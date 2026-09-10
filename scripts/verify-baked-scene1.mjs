@@ -292,7 +292,11 @@ function fakeDoc(values = {}) {
   ok(box.env.state._bakedGenesisUnlocked === true, 'setup succeeds → unlocks');
   ok(box.env.state.scenes && box.env.state.scenes.length === 1, 'setup succeeds → commits exactly one scene');
   ok(box.env.state.scenes[0].text === 'baked prose', 'setup succeeds → commits the BAKED scene');
-  ok(box.env.state.turnCount === 1, 'setup succeeds → turnCount becomes 1');
+  // INVARIANT (2026-09-06): turnCount = completed continuation turns. Committing the mounted Scene 1
+  // completes none, so it stays 0 and the first continuation is scene 2 (plan row 2). It used to become 1,
+  // which made the first continuation scene 3 and skipped plan row 2.
+  ok(!(box.env.state.turnCount > 0), 'setup succeeds → scene committed, turnCount stays at zero completed continuation turns');
+  ok(Array.isArray(box.env.state.scenes) && box.env.state.scenes.length === 1, 'setup succeeds → the baked scene is scenes[0]');
   ok(box.env.state._bakedPendingCommit === null, 'setup succeeds → pending commit is consumed');
   ok(box.env.calls.snapshots === 1, 'setup succeeds → the story is snapshotted');
 }
@@ -426,6 +430,26 @@ ok(nav && codeOf(nav).includes('_restoreBakedEntryAfterAuth('),
   'the post-boot path consults the stash before landing on the shelf');
 ordered(codeOf(nav || ''), '_restoreBakedEntryAfterAuth', "showScreen('vaultLibraryScreen')",
   'restore is attempted BEFORE navigating to the shelf');
+
+console.log('\n── seed contract v2 (2026-09-05) ──');
+// Every authored pressure must carry an evidence_requires pattern: the option composer offers
+// nothing without one, and the act gate would otherwise be silently absent for that condition.
+{
+  const blocks = [...app.matchAll(/possible_pressures:\s*\[([\s\S]*?)\]/g)].map(m => m[1]);
+  const entries = blocks.flatMap(b => [...b.matchAll(/\{\s*text:\s*'((?:[^'\\]|\\.)*)'([^}]*)\}/g)].map(m => ({ text: m[1], rest: m[2] })));
+  const missing = entries.filter(e => !/evidence_requires\s*:/.test(e.rest));
+  ok(entries.length > 0, `seed pressures found (${entries.length})`);
+  ok(missing.length === 0, 'every authored pressure carries evidence_requires', missing.map(m => m.text).join(' | '));
+  // Owned objects carry a head noun so the possessive check has something exact to match.
+  const owned = [...app.matchAll(/object_id:\s*'O\d+'[^}]*owner_ref:\s*'([^']+)'[^}]*/g)];
+  const noHead = owned.filter(m => m[1] !== 'all' && !/head:\s*'/.test(m[0]));
+  ok(owned.length >= 2, `owned grounded objects declared (${owned.length})`);
+  ok(noHead.length === 0, 'every owned object with a person owner has a head noun');
+  ok(/forbiddenEnvironmentFacts:\s*'/.test(app), 'First Sacrifice sceneOne authors forbiddenEnvironmentFacts');
+  const rx = (app.match(/forbiddenEnvironmentFacts:\s*'((?:[^'\\]|\\.)*)'/) || [])[1];
+  let compiles = false; try { new RegExp(rx.replace(/\\\\/g, '\\'), 'i'); compiles = true; } catch (_) {}
+  ok(compiles, 'forbiddenEnvironmentFacts compiles as a regex');
+}
 
 console.log(`\n${failures ? `✗ ${failures} of ${checks} checks FAILED` : `✓ all ${checks} checks passed`}\n`);
 process.exit(failures ? 1 : 0);

@@ -105,6 +105,23 @@ const ROLE_MODEL_CHAIN = {
   // provider entirely (xAI), so an OpenAI/Anthropic dual-outage doesn't
   // affect it. No ESD validation required for this role (structured
   // JSON, not erotic narrative).
+  // ── OPENING_PLANNER (Roman 2026-09-07: "direct Grok, one bounded retry, no OpenAI fallback") ──
+  // The Scene-1 opening planner (~80-84k-token structured-JSON request) cannot be admitted by the
+  // Mistral Small governor (20k TPM), so it authors here. ONE chain entry on purpose: the client owns
+  // the single transport retry, so the proxy must not add hidden attempts of its own — with one entry
+  // a hang/5xx/400 exits the loop after exactly one upstream call. Effort is set by the client
+  // (body.reasoningEffort); the default resolution for this name would be 'high'.
+  OPENING_PLANNER: [
+    'grok-4.3'
+  ],
+  // ── NARRATIVE_AUTHOR_GROK_ONLY (2026-09-07, proxy-boundary proof) ── the flag-on scene author. The
+  // NARRATIVE_AUTHOR chain advances to its next entry on a connection failure or hang guard, i.e. a
+  // HIDDEN second upstream attempt (and the non-reasoning entry flips effort to 'none'). Under the
+  // grok-only policy the client owns the single retry, so this role has ONE entry: one upstream call
+  // per client request, effort resolves to the shipped author default (high).
+  NARRATIVE_AUTHOR_GROK_ONLY: [
+    'grok-4.3'
+  ],
   STRUCTURE_GENERATOR: [
     'grok-4-1-fast-reasoning',
     'grok-4-1-fast-non-reasoning',
@@ -242,7 +259,8 @@ export default async function handler(req, res) {
       max_tokens = 1000,
       role = 'SPECIALIST_RENDERER',  // Orchestration role
       esd = null,  // Erotic Scene Directive (required for specialist rendering)
-      convId = null  // xAI conversation id → x-grok-conv-id header, maximizes prompt-cache hits across requests
+      convId = null,  // xAI conversation id → x-grok-conv-id header, maximizes prompt-cache hits across requests
+      response_format = null  // opt-in JSON mode passthrough ({ type:'json_object' }); mirrors mistral-proxy's contract
     } = req.body;
     // SECURITY: scrub user-role messages before any downstream code touches them.
     const messages = sanitizeUserMessages(_rawMessages, 'grok');
@@ -253,6 +271,18 @@ export default async function handler(req, res) {
 
     if (!messages || !Array.isArray(messages) || messages.length === 0) {
       return res.status(400).json({ error: 'Messages array is required' });
+    }
+    // response_format is forwarded ONLY when the client asks for it and only in the one shape both
+    // proxies accept. Nothing else about the upstream body changes for callers that omit it.
+    if (response_format !== undefined && response_format !== null) {
+      const _rfType = response_format && response_format.type;
+      if (_rfType !== 'json_object') {
+        return res.status(400).json({
+          error: 'invalid_response_format',
+          detail: "response_format.type must be 'json_object'",
+          received: String(_rfType)
+        });
+      }
     }
 
     // ==========================================================================
@@ -378,6 +408,7 @@ export default async function handler(req, res) {
         max_tokens: max_tokens,
         reasoning: { effort: _grok.effort }
       };
+      if (response_format && response_format.type === 'json_object') _xaiBody.response_format = { type: 'json_object' };
       // Belt-and-suspenders cache hint: OpenAI-compatible APIs (xAI included) route
       // prompt-cache lookups by this stable key. Harmless if the upstream ignores it;
       // pairs with x-grok-conv-id to maximize prefix-cache hits across a story's scenes.

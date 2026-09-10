@@ -43,7 +43,10 @@ let LAST_OFFERED = [];
 // runtime leak and also silently unauthenticated every run, so Scene 1 was refused at the purchase
 // gate and all 344 assertions below were measuring a chain that never executed.
 const PASSTHROUGH = /\/api\/(geo|csp-report|beta-events)\b/;
-const LOCAL = { '/api/consume-fortune': { success: true, fortunesRemaining: 9999 } };
+const LOCAL = { '/api/consume-fortune': { success: true, fortunesRemaining: 9999 },
+                // 2026-09-07: a Scene-1 planner fatal now FAILS AND REFUNDS (outer begin-story catch). The refund is
+                // a sanctioned local route, counted per arm so the guard arm can ASSERT it fired exactly once.
+                '/api/refund-fortune':  { success: true, fortunesRemaining: 9999 } };
 const MODEL = /\/api\/(proxy|chatgpt-proxy|mistral-proxy|deepseek-proxy|gemini)\b/;
 const L = 'she understands the wish has already begun to cost her something she cannot name';
 // ── THE PORTFOLIO THE SCAFFOLD RETURNS (2026-08-29) ──
@@ -276,6 +279,17 @@ function plannerReply(usr, mutate) {
     perceptual_signature_beat:L,
     staged_characters: cast.map(n => ({ name:n, presence:'IN_PERSON', anchor_beat:'is already in place as the scene opens' })) };
   if (!SOLO) spine.interlocutor_placement = 'The Dohkar stands between';
+  // ── CONTRACT v2 (2026-09-05) ── the reply SELECTS. Objects are read off the dispatched packet
+  // ("THE OBJECTS THIS SCENE CONTAINS"), never remembered; on a seed-owned stage the elements and
+  // the E+ target are ids, the fusion has no target of its own, every C+ act names the fact it
+  // enacts, and the opening actor is declared (null here: "She sets the relic down" stages nobody).
+  const OBJ = [...usr.matchAll(/^ {2}(O\d+): (.+)$/gm)].map(m => ({ id: m[1], name: m[2] }));
+  const idFor = (needle) => (OBJ.find(o => o.name.toLowerCase().includes(needle)) || {}).id;
+  const SEEDED = !SOLO && OBJ.length > 0 && /Veilwood/.test((usr.match(/WHERE \(fixed\): ([^\n]+)/) || ['', ''])[1] || '');
+  const EVID = (oid) => { const m = usr.match(new RegExp('option_id: ' + oid + '\\b[\\s\\S]*?established by: ([^\\n]+)')); return m ? m[1].split(/,\s*/).map(s => s.trim()).filter(Boolean) : []; };
+  const FACT_TEXT = (id) => ((usr.match(new RegExp('^ {2}' + id + ': (.+)$', 'm')) || [])[1] || '').trim();
+  spine.opening_actor_id = null;
+  if (SEEDED) spine.environment_element_ids = [idFor('spiralgrass'), idFor('veil-canopy')].filter(Boolean);
   // A solo corridor has no seed, so the planner OWNS the setting — and a planner-owned setting
   // must declare its environmental inventory before E+ may reference it.
   const SOLO_ELS = ['the weighhouse ledger', 'a bolt of undyed cloth'];
@@ -288,13 +302,18 @@ function plannerReply(usr, mutate) {
   // claim rather than one string matching by accident.
   // Angles must now be RENDERABLE BEATS, not diagnoses, and E+/fusion targets must be things the
   // resolved scene actually contains. "spiralgrass" is in the First Sacrifice seed's WHERE.
+  // Seeded: the E+ thing is the carpet by id, so beats name its HEAD ("carpet"), which is what the
+  // head-noun rule asks of a beat about "the deep-crimson carpet of braided … spiralgrass".
   const ANCHOR = SOLO ? SOLO_ELS[0]
     : (FIXED_WHERE && !/Veilwood/.test(FIXED_WHERE)) ? FIXED_WHERE.trim()
-    : 'the spiralgrass';
+    : 'the carpet';
   // The PC's opening beat IS the fusion: one beat carries her C+, the E+ axis and the fusion, and
   // her staged anchor is that same beat. One source of truth for the opening.
   const PCN = cast[0];
-  const POF_BEAT = `my thumb finds ${ANCHOR} where the rite has worn it smooth, and my rehearsed steadiness feels newly counterfeit`;
+  // Tightening (2026-09-06): on a seeded stage the beat names its object through the literal
+  // {TARGET}, which production replaces with the record's name after the identity scan.
+  const TGT = SEEDED ? '{TARGET}' : ANCHOR;
+  const POF_BEAT = `my thumb finds ${TGT} where the rite has worn it smooth, and my rehearsed steadiness feels newly counterfeit`;
   // THE PROTAGONIST GETS NO C+ ENTRY (2026-08-26). Her first appearance is pc_opening_fusion,
   // and her accounting row is SYNTHESISED after validation — the planner never sends one.
   // ── DISCRIMINATING PSYCHOLOGY, NOT A GESTURE APIECE (2026-08-27) ──
@@ -367,10 +386,16 @@ function plannerReply(usr, mutate) {
       const c = CAND[n] || {}; const opt = (c.options || [])[0];
       const R = READS[n] || READ_FALLBACK(n);
       const kw = (x) => (String(x).toLowerCase().match(/[a-z]{5,}/g) || []).slice(0, 6).join(' ');
+      // contract v2: the act names the fact it enacts, and engages that fact's condition — the
+      // fixture appends the seed's own evidence sentence, so the act gate is met with seed words.
+      const evIds = opt ? EVID(opt.option_id) : [];
+      const evTxt = evIds.length ? FACT_TEXT(evIds[0]) : '';
+      const ACT = groundAct(R.behavior) + (evTxt ? ' as ' + evTxt : '');
       return { character:n, mode: ((c.modes || [])[0] || 'IN_PERSON'),
                ...(opt ? { option_id: opt.option_id } : {}),
                ...(opt ? { expression_mode: 'CONTROL' } : {}),
-               first_mention:true, behavior: groundAct(R.behavior), visible_action: groundAct(R.behavior),
+               ...(evIds.length ? { enacts_evidence_id: evIds[0] } : {}),
+               first_mention:true, behavior: ACT, visible_action: ACT,
                // NO AUTHORED PSYCHOLOGY ON RECORD is the one case where the planner still writes
                // the read; where an option EXISTS, sending one is the model rewriting canon.
                ...(opt ? {} : { character_revelation: R.character_revelation }),
@@ -393,11 +418,18 @@ function plannerReply(usr, mutate) {
     ({ ...c, anchor_beat: c.name === PCN ? 'FROM_PC_OPENING_FUSION'
         : (LAST_OFFERED.includes(c.name) ? 'FROM_CHARACTER_PLUS'
            : 'stands where the assembly can see ' + c.name + ' without moving') }));
-  let pof = { character:PCN, placement:'PC_FIRST_EMBODIED_BEAT',
-    character_angle:'rehearsed steadiness that does not survive contact',
-    environment_target:ANCHOR, environment_axis:'ritual', beat:POF_BEAT };
-  let ep = { target:ANCHOR, axis:'ritual',
-             beat:`${ANCHOR} is worn smooth along one edge where the rite has been performed the same way for generations` };
+  // contract v2: on a seeded stage the fusion carries no target/axis (they are E+'s) and E+ is by id.
+  let pof = SEEDED
+    ? { character:PCN, placement:'PC_FIRST_EMBODIED_BEAT',
+        character_angle:'rehearsed steadiness that does not survive contact', beat:POF_BEAT }
+    : { character:PCN, placement:'PC_FIRST_EMBODIED_BEAT',
+        character_angle:'rehearsed steadiness that does not survive contact',
+        environment_target:ANCHOR, environment_axis:'ritual', beat:POF_BEAT };
+  let ep = SEEDED
+    ? { target_object_id: idFor('spiralgrass'), axis:'ritual',
+        beat:`{TARGET} is worn smooth along one edge where the rite has been performed the same way for generations` }
+    : { target:ANCHOR, axis:'ritual',
+        beat:`${ANCHOR} is worn smooth along one edge where the rite has been performed the same way for generations` };
   let fu = { character: cast[0], target:ANCHOR, beat:`she sets her palm flat on ${ANCHOR} to keep it still` };
   if (mutate === 'unknown')   cp = cp.concat([{ character:'Nobody Here', first_mention:true, behavior:'sets the cloth straight twice', character_revelation:'she needs the cloth to be the reason she is standing there, so no one asks why she came' }]);
   // CARDINALITY IS PRESSURE, NOT HEADCOUNT (2026-08-27): a candidate with no assignment used to
@@ -494,6 +526,8 @@ function plannerReply(usr, mutate) {
       const act = 'he steps aside for the guest at the edge like someone who cares deeply where they stand';
       const kw = (x) => (String(x).toLowerCase().match(/[a-z]{5,}/g) || []).slice(0, 6).join(' ');
       return want ? { ...c, option_id: want.option_id, behavior: act, visible_action: act,
+        // contract v2: the act binds to one of THIS option's facts
+        ...(EVID(want.option_id).length ? { enacts_evidence_id: EVID(want.option_id)[0] } : {}),
         // Rebuilt for the option this mutation selects: a bridge left describing a different
         // option fails the bridge gate, and the case would be red for a reason it does not test.
         revelation_bridge: 'this act is how ' + kw(want.truth) + ' surfaces, and this scene is the '
@@ -506,13 +540,40 @@ function plannerReply(usr, mutate) {
   // the backend and anything the model writes there is discarded, so the old mutation is inert —
   // which is the point of the contract. The surviving form of "asserted a binding the material
   // does not support" is to cite one option while the bridge explains a different one.
+  // contract v2 (2026-09-05): the bridge no longer gates, so "bridge describes a different option" is
+  // no longer a defect the product can see. The surviving form is the BINDING: the act cites the
+  // fact it enacts (enacts_evidence_id), and an option whose evidence does not include that fact
+  // is a pairing the material does not support. The alternative option is chosen so its evidence
+  // set does NOT contain the cited fact; if every alternative shares it, the case is inert.
+  // The DISCRIMINATING form (2026-09-05, review control 1): for the first candidate whose offered
+  // options do not all share the same evidence, cite an option whose evidence EXCLUDES a fact that
+  // another of their options is established by, and name that excluded fact as the one the act
+  // enacts. In First Sacrifice that is Seren: OPT-1 is established by E4 alone while E3 establishes
+  // OPT-2/3/4 — so "option OPT-1, enacts E3" is a pairing the material does not support. The
+  // Dohkar's four options all cite E5, which is why the old Dohkar-only form went inert; a packet
+  // with NO such pair anywhere makes the fixture THROW rather than let the case pass by accident.
+  // Tightening (2026-09-06) changed what is expressible: an option resting on ONE fact derives its
+  // enacted fact, so "wrong evidence" can only be typed against a MULTI-fact option. The case now
+  // keeps the candidate's real multi-fact option (so the act gate is satisfied by the act's own
+  // words) and cites a fact from the packet that this option is NOT established by — a fact about
+  // somebody else when one exists. The ONLY fault is then the binding, which is the point.
   if (mutate === 'contemptOverJealousyEvidence') {
+    let placed = false;
+    const ALL_IDS = [...usr.matchAll(/^ {2}(E\d+): /gm)].map(m => m[1]);
     cp = cp.map(c => {
-      if (!/Dohkar/i.test(c.character)) return c;   // the original targeted this character alone
+      if (placed) return c;
       const cd = CAND[c.character] || {};
-      const alt = (cd.options || [])[1];
-      return alt ? { ...c, option_id: alt.option_id } : c;   // bridge still describes option[0]
+      const opts = (cd.options || []).map(o => ({ id: o.option_id, ev: EVID(o.option_id) })).filter(o => o.ev.length >= 2);
+      for (const o of opts) {
+        const foreign = ALL_IDS.filter(e => !o.ev.includes(e));
+        const wrong = foreign.find(e => /Dohkar|Julian/i.test(FACT_TEXT(e))) || foreign[0];
+        if (!wrong) continue;
+        placed = true;
+        return { ...c, option_id: o.id, enacts_evidence_id: wrong };
+      }
+      return c;
     });
+    if (!placed) throw new Error('fixture: no candidate in this packet offers a multi-fact option with a foreign fact available — the discriminating cross-option case cannot be built here and must not pass silently');
   }
   if (mutate === 'readMissing')   cp = cp.map((c,i) => i === 0 ? (({ behavior, visible_action, ...r }) => r)(c) : c);
   if (mutate === 'readVoiceDrops') cp = cp.map((c,i) => i === 0
@@ -533,11 +594,96 @@ function plannerReply(usr, mutate) {
   // doing the same job. All three of these must now be ACCEPTED.
   if (mutate === 'longTargetHeadNoun') {
     const LONG = 'the long white weeping-willow veil-canopy';
-    ep = { target:LONG, axis:'ritual',
-           beat:`the canopy hangs lower on one side where hands have pulled it aside for generations` };
-    pof = { ...pof, environment_target:LONG, environment_axis:'ritual',
-            beat:`the canopy's leaves brush my shoulder and I hold still under them` };
+    if (SEEDED) {
+      // contract v2: the long name is the SEED's (O1), selected by id; the beat names its head noun
+      spine.environment_element_ids = [idFor('spiralgrass'), idFor('veil-canopy')].filter(Boolean);
+      ep = { target_object_id: idFor('veil-canopy'), axis:'ritual',
+             beat:`{TARGET} hangs lower on one side where hands have pulled it aside for generations` };
+      pof = { ...pof, beat:`the leaves of {TARGET} brush my shoulder and I hold still under them` };
+    } else {
+      ep = { target:LONG, axis:'ritual',
+             beat:`the canopy hangs lower on one side where hands have pulled it aside for generations` };
+      pof = { ...pof, environment_target:LONG, environment_axis:'ritual',
+              beat:`the canopy's leaves brush my shoulder and I hold still under them` };
+    }
     fu = undefined;
+  }
+  // ── CONTRACT v2 REVIEW CONTROLS (2026-09-05) ──
+  // v2OpeningActor: a fully valid ID-based plan that exercises every v2 field at once — a declared
+  // opening actor whose C+ act is FROM_OPENING_BEAT, ids for elements and E+ target, a realization,
+  // an enacted fact, and a fusion with no target of its own. The opening beat is the seed's own E3
+  // event, which names Seren, contains "aloud" (OPT-4's condition pattern) and IS E3.
+  if (mutate === 'v2OpeningActor' && SEEDED) {
+    const serenId = ((usr.match(/^ {2}([a-z]+:[^:\n]+): Seren$/m) || [])[1]) || null;
+    const serenOpt = ((CAND['Seren'] || {}).options || []).find(o => EVID(o.option_id).includes('E3') && /nameable in public/.test(o.pressure))
+                  || ((CAND['Seren'] || {}).options || []).find(o => EVID(o.option_id).includes('E3'));
+    if (!serenId || !serenOpt) throw new Error('fixture: v2OpeningActor needs Seren on stage with an E3-established option');
+    spine.opening_beat = 'Seren names her offering aloud before the wish — her earliest memory — and begins the invocation exactly as rehearsed';
+    spine.opening_actor_id = serenId;
+    spine.environment_element_ids = [idFor('spiralgrass'), idFor('veil-canopy')].filter(Boolean);
+    cp = cp.map(c => c.character === 'Seren'
+      ? { ...c, option_id: serenOpt.option_id, enacts_evidence_id: 'E3', visible_action: 'FROM_OPENING_BEAT', behavior: 'FROM_OPENING_BEAT' }
+      : c);
+    if (!cp.some(c => c.character === 'Seren')) throw new Error('fixture: v2OpeningActor needs a Seren C+ entry');
+  }
+  // v2OldShape: the pre-v2 free-text shape on a seeded stage — what the twelve frozen real plans
+  // sent. Rejected by name; with the valve ON it must drop assignments and still author the scene.
+  if (mutate === 'v2OldShape' && SEEDED) {
+    delete spine.environment_element_ids; delete spine.environment_realizations;
+    spine.environment_elements = ['the deep-crimson carpet of braided spiralgrass underfoot, still and untrampled', 'the white weeping-willow veil-canopy swaying in the dawn breeze'];
+    ep = { target: 'the deep-crimson carpet of braided spiralgrass', axis: 'damage', beat: 'the carpet shows faint indentations where Seren knelt' };
+    pof = { ...pof, environment_target: 'the deep-crimson carpet of braided spiralgrass', environment_axis: 'damage' };
+    cp = cp.map(c => { const { enacts_evidence_id, ...r } = c; return r; });
+  }
+  // ── CORRECTIONS 1–3 CONTROLS (Roman 2026-09-06) — built on the valid v2OpeningActor plan ──
+  const V2ACTOR = (m) => ['v2ActorFreeAct', 'v2WrongActorLiteral', 'v2ActorSentinelRoster', 'v2SentinelWrongRow'].includes(m);
+  if (V2ACTOR(mutate) && SEEDED) {
+    const serenId = ((usr.match(/^ {2}([a-z]+:[^:\n]+): Seren$/m) || [])[1]) || null;
+    const serenOpt = ((CAND['Seren'] || {}).options || []).find(o => EVID(o.option_id).includes('E3') && /nameable in public/.test(o.pressure))
+                  || ((CAND['Seren'] || {}).options || []).find(o => EVID(o.option_id).includes('E3'));
+    if (!serenId || !serenOpt) throw new Error('fixture: the correction controls need Seren on stage with an E3-established option');
+    spine.opening_beat = 'Seren names her offering aloud before the wish — her earliest memory — and begins the invocation exactly as rehearsed';
+    spine.opening_actor_id = serenId;
+    spine.environment_element_ids = [idFor('spiralgrass'), idFor('veil-canopy')].filter(Boolean);
+    cp = cp.map(c => c.character === 'Seren'
+      ? { ...c, option_id: serenOpt.option_id, enacts_evidence_id: 'E3', visible_action: 'FROM_OPENING_BEAT', behavior: 'FROM_OPENING_BEAT' } : c);
+    // 1 · the declared actor types a FREE act anyway (what 14B did 5/6) → derived, logged, ACCEPTED
+    if (mutate === 'v2ActorFreeAct') cp = cp.map(c => c.character === 'Seren'
+      ? { ...c, visible_action: 'Seren’s fingers tremble on the sash as her voice softens', behavior: 'Seren’s fingers tremble on the sash as her voice softens' } : c);
+    // 1 · hostile: a NON-actor claims the derivation → REJECTED
+    if (mutate === 'v2WrongActorLiteral') cp = cp.map(c => /Dohkar/.test(c.character)
+      ? { ...c, visible_action: 'FROM_OPENING_BEAT', behavior: 'FROM_OPENING_BEAT' } : c);
+    // 2 · the actor's roster row echoes the sentinel (what 14B did 5/6) → ACCEPTED, anchor derived
+    if (mutate === 'v2ActorSentinelRoster') spine.staged_characters = spine.staged_characters.map(c =>
+      c.name === 'Seren' ? { ...c, anchor_beat: 'FROM_OPENING_BEAT' } : c);
+    // 2 · hostile: the sentinel on somebody else's row → REJECTED
+    if (mutate === 'v2SentinelWrongRow') spine.staged_characters = spine.staged_characters.map(c =>
+      /Dohkar/.test(c.name) ? { ...c, anchor_beat: 'FROM_OPENING_BEAT' } : c);
+  }
+  // 3 · a seed object whose NAME is absent from the scene text (the sash, O5), chosen by id → ACCEPTED
+  if (mutate === 'v2SashById' && SEEDED) {
+    const sash = idFor('sash');
+    if (!sash) throw new Error('fixture: v2SashById needs the sash object in the packet');
+    spine.environment_element_ids = [idFor('spiralgrass'), sash].filter(Boolean);
+    ep = { target_object_id: sash, axis: 'ritual', beat: '{TARGET} is worn pale along one edge where the rite has been handled the same way for generations' };
+    pof = { ...pof, beat: 'my thumb finds {TARGET} where the rite has worn it smooth, and my rehearsed steadiness feels newly counterfeit' };
+    fu = { character: cast[0], target: 'the sash', beat: 'she sets her palm flat on the sash to keep it still' };
+  }
+  // ── TIGHTENING CONTROLS (2026-09-06) ──
+  // derived evidence: the Dohkar's option rests on ONE fact; a typed E6 is replaced by it, logged → ACCEPTED
+  if (mutate === 'v2EvidenceDerived' && SEEDED) cp = cp.map(c => /Dohkar/.test(c.character) ? { ...c, enacts_evidence_id: 'E6' } : c);
+  // hostile: the E+ beat names ANOTHER object → REJECTED
+  if (mutate === 'v2BeatOtherObject' && SEEDED) ep = { ...ep, beat: '{TARGET} is worn smooth where the sash has dragged across it for generations' };
+  // hostile: no {TARGET} — the planner named the thing itself → REJECTED
+  if (mutate === 'v2NoPlaceholder' && SEEDED) ep = { ...ep, beat: 'the carpet is worn smooth along one edge where the rite has been performed the same way for generations' };
+  // hostile: the retired free-text realization channel → REJECTED
+  if (mutate === 'v2RealizationsSent' && SEEDED) spine.environment_realizations = { [idFor('spiralgrass')]: 'pressed flat where Seren kneels' };
+  // 3 · hostile: an id this scene does not contain → REJECTED
+  if (mutate === 'v2UnknownObjectId' && SEEDED) spine.environment_element_ids = ['O42', idFor('spiralgrass')].filter(Boolean);
+  // 3 · hostile: E+ cites a valid id that was NOT chosen as an element → REJECTED
+  if (mutate === 'v2TargetNotChosen' && SEEDED) {
+    spine.environment_element_ids = [idFor('spiralgrass'), idFor('gossamer band')].filter(Boolean);
+    ep = { target_object_id: idFor('veil-canopy'), axis: 'ritual', beat: '{TARGET} hangs lower on one side where hands have pulled it aside for generations' };
   }
   if (mutate === 'sentinelSpelling') spine.staged_characters = spine.staged_characters.map(c =>
     ({ ...c, anchor_beat: c.name === PCN ? 'pc_opening_fusion' : 'character_plus' }));
@@ -590,10 +736,19 @@ function plannerReply(usr, mutate) {
     // moves together: E+ carries its evidence and the opening fusion points at the same thing.
     const CLOTH = 'the gossamer band';
     const CLOTH_BEAT = `my thumb finds ${CLOTH} where the rite has worn it smooth, and my rehearsed steadiness feels newly counterfeit`;
-    ep = { target:CLOTH, axis:'ritual',
-           beat:`${CLOTH} is worn thin along one edge where the rite has been performed the same way for generations` };
-    fu = { character: cast[0], target:CLOTH, beat:'she tugs the band tighter until the knot bites' };
-    pof = { ...pof, environment_target:CLOTH, environment_axis:'ritual', beat:CLOTH_BEAT };
+    // contract v2: by id on a seeded stage, and the chosen element ids must include it
+    if (SEEDED) {
+      spine.environment_element_ids = [idFor('spiralgrass'), idFor('gossamer band')].filter(Boolean);
+      ep = { target_object_id: idFor('gossamer band'), axis:'ritual',
+             beat:`{TARGET} is worn thin along one edge where the rite has been performed the same way for generations` };
+      fu = { character: cast[0], target:CLOTH, beat:'she tugs the band tighter until the knot bites' };
+      pof = { ...pof, beat:CLOTH_BEAT.replace(CLOTH, '{TARGET}') };
+    } else {
+      ep = { target:CLOTH, axis:'ritual',
+             beat:`${CLOTH} is worn thin along one edge where the rite has been performed the same way for generations` };
+      fu = { character: cast[0], target:CLOTH, beat:'she tugs the band tighter until the knot bites' };
+      pof = { ...pof, environment_target:CLOTH, environment_axis:'ritual', beat:CLOTH_BEAT };
+    }
   }
   const skel = { character_plus:cp, fusion:fu };
   if (pof) skel.pc_opening_fusion = pof;   // a null pof omits the KEY, as a planner omission would
@@ -761,9 +916,10 @@ async function run({ hot, mutate, solo, duo, pollute, genPortfolio, mutateSrc, k
   const page = await ctx.newPage();
   page.setDefaultTimeout(180000); page.setDefaultNavigationTimeout(180000);
   await installSession(page);
+  const pageEvents = [];
   const planner = [], author = [], escaped = [], unknown = [], scaffold = [],
         unknownModel = [], ambiguous = [];
-  const kinds = {}; let bibleReq = 0;
+  const kinds = {}; let bibleReq = 0; const local = {};
   // MUTATION CONTROL. The served source is the ONE lever; a case that passes with the production
   // invocation deleted is evidence about a helper, not about the call site.
   let _srcMutated = null, _mutationTargets = null, _mutationCounts = null;
@@ -801,7 +957,7 @@ async function run({ hot, mutate, solo, duo, pollute, genPortfolio, mutateSrc, k
     if (isAuthOrigin(route.request().url())) return route.fulfill({ status:200, contentType:'application/json', body:'{}' });
     if (PASSTHROUGH.test(url)) return /* FULFILLED, NOT FORWARDED: a forwarded static endpoint spawns a @vercel/node runtime that is never reaped — they accumulate into gigabytes and wedge the dev server mid-suite. */ route.fulfill({ status:200, contentType:'application/json', body:'{}' });
     const k = Object.keys(LOCAL).find(x => url.startsWith(x));
-    if (k) return route.fulfill({ status:200, contentType:'application/json', body: JSON.stringify(LOCAL[k]) });
+    if (k) { local[k] = (local[k] || 0) + 1; return route.fulfill({ status:200, contentType:'application/json', body: JSON.stringify(LOCAL[k]) }); }
     let b=null; try { b = JSON.parse(route.request().postData()||'{}'); } catch(_){}
     if (!MODEL.test(url)) { unknown.push(url); return route.abort(); }
     const m=(b&&b.messages)||[];
@@ -865,8 +1021,8 @@ async function run({ hot, mutate, solo, duo, pollute, genPortfolio, mutateSrc, k
         author.push({ system: sys, user: usr, max_tokens: b.max_tokens, url });
         out = PROSE;
       } else if (kind === 'planner') {
-        planner.push({ url, model:b.model, max_tokens:b.max_tokens, reasoning_effort:b.reasoning_effort,
-                       response_format:b.response_format, user: usr });
+        planner.push({ url, model:b.model, role:b.role, max_tokens:b.max_tokens, reasoning_effort:b.reasoning_effort,
+                       reasoningEffort:b.reasoningEffort, preferredModel:b.preferredModel, response_format:b.response_format, user: usr });
         out = plannerReply(usr, mutate);
       } else if (kind === 'aplotGenerator' && genPortfolio) {
         // A VALID plot, so production accepts it first time and never enters correction. It
@@ -895,8 +1051,8 @@ async function run({ hot, mutate, solo, duo, pollute, genPortfolio, mutateSrc, k
     // /api/chatgpt-proxy normalises to {content}. The old mock returned BOTH shapes at once,
     // which is precisely why this suite passed while production discarded every opening plan
     // as "no JSON object". A mock must never hand the client a shape the proxy cannot produce.
-    const envelope = /mistral-proxy/.test(url)
-      ? { id:'mock', object:'chat.completion', model:b.model, usage:{}, _orchestration:{},
+    const envelope = /mistral-proxy|\/api\/proxy\b/.test(url)   // both return the RAW provider envelope (+ _orchestration)
+      ? { id:'mock', object:'chat.completion', model:b.model, usage:{}, _orchestration:{ role: b.role || null, model: b.model },
           choices:[{ index:0, finish_reason:'stop', message:{ role:'assistant', content: out } }] }
       : { ok:true, content: out, choices:[{ message:{ content: out } }] };
     return route.fulfill({ status:200, contentType:'application/json', body: JSON.stringify(envelope) });
@@ -919,10 +1075,26 @@ async function run({ hot, mutate, solo, duo, pollute, genPortfolio, mutateSrc, k
     // flag was permanently false, and every injected throw was dead code. The seam was never the
     // fault — the switch was. `injectArmed` is exported so a test can assert the switch is ON.
   }, !!injectScaffoldFailure);
+  // ── CONTRACT v2 AVAILABILITY VALVE (2026-09-05) ──
+  // Production ships the valve ON: an invalid ASSIGNMENT plan drops C+/E+/fusion and authors Scene 1
+  // from the seed stage. This suite tests DETECTION, and its mutation cases assert "named fault, no
+  // author call" — so it runs with the valve OFF, which restores the abort those assertions expect.
+  // The valve's own behaviour (dropped → author reached, nothing thrown) is proven separately by
+  // replaying the frozen stage-0 plans through _planner_probe3.mjs (REPLAY_DIR, valve ON).
+  //   SB_VALVE=off → window._scene1AssignmentValve = false for every page in this run.
+  // The valve is OPT-IN in production pending approval (window._scene1AssignmentValve === true), so
+  // the default page already aborts on an invalid plan. SB_VALVE=on switches it on for the pages of
+  // the valve-behaviour part (PART W); SB_VALVE=off is kept as an explicit no-op for symmetry.
+  if (process.env.SB_VALVE === 'on') await page.addInitScript(() => { window._scene1AssignmentValve = true; });
+  if (process.env.SB_VALVE === 'off') await page.addInitScript(() => { window._scene1AssignmentValve = false; });
   page.on('console', m => { const x=m.text(); // PORTFOLIO is included because the grounding gate reports there: without it a run that aborts
   // before the planner shows an empty cast and no reason, which is how two cases looked like
   // fixture bugs when they were a refusal working as designed.
-  if (/SCENE1:|SKELETON|PLANNER|PORTFOLIO/.test(x)) logs.push(x.slice(0,400)); });
+  if (/SCENE1:|SKELETON|PLANNER|PORTFOLIO/.test(x)) logs.push(x.slice(0,400)); if (m.type() === 'error') pageEvents.push('console.error: ' + x.slice(0, 200)); });
+  // PAGE-LEVEL FAILURE CAPTURE (2026-09-07: silent arms produced NO console output; nothing recorded why).
+  page.on('pageerror', e => pageEvents.push('pageerror: ' + String(e && e.message).slice(0, 200)));
+  page.on('crash', () => pageEvents.push('CRASH: page crashed'));
+  page.on('requestfailed', r => { const u = r.url(); if (!/sb-test\.localhost/.test(u)) pageEvents.push('requestfailed: ' + u.replace(/^https?:\/\/[^/]+/, '').slice(0, 120) + ' ' + ((r.failure() || {}).errorText || '')); });
   page.on('pageerror', e => logs.push('PAGEERROR ' + String(e.message).slice(0,200)));
 
   await page.goto('http://localhost:3000/', { waitUntil:'commit', timeout:60000 });
@@ -1097,7 +1269,7 @@ async function run({ hot, mutate, solo, duo, pollute, genPortfolio, mutateSrc, k
   const gateAtFailure = await page.evaluate(() => window.__gateAtFailure).catch(() => null);
   const injectArmed = await page.evaluate(() => window.__injectScaffoldFailure === true).catch(() => null);
   const sbTrace = await page.evaluate(() => window.__sbTrace || null).catch(() => null);
-  return { offered: LAST_OFFERED.slice(), planner, author, scaffold, kinds, unknownModel, ambiguous, escaped, unknown, logs,
+  return { offered: LAST_OFFERED.slice(), planner, author, scaffold, kinds, unknownModel, ambiguous, escaped, unknown, logs, local, pageEvents,
            srcMutated: _srcMutated, srcParseError: _srcParseError, mutationTargets: _mutationTargets, mutationCounts: _mutationCounts, gateAtFailure, injectArmed, sbTrace, ...res };
   } finally { await ctx.close().catch(() => {}); }
 }
@@ -1114,12 +1286,15 @@ for (const [label, hot] of [['HEAVY', false], ['HOTFAST', true]]) {
   console.log(`   E+ / fusion       : ${JSON.stringify(R.skeleton && R.skeleton.ep)} / ${JSON.stringify(R.skeleton && R.skeleton.fu)}`);
 
   t(`${label} 1: exactly one opening-planner request`, R.planner.length === 1, `got ${R.planner.length}`);
-  t(`${label} 2: mistral-small, explicit none, JSON mode, calculated budget`,
-    R.planner[0] && /mistral-proxy/.test(R.planner[0].url) && R.planner[0].model === 'mistral-small-latest'
-    && R.planner[0].reasoning_effort === 'none' && R.planner[0].response_format
+  // ROUTE (Roman 2026-09-07): direct Grok — /api/proxy, role OPENING_PLANNER (single-model chain), grok-4.3
+  // pinned via preferredModel, effort 'none' (function-matched to the shipped non-reasoning planner), JSON mode.
+  t(`${label} 2: direct Grok — /api/proxy, OPENING_PLANNER, grok-4.3, effort none, JSON mode, calculated budget`,
+    R.planner[0] && /\/api\/proxy\b/.test(R.planner[0].url) && R.planner[0].role === 'OPENING_PLANNER'
+    && R.planner[0].model === 'grok-4.3' && R.planner[0].preferredModel === 'grok-4.3'
+    && R.planner[0].reasoningEffort === 'none' && R.planner[0].response_format
     && R.planner[0].response_format.type === 'json_object' && R.planner[0].max_tokens >= 1800,
-    JSON.stringify(R.planner[0] && { m:R.planner[0].model, re:R.planner[0].reasoning_effort, mt:R.planner[0].max_tokens }));
-  t(`${label} 2b: planner reply read from the RAW mistral envelope (no top-level content)`,
+    JSON.stringify(R.planner[0] && { u:R.planner[0].url, r:R.planner[0].role, m:R.planner[0].model, re:R.planner[0].reasoningEffort, mt:R.planner[0].max_tokens }));
+  t(`${label} 2b: planner reply read from the RAW provider envelope (no top-level content)`,
     !!(R.skeleton && R.skeleton.cp && R.skeleton.cp.length),
     'skeleton is empty — the client is reading a response shape mistral-proxy never returns');
   // Not an obligation any more — cardinality follows pressure. This fixture assigns one per
@@ -1136,7 +1311,9 @@ for (const [label, hot] of [['HEAVY', false], ['HOTFAST', true]]) {
       && R.offered.every(n => (R.skeleton.cp || []).some(c => c.character === n)),
     `offered=${JSON.stringify(R.offered)} cp=${JSON.stringify((R.skeleton && R.skeleton.cp || []).map(c => c.character))}`);
   t(`${label} 4: E+ and fusion survive normalization`,
-    R.skeleton && R.skeleton.ep && R.skeleton.ep.target === 'the spiralgrass'
+    // contract v2: on a seeded stage the delivered E+ target is the SEED's name for the object
+    // the plan selected by id ("the deep-crimson carpet of braided … spiralgrass underfoot").
+    R.skeleton && R.skeleton.ep && /spiralgrass/i.test(String(R.skeleton.ep.target || ''))
     && R.skeleton.ep.axis === 'ritual' && R.skeleton.fu && R.skeleton.fu.beat,
     JSON.stringify(R.skeleton && { ep: R.skeleton.ep, fu: R.skeleton.fu }));
   const key = `${label} ${hot ? 6 : 5}`;
@@ -1199,7 +1376,11 @@ for (const [label, hot] of [['HEAVY', false], ['HOTFAST', true]]) {
     JSON.stringify(ep));
   t(`${label} 11d: delivered — fusion character eligible, target nonempty, target === E+ target`,
     !!(fu && R.eligible && R.eligible.map(tnorm).includes(tnorm(fu.character))
-       && String(fu.target||'').trim() && tnorm(fu.target) === tnorm(ep && ep.target)),
+       // contract v2: the E+ target is the seed's full name; the standalone fusion may name it by a
+       // whole-token sub-phrase ("the spiralgrass"), which is exactly the product's own _targetsMatch rule.
+       && String(fu.target||'').trim()
+       && ((' ' + tnorm(ep && ep.target) + ' ').includes(' ' + tnorm(fu.target) + ' ')
+           || (' ' + tnorm(fu.target) + ' ').includes(' ' + tnorm(ep && ep.target) + ' '))),
     JSON.stringify({ fu, epTarget: ep && ep.target }));
 
   // ── the same values, verbatim, in the bytes handed to Grok ──
@@ -1338,7 +1519,7 @@ console.log(` 12 · PLANNING CONTRACT: stage authority, on-stage eligibility, fi
       && !/generations of petitioners had polished it smooth/i.test(pu),
     JSON.stringify((pu.match(/.{0,60}(worn hollow|newly counterfeit).{0,60}/i) || [])[0] || null));
   t(`12h5: E+ is stated as a SHAPE, with placeholders to replace rather than prose to copy`,
-    /"beat": "<TARGET \+ PHYSICAL CHANGE CAUSED BY THE AXIS \+ MATERIAL TRACE VISIBLE IN THIS SCENE>"/.test(pu)
+    /PHYSICAL CHANGE CAUSED BY THE AXIS \+ MATERIAL TRACE VISIBLE IN THIS SCENE/.test(pu)   // v2: preceded by the {TARGET} instruction on a seeded stage
       && /Replace EVERY angle-bracket placeholder with your own words/.test(pu)
       && /CATEGORY NAMES, not content/.test(pu));
   t(`12i: FIRST-PERSON landing point is defined for the PC`,
@@ -1355,7 +1536,7 @@ console.log(` 12 · PLANNING CONTRACT: stage authority, on-stage eligibility, fi
       && /first embodied action or self-reference/.test(sys));
   t(`12l: the opening BEAT reaches the author, not just the pair`,
     /PROTAGONIST OPENING BEAT \(HARD/.test(sys)
-      && /my thumb finds the spiralgrass where the rite has worn it smooth/.test(sys)
+      && /my thumb finds the [^\n]{0,80}spiralgrass[^\n]{0,20} where the rite has worn it smooth/.test(sys)   // {TARGET} → the seed's name
       && !/FUSION — one sentence in which/.test(sys),
     JSON.stringify(sys.split('\n').filter(l => /PROTAGONIST OPENING BEAT|FUSION —/.test(l)).slice(0, 2)));
   t(`12m: zero escaped / unknown requests`, R.escaped.length === 0 && R.unknown.length === 0);
@@ -1379,6 +1560,12 @@ for (const [mutate, label, expect] of [
   ['angleIsAReading',    'an interpretive PC angle that stages no body is untouched', { alias:false }],
   // CARDINALITY BY PRESSURE: a candidate the planner declined to assign is a legitimate plan.
   ['missing',            'a candidate left WITHOUT a C+ assignment is accepted, not faulted', { alias:false }],
+  ['v2OpeningActor',     'a fully valid ID-based plan with a declared opening actor is ACCEPTED (delivery asserted in PART V)', { alias:false }],
+  // corrections 1–3 (2026-09-06), positive arms — the hostile twins are in the rejection table
+  ['v2ActorFreeAct',     'correction 1: the declared actor typed a free act — derived from the opening beat, logged, ACCEPTED', { alias:false }],
+  ['v2ActorSentinelRoster', 'correction 2: the opening sentinel on the ACTOR\'s roster row is accepted and derived', { alias:false }],
+  ['v2SashById',         'correction 3: a seed object absent from the scene text (the sash) is grounded BY ID', { alias:false }],
+  ['v2EvidenceDerived',  'tightening: a typed enacts_evidence_id for a single-fact option is derived, not faulted', { alias:false }],
 ]) {
   const R = await run({ hot: false, mutate });
   const cp = ((R.skeleton && R.skeleton.cp) || []).map(c => c.character);
@@ -1416,12 +1603,15 @@ console.log('');
   const R = await run({ hot: false, mutate: null });
   const pu = String((R.planner[0] || {}).user || '');
   const tmpl = pu.slice(pu.indexOf('Return ONLY this JSON'), pu.indexOf('"scene_skeleton"'));
-  t(`   dispatched JSON TEMPLATE declares opening_spine.environment_elements`,
-    /"environment_elements"\s*:/.test(tmpl) && tmpl.indexOf('"opening_setting"') !== -1
-      && tmpl.indexOf('"environment_elements"') > tmpl.indexOf('"opening_setting"'),
-    `inTemplate=${/"environment_elements"\s*:/.test(tmpl)} templateLen=${tmpl.length}`);
+  // contract v2: a seed-owned stage declares environment_element_ids (selection by object_id);
+  // a planner-owned stage still declares free-text environment_elements.
+  const ENV_KEY = /"environment_element_ids"\s*:/.test(tmpl) ? '"environment_element_ids"' : '"environment_elements"';
+  t(`   dispatched JSON TEMPLATE declares opening_spine.environment_elements (or _ids on a seeded stage)`,
+    tmpl.indexOf(ENV_KEY) !== -1 && tmpl.indexOf('"opening_setting"') !== -1
+      && tmpl.indexOf(ENV_KEY) > tmpl.indexOf('"opening_setting"'),
+    `key=${ENV_KEY} inTemplate=${tmpl.indexOf(ENV_KEY) !== -1} templateLen=${tmpl.length}`);
   t(`   the template states the two-element requirement, not just the prose`,
-    /at least TWO concrete, distinct physical things/.test(tmpl));
+    /at least TWO concrete, distinct physical things|2 or 3 DISTINCT object_ids/.test(tmpl));
 
   // ── the three staging corrections, asserted on the DISPATCHED template ──
   const full = pu.slice(pu.indexOf('Return ONLY this JSON'));
@@ -1505,8 +1695,8 @@ console.log('');
   t(`   template binds the opening fusion to the PROTAGONIST and to environment_plus`,
     /"pc_opening_fusion": \{/.test(full)
       && /"placement": "PC_FIRST_EMBODIED_BEAT"/.test(full)
-      && /the SAME string as environment_plus\.target, verbatim/.test(full)
-      && /the SAME value as environment_plus\.axis/.test(full),
+      && /ENVIRONMENT\+ THING (?:ABOVE )?reveals her/.test(full)   // contract v2: bound to E+ by construction, not by repetition
+      && /The fusion has no target or axis of its own: it is E\+'s/.test(full),   // contract v2: derived, not repeated
     (full.match(/.{0,60}pc_opening_fusion.{0,80}/) || ['(none)'])[0]);
   // ── the reconciler's allowlist IS the template's contract ──
   // Parsed from the SAME dispatched text the planner received, so a field added to the schema
@@ -1533,7 +1723,9 @@ console.log('');
   t(`   reconciler allowlist is PARSED from the dispatched template`,
     Array.isArray(declared) && declared.length >= 10, `parsed ${declared && declared.length} field(s)`);
   t(`   every field the template declares is reconcilable`,
-    MUST_RECONCILE.every(f => declared.includes(f)),
+    MUST_RECONCILE.every(f => f === 'environment_elements'
+      ? declared.some(d => /^environment_element/.test(d))   // contract v2: _ids on a seeded stage
+      : declared.includes(f)),
     `missing from parsed list: ${MUST_RECONCILE.filter(f => !declared.includes(f))}`);
   t(`   the allowlist does NOT leak nested or sibling keys`,
     !declared.includes('character_plus') && !declared.includes('scene_skeleton')
@@ -1585,6 +1777,9 @@ for (const mutate of ['unknown', 'duplicate', 'badaxis', 'badfusion',
                       'aliasNarrator', 'aliasProtag',
                       'epSchemaEcho', 'epCategoryEcho', 'pofSchemaEcho', 'angleSecondAction',
                       // C+ must REVEAL, not merely be recordable
+                      // contemptOverJealousyEvidence (contract v2, 2026-09-05): now the DISCRIMINATING form —
+                      // an option whose evidence excludes the fact the act enacts. The fixture throws if the
+                      // packet offers no such pair, so the case can never pass by going inert.
                       'readMissing', 'contemptOverJealousyEvidence', 'caringOnContemptFacet',
                       // identical duplicates now COLLAPSE (tested below); a DIFFERENCE still aborts
                       'dupSkeletonDiff', 'stagedBothDiff',
@@ -1604,7 +1799,7 @@ for (const mutate of ['unknown', 'duplicate', 'badaxis', 'badfusion',
   }
   t(`   "${mutate}" is rejected visibly and no author call is made`,
     flagged && R.author.length === 0 && R.planner.length === 1,
-    `flagged=${flagged} authorCalls=${R.author.length} planner=${R.planner.length}`);
+    `flagged=${flagged} authorCalls=${R.author.length} planner=${R.planner.length}` + (R.planner.length === 0 ? ` · NO PLANNER REQUEST — page events: ${JSON.stringify((R.pageEvents || []).slice(0, 6))} · last logs: ${JSON.stringify((R.logs || []).slice(-3).map(l => l.slice(0, 100)))}` : ''));
 }
 
 // ══════════════════════════════════════════════════════════════════════════════════════════
@@ -1884,9 +2079,20 @@ for (const [mutate, label, needle] of [
   // The old fault — "none of the evidence it cites establishes it" — is unreachable now: the model
   // cites no evidence, so it cannot cite the wrong evidence. The surviving form of the same defect
   // is a binding the material does not support, and the bridge is where that shows.
+  // contract v2 (2026-09-05): the bridge no longer gates; the binding does. The case cites an
+  // option whose evidence EXCLUDES the fact the act enacts (Seren: OPT-1/E4 vs enacted E3).
   ['contemptOverJealousyEvidence',
-                       'a facet bound to a condition the account does not support',
-                                                                             'bridge never refers to'],
+                       'an option cited for a condition the enacted fact does not establish',
+                                                                             'which does not establish this option'],
+  // corrections 1–3 (2026-09-06), hostile arms
+  ['v2WrongActorLiteral', 'correction 1 hostile: a NON-actor claims FROM_OPENING_BEAT',       'claims FROM_OPENING_BEAT but is not the declared opening_actor'],
+  ['v2SentinelWrongRow',  'correction 2 hostile: the opening sentinel on somebody else\'s row', 'that sentinel belongs to the opening actor alone'],
+  ['v2UnknownObjectId',   'correction 3 hostile: an object id this scene does not contain',    'which this scene does not contain'],
+  ['v2TargetNotChosen',   'correction 3 hostile: E+ cites a valid id that was not chosen',    'is not one of the chosen environment_element_ids'],
+  // tightening (2026-09-06), hostile arms
+  ['v2BeatOtherObject',   'tightening hostile: the E+ beat names ANOTHER object',            'names another object'],
+  ['v2NoPlaceholder',     'tightening hostile: the planner named the thing itself, no {TARGET}', 'must contain the literal {TARGET} exactly once'],
+  ['v2RealizationsSent',  'tightening hostile: the retired realization channel',             'environment_realizations is no longer part of the contract'],
 ]) {
   const R = await run({ hot: false, mutate });
   const invalid = R.logs.filter(l => /SKELETON:INVALID/.test(l)).join(' | ');
@@ -2294,10 +2500,11 @@ console.log(`\n${'═'.repeat(90)}\nPART X — THE GENERATED PORTFOLIO, END TO E
   // kind; anything else was ABORTED and counted as unknownModel. The A-plot generator that starts
   // this chain is counted like everything else — and it fires TWICE (initial generation and the
   // classification pass), which is exactly the kind of fact a generic catch-all used to hide.
-  const acct = a => a && ({ scaffold: a.scaffold.length, planner: a.planner.length,
-                           author: a.author.length, ...a.kinds,
-                           unknownApi: a.unknown.length, unknownModel: a.unknownModel.length,
-                           ambiguous: a.ambiguous.length, escaped: a.escaped.length });
+  const _n = x => (Array.isArray(x) ? x.length : 0);   // an arm that never reached a stage has no array there
+  const acct = a => a && ({ scaffold: _n(a.scaffold), planner: _n(a.planner),
+                           author: _n(a.author), ...(a.kinds || {}),
+                           unknownApi: _n(a.unknown), unknownModel: _n(a.unknownModel),
+                           ambiguous: _n(a.ambiguous), escaped: _n(a.escaped) });
   // ── THE CENSUS ──
   // Every count below was OBSERVED across repeated runs, not assumed. All but two are identical
   // every time and are PINNED exactly. `pa_liBibleField` and `pa_soundscape` are conditionally
@@ -2352,6 +2559,13 @@ console.log(`\n${'═'.repeat(90)}\nPART X — THE GENERATED PORTFOLIO, END TO E
     'no post-author lane, no subplot pass',
     !GG.notDispatched && census(GG, EXPECT_GUARD, BOUNDED_GUARD).length === 0,
     GG.notDispatched ? 'not dispatched: ' + GG.reason : JSON.stringify(census(GG, EXPECT_GUARD, BOUNDED_GUARD)));
+  // ── FAIL AND REFUND (2026-09-07) ──
+  // The guard arm aborts Scene 1 on the guardrail fault before the author. That abort is a Scene-1
+  // planner fatal, which the begin-story handler now settles by refunding the issue purchase once.
+  // The main arm mounts its scene and must never refund.
+  t('X13b-refund: the guard arm\'s Scene-1 abort refunds the issue purchase EXACTLY once; the main arm never does',
+    !GG.notDispatched && ((GG.local || {})['/api/refund-fortune'] || 0) === 1 && ((G.local || {})['/api/refund-fortune'] || 0) === 0,
+    JSON.stringify({ guard: (GG.local || {}), main: (G.local || {}) }));
   // ══════════════════════════════════════════════════════════════════════════════════════
   //  X13d/e — THE GATE'S PLACEMENT, NOT MERELY ITS EXISTENCE
   //
@@ -2795,6 +3009,128 @@ console.log(`\n${'═'.repeat(90)}\nPART X — THE GENERATED PORTFOLIO, END TO E
     census(MX, PINNED_FULL, BOUNDED_FULL).length === 0,
     JSON.stringify(census(MX, PINNED_FULL, BOUNDED_FULL)));
   console.log('');
+}
+
+// ══════════════════════════════════════════════════════════════════════════════════════════
+// PART V — CONTRACT v2, POSITIVE: A VALID ID-BASED PLAN DELIVERS OPENING C+, E+ AND FUSION
+// (review control 2, 2026-09-05). Not "invalid plans are dropped" — the other direction: every
+// v2 field exercised at once, and the result read from the COMMIT and the AUTHOR DIRECTIVE.
+// ══════════════════════════════════════════════════════════════════════════════════════════
+console.log(`\n${'═'.repeat(90)}\nPART V — CONTRACT v2 POSITIVE DELIVERY (valid ID-based plan, declared opening actor)\n${'═'.repeat(90)}\n`);
+{
+  const R = await run({ hot: false, mutate: 'v2OpeningActor' });
+  const au = R.author[0]; const sys = au ? au.system : '';
+  const sk = R.skeleton || {}; const ep = sk.ep || null; const pof = sk.pof || null; const cp = sk.cp || [];
+  const OB = 'Seren names her offering aloud before the wish — her earliest memory — and begins the invocation exactly as rehearsed';
+  const seren = cp.find(c => c.character === 'Seren') || null;
+  const dropped = R.logs.some(l => /ASSIGNMENTS:DROPPED|CPLUS:DROPPED/.test(l));
+  t('V1: the plan is ACCEPTED — author called once, nothing dropped, no abort',
+    R.author.length === 1 && !dropped && !R.logs.some(l => /SCENE1:ABORT|SKELETON:INVALID/.test(l)),
+    `author=${R.author.length} dropped=${dropped} ` + R.logs.filter(l => /INVALID|ABORT|DROPPED/.test(l)).slice(0, 1).join('').slice(0, 200));
+  t('V2: Seren\'s COMMITTED C+ act IS the opening beat, marked as derived (one source)',
+    !!seren && seren.behavior === OB && seren._derived_from_opening === true,
+    JSON.stringify(seren && { behavior: String(seren.behavior || '').slice(0, 80), derived: seren._derived_from_opening }));
+  t('V3: the AUTHOR DIRECTIVE renders that derived act as her VISIBLE ACTION, exactly once',
+    count(sys, 'VISIBLE ACTION — MUST OCCUR: ' + OB) === 1,
+    `count=${count(sys, 'VISIBLE ACTION — MUST OCCUR: ' + OB)}`);
+  t('V4: her staged anchor is the same beat',
+    (R.staged || []).some(c => c && c.name === 'Seren' && String(c.anchor_beat || '').trim() === OB),
+    JSON.stringify((R.staged || []).map(c => [c.name, String(c.anchor_beat || '').slice(0, 50)])));
+  t('V5: E+ is COMMITTED as the SEED\'s name for the selected object, with its axis, and the beat carries that name (placeholder substituted)',
+    !!ep && /spiralgrass/i.test(String(ep.target)) && ep.axis === 'ritual'
+      && String(ep.beat || '').includes(ep.target) && !/\{TARGET\}/.test(String(ep.beat || '')),
+    JSON.stringify(ep));
+  t('V6: the AUTHOR DIRECTIVE renders E+ under the seed name exactly once, and the substituted beat with it',
+    !!ep && count(sys, 'ENVIRONMENT+ ASSIGNED THIS SCENE (required): ' + ep.target) === 1 && count(sys, ep.beat) === 1,
+    (sys.match(/ENVIRONMENT\+ ASSIGNED THIS SCENE[^\n]{0,160}/) || ['(none)'])[0]);
+  t('V5b: the fusion beat carries the seed name too, and no literal placeholder survives anywhere in the author payload',
+    !!pof && String(pof.beat || '').includes(ep.target) && !/\{TARGET\}/.test(sys) && !/\{TARGET\}/.test(au ? au.user : ''),
+    JSON.stringify(pof && String(pof.beat || '').slice(0, 100)));
+  t('V7: the fusion carries E+\'s target and axis BY DERIVATION and reaches the author through them',
+    !!pof && !!ep && pof.environment_target === ep.target && pof.environment_axis === ep.axis
+      && new RegExp('↳ THROUGH: ' + String(ep.target).replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ' — the axis of ' + ep.axis).test(sys),
+    JSON.stringify(pof && { t: pof.environment_target, a: pof.environment_axis }));
+  // The commit strips the planner's selection internals (option_id, bridge, expression_mode, the
+  // option's evidence list — app.js ~265217) and keeps the RESOLVED record. What must survive is the
+  // fact the act enacts and the facet the record resolved; that E3 establishes the option was proven
+  // by validation passing (the binding check would otherwise have rejected the plan — the
+  // discriminating case above shows it does).
+  t('V8: the committed assignment carries the enacted fact and the RESOLVED facet, with the planner internals stripped',
+    !!seren && seren.enacts_evidence_id === 'E3' && !!seren.facet_id
+      && !('option_id' in seren) && !('revelation_bridge' in seren),
+    JSON.stringify(seren && { e: seren.enacts_evidence_id, facet: seren.facet_id, keys: Object.keys(seren) }));
+  t('V9: the planner\'s bridge is logged as diagnostic evidence, not gated',
+    R.logs.some(l => /\[SCENE1:CPLUS:BRIDGE\]/.test(l)) || !cp.some(c => c.revelation_bridge),
+    R.logs.filter(l => /CPLUS:BRIDGE/.test(l)).slice(0, 1).join('').slice(0, 120));
+  // ── corrections 1–3 (2026-09-06): what the positive arms must DELIVER, not merely pass ──
+  const OB2 = OB;
+  const Ra = await run({ hot: false, mutate: 'v2ActorFreeAct' });
+  const serenA = ((Ra.skeleton && Ra.skeleton.cp) || []).find(c => c.character === 'Seren') || null;
+  t('V10: correction 1 — the planner\'s free act for the declared actor is DISCARDED and logged; the committed act is the opening beat',
+    Ra.author.length === 1 && !!serenA && serenA.behavior === OB2 && serenA._derived_from_opening === true
+      && Ra.logs.some(l => /\[SCENE1:CPLUS:OPENING-DERIVED\] "Seren"/.test(l))
+      && !(Ra.author[0] && Ra.author[0].system.includes('fingers tremble on the sash as her voice softens')),
+    JSON.stringify({ author: Ra.author.length, act: serenA && String(serenA.behavior || '').slice(0, 60), logged: Ra.logs.some(l => /OPENING-DERIVED/.test(l)) }));
+  const Rs = await run({ hot: false, mutate: 'v2ActorSentinelRoster' });
+  t('V11: correction 2 — the sentinel on the actor\'s row is replaced by the DERIVED anchor (= opening beat), and no sentinel survives',
+    Rs.author.length === 1 && (Rs.staged || []).some(c => c && c.name === 'Seren' && String(c.anchor_beat || '').trim() === OB2)
+      && (Rs.staged || []).every(c => !/^FROM_/.test(String((c && c.anchor_beat) || ''))),
+    JSON.stringify((Rs.staged || []).map(c => [c.name, String(c.anchor_beat || '').slice(0, 40)])));
+  const Rd = await run({ hot: false, mutate: 'v2EvidenceDerived' });
+  const dohkarD = ((Rd.skeleton && Rd.skeleton.cp) || []).find(c => /Dohkar/.test(c.character)) || null;
+  t('V13: tightening — an option resting on ONE fact derives its enacted fact; the planner\'s typed E6 is replaced by E5 and logged',
+    Rd.author.length === 1 && !!dohkarD && dohkarD.enacts_evidence_id === 'E5'
+      && Rd.logs.some(l => /\[SCENE1:CPLUS:EVIDENCE-DERIVED\].*typed enacts_evidence_id E6/.test(l)),
+    JSON.stringify({ author: Rd.author.length, e: dohkarD && dohkarD.enacts_evidence_id, logged: Rd.logs.some(l => /EVIDENCE-DERIVED/.test(l)) }));
+  const Rx = await run({ hot: false, mutate: 'v2SashById' });
+  const epx = Rx.skeleton && Rx.skeleton.ep;
+  t('V12: correction 3 — the sash, absent from the scene text, is committed by id with its SEED name and rendered to the author',
+    Rx.author.length === 1 && !!epx && /sash/i.test(String(epx.target)) && Rx.author[0].system.includes('ENVIRONMENT+ ASSIGNED THIS SCENE (required): ' + epx.target),
+    JSON.stringify({ author: Rx.author.length, target: epx && epx.target, faults: Rx.logs.filter(l => /INVALID|ABORT/.test(l)).slice(0, 1).join('').slice(0, 160) }));
+}
+
+// ══════════════════════════════════════════════════════════════════════════════════════════
+// PART W — THE AVAILABILITY VALVE, OPT-IN (review control 4, 2026-09-05)
+// With the valve ON, an invalid ASSIGNMENT plan must (a) not abort the scene, (b) log the drop by
+// name, (c) leak nothing into the author directive or the commit, (d) blank every anchor sentinel;
+// while a ROSTER fault still aborts. With the valve at its shipped default (OFF) the same plan
+// aborts as before. Governor refusal is a transport fault and is proven by the probe, not here.
+// ══════════════════════════════════════════════════════════════════════════════════════════
+console.log(`\n${'═'.repeat(90)}\nPART W — AVAILABILITY VALVE (opt-in): invalid plan continues from the seed stage, nothing leaks\n${'═'.repeat(90)}\n`);
+{
+  process.env.SB_VALVE = 'on';
+  let R, R2;
+  try { R = await run({ hot: false, mutate: 'v2OldShape' }); R2 = await run({ hot: false, mutate: 'stagedBothDiff' }); }
+  finally { delete process.env.SB_VALVE; }
+  const au = R.author[0]; const sys = au ? au.system : '';
+  const sk = R.skeleton || {}; const A = R.assignments || null;
+  t('W1: valve ON — an old-shape plan is NOT fatal: the author is called once, no abort',
+    R.author.length === 1 && !R.logs.some(l => /SCENE1:ABORT/.test(l)), `author=${R.author.length}`);
+  t('W2: the drop is LOGGED with the faults, by name',
+    R.logs.some(l => /\[SCENE1:ASSIGNMENTS:DROPPED\].*old shape is not accepted/.test(l)),
+    R.logs.filter(l => /DROPPED/.test(l)).slice(0, 1).join('').slice(0, 160));
+  t('W3: nothing leaks into the AUTHOR DIRECTIVE — no C+, E+, opening-fusion or standalone fusion block',
+    count(sys, 'CHARACTER+ ASSIGNED THIS SCENE') === 0 && count(sys, 'ENVIRONMENT+ ASSIGNED THIS SCENE') === 0
+      && count(sys, 'PROTAGONIST OPENING BEAT (HARD') === 0 && count(sys, 'FUSION — one sentence') === 0,
+    `cp=${count(sys, 'CHARACTER+ ASSIGNED THIS SCENE')} ep=${count(sys, 'ENVIRONMENT+ ASSIGNED THIS SCENE')} pof=${count(sys, 'PROTAGONIST OPENING BEAT (HARD')}`);
+  t('W4: nothing leaks into the COMMIT — empty C+, null E+/fusion/pof, dropped flag carrying the reasons',
+    !!A && A.dropped === true && Array.isArray(A.character_plus) && A.character_plus.length === 0
+      && !A.environment_plus && !A.fusion && !A.pc_opening_fusion && (sk.cp || []).length === 0 && !sk.ep && !sk.pof
+      && Array.isArray(A.faults) && A.faults.length > 0,
+    JSON.stringify(A && { d: A.dropped, cp: (A.character_plus || []).length, ep: !!A.environment_plus, faults: (A.faults || []).length }));
+  t('W5: no staged-anchor sentinel reaches the author',
+    (R.staged || []).every(c => !/^FROM_/.test(String((c && c.anchor_beat) || ''))) && !/FROM_CHARACTER_PLUS|FROM_PC_OPENING_FUSION/.test(sys),
+    JSON.stringify((R.staged || []).map(c => c.anchor_beat)));
+  t('W6: the planner\'s invented environment text does not reach the author either',
+    !/dawn breeze|untrampled/.test(sys) && !/dawn breeze|untrampled/.test(au ? au.user : ''),
+    ((sys + (au ? au.user : '')).match(/.{0,50}(dawn breeze|untrampled).{0,30}/) || ['(none)'])[0]);
+  t('W7: a ROSTER fault still ABORTS with the valve ON — the valve covers assignments only',
+    R2.author.length === 0 && R2.logs.some(l => /SCENE1:ABORT/.test(l)),
+    `author=${R2.author.length} ` + R2.logs.filter(l => /ABORT|STAGED:INVALID/.test(l)).slice(0, 1).join('').slice(0, 140));
+  const R3 = await run({ hot: false, mutate: 'v2OldShape' });
+  t('W8: at the SHIPPED default (valve OFF) the same plan ABORTS before the author, named',
+    R3.author.length === 0 && R3.logs.some(l => /SCENE1:ABORT/.test(l)) && R3.logs.some(l => /SKELETON:INVALID/.test(l)),
+    `author=${R3.author.length}`);
 }
 
 console.log(`\n${'─'.repeat(90)}\n  ${pass} passed · ${fail} failed\n`);

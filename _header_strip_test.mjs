@@ -1,0 +1,26 @@
+// Tests the REAL _stripHeaderArtifacts (extracted from orchestration-client.js by source, not re-implemented)
+import fs from 'node:fs';
+const src = fs.readFileSync('public/orchestration-client.js', 'utf8');
+const start = src.indexOf("  var _HEADER_ARTIFACT_KEYS = ["); const end = src.indexOf("  try { if (typeof window !== 'undefined') { window.StoryboundOrchestration = window.StoryboundOrchestration || {}; window.StoryboundOrchestration._stripHeaderArtifacts", start);
+if (start < 0 || end < 0) throw new Error('sanitiser source not found');
+const fn = new Function(src.slice(start, end) + '\nreturn _stripHeaderArtifacts;')();
+const results = []; const ok = (n, p, d) => { results.push(p); console.log((p ? '  ✓ ' : '  ✗ ') + n + (p ? '' : '\n      ' + d)); };
+const pageFile = fs.readdirSync('_validate_out').filter(f => /^scene1_measure_live\.rawreply\.\d{4}.*author\.1\.txt$/.test(f)).sort().pop();
+const page = fs.readFileSync('_validate_out/' + pageFile, 'utf8');
+const r1 = fn(page);
+ok('H1 the retained real Grok page: [TITLE] [SYNOPSIS] [CHARACTERS] blocks removed (3), story prose begins at "The oven vent rattled"', r1.stripped === 3 && /^The oven vent rattled/.test(r1.text) && !/\[TITLE:|\[SYNOPSIS:|\[CHARACTERS:/.test(r1.text), JSON.stringify({ stripped: r1.stripped, keys: r1.keys, head: r1.text.slice(0, 60) }));
+ok('H1b nothing else was removed: the cleaned text is the page minus exactly those three blocks', r1.text.length === page.slice(page.indexOf('The oven vent rattled')).trim().length, JSON.stringify({ cleaned: r1.text.length, expected: page.slice(page.indexOf('The oven vent rattled')).trim().length }));
+const prose2 = 'The word TITLE: she had written on the box was a joke between them.\n[TITLE: The Last Ferry North] was the name of the film he never finished.\nShe said "CHARACTERS: none" and laughed.';
+const r2 = fn(prose2);
+ok('H2 ordinary prose resembling labels survives (label words mid-line, a bracketed title on line 2, a quoted label): nothing stripped', r2.stripped === 0 && r2.text === prose2, JSON.stringify({ stripped: r2.stripped }));
+const prose3 = '[MOTHER: come home tonight.]\nThe note was on the counter when I got in.';
+const r3 = fn(prose3);
+ok('H3 a leading bracketed line with an UNRECOGNISED key (a diegetic note) survives', r3.stripped === 0 && r3.text === prose3, JSON.stringify({ stripped: r3.stripped }));
+const prose4 = '[Title: The Ferry]\n[synopsis: lower-case is not the artefact shape]\nThe vent rattled.';
+const r4 = fn(prose4);
+ok('H4 mixed/lower-case bracket keys are not the artefact shape and survive', r4.stripped === 0 && r4.text === prose4, JSON.stringify({ stripped: r4.stripped }));
+const prose5 = '[TITLE: X]\n[GENRE: romance]\n[MOTHER: come home.]\nI went.';
+const r5 = fn(prose5);
+ok('H5 recognised leading blocks are removed in sequence and removal STOPS at the first unrecognised key', r5.stripped === 2 && r5.text === '[MOTHER: come home.]\nI went.', JSON.stringify({ stripped: r5.stripped, text: r5.text }));
+ok('H6 the live author path now applies it for every author (no Small-only gate remains)', !/if \(_smallAuthor && typeof prose === 'string'\) \{\s*var _metaRe/.test(src) && /var _hs = _stripHeaderArtifacts\(prose\);/.test(src), '');
+const fails = results.filter(x => !x).length; console.log(`\n${results.length} checks · ${results.length - fails} passed · ${fails} failed`); process.exit(fails ? 1 : 0);

@@ -2654,7 +2654,10 @@ FAILURE CONDITIONS (invalid outputs):
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         messages,
-        role: 'NARRATIVE_AUTHOR',
+        // role is caller-selectable so the grok-only policy can use a SINGLE-ENTRY proxy chain
+        // (NARRATIVE_AUTHOR's 3-entry chain advances on a connection failure/hang — a hidden second
+        // upstream attempt with a different effort; found by the proxy-boundary proof 2026-09-07).
+        role: options.role || 'NARRATIVE_AUTHOR',
         preferredModel: _preferred,
         temperature: 0.8,
         max_tokens: _maxTokens,
@@ -2911,6 +2914,27 @@ FAILURE CONDITIONS (invalid outputs):
     return (d && d.choices && d.choices[0] && d.choices[0].message && d.choices[0].message.content) || (d && d.content) || '';
   }
 
+  // ── HEADER-ARTEFACT STRIP (provider-neutral; Roman 2026-09-08) ──
+  // Removes ONLY leading bracketed blocks whose key is a recognised metadata/header artefact
+  // ([TITLE: …] [SYNOPSIS: …] [CHARACTERS: …] and the like), one after another from the top of the
+  // output. Anything else — including ordinary prose that merely resembles a label, a bracketed line
+  // that is not at the top, or a bracket with an unrecognised key — is left exactly as written.
+  var _HEADER_ARTIFACT_KEYS = ['TITLE', 'SYNOPSIS', 'SUMMARY', 'LOGLINE', 'CHARACTERS', 'CHARACTER', 'CAST', 'GENRE', 'TAGS', 'SCENE', 'SCENE TITLE', 'CHAPTER', 'NOTES', 'AUTHOR NOTE', 'META', 'METADATA'];
+  function _stripHeaderArtifacts(text) {
+    var out = { text: String(text || ''), stripped: 0, keys: [] };
+    var re = /^\s*\[([A-Z][A-Z0-9 _\/]*):[\s\S]*?\]\s*/;
+    for (var i = 0; i < 8; i++) {
+      var m = re.exec(out.text);
+      if (!m) break;
+      var key = String(m[1] || '').trim().toUpperCase();
+      if (_HEADER_ARTIFACT_KEYS.indexOf(key) === -1) break;   // unrecognised key at the top: not ours to remove
+      out.text = out.text.slice(m[0].length); out.stripped++; out.keys.push(key);
+    }
+    if (out.stripped) out.text = out.text.replace(/^\s+/, '');
+    return out;
+  }
+  try { if (typeof window !== 'undefined') { window.StoryboundOrchestration = window.StoryboundOrchestration || {}; window.StoryboundOrchestration._stripHeaderArtifacts = _stripHeaderArtifacts; } } catch (_) {}
+
   async function _grokLiteraryAuthor(messages, options = {}) {
     const _maxTokens = options.max_tokens || 3000;
     // 1. Grok authors the scene prose (reasoning / "thinking" model). AUTHOR FALLBACK
@@ -2929,14 +2953,20 @@ FAILURE CONDITIONS (invalid outputs):
     // path without depending on the harness reaching a non-premium turn. No prod effect (off).
     const _prevWasPremium = (typeof window !== 'undefined' && window.state) ? window.state._authorPrevWasPremium === true : false;
     const _premium = (_isPremiumAuthorScene() || _isComplexAuthorMode()) && !(typeof window !== 'undefined' && window._smallAuthorForceAll === true); // complex modes → Grok every scene (CG matches this)
-    const _smallAuthor = _smallAuthorEnabled() && !_premium;
+    // ── GROK-ONLY SCENE AUTHOR (Roman 2026-09-07; behind window._grokOnlySceneAuthor, default OFF — not activated) ──
+    // Grok is the only scene author: no Mistral Small author attempt, no OpenAI scene-author fallback, no
+    // Mistral/OpenAI post-author rewrite. On a Grok failure: ONE bounded retry on Grok, then a NAMED terminal
+    // error the Scene-1 handler turns into an issue refund + honest message.
+    const _grokOnly = (typeof window !== 'undefined' && window._grokOnlySceneAuthor === true);
+    const _smallAuthor = _smallAuthorEnabled() && !_premium && !_grokOnly;
     const _bridge = _smallAuthor && _prevWasPremium; // Grok-tentpole → Mistral seam → continuity-style bridge
     try { if (typeof window !== 'undefined' && window.state) window.state._authorPrevWasPremium = _premium; } catch (_) {} // record THIS scene's tier for the next scene's seam check
     const _grokAuthor = () => {
       // TEST HOOK (Roman 2026-07-30, default off): force a Grok author failure to verify the
       // cross-provider Mistral fallback actually catches it. No production effect.
       if (typeof window !== 'undefined' && window.__forceGrokAuthorFail === true) return Promise.reject(new Error('forced Grok author failure (test hook)'));
-      return callGrokNarrativeAuthor(messages, { preferredModel: CONFIG.NARRATIVE_AUTHOR_MODEL || CONFIG.SCENE_RENDERER_MODEL, max_tokens: _maxTokens });
+      return callGrokNarrativeAuthor(messages, { preferredModel: CONFIG.NARRATIVE_AUTHOR_MODEL || CONFIG.SCENE_RENDERER_MODEL, max_tokens: _maxTokens,
+        role: _grokOnly ? 'NARRATIVE_AUTHOR_GROK_ONLY' : undefined });   // grok-only: single-entry proxy chain, no hidden chain advance
     };
     try {
       if (_smallAuthor) {
@@ -2949,6 +2979,22 @@ FAILURE CONDITIONS (invalid outputs):
         if (!prose) throw new Error('Grok author returned empty');
       }
     } catch (_authErr) {
+      if (_grokOnly) {
+        // GROK-ONLY POLICY: one bounded retry on the same author, then a named terminal failure.
+        // Nothing below this block runs under the flag — no Mistral, no OpenAI.
+        const _first = String((_authErr && _authErr.message) || _authErr).slice(0, 160);
+        console.warn('[GROK-LIT] grok-only: Grok author failed (' + _first + ') — ONE bounded retry on Grok');
+        let _second = null;
+        try { prose = _extract(await _grokAuthor()); if (!prose) _second = 'Grok author returned empty'; }
+        catch (_r) { _second = String((_r && _r.message) || _r).slice(0, 160); }
+        if (!prose) {
+          const _term = new Error('scene author unavailable (grok-only policy: Grok failed twice — ' + _first + ' / ' + _second + ')');
+          _term._authorTerminal = true;
+          console.error('[GROK-LIT] grok-only: ' + _term.message);
+          throw _term;
+        }
+        try { console.log('[AUTHOR-FALLBACK] served=Grok (grok-only retry)'); } catch (_) {}
+      } else {
       // CROSS-PROVIDER FALLBACK (Roman 2026-07-30 — health-based redundancy, never fail a scene if another
       // provider can finish it). A Grok hang/glitch must NOT drop straight to gpt-4o (pricier + a different
       // voice); it falls to the OTHER cheap INDEPENDENT vendor first. Each hop is a different provider so
@@ -2970,15 +3016,17 @@ FAILURE CONDITIONS (invalid outputs):
         if (!prose) throw new Error('scene authors (grok/mistral/gpt-4o) all returned empty — Sonnet/Opus rescue is cost-deprecated; retry / wait for provider');
         try { console.log('[AUTHOR-FALLBACK] served=gpt-4o (terminal — grok+mistral both failed)'); } catch (_) {}
       }
+      }
     }
     // 1.5 Strip leaked metadata tags (Roman 2026-06-25): Small sometimes prefixes the prose with
     //     [TITLE: …][SYNOPSIS: …][CHARACTERS: …] scaffolding. Deterministically remove any leading
     //     [ALLCAPS-KEY: …] block (Small-authored only; Grok never emits them). Cheap, no LLM.
-    if (_smallAuthor && typeof prose === 'string') {
-      var _metaRe = /^\s*\[[A-Z][A-Z0-9 _\/]*:[\s\S]*?\]\s*/;
-      var _stripped = 0;
-      while (_metaRe.test(prose) && _stripped < 8) { prose = prose.replace(_metaRe, ''); _stripped++; }
-      if (_stripped) { prose = prose.trim(); try { console.log('[GROK-LIT] stripped ' + _stripped + ' leaked metadata tag(s) from Small-authored prose'); } catch (_) {} }
+    // PROVIDER-NEUTRAL (Roman 2026-09-08): the first real Grok page shipped [TITLE]/[SYNOPSIS]/[CHARACTERS]
+    // blocks because this ran for Small only. It now runs for every author output, removes ONLY leading
+    // blocks whose key is a RECOGNISED header artefact, and never touches story prose.
+    if (typeof prose === 'string') {
+      var _hs = _stripHeaderArtifacts(prose);
+      if (_hs.stripped) { prose = _hs.text; try { console.log('[GROK-LIT] stripped ' + _hs.stripped + ' leaked header artefact block(s) (' + _hs.keys.join(', ') + ') from author output'); } catch (_) {} }
     }
     // 1.6 Strip stray LENS / angle-bracket markers (Roman 2026-06-25): the perception/purple lens
     //     wraps rewritten sentences in ⟦LENS:KEY⟧…⟦/LENS⟧; a weak author or repair can ECHO a marker
@@ -3010,7 +3058,9 @@ FAILURE CONDITIONS (invalid outputs):
       try {
         _auditRaw = _extract(await callGrokNarrativeAuthor([{ role: 'system', content: _auditSys }, { role: 'user', content: prose }], { preferredModel: CONFIG.SCENE_RENDERER_MODEL, max_tokens: 900 }));
       } catch (_gErr) {
-        try { _auditRaw = _extract(await callChatGPT([{ role: 'system', content: _auditSys }, { role: 'user', content: prose }], 'PRIMARY_AUTHOR', { model: 'gpt-4o-mini', max_tokens: 900, temperature: 0.3 })); } catch (_) { _auditRaw = ''; }
+        // Under the grok-only policy the editor has no OpenAI fallback: keep the prose as authored.
+        if (_grokOnly) { _auditRaw = ''; try { console.log('[GROK-LIT] grok-only: de-calc editor unavailable — prose kept as authored'); } catch (_) {} }
+        else { try { _auditRaw = _extract(await callChatGPT([{ role: 'system', content: _auditSys }, { role: 'user', content: prose }], 'PRIMARY_AUTHOR', { model: 'gpt-4o-mini', max_tokens: 900, temperature: 0.3 })); } catch (_) { _auditRaw = ''; } }
       }
       let _fixes = [];
       try { _fixes = JSON.parse((String(_auditRaw).match(/\[[\s\S]*\]/) || ['[]'])[0]); } catch (_) { _fixes = []; }
@@ -3033,7 +3083,8 @@ FAILURE CONDITIONS (invalid outputs):
     //    can introduce (lowercase fragments, tense breaks like "watched ... ticked", double
     //    periods), plus the usual Grok-author mechanical defects + micro-expression marker
     //    pairing. (gpt-4o-mini fallback, then keep-original; meta-leak guarded.)
-    try {
+    if (_grokOnly) { try { console.log('[GROK-LIT] grok-only: Mistral-small mechanical repair skipped by policy'); } catch (_) {} }
+    else try {
       const _repairSys = 'Fix ONLY mechanical defects in this scene: broken or incomplete sentences (including fragments or tense breaks left by an edit, e.g. a participle with no finite verb, or "watched X ticked"), fused-speaker quotations, doubled punctuation, a lowercase word starting a sentence, and any stat-block / character-dossier line (recast it as lived in-scene prose). MARKER REPAIR: if the scene has a <<MICRO_EXPRESSION>> line followed by an "Is this X or Y?" question but NO <<CONTINUE>>, insert <<CONTINUE>> on its own line IMMEDIATELY AFTER that question and BEFORE the scene resumes (never at the very end). Do NOT otherwise change events, structure, length, markers, or names. Return ONLY the corrected scene.';
       const _t = await _mistralRepairPass(
         [{ role: 'system', content: _repairSys }, { role: 'user', content: prose }],
@@ -3094,6 +3145,7 @@ FAILURE CONDITIONS (invalid outputs):
     // default to 3rd. Source of truth: window._buildPOVPronounPromptBlock
     // (defined in app.js near _buildLiteraryRepairWindowDirective).
     var _pcPovDirective = '';
+    var _continuitySpineDir = '';
     var _mythicCoupleDir = '';
     var _mythicForgettingDir = '';
     var _temptCallbackDir = '';
@@ -3111,6 +3163,11 @@ FAILURE CONDITIONS (invalid outputs):
       // every other scene path.
       if (typeof window !== 'undefined' && typeof window.buildMythicCoupleDirective === 'function') {
         _mythicCoupleDir = window.buildMythicCoupleDirective() || '';
+      }
+      // Story ledger — what the reader has already read + permanent Fate changes (same block as the
+      // literary, CG and OAS paths; '' when nothing authoritative exists).
+      if (typeof window !== 'undefined' && typeof window._buildContinuitySpineBlock === 'function') {
+        _continuitySpineDir = window._buildContinuitySpineBlock(window.state) || '';
       }
       // Mythic forgetting — one-scene transition after a "make them
       // forget us" Tempt. Auto-clears.
@@ -3287,6 +3344,7 @@ DIRECTIVES (NON-NEGOTIABLE):
 - Hard Stops: ${(constraints.hardStops || ['consent_withdrawal']).join(', ')}
 
 ${_pcPovDirective}
+${_continuitySpineDir}
 ${_mythicCoupleDir}
 ${_mythicForgettingDir}
 ${_temptReactionDir}
@@ -3680,6 +3738,7 @@ DIRECTIVES (NON-NEGOTIABLE):
 - Emotional Core: ${constraints.emotionalCore || EMOTIONAL_CORE_DEFAULTS[(window.state && window.state.eroticMode) || 'ROMANTIC']}
 - Physical Rendering Floor: ${constraints.physicalBounds || resolvePhysicalBounds()}
 - Hard Stops: ${(constraints.hardStops || ['consent_withdrawal']).join(', ')}
+${(typeof window !== 'undefined' && typeof window._buildContinuitySpineBlock === 'function') ? (window._buildContinuitySpineBlock(window.state) || '') : ''}
 
 ${!gateEnforcement.completionAllowed ? `
 CRITICAL: Completion is FORBIDDEN by narrative constraints.

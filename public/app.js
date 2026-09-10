@@ -23188,6 +23188,20 @@ window._reflowSceneDialogueLLM = _reflowSceneDialogueLLM;
       // prepend/append so the opener/closer stay on their own paragraphs).
       out = _normalizeScene1Paragraphs(out);
       if (!opener && !closer) return out;   // mandate not active — still de-blocked + de-meta'd
+      // COMPLIANCE SHORT-CIRCUIT (2026-09-10, integration audit §41 / plan §42 B): when the author ended the scene on the VERBATIM
+      // mandated closer and the deck is not mentioned earlier, there is nothing to enforce. The old path split the compliant
+      // closer into sentence-level "echoes", orphaned its middle sentence, collapsed every paragraph and re-appended the closer
+      // three times (frozen run 2026-09-10T01-14). Legacy behaviour stays reachable for the red control: window._legacyScene1Frame.
+      if (closer && state && state._sceneOneDeckAtEnd && !(typeof window !== 'undefined' && window._legacyScene1Frame === true)) {
+        var _cTail = out.replace(/\s+$/, '');
+        if (_cTail.endsWith(closer) && _cTail.indexOf(closer) === _cTail.length - closer.length) {
+          var _cBody = _cTail.slice(0, _cTail.length - closer.length);
+          if (!/\btarot\b|\bthe deck\b|great-?grandmother|let the cards/i.test(_cBody)) {
+            try { console.log('[SCENE1-FRAME] verbatim mandated closer is already the final beat and the deck appears nowhere earlier — frame compliant, no mutation'); } catch (_) {}
+            return out;
+          }
+        }
+      }
       // OPENER must be the first line. Its design role is line 1; the model's
       // own opening then reads as the precipitating-cause beat that follows.
       if (opener && out.slice(0, 200).indexOf(opener.slice(0, 40)) === -1) {
@@ -23296,14 +23310,21 @@ window._reflowSceneDialogueLLM = _reflowSceneDialogueLLM;
         if (state && state._sceneOneDeckAtEnd) {
           try {
             var _deckMention = /\btarot\b|\bcards?\b|\bthe deck\b|\b(?:my|her|his) deck\b|\bdeck of (?:cards|the)/i;
-            out = out.split(/(?<=[.!?])\s+/).filter(function (sn) {
-              if (!sn) return true;
-              if (_deckMention.test(sn)) {
-                try { console.log('[SCENE1-FRAME] Stripped premature deck mention from body (deck-at-end constraint): "' + sn.trim().slice(0, 90) + '"'); } catch (_) {}
-                return false;
-              }
-              return true;
-            }).join(' ').replace(/[ \t]{2,}/g, ' ').replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
+            var _dropDeckSentences = function (chunk) {
+              return chunk.split(/(?<=[.!?])\s+/).filter(function (sn) {
+                if (!sn) return true;
+                if (_deckMention.test(sn)) {
+                  try { console.log('[SCENE1-FRAME] Stripped premature deck mention from body (deck-at-end constraint): "' + sn.trim().slice(0, 90) + '"'); } catch (_) {}
+                  return false;
+                }
+                return true;
+              }).join(' ');
+            };
+            // PER PARAGRAPH (2026-09-10): the former whole-text split/join consumed every paragraph break (8 → 1 in the frozen run).
+            out = ((typeof window !== 'undefined' && window._legacyScene1Frame === true)
+              ? _dropDeckSentences(out)
+              : out.split(/\n\s*\n/).map(_dropDeckSentences).filter(function (para) { return para.trim(); }).join('\n\n'))
+              .replace(/[ \t]{2,}/g, ' ').replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
           } catch (_) {}
         }
         // Drop a trailing mid-sentence fragment (em-dash / ellipsis / dangling
@@ -24147,7 +24168,12 @@ window._reflowSceneDialogueLLM = _reflowSceneDialogueLLM;
       } catch (_) {}
 
       // ── TIER 2 (final): deterministic fallback (repair_failed must NOT ship) ─────
-      if (!ok && remaining.length) {
+      // DEFAULT OFF (2026-09-10, integration audit §41 / plan §42 B): when the repair tiers fail, the ORIGINAL prose ships. The
+      // deterministic deletion excised words mid-sentence and swallowed a paragraph break in the preservation trace. Opt-in:
+      // window._calcifiedMoveFallbackRemove = true. Calcification remains logged as telemetry either way.
+      if (!ok && remaining.length && !(typeof window !== 'undefined' && window._calcifiedMoveFallbackRemove === true)) {
+        try { console.warn('[CALCIFIED-MOVE:KEPT-ORIGINAL] repair tiers failed; deterministic deletion is opt-in — shipping the author\'s sentence(s) unchanged · still present: ' + remaining.map(function (h2) { return h2.key || h2.phrase; }).join(', ')); } catch (_) {}
+      } else if (!ok && remaining.length) {
         var fb = _neutralizeCalcifiedSentences(finalText, remaining);
         if (fb && fb.removed && fb.removed.length) {
           // LOAD-BEARING DELETION GUARD (Roman 2026-06-26, Phase 1): the deletion fallback must
@@ -25159,7 +25185,10 @@ window._reflowSceneDialogueLLM = _reflowSceneDialogueLLM;
       // Labeled canon-value enumeration — lifted from the Haiku repair prompts
       // (lines 19007 / 19062). Models commit to labeled assignments ("hair — X")
       // more reliably than to pool selection ("draw from [ X · Y · Z ]").
+      var _vaLI = (li.visual_anchor && li.visual_anchor.detail) ? String(li.visual_anchor.detail).trim() : '';
+      var _vaPC = (pc.visual_anchor && pc.visual_anchor.detail) ? String(pc.visual_anchor.detail).trim() : '';
       var liDet = [
+        _vaLI && ('VISUAL ANCHOR (lead with this) — ' + _vaLI),   // 2026-09-10 (§41): the bible's anchor was generated but never delivered on this path
         li.face && ('OVERALL LOOK — ' + li.face),
         li.hair && ('hair — ' + li.hair),
         (li.height || li.build) && ('build — ' + [li.height, li.build].filter(Boolean).join(', ')),
@@ -25175,6 +25204,7 @@ window._reflowSceneDialogueLLM = _reflowSceneDialogueLLM;
       try {
         if (typeof _liOnPageThisScene === 'function' && !_liOnPageThisScene(state)) {
           var _offAnchor = [
+            _vaLI && ('VISUAL ANCHOR (lead with this) — ' + _vaLI),
             li.eye_color && ('eyes — ' + li.eye_color),
             li.mouth_quality && ('mouth — ' + li.mouth_quality),
             li.voice_quality && ('voice — ' + li.voice_quality),
@@ -25184,6 +25214,7 @@ window._reflowSceneDialogueLLM = _reflowSceneDialogueLLM;
         }
       } catch (_) {}
       var pcDet = [
+        _vaPC && ('VISUAL ANCHOR (lead with this) — ' + _vaPC),
         pc.face && ('OVERALL LOOK — ' + pc.face),
         pc.signature_feature && ('signature — ' + pc.signature_feature),
         pc.second_celebrated_feature && ('also — ' + pc.second_celebrated_feature),
@@ -80192,6 +80223,8 @@ Return ONLY valid JSON:
       state._lastShapeSavedAt = null;
       state._saveConfirmedVisible = false;
       state.turnCount = 0;
+      state._turnCountSchema = 2;          // completed-continuation-turns semantics from birth (see _normalizeLegacyTurnCount)
+      state._turnCountMigration = null;
       // ── CANON ARTIFACTS ARE STORY-SCOPED AND DIE WITH THE STORY ──
       // These all post-date the last audit of this function and none of them were being cleared.
       // The stamped ones (results keyed by attempt, snapshots matched to a skeleton) would have
@@ -80628,6 +80661,9 @@ Return ONLY valid JSON:
       // (L3 receipt book = _fateTollLedger above, promoted to append-only history.)
       state._openFateBargains = [];
       state._durableFateConsequences = [];
+      state._sceneLedger = null;          // scene ledger (page record) — per story, carried across an issue boundary by explicit re-stamp only
+      state._authoringSceneKey = null;
+      state._stagedAuthoringSceneIndex = null;
       // Wry Distortion — Tempt Fate tone override (resets per story)
       state._wryDistortion = { active: false, scenesRemaining: 0, originalArtist: null, originalTone: null, hangoverScene: false };
       state._temptUsageCount = 0;
@@ -84138,7 +84174,7 @@ The scene carries the weight of something almost chosen. There should be a quiet
       if (!p || state.previewContinued) return false;
       var stop = p.previewStop;
       if (!stop) return false;
-      if (stop.type === 'scene') { var _atStop = (state.turnCount || 0) === stop.at; try { if (_atStop && typeof sbLogBeta === 'function' && !state._betaPreviewStopLogged) { state._betaPreviewStopLogged = true; sbLogBeta('preview_stop_shown', { sceneIndex: state.turnCount, previewStop: stop.at, continuationPrice: p.continuationPrice, previewActive: !!state.previewActive }); } } catch (_) {} return _atStop; }
+      if (stop.type === 'scene') { var _atStop = ((state.turnCount || 0) + 1) === stop.at; /* stop AFTER scene N: scenes displayed = completed continuation turns + 1 */ try { if (_atStop && typeof sbLogBeta === 'function' && !state._betaPreviewStopLogged) { state._betaPreviewStopLogged = true; sbLogBeta('preview_stop_shown', { sceneIndex: state.turnCount, previewStop: stop.at, continuationPrice: p.continuationPrice, previewActive: !!state.previewActive }); } } catch (_) {} return _atStop; }
       if (stop.type === 'oas_interrupt') {
         // CG (Glass House): the forced "before satisfaction" cut. Fires once the
         // Chorus-intrusion interrupt has been triggered, OR proactively when the
@@ -96076,36 +96112,8 @@ Return ONLY numbered beats. No prose. No dialogue.` }
       // ── THE REFS THIS SCENE ISSUES ──
       // The planner may name people ONLY from this list. A name it writes itself is a slug, not
       // an identity, and two people can answer to it.
-      var _issuedRefs = [];
-      try {
-        _issuedRefs.push('pc:self');
-        var _rl = (typeof _relLedger === 'function') ? _relLedger(false) : null;
-        Object.keys((_rl && _rl.entities) || {}).forEach(function (k) {
-          if (k && k !== 'pc' && _issuedRefs.indexOf(k) === -1) _issuedRefs.push(k);
-        });
-        var _seedC = (typeof _activeSeed === 'function') ? _activeSeed(state) : null;
-        ((_seedC && _seedC.cast) || []).forEach(function (c) {
-          if (!c || c.role === 'PC' || !c.name) return;
-          var r = 'named:' + String(c.name).trim().toLowerCase().replace(/[^a-z0-9]+/g, '_');
-          if (_issuedRefs.indexOf(r) === -1) _issuedRefs.push(r);
-        });
-        _issuedRefs = _issuedRefs.slice(0, 12);
-      } catch (_) { _issuedRefs = ['pc:self']; }
-      var _stageContractBlock = '\nSTAGE_CONTRACT (REQUIRED). Return a "stage_contract" object, versioned:\n'
-        + '{ "v": 1,\n'
-        + '  "participants": [ { "ref": "<COPIED VERBATIM from ISSUED REFS>", "presence": "IN_PERSON|ANTICIPATED|RECALLED|REPORTED" } ],\n'
-        + '  "event_facts": [ { "text": "<one clause: what OCCURS in this scene>",\n'
-        + '                     "participants": [ { "ref": "<issued ref>", "role": "actor|subject|speaker|target" } ] } ] }\n'
-        + 'RULES — a violation rejects the WHOLE stage_contract, not just the offending row:\n'
-        + ' · Every "ref" MUST be copied verbatim from ISSUED REFS below. A name you write yourself is NOT\n'
-        + '   a ref, and a ref you have not been issued does not exist.\n'
-        + ' · No ref may appear twice in "participants".\n'
-        + ' · Only IN_PERSON is in the room. Do not give physical action to anyone else.\n'
-        + ' · "event_facts" state what HAPPENS. Not psychology, not motive, not history — those are\n'
-        + '   decided elsewhere and are not yours to assign.\n'
-        + ' · Do NOT return character_plus, facet_id, option_id, or any per-character angle.\n'
-        + 'ISSUED REFS (the complete set; there are no others):\n'
-        + _issuedRefs.map(function (r) { return '  · ' + r; }).join('\n') + '\n';
+      var _issuedRefs = _cpIssuedRefs(state);
+      var _stageContractBlock = _cpStageContractBlock(_issuedRefs);
 
        const _skelMsgs = [
           { role: 'system', content: _stageContractBlock + 'You define narrative skeletons for fiction scenes. Return ONLY a JSON object — no markdown, no commentary. Required fields: environment_anchor, structural_pacing, narrative_density, dialogue_ratio, beat_style, tension_rhythm, staged_characters, interlocutor_placement, li_texture_beat, pc_body_callback, li_body_callback, antagonist_body_callback, environment_plus, fusion, stage_contract. environment_anchor = a physical object/surface/sound/environmental phenomenon the scene should begin from (4-12 words, world-specific).\nDo NOT return `character_plus`, `facet_id`, `option_id` or any per-character psychological angle. Character psychology for this scene is resolved by the backend from canon and is not yours to assign. Stage who is present; that is the whole of your responsibility for people.\nENVIRONMENT_PLUS = {target, axis}. REQUIRED EVERY SCENE, no exceptions — a scene whose place means nothing has failed. `target` is a specific object or place already present (prefer the environment_anchor or a listed prop). `axis` is exactly one of: history · use · damage · ownership · repair · ritual · absence — what this thing has BECOME because of what happened to it. Never symbolism; a spoon is usually a spoon.\nFUSION = {character, target} or null. Roughly one scene in five, NOT every scene: one beat where a person and a thing reveal each other. Prefer null to a forced one.\nASSIGN, DO NOT WRITE. Every field is a target for the author to realise in their own words. If you write the prose yourself the author copies your phrasing and the scene reads assembled. structural_pacing / narrative_density / dialogue_ratio / beat_style / tension_rhythm = short phrases (3-8 words). staged_characters = an ARRAY of {name, presence_mode, role} objects covering every character who APPEARS or is NAMED in the upcoming scene (include the protagonist). presence_mode is exactly one of: IN_PERSON (physically present, can be looked at / touched / handed a physical object), ON_PHONE (audible only via call/voice channel — NOT physically present, CANNOT receive a physical handoff — the most common failure shape is a planner treating a phone-call interlocutor as IN_PERSON), OFFSTAGE_REFERENCED (named or discussed but not present in any form). Be STRICT about ON_PHONE vs IN_PERSON. If the player intent or prior staging implies a transition (the player leaves a location, takes a call, walks into a new room), reflect that in the new staging. interlocutor_placement = if any NAMED character APPEARS or is in active engagement with the protagonist this scene (IN_PERSON OR ON_PHONE), give NAME + RELATIONSHIP-TO-PROTAGONIST + one revealing TELL in 10-20 words. The TELL form depends on presence_mode: IN_PERSON → an OBSERVED physical/behavioral detail. ON_PHONE → a REMEMBERED, PROJECTED, or HEARD-THROUGH-LINE detail (e.g. "Lina — her direct contact at the foundation board, a woman whose long sigh always preceded the part of the meeting she had stopped pretending to negotiate"). Naming + job alone is NOT enough — phone interlocutors require their own kind of texture. Null only if no named character is engaging with the protagonist. li_texture_beat = if the love interest is OFFSTAGE_REFERENCED or ON_PHONE in this scene, a 15-30-word sketch of WHICH beat carries a textured memory of him + WHAT the memory shape is. Roman 2026-06-01 PHOTOGRAPH TEST (HARD): the memory MUST contain a VERB he performed (a behavior / decision / joke / deflection / kindness / contradiction), drawn from his Bible\'s behavioral fields (signature_behavior / deflection_pattern / attraction_manifestation / defining_anecdote). A PHYSICAL ANCHOR is REQUIRED too (Roman 2026-06-04 — the PHOTOGRAPH TEST is REVISED, not removed): the ideal beat carries ALL THREE — a VERB + an attractive PHYSICAL ANCHOR + a REVELATION about who he is. A feature is wallpaper ONLY when it reveals NOTHING (✗ "rolled sleeves / a scar / broad shoulders / dark hair"); a feature that reveals him is REQUIRED (✓ "the scar at the corner of his mouth deepening whenever he was about to say something cruel" / "hands that looked capable of breaking things, paired with impossible patience"). TEST: remove the feature — is it pure WALLPAPER (gives NEITHER attraction NOR character)? If it gives EITHER — ATTRACTION ALONE is sufficient — keep it (Roman 2026-06-04 correction: a pure attraction anchor like broad shoulders / strong jaw needs NO character reason; characterization is a bonus). No = wallpaper. SOURCE PRIORITY (Roman 2026-06-03 — measured: the memory keeps drawing from deflection_pattern / signature_behavior, so he is remembered as an intriguing STRATEGIST, not a man she WANTS). For a DESIRE-bearing memory (engine = SHARED_HISTORY or LOOMING_PRESENCE, or any LI she has wanted), draw the VERB FIRST from attraction_manifestation or desire_register_exemplars — a moment of WANTING (his desire/care-as-action toward her, or a charged moment between them). deflection_pattern / signature_behavior are the STRATEGIST register: use them ONLY when the engine is ADVERSARIAL (COLLISION, pre-bond) or as secondary color — NEVER the default for a desire-bearing scene. ENEMIES-TO-LOVERS / ANTAGONISTIC SHARED-HISTORY (Roman 2026-06-04 — she opposes, distrusts, or has insulted him, but they have HISTORY and a charge): this is NOT adversarial-equals-strategist. It is RELUCTANT DESIRE — her body wants him AGAINST HER WILL and she is FURIOUS at herself for it. She notices his shoulders / forearms / mouth / the way he fills a doorway, hates that she noticed, and reaches for an insult to COVER the wanting. Draw the VERB from attraction_manifestation / desire_register and let the antagonism COLOR it — NEVER let the hostility REPLACE the wanting with pure scheming-analysis or name-calling. The hatred and the wanting COEXIST; that friction IS the engine of enemies-to-lovers. Strategist-only (all intrigue, zero body, just calling him names) is the failure. A memory that turns on a strategist move ("he named what she would not say, then waited") reads as intrigue, not desire. Pull from defining_anecdote when in doubt. Format: "beat 2: she catches herself remembering [a specific thing he DID — verb-anchored] — and [her embodied response]." Null if the LI is IN_PERSON or genuinely absent from the scene\'s consciousness. MICRO-SCENE vs SUMMARY (HARD — Roman 2026-06-03; applies to ALL scenes where LI is offstage, not just Scene 1): the texture beat MUST be a MICRO-SCENE (specific small moment + specific body reaction in her), NEVER a SUMMARY (personality/relationship/plot/factual statement about him). ✗ "he always knew what to say" / "things between us had always been complicated" / "he had lied to me about X" / "he ran the kind of enclave that made governments nervous." ✓ a single remembered moment / expression / gesture / look / reaction / fragment of dialogue. PAIRED: ✗ "he lied convincingly" vs ✓ "' + (typeof window._rotLiPairedComparison === 'function' ? window._rotLiPairedComparison() : 'he lied while setting his pen down with both hands and not picking it back up, and I had spent the whole conversation watching his hand instead of the lie') + '." COGNITIVE INTERFERENCE TEST (HARD — Roman 2026-06-03; the ladder from biography to desire — sketch at LEVEL 4): ✗ L1 EXPOSITION ("he was attentive"); ⚠ L2 NEUTRAL MICRO-SCENE ("I remembered how kind he was to the waiter" — moment without desire); ✓ L3 ATTRACTION-PRESENT ("the way he\'d watched me while pretending to listen" — attraction visible); ✓✓ L4 COGNITIVE INTERFERENCE ("the question he hadn\'t answered because I\'d spent the whole conversation watching his hands" — attraction breaks her thinking). ✓✓ L4 STRANGER-COMPATIBLE VARIANT (Roman 2026-06-12 — for COLLISION / LOOMING_PRESENCE, when she has no past observation of him): present-tense interference from anticipation / reputation / projection — NEVER invent a prior interaction ("the one time at the gala" / "we exchanged a few words last spring" / "I had met him briefly") to license L4. That is the Level-4-by-fake-history failure mode. Anticipation-shape examples: "she had been listening to Sophie for ten minutes and only now realized she had been picturing the back of a stranger\'s hand on a glass — a man she had not met and could not stop assembling from third-hand stories"; "she was answering an email and had lost the thread of her own sentence — somewhere in the building was a man she had been hearing about for six months, and her body had decided he was already someone". Same cognitive failure, NO past memory required. PREFER L4: she missed / lost the thread / stopped tracking because she was watching him. The attraction is in the COGNITIVE FAILURE, not the noticing. Roman 2026-06-01 P3 ENGINE GATE (HARD): see the ROMANCE ENGINE block in the user context. If the engine is COLLISION and this scene predates the PC having any memory of him at all (early-arc, pre-meet), li_texture_beat MUST be null — forcing a textured memory of someone she has not met is an engine-betrayal failure. If LOOMING_PRESENCE pre-meet, the texture should be ANTICIPATION-shape (reputation, what she has heard, the version she has built from other people\'s stories) — NOT a remembered event between them. pc_body_callback = a LIGHT recurring touch from the PC Body Bible (see PC BODY BIBLE block in the system context) — name WHICH beat carries it + WHICH feature (signature_feature / second_celebrated_feature) OR WHICH tell (stress_tic / desire_tell / impatience_tell / confidence_tell / vulnerability_tell) is firing + a sketch that POINTS AT the firing motif (not a verbatim copy of the Bible text). ROTATE across scenes so a salient PHYSICAL feature (signature_feature / second_celebrated_feature — NOT only a tic/tell) surfaces at least once every ~2 scenes, ALTERNATING with the LI so both bodies stay visible across the arc, and tells fire WHEN their trigger fires. Roman 2026-06-12 SKETCH-AS-POINTER RULE: your job is to pick WHICH BEAT + WHICH BIBLE FIELD fires. The sketch is a POINTER, not a script. Preserve the anchor (which body part / site) and the mechanic (press / count / turn / twist / pull / hold / drop). The PROSE LAYER reads the Bible and renders the motif for the scene — varying wording, framing, emphasis, narrative distance, and sentence construction so the same character-signature recurs without the same sentence recurring. Bible defines WHAT recurs; the sketch declares WHICH motif fired; the prose decides HOW it is expressed this time. Do NOT inline the Bible\'s literal field text in your sketch. Format examples: "beat 2 — signature_feature (the crooked front tooth)"; "beat 1 — stress_tic (the grandmother\'s ring)"; "decision — desire_tell (the breath before she admits anything)". Each example names the firing motif + anchor; the prose layer renders the surface. Required. If no Bible exists yet, return null and the directive will be skipped. li_body_callback = if the LI is IN_PERSON or ON_PHONE this scene, name WHICH beat carries the PC noticing ONE specific thing about him from the LI Body Bible (see LOVE INTEREST BODY BIBLE block) — pick from pc_keenly_notices basket OR a tell of his firing (focus_tell when his attention locks onto her, restraint_tell when he holds back, interest_tell when he treats her differently than the room, frustration_tell, desire_tell). ROTATE across scenes; never default to the same anchor. NEVER "jaw" / "jaw tightening" (banned, calcified). NEVER power-coded ("the room reorganized around him" — that\'s presence, not desire). NEVER generic-handsome (chiseled jaw, piercing eyes). Roman 2026-06-12 SKETCH-AS-POINTER RULE: when this scene\'s callback fires a tell of his (focus / restraint / interest / frustration / desire), the sketch is a POINTER — name the firing motif and the anchor (body part / mechanic). Do NOT inline the Bible\'s literal field text. The PROSE LAYER reads the LI Bible and renders the motif, varying wording and sentence construction scene to scene while preserving the anchor and mechanic so the reader recognizes the character. Bible defines WHAT recurs; the sketch declares WHICH motif fired; the prose decides HOW it is expressed this time. Format: "beat 2 — restraint_tell (the pause he takes before answering)". Examples (using illustrative Bible values — your sketch uses THIS story\'s actual values): "beat 1 — pc_keenly_notices: she catches his hands on the glass — broad, the right one scarred at the knuckles"; "beat 2 — restraint_tell: his hand flattens slowly on the table — his version of pulling himself back"; "decision — interest_tell: he stands a foot closer to her than to anyone else in the room". MICRO-SCENE + COGNITIVE INTERFERENCE (HARD — Roman 2026-06-03; mirror of the offstage rules tuned for ON-STAGE LI noticing — every line he speaks is a chance for her cognition to break, so sketch the noticing as a moment in REAL TIME where her attention to him CAUSES HER TO MISS SOMETHING). The sketch must take a MICRO-MOMENT shape (a specific thing he does this scene + her body\'s specific response), NEVER a SUMMARY ("he was the kind of man whose hands gave him away" — biography). Climb to LEVEL 4: ✗ L1 EXPOSITION ("he had elegant hands"); ⚠ L2 NEUTRAL NOTICING ("she watched his hands while he poured the wine"); ✓ L3 ATTRACTION-PRESENT ("she watched his hands and felt the heat low in her sternum"); ✓✓ L4 COGNITIVE INTERFERENCE ("she watched his hands for the whole answer and had to ask him to repeat it"). PREFER L4: her noticing CAUSES her to miss / lose the thread / stop tracking / answer the wrong question. The attraction is in the COGNITIVE FAILURE, not the noticing. Null if LI is OFFSTAGE_REFERENCED — in that case li_texture_beat covers him. Required when LI is on-stage. antagonist_body_callback = if the ANTAGONIST is IN_PERSON in this scene AND the ANTAGONIST BODY BIBLE block exists in the system context, name WHICH beat carries the PC noticing ONE specific thing about them — pick from pc_keeps_noticing basket OR a tell firing (targeting_tell when his attention finds her; control_tell when he takes the room; pleasure_tell when he enjoys her discomfort; escalation_tell right before he pushes further). THREAT register — NOT desire register; never cross-wire with the LI noticing. ROTATE across scenes. The softness_seam — the ONE uncalculated tell that humanizes them — fires AT MOST ONCE in the whole arc; do NOT use it casually. NEVER generic-villain ("cold eyes", "cruel smile", "menacing presence"). Examples: "beat 2 — control_tell: he sits down before being invited; the room re-files itself around him"; "beat 1 — signature_feature: the smile arrives the half-second too late she has stopped pretending not to notice"; "decision — pleasure_tell: the corner of his mouth pulls a quarter-inch when she stumbles on the word". Null if the antagonist is OFFSTAGE_REFERENCED or ON_PHONE this scene, or if no Bible exists. Required only when antagonist is IN_PERSON.' },
@@ -96597,7 +96605,18 @@ ${(function(){ try { return (typeof _ffBuildRevealWithholdDirective === 'functio
         }
         // ── PC OPENING FUSION — the protagonist's first beat IS the fusion ──
         var _pof = _pofSk;
-        if (_pof && _pof.beat) {
+        if (_pof && _pof.v3 && _pof.action) {
+          // FUSION v3 (2026-09-07): action (contact, target rendered ONCE here) + what it shows through the lens +
+          // the environment as it bears on the protagonist (axis-labelled, grounded, no target name). The author
+          // composes the single beat; nothing here is prose to copy. No pronoun is assumed: the name is used.
+          var _pcN3 = String(_pof.character || 'the protagonist');
+          directive += '\nPROTAGONIST OPENING BEAT (HARD — Character+ × Environment+ in ONE beat, at ' + _pcN3 + '\'s FIRST embodied action or sensory response; no second, separate opening action):\n'
+            + '  · CONTACT: ' + ((_pof.contact && _pof.contact.line) || _pof.action) + '\n'
+            + ((_pof.action_wording) ? ('  · ACTION WORDING (support for that contact): ' + _pof.action_wording + '\n') : '')
+            + '  · WHAT IT SHOWS ABOUT ' + _pcN3 + ' (lens: ' + (_pof.pc_lens_operation || '') + ')' + (_pof.character_revelation ? (': ' + _pof.character_revelation) : ' — read the act through this lens (the planner\'s sentence was withheld)') + '\n'
+            + '  · THE ENVIRONMENT AS IT BEARS ON ' + _pcN3 + ' (axis: ' + (_pof.environment_axis || '') + ')' + ((_pof.environment_pressure && _pof.environment_pressure.text) ? (': ' + _pof.environment_pressure.text) : (' — let ' + (_pof.environment_target || 'the target') + ', in its ' + (_pof.environment_axis || '') + ' condition, bear on ' + _pcN3 + ' (the planner\'s sentence was withheld)')) + '\n'
+            + '  Write ONE beat that fuses all three. Do not copy these sentences. The thing itself is named once above and need not be renamed.\n';
+        } else if (_pof && _pof.beat) {
           directive += '\nPROTAGONIST OPENING BEAT (HARD — this is her Character+, the Environment+ axis, and the '
             + 'fusion, all in ONE beat; do not write her a second, separate opening action):\n'
             + '  ↳ PLACEMENT: at her FIRST embodied action or sensory response — not the opening sentence, and '
@@ -98832,9 +98851,10 @@ function _buildAuthorFloorDirective(s) {
       StoryPagination.clear();
       body = sanitizeFatelandsUnits(body);
       StoryPagination.addPage(formatStory(body), true);
-      state.turnCount = 1;
+      state.turnCount = 0; // the issue's Scene 1 is mounted; completed continuation turns = 0 (first continuation = scene 2)
       state.scenes = state.scenes || [];
       state.scenes.push({ title, synopsis, text: body, fateCard: null });
+      try { _sceneLedgerCommit(state, { kind: 'issue_open', sceneNumber: 1, event: null, pageUid: StoryPagination.getCurrentPageUid() }); } catch (_) {}
       try { if (typeof window._sbBetaSceneDone === 'function') window._sbBetaSceneDone(body); } catch (_) {}
 
       if (statusEl) statusEl.textContent = label + ' ready';
@@ -99045,6 +99065,11 @@ Do NOT summarize Book 1. Do NOT reintroduce characters. Jump straight into the n
               _relLedgerJson:     (function () { try { return state._relationshipLedger ? JSON.stringify(state._relationshipLedger) : null; } catch (_) { return null; } })(),
               _charLedgerJson:    (function () { try { return state._characterDisclosureLedger ? JSON.stringify(state._characterDisclosureLedger) : null; } catch (_) { return null; } })(),
               _ledgerStoryId:     state.storyId || null,
+              // ── WHAT THE READER HAS READ + WHAT FATE PERMANENTLY CHANGED, CARRIED THE SAME WAY ──
+              _sceneLedgerJson:   (function () { try { return state._sceneLedger ? JSON.stringify(state._sceneLedger) : null; } catch (_) { return null; } })(),
+              _durableJson:       (function () { try { return Array.isArray(state._durableFateConsequences) && state._durableFateConsequences.length ? JSON.stringify(state._durableFateConsequences) : null; } catch (_) { return null; } })(),
+              _temptLedgerJson:   (function () { try { return Array.isArray(state._temptFateLedger) && state._temptFateLedger.length ? JSON.stringify(state._temptFateLedger) : null; } catch (_) { return null; } })(),
+              _mythicJson:        (function () { try { return state._mythicCoupleStatus && state._mythicCoupleStatus.active ? JSON.stringify(state._mythicCoupleStatus) : null; } catch (_) { return null; } })(),
               _prefMemory:        state._prefMemory   // reader-preference memory — same couple keeps their learned taste (Issue 2 remembers Issue 1's axes)
           };
           // Captured BEFORE the reset: this is the identity the ledgers were taken under, and
@@ -99086,6 +99111,14 @@ Do NOT summarize Book 1. Do NOT reintroduce characters. Jump straight into the n
                 if (_cl && typeof _cl === 'object' && 'storyId' in _cl) _cl.storyId = _newSid;
                 state._characterDisclosureLedger = _cl;
               }
+              try {
+                if (_carriedRel._sceneLedgerJson) { var _sl2 = _sceneLedgerRestamp(_carriedRel._sceneLedgerJson, _newSid); if (_sl2) state._sceneLedger = _sl2; }
+                if (_carriedRel._durableJson)     state._durableFateConsequences = JSON.parse(_carriedRel._durableJson);
+                if (_carriedRel._temptLedgerJson) state._temptFateLedger = JSON.parse(_carriedRel._temptLedgerJson);
+                if (_carriedRel._mythicJson)      state._mythicCoupleStatus = JSON.parse(_carriedRel._mythicJson);
+                console.log('[ISSUE-CONTINUITY] carried scene ledger (' + (((state._sceneLedger || {}).entries || []).length) + ' pages), durable consequences ('
+                  + ((state._durableFateConsequences || []).length) + '), tempt ledger (' + ((state._temptFateLedger || []).length) + ')' + (state._mythicCoupleStatus ? ', mythic status' : ''));
+              } catch (_lc) { try { console.warn('[ISSUE-CONTINUITY] scene/fate ledger carry failed: ' + String(_lc && _lc.message).slice(0, 120)); } catch (_) {} }
               console.log('[ISSUE-CONTINUITY] carried the character ledgers across the issue boundary — '
                 + Object.keys((state._relationshipLedger || {}).entities || {}).length + ' entities, '
                 + _carriedRel._ledgerStoryId + ' → ' + _newSid);
@@ -113100,6 +113133,9 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
         // addPage (not setPages) so the sb:scene-page-added consumers still fire.
         StoryPagination.addPage(_cleanHtml, true, 'legacy:' + _sidH + ':storyHTML:0');
     }
+    // One-time turn-count schema normalization (see _normalizeLegacyTurnCount): runs AFTER the
+    // snapshot is applied and the pages are restored, so the page evidence it reads is this story's.
+    try { _normalizeLegacyTurnCount(state, { storyPages: (data && Array.isArray(data.storyPages)) ? data.storyPages : null }); } catch (_) {}
     state.lastSavedWordCount = currentStoryWordCount();
 
     // Setting shot removed from auto-load - requires explicit user action
@@ -126273,7 +126309,9 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
             { facet_id: 'seren_delicacy_over_truth', category: 'relationship_pattern',
               canonical_truth: 'She avoids naming another person\'s wound plainly because she believes softening and blurring it is kinder than making them endure direct recognition.',
               possible_pressures: [
-                { text: 'someone\'s pain becomes nameable in public', evidence_requires: 'wound|grief|the one she lost|bereave|pain|name (?:it|the loss)|aloud' },
+                // 2026-09-05 (Roman): blurring / softening the wording IS this condition being met —
+                // it is the seed's own mechanism (E4) — so an act that blurs the wish engages it.
+                { text: 'someone\'s pain becomes nameable in public', evidence_requires: 'wound|grief|the one she lost|bereave|pain|name (?:it|the loss)|aloud|blur|soften' },
                 { text: 'precision would embarrass a person she cares about', evidence_requires: 'blur|imprecis|too loosely|embarrass|delicacy|soften|without naming' },
               ] },
           ],
@@ -126306,6 +126344,13 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       // not a creative call: the author RENDERS this, never invents / relocates / reframes it (a drifted
       // opening is the same serialization failure as Julian→Soren, one level up — the scene level).
       sceneOne: {
+        // ── FORBIDDEN ENVIRONMENTAL FACTS (policy 1, 2026-09-05) ──
+        // What this scene does NOT contain, as a regex the validator applies to declared elements
+        // and beats. Detail about seed-named things is allowed; these are facts the seed rules out:
+        // no wind (the clearing is still, the canopy DRAPES), no light beyond dawn, no fluids (FF
+        // blood is quicksilver and nobody bleeds here), no flame, and no "untrampled/unmarked"
+        // ground under two dozen barefoot people. Seed-owned: edit here, never in the validator.
+        forbiddenEnvironmentFacts: '\\b(?:wind|winds|breeze|gust|gusts|draft|rain|storm|fog|mist|snow|thunder|lightning|blood|bloody|bleed\\w*|torch\\w*|lantern\\w*|candle\\w*|flame\\w*|fire|smoke|moon\\w*|starlight|sunset|noon|midday|night|untrampled|unmarked|untouched|pristine)\\b',
         // ── GROUNDED OBJECTS (Roman 2026-08-27) ──
         // Every one of these is already named in the setting / present / narrator text below;
         // this is that list made ADDRESSABLE, not new set-dressing. A planned behaviour may cite
@@ -126316,9 +126361,12 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
           { object_id: 'O1', name: 'the white weeping-willow veil-canopy (the trees\u2019 hanging leaf-curtains)' },
           { object_id: 'O2', name: 'the pale mated-pair trees it hangs from' },
           { object_id: 'O3', name: 'the deep-crimson carpet of braided mated-pair spiralgrass underfoot' },
-          { object_id: 'O4', name: 'the gossamer band tied across the Sacrificiant\u2019s mouth' },
-          { object_id: 'O5', name: 'the officiating Sacrificiant\u2019s one ornamented ceremonial sash' },
-          { object_id: 'O6', name: 'the gossamer Veilweave everyone present is dressed in' },
+          // owner_ref / head (contract v2, 2026-09-05): who the object belongs to ('pc' = the
+          // protagonist, 'all' = everyone present) and its head noun, so a plan that hands
+          // "the Dohkar's sash" to the wrong person is caught by data the seed owns.
+          { object_id: 'O4', name: 'the gossamer band tied across the Sacrificiant\u2019s mouth', owner_ref: 'pc', head: 'band' },
+          { object_id: 'O5', name: 'the officiating Sacrificiant\u2019s one ornamented ceremonial sash', owner_ref: 'pc', head: 'sash' },
+          { object_id: 'O6', name: 'the gossamer Veilweave everyone present is dressed in', owner_ref: 'all', head: 'Veilweave' },
           { object_id: 'O7', name: 'the assembled First Favored themselves \u2014 family and guests, barefoot' },
         ],
         // ── ROLE-INSTANCE FACETS (Roman 2026-08-27) ──
@@ -126378,6 +126426,13 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
                 possible_pressures: [
                   { text: 'an offering being named aloud', evidence_requires: 'offering|memory|sacrifice|cost|names? (?:it|her)' },
                   { text: 'a cost he judges too small for what is being asked', evidence_requires: 'cost|price|small|paid|enough|offering' },
+                  // 2026-09-06 (Roman, seed_calibration_memo §1A): the fact the seed already authors about
+                  // him — "trained, perceives the finer misalignment sooner … and reacts to the wording as it
+                  // lands" — established none of his conditions, so every plan that had him move first on
+                  // the misalignment failed. aboutToHappen (4)–(5) makes that move an intrusion on the sealed
+                  // supervisor's office, which IS this truth. Act-shaped words are in the pattern too, because
+                  // the same pattern gates the planner's act.
+                  { text: 'a wish misaligning under his ear before the supervisor has ruled', evidence_requires: 'misalign|wording|sooner|perceiv|reacts?|halt|interrupt|correct|cuts? in|signal|before (?:she|seren) (?:finish|has finished)' },
                 ],
                 forbidden_restatements: [
                   { forbid: 'assumes his judge?ment|arrogant about sacrifice|believes he alone (?:knows|decides)',
@@ -126441,7 +126496,7 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
         ],
         setting: 'Dawn in a Veilwood ceremony clearing: the long white weeping-willow veil-canopy drapes down from the pale mated-pair trees (the "veil" is the trees’ hanging leaf-curtains — NOT fabric), the floor a deep-crimson carpet of braided mated-pair spiralgrass; roughly two dozen First Favored assembled — Seren’s family and guests, a many-hued people — barefoot in gossamer Veilweave. A solemn-but-festive coming-of-age mood: everyone expects the rite to end in celebration.',
         present: 'SEREN, kneeling — the youth making her First Sacrifice. Lirael\'s ward: they have trained together for months and she can recite the rule she is about to break. Name her early and use the name; she is a character, not a role. A senior DOHKAR (never "elder" — First Favored are a professional order: Dohkar / Profer / Chayr) presiding over the rite. JULIAN at the edge of the gathering, perfectly still, here only as an observer. The assembled First Favored family and guests.',
-        narrator: 'You (the PC) have been assigned to SUPERVISE this First Sacrifice — your first time. Your task: read the alignment of everyone present, above all Seren, and be ready to halt and re-align the wish before it can twist. As the officiating Sacrificiant your mouth is ceremonially COVERED for the rite — a gossamer band tied across it — so you cannot cleanly speak. The band is DECORUM, not machinery: it muffles you and does nothing else. Nothing is sealed, bound, circled or charged; pulling it away breaks no spell and releases no force — it breaks protocol only, in front of witnesses.   if the wish begins to twist, your alarm can only be a muffled cry behind the cloth and the look in your eyes.',
+        narrator: 'You (the PC) have been assigned to SUPERVISE this First Sacrifice — your first time. Your task: read the alignment of everyone present, above all Seren, and be ready to halt and re-align the wish before it can twist. As the officiating Sacrificiant your mouth is ceremonially COVERED for the rite — a gossamer band tied across it — so you cannot cleanly speak. The band is DECORUM, not machinery: it muffles you and does nothing else. Nothing is sealed, bound, circled or charged; pulling it away breaks no spell and releases no force — it breaks protocol only, in front of witnesses.   if the wish begins to twist, your alarm can only be a muffled cry behind the cloth and the look in your eyes. You wear the one ornamented ceremonial sash of the officiating Sacrificiant — nobody else here does; the presiding Dohkar wears none.',
         aboutToHappen: 'THE SEQUENCE, IN ORDER - EACH BEAT A SEPARATE EVENT. (1) THE RITE HAS A FIXED ORDER: invocation, then SACRIFICE, then desire. The cost is spoken BEFORE the miracle so the assembly hears what is being paid. SEREN — Seren making her First Sacrifice — has a PREPARED wish rehearsed with you over months, and it is SELF-DIRECTED as the rite requires - what she is willing to become, or something for her own people. Her offering is a MEMORY: First Favored give memories, because a memory is the one thing you cannot get back and cannot fake giving. She names it aloud - her earliest memory, or the memory of the moment she chose this path - and the reader HEARS the exact thing she is surrendering before anything goes wrong. She begins the invocation and you relax, because you know every word of it. (2) Then she looks at YOU, and abandons the practiced wish. She KNOWS the rule - she has recited it back to you - and in front of the whole assembly she spends her First Sacrifice on you instead. This is NOT innocence. It is VANITY WEARING COMPASSION: the First Sacrifice is meant to reveal who you are willing to become, and she uses hers to let everyone see what a good person she is. She chooses the beautiful mistake. And because she is trying not to embarrass you by naming the wound out loud, she blurs it: she asks that you FIND THE ONE YOU LOST. She thinks the delicacy is kindness. It is imprecision, and imprecision is what Fate feeds on. (3) WHAT IS ACTUALLY WRONG — and it is NOT that she wished for someone else. A First Favored may wish for a sibling, a parent, a friend, their village; wishing outward is honourable and common. The violation is that she spent HER First Sacrifice using ANOTHER PERSON\'S UNRESOLVED WOUND as the stage for her own virtue, and she described it too loosely to bind. DO NOT WRITE ANY OF THIS DOWN. The reader must never be handed a list of violations, a count of fractures, or a phrase like \'the beneficiary was not the wisher\' or \'the target had no name\' — those are design notes, not prose. What reaches the page is only: Seren changed the wish, Lirael knows instantly what that costs, the Dohkar reacts, and Fate answers the words as spoken. The reader infers the rule from the consequence, never before it. (4) EVERY First Favored present senses that something has gone wrong - this is not a rare gift of yours. The trained ones (you, the presiding Dohkar, Julian) perceive the finer misalignment sooner. What you have that they do not is CONTEXT: you know where the wording came from, and you know Seren mistook what you actually wanted (an answer) for what she asked Fate to give you (a person). So you understand WHY it is failing before anyone else can diagnose it. (5) You are sealed and forbidden to interfere - and intervening now will look like manipulating your own ward\'s rite for your own benefit, because the wish is ABOUT YOU. That is what makes the choice cost something. (6) You tear the gossamer mouth-band away and move toward her anyway. (7) THE TWIST IS IMMEDIATE AND IN THE ROOM. Fate is not malicious and not a genie; it is exacting, and it punishes imprecision the instant the words finish. It does NOT deliver a delayed irony the reader discovers chapters later - that is a plot reveal, not a twist. Someone ALREADY PRESENT rises, or something already true becomes undeniable, and the assembly can point at WHICH WORD BENT. \'The one she lost\' is the hinge: it can mean the father, or it can mean whoever Lirael most recently buried, or it can mean a man who is found and immediately leaves - \'You asked that she find the one she lost. She has.\' Then he goes. The words are honoured exactly; the intent is denied exactly. Someone in the clearing should be able to say aloud which word did it. This is SEPARATE from and additional to whatever price Fate takes. Fate MANIFESTS NOTHING: no apparition, no summoned figure, no vision, no face out of the trees, no display. It rearranges what is ALREADY REAL so the literal words come true by an ordinary-looking route - someone present says or does what they would never otherwise have said or done, a thing already in the clearing turns out to be evidence, a person who knows the answer is put where they cannot avoid giving it. As it lands it should be mistakable for coincidence; the horror is in what the coincidence proves, and it arrives a beat later than the event itself. (8) Because you moved at that instant, and because the wish was for YOU, the assembly draws the obvious inference. No magical law of touch or transfer exists or is needed; this is ordinary human misattribution, and it is enough to put your Dohkar qualification in jeopardy.'
       },
       // VISUAL CANON — locked appearance so the author never infers it. Species block =
@@ -126745,17 +126800,196 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
   // only what a scene needs (cast species canon + on-stage character anchors + always-on
   // constraints), never dumps the whole thing. Returns '' for non-seeded stories.
   function _activeSeed(s) { try { s = s || window.state; var id = s && s._starterId; return (id && typeof STARTER_SEEDS !== 'undefined' && STARTER_SEEDS[id]) || null; } catch (_) { return null; } }
+  // ═══ TURN-COUNT SCHEMA v2 — one-time, idempotent load normalization (2026-09-06) ══════════════════
+  // Schema 2 = `turnCount` is COMPLETED CONTINUATION TURNS. Before the repair, four Scene-1 entry paths
+  // (baked unlock, background-pregenerated mount, issue opening, CG) stored a Scene-1-only story as 1.
+  // Such a save would still skip plan row 2 on resume. This normalizes exactly that class, once, from
+  // DURABLE STRUCTURED EVIDENCE only — never from title or prose:
+  //   displayed = scene-ledger entries when the ledger exists for this story, else
+  //               max(storyPages.length, scenes.length)  (literary pages / CG scenes / baked page)
+  //   normalize iff turnCount === 1 AND displayed === 1.  Verifier-committed facts are NOT display evidence
+  //   (CG Scene 1 runs the plot contract; an aborted Scene-2 attempt verifies its proposal against Scene 1's
+  //   page), so they are recorded as diagnostics and never gate the decision.
+  // Anything else is left as saved and stamped: displayed > 1 with turnCount 1 is a genuine first
+  // continuation; turnCount ≥ 2 legacy saves are consistently offset already and re-numbering them would
+  // replay a plan row the reader has read; a pre-2026-05-31 single-blob save (no storyPages array)
+  // cannot be told apart and is reported as ambiguous, untouched. The schema stamp makes the pass
+  // one-time; `_turnCountMigration` records before/after so a rollback can restore the prior value.
+  // Pages are never touched.
+  var _TURN_COUNT_SCHEMA = 2;
+  function _normalizeLegacyTurnCount(s, info) {
+    try {
+      s = s || window.state; if (!s) return { applied: false, reason: 'no state' };
+      if (s._turnCountSchema === _TURN_COUNT_SCHEMA) return { applied: false, reason: 'already schema ' + _TURN_COUNT_SCHEMA };
+      info = info || {};
+      var pages = Array.isArray(info.storyPages) ? info.storyPages.length : null;      // null = legacy single-blob save
+      var scenes = Array.isArray(s.scenes) ? s.scenes.length : 0;
+      var ledger = (s._sceneLedger && Array.isArray(s._sceneLedger.entries) && String(s._sceneLedger.storyId || '') === String(s.storyId || '')) ? s._sceneLedger.entries.length : null;
+      var facts = (s._committedState && Array.isArray(s._committedState.facts)) ? s._committedState.facts.length : 0;
+      var tc = Number(s.turnCount) || 0;
+      var displayed = (ledger != null) ? ledger : (pages == null ? null : Math.max(pages, scenes));
+      var rec = { schemaFrom: 1, schemaTo: _TURN_COUNT_SCHEMA, at: Date.now(), turnCountBefore: tc, turnCountAfter: tc,
+                  evidence: { pages: pages, scenes: scenes, ledger: ledger, facts: facts, displayed: displayed }, applied: false, reason: '' };
+      if (tc !== 1)               rec.reason = 'turnCount is ' + tc + ' — not the Scene-1-only class; left as saved';
+      else if (displayed == null) rec.reason = 'AMBIGUOUS: legacy single-blob save (no storyPages) — left as saved';
+      else if (displayed > 1)     rec.reason = 'a continuation was displayed (' + displayed + ' pages/scenes) — legitimately 1; left as saved';
+      else if (displayed < 1)     rec.reason = 'no page evidence — left as saved';
+      else { s.turnCount = 0; rec.turnCountAfter = 0; rec.applied = true; rec.reason = 'pre-repair Scene-1-only save stored as 1 → 0 (completed continuation turns)'; }
+      s._turnCountSchema = _TURN_COUNT_SCHEMA; s._turnCountMigration = rec;
+      try { console.log('[TURNCOUNT:SCHEMA] ' + (rec.applied ? 'NORMALIZED 1 → 0' : 'stamped, unchanged') + ' — ' + rec.reason + ' · evidence=' + JSON.stringify(rec.evidence)); } catch (_) {}
+      return rec;
+    } catch (e) { return { applied: false, reason: 'error: ' + String(e && e.message).slice(0, 80) }; }
+  }
+  try { if (typeof window !== 'undefined') window._normalizeLegacyTurnCount = _normalizeLegacyTurnCount; } catch (_) {}
+  // ═══ SCENE LEDGER + CONTINUITY SPINE (2026-09-06) ═══════════════════════════════════════════
+  // Append-only, authoritative record of every PAGE the reader has read. Written at the page-commit
+  // sites (literary continuation, Scene 1, baked Scene 1, CG, issue open) and never edited afterwards:
+  // entries are frozen, a later page can only ADD an entry. Sources are committed STATE and EVENTS —
+  // the scene assignment (event/source/setting/participants), the reader's Say/Do, the Petition/Tempt
+  // card, durable Fate consequences recorded during the page — never prose, never a summary.
+  // PLANNED vs SHOWN (review 2026-09-06): the scene assignment is a PLAN, not evidence that anything
+  // happened — a page can be aborted, a speculative draft discarded, or the author can render something
+  // else. So the entry keeps the assignment only as `plannedEvent` (diagnostic; never rendered) and the
+  // block renders FACTS only: the page exists (uid), what the reader did/said, which card was played,
+  // what Fate recorded, and — when the runtime verifier (`_commitScene`, DELIVERED + slot check) has
+  // committed a fact for that scene — that verified fact. Nothing else is shown to the next author.
+  // The spine block renders from this ledger plus the other authoritative ledgers and is EMPTY when
+  // there is nothing authoritative to say (fail-closed): no invented names, no re-told prose.
+  var _SPINE_RECENT = 6, _SPINE_MAX_CHARS = 2200;
+  function _slClip(v, n) { if (v == null) return null; var t = String(v).replace(/\s+/g, ' ').trim(); return t ? t.slice(0, n) : null; }
+  function _sceneLedgerGet(s, create) {
+    try {
+      s = s || window.state; if (!s) return null;
+      var sid = String(s.storyId || '');
+      var L = s._sceneLedger;
+      var ok = L && typeof L === 'object' && Array.isArray(L.entries) && String(L.storyId || '') === sid;
+      if (ok) return L;
+      if (!create) return null;                       // a ledger from another story is never READ
+      L = { storyId: sid, entries: [] }; s._sceneLedger = L; return L;
+    } catch (_) { return null; }
+  }
+  // Called BEFORE the author pass with the reader's inputs: ONE key per authored scene, consumed once
+  // at commit (the scene-key rule: stamp before the pass, never recompute from turnCount afterwards).
+  function _sceneLedgerStamp(s, extras) {
+    try {
+      s = s || window.state; if (!s) return null; extras = extras || {};
+      var n = _currentSceneNumber(s), asg = null;
+      try { asg = (s._sceneAssignment && Number(s._sceneAssignment.sceneNumber) === n) ? s._sceneAssignment : _selectSceneAssignment(s, n); } catch (_) { asg = null; }
+      var key = {
+        storyId: String(s.storyId || ''), sceneNumber: n,
+        act: _slClip(extras.act, 240), dia: _slClip(extras.dia, 240),
+        card: s.tempt_fate_invoked_this_turn ? 'tempt' : ((s.fate && s.fate.pendingPetition) ? 'petition' : 'ordinary'),
+        plannedEvent: asg && asg.event ? _slClip(asg.event, 300) : null, plannedSource: (asg && asg.source) || null,
+        setting: asg && asg.setting ? _slClip(asg.setting, 120) : null,
+        participants: (asg && Array.isArray(asg.participants)) ? asg.participants.slice(0, 8).map(String) : null,
+        durableBefore: Array.isArray(s._durableFateConsequences) ? s._durableFateConsequences.length : 0,
+        stampedAt: Date.now()
+      };
+      s._authoringSceneKey = key; return key;
+    } catch (_) { return null; }
+  }
+  function _sceneLedgerCommit(s, opts) {
+    try {
+      s = s || window.state; if (!s) return null; opts = opts || {};
+      var L = _sceneLedgerGet(s, true); if (!L) return null;
+      var sid = String(s.storyId || ''), key = s._authoringSceneKey, kind = String(opts.kind || 'scene');
+      // The key is used only for a literary 'scene' commit under the same story AND — when the caller
+      // names the scene — the same scene number; a stale key from an aborted attempt never leaks forward.
+      var useKey = !!(key && String(key.storyId) === sid && kind === 'scene' && (opts.sceneNumber == null || Number(key.sceneNumber) === Number(opts.sceneNumber)));
+      var last = L.entries.length ? L.entries[L.entries.length - 1] : null;
+      var n = (opts.sceneNumber != null) ? Number(opts.sceneNumber) : (useKey ? key.sceneNumber : ((last && Number(last.sceneNumber)) || L.entries.length) + 1);
+      var issue = (Number.isInteger(s.issueIndexInRun) && s.issueIndexInRun > 0) ? s.issueIndexInRun : 1;
+      for (var i = L.entries.length - 1; i >= 0; i--) {           // a page is committed once
+        var e0 = L.entries[i]; if (e0.sceneNumber === n && e0.kind === kind && e0.issue === issue) return e0;
+      }
+      var ev = null, src = null, setting = null, participants = null;
+      if (useKey) { ev = key.plannedEvent; src = key.plannedSource; setting = key.setting; participants = key.participants; }
+      else if (opts.event !== undefined) { ev = _slClip(opts.event, 300); src = opts.eventSource || null; }
+      else { try { var a = _selectSceneAssignment(s, n); if (a && a.event) { ev = _slClip(a.event, 300); src = a.source || null; setting = a.setting ? _slClip(a.setting, 120) : null; participants = Array.isArray(a.participants) ? a.participants.slice(0, 8).map(String) : null; } } catch (_) {} }
+      var dur = Array.isArray(s._durableFateConsequences) ? s._durableFateConsequences : [];
+      var durBefore = useKey ? key.durableBefore : (opts.durableBefore != null ? Number(opts.durableBefore) : dur.length);
+      var changes = dur.slice(Math.max(0, durBefore)).map(function (c) { return c && c.id ? String(c.id) : null; }).filter(Boolean);
+      var entry = {
+        n: L.entries.length + 1, sceneNumber: n, issue: issue, kind: kind, pageUid: opts.pageUid || null,
+        plannedEvent: ev, plannedSource: src, setting: setting, participants: participants ? Object.freeze(participants.slice()) : null,
+        act: useKey ? key.act : _slClip(opts.act, 240), dia: useKey ? key.dia : _slClip(opts.dia, 240),
+        card: useKey ? key.card : (opts.card || null), changes: Object.freeze(changes), committedAt: Date.now()
+      };
+      Object.freeze(entry); L.entries.push(entry);
+      if (useKey) s._authoringSceneKey = null;
+      try { console.log('[SCENE-LEDGER] +p' + n + ' kind=' + kind + ' issue=' + issue + ' uid=' + (entry.pageUid || 'none') + (ev ? ' planned="' + ev.slice(0, 60) + '"' : ' planned=none') + (changes.length ? ' changes=' + changes.length : '')); } catch (_) {}
+      return entry;
+    } catch (_) { return null; }
+  }
+  // Issue boundary: the ledger travels as JSON and is RE-STAMPED to the new story id (same rule as the
+  // relationship ledger — a held reference would survive the reset by accident, a string by decision).
+  function _sceneLedgerRestamp(json, newStoryId) {
+    try { var L = JSON.parse(json); if (!L || !Array.isArray(L.entries)) return null; L.storyId = String(newStoryId || ''); L.entries = L.entries.map(function (e) { return Object.freeze(e); }); return L; } catch (_) { return null; }
+  }
+  // The block every author path receives. Same text on every path; '' when nothing is authoritative.
+  function _buildContinuitySpineBlock(s) {
+    try {
+      s = s || window.state; if (!s) return '';
+      var L = _sceneLedgerGet(s, false), entries = L ? L.entries : [];
+      var durable = ''; try { durable = (typeof _buildDurableFateConsequenceDirective === 'function') ? (_buildDurableFateConsequenceDirective() || '') : ''; } catch (_) { durable = ''; }
+      if (!entries.length && !durable) return '';
+      // Verified facts: written ONLY by the runtime verifier when a declared state change was DELIVERED
+      // on the page (slot-checked against the prose). Keyed by the scene it was committed at.
+      var verifiedBy = {};
+      try { var cf = (s._committedState && Array.isArray(s._committedState.facts)) ? s._committedState.facts : [];
+        cf.forEach(function (f) { if (!f || !f.fact) return; var k = (typeof f.committedAtScene === 'number') ? f.committedAtScene : null;
+          if (k == null) { var m = /^scene(\d+)_transition$/.exec(String(f.sourceEvent || '')); if (m) k = Number(m[1]); }
+          if (k == null) return; (verifiedBy[k] = verifiedBy[k] || []).push(String(f.fact).slice(0, 200)); }); } catch (_) { verifiedBy = {}; }
+      var lines = ['STORY LEDGER (authoritative — built from committed state, never from prose; it is what the reader has ALREADY READ, facts only: what the reader did, what Fate recorded, what was verified on the page):'];
+      var who = [];
+      try { var pc = _resolvePcIdentity(s); if (pc && pc.v) who.push('PC ' + String(pc.v)); } catch (_) {}
+      try { var li = s.canonicalLI; if (li && li.committed && li.name) who.push('LI ' + String(li.name)); } catch (_) {}
+      if (who.length) lines.push('  WHO: ' + who.join(' · '));
+      if (entries.length) {
+        var cur = (Number.isInteger(s.issueIndexInRun) && s.issueIndexInRun > 0) ? s.issueIndexInRun : 1;
+        var recent = entries.slice(-_SPINE_RECENT), older = entries.length - recent.length;
+        lines.push('  ALREADY READ (' + entries.length + ' page' + (entries.length === 1 ? '' : 's') + (older ? '; ' + older + ' earlier not listed' : '') + ') — what is listed here HAPPENED and is finished; do not replay, re-stage or re-argue it:');
+        recent.forEach(function (e) {
+          var tag = (e.issue !== cur ? 'issue ' + e.issue + ' ' : '') + 'p' + e.sceneNumber, bits = [];
+          if (e.kind === 'baked' && e.plannedEvent) bits.push('the authored opening established: ' + e.plannedEvent);   // 2026-09-10: a fixed seed opening records what it established
+          if (e.act) bits.push('reader did: ' + e.act);
+          if (e.dia) bits.push('reader said: "' + e.dia + '"');
+          if (e.card === 'tempt') bits.push('[Tempt Fate played]'); else if (e.card === 'petition') bits.push('[Petition made]');
+          if (e.changes && e.changes.length) bits.push('[Fate recorded a permanent change]');
+          var vf = verifiedBy[e.sceneNumber]; if (vf && vf.length) bits.push('verified on the page: ' + vf.join('; '));
+          lines.push('    ' + tag + ': ' + (bits.length ? bits.join(' — ') : 'page read (no recorded facts)'));
+        });
+      }
+      if (durable) lines.push(durable.trim().replace(/^/gm, '  '));
+      lines.push('  NOW: page ' + _currentSceneNumber(s) + ' — reach a dramatic state that is not on the list above; what is listed has been read and cannot be undone or re-told.');
+      var out = '\n' + lines.join('\n') + '\n';
+      if (out.length > _SPINE_MAX_CHARS) out = out.slice(0, _SPINE_MAX_CHARS - 2) + '…\n';
+      return out;
+    } catch (_) { return ''; }
+  }
+  try { if (typeof window !== 'undefined') {
+    window._sceneLedgerGet = _sceneLedgerGet; window._sceneLedgerStamp = _sceneLedgerStamp;
+    window._sceneLedgerCommit = _sceneLedgerCommit; window._sceneLedgerRestamp = _sceneLedgerRestamp;
+    window._buildContinuitySpineBlock = _buildContinuitySpineBlock;
+  } } catch (_) {}
   // ═══ CANONICAL SCENE NUMBER (Roman 2026-08-16) ═══════════════════════════════════════════════════
   // MEASURED (ordering trace 2026-08-16), do not "simplify": turnCount increments only AFTER a scene
   // commits and Scene 1 leaves it at 0, so while BUILDING a continuation the scene being written is
   // turnCount + 2 (tc=0 → scene 2, tc=1 → scene 3 — both confirmed against the plan index live).
   // The +2 is correct; what was wrong was every layer deriving its own number (the skeleton logged
   // bare turnCount and called scene 3 "scene 1"). One accessor, used by every layer.
+  // INVARIANT (Roman 2026-09-06): state.turnCount = COMPLETED CONTINUATION TURNS. Mounting Scene 1 —
+  // inline, background-pregenerated, baked, CG, or an issue opening — leaves it at 0; the literary
+  // path increments after each continuation commits; CG increments when it advances to the next scene
+  // index (see _stagedAuthoringSceneIndex above). The first continuation after ANY Scene 1 is scene 2.
   function _currentSceneNumber(s) {
     try {
       s = s || window.state;
       if (!s) return 1;
       if (s._isScene1Build === true) return 1;
+      // CG / staged generation bumps turnCount BEFORE generating (scene index, 0-based) and runs the
+      // same plot contract; while a staged scene is being generated the scene number is its index + 1.
+      if (typeof s._stagedAuthoringSceneIndex === 'number' && s._stagedAuthoringSceneIndex >= 0) return s._stagedAuthoringSceneIndex + 1;
       var tc = s.turnCount || 0;
       return tc + 2;
     } catch (_) { return 1; }
@@ -126971,15 +127205,36 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
           // under. The reset clears these; this is the guard for any path that does not.
           if (_genStage && String(_genStage.storyId || '') !== String((s && s.storyId) || '')) _genStage = null;
         } catch (_) { _genStage = null; }
-        if (!_asg && _genStage && _genStage.ok) {
+        // A validated planner stage is the roster when nothing AUTHORED one: no assignment at all, or a
+        // corridor scene-mission (an EVENT, not a roster). An authored plan row keeps precedence.
+        if (_genStage && _genStage.ok && (!_asg || String(_asg.source || '') === 'scene-mission')) {
           out.source = 'generated:' + String(_genStage.provenance || 'planner_stage');
           out.stageAuthority = _genStage;
           out.eventFacts = (_genStage.eventFacts || []).slice();
+          out.aboutToHappen = _asg ? String(_asg.event || '').trim() : '';
           out.setting = ''; out.settingOwner = 'planner'; out.settingSource = 'planner-pending';
+          out.pending = true;   // the planner owns WHERE: _resolveStageFromPlan attaches its opening_setting + environment_elements, or faults
+          // Planner-staged people carry ISSUED REFS, not names. Resolve each ref to the identity it names —
+          // the PC record (name + aliases) or the ledger's display label — so a staged_characters name can
+          // resolve against this roster exactly as it does for an authored stage. Unknown ids keep the ref.
+          var _gsSlug = function (x) { return String(x || '').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, ''); };
+          var _gsLedger = null; try { _gsLedger = (typeof _relLedger === 'function') ? _relLedger(false) : null; } catch (_) { _gsLedger = null; }
           _genStage.participants.forEach(function (sp) {
-            (out.onStage = out.onStage || []).push({ id: sp.ref, label: sp.label || sp.ref,
-              presence: sp.presence, authorized: true,
-              source: 'generated.stage.participants (' + _genStage.provenance + ')' });
+            var _ref = String(sp.ref || ''); var _rec;
+            if (_ref === 'pc:self' || _ref === 'pc' || /^pc:/.test(_ref)) {
+              _rec = { id: 'pc:' + _gsSlug(out.pcName), label: out.pcName, kind: 'pc', presence: sp.presence, authorized: true,
+                       aliases: out.pcAliases || [out.pcName], source: 'generated.stage.participants (' + _genStage.provenance + ') · identity:' + out.pcNameSource };
+            } else {
+              var _lbl = null; try { _lbl = (_gsLedger && _gsLedger.entities && _gsLedger.entities[_ref] && typeof window._relDisplayLabel === 'function') ? window._relDisplayLabel(_gsLedger, _ref, 'author') : null; } catch (_) { _lbl = null; }
+              _lbl = String(_lbl || sp.label || _ref);
+              _rec = { id: _ref, label: _lbl, kind: _ref.split(':')[0], presence: sp.presence, authorized: true,
+                       aliases: _lbl === _ref ? [_ref] : [_lbl, _ref], source: 'generated.stage.participants (' + _genStage.provenance + ')' };
+            }
+            // Same rule as an authored stage: only a PRESENT mode is in the room; a declared ANTICIPATED /
+            // RECALLED / REPORTED person is named by the stage, not staged.
+            if (CP_PRESENT_MODES.indexOf(String(sp.presence || '').toUpperCase()) !== -1) (out.onStage = out.onStage || []).push(_rec);
+            else (out.offStage = out.offStage || []).push({ name: _rec.label, id: _rec.id, presence: sp.presence,
+                                                            reason: 'declared ' + sp.presence + ' -- named by the planner stage, not in the room' });
           });
           out.ok = true;
           return _cpValidateStageRefs(out);
@@ -127163,6 +127418,9 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       // ── SEEDED OWNERSHIP ─────────────────────────────────────────────────────────────────────
       out.authoritative = true;
       out.source = 'seed.sceneOne';
+      // seed-authored environmental facts the scene rules out (policy 1, 2026-09-05); a regex source
+      // string or null. Read by the Scene-1 validator; never rendered into any prompt.
+      out.forbiddenEnvironmentFacts = (sc && sc.forbiddenEnvironmentFacts) ? String(sc.forbiddenEnvironmentFacts) : null;
       out.settingSource = 'seed';
       out.settingOwner = 'seed';
       out.presenceOwner = 'seed';
@@ -127404,19 +127662,22 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
   // person is being remembered, expected or written about — all explicitly permitted.
   var _SOLO_ALLOW_CTX = /\b(?:remember(?:s|ed|ing)?|memory|memories|recall(?:s|ed|ing)?|thought|thinks|thinking|imagin(?:e|es|ed|ing)|dream(?:s|ed|t)?|used to|years? ago|last (?:night|week|month|year|time)|once|had (?:said|told|written|left|been|come|gone)|letter|note|ledger entry|document|record|earlier|before (?:she|he|they) came|when (?:she|he|they) (?:was|were)|tomorrow|later|will (?:come|arrive|return|be here)|expects?|expecting|anticipat(?:e|es|ing)|prepar(?:e|es|ing|ation)|due to (?:come|arrive)|on (?:his|her|their) way|has not (?:yet )?(?:come|arrived)|not yet)\b/i;
 
+  // Articles are matched case-insensitively on their FIRST letter (2026-09-09): "A clerk stands at the far counter" at the head
+  // of a sentence is as much a second body as "a clerk stands" mid-sentence. The role nouns were already first-letter-insensitive.
+  var _SOLO_ART = _soloAlt(['the', 'a', 'an', 'another', 'some']);
   function _soloFrames() {
-    var ROLE = '(?:the|a|an|another|some)\\s+' + _soloAlt(_SOLO_ROLE_NOUNS);
+    var ROLE = _SOLO_ART + '\\s+' + _soloAlt(_SOLO_ROLE_NOUNS);
     var ANYONE = '(?:' + ROLE + '|[Ss]omeone|[Ss]omebody|[A-Z][a-z]{2,})';
     return [
       // ── a second VOICE ──────────────────────────────────────────────────────────────────
       { code:'SOLO_VOICE', frame:'a voice located elsewhere in the scene',
         rx:/\b(?:voice|whisper|shout|cry|murmur)\b[^.;]{0,40}?\b(?:outside|through the (?:door|wall|window|floor)|beyond the|from the (?:hall|corridor|street|stair|other side|next room)|in the (?:hall|corridor|next room)|down the (?:hall|corridor|stair))/g },
       { code:'SOLO_VOICE', frame:'a voice belonging to someone other than the narrator',
-        rx:new RegExp("\\b(?:a|an|another)\\s+(?:[\\w'\u2019-]+\\s+){0,2}(?:voice|whisper|shout)\\b", 'g') },
+        rx:new RegExp("\\b" + _soloAlt(['a', 'an', 'another']) + "\\s+(?:[\\w'\u2019-]+\\s+){0,2}(?:voice|whisper|shout)\\b", 'g') },
       { code:'SOLO_VOICE', frame:'a second party performing a speech act in the scene',
         rx:new RegExp('\\b' + ANYONE + '\\s+(?:\\w+\\s+){0,2}?' + _soloAlt(_SOLO_SPEECH_VERBS) + '\\b', 'g') },
       { code:'SOLO_VOICE', frame:'a voice belonging to a named or role-bearing party',
-        rx:/\b(?:the|a|an|another|his|her|their|its)\s+[\w'\u2019-]+['\u2019]s\s+(?:voice|whisper|shout|reply|answer)\b/g },
+        rx:new RegExp("\\b" + _soloAlt(['the', 'a', 'an', 'another', 'his', 'her', 'their', 'its']) + "\\s+[\\w'\u2019-]+['\u2019]s\\s+(?:voice|whisper|shout|reply|answer)\\b", 'g') },
       { code:'SOLO_VOICE', frame:'speech performed in the scene, stated passively',
         rx:/\b(?:is|are|was|were)\s+(?:being\s+)?(?:read|spoken|shouted|whispered|announced|recited|pronounced|declared|called)\b(?:\s+(?:aloud|out|over))?/g },
       { code:'SOLO_VOICE', frame:'an ongoing speech act the scene waits on',
@@ -127428,7 +127689,7 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
         rx:/\b(?:[Ss]omeone|[Ss]omebody)\s+(?:\w+\s+){0,2}?(?:is |was )?[a-z]+(?:s|ing|ed)\b/g },
       // ── a LIVE message / call / transmission ────────────────────────────────────────────
       { code:'SOLO_LIVE_MESSAGE', frame:'a message or call arriving during the scene',
-        rx:new RegExp('\\b(?:a|an|the)\\s+' + _soloAlt(_SOLO_LIVE_ARRIVAL) + '\\s+(?:\\w+\\s+){0,2}?(?:arrives|arriving|comes|coming|lands|rings|ringing|buzzes|sounds|reaches her|reaches him)\\b', 'g') },
+        rx:new RegExp('\\b' + _soloAlt(['a', 'an', 'the']) + '\\s+' + _soloAlt(_SOLO_LIVE_ARRIVAL) + '\\s+(?:\\w+\\s+){0,2}?(?:arrives|arriving|comes|coming|lands|rings|ringing|buzzes|sounds|reaches her|reaches him)\\b', 'g') },
       { code:'SOLO_LIVE_MESSAGE', frame:'a live channel opening during the scene',
         rx:/\b(?:answers?|picks up|takes) the (?:call|line|phone|receiver)\b/g },
       // ── the want / mission DEPENDS on a second party ────────────────────────────────────
@@ -127445,6 +127706,10 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
   // Fields whose CONTRACT is retrospective — a memory of the love interest, an old wound. Their
   // whole job is to look backwards, so a second person appearing there is by definition remembered.
   var _SOLO_MEMORY_FIELDS = { li_texture_beat:1, pc_wound_anchor:1, defining_anecdote:1 };
+  // COMPARATIVE / SIMILE FRAMING (2026-09-09, live 04:20 false positive): "…too quick, like someone who already knows she will
+  // lose this round" describes the NARRATOR by comparison; nobody else is in the room. A hit whose immediate left context is a
+  // comparative marker is not a second person. Bare "as" is deliberately NOT a marker: "as the guard steps closer" is real action.
+  var _SOLO_COMPARATIVE_PRE = /\b(?:like|unlike|as if|as though|the way|looks? like|looked like|looking like|sounds? like|sounded like|seems? like|seemed like)\s+$/i;
 
   function _validateSoloStageInteraction(node, opts) {
     opts = opts || {};
@@ -127461,6 +127726,8 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
           var m;
           while ((m = f.rx.exec(n)) !== null) {
             var hit = m[0];
+            // a comparison ("like someone who…", "as if somebody were…") is not a second person
+            if (_SOLO_COMPARATIVE_PRE.test(n.slice(Math.max(0, m.index - 24), m.index))) continue;
             // the narrator acting is not a second person
             if (narrator && new RegExp('\\b' + narrator.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b', 'i').test(hit)) continue;
             if (/^(?:She|He|They|I)\b/.test(hit)) continue;
@@ -127916,8 +128183,9 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
 
   // Pure: returns a NEW envelope plus the moves made and the first fault found. Idempotent — a
   // reconciled envelope passed back through produces no moves and no fault.
-  function _reconcileOpeningEnvelope(envelope, declaredFields) {
+  function _reconcileOpeningEnvelope(envelope, declaredFields, opts) {
     var res = { envelope: envelope, moves: [], fault: null, createdSpine: false };
+    var _allowTop = (opts && Array.isArray(opts.allowTopLevel)) ? opts.allowTopLevel.map(String) : [];
     try {
       if (!envelope || typeof envelope !== 'object' || Array.isArray(envelope)) {
         res.fault = 'planner envelope is not an object'; return res;
@@ -127989,7 +128257,7 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
 
       // After reconciliation the top level may hold ONLY these two. An unrecognised key means the
       // planner invented a field; that is a schema fault to surface, never something to discard.
-      var extra = Object.keys(env).filter(function (k) { return k !== 'opening_spine' && k !== 'scene_skeleton'; });
+      var extra = Object.keys(env).filter(function (k) { return k !== 'opening_spine' && k !== 'scene_skeleton' && _allowTop.indexOf(k) === -1; });
       if (extra.length) {
         res.fault = 'unrecognised top-level field(s) in the planner envelope: ' + extra.join(', ')
           + ' — not declared by the opening_spine contract and not scene_skeleton';
@@ -128199,7 +128467,9 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
   // the point of a fusion; what matters is that a physical interaction actually happens, that the
   // thing touched is the ASSIGNED target, and that the person doing it is the assigned character.
   // Perception alone is not interaction: noticing, watching or thinking about the target fails.
-  var _FUSION_CONTACT = /\b(?:pressed|gripped|touched|reached|trailed|brushed|tapped|lifted|dropped|pushed|pulled|turned|folded|wiped|smoothed|straightened|tightened|closed|opened|slid|tucked|clasped|grasped|laid|placed|dragged|scraped|traced|knotted|untied|carried|caught|held|press(?:es|ing)?|grips?|gripping|holds?|holding|touch(?:es|ing)?|reach(?:es|ing)?|trails?|trailing|brush(?:es|ing)?|taps?|tapping|lifts?|lifting|sets?|setting|drops?|dropping|pulls?|pulling|pushes?|pushing|turns?|turning|folds?|folding|wipes?|wiping|smooths?|smoothing|straighten(?:s|ing)?|tightens?|closes?|closing|opens?|opening|slides?|sliding|tucks?|tucking|clasps?|grasps?|lays?|laying|places?|placing|drags?|dragging|scrapes?|traces?|tracing|knots?|unties?|lifts?|catches?|carries|carrying|leans?(?:\s+\w+){0,2}\s+against|rests?(?:\s+\w+){0,2}\s+(?:on|against)|puts?(?:\s+\w+){0,2}\s+(?:on|against|to))\b/i;
+  // 2026-09-05 (validator triage, policy memo §3): "dig into / sink into / curl around / knead / claw"
+  // are physical contact and were rejected as NO_CONTACT on a real plan. Vocabulary gap, not policy.
+  var _FUSION_CONTACT = /\b(?:dig(?:s|ging)?\s+into|dug\s+into|sink(?:s|ing)?\s+into|sank\s+into|curl(?:s|ed|ing)?\s+(?:around|into)|knead(?:s|ed|ing)?|claw(?:s|ed|ing)?|pressed|gripped|touched|reached|trailed|brushed|tapped|lifted|dropped|pushed|pulled|turned|folded|wiped|smoothed|straightened|tightened|closed|opened|slid|tucked|clasped|grasped|laid|placed|dragged|scraped|traced|knotted|untied|carried|caught|held|press(?:es|ing)?|grips?|gripping|holds?|holding|touch(?:es|ing)?|reach(?:es|ing)?|trails?|trailing|brush(?:es|ing)?|taps?|tapping|lifts?|lifting|sets?|setting|drops?|dropping|pulls?|pulling|pushes?|pushing|turns?|turning|folds?|folding|wipes?|wiping|smooths?|smoothing|straighten(?:s|ing)?|tightens?|closes?|closing|opens?|opening|slides?|sliding|tucks?|tucking|clasps?|grasps?|lays?|laying|places?|placing|drags?|dragging|scrapes?|traces?|tracing|knots?|unties?|lifts?|catches?|carries|carrying|leans?(?:\s+\w+){0,2}\s+against|rests?(?:\s+\w+){0,2}\s+(?:on|against)|puts?(?:\s+\w+){0,2}\s+(?:on|against|to))\b/i;
   var _FUSION_PERCEPTION_ONLY = /^(?:\W*(?:she|he|they|i)\s+)?(?:feels?|senses?|notices?|sees?|watch(?:es)?|thinks?|remembers?|considers?|wonders?|knows?|understands?|realizes?|imagines?)\b/i;
   function _validateFusionConcreteness(beat, characterName, targetText) {
     var b = String(beat || '').trim();
@@ -128620,6 +128890,10 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
           out.push({ option_id: 'OPT-' + (++n), recipient: cand.label, recipient_id: cand.id || null,
                      facet_id: f0.facet_id, category: f0.category, truth: f0.canonical_truth,
                      pressure_id: pid, pressure_text: pr.text,
+                     // the authored per-condition requirement travels with the option so the validator
+                     // can ask the planner's ACT to engage the condition (policy 2, 2026-09-05). Backend-only;
+                     // the prompt block prints truth / pressure_text / evidence_ids and nothing else.
+                     evidence_requires: pr.evidence_requires || null,
                      evidence_ids: ev.map(function (x) { return x.evidence_id; }),
                      evidence_texts: ev.map(function (x) { return x.text; }) });
         });
@@ -128865,6 +129139,172 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
   // Runs the SAME normaliser an authored stage runs — no second validator — then applies the two
   // rules that only apply to generated input. Provenance is `planner_stage`: this is a claim about
   // THIS scene, not pre-existing truth, and it authorises current-scene grounding only.
+  // ═══ ISSUED REFS + STAGE_CONTRACT BLOCK — shared by the continuation skeleton and the opening planner ═══
+  // Extracted verbatim from _generateSceneSkeleton (2026-09-07) so the Scene-1 planner-owned stage uses the SAME
+  // identity issuance and the SAME contract text; the skeleton's request is byte-identical to before.
+  function _cpIssuedRefs(state) {
+    var _issuedRefs = [];
+    try {
+      _issuedRefs.push('pc:self');
+      var _rl = (typeof _relLedger === 'function') ? _relLedger(false) : null;
+      Object.keys((_rl && _rl.entities) || {}).forEach(function (k) {
+        if (k && k !== 'pc' && _issuedRefs.indexOf(k) === -1) _issuedRefs.push(k);
+      });
+      var _seedC = (typeof _activeSeed === 'function') ? _activeSeed(state) : null;
+      ((_seedC && _seedC.cast) || []).forEach(function (c) {
+        if (!c || c.role === 'PC' || !c.name) return;
+        var r = 'named:' + String(c.name).trim().toLowerCase().replace(/[^a-z0-9]+/g, '_');
+        if (_issuedRefs.indexOf(r) === -1) _issuedRefs.push(r);
+      });
+      _issuedRefs = _issuedRefs.slice(0, 12);
+    } catch (_) { _issuedRefs = ['pc:self']; }
+    return _issuedRefs;
+  }
+  // opts.rulesOnly (Scene-1 planner-owned mode, 2026-09-07): the OBJECT is declared inside the response
+  // template as a required member; this block then carries ONLY the rules and the ISSUED REFS, so the
+  // request contains exactly one demand for the object. The continuation skeleton (no opts) is unchanged.
+  function _cpStageContractBlock(_issuedRefs, opts) {
+    var _rulesOnly = !!(opts && opts.rulesOnly);
+    return (_rulesOnly
+      ? '\nSTAGE_CONTRACT RULES (for the REQUIRED top-level "stage_contract" member of the JSON above):\n'
+      : ('\nSTAGE_CONTRACT (REQUIRED). Return a "stage_contract" object, versioned:\n'
+      + '{ "v": 1,\n'
+      + '  "participants": [ { "ref": "<COPIED VERBATIM from ISSUED REFS>", "presence": "IN_PERSON|ANTICIPATED|RECALLED|REPORTED" } ],\n'
+      + '  "event_facts": [ { "text": "<one clause: what OCCURS in this scene>",\n'
+      + '                     "participants": [ { "ref": "<issued ref>", "role": "actor|subject|speaker|target" } ] } ] }\n'))
+      + 'RULES — a violation rejects the WHOLE stage_contract, not just the offending row:\n'
+      + ' · Every "ref" MUST be copied verbatim from ISSUED REFS below. A name you write yourself is NOT\n'
+      + '   a ref, and a ref you have not been issued does not exist.\n'
+      + ' · No ref may appear twice in "participants".\n'
+      + ' · Only IN_PERSON is in the room. Do not give physical action to anyone else.\n'
+      + ' · "event_facts" state what HAPPENS. Not psychology, not motive, not history — those are\n'
+      + '   decided elsewhere and are not yours to assign.\n'
+      + ' · Do NOT return character_plus, facet_id, option_id, or any per-character angle.\n'
+      + 'ISSUED REFS (the complete set; there are no others):\n'
+      + _issuedRefs.map(function (r) { return '  · ' + r; }).join('\n') + '\n';
+
+  }
+  // ── SHARED RULE: the opening fusion's environment_target / environment_axis ARE the environment_plus canon ──
+  // (Roman 2026-09-07, after the live Grok reply omitted both.) ONE rule, two contracts, one function so they
+  // cannot drift again:
+  //   mode 'derive'  (v2 / id contract): the fusion never owns these values; they are set from the selected
+  //                  E+ record after the identity scan (the caller applies). A planner-written value that
+  //                  differs from the canon or its id alias is a fault.
+  //   mode 'inherit' (free-text contract): an OMITTED value inherits the canon — only after environment_plus
+  //                  passed its own validation (beat, target, axis allowlist); an EXPLICIT differing value is
+  //                  the named mismatch fault; explicit matching values are accepted (backward compatibility).
+  // Derived values never excuse a fusion beat about a different object: the beat rule runs on the E+ target
+  // regardless of how the fusion's fields were filled.
+  // v3 CONTACT TYPES (Roman 2026-09-08): contact is STRUCTURED — the planner names one of these verbatim and a
+  // contact object that must be the environment identity. Prose proximity never establishes contact.
+  var _V3_CONTACT_TYPES = ['GRIP', 'PRESS', 'PUSH', 'PULL', 'LIFT', 'DRAG', 'STRIKE', 'TEAR', 'FOLD', 'WIPE', 'BRACE_AGAINST', 'LEAN_INTO', 'KNEEL_AT', 'CLIMB', 'OPEN', 'CLOSE', 'TURN', 'SET_DOWN_ON', 'PICK_UP', 'HOLD'];
+  // ── ELEMENT AFFORDANCES (Roman 2026-09-08) ── the smallest per-element metadata that lets the backend validate an
+  // issued contact verb against an issued contact object: ONE closed affordance per stage element, declared by the
+  // planner in stage_contract.elements and validated here. Free-text claims of affordance are never accepted.
+  //   GRASPABLE — a thing a hand can take hold of and move (book, ledger, bolt of cloth, tool, tray)
+  //   SURFACE   — a plane a body can bear on (table, counter, bench, floor, step, sill)
+  //   PORTAL    — an opening that opens/closes or is passed through (door, gate, hatch, window sash)
+  //   FIXTURE   — a mounted or built-in thing a body can bear against, push or pull on, but not carry (vent, rail, pipe, hinged door, wall hook)
+  // CAPABILITY SETS (2026-09-09): an element may carry MORE THAN ONE affordance ("affordances": ["PORTAL","FIXTURE"], or
+  // "PORTAL|FIXTURE") — a hinged oven door is validly both. A verb is permitted when ANY member of the set permits it.
+  // AMBIENT is exclusive (never combined). Generic closed values only; no free-text capability claims are accepted.
+  //   AMBIENT   — light, sound, smell, weather, air — perceived, never contacted
+  var _V3_AFFORDANCES = ['GRASPABLE', 'SURFACE', 'PORTAL', 'FIXTURE', 'AMBIENT'];
+  var _V3_AFFORDANCE_VERBS = {
+    GRASPABLE: ['GRIP', 'HOLD', 'LIFT', 'DRAG', 'PULL', 'PUSH', 'PICK_UP', 'TEAR', 'FOLD', 'TURN', 'PRESS', 'STRIKE', 'WIPE', 'OPEN', 'CLOSE'],
+    SURFACE:   ['PRESS', 'WIPE', 'SET_DOWN_ON', 'LEAN_INTO', 'BRACE_AGAINST', 'KNEEL_AT', 'CLIMB', 'STRIKE', 'PUSH', 'PULL', 'DRAG', 'GRIP', 'LIFT'],
+    PORTAL:    ['OPEN', 'CLOSE', 'PUSH', 'PULL', 'PRESS', 'BRACE_AGAINST', 'LEAN_INTO', 'STRIKE', 'GRIP', 'KNEEL_AT'],
+    FIXTURE:   ['PRESS', 'BRACE_AGAINST', 'LEAN_INTO', 'STRIKE', 'GRIP', 'HOLD', 'KNEEL_AT', 'CLIMB', 'WIPE', 'TURN', 'PUSH', 'PULL'],
+    AMBIENT:   []
+  };
+  function _v3ElementAffordances(el) {
+    var a = (el && Array.isArray(el.affordances) && el.affordances.length) ? el.affordances : [el && el.affordance];
+    return a.map(function (x) { return String(x || '').trim().toUpperCase(); }).filter(Boolean);
+  }
+  function _v3PermittedVerbs(el) {
+    var out = [];
+    _v3ElementAffordances(el).forEach(function (a) { (_V3_AFFORDANCE_VERBS[a] || []).forEach(function (v) { if (out.indexOf(v) === -1) out.push(v); }); });
+    return out;
+  }
+  // ── HEAD-NOUN CO-REFERENCE (2026-09-09) ── fusion wording resolves against ACCEPTED stage-element identity, not the full
+  // canonical phrase. "the door" resolves to "oven door" when exactly one accepted element has that head noun; with two
+  // candidates ("oven door", "back door") a distinguishing word from exactly one of them resolves it, otherwise the mention
+  // is AMBIGUOUS and rejects by name. A head noun no element carries ("the old weighing book") resolves to nothing.
+  var _V3_HEAD_STOP = { the:1, a:1, an:1, of:1, and:1, with:1, in:1, on:1, at:1, to:1, its:1, my:1, his:1, her:1, their:1, our:1, this:1, that:1, still:1, untrampled:1 };
+  function _v3ElementHead(name) {
+    var t = String(name || '').toLowerCase().split(/[,;:(]/)[0].replace(/[^a-z0-9'\s-]/g, ' ').split(/\s+/).filter(function (w) { return w && !_V3_HEAD_STOP[w]; });
+    var head = t.length ? t[t.length - 1].replace(/'s$/, '') : '';
+    return { head: head, mods: t.slice(0, -1) };
+  }
+  function _v3ResolveWordingMentions(text, elementNames) {
+    var els = (elementNames || []).map(function (n) { var h = _v3ElementHead(n); return { name: n, head: h.head, mods: h.mods }; }).filter(function (e) { return e.head; });
+    var out = { mentions: [] };
+    if (!els.length) return out;
+    var sing = function (w) { return String(w || '').replace(/(?:es|s)$/, ''); };
+    var heads = {}; els.forEach(function (e) { heads[e.head] = 1; });
+    var alt = Object.keys(heads).map(function (h) { return h.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }).sort(function (a, b) { return b.length - a.length; }).join('|');
+    var rx = new RegExp("\\b(?:the|this|that|these|those|its|my|our|his|her|their)\\s+((?:[\\w'-]+\\s+){0,3}?)(" + alt + ")(?:es|s)?\\b", 'gi');
+    var m;
+    while ((m = rx.exec(String(text || ''))) !== null) {
+      var head = m[2].toLowerCase(), modWords = m[1].toLowerCase().split(/\s+/).filter(Boolean);
+      var cands = els.filter(function (e) { return e.head === head || sing(e.head) === sing(head); });
+      if (!cands.length) continue;
+      var picked = null, ambiguous = false;
+      if (cands.length === 1) picked = cands[0];
+      else {
+        var narrowed = cands.filter(function (e) { return modWords.some(function (w) { return e.mods.indexOf(w) !== -1; }); });
+        if (narrowed.length === 1) picked = narrowed[0]; else ambiguous = true;
+      }
+      out.mentions.push({ phrase: m[0].trim(), element: picked ? picked.name : null, ambiguous: ambiguous, candidates: cands.map(function (e) { return e.name; }) });
+    }
+    return out;
+  }
+  try { if (typeof window !== 'undefined') { window._v3ResolveWordingMentions = _v3ResolveWordingMentions; window._v3PermittedVerbs = _v3PermittedVerbs; } } catch (_) {}
+  // ── GATE CLASSIFICATION (Roman 2026-09-09) ── the Scene-1 mount gate stays FATAL only for transport/parse/missing containers,
+  // unissued refs, missing or duplicate required members, closed-enum violations, non-issued/impossible contact and structural
+  // contradictions the backend cannot canonicalize. Every language-quality / persuasion rule is a SOFT finding: telemetry at
+  // planner time, the offending optional field withheld from the author directive, the canonical value kept where one exists.
+  // A soft finding never refunds and never prevents the author attempt.
+  function _s1Soft(code, field, action, msg) {
+    try {
+      var st = (typeof window !== 'undefined' && window.state) ? window.state : null;
+      if (st) { if (!Array.isArray(st._scene1SoftFindings)) st._scene1SoftFindings = []; st._scene1SoftFindings.push({ code: code, field: field, action: action, msg: String(msg || '').slice(0, 400), at: Date.now() }); }
+      console.warn('[SCENE1:SOFT] ' + code + ' · ' + field + ' · ' + action + ' — ' + String(msg || '').slice(0, 300));
+    } catch (_) {}
+  }
+  try { if (typeof window !== 'undefined') window._s1Soft = _s1Soft; } catch (_) {}
+  function _reconcileFusionEnvFields(pof, canon, opts) {
+    var out = { faults: [], derived: [] };
+    if (!pof || typeof pof !== 'object' || !canon) return out;
+    var lc = function (x) { return String(x || '').trim().toLowerCase(); };
+    var mode = (opts && opts.mode) || 'inherit';
+    var aliases = ((opts && opts.aliases) || []).map(lc).filter(Boolean);
+    var ownT = String(pof.environment_target || '').trim(), ownA = String(pof.environment_axis || '').trim();
+    var canT = String(canon.target || '').trim(), canA = String(canon.axis || '').trim();
+    if (ownT && canT && lc(ownT) !== lc(canT) && aliases.indexOf(lc(ownT)) === -1) {
+      out.faults.push(mode === 'derive'
+        ? 'pc_opening_fusion carries an environment_target of its own ("' + ownT.slice(0, 60) + '") — the fusion has no target; it is the E+ target by definition'
+        : 'pc_opening_fusion.environment_target does not match environment_plus.target — the opening may not point at two different things');
+    }
+    if (ownA && canA && lc(ownA) !== lc(canA)) {
+      out.faults.push(mode === 'derive'
+        ? 'pc_opening_fusion carries an environment_axis of its own — the fusion has no axis; it is the E+ axis by definition'
+        : 'pc_opening_fusion.environment_axis does not match environment_plus.axis');
+    }
+    if (mode === 'owned') {
+      // v3 (2026-09-07): on the planner-owned free-text path the fusion NEVER carries these values; the backend
+      // attaches the validated E+ target/axis at normalisation. Any planner-written value is a fault.
+      if (ownT) out.faults.push('the fusion has no target; environment_target is backend-owned (v3) and is the E+ target by definition');
+      if (ownA) out.faults.push('the fusion has no axis; environment_axis is backend-owned (v3) and is the E+ axis by definition');
+      return out;
+    }
+    if (!out.faults.length && !(opts && opts.apply === false) && mode === 'inherit') {
+      if (!ownT && canT) { pof.environment_target = canT; out.derived.push('environment_target'); }
+      if (!ownA && canA) { pof.environment_axis = canA; out.derived.push('environment_axis'); }
+    }
+    return out;
+  }
+
   function _cpIngestGeneratedStage(rawContract, issuedRefs, storyId, sceneNum, pcId) {
     var out = { ok: false, code: null, stage: null, bytes: 0, rejected: [] };
     if (!rawContract || typeof rawContract !== 'object') { out.code = 'absent'; return out; }
@@ -128872,6 +129312,15 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       ? new TextEncoder().encode(JSON.stringify(rawContract)).length
       : JSON.stringify(rawContract).length; } catch (_) { out.code = 'unserialisable'; return out; }
     if (out.bytes > CP_GEN_STAGE_MAX_BYTES) { out.code = 'over_size_bound'; return out; }
+    // SHAPE GUARD (adversarial control A2, 2026-09-07). A contract whose participants or event_facts
+    // is not an array used to THROW here (".forEach is not a function"), which the Scene-1 caller
+    // reported as "scaffold builder threw" — fail-closed, but a crash message instead of a schema
+    // reason. The same function validates the continuation skeleton's contract. A wrong shape is a
+    // NAMED rejection, on the same path as every other rejection.
+    if (rawContract.participants !== undefined && rawContract.participants !== null && !Array.isArray(rawContract.participants)) { out.code = 'malformed:participants'; return out; }
+    var _efRaw = (rawContract.event_facts !== undefined) ? rawContract.event_facts : rawContract.eventFacts;
+    if (_efRaw !== undefined && _efRaw !== null && !Array.isArray(_efRaw)) { out.code = 'malformed:event_facts'; return out; }
+    if (rawContract.elements !== undefined && rawContract.elements !== null && !Array.isArray(rawContract.elements)) { out.code = 'malformed:elements'; return out; }
 
     var norm = _cpNormalizeStage({
       v: rawContract.v, provenance: CP_GEN_STAGE_PROVENANCE,
@@ -128899,7 +129348,24 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       });
     });
 
-    out.rejected = (norm.rejected || []).concat(unissued);
+    // ELEMENTS (v3 affordances): each { name, affordance } — affordance MUST be one of the closed enum; duplicates reject.
+    var _elRej = [], _elOut = [], _elSeen = {};
+    (Array.isArray(rawContract.elements) ? rawContract.elements : []).forEach(function (e) {
+      if (!e || typeof e !== 'object') { _elRej.push({ why: 'element_not_an_object' }); return; }
+      var nm = String(e.name || '').trim();
+      if (!nm) { _elRej.push({ why: 'element_without_name' }); return; }
+      // capability SET: "affordance": "PORTAL" | "PORTAL|FIXTURE" | ["PORTAL","FIXTURE"] | "affordances": [...] — closed values only
+      var _afRaw = (e.affordances !== undefined && e.affordances !== null) ? e.affordances : e.affordance;
+      var _afList = (Array.isArray(_afRaw) ? _afRaw : String(_afRaw || '').split(/[|,\/+]/)).map(function (a) { return String(a || '').trim().toUpperCase(); }).filter(Boolean);
+      var _afSet = []; _afList.forEach(function (a) { if (_afSet.indexOf(a) === -1) _afSet.push(a); });
+      var _afBad = _afSet.filter(function (a) { return _V3_AFFORDANCES.indexOf(a) === -1; });
+      if (!_afSet.length || _afBad.length) { _elRej.push({ ref: nm, why: 'element_affordance_unknown:' + (_afBad[0] || 'none') }); return; }
+      if (_afSet.indexOf('AMBIENT') !== -1 && _afSet.length > 1) { _elRej.push({ ref: nm, why: 'element_affordance_ambient_exclusive' }); return; }
+      var k = nm.toLowerCase(); if (_elSeen[k]) { _elRej.push({ ref: nm, why: 'element_duplicate' }); return; } _elSeen[k] = 1;
+      _elOut.push({ name: nm, affordance: _afSet.join('+'), affordances: _afSet });
+    });
+    norm.elements = _elOut;
+    out.rejected = (norm.rejected || []).concat(unissued, _elRej);
     if (CP_GEN_STAGE_WHOLE_REJECT && out.rejected.length) { out.code = 'whole_contract_rejected'; return out; }
     if (!norm.ok) { out.code = norm.code || 'normalise_failed'; return out; }
     if (!norm.participants.length) { out.code = 'no_participants'; return out; }
@@ -134439,7 +134905,7 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
    *      builds the Bibles / R-plot / A-plot / spine / sysPrompt, and returns
    *      before authoring anything. This is the step whose absence meant
    *      Scene 2 had no planning behind it.
-   *   2. COMMIT — the baked scene becomes scenes[0] and turnCount becomes 1,
+   *   2. COMMIT — the baked scene becomes scenes[0]; turnCount stays 0 (completed continuation turns),
    *      so the story's history starts with the opening the reader just read.
    *   3. UNLOCK — gates stop firing; normal pricing and generation resume.
    *
@@ -134515,7 +134981,8 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
     state._bakedPendingCommit = null;
     state.scenes = state.scenes || [];
     if (state.scenes.length === 0) state.scenes.push(pending);
-    if (!(state.turnCount > 0)) state.turnCount = 1;
+    // turnCount = completed continuation turns; committing the mounted Scene 1 completes none, so it
+    // stays 0 and the first continuation is scene 2 (previously began at 1 → scene 3, plan row 2 skipped).
     try { if (typeof window._sbBetaSceneDone === 'function') window._sbBetaSceneDone(pending.text); } catch (_) {}
     console.log('[BAKED] Scene 1 committed to story state (turnCount=' + state.turnCount + ', scenes=' + state.scenes.length + ')');
   }
@@ -134641,6 +135108,7 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       }
     } catch (_) {}
     StoryPagination.addPage(formatStory(displayBody), true);
+    try { _sceneLedgerCommit(state, { kind: 'baked', sceneNumber: 1, event: (pkg && pkg.emitted && pkg.emitted.sceneSummary) ? String(pkg.emitted.sceneSummary).slice(0, 300) : null, pageUid: StoryPagination.getCurrentPageUid() }); } catch (_) {}   // 2026-09-10: the ledger names what the fixed opening established
 
     // ── DISPLAY NOW, COMMIT AT UNLOCK ──
     // The scene is on screen but NOT committed to story state: turnCount stays
@@ -153165,11 +153633,17 @@ Return JSON only: { "title": "...", "synopsis": "..." }${_preTitleLangBlock}` },
                   // to the 3rd-person default. Derive the actual person from
                   // state.picks.pov when povMode isn't a tier-specific tag.
                   if (_pov === 'normal' || _pov === 'standard') {
-                    var _povPick88 = String((state.picks && state.picks.pov) || '').toLowerCase();
-                    if (_povPick88 === '1st' || _povPick88 === 'first' || _povPick88 === '1') _pov = '1st';
-                    else if (_povPick88 === '2nd' || _povPick88 === 'second' || _povPick88 === '2') _pov = '2nd';
+                    // Roman 2026-09-08: the corridor writes 'first_person' / 'second_person' / 'third_person' (and state.pov);
+                    // the old exact matches ('1st'/'first'/'1') missed them, so a first-person story got the third-person frame.
+                    var _povPick88 = String((state.picks && state.picks.pov) || state.pov || '').toLowerCase().replace(/[\s_-]+/g, '');
+                    if (/^(1st|first|firstperson|1)$/.test(_povPick88)) _pov = '1st';
+                    else if (/^(2nd|second|secondperson|2)$/.test(_povPick88)) _pov = '2nd';
                   }
-                  var _name = (state.playerName || (state.picks && state.picks.identity && state.picks.identity.displayPlayerName) || '').trim();
+                  // Roman 2026-09-08: playerName routinely holds the KERNEL placeholder ("the one who carries the story");
+                  // resolve a REAL name or use none — a placeholder or omniscient phrasing must never reach the page.
+                  var _name = '';
+                  try { var _rid = (typeof _resolvePcIdentity === 'function') ? _resolvePcIdentity(state) : null; _name = (_rid && _rid.v) ? String(_rid.v).trim() : ''; } catch (_) { _name = ''; }
+                  if (!_name) { var _rawNm = String(state.name || state.playerName || (state.picks && state.picks.identity && state.picks.identity.displayPlayerName) || '').trim(); if (_rawNm && !(typeof _isPlaceholderPcName === 'function' && _isPlaceholderPcName(_rawNm)) && !/the one who carries the story/i.test(_rawNm)) _name = _rawNm; }
                   var _gender = String(state.gender || (state.picks && state.picks.identity && state.picks.identity.playerGender) || 'female').toLowerCase();
                   var _subj = _gender === 'male' ? 'he' : (_gender === 'non-binary' ? 'they' : 'she');
                   var _Subj = _subj.charAt(0).toUpperCase() + _subj.slice(1);
@@ -189600,6 +190074,11 @@ No text, no watermark, no UI elements, share-ready.`;
           // colors LI dialogue ("everyone knows about us now") rather
           // than driving new NPC encounters — those happen in the
           // literary / CG scene paths that follow OAS.
+          // Story ledger — same block as the literary / CG / SD paths (OAS is inside an authored scene;
+          // the list of already-read pages still bounds what this exchange may re-tell).
+          if (typeof window._buildContinuitySpineBlock === 'function') {
+            parts.push(window._buildContinuitySpineBlock(window.state) || '');
+          }
           if (typeof window.buildMythicCoupleDirective === 'function') {
             parts.push(window.buildMythicCoupleDirective() || '');
           }
@@ -217201,6 +217680,7 @@ No text, no watermark, no UI elements, share-ready.`;
     var _relationshipGravityBlock = '';
     var _momentumBlock = '';
     var _emotionalResidueBlock = '';
+    var _continuitySpineBlock = '';
     var _mythicCoupleBlock = '';
     var _mythicForgettingBlock = '';
     var _temptCallbackBlock = '';
@@ -217221,6 +217701,40 @@ No text, no watermark, no UI elements, share-ready.`;
       // Mythic Couple recognition — story-wide flag set when player invoked
       // "Make us Mythic" / variants via Tempt Fate. Drives NPC recognition
       // across every CG scene for the rest of the story.
+      // Story ledger — what the reader has already read + permanent Fate changes; same block as every
+      // other author path; '' when nothing authoritative exists.
+      if (typeof window._buildContinuitySpineBlock === 'function') {
+        _continuitySpineBlock = window._buildContinuitySpineBlock(window.state) || '';
+        // SEED CONTINUITY (2026-09-10, seed-contract audit §44): the seeded Book's fixed cast/world (the directive the literary intro
+        // already receives at 256558 but the CG packet never did), the plan's row for THIS scene, and what the fixed opening
+        // established (state._bakedEmitted, which production itself logged as having "no verified consumer yet"). Seeded Books only.
+        try {
+          var _sdSeed = (typeof _activeSeed === 'function') ? _activeSeed(window.state) : null;
+          if (_sdSeed) {
+            var _sdLines = [];
+            var _sdCtx = (typeof _buildSeedContextDirective === 'function') ? (_buildSeedContextDirective(window.state, { suppressSceneOne: true }) || '') : '';
+            if (_sdCtx) _sdLines.push(_sdCtx.trim());
+            var _sdPlan = (typeof _activePlan === 'function') ? _activePlan(window.state) : null;
+            var _sdRowIdx = Array.isArray(window.state.scenes) ? window.state.scenes.length : ((window.state.turnCount | 0) + 1);   // the next scene to write = number of committed scenes (row 0 = the fixed Scene 1); turnCount is already advanced when this builder runs
+            var _sdRow = (_sdPlan && Array.isArray(_sdPlan.scenes)) ? _sdPlan.scenes[_sdRowIdx] : null;
+            var _sdRender = function (v) { if (typeof v === 'string') return v; if (Array.isArray(v)) return v.map(function (x) { return typeof x === 'string' ? x : (x && (x.text || x.name || x.ref)) ? String(x.text || x.name || x.ref) : ''; }).filter(Boolean).join(' | '); if (v && typeof v === 'object') return Object.keys(v).map(function (k) { var r = _sdRender(v[k]); return r ? k + ': ' + r : ''; }).filter(Boolean).join('; '); return ''; };
+            if (_sdRow && typeof _sdRow === 'object') {
+              var _sdRowLines = Object.keys(_sdRow).filter(function (k) { return !/^_/.test(k); }).map(function (k) { var r = _sdRender(_sdRow[k]); return r ? '  • ' + k + ': ' + r.slice(0, 600) : ''; }).filter(Boolean);
+              if (_sdRowLines.length) _sdLines.push('PLAN ROW FOR THIS SCENE (scene ' + (_sdRowIdx + 1) + ' of the Book\'s fixed arc — realise it, never replace it):\n' + _sdRowLines.join('\n'));
+            }
+            var _sdEm = window.state._bakedEmitted;
+            if (_sdEm && Array.isArray(window.state.scenes) && window.state.scenes.length === 1) {   // the scene right after the fixed opening
+              var _sdEmLines = [];
+              if (_sdEm.sceneSummary) _sdEmLines.push('  • what happened: ' + String(_sdEm.sceneSummary).slice(0, 600));
+              if (_sdEm.openState) _sdEmLines.push('  • state at the end of the opening: ' + _sdRender(_sdEm.openState).slice(0, 400));
+              if (Array.isArray(_sdEm.obligations) && _sdEm.obligations.length) _sdEmLines.push('  • obligations this scene inherits: ' + _sdEm.obligations.map(String).join(' | ').slice(0, 800));
+              if (Array.isArray(_sdEm.ledgerSeeds) && _sdEm.ledgerSeeds.length) _sdEmLines.push('  • what the cast now perceive of each other: ' + _sdEm.ledgerSeeds.map(function (l) { return l ? [l.subject, l.about, l.perception].filter(Boolean).join(' → ') : ''; }).filter(Boolean).join(' | ').slice(0, 800));
+              if (_sdEmLines.length) _sdLines.push('THE FIXED OPENING ESTABLISHED (authored Scene 1 — already read; continue from it):\n' + _sdEmLines.join('\n'));
+            }
+            if (_sdLines.length) _continuitySpineBlock += '\n\nSEED CONTINUITY (authoritative for this Book — its fixed cast and world, the plan\'s row for this scene, what the opening established):\n' + _sdLines.join('\n\n') + '\n';
+          }
+        } catch (_) {}
+      }
       if (typeof window.buildMythicCoupleDirective === 'function') {
         _mythicCoupleBlock = window.buildMythicCoupleDirective() || '';
       }
@@ -217569,6 +218083,7 @@ No text, no watermark, no UI elements, share-ready.`;
       // Tempt wish. Tells the screenplay generator that every NPC entering
       // contact with the couple should react with Romeo-and-Juliet
       // recognition. Self-gated; empty when flag is off.
+      (_continuitySpineBlock      ? _continuitySpineBlock      + '\n' : '') +
       (_mythicCoupleBlock         ? _mythicCoupleBlock         + '\n' : '') +
       // Mythic forgetting — one-scene transition narrating the legend
       // fading after a "make them forget us" Tempt. Auto-clears after
@@ -221376,11 +221891,15 @@ No text, no watermark, no UI elements, share-ready.`;
       // 1st/2nd/3rd picks land state.povMode as 'normal'; derive the
       // actual person from state.picks.pov when not a tier-specific tag.
       if (_pov === 'normal' || _pov === 'standard') {
-        var _povPick121 = String((picks && picks.pov) || '').toLowerCase();
-        if (_povPick121 === '1st' || _povPick121 === 'first' || _povPick121 === '1') _pov = '1st';
-        else if (_povPick121 === '2nd' || _povPick121 === 'second' || _povPick121 === '2') _pov = '2nd';
+        // Roman 2026-09-08: same normalisation as the Scene-1 scaffold frame — the corridor writes 'first_person'.
+        var _povPick121 = String((picks && picks.pov) || state.pov || '').toLowerCase().replace(/[\s_-]+/g, '');
+        if (/^(1st|first|firstperson|1)$/.test(_povPick121)) _pov = '1st';
+        else if (/^(2nd|second|secondperson|2)$/.test(_povPick121)) _pov = '2nd';
       }
-      var _name = (state.playerName || (picks.identity && picks.identity.displayPlayerName) || '').trim();
+      // Roman 2026-09-08: a REAL resolved name or none — the kernel placeholder never reaches the page.
+      var _name = '';
+      try { var _rid121 = (typeof _resolvePcIdentity === 'function') ? _resolvePcIdentity(state) : null; _name = (_rid121 && _rid121.v) ? String(_rid121.v).trim() : ''; } catch (_) { _name = ''; }
+      if (!_name) { var _rawNm121 = String(state.name || state.playerName || (picks.identity && picks.identity.displayPlayerName) || '').trim(); if (_rawNm121 && !(typeof _isPlaceholderPcName === 'function' && _isPlaceholderPcName(_rawNm121)) && !/the one who carries the story/i.test(_rawNm121)) _name = _rawNm121; }
       var _gender = String(state.gender || (picks.identity && picks.identity.playerGender) || 'female').toLowerCase();
       var _subj = _gender === 'male' ? 'he' : (_gender === 'non-binary' ? 'they' : 'she');
       var _Subj = _subj.charAt(0).toUpperCase() + _subj.slice(1);
@@ -221708,6 +222227,10 @@ No text, no watermark, no UI elements, share-ready.`;
             if (Array.isArray(c.behavior_person_ids)) e.behavior_person_ids = c.behavior_person_ids.map(function (x) { return String(x || '').trim(); }).filter(Boolean);
             if (typeof c.pc_lens_operation === 'string' && c.pc_lens_operation.trim()) e.pc_lens_operation = c.pc_lens_operation.trim().toUpperCase();
             if (typeof c.pc_effect === 'string' && c.pc_effect.trim()) e.pc_effect = c.pc_effect.trim();
+            // contract v2 (2026-09-05): the fact the act enacts, and the derivation mark set by the
+            // Scene-1 resolver when visible_action came from opening_beat. Allowlisted here or lost.
+            if (typeof c.enacts_evidence_id === 'string' && c.enacts_evidence_id.trim()) e.enacts_evidence_id = c.enacts_evidence_id.trim();
+            if (c._derived_from_opening === true) e._derived_from_opening = true;
             if (typeof c.pressure === 'string' && c.pressure.trim()) e.pressure = c.pressure.trim();   // legacy
             // ── TWO JOBS, TWO FIELDS ──
             // pc_archetype_reaction and source_bridge are RETIRED: both probes turned them into
@@ -221738,6 +222261,10 @@ No text, no watermark, no UI elements, share-ready.`;
         // through when present so the Scene-1 directive can render it; continuations that do
         // not send one are unaffected.
         if (typeof ep.beat === 'string' && ep.beat.trim()) out.environment_plus.beat = ep.beat.trim();
+        // contract v2: the id the target was resolved from, and the optional realization (a trace
+        // of the seed-named thing), both set by the Scene-1 resolver before normalisation.
+        if (typeof ep.target_object_id === 'string' && ep.target_object_id.trim()) out.environment_plus.target_object_id = ep.target_object_id.trim();
+        if (typeof ep.realization === 'string' && ep.realization.trim()) out.environment_plus.realization = ep.realization.trim();
       }
       const fu = raw.fusion;
       if (fu && typeof fu === 'object' && typeof fu.character === 'string' && fu.character.trim()
@@ -224073,7 +224600,14 @@ No text, no watermark, no UI elements, share-ready.`;
   }
   window._validateAndNormalizeCGPlan = _validateAndNormalizeCGPlan;
 
+  // Scene-number seam for staged generation: the index being generated (0-based) is authoritative for
+  // _currentSceneNumber while this runs; cleared on every exit so a literary turn never inherits it.
   async function _runCGScreenplayGen(sceneIndex, playerAction, playerDialogue) {
+    try { state._stagedAuthoringSceneIndex = (typeof sceneIndex === 'number' && sceneIndex >= 0) ? sceneIndex : null; } catch (_) {}
+    try { return await _runCGScreenplayGenInner(sceneIndex, playerAction, playerDialogue); }
+    finally { try { state._stagedAuthoringSceneIndex = null; } catch (_) {} }
+  }
+  async function _runCGScreenplayGenInner(sceneIndex, playerAction, playerDialogue) {
     // Tick grievance contracts FIRST so visibility transitions land in
     // state before any directive builder reads them.
     try { if (typeof _tickGrievanceContracts === 'function') _tickGrievanceContracts(); } catch (_) {}
@@ -224290,7 +224824,19 @@ No text, no watermark, no UI elements, share-ready.`;
         ? window._isPremiumAuthorScene()
         : (typeof window._sceneEditorialTier === 'function' && window._sceneEditorialTier(state) === 'premium');
       var _SCREENPLAY_PROVIDERS, _routingReason;
-      if (_complexMode) {
+      // ── GROK-ONLY SCENE AUTHOR (Roman 2026-09-07; behind window._grokOnlySceneAuthor, default OFF) ──
+      // Grok primary with ONE bounded retry, then the existing exhaustion path (literary fallback, which
+      // under the same flag is Grok-only too, or a named terminal error). No Mistral Small author attempt,
+      // no DeepSeek, no OpenAI scene-author fallback. Two entries = two attempts, both visible.
+      var _SCREENPLAY_GROK_ONLY = [
+        { name: 'Grok-4.3',        endpoint: '/api/proxy', grokModel: 'grok-4.3', timeoutMs: 75000 },
+        { name: 'Grok-4.3-retry',  endpoint: '/api/proxy', grokModel: 'grok-4.3', timeoutMs: 75000 }
+      ];
+      var _grokOnlyAuthor = false; try { _grokOnlyAuthor = (typeof window !== 'undefined' && window._grokOnlySceneAuthor === true); } catch (_) {}
+      if (_grokOnlyAuthor) {
+        _SCREENPLAY_PROVIDERS = _SCREENPLAY_GROK_ONLY;
+        _routingReason = ' (grok-only policy — Grok primary, one bounded retry, no Mistral/OpenAI)';
+      } else if (_complexMode) {
         _SCREENPLAY_PROVIDERS = _SCREENPLAY_GROK_FIRST;
         _routingReason = ' (complex mode — Grok primary)';
       } else if (_premiumScene) {
@@ -225050,6 +225596,7 @@ No text, no watermark, no UI elements, share-ready.`;
         var proseAssembled = plan.beats.map(function(b) { return _sbSpeakerLabel(b) + (b.text || ''); }).join('\n\n');
         state.scenes = state.scenes || [];
         state.scenes.push({ title: '', synopsis: '', text: proseAssembled, fateCard: null });
+        try { _sceneLedgerCommit(state, { kind: 'cg', sceneNumber: (typeof sceneIndex === 'number' ? sceneIndex + 1 : undefined), act: playerAction, dia: playerDialogue }); } catch (_) {}
         try { if (typeof window._sbBetaSceneDone === 'function') window._sbBetaSceneDone(proseAssembled); } catch (_) {}
       } catch (_) {}
 
@@ -229386,6 +229933,10 @@ No text, no watermark, no UI elements, share-ready.`;
       }
 
       // Deal fate cards into GN reader — same cards as prose mode
+      // LEGACY GN RENDERER (no live setter of renderMode 'graphic_novel' found): keeps its own
+      // convention — its generation-time gates read turnCount as the index of the scene being
+      // generated (bump-before, like CG) and it never calls the plot contract, so the
+      // completed-continuation-turns invariant is NOT applied here on purpose.
       state.turnCount = 1;
       _dealGNFateCards();
 
@@ -229655,7 +230206,7 @@ No text, no watermark, no UI elements, share-ready.`;
       }
 
       // ── Turn lifecycle (same state as prose) ──
-      state.turnCount = _gnSceneIndex + 1;
+      state.turnCount = _gnSceneIndex + 1; // legacy GN convention (see _renderGNFromPanels): next scene's index
       state.fateCommitted = false;
       state.fateSelectedIndex = -1;
       state.petitionUsedThisScene = false;
@@ -254434,6 +254985,7 @@ Generate the synopsis now.` }
                       }
                     } catch (_) {}
                     StoryPagination.addPage(formatStory(_sanitizedBody), true);
+                    try { _sceneLedgerCommit(state, { kind: 'scene', sceneNumber: 1, pageUid: StoryPagination.getCurrentPageUid() }); } catch (_) {}
                   }
                 }
 
@@ -254443,7 +254995,7 @@ Generate the synopsis now.` }
                 }
 
                 // Update turn state
-                state.turnCount = 1;
+                state.turnCount = 0; // Scene 1 mounted; completed continuation turns = 0 (first continuation = scene 2)
                 state.scenes = state.scenes || [];
                 state.scenes.push({ title, synopsis, text: _sanitizedBody, fateCard: null });
                 try { if (typeof window._sbBetaSceneDone === 'function') window._sbBetaSceneDone(_sanitizedBody); } catch (_) {}
@@ -255581,8 +256133,8 @@ INCORRECT:
       try { if (typeof commitCanonicalLoveInterest === 'function') commitCanonicalLoveInterest(state, { at: 'pre-bible' }); } catch (_eCanonLI) { try { console.warn('[CANONICAL-LI] pre-bible commit threw:', _eCanonLI && _eCanonLI.message); } catch (__) {} }
       try {
         var _spineBks = [];
-        if (typeof _generatePCBodyBible === 'function' && !state.pcBodyBible) _spineBks.push(_generatePCBodyBible());
-        if (typeof _generateLIBodyBible === 'function' && !state.liBodyBible) _spineBks.push(_generateLIBodyBible());
+        if (typeof window._generatePCBodyBible === 'function' && !state.pcBodyBible) _spineBks.push(window._generatePCBodyBible());   // SCOPE FIX 2026-09-10 (§41)
+        if (typeof window._generateLIBodyBible === 'function' && !state.liBodyBible) _spineBks.push(window._generateLIBodyBible());
         // Famous Fate character contract — pins facts/behavior/social-reality/
         // world-laws once per story so scenes can't forget a power, break a world-
         // rule, or drift the character's voice. FF-only.
@@ -262629,9 +263181,12 @@ Generate the synopsis now. The protagonist MUST be named ${pKernel}. Depict the 
         // shape A/B + named antagonist.
         try {
           var _bibleKickoffs = [];
-          if (typeof _generatePCBodyBible === 'function' && !window.state.pcBodyBible) _bibleKickoffs.push(_generatePCBodyBible());
-          if (typeof _generateLIBodyBible === 'function' && !window.state.liBodyBible) _bibleKickoffs.push(_generateLIBodyBible());
-          if (typeof _generateAntagonistBodyBible === 'function' && !window.state.antagonistBodyBible) _bibleKickoffs.push(_generateAntagonistBodyBible());
+          // SCOPE FIX (2026-09-10, integration audit §41): the generators are defined inside an IIFE that closes before this
+          // function; the bare names were `typeof === 'undefined'` here, so the Scene-1 literary path NEVER generated PC/LI bibles.
+          // The window-exposed generators are the ones the CG path already uses (224587–224589).
+          if (typeof window._generatePCBodyBible === 'function' && !window.state.pcBodyBible) _bibleKickoffs.push(window._generatePCBodyBible());
+          if (typeof window._generateLIBodyBible === 'function' && !window.state.liBodyBible) _bibleKickoffs.push(window._generateLIBodyBible());
+          if (typeof window._generateAntagonistBodyBible === 'function' && !window.state.antagonistBodyBible) _bibleKickoffs.push(window._generateAntagonistBodyBible());
           if (_bibleKickoffs.length) await Promise.all(_bibleKickoffs);
           // Roman 2026-06-01 — character-signature flavor-history sync (scaffold path)
           try { if (typeof window._updateLastFlavorHistoryCharacterSignatures === 'function') window._updateLastFlavorHistoryCharacterSignatures(window.state); } catch (_) {}
@@ -262932,6 +263487,34 @@ Generate the synopsis now. The protagonist MUST be named ${pKernel}. Depict the 
         // must know them before the template is built. Failing early also means an unresolvable
         // stage aborts before we spend effort assembling a large prompt.
         var _stage = (typeof _scene1StageContract === 'function') ? _scene1StageContract(state) : null;
+        var _plannerOwnedStage = false, _s1IssuedRefs = null;
+        if (_stage && !_stage.ok) {
+          // ── THE OPENING PLANNER OWNS THE STAGE FOR AN UNSEEDED SCENE 1 (Roman 2026-09-07) ──
+          // Before this, an unseeded story had no way to start: the stage had to resolve BEFORE the
+          // planner, and the only corridor source of a mission/stage was the planner's own reply.
+          // Seeded stories keep their authored stage; baked starters never reach this function's
+          // author dispatch. Here the planner is asked for the mission AND a versioned stage_contract
+          // over ISSUED REFS (the same issuance the continuation skeleton uses); after the reply the
+          // stage_contract is ingested and the contract re-resolves. Invalid output still fails closed
+          // (same abort + refund) — no circular prerequisite, no extra call, no silent fallback.
+          var _s1Seed = (typeof _activeSeed === 'function') ? _activeSeed(state) : null;
+          var _s1Asg = null; try { _s1Asg = (typeof _selectSceneAssignment === 'function') ? _selectSceneAssignment(state, 1) : null; } catch (_) { _s1Asg = null; }
+          var _s1Unseeded = !(_s1Seed && _s1Seed.sceneOne) && !_s1Asg;
+          if (_s1Unseeded && /no authoritative stage/.test(String(_stage.fault || ''))) {
+            _plannerOwnedStage = true;
+            _s1IssuedRefs = _cpIssuedRefs(state);
+            var _s1Slug = function (x) { return String(x || '').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, ''); };
+            _stage = Object.assign({}, _stage, {
+              ok: true, plannerOwned: true, fault: null, source: 'planner-owned:pending', authoritative: false, pending: true,
+              setting: '', settingOwner: 'planner', settingSource: 'planner-pending', presenceOwner: 'planner', environmentOwner: 'planner',
+              onStage: [{ id: 'pc:' + _s1Slug(_stage.pcName), label: _stage.pcName, kind: 'pc', presence: 'IN_PERSON',
+                          aliases: _stage.pcAliases || [_stage.pcName], source: 'identity:' + (_stage.pcNameSource || 'unresolved') }],
+              offStage: [], eventFacts: [], groundText: ''
+            });
+            try { if (typeof _indexAliases === 'function') _indexAliases(_stage); } catch (_) {}
+            try { console.log('[SCENE1:STAGE:PLANNER-OWNED] unseeded Scene 1 — the opening planner must return scene_mission + stage_contract over ' + _s1IssuedRefs.length + ' issued ref(s): [' + _s1IssuedRefs.join(', ') + ']'); } catch (_) {}
+          }
+        }
         if (!_stage || !_stage.ok) {
           // NO SILENT FALLBACK. Reverting to the old heuristic here would restore exactly the
           // input-starved planner that invented "gallery hallway" — an unresolvable stage is a
@@ -263531,6 +264114,7 @@ Generate the synopsis now. The protagonist MUST be named ${pKernel}. Depict the 
         if (_cpAssignable.length || (_cpSel && _cpSel.declined && _cpSel.declined.length)) {
           _cpCandidateBlock = '\n\nCHARACTER+ CANDIDATES (' + _cpAssignable.length + ') — who this scene could honestly reveal.\n'
             + 'PHYSICAL PRESENCE IS NOT THE QUALIFICATION. A person can be revealed by how they are remembered, reported or awaited. What disqualifies someone is having no opportunity in this scene at all.\n'
+            + 'IF YOUR opening_beat SHOWS ONE OF THESE PEOPLE DOING SOMETHING, declare them as opening_actor_id and set their character_plus "visible_action" to the literal FROM_OPENING_BEAT. The opening act IS their first appearance; it is derived from the opening by us and is never written twice.\n'
             + _cpAssignable.map(function (c) {
                 var recs = _cpFacetsById[c.id] || [];
                 var head = '  • ' + c.label + '\n'
@@ -263580,7 +264164,16 @@ Generate the synopsis now. The protagonist MUST be named ${pKernel}. Depict the 
             + _cpFacts.map(function (f) { return '  ' + f.evidence_id + ': ' + f.text + '\n'; }).join('')
             + (_cpObjects.length
                 ? 'THE OBJECTS THIS SCENE CONTAINS. A behaviour may handle, touch or use these and NOTHING else:\n'
-                  + _cpObjects.map(function (o) { return '  ' + o.object_id + ': ' + o.name + '\n'; }).join('')
+                  + _cpObjects.map(function (o) {
+                      // contract v2: ownership is rendered from the seed, never re-typed by the planner
+                      var _own = '';
+                      try {
+                        if (o.owner_ref === 'all') _own = ' (everyone\'s)';
+                        else if (o.owner_ref === 'pc') { var _pcO = (_stage.onStage || []).filter(function (r) { return r.kind === 'pc'; })[0]; if (_pcO) _own = ' (owner: ' + _pcO.label + ')'; }
+                        else if (o.owner_ref) { var _rO = (_stage.onStage || []).filter(function (r) { return r.id === o.owner_ref || r.roleInstanceId === o.owner_ref; })[0]; if (_rO) _own = ' (owner: ' + _rO.label + ')'; }
+                      } catch (_) {}
+                      return '  ' + o.object_id + ': ' + o.name + _own + '\n';
+                    }).join('')
                 : '')
             + (_cpPeople.length
                 ? 'THE PEOPLE PHYSICALLY PRESENT, by id:\n'
@@ -263590,7 +264183,9 @@ Generate the synopsis now. The protagonist MUST be named ${pKernel}. Depict the 
             + 'FIELD OBLIGATIONS:\n'
             + '  · "expression_mode" — how the truth surfaces: ' + CP_EXPRESSION_MODES.join(' | ') + '.\n'
             + '  · "visible_action" — ONE act a camera records. It must engage a person, a choice, an obligation, an object or an opportunity this scene already contains. Ambience and an isolated fidget are not acts: a body settling, a floor creaking, hands moving for their own sake reveal nothing. The one exception is LEAK, and only when the bridge names the controlled impulse that escaped.\n'
-            + '  · "revelation_bridge" — PLANNING ONLY, never shown to the author: state how that act reveals THIS truth under THIS condition. If you cannot write the bridge without restating the truth, the act does not reveal it — choose a different act.\n'
+            + '  · "enacts_evidence_id" — EXACTLY one id from the option\'s "established by" list: the fact this act is your character\'s part of. The act must put that condition on the page itself; if no listed fact is something this person does or answers to, choose a different option.\n'
+            + '  · "visible_action" for the opening_actor_id — the literal FROM_OPENING_BEAT and nothing else: their act is the opening beat, written once.\n'
+            + '  · "revelation_bridge" — PLANNING ONLY, never shown to the author, never a gate: state how that act reveals THIS truth under THIS condition. If you cannot write the bridge without restating the truth, the act does not reveal it — choose a different act.\n'
             + '  · "pc_lens_operation" — one operation from the reading lens below.\n'
             + '  · "pc_interpretation" — what the protagonist CONCLUDES about the observed person: their motive, defence, need, value or contradiction. Name that person. A sensation in the protagonist\'s own body, or how the moment made her feel, is not a conclusion about anybody and does not satisfy this field.\n'
             + 'CITE, DO NOT RESTATE. The behaviour you assign must be an occasion on which the cited truth would SHOW — an act a camera could record, from which that truth could be inferred. It is not a description of the truth and not an explanation of it.\n'
@@ -263610,6 +264205,28 @@ Generate the synopsis now. The protagonist MUST be named ${pKernel}. Depict the 
             + '  · REPORTED — a behaviour attributed to them through dialogue, rumour or report, and what she reads in it. Someone in the scene says it; the person does not appear.\n'
             + '  · ANTICIPATED — her expectation of a distinctive behaviour of theirs, marked as expectation and not as present fact ("he will have been standing there an hour before anyone else").\n';
         }
+
+        // ── FUSION v3 (Roman 2026-09-07; planner-owned literary Scene 1 ONLY) ── the issued, provenance-tagged FACT
+        // BASE for environment_pressure.grounds, and the two NO-OFFER rules: no validated lens operation, or no
+        // admissible NON-environment grounding fact → no fusion is offered (the template omits the member and the
+        // validator requires its absence). Free spine prose is never a fact. env:*/stage:* ids are created by the
+        // reply itself and are only admissible once E+ / the stage contract have been validated.
+        var _v3Fusion = null;
+        try {
+          if (_plannerOwnedStage) {
+            var _v3g = []; var _v3pk = state.picks || {};
+            [['pick:world', state.world || _v3pk.world], ['pick:worldSubtype', state.worldSubtype || _v3pk.worldSubtype], ['pick:flavor', state.flavor || _v3pk.flavor],
+             ['pick:dynamic', state.dynamic || _v3pk.dynamic], ['pick:tone', _v3pk.tone], ['pick:intensity', state.intensity || _v3pk.intensity], ['pick:pov', state.pov || _v3pk.pov],
+             ['pick:pcName', pcName], ['pick:liName', state.loveInterestName || state.partnerName], ['pick:mask', _cpPcMask], ['pick:archetype', state.archetype && state.archetype.primary]]
+              .forEach(function (kv) { if (kv[1]) _v3g.push({ id: kv[0], text: String(kv[1]), provenance: 'reader' }); });
+            (_s1IssuedRefs || []).forEach(function (r) { _v3g.push({ id: 'stage:participant:' + r, text: String(r), provenance: 'issued_ref' }); });
+            (((state._committedState || {}).facts) || []).forEach(function (f, i) { _v3g.push({ id: 'ledger:fact:' + (i + 1), text: String((f && f.text) || f), provenance: 'ledger' }); });
+            var _v3why = !_cpLensOps.length ? 'no validated lens operation is issued for this mask' : (!_v3g.length ? 'no admissible non-environment grounding fact is issued' : null);
+            _v3Fusion = { grounds: _v3g, offered: !_v3why, whyNot: _v3why };
+            try { state._scene1FusionV3 = { offered: !_v3why, whyNot: _v3why, groundIds: _v3g.map(function (g) { return g.id; }) }; } catch (_) {}
+            console.log('[SCENE1:FUSION:V3] ' + (!_v3why ? ('offered · lens ops ' + _cpLensOps.length + ' · grounds [' + _v3g.map(function (g) { return g.id; }).join(', ') + ']') : ('NOT offered — ' + _v3why)));
+          }
+        } catch (_v3e) { _v3Fusion = null; try { console.warn('[SCENE1:FUSION:V3] fact base failed: ' + (_v3e && _v3e.message)); } catch (_) {} }
 
         var usr =
           'STORY CONTEXT\n' +
@@ -263841,6 +264458,11 @@ Generate the synopsis now. The protagonist MUST be named ${pKernel}. Depict the 
           '  "pressure_source_type": "<the KIND of pressure this scene actually runs on: emotional | relational | social | physical | atmospheric | erotic | moral | survival | procedural | object | institutional. Choose the TRUE source of the tension — most emotional/relational/canon openings are NOT object/procedural. A scene is playable when it has a clear PRESSURE SOURCE, which need not be an object.>",\n' +
           '  "pressure_source": "<one clear sentence naming the scene\'s ACTUAL pressure — the ache, the person, the danger, the moral bind, the social exposure, the longing. This is what the opening and the decision act on.' + (_soloStage ? ' SOLO SCENE — THE PRESSURE MAY NOT BE ANOTHER PERSON. No one else is here, named or unnamed. It must be the PLACE and what it is doing to her, a PROCEDURE or RITE she can get wrong, an OBJECT in her hands, a DECISION only she can pay for, something she must CONCEAL or RESIST, her own body under strain, or a DEADLINE that is a fact of the world (a tide, a bell, a fire, a closing door).' : '') + (_ot === 'HOT_CRISIS' ? (_soloStage ? ' HOT OPENING (REQUIRED PHRASING) — SOLO: write this as an EVENT UNDERWAY IN THE ROOM RIGHT NOW, present, active, mid-motion, but driven by something that is NOT a person: the place, the object, the procedure, her own body, or a clock the world is running. It is a VERB IN PROGRESS, not a condition (e.g. \\"the wax is cooling and the seal will not take a second impression\\", \\"the tide is already turning and the manifest is still one crate short\\", \\"her hands will not hold steady long enough to finish the mark\\", \\"the lamp is guttering and the rite has to be finished in the light\\"). NEVER a settled state, mood or aftermath. AND THE THING IN MOTION IS NEVER A PERSON - no one else is in this scene to speak, be heard, arrive, act, or be waited on, and an unnamed role is still a person. If your sentence needs a second body to make sense, it is the wrong sentence for this opening.' : ' HOT OPENING (REQUIRED PHRASING): write this as an EVENT UNDERWAY IN THE ROOM RIGHT NOW — present, active, mid-motion: someone is doing or saying it AT THIS MOMENT, a force is breaking over her AS THE SCENE OPENS (e.g. \\"a rival is denouncing her to the room, mid-sentence\\", \\"the accuser is in the doorway, still speaking\\", \\"the summons is being read aloud as she walks in\\"). It is a VERB IN PROGRESS, not a condition. NEVER a settled state, mood, or aftermath — NOT \\"she feels the weight of shame\\", NOT \\"the scandal hangs over her\\", NOT \\"the news came at dawn\\", NOT \\"her name is embroiled in\\". A state/aftermath phrasing here makes the author write reflection and kills the hot open.') : '') + '>",\n' +
           '  "hook_object": "<a concrete object ONLY when pressure_source_type is object | procedural | institutional (then pick ONE item from the list above); otherwise null. Do NOT invent a letter / document / notice / summons / token / contract for an emotional / relational / atmospheric / erotic / moral / survival scene — an object there is the failure this field is guarding against.>",\n' +
+          // ── CONTRACT v2 (Roman 2026-09-05): THE OPENING ACTOR IS DECLARED, AND THEIR C+ ACT IS DERIVED ──
+          // Twelve real plans in a row gave the opening character one act in opening_beat and a
+          // different one in character_plus, with a sentence asking them not to. The field below
+          // makes the second act inexpressible: the actor is named, and their act is the opening.
+          '  "opening_actor_id": "<the person_id (from THE PEOPLE PHYSICALLY PRESENT list) of the ONE person the opening beat shows DOING something, or null if it stages nobody in particular. If that person is a CHARACTER+ candidate, their character_plus entry MUST carry "visible_action": "FROM_OPENING_BEAT" — the opening act IS their first appearance, and it is written once, here>",\n' +
           '  "opening_beat": "<the concrete opening situation, max 25 words. If hook_object is non-null, name it with a number / name / quoted line. If null, open on the PRESSURE SOURCE in motion — ' + (_soloStage ? 'the place acting on her, an ache, a charged silence, a procedure underway, her body under strain (NOT another person: no one else is here)' : 'a person present, an ache, a confrontation, a charged silence, a body under strain') + ' — NOT an invented object.' + (_ot === 'HOT_CRISIS' ? (_soloStage ? ' HOT OPENING — SOLO: the situation is ALREADY HAPPENING when the reader arrives, but it is not a person happening. The wax is already cooling, the water is already over the sill, the rite is already half-said, her hands are already shaking. Start INSIDE the event. The thing already in motion is the place, the object, the procedure or her own body - never another person speaking, touching her, or turning on her, because there is no one else here and no hand but hers.' : ' HOT OPENING: the situation is ALREADY HAPPENING when the reader arrives — a line is mid-air, a hand is already on her, the room has already turned on her. Start INSIDE the event, not before it and not in its aftermath. No scene-setting, no her-reflecting-on-what-happened.') : '') + '>",\n' +
           '  "rising_beats": ["<short beat>", "<short beat>"],\n' +
           '  "decision_beat": "<the final decision, max 25 words, a question or demand that ACTS ON THE PRESSURE SOURCE (an object only if one exists). For emotional/relational pressure use: confess vs bury · approach vs withdraw · name the wound vs hide it · yield to desire vs hold control · defy vs endure · speak truth vs keep the mask · stay vs flee. e.g. Romeo → \\"Speak the name that wounds me, or bury it deeper?\\", never \\"Open the letter?\\".>",\n' +
@@ -263855,9 +264477,16 @@ Generate the synopsis now. The protagonist MUST be named ${pKernel}. Depict the 
           // example and the planner returned all three of its nouns VERBATIM — anchoring, not
           // coincidence, and a prose run built on copied objects would look successful while
           // testing nothing. Placeholders now name a CATEGORY to fill, never an object to reuse.
-          '  "environment_elements": ["<SCENE-SPECIFIC PHYSICAL FIXTURE>", "<SCENE-SPECIFIC MATERIAL, SURFACE, BOUNDARY, LIGHT, OR WEATHER ELEMENT>"],\n' +
-          '  (Replace EVERY placeholder with a concrete noun phrase drawn from THIS scene. Never copy the angle-bracket text, and never return a category word ("fixture", "material", "surface", "element") as if it were a thing. Do not reuse any object named anywhere in these instructions. Each element must be physically available in the setting you chose, distinct from the others, and something prose can actually handle.)\n' +
-          '  (environment_elements is REQUIRED: at least TWO concrete, distinct physical things. environment_plus.target MUST be one of them, or the opening_setting itself — E+ may not introduce an object you did not list here. If the scene\'s location is already fixed for you above, every element must be something that authoritative description actually contains.)\n' +
+          // ── CONTRACT v2 (Roman 2026-09-05): ON A SEED-OWNED STAGE, ELEMENTS ARE CHOSEN BY ID ──
+          // Eight of twelve real plans typed weather, marks or fluids into a free-text inventory
+          // that the seed does not contain. An id cannot carry a breeze. What may vary — a visible
+          // trace of the seed-named thing — has its own optional field and its own check.
+          (((_stage && _stage.ok && _stage.environmentOwner !== 'planner' && _cpObjects.length > 0))
+            ? '  "environment_element_ids": ["<2 or 3 DISTINCT object_ids from THE OBJECTS THIS SCENE CONTAINS (below) — the physical things this opening handles; ids only, never names>"],\n' +
+              '  (environment_plus.target_object_id MUST be one of your environment_element_ids. You do not name or describe these things — the record names them; you choose which ones the scene is about. The ONE trace you may write is environment_plus.beat, about the E+ thing alone.)\n'
+            : '  "environment_elements": ["<SCENE-SPECIFIC PHYSICAL FIXTURE>", "<SCENE-SPECIFIC MATERIAL, SURFACE, BOUNDARY, LIGHT, OR WEATHER ELEMENT>"],\n' +
+              '  (Replace EVERY placeholder with a concrete noun phrase drawn from THIS scene. Never copy the angle-bracket text, and never return a category word ("fixture", "material", "surface", "element") as if it were a thing. Do not reuse any object named anywhere in these instructions. Each element must be physically available in the setting you chose, distinct from the others, and something prose can actually handle.)\n' +
+              '  (environment_elements is REQUIRED: at least TWO concrete, distinct physical things. environment_plus.target MUST be one of them, or the opening_setting itself — E+ may not introduce an object you did not list here.)\n') +
           // 2026-06-03 (Roman): micro_decision field REMOVED from scaffold
           // JSON schema. Library override at ~app.js:189569 supplies the
           // canonical question unconditionally; Haiku output was rejected
@@ -263971,7 +264600,7 @@ Generate the synopsis now. The protagonist MUST be named ${pKernel}. Depict the 
           // are two, and the second one is the point.
           // Stated as a SHAPE and a set of TESTS, never as worked prose: an example here comes
           // back paraphrased, measured three times now.
-          '      { "character": "<EXACTLY one of: ' + (_cpAllowedEnum || '(nobody — this scene offers no Character+ candidate)') + ' — from the CHARACTER+ CANDIDATES list, which is NOT the same list as staged_characters>", "mode": "<one of THAT person\'s permitted modes: IN_PERSON | RECALLED | REPORTED | ANTICIPATED>", "option_id": "<EXACTLY one option_id from THAT person\'s GROUNDED OPTIONS list — this single id fixes the truth, the condition and the evidence>", "expression_mode": "<one of: ' + CP_EXPRESSION_MODES.join(' | ') + '>", "first_mention": true, "visible_action": "<ONE act a camera records, engaging something this scene already contains, delivered as the mode requires>", "behavior_object_ids": ["<object_ids the act touches or uses; [] if it touches nothing>"], "behavior_person_ids": ["<person_ids it involves besides the recipient; [] if none>"], "revelation_bridge": "<PLANNING ONLY — how that act reveals THIS truth under THIS condition. Never reaches the author.>", "pc_lens_operation": "<EXACTLY one operation from the CHARACTER+ READING LENS list below>", "pc_interpretation": "<what she concludes about THAT person — motive, defence, need, value or contradiction. Name them.>" }\n' +
+          '      { "character": "<EXACTLY one of: ' + (_cpAllowedEnum || '(nobody — this scene offers no Character+ candidate)') + ' — from the CHARACTER+ CANDIDATES list, which is NOT the same list as staged_characters>", "mode": "<one of THAT person\'s permitted modes: IN_PERSON | RECALLED | REPORTED | ANTICIPATED>", "option_id": "<EXACTLY one option_id from THAT person\'s GROUNDED OPTIONS list — this single id fixes the truth, the condition and the evidence>", "expression_mode": "<one of: ' + CP_EXPRESSION_MODES.join(' | ') + '>", "first_mention": true, "visible_action": "<ONE act a camera records, engaging something this scene already contains, delivered as the mode requires — or the literal FROM_OPENING_BEAT when this person is the opening_actor_id>", "enacts_evidence_id": "<EXACTLY one evidence id from THIS option\'s established-by list — the fact this act is your character\'s part of>", "behavior_object_ids": ["<object_ids the act touches or uses; [] if it touches nothing>"], "behavior_person_ids": ["<person_ids it involves besides the recipient; [] if none>"], "revelation_bridge": "<PLANNING ONLY — how that act reveals THIS truth under THIS condition. Never reaches the author.>", "pc_lens_operation": "<EXACTLY one operation from the CHARACTER+ READING LENS list below>", "pc_interpretation": "<what she concludes about THAT person — motive, defence, need, value or contradiction. Name them.>" }\n' +
           '  ("behavior" is the FLOOR: an observable action, a sensory selection (what they look at / away from), how they handle speech (answer, delay, cut in, go quiet), posture, timing, or a material interaction with something in this scene. TEST: could a camera record it, or could you write it as one sentence of action? If not, rewrite it.\n' +
           '     ✗ "a woman clinging to the illusion of worthiness"  ✗ "an authority whose judgment will decide her fate"  ✗ "a name that carries more weight than it should" — these are conclusions ABOUT people; no camera can see them.)\n' +
           // ── TWO JOBS, TWO FIELDS (Roman 2026-08-27, after the first paid planner probe) ──
@@ -264015,7 +264644,14 @@ Generate the synopsis now. The protagonist MUST be named ${pKernel}. Depict the 
           // another world would not fix it — it would still hand over pre-written prose, and leak
           // an alien setting besides. The field states its SHAPE and its tests; the planner
           // supplies every word of the content.
-          '    "environment_plus": { "target": "<DECLARED ENVIRONMENT TARGET>", "axis": "<ALLOWED AXIS: history | use | damage | ownership | repair | ritual | absence>", "beat": "<TARGET + PHYSICAL CHANGE CAUSED BY THE AXIS + MATERIAL TRACE VISIBLE IN THIS SCENE>" },\n' +
+          // ── MEMBER ORDER FOLLOWS THE DEPENDENCY (Roman 2026-09-09) ── on the planner-owned v3 path the structured CONTACT is
+          // asked for FIRST and environment_plus follows WITHOUT a target field: the backend derives the Environment+ target from the
+          // accepted contact (all three structured live replies had filled the skeleton in template order — target first, contact
+          // second — and the 11:31 reply contradicted itself). Legacy / v2 / no-fusion paths keep the original order and fields.
+          (function () {
+            var _epMember = (          (((_stage && _stage.ok && _stage.environmentOwner !== 'planner' && _cpObjects.length > 0))
+            ? '    "environment_plus": { "target_object_id": "<one of YOUR environment_element_ids — the thing E+ is about, by id, never by name>", "axis": "<ALLOWED AXIS: history | use | damage | ownership | repair | ritual | absence>", "beat": "<write the literal token {TARGET} exactly once where the thing goes — we replace it with the record\'s name — then the PHYSICAL CHANGE CAUSED BY THE AXIS + MATERIAL TRACE VISIBLE IN THIS SCENE. Do not name the thing yourself and do not name any OTHER object in this beat>" },\n'
+            : '    "environment_plus": { "target": "<DECLARED ENVIRONMENT TARGET>", "axis": "<ALLOWED AXIS: history | use | damage | ownership | repair | ritual | absence>", "beat": "<TARGET + PHYSICAL CHANGE CAUSED BY THE AXIS + MATERIAL TRACE VISIBLE IN THIS SCENE>" },\n') +
           '  (environment_plus is REQUIRED every scene — what this thing has BECOME because of what happened to it. Never symbolism; a spoon is usually a spoon.\n' +
           '   "target" — a specific object or place already present in this opening; prefer the hook object or the opening setting.\n' +
           '   "beat" is REQUIRED and is the whole point of the axis. It MUST:\n' +
@@ -264023,7 +264659,8 @@ Generate the synopsis now. The protagonist MUST be named ${pKernel}. Depict the 
           '     · show a PERSISTENT PHYSICAL ALTERATION or USE-PATTERN caused by that axis — what the history / use / damage / ownership / repair / ritual / absence has MADE of it;\n' +
           '     · be PERCEPTIBLE IN THIS SCENE — findable by a hand or an eye, here, now.\n' +
           '   It MUST NOT be: neutral appearance, lighting, weather, atmosphere or mood; a statement of where the thing is; a prediction, a memory, or something that happens later in the scene.\n' +
-          '   Replace EVERY angle-bracket placeholder with your own words. Do not return the bracket text. Do not build the beat out of the instruction words themselves — "target", "physical change", "material trace", "axis" are CATEGORY NAMES, not content, and a beat made of them is empty.)\n' +
+          '   Replace EVERY angle-bracket placeholder with your own words. Do not return the bracket text. Do not build the beat out of the instruction words themselves — "target", "physical change", "material trace", "axis" are CATEGORY NAMES, not content, and a beat made of them is empty.)\n'
+            );
           // ── PC OPENING FUSION (Roman 2026-08-26) — SUPERSEDES the independent Scene-1 fusion ──
           // The paid draft landed the PC's C+ verbatim and dropped BOTH the E+ axis and the fusion.
           // Three separate obligations competing for one opening is why. They are now ONE: the PC's
@@ -264031,21 +264668,74 @@ Generate the synopsis now. The protagonist MUST be named ${pKernel}. Depict the 
           // The worked example that stood here is gone for the same reason as the E+ one: round 11
           // returned its syntax AND its closing idea ("my rehearsed steadiness feels newly
           // counterfeit") almost intact. Shape-only here too.
+          // ── FUSION v3 TEMPLATE MEMBER (planner-owned literary Scene 1 only; Roman 2026-09-07) ──
+            var _fusionMember =           ((_plannerOwnedStage && _v3Fusion)
+            ? (_v3Fusion.offered
+              ? ('    "pc_opening_fusion": {\n'
+                + '      "character": "' + (_pcLabelForFusion || 'the protagonist') + '",\n'
+                + '      "placement": "PC_FIRST_EMBODIED_BEAT",\n'
+                + '      "contact": { "verb": "<EXACTLY one of the CONTACT TYPES below, verbatim>", "object": "<the EXACT name of ONE of your environment_elements whose affordance PERMITS that verb (see AFFORDANCE TABLE) — never AMBIENT, never a placeholder>" },\n'
+                + '      "action": "<OPTIONAL one clause of wording around that contact, for the author; it may name {ENV_TARGET} once or not at all; it does NOT establish contact — contact.object does>",\n'
+                + '      "pc_lens_operation": "<EXACTLY one operation from the CHARACTER+ READING LENS list above, verbatim>",\n'
+                + '      "character_revelation": "<one sentence: what this act shows about ' + (_pcLabelForFusion || 'the protagonist') + ' through that operation — a judgment of the protagonist, not the operation\'s gloss re-worded, not a description of the room>",\n'
+                + '      "environment_pressure": { "grounds": ["env:axis", "<one or more further ids from the FACT BASE below>"], "text": "<one sentence that states HOW the environment thing, in its E+ condition, bears on ' + (_pcLabelForFusion || 'the protagonist') + ' NOW — what it costs, forbids, exposes or demands of ' + (_pcLabelForFusion || 'the protagonist') + '. It MUST name ' + (_pcLabelForFusion || 'the protagonist') + ' (or use ' + (_pcLabelForFusion || 'the protagonist') + '\'s own POV pronoun: in first person, I / me / my). A sentence that only describes the setting or the thing is INVALID. Use ONLY the grounded facts; no {ENV_TARGET}; do not repeat the target\'s name>" }\n'
+                + '    }\n'
+                + '  (pc_opening_fusion IS ' + (_pcLabelForFusion || 'the protagonist') + '\'s entire first appearance: the action, what it reveals through the lens, and the environment as it bears on the protagonist. The BACKEND owns environment_target and environment_axis — do NOT return them. The AUTHOR writes the finished beat from these parts — do NOT return a "beat" or a "character_angle". Both revelation and pressure must concern ' + (_pcLabelForFusion || 'the protagonist') + ' by name or pronoun.\n'
+                + '   FACT BASE — the ONLY ids "grounds" may cite (free spine prose such as pc_career, pressure_source, pc_wound_anchor or reader_state is NOT a fact and may not be cited):\n'
+                + _v3Fusion.grounds.map(function (g) { return '    · ' + g.id + ' = ' + String(g.text).slice(0, 60) + '  [' + g.provenance + ']\n'; }).join('')
+                + '    · env:target, env:axis = the Environment+ target (= your contact.object on this path) and your environment_plus.axis, once validated  [validated E+]\n'
+                + '    · stage:setting, stage:element:<n>, stage:fact:<n> = your own opening_setting / environment_elements / stage_contract.event_facts, once ACCEPTED (n is 1-based)  [planner_stage]\n'
+                + '   "grounds" MUST include env:axis and at least one id that is not env:*.\n'
+                + '   CONTACT TYPES (contact.verb must be exactly one of these): ' + _V3_CONTACT_TYPES.join(', ') + '.\n'
+                + '   AFFORDANCE TABLE (which verbs each affordance permits): ' + Object.keys(_V3_AFFORDANCE_VERBS).map(function (k) { return k + ' → ' + (_V3_AFFORDANCE_VERBS[k].length ? _V3_AFFORDANCE_VERBS[k].join('/') : 'none — cannot be contacted'); }).join('; ') + '.\n'
+                + '   DEPENDENCY: choose the CONTACT first — one issued element whose affordance permits the verb. environment_plus (BELOW) has NO "target" field on this path: the Environment+ thing IS contact.object and we derive the target from your accepted contact; its "beat" must be about that same element. Contact with an unlisted object (an apron, a bench you did not list) or with an AMBIENT element is rejected by name.)\n')
+              : ('  (NO pc_opening_fusion THIS SCENE — ' + _v3Fusion.whyNot + '. Do NOT return the member; the protagonist\'s first appearance is written by the author without a fusion assignment.)\n'))
+            : (
           '    "pc_opening_fusion": {\n' +
           '      "character": "' + (_pcLabelForFusion || 'the protagonist') + '",\n' +
           '      "placement": "PC_FIRST_EMBODIED_BEAT",\n' +
           '      "character_angle": "<what the BEAT below reveals about her — a READING of that one beat, not another thing she does. Do not stage a second action here and do not name a second object: the beat is the only thing she does in this assignment. This is her ONLY Character+ angle; she has no character_plus entry.>",\n' +
-          '      "environment_target": "<the SAME string as environment_plus.target, verbatim>",\n' +
-          '      "environment_axis": "<the SAME value as environment_plus.axis>",\n' +
-          '      "beat": "<ONE concrete beat, at her FIRST embodied action or sensory response, in which the environment REVEALS her — through contact, sensory alignment, or juxtaposition. The axis must be materially legible in it.>"\n' +
+          // contract v2 (2026-09-05): the fusion has NO target and NO axis of its own — both are the
+          // E+ target and axis by definition and are derived after parsing. Four real plans pointed
+          // the fusion at a second object while being told to repeat the first "verbatim".
+          (((_stage && _stage.ok && _stage.environmentOwner !== 'planner' && _cpObjects.length > 0))
+            ? '      "beat": "<ONE concrete beat, at her FIRST embodied action or sensory response, in which the ENVIRONMENT+ THING reveals her — through contact, sensory alignment, or juxtaposition. Write the literal token {TARGET} exactly once where that thing goes; we replace it with the record\'s name. Do not name it yourself and do not name any OTHER object in this beat. The E+ axis must be materially legible in it. The fusion has no target or axis of its own: it is E+\'s.>"\n'
+            : '      "beat": "<ONE concrete beat, at her FIRST embodied action or sensory response, in which the ENVIRONMENT+ THING ABOVE reveals her — through contact, sensory alignment, or juxtaposition. The E+ axis must be materially legible in it. The fusion has no target or axis of its own: it is E+\'s.>"\n') +
           '    }\n' +
           '  (pc_opening_fusion IS the protagonist\'s entire first appearance — her Character+ angle, her staged anchor and the fusion, in one place. Do NOT write her a second opening action anywhere else in this object.\n' +
           '   PLACEMENT: it lands at her FIRST EMBODIED ACTION OR SENSORY RESPONSE — not the opening sentence, not the first time a name appears. In first person there is no name to wait for.\n' +
-          '   The environment_target must be physically or perceptually AVAILABLE at that moment; do not assign a thing she is nowhere near.\n' +
+          '   The E+ thing must be physically or perceptually AVAILABLE at that moment; do not choose an E+ target she is nowhere near.\n' +
           '   TOUCH IS OPTIONAL. Contact, sensory alignment, or contrast all work — what is required is that the thing and the person read each other.\n' +
           '   ✗ naming the target; ✗ decorative light on it; ✗ an interior diagnosis of her; ✗ an interaction scheduled for later in the scene. Any of those is a miss.\n' +
-          '   Replace every angle-bracket placeholder with your own words, and do not build the beat out of the instruction words.)\n' +
-'  }\n' +
+          '   Replace every angle-bracket placeholder with your own words, and do not build the beat out of the instruction words.)\n'
+          ));
+            var _v3First = !!(_plannerOwnedStage && _v3Fusion && _v3Fusion.offered);
+            if (!_v3First) return _epMember + _fusionMember;
+            var _epNoTarget = '    "environment_plus": { "axis": "<ALLOWED AXIS: history | use | damage | ownership | repair | ritual | absence>", "beat": "<the element you named in contact.object ABOVE + the PHYSICAL CHANGE CAUSED BY THE AXIS + the MATERIAL TRACE VISIBLE IN THIS SCENE>" }\n' +
+              '  (environment_plus is REQUIRED every scene — what this thing has BECOME because of what happened to it. On this path it has NO "target" field: the Environment+ thing IS the element you named in contact.object; we derive the target from your accepted contact. Do not add a target of your own. Never symbolism; a spoon is usually a spoon.\n' +
+              '   "beat" is REQUIRED and is the whole point of the axis. It MUST:\n' +
+          '     · name the exact target it belongs to;\n' +
+          '     · show a PERSISTENT PHYSICAL ALTERATION or USE-PATTERN caused by that axis — what the history / use / damage / ownership / repair / ritual / absence has MADE of it;\n' +
+          '     · be PERCEPTIBLE IN THIS SCENE — findable by a hand or an eye, here, now.\n' +
+          '   It MUST NOT be: neutral appearance, lighting, weather, atmosphere or mood; a statement of where the thing is; a prediction, a memory, or something that happens later in the scene.\n' +
+          '   Replace EVERY angle-bracket placeholder with your own words. Do not return the bracket text. Do not build the beat out of the instruction words themselves — "target", "physical change", "material trace", "axis" are CATEGORY NAMES, not content, and a beat made of them is empty.)\n';
+            return _fusionMember.replace(/    \}\n(  \(pc_opening_fusion IS )/, '    },\n$1') + _epNoTarget;
+          })() +
+'  }' +
+          // ── STAGE_CONTRACT AS A TEMPLATE MEMBER (Roman 2026-09-07) ── planner-owned mode only. The real Grok
+          // planner omitted an APPENDED "return a stage_contract object" demand (21:01 run); the requirement now
+          // lives HERE, in the response template the model fills, as a required top-level sibling of
+          // "opening_spine" and "scene_skeleton" — the exact shape _cpIngestGeneratedStage / _cpNormalizeStage
+          // accept. The rules and ISSUED REFS follow the JSON (rules-only form of the shared block). ONE source
+          // of truth: no other place demands the object.
+          (_plannerOwnedStage ? (',\n  "stage_contract": {\n'
+            + '    "v": 1,\n'
+            + '    "participants": [ { "ref": "<COPIED VERBATIM from ISSUED REFS below>", "presence": "IN_PERSON|ANTICIPATED|RECALLED|REPORTED" } ],\n'
+            + '    "event_facts": [ { "text": "<one clause: what OCCURS in this scene>", "participants": [ { "ref": "<issued ref>", "role": "actor|subject|speaker|target" } ] } ],\n'
+            + '    "elements": [ { "name": "<EXACT string of one of your environment_elements>", "affordance": "GRASPABLE|SURFACE|PORTAL|FIXTURE|AMBIENT" } ]\n'
+            + '  }\n'
+            + '  ("elements" is REQUIRED and must list EVERY entry of opening_spine.environment_elements, each with exactly one affordance from the closed set: GRASPABLE = a hand can take hold of it and move it; SURFACE = a body can bear on it; PORTAL = it opens/closes or is passed through; FIXTURE = mounted or built in, a body can bear against it but not carry it; AMBIENT = light, sound, smell, weather, air — perceived, never contacted.)\n'
+            + '  (stage_contract is a REQUIRED top-level member of this JSON — a sibling of "opening_spine" and "scene_skeleton", at exactly this position, with all three subfields. A reply without it is INVALID and is rejected whole; no other field can stand in for it. Its rules and the complete ISSUED REFS follow this JSON.)\n') : '\n') +
           '}';
 
         // 2026-05-30 (Roman, urgent): a single Haiku JSON parse failure was
@@ -264174,6 +264864,12 @@ Generate the synopsis now. The protagonist MUST be named ${pKernel}. Depict the 
           console.log('[SCENE1:PLANNER] eligible cast (' + _N_eligible + '): [' + _eligibleCast.join(', ') + ']'
             + ' · chars=' + _budgetChars + ' → max_tokens=' + _SCAFFOLD_MAX_TOKENS
             + ' (N_staged_max = N_eligible; staged_characters is an OUTPUT and never sizes the request)');
+        if (_plannerOwnedStage) {
+          usr += _cpStageContractBlock(_s1IssuedRefs, { rulesOnly: true })   // the OBJECT is a template member above; this is rules + ISSUED REFS only
+            + '\nSCENE MISSION (REQUIRED in this mode): no event has been authored for this opening. Your scene_mission IS the event —\n'
+            + 'one non-empty sentence — and your stage_contract IS the room. Anyone IN_PERSON in stage_contract must also appear in\n'
+            + 'staged_characters, and nobody else may.\n';
+        }
         } catch (_) {}
 
         // ── ONE MERGED MISTRAL OPENING-PLANNING CALL (Roman 2026-08-25) ──
@@ -264206,16 +264902,28 @@ Generate the synopsis now. The protagonist MUST be named ${pKernel}. Depict the 
           } catch (_) {}
           return null;
         };
+        // ── ROUTE: DIRECT GROK (Roman 2026-09-07) ──
+        // The opening planner reserves 80,783-84,392 tokens (bytes + max_tokens) against the Mistral
+        // Small governor's 20,000 TPM allowance and is refused before dispatch, every world (measured
+        // 2026-09-06, `_scene1_planner_reserve.mjs`). Decision: direct Grok, ONE bounded transport
+        // retry (the block below, unchanged), honest terminal error + issue refund on exhaustion, and
+        // NO OpenAI fallback. The proxy role OPENING_PLANNER carries a single-model chain, so the
+        // proxy adds no hidden attempts: at most two upstream calls per story, both visible here.
+        // Effort 'none' is the FUNCTION-MATCHED setting — the shipped planner ran Mistral Small with
+        // reasoning_effort 'none', and every plan the validators were tuned on came from a
+        // non-reasoning pass. It also keeps the planner's cost fully bounded (no reasoning tokens);
+        // the capped real-call measurement records the served usage to confirm that.
+        var _SCENE1_PLANNER_ROUTE = { url: '/api/proxy', role: 'OPENING_PLANNER', model: 'grok-4.3', effort: 'none' };
         var _doScaffoldCall = async function (extraUsrSuffix) {
           _plannerAttempts++;
-          var _res = await fetch('/api/mistral-proxy', {
+          var _res = await fetch(_SCENE1_PLANNER_ROUTE.url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              role: 'PROMPT_PREPROCESSOR', model: 'mistral-small-latest',
+              role: _SCENE1_PLANNER_ROUTE.role, model: _SCENE1_PLANNER_ROUTE.model, preferredModel: _SCENE1_PLANNER_ROUTE.model,
               temperature: 0.4,
               max_tokens: _SCAFFOLD_MAX_TOKENS,
-              reasoning_effort: 'none',
+              reasoningEffort: _SCENE1_PLANNER_ROUTE.effort,
               response_format: { type: 'json_object' },
               messages: [
                 { role: 'system', content: sys },
@@ -264270,7 +264978,16 @@ Generate the synopsis now. The protagonist MUST be named ${pKernel}. Depict the 
             throw _htErr2;
           }
           var _data = await _res.json();
-          try { if (typeof _recordProxyTextCost === 'function') _recordProxyTextCost(_data, 'mistral-small-latest', 'setup'); } catch (_) {}
+          try { if (typeof _recordProxyTextCost === 'function') _recordProxyTextCost(_data, _SCENE1_PLANNER_ROUTE.model, 'setup'); } catch (_) {}
+          // USAGE RECORD for the capped measurement: the served model and the raw usage block
+          // (xAI reports reasoning under completion_tokens_details.reasoning_tokens).
+          try {
+            state._scene1PlannerUsage = {
+              route: _SCENE1_PLANNER_ROUTE.url, requested: _SCENE1_PLANNER_ROUTE.model, effort: _SCENE1_PLANNER_ROUTE.effort,
+              served: (_data && _data.model) || null, usage: (_data && _data.usage) || null, attempt: _plannerAttempts, at: Date.now()
+            };
+            console.log('[SCENE1:PLANNER:USAGE] ' + JSON.stringify(state._scene1PlannerUsage));
+          } catch (_) {}
           // RESPONSE SHAPE (Roman 2026-08-25 — found by the paid run). /api/chatgpt-proxy
           // NORMALISES to a top-level {content}; /api/mistral-proxy returns the raw Mistral
           // envelope ({choices:[{message:{content}}]}) plus _orchestration and never sets
@@ -264389,7 +265106,7 @@ Generate the synopsis now. The protagonist MUST be named ${pKernel}. Depict the 
         // into `plan` so every existing downstream read (including the live reader_state
         // contract) keeps working against the identical shape it always saw. A flat legacy
         // response still parses — the fallback is `plan` itself.
-        try { state._scene1SkeletonFatal = null; } catch (_) {}
+        try { state._scene1SkeletonFatal = null; state._scene1SoftFindings = []; } catch (_) {}
           try { _markInvocationFatal(null, state); } catch (_) {}
         var _envelope = _parse.plan || {};
         // ── ONE GENERALISED RECONCILIATION (Roman 2026-08-25) ──
@@ -264397,7 +265114,7 @@ Generate the synopsis now. The protagonist MUST be named ${pKernel}. Depict the 
         // dispatched, so it IS the contract rather than a copy of it.
         var _spineFields = _openingSpineDeclaredFields(usr);
         try { console.log('[SCENE1:ENVELOPE] spine contract declares ' + _spineFields.length + ' field(s)'); } catch (_) {}
-        var _rec = _reconcileOpeningEnvelope(_envelope, _spineFields);
+        var _rec = _reconcileOpeningEnvelope(_envelope, _spineFields, { allowTopLevel: _plannerOwnedStage ? ['stage_contract'] : [] });
         if (_rec.fault) {
           try { console.error('[SCENE1:ENVELOPE:FAULT] ' + _rec.fault); } catch (_) {}
           try { state._scene1SkeletonFatal = _rec.fault; } catch (_) {}
@@ -264418,6 +265135,88 @@ Generate the synopsis now. The protagonist MUST be named ${pKernel}. Depict the 
           } catch (_) {}
         }
         _envelope = _rec.envelope;
+        if (_plannerOwnedStage) {
+          // ── PLANNER-OWNED STAGE: ingest, then RE-RESOLVE the contract from committed state ──
+          var _poFail = function (msg) {
+            try { console.error('[SCENE1:STAGE:PLANNER-OWNED:FAULT] ' + msg); } catch (_) {}
+            try { state._scene1SkeletonFatal = msg; } catch (_) {}
+            try { _markInvocationFatal(msg, state); } catch (_) {}
+            try { _settleChainCommit(false, msg, state); } catch (_) {}
+            var _e = new Error(msg); _e._scene1SkeletonFatal = true; throw _e;
+          };
+          var _poMission = String((_envelope.opening_spine && _envelope.opening_spine.scene_mission) || '').trim();
+          if (!_poMission || ['null', 'none', 'n/a', 'skip'].indexOf(_poMission.toLowerCase()) !== -1) _poFail('planner returned no scene_mission for an unseeded opening — nothing authored the event');
+          // WHERE THE CONTRACT LANDED (live run 2026-09-07). The real model nested envelope members
+          // inside opening_spine (the normaliser lifted scene_skeleton); the reconciler lifts ONLY
+          // scene_skeleton, so a stage_contract nested in opening_spine or scene_skeleton was read as
+          // "absent" and the story failed closed. Accept the contract from its top-level home OR either
+          // nested home — LOCATION leniency only: the value moves intact, every validator still runs,
+          // and two copies with DIFFERENT values are a fault, never a choice.
+          var _poSc = null, _poScHome = null, _poScConflict = false;
+          [['top', _envelope], ['opening_spine', _envelope.opening_spine], ['scene_skeleton', _envelope.scene_skeleton]].forEach(function (pair) {
+            var home = pair[1];
+            if (!home || typeof home !== 'object' || !Object.prototype.hasOwnProperty.call(home, 'stage_contract')) return;
+            var v = home.stage_contract;
+            if (_poSc === null) { _poSc = v; _poScHome = pair[0]; }
+            else { var _same = false; try { _same = JSON.stringify(_poSc) === JSON.stringify(v); } catch (_) { _same = false; } if (!_same) _poScConflict = true; }
+            if (pair[0] !== 'top') delete home.stage_contract;
+          });
+          if (_poScConflict) _poFail('planner returned stage_contract in more than one place with DIFFERENT values — refusing to choose between two stages');
+          if (_poSc !== null && _poScHome !== 'top') {
+            _envelope.stage_contract = _poSc;
+            try { console.log('[SCENE1:ENVELOPE:NORMALISED] stage_contract (' + _poScHome + ' -> top level) — value moved intact'); } catch (_) {}
+          }
+          var _poIn = _cpIngestGeneratedStage(_envelope.stage_contract, _s1IssuedRefs, String(state.storyId || ''), 1,
+                        (typeof _relPcId === 'function') ? _relPcId() : 'pc');
+          if (!_poIn.ok) _poFail('planner stage_contract rejected (' + (_poIn.code || 'invalid') + (_poIn.rejected && _poIn.rejected.length ? '; ' + _poIn.rejected.slice(0, 3).map(function (r) { return r.ref + ':' + r.why; }).join(', ') : '') + ') — the stage is not established');
+          if (!state._cpGeneratedStage || typeof state._cpGeneratedStage !== 'object') state._cpGeneratedStage = {};
+          state._cpGeneratedStage['1'] = _poIn.stage;
+          state._cpGeneratedStageReport = { sceneNumber: 1, ok: true, code: _poIn.code, bytes: _poIn.bytes, rejected: (_poIn.rejected || []).slice(0, 6), provenance: 'planner_stage:opening' };
+          delete _envelope.stage_contract;          // consumed into committed state; the author never sees planner metadata
+          _stage = _scene1StageContract(state);
+          if (!_stage || !_stage.ok) _poFail('stage contract still unresolved after the planner stage — ' + ((_stage && _stage.fault) || 'no contract'));
+          // v3 (Roman 2026-09-08): every accepted environment element must carry an issued affordance — the data the
+          // fusion's structured contact is validated against. Missing or uncovered elements fail closed here.
+          if (_v3Fusion && _v3Fusion.offered) {
+            var _accEls = (_stage.environmentElements || []).map(function (e) { return String(e || '').trim(); }).filter(Boolean);
+            var _decl = ((_poIn.stage && _poIn.stage.elements) || []);
+            var _declByName = {}; _decl.forEach(function (e) { _declByName[e.name.toLowerCase()] = e; });
+            var _uncovered = _accEls.filter(function (e) { return !_declByName[e.toLowerCase()]; });
+            if (!_decl.length) _poFail('stage_contract.elements missing — every environment element needs one issued affordance (' + _V3_AFFORDANCES.join('|') + ')');
+            if (_uncovered.length) _poFail('stage_contract.elements does not cover every environment element (missing: ' + _uncovered.slice(0, 3).join(', ') + ')');
+            try { console.log('[SCENE1:FUSION:V3] element affordances accepted: ' + _decl.map(function (e) { return e.name + '=' + e.affordance; }).join(', ')); } catch (_) {}
+            // ── DEPENDENCY DIRECTION ── the structured contact chooses ONE issued, actionable element FIRST; the Environment+
+            // target DERIVES from contact.object. Done HERE (before any skeleton validation reads environment_plus.target) on the
+            // envelope's own scene_skeleton object. A planner-written E+ target that differs fails closed, named.
+            try {
+              var _sk0 = (_envelope && typeof _envelope.scene_skeleton === 'object') ? _envelope.scene_skeleton : null;
+              var _ct0 = _sk0 && _sk0.pc_opening_fusion && typeof _sk0.pc_opening_fusion === 'object' ? _sk0.pc_opening_fusion.contact : null;
+              if (_sk0 && _ct0 && typeof _ct0 === 'object') {
+                var _obj0 = String(_ct0.object || _ct0.contact_object || '').trim();
+                var _el0 = _decl.filter(function (e) { return e.name.toLowerCase() === _obj0.toLowerCase(); })[0] || null;
+                if (_el0) {
+                  if (!_sk0.environment_plus || typeof _sk0.environment_plus !== 'object') _sk0.environment_plus = {};
+                  var _epT0 = String(_sk0.environment_plus.target || '').trim();
+                  if (_epT0 && _epT0.toLowerCase() !== _el0.name.toLowerCase()) {
+                    // SOFT (2026-09-09): the backend-derived target is canonical; a planner-written independent target is overridden and logged.
+                    _s1Soft('ep_target_overridden', 'environment_plus.target', 'canonicalized', 'planner wrote "' + _epT0.slice(0, 50) + '" but contact.object is "' + _el0.name.slice(0, 50) + '" — the contacted element is the Environment+ target');
+                    _sk0.environment_plus.target = _el0.name;
+                  } else if (!_epT0) {
+                    _sk0.environment_plus.target = _el0.name;
+                    try { console.log('[SCENE1:FUSION:V3] environment_plus.target derived from contact.object: "' + _el0.name + '" (' + _el0.affordance + ')'); } catch (_) {}
+                  }
+                }
+              }
+            } catch (_e0) { if (_e0 && _e0._scene1SkeletonFatal) throw _e0; }
+          }
+          try { if (typeof _indexAliases === 'function') _indexAliases(_stage); } catch (_) {}
+          _eligibleCast = _stage.onStage.map(function (c) { return c.label; });
+          _allowedLabels = _eligibleCast; _allowedEnum = _allowedLabels.join(' | ');
+          _pcRecForFusion = (_stage.onStage || []).filter(function (c) { return c.kind === 'pc'; })[0] || null;
+          _pcLabelForFusion = _pcRecForFusion ? _pcRecForFusion.label : '';
+          _soloStage = _eligibleCast.length === 1; _narratorLabel = _soloStage ? _eligibleCast[0] : '';
+          try { console.log('[SCENE1:STAGE:PLANNER-OWNED] resolved — source=' + _stage.source + ' · on stage [' + _eligibleCast.join(', ') + '] · mission="' + _poMission.slice(0, 80) + '"'); } catch (_) {}
+        }
         // DECLARED-SHAPE CHECK, post-reconciliation. The reconciler is deliberately structural and
         // never inspects a value it moves — but a staged_characters array whose entries have no
         // name is not a presence declaration at all, and on a seed-owned stage nothing downstream
@@ -264481,6 +265280,148 @@ Generate the synopsis now. The protagonist MUST be named ${pKernel}. Depict the 
         var _skelRaw = (_envelope && typeof _envelope.scene_skeleton === 'object') ? _envelope.scene_skeleton : null;
         var plan = (_envelope && typeof _envelope.opening_spine === 'object' && _envelope.opening_spine)
           ? _envelope.opening_spine : _envelope;
+        // ══════════════════════════════════════════════════════════════════════════
+        //  CONTRACT v2 — RESOLVE IDS TO SEED TEXT BEFORE ANYTHING VALIDATES (Roman 2026-09-05)
+        //  The planner now SELECTS: environment elements and the E+ target by object_id, the
+        //  opening actor by person_id; the opening actor's C+ act is DERIVED from opening_beat; the
+        //  fusion's target/axis are E+'s by definition. This block turns those selections back into
+        //  the text every existing validator, renderer and continuation consumer already reads, so
+        //  the rest of the chain is unchanged. Old-shape replies are rejected BY NAME, never coerced.
+        //  Faults collected here are merged into the validator's list below.
+        // ══════════════════════════════════════════════════════════════════════════
+        // seedOwned = the stage is not planner-owned AND offers an object list to select from. An
+        // assignment-owned stage with a fixed WHERE but no grounded objects keeps the free-text
+        // contract: there are no ids to choose, so demanding them would reject every such plan.
+        var _v2 = { seedOwned: !!(_stage && _stage.ok && _stage.environmentOwner !== 'planner'
+                                  && _cpContract && Array.isArray(_cpContract.objects) && _cpContract.objects.length > 0),
+                    faults: [], elementIds: null, realizations: {}, openingActor: null, valve: false, pending: null };
+        var _v2lc = function (x) { return String(x || '').trim().toLowerCase(); };
+        var _v2Esc = function (s) { return String(s || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); };
+        var _v2NameRe = function (nm) { return new RegExp('\\b' + _v2Esc(String(nm || '').trim()).replace(/^the\s+/i, '(?:the\\s+)?') + '\\b', 'i'); };
+        try {
+          var _v2Objs = {}; ((_cpContract && _cpContract.objects) || []).forEach(function (o) { if (o && o.object_id) _v2Objs[String(o.object_id)] = o; });
+          var _v2People = ((_cpContract && _cpContract.people) || []).slice();
+          if (_v2.seedOwned && plan && typeof plan === 'object') {
+            var _ids = Array.isArray(plan.environment_element_ids)
+              ? plan.environment_element_ids.map(function (x) { return String(x || '').trim(); }).filter(Boolean) : null;
+            if (!_ids) {
+              _v2.faults.push((Array.isArray(plan.environment_elements) && plan.environment_elements.length)
+                ? 'environment_elements were sent as free text — on a seed-owned stage elements are chosen by object_id ("environment_element_ids"); the old shape is not accepted'
+                : 'environment_element_ids missing — choose 2–3 object_ids from THE OBJECTS THIS SCENE CONTAINS');
+            } else {
+              var _uniq = _ids.filter(function (x, i) { return _ids.indexOf(x) === i; });
+              if (_uniq.length !== _ids.length) _v2.faults.push('environment_element_ids repeats an id — each element once');
+              if (_uniq.length < 2 || _uniq.length > 3) _v2.faults.push('environment_element_ids must name 2–3 objects (got ' + _uniq.length + ')');
+              var _badIds = _uniq.filter(function (x) { return !_v2Objs[x]; });
+              if (_badIds.length) _v2.faults.push('environment_element_ids cites ' + _badIds.join(', ') + ', which this scene does not contain');
+              // TIGHTENING (Roman 2026-09-06): the free-text realization channel is gone. Elements are the
+              // record's names, full stop; the ONE trace the planner writes is environment_plus.beat. In
+              // retest #2 the same invented wind arrived through the realization AND the beat.
+              if (plan.environment_realizations && typeof plan.environment_realizations === 'object'
+                  && Object.keys(plan.environment_realizations).length) {
+                _v2.faults.push('environment_realizations is no longer part of the contract — elements are the record\'s names and environment_plus.beat is the one trace (old shape)');
+              }
+              if (!_badIds.length) _v2.elementIds = _uniq;
+            }
+            var _epV = (_skelRaw && _skelRaw.environment_plus && typeof _skelRaw.environment_plus === 'object') ? _skelRaw.environment_plus : null;
+            var _epName = '';
+            if (_epV) {
+              var _tid = String(_epV.target_object_id || '').trim();
+              if (!_tid) {
+                _v2.faults.push(_epV.target
+                  ? 'environment_plus.target was sent as free text — on a seed-owned stage E+ cites "target_object_id"; the old shape is not accepted'
+                  : 'environment_plus.target_object_id missing — cite one of your environment_element_ids');
+              } else if (!_v2Objs[_tid]) {
+                _v2.faults.push('environment_plus.target_object_id "' + _tid + '" is not an object this scene contains');
+              } else if (_v2.elementIds && _v2.elementIds.indexOf(_tid) === -1) {
+                _v2.faults.push('environment_plus.target_object_id "' + _tid + '" is not one of the chosen environment_element_ids');
+              } else {
+                _epName = _v2Objs[_tid].name;
+              }
+              var _pofV2 = (_skelRaw.pc_opening_fusion && typeof _skelRaw.pc_opening_fusion === 'object') ? _skelRaw.pc_opening_fusion : null;
+              if (_pofV2) {
+                // SHARED RULE, mode 'derive' (fault check only here; the derivation itself happens after the
+                // identity scan, below, exactly as before).
+                var _pofV2Rule = _reconcileFusionEnvFields(_pofV2, { target: _epName, axis: _epV.axis }, { mode: 'derive', aliases: [_tid], apply: false });
+                _pofV2Rule.faults.forEach(function (f) { _v2.faults.push(f); });
+              }
+              // ── TIGHTENING (Roman 2026-09-06): THE BEAT'S OBJECT IS DERIVED, NOT TYPED ──
+              // Five of six real plans wrote the fusion about a different object than E+ ("the sash" while
+              // E+ was the band), and three named the band as "mouthband"/"the cloth". Both beats now carry
+              // the literal {TARGET} exactly once; the record's name is substituted after the identity scan;
+              // any OTHER grounded object's head noun in the beat is a fault. The planner keeps the whole
+              // sentence except the noun it kept getting wrong.
+              if (_epName) {
+                var _v2HeadOf = function (name) {
+                  var s = String(name || '').toLowerCase().split(/\s*[,;—(]\s*/)[0]
+                    .split(/\s+(?:of|across|on|in|at|from|for|with|beneath|under|above|behind|beside|between|toward|towards|through|over|into|onto|by|it|that|which|where|tied|hanging|dressed|draped|worn|hung|set|laid|placed)\s+/)[0];
+                  var toks = s.replace(/[^a-z0-9]+/g, ' ').trim().split(/\s+/).filter(function (w) { return w.length > 2 && !/^(the|a|an|of|and|in|on|at|to|its|her|his|their|this|that|one)$/.test(w); });
+                  return toks.length ? toks[toks.length - 1] : '';
+                };
+                var _otherHeads = Object.keys(_v2Objs).filter(function (k) { return k !== _tid; })
+                  .map(function (k) { return (_v2Objs[k].head || _v2HeadOf(_v2Objs[k].name) || '').toLowerCase(); })
+                  .filter(function (h) { return h && h.length >= 4 && !/^(themselves|everyone|people)$/.test(h); });
+                var _checkBeat = function (label, text) {
+                  var t = String(text || '');
+                  if (!t.trim()) return;
+                  var n = (t.match(/\{TARGET\}/g) || []).length;
+                  if (n !== 1) _v2.faults.push(label + ' must contain the literal {TARGET} exactly once — the thing is named by the record, not by the planner (found ' + n + ')');
+                  _otherHeads.forEach(function (h) {
+                    if (new RegExp('\\b' + _v2Esc(h) + '\\b', 'i').test(t)) _v2.faults.push(label + ' names another object ("' + h + '") — the beat is about {TARGET} alone');
+                  });
+                };
+                _checkBeat('environment_plus.beat', _epV.beat);
+                if (_pofV2) _checkBeat('pc_opening_fusion.beat', _pofV2.beat);
+              }
+            }
+            // The seed names are written into the plan AFTER the identity scan below: a seed object
+            // like "the band tied across the Sacrificiant's mouth" is canon, not a person the planner
+            // introduced, and the scan must keep judging the planner's own text only.
+            _v2.pending = { elements: _v2.elementIds ? _v2.elementIds.map(function (id) { return _v2Objs[id].name; }) : null,
+                            epName: _epName, epAxis: _epV ? _epV.axis : null };
+          }
+          // ── THE OPENING ACTOR: ONE PERSON, ONE FIRST APPEARANCE, ONE SOURCE ──
+          if (plan && typeof plan === 'object') {
+            var _ob = String(plan.opening_beat || '');
+            var _oa = plan.opening_actor_id;
+            var _oaRec = null;
+            if (typeof _oa === 'undefined') {
+              _v2.faults.push('opening_actor_id missing — name the person_id the opening beat stages, or null');
+            } else if (_oa !== null && String(_oa).trim() !== '') {
+              _oaRec = _v2People.filter(function (p) { return String(p.person_id) === String(_oa).trim(); })[0] || null;
+              if (!_oaRec) _v2.faults.push('opening_actor_id "' + _oa + '" is not a person physically present in this scene');
+              else if (!_v2NameRe(_oaRec.name).test(_ob)) _v2.faults.push('opening_actor_id names ' + _oaRec.name + ' but the opening beat never stages them');
+            } else {
+              var _namedOnes = _v2People.filter(function (p) { return _v2NameRe(p.name).test(_ob); });
+              if (_namedOnes.length) _v2.faults.push('opening_beat stages ' + _namedOnes.map(function (p) { return p.name; }).join(', ')
+                + ' but opening_actor_id is null — declare the opening actor; that person\'s character_plus act is then FROM_OPENING_BEAT');
+            }
+            _v2.openingActor = _oaRec;
+            var _cpV2 = (_skelRaw && Array.isArray(_skelRaw.character_plus)) ? _skelRaw.character_plus : [];
+            _cpV2.forEach(function (c) {
+              if (!c || typeof c !== 'object') return;
+              var _va = String(c.visible_action || '').trim();
+              var _isOA = !!(_oaRec && _v2lc(_oaRec.name) === _v2lc(c.character));
+              if (_isOA) {
+                // CORRECTION 1 (Roman 2026-09-06): the opening actor's act is DERIVED, unconditionally.
+                // Retest #2 showed 14B declaring the actor correctly 6/6 and still typing a free act 5/6;
+                // rejecting that re-created the very "second first appearance" the field exists to make
+                // inexpressible. Whatever the planner typed here is discarded and logged, never used.
+                if (!_ob.trim()) _v2.faults.push('character_plus "' + c.character + '" derives from an empty opening_beat');
+                else {
+                  if (_va && !/^FROM_OPENING_BEAT$/i.test(_va)) {
+                    try { console.log('[SCENE1:CPLUS:OPENING-DERIVED] "' + c.character + '" — planner typed a separate act ("'
+                      + _va.slice(0, 120) + '"); discarded, the opening beat is their act'); } catch (_) {}
+                  }
+                  c.visible_action = _ob.trim(); c.behavior = _ob.trim(); c._derived_from_opening = true;
+                }
+              } else if (/^FROM_OPENING_BEAT$/i.test(_va)) {
+                // hostile: somebody who is NOT the declared actor claiming the derivation
+                _v2.faults.push('character_plus "' + c.character + '" claims FROM_OPENING_BEAT but is not the declared opening_actor');
+              }
+            });
+          }
+        } catch (_v2e) { _v2.faults.push('contract v2 resolution threw: ' + (_v2e && _v2e.message)); }
 
         // ── SCENE SKELETON: normalise, then VALIDATE against the precomputed eligible cast ──
         // Normalisation is shared with continuations (_normalizeSceneAssignments — same C+ shape,
@@ -264521,12 +265462,33 @@ Generate the synopsis now. The protagonist MUST be named ${pKernel}. Depict the 
               + (_stage.onStage || []).map(function (r) { return r.label; })
                   .concat((_stage.offStage || []).map(function (r) { return r.name; })).join(', ')
               + '] — a name in any field is an identity, not decoration';
-            try { console.error('[SCENE1:IDENTITY:INVENTED] ' + _invMsg); } catch (_) {}
-            try { state._scene1SkeletonFatal = _invMsg; } catch (_) {}
-          try { _markInvocationFatal(_invMsg, state); } catch (_) {}
-            var _invErr = new Error(_invMsg); _invErr._scene1SkeletonFatal = true; throw _invErr;
+            if (_plannerOwnedStage) {
+              // SOFT (2026-09-09, planner-owned path): a capitalised-name HEURISTIC on prose fields is telemetry; unissued STRUCTURED refs stay fatal in the stage contract.
+              _s1Soft('invented_identity_prose', _invented.map(function (v) { return v.path; }).join('|'), 'kept', _invMsg);
+            } else {
+              try { console.error('[SCENE1:IDENTITY:INVENTED] ' + _invMsg); } catch (_) {}
+              try { state._scene1SkeletonFatal = _invMsg; } catch (_) {}
+              try { _markInvocationFatal(_invMsg, state); } catch (_) {}
+              var _invErr = new Error(_invMsg); _invErr._scene1SkeletonFatal = true; throw _invErr;
+            }
           }
         } catch (_invOuter) { if (_invOuter && _invOuter._scene1SkeletonFatal) throw _invOuter; }
+        // ── CONTRACT v2: NOW the selected ids become the seed's own text, for every downstream reader ──
+        try {
+          if (_v2 && _v2.pending) {
+            if (_v2.pending.elements) plan.environment_elements = _v2.pending.elements;
+            if (_v2.pending.epName && _skelRaw && _skelRaw.environment_plus) {
+              _skelRaw.environment_plus.target = _v2.pending.epName;
+              // the beat's object is the record's name, substituted here (after the identity scan)
+              if (typeof _skelRaw.environment_plus.beat === 'string') _skelRaw.environment_plus.beat = _skelRaw.environment_plus.beat.replace('{TARGET}', _v2.pending.epName);
+              if (_skelRaw.pc_opening_fusion && typeof _skelRaw.pc_opening_fusion === 'object') {
+                _skelRaw.pc_opening_fusion.environment_target = _v2.pending.epName;
+                _skelRaw.pc_opening_fusion.environment_axis = _v2.pending.epAxis;
+                if (typeof _skelRaw.pc_opening_fusion.beat === 'string') _skelRaw.pc_opening_fusion.beat = _skelRaw.pc_opening_fusion.beat.replace('{TARGET}', _v2.pending.epName);
+              }
+            }
+          }
+        } catch (_) {}
 
         // ── NO UNAUTHORISED SECOND BODY, VOICE OR LIVE INTERACTION (Roman 2026-08-26) ──
         // Separate from the identity scan above, and it must be: rounds 7 and 8 both had ZERO
@@ -264545,10 +265507,15 @@ Generate the synopsis now. The protagonist MUST be named ${pKernel}. Depict the 
                 }).join('; ')
               + ' — only the narrator is present. A second person may be remembered, anticipated, '
               + 'written to or feared; they may not speak, act, arrive or be waited on in this scene';
-            try { console.error('[SCENE1:SOLO:INTERACTION] ' + _svMsg); } catch (_) {}
-            try { state._scene1SkeletonFatal = _svMsg; } catch (_) {}
-          try { _markInvocationFatal(_svMsg, state); } catch (_) {}
-            var _svErr = new Error(_svMsg); _svErr._scene1SkeletonFatal = true; throw _svErr;
+            if (_plannerOwnedStage) {
+              // SOFT (2026-09-09, planner-owned path): a second-person HEURISTIC on planner prose is telemetry, not a mount gate.
+              _s1Soft('solo_second_person', 'opening_spine.' + _soloV.violations.map(function (v) { return v.path; }).join('|'), 'kept', _svMsg);
+            } else {
+              try { console.error('[SCENE1:SOLO:INTERACTION] ' + _svMsg); } catch (_) {}
+              try { state._scene1SkeletonFatal = _svMsg; } catch (_) {}
+              try { _markInvocationFatal(_svMsg, state); } catch (_) {}
+              var _svErr = new Error(_svMsg); _svErr._scene1SkeletonFatal = true; throw _svErr;
+            }
           }
         }
 
@@ -264585,6 +265552,8 @@ Generate the synopsis now. The protagonist MUST be named ${pKernel}. Depict the 
           var _cpIn = (_skelRaw && Array.isArray(_skelRaw.character_plus)) ? _skelRaw.character_plus.length : 0;
           var _cp = (_norm && Array.isArray(_norm.character_plus)) ? _norm.character_plus : [];
           var _faults = [];
+          // contract v2: selection/derivation faults found before normalisation join the list here
+          if (_v2 && _v2.faults && _v2.faults.length) _v2.faults.forEach(function (f) { _faults.push(f); });
 
           // the normaliser must not have silently sliced, capped or dropped a valid entry
           if (_cp.length !== _cpIn) _faults.push('normaliser changed character_plus cardinality ' + _cpIn + ' -> ' + _cp.length);
@@ -264701,6 +265670,26 @@ Generate the synopsis now. The protagonist MUST be named ${pKernel}. Depict the 
                   c.pressure_id = _optRec.pressure_id;
                   c.pressure_evidence_ids = _optRec.evidence_ids.slice();
                   c.option_resolved = true;
+                }
+              }
+              // CONTRACT v2 (2026-09-05): THE ACT NAMES THE FACT IT ENACTS. Binding, not citation:
+              // the id must be one of the facts that establish THIS option's condition.
+              if (c.option_resolved && _optRec) {
+                var _eid = (typeof c.enacts_evidence_id === 'string') ? c.enacts_evidence_id.trim() : '';
+                var _evIds = Array.isArray(_optRec.evidence_ids) ? _optRec.evidence_ids : [];
+                // TIGHTENING (Roman 2026-09-06): when the option rests on ONE fact, the enacted fact is that
+                // fact — derived, not typed. Four of six real plans typed E6 for an option established by
+                // E5 alone. A typed id is logged and replaced; the choice exists only when there is one.
+                if (_evIds.length === 1) {
+                  if (_eid && _eid !== _evIds[0]) {
+                    try { console.log('[SCENE1:CPLUS:EVIDENCE-DERIVED] "' + c.character + '" typed enacts_evidence_id ' + _eid + '; the option rests on ' + _evIds[0] + ' alone — derived'); } catch (_) {}
+                  }
+                  c.enacts_evidence_id = _evIds[0]; _eid = _evIds[0];
+                }
+                if (!_eid) {
+                  _faults.push('character_plus "' + c.character + '" names no "enacts_evidence_id" — the act is this person\'s part of one of the facts that establish the condition (' + _evIds.join(' | ') + ')');
+                } else if (_evIds.indexOf(_eid) === -1) {
+                  _faults.push('character_plus "' + c.character + '" cites enacts_evidence_id "' + _eid + '", which does not establish this option (' + _evIds.join(' | ') + ')');
                 }
               }
               // The grounding checks downstream read `behavior`; the field the model fills is now
@@ -264827,17 +265816,29 @@ Generate the synopsis now. The protagonist MUST be named ${pKernel}. Depict the 
                   _faults.push('character_plus "' + c.character + '" gives no "revelation_bridge" — an act asserted to '
                     + 'reveal a truth, with no account of how, is a hope');
                 } else {
-                  var _shares = function (a, b) {
-                    var A = _portfolioContentWords(a), B = _portfolioContentWords(b), hit = false;
-                    A.forEach(function (w) { if (B.has(w)) hit = true; });
-                    return hit;
-                  };
-                  if (!_shares(_br, _optRec.truth)) {
-                    _faults.push('character_plus "' + c.character + '" bridge never refers to the truth it claims to '
-                      + 'reveal — it explains something else');
-                  } else if (!_shares(_br, _optRec.pressure_text)) {
-                    _faults.push('character_plus "' + c.character + '" bridge never refers to the condition that puts '
-                      + 'the truth in play here');
+                  // POLICY 2 (Roman 2026-09-05): THE CONDITION IS GATED ON THE ACT, NOT ON THE NOTE.
+                  // The old test was stopword-free word overlap between the bridge and the truth/condition
+                  // text: it failed "naming" against "nameable" and passed other bridges on "being" and
+                  // "someone" alone. The bridge is the planner's private working — it never reaches the
+                  // author — so it is LOGGED as diagnostic evidence and no longer gates. What gates is
+                  // whether the visible_action engages the condition the option was chosen under, tested
+                  // with the requirement the SEED authored for that very pressure (evidence_requires).
+                  try { console.log('[SCENE1:CPLUS:BRIDGE] ' + c.character + ' · ' + (_optRec.option_id || '?') + ' · ' + _br.slice(0, 220)); } catch (_) {}
+                  var _reqRe = null;
+                  try { if (_optRec.evidence_requires) _reqRe = new RegExp(_optRec.evidence_requires, 'i'); } catch (_) { _reqRe = null; }
+                  if (_reqRe && !_reqRe.test(String(_act || ''))) {
+                    if (c._derived_from_opening) {
+                      // CONTRACT v2: the opening actor's act IS the opening beat by construction. If that
+                      // beat does not enact the chosen condition, the OPTION was the wrong choice, not the
+                      // beat — C+ closes for this person and the opening stands (fail C+ closed, not the story).
+                      c._drop = 'opening_does_not_enact_condition';
+                      try { console.warn('[SCENE1:CPLUS:DROPPED] "' + c.character + '" — their act is the opening beat, which does not enact "'
+                        + String(_optRec.pressure_text || '').slice(0, 60) + '"; C+ closed for them, the opening stands'); } catch (_) {}
+                    } else {
+                      _faults.push('character_plus "' + c.character + '" visible_action never engages the condition it was '
+                        + 'chosen under ("' + String(_optRec.pressure_text || '').slice(0, 80) + '") — the act itself must put '
+                        + 'that condition on the page — a bridge sentence cannot do it for it');
+                    }
                   }
                   if (_xm === 'LEAK' && !_touches && !/escap|slip|before .*could|without meaning|despite|betray|catch|caught|control/i.test(_br)) {
                     _faults.push('character_plus "' + c.character + '" declares LEAK but the bridge names no controlled '
@@ -265051,6 +266052,11 @@ Generate the synopsis now. The protagonist MUST be named ${pKernel}. Depict the 
               + ' offered — pressure, not headcount · regime=' + _cpContract.regime
               + ' sourced=' + _cpContract.populations.sourced + '/' + _cpContract.populations.ordinary);
           } catch (_) {}
+          // CONTRACT v2: entries closed by the opening-actor rule leave in place (same array as _norm.character_plus)
+          if (_cp.some(function (c) { return c && c._drop; })) {
+            var _keptCp = _cp.filter(function (c) { return !(c && c._drop); });
+            _cp.length = 0; _keptCp.forEach(function (c) { _cp.push(c); });
+          }
           var _EP_AXES = ['history','use','damage','ownership','repair','ritual','absence'];
           // E+ is REQUIRED every scene (the request says so in as many words), so its ABSENCE is a
           // fault, not an accepted silence. Without this, a response that simply omits the key
@@ -265086,6 +266092,10 @@ Generate the synopsis now. The protagonist MUST be named ${pKernel}. Depict the 
                   + (_stage.environmentElements || []).join(' | ') + '] nor the opening setting "'
                   + _stage.setting + '" — E+ may not invent the environmental inventory');
               }
+            } else if (_v2 && _v2.pending && _v2.pending.epName) {
+              // CORRECTION 3 (Roman 2026-09-06): a valid seed-object ID is grounded BY IDENTITY. Its
+              // resolved display name need not appear in the scene text — the sash (O5) does not, and
+              // choosing the seed's own object by id failed here in retest #2.
             } else if (!_targetInScene(_norm.environment_plus.target, _stage.groundText)) {
               _faults.push('environment_plus target "' + _norm.environment_plus.target
                 + '" is not in the resolved scene (WHERE: ' + _stage.setting.slice(0, 90) + '…)');
@@ -265093,15 +266103,84 @@ Generate the synopsis now. The protagonist MUST be named ${pKernel}. Depict the 
           }
           // For a seed/assignment-owned stage the planner may still DECLARE elements, and they must
           // be grounded in the authoritative material rather than invented alongside it.
+          // POLICY 1 (Roman 2026-09-05): descriptive detail about a SEED-NAMED thing is allowed; a NEW
+          // environmental fact, or a contradiction of the seed, is not — anywhere. So the grounding
+          // check asks the element's nominal HEAD to be in the seed (the thing it names), not every
+          // appended qualifier, and a seed-authored forbidden-fact pattern is applied to elements and
+          // beats alike. Before this, "the carpet, pressed where she knelt" and "the canopy swaying in
+          // the dawn breeze" failed for the same reason; only the second one should.
+          // local tokenizer: _contentToks is declared further down in this function (var + function
+          // expression), so it is undefined at this point — the first control run threw on exactly that.
+          var _envToks = function (t) {
+            var STOPE = { the:1, a:1, an:1, of:1, and:1, in:1, on:1, at:1, to:1, its:1, her:1, his:1, their:1, this:1, that:1 };
+            return String(t || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim().split(/\s+/)
+              .filter(function (w) { return w && w.length > 2 && !STOPE[w]; });
+          };
+          var _envHead = function (t) {
+            var s = String(t || '').trim();
+            s = s.split(/\s*[,;—]\s*|\s+\(/)[0];
+            s = s.split(/\s+(?:where|that|which|as|while|when|beneath|under|above|beside|behind|near|across|along|around|against|between|toward|towards|through|over|into|onto|with|without|by|from|at|in|on)\s+/)[0];
+            // a trailing participial phrase ("swaying in…", "catching the light…") is elaboration, not the
+            // thing. The participle must be a whole word followed by space or end — "weeping-willow" is a
+            // name, not a clause — and it is stripped only if a nameable head survives.
+            var _cut = s.replace(/\s+[a-z]+ing(?=\s|$)[\s\S]*$/i, '');
+            if (_cut !== s && _envToks(_cut).length) s = _cut;
+            return s.trim() || String(t || '').trim();
+          };
+          var _forbidRe = null;
+          try { if (_stage && _stage.forbiddenEnvironmentFacts) _forbidRe = new RegExp(_stage.forbiddenEnvironmentFacts, 'i'); } catch (_) { _forbidRe = null; }
+          var _newFact = function (label, text) {
+            if (!_forbidRe) return;
+            var mm = _forbidRe.exec(String(text || ''));
+            if (mm) _faults.push(label + ' "' + String(text || '').slice(0, 90) + '" introduces an environmental fact the seed rules out ("'
+                                 + mm[0] + '") — describe what the seed names and add no weather, light, marks or fluids it does not contain');
+          };
           if (_stage && _stage.ok && _stage.environmentOwner !== 'planner'
               && plan && Array.isArray(plan.environment_elements)) {
             plan.environment_elements.forEach(function (e) {
               var v = String(e || '').trim(); if (!v) return;
-              if (!_targetInScene(v, _stage.groundText)) {
-                _faults.push('environment element "' + v + '" is not grounded in the authoritative scene material');
+              // CORRECTION 3 (2026-09-06): elements chosen by seed-object ID are grounded by identity;
+              // the text check applies only to free-text elements (no ids resolved).
+              if (!(_v2 && _v2.elementIds) && !_targetInScene(_envHead(v), _stage.groundText)) {
+                _faults.push('environment element "' + v + '" names something the authoritative scene material does not contain (head: "' + _envHead(v) + '")');
               }
+              _newFact('environment element', v);
             });
           }
+          if (_stage && _stage.ok && _stage.environmentOwner !== 'planner' && _norm) {
+            if (_norm.environment_plus) _newFact('environment_plus.beat', _norm.environment_plus.beat);
+            if (_norm.pc_opening_fusion) _newFact('pc_opening_fusion.beat', _norm.pc_opening_fusion.beat);
+            Object.keys((_v2 && _v2.realizations) || {}).forEach(function (k) { _newFact('environment_realizations[' + k + ']', _v2.realizations[k]); });
+          }
+          // ── CONTRACT v2: OWNERSHIP IS SEED DATA (Roman 2026-09-05) ──
+          // Objects with an owner_ref cannot be handed to somebody else in any free-text field.
+          // "her fingers on Lirael's sash" is handling; "the Dohkar's sash" is a re-assignment of
+          // ownership, and a real plan did exactly that. Names come from the stage, heads from the seed.
+          try {
+            var _ownedObjs = ((_cpContract && _cpContract.objects) || []).filter(function (o) { return o && o.owner_ref && o.owner_ref !== 'all' && o.head; });
+            var _ownerLabel = function (ref) {
+              if (ref === 'pc') { var p = (_stage.onStage || []).filter(function (r) { return r.kind === 'pc'; })[0]; return p ? p.label : ''; }
+              var r = (_stage.onStage || []).filter(function (x) { return x.id === ref || x.roleInstanceId === ref; })[0]; return r ? r.label : '';
+            };
+            var _ownerCheck = function (label, text) {
+              var t = String(text || ''); if (!t || !_ownedObjs.length) return;
+              _ownedObjs.forEach(function (o) {
+                var owner = _ownerLabel(o.owner_ref); if (!owner) return;
+                var alts = [];
+                (_stage.onStage || []).map(function (r) { return r.label; }).filter(function (n) { return n && _v2lc(n) !== _v2lc(owner); })
+                  .forEach(function (n) { alts.push(_v2Esc(n)); var first = String(n).replace(/^the\s+/i, '').split(/\s+/)[0]; if (first && first.length > 2) alts.push(_v2Esc(first)); });
+                if (!alts.length) return;
+                var re = new RegExp('\\b(?:' + alts.join('|') + ')[\'’]s\\s+(?:\\w+\\s+){0,2}' + _v2Esc(o.head) + '\\b', 'i');
+                var m = re.exec(t);
+                if (m) _faults.push(label + ' "' + t.slice(0, 80) + '" gives the ' + o.head + ' to the wrong person ("' + m[0] + '") — the seed says it is ' + owner + '\'s');
+              });
+            };
+            _ownerCheck('opening_beat', plan && plan.opening_beat);
+            _cp.forEach(function (c) { if (c && !c._derived_from_opening) _ownerCheck('character_plus "' + c.character + '" visible_action', c.behavior || c.visible_action); });
+            if (_norm && _norm.environment_plus) _ownerCheck('environment_plus.beat', _norm.environment_plus.beat);
+            if (_norm && _norm.pc_opening_fusion) _ownerCheck('pc_opening_fusion.beat', _norm.pc_opening_fusion.beat);
+            Object.keys((_v2 && _v2.realizations) || {}).forEach(function (k) { _ownerCheck('environment_realizations[' + k + ']', _v2.realizations[k]); });
+          } catch (_) {}
           // ── THE SETTING MUST AGREE (Roman 2026-08-25) ──
           // Disagreement is detected HERE, before Grok, rather than shipped as two contradicting
           // instructions for the author to arbitrate between.
@@ -265206,7 +266285,17 @@ Generate the synopsis now. The protagonist MUST be named ${pKernel}. Depict the 
           var _namesTarget = function (target, beat) {
             var n = _contentToks(target), h = _contentToks(beat);
             if (!n.length) return true;
-            var head = n[n.length - 1];
+            // HEAD NOUN, NOT LAST TOKEN (2026-09-05, validator triage): for "the carpet of braided
+            // spiralgrass" the head is "carpet"; the last token is the material. Taking the last token
+            // rejected four real beats that named the carpet because they did not name the grass.
+            // The head phrase ends at the first parenthesis, comma, preposition, relative pronoun or
+            // participle: "the gossamer band tied across the Sacrificiant's mouth" → "band";
+            // "the veil-canopy (the trees' hanging leaf-curtains)" → "canopy"; "the pale trees it
+            // hangs from" → "trees". Seed object names are long on purpose; their head is not.
+            var _hpTxt = String(target || '').toLowerCase().split(/\s*[,;—(]\s*/)[0]
+              .split(/\s+(?:of|across|on|in|at|from|for|with|beneath|under|above|behind|beside|between|toward|towards|through|over|into|onto|by|it|that|which|where|tied|hanging|dressed|draped|worn|hung|set|laid|placed)\s+/)[0];
+            var _hp = _contentToks(_hpTxt);
+            var head = _hp.length ? _hp[_hp.length - 1] : n[n.length - 1];
             if (h.some(function (g) { return _tokEquivalent(head, g); })) return true;
             var hit = n.filter(function (t) { return h.some(function (g) { return _tokEquivalent(t, g); }); });
             return (hit.length / n.length) >= 0.34;
@@ -265219,6 +266308,7 @@ Generate the synopsis now. The protagonist MUST be named ${pKernel}. Depict the 
           };
 
           // ── 1. ENVIRONMENT_PLUS MUST CARRY A RENDERABLE BEAT ──
+          var _faultsBeforeEp = _faults.length;   // the fusion may inherit E+ canon ONLY if E+ adds no fault here
           var _epObj = _skelRaw.environment_plus || {};
           var _epBeat = String(_epObj.beat || '').trim();
           var _epTargetRaw = String(_epObj.target || '').trim();
@@ -265226,18 +266316,19 @@ Generate the synopsis now. The protagonist MUST be named ${pKernel}. Depict the 
             _faults.push('environment_plus has no "beat" — a target and an axis with no physical evidence '
               + 'is an assignment with nothing in it. Name what the ' + String(_epObj.axis || 'axis')
               + ' has MADE of "' + _epTargetRaw.slice(0, 60) + '"');
-          } else if (_isSchemaEcho(_epBeat)) {
-            _faults.push('environment_plus.beat returns the schema instead of content — bracket text or the '
-              + 'instruction\'s own category words are not evidence: "' + _epBeat.slice(0, 110) + '"');
           } else {
-            if (!_namesTarget(_epTargetRaw, _epBeat)) {
-              _faults.push('environment_plus.beat does not name its own target — the beat must show what '
-                + 'happened to "' + _epTargetRaw.slice(0, 60) + '", not to something else: "' + _epBeat.slice(0, 110) + '"');
-            }
-            if (!_validateAngleConcreteness(_epBeat, '', { concreteOverride: false }).ok
-                && !_angleConcreteFrame(_epBeat)) {
-              _faults.push('environment_plus.beat is not physical evidence — neutral mention, light or '
-                + 'atmosphere does not realise the axis: "' + _epBeat.slice(0, 110) + '"');
+            // SOFT (2026-09-09): beat LANGUAGE checks are telemetry; a failing beat is withheld from the directive, target + axis stay.
+            var _epBeatSoft = null;
+            if (_isSchemaEcho(_epBeat)) _epBeatSoft = ['ep_beat_schema_echo', 'environment_plus.beat returns the schema instead of content: "' + _epBeat.slice(0, 110) + '"'];
+            else if (!_namesTarget(_epTargetRaw, _epBeat)) _epBeatSoft = ['ep_beat_other_target', 'environment_plus.beat does not name its own target — it should show what happened to "' + _epTargetRaw.slice(0, 60) + '": "' + _epBeat.slice(0, 110) + '"'];
+            else if (!_validateAngleConcreteness(_epBeat, '', { concreteOverride: false }).ok && !_angleConcreteFrame(_epBeat)) _epBeatSoft = ['ep_beat_not_physical', 'environment_plus.beat is not physical evidence: "' + _epBeat.slice(0, 110) + '"'];
+            if (_epBeatSoft && !_plannerOwnedStage) {
+              _faults.push(_epBeatSoft[1]);   // legacy / v2 paths: unchanged, fatal
+            } else if (_epBeatSoft) {
+              _s1Soft(_epBeatSoft[0], 'environment_plus.beat', 'omitted', _epBeatSoft[1]);
+              try { _skelRaw.environment_plus.beat = ''; } catch (_) {}
+              try { if (_norm && _norm.environment_plus) _norm.environment_plus.beat = ''; } catch (_) {}
+              _epBeat = '';
             }
           }
 
@@ -265245,10 +266336,184 @@ Generate the synopsis now. The protagonist MUST be named ${pKernel}. Depict the 
           var _pcRecV = (_stage.onStage || []).filter(function (r) { return r.kind === 'pc'; })[0] || null;
           var _pof = _skelRaw.pc_opening_fusion || null;
           if (_pcRecV) {
-            if (!_pof || typeof _pof !== 'object') {
+            var _v3NoOffer = !!(_plannerOwnedStage && (typeof _v3Fusion !== 'undefined') && _v3Fusion && !_v3Fusion.offered);
+            if ((!_pof || typeof _pof !== 'object') && _v3NoOffer) {
+              try { console.log('[SCENE1:FUSION:V3] no fusion offered and none returned — ' + _v3Fusion.whyNot); } catch (_) {}
+            } else if (!_pof || typeof _pof !== 'object') {
               _faults.push('pc_opening_fusion is missing — the protagonist\'s opening beat IS the fusion; '
                 + 'it is not optional and it is not a separate opportunity');
             } else {
+              var _v3Mode = !!(_plannerOwnedStage && (typeof _v3Fusion !== 'undefined') && _v3Fusion);
+              var _pofBeat = '';
+              if (_v3Mode) {
+                // ══ FUSION v3 VALIDATION (planner-owned literary Scene 1 only) ══ C+ here = the validated PC mask/lens anchor;
+                // E+ target/axis are backend-owned; pressure must cite issued grounds; the author writes the beat.
+                var _v3f = [];   // HARD: structural — a non-empty list still fails the mount by name
+                var _v3s = [];   // SOFT: language/persuasion — telemetry + the field withheld from the directive
+                var _revOmit = null, _prOmit = null, _wordingSoft = null;
+                var _v3soft = function (code, field, action, msg) { _v3s.push({ code: code, field: field, action: action, msg: msg }); _s1Soft(code, field, action, msg); };
+                var _v3PcId = null; try { _v3PcId = (typeof _resolvePcIdentity === 'function') ? _resolvePcIdentity(state) : null; } catch (_) {}
+                var _v3Pron = null; try { _v3Pron = (typeof _pcPronouns === 'function') ? _pcPronouns() : null; } catch (_) {}
+                var _v3Names = [_pcRecV.label, (_v3PcId && _v3PcId.v)].concat((_pcRecV.aliases || [])).filter(Boolean).map(function (x) { return String(x).toLowerCase(); });
+                var _v3First = /first/.test(String(state.pov || (state.picks && state.picks.pov) || '').toLowerCase());
+                var _aboutPc = function (txt) {
+                  var t = ' ' + String(txt || '').toLowerCase().replace(/[^a-z0-9' ]+/g, ' ').replace(/\s+/g, ' ') + ' ';
+                  if (_v3Names.some(function (n) { return n && t.indexOf(' ' + n + ' ') !== -1; })) return true;
+                  if (_v3First && /\s(i|me|my|myself|mine)\s/.test(t)) return true;
+                  var ps = _v3Pron ? [_v3Pron.subj, _v3Pron.obj, _v3Pron.poss].filter(Boolean) : [];
+                  return ps.some(function (pr) { return t.indexOf(' ' + String(pr).toLowerCase() + ' ') !== -1; });
+                };
+                if (!_v3Fusion.offered) {
+                  _v3soft('fusion_not_offered', 'pc_opening_fusion', 'omitted', 'pc_opening_fusion was returned but no fusion is offered this scene — ' + _v3Fusion.whyNot);
+                  try { if (_norm) _norm.pc_opening_fusion = null; } catch (_) {}
+                } else {
+                  var _need = ['pc_lens_operation', 'character_revelation', 'environment_pressure'].filter(   /* contact is checked by name in the structured-contact block */function (k) { return _pof[k] == null || (typeof _pof[k] === 'string' && !String(_pof[k]).trim()); });
+                  if (_need.length) _v3f.push('pc_opening_fusion is missing v3 fields (' + _need.join(', ') + ')' + ((_pof.beat != null || _pof.character_angle != null) ? ' — a free "beat"/"character_angle" is the retired shape' : ''));
+                  _reconcileFusionEnvFields(_pof, { target: _epTargetRaw, axis: _epObj.axis }, { mode: 'owned', apply: false }).faults.forEach(function (f) { _v3soft('fusion_env_fields_ignored', 'pc_opening_fusion.environment_target|environment_axis', 'canonicalized', f); });
+                  if (!_need.length && (_pof.beat != null || _pof.character_angle != null)) _v3soft('fusion_legacy_fields_ignored', 'pc_opening_fusion.beat|character_angle', 'omitted', 'pc_opening_fusion carries "beat"/"character_angle" — the author writes the beat; v3 takes action + revelation + pressure only');
+                  var _epOk3 = !!_epTargetRaw && (typeof _EP_AXES === 'undefined' || _EP_AXES.indexOf(String(_epObj.axis || '').trim().toLowerCase()) !== -1) && _faults.length === _faultsBeforeEp;
+                  if (!_epOk3) _v3f.push('no fusion is accepted on an invalid environment_plus (target, axis or beat failed its own validation)');
+                  if (!_v3f.length) {
+                    // ── STRUCTURED CONTACT (Roman 2026-09-08) ── contact identity comes from contact.object, never from
+                    // token proximity in prose. verb ∈ issued types; object = literal {ENV_TARGET} or the exact canonical
+                    // validated target; the backend normalises it; any other object rejects by name.
+                    var _ct = (_pof.contact && typeof _pof.contact === 'object') ? _pof.contact : null;
+                    var _canonRe = _epTargetRaw ? new RegExp('^' + _epTargetRaw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$', 'i') : null;
+                    var _ctVerb = _ct ? String(_ct.verb || _ct.type || '').trim().toUpperCase() : '';
+                    var _ctObj = _ct ? String(_ct.object || _ct.contact_object || '').trim() : '';
+                    // accepted stage elements (declared BEFORE the contact branch: the head-noun co-reference below reads it even when no contact was given)
+                    var _gsEls = (state._cpGeneratedStage && state._cpGeneratedStage['1'] && Array.isArray(state._cpGeneratedStage['1'].elements)) ? state._cpGeneratedStage['1'].elements : [];
+                    if (!_ct) _v3f.push('contact_object missing: fusion has no structured contact (contact.verb + contact.object) — wording alone does not establish contact with the environment target');
+                    else {
+                      if (!_ctVerb || _V3_CONTACT_TYPES.indexOf(_ctVerb) === -1) _v3f.push('contact.verb "' + _ctVerb.slice(0, 40) + '" is not one of the issued contact types');
+                      var _elHit = _gsEls.filter(function (e) { return e.name.toLowerCase() === _ctObj.toLowerCase(); })[0] || null;
+                      if (!_ctObj) _v3f.push('contact_object missing: contact.object is empty');
+                      else if (_ctObj === '{ENV_TARGET}') _v3f.push('contact_object is the placeholder — contact.object must be the EXACT name of one issued stage element (the E+ target derives from it)');
+                      else if (!_elHit) _v3f.push('contact_object "' + _ctObj.slice(0, 50) + '" is not an issued stage element — contact with an unlisted object is not fusion');
+                      else {
+                        var _permitted = _v3PermittedVerbs(_elHit), _afsHit = _v3ElementAffordances(_elHit);
+                        if (_afsHit.length === 1 && _afsHit[0] === 'AMBIENT') _v3f.push('contact_object "' + _elHit.name.slice(0, 50) + '" is AMBIENT (perceived, never contacted) — choose an element a body can act on');
+                        else if (_ctVerb && _permitted.indexOf(_ctVerb) === -1) _v3f.push('contact.verb ' + _ctVerb + ' is not permitted by the affordance ' + _elHit.affordance + ' of "' + _elHit.name.slice(0, 50) + '"');
+                        if (_epTargetRaw && _epTargetRaw.toLowerCase() !== _elHit.name.toLowerCase()) _v3soft('ep_target_overridden', 'environment_plus.target', 'canonicalized', 'environment_plus.target does not derive from contact.object — the contacted element is canonical');
+                      }
+                    }
+                    // Optional wording (author-facing support): may carry the identity at most once; never the source of contact.
+                    var _act = String(_pof.action || '').trim();
+                    var _phN = (_act.match(/\{ENV_TARGET\}/g) || []).length;
+                    var _canonInRe = _epTargetRaw ? new RegExp(_epTargetRaw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi') : null;
+                    var _cnN = _canonInRe ? (_act.match(_canonInRe) || []).length : 0;
+                    // HEAD-NOUN RESOLUTION (2026-09-09): after the token and the exact name are accounted for, every remaining
+                    // determiner + head-noun mention is resolved against the ACCEPTED element identities (unique head → that element;
+                    // shared head + one distinguishing word → that element; otherwise ambiguous, by name).
+                    var _elNamesAll = (_gsEls.length ? _gsEls.map(function (e) { return e.name; }) : ((plan && plan.environment_elements) || [])).map(function (x) { return String(x || '').trim(); }).filter(Boolean);
+                    var _wordResolved = _act.replace(/\{ENV_TARGET\}/g, ' ');
+                    if (_canonInRe) _wordResolved = _wordResolved.replace(_canonInRe, ' ');
+                    var _otherByHead = [];
+                    _elNamesAll.forEach(function (nm) { if (_lc1(nm) !== _lc1(_epTargetRaw)) { var _r = new RegExp(nm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'); if (_r.test(_wordResolved)) { _otherByHead.push(nm); _wordResolved = _wordResolved.replace(_r, ' '); } } });
+                    var _resMen = _v3ResolveWordingMentions(_wordResolved, _elNamesAll);
+                    _resMen.mentions.forEach(function (mn) {
+                      if (mn.ambiguous) { var _ambMsg = 'fusion action wording "' + mn.phrase.slice(0, 40) + '" is ambiguous between issued elements (' + mn.candidates.slice(0, 3).map(function (c) { return '"' + String(c).slice(0, 40) + '"'; }).join(', ') + ')'; _wordingSoft = _wordingSoft || _ambMsg; _v3soft('wording_ambiguous', 'pc_opening_fusion.action', 'omitted', _ambMsg); }
+                      else if (_lc1(mn.element) === _lc1(_epTargetRaw)) _cnN += 1;
+                      else _otherByHead.push(mn.element);
+                    });
+                    var _idN = _phN + _cnN;
+                    if (_idN > 1) { _wordingSoft = _wordingSoft || 'carries the environment identity more than once'; _v3soft('wording_identity_twice', 'pc_opening_fusion.action', 'omitted', 'fusion action wording carries the environment identity more than once'); }
+                    // COHERENCE (Roman 2026-09-08): wording, when present, must CO-REFER to the structured contact's object —
+                    // name the environment identity exactly once — and may not name another environment element as the thing
+                    // acted on. An apron/vent or table/vent disagreement rejects before the author.
+                    // OPTIONAL SUPPORT IS WITHHELD, NEVER FATAL (2026-09-09, live 06:56 "thumb jamming the button" on the oven timer): wording
+                    // that names a part, a tool, a body or nothing resolvable is not a CONTRADICTION — it is unverifiable support. The
+                    // structured contact stands alone; the wording is withheld from the author and logged. Contradictions (another
+                    // element, an ambiguous head, the identity more than once) remain fatal below.
+                    var _wordingWithheld = _wordingSoft || ((_act && _idN === 0) ? 'nothing in it resolves to the contact object (token, exact name, or a head noun unique to it)' : null);
+                    if (_wordingWithheld) { try { console.log('[SCENE1:FUSION:V3] action wording withheld from the author — ' + _wordingWithheld + ': "' + _act.slice(0, 80) + '"'); } catch (_) {} }
+                    if (_act) {
+                      var _wordNoId = _phN ? _act.replace('{ENV_TARGET}', ' ') : (_canonInRe ? _act.replace(_canonInRe, ' ') : _act);
+                      var _otherEls = ((plan && plan.environment_elements) || []).filter(function (e) { return _lc1(e) !== _lc1(_epTargetRaw); });
+                      var _otherNamed = _otherEls.filter(function (e) { return _namesTarget(e, _wordNoId); }).concat(_otherByHead);
+                      if (_otherNamed.length) { _wordingWithheld = _wordingWithheld || 'names another environment element'; _v3soft('wording_other_element', 'pc_opening_fusion.action', 'omitted', 'fusion action wording names another environment element ("' + String(_otherNamed[0]).slice(0, 50) + '") while contact.object is the target'); }
+                    }
+                    var _opsV = (_cpContract.lensOps || []); var _opV = String(_pof.pc_lens_operation).trim().toUpperCase();
+                    var _opRecV = _opsV.filter(function (o) { return o.op === _opV; })[0] || null;
+                    if (!_opsV.length) _v3f.push('no validated lens operation is issued for this mask — the fusion has no C+ anchor');
+                    else if (!_opRecV) _v3f.push('pc_opening_fusion.pc_lens_operation "' + _opV.slice(0, 60) + '" is not one of the issued operations');
+                    var _rev = String(_pof.character_revelation).trim();
+                    if (_isSchemaEcho(_rev)) { _revOmit = 'revelation_schema_echo'; _v3soft('revelation_schema_echo', 'pc_opening_fusion.character_revelation', 'omitted', 'character_revelation returns the schema instead of content'); }
+                    else {
+                      if (/\{ENV_TARGET\}/.test(_rev)) { _revOmit = _revOmit || 'revelation_placeholder'; _v3soft('revelation_placeholder', 'pc_opening_fusion.character_revelation', 'omitted', 'character_revelation carries the environment placeholder'); }
+                      if (_covered(_epTargetRaw, _rev) >= 0.67) { _revOmit = _revOmit || 'revelation_describes_thing'; _v3soft('revelation_describes_thing', 'pc_opening_fusion.character_revelation', 'omitted', 'character_revelation describes the environment thing instead of the protagonist'); }
+                      if (_opRecV && _covered(_opRecV.gloss, _rev) >= 0.6) { _revOmit = _revOmit || 'revelation_restates_gloss'; _v3soft('revelation_restates_gloss', 'pc_opening_fusion.character_revelation', 'omitted', 'character_revelation restates the lens operation\'s gloss'); }
+                      if (!_aboutPc(_rev)) { _revOmit = _revOmit || 'revelation_not_about_pc'; _v3soft('revelation_not_about_pc', 'pc_opening_fusion.character_revelation', 'omitted', 'character_revelation does not concern the protagonist (no resolved name, alias or pronoun)'); }
+                    }
+                    var _ep3 = _pof.environment_pressure;
+                    var _prText = (_ep3 && typeof _ep3 === 'object') ? String(_ep3.text || '').trim() : (typeof _ep3 === 'string' ? String(_ep3).trim() : '');
+                    var _grounds = (_ep3 && typeof _ep3 === 'object' && Array.isArray(_ep3.grounds)) ? _ep3.grounds.map(String) : null;
+                    if (!_prText) _v3f.push('fusion has no environment pressure');
+                    var _issued = {}; (_v3Fusion.grounds || []).forEach(function (g) { _issued[g.id] = g; });
+                    _issued['env:target'] = { provenance: 'validated_env' }; _issued['env:axis'] = { provenance: 'validated_env' };
+                    var _gs1 = state._cpGeneratedStage && state._cpGeneratedStage['1'];
+                    if (_gs1) { (_gs1.eventFacts || []).forEach(function (f, i) { _issued['stage:fact:' + (i + 1)] = { provenance: 'planner_stage', text: f.text }; }); (_gs1.participants || []).forEach(function (pp) { _issued['stage:participant:' + pp.ref] = { provenance: 'planner_stage' }; }); }
+                    if (_stage && _stage.environmentOwner === 'planner') { if (_stage.setting) _issued['stage:setting'] = { provenance: 'planner_stage', text: _stage.setting }; (_stage.environmentElements || []).forEach(function (e, i) { _issued['stage:element:' + (i + 1)] = { provenance: 'planner_stage', text: e }; }); }
+                    if (!_grounds) _v3f.push('environment_pressure.grounds is missing — the pressure must cite issued fact ids');
+                    else {
+                      // ── TWO PROVEN ALIASES (Roman 2026-09-08) ── aliasing of ISSUED facts, not a new fact channel:
+                      //  · `env:<value>` → `env:axis` ONLY when <value> exactly equals the validated E+ axis;
+                      //  · a bare participant ref → its `stage:participant:<ref>` id ONLY when that ref resolves to exactly
+                      //    one participant of the ACCEPTED stage. Anything else stays as written and fails membership by name.
+                      var _axisLc = String(_epObj.axis || '').trim().toLowerCase();
+                      var _aliased = [];
+                      _grounds = _grounds.map(function (g) {
+                        var m = /^env:(.+)$/.exec(g);
+                        if (m && m[1] !== 'axis' && m[1] !== 'target' && String(m[1]).trim().toLowerCase() === _axisLc && _axisLc) { _aliased.push(g + '→env:axis'); return 'env:axis'; }
+                        if (!/^(env|pick|stage|ledger|plot):/.test(g) && _gs1 && Array.isArray(_gs1.participants) && _issued['stage:participant:' + g]) {
+                          // the accepted stage stores the protagonist under the RESOLVED id (the normaliser maps pc:self to it),
+                          // so `pc:self` matches the stage's single pc:* participant; any other bare ref must match exactly.
+                          var _hits = _gs1.participants.filter(function (pp) { var r = String(pp.ref || ''); return r === String(g) || (String(g) === 'pc:self' && (r === 'pc' || /^pc:/.test(r))); });
+                          if (_hits.length === 1) { _aliased.push(g + '→stage:participant:' + g); return 'stage:participant:' + g; }
+                        }
+                        return g;
+                      });
+                      if (_aliased.length) { try { console.log('[SCENE1:FUSION:V3] grounds normalised (issued-fact aliases): ' + _aliased.join(', ')); } catch (_) {} }
+                      var _badG = _grounds.filter(function (g) { return !_issued[g]; });
+                      if (_badG.length) _v3f.push('environment_pressure.grounds cites unissued ids (' + _badG.slice(0, 3).join(', ') + ') — free spine prose is not a fact');
+                      if (_grounds.indexOf('env:axis') === -1) _v3f.push('environment_pressure.grounds does not link to env:axis');
+                      if (!_grounds.some(function (g) { return !/^env:/.test(g); })) _v3f.push('environment_pressure cites no admissible non-environment fact');
+                    }
+                    if (_prText) {
+                      if (/\{ENV_TARGET\}/.test(_prText)) { _prOmit = 'pressure_placeholder'; _v3soft('pressure_placeholder', 'pc_opening_fusion.environment_pressure.text', 'omitted', 'environment_pressure.text carries the placeholder'); }
+                      // (2026-09-09, live 17:39) the pressure sentence MAY name the thing that bears on the protagonist — the template asks it to
+                      // state HOW the environment thing bears on her, and "the oven door holds the heat of the day and presses it back into my
+                      // skin" is that sentence. The former "repeats the target's name" fault rejected presence, not contradiction; removed.
+                      // Still fatal: the placeholder token here, schema echo, restating the E+ beat, a sentence that is not about the protagonist.
+                      if (_isSchemaEcho(_prText)) { _prOmit = _prOmit || 'pressure_schema_echo'; _v3soft('pressure_schema_echo', 'pc_opening_fusion.environment_pressure.text', 'omitted', 'environment_pressure.text returns the schema instead of content'); }
+                      if (_epBeat && _covered(_epBeat, _prText) >= 0.6) { _prOmit = _prOmit || 'pressure_restates_beat'; _v3soft('pressure_restates_beat', 'pc_opening_fusion.environment_pressure.text', 'omitted', 'environment_pressure.text restates the environment_plus beat'); }
+                      if (!_aboutPc(_prText)) { _prOmit = _prOmit || 'pressure_not_about_pc'; _v3soft('pressure_not_about_pc', 'pc_opening_fusion.environment_pressure.text', 'omitted', 'environment_pressure.text does not bear on the protagonist (no resolved name, alias or pronoun)'); }
+                      if (_rev && _covered(_rev, _prText) >= 0.6) { _prOmit = _prOmit || 'pressure_duplicates_revelation'; _v3soft('pressure_duplicates_revelation', 'pc_opening_fusion.environment_pressure.text', 'omitted', 'character_revelation and environment_pressure are one sentence written twice'); }
+                    }
+                    if (!_v3f.length) {
+                      var _renderedWording = _wordingWithheld ? '' : (_phN ? _act.replace('{ENV_TARGET}', _epTargetRaw) : _act);   // withheld support renders nothing
+                      var _contactLine = _ctVerb + ' — ' + _epTargetRaw;   // the ONE canonical occurrence owned by the contact
+                      var _rendered = _renderedWording || (_ctVerb.toLowerCase().replace(/_/g, ' ') + ' ' + _epTargetRaw);
+                      if (!_v3f.length) {
+                        _pofBeat = _rendered;
+                        try {
+                          // The normaliser emits a fusion object only for the retired free-beat shape; under v3 the
+                          // VALIDATED parts are the normalised object, created here so the shared-state copy and the
+                          // author directive receive them.
+                          if (_norm) {
+                            _norm.pc_opening_fusion = Object.assign({}, (_norm.pc_opening_fusion && typeof _norm.pc_opening_fusion === 'object') ? _norm.pc_opening_fusion : {}, { v3: true, character: _pcRecV.label, placement: 'PC_FIRST_EMBODIED_BEAT', contact: { verb: _ctVerb, object: _epTargetRaw, line: _contactLine }, action_wording: _renderedWording, wording_names_target: _idN === 1, action: _rendered, beat: _rendered,
+                              pc_lens_operation: _opV, character_revelation: (_revOmit ? '' : _rev), character_angle: (_revOmit ? '' : _rev), revelation_withheld: _revOmit || null, pressure_withheld: _prOmit || null, wording_withheld: _wordingWithheld || null, soft_findings: _v3s.slice(),
+                              environment_pressure: { grounds: _grounds.slice(), text: (_prOmit ? '' : _prText), provenance: _grounds.map(function (g) { return g + '[' + ((_issued[g] && _issued[g].provenance) || '?') + ']'; }) },
+                              environment_target: _epTargetRaw, environment_axis: String(_epObj.axis || '') });
+                          }
+                        } catch (_) {}
+                        try { console.log('[SCENE1:FUSION:V3] accepted — contact ' + _ctVerb + ' → target · lens ' + _opV + ' · grounds [' + _grounds.join(', ') + ']'); } catch (_) {}
+                      }
+                    }
+                  }
+                }
+                _v3f.forEach(function (f) { _faults.push(f); });
+              } else {
               var _pofBeat = String(_pof.beat || '').trim();
               if (!_pofBeat) _faults.push('pc_opening_fusion has no beat');
               else if (_isSchemaEcho(_pofBeat)) {
@@ -265301,12 +266566,19 @@ Generate the synopsis now. The protagonist MUST be named ${pKernel}. Depict the 
                 _faults.push('pc_opening_fusion.placement must be PC_FIRST_EMBODIED_BEAT — the beat lands at '
                   + 'her first embodied action or sensory response, not wherever the author finds room');
               }
-              if (_lc1(_pof.environment_target) !== _lc1(_epTargetRaw)) {
-                _faults.push('pc_opening_fusion.environment_target does not match environment_plus.target — '
-                  + 'the opening may not point at two different things');
+              // SHARED RULE, mode 'inherit' (free-text contract). Inheritance is allowed ONLY when environment_plus
+              // passed its own validation: non-empty target, axis inside the allowlist, and no E+ fault above.
+              var _epAxisLc = String(_epObj.axis || '').trim().toLowerCase();
+              var _epAxesOk = (typeof _EP_AXES !== 'undefined' && Array.isArray(_EP_AXES)) ? (_EP_AXES.indexOf(_epAxisLc) !== -1) : !!_epAxisLc;
+              var _epPassed = !!_epTargetRaw && _epAxesOk && _faults.length === _faultsBeforeEp;
+              var _pofRule = _reconcileFusionEnvFields(_pof, { target: _epTargetRaw, axis: _epObj.axis }, { mode: 'inherit', apply: _epPassed });
+              _pofRule.faults.forEach(function (f) { _faults.push(f); });
+              if (!_pofRule.faults.length && !_epPassed && (!String(_pof.environment_target || '').trim() || !String(_pof.environment_axis || '').trim())) {
+                _faults.push('pc_opening_fusion omits environment_target/axis and environment_plus did not pass its own validation — nothing canonical to inherit');
               }
-              if (_lc1(_pof.environment_axis) !== _lc1(_epObj.axis)) {
-                _faults.push('pc_opening_fusion.environment_axis does not match environment_plus.axis');
+              if (_pofRule.derived.length) {
+                try { if (_norm && _norm.pc_opening_fusion && typeof _norm.pc_opening_fusion === 'object') { _norm.pc_opening_fusion.environment_target = _pof.environment_target; _norm.pc_opening_fusion.environment_axis = _pof.environment_axis; } } catch (_) {}
+                try { console.log('[SCENE1:FUSION:INHERITED] ' + _pofRule.derived.join(' + ') + ' inherited from environment_plus ("' + _epTargetRaw.slice(0, 60) + '" / "' + String(_epObj.axis || '') + '") — free-text contract, v2 invariant; the beat rule still runs on the E+ target'); } catch (_) {}
               }
               if (_pofBeat) {
                 var _pofV = _validateFusionConcreteness(_pofBeat, (_pcRecV.label || ''), _epTargetRaw);
@@ -265320,6 +266592,7 @@ Generate the synopsis now. The protagonist MUST be named ${pKernel}. Depict the 
                     + _pofV.code + '] — a neutral mention or an interior diagnosis does not fuse: "'
                     + _pofBeat.slice(0, 110) + '"');
                 }
+              }
                 // ONE SOURCE OF TRUTH: the PC's C+ angle and her staged anchor must BE this beat.
                 var _pcCp = _cp.filter(function (c) {
                   return (_pcRecV.aliases || [_pcRecV.label]).some(function (a) { return _lc1(a) === _lc1(c.character); });
@@ -265363,6 +266636,15 @@ Generate the synopsis now. The protagonist MUST be named ${pKernel}. Depict the 
             var _isPcRow2 = !!(_rec2 && _rec2.kind === 'pc');
             if (_isPcRow2) return;                                    // handled above, against the fusion
             if (_isPointerSentinel(ab)) return;                       // the expected value, any spelling
+            // CORRECTION 2 (Roman 2026-09-06): the opening sentinel is accepted ONLY on the declared
+            // opening actor's row (5/6 real plans echoed it there); the anchor is derived after
+            // validation from their C+ act, which IS the opening beat. On any other row it is hostile.
+            if (/^FROM[_\s-]*OPENING[_\s-]*BEAT$/i.test(ab)) {
+              if (_v2 && _v2.openingActor && _rec2 && _lc1(_rec2.label) === _lc1(_v2.openingActor.name)) return;
+              _faults.push('"' + nm + '" is staged with anchor_beat FROM_OPENING_BEAT but is not the declared opening_actor — '
+                + 'that sentinel belongs to the opening actor alone');
+              return;
+            }
             var _cpFor = _cp.filter(function (x) {
               return _rec2 ? _lc1(x.character) === _lc1(_rec2.label) : _lc1(x.character) === _lc1(nm);
             })[0];
@@ -265397,6 +266679,11 @@ Generate the synopsis now. The protagonist MUST be named ${pKernel}. Depict the 
             });
           }
 
+          if (_norm && _norm.fusion && _plannerOwnedStage && (typeof _v3Fusion !== 'undefined') && _v3Fusion) {
+            // SOFT (2026-09-09): on the v3 path the structured pc_opening_fusion IS the fusion; a legacy `fusion` member is ignored, not judged.
+            _s1Soft('fusion_legacy_member_ignored', 'scene_skeleton.fusion', 'omitted', 'a legacy fusion member was returned on the v3 path; pc_opening_fusion (contact) is the fusion');
+            _norm.fusion = null;
+          }
           if (_norm && _norm.fusion) {
             var _fuRec = _resolveEligiblePerson(_norm.fusion.character, _stage);
             if (_fuRec) {
@@ -265444,19 +266731,52 @@ Generate the synopsis now. The protagonist MUST be named ${pKernel}. Depict the 
           }
 
           if (_faults.length) {
+            // ── AVAILABILITY VALVE (Roman 2026-09-05, approved with contract v2) ──
+            // An invalid ASSIGNMENT plan is a missing feature, not a broken story: C+, E+ and the
+            // fusion are dropped, the drop is logged with every fault, and Scene 1 is authored from
+            // the seed stage alone. Transport and roster faults are NOT routed here — a governor
+            // refusal is still "at capacity", and a changed cast still aborts.
+            // OPT-IN, PENDING APPROVAL (2026-09-05): this is a NEW policy, not the pre-existing
+            // fail-C+-closed doctrine (that one withdraws a single candidate the scene proves nothing
+            // for; an invalid skeleton was fatal by explicit design). Until Roman approves it as the
+            // default, the abort below stays the shipped behaviour and the valve runs only when
+            // window._scene1AssignmentValve === true.
+            // SOFT PARTITION (2026-09-09): Character+ language/persuasion faults withhold that ONE entry and log; everything else here is structural and stays fatal.
+            var _CP_SOFT = /^character_plus "([^"]+)" (?:restates the canonical truth|is a known restatement of|offers a bodily reaction|visible_action never engages the condition|gives a visible_action that engages nothing|gives a pc_interpretation that never names them|declares LEAK but the bridge names no controlled|behavior rejected \[(?!EMPTY\]))/;   /* EMPTY = missing behaviour = structural, stays fatal */
+            var _softCp = _plannerOwnedStage ? _faults.filter(function (f) { return _CP_SOFT.test(String(f)); }) : [];
+            if (_softCp.length) {
+              _softCp.forEach(function (f) {
+                var nm = (String(f).match(_CP_SOFT) || [])[1];
+                _s1Soft('cplus_language', 'character_plus["' + nm + '"]', 'omitted', f);
+                try { if (_norm && Array.isArray(_norm.character_plus)) _norm.character_plus = _norm.character_plus.filter(function (c) { return String(c && c.character) !== String(nm); }); _cp = _norm.character_plus; } catch (_) {}
+              });
+              _faults = _faults.filter(function (f) { return !_CP_SOFT.test(String(f)); });
+            }
+            if (!_faults.length) { try { console.log('[SCENE1:SKELETON] soft-only findings; assignments accepted with ' + _softCp.length + ' Character+ entr' + (_softCp.length === 1 ? 'y' : 'ies') + ' withheld'); } catch (_) {} }
+            var _valveOn = (typeof window !== 'undefined' && window._scene1AssignmentValve === true);
+            if (!_faults.length) {
+              // soft-only: nothing structural failed — the assignments stand (minus withheld entries) and the author attempt proceeds
+            } else if (_valveOn) {
+              try { console.warn('[SCENE1:ASSIGNMENTS:DROPPED] ' + _faults.length + ' fault(s) — authoring Scene 1 from the seed stage WITHOUT C+/E+/fusion: ' + _faults.join(' · ')); } catch (_) {}
+              try { state._scene1AssignmentsDropped = _faults.join('; '); state._scene1SkeletonFatal = null; } catch (_) {}
+              _norm = { character_plus: [], environment_plus: null, fusion: null, pc_opening_fusion: null, dropped: true, faults: _faults.slice() };
+              _cp = _norm.character_plus;
+              _v2.valve = true;
+            } else {
               // -- THE RUN IS ABANDONED HERE, AND THE PAID PASSES MUST LEARN IT --
               // X13b: a fire-and-forget subplot pass launched during A-plot generation could
               // already be past its ownership guard when this line runs, and would spend money
               // on a scene that is never written. Settling the gate is what it waits on.
               try { _settleChainCommit(false, 'scene_skeleton invalid', state); } catch (_) {}
-            try { console.error('[SCENE1:SKELETON:INVALID] ' + _faults.length + ' fault(s) — ' + _faults.join(' · ')); } catch (_) {}
-            // Recorded on state, not just thrown: _buildScene1Scaffold wraps this region in a
-            // catch that degrades any throw to an empty scaffold block, which would let an
-            // invalid skeleton reach Grok silently — the precise failure this must prevent.
-            try { state._scene1SkeletonFatal = _faults.join('; '); } catch (_) {}
-            var _skFatal = new Error('scene_skeleton invalid: ' + _faults.join('; '));
-            _skFatal._scene1SkeletonFatal = true;
-            throw _skFatal;
+              try { console.error('[SCENE1:SKELETON:INVALID] ' + _faults.length + ' fault(s) — ' + _faults.join(' · ')); } catch (_) {}
+              // Recorded on state, not just thrown: _buildScene1Scaffold wraps this region in a
+              // catch that degrades any throw to an empty scaffold block, which would let an
+              // invalid skeleton reach Grok silently — the precise failure this must prevent.
+              try { state._scene1SkeletonFatal = _faults.join('; '); } catch (_) {}
+              var _skFatal = new Error('scene_skeleton invalid: ' + _faults.join('; '));
+              _skFatal._scene1SkeletonFatal = true;
+              throw _skFatal;
+            }
           }
             // Validation passed — but the chain is NOT yet committed. A scaffold builder
             // failure downstream can still kill this scene, and releasing paid passes here
@@ -265507,6 +266827,8 @@ Generate the synopsis now. The protagonist MUST be named ${pKernel}. Depict the 
                   _src = _mD ? String(_mD.angle || '') : '';
                 }
                 if (_src) row.anchor_beat = _src;
+                // valve: an unresolved sentinel must not reach the author as a literal
+                else if (_v2 && _v2.valve && /^FROM_/i.test(String(row.anchor_beat || ''))) row.anchor_beat = '';
               });
               try {
                 console.log('[SCENE1:ANCHOR:DERIVED] ' + _sc.length + ' staged anchor(s) derived from their '
@@ -270033,7 +271355,10 @@ Return ONLY the blurb, no quotes:\n${text}`}]);
         // OFFSTAGE-LI FACE SCRUB (Roman 2026-07-04): Scene-1, LI offstage only — strip free-authored
         // remembered-FACE memory the offstage "reputation, not face" directive can't prevent.
         try {
+          // DEFAULT OFF (2026-09-10, §41): this deleted the LI's only required behaviour ("…without lifting his eyes…") in the frozen run.
+          // A deterministic pass that deletes dramatic prose is not a safe presentation transform. Opt-in: window._scrubOffstageLiFace = true.
           if (_isScene1Lit && typeof text === 'string' && typeof _scrubOffstageLiFace === 'function'
+              && (typeof window !== 'undefined' && window._scrubOffstageLiFace === true)
               && (typeof _liOnPageThisScene !== 'function' || !_liOnPageThisScene(state))) {
             var _liGsc = String((state && (state.liGender || state.loveInterestGender)) || 'male').toLowerCase();
             var _liPossSc = (_liGsc.indexOf('female') === 0) ? 'her' : (_liGsc.indexOf('non') === 0 ? 'their' : 'his');
@@ -270295,7 +271620,9 @@ Return ONLY the blurb, no quotes:\n${text}`}]);
               try { if (typeof _auditPreRenderFormat === 'function') _auditPreRenderFormat(text, 'scene1-mount'); } catch (_) {}
             }
           } catch (_fnErr) { try { console.warn('[FORMAT:FINAL-NORMALIZE] failed: ' + (_fnErr && _fnErr.message)); } catch (_) {} }
-          try { if (typeof window._dedupRepeatedSentences === 'function') text = window._dedupRepeatedSentences(text, 'scene1'); } catch (_) {}
+          // DEFAULT OFF (2026-09-10, §41): the dedup removed the mandated closer's own middle sentence in the frozen run; a repeated
+          // sentence can be a refrain. Opt-in: window._dedupScene1Sentences = true.
+          try { if (typeof window !== 'undefined' && window._dedupScene1Sentences === true && typeof window._dedupRepeatedSentences === 'function') text = window._dedupRepeatedSentences(text, 'scene1'); } catch (_) {}
           // LANE-2 ENDPOINTS (harness-only). FINAL_PROSE is the literary judging endpoint — the last
           // authoritative prose BEFORE presentation. DELIVERED is formatStory's output, which strips
           // [LORE:…] machine metadata and applies <p> markup but alters no reader-facing words; it is
@@ -270379,6 +271706,7 @@ Return ONLY the blurb, no quotes:\n${text}`}]);
           StoryPagination.addPage(formatStory(text), true, undefined,
             Object.assign({}, _pInvLit ? { invocationId: _pInvLit } : null,
                           { cpAttemptId: (typeof _pageAttempt !== 'undefined' ? _pageAttempt : null) }));
+          try { _sceneLedgerCommit(state, { kind: 'scene', sceneNumber: 1, pageUid: StoryPagination.getCurrentPageUid() }); } catch (_) {}
         }
 
         // ═══════════════════════════════════════════════════════════════════════
@@ -270619,6 +271947,31 @@ Return ONLY the blurb, no quotes:\n${text}`}]);
     } catch (beginErr) {
       console.error('[BeginStory] Error:', beginErr);
       if (typeof _refundPendingSceneFortune === 'function') _refundPendingSceneFortune();
+      // ── SCENE-1 PLANNER FATAL: FAIL AND REFUND ──
+      // The opening planner owns the mission/stage for an unseeded Scene 1. When its output is
+      // invalid the story aborts BEFORE the inner try (the throw sits ahead of it), so it lands
+      // here — where, until now, the issue purchase was never refunded and the reader saw
+      // nothing. Fail-closed means: refund the issue purchase, say so honestly, return to setup.
+      var _s1Fatal = !!(beginErr && beginErr._scene1SkeletonFatal);
+      // ── NEVER SILENCE (Roman 2026-09-07 invariant) ── an UNTAGGED exception that escapes to
+      // here after the reader paid for an issue used to end with no refund and no message: the
+      // person sat on a dead screen and nothing in state named the failure. Any error that
+      // arrives while an issue purchase is pending and no page was committed takes the same
+      // reader path as a Scene-1 fatal, and the console names the error class so it is never
+      // mistaken for a stage fault.
+      if (!_s1Fatal && beginErr && state && state._issuePurchaseOpId) {
+        var _noPage = true;
+        try { _noPage = !(window.StoryPagination && window.StoryPagination.getPageCount && window.StoryPagination.getPageCount() > 0); } catch (_) {}
+        if (_noPage) {
+          _s1Fatal = true;
+          try { state._scene1SkeletonFatal = state._scene1SkeletonFatal || ('begin-story error (untagged): ' + String((beginErr && beginErr.message) || beginErr).slice(0, 200)); } catch (_) {}
+          try { console.error('[BeginStory] UNTAGGED error with a pending issue purchase and no page — taking the refund path: ' + String((beginErr && beginErr.message) || beginErr).slice(0, 200)); } catch (_) {}
+        }
+      }
+      var _s1Refunded = false;
+      if (_s1Fatal) {
+        try { _s1Refunded = await _refundIssuePurchase(); } catch (_s1RfErr) { console.error('[BEGIN:REFUND] threw:', _s1RfErr && _s1RfErr.message); }
+      }
       // ── THE READER HEARS SOMETHING ──
       // A Scene-1 abort thrown outside the inner try lands here, and this handler used to only
       // LOG it: the person was left on a dead screen with no message at all. That is bad for
@@ -270639,7 +271992,12 @@ Return ONLY the blurb, no quotes:\n${text}`}]);
                     : " Please try again shortly."));
           }
           state._scene1QuotaBusy = null;
+        } else if (_s1Fatal) {
+          alert(_s1Refunded
+            ? "Fate stumbled — your story didn't start, so your Fortunes have been refunded. Please try again."
+            : "Fate stumbled. Please try again. (Check console for diagnostics)");
         }
+        if (_s1Fatal && typeof window.showScreen === 'function') window.showScreen('setup');
       } catch (_) {}
     } finally {
       _beginStoryInProgress = false;
@@ -300659,7 +302017,9 @@ Must remain physical, not conceptual. Richness comes from specificity of interac
               // UNCHANGED — live, not frozen. Collapses the latch-vs-live "two truths" bug.
               // Scene 2 opening emphasis (one-shot, runs only on Scene 2).
               // ── TONE-GATE SYMMETRY ──
-              if (state.turnCount === 1 && state.storyGravity) {
+              // Scene 2 at BUILD time = canonical scene number 2 (turnCount = completed continuation turns,
+              // so the scene being built is turnCount + 2; the old `turnCount === 1` test fired on the Scene-3 build).
+              if (_currentSceneNumber(state) === 2 && state.storyGravity) {
                   var _sg2Dir = state.storyGravity === 'outcome' ? 'goal_heavy' : 'connection_heavy';
                   var _sg2Override = (typeof _axisToneOverride === 'function')
                       ? _axisToneOverride('literary_story_gravity', _sg2Dir)
@@ -300890,6 +302250,7 @@ Must remain physical, not conceptual. Richness comes from specificity of interac
       // must COLLAPSE without the LI) and LAW 2 (≥75% of LI-paragraphs must be WANTING/WONDERING) under a
       // clause granting them precedence over all doctrine. That outranks TWO-ENGINE GRAVITY's 60/40
       // continuation default and suppresses assigned A-plot events. LAW 3 (memory content) is retained.
+      try { _sceneLedgerStamp(state, { act: (typeof act !== 'undefined' ? act : ''), dia: (typeof dia !== 'undefined' ? dia : '') }); } catch (_) {}
       var _sysForTurn = state.sysPrompt || '';
       try {
         if (state.turnCount && window._ARCH_LAWS_SCENE1_STRIP &&
@@ -300897,7 +302258,7 @@ Must remain physical, not conceptual. Richness comes from specificity of interac
           _sysForTurn = _sysForTurn.replace(window._ARCH_LAWS_SCENE1_STRIP, window._ARCH_LAWS_CONT_TITLE);
         }
       } catch (_archStripErr) { _sysForTurn = state.sysPrompt || ''; }
-      let fullSys = !_buildHeavy ? '' : (_sysForTurn + _persistentStableTail + _CACHE_SENTINEL + _buildAuthorFloorDirective(state) + _buildA50ModeDirective() + _buildStagingFloorDirective() + _seedCanonPersist(state) + _intentTransmutationDirective + _billionaireAttractionBlock + _preBiasBlock + _adaptiveBlock + _persistentCache + _binl_voiceAnchor + _emergentLIBlock + _typologicalVectorBlock + _thirstCastBlock + _preCollapseArchFlavorBlock + _preCollapseHookEnforcementBlock + _indecisionPressureBlock + _liReactivationBlock + _liSignatureGestureBlock + _postRejectionPersistenceBlock + _attractionAnchorBlock + _binl_liAttractionTexture + _binl_desireAttention + _fatedBloodAttractionBlock +_storyPullEnforcementBlock + _temptationBlock + _rhythmBlock + _attractionBlock + _crossStoryBlock + _entryBlock + _exitBlock + _hiddenTruthBlock + _committedTruthBlock + _scarBlock + _nearMissBlock + _invisibleEscalationBlock + _sceneMirrorBlock + _breathBlock + _grievanceFormationBlock + _grievanceConvergenceBlock + _grievanceAftermathBlock + _pressureBiasBlock + _binl_literaryHedge + _binl_literaryCraft /* PROSESTACK DEDUP (2026-05-29): buildDialogueFormatting / ProseDensityConductor / WorldSensoryTexture / EmotionalAtmosphere / CharacterImpression / CharacterDescription / CharacterContext / CharacterDisclosure are ALREADY emitted in state.sysPrompt via buildProseStackDirectives() (def @~21516, called at sysPrompt build @~178867). Their late dup here was costing ~$0.03–0.05/scene at the 1.25× cache-write rate to repeat content the model already had on the 1h-cached prefix. Mirrors the SPINE DEDUP at ~207745. */ + _binl_liInitiative + _binl_goalRelationshipPrinciple + _binl_relationalContinuity + _binl_establishedDescription + _binl_liFeatureRotation + _binl_pcFeatureRotation + _binl_inhumanFeatureRotation + _binl_liCharmHabit + _binl_gestureRotation + _binl_orientationAwareAdaptations + _binl_subplot + _binl_regime + _binl_literaryScaffoldTail + _adaptiveLengthBlock + _energyBoostBlock + _scene1Contract + _lowAgencyBlock + _relationalAwarenessBlock + /* _pursuitStyleBlock + _humorSignatureBlock + _billionaireSpecBlock + _billionaireAttractionBlock + _billionaireFixationBlock + _billionairePerceptionBlock — hoisted into the 1h-cached prefix above, 2026-05-29 */ _axisCheckpointBlock + _intensityCalibrationBlock + _intimacyMicroDecisionBlock + _explicitTolerancePromptBlock + _binl_mode1Whisper + _binl_mode1FemaleVariant + _binl_mode1Aftermath + _binl_mode1Rendezvous + _binl_mode1AlternateLi + _binl_mode1ReturnChance + _binl_frictionMarker + _binl_forceMarker + _binl_sceneSignals + _binl_intimacyEntryProbe + _binl_liOccupationRegister + _binl_liRegionalVoice + _binl_aPlotPressure + _binl_fastBurnYield + _binl_mythicCouple + _binl_mythicCoupleForgetting + _binl_temptInSceneReaction + _binl_temptFateCallback + _binl_intimateCooldown + _binl_honeyPotBehavior + _binl_honeyPotClimax + _indulgenceBlock + _deckEscalationBlock + _storyGravityBlock + _postVisionReactionBlock + _postVisionDivergenceBlock + _safeModeBlock + _binl_subBoundary + sceneDirectives + _buildPerTurnCharMemory() + _literarySceneMandate + _safeModePostfix + _fatelandsCognitiveMemoryBlock + _binl_sceneContinuation + _binl_playerImpact + _binl_signaturePhraseBan + _binl_phraseMarker + _binl_liSocialProof + _binl_liRelationalValue + _binl_liInterestSignal + _binl_liHiddenBurden + _binl_liPrivateExplanation + `\n\nTURN INSTRUCTIONS:
+      let fullSys = !_buildHeavy ? '' : (_sysForTurn + _persistentStableTail + _CACHE_SENTINEL + _buildAuthorFloorDirective(state) + _buildContinuitySpineBlock(state) + _buildA50ModeDirective() + _buildStagingFloorDirective() + _seedCanonPersist(state) + _intentTransmutationDirective + _billionaireAttractionBlock + _preBiasBlock + _adaptiveBlock + _persistentCache + _binl_voiceAnchor + _emergentLIBlock + _typologicalVectorBlock + _thirstCastBlock + _preCollapseArchFlavorBlock + _preCollapseHookEnforcementBlock + _indecisionPressureBlock + _liReactivationBlock + _liSignatureGestureBlock + _postRejectionPersistenceBlock + _attractionAnchorBlock + _binl_liAttractionTexture + _binl_desireAttention + _fatedBloodAttractionBlock +_storyPullEnforcementBlock + _temptationBlock + _rhythmBlock + _attractionBlock + _crossStoryBlock + _entryBlock + _exitBlock + _hiddenTruthBlock + _committedTruthBlock + _scarBlock + _nearMissBlock + _invisibleEscalationBlock + _sceneMirrorBlock + _breathBlock + _grievanceFormationBlock + _grievanceConvergenceBlock + _grievanceAftermathBlock + _pressureBiasBlock + _binl_literaryHedge + _binl_literaryCraft /* PROSESTACK DEDUP (2026-05-29): buildDialogueFormatting / ProseDensityConductor / WorldSensoryTexture / EmotionalAtmosphere / CharacterImpression / CharacterDescription / CharacterContext / CharacterDisclosure are ALREADY emitted in state.sysPrompt via buildProseStackDirectives() (def @~21516, called at sysPrompt build @~178867). Their late dup here was costing ~$0.03–0.05/scene at the 1.25× cache-write rate to repeat content the model already had on the 1h-cached prefix. Mirrors the SPINE DEDUP at ~207745. */ + _binl_liInitiative + _binl_goalRelationshipPrinciple + _binl_relationalContinuity + _binl_establishedDescription + _binl_liFeatureRotation + _binl_pcFeatureRotation + _binl_inhumanFeatureRotation + _binl_liCharmHabit + _binl_gestureRotation + _binl_orientationAwareAdaptations + _binl_subplot + _binl_regime + _binl_literaryScaffoldTail + _adaptiveLengthBlock + _energyBoostBlock + _scene1Contract + _lowAgencyBlock + _relationalAwarenessBlock + /* _pursuitStyleBlock + _humorSignatureBlock + _billionaireSpecBlock + _billionaireAttractionBlock + _billionaireFixationBlock + _billionairePerceptionBlock — hoisted into the 1h-cached prefix above, 2026-05-29 */ _axisCheckpointBlock + _intensityCalibrationBlock + _intimacyMicroDecisionBlock + _explicitTolerancePromptBlock + _binl_mode1Whisper + _binl_mode1FemaleVariant + _binl_mode1Aftermath + _binl_mode1Rendezvous + _binl_mode1AlternateLi + _binl_mode1ReturnChance + _binl_frictionMarker + _binl_forceMarker + _binl_sceneSignals + _binl_intimacyEntryProbe + _binl_liOccupationRegister + _binl_liRegionalVoice + _binl_aPlotPressure + _binl_fastBurnYield + _binl_mythicCouple + _binl_mythicCoupleForgetting + _binl_temptInSceneReaction + _binl_temptFateCallback + _binl_intimateCooldown + _binl_honeyPotBehavior + _binl_honeyPotClimax + _indulgenceBlock + _deckEscalationBlock + _storyGravityBlock + _postVisionReactionBlock + _postVisionDivergenceBlock + _safeModeBlock + _binl_subBoundary + sceneDirectives + _buildPerTurnCharMemory() + _literarySceneMandate + _safeModePostfix + _fatelandsCognitiveMemoryBlock + _binl_sceneContinuation + _binl_playerImpact + _binl_signaturePhraseBan + _binl_phraseMarker + _binl_liSocialProof + _binl_liRelationalValue + _binl_liInterestSignal + _binl_liHiddenBurden + _binl_liPrivateExplanation + `\n\nTURN INSTRUCTIONS:
       ${tierContextBlock}
       Player Action: ${act}.
       Player Dialogue: ${dia}.
@@ -301616,7 +302977,7 @@ Must remain physical, not conceptual. Richness comes from specificity of interac
                   }
                 } catch (_e) { console.warn('[SKELETON] multi-pass build failed:', _e && _e.message); _skelMP = ''; }
                 if (window.__traceAuthorCalls) console.log('[BRANCH] MULTI-PASS pass2');
-              var _pass2Sys = state.sysPrompt + _pass2SysSentinel + _skelMP + _persistentCache + buildVoiceAnchorDirective() + _emergentLIBlock +
+              var _pass2Sys = state.sysPrompt + _pass2SysSentinel + _skelMP + _persistentCache + _buildContinuitySpineBlock(state) + buildVoiceAnchorDirective() + _emergentLIBlock +
                   _temptationBlock + _humorSignatureBlock + _safeModeBlock + _scene1Contract +
                   _literarySceneMandate +
                   '\n\n' + _proseContext +
@@ -302743,7 +304104,9 @@ ABSOLUTE RULES:
           // actually emitted an indulgence moment: the opportunity was
           // contextual to Scene 3 + toward + short-form, and shouldn't
           // carry forward to later scenes where it no longer fits.
-          if (state.turnCount === 2 && state._intensitySignal === 'toward') {
+          // Pre-increment: the scene just generated IS the canonical scene number (turnCount + 2);
+          // the old `turnCount === 2` test fired on Scene 4.
+          if (_currentSceneNumber(state) === 3 && state._intensitySignal === 'toward') {
             state._indulgenceOffered = true;
           }
           state.turnCount++;
@@ -303654,6 +305017,7 @@ ABSOLUTE RULES:
             pageContent += _formattedScene;
             StoryPagination.addPage(pageContent, true, undefined,
               { cpAttemptId: (typeof _pageAttemptC !== 'undefined' ? _pageAttemptC : null) });
+            try { _sceneLedgerCommit(state, { kind: 'scene', pageUid: StoryPagination.getCurrentPageUid() }); } catch (_) {}
           }
 
           // ──────────────────────────────────────────────────────────────
@@ -303839,8 +305203,9 @@ ABSOLUTE RULES:
           if (typeof showFateCardWhisper === 'function') showFateCardWhisper();
 
           // ── Onboarding Milestone Visions ──
-          // Scene 2 intro vision
-          if (state.turnCount === 2
+          // Scene 2 intro vision — POST-increment here, so the scene just committed is turnCount + 1
+          // (the old `turnCount === 2` test fired after Scene 3).
+          if (((state.turnCount || 0) + 1) === 2
               && state.storyId === state.onboarding_story_id
               && !state.has_received_intro_vision) {
               state.has_received_intro_vision = true;
@@ -305648,7 +307013,7 @@ FATE CARD ADAPTATION (CRITICAL):
           const _specPlayerImpactBlock = _specImpactRead ? buildPlayerImpactDirective(_specImpactRead) : '';
 
           const _specCacheSentinel = (window.StoryboundOrchestration && window.StoryboundOrchestration.CACHE_BOUNDARY) || '<<<STORYBOUND_CACHE_BOUNDARY>>>';
-          const fullSys = state.sysPrompt + _specCacheSentinel + `\n\n${turnPOVContract}${turnToneEnforcement}${intensityGuard}${specEroticGating}\n${specSafetyRewriteDirective ? '\n' + specSafetyRewriteDirective + '\n' : ''}${specIntentAnchorDirective}${squashDirective}\n${metaReminder}\n${vetoRules}\n${bbDirective}\n${safetyDirective}\n${edgeDirective}\n${pacingDirective}\n${lensEnforcement}${buildLiteraryIllusionDirective()}${buildEmotionalResidueDirective()}${ENGINE_VOCAB_FIREWALL_DIRECTIVE}${buildLiAttractionTextureDirective()}${typeof buildLiInitiativeDirective === 'function' ? buildLiInitiativeDirective() : ''}${specComponentBlock}${buildCallbackEchoDirective()}${buildChoiceMemoryDirective()}${buildMotifEchoDirective()}${buildThemeResonanceDirective()}${buildNarrativeSignatureDirective()}${buildEmotionalForeshadowDirective()}${buildEmotionalVectorDirective()}${buildMomentumDirective()}${buildNarrativeGravityDirective()}${buildRelationshipGravityDirective()}${buildNarrativeDriftDirective()}${buildAttractionGroundingDirective()}${buildRomanceProgressionDirective()}${buildProximityTensionDirective()}${buildReversalDirective()}${buildEntropyPulseDirective()}${buildExpectationInversionDirective()}${buildPerspectiveReframeDirective()}${buildArcSaturationDirective()}${buildDialogueDriftDirective()}${buildBeatDiversityDirective()}${buildCadenceDirective()}${buildDialogueStrategyDirective(act, dia)}${buildEmotionalChoiceEchoDirective(act, dia, null)}${buildMicroCliffhangerDirective()}${buildFateSeedDirective(null)}${buildMilestoneDirective()}${buildAxisGravityDirective()}${buildFrictionMarkerDirective()}${buildForceMarkerDirective()}${buildSceneSignalsDirective()}${buildIntimacyEntryProbeDirective()}${buildLIOccupationRegisterDirective()}${buildLIRegionalVoiceDirective()}${buildAPlotPressureDirective()}${buildMythicCoupleDirective()}${buildMythicCoupleForgettingDirective()}${buildTemptInSceneReactionDirective()}${buildTemptFateCallbackDirective()}${buildIntimateCooldownDirective()}${buildHoneyPotBehaviorDirective()}${buildHoneyPotClimaxDirective()}${_specGrEcho}${_specGrEscalation}${_specPlayerImpactBlock}
+          const fullSys = state.sysPrompt + _specCacheSentinel + `\n\n${_buildContinuitySpineBlock(state)}${turnPOVContract}${turnToneEnforcement}${intensityGuard}${specEroticGating}\n${specSafetyRewriteDirective ? '\n' + specSafetyRewriteDirective + '\n' : ''}${specIntentAnchorDirective}${squashDirective}\n${metaReminder}\n${vetoRules}\n${bbDirective}\n${safetyDirective}\n${edgeDirective}\n${pacingDirective}\n${lensEnforcement}${buildLiteraryIllusionDirective()}${buildEmotionalResidueDirective()}${ENGINE_VOCAB_FIREWALL_DIRECTIVE}${buildLiAttractionTextureDirective()}${typeof buildLiInitiativeDirective === 'function' ? buildLiInitiativeDirective() : ''}${specComponentBlock}${buildCallbackEchoDirective()}${buildChoiceMemoryDirective()}${buildMotifEchoDirective()}${buildThemeResonanceDirective()}${buildNarrativeSignatureDirective()}${buildEmotionalForeshadowDirective()}${buildEmotionalVectorDirective()}${buildMomentumDirective()}${buildNarrativeGravityDirective()}${buildRelationshipGravityDirective()}${buildNarrativeDriftDirective()}${buildAttractionGroundingDirective()}${buildRomanceProgressionDirective()}${buildProximityTensionDirective()}${buildReversalDirective()}${buildEntropyPulseDirective()}${buildExpectationInversionDirective()}${buildPerspectiveReframeDirective()}${buildArcSaturationDirective()}${buildDialogueDriftDirective()}${buildBeatDiversityDirective()}${buildCadenceDirective()}${buildDialogueStrategyDirective(act, dia)}${buildEmotionalChoiceEchoDirective(act, dia, null)}${buildMicroCliffhangerDirective()}${buildFateSeedDirective(null)}${buildMilestoneDirective()}${buildAxisGravityDirective()}${buildFrictionMarkerDirective()}${buildForceMarkerDirective()}${buildSceneSignalsDirective()}${buildIntimacyEntryProbeDirective()}${buildLIOccupationRegisterDirective()}${buildLIRegionalVoiceDirective()}${buildAPlotPressureDirective()}${buildMythicCoupleDirective()}${buildMythicCoupleForgettingDirective()}${buildTemptInSceneReactionDirective()}${buildTemptFateCallbackDirective()}${buildIntimateCooldownDirective()}${buildHoneyPotBehaviorDirective()}${buildHoneyPotClimaxDirective()}${_specGrEcho}${_specGrEscalation}${_specPlayerImpactBlock}
 
 SPECULATIVE GENERATION CONSTRAINTS:
 - Do NOT advance storyturn state.
@@ -306896,8 +308261,11 @@ CONSTRAINTS: No dialogue. No plot events. No character names. No storyturn advan
     var _anchorPara = (_liPhysPara >= 0) ? _liPhysPara : _liPara;
     // Relocate when the micro floats early OR is at/before the anchor paragraph
     // (we want it STRICTLY AFTER the physical description, not within or before it).
-    var _needsRelocate = (_mxAt !== -1 && _mxWordsBefore < 80) ||
-                         (_mxPara !== -1 && _anchorPara !== -1 && _mxPara <= _anchorPara);
+    // AUTHOR POSITION WINS (2026-09-10, §41): the author's marker block stays where the author put it. Relocation moved the
+    // widget to the page end in the frozen run (LI name resolved as "the"). Opt-in: window._relocateAuthorMicro = true.
+    var _needsRelocate = (typeof window !== 'undefined' && window._relocateAuthorMicro === true) &&
+                         ((_mxAt !== -1 && _mxWordsBefore < 80) ||
+                          (_mxPara !== -1 && _anchorPara !== -1 && _mxPara <= _anchorPara));
     if (_needsRelocate) {
       var _mxBody = _mxMarked.replace(' MX ', '').replace(/\n{3,}/g, '\n\n').trim();
       var _mxParas = _mxBody.split(/\n\s*\n/);
@@ -308688,7 +310056,7 @@ CONSTRAINTS: No dialogue. No plot events. No character names. No storyturn advan
           if (turn.scene_text && typeof StoryPagination !== 'undefined' && StoryPagination.addPage) {
             StoryPagination.addPage(formatStory(turn.scene_text), true);
           }
-          state.turnCount = turn.turn_index + 1;
+          state.turnCount = turn.turn_index; // 0-based index of the scene just shown = completed continuation turns
           state._coupleLastSeenTurn = turn.turn_index;
 
           // Update turn ownership UI
@@ -308812,7 +310180,7 @@ CONSTRAINTS: No dialogue. No plot events. No character names. No storyturn advan
         StoryPagination.addPage(formatStory(turn.scene_text), false); // don't auto-navigate
       }
     }
-    state.turnCount = turns[turns.length - 1].turn_index + 1;
+    state.turnCount = turns[turns.length - 1].turn_index; // 0-based index of the last shown scene = completed continuation turns
     state._coupleLastSeenTurn = turns[turns.length - 1].turn_index;
     // Navigate to latest page
     if (typeof StoryPagination !== 'undefined' && StoryPagination.goToPage) {
