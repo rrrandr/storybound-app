@@ -129736,6 +129736,25 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       if (seedPc && Array.isArray(seedPc.cPlusFacets) && seedPc.cPlusFacets.length) {
         rec.source = 'fixed_starter';
         rec.facets = seedPc.cPlusFacets.map(function (f) { return _normFacet(f, 'pc'); }).filter(Boolean);
+        // LEGACY DISPLAY-STRING NORMALIZATION (Roman, corrective follow-up to 6533f02, 2026-09-15)
+        // — SAFE BACKWARD COMPATIBILITY ONLY, no behavior change. Some fixed-starter facets (First
+        // Sacrifice's Lirael is the known case) authored `possible_pressures` as plain display
+        // strings, predating this session's structured {text,evidence_requires} contract —
+        // _normFacet already normalizes a plain string to evidence_requires:'', which
+        // _cpBuildGroundedOptions's `if (!req) return;` already refuses to ground (unchanged here,
+        // and correctly so — PC-C+ stays absent, never fabricated). What this loop adds is
+        // LABELING ONLY: an empty evidence_requires from a fixed-starter facet is marked
+        // `legacy_display_only:true, evidence_requires:null` (null, never '' — distinguishing
+        // "structurally never evidenced" from a structured pressure that merely found no match
+        // this scene) so a legacy gap is self-documenting instead of silently indistinguishable
+        // from an ordinary unmatched one. `_cpBuildGroundedOptions`'s `if (!req) return;` and
+        // `_cpEvidenceEstablishes`'s `if (!pr.evidence_requires)` both already treat '' and null
+        // identically (both falsy) — this changes NO grounding behavior, only diagnosability.
+        rec.facets.forEach(function (f) {
+          (f.pressures || []).forEach(function (p) {
+            if (!p.evidence_requires) { p.evidence_requires = null; p.legacy_display_only = true; }
+          });
+        });
         rec.provenance.seedId = String((seed && (seed.id || seed.seedId)) || '');
         rec.provenance.fingerprint = _pcPortfolioFingerprint(['fixed_starter', rec.provenance.seedId,
           rec.facets.map(function (f) { return f.facet_id; }).join(',')]);
@@ -227766,6 +227785,29 @@ No text, no watermark, no UI elements, share-ready.`;
   async function _completeStagedSceneFromScreenplay(sceneIndex, playerAction, playerDialogue) {
     if (!_isStagedMode()) return;
     state._stagedAwaitingProse = false;
+
+    // ── PC-C+ POSTURE PARITY WITH LITERARY (Roman, corrective follow-up to 6533f02, 2026-09-15) ──
+    // Literary records the reader's exact submitted Say/Do via _recordScenePosture (app.js
+    // ~98287). CG's screenplay-native path never called it at all — _pcEvidenceFacts' posture-
+    // based evidence source (and the Say/Do contradiction guard) were structurally UNREACHABLE
+    // for a CG-engine scene, so PC-C+ could never ground on THIS scene's own reader choice under
+    // CG, only on baked/durable/Tempt evidence (a real gap disclosed in the prior pass). Recorded
+    // HERE, unconditionally, for every real submit — a freshly typed action/dialogue OR one a
+    // Fate-card click filled into the same #gnActionInput/#gnDialogueInput boxes, both of which
+    // arrive as plain playerAction/playerDialogue strings by the time this function runs — BEFORE
+    // any stage/author pipeline call below reads state._scenePosture. Uses the EXACT SAME
+    // sceneNum convention _cgMintDeliveredAssignments already uses ((sceneIndex|0)+1), so the two
+    // can never disagree about which scene a posture belongs to. _recordScenePosture itself is a
+    // single keyed overwrite (state._scenePosture[sceneNum] = rec), never an append — calling this
+    // more than once for the same scene (e.g. the _sceneDecisionNeeded() resume path re-entering
+    // _advanceStagedScene with the same action/dialogue) replaces the same slot with the same
+    // content, never creates a duplicate record.
+    try {
+      var _cgPostureSceneNum = (sceneIndex | 0) + 1;
+      if (_cgPostureSceneNum >= 2 && typeof _recordScenePosture === 'function') {
+        _recordScenePosture(_cgPostureSceneNum, playerAction || '', playerDialogue || '');
+      }
+    } catch (_cgPostureErr) { try { console.warn('[CG:POSTURE] record failed (non-fatal): ' + (_cgPostureErr && _cgPostureErr.message)); } catch (_) {} }
 
     // ── CG INTENSITY MODE — scene-start clearing ─────────────────
     // Aggressive clearing of the scene-local intensity mode at the start

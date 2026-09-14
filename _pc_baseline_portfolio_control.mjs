@@ -277,6 +277,39 @@ section('CONTROL 6 — no raw bible/model text or uncommitted planner fact leaks
   ok('the rendered author directive never contains the uncommitted planner fact', directiveText.indexOf('burned every letter') === -1);
 }
 
+// ══════════════════════════════════════════════════════════════════════════════════
+section('CONTROL 7 — legacy plain-string pressures are marked non-evidentiary, never treated as evidence (corrective follow-up)');
+{
+  const win = freshSandbox('story-c7');
+  const s = win.state;
+  // A fixed-starter seed whose PC facet uses the REAL shipped shape: plain-string
+  // possible_pressures, exactly like STARTER_SEEDS.starter_first_sacrifice.cast[0].
+  s.__seedFixture = { id: 'starter_first_sacrifice', cast: [{ role: 'PC', name: 'Lirael', cPlusFacets: [
+    { facet_id: 'pc_untested_brilliance', category: 'competence', canonical_truth: 'her brilliance has never been tested against real cost',
+      possible_pressures: ['first live performance of a rehearsed duty', 'being watched by people who can judge her'] },
+  ] }] };
+  const rec = win._ensurePcPortfolio(s);
+  const pressures = rec.facets[0].pressures;
+  ok('both legacy pressures are marked legacy_display_only', pressures.every(function (p) { return p.legacy_display_only === true; }));
+  ok('both legacy pressures carry evidence_requires:null (never empty-string, distinct from an unmatched structured pressure)',
+    pressures.every(function (p) { return p.evidence_requires === null; }));
+
+  // NO BEHAVIOR CHANGE: still structurally ungroundable, even with matching-worded evidence.
+  s._scenePosture = { '2': { sceneNum: 2, action: 'her first live performance of a rehearsed duty, being watched by people who can judge her', dialogue: '' } };
+  const evidence = win._pcEvidenceFacts(s, 2);
+  s.__stageFixture = stageFixture([pcOnStage()], evidence);
+  const cont = win._cpContinuationAssignment(s, 2);
+  ok('PC-C+ is STILL absent for a legacy-marked pressure, even against exactly-matching scene text (labeling changed nothing about grounding)',
+    !cont.ok || cont.character_plus.length === 0, cont.ok ? JSON.stringify(cont.character_plus) : cont.reason);
+
+  // A REAL structured pressure (Julian-style, NPC) is UNAFFECTED by this PC-only marking pass —
+  // never touched, never mislabeled.
+  const win2 = freshSandbox('story-c7b');
+  win2._ensurePcPortfolio(win2.state);   // no seed/bible — source:none, nothing to mark
+  ok('a story with no fixed-starter PC facets is unaffected (nothing to mark, no crash)',
+    win2.state._pcPortfolio.source === 'none' && win2.state._pcPortfolio.facets.length === 0);
+}
+
 console.log('\n' + '='.repeat(70));
 console.log(`PC BASELINE PORTFOLIO CONTROL: ${pass} passed, ${fail} failed`);
 if (fail) { console.log('\nFAILURES:'); fails.forEach(function (f) { console.log('  - ' + f); }); process.exit(1); }

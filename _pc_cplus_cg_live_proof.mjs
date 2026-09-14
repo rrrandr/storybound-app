@@ -50,13 +50,38 @@
 //     openState.pcCondition evidence source (legitimate for scene 2 specifically), which is
 //     unaffected by this gap.
 //
+// CORRECTIVE FOLLOW-UP (Roman, 2026-09-15, on top of 6533f02): CG's own submit flow never called
+// _recordScenePosture at all — PC-C+ could ground on the baked scene-2 opening but never on THIS
+// scene's own reader Say/Do under CG. Fixed (app.js's _completeStagedSceneFromScreenplay now
+// records posture on every real submit, same sceneNum convention as _cgMintDeliveredAssignments).
+// FIVE new scenarios below (CUSTOM, SAYDO, DOUBLESUBMIT, plus two new assertions folded into
+// GREEN) prove: card-filled AND custom-typed Say/Do both persist verbatim; a real Save+reload
+// cycle retains the recorded posture; the next scene's PC-C+ grounds through THIS scene's own
+// posture specifically (not only the scene-2 baked fallback); a contrary Say/Do drops the PC's
+// self-embodiment claim while an NPC's C+ is unaffected; and the app's own existing double-submit
+// latch (not a harness invention) blocks a genuine double real-click from producing two competing
+// records.
+//
+// FIXTURE-LEVEL CAPABILITY vs REAL SHIPPED DATA (read this before citing any GREEN/CUSTOM/SAYDO
+// pass as evidence about First Sacrifice's actual current quality): every scenario that
+// demonstrates PC-C+ firing (GREEN, CUSTOM, and the pre-guard half of SAYDO) does so with an
+// in-page-memory-only controlled PC facet (via state.pcBodyBible, the corridor path), NEVER the
+// real, shipped STARTER_SEEDS.starter_first_sacrifice PC facets — those remain exactly as
+// ungroundable as RED proves, unaffected by anything in this pass (the legacy-marking change is
+// pure labeling, see LEGACY DISPLAY-STRING NORMALIZATION in app.js). What this file proves is
+// that the MECHANISM is real and reachable end-to-end through the actual CG pipeline; it makes NO
+// claim that a reader playing real, unmodified First Sacrifice today gets PC-C+ from her own
+// authored facets — she does not, until the foundation-issuance gap documented in
+// _audit_out/pc_facet_foundation_source_audit.md is decided and built.
+//
 // NEVER: git commit/push/stash/checkout/reset. NEVER touch .env.local. NO paid model calls — every
 // /api/** answered locally. NEVER edit public/app.js, public/orchestration-client.js,
 // public/starter-scenes.js, or the two reference proof files this reuses patterns from. NO DOM
-// forcing, no calling _runCGScreenplayGen/_advanceStagedScene directly — the CG generation flow
-// itself is driven only by real clicks (book, zoom, Read, the real Genesis #buGoBtn, the real
-// Fate-card + Submit). Setup preconditions (accepted stage, granted/patched facet material,
-// scenePosture-producing card text) are established the same way this repo's own proven proofs
+// forcing, no calling _runCGScreenplayGen/_advanceStagedScene/_completeStagedSceneFromScreenplay/
+// _recordScenePosture directly — the CG generation flow itself is driven only by real clicks
+// (book, zoom, Read, the real Genesis #buGoBtn, the real Fate-card or real typed input + Submit,
+// the real Save & Exit + reload + Continue cycle). Setup preconditions (accepted stage,
+// granted/patched facet material) are established the same way this repo's own proven proofs
 // already do it: direct page.evaluate state injection BEFORE the real submit that exercises the
 // mechanism under test.
 //
@@ -163,11 +188,64 @@ async function dismissPcLookModalIfOpen(page) {
   }
 }
 
+// ── PROPERTY 2 — REAL SAVE + RELOAD + CONTINUE (Roman, corrective follow-up to 6533f02, 2026-09-15)
+// Reuses the exact real-click technique _stage_state_persistence_proof.mjs already proves
+// generically for state._stageState (Save & Exit -> real page.reload() [clears ALL runtime
+// state] -> real Library navigation -> the row's own real "Continue" button -> read state back).
+// #gnSaveExitBtn is the CG/gnReader screen's own Save & Exit affordance — the SAME
+// window.saveAndExitStory() handler #storySaveExitBtn (literary) is wired to.
+async function realClickSaveReloadContinue(page, label) {
+  const saveBtnId = await page.evaluate(() => {
+    const gn = document.getElementById('gnSaveExitBtn');
+    if (gn && gn.getClientRects().length > 0) return 'gnSaveExitBtn';
+    const lit = document.getElementById('storySaveExitBtn');
+    if (lit && lit.getClientRects().length > 0) return 'storySaveExitBtn';
+    return null;
+  });
+  ok(label + ' a real Save & Exit affordance is visible', !!saveBtnId, saveBtnId);
+  if (!saveBtnId) return null;
+  await page.click('#' + saveBtnId);
+  await page.waitForTimeout(2000);
+  ok(label + ' close returns to the Library screen', (await page.evaluate(() => window._currentScreenId)) === 'vaultLibraryScreen');
+
+  await page.reload({ waitUntil: 'commit' });
+  const t0 = Date.now(); let up = false;
+  while (Date.now() - t0 < 60000 && !up) {
+    try { await page.waitForFunction(() => window.state && window._launchStarterStory, null, { timeout: 10000 }); up = true; }
+    catch (_) { await page.waitForTimeout(1000); }
+  }
+  ok(label + ' page reload completes (runtime state genuinely cleared)', up);
+  if (!up) return null;
+  await page.waitForFunction(() => !document.body.classList.contains('booting'), null, { timeout: 60000 }).catch(() => {});
+  await page.waitForTimeout(2000);
+
+  await page.click('#burgerBtn'); await page.waitForTimeout(400);
+  await page.click('.vault-tab[data-vault-section="Stories"]'); await page.waitForTimeout(300);
+  await page.click('.vault-nav[data-vault-section="SavedStories"]'); await page.waitForTimeout(600);
+  const rowLocator = page.locator('#vaultSavedStoriesList .vault-saved-story-row').first();
+  const rowCount = await rowLocator.count();
+  ok(label + ' a saved-story row exists in the real Library UI', rowCount > 0);
+  if (!rowCount) return null;
+  const continueBtn = rowLocator.getByRole('button', { name: 'Continue', exact: true });
+  await continueBtn.click();
+  await page.waitForTimeout(1500);
+  for (let i = 0; i < 20; i++) {
+    const scr = await page.evaluate(() => window._currentScreenId);
+    if (scr === 'game' || scr === 'gnReader') break;
+    await page.waitForTimeout(1000);
+  }
+  await page.waitForTimeout(1500);
+  const after = await page.evaluate(() => ({ screen: window._currentScreenId, scenePosture2: window.state._scenePosture && window.state._scenePosture['2'] }));
+  ok(label + ' the real Continue click (not a direct function call) restored the story', after.screen === 'game' || after.screen === 'gnReader', JSON.stringify(after));
+  return after;
+}
+
 // ── SHARED REAL-CLICK CHAIN (STEP1-6, reused pattern from _cg_oas_library_reload_proof.mjs) ──
 // fixtureFn(page) runs AFTER Genesis unlock, BEFORE the interruption card click — the one place
 // this proof diverges from the reference file: it injects the accepted stage / facet fixtures
 // there, via page.evaluate, exactly like _cplus_eplus_fusion_live_proof.mjs's own setup step.
-async function driveToCgScreenplayRequest(label, page, ctx, fixtureFn) {
+async function driveToCgScreenplayRequest(label, page, ctx, fixtureFn, opts) {
+  opts = opts || {};
   const t0 = Date.now(); let up = false;
   while (Date.now() - t0 < 120000 && !up) {
     try { await page.goto('http://localhost:3000/', { waitUntil: 'commit', timeout: 20000 }); await page.waitForFunction(() => window.state && window._launchStarterStory && window.STARTER_STORIES && window._bakedScene1For, null, { timeout: 60000 }); up = true; }
@@ -246,16 +324,57 @@ async function driveToCgScreenplayRequest(label, page, ctx, fixtureFn) {
   for (let i = 0; i < 15 && !(await page.evaluate(() => { const r = window.state._intimateInterruption; return !!(r && r.cards && Object.keys(r.cards).length); })); i++) await page.waitForTimeout(1000);
   const HOST = await page.evaluate(() => { const r = window.state._intimateInterruption; return r && r.host === 'cg' ? { mount: 'gnCardMount', a: 'gnActionInput', d: 'gnDialogueInput', s: 'gnSubmitBtn' } : { mount: 'cardMount', a: 'actionInput', d: 'dialogueInput', s: 'submitBtn' }; });
   await dismissPcLookModalIfOpen(page);
-  await page.click('#' + HOST.mount + ' [data-fate-card-slot="confession"]');
-  await page.waitForTimeout(700);
-  const filled = await page.evaluate((H) => ({ a: document.getElementById(H.a).value, d: document.getElementById(H.d).value }), HOST);
-  ok(label + ' real CONFESSION card click fills real Say/Do inputs verbatim', filled.a === CONFESSION_ACTION && filled.d === CONFESSION_DIALOGUE, JSON.stringify(filled));
+
+  // ── CARD-FILLED vs CUSTOM-TYPED SUBMIT (Roman, corrective follow-up to 6533f02, 2026-09-15) ──
+  // _commitIntimateInterruption(action, dialogue) (app.js ~197310) takes whatever text the real
+  // #gnActionInput/#gnDialogueInput boxes hold at Submit — a Fate-card click is ONE real way to
+  // populate them (selectedSlot set); a reader typing directly is equally real (selectedSlot
+  // stays null/'-', logged as such by the app's own [INTIMATE-INTERRUPT] line). opts.customSubmit
+  // = {action, dialogue} exercises the SECOND real path with no card involved.
+  if (opts.customSubmit) {
+    await page.fill('#' + HOST.a, opts.customSubmit.action || '');
+    await page.fill('#' + HOST.d, opts.customSubmit.dialogue || '');
+    await page.waitForTimeout(300);
+    const filled = await page.evaluate((H) => ({ a: document.getElementById(H.a).value, d: document.getElementById(H.d).value }), HOST);
+    ok(label + ' real custom-typed Say/Do fills the real inputs verbatim (no card)', filled.a === opts.customSubmit.action && filled.d === opts.customSubmit.dialogue, JSON.stringify(filled));
+  } else {
+    await page.click('#' + HOST.mount + ' [data-fate-card-slot="confession"]');
+    await page.waitForTimeout(700);
+    const filled = await page.evaluate((H) => ({ a: document.getElementById(H.a).value, d: document.getElementById(H.d).value }), HOST);
+    ok(label + ' real CONFESSION card click fills real Say/Do inputs verbatim', filled.a === CONFESSION_ACTION && filled.d === CONFESSION_DIALOGUE, JSON.stringify(filled));
+  }
 
   const before = ctx.cgRequests.length;
   await dismissPcLookModalIfOpen(page);
   await page.click('#' + HOST.s);
+  let secondClickThrew = false;
+  if (opts.doubleClickSubmit) {
+    // PROPERTY 5 — a SECOND real click, as fast as Playwright can fire it, on the SAME button,
+    // for the SAME turn. Proves the app's OWN existing double-submit protection (either the JS
+    // Guard 2 latch, state._stagedSubmitting, "Guard 2 — double-submit" in app.js; OR the DOM
+    // itself already having disabled/removed the button by the time the second click lands —
+    // BOTH are real, existing app behavior, not a harness fixture) blocks a genuine double
+    // real-click from producing a second competing generation attempt.
+    try { await page.click('#' + HOST.s, { timeout: 3000 }); } catch (_) { secondClickThrew = true; }
+  }
   for (let i = 0; i < 60 && ctx.cgRequests.length <= before; i++) await page.waitForTimeout(2000);
   ok(label + ' real Submit fires a real cgScreenplay request', ctx.cgRequests.length > before, 'cgRequests=' + ctx.cgRequests.length);
+  if (opts.doubleClickSubmit) {
+    // Give any (correctly blocked) second attempt time to have shown up if the guard had failed.
+    await page.waitForTimeout(4000);
+    ok(label + ' exactly ONE cgScreenplay request fired despite two real clicks (double-submit protection held)', ctx.cgRequests.length - before === 1, 'delta=' + (ctx.cgRequests.length - before));
+    // DISCLOSED, NOT A PASS/FAIL CLAIM: which specific mechanism absorbed the second click is
+    // genuinely unresolved by this harness across two real runs — sometimes the JS Guard 2 latch
+    // logged the block, sometimes the click threw (button unclickable), and once (this run)
+    // NEITHER was observed even though the outer property (exactly one request, one posture
+    // record) held both times. The second click may be getting silently re-routed as an ordinary
+    // (non-interruption) turn submit once _intimateInterruptionPending() goes false right after
+    // the first commit, rather than hitting Guard 2 at all — plausible but not confirmed here.
+    // Reported as an open diagnostic question, not asserted either way, to avoid a dishonest
+    // pass/fail on a mechanism this proof did not actually pin down.
+    const blockedLog = ctx.consoleEvents.some(e => /\[STAGED:SUBMIT\] Blocked — already in flight/.test(e.text));
+    note(label + ' second-click disposition (diagnostic only, not asserted): ' + (blockedLog ? 'JS Guard 2 latch logged the block' : (secondClickThrew ? 'click could not dispatch — button already disabled/unavailable' : 'click dispatched, no guard log observed — likely re-routed as an ordinary turn submit once the interruption was no longer pending; unconfirmed')));
+  }
   const diag = await page.evaluate(() => ({
     turnCount: window.state.turnCount,
     scenePosture2: window.state._scenePosture && window.state._scenePosture['2'],
@@ -375,6 +494,7 @@ const browser = await chromium.launch({ headless: true });
       return { marcusId, acceptedOk: accepted.ok, acceptedWhy: accepted.why };
     });
   });
+  let greenPostureBefore = null, greenReload = null;
   if (gotRequest) {
     const diag = await page.evaluate(() => ({
       turnCount: window.state.turnCount,
@@ -385,6 +505,12 @@ const browser = await chromium.launch({ headless: true });
     note('GREEN DIAG: ' + JSON.stringify(diag).slice(0, 1500));
     note('GREEN DIAG consoleEvents (last 30 relevant): ' + JSON.stringify(
       ctx.consoleEvents.filter(e => /CG:ASSIGN|STAGE-CONTRACT|SKELETON:CPLUS|HARNESS-DEBUG|CPLUS|PC-PORTFOLIO|PC-EVIDENCE/.test(e.text)).slice(-30).map(e => e.text)));
+    // PROPERTY 1a — the CONFESSION card's real fill produced a real, verbatim state._scenePosture
+    // record (proves the CG posture-parity fix actually recorded it, not just that the card filled
+    // the DOM inputs).
+    greenPostureBefore = await page.evaluate(() => window.state._scenePosture && window.state._scenePosture['2']);
+    // PROPERTY 2 — real Save & Exit -> real reload -> real Continue click retains it.
+    greenReload = await realClickSaveReloadContinue(page, 'GREEN-RELOAD');
   }
   await page.context().close();
   if (gotRequest) {
@@ -394,6 +520,10 @@ const browser = await chromium.launch({ headless: true });
     ok('GREEN Marcus\'s NPC outsider-observation C+ content reached the payload', /DO NOT STATE: Marcus believes the Institution/.test(usr), '(see full usr for context)');
     ok('GREEN no raw scene_assignments JSON leaked (delivered, not requested)', !/"environment_plus"\s*:\s*\{"target"/.test(usr));
     note('GREEN prompt excerpt around CHARACTER+:\n' + (usr.split('CHARACTER+ ASSIGNED THIS SCENE')[1] || '(not found)').slice(0, 900));
+    ok('GREEN (property 1a) real card-filled posture recorded verbatim', !!greenPostureBefore && greenPostureBefore.action === CONFESSION_ACTION && greenPostureBefore.dialogue === CONFESSION_DIALOGUE, JSON.stringify(greenPostureBefore));
+    ok('GREEN (property 2) a real reload retains the identical recorded posture', !!(greenReload && greenReload.scenePosture2 && greenPostureBefore
+        && greenReload.scenePosture2.action === greenPostureBefore.action && greenReload.scenePosture2.dialogue === greenPostureBefore.dialogue && greenReload.scenePosture2.hash === greenPostureBefore.hash),
+      JSON.stringify({ before: greenPostureBefore, after: greenReload && greenReload.scenePosture2 }));
   } else {
     ok('GREEN scenario reached a real cgScreenplay request', false, 'blocked earlier in the real click chain — see FAIL lines above');
   }
@@ -451,6 +581,185 @@ const browser = await chromium.launch({ headless: true });
     ok('RED scenario reached a real cgScreenplay request', false, 'blocked earlier in the real click chain — see FAIL lines above');
   }
   console.log('RED done. cgRequests=' + (ctx.cgRequests ? ctx.cgRequests.length : 0));
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// SCENARIO POSTURE-CUSTOM — corrective follow-up to 6533f02 (properties 1b + 3). A real
+// CUSTOM-TYPED (no card) interruption submit. The PC facet's evidence_requires is worded to
+// match ONLY this scenario's posture text — deliberately sharing NO words with the baked
+// openState.pcCondition text (checked by hand against the real baked string) — so if her
+// self-embodiment marker reaches the real cgScreenplay prompt, it can only be because
+// _pcEvidenceFacts' posture-based source (this pass's fix) actually grounded it, not the
+// scene-2-only baked fallback GREEN already used.
+// ══════════════════════════════════════════════════════════════════════════
+const CUSTOM_ACTION = 'I press both palms flat against the cold stone floor and refuse to step back.';
+const CUSTOM_DIALOGUE = 'This is mine to answer, not his.';
+{
+  const ctx = {};
+  const page = await newStubbedPage(browser, ctx);
+  const gotRequest = await driveToCgScreenplayRequest('CUSTOM', page, ctx, async (page) => {
+    return page.evaluate(() => {
+      const s = window.state;
+      const seed = window.STARTER_SEEDS && window.STARTER_SEEDS.starter_first_sacrifice;
+      const pcCast = seed && seed.cast && seed.cast.filter(c => c && c.role === 'PC')[0];
+      if (pcCast) pcCast.cPlusFacets = [];   // corridor branch, same disclosed reason as GREEN
+      s.pcBodyBible = {
+        core_contradiction: 'she refuses to be moved even when staying costs her something real',
+        current_crisis: {
+          // Words deliberately absent from the real baked openState.pcCondition text
+          // ("mouth-band torn away, ceremonial sash still on, publicly accused, holding The
+          // Answer (the Institution's, in Julian's keeping — hers only for the questioning),
+          // the interrogation just cut off by the Dohkar") — so a match can only come from THIS
+          // scenario's own posture text below.
+          event: 'she pressed both palms flat against unyielding stone and would not step back',
+          immediate_fear: 'that refusing to move will be read as defiance instead of resolve',
+        },
+      };
+      window._ensureStoryEntityAnchors();
+      const marcus = window._proposeNewEntity({ label: 'Marcus', kind: 'named' });
+      const marcusId = marcus.entity.id;
+      const L = window._relLedger(true);
+      L.entities[marcusId].authorProfile = { status: 'ready', guardrails: [],
+        cPlusFacets: [{ facet_id: 'test:' + marcusId + ':f1', category: 'value',
+          canonical_truth: "Marcus believes the Institution's order matters more than any one person's comfort.",
+          possible_pressures: [{ text: 'Marcus defends the Institution', evidence_requires: 'defends the Institution' }] }] };
+      const accepted = window._acceptStageProposal('2', {
+        present: ['pc', marcusId], location: { label: 'the assembly hall, before the gathered First Favored' },
+        issued_facts: [
+          { text: 'Marcus defends the Institution\'s authority without hesitation, cutting off the objection before it forms.', participants: [{ ref: marcusId, role: 'subject' }] },
+        ],
+        issued_objects: [{ label: 'the sealed ledger', owner_or_caretaker_ref: marcusId, addressable_by: [marcusId] }],
+        exclusions: { locations: [], objects: [] }, affordances: [], source: 'pc-cg-live-proof-custom',
+      });
+      return { marcusId, acceptedOk: accepted.ok, acceptedWhy: accepted.why };
+    });
+  }, { customSubmit: { action: CUSTOM_ACTION, dialogue: CUSTOM_DIALOGUE } });
+  let customPosture = null;
+  if (gotRequest) {
+    customPosture = await page.evaluate(() => window.state._scenePosture && window.state._scenePosture['2']);
+    note('CUSTOM DIAG scenePosture2=' + JSON.stringify(customPosture));
+  }
+  await page.context().close();
+  if (gotRequest) {
+    const usr = ctx.cgRequests[ctx.cgRequests.length - 1].usr;
+    ok('CUSTOM (property 1b) custom-typed posture recorded verbatim (no card involved)', !!customPosture && customPosture.action === CUSTOM_ACTION && customPosture.dialogue === CUSTOM_DIALOGUE, JSON.stringify(customPosture));
+    ok('CUSTOM (property 3) PC self-embodiment marker reaches the payload, grounded by THIS scene\'s own posture (not the baked opening)', /SELF \(PC-C\+; embodiment, not outsider observation\)/.test(usr));
+    ok('CUSTOM Marcus\'s NPC C+ still fires alongside her', /DO NOT STATE: Marcus believes the Institution/.test(usr));
+    note('CUSTOM prompt excerpt around CHARACTER+:\n' + (usr.split('CHARACTER+ ASSIGNED THIS SCENE')[1] || '(not found)').slice(0, 900));
+  } else {
+    ok('CUSTOM scenario reached a real cgScreenplay request', false, 'blocked earlier in the real click chain — see FAIL lines above');
+  }
+  console.log('CUSTOM done. cgRequests=' + (ctx.cgRequests ? ctx.cgRequests.length : 0));
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// SCENARIO SAYDO — corrective follow-up to 6533f02 (property 4). A real submit whose text BOTH
+// grounds the PC facet's pressure (so without the guard she WOULD be scheduled) AND explicitly
+// negates that same facet's canonical_truth, per _applyPcSayDoGuard's own mechanical rule
+// (a word from _PC_SAYDO_NEGATIONS within 5 tokens of a >3-char word shared with canonical_truth).
+// ══════════════════════════════════════════════════════════════════════════
+const SAYDO_ACTION = 'I gripped that control until my knuckles went white, then told myself I am not in control of anything anymore.';
+const SAYDO_DIALOGUE = '';
+{
+  const ctx = {};
+  const page = await newStubbedPage(browser, ctx);
+  const gotRequest = await driveToCgScreenplayRequest('SAYDO', page, ctx, async (page) => {
+    return page.evaluate(() => {
+      const s = window.state;
+      const seed = window.STARTER_SEEDS && window.STARTER_SEEDS.starter_first_sacrifice;
+      const pcCast = seed && seed.cast && seed.cast.filter(c => c && c.role === 'PC')[0];
+      if (pcCast) pcCast.cPlusFacets = [];
+      s.pcBodyBible = {
+        // canonical_truth carries "control" — the word SAYDO_ACTION both grounds (via "gripped",
+        // from current_crisis.event below) and negates (via "not ... in control").
+        core_contradiction: 'she believes tight control keeps everyone around her safe',
+        current_crisis: {
+          event: 'the ritual demanded steadiness and she gripped that control harder than ever',
+          immediate_fear: 'that letting go, even once, proves the control was never real',
+        },
+      };
+      window._ensureStoryEntityAnchors();
+      const marcus = window._proposeNewEntity({ label: 'Marcus', kind: 'named' });
+      const marcusId = marcus.entity.id;
+      const L = window._relLedger(true);
+      L.entities[marcusId].authorProfile = { status: 'ready', guardrails: [],
+        cPlusFacets: [{ facet_id: 'test:' + marcusId + ':f1', category: 'value',
+          canonical_truth: "Marcus believes the Institution's order matters more than any one person's comfort.",
+          possible_pressures: [{ text: 'Marcus defends the Institution', evidence_requires: 'defends the Institution' }] }] };
+      const accepted = window._acceptStageProposal('2', {
+        present: ['pc', marcusId], location: { label: 'the assembly hall, before the gathered First Favored' },
+        issued_facts: [
+          { text: 'Marcus defends the Institution\'s authority without hesitation, cutting off the objection before it forms.', participants: [{ ref: marcusId, role: 'subject' }] },
+        ],
+        issued_objects: [{ label: 'the sealed ledger', owner_or_caretaker_ref: marcusId, addressable_by: [marcusId] }],
+        exclusions: { locations: [], objects: [] }, affordances: [], source: 'pc-cg-live-proof-saydo',
+      });
+      return { marcusId, acceptedOk: accepted.ok, acceptedWhy: accepted.why };
+    });
+  }, { customSubmit: { action: SAYDO_ACTION, dialogue: SAYDO_DIALOGUE } });
+  let saydoPosture = null;
+  if (gotRequest) {
+    saydoPosture = await page.evaluate(() => window.state._scenePosture && window.state._scenePosture['2']);
+    note('SAYDO DIAG scenePosture2=' + JSON.stringify(saydoPosture));
+    note('SAYDO DIAG guard log lines: ' + JSON.stringify(ctx.consoleEvents.filter(e => /PC-SAYDO-GUARD/.test(e.text)).map(e => e.text)));
+  }
+  await page.context().close();
+  if (gotRequest) {
+    const usr = ctx.cgRequests[ctx.cgRequests.length - 1].usr;
+    ok('SAYDO custom posture recorded verbatim', !!saydoPosture && saydoPosture.action === SAYDO_ACTION, JSON.stringify(saydoPosture));
+    ok('SAYDO (property 4) PC self-embodiment marker is ABSENT — the reader\'s own submitted Say/Do contradicts the facet\'s claim', !/SELF \(PC-C\+; embodiment, not outsider observation\)/.test(usr));
+    ok('SAYDO Marcus\'s NPC C+ STILL fires normally (the guard is targeted at the PC, not a blanket suppression)', /DO NOT STATE: Marcus believes the Institution/.test(usr));
+    ok('SAYDO the app\'s own guard actually logged the drop (not a coincidental absence)', ctx.consoleEvents.some(e => /PC-SAYDO-GUARD/.test(e.text)));
+  } else {
+    ok('SAYDO scenario reached a real cgScreenplay request', false, 'blocked earlier in the real click chain — see FAIL lines above');
+  }
+  console.log('SAYDO done. cgRequests=' + (ctx.cgRequests ? ctx.cgRequests.length : 0));
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// SCENARIO DOUBLESUBMIT — corrective follow-up to 6533f02 (property 5). Two real, rapid clicks
+// on the SAME #gnSubmitBtn for the SAME turn. _recordScenePosture's own single-keyed-overwrite
+// semantics (verified by reading its source: state._scenePosture[sceneNum] = rec, never an
+// array push) make a "duplicate ARRAY entry" structurally impossible regardless — what this
+// proves is the REAL user-facing risk: that the app's own existing double-submit latch
+// (state._stagedSubmitting, "Guard 2 — double-submit") actually blocks a second real click from
+// firing a second generation attempt at all.
+// ══════════════════════════════════════════════════════════════════════════
+{
+  const ctx = {};
+  const page = await newStubbedPage(browser, ctx);
+  const gotRequest = await driveToCgScreenplayRequest('DOUBLESUBMIT', page, ctx, async (page) => {
+    return page.evaluate(() => {
+      window._ensureStoryEntityAnchors();
+      const marcus = window._proposeNewEntity({ label: 'Marcus', kind: 'named' });
+      const marcusId = marcus.entity.id;
+      const L = window._relLedger(true);
+      L.entities[marcusId].authorProfile = { status: 'ready', guardrails: [],
+        cPlusFacets: [{ facet_id: 'test:' + marcusId + ':f1', category: 'value',
+          canonical_truth: "Marcus believes the Institution's order matters more than any one person's comfort.",
+          possible_pressures: [{ text: 'Marcus defends the Institution', evidence_requires: 'defends the Institution' }] }] };
+      const accepted = window._acceptStageProposal('2', {
+        present: ['pc', marcusId], location: { label: 'the assembly hall, before the gathered First Favored' },
+        issued_facts: [
+          { text: 'Marcus defends the Institution\'s authority without hesitation, cutting off the objection before it forms.', participants: [{ ref: marcusId, role: 'subject' }] },
+        ],
+        issued_objects: [], exclusions: { locations: [], objects: [] }, affordances: [], source: 'pc-cg-live-proof-doublesubmit',
+      });
+      return { marcusId, acceptedOk: accepted.ok, acceptedWhy: accepted.why };
+    });
+  }, { customSubmit: { action: 'I hold my ground and say nothing.', dialogue: '' }, doubleClickSubmit: true });
+  let doublePosture = null;
+  if (gotRequest) {
+    doublePosture = await page.evaluate(() => window.state._scenePosture && window.state._scenePosture['2']);
+    note('DOUBLESUBMIT DIAG scenePosture2=' + JSON.stringify(doublePosture));
+  }
+  await page.context().close();
+  if (gotRequest) {
+    ok('DOUBLESUBMIT (property 5) the recorded posture is a single object, not an array, reflecting exactly one real submission', !!doublePosture && !Array.isArray(doublePosture) && doublePosture.action === 'I hold my ground and say nothing.', JSON.stringify(doublePosture));
+  } else {
+    ok('DOUBLESUBMIT scenario reached a real cgScreenplay request', false, 'blocked earlier in the real click chain — see FAIL lines above');
+  }
+  console.log('DOUBLESUBMIT done. cgRequests=' + (ctx.cgRequests ? ctx.cgRequests.length : 0));
 }
 
 await browser.close();

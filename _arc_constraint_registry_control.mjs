@@ -29,7 +29,7 @@ function sliceLines(from1, to1, startAnchor, endAnchor) {
 
 const starterSeedsSrc = sliceLines(126839, 127180, 'const STARTER_SEEDS = {', 'window.STARTER_SEEDS = STARTER_SEEDS;');
 const activeSeedSrc = sliceLines(127472, 127472, 'function _activeSeed(s)', 'function _activeSeed(s)');
-const registrySrc = sliceLines(197814, 197935,
+const registrySrc = sliceLines(197833, 197954,
   'GENERIC ARC-CONSTRAINT REGISTRY (Roman, authorized 2026-09-14)',
   'window._attemptArcConstraintTarget = _attemptArcConstraintTarget;');
 
