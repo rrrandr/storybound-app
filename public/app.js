@@ -127843,8 +127843,17 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
               kind: e.anchorRole === 'pc' ? 'pc' : (e.kind || 'named'), aliases: (e.aliases || []).concat([e.label]),
               presence: 'IN_PERSON', role_instance_id: e.role_instance_id || null, source: 'accepted_stage.present' });
           });
+          // Each issued fact is attributed (role 'subject') to every present participant — a stage
+          // fact is scene-level witnessed truth, not one person's private condition, so ownership is
+          // shared among whoever is there. This is what makes an issued fact PRESSURE-ELIGIBLE and
+          // GROUNDED for _cpFactCorpus/_cpBuildGroundedOptions (participants.length>0 — see
+          // _cpFactCorpus's 'about-to-happen' push) — without it, C+ options could never be built
+          // from this substrate's facts at all, silently defeating the whole point of this branch.
+          // evidence_requires regex matching (authored per-facet, unrelated to this) still decides
+          // actual relevance; this only establishes that the fact CAN be cited, never that it will be.
+          var _accParticipantRefs = _accOnStage.map(function (r) { return { ref: r.id, role: 'subject', label: r.label }; });
           var _accEventFacts = (Array.isArray(_acceptedRec.issued_facts) ? _acceptedRec.issued_facts : [])
-            .filter(Boolean).map(function (f) { return { text: String(f), participants: [] }; });
+            .filter(Boolean).map(function (f) { return { text: String(f), participants: _accParticipantRefs }; });
           out.source = 'accepted_stage:' + (_acceptedRec.provenance && _acceptedRec.provenance.source || 'stage_issuer');
           out.onStage = _accOnStage; out.offStage = [];
           out.setting = (_acceptedRec.location && _acceptedRec.location.label) || '';
