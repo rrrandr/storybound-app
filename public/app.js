@@ -254934,6 +254934,116 @@ Generate the synopsis now.` }
       return ident.displayPlayerName || ident.playerName || (window.state && window.state.playerName) || 'the protagonist';
     }
 
+    // ══════════════════════════════════════════════════════════════════════════════════════
+    // STARTER PC FOUNDATION BLOCK (Roman, corrective follow-up, 2026-09-15) — for a SEEDED
+    // FIXED STARTER PC only (e.g. First Sacrifice's Lirael). The PC Body Bible generator
+    // previously received NOTHING about the fixed starter's own approved canon — no bio, no
+    // established cPlusFacets, no committed Scene 1 facts — so any consistency between a
+    // generated Bible and her REAL established character was luck, not construction (the exact
+    // defect a dry preflight surfaced: rubric layers "starter-specific canon" and "approved
+    // Scene 1 package" both structurally absent). This compiles a COMPACT, read-only block from
+    // ALREADY-APPROVED structured sources ONLY — nothing invented here, nothing beyond what the
+    // seed/committed-scene data already states. Explicitly NOT a raw-prose dump: sceneSummary,
+    // ledgerSeeds, calcification, axes and expansions are deliberately excluded (prose framing,
+    // not committed fact — same doctrine _pcEvidenceFacts already applies for PC-C+ evidence).
+    //
+    // CORRIDOR IS UNCHANGED: this returns '' the instant _activeSeed(s) is null or has no PC
+    // cast entry — a corridor PC's Bible generation is untouched by this block entirely, and so
+    // is any OTHER story's (Famous Fate included — _activeSeed(s) is scoped to THIS story's own
+    // _starterId, never a shared/global lookup, so nothing here can leak between stories).
+    // ══════════════════════════════════════════════════════════════════════════════════════
+    function _starterPcFoundationBlock(s) {
+      try {
+        s = s || (typeof window !== 'undefined' ? window.state : null) || {};
+        var seed = (typeof _activeSeed === 'function') ? _activeSeed(s)
+          : (window._activeSeed ? window._activeSeed(s) : null);
+        if (!seed || !Array.isArray(seed.cast)) return '';
+        var pcCast = seed.cast.filter(function (c) { return c && c.role === 'PC'; })[0];
+        if (!pcCast) return '';                     // corridor / no fixed PC canon — nothing to add
+
+        var L = [];
+        L.push('STARTER PC FOUNDATION (CANONICAL — READ-ONLY, ' + String(s._starterId || '') + '):');
+        L.push('This is Roman\'s own approved, already-committed canon for THIS specific protagonist and '
+          + 'scene, not a description to elaborate freely. Organize it into the schema below — restate, '
+          + 'structure, characterize — but do NOT contradict it, do NOT invent additional facts that '
+          + 'conflict with it, and do NOT silently overwrite anything it states. Where the schema asks for '
+          + 'something this material does not cover, you may originate NEW material for THAT field only, '
+          + 'and it must remain consistent with everything below.');
+
+        L.push('');
+        L.push('FIXED IDENTITY: ' + String(pcCast.name || '') + ', PC'
+          + (pcCast.species ? ', ' + pcCast.species : '') + '.');
+        if (pcCast.bio) L.push('APPROVED BIOGRAPHY: ' + String(pcCast.bio));
+
+        var facets = Array.isArray(pcCast.cPlusFacets) ? pcCast.cPlusFacets : [];
+        if (facets.length) {
+          L.push('');
+          L.push('ESTABLISHED PSYCHOLOGICAL FACTS (already authored — never to be contradicted):');
+          facets.forEach(function (f) {
+            if (f && f.canonical_truth) L.push('  - ' + (f.facet_id || '') + ': ' + String(f.canonical_truth));
+          });
+        }
+
+        // Relationship facts: the LI's own approved bio (as it bears on her), plus whichever of
+        // the seed's own invariant constraints are actually relationship-scoped — never the
+        // generic authorial-doctrine ones ("the author must never invent Fate laws") that say
+        // nothing about her relationships.
+        var liCast = seed.cast.filter(function (c) { return c && c.role === 'LI'; })[0];
+        var relConstraints = (Array.isArray(seed.constraints) ? seed.constraints : [])
+          .filter(function (c) { return /\bPC\b|\bsuspicio/i.test(String(c || '')) || (liCast && liCast.name && new RegExp('\\b' + liCast.name + '\\b').test(String(c || ''))); });
+        if ((liCast && liCast.bio) || relConstraints.length) {
+          L.push('');
+          L.push('FIXED RELATIONSHIP FACTS (do not contradict):');
+          if (liCast && liCast.bio) L.push('  - ' + String(liCast.name || 'the love interest') + ' (love interest): ' + String(liCast.bio));
+          relConstraints.forEach(function (c) { L.push('  - ' + String(c)); });
+        }
+
+        // Committed Scene 1: the STRUCTURED fields only (ledgerLine, openState, obligations) —
+        // never sceneSummary (a full prose paragraph) or ledgerSeeds (relationally-framed prose,
+        // explicitly excluded from PC-evidence elsewhere in this codebase for the same reason).
+        var em = s._bakedEmitted;
+        if (em) {
+          var os = em.openState || {};
+          var sc = [];
+          if (em.ledgerLine) sc.push('  - ' + String(em.ledgerLine));
+          if (os.location || os.timeOfDay) sc.push('  - Location: ' + String(os.location || 'unspecified') + '; time: ' + String(os.timeOfDay || 'unspecified'));
+          if (os.pcCondition) sc.push('  - Her condition now: ' + String(os.pcCondition));
+          (Array.isArray(em.obligations) ? em.obligations : []).forEach(function (o) { if (o) sc.push('  - ' + String(o)); });
+          if (sc.length) {
+            L.push('');
+            L.push('COMMITTED SCENE 1 (already happened — do not contradict):');
+            L = L.concat(sc);
+          }
+        }
+
+        // Reader posture: whatever the reader has actually submitted so far (usually none yet at
+        // Bible-generation time — included only when it already exists, never awaited).
+        var posture = s._scenePosture;
+        if (posture && typeof posture === 'object') {
+          var pLines = [];
+          Object.keys(posture).forEach(function (k) {
+            var p = posture[k];
+            if (!p) return;
+            var bits = [];
+            if (p.action) bits.push('did: ' + p.action);
+            if (p.dialogue) bits.push('said: "' + p.dialogue + '"');
+            if (bits.length) pLines.push('  - scene ' + k + ': ' + bits.join('; '));
+          });
+          if (pLines.length) {
+            L.push('');
+            L.push('THE READER\'S OWN SUBMITTED SAY/DO SO FAR (do not contradict):');
+            L = L.concat(pLines);
+          }
+        }
+
+        return L.join('\n') + '\n';
+      } catch (e) {
+        try { console.warn('[PC-BODY-BIBLE] _starterPcFoundationBlock failed (non-fatal, block omitted): ' + (e && e.message)); } catch (_) {}
+        return '';
+      }
+    }
+    try { if (typeof window !== 'undefined') window._starterPcFoundationBlock = _starterPcFoundationBlock; } catch (_) {}
+
     async function _generatePCBodyBibleUncached(_keyAtRequest) {
       try {
         var picks = (state && state.picks) || {};
@@ -255206,10 +255316,14 @@ Generate the synopsis now.` }
         // VISUAL ANCHOR (Roman 2026-07-26): forced camera-visible channel for the PC.
         var _vaFocusPC = 'the eyes';
         try { _vaFocusPC = (typeof window !== 'undefined' && window._forcedVisualAnchorFocus) ? String(window._forcedVisualAnchorFocus) : ((typeof window._rotatingExemplars === 'function' && Array.isArray(window._VISUAL_ANCHOR_CHANNELS)) ? (window._rotatingExemplars('visual_anchor_pc', window._VISUAL_ANCHOR_CHANNELS, 1)[0] || 'the eyes') : 'the eyes'); } catch (_) { _vaFocusPC = 'the eyes'; }
+        // STARTER PC FOUNDATION (Roman, corrective follow-up, 2026-09-15) — '' for corridor/any
+        // story without a seeded fixed PC; see _starterPcFoundationBlock's own header comment.
+        var _starterFoundation = _starterPcFoundationBlock(state);
         var usr =
           'PROTAGONIST: ' + pcName + ' (' + pcGender + ')' + (_pcIsMale ? ' — render as a MAN (he/him); treat any "she/her/heroine" wording in the schema as he/him' : '') + '\n' +
           'ARCHETYPE / MASK: ' + (playermask || 'unspecified') + '\n' +
           'WORLD: ' + world + (subtype ? ' (' + subtype + ')' : '') + '\n' +
+          (_starterFoundation ? '\n' + _starterFoundation + '\n' : '') +
           (aplotGoal ? 'A-PLOT CONTEXT: ' + aplotGoal + '\n' : '') +
           (lockedFace ? 'LOCKED_FACE (authoritative — Vision Orb / Pick-Your-Look render): "' + lockedFace + '"\n' : '') +
           // PHASE 1.2 (Roman 2026-06-11) — JSON-enforced age lock. When the
