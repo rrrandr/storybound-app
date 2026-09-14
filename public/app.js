@@ -255042,16 +255042,21 @@ Generate the synopsis now.` }
           + 'conflict with it, and do NOT silently overwrite anything it states. Where the schema asks for '
           + 'something this material does not cover, you may originate NEW material for THAT field only, '
           + 'and it must remain consistent with everything below.');
-        L.push('CITE YOUR BASIS (HARD — Roman, corrective, 2026-09-15): for wound, core_contradiction, '
-          + 'private_hope, current_crisis.li_complication, and current_crisis.refusal, the JSON must also '
-          + 'include a "_provenance" object keyed by field name, each entry {"basis": one of '
-          + '"approved_bio" | "approved_facet:<facet_id>" | "approved_relationship" | "approved_scene1" | '
-          + '"inferred", "cites": the exact short snippet from the material above that basis is drawn from '
-          + '(omit/empty only when basis is "inferred")}. "inferred" is allowed ONLY for a genuinely new '
-          + 'observation that does not assert a new permanent fact (a reading of her feelings, never a new '
-          + 'event, relationship history, or person). Never invent a family member\'s fate, never assert an '
-          + 'emotional history with the love interest beyond his approved bio, never assign a ruling/judging '
-          + 'authority to anyone this material does not already give it to.');
+        L.push('CITE YOUR BASIS (HARD, MANDATORY — Roman, corrective, 2026-09-15): for EVERY ONE of '
+          + 'wound.core, wound.surfacing_hint, core_contradiction, private_hope, current_crisis.event, '
+          + 'current_crisis.immediate_fear, current_crisis.li_complication, and current_crisis.refusal, the '
+          + 'JSON MUST include a top-level "_provenance" object keyed by field name (use the exact dotted '
+          + 'keys just listed), each entry {"basis": one of "approved_bio" | "approved_facet:<facet_id>" | '
+          + '"approved_relationship" | "approved_scene1" | "approved_posture" | "inferred", "cites": the '
+          + 'EXACT short snippet from the material above that basis is drawn from, copied verbatim (omit/empty '
+          + 'ONLY when basis is "inferred")}. A response with NO "_provenance" object, or missing an entry for '
+          + 'any of the eight fields above, is REJECTED outright — this is not optional and there is no '
+          + 'content-only fallback. "inferred" is allowed ONLY for a genuinely new observation that does not '
+          + 'assert a new permanent fact (a reading of her feelings, never a new event, relationship history, '
+          + 'or person) — it is NOT a way to avoid citing. Never invent a family member\'s fate, never assert '
+          + 'an emotional history with the love interest beyond his approved bio, never assign a '
+          + 'ruling/judging authority to anyone this material does not already give it to — marking such a '
+          + 'claim "inferred" does not make it acceptable.');
 
         L.push('');
         L.push('FIXED IDENTITY: ' + src.pcName + ', PC' + (src.pcSpecies ? ', ' + src.pcSpecies : '') + '.');
@@ -255165,16 +255170,54 @@ Generate the synopsis now.` }
 
     var PCV_DURABLE_FIELDS = [
       { key: 'wound.core', get: function (b) { return b.wound && b.wound.core; } },
+      { key: 'wound.surfacing_hint', get: function (b) { return b.wound && b.wound.surfacing_hint; } },
       { key: 'core_contradiction', get: function (b) { return b.core_contradiction; } },
       { key: 'private_hope', get: function (b) { return b.private_hope; } },
+      { key: 'current_crisis.event', get: function (b) { return b.current_crisis && b.current_crisis.event; } },
+      { key: 'current_crisis.immediate_fear', get: function (b) { return b.current_crisis && b.current_crisis.immediate_fear; } },
       { key: 'current_crisis.li_complication', get: function (b) { return b.current_crisis && b.current_crisis.li_complication; } },
       { key: 'current_crisis.refusal', get: function (b) { return b.current_crisis && b.current_crisis.refusal; } },
     ];
+
+    // Resolves a claimed provenance `basis` to the EXACT approved-source text it is allowed to
+    // cite from — never the whole haystack. Returns: a string (possibly empty) when the basis is
+    // a recognized category; `null` when the basis names a specific source (a facet_id) that does
+    // not exist; `undefined` when the basis string itself is not one of the allowed values. Three
+    // different failure shapes, three different named rejections below — "cites a real BUT
+    // irrelevant source" (wrong category) is structurally distinct from "cites nothing that
+    // exists at all" (bad facet_id) and from "used a basis value that isn't in the enum."
+    function _pcvSourceTextForBasis(basis, source) {
+      if (basis === 'approved_bio') return source.pcBio || '';
+      if (basis === 'approved_relationship') return [source.liBio].concat(source.relationshipConstraints || []).filter(Boolean).join(' • ');
+      if (basis === 'approved_scene1') {
+        var sc = source.scene1;
+        if (!sc) return '';
+        return [sc.ledgerLine, sc.pcCondition].concat(sc.obligations || []).filter(Boolean).join(' • ');
+      }
+      if (basis === 'approved_posture') return (source.posture || []).map(function (p) { return p.text; }).join(' • ');
+      if (/^approved_facet:/.test(String(basis || ''))) {
+        var fid = String(basis).slice('approved_facet:'.length);
+        var f = (source.facets || []).filter(function (x) { return x.facet_id === fid; })[0];
+        return f ? f.canonical_truth : null;
+      }
+      return undefined;
+    }
+    try { if (typeof window !== 'undefined') window._pcvSourceTextForBasis = _pcvSourceTextForBasis; } catch (_) {}
+
+    // REJECT-ONLY, never rewrites (a validator that rewrites is a competing author). PROVENANCE
+    // IS MANDATORY (Roman, corrective #4, 2026-09-15): a response with no valid _provenance
+    // object — absent, null, non-object, or an array — is rejected by name
+    // (no_provenance_block) for every durable claim it makes, full stop; it never falls back to
+    // "content-only acceptance." The CONTENT layer (the three named pattern checks) runs
+    // UNCONDITIONALLY regardless of the provenance outcome — a malformed or missing _provenance
+    // block does not exempt a claim from it; the two fences are independent, not either/or.
     function _validatePcFoundationOutput(bible, source) {
       var out = { ok: true, rejections: [], accepted: [] };
       if (!bible || typeof bible !== 'object') { out.ok = false; out.rejections.push({ field: '*', reason: 'no_bible_object' }); return out; }
       if (!source) { out.ok = false; out.rejections.push({ field: '*', reason: 'no_source_facts_supplied' }); return out; }
-      var prov = (bible._provenance && typeof bible._provenance === 'object') ? bible._provenance : null;
+      var provRaw = bible._provenance;
+      var prov = (provRaw && typeof provRaw === 'object' && !Array.isArray(provRaw)) ? provRaw : null;
+      var provenanceBlockMissing = !prov;
 
       PCV_DURABLE_FIELDS.forEach(function (f) {
         var text = String(f.get(bible) || '').trim();
@@ -255182,19 +255225,37 @@ Generate the synopsis now.` }
         var rejected = false;
         var reject = function (reason, detail) { rejected = true; out.ok = false; out.rejections.push({ field: f.key, reason: reason, detail: detail }); };
 
-        if (prov) {
+        if (provenanceBlockMissing) {
+          reject('no_provenance_block', 'response carries no valid _provenance object — provenance is mandatory for fixed-starter foundation output, not optional');
+        } else {
           var leafKey = f.key.indexOf('.') !== -1 ? f.key.split('.').pop() : f.key;
           var pr = prov[f.key] || prov[leafKey];
-          if (!pr || !pr.basis) {
+          if (!pr || typeof pr !== 'object' || !pr.basis) {
             reject('no_valid_citation', 'no _provenance entry for ' + f.key);
           } else if (pr.basis !== 'inferred') {
-            var cites = String(pr.cites || '').trim();
-            if (!cites || (source.allSourceText || '').indexOf(cites) === -1) {
-              reject('citation_not_supported', 'cites="' + cites + '" not found in approved source text');
+            var srcText = _pcvSourceTextForBasis(pr.basis, source);
+            if (srcText === undefined) {
+              reject('invalid_basis_value', 'basis "' + pr.basis + '" is not one of the allowed values');
+            } else if (srcText === null) {
+              reject('citation_basis_not_found', 'basis "' + pr.basis + '" names a source that does not exist (e.g. an unknown facet_id)');
+            } else {
+              var cites = String(pr.cites || '').trim();
+              if (!cites) {
+                reject('citation_missing_snippet', 'basis="' + pr.basis + '" declared but cites is empty');
+              } else if (srcText.indexOf(cites) === -1) {
+                // A REAL source may exist elsewhere in the approved material — deliberately NOT
+                // checked against source.allSourceText here. A citation must support THIS claim
+                // from THIS claimed category, or it is exactly the "cites an irrelevant but real
+                // source" failure this whole per-basis lookup exists to catch.
+                reject('citation_not_supported', 'cites="' + cites + '" not found within the claimed basis category (' + pr.basis + ')');
+              }
             }
           }
         }
 
+        // CONTENT LAYER — independent fence, always runs, never short-circuited by the outcome
+        // above (a self-reported "inferred", a fabricated citation, or a missing block are all
+        // equally incapable of excusing a minted family-death event or a reassigned authority).
         [_checkUnsupportedFamilyLoss, _checkUnsupportedLiIntimacy, _checkAuthorityNotMisattributed].forEach(function (check) {
           var r = check(text, source);
           if (!r.ok) reject(r.reason, r.detail);
@@ -255206,6 +255267,56 @@ Generate the synopsis now.` }
       return out;
     }
     try { if (typeof window !== 'undefined') window._validatePcFoundationOutput = _validatePcFoundationOutput; } catch (_) {}
+
+    // ══════════════════════════════════════════════════════════════════════════════════════
+    // VALIDATED PC-FOUNDATION MERGE (Roman, corrective follow-up #4, 2026-09-15) — the actual
+    // foundation-issuance merge path the audit proposed, gated by the validator above.
+    // VALIDATE FIRST: on any rejection this makes ZERO state changes — no partial write, no
+    // touched timestamp, nothing reader-visible. On acceptance it commits ONE additive,
+    // provenance-stamped update to state._pcPortfolio — the seed's own facets are read, never
+    // mutated or replaced (concat, not overwrite); bible-derived facets are tagged with a
+    // distinct origin ('pc_body_bible_validated') so they can never be confused with seed canon.
+    //
+    // SCOPE, DISCLOSED: this commits the PORTFOLIO RECORD only (state._pcPortfolio.facets) — it
+    // does NOT also write to L.entities.pc.authorProfile.cPlusFacets, because for a fixed
+    // starter that write is silently discarded anyway (_generatedCastFacetIndex's own
+    // seed-owned skip guard fires on the shared "Lirael" label — see _ensurePcPortfolio's own
+    // comment on this). Wiring state._pcPortfolio's validated-merge facets into the LIVE
+    // grounding path (e.g. teaching _seedFacetIndex to also read them) is a separate, deferred
+    // decision, not made here.
+    // ══════════════════════════════════════════════════════════════════════════════════════
+    function _commitValidatedPcFoundation(s, bible) {
+      s = s || (typeof window !== 'undefined' ? window.state : null) || {};
+      var out = { committed: false, reason: null, validation: null, mergedFacetIds: [] };
+      var source = _pcFoundationSourceFacts(s);
+      if (!source) { out.reason = 'no_fixed_starter_source'; return out; }
+      var validation = _validatePcFoundationOutput(bible, source);
+      out.validation = validation;
+      if (!validation.ok) { out.reason = 'validation_failed'; return out; }
+
+      var rec = _ensurePcPortfolio(s);
+      if (!rec || rec.source !== 'fixed_starter') { out.reason = 'not_a_fixed_starter_portfolio'; return out; }
+
+      var bibleFacetsRaw = _pcFacetsFromBodyBible(bible);
+      if (!bibleFacetsRaw.length) { out.reason = 'no_mappable_bible_facets'; return out; }
+      var normalized = bibleFacetsRaw.map(function (f) { return _normFacet(f, 'pc'); }).filter(Boolean);
+      if (!normalized.length) { out.reason = 'facets_failed_normalization'; return out; }
+      normalized.forEach(function (f) { f.origin = 'pc_body_bible_validated'; });
+
+      // ATOMIC COMMIT — everything above is pure/local; this is the ONLY point that touches
+      // state, and only after every guard above has already passed.
+      var existingIds = (rec.facets || []).map(function (f) { return f.facet_id; });
+      var newFacets = normalized.filter(function (f) { return existingIds.indexOf(f.facet_id) === -1; });
+      rec.facets = (rec.facets || []).concat(newFacets);
+      rec.provenance.validatedMerge = { at: Date.now(), bibleProvenance: bible._provenance || null, mergedFacetIds: newFacets.map(function (f) { return f.facet_id; }) };
+      rec.reconciliation.lastReconciledAt = Date.now();
+      s._pcPortfolio = rec;
+
+      out.committed = true;
+      out.mergedFacetIds = newFacets.map(function (f) { return f.facet_id; });
+      return out;
+    }
+    try { if (typeof window !== 'undefined') window._commitValidatedPcFoundation = _commitValidatedPcFoundation; } catch (_) {}
 
     async function _generatePCBodyBibleUncached(_keyAtRequest) {
       try {
@@ -255643,9 +255754,12 @@ Generate the synopsis now.` }
           '  "li_keenly_aware_of": "<a SHORT LIST (2-3 items) of the specific features the LI has noticed and finds compelling about her, including AT LEAST ONE that is asymmetric / imperfect / not-conventionally-pretty (because real desire is particular, not airbrushed). Example: \'her slightly crooked front tooth, the way she goes still when listening, the perfume only noticeable from close enough to touch\'.>"' +
           (_starterFoundation ? (',\n' +
           '  "_provenance": {\n' +
-          '    "wound.core": {"basis": "<approved_bio | approved_facet:<facet_id> | approved_relationship | approved_scene1 | inferred>", "cites": "<exact short snippet from the STARTER PC FOUNDATION block above this basis is drawn from, or omit/empty if basis is \'inferred\'>"},\n' +
+          '    "wound.core": {"basis": "<approved_bio | approved_facet:<facet_id> | approved_relationship | approved_scene1 | approved_posture | inferred>", "cites": "<exact short snippet from the STARTER PC FOUNDATION block above this basis is drawn from, or omit/empty if basis is \'inferred\'>"},\n' +
+          '    "wound.surfacing_hint": {"basis": "...", "cites": "..."},\n' +
           '    "core_contradiction": {"basis": "...", "cites": "..."},\n' +
           '    "private_hope": {"basis": "...", "cites": "..."},\n' +
+          '    "current_crisis.event": {"basis": "...", "cites": "..."},\n' +
+          '    "current_crisis.immediate_fear": {"basis": "...", "cites": "..."},\n' +
           '    "current_crisis.li_complication": {"basis": "...", "cites": "..."},\n' +
           '    "current_crisis.refusal": {"basis": "...", "cites": "..."}\n' +
           '  }\n') : '\n') +

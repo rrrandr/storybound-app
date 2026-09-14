@@ -70,7 +70,8 @@ function classifyModelCall(sys, usr, role, model) {
 // Declared contract, N from the real code (public/app.js ~255712: `while (_v.fail && _passes < 2)`).
 const CALL_CAPS = { pcBodyBible: 1, bodyTellReroll: 2 };
 const attemptCounts = {};
-const correlatedAttempts = [];   // [{kind, attemptNumber, request, sys, usr, sysBytes, usrBytes, model, role, maxTokens, temperature, response}]
+const correlatedAttempts = [];   // [{requestId, kind, attemptNumber, request, sys, usr, sysBytes, usrBytes, model, role, maxTokens, temperature, outcome, response}]
+const blockedAttempts = [];      // over-cap attempts, named and recorded, never silently dropped
 let contractViolation = null;
 
 const requestCensus = [];
@@ -123,14 +124,16 @@ await page.route('**/api/**', async route => {
     attemptCounts[kind] = (attemptCounts[kind] || 0) + 1;
     const attemptNumber = attemptCounts[kind];
     const cap = CALL_CAPS[kind];
-    correlatedAttempts.push({ kind, attemptNumber, request: req, sys, usr, sysBytes, usrBytes, model: b.model, role: b.role, maxTokens: b.max_tokens, temperature: b.temperature, response: null });
+    const requestId = kind + '#' + attemptNumber;
     if (attemptNumber > cap) {
+      blockedAttempts.push({ requestId, kind, attemptNumber, cap, role: b.role, model: b.model, outcome: 'blocked_over_cap' });
       contractViolation = { kind, attemptNumber, cap };
-      note('*** CONTRACT VIOLATION: ' + kind + ' attempt #' + attemptNumber + ' exceeds the declared cap of ' + cap + ' — ABORTING this request, not letting it through ***');
+      note('*** CONTRACT VIOLATION: ' + requestId + ' exceeds the declared cap of ' + cap + ' for ' + kind + ' — recorded as a BLOCKED ATTEMPT and ABORTED, never let through ***');
       return route.abort('failed');
     }
+    correlatedAttempts.push({ requestId, kind, attemptNumber, request: req, sys, usr, sysBytes, usrBytes, model: b.model, role: b.role, maxTokens: b.max_tokens, temperature: b.temperature, outcome: 'completed', response: null });
     if (kind === 'pcBodyBible') pcBodyBibleCapturedRequest = { url: p, role: b.role, model: b.model, maxTokens: b.max_tokens, temperature: b.temperature, sys, usr, sysBytes, usrBytes };
-    note('*** LIVE: letting ' + kind + ' attempt #' + attemptNumber + ' (of at most ' + cap + ') through to the real /api/mistral-proxy ***');
+    note('*** LIVE: letting ' + requestId + ' (of at most ' + cap + ' for ' + kind + ') through to the real /api/mistral-proxy — this run may legitimately make the primary plus up to ' + CALL_CAPS.bodyTellReroll + ' rerolls, never reported as "one call" ***');
     return route.continue();
   }
   // ANY OTHER CLASSIFIED CALL — must never see one. Stubbed harmlessly (never real), occurrence
@@ -187,9 +190,15 @@ try {
 const callMs = Date.now() - callStart;
 await page.waitForTimeout(1500);
 ok('_generatePCBodyBible() completed without throwing', genResult && genResult.ok, JSON.stringify({ ok: genResult && genResult.ok, hadResult: genResult && genResult.hadResult }) + (genThrew ? ' threw=' + genThrew : ''));
-ok('exactly one pcBodyBible attempt fired', (attemptCounts.pcBodyBible || 0) === 1, 'pcBodyBible attempts=' + (attemptCounts.pcBodyBible || 0));
-ok('bodyTellReroll attempts stayed within the declared cap of ' + CALL_CAPS.bodyTellReroll, (attemptCounts.bodyTellReroll || 0) <= CALL_CAPS.bodyTellReroll, 'bodyTellReroll attempts=' + (attemptCounts.bodyTellReroll || 0));
+// This product may LEGITIMATELY make the primary call plus up to CALL_CAPS.bodyTellReroll reroll
+// attempts — never reported as "one call." Bounded means the primary fired exactly once and
+// every reroll (0 to the cap) is individually accounted for by request id/role/model/usage/outcome.
+ok('the primary pcBodyBible call fired exactly once', (attemptCounts.pcBodyBible || 0) === 1, 'pcBodyBible attempts=' + (attemptCounts.pcBodyBible || 0));
+ok('bodyTellReroll attempts stayed within the declared cap of ' + CALL_CAPS.bodyTellReroll + ' (0 to ' + CALL_CAPS.bodyTellReroll + ' are ALL legitimate)',
+  (attemptCounts.bodyTellReroll || 0) <= CALL_CAPS.bodyTellReroll, 'bodyTellReroll attempts=' + (attemptCounts.bodyTellReroll || 0));
 ok('NO CONTRACT VIOLATION occurred', !contractViolation, JSON.stringify(contractViolation));
+ok('blocked-attempts ledger agrees with the contract-violation flag', (blockedAttempts.length > 0) === !!contractViolation, JSON.stringify(blockedAttempts));
+note('BLOCKED ATTEMPTS (over-cap, named and recorded, never silently dropped): ' + JSON.stringify(blockedAttempts, null, 2));
 note('call wall-clock time: ' + callMs + 'ms');
 
 const afterAllQuiet = requestCensus.slice(censusBeforeIsolatedCall).filter(r => r.kind !== 'pcBodyBible' && r.kind !== 'bodyTellReroll');
@@ -203,6 +212,20 @@ if (genResult && genResult.bible && foundationCapture.source) {
     try { return (typeof window._validatePcFoundationOutput === 'function') ? window._validatePcFoundationOutput(bible, source) : { ok: false, rejections: [{ field: '*', reason: 'validator_not_found' }] }; }
     catch (e) { return { ok: false, rejections: [{ field: '*', reason: 'validator_threw', detail: String(e && e.message) }] }; }
   }, { bible: genResult.bible, source: foundationCapture.source });
+}
+
+// Run the REAL merge boundary in-page too, before the browser closes — against a SANDBOXED,
+// throw-away state object (never window.state), so this proves the atomic commit/refuse
+// behavior without ever touching anything reader-visible, live, or persisted.
+let mergeResult = null;
+if (genResult && genResult.bible) {
+  const sandboxState = { storyId: 'live-sample-sandbox', _starterId: foundationCapture.starterId };
+  mergeResult = await page.evaluate(({ s, bible }) => {
+    try {
+      const result = window._commitValidatedPcFoundation(s, bible);
+      return { result, portfolioAfter: s._pcPortfolio || null };
+    } catch (e) { return { error: String(e && e.message) }; }
+  }, { s: sandboxState, bible: genResult.bible });
 }
 
 await browser.close();
@@ -234,7 +257,7 @@ catch (e) { note('failed to save raw response: ' + (e && e.message)); }
 section('ACTUAL USAGE / COST — per attempt, correctly correlated (not "last response wins")');
 correlatedAttempts.forEach(a => {
   const usage = a.response && a.response.json && a.response.json.usage;
-  note(a.kind + ' attempt #' + a.attemptNumber + ' (model=' + a.model + '): status=' + (a.response && a.response.status) + ' usage=' + JSON.stringify(usage || null));
+  note(a.requestId + ' (' + a.kind + ', role=' + a.role + ', model=' + a.model + ', outcome=' + a.outcome + '): status=' + (a.response && a.response.status) + ' usage=' + JSON.stringify(usage || null));
 });
 const pcAttempt = correlatedAttempts.find(a => a.kind === 'pcBodyBible');
 ok('the pcBodyBible attempt specifically reported a usage block', !!(pcAttempt && pcAttempt.response && pcAttempt.response.json && pcAttempt.response.json.usage),
@@ -262,7 +285,7 @@ if (bible && foundationCapture.source) {
     note('rejections: ' + JSON.stringify(validation.rejections));
     ok('PROVENANCE GATE: the real response is ACCEPTED (no durable claim rejected)', validation.ok === true, JSON.stringify(validation.rejections));
     if (!validation.ok) {
-      note('*** This sample FAILS the provenance gate — do not propose a merge from it. See rejections above for exactly which claims and why. ***');
+      note('*** This sample FAILS the provenance gate — the merge boundary below will refuse it. See rejections above for exactly which claims and why. ***');
     }
   }
   note('FULL RAW BIBLE (for a human R2/R3 cross-check alongside the validator verdict above):\n' + JSON.stringify(bible, null, 2));
@@ -270,9 +293,27 @@ if (bible && foundationCapture.source) {
   ok('a bible + source pair existed to validate', false, 'bible=' + !!bible + ' source=' + !!(foundationCapture && foundationCapture.source));
 }
 
+// ═══════════════════════════════════════ THE MERGE BOUNDARY — validate first, then commit or refuse; SANDBOXED, never real story state ═══════════════════════════════════════
+section('MERGE BOUNDARY (_commitValidatedPcFoundation) — result from a SANDBOXED copy of state, never the real live story (computed above, pre-close)');
+if (mergeResult) {
+  note('merge result (sandboxed — real window.state was never passed to this call): ' + JSON.stringify(mergeResult));
+  if (validation && validation.ok) {
+    ok('an ACCEPTED response commits to the sandboxed portfolio', mergeResult.result && mergeResult.result.committed === true, JSON.stringify(mergeResult));
+  } else {
+    ok('a REJECTED response makes the merge refuse — no partial portfolio, no canon mutation', mergeResult.result && mergeResult.result.committed === false, JSON.stringify(mergeResult));
+  }
+} else {
+  note('no bible to attempt a merge with.');
+}
+
 console.log('\n' + '='.repeat(70));
 const p = results.filter(r => r.pass).length, f = results.length - p;
 console.log('PC FOUNDATION LIVE SAMPLE: ' + p + ' passed, ' + f + ' failed');
-console.log('R2/R3 verdict comes from the validator above plus a human read of the full bible in the saved JSON — not a free-text guess.');
-console.log('NO MERGE WAS APPLIED. Raw response is at ' + savePath + ' only (untracked evidence).');
+console.log('SCOPE (Roman, 2026-09-15): this establishes FOUNDATION-CLAIM COMPLIANCE ONLY — whether the');
+console.log('real response\'s durable claims are cited and source-supported per _validatePcFoundationOutput.');
+console.log('It says NOTHING about Scene 2 prose quality, an A/50 read, or any other narrative-quality');
+console.log('judgment — those are separate, later questions this sample does not answer.');
+console.log('The merge boundary above ran against a SANDBOXED state object only — nothing here touched');
+console.log('real story state, and no merge was applied to anything persisted or reader-visible.');
+console.log('Raw response is at ' + savePath + ' only (untracked evidence, never committed).');
 process.exit(f || contractViolation ? 1 : 0);

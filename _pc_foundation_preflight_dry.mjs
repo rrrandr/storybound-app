@@ -12,8 +12,9 @@
 //   - a bounded cost estimate, computed from this app's OWN TEXT_PRICING table, with the pricing
 //     gap it has for ministral-8b-2512 disclosed rather than hidden;
 //   - proof that every OTHER route is intercepted at the outbound boundary and that reaching this
-//     point, and making the one call, produces NO other request (no Scene 2, no author prose, no
-//     images, no fate cards, no sibling bible/scaffold/rplot calls);
+//     point, and calling _generatePCBodyBible() (the primary call, plus up to 2 legitimate
+//     body-tell reroll attempts — never reported as "one call"), produces NO other request (no
+//     Scene 2, no author prose, no images, no fate cards, no sibling bible/scaffold/rplot calls);
 //   - the exact fixed First Sacrifice source material (state.picks/playerMask/archetype/name)
 //     that would be supplied as input, captured live rather than assumed;
 //   - the acceptance rubric the real response would be graded against, stated here so it is fixed
@@ -76,7 +77,8 @@ function classifyModelCall(sys, usr, role, model) {
 // aborted rather than silently stubbed/allowed through. ──
 const CALL_CAPS = { pcBodyBible: 1, bodyTellReroll: 2 };
 const attemptCounts = {};
-const correlatedAttempts = [];   // [{kind, attemptNumber, request, sys, usr, sysBytes, usrBytes, model, role, maxTokens, temperature, response}]
+const correlatedAttempts = [];   // [{requestId, kind, attemptNumber, request, sys, usr, sysBytes, usrBytes, model, role, maxTokens, temperature, outcome, response}]
+const blockedAttempts = [];      // over-cap attempts, named and recorded, never silently dropped
 let contractViolation = null;
 
 const requestCensus = [];
@@ -135,12 +137,15 @@ await page.route('**/api/**', async route => {
     attemptCounts[kind] = (attemptCounts[kind] || 0) + 1;
     const attemptNumber = attemptCounts[kind];
     const cap = CALL_CAPS[kind];
-    correlatedAttempts.push({ kind, attemptNumber, request: req, sys, usr, sysBytes, usrBytes, model: b.model, role: b.role, maxTokens: b.max_tokens, temperature: b.temperature, response: null });
+    const requestId = kind + '#' + attemptNumber;    // stable, printable id — Playwright Request objects have no public id of their own
     if (attemptNumber > cap) {
+      const blocked = { requestId, kind, attemptNumber, cap, role: b.role, model: b.model, outcome: 'blocked_over_cap' };
+      blockedAttempts.push(blocked);
       contractViolation = { kind, attemptNumber, cap };
-      note('*** CONTRACT VIOLATION: ' + kind + ' attempt #' + attemptNumber + ' exceeds the declared cap of ' + cap + ' — ABORTING this request, not fulfilling it ***');
+      note('*** CONTRACT VIOLATION: ' + requestId + ' exceeds the declared cap of ' + cap + ' for ' + kind + ' — recorded as a BLOCKED ATTEMPT and ABORTED, never fulfilled ***');
       return route.abort('failed');
     }
+    correlatedAttempts.push({ requestId, kind, attemptNumber, request: req, sys, usr, sysBytes, usrBytes, model: b.model, role: b.role, maxTokens: b.max_tokens, temperature: b.temperature, outcome: 'completed', response: null });
     if (kind === 'pcBodyBible') pcBodyBibleCapturedRequest = { url: p, role: b.role, model: b.model, maxTokens: b.max_tokens, temperature: b.temperature, sys, usr, sysBytes, usrBytes };
     // DRY: stub a harmless, schema-shaped reply so _generatePCBodyBible completes normally and we
     // can inspect what it DOES with a reply, without ever contacting Mistral. NOT a real answer.
@@ -221,8 +226,8 @@ ok('the resolved PC name at this point is her real name, NOT the placeholder ("T
 ok('picks.world/worldSubtype are real (non-empty), matching a Fatelands/First-Sacrifice starter, not a generic default',
   !!foundation.picks_world && !!foundation.picks_worldSubtype, JSON.stringify({ world: foundation.picks_world, worldSubtype: foundation.picks_worldSubtype }));
 
-// ═══════════════════════════════════════ THE ONE ISOLATED CALL (DRY — stubbed, zero cost) ═══════════════════════════════════════
-section('THE ONE ISOLATED _generatePCBodyBible() CALL — DRY (stubbed reply, zero cost, zero real network contact)');
+// ═══════════════════════════════════════ THE ISOLATED _generatePCBodyBible() CALL: PRIMARY + AT MOST 2 REROLLS (DRY, zero cost) ═══════════════════════════════════════
+section('THE ISOLATED _generatePCBodyBible() CALL — primary + up to ' + CALL_CAPS.bodyTellReroll + ' reroll attempts — DRY (stubbed reply, zero cost, zero real network contact)');
 const censusBeforeIsolatedCall = requestCensus.length;
 let genResult = null, genThrew = null;
 try {
@@ -234,12 +239,19 @@ try {
 await page.waitForTimeout(1500);
 const newRequests = requestCensus.slice(censusBeforeIsolatedCall);
 ok('_generatePCBodyBible() completed without throwing', genResult && genResult.ok, JSON.stringify(genResult) + (genThrew ? ' threw=' + genThrew : ''));
-ok('exactly one pcBodyBible attempt fired', (attemptCounts.pcBodyBible || 0) === 1, 'pcBodyBible attempts=' + (attemptCounts.pcBodyBible || 0));
-ok('bodyTellReroll attempts stayed within the declared cap of ' + CALL_CAPS.bodyTellReroll, (attemptCounts.bodyTellReroll || 0) <= CALL_CAPS.bodyTellReroll,
-  'bodyTellReroll attempts=' + (attemptCounts.bodyTellReroll || 0));
+// The product may LEGITIMATELY make the primary call plus up to CALL_CAPS.bodyTellReroll reroll
+// attempts — never reported here as "one call." "Bounded" means the primary fired exactly once
+// and every reroll (0 to the cap) is individually accounted for, not that only one request total
+// is expected.
+ok('the primary pcBodyBible call fired exactly once', (attemptCounts.pcBodyBible || 0) === 1, 'pcBodyBible attempts=' + (attemptCounts.pcBodyBible || 0));
+ok('bodyTellReroll attempts stayed within the declared cap of ' + CALL_CAPS.bodyTellReroll + ' (0 to ' + CALL_CAPS.bodyTellReroll + ' are ALL legitimate)',
+  (attemptCounts.bodyTellReroll || 0) <= CALL_CAPS.bodyTellReroll, 'bodyTellReroll attempts=' + (attemptCounts.bodyTellReroll || 0));
 ok('NO CONTRACT VIOLATION occurred (no attempt exceeded its declared cap)', !contractViolation, JSON.stringify(contractViolation));
-note('CORRELATED ATTEMPT LOG (every pcBodyBible/bodyTellReroll request this run made, each matched to its own response): '
-  + JSON.stringify(correlatedAttempts.map(a => ({ kind: a.kind, attemptNumber: a.attemptNumber, model: a.model, role: a.role, maxTokens: a.maxTokens, temperature: a.temperature, sysBytes: a.sysBytes, usrBytes: a.usrBytes, responseStatus: a.response && a.response.status, responseUsage: a.response && a.response.json && a.response.json.usage })), null, 2));
+ok('no over-cap attempt was silently dropped — the blocked-attempts ledger agrees with the contract-violation flag',
+  (blockedAttempts.length > 0) === !!contractViolation, 'blockedAttempts=' + JSON.stringify(blockedAttempts) + ' contractViolation=' + JSON.stringify(contractViolation));
+note('BLOCKED ATTEMPTS (over-cap requests, named and recorded, never silently dropped): ' + JSON.stringify(blockedAttempts, null, 2));
+note('CORRELATED ATTEMPT LOG — request id, kind, role, model, usage, outcome, PER ATTEMPT (primary + every permitted reroll), each matched to its own response by exact Playwright Request identity, never "last response wins": '
+  + JSON.stringify(correlatedAttempts.map(a => ({ requestId: a.requestId, kind: a.kind, attemptNumber: a.attemptNumber, outcome: a.outcome, model: a.model, role: a.role, maxTokens: a.maxTokens, temperature: a.temperature, sysBytes: a.sysBytes, usrBytes: a.usrBytes, responseStatus: a.response && a.response.status, responseUsage: a.response && a.response.json && a.response.json.usage })), null, 2));
 ok('the request used role=STRUCTURE_GENERATOR, model=ministral-8b-2512 (the tiered-policy PRIMARY tier) on /api/mistral-proxy',
   pcBodyBibleCapturedRequest && pcBodyBibleCapturedRequest.role === 'STRUCTURE_GENERATOR' && pcBodyBibleCapturedRequest.model === 'ministral-8b-2512' && pcBodyBibleCapturedRequest.url === '/api/mistral-proxy',
   JSON.stringify(pcBodyBibleCapturedRequest && { role: pcBodyBibleCapturedRequest.role, model: pcBodyBibleCapturedRequest.model, url: pcBodyBibleCapturedRequest.url, maxTokens: pcBodyBibleCapturedRequest.maxTokens, temperature: pcBodyBibleCapturedRequest.temperature }));
