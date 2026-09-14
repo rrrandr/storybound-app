@@ -51,3 +51,71 @@ export async function installSession(page, session) {
 
 // True for any request the auth client makes to its own (unreachable) origin.
 export const isAuthOrigin = (u) => String(u).indexOf(SB_URL) === 0;
+
+// ══════════════════════════════════════════════════════════════════════════════════════════
+//  HONEST ENTITLEMENT STUB (2026-09-13, §72 correction)
+//
+//  Root cause of the "entitlement drift" a prior harness patched around at runtime: hydrateState()
+//  (app.js ~7481, called from hydrateProfile() ~7464) reads profile.is_subscriber from a Supabase
+//  PostgREST `profiles` row. The generic sb-test.localhost catch-all (below, and in every harness)
+//  answers EVERY Supabase REST call — including this one — with `{}`, so profile.is_subscriber is
+//  undefined, state.subscribed becomes false, and the app CORRECTLY behaves as an unentitled
+//  reader. That is not a production bug; patching state.subscribed/access/fortunes or hiding
+//  #payModal after the fact hides the app's own correct behavior instead of fixing the stub that
+//  misrepresents the backend. The honest fix is to answer the ONE request that actually needs a
+//  real shape: a `profiles` GET, with a fully entitled reader's row.
+// ══════════════════════════════════════════════════════════════════════════════════════════
+
+// The exact field set PROFILE_COLUMNS selects (app.js ~7446), shaped as a fully entitled,
+// already-onboarded, already-legal-accepted reader. Non-secret, synthetic values only.
+//
+// tos_version/privacy_version/adult_ack_version are the INTEGER gate versions resolveLegalGate()
+// (app.js ~11463) compares via Number(profile.x) against LEGAL.TOS_VERSION/PRIVACY_VERSION/
+// ADULT_ACK_VERSION (app.js ~116-118, currently 3/2/2) — NOT the display semver strings
+// (CURRENT_TOS_VERSION etc., e.g. '2.2.0') shown in the legal-doc modal. A semver string here
+// makes Number(...) → NaN → 0, which always fails the gate and routes to legalGate regardless of
+// age_confirmed/onboarding_complete — discovered 2026-09-13 driving the real Library click-path,
+// where (unlike a harness that calls internal functions directly) a wrongly-gated profile
+// actually blocks every subsequent click. Keep these three in sync with LEGAL.* in app.js.
+export function entitledProfileBody() {
+  return {
+    tier: 'chosen', fortunes: 9999999, is_subscriber: true, subscription_tier: 'chosen',
+    age_confirmed: true, tos_version: 3, privacy_version: 2, adult_ack_version: 2,
+    romance_preferences: null, avoidances: null, first_tempt_fate_vision_triggered: true,
+    attraction_profile: null, billing_status: 'active', billing_grace_until: null,
+    signup_date: new Date(Date.now() - 30 * 86400000).toISOString(), last_seen_date: new Date().toISOString(),
+    welcome_first_arc_granted: true, welcome_day2_granted: true, bonus_tempt_charges: 0,
+    tempt_grant_month: null, onboarding_complete: true, onboarding_gift_granted: true
+  };
+}
+
+// The shape api/verify-subscription.js returns (userId, fortunes_before/after, tier_before/after,
+// repairs) — a "nothing to reconcile" reply, for the rare harness run where window.verifySubscription()
+// or the HYDRATE auto-trigger actually fires.
+export function verifySubscriptionBody(userId) {
+  return { userId: userId || null, fortunes_before: 9999999, fortunes_after: 9999999, tier_before: 'chosen', tier_after: 'chosen', repairs: [] };
+}
+
+// True for a PostgREST GET against the `profiles` table — hydrateProfile()'s
+// .select(PROFILE_COLUMNS).eq('id', userId).maybeSingle()/.single() (app.js ~7465-7478).
+export function isProfilesGet(url, method) {
+  return method === 'GET' && /\/rest\/v1\/profiles(\?|$)/.test(String(url));
+}
+
+// Registers the targeted `profiles` stub AFTER the caller's generic sb-test.localhost catch-all
+// (Playwright runs the MOST RECENTLY REGISTERED route first, so registering this one second gives
+// it priority) — answers a profiles GET with a fully entitled reader's row and falls back to the
+// generic handler (route.fallback()) for every other Supabase call. Call once, right after
+// registering the generic sb-test.localhost catch-all, as part of the shared test-session setup —
+// never as a recurring runtime correction.
+export async function installEntitledProfileStub(page, { log } = {}) {
+  await page.route('**/sb-test.localhost/**', async route => {
+    const req = route.request();
+    const url = req.url();
+    if (isProfilesGet(url, req.method())) {
+      if (log) log('profiles GET answered by the targeted entitled-reader stub: ' + url);
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(entitledProfileBody()) });
+    }
+    return route.fallback();
+  });
+}

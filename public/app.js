@@ -5813,6 +5813,126 @@ ${_pcInteriorLock}`;
   }
   window._setupMistralPost = _setupMistralPost;
 
+  // ══════════════════════════════════════════════════════════════════════════════════════════
+  //  TIERED PROVIDER POLICY (2026-09-13, Roman's decision) — for the CG/OAS setup-phase
+  //  generators: PC body bible, LI body bible, romance-plot shape (rplot), CG scaffold.
+  //
+  //  Mistral (ministral-8b-2512) PRIMARY → Grok (grok-4-1-fast-reasoning) FIRST FALLBACK →
+  //  Claude/OpenAI TERMINAL BACKUP, reached ONLY after both Mistral and Grok have failed. Never a
+  //  silent primary on a healthy path. Every attempt — success or failure, every tier — logs its
+  //  role, tier, provider, model, fallback reason (null on the first attempt), and attempt number
+  //  at the outbound boundary, in window._providerTierLog, before the network call is made.
+  //
+  //  MODEL CHOICE, WITH EVIDENCE (not a guess): mistral-small-latest's real 20,000 TPM ceiling
+  //  rejects 3 of these 4 roles' real measured payloads (pcBodyBible ~37.5k, liBodyBible ~71.8k,
+  //  scaffold ~25.5k reservation — only rplot's ~13.5k fits). ministral-8b-2512 was already
+  //  configured in the governor (api/_mistral-governor.js MODEL_LIMITS, 625,000 TPM / 3.13 RPS,
+  //  sourced from the real account limits page, read 2026-09-04) but NOT in the proxy's
+  //  ALLOWED_MISTRAL_MODELS — added there 2026-09-13, aligning both layers on real, already-
+  //  sourced numbers (never invented). Verified against the ACTUAL governor.admit() calculation
+  //  (_measure_governor_admission.mjs), not a hand estimate: all four roles ADMIT on size alone.
+  //
+  //  RPS-AWARE BY CONSTRUCTION: the four roles fire together at Genesis-gate (a burst). The same
+  //  measurement proved an unspaced burst against ministral-8b-2512's real 3.13 RPS ceiling gets
+  //  3 of 4 calls refused (quota_exhausted_rps) — this is NOT solved by picking a bigger model
+  //  (every Ministral tier has the same burst problem at its own RPS). _tierPaced() below
+  //  serializes same-provider-model callers through a shared spacing queue (ceil(1000/rps) apart)
+  //  so a real burst never trips it — proven by the same measurement script's "spaced" scenario.
+  // ══════════════════════════════════════════════════════════════════════════════════════════
+  var _tierPaceQueue = {};                         // keyed 'provider:model' → promise chain enforcing spacing
+  var _TIER_MIN_INTERVAL_MS = { 'mistral:ministral-8b-2512': 320 };   // ceil(1000/3.13) — governor's own real RPS limit
+  function _tierPaced(key, fn) {
+    // BUG FOUND + FIXED (2026-09-13, found while building the bible-conflict control): the queue
+    // MUST only serialize on the SPACING delay between DISPATCHES, never on fn()'s own completion —
+    // the original version chained _tierPaceQueue[key] to `next` (gated.then(fn), i.e. the full
+    // request including its response), so a single slow/stuck Mistral response would block EVERY
+    // later caller to the same model indefinitely, not just for the rate-limit interval. A real
+    // network hiccup on one role's call would have silently stalled every other role sharing the
+    // bucket. Fixed: the next caller's `prior` is `myTurn` (the spacing gate alone) — reassigned
+    // BEFORE fn() is invoked — so a slow fn() only delays ITS OWN caller, never anyone after it.
+    var interval = _TIER_MIN_INTERVAL_MS[key] || 0;
+    var prior = _tierPaceQueue[key] || Promise.resolve();
+    var myTurn = prior.then(function () { return interval ? new Promise(function (res) { setTimeout(res, interval); }) : null; });
+    _tierPaceQueue[key] = myTurn;
+    return myTurn.then(fn);
+  }
+
+  window._providerTierLog = window._providerTierLog || [];
+  function _logProviderTierAttempt(roleTag, tier, provider, model, fallbackReason, attemptNumber) {
+    var rec = { role: roleTag, tier: tier, provider: provider, model: model, fallbackReason: fallbackReason || null, attempt: attemptNumber, at: Date.now(), storyId: (window.state && window.state.storyId) || null };
+    window._providerTierLog.push(rec);
+    try { console.log('[TIERED:' + roleTag + '] attempt ' + attemptNumber + ' tier=' + tier + ' provider=' + provider + ' model=' + model + (fallbackReason ? ' fallbackReason="' + fallbackReason + '"' : '')); } catch (_) {}
+    return rec;
+  }
+  window._logProviderTierAttempt = _logProviderTierAttempt;
+
+  // Returns {content, usage, _orchestration:{model}} — the same shape _setupMistralPost already
+  // returns, so callers can hand the result straight to _recordProxyTextCost and get accurate
+  // per-request cost attribution for whichever provider actually served the request, not
+  // whichever was merely attempted first.
+  async function _tieredProviderDispatch(provider, model, messages, maxTokens, temperature) {
+    if (provider === 'mistral') {
+      return _tierPaced('mistral:' + model, async function () {
+        var r = await fetch('/api/mistral-proxy', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ role: 'STRUCTURE_GENERATOR', model: model, temperature: temperature, max_tokens: maxTokens, messages: messages }) });
+        if (!r.ok) { var eb = await r.text().catch(function () { return ''; }); throw new Error('mistral HTTP ' + r.status + (eb ? ' ' + eb.slice(0, 200) : '')); }
+        var d = await r.json();
+        var content = (d && (d.content || (d.choices && d.choices[0] && d.choices[0].message && d.choices[0].message.content))) || '';
+        return { content: content, usage: (d && d.usage) || null, _orchestration: { model: model } };
+      });
+    }
+    if (provider === 'grok') {
+      var r2 = await fetch('/api/proxy', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ role: 'STRUCTURE_GENERATOR', preferredModel: model, temperature: temperature, max_tokens: maxTokens, messages: messages }) });
+      if (!r2.ok) { var eb2 = await r2.text().catch(function () { return ''; }); throw new Error('grok HTTP ' + r2.status + (eb2 ? ' ' + eb2.slice(0, 200) : '')); }
+      var d2 = await r2.json();
+      var content2 = (d2 && d2.choices && d2.choices[0] && d2.choices[0].message && d2.choices[0].message.content) || (d2 && d2.content) || '';
+      return { content: content2, usage: (d2 && d2.usage) || null, _orchestration: { model: model } };
+    }
+    if (provider === 'openai') {
+      var r3 = await fetch('/api/chatgpt-proxy', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ role: 'PRIMARY_AUTHOR', model: model, temperature: temperature, max_tokens: maxTokens, messages: messages }) });
+      if (!r3.ok) { var eb3 = await r3.text().catch(function () { return ''; }); throw new Error('chatgpt-proxy HTTP ' + r3.status + (eb3 ? ' ' + eb3.slice(0, 200) : '')); }
+      var d3 = await r3.json();
+      return { content: (d3 && d3.content) || '', usage: (d3 && d3.usage) || null, _orchestration: { model: model } };
+    }
+    throw new Error('[TIERED] unknown provider: ' + provider);
+  }
+
+  // roleTag: a short identifier ('pcBodyBible' | 'liBodyBible' | 'rplot' | 'scaffold' | ...) used
+  // only for logging/telemetry — carries no behavior. messages: [{role,content}, ...] exactly as
+  // built today (UNCHANGED prompt content — this function only changes WHICH PROVIDER carries it).
+  // opts: {max_tokens, temperature, terminalModel}. Throws if every tier is exhausted (callers
+  // already handle a thrown/rejected generator the same way they handled an HTTP failure before).
+  async function _callTieredProvider(roleTag, messages, opts) {
+    opts = opts || {};
+    var maxTokens = opts.max_tokens || 1200;
+    var temperature = (opts.temperature != null) ? opts.temperature : 0.6;
+    var tiers = [
+      { tier: 'primary',  provider: 'mistral', model: 'ministral-8b-2512' },
+      { tier: 'fallback', provider: 'grok',    model: 'grok-4-1-fast-reasoning' },
+      { tier: 'terminal', provider: 'openai',  model: opts.terminalModel || 'gpt-4o-mini' }
+    ];
+    var attempt = 0, lastErr = null;
+    for (var i = 0; i < tiers.length; i++) {
+      attempt++;
+      var t = tiers[i];
+      var fallbackReason = (i === 0) ? null : String((lastErr && lastErr.message) || lastErr || 'unknown');
+      _logProviderTierAttempt(roleTag, t.tier, t.provider, t.model, fallbackReason, attempt);
+      try {
+        var result = await _tieredProviderDispatch(t.provider, t.model, messages, maxTokens, temperature);
+        if (!result || !result.content || !String(result.content).trim()) throw new Error(t.provider + ' returned empty content');
+        result.tier = t.tier; result.provider = t.provider; result.attempt = attempt;
+        return result;
+      } catch (e) {
+        lastErr = e;
+        try { console.warn('[TIERED:' + roleTag + '] ' + t.tier + '/' + t.provider + '/' + t.model + ' failed: ' + (e && e.message)); } catch (_) {}
+      }
+    }
+    throw new Error('[TIERED:' + roleTag + '] all tiers exhausted — last error: ' + (lastErr && lastErr.message));
+  }
+  window._callTieredProvider = _callTieredProvider;
+
   // ── PER-SCENE CONDITIONAL-REPAIR CIRCUIT BREAKER (Roman 2026-06-26, Phase 1) ──────────────
   // _sceneCostAcc buckets author+repair together, so the breaker keeps its OWN per-scene counter
   // of CONDITIONAL repair/polish/fallback STARTS (the unconditional author + de-calc + repair
@@ -15363,6 +15483,30 @@ Propaganda mode UNLOCKED (rare): Institutional antagonist may use stronger ideol
       role: "A SACRIFICIANT is whoever supervises a First Sacrifice — one whose misalignment-sense is honed enough to guide the rite (First Favored preferred; trained humans/Kwisheen possible).",
       seal: "For any official rite the Sacrificiant is ceremonially SEALED: a gossamer BAND drawn across the mouth and tied behind the head (JUST CLOTH — no orb, no bead, no gag; part of their ceremonial sash), because a supervisor bolstering the wish with one of their OWN would be a ruinous breach. Their cries/speech are MUFFLED behind the cloth; emotion reads through the eyes and body. CG draws the band in for the duration of the rite; a clean identity anchor omits it.",
       vestments: "Otherwise the same sheer gossamer as everyone, with ONE ornamented ceremonial SASH — never robes."
+    },
+    // LANDMARKS (Roman, wired 2026-09-13, corrected 2026-09-13) — canonical architectural/geographic
+    // features explicit enough to persist across stories, SHARED across every ordinary Fatelands
+    // Fantasy story. Confirmed consumer: the prose author's Fantasy Depth Engine prompt (see
+    // "LANDMARK GENERATION CONSTRAINT", computed FROM this object, not hand-duplicated) — gated OFF
+    // for Famous Fate (fateMode==='famous_fate'), which must receive neither this nor any
+    // story-specific canon. NOT wired into the Traveler's Guide lore glossary (_LORE_CANON_GLOSS) —
+    // see the note there for why. Single-consumer for now; the two-consumer governance note at line
+    // 15413 was written for future editors, not enforced at runtime.
+    //
+    // CORRECTION (Roman 2026-09-13): this entry originally also carried "If Lirael is formally
+    // questioned..." and "locked, future Issue 1 location" text. That is FIRST-SACRIFICE-SPECIFIC
+    // PLOT STATE (Lirael/Julian/her accusation), not shared world lore — it has no business reaching
+    // an unrelated Fatelands story's prompt. It now lives ONLY in
+    // STARTER_SEEDS.starter_first_sacrifice.worldTruths (the seed-scoped ground-truth directive,
+    // `_buildSeedContextDirective`, First-Sacrifice-only). This record keeps only the physical
+    // description, Veilwood origin, and the GENERIC institutional use any Fatelands story may cite.
+    landmarks: {
+      the_open: {
+        name: "The Open",
+        description: "A perfectly circular clearing in the Veilwood, walled by twenty-four white Veilwood trunks twisted together. It has only one entrance: a seam in the living wall, wide enough for people to pass through. Veilwood trees commonly mate in pairs, but it is known — though uncommon — for three, four, five, or more trees to tangle and mate together. The Open began when twenty-four young Veilwood trees reached toward one another and, over years, slowly drew one another closer until their joined trunks formed the round clearing.",
+        use: "Used for formal public endings and settlements: trials, treaties, coronations, and matters of comparable institutional gravity.",
+        constraints: "No furniture, ritual objects, officials, powers, or further history beyond what is stated here is canonical. This shared record carries no story-specific plot state — a given story's own seed determines whether, or how, The Open is currently relevant to it."
+      }
     },
     // NAMING (Roman, wired 2026-08-10 — was memory-only; DATA home here, the naming CODE PATH still needs to
     // consume it = delivery TODO). Core pattern: your first successful encounter with Fate renames you.
@@ -32324,6 +32468,18 @@ window._reflowSceneDialogueLLM = _reflowSceneDialogueLLM;
   try { if (typeof window !== 'undefined') window.__ledgerInFlightUids = _ledgerInFlightUids; } catch (_) {}
 
   window._updateCharacterDisclosureLedgerForCurrent = function _updateCharacterDisclosureLedgerForCurrent(explicitText, sceneUid) {
+    // BAKED OPENING (Roman 2026-09-12): a fixed, free opening makes NO model request. Its cast identities come from
+    // _seedLedgerIdentities and its perceptions from the package's authored ledgerSeeds; the gpt-4o-mini CHARACTER MEMORY
+    // EXTRACTOR is not run on it. Generated scenes (turnCount > 0, or a non-baked page 1) are unaffected.
+    try {
+      var _s0 = window.state || {};
+      // keyed on the ACTUAL baked mount (flag raised by _renderBakedScene1 before its page commits), never on the starter id:
+      // a generated Scene 1 for the same starter (harness arms, a future regenerate) must keep the extractor.
+      if ((_s0._bakedOpeningMounted || _s0._bakedScene1Version) && !(_s0.turnCount > 0) && !((_s0.scenes || []).length > 1)) {
+        console.log('[LEDGER:ADMIT] baked opening — character-memory extractor deferred (no OpenAI request for a fixed opening; authored ledgerSeeds are the record)');
+        return;
+      }
+    } catch (_) {}
     try {
       var s = window.state; if (!s) return;
       var scenes = s.scenes || [];
@@ -35363,6 +35519,17 @@ WRY REFERENCE:
     'the favor':     { kind: 'concept',    meaning: "The ambient force of Fate that pervades the Fatelands — it weighs oaths and debts, and records what is owed even when unspoken." },
     'spiralgrass':   { kind: 'concept',    meaning: "The Fatelands' signature crimson grass — chewed each morning it wakes you and cleans the teeth; brewed it is 'blush'; a wound-salve, and smoked, a mild sacrament. Grows only in three places; only the First Favored know how to make it work." },
     'blushery':      { kind: 'place',      meaning: "A house that brews and serves blush — the hot spiralgrass infusion; the Fatelands' café / social hub." }
+    // NOTE (Roman 2026-09-13): 'the open' (FATELANDS_CANON.landmarks.the_open) was deliberately NOT
+    // added here. _loreCanonMatch's shared matcher strips a leading "the " and makes it optional,
+    // then case-insensitively matches the bare remainder — safe for multi-word/rare terms, but "open"
+    // alone collides with ordinary prose ("open the door", "an open wound") AND with pre-existing,
+    // unrelated internal display names that already contain the substring "The Open" (OPEN_VEIN's
+    // "The Open Vein" at ~17599/117506, pulse_point's "The Open Ledger" at ~59327, "The Open Form of
+    // Fate" at ~59339). Wiring it into this matcher without a per-entry match-mode option would
+    // misfire constantly. The landmark's canonical prose-author consumer (Fantasy Depth Engine
+    // LANDMARK GENERATION CONSTRAINT, computed from FATELANDS_CANON.landmarks) stands as its one
+    // confirmed consumer; a glossary entry needs the matcher to support mandatory-"The"/case-sensitive
+    // matching first — a separate, reviewed change, not bundled into this canon addition.
   };
 
   // Normalize a term for keying (case / article / punctuation insensitive).
@@ -51866,22 +52033,21 @@ AESTHETIC: Polished editorial illustration. The object's compromised state reads
         'Emit the pair-level JSON.';
 
       var _t0 = Date.now();
-      var res = await fetch('/api/chatgpt-proxy', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          role: 'PRIMARY_AUTHOR', model: 'gpt-4o-mini',
-          temperature: 0.55,
-          max_tokens: 1800,
-          messages: [
-            { role: 'system', content: sys },
-            { role: 'user', content: usr }
-          ]
-        })
-      });
-      if (!res.ok) { try { console.warn('[PAIRBOND] HTTP ' + res.status); } catch (_) {} return null; }
-      var data = await res.json();
-      try { if (typeof _recordProxyTextCost === 'function') _recordProxyTextCost(data, 'gpt-4o-mini', 'setup'); } catch (_) {}
+      // TIERED PROVIDER POLICY (2026-09-13, found + closed during the "no unknown outbound calls"
+      // investigation): a sixth same-lifecycle generation call, single caller (~257231, right
+      // after the bibles/rplot generate) — silently OpenAI-primary before this change. Mistral
+      // (ministral-8b-2512) primary → Grok fallback → Claude/OpenAI terminal-only.
+      var data;
+      try {
+        data = await _callTieredProvider('pairBond', [
+          { role: 'system', content: sys },
+          { role: 'user', content: usr }
+        ], { max_tokens: 1800, temperature: 0.55 });
+      } catch (_tpErr) {
+        try { console.warn('[PAIRBOND] all provider tiers failed: ' + (_tpErr && _tpErr.message)); } catch (_) {}
+        return null;
+      }
+      try { if (typeof _recordProxyTextCost === 'function') _recordProxyTextCost(data, (data && data._orchestration && data._orchestration.model), 'setup'); } catch (_) {}
       var raw = (data && typeof data.content === 'string') ? data.content : '';
       raw = raw.replace(/^\s*```[a-z]*\s*/i, '').replace(/\s*```\s*$/i, '').trim();
       var lb = raw.indexOf('{'), rb = raw.lastIndexOf('}');
@@ -62416,6 +62582,45 @@ Return ONLY a single valid JSON object. STRICT JSON RULES (HARD — malformed JS
       } catch (_) { /* the in-flight attempt threw — fall through to a fresh try */ }
       if (window.state.aPlot && window.state.aPlot.goal) return window.state.aPlot;
     }
+    // ── SEEDED BOOK: the A-plot IS the seed/plan (Roman 2026-09-10, readiness audit) ──
+    // A starter with an active STARTER_PLANS row set never generates a competing A-plot: every field the app reads from
+    // state.aPlot is derived VERBATIM from the plan and seed, and the generator is not called. Red control: window._seedAPlotOff.
+    try {
+      var _apFn = (typeof window !== 'undefined' && typeof window._activePlan === 'function') ? window._activePlan : ((typeof _activePlan === 'function') ? _activePlan : null);
+      var _asFn = (typeof window !== 'undefined' && typeof window._activeSeed === 'function') ? window._activeSeed : ((typeof _activeSeed === 'function') ? _activeSeed : null);
+      var _sPlan = _apFn ? _apFn(window.state) : null;
+      // A Book ARC (a multi-scene plan, or one that declares aPlotAuthority: 'seed') owns its A-plot. A single-row plan is a
+      // Scene-1 STAGE seed (the harness's test plans, and any future one-scene stage), not an arc — it keeps the generator.
+      var _isBookArc = !!(_sPlan && Array.isArray(_sPlan.scenes) && (_sPlan.scenes.length >= 2 || _sPlan.aPlotAuthority === 'seed'));
+      if (_isBookArc && !(typeof window !== 'undefined' && window._seedAPlotOff === true)) {
+        var _sSeed = _asFn ? _asFn(window.state) : null;
+        var _rows = _sPlan.scenes.filter(function (r) { return r && typeof r === 'object'; });
+        var _r1 = _rows[0] || {};
+        var _firstSentence = function (t) { var m = String(t || '').trim().match(/^[^.!?]{1,220}[.!?]?/); return m ? m[0].trim() : String(t || '').slice(0, 220); };
+        var _newProblem = (String(_r1.exitState || '').match(/NEW PROBLEM:\s*(.+)$/i) || [])[1] || '';
+        var _sGoal = _newProblem || String(_r1.requiredTruth || '') || _firstSentence(_r1.goal);
+        var _parts = Array.isArray(_r1.participants) ? _r1.participants.map(String) : [];
+        var _pcName = String(window.state.playerName || (window.state.picks && window.state.picks.identity && window.state.picks.identity.playerName) || '');
+        var _liName = (typeof window !== 'undefined' && typeof window._seedLIName === 'function') ? String(window._seedLIName(window.state) || '') : '';
+        var _force = _parts.filter(function (x) { return /dohkar|assembly|house|council|presid/i.test(x); })[0]
+                  || _parts.filter(function (x) { return x !== _pcName && x !== _liName && !(_sSeed && (_sSeed.cast || []).some(function (c) { return c && c.name === x; })); })[0] || '';
+        var _sa = _aPlotEmptySchema();
+        _sa.id = 'aplot:seeded:' + String(window.state._starterId || '');
+        _sa.tier = opts.tier || 'seeded'; _sa.pattern = null; _sa.goal = _sGoal;
+        _sa.namedClock = null; _sa.clockUnit = 'scenes'; _sa.totalClockUnits = _rows.length; _sa.timelineLength = _rows.length; _sa.currentTurn = 0;
+        _sa.milestones = _rows.map(function (r, i) { return { atScene: Number(r.n) || (i + 1), event: _firstSentence(r.goal), triggered: false }; });
+        _sa.stakesIfFail = null; _sa.stakesIfWin = null; _sa.resolutionShape = null; _sa.cliffhangerHook = null;
+        _sa.antagonistOrAntiForce = _force; _sa.antagonistSubject = { kind: 'UNKNOWN', reference_label: _force || null, proper_name: null }; _sa.antagonistShape = null; _sa.antagonistPersonalTie = null;
+        _sa.personalStakePC = null; _sa.personalStakeLI = null; _sa.pcWound = null; _sa.liWound = null; _sa.woundSurfacingMechanism = null; _sa.woundLoadBearingProof = null;
+        _sa.romanceEngine = (window.state.pairDynamic && window.state.pairDynamic.romanceEngine) || (window.state.romanceEnginePlan && window.state.romanceEnginePlan.engine) || null;
+        _sa.storyShape = null; _sa.storyShapeLabel = null; _sa.readerQuestion = String(_r1.decision_axis || '') || null;
+        _sa.sourceWorld = (window.state.picks && window.state.picks.world) || window.state.world || null; _sa.generatedAt = Date.now();
+        _sa._seeded = true; _sa._seedId = String(window.state._starterId || '');
+        window.state.aPlot = _sa;
+        try { console.log('[A-PLOT:SEEDED] derived from STARTER_PLANS.' + _sa._seedId + ' (' + _rows.length + ' scenes; force="' + _force + '") — generator NOT called'); } catch (_) {}
+        return window.state.aPlot;
+      }
+    } catch (_sErr) { try { console.warn('[A-PLOT:SEEDED] derivation failed, falling through to the generator: ' + (_sErr && _sErr.message)); } catch (_) {} }
     var _run = _runInitAPlot(opts);
     if (!opts.force) window.state._aPlotInitPromise = _run;
     try { return await _run; }
@@ -65411,6 +65616,7 @@ function _buildCharacterPlusShared(opts) {
   lines.push('THE NAME MATTERS: this is CAUSALITY, not flavour. The instruction is never "add a memorable detail" — it is "every memorable detail must have a reason to exist". Read as flavour, this layer produces signature gestures, props and body tics.');
   lines.push('WHAT A BEAT IS: the POV evaluates another person THROUGH HER OWN ARCHETYPE LENS, and what she notices reveals something that person is trying not to expose. An inference only THIS observer would draw about THIS person.');
   lines.push('Character+ is NOT description, NOT a compliment, NOT a memorable quirk, and NOT a sentence stating that someone matters. It is a detail through which the POV reveals that they perceive this person through accumulated experience, bias, history, desire, fear or expectation — so the reader infers a private relationship, an internal conflict, a learned pattern, or a personal lens.');
+  lines.push('THE EXPOSURE CLAUSE (HARD — Roman 2026-09-10; the success criterion for EVERY Character+, Environment+ and fusion beat): the beat must expose a SPECIFIC, NON-OBVIOUS TRUTH about a person — a flaw, an obsession, a private secret, a contradiction, or a particular worldview — through a concrete detail that THIS protagonist interprets in a revealing way. The observation must EXPOSE SOMEONE, not merely describe something. A “secret” means private psychological meaning, never an obligatory plot revelation. An “obsession” cannot be just a signature gesture. A “worldview” must be particular enough to distinguish this person from anyone else on stage. And the reading must be this protagonist\'s — her archetype decides what she is built to notice. A perception that lands only on a virtue, a charm or a neutral trait is grounding or admiration, not Character+. ✓ “Seren could not help herself: even her one wish had to be about what a caring person she was, and she had to be seen being it — I have never been able to keep a feeling off my face, so I know when one has been arranged there.” (exposes Seren\'s need for a witness; reveals an Open Vein reading it) ✗ “Seren was so generous it hurt to watch.” (admiration; any observer, nothing exposed).');
   lines.push('SUBSTITUTION TEST (HARD): replace the named character with any other plausible person on stage. If the inference, the emotional meaning AND the observer’s reaction all survive unchanged, you wrote GROUNDING, not Character+. Grounding is necessary and good — it is simply not this.');
   lines.push('It is usually NOT a dramatic revelation. It is a tiny, involuntary choice that exposes a whole person and a relationship.');
   lines.push('');
@@ -65527,10 +65733,10 @@ function _buildCharacterPlusShared(opts) {
   lines.push('    · A DARK VICE protagonist: she is starving for admiration — and this reading may simply be WRONG, and still be the truest thing in the paragraph, because it is about him.');
   lines.push('    None is verified. Each is TRUE ABOUT THE PROTAGONIST. That is the double exposure.');
   lines.push('  THE PC MAY BE MISTAKEN, AND SHOULD SOMETIMES BE: she is reading a stranger through her own wound. Let the reading be confident and slightly unfair. Do not correct it in narration — a later scene can, or nothing can.');
-  lines.push('  BEFORE YOU WRITE ONE, ANSWER FIVE QUESTIONS: (a) what does this person want others to believe about them? (b) WHAT ARE THEY DOING to create that impression? (c) what does that behaviour accidentally reveal? (d) why does THIS protagonist notice that contradiction? (e) would another archetype read the same performance differently? IF (b) IS MISSING, IT IS NOT CHARACTER+ — you have written a tell. Cut it or find the choice underneath it.');
+  lines.push('  BEFORE YOU WRITE ONE, ANSWER FIVE QUESTIONS: (a) what does this person want others to believe about them? (b) WHAT ARE THEY DOING to create that impression? (c) what specific, non-obvious truth does that behaviour accidentally expose — a flaw, an obsession, a private secret, a contradiction, a particular worldview? (d) why does THIS protagonist notice that contradiction — what in her archetype makes her the one who reads it? (e) would another archetype read the same performance differently? IF (b) IS MISSING, IT IS NOT CHARACTER+ — you have written a tell. Cut it or find the choice underneath it.');
   lines.push('  WHAT TO LOOK FOR — CHOSEN ACTS ONLY: a correction nobody asked for, an answer given too fast, a courtesy performed at volume, a generosity staged where it will be seen, a word selected to sound like a word they do not own, a story told a second time with the shameful part removed, a rule enforced on others and quietly exempted for themselves.');
   lines.push('');
-  lines.push('ENVIRONMENT+ — THE OTHER HALF, AND THE ONE THAT KEEPS HIDING. Character+ asks what a person is trying to make others believe. ENVIRONMENT+ asks WHAT THIS PLACE OR OBJECT HAS BECOME BECAUSE OF WHAT HAPPENED TO IT \u2014 scar, adaptation, memory, purpose, inheritance, neglect, or love. A person is a mask they choose; a place is a history it cannot escape. Both answer the same question: what does THIS observer notice that another would not?');
+  lines.push('ENVIRONMENT+ — THE OTHER HALF, AND THE ONE THAT KEEPS HIDING. Character+ asks what a person is trying to make others believe. ENVIRONMENT+ asks WHAT THIS PLACE OR OBJECT HAS BECOME BECAUSE OF WHAT HAPPENED TO IT \u2014 scar, adaptation, memory, purpose, inheritance, neglect, or love. A person is a mask they choose; a place is a history it cannot escape. Both answer the same question: what does THIS observer notice that another would not? And the EXPOSURE CLAUSE holds for Environment+ too: the place or object must EXPOSE its maker, its keeper, or the protagonist herself through her relationship to it — a specific truth (flaw, obsession, private secret, contradiction, worldview), not a mood. A natural environment needs no invented human intention: an unmarked Veilwood tree only IS, and what it exposes is the person reading it; a natural thing that carries a real mark exposes whoever marked it as well. The repaired sword qualifies because it exposes the one who kept choosing to save it; Mara\'s tree-wish qualifies because it exposes what she misunderstands about love; neither would qualify as scenery.');
   lines.push('  CHAIN: PERMANENT FACT → HISTORY, USE OR CHANGE → THE PC’S READING. The sensory anchors below are the raw material, never the mechanism — a scent is something to remember, not something that means.');
   lines.push('  ✗ “The sword was old and nicked.” ✓ “The sword had been repaired more times than replaced. Someone kept choosing to save it.”');
   lines.push('  ✗ “The city walls were ancient.” ✓ “The city had rebuilt the same gate three times, always facing the same direction. Nobody remembered what they were keeping out. Everyone remembered what had got in.”');
@@ -65573,15 +65779,39 @@ function _buildCharacterPlusShared(opts) {
       lines.push('  Same object. Different secret. The archetype is what decides which one surfaces — without it, this is only pretty writing.');
       lines.push('  ANYTHING SHAPED BY A PERSON CARRIES THE SAME PERFORMANCE/LEAK STRUCTURE: a room arranged to look unarranged, a mended seam turned to the wall, a gift chosen to be seen being given. A wild thing cannot perform — a Veilwood tree only IS — so for natural things the secret is what the PC’s lens finds in it, not what it hides.');
       lines.push('  A SECOND ANCHOR, DELIBERATELY UNLIKE THE FIRST — the object is never the point (Armored Fox, love as hiding the wound): “The duelling sword had been re-gripped so many times the leather no longer matched the blade. He had replaced everything that touched his hand, and nothing that did the killing.”');
+      // ── THE THIRD CASE: A NATURAL THING MARKED BY A REAL AGENT (Roman 2026-09-10) ──
+      // Wild things cannot perform, but they can be MARKED. A scar left by someone real exposes that someone,
+      // and the reading exposes her. ONE anchor per story, drawn by the seeded rotation from a pool whose
+      // surfaces differ (only one is a tree — the note below still forbids reaching for trees); the ✗ is the
+      // failure this case invites, an intention INVENTED for a thing nobody marked.
+      try {
+        var _EP_TRACE_POOL = [
+          ['a scarred trunk',  '✗ “The old tree stood as if it had chosen to guard the road.” — an intention invented for a thing nobody marked.',
+                               '✓ (Open Vein) “The bark was torn open at the height of an axle, still weeping where the war machines had been forced through. The hurt reached me first; the thought came after, and it was not about the road. Whoever drove here had decided the tree was in the way, and I was sure — with nothing but the wound to go on — that they had never once had to be the thing in the way.” — EXPOSED: the drivers, a particular truth (they have never been the obstacle). The scar proves the machines; it does not prove the last clause, and the sentence says so: the judgment is hers, confident and possibly unfair. The hurt arriving first is how an Open Vein reads; it is not the exposure.'],
+          ['a worn ford',      '✗ “The river had carved the crossing with patient purpose.” — a river has no purpose; nobody was exposed.',
+                               '✓ (Open Vein) “The stones at the ford were worn hollow on the near side only. People crossed here going out from the village, and did not come back this way. I read a whole leaving into it before I had any right to — I always do — and what I could not stop knowing was how many times you have to leave a place before the stone agrees with you.” — EXPOSED: the village, a particular habit its own stones record (its people go out this way and return another, or not at all). The wear supports exactly that much and no more. The reading exposes her: she reads departures into everything and names that she does.'],
+          ['a cliff path',     '✗ “The cliff wore its danger proudly.” — decoration; the cliff exposes no one.',
+                               '✓ (Open Vein) “There was a safer path forty paces on, and the fishermen still cut theirs along the drop, hand-holds gouged at the height of a man moving fast. Not bravery. Whatever waited at the bottom was worth more to them than the walk, every morning, and they had stopped noticing they had decided that. I noticed, because I have never been able to stop noticing what people have decided not to feel.” — EXPOSED: the fishermen’s worldview (the catch outranks the fall, a decision worn smooth enough that they no longer feel it). The hand-holds and the ignored safer path support it. The reading exposes her: an Open Vein names what others have decided not to feel.'],
+          ['a fallow field',   '✗ “The field lay empty, as though the land itself were in mourning.” — the land is not in mourning; a person was.',
+                               '✓ (Open Vein) “One field had gone to seed while every neighbour’s was cut, the furrows still straight under the weeds. Nobody had ploughed it since her husband went into the ground at its head, and nobody had dared offer. What I read in it was not grief — grief would have let the neighbours help. It was that she would rather the whole valley watch it rot than watch another man finish his rows. I may have been wrong. I was not wrong about what it made me feel toward her.” — EXPOSED: the widow, a contradiction (a mourning that refuses help is also a possession). The burial is scene knowledge, not inferred from weeds; the motive is her reading and is marked as possibly wrong. What she feels toward the widow is the Open Vein part, and it is stated as hers, not offered as proof.']
+        ];
+        var _epPick = (typeof window._rotatingExemplars === 'function') ? window._rotatingExemplars('ep_trace_anchor', _EP_TRACE_POOL, 1) : _EP_TRACE_POOL.slice(0, 1);
+        if (_epPick && _epPick[0]) {
+          lines.push('  THE THIRD CASE — A NATURAL THING MARKED BY A REAL AGENT. A wild thing cannot perform, but it can be MARKED, and the mark exposes whoever made it while the reading exposes her. Three rules inside this case: the exposure is a PARTICULAR truth about the people the mark points to, never a mood; the inference is PROPORTIONATE to the trace, or it is written as hers and allowed to be wrong; a bodily reaction may accompany the reading (that is how an Open Vein arrives) but it is never the exposure itself. Anchor for this story (' + _epPick[0][0] + ' — its SURFACE is BANNED from this story\'s prose: no ' + _epPick[0][0].replace(/^an? /, '') + ', nothing that rhymes with it):');
+          lines.push('    ' + _epPick[0][1]);
+          lines.push('    ' + _epPick[0][2]);
+          lines.push('    Where the lens above is not Open Vein, keep the MECHANISM (the mark exposes its maker; her reading exposes her; the inference stays proportionate or is marked as hers) and let YOUR archetype decide what she notices first and whom she judges.');
+        }
+      } catch (_) {}
       lines.push('  THESE ARE CALIBRATION ANCHORS, NOT TEMPLATES. Do not reach for trees, branches, wounds, or moonlight because they appear here. A letter, a doorway, a debt, an animal, a scar, a room someone stopped entering — any of these carry a secret if the PC presses on them. THE OBJECT IS NOT SPECIAL; THE RELATIONSHIP BETWEEN OBJECT AND OBSERVER IS SPECIAL.');
     }
   } catch (_) {}
 
   lines.push('  A Description+ may also live inside a character’s wish or dream: “Mara’s secret wish was to grow up to be a Veilwood tree — wrapped around a mate for eternity under a cloak of white foliage, never letting go. Never.” — which tells us what the world lets a girl dream, what she misunderstands about love, and what tragedy is waiting.');
   lines.push('');
-  lines.push('THIS IS A LENS, NOT A QUOTA. Nothing here obliges you to produce a beat. PROSE DENSITY — THE CONDUCTOR governs whether perception gets space at all, and the density governor decides WHO earns it (pressure, not headcount). When a moment has already earned interpretive space, THIS is the lens you use. If no honest opportunity exists, write plainly and move on. A SCENE WITH NO CHARACTER+ AND NO DESCRIPTION+ CAN BE COMPLETELY SUCCESSFUL when the pressure, the action and the consequence already carry the meaning — that is a good scene, not a missed one. Forcing a beat produces purple prose, which is worse than plain description.');
+  lines.push('THIS IS A LENS, NOT A QUOTA — FOR WHAT HAS NOT BEEN ASSIGNED. Two different moments, two different rules. AT PLANNING TIME an opportunity may be declined: if no grounded, honest occasion exists for a person, the plan carries no beat for them, and a scene whose PLAN carries no Character+ and no Description+ can be completely successful when the pressure, the action and the consequence already carry the meaning — that is a good scene, not a missed one. AT WRITING TIME an assignment that reached you (a CHARACTER+ BEAT, an ENVIRONMENT+ target, a PROTAGONIST OPENING BEAT, a FUSION) was accepted at planning and is REQUIRED: write it; it is never dropped silently and never replaced with a different person or object. PROSE DENSITY — THE CONDUCTOR governs how much room perception gets and decides WHO earns any UNASSIGNED beat (pressure, not headcount); it does not erase an assigned one. Forcing an unassigned beat produces purple prose, which is worse than plain description.');
   lines.push('THE REMOVAL TEST (apply it to every beat): take the archetype lens away — would the moment still exist? If yes, it is ordinary characterisation. If the moment COLLAPSES without the lens, it is Storybound+.');
-  lines.push('THE ACCEPTANCE TEST: a reader should be able to say “only THIS protagonist could have seen it that way.” If the insight is true for everyone, it is not Storybound+ — cut it or re-aim it through the lens.');
+  lines.push('THE ACCEPTANCE TEST: a reader should be able to say “only THIS protagonist could have seen it that way.” If the insight is true for everyone, it is not Storybound+ — cut it or re-aim it through the lens. And a reader should be able to say WHAT the beat exposed and about WHOM (a flaw, an obsession, a private secret, a contradiction, a worldview); if nothing was exposed, it was description or admiration.');
   lines.push('');
 
   }
@@ -66148,6 +66378,10 @@ function _buildCharacterPlusShared(opts) {
     const inClimaxWindow = pct >= (climaxPct - 5) && pct <= (climaxPct + 5);
 
     // Find last triggered + next pending milestones.
+    // ONE RESOLVED INTENT (2026-09-11): seeded milestones are re-derived from the effective scene row first, so the
+    // "current milestone" this directive renders is the reconciled intent for the recorded branch, never a row's
+    // branch-contingent goal text.
+    try { if (a._seeded && typeof _reconcileSeededMilestones === 'function') _reconcileSeededMilestones(); } catch (_) {}
     let lastTriggered = null, nextPending = null;
     if (Array.isArray(a.milestones)) {
       for (let i = 0; i < a.milestones.length; i++) {
@@ -74730,6 +74964,53 @@ TEMPT FATE NARRATIVE STRUCTURE (MANDATORY — this scene must open with all thre
       return ['ST3', 'ST4'].includes(currentSt);
   }
 
+  // ═══════════════════════════════════════════════════════════════════════════
+  // EROTIC GATING — MAIN CHARACTER CONTACT ONLY
+  // storybound/scene-length-erotic-gates-canonical-v2
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Sexual/romantic contact between TWO MAIN CHARACTERS is gated and delayed.
+  // Gate is VARIABLE based on: story length tier, intensity, scene index, milestones.
+  //
+  // ✅ ALLOWED BEFORE GATE:
+  //    - Side character intimacy, ex encounters, memories, fantasies, witnessing others
+  //    - Ambient erotic atmosphere (Dirty tone), voyeuristic scenes
+  //
+  // ❌ FORBIDDEN BEFORE GATE (main characters only):
+  //    - Kissing, sexual touching, intimacy, "almost kiss" loopholes, "accidental" contact
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Calculate when main character intimacy gate opens
+   * Returns the scene index at which main pair contact is allowed
+   * RELOCATED 2026-09-13 (Roman): was nested inside the #submitBtn click handler (~298651), invisible to
+   * reinterpretSafetyAction() (defined at outer scope, ~102601) — every call to reinterpretSafetyAction with
+   * escalating Say/Do while isIntimacyAllowedAtCurrentStoryturn() was true threw an unhandled ReferenceError
+   * ("getMainPairIntimacyGateScene is not defined"), caught by the generic scene-fail-recovery path and shown
+   * to the reader as "Fate stumbled" instead of its real behavior (pass-through or metaphorical reinterpretation).
+   * Moved to outer scope, beside its sibling gate helpers, so every caller (reinterpretSafetyAction and the
+   * #submitBtn handler's own uses) resolves the same function. Body unchanged.
+   */
+  function getMainPairIntimacyGateScene() {
+      const storyLength = state.storyLength || 'taste';
+
+      // Base gates by story length only — intensity no longer modifies gate timing
+      const baseGates = {
+          taste: 4,    // Short: tension builds quickly
+          fling: 6,    // Medium: more buildup
+          affair: 10   // Long: slow burn
+      };
+
+      let gateScene = baseGates[storyLength] || 4;
+
+      // Milestone modifiers — certain flags can adjust gate
+      if (state.intimacyInterrupted?.first_kiss) {
+          // If first kiss was already interrupted, we're past the gate
+          gateScene = Math.min(gateScene, state.turnCount || 0);
+      }
+
+      return gateScene;
+  }
+
   /**
    * Check if intimacy COMPLETION is allowed (not just initiation)
    * Taste can initiate at ST3 but CANNOT complete
@@ -79943,6 +80224,15 @@ Return ONLY valid JSON:
       // resetForNewStory and performAuthReset pick it up; see
       // _resetBakedLifecycle for why leaking these corrupts the NEXT story.
       try { if (typeof _resetBakedLifecycle === 'function') _resetBakedLifecycle(); } catch (_) {}
+      // STAGE-STATE ISSUE BOUNDARY (Roman, authorized 2026-09-14; design: generic_stage_state_
+      // substrate_design.md §4). L3 IS the Issue boundary (startBook2 calls this) — close
+      // whatever stage is currently active so the next Issue is issued a fresh one rather than
+      // inheriting the prior Issue's physical room/props by accident. This APPENDS closure
+      // metadata only (_closeActiveStage never mutates issued content) and leaves every closed
+      // record in state._stageState as permanent, readable history — nothing here deletes it.
+      // A deliberate asymmetry with _relationshipLedger, which IS carried across this same
+      // boundary (_relLedgerCarryAdopt) — identity persists across Issues, physical stage does not.
+      try { if (typeof _closeActiveStage === 'function') _closeActiveStage('issue_boundary'); } catch (_) {}
       // ── LAYER 3 — STORY STATE RESET ──
       // Resets all per-story couple/fate/narrative mechanics.
       // Called by startBook2 and startNewInWorld.
@@ -81297,7 +81587,18 @@ Return ONLY valid JSON:
           ? crypto.randomUUID()
           : 'sb_' + Date.now().toString(36);
       localStorage.setItem('sb_current_story_id', state.storyId);
+      // HYDRATION MARKER (Roman, authorized 2026-09-14 — fixes the Library-resume defect found
+      // 2026-09-13/14): a fresh story minted here IS its own source of truth in memory — nothing
+      // to restore. See the marker's full contract at its OTHER write site, continueStory()'s
+      // successful-completion point, and its read site, renderVaultSavedStories()'s Continue click.
+      state._fullyHydratedStoryId = state.storyId;
   }
+
+  // Exposed for the stage-state persistence proof (2026-09-14) — calling the REAL Issue-boundary
+  // function directly, the same one startBook2/startNewInWorld already call, rather than a
+  // reimplemented test-only stub. No other production caller changes; this is an additive export
+  // only, matching the many other window._x = _x test-access exports already in this file.
+  try { window._resetStoryState = _resetStoryState; } catch (_) {}
 
   /**
    * Sync legacy romantic-target fields from canonical normalizedPartnerKernel.
@@ -96463,6 +96764,62 @@ ${(function(){ try { return (typeof _ffBuildRevealWithholdDirective === 'functio
       return null;
   }
 
+  // ── THE PROTAGONIST'S ESTABLISHED LENS (2026-09-11) — delivered, not chosen for her ──
+  // Read from the PC MASK (never state.archetype, which is the LI's). No facet→operation mapping: the author
+  // selects the lens's scene-appropriate expression unless an authored assignment already names an operation.
+  function _pcLensRecord(st) {
+    try {
+      st = st || state || window.state; if (!st) return null;
+      var mask = String((st.picks && (st.picks.playermask || st.picks.playerMask)) || st.playerMask || st.playermask || '').toUpperCase().replace(/[^A-Z_]/g, '');
+      if (!mask) return null;
+      var prof = (typeof _PC_NARRATOR_ARCHETYPE_PROFILES !== 'undefined') ? _PC_NARRATOR_ARCHETYPE_PROFILES[mask] : null;
+      return { mask: mask, label: prof ? String(prof.label) : mask.replace(/_/g, ' '), movement: prof && prof.movement ? String(prof.movement) : '' };
+    } catch (_) { return null; }
+  }
+  window._pcLensRecord = _pcLensRecord;
+  // ── ONE PER-BEAT RENDERER FOR BOTH ENGINES (2026-09-11) ──
+  // Literary (buildSkeletonDirective) and CG (the delivered-assignments block) render an assigned Character+
+  // beat through THIS function, so what the author receives cannot diverge by engine. Strings are unchanged
+  // from the literary block; the one addition is the YOURS-TO-COMPOSE interpretation line for entries that
+  // carry neither a planner interpretation nor an operation (continuations).
+  function _cpBeatLines(c, isPofRecipient) {
+    if (!c) return '';
+    if (isPofRecipient) {
+      return '  • ' + c.character + ' (first mention — the beat lands here) — assigned BELOW as the '
+        + 'PROTAGONIST OPENING BEAT. That single beat is her Character+; do not write her a second one here.\n';
+    }
+    var lens = _pcLensRecord();
+    var composeLine = 'YOURS TO COMPOSE' + (lens ? ' — through her ESTABLISHED lens, ' + lens.label.toUpperCase() + (lens.movement ? ' (' + lens.movement + ')' : '') : '')
+      + ': a reading of this act that exposes ' + c.character + ' — a specific, non-obvious truth — and shows how SHE sees; choose the lens\'s expression for THIS moment; never state the SOURCE TRUTH';
+    if (c.facet_truth || c.psychological_read) {
+      return '  • ' + c.character + (c.first_mention ? ' (first mention — the beat lands here)' : '')
+        + (c.mode ? ' — ' + c.mode : '')
+        + (c.not_physically_present ? '; NOT PHYSICALLY PRESENT' : '') + '\n'
+        + (c.facet_truth
+            ? '      SOURCE TRUTH — DO NOT STATE: ' + c.facet_truth + '\n'
+            : (c.psychological_read ? '      SOURCE TRUTH — DO NOT STATE: ' + c.psychological_read + '\n' : ''))
+        + (c.facet_pressure ? '      (it applies here because: ' + c.facet_pressure + ')\n' : '')
+        + (Array.isArray(c.guardrails) && c.guardrails.length ? '      READS THIS CHARACTER\'S CANON FORBIDS: ' + c.guardrails.map(function (g) { return String(g && (g.why || g.text || g)).trim(); }).filter(Boolean).join(' · ') + '\n' : '')
+        + ((c.behavior || c.angle)
+            ? '      VISIBLE ACTION — MUST OCCUR: ' + (c.behavior || c.angle) + '\n'
+            : '      VISIBLE ACTION — YOURS TO CHOOSE: one small physical act, possible in this '
+              + 'scene\'s circumstances, in which the SOURCE TRUTH is legible without being stated.\n')
+        + '      PC INTERPRETATION — MUST GOVERN THE NARRATION: '
+          + (c.pc_interpretation
+              ? c.pc_interpretation
+              : (c.pc_lens_operation ? 'as her attention moves onto it (below)' : composeLine))
+          + (c.pc_effect ? '; here: ' + c.pc_effect : '') + '\n'
+        + (c.pc_lens_operation
+            ? '      HOW HER ATTENTION MOVES ONTO IT (lens operation): ' + c.pc_lens_operation + (c.pc_lens_gloss ? ' — ' + c.pc_lens_gloss : '') + '\n'
+            : '');
+    }
+    return '  • ' + c.character + (c.first_mention ? ' (first mention — the beat lands here)' : '')
+      + (c.angle ? ' — read: ' + c.angle : '') + '\n'
+      + ((c.pc_interpretation || c.character_revelation) ? '      PC INTERPRETATION — MUST GOVERN THE NARRATION: ' + (c.pc_interpretation || c.character_revelation) + (c.pc_effect ? '; here: ' + c.pc_effect : '') + '\n' : '')
+      + (c.pc_lens_operation ? '      HOW HER ATTENTION MOVES ONTO IT (lens operation): ' + c.pc_lens_operation + (c.pc_lens_gloss ? ' — ' + c.pc_lens_gloss : '') + '\n' : '');
+  }
+  window._cpBeatLines = _cpBeatLines;
+
   function buildSkeletonDirective() {
       if (!state.sceneSkeleton) return '';
       const sk = state.sceneSkeleton;
@@ -96507,68 +96864,12 @@ ${(function(){ try { return (typeof _ffBuildRevealWithholdDirective === 'functio
         };
         if (_cp.length) {
           directive += '\nCHARACTER+ ASSIGNED THIS SCENE — one beat per person listed, at their FIRST mention:\n';
-          _cp.forEach(function (c) {
-            if (_isPofRecipient(c)) {
-              directive += '  • ' + c.character + ' (first mention — the beat lands here) — assigned BELOW as the '
-                + 'PROTAGONIST OPENING BEAT. That single beat is her Character+; do not write her a second one here.\n';
-              return;
-            }
-            // ONE OBLIGATION, TWO HALVES (Roman 2026-08-27). Rendered on a single line so the
-            // author writes one beat that carries both — not an action and then, separately, an
-            // explanation of it.
-            //
-            // ── MODE AND ABSENCE REACH THE AUTHOR (Roman 2026-08-27) ──
-            // `mode` survived the planner and the normaliser and then died here: the author was
-            // handed a behaviour for a person the author had no way of knowing was NOT IN THE
-            // ROOM. Writing that beat as a present action is the only thing an author could do
-            // with it — the non-materialisation rule was enforced against the planner and then
-            // discarded one layer before the component that writes the prose. The trusted facet
-            // travels with it, so the author reads what is TRUE of the person, not only the
-            // planner's reading of it.
-            if (c.facet_truth || c.psychological_read) {
-              // ══════════════════════════════════════════════════════════════════════════
-              // DECONSTRUCTION → RECONSTRUCTION (Roman 2026-08-27)
-              //
-              // One line carrying truth + pressure + evidence + action + operation is a single
-              // overloaded "write a C+ beat" instruction again, and the author's way of
-              // satisfying it is the shape this whole effort exists to kill: "They did X. I
-              // realised this meant Y." So the three components are rendered APART, each with
-              // its own standing, and the writer is asked to FUSE two of them.
-              //
-              // 1 SOURCE TRUTH  — ours, unstated, a constraint on accuracy.
-              // 2 VISIBLE ACTION — the planner's one grounded act.
-              // 3 PC INTERPRETATION — the resolved operation, and what she makes of it here.
-              // ══════════════════════════════════════════════════════════════════════════
-              directive += '  • ' + c.character + (c.first_mention ? ' (first mention — the beat lands here)' : '')
-                + (c.mode ? ' — ' + c.mode : '')
-                + (c.not_physically_present ? '; NOT PHYSICALLY PRESENT' : '') + '\n'
-                + (c.facet_truth
-                    ? '      SOURCE TRUTH — DO NOT STATE: ' + c.facet_truth + '\n'
-                    : (c.psychological_read ? '      SOURCE TRUTH — DO NOT STATE: ' + c.psychological_read + '\n' : ''))
-                + (c.facet_pressure ? '      (it applies here because: ' + c.facet_pressure + ')\n' : '')
-                // A CONTINUATION DIRECTS NO ACT. Scene 1's planner supplies one; the backend does
-                // not, because inventing the act is authoring. Printing an empty "MUST OCCUR:"
-                // label asks the author to perform nothing, so the instruction says what is
-                // actually wanted: choose the act, under the truth we supplied.
-                + ((c.behavior || c.angle)
-                    ? '      VISIBLE ACTION — MUST OCCUR: ' + (c.behavior || c.angle) + '\n'
-                    : '      VISIBLE ACTION — YOURS TO CHOOSE: one small physical act, possible in this '
-                      + 'scene\'s circumstances, in which the SOURCE TRUTH is legible without being stated.\n')
-                + '      PC INTERPRETATION — MUST GOVERN THE NARRATION: '
-                  + (c.pc_lens_operation
-                      ? c.pc_lens_operation + (c.pc_lens_gloss ? ' — ' + c.pc_lens_gloss : '')
-                      : (c.pc_interpretation || 'as this POV would take it'))
-                  + (c.pc_effect ? '; here: ' + c.pc_effect : '') + '\n';
-              return;
-            }
-            directive += '  • ' + c.character + (c.first_mention ? ' (first mention — the beat lands here)' : '')
-              + (c.angle ? ' — read: ' + c.angle : '') + '\n';
-          });
+          _cp.forEach(function (c) { directive += _cpBeatLines(c, _isPofRecipient(c)); });
           directive += '  RECONSTRUCT each of these into ONE OR TWO natural sentences of finished prose: the VISIBLE '
             + 'ACTION happens, and the PC INTERPRETATION governs how it is narrated. The SOURCE TRUTH governs accuracy '
             + 'and must remain UNSTATED — never write it, never paraphrase it, never let a character say it.\n'
             + '  DO NOT write the action and then append an explanatory diagnosis of it. Let the wording, the sequence, '
-            + 'the consequence, or what she focuses on carry the interpretation. Any of these shapes is right:\n'
+            + 'the consequence, or what she focuses on carry the interpretation. In every case a reader must be able to say what the beat exposed about that person — a flaw, an obsession, a private secret, a contradiction, a worldview — and what it shows of how SHE sees; the PC INTERPRETATION above is that target, the lens operation is only the route to it. Any of these shapes is right:\n'
             + '    · the action, then one brief focalised inference;\n'
             + '    · the interpretation folded into how the action is described;\n'
             + '    · the action, then a consequence that makes her reading legible without naming it.\n'
@@ -96615,6 +96916,7 @@ ${(function(){ try { return (typeof _ffBuildRevealWithholdDirective === 'functio
             + ((_pof.action_wording) ? ('  · ACTION WORDING (support for that contact): ' + _pof.action_wording + '\n') : '')
             + '  · WHAT IT SHOWS ABOUT ' + _pcN3 + ' (lens: ' + (_pof.pc_lens_operation || '') + ')' + (_pof.character_revelation ? (': ' + _pof.character_revelation) : ' — read the act through this lens (the planner\'s sentence was withheld)') + '\n'
             + '  · THE ENVIRONMENT AS IT BEARS ON ' + _pcN3 + ' (axis: ' + (_pof.environment_axis || '') + ')' + ((_pof.environment_pressure && _pof.environment_pressure.text) ? (': ' + _pof.environment_pressure.text) : (' — let ' + (_pof.environment_target || 'the target') + ', in its ' + (_pof.environment_axis || '') + ' condition, bear on ' + _pcN3 + ' (the planner\'s sentence was withheld)')) + '\n'
+            + '  · WHAT IT MUST EXPOSE (HARD): a specific, non-obvious truth about ' + _pcN3 + ' — a flaw, an obsession, a private secret, a contradiction, a worldview — read as her archetype reads; and, when the target was made, kept or MARKED by someone, what its condition gives away about them. An unmarked natural target exposes only her; one that carries a real mark (a scar, a cut path, a worn stone) exposes whoever made the mark as well — never an intention invented for it.\n'
             + '  Write ONE beat that fuses all three. Do not copy these sentences. The thing itself is named once above and need not be renamed.\n';
         } else if (_pof && _pof.beat) {
           directive += '\nPROTAGONIST OPENING BEAT (HARD — this is her Character+, the Environment+ axis, and the '
@@ -96623,6 +96925,7 @@ ${(function(){ try { return (typeof _ffBuildRevealWithholdDirective === 'functio
             + 'not the first time a name appears. In first person there is no name to wait for.\n'
             + '  ↳ THE BEAT: ' + _pof.beat + '\n'
             + (_pof.character_angle ? '  ↳ WHAT IT REVEALS ABOUT HER: ' + _pof.character_angle + '\n' : '')
+            + '  ↳ WHAT IT MUST EXPOSE (HARD): a specific, non-obvious truth about her — a flaw, an obsession, a private secret, a contradiction, a worldview — read as her archetype reads.\n'
             + '  ↳ THROUGH: ' + (_pof.environment_target || '') + ' — the axis of ' + (_pof.environment_axis || '')
             + ' must be materially legible in this beat. Touch is optional; sensory alignment or contrast counts. '
             + 'Naming the thing, or lighting it, does not.\n';
@@ -96631,7 +96934,8 @@ ${(function(){ try { return (typeof _ffBuildRevealWithholdDirective === 'functio
         if (_fu && _fu.character && _fu.target && !(_pof && _pof.beat)) {
           directive += 'FUSION — one sentence in which ' + _fu.character + ' and ' + _fu.target
             + ' reveal each other'
-            + (_fu.beat ? ': ' + _fu.beat : '. Take it only if it lands naturally.') + '\n';
+            + (_fu.beat ? ': ' + _fu.beat : '. Take it only if it lands naturally.')
+            + ' The same concrete moment must expose the person (a flaw, an obsession, a private secret, a contradiction, a worldview) AND show the protagonist\'s way of seeing; the thing exposes its maker or keeper, or her.\n';
         }
       } catch (_) {}
 
@@ -97412,11 +97716,19 @@ function _buildAuthorFloorDirective(s) {
       }
       var _delivery = 'MISSED', _tab = null, _replacement = 'none', _txnPos = -1, _firstIrrev = -1;
       try {
-        var _vRes = await fetch('/api/chatgpt-proxy', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ messages: [{ role: 'system', content: _vSys }, { role: 'user', content: _vUsr }], role: 'PRIMARY_AUTHOR', model: 'gpt-4o-mini', temperature: 0.1, max_tokens: 280, jsonMode: true }) });
-        if (_vRes.ok) {
-          var _vData = await _vRes.json();
-          var _vC = (_vData && _vData.content) || (_vData && _vData.choices && _vData.choices[0] && _vData.choices[0].message && _vData.choices[0].message.content);
+        // TIERED PROVIDER POLICY (2026-09-13): this semantic judgment call (did the prose deliver
+        // the proposed transition — genuine reading-comprehension work, not reducible to
+        // deterministic local logic) was a direct, silent OpenAI primary. Mistral (ministral-8b-2512)
+        // primary → Grok fallback → Claude/OpenAI terminal-only, via the shared _callTieredProvider
+        // (grep "TIERED PROVIDER POLICY" near ~5817). `jsonMode: true` was dead — none of the proxy
+        // endpoints (chatgpt/mistral/proxy) read that field server-side; parsing already fell back to
+        // manual JSON extraction below regardless, so dropping it changes nothing.
+        var _vData = await _callTieredProvider('runtimeCommitVerifier', [
+          { role: 'system', content: _vSys },
+          { role: 'user', content: _vUsr }
+        ], { max_tokens: 280, temperature: 0.1 });
+        {
+          var _vC = _vData && _vData.content;
           var _vP; try { _vP = JSON.parse(_vC); } catch (e) { var _m = String(_vC || '').match(/\{[\s\S]*\}/); if (_m) { try { _vP = JSON.parse(_m[0]); } catch (_) {} } }
           if (_vP) { _delivery = String(_vP.delivery || 'MISSED').toUpperCase(); _tab = _vP.tableau || null; _replacement = String(_vP.dominant_replacement || 'none'); _txnPos = (typeof _vP.transition_position === 'number') ? _vP.transition_position : -1; _firstIrrev = (typeof _vP.first_irreversible_position === 'number') ? _vP.first_irreversible_position : -1; }
           // SLOT-CHECK OVERRIDE: a load-bearing slot mismatch forces MISSED regardless of the LLM's delivery label.
@@ -97775,6 +98087,7 @@ function _buildAuthorFloorDirective(s) {
       var _mAnchorOn = !(typeof window !== 'undefined' && window._milestoneAnchorV0 === false);
       var _curMs = null;
       try {
+        try { if (s.aPlot && s.aPlot._seeded && typeof _reconcileSeededMilestones === 'function') _reconcileSeededMilestones(); } catch (_) {}
         var _msArr = (s.aPlot && Array.isArray(s.aPlot.milestones)) ? s.aPlot.milestones : [];
         _curMs = _msArr.find(function (m) { return m && !m.triggered && m.event; }) || _msArr.find(function (m) { return m && m.event; }) || null;
       } catch (_) {}
@@ -97817,10 +98130,24 @@ function _buildAuthorFloorDirective(s) {
           var _apFn = (typeof _activePlan === 'function') ? _activePlan : (window._activePlan || null);
           var _plan = _apFn ? _apFn(s) : null;
           if (_plan && Array.isArray(_plan.scenes)) {
-            var _planSceneNum = (s.turnCount || 0) + 2;   // scene being BUILT (turnCount lags by 2 here — see note @~92889)
-            var _planScene = _plan.scenes.find(function (p) { return p && p.n === _planSceneNum && p.goal; }) || null;
+            // ONE RESOLVED INTENT (2026-09-11): on the STAGED (CG) path the scene being BUILT is the CG seam's index + 1 —
+            // the staged path bumps turnCount BEFORE generating, so turnCount+2 pointed the spine planner at the NEXT row
+            // (Scene 2's spine received row 3). The literary path is byte-identical (turnCount+2, its Scene-1 quirk included).
+            var _planSceneNum = (typeof s._stagedAuthoringSceneIndex === 'number' && s._stagedAuthoringSceneIndex >= 0) ? (s._stagedAuthoringSceneIndex + 1) : ((s.turnCount || 0) + 2);
+            var _planScene = _plan.scenes.find(function (p) { return p && p.n === _planSceneNum && (p.goal || p.objective === 'reader'); }) || null;
+            // ONE RESOLVED INTENT (2026-09-11): the spine planner's objective is the effective row for the recorded branch.
+            var _effSpine = (_planScene && typeof _effectiveSceneRow === 'function') ? _effectiveSceneRow(s, _planSceneNum) : null;
+            // OPEN ROW: record the reader's posture NOW (choice + exact Say/Do); an accepted objective with the same posture is reused.
+            var _openRow = !!(_effSpine && _effSpine.openObjective), _posture = null, _openReuse = null;
+            if (_openRow) {
+              _posture = _recordScenePosture(_planSceneNum, act, dia);
+              var _prevObj = s._sceneObjectives && s._sceneObjectives[String(_planSceneNum)];
+              if (_prevObj && _prevObj.status === 'accepted' && _posture && _prevObj.postureHash === _posture.hash && _prevObj.storyId === s.storyId) _openReuse = _prevObj;
+              else if (_prevObj && _prevObj.status === 'accepted') { try { console.log('[OBJECTIVE:SUPERSEDED] scene ' + _planSceneNum + ' posture changed (' + _prevObj.postureHash + ' → ' + (_posture && _posture.hash) + ') — the old objective is dropped'); } catch (_) {} s._sceneObjectives[String(_planSceneNum)] = Object.assign({}, _prevObj, { status: 'superseded', supersededAt: Date.now() }); _effSpine = _effectiveSceneRow(s, _planSceneNum); }
+            }
+            if (_effSpine) _planScene = Object.assign({}, _planScene, { goal: _effSpine.goal || (_openRow ? '' : (_effSpine.effectiveEvent || '')), requiredTruth: _effSpine.requiredTruth || null, exitState: _effSpine.exitState || null, participants: _effSpine.participants || (_openRow ? (_effSpine.roster || []).map(function (r) { return r.label; }) : null), presentGroups: _effSpine.presentGroups || null });
             if (_planScene) {
-              _curMs = { event: _planScene.goal, atScene: _planScene.n, kind: 'authored-spine', triggered: false, _fromPlan: true,
+              _curMs = { event: _planScene.goal, atScene: _planScene.n, kind: 'authored-spine', triggered: false, _fromPlan: true, _open: _openRow, _eff: _effSpine,
                          requiredTruth: _planScene.requiredTruth || null, exitState: _planScene.exitState || null,
                          participants: _planScene.participants || null, requiredTruths: _planScene.requiredTruths || null,
                          presentGroups: _planScene.presentGroups || null,
@@ -97848,6 +98175,8 @@ function _buildAuthorFloorDirective(s) {
                   + 'magical rules or ritual mechanics, new celestial bodies, new locations, or new stakes. Enrich '
                   + 'perception, embodiment and phrasing freely — but add no STATE. Every invention becomes canon '
                   + 'the next scene has to carry.';
+                if (_effSpine && Array.isArray(_effSpine.constraints) && _effSpine.constraints.length)
+                  _sConstr += '\n  THIS SCENE\'S SEED CONSTRAINTS: ' + _effSpine.constraints.join(' · ');
                 s._spineConstraints = _sConstr;
               } catch (_) { try { s._spineConstraints = ''; } catch (__) {} }
               // ═══ AUTHORITY CHANNEL (Roman 2026-08-12) — stash the spine goal VERBATIM for the author ═══
@@ -97859,6 +98188,7 @@ function _buildAuthorFloorDirective(s) {
               // threat both gone. Pass the EXACT string; deliberately NO second summarizer in this path
               // (see feedback_llm_reexpression_leaks_information).
               try { s._spineEventVerbatim = String(_planScene.goal || ''); } catch (_) {}
+              if (_openRow && _openReuse) { try { console.log('[OBJECTIVE:REUSED] scene ' + _planSceneNum + ' posture unchanged (' + _openReuse.postureHash + ') — no planner call: "' + String(_openReuse.local_objective).slice(0, 100) + '"'); } catch (_) {} }
               // Compile the spine's staging into structured state (consumed at the two carrier write-sites).
               try {
                 var _knownCast = [s.playerName, s.partnerName, s.loveInterestName].filter(Boolean);
@@ -97951,6 +98281,31 @@ function _buildAuthorFloorDirective(s) {
             + '\nContinuity (where the last scene ended — context only, NOT the event to repeat): ' + JSON.stringify(sc).slice(0, 300)
             + '\nPlayer action: ' + String(act || '').slice(0, 250) + '\nPlayer dialogue: ' + String(dia || '').slice(0, 200)
             + '\nScene index: ' + (s.turnCount || 0);
+          // ═══ OPEN ROW — READER POSTURE → BOUNDED LOCAL OBJECTIVE (Roman 2026-09-11) ═══
+          // The seed owns the aftermath and the long arc; the reader owns the posture; the planner derives ONE local objective.
+          if (_curMs && _curMs._open && _curMs._eff) {
+            var _oe = _curMs._eff, _ob = [];
+            _ob.push('THIS ROW IS OPEN: no authored objective. Derive THIS scene\'s LOCAL OBJECTIVE from the aftermath and the reader\'s actual posture below, inside the seed\'s constraints.');
+            try { var _em = s._bakedEmitted; if (_oe.aftermathSource === 'baked_emitted' && _em) {
+              _ob.push('IMMUTABLE AFTERMATH (already read; build FROM it, never re-establish or reverse it): ' + String(_em.sceneSummary || '').slice(0, 2000));
+              if (_em.openState && _em.openState.pcCondition) _ob.push('  • her condition now: ' + String(_em.openState.pcCondition));
+              if (Array.isArray(_em.obligations) && _em.obligations.length) _ob.push('  • open obligations: ' + _em.obligations.map(String).join(' | ').slice(0, 1400));
+              if (Array.isArray(_em.ledgerSeeds) && _em.ledgerSeeds.length) _ob.push('  • what the cast now perceive of each other: ' + _em.ledgerSeeds.map(String).join(' | ').slice(0, 800));
+            } } catch (_) {}
+            if (_posture) { _ob.push('READER\'S RECORDED CHOICE at the end of the opening: ' + (_posture.label || '(none recorded)')); _ob.push('READER\'S SAY/DO for this scene (verbatim; this is the posture the objective must answer): action: ' + JSON.stringify(_posture.action) + ' · dialogue: ' + JSON.stringify(_posture.dialogue)); }
+            try { var _L = (typeof _relLedger === 'function') ? _relLedger(false) : null; var _ents = (_L && _L.entities) || {}; var _rl = (_oe.roster || []).map(function (r) { var e = _ents[r.ref]; var cp = (_L && _L.cplus && _L.cplus.rows && _L.cplus.rows[r.ref]) || null; return r.label + (e && e.anchorRole === 'li' ? ' (love interest)' : '') + (cp && cp.last_cplus_scene_ordinal != null ? ' — last Character+ scene ' + cp.last_cplus_scene_ordinal : ''); });
+              if (_rl.length) _ob.push('ROSTER — who CAN be present (name only these; choose who IS): ' + _rl.join(' · ')); } catch (_) {}
+            if (_oe.presentGroups && _oe.presentGroups.length) _ob.push('ALSO PRESENT (unnamed): ' + _oe.presentGroups.join(' · '));
+            try { var _dc = Array.isArray(s._durableFateConsequences) ? s._durableFateConsequences : []; if (_dc.length) _ob.push('DURABLE CONSEQUENCES ALREADY IN FORCE: ' + _dc.map(function (d) { return String(d && (d.text || d.summary || d.kind) || ''); }).filter(Boolean).join(' | ').slice(0, 500)); } catch (_) {}
+            if (_oe.requiredTruth) _ob.push('MUST STILL BE TRUE after this scene: ' + _oe.requiredTruth);
+            if (_oe.exitState) _ob.push('TARGET STATE this scene leaves the story in: ' + _oe.exitState);
+            if (_oe.aftermathTruths && _oe.aftermathTruths.length) _ob.push('AFTERMATH TRUTHS (seed-owned ids — ALREADY TRUE; your objective builds from them and may not reverse or re-stage them; you MUST return "kept" for EACH id):\n' + _oe.aftermathTruths.map(function (t) { return '  • ' + t.id + ': ' + t.text; }).join('\n'));
+            if (_oe.reserved && _oe.reserved.length) _ob.push('RESERVED FOR LATER SCENES (seed-owned ids — your objective must NOT deliver, name or pre-empt any of them; you MUST return a status for EACH id):\n' + _oe.reserved.map(function (r) { return '  • ' + r.id + (r.sealed ? ': ' + r.label + ' [sealed]' : ' (scene ' + r.fromScene + '): ' + r.text); }).join('\n'));
+            if (_oe.vectors && _oe.vectors.length) _ob.push('AFFORDANCES (any, none, or the reader\'s own — NOT a menu, NOT exhaustive, none required):\n' + _oe.vectors.map(function (v) { return '  • ' + v; }).join('\n'));
+            if (_oe.constraints && _oe.constraints.length) _ob.push('SEED CONSTRAINTS: ' + _oe.constraints.join(' · '));
+            _scUsr = 'READER POSTURE → LOCAL OBJECTIVE\n' + _ob.join('\n') + '\n\n' + _scUsr;
+            _scSys += '\n\nOPEN ROW (REQUIRED — add these keys to your JSON): "posture_read" (one sentence: what the reader\'s recorded choice and Say/Do MEAN here), "local_objective" (one sentence: whose concrete act, where, that this scene exists to land — it must answer the reader\'s posture and build from the aftermath), "local_objective_actor" (one ROSTER name), "present" (array of ROSTER names who are in the scene), "reserved" (object: every RESERVED id → "untouched" or "touched"), "aftermath" (object: every AFTERMATH TRUTH id → "kept"). Your state_change realizes the local_objective.';
+          }
           // PLANNER-PROMPT DUMP + PENDING-INTENT DELETION TEST (Roman 2026-08-10). window._dumpPlannerPrompt logs the
           // LITERAL user prompt the scene planner reasons from (to see what dominates: committed facts vs pendingIntent
           // vs continuity vs milestone). window._suppressPendingIntent omits the pendingIntent line after a MISS (the
@@ -98094,6 +98449,12 @@ function _buildAuthorFloorDirective(s) {
           if (typeof window !== 'undefined' && (window._structuredEventHandoff === true || window._evidenceCommitCheck !== false)) {
             _scSys += '\n\nSTRUCTURED EVENT HANDOFF (REQUIRED — add ONE more key to your JSON): also return "event_slots", decomposing THE SAME single event you chose (do NOT invent a different one) into its SEMANTIC core: { "precondition":"WHAT MUST BE PRESENT for this event to be STAGEABLE — the actor and target must exist / be present in the scene (e.g. \\"Julian is present in the scene\\"). A PRESENCE / availability condition, NOT the before-state the event overturns. If the needed party cannot be present, the event is IMPOSSIBLE — pick a different event", "actor":"who performs it", "action":"the core thing they do", "target":"who or what it is done TO / BEFORE / WITH — a specific character or object; if genuinely none, \\"none\\"", "exit_state":"the ONE fact about the world that is now TRUE because it happened, phrased as a STATE (e.g. \\"the elders now believe Julian caused it\\")" }. EXIT_STATE is the PRIMARY invariant. These four are the author\'s SEMANTIC contract — MEANING, not wording: the author may freely choose location, phrasing, imagery, pacing, AND invent additional micro-beats (hesitation, a lie, an escalation, a reversal), but may NEVER change WHO acts, the core action, WHOM it targets, or the exit_state.';
           }
+          if (_openReuse) {
+            // Same posture, accepted objective on record: no planner call; the persisted transition stands.
+            try { state._scenePlotContract = _openReuse.plotContract || state._scenePlotContract; state._priorSceneStateChange = _openReuse.stateChange || state._priorSceneStateChange; } catch (_) {}
+            try { s._spineEventVerbatim = String(_openReuse.local_objective || ''); s._sceneAssignment = (typeof _selectSceneAssignment === 'function') ? _selectSceneAssignment(s, _planSceneNum) : s._sceneAssignment; } catch (_) {}
+            return;
+          }
           var _plannerGrok = (typeof window !== 'undefined' && window._scenePlannerEngine === 'grok');
           // Richer contracts (situation-driven / accomplished-event / structured-handoff) emit more fields; 320 tokens
           // truncated the output and DROPPED the trailing event_slots (found in channel validation). Give them room.
@@ -98101,8 +98462,8 @@ function _buildAuthorFloorDirective(s) {
           var _scRes = _plannerGrok
             ? await fetch('/api/proxy', { method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ messages: [{ role: 'system', content: _scSys + '\nOutput STRICT JSON ONLY — no preamble, no code fences.' }, { role: 'user', content: _scUsr }], role: 'STRUCTURE_GENERATOR', preferredModel: (typeof window !== 'undefined' && window._scenePlannerModel) || 'grok-4-1-fast-non-reasoning', temperature: 0.3, max_tokens: _scMaxTok }) })
-            : await fetch('/api/chatgpt-proxy', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ messages: [{ role: 'system', content: _scSys }, { role: 'user', content: _scUsr }], role: 'PRIMARY_AUTHOR', model: 'gpt-4o-mini', temperature: 0.3, max_tokens: _scMaxTok, jsonMode: true }) });
+            : await fetch('/api/mistral-proxy', { method: 'POST', headers: { 'Content-Type': 'application/json' },   // 2026-09-10 (Roman): scene-spine planner off gpt-4o-mini → Mistral Small (no OpenAI in the author chain)
+                body: JSON.stringify({ messages: [{ role: 'system', content: _scSys }, { role: 'user', content: _scUsr }], role: 'STRUCTURE_GENERATOR', model: 'mistral-small-latest', temperature: 0.3, max_tokens: _scMaxTok, response_format: { type: 'json_object' } }) });
           if (!_scRes.ok) return;
           var _scData = await _scRes.json();
           var _scContent = (_scData && _scData.content) || (_scData && _scData.choices && _scData.choices[0] && _scData.choices[0].message && _scData.choices[0].message.content);
@@ -98126,6 +98487,16 @@ function _buildAuthorFloorDirective(s) {
             _scP.state_change = _scP.objective || _scP.state_change;
             _scP.tactical_move = _scP.selected_change || _scP.selected_consequence || _scP.tactical_move;
             if (_scP.event_slots && _scP.event_slots.precondition) _scP.state_change_precondition = _scP.event_slots.precondition;
+          }
+          // OPEN ROW acceptance — reject-only, BEFORE anything is stored. A rejected reply stores no transition and no objective.
+          var _openAccept = null;
+          if (_curMs && _curMs._open && _curMs._eff) {
+            _openAccept = _validateLocalObjective(_scP, _curMs._eff);
+            if (!_openAccept.ok) {
+              s._sceneObjectiveRejection = { sceneNum: _planSceneNum, reason: _openAccept.why.join('; '), postureHash: _posture && _posture.hash, at: Date.now() };
+              try { console.warn('[OBJECTIVE:REJECTED] scene ' + _planSceneNum + ' — ' + s._sceneObjectiveRejection.reason); } catch (_) {}
+              return;
+            }
           }
           var _scEvent = _scP && String(_scP.state_change || '').trim();
           if (!_scEvent) return;
@@ -98180,6 +98551,17 @@ function _buildAuthorFloorDirective(s) {
           var _derivedBeat = { id: 'scene' + (s.turnCount || 0) + '_statechange', description: _stateChange.event, whyItMatters: _stateChange.forces_choice, type: 'plot', importance: 'hard', bornScene: (s.turnCount || 0), locationBound: null, carryStrategy: 'pay_if_plausible_else_adapt', dropAllowed: false, _derivedFromStateChange: true };
           state._scenePlotContract = { sceneIndex: (s.turnCount || 0), stateChange: _stateChange, hardBeats: [_derivedBeat] };
           state._priorSceneStateChange = _stateChange; // next scene's "before" (DECLARED, not delivery-verified — the commit gate verifies)
+          if (_openAccept && _openAccept.ok) {
+            s._sceneObjectives = s._sceneObjectives || {};
+            s._sceneObjectives[String(_planSceneNum)] = { sceneNum: _planSceneNum, branch: _posture ? _posture.choice : null, postureHash: _posture ? _posture.hash : null, posture_read: _openAccept.posture_read,
+              local_objective: _openAccept.local_objective, actor: _openAccept.actor, present: _openAccept.present, stateChange: _stateChange, plotContract: state._scenePlotContract || null, reserved: (_curMs._eff.reserved || []).map(function (r) { return r.id; }),
+              status: 'accepted', source: 'spine:posture', storyId: s.storyId, at: Date.now() };
+            s._sceneObjectiveRejection = null;
+            try { s._spineEventVerbatim = _openAccept.local_objective; } catch (_) {}
+            try { s._sceneAssignment = (typeof _selectSceneAssignment === 'function') ? _selectSceneAssignment(s, _planSceneNum) : s._sceneAssignment; } catch (_) {}
+            try { if (typeof _reconcileSeededMilestones === 'function') _reconcileSeededMilestones(); } catch (_) {}
+            try { console.log('[OBJECTIVE:ACCEPTED] scene ' + _planSceneNum + ' branch=' + (_posture && _posture.choice) + ' actor=' + _openAccept.actor + ' present=' + _openAccept.present.join('/') + ' — "' + _openAccept.local_objective.slice(0, 120) + '"'); } catch (_) {}
+          }
           // COMMITTED-STATE v0: record the PROPOSED transition as pendingIntent (planner memory). It becomes a
           // committed fact ONLY if the post-gen scorer verifies delivery (see the commit hook ~29335); on a miss
           // it stays pending and the planner replans toward the same milestone from the unchanged committed state.
@@ -98252,8 +98634,8 @@ function _buildAuthorFloorDirective(s) {
         + '\n' + (_v0 ? 'Prior scene end-state (CONTINUITY CONTEXT ONLY — not the beat to repeat): ' : 'Where the LAST scene ended: ') + JSON.stringify(sc).slice(0, 400)
         + '\nPlayer action: ' + String(act || '').slice(0, 300) + '\nPlayer dialogue: ' + String(dia || '').slice(0, 300)
         + '\nScene index: ' + (s.turnCount || 0);
-      var res = await fetch('/api/chatgpt-proxy', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: [{ role: 'system', content: sys }, { role: 'user', content: usr }], role: 'PRIMARY_AUTHOR', model: 'gpt-4o-mini', temperature: 0.3, max_tokens: 420, jsonMode: true }) });
+      var res = await fetch('/api/mistral-proxy', { method: 'POST', headers: { 'Content-Type': 'application/json' },   // 2026-09-10 (Roman): legacy hard-beat planner off gpt-4o-mini → Mistral Small, same class as the spine planner above
+        body: JSON.stringify({ messages: [{ role: 'system', content: sys }, { role: 'user', content: usr }], role: 'STRUCTURE_GENERATOR', model: 'mistral-small-latest', temperature: 0.3, max_tokens: 420, response_format: { type: 'json_object' } }) });
       if (!res.ok) return;
       var data = await res.json();
       var content = (data && data.content) || (data && data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content); // proxy returns {content}; OpenAI returns {choices}
@@ -106752,6 +107134,16 @@ This is narrative pressure only.`;
     // Fantasy Depth Engine (narrative discipline, not mechanics)
     if (world === 'Fantasy') {
       const favorAmp = state._fantasyCoreEntropy?.fantasy_favor_amplitude || 'stable';
+      // Canonical landmarks, COMPUTED from FATELANDS_CANON.landmarks (not hand-duplicated) so the
+      // prompt always reflects the canonical record. Roman 2026-09-13 — first entry: The Open.
+      // GATED OFF for Famous Fate (2026-09-13 correction): FF retells named, non-Fatelands-native
+      // canon (see the _isFF pattern-gate precedent at ~57721) and must receive no Fatelands lore,
+      // shared or story-specific, even when its own picks.world happens to read 'Fantasy'.
+      const _isFamousFate = state.fateMode === 'famous_fate';
+      const _landmarksBlock = _isFamousFate ? '' : Object.keys(FATELANDS_CANON.landmarks || {}).map(function (lk) {
+        const l = FATELANDS_CANON.landmarks[lk];
+        return '- CANONICAL LANDMARK — ' + l.name.toUpperCase() + ': ' + l.description + ' ' + l.use + ' ' + l.constraints;
+      }).join('\n');
       const ampToneMap = {
         low: 'Intimacy feels private and fragile. Vows are whispered, never declared.',
         stable: 'Vows feel binding and stabilizing. Love anchors identity.',
@@ -106849,7 +107241,8 @@ DROWNED VEIN VISIBILITY:
 
 LANDMARK GENERATION CONSTRAINT:
 - Do not invent major architectural landmarks (spires, towers, observatories, citadels, academies, temples) as canonical features unless explicitly defined in FATELANDS_CANON.
-- If a landmark is invented for a single story, treat it as a local, non-canonical structure. It must not persist across stories or be referenced as established geography.`;
+- If a landmark is invented for a single story, treat it as a local, non-canonical structure. It must not persist across stories or be referenced as established geography.
+${_landmarksBlock}`;
     }
 
     // Modern Depth Engine (escalation discipline, not mechanics)
@@ -108581,8 +108974,10 @@ RULES:
               btn.textContent = 'Continue';
               btn.onclick = function() {
                   modal.classList.add('hidden');
-                  // If this is the current story, just navigate to it
-                  if (r.storyId === state.storyId) {
+                  // If this is the current story AND it is actually fully hydrated in memory
+                  // (not just storyId pre-populated at boot from localStorage — see the fix at
+                  // state._fullyHydratedStoryId, 2026-09-14), just navigate to it.
+                  if (r.storyId === state.storyId && state._fullyHydratedStoryId === state.storyId) {
                       window.showScreen('game');
                       showReaderPage(2);
                       if (window.initFateCards) window.initFateCards();
@@ -108641,9 +109036,35 @@ RULES:
               document.getElementById('menuOverlay')?.classList.add('hidden');
               // Reset vault state so panels close properly
               if (typeof resetVaultState === 'function') resetVaultState();
-              if (r.storyId === state.storyId && hasSavedStory()) {
-                  // Current story — navigate directly to reader
-                  window.showScreen('game');
+              if (r.storyId === state.storyId && hasSavedStory() && state._fullyHydratedStoryId === state.storyId) {
+                  // Current story — navigate directly to reader. STAGED RESUME ROUTING (2026-09-13,
+                  // part 2): this is a SIBLING path to continueStory()'s own fix above — when the
+                  // story clicked is already the one live in memory (the common case: Library
+                  // visited shortly after Save & Exit, same tab), this branch never calls
+                  // continueStory() at all, so that fix never ran here. showScreen('game') was
+                  // unconditionally suppressed by the STAGED guard for a staged/CG session, leaving
+                  // the reader stranded on the Library even though nothing needed re-loading — the
+                  // story, the OAS/interruption DOM, and state._stagedActive were never torn down
+                  // (resetVaultState() above only touches vault/menu panel visibility). Found by the
+                  // real Library click-path reload proof re-run, 2026-09-13. Same predicate, same
+                  // target screen as continueStory()'s fix — no story-specific exception.
+                  //
+                  // REAL DEFECT FIX (2026-09-14, Roman-authorized): "r.storyId === state.storyId"
+                  // alone is NOT proof the full snapshot is in memory — boot sets state.storyId
+                  // from localStorage immediately (app.js ~312162+) without loading the rest of
+                  // state, so after any fresh page load this branch previously fired and silently
+                  // skipped the full restore (found by the stage-state persistence proof: state.
+                  // _stageState never populated on a second reopen despite the correct storyId).
+                  // The added state._fullyHydratedStoryId check — set only by continueStory()'s
+                  // successful restore or a genuine fresh genesis in _resetStoryState() — makes
+                  // this fast path fire ONLY when the state actually IS already fully loaded, and
+                  // fall through to the real continueStory() restore otherwise, every time,
+                  // regardless of how storyId came to match.
+                  if (typeof _isStagedMode === 'function' && _isStagedMode()) {
+                    window.showScreen('gnReader');
+                  } else {
+                    window.showScreen('game');
+                  }
                   showReaderPage(2);
                   if (window.initFateCards) window.initFateCards();
               } else if (r.storyId) {
@@ -113044,6 +113465,14 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     var _liveRealSubscribed = state._realSubscribed;
     var _liveTier = state.tier;
     if(data.stateSnapshot) Object.assign(state, data.stateSnapshot);
+    // HYDRATION MARKER (Roman, authorized 2026-09-14) — set explicitly AFTER the snapshot lands,
+    // never trusting whatever value Object.assign may have just copied in from the snapshot
+    // itself. See the marker's other write site (_resetStoryState) and its read site
+    // (renderVaultSavedStories()'s Continue click, both instances) for the full fix this closes:
+    // boot sets state.storyId from localStorage immediately (line ~312162) WITHOUT loading the
+    // rest of state, so "storyId matches" alone was never proof the full snapshot was in memory —
+    // only this marker is.
+    state._fullyHydratedStoryId = state.storyId;
     // ── LEGACY FF CONTRACTS ARE MIGRATED ON RESTORE (Roman 2026-08-28) ──
     // Contracts assembled before cast ids existed carry none, and this is the ONLY path such a
     // story takes back into play — continueStory() does not call handleBeginStory(). Without
@@ -113140,11 +113569,27 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
 
     // Setting shot removed from auto-load - requires explicit user action
 
-    window.showScreen('game');
+    // STAGED RESUME ROUTING (2026-09-13): a staged/CG story lives on gnReader, not the literary
+    // 'game' screen — showScreen('game') is unconditionally suppressed for staged sessions (the
+    // guard at showScreen's own STAGED check), so calling it here left every resumed CG/staged
+    // story's reader stranded on whatever screen they clicked Continue from (found by the real
+    // Library click-path reload proof, 2026-09-13 — state restored correctly in the background,
+    // nothing was ever visible). loadStoryData() itself is a pure data-fetch helper with no
+    // navigation logic; this is the one and only screen-routing call in continueStory(), the sole
+    // caller of loadStoryData(), so it is also "the shared loadStoryData path" for both the
+    // boot-time restore (no storyId) and the Library-click restore (with storyId). Ordinary
+    // literary stories are unaffected — same _isStagedMode() predicate and same 'gnReader' target
+    // the existing intimacy-mount resume path already uses (~app.js:181791).
+    if (typeof _isStagedMode === 'function' && _isStagedMode()) {
+      window.showScreen('gnReader');
+    } else {
+      window.showScreen('game');
+    }
     if (state.fateOptions && state.fateOptions.length) state.fateOptions = filterFateCardsForBatedBreath(state.fateOptions);
     // FIX: Use dealFateCards (not initCards) to get clickable, flippable cards with handlers
     if(window.dealFateCards) window.dealFateCards();
     else if(window.initCards) window.initCards();
+    try { if (typeof _intimateInterruptionPending === 'function' && _intimateInterruptionPending()) setTimeout(function () { _mountIntimateInterruption({ resume: true }); }, 400); } catch (_) {}   // a pending interruption survives reload
     // REBIND: Ensure FX handlers are attached after navigation
     if (window.initFateCards) window.initFateCards();
     resetTurnSnapshotFlag();
@@ -125983,7 +126428,8 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       length: 'taste',
       dynamic: 'Enemies',
       mode: 'solo',
-      archetype: 'BEAUTIFUL_RUIN',
+      archetype: 'SPELLBINDER',      // the LOVE INTEREST's archetype (state.archetype.primary) — Roman 2026-09-10
+      playerMask: 'OPEN_VEIN',       // the PC's archetype (her observing lens) — Roman 2026-09-10; wired by _launchStarterStory
       coverImage: '/assets/Forbidde-Library-Art/Storybound-Fantasy-Cover5x7-text.jpg',
       backCoverImage: '/assets/Forbidde-Library-Art/Storybound-Fantasy-Cover5x7-back.jpg',
       spineImage: '/assets/Forbidde-Library-Art/Storybound-Fantasy-Spine2x7.jpg',
@@ -126223,7 +126669,7 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
     starter_first_sacrifice: {
       issue: 1,
       cast: [
-        { role: 'PC', species: 'First Favored', nameLock: false, castingTier: 1, // PC = player-named via the casting line
+        { role: 'PC', name: 'Lirael', species: 'First Favored', nameLock: false, castingTier: 1, // name ADDED 2026-09-13: this starter has no casting line (baked, fixed opening — nameLock:false/"player-named" is stale for this starter specifically), and the delivered prose in starter-scenes.js already fixes her name to "Lirael" throughout; this field makes that existing fact machine-readable instead of leaving it implicit in prose strings only.
           bio: 'A young First Favored apprentice. Today is her first time SUPERVISING another person’s First Sacrifice — responsible for the ritual being conducted correctly, not for the wish itself. Brilliant but untested; terrified of failing publicly.',
           // The PC carries facets like anyone else — she is the OBSERVED party in a CG panel, an
           // LI-POV edition, or another character's read of her. Her own C+ is pc_opening_fusion.
@@ -126327,6 +126773,7 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       worldTruths: [
         'A First Sacrifice is a COMING-OF-AGE RITE — closest analogue a Bar Mitzvah / quinceañera / confirmation / graduation, NOT a death ritual. At 16 (younger minds are too unformed to wish safely) a youth, after long study and practice, publicly makes their first wish and offers its price to Fate. It can be stern and formal, but when it goes well it ENDS IN CELEBRATION; catastrophe is UNUSUAL — everyone understands the safeguards the way we understand fire drills. Do NOT default to disaster, apocalypse, curses, or world-ending stakes.',
         'First Favored are hired to GUIDE and SUPERVISE the rite — their alignment-sense and powerful wish-strength make them the preferred (and pricier) choice over human or Kwisheen wishcraft scholars. The supervisor reads the alignment of EVERYONE present, above all the wishing youth, ready to HALT and re-align the wish before it can twist.',
+        'The GRADUANT (the role) is the person making the wish at their own First Sacrifice — the one who pays the sacrifice and speaks the desire. The Sacrificiant officiates and supervises; the Graduant wishes. Use the title only where the ceremonial role matters; otherwise the person is called by name.',
         'The supervisor is a SACRIFICIANT (the role): one whose misalignment-sense is honed enough to supervise (the PC is an apprentice Sacrificiant). THE SACRIFICIANT SEAL — worn by whoever supervises, during ANY official First Sacrifice rite: because a supervisor bolstering the youth’s sacrifice with a wish of their OWN would be a ruinous breach, every Sacrificiant is ceremonially SEALED for the rite — a gossamer BAND drawn across the mouth and tied behind the head (just cloth, part of their ceremonial sash; NO orb, NO bead, NO gag), so they cannot cleanly voice a wish while officiating. Vestments are otherwise the same sheer gossamer as everyone, with ONE ornamented ceremonial SASH (never robes). LITERARY: a sealed Sacrificiant’s cries and speech are MUFFLED behind the cloth — emotion reads through the eyes and body. CG: the mouth-band is drawn IN on the supervising Sacrificiant for the duration of the rite.',
         'ALIGNMENT-SENSE (the First Favored gift): they do NOT read thoughts or emotions — they perceive ALIGNMENT, how far a person’s desire, intention, sacrifice, and deepest self all point at one truth. Misalignment is as unmistakable to them as a sour note in music.',
         'The rite is PUBLIC partly because anyone present who wishes the youth ILL can twist the outcome — which is exactly what the supervising First Favored guards against.',
@@ -126338,7 +126785,11 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
         'Wishing on another person’s First Sacrifice is among the gravest taboos: the sacrifice and its consequences must belong ENTIRELY to the wisher.',
         'A First Sacrifice is ALSO the supervising Sacrificiant’s professional threshold. Successfully guiding a youth through the rite WITHOUT interfering earns the guide the title DOHKAR. If the guide is judged to have interfered, manipulated the wish, or otherwise compromised the rite, the qualification can be DENIED and the guide may face formal inquiry (a Chayr and Dohkars). So the guide has their own rise at stake in the same ceremony as Seren’s coming of age.',
         'THE RITE HAS NO MAGICAL MACHINERY. There is NO "sealing of the rite" - no seal to finish, no ward to close, no circle that locks, no ceremony-state whose incompletion makes a wish malfunction. Also absent: wardens, glowing ward-signs, warding gestures, visible wish-energy, responsive ceremonial fire, and any "elder" caste (First Favored authority is professional - Dohkar / Profer / Chayr). NO touch transfers, bends, contaminates or redirects a wish. The non-interference rule is PROCEDURAL AND CULTURAL, not magical.',
-        'WHO SENSES MISALIGNMENT: EVERY First Favored senses meaningful misalignment - it is part of being First Favored, not a rare talent. TRAINING CHANGES RESOLUTION, NOT POSSESSION: Sacrificiants, Dohkars and unusual savants perceive small semantic divergences early enough to know a wish may twist before it is obvious to everyone else. Never write a scene in which one First Favored senses misalignment while the other trained professionals present cannot.'
+        'WHO SENSES MISALIGNMENT: EVERY First Favored senses meaningful misalignment - it is part of being First Favored, not a rare talent. TRAINING CHANGES RESOLUTION, NOT POSSESSION: Sacrificiants, Dohkars and unusual savants perceive small semantic divergences early enough to know a wish may twist before it is obvious to everyone else. Never write a scene in which one First Favored senses misalignment while the other trained professionals present cannot.',
+        // STORY-SPECIFIC (Roman 2026-09-13, split out of FATELANDS_CANON.landmarks.the_open, which
+        // stays shared/generic — see the correction note there). This fact belongs ONLY here: it names
+        // Lirael, Julian, and her accusation, and must never reach an unrelated Fatelands story.
+        'LIRAEL’S FORMAL INQUIRY — WHERE AND WHEN: the presiding Dohkar has asserted the rite and the ruling on the Sacrificiant’s conduct are his, and Julian has publicly claimed authority to convene and preside over a formal inquiry (a Chayr and two Dohkars) into Lirael. When that inquiry is formally convened, it would be held at The Open (the Fatelands’ site for trials, treaties, coronations, and matters of comparable institutional gravity). It is NOT yet convened, and its convening is LATE-ISSUE-1 content, not an early scene’s. Early scenes may carry accusation, preliminary review, political pressure, investigation, concealment, or flight — never the convened inquiry itself, and never a scene staged at The Open before that point.'
       ],
       // SCENE ONE — the SERIALIZED physical reality of the opening (Roman 2026-07-31). IMMUTABLE story fact,
       // not a creative call: the author RENDERS this, never invents / relocates / reframes it (a drifted
@@ -126509,14 +126960,18 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       },
       // TRUTHS — immutable plot facts / secrets. NEVER change. The PLANNER decides, per
       // scene, WHEN (if ever) each becomes known to the PC / the crowd / the reader.
+      // CORRECTED (Roman 2026-09-11): Seren's MISALIGNMENT causes the twist. Julian's secret intervention does NOT cause
+      // it — he COUNTERS it. Entries marked SEALED are future reveals: never in Scene 1/2 prose, ledgers, author or CG
+      // packets, affordances, public consequences or planner context. They are protected as structured sealed ids
+      // (STARTER_PLANS.starter_first_sacrifice.sealedEvents) and no consumer renders these strings.
       truths: [
-        'Seren slipped into catastrophic misalignment; the wish should have twisted horribly.',
-        'Instead the wish succeeded cleanly — impossible without illegal intervention.',
-        'JULIAN made the forbidden wish, knowingly accepting an enormous unseen sacrifice to save Seren (and, ultimately, the PC).',
-        'The PC did NOT intervene — she is innocent of the crime she is blamed for.',
+        'Seren slipped into misalignment: she abandoned the appropriate wish for a wish that PERFORMS empathy toward Lirael, while her true desire was self-aggrandizement rather than helping Lirael. That misalignment is what twisted the wish.',
+        'SEALED (julian_counter_wish): Julian sensed Seren\'s misalignment and that Lirael would be its target, and secretly spent his own wish to counter it — a forbidden intervention at enormous unseen cost.',
+        'SEALED (julian_obscuring_wishes): Julian later uses smaller wishes to obscure that intervention.',
+        'The PC did NOT intervene with the wish — she is innocent of the crime she is blamed for.',
         'Seren never realizes any of this.'
       ],
-      dramaticTruth: 'Julian committed the gravest taboo in wishcraft to save a stranger; the PC is publicly blamed for it, and trust must grow between them under suspicion.',
+      dramaticTruth: 'SEALED: Julian secretly countered a misaligned wish at enormous unseen cost; the PC is publicly blamed for interference she did not commit, and trust must grow between them under suspicion.',
       // CONSTRAINTS — storytelling invariants (not lore, not plot). Scene-gated ones
       // ("before Scene 8") activate once the planner is wired; the rest are always-on.
       constraints: [
@@ -126527,6 +126982,27 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
         'The author must never invent additional wish or Fate laws beyond worldTruths.',
         'The author must never depict visible Fate effects.',
         'The crowd’s accusations must always remain logically explainable from publicly observable events.'
+      ],
+      // ARC CONSTRAINTS (Roman, authorized 2026-09-14) — story-scoped structural locks, read by
+      // the generic _checkArcConstraint/_attemptArcConstraintTarget registry (app.js ~197xxx,
+      // near the stage-state substrate). This is DEFINITION data, same governance as everything
+      // else in this seed file: a one-off STORY fact, never shared canon. The_open's own SHARED
+      // description stays in FATELANDS_CANON.landmarks (available to every ordinary Fatelands
+      // story); this lock is First-Sacrifice-only and names Lirael's accusation, so it belongs
+      // here, not there — the same split made explicit for the landmark canon itself, 2026-09-13.
+      // unlock_condition.event_id references the REAL, already-existing reservedEvents id
+      // ('inquiry_opened', row n:4 below) — never an invented synonym — so the unlock check has
+      // exactly one real structured fact to test against, never a phrase.
+      arcConstraints: [
+        {
+          constraint_id: 'starter_first_sacrifice:the_open',
+          scope: { level: 'story', id: 'starter_first_sacrifice' },
+          target: { type: 'landmark', id: 'the_open' },
+          availability_state: 'locked',
+          unlock_condition: { type: 'committed_event_id', event_id: 'inquiry_opened' },
+          deferral_reason_key: 'preliminary_process_before_formal_inquiry',
+          provenance: { source: 'seed_authored' }
+        }
       ]
     }
   };
@@ -126545,6 +127021,7 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
   const SEED_TRUTH_IDS = {
     starter_first_sacrifice: {
       first_sacrifice_definition:      'A First Sacrifice is a COMING-OF-AGE RITE',
+      graduant_role:                   'The GRADUANT (the role) is the person making the wish',
       sacrificiant_role:               'The supervisor is a SACRIFICIANT',
       sacrificiant_mouth_band:         'The supervisor is a SACRIFICIANT',
       first_sacrifice_no_interference: 'NO ONE may interfere',
@@ -126576,6 +127053,12 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
   const STARTER_PLANS = {
     starter_first_sacrifice: {
       issue: 1,
+      // SEALED FUTURE REVEALS (Roman 2026-09-11): structured ids only. Sent to every continuation planner as reserved
+      // ids with a mandatory "untouched" status until the unsealing scene; the sealed TEXT (seed.truths) is never rendered.
+      sealedEvents: [
+        { id: 'julian_counter_wish', label: 'a sealed future reveal concerning Julian (not to be delivered, named or pre-empted)', unsealsAtScene: 16 },
+        { id: 'julian_obscuring_wishes', label: 'a second sealed future reveal concerning Julian', unsealsAtScene: 16 },
+      ],
       scenes: [
         // SCENE 1 CAUSAL CHAIN (Roman 2026-08-18). The old goal named a collapse with NO MECHANISM,
         // so the Author invented connective magic to bridge it ("you touched me and the wish bent" -
@@ -126619,29 +127102,38 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       decision_axis: 'intervene (tear the band, go to Seren) vs remain_bound (hold the line she was told to hold)',
       decision_consequence: 'The choice MUST alter who witnesses the twist, how Lirael is judged when it lands, and what she is able to learn afterwards. A scene may NOT resolve the central crisis before the player decides.',
       exitState: 'RESOLVED: the wish is spoken, the room knows something is wrong, the omen has been seen. NEW PROBLEM: Lirael must choose — break protocol for her ward, or protect her own standing.' },
-    { n: 2, goal: 'THE TWIST — steps 5-6, shaped by what the player chose. IN THIS ORDER: (A) The consequence of Lirael\'s choice registers first: if she moved, she is now visibly implicated; if she held, Seren went unprotected. (B) THE TWIST MANIFESTS, visible and undeniable. The literal words come true through someone or something ALREADY PRESENT; the intent fails. A reader must be able to point at the word that bent. (C) A witness reacts and the irony lands in THEIR mouth, not the narrator\'s. (D) Julian challenges Lirael — testing, not hostile. (E) Lirael\'s judgement of him surfaces, and what she wants from him and resents wanting. (F) The deck reaches her hand; Petition Fate becomes a temptation. NO new mystery, NO new named character, NO new lore.',
+    // ── OPEN ROW (Roman 2026-09-11): nobody pre-writes Scene 2. The seed owns the immutable aftermath (the baked
+    // package's emitted record) and the long arc (reservedEvents on later rows); the reader's recorded end-of-opening
+    // choice plus their exact Say/Do owns the immediate posture; the scene-spine planner derives ONE bounded local
+    // objective from both, which is validated (reject-only) and PERSISTED before any prose. `vectors` are affordances —
+    // any, none, or the reader's own — never a menu. `stage.participants` is the ROSTER of who CAN be present; the
+    // accepted objective says who IS. No goal text lives here, per branch or otherwise.
+    { n: 2, objective: 'reader', aftermathSource: 'baked_emitted',
+      constraints: ['NO new mystery', 'NO new named character', 'NO new lore'],
+      vectors: [
+        'Lirael goes on the offensive against Julian for what his accusation called her',
+        'Lirael smiles and turns it back on him: Julian confessed to more than he meant to — he implied she was so alluring that others could not help trying to please her',
+        'She runs, slows, and reconsiders either of the above',
+        'She wishes her way out of the predicament',
+        'Seren, or one of Seren\'s family, follows and confronts her',
+        'She exiles herself to travel the Fatelands looking for a new path, while Julian or one of his people follows and keeps her safe from afar',
+      ],
+      // AFTERMATH TRUTHS (Roman 2026-09-11): structured seed ids for what is ALREADY TRUE at the top of this scene. The
+      // planner must return "kept" for each; an objective that reverses one is rejected. (Julian's public interrogation
+      // of Lirael and the Dohkar's interruption are fixed opening aftermath — recorded in the package's emitted summary.)
+      aftermathTruths: [
+        { id: 'twist_manifested', text: 'Seren\'s wish twisted because it was MISALIGNED — care performed for the assembly over the desire she actually held; the literal words were honoured (the whole assembly turned to look at Lirael) and the intent failed. Every First Favored present heard the loose note. This has already happened and is not re-staged.' },
+        { id: 'interrogation_interrupted', text: 'Julian, the Provast, has ALREADY questioned Lirael before the assembly — intimately, as an accusation through desirability — and the presiding Dohkar interrupted it as grossly inappropriate. Only then did her choice (run in shame or remain) arise. Not re-staged.' },
+        { id: 'the_answer_institutional', text: 'The Answer belongs to the Institution; Julian is its caretaker; Lirael holds it only for the questioning. It is not hers.' },
+        { id: 'inquiry_authority_claimed', text: 'The presiding Dohkar asserted that the rite and the ruling on the Sacrificiant\'s conduct are his and named a formal inquiry (a Chayr and two Dohkars) as the venue; Julian agreed and publicly claimed authority to convene and preside over it. The inquiry is NOT yet opened (that is a later scene).' },
+      ],
       participants: ['Lirael', 'Seren', 'Julian', 'the presiding Dohkar'],
-      // MIGRATED B→A (2026-09-01): presence is fixed — the same room and the same people as
-      // Scene 1. Most of this scene BRANCHES on the player's Scene-1 choice, and an act authored
-      // from a branching beat would be FALSE on some playthroughs — worse than no fact, because
-      // it asserts ownership against prose that never happened.
-      //
-      // Beat (D) is the exception, and it is why this scene has exactly ONE fact: "Julian
-      // challenges Lirael — testing, not hostile" is stated UNCONDITIONALLY in the goal, while
-      // only beat (A) is written with "if she moved / if she held". A branch-independent beat
-      // needs no branch key. The presiding Dohkar gets nothing here: beat (C) is "a witness
-      // reacts", deliberately unnamed, and naming him would be choosing for the author.
       stage: { v: 1, provenance: 'authored_seed_spine',
         participants: [
           { ref: 'pc:self', label: 'Lirael', presence: 'IN_PERSON' },
           { ref: 'named:seren', label: 'Seren', presence: 'IN_PERSON' },
           { ref: 'named:julian', label: 'Julian', presence: 'IN_PERSON' },
           { ref: 'role:first_sacrifice_presiding_dohkar', label: 'the presiding Dohkar', presence: 'IN_PERSON' },
-        ],
-        eventFacts: [
-          { text: 'Julian puts a testing question to Lirael in front of the others, without heat',
-            participants: [{ ref: 'named:julian', role: 'speaker', label: 'Julian' },
-                           { ref: 'pc:self', role: 'target', label: 'Lirael' }] },
         ] },
       presentGroups: ['the assembly (unnamed, reacting, no dialogue)'],
       requiredTruth: 'The twist is an EVENT, not a recognition of one. Julian is not an antagonist. The price has not yet been named.',
@@ -126662,6 +127154,12 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
         ] },
       presentGroups: ['the dispersing assembly (unnamed, no dialogue)'],
       requiredTruth: 'No character chooses Tempt Fate. The pressure is NEW, not louder.',
+      // RESERVED EVENTS (seed-owned arc guard, 2026-09-11): sent to the continuation planner as structured ids and
+      // ENFORCED by Storybound — an earlier scene's objective that touches one is rejected. `markers` are the seed's
+      // own words for the event (lexical, reject-only; a paraphrase can slip — declared in the record).
+      reservedEvents: [
+        { id: 'price_identified', text: 'The sacrifice is taken or identified — the offered MEMORY lands', markers: ['the price', 'the sacrifice is taken', 'memory is taken', 'what it cost her', 'the cost is named'] },
+      ],
       player_decision_required: true,
       decision_axis: 'player-facing Tempt Fate threshold — offered, never taken by a character',
       decision_consequence: 'The scene builds the temptation and STOPS. Lirael does not resolve it.',
@@ -126679,6 +127177,7 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
     // pc:self — never `pc:lirael`. The player names the protagonist, and a hardcoded name would
     // become a second entity for anyone who chose a different one.
     { n: 4, goal: 'A Chayr and two Dohkars formally open an inquiry into the PC.',
+      reservedEvents: [{ id: 'inquiry_opened', text: 'A Chayr and two Dohkars formally open an inquiry into the PC', markers: ['open an inquiry', 'opens an inquiry', 'formal inquiry', 'the inquiry'] }],
       participants: ['Lirael', 'the Chayr', 'the presiding Dohkar'],
       stage: {
         v: 1,
@@ -126952,6 +127451,7 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
         recent.forEach(function (e) {
           var tag = (e.issue !== cur ? 'issue ' + e.issue + ' ' : '') + 'p' + e.sceneNumber, bits = [];
           if (e.kind === 'baked' && e.plannedEvent) bits.push('the authored opening established: ' + e.plannedEvent);   // 2026-09-10: a fixed seed opening records what it established
+          if (e.kind === 'oas_interrupt' && e.plannedEvent) bits.push('the opening ended: ' + e.plannedEvent);            // 2026-09-11: the interruption's fixed exchange, then the reader's own answer (act/dia below)
           if (e.act) bits.push('reader did: ' + e.act);
           if (e.dia) bits.push('reader said: "' + e.dia + '"');
           if (e.card === 'tempt') bits.push('[Tempt Fate played]'); else if (e.card === 'petition') bits.push('[Petition made]');
@@ -128531,8 +129031,10 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
     var a = null;
     try {
       var plan = (typeof _activePlan === 'function') ? _activePlan(s) : null;
-      var ps = (plan && Array.isArray(plan.scenes))
-        ? plan.scenes.find(function (p) { return p && p.n === sceneNum && p.goal; }) : null;
+      // ONE RESOLVED INTENT (2026-09-11): the effective row for the recorded branch; a withheld goal does not lose the row.
+      var _effRow = (typeof _effectiveSceneRow === 'function') ? _effectiveSceneRow(s, sceneNum) : null;
+      var ps = _effRow ? Object.assign({}, (plan.scenes.find(function (p) { return p && p.n === sceneNum; }) || {}), { goal: _effRow.goal || _effRow.effectiveEvent || '', requiredTruth: _effRow.requiredTruth, exitState: _effRow.exitState, stage: _effRow.stage, participants: _effRow.participants || null, presentGroups: _effRow.presentGroups || null, eventFacts: _effRow.eventFacts || null })
+        : ((plan && Array.isArray(plan.scenes)) ? plan.scenes.find(function (p) { return p && p.n === sceneNum && p.goal; }) : null);
       if (ps) {
         a = { event: String(ps.goal || ''), setting: ps.setting || null,
               participants: Array.isArray(ps.participants) ? ps.participants : null,
@@ -128550,7 +129052,10 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
               // a ref, and nothing in it says whether the person is in the room or being talked
               // about. A source that can say those things says them here, in one object, and the
               // backend decides whether what it says is authoritative.
-              stage: (ps.stage && typeof ps.stage === 'object') ? ps.stage : null,
+              // BRANCH GATE (2026-09-11): an authored stage is authoritative only for the branch it was written for.
+              // A row may carry stageByBranch{<key>: stage}; a row with only `stage` is the default branch. When the
+              // reader's recorded choice has no authored stage, NO stage is authoritative (fail closed — no C+ is minted).
+              stage: (ps.stage && typeof ps.stage === 'object') ? ps.stage : null,   // branch already resolved by _effectiveSceneRow
               props: Array.isArray(ps.props) ? ps.props : null,
               stateChange: ps.exitState || ps.state_change || null, source: 'plan-scene' };
       }
@@ -129003,8 +129508,11 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
             // and never once seen by the component that writes the prose.
             facet_truth: pick.truth,
             facet_pressure: pick.pressure_text,
+            guardrails: (function () { try { var _ix = (typeof _facetIndex === 'function') ? (_facetIndex(s, { sceneNumber: sceneNum }) || {}) : {}; var _rec = _ix[cand.canonicalId || cand.id] || null; var _g = (_rec && Array.isArray(_rec.guardrails)) ? _rec.guardrails : ((cand && Array.isArray(cand.guardrails)) ? cand.guardrails : []); return _g.slice(0, 6); } catch (_) { return []; } })(),
             revelation_bridge: pick.truth + ' — surfacing here because ' + pick.pressure_text,
-            pc_interpretation: 'what she reads in it: ' + pick.truth,
+            // 2026-09-11 (review): no interpretation is minted here. Restating the truth as the reading handed the
+            // author the SOURCE TRUTH it is told never to state. The author composes the reading through the
+            // protagonist's ESTABLISHED lens (rendered by _cpBeatLines); no operation is chosen for her.
             option_resolved: true,
             // WHAT VERIFICATION CAN HONESTLY ASK OF A CONTINUATION BEAT.
             // Scene 1 verifies the planner's directed ACT against the page. Here no act is
@@ -133262,10 +133770,15 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
     var out = {};
     try {
       var L = _relLedger(false); if (!L) return out;
+      // SEED AUTHORITY (2026-09-11): the merge tombstones a facet_id two providers define differently — that is
+      // not seed authority, it is mutual destruction. A generated portfolio never speaks for a person the seed
+      // owns: skip seed-owned canonical ids AND seed-owned labels.
+      var _seedOwned = {}; try { var _si = _seedFacetIndex(s, opts) || {}; Object.keys(_si).forEach(function (k) { _seedOwned[k] = 1; var _lb = _si[k] && _si[k].label; if (_lb) _seedOwned['label:' + String(_lb).trim().toLowerCase()] = 1; (_si[k] && _si[k].aliases || []).forEach(function (a) { _seedOwned['label:' + String(a).trim().toLowerCase()] = 1; }); }); } catch (_) {}
       Object.keys(L.entities).forEach(function (id) {
         var e = L.entities[id];
         if (!e || e.supersededBy) return;
         var ap = e.authorProfile; if (!ap || ap.status !== 'ready') return;
+        if (_seedOwned[id] || _seedOwned['label:' + String(e.label || '').trim().toLowerCase()]) { try { console.log('[CPLUS:PROVIDER] generated_cast skipped seed-owned ' + id + ' (' + (e.label || '') + ')'); } catch (_) {} return; }
         var facets = Array.isArray(ap.cPlusFacets) ? ap.cPlusFacets : [];
         if (!facets.length) return;
         // The LABEL is an alias of itself. A staged record resolves by canonical id first and by
@@ -134579,6 +135092,7 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
     state._bakedPendingOASPlan  = null;
     state._bakedEmitted         = null;
     state._bakedScene1Version   = null;
+    state._bakedOpeningMounted  = false;
     state._bakedAmbientTag      = null;
     state._bakedScene1MountedAt = null;
   }
@@ -135089,6 +135603,7 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
    * author, and here there is no author to compete with.
    */
   function _renderBakedScene1(def, pkg) {
+    state._bakedOpeningMounted = true;   // raised BEFORE the page commits: the page-commit hook keys the no-OpenAI rule on this, not on the starter id
     console.log('[BAKED] mounting Scene 1 — ' + def.id + ' v' + pkg.version + (pkg.placeholder ? ' (PLACEHOLDER CONTENT)' : ''));
 
     var isCG = (pkg.format === 'cg');
@@ -135108,7 +135623,7 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       }
     } catch (_) {}
     StoryPagination.addPage(formatStory(displayBody), true);
-    try { _sceneLedgerCommit(state, { kind: 'baked', sceneNumber: 1, event: (pkg && pkg.emitted && pkg.emitted.sceneSummary) ? String(pkg.emitted.sceneSummary).slice(0, 300) : null, pageUid: StoryPagination.getCurrentPageUid() }); } catch (_) {}   // 2026-09-10: the ledger names what the fixed opening established
+    try { _sceneLedgerCommit(state, { kind: 'baked', sceneNumber: 1, event: (pkg && pkg.emitted && (pkg.emitted.ledgerLine || pkg.emitted.sceneSummary)) ? String(pkg.emitted.ledgerLine || pkg.emitted.sceneSummary).slice(0, 300) : null, /* ledgerLine = the package's ≤300-char committed record; sceneSummary is the fuller orientation (SEED CONTINUITY) */ pageUid: StoryPagination.getCurrentPageUid() }); } catch (_) {}   // 2026-09-10: the ledger names what the fixed opening established
 
     // ── DISPLAY NOW, COMMIT AT UNLOCK ──
     // The scene is on screen but NOT committed to story state: turnCount stays
@@ -135128,12 +135643,16 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
 
     _hydrateBakedStoryState(pkg);
 
+    state._bakedOpeningOnGame = true;   // the baked opening (and its one-on-one / interruption) live on the game screen until a generated staged scene takes over
     window.showScreen('game');
     showReaderPage(2);
     if (!state._titlePageShown) showTitlePage();
     if (window.dealFateCards) window.dealFateCards();
     if (window.initFateCards) window.initFateCards();
     try { var _sb = document.getElementById('submitBtn'); if (_sb) _sb.disabled = false; } catch (_) {}
+    // Symmetric with the paywall lock (2026-09-12): the boot-time lock disables ALL four Say/Do boxes; the baked mount must
+    // release all four, or the gn pair — which the one-on-one uses on this Book — stays dead (probe: _baked_screen_probe.mjs V4).
+    try { var _pm = document.getElementById('payModal'); if ((!_pm || _pm.classList.contains('hidden')) && typeof window._setSayDoInputsDisabled === 'function') window._setSayDoInputsDisabled(false); } catch (_) {}
 
     // ── CG: THE OAS HANDOFF ──
     // A CG package declares endsAt:'oas_interrupt' — the scene ends by handing
@@ -135193,7 +135712,7 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       wrap.setAttribute('style', 'margin:28px auto 12px;max-width:520px;text-align:center;');
       var cue = (pkg.oasHandoff && pkg.oasHandoff.cue) ? String(pkg.oasHandoff.cue) : '';
       wrap.innerHTML = (cue ? '<p class="baked-oas-cue" style="font-style:italic;color:#c9bfa8;line-height:1.6;margin:0 0 16px;"></p>' : '')
-        + '<button id="bakedOASEnterBtn" class="sb-btn-png md">Stay with him</button>';
+        + '<button id="bakedOASEnterBtn" class="sb-btn-png md">Continue</button>';   // the interrogation is a REQUIRED part of the opening (Roman 2026-09-11) — this is a continue, not a choice to stay
       if (cue) wrap.querySelector('.baked-oas-cue').textContent = cue;   // authored text, never innerHTML
       host.appendChild(wrap);
 
@@ -135221,12 +135740,26 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       is_consummate_scene: true,
       __bakedOrigin: (pkg && pkg.title) || null,
       openingFrame: h.openingFrame || '',
-      cue: h.cue || ''
+      cue: h.cue || '',
+      interruption: h.interruption || '', interruptionImage: h.interruptionImage || '', interruptionExchange: Array.isArray(h.interruptionExchange) ? h.interruptionExchange : []
     };
   }
 
   function _bakedCGBody(pkg, withPlates) {
     var out = [];
+    if (Array.isArray(pkg.beats) && pkg.beats.length) {
+      // REAL CG SHAPE (2026-09-10): ~20 beats over dramatic + character-intro images. A plate is emitted where the
+      // image changes; the beats themselves are the reader's text (dialogue beats carry their own quotation).
+      var byId = {}; (pkg.images || []).forEach(function (im) { if (im && im.id) byId[im.id] = im; });
+      var curImg = null;
+      pkg.beats.forEach(function (b) {
+        if (!b) return;
+        if (withPlates && b.image && b.image !== curImg) { var im = byId[b.image]; out.push('[' + ((im && im.label) || b.image) + ']'); }
+        curImg = b.image || curImg;
+        if (b.text) out.push(String(b.text));
+      });
+      return out.join('\n\n');
+    }
     (pkg.panels || []).forEach(function (p) {
       if (withPlates) out.push('[' + (p.imageLabel || ('Image ' + p.n)) + ']');
       if (p.prose) out.push(String(p.prose));
@@ -135263,7 +135796,30 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
         .filter(function (k) { return em[k] != null; });
       console.log('[BAKED:EMITTED] parked on state._bakedEmitted (no verified consumer yet): ' + (unconsumed.join(', ') || 'none'));
     } catch (e) { console.warn('[BAKED:EMITTED] hydrate failed (non-fatal):', e && e.message); }
+    // STABLE IDENTITIES (2026-09-11): the C+ continuity projection, cooldown and resurfacing key off relationship-ledger
+    // entities, and a baked Book created none. Create them for the seed cast under the SAME canonical ids the seed facet
+    // index uses (named:<slug>, role:<role_instance_id>), provenance seed. The PC keeps the ledger's own 'pc' anchor.
+    try { _seedLedgerIdentities(); } catch (e) { console.warn('[BAKED:IDENTITY] ledger seeding failed (non-fatal):', e && e.message); }
   }
+  function _seedLedgerIdentities() {
+    var seed = (typeof window._activeSeed === 'function') ? window._activeSeed(state) : null; if (!seed) return 0;
+    var L = (typeof _relLedger === 'function') ? _relLedger(true) : null; if (!L || !L.entities) return 0;
+    var slug = function (x) { return String(x || '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, ''); };
+    var made = 0;
+    (seed.cast || []).forEach(function (c) {
+      if (!c || c.role === 'PC' || !c.name) return;
+      var id = 'named:' + slug(c.name);
+      if (!L.entities[id]) { L.entities[id] = { id: id, kind: 'named', label: String(c.name).trim(), aliases: [String(c.name).trim()], provenance: 'seed', anchorRole: (c.role === 'LI') ? 'li' : null }; made++; }
+    });
+    (((seed.sceneOne || {}).roleInstances) || []).forEach(function (r) {
+      if (!r || !r.role_instance_id) return;
+      var id = 'role:' + slug(r.role_instance_id); var label = (r.matches && r.matches[0]) || r.role_instance_id;
+      if (!L.entities[id]) { L.entities[id] = { id: id, kind: 'role', label: String(label), aliases: (r.matches || []).map(String), provenance: 'seed', role_instance_id: r.role_instance_id }; made++; }
+    });
+    try { console.log('[BAKED:IDENTITY] ledger entities for the seed cast: +' + made); } catch (_) {}
+    return made;
+  }
+  window._seedLedgerIdentities = _seedLedgerIdentities;
 
   /**
    * Launch the starter story — sets up picks, generates Scene 1, transitions to game.
@@ -135303,6 +135859,27 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       if (def.pcSpecies) state.picks.pcSpecies = def.pcSpecies;
       if (def.liSpecies) state.picks.liSpecies = def.liSpecies;
       state._starterId = def.id; // seed/plan registry key (STARTER_SEEDS / STARTER_PLANS)
+      // FIXED-CAST NAME POPULATION (2026-09-13): a starter with a STARTER_SEEDS entry has a
+      // pre-authored cast (no reader casting line — the reader inhabits the seed, never invents it,
+      // per the reader-owned-identity model). Corridor-created stories get state.playerName /
+      // state.loveInterestName from the reader's own input or generation; this starter's baked
+      // prose is fixed to specific names throughout (e.g. First Sacrifice's package speaks of
+      // "Lirael" and "Julian" by name in every beat) but nothing previously copied those names into
+      // state, so protagonist/li speaker tags resolved to null wherever code reads state.playerName/
+      // state.loveInterestName instead of the raw prose (found via the CG beat-narration red control,
+      // 2026-09-13). Only fires when STARTER_SEEDS has an entry for this starter — today that is
+      // First Sacrifice alone — so no other starter's real casting-line flow is touched.
+      try {
+        var _seedForNames = (typeof STARTER_SEEDS !== 'undefined') ? STARTER_SEEDS[def.id] : null;
+        var _seedCastForNames = _seedForNames && Array.isArray(_seedForNames.cast) ? _seedForNames.cast : null;
+        if (_seedCastForNames) {
+          var _pcCast = _seedCastForNames.filter(function (c) { return c && c.role === 'PC' && c.name; })[0];
+          var _liCast = _seedCastForNames.filter(function (c) { return c && c.role === 'LI' && c.name; })[0];
+          if (_pcCast) state.playerName = _pcCast.name;
+          if (_liCast) state.loveInterestName = _liCast.name;
+          console.log('[STARTER] fixed-cast names from STARTER_SEEDS: playerName=' + (state.playerName || '-') + ' loveInterestName=' + (state.loveInterestName || '-'));
+        }
+      } catch (_e) { console.warn('[STARTER] fixed-cast name population failed (non-fatal):', _e && _e.message); }
       state.picks.authorship = 'fate'; // Guided Fate for starter
       state.storyLength = 'taste';
       // CG starters (First Sacrifice) carry render_mode so the begin flow routes to
@@ -135311,6 +135888,9 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       if (def.render_mode) state.renderMode = def.render_mode;
       state.intensity = 'Steamy';
       state.archetype = { primary: def.archetype, modifier: null };
+      // The PC's archetype is her MASK, not state.archetype (the LI's). A starter Book may declare it;
+      // without this the C+ reading lens and PC NARRATOR VOICE fell back to nothing (or to the LI's).
+      if (def.playerMask) { state.playerMask = def.playerMask; state.picks.playermask = def.playerMask; }
       if (typeof _generateHumanAnchor === 'function') _generateHumanAnchor();
       state.is_starter_story = true;
       state._starterStoryFreeInput = true;
@@ -136388,7 +136968,11 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
     // the source of all showScreen calls — safer than a monkey-patch
     // wrapper because async callbacks scheduled deep inside the literary
     // pipeline can't slip past after a try/finally restore.
-    if (state.renderMode === 'staged_story_mode' && id === 'game') {
+    // BAKED OPENING EXEMPTION (2026-09-12): a baked CG Book renders its fixed opening, its one-on-one and the interruption
+    // on the literary 'game' screen (StoryPagination + #actionInput/#cardMount). Until a GENERATED staged scene takes over
+    // (which shows gnReader and clears the flag), 'game' must be reachable — this guard predates the baked path
+    // (2026-04-30 vs 2026-08-30) and was hiding the opening entirely (probe: _baked_screen_probe.mjs).
+    if (state.renderMode === 'staged_story_mode' && id === 'game' && !state._bakedOpeningOnGame) {
       console.log('[STAGED] showScreen("game") suppressed — staged session on gnReader');
       return;
     }
@@ -165252,6 +165836,7 @@ No text, no watermark, no UI elements, share-ready.`;
         } catch (_) {}
         // Staged mode → route to staged scene advance (S6 stub for now).
         // Legacy graphic_novel mode → existing panel renderer.
+        try { if (typeof _intimateInterruptionPending === 'function' && _intimateInterruptionPending()) _commitIntimateInterruption(action, dialogue); } catch (_) {}
         var _advancePromise;
         if (_isStagedMode()) {
           _advancePromise = _advanceStagedScene(action, dialogue);
@@ -167126,13 +167711,15 @@ No text, no watermark, no UI elements, share-ready.`;
     '    "character_plus": [\n' +
     '      { "character": "<a name from other_characters_present, the LI, or the PC>",\n' +
     '        "first_mention": true,\n' +
-    '        "angle": "<6-14 words: what this person works to make others believe, and what it costs them>" }\n' +
+    '        "angle": "<6-14 words: what this person works to make others believe, and what it costs them — the beat must EXPOSE a specific, non-obvious truth about them (a flaw, an obsession, a private secret, a contradiction, a particular worldview) as the protagonist reads it; a compliment or a neutral trait is not an angle>" }\n' +
     '    ],\n' +
     '    "environment_plus": { "target": "<a specific prop or place already named in visualState>",\n' +
     '                          "axis": "history | use | damage | ownership | repair | ritual | absence" },\n' +
     '    "fusion": null\n' +
     '    /* fusion = { "character": "...", "target": "..." } for one beat where a person and a\n' +
-    '       thing reveal each other. Roughly one scene in five — prefer null to a forced one. */\n' +
+    '       thing reveal each other: the same concrete moment exposes a specific truth about the person\n' +
+    '       (flaw, obsession, private secret, contradiction, worldview) AND shows how the protagonist sees.\n' +
+    '       Roughly one scene in five — prefer null to a forced one. */\n' +
     '  },\n' +
     '  "beats": [\n' +
     '    {\n' +
@@ -181467,9 +182054,15 @@ No text, no watermark, no UI elements, share-ready.`;
   }
 
   // ── UI MOUNT / DISMOUNT ──
+  // ONE READER SCREEN (Roman 2026-09-12): on a staged (CG) Book the one-on-one lives on the gn reader. Navigate there
+  // properly so the literary 'game' screen — and its Submit — is hidden; a second visible screen was a wrong-engine path.
+  function _oasEnsureSingleReaderScreen() {
+    try { if (typeof _isStagedMode === 'function' && _isStagedMode() && typeof window.showScreen === 'function' && window._currentScreenId !== 'gnReader') { window.showScreen('gnReader'); console.log('[INTIMACY-MOUNT] staged Book → gnReader (single reader screen)'); } } catch (_) {}
+  }
   function _mountIntimacyDialogueUI() {
     var d = state.intimacyDialogue;
     if (!d) return;
+    _oasEnsureSingleReaderScreen();
     // Normal path — replace the staged scene's display area with our
     // overlay. Fallback path — when the dev launcher fires from a non-
     // gameplay screen (library, setup, etc.), gnPanelDisplay does not
@@ -181483,7 +182076,7 @@ No text, no watermark, no UI elements, share-ready.`;
     // as the visibility check — robust against display:none on any
     // ancestor.
     var stage = document.getElementById('gnPanelDisplay');
-    var stageIsVisible = !!stage && stage.offsetParent !== null;
+    var stageIsVisible = !!stage && (function () { try { return stage.getClientRects().length > 0; } catch (_) { return stage.offsetParent !== null; } })();   // offsetParent is null inside a position:fixed reader
     var standalone = false;
     console.log('[INTIMACY-MOUNT] gnPanelDisplay exists:', !!stage, 'visible:', stageIsVisible);
     if (!stage || !stageIsVisible) {
@@ -182610,6 +183203,8 @@ No text, no watermark, no UI elements, share-ready.`;
   var _OAS_PERSISTED_FIELDS = [
     // Session shape
     'active', 'beatCount', 'softCap', 'hardCap', 'startedAt',
+    // Authored handoff frame (fixed editorial Scene 1 → OAS). Read by every OAS prompt via _buildIntimacySceneContext.
+    '_authoredFrame',
     // Emotional / engagement state (continuity)
     'temperature', 'userRegister', 'userSignals',
     'userInputLengths', 'boredomScore',
@@ -182890,7 +183485,9 @@ No text, no watermark, no UI elements, share-ready.`;
       'OPENER CONSTRAINTS (HARD):',
       '  • li_dialogue = the FIRST line ' + liName + ' speaks aloud as the scene opens. ' + pcName + ' is right there; ' + liName + ' breaks the silence.',
       '  • Length: ONE sentence, ≤14 words. No multi-clause monologue.',
-      '  • Register: invitational / present / charged — NOT a generic prompt ("tell me what you want" is banned), NOT a dom challenge.',
+      ((d._authoredFrame && (d._authoredFrame.openingFrame || d._authoredFrame.cue))
+          ? '  • Register: the AUTHORED OPENING FRAME above governs. The first line is what that frame says it is (there: an accusation, not a comfort or an invitation). The REGISTER EXAMPLES below do NOT apply.'
+          : '  • Register: invitational / present / charged — NOT a generic prompt ("tell me what you want" is banned), NOT a dom challenge.'),
       '  • Specific to character + scene context above. If the scene context mentioned a recent beat (a touch, a confession, a setting), the opener may glance at it — never repeat it verbatim.',
       '  • ' + (dirtyAllowed
           ? 'Web register: charged subtext permitted; save crude/anatomical for mid-scene, NOT the opener.'
@@ -183036,6 +183633,14 @@ No text, no watermark, no UI elements, share-ready.`;
     var d = state.intimacyDialogue;
     d.active = true;
     d.startedAt = Date.now();
+    // ── AUTHORED HANDOFF FRAME (fixed editorial Scene 1) ──
+    // A baked starter's OAS plan carries `openingFrame` (the exact situation the one-on-one opens in) and `cue`
+    // (the last authored beat). Before 2026-09-10 neither reached any prompt — the opener was written from generic
+    // scene context. Stored on the dialogue state so the opener AND every subsequent turn render it.
+    d._authoredFrame = (plan && (plan.openingFrame || plan.cue)) ? { openingFrame: String(plan.openingFrame || ''), cue: String(plan.cue || ''),
+      // INTERRUPTION (Roman 2026-09-11): an authored end to this exchange — plate + fixed lines — rendered instead of the afterglow.
+      interruption: String(plan.interruption || ''), interruptionImage: String(plan.interruptionImage || ''), interruptionExchange: Array.isArray(plan.interruptionExchange) ? plan.interruptionExchange.slice() : [] } : null;
+    try { if (d._authoredFrame) console.log('[INTIMACY-INIT:AUTHORED-FRAME] frame=' + d._authoredFrame.openingFrame.length + 'ch cue=' + d._authoredFrame.cue.length + 'ch'); } catch (_) {}
 
     // ── Wound-reveal eligibility (per-encounter computation) ──────────
     // The LI's archetypal wound (misbelief / stress-failure) surfaces as
@@ -183069,6 +183674,9 @@ No text, no watermark, no UI elements, share-ready.`;
     if (typeof _applyOasTextMode === 'function' && typeof _isOasTextModeOn === 'function') {
       try { _applyOasTextMode(_isOasTextModeOn()); } catch (_) {}
     }
+    // The one-on-one owns its inputs while active: make sure they are usable (a boot-time paywall lock can leave the gn pair
+    // disabled with no later release on the baked path). Never overrides a paywall that is showing right now.
+    try { var _pmO = document.getElementById('payModal'); if ((!_pmO || _pmO.classList.contains('hidden')) && typeof window._setSayDoInputsDisabled === 'function') window._setSayDoInputsDisabled(false); } catch (_) {}
     // Live curly-quote wrap on Say input.
     if (typeof _wireOASSayLiveQuotes === 'function') {
       try { _wireOASSayLiveQuotes(); } catch (_) {}
@@ -183294,17 +183902,31 @@ No text, no watermark, no UI elements, share-ready.`;
   // the boot sequence).
   function _buildIntimacySceneContext(s) {
     s = s || window.state || {};
+    var base = null;
     if (window.StoryboundOrchestration && typeof window.StoryboundOrchestration.buildSceneAndPlotContext === 'function') {
-      try { return window.StoryboundOrchestration.buildSceneAndPlotContext(s, { audience: 'li' }); } catch (_) {}
+      try { base = window.StoryboundOrchestration.buildSceneAndPlotContext(s, { audience: 'li' }); } catch (_) { base = null; }
     }
-    // Boot-time / orchestration-missing fallback — minimal context only.
-    var lines = [];
-    if (s.archetype && s.archetype.primary) lines.push('LI archetype: ' + s.archetype.primary);
-    if (s.picks && s.picks.dynamic)         lines.push('Relationship dynamic: ' + s.picks.dynamic);
-    if (s.worldSubtype || (s.picks && s.picks.worldSubtype)) {
-      lines.push('World flavor: ' + (s.worldSubtype || s.picks.worldSubtype));
+    if (base == null) {
+      // Boot-time / orchestration-missing fallback — minimal context only.
+      var lines = [];
+      if (s.archetype && s.archetype.primary) lines.push('LI archetype: ' + s.archetype.primary);
+      if (s.picks && s.picks.dynamic)         lines.push('Relationship dynamic: ' + s.picks.dynamic);
+      if (s.worldSubtype || (s.picks && s.picks.worldSubtype)) {
+        lines.push('World flavor: ' + (s.worldSubtype || s.picks.worldSubtype));
+      }
+      base = lines.join('\n');
     }
-    return lines.join('\n');
+    return _appendAuthoredOASFrame(s, base || '');
+  }
+  // The fixed editorial opening's handoff (see _initIntimacyDialogue). Authoritative over generic context: the one-on-one
+  // opens in exactly this situation, and the register examples of the generic opener do not apply to it.
+  function _appendAuthoredOASFrame(s, ctx) {
+    var d = s && s.intimacyDialogue; var f = d && d._authoredFrame;
+    if (!f || !(f.openingFrame || f.cue)) return ctx;
+    var block = 'AUTHORED OPENING FRAME (fixed Scene 1 handoff — authoritative; the one-on-one opens HERE and stays in this situation):'
+      + (f.cue ? '\n  • last authored beat: ' + f.cue : '')
+      + (f.openingFrame ? '\n  • situation and required opening: ' + f.openingFrame : '');
+    return ctx ? ctx + '\n\n' + block : block;
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -195786,7 +196408,14 @@ No text, no watermark, no UI elements, share-ready.`;
     // the generic satisfied default, so this gate fails closed.
     // For disinterest / pivot-end / fate ruptures, leave the LLM-picked
     // face as-is — those resolves are emotional, not climactic.
-    var isAfterglowReason = (reason === 'cap' || reason === 'afterglow' || reason === 'resolve');
+    // ═══ INTIMATE INTERRUPTION (Roman 2026-09-11) — generic rule, First Sacrifice = primary control ═══
+    // When the exchange's authored frame declares an interruption and the exit is a story reason (not a Fate rupture),
+    // the afterglow does not happen: no closing line, no afterglow face, no synthetic Say/Do. The interruption plate,
+    // the fixed exchange, the five Fate cards and the reader's own Say/Do are rendered instead, and NOTHING advances
+    // until the reader presses Submit. Kill switch: window._oasInterruptionOff === true (controls must go red).
+    var _intr = null;
+    try { if (typeof _intimateInterruptionFrame === 'function') _intr = _intimateInterruptionFrame(d, reason); } catch (_) {}
+    var isAfterglowReason = !_intr && (reason === 'cap' || reason === 'afterglow' || reason === 'resolve');
     var confirmedToneOverride = null;
     if (isAfterglowReason) {
       // User-explicit "Drift to afterglow" click ALWAYS bypasses the tone
@@ -195847,6 +196476,7 @@ No text, no watermark, no UI elements, share-ready.`;
     else if (reason === 'cap')                         closing = 'Stay with me. Just like this.';
     else if (reason === 'afterglow')                   closing = 'Stay…';
     else                                                closing = 'That was…';
+    if (_intr) closing = '';   // an interruption has no afterglow line
 
     // ── OAS ARCHIVE SNAPSHOT (added 2026-05-20) ──
     // Snapshot the resolved exchange into state.scenes[] so Back-nav from
@@ -195891,7 +196521,7 @@ No text, no watermark, no UI elements, share-ready.`;
           liGender: (state.storybeau && state.storybeau.gender) || state.loveInterestGender || null,
           worldSubtype: (state.picks && state.picks.worldSubtype) || state.worldSubtype || null,
           beatCount: d.beatCount || _devBeats.length,
-          resolveReason: reason || null,
+          resolveReason: _intr ? 'interrupted' : (reason || null),
           toneOverride: confirmedToneOverride || null,
           finalTemperature: d.temperature || null,
           peakReached: !!d._peakReached,
@@ -195938,7 +196568,7 @@ No text, no watermark, no UI elements, share-ready.`;
           liGender: (state.storybeau && state.storybeau.gender) || state.loveInterestGender || null,
           worldSubtype: (state.picks && state.picks.worldSubtype) || state.worldSubtype || null,
           beatCount: d.beatCount || _archiveBeats.length,
-          resolveReason: reason || null,
+          resolveReason: _intr ? 'interrupted' : (reason || null),
           toneOverride: confirmedToneOverride || null,
           finalTemperature: d.temperature || null,
           peakReached: !!d._peakReached,
@@ -196014,6 +196644,7 @@ No text, no watermark, no UI elements, share-ready.`;
     // the staged-engine kicking off, which feels stalled. Dev-mode resolves
     // (no next scene) skip — there's nothing composing.
     var _willComposeNextScene = !state._intimacyDevMode;
+    if (_intr) _willComposeNextScene = false;   // nothing composes until the reader submits
     if (_willComposeNextScene && typeof _showStagedComposingIndicator === 'function') {
       try { _showStagedComposingIndicator(); } catch (_) {}
     }
@@ -196037,16 +196668,688 @@ No text, no watermark, no UI elements, share-ready.`;
       // own carry-forward so the literary engine doesn't render the
       // generic tender aftermath under a cold_dismissal face.
       var overrideEntry2 = confirmedToneOverride ? _OAS_TONE_AFTERGLOW_OVERRIDES[confirmedToneOverride] : null;
+      if (_intr) {
+        // The reader's real choice and words come next — through the interruption UI, never a synthetic afterglow value.
+        try { _mountIntimateInterruption({ host: 'auto', frame: _intr, sceneNum: 1 }); } catch (e) { console.warn('[INTIMATE-INTERRUPT] mount failed:', e && e.message); }
+        return;
+      }
       var syntheticAction = (overrideEntry2 && overrideEntry2.prompt)
         || _OAS_AFTERGLOW_PROMPTS[reason]
         || ('[intimacy scene resolved — ' + reason + ']');
       var syntheticDialogue = closing;
+      // THE READER'S DECISION IS NOT THE END OF THE ONE-ON-ONE (2026-09-11). A baked Book that declared a decision
+      // axis (e.g. run in shame vs remain) records the reader's actual choice as structured state BEFORE Scene 2 is
+      // requested — elicited from the package's own authored expansions, never inferred from dialogue. Until it is
+      // recorded, Scene 2 is not generated; progress is preserved and the prompt can be resumed.
+      if (typeof _sceneDecisionNeeded === 'function' && _sceneDecisionNeeded()) {
+        _mountSceneDecisionPrompt(function () {
+          if (typeof _advanceStagedScene === 'function') _advanceStagedScene(syntheticAction, syntheticDialogue).catch(function(_) {});
+        });
+        return;
+      }
       if (typeof _advanceStagedScene === 'function') {
         _advanceStagedScene(syntheticAction, syntheticDialogue).catch(function(_) {});
       }
     }, 2200);
   }
   window._resolveIntimacyScene = _resolveIntimacyScene;
+
+  // ═══ INTIMATE INTERRUPTION — rendering, state, submit gate (Roman 2026-09-11) ═══
+  var _INTR_SLOTS = [
+    { key: 'temptation', label: 'Temptation', desc: 'Cross the next threshold.',            art: 'Tarot-Gold-front-Temptation.png' },
+    { key: 'silence',    label: 'Silence',    desc: 'Let the look between us land.',         art: 'Tarot-Gold-front-Silence.png'    },
+    { key: 'reversal',   label: 'Reversal',   desc: 'Take control.',                         art: 'Tarot-Gold-front-Reversal.png'   },
+    { key: 'boundary',   label: 'Boundary',   desc: 'Name the want.',                        art: 'Tarot-Gold-front-Boundary.png'   },
+    { key: 'confession', label: 'Confession', desc: "Tell her the part you haven't said.",   art: 'Tarot-Gold-front-Confession.png' }
+  ];
+  var _INTR_HOSTS = {
+    cg:       { mount: 'gnCardMount', action: 'gnActionInput', dialogue: 'gnDialogueInput', submit: 'gnSubmitBtn' },
+    literary: { mount: 'cardMount',   action: 'actionInput',   dialogue: 'dialogueInput',   submit: 'submitBtn' }
+  };
+  function _intimateInterruptionFrame(d, reason) {
+    try {
+      if (typeof window !== 'undefined' && window._oasInterruptionOff === true) return null;
+      if (/rupture/.test(String(reason || ''))) return null;            // Fate ruptures keep their own carry-forward
+      var f = d && d._authoredFrame;
+      return (f && f.interruption) ? f : null;
+    } catch (_) { return null; }
+  }
+  // LITERARY CASCADE HOST (2026-09-12): the authored interruption for a GENERATED intimate exchange is declared on the story
+  // as state._authoredIntimateInterruption = { storyId, interruption, interruptionImage, interruptionExchange[] } by whoever
+  // plans that scene (nothing declares one yet; the control declares one). One source; consumed when it mounts.
+  function _cascadeInterruptionFrame() {
+    try {
+      if (typeof window !== 'undefined' && window._oasInterruptionOff === true) return null;
+      var f = state && state._authoredIntimateInterruption;
+      if (!f || !f.interruption) return null;
+      if (f.storyId && f.storyId !== state.storyId) return null;
+      return f;
+    } catch (_) { return null; }
+  }
+  function _intimateInterruptionPending() {
+    var r = state && state._intimateInterruption;
+    return !!(r && !r.submitted && r.storyId === state.storyId);
+  }
+  function _intrCardText(slot) {
+    var r = state._intimateInterruption; var c = r && r.cards && r.cards[slot];
+    var a = c && c.action ? String(c.action) : '', dl = c && c.dialogue ? String(c.dialogue) : '';
+    try { if (typeof _sanitizeFatePreviewLine === 'function') { a = _sanitizeFatePreviewLine(a, slot, 'action') || a; dl = _sanitizeFatePreviewLine(dl, slot, 'dialogue') || dl; } } catch (_) {}
+    var loaded = !!(c && (c.action || c.dialogue));
+    if (!a && !dl) { try { if (typeof _OAS_FALLBACK_PREVIEWS !== 'undefined' && _OAS_FALLBACK_PREVIEWS[slot]) { a = _OAS_FALLBACK_PREVIEWS[slot].action || ''; dl = _OAS_FALLBACK_PREVIEWS[slot].dialogue || ''; } } catch (_) {} }
+    return { action: String(a).replace(/^["“]|["”]$/g, ''), dialogue: String(dl).replace(/^["“]|["”]$/g, ''), loaded: loaded };
+  }
+  function _intrRefreshCardTexts(mount) {
+    if (!mount) return;
+    mount.querySelectorAll('[data-fate-card-slot]').forEach(function (card) {
+      var slot = card.getAttribute('data-fate-card-slot'); var t = _intrCardText(slot); var el = card.querySelector('[data-suggestion-text]');
+      if (el) el.textContent = t.loaded ? (t.action + (t.dialogue ? ' — ' + t.dialogue : '')) : '(loading…)';
+    });
+  }
+  function _dealInterruptionFateCards(hostKey) {
+    var H = _INTR_HOSTS[hostKey] || _INTR_HOSTS.cg; var mount = document.getElementById(H.mount); if (!mount) return null;
+    var r = state._intimateInterruption;
+    var html = '';
+    _INTR_SLOTS.forEach(function (slot) {
+      html += '<div class="fate-card intimate-interrupt-fate-card" data-fate-card-slot="' + slot.key + '" data-revealed="0"><div class="inner">'
+        + '<div class="front" style="background:url(\'/assets/card-art/cards/Tarot-Gold-back.png\') center/cover no-repeat, #111;"></div>'
+        + '<div class="back" style="background-image:url(\'/assets/card-art/cards/' + slot.art + '\');"><h3>' + slot.label + '</h3><p class="fate-card-suggestion" data-suggestion-text>(loading…)</p></div></div></div>';
+    });
+    mount.innerHTML = html;
+    mount.style.cssText = 'display:flex !important;gap:14px;justify-content:center;align-items:flex-start;flex-wrap:wrap;max-width:960px;margin:12px auto;padding:8px 16px;';
+    mount.querySelectorAll('[data-fate-card-slot]').forEach(function (card, idx) {
+      var slot = card.getAttribute('data-fate-card-slot');
+      if (r && r.selectedSlot === slot) { card.classList.add('flipped'); card.classList.add('intimate-interrupt-selected'); card.setAttribute('data-revealed', '1'); }
+      setTimeout(function () { card.classList.add('flipped'); card.setAttribute('data-revealed', '1'); }, 900 + idx * 250);
+      card.addEventListener('click', function () {
+        var rec = state._intimateInterruption; if (!rec || rec.submitted) return;
+        rec.selectedSlot = slot; card.classList.add('flipped'); card.setAttribute('data-revealed', '1');
+        mount.querySelectorAll('[data-fate-card-slot]').forEach(function (c2) { c2.classList.toggle('intimate-interrupt-selected', c2 === card); });
+        var t = _intrCardText(slot); var aEl = document.getElementById(H.action), dEl = document.getElementById(H.dialogue);
+        if (aEl) { aEl.disabled = false; aEl.value = t.action; } if (dEl) { dEl.disabled = false; dEl.value = t.dialogue; }
+        rec.draft = { action: t.action, dialogue: t.dialogue };
+        try { console.log('[INTIMATE-INTERRUPT] card ' + slot + ' → Say/Do filled (editable)'); } catch (_) {}
+        try { if (typeof saveStorySnapshot === 'function') saveStorySnapshot(); } catch (_) {}
+      });
+    });
+    _intrRefreshCardTexts(mount);
+    return mount;
+  }
+  function _mountIntimateInterruption(opts) {
+    opts = opts || {};
+    // The host is the reader the person is LOOKING AT, not the engine: a baked CG Book renders its opening on the literary
+    // 'game' screen (#storyContent, #actionInput, #cardMount) while staged mode is on; the gn reader hosts generated CG scenes.
+    var _vis = function (id) { var el = document.getElementById(id); if (!el) return false; try { return el.getClientRects().length > 0 && getComputedStyle(el).visibility !== 'hidden'; } catch (_) { return el.offsetParent !== null; } };   // offsetParent is null inside position:fixed readers
+    var hostKey = (opts.host && opts.host !== 'auto') ? opts.host : ((state._intimateInterruption && !state._intimateInterruption.submitted && state._intimateInterruption.host) || (_vis('gnReaderControls') || _vis('gnPanelDisplay') ? 'cg' : 'literary'));
+    var H = _INTR_HOSTS[hostKey] || _INTR_HOSTS.cg;
+    var host = (hostKey === 'cg' ? (document.getElementById('gnPanelDisplay') || document.getElementById('storyContent')) : (document.getElementById('storyContent') || document.getElementById('gnPanelDisplay'))); if (!host) { console.warn('[INTIMATE-INTERRUPT] no host element'); return null; }
+    var frame = opts.frame || (state._intimateInterruption && state._intimateInterruption.frame) || null; if (!frame || !frame.interruption) { console.warn('[INTIMATE-INTERRUPT] no authored interruption'); return null; }
+    var r = state._intimateInterruption;
+    if (!r || r.submitted || r.storyId !== state.storyId) {
+      r = state._intimateInterruption = { host: hostKey, sceneNum: opts.sceneNum || 1, storyId: state.storyId, at: Date.now(), imageId: frame.interruptionImage || null,
+            frame: { interruption: String(frame.interruption), interruptionImage: String(frame.interruptionImage || ''), interruptionExchange: (frame.interruptionExchange || []).slice() },
+            selectedSlot: null, draft: { action: '', dialogue: '' }, cards: null, submitted: false };
+    }
+    var prior = document.getElementById('intimateInterruption'); if (prior) prior.remove();
+    var wrap = document.createElement('div'); wrap.id = 'intimateInterruption'; wrap.className = 'intimate-interruption';
+    wrap.style.cssText = 'margin:24px auto 8px;max-width:680px;padding:16px 18px;border:1px solid rgba(201,162,78,0.35);border-radius:6px;background:rgba(0,0,0,0.25);line-height:1.65;';
+    var plateLabel = '';
+    try { var pkg = (typeof window._bakedScene1For === 'function') ? window._bakedScene1For(state._starterId) : null; var im = pkg && (pkg.images || []).filter(function (x) { return x && x.id === r.frame.interruptionImage; })[0];
+          plateLabel = im ? ('[' + (im.label || im.id) + (im.subject ? ' — ' + im.subject : '') + ']') : (r.frame.interruptionImage ? '[' + r.frame.interruptionImage + ']' : ''); } catch (_) {}
+    var pPlate = document.createElement('p'); pPlate.className = 'intimate-interruption-plate'; pPlate.style.cssText = 'font-style:italic;color:#8f866f;margin:0 0 10px;'; pPlate.textContent = plateLabel;
+    var pNarr = document.createElement('p'); pNarr.className = 'intimate-interruption-narration'; pNarr.style.cssText = 'color:#e7dcc2;margin:0 0 10px;'; pNarr.textContent = String(r.frame.interruption);
+    wrap.appendChild(pPlate); wrap.appendChild(pNarr);
+    (r.frame.interruptionExchange || []).forEach(function (ln) { if (!ln || !ln.text) return; var p = document.createElement('p'); p.className = 'intimate-interruption-line'; p.style.cssText = 'color:#e7dcc2;margin:0 0 8px;'; p.textContent = (ln.speaker ? ln.speaker + ': ' : '') + String(ln.text); wrap.appendChild(p); });
+    var pNote = document.createElement('p'); pNote.className = 'intimate-interruption-note'; pNote.style.cssText = 'color:#a99f8c;font-size:0.92em;margin:12px 0 0;'; pNote.textContent = 'Choose a card to fill in what you say and do, or write your own — then Submit.'; wrap.appendChild(pNote);
+    host.appendChild(wrap);
+    // The reader must be able to SEE the rail and the inputs: the CG reader hides both containers until a scene's gate
+    // deals cards / opens the inputs, and the one-on-one flattens them. Show them here.
+    try { (hostKey === 'cg' ? ['gnReaderControls', 'gnFateSection'] : ['cardMount', 'fateSpecialCards']).forEach(function (id) { var el = document.getElementById(id); if (el) el.style.display = ''; });
+          if (hostKey !== 'cg') { var _ai = document.getElementById('actionInput'); var _grid = _ai && _ai.closest('div[style*="grid-template-columns"], .say-do-grid, .input-grid'); if (_grid) _grid.style.display = ''; var _row = document.getElementById('submitBtn') && document.getElementById('submitBtn').parentElement; if (_row) _row.style.display = ''; } } catch (_) {}
+    var mount = _dealInterruptionFateCards(hostKey);
+    var aEl = document.getElementById(H.action), dEl = document.getElementById(H.dialogue), sEl = document.getElementById(H.submit);
+    [aEl, dEl, sEl].forEach(function (el) { if (el) { el.disabled = false; try { el.style.display = ''; } catch (_) {} } });
+    if (aEl) { aEl.value = r.draft.action || ''; aEl.oninput = function () { var rec = state._intimateInterruption; if (rec && !rec.submitted) rec.draft.action = aEl.value; }; }
+    if (dEl) { dEl.value = r.draft.dialogue || ''; dEl.oninput = function () { var rec = state._intimateInterruption; if (rec && !rec.submitted) rec.draft.dialogue = dEl.value; }; }
+    try { var grid = aEl && aEl.closest('.gn-input-grid'); if (grid) grid.style.display = ''; } catch (_) {}
+    if (!r.cards) {
+      var orch = (typeof window !== 'undefined') && window.StoryboundOrchestration;
+      if (orch && typeof orch.generateIntimateFatePreviewsBatch === 'function') {
+        orch.generateIntimateFatePreviewsBatch().then(function (cards) { var rec = state._intimateInterruption; if (!rec || rec.submitted) return; rec.cards = cards || {}; _intrRefreshCardTexts(document.getElementById(H.mount)); try { console.log('[INTIMATE-INTERRUPT] five heightened options landed'); } catch (_) {} try { if (typeof saveStorySnapshot === 'function') saveStorySnapshot(); } catch (_) {} })
+          .catch(function (e) { console.warn('[INTIMATE-INTERRUPT] previews batch failed:', e && e.message); var rec = state._intimateInterruption; if (rec) rec.cards = rec.cards || {}; _intrRefreshCardTexts(document.getElementById(H.mount)); });
+      } else { r.cards = {}; _intrRefreshCardTexts(mount); }
+    }
+    try { console.log('[INTIMATE-INTERRUPT] mounted host=' + hostKey + ' image=' + (r.frame.interruptionImage || '-') + ' lines=' + (r.frame.interruptionExchange || []).length + (opts.resume ? ' (resume)' : '')); } catch (_) {}
+    try { if (typeof saveStorySnapshot === 'function') saveStorySnapshot(); } catch (_) {}
+    return wrap;
+  }
+  function _commitIntimateInterruption(action, dialogue) {
+    var r = state._intimateInterruption; if (!r || r.submitted) return false;
+    r.submitted = true; r.submittedAt = Date.now(); r.action = String(action || ''); r.dialogue = String(dialogue || '');
+    var label = (r.action || r.dialogue).slice(0, 80);
+    try { _recordSceneDecision(r.sceneNum || 1, 'posture', label, 'interruption_submit'); } catch (_) {}
+    try { _sceneLedgerCommit(state, { kind: 'oas_interrupt', sceneNumber: r.sceneNum || 1, event: String(r.frame.interruption) + ' ' + (r.frame.interruptionExchange || []).map(function (l) { return l && l.text ? ((l.speaker ? l.speaker + ': ' : '') + l.text) : ''; }).filter(Boolean).join(' '), eventSource: 'interruption_submit', act: r.action, dia: r.dialogue }); } catch (_) {}
+    try { var note = document.querySelector('#intimateInterruption .intimate-interruption-note'); if (note) note.remove(); } catch (_) {}
+    try { console.log('[INTIMATE-INTERRUPT] submitted card=' + (r.selectedSlot || '-') + ' action="' + r.action.slice(0, 60) + '" dialogue="' + r.dialogue.slice(0, 60) + '"'); } catch (_) {}
+    try { if (typeof saveStorySnapshot === 'function') saveStorySnapshot(); } catch (_) {}
+    return true;
+  }
+  window._intimateInterruptionPending = _intimateInterruptionPending; window._mountIntimateInterruption = _mountIntimateInterruption; window._commitIntimateInterruption = _commitIntimateInterruption; window._intimateInterruptionFrame = _intimateInterruptionFrame; window._cascadeInterruptionFrame = _cascadeInterruptionFrame;
+
+  // ── SCENE DECISION RECORD (2026-09-11) ──
+  //   state._sceneDecisions = { '1': { axis, choice: 'run'|'remain'|<branch key>, label, source: 'oas_exit'|'resume', at, storyId } }
+  // The axis and the two branches come from the baked package (emitted.axes.microDecision + expansions A/B).
+  function _sceneDecisionAxis() {
+    try { var em = state && state._bakedEmitted; var ax = em && em.axes && em.axes.microDecision; if (!ax || !state._starterId) return null;
+      var parts = String(ax).split(/\s+vs\.?\s+/i); if (parts.length < 2) return null;
+      var key = function (t) { var m = String(t).trim().toLowerCase().match(/^[a-z]+/); return m ? m[0] : 'a'; };
+      return { axis: String(ax), a: { key: key(parts[0]), label: parts[0].trim(), text: (em.expansions && em.expansions.A) || '' }, b: { key: key(parts[1]), label: parts[1].trim(), text: (em.expansions && em.expansions.B) || '' } };
+    } catch (_) { return null; }
+  }
+  function _sceneDecisionNeeded() {
+    var ax = _sceneDecisionAxis(); if (!ax) return false;
+    var d = state._sceneDecisions && state._sceneDecisions['1'];
+    return !(d && d.choice && d.storyId === state.storyId);
+  }
+  function _sceneDecision(n) { try { var d = state._sceneDecisions && state._sceneDecisions[String(n || 1)]; return (d && d.choice && d.storyId === state.storyId) ? d : null; } catch (_) { return null; } }
+  function _recordSceneDecision(n, choice, label, source) {
+    state._sceneDecisions = state._sceneDecisions || {};
+    var ax = _sceneDecisionAxis();
+    state._sceneDecisions[String(n || 1)] = { axis: ax ? ax.axis : null, choice: String(choice), label: String(label || choice), source: source || 'oas_exit', at: Date.now(), storyId: state.storyId };
+    try { console.log('[SCENE-DECISION] scene ' + (n || 1) + ' → ' + choice + ' (' + (source || 'oas_exit') + ')'); } catch (_) {}
+    try { _reconcileSeededMilestones(); } catch (_) {}
+    try { if (typeof saveStorySnapshot === 'function') saveStorySnapshot(); } catch (_) {}
+  }
+  function _mountSceneDecisionPrompt(onChosen) {
+    var ax = _sceneDecisionAxis(); if (!ax) { if (onChosen) onChosen(); return; }
+    var _visEl = function (id) { var el = document.getElementById(id); try { return (el && el.getClientRects().length > 0) ? el : null; } catch (_) { return null; } };
+    var host = _visEl('gnPanelDisplay') || _visEl('storyContent') || document.getElementById('storyContent') || document.getElementById('gnPanelDisplay'); if (!host) { console.warn('[SCENE-DECISION] no host'); return; }
+    var prior = document.getElementById('sceneDecisionPrompt'); if (prior) prior.remove();
+    var wrap = document.createElement('div'); wrap.id = 'sceneDecisionPrompt'; wrap.className = 'scene-decision-prompt'; wrap.style.cssText = 'margin:24px auto;max-width:640px;padding:16px;border:1px solid rgba(212,175,55,0.35);border-radius:8px;';
+    wrap.innerHTML = '<p class="scene-decision-axis" style="font-style:italic;color:#c9bfa8;line-height:1.6;margin:0 0 14px;"></p>'
+      + '<div style="display:flex;gap:12px;flex-wrap:wrap;">'
+      + '<button id="sceneDecisionA" class="sb-btn-png md" data-choice=""></button>'
+      + '<button id="sceneDecisionB" class="sb-btn-png md" data-choice=""></button></div>'
+      + '<p class="scene-decision-a" style="color:#a99f8c;margin:12px 0 0;font-size:0.92em;"></p><p class="scene-decision-b" style="color:#a99f8c;margin:6px 0 0;font-size:0.92em;"></p>';
+    wrap.querySelector('.scene-decision-axis').textContent = ax.axis;   // authored text, never innerHTML
+    var bA = wrap.querySelector('#sceneDecisionA'), bB = wrap.querySelector('#sceneDecisionB');
+    bA.textContent = ax.a.label; bA.setAttribute('data-choice', ax.a.key); bB.textContent = ax.b.label; bB.setAttribute('data-choice', ax.b.key);
+    wrap.querySelector('.scene-decision-a').textContent = ax.a.text; wrap.querySelector('.scene-decision-b').textContent = ax.b.text;
+    var pick = function (k, lbl) { return function () { _recordSceneDecision(1, k, lbl, (state._sceneDecisions && state._sceneDecisions._resumed) ? 'resume' : 'oas_exit'); try { wrap.remove(); } catch (_) {} if (onChosen) onChosen(); }; };
+    bA.addEventListener('click', pick(ax.a.key, ax.a.label)); bB.addEventListener('click', pick(ax.b.key, ax.b.label));
+    host.appendChild(wrap);
+    try { console.log('[SCENE-DECISION] prompt mounted: ' + ax.axis); } catch (_) {}
+  }
+  window._sceneDecisionNeeded = _sceneDecisionNeeded; window._sceneDecision = _sceneDecision; window._recordSceneDecision = _recordSceneDecision; window._mountSceneDecisionPrompt = _mountSceneDecisionPrompt; window._sceneDecisionAxis = _sceneDecisionAxis;
+
+  // ── EFFECTIVE SCENE ROW — ONE RESOLVED INTENT FOR EVERY CONSUMER (2026-09-11) ──
+  // A plan row written for a branch the reader did not take is not delivered with an instruction to ignore it; it is
+  // not delivered. The resolver decides, once, what stands for THIS scene on THIS branch, and the seed-continuity
+  // block, the stage selector, the A-plot milestone, the scene-position block and the canon gate all read the result.
+  //   per-branch authored overrides:  goalByBranch, requiredTruthByBranch, exitStateByBranch, stageByBranch (keys = branch)
+  //   row flags:                      branchDependent: true|false (else detected from the row's own branch markers),
+  //                                   stageDefaultBranch (default 'remain'), branchNeutral: true (never withhold)
+  var _SCENE_BRANCH_MARKER = /if she (?:moved|held)|shaped by what the player chose|contingent on the Scene-1 choice|whatever the player chose in scene 1/i;
+  function _sceneFirstSentence(t) { var m = String(t || '').trim().match(/^[^.!?]+[.!?]/); return (m ? m[0] : String(t || '').trim()).slice(0, 220); }
+  function _effectiveSceneRow(s, sceneNum) {
+    try {
+      s = s || state; var plan = (typeof _activePlan === 'function') ? _activePlan(s) : null;
+      var row = (plan && Array.isArray(plan.scenes)) ? plan.scenes.filter(function (p) { return p && Number(p.n) === Number(sceneNum); })[0] : null;
+      if (!row) return null;
+      var dec = (Number(sceneNum) >= 2 && typeof _sceneDecision === 'function') ? _sceneDecision(1) : null;
+      var choice = dec && dec.choice ? String(dec.choice) : null;
+      var goal = String(row.goal || ''), truth = String(row.requiredTruth || ''), exit = String(row.exitState || '');
+      var isOpen = row.objective === 'reader';
+      var obj = (isOpen && s._sceneObjectives && s._sceneObjectives[String(sceneNum)] && s._sceneObjectives[String(sceneNum)].status === 'accepted') ? s._sceneObjectives[String(sceneNum)] : null;
+      if (isOpen) {
+        // OPEN ROW: the goal is the ACCEPTED, PERSISTED local objective or nothing yet; the stage is the roster filtered by
+        // the objective's presence; reserved events come from the next rows. No branch withholding applies (no goal text).
+        var roster = (row.stage && Array.isArray(row.stage.participants)) ? row.stage.participants : [];
+        var effO = { n: Number(row.n), openObjective: true, objectivePending: !obj, decision_axis: row.decision_axis || null, decision_consequence: row.decision_consequence || null, player_decision_required: !!row.player_decision_required,
+                     exitState: exit, requiredTruth: truth, branch: choice, branchDependent: false, offBranch: false, vectors: Array.isArray(row.vectors) ? row.vectors.slice() : [], constraints: Array.isArray(row.constraints) ? row.constraints.slice() : [],
+                     aftermathSource: row.aftermathSource || null, roster: roster, presentGroups: row.presentGroups || null,
+                     reserved: plan.scenes.filter(function (p) { return p && Number(p.n) > Number(sceneNum) && Number(p.n) <= Number(sceneNum) + 2 && Array.isArray(p.reservedEvents); }).reduce(function (acc, p) { return acc.concat(p.reservedEvents.map(function (r) { return Object.assign({ fromScene: Number(p.n) }, r); })); }, [])
+                               .concat((Array.isArray(plan.sealedEvents) ? plan.sealedEvents : []).filter(function (e) { return e && e.id && Number(sceneNum) < Number(e.unsealsAtScene || Infinity); }).map(function (e) { return { id: e.id, sealed: true, label: e.label || 'a sealed future reveal', fromScene: Number(e.unsealsAtScene || 0), markers: [] }; })),
+                     aftermathTruths: Array.isArray(row.aftermathTruths) ? row.aftermathTruths.slice() : [],
+                     _reconciliation: { withheld: [], source: { goal: obj ? 'spine:posture' : 'pending: no accepted local objective yet' } } };
+        var newProblemO = (exit.match(/NEW PROBLEM:\s*(.+)$/i) || [])[1] || '';
+        if (obj) {
+          effO.goal = String(obj.local_objective || '');
+          var presentSet = (Array.isArray(obj.present) ? obj.present : []).map(function (x) { return String(x).toLowerCase(); });
+          var staged = roster.filter(function (r) { return r && (presentSet.indexOf(String(r.label || '').toLowerCase()) !== -1 || presentSet.indexOf(String(r.ref || '').toLowerCase()) !== -1); });
+          var actor = roster.filter(function (r) { return r && obj.actor && (String(r.label).toLowerCase() === String(obj.actor).toLowerCase() || String(r.ref).toLowerCase() === String(obj.actor).toLowerCase()); })[0] || null;
+          effO.stage = { v: 1, provenance: 'reader_posture_spine', participants: staged.map(function (r) { return { ref: r.ref, label: r.label, presence: 'IN_PERSON' }; }),
+                         eventFacts: actor ? [{ text: effO.goal, participants: [{ ref: actor.ref, role: 'actor', label: actor.label }], source: 'spine:posture' }] : [] };
+          effO.participants = staged.map(function (r) { return r.label; }); effO.eventFacts = effO.stage.eventFacts;
+          effO.effectiveEvent = _sceneFirstSentence(effO.goal); effO._reconciliation.effectiveEventSource = 'local objective (spine:posture)';
+          effO.objective = obj;
+        } else {
+          effO.goal = ''; effO.stage = null; effO.participants = null; effO.eventFacts = null;
+          effO.effectiveEvent = newProblemO || truth || ''; effO._reconciliation.effectiveEventSource = newProblemO ? 'exitState NEW PROBLEM (objective pending)' : 'requiredTruth (objective pending)';
+        }
+        return effO;
+      }
+      var _depOf = function (txt) { return row.branchNeutral === true ? false : (row.branchDependent === true ? true : (row.branchDependent === false ? false : _SCENE_BRANCH_MARKER.test(txt))); };
+      var goalDep = _depOf(goal), truthDep = _depOf(truth), dependent = goalDep || truthDep;   // per FIELD: a branch-contingent goal does not take a branch-neutral truth down with it
+      var eff = { n: Number(row.n), decision_axis: row.decision_axis || null, decision_consequence: row.decision_consequence || null, player_decision_required: !!row.player_decision_required,
+                  exitState: (choice && row.exitStateByBranch && row.exitStateByBranch[choice]) ? String(row.exitStateByBranch[choice]) : exit,
+                  branch: choice, branchDependent: dependent, _reconciliation: { withheld: [], source: {} } };
+      var pick = function (field, byBranch, base, dep) {
+        if (choice && byBranch && byBranch[choice]) { eff._reconciliation.source[field] = 'authored:' + choice; return String(byBranch[choice]); }
+        if (!dep || !choice) { eff._reconciliation.source[field] = 'row'; return base; }
+        eff._reconciliation.withheld.push(field); eff._reconciliation.source[field] = 'withheld: branch-dependent, no per-branch text approved for "' + choice + '"'; return '';
+      };
+      eff.goal = pick('goal', row.goalByBranch, goal, goalDep);
+      eff.requiredTruth = pick('requiredTruth', row.requiredTruthByBranch, truth, truthDep);
+      var sbb = (row.stageByBranch && typeof row.stageByBranch === 'object') ? row.stageByBranch : null;
+      var defBranch = (row.stageDefaultBranch != null) ? String(row.stageDefaultBranch) : 'remain';
+      if (choice) {
+        if (sbb && sbb[choice] && typeof sbb[choice] === 'object') { eff.stage = sbb[choice]; eff._reconciliation.source.stage = 'authored:' + choice; }
+        else if (choice === defBranch && row.stage && typeof row.stage === 'object') { eff.stage = row.stage; eff._reconciliation.source.stage = 'row (default branch ' + defBranch + ')'; }
+        else { eff.stage = null; eff._reconciliation.withheld.push('stage'); eff._reconciliation.source.stage = 'withheld: the authored row stages "' + defBranch + '", the reader chose "' + choice + '"'; }
+      } else { eff.stage = (row.stage && typeof row.stage === 'object') ? row.stage : null; eff._reconciliation.source.stage = eff.stage ? 'row' : 'none'; }
+      // Presence and row-level event facts travel whenever the row stands on this branch; they are dropped only when the
+      // stage was withheld FOR BRANCH REASONS — a row with no structured stage object is not off-branch.
+      var _offBranch = eff._reconciliation.withheld.indexOf('stage') !== -1;
+      eff.offBranch = _offBranch;
+      if (!_offBranch) { eff.participants = row.participants || null; eff.presentGroups = row.presentGroups || null; eff.eventFacts = Array.isArray(row.eventFacts) ? row.eventFacts : null; }
+      var newProblem = (eff.exitState.match(/NEW PROBLEM:\s*(.+)$/i) || [])[1] || '';
+      eff.effectiveEvent = eff.goal ? _sceneFirstSentence(eff.goal) : (newProblem || eff.requiredTruth || '');
+      eff._reconciliation.effectiveEventSource = eff.goal ? 'goal' : (newProblem ? 'exitState NEW PROBLEM' : (eff.requiredTruth ? 'requiredTruth' : 'none'));
+      if (eff._reconciliation.withheld.length) { try { console.log('[SCENE-INTENT] scene ' + eff.n + ' branch=' + choice + ' withheld: ' + eff._reconciliation.withheld.join(',') + ' (no per-branch text approved for this branch)'); } catch (_) {} }
+      return eff;
+    } catch (e) { try { console.warn('[SCENE-INTENT] resolver failed:', e && e.message); } catch (_) {} return null; }
+  }
+  // The seeded A-plot's milestones are derived data (one per row). Re-derive every row from scene 2 on from the
+  // resolver so the "current milestone" the directive and the scene-spine planner read is the reconciled intent.
+  function _reconcileSeededMilestones() {
+    try {
+      var a = state && state.aPlot; if (!a || !a._seeded || !Array.isArray(a.milestones)) return 0;
+      var changed = 0;
+      a.milestones.forEach(function (m) {
+        if (!m || Number(m.atScene) < 2) return;
+        var eff = _effectiveSceneRow(state, Number(m.atScene)); if (!eff) return;
+        var ev = eff.effectiveEvent || ''; if (!ev || ev === m.event) return;
+        m._originalEvent = m._originalEvent || m.event; m.event = ev; m._reconciledFrom = eff._reconciliation.effectiveEventSource; changed++;
+      });
+      if (changed) { try { console.log('[SCENE-INTENT] ' + changed + ' seeded milestone(s) re-derived from the effective scene row'); } catch (_) {} }
+      return changed;
+    } catch (_) { return 0; }
+  }
+  window._effectiveSceneRow = _effectiveSceneRow; window._reconcileSeededMilestones = _reconcileSeededMilestones;
+
+  // ── READER POSTURE → LOCAL OBJECTIVE (2026-09-11) ──
+  // The posture record is the reader's actual input for THIS scene: the recorded end-of-opening choice plus their exact
+  // Say/Do. It is persisted on state (saves, Issues, Library) and hashed; an accepted objective is reused while the
+  // posture is unchanged and superseded when it changes.
+  function _postureHash(t) { var h = 5381, str = String(t || ''); for (var i = 0; i < str.length; i++) h = ((h << 5) + h + str.charCodeAt(i)) | 0; return 'ph:' + (h >>> 0).toString(36); }
+  function _recordScenePosture(sceneNum, action, dialogue) {
+    try {
+      var dec = (typeof _sceneDecision === 'function') ? _sceneDecision(1) : null;
+      var rec = { sceneNum: Number(sceneNum), choice: dec ? dec.choice : null, label: dec ? dec.label : null, action: String(action || ''), dialogue: String(dialogue || ''), at: Date.now(), storyId: state.storyId };
+      rec.hash = _postureHash([rec.choice, rec.action, rec.dialogue].join('|'));
+      state._scenePosture = state._scenePosture || {}; state._scenePosture[String(sceneNum)] = rec;
+      return rec;
+    } catch (_) { return null; }
+  }
+  // Reject-only validation of the planner's open-row reply against the seed's structured constraints. Never rewrites.
+  function _validateLocalObjective(reply, eff) {
+    var why = [];
+    var lo = reply && typeof reply.local_objective === 'string' ? reply.local_objective.trim() : '';
+    if (!lo) why.push('no local_objective');
+    if (!(reply && typeof reply.posture_read === 'string' && reply.posture_read.trim())) why.push('no posture_read');
+    var rosterL = (eff.roster || []).map(function (r) { return String(r.label || '').toLowerCase(); }), rosterR = (eff.roster || []).map(function (r) { return String(r.ref || '').toLowerCase(); });
+    var present = Array.isArray(reply && reply.present) ? reply.present.map(String) : [];
+    if (!present.length) why.push('no present cast');
+    present.forEach(function (x) { var k = x.toLowerCase(); if (rosterL.indexOf(k) === -1 && rosterR.indexOf(k) === -1) why.push('present names someone outside the seed roster: ' + x); });
+    var actor = reply && reply.local_objective_actor ? String(reply.local_objective_actor) : '';
+    if (!actor) why.push('no local_objective_actor');
+    else if (present.map(function (x) { return x.toLowerCase(); }).indexOf(actor.toLowerCase()) === -1) why.push('actor is not among present: ' + actor);
+    // RESERVED EVENTS — structured ids the seed owns. Two enforcement legs, both reject-only: (1) the planner MUST return a
+    // status for EVERY reserved id and it must be "untouched"; (2) the seed's own markers must not appear in the objective.
+    var text = [reply && reply.state_change, lo, reply && reply.forces_choice, reply && reply.branch_a, reply && reply.branch_b].map(function (x) { return String(x || '').toLowerCase(); }).join(' \n ');
+    var rs = (reply && reply.reserved && typeof reply.reserved === 'object') ? reply.reserved : null;
+    (eff.reserved || []).forEach(function (r) {
+      var st = rs ? rs[r.id] : undefined;
+      if (st !== 'untouched') why.push('reserved event ' + r.id + ' (scene ' + r.fromScene + '): ' + (st === undefined ? 'no status declared' : 'declared ' + JSON.stringify(st)));
+      (r.markers || []).forEach(function (m) { if (m && text.indexOf(String(m).toLowerCase()) !== -1) why.push('reserved event ' + r.id + ' touched: marker "' + m + '" in the objective'); });
+    });
+    var am = (reply && reply.aftermath && typeof reply.aftermath === 'object') ? reply.aftermath : null;
+    (eff.aftermathTruths || []).forEach(function (t) { var st2 = am ? am[t.id] : undefined; if (st2 !== 'kept') why.push('aftermath truth ' + t.id + ': ' + (st2 === undefined ? 'no status declared' : 'declared ' + JSON.stringify(st2))); });
+    return { ok: why.length === 0, why: why, local_objective: lo, actor: actor, present: present, posture_read: reply && reply.posture_read ? String(reply.posture_read).trim() : '' };
+  }
+  window._recordScenePosture = _recordScenePosture; window._validateLocalObjective = _validateLocalObjective; window._postureHash = _postureHash;
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // GENERIC STAGE-STATE SUBSTRATE (Roman, authorized 2026-09-14)
+  // Design: _audit_out/generic_stage_state_substrate_design.md (+ two corrections, +
+  // the creation-rule tightening). Durable, story-scoped, per-scene stage records
+  // (state._stageState), a SIBLING of _sceneObjectives — not a replacement, not a view.
+  // Entity authority is the EXISTING _relationshipLedger (_relLedger/_relEnsureEntity,
+  // ~line 31168) — NO second identity registry is created here.
+  //
+  // EXPLICIT SCOPE BOUNDARY: nothing here is consumed by any author/planner/prose/C+/
+  // E+/fusion/location-change/provider-dispatch path yet. These are pure, storyId-
+  // scoped, offline helpers only. A story with no state._stageState record behaves
+  // exactly as it does today — nothing reads this data except the six controls in
+  // _stage_state_substrate_control.mjs. Building the continuation-stage issuer,
+  // wiring this into the scene-spine planner, or adding a structural landmark-lock
+  // (ArcConstraint) registry are explicitly OUT of scope for this slice.
+  // ══════════════════════════════════════════════════════════════════════════
+
+  // ── STAGE-STATE LEDGER (state._stageState) — durability convention identical to
+  // _bibleArtifacts/_relationshipLedger: a plain, storyId-stamped state property that
+  // survives saveStorySnapshot's `{ ...state }` blocklist-copy (it is not in that
+  // function's delete-list) and rides the same Library-resume path unchanged. ──
+  function _stageStateLedger(create) {
+    var s = window.state; if (!s) return null;
+    var sid = s.storyId ? String(s.storyId) : '';
+    if (!sid) return null;   // fail closed — no ownership, same discipline _relLedger uses
+    if (!s._stageState || typeof s._stageState !== 'object') {
+      if (!create) return null;
+      s._stageState = {};
+    }
+    return s._stageState;
+  }
+  window._stageStateLedger = function () { return _stageStateLedger(false); };
+
+  // Exactly one record may be "active" (status:'accepted', lifecycle.closedAt:null) per story
+  // at any time. Everything else is immutable, readable history.
+  function _activeStageRecord(s) {
+    s = s || window.state; var map = _stageStateLedger(false); if (!map) return null;
+    var sid = s.storyId ? String(s.storyId) : '';
+    var keys = Object.keys(map);
+    for (var i = 0; i < keys.length; i++) {
+      var rec = map[keys[i]];
+      if (rec && rec.storyId === sid && rec.status === 'accepted' && rec.lifecycle && !rec.lifecycle.closedAt) return rec;
+    }
+    return null;
+  }
+  window._activeStageRecord = _activeStageRecord;
+
+  // Closing NEVER mutates a record's issued content (location/present/issued_objects/
+  // issued_facts/affordances/exclusions/present_disambiguators) — it only appends
+  // lifecycle metadata. Called both on ordinary scene-advance and at an Issue boundary.
+  function _closeActiveStage(reason) {
+    var rec = _activeStageRecord(window.state);
+    if (!rec) return null;
+    rec.lifecycle.closedAt = Date.now();
+    rec.lifecycle.closedReason = reason;
+    rec.status = 'superseded';
+    return rec;
+  }
+  window._closeActiveStage = _closeActiveStage;
+
+  // ── NEW-ENTITY PROPOSAL → BACKEND-VALIDATED, BACKEND-MINTED COMMIT ──
+  // The caller (planner) may only PROPOSE a new entity with minimal identity fields.
+  // It NEVER supplies a permanent id, and NEVER supplies its own provenance — both are
+  // backend-only. Reject-only validation; the backend mints (via _relEnsureEntity + a
+  // freshly incremented _relLedger seq) and commits ONLY on success. No fuzzy matching,
+  // no review queue, no name-similarity rejection — see the design doc's final correction.
+  var _STAGE_ALLOWED_ENTITY_KINDS = { named: 1, role: 1 };
+  function _validateEntityCreationProposal(proposal) {
+    var why = [];
+    if (!proposal || typeof proposal !== 'object') { why.push('no proposal'); return { ok: false, why: why }; }
+    if (proposal.id) why.push('proposal supplies its own id — the backend mints ids, never the caller');
+    if (proposal.provenance) why.push('proposal supplies its own provenance — the backend stamps provenance, never the caller');
+    var label = typeof proposal.label === 'string' ? proposal.label.trim() : '';
+    if (!label) why.push('no label (schema failure)');
+    var aliases = Array.isArray(proposal.aliases) ? proposal.aliases.filter(function (a) { return typeof a === 'string' && a.trim(); }) : [];
+    var kind = typeof proposal.kind === 'string' && proposal.kind.trim() ? proposal.kind.trim() : 'named';
+    if (!_STAGE_ALLOWED_ENTITY_KINDS[kind]) why.push('forbidden/irrelevant entity kind: ' + kind);
+    var roleHint = typeof proposal.roleHint === 'string' ? proposal.roleHint.trim() : '';
+    // LOCKED-WORLD CONSTRAINT HOOK — no ArcConstraint registry exists yet (explicitly out of
+    // scope for this slice; see the continuation-stage issuer addendum §5). This call site
+    // always passes today (no registry to check against) so a future registry has one place
+    // to wire into, without this slice claiming to enforce a lock that doesn't exist yet.
+    var lockedViolation = (typeof window !== 'undefined' && typeof window._stageArcConstraintCheck === 'function')
+      ? window._stageArcConstraintCheck(proposal) : null;
+    if (lockedViolation) why.push('locked-world constraint: ' + lockedViolation);
+    return { ok: why.length === 0, why: why, label: label, aliases: aliases, kind: kind, roleHint: roleHint };
+  }
+  window._validateEntityCreationProposal = _validateEntityCreationProposal;
+
+  function _proposeNewEntity(proposal) {
+    var check = _validateEntityCreationProposal(proposal);
+    if (!check.ok) return { ok: false, why: check.why };
+    var L = _relLedger(true); if (!L) return { ok: false, why: ['no story — cannot mint an entity'] };
+    var id = 'ent:stage:' + (++L.seq);   // backend-minted, sequential, never planner-supplied
+    var patch = { kind: check.kind, label: check.label, aliases: check.aliases, provenance: 'stage_issuer_generated' };
+    if (check.roleHint) patch.roleHint = check.roleHint;
+    var e = _relEnsureEntity(L, id, patch);
+    return { ok: true, entity: e };
+  }
+  window._proposeNewEntity = _proposeNewEntity;
+
+  // ── ENTITY-ANCHOR BOOTSTRAP (Roman's correction, 2026-09-14) — SEPARATE from validation ──
+  // PC/LI anchor creation is a story-LIFECYCLE concern (genesis / legacy-snapshot normalization /
+  // restore), not a validation-time side effect. A reject-only validator that mutates the ledger
+  // on its rejected path is not reject-only, so this is now the ONE place that may create the
+  // ledger/anchors for this substrate's purposes. Idempotent: safe to call repeatedly (including
+  // once per story genesis, once per legacy-save load, once per resume) with no duplicate entities
+  // — it thins to _relLedger(true), which already no-ops once the ledger/anchors exist.
+  // NOT YET WIRED into genesis/migration/resume call sites elsewhere in the app — no production
+  // path consumes this substrate yet (see the scope boundary at the top of this section), so the
+  // only real caller today is _acceptStageProposal itself, below, immediately before validation.
+  function _ensureStoryEntityAnchors() {
+    return _relLedger(true);
+  }
+  window._ensureStoryEntityAnchors = _ensureStoryEntityAnchors;
+
+  // ── STAGE PROPOSAL → REJECT-ONLY VALIDATION, THEN ACCEPT/COMMIT ──
+  // Mirrors _validateLocalObjective's discipline exactly: never rewrites, never partially
+  // commits. `present` (and any object owner_or_caretaker_ref/held_by/addressable_by) must
+  // be STABLE LEDGER IDS ONLY — a bare name or an id with no matching entity is rejected.
+  // `identityClaims: { <existing id>: { kind, anchorRole, role_instance_id } }` lets a
+  // proposal assert canonical identity facts about an EXISTING id; a claim that conflicts
+  // with that id's own record is the one identity-conflict red case — never a name check.
+  // STRICTLY READ-ONLY (Roman's correction, 2026-09-14): a reject-only validator that mutates
+  // _relationshipLedger on its rejected path is not reject-only. This function only ever RESOLVES
+  // existing entity ids via _relLedger(false) — it never creates the ledger and never bootstraps
+  // the PC/LI anchors. If a referenced id is absent (anchors never bootstrapped, or a genuinely
+  // unissued id), it rejects by name. See _ensureStoryEntityAnchors below for where bootstrap
+  // belongs — a separate, explicitly-called, idempotent step, never implicit inside validation.
+  function _validateStageProposal(proposal) {
+    var why = [];
+    if (!proposal || typeof proposal !== 'object') { why.push('no proposal'); return { ok: false, why: why }; }
+    var L = _relLedger(false);
+    var present = Array.isArray(proposal.present) ? proposal.present.map(String) : [];
+    if (!present.length) why.push('no present');
+    present.forEach(function (ref) {
+      if (!L || !L.entities[ref]) { why.push('present references an unissued entity: "' + ref + '" (bare name or unminted id — propose creation via _proposeNewEntity first, or reference an existing stable id)'); return; }
+      var claim = proposal.identityClaims && proposal.identityClaims[ref];
+      if (claim) {
+        var ent = L.entities[ref];
+        ['kind', 'anchorRole', 'role_instance_id'].forEach(function (f) {
+          if (claim[f] !== undefined && ent[f] !== undefined && String(claim[f]) !== String(ent[f])) {
+            why.push('present ' + ref + ': claimed ' + f + '="' + claim[f] + '" conflicts with existing record "' + ent[f] + '" — display-name is never checked here');
+          }
+        });
+      }
+    });
+    // Object references (owner_or_caretaker_ref / held_by / addressable_by) — same discipline.
+    (Array.isArray(proposal.issued_objects) ? proposal.issued_objects : []).forEach(function (o, i) {
+      ['owner_or_caretaker_ref', 'held_by'].forEach(function (f) {
+        if (o[f] && !(L && L.entities[o[f]])) why.push('issued_objects[' + i + '].' + f + ' references an unissued entity: "' + o[f] + '"');
+      });
+      (Array.isArray(o.addressable_by) ? o.addressable_by : []).forEach(function (ref) {
+        if (!(L && L.entities[ref])) why.push('issued_objects[' + i + '].addressable_by references an unissued entity: "' + ref + '"');
+      });
+    });
+    return { ok: why.length === 0, why: why, present: present };
+  }
+  window._validateStageProposal = _validateStageProposal;
+
+  // Exact-string label collision ONLY — never fuzzy, never a similarity judgment. Two
+  // different, already-valid ids sharing an identical resolved label both stay in
+  // `present` unchanged; this only adds a distinguishing phrase for the author packet
+  // to use later (a deterministic ordinal placeholder here — real disambiguating prose
+  // is future author-facing work, out of scope for this offline substrate).
+  function _computeDisambiguators(presentIds) {
+    var L = _relLedger(false); var out = {}; var byLabel = {};
+    presentIds.forEach(function (id) {
+      var ent = L && L.entities[id]; var label = ent && ent.label ? String(ent.label) : '';
+      if (!label) return;
+      (byLabel[label] = byLabel[label] || []).push(id);
+    });
+    Object.keys(byLabel).forEach(function (label) {
+      var ids = byLabel[label];
+      if (ids.length < 2) return;
+      ids.forEach(function (id, i) { out[id] = label + ' (' + (i + 1) + ')'; });
+    });
+    return out;
+  }
+  window._computeDisambiguators = _computeDisambiguators;
+
+  // THE single accept/commit path for a stage. Reject-only: on failure, NOTHING is
+  // written — no partial record, no ledger mutation, no closed-stage side effect.
+  function _acceptStageProposal(sceneKey, proposal) {
+    var s = window.state; if (!s || !s.storyId) return { ok: false, why: ['no story'] };
+    var check = _validateStageProposal(proposal);
+    if (!check.ok) return { ok: false, why: check.why };
+    var map = _stageStateLedger(true);
+    var disambiguators = _computeDisambiguators(check.present);
+    _closeActiveStage('scene_advanced');   // no-op if nothing was active (e.g. first stage ever, or post-Issue-boundary)
+    var rec = {
+      v: 1, storyId: String(s.storyId),
+      issueId: (typeof s.issueIndexInRun === 'number' && s.issueIndexInRun > 0) ? s.issueIndexInRun : 1,
+      sceneKey: String(sceneKey), status: 'accepted', postureHash: proposal.postureHash || null,
+      location: proposal.location || null,
+      present: check.present, present_disambiguators: disambiguators,
+      issued_facts: Array.isArray(proposal.issued_facts) ? proposal.issued_facts : [],
+      issued_objects: Array.isArray(proposal.issued_objects) ? proposal.issued_objects : [],
+      affordances: Array.isArray(proposal.affordances) ? proposal.affordances : [],
+      exclusions: proposal.exclusions || { locations: [], objects: [] },
+      provenance: { source: proposal.source || 'unspecified', reconciled_from: Array.isArray(proposal.reconciled_from) ? proposal.reconciled_from : [] },
+      lifecycle: { issuedAt: Date.now(), supersededAt: null, closedAt: null, closedReason: null }
+    };
+    map[String(sceneKey)] = rec;
+    return { ok: true, record: rec };
+  }
+  window._acceptStageProposal = _acceptStageProposal;
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // GENERIC ARC-CONSTRAINT REGISTRY (Roman, authorized 2026-09-14)
+  // Structural, story-scoped locks on a landmark or future event, keyed to a REAL committed
+  // structured event id — never a lexical phrase. Preserves reader agency: a locked attempt is
+  // never discarded — it is recorded as durable posture (state._arcConstraintDeferrals) for a
+  // FUTURE stage issuer to build an immediate consequential response around. This registry does
+  // NOT stage anything, does NOT touch any prompt, and is consumed by nothing today except its
+  // own controls — same scope boundary as the stage-state substrate above.
+  // ══════════════════════════════════════════════════════════════════════════
+
+  // ── COMMITTED STORY EVENTS — the ONLY thing an unlock condition may check against. Once
+  // true, permanently true for this story (an Issue transition doesn't un-happen something that
+  // already happened, so this is never filtered by the current storyId). ──
+  function _isStoryEventCommitted(eventId) {
+    var s = window.state; if (!s || !s._committedStoryEvents) return false;
+    return !!s._committedStoryEvents[String(eventId)];
+  }
+  window._isStoryEventCommitted = _isStoryEventCommitted;
+
+  function _commitStoryEvent(eventId, opts) {
+    var s = window.state; if (!s || !eventId) return null;
+    if (!s._committedStoryEvents) s._committedStoryEvents = {};
+    var id = String(eventId);
+    if (s._committedStoryEvents[id]) return s._committedStoryEvents[id];   // first-write-wins, idempotent
+    var rec = { eventId: id, committedAt: Date.now(), storyId: s.storyId || null, source: (opts && opts.source) || 'unspecified' };
+    s._committedStoryEvents[id] = rec;
+    return rec;
+  }
+  window._commitStoryEvent = _commitStoryEvent;
+
+  // ── ARC-CONSTRAINT DEFINITIONS — bootstrapped from the active seed's static arcConstraints
+  // array (STORY-scoped canon, never shared FATELANDS_CANON — same split made explicit for The
+  // Open itself, 2026-09-13). Idempotent, explicit, separate from the read-only check below —
+  // same discipline as _ensureStoryEntityAnchors. Keyed by the SEED identity (_starterId), not
+  // the ephemeral per-Issue storyId, so a definition survives an Issue transition with no
+  // carry-adoption step needed — the seed doesn't change when a continuing story crosses into
+  // its next Issue, even though state.storyId does. ──
+  function _ensureArcConstraintsForStory() {
+    var s = window.state; if (!s) return null;
+    if (!s._arcConstraints) s._arcConstraints = {};
+    var seed = (typeof _activeSeed === 'function') ? _activeSeed(s) : null;
+    var defs = (seed && Array.isArray(seed.arcConstraints)) ? seed.arcConstraints : [];
+    defs.forEach(function (def) {
+      if (!def || !def.constraint_id) return;
+      if (s._arcConstraints[def.constraint_id]) return;   // already bootstrapped — idempotent
+      s._arcConstraints[def.constraint_id] = {
+        v: 1, constraint_id: def.constraint_id, scope: def.scope, target: def.target,
+        availability_state: def.availability_state, unlock_condition: def.unlock_condition,
+        deferral_reason_key: def.deferral_reason_key,
+        provenance: Object.assign({ source: 'seed_authored', bootstrappedAt: Date.now() }, def.provenance || {}),
+        lineage: { seedId: s._starterId || null }
+      };
+    });
+    return s._arcConstraints;
+  }
+  window._ensureArcConstraintsForStory = _ensureArcConstraintsForStory;
+
+  // Effective constraint definitions for the CURRENT story: the bootstrapped, lineage-stamped
+  // copy (state._arcConstraints) where it exists, falling back to the active seed's raw
+  // definition directly for anything not yet bootstrapped. Reading the seed is a pure
+  // computation — no mutation — so _checkArcConstraint below is correct and read-only whether
+  // or not _ensureArcConstraintsForStory has ever been explicitly called.
+  function _effectiveArcConstraintDefs(s) {
+    var reg = (s && s._arcConstraints) || {};
+    var seed = (typeof _activeSeed === 'function') ? _activeSeed(s) : null;
+    var seedDefs = (seed && Array.isArray(seed.arcConstraints)) ? seed.arcConstraints : [];
+    var out = {};
+    seedDefs.forEach(function (def) { if (def && def.constraint_id) out[def.constraint_id] = def; });
+    Object.keys(reg).forEach(function (cid) { out[cid] = reg[cid]; });   // bootstrapped copy wins if present
+    return out;
+  }
+
+  // ── READ-ONLY AVAILABILITY CHECK. Never mutates state._arcConstraints, never mutates
+  // anything. Famous Fate receives no Fatelands constraint at all — gated off before any
+  // lookup, same discipline the shared landmark canon prompt injection already uses. ──
+  function _checkArcConstraint(targetType, targetId) {
+    var s = window.state;
+    if (!s) return { available: true };
+    if (s.fateMode === 'famous_fate') return { available: true };   // no Fatelands constraint reaches FF, ever
+    var reg = _effectiveArcConstraintDefs(s);
+    var scopeId = s._starterId || null;
+    var match = null;
+    Object.keys(reg).forEach(function (cid) {
+      if (match) return;
+      var c = reg[cid];
+      if (!c || !c.target || c.target.type !== targetType || c.target.id !== targetId) return;
+      if (c.scope && c.scope.level === 'story' && c.scope.id !== scopeId) return;   // a different story's own lock never applies here
+      match = c;
+    });
+    if (!match) return { available: true };   // no constraint defined for this target in this scope — available by default
+    if (match.availability_state !== 'locked') return { available: true, constraint_id: match.constraint_id };
+    var cond = match.unlock_condition;
+    if (cond && cond.type === 'committed_event_id' && _isStoryEventCommitted(cond.event_id)) {
+      return { available: true, constraint_id: match.constraint_id, unlockedBy: cond.event_id };
+    }
+    return { available: false, constraint_id: match.constraint_id, reason_key: match.deferral_reason_key };
+  }
+  window._checkArcConstraint = _checkArcConstraint;
+
+  // ── THE ATOMIC "READER ATTEMPT" ENTRY POINT. A locked attempt is NEVER discarded or
+  // rewritten as refusal — it is recorded, verbatim, as durable posture/state for a future
+  // stage issuer to build an immediate consequential response around. This function
+  // intentionally does NOT stage anything, invent institutional procedure, or return a
+  // reader-visible "locked" string — only the structured reason key. Bootstraps the registry
+  // itself if not yet done — this function's whole purpose is recording an attempt, not
+  // reject-only checking, so a bootstrap side effect here (unlike _checkArcConstraint /
+  // _validateStageProposal) is appropriate. ──
+  function _attemptArcConstraintTarget(targetType, targetId, requestedIntentText, opts) {
+    var s = window.state; if (!s) return { ok: false, why: ['no story'] };
+    _ensureArcConstraintsForStory();
+    var check = _checkArcConstraint(targetType, targetId);
+    if (check.available) return { ok: true, available: true };
+    if (!s._arcConstraintDeferrals) s._arcConstraintDeferrals = [];
+    var deferral = {
+      v: 1, constraint_id: check.constraint_id, target: { type: targetType, id: targetId },
+      requested_intent_text: String(requestedIntentText || ''),   // preserved VERBATIM — never discarded or rewritten
+      reason_key: check.reason_key, deferredAt: Date.now(), storyId: s.storyId || null,
+      sceneKey: (opts && opts.sceneKey) || null
+    };
+    s._arcConstraintDeferrals.push(deferral);
+    return { ok: true, available: false, constraint_id: check.constraint_id, reason_key: check.reason_key, deferral: deferral };
+  }
+  window._attemptArcConstraintTarget = _attemptArcConstraintTarget;
 
   // ── FATE CARD INTIMACY OVERRIDE HOOK ──
   // Called whenever fate cards re-render. If intimacy dialogue is
@@ -196541,6 +197844,14 @@ No text, no watermark, no UI elements, share-ready.`;
   // when intimacy dialogue is active. Returns true if it consumed
   // the input (intimacy is active) so the caller skips normal
   // scene-advance flow.
+  // The Say box live-wraps typed text in curly quotes for DISPLAY; commands/exits are detected on the RAW words (Roman 2026-09-12).
+  function _stripOASSayQuotes(v) {
+    var t = String(v == null ? '' : v).trim();
+    while (t.length && (t.charAt(0) === '“' || t.charAt(0) === '"' || t.charAt(0) === '”')) t = t.slice(1);
+    while (t.length && (t.charAt(t.length - 1) === '”' || t.charAt(t.length - 1) === '"' || t.charAt(t.length - 1) === '“')) t = t.slice(0, -1);
+    return t.trim();
+  }
+  window._stripOASSayQuotes = _stripOASSayQuotes;
   window._intimacyDialogueConsumeInput = function(say, doText) {
     if (!state.intimacyDialogue || !state.intimacyDialogue.active) return false;
     // Resolve race-guard: during the 2.2s teardown window, d.active is
@@ -196552,6 +197863,7 @@ No text, no watermark, no UI elements, share-ready.`;
     // Graceful-exit intercept: full-line "stop" / "skip" / "enough" /
     // "fade to black" etc. opens the exit modal instead of firing a
     // turn into the LI. Mid-sentence matches don't trigger.
+    say = _stripOASSayQuotes(say); doText = String(doText == null ? '' : doText).trim();
     if (_isIntimacyExitInput(say, doText)) {
       _showIntimacyExitModal('text');
       try {
@@ -212925,27 +214237,27 @@ No text, no watermark, no UI elements, share-ready.`;
     newTextEl.appendChild(pEl);
     beatTextEl.parentNode.replaceChild(newTextEl, beatTextEl);
 
-    // ── SCREENPLAY-STYLE DIALOGUE CLEANING ──
-    // For dialogue beats in staged (CG) mode, strip novel-style
-    // attribution ("he said", "she replied", etc.) so the displayed
-    // text reads as pure screenplay: the speaker tag is rendered above
-    // the line (already done as speakerEl), and the line itself is
-    // just the quoted dialogue. Surrounding action / he-said framing
-    // is dropped from this beat — narration beats handle stage
-    // direction separately.
+    // ── DIALOGUE BEAT TEXT — PRESERVED, NOT REDUCED (2026-09-13) ──
+    // REPLACED the old "screenplay-style dialogue cleaning" that discarded everything except the
+    // FIRST quoted span from a dialogue beat's text. That silently deleted any narration-before,
+    // narration-after, interior-thought aside, or Character+/Environment+/fusion detail the model
+    // bundled into the same beat as its quote — proven by a real authored fixture through this
+    // exact render path (_cg_beat_narration_loss_control.mjs, RED-1/RED-2, 2026-09-13). The schema
+    // (_buildCGScreenplaySystemPrompt's TEXT RULES) already instructs the model to keep a dialogue
+    // beat's text to JUST the spoken line and put narration/interiority in their OWN adjacent
+    // narration/exposition beats — so in compliant output this is a no-op either way. The fix is
+    // to stop reducing at all: render beat.text verbatim for every kind, dialogue included, exactly
+    // as narration/exposition beats already do below. The speaker-label logic above is untouched —
+    // it already reads the ORIGINAL beat.text (via _hasQuotedLine), independent of this step.
     //
-    // Scope: dialogue beats only. Narration / exposition / interiority
-    // beats render as-is so internal monologue keeps its prose voice.
+    // Deliberately NOT added: a heuristic strip of redundant "he said"/"she replied" tags touching
+    // the quote. A regex narrow enough to be safe (only the exact span between the string boundary
+    // and the quote, nothing else) adds real complexity for a case the schema already prevents in
+    // compliant output, and a regex that's even slightly too broad risks silently deleting genuine
+    // narration again — the exact failure this change exists to stop. If real authored output ever
+    // shows a genuine redundant-attribution problem, add a narrowly-scoped, tested strip THEN, with
+    // real examples to validate against — not preemptively here.
     var _displayText = beat.text;
-    if (beat.kind === 'dialogue' && typeof _displayText === 'string') {
-      // Pull the FIRST quoted span (smart or straight quotes). Discard
-      // everything else in the beat — that's attribution + action that
-      // doesn't belong inside the dialogue line.
-      var _qMatch = _displayText.match(/["“]([^"”]+)["”]/);
-      if (_qMatch && _qMatch[1] && _qMatch[1].trim().length > 0) {
-        _displayText = '"' + _qMatch[1].trim() + '"';
-      }
-    }
 
     // ── Text reveal ──
     // Exposition beats type in character-by-character (different
@@ -212974,6 +214286,13 @@ No text, no watermark, no UI elements, share-ready.`;
         if (typedIdx >= fullText.length) {
           newTextEl.classList.remove('staged-beat-text--typing');
           active._typewriterRaf = null;
+          // BUG FIX (2026-09-13, found via the CG beat-narration red control): natural completion
+          // left active._typewriterComplete set, so _advanceStagedBeat's fast-forward guard
+          // ("if (active._typewriterComplete) { active._typewriterComplete(); return; }") treated
+          // the READER'S NEXT CLICK as a fast-forward-and-swallow instead of an advance — the click
+          // silently did nothing (typing was already done) and the reader had to click Next twice.
+          // Clear it here too, exactly as the manual _typewriterComplete() path already does.
+          active._typewriterComplete = null;
           return;
         }
         active._typewriterRaf = setTimeout(typeStep, TYPE_INTERVAL);
@@ -214793,6 +216112,24 @@ No text, no watermark, no UI elements, share-ready.`;
 
     var active = state._stagedActive;
 
+    // ── THE READER'S RECORDED CHOICE COMES FIRST (2026-09-11) ──
+    // On a baked Book that declared a decision axis, no continuation is requested until the choice is recorded.
+    // This sits BEFORE every lock and before any turn bookkeeping, so a gated request leaves nothing behind: the
+    // resumed call is a first call. The prompt is built from the package's own authored branches.
+    if (typeof _intimateInterruptionPending === 'function' && _intimateInterruptionPending()) {
+      try { console.warn('[INTIMATE-INTERRUPT] continuation requested before the reader submitted — re-mounting the interruption, requesting nothing'); } catch (_) {}
+      try { _mountIntimateInterruption({ resume: true }); } catch (_) {}
+      return;
+    }
+    if ((state.turnCount | 0) >= 0 && Array.isArray(state.scenes) && state.scenes.length >= 1
+        && typeof _sceneDecisionNeeded === 'function' && _sceneDecisionNeeded()) {
+      try { console.warn('[SCENE-DECISION] continuation requested before the reader\'s choice was recorded — mounting the prompt, requesting nothing'); } catch (_) {}
+      state._sceneDecisions = state._sceneDecisions || {}; state._sceneDecisions._resumed = true;
+      var _gateAct = action, _gateDia = dialogue;
+      _mountSceneDecisionPrompt(function () { try { _advanceStagedScene(_gateAct, _gateDia); } catch (_) {} });
+      return;
+    }
+
     // Guard 1 — gate must be open. If staged session exists but gate
     // hasn't fired yet, the user shouldn't be able to submit (they
     // haven't read the scene). Belt+suspenders alongside the disabled-
@@ -214830,6 +216167,7 @@ No text, no watermark, no UI elements, share-ready.`;
       if (_gnActIn) _gnActIn.value = '';
       if (_gnDiaIn) _gnDiaIn.value = '';
       var nextSceneIdx = (state.turnCount || 0) + 1;
+      state._bakedOpeningOnGame = false;   // a generated staged scene takes over from here: the staged guard on 'game' applies again (2026-09-12)
       // Increment turn count to match what the literary path does post-submit.
       // This is what unlocks Petition Fate (Scene 2, turn 1) and Tempt
       // Fate (Scene 3, turn 2) in the UI — see _syncFateCardLockState
@@ -215533,8 +216871,18 @@ No text, no watermark, no UI elements, share-ready.`;
         + ' (+' + PORTFOLIO_MAX_TOKENS + ' conservative chars÷3 allowance, not a token measurement)'); } catch (_) {}
     }
     var raw;
-    try {
-      if (_isGrokScaffold) {
+    if (_isGrokScaffold) {
+      // UNCHANGED (Roman's bake-off / grok-4.3 author testing override — a deliberately-
+      // invoked, non-default path, never a silent primary). Investigated 2026-09-13:
+      // _isGrokScaffold is only ever true when _opts.modelOverride carries a grok-prefixed
+      // model string; the ONLY caller that ever passes modelOverride is
+      // window._spineModelBakeoff (~216584, an explicit console-invoked A/B harness whose
+      // own default MODELS list is ['gpt-4o-mini','gpt-4o'] — grok only appears if a
+      // developer explicitly passes {models:['grok-...']}). The production call site
+      // (_buildCGScaffold(s) at ~217019, Genesis-gate) never sets modelOverride, so this
+      // branch is DEAD in the live default flow today, but is left structurally intact
+      // (out of scope to remove) with its original SPINE FALLBACK behavior unchanged.
+      try {
         // callChatGPT routes only gpt/claude; Grok scaffolds post directly to /api/proxy
         // STRUCTURE_GENERATOR (structured JSON, no ESD). Gated on the grok prefix → production
         // (gpt-4o-mini / opus) scaffolds are unaffected; only a grok modelOverride takes this path.
@@ -215542,34 +216890,47 @@ No text, no watermark, no UI elements, share-ready.`;
         if (!_gres.ok) throw new Error('grok scaffold HTTP ' + _gres.status);
         var _gdata = await _gres.json();
         raw = (_gdata && _gdata.choices && _gdata.choices[0] && _gdata.choices[0].message && _gdata.choices[0].message.content) || (_gdata && _gdata.content) || '';
-      } else {
-        raw = await orch.callChatGPT(_scaffoldMsgs, 'PRIMARY_AUTHOR', { model: _genre.model, max_tokens: _scaffoldMaxTok, jsonMode: true, temperature: 0.7 });
+        var _rawStr = (typeof raw === 'string') ? raw : ((raw && raw.content) || '');
+        if (!String(_rawStr).trim()) throw new Error('primary scaffold model returned empty content');
+      } catch (_scaffoldPrimaryErr) {
+        // SPINE FALLBACK (Roman 2026-06-21), unchanged for the grok-override path: fall back
+        // across INDEPENDENT providers so a single-provider outage never kills the spine:
+        //   backup 1: gpt-4o-mini @ chatgpt-proxy (OpenAI — the prior live spine, Roman's chosen backup)
+        //   backup 2: grok-4-1-fast-reasoning @ /api/proxy STRUCTURE_GENERATOR (x.ai — last resort)
+        raw = '';
+        try {
+          console.warn('[CG:SCAFFOLD] primary ' + _genre.model + ' failed/empty (' + (_scaffoldPrimaryErr && _scaffoldPrimaryErr.message) + ') — backup 1: gpt-4o-mini');
+          var _mraw = await orch.callChatGPT(_scaffoldMsgs, 'PRIMARY_AUTHOR', { model: 'gpt-4o-mini', max_tokens: _scaffoldMaxTok /* shared conditional ceiling: a hardcoded 2000 truncates a portfolio-bearing scaffold */, jsonMode: true, temperature: 0.7 });
+          raw = (typeof _mraw === 'string') ? _mraw : ((_mraw && _mraw.content) || '');
+          if (String(raw || '').trim()) { try { console.log('[CG:SCAFFOLD] ✓ recovered via gpt-4o-mini'); } catch (_) {} }
+        } catch (_miniErr) { try { console.warn('[CG:SCAFFOLD] gpt-4o-mini backup failed (' + (_miniErr && _miniErr.message) + ') — backup 2: grok'); } catch (_) {} }
+        if (!String(raw || '').trim()) {
+          var _gres2 = await fetch('/api/proxy', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ messages: _scaffoldMsgs, role: 'STRUCTURE_GENERATOR', preferredModel: 'grok-4-1-fast-reasoning', max_tokens: _scaffoldMaxTok, temperature: 0.7 })
+          });
+          if (!_gres2.ok) throw new Error('spine fallback chain exhausted (grok HTTP ' + _gres2.status + '; primary: ' + (_scaffoldPrimaryErr && _scaffoldPrimaryErr.message) + ')');
+          var _gdata2 = await _gres2.json();
+          raw = (_gdata2 && _gdata2.choices && _gdata2.choices[0] && _gdata2.choices[0].message && _gdata2.choices[0].message.content) || (_gdata2 && _gdata2.content) || '';
+          if (!String(raw || '').trim()) throw new Error('spine fallback chain exhausted (all backups empty)');
+          try { console.log('[CG:SCAFFOLD] ✓ recovered via grok-4-1-fast-reasoning (last resort)'); } catch (_) {}
+        }
       }
-      var _rawStr = (typeof raw === 'string') ? raw : ((raw && raw.content) || '');
-      if (!String(_rawStr).trim()) throw new Error('primary scaffold model returned empty content');
-    } catch (_scaffoldPrimaryErr) {
-      // SPINE FALLBACK (Roman 2026-06-21): primary = Haiku (issue-spine bake-off winner). On a
-      // degraded Anthropic window, fall back across INDEPENDENT providers so a single-provider
-      // outage never kills the spine (one scaffold call = both story + issue spine):
-      //   backup 1: gpt-4o-mini @ chatgpt-proxy (OpenAI — the prior live spine, Roman's chosen backup)
-      //   backup 2: grok-4-1-fast-reasoning @ /api/proxy STRUCTURE_GENERATOR (x.ai — last resort)
-      raw = '';
+    } else {
+      // TIERED PROVIDER POLICY (2026-09-13): Mistral (ministral-8b-2512) primary → Grok
+      // fallback → Claude/OpenAI terminal-only, via the shared _callTieredProvider helper
+      // (grep "TIERED PROVIDER POLICY" near ~5817). REPLACES the bespoke SPINE FALLBACK chain
+      // above (Haiku/gpt-4o-mini primary → gpt-4o-mini backup 1 → grok backup 2) for every
+      // non-Grok-override scaffold — today's actual default path (_genre.model is always
+      // 'gpt-4o-mini'; see CG_SCAFFOLD_GENRE / _cgScaffoldGenreFor). The portfolio-allowance
+      // ceiling computation (_scaffoldMaxTok) above is UNCHANGED — only the dispatch changes.
       try {
-        console.warn('[CG:SCAFFOLD] primary ' + _genre.model + ' failed/empty (' + (_scaffoldPrimaryErr && _scaffoldPrimaryErr.message) + ') — backup 1: gpt-4o-mini');
-        var _mraw = await orch.callChatGPT(_scaffoldMsgs, 'PRIMARY_AUTHOR', { model: 'gpt-4o-mini', max_tokens: _scaffoldMaxTok /* shared conditional ceiling: a hardcoded 2000 truncates a portfolio-bearing scaffold */, jsonMode: true, temperature: 0.7 });
-        raw = (typeof _mraw === 'string') ? _mraw : ((_mraw && _mraw.content) || '');
-        if (String(raw || '').trim()) { try { console.log('[CG:SCAFFOLD] ✓ recovered via gpt-4o-mini'); } catch (_) {} }
-      } catch (_miniErr) { try { console.warn('[CG:SCAFFOLD] gpt-4o-mini backup failed (' + (_miniErr && _miniErr.message) + ') — backup 2: grok'); } catch (_) {} }
-      if (!String(raw || '').trim()) {
-        var _gres = await fetch('/api/proxy', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ messages: _scaffoldMsgs, role: 'STRUCTURE_GENERATOR', preferredModel: 'grok-4-1-fast-reasoning', max_tokens: _scaffoldMaxTok, temperature: 0.7 })
-        });
-        if (!_gres.ok) throw new Error('spine fallback chain exhausted (grok HTTP ' + _gres.status + '; primary: ' + (_scaffoldPrimaryErr && _scaffoldPrimaryErr.message) + ')');
-        var _gdata = await _gres.json();
-        raw = (_gdata && _gdata.choices && _gdata.choices[0] && _gdata.choices[0].message && _gdata.choices[0].message.content) || (_gdata && _gdata.content) || '';
-        if (!String(raw || '').trim()) throw new Error('spine fallback chain exhausted (all backups empty)');
-        try { console.log('[CG:SCAFFOLD] ✓ recovered via grok-4-1-fast-reasoning (last resort)'); } catch (_) {}
+        var _tieredScaffold = await _callTieredProvider('scaffold', _scaffoldMsgs, { max_tokens: _scaffoldMaxTok, temperature: 0.7 });
+        raw = (_tieredScaffold && typeof _tieredScaffold.content === 'string') ? _tieredScaffold.content : '';
+        if (!String(raw || '').trim()) throw new Error('all provider tiers returned empty content');
+      } catch (_scaffoldTieredErr) {
+        try { console.warn('[CG:SCAFFOLD] all provider tiers failed: ' + (_scaffoldTieredErr && _scaffoldTieredErr.message)); } catch (_) {}
+        throw new Error('scaffold generation failed — all tiers exhausted (' + (_scaffoldTieredErr && _scaffoldTieredErr.message) + ')');
       }
     }
     var parsed;
@@ -217718,16 +219079,29 @@ No text, no watermark, no UI elements, share-ready.`;
             var _sdRowIdx = Array.isArray(window.state.scenes) ? window.state.scenes.length : ((window.state.turnCount | 0) + 1);   // the next scene to write = number of committed scenes (row 0 = the fixed Scene 1); turnCount is already advanced when this builder runs
             var _sdRow = (_sdPlan && Array.isArray(_sdPlan.scenes)) ? _sdPlan.scenes[_sdRowIdx] : null;
             var _sdRender = function (v) { if (typeof v === 'string') return v; if (Array.isArray(v)) return v.map(function (x) { return typeof x === 'string' ? x : (x && (x.text || x.name || x.ref)) ? String(x.text || x.name || x.ref) : ''; }).filter(Boolean).join(' | '); if (v && typeof v === 'object') return Object.keys(v).map(function (k) { var r = _sdRender(v[k]); return r ? k + ': ' + r : ''; }).filter(Boolean).join('; '); return ''; };
-            if (_sdRow && typeof _sdRow === 'object') {
-              var _sdRowLines = Object.keys(_sdRow).filter(function (k) { return !/^_/.test(k); }).map(function (k) { var r = _sdRender(_sdRow[k]); return r ? '  • ' + k + ': ' + r.slice(0, 600) : ''; }).filter(Boolean);
+            var _sdEff = (_sdRow && typeof window._effectiveSceneRow === 'function') ? window._effectiveSceneRow(window.state, _sdRowIdx + 1) : null;
+            if (_sdEff) {
+              // ONE RESOLVED INTENT (2026-09-11): only what stands on the recorded branch is rendered; nothing is delivered with an instruction to ignore it.
+              var _sdDec = (typeof window._sceneDecision === 'function') ? window._sceneDecision(1) : null;
+              var _sdRowLines = [];
+              if (_sdDec && _sdDec.choice) _sdRowLines.push('  • THE READER\'S RECORDED CHOICE at the end of the opening: ' + _sdDec.label);
+              if (_sdEff.goal) _sdRowLines.push('  • goal: ' + _sdRender(_sdEff.goal).slice(0, 600));
+              else _sdRowLines.push('  • this scene\'s job (the authored goal branches on the opening\'s choice and no per-branch goal is approved for "' + (_sdEff.branch || '') + '"; what stands is the exit state): ' + _sdRender(_sdEff.effectiveEvent).slice(0, 400));
+              if (_sdEff.requiredTruth) _sdRowLines.push('  • requiredTruth: ' + _sdRender(_sdEff.requiredTruth).slice(0, 600));
+              if (_sdEff.stage) _sdRowLines.push('  • stage: ' + _sdRender(_sdEff.stage).slice(0, 600));
+              if (!_sdEff.offBranch) { if (_sdEff.participants) _sdRowLines.push('  • participants: ' + _sdRender(_sdEff.participants).slice(0, 300)); if (_sdEff.presentGroups) _sdRowLines.push('  • presentGroups: ' + _sdRender(_sdEff.presentGroups).slice(0, 300)); if (_sdEff.eventFacts) _sdRowLines.push('  • eventFacts: ' + _sdRender(_sdEff.eventFacts).slice(0, 600)); }
+              if (_sdEff.decision_axis) _sdRowLines.push('  • decision_axis: ' + _sdRender(_sdEff.decision_axis).slice(0, 300));
+              if (_sdEff.decision_consequence) _sdRowLines.push('  • decision_consequence: ' + _sdRender(_sdEff.decision_consequence).slice(0, 400));
+              if (_sdEff.exitState) _sdRowLines.push('  • exitState: ' + _sdRender(_sdEff.exitState).slice(0, 400));
+              try { window.state._sceneIntent = { scene: _sdRowIdx + 1, branch: _sdEff.branch, withheld: _sdEff._reconciliation.withheld.slice(), effectiveEvent: _sdEff.effectiveEvent }; } catch (_) {}
               if (_sdRowLines.length) _sdLines.push('PLAN ROW FOR THIS SCENE (scene ' + (_sdRowIdx + 1) + ' of the Book\'s fixed arc — realise it, never replace it):\n' + _sdRowLines.join('\n'));
             }
             var _sdEm = window.state._bakedEmitted;
             if (_sdEm && Array.isArray(window.state.scenes) && window.state.scenes.length === 1) {   // the scene right after the fixed opening
               var _sdEmLines = [];
-              if (_sdEm.sceneSummary) _sdEmLines.push('  • what happened: ' + String(_sdEm.sceneSummary).slice(0, 600));
+              if (_sdEm.sceneSummary) _sdEmLines.push('  • what happened: ' + String(_sdEm.sceneSummary).slice(0, 2000));   // cap raised 1000→1600 (2026-09-11): the corrected authored aftermath is ~1400 chars and must reach the writer whole
               if (_sdEm.openState) _sdEmLines.push('  • state at the end of the opening: ' + _sdRender(_sdEm.openState).slice(0, 400));
-              if (Array.isArray(_sdEm.obligations) && _sdEm.obligations.length) _sdEmLines.push('  • obligations this scene inherits: ' + _sdEm.obligations.map(String).join(' | ').slice(0, 800));
+              if (Array.isArray(_sdEm.obligations) && _sdEm.obligations.length) _sdEmLines.push('  • obligations this scene inherits: ' + _sdEm.obligations.map(String).join(' | ').slice(0, 1400));   // cap raised 800→1400 (2026-09-11), same reason
               if (Array.isArray(_sdEm.ledgerSeeds) && _sdEm.ledgerSeeds.length) _sdEmLines.push('  • what the cast now perceive of each other: ' + _sdEm.ledgerSeeds.map(function (l) { return l ? [l.subject, l.about, l.perception].filter(Boolean).join(' → ') : ''; }).filter(Boolean).join(' | ').slice(0, 800));
               if (_sdEmLines.length) _sdLines.push('THE FIXED OPENING ESTABLISHED (authored Scene 1 — already read; continue from it):\n' + _sdEmLines.join('\n'));
             }
@@ -219238,12 +220612,41 @@ No text, no watermark, no UI elements, share-ready.`;
   // Returns a string ready to splice into _buildCGScreenplayUserPrompt's
   // `lines.push(...)` flow. Empty string if no Bibles exist (CG mode
   // proceeds unchanged — fail-safe).
+  // ── PROTAGONIST READING LENS + EXPOSURE CLAUSE → CG (2026-09-10) ──
+  // The CG screenplay writer received NO protagonist lens and none of the shared Character+ doctrine: the
+  // literary author gets LAYER 1A (PC NARRATOR VOICE) and THE EXPOSURE CLAUSE from _buildCharacterPlusShared;
+  // the CG builders call neither. Independent of the bibles (a baked Book may have none), keyed off the PC's
+  // MASK (state.playerMask / picks.playermask) — never state.archetype, which is the LI's.
+  function _buildCGProtagonistLensBlock() {
+    try {
+      var st = (typeof state !== 'undefined') ? state : window.state; if (!st) return '';
+      var mask = String((st.picks && (st.picks.playermask || st.picks.playerMask)) || st.playerMask || st.playermask || '').toUpperCase().replace(/[^A-Z_]/g, '');
+      var prof = (mask && typeof _PC_NARRATOR_ARCHETYPE_PROFILES !== 'undefined') ? _PC_NARRATOR_ARCHETYPE_PROFILES[mask] : null;
+      var pcName = st.playerName || 'the protagonist';
+      var L = [];
+      L.push('PROTAGONIST READING LENS' + (prof ? ' — ' + String(prof.label).toUpperCase() : (mask ? ' — ' + mask : '')) + ' (HARD; every beat and panel that shows her noticing someone or something is read THROUGH this):');
+      if (prof && prof.movement) L.push('  HOW HER ATTENTION MOVES: ' + prof.movement);
+      if (prof && prof.voice) L.push('  HOW SHE READS PEOPLE: ' + String(prof.voice).slice(0, 420));
+      if (!prof) L.push('  (no PC archetype is set for this story — read her through the seed\'s facets; never through the love interest\'s archetype)');
+      L.push('THE EXPOSURE CLAUSE (HARD — the success criterion for every Character+, Environment+ and fusion moment, in beats AND panels): expose a SPECIFIC, NON-OBVIOUS TRUTH about a person — a flaw, an obsession, a private secret (psychological meaning, never a plot reveal), a contradiction, or a worldview particular enough to distinguish them — through a concrete detail that ' + pcName + ' interprets in a revealing way. Expose someone; do not merely describe something. A place or object exposes its maker, its keeper, whoever marked it, or her through her relationship to it; an unmarked natural environment exposes only her, and no intention is ever invented for it. A fusion is ONE concrete moment that does both. An assignment that reached this prompt is REQUIRED; the density of everything unassigned is yours.');
+      return L.join('\n');
+    } catch (_) { return ''; }
+  }
+  window._buildCGProtagonistLensBlock = _buildCGProtagonistLensBlock;
+
   function _renderBiblesAsCGDirectives() {
     var out = [];
     var pcB = (window.state && window.state.pcBodyBible) || null;
     var liB = (window.state && window.state.liBodyBible) || null;
+    // SEED PHYSICAL CANON IS AUTHORITATIVE (2026-09-11). For a seeded Book, `visualCanon` decides appearance for
+    // every seed-named person; a generated bible may fill only what the seed does not author. Missing stays missing.
+    var _vcSeed = null; try { var _sd = (typeof window._activeSeed === 'function') ? window._activeSeed(window.state) : null; _vcSeed = (_sd && _sd.visualCanon) || null; } catch (_) { _vcSeed = null; }
+    var _vcFor = function (key) { var v = _vcSeed && _vcSeed[key]; return Array.isArray(v) && v.length ? v.map(String).join('; ') : ''; };
     var anB = (window.state && window.state.antagonistBodyBible) || null;
     var liName = (window.state && window.state.loveInterestName) || 'the love interest';
+    // SEED LI NAME (2026-09-11): on a seeded Book the seed's LI name decides the LI canon line — state.loveInterestName
+    // may be unset or a placeholder at Scene 2 of a baked Book, and the visualCanon is keyed by the seed name.
+    try { var _sdLi2 = _sd && (_sd.cast || []).filter(function (c) { return c && c.role === 'LI' && c.name; })[0]; if (_sdLi2 && _vcSeed && _vcSeed[_sdLi2.name]) liName = String(_sdLi2.name); } catch (_) {}
     var antName = (window.state && window.state.aPlot && window.state.aPlot.antagonistOrAntiForce) || 'the antagonist';
     var pcName = (window.state && (window.state.playerName || window.state.pcName)) || 'the protagonist';
     // APPEARANCE ESTABLISHMENT GATING (Roman 2026-06-19) — CG mirror of the literary fix.
@@ -219264,16 +220667,23 @@ No text, no watermark, no UI elements, share-ready.`;
     var _cgLockLine = function (label, name) { return label + ' — ' + name + ' (APPEARANCE ESTABLISHED & LOCKED): the look is fixed canon, established earlier and locked separately for the image. Render CONSISTENTLY from the established appearance; do NOT restate a canonical descriptor list each scene. Surface a physical detail only when a beat genuinely earns it.'; };
 
     // ── PC BODY BIBLE → CG ────────────────────────────────────────────
+    var _pcSeedPhys = _vcFor('PC');
+    if (_pcSeedPhys) {
+      out.push(_cgMode.pc === 'lock' ? _cgLockLine('PROTAGONIST APPEARANCE', pcName) : 'PROTAGONIST PHYSICAL CANON (SEED — authoritative; render exactly; nothing beyond it is authored): ' + _pcSeedPhys);
+      try { if (!/hair|face|eyes|build|age/i.test(_pcSeedPhys)) console.log('[CANON:UNAUTHORED] pc.appearance — the seed authors species, garments and seal only'); } catch (_) {}
+    }
     if (pcB) {
       var pcPhys = [];
-      if (pcB.age)       pcPhys.push('age: ' + pcB.age); // Roman 2026-06-11 Phase 2a-lite: CORE_LOCKED identity field
-      if (pcB.ancestry)  pcPhys.push('ancestry: ' + pcB.ancestry + ' (heritage informs appearance + naming; does NOT change setting)'); // Phase 2 contemporary contract
-      if (pcB.height) pcPhys.push(pcB.height);
-      if (pcB.build)  pcPhys.push(pcB.build);
-      if (pcB.hair)   pcPhys.push(pcB.hair);
-      if (pcB.complexion) pcPhys.push(pcB.complexion);
-      if (pcB.signature_feature) pcPhys.push('signature: ' + pcB.signature_feature);
-      if (pcB.second_celebrated_feature) pcPhys.push('also: ' + pcB.second_celebrated_feature);
+      if (_pcSeedPhys) pcPhys = null;   // seed decides appearance; the bible's physical fields are not rendered
+      if (pcPhys && pcB.age)       pcPhys.push('age: ' + pcB.age); // Roman 2026-06-11 Phase 2a-lite: CORE_LOCKED identity field
+      if (pcPhys && pcB.ancestry)  pcPhys.push('ancestry: ' + pcB.ancestry + ' (heritage informs appearance + naming; does NOT change setting)'); // Phase 2 contemporary contract
+      if (pcPhys && pcB.height) pcPhys.push(pcB.height);
+      if (pcPhys && pcB.build)  pcPhys.push(pcB.build);
+      if (pcPhys && pcB.hair)   pcPhys.push(pcB.hair);
+      if (pcPhys && pcB.complexion) pcPhys.push(pcB.complexion);
+      if (pcPhys && pcB.signature_feature) pcPhys.push('signature: ' + pcB.signature_feature);
+      if (pcPhys && pcB.second_celebrated_feature) pcPhys.push('also: ' + pcB.second_celebrated_feature);
+      if (!pcPhys) pcPhys = [];
       // INTERIOR, not tics (Roman 2026-08-06): CG reasons fresh panel behavior FROM who she is,
       // rather than replaying a fixed nervous tell. The anti-calcification lesson applied to CG —
       // the five emotional tells (stress/desire/impatience/confidence/vulnerability) are no longer
@@ -219285,7 +220695,8 @@ No text, no watermark, no UI elements, share-ready.`;
       // signature_habits is deliberately NOT forwarded to CG (Roman 2026-08-06): it is a tic-CARRIER
       // (e.g. "counts the steps when anxious") that the panel author replays verbatim across every scene —
       // the exact calcification the interior swap exists to kill. The PURE interior above forces fresh reasoning.
-      if (_cgMode.pc === 'lock') out.push(_cgLockLine('PROTAGONIST APPEARANCE', pcName));
+      if (_pcSeedPhys) { /* seed canon already emitted above */ }
+      else if (_cgMode.pc === 'lock') out.push(_cgLockLine('PROTAGONIST APPEARANCE', pcName));
       else out.push('PROTAGONIST PHYSICAL CANON (HARD — visual continuity across panels; render exactly): ' + pcPhys.join('; '));
       if (pcInterior.length) {
         out.push('PROTAGONIST INTERIOR (HARD — this is who she IS, not a menu of gestures. When a beat needs her body / expression / posture to carry state, REASON a fresh, panel-specific action that THIS person — given this interior — would do in THIS exact moment. Do NOT default to a fixed nervous tic (no reflex hand-to-face / ring-twist / hair-touch); invent what she does HERE from who she is. Never caption the interior — show only the behavior it produces):');
@@ -219300,18 +220711,25 @@ No text, no watermark, no UI elements, share-ready.`;
     }
 
     // ── LI BODY BIBLE → CG ────────────────────────────────────────────
+    var _liSeedPhys = _vcFor(liName);
+    if (_liSeedPhys) out.push(_cgMode.li === 'lock' ? _cgLockLine('LI APPEARANCE', liName) : 'LI PHYSICAL CANON (SEED — authoritative; render exactly): ' + liName + ' — ' + _liSeedPhys);
+    // Other seed-named cast with authored physical canon (e.g. Seren): emitted verbatim. People the seed leaves
+    // unauthored (the presiding Dohkar) get NO appearance line — absent, never invented.
+    try { if (_vcSeed) Object.keys(_vcSeed).forEach(function (k) { if (k === 'PC' || k === liName || /^First Favored$|^Kwisheen$|^Human$|^Wilder$/i.test(k)) return; var _v = _vcFor(k); if (_v) out.push('CAST PHYSICAL CANON (SEED — authoritative; render exactly): ' + k + ' — ' + _v); }); } catch (_) {}
     if (liB) {
-      var liPhys = [];
-      if (liB.age)       liPhys.push('age: ' + liB.age); // Roman 2026-06-11 Phase 2a-lite: CORE_LOCKED identity field
-      if (liB.ancestry)  liPhys.push('ancestry: ' + liB.ancestry + ' (heritage informs appearance + naming; does NOT change setting)'); // Phase 2 contemporary contract
-      if (liB.height) liPhys.push(liB.height);
-      if (liB.build)  liPhys.push(liB.build);
-      if (liB.hair)   liPhys.push(liB.hair);
-      if (liB.complexion) liPhys.push(liB.complexion);
-      if (liB.eye_color)  liPhys.push('eyes: ' + liB.eye_color);
-      if (liB.signature_feature) liPhys.push('signature: ' + liB.signature_feature);
-      if (liB.second_celebrated_feature) liPhys.push('also: ' + liB.second_celebrated_feature);
-      if (_cgMode.li === 'lock') out.push(_cgLockLine('LI APPEARANCE', liName));
+      var liPhys = _liSeedPhys ? null : [];
+      if (liPhys && liB.age)       liPhys.push('age: ' + liB.age); // Roman 2026-06-11 Phase 2a-lite: CORE_LOCKED identity field
+      if (liPhys && liB.ancestry)  liPhys.push('ancestry: ' + liB.ancestry + ' (heritage informs appearance + naming; does NOT change setting)'); // Phase 2 contemporary contract
+      if (liPhys && liB.height) liPhys.push(liB.height);
+      if (liPhys && liB.build)  liPhys.push(liB.build);
+      if (liPhys && liB.hair)   liPhys.push(liB.hair);
+      if (liPhys && liB.complexion) liPhys.push(liB.complexion);
+      if (liPhys && liB.eye_color)  liPhys.push('eyes: ' + liB.eye_color);
+      if (liPhys && liB.signature_feature) liPhys.push('signature: ' + liB.signature_feature);
+      if (liPhys && liB.second_celebrated_feature) liPhys.push('also: ' + liB.second_celebrated_feature);
+      if (!liPhys) liPhys = [];
+      if (_liSeedPhys) { /* seed canon already emitted above */ }
+      else if (_cgMode.li === 'lock') out.push(_cgLockLine('LI APPEARANCE', liName));
       else out.push('LI PHYSICAL CANON — ' + liName + ' (HARD — visual continuity across panels; render exactly): ' + liPhys.join('; '));
       // Sensory presence drives SHOT choice (close on hands; how he holds
       // an object; mouth in profile). These are cinematic cues, not prose.
@@ -219757,7 +221175,7 @@ No text, no watermark, no UI elements, share-ready.`;
       plan.scenes.forEach(function (sc) {
         if (!sc || !sc.goal || typeof sc.n !== 'number') return;
         if (sc.n < n) _stepsInGoal(sc.goal).forEach(function (i) { if (spent.indexOf(i) === -1) spent.push(i); });
-        else if (sc.n === n) jobSteps = _stepsInGoal(sc.goal);
+        else if (sc.n === n) { var _effJ = (typeof window._effectiveSceneRow === 'function') ? window._effectiveSceneRow(st, n) : null; jobSteps = _stepsInGoal(_effJ ? _effJ.goal : sc.goal); }
       });
       spent = spent.filter(function (i) { return jobSteps.indexOf(i) === -1; }).sort();
       if (!spent.length) return '';
@@ -219799,7 +221217,9 @@ No text, no watermark, no UI elements, share-ready.`;
       var plan = pf ? pf(st) : null, n = cf ? cf(st) : null;
       if (plan && Array.isArray(plan.scenes) && n != null) {
         var sc = plan.scenes.filter(function (x) { return x && x.n === n; })[0];
-        if (sc && sc.goal) parts.push(String(sc.goal));
+        var _effC = (sc && typeof window._effectiveSceneRow === 'function') ? window._effectiveSceneRow(st, n) : null;
+        if (_effC) { if (_effC.goal) parts.push(String(_effC.goal)); else if (_effC.effectiveEvent) parts.push(String(_effC.effectiveEvent)); }
+        else if (sc && sc.goal) parts.push(String(sc.goal));
       }
     } catch (_) {}
     return parts.join(' ');
@@ -221030,6 +222450,8 @@ No text, no watermark, no UI elements, share-ready.`;
     // (pc_keenly_notices / pc_keeps_noticing baskets), and the SPURNED_EX
     // doubled-panel protocol when applicable. Mode-agnostic data, CG-
     // specific rendering. Empty when no Bibles exist — fail-safe.
+    try { var _lensBlk = (typeof _buildCGProtagonistLensBlock === 'function') ? _buildCGProtagonistLensBlock() : ''; if (_lensBlk) { lines.push(''); lines.push(_lensBlk); } } catch (_) {}
+    try { var _dlv = (typeof _renderCGDeliveredAssignments === 'function' && state._cgDeliveredAssignments && (state._cgDeliveredAssignments.sceneIndex | 0) === (sceneIndex | 0)) ? _renderCGDeliveredAssignments(state._cgDeliveredAssignments) : ''; if (_dlv) { lines.push(''); lines.push(_dlv); } } catch (_) {}
     try {
       var _bibleBlock = (typeof _renderBiblesAsCGDirectives === 'function') ? _renderBiblesAsCGDirectives() : '';
       if (_bibleBlock) {
@@ -224607,6 +226029,45 @@ No text, no watermark, no UI elements, share-ready.`;
     try { return await _runCGScreenplayGenInner(sceneIndex, playerAction, playerDialogue); }
     finally { try { state._stagedAuthoringSceneIndex = null; } catch (_) {} }
   }
+  // ── CG DELIVERED ASSIGNMENTS: mint · snapshot · accept (2026-09-11) ──
+  function _cgBranchKey() { try { var d = (typeof _sceneDecision === 'function') ? _sceneDecision(1) : null; return d ? String(d.choice) : null; } catch (_) { return null; } }
+  function _cgMintDeliveredAssignments(sceneIndex) {
+    var sceneNum = (sceneIndex | 0) + 1;                       // sceneIndex is 0-based; minting speaks in scene numbers
+    if (sceneNum < 2) return null;                             // Scene 1 is authored (baked) or planner-owned; nothing to mint here
+    if (typeof _cpContinuationAssignment !== 'function') return null;
+    if (typeof _sceneDecisionNeeded === 'function' && _sceneDecisionNeeded()) { try { console.warn('[SCENE-DECISION] scene ' + sceneNum + ' requested with NO recorded choice — nothing is minted (fail closed)'); } catch (_) {} return { storyId: state.storyId, sceneIndex: sceneIndex, branchKey: null, attemptId: _cpMintAttemptId(), character_plus: [], environment_plus: null, fusion: null, reason: 'decision-absent', at: Date.now() }; }
+    var m = _cpContinuationAssignment(state, sceneNum);
+    var snap = { storyId: state.storyId, sceneIndex: sceneIndex, branchKey: _cgBranchKey(), attemptId: _cpMintAttemptId(),
+                 character_plus: (m && Array.isArray(m.character_plus)) ? m.character_plus : [], environment_plus: null, fusion: null,
+                 reason: (m && m.ok) ? null : ((m && m.reason) || 'no assignment'), at: Date.now() };
+    state._cgDeliveredAssignments = snap;
+    try { console.log('[CG:ASSIGN:DELIVERED] scene ' + sceneNum + ' · C+' + snap.character_plus.length + ' · branch=' + (snap.branchKey || '-') + ' · attempt=' + snap.attemptId + (snap.reason ? ' · ' + snap.reason : '')); } catch (_) {}
+    return snap;
+  }
+  function _cgAcceptDelivered(reqSnap, sceneIndex, reqAttemptId) {
+    var cur = state._cgDeliveredAssignments || null;
+    if (!reqSnap) return { ok: true, snapshot: null };        // nothing was delivered for this request (Scene 1 / no minting) — nothing to bind
+    if (!cur || cur.attemptId !== reqAttemptId) return { ok: false, reason: 'stale attempt: a newer request replaced this one (' + (cur && cur.attemptId) + ' ≠ ' + reqAttemptId + ')' };
+    if (cur.storyId !== state.storyId) return { ok: false, reason: 'story changed during generation' };
+    if ((cur.sceneIndex | 0) !== (sceneIndex | 0)) return { ok: false, reason: 'scene mismatch: snapshot for scene ' + cur.sceneIndex + ', result for scene ' + sceneIndex };
+    var nowBranch = _cgBranchKey(); if (String(cur.branchKey || '') !== String(nowBranch || '')) return { ok: false, reason: 'branch changed during generation: ' + (cur.branchKey || '-') + ' → ' + (nowBranch || '-') };
+    return { ok: true, snapshot: cur };
+  }
+  function _renderCGDeliveredAssignments(snap) {
+    if (!snap) return '';
+    var L = [];
+    if (snap.reason === 'decision-absent') return '';
+    if (Array.isArray(snap.character_plus) && snap.character_plus.length) {
+      L.push('CHARACTER+ ASSIGNED THIS SCENE — DELIVERED, NOT REQUESTED (one beat per person listed, at their first mention; do not return scene_assignments — these stand):');
+      snap.character_plus.forEach(function (c) { L.push((typeof _cpBeatLines === 'function') ? _cpBeatLines(c, false).replace(/\n$/, '') : ('  • ' + c.character)); });
+      L.push('  Write the beat and the panel that carries it; the SOURCE TRUTH stays unstated; nobody else receives a Character+ this scene.');
+    }
+    // Objects: availability is a FACT from the record; a revealing use is the author\'s to compose — never an assignment here.
+    try { var em = state._bakedEmitted; var os = em && em.openState; if (os && os.pcCondition) L.push('OBJECTS IN PLAY (from the recorded open state — availability only, not an assignment): ' + String(os.pcCondition)); } catch (_) {}
+    return L.length ? L.join('\n') : '';
+  }
+  window._cgMintDeliveredAssignments = _cgMintDeliveredAssignments; window._cgAcceptDelivered = _cgAcceptDelivered; window._renderCGDeliveredAssignments = _renderCGDeliveredAssignments; window._cgBranchKey = _cgBranchKey;
+
   async function _runCGScreenplayGenInner(sceneIndex, playerAction, playerDialogue) {
     // Tick grievance contracts FIRST so visibility transitions land in
     // state before any directive builder reads them.
@@ -224666,6 +226127,15 @@ No text, no watermark, no UI elements, share-ready.`;
     // state._scenePlotContract so the fulfillment audit + carryover operate on CG too). No-op when
     // killed (window._plotContractKill) — _generateLiteraryPlotContract self-gates on _plotContractActive().
     try { if (typeof _generateLiteraryPlotContract === 'function') await _generateLiteraryPlotContract(playerAction, playerDialogue); } catch (_pcCgErr) {}
+    // OPEN ROW GATE (2026-09-11): with no ACCEPTED local objective there is nothing to stage, assign or write. The caller
+    // treats this exactly like a stale result — one bounded retry (a fresh planner reply), then STOP resumable. Never prose.
+    try {
+      var _oeRow = (typeof _effectiveSceneRow === 'function') ? _effectiveSceneRow(state, (sceneIndex | 0) + 1) : null;
+      if (_oeRow && _oeRow.openObjective && _oeRow.objectivePending) {
+        var _rj = state._sceneObjectiveRejection;
+        return { __staleRejected: true, reason: 'local objective not accepted: ' + (_rj && _rj.sceneNum === ((sceneIndex | 0) + 1) ? _rj.reason : 'the planner produced no usable objective'), sceneIndex: sceneIndex };
+      }
+    } catch (_) {}
     // SCENE-1 DIRECT-vs-SUBTLE AXIS EMBODIMENT (Roman 2026-07-15) — match literary.
     // The literary scene-1 scaffold calls _genBespokeScene1Axis to embody the fixed
     // Direct-vs-Subtle probe in THIS scene's real stakes; CG never did, so its demand_hint
@@ -224689,6 +226159,11 @@ No text, no watermark, no UI elements, share-ready.`;
     // (mirrors the literary roots). Both no-op when killed or when there are no beats/debts.
     try { if (typeof _buildPlotContractDirective === 'function') sysPrompt += _buildPlotContractDirective(); } catch (_) {}
     try { if (typeof _buildDeferredSetupDirective === 'function') sysPrompt += _buildDeferredSetupDirective(); } catch (_) {}
+    // ── DELIVERED ASSIGNMENTS (2026-09-11): minted from the authored stage + seed facets BEFORE the prompt is built,
+    // snapshotted and bound to (story, scene, branch, attempt). The writer receives them; it is never asked for them.
+    var _cgDelivered = null;
+    try { _cgDelivered = _cgMintDeliveredAssignments(sceneIndex); } catch (_mdErr) { console.warn('[CG:ASSIGN] mint failed (non-fatal — no assignment this scene):', _mdErr && _mdErr.message); _cgDelivered = null; }
+    var _cgReqAttemptId = _cgDelivered ? _cgDelivered.attemptId : null;
     var userPrompt = _buildCGScreenplayUserPrompt(sceneIndex, playerAction, playerDialogue);
     // [CG:PROMPT-SIZES] (Roman 2026-06-09): itemize the CG prompt mass so cuts are
     // MEASURED, not guessed (mirror of [SCENE1:PROMPT-SIZES]). system = the big
@@ -225033,8 +226508,21 @@ No text, no watermark, no UI elements, share-ready.`;
       // sceneIndex so a stale pre-warmed plan cannot leak assignments into another scene.
       try {
         if (_normalized) {
+          // ── ACCEPTANCE IS BOUND TO THE REQUEST'S OWN SNAPSHOT (2026-09-11) ──
+          // The model's returned scene_assignments never attach. The delivered snapshot attaches only if it is still
+          // the current one for THIS story, THIS scene, THIS branch and THIS attempt; otherwise the WHOLE result is
+          // rejected (never mounted, never committed, no continuity written) and the caller resumes with a fresh request.
+          var _acc = _cgAcceptDelivered(_cgDelivered, sceneIndex, _cgReqAttemptId);
+          if (!_acc.ok) {
+            try { console.warn('[CG:STALE-REJECTED] scene ' + sceneIndex + ' — ' + _acc.reason); } catch (_) {}
+            // The model-compare capture backfilled the raw reply before acceptance; a rejected reply is not this scene's output.
+            try { if (state._sceneCaptures && state._sceneCaptures[sceneIndex]) { state._sceneCaptures[sceneIndex].originalOutput = null; state._sceneCaptures[sceneIndex].rejected = _acc.reason; } } catch (_) {}
+            return { __staleRejected: true, reason: _acc.reason, sceneIndex: sceneIndex }; }
+          if (plan && plan.scene_assignments) { try { console.log('[CG:ASSIGN:MODEL-IGNORED] the writer returned scene_assignments; delivered ones stand'); } catch (_) {} }
           _normalized.scene_assignments = _normalizeSceneAssignments(
-            plan && plan.scene_assignments, sceneIndex, 'cg_screenplay');
+            _acc.snapshot ? { character_plus: _acc.snapshot.character_plus || [], environment_plus: _acc.snapshot.environment_plus || null, fusion: _acc.snapshot.fusion || null } : null, sceneIndex, _acc.snapshot ? 'cg_delivered' : 'cg_none');
+          if (_acc.snapshot) { _normalized._deliveredAttemptId = _acc.snapshot.attemptId; _normalized._deliveredBranch = _acc.snapshot.branchKey; }
+          try { state._cgLastAccepted = { sceneIndex: sceneIndex, attemptId: _acc.snapshot ? _acc.snapshot.attemptId : null, branch: _acc.snapshot ? _acc.snapshot.branchKey : null, cplus: _normalized.scene_assignments.character_plus.length, at: Date.now() }; } catch (_) {}
           var _authored = (Array.isArray(_normalized.beats) && _normalized.beats.length > 0)
                        || (Array.isArray(_normalized.panels) && _normalized.panels.length > 0);
           if (_authored) _normalized.scene_assignments.status = 'issued';
@@ -225479,7 +226967,41 @@ No text, no watermark, no UI elements, share-ready.`;
         }
       }
       if (!plan) {
+        // A Scene-2+ request on a Book whose reader has not recorded the opening's decision is not generated:
+        // the decision prompt is (re)mounted and progress is preserved. No unconstrained continuation, no fallback.
+        if (typeof _sceneDecisionNeeded === 'function' && (sceneIndex | 0) >= 1 && _sceneDecisionNeeded()) {
+          try { console.warn('[SCENE-DECISION] scene ' + ((sceneIndex | 0) + 1) + ' requested before the reader\'s choice was recorded — mounting the prompt, not generating'); } catch (_) {}
+          try { _hideStagedComposingIndicator(); } catch (_) {}
+          state._sceneDecisions = state._sceneDecisions || {}; state._sceneDecisions._resumed = true;
+          try { state.turnCount = Math.max(0, (sceneIndex | 0) - 1); } catch (_) {}   // nothing was written: completed-turn count goes back so the resumed call builds THIS scene
+          state._stagedSubmitting = false; state._isAdvancingScene = false;   // release the advance locks exactly as the function's own exits do, or the resumed call is refused as a duplicate
+          _mountSceneDecisionPrompt(function () { try { _advanceStagedScene(playerAction || '', playerDialogue || ''); } catch (_) {} });
+          return;
+        }
         plan = await _runCGScreenplayGen(sceneIndex, playerAction, playerDialogue);
+        if (plan && plan.__staleRejected) {
+          // The whole result is discarded (never displayed, never committed). ONE bounded retry with the CURRENT
+          // snapshot. Whatever the retry does — a second stale result, a null or malformed reply, a thrown error —
+          // the rejection context is preserved: STOP with resumable state and released locks. The ordinary
+          // null-plan failure path (and the literary safety net behind it) is never entered from here.
+          try { console.warn('[CG:STALE-REJECTED] retrying once with the current branch/attempt: ' + plan.reason); } catch (_) {}
+          var _retry = null, _retryErr = null;
+          try { _retry = await _runCGScreenplayGen(sceneIndex, playerAction, playerDialogue); } catch (_re) { _retryErr = _re; }
+          var _retryOk = !!(_retry && !_retry.__staleRejected && Array.isArray(_retry.beats) && _retry.beats.length);
+          if (!_retryOk) {
+            var _why = _retryErr ? ('retry threw: ' + (_retryErr && _retryErr.message)) : (_retry && _retry.__staleRejected ? ('retry stale: ' + _retry.reason) : 'retry returned no usable plan');
+            state._cgResumable = { sceneIndex: sceneIndex, action: playerAction || '', dialogue: playerDialogue || '', reason: _why, at: Date.now(), storyId: state.storyId };
+            try { console.warn('[CG:STALE-STOP] scene ' + sceneIndex + ' — ' + _why + ' — stopped; resumable; no engine switch'); } catch (_) {}
+            try { _hideStagedComposingIndicator(); } catch (_) {}
+            try { showToast(/local objective/.test(_why) ? 'This scene could not be planned inside the story\'s canon. Submit again to continue.' : 'The story changed while this scene was being written. Submit again to continue.'); } catch (_) {}
+            // The staged path bumps turnCount BEFORE generating; nothing was written, so the count of COMPLETED turns goes
+            // back to what it was — a resubmit then builds THIS scene again, not the one after it.
+            try { state.turnCount = Math.max(0, (sceneIndex | 0) - 1); } catch (_) {}
+            state._stagedSubmitting = false; state._isAdvancingScene = false;
+            return;
+          }
+          plan = _retry;
+        }
       }
       // CG SIGNATURE LENS — caption-only perception pass, AFTER screenplay gen, BEFORE
       // final cleanup/render. ≤1 caption/scene, scarce by default, shared anti-calc/CDS.
@@ -229674,6 +231196,7 @@ No text, no watermark, no UI elements, share-ready.`;
     state.fateCommitted = false;
     state._isAdvancingScene = false;
 
+    state._bakedOpeningOnGame = false;   // a generated staged scene takes over: the staged guard on 'game' applies again
     if (typeof window.showScreen === 'function') {
       window.showScreen('gnReader');
     }
@@ -252331,9 +253854,90 @@ Generate the synopsis now.` }
     //   · ownership re-checked at the store, so a bible that arrives after the story moved on is
     //     discarded instead of written onto the story that replaced it.
     // ══════════════════════════════════════════════════════════════════════════════════════
-    var _bodyBibleInFlight = {};
+    var _bodyBibleInFlight = {};   // in-memory only — a Promise cannot be persisted; the DURABLE record is state._bibleArtifacts (below)
     function _bodyBibleScopeKey(subject) {
       return String((window.state && window.state.storyId) || '') + '::' + String(subject || '');
+    }
+    // ══════════════════════════════════════════════════════════════════════════════════════
+    //  DURABLE BIBLE ARTIFACT LEDGER (2026-09-13, Roman's decision) — an explicit, PERSISTED
+    //  (state._bibleArtifacts, survives a save/reload) per-story, per-role state machine:
+    //    absent -> pending -> committed | failed -> (retry -> pending again)
+    //  Diagnosed first, not assumed: a real-click-path trace (with real, valid fixture content)
+    //  found _generatePCBodyBible()/_generateLIBodyBible() fire EXACTLY ONCE per role when the
+    //  first attempt succeeds — the pre-existing _bodyBibleOnce in-flight map + the top-level
+    //  `if (state.pcBodyBible) return` guard already prevent duplicating a SUCCESSFUL generation.
+    //  What that mechanism lacked, precisely: (1) an EXPLICIT, inspectable, persisted status
+    //  (today's only signal is "is the value truthy yet", not pending/failed/committed as named
+    //  states); (2) reuse keyed on the SUBJECT NAME only, not a fingerprint of the actual DECLARED
+    //  INPUTS that vary the prompt (world/subtype/archetype/gender/mask/A-plot goal) — so a real
+    //  input change mid-story would silently regenerate with no record of WHY, and a coincidental
+    //  non-change would silently reuse without confirming the inputs actually still match; (3) no
+    //  logged distinction between "this is a deliberate retry after a real failure" and "this is
+    //  an explicit refresh because inputs changed" — both looked identical (just another call).
+    //  This ledger makes all three explicit, on top of the EXISTING in-flight/ownership machinery
+    //  (_bodyBibleInFlight, _bodyBibleStillOwned) — neither is replaced, both still apply.
+    // ══════════════════════════════════════════════════════════════════════════════════════
+    function _bibleFingerprint(inputs) {
+      var keys = Object.keys(inputs || {}).sort();
+      var s = keys.map(function (k) { return k + '=' + String(inputs[k]); }).join('|');
+      var h = 0; for (var i = 0; i < s.length; i++) { h = ((h << 5) - h + s.charCodeAt(i)) | 0; }
+      return 'fp' + (h >>> 0).toString(36) + ':' + s.length;
+    }
+    function _bibleLedger() {
+      if (!window.state) return {};
+      if (!window.state._bibleArtifacts) window.state._bibleArtifacts = {};
+      return window.state._bibleArtifacts;
+    }
+    // Called BEFORE dispatch. Returns the record to use; also decides + LOGS which of the four
+    // named cases applies: reuse committed / join pending / retry after failed / first-ever.
+    function _bibleArtifactBefore(kind, storyId, fingerprint) {
+      var ledger = _bibleLedger();
+      var rec = ledger[kind];
+      var sameScope = rec && rec.storyId === storyId;
+      if (sameScope && rec.status === 'committed' && rec.fingerprint === fingerprint) {
+        return { decision: 'reuse-committed', rec: rec };
+      }
+      // JOIN PENDING (2026-09-13, real regression found + fixed): a genuinely concurrent second
+      // caller — same story, same fingerprint, an attempt is ALREADY pending — must join that
+      // attempt, not start a second one. This case was missing entirely; every caller fell through
+      // to "proceed" unconditionally, which silently broke the very coalescing this ledger was
+      // built alongside (caught by re-running the existing coalescing control after this file's
+      // other changes — it went from passing to failing, which is what surfaced this).
+      if (sameScope && rec.status === 'pending' && rec.fingerprint === fingerprint) {
+        return { decision: 'join-pending', rec: rec };
+      }
+      if (sameScope && rec.fingerprint !== fingerprint) {
+        try { console.log('[BIBLE-ARTIFACT] ' + kind + ' EXPLICIT REFRESH — declared inputs changed (was ' + rec.fingerprint + ', now ' + fingerprint + '), previous status was ' + rec.status); } catch (_) {}
+      } else if (sameScope && rec.status === 'failed') {
+        try { console.log('[BIBLE-ARTIFACT] ' + kind + ' retrying after a recorded failure (attempt ' + ((rec.attempt || 0) + 1) + '): ' + rec.error); } catch (_) {}
+      } else if (!rec) {
+        try { console.log('[BIBLE-ARTIFACT] ' + kind + ' first attempt for this story'); } catch (_) {}
+      }
+      var attempt = sameScope ? (rec.attempt || 0) + 1 : 1;
+      var next = { status: 'pending', storyId: storyId, fingerprint: fingerprint, attempt: attempt, startedAt: Date.now() };
+      ledger[kind] = next;
+      return { decision: 'proceed', rec: next };
+    }
+    function _bibleArtifactCommitted(kind, storyId) {
+      var ledger = _bibleLedger(); var rec = ledger[kind];
+      if (rec && rec.storyId === storyId) { rec.status = 'committed'; rec.committedAt = Date.now(); }
+      try { console.log('[BIBLE-ARTIFACT] ' + kind + ' -> committed (attempt ' + (rec && rec.attempt) + ')'); } catch (_) {}
+    }
+    function _bibleArtifactFailed(kind, storyId, reason) {
+      var ledger = _bibleLedger(); var rec = ledger[kind];
+      if (rec && rec.storyId === storyId) { rec.status = 'failed'; rec.failedAt = Date.now(); rec.error = String(reason || 'unknown'); }
+      try { console.warn('[BIBLE-ARTIFACT] ' + kind + ' -> failed (attempt ' + (rec && rec.attempt) + '): ' + reason); } catch (_) {}
+    }
+    // Ownership token = story::subject key PLUS the ledger's attempt number at the moment this
+    // token was minted. Closes a real gap the pre-existing key-only ownership check (below) could
+    // not: a stale attempt whose FINGERPRINT no longer matches — inputs changed (an explicit
+    // refresh) while the SUBJECT NAME stayed the same, so the key-only check alone would not have
+    // noticed the request is now stale. Comparing the CURRENT ledger attempt catches it: an
+    // explicit refresh always increments attempt, so a stale in-flight request's token goes out of
+    // date the moment a newer attempt starts, even with an identical subject name.
+    function _bibleOwnershipToken(kind, key) {
+      var rec = _bibleLedger()[kind];
+      return key + '#a' + ((rec && rec.attempt) || 0);
     }
     function _bodyBibleOnce(kind, key, run) {
       var cur = _bodyBibleInFlight[kind];
@@ -252368,9 +253972,40 @@ Generate the synopsis now.` }
       return false;
     }
 
+    function _pcBibleFingerprintInputs() {
+      var s = window.state || {}; var picks = s.picks || {}; var ident = picks.identity || {};
+      return {
+        subject: _pcBibleSubject(),
+        gender: ident.playerGender || s.playerGender || 'Female',
+        mask: picks.playermask || picks.playerMask || s.playerMask || s.playermask || '',
+        world: picks.world || 'Modern', subtype: picks.worldSubtype || '',
+        aplotGoal: (s.aPlot && s.aPlot.goal) ? String(s.aPlot.goal) : ''
+      };
+    }
     async function _generatePCBodyBible() {
-      if (window.state && window.state.pcBodyBible) return window.state.pcBodyBible;
-      return _bodyBibleOnce('pc', _bodyBibleScopeKey(_pcBibleSubject()), _generatePCBodyBibleUncached);
+      var storyId = String((window.state && window.state.storyId) || '');
+      var fp = _bibleFingerprint(_pcBibleFingerprintInputs());
+      // MIGRATION (a story saved before this ledger existed already has state.pcBodyBible set with
+      // no ledger record at all): treat the existing value as authoritative and backfill a
+      // 'committed' record for it rather than reading "no record" as "absent, regenerate".
+      if (window.state && window.state.pcBodyBible && !_bibleLedger().pc) {
+        _bibleLedger().pc = { status: 'committed', storyId: storyId, fingerprint: fp, attempt: 1, committedAt: Date.now(), migrated: true };
+        try { console.log('[BIBLE-ARTIFACT] pc backfilled as committed from a pre-ledger value'); } catch (_) {}
+        return window.state.pcBodyBible;
+      }
+      var gate = _bibleArtifactBefore('pc', storyId, fp);
+      if (gate.decision === 'reuse-committed' && window.state && window.state.pcBodyBible) return window.state.pcBodyBible;
+      var result = await _bodyBibleOnce('pc', _bibleOwnershipToken('pc', _bodyBibleScopeKey(_pcBibleSubject())), _generatePCBodyBibleUncached);
+      // Re-check ownership AFTER the await, not just before it started: a newer attempt (explicit
+      // refresh) may have superseded this one WHILE it was in flight. Only the attempt that is
+      // STILL current when it resolves may commit; a superseded one's result is discarded here too
+      // (on top of the write-site checks inside the Uncached generator, which guard state.pcBodyBible
+      // itself) so the ledger's own status never regresses from a stale late arrival.
+      var stillCurrent = _bibleLedger().pc === gate.rec;
+      if (result && stillCurrent) _bibleArtifactCommitted('pc', storyId);
+      else if (!result && stillCurrent) _bibleArtifactFailed('pc', storyId, 'generation returned null (see [PC-BODY-BIBLE] warning above for detail)');
+      else if (!stillCurrent) { try { console.warn('[BIBLE-ARTIFACT] pc attempt ' + gate.rec.attempt + ' resolved AFTER being superseded — discarded, not committed, ledger left as the newer attempt left it'); } catch (_) {} }
+      return stillCurrent ? result : window.state.pcBodyBible;
     }
     function _pcBibleSubject() {
       var ident = ((window.state && window.state.picks) || {}).identity || {};
@@ -252816,28 +254451,22 @@ Generate the synopsis now.` }
           'FAILURE TEST — THREE DIFFERENT DANIS (HARD, Roman 2026-06-01). Imagine three women, all of THIS PC\'s archetype (e.g. three Open Veins), all with the same WORLD setting and roughly comparable wounds. Strip the names. Could a reader tell them apart from THIS Bible alone? Not "three different archetypes" — that\'s easy and not the test. Not "three different women with different scars" — that\'s the failure mode. THREE DIFFERENT NARRATORS. They have the same MOVEMENT (Open Vein = events arrive as feeling first) but their EMOTIONAL CLIMATES are different: weather, core_contradiction, private_hope. If your Bible could be lifted onto another Dani with only the names changed — same weather register, same contradiction shape, same private hope — you have written a TYPE, not a narrator. ROTATE the climate dimensions: if recent Danis were "watchful" or "guarded but kind" weather, this Dani is "meaning-hungry" or "already in love with something she has not let herself name." Climate variety is not adjective-swap (guarded → cautious → careful). Climate variety is which emotional REGISTER she is living in — the kind of woman she IS, before the plot starts.\n\n' +
           'Every field REQUIRED. No nulls. No placeholders. No generics. Return ONLY the JSON object.';
 
-        var res = await fetch('/api/chatgpt-proxy', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            role: 'PRIMARY_AUTHOR', model: 'gpt-4o-mini',
-            temperature: 0.6,
-            // 900 → 1500 → 2500. After LI bible hit max_tokens at 1500 with
-            // rawLen=6543, the PC bible (similarly verbose schema with
-            // emotional_weather + core_contradiction + private_hope +
-            // signature_habits added 2026-06-01) is at the same risk.
-            // Output cost is ~$0.005/1k tokens — +1000 tokens = $0.005/story,
-            // negligible vs. the failure mode (no PC anchor for the arc).
-            max_tokens: 2500,
-            messages: [
-              { role: 'system', content: sys },
-              { role: 'user', content: usr }
-            ]
-          })
-        });
-        if (!res.ok) { try { console.warn('[PC-BODY-BIBLE] HTTP ' + res.status); } catch (_) {} return null; }
-        var data = await res.json();
-        try { if (typeof _recordProxyTextCost === 'function') _recordProxyTextCost(data, 'gpt-4o-mini', 'setup'); } catch (_) {}
+        // TIERED PROVIDER POLICY (2026-09-13): Mistral (ministral-8b-2512) primary → Grok
+        // fallback → Claude/OpenAI terminal-only, via the shared _callTieredProvider helper
+        // (grep "TIERED PROVIDER POLICY" near ~5817). Prompt content (sys/usr) is UNCHANGED —
+        // only the transport that carries it changed. A thrown error (all three tiers
+        // exhausted) is handled the same way the old `!res.ok` branch was: warn + return null.
+        var data;
+        try {
+          data = await _callTieredProvider('pcBodyBible', [
+            { role: 'system', content: sys },
+            { role: 'user', content: usr }
+          ], { max_tokens: 2500, temperature: 0.6 });
+        } catch (_tpErr) {
+          try { console.warn('[PC-BODY-BIBLE] all provider tiers failed: ' + (_tpErr && _tpErr.message)); } catch (_) {}
+          return null;
+        }
+        try { if (typeof _recordProxyTextCost === 'function') _recordProxyTextCost(data, (data && data._orchestration && data._orchestration.model), 'setup'); } catch (_) {}
         var rawc = (data && typeof data.content === 'string') ? data.content : '';
         rawc = rawc.replace(/^\s*```[a-z]*\s*/i, '').replace(/\s*```\s*$/i, '').trim();
         var lb = rawc.indexOf('{'), rb = rawc.lastIndexOf('}');
@@ -252867,7 +254496,7 @@ Generate the synopsis now.` }
         }
         // BEFORE the crisis re-roll and both canon-decalcification gates, all of which can dispatch
         // paid calls of their own.
-        if (!_bodyBibleStillOwned('pc', _keyAtRequest, _bodyBibleScopeKey(_pcBibleSubject()))) return null;
+        if (!_bodyBibleStillOwned('pc', _keyAtRequest, _bibleOwnershipToken('pc', _bodyBibleScopeKey(_pcBibleSubject())))) return null;
         // CRISIS-FAMILY telemetry (Roman 2026-06-12 #1B) — did the steer land? The
         // inherited Scene-1 crisis (current_crisis.event) should be embodied/social/
         // public/intimate, not institutional. Telemetry-first; if institutional
@@ -253069,7 +254698,7 @@ Generate the synopsis now.` }
             await window._behavioralCanonDecalcifyGate(bible, 'pc', (playermask || 'HEART_WARDEN') + '; billionaire-modern world; heroine');
           }
         } catch (_pcbErr) { try { console.warn('[BEHAV-CANON] pc gate call failed: ' + (_pcbErr && _pcbErr.message)); } catch (_) {} }
-        if (!_bodyBibleStillOwned('pc', _keyAtRequest, _bodyBibleScopeKey(_pcBibleSubject()))) return null;
+        if (!_bodyBibleStillOwned('pc', _keyAtRequest, _bibleOwnershipToken('pc', _bodyBibleScopeKey(_pcBibleSubject())))) return null;
         window.state.pcBodyBible = bible;
         try {
           console.log('[PC-BODY-BIBLE] generated for ' + pcName + ':',
@@ -253097,14 +254726,37 @@ Generate the synopsis now.` }
     }
     window._generatePCBodyBible = _generatePCBodyBible;
 
+    function _liBibleFingerprintInputs() {
+      var s = window.state || {}; var picks = s.picks || {}; var ident = picks.identity || {};
+      return {
+        subject: _liBibleSubject(),
+        gender: ((s.famousFate && s.famousFate.resolved && s.famousFate.resolved.loveInterestGender)) || s.loveInterestGender || s.liGender || ident.loveInterestGender || ident.partnerGender || s.partnerGender || 'Male',
+        archetype: (s.archetype && s.archetype.primary) || '',
+        world: picks.world || 'Modern', subtype: picks.worldSubtype || ''
+      };
+    }
     async function _generateLIBodyBible() {
-      if (window.state && window.state.liBodyBible) return window.state.liBodyBible;
       // NO-ROMANCE HONOR (Roman 2026-07-07): no love interest → no LI Body Bible. This is the
       // highest-leverage chokepoint — _generatePairBond / _ensureRPlot / _pickStoryShape all
       // require liBodyBible and fall through their existing guards without it. It is checked
       // BEFORE the in-flight join, so a no-romance story registers no promise at all.
       if (window.state && window.state.famousFate && window.state.famousFate.romance && window.state.famousFate.romance.noLoveInterest) return null;
-      return _bodyBibleOnce('li', _bodyBibleScopeKey(_liBibleSubject()), _generateLIBodyBibleUncached);
+      var storyId = String((window.state && window.state.storyId) || '');
+      var fp = _bibleFingerprint(_liBibleFingerprintInputs());
+      // MIGRATION: a pre-ledger story already has state.liBodyBible with no ledger record.
+      if (window.state && window.state.liBodyBible && !_bibleLedger().li) {
+        _bibleLedger().li = { status: 'committed', storyId: storyId, fingerprint: fp, attempt: 1, committedAt: Date.now(), migrated: true };
+        try { console.log('[BIBLE-ARTIFACT] li backfilled as committed from a pre-ledger value'); } catch (_) {}
+        return window.state.liBodyBible;
+      }
+      var gate = _bibleArtifactBefore('li', storyId, fp);
+      if (gate.decision === 'reuse-committed' && window.state && window.state.liBodyBible) return window.state.liBodyBible;
+      var result = await _bodyBibleOnce('li', _bibleOwnershipToken('li', _bodyBibleScopeKey(_liBibleSubject())), _generateLIBodyBibleUncached);
+      var stillCurrent = _bibleLedger().li === gate.rec;
+      if (result && stillCurrent) _bibleArtifactCommitted('li', storyId);
+      else if (!result && stillCurrent) _bibleArtifactFailed('li', storyId, 'generation returned null (see [LI-BODY-BIBLE] warning above for detail)');
+      else if (!stillCurrent) { try { console.warn('[BIBLE-ARTIFACT] li attempt ' + gate.rec.attempt + ' resolved AFTER being superseded — discarded, not committed, ledger left as the newer attempt left it'); } catch (_) {} }
+      return stillCurrent ? result : window.state.liBodyBible;
     }
     function _liBibleSubject() {
       var ident = ((window.state && window.state.picks) || {}).identity || {};
@@ -253863,29 +255515,22 @@ Generate the synopsis now.` }
           '(3) THE THREE-DIFFERENT-MEN TEST (HARDEST — Roman 2026-06-01). Imagine three men, all of THIS LI\'s archetype, all in the same WORLD setting. Now strip the names. Could a reader tell them apart from THIS Bible alone? Not "three different archetypes" — that\'s easy and not the test. Not "three different billionaires" — that\'s the failure mode. THREE DIFFERENT MEN. They have the same MOVEMENT (Fox = deflects sideways) but they are not interchangeable. Different weather, different defining moments, different secondary anecdotes from different domains, different contradictions. If your Bible could be copied onto Roman #2 with only the names changed — same anecdote shape, same emotional weather, same kind-of-kindness in the defining_anecdote — you have written a TYPE, not a man. ROTATE the structural shapes: if recent Romans had kindness-without-credit defining_anecdotes, this Roman\'s defining_anecdote should live in a different life-domain entirely (failure / refusal / arrogance / cruelty-regretted / small-stakes-truth). If recent Romans were "armored and tired" weather, this Roman is "grimly amused" or "angry-curious" or "weirdly cheerful." Anecdote variety is not synonym-swap (fly → drive). Anecdote variety is which life-domain the anecdote LIVES in.\n\n' +
           'Every field REQUIRED. No nulls. No placeholders. No generics. Return ONLY the JSON object.';
 
-        var res = await fetch('/api/chatgpt-proxy', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            role: 'PRIMARY_AUTHOR', model: 'gpt-4o-mini',
-            temperature: 0.6,
-            // Bumped 1500 → 3000 after live diagnostic showed stop_reason=
-            // max_tokens with rawLen=6543 (~1635 tokens; bible truncated
-            // mid-JSON before closing brace). LI bible has 18+ specific
-            // fields including voice_quality, hands_quality, mouth_quality,
-            // pc_keeps_noticing basket, defining_anecdote, secondary_anecdote,
-            // weather, contradiction etc. — each is verbose enough that 1500
-            // wasn't ever enough headroom.
-            max_tokens: 3000,
-            messages: [
-              { role: 'system', content: sys },
-              { role: 'user', content: usr }
-            ]
-          })
-        });
-        if (!res.ok) { try { console.warn('[LI-BODY-BIBLE] HTTP ' + res.status); } catch (_) {} return null; }
-        var data = await res.json();
-        try { if (typeof _recordProxyTextCost === 'function') _recordProxyTextCost(data, 'gpt-4o-mini', 'setup'); } catch (_) {}
+        // TIERED PROVIDER POLICY (2026-09-13): Mistral (ministral-8b-2512) primary → Grok
+        // fallback → Claude/OpenAI terminal-only, via the shared _callTieredProvider helper
+        // (grep "TIERED PROVIDER POLICY" near ~5817). Prompt content (sys/usr) is UNCHANGED —
+        // only the transport that carries it changed. A thrown error (all three tiers
+        // exhausted) is handled the same way the old `!res.ok` branch was: warn + return null.
+        var data;
+        try {
+          data = await _callTieredProvider('liBodyBible', [
+            { role: 'system', content: sys },
+            { role: 'user', content: usr }
+          ], { max_tokens: 3000, temperature: 0.6 });
+        } catch (_tpErr) {
+          try { console.warn('[LI-BODY-BIBLE] all provider tiers failed: ' + (_tpErr && _tpErr.message)); } catch (_) {}
+          return null;
+        }
+        try { if (typeof _recordProxyTextCost === 'function') _recordProxyTextCost(data, (data && data._orchestration && data._orchestration.model), 'setup'); } catch (_) {}
         var rawc = (data && typeof data.content === 'string') ? data.content : '';
         rawc = rawc.replace(/^\s*```[a-z]*\s*/i, '').replace(/\s*```\s*$/i, '').trim();
         var lb = rawc.indexOf('{'), rb = rawc.lastIndexOf('}');
@@ -253912,7 +255557,7 @@ Generate the synopsis now.` }
           return null;
         }
         // BEFORE the physical- and behavioral-canon gates, both of which can dispatch paid calls.
-        if (!_bodyBibleStillOwned('li', _keyAtRequest, _bodyBibleScopeKey(_liBibleSubject()))) return null;
+        if (!_bodyBibleStillOwned('li', _keyAtRequest, _bibleOwnershipToken('li', _bodyBibleScopeKey(_liBibleSubject())))) return null;
         // Normalize desire_register_exemplars (literary) AND
         // desire_register_exemplars_cg (CG-grammar) — both same shape, same
         // sanity filter. Caps at 6 each; rejects calcified phrasings.
@@ -253963,7 +255608,7 @@ Generate the synopsis now.` }
             await window._behavioralCanonDecalcifyGate(bible, 'li', _liCtxB);
           }
         } catch (_libErr) { try { console.warn('[BEHAV-CANON] li gate call failed: ' + (_libErr && _libErr.message)); } catch (_) {} }
-        if (!_bodyBibleStillOwned('li', _keyAtRequest, _bodyBibleScopeKey(_liBibleSubject()))) return null;
+        if (!_bodyBibleStillOwned('li', _keyAtRequest, _bibleOwnershipToken('li', _bodyBibleScopeKey(_liBibleSubject())))) return null;
         window.state.liBodyBible = bible;
         try {
           console.log('[LI-BODY-BIBLE] generated for ' + liName + ':',
@@ -254108,22 +255753,25 @@ Generate the synopsis now.` }
           '}\n\n' +
           'Every field REQUIRED. No nulls. No placeholders. No generics. Return ONLY the JSON object.';
 
-        var res = await fetch('/api/chatgpt-proxy', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            role: 'PRIMARY_AUTHOR', model: 'gpt-4o-mini',
-            temperature: 0.65,
-            max_tokens: 1100,
-            messages: [
-              { role: 'system', content: sys },
-              { role: 'user', content: usr }
-            ]
-          })
-        });
-        if (!res.ok) { try { console.warn('[ANT-BODY-BIBLE] HTTP ' + res.status); } catch (_) {} return null; }
-        var data = await res.json();
-        try { if (typeof _recordProxyTextCost === 'function') _recordProxyTextCost(data, 'gpt-4o-mini', 'setup'); } catch (_) {}
+        // TIERED PROVIDER POLICY (2026-09-13, found + closed during the "no unknown outbound
+        // calls" investigation): this generator fires in the SAME Genesis-gate lifecycle window
+        // as the four originally-converted roles, self-gated on a named Shape-A/B antagonist —
+        // so it doesn't fire on every story, which is exactly why it read as "unclassified"
+        // traffic rather than a consistently-reproducing one. It is still a direct, silent
+        // OpenAI generation call in this lifecycle, so it gets the same policy, not an exclusion.
+        // Mistral (ministral-8b-2512) primary → Grok fallback → Claude/OpenAI terminal-only, via
+        // the shared _callTieredProvider helper (grep "TIERED PROVIDER POLICY" near ~5817).
+        var data;
+        try {
+          data = await _callTieredProvider('antagonistBodyBible', [
+            { role: 'system', content: sys },
+            { role: 'user', content: usr }
+          ], { max_tokens: 1100, temperature: 0.65 });
+        } catch (_tpErr) {
+          try { console.warn('[ANT-BODY-BIBLE] all provider tiers failed: ' + (_tpErr && _tpErr.message)); } catch (_) {}
+          return null;
+        }
+        try { if (typeof _recordProxyTextCost === 'function') _recordProxyTextCost(data, (data && data._orchestration && data._orchestration.model), 'setup'); } catch (_) {}
         var rawc = (data && typeof data.content === 'string') ? data.content : '';
         rawc = rawc.replace(/^\s*```[a-z]*\s*/i, '').replace(/\s*```\s*$/i, '').trim();
         var lb = rawc.indexOf('{'), rb = rawc.lastIndexOf('}');
@@ -261120,22 +262768,22 @@ Generate the synopsis now. The protagonist MUST be named ${pKernel}. Depict the 
           '}\n\n' +
           'FORBIDDEN OUTPUT: any string that names the external A-plot (the drive / the audit / the deal / the breach / the contract / the investigation / the mission). Any string that quantifies the relationship (trust score / attraction percentage / X%). Any milestone generic enough to fit a different couple ("their first kiss" / "their first date"). Specific-to-THIS-pair, plain prose. Return the JSON object only.';
 
-        var res = await fetch('/api/chatgpt-proxy', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            role: 'PRIMARY_AUTHOR', model: 'gpt-4o-mini',
-            temperature: 0.6,
-            max_tokens: 1200,
-            messages: [
-              { role: 'system', content: sys },
-              { role: 'user',   content: usr }
-            ]
-          })
-        });
-        if (!res.ok) { try { console.warn('[R-PLOT] HTTP ' + res.status); } catch (_) {} return null; }
-        var data = await res.json();
-        try { if (typeof _recordProxyTextCost === 'function') _recordProxyTextCost(data, 'gpt-4o-mini', 'setup'); } catch (_) {}
+        // TIERED PROVIDER POLICY (2026-09-13): Mistral (ministral-8b-2512) primary → Grok
+        // fallback → Claude/OpenAI terminal-only, via the shared _callTieredProvider helper
+        // (grep "TIERED PROVIDER POLICY" near ~5817). Prompt content (sys/usr) is UNCHANGED —
+        // only the transport that carries it changed. A thrown error (all three tiers
+        // exhausted) is handled the same way the old `!res.ok` branch was: warn + return null.
+        var data;
+        try {
+          data = await _callTieredProvider('rplot', [
+            { role: 'system', content: sys },
+            { role: 'user',   content: usr }
+          ], { max_tokens: 1200, temperature: 0.6 });
+        } catch (_tpErr) {
+          try { console.warn('[R-PLOT] all provider tiers failed: ' + (_tpErr && _tpErr.message)); } catch (_) {}
+          return null;
+        }
+        try { if (typeof _recordProxyTextCost === 'function') _recordProxyTextCost(data, (data && data._orchestration && data._orchestration.model), 'setup'); } catch (_) {}
         var raw = (data && typeof data.content === 'string') ? data.content : '';
         raw = raw.replace(/^\s*```[a-z]*\s*/i, '').replace(/\s*```\s*$/i, '').trim();
         var lb = raw.indexOf('{'), rb = raw.lastIndexOf('}');
@@ -261248,10 +262896,23 @@ Generate the synopsis now. The protagonist MUST be named ${pKernel}. Depict the 
           '  "sequence_verdict": "<PASS | WARN | FAIL>",\n' +
           '  "sequence_reason": "<one sentence: where the escalation lives across the states — or where the states stop progressing>"\n' +
           '}';
-        var res = await _auditPost({ temperature: 0.3, max_tokens: 400, messages: [ { role: 'system', content: sys }, { role: 'user', content: usr } ] });
-        if (!res.ok) { try { console.warn('[R-PLOT:AUDIT] shape audit HTTP ' + res.status); } catch (_) {} return null; }
-        var data = await res.json();
-        try { if (typeof _recordProxyTextCost === 'function') _recordProxyTextCost(data, 'gpt-4o-mini', 'audit'); } catch (_) {}
+        // TIERED PROVIDER POLICY (2026-09-13): this ONE caller (single call site, ~257263, right
+        // after rplot generates) is routed through _callTieredProvider directly instead of the
+        // shared _auditPost — _auditPost has 16 OTHER, unrelated callers across the app that are
+        // out of scope for this CG/OAS-lifecycle policy; only this call site's own dispatch
+        // changes, _auditPost itself is untouched. Mistral (ministral-8b-2512) primary → Grok
+        // fallback → Claude/OpenAI terminal-only.
+        var data;
+        try {
+          data = await _callTieredProvider('rplotAudit', [
+            { role: 'system', content: sys },
+            { role: 'user', content: usr }
+          ], { max_tokens: 400, temperature: 0.3 });
+        } catch (_tpErr) {
+          try { console.warn('[R-PLOT:AUDIT] all provider tiers failed: ' + (_tpErr && _tpErr.message)); } catch (_) {}
+          return null;
+        }
+        try { if (typeof _recordProxyTextCost === 'function') _recordProxyTextCost(data, (data && data._orchestration && data._orchestration.model), 'audit'); } catch (_) {}
         var raw = (data && typeof data.content === 'string') ? data.content : '';
         raw = raw.replace(/^\s*```[a-z]*\s*/i, '').replace(/\s*```\s*$/i, '').trim();
         var lb = raw.indexOf('{'), rb = raw.lastIndexOf('}');
@@ -261365,10 +263026,22 @@ Generate the synopsis now. The protagonist MUST be named ${pKernel}. Depict the 
           '  "link": "<the SPECIFIC entanglement between THIS wound and THIS love interest (he caused it / embodies it / only one who can heal it / etc.), or \\"none — the wound runs around him\\" if absent>",\n' +
           '  "fix": "<if NOT_INTEGRATED or PARTIAL: one sentence on how to entangle THIS wound with THIS love interest specifically (not the plot). Empty string if INTEGRATED.>"\n' +
           '}';
-        var res = await _auditPost({ temperature: 0.3, max_tokens: 500, messages: [ { role: 'system', content: sys }, { role: 'user', content: usr } ] });
-        if (!res.ok) { try { console.warn('[WOUND→LI] audit HTTP ' + res.status); } catch (_) {} return null; }
-        var data = await res.json();
-        try { if (typeof _recordProxyTextCost === 'function') _recordProxyTextCost(data, 'gpt-4o-mini', 'audit'); } catch (_) {}
+        // TIERED PROVIDER POLICY (2026-09-13): a genuine semantic judgment (is this wound
+        // integrated with THIS love interest specifically, or would it survive the swap test) —
+        // not reducible to deterministic local logic. Routed through _callTieredProvider directly
+        // (single caller, ~257347) rather than the shared _auditPost — _auditPost has 16 OTHER
+        // unrelated callers across the app, left untouched.
+        var data;
+        try {
+          data = await _callTieredProvider('woundSwapTest', [
+            { role: 'system', content: sys },
+            { role: 'user', content: usr }
+          ], { max_tokens: 500, temperature: 0.3 });
+        } catch (_tpErr) {
+          try { console.warn('[WOUND→LI] all provider tiers failed: ' + (_tpErr && _tpErr.message)); } catch (_) {}
+          return null;
+        }
+        try { if (typeof _recordProxyTextCost === 'function') _recordProxyTextCost(data, (data && data._orchestration && data._orchestration.model), 'audit'); } catch (_) {}
         var raw = (data && typeof data.content === 'string') ? data.content : '';
         raw = raw.replace(/^\s*```[a-z]*\s*/i, '').replace(/\s*```\s*$/i, '').trim();
         var lb = raw.indexOf('{'), rb = raw.lastIndexOf('}');
@@ -263965,7 +265638,11 @@ Generate the synopsis now. The protagonist MUST be named ${pKernel}. Depict the 
         //  planning continues through the established no-facet path. Coverage stays red, so this
         //  can never be mistaken for C+ having worked.
         // ══════════════════════════════════════════════════════════════════════════
-        var _cpStarved = _cpAssignable.filter(function (c) { return _cpOptionsFor(_cpOptions, c.label).length === 0; });
+        // HARNESS SEAM (2026-09-11): window._cpStarveLabel forces one label into the starved set (its options are
+        // withdrawn too, so the offer stays consistent). Lets a free control exercise the starved rendering on the
+        // unseeded corridor, where the fixture cast is otherwise fully owned. Never set in production.
+        var _cpForceStarve = (typeof window !== 'undefined' && window._cpStarveLabel) ? String(window._cpStarveLabel).trim().toLowerCase() : '';
+        var _cpStarved = _cpAssignable.filter(function (c) { return (_cpForceStarve && String(c.label).trim().toLowerCase() === _cpForceStarve) || _cpOptionsFor(_cpOptions, c.label).length === 0; });
         if (_cpStarved.length) {
           var _starvedLabels = _cpStarved.map(function (c) { return c.label; });
           try { console.warn('[SCENE1:CPLUS:NO-OWNED-EVIDENCE] ' + _starvedLabels.length
@@ -263979,7 +265656,22 @@ Generate the synopsis now. The protagonist MUST be named ${pKernel}. Depict the 
           // The contract was built from the unfiltered set; the offer must not contradict it.
           _cpContract.byLabel = Object.keys(_cpContract.byLabel).reduce(function (acc, k) {
             if (!_starvedSet[k]) acc[k] = _cpContract.byLabel[k]; return acc; }, {});
+          // A forced starve withdraws the label's options as a real starve would have none.
+          if (_cpForceStarve) { _cpOptions = _cpOptions.filter(function (o) { return !_cpStarved.some(function (c) { return _cpOptionsFor([o], c.label).length > 0; }); });
+            _cpContract.options = _cpOptions.slice(); _cpContract.optionById = _cpOptions.reduce(function (a, o) { a[o.option_id] = o; return a; }, {}); }
         }
+        // D1 (2026-09-11, Codex/Roman): the permitted-labels enum was computed from the UNFILTERED assignable set, so the
+        // planner was told "EXACTLY one of: …" naming people the CANDIDATES block never offered. Recompute from the
+        // same list the block renders. Red knob window._cpEnumStale restores the defect for the control.
+        if (!(typeof window !== 'undefined' && window._cpEnumStale === true)) _cpAllowedEnum = _cpAssignable.map(function (c) { return c.label; }).join(' | ');
+        // Observability for the partition control (mirror only — never persisted, never read by production).
+        try {
+          _cpContract.ordinaryLabels = _cpOrdinary.map(function (c) { return c.label; });
+          _cpContract.offeredLabels = _cpAssignable.map(function (c) { return c.label; });
+          _cpContract.starvedLabels = (_cpStarved || []).map(function (c) { return c.label; });
+          _cpContract.declinedLabels = ((_cpSel && _cpSel.declined) || []).map(function (d) { return d.label; });
+          _cpContract.pcLabel = String((state && state.playerName) || '');
+        } catch (_) {}
         // ── COVERAGE IS REPORTED SEPARATELY, AND STAYS RED ──
         // Release gating reads this. A scene that authored beautifully with zero C+ is a scene
         // that did not do the thing C+ exists for, and the record says so in its own field.
@@ -264149,17 +265841,24 @@ Generate the synopsis now. The protagonist MUST be named ${pKernel}. Depict the 
                 var foot = '      ⟂ Everything in this packet belongs to ' + c.label + ' ALONE. Do not use another candidate\'s truth, condition or reading here, and do not use ' + c.label + '\'s in theirs.\n';
                 return head + (ev ? ev + '\n' : '') + fac + grd + foot;
               }).join('')
-            + (_cpSel && _cpSel.declined && _cpSel.declined.length
-                ? 'NOT CANDIDATES — they exist in this story and this scene gives them no opportunity. They may not receive a Character+ under any mode:\n'
-                  + _cpSel.declined.map(function (d) { return '  • ' + d.label; }).join('\n') + '\n'
-                : '')
+            + (function () {
+                // D2 (2026-09-11): every named person the selector considered is listed exactly once — offered above, or
+                // here with the reason they are not: DECLINED (no opportunity this scene) or STARVED (no owned pressure
+                // evidence). Starved people used to vanish silently. Red knob window._cpStarvedSilent restores that.
+                var _dl = (_cpSel && _cpSel.declined) || [];
+                var _sl = (typeof window !== 'undefined' && window._cpStarvedSilent === true) ? [] : (_cpStarved || []);
+                if (!_dl.length && !_sl.length) return '';
+                return 'NOT CANDIDATES — named in this story and NOT offered this scene. They may not receive a Character+ under any mode:\n'
+                  + _dl.map(function (d) { return '  • ' + d.label + ' — no opportunity in this scene' + (d.reason ? ' (' + String(d.reason).slice(0, 120) + ')' : ''); }).join('\n') + (_dl.length ? '\n' : '')
+                  + _sl.map(function (c) { return '  • ' + c.label + ' — no owned pressure evidence in this scene: none of their conditions is established by a fact this scene owns'; }).join('\n') + (_sl.length ? '\n' : '');
+              })()
             + (_cpRegime === 'fully-covered'
                 ? 'EVERY character_plus entry MUST cite one "facet_id" from that person\'s list above, and one "mode" from their permitted modes.\n'
                 : _cpRegime === 'mixed'
                   ? 'WHERE A PERSON HAS AUTHORED PSYCHOLOGY, an entry for them MUST cite one of THEIR facet_ids. Where the list says none is on record, omit "facet_id" — do not borrow someone else\'s and do not invent one. "mode" is required for everyone.\n'
                   : 'This story has no authored facet source yet, so "facet_id" is not required. "mode" still is.\n')
             + 'RETURN THE facet_id ONLY. Do not copy the canonical truth back into the plan: it is already known, and a re-worded copy of it is how a truth quietly becomes a different truth.\n'
-            + 'ONE EXCEPTION, AND ONLY ONE: for a person whose packet says NO authored psychology is on record, add "character_revelation" — one sentence naming what the behaviour reveals about them. There is nothing to cite for that person, so it is the only case where you write the psychology yourself. Never add it for anyone whose packet lists facets.\n'
+            + 'ONE EXCEPTION, AND ONLY ONE: for a person whose packet says NO authored psychology is on record, add "character_revelation" — one sentence naming the specific, non-obvious truth the behaviour exposes about them (a flaw, an obsession, a private secret, a contradiction, a particular worldview). There is nothing to cite for that person, so it is the only case where you write the psychology yourself. Never add it for anyone whose packet lists facets.\n'
             + 'THE SCENE, AS NUMBERED FACTS. Everything you may cite as evidence is here, and nothing else is:\n'
             + _cpFacts.map(function (f) { return '  ' + f.evidence_id + ': ' + f.text + '\n'; }).join('')
             + (_cpObjects.length
@@ -264187,7 +265886,7 @@ Generate the synopsis now. The protagonist MUST be named ${pKernel}. Depict the 
             + '  · "visible_action" for the opening_actor_id — the literal FROM_OPENING_BEAT and nothing else: their act is the opening beat, written once.\n'
             + '  · "revelation_bridge" — PLANNING ONLY, never shown to the author, never a gate: state how that act reveals THIS truth under THIS condition. If you cannot write the bridge without restating the truth, the act does not reveal it — choose a different act.\n'
             + '  · "pc_lens_operation" — one operation from the reading lens below.\n'
-            + '  · "pc_interpretation" — what the protagonist CONCLUDES about the observed person: their motive, defence, need, value or contradiction. Name that person. A sensation in the protagonist\'s own body, or how the moment made her feel, is not a conclusion about anybody and does not satisfy this field.\n'
+            + '  · "pc_interpretation" — what the protagonist CONCLUDES about the observed person: their motive, defence, need, value or contradiction. Name that person. A sensation in the protagonist\'s own body, or how the moment made her feel, is not a conclusion about anybody and does not satisfy this field. The conclusion must EXPOSE that person — a specific, non-obvious truth: a flaw, an obsession, a private secret (private psychological meaning, not a plot reveal), a contradiction, or a worldview particular enough to distinguish them; admiration alone does not satisfy it. This sentence is delivered to the writer as the beat\'s target.\n'
             + 'CITE, DO NOT RESTATE. The behaviour you assign must be an occasion on which the cited truth would SHOW — an act a camera could record, from which that truth could be inferred. It is not a description of the truth and not an explanation of it.\n'
             + 'THE BEHAVIOUR USES ONLY WHAT IS ALREADY HERE. It may use the people, objects, garments, and circumstances the scene material above establishes, and nothing else. Do NOT introduce a prop, implement, vessel, weapon or ritual object the scene has not named — a blade, a knife, a bowl, a candle, a bell, a staff, a chalice. If the beat needs an object to exist, it is the wrong beat.\n'
             + (_cpPcProfile
@@ -264677,7 +266376,7 @@ Generate the synopsis now. The protagonist MUST be named ${pKernel}. Depict the 
                 + '      "contact": { "verb": "<EXACTLY one of the CONTACT TYPES below, verbatim>", "object": "<the EXACT name of ONE of your environment_elements whose affordance PERMITS that verb (see AFFORDANCE TABLE) — never AMBIENT, never a placeholder>" },\n'
                 + '      "action": "<OPTIONAL one clause of wording around that contact, for the author; it may name {ENV_TARGET} once or not at all; it does NOT establish contact — contact.object does>",\n'
                 + '      "pc_lens_operation": "<EXACTLY one operation from the CHARACTER+ READING LENS list above, verbatim>",\n'
-                + '      "character_revelation": "<one sentence: what this act shows about ' + (_pcLabelForFusion || 'the protagonist') + ' through that operation — a judgment of the protagonist, not the operation\'s gloss re-worded, not a description of the room>",\n'
+                + '      "character_revelation": "<one sentence: what this act shows about ' + (_pcLabelForFusion || 'the protagonist') + ' through that operation — a judgment of the protagonist that exposes a specific, non-obvious truth about her (a flaw, an obsession, a private secret, a contradiction, a particular worldview); not the operation\'s gloss re-worded, not a description of the room>",\n'
                 + '      "environment_pressure": { "grounds": ["env:axis", "<one or more further ids from the FACT BASE below>"], "text": "<one sentence that states HOW the environment thing, in its E+ condition, bears on ' + (_pcLabelForFusion || 'the protagonist') + ' NOW — what it costs, forbids, exposes or demands of ' + (_pcLabelForFusion || 'the protagonist') + '. It MUST name ' + (_pcLabelForFusion || 'the protagonist') + ' (or use ' + (_pcLabelForFusion || 'the protagonist') + '\'s own POV pronoun: in first person, I / me / my). A sentence that only describes the setting or the thing is INVALID. Use ONLY the grounded facts; no {ENV_TARGET}; do not repeat the target\'s name>" }\n'
                 + '    }\n'
                 + '  (pc_opening_fusion IS ' + (_pcLabelForFusion || 'the protagonist') + '\'s entire first appearance: the action, what it reveals through the lens, and the environment as it bears on the protagonist. The BACKEND owns environment_target and environment_axis — do NOT return them. The AUTHOR writes the finished beat from these parts — do NOT return a "beat" or a "character_angle". Both revelation and pressure must concern ' + (_pcLabelForFusion || 'the protagonist') + ' by name or pronoun.\n'
@@ -294413,6 +296112,29 @@ _pcFrictionBlock +
 
   // --- GAME LOOP ---
   $('submitBtn')?.addEventListener('click', async () => {
+      // INTIMATE INTERRUPTION (2026-09-11): the reader answers the interruption HERE. Their verbatim Say/Do is committed as
+      // the end-of-scene event; a staged (CG) Book then advances through the staged engine, never the literary pipeline.
+      try {
+        var _iiPend = (typeof _intimateInterruptionPending === 'function') ? _intimateInterruptionPending : window._intimateInterruptionPending;
+        if (typeof _iiPend === 'function' && _iiPend()) {
+          var _iiSan = (typeof sanitizeShortInput === 'function') ? sanitizeShortInput : function (v) { return String(v || '').slice(0, 2000); };
+          var _iiA = _iiSan(document.getElementById('actionInput')?.value || '', 2000), _iiD = _iiSan(document.getElementById('dialogueInput')?.value || '', 2000);
+          if (!_iiA && !_iiD) { if (typeof showToast === 'function') showToast('Say or do something first.'); return; }
+          ((typeof _commitIntimateInterruption === 'function') ? _commitIntimateInterruption : window._commitIntimateInterruption)(_iiA, _iiD);
+          var _iiStaged = (typeof _isStagedMode === 'function') ? _isStagedMode : window._isStagedMode, _iiAdv = (typeof _advanceStagedScene === 'function') ? _advanceStagedScene : window._advanceStagedScene;
+          if (typeof _iiStaged === 'function' && _iiStaged() && typeof _iiAdv === 'function') { _iiAdv(_iiA, _iiD).catch(function (_) {}); return; }
+        }
+      } catch (e) { console.warn('[INTIMATE-INTERRUPT] literary submit hook threw:', e && e.message); }
+      // WRONG-ENGINE GUARD (Roman 2026-09-12): on a staged (CG) Book the literary Submit must never start a literary
+      // continuation. The staged path's own deliberate fallback (it sets _stagedAwaitingProse before clicking) is the only exception.
+      try {
+        var _sgStaged = (typeof _isStagedMode === 'function') ? _isStagedMode : window._isStagedMode;
+        if (typeof _sgStaged === 'function' && _sgStaged() && !state._stagedAwaitingProse) {
+          console.warn('[STAGED:GUARD] literary Submit refused on a staged Book — the story continues through its own Submit');
+          if (typeof showToast === 'function') showToast('This story continues through its own Submit.');
+          return;
+        }
+      } catch (_) {}
       // A NEW AUTHORING ATTEMPT for this continuation turn — including every retry of it.
       try { if (typeof _cpNewAttemptId === 'function') _cpNewAttemptId(state); } catch (_) {}
       // ── ALT POV FINISH HOOK ──
@@ -297756,45 +299478,10 @@ Focus on sensation, tension, and reaction. Dense, not sprawling.`;
 Take time for atmosphere, reaction, emotional beats, and tension building.`;
       }
 
-      // ═══════════════════════════════════════════════════════════════════════════
-      // EROTIC GATING — MAIN CHARACTER CONTACT ONLY
-      // storybound/scene-length-erotic-gates-canonical-v2
-      // ═══════════════════════════════════════════════════════════════════════════
-      // Sexual/romantic contact between TWO MAIN CHARACTERS is gated and delayed.
-      // Gate is VARIABLE based on: story length tier, intensity, scene index, milestones.
-      //
-      // ✅ ALLOWED BEFORE GATE:
-      //    - Side character intimacy, ex encounters, memories, fantasies, witnessing others
-      //    - Ambient erotic atmosphere (Dirty tone), voyeuristic scenes
-      //
-      // ❌ FORBIDDEN BEFORE GATE (main characters only):
-      //    - Kissing, sexual touching, intimacy, "almost kiss" loopholes, "accidental" contact
-      // ═══════════════════════════════════════════════════════════════════════════
-
-      /**
-       * Calculate when main character intimacy gate opens
-       * Returns the scene index at which main pair contact is allowed
-       */
-      function getMainPairIntimacyGateScene() {
-          const storyLength = state.storyLength || 'taste';
-
-          // Base gates by story length only — intensity no longer modifies gate timing
-          const baseGates = {
-              taste: 4,    // Short: tension builds quickly
-              fling: 6,    // Medium: more buildup
-              affair: 10   // Long: slow burn
-          };
-
-          let gateScene = baseGates[storyLength] || 4;
-
-          // Milestone modifiers — certain flags can adjust gate
-          if (state.intimacyInterrupted?.first_kiss) {
-              // If first kiss was already interrupted, we're past the gate
-              gateScene = Math.min(gateScene, state.turnCount || 0);
-          }
-
-          return gateScene;
-      }
+      // getMainPairIntimacyGateScene() RELOCATED 2026-09-13 to outer scope (beside isIntimacyAllowedAtCurrentStoryturn,
+      // ~line 74812) — this local declaration shadowed the identical body but was invisible to reinterpretSafetyAction(),
+      // an outer-scope function that also calls it (see the relocation note at the new definition). Every call site in
+      // this handler resolves to the outer-scope function now (unchanged behavior for callers already inside this closure).
 
       /**
        * Check if main character intimacy is currently allowed
@@ -303055,6 +304742,12 @@ Must remain physical, not conceptual. Richness comes from specificity of interac
               ], 0.7, { max_tokens: 3000 + (_tokenBoost || 0) }); try { if (window.__rawSnap) window.__rawSnap.push({ sid: '16eab0c2#1', label: 'window._authorChatCapture', mutationClass: 'model', before: String(__rp_16eab0c2_1||''), after: String(raw||''), changed: String(raw||'')!==String(__rp_16eab0c2_1||'') }); } catch (_) {} // Roman 2026-06-09: raised from 1000 base — truncated scene endings (deck closer + decision). Cap is free; pay only for tokens generated.
           }
 
+          // INTIMATE INTERRUPTION — literary cascade host (2026-09-12): the cascade wrapped by a story reason with an authored
+          // interruption pending. No scene was authored and this is not a failure: hand the turn to the catch, which mounts it.
+          if (state._cascadeInterruptedTurn && state._cascadeInterruptedTurn.storyId === state.storyId) {
+              const _ciErr = new Error('cascade interrupted'); _ciErr.cascadeInterrupted = true; throw _ciErr;
+          }
+
           // Validate response shape before marking as success
           if (!raw || typeof raw !== 'string' || raw.trim().length === 0) {
               console.error('[SCENE] Proxy returned 200 but scene text missing/empty. raw type:', typeof raw, '| raw:', String(raw).slice(0, 200));
@@ -306511,6 +308204,17 @@ ABSOLUTE RULES:
           scheduleSpeculativePreload();
 
       } catch(e) {
+          // INTIMATE INTERRUPTION — literary cascade host: mount on the literary reader; the finally block releases the lock and
+          // re-enables Submit. turnCount is untouched, no page is appended, nothing is requested until the reader submits.
+          if (e && e.cascadeInterrupted) {
+              const _ci = state._cascadeInterruptedTurn; state._cascadeInterruptedTurn = null;
+              const _ciMount = (typeof _mountIntimateInterruption === 'function') ? _mountIntimateInterruption : window._mountIntimateInterruption;
+              let _ciWrap = null;
+              try { _ciWrap = _ciMount({ host: 'literary', frame: _ci && _ci.frame, sceneNum: _ci && _ci.sceneNum }); } catch (mErr) { console.warn('[INTIMATE-INTERRUPT] literary mount failed:', mErr && mErr.message); }
+              if (_ciWrap) state._authoredIntimateInterruption = null;   // the declaration is consumed once it is on the page
+              try { saveStorySnapshot(); } catch (_) {}
+              return;
+          }
           // HTTP 429 RATE LIMIT — TERMINAL FAILURE, NO RETRY
           if (e instanceof RateLimitError || e?.isRateLimit) {
               console.group('STORYBOUND RATE LIMITED - TURN BLOCKED');

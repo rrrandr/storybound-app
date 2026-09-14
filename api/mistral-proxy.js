@@ -22,7 +22,19 @@ const ALLOWED_MISTRAL_MODELS = [
   'mistral-medium-latest',
   'mistral-large-latest',
   'mistral-small-latest',
-  'mistral-small-2603'    // Mistral Small 4 (119B/6.5B active, 256k ctx, $0.15/$0.60 per M) — author A/B (Roman 2026-07-23)
+  'mistral-small-2603',   // Mistral Small 4 (119B/6.5B active, 256k ctx, $0.15/$0.60 per M) — author A/B (Roman 2026-07-23)
+  // ministral-8b-2512 ADDED 2026-09-13 (Roman, provider-policy decision): the governor's
+  // MODEL_LIMITS table (api/_mistral-governor.js) has already carried this model's REAL account
+  // limits (625,000 TPM / 3.13 RPS, source=https://admin.mistral.ai/plateforme/limits,
+  // readOn=2026-09-04) since before this change — it was configured but unreachable, because
+  // this allowlist never named it, so every request naming it would have been rejected here
+  // before the governor ever saw it. Added so the CG/OAS setup-phase generators (PC body bible,
+  // LI body bible, romance-plot shape, CG scaffold) have an admissible higher-capacity Mistral
+  // route: their real measured reservations (up to ~71,848 for the LI bible) exceed
+  // mistral-small-latest's 20,000 TPM ceiling but fit ministral-8b-2512 with wide headroom
+  // (verified against the REAL governor.admit() calculation, not a hand estimate — see
+  // _measure_governor_admission.mjs and _audit_out/mistral_provider_policy_conversion.md).
+  'ministral-8b-2512'
 ];
 
 // ── QUOTA GOVERNOR BOOTSTRAP ──
