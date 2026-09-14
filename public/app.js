@@ -30754,21 +30754,30 @@ window._reflowSceneDialogueLLM = _reflowSceneDialogueLLM;
           + '. For EACH, decide from the scene text: "fulfilled" (it clearly happened), "partial" (begun but not completed), "missed" (did not happen), or "contradicted" (the scene did the opposite). Add to the returned JSON a "beatFulfillment" array: [ { "id":"", "status":"fulfilled|partial|missed|contradicted", "evidence":"short quote or paraphrase", "recommendedAction":"none|carry_next|adapt_next|repair_current|regenerate_current" } ].';
       }
 
-      var res = await fetch('/api/chatgpt-proxy', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          messages: [ { role: 'system', content: sys }, { role: 'user', content: String(sceneText).slice(0, 8000) } ],
-          role: 'PRIMARY_AUTHOR',
-          model: 'gpt-4o-mini',
-          temperature: 0.2,
-          max_tokens: _pcBeats.length ? 1100 : 800,   // +150 for up to 4 relation entries
-          jsonMode: true
-        })
-      });
-      if (!res.ok) return;
-      var data = await res.json();
-      var content = (data && data.content) || (data && data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content); // proxy returns {content}; OpenAI returns {choices}
+      // TIERED PROVIDER POLICY (2026-09-14): this was a DIRECT, untiered /api/chatgpt-proxy call —
+      // found and disclosed during the checkpoint regression, now closed. It is a genuine
+      // generative/comprehension task (new-information judgment against a known ledger, prose-
+      // density assessment, scene end-state extraction, stated-relationship extraction with
+      // verbatim quotes) — not deterministic parsing, so it cannot become local. Routed through
+      // the SAME shared Mistral (ministral-8b-2512) primary → Grok fallback → OpenAI terminal-only
+      // chain every other role already uses (_callTieredProvider, grep "TIERED PROVIDER POLICY"
+      // near ~5817). Prompt content (sys/usr) is UNCHANGED — only the transport changed. The
+      // existing JSON.parse-with-regex-fallback below already tolerates a non-strict-JSON reply,
+      // so dropping `jsonMode` (a chatgpt-proxy-only param, unsupported by the other two tiers)
+      // is safe. A thrown error (all three tiers exhausted) is handled the same way the old
+      // `!res.ok` branch was: silently return (extraction stays retryable — see the guard above).
+      var data;
+      try {
+        data = await _callTieredProvider('characterDisclosure', [
+          { role: 'system', content: sys },
+          { role: 'user', content: String(sceneText).slice(0, 8000) }
+        ], { max_tokens: _pcBeats.length ? 1100 : 800, temperature: 0.2 });
+      } catch (_tpErr) {
+        try { console.warn('[CHAR-DISCLOSURE] all provider tiers failed: ' + (_tpErr && _tpErr.message)); } catch (_) {}
+        return;
+      }
+      try { if (typeof _recordProxyTextCost === 'function') _recordProxyTextCost(data, (data && data._orchestration && data._orchestration.model), 'ledger'); } catch (_) {}
+      var content = data && data.content;
       if (!content) return;
       var parsed;
       try { parsed = JSON.parse(content); }
@@ -98305,6 +98314,17 @@ function _buildAuthorFloorDirective(s) {
             if (_oe.constraints && _oe.constraints.length) _ob.push('SEED CONSTRAINTS: ' + _oe.constraints.join(' · '));
             _scUsr = 'READER POSTURE → LOCAL OBJECTIVE\n' + _ob.join('\n') + '\n\n' + _scUsr;
             _scSys += '\n\nOPEN ROW (REQUIRED — add these keys to your JSON): "posture_read" (one sentence: what the reader\'s recorded choice and Say/Do MEAN here), "local_objective" (one sentence: whose concrete act, where, that this scene exists to land — it must answer the reader\'s posture and build from the aftermath), "local_objective_actor" (one ROSTER name), "present" (array of ROSTER names who are in the scene), "reserved" (object: every RESERVED id → "untouched" or "touched"), "aftermath" (object: every AFTERMATH TRUTH id → "kept"). Your state_change realizes the local_objective.';
+            // CONTINUATION-STAGE ISSUER (Roman, authorized 2026-09-14) — SAME reply, SAME call, no
+            // second provider round trip. All optional: an old-shaped reply that omits these keys
+            // skips stage issuance without touching anything above (see _issueStageFromPlannerReply).
+            _scSys += ' Also add, same JSON, all optional (never required — omit if unnatural): "stage_location" (one short phrase for where this scene physically happens), "stage_issued_objects" (array of {"label":"","kind":""} for any concrete object this scene puts in play), "stage_affordances" (array of short strings naming things present participants could plausibly do with what\'s here).';
+          } else {
+            // CORRIDOR / NON-OPEN-ROW SCENES — the SAME stage packet, requested on the SAME reply,
+            // so seeded and corridor continuations share one issuance path below (never a second
+            // planner). No ROSTER exists here to validate "present" against, so it is requested
+            // fresh; _issueStageFromPlannerReply resolves each name against the existing
+            // relationship ledger (or backend-mints a new entity) — never fuzzy, never a name ban.
+            _scSys += '\n\nSTAGE PACKET (optional — add only if natural, never required): "stage_present" (array of names on stage this scene), "stage_location" (one short phrase for where this scene physically happens), "stage_issued_objects" (array of {"label":"","kind":""}), "stage_affordances" (array of short strings).';
           }
           // PLANNER-PROMPT DUMP + PENDING-INTENT DELETION TEST (Roman 2026-08-10). window._dumpPlannerPrompt logs the
           // LITERAL user prompt the scene planner reasons from (to see what dominates: committed facts vs pendingIntent
@@ -98562,6 +98582,22 @@ function _buildAuthorFloorDirective(s) {
             try { if (typeof _reconcileSeededMilestones === 'function') _reconcileSeededMilestones(); } catch (_) {}
             try { console.log('[OBJECTIVE:ACCEPTED] scene ' + _planSceneNum + ' branch=' + (_posture && _posture.choice) + ' actor=' + _openAccept.actor + ' present=' + _openAccept.present.join('/') + ' — "' + _openAccept.local_objective.slice(0, 120) + '"'); } catch (_) {}
           }
+          // CONTINUATION-STAGE ISSUER — ONE call site for BOTH seeded OPEN-row scenes and corridor/
+          // legacy scenes (never a second planner or provider call; reads the SAME _scP reply this
+          // function already parsed). Never blocks or alters state_change/_scenePlotContract/
+          // _sceneObjectives above — those are already built by this point. On any failure
+          // (no present cast, ambiguous name, locked-landmark-only location, internal error) it
+          // writes nothing to state._stageState: an old story, or any reply that omits the stage
+          // packet, behaves exactly as before this slice. The author-facing structures above never
+          // receive raw planner stage fields — only state._stageState (via _acceptStageProposal)
+          // ever gets the validated, backend-shaped record.
+          try {
+            if (typeof _issueStageFromPlannerReply === 'function') {
+              var _stageIssueOpts = { source: 'spine:issuer' };
+              if (_openAccept && _openAccept.ok) { _stageIssueOpts.present = _openAccept.present; _stageIssueOpts.postureHash = _posture ? _posture.hash : null; }
+              _issueStageFromPlannerReply(_scP, String(_planSceneNum), _stageIssueOpts);
+            }
+          } catch (_stageIssueErr) { try { console.warn('[STAGE-ISSUER] uncaught at call site, no record written: ' + (_stageIssueErr && _stageIssueErr.message)); } catch (_) {} }
           // COMMITTED-STATE v0: record the PROPOSED transition as pendingIntent (planner memory). It becomes a
           // committed fact ONLY if the post-gen scorer verifies delivery (see the commit hook ~29335); on a miss
           // it stays pending and the planner replans toward the same milestone from the unchanged committed state.
@@ -127431,7 +127467,11 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       s = s || window.state; if (!s) return '';
       var L = _sceneLedgerGet(s, false), entries = L ? L.entries : [];
       var durable = ''; try { durable = (typeof _buildDurableFateConsequenceDirective === 'function') ? (_buildDurableFateConsequenceDirective() || '') : ''; } catch (_) { durable = ''; }
-      if (!entries.length && !durable) return '';
+      // CURRENT ACCEPTED STAGE (Roman, authorized 2026-09-14) — same delivery discipline as
+      // `durable` above: one function, read-only, '' when there is nothing authoritative to say.
+      // A stage-less legacy story (or a scene that never issued one) gets no block at all.
+      var stageBlock = ''; try { stageBlock = (typeof _buildCurrentStageDirective === 'function') ? (_buildCurrentStageDirective(s) || '') : ''; } catch (_) { stageBlock = ''; }
+      if (!entries.length && !durable && !stageBlock) return '';
       // Verified facts: written ONLY by the runtime verifier when a declared state change was DELIVERED
       // on the page (slot-checked against the prose). Keyed by the scene it was committed at.
       var verifiedBy = {};
@@ -127461,6 +127501,7 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
         });
       }
       if (durable) lines.push(durable.trim().replace(/^/gm, '  '));
+      if (stageBlock) lines.push(stageBlock.trim().replace(/^/gm, '  '));
       lines.push('  NOW: page ' + _currentSceneNumber(s) + ' — reach a dramatic state that is not on the list above; what is listed has been read and cannot be undone or re-told.');
       var out = '\n' + lines.join('\n') + '\n';
       if (out.length > _SPINE_MAX_CHARS) out = out.slice(0, _SPINE_MAX_CHARS - 2) + '…\n';
@@ -197227,6 +197268,53 @@ No text, no watermark, no UI elements, share-ready.`;
   }
   window._acceptStageProposal = _acceptStageProposal;
 
+  // ── CURRENT ACCEPTED STAGE → AUTHOR DIRECTIVE (Roman, authorized 2026-09-14) ──
+  // The delivery half of the stage substrate: renders the ONE active accepted stage record (never
+  // a closed/historical one — _activeStageRecord's own contract already excludes those; never a
+  // raw planner-reply field — only what _acceptStageProposal actually committed) into the SAME
+  // compact text every author assembly receives. Wired into _buildContinuitySpineBlock (the
+  // existing single function already reaching every author call site — grep "SCENE LEDGER +
+  // CONTINUITY SPINE"), so this reaches the author EXACTLY ONCE per assembly, with no new
+  // per-site wiring. '' when there is no active stage — a stage-less legacy story, or a scene
+  // that never issued one, gets no block and retains its existing behavior unchanged.
+  function _buildCurrentStageDirective(s) {
+    try {
+      s = s || window.state; if (!s) return '';
+      var rec = (typeof _activeStageRecord === 'function') ? _activeStageRecord(s) : null;
+      if (!rec) return '';
+      var L = (typeof _relLedger === 'function') ? _relLedger(false) : null;
+      var ents = (L && L.entities) || {};
+      function labelFor(id) {
+        var e = ents[id]; var lbl = e && e.label ? String(e.label) : String(id);
+        var disamb = rec.present_disambiguators && rec.present_disambiguators[id];
+        return disamb || lbl;
+      }
+      var lines = ['CURRENT STAGE (authoritative — where/who/what is physically here RIGHT NOW; the only source for location, presence, objects, and affordances — never invent or assume any beyond it):'];
+      if (rec.location && rec.location.label) lines.push('  LOCATION: ' + String(rec.location.label));
+      var present = (Array.isArray(rec.present) ? rec.present : []).map(labelFor).filter(Boolean);
+      if (present.length) lines.push('  PRESENT: ' + present.join(' · '));
+      if (Array.isArray(rec.issued_facts) && rec.issued_facts.length) lines.push('  ISSUED FACTS: ' + rec.issued_facts.map(String).join(' | '));
+      if (Array.isArray(rec.issued_objects) && rec.issued_objects.length) {
+        lines.push('  ISSUED OBJECTS (only these may appear as physically present — never invent another):');
+        rec.issued_objects.forEach(function (o) {
+          if (!o || !o.label) return;
+          var bits = [String(o.label) + (o.kind ? ' (' + o.kind + ')' : '')];
+          var owner = o.owner_or_caretaker_ref ? labelFor(o.owner_or_caretaker_ref) : (o.held_by ? labelFor(o.held_by) : null);
+          if (owner) bits.push('held/owned by ' + owner);
+          if (Array.isArray(o.addressable_by) && o.addressable_by.length) bits.push('addressable by ' + o.addressable_by.map(labelFor).join(', '));
+          lines.push('    - ' + bits.join(' — '));
+        });
+      }
+      if (Array.isArray(rec.affordances) && rec.affordances.length) lines.push('  AFFORDANCES (available, never required): ' + rec.affordances.join(' | '));
+      var exLoc = (rec.exclusions && Array.isArray(rec.exclusions.locations)) ? rec.exclusions.locations : [];
+      var exObj = (rec.exclusions && Array.isArray(rec.exclusions.objects)) ? rec.exclusions.objects : [];
+      if (exLoc.length || exObj.length) lines.push('  NOT HERE (do not introduce): ' + exLoc.concat(exObj).join(' | '));
+      if (lines.length < 2) return '';   // location+present+facts+objects+affordances+exclusions all absent — nothing worth saying
+      return '\n' + lines.join('\n') + '\n';
+    } catch (_) { return ''; }
+  }
+  window._buildCurrentStageDirective = _buildCurrentStageDirective;
+
   // ══════════════════════════════════════════════════════════════════════════
   // GENERIC ARC-CONSTRAINT REGISTRY (Roman, authorized 2026-09-14)
   // Structural, story-scoped locks on a landmark or future event, keyed to a REAL committed
@@ -197350,6 +197438,102 @@ No text, no watermark, no UI elements, share-ready.`;
     return { ok: true, available: false, constraint_id: check.constraint_id, reason_key: check.reason_key, deferral: deferral };
   }
   window._attemptArcConstraintTarget = _attemptArcConstraintTarget;
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // CONTINUATION-STAGE ISSUER (Roman, authorized 2026-09-14, controls-first)
+  // The ONLY new provider-facing surface is two schema-instruction strings appended to the
+  // scene-spine planner's EXISTING single _scSys build (see the OPEN-ROW block above) — this file
+  // makes NO second planner, validator duplicate, or provider call. Everything below composes the
+  // ALREADY-authorized, ALREADY-controlled primitives (_relLedger / _proposeNewEntity /
+  // _ensureStoryEntityAnchors / _validateStageProposal / _acceptStageProposal /
+  // _checkArcConstraint / _attemptArcConstraintTarget) UNCHANGED — none of those functions are
+  // modified by this block. Runs identically for seeded OPEN-row scenes and corridor/legacy
+  // scenes (one call site, see above) — never a fork into two issuance paths.
+  // ══════════════════════════════════════════════════════════════════════════
+
+  // Exact-name resolution ONLY — no fuzzy matching, no similarity judgment (same discipline as
+  // _computeDisambiguators / _relMatchByName's own contract). A name that matches exactly one
+  // existing entity resolves to it; a name matching none is proposed as a NEW entity through the
+  // existing backend-mints-only-on-validated-proposal path; a name matching more than one
+  // existing entity is a hard reject (fail closed on ambiguity — never guessed).
+  function _resolveOrProposePresentIds(labels) {
+    var ids = [], why = [];
+    var L = (typeof _relLedger === 'function') ? _relLedger(false) : null;
+    (Array.isArray(labels) ? labels : []).forEach(function (label) {
+      var raw = String(label || '').trim(); if (!raw) return;
+      var n = (typeof _relNorm === 'function') ? _relNorm(raw) : raw.toLowerCase();
+      var m = (L && typeof _relMatchByName === 'function') ? _relMatchByName(L, n, {}) : { status: 'none' };
+      if (m.status === 'unique') { ids.push(m.id); return; }
+      if (m.status === 'ambiguous') { why.push('present name "' + raw + '" is ambiguous among existing entities — never guessed'); return; }
+      var created = (typeof _proposeNewEntity === 'function') ? _proposeNewEntity({ label: raw, kind: 'named' }) : { ok: false, why: ['_proposeNewEntity unavailable'] };
+      if (created.ok) ids.push(created.entity.id);
+      else why.push('could not mint entity for "' + raw + '": ' + (created.why || []).join('; '));
+    });
+    return { ok: why.length === 0, ids: ids, why: why };
+  }
+  window._resolveOrProposePresentIds = _resolveOrProposePresentIds;
+
+  // Structural landmark match ONLY: the proposed location must equal a canon landmark's exact
+  // `name` string before any lock is even consulted — a plain scene description never triggers a
+  // check, and nothing here is a phrase-based unlock (unlocks remain _checkArcConstraint's own
+  // committed-event-id mechanism, untouched).
+  function _matchLandmarkIdByLabel(label) {
+    var raw = String(label || '').trim().toLowerCase(); if (!raw) return null;
+    var lm = (typeof FATELANDS_CANON !== 'undefined' && FATELANDS_CANON && FATELANDS_CANON.landmarks) || {};
+    var found = null;
+    Object.keys(lm).forEach(function (id) { if (found) return; var nm = lm[id] && lm[id].name; if (nm && String(nm).trim().toLowerCase() === raw) found = id; });
+    return found;
+  }
+  window._matchLandmarkIdByLabel = _matchLandmarkIdByLabel;
+
+  // THE issuer entry point. Never throws out of itself — any internal failure is logged and
+  // returns ok:false, writing NOTHING to state._stageState, which is the exact contract that
+  // keeps an old story (or a reply lacking the stage packet) behaving exactly as before this
+  // slice. `opts.present`, when supplied (OPEN-ROW scenes pass the ALREADY roster-validated
+  // _openAccept.present here), is used INSTEAD of scP.stage_present — an OPEN-ROW scene is never
+  // asked for "present" twice. A missing/empty object layer (no stage_issued_objects) is not an
+  // error: the accepted record simply carries issued_objects:[] — a valid stage with no object
+  // layer, never a synthesized one.
+  function _issueStageFromPlannerReply(scP, sceneKey, opts) {
+    try {
+      var s = window.state; if (!s || !s.storyId || !scP) return { ok: false, why: ['no story/reply'] };
+      opts = opts || {};
+      var presentLabels = (Array.isArray(opts.present) && opts.present.length) ? opts.present
+        : (Array.isArray(scP.stage_present) ? scP.stage_present : []);
+      if (!presentLabels.length) { try { console.log('[STAGE-ISSUER] scene ' + sceneKey + ' — no present cast in the reply; skipping stage issuance (state_change/plot-contract unaffected)'); } catch (_) {} return { ok: false, why: ['no present cast'] }; }
+      if (typeof _ensureStoryEntityAnchors === 'function') _ensureStoryEntityAnchors();
+      var resolved = _resolveOrProposePresentIds(presentLabels);
+      if (!resolved.ok) { try { console.warn('[STAGE-ISSUER] scene ' + sceneKey + ' — entity resolution failed: ' + resolved.why.join('; ')); } catch (_) {} return { ok: false, why: resolved.why }; }
+      var locationLabel = (typeof scP.stage_location === 'string') ? scP.stage_location.trim() : '';
+      var proposal = {
+        present: resolved.ids,
+        postureHash: opts.postureHash || null,
+        location: locationLabel ? { label: locationLabel } : null,
+        issued_objects: Array.isArray(scP.stage_issued_objects) ? scP.stage_issued_objects.filter(function (o) { return o && o.label; }).map(function (o) { return { label: String(o.label), kind: (typeof o.kind === 'string' && o.kind.trim()) ? o.kind.trim() : 'object' }; }) : [],
+        affordances: Array.isArray(scP.stage_affordances) ? scP.stage_affordances.filter(function (a) { return typeof a === 'string' && a.trim(); }) : [],
+        source: opts.source || 'spine:issuer', reconciled_from: []
+      };
+      // LANDMARK LOCK — a locked match is never discarded as a refusal; it is recorded as durable
+      // deferred intent (the existing _attemptArcConstraintTarget contract) and the stage simply
+      // issues with no location, exactly the registry's existing deferral behavior.
+      if (locationLabel && typeof _matchLandmarkIdByLabel === 'function') {
+        var landmarkId = _matchLandmarkIdByLabel(locationLabel);
+        if (landmarkId && typeof _attemptArcConstraintTarget === 'function') {
+          var attempt = _attemptArcConstraintTarget('landmark', landmarkId, locationLabel, { sceneKey: sceneKey });
+          if (attempt.ok && attempt.available === false) {
+            proposal.location = null;
+            try { console.log('[STAGE-ISSUER] scene ' + sceneKey + ' — landmark "' + locationLabel + '" is locked (' + attempt.reason_key + '); deferral recorded, stage issued without it'); } catch (_) {}
+          }
+        }
+      }
+      var check = (typeof _validateStageProposal === 'function') ? _validateStageProposal(proposal) : { ok: false, why: ['_validateStageProposal unavailable'] };
+      if (!check.ok) { try { console.warn('[STAGE-ISSUER] scene ' + sceneKey + ' — proposal rejected: ' + check.why.join('; ')); } catch (_) {} return { ok: false, why: check.why }; }
+      var accepted = (typeof _acceptStageProposal === 'function') ? _acceptStageProposal(sceneKey, proposal) : { ok: false, why: ['_acceptStageProposal unavailable'] };
+      if (accepted.ok) { try { console.log('[STAGE-ISSUER] scene ' + sceneKey + ' — stage accepted, present=' + resolved.ids.join('/') + ' location=' + (proposal.location ? locationLabel : '(none)')); } catch (_) {} }
+      return accepted;
+    } catch (e) { try { console.warn('[STAGE-ISSUER] scene ' + sceneKey + ' — internal failure, no record written: ' + (e && e.message)); } catch (_) {} return { ok: false, why: ['internal: ' + (e && e.message)] }; }
+  }
+  window._issueStageFromPlannerReply = _issueStageFromPlannerReply;
 
   // ── FATE CARD INTIMACY OVERRIDE HOOK ──
   // Called whenever fate cards re-render. If intimacy dialogue is

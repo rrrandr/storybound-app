@@ -28,8 +28,8 @@ function sliceLines(from1, to1, startAnchor, endAnchor) {
   return slice;
 }
 
-const relLedgerSrc = sliceLines(31116, 31226, 'var REL_V = 1;', 'function _relEnsureEntity(L, id, patch)');
-const stageStateSrc = sliceLines(197023, 197228,
+const relLedgerSrc = sliceLines(31125, 31235, 'var REL_V = 1;', 'function _relEnsureEntity(L, id, patch)');
+const stageStateSrc = sliceLines(197064, 197269,
   'GENERIC STAGE-STATE SUBSTRATE (Roman, authorized 2026-09-14)',
   'window._acceptStageProposal = _acceptStageProposal;');
 
