@@ -150,15 +150,28 @@ const browser = await chromium.launch({ headless: true });
 // Shared scenario runner: opens a fresh page, seeds mid-story, grants Julian's entity + optional
 // facet, accepts a stage proposal with the given issued_objects/exclusions, submits a real turn
 // with the given skeleton-reply stub, settles, and returns everything a scenario needs to assert
-// on. story-shape (seeded/corridor), facet presence, object inventory, and exclusions are all
-// parameters so each RED/GREEN case only states what's DIFFERENT about it.
+// on. story-shape (seeded/corridor) and every entity/fact/object/exclusion are parameters so
+// each RED/GREEN case only states what's DIFFERENT about it.
+//
+// opts.people: [{ key, label, grantFacet }] — every named entity to mint. grantFacet gives that
+//   entity REAL authored facet material (the generated_cast shape) with a evidence_requires
+//   pattern unique to that entity's OWN text, so two granted entities never accidentally ground
+//   off each other's fact.
+// opts.present: [key, ...] — who is actually staged present this scene.
+// opts.issuedFacts: [ 'plain string' | { text, participants: [{ key, role }] } ] — EXPLICIT
+//   attribution only (2026-09-14 correction) — nobody is attributed who isn't named here.
+// opts.issuedObjects / opts.exclusions: same shape as the real proposal, refs by `key`.
+// opts.envTarget / opts.fusionCharacter / opts.fusionTarget: the MODEL's free-text proposal (by
+//   label, exactly as a real planner reply would name them) — resolution/rejection is what's
+//   under test, so these are never pre-validated by this harness.
 async function runFixtureScenario(id, opts) {
   const page = await (await browser.newContext()).newPage(); const ctx = {};
   const dbg = { errs: [], logs: [] };
   page.on('pageerror', e => dbg.errs.push(String(e && e.message).slice(0, 300)));
   page.on('console', m => dbg.logs.push(m.text().replace(/\s+/g, ' ').slice(0, 260)));
+  const stagedCharacters = (opts.people || []).map(p => ({ name: p.label, presence_mode: 'IN_PERSON', role: p.role || 'a member of the assembly' }));
   ctx.skeletonReply = () => Object.assign(defaultSkeletonReply(), {
-    staged_characters: [{ name: 'Julian', presence_mode: 'IN_PERSON', role: 'the Provast' }],
+    staged_characters: stagedCharacters,
     environment_plus: opts.envTarget ? { target: opts.envTarget, axis: 'ownership' } : null,
     fusion: (opts.fusionCharacter || opts.fusionTarget) ? { character: opts.fusionCharacter || 'Julian', target: opts.fusionTarget || opts.envTarget } : null
   });
@@ -167,50 +180,72 @@ async function runFixtureScenario(id, opts) {
   const setup = await page.evaluate((p) => {
     window.__seedMidStory(p.id, p.seeded);
     window._ensureStoryEntityAnchors();
-    const julian = window._proposeNewEntity({ label: 'Julian', kind: 'named' });
-    const other = window._proposeNewEntity({ label: 'Seren', kind: 'named' }); // a real, different entity — RED-E's "someone else"
-    if (p.grantFacet) window.__grantFacet(julian.entity.id, "Julian defends the Institution's authority without hesitation, cutting off her objection before it forms.");
-    const resolveRef = (ref) => ref === '__JULIAN__' ? julian.entity.id : (ref === '__OTHER__' ? other.entity.id : ref);
+    const minted = {}; // key -> entity id
+    (p.people || []).forEach(person => {
+      const e = window._proposeNewEntity({ label: person.label, kind: 'named' });
+      minted[person.key] = e.entity.id;
+      if (person.grantFacet) {
+        window.__grantFacet(e.entity.id, person.label + " defends the Institution's authority without hesitation, cutting off the objection before it forms.");
+      }
+    });
+    const resolveRef = (key) => minted[key] || key;
     const issuedObjects = (p.issuedObjects || []).map(o => Object.assign({}, o, {
-      owner_or_caretaker_ref: resolveRef(o.owner_or_caretaker_ref),
+      owner_or_caretaker_ref: o.owner_or_caretaker_ref ? resolveRef(o.owner_or_caretaker_ref) : o.owner_or_caretaker_ref,
       addressable_by: (o.addressable_by || []).map(resolveRef)
     }));
+    const issuedFacts = (p.issuedFacts || []).map(f => {
+      if (typeof f === 'string') return f;
+      return { text: f.text, participants: (f.participants || []).map(pt => ({ ref: resolveRef(pt.key), role: pt.role })) };
+    });
     const accepted = window._acceptStageProposal('2', {
-      present: [julian.entity.id], location: { label: 'the colonnade outside the assembly hall' },
-      issued_facts: p.grantFacet ? ["Julian defends the Institution's authority without hesitation, cutting off her objection before it forms."] : [],
-      issued_objects: issuedObjects, exclusions: p.exclusions || { locations: [], objects: [] },
+      present: (p.present || []).map(resolveRef), location: { label: 'the colonnade outside the assembly hall' },
+      issued_facts: issuedFacts, issued_objects: issuedObjects, exclusions: p.exclusions || { locations: [], objects: [] },
       affordances: ['the side door stands unlatched'], source: 'live-proof-' + p.id
     });
-    return { julianId: julian.entity.id, accepted };
-  }, { id, seeded: !!opts.seeded, grantFacet: !!opts.grantFacet, issuedObjects: opts.issuedObjects || [], exclusions: opts.exclusions || null });
-  ok(id + ' setup: entity + accepted stage succeeded', setup.accepted.ok === true, JSON.stringify(setup.accepted.why));
+    return { minted, accepted };
+  }, { id, seeded: !!opts.seeded, people: opts.people || [], present: opts.present || [], issuedFacts: opts.issuedFacts || [], issuedObjects: opts.issuedObjects || [], exclusions: opts.exclusions || null });
+  ok(id + ' setup: entities + accepted stage succeeded', setup.accepted.ok === true, JSON.stringify(setup.accepted.why));
 
   await submit(page, 'I hold my ground and answer him.', 'I did what the rite required.');
   const settled = await settle(page, ctx, 150000);
   ok(id + ' a real author payload was produced', settled && ctx.authorPayloads.length >= 1, 'authorPayloads=' + ctx.authorPayloads.length);
   if (!settled) console.log('DEBUG ' + id + ' logs=' + JSON.stringify(dbg.logs.slice(-40)));
 
-  const post = await page.evaluate(() => ({ sk: window.state.sceneSkeleton }));
+  const post = await page.evaluate(() => ({ sk: window.state.sceneSkeleton, cont: window.state._cpContinuationContract }));
+  if (post.sk && Array.isArray(post.sk.character_plus) && post.sk.character_plus.length === 0) console.log('DEBUG ' + id + ' _cpContinuationContract=' + JSON.stringify(post.cont));
   const authorAll = ctx.authorPayloads.length ? (ctx.authorPayloads[0].sys + '\n' + ctx.authorPayloads[0].usr) : '';
   await page.context().close();
-  return { post, authorAll, julianId: setup.julianId };
+  return { post, authorAll, minted: setup.minted };
 }
 
 // ══════════════════════════════════════════════════════════════════════════
-// SCENARIO A — SEEDED continuation, VALID: accepted stage + a facet-backed present participant +
-// an issued object addressable by them. Proves C+/E+/fusion all resolve, exactly once, in the
-// real author payload.
+// SCENARIO A — SEEDED continuation, VALID, MULTI-ENTITY (2026-09-14 correction). FOUR present
+// entities — Julian, Seren, Lirael (PC), the Dohkar — and Seren/Dohkar are ALSO granted real
+// authored facet material (same shape as Julian's). Only ONE issued fact exists, and it is
+// EXPLICITLY attributed to Julian alone (role:subject). This is what the withdrawn blanket-
+// attribution fix could never have proven: that having facet material is NOT sufficient — only
+// the explicitly named participant may be C+-eligible from this fact. Also proves controls 1 and
+// 5 (author payload carries evidence for Julian only) directly.
 // ══════════════════════════════════════════════════════════════════════════
 {
+  const people = [
+    { key: 'JULIAN', label: 'Julian', grantFacet: true, role: 'the Provast' },
+    { key: 'SEREN', label: 'Seren', grantFacet: true, role: 'a First Favored' },
+    { key: 'DOHKAR', label: 'the presiding Dohkar', grantFacet: true, role: 'the officiant' }
+  ];
   const { post, authorAll } = await runFixtureScenario('A', {
-    seeded: true, grantFacet: true,
-    issuedObjects: [{ label: 'the sealed ledger', owner_or_caretaker_ref: '__JULIAN__', addressable_by: ['__JULIAN__'] }],
+    seeded: true, people, present: ['JULIAN', 'SEREN', 'DOHKAR'],
+    issuedFacts: [{ text: "Julian defends the Institution's authority without hesitation, cutting off the objection before it forms.", participants: [{ key: 'JULIAN', role: 'subject' }] }],
+    issuedObjects: [{ label: 'the sealed ledger', owner_or_caretaker_ref: 'JULIAN', addressable_by: ['JULIAN'] }],
     envTarget: 'the sealed ledger', fusionCharacter: 'Julian', fusionTarget: 'the sealed ledger'
   });
-  ok('A the resolved stage was consulted (accepted, not the raw planner target)', post.sk && post.sk.environment_plus && post.sk.environment_plus.target === 'the sealed ledger' && !!post.sk.environment_plus.object_id, JSON.stringify(post.sk && post.sk.environment_plus));
+  ok('A (CONTROL 1) C+ fires ONLY for the explicitly attributed actor (Julian) — never Seren, Lirael, or the Dohkar, despite all three being present with real facet material', post.sk && Array.isArray(post.sk.character_plus) && post.sk.character_plus.length === 1 && post.sk.character_plus[0].character === 'Julian', JSON.stringify(post.sk && post.sk.character_plus));
+  ok('A C+ used an issued facet/evidence source (real backend-scheduled assignment, canonicalId present)', post.sk && post.sk.character_plus && post.sk.character_plus[0] && !!post.sk.character_plus[0].facet_id && !!post.sk.character_plus[0].canonicalId, JSON.stringify(post.sk && post.sk.character_plus));
+  ok('A the resolved stage was consulted for E+ (accepted, not the raw planner target)', post.sk && post.sk.environment_plus && post.sk.environment_plus.target === 'the sealed ledger' && !!post.sk.environment_plus.object_id, JSON.stringify(post.sk && post.sk.environment_plus));
   ok('A E+ target carries a real backend object_id (D1)', post.sk && post.sk.environment_plus && /^obj:stage:\d+$/.test(post.sk.environment_plus.object_id || ''), post.sk && post.sk.environment_plus && post.sk.environment_plus.object_id);
-  ok('A C+ used an issued facet/evidence source for the present participant (real backend-scheduled assignment, not the planner\'s free text)', post.sk && Array.isArray(post.sk.character_plus) && post.sk.character_plus.length === 1 && post.sk.character_plus[0].character === 'Julian' && !!post.sk.character_plus[0].facet_id && !!post.sk.character_plus[0].canonicalId, JSON.stringify(post.sk && post.sk.character_plus));
   ok('A fusion resolved for the SAME actor via addressable_by', post.sk && post.sk.fusion && post.sk.fusion.character === 'Julian' && post.sk.fusion.target === 'the sealed ledger', JSON.stringify(post.sk && post.sk.fusion));
+  ok('A (CONTROL 5) the author payload carries Julian\'s facet_truth/pressure text', authorAll.indexOf("This person believes the Institution's order matters more than any one person's comfort.") !== -1, '');
+  ok('A (CONTROL 5) the author payload does NOT carry Seren\'s or the Dohkar\'s facet content (they were never attributed on any fact)', authorAll.indexOf('Seren defends the') === -1 && authorAll.indexOf('the presiding Dohkar defends the') === -1, '');
   ok('A the author payload contains the accepted E+ object', (authorAll.match(/the sealed ledger/g) || []).length >= 1, '');
   ok('A the author payload contains the current-stage directive', /CURRENT STAGE/.test(authorAll), '');
   ok('A no raw planner proposal JSON leaked into the author payload', !/"environment_plus"\s*:\s*\{"target"/.test(authorAll), '');
@@ -220,32 +255,83 @@ async function runFixtureScenario(id, opts) {
 }
 
 // ══════════════════════════════════════════════════════════════════════════
-// SCENARIO B — CORRIDOR (unseeded) continuation, VALID: the identical fixture as A, minus a
-// starter id. Proves the wiring is genuinely story-shape-agnostic, not accidentally seed-only.
+// SCENARIO B — CORRIDOR (unseeded) continuation, VALID: the identical multi-entity, explicit-
+// attribution fixture as A, minus a starter id. Proves the wiring is genuinely story-shape-
+// agnostic, not accidentally seed-only, and that the correction holds for corridor too.
 // ══════════════════════════════════════════════════════════════════════════
 {
+  const people = [
+    { key: 'JULIAN', label: 'Julian', grantFacet: true },
+    { key: 'SEREN', label: 'Seren', grantFacet: true }
+  ];
   const { post, authorAll } = await runFixtureScenario('B', {
-    seeded: false, grantFacet: true,
-    issuedObjects: [{ label: 'the sealed ledger', owner_or_caretaker_ref: '__JULIAN__', addressable_by: ['__JULIAN__'] }],
+    seeded: false, people, present: ['JULIAN', 'SEREN'],
+    issuedFacts: [{ text: "Julian defends the Institution's authority without hesitation, cutting off the objection before it forms.", participants: [{ key: 'JULIAN', role: 'subject' }] }],
+    issuedObjects: [{ label: 'the sealed ledger', owner_or_caretaker_ref: 'JULIAN', addressable_by: ['JULIAN'] }],
     envTarget: 'the sealed ledger', fusionCharacter: 'Julian', fusionTarget: 'the sealed ledger'
   });
+  ok('B (corridor) C+ fires ONLY for Julian, never Seren (present, facet-granted, but unattributed)', post.sk && Array.isArray(post.sk.character_plus) && post.sk.character_plus.length === 1 && post.sk.character_plus[0].character === 'Julian', JSON.stringify(post.sk && post.sk.character_plus));
   ok('B (corridor) E+ resolved to the accepted object with a real object_id', post.sk && post.sk.environment_plus && post.sk.environment_plus.target === 'the sealed ledger' && /^obj:stage:\d+$/.test(post.sk.environment_plus.object_id || ''), JSON.stringify(post.sk && post.sk.environment_plus));
-  ok('B (corridor) C+ resolved via the accepted stage\'s authoritative branch (no seed involved)', post.sk && Array.isArray(post.sk.character_plus) && post.sk.character_plus.length === 1 && post.sk.character_plus[0].character === 'Julian', JSON.stringify(post.sk && post.sk.character_plus));
   ok('B (corridor) fusion resolved for the same actor', post.sk && post.sk.fusion && post.sk.fusion.character === 'Julian' && post.sk.fusion.target === 'the sealed ledger', JSON.stringify(post.sk && post.sk.fusion));
   ok('B (corridor) the author payload carries the current-stage directive exactly once', (authorAll.match(/CURRENT STAGE \(authoritative/g) || []).length === 1, '');
   console.log('SCENARIO B subtotal: ' + JSON.stringify(tally()));
 }
 
 // ══════════════════════════════════════════════════════════════════════════
-// RED C — no object inventory at all: C+ may still fire (Julian has real facet material), but
-// E+ and fusion must be ABSENT — never invented from the planner's free-text guess.
+// CONTROL 2 — a genuinely multi-party fact: BOTH Julian and Seren are explicitly listed as
+// subjects of the SAME fact, and BOTH have real, independently-matching facet material. Both
+// must be C+-eligible — this is the real system's own doctrine ("a genuinely joint interaction ...
+// an author states by listing both participants on that beat"), still subject to each
+// participant's OWN facet/evidence rule (neither is invented for the other).
 // ══════════════════════════════════════════════════════════════════════════
 {
+  const people = [
+    { key: 'JULIAN', label: 'Julian', grantFacet: true },
+    { key: 'SEREN', label: 'Seren', grantFacet: true }
+  ];
+  const { post } = await runFixtureScenario('CTRL2', {
+    seeded: false, people, present: ['JULIAN', 'SEREN'],
+    issuedFacts: [{
+      text: "Julian defends the Institution's authority without hesitation, and Seren, standing beside him, defends the Institution's authority just as fiercely — neither one backing down.",
+      participants: [{ key: 'JULIAN', role: 'subject' }, { key: 'SEREN', role: 'subject' }]
+    }],
+    issuedObjects: [], envTarget: null
+  });
+  const names = (post.sk && post.sk.character_plus || []).map(c => c.character).sort();
+  ok('CONTROL-2 BOTH explicitly-listed joint participants are C+-eligible', JSON.stringify(names) === JSON.stringify(['Julian', 'Seren']), JSON.stringify(post.sk && post.sk.character_plus));
+  ok('CONTROL-2 each entry carries its OWN facet_id/canonicalId (not one invented for the other)', post.sk && post.sk.character_plus && post.sk.character_plus.every(c => !!c.facet_id && !!c.canonicalId), JSON.stringify(post.sk && post.sk.character_plus));
+  console.log('CONTROL-2 subtotal: ' + JSON.stringify(tally()));
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// CONTROL 3 — a participant-less fact (plain string, no attribution) cannot enable C+ for
+// anyone, even when the only present entity has real facet material with text that would
+// otherwise match.
+// ══════════════════════════════════════════════════════════════════════════
+{
+  const people = [{ key: 'JULIAN', label: 'Julian', grantFacet: true }];
+  const { post } = await runFixtureScenario('CTRL3', {
+    seeded: false, people, present: ['JULIAN'],
+    issuedFacts: ["Julian defends the Institution's authority without hesitation, cutting off the objection before it forms."], // plain string — NO participants
+    issuedObjects: [], envTarget: null
+  });
+  ok('CONTROL-3 C+ is ABSENT — the fact carries no participant attribution, so it cannot ground anyone, even Julian', post.sk && Array.isArray(post.sk.character_plus) && post.sk.character_plus.length === 0, JSON.stringify(post.sk && post.sk.character_plus));
+  console.log('CONTROL-3 subtotal: ' + JSON.stringify(tally()));
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// RED C — no object inventory at all: C+ may still fire (Julian's fact is properly attributed
+// to him), but E+ and fusion must be ABSENT — never invented from the planner's free-text guess.
+// ══════════════════════════════════════════════════════════════════════════
+{
+  const people = [{ key: 'JULIAN', label: 'Julian', grantFacet: true }];
   const { post } = await runFixtureScenario('C', {
-    seeded: false, grantFacet: true, issuedObjects: [],
+    seeded: false, people, present: ['JULIAN'],
+    issuedFacts: [{ text: "Julian defends the Institution's authority without hesitation, cutting off the objection before it forms.", participants: [{ key: 'JULIAN', role: 'subject' }] }],
+    issuedObjects: [],
     envTarget: 'a lantern the model imagined', fusionCharacter: 'Julian', fusionTarget: 'a lantern the model imagined'
   });
-  ok('RED-C C+ still fires (facet material exists, independent of the object inventory)', post.sk && Array.isArray(post.sk.character_plus) && post.sk.character_plus.length === 1 && post.sk.character_plus[0].character === 'Julian', JSON.stringify(post.sk && post.sk.character_plus));
+  ok('RED-C C+ still fires for the properly-attributed actor', post.sk && Array.isArray(post.sk.character_plus) && post.sk.character_plus.length === 1 && post.sk.character_plus[0].character === 'Julian', JSON.stringify(post.sk && post.sk.character_plus));
   ok('RED-C E+ is ABSENT — no inventory, never invented from the planner\'s free text', post.sk && post.sk.environment_plus === null, JSON.stringify(post.sk && post.sk.environment_plus));
   ok('RED-C fusion is ABSENT (no valid E+ target to pair with)', post.sk && post.sk.fusion === null, JSON.stringify(post.sk && post.sk.fusion));
   console.log('RED-C subtotal: ' + JSON.stringify(tally()));
@@ -256,9 +342,11 @@ async function runFixtureScenario(id, opts) {
 // be refused (E+ absent), not silently issued.
 // ══════════════════════════════════════════════════════════════════════════
 {
+  const people = [{ key: 'JULIAN', label: 'Julian', grantFacet: true }];
   const { post } = await runFixtureScenario('D', {
-    seeded: false, grantFacet: true,
-    issuedObjects: [{ label: 'the sealed ledger', owner_or_caretaker_ref: '__JULIAN__', addressable_by: ['__JULIAN__'] }],
+    seeded: false, people, present: ['JULIAN'],
+    issuedFacts: [{ text: "Julian defends the Institution's authority without hesitation, cutting off the objection before it forms.", participants: [{ key: 'JULIAN', role: 'subject' }] }],
+    issuedObjects: [{ label: 'the sealed ledger', owner_or_caretaker_ref: 'JULIAN', addressable_by: ['JULIAN'] }],
     exclusions: { locations: [], objects: ['the sealed ledger'] },
     envTarget: 'the sealed ledger', fusionCharacter: 'Julian', fusionTarget: 'the sealed ledger'
   });
@@ -270,12 +358,18 @@ async function runFixtureScenario(id, opts) {
 
 // ══════════════════════════════════════════════════════════════════════════
 // RED E — unreachable actor/object fusion: the object exists and is NOT excluded (E+ resolves),
-// but its addressable_by names someone else. Fusion must be absent while E+ stands alone.
+// but its addressable_by names someone else (a real, minted, but NOT present entity). Fusion
+// must be absent while E+ stands alone.
 // ══════════════════════════════════════════════════════════════════════════
 {
+  const people = [
+    { key: 'JULIAN', label: 'Julian', grantFacet: true },
+    { key: 'SEREN', label: 'Seren', grantFacet: false } // minted so addressable_by has a real ref; never present, never attributed
+  ];
   const { post } = await runFixtureScenario('E', {
-    seeded: false, grantFacet: true,
-    issuedObjects: [{ label: 'the sealed ledger', owner_or_caretaker_ref: '__JULIAN__', addressable_by: ['__OTHER__'] }],
+    seeded: false, people, present: ['JULIAN'],
+    issuedFacts: [{ text: "Julian defends the Institution's authority without hesitation, cutting off the objection before it forms.", participants: [{ key: 'JULIAN', role: 'subject' }] }],
+    issuedObjects: [{ label: 'the sealed ledger', owner_or_caretaker_ref: 'JULIAN', addressable_by: ['SEREN'] }],
     envTarget: 'the sealed ledger', fusionCharacter: 'Julian', fusionTarget: 'the sealed ledger'
   });
   ok('RED-E C+ still fires', post.sk && Array.isArray(post.sk.character_plus) && post.sk.character_plus.length === 1, JSON.stringify(post.sk && post.sk.character_plus));
@@ -289,9 +383,11 @@ async function runFixtureScenario(id, opts) {
 // issued at all (not excluded, simply absent). E+ must be refused, never invented.
 // ══════════════════════════════════════════════════════════════════════════
 {
+  const people = [{ key: 'JULIAN', label: 'Julian', grantFacet: true }];
   const { post } = await runFixtureScenario('F', {
-    seeded: false, grantFacet: true,
-    issuedObjects: [{ label: 'the sealed ledger', owner_or_caretaker_ref: '__JULIAN__', addressable_by: ['__JULIAN__'] }],
+    seeded: false, people, present: ['JULIAN'],
+    issuedFacts: [{ text: "Julian defends the Institution's authority without hesitation, cutting off the objection before it forms.", participants: [{ key: 'JULIAN', role: 'subject' }] }],
+    issuedObjects: [{ label: 'the sealed ledger', owner_or_caretaker_ref: 'JULIAN', addressable_by: ['JULIAN'] }],
     envTarget: 'a golden chalice the model invented', fusionCharacter: 'Julian', fusionTarget: 'a golden chalice the model invented'
   });
   ok('RED-F C+ still fires', post.sk && Array.isArray(post.sk.character_plus) && post.sk.character_plus.length === 1, JSON.stringify(post.sk && post.sk.character_plus));
@@ -301,18 +397,24 @@ async function runFixtureScenario(id, opts) {
 }
 
 // ══════════════════════════════════════════════════════════════════════════
-// RED G — absent participant facet/evidence: Julian is present but was NEVER granted authored
-// facet material. C+ must be absent for him (never inferred from the bare label "Julian").
+// RED G — absent participant facet/evidence: Julian is present AND properly attributed on a
+// fact, but was NEVER granted authored facet material. C+ must be absent for him (never inferred
+// from the bare label or from correct attribution alone — attribution and facet coverage are
+// TWO SEPARATE gates, both required). (CONTROL 5, negative half): fusion must ALSO be absent,
+// because its C+ prerequisite is missing.
 // ══════════════════════════════════════════════════════════════════════════
 {
-  const { post } = await runFixtureScenario('G', {
-    seeded: false, grantFacet: false,
-    issuedObjects: [{ label: 'the sealed ledger', owner_or_caretaker_ref: '__JULIAN__', addressable_by: ['__JULIAN__'] }],
+  const people = [{ key: 'JULIAN', label: 'Julian', grantFacet: false }];
+  const { post, authorAll } = await runFixtureScenario('G', {
+    seeded: false, people, present: ['JULIAN'],
+    issuedFacts: [{ text: "Julian defends the Institution's authority without hesitation, cutting off the objection before it forms.", participants: [{ key: 'JULIAN', role: 'subject' }] }],
+    issuedObjects: [{ label: 'the sealed ledger', owner_or_caretaker_ref: 'JULIAN', addressable_by: ['JULIAN'] }],
     envTarget: 'the sealed ledger', fusionCharacter: 'Julian', fusionTarget: 'the sealed ledger'
   });
-  ok('RED-G C+ is ABSENT for Julian (present, but no authored facet material — never inferred)', post.sk && Array.isArray(post.sk.character_plus) && post.sk.character_plus.length === 0, JSON.stringify(post.sk && post.sk.character_plus));
+  ok('RED-G C+ is ABSENT for Julian (correctly attributed, but no authored facet material — attribution alone is not enough)', post.sk && Array.isArray(post.sk.character_plus) && post.sk.character_plus.length === 0, JSON.stringify(post.sk && post.sk.character_plus));
   ok('RED-G E+ can still resolve independently (object inventory exists regardless of facet coverage)', post.sk && post.sk.environment_plus && post.sk.environment_plus.target === 'the sealed ledger', JSON.stringify(post.sk && post.sk.environment_plus));
-  ok('RED-G fusion is ABSENT — no scheduled C+ participant to pair with the object', post.sk && post.sk.fusion === null, JSON.stringify(post.sk && post.sk.fusion));
+  ok('RED-G (CONTROL 5) fusion is ABSENT — no scheduled C+ participant to pair with the object (the C+ prerequisite is missing)', post.sk && post.sk.fusion === null, JSON.stringify(post.sk && post.sk.fusion));
+  ok('RED-G the author payload never claims Julian has a C+ beat (no facet_truth text present)', authorAll.indexOf("This person believes the Institution's order matters more than any one person's comfort.") === -1, '');
   console.log('RED-G subtotal: ' + JSON.stringify(tally()));
 }
 

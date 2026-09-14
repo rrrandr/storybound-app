@@ -127843,17 +127843,32 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
               kind: e.anchorRole === 'pc' ? 'pc' : (e.kind || 'named'), aliases: (e.aliases || []).concat([e.label]),
               presence: 'IN_PERSON', role_instance_id: e.role_instance_id || null, source: 'accepted_stage.present' });
           });
-          // Each issued fact is attributed (role 'subject') to every present participant — a stage
-          // fact is scene-level witnessed truth, not one person's private condition, so ownership is
-          // shared among whoever is there. This is what makes an issued fact PRESSURE-ELIGIBLE and
-          // GROUNDED for _cpFactCorpus/_cpBuildGroundedOptions (participants.length>0 — see
-          // _cpFactCorpus's 'about-to-happen' push) — without it, C+ options could never be built
-          // from this substrate's facts at all, silently defeating the whole point of this branch.
-          // evidence_requires regex matching (authored per-facet, unrelated to this) still decides
-          // actual relevance; this only establishes that the fact CAN be cited, never that it will be.
-          var _accParticipantRefs = _accOnStage.map(function (r) { return { ref: r.id, role: 'subject', label: r.label }; });
+          // CORRECTED (Roman, 2026-09-14): the prior version attributed every issued fact to
+          // EVERY present participant (role 'subject'), which is semantically wrong — a present
+          // participant is not automatically a participant in every issued fact. That let the
+          // engine "prove" psychology for anyone in the room off an unrelated fact, defeating the
+          // whole purpose of pressure-grounding. Withdrawn.
+          //
+          // A fact now carries ONLY the participants it explicitly names. A plain string fact has
+          // NO participants — an environmental/history fact, engagement-only, never C+-eligible
+          // (_cpFactCorpus's own participants.length>0 gate, UNMODIFIED, already enforces this). A
+          // structured fact {text, participants:[{ref, role}]} carries EXACTLY the refs/roles the
+          // issuer stated; _validateStageProposal already rejected any ref that is not a PRESENT,
+          // issued entity for this proposal (fail-closed, never inferred, never blanket-applied).
+          // Only participants whose role is in _cpFactCorpus's own CP_GROUNDING_ROLES
+          // (actor/subject/speaker, unmodified) ever ground a pressure — 'object'/'witness'/
+          // 'affected_party' pass through unchanged but never ground anyone by themselves, exactly
+          // matching the existing doctrine ("a person acted upon is not thereby revealed").
           var _accEventFacts = (Array.isArray(_acceptedRec.issued_facts) ? _acceptedRec.issued_facts : [])
-            .filter(Boolean).map(function (f) { return { text: String(f), participants: _accParticipantRefs }; });
+            .map(function (f) {
+              if (typeof f === 'string') { var t = f.trim(); return t ? { text: t, participants: [] } : null; }
+              if (!f || typeof f !== 'object') return null;
+              var text = String(f.text || '').trim(); if (!text) return null;
+              var parts = (Array.isArray(f.participants) ? f.participants : [])
+                .filter(function (p) { return p && p.ref; })
+                .map(function (p) { return { ref: String(p.ref), role: String(p.role || 'mentioned'), label: '' }; });
+              return { text: text, participants: parts };
+            }).filter(Boolean);
           out.source = 'accepted_stage:' + (_acceptedRec.provenance && _acceptedRec.provenance.source || 'stage_issuer');
           out.onStage = _accOnStage; out.offStage = [];
           out.setting = (_acceptedRec.location && _acceptedRec.location.label) || '';
@@ -197370,6 +197385,26 @@ No text, no watermark, no UI elements, share-ready.`;
         if (!(L && L.entities[ref])) why.push('issued_objects[' + i + '].addressable_by references an unissued entity: "' + ref + '"');
       });
     });
+    // FACT PARTICIPANT ATTRIBUTION (Roman, corrected 2026-09-14) — a present participant is NOT
+    // automatically a participant in every issued fact; that earlier rule let C+ be "proven" for
+    // anyone in the room off an unrelated fact and is withdrawn. issued_facts entries may be a
+    // plain string (an environmental/history fact — no participants, never C+-eligible) or a
+    // structured { text, participants:[{ref, role}] } record. EVERY participant ref must be a
+    // PRESENT, issued entity in THIS proposal — never inferred, never merely "an existing entity
+    // somewhere" — or the whole proposal is rejected. role is free text (subject/object/witness/
+    // affected_party and similar); only roles _cpFactCorpus's own CP_GROUNDING_ROLES recognizes
+    // (actor/subject/speaker) ever ground a pressure — that grounding logic is untouched here.
+    (Array.isArray(proposal.issued_facts) ? proposal.issued_facts : []).forEach(function (f, i) {
+      if (typeof f === 'string') return; // a plain fact carries no participants to validate
+      if (!f || typeof f !== 'object') { why.push('issued_facts[' + i + '] is neither a string nor a {text,participants} object'); return; }
+      if (!String(f.text || '').trim()) { why.push('issued_facts[' + i + '] has no text'); return; }
+      (Array.isArray(f.participants) ? f.participants : []).forEach(function (p, j) {
+        var ref = p && p.ref;
+        if (!ref) { why.push('issued_facts[' + i + '].participants[' + j + '] has no ref'); return; }
+        if (!(L && L.entities[ref])) { why.push('issued_facts[' + i + '].participants[' + j + '] references an unissued entity: "' + ref + '"'); return; }
+        if (present.indexOf(String(ref)) === -1) { why.push('issued_facts[' + i + '].participants[' + j + '] references "' + ref + '", which is not present in this proposal — a fact\'s participant must be present, never inferred'); }
+      });
+    });
     // BUDGET CHECK (Roman, authorized 2026-09-14) — the stage directive shares a single
     // continuity-spine character budget (_SPINE_MAX_CHARS) with durable consequences, reader
     // posture/history and the header/footer lines. A proposal whose own rendered directive would
@@ -197481,7 +197516,9 @@ No text, no watermark, no UI elements, share-ready.`;
     if (rec.location && rec.location.label) lines.push('  LOCATION: ' + String(rec.location.label));
     var present = (Array.isArray(rec.present) ? rec.present : []).map(labelFor).filter(Boolean);
     if (present.length) lines.push('  PRESENT: ' + present.join(' · '));
-    if (Array.isArray(rec.issued_facts) && rec.issued_facts.length) lines.push('  ISSUED FACTS: ' + rec.issued_facts.map(String).join(' | '));
+    // A fact may be a plain string or a structured {text, participants} record (2026-09-14
+    // correction) — render its text either way; participant attribution is not author-facing here.
+    if (Array.isArray(rec.issued_facts) && rec.issued_facts.length) lines.push('  ISSUED FACTS: ' + rec.issued_facts.map(function (f) { return typeof f === 'string' ? f : String((f && f.text) || ''); }).filter(Boolean).join(' | '));
     if (Array.isArray(rec.issued_objects) && rec.issued_objects.length) {
       lines.push('  ISSUED OBJECTS (only these may appear as physically present — never invent another):');
       rec.issued_objects.forEach(function (o) {
