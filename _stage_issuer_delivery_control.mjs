@@ -59,7 +59,7 @@ function section(title) { console.log('\n=== ' + title + ' ==='); }
 // ══════════════════════════════════════════════════════════════════════════
 section('STATIC — wiring into the single shared author-assembly function');
 {
-  const spineFnSrc = sliceByAnchor('spine-fn', 'function _buildContinuitySpineBlock(s) {', "window._buildContinuitySpineBlock = _buildContinuitySpineBlock;");
+  const spineFnSrc = sliceByAnchor('spine-fn', 'function _buildContinuitySpineBlock(s, opts) {', "window._buildContinuitySpineBlock = _buildContinuitySpineBlock;");
   const occurrences = (spineFnSrc.match(/_buildCurrentStageDirective\(/g) || []).length;
   ok('_buildCurrentStageDirective is called exactly once inside _buildContinuitySpineBlock', occurrences === 1, 'found ' + occurrences);
   const callSites = (SRC.match(/_buildContinuitySpineBlock\(/g) || []).length;

@@ -127462,15 +127462,24 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
     try { var L = JSON.parse(json); if (!L || !Array.isArray(L.entries)) return null; L.storyId = String(newStoryId || ''); L.entries = L.entries.map(function (e) { return Object.freeze(e); }); return L; } catch (_) { return null; }
   }
   // The block every author path receives. Same text on every path; '' when nothing is authoritative.
-  function _buildContinuitySpineBlock(s) {
+  // opts.includeStage (default true): pass {includeStage:false} to measure "everything else"
+  // (header/who/durable/history/now) WITHOUT the current stage occupying its own headroom — this
+  // is exactly what _validateStageProposal's pre-commit BUDGET CHECK calls, so a stage proposal is
+  // measured against the REAL remaining room, never a guessed split. No recursion risk: with
+  // includeStage:false this function never calls _buildCurrentStageDirective at all.
+  function _buildContinuitySpineBlock(s, opts) {
     try {
       s = s || window.state; if (!s) return '';
+      opts = opts || {};
       var L = _sceneLedgerGet(s, false), entries = L ? L.entries : [];
       var durable = ''; try { durable = (typeof _buildDurableFateConsequenceDirective === 'function') ? (_buildDurableFateConsequenceDirective() || '') : ''; } catch (_) { durable = ''; }
       // CURRENT ACCEPTED STAGE (Roman, authorized 2026-09-14) — same delivery discipline as
       // `durable` above: one function, read-only, '' when there is nothing authoritative to say.
       // A stage-less legacy story (or a scene that never issued one) gets no block at all.
-      var stageBlock = ''; try { stageBlock = (typeof _buildCurrentStageDirective === 'function') ? (_buildCurrentStageDirective(s) || '') : ''; } catch (_) { stageBlock = ''; }
+      var stageBlock = '';
+      if (opts.includeStage !== false) {
+        try { stageBlock = (typeof _buildCurrentStageDirective === 'function') ? (_buildCurrentStageDirective(s) || '') : ''; } catch (_) { stageBlock = ''; }
+      }
       if (!entries.length && !durable && !stageBlock) return '';
       // Verified facts: written ONLY by the runtime verifier when a declared state change was DELIVERED
       // on the page (slot-checked against the prose). Keyed by the scene it was committed at.
@@ -127479,31 +127488,58 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
         cf.forEach(function (f) { if (!f || !f.fact) return; var k = (typeof f.committedAtScene === 'number') ? f.committedAtScene : null;
           if (k == null) { var m = /^scene(\d+)_transition$/.exec(String(f.sourceEvent || '')); if (m) k = Number(m[1]); }
           if (k == null) return; (verifiedBy[k] = verifiedBy[k] || []).push(String(f.fact).slice(0, 200)); }); } catch (_) { verifiedBy = {}; }
-      var lines = ['STORY LEDGER (authoritative — built from committed state, never from prose; it is what the reader has ALREADY READ, facts only: what the reader did, what Fate recorded, what was verified on the page):'];
+      var headerLine = 'STORY LEDGER (authoritative — built from committed state, never from prose; it is what the reader has ALREADY READ, facts only: what the reader did, what Fate recorded, what was verified on the page):';
       var who = [];
       try { var pc = _resolvePcIdentity(s); if (pc && pc.v) who.push('PC ' + String(pc.v)); } catch (_) {}
       try { var li = s.canonicalLI; if (li && li.committed && li.name) who.push('LI ' + String(li.name)); } catch (_) {}
-      if (who.length) lines.push('  WHO: ' + who.join(' · '));
+      var whoLine = who.length ? ('  WHO: ' + who.join(' · ')) : null;
+      var durableLine = durable ? durable.trim().replace(/^/gm, '  ') : '';
+      var stageLine = stageBlock ? stageBlock.trim().replace(/^/gm, '  ') : '';
+      var nowLine = '  NOW: page ' + _currentSceneNumber(s) + ' — reach a dramatic state that is not on the list above; what is listed has been read and cannot be undone or re-told.';
+      // PRIORITY ORDER (Roman, 2026-09-14 budget safeguard): durable consequences, the current
+      // accepted stage (validator-guaranteed at commit time to fit the real remaining headroom —
+      // see _validateStageProposal), and the header/WHO/NOW lines are PROTECTED — this function
+      // never slices into them. The reader's own posture lives in the newest "ALREADY READ" entry,
+      // which the degradation below always keeps longest (it shrinks the recency window from the
+      // OLDEST end first, never mid-entry). Only OLDER history is ever shrunk, and text POSITION
+      // is left exactly where it always was (immediately after WHO) so nothing that scans for
+      // "p1: ..." shortly after "STORY LEDGER" sees new content inserted ahead of it — what changed
+      // is how MUCH history is shown, sized against the room durable+stage+now actually need,
+      // computed for real rather than assumed.
+      var protectedLen = ('\n' + [headerLine].concat(whoLine ? [whoLine] : []).concat(durableLine ? [durableLine] : []).concat(stageLine ? [stageLine] : []).concat([nowLine]).join('\n') + '\n').length;
+      var historyBudget = Math.max(0, _SPINE_MAX_CHARS - protectedLen);
+      var historyLines = [];
       if (entries.length) {
         var cur = (Number.isInteger(s.issueIndexInRun) && s.issueIndexInRun > 0) ? s.issueIndexInRun : 1;
-        var recent = entries.slice(-_SPINE_RECENT), older = entries.length - recent.length;
-        lines.push('  ALREADY READ (' + entries.length + ' page' + (entries.length === 1 ? '' : 's') + (older ? '; ' + older + ' earlier not listed' : '') + ') — what is listed here HAPPENED and is finished; do not replay, re-stage or re-argue it:');
-        recent.forEach(function (e) {
-          var tag = (e.issue !== cur ? 'issue ' + e.issue + ' ' : '') + 'p' + e.sceneNumber, bits = [];
-          if (e.kind === 'baked' && e.plannedEvent) bits.push('the authored opening established: ' + e.plannedEvent);   // 2026-09-10: a fixed seed opening records what it established
-          if (e.kind === 'oas_interrupt' && e.plannedEvent) bits.push('the opening ended: ' + e.plannedEvent);            // 2026-09-11: the interruption's fixed exchange, then the reader's own answer (act/dia below)
-          if (e.act) bits.push('reader did: ' + e.act);
-          if (e.dia) bits.push('reader said: "' + e.dia + '"');
-          if (e.card === 'tempt') bits.push('[Tempt Fate played]'); else if (e.card === 'petition') bits.push('[Petition made]');
-          if (e.changes && e.changes.length) bits.push('[Fate recorded a permanent change]');
-          var vf = verifiedBy[e.sceneNumber]; if (vf && vf.length) bits.push('verified on the page: ' + vf.join('; '));
-          lines.push('    ' + tag + ': ' + (bits.length ? bits.join(' — ') : 'page read (no recorded facts)'));
-        });
+        for (var windowSize = Math.min(_SPINE_RECENT, entries.length); windowSize >= 0; windowSize--) {
+          var recent = windowSize ? entries.slice(-windowSize) : [];
+          var older = entries.length - recent.length;
+          var candidate = ['  ALREADY READ (' + entries.length + ' page' + (entries.length === 1 ? '' : 's') + (older ? '; ' + older + ' earlier not listed' : '') + ') — what is listed here HAPPENED and is finished; do not replay, re-stage or re-argue it:'];
+          recent.forEach(function (e) {
+            var tag = (e.issue !== cur ? 'issue ' + e.issue + ' ' : '') + 'p' + e.sceneNumber, bits = [];
+            if (e.kind === 'baked' && e.plannedEvent) bits.push('the authored opening established: ' + e.plannedEvent);   // 2026-09-10: a fixed seed opening records what it established
+            if (e.kind === 'oas_interrupt' && e.plannedEvent) bits.push('the opening ended: ' + e.plannedEvent);            // 2026-09-11: the interruption's fixed exchange, then the reader's own answer (act/dia below)
+            if (e.act) bits.push('reader did: ' + e.act);
+            if (e.dia) bits.push('reader said: "' + e.dia + '"');
+            if (e.card === 'tempt') bits.push('[Tempt Fate played]'); else if (e.card === 'petition') bits.push('[Petition made]');
+            if (e.changes && e.changes.length) bits.push('[Fate recorded a permanent change]');
+            var vf = verifiedBy[e.sceneNumber]; if (vf && vf.length) bits.push('verified on the page: ' + vf.join('; '));
+            candidate.push('    ' + tag + ': ' + (bits.length ? bits.join(' — ') : 'page read (no recorded facts)'));
+          });
+          if (candidate.join('\n').length <= historyBudget || windowSize === 0) { historyLines = candidate; break; }
+        }
       }
-      if (durable) lines.push(durable.trim().replace(/^/gm, '  '));
-      if (stageBlock) lines.push(stageBlock.trim().replace(/^/gm, '  '));
-      lines.push('  NOW: page ' + _currentSceneNumber(s) + ' — reach a dramatic state that is not on the list above; what is listed has been read and cannot be undone or re-told.');
+      var lines = [headerLine];
+      if (whoLine) lines.push(whoLine);
+      if (historyLines.length) lines = lines.concat(historyLines);
+      if (durableLine) lines.push(durableLine);
+      if (stageLine) lines.push(stageLine);
+      lines.push(nowLine);
       var out = '\n' + lines.join('\n') + '\n';
+      // Last-resort safety net only — should not fire in practice (see _stage_issuer_budget_control.mjs):
+      // it would only trigger if the PROTECTED content alone (durable consequences, whose own
+      // sizing is pre-existing and out of this slice's scope) already exceeds the budget with ZERO
+      // history shown. Stage sizing cannot cause this — the validator guarantees it fits.
       if (out.length > _SPINE_MAX_CHARS) out = out.slice(0, _SPINE_MAX_CHARS - 2) + '…\n';
       return out;
     } catch (_) { return ''; }
@@ -197216,6 +197252,25 @@ No text, no watermark, no UI elements, share-ready.`;
         if (!(L && L.entities[ref])) why.push('issued_objects[' + i + '].addressable_by references an unissued entity: "' + ref + '"');
       });
     });
+    // BUDGET CHECK (Roman, authorized 2026-09-14) — the stage directive shares a single
+    // continuity-spine character budget (_SPINE_MAX_CHARS) with durable consequences, reader
+    // posture/history and the header/footer lines. A proposal whose own rendered directive would
+    // not fit the REAL remaining headroom (computed against current state, never a guessed split)
+    // is rejected HERE, before commit, with a named reason — never silently truncated later at
+    // delivery time, which would risk cutting mid-object, mid-exclusion or mid-ownership-field.
+    // `_buildContinuitySpineBlock(s, {includeStage:false})` measures "everything else" exactly as
+    // it stands right now, so the headroom checked against is exact, not estimated. Both helpers
+    // are guarded (typeof-checked) so a sandbox missing this dependency chain fails OPEN (assumes
+    // zero pre-existing content, i.e. full headroom) rather than rejecting everything.
+    try {
+      var _stageRenderedForBudget = (typeof _renderStageDirectiveText === 'function') ? _renderStageDirectiveText({ location: proposal.location, present: present, issued_facts: proposal.issued_facts, issued_objects: proposal.issued_objects, affordances: proposal.affordances, exclusions: proposal.exclusions, present_disambiguators: (typeof _computeDisambiguators === 'function') ? _computeDisambiguators(present) : {} }) : '';
+      var _spineMaxForBudget = (typeof _SPINE_MAX_CHARS === 'number') ? _SPINE_MAX_CHARS : 2200;
+      var _spineCoreLen = (typeof _buildContinuitySpineBlock === 'function') ? _buildContinuitySpineBlock(window.state, { includeStage: false }).length : 0;
+      var _spineHeadroom = Math.max(0, _spineMaxForBudget - _spineCoreLen);
+      if (_stageRenderedForBudget.length > _spineHeadroom) {
+        why.push('stage packet exceeds the continuity-spine delivery budget: rendered directive is ' + _stageRenderedForBudget.length + ' chars but only ' + _spineHeadroom + ' chars remain after durable consequences, reader posture/history, and header/footer lines (budget ' + _spineMaxForBudget + ')');
+      }
+    } catch (_budgetErr) { /* never let the budget check itself break an otherwise-valid proposal */ }
     return { ok: why.length === 0, why: why, present: present };
   }
   window._validateStageProposal = _validateStageProposal;
@@ -197277,40 +197332,51 @@ No text, no watermark, no UI elements, share-ready.`;
   // CONTINUITY SPINE"), so this reaches the author EXACTLY ONCE per assembly, with no new
   // per-site wiring. '' when there is no active stage — a stage-less legacy story, or a scene
   // that never issued one, gets no block and retains its existing behavior unchanged.
+  // Pure rendering: rec -> directive text. Shared by the real delivery path
+  // (_buildCurrentStageDirective, reading the ACCEPTED record) and the pre-commit BUDGET CHECK
+  // inside _validateStageProposal (reading the PROPOSAL directly — same field shape, before it is
+  // ever accepted), so the size measured at validate time is the EXACT text the author will later
+  // receive, never an estimate.
+  function _renderStageDirectiveText(rec) {
+    if (!rec) return '';
+    var L = (typeof _relLedger === 'function') ? _relLedger(false) : null;
+    var ents = (L && L.entities) || {};
+    function labelFor(id) {
+      var e = ents[id]; var lbl = e && e.label ? String(e.label) : String(id);
+      var disamb = rec.present_disambiguators && rec.present_disambiguators[id];
+      return disamb || lbl;
+    }
+    var lines = ['CURRENT STAGE (authoritative — where/who/what is physically here RIGHT NOW; the only source for location, presence, objects, and affordances — never invent or assume any beyond it):'];
+    if (rec.location && rec.location.label) lines.push('  LOCATION: ' + String(rec.location.label));
+    var present = (Array.isArray(rec.present) ? rec.present : []).map(labelFor).filter(Boolean);
+    if (present.length) lines.push('  PRESENT: ' + present.join(' · '));
+    if (Array.isArray(rec.issued_facts) && rec.issued_facts.length) lines.push('  ISSUED FACTS: ' + rec.issued_facts.map(String).join(' | '));
+    if (Array.isArray(rec.issued_objects) && rec.issued_objects.length) {
+      lines.push('  ISSUED OBJECTS (only these may appear as physically present — never invent another):');
+      rec.issued_objects.forEach(function (o) {
+        if (!o || !o.label) return;
+        var bits = [String(o.label) + (o.kind ? ' (' + o.kind + ')' : '')];
+        var owner = o.owner_or_caretaker_ref ? labelFor(o.owner_or_caretaker_ref) : (o.held_by ? labelFor(o.held_by) : null);
+        if (owner) bits.push('held/owned by ' + owner);
+        if (Array.isArray(o.addressable_by) && o.addressable_by.length) bits.push('addressable by ' + o.addressable_by.map(labelFor).join(', '));
+        lines.push('    - ' + bits.join(' — '));
+      });
+    }
+    if (Array.isArray(rec.affordances) && rec.affordances.length) lines.push('  AFFORDANCES (available, never required): ' + rec.affordances.join(' | '));
+    var exLoc = (rec.exclusions && Array.isArray(rec.exclusions.locations)) ? rec.exclusions.locations : [];
+    var exObj = (rec.exclusions && Array.isArray(rec.exclusions.objects)) ? rec.exclusions.objects : [];
+    if (exLoc.length || exObj.length) lines.push('  NOT HERE (do not introduce): ' + exLoc.concat(exObj).join(' | '));
+    if (lines.length < 2) return '';   // location+present+facts+objects+affordances+exclusions all absent — nothing worth saying
+    return '\n' + lines.join('\n') + '\n';
+  }
+  window._renderStageDirectiveText = _renderStageDirectiveText;
+
   function _buildCurrentStageDirective(s) {
     try {
       s = s || window.state; if (!s) return '';
       var rec = (typeof _activeStageRecord === 'function') ? _activeStageRecord(s) : null;
       if (!rec) return '';
-      var L = (typeof _relLedger === 'function') ? _relLedger(false) : null;
-      var ents = (L && L.entities) || {};
-      function labelFor(id) {
-        var e = ents[id]; var lbl = e && e.label ? String(e.label) : String(id);
-        var disamb = rec.present_disambiguators && rec.present_disambiguators[id];
-        return disamb || lbl;
-      }
-      var lines = ['CURRENT STAGE (authoritative — where/who/what is physically here RIGHT NOW; the only source for location, presence, objects, and affordances — never invent or assume any beyond it):'];
-      if (rec.location && rec.location.label) lines.push('  LOCATION: ' + String(rec.location.label));
-      var present = (Array.isArray(rec.present) ? rec.present : []).map(labelFor).filter(Boolean);
-      if (present.length) lines.push('  PRESENT: ' + present.join(' · '));
-      if (Array.isArray(rec.issued_facts) && rec.issued_facts.length) lines.push('  ISSUED FACTS: ' + rec.issued_facts.map(String).join(' | '));
-      if (Array.isArray(rec.issued_objects) && rec.issued_objects.length) {
-        lines.push('  ISSUED OBJECTS (only these may appear as physically present — never invent another):');
-        rec.issued_objects.forEach(function (o) {
-          if (!o || !o.label) return;
-          var bits = [String(o.label) + (o.kind ? ' (' + o.kind + ')' : '')];
-          var owner = o.owner_or_caretaker_ref ? labelFor(o.owner_or_caretaker_ref) : (o.held_by ? labelFor(o.held_by) : null);
-          if (owner) bits.push('held/owned by ' + owner);
-          if (Array.isArray(o.addressable_by) && o.addressable_by.length) bits.push('addressable by ' + o.addressable_by.map(labelFor).join(', '));
-          lines.push('    - ' + bits.join(' — '));
-        });
-      }
-      if (Array.isArray(rec.affordances) && rec.affordances.length) lines.push('  AFFORDANCES (available, never required): ' + rec.affordances.join(' | '));
-      var exLoc = (rec.exclusions && Array.isArray(rec.exclusions.locations)) ? rec.exclusions.locations : [];
-      var exObj = (rec.exclusions && Array.isArray(rec.exclusions.objects)) ? rec.exclusions.objects : [];
-      if (exLoc.length || exObj.length) lines.push('  NOT HERE (do not introduce): ' + exLoc.concat(exObj).join(' | '));
-      if (lines.length < 2) return '';   // location+present+facts+objects+affordances+exclusions all absent — nothing worth saying
-      return '\n' + lines.join('\n') + '\n';
+      return _renderStageDirectiveText(rec);
     } catch (_) { return ''; }
   }
   window._buildCurrentStageDirective = _buildCurrentStageDirective;
