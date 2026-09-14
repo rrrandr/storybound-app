@@ -96694,6 +96694,15 @@ ${(function(){ try { return (typeof _ffBuildRevealWithholdDirective === 'functio
                           options: (_cpCont.options || []).length,
                           optionById: _cpCont.optionById || {} };
                       if (_cpCont.ok && _cpCont.character_plus.length) {
+                          // PC SAY/DO GUARD (Roman, authorized 2026-09-14) — applied once, here,
+                          // before the array reaches either the skeleton directive or the
+                          // directed-beats projection below, so neither can carry an imposed
+                          // internal claim the reader's own submitted action/dialogue contradicts.
+                          try {
+                              if (typeof _applyPcSayDoGuard === 'function') {
+                                  _cpCont.character_plus = _applyPcSayDoGuard(_cpCont.character_plus, state, _cpSceneNum, null);
+                              }
+                          } catch (_) {}
                           state.sceneSkeleton.character_plus = _cpCont.character_plus;
                           state._cpDirectedBeats = _cpCont.character_plus.map(function (c) {
                               return { facet_id: c.facet_id, expressionMode: null,
@@ -96848,6 +96857,69 @@ ${(function(){ try { return (typeof _ffBuildRevealWithholdDirective === 'functio
     } catch (_) { return null; }
   }
   window._pcLensRecord = _pcLensRecord;
+
+  // ── PC SAY/DO CONTRADICTION GUARD (Roman, authorized 2026-09-14) ──
+  // Mechanical, never a semantic/LLM judgment: drops the PC's own Character+ entry when THIS
+  // scene's reader posture (submitted action/dialogue) carries an explicit negation marker
+  // near a content word shared with the facet's own canonical_truth. PC-C+ must never impose
+  // an internal claim contrary to what the reader actually said or did this scene.
+  var _PC_SAYDO_NEGATIONS = ['not', 'never', "didn't", "doesn't", "won't", "isn't", "wasn't", "can't", "refuses"];
+  function _applyPcSayDoGuard(list, s, sceneNum, pcLabel) {
+    var arr = Array.isArray(list) ? list : [];
+    try {
+      s = s || (typeof window !== 'undefined' ? window.state : null) || {};
+      var post = s._scenePosture && s._scenePosture[String(Number(sceneNum))];
+      var saidRaw = post ? [post.action, post.dialogue].filter(Boolean).join(' ') : '';
+      if (!saidRaw) return arr;
+      var saidWords = saidRaw.toLowerCase().replace(/[^a-z0-9\s']+/g, ' ').split(/\s+/).filter(Boolean);
+      var negIdx = [];
+      saidWords.forEach(function (w, i) {
+        if (_PC_SAYDO_NEGATIONS.indexOf(w) !== -1) negIdx.push(i);
+        else if (w === 'no' && saidWords[i + 1] === 'longer') negIdx.push(i);
+      });
+      if (!negIdx.length) return arr;
+      return arr.filter(function (c) {
+        if (!c || !c.isPC) return true;
+        var truth = String(c.facet_truth || c.psychological_read || '').toLowerCase();
+        if (!truth) return true;
+        var truthWords = truth.replace(/[^a-z0-9\s]+/g, ' ').split(/\s+/).filter(function (w) { return w.length > 3; });
+        if (!truthWords.length) return true;
+        var contradicted = negIdx.some(function (ni) {
+          return saidWords.slice(ni, ni + 5).some(function (w) { return truthWords.indexOf(w) !== -1; });
+        });
+        if (contradicted) {
+          try { console.log('[PC-SAYDO-GUARD] dropped PC C+ for "' + c.character + '" — reader posture contradicts facet claim'); } catch (_) {}
+        }
+        return !contradicted;
+      });
+    } catch (e) { return arr; }
+  }
+  window._applyPcSayDoGuard = _applyPcSayDoGuard;
+
+  // ── PC SELF-EMBODIMENT RENDERING (Roman, authorized 2026-09-14) ──
+  // _cpBeatLines is 100% outsider-observation voice ("a reading of this act that exposes X...
+  // shows how SHE sees") — incoherent when X is the PC herself. This is the parallel renderer:
+  // internal perception/body/words/action, never another character's read of her, and never a
+  // claim the Say/Do guard above didn't already clear.
+  function _renderPcSelfEmbodimentLine(c) {
+    if (!c) return '';
+    var truth = c.facet_truth || c.psychological_read || '';
+    return '  • ' + c.character + ' — SELF (PC-C+; embodiment, not outsider observation)'
+      + (c.mode ? ' — ' + c.mode : '') + '\n'
+      + (truth ? '      SOURCE TRUTH — DO NOT STATE: ' + truth + '\n' : '')
+      + (c.facet_pressure ? '      (it applies here because: ' + c.facet_pressure + ')\n' : '')
+      + ((c.behavior || c.angle)
+          ? '      VISIBLE EXPRESSION — MUST OCCUR: ' + (c.behavior || c.angle) + '\n'
+          : '      VISIBLE EXPRESSION — YOURS TO CHOOSE: one small piece of HER OWN perception, body, '
+            + 'words, or action, possible in this scene\'s circumstances, in which the SOURCE TRUTH is '
+            + 'legible without being stated or named by her.\n')
+      + '      THIS IS SELF-EMBODIMENT, NOT OBSERVATION: render it as what SHE notices, feels in her '
+        + 'own body, says, or does — never as another character\'s read of her. NEVER invent an '
+        + 'unexpressed desire, guilt, attraction, belief, or decision that contradicts what she has '
+        + 'actually said or done this scene.\n';
+  }
+  window._renderPcSelfEmbodimentLine = _renderPcSelfEmbodimentLine;
+
   // ── ONE PER-BEAT RENDERER FOR BOTH ENGINES (2026-09-11) ──
   // Literary (buildSkeletonDirective) and CG (the delivered-assignments block) render an assigned Character+
   // beat through THIS function, so what the author receives cannot diverge by engine. Strings are unchanged
@@ -96855,6 +96927,7 @@ ${(function(){ try { return (typeof _ffBuildRevealWithholdDirective === 'functio
   // carry neither a planner interpretation nor an operation (continuations).
   function _cpBeatLines(c, isPofRecipient) {
     if (!c) return '';
+    if (c.isPC && !isPofRecipient) return _renderPcSelfEmbodimentLine(c);
     if (isPofRecipient) {
       return '  • ' + c.character + ' (first mention — the beat lands here) — assigned BELOW as the '
         + 'PROTAGONIST OPENING BEAT. That single beat is her Character+; do not write her a second one here.\n';
@@ -127869,6 +127942,13 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
                 .map(function (p) { return { ref: String(p.ref), role: String(p.role || 'mentioned'), label: '' }; });
               return { text: text, participants: parts };
             }).filter(Boolean);
+          // PC BASELINE PORTFOLIO (Roman, authorized 2026-09-14) — ensure a portfolio exists
+          // (idempotent; a no-op when neither a fixed-starter seed nor a body bible supplies
+          // real PC facet material) and append her own structurally-scoped evidence facts,
+          // in the EXACT SAME {text,participants} shape as the issuer facts above — never a
+          // blanket attribution, never invented content.
+          try { _ensurePcPortfolio(s); } catch (_) {}
+          try { _accEventFacts = _accEventFacts.concat(_pcEvidenceFacts(s, _sceneN)); } catch (_) {}
           out.source = 'accepted_stage:' + (_acceptedRec.provenance && _acceptedRec.provenance.source || 'stage_issuer');
           out.onStage = _accOnStage; out.offStage = [];
           out.setting = (_acceptedRec.location && _acceptedRec.location.label) || '';
@@ -129554,6 +129634,183 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
     window._cpFactFingerprint = _cpFactFingerprint;
   } } catch (_) {}
 
+  // ══════════════════════════════════════════════════════════════════════════════════════
+  //  PC BASELINE PORTFOLIO (Roman, authorized 2026-09-14)
+  //
+  //  Character+ for NPCs draws on authored facets plus committed scene evidence. Lirael — the
+  //  character the reader inhabits — had no equivalent path: no portfolio, no facet source
+  //  wired to her ledger identity ('pc'), no PC-scoped evidence discipline. This builds the
+  //  MINIMUM baseline: one story-scoped portfolio record derived from EXISTING sources — the
+  //  fixed-starter seed's OWN authored cPlusFacets, or the corridor PC body bible already
+  //  generated via the EXISTING tiered provider call (_generatePCBodyBible; NO new provider
+  //  call here) — plus a PC-scoped evidence-fact builder that reuses the SAME structured
+  //  {text,participants} shape this session's own fact-participant correction established
+  //  (never a blanket attribution — see _sceneStageContract's accepted-stage branch below).
+  //
+  //  Fixed starters: her facets already ship authored in the seed and already reach C+ through
+  //  the EXISTING _seedFacetIndex + alias-fallback path (same mechanism every seeded NPC uses,
+  //  keyed 'pc:'+slug(name) vs the ledger's bare 'pc' — reconciled by alias match, not by id
+  //  unification). This portfolio record does NOT re-materialize those facets onto the ledger:
+  //  doing so would collide with _generatedCastFacetIndex's own seed-owned skip guard, which
+  //  exists precisely to stop a generated portfolio from speaking for someone the seed owns.
+  //
+  //  Corridor: no seed exists to carry facets through _seedFacetIndex, so the bible-derived
+  //  facets are materialized directly onto L.entities['pc'].authorProfile.cPlusFacets — the
+  //  SAME compartment _generatedCastFacetIndex (UNMODIFIED) already reads for every other
+  //  generated cast member, resolved under the ledger's own bare 'pc' id, no alias risk.
+  //
+  //  Explicitly NOT built here: ordinary-wish adjudication, new Fate UI, Scene 2 canon, the
+  //  reconciliation WRITER for durable identity/body changes (only its target,
+  //  state._pcPortfolio.reconciliation, exists — the writer that populates it is deferred).
+  // ══════════════════════════════════════════════════════════════════════════════════════
+  var PC_PORTFOLIO_SCHEMA_V = 1;
+
+  // Lightweight, top-level-accessible content fingerprint — same DJB2 pattern as
+  // _cpFactFingerprint/_postureHash elsewhere in this file. The PC Body Bible's OWN fingerprint
+  // helpers (_bibleFingerprint/_pcBibleFingerprintInputs, ~app.js:254458) are nested inside a
+  // differently-scoped closure and not exported to window — this is an independent mechanism
+  // for the portfolio's own provenance field, not a dependency on that inaccessible one.
+  function _pcPortfolioFingerprint(basisParts) {
+    var basis = 'v' + PC_PORTFOLIO_SCHEMA_V + '' + (basisParts || []).join('');
+    var h = 5381;
+    for (var i = 0; i < basis.length; i++) { h = ((h << 5) + h + basis.charCodeAt(i)) >>> 0; }
+    return 'pf:' + ('00000000' + h.toString(16)).slice(-8) + '-' + basis.length;
+  }
+  try { if (typeof window !== 'undefined') window._pcPortfolioFingerprint = _pcPortfolioFingerprint; } catch (_) {}
+
+  // Stopword-filtered content words — same discipline this file's own fact/evidence tokenizers
+  // use elsewhere — used ONLY to derive evidence_requires from the bible's OWN authored text (a
+  // mechanical transform of already-written canon), never to invent new applicability wording.
+  var _PC_PORTFOLIO_STOPWORDS = ['a', 'an', 'the', 'and', 'or', 'but', 'of', 'to', 'in', 'on',
+    'at', 'for', 'with', 'is', 'was', 'were', 'be', 'been', 'being', 'it', 'its', 'her', 'his',
+    'their', 'she', 'he', 'they', 'that', 'this', 'has', 'had', 'have', 'not', 'no', 'so', 'as',
+    'by', 'from', 'into', 'over', 'after', 'before'];
+  function _pcEvidenceRequiresFromText(text) {
+    var words = String(text || '').toLowerCase().replace(/[^a-z0-9\s]+/g, ' ').split(/\s+/)
+      .filter(function (w) { return w && w.length > 2 && _PC_PORTFOLIO_STOPWORDS.indexOf(w) === -1; });
+    if (!words.length) return '';
+    return words.slice(0, 4).join('|');
+  }
+
+  // Corridor mapper: the PC body bible's OWN authored psychological fields, transformed — never
+  // invented — into the same raw facet shape NPC portfolios use (_normFacet consumes this SAME
+  // shape at read time; nothing here is pre-normalized). Two facets only, both real bible
+  // fields: core_contradiction and current_crisis.immediate_fear. A missing field yields fewer
+  // (or zero) facets, never a fabricated one.
+  function _pcFacetsFromBodyBible(bible) {
+    var out = [];
+    if (!bible || typeof bible !== 'object') return out;
+    var crisisText = (bible.current_crisis && bible.current_crisis.event) || '';
+    var cc = String(bible.core_contradiction || '').trim();
+    if (cc) {
+      out.push({ facet_id: 'pc_core_contradiction', category: 'contradiction', canonical_truth: cc,
+                 forbidden_restatements: [], origin: 'pc_body_bible',
+                 possible_pressures: [{ text: cc, evidence_requires: _pcEvidenceRequiresFromText(crisisText || cc) }] });
+    }
+    var fear = String((bible.current_crisis && bible.current_crisis.immediate_fear) || '').trim();
+    if (fear) {
+      out.push({ facet_id: 'pc_current_fear', category: 'fear', canonical_truth: fear,
+                 forbidden_restatements: [], origin: 'pc_body_bible',
+                 possible_pressures: [{ text: fear, evidence_requires: _pcEvidenceRequiresFromText(crisisText || fear) }] });
+    }
+    return out;
+  }
+  try { if (typeof window !== 'undefined') window._pcFacetsFromBodyBible = _pcFacetsFromBodyBible; } catch (_) {}
+
+  // Idempotent per story. Missing source (no seed PC facets, no body bible) leaves
+  // source:'none', empty facets, no ledger write — PC-C+ is silently ABSENT, never fabricated.
+  function _ensurePcPortfolio(s) {
+    s = s || (typeof window !== 'undefined' ? window.state : null) || {};
+    try {
+      var storyId = String(s.storyId || '');
+      if (!storyId) return s._pcPortfolio || null;
+      if (s._pcPortfolio && s._pcPortfolio.storyId === storyId && s._pcPortfolio.v === PC_PORTFOLIO_SCHEMA_V) {
+        return s._pcPortfolio;
+      }
+      var rec = { v: PC_PORTFOLIO_SCHEMA_V, storyId: storyId, pcRef: 'pc', source: 'none',
+                  provenance: { builtAt: Date.now() }, facets: [],
+                  reconciliation: { appliedDurableConsequenceIds: [], appliedTemptEventKeys: [], lastReconciledAt: null } };
+      var seed = (typeof _activeSeed === 'function') ? _activeSeed(s) : null;
+      var seedPc = (seed && Array.isArray(seed.cast))
+        ? seed.cast.filter(function (c) { return c && c.role === 'PC'; })[0] : null;
+      if (seedPc && Array.isArray(seedPc.cPlusFacets) && seedPc.cPlusFacets.length) {
+        rec.source = 'fixed_starter';
+        rec.facets = seedPc.cPlusFacets.map(function (f) { return _normFacet(f, 'pc'); }).filter(Boolean);
+        rec.provenance.seedId = String((seed && (seed.id || seed.seedId)) || '');
+        rec.provenance.fingerprint = _pcPortfolioFingerprint(['fixed_starter', rec.provenance.seedId,
+          rec.facets.map(function (f) { return f.facet_id; }).join(',')]);
+      } else {
+        var bible = s.pcBodyBible;
+        var raw = _pcFacetsFromBodyBible(bible);
+        if (raw.length) {
+          rec.source = 'corridor_bible';
+          rec.facets = raw.map(function (f) { return _normFacet(f, 'pc'); }).filter(Boolean);
+          rec.provenance.fingerprint = _pcPortfolioFingerprint(['corridor_bible',
+            String(bible.core_contradiction || ''),
+            String((bible.current_crisis && bible.current_crisis.immediate_fear) || ''),
+            String((bible.current_crisis && bible.current_crisis.event) || '')]);
+          try {
+            var L = (typeof _relLedger === 'function') ? _relLedger(true) : null;
+            var e = L && L.entities && L.entities.pc;
+            if (e) {
+              var ap = (typeof window._relEnsureAuthorProfile === 'function')
+                ? window._relEnsureAuthorProfile(e, 'pc_body_bible', null) : (e.authorProfile = e.authorProfile || {});
+              ap.cPlusFacets = raw;          // RAW shape — _generatedCastFacetIndex normalizes at read time
+              ap.status = 'ready';
+              ap.fingerprint = rec.provenance.fingerprint;
+            }
+          } catch (_) {}
+        }
+      }
+      s._pcPortfolio = rec;
+      return rec;
+    } catch (e) {
+      try { console.warn('[PC-PORTFOLIO] build failed: ' + (e && e.message)); } catch (_) {}
+      return s._pcPortfolio || null;
+    }
+  }
+  try { if (typeof window !== 'undefined') window._ensurePcPortfolio = _ensurePcPortfolio; } catch (_) {}
+
+  // PC-scoped, structurally-attributed scene evidence — the SAME {text, participants:[{ref,
+  // role}]} shape _sceneStageContract's accepted-stage branch already uses for issuer-issued
+  // facts. Every entry names 'pc' explicitly as 'subject' — never a blanket attribution, and
+  // never derived from prose (_committedState.facts[] has NO subject ref at all and is
+  // deliberately excluded as a source — see design notes). Four structurally PC-scoped
+  // sources only: this scene's own reader posture; durable Fate consequences and Tempt Fate
+  // events committed strictly BEFORE this scene (both always the reader's own); and the baked
+  // opening's pcCondition, legitimate only for the scene immediately following it (scene 2).
+  function _pcEvidenceFacts(s, sceneNum) {
+    s = s || (typeof window !== 'undefined' ? window.state : null) || {};
+    var n = Number(sceneNum);
+    var out = [];
+    var push = function (text) {
+      var t = String(text || '').trim(); if (!t) return;
+      out.push({ text: t, participants: [{ ref: 'pc', role: 'subject', label: '' }] });
+    };
+    try {
+      var post = s._scenePosture && s._scenePosture[String(n)];
+      if (post) {
+        var bits = [];
+        if (post.action) bits.push('did: ' + post.action);
+        if (post.dialogue) bits.push('said: "' + post.dialogue + '"');
+        if (bits.length) push(bits.join('; '));
+      }
+      (Array.isArray(s._durableFateConsequences) ? s._durableFateConsequences : []).forEach(function (c) {
+        if (!c || typeof c.sceneIdx !== 'number' || c.sceneIdx >= n) return;
+        if (c.detail) push('carries a permanent consequence: ' + c.detail);
+      });
+      (Array.isArray(s._temptFateLedger) ? s._temptFateLedger : []).forEach(function (t) {
+        if (!t || typeof t.sceneIdx !== 'number' || t.sceneIdx >= n) return;
+        if (t.wishText) push('once tempted Fate: ' + t.wishText);
+      });
+      if (n === 2 && s._bakedEmitted && s._bakedEmitted.openState && s._bakedEmitted.openState.pcCondition) {
+        push('carries from the opening: ' + s._bakedEmitted.openState.pcCondition);
+      }
+    } catch (e) { try { console.warn('[PC-EVIDENCE] build failed: ' + (e && e.message)); } catch (_) {} }
+    return out;
+  }
+  try { if (typeof window !== 'undefined') window._pcEvidenceFacts = _pcEvidenceFacts; } catch (_) {}
+
   function _cpBuildGroundedOptions(candidates, facts) {
     var out = [], n = 0;
     (candidates || []).forEach(function (cand) {
@@ -129701,6 +129958,10 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
           cp.push({
             character: cand.label,
             canonicalId: cand.canonicalId || cand.id,
+            // PC BASELINE PORTFOLIO (Roman, authorized 2026-09-14) — additive flag only, no other
+            // change to this function. Lets downstream rendering choose self-embodiment phrasing
+            // over outsider-observation without re-deriving PC-ness from label/id guessing.
+            isPC: !!(onStage && onStage.kind === 'pc'),
             facet_id: pick.facet_id,
             option_id: pick.option_id,
             mode: (onStage && onStage.presence) || 'IN_PERSON',
@@ -226611,11 +226872,43 @@ No text, no watermark, no UI elements, share-ready.`;
     if (typeof _cpContinuationAssignment !== 'function') return null;
     if (typeof _sceneDecisionNeeded === 'function' && _sceneDecisionNeeded()) { try { console.warn('[SCENE-DECISION] scene ' + sceneNum + ' requested with NO recorded choice — nothing is minted (fail closed)'); } catch (_) {} return { storyId: state.storyId, sceneIndex: sceneIndex, branchKey: null, attemptId: _cpMintAttemptId(), character_plus: [], environment_plus: null, fusion: null, reason: 'decision-absent', at: Date.now() }; }
     var m = _cpContinuationAssignment(state, sceneNum);
+    var cpList = (m && Array.isArray(m.character_plus)) ? m.character_plus : [];
+    // PC SAY/DO GUARD (Roman, authorized 2026-09-14) — same discipline as the literary path
+    // (see the skeleton's continuation-assignment injection): applied once, here, before the
+    // list is snapshotted and delivered.
+    try { if (typeof _applyPcSayDoGuard === 'function') cpList = _applyPcSayDoGuard(cpList, state, sceneNum, null); } catch (_) {}
+    // ENVIRONMENT+/FUSION (Roman, authorized 2026-09-14) — CLOSES A PRE-EXISTING GAP: CG never
+    // had E+/fusion delivery (hardcoded null below). CG's own model reply is discarded
+    // categorically for scene_assignments regardless of what it proposes (see
+    // [CG:ASSIGN:MODEL-IGNORED] at the acceptance site) — there is no live model proposal to
+    // validate here, unlike the literary skeleton's two-phase plan→author flow. So this resolves
+    // directly against the SAME D2/D5 inventory/reachability primitives the literary path uses,
+    // picking the first real inventory object as E+ when one exists (never invented; absent
+    // inventory → absent E+). Fusion is restricted to a character ALREADY in cpList — the real
+    // scheduled C+ decision above, never re-derived — so it can never compete with or
+    // contradict it, exactly mirroring the literary skeleton's own restriction.
+    var epOut = null, fuOut = null;
+    try {
+      var _cgInv = (typeof _resolveStageBeatInventory === 'function') ? _resolveStageBeatInventory(state) : null;
+      if (_cgInv && Array.isArray(_cgInv.objects) && _cgInv.objects.length) {
+        var _cgObj0 = _cgInv.objects[0];
+        epOut = { target: _cgObj0.label, axis: 'history', object_id: _cgObj0.object_id };
+        if (typeof _checkFusionReachability === 'function') {
+          var _cgFu = cpList.filter(function (c) { return c && c.canonicalId; }).map(function (c) {
+            var _r = _checkFusionReachability({ id: c.canonicalId, label: c.character }, _cgObj0);
+            return _r.ok ? { character: c.character, target: _cgObj0.label } : null;
+          }).filter(Boolean)[0];
+          if (_cgFu) fuOut = _cgFu;
+        }
+      }
+    } catch (_) {}
     var snap = { storyId: state.storyId, sceneIndex: sceneIndex, branchKey: _cgBranchKey(), attemptId: _cpMintAttemptId(),
-                 character_plus: (m && Array.isArray(m.character_plus)) ? m.character_plus : [], environment_plus: null, fusion: null,
+                 character_plus: cpList, environment_plus: epOut, fusion: fuOut,
                  reason: (m && m.ok) ? null : ((m && m.reason) || 'no assignment'), at: Date.now() };
     state._cgDeliveredAssignments = snap;
-    try { console.log('[CG:ASSIGN:DELIVERED] scene ' + sceneNum + ' · C+' + snap.character_plus.length + ' · branch=' + (snap.branchKey || '-') + ' · attempt=' + snap.attemptId + (snap.reason ? ' · ' + snap.reason : '')); } catch (_) {}
+    try { console.log('[CG:ASSIGN:DELIVERED] scene ' + sceneNum + ' · C+' + snap.character_plus.length
+      + ' · E+' + (epOut ? 1 : 0) + ' · fusion' + (fuOut ? 1 : 0)
+      + ' · branch=' + (snap.branchKey || '-') + ' · attempt=' + snap.attemptId + (snap.reason ? ' · ' + snap.reason : '')); } catch (_) {}
     return snap;
   }
   function _cgAcceptDelivered(reqSnap, sceneIndex, reqAttemptId) {
@@ -226635,6 +226928,19 @@ No text, no watermark, no UI elements, share-ready.`;
       L.push('CHARACTER+ ASSIGNED THIS SCENE — DELIVERED, NOT REQUESTED (one beat per person listed, at their first mention; do not return scene_assignments — these stand):');
       snap.character_plus.forEach(function (c) { L.push((typeof _cpBeatLines === 'function') ? _cpBeatLines(c, false).replace(/\n$/, '') : ('  • ' + c.character)); });
       L.push('  Write the beat and the panel that carries it; the SOURCE TRUTH stays unstated; nobody else receives a Character+ this scene.');
+    }
+    // ENVIRONMENT+/FUSION — DELIVERED, NOT REQUESTED (Roman, authorized 2026-09-14). Same
+    // rendering doctrine as the literary continuation directive: the axis is required, not
+    // optional colour; fusion only when reachability was actually proven.
+    if (snap.environment_plus && snap.environment_plus.target) {
+      L.push('ENVIRONMENT+ ASSIGNED THIS SCENE — DELIVERED, NOT REQUESTED (required): ' + snap.environment_plus.target
+        + ' — through the axis of ' + (snap.environment_plus.axis || 'history')
+        + '. What has it become because of what happened to it? Not symbolism, not atmosphere.');
+    }
+    if (snap.fusion && snap.fusion.character && snap.fusion.target) {
+      L.push('FUSION — DELIVERED, NOT REQUESTED: one sentence in which ' + snap.fusion.character + ' and ' + snap.fusion.target
+        + ' reveal each other. The same concrete moment must expose the person (a flaw, an obsession, a private secret, '
+        + 'a contradiction, a worldview) AND show the protagonist\'s way of seeing; the thing exposes its maker or keeper, or her.');
     }
     // Objects: availability is a FACT from the record; a revealing use is the author\'s to compose — never an assignment here.
     try { var em = state._bakedEmitted; var os = em && em.openState; if (os && os.pcCondition) L.push('OBJECTS IN PLAY (from the recorded open state — availability only, not an assignment): ' + String(os.pcCondition)); } catch (_) {}
