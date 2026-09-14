@@ -29,9 +29,10 @@ function sliceLines(from1, to1, startAnchor, endAnchor) {
 }
 
 const relLedgerSrc = sliceLines(31125, 31235, 'var REL_V = 1;', 'function _relEnsureEntity(L, id, patch)');
-const stageStateSrc = sliceLines(197100, 197324,
+const stageStateSrc = sliceLines(197204, 197446,
   'GENERIC STAGE-STATE SUBSTRATE (Roman, authorized 2026-09-14)',
-  'window._acceptStageProposal = _acceptStageProposal;');
+  'window._acceptStageProposal = _acceptStageProposal;') + '\n'
+  + sliceLines(197737, 197745, 'function _deriveObjectHead(label) {', 'window._deriveObjectHead = _deriveObjectHead;');
 
 const body = relLedgerSrc + '\n' + stageStateSrc;
 const factory = new Function('window', body);
@@ -109,9 +110,13 @@ section('CONTROL 3 — Issue-boundary smuggling');
   win._ensureStoryEntityAnchors();   // explicit lifecycle bootstrap — NOT implicit inside validation/accept
   const s1 = win._acceptStageProposal('s1', {
     present: ['pc'], source: 'test',
-    issued_objects: [{ object_id: 's:s1:O1', label: 'the ceremonial sash', owner_or_caretaker_ref: 'pc', held_by: 'pc', addressable_by: ['pc'] }]
+    // D1 (Roman, authorized 2026-09-14): object_id is now BACKEND-MINTED at accept time — a
+    // proposal never supplies one. The real minted id is read back from s1.record below.
+    issued_objects: [{ label: 'the ceremonial sash', owner_or_caretaker_ref: 'pc', held_by: 'pc', addressable_by: ['pc'] }]
   });
   ok('Issue 1 stage accepted with an issued object', s1.ok === true, JSON.stringify(s1.why));
+  const s1ObjectId = s1.ok ? s1.record.issued_objects[0].object_id : null;
+  ok('Issue 1\'s object was minted a real backend object_id', /^obj:stage:\d+$/.test(s1ObjectId || ''), s1ObjectId);
 
   // Simulate the Issue boundary the same way _resetStoryState now does: close the active stage.
   const closed = win._closeActiveStage('issue_boundary');
@@ -125,7 +130,7 @@ section('CONTROL 3 — Issue-boundary smuggling');
   const active = win._activeStageRecord(win.state);
   ok('the active stage is now Issue 2\'s, not Issue 1\'s', !!active && active.sceneKey === 's2');
   ok('the active stage does not expose Issue 1\'s object id anywhere in its own issued content',
-    JSON.stringify(active.issued_objects).indexOf('s:s1:O1') === -1);
+    JSON.stringify(active.issued_objects).indexOf(s1ObjectId) === -1);
 }
 
 // ══════════════════════════════════════════════════════════════════════════
@@ -138,8 +143,10 @@ section('CONTROL 4 — immutable historical stage');
   win._ensureStoryEntityAnchors();
   const s1 = win._acceptStageProposal('s1', {
     present: ['pc'], source: 'test',
-    issued_objects: [{ object_id: 's:s1:O1', label: 'the sash', addressable_by: ['pc'] }]
+    // D1: object_id is backend-minted at accept time — never supplied by the proposal.
+    issued_objects: [{ label: 'the sash', addressable_by: ['pc'] }]
   });
+  ok('Control 4 setup: stage accepted', s1.ok === true, JSON.stringify(s1.why));
   const snapshotBefore = JSON.parse(JSON.stringify(win.state._stageState.s1));
   win._closeActiveStage('issue_boundary');
   const historical = win.state._stageState.s1;

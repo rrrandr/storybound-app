@@ -96714,6 +96714,68 @@ ${(function(){ try { return (typeof _ffBuildRevealWithholdDirective === 'functio
                       + String(_cpContErr && _cpContErr.message).slice(0, 160)); } catch (_) {}
               }
 
+              // ══════════════════════════════════════════════════════════════════════════
+              // RESOLVE ENVIRONMENT+/FUSION AGAINST THE STAGE INVENTORY — AFTER THE PLANNER,
+              // BEFORE THE AUTHOR (Roman, authorized 2026-09-14, D1-D5). Previously the model's
+              // free-text environment_plus.target/fusion went straight to the author directive
+              // with NO structural check on this continuation path (confirmed: no
+              // _targetInInventory/_targetInScene call exists here — that machinery is
+              // Scene-1-only). This resolves against _resolveStageBeatInventory's structured,
+              // precedence-ordered inventory (D2: active accepted stage, else legacy seed
+              // groundedObjects, else empty — never a free-text fallback). Unresolved → absent,
+              // never invented. Fusion additionally requires the SAME character to already be a
+              // real, backend-scheduled Character+ this scene (character_plus, just populated
+              // above — reused, never re-derived, so this can never compete with or contradict
+              // the actual C+ decision) AND reachability via the object's addressable_by (D5) —
+              // bare co-occurrence is explicitly not sufficient.
+              // ══════════════════════════════════════════════════════════════════════════
+              try {
+                  if (typeof _resolveStageBeatInventory === 'function' && state.sceneSkeleton) {
+                      var _sbInv = _resolveStageBeatInventory(state);
+                      var _sk0 = state.sceneSkeleton;
+                      var _epRaw0 = _sk0.environment_plus;
+                      var _epResolved0 = null;
+                      if (_epRaw0 && _epRaw0.target && typeof _resolveEPlusTarget === 'function') {
+                          var _epRes0 = _resolveEPlusTarget(_epRaw0.target, _sbInv);
+                          if (_epRes0.ok) {
+                              _epResolved0 = { target: _epRes0.object.label, axis: _epRaw0.axis, object_id: _epRes0.object.object_id };
+                              try { console.log('[SKELETON:EPLUS] scene ' + _cpSceneNum + ' — target "' + _epRes0.object.label + '" resolved (inventory=' + _sbInv.source + ')'); } catch (_) {}
+                          } else {
+                              try { console.log('[SKELETON:EPLUS] scene ' + _cpSceneNum + ' — target "' + _epRaw0.target + '" NOT resolved (' + _epRes0.why + ', inventory=' + _sbInv.source + '); E+ absent, never invented'); } catch (_) {}
+                          }
+                      }
+                      state.sceneSkeleton.environment_plus = _epResolved0;
+
+                      var _fuRaw0 = _sk0.fusion;
+                      var _fuResolved0 = null;
+                      if (_fuRaw0 && _fuRaw0.character && _fuRaw0.target && _epResolved0 && typeof _checkFusionReachability === 'function') {
+                          var _fuCp0 = (Array.isArray(_sk0.character_plus) ? _sk0.character_plus : []).filter(function (c) {
+                              return c && c.character && String(c.character).trim().toLowerCase() === String(_fuRaw0.character).trim().toLowerCase();
+                          })[0];
+                          if (_fuCp0 && _fuCp0.canonicalId) {
+                              var _fuTargetRes0 = _resolveEPlusTarget(_fuRaw0.target, _sbInv);
+                              if (_fuTargetRes0.ok) {
+                                  var _reach0 = _checkFusionReachability({ id: _fuCp0.canonicalId, label: _fuCp0.character }, _fuTargetRes0.object);
+                                  if (_reach0.ok) {
+                                      _fuResolved0 = { character: _fuCp0.character, target: _fuTargetRes0.object.label };
+                                      try { console.log('[SKELETON:FUSION] scene ' + _cpSceneNum + ' — ' + _fuCp0.character + '/' + _fuTargetRes0.object.label + ' — reachable, resolved'); } catch (_) {}
+                                  } else {
+                                      try { console.log('[SKELETON:FUSION] scene ' + _cpSceneNum + ' — ' + _fuCp0.character + '/' + _fuRaw0.target + ' NOT reachable (' + _reach0.why + '); fusion absent, never invented'); } catch (_) {}
+                                  }
+                              } else {
+                                  try { console.log('[SKELETON:FUSION] scene ' + _cpSceneNum + ' — target "' + _fuRaw0.target + '" not resolved (' + _fuTargetRes0.why + '); fusion absent'); } catch (_) {}
+                              }
+                          } else {
+                              try { console.log('[SKELETON:FUSION] scene ' + _cpSceneNum + ' — "' + _fuRaw0.character + '" is not a real scheduled Character+ this scene; fusion absent (bare co-occurrence is not fusion)'); } catch (_) {}
+                          }
+                      }
+                      state.sceneSkeleton.fusion = _fuResolved0;
+                  }
+              } catch (_epFuErr) {
+                  try { console.warn('[SKELETON:EPLUS/FUSION] resolution threw (both nulled, fail-closed): ' + (_epFuErr && _epFuErr.message)); } catch (_) {}
+                  try { if (state.sceneSkeleton) { state.sceneSkeleton.environment_plus = null; state.sceneSkeleton.fusion = null; } } catch (_) {}
+              }
+
               // INTIMACY STAGING OVERRIDE (Roman 2026-06-18): when intimacy is LIVE (ST3+), the
               // love interest MUST be PHYSICALLY PRESENT — never staged on the phone / offstage.
               // That offstage staging was the root cause of cold "intimate" scenes: the player
@@ -127759,6 +127821,48 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       out.pcAliases = _dedupeCastNames([out.pcName, 'the narrator', 'narrator', 'the protagonist', 'protagonist']
         .concat(_pcIdentityCandidates(s).map(function (c) { return String(c.v || '').trim(); }).filter(Boolean)));
       out.pcFirstPerson = /first/i.test(String((s && (s.pov || (s.picks && s.picks.pov))) || ''));
+
+      // ── ACCEPTED STAGE IS AUTHORITATIVE, HIGHEST PRECEDENCE (Roman, authorized 2026-09-14, D2/D4) ──
+      // A story's active accepted state._stageState record — when one exists — wins over BOTH the
+      // seed/plan-row path below AND the generated-stage path, for ANY scene number (seeded or
+      // corridor). This is the ONLY new branch here; everything below is completely unchanged and
+      // remains the fallback for every scene the new issuer does not (yet) cover. Constructed
+      // directly (not via _cpNormalizeStage/_cpIngestGeneratedStage, whose ref-format contract
+      // — pc:/named:/role:/plot:/cand: — is specific to model-declared skeleton refs and does not
+      // apply to this substrate's own ledger ids) — _cPlusCandidateSet itself is id-format-agnostic
+      // (it uses whatever id a stage.onStage record supplies), so this is a safe, direct construction.
+      try {
+        var _acceptedRec = (typeof _activeStageRecord === 'function') ? _activeStageRecord(s) : null;
+        if (_acceptedRec) {
+          var _accL = (typeof _relLedger === 'function') ? _relLedger(false) : null;
+          var _accEnts = (_accL && _accL.entities) || {};
+          var _accOnStage = [];
+          (Array.isArray(_acceptedRec.present) ? _acceptedRec.present : []).forEach(function (id) {
+            var e = _accEnts[id]; if (!e) return;
+            _accOnStage.push({ id: id, label: (_acceptedRec.present_disambiguators && _acceptedRec.present_disambiguators[id]) || e.label,
+              kind: e.anchorRole === 'pc' ? 'pc' : (e.kind || 'named'), aliases: (e.aliases || []).concat([e.label]),
+              presence: 'IN_PERSON', role_instance_id: e.role_instance_id || null, source: 'accepted_stage.present' });
+          });
+          var _accEventFacts = (Array.isArray(_acceptedRec.issued_facts) ? _acceptedRec.issued_facts : [])
+            .filter(Boolean).map(function (f) { return { text: String(f), participants: [] }; });
+          out.source = 'accepted_stage:' + (_acceptedRec.provenance && _acceptedRec.provenance.source || 'stage_issuer');
+          out.onStage = _accOnStage; out.offStage = [];
+          out.setting = (_acceptedRec.location && _acceptedRec.location.label) || '';
+          out.settingOwner = 'issuer'; out.settingSource = 'accepted_stage'; out.presenceOwner = 'accepted_stage';
+          out.eventFacts = _accEventFacts;
+          out.aboutToHappen = '';
+          out.groundText = [out.setting].concat(_accEventFacts.map(function (f) { return f.text; })).filter(Boolean).join(' ');
+          out.authoritative = true; out.pending = false;
+          // canonDevelopments: NOT accepted from this substrate either — same doctrine as the
+          // generated-stage path ("a development is authorised by a person", not this mechanism).
+          out.stageAuthority = { ok: true, code: null, version: null, fingerprint: null,
+            provenance: 'stage_issuer', participants: _accOnStage.map(function (r) { return { ref: r.id, presence: r.presence, label: r.label }; }),
+            eventFacts: _accEventFacts, canonDevelopments: [], rejected: [] };
+          out.ok = true;
+          return _cpValidateStageRefs(out);
+        }
+      } catch (_acceptedErr) { try { console.warn('[STAGE-CONTRACT] accepted-stage branch threw (falling through to existing behavior): ' + (_acceptedErr && _acceptedErr.message)); } catch (_) {} }
+
       var lc0 = function (x) { return String(x || '').trim().toLowerCase(); };
       var _asg = null;
       try { _asg = _selectSceneAssignment(s, _sceneN); } catch (_) { _asg = null; }
@@ -197244,7 +197348,12 @@ No text, no watermark, no UI elements, share-ready.`;
       }
     });
     // Object references (owner_or_caretaker_ref / held_by / addressable_by) — same discipline.
+    // D1 (Roman, authorized 2026-09-14): object_id/head are BACKEND-MINTED at accept time (see
+    // _acceptStageProposal) — never a planner-supplied identity claim, mirroring the same rule
+    // already enforced for entity ids (window._proposeNewEntity, "the backend mints ids, never
+    // the caller"). A proposal that supplies its own object_id is rejected here, before commit.
     (Array.isArray(proposal.issued_objects) ? proposal.issued_objects : []).forEach(function (o, i) {
+      if (o && o.object_id) why.push('issued_objects[' + i + '] supplies its own object_id — the backend mints object ids, never the caller');
       ['owner_or_caretaker_ref', 'held_by'].forEach(function (f) {
         if (o[f] && !(L && L.entities[o[f]])) why.push('issued_objects[' + i + '].' + f + ' references an unissued entity: "' + o[f] + '"');
       });
@@ -197305,6 +197414,19 @@ No text, no watermark, no UI elements, share-ready.`;
     var map = _stageStateLedger(true);
     var disambiguators = _computeDisambiguators(check.present);
     _closeActiveStage('scene_advanced');   // no-op if nothing was active (e.g. first stage ever, or post-Issue-boundary)
+    // D1 (Roman, authorized 2026-09-14): mint a stable object_id + backend-derived head for every
+    // issued object, at COMMIT time — the same minting authority _proposeNewEntity uses for entity
+    // ids (the shared _relLedger seq counter), prefixed obj:stage: to stay in its own namespace.
+    // An E+ target must later resolve to exactly one of these by id (see _resolveEPlusTarget).
+    var mintedObjects = (Array.isArray(proposal.issued_objects) ? proposal.issued_objects : []).map(function (o) {
+      var L = _relLedger(true);
+      return {
+        object_id: 'obj:stage:' + (++L.seq), label: o.label, head: _deriveObjectHead(o.label),
+        kind: o.kind || 'object', owner_or_caretaker_ref: o.owner_or_caretaker_ref || null,
+        held_by: o.held_by || null,
+        addressable_by: Array.isArray(o.addressable_by) ? o.addressable_by.slice() : []
+      };
+    });
     var rec = {
       v: 1, storyId: String(s.storyId),
       issueId: (typeof s.issueIndexInRun === 'number' && s.issueIndexInRun > 0) ? s.issueIndexInRun : 1,
@@ -197312,7 +197434,7 @@ No text, no watermark, no UI elements, share-ready.`;
       location: proposal.location || null,
       present: check.present, present_disambiguators: disambiguators,
       issued_facts: Array.isArray(proposal.issued_facts) ? proposal.issued_facts : [],
-      issued_objects: Array.isArray(proposal.issued_objects) ? proposal.issued_objects : [],
+      issued_objects: mintedObjects,
       affordances: Array.isArray(proposal.affordances) ? proposal.affordances : [],
       exclusions: proposal.exclusions || { locations: [], objects: [] },
       provenance: { source: proposal.source || 'unspecified', reconciled_from: Array.isArray(proposal.reconciled_from) ? proposal.reconciled_from : [] },
@@ -197600,6 +197722,162 @@ No text, no watermark, no UI elements, share-ready.`;
     } catch (e) { try { console.warn('[STAGE-ISSUER] scene ' + sceneKey + ' — internal failure, no record written: ' + (e && e.message)); } catch (_) {} return { ok: false, why: ['internal: ' + (e && e.message)] }; }
   }
   window._issueStageFromPlannerReply = _issueStageFromPlannerReply;
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // C+/E+/FUSION GENERIC STAGE CONSUMPTION CONTRACT (Roman, authorized 2026-09-14, D1-D6)
+  // Accepted contract: _audit_out/cplus_eplus_fusion_generic_contract.md. One shared set of
+  // primitives, not five patches — composed together below and by the live wiring at
+  // _sceneStageContract (C+ authority) and the continuation skeleton's E+/fusion resolution step.
+  // Nothing here authors Scene 2 canon, adjudicates ordinary wishes, or makes a model call.
+  // ══════════════════════════════════════════════════════════════════════════
+
+  // D1 — backend-owned, deterministic head-noun derivation. NEVER a planner identity claim (the
+  // object_id is the identity); this is rendering-convenience data only, so it stays intentionally
+  // simpler than the Scene-1 v3 element-head extractor (that one IS identity-bearing there).
+  function _deriveObjectHead(label) {
+    var t = String(label || '').trim();
+    if (!t) return '';
+    t = t.replace(/^(the|a|an)\s+/i, '');
+    t = t.split(/\s*[,;—]\s*/)[0];
+    t = t.split(/\s+(?:that|which|where|with|near|beside|behind|above|beneath|holding|carrying)\s+/i)[0];
+    return t.trim();
+  }
+  window._deriveObjectHead = _deriveObjectHead;
+
+  // D2 — stage-beat inventory, explicit source precedence, computed fresh, read-only:
+  //   1. an active accepted state._stageState record — its issued_objects/present ARE the
+  //      inventory (backend-minted ids from D1, never a free-text/model-declared pool);
+  //   2. else the active seed's legacy structured Scene-1 groundedObjects, normalized into the
+  //      SAME {object_id,label,head,kind,owner_or_caretaker_ref,addressable_by} shape — the
+  //      preserved seed v2 path, now read through one normalizer instead of ad hoc;
+  //   3. else empty — no free-text environment_elements/groundText fallback (D2, explicit). A
+  //      story with neither source simply has no E+ inventory for this beat.
+  function _resolveStageBeatInventory(s) {
+    s = s || window.state;
+    var out = { objects: [], present: [], exclusions: { locations: [], objects: [] }, location: null, source: 'none' };
+    if (!s) return out;
+    try {
+      var rec = (typeof _activeStageRecord === 'function') ? _activeStageRecord(s) : null;
+      if (rec) {
+        out.source = 'active_stage';
+        out.objects = (Array.isArray(rec.issued_objects) ? rec.issued_objects : []).slice();
+        out.exclusions = rec.exclusions || { locations: [], objects: [] };
+        out.location = rec.location || null;
+        var L = (typeof _relLedger === 'function') ? _relLedger(false) : null;
+        var ents = (L && L.entities) || {};
+        out.present = (Array.isArray(rec.present) ? rec.present : []).map(function (id) {
+          var e = ents[id]; if (!e) return null;
+          return { id: id, label: (rec.present_disambiguators && rec.present_disambiguators[id]) || e.label,
+                   kind: e.anchorRole === 'pc' ? 'pc' : (e.kind || 'named'), aliases: (e.aliases || []).concat([e.label]),
+                   role_instance_id: e.role_instance_id || null };
+        }).filter(Boolean);
+        return out;
+      }
+      // Legacy structured seed path — Scene 1's groundedObjects ONLY (that field's real scope
+      // today; see the review's ground-truth mapping). Normalized into the same object shape so
+      // _resolveEPlusTarget never needs to know which source it came from.
+      var seed = (typeof _activeSeed === 'function') ? _activeSeed(s) : null;
+      var n = (typeof _currentSceneNumber === 'function') ? _currentSceneNumber(s) : null;
+      var groundedObjects = (n === 1 && seed && seed.sceneOne && Array.isArray(seed.sceneOne.groundedObjects)) ? seed.sceneOne.groundedObjects : null;
+      if (groundedObjects && groundedObjects.length) {
+        out.source = 'legacy_seed_grounded_objects';
+        out.objects = groundedObjects.filter(function (o) { return o && o.name; }).map(function (o) {
+          return { object_id: 'legacy:' + String(o.object_id || o.name), label: String(o.name),
+                   head: o.head ? String(o.head) : _deriveObjectHead(o.name), kind: 'object',
+                   owner_or_caretaker_ref: o.owner_ref || null, held_by: null, addressable_by: [] };
+        });
+      }
+    } catch (_) {}
+    return out;
+  }
+  window._resolveStageBeatInventory = _resolveStageBeatInventory;
+
+  // D3 — resolve an E+ target ref (an object_id, preferred; or an exact normalized label, never
+  // fuzzy token overlap against free scene text) against the inventory. BOTH filter and reject:
+  // an excluded object is structurally absent from the pool it matches against (filter), AND a
+  // resolution attempt that names an excluded label/id anyway gets a NAMED code (reject) — never
+  // an indistinguishable "not found".
+  function _resolveEPlusTarget(targetRef, inventory) {
+    var out = { ok: false, object: null, why: null };
+    inventory = inventory || { objects: [], exclusions: { locations: [], objects: [] } };
+    var ref = String(targetRef || '').trim();
+    if (!ref) { out.why = 'NO_TARGET_SUPPLIED'; return out; }
+    if (!Array.isArray(inventory.objects) || !inventory.objects.length) { out.why = 'NO_INVENTORY'; return out; }
+    var exObj = ((inventory.exclusions && inventory.exclusions.objects) || []).map(function (x) { return String(x).toLowerCase().trim(); });
+    var normRef = ref.toLowerCase();
+    var pool = inventory.objects.filter(function (o) { return exObj.indexOf(String(o.label || '').toLowerCase().trim()) === -1; });
+    var found = pool.filter(function (o) { return o.object_id === ref; })[0]
+      || pool.filter(function (o) { return String(o.label || '').toLowerCase().trim() === normRef; })[0];
+    if (found) { out.ok = true; out.object = found; return out; }
+    var excludedMatch = inventory.objects.some(function (o) {
+      return (o.object_id === ref || String(o.label || '').toLowerCase().trim() === normRef)
+        && exObj.indexOf(String(o.label || '').toLowerCase().trim()) !== -1;
+    }) || exObj.indexOf(normRef) !== -1;
+    out.why = excludedMatch ? 'TARGET_EXCLUDED' : 'TARGET_NOT_IN_INVENTORY';
+    return out;
+  }
+  window._resolveEPlusTarget = _resolveEPlusTarget;
+
+  // D4 — resolve a present-pool entity to its issued identity AND authored facet/evidence
+  // material, composing EXISTING mechanisms (_relLedger, _facetIndex, _resolveFacetIndexEntry) —
+  // never reimplemented, never inferred from a bare label. No authored material → C+ unavailable.
+  function _resolveCPlusParticipant(entityRef, s, sceneNumber) {
+    s = s || window.state;
+    var out = { ok: false, participant: null, why: null };
+    try {
+      var L = (typeof _relLedger === 'function') ? _relLedger(false) : null;
+      var e = L && L.entities && L.entities[entityRef];
+      if (!e) { out.why = 'NOT_ON_STAGE'; return out; }
+      var stageRec = { id: entityRef, label: e.label, aliases: (e.aliases || []).concat([e.label]) };
+      var idx = {}; try { idx = (typeof _facetIndex === 'function') ? (_facetIndex(s, {}) || {}) : {}; } catch (_) { idx = {}; }
+      var facets = (typeof _resolveFacetIndexEntry === 'function') ? _resolveFacetIndexEntry(stageRec, idx, sceneNumber) : [];
+      if (!facets || !facets.length) { out.why = 'NO_AUTHORED_MATERIAL'; return out; }
+      out.ok = true;
+      out.participant = { id: entityRef, label: e.label, kind: e.anchorRole === 'pc' ? 'pc' : (e.kind || 'named'), facets: facets };
+      return out;
+    } catch (_e) { out.why = 'threw: ' + (_e && _e.message); return out; }
+  }
+  window._resolveCPlusParticipant = _resolveCPlusParticipant;
+
+  // D5 — fusion reachability: valid only when the participant's id appears in the object's
+  // addressable_by. FAIL-CLOSED: an object with empty/missing addressable_by is reachable by NO
+  // ONE — never a permissive default. Bare co-occurrence (same scene, no cross-reference) is
+  // explicitly NOT sufficient — this is the whole point of the check.
+  function _checkFusionReachability(participant, object) {
+    if (!participant || !participant.id) return { ok: false, why: 'NO_PARTICIPANT' };
+    if (!object) return { ok: false, why: 'NO_OBJECT' };
+    var addr = Array.isArray(object.addressable_by) ? object.addressable_by : [];
+    if (!addr.length) return { ok: false, why: 'NO_ADDRESSABLE_BY_DECLARED' };
+    if (addr.indexOf(participant.id) === -1) return { ok: false, why: 'NOT_REACHABLE' };
+    return { ok: true, why: null };
+  }
+  window._checkFusionReachability = _checkFusionReachability;
+
+  // D6 — pure composition: everything eligible right now, for offline proof that the primitives
+  // fail-closed correctly together. C+-eligible participants (D4) from the active stage's present
+  // pool; E+-eligible objects (D2/D3, the whole inventory — a live caller resolves ONE declared
+  // target via D3 against this same inventory); valid fusion PAIRS (D5) — a participant×object
+  // pairing only where reachability holds. A beat with no eligible C+ has no C+; no eligible E+
+  // has no E+; fusion needs both AND reachability — never invented to fill a gap. This composer is
+  // for CONTROLS; the live wiring calls the individual primitives against real declared inputs
+  // (see _sceneStageContract's accepted-stage branch and the continuation skeleton's E+/fusion
+  // resolution step) so it never competes with the real scheduled Character+ decision.
+  function _resolveStageBeatEligibility(s, sceneNumber) {
+    s = s || window.state;
+    var inv = _resolveStageBeatInventory(s);
+    var out = { cplus: [], eplus: inv.objects.slice(), fusionPairs: [], inventorySource: inv.source };
+    (inv.present || []).forEach(function (p) {
+      var r = _resolveCPlusParticipant(p.id, s, sceneNumber);
+      if (r.ok) out.cplus.push(r.participant);
+    });
+    out.cplus.forEach(function (participant) {
+      inv.objects.forEach(function (object) {
+        if (_checkFusionReachability(participant, object).ok) out.fusionPairs.push({ participant: participant, object: object });
+      });
+    });
+    return out;
+  }
+  window._resolveStageBeatEligibility = _resolveStageBeatEligibility;
 
   // ── FATE CARD INTIMACY OVERRIDE HOOK ──
   // Called whenever fate cards re-render. If intimacy dialogue is

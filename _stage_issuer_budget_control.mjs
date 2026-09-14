@@ -45,9 +45,13 @@ const relLedgerSrc = sliceByAnchor('rel-ledger-primitives',
   'var REL_V = 1;',
   'return _relMatchByName(L, n, opts);\n  };');
 
+const deriveObjectHeadSrc = sliceByAnchor('derive-object-head',
+  'function _deriveObjectHead(label) {',
+  'window._deriveObjectHead = _deriveObjectHead;');
+
 const stageSubstrateSrc = sliceByAnchor('stage-state-substrate',
   '// GENERIC STAGE-STATE SUBSTRATE (Roman, authorized 2026-09-14)',
-  'window._acceptStageProposal = _acceptStageProposal;');
+  'window._acceptStageProposal = _acceptStageProposal;') + '\n' + deriveObjectHeadSrc;
 
 const deliverySrc = sliceByAnchor('render-and-current-stage-directive',
   'function _renderStageDirectiveText(rec) {',

@@ -161,7 +161,8 @@ const accept1 = await page.evaluate(() => {
   const accepted = window._acceptStageProposal('s1', {
     present: ['pc', j1.entity.id, j2.entity.id],
     location: { location_ref: 'willow-clearing', issued_by: 'seed_authored', time_offset_from_prior_scene: 'continuous' },
-    issued_objects: [{ object_id: 's:s1:O1', label: 'the ceremonial sash', owner_or_caretaker_ref: 'pc', held_by: 'pc', addressable_by: ['pc'] }],
+    // D1 (Roman, authorized 2026-09-14): object_id is backend-minted at accept time — never supplied.
+    issued_objects: [{ label: 'the ceremonial sash', owner_or_caretaker_ref: 'pc', held_by: 'pc', addressable_by: ['pc'] }],
     affordances: ['stay and answer', 'break away toward Julian'],
     source: 'persistence-proof'
   });

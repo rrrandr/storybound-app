@@ -204,7 +204,8 @@ const accept1 = await page.evaluate(() => {
   const accepted = window._acceptStageProposal('s1', {
     present: ['pc', j1.entity.id, j2.entity.id],
     location: { location_ref: 'willow-clearing', issued_by: 'seed_authored', time_offset_from_prior_scene: 'continuous' },
-    issued_objects: [{ object_id: 's:s1:O1', label: 'the ceremonial sash', owner_or_caretaker_ref: 'pc', held_by: 'pc', addressable_by: ['pc'] }],
+    // D1 (Roman, authorized 2026-09-14): object_id is backend-minted at accept time — never supplied.
+    issued_objects: [{ label: 'the ceremonial sash', owner_or_caretaker_ref: 'pc', held_by: 'pc', addressable_by: ['pc'] }],
     affordances: ['stay and answer', 'break away toward Julian'],
     source: 'issue-transition-proof'
   });
@@ -315,7 +316,7 @@ ok('STEP4 the two Julian entities from Book 1 are STILL the same ids in the carr
 STEP = '5-issue2-first-stage';
 const issue2Accept = await page.evaluate(() => window._acceptStageProposal('s2', { present: ['pc'], source: 'issue-transition-proof-issue2' }));
 ok('STEP5 Issue 2\'s own first stage accepts', issue2Accept.ok === true, JSON.stringify(issue2Accept.why));
-ok('STEP5 Issue 2\'s stage carries no issued_objects — s:s1:O1 not addressable without reissuance', issue2Accept.ok && issue2Accept.record.issued_objects.length === 0);
+ok('STEP5 Issue 2\'s stage carries no issued_objects — Book 1\'s object (' + (book1Record.issued_objects[0] && book1Record.issued_objects[0].object_id) + ') not addressable without reissuance', issue2Accept.ok && issue2Accept.record.issued_objects.length === 0);
 ok('STEP5 the active stage is now Issue 2\'s own (s2)', (await page.evaluate(() => { const a = window._activeStageRecord(window.state); return a && a.sceneKey; })) === 's2');
 
 // ── SUBSEQUENT REAL LIBRARY REOPEN — real Save & Exit click, real reload, real Continue click.
@@ -428,7 +429,7 @@ ok('STEP7 lineage pointer survives the real save/reopen', finalState.previousSto
 ok('STEP7 s1 is STILL immutable, closed history after a real save/reopen', !!finalState.s1 && finalState.s1.lifecycle.closedReason === 'issue_boundary' && JSON.stringify(snapshotIssuedContent(finalState.s1)) === JSON.stringify(snapshotIssuedContent(book1Record)));
 ok('STEP7 no active physical stage that is s1 after the real reopen', finalState.activeSceneKey !== 's1', finalState.activeSceneKey);
 ok('STEP7 the active stage is s2 (Issue 2\'s own, freshly issued)', finalState.activeSceneKey === 's2', finalState.activeSceneKey);
-ok('STEP7 s1\'s object is NOT addressable in s2 without explicit reissuance, after the real reopen', !!finalState.s2 && finalState.s2.issued_objects.length === 0 && JSON.stringify(finalState.s2).indexOf('s:s1:O1') === -1);
+ok('STEP7 s1\'s object is NOT addressable in s2 without explicit reissuance, after the real reopen', !!finalState.s2 && finalState.s2.issued_objects.length === 0 && JSON.stringify(finalState.s2).indexOf(book1Record.issued_objects[0].object_id) === -1);
 ok('STEP7 established identity (pc) remains resolvable after the real reopen', finalState.pcResolvable);
 
 console.log('\n' + '='.repeat(60));
