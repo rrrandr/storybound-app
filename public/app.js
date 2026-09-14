@@ -255204,6 +255204,43 @@ Generate the synopsis now.` }
     }
     try { if (typeof window !== 'undefined') window._pcvSourceTextForBasis = _pcvSourceTextForBasis; } catch (_) {}
 
+    // CLAIM-LEVEL ENTAILMENT, not merely category membership (Roman, corrective #6, 2026-09-15):
+    // "right category" was not "this exact source supports this claim" — a citation could be a
+    // real substring of, say, her whole approved bio while having NOTHING to do with the specific
+    // wound/contradiction/fear it was attached to (any bio fragment "counts" as approved_bio).
+    // This requires the CITED snippet's own content words to be SUBSTANTIALLY present in the
+    // CLAIM text — a deterministic, mechanical proxy for "the source states or structurally
+    // entails the claim," in the same spirit as this file's own evidence_requires content-word
+    // matching elsewhere (_cpBuildGroundedOptions) — never a semantic/LLM judgment, and never
+    // permissive: a short, generic, or unrelated citation fails this by construction.
+    var _PCV_STOPWORDS = ['a', 'an', 'the', 'and', 'or', 'but', 'of', 'to', 'in', 'on', 'at', 'for',
+      'with', 'is', 'was', 'were', 'be', 'been', 'being', 'it', 'its', 'her', 'his', 'their', 'she',
+      'he', 'they', 'that', 'this', 'has', 'had', 'have', 'not', 'no', 'so', 'as', 'by', 'from',
+      'into', 'over', 'after', 'before', 'who', 'which', 'today', 'only'];
+    function _pcvContentWords(text) {
+      return String(text || '').toLowerCase().replace(/[^a-z0-9\s]+/g, ' ').split(/\s+/)
+        .filter(function (w) { return w.length > 3 && _PCV_STOPWORDS.indexOf(w) === -1; });
+    }
+    function _pcvClaimSupportedByCitation(claimText, citeText) {
+      var citeWords = _pcvContentWords(citeText);
+      if (!citeWords.length) return { ok: false, sharedCount: 0, proportion: 0, citeWordCount: 0 };
+      var claimSet = {}; _pcvContentWords(claimText).forEach(function (w) { claimSet[w] = true; });
+      var uniqueCite = Array.prototype.filter.call(citeWords, function (w, i) { return citeWords.indexOf(w) === i; });
+      var shared = uniqueCite.filter(function (w) { return claimSet[w]; });
+      var proportion = shared.length / uniqueCite.length;
+      // The cite's OWN content must be substantially present in the claim — at least two
+      // distinct shared content words AND at least 40% of the cite's own distinct vocabulary.
+      // Both bars deliberately bounded, deterministic, and disclosed here rather than tuned to
+      // fit whatever a future sample happens to produce.
+      return { ok: shared.length >= 2 && proportion >= 0.4, sharedCount: shared.length, proportion: proportion, citeWordCount: uniqueCite.length };
+    }
+    try {
+      if (typeof window !== 'undefined') {
+        window._pcvContentWords = _pcvContentWords;
+        window._pcvClaimSupportedByCitation = _pcvClaimSupportedByCitation;
+      }
+    } catch (_) {}
+
     // REJECT-ONLY, never rewrites (a validator that rewrites is a competing author). PROVENANCE
     // IS MANDATORY (Roman, corrective #4, 2026-09-15): a response with no valid _provenance
     // object — absent, null, non-object, or an array — is rejected by name
@@ -255248,6 +255285,17 @@ Generate the synopsis now.` }
                 // from THIS claimed category, or it is exactly the "cites an irrelevant but real
                 // source" failure this whole per-basis lookup exists to catch.
                 reject('citation_not_supported', 'cites="' + cites + '" not found within the claimed basis category (' + pr.basis + ')');
+              } else {
+                // CATEGORY MEMBERSHIP ALONE IS NOT ENOUGH — the cited snippet must actually
+                // SUPPORT this specific claim's own content, not merely exist somewhere inside
+                // the right bucket (a bio fragment about "today is her first time" cannot ground
+                // an unrelated invented wound just because both are "approved_bio").
+                var entailment = _pcvClaimSupportedByCitation(text, cites);
+                if (!entailment.ok) {
+                  reject('citation_does_not_support_claim', 'cites="' + cites + '" is a real ' + pr.basis
+                    + ' snippet, but shares only ' + entailment.sharedCount + '/' + entailment.citeWordCount
+                    + ' content words (' + Math.round(entailment.proportion * 100) + '%) with the claim itself — category membership is not entailment');
+                }
               }
             }
           }

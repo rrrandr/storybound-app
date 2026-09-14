@@ -129,7 +129,7 @@ function fullyCoveredGreenBible() {
       event: 'The presiding Dohkar has charged her with shaping and interfering, and the matter has not yet been resolved before the gathered assembly.',
       immediate_fear: 'That the accusation outlives any answer she gives before the inquiry opens.',
       li_complication: 'Julian, who already knows something about her lineage, questioned her before the assembly as part of the same incident.',
-      refusal: 'To let the presiding Dohkar’s unproven charge stand unanswered before the coming inquiry convenes.',
+      refusal: 'To let the Dohkar’s claim that she was shaping the wish and interfering go unanswered before he has ruled.',
     },
     _provenance: {
       'wound.core': { basis: 'approved_facet:pc_fears_public_failure', cites: 'Failing is survivable; failing where it can be witnessed and recounted is not' },
@@ -139,7 +139,7 @@ function fullyCoveredGreenBible() {
       'current_crisis.event': { basis: 'approved_scene1', cites: 'The presiding Dohkar has charged Lirael with shaping the wish and with interfering' },
       'current_crisis.immediate_fear': { basis: 'inferred', cites: '' },
       'current_crisis.li_complication': { basis: 'approved_relationship', cites: 'Already knows something about the PC’s lineage' },
-      'current_crisis.refusal': { basis: 'approved_scene1', cites: 'he has not yet ruled' },
+      'current_crisis.refusal': { basis: 'approved_scene1', cites: 'The presiding Dohkar has charged Lirael with shaping the wish and with interfering; he has not yet ruled' },
     },
   };
 }
@@ -360,6 +360,46 @@ section('CONTROL 8 — corridor / no fixed-starter source: the merge refuses cle
   const s = { _starterId: null };   // corridor — no seed at all
   const merge = win._commitValidatedPcFoundation(s, fullyCoveredGreenBible());
   ok('the merge refuses for a non-fixed-starter story', merge.committed === false && merge.reason === 'no_fixed_starter_source', JSON.stringify(merge));
+}
+
+// ══════════════════════════════════════════════════════════════════════════════════
+section('CONTROL 9 (Roman\'s exact exploit) — a citation to the RIGHT category that does NOT support THIS specific claim is rejected, category membership alone is not entailment');
+{
+  const win = freshSandbox({ starter_first_sacrifice: FIRST_SACRIFICE_SEED });
+  const s = baseState();
+  const source = win._pcFoundationSourceFacts(s);
+  // "A Lirael bio citation should not be able to justify any arbitrary wound merely because both
+  // are seed_bio" — cites a REAL, CORRECTLY-CATEGORIZED (approved_bio) fragment of her own bio
+  // that has nothing to do with the invented wound it is attached to.
+  const sameCategoryUnrelated = {
+    wound: { core: 'Her mother vanished during a ritual sacrifice years ago and was never seen again.' },
+    _provenance: {
+      'wound.core': { basis: 'approved_bio', cites: 'Today is her first time SUPERVISING another person’s First Sacrifice' },
+    },
+  };
+  const result = win._validatePcFoundationOutput(sameCategoryUnrelated, source);
+  ok('REJECTED overall despite a real, correctly-categorized citation', result.ok === false);
+  ok('rejected specifically for citation_does_not_support_claim (not citation_not_supported — the category WAS right)',
+    result.rejections.some(r => r.field === 'wound.core' && r.reason === 'citation_does_not_support_claim'), JSON.stringify(result.rejections));
+  ok('the content-layer fence ALSO independently catches this (belt and suspenders — a family-death claim is dangerous regardless of citation shape)',
+    result.rejections.some(r => r.field === 'wound.core' && r.reason === 'unsupported_family_death_or_disappearance'), JSON.stringify(result.rejections));
+
+  const sBefore = JSON.parse(JSON.stringify(s));
+  win._ensurePcPortfolio(s);
+  const beforeMerge = JSON.parse(JSON.stringify(s));
+  const merge = win._commitValidatedPcFoundation(s, sameCategoryUnrelated);
+  ok('the merge REFUSES this exploit attempt', merge.committed === false);
+  ok('sandboxed state is unchanged by the refused merge', JSON.stringify(s) === JSON.stringify(beforeMerge));
+
+  // Now the POSITIVE contrast, same category, but a citation that GENUINELY entails the claim.
+  const sameCategorySupported = {
+    core_contradiction: 'She is brilliant but untested, and she is terrified of failing publicly now that the whole assembly is watching.',
+    _provenance: {
+      'core_contradiction': { basis: 'approved_bio', cites: 'Brilliant but untested; terrified of failing publicly' },
+    },
+  };
+  const result2 = win._validatePcFoundationOutput(sameCategorySupported, source);
+  ok('the SAME category, when the citation genuinely entails the claim, is ACCEPTED', result2.ok === true, JSON.stringify(result2.rejections));
 }
 
 console.log('\n' + '='.repeat(70));
