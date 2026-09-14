@@ -254952,88 +254952,137 @@ Generate the synopsis now.` }
     // is any OTHER story's (Famous Fate included — _activeSeed(s) is scoped to THIS story's own
     // _starterId, never a shared/global lookup, so nothing here can leak between stories).
     // ══════════════════════════════════════════════════════════════════════════════════════
-    function _starterPcFoundationBlock(s) {
+    // ══════════════════════════════════════════════════════════════════════════════════════
+    // PC FOUNDATION SOURCE FACTS (Roman, corrective follow-up #2, 2026-09-15) — the SAME
+    // approved-source extraction _starterPcFoundationBlock renders to prompt text, but returned
+    // STRUCTURED so a validator can check a generated claim against it directly, rather than
+    // re-parsing prose. ONE extractor, two consumers (the prompt block below, and
+    // _validatePcFoundationOutput further down) — never two independently-maintained copies of
+    // what counts as "approved source" drifting apart.
+    // ══════════════════════════════════════════════════════════════════════════════════════
+    function _pcFoundationSourceFacts(s) {
       try {
         s = s || (typeof window !== 'undefined' ? window.state : null) || {};
         var seed = (typeof _activeSeed === 'function') ? _activeSeed(s)
           : (window._activeSeed ? window._activeSeed(s) : null);
-        if (!seed || !Array.isArray(seed.cast)) return '';
+        if (!seed || !Array.isArray(seed.cast)) return null;
         var pcCast = seed.cast.filter(function (c) { return c && c.role === 'PC'; })[0];
-        if (!pcCast) return '';                     // corridor / no fixed PC canon — nothing to add
+        if (!pcCast) return null;                    // corridor / no fixed PC canon
+
+        var liCast = seed.cast.filter(function (c) { return c && c.role === 'LI'; })[0];
+        var facets = (Array.isArray(pcCast.cPlusFacets) ? pcCast.cPlusFacets : [])
+          .filter(function (f) { return f && f.canonical_truth; })
+          .map(function (f) { return { facet_id: f.facet_id || '', category: f.category || '', canonical_truth: String(f.canonical_truth) }; });
+        var relationshipConstraints = (Array.isArray(seed.constraints) ? seed.constraints : [])
+          .filter(function (c) { return /\bPC\b|\bsuspicio/i.test(String(c || '')) || (liCast && liCast.name && new RegExp('\\b' + liCast.name + '\\b').test(String(c || ''))); })
+          .map(String);
+
+        var em = s._bakedEmitted;
+        var os = (em && em.openState) || {};
+        var scene1 = em ? {
+          ledgerLine: em.ledgerLine ? String(em.ledgerLine) : '',
+          location: os.location ? String(os.location) : '',
+          timeOfDay: os.timeOfDay ? String(os.timeOfDay) : '',
+          pcCondition: os.pcCondition ? String(os.pcCondition) : '',
+          obligations: (Array.isArray(em.obligations) ? em.obligations : []).map(String),
+        } : null;
+
+        var posturePairs = [];
+        var posture = s._scenePosture;
+        if (posture && typeof posture === 'object') {
+          Object.keys(posture).forEach(function (k) {
+            var p = posture[k]; if (!p) return;
+            var bits = [];
+            if (p.action) bits.push('did: ' + p.action);
+            if (p.dialogue) bits.push('said: "' + p.dialogue + '"');
+            if (bits.length) posturePairs.push({ sceneNum: k, text: bits.join('; ') });
+          });
+        }
+
+        var out = {
+          starterId: String(s._starterId || ''),
+          pcName: String(pcCast.name || ''),
+          pcSpecies: String(pcCast.species || ''),
+          pcBio: String(pcCast.bio || ''),
+          facets: facets,
+          liName: liCast ? String(liCast.name || '') : '',
+          liBio: liCast ? String(liCast.bio || '') : '',
+          relationshipConstraints: relationshipConstraints,
+          scene1: scene1,
+          posture: posturePairs,
+        };
+        // One flat haystack every content-pattern check searches against — built from every
+        // field above, nothing else, so "is this supported by the source" always means exactly
+        // "is this supported by what a reader would see rendered in the prompt block."
+        out.allSourceText = [
+          out.pcBio, out.liBio,
+          facets.map(function (f) { return f.canonical_truth; }).join(' • '),
+          relationshipConstraints.join(' • '),
+          scene1 ? [scene1.ledgerLine, scene1.pcCondition].concat(scene1.obligations).join(' • ') : '',
+          posturePairs.map(function (p) { return p.text; }).join(' • '),
+        ].filter(Boolean).join(' • ');
+        return out;
+      } catch (e) {
+        try { console.warn('[PC-BODY-BIBLE] _pcFoundationSourceFacts failed: ' + (e && e.message)); } catch (_) {}
+        return null;
+      }
+    }
+    try { if (typeof window !== 'undefined') window._pcFoundationSourceFacts = _pcFoundationSourceFacts; } catch (_) {}
+
+    function _starterPcFoundationBlock(s) {
+      try {
+        var src = _pcFoundationSourceFacts(s);
+        if (!src) return '';                        // corridor / no fixed PC canon — nothing to add
 
         var L = [];
-        L.push('STARTER PC FOUNDATION (CANONICAL — READ-ONLY, ' + String(s._starterId || '') + '):');
+        L.push('STARTER PC FOUNDATION (CANONICAL — READ-ONLY, ' + src.starterId + '):');
         L.push('This is Roman\'s own approved, already-committed canon for THIS specific protagonist and '
           + 'scene, not a description to elaborate freely. Organize it into the schema below — restate, '
           + 'structure, characterize — but do NOT contradict it, do NOT invent additional facts that '
           + 'conflict with it, and do NOT silently overwrite anything it states. Where the schema asks for '
           + 'something this material does not cover, you may originate NEW material for THAT field only, '
           + 'and it must remain consistent with everything below.');
+        L.push('CITE YOUR BASIS (HARD — Roman, corrective, 2026-09-15): for wound, core_contradiction, '
+          + 'private_hope, current_crisis.li_complication, and current_crisis.refusal, the JSON must also '
+          + 'include a "_provenance" object keyed by field name, each entry {"basis": one of '
+          + '"approved_bio" | "approved_facet:<facet_id>" | "approved_relationship" | "approved_scene1" | '
+          + '"inferred", "cites": the exact short snippet from the material above that basis is drawn from '
+          + '(omit/empty only when basis is "inferred")}. "inferred" is allowed ONLY for a genuinely new '
+          + 'observation that does not assert a new permanent fact (a reading of her feelings, never a new '
+          + 'event, relationship history, or person). Never invent a family member\'s fate, never assert an '
+          + 'emotional history with the love interest beyond his approved bio, never assign a ruling/judging '
+          + 'authority to anyone this material does not already give it to.');
 
         L.push('');
-        L.push('FIXED IDENTITY: ' + String(pcCast.name || '') + ', PC'
-          + (pcCast.species ? ', ' + pcCast.species : '') + '.');
-        if (pcCast.bio) L.push('APPROVED BIOGRAPHY: ' + String(pcCast.bio));
+        L.push('FIXED IDENTITY: ' + src.pcName + ', PC' + (src.pcSpecies ? ', ' + src.pcSpecies : '') + '.');
+        if (src.pcBio) L.push('APPROVED BIOGRAPHY: ' + src.pcBio);
 
-        var facets = Array.isArray(pcCast.cPlusFacets) ? pcCast.cPlusFacets : [];
-        if (facets.length) {
+        if (src.facets.length) {
           L.push('');
           L.push('ESTABLISHED PSYCHOLOGICAL FACTS (already authored — never to be contradicted):');
-          facets.forEach(function (f) {
-            if (f && f.canonical_truth) L.push('  - ' + (f.facet_id || '') + ': ' + String(f.canonical_truth));
-          });
+          src.facets.forEach(function (f) { L.push('  - ' + f.facet_id + ': ' + f.canonical_truth); });
         }
 
-        // Relationship facts: the LI's own approved bio (as it bears on her), plus whichever of
-        // the seed's own invariant constraints are actually relationship-scoped — never the
-        // generic authorial-doctrine ones ("the author must never invent Fate laws") that say
-        // nothing about her relationships.
-        var liCast = seed.cast.filter(function (c) { return c && c.role === 'LI'; })[0];
-        var relConstraints = (Array.isArray(seed.constraints) ? seed.constraints : [])
-          .filter(function (c) { return /\bPC\b|\bsuspicio/i.test(String(c || '')) || (liCast && liCast.name && new RegExp('\\b' + liCast.name + '\\b').test(String(c || ''))); });
-        if ((liCast && liCast.bio) || relConstraints.length) {
+        if (src.liBio || src.relationshipConstraints.length) {
           L.push('');
           L.push('FIXED RELATIONSHIP FACTS (do not contradict):');
-          if (liCast && liCast.bio) L.push('  - ' + String(liCast.name || 'the love interest') + ' (love interest): ' + String(liCast.bio));
-          relConstraints.forEach(function (c) { L.push('  - ' + String(c)); });
+          if (src.liBio) L.push('  - ' + (src.liName || 'the love interest') + ' (love interest): ' + src.liBio);
+          src.relationshipConstraints.forEach(function (c) { L.push('  - ' + c); });
         }
 
-        // Committed Scene 1: the STRUCTURED fields only (ledgerLine, openState, obligations) —
-        // never sceneSummary (a full prose paragraph) or ledgerSeeds (relationally-framed prose,
-        // explicitly excluded from PC-evidence elsewhere in this codebase for the same reason).
-        var em = s._bakedEmitted;
-        if (em) {
-          var os = em.openState || {};
+        if (src.scene1) {
           var sc = [];
-          if (em.ledgerLine) sc.push('  - ' + String(em.ledgerLine));
-          if (os.location || os.timeOfDay) sc.push('  - Location: ' + String(os.location || 'unspecified') + '; time: ' + String(os.timeOfDay || 'unspecified'));
-          if (os.pcCondition) sc.push('  - Her condition now: ' + String(os.pcCondition));
-          (Array.isArray(em.obligations) ? em.obligations : []).forEach(function (o) { if (o) sc.push('  - ' + String(o)); });
-          if (sc.length) {
-            L.push('');
-            L.push('COMMITTED SCENE 1 (already happened — do not contradict):');
-            L = L.concat(sc);
-          }
+          if (src.scene1.ledgerLine) sc.push('  - ' + src.scene1.ledgerLine);
+          if (src.scene1.location || src.scene1.timeOfDay) sc.push('  - Location: ' + (src.scene1.location || 'unspecified') + '; time: ' + (src.scene1.timeOfDay || 'unspecified'));
+          if (src.scene1.pcCondition) sc.push('  - Her condition now: ' + src.scene1.pcCondition);
+          src.scene1.obligations.forEach(function (o) { sc.push('  - ' + o); });
+          if (sc.length) { L.push(''); L.push('COMMITTED SCENE 1 (already happened — do not contradict):'); L = L.concat(sc); }
         }
 
-        // Reader posture: whatever the reader has actually submitted so far (usually none yet at
-        // Bible-generation time — included only when it already exists, never awaited).
-        var posture = s._scenePosture;
-        if (posture && typeof posture === 'object') {
-          var pLines = [];
-          Object.keys(posture).forEach(function (k) {
-            var p = posture[k];
-            if (!p) return;
-            var bits = [];
-            if (p.action) bits.push('did: ' + p.action);
-            if (p.dialogue) bits.push('said: "' + p.dialogue + '"');
-            if (bits.length) pLines.push('  - scene ' + k + ': ' + bits.join('; '));
-          });
-          if (pLines.length) {
-            L.push('');
-            L.push('THE READER\'S OWN SUBMITTED SAY/DO SO FAR (do not contradict):');
-            L = L.concat(pLines);
-          }
+        if (src.posture.length) {
+          L.push('');
+          L.push('THE READER\'S OWN SUBMITTED SAY/DO SO FAR (do not contradict):');
+          src.posture.forEach(function (p) { L.push('  - scene ' + p.sceneNum + ': ' + p.text); });
         }
 
         return L.join('\n') + '\n';
@@ -255043,6 +255092,120 @@ Generate the synopsis now.` }
       }
     }
     try { if (typeof window !== 'undefined') window._starterPcFoundationBlock = _starterPcFoundationBlock; } catch (_) {}
+
+    // ══════════════════════════════════════════════════════════════════════════════════════
+    // PC FOUNDATION OUTPUT VALIDATOR (Roman, corrective follow-up #2, 2026-09-15)
+    //
+    // The live sample proved source-integrity in the REQUEST is not source-fidelity in the
+    // RESPONSE: a smaller model (ministral-8b) still minted an unestablished vanished/dead
+    // mother as her wound, asserted an unestablished emotional history with the love interest,
+    // and attributed the presiding authority's ruling role to him instead. This validator is a
+    // REJECT-ONLY gate over a generated bible's DURABLE claims (wound, contradiction, private
+    // hope, the LI complication, the refusal) — never a rewriter (a validator that rewrites is a
+    // competing author). Two independent layers, both must pass:
+    //   CITATION LAYER — only enforced when the response actually carries the _provenance block
+    //   the prompt above now asks for (a forward-looking schema addition; an older-shape
+    //   response without one skips straight to the content layer, never silently passed for
+    //   lacking an apparatus it was never asked for).
+    //   CONTENT LAYER — runs unconditionally. Three NAMED, targeted checks for the exact failure
+    //   classes the live sample exhibited. Deliberately NOT a general semantic fact-checker (no
+    //   such thing exists here) — an extensible list of concrete danger patterns, matched against
+    //   whether the SAME pattern is actually supported by the approved source text. A model
+    //   self-marking a claim "inferred" does not exempt it from this layer — inferring a reading
+    //   of her feelings is allowed; minting a new family-death event or reassigning a named
+    //   authority is not, regardless of how it is labeled.
+    // ══════════════════════════════════════════════════════════════════════════════════════
+    function _pcvEscapeRegex(x) { return String(x || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+
+    var _PCV_FAMILY_LOSS_RE = /\b(mother|father|parent|sister|brother|sibling|grandmother|grandfather)\b[^.]{0,80}\b(died|dead|death|vanished|disappear\w*|killed|lost forever|never came back|ascended|gone)\b/i;
+    function _checkUnsupportedFamilyLoss(text, source) {
+      var m = _PCV_FAMILY_LOSS_RE.exec(text);
+      if (!m) return { ok: true };
+      if (_PCV_FAMILY_LOSS_RE.test(source.allSourceText || '')) return { ok: true };
+      return { ok: false, reason: 'unsupported_family_death_or_disappearance', detail: m[0] };
+    }
+
+    var _PCV_INTIMACY_RE = /\b(the only one who|always made (?:her|him)|never had to be|made (?:her|him) feel like she didn'?t|before (?:him|her) even)\b/i;
+    function _checkUnsupportedLiIntimacy(text, source) {
+      if (!source.liName) return { ok: true };
+      var nameRe = new RegExp('\\b' + _pcvEscapeRegex(source.liName) + '\\b');
+      if (!nameRe.test(text)) return { ok: true };
+      var m = _PCV_INTIMACY_RE.exec(text);
+      if (!m) return { ok: true };
+      var supported = _PCV_INTIMACY_RE.test(source.liBio || '')
+        || (source.relationshipConstraints || []).some(function (c) { return _PCV_INTIMACY_RE.test(c); });
+      if (supported) return { ok: true };
+      return { ok: false, reason: 'unsupported_li_intimacy_precedent', detail: m[0] };
+    }
+
+    var _PCV_AUTHORITY_VERBS = '(?:decide|deciding|decides|decided|rule|ruling|rules|ruled|judge|judging|judges|determine|determin\\w*|pronounc\\w*)';
+    function _checkAuthorityNotMisattributed(text, source) {
+      if (!source.liName) return { ok: true };
+      var name = _pcvEscapeRegex(source.liName);
+      var nameRe = new RegExp('\\b' + name + '\\b', 'i');
+      if (!nameRe.test(text)) return { ok: true };     // this field doesn't even name him
+      // WHOLE-FIELD, not proximity-windowed: a durable claim naming the LI once and then
+      // referring to him by pronoun for the rest of the sentence ("he's the one who's going to
+      // have to decide whether she's guilty") is exactly the real failure mode this exists to
+      // catch, and a fixed character window around the literal name misses it entirely.
+      var authorityClaimRe = new RegExp('\\bguilt\\w*\\b|\\b' + _PCV_AUTHORITY_VERBS + '\\b', 'i');
+      var m = authorityClaimRe.exec(text);
+      if (!m) return { ok: true };
+      var liGrantedAuthorityRe = new RegExp('\\b' + name + '\\b[^.]{0,80}\\b' + _PCV_AUTHORITY_VERBS + '\\b', 'i');
+      if (liGrantedAuthorityRe.test(source.allSourceText || '')) return { ok: true };
+      return { ok: false, reason: 'authority_misattributed_to_li', detail: m[0] };
+    }
+    try {
+      if (typeof window !== 'undefined') {
+        window._checkUnsupportedFamilyLoss = _checkUnsupportedFamilyLoss;
+        window._checkUnsupportedLiIntimacy = _checkUnsupportedLiIntimacy;
+        window._checkAuthorityNotMisattributed = _checkAuthorityNotMisattributed;
+      }
+    } catch (_) {}
+
+    var PCV_DURABLE_FIELDS = [
+      { key: 'wound.core', get: function (b) { return b.wound && b.wound.core; } },
+      { key: 'core_contradiction', get: function (b) { return b.core_contradiction; } },
+      { key: 'private_hope', get: function (b) { return b.private_hope; } },
+      { key: 'current_crisis.li_complication', get: function (b) { return b.current_crisis && b.current_crisis.li_complication; } },
+      { key: 'current_crisis.refusal', get: function (b) { return b.current_crisis && b.current_crisis.refusal; } },
+    ];
+    function _validatePcFoundationOutput(bible, source) {
+      var out = { ok: true, rejections: [], accepted: [] };
+      if (!bible || typeof bible !== 'object') { out.ok = false; out.rejections.push({ field: '*', reason: 'no_bible_object' }); return out; }
+      if (!source) { out.ok = false; out.rejections.push({ field: '*', reason: 'no_source_facts_supplied' }); return out; }
+      var prov = (bible._provenance && typeof bible._provenance === 'object') ? bible._provenance : null;
+
+      PCV_DURABLE_FIELDS.forEach(function (f) {
+        var text = String(f.get(bible) || '').trim();
+        if (!text) return;                            // nothing asserted, nothing to check
+        var rejected = false;
+        var reject = function (reason, detail) { rejected = true; out.ok = false; out.rejections.push({ field: f.key, reason: reason, detail: detail }); };
+
+        if (prov) {
+          var leafKey = f.key.indexOf('.') !== -1 ? f.key.split('.').pop() : f.key;
+          var pr = prov[f.key] || prov[leafKey];
+          if (!pr || !pr.basis) {
+            reject('no_valid_citation', 'no _provenance entry for ' + f.key);
+          } else if (pr.basis !== 'inferred') {
+            var cites = String(pr.cites || '').trim();
+            if (!cites || (source.allSourceText || '').indexOf(cites) === -1) {
+              reject('citation_not_supported', 'cites="' + cites + '" not found in approved source text');
+            }
+          }
+        }
+
+        [_checkUnsupportedFamilyLoss, _checkUnsupportedLiIntimacy, _checkAuthorityNotMisattributed].forEach(function (check) {
+          var r = check(text, source);
+          if (!r.ok) reject(r.reason, r.detail);
+        });
+
+        if (!rejected) out.accepted.push({ field: f.key });
+      });
+
+      return out;
+    }
+    try { if (typeof window !== 'undefined') window._validatePcFoundationOutput = _validatePcFoundationOutput; } catch (_) {}
 
     async function _generatePCBodyBibleUncached(_keyAtRequest) {
       try {
@@ -255477,7 +255640,15 @@ Generate the synopsis now.` }
           // into a single behavioral register.
           '  "signature_habits": "<a SHORT LIST (3-5 items) of recurring NON-PHYSICAL micro-habits that define this character — the kind of thing a reader would mention if asked to describe her later. NOT tells (those are above). These are RECURRING behaviors. Each habit must be a DIFFERENT KIND from the others — mix at least 3 of: verbal (a phrase she uses / a word she avoids / a thing she always says when X) / cognitive (always counts something / always notices a specific kind of detail / always solves a problem the same way) / object-relation (always carries / always loses / always folds / always returns) / spatial (always knows where the exit is / always sits with her back to the wall / always takes the long way) / temporal (always early / always counts down / always checks the time) / social (always remembers names / always asks the third question / never finishes first). Examples (rotate across stories — each Dani gets a DIFFERENT set): \'always counts the doorways between her seat and the exit; always folds receipts into perfect rectangles; always orders the second cheapest wine; always asks the third question, never the first\'. NEVER generic-quirky (\'has a sweet tooth\', \'loves coffee\'). Specific enough that a reader could spot her in another story.>",\n' +
           '  "self_conscious_feature": "<OPTIONAL — use null and omit if nothing fits; do NOT force it (a forced one becomes a Hallmark self-esteem beat). A feature SHE privately dismisses, hides, underplays, or resents. NOT necessarily physical — may be her curves / height / a feature she thinks is too much, OR her laugh / accent / how easily her face shows everything / a softness she reads as weakness. It works ONLY when tied to IDENTITY, VULNERABILITY, or SOCIAL FRICTION (an expressiveness that costs her in boardrooms; a body shaped unlike what her industry rewards) — never generic looks-insecurity. Name the dismissed feature + WHY she dismisses it, 12-25 words. Do NOT write the partner reaction here — that is render-time.>",\n' +
-          '  "li_keenly_aware_of": "<a SHORT LIST (2-3 items) of the specific features the LI has noticed and finds compelling about her, including AT LEAST ONE that is asymmetric / imperfect / not-conventionally-pretty (because real desire is particular, not airbrushed). Example: \'her slightly crooked front tooth, the way she goes still when listening, the perfume only noticeable from close enough to touch\'.>"\n' +
+          '  "li_keenly_aware_of": "<a SHORT LIST (2-3 items) of the specific features the LI has noticed and finds compelling about her, including AT LEAST ONE that is asymmetric / imperfect / not-conventionally-pretty (because real desire is particular, not airbrushed). Example: \'her slightly crooked front tooth, the way she goes still when listening, the perfume only noticeable from close enough to touch\'.>"' +
+          (_starterFoundation ? (',\n' +
+          '  "_provenance": {\n' +
+          '    "wound.core": {"basis": "<approved_bio | approved_facet:<facet_id> | approved_relationship | approved_scene1 | inferred>", "cites": "<exact short snippet from the STARTER PC FOUNDATION block above this basis is drawn from, or omit/empty if basis is \'inferred\'>"},\n' +
+          '    "core_contradiction": {"basis": "...", "cites": "..."},\n' +
+          '    "private_hope": {"basis": "...", "cites": "..."},\n' +
+          '    "current_crisis.li_complication": {"basis": "...", "cites": "..."},\n' +
+          '    "current_crisis.refusal": {"basis": "...", "cites": "..."}\n' +
+          '  }\n') : '\n') +
           '}\n\n' +
           // Roman 2026-06-01 — three-different-Danis test mirrors the LI
           // three-different-men test. The narrator is even more important

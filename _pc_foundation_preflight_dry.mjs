@@ -53,9 +53,13 @@ const note = (s) => console.log('  [NOTE] ' + s);
 const section = (t) => console.log('\n=== ' + t + ' ===');
 
 function classifyModelCall(sys, usr, role, model) {
-  // Exact system-prompt anchors, verified directly against public/app.js (~255175, ~256191,
-  // ~256618) — the same three-way phrasing the app itself uses, not a guess.
+  // Exact system-prompt anchors, verified directly against public/app.js — the same phrasing the
+  // app itself uses, not a guess. bodyTellReroll is the REAL, pre-existing diversity-reroll gate
+  // inside _generatePCBodyBible (public/app.js ~255689) — discovered live-firing in the FIRST
+  // live sample (its own system prompt: "You rewrite 5 body-tell fields..."), not anticipated by
+  // the original version of this script, which is exactly the bug items 1/2 correct.
   if (/generating a PROTAGONIST BODY BIBLE for a romance novel/.test(sys)) return 'pcBodyBible';
+  if (/rewrite 5 body-tell fields for a romance heroine bible/.test(sys)) return 'bodyTellReroll';
   if (/generating a LOVE-INTEREST BODY BIBLE for a romance novel/.test(sys)) return 'liBodyBible';
   if (/generating an ANTAGONIST BODY BIBLE for a romance novel/.test(sys)) return 'antagonistBodyBible';
   if (/screenplay-native cinematic-romance writer/.test(sys)) return 'cgScreenplay';
@@ -65,12 +69,37 @@ function classifyModelCall(sys, usr, role, model) {
   return 'unclassified(role=' + role + ',model=' + model + ')';
 }
 
+// ── DECLARED CONTRACT (Roman, corrective #3, 2026-09-15): one foundation call PLUS AT MOST N
+// declared reroll attempts, where N is read from the REAL code, not guessed — public/app.js
+// ~255712: `while (_v.fail && _passes < 2)`, i.e. at most 2 reroll passes. Enforced HERE, at the
+// outbound boundary: a request beyond either cap is a CONTRACT VIOLATION and the route is
+// aborted rather than silently stubbed/allowed through. ──
+const CALL_CAPS = { pcBodyBible: 1, bodyTellReroll: 2 };
+const attemptCounts = {};
+const correlatedAttempts = [];   // [{kind, attemptNumber, request, sys, usr, sysBytes, usrBytes, model, role, maxTokens, temperature, response}]
+let contractViolation = null;
+
 const requestCensus = [];
 let pcBodyBibleCapturedRequest = null;
 
 const browser = await chromium.launch({ headless: true });
 const page = await (await browser.newContext()).newPage();
 page.on('console', () => {}); // silenced — this script reports its own structured findings
+
+// ── PER-REQUEST CORRELATION (Roman, corrective #3, 2026-09-15): replaces the prior single-slot
+// "last response wins" listener, which silently captured the WRONG response's usage block once a
+// second/third /api/mistral-proxy exchange (a reroll) existed in the same run. Matched by exact
+// Playwright Request object identity — route.continue() forwards the SAME request, so
+// response.request() is reference-equal to what the route handler saw. ──
+page.on('response', async (response) => {
+  try {
+    if (!/\/api\/mistral-proxy\b/.test(response.url())) return;
+    const rec = correlatedAttempts.find(a => a.request === response.request() && !a.response);
+    if (!rec) return;
+    let json = null; try { json = await response.json(); } catch (_) { json = null; }
+    rec.response = { status: response.status(), json, at: Date.now() };
+  } catch (_) {}
+});
 
 await installSession(page);
 await page.route('**/sb-test.localhost/**', route => {
@@ -81,10 +110,9 @@ await page.route('**/sb-test.localhost/**', route => {
 await installEntitledProfileStub(page, { log: () => {} });
 
 // ── THE ONE OUTBOUND BOUNDARY. Every /api/** POST, of every kind, passes through here. In this
-// dry run EVERY request — including a would-be pcBodyBible one — is answered locally. This is
-// the exact mechanism that, in the authorized live run, would let pcBodyBible through for real
-// while continuing to stub everything else: the boundary is proven here by showing it intercepts
-// and classifies every single request that occurs, with nothing reaching the real internet. ──
+// dry run EVERY request — including a would-be pcBodyBible/bodyTellReroll one — is answered
+// locally. This is the exact mechanism that, in an authorized live run, would let those through
+// for real while continuing to stub everything else — bounded by CALL_CAPS above. ──
 await page.route('**/api/**', async route => {
   const req = route.request(); const url = req.url(); const p = new URL(url).pathname;
   if (/\/api\/config\b/.test(url)) { requestCensus.push({ kind: 'infra:config', url: p }); return route.fulfill({ status: 200, contentType: 'application/json', body: configBody() }); }
@@ -102,8 +130,18 @@ await page.route('**/api/**', async route => {
   const sysBytes = Buffer.byteLength(sys, 'utf8'), usrBytes = Buffer.byteLength(usr, 'utf8');
   const entry = { kind, url: p, role: b.role || null, model: b.model || b.preferredModel || null, maxTokens: b.max_tokens || null, temperature: b.temperature, sysBytes, usrBytes };
   requestCensus.push(entry);
-  if (kind === 'pcBodyBible') {
-    pcBodyBibleCapturedRequest = { url: p, role: b.role, model: b.model, maxTokens: b.max_tokens, temperature: b.temperature, sys, usr, sysBytes, usrBytes };
+
+  if (kind === 'pcBodyBible' || kind === 'bodyTellReroll') {
+    attemptCounts[kind] = (attemptCounts[kind] || 0) + 1;
+    const attemptNumber = attemptCounts[kind];
+    const cap = CALL_CAPS[kind];
+    correlatedAttempts.push({ kind, attemptNumber, request: req, sys, usr, sysBytes, usrBytes, model: b.model, role: b.role, maxTokens: b.max_tokens, temperature: b.temperature, response: null });
+    if (attemptNumber > cap) {
+      contractViolation = { kind, attemptNumber, cap };
+      note('*** CONTRACT VIOLATION: ' + kind + ' attempt #' + attemptNumber + ' exceeds the declared cap of ' + cap + ' — ABORTING this request, not fulfilling it ***');
+      return route.abort('failed');
+    }
+    if (kind === 'pcBodyBible') pcBodyBibleCapturedRequest = { url: p, role: b.role, model: b.model, maxTokens: b.max_tokens, temperature: b.temperature, sys, usr, sysBytes, usrBytes };
     // DRY: stub a harmless, schema-shaped reply so _generatePCBodyBible completes normally and we
     // can inspect what it DOES with a reply, without ever contacting Mistral. NOT a real answer.
     const stub = {
@@ -117,7 +155,9 @@ await page.route('**/api/**', async route => {
       stress_tic: 'DRY-RUN', desire_tell: 'DRY-RUN', impatience_tell: 'DRY-RUN', confidence_tell: 'DRY-RUN', vulnerability_tell: 'DRY-RUN',
       current_crisis: { event: 'DRY-RUN PLACEHOLDER', time_since_impact: 'DRY-RUN', hottest_emotion: 'DRY-RUN', immediate_want: 'DRY-RUN', immediate_fear: 'DRY-RUN', refusal: 'DRY-RUN', li_complication: 'DRY-RUN' },
     };
-    return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ content: JSON.stringify(stub), usage: { prompt_tokens: Math.round((sysBytes + usrBytes) / 4), completion_tokens: 400 } }) });
+    const body = kind === 'pcBodyBible' ? JSON.stringify(stub)
+      : JSON.stringify({ stress_tic: 'DRY-RUN', desire_tell: 'DRY-RUN', impatience_tell: 'DRY-RUN', confidence_tell: 'DRY-RUN', vulnerability_tell: 'DRY-RUN' });
+    return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ content: body, usage: { prompt_tokens: Math.round((sysBytes + usrBytes) / 4), completion_tokens: kind === 'pcBodyBible' ? 400 : 60 } }) });
   }
   // ANY OTHER CLASSIFIED CALL — this run must never see one. Stubbed harmlessly, but its mere
   // OCCURRENCE is itself the finding (checked below).
@@ -191,17 +231,22 @@ try {
     catch (e) { return { ok: false, error: String(e && e.message) }; }
   });
 } catch (e) { genThrew = String(e && e.message); }
-await page.waitForTimeout(1000);
+await page.waitForTimeout(1500);
 const newRequests = requestCensus.slice(censusBeforeIsolatedCall);
 ok('_generatePCBodyBible() completed without throwing', genResult && genResult.ok, JSON.stringify(genResult) + (genThrew ? ' threw=' + genThrew : ''));
-ok('EXACTLY ONE new request fired by this call, and it classified as pcBodyBible', newRequests.length === 1 && newRequests[0].kind === 'pcBodyBible', JSON.stringify(newRequests));
+ok('exactly one pcBodyBible attempt fired', (attemptCounts.pcBodyBible || 0) === 1, 'pcBodyBible attempts=' + (attemptCounts.pcBodyBible || 0));
+ok('bodyTellReroll attempts stayed within the declared cap of ' + CALL_CAPS.bodyTellReroll, (attemptCounts.bodyTellReroll || 0) <= CALL_CAPS.bodyTellReroll,
+  'bodyTellReroll attempts=' + (attemptCounts.bodyTellReroll || 0));
+ok('NO CONTRACT VIOLATION occurred (no attempt exceeded its declared cap)', !contractViolation, JSON.stringify(contractViolation));
+note('CORRELATED ATTEMPT LOG (every pcBodyBible/bodyTellReroll request this run made, each matched to its own response): '
+  + JSON.stringify(correlatedAttempts.map(a => ({ kind: a.kind, attemptNumber: a.attemptNumber, model: a.model, role: a.role, maxTokens: a.maxTokens, temperature: a.temperature, sysBytes: a.sysBytes, usrBytes: a.usrBytes, responseStatus: a.response && a.response.status, responseUsage: a.response && a.response.json && a.response.json.usage })), null, 2));
 ok('the request used role=STRUCTURE_GENERATOR, model=ministral-8b-2512 (the tiered-policy PRIMARY tier) on /api/mistral-proxy',
   pcBodyBibleCapturedRequest && pcBodyBibleCapturedRequest.role === 'STRUCTURE_GENERATOR' && pcBodyBibleCapturedRequest.model === 'ministral-8b-2512' && pcBodyBibleCapturedRequest.url === '/api/mistral-proxy',
   JSON.stringify(pcBodyBibleCapturedRequest && { role: pcBodyBibleCapturedRequest.role, model: pcBodyBibleCapturedRequest.model, url: pcBodyBibleCapturedRequest.url, maxTokens: pcBodyBibleCapturedRequest.maxTokens, temperature: pcBodyBibleCapturedRequest.temperature }));
 
 await page.waitForTimeout(1500);
-const afterAllQuiet = requestCensus.slice(censusBeforeIsolatedCall + 1);
-ok('NOTHING ELSE fired afterward (no Scene 2, no author prose, no images, no cards, no sibling bible/scaffold/rplot calls)',
+const afterAllQuiet = requestCensus.slice(censusBeforeIsolatedCall).filter(r => r.kind !== 'pcBodyBible' && r.kind !== 'bodyTellReroll');
+ok('NOTHING OUTSIDE THE DECLARED CONTRACT fired (no Scene 2, no author prose, no images, no cards, no sibling bible/scaffold/rplot calls — bounded reroll attempts are the only allowed extras)',
   afterAllQuiet.length === 0, JSON.stringify(afterAllQuiet));
 
 // ═══════════════════════════════════════ POSITIVE PACKET CHECK (Roman, corrective, 2026-09-15) ═══════════════════════════════════════

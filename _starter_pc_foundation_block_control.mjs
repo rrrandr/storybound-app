@@ -43,7 +43,7 @@ function extractLine(startAnchor) {
 const activeSeedLine = extractLine('function _activeSeed(s) {');
 
 const blockSrc = sliceByAnchor('starter-pc-foundation-block',
-  'function _starterPcFoundationBlock(s) {',
+  'function _pcFoundationSourceFacts(s) {',
   "window._starterPcFoundationBlock = _starterPcFoundationBlock;") + ' } catch (_) {}';
 
 const body = activeSeedLine + '\n' + blockSrc;
