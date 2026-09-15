@@ -99623,7 +99623,12 @@ Do NOT summarize Book 1. Do NOT reintroduce characters. Jump straight into the n
               _durableJson:       (function () { try { return Array.isArray(state._durableFateConsequences) && state._durableFateConsequences.length ? JSON.stringify(state._durableFateConsequences) : null; } catch (_) { return null; } })(),
               _temptLedgerJson:   (function () { try { return Array.isArray(state._temptFateLedger) && state._temptFateLedger.length ? JSON.stringify(state._temptFateLedger) : null; } catch (_) { return null; } })(),
               _mythicJson:        (function () { try { return state._mythicCoupleStatus && state._mythicCoupleStatus.active ? JSON.stringify(state._mythicCoupleStatus) : null; } catch (_) { return null; } })(),
-              _prefMemory:        state._prefMemory   // reader-preference memory — same couple keeps their learned taste (Issue 2 remembers Issue 1's axes)
+              _prefMemory:        state._prefMemory,  // reader-preference memory — same couple keeps their learned taste (Issue 2 remembers Issue 1's axes)
+              // ── LIRAEL'S VALIDATED FOUNDATION, CARRIED THE SAME WAY (Roman, corrective
+              // follow-up #7, 2026-09-15) — only when a validated merge actually happened; a bare
+              // seed-only portfolio needs no carry, since it rebuilds identically from the new
+              // story's own seed. See the restore block below for the lineage/seed-identity guard.
+              _pcPortfolioJson:   (function () { try { return (state._pcPortfolio && state._pcPortfolio.provenance && state._pcPortfolio.provenance.validatedMerge) ? JSON.stringify(state._pcPortfolio) : null; } catch (_) { return null; } })()
           };
           // Captured BEFORE the reset: this is the identity the ledgers were taken under, and
           // the only value the carry guard can meaningfully be checked against.
@@ -99683,6 +99688,42 @@ Do NOT summarize Book 1. Do NOT reintroduce characters. Jump straight into the n
           } catch (_e) {
             try { console.warn('[ISSUE-CONTINUITY] ledger restore failed, continuing without it: '
               + String(_e && _e.message).slice(0, 120)); } catch (_) {}
+          }
+          // ── PC-VALIDATED-FOUNDATION CARRY (Roman, corrective follow-up #7, 2026-09-15) ──
+          // Same pattern as the relationship-ledger carry immediately above — captured BEFORE the
+          // reset, re-stamped to the story it now belongs to — but its OWN try, independent of
+          // whether a relationship ledger existed (a portfolio can exist without one, in
+          // principle). Gated on the SAME lineage guard (this transition's prior story matches
+          // what the carried record was taken under) PLUS an explicit seed-identity check: a
+          // Book 2 that ever ran under a different starter seed must never inherit Book 1's
+          // foundation, even though every seed today keeps the same PC across its own series.
+          try {
+            if (_carriedRel._pcPortfolioJson) {
+              var _pcCarryRec = JSON.parse(_carriedRel._pcPortfolioJson);
+              var _pcCarrySeedIdBefore = String((_pcCarryRec.provenance && _pcCarryRec.provenance.seedId) || '');
+              // THE STARTER KEY IS THE REAL IDENTITY (Roman, corrective follow-up #7b, found by
+              // the real-path integration proof, 2026-09-15) — no STARTER_SEEDS entry carries its
+              // own id/seedId field, so _activeSeed(state).id/.seedId is ALWAYS undefined for a
+              // real seed; state._starterId (the key _activeSeed itself looks the seed up by) is
+              // what _ensurePcPortfolio now stamps into provenance.seedId, so it is what this must
+              // compare against too, or the two sides can never agree.
+              var _pcCarrySeedIdNow = String(state._starterId || '');
+              if (_pcCarryRec && _pcCarryRec.storyId
+                  && String(_priorStoryIdForCarry || '') === String(_pcCarryRec.storyId)
+                  && _pcCarrySeedIdBefore && _pcCarrySeedIdNow && _pcCarrySeedIdBefore === _pcCarrySeedIdNow) {
+                var _pcNewSid = String(state.storyId || '');
+                _pcCarryRec.storyId = _pcNewSid;
+                state._pcPortfolio = _pcCarryRec;
+                console.log('[ISSUE-CONTINUITY] carried the validated PC foundation across the issue boundary — '
+                  + ((_pcCarryRec.provenance.validatedMerge.mergedFacetIds || []).length) + ' merged facet(s), '
+                  + _priorStoryIdForCarry + ' → ' + _pcNewSid);
+              } else {
+                console.log('[ISSUE-CONTINUITY] validated PC foundation NOT carried — lineage or seed identity did not match');
+              }
+            }
+          } catch (_pcCarryErr) {
+            try { console.warn('[ISSUE-CONTINUITY] PC foundation carry failed, continuing without it: '
+              + String(_pcCarryErr && _pcCarryErr.message).slice(0, 120)); } catch (_) {}
           }
           if (_carriedRel._prefMemory)        state._prefMemory        = _carriedRel._prefMemory;
           if (_carriedRel.storySpine)         state.storySpine         = _carriedRel.storySpine;
@@ -129755,7 +129796,14 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
             if (!p.evidence_requires) { p.evidence_requires = null; p.legacy_display_only = true; }
           });
         });
-        rec.provenance.seedId = String((seed && (seed.id || seed.seedId)) || '');
+        // THE STARTER KEY IS THE REAL IDENTITY (Roman, corrective follow-up #7b, found by the
+        // real-path integration proof, 2026-09-15) — no STARTER_SEEDS entry carries its own
+        // id/seedId field (identity comes only from the key it is stored under, i.e. s._starterId
+        // == state._starterId); seed.id/seed.seedId were ALWAYS undefined for every real seed, so
+        // this always stamped '' and the Issue-transition carry gate (which requires a non-empty
+        // match) could never fire for any real starter. s._starterId is the fallback-of-first-
+        // resort now, not last.
+        rec.provenance.seedId = String(s._starterId || (seed && (seed.id || seed.seedId)) || '');
         rec.provenance.fingerprint = _pcPortfolioFingerprint(['fixed_starter', rec.provenance.seedId,
           rec.facets.map(function (f) { return f.facet_id; }).join(',')]);
       } else {
@@ -134280,8 +134328,76 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
     return out;
   }
 
+  // ══════════════════════════════════════════════════════════════════════════════════════
+  // VALIDATED PC-PORTFOLIO FACET PROVIDER (Roman, corrective follow-up #7 to 588924b/faf7684,
+  // 2026-09-15) — closes the gap the real-path integration proof confirmed empirically:
+  // state._pcPortfolio.facets tagged origin:'pc_body_bible_validated' by
+  // _commitValidatedPcFoundation reached NOTHING (_facetIndex resolved zero facets for "pc" at
+  // scene 2, live, in-page). This is the wiring, scoped as narrowly as the requirement allows:
+  //   • PC-ONLY, STRUCTURALLY. Keyed under the SAME 'pc:<slug>' canonical id _seedFacetIndex
+  //     already uses for the fixed-starter PC (identical derivation via _resolvePcIdentity) — an
+  //     NPC's canonical id is always 'named:'/'role:', so this provider cannot contribute to one
+  //     by construction, not by a runtime check that could be wrong.
+  //   • FIXED-STARTER ONLY. A corridor PC's bible-derived facets already reach C+ through the
+  //     EXISTING _generatedCastFacetIndex path (_ensurePcPortfolio's corridor branch writes them
+  //     onto L.entities.pc.authorProfile.cPlusFacets — see that function's own comment). This
+  //     provider only ever fires when a seed defines the PC (rec.source === 'fixed_starter').
+  //   • ADDITIVE ONLY, NEVER OVERWRITING. Only facets tagged origin:'pc_body_bible_validated' are
+  //     ever emitted — never the seed's own cPlusFacets (those already reach C+ through
+  //     _seedFacetIndex). A facet_id the seed already defines for this PC is skipped outright —
+  //     belt-and-suspenders so seed canon can never be contended for, even if this provider's
+  //     input were ever wrong.
+  //   • REFUSES STALE OR FOREIGN MATERIAL. Three independent checks, ALL required, any failure →
+  //     contributes NOTHING (identical to today's behavior, since no such provider existed
+  //     before): (a) the portfolio was built for THIS exact story (rec.storyId === s.storyId);
+  //     (b) it carries a validatedMerge stamp — never a bare/rebuilt portfolio holding only
+  //     copied seed facets; (c) its provenance.fingerprint still matches what the CURRENT seed's
+  //     PC facets would produce — catches a portfolio surviving under a seed that changed under
+  //     it, or one that reached this story from somewhere it should not have.
+  // ══════════════════════════════════════════════════════════════════════════════════════
+  function _pcValidatedFacetIndex(s, opts) {
+    var out = {};
+    try {
+      s = s || (typeof window !== 'undefined' ? window.state : null) || {};
+      var seed = (typeof _activeSeed === 'function') ? _activeSeed(s) : null;
+      if (!seed || !Array.isArray(seed.cast)) return out;
+      var seedPc = seed.cast.filter(function (c) { return c && c.role === 'PC'; })[0];
+      if (!seedPc) return out;                                   // corridor / no fixed-starter PC
+      var rec = s._pcPortfolio;
+      if (!rec || rec.source !== 'fixed_starter') return out;
+      if (!rec.provenance || !rec.provenance.validatedMerge) return out;
+      var storyId = String(s.storyId || '');
+      if (!storyId || String(rec.storyId || '') !== storyId) return out;      // foreign/stale story
+      var expectFp = _pcPortfolioFingerprint(['fixed_starter', String(s._starterId || seed.id || seed.seedId || ''),
+        (Array.isArray(seedPc.cPlusFacets) ? seedPc.cPlusFacets : [])
+          .map(function (f) { return f && f.facet_id; }).filter(Boolean).join(',')]);
+      if (String(rec.provenance.fingerprint || '') !== expectFp) return out;  // seed drifted under it
+      var seedFacetIds = {};
+      (Array.isArray(seedPc.cPlusFacets) ? seedPc.cPlusFacets : []).forEach(function (f) {
+        if (f && f.facet_id) seedFacetIds[f.facet_id] = 1;
+      });
+      var validated = (rec.facets || []).filter(function (f) {
+        return f && f.origin === 'pc_body_bible_validated' && f.facet_id && !seedFacetIds[f.facet_id];
+      });
+      if (!validated.length) return out;
+      var _pcId = _resolvePcIdentity(s);
+      var label = String((_pcId && _pcId.v) || '').trim();
+      if (!label) return out;
+      var id = 'pc:' + _facetSlug(label);
+      out[id] = { canonical_id: id, label: label, aliases: [label], guardrails: [], facets: validated };
+    } catch (_) {}
+    return out;
+  }
+  try { if (typeof window !== 'undefined') window._pcValidatedFacetIndex = _pcValidatedFacetIndex; } catch (_) {}
+
   var _FACET_PROVIDERS = [
     { id: 'seed',          live: true,  fn: function (s, opts) { return _seedFacetIndex(s, opts); } },
+    // ── VALIDATED PC PORTFOLIO (Roman, corrective follow-up #7, 2026-09-15) ── the
+    // highest-precedence PC-specific source: a validated, committed foundation for THIS story,
+    // additive over the seed's own facets (never overwriting them — see _pcValidatedFacetIndex's
+    // own comment). Ordered directly after 'seed', since both ever describe the PC and must
+    // never disagree, and ahead of generated_cast, which is the general-cast provider.
+    { id: 'pc_validated_portfolio', live: true, fn: function (s, opts) { return _pcValidatedFacetIndex(s, opts); } },
     // ── GENERATED CAST (Roman 2026-08-28) ── reads the portfolio compartment that attachment
     // writes. Attachment alone is invisible: _facetIndex merges PROVIDER output, so a portfolio
     // sitting on entity.authorProfile.cPlusFacets reaches nothing until a provider emits it.

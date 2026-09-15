@@ -402,6 +402,149 @@ section('CONTROL 9 (Roman\'s exact exploit) — a citation to the RIGHT category
   ok('the SAME category, when the citation genuinely entails the claim, is ACCEPTED', result2.ok === true, JSON.stringify(result2.rejections));
 }
 
+// ══════════════════════════════════════════════════════════════════════════════════
+section('CONTROL 10 (FACET-INDEX WIRING) — a validated, committed portfolio reaches _facetIndex; PC-only, additive, refuses stale/foreign material');
+{
+  // 10a — REGRESSION: no portfolio at all. _facetIndex for the PC id must be IDENTICAL to
+  // seed-only behavior — the seed's own two facets, nothing from a portfolio that doesn't exist.
+  {
+    const win = freshSandbox({ starter_first_sacrifice: FIRST_SACRIFICE_SEED });
+    const s = baseState({ playerName: "Lirael" });
+    const idx = win._facetIndex(s, { sceneNumber: 2 });
+    const rec = idx['pc:lirael'];
+    ok('10a: with no portfolio, pc:lirael resolves (seed provider alone)', !!rec, JSON.stringify(Object.keys(idx)));
+    const ids = (rec && rec.facets || []).map(f => f.facet_id).sort();
+    ok('10a: exactly the seed\'s own two facets, no validated-merge facets present',
+      JSON.stringify(ids) === JSON.stringify(['pc_fears_public_failure', 'pc_untested_brilliance']), JSON.stringify(ids));
+  }
+
+  // 10b — GREEN: a real _commitValidatedPcFoundation merge, then _facetIndex must carry the
+  // validated facets ADDITIVELY alongside the seed's own — neither replaced nor duplicated.
+  {
+    const win = freshSandbox({ starter_first_sacrifice: FIRST_SACRIFICE_SEED });
+    const s = baseState({ playerName: "Lirael" });
+    const commit = win._commitValidatedPcFoundation(s, fullyCoveredGreenBible());
+    ok('10b: the green bible commits successfully (precondition for this control)', commit.committed === true, JSON.stringify(commit));
+    const idx = win._facetIndex(s, { sceneNumber: 2 });
+    const rec = idx['pc:lirael'];
+    const ids = (rec && rec.facets || []).map(f => f.facet_id).sort();
+    ok('10b: all four facet_ids present — 2 seed-authored + 2 validated-merge, additive',
+      JSON.stringify(ids) === JSON.stringify(['pc_core_contradiction', 'pc_current_fear', 'pc_fears_public_failure', 'pc_untested_brilliance']),
+      JSON.stringify(ids));
+    const validatedOnes = (rec.facets || []).filter(f => f.origin === 'pc_body_bible_validated');
+    ok('10b: the two validated facets are tagged origin:pc_body_bible_validated', validatedOnes.length === 2, JSON.stringify(validatedOnes.map(f => f.facet_id)));
+    const seedOnes = (rec.facets || []).filter(f => f.facet_id === 'pc_untested_brilliance' || f.facet_id === 'pc_fears_public_failure');
+    ok('10b: the seed\'s own two facets are UNTOUCHED (same canonical_truth as the raw fixture)',
+      seedOnes.length === 2
+      && seedOnes.every(f => FIRST_SACRIFICE_SEED.cast[0].cPlusFacets.some(sf => sf.facet_id === f.facet_id && sf.canonical_truth === f.canonical_truth)));
+    ok('10b: no identity conflict was raised for pc:lirael (seed and validated-portfolio providers agree on who she is)', !rec.identity_conflict);
+    // Resolution as a live consumer (_cpContinuationAssignment/_facetsForCharacter) would see it —
+    // a staged record keyed the same way _cPlusCandidateSet stages the PC.
+    const resolved = win._resolveFacetIndexEntry({ id: 'pc:lirael', label: 'Lirael', aliases: ['Lirael'] }, idx, 2);
+    ok('10b: _resolveFacetIndexEntry (the exact function _facetsForCharacter/_cpContinuationAssignment call) returns all 4 facets',
+      resolved.length === 4, JSON.stringify(resolved.map(f => f.facet_id)));
+  }
+
+  // 10c — NPC RESOLUTION UNTOUCHED: add a real NPC-shaped seed facet source alongside the PC and
+  // confirm the validated-portfolio provider contributes NOTHING to it, before or after a commit.
+  {
+    const seedWithNpc = JSON.parse(JSON.stringify(FIRST_SACRIFICE_SEED));
+    seedWithNpc.cast[1].cPlusFacets = [
+      { facet_id: 'li_guarded_knowledge', category: 'history', canonical_truth: 'Julian already knows something about her lineage and has chosen not to say it.' },
+    ];
+    const win = freshSandbox({ starter_first_sacrifice: seedWithNpc });
+    const s = baseState({ playerName: "Lirael" });
+    const idxBefore = win._facetIndex(s, { sceneNumber: 2 });
+    win._commitValidatedPcFoundation(s, fullyCoveredGreenBible());
+    const idxAfter = win._facetIndex(s, { sceneNumber: 2 });
+    const npcBefore = JSON.stringify((idxBefore['named:julian'] || {}).facets || []);
+    const npcAfter = JSON.stringify((idxAfter['named:julian'] || {}).facets || []);
+    ok('10c: Julian (NPC) has his own facet before any PC commit', !!(idxBefore['named:julian'] && idxBefore['named:julian'].facets.length));
+    ok('10c: Julian (NPC) facets are BYTE-IDENTICAL after a validated PC commit — never touched', npcBefore === npcAfter, npcBefore + ' vs ' + npcAfter);
+    ok('10c: the validated-portfolio provider never produced a "named:julian" or any non-"pc:" key',
+      Object.keys(idxAfter).every(k => k === 'named:julian' || k.indexOf('pc:') === 0));
+  }
+
+  // 10d — STALE/FOREIGN REFUSAL: four independent ways a portfolio must contribute NOTHING.
+  {
+    const win = freshSandbox({ starter_first_sacrifice: FIRST_SACRIFICE_SEED });
+
+    // (i) built (via _ensurePcPortfolio) but never validated-merged — today's exact pre-feature shape.
+    const s1 = baseState({ playerName: "Lirael" });
+    win._ensurePcPortfolio(s1);
+    ok('10d(i): a bare, never-validated portfolio contributes no facets to the provider',
+      Object.keys(win._pcValidatedFacetIndex(s1, {})).length === 0);
+
+    // (ii) validated-merged for a DIFFERENT story (foreign story identity).
+    const s2 = baseState({ playerName: "Lirael" });
+    win._commitValidatedPcFoundation(s2, fullyCoveredGreenBible());
+    const foreign = JSON.parse(JSON.stringify(s2));
+    foreign.storyId = 'a-totally-different-story';
+    ok('10d(ii): a portfolio committed under a different storyId contributes nothing to THIS story',
+      Object.keys(win._pcValidatedFacetIndex(foreign, {})).length === 0);
+
+    // (iii) validated-merged, correct story, but the fingerprint has been tampered with / gone stale.
+    const s3 = baseState({ playerName: "Lirael" });
+    win._commitValidatedPcFoundation(s3, fullyCoveredGreenBible());
+    s3._pcPortfolio.provenance.fingerprint = 'pf:tampered-or-stale';
+    ok('10d(iii): a portfolio whose fingerprint no longer matches the current seed contributes nothing',
+      Object.keys(win._pcValidatedFacetIndex(s3, {})).length === 0);
+
+    // (iv) same story, but the seed underneath it has genuinely changed (a facet_id added/removed) —
+    // the fingerprint recomputes differently, so this is refused exactly like (iii), not silently trusted.
+    const s4 = baseState({ playerName: "Lirael" });
+    win._commitValidatedPcFoundation(s4, fullyCoveredGreenBible());
+    const mutatedSeed = JSON.parse(JSON.stringify(FIRST_SACRIFICE_SEED));
+    mutatedSeed.cast[0].cPlusFacets.push({ facet_id: 'pc_new_seed_facet', category: 'value', canonical_truth: 'Something the seed added later.' });
+    const winMutated = freshSandbox({ starter_first_sacrifice: mutatedSeed });
+    ok('10d(iv): the SAME committed record, read against a seed that has since changed, contributes nothing (fingerprint no longer matches)',
+      Object.keys(winMutated._pcValidatedFacetIndex(s4, {})).length === 0);
+  }
+
+  // 10e — SEED-OWNED FACET_ID IS NEVER CONTENDED FOR: even if a portfolio somehow carried a
+  // validated-merge facet reusing one of the seed's own facet_ids, the provider must skip it
+  // rather than let it compete with (and risk tombstoning) the seed's authored fact.
+  {
+    const win = freshSandbox({ starter_first_sacrifice: FIRST_SACRIFICE_SEED });
+    const s = baseState({ playerName: "Lirael" });
+    win._ensurePcPortfolio(s);
+    s._pcPortfolio.facets.push({ facet_id: 'pc_untested_brilliance', category: 'competence',
+      canonical_truth: 'A DIFFERENT, model-authored version of the same facet_id.', origin: 'pc_body_bible_validated' });
+    s._pcPortfolio.provenance.validatedMerge = { at: Date.now(), bibleProvenance: null, mergedFacetIds: ['pc_untested_brilliance'] };
+    s._pcPortfolio.provenance.fingerprint = win._pcPortfolioFingerprint(['fixed_starter', s._starterId,
+      FIRST_SACRIFICE_SEED.cast[0].cPlusFacets.map(f => f.facet_id).join(',')]);
+    const out = win._pcValidatedFacetIndex(s, {});
+    ok('10e: a validated-merge facet colliding with a seed facet_id is skipped, not emitted',
+      Object.keys(out).length === 0 || !(out['pc:lirael'] && out['pc:lirael'].facets.some(f => f.facet_id === 'pc_untested_brilliance')),
+      JSON.stringify(out));
+    const idx = win._facetIndex(s, { sceneNumber: 2 });
+    const truth = (idx['pc:lirael'].facets.find(f => f.facet_id === 'pc_untested_brilliance') || {}).canonical_truth;
+    ok('10e: the SEED\'s own canonical_truth for that facet_id survives in the merged index, not the colliding one',
+      truth === FIRST_SACRIFICE_SEED.cast[0].cPlusFacets[0].canonical_truth, truth);
+  }
+
+  // 10f — CORRIDOR / NO FIXED-STARTER PC: the provider must structurally contribute nothing.
+  {
+    const win = freshSandbox({});
+    const s = { storyId: 'corridor-story-1' }; // no _starterId at all
+    ok('10f: no active seed at all (corridor) yields no validated-portfolio contribution',
+      Object.keys(win._pcValidatedFacetIndex(s, {})).length === 0);
+  }
+
+  // 10g — RETAINED BAD SAMPLE, THROUGH THE SAME PATH: the rejected response must never reach the
+  // facet index either (this is the same replay CONTROL 1 runs, checked here for index-reachability).
+  {
+    const raw = JSON.parse(fs.readFileSync(path.join(__dirname, '_audit_out/pc_foundation_samples/2026-09-15_live_sample_01_FAILED.json'), 'utf8'));
+    const win = freshSandbox({ starter_first_sacrifice: FIRST_SACRIFICE_SEED });
+    const s = baseState({ playerName: "Lirael" });
+    win._commitValidatedPcFoundation(s, raw.parsedBible);
+    const idx = win._facetIndex(s, { sceneNumber: 2 });
+    const ids = (idx['pc:lirael'].facets || []).map(f => f.facet_id).sort();
+    ok('10g: after replaying the retained REJECTED sample through the real merge boundary, the facet index still holds only the seed\'s own two facets',
+      JSON.stringify(ids) === JSON.stringify(['pc_fears_public_failure', 'pc_untested_brilliance']), JSON.stringify(ids));
+  }
+}
+
 console.log('\n' + '='.repeat(70));
 console.log(`PC FOUNDATION OUTPUT VALIDATOR + MERGE CONTROL: ${pass} passed, ${fail} failed`);
 if (fail) { console.log('\nFAILURES:'); fails.forEach(function (f) { console.log('  - ' + f); }); process.exit(1); }
