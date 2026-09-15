@@ -129504,7 +129504,21 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
   }
   function _pcIdentityCandidates(s) {
     s = s || (typeof window !== 'undefined' ? window.state : null) || {};
+    // FIXED-STARTER SEED IDENTITY, CHECKED FIRST (Roman, corrective follow-up #9, 2026-09-15) —
+    // the single most authoritative source for a fixed starter's PC name is the seed itself
+    // (STARTER_SEEDS[s._starterId]), never a mutable state field. This is SELF-HEALING, not merely
+    // corruption-prevention: corrective follow-up #8 stopped handleBeginStory from writing a
+    // placeholder into state.playerName going forward, but a story SAVED BEFORE that fix still
+    // carries the placeholder in its persisted snapshot — reloading it must resolve Lirael from
+    // canonical starter identity without requiring any new Genesis/begin flow to re-run. Generic,
+    // not Lirael-specific: null for any story whose _starterId has no STARTER_SEEDS entry (every
+    // corridor story, and any other starter), so a reader-chosen corridor name is never touched
+    // and an unrelated/unseeded story can never acquire this or any other starter's identity.
+    var _seedForIdentity = (typeof STARTER_SEEDS !== 'undefined' && s._starterId) ? STARTER_SEEDS[s._starterId] : null;
+    var _seedPcForIdentity = (_seedForIdentity && Array.isArray(_seedForIdentity.cast))
+      ? (_seedForIdentity.cast.filter(function (c) { return c && c.role === 'PC' && c.name; })[0] || {}).name : null;
     return [
+      { v: _seedPcForIdentity, src: 'starterSeed.cast.PC.name' },
       { v: s.playerName, src: 'state.playerName' },
       { v: s.name, src: 'state.name' },
       { v: s.identity && s.identity.playerName, src: 'state.identity.playerName' },
@@ -257889,10 +257903,39 @@ Generate the synopsis now.` }
     // gone — without the state fallback, names ALWAYS read as blank and
     // the AI invents replacements ignoring what the user typed.
     const _identity = state.picks?.identity || {};
-    const playerInputVal2 = $('playerNameInput')?.value.trim() ||
+    // FIXED-STARTER IDENTITY TAKES PRECEDENCE (Roman, corrective follow-up #8, 2026-09-15) — for
+    // a starter with an authored STARTER_SEEDS cast (no reader casting line; the reader inhabits
+    // the seed, never invents it — per the reader-owned-identity model), the seed's own name is
+    // the durable, resolved PC/LI identity for THIS story, never a DOM input that was never shown.
+    // Without this, handleBeginStory's generic corridor identity fallback (blank DOM input ->
+    // "The Protagonist"/"The Love Interest" placeholder) ran during a fixed-starter's Genesis
+    // unlock too — handleBeginStory is SHARED, called from _unlockBakedGenesis — and
+    // _syncRomanticTargetState (app.js ~81621) then overwrote the correct name
+    // _launchStarterStory had already set (app.js ~136479, same STARTER_SEEDS lookup, reused here
+    // rather than duplicated with different logic) with that placeholder. Found via the real-path
+    // CG integration proof: _resolvePcIdentity(state) returned null at real OAS-entry because
+    // state.playerName had become "The Protagonist" by the time OAS's author payload was built.
+    // Fixed at THIS shared resolution point, not by adding a Lirael-specific fallback to the C+
+    // facet providers, so every consumer of state.playerName/loveInterestName benefits, not only
+    // the PC-foundation validator's identity lookup.
+    const _seedCastForIdentity = (typeof STARTER_SEEDS !== 'undefined' && state._starterId) ? STARTER_SEEDS[state._starterId] : null;
+    const _seedPcNameForIdentity = (_seedCastForIdentity && Array.isArray(_seedCastForIdentity.cast))
+      ? (_seedCastForIdentity.cast.filter(function (c) { return c && c.role === 'PC' && c.name; })[0] || {}).name : null;
+    const _seedLiNameForIdentity = (_seedCastForIdentity && Array.isArray(_seedCastForIdentity.cast))
+      ? (_seedCastForIdentity.cast.filter(function (c) { return c && c.role === 'LI' && c.name; })[0] || {}).name : null;
+    const playerInputVal2 = _seedPcNameForIdentity || $('playerNameInput')?.value.trim() ||
         _identity.playerName || '';
-    const partnerInputVal2 = $('partnerNameInput')?.value.trim() ||
+    const partnerInputVal2 = _seedLiNameForIdentity || $('partnerNameInput')?.value.trim() ||
         _identity.partnerName || '';
+    // A fixed-starter's authored name must be LOCKED exactly like Famous Fate's classifier-
+    // supplied name already is (see _ffNameLock below) — never sent through the
+    // callNormalizationLayer model call or _transformNameForWorld, both of which exist to turn a
+    // READER-TYPED name into a narrative kernel phrase. "Lirael" is not raw player input; running
+    // it through that pipeline either re-styles a name the baked prose already commits to
+    // verbatim, or — if the (stubbed or real) normalization call returns nothing usable — falls
+    // through to the SAME generic placeholder kernel ("the one who carries the story") this whole
+    // fix exists to keep out of state.playerName for a fixed starter.
+    const _seedNameLock = !!(_seedPcNameForIdentity || _seedLiNameForIdentity);
     const playerNameBlank2 = !playerInputVal2 || playerInputVal2 === 'Protagonist';
     const partnerNameBlank2 = !partnerInputVal2 || partnerInputVal2 === 'Love Interest';
     const rawPlayerName = playerNameBlank2 ? "The Protagonist" : playerInputVal2;
@@ -258334,7 +258377,10 @@ Generate the synopsis now.` }
     // supplied (e.g. "Luke Skywalker") must NEVER be normalized, archetyped, or
     // world-transformed into a Storybound-invented name. Bypass both the
     // normalization layer and _transformNameForWorld for Famous Fate.
-    const _ffNameLock = (state.fateMode === 'famous_fate');
+    // FIXED-STARTER NAME-LOCK (Roman, corrective follow-up #8, 2026-09-15) joins the SAME lock —
+    // a seed-authored name is exactly as canonical as a Famous Fate classifier name, for the same
+    // reason: it is not raw reader input, so it must never be re-styled into an invented kernel.
+    const _ffNameLock = (state.fateMode === 'famous_fate') || _seedNameLock;
     let playerNorm, partnerNorm, pKernel, lKernel;
     try {
         if (!playerNameBlank2 && !_ffNameLock) {

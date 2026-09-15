@@ -222,6 +222,15 @@ function newStubbedPage(browser, ctx, bibleContent, opts) {
         const reply = (typeof ctx.skeletonReply === 'function') ? ctx.skeletonReply(b) : ctx.skeletonReply;
         return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ content: JSON.stringify(reply) }) });
       }
+      // NORMALIZATION — callNormalizationLayer (/api/chatgpt-proxy, role 'NORMALIZATION'). Only
+      // ID3 (corridor begin-story) exercises this; a benign echo-back of the SAME user_text is a
+      // realistic, non-corrupting normalization outcome and lets ID3 assert on an EXACT known
+      // value rather than an unpredictable model-shaped one.
+      if (b.role === 'NORMALIZATION') {
+        let userText = '';
+        try { const u = (b.messages || []).find(m => m.role === 'user'); userText = JSON.parse((u && u.content) || '{}').user_text || ''; } catch (_) {}
+        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, normalized_text: userText, confidence_level: 'high' }) });
+      }
       const kind = classifyModelCall(sys, usr, b.role, b.model || b.preferredModel);
       const sysBytes = Buffer.byteLength(sys, 'utf8'), usrBytes = Buffer.byteLength(usr, 'utf8');
       ctx.requestCensus.push({ kind, url: p, role: b.role || null, model: b.model || b.preferredModel || null, sysBytes, usrBytes });
@@ -371,7 +380,12 @@ async function realClickSaveReloadContinue(label, page) {
 // three sibling generator calls — liBodyBible/antagonistBodyBible/scaffold — never contaminate the
 // isolated pcBodyBible measurement above). fixtureFn(page) runs right after OAS goes active, before
 // the dialogue exchange — the one injection point, matching the reference file's own convention. ──
-async function driveToCgScreenplayRequest(label, page, ctx, fixtureFn) {
+// ── SHARED — real Library/book/Read is assumed already reached; drives real Genesis unlock
+// (#bakedOASEnterBtn -> #buGoBtn -> wait for the real console gate) through to OAS-active
+// (gnReader, intimacyDialogue.active). Extracted so item-1's "seed facet resolves at OAS entry,
+// no portfolio commit" control can reach the exact same real checkpoint driveToCgScreenplayRequest
+// uses, without duplicating the click sequence. ──
+async function unlockGenesisAndReachOas(label, page, ctx) {
   const afterRead = await page.evaluate(() => ({ screen: window._currentScreenId,
     oasBtnVisible: !!document.getElementById('bakedOASEnterBtn') && document.getElementById('bakedOASEnterBtn').getClientRects().length > 0 }));
   if (!afterRead.oasBtnVisible) { ok(label + ' bakedOASEnterBtn visible before Genesis unlock', false, JSON.stringify(afterRead)); return false; }
@@ -392,8 +406,15 @@ async function driveToCgScreenplayRequest(label, page, ctx, fixtureFn) {
 
   const s4 = await page.evaluate(() => ({ screen: window._currentScreenId, oasActive: !!(window.state.intimacyDialogue && window.state.intimacyDialogue.active) }));
   ok(label + ' one-on-one live (gnReader, OAS active)', s4.screen === 'gnReader' && s4.oasActive, JSON.stringify(s4));
-  if (!s4.oasActive) return false;
+  return !!s4.oasActive;
+}
 
+// ── SHARED — everything AFTER OAS-active: the dialogue exchange, exit, interruption mount,
+// CONFESSION card, and real Submit. Extracted so a caller that has already reached OAS-active
+// through its OWN route (e.g. Book2's own post-transition Genesis unlock, which is NOT reachable
+// via unlockGenesisAndReachOas a second time — #bakedOASEnterBtn/#buGoBtn no longer exist once
+// already unlocked) can drive the rest of the real chain without re-clicking a gate that is gone. ──
+async function driveOasToInterruptionSubmit(label, page, ctx, fixtureFn) {
   const fixtureResult = await fixtureFn(page);
   note(label + ' fixture injected: ' + JSON.stringify(fixtureResult));
 
@@ -429,6 +450,12 @@ async function driveToCgScreenplayRequest(label, page, ctx, fixtureFn) {
   for (let i = 0; i < 60 && ctx.cgRequests.length <= before; i++) await page.waitForTimeout(2000);
   ok(label + ' real Submit fires a real cgScreenplay request', ctx.cgRequests.length > before, 'cgRequests=' + ctx.cgRequests.length);
   return ctx.cgRequests.length > before;
+}
+
+async function driveToCgScreenplayRequest(label, page, ctx, fixtureFn) {
+  const oasOk = await unlockGenesisAndReachOas(label, page, ctx);
+  if (!oasOk) return false;
+  return driveOasToInterruptionSubmit(label, page, ctx, fixtureFn);
 }
 
 const browser = await chromium.launch({ headless: true });
@@ -876,6 +903,304 @@ section('SCENARIO RED-LIT — retained failed sample through the literary path')
 const redLitOut = await runLiteraryScenario('RED-LIT', redBible(), { expectAccept: false });
 
 // ══════════════════════════════════════════════════════════════════════════════════════════
+// CG/OAS CONTROL 1 (Roman, corrective follow-up #8, 2026-09-15) — the SEED's own two facets
+// resolve at real OAS entry, with NO portfolio commit at all (no _generatePCBodyBible call, no
+// _commitValidatedPcFoundation call — this isolates the identity-resolution fix itself from the
+// new pc_validated_portfolio provider entirely). BEFORE the fix (this session's own real
+// instrumented trace, cited in app.js's own corrective-follow-up-#8 comment): _resolvePcIdentity
+// returned null at this exact checkpoint because state.playerName had already become
+// "The Protagonist" by real OAS entry — which starved _seedFacetIndex's PC branch too, not only
+// the new provider. Re-breaking the real fix to re-demonstrate that failure would be destructive;
+// the durable proof is that this exact real-click checkpoint is green now and stays green.
+// ══════════════════════════════════════════════════════════════════════════════════════════
+// THE NORMAL READER ROUTE, NOT A SHORTCUT (Roman) — Library -> book -> #zoomReadBtn -> Read ->
+// #bakedOASEnterBtn -> real Genesis unlock (#buGoBtn, real charge/gate) -> OAS entry. Genesis
+// unlock IS the real, required step this starter's own reader takes to reach OAS/CG play — it is
+// never bypassed or substituted here; reachBakedScene1 + unlockGenesisAndReachOas together ARE
+// that real route, not an alternate path around it.
+section('CG/OAS CONTROL 1 — the normal First Sacrifice reader route (Library -> Read -> real Genesis unlock -> OAS): seed facets resolve, zero portfolio commit');
+{
+  const ctx = {};
+  const page = await newStubbedPage(browser, ctx, greenBible());
+  const reached = await reachBakedScene1('CG1', page);
+  if (reached) {
+    const oasOk = await unlockGenesisAndReachOas('CG1', page, ctx);
+    if (oasOk) {
+      const diag = await page.evaluate(() => {
+        const id = window._resolvePcIdentity(window.state);
+        const idx = window._facetIndex(window.state, { sceneNumber: 2 });
+        const facets = window._resolveFacetIndexEntry({ id: 'pc', label: 'Lirael', aliases: ['Lirael'] }, idx, 2);
+        return { resolvedLabel: id && id.v, playerName: window.state.playerName, idxKeys: Object.keys(idx), pcFacetsResolved: facets.map(f => f.facet_id), pcPortfolioExists: !!window.state._pcPortfolio };
+      });
+      note('CG1 diagnostic: ' + JSON.stringify(diag));
+      ok('CG1 [ROOT-CAUSE FIX] _resolvePcIdentity resolves "Lirael" at real OAS entry (was null before the fix)', diag.resolvedLabel === 'Lirael' && diag.playerName === 'Lirael', JSON.stringify(diag));
+      ok('CG1 the seed\'s own two facets (pc_untested_brilliance, pc_fears_public_failure) resolve via _facetIndex/_resolveFacetIndexEntry, with ZERO portfolio commit', ['pc_untested_brilliance', 'pc_fears_public_failure'].every(id => diag.pcFacetsResolved.indexOf(id) !== -1), JSON.stringify(diag.pcFacetsResolved));
+      const validatedMergeDiag = await page.evaluate(() => !!(window.state._pcPortfolio && window.state._pcPortfolio.provenance && window.state._pcPortfolio.provenance.validatedMerge));
+      ok('CG1 no validated-merge commit happened in this scenario (isolates identity fix from the new provider)', validatedMergeDiag === false, 'pcPortfolioExists=' + diag.pcPortfolioExists + ' validatedMerge=' + validatedMergeDiag);
+    } else {
+      ok('CG1 reached real OAS-active state', false);
+    }
+  } else {
+    ok('CG1 reached baked Scene 1', false);
+  }
+  await page.context().close();
+}
+
+// ══════════════════════════════════════════════════════════════════════════════════════════
+// CG/OAS CONTROL 2 (Roman, corrective follow-up #9, 2026-09-15) — SELF-HEALING on a pre-fix-style
+// corrupted saved state, with NO new Genesis/begin flow re-run. Reaches real OAS-active through
+// the SAME one real, required Genesis unlock CG1 uses (there is no other route to a genuinely
+// unlocked mid-story state for this starter), THEN corrupts state.playerName in place to the
+// REAL placeholder string handleBeginStory's pre-#8 bug actually produced ("The Protagonist") —
+// simulating exactly what a story SAVED BEFORE corrective follow-up #8 would have persisted in
+// state.playerName. This is direct state assignment used to construct a precondition (a
+// documented simulation of a historical corruption, not a re-enactment of the bug), never to
+// force the mechanism under test — the RESOLVER and the downstream real CG click chain
+// (driveOasToInterruptionSubmit) run completely unmodified, unaware the field was hand-set, and
+// no Genesis/begin call fires a second time anywhere in this scenario.
+// ══════════════════════════════════════════════════════════════════════════════════════════
+section('CG/OAS CONTROL 2 — pre-fix-style corrupted saved state (state.playerName="The Protagonist") self-heals, no new begin flow');
+{
+  const ctx = {};
+  const page = await newStubbedPage(browser, ctx, greenBible());
+  const reached = await reachBakedScene1('CG2', page);
+  let commit = null;
+  if (reached) {
+    // A validated, committed portfolio BEFORE unlock (same as CG3) — the seed's OWN two facets
+    // are structurally ungroundable as shipped (plain-string possible_pressures, no
+    // evidence_requires — a real, separate, already-disclosed content gap from earlier in this
+    // session, unrelated to identity resolution), so a merged facet is what makes a REAL delivery
+    // check through this corrupted-then-self-healed state meaningful, not just resolution.
+    await page.evaluate(async () => { await window._generatePCBodyBible(); });
+    commit = await page.evaluate(() => window._commitValidatedPcFoundation(window.state, window.state.pcBodyBible));
+    note('CG2 pre-unlock commit: ' + JSON.stringify(commit));
+    ok('CG2 real commit succeeds before Genesis unlock', commit && commit.committed === true, JSON.stringify(commit));
+    const oasOk = await unlockGenesisAndReachOas('CG2', page, ctx);
+    if (oasOk) {
+      const preCorrupt = await page.evaluate(() => window.state.playerName);
+      ok('CG2 real state.playerName is genuinely "Lirael" before the simulated corruption (proves the corruption below is real interference, not a no-op)', preCorrupt === 'Lirael', preCorrupt);
+
+      await page.evaluate(() => {
+        // SIMULATED PRE-FIX SAVE STATE — the real placeholder string corrective follow-up #8's
+        // bug actually produced (confirmed via this session's own real instrumented trace),
+        // written directly to simulate what a pre-fix save's persisted state.playerName held.
+        window.state.playerName = 'The Protagonist';
+      });
+      const diag = await page.evaluate(() => {
+        const id = window._resolvePcIdentity(window.state);
+        const idx = window._facetIndex(window.state, { sceneNumber: 2 });
+        const facets = window._resolveFacetIndexEntry({ id: 'pc', label: 'Lirael', aliases: ['Lirael'] }, idx, 2);
+        return { resolvedLabel: id && id.v, resolvedSrc: id && id.src, corruptedPlayerName: window.state.playerName, pcFacetsResolved: facets.map(f => f.facet_id) };
+      });
+      note('CG2 diagnostic after simulated corruption: ' + JSON.stringify(diag));
+      ok('CG2 [SELF-HEAL] _resolvePcIdentity resolves "Lirael" from the SEED, actively overriding the corrupted state.playerName', diag.resolvedLabel === 'Lirael' && diag.corruptedPlayerName === 'The Protagonist', JSON.stringify(diag));
+      ok('CG2 [SELF-HEAL] the resolution source is starterSeed.cast.PC.name, NOT state.playerName (the corrupted field)', diag.resolvedSrc === 'starterSeed.cast.PC.name', diag.resolvedSrc);
+      const mergedIds = (commit && commit.mergedFacetIds) || [];
+      ok('CG2 [SELF-HEAL] _facetIndex still resolves the seed\'s own facets despite the corrupted playerName', ['pc_untested_brilliance', 'pc_fears_public_failure'].every(id => diag.pcFacetsResolved.indexOf(id) !== -1), JSON.stringify(diag.pcFacetsResolved));
+      ok('CG2 [SELF-HEAL] _facetIndex also still resolves the merged validated facets despite the corrupted playerName', mergedIds.every(id => diag.pcFacetsResolved.indexOf(id) !== -1), JSON.stringify({ mergedIds, resolved: diag.pcFacetsResolved }));
+
+      // Real CG payload check FROM this corrupted-then-self-healed state — no second Genesis/begin call.
+      const beforeCg = ctx.cgRequests.length;
+      const gotRequest = await driveOasToInterruptionSubmit('CG2', page, ctx, async (p) => {
+        return p.evaluate(() => {
+          window._ensureStoryEntityAnchors();
+          const accepted = window._acceptStageProposal('2', {
+            present: ['pc'], location: { label: 'the assembly hall, before the gathered First Favored' },
+            issued_facts: [{ text: 'The presiding Dohkar has not yet ruled on the charge against her.', participants: [{ ref: 'pc', role: 'subject' }] }],
+            issued_objects: [], exclusions: { locations: [], objects: [] }, affordances: [],
+            source: 'pc-foundation-cg2-selfheal-proof',
+          });
+          return { acceptedOk: accepted.ok, acceptedWhy: accepted.why, playerNameStillCorrupted: window.state.playerName === 'The Protagonist' };
+        });
+      });
+      const fired = gotRequest && ctx.cgRequests.length > beforeCg;
+      ok('CG2 real Submit (from the corrupted-then-self-healed state, no new begin flow) fires a real cgScreenplay request', fired, 'cgRequests=' + ctx.cgRequests.length);
+      if (fired) {
+        const usr = ctx.cgRequests[ctx.cgRequests.length - 1].usr;
+        // Read the REAL delivered record rather than assuming which of her two seed facets the
+        // scheduler picked this turn (only one facet per candidate is delivered per scene, and
+        // which one is not pinned by this fixture — same non-determinism already observed and
+        // handled the same way in the GREEN CG scenario above).
+        const delivered = await page.evaluate(() => ((window.state._cgDeliveredAssignments && window.state._cgDeliveredAssignments.character_plus) || []).map(c => ({ facet_id: c.facet_id, facet_truth: c.facet_truth })));
+        note('CG2 real delivered record: ' + JSON.stringify(delivered));
+        // Only the MERGED (validated-bible) facets are groundable — the seed's own two facets
+        // ship with plain-string possible_pressures (no evidence_requires), a real, separate,
+        // already-disclosed content gap unrelated to identity resolution; they structurally
+        // cannot ground via _cpBuildGroundedOptions regardless of this fix.
+        const pcDelivered = delivered.find(c => mergedIds.indexOf(c.facet_id) !== -1);
+        const truthCount = pcDelivered ? usr.split('SOURCE TRUTH — DO NOT STATE: ' + pcDelivered.facet_truth).length - 1 : 0;
+        ok('CG2 [SELF-HEAL] the merged validated facet was delivered this scene, from the self-healed identity', !!pcDelivered, JSON.stringify(delivered));
+        ok('CG2 [SELF-HEAL] the delivered facet\'s truth reaches the real CG payload EXACTLY ONCE (delivery, not just resolution)', truthCount === 1, 'truthCount=' + truthCount);
+      }
+    } else {
+      ok('CG2 reached real OAS-active state', false);
+    }
+  } else {
+    ok('CG2 reached baked Scene 1', false);
+  }
+  await page.context().close();
+}
+
+// ══════════════════════════════════════════════════════════════════════════════════════════
+// CG/OAS CONTROL 3 (item 3) — Save & Exit -> reload -> Continue FROM an already-unlocked CG/OAS
+// session (not the pre-unlock preview persistence phase above) — confirms BOTH identity
+// resolution AND facet resolution survive a real reload while genuinely mid-story, not only
+// portfolio persistence. Reuses realClickSaveReloadContinue (proven to work for #storySaveExitBtn
+// and #gnSaveExitBtn both) after real Genesis unlock + a real commit.
+// ══════════════════════════════════════════════════════════════════════════════════════════
+section('CG/OAS CONTROL 3 — identity + facet resolution survive real Save & Exit -> reload -> Continue, from an unlocked CG/OAS session');
+{
+  const ctx = {};
+  const page = await newStubbedPage(browser, ctx, greenBible());
+  const reached = await reachBakedScene1('CG3', page);
+  let commit = null;
+  if (reached) {
+    await page.evaluate(async () => { await window._generatePCBodyBible(); });
+    commit = await page.evaluate(() => window._commitValidatedPcFoundation(window.state, window.state.pcBodyBible));
+    note('CG3 pre-unlock commit: ' + JSON.stringify(commit));
+    ok('CG3 real commit succeeds before Genesis unlock', commit && commit.committed === true, JSON.stringify(commit));
+    const oasOk = await unlockGenesisAndReachOas('CG3', page, ctx);
+    if (oasOk) {
+      const before = await page.evaluate(() => {
+        const id = window._resolvePcIdentity(window.state);
+        const idx = window._facetIndex(window.state, { sceneNumber: 2 });
+        const facets = window._resolveFacetIndexEntry({ id: 'pc', label: 'Lirael', aliases: ['Lirael'] }, idx, 2);
+        return { resolvedLabel: id && id.v, pcFacetsResolved: facets.map(f => f.facet_id) };
+      });
+      note('CG3 pre-reload diagnostic: ' + JSON.stringify(before));
+      const mergedIds = (commit && commit.mergedFacetIds) || [];
+      ok('CG3 pre-reload: merged facets already resolve via _facetIndex', mergedIds.every(id => before.pcFacetsResolved.indexOf(id) !== -1), JSON.stringify(before));
+
+      const reloadResult = await realClickSaveReloadContinue('CG3', page);
+      const after = await page.evaluate(() => {
+        const id = window._resolvePcIdentity(window.state);
+        const idx = window._facetIndex(window.state, { sceneNumber: 2 });
+        const facets = window._resolveFacetIndexEntry({ id: 'pc', label: 'Lirael', aliases: ['Lirael'] }, idx, 2);
+        return { resolvedLabel: id && id.v, playerName: window.state.playerName, pcFacetsResolved: facets.map(f => f.facet_id), pcPortfolioFacetIds: (window.state._pcPortfolio && window.state._pcPortfolio.facets || []).map(f => f.facet_id) };
+      });
+      note('CG3 post-reload diagnostic: ' + JSON.stringify(after));
+      ok('CG3 [REQUIREMENT 3] identity resolves to "Lirael" (not a placeholder) after a real reload + Continue from an unlocked CG session', after.resolvedLabel === 'Lirael', JSON.stringify(after));
+      ok('CG3 [REQUIREMENT 3] the merged facet_ids still resolve via _facetIndex after the real reload', mergedIds.every(id => after.pcFacetsResolved.indexOf(id) !== -1), JSON.stringify(after));
+      ok('CG3 [REQUIREMENT 3] the portfolio record itself still carries the merged facet_ids after reload', mergedIds.every(id => after.pcPortfolioFacetIds.indexOf(id) !== -1), JSON.stringify(after.pcPortfolioFacetIds));
+    } else {
+      ok('CG3 reached real OAS-active state before testing reload', false);
+    }
+  } else {
+    ok('CG3 reached baked Scene 1', false);
+  }
+  await page.context().close();
+}
+
+// ══════════════════════════════════════════════════════════════════════════════════════════
+// IDENTITY CONTROL 4 (Roman, corrective follow-up #9, 2026-09-15) — an unrelated/unseeded story
+// (no _starterId, or a _starterId with no STARTER_SEEDS entry) never acquires Lirael's identity
+// or any other default. _pcIdentityCandidates' new first candidate is structurally null here (the
+// STARTER_SEEDS[s._starterId] lookup itself returns nothing) — not a runtime check that could be
+// wrong, the lookup has nothing to find. No Genesis unlock needed; this is a pure identity-
+// resolution check against a real, freshly-booted app instance with a genuinely blank/unseeded
+// story, reached the SAME way this file's own other proofs boot (server up, window.state real).
+// ══════════════════════════════════════════════════════════════════════════════════════════
+section('IDENTITY CONTROL 4 — an unrelated/unseeded story never acquires Lirael or any default identity');
+{
+  const ctx = {};
+  const page = await newStubbedPage(browser, ctx, greenBible());
+  const t0 = Date.now(); let up = false;
+  while (Date.now() - t0 < 60000 && !up) {
+    try { await page.goto('http://localhost:3000/', { waitUntil: 'commit', timeout: 20000 }); await page.waitForFunction(() => window.state && window._resolvePcIdentity && window._facetIndex, null, { timeout: 30000 }); up = true; }
+    catch (_) { await page.waitForTimeout(2000); }
+  }
+  ok('ID4 server reachable, real window.state present', up);
+  if (up) {
+    const diag = await page.evaluate(() => {
+      // A genuinely blank/unseeded precondition — no _starterId at all, no identity fields set.
+      // Direct state assignment here constructs the precondition (an unrelated story that was
+      // never a fixed starter); it does not force the resolver or facet-index functions under
+      // test, both of which run completely unmodified against it.
+      window.state._starterId = null;
+      window.state.playerName = '';
+      window.state.name = '';
+      window.state.identity = {};
+      window.state.picks = window.state.picks || {};
+      window.state.picks.identity = {};
+      const id = window._resolvePcIdentity(window.state);
+      const idx = window._facetIndex(window.state, { sceneNumber: 2 });
+      const pcKeys = Object.keys(idx).filter(k => k.indexOf('pc:') === 0 || k === 'pc');
+      return { resolved: id, idxKeys: Object.keys(idx), pcKeys };
+    });
+    note('ID4 diagnostic (unseeded, blank identity): ' + JSON.stringify(diag));
+    ok('ID4 _resolvePcIdentity returns null for an unrelated/unseeded story (never "Lirael", never a placeholder treated as real)', diag.resolved === null, JSON.stringify(diag.resolved));
+    ok('ID4 _facetIndex produces NO pc:* entry and no Lirael-sourced facet for this unrelated story', diag.pcKeys.length === 0, JSON.stringify(diag.pcKeys));
+
+    // Also confirm a bogus _starterId (a starter key with no STARTER_SEEDS entry) behaves identically.
+    const diag2 = await page.evaluate(() => {
+      window.state._starterId = 'starter_does_not_exist_' + Date.now();
+      const id = window._resolvePcIdentity(window.state);
+      return { resolved: id };
+    });
+    note('ID4 diagnostic (bogus _starterId, no STARTER_SEEDS entry): ' + JSON.stringify(diag2));
+    ok('ID4 a _starterId with no STARTER_SEEDS entry also resolves null (the seed lookup itself finds nothing, structurally)', diag2.resolved === null, JSON.stringify(diag2.resolved));
+  }
+  await page.context().close();
+}
+
+// ══════════════════════════════════════════════════════════════════════════════════════════
+// IDENTITY CONTROL 3 (Roman, corrective follow-up #9, 2026-09-15) — a real corridor "begin story"
+// flow with a reader-typed name: confirm state.playerName ends up as that typed name (never
+// overwritten by anything starter-related — corridor has no _starterId, so _pcIdentityCandidates'
+// new first candidate is structurally absent), _resolvePcIdentity resolves it with
+// src:'state.playerName' (never 'starterSeed.cast.PC.name'), and the identity survives
+// handleBeginStory's REAL normalization pipeline (callNormalizationLayer + _syncRomanticTargetState,
+// both exercised for real, stubbed only at the outbound provider boundary) unchanged. Calls the
+// real, unmodified handleBeginStory() directly — the same "direct call to the real backend
+// function under test" pattern already used throughout this file for _generatePCBodyBible/
+// window.startBook2 — since no real click chain in this repo reaches corridor's own multi-step
+// card-selection UI quickly, and driving that UI is not what corrective follow-up #9 touches.
+// ══════════════════════════════════════════════════════════════════════════════════════════
+section('IDENTITY CONTROL 3 — real corridor begin-story flow, reader-chosen name survives the real normalization pipeline unchanged');
+{
+  const ctx = {};
+  const READER_NAME = 'Aria Thorne';
+  const page = await newStubbedPage(browser, ctx, greenBible()); // greenBible() never fires here — no pcBodyBible call in this scenario
+  const t0 = Date.now(); let up = false;
+  while (Date.now() - t0 < 60000 && !up) {
+    try { await page.goto('http://localhost:3000/', { waitUntil: 'commit', timeout: 20000 }); await page.waitForFunction(() => window.state && typeof window.handleBeginStory === 'function', null, { timeout: 30000 }); up = true; }
+    catch (_) { await page.waitForTimeout(2000); }
+  }
+  ok('ID3 server reachable, real handleBeginStory present', up);
+  if (up) {
+    const setup = await page.evaluate((name) => {
+      const s = window.state;
+      s._starterId = null; s.is_starter_story = false;
+      s.storyId = 'corridor-id3-' + Date.now();
+      s.picks = Object.assign(s.picks || {}, {
+        world: 'Modern', worldSubtype: '', tone: 'Earnest', flavor: 'Contemporary', dynamic: 'Enemies',
+        pov: 'first_person', length: 'fling', intensity: 'Steamy', playermask: 'OPEN_VEIN',
+        archetype: { primary: 'BEAUTIFUL_RUIN' }, loveInterest: 'Male',
+        identity: { playerName: name, partnerName: 'Marcus' },
+      });
+      s.archetype = { primary: 'BEAUTIFUL_RUIN' }; s.gender = 'Female'; s.loveInterest = 'Male';
+      s.storyLength = 'fling'; s.tier = 'fling'; s.access = 'sub'; s.subscribed = true; s.fortunes = 9999999;
+      s._skipCorridorValidation = true; s.aPlot = s.aPlot || { goal: '' };
+      return { playerNameBefore: s.playerName, identityPlayerName: s.picks.identity.playerName };
+    }, READER_NAME);
+    note('ID3 corridor setup: ' + JSON.stringify(setup));
+
+    let threw = null;
+    try { await page.evaluate(() => window.handleBeginStory()); } catch (e) { threw = String(e && e.message); }
+    await page.waitForTimeout(2000);
+    const diag = await page.evaluate(() => {
+      const id = window._resolvePcIdentity(window.state);
+      return { playerName: window.state.playerName, resolvedLabel: id && id.v, resolvedSrc: id && id.src, normalizedKernel: window.state.normalizedPlayerKernel };
+    });
+    note('ID3 post-handleBeginStory diagnostic: ' + JSON.stringify(diag) + (threw ? ' (threw: ' + threw + ')' : ''));
+    ok('ID3 handleBeginStory() completed (threw=' + threw + ')', !threw, threw || '');
+    ok('ID3 [REQUIREMENT] state.playerName ends up as exactly the reader-typed name after the real normalization pipeline', diag.playerName === READER_NAME, JSON.stringify(diag));
+    ok('ID3 [REQUIREMENT] _resolvePcIdentity resolves it with src="state.playerName", never starterSeed.cast.PC.name', diag.resolvedLabel === READER_NAME && diag.resolvedSrc === 'state.playerName', JSON.stringify(diag));
+  }
+  await page.context().close();
+}
+
+// ══════════════════════════════════════════════════════════════════════════════════════════
 // REQUIREMENT 6 — ISSUE TRANSITION CARRY (window.startBook2(), real First Sacrifice, real merge)
 // window._book2TestBypass is a PRODUCTION-SHIPPED headless-test flag (app.js ~79994, its own
 // comment: "startBook2's real Book-1->Book-2 continuity path can't be driven headless because
@@ -945,6 +1270,68 @@ section('REQUIREMENT 6 — ISSUE TRANSITION: window.startBook2() carries the val
     ok('REQUIREMENT 6 — the SAME merged facet_ids are present under the NEW storyId', after.hasAllMergedIds, JSON.stringify(after.pcPortfolio && after.pcPortfolio.facets && after.pcPortfolio.facets.map(f => f.facet_id)));
     ok('REQUIREMENT 6 — the carried record is re-stamped to the NEW storyId, not left on the old one',
       !!after.pcPortfolio && after.pcPortfolio.storyId === after.storyIdAfter, JSON.stringify(after.pcPortfolio && after.pcPortfolio.storyId));
+
+    // ── ITEM 4 — CG-PATH FACET RESOLUTION POST-TRANSITION, VIA A REAL CLICK-DRIVEN SUBMIT ──
+    // state._starterId survives the transition (required for the seedId-carry fix) — Book2 mounts
+    // back into the SAME baked-preview template as a result, with #bakedOASEnterBtn present again,
+    // rather than a directly-submittable reader. Discovered empirically (this run's own probe);
+    // driven through with the SAME real Genesis-unlock chain used everywhere else in this file.
+    let probe = await page.evaluate(() => {
+      const btnIds = Array.from(document.querySelectorAll('button[id]')).filter(b => b.getClientRects().length > 0 && !b.disabled).map(b => b.id);
+      return { screen: window._currentScreenId, starterId: window.state._starterId, turnCount: window.state.turnCount, cgMode: (typeof window._shouldUseCGScreenplayPath === 'function') ? window._shouldUseCGScreenplayPath() : 'n/a', btnIds };
+    });
+    note('BOOK2 post-transition screen probe: ' + JSON.stringify(probe));
+    if (probe.btnIds.indexOf('bakedOASEnterBtn') !== -1) {
+      note('BOOK2 [REQUIREMENT 4] #bakedOASEnterBtn present post-transition — Book2 needs its own real Genesis-unlock pass before a submit affordance exists.');
+      const oasOk = await unlockGenesisAndReachOas('BOOK2', page, ctx);
+      ok('BOOK2 [REQUIREMENT 4] real Genesis unlock for Book2 itself succeeds, reaching OAS-active', oasOk);
+      probe = await page.evaluate(() => {
+        const btnIds = Array.from(document.querySelectorAll('button[id]')).filter(b => b.getClientRects().length > 0 && !b.disabled).map(b => b.id);
+        return { screen: window._currentScreenId, btnIds };
+      });
+      note('BOOK2 post-unlock screen probe: ' + JSON.stringify(probe));
+    }
+    ok('BOOK2 [REQUIREMENT 4] real Genesis unlock landed in gnReader (OAS active)', probe.screen === 'gnReader', JSON.stringify(probe));
+    if (probe.screen === 'gnReader') {
+      const beforeCg = ctx.cgRequests.length, beforeAuthor = ctx.authorPayloads.length;
+      const gotRequest = await driveOasToInterruptionSubmit('BOOK2', page, ctx, async (p) => {
+        return p.evaluate(() => {
+          window._ensureStoryEntityAnchors();
+          const n = Math.max((Array.isArray(window.state.scenes) ? window.state.scenes.length : 0), (window.state.turnCount || 0)) + 1;
+          const accepted = window._acceptStageProposal(String(n), {
+            present: ['pc'], location: { label: 'the new hall' },
+            issued_facts: [{ text: 'The presiding Dohkar has not yet ruled on the charge against her.', participants: [{ ref: 'pc', role: 'subject' }] }],
+            issued_objects: [], exclusions: { locations: [], objects: [] }, affordances: [],
+            source: 'pc-foundation-book2-cg-proof',
+          });
+          return { sceneNum: n, acceptedOk: accepted.ok, acceptedWhy: accepted.why };
+        });
+      });
+      const fired = gotRequest && (ctx.cgRequests.length > beforeCg || ctx.authorPayloads.length > beforeAuthor);
+      ok('BOOK2 [REQUIREMENT 4] real Submit fires a real request (cgScreenplay or author)', fired, 'cgRequests=' + ctx.cgRequests.length + ' authorPayloads=' + ctx.authorPayloads.length);
+      if (fired) {
+        const usedCg = ctx.cgRequests.length > beforeCg;
+        const last = usedCg ? ctx.cgRequests[ctx.cgRequests.length - 1] : ctx.authorPayloads[ctx.authorPayloads.length - 1];
+        const payloadText = last.sys + '\n' + last.usr;
+        const mergedIds = before.commit.mergedFacetIds || [];
+        const delivered = await page.evaluate((usedCg) => {
+          const cp = usedCg ? ((window.state._cgDeliveredAssignments && window.state._cgDeliveredAssignments.character_plus) || [])
+            : ((window.state.sceneSkeleton && window.state.sceneSkeleton.character_plus) || []);
+          return cp.map(c => ({ facet_id: c.facet_id, facet_truth: c.facet_truth }));
+        }, usedCg);
+        note('BOOK2 post-transition delivered (via ' + (usedCg ? 'cgScreenplay' : 'author') + '): ' + JSON.stringify(delivered));
+        const pcDelivered = delivered.find(c => mergedIds.indexOf(c.facet_id) !== -1);
+        if (pcDelivered) {
+          const truthCount = payloadText.split('SOURCE TRUTH — DO NOT STATE: ' + pcDelivered.facet_truth).length - 1;
+          ok('BOOK2 [REQUIREMENT 4] the merged facet_truth appears EXACTLY ONCE in the real post-transition payload', truthCount === 1, 'count=' + truthCount + ' via=' + (usedCg ? 'cgScreenplay' : 'author'));
+        } else {
+          ok('BOOK2 [REQUIREMENT 4] the merged PC facet was delivered post-transition', false, 'delivered=' + JSON.stringify(delivered) + ' mergedIds=' + JSON.stringify(mergedIds));
+        }
+        const leakPatterns = ['"basis"', '"cites"', 'approved_facet:', 'approved_bio', 'approved_relationship', 'approved_scene1', 'approved_posture', '_provenance'];
+        const leakHits = leakPatterns.filter(p => payloadText.indexOf(p) !== -1);
+        ok('BOOK2 [REQUIREMENT 4] ZERO raw provenance internals leak into the post-transition payload', leakHits.length === 0, 'leaked=' + JSON.stringify(leakHits));
+      }
+    }
   } else {
     ok('BOOK2 reached baked Scene 1 to set up the transition', false);
   }
