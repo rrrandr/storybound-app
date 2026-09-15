@@ -255518,17 +255518,29 @@ Generate the synopsis now.` }
       out.validation = validation;
       if (!validation.ok) { out.reason = 'validation_failed'; return out; }
 
-      var rec = _ensurePcPortfolio(s);
-      if (!rec || rec.source !== 'fixed_starter') { out.reason = 'not_a_fixed_starter_portfolio'; return out; }
-
+      // PURE/LOCAL CHECKS FIRST (Roman, corrective follow-up #11, 2026-09-15) — _pcFacetsFromBodyBible
+      // and _normFacet touch nothing; computed BEFORE _ensurePcPortfolio, which DOES write state
+      // as a side effect (it idempotently initializes state._pcPortfolio from the seed the first
+      // time it is called for a story). Ordering it after validation but before these checks let a
+      // validated-but-empty response (nothing recognizable to map — e.g. an object that happens to
+      // pass the validator only because it makes no durable claims at all) reach
+      // _ensurePcPortfolio and populate the seed-only portfolio, even though the SAME call
+      // ultimately reported committed:false — a real, narrow violation of the "ONLY point that
+      // touches state" promise below, found by a defensive control (a caller that hands a
+      // non-bible object to this function must get a clean refusal with ZERO state touched, not
+      // just an eventual committed:false after a side effect already landed).
       var bibleFacetsRaw = _pcFacetsFromBodyBible(bible);
       if (!bibleFacetsRaw.length) { out.reason = 'no_mappable_bible_facets'; return out; }
       var normalized = bibleFacetsRaw.map(function (f) { return _normFacet(f, 'pc'); }).filter(Boolean);
       if (!normalized.length) { out.reason = 'facets_failed_normalization'; return out; }
       normalized.forEach(function (f) { f.origin = 'pc_body_bible_validated'; });
 
-      // ATOMIC COMMIT — everything above is pure/local; this is the ONLY point that touches
-      // state, and only after every guard above has already passed.
+      var rec = _ensurePcPortfolio(s);
+      if (!rec || rec.source !== 'fixed_starter') { out.reason = 'not_a_fixed_starter_portfolio'; return out; }
+
+      // ATOMIC COMMIT — everything above is pure/local except _ensurePcPortfolio's own idempotent
+      // initialization immediately above (unavoidable — it is also how rec.source is known); this
+      // concat is the ONLY point that touches rec.facets, and only after every guard has passed.
       var existingIds = (rec.facets || []).map(function (f) { return f.facet_id; });
       var newFacets = normalized.filter(function (f) { return existingIds.indexOf(f.facet_id) === -1; });
       rec.facets = (rec.facets || []).concat(newFacets);

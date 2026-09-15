@@ -273,6 +273,60 @@ section('SCENARIO 5 — no rerolls after a failed/no-content foundation (structu
   await browser.close(); await browser2.close();
 }
 
+// ══════════════════════════════════════════════════════════════════════════════════════
+// SCENARIO 6 (Roman, corrective follow-up #11, 2026-09-15) — the REAL failure shape the second
+// live sample actually observed: all THREE independent provider routes (mistral-proxy, proxy,
+// chatgpt-proxy) return the SAME error — a Vercel-dev-server "NO_RESPONSE_FROM_FUNCTION" 502,
+// with a PLAIN-TEXT body (not JSON), and no usable content from ANY tier. Confirmed (dry, zero
+// provider contact) via a direct curl to /api/config — a provider-agnostic endpoint — returning
+// the IDENTICAL error at the time of that run: strong evidence the failure sits at the local
+// dev-server/serverless-runtime layer (very likely resource exhaustion — 521 leaked
+// @vercel/node/dist/dev-server.mjs child processes, ~1.7GB RSS, were found running at the time),
+// not three independent provider outages, not a shared proxy/dispatcher BUG in this app's own
+// code, and not per-provider handler defects. This scenario proves the APP's own handling of
+// that exact real shape is safe regardless of which layer eventually turns out to be at fault:
+// no crash on a non-JSON error body, a correctly named failure, and — the specific defensive
+// check Roman asked for — that even a caller who naively hands the failure record itself to the
+// validator/merge boundary (as if it were a bible) gets a clean refusal, never a crash, never a
+// partial commit. ──
+section('SCENARIO 6 — common-dispatch failure across all tiers (the REAL observed shape: identical 502 + plain-text NO_RESPONSE_FROM_FUNCTION body on every tier)');
+{
+  let pcCount = 0;
+  const REAL_BODY = 'An error occurred with this application.\n\nNO_RESPONSE_FROM_FUNCTION\n';
+  const { browser, page } = await boot(baseRoute(async (route, req, url, p) => {
+    if (!/\/api\/(mistral-proxy|proxy|chatgpt-proxy)\b/.test(url)) return false;
+    let b = {}; try { b = JSON.parse(req.postData() || '{}'); } catch (_) {}
+    const sys = (b.messages || []).filter(m => m.role === 'system').map(m => m.content).join('\n');
+    if (!isPcBible(sys)) { fulfillMistralSuccess(route, { ok: true }); return true; }
+    pcCount++;
+    // PLAIN TEXT, not JSON — matches the real observed shape exactly (contentType text/plain,
+    // status 502). _tieredProviderDispatch's error path already uses r.text(), never r.json(),
+    // on failure — this proves that choice was correct, not merely untested.
+    route.fulfill({ status: 502, contentType: 'text/plain', body: REAL_BODY });
+    return true;
+  }));
+  const r = await page.evaluate(async () => {
+    const before = JSON.stringify(window.state._pcPortfolio || null);
+    const bible = await window._generatePCBodyBible();
+    // DEFENSIVE CHECK: a caller who forgot to check __pcFoundationOutcome and handed the failure
+    // record itself to the real validator/merge boundary, exactly as a bible — must be refused
+    // cleanly, never crash, never partially commit.
+    let mergeOnFailureObject = null;
+    try { mergeOnFailureObject = window._commitValidatedPcFoundation(window.state, bible); }
+    catch (e) { mergeOnFailureObject = { threw: String(e && e.message) }; }
+    const after = JSON.stringify(window.state._pcPortfolio || null);
+    return { bible, before, after, mergeOnFailureObject, pcBodyBibleOnState: window.state.pcBodyBible || null };
+  });
+  ok('S6: all 3 physical attempts fired with the REAL observed error shape (502, plain-text NO_RESPONSE_FROM_FUNCTION)', pcCount === 3, 'pcCount=' + pcCount);
+  ok('S6: the non-JSON error body did NOT crash dispatch — a clean named failure resulted, not an unhandled exception', r.bible && r.bible.__pcFoundationOutcome === 'PC_FOUNDATION_UPSTREAM_FAILURE', JSON.stringify(r.bible));
+  ok('S6: all 3 attempts in the failure record report httpStatus:502 and hadContent:false, correlated per-attempt', r.bible && r.bible.attempts.every(a => a.httpStatus === 502 && a.hadContent === false), JSON.stringify(r.bible && r.bible.attempts));
+  ok('S6: state.pcBodyBible was never set', r.pcBodyBibleOnState === null);
+  ok('S6: state._pcPortfolio is byte-identical before and after this failed operation — zero mutation', r.before === r.after, JSON.stringify({ before: r.before, after: r.after }));
+  ok('S6: [DEFENSIVE] passing the failure record itself to _commitValidatedPcFoundation (simulating a caller that forgot to check __pcFoundationOutcome) is cleanly REFUSED, never crashes, never partially commits',
+    r.mergeOnFailureObject && r.mergeOnFailureObject.committed === false && !r.mergeOnFailureObject.threw, JSON.stringify(r.mergeOnFailureObject));
+  await browser.close();
+}
+
 console.log('\n' + '='.repeat(70));
 const pass = rows.filter(r => r[1]).length, fail = rows.length - pass;
 console.log('PC FOUNDATION PROVIDER-FAILOVER + BUDGET-CONTRACT CONTROL: ' + rows.length + ' rows · ' + pass + ' passed · ' + fail + ' failed');

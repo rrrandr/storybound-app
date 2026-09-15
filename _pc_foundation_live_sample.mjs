@@ -89,6 +89,13 @@ const { memoryStore } = require('./api/_mistral-governor-store.js');
 
 const results = [];
 const ok = (name, pass, detail) => { results.push({ name, pass: !!pass }); console.log((pass ? 'PASS ' : 'FAIL ') + name + (detail ? '  — ' + String(detail).slice(0, 500) : '')); };
+// N/A LANE (Roman, corrective follow-up #11, 2026-09-15) — a content-dependent check (usage
+// block present, bible+source pair existed to validate, etc.) is NOT a failure of the mechanism
+// under test when the operation never produced content at all (an infrastructure failure) — it
+// is inapplicable. Counted separately from pass/fail so an infra failure can never manufacture
+// false FAILs that look like content/validator defects.
+const notApplicable = [];
+const na = (name, reason) => { notApplicable.push({ name, reason }); console.log('N/A  ' + name + '  — ' + reason); };
 const note = (s) => console.log('  [NOTE] ' + s);
 const section = (t) => console.log('\n=== ' + t + ' ===');
 
@@ -125,13 +132,21 @@ page.on('console', () => {});
 // PER-REQUEST CORRELATION — matched by Playwright Request object identity, not "last response
 // wins." route.continue() forwards the SAME request, so response.request() is reference-equal
 // to what the route handler saw for that exact exchange.
+// FIXED (Roman, corrective follow-up #11, 2026-09-15) — this only ever matched
+// /api/mistral-proxy, so under the corrected 3-tier budget contract (attempt #2 hits /api/proxy,
+// attempt #3 hits /api/chatgpt-proxy) their real responses were NEVER captured — the live run's
+// "status=null usage=null" for attempts #2/#3 was this bug, not a genuine absence of a response.
+// Also now sets a REAL outcome ('succeeded'/'failed') from the actual response, replacing the
+// misleading push-time 'completed' every attempt got regardless of what actually happened.
 page.on('response', async (response) => {
   try {
-    if (!/\/api\/mistral-proxy\b/.test(response.url())) return;
+    if (!/\/api\/(mistral-proxy|proxy|chatgpt-proxy)\b/.test(response.url())) return;
     const rec = correlatedAttempts.find(a => a.request === response.request() && !a.response);
     if (!rec) return;
     let json = null; try { json = await response.json(); } catch (_) { json = null; }
     rec.response = { status: response.status(), json, at: Date.now() };
+    const hadContent = !!(json && (json.content || (json.choices && json.choices[0] && json.choices[0].message && json.choices[0].message.content)));
+    rec.outcome = (response.status() < 400 && hadContent) ? 'succeeded' : 'failed';
   } catch (_) {}
 });
 
@@ -172,8 +187,16 @@ await page.route('**/api/**', async route => {
       note('*** CONTRACT VIOLATION: ' + requestId + ' exceeds the declared cap of ' + cap + ' for ' + kind + ' — recorded as a BLOCKED ATTEMPT and ABORTED, never let through ***');
       return route.abort('failed');
     }
-    correlatedAttempts.push({ requestId, kind, attemptNumber, request: req, sys, usr, sysBytes, usrBytes, model: b.model, role: b.role, maxTokens: b.max_tokens, temperature: b.temperature, outcome: 'completed', response: null });
-    if (kind === 'pcBodyBible') pcBodyBibleCapturedRequest = { url: p, role: b.role, model: b.model, maxTokens: b.max_tokens, temperature: b.temperature, sys, usr, sysBytes, usrBytes };
+    // 'dispatched', not 'completed' — this is push-TIME status (the request was sent), never the
+    // real outcome; the response listener above corrects it to 'succeeded'/'failed' once known.
+    correlatedAttempts.push({ requestId, kind, attemptNumber, request: req, sys, usr, sysBytes, usrBytes, model: b.model, role: b.role, maxTokens: b.max_tokens, temperature: b.temperature, outcome: 'dispatched', response: null });
+    // IMMUTABLE PRIMARY-OPERATION METADATA (Roman, corrective follow-up #11, 2026-09-15) — this
+    // used to overwrite unconditionally on EVERY pcBodyBible-classified attempt, so by the time
+    // the governor-admission check ran, it held attempt #3's (terminal/openai) model+prompt, not
+    // the PRIMARY (attempt #1/mistral) request — a real "no silent success" sibling bug: silently
+    // SWAPPING which physical attempt the primary-operation accounting describes. Set ONCE, on
+    // the first (primary) attempt only.
+    if (kind === 'pcBodyBible' && attemptNumber === 1) pcBodyBibleCapturedRequest = { url: p, role: b.role, model: b.model, maxTokens: b.max_tokens, temperature: b.temperature, sys, usr, sysBytes, usrBytes };
     note('*** LIVE: letting ' + requestId + ' (of at most ' + cap + ' for ' + kind + ') through to the real /api/mistral-proxy — this run may legitimately make the primary plus up to ' + CALL_CAPS.bodyTellReroll + ' rerolls, never reported as "one call" ***');
     return route.continue();
   }
@@ -340,8 +363,12 @@ correlatedAttempts.forEach(a => {
   note(a.requestId + ' (' + a.kind + ', role=' + a.role + ', model=' + a.model + ', outcome=' + a.outcome + '): status=' + (a.response && a.response.status) + ' usage=' + JSON.stringify(usage || null));
 });
 const pcAttempt = correlatedAttempts.find(a => a.kind === 'pcBodyBible');
-ok('the pcBodyBible attempt specifically reported a usage block', !!(pcAttempt && pcAttempt.response && pcAttempt.response.json && pcAttempt.response.json.usage),
-  pcAttempt ? JSON.stringify(pcAttempt.response && pcAttempt.response.json && pcAttempt.response.json.usage) : 'no pcBodyBible attempt recorded');
+if (genResult && genResult.isUpstreamFailure) {
+  na('the pcBodyBible attempt specifically reported a usage block', 'no provider response — every physical attempt failed before returning usable content, so there is no usage block to report (this is the INFRASTRUCTURE_FAILURE_RETRY_ELIGIBLE verdict, not a content-quality question)');
+} else {
+  ok('the pcBodyBible attempt specifically reported a usage block', !!(pcAttempt && pcAttempt.response && pcAttempt.response.json && pcAttempt.response.json.usage),
+    pcAttempt ? JSON.stringify(pcAttempt.response && pcAttempt.response.json && pcAttempt.response.json.usage) : 'no pcBodyBible attempt recorded');
+}
 note('DOLLAR COST: still UNKNOWN — no sourced ministral-8b-2512 rate exists in this codebase. Real token counts above are exact per attempt, not estimated; only the $/token conversion remains unsourced.');
 
 // ═══════════════════════════════════════ GOVERNOR ADMISSION — post-hoc sanity check ═══════════════════════════════════════
@@ -369,6 +396,8 @@ if (bible && foundationCapture.source) {
     }
   }
   note('FULL RAW BIBLE (for a human R2/R3 cross-check alongside the validator verdict above):\n' + JSON.stringify(bible, null, 2));
+} else if (genResult && genResult.isUpstreamFailure) {
+  na('a bible + source pair existed to validate', 'no provider response — the validator has nothing to grade when no content was ever produced (INFRASTRUCTURE_FAILURE_RETRY_ELIGIBLE, not a validator/content defect)');
 } else {
   ok('a bible + source pair existed to validate', false, 'bible=' + !!bible + ' source=' + !!(foundationCapture && foundationCapture.source));
 }
@@ -404,8 +433,19 @@ if (mergeResult) {
 
 console.log('\n' + '='.repeat(70));
 const p = results.filter(r => r.pass).length, f = results.length - p;
-console.log('PC FOUNDATION LIVE SAMPLE: ' + p + ' passed, ' + f + ' failed');
+console.log('PC FOUNDATION LIVE SAMPLE: ' + p + ' passed, ' + f + ' failed' + (notApplicable.length ? ', ' + notApplicable.length + ' N/A (infrastructure failure, not content/validator defects)' : ''));
 console.log('FINAL VERDICT: ' + finalVerdict);
+if (finalVerdict === 'INFRASTRUCTURE_FAILURE_RETRY_ELIGIBLE') {
+  // SHARED-DISPATCH DIAGNOSTIC HINT (Roman, corrective follow-up #11, 2026-09-15) — if every
+  // physical attempt across ALL THREE independent provider routes failed with the identical error
+  // shape, that is evidence pointing at a layer BEFORE any provider-specific code (client
+  // routing, local dev-server/serverless runtime, or a shared dispatcher), not three independent
+  // provider outages. Reported here, not asserted as certain — a human/later pass should trace it
+  // (see _pc_foundation_shared_dispatch_failure_control.mjs for the offline half of this).
+  const errs = correlatedAttempts.filter(a => a.kind === 'pcBodyBible').map(a => a.response && a.response.json === null ? (a.response.status + ':unparseable') : (a.response && a.response.status));
+  const distinctShapes = [...new Set(correlatedAttempts.filter(a => a.kind === 'pcBodyBible').map(a => (a.response && a.response.status) + '|' + JSON.stringify(a.response && a.response.json)))];
+  console.log('SHARED-DISPATCH HINT: ' + correlatedAttempts.filter(a => a.kind === 'pcBodyBible').length + ' physical attempts across ' + new Set(correlatedAttempts.filter(a => a.kind === 'pcBodyBible').map(a => a.requestId)).size + ' provider routes; ' + distinctShapes.length + ' distinct (status, body) shape(s) observed: ' + JSON.stringify(distinctShapes) + '. If distinct shape count is 1, this strongly suggests a shared layer failing identically for every provider, not independent provider outages — do not report this as "N providers failed" without checking a provider-agnostic endpoint (e.g. /api/config) first.');
+}
 console.log('SCOPE (Roman, 2026-09-15): this establishes FOUNDATION-CLAIM COMPLIANCE ONLY — whether the');
 console.log('real response\'s durable claims are cited and source-supported per _validatePcFoundationOutput,');
 console.log('and (if accepted) whether the merge actually reaches the usable PC portfolio via _facetIndex.');
