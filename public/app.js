@@ -5870,12 +5870,25 @@ ${_pcInteriorLock}`;
   // returns, so callers can hand the result straight to _recordProxyTextCost and get accurate
   // per-request cost attribution for whichever provider actually served the request, not
   // whichever was merely attempted first.
+  // STRUCTURED TIER ERRORS (Roman, corrective follow-up #10, 2026-09-15) — a plain Error(message)
+  // loses provider/HTTP-status/content-received the moment it's caught; a caller wanting to build
+  // a NAMED infrastructure-failure record (rather than collapse an upstream 502 into an ambiguous
+  // string) needs these as real properties, not substring-parsed back out of prose. Additive only:
+  // every existing catch(e){...e.message...} consumer is unaffected.
+  function _tierErr(message, meta) {
+    var e = new Error(message);
+    e.provider = meta && meta.provider || null;
+    e.model = meta && meta.model || null;
+    e.httpStatus = (meta && typeof meta.httpStatus === 'number') ? meta.httpStatus : null;
+    e.hadContent = !!(meta && meta.hadContent);
+    return e;
+  }
   async function _tieredProviderDispatch(provider, model, messages, maxTokens, temperature) {
     if (provider === 'mistral') {
       return _tierPaced('mistral:' + model, async function () {
         var r = await fetch('/api/mistral-proxy', { method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ role: 'STRUCTURE_GENERATOR', model: model, temperature: temperature, max_tokens: maxTokens, messages: messages }) });
-        if (!r.ok) { var eb = await r.text().catch(function () { return ''; }); throw new Error('mistral HTTP ' + r.status + (eb ? ' ' + eb.slice(0, 200) : '')); }
+        if (!r.ok) { var eb = await r.text().catch(function () { return ''; }); throw _tierErr('mistral HTTP ' + r.status + (eb ? ' ' + eb.slice(0, 200) : ''), { provider: 'mistral', model: model, httpStatus: r.status, hadContent: false }); }
         var d = await r.json();
         var content = (d && (d.content || (d.choices && d.choices[0] && d.choices[0].message && d.choices[0].message.content))) || '';
         return { content: content, usage: (d && d.usage) || null, _orchestration: { model: model } };
@@ -5884,7 +5897,7 @@ ${_pcInteriorLock}`;
     if (provider === 'grok') {
       var r2 = await fetch('/api/proxy', { method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ role: 'STRUCTURE_GENERATOR', preferredModel: model, temperature: temperature, max_tokens: maxTokens, messages: messages }) });
-      if (!r2.ok) { var eb2 = await r2.text().catch(function () { return ''; }); throw new Error('grok HTTP ' + r2.status + (eb2 ? ' ' + eb2.slice(0, 200) : '')); }
+      if (!r2.ok) { var eb2 = await r2.text().catch(function () { return ''; }); throw _tierErr('grok HTTP ' + r2.status + (eb2 ? ' ' + eb2.slice(0, 200) : ''), { provider: 'grok', model: model, httpStatus: r2.status, hadContent: false }); }
       var d2 = await r2.json();
       var content2 = (d2 && d2.choices && d2.choices[0] && d2.choices[0].message && d2.choices[0].message.content) || (d2 && d2.content) || '';
       return { content: content2, usage: (d2 && d2.usage) || null, _orchestration: { model: model } };
@@ -5892,11 +5905,11 @@ ${_pcInteriorLock}`;
     if (provider === 'openai') {
       var r3 = await fetch('/api/chatgpt-proxy', { method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ role: 'PRIMARY_AUTHOR', model: model, temperature: temperature, max_tokens: maxTokens, messages: messages }) });
-      if (!r3.ok) { var eb3 = await r3.text().catch(function () { return ''; }); throw new Error('chatgpt-proxy HTTP ' + r3.status + (eb3 ? ' ' + eb3.slice(0, 200) : '')); }
+      if (!r3.ok) { var eb3 = await r3.text().catch(function () { return ''; }); throw _tierErr('chatgpt-proxy HTTP ' + r3.status + (eb3 ? ' ' + eb3.slice(0, 200) : ''), { provider: 'openai', model: model, httpStatus: r3.status, hadContent: false }); }
       var d3 = await r3.json();
       return { content: (d3 && d3.content) || '', usage: (d3 && d3.usage) || null, _orchestration: { model: model } };
     }
-    throw new Error('[TIERED] unknown provider: ' + provider);
+    throw _tierErr('[TIERED] unknown provider: ' + provider, { provider: provider, model: model });
   }
 
   // roleTag: a short identifier ('pcBodyBible' | 'liBodyBible' | 'rplot' | 'scaffold' | ...) used
@@ -5913,23 +5926,39 @@ ${_pcInteriorLock}`;
       { tier: 'fallback', provider: 'grok',    model: 'grok-4-1-fast-reasoning' },
       { tier: 'terminal', provider: 'openai',  model: opts.terminalModel || 'gpt-4o-mini' }
     ];
-    var attempt = 0, lastErr = null;
+    // ATTEMPT LOG (Roman, corrective follow-up #10, 2026-09-15) — one entry per PHYSICAL request
+    // this operation makes, win or lose, carrying exactly what a named infrastructure-failure
+    // record needs to preserve: a synthetic but stable requestId (roleTag#attemptNumber, the SAME
+    // convention every PC-foundation harness in this codebase already uses), provider, model, tier,
+    // httpStatus (null when the request never got an HTTP response at all), and hadContent. Attached
+    // to the SUCCESS result too (result.attemptLog) so a caller can see the full failover history
+    // even when the operation ultimately succeeded — not only on total failure.
+    var attempt = 0, lastErr = null, attemptLog = [];
     for (var i = 0; i < tiers.length; i++) {
       attempt++;
       var t = tiers[i];
+      var requestId = roleTag + '#' + attempt;
       var fallbackReason = (i === 0) ? null : String((lastErr && lastErr.message) || lastErr || 'unknown');
       _logProviderTierAttempt(roleTag, t.tier, t.provider, t.model, fallbackReason, attempt);
       try {
         var result = await _tieredProviderDispatch(t.provider, t.model, messages, maxTokens, temperature);
-        if (!result || !result.content || !String(result.content).trim()) throw new Error(t.provider + ' returned empty content');
-        result.tier = t.tier; result.provider = t.provider; result.attempt = attempt;
+        var hadContent = !!(result && result.content && String(result.content).trim());
+        if (!hadContent) throw _tierErr(t.provider + ' returned empty content', { provider: t.provider, model: t.model, httpStatus: 200, hadContent: false });
+        attemptLog.push({ requestId: requestId, tier: t.tier, provider: t.provider, model: t.model, httpStatus: 200, hadContent: true, outcome: 'succeeded' });
+        result.tier = t.tier; result.provider = t.provider; result.attempt = attempt; result.attemptLog = attemptLog;
         return result;
       } catch (e) {
         lastErr = e;
+        attemptLog.push({ requestId: requestId, tier: t.tier, provider: t.provider, model: t.model,
+          httpStatus: (e && typeof e.httpStatus === 'number') ? e.httpStatus : null,
+          hadContent: !!(e && e.hadContent), outcome: 'failed', error: String((e && e.message) || e) });
         try { console.warn('[TIERED:' + roleTag + '] ' + t.tier + '/' + t.provider + '/' + t.model + ' failed: ' + (e && e.message)); } catch (_) {}
       }
     }
-    throw new Error('[TIERED:' + roleTag + '] all tiers exhausted — last error: ' + (lastErr && lastErr.message));
+    var exhausted = new Error('[TIERED:' + roleTag + '] all tiers exhausted — last error: ' + (lastErr && lastErr.message));
+    exhausted.code = 'ALL_TIERS_EXHAUSTED';
+    exhausted.attemptLog = attemptLog;
+    throw exhausted;
   }
   window._callTieredProvider = _callTieredProvider;
 
@@ -255054,9 +255083,26 @@ Generate the synopsis now.` }
       // (on top of the write-site checks inside the Uncached generator, which guard state.pcBodyBible
       // itself) so the ledger's own status never regresses from a stale late arrival.
       var stillCurrent = _bibleLedger().pc === gate.rec;
-      if (result && stillCurrent) _bibleArtifactCommitted('pc', storyId);
-      else if (!result && stillCurrent) _bibleArtifactFailed('pc', storyId, 'generation returned null (see [PC-BODY-BIBLE] warning above for detail)');
+      // NO SILENT SUCCESS (Roman, corrective follow-up #10, 2026-09-15) — a named infrastructure
+      // failure (see _generatePCBodyBibleUncached's catch site) is a TRUTHY object, and the old
+      // `if (result && stillCurrent)` check would have called _bibleArtifactCommitted on it,
+      // marking the ledger "committed" for an operation that produced no bible at all. Checked
+      // explicitly here so a real upstream failure is recorded as 'failed' (retry-eligible, per
+      // _bibleArtifactBefore's own already-real "retrying after a recorded failure" branch), never
+      // as a false-positive success.
+      var isUpstreamFailure = !!(result && result.__pcFoundationOutcome === 'PC_FOUNDATION_UPSTREAM_FAILURE');
+      if (result && !isUpstreamFailure && stillCurrent) _bibleArtifactCommitted('pc', storyId);
+      else if ((!result || isUpstreamFailure) && stillCurrent) {
+        _bibleArtifactFailed('pc', storyId, isUpstreamFailure
+          ? ('upstream_failure: ' + JSON.stringify((result.attempts || []).map(function (a) { return a.requestId + '=' + a.outcome + (a.httpStatus ? '(' + a.httpStatus + ')' : ''); })))
+          : 'generation returned null (see [PC-BODY-BIBLE] warning above for detail)');
+      }
       else if (!stillCurrent) { try { console.warn('[BIBLE-ARTIFACT] pc attempt ' + gate.rec.attempt + ' resolved AFTER being superseded — discarded, not committed, ledger left as the newer attempt left it'); } catch (_) {} }
+      // EXPLICIT RETRY-ELIGIBLE FAILURE RECORD, DURABLE AND SEPARATE FROM state.pcBodyBible — the
+      // UI/state path can check this without ever mistaking it for content. Cleared on the next
+      // attempt's own outcome (never left stale pointing at an old failure once a newer one runs).
+      if (isUpstreamFailure && window.state) { window.state._pcFoundationLastFailure = result; }
+      else if (result && !isUpstreamFailure && window.state && window.state._pcFoundationLastFailure) { window.state._pcFoundationLastFailure = null; }
       return stillCurrent ? result : window.state.pcBodyBible;
     }
     function _pcBibleSubject() {
@@ -255953,8 +255999,18 @@ Generate the synopsis now.` }
         // TIERED PROVIDER POLICY (2026-09-13): Mistral (ministral-8b-2512) primary → Grok
         // fallback → Claude/OpenAI terminal-only, via the shared _callTieredProvider helper
         // (grep "TIERED PROVIDER POLICY" near ~5817). Prompt content (sys/usr) is UNCHANGED —
-        // only the transport that carries it changed. A thrown error (all three tiers
-        // exhausted) is handled the same way the old `!res.ok` branch was: warn + return null.
+        // only the transport that carries it changed.
+        //
+        // NAMED INFRASTRUCTURE FAILURE (Roman, corrective follow-up #10, 2026-09-15) — a thrown
+        // error here (all three tiers exhausted) used to collapse to a bare `return null`,
+        // indistinguishable from "the model legitimately produced nothing" by the time it reached
+        // _generatePCBodyBible()'s own truthy check, which then called _bibleArtifactCommitted on
+        // a falsy result's sibling truthy replacement (see below) — a real "no silent success" bug
+        // this run's live sample exposed (a real 502 on the primary tier). This now returns a
+        // DISTINCTLY-SHAPED object instead of null: never confusable with a real bible (no bible
+        // field ever has __pcFoundationOutcome), carrying exactly what a retry-eligible failure
+        // record needs — every physical attempt's provider/model/tier/httpStatus/hadContent, via
+        // _callTieredProvider's own attemptLog.
         var data;
         try {
           data = await _callTieredProvider('pcBodyBible', [
@@ -255963,7 +256019,13 @@ Generate the synopsis now.` }
           ], { max_tokens: 2500, temperature: 0.6 });
         } catch (_tpErr) {
           try { console.warn('[PC-BODY-BIBLE] all provider tiers failed: ' + (_tpErr && _tpErr.message)); } catch (_) {}
-          return null;
+          return {
+            __pcFoundationOutcome: 'PC_FOUNDATION_UPSTREAM_FAILURE',
+            reason: 'all_provider_tiers_failed',
+            attempts: (_tpErr && _tpErr.attemptLog) || [],
+            retryEligible: true,
+            at: Date.now(),
+          };
         }
         try { if (typeof _recordProxyTextCost === 'function') _recordProxyTextCost(data, (data && data._orchestration && data._orchestration.model), 'setup'); } catch (_) {}
         var rawc = (data && typeof data.content === 'string') ? data.content : '';

@@ -98,7 +98,18 @@ function fulfillFail(route) {
     const ledger = (window.state._bibleArtifacts || {}).pc;
     return { result: r, ledgerStatus: ledger && ledger.status, ledgerAttempt: ledger && ledger.attempt, ledgerError: ledger && ledger.error };
   });
-  ok('DELAYED-RETRY: a genuine first-attempt failure (all 3 tiers exhausted) is recorded explicitly — status=failed, a real reason, result=null', first.result === null && first.ledgerStatus === 'failed' && !!first.ledgerError, JSON.stringify(first));
+  // NAMED INFRASTRUCTURE FAILURE (Roman, corrective follow-up #10, 2026-09-15) — a genuine
+  // all-tiers-exhausted failure now returns a distinctly-shaped, retry-eligible failure record
+  // (never null, never confusable with a real bible) instead of collapsing to null. This is the
+  // REAL fix the live sample's actual 502 exposed: the old bare-null return let
+  // _generatePCBodyBible's truthy check mis-mark a failed operation as committed.
+  ok('DELAYED-RETRY: a genuine first-attempt failure (all 3 tiers exhausted) is recorded explicitly — status=failed, a real reason, a NAMED failure record (never null, never a bible)',
+    first.result && first.result.__pcFoundationOutcome === 'PC_FOUNDATION_UPSTREAM_FAILURE' && first.result.retryEligible === true
+    && Array.isArray(first.result.attempts) && first.result.attempts.length === 3
+    && first.ledgerStatus === 'failed' && !!first.ledgerError, JSON.stringify(first));
+  ok('DELAYED-RETRY: the failure record\'s 3 attempts are each correlated (requestId/tier/provider/httpStatus), not a flattened blob',
+    first.result && first.result.attempts.every(a => a.requestId && a.tier && a.provider && a.httpStatus === 500 && a.hadContent === false && a.outcome === 'failed'),
+    JSON.stringify(first.result && first.result.attempts));
 
   // Simulate the delayed second call from a DIFFERENT lifecycle entry point — same declared inputs
   // (no explicit refresh), calling the SAME real function again, exactly as _runEnsureCGScaffold's
