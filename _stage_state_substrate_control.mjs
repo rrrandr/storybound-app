@@ -29,10 +29,10 @@ function sliceLines(from1, to1, startAnchor, endAnchor) {
 }
 
 const relLedgerSrc = sliceLines(31154, 31264, 'var REL_V = 1;', 'function _relEnsureEntity(L, id, patch)');
-const stageStateSrc = sliceLines(197667, 197929,
+const stageStateSrc = sliceLines(197703, 197965,
   'GENERIC STAGE-STATE SUBSTRATE (Roman, authorized 2026-09-14)',
   'window._acceptStageProposal = _acceptStageProposal;') + '\n'
-  + sliceLines(198222, 198230, 'function _deriveObjectHead(label) {', 'window._deriveObjectHead = _deriveObjectHead;');
+  + sliceLines(198258, 198266, 'function _deriveObjectHead(label) {', 'window._deriveObjectHead = _deriveObjectHead;');
 
 const body = relLedgerSrc + '\n' + stageStateSrc;
 const factory = new Function('window', body);

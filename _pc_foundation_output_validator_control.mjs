@@ -132,14 +132,14 @@ function fullyCoveredGreenBible() {
       refusal: 'To let the Dohkar’s claim that she was shaping the wish and interfering go unanswered before he has ruled.',
     },
     _provenance: {
-      'wound.core': { basis: 'approved_facet:pc_fears_public_failure', cites: 'Failing is survivable; failing where it can be witnessed and recounted is not' },
-      'wound.surfacing_hint': { basis: 'inferred', cites: '' },
-      'core_contradiction': { basis: 'approved_facet:pc_untested_brilliance', cites: 'She knows the procedure better than she has ever performed it' },
-      'private_hope': { basis: 'inferred', cites: '' },
-      'current_crisis.event': { basis: 'approved_scene1', cites: 'The presiding Dohkar has charged Lirael with shaping the wish and with interfering' },
-      'current_crisis.immediate_fear': { basis: 'inferred', cites: '' },
-      'current_crisis.li_complication': { basis: 'approved_relationship', cites: 'Already knows something about the PC’s lineage' },
-      'current_crisis.refusal': { basis: 'approved_scene1', cites: 'The presiding Dohkar has charged Lirael with shaping the wish and with interfering; he has not yet ruled' },
+      'wound.core': { kind: 'locked_canon_fact', basis: 'approved_facet:pc_fears_public_failure', cites: 'Failing is survivable; failing where it can be witnessed and recounted is not' },
+      'wound.surfacing_hint': { kind: 'grounded_inference', basis: 'inferred', cites: '' },
+      'core_contradiction': { kind: 'locked_canon_fact', basis: 'approved_facet:pc_untested_brilliance', cites: 'She knows the procedure better than she has ever performed it' },
+      'private_hope': { kind: 'grounded_inference', basis: 'inferred', cites: '' },
+      'current_crisis.event': { kind: 'locked_canon_fact', basis: 'approved_scene1', cites: 'The presiding Dohkar has charged Lirael with shaping the wish and with interfering' },
+      'current_crisis.immediate_fear': { kind: 'grounded_inference', basis: 'inferred', cites: '' },
+      'current_crisis.li_complication': { kind: 'locked_canon_fact', basis: 'approved_relationship', cites: 'Already knows something about the PC’s lineage' },
+      'current_crisis.refusal': { kind: 'locked_canon_fact', basis: 'approved_scene1', cites: 'The presiding Dohkar has charged Lirael with shaping the wish and with interfering; he has not yet ruled' },
     },
   };
 }
@@ -249,7 +249,7 @@ section('CONTROL 4 — a citation that names a REAL source but the WRONG categor
     _provenance: {
       // basis claims this comes from HER OWN facet, but the cited text is real — it is Julian's
       // bio, not her facet. A real, existing string, the WRONG category for this claim.
-      'core_contradiction': { basis: 'approved_facet:pc_untested_brilliance', cites: 'Already knows something about the PC’s lineage' },
+      'core_contradiction': { kind: 'locked_canon_fact', basis: 'approved_facet:pc_untested_brilliance', cites: 'Already knows something about the PC’s lineage' },
     },
   };
   const result = win._validatePcFoundationOutput(wrongCategoryBible, source);
@@ -258,7 +258,7 @@ section('CONTROL 4 — a citation that names a REAL source but the WRONG categor
 
   const fabricatedBible = {
     core_contradiction: 'She secretly wishes she had never been chosen for this role at all.',
-    _provenance: { 'core_contradiction': { basis: 'approved_facet:pc_untested_brilliance', cites: 'she secretly wishes she had never been chosen' } },
+    _provenance: { 'core_contradiction': { kind: 'locked_canon_fact', basis: 'approved_facet:pc_untested_brilliance', cites: 'she secretly wishes she had never been chosen' } },
   };
   const result2 = win._validatePcFoundationOutput(fabricatedBible, source);
   ok('a wholly fabricated citation is ALSO rejected — citation_not_supported', result2.ok === false
@@ -266,7 +266,7 @@ section('CONTROL 4 — a citation that names a REAL source but the WRONG categor
 
   const badFacetIdBible = {
     core_contradiction: 'She knows the procedure better than she has ever performed it.',
-    _provenance: { 'core_contradiction': { basis: 'approved_facet:pc_does_not_exist', cites: 'anything' } },
+    _provenance: { 'core_contradiction': { kind: 'locked_canon_fact', basis: 'approved_facet:pc_does_not_exist', cites: 'anything' } },
   };
   const result3 = win._validatePcFoundationOutput(badFacetIdBible, source);
   ok('a basis naming a facet_id that does not exist is rejected — citation_basis_not_found', result3.ok === false
@@ -274,7 +274,7 @@ section('CONTROL 4 — a citation that names a REAL source but the WRONG categor
 
   const badBasisBible = {
     core_contradiction: 'She knows the procedure better than she has ever performed it.',
-    _provenance: { 'core_contradiction': { basis: 'made_up_basis_value', cites: 'anything' } },
+    _provenance: { 'core_contradiction': { kind: 'locked_canon_fact', basis: 'made_up_basis_value', cites: 'anything' } },
   };
   const result4 = win._validatePcFoundationOutput(badBasisBible, source);
   ok('an unrecognized basis enum value is rejected — invalid_basis_value', result4.ok === false
@@ -289,7 +289,7 @@ section('CONTROL 5 — a partially cited response: seven fields correct, ONE dur
   const source = win._pcFoundationSourceFacts(s);
   const partial = fullyCoveredGreenBible();
   // Sabotage exactly one field's citation — everything else stays fully correct.
-  partial._provenance['current_crisis.refusal'] = { basis: 'approved_bio', cites: 'a phrase that is not in her approved bio at all' };
+  partial._provenance['current_crisis.refusal'] = { kind: 'locked_canon_fact', basis: 'approved_bio', cites: 'a phrase that is not in her approved bio at all' };
   const result = win._validatePcFoundationOutput(partial, source);
   ok('the response is REJECTED overall from a single bad field', result.ok === false);
   ok('exactly the sabotaged field is rejected — citation_not_supported',
@@ -319,7 +319,7 @@ section('CONTROL 6 — the content-layer fence fires independently of provenance
   // Dangerous content, a self-reported "inferred" basis — does NOT excuse it.
   const inferredEvasion = {
     wound: { core: 'Her father vanished during a sacrifice and never came back.' },
-    _provenance: { 'wound.core': { basis: 'inferred', cites: '' } },
+    _provenance: { 'wound.core': { kind: 'grounded_inference', basis: 'inferred', cites: '' } },
   };
   const r2 = win._validatePcFoundationOutput(inferredEvasion, source);
   ok('marking a minted family-death event "inferred" does NOT excuse it — content layer still rejects it',
@@ -328,7 +328,7 @@ section('CONTROL 6 — the content-layer fence fires independently of provenance
   // Dangerous content, a FABRICATED but well-formed citation trying to look legitimate.
   const fakedCitation = {
     wound: { core: 'Her father vanished during a sacrifice and never came back.' },
-    _provenance: { 'wound.core': { basis: 'approved_facet:pc_fears_public_failure', cites: 'Failing is survivable; failing where it can be witnessed and recounted is not' } },
+    _provenance: { 'wound.core': { kind: 'locked_canon_fact', basis: 'approved_facet:pc_fears_public_failure', cites: 'Failing is survivable; failing where it can be witnessed and recounted is not' } },
   };
   const r3 = win._validatePcFoundationOutput(fakedCitation, source);
   ok('a real, valid-LOOKING citation attached to dangerous content still gets caught by the content layer',
@@ -345,8 +345,8 @@ section('CONTROL 7 — ordinary, source-neutral claims with COMPLETE citations a
     core_contradiction: 'She rehearses control because an unrehearsed moment once cost her a clean performance in front of her whole cohort.',
     private_hope: 'To finish a rite without a single visible tremor.',
     _provenance: {
-      'core_contradiction': { basis: 'inferred', cites: '' },
-      'private_hope': { basis: 'inferred', cites: '' },
+      'core_contradiction': { kind: 'grounded_inference', basis: 'inferred', cites: '' },
+      'private_hope': { kind: 'grounded_inference', basis: 'inferred', cites: '' },
     },
   };
   const result = win._validatePcFoundationOutput(mundane, source);
@@ -374,7 +374,7 @@ section('CONTROL 9 (Roman\'s exact exploit) — a citation to the RIGHT category
   const sameCategoryUnrelated = {
     wound: { core: 'Her mother vanished during a ritual sacrifice years ago and was never seen again.' },
     _provenance: {
-      'wound.core': { basis: 'approved_bio', cites: 'Today is her first time SUPERVISING another person’s First Sacrifice' },
+      'wound.core': { kind: 'locked_canon_fact', basis: 'approved_bio', cites: 'Today is her first time SUPERVISING another person’s First Sacrifice' },
     },
   };
   const result = win._validatePcFoundationOutput(sameCategoryUnrelated, source);
@@ -395,7 +395,7 @@ section('CONTROL 9 (Roman\'s exact exploit) — a citation to the RIGHT category
   const sameCategorySupported = {
     core_contradiction: 'She is brilliant but untested, and she is terrified of failing publicly now that the whole assembly is watching.',
     _provenance: {
-      'core_contradiction': { basis: 'approved_bio', cites: 'Brilliant but untested; terrified of failing publicly' },
+      'core_contradiction': { kind: 'locked_canon_fact', basis: 'approved_bio', cites: 'Brilliant but untested; terrified of failing publicly' },
     },
   };
   const result2 = win._validatePcFoundationOutput(sameCategorySupported, source);
@@ -542,6 +542,160 @@ section('CONTROL 10 (FACET-INDEX WIRING) — a validated, committed portfolio re
     const ids = (idx['pc:lirael'].facets || []).map(f => f.facet_id).sort();
     ok('10g: after replaying the retained REJECTED sample through the real merge boundary, the facet index still holds only the seed\'s own two facets',
       JSON.stringify(ids) === JSON.stringify(['pc_fears_public_failure', 'pc_untested_brilliance']), JSON.stringify(ids));
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════════════════════
+section('CONTROL 11 (THREE-KIND REDESIGN, Roman corrective #12, 2026-09-15) — generated_foundation can be accepted; false-sourcing and hard red lines still reject; retained samples replay unmodified');
+{
+  const win = freshSandbox({ starter_first_sacrifice: FIRST_SACRIFICE_SEED });
+
+  // 11a/11b — REPLAY THE ACTUAL RETAINED LIVE SAMPLES, UNMODIFIED. Not rewritten to pass — the
+  // whole point is to prove they are STILL rejected under the new schema, for the reason the new
+  // schema actually names: neither ever declared a "kind" at all (they predate this redesign),
+  // so every durable claim they make is rejected as missing_or_invalid_claim_kind — plus,
+  // independently, the hard-red-line content checks still catch the SAME dangerous content
+  // (an invented family-tragedy claim) exactly as before, since a claim with no resolvable kind
+  // is conservatively treated as neither locked nor inferred nor generated.
+  ['2026-09-15T21-40-55-755Z_live_sample.json', '2026-09-15T21-58-49-058Z_live_sample.json'].forEach((fname, i) => {
+    const raw = JSON.parse(fs.readFileSync(path.join(__dirname, '_audit_out/pc_foundation_samples', fname), 'utf8'));
+    const bible = raw.parsedBible;
+    if (!bible) { ok('11' + (i ? 'b' : 'a') + ': ' + fname + ' has a parsedBible to replay', false, 'missing parsedBible'); return; }
+    const s = baseState({ playerName: 'Lirael' });
+    const source = win._pcFoundationSourceFacts(s);
+    const result = win._validatePcFoundationOutput(bible, source);
+    ok('11' + (i ? 'b' : 'a') + ': retained sample ' + fname + ' (pre-redesign, no "kind" declared anywhere) is REJECTED, not auto-rewritten to pass',
+      result.ok === false);
+    ok('11' + (i ? 'b' : 'a') + ': rejected specifically for missing_or_invalid_claim_kind on at least one field (the honest reason under the new schema)',
+      result.rejections.some(r => r.reason === 'missing_or_invalid_claim_kind'), JSON.stringify(result.rejections.map(r => r.reason)));
+    ok('11' + (i ? 'b' : 'a') + ': the SAME dangerous content is STILL independently caught by a hard-red-line or unsupported-invention check (kind resolving to null is treated conservatively, not as a free pass)',
+      result.rejections.some(r => r.reason === 'unsupported_family_death_or_disappearance' || r.reason === 'citation_does_not_support_claim' || r.reason === 'citation_not_supported' || r.reason === 'authority_misattributed_to_li'),
+      JSON.stringify(result.rejections.map(r => r.reason)));
+    const before = JSON.parse(JSON.stringify(s._pcPortfolio || null));
+    const merge = win._commitValidatedPcFoundation(s, bible);
+    ok('11' + (i ? 'b' : 'a') + ': merge refuses, zero mutation', merge.committed === false && JSON.stringify(s._pcPortfolio || null) === JSON.stringify(before));
+  });
+
+  // 11c — A CORRECTLY-TYPED "Elowen" fixture: the SAME kind of new-sister backstory the retained
+  // sample invented, but honestly declared kind:'generated_foundation', basis:'generated', cites
+  // empty. Must be ACCEPTED and MERGED — proving the redesign actually permits legitimate
+  // invention, not just rejects everything the way the prior design effectively did.
+  {
+    const s = baseState({ playerName: 'Lirael' });
+    const source = win._pcFoundationSourceFacts(s);
+    const generatedElowen = {
+      wound: {
+        core: 'her estranged sister Elowen, who left the Favored ranks after a public scandal — Lirael has carried the guilt of not stopping her since she was sixteen',
+        category: 'PUBLIC',
+        surfacing_hint: 'a public failure that forces her to confront the same flaws Elowen was cast out for',
+      },
+      core_contradiction: 'She knows the procedure better than she has ever performed it, and the gap between knowing and doing is where her fear lives.',
+      _provenance: {
+        'wound.core': { kind: 'generated_foundation', basis: 'generated', cites: '' },
+        'wound.surfacing_hint': { kind: 'generated_foundation', basis: 'generated', cites: '' },
+        'core_contradiction': { kind: 'locked_canon_fact', basis: 'approved_facet:pc_untested_brilliance', cites: 'She knows the procedure better than she has ever performed it' },
+      },
+    };
+    const result = win._validatePcFoundationOutput(generatedElowen, source);
+    ok('11c: a correctly-typed generated_foundation "new sister" claim is ACCEPTED (no rejections)', result.ok === true, JSON.stringify(result.rejections));
+    ok('11c: accepted[] records kind:"generated_foundation" for wound.core', result.accepted.some(a => a.field === 'wound.core' && a.kind === 'generated_foundation'), JSON.stringify(result.accepted));
+
+    const merge = win._commitValidatedPcFoundation(s, generatedElowen);
+    ok('11c: the merge COMMITS the generated content', merge.committed === true, JSON.stringify(merge));
+    ok('11c: the merged facet is tagged origin:pc_body_bible_generated_canon (distinguishable from locked/inferred merges)',
+      (s._pcPortfolio.facets || []).some(f => f.facet_id === 'pc_generated_wound_core' && f.origin === 'pc_body_bible_generated_canon'),
+      JSON.stringify((s._pcPortfolio.facets || []).map(f => ({ id: f.facet_id, origin: f.origin }))));
+    ok('11c: the seed\'s own 2 facets are untouched alongside the new generated ones', (s._pcPortfolio.facets || []).some(f => f.facet_id === 'pc_untested_brilliance') && (s._pcPortfolio.facets || []).some(f => f.facet_id === 'pc_fears_public_failure'));
+
+    const idx = win._facetIndex(s, { sceneNumber: 2 });
+    const ids = (idx['pc:lirael'].facets || []).map(f => f.facet_id).sort();
+    ok('11c: the generated facet reaches _facetIndex (the SAME chain literary/CG delivery consumes)', ids.indexOf('pc_generated_wound_core') !== -1, JSON.stringify(ids));
+  }
+
+  // 11d — THE SAME "Elowen" content, but FALSELY declared kind:'locked_canon_fact' as if it were
+  // already-established canon, citing a real-but-irrelevant bio snippet — exactly Roman's
+  // diagnosis of the retained samples' actual defect. Must be REJECTED.
+  {
+    const s = baseState({ playerName: 'Lirael' });
+    const source = win._pcFoundationSourceFacts(s);
+    const falselyLockedElowen = {
+      wound: { core: 'her estranged sister Elowen, who left the Favored ranks after a public scandal — Lirael has carried the guilt of not stopping her since she was sixteen' },
+      _provenance: {
+        'wound.core': { kind: 'locked_canon_fact', basis: 'approved_bio', cites: 'A young First Favored apprentice. Today is her first time SUPERVISING another person’s First Sacrifice' },
+      },
+    };
+    const result = win._validatePcFoundationOutput(falselyLockedElowen, source);
+    ok('11d: the SAME generated content, falsely presented as kind:"locked_canon_fact", is REJECTED', result.ok === false, JSON.stringify(result.rejections));
+    ok('11d: rejected for citation not actually supporting the claim (false-sourcing), and/or the unsupported-invention hard line — either is a correct catch of "falsely presented as canon"',
+      result.rejections.some(r => r.field === 'wound.core' && (r.reason === 'citation_does_not_support_claim' || r.reason === 'citation_not_supported' || r.reason === 'unsupported_family_death_or_disappearance')),
+      JSON.stringify(result.rejections));
+    const merge = win._commitValidatedPcFoundation(s, falselyLockedElowen);
+    ok('11d: merge refuses, zero mutation', merge.committed === false && !s._pcPortfolio);
+  }
+
+  // 11e — HARD RED LINE: Julian ruling on her guilt. Must reject regardless of declared kind —
+  // tested under BOTH locked_canon_fact (fabricated citation) AND generated_foundation (honestly
+  // declared as new material) to prove this is a KIND-INDEPENDENT red line, not merely another
+  // citation failure that a well-formed generated_foundation claim could slip past.
+  {
+    const s = baseState({ playerName: 'Lirael' });
+    const source = win._pcFoundationSourceFacts(s);
+    ['locked_canon_fact', 'generated_foundation'].forEach((k) => {
+      const julianRulesGuilt = {
+        current_crisis: { refusal: 'To accept that Julian has already decided she is guilty of shaping the wish, before the Dohkar has ruled.' },
+        _provenance: {
+          'current_crisis.refusal': k === 'locked_canon_fact'
+            ? { kind: 'locked_canon_fact', basis: 'approved_scene1', cites: 'The presiding Dohkar has charged Lirael with shaping the wish and with interfering; he has not yet ruled' }
+            : { kind: 'generated_foundation', basis: 'generated', cites: '' },
+        },
+      };
+      const result = win._validatePcFoundationOutput(julianRulesGuilt, source);
+      ok('11e (' + k + '): Julian-rules-on-guilt is REJECTED regardless of declared kind', result.ok === false, JSON.stringify(result.rejections));
+      ok('11e (' + k + '): rejected specifically for authority_misattributed_to_li (the hard red line, not a citation technicality)',
+        result.rejections.some(r => r.reason === 'authority_misattributed_to_li'), JSON.stringify(result.rejections));
+    });
+  }
+
+  // 11f — a generated field that FORCES the reader's live agency (a present-moment confession/
+  // decision, not an established trait). Must reject even though honestly declared generated.
+  {
+    const s = baseState({ playerName: 'Lirael' });
+    const source = win._pcFoundationSourceFacts(s);
+    const forcedConfession = {
+      current_crisis: { refusal: 'She confesses to Julian right now that she has always loved him, before the inquiry even begins.' },
+      _provenance: { 'current_crisis.refusal': { kind: 'generated_foundation', basis: 'generated', cites: '' } },
+    };
+    const result = win._validatePcFoundationOutput(forcedConfession, source);
+    ok('11f: a generated field forcing the reader\'s live confession is REJECTED', result.ok === false, JSON.stringify(result.rejections));
+    ok('11f: rejected specifically for forces_reader_agency', result.rejections.some(r => r.reason === 'forces_reader_agency'), JSON.stringify(result.rejections));
+  }
+
+  // 11g — a generated field that leaks Julian's SEALED interference (honestly declared generated,
+  // still must reject — new creative material may not contradict what the seed has sealed).
+  {
+    const s = baseState({ playerName: 'Lirael' });
+    const source = win._pcFoundationSourceFacts(s);
+    const leakedInterference = {
+      current_crisis: { immediate_fear: 'That the assembly will discover Julian actually interfered with the wish before she can explain it.' },
+      _provenance: { 'current_crisis.immediate_fear': { kind: 'generated_foundation', basis: 'generated', cites: '' } },
+    };
+    const result = win._validatePcFoundationOutput(leakedInterference, source);
+    ok('11g: a generated field leaking Julian\'s sealed interference is REJECTED', result.ok === false, JSON.stringify(result.rejections));
+    ok('11g: rejected specifically for julian_sealed_interference_leaked', result.rejections.some(r => r.reason === 'julian_sealed_interference_leaked'), JSON.stringify(result.rejections));
+  }
+
+  // 11h — a grounded_inference that smuggles in a brand-new named person (not permitted for this
+  // kind — only generated_foundation may introduce new people).
+  {
+    const s = baseState({ playerName: 'Lirael' });
+    const source = win._pcFoundationSourceFacts(s);
+    const smuggledName = {
+      private_hope: 'That Master Hallowyn, who trained her as a child, would finally admit she was ready.',
+      _provenance: { 'private_hope': { kind: 'grounded_inference', basis: 'inferred', cites: '' } },
+    };
+    const result = win._validatePcFoundationOutput(smuggledName, source);
+    ok('11h: a grounded_inference smuggling in a brand-new named person ("Master Hallowyn") is REJECTED', result.ok === false, JSON.stringify(result.rejections));
+    ok('11h: rejected specifically for grounded_inference_names_new_person_or_event', result.rejections.some(r => r.reason === 'grounded_inference_names_new_person_or_event'), JSON.stringify(result.rejections));
   }
 }
 

@@ -129797,6 +129797,37 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
                  forbidden_restatements: [], origin: 'pc_body_bible',
                  possible_pressures: [{ text: fear, evidence_requires: _pcEvidenceRequiresFromText(crisisText || fear) }] });
     }
+    // GENERATED FOUNDATION FACETS (Roman, corrective follow-up #12, 2026-09-15) — genuinely NEW
+    // creative material the model contributed for an unfilled slot (e.g. a sister, a prior event,
+    // a vulnerability), validated and ACCEPTED under kind:'generated_foundation'. Unlike
+    // core_contradiction/immediate_fear above (mapped unconditionally), these five fields are
+    // mapped ONLY when their OWN _provenance entry says kind==='generated_foundation' — a
+    // locked_canon_fact or grounded_inference claim in the SAME field is restating/interpreting
+    // canon the seed's own facets (or the two unconditional mappings above) already cover, and is
+    // deliberately NOT re-merged as if it were new content. facet_id is prefixed 'pc_generated_'
+    // so _commitValidatedPcFoundation can tag its origin distinctly WITHOUT _normFacet needing to
+    // preserve a custom field (it whitelists its output shape and would drop one). This function
+    // is only ever called with an ALREADY validated+accepted bible — every red line has passed.
+    var _prov = (bible._provenance && typeof bible._provenance === 'object') ? bible._provenance : {};
+    var _provFor = function (key) { return _prov[key] || _prov[key.split('.').pop()]; };
+    var _genMap = [
+      // 'wound' is NOT one of _CPLUS_FACET_CATEGORIES's ten values (_normFacet silently drops an
+      // invalid category, found by this file's own offline control) — 'history' is the closest
+      // real category (a wound is fundamentally a past event shaping her present).
+      { key: 'wound.core', facet_id: 'pc_generated_wound_core', category: 'history', get: function (b) { return b.wound && b.wound.core; } },
+      { key: 'wound.surfacing_hint', facet_id: 'pc_generated_wound_surfacing_hint', category: 'history', get: function (b) { return b.wound && b.wound.surfacing_hint; } },
+      { key: 'private_hope', facet_id: 'pc_generated_private_hope', category: 'desire', get: function (b) { return b.private_hope; } },
+      { key: 'current_crisis.li_complication', facet_id: 'pc_generated_li_complication', category: 'relationship_pattern', get: function (b) { return b.current_crisis && b.current_crisis.li_complication; } },
+      { key: 'current_crisis.refusal', facet_id: 'pc_generated_refusal', category: 'value', get: function (b) { return b.current_crisis && b.current_crisis.refusal; } },
+    ];
+    _genMap.forEach(function (m) {
+      var pr = _provFor(m.key);
+      if (!pr || pr.kind !== 'generated_foundation') return;
+      var v = String(m.get(bible) || '').trim();
+      if (!v) return;
+      out.push({ facet_id: m.facet_id, category: m.category, canonical_truth: v, forbidden_restatements: [], origin: 'pc_body_bible',
+                 possible_pressures: [{ text: v, evidence_requires: _pcEvidenceRequiresFromText(crisisText || v) }] });
+    });
     return out;
   }
   try { if (typeof window !== 'undefined') window._pcFacetsFromBodyBible = _pcFacetsFromBodyBible; } catch (_) {}
@@ -134419,8 +134450,13 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       (Array.isArray(seedPc.cPlusFacets) ? seedPc.cPlusFacets : []).forEach(function (f) {
         if (f && f.facet_id) seedFacetIds[f.facet_id] = 1;
       });
+      // Both origins reach _facetIndex (Roman, corrective follow-up #12, 2026-09-15) — a
+      // locked/inferred claim tagged 'pc_body_bible_validated' AND genuinely new creative
+      // material tagged 'pc_body_bible_generated_canon' are both validated, accepted, real
+      // additions to the usable portfolio; only their PROVENANCE differs, which the facet itself
+      // still carries (origin) for any downstream consumer that wants to distinguish them.
       var validated = (rec.facets || []).filter(function (f) {
-        return f && f.origin === 'pc_body_bible_validated' && f.facet_id && !seedFacetIds[f.facet_id];
+        return f && (f.origin === 'pc_body_bible_validated' || f.origin === 'pc_body_bible_generated_canon') && f.facet_id && !seedFacetIds[f.facet_id];
       });
       if (!validated.length) return out;
       var _pcId = _resolvePcIdentity(s);
@@ -255218,21 +255254,45 @@ Generate the synopsis now.` }
           + 'conflict with it, and do NOT silently overwrite anything it states. Where the schema asks for '
           + 'something this material does not cover, you may originate NEW material for THAT field only, '
           + 'and it must remain consistent with everything below.');
-        L.push('CITE YOUR BASIS (HARD, MANDATORY — Roman, corrective, 2026-09-15): for EVERY ONE of '
-          + 'wound.core, wound.surfacing_hint, core_contradiction, private_hope, current_crisis.event, '
-          + 'current_crisis.immediate_fear, current_crisis.li_complication, and current_crisis.refusal, the '
-          + 'JSON MUST include a top-level "_provenance" object keyed by field name (use the exact dotted '
-          + 'keys just listed), each entry {"basis": one of "approved_bio" | "approved_facet:<facet_id>" | '
-          + '"approved_relationship" | "approved_scene1" | "approved_posture" | "inferred", "cites": the '
-          + 'EXACT short snippet from the material above that basis is drawn from, copied verbatim (omit/empty '
-          + 'ONLY when basis is "inferred")}. A response with NO "_provenance" object, or missing an entry for '
-          + 'any of the eight fields above, is REJECTED outright — this is not optional and there is no '
-          + 'content-only fallback. "inferred" is allowed ONLY for a genuinely new observation that does not '
-          + 'assert a new permanent fact (a reading of her feelings, never a new event, relationship history, '
-          + 'or person) — it is NOT a way to avoid citing. Never invent a family member\'s fate, never assert '
-          + 'an emotional history with the love interest beyond his approved bio, never assign a '
-          + 'ruling/judging authority to anyone this material does not already give it to — marking such a '
-          + 'claim "inferred" does not make it acceptable.');
+        L.push('DECLARE THE KIND OF EVERY CLAIM (HARD, MANDATORY — Roman, corrective, 2026-09-15): for '
+          + 'EVERY ONE of wound.core, wound.surfacing_hint, core_contradiction, private_hope, '
+          + 'current_crisis.event, current_crisis.immediate_fear, current_crisis.li_complication, and '
+          + 'current_crisis.refusal, the JSON MUST include a top-level "_provenance" object keyed by field '
+          + 'name (use the exact dotted keys just listed), each entry {"kind": one of the three below, '
+          + '"basis": ..., "cites": ...}. A response with NO "_provenance" object, or missing an entry for '
+          + 'any of the eight fields, is REJECTED outright. THE THREE KINDS:');
+        L.push('  1. "locked_canon_fact" — states something the material below ALREADY establishes. '
+          + 'Requires "basis": one of "approved_bio" | "approved_facet:<facet_id>" | "approved_relationship" '
+          + '| "approved_scene1" | "approved_posture", and "cites": the EXACT short snippet from that '
+          + 'material this claim restates, copied verbatim. If it contradicts the material below, it is '
+          + 'rejected regardless of citation.');
+        L.push('  2. "grounded_inference" — a READING of established canon (how she likely feels about it, '
+          + 'what it implies), clearly an interpretation, not a new fact. May set "basis" to a real category '
+          + 'above (the citation need not be verbatim) or to "inferred" with "cites" empty. Must NOT '
+          + 'introduce a new named person, a new past event, a new authority arrangement, or a new settled '
+          + 'relationship history — an inference reads what is already there; it does not add to the cast.');
+        L.push('  3. "generated_foundation" — genuinely NEW creative material for a slot this canon leaves '
+          + 'open (a sibling, an earlier failure, a specific fear, a complication with him that is not yet '
+          + 'written). Set "basis":"generated" and leave "cites" EMPTY — never cite a source for invented '
+          + 'material; claiming this was already established when it was not is the one thing this schema '
+          + 'exists to catch. This is not merely allowed — GENERATING SPECIFIC NEW FOUNDATION MATERIAL IS '
+          + 'THIS TASK\'S WHOLE PURPOSE for any field the material below does not already cover. A working '
+          + 'story needs a filled-in protagonist, not a blank one padded with vague inference.');
+        L.push('HARD LINES, REGARDLESS OF KIND — no exception, no citation excuses these: never rewrite who '
+          + 'holds ruling/judging authority (the presiding Dohkar rules; that is not open to reassignment); '
+          + 'never claim or imply ' + (src.liName || 'the love interest') + ' interfered with, shaped, or is '
+          + 'guilty of anything, and never suggest he is suspected — that is SEALED, not yet true in this '
+          + 'story, no matter how the claim is sourced; never state that she is, right now, already '
+          + 'confessing, deciding, or declaring something in this moment — that choice belongs to the reader\'s '
+          + 'next action, not to a foundation document.');
+        L.push('WHAT TO GENERATE, AND WHAT TO AVOID DEFAULTING TO: prefer pressures that grow SPECIFICALLY '
+          + 'from what is already true of her — her aspiration and rank within the Institution, the public '
+          + 'accusation she is under RIGHT NOW, her actual institutional status, and her real relationship to '
+          + (src.liName || 'the love interest') + ' — over a generic, interchangeable backstory. A dead or '
+          + 'estranged family member is not banned, but it must EARN its place: it should connect concretely '
+          + 'to THIS crisis (her specific accusation, her specific ambition), not stand in as a shortcut for '
+          + '"tragic past." If you generate one, make it as specific and dramatically load-bearing as the '
+          + 'material already given below — never a placeholder feeling.');
 
         L.push('');
         L.push('FIXED IDENTITY: ' + src.pcName + ', PC' + (src.pcSpecies ? ', ' + src.pcSpecies : '') + '.');
@@ -255336,11 +255396,83 @@ Generate the synopsis now.` }
       if (liGrantedAuthorityRe.test(source.allSourceText || '')) return { ok: true };
       return { ok: false, reason: 'authority_misattributed_to_li', detail: m[0] };
     }
+
+    // ══════════════════════════════════════════════════════════════════════════════════════
+    // HARD RED LINES (Roman, corrective follow-up #12, 2026-09-15) — apply to EVERY claim kind,
+    // including 'generated_foundation'. Roman's correction: "unsupported" must mean "a claim
+    // falsely presented as already-established canon", not "a new creative character fact" — the
+    // three checks above (family-loss, LI-intimacy) are therefore scoped to locked_canon_fact and
+    // grounded_inference ONLY from here on (see _validatePcFoundationOutput), never applied to
+    // genuinely new material. These three, below, are different in kind: they are never
+    // permissible regardless of how a claim is labeled, because they contradict LOCKED canon
+    // rather than merely inventing UNLOCKED material.
+    // ══════════════════════════════════════════════════════════════════════════════════════
+
+    // Julian's sealed interference (Roman: "no leakage of Julian's sealed interference") — the
+    // seed's own constraints ALREADY forbid this ("Julian must never read as suspicious before
+    // Scene 8"; "the PC must never consciously suspect Julian before the planner allows it" — see
+    // source.relationshipConstraints/allSourceText). A durable claim asserting Julian interfered,
+    // is guilty, or is suspected is invalid no matter how it is sourced or labeled.
+    var _PCV_SEALED_INTERFERENCE_RE = /\b(interfer\w*|shaped the wish|is guilty|guilt of|suspect\w*|responsible for (?:the|her) (?:misalign\w*|wish)|behind (?:the|her) wish)\b/i;
+    function _checkSealedInterferenceLeakage(text, source) {
+      if (!source.liName) return { ok: true };
+      var nameRe = new RegExp('\\b' + _pcvEscapeRegex(source.liName) + '\\b', 'i');
+      if (!nameRe.test(text)) return { ok: true };
+      var m = _PCV_SEALED_INTERFERENCE_RE.exec(text);
+      if (!m) return { ok: true };
+      // Deliberately NO "supported by source" escape hatch — unlike family-loss/LI-intimacy,
+      // which check whether the SAME pattern is independently established, this is sealed: the
+      // seed's own doctrine forbids it from being true yet, so no citation can ever justify it.
+      return { ok: false, reason: 'julian_sealed_interference_leaked', detail: m[0] };
+    }
+
+    // Forces the reader's live agency (Roman: "no generated PC interiority that forces the
+    // reader's current desire, belief, confession, or action"). Narrow and conservative by
+    // design, like every pattern-matcher in this file — an established trait ("she refuses to
+    // beg for mercy") is legitimate durable psychology; a flat assertion that she is, in THIS
+    // moment, already confessing/deciding/declaring is not — that choice belongs to the reader's
+    // next Say/Do, never to a foundation document.
+    var _PCV_FORCES_AGENCY_RE = /\bshe (?:confesses|admits|decides right now|chooses right now|will (?:confess|admit|tell him|say)|has already (?:confessed|admitted|decided))\b/i;
+    function _checkForcesReaderAgency(text, source) {
+      var m = _PCV_FORCES_AGENCY_RE.exec(text);
+      if (!m) return { ok: true };
+      return { ok: false, reason: 'forces_reader_agency', detail: m[0] };
+    }
+
+    // New-named-person smuggling (Roman: grounded_inference "may not smuggle in a new named
+    // person, historical event, authority arrangement, or settled relationship fact"). Applies
+    // ONLY to grounded_inference — locked_canon_fact's strict citation+entailment already
+    // structurally prevents this (a genuinely new name cannot appear in real cited source text),
+    // and generated_foundation explicitly PERMITS new people. Heuristic, deterministic, and
+    // conservative like every other check here: flags a capitalized proper-noun-shaped token that
+    // does not already appear anywhere in the approved source text. False positives (an ordinary
+    // capitalized word this list doesn't know to exclude) are the cheaper error, consistent with
+    // this file's established doctrine elsewhere.
+    var _PCV_PROPER_NOUN_RE = /\b[A-Z][a-z]{2,}\b/g;
+    var _PCV_CAPITALIZED_NONNAMES = { The: 1, A: 1, An: 1, This: 1, That: 1, These: 1, Those: 1,
+      He: 1, She: 1, His: 1, Her: 1, It: 1, They: 1, Today: 1, Now: 1, Before: 1, After: 1, If: 1,
+      When: 1, While: 1, Because: 1, Though: 1, Although: 1, Since: 1, So: 1, But: 1, And: 1, Or: 1 };
+    function _checkNewNamedPersonSmuggled(text, source) {
+      var matches = text.match(_PCV_PROPER_NOUN_RE) || [];
+      var haystack = String(source.allSourceText || '');
+      for (var i = 0; i < matches.length; i++) {
+        var w = matches[i];
+        if (_PCV_CAPITALIZED_NONNAMES[w]) continue;
+        if (w === source.pcName || w === source.liName) continue;
+        if (new RegExp('\\b' + _pcvEscapeRegex(w) + '\\b').test(haystack)) continue;
+        return { ok: false, reason: 'grounded_inference_names_new_person_or_event', detail: w };
+      }
+      return { ok: true };
+    }
+
     try {
       if (typeof window !== 'undefined') {
         window._checkUnsupportedFamilyLoss = _checkUnsupportedFamilyLoss;
         window._checkUnsupportedLiIntimacy = _checkUnsupportedLiIntimacy;
         window._checkAuthorityNotMisattributed = _checkAuthorityNotMisattributed;
+        window._checkSealedInterferenceLeakage = _checkSealedInterferenceLeakage;
+        window._checkForcesReaderAgency = _checkForcesReaderAgency;
+        window._checkNewNamedPersonSmuggled = _checkNewNamedPersonSmuggled;
       }
     } catch (_) {}
 
@@ -255417,13 +255549,37 @@ Generate the synopsis now.` }
       }
     } catch (_) {}
 
-    // REJECT-ONLY, never rewrites (a validator that rewrites is a competing author). PROVENANCE
-    // IS MANDATORY (Roman, corrective #4, 2026-09-15): a response with no valid _provenance
-    // object — absent, null, non-object, or an array — is rejected by name
-    // (no_provenance_block) for every durable claim it makes, full stop; it never falls back to
-    // "content-only acceptance." The CONTENT layer (the three named pattern checks) runs
-    // UNCONDITIONALLY regardless of the provenance outcome — a malformed or missing _provenance
-    // block does not exempt a claim from it; the two fences are independent, not either/or.
+    // THREE CLAIM KINDS (Roman, corrective follow-up #12, 2026-09-15) — Roman's correction to the
+    // prior design: "unsupported" must mean "a claim falsely presented as already-established
+    // canon" — not "a new creative character fact." The prior validator treated every durable
+    // claim identically (citation mandatory, strict entailment, invention forbidden), which made
+    // the whole generator a retrieval tool: nothing the model contributed for an unfilled slot
+    // (a sister, a prior event, a vulnerability) could ever pass, because nothing UNWRITTEN can
+    // be cited. Every durable claim now DECLARES which of three kinds it is, and each kind is
+    // validated differently:
+    //   locked_canon_fact — states existing canon. Requires a real basis category and a citation
+    //     that both contains the exact cited snippet AND passes claim-level entailment (the FULL
+    //     strict pipeline this validator already had) — unchanged from before, just now opt-in by
+    //     declaration rather than the only mode that ever existed.
+    //   grounded_inference — an interpretation/reading of canon, clearly marked as such. May cite
+    //     a basis, but the citation does NOT need to literally contain the claim's phrasing (no
+    //     substring check, no entailment threshold) — only that a claimed real-category basis
+    //     actually exists. May NOT smuggle in a new named person, historical event, authority
+    //     arrangement, or settled relationship fact (_checkNewNamedPersonSmuggled, plus the
+    //     family-loss/LI-intimacy checks below, all still apply to this kind).
+    //   generated_foundation — genuinely NEW creative material for an unfilled slot. MUST declare
+    //     basis:'generated' and MUST leave cites empty — claiming a source for invented material
+    //     is exactly the failure this redesign exists to separate from legitimate invention. The
+    //     family-loss/LI-intimacy "is this independently supported" checks do NOT apply (new
+    //     family/backstory content is the EXPECTED, PERMITTED case here) — but every HARD RED
+    //     LINE below still does.
+    // HARD RED LINES — apply to EVERY kind, no exceptions, no citation can excuse them:
+    // authority misattribution (the Dohkar's ruling role), Julian's sealed interference, and
+    // forcing the reader's live agency. PROVENANCE IS STILL MANDATORY for every durable claim —
+    // absent, null, non-object, or an array is rejected by name (no_provenance_block), never a
+    // content-only fallback. REJECT-ONLY, never rewrites (a validator that rewrites is a
+    // competing author).
+    var PCV_CLAIM_KINDS = ['locked_canon_fact', 'grounded_inference', 'generated_foundation'];
     function _validatePcFoundationOutput(bible, source) {
       var out = { ok: true, rejections: [], accepted: [] };
       if (!bible || typeof bible !== 'object') { out.ok = false; out.rejections.push({ field: '*', reason: 'no_bible_object' }); return out; }
@@ -255437,60 +255593,114 @@ Generate the synopsis now.` }
         if (!text) return;                            // nothing asserted, nothing to check
         var rejected = false;
         var reject = function (reason, detail) { rejected = true; out.ok = false; out.rejections.push({ field: f.key, reason: reason, detail: detail }); };
+        var kind = null;
 
         if (provenanceBlockMissing) {
           reject('no_provenance_block', 'response carries no valid _provenance object — provenance is mandatory for fixed-starter foundation output, not optional');
         } else {
           var leafKey = f.key.indexOf('.') !== -1 ? f.key.split('.').pop() : f.key;
           var pr = prov[f.key] || prov[leafKey];
-          if (!pr || typeof pr !== 'object' || !pr.basis) {
+          if (!pr || typeof pr !== 'object') {
             reject('no_valid_citation', 'no _provenance entry for ' + f.key);
-          } else if (pr.basis !== 'inferred') {
-            var srcText = _pcvSourceTextForBasis(pr.basis, source);
-            if (srcText === undefined) {
-              reject('invalid_basis_value', 'basis "' + pr.basis + '" is not one of the allowed values');
-            } else if (srcText === null) {
-              reject('citation_basis_not_found', 'basis "' + pr.basis + '" names a source that does not exist (e.g. an unknown facet_id)');
-            } else {
-              var cites = String(pr.cites || '').trim();
-              if (!cites) {
-                reject('citation_missing_snippet', 'basis="' + pr.basis + '" declared but cites is empty');
-              } else if (srcText.indexOf(cites) === -1) {
-                // A REAL source may exist elsewhere in the approved material — deliberately NOT
-                // checked against source.allSourceText here. A citation must support THIS claim
-                // from THIS claimed category, or it is exactly the "cites an irrelevant but real
-                // source" failure this whole per-basis lookup exists to catch.
-                reject('citation_not_supported', 'cites="' + cites + '" not found within the claimed basis category (' + pr.basis + ')');
+          } else {
+            kind = pr.kind;
+            if (PCV_CLAIM_KINDS.indexOf(kind) === -1) {
+              reject('missing_or_invalid_claim_kind', 'kind must be one of ' + PCV_CLAIM_KINDS.join('|') + ' — got '
+                + (kind === undefined ? '(absent)' : JSON.stringify(kind)) + '. Every _provenance entry must declare which kind of claim this is.');
+              kind = null;
+            } else if (kind === 'locked_canon_fact') {
+              if (!pr.basis || pr.basis === 'inferred' || pr.basis === 'generated') {
+                reject('locked_fact_requires_real_basis', 'kind="locked_canon_fact" requires a real source-category basis, not "' + pr.basis + '"');
               } else {
-                // CATEGORY MEMBERSHIP ALONE IS NOT ENOUGH — the cited snippet must actually
-                // SUPPORT this specific claim's own content, not merely exist somewhere inside
-                // the right bucket (a bio fragment about "today is her first time" cannot ground
-                // an unrelated invented wound just because both are "approved_bio").
-                var entailment = _pcvClaimSupportedByCitation(text, cites);
-                if (!entailment.ok) {
-                  reject('citation_does_not_support_claim', 'cites="' + cites + '" is a real ' + pr.basis
-                    + ' snippet, but shares only ' + entailment.sharedCount + '/' + entailment.citeWordCount
-                    + ' content words (' + Math.round(entailment.proportion * 100) + '%) with the claim itself — category membership is not entailment');
+                var srcText = _pcvSourceTextForBasis(pr.basis, source);
+                if (srcText === undefined) {
+                  reject('invalid_basis_value', 'basis "' + pr.basis + '" is not one of the allowed values');
+                } else if (srcText === null) {
+                  reject('citation_basis_not_found', 'basis "' + pr.basis + '" names a source that does not exist (e.g. an unknown facet_id)');
+                } else {
+                  var cites = String(pr.cites || '').trim();
+                  if (!cites) {
+                    reject('citation_missing_snippet', 'kind="locked_canon_fact", basis="' + pr.basis + '" declared but cites is empty');
+                  } else if (srcText.indexOf(cites) === -1) {
+                    // A REAL source may exist elsewhere in the approved material — deliberately NOT
+                    // checked against source.allSourceText here. A citation must support THIS claim
+                    // from THIS claimed category, or it is exactly the "cites an irrelevant but real
+                    // source" failure this whole per-basis lookup exists to catch.
+                    reject('citation_not_supported', 'cites="' + cites + '" not found within the claimed basis category (' + pr.basis + ')');
+                  } else {
+                    // CATEGORY MEMBERSHIP ALONE IS NOT ENOUGH — the cited snippet must actually
+                    // SUPPORT this specific claim's own content, not merely exist somewhere inside
+                    // the right bucket (a bio fragment about "today is her first time" cannot ground
+                    // an unrelated invented wound just because both are "approved_bio").
+                    var entailment = _pcvClaimSupportedByCitation(text, cites);
+                    if (!entailment.ok) {
+                      reject('citation_does_not_support_claim', 'cites="' + cites + '" is a real ' + pr.basis
+                        + ' snippet, but shares only ' + entailment.sharedCount + '/' + entailment.citeWordCount
+                        + ' content words (' + Math.round(entailment.proportion * 100) + '%) with the claim itself — category membership is not entailment');
+                    }
+                  }
                 }
+              }
+            } else if (kind === 'grounded_inference') {
+              if (pr.basis === 'generated') {
+                reject('inference_cannot_use_generated_basis', 'kind="grounded_inference" may not declare basis:"generated" — that combination is self-contradictory (an inference reads canon; generated material invents past it)');
+              } else if (pr.basis && pr.basis !== 'inferred') {
+                // A real category MAY be named, looser than locked_canon_fact — the citation
+                // (if any) is NOT required to literally contain the phrasing or pass entailment,
+                // only that the claimed category itself genuinely resolves.
+                var infSrcText = _pcvSourceTextForBasis(pr.basis, source);
+                if (infSrcText === undefined) reject('invalid_basis_value', 'basis "' + pr.basis + '" is not one of the allowed values');
+                else if (infSrcText === null) reject('citation_basis_not_found', 'basis "' + pr.basis + '" names a source that does not exist (e.g. an unknown facet_id)');
+              }
+              // basis:'inferred', or omitted, is fine for grounded_inference.
+            } else if (kind === 'generated_foundation') {
+              if (pr.basis !== 'generated') {
+                reject('generated_claim_must_use_generated_basis', 'kind="generated_foundation" requires basis:"generated" — got "' + pr.basis + '"');
+              }
+              if (String(pr.cites || '').trim()) {
+                reject('generated_claims_source_as_basis', 'kind="generated_foundation" must never populate cites — this material is new, not retrieved, and citing anything claims a source that does not support it');
               }
             }
           }
         }
 
-        // CONTENT LAYER — independent fence, always runs, never short-circuited by the outcome
-        // above (a self-reported "inferred", a fabricated citation, or a missing block are all
-        // equally incapable of excusing a minted family-death event or a reassigned authority).
-        [_checkUnsupportedFamilyLoss, _checkUnsupportedLiIntimacy, _checkAuthorityNotMisattributed].forEach(function (check) {
+        // HARD RED LINES — independent fence, run UNCONDITIONALLY for every kind, never
+        // short-circuited by the citation outcome above (a self-reported "inferred"/"generated",
+        // a fabricated citation, or a missing block are all equally incapable of excusing a
+        // rewritten authority fact, leaked sealed interference, or forced reader agency).
+        [_checkAuthorityNotMisattributed, _checkSealedInterferenceLeakage, _checkForcesReaderAgency].forEach(function (check) {
           var r = check(text, source);
           if (!r.ok) reject(r.reason, r.detail);
         });
 
-        if (!rejected) out.accepted.push({ field: f.key });
+        // UNSUPPORTED-INVENTION CHECKS — only for locked_canon_fact / grounded_inference (and any
+        // claim whose kind failed to resolve at all, conservatively treated as neither locked nor
+        // inferred nor generated). generated_foundation is EXEMPT: new family/backstory content
+        // is the explicit, permitted purpose of that kind.
+        if (kind !== 'generated_foundation') {
+          [_checkUnsupportedFamilyLoss, _checkUnsupportedLiIntimacy].forEach(function (check) {
+            var r = check(text, source);
+            if (!r.ok) reject(r.reason, r.detail);
+          });
+        }
+        // NEW-NAMED-PERSON SMUGGLING — grounded_inference only (see the check's own comment for
+        // why locked_canon_fact and generated_foundation don't need this same guard).
+        if (kind === 'grounded_inference') {
+          var npr = _checkNewNamedPersonSmuggled(text, source);
+          if (!npr.ok) reject(npr.reason, npr.detail);
+        }
+
+        if (!rejected) out.accepted.push({ field: f.key, kind: kind });
       });
 
       return out;
     }
-    try { if (typeof window !== 'undefined') window._validatePcFoundationOutput = _validatePcFoundationOutput; } catch (_) {}
+    try {
+      if (typeof window !== 'undefined') {
+        window._validatePcFoundationOutput = _validatePcFoundationOutput;
+        window.PCV_CLAIM_KINDS = PCV_CLAIM_KINDS;
+      }
+    } catch (_) {}
 
     // ══════════════════════════════════════════════════════════════════════════════════════
     // VALIDATED PC-FOUNDATION MERGE (Roman, corrective follow-up #4, 2026-09-15) — the actual
@@ -255533,7 +255743,12 @@ Generate the synopsis now.` }
       if (!bibleFacetsRaw.length) { out.reason = 'no_mappable_bible_facets'; return out; }
       var normalized = bibleFacetsRaw.map(function (f) { return _normFacet(f, 'pc'); }).filter(Boolean);
       if (!normalized.length) { out.reason = 'facets_failed_normalization'; return out; }
-      normalized.forEach(function (f) { f.origin = 'pc_body_bible_validated'; });
+      // ORIGIN DISTINGUISHES LOCKED/INFERRED FROM GENERATED (Roman, corrective follow-up #12,
+      // 2026-09-15) — _pcFacetsFromBodyBible prefixes a generated-foundation facet's OWN
+      // facet_id 'pc_generated_' (the only channel that survives _normFacet, which whitelists its
+      // output shape and would drop any other custom marker); read back here rather than
+      // duplicating the kind-lookup this function already validated upstream.
+      normalized.forEach(function (f) { f.origin = /^pc_generated_/.test(f.facet_id) ? 'pc_body_bible_generated_canon' : 'pc_body_bible_validated'; });
 
       var rec = _ensurePcPortfolio(s);
       if (!rec || rec.source !== 'fixed_starter') { out.reason = 'not_a_fixed_starter_portfolio'; return out; }
@@ -255990,14 +256205,14 @@ Generate the synopsis now.` }
           '  "li_keenly_aware_of": "<a SHORT LIST (2-3 items) of the specific features the LI has noticed and finds compelling about her, including AT LEAST ONE that is asymmetric / imperfect / not-conventionally-pretty (because real desire is particular, not airbrushed). Example: \'her slightly crooked front tooth, the way she goes still when listening, the perfume only noticeable from close enough to touch\'.>"' +
           (_starterFoundation ? (',\n' +
           '  "_provenance": {\n' +
-          '    "wound.core": {"basis": "<approved_bio | approved_facet:<facet_id> | approved_relationship | approved_scene1 | approved_posture | inferred>", "cites": "<exact short snippet from the STARTER PC FOUNDATION block above this basis is drawn from, or omit/empty if basis is \'inferred\'>"},\n' +
-          '    "wound.surfacing_hint": {"basis": "...", "cites": "..."},\n' +
-          '    "core_contradiction": {"basis": "...", "cites": "..."},\n' +
-          '    "private_hope": {"basis": "...", "cites": "..."},\n' +
-          '    "current_crisis.event": {"basis": "...", "cites": "..."},\n' +
-          '    "current_crisis.immediate_fear": {"basis": "...", "cites": "..."},\n' +
-          '    "current_crisis.li_complication": {"basis": "...", "cites": "..."},\n' +
-          '    "current_crisis.refusal": {"basis": "...", "cites": "..."}\n' +
+          '    "wound.core": {"kind": "<locked_canon_fact | grounded_inference | generated_foundation>", "basis": "<for locked_canon_fact: approved_bio | approved_facet:<facet_id> | approved_relationship | approved_scene1 | approved_posture — for grounded_inference: one of those OR inferred — for generated_foundation: generated>", "cites": "<for locked_canon_fact: exact short snippet this restates, copied verbatim — for grounded_inference: optional, need not be verbatim — for generated_foundation: MUST be empty, never cite a source for invented material>"},\n' +
+          '    "wound.surfacing_hint": {"kind": "...", "basis": "...", "cites": "..."},\n' +
+          '    "core_contradiction": {"kind": "...", "basis": "...", "cites": "..."},\n' +
+          '    "private_hope": {"kind": "...", "basis": "...", "cites": "..."},\n' +
+          '    "current_crisis.event": {"kind": "...", "basis": "...", "cites": "..."},\n' +
+          '    "current_crisis.immediate_fear": {"kind": "...", "basis": "...", "cites": "..."},\n' +
+          '    "current_crisis.li_complication": {"kind": "...", "basis": "...", "cites": "..."},\n' +
+          '    "current_crisis.refusal": {"kind": "...", "basis": "...", "cites": "..."}\n' +
           '  }\n') : '\n') +
           '}\n\n' +
           // Roman 2026-06-01 — three-different-Danis test mirrors the LI
