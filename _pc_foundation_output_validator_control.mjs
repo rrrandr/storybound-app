@@ -59,7 +59,17 @@ const validatorSrc = sliceByAnchor('pc-foundation-source-validator-and-merge',
   'function _pcFoundationSourceFacts(s) {',
   "window._commitValidatedPcFoundation = _commitValidatedPcFoundation;") + ' } catch (_) {}';
 
-const body = activeSeedLine + '\n' + relLedgerSrc + '\n' + cplusPipelineSrc + '\n' + validatorSrc;
+// The REAL CG delivery function (Roman, corrective follow-up #13, 2026-09-15) — proves the
+// validated-only interior gate the real-path proof found missing. Every OTHER helper it calls
+// (_buildSideCharCoreManifestations, _buildSocialEcosystemDirective, etc.) is called through a
+// defensive `typeof window._x === 'function'` check already in the real source, so leaving them
+// undefined in this sandbox no-ops those optional blocks rather than crashing — exactly the
+// resilience this codebase already relies on elsewhere.
+const cgDeliverySrc = sliceByAnchor('render-bibles-as-cg-directives',
+  'function _renderBiblesAsCGDirectives() {',
+  'window._renderBiblesAsCGDirectives = _renderBiblesAsCGDirectives;');
+
+const body = activeSeedLine + '\n' + relLedgerSrc + '\n' + cplusPipelineSrc + '\n' + validatorSrc + '\n' + cgDeliverySrc;
 const factory = new Function('window', 'STARTER_SEEDS', body);
 
 function freshSandbox(seeds) {
@@ -696,6 +706,66 @@ section('CONTROL 11 (THREE-KIND REDESIGN, Roman corrective #12, 2026-09-15) — 
     const result = win._validatePcFoundationOutput(smuggledName, source);
     ok('11h: a grounded_inference smuggling in a brand-new named person ("Master Hallowyn") is REJECTED', result.ok === false, JSON.stringify(result.rejections));
     ok('11h: rejected specifically for grounded_inference_names_new_person_or_event', result.rejections.some(r => r.reason === 'grounded_inference_names_new_person_or_event'), JSON.stringify(result.rejections));
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════════════════════
+section('CONTROL 12 (CG DELIVERY GATE, Roman corrective #13, 2026-09-15) — _renderBiblesAsCGDirectives only forwards PC interior after a REAL validated commit for a fixed-starter story; corridor is unaffected');
+{
+  // 12a — NO validated commit exists (a bible sitting on state.pcBodyBible that was never
+  // validated/committed — exactly what the real app has BEFORE any merge, or AFTER a rejection,
+  // since a successfully-PARSED bible sets state.pcBodyBible regardless of later validation).
+  {
+    const win = freshSandbox({ starter_first_sacrifice: FIRST_SACRIFICE_SEED });
+    win.state = baseState({ playerName: 'Lirael' });
+    win.state.pcBodyBible = {
+      core_contradiction: 'UNVALIDATED CONTRADICTION TEXT', private_hope: 'UNVALIDATED HOPE TEXT',
+      emotional_weather: 'UNVALIDATED WEATHER TEXT', li_keenly_aware_of: 'UNVALIDATED NOTICE TEXT',
+    };
+    const block = win._renderBiblesAsCGDirectives();
+    ok('12a: with NO validated commit, the PC interior fields are ABSENT from the real CG directive block',
+      !block.includes('UNVALIDATED CONTRADICTION TEXT') && !block.includes('UNVALIDATED HOPE TEXT')
+      && !block.includes('UNVALIDATED WEATHER TEXT') && !block.includes('UNVALIDATED NOTICE TEXT'), block);
+  }
+
+  // 12b — a REAL validated commit exists for THIS story — the interior now appears (gate open).
+  {
+    const win = freshSandbox({ starter_first_sacrifice: FIRST_SACRIFICE_SEED });
+    win.state = baseState({ playerName: 'Lirael' });
+    const bible = fullyCoveredGreenBible();
+    bible.core_contradiction = 'VALIDATED CONTRADICTION TEXT — ' + bible.core_contradiction;
+    const commit = win._commitValidatedPcFoundation(win.state, bible);
+    ok('12b: precondition — the commit actually succeeded', commit.committed === true, JSON.stringify(commit));
+    win.state.pcBodyBible = bible;   // the real app sets this unconditionally on successful parse, independent of validate/commit
+    const block = win._renderBiblesAsCGDirectives();
+    ok('12b: WITH a real validated commit, the PC interior now appears in the real CG directive block', block.includes('VALIDATED CONTRADICTION TEXT'), block);
+  }
+
+  // 12c — a REJECTED bible (the ACTUAL retained sample, never committed) must NOT leak into the
+  // CG directive block, even though state.pcBodyBible still holds it — this is the EXACT leak
+  // the real-path proof found.
+  {
+    const win = freshSandbox({ starter_first_sacrifice: FIRST_SACRIFICE_SEED });
+    win.state = baseState({ playerName: 'Lirael' });
+    const raw = JSON.parse(fs.readFileSync(path.join(__dirname, '_audit_out/pc_foundation_samples/2026-09-15T21-58-49-058Z_live_sample.json'), 'utf8'));
+    const bible = raw.parsedBible;
+    const commit = win._commitValidatedPcFoundation(win.state, bible);
+    ok('12c: precondition — the retained sample is still correctly rejected', commit.committed === false, JSON.stringify(commit));
+    win.state.pcBodyBible = bible;
+    const block = win._renderBiblesAsCGDirectives();
+    const dangerousSnippet = (bible.wound && bible.wound.core) ? bible.wound.core.slice(0, 40) : '';
+    ok('12c: a REJECTED bible\'s own dangerous content (wound.core) does NOT reach the real CG directive block', !!dangerousSnippet && !block.includes(dangerousSnippet), block);
+    ok('12c: the rejected bible\'s core_contradiction ALSO does not leak (the exact leak the real-path proof found)', !bible.core_contradiction || !block.includes(bible.core_contradiction), block);
+  }
+
+  // 12d — CORRIDOR story (no fixed-starter source at all): UNCHANGED, unconditional forwarding —
+  // gating must never silently blank a corridor CG story's interior, since corridor content was
+  // never validated by design (the validator is fixed-starter-only).
+  {
+    const win = freshSandbox({});
+    win.state = { storyId: 'corridor-1', _starterId: null, pcBodyBible: { core_contradiction: 'CORRIDOR CONTRADICTION TEXT' } };
+    const block = win._renderBiblesAsCGDirectives();
+    ok('12d: a corridor story (no fixed-starter source) is UNAFFECTED — interior still forwards unconditionally, exactly as before', block.includes('CORRIDOR CONTRADICTION TEXT'), block);
   }
 }
 

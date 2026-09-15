@@ -221722,6 +221722,32 @@ No text, no watermark, no UI elements, share-ready.`;
       try { if (!/hair|face|eyes|build|age/i.test(_pcSeedPhys)) console.log('[CANON:UNAUTHORED] pc.appearance — the seed authors species, garments and seal only'); } catch (_) {}
     }
     if (pcB) {
+      // VALIDATED-ONLY INTERIOR FOR A FIXED STARTER (Roman, corrective follow-up #13, 2026-09-15)
+      // — for a fixed-starter story (First Sacrifice), state.pcBodyBible is the RAW, unvalidated
+      // generation output; _validatePcFoundationOutput/_commitValidatedPcFoundation is the gate
+      // this whole corrective arc built specifically to keep uncited, contradicting, or rejected
+      // durable claims out of anything reader-visible. This function read state.pcBodyBible
+      // directly and forwarded its interior fields (core_contradiction/private_hope/
+      // emotional_weather/li_keenly_aware_of) regardless of that gate — a SECOND delivery path
+      // parallel to the validated-merge one, discovered via a real-path proof that a REJECTED
+      // sample's own content (an invented family-tragedy claim) still reached a real CG payload
+      // even though the validator correctly refused to merge it. For a fixed-starter story, the
+      // interior fields below are now gated on a real validated commit existing for THIS story
+      // (all-or-nothing, matching _commitValidatedPcFoundation's own "no partial portfolio"
+      // semantics — an unaccepted bible contributes NOTHING here, never a partial one). For a
+      // CORRIDOR story (never validated by design — the validator is fixed-starter-only, and
+      // always has been), this gate is a permanent no-op — unconditional forwarding, UNCHANGED,
+      // since gating it would silently blank every corridor CG story's interior.
+      var _pcInteriorValidated = true;
+      try {
+        var _fsSrc13 = (typeof _pcFoundationSourceFacts === 'function') ? _pcFoundationSourceFacts(window.state) : null;
+        if (_fsSrc13) {
+          var _pf13 = window.state && window.state._pcPortfolio;
+          _pcInteriorValidated = !!(_pf13 && _pf13.provenance && _pf13.provenance.validatedMerge
+            && String(_pf13.storyId || '') === String((window.state && window.state.storyId) || ''));
+        }
+      } catch (_) { _pcInteriorValidated = true; }
+
       var pcPhys = [];
       if (_pcSeedPhys) pcPhys = null;   // seed decides appearance; the bible's physical fields are not rendered
       if (pcPhys && pcB.age)       pcPhys.push('age: ' + pcB.age); // Roman 2026-06-11 Phase 2a-lite: CORE_LOCKED identity field
@@ -221738,9 +221764,11 @@ No text, no watermark, no UI elements, share-ready.`;
       // the five emotional tells (stress/desire/impatience/confidence/vulnerability) are no longer
       // forwarded; the deep-psych interior is, as constraints the panel author reasons behavior from.
       var pcInterior = [];
-      if (pcB.core_contradiction) pcInterior.push('CONTRADICTION she lives with — ' + pcB.core_contradiction);
-      if (pcB.private_hope)       pcInterior.push('PRIVATE HOPE (never captioned; it only bends what she reaches for) — ' + pcB.private_hope);
-      if (pcB.emotional_weather)  pcInterior.push('EMOTIONAL WEATHER (her baseline climate) — ' + pcB.emotional_weather);
+      if (_pcInteriorValidated) {
+        if (pcB.core_contradiction) pcInterior.push('CONTRADICTION she lives with — ' + pcB.core_contradiction);
+        if (pcB.private_hope)       pcInterior.push('PRIVATE HOPE (never captioned; it only bends what she reaches for) — ' + pcB.private_hope);
+        if (pcB.emotional_weather)  pcInterior.push('EMOTIONAL WEATHER (her baseline climate) — ' + pcB.emotional_weather);
+      }
       // signature_habits is deliberately NOT forwarded to CG (Roman 2026-08-06): it is a tic-CARRIER
       // (e.g. "counts the steps when anxious") that the panel author replays verbatim across every scene —
       // the exact calcification the interior swap exists to kill. The PURE interior above forces fresh reasoning.
@@ -221751,7 +221779,7 @@ No text, no watermark, no UI elements, share-ready.`;
         out.push('PROTAGONIST INTERIOR (HARD — this is who she IS, not a menu of gestures. When a beat needs her body / expression / posture to carry state, REASON a fresh, panel-specific action that THIS person — given this interior — would do in THIS exact moment. Do NOT default to a fixed nervous tic (no reflex hand-to-face / ring-twist / hair-touch); invent what she does HERE from who she is. Never caption the interior — show only the behavior it produces):');
         pcInterior.forEach(function(t){ out.push('  • ' + t); });
       }
-      if (pcB.li_keenly_aware_of) {
+      if (_pcInteriorValidated && pcB.li_keenly_aware_of) {
         out.push('LI NOTICING THE PROTAGONIST (when LI shares panels with PC, plan ONE shot per scene where LI clocks a specific PC feature — micro-shot, brief, never compliment): ' + pcB.li_keenly_aware_of);
       }
       // Phase 2b invariant audit — fires FIELD-FORWARD:ERROR if the bible

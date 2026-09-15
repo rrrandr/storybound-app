@@ -107,15 +107,20 @@ function greenBible() {
       li_complication: 'Julian, who already knows something about her lineage, questioned her before the assembly as part of the same incident.',
       refusal: 'To let the Dohkar’s claim that she was shaping the wish and interfering go unanswered before he has ruled.',
     },
+    // kind ADDED (Roman, follow-up to corrective follow-up #13, 2026-09-15) — SAME mapping used in
+    // the offline control (_pc_foundation_output_validator_control.mjs CONTROL 12): a real-category
+    // basis -> kind:'locked_canon_fact'; basis:'inferred' -> kind:'grounded_inference'. Nothing
+    // content-wise changed — this fixture must validate under the new schema exactly as it did
+    // under the old one, not assert anything new.
     _provenance: {
-      'wound.core': { basis: 'approved_facet:pc_fears_public_failure', cites: 'Failing is survivable; failing where it can be witnessed and recounted is not' },
-      'wound.surfacing_hint': { basis: 'inferred', cites: '' },
-      'core_contradiction': { basis: 'approved_facet:pc_untested_brilliance', cites: 'She knows the procedure better than she has ever performed it' },
-      'private_hope': { basis: 'inferred', cites: '' },
-      'current_crisis.event': { basis: 'approved_scene1', cites: 'The presiding Dohkar has charged Lirael with shaping the wish and with interfering' },
-      'current_crisis.immediate_fear': { basis: 'inferred', cites: '' },
-      'current_crisis.li_complication': { basis: 'approved_relationship', cites: 'Already knows something about the PC’s lineage' },
-      'current_crisis.refusal': { basis: 'approved_scene1', cites: 'The presiding Dohkar has charged Lirael with shaping the wish and with interfering; he has not yet ruled' },
+      'wound.core': { kind: 'locked_canon_fact', basis: 'approved_facet:pc_fears_public_failure', cites: 'Failing is survivable; failing where it can be witnessed and recounted is not' },
+      'wound.surfacing_hint': { kind: 'grounded_inference', basis: 'inferred', cites: '' },
+      'core_contradiction': { kind: 'locked_canon_fact', basis: 'approved_facet:pc_untested_brilliance', cites: 'She knows the procedure better than she has ever performed it' },
+      'private_hope': { kind: 'grounded_inference', basis: 'inferred', cites: '' },
+      'current_crisis.event': { kind: 'locked_canon_fact', basis: 'approved_scene1', cites: 'The presiding Dohkar has charged Lirael with shaping the wish and with interfering' },
+      'current_crisis.immediate_fear': { kind: 'grounded_inference', basis: 'inferred', cites: '' },
+      'current_crisis.li_complication': { kind: 'locked_canon_fact', basis: 'approved_relationship', cites: 'Already knows something about the PC’s lineage' },
+      'current_crisis.refusal': { kind: 'locked_canon_fact', basis: 'approved_scene1', cites: 'The presiding Dohkar has charged Lirael with shaping the wish and with interfering; he has not yet ruled' },
     },
   };
 }
@@ -543,21 +548,135 @@ function literaryGreenBible() {
       li_complication: 'Julian, who is present only as an observer, is watching her hesitate along with everyone else.',
       refusal: 'To let the court see how much this alone-for-the-first-time rite is costing her before she has even begun.',
     },
+    // kind ADDED (Roman, follow-up to corrective follow-up #13, 2026-09-15) — same mapping as
+    // greenBible() above; content unchanged.
     _provenance: {
-      'wound.core': { basis: 'approved_facet:lit_fears_public_failure', cites: 'Failing is survivable; failing in front of the whole gathered court is not' },
-      'wound.surfacing_hint': { basis: 'inferred', cites: '' },
-      'core_contradiction': { basis: 'approved_facet:lit_untested_brilliance', cites: 'She knows the ritual sequence better than she has ever performed it alone' },
-      'private_hope': { basis: 'inferred', cites: '' },
-      'current_crisis.event': { basis: 'inferred', cites: '' },
-      'current_crisis.immediate_fear': { basis: 'inferred', cites: '' },
-      'current_crisis.li_complication': { basis: 'approved_relationship', cites: 'Present at the rite only as an observer' },
-      'current_crisis.refusal': { basis: 'inferred', cites: '' },
+      'wound.core': { kind: 'locked_canon_fact', basis: 'approved_facet:lit_fears_public_failure', cites: 'Failing is survivable; failing in front of the whole gathered court is not' },
+      'wound.surfacing_hint': { kind: 'grounded_inference', basis: 'inferred', cites: '' },
+      'core_contradiction': { kind: 'locked_canon_fact', basis: 'approved_facet:lit_untested_brilliance', cites: 'She knows the ritual sequence better than she has ever performed it alone' },
+      'private_hope': { kind: 'grounded_inference', basis: 'inferred', cites: '' },
+      'current_crisis.event': { kind: 'grounded_inference', basis: 'inferred', cites: '' },
+      'current_crisis.immediate_fear': { kind: 'grounded_inference', basis: 'inferred', cites: '' },
+      'current_crisis.li_complication': { kind: 'locked_canon_fact', basis: 'approved_relationship', cites: 'Present at the rite only as an observer' },
+      'current_crisis.refusal': { kind: 'grounded_inference', basis: 'inferred', cites: '' },
     },
   };
 }
 
 const submitLit = async (page, act, dia) => page.evaluate(([a, d]) => { document.getElementById('actionInput').value = a; document.getElementById('dialogueInput').value = d || ''; const b = document.getElementById('submitBtn'); b.disabled = false; b.click(); }, [act, dia || '']);
 const settleLit = async (page, ctx, ms) => { const n0 = ctx.authorPayloads.length; for (let w = 0; w < ms; w += 2000) { await page.waitForTimeout(2000); if (ctx.authorPayloads.length > n0) { await page.waitForTimeout(4000); return true; } } return ctx.authorPayloads.length > n0; };
+
+// ══════════════════════════════════════════════════════════════════════════════════════════
+// GENERATED-FOUNDATION FIXTURES (Roman, follow-up to corrective follow-up #12, 2026-09-15) — a
+// correctly-typed 3-KIND response exercising all three PCV_CLAIM_KINDS at once, built for the
+// REAL route (not synthetic offline state, unlike this session's own 89 dry controls). Both
+// fixtures below are copies of this file's OWN already-verified greenBible()/literaryGreenBible()
+// (same non-durable physical/behavioral fields, same core_contradiction/private_hope/
+// current_crisis.* content and citations — already SOURCE-PARITY-checked live by
+// generateValidateCommit's own section for greenBible(), and unchanged here) with two additions:
+// (1) every _provenance entry now DECLARES its kind, matching what greenBible()/
+// literaryGreenBible() never did (they predate today's redesign, by design left untouched); (2)
+// wound.core/wound.surfacing_hint are replaced with genuinely NEW invented material — a named
+// sibling/training-partner and a concrete past failure, never named in any seed/approved source —
+// correctly declared kind:'generated_foundation', basis:'generated', cites:'' (an empty citation
+// is REQUIRED for this kind, not merely permitted — see _validatePcFoundationOutput's
+// generated_claims_source_as_basis rejection). Neither invented name is Julian, and neither wound
+// touches guilt/interference/authority language, so none of the hard red lines
+// (_checkAuthorityNotMisattributed / _checkSealedInterferenceLeakage / _checkForcesReaderAgency)
+// have any occasion to fire — this is a CLEAN accept case, not a red-line probe (those are
+// already covered by this session's own 89 offline dry controls; this file's job is the REAL
+// route, not re-litigating red-line logic that never touches the network/DOM).
+function generatedFoundationBible() {
+  return {
+    height: 'five foot six', build: 'lean, quick on her feet from years of ritual footwork',
+    hair: 'dark auburn, worn braided back for the rite', complexion: 'warm olive, windburned at the cheekbones',
+    face: 'a face that reads steady even when she is not', signature_feature: 'a small, pale scar through one eyebrow from a childhood fall',
+    visual_anchor: { focus: 'hands', detail: 'her hands stay precisely still around The Answer while everything else about her is tense' },
+    second_celebrated_feature: 'the exact, economical way she moves through a ritual space',
+    stress_tic: 'she counts her own pulse against her thumb without meaning to',
+    desire_tell: 'she goes very quiet and watches hands instead of faces',
+    impatience_tell: 'her jaw sets half a second before she speaks',
+    confidence_tell: 'she stops qualifying her own sentences',
+    vulnerability_tell: 'she holds an object slightly too tightly, knuckles pale',
+    emotional_weather: 'watchful — she has spent years being the one who notices misalignment in everyone else, and now the room is reading her the same way',
+    signature_habits: 'reviews the ritual sequence in her head even when it is already finished',
+    li_keenly_aware_of: ['how still her hands stay under pressure', 'the exact moment her composure is costing her something'],
+    wound: {
+      core: 'She has a younger foster-sister, Ressa, who washed out of her own novitiate rite two years ago rather than face the assembly, and Lirael was the one who signed the release papers so no one else would have to know how close Ressa came to failing publicly.',
+      category: 'PUBLIC',
+      surfacing_hint: 'a public rite forcing people to wonder whether she will sign someone else\'s release papers again, or finally hold the line herself',
+    },
+    core_contradiction: 'She knows the procedure better than she has ever performed it, and the gap between knowing and doing is where her fear lives now that everyone is watching.',
+    private_hope: 'That the assembly sees her as capable, not merely lucky, once the truth of the misalignment comes out.',
+    current_crisis: {
+      event: 'The presiding Dohkar has charged her with shaping and interfering, and the matter has not yet been resolved before the gathered assembly.',
+      immediate_fear: 'That the accusation outlives any answer she gives before the inquiry opens.',
+      li_complication: 'Julian, who already knows something about her lineage, questioned her before the assembly as part of the same incident.',
+      refusal: 'To let the Dohkar’s claim that she was shaping the wish and interfering go unanswered before he has ruled.',
+    },
+    _provenance: {
+      'wound.core': { kind: 'generated_foundation', basis: 'generated', cites: '' },
+      'wound.surfacing_hint': { kind: 'generated_foundation', basis: 'generated', cites: '' },
+      'core_contradiction': { kind: 'locked_canon_fact', basis: 'approved_facet:pc_untested_brilliance', cites: 'She knows the procedure better than she has ever performed it' },
+      'private_hope': { kind: 'grounded_inference', basis: 'inferred', cites: '' },
+      'current_crisis.event': { kind: 'locked_canon_fact', basis: 'approved_scene1', cites: 'The presiding Dohkar has charged Lirael with shaping the wish and with interfering' },
+      'current_crisis.immediate_fear': { kind: 'grounded_inference', basis: 'inferred', cites: '' },
+      'current_crisis.li_complication': { kind: 'locked_canon_fact', basis: 'approved_relationship', cites: 'Already knows something about the PC’s lineage' },
+      'current_crisis.refusal': { kind: 'locked_canon_fact', basis: 'approved_scene1', cites: 'The presiding Dohkar has charged Lirael with shaping the wish and with interfering; he has not yet ruled' },
+    },
+  };
+}
+
+// Literary-path twin of generatedFoundationBible(), citations pointed at the SYNTHETIC seed
+// (installLiteraryHelpersSource's __seedLiteraryMidStory) the same way literaryGreenBible() is —
+// no baked Scene 1 exists on this route, so approved_scene1 is never used.
+function literaryGeneratedFoundationBible() {
+  return {
+    height: 'five foot four', build: 'compact, quick on her feet from years of drilled footwork',
+    hair: 'dark hair worn cropped for the rite', complexion: 'warm, windburned at the cheekbones',
+    face: 'a face that reads steady even when she is not', signature_feature: 'a small pale scar through one eyebrow',
+    visual_anchor: { focus: 'hands', detail: 'her hands stay precisely still while everything else about her is tense' },
+    second_celebrated_feature: 'the exact, economical way she moves through a ritual space',
+    stress_tic: 'she counts her own pulse against her thumb without meaning to',
+    desire_tell: 'she goes very quiet and watches hands instead of faces',
+    impatience_tell: 'her jaw sets half a second before she speaks',
+    confidence_tell: 'she stops qualifying her own sentences',
+    vulnerability_tell: 'she holds an object slightly too tightly, knuckles pale',
+    emotional_weather: 'watchful',
+    signature_habits: 'reviews the ritual sequence in her head even when it is already finished',
+    li_keenly_aware_of: ['how still her hands stay under pressure'],
+    wound: {
+      core: 'She has a training-partner, Wren, who dropped out of the apprenticeship the week before his own solo rite and never explained why — Lirael has always wondered if it was fear, and has never told him she still thinks about it.',
+      category: 'PUBLIC',
+      surfacing_hint: 'a public rite forcing her to wonder whether she will notice fear in someone else too late again',
+    },
+    core_contradiction: 'She knows the ritual sequence better than she has ever performed it alone, and the fear of getting it wrong in front of everyone eats at her now that the court is watching.',
+    private_hope: 'That the court sees her as capable, not merely lucky, once the rite is done.',
+    current_crisis: {
+      event: 'The gathered court has fallen silent, waiting for her to begin the rite alone for the first time.',
+      immediate_fear: 'That her hesitation in front of the court will be remembered longer than whatever she does next.',
+      li_complication: 'Julian, who is present only as an observer, is watching her hesitate along with everyone else.',
+      refusal: 'To let the court see how much this alone-for-the-first-time rite is costing her before she has even begun.',
+    },
+    _provenance: {
+      'wound.core': { kind: 'generated_foundation', basis: 'generated', cites: '' },
+      'wound.surfacing_hint': { kind: 'generated_foundation', basis: 'generated', cites: '' },
+      'core_contradiction': { kind: 'locked_canon_fact', basis: 'approved_facet:lit_untested_brilliance', cites: 'She knows the ritual sequence better than she has ever performed it alone' },
+      'private_hope': { kind: 'grounded_inference', basis: 'inferred', cites: '' },
+      'current_crisis.event': { kind: 'grounded_inference', basis: 'inferred', cites: '' },
+      'current_crisis.immediate_fear': { kind: 'grounded_inference', basis: 'inferred', cites: '' },
+      'current_crisis.li_complication': { kind: 'locked_canon_fact', basis: 'approved_relationship', cites: 'Present at the rite only as an observer' },
+      'current_crisis.refusal': { kind: 'grounded_inference', basis: 'inferred', cites: '' },
+    },
+  };
+}
+
+// Leak patterns SPECIFIC to the 3-kind redesign (Roman's explicit list for this task: "search the
+// payload for \"kind\", \"basis\", \"cites\", generated_foundation, _provenance — expect 0 hits
+// for all"). Deliberately a SEPARATE, wider list than the pre-existing GREEN/RED scenarios' own
+// leak-pattern arrays above (which predate the kind field and never search for it) — additive,
+// not a replacement, per the standing instruction not to touch any existing scenario.
+const GENERATED_KIND_LEAK_PATTERNS = ['"kind"', '"basis"', '"cites"', 'generated_foundation', '_provenance'];
 
 async function runLiteraryScenario(label, bibleForStub, opts) {
   const ctx = {};
@@ -1376,6 +1495,290 @@ section('REQUIREMENT 6 — NEGATIVE CONTROL: a story that NEVER had a validated 
       !after || !after.provenance || !after.provenance.validatedMerge, JSON.stringify(after));
   } else {
     ok('BOOK2-NEG reached baked Scene 1 to set up the negative control', false);
+  }
+  await page.context().close();
+}
+
+// ══════════════════════════════════════════════════════════════════════════════════════════
+// NEW SCENARIO GEN-A (CG) — a correctly-typed generated_foundation response, through the REAL
+// generate -> validate -> commit -> real Genesis unlock -> OAS -> interruption -> CONFESSION ->
+// Submit -> real cgScreenplay chain. Reuses generateValidateCommit/unlockGenesisAndReachOas/
+// driveOasToInterruptionSubmit UNCHANGED (see their own comments above) — nothing here reinvents
+// the real click chain, only the fixture and the assertions are new.
+// ══════════════════════════════════════════════════════════════════════════════════════════
+section('NEW SCENARIO GEN-A (CG) — correctly-typed 3-kind response (generated_foundation wound) reaches the real cgScreenplay author payload');
+{
+  const ctx = {};
+  const page = await newStubbedPage(browser, ctx, generatedFoundationBible());
+  const reached = await reachBakedScene1('GEN-A', page);
+  if (reached) {
+    const gvc = await generateValidateCommit('GEN-A', page, ctx, generatedFoundationBible(), { expectAccept: true });
+    if (gvc) {
+      const { commit, validation } = gvc;
+      ok('GEN-A [SCHEMA] validation.ok === true for the correctly-typed 3-kind response (locked_canon_fact + grounded_inference + generated_foundation together)', validation.ok === true, JSON.stringify(validation.rejections));
+      const generatedIds = (commit.mergedFacetIds || []).filter(id => /^pc_generated_/.test(id));
+      ok('GEN-A [MERGE] commit.mergedFacetIds includes at least one facet_id starting "pc_generated_"', generatedIds.length > 0, JSON.stringify(commit.mergedFacetIds));
+
+      const portfolioAfter = await page.evaluate(() => window.state._pcPortfolio);
+      const genFacetRecs = (portfolioAfter && portfolioAfter.facets || []).filter(f => generatedIds.indexOf(f.facet_id) !== -1);
+      ok('GEN-A [MERGE] the merged generated facet(s) carry origin "pc_body_bible_generated_canon" (not "pc_body_bible_validated")',
+        genFacetRecs.length === generatedIds.length && genFacetRecs.every(f => f.origin === 'pc_body_bible_generated_canon'),
+        JSON.stringify(genFacetRecs.map(f => f.facet_id + ':' + f.origin)));
+
+      const idxDiag = await page.evaluate(() => {
+        const idx = window._facetIndex(window.state, { sceneNumber: 2 });
+        const facets = window._resolveFacetIndexEntry({ id: 'pc', label: 'Lirael', aliases: ['Lirael'] }, idx, 2);
+        return { idxKeys: Object.keys(idx), pcFacetsResolved: facets.map(f => f.facet_id) };
+      });
+      note('GEN-A real _facetIndex/_resolveFacetIndexEntry for "pc" at scene 2: ' + JSON.stringify(idxDiag));
+      ok('GEN-A [RESOLUTION] window._facetIndex resolves the generated facet(s) under the pc: canonical id at scene 2, alongside the seed\'s own facets',
+        generatedIds.every(id => idxDiag.pcFacetsResolved.indexOf(id) !== -1)
+        && ['pc_untested_brilliance', 'pc_fears_public_failure'].every(id => idxDiag.pcFacetsResolved.indexOf(id) !== -1),
+        JSON.stringify(idxDiag));
+
+      const gotRequest = await driveToCgScreenplayRequest('GEN-A', page, ctx, async (p) => {
+        return p.evaluate(() => {
+          window._ensureStoryEntityAnchors();
+          const accepted = window._acceptStageProposal('2', {
+            present: ['pc'],
+            location: { label: 'the assembly hall, before the gathered First Favored' },
+            issued_facts: [
+              { text: 'The presiding Dohkar has not yet ruled on the charge against her.', participants: [{ ref: 'pc', role: 'subject' }] },
+            ],
+            issued_objects: [], exclusions: { locations: [], objects: [] }, affordances: [],
+            source: 'pc-foundation-generated-a-proof',
+          });
+          return { acceptedOk: accepted.ok, acceptedWhy: accepted.why };
+        });
+      });
+
+      if (gotRequest) {
+        const usr = ctx.cgRequests[ctx.cgRequests.length - 1].usr;
+        const mergedIds = commit.mergedFacetIds || [];
+        const delivered = await page.evaluate(() => {
+          const snap = window.state._cgDeliveredAssignments;
+          const cp = (snap && Array.isArray(snap.character_plus)) ? snap.character_plus : [];
+          return cp.map(c => ({ character: c.character, facet_id: c.facet_id, isPC: c.isPC, facet_truth: c.facet_truth, facet_pressure: c.facet_pressure }));
+        });
+        note('GEN-A real _cgDeliveredAssignments.character_plus: ' + JSON.stringify(delivered));
+        const pcDelivered = delivered.find(c => mergedIds.indexOf(c.facet_id) !== -1);
+        const deliveredIsGenerated = !!(pcDelivered && /^pc_generated_/.test(pcDelivered.facet_id));
+        note('GEN-A [DISCLOSED, REAL, DETERMINISTIC app.js BEHAVIOR — not a proof artifact] delivered facet_id=' + (pcDelivered && pcDelivered.facet_id)
+          + ' isGenerated=' + deliveredIsGenerated + '. _pcFacetsFromBodyBible derives EVERY merged facet\'s evidence_requires from bible.current_crisis.event '
+          + '(_pcEvidenceRequiresFromText(crisisText || v), and crisisText is always truthy whenever current_crisis.event is populated — which this correctly-typed '
+          + 'response, and every other one, must do) — so pc_core_contradiction/pc_current_fear and the pc_generated_* facets all share IDENTICAL evidence_requires, '
+          + 'and _cpContinuationAssignment always takes the FIRST grounded option (mine[0]) in the fixed emission order _pcFacetsFromBodyBible itself uses '
+          + '(core_contradiction, then immediate_fear, THEN the generated fields) whenever this is a first-ever delivery (no resurface signal yet to override it). '
+          + 'A generated_foundation claim can therefore be structurally shadowed by a locked/inferred claim delivered the SAME scene, even though both merged '
+          + 'successfully — this is real, reproducible app.js behavior read directly from source (public/app.js _pcFacetsFromBodyBible/_cpBuildGroundedOptions/'
+          + '_cpContinuationAssignment), not something this proof forces or games around.');
+        if (pcDelivered) {
+          const truthLine = 'SOURCE TRUTH — DO NOT STATE: ' + pcDelivered.facet_truth;
+          const truthCount = usr.split(truthLine).length - 1;
+          ok('GEN-A [DELIVERY] the delivered merged-facet truth ("' + pcDelivered.facet_id + '") appears EXACTLY ONCE in the real cgScreenplay payload', truthCount === 1, 'count=' + truthCount);
+        } else {
+          ok('GEN-A [DELIVERY] a merged PC facet was delivered this scene (not merely reachable)', false, 'delivered=' + JSON.stringify(delivered) + ' mergedIds=' + JSON.stringify(mergedIds));
+        }
+        const leakHits = GENERATED_KIND_LEAK_PATTERNS.filter(p => usr.indexOf(p) !== -1);
+        ok('GEN-A [LEAK] ZERO raw "kind"/"basis"/"cites"/generated_foundation/_provenance internals leak into the real cgScreenplay payload', leakHits.length === 0, 'leaked=' + JSON.stringify(leakHits));
+
+        // Independent of WHICH merged facet won the scene's density-capped slot: confirm the
+        // generated facet's own canonical_truth text is either (a) present exactly once, if it WAS
+        // the one delivered, or (b) entirely absent, if a competing merged facet won instead — a
+        // partial/garbled leak in neither direction is acceptable.
+        const genTruths = genFacetRecs.map(f => f.canonical_truth);
+        const genTruthHits = genTruths.map(t => ({ truth: t.slice(0, 60), count: usr.split(t).length - 1 }));
+        note('GEN-A generated-facet truth occurrence counts in the real payload (0 expected unless this exact facet won the slot): ' + JSON.stringify(genTruthHits));
+        if (deliveredIsGenerated) {
+          ok('GEN-A [REQUIREMENT — GENERATED CONTENT DELIVERED] the WINNING facet is a generated_foundation one, and its own truth text is present exactly once',
+            genTruthHits.some(h => h.count === 1), JSON.stringify(genTruthHits));
+        } else {
+          ok('GEN-A [DISCLOSED] the generated facet did NOT win this scene\'s slot (a competing locked/inferred merged facet did) — confirms it also did not leak in any other form',
+            genTruthHits.every(h => h.count === 0), JSON.stringify(genTruthHits));
+        }
+      } else {
+        ok('GEN-A a real cgScreenplay request was reached to check payload delivery', false, 'blocked earlier in the real click chain — see FAIL lines above');
+      }
+    }
+  } else {
+    ok('GEN-A reached baked Scene 1', false);
+  }
+  await page.context().close();
+}
+
+// ══════════════════════════════════════════════════════════════════════════════════════════
+// NEW SCENARIO GEN-A-LIT (literary) — the SAME correctly-typed generated_foundation response,
+// through the real literary continuation path (synthetic fixed-starter mid-story seed, the same
+// established technique runLiteraryScenario already uses — see that function's own comment for
+// why no real click path exists to reach a literary continuation for THIS starter specifically).
+// ══════════════════════════════════════════════════════════════════════════════════════════
+section('NEW SCENARIO GEN-A-LIT (literary) — correctly-typed 3-kind response (generated_foundation wound) reaches the real literary author payload');
+{
+  const ctx = {};
+  const page = await newStubbedPage(browser, ctx, literaryGeneratedFoundationBible());
+  await page.addInitScript({ content: installLiteraryHelpersSource() });
+  const t0 = Date.now(); let up = false;
+  while (Date.now() - t0 < 120000 && !up) {
+    try { await page.goto('http://localhost:3000/', { waitUntil: 'commit', timeout: 20000 }); await page.waitForFunction(() => window.state && window._buildContinuitySpineBlock && window.StoryPagination && window.__seedLiteraryMidStory, { timeout: 60000 }); up = true; }
+    catch (_) { await page.waitForTimeout(3000); }
+  }
+  ok('GEN-A-LIT server reachable with helpers installed', up);
+  if (up) {
+    const storyId = 'lit-proof-gen-a-' + Date.now();
+    await page.evaluate((sid) => { window.__seedLiteraryMidStory(sid); }, storyId);
+    const seeded = await page.evaluate(() => ({ starterId: window.state._starterId, turnCount: window.state.turnCount }));
+    ok('GEN-A-LIT synthetic fixed-starter mid-story reached', !!seeded.starterId && seeded.turnCount === 0, JSON.stringify(seeded));
+
+    let genResult = null;
+    try { genResult = await page.evaluate(async () => { try { const r = await window._generatePCBodyBible(); return { ok: true, hadResult: !!r }; } catch (e) { return { ok: false, error: String(e && e.message) }; } }); }
+    catch (e) { genResult = { ok: false, error: String(e && e.message) }; }
+    await page.waitForTimeout(1000);
+    ok('GEN-A-LIT _generatePCBodyBible() completed without throwing', genResult && genResult.ok, JSON.stringify(genResult));
+    const realBible = await page.evaluate(() => window.state.pcBodyBible);
+    const validation = await page.evaluate((bible) => window._validatePcFoundationOutput(bible, window._pcFoundationSourceFacts(window.state)), realBible);
+    const commit = await page.evaluate((bible) => window._commitValidatedPcFoundation(window.state, bible), realBible);
+    note('GEN-A-LIT VALIDATION: ok=' + validation.ok + ' rejections=' + JSON.stringify(validation.rejections));
+    note('GEN-A-LIT COMMIT: ' + JSON.stringify(commit));
+    ok('GEN-A-LIT [SCHEMA] validation.ok === true', validation.ok === true, JSON.stringify(validation.rejections));
+    ok('GEN-A-LIT [MERGE] commit REPORTS committed:true', commit.committed === true, JSON.stringify(commit));
+    const mergedIds = commit.mergedFacetIds || [];
+    const generatedIds = mergedIds.filter(id => /^pc_generated_/.test(id));
+    ok('GEN-A-LIT [MERGE] commit.mergedFacetIds includes at least one facet_id starting "pc_generated_"', generatedIds.length > 0, JSON.stringify(mergedIds));
+    const portfolioAfter = await page.evaluate(() => window.state._pcPortfolio);
+    const genFacetRecs = (portfolioAfter && portfolioAfter.facets || []).filter(f => generatedIds.indexOf(f.facet_id) !== -1);
+    ok('GEN-A-LIT [MERGE] the merged generated facet(s) carry origin "pc_body_bible_generated_canon"',
+      genFacetRecs.length === generatedIds.length && genFacetRecs.every(f => f.origin === 'pc_body_bible_generated_canon'),
+      JSON.stringify(genFacetRecs.map(f => f.facet_id + ':' + f.origin)));
+
+    const setup = await page.evaluate(() => {
+      window._ensureStoryEntityAnchors();
+      const accepted = window._acceptStageProposal('2', {
+        present: ['pc'], location: { label: 'the courtyard before the gathered court' },
+        issued_facts: [{ text: 'The gathered court has fallen silent, waiting for her to begin.', participants: [{ ref: 'pc', role: 'subject' }] }],
+        issued_objects: [], exclusions: { locations: [], objects: [] }, affordances: [],
+        source: 'pc-foundation-generated-a-lit-proof',
+      });
+      return { acceptedOk: accepted.ok, acceptedWhy: accepted.why };
+    });
+    ok('GEN-A-LIT accepted stage naming pc present succeeded', setup.acceptedOk === true, JSON.stringify(setup));
+
+    await submitLit(page, 'I keep my hands steady and look out at the court.', 'I am ready to begin.');
+    const settled = await settleLit(page, ctx, 60000);
+    ok('GEN-A-LIT real Submit fires a real author payload', settled && ctx.authorPayloads.length >= 1, 'authorPayloads=' + ctx.authorPayloads.length);
+
+    if (settled) {
+      const lastAuthor = ctx.authorPayloads[ctx.authorPayloads.length - 1];
+      const usr = lastAuthor.sys + '\n' + lastAuthor.usr;
+      const post = await page.evaluate(() => ({
+        cp: window.state.sceneSkeleton && window.state.sceneSkeleton.character_plus,
+        facetIndex: (() => { try { const idx = window._facetIndex(window.state, { sceneNumber: 2 }); return Object.keys(idx); } catch (e) { return ['ERR:' + e.message]; } })(),
+      }));
+      note('GEN-A-LIT real sceneSkeleton.character_plus: ' + JSON.stringify(post.cp));
+      note('GEN-A-LIT real _facetIndex keys at scene 2: ' + JSON.stringify(post.facetIndex));
+      const cp = post.cp || [];
+      const pcDelivered = cp.find(c => mergedIds.indexOf(c.facet_id) !== -1);
+      const deliveredIsGenerated = !!(pcDelivered && /^pc_generated_/.test(pcDelivered.facet_id));
+      note('GEN-A-LIT [DISCLOSED, SAME REAL app.js BEHAVIOR AS GEN-A CG] delivered facet_id=' + (pcDelivered && pcDelivered.facet_id) + ' isGenerated=' + deliveredIsGenerated
+        + ' — see GEN-A (CG) scenario\'s own note above for the exact mechanism (_pcFacetsFromBodyBible\'s shared evidence_requires + fixed emission order).');
+      if (pcDelivered) {
+        const truthLine = 'SOURCE TRUTH — DO NOT STATE: ' + pcDelivered.facet_truth;
+        const truthCount = usr.split(truthLine).length - 1;
+        ok('GEN-A-LIT [DELIVERY] the delivered merged-facet truth ("' + pcDelivered.facet_id + '") appears EXACTLY ONCE in the real author payload', truthCount === 1, 'count=' + truthCount);
+      } else {
+        ok('GEN-A-LIT [DELIVERY] a merged PC facet was delivered this scene', false, 'cp=' + JSON.stringify(cp) + ' mergedIds=' + JSON.stringify(mergedIds));
+      }
+      const leakHits = GENERATED_KIND_LEAK_PATTERNS.filter(p => usr.indexOf(p) !== -1);
+      ok('GEN-A-LIT [LEAK] ZERO raw "kind"/"basis"/"cites"/generated_foundation/_provenance internals leak into the real author payload', leakHits.length === 0, 'leaked=' + JSON.stringify(leakHits));
+
+      const genTruths = genFacetRecs.map(f => f.canonical_truth);
+      const genTruthHits = genTruths.map(t => ({ truth: t.slice(0, 60), count: usr.split(t).length - 1 }));
+      note('GEN-A-LIT generated-facet truth occurrence counts: ' + JSON.stringify(genTruthHits));
+      if (deliveredIsGenerated) {
+        ok('GEN-A-LIT [REQUIREMENT — GENERATED CONTENT DELIVERED] the WINNING facet is a generated_foundation one, present exactly once', genTruthHits.some(h => h.count === 1), JSON.stringify(genTruthHits));
+      } else {
+        ok('GEN-A-LIT [DISCLOSED] the generated facet did NOT win this scene\'s slot — confirms it also did not leak in any other form', genTruthHits.every(h => h.count === 0), JSON.stringify(genTruthHits));
+      }
+    }
+  }
+  await page.context().close();
+}
+
+// ══════════════════════════════════════════════════════════════════════════════════════════
+// NEW SCENARIO RETAINED-B — the ACTUAL retained pre-redesign live sample
+// (_audit_out/pc_foundation_samples/2026-09-15T21-58-49-058Z_live_sample.json's own parsedBible,
+// replayed VERBATIM, never modified — the whole point is proving the unmodified real response
+// still correctly rejects through the real route now that the validator requires a declared
+// kind). Offline-proven already (this session's own 89 dry controls) to reject for
+// missing_or_invalid_claim_kind on every durable field; this is the REAL end-to-end replay:
+// real route, real rejection, zero real-state mutation, zero real-payload leakage.
+// ══════════════════════════════════════════════════════════════════════════════════════════
+function retainedBadSampleB() {
+  const raw = JSON.parse(fs.readFileSync('_audit_out/pc_foundation_samples/2026-09-15T21-58-49-058Z_live_sample.json', 'utf8'));
+  if (!raw.parsedBible) throw new Error('retained sample B has no parsedBible to replay');
+  return raw.parsedBible;
+}
+// Distinctive, ASCII-safe substrings of retainedBadSampleB()'s OWN content (verified present via
+// direct grep before writing this file) — DIFFERENT from the existing RED scenario's own
+// rejectedSnippets (which come from a different retained sample,
+// 2026-09-15_live_sample_01_FAILED.json), since Roman's instruction is explicit that this scenario
+// needs its own snippets from these specific retained files, not the old RED scenario's.
+const RETAINED_B_SNIPPETS = [
+  'her estranged sister, Elowen, who left the Favored ranks after a public scandal',
+  'Lirael has carried the guilt of not stopping her ever since, even though she was only sixteen',
+  'once in secret, once in front of everyone',
+  'to be allowed to make a mistake in front of someone who',
+];
+
+section('NEW SCENARIO RETAINED-B — the retained pre-kind-redesign live sample (2026-09-15T21-58-49-058Z), replayed verbatim through the real route, still rejects with zero delivery');
+{
+  const ctx = {};
+  const bible = retainedBadSampleB();
+  const page = await newStubbedPage(browser, ctx, bible);
+  const reached = await reachBakedScene1('RETAINED-B', page);
+  if (reached) {
+    const gvc = await generateValidateCommit('RETAINED-B', page, ctx, bible, { expectAccept: false });
+    if (gvc) {
+      const { validation, commit } = gvc;
+      ok('RETAINED-B [SCHEMA] validation.ok === false (kind field absent on every entry — pre-dates the redesign)', validation.ok === false, JSON.stringify(validation.rejections));
+      const kindRejections = (validation.rejections || []).filter(r => r.reason === 'missing_or_invalid_claim_kind');
+      ok('RETAINED-B [SCHEMA] every durable field with content is rejected specifically for missing_or_invalid_claim_kind', kindRejections.length > 0, JSON.stringify(validation.rejections.map(r => r.field + ':' + r.reason)));
+      ok('RETAINED-B [MERGE] commit REFUSES with committed:false', commit.committed === false, JSON.stringify(commit));
+
+      const gotRequest = await driveToCgScreenplayRequest('RETAINED-B', page, ctx, async (p) => {
+        return p.evaluate(() => {
+          window._ensureStoryEntityAnchors();
+          const accepted = window._acceptStageProposal('2', {
+            present: ['pc'],
+            location: { label: 'the assembly hall, before the gathered First Favored' },
+            issued_facts: [
+              { text: 'The presiding Dohkar has not yet ruled on the charge against her.', participants: [{ ref: 'pc', role: 'subject' }] },
+            ],
+            issued_objects: [], exclusions: { locations: [], objects: [] }, affordances: [],
+            source: 'pc-foundation-retained-b-proof',
+          });
+          return { acceptedOk: accepted.ok, acceptedWhy: accepted.why };
+        });
+      });
+      if (gotRequest) {
+        const usr = ctx.cgRequests[ctx.cgRequests.length - 1].usr;
+        let hits = 0; const hitList = [];
+        RETAINED_B_SNIPPETS.forEach(sn => { if (usr.indexOf(sn) !== -1) { hits++; hitList.push(sn); } });
+        note('RETAINED-B searched the real captured cgScreenplay usr payload for ' + RETAINED_B_SNIPPETS.length + ' rejected-sample distinctive phrases — found: ' + hits);
+        ok('RETAINED-B [LEAK] ZERO rejected-field content reaches the real cgScreenplay author payload', hits === 0, 'hits=' + hits + (hitList.length ? ' matched=' + JSON.stringify(hitList) : ''));
+        const facetIndexDiag = await page.evaluate(() => {
+          const idx = window._facetIndex(window.state, { sceneNumber: 2 });
+          const facets = window._resolveFacetIndexEntry({ id: 'pc', label: 'Lirael', aliases: ['Lirael'] }, idx, 2);
+          return { pcFacetsResolved: facets.map(f => f.facet_id) };
+        });
+        ok('RETAINED-B [MERGE] the rejected bible contributed NOTHING to _facetIndex (only the seed\'s own two facet_ids resolve)',
+          !facetIndexDiag.pcFacetsResolved || facetIndexDiag.pcFacetsResolved.every(id => id === 'pc_untested_brilliance' || id === 'pc_fears_public_failure'),
+          JSON.stringify(facetIndexDiag));
+      } else {
+        ok('RETAINED-B a real cgScreenplay request was reached to check payload delivery', false, 'blocked earlier in the real click chain — see FAIL lines above');
+      }
+    }
+  } else {
+    ok('RETAINED-B reached baked Scene 1', false);
   }
   await page.context().close();
 }
