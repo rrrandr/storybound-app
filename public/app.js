@@ -5933,6 +5933,13 @@ ${_pcInteriorLock}`;
     // httpStatus (null when the request never got an HTTP response at all), and hadContent. Attached
     // to the SUCCESS result too (result.attemptLog) so a caller can see the full failover history
     // even when the operation ultimately succeeded — not only on total failure.
+    // OPTIONAL CONTENT VALIDATION (Roman 2026-09-16, fate-preview provider-policy pass): some
+    // callers need MORE than "non-empty" to accept a tier's response — e.g. a delimiter-format
+    // parser that can reject a syntactically-present-but-unusable reply. opts.validateContent, if
+    // given, is a (content) => boolean check; a tier that fails it is treated exactly like an
+    // empty-content failure (advances to the next tier, logged the same way). Fully additive and
+    // backward-compatible: every existing caller omits this and is byte-identical in behavior.
+    var validateContent = (typeof opts.validateContent === 'function') ? opts.validateContent : null;
     var attempt = 0, lastErr = null, attemptLog = [];
     for (var i = 0; i < tiers.length; i++) {
       attempt++;
@@ -5944,6 +5951,7 @@ ${_pcInteriorLock}`;
         var result = await _tieredProviderDispatch(t.provider, t.model, messages, maxTokens, temperature);
         var hadContent = !!(result && result.content && String(result.content).trim());
         if (!hadContent) throw _tierErr(t.provider + ' returned empty content', { provider: t.provider, model: t.model, httpStatus: 200, hadContent: false });
+        if (validateContent && !validateContent(result.content)) throw _tierErr(t.provider + ' returned unparsable content', { provider: t.provider, model: t.model, httpStatus: 200, hadContent: true });
         attemptLog.push({ requestId: requestId, tier: t.tier, provider: t.provider, model: t.model, httpStatus: 200, hadContent: true, outcome: 'succeeded' });
         result.tier = t.tier; result.provider = t.provider; result.attempt = attempt; result.attemptLog = attemptLog;
         return result;
@@ -217484,6 +217492,17 @@ No text, no watermark, no UI elements, share-ready.`;
     state._stagedSubmitting = true;
     try { if (typeof sbLogBeta === 'function') sbLogBeta('scene_generation_started', { sceneIndex: (state.turnCount || 0) + 1 }); } catch (_) {}
 
+    // DEFERRED CG SCAFFOLD (Roman 2026-09-16): the baked-opening path skips this in
+    // handleBeginStory (OAS never consumed it — see the comment there). By the time this line
+    // runs, every early-return above has already passed — including the interruption/decision
+    // gates that refuse to reach here until the reader's posture is genuinely recorded — so this
+    // is the correct "immediately before Scene-2 CG continuation needs it" point. Idempotent
+    // guard (state.cgScaffold presence) makes this a no-op for every normal (non-baked) staged
+    // story, whose scaffold was already built during handleBeginStory as before.
+    if (!state.cgScaffold && typeof _ensureCGScaffold === 'function') {
+      try { await _ensureCGScaffold(state); } catch (_scE) { try { console.warn('[STAGED:SUBMIT] deferred CG scaffold ensure failed (non-fatal):', _scE && _scE.message); } catch (_) {} }
+    }
+
     // ── SCREENPLAY-NATIVE PATH (option 2 — opt-in via state._cgScreenplayMode) ──
     // When the flag is on, advance via the screenplay generator instead of
     // the literary submit pipeline. The PC action/dialogue feed straight
@@ -260411,7 +260430,15 @@ INCORRECT:
           _auditWoundLIIntegration().catch(function (e) { try { console.warn('[WOUND→LI] audit promise rejected:', e && e.message); } catch (_) {} });
         }
       } catch (_) {}
-      if (typeof _ensureCGScaffold === 'function') await _ensureCGScaffold(state);
+      // BAKED OPENING (Roman 2026-09-16): OAS does not consume state.cgScaffold anywhere (traced
+      // directly — zero references in the entire OAS dialogue-building region); its block on OAS
+      // opening today is pure sequencing (both awaited in this same chain), not a real data
+      // dependency. Deferred, not baked, not deleted: fires once the reader actually submits their
+      // post-interruption choice, immediately before Scene-2 CG continuation needs it (see the
+      // idempotent-guarded call in _advanceStagedScene). Normal (non-baked) staged launches are
+      // UNCHANGED — this only skips the call during handleBeginStory's baked-setup-only run.
+      if (state._bakedSetupOnly) { try { console.log('[TIER0] CG_SCAFFOLD deferred — baked opening, no paid call until the reader submits their Scene 1 choice'); } catch (_) {} }
+      else if (typeof _ensureCGScaffold === 'function') await _ensureCGScaffold(state);
       if (typeof buildLiteraryScaffoldDirective === 'function') _issueSpine = buildLiteraryScaffoldDirective();
     } catch (_eSp) { try { console.warn('[LIT:SPINE] scaffold ensure/inject failed:', _eSp && _eSp.message); } catch (_) {} }
     // L1 Scene 1 Romance Packet — injected ONLY for turn===0 so Scene 2+ falls

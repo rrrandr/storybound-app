@@ -6787,23 +6787,32 @@ ANTI-TECHNOBABBLE / ANTI-NONSENSE (HARD):
       { role: 'user',   content: userMsg }
     ];
 
-    // Reuse the existing fate-preview chain (Grok → Mistral)
-    console.log('[FATE:INTIMATE] Requesting BATCH preview for all 5 archetypes');
-    let raw = await callGrokIntimateFate(messages, { max_tokens: 700 });
-    let parsed = _parseBatchFatePreview(raw);
-    if (parsed) {
-      console.log('[FATE:INTIMATE] Grok batch preview success');
-      return parsed;
+    // PROVIDER POLICY (Roman 2026-09-16): brought under the SAME shared Mistral-primary ->
+    // Grok-fallback -> terminal-OpenAI policy every other tiered role uses (PC/LI bible, pairBond,
+    // rplot, scaffold, rplotAudit, antagonistBodyBible) — this used to be its own bespoke
+    // Grok-primary -> Mistral-fallback chain with no terminal tier, the REVERSE of the agreed
+    // policy. The delimiter parser and 5-card contract are UNCHANGED; only which provider serves
+    // the request, in which order, changes. validateContent makes an unparsable (not just empty)
+    // reply advance to the next tier — a reply with real HTTP content that doesn't match the
+    // "CARD ||| variant ||| action ||| dialogue" shape is exactly as unusable as no content at all.
+    console.log('[FATE:INTIMATE] Requesting BATCH preview for all 5 archetypes (tiered: mistral -> grok -> openai)');
+    try {
+      const result = await window._callTieredProvider('fatePreviews', messages, {
+        max_tokens: 700, temperature: 0.85,
+        validateContent: (raw) => !!_parseBatchFatePreview(raw)
+      });
+      const parsed = _parseBatchFatePreview(result.content);
+      if (parsed) {
+        console.log('[FATE:INTIMATE] tiered batch preview success via ' + result.provider + '/' + result.tier);
+        return parsed;
+      }
+      // Should not happen given validateContent above — defensive only.
+      console.warn('[FATE:INTIMATE] tiered result had content but failed to parse post-hoc');
+      return null;
+    } catch (e) {
+      console.log('[FATE:INTIMATE] Batch failed on all tiers: ' + (e && e.message));
+      return null;
     }
-    console.log('[FATE:INTIMATE] Grok batch failed, trying Mistral');
-    raw = await callMistralIntimateFate(messages, { max_tokens: 700 });
-    parsed = _parseBatchFatePreview(raw);
-    if (parsed) {
-      console.log('[FATE:INTIMATE] Mistral batch preview success');
-      return parsed;
-    }
-    console.log('[FATE:INTIMATE] Batch failed on both models');
-    return null;
   }
 
   function _parseBatchFatePreview(raw) {
