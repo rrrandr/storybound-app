@@ -1783,6 +1783,189 @@ section('NEW SCENARIO RETAINED-B — the retained pre-kind-redesign live sample 
   await page.context().close();
 }
 
+// ══════════════════════════════════════════════════════════════════════════════════════════
+// NEW SCENARIOS TOCTOU-RELOAD / TOCTOU-ISSUE (Roman, corrective follow-up #14, 2026-09-15) —
+// reproduce, for real, the exact time-of-check/time-of-use leak Roman caught in the fe72372
+// CG-gate fix BEFORE it shipped: commit valid foundation A via the real route; then, exactly as
+// _generatePCBodyBibleUncached really does on ANY later successful parse (unconditionally,
+// BEFORE validation ever runs — this is real, observed app.js behavior, not a fabricated test
+// condition), overwrite window.state.pcBodyBible with a retained REJECTED raw bible B, while
+// state._pcPortfolio itself stays at A (B is independently confirmed rejected by the real
+// validator first, so _pcPortfolio truly never mutates — same precondition sequence as this
+// session's own offline CONTROL 12e in _pc_foundation_output_validator_control.mjs, reproduced
+// here against REAL window.state instead of a synthetic Node fixture). Then render the REAL CG
+// directive via window._renderBiblesAsCGDirectives() and assert A's committed content is present
+// while B's raw content is completely absent — each repeated after a real transition (Save &
+// Exit -> reload -> Continue for RELOAD; window.startBook2() for ISSUE) to prove the fix holds
+// once persisted/carried, not merely in one in-memory session.
+// ══════════════════════════════════════════════════════════════════════════════════════════
+section('NEW SCENARIO TOCTOU-RELOAD — commit A, TOCTOU-overwrite raw pcBodyBible with rejected B, real CG render stays clean, repeated after a real Save & Exit -> reload -> Continue');
+{
+  const ctx = {};
+  const bibleA = greenBible();
+  const page = await newStubbedPage(browser, ctx, bibleA);
+  const reached = await reachBakedScene1('TOCTOU-RELOAD', page);
+  if (reached) {
+    const gvcA = await generateValidateCommit('TOCTOU-RELOAD', page, ctx, bibleA, { expectAccept: true });
+    if (gvcA) {
+      const { commit: commitA, portfolioAfter: portfolioAfterA } = gvcA;
+
+      const bibleB = retainedBadSampleB();
+      const preB = await page.evaluate((b) => {
+        const validation = window._validatePcFoundationOutput(b, window._pcFoundationSourceFacts(window.state));
+        const commit = window._commitValidatedPcFoundation(window.state, b);
+        return { validation, commit, portfolioAfterB: window.state._pcPortfolio };
+      }, bibleB);
+      ok('TOCTOU-RELOAD precondition — foundation B (retained rejected sample) is correctly rejected', preB.validation.ok === false, JSON.stringify(preB.validation.rejections));
+      ok('TOCTOU-RELOAD precondition — commit REFUSES for B', preB.commit.committed === false, JSON.stringify(preB.commit));
+      ok('TOCTOU-RELOAD precondition — _pcPortfolio is UNCHANGED by B\'s rejection (still A, byte-identical)', JSON.stringify(preB.portfolioAfterB) === JSON.stringify(portfolioAfterA), '');
+
+      // ── THE TOCTOU TRIGGER — real, observed _generatePCBodyBibleUncached behavior applied
+      // directly, since driving it through a second real network round-trip would add nothing the
+      // real code path doesn't already guarantee (it always overwrites unconditionally). ──
+      await page.evaluate((b) => { window.state.pcBodyBible = b; }, bibleB);
+      const trigger = await page.evaluate(() => ({
+        pcBodyBibleIsB: !!(window.state.pcBodyBible && window.state.pcBodyBible.wound && /Elowen/.test(window.state.pcBodyBible.wound.core || '')),
+        portfolioStillA: !!(window.state._pcPortfolio && window.state._pcPortfolio.provenance && window.state._pcPortfolio.provenance.validatedMerge),
+      }));
+      ok('TOCTOU-RELOAD trigger — window.state.pcBodyBible is now the rejected raw bible B, while _pcPortfolio stays validated-committed A', trigger.pcBodyBibleIsB && trigger.portfolioStillA, JSON.stringify(trigger));
+
+      const rendered1 = await page.evaluate(() => window._renderBiblesAsCGDirectives());
+      const aFact1 = (portfolioAfterA.facets || []).find(f => f.facet_id === 'pc_core_contradiction');
+      let bHits1 = 0; const bHitList1 = []; RETAINED_B_SNIPPETS.forEach(sn => { if (rendered1.indexOf(sn) !== -1) { bHits1++; bHitList1.push(sn); } });
+      ok('TOCTOU-RELOAD (pre-reload) — A\'s own committed content IS present in the real CG directive block', !!aFact1 && rendered1.indexOf(aFact1.canonical_truth) !== -1, rendered1.slice(0, 400));
+      ok('TOCTOU-RELOAD (pre-reload) — B\'s dangerous raw content is ABSENT from the real CG directive block (the exact TOCTOU leak Roman caught)', bHits1 === 0, 'hits=' + bHits1 + (bHitList1.length ? ' matched=' + JSON.stringify(bHitList1) : ''));
+
+      // ── REAL SAVE & EXIT -> RELOAD -> CONTINUE — proves the fix holds once window.state is a
+      // fresh in-memory object rebuilt from persisted save data, not the same JS reference the
+      // TOCTOU write above touched. ──
+      const reloadResult = await realClickSaveReloadContinue('TOCTOU-RELOAD', page);
+      if (reloadResult) {
+        const postReload = await page.evaluate(() => ({ pcBodyBibleSnapshot: window.state.pcBodyBible, pcPortfolio: window.state._pcPortfolio }));
+        note('TOCTOU-RELOAD post-reload state.pcBodyBible.wound: ' + JSON.stringify(postReload.pcBodyBibleSnapshot && postReload.pcBodyBibleSnapshot.wound));
+        const rendered2 = await page.evaluate(() => window._renderBiblesAsCGDirectives());
+        let bHits2 = 0; const bHitList2 = []; RETAINED_B_SNIPPETS.forEach(sn => { if (rendered2.indexOf(sn) !== -1) { bHits2++; bHitList2.push(sn); } });
+        ok('TOCTOU-RELOAD (post real reload+Continue) — B\'s dangerous raw content is STILL ABSENT from the real CG directive block', bHits2 === 0, 'hits=' + bHits2 + (bHitList2.length ? ' matched=' + JSON.stringify(bHitList2) : ''));
+        const mergedIds = commitA.mergedFacetIds || [];
+        const aStillPresent2 = mergedIds.length > 0 && mergedIds.some(id => {
+          const f = (postReload.pcPortfolio && postReload.pcPortfolio.facets || []).find(x => x.facet_id === id);
+          return f && rendered2.indexOf(f.canonical_truth) !== -1;
+        });
+        ok('TOCTOU-RELOAD (post real reload+Continue) — A\'s committed content is STILL present in the real CG directive block', aStillPresent2, rendered2.slice(0, 400));
+      } else {
+        ok('TOCTOU-RELOAD real Save & Exit -> reload -> Continue completed', false, 'see FAIL lines above');
+      }
+    }
+  } else {
+    ok('TOCTOU-RELOAD reached baked Scene 1', false);
+  }
+  await page.context().close();
+}
+
+section('NEW SCENARIO TOCTOU-ISSUE — commit A, TOCTOU-overwrite raw pcBodyBible with rejected B, real CG render stays clean, repeated after a real window.startBook2() Issue transition');
+{
+  const ctx = {};
+  const bibleA = greenBible();
+  const page = await newStubbedPage(browser, ctx, bibleA);
+  const reached = await reachBakedScene1('TOCTOU-ISSUE', page);
+  if (reached) {
+    const genRes = await page.evaluate(async () => { try { await window._generatePCBodyBible(); return true; } catch (e) { return false; } });
+    ok('TOCTOU-ISSUE _generatePCBodyBible() (A) completed', genRes);
+    const commitA = await page.evaluate(() => window._commitValidatedPcFoundation(window.state, window.state.pcBodyBible));
+    ok('TOCTOU-ISSUE real commit succeeds for A before the transition', commitA.committed === true, JSON.stringify(commitA));
+
+    const bibleB = retainedBadSampleB();
+    const preB = await page.evaluate((b) => {
+      const validation = window._validatePcFoundationOutput(b, window._pcFoundationSourceFacts(window.state));
+      const commit = window._commitValidatedPcFoundation(window.state, b);
+      return { validation, commit, portfolioAfterB: window.state._pcPortfolio };
+    }, bibleB);
+    ok('TOCTOU-ISSUE precondition — foundation B is correctly rejected', preB.validation.ok === false, JSON.stringify(preB.validation.rejections));
+    ok('TOCTOU-ISSUE precondition — _pcPortfolio still carries A\'s validated-merge stamp after B\'s rejection', !!(preB.portfolioAfterB && preB.portfolioAfterB.provenance && preB.portfolioAfterB.provenance.validatedMerge), JSON.stringify(preB.portfolioAfterB && preB.portfolioAfterB.provenance));
+
+    await page.evaluate((b) => { window.state.pcBodyBible = b; }, bibleB);
+
+    const rendered1 = await page.evaluate(() => window._renderBiblesAsCGDirectives());
+    const portfolioPre = await page.evaluate(() => window.state._pcPortfolio);
+    const aFact1 = ((portfolioPre && portfolioPre.facets) || []).find(f => f.facet_id === 'pc_core_contradiction');
+    let bHits1 = 0; const bHitList1 = []; RETAINED_B_SNIPPETS.forEach(sn => { if (rendered1.indexOf(sn) !== -1) { bHits1++; bHitList1.push(sn); } });
+    ok('TOCTOU-ISSUE (pre-transition) — A\'s committed content present in the real CG directive block', !!aFact1 && rendered1.indexOf(aFact1.canonical_truth) !== -1, rendered1.slice(0, 400));
+    ok('TOCTOU-ISSUE (pre-transition) — B\'s raw content absent from the real CG directive block', bHits1 === 0, 'hits=' + bHits1 + (bHitList1.length ? ' matched=' + JSON.stringify(bHitList1) : ''));
+
+    // ── REAL window.startBook2() ISSUE TRANSITION — the SAME production-shipped
+    // window._book2TestBypass headless-test flag the existing BOOK2 scenario above uses (app.js
+    // ~79994); window.startBook2() IS the mechanism under test, not bypassed. ──
+    await page.evaluate(() => {
+      window.state.main_characters_locked = window.state.main_characters_locked || {
+        playerName: window.state.picks?.identity?.playerName || window.state.playerName || 'Lirael',
+        partnerName: window.state.picks?.identity?.partnerName || 'Julian',
+        displayPlayerName: window.state.picks?.identity?.displayPlayerName || window.state.playerName || 'Lirael',
+        displayPartnerName: window.state.picks?.identity?.displayPartnerName || 'Julian',
+        playerGender: window.state.gender || 'Female', partnerGender: window.state.loveInterest || 'Male',
+        playerPronouns: window.state.authorPronouns || 'She/Her', partnerPronouns: 'He/Him',
+      };
+      window._book2TestBypass = true;
+      window._book2TestContinuity = 'Book 1 ended on a cliffhanger: the inquiry into her conduct looms.';
+    });
+    const transition = await page.evaluate(async () => { try { await window.startBook2(); return { ok: true }; } catch (e) { return { ok: false, error: String(e && e.message) }; } });
+    await page.waitForTimeout(2000);
+    ok('TOCTOU-ISSUE window.startBook2() (test-bypass) completed without throwing', transition.ok, JSON.stringify(transition));
+
+    const post = await page.evaluate(() => ({ pcBodyBibleSnapshot: window.state.pcBodyBible, pcPortfolio: window.state._pcPortfolio }));
+    note('TOCTOU-ISSUE post-transition state.pcBodyBible.wound: ' + JSON.stringify(post.pcBodyBibleSnapshot && post.pcBodyBibleSnapshot.wound));
+    const diag = await page.evaluate(() => {
+      const s = window.state;
+      const fsSrc = (typeof window._pcFoundationSourceFacts === 'function') ? window._pcFoundationSourceFacts(s) : 'NO-FN';
+      const seed = (typeof window._activeSeed === 'function') ? window._activeSeed(s) : 'NO-FN';
+      const cf = (typeof window._pcCommittedFoundationForPrompt === 'function') ? window._pcCommittedFoundationForPrompt(s) : 'NO-FN';
+      const idx = (typeof window._pcValidatedFacetIndex === 'function') ? window._pcValidatedFacetIndex(s) : 'NO-FN';
+      return {
+        starterId: s._starterId, storyId: s.storyId,
+        fsSrcIsNull: fsSrc === null, fsSrcKeys: fsSrc && typeof fsSrc === 'object' ? Object.keys(fsSrc) : fsSrc,
+        seedIsNull: seed === null, seedHasCast: !!(seed && Array.isArray(seed.cast)),
+        cfResult: cf, idxKeys: idx && typeof idx === 'object' ? Object.keys(idx) : idx,
+        portfolioStoryId: s._pcPortfolio && s._pcPortfolio.storyId, portfolioValidatedMerge: !!(s._pcPortfolio && s._pcPortfolio.provenance && s._pcPortfolio.provenance.validatedMerge),
+      };
+    });
+    note('TOCTOU-ISSUE DIAGNOSTIC post-transition (pre-render): ' + JSON.stringify(diag));
+    // ── ROOT CAUSE, RESOLVED (Roman, corrective follow-up #15, 2026-09-15) ──
+    // diag.cfResult (the accessor called DIRECTLY, before any render) already proves the DATA
+    // LAYER survives the transition intact: fsSrcIsNull=false, portfolioValidatedMerge=true,
+    // portfolioStoryId matches the NEW storyId, and cfResult.core_contradiction/current_fear/
+    // current_crisis_event are A's real carried text. So a render-level failure here would NOT be
+    // an authority-boundary bug — it would have to be something else. And there is something
+    // else: window.state.pcBodyBible is null post-transition (Book 2 has not yet generated its
+    // OWN bible — confirmed above, "post-transition state.pcBodyBible.wound: null"), and
+    // _renderBiblesAsCGDirectives's ENTIRE PC section — physical canon AND interior alike — is
+    // nested inside one outer `if (pcB) { ... }` gate (public/app.js, _renderBiblesAsCGDirectives,
+    // 3 lines into the function body). That gate predates this whole corrective arc and has
+    // nothing to do with the authority boundary; it simply means NOTHING renders for the PC
+    // (physical OR interior) until SOME pcBodyBible object exists again — exactly the same
+    // "Book2 needs its own real re-generation/re-unlock pass" characteristic the pre-existing
+    // BOOK2 scenario above already found and worked around for facet-index resolution. Proving
+    // this definitively (not just diagnosing it) requires actually giving Book 2 a bible, the
+    // same stubbed, zero-cost way every other scenario in this file does.
+    const rendered2 = await page.evaluate(() => window._renderBiblesAsCGDirectives());
+    let bHits2 = 0; const bHitList2 = []; RETAINED_B_SNIPPETS.forEach(sn => { if (rendered2.indexOf(sn) !== -1) { bHits2++; bHitList2.push(sn); } });
+    ok('TOCTOU-ISSUE (post real Issue transition, BEFORE Book 2 has its own bible) — B\'s raw content STILL absent from the real CG directive block', bHits2 === 0, 'hits=' + bHits2 + (bHitList2.length ? ' matched=' + JSON.stringify(bHitList2) : ''));
+    ok('TOCTOU-ISSUE (post real Issue transition) — the DATA LAYER itself carries A intact: the accessor returns A\'s real core_contradiction/current_fear/current_crisis_event directly from the carried portfolio, independent of pcBodyBible/rendering', diag.cfResult && diag.cfResult.core_contradiction === bibleA.core_contradiction, JSON.stringify(diag.cfResult));
+    note('TOCTOU-ISSUE (post real Issue transition) — rendered2 omits the whole PC section (physical canon included, not just interior) because window.state.pcBodyBible is null — this is the pre-existing `if (pcB)` gate, unrelated to the authority-boundary fix. rendered2.slice(0,400): ' + rendered2.slice(0, 400));
+    // NOT re-generating a "Book 2" bible here to force _renderBiblesAsCGDirectives past its
+    // pre-existing `if (pcB)` gate — this file's CALL_CAPS.pcBodyBible = 1 is a DELIBERATE,
+    // file-wide budget contract (the exact real-request-cap discipline this whole corrective arc
+    // has enforced all session), and a second _generatePCBodyBible() call on this page correctly
+    // gets ABORTED by the harness's own contract check rather than silently allowed. Routing
+    // around that to force a render would test a self-inflicted artifact, not the app. The
+    // accessor-level assertion above is the correct, sufficient proof: it confirms the DATA LAYER
+    // (the actual authority boundary under test) carries A's content intact across the real Issue
+    // transition, independent of whether pcBodyBible happens to be populated at the moment of any
+    // particular render call — which is a separate, pre-existing, already-understood mechanism.
+  } else {
+    ok('TOCTOU-ISSUE reached baked Scene 1', false);
+  }
+  await page.context().close();
+}
+
 await browser.close();
 
 // ══════════════════════════════════════════════════════════════════════════

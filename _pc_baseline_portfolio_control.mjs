@@ -267,8 +267,12 @@ section('CONTROL 6 — no raw bible/model text or uncommitted planner fact leaks
   ok('bible.private_hope (unmapped field) never appears in the materialized portfolio facets', facetText.indexOf('loved without ever having to ask') === -1);
   ok('bible.emotional_weather (unmapped field) never appears in the materialized portfolio facets', facetText.indexOf('brittle composure') === -1);
   ok('bible.wound.core (unmapped field) never appears in the materialized portfolio facets', facetText.indexOf('mother left') === -1);
-  ok('only the two mapped fields (core_contradiction, current_crisis.immediate_fear) are present',
-    facets.length === 2 && facets.map(function (f) { return f.facet_id; }).sort().join(',') === 'pc_core_contradiction,pc_current_fear');
+  // Roman, corrective follow-up #15, 2026-09-15 — current_crisis.event joined the UNCONDITIONAL
+  // mapping (alongside core_contradiction/immediate_fear) so the new _pcCommittedFoundationForPrompt
+  // authority boundary has a committed source for the page-one crisis text; three fields now.
+  ok('only the three unconditionally-mapped fields (core_contradiction, current_crisis.event, current_crisis.immediate_fear) are present',
+    facets.length === 3 && facets.map(function (f) { return f.facet_id; }).sort().join(',') === 'pc_core_contradiction,pc_current_crisis_event,pc_current_fear');
+  ok('pc_current_crisis_event carries the exact crisis event text', facetText.indexOf('ritual collapsed and the assembly blamed her control') !== -1);
 
   const cont2 = win._cpContinuationAssignment(s, 2);
   const directiveText = cont2.ok ? cont2.character_plus.map(function (c) { return win._cpBeatLines(c, false); }).join('\n') : '';

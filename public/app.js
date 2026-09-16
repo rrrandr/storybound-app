@@ -51563,9 +51563,15 @@ AESTHETIC: Polished editorial illustration. The object's compromised state reads
     liDeflect = liDeflect.replace(/^He\s+/i, '').replace(/^[A-Z]/, function (c) { return c.toLowerCase(); });
     if (liDeflect.length > 90) liDeflect = liDeflect.slice(0, 90).replace(/\s+\S*$/, '') + '…';
 
+    // AUTHORITY BOUNDARY (Roman, corrective follow-up #15, 2026-09-15) — see
+    // _pcCommittedFoundationForPrompt's own header. Corridor (null) keeps the exact prior raw
+    // pc.li_keenly_aware_of/pc.private_hope reads, unchanged. li_keenly_aware_of has NO
+    // committed-portfolio equivalent — permanently omitted for a fixed starter (falls through
+    // to the signature_feature/default branches below, same disclosed narrowing as elsewhere).
+    var _cf15i = (typeof _pcCommittedFoundationForPrompt === 'function') ? _pcCommittedFoundationForPrompt(s) : null;
     // PC feature for "noticing her" beats — pull from li_keenly_aware_of (PC Bible)
     var pcFeature = '';
-    if (pc.li_keenly_aware_of) {
+    if (!_cf15i && pc.li_keenly_aware_of) {
       var feats = String(pc.li_keenly_aware_of).split(/[,;]/).map(function (s) { return s.trim(); }).filter(Boolean);
       if (feats.length) pcFeature = feats[0];
     }
@@ -51574,7 +51580,8 @@ AESTHETIC: Polished editorial illustration. The object's compromised state reads
 
     // PC want — from private_hope; transform "to <verb>" → gerund-noun phrase so
     // it reads grammatically inside "The shape of X sat in her chest."
-    var pcWantRaw = pc.private_hope ? String(pc.private_hope).trim() : 'wanting to be noticed';
+    var _pcPrivateHope = _cf15i ? _cf15i.private_hope : pc.private_hope;
+    var pcWantRaw = _pcPrivateHope ? String(_pcPrivateHope).trim() : 'wanting to be noticed';
     var pcWantGerund = pcWantRaw
       .replace(/^to be\s+/i, 'being ')           // "to be loved" → "being loved"
       .replace(/^to have\s+/i, 'having ')        // "to have …" → "having …"
@@ -62068,7 +62075,15 @@ Return ONLY a single valid JSON object. STRICT JSON RULES (HARD — malformed JS
     // PRESSURE this relationship. Absent (legacy/CG ordering) → builder skips
     // the blocks and the A-plot invents wounds as before (graceful fallback).
     var _rPlotForAPlot = (window.state && window.state.rPlot && window.state.rPlot.coreTension) ? window.state.rPlot : null;
-    var _pcWoundForAPlot = (window.state && window.state.pcBodyBible && window.state.pcBodyBible.wound) ? window.state.pcBodyBible.wound : null;
+    // AUTHORITY BOUNDARY (Roman, corrective follow-up #15, 2026-09-15) — for a fixed-starter
+    // story, every PC psychological/foundation field this generator consumes must come from
+    // the committed portfolio, never mutable raw pcBodyBible. _cf15c is null for corridor
+    // (unchanged raw behavior below) or an object (possibly with fields absent — omitted, never
+    // substituted with raw content) for a fixed starter. See _pcCommittedFoundationForPrompt.
+    var _cf15c = (typeof _pcCommittedFoundationForPrompt === 'function') ? _pcCommittedFoundationForPrompt(window.state) : null;
+    var _pcWoundForAPlot = _cf15c
+      ? (_cf15c.wound_core ? { core: _cf15c.wound_core, surfacing_hint: _cf15c.wound_surfacing_hint || '' } : null)
+      : ((window.state && window.state.pcBodyBible && window.state.pcBodyBible.wound) ? window.state.pcBodyBible.wound : null);
     var _liWoundForAPlot = (window.state && window.state.liBodyBible && window.state.liBodyBible.wound) ? window.state.liBodyBible.wound : null;
     // Roman 2026-06-03 — kink-fit wiring. LI's signature_kink (the emotional
     // hole his wound creates) + relevant PC Bible signals (signature_behavior /
@@ -62078,12 +62093,17 @@ Return ONLY a single valid JSON object. STRICT JSON RULES (HARD — malformed JS
     // upstream architecture that gives it gravity.
     var _liKinkForAPlot = (window.state && window.state.liBodyBible && window.state.liBodyBible.signature_kink) ? window.state.liBodyBible.signature_kink : null;
     var _pcBibleForAPlot = (window.state && window.state.pcBodyBible) ? window.state.pcBodyBible : null;
-    var _pcKinkSignalsForAPlot = _pcBibleForAPlot ? {
-      signature_behavior:   _pcBibleForAPlot.signature_behavior   || '',
-      core_contradiction:   _pcBibleForAPlot.core_contradiction   || '',
-      private_hope:         _pcBibleForAPlot.private_hope         || '',
-      emotional_weather:    _pcBibleForAPlot.emotional_weather    || ''
-    } : null;
+    // signature_behavior and emotional_weather have NO committed-portfolio equivalent (neither
+    // is one of PCV_DURABLE_FIELDS) — PERMANENTLY, intentionally omitted for a fixed starter,
+    // same disclosed narrowing as _pcCommittedFoundationForPrompt's own header documents.
+    var _pcKinkSignalsForAPlot = _cf15c
+      ? { signature_behavior: '', core_contradiction: _cf15c.core_contradiction || '', private_hope: _cf15c.private_hope || '', emotional_weather: '' }
+      : (_pcBibleForAPlot ? {
+          signature_behavior:   _pcBibleForAPlot.signature_behavior   || '',
+          core_contradiction:   _pcBibleForAPlot.core_contradiction   || '',
+          private_hope:         _pcBibleForAPlot.private_hope         || '',
+          emotional_weather:    _pcBibleForAPlot.emotional_weather    || ''
+        } : null);
     var _collisionGeometryForAPlot = (window.state && window.state.pairDynamic && window.state.pairDynamic.collisionGeometry) ? window.state.pairDynamic.collisionGeometry : '';
     const built = buildAPlotGeneratorPrompt({
       tier,
@@ -62101,7 +62121,12 @@ Return ONLY a single valid JSON object. STRICT JSON RULES (HARD — malformed JS
       collisionGeometry: _collisionGeometryForAPlot,
       acquaintance:   (window.state && window.state.romanceEnginePlan && window.state.romanceEnginePlan.acquaintance) || (window.state && window.state.pairDynamic && window.state.pairDynamic.acquaintance) || '', // Roman 2026-06-04 — strangers have NO prior PC↔LI relationship
       scene1Presence: (window.state && window.state.romanceEnginePlan && window.state.romanceEnginePlan.scene1Presence) || (window.state && window.state.pairDynamic && window.state.pairDynamic.scene1Presence) || '',
-      currentCrisis: (window.state && window.state.pcBodyBible && window.state.pcBodyBible.current_crisis) || null, // Roman 2026-06-04 — Single Crisis Law: A-plot must be ONE FIRE with the page-one crisis
+      currentCrisis: _cf15c
+        ? ((_cf15c.current_crisis_event || _cf15c.current_fear || _cf15c.li_complication || _cf15c.refusal) ? {
+            event: _cf15c.current_crisis_event || '', immediate_fear: _cf15c.current_fear || '',
+            li_complication: _cf15c.li_complication || '', refusal: _cf15c.refusal || ''
+          } : null)
+        : ((window.state && window.state.pcBodyBible && window.state.pcBodyBible.current_crisis) || null), // Roman 2026-06-04 — Single Crisis Law: A-plot must be ONE FIRE with the page-one crisis; authority boundary added #15
       openingTemp:  (window.state && window.state._openingTemperature) || '',
       pcArch:       (window.state && window.state.picks && (window.state.picks.playermask || window.state.picks.playerMask)) ||
                     (window.state && (window.state.playerMask || window.state.playermask)) || '', // Roman 2026-06-12: full chain — Destiny writes state.playerMask
@@ -70809,7 +70834,11 @@ One sentence maximum. Atmospheric only. If reality bends, the deck should stir.\
     var bits = ['A-PLOT PRESSURE (this scene must TIGHTEN the spine, not just reference it): land ONE concrete beat that raises the stakes, advances the clock, or drops a complication on the issue objective. The A-plot is the ACCELERANT; the relationship is the FIRE — convert plot pressure into pressure on the couple, never a logistics report.'];
     try {
       var lvl = (typeof _woundDisclosureLevel === 'function') ? _woundDisclosureLevel(state) : 'symptom';
-      var wound = state.primaryWound || (state.pcBodyBible && state.pcBodyBible.wound) || a.pcWound || '';
+      // AUTHORITY BOUNDARY (Roman, corrective follow-up #15, 2026-09-15) — see
+      // _pcCommittedFoundationForPrompt's own header; corridor (null) keeps its exact prior
+      // (state.pcBodyBible && state.pcBodyBible.wound) read, unchanged.
+      var _cf15b = (typeof _pcCommittedFoundationForPrompt === 'function') ? _pcCommittedFoundationForPrompt(state) : null;
+      var wound = state.primaryWound || (_cf15b ? _cf15b.wound_core : (state.pcBodyBible && state.pcBodyBible.wound)) || a.pcWound || '';
       if (lvl === 'named' && wound) {
         var liNm = state.loveInterestName || 'the love interest';
         bits.push('WOUND VORTEX (once this scene — the wound is now EARNED): the PC\'s wound — "' + _llClip(wound, 160) + '" — surfaces ONCE, THROUGH the surface action (never a flashback or stand-alone memory paragraph). Pattern: [surface beat fully rendered] → [she notices something: a look, phrase, echo, behavior] → [ONE-CLAUSE concrete recognition of the wound] → [back to the surface, now heavier]. Named concretely but PERIPHERAL — never explained, never its own paragraph, never named twice. PREFER latching it onto a remembered ' + liNm + ' moment so HE owns the gravity (not a third party). VARY the form (look / phrase / sensory echo / behavior / sudden certainty) — never calcify on "I\'d seen that look before." Land it in the latter half of the scene.');
@@ -98004,9 +98033,13 @@ function _buildAuthorFloorDirective(s) {
     try {
       s = s || window.state || {};
       var pc = s.pcBodyBible || {}, cr = pc.current_crisis || {}, ap = s.aPlot || {};
+      // AUTHORITY BOUNDARY (Roman, corrective follow-up #15, 2026-09-15) — for a fixed-starter
+      // story, raw cr.immediate_fear/cr.event must come from the committed portfolio, never
+      // from mutable raw pcBodyBible; see _pcCommittedFoundationForPrompt's own header.
+      var _cf15 = (typeof _pcCommittedFoundationForPrompt === 'function') ? _pcCommittedFoundationForPrompt(s) : null;
       var who = s.name || s.playerName || 'the protagonist';
       var li = s.loveInterestName || s.partnerName || '';
-      var fear = String(cr.immediate_fear || '').slice(0, 200);
+      var fear = String((_cf15 ? _cf15.current_fear : cr.immediate_fear) || '').slice(0, 200);
       var world = [s.world, s.flavor].filter(Boolean).join(' / ');
       // THE MANDATORY BEAT — the fixed event the seed owns. When a seed-level opener owns Scene 1 (Fatelands
       // wish-demo), hand the editor that STRUCTURAL beat so it stops inventing a different scene (the mis-source bug);
@@ -98016,7 +98049,7 @@ function _buildAuthorFloorDirective(s) {
       if (isWishDemo) {
         beat = 'A live catastrophe strikes a crowd and ordinary means visibly fail; a DESPERATE BYSTANDER (a minor NPC invented for this scene — NOT ' + who + ', and do NOT assume it is the love interest or any named main character; you do not know who they are) reaches for Fate and speaks a BLANK-CHECK wish aloud to save someone, leaving the price unnamed ("take what you will"); the room recoils, Fate grants it, and takes a price no one would have offered. ' + who + ' can only WITNESS this — so CENTER YOUR OBSERVATION ON ' + who + ' (the one person here whose identity is fixed), never on the unknown wisher, and NEVER name the wisher.';
       } else {
-        beat = String((cr.event || (ap.scene1Compressed && ap.scene1Compressed.pressure_sentence) || (ap.scene1Compressed && ap.scene1Compressed.pressure) || '')).slice(0, 320);
+        beat = String(((_cf15 ? _cf15.current_crisis_event : cr.event) || (ap.scene1Compressed && ap.scene1Compressed.pressure_sentence) || (ap.scene1Compressed && ap.scene1Compressed.pressure) || '')).slice(0, 320);
       }
       if (!beat) return '';
       var editorSys = 'You are the story\'s EDITOR, not the writer. The scene\'s EVENTS are ALREADY FIXED by the story — you do NOT choose what happens, and you may not add, remove, or alter a single event. You choose ONE revealing SOCIAL MOVE — a deliberate BID — the narration should NOTICE while the fixed beat unfolds. Do not write prose.\n\n'
@@ -129797,6 +129830,21 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
                  forbidden_restatements: [], origin: 'pc_body_bible',
                  possible_pressures: [{ text: fear, evidence_requires: _pcEvidenceRequiresFromText(crisisText || fear) }] });
     }
+    // UNCONDITIONAL, THIRD FIELD (Roman, corrective follow-up #15, 2026-09-15) — current_crisis.event
+    // is the "one fire" the Single Crisis Law and multiple author-payload builders
+    // (generateAPlot, _buildInMotionOpeningBeat, _buildCGScaffold, _runEditorialPass) require to
+    // exist for a fixed-starter PC; it is validated (see the "current_crisis.event" _provenance key
+    // the validator requires) but, until now, never committed — meaning the new authority boundary
+    // (_pcCommittedFoundationForPrompt) would have silently DROPPED the page-one crisis text for
+    // every fixed starter. Mapped unconditionally, exactly like core_contradiction/immediate_fear
+    // above (regardless of declared claim kind — locked/inferred/generated all describe a real,
+    // already-validated crisis the story needs, not a duplicate of other committed content).
+    var crisisEventTrim = String(crisisText || '').trim();
+    if (crisisEventTrim) {
+      out.push({ facet_id: 'pc_current_crisis_event', category: 'history', canonical_truth: crisisEventTrim,
+                 forbidden_restatements: [], origin: 'pc_body_bible',
+                 possible_pressures: [{ text: crisisEventTrim, evidence_requires: _pcEvidenceRequiresFromText(crisisEventTrim) }] });
+    }
     // GENERATED FOUNDATION FACETS (Roman, corrective follow-up #12, 2026-09-15) — genuinely NEW
     // creative material the model contributed for an unfilled slot (e.g. a sister, a prior event,
     // a vulnerability), validated and ACCEPTED under kind:'generated_foundation'. Unlike
@@ -134468,6 +134516,59 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
     return out;
   }
   try { if (typeof window !== 'undefined') window._pcValidatedFacetIndex = _pcValidatedFacetIndex; } catch (_) {}
+
+  // ══════════════════════════════════════════════════════════════════════════════════════
+  // SHARED PROMPT-FACING COMMITTED-FOUNDATION ACCESSOR (Roman, corrective follow-up #15 to
+  // fe72372/#14, 2026-09-15) — closes a systemic version of the TOCTOU bug #14 found in
+  // _renderBiblesAsCGDirectives ALONE: a static audit found the SAME raw-state.pcBodyBible-
+  // reaches-an-author-payload pattern, unguarded by any commit check, in at least seven OTHER
+  // builders (_renderPCBodyBibleCompact, _buildCGScaffold, _llAPlotPressure, generateAPlot,
+  // _buildInMotionOpeningBeat, _runEditorialPass, _buildRomanceArcResonanceDirective). Rather
+  // than hand-writing the same gate at each call site (which is how the bug spread the first
+  // time), every one of those — AND _renderBiblesAsCGDirectives, refactored onto this same
+  // accessor instead of its own inline copy — now goes through THIS single function.
+  //
+  // Returns exactly one of three shapes:
+  //   • null  — NOT a fixed-starter story (_pcFoundationSourceFacts is null: corridor / no PC
+  //     seed). The authority boundary does not apply here; callers keep their EXISTING
+  //     unconditional raw state.pcBodyBible read, completely unchanged.
+  //   • {}    — a fixed-starter story with NO valid committed foundation (no commit yet, a
+  //     portfolio from a foreign/stale story, or one whose fingerprint no longer matches the
+  //     current seed — identical checks _pcValidatedFacetIndex already enforces for C+
+  //     delivery, reused here rather than re-implemented). The boundary IS active: callers
+  //     must render NOTHING for these fields, never falling back to raw pcBodyBible.
+  //   • {...} — a fixed-starter story WITH a valid committed foundation. Only the named fields
+  //     below are populated, each sourced EXCLUSIVELY from state._pcPortfolio's validated
+  //     facets (both origin:'pc_body_bible_validated' and 'pc_body_bible_generated_canon' —
+  //     locked/inferred and generated content are equally committed, equally usable).
+  //
+  // emotional_weather and li_keenly_aware_of have NO committed-portfolio equivalent and are
+  // PERMANENTLY, intentionally omitted — a disclosed narrowing (first accepted in the original
+  // _renderBiblesAsCGDirectives fix), not an oversight here.
+  // ══════════════════════════════════════════════════════════════════════════════════════
+  function _pcCommittedFoundationForPrompt(s) {
+    try {
+      s = s || (typeof window !== 'undefined' ? window.state : null) || {};
+      var fsSrc = (typeof _pcFoundationSourceFacts === 'function') ? _pcFoundationSourceFacts(s) : null;
+      if (!fsSrc) return null;                                    // corridor — boundary inactive
+      var out = {};
+      var idx = (typeof _pcValidatedFacetIndex === 'function') ? _pcValidatedFacetIndex(s) : {};
+      var facetMap = {};
+      Object.keys(idx || {}).forEach(function (k) {
+        ((idx[k] && idx[k].facets) || []).forEach(function (f) { if (f && f.facet_id) facetMap[f.facet_id] = f.canonical_truth; });
+      });
+      if (facetMap.pc_core_contradiction != null)              out.core_contradiction    = facetMap.pc_core_contradiction;
+      if (facetMap.pc_current_fear != null)                    out.current_fear          = facetMap.pc_current_fear;
+      if (facetMap.pc_current_crisis_event != null)            out.current_crisis_event  = facetMap.pc_current_crisis_event;
+      if (facetMap.pc_generated_wound_core != null)             out.wound_core            = facetMap.pc_generated_wound_core;
+      if (facetMap.pc_generated_wound_surfacing_hint != null)   out.wound_surfacing_hint  = facetMap.pc_generated_wound_surfacing_hint;
+      if (facetMap.pc_generated_private_hope != null)           out.private_hope          = facetMap.pc_generated_private_hope;
+      if (facetMap.pc_generated_li_complication != null)        out.li_complication       = facetMap.pc_generated_li_complication;
+      if (facetMap.pc_generated_refusal != null)                out.refusal               = facetMap.pc_generated_refusal;
+      return out;
+    } catch (_) { return null; }
+  }
+  try { if (typeof window !== 'undefined') window._pcCommittedFoundationForPrompt = _pcCommittedFoundationForPrompt; } catch (_) {}
 
   var _FACET_PROVIDERS = [
     { id: 'seed',          live: true,  fn: function (s, opts) { return _seedFacetIndex(s, opts); } },
@@ -217642,7 +217743,15 @@ No text, no watermark, no UI elements, share-ready.`;
       (function(){
         try {
           if ((s._openingTemperature || '') !== 'HOT_CRISIS') return '';
-          var cc = s.pcBodyBible && s.pcBodyBible.current_crisis;
+          // AUTHORITY BOUNDARY (Roman, corrective follow-up #15, 2026-09-15) — see
+          // _pcCommittedFoundationForPrompt's own header. Corridor (null) keeps the exact prior
+          // raw s.pcBodyBible.current_crisis read, unchanged. time_since_impact has NO
+          // committed-portfolio equivalent (not one of PCV_DURABLE_FIELDS) — omitted for a fixed
+          // starter, same disclosed-narrowing precedent as emotional_weather elsewhere.
+          var _cf15g = (typeof _pcCommittedFoundationForPrompt === 'function') ? _pcCommittedFoundationForPrompt(s) : null;
+          var cc = _cf15g
+            ? (_cf15g.current_crisis_event ? { event: _cf15g.current_crisis_event, li_complication: _cf15g.li_complication || '' } : null)
+            : (s.pcBodyBible && s.pcBodyBible.current_crisis);
           if (!cc || typeof cc !== 'object' || !cc.event) return '';
           var L = ['\nOPENING CRISIS (HARD — Roman 2026-06-04 Single Crisis Law; the run OPENS HOT on this ONE catastrophe):'];
           L.push('- Scene 1 opens mid-detonation on: ' + cc.event + (cc.time_since_impact ? ' (' + cc.time_since_impact + ' ago)' : ''));
@@ -217748,12 +217857,22 @@ No text, no watermark, no UI elements, share-ready.`;
           var pc = s.pcBodyBible;
           var li = s.liBodyBible;
           if (!pc && !li) return '';
+          // AUTHORITY BOUNDARY (Roman, corrective follow-up #15, 2026-09-15) — see
+          // _pcCommittedFoundationForPrompt's own header. Corridor (null) keeps the exact prior
+          // raw pc.emotional_weather/private_hope/core_contradiction reads, unchanged.
+          // emotional_weather has NO committed-portfolio equivalent — permanently omitted for a
+          // fixed starter, same disclosed narrowing as elsewhere. LI's own bible fields (li.*)
+          // are untouched — out of scope (this pass is PC foundation only).
+          var _cf15h = (typeof _pcCommittedFoundationForPrompt === 'function') ? _pcCommittedFoundationForPrompt(s) : null;
+          var _pcEW = _cf15h ? '' : (pc && pc.emotional_weather);
+          var _pcHope = _cf15h ? _cf15h.private_hope : (pc && pc.private_hope);
+          var _pcContra = _cf15h ? _cf15h.core_contradiction : (pc && pc.core_contradiction);
           var L = ['\nCHARACTER BIBLES (HARD — Roman 2026-06-01 P2; these are the per-story EMOTIONAL GRAVITY; runThesis + every issueArc\'s thesis/ambiguityTargets/pressureVectors + voiceAnchors must be coherent with THESE specific fields, not generic-by-archetype):'];
           if (pc) {
             L.push('PROTAGONIST (' + ((s.playerName) || 'PC') + ') — the narrator\'s climate:');
-            if (pc.emotional_weather)        L.push('  - Emotional weather (her default climate; the LENS her narration filters through — voiceAnchors.pc_register should MATCH this, not contradict it): ' + pc.emotional_weather);
-            if (pc.private_hope)             L.push('  - Private hope (what she secretly wants; THE romance arc engine — every issue should PRESSURE or THREATEN or RECONTEXTUALIZE this; if the issue arc you author doesn\'t move against the private_hope, the issue is generic): ' + pc.private_hope);
-            if (pc.core_contradiction)       L.push('  - Core contradiction (the central tension that makes her readable across the arc; each issue should ACTIVATE this contradiction differently, never resolve it): ' + pc.core_contradiction);
+            if (_pcEW)        L.push('  - Emotional weather (her default climate; the LENS her narration filters through — voiceAnchors.pc_register should MATCH this, not contradict it): ' + _pcEW);
+            if (_pcHope)      L.push('  - Private hope (what she secretly wants; THE romance arc engine — every issue should PRESSURE or THREATEN or RECONTEXTUALIZE this; if the issue arc you author doesn\'t move against the private_hope, the issue is generic): ' + _pcHope);
+            if (_pcContra)    L.push('  - Core contradiction (the central tension that makes her readable across the arc; each issue should ACTIVATE this contradiction differently, never resolve it): ' + _pcContra);
             if (pc.signature_feature)        L.push('  - Signature feature: ' + pc.signature_feature);
             if (pc.signature_habits)         L.push('  - Signature habits: ' + pc.signature_habits);
           }
@@ -221722,31 +221841,29 @@ No text, no watermark, no UI elements, share-ready.`;
       try { if (!/hair|face|eyes|build|age/i.test(_pcSeedPhys)) console.log('[CANON:UNAUTHORED] pc.appearance — the seed authors species, garments and seal only'); } catch (_) {}
     }
     if (pcB) {
-      // VALIDATED-ONLY INTERIOR FOR A FIXED STARTER (Roman, corrective follow-up #13, 2026-09-15)
-      // — for a fixed-starter story (First Sacrifice), state.pcBodyBible is the RAW, unvalidated
-      // generation output; _validatePcFoundationOutput/_commitValidatedPcFoundation is the gate
-      // this whole corrective arc built specifically to keep uncited, contradicting, or rejected
-      // durable claims out of anything reader-visible. This function read state.pcBodyBible
-      // directly and forwarded its interior fields (core_contradiction/private_hope/
-      // emotional_weather/li_keenly_aware_of) regardless of that gate — a SECOND delivery path
-      // parallel to the validated-merge one, discovered via a real-path proof that a REJECTED
-      // sample's own content (an invented family-tragedy claim) still reached a real CG payload
-      // even though the validator correctly refused to merge it. For a fixed-starter story, the
-      // interior fields below are now gated on a real validated commit existing for THIS story
-      // (all-or-nothing, matching _commitValidatedPcFoundation's own "no partial portfolio"
-      // semantics — an unaccepted bible contributes NOTHING here, never a partial one). For a
+      // AUTHORITY BOUNDARY, NOT JUST A GATE (Roman, corrective follow-up #14, 2026-09-15) — the
+      // PRIOR version of this fix checked whether state._pcPortfolio had a validated commit, but
+      // then rendered from pcB (state.pcBodyBible) — a DIFFERENT, MUTABLE object. That is a
+      // time-of-check/time-of-use bug: state.pcBodyBible is overwritten by EVERY later
+      // generation attempt regardless of outcome (_generatePCBodyBibleUncached sets it on any
+      // successful PARSE, before validation ever runs), while state._pcPortfolio only changes on
+      // an ACCEPTED commit. So: commit valid foundation A -> _pcPortfolio reflects A -> a LATER
+      // raw generation B arrives and is REJECTED -> _pcPortfolio is untouched (still A) -> the
+      // gate stays open -> but pcB now IS B, so B's unvalidated, possibly dangerous interior
+      // rendered anyway. Roman caught this before it shipped. FIXED: for a fixed-starter story,
+      // interior content is read EXCLUSIVELY from state._pcPortfolio.facets — the committed,
+      // validated record itself — never from pcB at all. A field with no committed facet
+      // (emotional_weather, li_keenly_aware_of — neither is one of PCV_DURABLE_FIELDS, so
+      // neither is ever validated or merged) is simply OMITTED, not read from the raw bible as a
+      // fallback — a real, disclosed narrowing of what reaches CG, not an oversight. For a
       // CORRIDOR story (never validated by design — the validator is fixed-starter-only, and
-      // always has been), this gate is a permanent no-op — unconditional forwarding, UNCHANGED,
-      // since gating it would silently blank every corridor CG story's interior.
-      var _pcInteriorValidated = true;
-      try {
-        var _fsSrc13 = (typeof _pcFoundationSourceFacts === 'function') ? _pcFoundationSourceFacts(window.state) : null;
-        if (_fsSrc13) {
-          var _pf13 = window.state && window.state._pcPortfolio;
-          _pcInteriorValidated = !!(_pf13 && _pf13.provenance && _pf13.provenance.validatedMerge
-            && String(_pf13.storyId || '') === String((window.state && window.state.storyId) || ''));
-        }
-      } catch (_) { _pcInteriorValidated = true; }
+      // always has been), behavior is UNCHANGED: pcB is still the source, unconditionally.
+      //
+      // SHARED ACCESSOR (Roman, corrective follow-up #15, 2026-09-15) — a static audit found the
+      // SAME raw-pcB-bypasses-committed-portfolio pattern in at least seven OTHER author-payload
+      // builders; rather than hand-writing this gate again here (which is how the bug spread the
+      // first time), this function now calls the ONE shared accessor every one of them uses.
+      var _pcCommittedInterior = (typeof _pcCommittedFoundationForPrompt === 'function') ? _pcCommittedFoundationForPrompt(window.state) : null;
 
       var pcPhys = [];
       if (_pcSeedPhys) pcPhys = null;   // seed decides appearance; the bible's physical fields are not rendered
@@ -221763,11 +221880,39 @@ No text, no watermark, no UI elements, share-ready.`;
       // rather than replaying a fixed nervous tell. The anti-calcification lesson applied to CG —
       // the five emotional tells (stress/desire/impatience/confidence/vulnerability) are no longer
       // forwarded; the deep-psych interior is, as constraints the panel author reasons behavior from.
+      //
+      // SOURCE SELECTION (Roman, corrective follow-up #14/#15, 2026-09-15): _pcCommittedInterior
+      // is null ONLY for a corridor story (no fixed-starter source at all — pcB is the sole,
+      // always has been, unvalidated-by-design source there). For a FIXED STARTER,
+      // _pcCommittedInterior is ALWAYS an object (possibly empty) — the two fields below read it,
+      // NEVER pcB, regardless of what pcB currently holds. No fallback to the raw bible ever.
+      //
+      // WOUND/SURFACING/REFUSAL DELIBERATELY NOT FORWARDED HERE (found by the real-path proof's
+      // GEN-A scenario after the #14/#15 fix first shipped, 2026-09-15) — a GENERATED-foundation
+      // wound fact that did NOT win this scene's Character+ delivery slot (state.
+      // _cgDeliveredAssignments / _cpContinuationAssignment, the SAME capped, evidence-gated
+      // reveal pipeline every other committed facet already reaches CG through) still appeared
+      // verbatim here, bypassing that cap entirely — a second, competing delivery channel this
+      // whole corrective arc exists to close, this time introduced by the fix itself. Unlike
+      // core_contradiction/private_hope (unconditionally forwarded every scene since long before
+      // the three-kind/generated-content redesign existed — an accepted, PRE-EXISTING design this
+      // fix does not revisit), wound_core/wound_surfacing_hint/refusal are new, GENERATED-only
+      // content with no such precedent; they reach CG EXCLUSIVELY through the Character+ capped
+      // pipeline (via _pcValidatedFacetIndex → _facetIndex → _cpContinuationAssignment), never
+      // duplicated into this unconditional text block.
       var pcInterior = [];
-      if (_pcInteriorValidated) {
+      if (_pcCommittedInterior === null) {
         if (pcB.core_contradiction) pcInterior.push('CONTRADICTION she lives with — ' + pcB.core_contradiction);
         if (pcB.private_hope)       pcInterior.push('PRIVATE HOPE (never captioned; it only bends what she reaches for) — ' + pcB.private_hope);
         if (pcB.emotional_weather)  pcInterior.push('EMOTIONAL WEATHER (her baseline climate) — ' + pcB.emotional_weather);
+      } else {
+        // Only facet_ids the validated-merge path actually produces are ever known here —
+        // core_contradiction is mapped unconditionally, private_hope may be locked/inferred/
+        // generated (see comment above for why only these two stay in this block). emotional_weather
+        // and li_keenly_aware_of have NO committed-portfolio equivalent (neither is one of
+        // PCV_DURABLE_FIELDS, so neither is ever validated) — omitted here, not substituted.
+        if (_pcCommittedInterior.core_contradiction) pcInterior.push('CONTRADICTION she lives with — ' + _pcCommittedInterior.core_contradiction);
+        if (_pcCommittedInterior.private_hope) pcInterior.push('PRIVATE HOPE (never captioned; it only bends what she reaches for) — ' + _pcCommittedInterior.private_hope);
       }
       // signature_habits is deliberately NOT forwarded to CG (Roman 2026-08-06): it is a tic-CARRIER
       // (e.g. "counts the steps when anxious") that the panel author replays verbatim across every scene —
@@ -221779,7 +221924,10 @@ No text, no watermark, no UI elements, share-ready.`;
         out.push('PROTAGONIST INTERIOR (HARD — this is who she IS, not a menu of gestures. When a beat needs her body / expression / posture to carry state, REASON a fresh, panel-specific action that THIS person — given this interior — would do in THIS exact moment. Do NOT default to a fixed nervous tic (no reflex hand-to-face / ring-twist / hair-touch); invent what she does HERE from who she is. Never caption the interior — show only the behavior it produces):');
         pcInterior.forEach(function(t){ out.push('  • ' + t); });
       }
-      if (_pcInteriorValidated && pcB.li_keenly_aware_of) {
+      // li_keenly_aware_of has no committed-portfolio equivalent (see above) — for a fixed
+      // starter this line is now structurally never emitted; for a corridor story it is
+      // unchanged (read from pcB, exactly as always).
+      if (_pcCommittedInterior === null && pcB.li_keenly_aware_of) {
         out.push('LI NOTICING THE PROTAGONIST (when LI shares panels with PC, plan ONE shot per scene where LI clocks a specific PC feature — micro-shot, brief, never compliment): ' + pcB.li_keenly_aware_of);
       }
       // Phase 2b invariant audit — fires FIELD-FORWARD:ERROR if the bible
@@ -261392,6 +261540,12 @@ Generate the synopsis now. The protagonist MUST be named ${pKernel}. Depict the 
     function _renderPCBodyBibleCompact() {
       var b = (window.state && window.state.pcBodyBible) || null;
       if (!b) return '';
+      // AUTHORITY BOUNDARY (Roman, corrective follow-up #15, 2026-09-15) — for a fixed-starter
+      // story, every PC psychological/foundation field this literary main-path block renders
+      // must come from the committed portfolio, never mutable raw pcBodyBible. Physical/
+      // appearance fields and tells (stress_tic etc.) below are unaffected — out of scope, same
+      // as the precedent set for _renderBiblesAsCGDirectives. See _pcCommittedFoundationForPrompt.
+      var _cf15f = (typeof _pcCommittedFoundationForPrompt === 'function') ? _pcCommittedFoundationForPrompt(window.state) : null;
       var pcName = (window.state && (window.state.playerName || window.state.pcName)) || 'the protagonist';
       if (_resolveAppearanceMode(window.state).pc === 'lock') return _apprLockBlock('PROTAGONIST', pcName);
       var lines = ['PROTAGONIST BODY BIBLE (per-story canon — the prose should reference these naturally across the arc; pepper, do not dump):'];
@@ -261431,26 +261585,37 @@ Generate the synopsis now. The protagonist MUST be named ${pKernel}. Depict the 
       // as stated facts but as TEXTURE. Sonnet must read weather +
       // contradiction + private_hope as the lens her observations pass
       // through, not as facts to declare.
-      if (b.emotional_weather)  lines.push('  EMOTIONAL WEATHER (her default climate — the lens her narration passes through on every line; color narration TEXTURE with this, never state it as fact): ' + b.emotional_weather);
-      if (b.core_contradiction) lines.push('  CORE CONTRADICTION (the central tension that makes her readable across the arc — the shape readers come back to): ' + b.core_contradiction);
-      if (b.private_hope)       lines.push('  PRIVATE HOPE (what she secretly wants but has not let herself name — the desire-engine of the romance arc; what this LI could fulfill or fail to fulfill): ' + b.private_hope);
+      if (!_cf15f && b.emotional_weather) lines.push('  EMOTIONAL WEATHER (her default climate — the lens her narration passes through on every line; color narration TEXTURE with this, never state it as fact): ' + b.emotional_weather);
+      var _cc15f = _cf15f ? _cf15f.core_contradiction : b.core_contradiction;
+      if (_cc15f) lines.push('  CORE CONTRADICTION (the central tension that makes her readable across the arc — the shape readers come back to): ' + _cc15f);
+      var _ph15f = _cf15f ? _cf15f.private_hope : b.private_hope;
+      if (_ph15f) lines.push('  PRIVATE HOPE (what she secretly wants but has not let herself name — the desire-engine of the romance arc; what this LI could fulfill or fail to fulfill): ' + _ph15f);
       if (b.signature_habits)   lines.push('  Signature habits (recurring non-physical micro-behaviors — surface these across the arc, the reader recognizes her by these): ' + b.signature_habits);
-      if (b.li_keenly_aware_of) lines.push('  LI is keenly aware of: ' + b.li_keenly_aware_of);
+      if (!_cf15f && b.li_keenly_aware_of) lines.push('  LI is keenly aware of: ' + b.li_keenly_aware_of);
       // Roman 2026-06-04: CURRENT CRISIS — the EVENT in motion, structured.
       // Rendered ONLY on HOT openings (it is the opening + the Crisis→LI bridge
       // source); omitted on COLD stories so it does not push a crisis opening.
       // Graceful: skips legacy string-form current_crisis (object only).
+      // AUTHORITY BOUNDARY (Roman, corrective follow-up #15, 2026-09-15) — event/immediate_fear/
+      // refusal/li_complication are PCV_DURABLE_FIELDS (validated, committed); for a fixed
+      // starter they come from _cf15f, never raw b.current_crisis. time_since_impact/
+      // hottest_emotion/immediate_want are NOT validated fields at all (no claim-kind, no commit
+      // path exists for them) — out of scope here, same as physical fields, left unchanged.
       try {
         if ((window.state && window.state._openingTemperature) === 'HOT_CRISIS' && b.current_crisis && typeof b.current_crisis === 'object') {
           var _cc = b.current_crisis;
           var _ccParts = [];
-          if (_cc.event)             _ccParts.push('EVENT: ' + _cc.event);
+          var _ccEvent = _cf15f ? _cf15f.current_crisis_event : _cc.event;
+          var _ccFear = _cf15f ? _cf15f.current_fear : _cc.immediate_fear;
+          var _ccRefusal = _cf15f ? _cf15f.refusal : _cc.refusal;
+          var _ccLiComp = _cf15f ? _cf15f.li_complication : _cc.li_complication;
+          if (_ccEvent)              _ccParts.push('EVENT: ' + _ccEvent);
           if (_cc.time_since_impact) _ccParts.push('TIME SINCE IMPACT: ' + _cc.time_since_impact);
           if (_cc.hottest_emotion)   _ccParts.push('HOTTEST EMOTION: ' + _cc.hottest_emotion);
           if (_cc.immediate_want)    _ccParts.push('IMMEDIATE WANT: ' + _cc.immediate_want);
-          if (_cc.immediate_fear)    _ccParts.push('IMMEDIATE FEAR: ' + _cc.immediate_fear);
-          if (_cc.refusal)           _ccParts.push('REFUSAL (the line she defends — her agency under duress): ' + _cc.refusal);
-          if (_cc.li_complication)   _ccParts.push('LI COMPLICATION (why he matters in THIS moment — the Crisis→LI bridge source): ' + _cc.li_complication);
+          if (_ccFear)               _ccParts.push('IMMEDIATE FEAR: ' + _ccFear);
+          if (_ccRefusal)            _ccParts.push('REFUSAL (the line she defends — her agency under duress): ' + _ccRefusal);
+          if (_ccLiComp)             _ccParts.push('LI COMPLICATION (why he matters in THIS moment — the Crisis→LI bridge source): ' + _ccLiComp);
           if (_ccParts.length) lines.push('  CURRENT CRISIS (HOT opening — what is literally on fire RIGHT NOW; OPEN INSIDE this EVENT, in progress, never as reflection): \n    ' + _ccParts.join('\n    '));
         }
       } catch (_) {}
@@ -263945,7 +264110,13 @@ Generate the synopsis now. The protagonist MUST be named ${pKernel}. Depict the 
       try {
         s = s || window.state || {};
         var liName = String((s.loveInterestName || s.partnerName || 'the love interest').split(/\s+/)[0]);
-        var cc = (s.pcBodyBible && s.pcBodyBible.current_crisis) || null;
+        // AUTHORITY BOUNDARY (Roman, corrective follow-up #15, 2026-09-15) — see
+        // _pcCommittedFoundationForPrompt's own header. Corridor (null) keeps the exact prior
+        // raw s.pcBodyBible.current_crisis read, unchanged.
+        var _cf15d = (typeof _pcCommittedFoundationForPrompt === 'function') ? _pcCommittedFoundationForPrompt(s) : null;
+        var cc = _cf15d
+          ? ((_cf15d.current_crisis_event || _cf15d.li_complication) ? { event: _cf15d.current_crisis_event || '', li_complication: _cf15d.li_complication || '' } : null)
+          : ((s.pcBodyBible && s.pcBodyBible.current_crisis) || null);
         var event = cc ? String(cc.event || cc.EVENT || '').trim() : '';
         var liComp = cc ? String(cc.li_complication || '').trim() : '';
         var crisisClause = event
@@ -264286,7 +264457,11 @@ Generate the synopsis now. The protagonist MUST be named ${pKernel}. Depict the 
         var pc = (window.state && window.state.pcBodyBible) || null;
         var li = (window.state && window.state.liBodyBible) || null;
         if (!pc || !li) return '';
-        var hope = pc.private_hope && pc.private_hope.toString().trim();
+        // AUTHORITY BOUNDARY (Roman, corrective follow-up #15, 2026-09-15) — see
+        // _pcCommittedFoundationForPrompt's own header. Corridor (null) keeps the exact prior
+        // raw pc.private_hope read, unchanged.
+        var _cf15e = (typeof _pcCommittedFoundationForPrompt === 'function') ? _pcCommittedFoundationForPrompt(window.state) : null;
+        var hope = _cf15e ? (_cf15e.private_hope && String(_cf15e.private_hope).trim()) : (pc.private_hope && pc.private_hope.toString().trim());
         var manif = li.attraction_manifestation && li.attraction_manifestation.toString().trim();
         if (!hope || !manif) return '';
         var pcName = (window.state && window.state.playerName) || 'the protagonist';

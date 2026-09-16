@@ -438,11 +438,11 @@ section('CONTROL 10 (FACET-INDEX WIRING) — a validated, committed portfolio re
     const idx = win._facetIndex(s, { sceneNumber: 2 });
     const rec = idx['pc:lirael'];
     const ids = (rec && rec.facets || []).map(f => f.facet_id).sort();
-    ok('10b: all four facet_ids present — 2 seed-authored + 2 validated-merge, additive',
-      JSON.stringify(ids) === JSON.stringify(['pc_core_contradiction', 'pc_current_fear', 'pc_fears_public_failure', 'pc_untested_brilliance']),
+    ok('10b: all five facet_ids present — 2 seed-authored + 3 validated-merge, additive (core_contradiction, current_fear, current_crisis_event — all unconditional, kind-agnostic)',
+      JSON.stringify(ids) === JSON.stringify(['pc_core_contradiction', 'pc_current_crisis_event', 'pc_current_fear', 'pc_fears_public_failure', 'pc_untested_brilliance']),
       JSON.stringify(ids));
     const validatedOnes = (rec.facets || []).filter(f => f.origin === 'pc_body_bible_validated');
-    ok('10b: the two validated facets are tagged origin:pc_body_bible_validated', validatedOnes.length === 2, JSON.stringify(validatedOnes.map(f => f.facet_id)));
+    ok('10b: the three validated facets are tagged origin:pc_body_bible_validated', validatedOnes.length === 3, JSON.stringify(validatedOnes.map(f => f.facet_id)));
     const seedOnes = (rec.facets || []).filter(f => f.facet_id === 'pc_untested_brilliance' || f.facet_id === 'pc_fears_public_failure');
     ok('10b: the seed\'s own two facets are UNTOUCHED (same canonical_truth as the raw fixture)',
       seedOnes.length === 2
@@ -451,8 +451,8 @@ section('CONTROL 10 (FACET-INDEX WIRING) — a validated, committed portfolio re
     // Resolution as a live consumer (_cpContinuationAssignment/_facetsForCharacter) would see it —
     // a staged record keyed the same way _cPlusCandidateSet stages the PC.
     const resolved = win._resolveFacetIndexEntry({ id: 'pc:lirael', label: 'Lirael', aliases: ['Lirael'] }, idx, 2);
-    ok('10b: _resolveFacetIndexEntry (the exact function _facetsForCharacter/_cpContinuationAssignment call) returns all 4 facets',
-      resolved.length === 4, JSON.stringify(resolved.map(f => f.facet_id)));
+    ok('10b: _resolveFacetIndexEntry (the exact function _facetsForCharacter/_cpContinuationAssignment call) returns all 5 facets',
+      resolved.length === 5, JSON.stringify(resolved.map(f => f.facet_id)));
   }
 
   // 10c — NPC RESOLUTION UNTOUCHED: add a real NPC-shaped seed facet source alongside the PC and
@@ -766,6 +766,184 @@ section('CONTROL 12 (CG DELIVERY GATE, Roman corrective #13, 2026-09-15) — _re
     win.state = { storyId: 'corridor-1', _starterId: null, pcBodyBible: { core_contradiction: 'CORRIDOR CONTRADICTION TEXT' } };
     const block = win._renderBiblesAsCGDirectives();
     ok('12d: a corridor story (no fixed-starter source) is UNAFFECTED — interior still forwards unconditionally, exactly as before', block.includes('CORRIDOR CONTRADICTION TEXT'), block);
+  }
+
+  // 12e — THE TOCTOU CASE (Roman, corrective follow-up #14, 2026-09-15): valid foundation A
+  // commits; a LATER raw generation B (the actual retained rejected sample) arrives and is
+  // rejected — state._pcPortfolio still reflects A (untouched by the rejection), but
+  // state.pcBodyBible is now B (state.pcBodyBible is overwritten by EVERY successful parse,
+  // valid or not — this is real _generatePCBodyBibleUncached behavior, not a test artifact).
+  // The PRIOR version of this fix (follow-up #13) checked _pcPortfolio but rendered from pcB —
+  // exactly this sequence would have leaked B's rejected content while the gate stayed "open"
+  // from A. Must now render ONLY A's committed content; B must never appear anywhere.
+  {
+    const win = freshSandbox({ starter_first_sacrifice: FIRST_SACRIFICE_SEED });
+    win.state = baseState({ playerName: 'Lirael' });
+
+    // Step 1 — commit valid foundation A.
+    const bibleA = fullyCoveredGreenBible();
+    bibleA.core_contradiction = 'FOUNDATION A CONTRADICTION TEXT — ' + bibleA.core_contradiction;
+    const commitA = win._commitValidatedPcFoundation(win.state, bibleA);
+    ok('12e: precondition — foundation A commits successfully', commitA.committed === true, JSON.stringify(commitA));
+    win.state.pcBodyBible = bibleA;   // matches the real app: a committed bible is also the current raw pcBodyBible, at this point
+
+    // Step 2 — a LATER raw generation B (the actual retained rejected sample) arrives and is
+    // rejected. _pcPortfolio must remain untouched (still A) — but state.pcBodyBible, exactly as
+    // the real app does on every successful parse, is overwritten to B regardless.
+    const rawB = JSON.parse(fs.readFileSync(path.join(__dirname, '_audit_out/pc_foundation_samples/2026-09-15T21-58-49-058Z_live_sample.json'), 'utf8'));
+    const bibleB = rawB.parsedBible;
+    const portfolioBeforeB = JSON.parse(JSON.stringify(win.state._pcPortfolio));
+    const commitB = win._commitValidatedPcFoundation(win.state, bibleB);
+    ok('12e: precondition — foundation B (retained rejected sample) is correctly rejected', commitB.committed === false, JSON.stringify(commitB));
+    ok('12e: precondition — _pcPortfolio is UNCHANGED by B\'s rejection (still A, byte-identical)', JSON.stringify(win.state._pcPortfolio) === JSON.stringify(portfolioBeforeB));
+    win.state.pcBodyBible = bibleB;   // THE TOCTOU TRIGGER: raw pcBodyBible now points to REJECTED content while _pcPortfolio still reflects ACCEPTED A
+
+    // Step 3 — render. Must show ONLY A's committed content; B must be completely absent.
+    const block = win._renderBiblesAsCGDirectives();
+    ok('12e: A\'s own committed content IS present (the gate correctly stays open for the story\'s real committed foundation)', block.includes('FOUNDATION A CONTRADICTION TEXT'), block);
+    const bDangerSnippet = (bibleB.wound && bibleB.wound.core) ? bibleB.wound.core.slice(0, 40) : '';
+    ok('12e: B\'s own dangerous content (wound.core) is ABSENT — this is the exact TOCTOU leak Roman caught before it shipped', !!bDangerSnippet && !block.includes(bDangerSnippet), block);
+    ok('12e: B\'s core_contradiction is ALSO absent (not merely its wound — nothing from the rejected raw bible reaches the block)', !bibleB.core_contradiction || !block.includes(bibleB.core_contradiction), block);
+    ok('12e: A\'s committed fields are the ONLY foundation-derived interior content delivered — no trace of B anywhere in the block', !block.includes('Elowen') && !block.includes('estranged sister'), block);
+  }
+}
+
+section('CONTROL 13 (SHARED AUTHORITY-BOUNDARY ACCESSOR, Roman corrective #15, 2026-09-15) — _pcCommittedFoundationForPrompt is the ONE choke point every author/planner/scaffold/A-plot/opening-beat/editorial/romance builder now calls instead of hand-writing its own gate; test IT exhaustively once rather than duplicating the same scenario at all 8 call sites (_renderBiblesAsCGDirectives, _renderPCBodyBibleCompact, _buildCGScaffold, _llAPlotPressure, generateAPlot, _buildInMotionOpeningBeat, _runEditorialPass, _buildRomanceArcResonanceDirective, _deriveRomancePacket all just consume its return value)');
+{
+  // A fixture covering ALL 8 accessor fields: fullyCoveredGreenBible's locked/inferred content
+  // for core_contradiction/current_fear/current_crisis_event (unconditionally mapped, any kind),
+  // PLUS generated_foundation overrides for wound/private_hope/li_complication/refusal (mapped
+  // ONLY when kind:'generated_foundation' — see _pcFacetsFromBodyBible's own _genMap comment).
+  function fullyGeneratedBible() {
+    const b = fullyCoveredGreenBible();
+    // NOTE: deliberately NOT named "Elowen"/"estranged sister" — the retained rejected sample used
+    // in the TOCTOU tests below (2026-09-15T21-58-49-058Z_live_sample.json) independently invented
+    // a character by that exact name; reusing it here would make "no trace of B" checks meaningless.
+    b.private_hope = 'GEN PRIVATE HOPE — that Marisel is found before the inquiry opens.';
+    b.current_crisis.li_complication = 'GEN LI COMPLICATION — Julian once trained alongside Marisel, years before she left the ranks.';
+    b.current_crisis.refusal = 'GEN REFUSAL — she will not name Marisel to the Dohkar unprompted.';
+    b._provenance['wound.core'] = { kind: 'generated_foundation', basis: 'generated', cites: '' };
+    b._provenance['wound.surfacing_hint'] = { kind: 'generated_foundation', basis: 'generated', cites: '' };
+    b._provenance['private_hope'] = { kind: 'generated_foundation', basis: 'generated', cites: '' };
+    b._provenance['current_crisis.li_complication'] = { kind: 'generated_foundation', basis: 'generated', cites: '' };
+    b._provenance['current_crisis.refusal'] = { kind: 'generated_foundation', basis: 'generated', cites: '' };
+    return b;
+  }
+
+  // 13a — NO committed portfolio at all (fixed-starter source exists, but no commit has ever
+  // happened for this story): the boundary is ACTIVE ({}), nothing from raw pcBodyBible leaks
+  // through, even though pcBodyBible itself holds real-looking content.
+  {
+    const win = freshSandbox({ starter_first_sacrifice: FIRST_SACRIFICE_SEED });
+    win.state = baseState({ playerName: 'Lirael' });
+    win.state.pcBodyBible = { core_contradiction: 'RAW UNCOMMITTED TEXT', private_hope: 'RAW UNCOMMITTED HOPE' };
+    const cf = win._pcCommittedFoundationForPrompt(win.state);
+    ok('13a: NOT null (fixed-starter source exists — the boundary is active)', cf !== null, JSON.stringify(cf));
+    ok('13a: an empty object — nothing committed yet, nothing to forward', cf && Object.keys(cf).length === 0, JSON.stringify(cf));
+  }
+
+  // 13b — a REAL validated commit (locked/inferred + generated_foundation fields together): every
+  // field the accessor promises appears, sourced from the committed portfolio.
+  {
+    const win = freshSandbox({ starter_first_sacrifice: FIRST_SACRIFICE_SEED });
+    win.state = baseState({ playerName: 'Lirael' });
+    const bible = fullyGeneratedBible();
+    const commit = win._commitValidatedPcFoundation(win.state, bible);
+    ok('13b: precondition — the fully-generated fixture commits successfully', commit.committed === true, JSON.stringify(commit));
+    win.state.pcBodyBible = bible;
+    const cf = win._pcCommittedFoundationForPrompt(win.state);
+    ok('13b: core_contradiction present (unconditional mapping)', cf.core_contradiction === bible.core_contradiction, cf.core_contradiction);
+    ok('13b: current_fear present (unconditional mapping, from current_crisis.immediate_fear)', cf.current_fear === bible.current_crisis.immediate_fear, cf.current_fear);
+    ok('13b: current_crisis_event present (unconditional mapping — the #15 fix; Single Crisis Law fields must not silently vanish)', cf.current_crisis_event === bible.current_crisis.event, cf.current_crisis_event);
+    ok('13b: wound_core present (generated_foundation kind)', cf.wound_core === bible.wound.core, cf.wound_core);
+    ok('13b: wound_surfacing_hint present (generated_foundation kind)', cf.wound_surfacing_hint === bible.wound.surfacing_hint, cf.wound_surfacing_hint);
+    ok('13b: private_hope present (generated_foundation kind)', cf.private_hope === bible.private_hope, cf.private_hope);
+    ok('13b: li_complication present (generated_foundation kind)', cf.li_complication === bible.current_crisis.li_complication, cf.li_complication);
+    ok('13b: refusal present (generated_foundation kind)', cf.refusal === bible.current_crisis.refusal, cf.refusal);
+    ok('13b: emotional_weather and li_keenly_aware_of are NEVER on the return object — no committed-portfolio equivalent exists for either', !('emotional_weather' in cf) && !('li_keenly_aware_of' in cf), JSON.stringify(Object.keys(cf)));
+  }
+
+  // 13c — THE TOCTOU CASE, at the accessor itself: commit A, then overwrite raw pcBodyBible with
+  // REJECTED B. Because the accessor NEVER reads pcBodyBible (only state._pcPortfolio), this case
+  // is structurally impossible to get wrong here — proving it once at the source closes the leak
+  // for EVERY consumer simultaneously, not just the one the real-path proof happened to test.
+  {
+    const win = freshSandbox({ starter_first_sacrifice: FIRST_SACRIFICE_SEED });
+    win.state = baseState({ playerName: 'Lirael' });
+    const bibleA = fullyGeneratedBible();
+    bibleA.core_contradiction = 'FOUNDATION A CONTRADICTION — ' + bibleA.core_contradiction;
+    const commitA = win._commitValidatedPcFoundation(win.state, bibleA);
+    ok('13c: precondition — foundation A commits successfully', commitA.committed === true, JSON.stringify(commitA));
+    win.state.pcBodyBible = bibleA;
+
+    const rawB = JSON.parse(fs.readFileSync(path.join(__dirname, '_audit_out/pc_foundation_samples/2026-09-15T21-58-49-058Z_live_sample.json'), 'utf8'));
+    const bibleB = rawB.parsedBible;
+    const commitB = win._commitValidatedPcFoundation(win.state, bibleB);
+    ok('13c: precondition — foundation B (retained rejected sample) is correctly rejected', commitB.committed === false, JSON.stringify(commitB));
+    win.state.pcBodyBible = bibleB;   // THE TOCTOU TRIGGER
+
+    const cf = win._pcCommittedFoundationForPrompt(win.state);
+    ok('13c: A\'s content is present (core_contradiction)', cf.core_contradiction === bibleA.core_contradiction, cf.core_contradiction);
+    ok('13c: A\'s generated wound_core is present', cf.wound_core === bibleA.wound.core, cf.wound_core);
+    const cfStr = JSON.stringify(cf);
+    ok('13c: NOTHING from B appears anywhere in the accessor\'s output (structural — the accessor never reads pcBodyBible)',
+      !cfStr.includes('Elowen') && !cfStr.includes('estranged sister') && (!bibleB.core_contradiction || !cfStr.includes(bibleB.core_contradiction)), cfStr);
+  }
+
+  // 13d — STALE/FOREIGN PORTFOLIO: a committed record exists but for a DIFFERENT storyId. Must be
+  // treated exactly like no-commit-at-all — {}, nothing forwarded.
+  {
+    const win = freshSandbox({ starter_first_sacrifice: FIRST_SACRIFICE_SEED });
+    win.state = baseState({ playerName: 'Lirael', storyId: 'story-A' });
+    const bible = fullyGeneratedBible();
+    const commit = win._commitValidatedPcFoundation(win.state, bible);
+    ok('13d: precondition — commit succeeds under story-A', commit.committed === true, JSON.stringify(commit));
+    win.state.storyId = 'story-B-a-completely-different-story';   // the story changed; the portfolio did not
+    const cf = win._pcCommittedFoundationForPrompt(win.state);
+    ok('13d: a portfolio committed for a FOREIGN storyId contributes NOTHING — treated as no-commit', cf && Object.keys(cf).length === 0, JSON.stringify(cf));
+  }
+
+  // 13d2 — STALE FINGERPRINT: the portfolio's provenance.fingerprint no longer matches what the
+  // CURRENT seed's PC facets would produce (the seed changed under it). Same treatment as 13d.
+  {
+    const win = freshSandbox({ starter_first_sacrifice: FIRST_SACRIFICE_SEED });
+    win.state = baseState({ playerName: 'Lirael' });
+    const bible = fullyGeneratedBible();
+    const commit = win._commitValidatedPcFoundation(win.state, bible);
+    ok('13d2: precondition — commit succeeds', commit.committed === true, JSON.stringify(commit));
+    win.state._pcPortfolio.provenance.fingerprint = 'DELIBERATELY-WRONG-FINGERPRINT';
+    const cf = win._pcCommittedFoundationForPrompt(win.state);
+    ok('13d2: a portfolio with a STALE fingerprint (seed drifted under it) contributes NOTHING — treated as no-commit', cf && Object.keys(cf).length === 0, JSON.stringify(cf));
+  }
+
+  // 13e — CORRIDOR (no fixed-starter seed at all): the boundary does not apply here BY DESIGN —
+  // null, so every consumer's existing `=== null` branch keeps reading raw pcBodyBible unchanged.
+  {
+    const win = freshSandbox({});
+    win.state = { storyId: 'corridor-1', _starterId: null, pcBodyBible: { core_contradiction: 'CORRIDOR TEXT' } };
+    const cf = win._pcCommittedFoundationForPrompt(win.state);
+    ok('13e: null for a corridor story — the authority boundary is fixed-starter-only, unconditional forwarding continues exactly as before', cf === null, JSON.stringify(cf));
+  }
+
+  // 13f — WIRING SPOT-CHECK, not a re-test of the accessor's own logic: confirm two of the eight
+  // consumers actually CALL the accessor and correctly honor its null/populated contract, so a
+  // future edit that quietly reverts one of them to reading raw pcBodyBible again is caught here
+  // rather than only in a real-browser run. (_renderBiblesAsCGDirectives and _renderPCBodyBibleCompact
+  // are covered by CONTROL 12 and are the two with the most direct fixture support already in this
+  // file; the other six wire the SAME accessor call, verified by direct source inspection during
+  // this pass — see public/app.js corrective follow-up #15 comments at each call site.)
+  {
+    const win = freshSandbox({ starter_first_sacrifice: FIRST_SACRIFICE_SEED });
+    win.state = baseState({ playerName: 'Lirael' });
+    const bibleA = fullyGeneratedBible();
+    bibleA.core_contradiction = 'WIRING-CHECK CONTRADICTION A — ' + bibleA.core_contradiction;   // prefix, not replace — preserves citation entailment against the fixture's own _provenance.cites
+    win._commitValidatedPcFoundation(win.state, bibleA);
+    const rawB = JSON.parse(fs.readFileSync(path.join(__dirname, '_audit_out/pc_foundation_samples/2026-09-15T21-58-49-058Z_live_sample.json'), 'utf8'));
+    win._commitValidatedPcFoundation(win.state, rawB.parsedBible);
+    win.state.pcBodyBible = rawB.parsedBible;   // TOCTOU trigger, once, shared across both consumers below
+    const cgBlock = win._renderBiblesAsCGDirectives();
+    ok('13f: _renderBiblesAsCGDirectives shows A, not B, under the shared TOCTOU precondition (wiring confirmed live, not just by source inspection)',
+      cgBlock.includes('WIRING-CHECK CONTRADICTION A') && !cgBlock.includes('Elowen') && !cgBlock.includes('estranged sister'), cgBlock.slice(0, 300));
   }
 }
 

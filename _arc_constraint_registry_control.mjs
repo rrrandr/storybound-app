@@ -27,9 +27,9 @@ function sliceLines(from1, to1, startAnchor, endAnchor) {
   return slice;
 }
 
-const starterSeedsSrc = sliceLines(126909, 127250, 'const STARTER_SEEDS = {', 'window.STARTER_SEEDS = STARTER_SEEDS;');
-const activeSeedSrc = sliceLines(127542, 127542, 'function _activeSeed(s)', 'function _activeSeed(s)');
-const registrySrc = sliceLines(198028, 198149,
+const starterSeedsSrc = sliceLines(126942, 127283, 'const STARTER_SEEDS = {', 'window.STARTER_SEEDS = STARTER_SEEDS;');
+const activeSeedSrc = sliceLines(127575, 127575, 'function _activeSeed(s)', 'function _activeSeed(s)');
+const registrySrc = sliceLines(198129, 198250,
   'GENERIC ARC-CONSTRAINT REGISTRY (Roman, authorized 2026-09-14)',
   'window._attemptArcConstraintTarget = _attemptArcConstraintTarget;');
 
