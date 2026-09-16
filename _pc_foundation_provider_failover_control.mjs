@@ -80,6 +80,20 @@ async function boot(routeFn) {
     const list = Array.isArray(window.STARTER_STORIES) ? window.STARTER_STORIES : Object.values(window.STARTER_STORIES || {});
     const def = list.find(d => d && d.id === 'starter_first_sacrifice');
     window._launchStarterStory(def);
+    // TIER 0 — SEEDED FIRST PAGE (Roman, 2026-09-16) intentionally short-circuits
+    // _generatePCBodyBible() BEFORE any live call for a sufficiently-seeded fixed starter like
+    // First Sacrifice — which this file's provider-failover scenarios need to NOT happen, since
+    // they test the live-path failover/failure machinery itself, not Tier 0 (dedicated coverage:
+    // _tier0_seeded_first_page_control.mjs / _tier0_seeded_first_page_live_wiring_proof.mjs).
+    // Neutralized by clearing the SEED's own PC cPlusFacets (the real, unmodified gate
+    // _tier0PcBibleFromSeed checks) — window.STARTER_SEEDS IS the same object the app's closured
+    // STARTER_SEEDS variable points to (app.js ~127293), so this mutation genuinely reaches the
+    // real function; app.js itself is untouched.
+    try {
+      var seed = window.STARTER_SEEDS && window.STARTER_SEEDS.starter_first_sacrifice;
+      var pcCast = seed && Array.isArray(seed.cast) && seed.cast.filter(function (c) { return c && c.role === 'PC'; })[0];
+      if (pcCast) pcCast.cPlusFacets = [];
+    } catch (_) {}
   });
   await page.waitForTimeout(2000);
   return { browser, page, consoleLines };

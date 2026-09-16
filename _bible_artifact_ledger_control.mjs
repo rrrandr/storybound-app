@@ -49,6 +49,27 @@ async function boot(routeFn) {
     const list = Array.isArray(window.STARTER_STORIES) ? window.STARTER_STORIES : Object.values(window.STARTER_STORIES || {});
     const def = list.find(d => d && d.id === 'starter_first_sacrifice');
     window._launchStarterStory(def);
+    // TIER 0 — SEEDED FIRST PAGE (Roman, 2026-09-16) intentionally short-circuits
+    // _generatePCBodyBible() BEFORE any live call for a sufficiently-seeded fixed starter like
+    // First Sacrifice — which is exactly what this file's two scenarios below need to NOT happen,
+    // since they are testing the pre-existing live-path failure/retry/conflict ledger machinery
+    // itself (stubbed provider responses, mid-flight timing), not Tier 0 (which has its own
+    // dedicated coverage in _tier0_seeded_first_page_control.mjs /
+    // _tier0_seeded_first_page_live_wiring_proof.mjs). Neutralized here by clearing the SEED's
+    // own cPlusFacets (the gate _tier0PcBibleFromSeed itself checks) rather than by reassigning
+    // window._tier0PcBibleFromSeed — that reassignment does NOT reach the function, since
+    // _generatePCBodyBible calls the closured LOCAL binding inside app.js's own IIFE, not the
+    // window-exported copy (the same hoisting distinction app.js's own ~218804 comment documents
+    // for _generatePCBodyBible itself). window.STARTER_SEEDS IS the same object the closured
+    // STARTER_SEEDS variable points to (`window.STARTER_SEEDS = STARTER_SEEDS` at app.js
+    // ~127293), so mutating it here genuinely reaches the real function — this is not a rewrite
+    // of app.js, only starving Tier 0's own real, unmodified "sufficient seed" gate of the input
+    // it requires for THIS test's launched story.
+    try {
+      var seed = window.STARTER_SEEDS && window.STARTER_SEEDS.starter_first_sacrifice;
+      var pcCast = seed && Array.isArray(seed.cast) && seed.cast.filter(function (c) { return c && c.role === 'PC'; })[0];
+      if (pcCast) pcCast.cPlusFacets = [];
+    } catch (_) {}
   });
   await page.waitForTimeout(2000);
   return { browser, page, consoleLines };

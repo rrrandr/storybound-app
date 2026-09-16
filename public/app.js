@@ -32517,6 +32517,17 @@ window._reflowSceneDialogueLLM = _reflowSceneDialogueLLM;
         console.log('[LEDGER:ADMIT] baked opening — character-memory extractor deferred (no OpenAI request for a fixed opening; authored ledgerSeeds are the record)');
         return;
       }
+      // TIER 0 (Roman 2026-09-16): CHARACTER_DISCLOSURE_EXTRACTION must not fire before the
+      // reader sees Scene 1 for a Tier-0-eligible fixed starter's LITERARY-PLANNER Scene 1 (this
+      // is the non-baked path — the existing baked-opening gate above does not cover it, since
+      // First Sacrifice's Scene 1 IS planner-generated, confirmed by this session's own call
+      // census). Suppressed for Scene 1 ONLY; scene 2+ are unaffected — this is not a permanent
+      // removal, only pre-page suppression, per Roman's instruction not to build a deferred-fire
+      // registry this pass.
+      if (typeof _tier0Scene1Eligible === 'function' && _tier0Scene1Eligible(_s0)) {
+        console.log('[TIER0] CHARACTER_DISCLOSURE_EXTRACTION suppressed pre-page — no paid call before the reader sees Scene 1');
+        return;
+      }
     } catch (_) {}
     try {
       var s = window.state; if (!s) return;
@@ -51532,7 +51543,15 @@ AESTHETIC: Polished editorial illustration. The object's compromised state reads
 
   function _deriveRomancePacket(state) {
     var s = state || window.state || {};
-    if (!s.pairBond || !s.liBodyBible || !s.pcBodyBible) return null;
+    // TIER 0 (Roman 2026-09-16): pairBond REMOVED from this gate. Every field this function
+    // actually computes below is derived from pcBodyBible/liBodyBible content (signature_feature,
+    // attraction_manifestation, deflection_pattern, voice_quality, etc.) — traced line-by-line,
+    // confirmed NONE of them read pairBond's own generated fields (the psychological/erotic
+    // locks, whyHer/whyHim, irreplaceabilityProof, attractionEngine). The one field that DOES
+    // touch pairBond (uncertainty_ref, below) already degrades to null safely when absent. This
+    // was a stricter gate than the function's real data needs, and for Tier 0 (PAIR_BOND
+    // suppressed pre-page) it silently dropped this whole prompt block from AUTHOR for no reason.
+    if (!s.liBodyBible || !s.pcBodyBible) return null;
 
     var engine = String(
       (s.aPlot && s.aPlot.romanceEngine) ||
@@ -97859,7 +97878,17 @@ function _buildAuthorFloorDirective(s) {
       var romantasy = '\n═══ MODE: ROMANTASY ═══\n'
         + 'Strange event → understandable personal consequence → emotional/romantic reaction → decision → deeper world understanding. GROUND THE STRANGE BY CONSEQUENCE: a term, rank, rite or creature needs no definition, but the reader must feel what it permits, prevents, threatens or costs RIGHT NOW. The love interest\'s BEHAVIOUR is the primary decoder — he knows, she doesn\'t, he is afraid, now she is afraid — never a lecture. Naming a thing while leaving the reader unable to feel why it matters is confusion, not mystery.\n';
       var modern = '\n═══ MODE: CONTEMPORARY ROMANCE ═══\n'
-        + 'Legible event → emotional/sexual interpretation → relational tension → decision → CHANGED RELATIONSHIP. The world needs no decoding, so spend that attention on attraction, power, trust, jealousy, vulnerability and consequence. Subtext should create pleasure, not uncertainty about what literally happened. Desire must cause behaviour, and each significant romantic beat must leave the relationship somewhere it was not before — no almost-touch / charged-look / withdrawal loops.\n';
+        + 'Legible event → emotional/sexual interpretation → relational tension → decision → CHANGED RELATIONSHIP. The world needs no decoding, so spend that attention on attraction, power, trust, jealousy, vulnerability and consequence. Subtext should create pleasure, not uncertainty about what literally happened. Desire must cause behaviour, and each significant romantic beat must leave the relationship somewhere it was not before — no almost-touch / charged-look / withdrawal loops.\n'
+        // RELOCATED from buildLiteraryCraftDirective (Roman, corrective pass 2026-09-16) — was
+        // already mode-gated to CONTEMPORARY_ROMANCE there (2026-08-15) but lived inside the
+        // universal literaryCraft block; moved here so the mode owns both the content AND the
+        // location. Text unchanged.
+        + 'DOMAIN REGISTER (HARD — added 2026-05-30 after observed pattern: invented compound nouns like "sovereign cross-border arbitration enclave", "sovereignty-abuse charges", "tertiary routing" — terms that sound impressive but trigger the gobbledygook detector in any reader who has met an actual lawyer or banker). When legal, financial, maritime, regulatory, medical, or other specialized terms appear in the prose, they must be REAL instruments used briefly and correctly. Prefer plain English a smart non-specialist friend would understand over jargon a specialist would use ironically:\n'
+        + '  • REAL and acceptable: escrow / fiduciary duty / asset freeze / non-recourse / non-disclosure agreement / subpoena / injunction / deposition / due diligence / discovery / arbitration / mediation / Letter of Intent / Memorandum of Understanding / fiduciary breach / earnest money / contingency / proxy fight / shareholder resolution / board resolution / Compliance / SAR / OFAC / AML.\n'
+        + '  • INVENTED COMPOUNDS — BANNED. "Sovereign cross-border arbitration enclave" is not a thing. "Sovereignty-abuse charges" is not a cause of action. "Tertiary routing" is not a banking term. "Compliance algorithm" is generic word-soup. If you reach for a compound noun and are not certain it is real, REPLACE it with the plain English a layperson would actually say.\n'
+        + '  • SPECIFICITY OVER VOLUME: one correctly-named instrument used briefly beats three plausible-sounding invented ones. "She had three days before the asset-freeze hearing" beats "The compliance algorithm flagged the transfer pending tertiary verification."\n'
+        + '  • SHOW THE STAKES IN PROSE, NOT IN JARGON: a banker reads "the wire arrived without sender details" and feels the wrongness; he reads "Sender ID: NULL" and laughs. A lawyer reads "she was deposed for nine hours" and feels the toll; she reads "compliance was running tertiary verification" and laughs. Write what a person actually experiences inside the instrument, not the instrument\'s technical specifications.\n'
+        + '  • WHEN UNSURE OF A TERM, USE THE PLAIN PHRASE YOU ARE SURE OF: "the deal," "the contract," "the lawsuit," "the regulator," "the bank," "the freeze," "the deadline." Plain language is never wrong; invented compound nouns frequently are.\n';
       return floor + (mode === 'ROMANTASY' ? romantasy : modern);
     } catch (_) { return ''; }
   }
@@ -129406,6 +129435,153 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
     return v;
   }
   try { if (typeof window !== 'undefined') window._validateFusionConcreteness = _validateFusionConcreteness; } catch (_) {}
+
+  // ══════════════════════════════════════════════════════════════════════════════════════
+  // OPENING-SKELETON HOLISTIC REPAIR — DESIGN + STANDALONE LAYER (Roman, 2026-09-16). A real
+  // paid Scene 1 run (First Sacrifice, seeded starter, legacy fusion contract — confirmed
+  // current/correct for this population, not obsolete) aborted on ONE weak pc_opening_fusion.beat
+  // [NO_CONTACT]. Roman's diagnosis: a one-shot pass/fail planner is too brittle; the fix is ONE
+  // bounded, holistic repair request — never per-element regeneration, never unbounded retry.
+  //
+  // WIRING STATUS: these functions are NOT YET CALLED from the live abort path ("THE RUN IS
+  // ABANDONED HERE", ~app.js:270509, inside _buildScene1Scaffold). That site's ~250-line
+  // validation block runs ONCE, inline, using dozens of local closures (_pcRecV, _stage, _sc,
+  // _cp, _epObj, and more) — it is not a separable validate() callable a second time without a
+  // real refactor of delicate, working code. Deliberately not attempted in this pass. What IS
+  // built and dry-tested here is the repair-REQUEST and repair-MERGE layer: the part that can be
+  // built and proven correct in complete isolation from that block, ready for the integration
+  // step (see the intended call shape documented above _classifySkeletonFaults's export).
+  //
+  // THE BOUND, explicitly: at most ONE repair request per Scene-1 attempt. No recursion, no
+  // retry-after-retry, no per-character/per-object repair loop. If the merged, repaired result
+  // still fails validation, that is a hard, NAMED failure — never a silent fall-through to the
+  // availability valve (window._scene1AssignmentValve), which stays exactly as opt-in-gated as it
+  // is today and is unrelated to this path.
+
+  // Maps each fault STRING (this codebase's fault list is human-readable strings, not structured
+  // {field,reason} objects) to the ONE top-level skeleton member it implicates. Conservative by
+  // design: a fault this cannot confidently attribute is left in `unmatched`, and
+  // _skeletonRepairEligible refuses to repair at all when `unmatched` is nonempty — under-
+  // triggering the repair is the safe failure mode; over-attributing a stage/cast/mission/canon
+  // problem to "just repair the fusion beat" would not be.
+  var _SKELETON_FAULT_MEMBER_PATTERNS = [
+    { member: 'pc_opening_fusion', test: function (f) { return /^pc_opening_fusion[.\s]/.test(f) || /^the protagonist has TWO different opening beats/.test(f) || /^the protagonist's staged anchor_beat/.test(f); } },
+    { member: 'fusion', test: function (f) { return /^fusion[\s]/.test(f); } },
+    { member: 'environment_plus', test: function (f) { return /^environment_plus[.\s]/.test(f); } },
+    { member: 'character_plus', isCharacter: true, test: function (f) {
+        var m = f.match(/^"([^"]+)" (?:is staged with anchor_beat|has TWO different first appearances|is given an action in the opening beat)/)
+             || f.match(/^character_plus "([^"]+)"/);
+        return m ? m[1] : null;
+    } },
+  ];
+  function _classifySkeletonFaults(faults) {
+    var out = { members: {}, characters: [], unmatched: [] };
+    (faults || []).forEach(function (fRaw) {
+      var f = String(fRaw || '');
+      var hit = false;
+      for (var i = 0; i < _SKELETON_FAULT_MEMBER_PATTERNS.length; i++) {
+        var p = _SKELETON_FAULT_MEMBER_PATTERNS[i];
+        if (p.isCharacter) {
+          var name = p.test(f);
+          if (name) { if (out.characters.indexOf(name) === -1) out.characters.push(name); out.members.character_plus = true; hit = true; break; }
+        } else if (p.test(f)) { out.members[p.member] = true; hit = true; break; }
+      }
+      if (!hit) out.unmatched.push(f);
+    });
+    return out;
+  }
+  try { if (typeof window !== 'undefined') window._classifySkeletonFaults = _classifySkeletonFaults; } catch (_) {}
+
+  // Repair is eligible ONLY when every fault was confidently attributed to a C+/E+/fusion member.
+  // stage/cast/mission/reader posture/sealed canon are never part of what a SEEDED starter's
+  // planner even returns (they are its INPUTS, not its outputs) — an unattributed fault is the
+  // honest signal that something outside the C+/E+/fusion surface broke, which a repair request
+  // aimed only at C+/E+/fusion would not fix and must not paper over.
+  function _skeletonRepairEligible(classified) {
+    return !!classified && Array.isArray(classified.unmatched) && classified.unmatched.length === 0
+      && Object.keys(classified.members || {}).length > 0;
+  }
+  try { if (typeof window !== 'undefined') window._skeletonRepairEligible = _skeletonRepairEligible; } catch (_) {}
+
+  // Builds the ONE compact repair request: accepted (non-implicated) members are shown VERBATIM
+  // as fixed context, never to be restated or altered; the exact named failures are listed for
+  // the implicated members only; the model is told to return ONLY those implicated top-level
+  // keys. Returns {user: <prompt text>, askFor: [<top-level keys the response may legally touch>]}.
+  function _buildSkeletonRepairRequest(originalEnvelope, faults, classified) {
+    var env = originalEnvelope || {};
+    var members = (classified && classified.members) || {};
+    var lines = [];
+    lines.push('Your previous response had one or more fields that failed validation. Repair ONLY the named fields below. Do not restate, summarize, or alter anything else.');
+    lines.push('');
+    lines.push('NAMED FAILURES (fix exactly these, and nothing else):');
+    (faults || []).forEach(function (f) { lines.push('  - ' + String(f)); });
+    lines.push('');
+    var acceptedKeys = Object.keys(env).filter(function (k) { return !members[k]; });
+    if (acceptedKeys.length) {
+      lines.push('ACCEPTED, UNCHANGED CONTEXT (already correct — do not repeat these in your reply; they stay exactly as they are):');
+      acceptedKeys.forEach(function (k) { lines.push('  - ' + k + ': ' + JSON.stringify(env[k]).slice(0, 400)); });
+      lines.push('');
+    }
+    var askFor = [];
+    if (members.pc_opening_fusion) askFor.push('pc_opening_fusion');
+    if (members.fusion) askFor.push('fusion');
+    if (members.environment_plus) askFor.push('environment_plus');
+    if (members.character_plus && classified.characters.length) {
+      lines.push('For character_plus, repair ONLY these named entries (return the full character_plus array, but every entry not named here must be copied back VERBATIM, unchanged): ' + classified.characters.join(', '));
+      askFor.push('character_plus');
+    }
+    lines.push('Return ONLY a JSON object containing exactly these top-level keys, corrected: ' + askFor.join(', ') + '. Do not include stage, cast, mission, reader posture, canon, or any other field — they are not yours to return.');
+    return { user: lines.join('\n'), askFor: askFor };
+  }
+  try { if (typeof window !== 'undefined') window._buildSkeletonRepairRequest = _buildSkeletonRepairRequest; } catch (_) {}
+
+  // Merges a repair response into a FRESH, DEEP COPY of the original, immutable envelope.
+  // Structural enforcement, not a post-hoc check: ONLY the keys named in `askFor` are ever read
+  // from the repair response — every other key the model might return (even a well-intentioned
+  // "fix" to stage/cast/mission/reader posture/canon) is silently discarded and reported in
+  // `tamperAttempted`, never applied. For character_plus, only the NAMED implicated characters'
+  // entries are replaced; every other character's entry is preserved from the ORIGINAL, even if
+  // the repair response also returned a "corrected" version of it.
+  function _applySkeletonRepair(originalEnvelope, repairResponseObj, askFor, implicatedCharacters) {
+    var out = JSON.parse(JSON.stringify(originalEnvelope || {}));
+    var resp = repairResponseObj || {};
+    var allow = askFor || [];
+    var tamperAttempted = Object.keys(resp).filter(function (k) { return allow.indexOf(k) === -1; });
+    allow.forEach(function (key) {
+      if (!(key in resp)) return;
+      if (key === 'character_plus') {
+        var repaired = Array.isArray(resp.character_plus) ? resp.character_plus : [];
+        var names = implicatedCharacters || [];
+        var origList = Array.isArray(out.character_plus) ? out.character_plus : [];
+        out.character_plus = origList.map(function (origEntry) {
+          var nm = origEntry && origEntry.character;
+          if (names.indexOf(nm) === -1) return origEntry; // not implicated — original stands, repair response ignored for this entry
+          var fixed = repaired.filter(function (e) { return e && e.character === nm; })[0];
+          return fixed || origEntry; // implicated but model didn't return it — keep original (still faulty; honest re-fail, not fabricated)
+        });
+      } else {
+        out[key] = resp[key]; // pc_opening_fusion / fusion / environment_plus — the only other eligible top-level keys
+      }
+    });
+    return { envelope: out, tamperAttempted: tamperAttempted };
+  }
+  try { if (typeof window !== 'undefined') window._applySkeletonRepair = _applySkeletonRepair; } catch (_) {}
+
+  // STRICT variant for the LIVE wiring (Roman, 2026-09-16): the dry-tested _applySkeletonRepair
+  // above discards an out-of-scope key and still applies the legitimate part — useful for
+  // observing exactly what a misbehaving repair attempted, but NOT what Roman specified for
+  // production: "reject the repair if it returns any out-of-scope key (REPAIR_SCOPE_VIOLATION),
+  // rather than silently discarding a tamper attempt." This wraps the same merge and, on ANY
+  // tamper, refuses the WHOLE repair (not even the legitimate fields are applied) — the caller
+  // must treat this identically to "repair failed", never partially adopt it.
+  function _applySkeletonRepairStrict(originalEnvelope, repairResponseObj, askFor, implicatedCharacters) {
+    var result = _applySkeletonRepair(originalEnvelope, repairResponseObj, askFor, implicatedCharacters);
+    if (result.tamperAttempted.length) {
+      return { rejected: true, code: 'REPAIR_SCOPE_VIOLATION', tamperAttempted: result.tamperAttempted, envelope: null };
+    }
+    return { rejected: false, code: null, tamperAttempted: [], envelope: result.envelope };
+  }
+  try { if (typeof window !== 'undefined') window._applySkeletonRepairStrict = _applySkeletonRepairStrict; } catch (_) {}
 
   function _selectSceneAssignment(s, sceneNum) {
     s = s || window.state; if (!s) return null;
@@ -182426,7 +182602,7 @@ No text, no watermark, no UI elements, share-ready.`;
         : 'Default: roughly 60% of the reader\'s ATTENTION/GRAVITY on the R-PLOT, 40% on the A-PLOT — enough A-plot to feel the pressure, never enough to own the scene. ') +
       'THIS IS A GRAVITY RULE, NOT A WORD COUNT AND NOT A VOCABULARY BAN. Two clarifications that matter:\n' +
       '  (1) NOT word count. "She opened Roman\'s letter" is five words of A-plot — but if the next three hundred words are her pulse refusing to behave, the way she still knows his handwriting, the question of why he wrote and why now, then the letter occupies five words and ninety percent of the GRAVITY, and the scene is overwhelmingly R-plot. THAT is the win. A procedural OBJECT can be the doorway into pure relationship gravity. Conversely, do NOT write "80% feelings then a paragraph of plot bolted on" — gravity is woven, not segregated.\n' +
-      '  (2) NOT a vocabulary ban. Within the A-plot\'s share, use whatever procedural / legal / financial language the plot genuinely requires, stated plainly and correctly (see DOMAIN REGISTER). Han and Leia can argue about shield generators; the audience still experiences it as a relationship scene because the GRAVITY is on them. Contracts, board votes, escrow, fiduciary duty are all fine — the issue is never the nouns, it is OWNERSHIP. FAILURE = the A-plot (the mystery, the logistics, who-files-what-when) owns the reader\'s mind. NOT a failure = real procedural terms present while the reader is thinking about HIM and HER.\n' +
+      '  (2) NOT a vocabulary ban. Within the A-plot\'s share, use whatever procedural / legal / financial language the plot genuinely requires, stated plainly and correctly' + (_authorMode(state) === 'CONTEMPORARY_ROMANCE' ? ' (see DOMAIN REGISTER above, in the AUTHOR FLOOR mode block)' : '') + '. Han and Leia can argue about shield generators; the audience still experiences it as a relationship scene because the GRAVITY is on them. Contracts, board votes, escrow, fiduciary duty are all fine — the issue is never the nouns, it is OWNERSHIP. FAILURE = the A-plot (the mystery, the logistics, who-files-what-when) owns the reader\'s mind. NOT a failure = real procedural terms present while the reader is thinking about HIM and HER.\n' +
       'When in doubt, ask the gravity question, not the word question: at the end of this scene, who is the reader thinking about? If the answer is the mystery / the deadline / the gatekeeper, you have failed regardless of how spare the procedural vocabulary was. If the answer is the two of them, you have won regardless of how much procedural vocabulary appeared.\n' +
       // ── COME-TO-A-HEAD ALLOWANCE (Roman 2026-06-02) ──
       // The inversion is EARNED, never a quota.
@@ -182435,7 +182611,7 @@ No text, no watermark, no UI elements, share-ready.`;
     return '\n\nLITERARY CRAFT (CALIBRATION — universal prose principles, not hard rewrites):\n' +
       'This is calibration guidance, not a hard rewrite mandate. Literary mode KEEPS the right to be quiet, abstract, interior, contemplative — that\'s the medium. Apply these where they make the prose stronger; ignore where the interior/contemplative register is genuinely the right choice.\n' +
       '\n' +
-      'FRAMING (read this first): prose energy moves through three modes — ESCALATION (stakes named, body shown, dialogue sharpened, loaded objects), BREATH (atmospheric texture, sensory observation, the moment held), REDIRECTION (deflection, stall, reroute, dissolve, interruption, loss of nerve, dialogue that misses). The default failure is RELENTLESS ESCALATION — every paragraph trying too hard becomes melodrama. Not every paragraph should resolve its pressure directly. Some paragraphs deflect, postpone, diffuse, or misfire tension instead of advancing it cleanly. Aborted momentum, mistimed reactions, refused payoffs, evasions that remain evasions — these are craft, not failures. They are the texture of real human emotional life. Trust the mix.\n' +
+      'FRAMING (read this first): prose energy moves through three modes — ESCALATION (stakes named, body shown, dialogue sharpened, loaded objects), BREATH (atmospheric texture, sensory observation, the moment held), REDIRECTION (deflection, stall, reroute, dissolve, interruption, loss of nerve, dialogue that misses). The default failure is RELENTLESS ESCALATION — every paragraph trying too hard becomes melodrama. Not every paragraph should resolve its pressure directly. Some paragraphs deflect, postpone, diffuse, or misfire tension instead of advancing it cleanly. Aborted momentum, mistimed reactions, refused payoffs, evasions that remain evasions — these are craft, not failures, AT THE LEVEL OF A BEAT OR AN EXCHANGE. They are the texture of real human emotional life. Trust the mix. THIS DOES NOT LICENSE THE SCENE ITSELF TO END WITHOUT ITS ASSIGNED EVENT (see AUTHOR FLOOR, rule 2): a beat may deflect, stall, or misfire — but by the scene\'s end the assigned event has still happened, or a NEW concrete event has visibly, materially replaced it. Redirection is what a scene passes THROUGH on the way to landing its event, never a way to avoid landing it.\n' +
       '\n' +
       'The principles below give the concrete vocabulary for the ESCALATION mode. The BREATH and REDIRECTION modes are equally legitimate — use them when they serve the moment, not because a quota says to.\n' +
       '\n' +
@@ -182464,17 +182640,13 @@ No text, no watermark, no UI elements, share-ready.`;
       '\n' +
       _twoEngineProportion +
       '\n' +
-      // MODE-GATED (Roman 2026-08-15): escrow / fiduciary duty / wire transfers / NDAs are a
-      // CONTEMPORARY concern. Shipping this register to a Fatelands scene is ~3.6k chars of
-      // dead instruction on every turn. CONTEMPORARY_ROMANCE owns it now; ROMANTASY skips it.
-      (_authorMode(state) === 'CONTEMPORARY_ROMANCE' ? (
-      'DOMAIN REGISTER (HARD — added 2026-05-30 after observed pattern: invented compound nouns like "sovereign cross-border arbitration enclave", "sovereignty-abuse charges", "tertiary routing" — terms that sound impressive but trigger the gobbledygook detector in any reader who has met an actual lawyer or banker). When legal, financial, maritime, regulatory, medical, or other specialized terms appear in the prose, they must be REAL instruments used briefly and correctly. Prefer plain English a smart non-specialist friend would understand over jargon a specialist would use ironically:\n' +
-      '  • REAL and acceptable: escrow / fiduciary duty / asset freeze / non-recourse / non-disclosure agreement / subpoena / injunction / deposition / due diligence / discovery / arbitration / mediation / Letter of Intent / Memorandum of Understanding / fiduciary breach / earnest money / contingency / proxy fight / shareholder resolution / board resolution / Compliance / SAR / OFAC / AML.\n' +
-      '  • INVENTED COMPOUNDS — BANNED. "Sovereign cross-border arbitration enclave" is not a thing. "Sovereignty-abuse charges" is not a cause of action. "Tertiary routing" is not a banking term. "Compliance algorithm" is generic word-soup. If you reach for a compound noun and are not certain it is real, REPLACE it with the plain English a layperson would actually say.\n' +
-      '  • SPECIFICITY OVER VOLUME: one correctly-named instrument used briefly beats three plausible-sounding invented ones. "She had three days before the asset-freeze hearing" beats "The compliance algorithm flagged the transfer pending tertiary verification."\n' +
-      '  • SHOW THE STAKES IN PROSE, NOT IN JARGON: a banker reads "the wire arrived without sender details" and feels the wrongness; he reads "Sender ID: NULL" and laughs. A lawyer reads "she was deposed for nine hours" and feels the toll; she reads "compliance was running tertiary verification" and laughs. Write what a person actually experiences inside the instrument, not the instrument\'s technical specifications.\n' +
-      '  • WHEN UNSURE OF A TERM, USE THE PLAIN PHRASE YOU ARE SURE OF: "the deal," "the contract," "the lawsuit," "the regulator," "the bank," "the freeze," "the deadline." Plain language is never wrong; invented compound nouns frequently are.\n'
-      ) : '') +
+      // RELOCATED to _buildAuthorFloorDirective's CONTEMPORARY_ROMANCE mode block (Roman,
+      // corrective pass 2026-09-16) — this was already correctly mode-gated here (Roman
+      // 2026-08-15) but living inside the universal literaryCraft block meant the mode owned
+      // its content without owning its location; DOMAIN REGISTER is CONTEMPORARY_ROMANCE-
+      // specific craft (Requirement 3 of the genre-mode redesign: C+/E+/fusion stay content-only,
+      // but PROSE-REGISTER priorities belong in the mode block that defines the mode). See
+      // _buildAuthorFloorDirective for the current text — unchanged, only moved.
       '\n' +
       'STORYBOUND DECK CANON (HARD — added 2026-05-29 after live Rider-Waite leak in body prose):\n' +
       '  The protagonist\'s great-grandmother\'s deck is NOT a Rider-Waite tarot deck. It is a UNIQUE seven-card gold-leafed Storybound deck. CANON, IMMUTABLE:\n' +
@@ -217509,6 +217681,16 @@ No text, no watermark, no UI elements, share-ready.`;
     var _stagedOK = (typeof _isStagedMode === 'function' && _isStagedMode());
     var _literaryOK = !(typeof _isCGRenderMode === 'function' && _isCGRenderMode());
     if (!_stagedOK && !_literaryOK) return false;
+    // TIER 0 — SEEDED FIRST PAGE (Roman 2026-09-16): CG_SCAFFOLD is a paid CG-authority task, not
+    // required to show a literary first page. Suppress/defer — never delete — for a Tier-0-
+    // eligible fixed starter's PRE-first-page literary Scene 1 (seed carries cPlusFacets, the
+    // same eligibility test as the PC/LI seed adapters and the post-author editor deferral).
+    // Once Scene 1 is delivered (turnCount advances) or the story enters staged/CG render mode,
+    // this gate no longer applies and CG_SCAFFOLD generates normally.
+    if (_literaryOK && !_stagedOK && typeof _tier0Scene1Eligible === 'function' && _tier0Scene1Eligible(s)) {
+      try { s._tier0CgScaffoldDeferred = true; console.log('[TIER0] CG_SCAFFOLD deferred — literary Tier-0 Scene 1, no paid CG-authority call before first page'); } catch (_) {}
+      return false;
+    }
     // Alt POV editions inherit the parent run's scaffold authority — the
     // companion edition is re-narrating the same events, so the parent
     // scaffold's gravitational structure (run thesis, motifs, etc.) is
@@ -217517,6 +217699,7 @@ No text, no watermark, no UI elements, share-ready.`;
     if (s.cgScaffold && s.cgScaffold.storyId && s.storyId && s.cgScaffold.storyId === s.storyId) return false;
     return true;
   }
+  try { if (typeof window !== 'undefined') window._shouldGenerateCGScaffold = _shouldGenerateCGScaffold; } catch (_) {}
 
   async function _buildCGScaffold(s, _opts) {
     _opts = _opts || {};
@@ -223419,6 +223602,14 @@ No text, no watermark, no UI elements, share-ready.`;
     // identity has been set — the resolvers walk a priority list of
     // alternates (kernel name, picks.identity, raw name, storybeau, …).
     var lines = [];
+    // AUTHOR FLOOR + GENRE MODE (Roman, corrective pass 2026-09-16) — CG never received this at
+    // all (confirmed by grep: _buildAuthorFloorDirective's only 3 call sites were literary
+    // Scene-1 user-payload builders + the continuation fullSys assembly). Requirement 4 of the
+    // genre-mode redesign: exactly one resolved mode block reaches every relevant literary AND
+    // CG author assembly. Same function, same deterministic selector, same shared floor + one
+    // resolved ROMANTASY/CONTEMPORARY_ROMANCE block literary already gets — CG was simply never
+    // wired to it. Pushed first, mirroring LORE FIDELITY's own "universal, every CG scene" placement.
+    try { if (typeof _buildAuthorFloorDirective === 'function') lines.push(_buildAuthorFloorDirective(state)); } catch (_) {}
     // LORE FIDELITY (Roman 2026-07-25) — universal, all worlds, every CG scene (mirrors the literary prose-stack injection).
     try { if (typeof _buildLoreFidelityDirective === 'function') lines.push(_buildLoreFidelityDirective()); } catch (_) {}
     var picks = (state && state.picks) || {};
@@ -255288,6 +255479,24 @@ Generate the synopsis now.` }
       }
       var gate = _bibleArtifactBefore('pc', storyId, fp);
       if (gate.decision === 'reuse-committed' && window.state && window.state.pcBodyBible) return window.state.pcBodyBible;
+      // TIER 0 — SEEDED FIRST PAGE: for a fixed starter with sufficient seed cPlusFacets, derive
+      // the foundation LOCALLY instead of firing a live call. Only takes this path when there is
+      // no already-committed bible for this story (respects the same "generate once" contract
+      // the live path below has); falls through to live generation untouched on any refusal.
+      if (window.state && !window.state.pcBodyBible) {
+        var _t0Bible = _tier0PcBibleFromSeed(window.state);
+        if (_t0Bible) {
+          var _t0Commit = _commitValidatedPcFoundation(window.state, _t0Bible);
+          if (_t0Commit.committed) {
+            _t0Bible._tier0 = { origin: 'seed_adapter', mergedFacetIds: _t0Commit.mergedFacetIds, at: Date.now() };
+            window.state.pcBodyBible = _t0Bible;
+            _bibleArtifactCommitted('pc', storyId);   // same ledger transition the live path uses
+            try { console.log('[TIER0] pc body bible derived locally from seed — zero live calls (' + (_t0Commit.mergedFacetIds || []).length + ' facet(s) merged into portfolio)'); } catch (_) {}
+            return window.state.pcBodyBible;
+          }
+          try { console.warn('[TIER0] pc seed adapter produced a bible but validator/commit rejected it (' + _t0Commit.reason + ') — falling through to live generation'); } catch (_) {}
+        }
+      }
       var result = await _bodyBibleOnce('pc', _bibleOwnershipToken('pc', _bodyBibleScopeKey(_pcBibleSubject())), _generatePCBodyBibleUncached);
       // Re-check ownership AFTER the await, not just before it started: a newer attempt (explicit
       // refresh) may have superseded this one WHILE it was in flight. Only the attempt that is
@@ -255416,6 +255625,88 @@ Generate the synopsis now.` }
       }
     }
     try { if (typeof window !== 'undefined') window._pcFoundationSourceFacts = _pcFoundationSourceFacts; } catch (_) {}
+
+    // TIER 0 — SHARED ELIGIBILITY TEST (Roman 2026-09-16, third pass): the ONE canonical check
+    // every Tier-0 gate/suppression in this file uses — Scene 1 (turnCount falsy) of a fixed
+    // starter whose PC cast entry carries at least one real, citable cPlusFacet. Deliberately
+    // stricter than a bare `_pcFoundationSourceFacts(s)` truthy check: that function returns a
+    // (facets:[]) object for ANY fixed starter, even one with zero authored facets, which would
+    // wrongly mark a facet-less starter "Tier 0 eligible" and suppress its pre-page calls with
+    // nothing to derive them from. Matches _tier0PcBibleFromSeed's own internal gate exactly, so
+    // "eligible for suppression" and "eligible for local derivation" can never drift apart.
+    function _tier0Scene1Eligible(s) {
+      if (!s || s.turnCount) return false;
+      var src = (typeof _pcFoundationSourceFacts === 'function') ? _pcFoundationSourceFacts(s) : null;
+      return !!(src && src.facets && src.facets.length);
+    }
+    try { if (typeof window !== 'undefined') window._tier0Scene1Eligible = _tier0Scene1Eligible; } catch (_) {}
+
+    // TIER 0 — LI sibling of _pcFoundationSourceFacts above: extracts the LI cast entry's OWN
+    // seed-authored cPlusFacets (which _pcFoundationSourceFacts deliberately does not expose —
+    // it only surfaces liName/liBio as CONTEXT for the PC's bible). Same eligibility boundary
+    // (_activeSeed returns null for Corridor / no fixed cast → null here too).
+    function _liFoundationSourceFacts(s) {
+      try {
+        s = s || (typeof window !== 'undefined' ? window.state : null) || {};
+        var seed = (typeof _activeSeed === 'function') ? _activeSeed(s)
+          : (window._activeSeed ? window._activeSeed(s) : null);
+        if (!seed || !Array.isArray(seed.cast)) return null;
+        var liCast = seed.cast.filter(function (c) { return c && c.role === 'LI'; })[0];
+        if (!liCast) return null;                     // corridor / no fixed LI canon
+        var facets = (Array.isArray(liCast.cPlusFacets) ? liCast.cPlusFacets : [])
+          .filter(function (f) { return f && f.canonical_truth; })
+          .map(function (f) { return { facet_id: f.facet_id || '', category: f.category || '', canonical_truth: String(f.canonical_truth) }; });
+        if (!facets.length) return null;              // insufficient seed — caller falls through to live gen
+        return { starterId: String(s._starterId || ''), liName: String(liCast.name || ''), liBio: String(liCast.bio || ''), facets: facets };
+      } catch (e) {
+        try { console.warn('[LI-BODY-BIBLE] _liFoundationSourceFacts failed: ' + (e && e.message)); } catch (_) {}
+        return null;
+      }
+    }
+    try { if (typeof window !== 'undefined') window._liFoundationSourceFacts = _liFoundationSourceFacts; } catch (_) {}
+
+    // TIER 0 — maps the LI's own approved facets onto the two BEHAVIORAL-TELL bible fields
+    // (focus_tell / restraint_tell — confirmed via the live generator's own field descriptions:
+    // focus_tell = "a SPECIFIC sign he is locked-in / paying close attention"; restraint_tell =
+    // "a SPECIFIC sign he is holding himself back"). Matched by CONTENT (regex against the
+    // facet's own canonical_truth text), never by a hardcoded facet_id or category label, so this
+    // generalizes to any future fixed starter's LI facets rather than special-casing Julian.
+    // Every other LI field (physical description, signature_kink, defining_anecdote, the other
+    // three tells, desire_register_exemplars, etc.) is left ABSENT — nothing here is invented.
+    function _tier0LiBibleFromSeed(s) {
+      var source = _liFoundationSourceFacts(s);
+      if (!source || !source.facets || !source.facets.length) return null;
+      var RESTRAINT_RE = /\bhold(?:s|ing)?\s*(?:himself|herself|themselves)?\s*back\b|\bwithout asserting\b|\bgrows? quieter\b|\bdoes not (?:compete|assert|display)\b|\brestrain/i;
+      var FOCUS_RE = /\battentive\b|\bnotice[sd]?\b|\baware\b|\blocked[- ]?(?:in|on)\b|\bwatch(?:es|ing)?\b/i;
+      var used = {};
+      function pick(re) {
+        for (var i = 0; i < source.facets.length; i++) {
+          var f = source.facets[i];
+          if (!used[f.facet_id] && re.test(f.canonical_truth)) { used[f.facet_id] = true; return f; }
+        }
+        return null;
+      }
+      var restraintFacet = pick(RESTRAINT_RE);
+      var focusFacet = pick(FOCUS_RE);
+      // Neither keyword pattern matched (a future starter's facets may not use this exact
+      // vocabulary) — fall back to unused facets in seed order rather than leaving a fully
+      // eligible seed unused; still never invents content, only assigns an already-approved fact.
+      if (!restraintFacet) { for (var j = 0; j < source.facets.length; j++) { if (!used[source.facets[j].facet_id]) { restraintFacet = source.facets[j]; used[restraintFacet.facet_id] = true; break; } } }
+      if (!focusFacet) { for (var k = 0; k < source.facets.length; k++) { if (!used[source.facets[k].facet_id]) { focusFacet = source.facets[k]; used[focusFacet.facet_id] = true; break; } } }
+
+      var bible = { _provenance: {} };
+      if (restraintFacet && restraintFacet.canonical_truth) {
+        bible.restraint_tell = restraintFacet.canonical_truth;
+        bible._provenance.restraint_tell = { kind: 'locked_canon_fact', basis: 'approved_facet:' + restraintFacet.facet_id, cites: restraintFacet.canonical_truth };
+      }
+      if (focusFacet && focusFacet.canonical_truth) {
+        bible.focus_tell = focusFacet.canonical_truth;
+        bible._provenance.focus_tell = { kind: 'locked_canon_fact', basis: 'approved_facet:' + focusFacet.facet_id, cites: focusFacet.canonical_truth };
+      }
+      if (!bible.restraint_tell && !bible.focus_tell) return null; // nothing durable — refuse rather than commit an empty bible
+      return bible;
+    }
+    try { if (typeof window !== 'undefined') window._tier0LiBibleFromSeed = _tier0LiBibleFromSeed; } catch (_) {}
 
     function _starterPcFoundationBlock(s) {
       try {
@@ -255944,6 +256235,135 @@ Generate the synopsis now.` }
       return out;
     }
     try { if (typeof window !== 'undefined') window._commitValidatedPcFoundation = _commitValidatedPcFoundation; } catch (_) {}
+
+    // ══════════════════════════════════════════════════════════════════════════════════════
+    // TIER 0 — SEEDED FIRST PAGE (Roman, 2026-09-16): for ANY fixed starter whose PC cast
+    // entry carries seed-authored cPlusFacets, the PC Body Bible's FOUNDATION content
+    // (core_contradiction / wound.core / current_crisis.event / current_crisis.li_complication)
+    // is derived LOCALLY AND DETERMINISTICALLY from already-approved seed canon — never a live
+    // model call — the instant the reader opens Scene 1. Every populated field is an EXACT
+    // substring citation against real seed text (kind:'locked_canon_fact'), run through the
+    // SAME _validatePcFoundationOutput / _commitValidatedPcFoundation pipeline live generation
+    // already uses (never a direct state.pcBodyBible write, so the authority-boundary system
+    // — _pcCommittedFoundationForPrompt — still only serves this via its real provenance stamp).
+    // Anything this seed cannot exactly cite is left ABSENT, never invented.
+    //
+    // SCOPE, DISCLOSED (do not read more into this than is built): this adapter covers ONLY the
+    // four validated "foundation" fields above. The bible's PHYSICAL/TELL fields (height, build,
+    // hair, complexion, face, signature_feature, visual_anchor, stress_tic, desire_tell,
+    // impatience_tell, confidence_tell, vulnerability_tell, emotional_weather, signature_habits,
+    // self_conscious_feature, li_keenly_aware_of) are left absent on purpose — confirmed safe by
+    // reading every downstream consumer (author-payload builders, kink-transmission audit,
+    // debug logs): all of them read these fields through `|| ''` / `if (field)` guards, never an
+    // unguarded access, so an absent field degrades to "not mentioned" in the prompt, not a
+    // crash or an "undefined" leak. For CG rendering specifically, a fixed starter's own seed
+    // visualCanon (_pcSeedPhys in _renderBiblesAsCGDirectives, ~line 221991) already overrides
+    // the bible's physical fields regardless, confirming physical omission is doubly safe here.
+    // GENERAL, NOT FIRST-SACRIFICE-SPECIAL-CASED: gated on facets.length>0 and mapped by facet
+    // CATEGORY (not a hardcoded facet_id), so any future fixed starter with this seed shape gets
+    // the same deterministic path automatically. Corridor is untouched: _pcFoundationSourceFacts
+    // already returns null for it (no fixed PC cast entry), so this returns null immediately too.
+    // ══════════════════════════════════════════════════════════════════════════════════════
+    function _tier0SentenceCiting(text, keywordRe) {
+      // Deterministic, local sentence-picker: splits `text` on sentence boundaries and returns
+      // the FIRST sentence (trimmed) whose content matches keywordRe AND is a verified exact
+      // substring of `text` itself. Never invents — returns null when nothing matches, so the
+      // caller leaves that bible field absent rather than fabricate a claim with nothing behind it.
+      var s = String(text || '');
+      var sentences = s.match(/[^.!?]+[.!?]+/g) || (s ? [s] : []);
+      for (var i = 0; i < sentences.length; i++) {
+        var sent = sentences[i].trim();
+        if (sent && keywordRe.test(sent) && s.indexOf(sent) !== -1) return sent;
+      }
+      return null;
+    }
+    try { if (typeof window !== 'undefined') window._tier0SentenceCiting = _tier0SentenceCiting; } catch (_) {}
+
+    function _tier0PcBibleFromSeed(s) {
+      var source = _pcFoundationSourceFacts(s);
+      if (!source || !source.facets || !source.facets.length) return null; // insufficient seed — caller falls through to live gen
+      var byCategory = {};
+      source.facets.forEach(function (f) { if (f.category && !byCategory[f.category]) byCategory[f.category] = f; });
+      var contradictionFacet = byCategory.competence || source.facets[0];
+      var woundFacet = (byCategory.fear && byCategory.fear.facet_id !== contradictionFacet.facet_id)
+        ? byCategory.fear
+        : (source.facets[1] && source.facets[1].facet_id !== contradictionFacet.facet_id ? source.facets[1] : null);
+
+      var bible = { _provenance: {} };
+      if (contradictionFacet && contradictionFacet.canonical_truth) {
+        bible.core_contradiction = contradictionFacet.canonical_truth;
+        bible._provenance.core_contradiction = { kind: 'locked_canon_fact', basis: 'approved_facet:' + contradictionFacet.facet_id, cites: contradictionFacet.canonical_truth };
+      }
+      if (woundFacet && woundFacet.canonical_truth) {
+        bible.wound = { core: woundFacet.canonical_truth };
+        bible._provenance['wound.core'] = { kind: 'locked_canon_fact', basis: 'approved_facet:' + woundFacet.facet_id, cites: woundFacet.canonical_truth };
+      }
+      var crisisSentence = _tier0SentenceCiting(source.pcBio, /\btoday\b|\bfirst time\b|\bresponsible for\b/i);
+      if (crisisSentence) {
+        bible.current_crisis = bible.current_crisis || {};
+        bible.current_crisis.event = crisisSentence;
+        bible._provenance['current_crisis.event'] = { kind: 'locked_canon_fact', basis: 'approved_bio', cites: crisisSentence };
+      }
+      var complicationSentence = source.liBio ? _tier0SentenceCiting(source.liBio, /\bknows\b|\bknown\b|\baware\b|\bsecret\b/i) : null;
+      if (complicationSentence) {
+        bible.current_crisis = bible.current_crisis || {};
+        bible.current_crisis.li_complication = complicationSentence;
+        bible._provenance['current_crisis.li_complication'] = { kind: 'locked_canon_fact', basis: 'approved_relationship', cites: complicationSentence };
+      }
+      // Nothing durable populated at all — refuse rather than commit an empty, useless bible.
+      if (!bible.core_contradiction && !bible.wound && !bible.current_crisis) return null;
+      return bible;
+    }
+    try { if (typeof window !== 'undefined') window._tier0PcBibleFromSeed = _tier0PcBibleFromSeed; } catch (_) {}
+
+    // TIER 0 — explicit, opt-in replay of whatever model-backed Scene-1 editorial passes were
+    // SKIPPED at first-page delivery time (state._tier0DeferredScene1Edits, populated by the
+    // finalize-block guards around _repairLISocialProof/_repairPCPicturability/etc.). Never runs
+    // automatically — a caller invokes this deliberately, later, on text the reader already saw.
+    // Deterministic/local guards were never deferred in the first place, so nothing here re-runs
+    // them. WHEN this should fire (next scene's generation? an explicit reader/admin action?) is
+    // an open product decision — this function only guarantees the seam exists and nothing a
+    // reader saw gets silently rewritten without a corresponding, later, explicit call.
+    async function _tier0RunDeferredScene1Edits(state, text) {
+      if (!state || !Array.isArray(state._tier0DeferredScene1Edits) || !state._tier0DeferredScene1Edits.length) return text;
+      var labels = state._tier0DeferredScene1Edits.slice();
+      var out = String(text || '');
+      for (var i = 0; i < labels.length; i++) {
+        var label = labels[i];
+        try {
+          if (label === 'LI_SOCIAL_PROOF' && typeof window._repairLISocialProof === 'function') out = await window._repairLISocialProof(out);
+          else if (label === 'LI_RELATIONAL_VALUE' && typeof window._repairLIRelationalValue === 'function') out = await window._repairLIRelationalValue(out);
+          else if (label === 'PC_PICTURABILITY' && typeof window._repairPCPicturability === 'function') out = await window._repairPCPicturability(out);
+          else if (label === 'LI_INTERLOCUTOR_PICTURABILITY' && typeof window._repairInterlocutorPicturability === 'function') out = await window._repairInterlocutorPicturability(out);
+          else if ((label === 'DE_CALC' || label === 'DE_CALC_PREMIUM') && typeof window._repairCalcifiedMoves === 'function') out = await window._repairCalcifiedMoves(out);
+          else if (label === 'HOT_OPENING_REPAIR' && typeof window._repairHotOpening === 'function') out = await window._repairHotOpening(out);
+          else if (label === 'BODY_BIBLE_DUMP' && typeof window._repairBodyBibleDump === 'function') out = await window._repairBodyBibleDump(out);
+          else if (label === 'PERCEPTION_LENS' && typeof window._applyPerceptionLens === 'function') out = await window._applyPerceptionLens(out);
+          else if (label === 'LI_DESC_PROSE_REPAIR' && typeof window._liDescriptionCheck === 'function' && typeof window._targetedSceneEdit === 'function') {
+            var _pre = null; try { _pre = window._liDescriptionCheck(out); } catch (_) {}
+            if (_pre && (_pre.fail || _pre.desireCoded === false)) {
+              var _b = (state && state.liBodyBible) || {};
+              var _first = String((state && state.loveInterestName) || 'the love interest').split(/\s+/)[0];
+              var _det = [
+                _b.hair && ('hair — ' + _b.hair),
+                (_b.height || _b.build) && ('build — ' + [_b.height, _b.build].filter(Boolean).join(', ')),
+                _b.eye_color && ('eyes — ' + _b.eye_color),
+                _b.mouth_quality && ('mouth — ' + _b.mouth_quality),
+                _b.signature_feature && ('signature — ' + _b.signature_feature),
+                _b.second_celebrated_feature && ('also — ' + _b.second_celebrated_feature)
+              ].filter(Boolean);
+              if (_det.length >= 2) {
+                var _instr = 'PROBLEM: the love interest, ' + _first + ', is named but the reader cannot PICTURE him as a man she WANTS — his physical description is missing or clinical (a catalog, not desire). FIX: at his first (and/or second) mention or in the protagonist\'s memory of him, weave in 3–4 image-defining physical details from his canon: ' + _det.join(' · ') + '. EACH detail MUST be DESIRE-CODED — rendered through HER wanting, never a clinical label. Add ~2–3 sentences of him; keep EVERYTHING else verbatim, including the opening and closing lines.';
+                try { var _rep = await window._targetedSceneEdit(out, _instr); if (_rep && _rep !== out) out = _rep; } catch (_) {}
+              }
+            }
+          }
+        } catch (_tier0DeferErr) { try { console.warn('[TIER0:DEFERRED-EDIT] ' + label + ' threw during replay, skipped: ' + (_tier0DeferErr && _tier0DeferErr.message)); } catch (_) {} }
+      }
+      try { state._tier0DeferredScene1Edits = []; } catch (_) {}
+      return out;
+    }
+    try { if (typeof window !== 'undefined') window._tier0RunDeferredScene1Edits = _tier0RunDeferredScene1Edits; } catch (_) {}
 
     async function _generatePCBodyBibleUncached(_keyAtRequest) {
       try {
@@ -256715,6 +257135,29 @@ Generate the synopsis now.` }
       }
       var gate = _bibleArtifactBefore('li', storyId, fp);
       if (gate.decision === 'reuse-committed' && window.state && window.state.liBodyBible) return window.state.liBodyBible;
+      // TIER 0 — SEEDED FIRST PAGE (Roman 2026-09-16): for a fixed starter whose LI cast entry
+      // carries seed-authored cPlusFacets, derive a PARTIAL foundation locally — never a live
+      // call just to fill schema blanks, and never a hand-authored full bible. Every populated
+      // field is an exact-substring citation of approved seed canon (kind:'locked_canon_fact');
+      // fields with no citable basis (physical description, most tells, signature_kink, etc.)
+      // stay ABSENT — confirmed safe: every consumer of state.liBodyBible reads fields through
+      // `||`/`&&` guards (never an unguarded access), same as the live-generated bible would
+      // produce for an LI with a thin canon. There is no LI-side authority-boundary accessor
+      // parallel to _pcCommittedFoundationForPrompt (state.liBodyBible is read directly by every
+      // consumer, live-generated or not — confirmed at the live path's own commit site), so this
+      // commits the same way the live path does: a direct state.liBodyBible assignment.
+      // PAIR_BOND/R_PLOT (out of Tier 0's pre-page scope) only require liBodyBible to be truthy;
+      // a partial object satisfies that without inventing anything for those later, separate calls.
+      if (window.state && !window.state.liBodyBible) {
+        var _t0LiBible = _tier0LiBibleFromSeed(window.state);
+        if (_t0LiBible) {
+          _t0LiBible._tier0 = { origin: 'seed_adapter', at: Date.now() };
+          window.state.liBodyBible = _t0LiBible;
+          _bibleArtifactCommitted('li', storyId);
+          try { console.log('[TIER0] li body bible derived locally from seed (partial — ' + Object.keys(_t0LiBible._provenance || {}).length + ' field(s) cited) — zero live calls'); } catch (_) {}
+          return window.state.liBodyBible;
+        }
+      }
       var result = await _bodyBibleOnce('li', _bibleOwnershipToken('li', _bodyBibleScopeKey(_liBibleSubject())), _generateLIBodyBibleUncached);
       var stillCurrent = _bibleLedger().li === gate.rec;
       if (result && stillCurrent) _bibleArtifactCommitted('li', storyId);
@@ -259805,6 +260248,18 @@ INCORRECT:
         try { window.showScreen && window.showScreen('setup'); } catch (_) {}
         return;
       }
+      // TIER 0 — SEEDED FIRST PAGE (Roman 2026-09-16, third pass): PAIR_BOND, R_PLOT, and
+      // WOUND_LI_INTEGRATION_AUDIT are SUPPRESSED entirely pre-page for a Tier-0-eligible fixed
+      // starter's Scene 1 — not rescheduled, not fired-and-forgotten right after delivery (Roman:
+      // "still an undisclosed paid call"). Traced and confirmed this session: AUTHOR does not
+      // consume PAIR_BOND's or R_PLOT's generated content (only a now-removed truthy-gate in
+      // _deriveRomancePacket touched pairBond at all); R_PLOT's only consumer is the PLANNER's
+      // optional context block, which already degrades gracefully when absent; the shape-
+      // selection block below already falls through to generateAPlot's own pick when
+      // state.rPlot is absent (pre-existing, documented fallback — untouched). No deferred-call
+      // registry is built here by design — if these become useful again, that is a SEPARATE,
+      // explicitly-budgeted Scene-2 task, not silent post-delivery firing.
+      var _tier0SuppressPrePageEnrichment = !!(typeof _tier0Scene1Eligible === 'function' && _tier0Scene1Eligible(state));
       // ── PAIRBOND GENERATION (Roman 2026-06-09) — the missing pre-spine layer.
       // Fires AFTER both Bibles populate, BEFORE R-plot + shape selection. Reads
       // PC + LI psychology + the romance engine; emits canonical psychological
@@ -259815,7 +260270,8 @@ INCORRECT:
       // Failure-tolerant: if generation returns null (HTTP failure / parse
       // failure / Bibles missing), state.pairBond stays null and downstream
       // shape selection gracefully falls back to axis-only behavior. Non-blocking.
-      try {
+      if (_tier0SuppressPrePageEnrichment) { try { console.log('[TIER0] PAIR_BOND suppressed pre-page — no paid call before the reader sees Scene 1'); } catch (_) {} }
+      else try {
         if (typeof _generatePairBond === 'function' && !(state.pairBond && state.pairBond.psychologicalLock_li)) {
           if (state.pcBodyBible && state.liBodyBible) {
             await _generatePairBond();
@@ -259836,7 +260292,8 @@ INCORRECT:
       // two Bibles (aPlot.goal is no longer required — that was the plot-first
       // dependency the inversion removes). Hard-failure telemetry still fires
       // when both Bibles exist but R-plot returns null.
-      try {
+      if (_tier0SuppressPrePageEnrichment) { try { console.log('[TIER0] R_PLOT suppressed pre-page — no multi-Issue relationship rail before the reader\'s first choice; Scene 2 plans from posture/seed/stage/continuity state instead'); } catch (_) {} }
+      else try {
         if (typeof _ensureRPlot === 'function' && !(state.rPlot && state.rPlot.coreTension)) {
           var _tR = Date.now();
           console.log('[R-PLOT] generating (INVERTED chain — relationship planning object fires BEFORE A-plot, from Pair Dynamic + Bibles)');
@@ -259932,7 +260389,12 @@ INCORRECT:
       // wound, LI, and A-plot all exist. Async/fire-and-forget so the spine build
       // proceeds in parallel; telemetry only (no regen, no gate). Detects the
       // Eleanor failure: a wound that runs around the LI instead of through him.
-      try {
+      // TIER 0 (Roman 2026-09-16): sampling/telemetry, not story delivery — must not become an
+      // undisclosed player-facing paid call before Scene 1. Suppressed here even though it was
+      // already fire-and-forget/non-blocking; left for explicit diagnostics or a separately
+      // budgeted later design, per Roman's instruction — not silently rescheduled.
+      if (_tier0SuppressPrePageEnrichment) { try { console.log('[TIER0] WOUND_LI_INTEGRATION_AUDIT suppressed pre-page — sampling/telemetry, not story delivery'); } catch (_) {} }
+      else try {
         if (typeof _auditWoundLIIntegration === 'function'
             && !(window.state && window.state._sceneAuditsEnabled === false)) {
           _auditWoundLIIntegration().catch(function (e) { try { console.warn('[WOUND→LI] audit promise rejected:', e && e.message); } catch (_) {} });
@@ -268723,6 +269185,48 @@ Generate the synopsis now. The protagonist MUST be named ${pKernel}. Depict the 
                       && _data.choices[0].message.content) || '');
           return _rawc.replace(/^\s*```[a-z]*\s*/i, '').replace(/\s*```\s*$/i, '').trim();
         };
+        // ── HOLISTIC SKELETON REPAIR — the ONE bounded, compact repair dispatch (Roman,
+        // 2026-09-16). SAME route/role/model as the opening planner (_SCENE1_PLANNER_ROUTE), SAME
+        // system prompt `sys` (the schema/canon context the model needs is already there), but a
+        // GENUINELY COMPACT user message — the repair request built by _buildSkeletonRepairRequest
+        // (accepted portions + named failures only), NEVER the original ~90KB planner prompt. No
+        // transport retry here by design: this is already the ONE permitted repair attempt: a
+        // connection failure on it is a failed repair, not a reason to spend a second one.
+        var _doRepairScaffoldCall = async function (repairUsr) {
+          var _rres = await fetch(_SCENE1_PLANNER_ROUTE.url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              role: _SCENE1_PLANNER_ROUTE.role, model: _SCENE1_PLANNER_ROUTE.model, preferredModel: _SCENE1_PLANNER_ROUTE.model,
+              temperature: 0.3,
+              max_tokens: _SCAFFOLD_MAX_TOKENS,
+              reasoningEffort: _SCENE1_PLANNER_ROUTE.effort,
+              response_format: { type: 'json_object' },
+              messages: [
+                { role: 'system', content: sys },
+                { role: 'user', content: repairUsr }
+              ]
+            })
+          });
+          if (!_rres.ok) { var _rErr = new Error('repair call failed: HTTP ' + _rres.status); _rErr._httpStatus = _rres.status; throw _rErr; }
+          var _rData = await _rres.json();
+          try { if (typeof _recordProxyTextCost === 'function') _recordProxyTextCost(_rData, _SCENE1_PLANNER_ROUTE.model, 'repair'); } catch (_) {}
+          try { state._scene1SkeletonRepairUsage = { route: _SCENE1_PLANNER_ROUTE.url, model: (_rData && _rData.model) || null, usage: (_rData && _rData.usage) || null, at: Date.now() }; console.log('[SCENE1:SKELETON:REPAIR:USAGE] ' + JSON.stringify(state._scene1SkeletonRepairUsage)); } catch (_) {}
+          var _rRawc = (_rData && typeof _rData.content === 'string' && _rData.content)
+            ? _rData.content
+            : String((_rData && _rData.choices && _rData.choices[0] && _rData.choices[0].message
+                      && _rData.choices[0].message.content) || '');
+          return _rRawc.replace(/^\s*```[a-z]*\s*/i, '').replace(/\s*```\s*$/i, '').trim();
+        };
+        // ── RE-CALLABLE VALIDATION (Roman, 2026-09-16) — wraps the EXISTING parse → reconcile →
+        // normalize → validate → derive pipeline, UNCHANGED in its body, so it can run a second
+        // time against a repaired candidate with exact behavior parity for the unmodified case.
+        // Returns {ok:true, assign} on success, {ok:false, faults, rawEnvelope, fullPlan} on a
+        // CONTENT/validation fault (never thrown — the call site decides abort-vs-repair). Every
+        // OTHER failure in this region (unparseable JSON, a reconciliation fault, or any other
+        // pre-existing throw site below) is NOT content the repair layer can fix and continues to
+        // throw exactly as before, propagating to _buildScene1Scaffold's own enclosing catch
+        // unchanged — repair is scoped ONLY to the one named abort site below.
         var _tryParseScaffold = function (rawc) {
           var _lb = rawc.indexOf('{'), _rb = rawc.lastIndexOf('}');
           if (_lb === -1 || _rb === -1 || _rb <= _lb) {
@@ -268790,6 +269294,7 @@ Generate the synopsis now. The protagonist MUST be named ${pKernel}. Depict the 
           console.log('[SCENE1:PLANNER:ATTEMPTS] ' + _plannerAttempts
             + (_plannerRetryReason ? ' (retried after ' + _plannerRetryReason + ')' : ' (no retry)'));
         } catch (_) {}
+        function _tryValidateOpeningSkeletonFromRaw(rawc) {
         var _parse = _tryParseScaffold(rawc);
 
         // ── NO PAID JSON RETRY (Roman 2026-08-25) ──
@@ -270485,19 +270990,16 @@ Generate the synopsis now. The protagonist MUST be named ${pKernel}. Depict the 
               _cp = _norm.character_plus;
               _v2.valve = true;
             } else {
-              // -- THE RUN IS ABANDONED HERE, AND THE PAID PASSES MUST LEARN IT --
-              // X13b: a fire-and-forget subplot pass launched during A-plot generation could
-              // already be past its ownership guard when this line runs, and would spend money
-              // on a scene that is never written. Settling the gate is what it waits on.
-              try { _settleChainCommit(false, 'scene_skeleton invalid', state); } catch (_) {}
-              try { console.error('[SCENE1:SKELETON:INVALID] ' + _faults.length + ' fault(s) — ' + _faults.join(' · ')); } catch (_) {}
-              // Recorded on state, not just thrown: _buildScene1Scaffold wraps this region in a
-              // catch that degrades any throw to an empty scaffold block, which would let an
-              // invalid skeleton reach Grok silently — the precise failure this must prevent.
-              try { state._scene1SkeletonFatal = _faults.join('; '); } catch (_) {}
-              var _skFatal = new Error('scene_skeleton invalid: ' + _faults.join('; '));
-              _skFatal._scene1SkeletonFatal = true;
-              throw _skFatal;
+              // -- THE RUN IS ABANDONED HERE UNLESS A BOUNDED REPAIR IS ELIGIBLE (Roman,
+              // 2026-09-16 — was an unconditional abort; the call site now decides, exactly once,
+              // whether every fault is a confidently classified C+/E+/fusion fault worth one
+              // repair attempt before reaching this same conclusion). X13b: a fire-and-forget
+              // subplot pass launched during A-plot generation could already be past its
+              // ownership guard when this returns non-ok, and would spend money on a scene that
+              // is never written — but settling that gate is a FINAL-outcome side effect now, not
+              // this function's job; the call site does it exactly once, after repair is
+              // resolved one way or the other, never here and never twice.
+              return { ok: false, faults: _faults.slice(), rawEnvelope: _skelRaw, fullPlan: _parse.plan };
             }
           }
             // Validation passed — but the chain is NOT yet committed. A scaffold builder
@@ -270567,9 +271069,83 @@ Generate the synopsis now. The protagonist MUST be named ${pKernel}. Depict the 
           } catch (_) {}
         } catch (_skErr) {
           // Visible, and NOT survivable: continuing would hand Grok a silently skeleton-less
-          // opening, which is the exact failure this work exists to make impossible.
+          // opening, which is the exact failure this work exists to make impossible. Still a real
+          // throw, still propagates to _buildScene1Scaffold's own enclosing catch unchanged — this
+          // is a genuine, unexpected error, never a content fault the repair layer could address.
           throw _skErr;
         }
+        return { ok: true, assign: _s1Assign, plan: plan };
+        }
+        // ── THE ONE BOUNDED REPAIR, LIVE (Roman, 2026-09-16) ──────────────────────────────────
+        // initial planner response -> existing normalize/reconcile/validate (unchanged, exact
+        // parity via _tryValidateOpeningSkeletonFromRaw above) -> on a content fault ONLY (never
+        // a parse/reconciliation failure, which still throws straight through, above), one
+        // compact repair request -> STRICT merge (any out-of-scope key = REPAIR_SCOPE_VIOLATION,
+        // the whole repair is refused, not partially applied) -> the SAME validation pipeline
+        // again, from scratch, on the repaired candidate -> author only after that second pass
+        // is clean -> any second failure is a named, final abort — zero further repair, zero
+        // silent fall-through to the availability valve (which, unchanged, is checked and
+        // resolved entirely INSIDE the validation function above, before repair is ever reached —
+        // a valve-accepted degraded skeleton returns ok:true and repair never fires for it).
+        var _validation = _tryValidateOpeningSkeletonFromRaw(rawc);
+        if (!_validation.ok) {
+          var _repairAttempted = false;
+          try {
+            var _classifiedS1 = _classifySkeletonFaults(_validation.faults);
+            if (_skeletonRepairEligible(_classifiedS1)) {
+              _repairAttempted = true;
+              var _repairReqS1 = _buildSkeletonRepairRequest(_validation.rawEnvelope, _validation.faults, _classifiedS1);
+              try { console.log('[SCENE1:SKELETON:REPAIR] attempting ONE holistic repair — ' + _repairReqS1.askFor.join(', ')); } catch (_) {}
+              var _repairRawcS1 = await _doRepairScaffoldCall(_repairReqS1.user);
+              var _repairParsedS1 = _tryParseScaffold(_repairRawcS1);
+              if (!_repairParsedS1.ok) {
+                _validation = { ok: false, faults: ['repair response failed to parse: ' + (_repairParsedS1.error || 'unknown')] };
+              } else {
+                var _repairSkeletonS1 = (_repairParsedS1.plan && _repairParsedS1.plan.scene_skeleton) || _repairParsedS1.plan || {};
+                var _mergedS1 = _applySkeletonRepairStrict(_validation.rawEnvelope, _repairSkeletonS1, _repairReqS1.askFor, _classifiedS1.characters);
+                if (_mergedS1.rejected) {
+                  try { console.error('[SCENE1:SKELETON:REPAIR_SCOPE_VIOLATION] out-of-scope key(s): ' + _mergedS1.tamperAttempted.join(', ')); } catch (_) {}
+                  _validation = { ok: false, faults: ['REPAIR_SCOPE_VIOLATION: repair response returned out-of-scope key(s): ' + _mergedS1.tamperAttempted.join(', ')] };
+                } else {
+                  // Reconstruct a full raw-response-equivalent: the ORIGINAL full plan, with ONLY
+                  // the repaired scene_skeleton fields spliced in, then re-run the IDENTICAL
+                  // parse->reconcile->validate->derive pipeline from scratch — never a shortcut.
+                  var _repairedFullPlanS1 = JSON.parse(JSON.stringify(_validation.fullPlan || {}));
+                  if (_repairedFullPlanS1.opening_spine) _repairedFullPlanS1.opening_spine.scene_skeleton = _mergedS1.envelope;
+                  else _repairedFullPlanS1.scene_skeleton = _mergedS1.envelope;
+                  _validation = _tryValidateOpeningSkeletonFromRaw(JSON.stringify(_repairedFullPlanS1));
+                }
+              }
+            }
+          } catch (_repairErrS1) {
+            _validation = { ok: false, faults: ['repair attempt threw: ' + (_repairErrS1 && _repairErrS1.message)] };
+          }
+          if (!_validation.ok) {
+            var _finalFaultsS1 = _validation.faults || [];
+            // PARITY (Roman, 2026-09-16): when repair was never attempted/eligible, every one of
+            // these four side effects must be byte-identical to the pre-repair code — same
+            // console.error shape (count + ' · ' join, not the internal '; ' join used for
+            // state._scene1SkeletonFatal), same state value, same thrown message. Only the
+            // repair-attempted-and-still-failed case (which had no "today" to match) gets the
+            // new, explicitly distinct prefix.
+            var _finalMsgS1 = (_repairAttempted ? 'repair attempted, still invalid: ' : '') + _finalFaultsS1.join('; ');
+            try { _settleChainCommit(false, 'scene_skeleton invalid', state); } catch (_) {}
+            try { console.error('[SCENE1:SKELETON:INVALID] ' + (_repairAttempted ? 'repair attempted, still invalid — ' : '') + _finalFaultsS1.length + ' fault(s) — ' + _finalFaultsS1.join(' · ')); } catch (_) {}
+            try { state._scene1SkeletonFatal = _finalMsgS1; } catch (_) {}
+            var _skFatalS1 = new Error('scene_skeleton invalid: ' + _finalMsgS1);
+            _skFatalS1._scene1SkeletonFatal = true;
+            throw _skFatalS1;
+          }
+        }
+        var _s1Assign = _validation.assign;
+        // REGRESSION FIX (Roman/census 2026-09-16): _tryValidateOpeningSkeletonFromRaw nests the
+        // resolved opening_spine (formerly a bare `var plan` living directly in this outer function
+        // scope, before the live-repair refactor) inside its own function scope — every downstream
+        // read of `plan.*` below (pressure source, hook object, opening/decision/rising beats) went
+        // undefined the moment that refactor landed. Caught by the no-provider call census, not by
+        // node --check (a ReferenceError only fires at runtime) or the diff-parity proof (which only
+        // checked the validation body itself, not what the surrounding code still needed in scope).
+        var plan = _validation.plan;
 
         // Into the SHARED state shape continuations already use, so buildSkeletonDirective()
         // renders the opening's assignments through the identical code path.
@@ -273873,6 +274449,7 @@ Generate the synopsis now. The protagonist MUST be named ${pKernel}. Depict the 
             }
             { try { if (window.__proseSnap) window.__proseSnap.push({ owner:'_targetedSceneEdit', label:null, inText:String(__tseIn||''), outText:String(originalText||''), changed:String(originalText||'')!==String(__tseIn||'') }); } catch(_){} return originalText; }
         }
+        try { if (typeof window !== 'undefined') window._targetedSceneEdit = _targetedSceneEdit; } catch (_) {}
 
         // APPROVED-DRAFT CAPTURE (Roman 2026-06-05). Snapshot the gate-APPROVED text
         // here, before the post-gate enforcement stack runs. The [POST-GATE:PAYLOAD-LOSS]
@@ -274182,12 +274759,21 @@ Edit ONLY the phrases that reference internal mechanics / system terms — trans
           // collapses into attractive random guy. Only fires when the LI is
           // named in Scene 1 with NO proof signal in the window around him.
           // Self-gates off for female LIs (the relational-value repair runs instead).
-          if (!state || !state.turnCount) { try { var __snapPrevLIP = text; text = await _repairLISocialProof(text); try { var _av = window._auditMutation && window._auditMutation('_repairLISocialProof', __snapPrevLIP, text); if (_av && !_av.ok && window._contractEnforce === true) { try { console.warn('[AUTHORITY-VIOLATION] _repairLISocialProof REVERTED'); } catch (_) {} text = __snapPrevLIP; } } catch (_) {} try { if (window.__textSnap) window.__textSnap.push({ site: 'LI_PROOF', label: '_repairLISocialProof', mutationClass: 'model', before: String(__snapPrevLIP||''), after: String(text||''), changed: String(text||'') !== String(__snapPrevLIP||'') }); } catch (_) {} } catch (_lspr) {} }
+          // TIER 0 — SEEDED FIRST PAGE (Roman 2026-09-16): for a Tier-0-eligible fixed-starter Scene 1
+          // (seed carries cPlusFacets — same eligibility test as the PC seed adapter), no model-backed
+          // prose EDITOR below may rewrite the page before the reader sees it. Deterministic/local
+          // guards (_enforceScene1MandatedFrame, the fused-punctuation normalizer) are UNAFFECTED —
+          // only mutationClass:'model' editorial passes are skipped, and every skip is recorded on
+          // state._tier0DeferredScene1Edits so it can be run later as an explicit, opt-in operation
+          // via window._tier0RunDeferredScene1Edits(state, text) — never silently lost.
+          var _tier0DeferPostAuthorEdits = !!(state && typeof _tier0Scene1Eligible === 'function' && _tier0Scene1Eligible(state));
+          if (_tier0DeferPostAuthorEdits) { try { state._tier0DeferredScene1Edits = state._tier0DeferredScene1Edits || []; } catch (_) {} }
+          if (!_tier0DeferPostAuthorEdits) { if (!state || !state.turnCount) { try { var __snapPrevLIP = text; text = await _repairLISocialProof(text); try { var _av = window._auditMutation && window._auditMutation('_repairLISocialProof', __snapPrevLIP, text); if (_av && !_av.ok && window._contractEnforce === true) { try { console.warn('[AUTHORITY-VIOLATION] _repairLISocialProof REVERTED'); } catch (_) {} text = __snapPrevLIP; } } catch (_) {} try { if (window.__textSnap) window.__textSnap.push({ site: 'LI_PROOF', label: '_repairLISocialProof', mutationClass: 'model', before: String(__snapPrevLIP||''), after: String(text||''), changed: String(text||'') !== String(__snapPrevLIP||'') }); } catch (_) {} } catch (_lspr) {} } } else { try { state._tier0DeferredScene1Edits.push('LI_SOCIAL_PROOF'); } catch (_) {} }
           // FEMALE-LI RELATIONAL VALUE REPAIR (Roman 2026-06-10) — gender-routed
           // counterpart. Models "her attention matters" rather than "the world
           // orbits her". Self-gates off for male LIs (only one of the two
           // repairs ever fires per Scene 1).
-          if ((!state || !state.turnCount) && !_liAbsentFromScene1(state)) { try { text = await _repairLIRelationalValue(text); } catch (_lvr) {} }
+          if (!_tier0DeferPostAuthorEdits) { if ((!state || !state.turnCount) && !_liAbsentFromScene1(state)) { try { text = await _repairLIRelationalValue(text); } catch (_lvr) {} } } else { try { state._tier0DeferredScene1Edits.push('LI_RELATIONAL_VALUE'); } catch (_) {} }
           _contractStageCheck('after LI-repairs (near-final)', text);
           // HAIKU REPAIR (Roman 2026-06-07): regens were removed because they
           // re-rolled the whole scene into mechanical garbage; the surgical Haiku
@@ -274205,7 +274791,8 @@ Edit ONLY the phrases that reference internal mechanics / system terms — trans
           // billionaire (PROXY/unset presence) still had his bible eyes/scar/hair/mouth pasted into a
           // scene he is not in — contradicting the offstage "REPUTATION, NOT FACE" rule. Align this
           // post-render repair with the prompt-side _liOnPageThisScene test (used at 22047).
-          if ((!state || !state.turnCount) && !_liAbsentFromScene1(state) && (typeof _liOnPageThisScene !== 'function' || _liOnPageThisScene(state)) && !_ffCanonDesireYield('li_desire_inventory', state) && typeof window._liDescriptionCheck === 'function' && typeof _targetedSceneEdit === 'function') {
+          if (_tier0DeferPostAuthorEdits) { try { state._tier0DeferredScene1Edits.push('LI_DESC_PROSE_REPAIR'); } catch (_) {} }
+          else if ((!state || !state.turnCount) && !_liAbsentFromScene1(state) && (typeof _liOnPageThisScene !== 'function' || _liOnPageThisScene(state)) && !_ffCanonDesireYield('li_desire_inventory', state) && typeof window._liDescriptionCheck === 'function' && typeof _targetedSceneEdit === 'function') {
             var _liPre = null; try { _liPre = window._liDescriptionCheck(text); } catch (_lpe) { try { console.warn('[FINALIZE:GUARD] _liDescriptionCheck(pre) threw — downstream repairs (incl HOT-render) PRESERVED: ' + (_lpe && _lpe.message)); } catch (_) {} } // silent (no 'final' → no scorecard yet)
             // Fire on ABSENT/thin (fail) OR present-but-CLINICAL (Roman 2026-06-08): Scene 1 must
             // establish him as a man she WANTS, so flat catalog description ("dark eyes") is upgraded
@@ -274288,13 +274875,18 @@ Edit ONLY the phrases that reference internal mechanics / system terms — trans
           // beat (per the opener directive) → reads as "thin/clinical" (desireCoded===false) → this
           // crisis-BLIND repair fired and re-injected the curves/hair/dimple/tattoo inventory the author
           // was told to omit. Defer full PC establishment to Scene 2 (calmer). Cold openers keep the repair.
-          if ((!state || !state.turnCount) && !(state && state._openingTemperature === 'HOT_CRISIS')) { try { var __snapPrevPCP = text; text = await _repairPCPicturability(text); try { var _av = window._auditMutation && window._auditMutation('_repairPCPicturability', __snapPrevPCP, text); if (_av && !_av.ok && window._contractEnforce === true) { try { console.warn('[AUTHORITY-VIOLATION] _repairPCPicturability REVERTED'); } catch (_) {} text = __snapPrevPCP; } } catch (_) {} try { if (window.__textSnap) window.__textSnap.push({ site: 'PC_PICT', label: '_repairPCPicturability', mutationClass: 'model', before: String(__snapPrevPCP||''), after: String(text||''), changed: String(text||'') !== String(__snapPrevPCP||'') }); } catch (_) {} } catch (_pcr) {} }
+          if (_tier0DeferPostAuthorEdits) { try { state._tier0DeferredScene1Edits.push('PC_PICTURABILITY'); } catch (_) {} }
+          else if ((!state || !state.turnCount) && !(state && state._openingTemperature === 'HOT_CRISIS')) { try { var __snapPrevPCP = text; text = await _repairPCPicturability(text); try { var _av = window._auditMutation && window._auditMutation('_repairPCPicturability', __snapPrevPCP, text); if (_av && !_av.ok && window._contractEnforce === true) { try { console.warn('[AUTHORITY-VIOLATION] _repairPCPicturability REVERTED'); } catch (_) {} text = __snapPrevPCP; } } catch (_) {} try { if (window.__textSnap) window.__textSnap.push({ site: 'PC_PICT', label: '_repairPCPicturability', mutationClass: 'model', before: String(__snapPrevPCP||''), after: String(text||''), changed: String(text||'') !== String(__snapPrevPCP||'') }); } catch (_) {} } catch (_pcr) {} }
           else if (state && state._openingTemperature === 'HOT_CRISIS') { try { console.log('[PC-PICTURABILITY:SKIP] HOT_CRISIS Scene-1 — deferring PC establishment to avoid mid-crisis inventory dump'); } catch (_) {} }
-          try { text = await _repairInterlocutorPicturability(text); } catch (_ir1) {} // on-page NPC face net (Roman 2026-06-09)
-          try { text = _preserveObligations('de-calc', text, await _repairCalcifiedMoves(text)); } catch (_cmr1) {} // calcified-move enforcement (Roman 2026-06-10)
+          if (_tier0DeferPostAuthorEdits) { try { state._tier0DeferredScene1Edits.push('LI_INTERLOCUTOR_PICTURABILITY'); } catch (_) {} }
+          else { try { text = await _repairInterlocutorPicturability(text); } catch (_ir1) {} } // on-page NPC face net (Roman 2026-06-09)
+          if (_tier0DeferPostAuthorEdits) { try { state._tier0DeferredScene1Edits.push('DE_CALC'); } catch (_) {} }
+          else { try { text = _preserveObligations('de-calc', text, await _repairCalcifiedMoves(text)); } catch (_cmr1) {} } // calcified-move enforcement (Roman 2026-06-10)
           try { if (typeof _measureSceneDynamics === 'function') _measureSceneDynamics(text); } catch (_sd1) {} // scene-dynamics telemetry (non-mutating; Roman 2026-08-07 — repair reverted, measurement kept)
-          try { if (typeof _repairHotOpening === 'function') var __snapPrevHot = text; text = await _repairHotOpening(text); try { var _av = window._auditMutation && window._auditMutation('_repairHotOpening', __snapPrevHot, text); if (_av && !_av.ok && window._contractEnforce === true) { try { console.warn('[AUTHORITY-VIOLATION] _repairHotOpening REVERTED'); } catch (_) {} text = __snapPrevHot; } } catch (_) {} try { if (window.__textSnap) window.__textSnap.push({ site: 'HOT_REPAIR', label: '_repairHotOpening', mutationClass: 'model', before: String(__snapPrevHot||''), after: String(text||''), changed: String(text||'') !== String(__snapPrevHot||'') }); } catch (_) {} } catch (_hor1) { try { console.warn('[HOT-RENDER:CALL-ERR] ' + (_hor1 && _hor1.message)); } catch (_) {} } // HOT-render opening repair (R4 #1, 2026-06-24): catches HOT_CRISIS→COLD render
-          try { if (typeof _repairBodyBibleDump === 'function') text = await _repairBodyBibleDump(text); } catch (_bdr1) {} // body-bible de-cluster repair (2026-06-24): fires only when an appearance cluster (>=4 traits/40w) is present
+          if (_tier0DeferPostAuthorEdits) { try { state._tier0DeferredScene1Edits.push('HOT_OPENING_REPAIR'); } catch (_) {} }
+          else { try { if (typeof _repairHotOpening === 'function') var __snapPrevHot = text; text = await _repairHotOpening(text); try { var _av = window._auditMutation && window._auditMutation('_repairHotOpening', __snapPrevHot, text); if (_av && !_av.ok && window._contractEnforce === true) { try { console.warn('[AUTHORITY-VIOLATION] _repairHotOpening REVERTED'); } catch (_) {} text = __snapPrevHot; } } catch (_) {} try { if (window.__textSnap) window.__textSnap.push({ site: 'HOT_REPAIR', label: '_repairHotOpening', mutationClass: 'model', before: String(__snapPrevHot||''), after: String(text||''), changed: String(text||'') !== String(__snapPrevHot||'') }); } catch (_) {} } catch (_hor1) { try { console.warn('[HOT-RENDER:CALL-ERR] ' + (_hor1 && _hor1.message)); } catch (_) {} } } // HOT-render opening repair (R4 #1, 2026-06-24): catches HOT_CRISIS→COLD render
+          if (_tier0DeferPostAuthorEdits) { try { state._tier0DeferredScene1Edits.push('BODY_BIBLE_DUMP'); } catch (_) {} }
+          else { try { if (typeof _repairBodyBibleDump === 'function') text = await _repairBodyBibleDump(text); } catch (_bdr1) {} } // body-bible de-cluster repair (2026-06-24): fires only when an appearance cluster (>=4 traits/40w) is present
           try { if (typeof _logScene1CausalReading === 'function') _logScene1CausalReading(text); } catch (_s1c1) {} // causal-opening reading (telemetry-only; after repair so it scores the shipped scene)
           try { if (typeof _logHotFastScene1 === 'function') _logHotFastScene1(text); } catch (_hf1) {} // HOT&FAST Scene-1 telemetry (no-op unless the flag is on)
           try { // HOT&FAST Phase 2: compute + stash the deferred-setup DEBT packet for Scene 2
@@ -274309,12 +274901,14 @@ Edit ONLY the phrases that reference internal mechanics / system terms — trans
               }
             }
           } catch (_hfp1) {}
-          try { if (typeof window._applyPerceptionLens === 'function') text = _preserveObligations('perception-lens', text, await window._applyPerceptionLens(text)); } catch (_lx1) {} // perception-lens editorial pass (Roman 2026-06-19)
-          try { if (state.fateMode === 'famous_fate' && typeof _famousFateContractCheck === 'function') text = await _famousFateContractCheck(text); } catch (_ffcc1) {} // Famous Fate character-contract check + surgical repair (2026-06-28)
+          if (_tier0DeferPostAuthorEdits) { try { state._tier0DeferredScene1Edits.push('PERCEPTION_LENS'); } catch (_) {} }
+          else { try { if (typeof window._applyPerceptionLens === 'function') text = _preserveObligations('perception-lens', text, await window._applyPerceptionLens(text)); } catch (_lx1) {} } // perception-lens editorial pass (Roman 2026-06-19)
+          try { if (state.fateMode === 'famous_fate' && typeof _famousFateContractCheck === 'function') text = await _famousFateContractCheck(text); } catch (_ffcc1) {} // Famous Fate character-contract check + surgical repair (2026-06-28) — structurally inert for First Sacrifice (not famous_fate mode); left un-gated for Tier 0 since it never fires for this population
           // EDITORIAL BUDGET (Roman 2026-06-20): premium scenes (opening/tempt/climax/cliffhanger) earn a
           // STRONGER repair pass — an extra de-calc sweep AFTER the lens (catches lens-introduced + residual
           // calcification a single pass misses). Drift-guarded; no-ops on normal scenes.
-          try { if (typeof window._editorialBudget === 'function' && window._editorialBudget().repair === 'strong' && typeof _repairCalcifiedMoves === 'function') { console.log('[EDITORIAL:REPAIR] premium → extra de-calc sweep'); text = _preserveObligations('de-calc-premium', text, await _repairCalcifiedMoves(text)); } } catch (_psr1) {}
+          if (_tier0DeferPostAuthorEdits) { try { state._tier0DeferredScene1Edits.push('DE_CALC_PREMIUM'); } catch (_) {} }
+          else { try { if (typeof window._editorialBudget === 'function' && window._editorialBudget().repair === 'strong' && typeof _repairCalcifiedMoves === 'function') { console.log('[EDITORIAL:REPAIR] premium → extra de-calc sweep'); text = _preserveObligations('de-calc-premium', text, await _repairCalcifiedMoves(text)); } } catch (_psr1) {} }
           // NON-ENGLISH LEAK REPAIR (Roman 2026-07-10): the prose author — and the English-instructed
           // editorial passes above — can leave/introduce English ambient/action sentences in a localized
           // scene. Run LAST (after every mutating pass) so it catches leaks from all of them. No-op for
@@ -274944,7 +275538,14 @@ Return ONLY the blurb, no quotes:\n${text}`}]);
         // ============================================================
         // Non-blocking: anchor generates in background while user reads.
         // Will be available for Scene 2+ prompt injection.
-        if (!state.voiceAnchor && typeof generateVoiceAnchor === 'function') {
+        // TIER 0 (Roman 2026-09-16): "fire-and-forget" is still an undisclosed paid call before
+        // the reader sees Scene 1 — suppressed pre-page for a Tier-0-eligible fixed starter's
+        // Scene 1. Not rescheduled to fire right after delivery; a later, explicitly-budgeted
+        // Scene-2 task if still wanted.
+        var _tier0SuppressVoiceAnchor = !!(state && typeof _tier0Scene1Eligible === 'function' && _tier0Scene1Eligible(state));
+        if (_tier0SuppressVoiceAnchor) {
+            try { console.log('[TIER0] VOICE_ANCHOR suppressed pre-page — no paid call before the reader sees Scene 1'); } catch (_) {}
+        } else if (!state.voiceAnchor && typeof generateVoiceAnchor === 'function') {
             generateVoiceAnchor(text).catch(err => {
                 console.warn('[VOICE_ANCHOR] Background generation failed:', err.message);
             });
@@ -276813,9 +277414,16 @@ Return ONLY the blurb, no quotes:\n${text}`}]);
         // Grok thinking → Haiku repair → Sonnet romance polish. Returns the prose
         // string; the same post-processing below (deck check, scrub, marker strip)
         // then applies, exactly as for the Sonnet path.
+        // TIER 0 — SEEDED FIRST PAGE (Roman 2026-09-16): for a Tier-0-eligible fixed-starter
+        // Scene 1, tell the author wrapper to skip its OWN internal post-author semantic edits
+        // (Grok de-calc editor + Mistral mechanical repair, inside _grokLiteraryAuthor itself) —
+        // the reader must see the author's actual output, not a model-rewritten version of it.
+        var _tier0SkipPostAuthorEdits = !!(window.state && typeof _tier0Scene1Eligible === 'function' && _tier0Scene1Eligible(window.state));
+        if (_tier0SkipPostAuthorEdits) { try { window.state._tier0DeferredScene1Edits = window.state._tier0DeferredScene1Edits || []; window.state._tier0DeferredScene1Edits.push('GROK_DECALC_EDITOR', 'MECHANICAL_REPAIR'); } catch (_) {} } // NOTE: _tier0RunDeferredScene1Edits does not yet replay these two — they live inside _grokLiteraryAuthor itself, not a standalone repair function; logged here for an honest registry, replay is a follow-up.
         _result = await window.StoryboundOrchestration._grokLiteraryAuthor(messages, {
           max_tokens: options.max_tokens || 3000,
-          temperature: temp
+          temperature: temp,
+          skipPostAuthorEdits: _tier0SkipPostAuthorEdits
         });
       } else {
         _result = await window.StoryboundOrchestration.callChatGPT(
@@ -277632,7 +278240,15 @@ Return ONLY the blurb, no quotes:\n${text}`}]);
             // silently never fire.
             var _hasMicro = (String((_s1pw && (_s1pw._microDecisionLibraryQuestion || _s1pw._scene1ScaffoldedMicroQuestion)) || '').length > 4)
               || (typeof _result === 'string' && /<<\s*MICRO_EXPRESSION\s*>>/i.test(_result));
-            if (_s1pw && (_s1pw.turnCount || 0) === 0 && !_hadAppendix && _hasMicro
+            // TIER 0 (Roman 2026-09-16): PREWRITE_HINT_EXPANSION must not fire before the reader
+            // sees Scene 1 for a Tier-0-eligible fixed starter — "fire-and-forget" is still an
+            // undisclosed paid call. The click-time emergency fallback (this pass's ELSE branch
+            // below, unaffected) still covers the reader clicking the widget; only the finalize-
+            // time background pre-population is suppressed here.
+            var _tier0SuppressPrewrite = !!(_s1pw && typeof _tier0Scene1Eligible === 'function' && _tier0Scene1Eligible(_s1pw));
+            if (_tier0SuppressPrewrite) {
+              try { console.log('[TIER0] PREWRITE_HINT_EXPANSION suppressed pre-page — no paid call before the reader sees Scene 1 (click-time emergency fallback still available)'); } catch (_) {}
+            } else if (_s1pw && (_s1pw.turnCount || 0) === 0 && !_hadAppendix && _hasMicro
                 && typeof _genDemandHintExpansionText === 'function') {
               var _pwSceneCtx = String(_result).replace(/<<[\s\S]*?>>/g, ' ');
               (async function _populatePrewriteCache() {

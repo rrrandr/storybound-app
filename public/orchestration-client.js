@@ -3051,6 +3051,17 @@ FAILURE CONDITIONS (invalid outputs):
     //    rewrite that would gut Grok's economic advantage). Complements the regex motif
     //    scanner downstream (app.js _repairCalcifiedMoves): catalog + cross-scene frequency
     //    there; SEMANTIC intra-scene repetition here.
+    // TIER 0 — SEEDED FIRST PAGE (Roman 2026-09-16): "no model post-editor may rewrite the first
+    // page before the reader sees the author's actual output." Steps 2+3 below are BOTH real
+    // model-backed semantic rewrites of the author's own prose (a repetition/cliché line-editor,
+    // then a mechanical-defect repair pass) — exactly the named target of that requirement. The
+    // caller (app.js callChat) sets options.skipPostAuthorEdits for a Tier-0-eligible Scene 1;
+    // everything ABOVE this point (the author call itself, the deterministic header-artifact
+    // strip, the deterministic lens-marker strip) is UNAFFECTED — those are not edits of the
+    // author's CONTENT, and one is explicitly a safety/leak guard, not a rewrite.
+    if (options.skipPostAuthorEdits) {
+      try { console.log('[TIER0] post-author semantic edits (Grok de-calc editor + Mistral mechanical repair) deferred — reader sees the author\'s actual output'); } catch (_) {}
+    } else {
     try {
       const _auditSys = 'You are a ruthless line-editor for romance prose. Find the up-to-FIVE worst spans, by priority: (1) HIGHEST — a physical descriptor / gesture / body-tell / observation / image REPEATED within the scene (the same eyes/jaw/hands re-described; a tic like rotating a wrist, a crease between the brows, a palm on glass used twice). Fix repetition BEFORE clichés. (2) calcified physical cliché ("chiseled jaw", "piercing eyes", "rangy"/"wiry"/"lean" build, "ruggedly handsome", "he was gorgeous"); (3) flat emotional cliché ("her heart raced", "electricity between them", "sparks flew", "time stood still"). Return ONLY a JSON array, at most 5 items, no prose: [{"quote":"<EXACT verbatim substring copied from the scene>","replacement":"<...>"}]. RULES FOR EACH replacement: it must be a CONCRETE, GROUNDED, SPECIFIC physical / sensory / behavioral observation — NOT a synonym swap (trading "chiseled jaw" for "strong jawline", or "piercing eyes" for "intense gaze", is NOT a fix and is forbidden). NEVER introduce another generic descriptor (rangy/wiry/lean/chiseled/sculpted/piercing/penetrating/intense/ruggedly/gorgeous). For a REPEATED feature, the replacement must notice something ENTIRELY DIFFERENT (a sound, a gait, a habit, a texture, a smell), not the same feature reworded. GRAMMATICAL FIT (critical — the replacement is spliced in verbatim): the replacement must slot into the quote\'s exact grammatical position and read cleanly. If the quoted span is a COMPLETE SENTENCE (capitalized start, ends in a period), the replacement must ALSO be a complete sentence with a subject and a FINITE verb — never a participle fragment ("my heel bouncing once" is WRONG; "my heel bounced once against the floorboard" is right). If the quote is a phrase or clause, match that shape. Keep similar length; keep names/events/dialogue/markers intact. The quote MUST be an exact verbatim substring or the fix is discarded. If clean, return [].';
       const _BANNED_REPL = /\b(rangy|wiry|lean|chiseled|sculpted|piercing|penetrating|intense(ly)?|ruggedly|gorgeous|heart (raced|pounded|hammered|skipped)|electricity between|sparks (flew|flying)|time stood still)\b/i;
@@ -3092,6 +3103,7 @@ FAILURE CONDITIONS (invalid outputs):
       );
       if (_t && _t.length > 40) prose = _t;
     } catch (_e) { console.warn('[GROK-LIT] Mistral-small repair skipped:', _e && _e.message); }
+    }
     // 3.5 PURPLE LENS for Small-authored prose (Roman 2026-06-25 — wiring fix). The finalization
     //     lens (_applyPerceptionLens) is density-gated AND fires AFTER the harness/telemetry
     //     capture point, so it was an unreliable home for Small's purple cleanup. Couple the
@@ -4004,6 +4016,24 @@ hardStops: consent_withdrawal, scene_boundary${!gateEnforcement.completionAllowe
         // it persists for downstream scenes to detect and inject consequences
         // (exhaustion residue, attachment spike, "the cost is showing").
         // It resets only on _resetStoryState (new story).
+        // AUTHORED INTERRUPTION — literary cascade host (2026-09-12). The arc wrapped by a STORY reason (the reader's answer at
+        // a checkpoint, the cap, an exhausted Fate override) and an authored interruption is declared for this exchange: the
+        // interruption is the next thing the reader sees, not a fresh full-orchestration scene. A Fate invocation outside
+        // collapse (fateForcesTerminate) yields to the full pipeline as today; renderer failures never reach this block.
+        if (!fateForcesTerminate && typeof window._cascadeInterruptionFrame === 'function') {
+          let _intrFrame = null; try { _intrFrame = window._cascadeInterruptionFrame(); } catch (_) {}
+          if (_intrFrame && _intrFrame.interruption) {
+            const _intrSceneNum = (appState.turnCount || 0) + 1;   // the scene the exchange belongs to (turnCount = completed continuation turns)
+            appState._cascadeInterruptedTurn = { frame: _intrFrame, sceneNum: _intrSceneNum, storyId: appState.storyId, at: Date.now() };
+            console.log('[CASCADE] Arc wrapped by a story reason — authored interruption pending for scene ' + _intrSceneNum + '; no next scene requested');
+            return {
+              success: true, cascadeInterrupted: true, interruptionSceneNum: _intrSceneNum, finalOutput: '',
+              orchestrationState: state, gateEnforcement: state.gateEnforcement, rendererUsed: false, fateStumbled: false,
+              forcedInterruption: false, usedFallbackAuthor: false, esdAuthoredByGrok: false, esdAuthoredByMistral: false,
+              grokFailed: false, mistralFailed: false, errors: [], timing: state.timing
+            };
+          }
+        }
         // Fall through to full orchestration below
       } else {
         // Step 3: Cascade fast path — Grok renderer only, skip Author/SD/Integration

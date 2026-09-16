@@ -173,6 +173,29 @@ async function runScenario(label, routeConfig) {
   if (!up) { ok(label + ': server never became ready', false, ''); await browser.close(); return { ok: false, unlocked: false, census, tierLog: [], consoleLines }; }
   await page.waitForFunction(() => !document.body.classList.contains('booting'), null, { timeout: 60000 }).catch(() => {});
   await page.waitForTimeout(2000);
+  // TIER 0 (Roman 2026-09-16, third pass): PAIR_BOND, R_PLOT, and (transitively, since it only
+  // fires after a successful R-plot) rplotAudit are now ALL suppressed pre-page for a Tier-0-
+  // eligible First Sacrifice launch — on top of the PC/LI bibles already neutralized here before.
+  // This mechanism (the real, unmodified _generatePairBond/_ensureRPlot/_auditWoundLIIntegration/
+  // etc.) is exactly what THIS file exists to exercise via the generic tiered-provider dispatch —
+  // not Tier 0 itself (dedicated Tier 0 coverage lives in _tier0_seeded_first_page_control.mjs /
+  // _tier0_li_cg_editor_defer_control.mjs and their live-wiring-proof siblings). Neutralized here,
+  // UNIVERSALLY for every scenario (not just coalescing), by clearing the seed's own PC AND LI
+  // cPlusFacets — the real, unmodified gate every Tier-0 adapter/suppression checks
+  // (_pcFoundationSourceFacts/_liFoundationSourceFacts return null with no facets) — so this
+  // story is no longer Tier-0-eligible and every role under test reaches the real tiered-provider
+  // dispatch exactly as it did before Tier 0 existed. window.STARTER_SEEDS IS the same object the
+  // app's closured STARTER_SEEDS variable points to (app.js ~126971), so this mutation genuinely
+  // reaches the real functions; app.js itself is untouched.
+  await page.evaluate(() => {
+    try {
+      var seed = window.STARTER_SEEDS && window.STARTER_SEEDS.starter_first_sacrifice;
+      var pcCast = seed && Array.isArray(seed.cast) && seed.cast.filter(function (c) { return c && c.role === 'PC'; })[0];
+      if (pcCast) pcCast.cPlusFacets = [];
+      var liCast = seed && Array.isArray(seed.cast) && seed.cast.filter(function (c) { return c && c.role === 'LI'; })[0];
+      if (liCast) liCast.cPlusFacets = [];
+    } catch (_) {}
+  });
 
   // ── REAL LIBRARY ENTRY (mirrors _cg_oas_library_reload_proof.mjs STEP2) ──
   const burgerVisible = await page.evaluate(() => { const b = document.getElementById('burgerBtn'); return !!(b && b.getClientRects().length > 0); });
@@ -245,11 +268,19 @@ console.log('  [BIBLE-DUPE-TRACE evidence, healthy scenario, REAL fixture conten
 }
 
 // ═══════════════════════════════════════════════════════ 2. MISTRAL FAILURE ═══════════════════════════════════════════════════════
-// pcBodyBible fails via EMPTY CONTENT (200 OK, content:''); the other three via HTTP 500 — covers
+// pairBond fails via EMPTY CONTENT (200 OK, content:''); the other roles via HTTP 500 — covers
 // both failure shapes the spec calls out ("HTTP 500, or empty content — test at least one").
+// EMPTY-CONTENT EXAMPLE ROLE CHANGED FROM pcBodyBible TO liBodyBible (2026-09-16) TO pairBond
+// (2026-09-16, second pass): pcBodyBible AND liBodyBible are no longer valid examples for First
+// Sacrifice — TIER 0 — SEEDED FIRST PAGE now derives BOTH locally (zero live calls) for this
+// sufficiently-seeded fixed starter, so neither reaches Mistral to demonstrate ANY failure shape
+// here. The mechanism under test (_callTieredProvider's own post-dispatch `!result.content`
+// empty-content check) is generic across every TIERED_ROLES entry, not bible-specific, so
+// pairBond (unaffected — explicitly OUT of Tier 0's pre-page scope; still a live call after both
+// bibles commit) demonstrates the identical shape without weakening this scenario's intent.
 const mistralFail = await runScenario('2-mistral-fail', {
   failMistralFor: new Set(TIERED_ROLES),
-  failMistralEmptyFor: new Set(['pcBodyBible']),
+  failMistralEmptyFor: new Set(['pairBond']),
   failGrokFor: new Set(),
 });
 {
@@ -271,11 +302,11 @@ const mistralFail = await runScenario('2-mistral-fail', {
   console.log('  [MISTRAL-FAIL _providerTierLog] ' + JSON.stringify(tl.map(x => ({ role: x.role, tier: x.tier, provider: x.provider, attempt: x.attempt, fallbackReason: x.fallbackReason }))));
   // Confirm the empty-content role's fallbackReason specifically names "empty content", and the
   // HTTP-500 roles' fallbackReason specifically names the HTTP status — two distinct failure shapes.
-  const pcReason = (byRole.pcBodyBible[1] || {}).fallbackReason || '';
+  const pairBondReason = (byRole.pairBond[1] || {}).fallbackReason || '';
   const scaffoldReason = (byRole.scaffold[1] || {}).fallbackReason || '';
-  ok('MISTRAL-FAIL: the two induced failure SHAPES are both evidenced in fallbackReason text — empty content (pcBodyBible) vs HTTP 500 (scaffold)',
-    /empty content/i.test(pcReason) && /HTTP 500/.test(scaffoldReason),
-    JSON.stringify({ pcReason, scaffoldReason }));
+  ok('MISTRAL-FAIL: the two induced failure SHAPES are both evidenced in fallbackReason text — empty content (pairBond) vs HTTP 500 (scaffold)',
+    /empty content/i.test(pairBondReason) && /HTTP 500/.test(scaffoldReason),
+    JSON.stringify({ pairBondReason, scaffoldReason }));
 }
 
 // ═══════════════════════════════════════════════════════ 3. MISTRAL + GROK FAILURE ═══════════════════════════════════════════════════════
@@ -371,6 +402,26 @@ async function runCoalescingScenario() {
     const list = Array.isArray(window.STARTER_STORIES) ? window.STARTER_STORIES : Object.values(window.STARTER_STORIES || {});
     const def = list.find(d => d && d.id === 'starter_first_sacrifice');
     window._launchStarterStory(def);
+    // TIER 0 — SEEDED FIRST PAGE (Roman, 2026-09-16) intentionally short-circuits
+    // _generatePCBodyBible() BEFORE any live call for a sufficiently-seeded fixed starter like
+    // First Sacrifice — which this file's pcBodyBible coalescing scenario needs to NOT happen,
+    // since it tests the live-path coalescing machinery itself, not Tier 0 (dedicated coverage:
+    // _tier0_seeded_first_page_control.mjs / _tier0_seeded_first_page_live_wiring_proof.mjs).
+    // Neutralized by clearing the SEED's own PC AND LI cPlusFacets (the real, unmodified gates
+    // _tier0PcBibleFromSeed / _tier0LiBibleFromSeed check) — window.STARTER_SEEDS IS the same
+    // object the app's closured STARTER_SEEDS variable points to (app.js ~127293), so this
+    // mutation genuinely reaches the real functions; app.js itself is untouched. UPDATED
+    // 2026-09-16 (Tier 0 second pass): a partial LI adapter now exists too (Roman required it —
+    // pcBodyBible-only was rejected as "not yet Tier 0"), so liBodyBible coalescing needs the
+    // same neutralization PC already had, not the "no LI adapter exists" assumption this comment
+    // used to state.
+    try {
+      var seed = window.STARTER_SEEDS && window.STARTER_SEEDS.starter_first_sacrifice;
+      var pcCast = seed && Array.isArray(seed.cast) && seed.cast.filter(function (c) { return c && c.role === 'PC'; })[0];
+      if (pcCast) pcCast.cPlusFacets = [];
+      var liCast = seed && Array.isArray(seed.cast) && seed.cast.filter(function (c) { return c && c.role === 'LI'; })[0];
+      if (liCast) liCast.cPlusFacets = [];
+    } catch (_) {}
   });
   await page.waitForTimeout(2000);
 
