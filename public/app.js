@@ -181469,6 +181469,17 @@ No text, no watermark, no UI elements, share-ready.`;
       try { console.log('[MOUTH-PREBATCH] Skipped — literary mode (prose-only; no OAS mouth/face spend; images via Vision Orb only)'); } catch (_) {}
       return;
     }
+    // BAKED CG/OAS OPENING (Roman 2026-09-16): a fixed starter's baked opening (First Sacrifice
+    // today) must not pay for bespoke Julian mouth frames — the existing static/generic-identity
+    // placeholder tier (_resolveMouthBaseUrl → /assets/test-mouths/*) already covers every viseme
+    // state with zero cost. Cold-start Gemini generation is disabled for this flow entirely, not
+    // just deferred — no fallback attempt, no /api/image request of any kind. This does NOT touch
+    // later, separately-authorized CG image generation (Scene 2+, non-baked stories) — only the
+    // baked-opening mouth-prebatch chokepoint every OAS trigger routes through.
+    if (state._bakedOpeningMounted || state._bakedScene1Version) {
+      try { console.log('[MOUTH-PREBATCH] Skipped — baked CG/OAS opening (generic static viseme placeholders only; zero /api/image spend for bespoke mouth frames)'); } catch (_) {}
+      return;
+    }
     tier = tier || 'all';
     var idn = _resolveMouthIdentity(liId);
     var entry = _getPrebatchEntry(idn.featureKey);
