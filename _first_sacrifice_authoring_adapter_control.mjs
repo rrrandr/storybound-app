@@ -148,12 +148,18 @@ function compliantScene1() {
     ])),
   };
 }
-const REQUIRED_BEAT_IDS = ['ceremony_setting', 'seren_kneeling_rehearsed', 'cost_offering_statement', 'julian_introduced', 'invocation_begins', 'wish_and_sacrifice', 'public_charge', 'julian_claims_the_answer'];
+// SEVENTH PASS (Roman, 2026-09-17): 10 ids now (was 8) — wish_visibly_twists and
+// twist_unnaturally_arrested added for the mandatory causal-and-strategic revision.
+const REQUIRED_BEAT_IDS = ['ceremony_setting', 'seren_kneeling_rehearsed', 'cost_offering_statement', 'julian_introduced', 'invocation_begins', 'wish_and_sacrifice', 'wish_visibly_twists', 'twist_unnaturally_arrested', 'public_charge', 'julian_claims_the_answer'];
 function compliantDraft() {
+  const scene1Beats = compliantScene1().beats;
   return {
-    scene1Candidate: compliantScene1(),
+    scene1Candidate: { beats: scene1Beats },
     first_person_lirael: true,
-    scene1Coverage: Object.fromEntries(REQUIRED_BEAT_IDS.map((id, i) => [id, [i * 2, i * 2 + 1]])),
+    // Modulo into the fixed 16-beat fixture — this file proves the ADAPTER's declared schema is
+    // structurally validator-compliant, not a model of real non-overlapping content coverage (see
+    // the packet validator's own compliantDraft() for that, which uses real distinct beat indices).
+    scene1Coverage: Object.fromEntries(REQUIRED_BEAT_IDS.map((id, i) => [id, [(i * 2) % scene1Beats.length, (i * 2 + 1) % scene1Beats.length]])),
     oasOpening: { speaker: 'Julian', text: 'placeholder opening accusation line.' },
     postInterruptionBeat: { speaker: null, image: 'd4', kind: 'narration', text: 'placeholder post-interruption beat crystallizing an unresolved choice.' },
     fateCards: Object.fromEntries(CARD_KEYS.map((k, i) => [k, {

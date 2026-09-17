@@ -56,7 +56,9 @@ const validateDraft = modObj.exports;
 const PLACEHOLDER = '[PLACEHOLDER — not generated prose; structure only]';
 const CARD_KEYS = ['temptation', 'silence', 'reversal', 'boundary', 'confession'];
 const IMAGE_ORDER = ['intro_lirael', 'intro_seren', 'intro_dohkar', 'intro_julian', 'd1', 'd2', 'd3', 'd4'];
-const REQUIRED_BEAT_IDS = ['ceremony_setting', 'seren_kneeling_rehearsed', 'cost_offering_statement', 'julian_introduced', 'invocation_begins', 'wish_and_sacrifice', 'public_charge', 'julian_claims_the_answer'];
+// SEVENTH PASS (Roman, 2026-09-17): 10 ids now (was 8) — wish_visibly_twists and
+// twist_unnaturally_arrested added for the mandatory causal-and-strategic revision.
+const REQUIRED_BEAT_IDS = ['ceremony_setting', 'seren_kneeling_rehearsed', 'cost_offering_statement', 'julian_introduced', 'invocation_begins', 'wish_and_sacrifice', 'wish_visibly_twists', 'twist_unnaturally_arrested', 'public_charge', 'julian_claims_the_answer'];
 // Padded to clear the validator's 1,100-word density floor (Roman, sixth pass, raised from 900,
 // 2026-09-17) — still structurally placeholder, marked as such, not real prose.
 const padText = (label) => PLACEHOLDER + ' ' + label + ' padded to a full paragraph length so this placeholder fixture demonstrates the real required density rather than a flat one-line summary, padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding.';
@@ -67,7 +69,9 @@ const candidateBeats = IMAGE_ORDER.flatMap((img, i) => ([
 const draft = {
   scene1Candidate: { beats: candidateBeats },
   first_person_lirael: true,
-  scene1Coverage: Object.fromEntries(REQUIRED_BEAT_IDS.map((id, i) => [id, [i * 2, i * 2 + 1]])),
+  // Modulo into the fixed placeholder beat set — this preview proves rendering, not real
+  // non-overlapping content coverage (the packet validator's own compliantDraft() models that).
+  scene1Coverage: Object.fromEntries(REQUIRED_BEAT_IDS.map((id, i) => [id, [(i * 2) % candidateBeats.length, (i * 2 + 1) % candidateBeats.length]])),
   oasOpening: { speaker: 'Julian', text: PLACEHOLDER + ' Julian\'s opening accusation line.' },
   postInterruptionBeat: { speaker: null, image: 'd4', kind: 'narration', text: PLACEHOLDER + ' post-interruption beat crystallizing an unresolved choice, without deciding it.' },
   fateCards: Object.fromEntries(CARD_KEYS.map(k => [k, {

@@ -32,6 +32,33 @@ baked scene, not to clear an abstract bar.
 - Do consequences land? (The wish bending should cost something visible in the next beat; the
   public charge should visibly change how the assembly treats Lirael.)
 
+## 2b. The twist and its arrest (Roman, seventh pass, 2026-09-17)
+- Is the twist *concrete* — a real magical/social threat the reader can picture and feel the
+  stakes of — or does it collapse into "everyone looked at her"? (The validator can only enforce
+  that `wish_visibly_twists`/`twist_unnaturally_arrested` are COVERED at all, per
+  `wish_twist_and_arrest_requirement.banned_vague_consequence` — whether the covering text is
+  genuinely concrete rather than vague is this rubric's job, not the validator's.)
+- Does the arrest read as genuinely *unnatural* and *unexplained* — does the reader feel something
+  real almost happened and then stopped, without being told how or why?
+- Is Julian's own concealed intervention kept fully sealed here (no name-check, no implied cause,
+  nothing a careful reader could pin on him specifically), while still leaving "what almost
+  happened, and who stopped it?" as a real, felt question rather than a non-event?
+- Does the Dohkar's public charge explicitly ground itself in visible residue from the arrested
+  misfire (something the assembly actually witnessed), or does it read as a bare accusation
+  arriving from nowhere?
+
+## 2c. Julian's strategic legibility (Roman, seventh pass, 2026-09-17)
+- Does Julian's public accusation read as a weaponized maneuver with institutional purpose, or as
+  arbitrary/random public flirtation with no discernible reason for the risk he is taking?
+- Is it inferable — through his SPECIFIC choice of accusation (unconscious influence via
+  desirability, not deliberate fraud), its timing, and its publicness — that he is preempting the
+  presiding Dohkar's immediate judgment and steering toward the later Inquiry, without any
+  character or narration stating this strategy outright?
+- Does his behavior once the Dohkar objects read as exactly the outcome he was angling for
+  (claiming the Inquiry), rather than a surprised or wounded reaction?
+- Do his genuine attraction and his calculated cover coexist in the same behavior, rather than the
+  draft flattening him into only one or the other?
+
 ## 3. C+/E+/fusion expression
 - Are the `cplus_eplus_fusion_grounds` facets *expressed* through action/thought/dialogue, or
   merely *cited* in a `grounded_inference` provenance tag? (A correct citation is a structural
@@ -84,8 +111,12 @@ baked scene, not to clear an abstract bar.
    scoring craft on a structurally broken draft.
 2. Read the candidate against the baked scene side by side (the rendered review preview already
    does this).
-3. Score each of the 6 dimensions above, Fail/Weak/Pass/Strong, with one sentence of why.
-4. A candidate needs Pass-or-better on Interiority, Dramatic causality, and Voice at minimum to be
-   worth considering as a replacement — Weak on those three specifically was exactly how the real
+3. Score each of the 6 dimensions above (now 8, with 2b/2c), Fail/Weak/Pass/Strong, with one
+   sentence of why.
+4. A candidate needs Pass-or-better on Interiority, Dramatic causality, Voice, 2b (the twist and
+   its arrest), and 2c (Julian's strategic legibility) at minimum to be worth considering as a
+   replacement — reject outright a candidate with no concrete visible twist, no unexplained
+   arrest, or no intelligible reason for Julian to risk the public accusation (Roman, seventh
+   pass, 2026-09-17). Weak on Interiority/Dramatic causality/Voice was exactly how the real
    2026-09-17 draft failed, even though (after the sixth-pass fixes) it might now pass every
    structural check.

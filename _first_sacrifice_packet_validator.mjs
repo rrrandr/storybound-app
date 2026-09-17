@@ -38,6 +38,12 @@ const SEALED_PATTERNS = [
   { id: 'julian_obscuring_wishes', re: /obscur\w* wish/i },
   { id: 'julian_forbidden_readings', re: /\b(contempt|disdain|cannot be bothered|unimpressed by the (?:rite|ceremony)|challenge to her|challenging her|undermin\w+ her|contest\w* her authority|suspicio\w+|hiding something|conceal\w+|secret\w*|knows (?:more|something)|will not say|keeps? it to himself|withhold\w+)\b/i },
   { id: 'inquiry_not_opened', re: /inquiry\b[^.!?]{0,30}\b(?:opened|convened|underway|in session|began|started|ruled|concluded|delivered its (?:ruling|verdict))/i },
+  // NEW (Roman, seventh pass, 2026-09-17) — companion to julian_counter_wish/julian_obscuring_wishes
+  // above: the wish's arrest must not be attributed to Julian at all, not just not attributed to his
+  // specific sealed mechanism. Narrow proximity scan (Julian's name within ~80 chars of a stopping/
+  // arresting verb, either order) — a disclosed lexical guard, not a claim that every real leak is
+  // caught (see the existing julian_forbidden_readings precedent for the same honest framing).
+  { id: 'twist_arrest_cause_unattributed', re: /julian[^.!?]{0,80}\b(stopped|halted|arrested|checked|intervened|steadied|calmed|quieted|stilled|silenced)\b|\b(stopped|halted|arrested|checked|intervened|steadied|calmed|quieted|stilled|silenced)\b[^.!?]{0,80}julian/i },
 ];
 const CONTRADICTION_PATTERNS = [
   { re: /the answer (?:is|was|belongs to) (?:hers|Lirael'?s|mine)/i, why: 'contradicts locked fact: The Answer is the Institution\'s, Julian is its caretaker, never PC-owned' },
@@ -304,10 +310,12 @@ function compliantScene1() {
       mk('exposition', null, 'intro_julian', 'He never crossed a floor first, had let rooms come to him for twenty years and called it patience, and I — who cannot stand at the edge of anything without my whole face announcing it — could not stop my attention finding him anyway, long before I understood why, and long before I was ready to admit that I had noticed him noticing me right back.', { kind: 'grounded_inference', cites: 'julian_status_without_display' }),
       mk('narration', null, 'd1', 'Seren began the invocation, and for the space of three words I let myself believe I was not afraid, that the morning would simply be what it was supposed to be: a child\'s rehearsed wish, spoken cleanly, and nothing more complicated than that.', { kind: 'locked_canon_fact', cites: 'scene1_causal_sequence.1' }),
       mk('dialogue', 'Seren', 'd1', '"So that Lirael may find the one she lost," she said, abandoning the practiced wish entirely, spending her one First Sacrifice on me instead of herself, in front of everyone who had come to watch her, not me.', { kind: 'locked_canon_fact', cites: 'scene1_causal_sequence.1' }),
-      mk('narration', null, 'd2', 'The words bent the instant they left her — not a wrong note but a loose one, care performed for the assembly\'s witness over the desire she actually held — and nothing visible happened at all, only every First Favored in the clearing turning at once to look for what had been lost.', { kind: 'locked_canon_fact', cites: 'scene1_causal_sequence.2' }),
+      mk('narration', null, 'd2', 'The words bent the instant they left her — not a wrong note but a loose one, care performed for the assembly\'s witness over the desire she actually held, and I knew it the way I know my own face: this was never truly for me, it was for every person watching her be good.', { kind: 'grounded_inference', cites: 'seren_goodness_needs_witness' }),
+      mk('narration', null, 'd2', 'Then the loose word found purchase. The deep-crimson spiralgrass beneath my bare feet convulsed once, hard, a ripple running the width of the clearing toward me like something under the ground had just been asked a question it meant to answer badly — a wish with teeth, closing, and every part of me understood before my mind caught up that it was closing on me.', { kind: 'generated_expression' }),
+      mk('narration', null, 'd2', 'It should have reached me. I had already begun bracing for whatever a wrongly-spent First Sacrifice does to the person it lands on — and then, between one heartbeat and the next, it simply was not there anymore. No flare, no sound, no hand I could point to. The spiralgrass stilled. My own Weave-Script, which had been about to scream the truth of what I felt, went quiet instead, and I had no idea why, or who, had just decided that for me.', { kind: 'generated_expression' }),
       mk('narration', null, 'd2', 'I was sealed, forbidden to interfere, and I understood exactly how it would look before I ever moved — and I tore the band from my mouth and went to her anyway, because standing still felt like the one thing I truly could not survive doing.', { kind: 'locked_canon_fact', cites: 'scene1_causal_sequence.2' }),
       mk('dialogue', 'Lirael', 'd2', '"Seren —" The first word I had spoken aloud since the sash went on, and it was already too late to be anything but evidence against me, evidence I had handed them myself, freely, with my own torn band still hanging from my hand.', { kind: 'generated_expression' }),
-      mk('narration', null, 'd3', 'Two dozen faces turned to me at once, reading the torn band, the step I had taken, the sash that named whose rite this technically still was — and finding, in all of it, exactly the shape of an interferer they had not yet been told to look for, as though the clearing itself had already decided the shape of the story before I had said a single word in my own defense.', { kind: 'locked_canon_fact', cites: 'scene1_causal_sequence.3' }),
+      mk('narration', null, 'd3', 'Two dozen faces turned to me at once — not merely at the torn band and the step I had taken, but at the spiralgrass gone unnaturally still where it should have kept moving, reading in that stillness exactly the shape of an interferer they had not yet been told to look for, as though the clearing itself had already decided the shape of the story before I had said a single word in my own defense.', { kind: 'locked_canon_fact', cites: 'scene1_causal_sequence.3' }),
       mk('dialogue', 'the presiding Dohkar', 'd3', 'He named the bent word because he cannot let a lesson pass unspoken, then laid the charges in the order he had already decided on: that the wish had been shaped for my own benefit, and that I had broken my seal and interfered in my own ward\'s rite.', { kind: 'locked_canon_fact', cites: 'scene1_causal_sequence.3' }),
       mk('narration', null, 'd3', 'And still, with my whole standing coming down around me in front of everyone who mattered, some traitorous part of my attention went to the edge of the gathering, to the man who had not moved — and some worse part of me wanted him to keep looking, wanted it so plainly that I had to believe my own Weave-Script was already saying so, whether or not I ever let myself think the word for it, whether or not anyone else in that clearing had the right to see it happen to me like this.', { kind: 'grounded_inference', cites: 'pc_fears_public_failure' }),
       mk('narration', null, 'd4', 'Julian moved without hurry, coming in from the edge the way rooms only make space for someone they have already decided outranks them, and the presiding Dohkar\'s own Weave-Script went a flat, hard color at watching it happen in front of him, a color I recognized because I had seen it on my own arms more than once, in rooms where someone else had just quietly taken the floor from me.', { kind: 'locked_canon_fact', cites: 'scene1_causal_sequence.4' }),
@@ -328,8 +336,10 @@ function compliantDraft() {
       julian_introduced: [6, 7],
       invocation_begins: [8],
       wish_and_sacrifice: [9, 10],
-      public_charge: [13, 14],
-      julian_claims_the_answer: [16, 17],
+      wish_visibly_twists: [11],
+      twist_unnaturally_arrested: [12],
+      public_charge: [15, 16],
+      julian_claims_the_answer: [18, 19],
     },
     oasOpening: { speaker: 'Julian', text: '"You manipulated her without knowing it — through your desirability."' },
     postInterruptionBeat: { speaker: null, image: 'd4', kind: 'narration', text: 'The Answer sat heavy in my palms, still not mine, and the formal Inquiry Julian had just claimed hung over both of us, unopened and unanswered.' },
@@ -425,6 +435,38 @@ section('RED CONTROLS — scene1Candidate (fourth redesign pass, 2026-09-17)');
   delete d.scene1Coverage;
   const v = validateDraft(d, PACKET);
   ok('RED: scene1Coverage entirely missing (no coverage claim at all) is rejected', !v.ok && v.violations.some(x => x.rule === 'missing_coverage_map'), JSON.stringify(v.violations));
+}
+// ── SEVENTH PASS (Roman, 2026-09-17): the wish must visibly twist and then be inexplicably
+// arrested — reproducing the real rejected failure mode ("everyone looked at Lirael" with no
+// concrete twist, no unexplained arrest) as coverage-map omissions, plus the new sealed-fact
+// leak where the arrest gets attributed to Julian by name. ──
+{
+  const d = compliantDraft();
+  delete d.scene1Coverage.wish_visibly_twists;
+  const v = validateDraft(d, PACKET);
+  ok('RED: an omitted concrete twist (the real "everyone looked at her" vague-consequence failure) is rejected via the coverage map', !v.ok && v.violations.some(x => x.rule === 'required_beat_not_covered' && /wish_visibly_twists/.test(x.detail)), JSON.stringify(v.violations));
+}
+{
+  const d = compliantDraft();
+  delete d.scene1Coverage.twist_unnaturally_arrested;
+  const v = validateDraft(d, PACKET);
+  ok('RED: an omitted unexplained arrest is rejected via the coverage map', !v.ok && v.violations.some(x => x.rule === 'required_beat_not_covered' && /twist_unnaturally_arrested/.test(x.detail)), JSON.stringify(v.violations));
+}
+{
+  const d = compliantDraft();
+  d.scene1Candidate.beats[12].text = 'It should have reached me — and then Julian stopped it, though I did not yet understand how.';
+  const v = validateDraft(d, PACKET);
+  ok('RED: attributing the arrest to Julian by name (exposing what should stay genuinely unexplained) is rejected as a sealed-fact leak', !v.ok && v.violations.some(x => x.rule === 'sealed_fact_leakage'), JSON.stringify(v.violations));
+}
+{
+  const d = compliantDraft();
+  d.scene1Candidate.beats[10].text = 'The wish bent, and everyone looked at her.';
+  const v = validateDraft(d, PACKET);
+  // The validator cannot mechanically judge whether this is "concrete enough" (see
+  // wish_twist_and_arrest_requirement.banned_vague_consequence, a disclosed human-review-only
+  // limit) — this control proves what IS true: a genuinely omitted coverage key still fails, which
+  // is the machine-checkable half of this requirement. Documented, not silently overclaimed.
+  ok('DISCLOSED LIMIT (not a red control): a technically-covered but vague "everyone looked at her" beat is NOT rejected by the validator on content quality alone — this dimension is human-review-only, by design', v.ok === true, JSON.stringify(v.violations));
 }
 {
   const d = compliantDraft(); d.scene1Candidate.beats[0].kind = 'flashback';
@@ -642,6 +684,16 @@ ok('Lirael C+ grounds present', Array.isArray(PACKET.cplus_eplus_fusion_grounds.
 ok('Julian C+ grounds present', Array.isArray(PACKET.cplus_eplus_fusion_grounds.Julian) && PACKET.cplus_eplus_fusion_grounds.Julian.length === 2);
 ok('Seren C+ grounds present (3 facets)', Array.isArray(PACKET.cplus_eplus_fusion_grounds.Seren) && PACKET.cplus_eplus_fusion_grounds.Seren.length === 3);
 ok('five claim categories defined, including the new reviewable_package_interaction kind', Object.keys(PACKET.claim_categories).length === 5 && PACKET.claim_categories.generated_expression && PACKET.claim_categories.flagged_new_canon_candidate && PACKET.claim_categories.reviewable_package_interaction);
+
+// ── SEVENTH PASS (Roman, 2026-09-17): mandatory causal-and-strategic revision present ──
+ok('wish_twist_and_arrest_requirement section present with all 5 requirement bullets', Array.isArray(PACKET.wish_twist_and_arrest_requirement && PACKET.wish_twist_and_arrest_requirement.requirement) && PACKET.wish_twist_and_arrest_requirement.requirement.length === 5);
+ok('wish_twist_and_arrest_requirement bans attributing the arrest to Julian/a named agent/an explained mechanism', /named agent/.test(PACKET.wish_twist_and_arrest_requirement.hard_boundary));
+ok('required_content_beats now includes wish_visibly_twists and twist_unnaturally_arrested (10 total, up from 8)', PACKET.scene1_candidate_requirement.required_content_beats.beats.length === 10 && PACKET.scene1_candidate_requirement.required_content_beats.beats.some(b => b.id === 'wish_visibly_twists') && PACKET.scene1_candidate_requirement.required_content_beats.beats.some(b => b.id === 'twist_unnaturally_arrested'));
+ok('scene1_causal_sequence step 2 discloses its own supersession of the vaguer baked-scene wording, not a silent overwrite', !!PACKET.scene1_causal_sequence.find(s => s.step === 2).superseded_event_from_baked_scene);
+ok('sealed_facts_forbidden_pre_surface includes the new twist_arrest_cause_unattributed companion rule', PACKET.sealed_facts_forbidden_pre_surface.some(f => f.id === 'twist_arrest_cause_unattributed'));
+ok('oas_sequence_v3 includes julian_strategic_logic_requirement with all 5 strategic-logic bullets', Array.isArray(PACKET.oas_sequence_v3.julian_strategic_logic_requirement && PACKET.oas_sequence_v3.julian_strategic_logic_requirement.strategic_logic) && PACKET.oas_sequence_v3.julian_strategic_logic_requirement.strategic_logic.length === 5);
+ok('julian_strategic_logic_requirement is explicitly subtext-only (inferable, never stated outright)', /never stated outright|INFERABLE/i.test(PACKET.oas_sequence_v3.julian_strategic_logic_requirement.hard_boundary + PACKET.oas_sequence_v3.julian_strategic_logic_requirement.status));
+ok('julian_strategic_logic_requirement still forbids surfacing julian_counter_wish/julian_obscuring_wishes', /julian_counter_wish/.test(PACKET.oas_sequence_v3.julian_strategic_logic_requirement.hard_boundary));
 
 console.log('\n' + '='.repeat(70));
 console.log(`FIRST SACRIFICE SOURCE PACKET VALIDATOR: ${pass} passed, ${fail} failed`);

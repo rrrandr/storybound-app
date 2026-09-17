@@ -1,6 +1,6 @@
 {
   "packet_id": "first_sacrifice_source_packet",
-  "version": "6.1.0-source-packet",
+  "version": "7.0.0-source-packet",
   "status": "DRAFT — awaiting Roman's review before any generation pass. Not baked. Not authoritative for starter-scenes.js.",
   "immutable": true,
   "scope_lock": {
@@ -108,9 +108,11 @@
     },
     {
       "step": 2,
-      "event": "The wish is MISALIGNED — care performed for the assembly's witness over the desire Seren actually held (facet: seren_goodness_needs_witness) — so it bends: no visible effect, only the assembly turning to look for Lirael's loss.",
-      "kind": "locked_canon_fact",
-      "cites": "starter-scenes.js:254; app.js seren_goodness_needs_witness facet"
+      "event": "Seren deviates from the rehearsed wish and speaks the misaligned wish naming Lirael; the wish is MISALIGNED — care performed for the assembly's witness over the self-aggrandizing desire Seren actually held (facet: seren_goodness_needs_witness), which Lirael recognizes in the moment. As it bends, the rite visibly begins a concrete, dangerous or socially catastrophic misfire aimed at Lirael — then, just as abruptly, it is unnaturally checked before it fully lands, with no explanation given to Lirael or the reader. The assembly is left with residue they can plausibly (if wrongly) read as evidence Lirael herself manipulated Seren or interfered. Julian's own concealed intervention is never surfaced or implied here (sealed until scene 16) — the reader is left with a real, unanswered question: what almost happened, and who stopped it?",
+      "kind": "generated_expression",
+      "cites": "Roman, seventh redesign pass, 2026-09-17 — see wish_twist_and_arrest_requirement; underlying fact that Seren's wish targets Lirael and bends remains locked_canon_fact per starter-scenes.js:254",
+      "superseded_event_from_baked_scene": "The wish is MISALIGNED — care performed for the assembly's witness over the desire Seren actually held (facet: seren_goodness_needs_witness) — so it bends: no visible effect, only the assembly turning to look for Lirael's loss.",
+      "superseded_note": "The real baked scene (starter-scenes.js:254) uses this vaguer wording. Roman (seventh pass, 2026-09-17) judges it a genuine craft flaw, not locked canon to preserve — \"everyone looked at you\" is a vague consequence, not a magical disaster, a rescue, or a reason the accusation has weight. See wish_twist_and_arrest_requirement below for the full requirement."
     },
     {
       "step": 3,
@@ -161,6 +163,12 @@
       "rule": "the formal Inquiry (before a Chayr and two Dohkars) has only been CLAIMED by Julian as his intent to convene and preside — it has NOT been opened, convened, or ruled on. No content may assert or imply it has begun.",
       "kind": "locked_canon_fact",
       "cites": "starter-scenes.js:266 (\"The inquiry has NOT yet been opened.\")"
+    },
+    {
+      "id": "twist_arrest_cause_unattributed",
+      "rule": "The cause of the wish's arrest must not be attributed to Julian, to any named agent, or to any explained mechanism — it must read as genuinely unexplained to Lirael and the reader, leaving 'what almost happened, and who stopped it?' as a real open question.",
+      "kind": "locked_canon_fact",
+      "cites": "Roman, seventh redesign pass, 2026-09-17 — companion rule to julian_counter_wish/julian_obscuring_wishes above"
     }
   ],
   "emotional_dramatic_requirement": {
@@ -392,7 +400,7 @@
         "timeoutMs": 60000,
         "pricing_usd_per_mtok": {
           "in": 2.5,
-          "out": 10.0
+          "out": 10
         },
         "pricing_cited_at": "public/app.js:4765 (TEXT_PRICING)",
         "pricing_source_note": "app.js:4749, \"calibrated to ACTUAL models in use as of 2026-05\"; no explicit pricing-page URL in-code (disclosed gap) — public reference openai.com/api/pricing, not cited by exact URL in this codebase.",
@@ -545,7 +553,7 @@
       "why_this_was_missing": "The first real draft (2026-09-17) used only 1,505 of its 6,000 available completion tokens and wrote 232 words — this was NOT a token-limit truncation, it was the model satisfying an underspecified instruction (beat count only, no density/length requirement) as cheaply as possible."
     },
     "required_content_beats": {
-      "status": "NEW (Roman, fifth pass) — the 6-step scene1_causal_sequence is a compressed PLOT summary, not a granular beat outline; it omitted real content the baked scene has (e.g. Seren’s spoken cost/offering statement) and the first real draft consequently omitted it too. This list is the granular event sequence — still an OUTLINE (what happens, not the prose expression of it) — grounding every beat the candidate must include, mapped to the 8 fixed images. Each entry now carries a stable `id` for the required coverage map (below) to reference precisely — \"generic citation\" can no longer stand in for actually covering a specific required beat.",
+      "status": "NEW (Roman, fifth pass) — the 6-step scene1_causal_sequence is a compressed PLOT summary, not a granular beat outline; it omitted real content the baked scene has (e.g. Seren’s spoken cost/offering statement) and the first real draft consequently omitted it too. This list is the granular event sequence — still an OUTLINE (what happens, not the prose expression of it) — grounding every beat the candidate must include, mapped to the 8 fixed images. Each entry now carries a stable `id` for the required coverage map (below) to reference precisely — \"generic citation\" can no longer stand in for actually covering a specific required beat. SEVENTH PASS (Roman, 2026-09-17): 2 new ids inserted (wish_visibly_twists, twist_unnaturally_arrested) and wish_and_sacrifice/public_charge revised — the vague \"everyone looked at her\" consequence is rejected; the candidate must show a concrete twist, an unnatural arrest, and misreadable public residue. See wish_twist_and_arrest_requirement.",
       "beats": [
         {
           "image": "intro_lirael",
@@ -574,13 +582,27 @@
         },
         {
           "image": "d2",
-          "required_event": "Seren deviates from the rehearsed wish and speaks the misaligned wish naming Lirael; the wish bends — no visible effect, only the assembly turning to look; Lirael, sealed and forbidden to interfere, moves toward her anyway.",
-          "id": "wish_and_sacrifice"
+          "required_event": "Seren deviates from the rehearsed wish and speaks BOTH the actual wish and its cost aloud, naming Lirael; Lirael, in the moment, recognizes that Seren's performed empathy does not match the self-aggrandizing desire beneath it (facet: seren_goodness_needs_witness) — a specific interior observation, not a generic sense that \"something is off.\"",
+          "id": "wish_and_sacrifice",
+          "superseded_required_event": "Seren deviates from the rehearsed wish and speaks the misaligned wish naming Lirael; the wish bends — no visible effect, only the assembly turning to look; Lirael, sealed and forbidden to interfere, moves toward her anyway."
+        },
+        {
+          "image": "d2",
+          "required_event": "As the misaligned wish takes hold, the rite visibly begins a concrete, dangerous or socially catastrophic misfire aimed at Lirael — a real magical or physical threat the reader can picture and feel the stakes of, not an abstraction and not merely 'the assembly turned to look.'",
+          "id": "wish_visibly_twists",
+          "status": "NEW (Roman, seventh pass, 2026-09-17)"
+        },
+        {
+          "image": "d2",
+          "required_event": "The misfire is abruptly and unnaturally checked before it fully lands — no explanation is given to Lirael or the reader for why or how. Julian's own concealed intervention must NOT be surfaced or implied here (see sealed_facts_forbidden_pre_surface). The beat must leave a real, unanswered question: what almost happened, and who stopped it?",
+          "id": "twist_unnaturally_arrested",
+          "status": "NEW (Roman, seventh pass, 2026-09-17)"
         },
         {
           "image": "d3",
-          "required_event": "The presiding Dohkar names the bent word and lays the charges — shaping the wish, interfering in the rite — publicly jeopardizing Lirael’s path; even as her standing collapses, some part of her attention goes to Julian.",
-          "id": "public_charge"
+          "required_event": "The presiding Dohkar names the bent word and lays the charges — shaping the wish, interfering in the rite — grounding the charge explicitly in visible residue from the arrested misfire (not a bare accusation): something concrete the assembly actually witnessed that can plausibly, if wrongly, be read as evidence Lirael herself manipulated Seren or interfered. Publicly jeopardizing Lirael's path; even as her standing collapses, some part of her attention goes to Julian.",
+          "id": "public_charge",
+          "superseded_required_event": "The presiding Dohkar names the bent word and lays the charges — shaping the wish, interfering in the rite — publicly jeopardizing Lirael’s path; even as her standing collapses, some part of her attention goes to Julian."
         },
         {
           "image": "d4",
@@ -670,7 +692,7 @@
         "timeoutMs": 60000,
         "pricing_usd_per_mtok": {
           "in": 2.5,
-          "out": 10.0
+          "out": 10
         },
         "pricing_cited_at": "public/app.js:4765 (TEXT_PRICING)",
         "pricing_source_url": "https://developers.openai.com/api/docs/models/gpt-4o (Roman-supplied, confirmed consistent 2026-09-16)",
@@ -686,19 +708,19 @@
     "cites": "_first_sacrifice_grok_authoring_census.mjs output, _first_sacrifice_ministral8b_fallback_compat_check.mjs output, public/app.js:4749-4795 (TEXT_PRICING), api/_mistral-governor.js, api/mistral-proxy.js, api/proxy.js:_resolveGrokModel"
   },
   "full_package_authoring_operation_census": {
-    "status": "REAL CENSUS — re-measured AGAIN (Roman, sixth pass, 2026-09-17) against the live-OAS redesign: scene1Candidate/scene1Coverage/first_person_lirael (raised 1,100-word floor, coverage map, focality gate, banned synopsis construction) + oasOpening (ONE Julian line, replaces the SUPERSEDED interrogationExchange) + postInterruptionBeat (new) + fateCards (5 fixed archetype keys), against the approved chain (Grok primary -> ministral-8b-2512 fallback -> GPT-4o terminal, no DeepSeek). Prior fifth-pass numbers below are superseded by this measurement, not deleted.",
-    "measured_on": "2026-09-17 (re-measured after the sixth-pass live-OAS/oasOpening/postInterruptionBeat redesign)",
+    "status": "REAL CENSUS — re-measured AGAIN (Roman, seventh pass, 2026-09-17) against the mandatory causal-and-strategic revision: 2 new required_content_beats (wish_visibly_twists, twist_unnaturally_arrested), the wish_twist_and_arrest_requirement block, and the julian_strategic_logic_requirement block, all now rendered in the prompt. Same schema (scene1Candidate/scene1Coverage/first_person_lirael/oasOpening/postInterruptionBeat/fateCards), against the approved chain (Grok primary -> ministral-8b-2512 fallback -> GPT-4o terminal, no DeepSeek). Prior sixth-pass numbers below are superseded by this measurement, not deleted.",
+    "measured_on": "2026-09-17 (re-measured after the seventh-pass causal-and-strategic revision)",
     "produced_by": "_first_sacrifice_scene1_candidate_budget_measurement.mjs, calling _first_sacrifice_authoring_adapter.mjs:buildAuthoringFallbackChain()",
     "real_prompt_size": {
       "system_bytes": 2839,
-      "user_bytes": 24692,
-      "total_bytes": 27531,
-      "est_input_tokens_chars_over_4_convention": 6782,
-      "note": "grew again from ~20,170 bytes (fifth-pass interrogationExchange-based prompt) to ~24,692 bytes once the interrogationExchange TASK 2/3 was replaced with the oasOpening + postInterruptionBeat tasks and the live-OAS constraints/coverage-map instructions were added."
+      "user_bytes": 30259,
+      "total_bytes": 33098,
+      "est_input_tokens_chars_over_4_convention": 8166,
+      "note": "grew again from ~27,531 bytes (sixth-pass prompt) to ~33,098 bytes once the wish-twist/arrest requirement and Julian's strategic-logic requirement were added to TASK 1 and TASK 2."
     },
     "max_tokens_ceiling": {
       "value": 8000,
-      "rationale": "Unchanged from the fifth pass — the sixth-pass schema change (interrogationExchange -> oasOpening + postInterruptionBeat) is a net SMALLER output ask (one ~14-word line plus one short beat, vs. ~7 lines of dialogue), so no ceiling increase was needed; re-measured against the real governor to confirm, not assumed."
+      "rationale": "Unchanged from the sixth pass — the seventh-pass revision only grows the INPUT (instructions), not the requested OUTPUT shape (still scene1Candidate + scene1Coverage + first_person_lirael + oasOpening + postInterruptionBeat + fateCards, same field count/sizes) — re-measured against the real governor to confirm the larger input still admits, not assumed."
     },
     "governor_check": {
       "tier_checked": "ministral-8b-2512 (the only tier a local governor exists for)",
@@ -708,15 +730,15 @@
       },
       "admit_result": {
         "outcome": "admitted",
-        "reserve": 35531,
+        "reserve": 41098,
         "limitTpm": 625000
       },
-      "utilization_pct": 6
+      "utilization_pct": 7
     },
     "cost_ceilings": {
-      "expected_grok_success_1_call": 0.0285,
-      "three_tier_exhaustion_3_calls": 0.1277,
-      "caveat": "Both are CEILINGS (full max_tokens billed), not measured spend. The only real completion-length data point available (232 words / 18 beats / third-person, the rejected v3 draft) was measured under the fifth-pass interrogationExchange schema, not this one — a real completion under the sixth-pass oasOpening/postInterruptionBeat schema has not yet been measured."
+      "expected_grok_success_1_call": 0.0302,
+      "three_tier_exhaustion_3_calls": 0.133,
+      "caveat": "Both are CEILINGS (full max_tokens billed), not measured spend. The only real completion-length data point available (232 words / 18 beats / third-person, the rejected v3 draft) was measured under the fifth-pass interrogationExchange schema, not this one — a real completion under the seventh-pass schema has not yet been measured."
     },
     "kind": "locked_canon_fact",
     "cites": "_first_sacrifice_scene1_candidate_budget_measurement.mjs output, api/_mistral-governor.js, app.js TEXT_PRICING"
@@ -853,6 +875,33 @@
       "content_requirement": "Crystallizes an unresolved choice, threat, or invitation arising from the interruption (The Answer still in Lirael’s hands; the coming formal Inquiry Julian has just claimed) — the moment the player’s custom Say/Do, a Fate card, or Petition/Tempt Fate responds to.",
       "hard_boundary": "MUST NOT decide, narrate, or imply what Lirael does next. No resolving language (\"I decided,\" \"I answered,\" \"I said yes,\" \"I chose to...\"). It ends ON the open question/threat/invitation, not past it. This is the single most important rule in this section — violating it silently pre-writes the player’s choice, which is exactly what this whole redesign exists to prevent."
     },
-    "five_fate_cards_requirement": "UNCHANGED from oas_sequence_v2_SUPERSEDED_scripted_transcript.five_fate_cards_requirement in structure and archetype semantics (temptation/silence/reversal/boundary/confession, action/dialogue/variant schema) — RESCOPED: these 5 prefills now respond to postInterruptionBeat specifically (the post-interruption handoff), not a mid-conversation moment. See that section for the full archetype/variant semantics, still authoritative."
+    "five_fate_cards_requirement": "UNCHANGED from oas_sequence_v2_SUPERSEDED_scripted_transcript.five_fate_cards_requirement in structure and archetype semantics (temptation/silence/reversal/boundary/confession, action/dialogue/variant schema) — RESCOPED: these 5 prefills now respond to postInterruptionBeat specifically (the post-interruption handoff), not a mid-conversation moment. See that section for the full archetype/variant semantics, still authoritative.",
+    "julian_strategic_logic_requirement": {
+      "kind": "generated_expression",
+      "status": "NEW (Roman, seventh pass, 2026-09-17) — Julian's public accusation must read as a weaponized strategic maneuver with institutional purpose, not random public flirtation. This is a SUBTEXT requirement: the logic must be INFERABLE from his behavior and word choice, never stated outright by any character.",
+      "strategic_logic": [
+        "Julian already knows, via the Weave-Script alignment sense every First Favored has, that Lirael's stated innocence reads as genuinely aligned — he is not accusing her of lying about not knowing.",
+        "He needs to preempt the presiding Dohkar's immediate judgment (heading toward a simple, final ruling against Lirael) and seize the LATER formal Inquiry instead, which he can convene and preside over himself.",
+        "His public theory/frame — the accusation he actually makes — is that Lirael may have unconsciously influenced Seren through desire, attention, or social gravity, NOT that she deliberately committed magical fraud. This is why 'manipulation through desirability' is his specific chosen accusation, not an arbitrary one.",
+        "By pushing the questioning into inappropriate public intimacy, he deliberately gives the presiding Dohkar cause to halt the ceremony and invoke formal process — the exact procedural transfer of authority Julian wants, achieved by provoking the Dohkar's objection rather than asking for it.",
+        "His attraction to Lirael is textually real, not feigned — but it is ALSO calculated cover and institutional maneuvering. Both are true at once; the draft must not flatten this into only one or the other."
+      ],
+      "hard_boundary": "Must not have Julian, Lirael, the Dohkar, or any narration state this strategy outright (\"Julian needed to seize the Inquiry,\" \"this was a calculated move to...\"). It must be legible through HIS CHOICES — which specific accusation he makes, the timing/publicness of it, how he behaves once the Dohkar objects — not through exposition. Must not surface or imply julian_counter_wish or julian_obscuring_wishes (unchanged from sealed_facts_forbidden_pre_surface).",
+      "cites": "Roman, seventh redesign pass, 2026-09-17, this message"
+    }
+  },
+  "wish_twist_and_arrest_requirement": {
+    "status": "NEW (Roman, seventh pass, 2026-09-17) — mandatory causal revision, required before any second draft. The real baked scene (starter-scenes.js:254) describes the wish's effect vaguely: 'no visible effect, only the assembly turning to look.' Roman judges this a genuine craft flaw, not locked canon to preserve — matching this session's established pattern of correcting baked-scene deficiencies rather than reproducing them (see point_of_view/density_requirement/prose_construction_requirement). 'Everyone looked at you' is a vague consequence, not a magical disaster, a rescue, or a reason the accusation has weight.",
+    "requirement": [
+      "Seren states the actual wish and the actual sacrifice aloud (required via required_content_beats ids cost_offering_statement + wish_and_sacrifice).",
+      "Lirael recognizes, in the moment, that Seren's performed empathy does not match the self-aggrandizing desire beneath it (required via wish_and_sacrifice).",
+      "The rite begins a concrete, dangerous or socially catastrophic misfire aimed at Lirael — a real threat, not an abstraction (required via NEW id wish_visibly_twists).",
+      "That misfire is abruptly, unnaturally checked before it fully lands (required via NEW id twist_unnaturally_arrested).",
+      "The public sees residue they can plausibly misread as evidence Lirael manipulated Seren or interfered (required via REVISED public_charge)."
+    ],
+    "hard_boundary": "The prose must NOT reveal Julian's counter-wish, his obfuscating wishes, or his knowledge (unchanged sealed_facts_forbidden_pre_surface rules). It must leave the reader with a real question: what almost happened, and who stopped it? Do not attribute the arrest to any named agent, magic performed by a visible character, or an explained mechanism.",
+    "banned_vague_consequence": "Do not reduce the twist to a bare social-attention beat (e.g. 'everyone looked at her,' 'the assembly turned to stare,' with nothing else) — that is a vague consequence, not a visible twist. This dimension is a HUMAN REVIEW judgment (see the human review rubric) — the validator can only mechanically enforce that wish_visibly_twists/twist_unnaturally_arrested are covered at all, not that the covering text is genuinely concrete rather than vague.",
+    "kind": "generated_expression",
+    "cites": "Roman, seventh redesign pass, 2026-09-17, this message"
   }
 }

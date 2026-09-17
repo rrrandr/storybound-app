@@ -92,6 +92,7 @@ function renderPacketAsPromptText(packet) {
   const oas = packet.oas_sequence_v3;
   const fb = oas.fixed_baked_content;
   const oo = oas.oas_opening_requirement;
+  const jsl = oas.julian_strategic_logic_requirement;
   const pib = oas.post_interruption_beat_requirement;
   const fc = packet.oas_sequence_v2_SUPERSEDED_scripted_transcript.five_fate_cards_requirement; // structure/semantics still authoritative, content unchanged
   const L = [];
@@ -144,6 +145,11 @@ function renderPacketAsPromptText(packet) {
   L.push('REQUIRED CONTENT BEATS (HARD — every one of these events MUST appear somewhere in your beats, mapped to its image; do not skip any):');
   s1.required_content_beats.beats.forEach(b => L.push('  - [' + b.image + '] ' + b.required_event));
   L.push('');
+  const wta = packet.wish_twist_and_arrest_requirement;
+  L.push('THE WISH MUST VISIBLY TWIST, THEN BE INEXPLICABLY ARRESTED (HARD): ' + wta.status);
+  L.push('Hard boundary: ' + wta.hard_boundary);
+  L.push('BANNED (a hard failure, not a style preference): ' + wta.banned_vague_consequence);
+  L.push('');
   L.push('IMAGES: ' + s1.existing_images_reuse_only.rule);
   L.push('Use ONLY these 8, in this exact order (each may repeat across consecutive beats):');
   s1.existing_images_reuse_only.order.forEach(id => L.push('  - ' + id + ': ' + s1.existing_images_reuse_only.subjects[id]));
@@ -160,7 +166,7 @@ function renderPacketAsPromptText(packet) {
   L.push('BANNED: ' + s1.prose_construction_requirement.banned_construction);
   L.push('');
   L.push('REQUIRED COVERAGE MAP (HARD — separate output field, draft metadata, never reader prose): ' + s1.required_beat_coverage_map.output_shape);
-  L.push('Every one of the 8 required_content_beats ids above MUST appear as a key in scene1Coverage, mapped to at least one real beat index. A missing or empty mapping is a hard failure — this is what catches an omitted required beat structurally, not by a generic citation elsewhere.');
+  L.push('Every one of the ' + s1.required_content_beats.beats.length + ' required_content_beats ids above MUST appear as a key in scene1Coverage, mapped to at least one real beat index. A missing or empty mapping is a hard failure — this is what catches an omitted required beat structurally, not by a generic citation elsewhere.');
   L.push('');
   L.push('POINT-OF-VIEW DECLARATION (HARD): also return a top-level boolean field first_person_lirael — your own honest declaration of whether you wrote scene1Candidate in first person. This is checked independently against your actual pronoun usage; a false declaration is itself a hard failure.');
   L.push('');
@@ -172,6 +178,10 @@ function renderPacketAsPromptText(packet) {
   L.push('Length constraint: ' + oo.length_constraint);
   L.push('Hard boundary: ' + oo.hard_boundary);
   L.push('Output shape: ' + oo.output_shape);
+  L.push('');
+  L.push('JULIAN\'S STRATEGIC LOGIC (HARD, subtext-only — read this before writing the line above): ' + jsl.status);
+  jsl.strategic_logic.forEach(s => L.push('  - ' + s));
+  L.push('Hard boundary: ' + jsl.hard_boundary);
   L.push('');
   L.push('═══ TASK 3 — postInterruptionBeat (ONE beat AFTER the fixed interruption tail — crystallizes, never decides) ═══');
   L.push('Requirement: ' + pib.content_requirement);
@@ -198,7 +208,7 @@ function renderPacketAsPromptText(packet) {
   L.push('OUTPUT SCHEMA (HARD — return ONLY these fields, nothing else; any other top-level or nested field, including anything about Scene 2, continuation, planning, or Lirael\'s OAS dialogue/response before the interruption, is a hard failure):');
   L.push('  top-level: ' + ALLOWED_OUTPUT_SCHEMA.top_level.join(', '));
   L.push('  scene1Candidate: { beats[] } — each beat: ' + ALLOWED_OUTPUT_SCHEMA.scene1_beat_fields.join(', ') + '; kind one of ' + ALLOWED_OUTPUT_SCHEMA.scene1_beat_kinds.join('|') + '; image one of ' + ALLOWED_OUTPUT_SCHEMA.scene1_allowed_images_in_order.join(', '));
-  L.push('  scene1Coverage: object keyed by the 8 required_content_beats ids, each value a non-empty array of scene1Candidate.beats indices');
+  L.push('  scene1Coverage: object keyed by the ' + s1.required_content_beats.beats.length + ' required_content_beats ids, each value a non-empty array of scene1Candidate.beats indices');
   L.push('  first_person_lirael: boolean');
   L.push('  oasOpening: { ' + ALLOWED_OUTPUT_SCHEMA.oas_opening_fields.join(', ') + ' } — speaker "Julian", ONE line, ≤14 words');
   L.push('  postInterruptionBeat: { ' + ALLOWED_OUTPUT_SCHEMA.post_interruption_beat_fields.join(', ') + ' } — image "d4", first person, never resolving');
