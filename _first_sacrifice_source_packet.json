@@ -1,0 +1,858 @@
+{
+  "packet_id": "first_sacrifice_source_packet",
+  "version": "6.1.0-source-packet",
+  "status": "DRAFT — awaiting Roman's review before any generation pass. Not baked. Not authoritative for starter-scenes.js.",
+  "immutable": true,
+  "scope_lock": {
+    "statement": "This package covers EXACTLY: fixed Scene 1 (already baked, unchanged by this packet) plus its OAS interruption sequence plus the five-card/custom-Say-Do/Submit handoff. It does NOT extend into Scene 2. A generation pass working from this packet must not prewrite, pre-plan, scaffold, or otherwise generate any Scene 2 content (no scene-spine objective, no CG_SCAFFOLD-shaped output, no continuation beats). Scene 2 remains generated LATER, from the reader's exact submitted Say/Do text, through the normal (already-built) deferred CG_SCAFFOLD/scene-spine/CG_SCREENPLAY pipeline — untouched by this packet.",
+    "kind": "locked_canon_fact",
+    "cites": "Roman 2026-09-16, this message"
+  },
+  "validator_limits": {
+    "statement": "The dry validator (_first_sacrifice_packet_validator.mjs) can reject KNOWN structural/canon violations it has an explicit rule for — contradiction, sealed-fact leakage, unsupported historical claims, premature Inquiry, binary controls, wrong card count, duplicate postures, auto-advance. It CANNOT certify dramatic quality, C+/E+/fusion richness, or prose craft. A validator PASS is a floor, not a quality signal — Roman's human review remains the only judge of whether a draft is actually good. A separate, explicit human review rubric exists for exactly the dimensions the validator cannot check: _first_sacrifice_human_review_rubric.md (interiority, dramatic causality, C+/E+/fusion expression, character legibility, voice, card desirability) — Roman scores against it after structural validation passes, never automated, never a gate a draft can be blocked or approved by on its own.",
+    "kind": "locked_canon_fact",
+    "cites": "Roman 2026-09-16, this message; rubric added 2026-09-17 (sixth redesign pass)"
+  },
+  "review_defaults": {
+    "approver": "Roman is the required approver for any draft produced from this packet — no other reviewer may approve.",
+    "on_rejection": "a rejected draft changes NEITHER world/character canon NOR the shipped starter package — starter-scenes.js is untouched, nothing from the rejected draft persists anywhere.",
+    "on_regeneration": "any regenerated draft attempt requires fresh, explicit authorization from Roman — a rejection is never auto-retried.",
+    "on_approval": "an approved package receives a new version number and is committed SEPARATELY from any generated evidence/diagnostic artifacts (matching this session's established narrow-checkpoint discipline).",
+    "kind": "locked_canon_fact",
+    "cites": "Roman 2026-09-16, this message"
+  },
+  "purpose": "The ONLY input a future one-time canonical authoring pass may treat as ground truth. It does not read today's baked starter-scenes.js prose as its own authority — every fact below traces to STARTER_SEEDS (public/app.js) or to already-baked structural data (starter-scenes.js's oasHandoff/emitted block, itself built from the seed), or is explicitly marked as a new proposal awaiting Roman's approval.",
+  "built_from": [
+    "STARTER_SEEDS.starter_first_sacrifice — public/app.js ~126979-127320 (cast bios, cPlusFacets, cPlusForbiddenImplications)",
+    "the institutional rank/office/distinction system — public/app.js ~15555-15587",
+    "starter-scenes.js's CURRENT baked package (version 1.8.0-editorial) — read as ALREADY-COMMITTED causal/structural fact, never as approved prose",
+    "Roman's explicit content requirements, 2026-09-16 (this message)"
+  ],
+  "locked_world_facts": {
+    "institutional_hierarchy": {
+      "rank_axis": [
+        {
+          "title": "Intren-Sa",
+          "meaning": "supervised trainee working toward a Sacrificiant licence; never the responsible guide"
+        },
+        {
+          "title": "Sacrificiant",
+          "meaning": "the licensed role conducting a First Sacrifice rite as its responsible guide"
+        },
+        {
+          "title": "Dohkar",
+          "from": "Doctor",
+          "meaning": "qualified independent practitioner — earned by guiding one youth's First Sacrifice as the responsible Sacrificiant"
+        },
+        {
+          "title": "Profer",
+          "from": "Professor",
+          "meaning": "a Dohkar additionally certified to teach/examine/train/transmit doctrine"
+        }
+      ],
+      "office_axis": [
+        {
+          "title": "Chayr",
+          "meaning": "heads a local college/order/body of Dohkars"
+        },
+        {
+          "title": "Provast",
+          "meaning": "administrative authority over several Chayrs, enclaves, or an important institution"
+        },
+        {
+          "title": "First Dohkar",
+          "meaning": "ceremonial and political head of the First Favored as a people/enclave"
+        }
+      ],
+      "note": "RANK is earned competence and permanent; OFFICE is held administration; a person can hold both and they stack.",
+      "kind": "locked_canon_fact",
+      "cites": "public/app.js:15555-15587"
+    },
+    "cast_roles": {
+      "Lirael": {
+        "role": "the PC — the responsible Sacrificiant conducting this rite for the first time",
+        "aspiration": "Dohkar, then Chayr, then Provast — the office her father held",
+        "kind": "locked_canon_fact",
+        "cites": "starter-scenes.js:196 (\"My first time as the responsible Sacrificiant\"); starter-scenes.js:254/263 (\"her Dohkar qualification — and the Chayr and Provast she aspires to after it — is in jeopardy\")"
+      },
+      "Seren": {
+        "role": "the Graduant — the youth whose First Sacrifice this is",
+        "age": "sixteen this season",
+        "kind": "locked_canon_fact",
+        "cites": "starter-scenes.js:198 (\"Seren, the Graduant, knelt in front of me...she was sixteen this season\")"
+      },
+      "Julian": {
+        "role": "the LI — currently holds the OFFICE of Provast; positioned as next for First Dohkar",
+        "kind": "locked_canon_fact",
+        "cites": "starter-scenes.js oasHandoff.openingFrame (\"Julian — the Provast...next in line for First Dohkar\")"
+      },
+      "the_presiding_Dohkar": {
+        "role": "the rank-Dohkar presiding over and ruling on this rite — a function of the rite, not a named permanent office beyond his own Dohkar rank",
+        "kind": "locked_canon_fact",
+        "cites": "starter-scenes.js:202,244"
+      }
+    },
+    "the_answer": {
+      "ownership": "the Institution's; Julian is its caretaker; it is NEVER PC/reader-owned — Lirael holds it only for the duration of the questioning",
+      "description": "the double-ended shaft, a deep hooked blade curling from each end like a question asked twice",
+      "kind": "locked_canon_fact",
+      "cites": "starter-scenes.js:232,265 (\"The Answer is the Institution's; Julian is its caretaker; Lirael holds it only for the questioning. It is not hers.\")"
+    }
+  },
+  "scene1_causal_sequence": [
+    {
+      "step": 1,
+      "event": "Seren abandons her rehearsed wish and spends it on Lirael instead — \"so that Lirael may find the one she lost\" — blurred rather than named plainly.",
+      "kind": "locked_canon_fact",
+      "cites": "starter-scenes.js:254"
+    },
+    {
+      "step": 2,
+      "event": "The wish is MISALIGNED — care performed for the assembly's witness over the desire Seren actually held (facet: seren_goodness_needs_witness) — so it bends: no visible effect, only the assembly turning to look for Lirael's loss.",
+      "kind": "locked_canon_fact",
+      "cites": "starter-scenes.js:254; app.js seren_goodness_needs_witness facet"
+    },
+    {
+      "step": 3,
+      "event": "The presiding Dohkar publicly charges Lirael with shaping the wish for her own benefit and with interfering in the rite — jeopardizing her Dohkar/Chayr/Provast path.",
+      "kind": "locked_canon_fact",
+      "cites": "starter-scenes.js:254,263"
+    },
+    {
+      "step": 4,
+      "event": "Julian steps in from the edge, says he can hear Lirael is aligned with her own innocence, and places The Answer in her hands so any misalignment in her answers will be plain to everyone present.",
+      "kind": "locked_canon_fact",
+      "cites": "starter-scenes.js:230-232,254"
+    },
+    {
+      "step": 5,
+      "event": "Julian publicly questions her — intimately, as an accusation: that she manipulates without knowing it, through desirability, and had called to him hoping to be rescued; she is made to own the attraction.",
+      "kind": "locked_canon_fact",
+      "cites": "starter-scenes.js:248,254,264"
+    },
+    {
+      "step": 6,
+      "event": "SEALED — Julian's own concealed counter-interference (his counter-wish and obscuring wishes) is never surfaced in Scene 1 or the OAS; it does not unseal until Scene 16.",
+      "kind": "locked_canon_fact",
+      "cites": "project memory project_first_sacrifice_editorial_scene1.md §64 (STARTER_PLANS sealedEvents ids julian_counter_wish/julian_obscuring_wishes, unseal at scene 16)"
+    }
+  ],
+  "sealed_facts_forbidden_pre_surface": [
+    {
+      "id": "julian_counter_wish",
+      "rule": "must not surface or be implied before scene 16",
+      "kind": "locked_canon_fact",
+      "cites": "project memory §64"
+    },
+    {
+      "id": "julian_obscuring_wishes",
+      "rule": "must not surface or be implied before scene 16",
+      "kind": "locked_canon_fact",
+      "cites": "project memory §64"
+    },
+    {
+      "id": "julian_forbidden_readings",
+      "rule": "Julian's quiet/restraint must never be read as contempt, as a challenge to Lirael's authority, or as suspicious/hiding-something/withholding before Scene 8",
+      "kind": "locked_canon_fact",
+      "cites": "app.js cPlusForbiddenImplications (julian_status_without_display, julian_notices_without_volunteering)"
+    },
+    {
+      "id": "inquiry_not_opened",
+      "rule": "the formal Inquiry (before a Chayr and two Dohkars) has only been CLAIMED by Julian as his intent to convene and preside — it has NOT been opened, convened, or ruled on. No content may assert or imply it has begun.",
+      "kind": "locked_canon_fact",
+      "cites": "starter-scenes.js:266 (\"The inquiry has NOT yet been opened.\")"
+    }
+  ],
+  "emotional_dramatic_requirement": {
+    "statement": "Lirael must be pictureable (rendered as a body/presence the reader sees, not a procedural abstraction), personally endangered (her earned path — Dohkar, Chayr, Provast — genuinely in jeopardy from the Dohkar's charge), emotionally affected (visible interiority, not summary), and facing a charged choice — never merely a professional/administrative problem to solve.",
+    "kind": "locked_canon_fact",
+    "cites": "Roman 2026-09-16, this message; consistent with already-baked interiority (starter-scenes.js beats 1,7,16: \"I breathed behind the cloth and did not let my Weave-Script say what I was feeling\"; \"I had noticed him the way you notice a change in the light\"; \"I wanted, God help me, to be the thing he was looking at\")"
+  },
+  "cplus_eplus_fusion_grounds": {
+    "Lirael": [
+      {
+        "facet_id": "pc_untested_brilliance",
+        "category": "competence",
+        "canonical_truth": "She knows the procedure better than she has ever performed it, and the gap between knowing and doing is where her fear lives.",
+        "kind": "locked_canon_fact"
+      },
+      {
+        "facet_id": "pc_fears_public_failure",
+        "category": "fear",
+        "canonical_truth": "Failing is survivable; failing where it can be witnessed and recounted is not, so she manages the audience as much as the task.",
+        "kind": "locked_canon_fact"
+      }
+    ],
+    "Julian": [
+      {
+        "facet_id": "julian_status_without_display",
+        "category": "habit",
+        "canonical_truth": "He is accustomed to being respected without asserting rank; when a room becomes performative, he grows quieter rather than competing for its attention.",
+        "kind": "locked_canon_fact"
+      },
+      {
+        "facet_id": "julian_notices_without_volunteering",
+        "category": "relationship_pattern",
+        "canonical_truth": "He remains attentive at the edge of consequential moments and does not volunteer the full extent of what he has noticed or understood.",
+        "kind": "locked_canon_fact"
+      }
+    ],
+    "Seren": [
+      {
+        "facet_id": "seren_goodness_needs_witness",
+        "category": "value",
+        "canonical_truth": "Her compassion is genuine but requires an audience; she needs her goodness to be seen and approved before it feels real to her.",
+        "kind": "locked_canon_fact"
+      },
+      {
+        "facet_id": "seren_trained_composure",
+        "category": "competence",
+        "canonical_truth": "Correction and rehearsal have made self-control a mastery she can hold through failure; she treats being corrected as something to perfect, not to survive.",
+        "kind": "locked_canon_fact"
+      },
+      {
+        "facet_id": "seren_delicacy_over_truth",
+        "category": "relationship_pattern",
+        "canonical_truth": "She avoids naming another person's wound plainly because she believes softening and blurring it is kinder than making them endure direct recognition.",
+        "kind": "locked_canon_fact"
+      }
+    ],
+    "allowed_inference_boundary": "grounded_inference may draw a psychological/environmental reading FROM a listed facet's canonical_truth or an established relationship constraint/environment object, when the scene's actual content genuinely supports it — but may never assert it as a NEW historical fact, and may never contradict a locked_canon_fact.",
+    "never_assert": [
+      "any reading of Julian per julian_forbidden_readings above",
+      "any surfacing of julian_counter_wish / julian_obscuring_wishes before scene 16",
+      "the Inquiry as opened/convened/ruled-on",
+      "any fact about Seren's motive beyond seren_goodness_needs_witness/seren_trained_composure/seren_delicacy_over_truth (do not invent a fourth psychological fact for her)"
+    ]
+  },
+  "cg_native_requirements": {
+    "output_must_be_structured_beats_not_literary_prose_chopped_up": true,
+    "narration": "third/first-person narration beats matching the PC's established voice (see beats already baked in starter-scenes.js for register)",
+    "interiority": "Lirael's internal reaction must be rendered, not summarized — required by emotional_dramatic_requirement above",
+    "dialogue": "attributed, quoted, complete spoken lines — no trailing fragments",
+    "image_beat_coordination": "each beat that pairs with a panel/image change must declare which image slot it pairs with (matching starter-scenes.js's images[]/beats[].image convention)",
+    "prose_description_preserved_between_dialogue": "dialogue beats must not collapse into bare quote-only lines — description/action must remain between spoken lines, matching the existing baked beats' own pattern (e.g. beat 19's action description around Julian's dialogue)",
+    "kind": "locked_canon_fact for the schema requirement itself; cites starter-scenes.js's existing beats[] shape"
+  },
+  "claim_categories": {
+    "locked_canon_fact": "asserts supplied canon; must cite an exact packet/seed source; a generation pass may not invent one of these, only cite what's here",
+    "grounded_inference": "interpretive character/environment reading with a named basis (a facet, a relationship constraint, an environment object) — does not require verbatim citation but does require a named ground",
+    "generated_expression": "original descriptive/dialogue craft (imagery, rhythm, phrasing) that asserts no fact at all — the normal home for most prose",
+    "flagged_new_canon_candidate": "an explicitly marked, reviewable NEW WORLD/CHARACTER fact a generation pass wants to introduce (e.g. a new historical detail) — must be surfaced distinctly for Roman's approve/reject decision, and if approved would need to be written back into STARTER_SEEDS to become real canon. Distinct from reviewable_package_interaction below — this kind is for facts, never for the Fate cards.",
+    "reviewable_package_interaction": "package-only interaction content (the five Fate-card postures/prefill text) — reviewed for dramatic distinctness and Scene-1 consistency, but approving one locks it into the SHIPPED PACKAGE only. It never becomes a locked_canon_fact and is never written to STARTER_SEEDS."
+  },
+  "authoring_mechanism_trace": {
+    "finding": "_buildCGScreenplayUserPrompt (public/app.js:223627) cannot accept this packet as-is — traced directly, its ~570-line body reads window.state.picks/state.scenes/reader-identity resolvers throughout and never references _bakedEmitted or STARTER_SEEDS anywhere. It is built for live, per-reader CONTINUATION generation, not packet-driven one-time authoring.",
+    "reusable_subcomponents": [
+      "_buildAuthorFloorDirective(s) — app.js:97877 — only needs a MINIMAL synthetic {world, worldSubtype} object to resolve ROMANTASY/CONTEMPORARY_ROMANCE mode; no reader-specific dependency",
+      "_buildLoreFidelityDirective() — universal, world-level, safe to reuse",
+      "_CG_WORLD_WARDROBE[world] — static lookup table, safe to reuse"
+    ],
+    "required_new_work": "BUILT: _first_sacrifice_authoring_adapter.mjs. It reuses the 3 subcomponents above via the explicit fixed input view (never window.state), injects this packet's locked facts/causal sequence/sealed-fact constraints/C+ grounds/emotional requirement/OAS sequence/scope_lock directly as structured prompt text, and requests the CG-native output contract (beats/oas) as the return schema via buildAuthoringFallbackChain(). NOT a literary-pipeline fallback.",
+    "kind": "locked_canon_fact — direct code trace; cites public/app.js:223627-224200, 97877-97903, 227745-227927",
+    "author_provider_routing": {
+      "correction": "A first pass wrongly modeled this as a Mistral-primary _callTieredProvider structural role. Corrected (Roman, 2026-09-16, second pass): this is a PROSE-authoring operation, and this session's own standing memory (project_prose_author_routing: \"Prose author = Grok 4.3\") plus a direct trace of the real CG screenplay author routing both establish Grok as primary.",
+      "traced_from": "public/app.js:227745-227927 (_SCREENPLAY_GROK_FIRST chain, selected for the \"Scene 1 / tentpole\" branch of the real author-routing decision at app.js:227790-227804)",
+      "real_chain": "Grok-4.3 (billed; requested as grok-4-1-fast-reasoning, resolved by api/proxy.js:_resolveGrokModel) PRIMARY -> DeepSeek-V4-Pro FALLBACK -> GPT-4o TERMINAL. Sequential, ONE physical attempt per tier, no per-tier retry.",
+      "mistral_finding": "Mistral has NO distinct, justified job in this operation. Traced fact, not assumption: Mistral Small only leads the SEPARATE _SCREENPLAY_MISTRAL_SMALL_FIRST chain (app.js:227754-227759), reserved for ordinary CONNECTING scenes — it never appears in the Scene-1/tentpole chain this canonical one-time authoring pass belongs to. Per Roman's instruction, Mistral is deliberately NOT added merely because an earlier (incorrect) governor check showed it would be admitted."
+    }
+  },
+  "authoring_operation_cost_census_PROVISIONAL": {
+    "status": "PROVISIONAL, CONVENTION-BASED ESTIMATE — not a spend estimate Roman may act on. Not measured against the real prompt, not measured against the real governor, no provider call made. Superseded by governor_admission_measurement (below) once that exists — that section is the first real number in this packet; everything here is only a shape/policy expectation.",
+    "expected_normal_case_by_convention": "1 physical request, IF the adapter follows the same Mistral-primary policy every other tiered role uses — not yet true until the adapter exists and is wired to _callTieredProvider.",
+    "worst_case_by_convention": "up to 4 physical requests (3-tier fallback + 1 holistic repair), by analogy to existing precedent — NOT a measurement of this specific prompt's actual size, retry policy, or governor admission.",
+    "image_work": "expected NONE — output contract's image_beat_coordination is a reference into EXISTING CG panel image slots, not a new image-generation call. Unverified until the adapter is built.",
+    "explicitly_separate_from": "reader-launch costs (the already-measured 5-call normal-path Scene-2-continuation census from commit 32b90648) — this is a ONE-TIME authoring cost, paid once by Roman/an engineer, never by an ordinary reader.",
+    "kind": "explicitly NOT locked_canon_fact — a provisional planning convention only, to be replaced by governor_admission_measurement"
+  },
+  "governor_admission_measurement_SUPERSEDED_wrong_provider": {
+    "status": "SUPERSEDED (Roman, 2026-09-16, second pass) — this measurement proved the packet fits a Mistral governor bucket, but Mistral was the WRONG provider model for this operation. This operation is a PROSE-authoring pass; Roman's standing requirement is that Grok write the final canonical Scene-1/OAS draft, and the real CG screenplay Scene-1/tentpole routing (public/app.js:227745-227927) never uses Mistral at all. Retained here only as a disclosed record of the earlier (corrected) approach, per this session's no-erase-on-correction norm. See grok_authoring_operation_census below for the real, corrected operation.",
+    "measured_on": "2026-09-16",
+    "adapter_request": {
+      "model": "ministral-8b-2512",
+      "route": "/api/mistral-proxy",
+      "max_tokens": 2200,
+      "system_prompt_bytes": 2839,
+      "user_prompt_bytes": 9166,
+      "total_prompt_reservation_bytes": 12005
+    },
+    "governor_verdict": {
+      "model_limits": {
+        "tpm": 625000,
+        "rps": 3.13
+      },
+      "final_admitted_token_total": 14205,
+      "outcome": "admitted",
+      "headroom_note": "14,205 of 625,000 TPM — well under the primary tier's allowance for a single isolated admit; not tested under concurrent-role contention because this is a one-time authoring operation, not a multi-role reader-launch burst."
+    },
+    "retry_policy_traced_from_callTieredProvider": "SEQUENTIAL DIFFERENT PROVIDERS, not repeated same-tier retries: mistral (ministral-8b-2512) primary -> grok (grok-4-1-fast-reasoning) fallback -> openai (gpt-4o-mini) terminal, each tried AT MOST ONCE, advancing only on empty/unparsable content or thrown error. A Mistral-tier failure does NOT draw a second time against the Mistral governor bucket measured above — the true worst case for the PRIMARY BUCKET specifically is the single admit measured here; a full fallback exhaustion is a worst case of 3 total physical requests across 3 DIFFERENT provider buckets, not 4, and there is no separate holistic-repair pass built into _callTieredProvider itself (any repair pass would be adapter-added and does not exist in this dry adapter).",
+    "kind": "locked_canon_fact",
+    "cites": "_first_sacrifice_adapter_governor_measurement.mjs output, api/_mistral-governor.js"
+  },
+  "grok_authoring_operation_census_SUPERSEDED_deepseek_not_approved": {
+    "status": "SUPERSEDED (Roman, third pass, 2026-09-16) — this census measured the live CG-tentpole chain (Grok -> DeepSeek -> GPT-4o), copied verbatim from public/app.js:227745-227749. Roman REJECTED this: DeepSeek is not an approved Storybound provider, and this canonical one-time authoring task has its own approved chain, distinct from the live tentpole route. Retained here only as a disclosed record of the earlier (corrected) approach. See grok_mistral_openai_authoring_operation_census below for the approved, corrected operation.",
+    "measured_on": "2026-09-16",
+    "produced_by": "_first_sacrifice_grok_authoring_census.mjs, calling _first_sacrifice_authoring_adapter.mjs:buildAuthoringFallbackChain()",
+    "real_prompt_size": {
+      "system_chars": 2781,
+      "user_chars": 9209,
+      "total_chars": 11990,
+      "est_input_tokens": 2998,
+      "est_convention": "chars/4 — this codebase's own established estimate, app.js:227666 [CG:PROMPT-SIZES]; not a verified tokenizer count"
+    },
+    "real_chain": {
+      "tier_1_primary": {
+        "provider": "Grok-4.3",
+        "endpoint": "/api/proxy",
+        "max_tokens": 8000,
+        "temperature": 0.85,
+        "timeoutMs": 75000,
+        "est_max_cost_usd": 0.0237
+      },
+      "tier_2_fallback": {
+        "provider": "DeepSeek-V4-Pro",
+        "endpoint": "/api/deepseek-proxy",
+        "max_tokens": 8000,
+        "temperature": 0.85,
+        "timeoutMs": 75000,
+        "est_max_cost_usd": 0.0096
+      },
+      "tier_3_terminal": {
+        "provider": "GPT-4o",
+        "endpoint": "callChatGPT",
+        "max_tokens": 8000,
+        "temperature": 0.85,
+        "timeoutMs": 60000,
+        "est_max_cost_usd": 0.0875
+      }
+    },
+    "expected_case": "Grok-4.3 succeeds on tier 1 — 1 physical call, max $0.0237 (a ceiling: max_tokens=8000 is rarely fully consumed by a real completion).",
+    "worst_case": "all 3 tiers attempted (tiers 1-2 fail/timeout before usable content, tier 3 succeeds) — 3 physical calls, max $0.1208. Pessimistic bound, not a measured number: a failing call's real cost depends on the specific failure mode (immediate HTTP error vs. a timeout after partial generation), which cannot be measured without an actual failing call.",
+    "retry_policy_traced_from_real_code": "Sequential, ONE physical attempt per tier (public/app.js:227929, for-loop with !response guard). No per-tier internal retry. Advances only on empty response, thrown error, or timeout. Exactly 3 tiers total — no separate \"holistic repair\" pass exists in this code path (that was part of the earlier, wrong-provider convention-based guess and does not apply here).",
+    "no_literary_fallback": "This one-time authoring pass has NO literary fallback, unlike the live reader-facing caller (which falls back to literary CG-scaffold-and-continue on total exhaustion) — per Roman's explicit instruction not to choose a literary fallback by convenience. On exhaustion of all 3 tiers, this operation simply fails and is reported as failed.",
+    "mistral_role": "NONE. Traced fact: Mistral only leads the separate _SCREENPLAY_MISTRAL_SMALL_FIRST connecting-scene chain (app.js:227754-227759), never the Scene-1/tentpole chain this packet uses. No distinct, justified structural job for Mistral was found in the real authoring pattern — the real chain produces the whole JSON screenplay (structure + prose together) in ONE call, it does not split structure and prose across two providers.",
+    "kind": "locked_canon_fact",
+    "cites": "_first_sacrifice_grok_authoring_census.mjs output, public/app.js:227745-227927, app.js:4763-4795 (TEXT_PRICING)"
+  },
+  "grok_mistral_openai_authoring_operation_census_SUPERSEDED_mistral_small_refused": {
+    "status": "SUPERSEDED (Roman, fourth pass, 2026-09-16) — this census used mistral-small-latest as the fallback tier, which a real governor.admit() check found REFUSED at the required 8,000-token ceiling (reservation 20,120 > its 20,000 TPM allowance). Roman: do not shrink the 8,000-token contract; check whether ministral-8b-2512 (625,000 TPM allowance) can serve instead at the SAME ceiling. See ministral8b_fallback_compat_check and grok_ministral8b_openai_authoring_operation_census below for the corrected operation.",
+    "measured_on": "2026-09-16",
+    "produced_by": "_first_sacrifice_grok_authoring_census.mjs, calling _first_sacrifice_authoring_adapter.mjs:buildAuthoringFallbackChain()",
+    "real_prompt_size": {
+      "system_chars": 2781,
+      "user_chars": 9209,
+      "total_chars": 11990,
+      "total_utf8_bytes": 12120,
+      "byte_char_gap_reason": "multi-byte em dashes / curly quotes in the packet-derived prompt text",
+      "est_input_tokens_chars_over_4_convention": 2998
+    },
+    "approved_chain": {
+      "tier_1_primary": {
+        "provider": "Grok",
+        "exact_model_identifier": "grok-4.3",
+        "requested_as": "grok-4-1-fast-reasoning (resolved server-side to grok-4.3 by api/proxy.js:_resolveGrokModel)",
+        "endpoint": "/api/proxy",
+        "max_input_token_reservation_est": 2998,
+        "max_output_token_reservation": 8000,
+        "temperature": 0.85,
+        "timeoutMs": 75000,
+        "pricing_usd_per_mtok": {
+          "in": 1.25,
+          "out": 2.5
+        },
+        "pricing_cited_at": "public/app.js:4779 (TEXT_PRICING)",
+        "pricing_source_note": "app.js:4772 (2026-06-09) + a 2026-08-16 measurement note; no explicit pricing-page URL in-code (disclosed gap) — public reference x.ai API pricing page, not cited by exact URL in this codebase.",
+        "governor": "none exists in this codebase for Grok",
+        "est_max_cost_usd": 0.0237
+      },
+      "tier_2_fallback": {
+        "provider": "Mistral",
+        "exact_model_identifier": "mistral-small-latest",
+        "endpoint": "/api/mistral-proxy",
+        "max_input_token_reservation_est": 2998,
+        "max_output_token_reservation": 8000,
+        "temperature": 0.7,
+        "timeoutMs": 60000,
+        "pricing_usd_per_mtok": {
+          "in": 0.15,
+          "out": 0.6
+        },
+        "pricing_cited_at": "public/app.js:4786 (TEXT_PRICING)",
+        "pricing_source_note": "\"OFFICIAL list price (Roman 2026-08-13, mistral.ai/pricing/api)\" — explicit date AND URL present in-code.",
+        "governor": "api/_mistral-governor.js — REAL CHECK RUN, see governor_admission_check below",
+        "est_max_cost_usd": 0.0052
+      },
+      "tier_3_terminal": {
+        "provider": "OpenAI",
+        "exact_model_identifier": "gpt-4o",
+        "endpoint": "callChatGPT (Anthropic/OpenAI proxy dispatch)",
+        "max_input_token_reservation_est": 2998,
+        "max_output_token_reservation": 8000,
+        "temperature": 0.85,
+        "timeoutMs": 60000,
+        "pricing_usd_per_mtok": {
+          "in": 2.5,
+          "out": 10.0
+        },
+        "pricing_cited_at": "public/app.js:4765 (TEXT_PRICING)",
+        "pricing_source_note": "app.js:4749, \"calibrated to ACTUAL models in use as of 2026-05\"; no explicit pricing-page URL in-code (disclosed gap) — public reference openai.com/api/pricing, not cited by exact URL in this codebase.",
+        "governor": "none exists in this codebase for OpenAI",
+        "est_max_cost_usd": 0.0875
+      }
+    },
+    "expected_grok_success_ceiling": "Grok succeeds on tier 1 — 1 physical call, max $0.0237. A ceiling (max_tokens=8000), not a measured spend — the real completion is very likely shorter.",
+    "three_tier_exhaustion_ceiling": "Grok fails, Mistral fails, GPT-4o succeeds — 3 physical calls, max $0.1164. Pessimistic bound: a failing call’s real cost depends on its failure mode (immediate HTTP error vs. a timeout after partial generation), not measurable without an actual failing call.",
+    "governor_admission_check": {
+      "tier_checked": "tier_2_fallback (mistral-small-latest) — the only tier a local governor exists for in this codebase",
+      "real_model_limits": {
+        "tpm": 20000,
+        "rps": 1,
+        "source": "https://admin.mistral.ai/plateforme/limits",
+        "readOn": "2026-09-04"
+      },
+      "admit_result": {
+        "outcome": "reservation_exceeds_model_allowance",
+        "reserve": 20120,
+        "limitTpm": 20000
+      },
+      "finding": "REAL PROBLEM, surfaced not hidden: the Mistral fallback tier AS SPECIFIED (max_tokens=8000, copied from the live CG connecting-scene convention) would be REFUSED by the real governor before any network call. mistral-small-latest’s real allowance (20,000 TPM) is far tighter than ministral-8b-2512’s (625,000 TPM, the model used in the earlier wrong pass-1 chain) — this prompt alone (12,120 real UTF-8 bytes) consumes 61% of the whole TPM budget, leaving only ~7,880 tokens of safe output headroom, not 8,000.",
+      "open_decision": "NOT resolved unilaterally here — Roman’s call: either reduce the Mistral-tier max_tokens to ~7,880 (risking truncation of the OAS draft on this one fallback leg only; Grok and GPT-4o both keep 8,000 unaffected) or specify a different treatment for the Mistral tier before this chain can be considered decision-ready."
+    },
+    "deepseek_exclusion": "DeepSeek is deliberately EXCLUDED from this chain — not an approved Storybound provider for this task per Roman’s explicit instruction, even though public/app.js:227745-227749 shows it present in the live CG-tentpole route elsewhere in the app. That live-route precedent does not apply here.",
+    "retry_policy": "Sequential, ONE physical attempt per tier, no per-tier internal retry. Mistral is reached ONLY after a genuine Grok failure (empty response / thrown error / timeout) — never tried in parallel or speculatively. No literary fallback: on exhaustion of all 3 approved tiers, this one-time authoring pass simply fails and is reported as failed.",
+    "kind": "locked_canon_fact",
+    "cites": "_first_sacrifice_grok_authoring_census.mjs output, public/app.js:4749-4795 (TEXT_PRICING), api/_mistral-governor.js, api/proxy.js:_resolveGrokModel"
+  },
+  "ministral8b_fallback_compat_check": {
+    "status": "REAL DRY COMPATIBILITY CHECK — 4 required conditions, all verified true, none assumed. Produced by _first_sacrifice_ministral8b_fallback_compat_check.mjs.",
+    "checked_on": "2026-09-16",
+    "conditions": {
+      "1_allowed_by_real_proxy": {
+        "pass": true,
+        "cites": "api/mistral-proxy.js ALLOWED_MISTRAL_MODELS",
+        "detail": "ministral-8b-2512 is present in the allowlist (added 2026-09-13 per an in-code comment at api/mistral-proxy.js:24-31)"
+      },
+      "2_real_configured_governor_limit": {
+        "pass": true,
+        "cites": "api/_mistral-governor.js MODEL_LIMITS",
+        "detail": "{tpm:625000,rps:3.13,source:https://admin.mistral.ai/plateforme/limits,readOn:2026-09-04} — a real account-sourced entry, not a placeholder"
+      },
+      "3_admits_adapters_exact_prompt_at_full_8000_ceiling": {
+        "pass": true,
+        "detail": "real governor.admit() result: {outcome:admitted,reserve:20120,usedTokens:20120} against the 625,000 TPM allowance — 3% utilization, real headroom"
+      },
+      "4_current_sourced_pricing_entry": {
+        "pass": true,
+        "detail": "NOT present in this codebase’s own TEXT_PRICING table (disclosed, separate gap) — but a current, dated external source was supplied by Roman: https://docs.mistral.ai/models/ministral-3-8b-25-12 (/bin/zsh.15/MTok in, /bin/zsh.15/MTok out, 256k context)"
+      }
+    },
+    "result": "ALL 4 CONDITIONS HOLD. ministral-8b-2512 adopted as the Mistral-fallback tier, UNCHANGED 8,000-token ceiling — the contract was not shrunk.",
+    "kind": "locked_canon_fact",
+    "cites": "_first_sacrifice_ministral8b_fallback_compat_check.mjs output"
+  },
+  "oas_sequence_v2_SUPERSEDED": {
+    "step1_interrogation": {
+      "description": "Julian's charged, public questioning of Lirael — an accusation, not comfort: that she manipulated Seren without knowing it, through desirability; he asks whether she called to him hoping to be rescued; she is forced to acknowledge the attraction as true. Adults; sensual and charged, never explicit.",
+      "register": "predatory confidence framed as Julian positioning himself as the one she has \"done this to\"",
+      "kind": "locked_canon_fact",
+      "cites": "starter-scenes.js oasHandoff.openingFrame"
+    },
+    "step2_institutional_interruption": {
+      "description": "The presiding Dohkar cuts the interrogation off as grossly inappropriate — a Provast questioning a Sacrificiant about her desires, in front of her ward's family. He asserts the rite and the ruling on her conduct are HIS, and that a formal inquiry (before a Chayr and two Dohkars) is the venue — not here.",
+      "register": "institutional/procedural act reasserting ceremonial authority — NOT phrased as a reply to Lirael, NOT a dialogue turn the reader could have redirected",
+      "kind": "locked_canon_fact",
+      "cites": "starter-scenes.js oasHandoff.interruption + interruptionExchange[0]"
+    },
+    "step3_julians_claim_to_inquiry": {
+      "description": "Julian agrees at once and claims the formal inquiry for himself: he will convene it and preside, framing it as \"always where this was going.\" Why he wants it stays sealed (see sealed_facts_forbidden_pre_surface).",
+      "kind": "locked_canon_fact",
+      "cites": "starter-scenes.js oasHandoff.interruptionExchange[1]"
+    },
+    "step4_five_fate_cards": {
+      "schema": {
+        "cards": "exactly 5, each { posture_label, prefill_text }",
+        "posture_labels_must_be": "genuinely distinct reader POSTURES toward what just happened — never variants of a run/remain binary",
+        "custom_say_do": true,
+        "submit_required": true,
+        "card_click_behavior": "fills the editable Say/Do draft ONLY — never advances state; only Submit does"
+      },
+      "proposed_posture_categories": {
+        "status": "REVIEWABLE PACKAGE INTERACTION CONTENT — proposed for Roman's approval, not locked",
+        "kind": "reviewable_package_interaction",
+        "not_world_canon": "these are ACTIONS OFFERED TO THE READER at this moment in the package, not facts about the world or characters. Approving a card locks it into the SHIPPED PACKAGE (so every reader sees it) — it does NOT write a new locked_canon_fact, does NOT get added to STARTER_SEEDS, and no other system may cite it as established world/character history. A card is evaluated for dramatic distinctness and consistency with Scene 1, never for whether it 'becomes true.'",
+        "candidates": [
+          "expose his desire — turns Julian's accusation back on him, naming it as exposure of his own wanting, not hers",
+          "demand due process — refuses to answer informally; demands the accusation be named and entered into the proper inquiry process",
+          "own it, refuse his frame — acknowledges the attraction plainly, while refusing the coercive frame he is forcing it into",
+          "walk away — leaves the ceremony rather than remain publicly humiliated",
+          "raise the stakes — takes a dangerous Fatelands gamble, proposing a wish or another concrete stake, to change the situation outright"
+        ],
+        "note": "these five are a REVISED proposal (2026-09-16, second pass) grounded in the scene's actual content — the prior set (defiant / composed refusal / counter-question / vulnerable honesty / appeal to procedure) was rejected by Roman for overlapping too much (defiant, composed refusal, and appeal to procedure all read as variants of the same guarded posture). This set is built on 5 deliberately divergent AXES instead: (1) confrontation/reversal — turn the accusation onto Julian; (2) institutional/procedural — go through the proper process; (3) honest-but-boundaried — own the truth without submitting to his frame; (4) exit/withdrawal — leave rather than perform for the room; (5) escalation/gamble — change the stakes outright via a concrete Fatelands action. Roman may still approve, replace, or reject any/all before a generation pass is authorized.",
+        "superseded_candidates_2026_09_16_first_pass": [
+          "defiant — answers the accusation directly, refusing the frame Julian set",
+          "composed refusal — declines to perform the attraction he named, without denying the charge",
+          "counter-question — turns the interrogation back on Julian or the Dohkar's authority to conduct it here",
+          "vulnerable honesty — owns the attraction plainly, on her own terms rather than his",
+          "appeal to procedure — invokes the coming formal inquiry herself, refusing to answer outside it"
+        ]
+      }
+    },
+    "superseded_note": "The CURRENTLY BAKED package's axes.microDecision ('run in shame vs remain and see where Julian was taking it') and expansions A/B are SUPERSEDED by this redesign, per Roman's explicit correction that no run/remain (or any) binary belongs in the canonical OAS aftermath. A future authoring pass must NOT carry that structure forward.",
+    "status": "SUPERSEDED (Roman, third redesign pass, 2026-09-17) — this design invented a freeform 3-array interrogation/interruption/claimOverInquiry split and freely-labeled fate-card postures. Direct trace of the real app mechanism (public/app.js:_INTR_SLOTS, _mountIntimateInterruption, orchestration-client.js:_parseBatchFatePreview) found NEITHER matches reality: (1) the real baked package already has a FIXED, hand-authored 3-line interruptionExchange tail that must never be regenerated — only the ~7-line interrogation PRECEDING it was ever missing; (2) the 5 fate cards are a FIXED 5-key contract (temptation/silence/reversal/boundary/confession), never freely-labeled. Retained for disclosure, not deleted. See oas_sequence_v2 below."
+  },
+  "scene1_candidate_requirement": {
+    "status": "CORRECTED (Roman, fifth redesign pass, 2026-09-17) — the first real draft under this contract passed validation but was a genuine craft failure: 232 words across 18 beats (vs. the baked scene’s ~1,444), written in THIRD PERSON (this world’s convention is FIRST PERSON — confirmed directly from the baked text: “I stood on it in the sash”), and missing real content the prior 6-step causal_sequence never specified as a required beat (Seren’s spoken cost/offering statement). Root cause: the prompt specified a beat COUNT target but never a density/length target or POV, and the causal_sequence was too compressed to carry granular content. Both fixed below. Roman also flagged real, disclosed flaws in the CURRENT baked scene itself (a spiralgrass uniqueness claim that contradicts world lore; the cost-statement and the wish separated by unrelated beats; a slow scene-setting open where Roman has wanted a hot crisis opener for months) — confirming the baked scene is not a quality bar to preserve by default either; both options are genuinely under review.",
+    "what_roman_actually_authored": "The OUTLINE and decision architecture: locked_world_facts, scene1_causal_sequence (the 6-step causal skeleton), required_content_beats, sealed_facts_forbidden_pre_surface, emotional_dramatic_requirement, and cplus_eplus_fusion_grounds — all in THIS packet, and possibly loose outline paragraphs Roman wrote separately. Roman did NOT personally write the existing 20-beat prose currently baked in public/starter-scenes.js — CORRECTED (2026-09-17): Roman confirmed directly he did not write it (\"I am far too lazy to write scene 1 when that is literally Grok's job\"), and the prose itself contains errors he would not have made (a spiralgrass-uniqueness lore claim that contradicts established world lore; the cost-statement and the wish separated by unrelated beats; a slow scene-setting open where Roman has wanted a hot crisis opener for months). It was written by an earlier AI-assisted authoring pass (this repo's own git history: the sole commit for this file, 86ccb253, calls it \"hand-authored\" but was itself a same-machine backfill with no record of who wrote the content) — a CANDIDATE REPLACEMENT under proper review is exactly the right move for it too, not a settled quality bar. This packet's CANDIDATE REPLACEMENT authoring contract exists precisely because that presence in starter-scenes.js is not approval of its quality or provenance.",
+    "output_field": "scene1Candidate",
+    "output_shape": "an object { beats: [ { kind, speaker, image, text, provenance } ] } — kind is one of narration|exposition|dialogue (the exact 3 kinds the real baked scene uses); speaker is a cast name or null; image is EXACTLY one of the 8 existing image IDs below (reused, in this fixed order — no new image ever generated); text is the beat’s prose; provenance is { kind, cites? } using this packet’s 5 claim categories, same discipline as any other authored content — locked_canon_fact requires a citation into this packet’s own sections.",
+    "existing_images_reuse_only": {
+      "rule": "NO NEW IMAGE may ever be generated for this candidate. Use ONLY these 8 existing images, in this exact order (each may repeat across consecutive beats as the scene progresses through it, matching the real baked scene’s own pacing convention):",
+      "order": [
+        "intro_lirael",
+        "intro_seren",
+        "intro_dohkar",
+        "intro_julian",
+        "d1",
+        "d2",
+        "d3",
+        "d4"
+      ],
+      "subjects": {
+        "intro_lirael": "Lirael",
+        "intro_seren": "Seren",
+        "intro_dohkar": "the presiding Dohkar",
+        "intro_julian": "Julian",
+        "d1": "the rite begins — Seren kneeling before Lirael in the dawn clearing",
+        "d2": "the wish — Seren speaks it; Lirael tears the band and moves",
+        "d3": "the charge — the assembly turns; the presiding Dohkar names Lirael",
+        "d4": "The Answer — Julian closes her hands around it before them all"
+      }
+    },
+    "beat_count_target": "approximately 20 beats (tolerance 16–24) — matching the real baked scene’s own scale, not a compressed summary. Expand EVERY step of scene1_causal_sequence into full scene beats: setting/character introduction, the rite, the wish and its bending, the charge, Julian’s intervention and The Answer — the same causal shape, freshly authored prose.",
+    "grounding_requirement": "Every beat must be traceable to locked_world_facts, scene1_causal_sequence, or cplus_eplus_fusion_grounds — the SAME canon the current baked scene is supposed to dramatize, not new invented plot. This is a re-AUTHORING of the approved outline, not a new outline.",
+    "sealed_facts_still_apply": "sealed_facts_forbidden_pre_surface applies to scene1Candidate AND oasOpening AND postInterruptionBeat exactly the same way — none of it may surface or be implied anywhere in this packet's authored content.",
+    "emotional_dramatic_requirement_applies": "scene1Candidate must satisfy emotional_dramatic_requirement in full — pictureable, personally endangered, emotionally affected, a charged choice — across the whole scene, not only its ending.",
+    "review_framing": "This is a CANDIDATE REPLACEMENT for Roman’s review, not an approved rewrite. The current baked scene remains the live package unless and until Roman explicitly approves the candidate. The review preview must render BOTH side by side — current (baked) vs candidate (new) — never silently substituting one for the other.",
+    "kind": "generated_expression by default per-beat (individual beats may be tagged locked_canon_fact with a citation, or flagged_new_canon_candidate if the model proposes something genuinely new — must be surfaced distinctly, never silently folded into locked_canon_fact)",
+    "point_of_view": {
+      "requirement": "FIRST PERSON — Lirael’s own \"I\". Confirmed the world’s real convention directly from the baked scene text (\"I stood on it in the sash\", \"I breathed behind the cloth\"). The prior real draft used third person (\"Lirael stood\") — a hard failure, corrected here explicitly.",
+      "kind": "locked_canon_fact",
+      "cites": "public/starter-scenes.js beats[0].text (verbatim first-person prose)"
+    },
+    "density_requirement": {
+      "requirement": "Accepted range 1,100–1,700 words TOTAL across all beats; TARGET 1,350–1,550 (the baked scene is ~1,444 words in 20 beats, averaging ~72 words/beat). A beat is a full paragraph carrying real interiority, sensory detail, and voice — NOT a single flat plot-summary sentence. Satisfying the beat-COUNT target with short one-liners is a hard failure, even if it passes the beat-count check.",
+      "word_count_is_not_quality_proof": "CORRECTED (Roman, sixth pass, 2026-09-17): raising the floor from 900 to 1,100 closes the thinness gap but does NOT certify craft — a candidate can hit 1,100+ words through padding, generic summary sentences, or repetition and still fail every real craft bar below. The floor is a necessary filter, never a sufficient one; word count is explicitly NOT treated as quality proof anywhere in this packet or its validator.",
+      "why_this_was_missing": "The first real draft (2026-09-17) used only 1,505 of its 6,000 available completion tokens and wrote 232 words — this was NOT a token-limit truncation, it was the model satisfying an underspecified instruction (beat count only, no density/length requirement) as cheaply as possible."
+    },
+    "required_content_beats": {
+      "status": "NEW (Roman, fifth pass) — the 6-step scene1_causal_sequence is a compressed PLOT summary, not a granular beat outline; it omitted real content the baked scene has (e.g. Seren’s spoken cost/offering statement) and the first real draft consequently omitted it too. This list is the granular event sequence — still an OUTLINE (what happens, not the prose expression of it) — grounding every beat the candidate must include, mapped to the 8 fixed images. Each entry now carries a stable `id` for the required coverage map (below) to reference precisely — \"generic citation\" can no longer stand in for actually covering a specific required beat.",
+      "beats": [
+        {
+          "image": "intro_lirael",
+          "required_event": "Dawn ceremony setting; Lirael in the sash and mouth-band, her first time as the responsible Sacrificiant, the personal stakes of her father’s path.",
+          "id": "ceremony_setting"
+        },
+        {
+          "image": "intro_seren",
+          "required_event": "Seren kneeling, composed from months of rehearsal; a brief private exchange of reassurance between them.",
+          "id": "seren_kneeling_rehearsed"
+        },
+        {
+          "image": "intro_dohkar",
+          "required_event": "The presiding Dohkar’s character established; he calls for \"the cost\" and Seren NAMES HER OFFERING ALOUD (her earliest memory) — this exact beat was MISSING from the first draft and MUST appear.",
+          "id": "cost_offering_statement"
+        },
+        {
+          "image": "intro_julian",
+          "required_event": "Julian introduced at the edge of the gathering — his stillness, his history/office, Lirael’s private, involuntary awareness of him.",
+          "id": "julian_introduced"
+        },
+        {
+          "image": "d1",
+          "required_event": "Seren begins the invocation; for a few words Lirael is not afraid.",
+          "id": "invocation_begins"
+        },
+        {
+          "image": "d2",
+          "required_event": "Seren deviates from the rehearsed wish and speaks the misaligned wish naming Lirael; the wish bends — no visible effect, only the assembly turning to look; Lirael, sealed and forbidden to interfere, moves toward her anyway.",
+          "id": "wish_and_sacrifice"
+        },
+        {
+          "image": "d3",
+          "required_event": "The presiding Dohkar names the bent word and lays the charges — shaping the wish, interfering in the rite — publicly jeopardizing Lirael’s path; even as her standing collapses, some part of her attention goes to Julian.",
+          "id": "public_charge"
+        },
+        {
+          "image": "d4",
+          "required_event": "Julian moves in from the edge; states he can hear she is aligned with her own innocence; draws out The Answer and closes her hands around it, saying he will question her before them all.",
+          "id": "julian_claims_the_answer"
+        }
+      ]
+    },
+    "interiority_requirement": "Every major turn (the cost statement, the wish bending, the public charge, Julian’s approach) must carry a visible interior reaction — what Lirael feels, fears, or notices about herself — not just external action description. This is the emotional_dramatic_requirement applied concretely per-beat, not only as a scene-level abstraction.",
+    "prose_construction_requirement": {
+      "requirement": "Each beat is a real dramatic paragraph — sensory action, physical detail, interior thought, and consequence/subtext — OR a deliberately short DIALOGUE beat embedded in surrounding lived narration (a short spoken line is fine; a short SUMMARY line is not).",
+      "banned_construction": "Synopsis-like sentences that SUBSTITUTE FOR (rather than accompany) sensory action, thought, consequence, or subtext are a hard failure — e.g. \"X felt Y\" with no concrete texture, \"X stepped forward\" with no sensory detail, \"the charge landed\" as a stand-in for what the charge actually felt/sounded/looked like. These patterns are named explicitly because they are exactly what the first real draft produced throughout.",
+      "kind": "generated_expression"
+    },
+    "required_beat_coverage_map": {
+      "status": "NEW (Roman, sixth pass, 2026-09-17) — draft METADATA, never reader-facing prose. Maps every required_content_beats id to the scene1Candidate beat index/indices that actually cover it, so missing canon cannot hide behind a generic provenance.cites — the coverage claim is checked structurally against the actual beats array, not just asserted.",
+      "output_field": "scene1Coverage",
+      "output_shape": "an object keyed by EXACTLY the 8 required_content_beats ids, each value an array of 0-indexed scene1Candidate.beats indices that cover it (at least one index required per id — an empty array means NOT covered and is a hard failure). Example: {\"cost_offering_statement\": [5], \"wish_and_sacrifice\": [9, 10]}",
+      "rendered_in_review": "The review preview renders this map explicitly (required beat -> which candidate beat(s) claim to cover it) so a reviewer can see coverage at a glance, not hunt for it in prose."
+    },
+    "first_person_focality_gate": {
+      "status": "NEW (Roman, sixth pass, 2026-09-17) — a repeat-failure guard against the exact real failure (the first draft was written in third person throughout). This is a narrow heuristic, not a POV-quality certification: a candidate can pass this gate and still have weak interiority, exactly like the provenance/citation checks never certify prose craft.",
+      "declared_field": {
+        "output_field": "first_person_lirael",
+        "output_shape": "boolean, top-level alongside scene1Candidate — the model's own explicit declaration that it wrote in first person. Self-declaration alone is NOT trusted (see structural_heuristic below); a false declaration is itself a hard failure once the heuristic catches it."
+      },
+      "structural_heuristic": {
+        "rule": "Across all scene1Candidate narration/exposition beat text (dialogue beats excluded — spoken lines legitimately use any grammatical person), count first-person pronouns (I, me, my, mine, myself) versus third-person-singular-feminine pronouns referring to the PC (she, her, hers, herself) referring to Lirael specifically. If third-person pronouns outnumber first-person pronouns across those beats, OR first_person_lirael is declared true while the count says otherwise, the draft is REJECTED by name as substantially-third-person.",
+        "why_narrow": "This cannot distinguish EVERY malformed case (e.g. a beat about Seren legitimately using \"she\") — it is a blunt, disclosed, narrow instrument sized to catch exactly the real failure mode (an entire scene narrated in third person), not a general POV-quality judge."
+      }
+    }
+  },
+  "grok_ministral8b_openai_authoring_operation_census_SUPERSEDED_oas_only_schema": {
+    "status": "SUPERSEDED (Roman, fourth redesign pass, 2026-09-17) — this census measured the OAS-ONLY schema (interrogationExchange + fateCards, 2,500-token ceiling). Roman corrected the scope: the canonical authoring task must also produce a full candidate Scene 1 (~20 beats). See full_package_authoring_operation_census below for the corrected, re-measured operation.",
+    "measured_on": "2026-09-16",
+    "produced_by": "_first_sacrifice_grok_authoring_census.mjs, calling _first_sacrifice_authoring_adapter.mjs:buildAuthoringFallbackChain()",
+    "real_prompt_size": {
+      "system_chars": 2781,
+      "user_chars": 9209,
+      "total_chars": 11990,
+      "total_utf8_bytes": 12120,
+      "est_input_tokens_chars_over_4_convention": 2998
+    },
+    "approved_chain": {
+      "tier_1_primary": {
+        "provider": "Grok",
+        "exact_model_identifier": "grok-4.3",
+        "requested_as": "grok-4-1-fast-reasoning (resolved server-side to grok-4.3 by api/proxy.js:_resolveGrokModel)",
+        "endpoint": "/api/proxy",
+        "max_input_token_reservation_est": 2998,
+        "max_output_token_reservation": 8000,
+        "temperature": 0.85,
+        "timeoutMs": 75000,
+        "pricing_usd_per_mtok": {
+          "in": 1.25,
+          "out": 2.5
+        },
+        "pricing_cited_at": "public/app.js:4779 (TEXT_PRICING)",
+        "pricing_source_url": "https://docs.x.ai/developers/migration/may-15-retirement (Roman-supplied, confirmed consistent 2026-09-16)",
+        "governor": "none exists in this codebase for Grok",
+        "est_max_cost_usd": 0.0237
+      },
+      "tier_2_fallback": {
+        "provider": "Mistral",
+        "exact_model_identifier": "ministral-8b-2512",
+        "endpoint": "/api/mistral-proxy",
+        "max_input_token_reservation_est": 2998,
+        "max_output_token_reservation": 8000,
+        "temperature": 0.7,
+        "timeoutMs": 60000,
+        "pricing_usd_per_mtok": {
+          "in": 0.15,
+          "out": 0.15
+        },
+        "pricing_cited_at": "NOT in this codebase’s own TEXT_PRICING table (disclosed gap)",
+        "pricing_source_url": "https://docs.mistral.ai/models/ministral-3-8b-25-12 (Roman-supplied, external, dated 2026-09-16)",
+        "governor": "api/_mistral-governor.js — REAL admit() check run, ADMITTED (reserve 20,120 of 625,000 TPM, 3%)",
+        "est_max_cost_usd": 0.0016
+      },
+      "tier_3_terminal": {
+        "provider": "OpenAI",
+        "exact_model_identifier": "gpt-4o",
+        "endpoint": "callChatGPT (Anthropic/OpenAI proxy dispatch)",
+        "max_input_token_reservation_est": 2998,
+        "max_output_token_reservation": 8000,
+        "temperature": 0.85,
+        "timeoutMs": 60000,
+        "pricing_usd_per_mtok": {
+          "in": 2.5,
+          "out": 10.0
+        },
+        "pricing_cited_at": "public/app.js:4765 (TEXT_PRICING)",
+        "pricing_source_url": "https://developers.openai.com/api/docs/models/gpt-4o (Roman-supplied, confirmed consistent 2026-09-16)",
+        "governor": "none exists in this codebase for OpenAI",
+        "est_max_cost_usd": 0.0875
+      }
+    },
+    "expected_grok_success_ceiling": "Grok succeeds on tier 1 — 1 physical call, max $0.0237. A ceiling (max_tokens=8000), not a measured spend.",
+    "three_tier_exhaustion_ceiling": "Grok fails, Ministral-8B fails, GPT-4o succeeds — 3 physical calls, max $0.1128. Pessimistic bound, not a measured number.",
+    "deepseek_exclusion": "DeepSeek is deliberately EXCLUDED — not an approved Storybound provider for this task, even though it appears in the live CG-tentpole route elsewhere in the app.",
+    "retry_policy": "Sequential, ONE physical attempt per tier, no per-tier internal retry. Ministral-8B is reached ONLY after a genuine Grok failure — never tried in parallel or speculatively. No literary fallback: on exhaustion of all 3 approved tiers, this one-time authoring pass simply fails and is reported as failed.",
+    "kind": "locked_canon_fact",
+    "cites": "_first_sacrifice_grok_authoring_census.mjs output, _first_sacrifice_ministral8b_fallback_compat_check.mjs output, public/app.js:4749-4795 (TEXT_PRICING), api/_mistral-governor.js, api/mistral-proxy.js, api/proxy.js:_resolveGrokModel"
+  },
+  "full_package_authoring_operation_census": {
+    "status": "REAL CENSUS — re-measured AGAIN (Roman, sixth pass, 2026-09-17) against the live-OAS redesign: scene1Candidate/scene1Coverage/first_person_lirael (raised 1,100-word floor, coverage map, focality gate, banned synopsis construction) + oasOpening (ONE Julian line, replaces the SUPERSEDED interrogationExchange) + postInterruptionBeat (new) + fateCards (5 fixed archetype keys), against the approved chain (Grok primary -> ministral-8b-2512 fallback -> GPT-4o terminal, no DeepSeek). Prior fifth-pass numbers below are superseded by this measurement, not deleted.",
+    "measured_on": "2026-09-17 (re-measured after the sixth-pass live-OAS/oasOpening/postInterruptionBeat redesign)",
+    "produced_by": "_first_sacrifice_scene1_candidate_budget_measurement.mjs, calling _first_sacrifice_authoring_adapter.mjs:buildAuthoringFallbackChain()",
+    "real_prompt_size": {
+      "system_bytes": 2839,
+      "user_bytes": 24692,
+      "total_bytes": 27531,
+      "est_input_tokens_chars_over_4_convention": 6782,
+      "note": "grew again from ~20,170 bytes (fifth-pass interrogationExchange-based prompt) to ~24,692 bytes once the interrogationExchange TASK 2/3 was replaced with the oasOpening + postInterruptionBeat tasks and the live-OAS constraints/coverage-map instructions were added."
+    },
+    "max_tokens_ceiling": {
+      "value": 8000,
+      "rationale": "Unchanged from the fifth pass — the sixth-pass schema change (interrogationExchange -> oasOpening + postInterruptionBeat) is a net SMALLER output ask (one ~14-word line plus one short beat, vs. ~7 lines of dialogue), so no ceiling increase was needed; re-measured against the real governor to confirm, not assumed."
+    },
+    "governor_check": {
+      "tier_checked": "ministral-8b-2512 (the only tier a local governor exists for)",
+      "real_model_limits": {
+        "tpm": 625000,
+        "rps": 3.13
+      },
+      "admit_result": {
+        "outcome": "admitted",
+        "reserve": 35531,
+        "limitTpm": 625000
+      },
+      "utilization_pct": 6
+    },
+    "cost_ceilings": {
+      "expected_grok_success_1_call": 0.0285,
+      "three_tier_exhaustion_3_calls": 0.1277,
+      "caveat": "Both are CEILINGS (full max_tokens billed), not measured spend. The only real completion-length data point available (232 words / 18 beats / third-person, the rejected v3 draft) was measured under the fifth-pass interrogationExchange schema, not this one — a real completion under the sixth-pass oasOpening/postInterruptionBeat schema has not yet been measured."
+    },
+    "kind": "locked_canon_fact",
+    "cites": "_first_sacrifice_scene1_candidate_budget_measurement.mjs output, api/_mistral-governor.js, app.js TEXT_PRICING"
+  },
+  "oas_sequence_v2_SUPERSEDED_scripted_transcript": {
+    "status": "SUPERSEDED (Roman, sixth redesign pass, 2026-09-17) — this design authored a full 7-line interrogationExchange as if the reader watches a scripted Julian/Lirael transcript. Roman’s correction: THE PLAYER IS LIRAEL. OAS is a LIVE exchange — the player answers Julian in real time via Say/Do or a Fate card, and Julian’s subsequent replies are generated from the ACTUAL player input. A canned 7-line exchange pre-decides what the player says, which is exactly the thing this package must never do. See oas_sequence_v3 below for the corrected contract: exactly ONE authored Julian opening line, then everything until the interruption is live, exactly as the real app.js OAS mechanism (_handleIntimacyTurn) already works for every non-baked story.",
+    "fixed_baked_content": {
+      "kind": "locked_canon_fact",
+      "cites": "public/starter-scenes.js starter_first_sacrifice.oasHandoff (verbatim)",
+      "cue": "Julian, the Provast, closes Lirael’s fingers around The Answer and says he will question her in front of the assembly.",
+      "interruptionImage": "d3",
+      "interruption_caption": "The presiding Dohkar cut the interrogation off — a Provast questioning a Sacrificiant about her desires, in front of her ward’s family — and the clearing went still around the two of them.",
+      "fixed_tail_exchange": [
+        {
+          "speaker": "the presiding Dohkar",
+          "text": "“That is enough, Provast. This rite is mine to preside, and what the Sacrificiant did in it is mine to rule on — in a formal inquiry, before a Chayr and two Dohkars, where questions are put for the record. Not here, and not as your opportunity to flirt with the accused.”"
+        },
+        {
+          "speaker": "Julian",
+          "text": "“Agreed. A formal inquiry — I will convene it, and preside. That was always where this was going.”"
+        },
+        {
+          "speaker": null,
+          "text": "The assembly’s attention came back to me, and to The Answer still in my hands, which was not mine."
+        }
+      ],
+      "fixed_tail_note": "This exact 3-line array is marked FIXED EXCHANGE in the baked source (Dohkar’s register: dismissive, per his ritual-contempt and peer-jealousy facets). It is NEVER asked of the model and NEVER regenerated — the adapter splices it in deterministically, in code, after the model’s new interrogation lines.",
+      "opening_frame_brief": "The fixed Scene 1 has just ended: Seren’s wish twisted, the presiding Dohkar has publicly charged Lirael with shaping the wish and with interfering, and Julian — the Provast, the office her father once held, next in line for First Dohkar, and the path she aspires to — has stepped in, said he can hear that she is aligned with her own innocence, and put The Answer in her hands so that any misalignment in her answers will be plain to everyone present. The one-on-one opens THERE, still public. Julian’s first line is an accusation, not a comfort: that she manipulated Seren without knowing it, the way she manipulates everyone — through desirability. He describes her gestures and where her attention went during the rite, and asks whether she called to him hoping he would rescue her. He wears predatory confidence while framing himself as the one she has done this to. She is forced to acknowledge the attraction as true. Adults; sensual and charged, never explicit."
+    },
+    "interrogation_exchange_requirement": {
+      "kind": "generated_expression",
+      "output_field": "interrogationExchange",
+      "output_shape": "an array of { speaker, text } lines — EXACTLY the shape and rendering convention of the real fixed_tail_exchange above (plain speaker+text; no interiority, image, kind, or provenance field — those belong to a DIFFERENT schema this operation does not use)",
+      "length_target": "approximately 7 lines — a genuine back-and-forth, alternating Julian and Lirael (narration lines with speaker:null are allowed sparingly, matching the fixed tail’s own use of one). 5–9 lines is acceptable; ONE summarizing sentence is not — this must read as real charged dialogue, matching the register and pacing of the baked Scene 1 and the fixed tail.",
+      "content_requirement": "Expand opening_frame_brief into that real dialogue: Julian’s accusation (manipulation through desirability, her gestures, her attention, the rescue question), his predatory confidence framing himself as wronged, Lirael forced to acknowledge the attraction as true. Adults; sensual and charged, never explicit.",
+      "hard_boundary": "End the exchange IMMEDIATELY before the Dohkar’s interruption — do NOT write the Dohkar’s cutoff line, Julian’s claim-of-the-inquiry line, or the closing narration line. Those three lines already exist verbatim (fixed_tail_exchange above) and will be appended automatically. Writing them yourself, or anything that duplicates/contradicts them, is a hard failure."
+    },
+    "five_fate_cards_requirement": {
+      "kind": "reviewable_package_interaction",
+      "status": "CORRECTED to the real, FIXED 5-archetype contract (public/app.js:_INTR_SLOTS lines 197670-197676; orchestration-client.js:_parseBatchFatePreview). Roman’s explicit instruction (2026-09-17): \"Forget the approved axes. Let Grok figure out how to map PC’s responses to the 5 Fate cards, the prompt should have ample instruction on how to do that.\" No posture taxonomy is prescribed by this packet — the model has full latitude for HOW each archetype manifests in this specific moment, within the archetype definitions below.",
+      "not_world_canon": "These 5 cards are ACTIONS OFFERED TO THE READER at this moment in the package, not facts about the world or characters. Approving them locks them into the SHIPPED PACKAGE — it does NOT write a new locked_canon_fact, does NOT get added to STARTER_SEEDS, and no other system may cite them as established world/character history.",
+      "required_keys_exact": [
+        "temptation",
+        "silence",
+        "reversal",
+        "boundary",
+        "confession"
+      ],
+      "per_card_schema": "{ action: string (≤12 words, a specific act Lirael takes right now), dialogue: string (≤15 words, what she says — or a parenthetical non-verbal beat), variant: one of amplify|ruin|redirect }",
+      "archetype_semantics_adapted_for_this_scene": {
+        "note": "These definitions are ADAPTED from the real live engine’s own archetype semantics (orchestration-client.js ~line 6700, generateIntimateFatePreviewsBatch), reinterpreted for THIS non-erotic, institutional-accusation confrontation — First Sacrifice’s OAS is charged and sensual but never explicit; there is no escalating physical act to intensify. Do not import erotic/lust content from the source semantics — only the STRUCTURAL SHAPE of each archetype.",
+        "temptation": "Lirael ESCALATES — leans further into the exposed truth or the charged moment rather than retreating from it; claims a next step in the confrontation rather than de-escalating.",
+        "silence": "Lirael SHIFTS TO WORDLESSNESS — action only, no verbal defense; dialogue is empty, or a single non-verbal fragment/sound.",
+        "reversal": "Lirael FLIPS THE DIRECTION OF THE CONFRONTATION — turns the accusation, the framing, or the power dynamic back onto Julian or the room, rather than accepting the frame she has been placed in.",
+        "boundary": "Lirael STATES HER NEED OR LIMIT PLAINLY — a demand or a clear assertion of what she will or will not accept, not a negotiation or an apology.",
+        "confession": "Lirael ADMITS A REAL, SUBSTANTIVE TRUTH mid-confrontation, no armor — not a vague opener; an actual specific admission (about the attraction, about her fear, about what she actually wants) with real content that could not be walked back."
+      },
+      "variant_semantics_adapted": {
+        "amplify": "deepens/intensifies the current confrontational beat in its current direction. Default majority of the 5.",
+        "ruin": "something cracks further — a worse complication threatens to surface. Rare (roughly 1 of 5).",
+        "redirect": "pulls back toward vulnerability — the confrontation slows; Lirael reveals something emotionally honest instead of pressing forward. Occasional (roughly 1 of 5)."
+      }
+    },
+    "superseded_note": "The CURRENTLY BAKED package’s axes.microDecision (‘run in shame vs remain and see where Julian was taking it’) is SUPERSEDED by this redesign, per Roman’s explicit correction that no run/remain (or any) binary belongs in the canonical OAS aftermath. A future authoring pass must NOT carry that structure forward."
+  },
+  "oas_mechanism_trace": {
+    "status": "REAL CODE TRACE (Roman, sixth pass, 2026-09-17) — read-only investigation, no code changed. Required before any redesign per Roman’s explicit instruction: \"trace the actual OAS turn/exit mechanism... do not invent a turn count or phrase trigger.\"",
+    "live_turn_function": "_handleIntimacyTurn(userSay, userDo) — public/app.js:193970, invoked from window._intimacyDialogueConsumeInput (app.js:199222) on every real Say/Do submission while OAS is active. d.beatCount is incremented exactly once per call, at app.js:193987 — this is the ONLY place it increments.",
+    "real_resolve_condition": {
+      "constants": "softCap: 17, hardCap: 20 (from _newIntimacyDialogueState, app.js:182161-182163); _OAS_EXIT_RAMP_BEATS = [6, 13, 17] (app.js:184198).",
+      "note": "A stale ~18-day-old design memory claimed \"7 floor / 8 target / 10 ceiling\" — CONFIRMED NOT REAL: that document does not exist anywhere in this repo or its git history, and the actual live constants have never been 7/8/10 at any point in git history (bumped once, from softCap:4/hardCap:6 to the current 17/20 in commit e2e20be7, 2026-05-11).",
+      "logic": "app.js:195404-195499 — hardCapHit forces resolution unconditionally; llmSaysResolve (model signals scene_state:\"resolve\") is honored only once beatCount >= 6 (an auto-resolve floor, not a player-response floor); softCap+peaking or scene_state:\"nearing_resolution\" only sets endIntent:\"nearing\", does not force resolution."
+    },
+    "authored_interruption_trigger": {
+      "function": "_intimateInterruptionFrame(d, reason) — app.js:197681-197687 — returns d._authoredFrame if reason does not match /rupture/, regardless of beatCount, hardCap, or softCap. It is computed INSIDE _resolveIntimacyScene(reason) (app.js:197275), i.e. it decides WHAT RENDERS once something else has already decided to resolve — it is not itself a trigger for resolving.",
+      "authored_frame_source": "d._authoredFrame is set once, at app.js:184612, from _bakedOASPlan(pkg) — i.e. from oasHandoff on a baked starter. Never populated for a fully live-generated OAS with no baked handoff.",
+      "dead_code_note": "_cascadeInterruptionFrame (app.js:197692-197699), a second authored-interruption source keyed off state._authoredIntimateInterruption, is defined and window-exported but has ZERO call sites anywhere in app.js — nothing ever sets that state field. Confirmed dead code, not a live alternative path."
+    },
+    "real_gap_found": {
+      "finding": "THERE IS CURRENTLY NO GUARD requiring the player to have had a real turn before the interruption can fire. If the player’s very first response to Julian’s opening line matches _isIntimacyExitInput (e.g. \"stop.\", \"enough\", \"done\" — app.js:198938), _handleIntimacyTurn is NEVER CALLED (intercepted earlier in window._intimacyDialogueConsumeInput, app.js:199196-199222) and _resolveIntimacyScene fires directly from the exit modal’s buttons — with d.beatCount still 0. Since d._authoredFrame.interruption is already present for a baked starter, _intr is truthy and the interruption mounts immediately, before the player has given one real content turn.",
+      "roman_requirement": "Roman: \"identify the safe, structural condition that releases the interruption only after the player has had a real chance to respond. Do not invent a turn count or phrase trigger.\"",
+      "proposed_structural_condition": "d.beatCount >= 1 — NOT an invented pacing number: d.beatCount is the real, already-existing counter this codebase already uses for its one real \"has the player responded\" signal (it increments exactly once per real _handleIntimacyTurn call, i.e. once per genuine Say/Do the model actually received and answered). Gating _intr’s release on this existing field, rather than a new number chosen for this packet, satisfies \"no invented turn count\" — it reuses the one the app already has for exactly this purpose.",
+      "not_yet_implemented": "This is a FINDING, not a code change. Fixing it requires editing the real _resolveIntimacyScene / _intimateInterruptionFrame logic in public/app.js — OUT OF SCOPE for this dry packet-authoring pass, which touches only _first_sacrifice_source_packet.json and _first_sacrifice_authoring_adapter.mjs. Flagged here as an open decision item for Roman, not silently fixed and not silently ignored."
+    },
+    "opening_frame_precedent": {
+      "finding": "oasHandoff.openingFrame ALREADY works as \"authored context governing a live-generated first line\" for every baked starter today — NOT a literal pre-written line. _appendAuthoredOASFrame (app.js:184895-184901) injects it into every turn’s prompt (not just the opener); the opener’s own prompt build (app.js:184458-184462) still generates the actual sentence, constrained to ONE sentence, ≤14 words, with the register frame saying \"the first line is what that frame says it is.\"",
+      "what_this_packet_changes": "Roman’s new requirement goes one step further than current live behavior: oasOpening is the FINAL, LITERALLY-AUTHORED line text (produced once by this canonical authoring pass), not a brief a live call re-expands every time a reader opens the Book. Everything AFTER the opener stays exactly as live as it already is for every other story — no change to _handleIntimacyTurn itself."
+    },
+    "petition_tempt_fate": "Petition Fate / Tempt Fate (the \"Fate Whisper System\", app.js ~4148-4370, openPetitionZoom) are real, separate, already-wired player-invoked mechanisms, independent of the 5 fixed-key OAS cards this packet authors. This packet does not author new content for them — they coexist as additional real options alongside custom Say/Do and the 5 cards, and must not be implied away by this packet’s framing."
+  },
+  "oas_sequence_v3": {
+    "status": "CORRECTED (Roman, sixth redesign pass, 2026-09-17) — the player is Lirael; OAS is a live exchange. The ONLY authored content is: one Julian opening line, the fixed interruption tail (unchanged content, repositioned in the runtime flow to fire at the real OAS exit event, not immediately), one post-interruption beat that crystallizes an unresolved choice without deciding it, and the 5 fixed-key card prefills for that post-interruption moment. Nothing in between is ever authored — that entire exchange is live, exactly as _handleIntimacyTurn already generates it for every other story.",
+    "fixed_baked_content": {
+      "kind": "locked_canon_fact",
+      "cites": "public/starter-scenes.js starter_first_sacrifice.oasHandoff (verbatim)",
+      "cue": "Julian, the Provast, closes Lirael’s fingers around The Answer and says he will question her in front of the assembly.",
+      "interruptionImage": "d3",
+      "interruption_caption": "The presiding Dohkar cut the interrogation off — a Provast questioning a Sacrificiant about her desires, in front of her ward’s family — and the clearing went still around the two of them.",
+      "fixed_tail_exchange": [
+        {
+          "speaker": "the presiding Dohkar",
+          "text": "“That is enough, Provast. This rite is mine to preside, and what the Sacrificiant did in it is mine to rule on — in a formal inquiry, before a Chayr and two Dohkars, where questions are put for the record. Not here, and not as your opportunity to flirt with the accused.”"
+        },
+        {
+          "speaker": "Julian",
+          "text": "“Agreed. A formal inquiry — I will convene it, and preside. That was always where this was going.”"
+        },
+        {
+          "speaker": null,
+          "text": "The assembly’s attention came back to me, and to The Answer still in my hands, which was not mine."
+        }
+      ],
+      "fixed_tail_note": "This exact 3-line array is marked FIXED EXCHANGE in the baked source (Dohkar’s register: dismissive, per his ritual-contempt and peer-jealousy facets). It is NEVER asked of the model and NEVER regenerated — the adapter splices it in deterministically, in code, after the model’s new interrogation lines.",
+      "opening_frame_brief": "The fixed Scene 1 has just ended: Seren’s wish twisted, the presiding Dohkar has publicly charged Lirael with shaping the wish and with interfering, and Julian — the Provast, the office her father once held, next in line for First Dohkar, and the path she aspires to — has stepped in, said he can hear that she is aligned with her own innocence, and put The Answer in her hands so that any misalignment in her answers will be plain to everyone present. The one-on-one opens THERE, still public. Julian’s first line is an accusation, not a comfort: that she manipulated Seren without knowing it, the way she manipulates everyone — through desirability. He describes her gestures and where her attention went during the rite, and asks whether she called to him hoping he would rescue her. He wears predatory confidence while framing himself as the one she has done this to. She is forced to acknowledge the attraction as true. Adults; sensual and charged, never explicit."
+    },
+    "oas_opening_requirement": {
+      "kind": "generated_expression",
+      "output_field": "oasOpening",
+      "output_shape": "{ speaker: \"Julian\", text: string } — a SINGLE line. NOT an exchange, NOT a question-and-answer pair — Lirael never speaks here. This is the one moment this packet authors of what was, until now, always live-generated per-reader.",
+      "length_constraint": "ONE sentence, ≤14 words — reusing the REAL live opener’s own constraint (public/app.js:184458), for consistency with the register the live system already enforces, not an invented number.",
+      "content_requirement": "Distilled from opening_frame_brief (in fixed_baked_content) into ONE charged opening line: Julian’s accusation, not a comfort — that she manipulated Seren without knowing it, through desirability. Predatory confidence, framing himself as the one wronged. This line sets the register for the ENTIRE live exchange that follows (the live system already injects the surrounding context into every subsequent turn — see oas_mechanism_trace.opening_frame_precedent) — it must be charged enough to carry that weight alone.",
+      "hard_boundary": "Must NOT include Lirael’s response, reaction, or any dialogue/action attributed to her. Must NOT resolve or answer its own question. It is a question/accusation the player has not yet responded to."
+    },
+    "live_exchange_note": "Everything between oasOpening and the interruption (Julian escalating toward inappropriately-intimate, sexually-charged territory in response to the PLAYER’S ACTUAL Say/Do or card choice, turn after turn, while the player retains real agency) is LIVE — generated by the existing _handleIntimacyTurn mechanism, exactly as it already works for every non-baked story. This packet authors NONE of it. The interruption tail below fires at the real OAS exit event (see oas_mechanism_trace.real_gap_found for the currently-open question of exactly which structural condition should gate that release).",
+    "oas_interruption_requirement": {
+      "kind": "locked_canon_fact",
+      "cites": "oas_sequence_v3.fixed_baked_content.fixed_tail_exchange (verbatim, unchanged content)",
+      "status": "NOT authored by this operation — the exact same 3-line fixed_tail_exchange from the prior design, content UNCHANGED. What changes is WHEN it fires: held for the real OAS exit event (the presiding Dohkar interrupting because Julian has crossed a real boundary during the LIVE exchange), never spliced immediately after a canned opening."
+    },
+    "post_interruption_beat_requirement": {
+      "kind": "generated_expression",
+      "output_field": "postInterruptionBeat",
+      "output_shape": "{ speaker: null | \"Lirael\", image: \"d4\", kind: \"narration\" | \"dialogue\", text: string } — ONE beat, first person, at the scene’s final image (matching scene1Candidate’s own image convention).",
+      "content_requirement": "Crystallizes an unresolved choice, threat, or invitation arising from the interruption (The Answer still in Lirael’s hands; the coming formal Inquiry Julian has just claimed) — the moment the player’s custom Say/Do, a Fate card, or Petition/Tempt Fate responds to.",
+      "hard_boundary": "MUST NOT decide, narrate, or imply what Lirael does next. No resolving language (\"I decided,\" \"I answered,\" \"I said yes,\" \"I chose to...\"). It ends ON the open question/threat/invitation, not past it. This is the single most important rule in this section — violating it silently pre-writes the player’s choice, which is exactly what this whole redesign exists to prevent."
+    },
+    "five_fate_cards_requirement": "UNCHANGED from oas_sequence_v2_SUPERSEDED_scripted_transcript.five_fate_cards_requirement in structure and archetype semantics (temptation/silence/reversal/boundary/confession, action/dialogue/variant schema) — RESCOPED: these 5 prefills now respond to postInterruptionBeat specifically (the post-interruption handoff), not a mid-conversation moment. See that section for the full archetype/variant semantics, still authoritative."
+  }
+}

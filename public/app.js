@@ -136706,7 +136706,14 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       __bakedOrigin: (pkg && pkg.title) || null,
       openingFrame: h.openingFrame || '',
       cue: h.cue || '',
-      interruption: h.interruption || '', interruptionImage: h.interruptionImage || '', interruptionExchange: Array.isArray(h.interruptionExchange) ? h.interruptionExchange : []
+      interruption: h.interruption || '', interruptionImage: h.interruptionImage || '', interruptionExchange: Array.isArray(h.interruptionExchange) ? h.interruptionExchange : [],
+      // ── TWO-PATH OAS LIFECYCLE (Roman, Option E, 2026-09-17) — both optional, absent from every
+      // package today including the real starter_first_sacrifice. oasOpening: {speaker,text}, the
+      // exact ≤14-word line Julian speaks (bypasses the live-generated opener when present).
+      // postInterruptionBeat: {speaker,image,kind,text}, rendered once after the fixed tail, before
+      // the Fate cards. See _fireIntimacyOpener / _mountIntimateInterruption.
+      oasOpening: (h.oasOpening && typeof h.oasOpening === 'object') ? h.oasOpening : null,
+      postInterruptionBeat: (h.postInterruptionBeat && typeof h.postInterruptionBeat === 'object') ? h.postInterruptionBeat : null
     };
   }
 
@@ -182236,7 +182243,13 @@ No text, no watermark, no UI elements, share-ready.`;
       _lastLIAgencyTurn: 0,
       // _liAgencyFireCount: cumulative agency fires this scene — drives
       // tier escalation (light → medium → strong).
-      _liAgencyFireCount: 0
+      _liAgencyFireCount: 0,
+      // ── TWO-PATH OAS LIFECYCLE (Roman, Option E, 2026-09-17) ──
+      // Only meaningful/tracked when _authoredFrame is truthy (a baked story).
+      // null for every generic/non-baked intimacy dialogue — a deliberate,
+      // narrow, scoped field; see _initIntimacyDialogue / _fireIntimacyOpener /
+      // _intimacyDialogueConsumeInput / _intimateInterruptionFrame.
+      phase: null
     };
   }
 
@@ -184177,6 +184190,8 @@ No text, no watermark, no UI elements, share-ready.`;
     'active', 'beatCount', 'softCap', 'hardCap', 'startedAt',
     // Authored handoff frame (fixed editorial Scene 1 → OAS). Read by every OAS prompt via _buildIntimacySceneContext.
     '_authoredFrame',
+    // Two-path OAS lifecycle phase (Roman, Option E, 2026-09-17) — null for non-baked stories.
+    'phase',
     // Emotional / engagement state (continuity)
     'temperature', 'userRegister', 'userSignals',
     'userInputLengths', 'boredomScore',
@@ -184418,6 +184433,59 @@ No text, no watermark, no UI elements, share-ready.`;
     if (d._openerFired) return;
     d._openerFired = true;
 
+    // ── AUTHORED OPENER (Roman, Option E, 2026-09-17) ──
+    // A baked package may declare oasHandoff.oasOpening: { speaker, text } —
+    // the exact line Julian speaks (≤14 words, one sentence, matching the
+    // live opener's own constraint below). When present, render it DIRECTLY
+    // — no model call — and advance d.phase so the first-submission gate in
+    // _intimacyDialogueConsumeInput knows a real opener has rendered. Absent
+    // for every package today (including the real starter-scenes.js First
+    // Sacrifice entry) — falls straight through to the existing
+    // live-generated opener below, unchanged.
+    if (d._authoredFrame && d._authoredFrame.oasOpening && d._authoredFrame.oasOpening.text) {
+      var _openerText = String(d._authoredFrame.oasOpening.text);
+      try { _appendLIResponseToHistory(_openerText, ''); } catch (_) {}
+      // ── liTurnHistory entry (Roman, 2026-09-17 follow-up) ──
+      // _appendLIResponseToHistory is DOM-display-only — it never touches
+      // d.liTurnHistory. That array is the REAL persisted state consumed by
+      // (a) the live-turn model-context builder's `historyStr`
+      // (~app.js:191167, reads t.liResponse) and its anti-monotony motif
+      // scan (~191192), and (b) _rehydrateOASUI's reload replay
+      // (~184395-184410, iterates d.liTurnHistory to rebuild the on-screen
+      // log from scratch). Without an entry here, the authored opener is
+      // invisible to Julian's own next live reply AND vanishes from the
+      // transcript on Save & Exit -> Continue. Shape matches
+      // _handleIntimacyTurn's real push (~195307-195322); userInput/
+      // userInputRaw/faceState/mouthUrl/fateCardTag/fateChangeApplied/
+      // sceneTone are null since no player turn or model call preceded
+      // this line. NOTE: this also makes d.liTurnHistory.length correctly
+      // count the opener as one beat for _buildFateSceneProgressionBlock /
+      // _buildFateFinalBeatEscalationCheck's fate-card escalation tier
+      // (~190169/190277) — a disclosed, minor, arguably-correct side
+      // effect (the opener IS beat 1), not a new problem.
+      d.liTurnHistory.push({
+        userInput: null, userInputRaw: null,
+        liDialogue: _openerText, liAction: null, liResponse: _openerText,
+        faceState: null, mouthUrl: null,
+        fateCardTag: null, fateChangeApplied: null,
+        tempBeforeShift: d.temperature, sceneTone: null,
+        userSignal: 'authored_opener'
+      });
+      d.phase = 'awaiting_first_response';
+      try { _persistOASState(); } catch (_) {}
+      try { console.log('[OAS:TWO-PATH] authored oasOpening rendered directly — no model call. phase=' + d.phase); } catch (_) {}
+      return;
+    }
+
+    // Everything below is the existing live-generated-opener path, unchanged
+    // in behavior. Wrapped in try/finally ONLY so that d.phase reliably
+    // advances to 'awaiting_first_response' once this attempt concludes —
+    // on success OR on any of the existing early-return failure paths
+    // (LLM call threw, empty response, parse failed) — so the first-
+    // submission gate in _intimacyDialogueConsumeInput isn't left waiting
+    // forever on a failed opener. No behavior of the existing calls/renders
+    // below is altered; the finally block only ever touches d.phase.
+    try {
     var s = window.state || {};
     var picks = s.picks || {};
     var liId = s.currentPrimaryLiId || null;
@@ -184533,6 +184601,15 @@ No text, no watermark, no UI elements, share-ready.`;
     }
 
     try { console.log('[INTIMACY-OPENER] Delivered:', JSON.stringify(parsed.li_dialogue).slice(0, 80), '| face:', parsed.li_face_state); } catch (_) {}
+    } finally {
+      // d may have been detached (dialogue torn down mid-call, see the
+      // staleness check above) — only touch live state, and only when this
+      // is a baked/authored OAS (phase is null/unused otherwise).
+      if (state && state.intimacyDialogue === d && d._authoredFrame) {
+        d.phase = 'awaiting_first_response';
+        try { _persistOASState(); } catch (_) {}
+      }
+    }
   }
   window._fireIntimacyOpener = _fireIntimacyOpener;
 
@@ -184611,8 +184688,18 @@ No text, no watermark, no UI elements, share-ready.`;
     // scene context. Stored on the dialogue state so the opener AND every subsequent turn render it.
     d._authoredFrame = (plan && (plan.openingFrame || plan.cue)) ? { openingFrame: String(plan.openingFrame || ''), cue: String(plan.cue || ''),
       // INTERRUPTION (Roman 2026-09-11): an authored end to this exchange — plate + fixed lines — rendered instead of the afterglow.
-      interruption: String(plan.interruption || ''), interruptionImage: String(plan.interruptionImage || ''), interruptionExchange: Array.isArray(plan.interruptionExchange) ? plan.interruptionExchange.slice() : [] } : null;
-    try { if (d._authoredFrame) console.log('[INTIMACY-INIT:AUTHORED-FRAME] frame=' + d._authoredFrame.openingFrame.length + 'ch cue=' + d._authoredFrame.cue.length + 'ch'); } catch (_) {}
+      interruption: String(plan.interruption || ''), interruptionImage: String(plan.interruptionImage || ''), interruptionExchange: Array.isArray(plan.interruptionExchange) ? plan.interruptionExchange.slice() : [],
+      // TWO-PATH OAS LIFECYCLE (Roman, Option E, 2026-09-17) — optional, both null for every package
+      // today. See _bakedOASPlan.
+      oasOpening: (plan.oasOpening && typeof plan.oasOpening === 'object') ? { speaker: plan.oasOpening.speaker || null, text: String(plan.oasOpening.text || '') } : null,
+      postInterruptionBeat: (plan.postInterruptionBeat && typeof plan.postInterruptionBeat === 'object') ? { speaker: plan.postInterruptionBeat.speaker || null, image: String(plan.postInterruptionBeat.image || ''), kind: String(plan.postInterruptionBeat.kind || 'narration'), text: String(plan.postInterruptionBeat.text || '') } : null
+      } : null;
+    // Fresh dialogue state starts the two-path lifecycle at 'opening'; _fireIntimacyOpener advances
+    // it to 'awaiting_first_response' once the (authored or live-generated) opener actually renders.
+    // Only meaningful for a baked/authored OAS (d._authoredFrame truthy) — see _intimacyDialogue-
+    // ConsumeInput and _intimateInterruptionFrame, both scoped on that same check.
+    d.phase = d._authoredFrame ? 'opening' : (d.phase || null);
+    try { if (d._authoredFrame) console.log('[INTIMACY-INIT:AUTHORED-FRAME] frame=' + d._authoredFrame.openingFrame.length + 'ch cue=' + d._authoredFrame.cue.length + 'ch oasOpening=' + (d._authoredFrame.oasOpening ? 'yes' : 'no') + ' postInterruptionBeat=' + (d._authoredFrame.postInterruptionBeat ? 'yes' : 'no')); } catch (_) {}
 
     // ── Wound-reveal eligibility (per-encounter computation) ──────────
     // The LI's archetypal wound (misbelief / stress-failure) surfaces as
@@ -195306,6 +195393,17 @@ No text, no watermark, no UI elements, share-ready.`;
     // Append LI dialogue + action to scrollback FIRST so the persistent
     // record is in place before the over-image flash plays.
     _appendLIResponseToHistory(parsed.li_dialogue, parsed.li_action);
+    // ── TWO-PATH OAS LIFECYCLE (Roman, Option E, 2026-09-17) ──
+    // Julian's live reply to the player's actual response has now rendered.
+    // From here the ordinary resolver/ramp logic below (unchanged) is
+    // allowed to eventually make the authored Dohkar interruption eligible
+    // — see _intimateInterruptionFrame's phase gate. This does not itself
+    // trigger the interruption. Scoped to baked/authored OAS only (a
+    // complete no-op for every other intimacy dialogue in the app).
+    if (d._authoredFrame && d.phase !== 'normal_reply_rendered') {
+      d.phase = 'normal_reply_rendered';
+      try { console.log('[OAS:TWO-PATH] first live Julian reply rendered — interruption now eligible'); } catch (_) {}
+    }
     _flashLIResponseOverImage(parsed.li_dialogue, parsed.li_action);
     // Backcompat: keep _setIntimacyDirective wired (hidden by CSS) so any
     // legacy code that reads #intimacyDirective still gets the composed line.
@@ -197642,7 +197740,7 @@ No text, no watermark, no UI elements, share-ready.`;
       var overrideEntry2 = confirmedToneOverride ? _OAS_TONE_AFTERGLOW_OVERRIDES[confirmedToneOverride] : null;
       if (_intr) {
         // The reader's real choice and words come next — through the interruption UI, never a synthetic afterglow value.
-        try { _mountIntimateInterruption({ host: 'auto', frame: _intr, sceneNum: 1 }); } catch (e) { console.warn('[INTIMATE-INTERRUPT] mount failed:', e && e.message); }
+        try { _mountIntimateInterruption({ host: 'auto', frame: _intr, sceneNum: 1, reason: reason }); } catch (e) { console.warn('[INTIMATE-INTERRUPT] mount failed:', e && e.message); }
         return;
       }
       var syntheticAction = (overrideEntry2 && overrideEntry2.prompt)
@@ -197678,12 +197776,50 @@ No text, no watermark, no UI elements, share-ready.`;
     cg:       { mount: 'gnCardMount', action: 'gnActionInput', dialogue: 'gnDialogueInput', submit: 'gnSubmitBtn' },
     literary: { mount: 'cardMount',   action: 'actionInput',   dialogue: 'dialogueInput',   submit: 'submitBtn' }
   };
+  // Ordered lifecycle phases for the eligibility comparison below. Only the
+  // relative order before/at 'normal_reply_rendered' matters here.
+  var _OAS_TWO_PATH_PHASE_ORDER = ['opening', 'awaiting_first_response', 'normal_awaiting_reply', 'normal_reply_rendered', 'boundary_first_response', 'interrupted', 'post_interruption_rendered', 'cards_open'];
   function _intimateInterruptionFrame(d, reason) {
     try {
       if (typeof window !== 'undefined' && window._oasInterruptionOff === true) return null;
       if (/rupture/.test(String(reason || ''))) return null;            // Fate ruptures keep their own carry-forward
       var f = d && d._authoredFrame;
-      return (f && f.interruption) ? f : null;
+      if (!f || !f.interruption) return null;
+      // ── TWO-PATH OAS LIFECYCLE GATE (Roman, Option E, 2026-09-17) ──
+      // The authored interruption may only fire once the player has had a
+      // real chance to respond: EITHER (a) reason === 'boundary_first_
+      // response' — the player's first-ever response was itself a clear
+      // stop/exit/boundary, and the Dohkar is cutting Julian off to PROTECT
+      // them, not rewarding the boundary with more pressure (see
+      // _intimacyDialogueConsumeInput) — OR (b) the ordinary path has
+      // actually rendered Julian's live reply to the player's first real
+      // response (d.phase reaches 'normal_reply_rendered' or later — set by
+      // _handleIntimacyTurn only after _appendLIResponseToHistory runs, not
+      // merely on beatCount incrementing). Before either, fall through to
+      // the ordinary (non-authored) resolution path — same as the existing
+      // /rupture/ branch above — instead of firing the canon-bearing
+      // interruption on zero real exchange (the real gap this design
+      // fixes: previously the 4 graceful-exit-modal call sites could reach
+      // _resolveIntimacyScene with d.beatCount still 0).
+      //
+      // LEGACY-PROGRESS SAFETY NET: a persisted OAS session started before
+      // this change (or any future session where d.phase was never tracked
+      // for some other reason) has phase null/'opening' but may already
+      // have real accumulated beatCount from the pre-fix code path. Treat
+      // beatCount >= 1 as equivalent proof of a real exchange in that case
+      // — this preserves _deserializeOASState's own stated forward/
+      // backward-compat contract (old snapshots get safe defaults, not
+      // broken behavior) without reopening the zero-turn hole (beatCount
+      // is still 0 for the exact case this gate exists to block).
+      var _phaseIdx = _OAS_TWO_PATH_PHASE_ORDER.indexOf(d.phase);
+      var _normalReplyIdx = _OAS_TWO_PATH_PHASE_ORDER.indexOf('normal_reply_rendered');
+      var _legacyProgress = (_phaseIdx < 0 || _phaseIdx <= _OAS_TWO_PATH_PHASE_ORDER.indexOf('awaiting_first_response')) && ((d.beatCount || 0) >= 1);
+      var _eligible = (reason === 'boundary_first_response') || _legacyProgress || (_phaseIdx >= _normalReplyIdx);
+      if (!_eligible) {
+        try { console.log('[OAS:TWO-PATH] authored interruption NOT yet eligible (phase=' + d.phase + ', beatCount=' + d.beatCount + ', reason=' + reason + ') — falling through to ordinary resolution'); } catch (_) {}
+        return null;
+      }
+      return f;
     } catch (_) { return null; }
   }
   // LITERARY CASCADE HOST (2026-09-12): the authored interruption for a GENERATED intimate exchange is declared on the story
@@ -197757,9 +197893,22 @@ No text, no watermark, no UI elements, share-ready.`;
     var frame = opts.frame || (state._intimateInterruption && state._intimateInterruption.frame) || null; if (!frame || !frame.interruption) { console.warn('[INTIMATE-INTERRUPT] no authored interruption'); return null; }
     var r = state._intimateInterruption;
     if (!r || r.submitted || r.storyId !== state.storyId) {
+      var _pib = frame.postInterruptionBeat;
       r = state._intimateInterruption = { host: hostKey, sceneNum: opts.sceneNum || 1, storyId: state.storyId, at: Date.now(), imageId: frame.interruptionImage || null,
-            frame: { interruption: String(frame.interruption), interruptionImage: String(frame.interruptionImage || ''), interruptionExchange: (frame.interruptionExchange || []).slice() },
-            selectedSlot: null, draft: { action: '', dialogue: '' }, cards: null, submitted: false };
+            frame: { interruption: String(frame.interruption), interruptionImage: String(frame.interruptionImage || ''), interruptionExchange: (frame.interruptionExchange || []).slice(),
+              // TWO-PATH OAS LIFECYCLE (Roman, Option E, 2026-09-17) — optional, null for every
+              // package today. Stored once here (never regenerated) so every remount (including
+              // resume-after-reload) renders the identical, deterministic content.
+              postInterruptionBeat: (_pib && typeof _pib === 'object') ? { speaker: _pib.speaker || null, image: String(_pib.image || ''), kind: String(_pib.kind || 'narration'), text: String(_pib.text || '') } : null },
+            selectedSlot: null, draft: { action: '', dialogue: '' }, cards: null, submitted: false,
+            // entryPath records WHICH path led here — telemetry/audit only; both paths render the
+            // identical fixed tail + postInterruptionBeat content (Roman: "render the same fixed
+            // tail and post-interruption CG beat" for both). r.phase covers the lifecycle stages
+            // AFTER d (state.intimacyDialogue) is nulled by _resolveIntimacyScene, before this
+            // function runs — a pre-existing architectural boundary in this file (see
+            // _resolveIntimacyScene's `state.intimacyDialogue = null;` ahead of this call).
+            entryPath: (opts.reason === 'boundary_first_response') ? 'boundary' : 'normal',
+            phase: 'interrupted', postBeatRendered: false };
     }
     var prior = document.getElementById('intimateInterruption'); if (prior) prior.remove();
     var wrap = document.createElement('div'); wrap.id = 'intimateInterruption'; wrap.className = 'intimate-interruption';
@@ -197771,6 +197920,35 @@ No text, no watermark, no UI elements, share-ready.`;
     var pNarr = document.createElement('p'); pNarr.className = 'intimate-interruption-narration'; pNarr.style.cssText = 'color:#e7dcc2;margin:0 0 10px;'; pNarr.textContent = String(r.frame.interruption);
     wrap.appendChild(pPlate); wrap.appendChild(pNarr);
     (r.frame.interruptionExchange || []).forEach(function (ln) { if (!ln || !ln.text) return; var p = document.createElement('p'); p.className = 'intimate-interruption-line'; p.style.cssText = 'color:#e7dcc2;margin:0 0 8px;'; p.textContent = (ln.speaker ? ln.speaker + ': ' : '') + String(ln.text); wrap.appendChild(p); });
+    // ── POST-INTERRUPTION BEAT (Roman, Option E, 2026-09-17) ──
+    // Runs on every mount call (fresh mount AND resume-after-reload) so the
+    // content survives reload exactly like the fixed tail above already
+    // does — this function fully rebuilds `wrap` from scratch every call,
+    // so gating the DOM-append itself (rather than the once-only DECISION
+    // of what content to store, already handled at r-creation above) would
+    // make the reader lose this beat on reload, contradicting the explicit
+    // reload-survival requirement. r.postBeatRendered is kept as an
+    // audit/telemetry marker ("did this run at least once"), not a
+    // render-gate. Absent from every package today — renders nothing extra
+    // in that case, so today's live game is unchanged (straight to cards).
+    var _pib = r.frame.postInterruptionBeat;
+    if (_pib && _pib.text) {
+      if (_pib.image && _pib.image !== r.frame.interruptionImage) {
+        var _pibPlateLabel = '';
+        try { var pkgPib = (typeof window._bakedScene1For === 'function') ? window._bakedScene1For(state._starterId) : null; var imPib = pkgPib && (pkgPib.images || []).filter(function (x) { return x && x.id === _pib.image; })[0];
+              _pibPlateLabel = imPib ? ('[' + (imPib.label || imPib.id) + (imPib.subject ? ' — ' + imPib.subject : '') + ']') : ('[' + _pib.image + ']'); } catch (_) {}
+        var pPibPlate = document.createElement('p'); pPibPlate.className = 'intimate-interruption-plate intimate-interruption-post-plate'; pPibPlate.style.cssText = 'font-style:italic;color:#8f866f;margin:14px 0 10px;'; pPibPlate.textContent = _pibPlateLabel;
+        wrap.appendChild(pPibPlate);
+      }
+      var pPib = document.createElement('p'); pPib.className = 'intimate-interruption-post-beat'; pPib.style.cssText = 'color:#e7dcc2;margin:0 0 10px;';
+      pPib.textContent = (_pib.speaker ? _pib.speaker + ': ' : '') + String(_pib.text);
+      wrap.appendChild(pPib);
+      try { console.log('[OAS:TWO-PATH] postInterruptionBeat rendered (image=' + _pib.image + ', kind=' + _pib.kind + ')'); } catch (_) {}
+    } else {
+      try { console.log('[OAS:TWO-PATH] no postInterruptionBeat declared — existing behavior preserved (straight to cards)'); } catch (_) {}
+    }
+    r.postBeatRendered = true;
+    r.phase = 'post_interruption_rendered';
     var pNote = document.createElement('p'); pNote.className = 'intimate-interruption-note'; pNote.style.cssText = 'color:#a99f8c;font-size:0.92em;margin:12px 0 0;'; pNote.textContent = 'Choose a card to fill in what you say and do, or write your own — then Submit.'; wrap.appendChild(pNote);
     host.appendChild(wrap);
     // The reader must be able to SEE the rail and the inputs: the CG reader hides both containers until a scene's gate
@@ -197778,6 +197956,7 @@ No text, no watermark, no UI elements, share-ready.`;
     try { (hostKey === 'cg' ? ['gnReaderControls', 'gnFateSection'] : ['cardMount', 'fateSpecialCards']).forEach(function (id) { var el = document.getElementById(id); if (el) el.style.display = ''; });
           if (hostKey !== 'cg') { var _ai = document.getElementById('actionInput'); var _grid = _ai && _ai.closest('div[style*="grid-template-columns"], .say-do-grid, .input-grid'); if (_grid) _grid.style.display = ''; var _row = document.getElementById('submitBtn') && document.getElementById('submitBtn').parentElement; if (_row) _row.style.display = ''; } } catch (_) {}
     var mount = _dealInterruptionFateCards(hostKey);
+    r.phase = 'cards_open';
     var aEl = document.getElementById(H.action), dEl = document.getElementById(H.dialogue), sEl = document.getElementById(H.submit);
     [aEl, dEl, sEl].forEach(function (el) { if (el) { el.disabled = false; try { el.style.display = ''; } catch (_) {} } });
     if (aEl) { aEl.value = r.draft.action || ''; aEl.oninput = function () { var rec = state._intimateInterruption; if (rec && !rec.submitted) rec.draft.action = aEl.value; }; }
@@ -199201,10 +199380,73 @@ No text, no watermark, no UI elements, share-ready.`;
     // as inactive so "keep going" mid-teardown doesn't fire a turn into
     // a half-torn-down state.
     if (state.intimacyDialogue._resolving) return false;
+    say = _stripOASSayQuotes(say); doText = String(doText == null ? '' : doText).trim();
+
+    // ── TWO-PATH OAS LIFECYCLE — first submission only (Roman, Option E,
+    // 2026-09-17) ──
+    // Scoped strictly to a baked/authored OAS (d._authoredFrame truthy) on
+    // the player's very first-ever submission (d.phase === 'awaiting_first_
+    // response', set once the opener has rendered — see _fireIntimacyOpener).
+    // Every other call (non-baked story, or the 2nd+ submission of a baked
+    // one) falls through unchanged to the existing logic below.
+    //
+    // Why: the pre-existing exit-modal intercept below has no gate against
+    // firing the authored Dohkar interruption before any real player/Julian
+    // exchange happened (real gap found 2026-09-17: the 4 graceful-exit-
+    // modal buttons call _resolveIntimacyScene with no beatCount check).
+    // Roman's correction: don't force a player who sets an immediate
+    // boundary ("stop") into a compulsory flirtatious Julian reply just to
+    // satisfy a turn-count gate — that punishes the boundary with more
+    // pressure. A boundary FIRST response is itself a real response, and
+    // the Dohkar interruption is what SAVES the player from Julian, not a
+    // reward gated behind surviving him. A non-boundary first response
+    // gets exactly one real live Julian reply before the interruption
+    // becomes eligible (see _intimateInterruptionFrame's phase gate).
+    var _tpD = state.intimacyDialogue;
+    if (_tpD._authoredFrame && _tpD.phase === 'awaiting_first_response') {
+      if (_isIntimacyExitInput(say, doText)) {
+        // BOUNDARY PATH — record the real response (liTurnHistory push
+        // mirrors _handleIntimacyTurn's own shape at ~line 195247, with
+        // null LI fields since no reply was generated), do NOT call
+        // _handleIntimacyTurn (no forced Julian reply), interrupt directly
+        // — bypasses the graceful-exit MODAL entirely; the Dohkar is the
+        // exit, not one more menu.
+        _tpD.beatCount = (_tpD.beatCount || 0) + 1;
+        _tpD.liTurnHistory.push({
+          userInput: (say || '') + (doText ? (say ? ' / ' : '') + doText : ''),
+          userInputRaw: (say || '') + (doText ? ' / ' + doText : ''),
+          liDialogue: null, liAction: null, liResponse: null, faceState: null, mouthUrl: null,
+          fateCardTag: _tpD._lastClickedFateSlot || null, fateChangeApplied: null,
+          tempBeforeShift: _tpD.temperature, sceneTone: null, userSignal: 'boundary'
+        });
+        _tpD.phase = 'boundary_first_response';
+        try { _persistOASState(); } catch (_) {}
+        try { console.log('[OAS:TWO-PATH] first response is a boundary — interrupting directly, no forced Julian reply'); } catch (_) {}
+        try {
+          var _tpA = document.getElementById('gnActionInput'); var _tpB = document.getElementById('gnDialogueInput');
+          if (_tpA) _tpA.value = ''; if (_tpB) _tpB.value = '';
+        } catch (_) {}
+        if (typeof _resolveIntimacyScene === 'function') _resolveIntimacyScene('boundary_first_response');
+        return true;
+      }
+      // NORMAL PATH — one real live Julian reply is owed before the
+      // interruption becomes eligible. _handleIntimacyTurn records this
+      // turn into d.liTurnHistory itself (~line 195247) — do not double-push.
+      _tpD.phase = 'normal_awaiting_reply';
+      try { _persistOASState(); } catch (_) {}
+      if (typeof window._intimacyBoundaryStreakReset === 'function') window._intimacyBoundaryStreakReset();
+      _handleIntimacyTurn(say || '', doText || '');
+      try {
+        var _tpAct = document.getElementById('gnActionInput'); var _tpDia = document.getElementById('gnDialogueInput');
+        if (_tpAct) _tpAct.value = ''; if (_tpDia) _tpDia.value = '';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } catch (_) {}
+      return true;
+    }
+
     // Graceful-exit intercept: full-line "stop" / "skip" / "enough" /
     // "fade to black" etc. opens the exit modal instead of firing a
     // turn into the LI. Mid-sentence matches don't trigger.
-    say = _stripOASSayQuotes(say); doText = String(doText == null ? '' : doText).trim();
     if (_isIntimacyExitInput(say, doText)) {
       _showIntimacyExitModal('text');
       try {

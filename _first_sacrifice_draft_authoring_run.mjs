@@ -1,0 +1,317 @@
+#!/usr/bin/env node
+// FIRST SACRIFICE — ONE canonical FULL-PACKAGE draft-authoring operation (Roman's fourth redesign
+// pass, 2026-09-17; AUTHORIZED by Roman: "authorize the one First Sacrifice draft").
+//
+// Scope (Roman's standing authorization, applied to the current full-package schema):
+//   - Grok-4.3 primary -> ministral-8b-2512 fallback ONLY on genuine Grok failure -> GPT-4o
+//     terminal ONLY if both fail. No DeepSeek.
+//   - Maximum ONE attempt per tier, no repair pass, no images, no live-reader launch, no
+//     starter-scenes.js / canon write.
+//   - The model writes scene1Candidate (~20 beats, full candidate replacement Scene 1) +
+//     scene1Coverage + first_person_lirael + oasOpening (Julian's ONE authored opening line,
+//     ≤14 words) + postInterruptionBeat (authored beat crystallizing an unresolved choice after
+//     the Dohkar's interruption, WITHOUT deciding it) + fateCards (5 fixed archetype keys) — the
+//     fixed 3-line interruption tail is NEVER asked of the model; this script splices it in
+//     deterministically, in code, after a successful call.
+//   - SIXTH REDESIGN PASS (Roman, 2026-09-17): the old scripted `interrogationExchange` (~7
+//     canned Julian/Lirael lines) is SUPERSEDED — the player IS Lirael, so no OAS reply is ever
+//     pre-scripted. Everything between `oasOpening` and the Dohkar's interruption is live,
+//     player-driven OAS, produced by the real app at read time, never by this script.
+//   - Emit a versioned draft artifact + a FULL side-by-side review preview (current baked Scene 1
+//     vs. the candidate, both converging into the shared oasOpening -> [LIVE OAS] -> fixed
+//     interruption/tail -> postInterruptionBeat -> 5 cards sequence).
+//   - Validate structurally/canon-wise (eligibility for review, NOT a prose-quality pass) —
+//     including provenance proportionality: only locked_canon_fact needs a citation,
+//     grounded_inference needs named grounds, generated_expression needs neither.
+//   - Retain request/response/usage records; report actual calls, model, tokens, cost.
+//   - Do NOT make a second draft call if this one fails validation or reads poorly.
+//
+// This calls the REAL production proxy handlers (api/proxy.js, api/mistral-proxy.js,
+// api/chatgpt-proxy.js) IN-PROCESS (no browser, no dev server, no live app UI, no window.state)
+// via mock req/res objects — the same code path real production traffic uses, at the network
+// boundary of THIS operation only. Real money is spent by this script when it is run.
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { createRequire } from 'node:module';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const require = createRequire(import.meta.url);
+const OUT_DIR = path.join(__dirname, '_first_sacrifice_draft_v3_full_package');
+fs.mkdirSync(OUT_DIR, { recursive: true });
+
+// ── Load .env.local into process.env (values never logged) ──────────────────────────────────
+const envPath = path.join(__dirname, '.env.local');
+const envText = fs.readFileSync(envPath, 'utf8');
+envText.split('\n').forEach(line => {
+  const m = line.match(/^([A-Z0-9_]+)=(.*)$/);
+  if (!m) return;
+  let val = m[2];
+  if (val.length >= 2 && ((val[0] === '"' && val[val.length - 1] === '"') || (val[0] === "'" && val[val.length - 1] === "'"))) {
+    val = val.slice(1, -1);
+  }
+  if (!process.env[m[1]]) process.env[m[1]] = val;
+});
+console.log('Env loaded. Keys present: XAI=' + !!process.env.XAI_API_KEY + ' MISTRAL=' + !!process.env.MISTRAL_API_KEY + ' OPENAI=' + !!process.env.OPENAI_API_KEY + ' SUPABASE=' + !!(process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY));
+
+// ── Build the adapter's real, packet-derived chain (identical prompt across all 3 tiers) ────
+const { buildFixedInputView, buildAuthoringFallbackChain } = await import('./_first_sacrifice_authoring_adapter.mjs');
+const PACKET = JSON.parse(fs.readFileSync(path.join(__dirname, '_first_sacrifice_source_packet.json'), 'utf8'));
+const chain = buildAuthoringFallbackChain(PACKET, buildFixedInputView());
+
+// ── READ-ONLY: the real baked Scene 1 + oasHandoff, for splicing + full-preview rendering ──
+const starterSrc = fs.readFileSync(path.join(__dirname, 'public/starter-scenes.js'), 'utf8');
+const beatsBlockMatch = starterSrc.match(/beats: \[([\s\S]*?)\],\s*\n\s*endsAt:/);
+const oasHandoffBlockMatch = starterSrc.match(/oasHandoff: \{([\s\S]*?)\n      \},\s*\n\s*emitted:/);
+const beats = new Function('return [' + beatsBlockMatch[1] + ']')();
+const oasHandoff = new Function('return {' + oasHandoffBlockMatch[1] + '\n}')();
+
+// ── Mock req/res factory matching the Vercel serverless contract these handlers expect ──────
+function makeReqRes(body) {
+  const res = {
+    _status: 200, _headers: {}, _body: null,
+    setHeader(k, v) { this._headers[k] = v; },
+    status(code) { this._status = code; return this; },
+    json(obj) { this._body = obj; return this; },
+    end() { return this; },
+  };
+  const req = { method: 'POST', headers: { origin: 'http://localhost:3000' }, body };
+  return { req, res };
+}
+
+const records = [];
+let winningTier = null, winningContent = null, winningUsage = null, winningModel = null;
+
+async function attemptGrok(tier) {
+  const { default: grokHandler } = await import('./api/proxy.js');
+  const body = { messages: tier.messages, role: tier.role, preferredModel: tier.preferredModel, temperature: tier.temperature, max_tokens: tier.max_tokens };
+  const { req, res } = makeReqRes(body);
+  const t0 = Date.now();
+  let threw = null;
+  try { await grokHandler(req, res); } catch (e) { threw = String(e && e.stack || e); }
+  const elapsed = Date.now() - t0;
+  const httpStatus = res._status;
+  const respBody = res._body;
+  const content = respBody && respBody.choices && respBody.choices[0] && respBody.choices[0].message && respBody.choices[0].message.content;
+  const hadContent = !!(content && String(content).trim());
+  const record = { tier: tier.tier, provider: tier.name, requestedModel: tier.preferredModel, endpoint: '/api/proxy (in-process)', requestBody: body, httpStatus, threw, elapsedMs: elapsed, responseBody: respBody, hadContent };
+  records.push(record);
+  console.log('[' + tier.name + '] status=' + httpStatus + ' hadContent=' + hadContent + ' elapsed=' + elapsed + 'ms' + (threw ? ' THREW: ' + threw : ''));
+  if (!threw && httpStatus === 200 && hadContent) {
+    winningTier = tier.tier; winningContent = content; winningUsage = respBody.usage || null;
+    winningModel = (respBody._orchestration && respBody._orchestration.model) || tier.preferredModel;
+    return true;
+  }
+  return false;
+}
+
+async function attemptMistral(tier) {
+  const mistralHandler = require('./api/mistral-proxy.js');
+  const body = { messages: tier.messages, model: tier.billedModel, temperature: tier.temperature, max_tokens: tier.max_tokens };
+  const { req, res } = makeReqRes(body);
+  const t0 = Date.now();
+  let threw = null;
+  try { await mistralHandler(req, res); } catch (e) { threw = String(e && e.stack || e); }
+  const elapsed = Date.now() - t0;
+  const httpStatus = res._status;
+  const respBody = res._body;
+  const content = respBody && respBody.choices && respBody.choices[0] && respBody.choices[0].message && respBody.choices[0].message.content;
+  const hadContent = !!(content && String(content).trim());
+  const record = { tier: tier.tier, provider: tier.name, requestedModel: tier.billedModel, endpoint: '/api/mistral-proxy (in-process)', requestBody: body, httpStatus, threw, elapsedMs: elapsed, responseBody: respBody, hadContent };
+  records.push(record);
+  console.log('[' + tier.name + '] status=' + httpStatus + ' hadContent=' + hadContent + ' elapsed=' + elapsed + 'ms' + (threw ? ' THREW: ' + threw : ''));
+  if (!threw && httpStatus === 200 && hadContent) {
+    winningTier = tier.tier; winningContent = content; winningUsage = respBody.usage || null;
+    winningModel = (respBody._orchestration && respBody._orchestration.model) || tier.billedModel;
+    return true;
+  }
+  return false;
+}
+
+async function attemptOpenAI(tier) {
+  const chatgptHandler = require('./api/chatgpt-proxy.js');
+  const body = { messages: tier.messages, role: tier.role, model: tier.model, temperature: tier.temperature, max_tokens: tier.max_tokens, response_format: { type: 'json_object' } };
+  const { req, res } = makeReqRes(body);
+  const t0 = Date.now();
+  let threw = null;
+  try { await chatgptHandler(req, res); } catch (e) { threw = String(e && e.stack || e); }
+  const elapsed = Date.now() - t0;
+  const httpStatus = res._status;
+  const respBody = res._body;
+  const content = respBody && respBody.content;
+  const hadContent = !!(content && String(content).trim());
+  const record = { tier: tier.tier, provider: tier.name, requestedModel: tier.model, endpoint: '/api/chatgpt-proxy (in-process)', requestBody: body, httpStatus, threw, elapsedMs: elapsed, responseBody: respBody, hadContent };
+  records.push(record);
+  console.log('[' + tier.name + '] status=' + httpStatus + ' hadContent=' + hadContent + ' elapsed=' + elapsed + 'ms' + (threw ? ' THREW: ' + threw : ''));
+  if (!threw && httpStatus === 200 && hadContent) {
+    winningTier = tier.tier; winningContent = content; winningUsage = respBody.usage || null;
+    winningModel = (respBody._orchestration && respBody._orchestration.model) || tier.model;
+    return true;
+  }
+  return false;
+}
+
+console.log('\n=== TIER 1: Grok primary (ONE attempt) ===');
+let ok = await attemptGrok(chain[0]);
+if (!ok) {
+  console.log('\n=== Grok failed — TIER 2: ministral-8b-2512 fallback (ONE attempt) ===');
+  ok = await attemptMistral(chain[1]);
+}
+if (!ok) {
+  console.log('\n=== Ministral-8B failed — TIER 3: GPT-4o terminal (ONE attempt) ===');
+  ok = await attemptOpenAI(chain[2]);
+}
+
+fs.writeFileSync(path.join(OUT_DIR, '01_request_response_records.json'), JSON.stringify(records, null, 2));
+
+if (!ok) {
+  console.log('\n' + '='.repeat(70));
+  console.log('ALL APPROVED TIERS EXHAUSTED. No draft produced. NO second call will be made (per authorization). Records saved to ' + OUT_DIR + '/01_request_response_records.json');
+  process.exit(1);
+}
+
+console.log('\n=== Winning tier: ' + winningTier + ' | model: ' + winningModel + ' ===');
+console.log('usage: ' + JSON.stringify(winningUsage));
+
+// ── Parse the winning content as the v2 draft schema (tolerant extraction, matching the real
+// code's own JSON-recovery pattern) ──
+let draft = null;
+try { draft = JSON.parse(winningContent); }
+catch (e) {
+  const first = winningContent.indexOf('{'), last = winningContent.lastIndexOf('}');
+  if (first >= 0 && last > first) {
+    try { draft = JSON.parse(winningContent.slice(first, last + 1)); } catch (e2) { draft = null; }
+  }
+}
+fs.writeFileSync(path.join(OUT_DIR, 'raw_winning_content.txt'), winningContent);
+
+if (!draft) {
+  console.log('\n⚠ WINNING RESPONSE WAS NOT PARSEABLE JSON. Raw content saved to raw_winning_content.txt. NO second call will be made. Stopping.');
+  fs.writeFileSync(path.join(OUT_DIR, 'REPORT.md'), '# First Sacrifice draft-authoring run (full-package v3) — FAILED (unparseable output)\n\nWinning tier: ' + winningTier + ' (' + winningModel + ')\n\nThe response was not parseable JSON. See raw_winning_content.txt. No second call was made.\n');
+  process.exit(1);
+}
+
+const draftArtifact = { packet_id: PACKET.packet_id, packet_version: PACKET.version, draft_version: 'draft-v3-full-package', generated_by: { tier: winningTier, model: winningModel, usage: winningUsage }, generated_at: new Date().toISOString(), draft };
+fs.writeFileSync(path.join(OUT_DIR, '02_draft.json'), JSON.stringify(draftArtifact, null, 2));
+
+// ── Structural/canon validation — reuse the REAL validator function exactly as the other
+// scripts in this session do (eligibility for review, not a quality judgment). ──
+const validatorSrc = fs.readFileSync(path.join(__dirname, '_first_sacrifice_packet_validator.mjs'), 'utf8');
+const fnMatch = validatorSrc.match(/function validateDraft[\s\S]*?\n}\n/);
+const patternsMatch = validatorSrc.match(/const SEALED_PATTERNS[\s\S]*?(?=\nfunction validateDraft)/);
+const sandbox = new Function('module', patternsMatch[0] + fnMatch[0] + '\nmodule.exports = validateDraft;');
+const modObj = { exports: null };
+sandbox(modObj);
+const validateDraft = modObj.exports;
+let validation;
+try { validation = validateDraft(draft, PACKET); }
+catch (e) { validation = { ok: false, violations: [{ rule: 'validator_threw', detail: String(e.message || e) }] }; }
+fs.writeFileSync(path.join(OUT_DIR, '03_validation_result.json'), JSON.stringify(validation, null, 2));
+
+// ── Real cost from actual usage + the real/externally-sourced pricing this session established ──
+const PRICING = {
+  'grok-4.3': { in: 0.00000125, out: 0.0000025 }, 'grok-4-1-fast-reasoning': { in: 0.00000125, out: 0.0000025 },
+  'ministral-8b-2512': { in: 0.00000015, out: 0.00000015 },
+  'gpt-4o': { in: 0.0000025, out: 0.00001 },
+};
+let realCostUSD = null;
+if (winningUsage) {
+  const promptTok = winningUsage.prompt_tokens || winningUsage.promptTokens || 0;
+  const compTok = winningUsage.completion_tokens || winningUsage.completionTokens || 0;
+  const p = PRICING[winningModel] || PRICING[Object.keys(PRICING).find(k => winningModel && winningModel.indexOf(k) !== -1)];
+  if (p) realCostUSD = +(promptTok * p.in + compTok * p.out).toFixed(6);
+}
+
+// ── FULL READING-EXPERIENCE preview: baked Scene 1 + oasHandoff fixed content + the model's new
+// oasOpening / postInterruptionBeat around the live OAS gap and the fixed 3-line tail + the 5
+// fate cards. Never the delta alone — Roman's explicit correction (2026-09-17): "where's the
+// 800-word scene itself?" ──
+const CARD_KEYS = ['temptation', 'silence', 'reversal', 'boundary', 'confession'];
+function renderPreview() {
+  const L = [];
+  L.push('# First Sacrifice — Full-Package Draft (v3) Review Preview (REAL, authorized draft)');
+  L.push('');
+  L.push('**Packet**: ' + PACKET.packet_id + ' v' + PACKET.version);
+  L.push('**Generated by**: ' + winningModel + ' (' + winningTier + ' tier) | usage: ' + JSON.stringify(winningUsage) + ' | real cost: ' + (realCostUSD != null ? '$' + realCostUSD : 'unknown — usage block missing'));
+  L.push('');
+  L.push('## Validator result: ' + (validation.ok ? '✅ ELIGIBLE FOR REVIEW (structural/canon checks passed — this is NOT a prose-quality judgment)' : '❌ NOT ELIGIBLE — structural/canon violations found'));
+  if (!validation.ok) validation.violations.forEach(v => L.push('- **' + v.rule + '**: ' + v.detail));
+  L.push('');
+  L.push('═'.repeat(70));
+  L.push('# OPTION A — CURRENT (baked, real, public/starter-scenes.js, read-only, ' + beats.length + ' beats)');
+  L.push('═'.repeat(70));
+  L.push('');
+  beats.forEach(b => { if (b.speaker) L.push('**' + b.speaker + '**'); L.push(b.text); L.push(''); });
+  L.push('═'.repeat(70));
+  const scene1Beats = (draft.scene1Candidate && Array.isArray(draft.scene1Candidate.beats)) ? draft.scene1Candidate.beats : [];
+  L.push('# OPTION B — CANDIDATE (this generation, ' + scene1Beats.length + ' beats)');
+  L.push('═'.repeat(70));
+  L.push('');
+  if (!scene1Beats.length) L.push('⚠ NONE — see validator violations above.');
+  scene1Beats.forEach(b => {
+    if (!b) return;
+    if (b.speaker) L.push('**' + b.speaker + '** _(' + b.kind + ', image=' + b.image + ')_');
+    else L.push('_(' + b.kind + ', image=' + b.image + ')_');
+    L.push(b.text); L.push('');
+  });
+  L.push('═'.repeat(70));
+  L.push('# SHARED DOWNSTREAM — identical regardless of which Scene 1 is selected');
+  L.push('═'.repeat(70));
+  L.push('');
+  L.push('## OAS HANDOFF');
+  L.push('> ' + oasHandoff.cue);
+  L.push('');
+  L.push('### oasOpening (NEW — this generation; Julian\'s ONE opening line, ≤14 words)');
+  const oo = draft.oasOpening && typeof draft.oasOpening === 'object' ? draft.oasOpening : null;
+  if (!oo) L.push('⚠ NONE — see validator violations above.');
+  else L.push('**' + oo.speaker + ':** ' + oo.text);
+  L.push('');
+  L.push('### [LIVE — player-driven OAS, NOT produced by this call, NOT rendered here]');
+  L.push('The player answers Julian in real time (custom Say/Do, Fate-card prefill, or Petition/Tempt Fate); Julian\'s replies are generated live by the real app from actual player input. Neither this script nor the model authors any line in this range.');
+  L.push('');
+  L.push('### Interruption + tail (FIXED, baked, spliced in — not generated by this call)');
+  L.push('_(image=' + oasHandoff.interruptionImage + ')_');
+  L.push('_' + oasHandoff.interruption + '_');
+  oasHandoff.interruptionExchange.forEach(l => L.push((l.speaker ? '**' + l.speaker + ':** ' : '_(narration)_ ') + l.text));
+  L.push('');
+  L.push('### postInterruptionBeat (NEW — this generation; crystallizes an unresolved choice WITHOUT deciding it)');
+  const pib = draft.postInterruptionBeat && typeof draft.postInterruptionBeat === 'object' ? draft.postInterruptionBeat : null;
+  if (!pib) L.push('⚠ NONE — see validator violations above.');
+  else L.push((pib.speaker ? '**' + pib.speaker + ':** ' : '_(' + pib.kind + ', image=' + pib.image + ')_ ') + pib.text);
+  L.push('');
+  L.push('---');
+  L.push('## FIVE FATE CARDS');
+  const fc = draft.fateCards && typeof draft.fateCards === 'object' ? draft.fateCards : {};
+  CARD_KEYS.forEach(k => {
+    const c = fc[k];
+    L.push('**' + k.toUpperCase() + '**' + (c ? ' (variant: ' + c.variant + ')' : ' — ⚠ MISSING'));
+    if (c) { L.push('  action: ' + c.action); L.push('  dialogue: ' + c.dialogue); }
+  });
+  L.push('');
+  L.push('---');
+  L.push('## Operation record');
+  L.push('- Tiers attempted: ' + records.map(r => r.provider + ' (status ' + r.httpStatus + (r.threw ? ', threw' : '') + ')').join(', '));
+  L.push('- Winning tier: ' + winningTier + ' / ' + winningModel);
+  L.push('- No second draft call was made regardless of the validator result above.');
+  L.push('- No images were generated. No package/starter-scenes.js write occurred. No live-reader launch occurred.');
+  return L.join('\n');
+}
+const preview = renderPreview();
+fs.writeFileSync(path.join(OUT_DIR, '04_review_preview.md'), preview);
+
+const report = [
+  '# First Sacrifice full-package draft-authoring operation (v3) — REPORT',
+  '',
+  '**Calls made**: ' + records.length + ' (' + records.map(r => r.provider).join(' -> ') + ')',
+  '**Winning tier/model**: ' + winningTier + ' / ' + winningModel,
+  '**Tokens (usage)**: ' + JSON.stringify(winningUsage),
+  '**Real cost**: ' + (realCostUSD != null ? '$' + realCostUSD : 'unknown — usage block missing from provider response'),
+  '**Validator**: ' + (validation.ok ? 'ELIGIBLE FOR REVIEW' : 'NOT ELIGIBLE — see 03_validation_result.json') + ' (structural/canon check only — NOT a prose-quality judgment)',
+  '**No second draft call was made.**',
+  '',
+  'Files: 01_request_response_records.json (full request/response/usage per attempt), 02_draft.json (versioned draft artifact), 03_validation_result.json, 04_review_preview.md (FULL reading-experience preview — READ THIS for the fiction), raw_winning_content.txt (raw model output).',
+].join('\n');
+fs.writeFileSync(path.join(OUT_DIR, 'REPORT.md'), report);
+
+console.log('\n' + '='.repeat(70));
+console.log(report);
