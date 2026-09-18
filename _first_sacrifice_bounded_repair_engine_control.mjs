@@ -58,7 +58,7 @@ console.log('\n' + '='.repeat(92) + '\nFIRST SACRIFICE BOUNDED REPAIR ENGINE —
 const PACKET = JSON.parse(fs.readFileSync(path.join(__dirname, '_first_sacrifice_source_packet.json'), 'utf8'));
 const {
   measureBeatDeficiencies, buildRepairPrompt, buildRepairFallbackChain, mergeRepairIntoDraft,
-  isRepairEligible, REPAIR_ELIGIBLE_VALIDATOR_RULES,
+  isRepairEligible, REPAIR_ELIGIBLE_VALIDATOR_RULES, planNextRepairPass, MAX_REPAIR_PASSES,
 } = await import('./_first_sacrifice_bounded_repair_engine.mjs');
 const { buildFixedInputView, buildAuthoringFallbackChain } = await import('./_first_sacrifice_authoring_adapter.mjs');
 
@@ -114,13 +114,22 @@ section('2. buildRepairPrompt / buildRepairFallbackChain — real invocation on 
 const { system: repairSystem, user: repairUser } = buildRepairPrompt(PACKET, attempt6, defAttempt6.deficiencies);
 const deficientNs = defAttempt6.deficiencies.map(d => d.n);
 const acceptedNs = Array.from({ length: 20 }, (_, i) => i + 1).filter(n => !deficientNs.includes(n));
-ok('the constructed repair prompt marks every real deficient slot [NEEDS REPAIR]', deficientNs.every(n => repairUser.includes('Beat ' + n + ' [NEEDS REPAIR]')));
+ok('the constructed repair prompt marks every real deficient slot [NEEDS REPAIR — REPLACE ENTIRELY]', deficientNs.every(n => repairUser.includes('Beat ' + n + ' [NEEDS REPAIR — REPLACE ENTIRELY]')));
 ok('the constructed repair prompt marks every non-deficient slot [ACCEPTED — do not return this one]', acceptedNs.every(n => repairUser.includes('Beat ' + n + ' [ACCEPTED — do not return this one]')));
 ok('the constructed repair prompt forbids touching oasOpening, postInterruptionBeat, and scene1Coverage', /Do NOT return oasOpening, postInterruptionBeat, scene1Coverage/.test(repairUser));
 ok('the constructed repair prompt forbids changing image/kind/speaker/provenance/objectClaims metadata', /Do NOT change any beat.s image, kind, speaker, or provenance\/objectClaims metadata/.test(repairUser));
 ok('the constructed repair prompt forbids inventing new canon, characters, dialogue, or reordering events', /Do NOT invent new canon, new characters, new dialogue/.test(repairUser));
 ok('the constructed repair prompt states the exact bounded output schema, naming only the real deficient slot numbers', repairUser.includes('exactly ' + defAttempt6.deficiencies.length + ' entries') && repairUser.includes(deficientNs.join(', ')));
-ok('the constructed repair prompt states each deficient slot\'s real required range and real current word count', defAttempt6.deficiencies.every(d => repairUser.includes('current text is ' + d.actualWords + ' words; REQUIRED range is ' + d.wordRange[0] + '-' + d.wordRange[1] + ' words')));
+// FULL-SLOT REPLACEMENT (Roman, 2026-09-20, post-Attempt-7): a real repair call was told an
+// explicit delta ("at least N more words needed") and still undershot on 7 of 12 named slots.
+// The prompt must now demand a COMPLETE replacement targeting each slot's own MIDPOINT, and must
+// NEVER again state the old delta/expansion framing.
+ok('the constructed repair prompt demands a COMPLETE, SELF-CONTAINED replacement beat, explicitly warning against an expanded fragment of the existing short text', /FULL-SLOT REPLACEMENT, NOT AN EXPANDED FRAGMENT/.test(repairUser) && /Do NOT simply append more words onto the existing short text/.test(repairUser));
+ok('the constructed repair prompt instructs the model to TARGET THE MIDPOINT of each slot\'s range, not its floor', /TARGET THE MIDPOINT of each slot.s own stated range, not its floor/.test(repairUser));
+ok('the constructed repair prompt states each deficient slot\'s real current word count, real MIDPOINT target, and real allowed range — the new full-slot contract, not the old delta contract', defAttempt6.deficiencies.every(d => repairUser.includes('current text is ' + d.actualWords + ' words (too short — do not extend it). TARGET approximately ' + d.targetWords + ' words. ALLOWED RANGE ' + d.wordRange[0] + '-' + d.wordRange[1] + ' words')));
+ok('every deficiency\'s targetWords is genuinely the midpoint of its own wordRange (real arithmetic, not a placeholder)', defAttempt6.deficiencies.every(d => d.targetWords === Math.round((d.wordRange[0] + d.wordRange[1]) / 2)));
+ok('the constructed repair prompt NEVER states the old, retired delta framing ("more words needed") anywhere', !/more words needed/.test(repairUser));
+ok('the constructed repair prompt\'s output schema calls for "complete replacement text", not "expanded text"', /complete replacement text/.test(repairUser) && !/expanded text/.test(repairUser));
 
 const repairChain = buildRepairFallbackChain(PACKET, attempt6, defAttempt6.deficiencies);
 ok('the repair fallback chain has exactly 3 tiers (Grok primary -> Ministral-8B fallback -> GPT-4o terminal), matching the primary chain\'s own shape', repairChain.length === 3 && repairChain[0].name === 'Grok-4.3' && repairChain[1].name === 'Ministral-8B' && repairChain[2].name === 'GPT-4o');
@@ -139,7 +148,7 @@ function buildCompliantRepairFor(deficiencies) {
     'A second breath followed the first, slower, and I let my shoulders settle a fraction before the next word came.',
     'My grip tightened without my choosing it, knuckles pale where they met the fabric, and I noticed the change only after it happened.',
     'The sound of it reached the back of the clearing before I finished speaking, and a few heads turned toward the noise rather than toward me.',
-    'I counted the space between one heartbeat and the next, and for that count nothing else in the clearing seemed to move.',
+    'I counted the length of that single silence, and for the span of it nothing else in the clearing seemed to move.',
     'Somewhere behind me a foot shifted on the grass, deliberate, and I understood it as a question I was not yet ready to answer.',
   ];
   return {
@@ -347,6 +356,118 @@ ok('REAL TRACE: all 6 real primary calls returned finish_reason "stop" (never "l
 ok('REAL TRACE: all 6 real completions used well under half the 8,000-token max_tokens ceiling (max used: ' + Math.max(...traceRows.map(r => r.completionTokens)) + ' of 8,000)', traceRows.every(r => r.completionTokens < 4000));
 ok('REAL TRACE: every real response parsed as clean, complete JSON (all 6 draft.json artifacts exist and are valid) — no schema/parser truncation ever occurred', [1, 2, 3, 4, 5, 6].every(i => { try { JSON.parse(fs.readFileSync(path.join(__dirname, '_first_sacrifice_draft_v7_attempt' + i + '_full_package/02_draft.json'), 'utf8')); return true; } catch (e) { return false; } }));
 console.log('\nDIAGNOSIS (real evidence, not inference): finish_reason="stop" + completion_tokens far below max_tokens + clean parseable JSON on all 6 real attempts rules out (a) the primary\'s own token ceiling, (b) schema/parser truncation, and (c) any proxy/runner output cap. The real failure mode across all 6 attempts is GENUINE MODEL EARLY COMPLETION — the model believes a short, structurally-complete 20-beat scene satisfies the task and stops. A text reminder (even a well-placed final self-check) asks the model to notice this about itself; it does not change the underlying tendency. A bounded, per-slot repair pass does not rely on the model noticing anything — it names the exact deficient slots mechanically, after real local measurement, and asks for a small, concrete, already-scoped completion instead of a full 20-beat judgment call.');
+
+// ═══════════════════════════════════════════════════════════════════════════════
+section('9. ADAPTIVE TWO-PASS REPAIR — real Attempt 7 fixtures (primary + real pass-1 repair)');
+// ═══════════════════════════════════════════════════════════════════════════════
+// Attempt 7 (real, paid, $0.027538) is the first real test of the (now-superseded) delta-based
+// repair prompt: primary alone was 1,007/1,100 words with 4/16 qualifying narration beats; a real
+// bounded repair call correctly targeted its 12 real deficient slots but undershot the stated
+// floor on 7 of them anyway, leaving the merged candidate at 1,168 words (floor cleared) with
+// 9/16 qualifying (still short of 12). This section proves the NEW full-slot-replacement contract
+// and the NEW two-pass orchestration against that exact real data.
+const attempt7Primary = JSON.parse(fs.readFileSync(path.join(__dirname, '_first_sacrifice_draft_v7_attempt7_full_package/02_draft.json'), 'utf8')).draft;
+const attempt7RealPass1Repair = JSON.parse(fs.readFileSync(path.join(__dirname, '_first_sacrifice_draft_v7_attempt7_full_package/raw_repair_content.txt'), 'utf8'));
+const attempt7RealMergedValidation = JSON.parse(fs.readFileSync(path.join(__dirname, '_first_sacrifice_draft_v7_attempt7_full_package/03_validation_result.json'), 'utf8'));
+
+const defAttempt7Primary = measureBeatDeficiencies(attempt7Primary.scene1Candidate, PACKET);
+ok('real Attempt 7 primary draft (1,007 words) is structurally repairable with 12 real deficient slots (matches the real run\'s own console output)', defAttempt7Primary.structurallyRepairable === true && defAttempt7Primary.deficiencies.length === 12, 'count=' + defAttempt7Primary.deficiencies.length);
+
+// Reproduce the REAL pass-1 merge locally (same inputs the real run used) to get a real, exact
+// pass-1-merged draft to build pass 2 against.
+const pass1Merge = mergeRepairIntoDraft(attempt7Primary, attempt7RealPass1Repair, defAttempt7Primary.deficiencies);
+ok('the REAL pass-1 repair response (as actually returned by the real, paid Grok call) merges cleanly under the bounded contract', pass1Merge.errors.length === 0, JSON.stringify(pass1Merge.errors));
+const pass1MergedValidation = validateDraft(pass1Merge.merged, PACKET);
+ok('the locally-reproduced pass-1 merge EXACTLY reproduces the real, on-disk post-pass-1 validation result (scene1_insufficient_narration_density only)', JSON.stringify(pass1MergedValidation.violations) === JSON.stringify(attempt7RealMergedValidation.finalValidation.violations), JSON.stringify(pass1MergedValidation.violations));
+
+// ── (a) "a too-short first repair leaves only its deficient slots eligible for the second pass" ──
+const plan2 = planNextRepairPass(pass1Merge.merged, pass1MergedValidation, PACKET, 1);
+ok('planNextRepairPass AUTHORIZES a second pass after a too-short real first repair (passesAlreadyRun=1, still < MAX_REPAIR_PASSES=' + MAX_REPAIR_PASSES + ')', plan2.authorized === true, JSON.stringify(plan2));
+const pass2DeficientNs = plan2.authorized ? plan2.deficiencyReport.deficiencies.map(d => d.n).sort((a, b) => a - b) : [];
+const EXPECTED_REAL_RESIDUAL_SLOTS = [9, 10, 12, 13, 14, 16, 17, 19, 20]; // hand-verified against the real merged draft's actual per-beat word counts
+ok('the second pass\'s deficient-slot set is EXACTLY the real 9 slots still below their own floor after the real pass-1 repair — not the original 12, not all 20, not a guess', JSON.stringify(pass2DeficientNs) === JSON.stringify(EXPECTED_REAL_RESIDUAL_SLOTS), 'got ' + JSON.stringify(pass2DeficientNs));
+ok('the 3 slots the real pass-1 repair DID fully fix (4, 7, 8) are correctly EXCLUDED from the second pass\'s target set', ![4, 7, 8].some(n => pass2DeficientNs.includes(n)));
+
+// ── (b) full-slot-replacement prompt for pass 2, real fixtures ──
+const { user: pass2User } = buildRepairPrompt(PACKET, pass1Merge.merged, plan2.deficiencyReport.deficiencies);
+ok('the pass-2 repair prompt, built from real residual deficiencies, targets each slot\'s real midpoint (not the old delta framing)', plan2.deficiencyReport.deficiencies.every(d => pass2User.includes('TARGET approximately ' + d.targetWords + ' words')));
+ok('the pass-2 repair prompt does not re-request any slot the first pass already fixed (4, 7, 8 never appear as [NEEDS REPAIR — REPLACE ENTIRELY])', ![4, 7, 8].some(n => pass2User.includes('Beat ' + n + ' [NEEDS REPAIR — REPLACE ENTIRELY]')));
+
+// ── (c) a compliant full-slot residual repair yields a PASSING merged candidate ──
+function buildCompliantFullSlotRepairFor(deficiencies) {
+  const FILLER_SENTENCES = [
+    'A second breath followed the first, slower, and I let my shoulders settle a fraction before the next word came from someone at the edge of the gathering.',
+    'My grip tightened without my choosing it, knuckles pale where they met the fabric, and I noticed the change only after it had already happened to me.',
+    'The sound of it reached the back of the clearing before I finished forming the thought, and a few heads turned toward the noise rather than toward me.',
+    'I counted the length of that single silence, and for the span of it nothing else in the clearing seemed to move or breathe at all.',
+    'Somewhere behind me a foot shifted against the grass, deliberate and unhurried, and I understood it as a question I was not yet ready to answer honestly.',
+  ];
+  return {
+    repairs: deficiencies.map((d, idx) => {
+      const need = d.targetWords; // land AT the midpoint target, not merely above the floor
+      const words = [];
+      let s = 0;
+      while (words.length < need) { words.push(...FILLER_SENTENCES[(idx + s) % FILLER_SENTENCES.length].split(' ')); s++; }
+      return { n: d.n, text: words.slice(0, need).join(' ') + '.' };
+    }),
+  };
+}
+const compliantPass2Repair = buildCompliantFullSlotRepairFor(plan2.deficiencyReport.deficiencies);
+ok('the compliant pass-2 fixture genuinely lands each slot AT its own midpoint (real arithmetic, not a placeholder)', compliantPass2Repair.repairs.every(r => { const d = plan2.deficiencyReport.deficiencies.find(x => x.n === r.n); return r.text.trim().split(/\s+/).filter(Boolean).length === d.targetWords; }));
+const pass2Merge = mergeRepairIntoDraft(pass1Merge.merged, compliantPass2Repair, plan2.deficiencyReport.deficiencies);
+ok('GREEN: the compliant pass-2 (full-slot) repair merges cleanly on top of the pass-1-merged draft', pass2Merge.errors.length === 0, JSON.stringify(pass2Merge.errors));
+const doublyMergedFullDraft = { ...attempt7Primary, scene1Candidate: pass2Merge.merged.scene1Candidate };
+const finalValidationAfterTwoPasses = validateDraft(doublyMergedFullDraft, PACKET);
+ok('END-TO-END: primary + real pass-1 repair + compliant pass-2 (full-slot, midpoint) repair, re-validated with the REAL validator, YIELDS A FULLY PASSING candidate (validation.ok === true)', finalValidationAfterTwoPasses.ok === true, JSON.stringify(finalValidationAfterTwoPasses.violations));
+
+// ── (d) a structural/canon/copy violation prevents ANY repair pass, at any pass count ──
+const mixedViolations = [{ rule: 'scene1_insufficient_narration_density' }, { rule: 'exemplar_verbatim_copy' }];
+ok('planNextRepairPass REFUSES pass 1 (passesAlreadyRun=0) when a canon/copy violation coexists with a density one', planNextRepairPass(pass1Merge.merged, { ok: false, violations: mixedViolations }, PACKET, 0).authorized === false);
+ok('planNextRepairPass REFUSES pass 2 (passesAlreadyRun=1) for the same mixed-violation reason', planNextRepairPass(pass1Merge.merged, { ok: false, violations: mixedViolations }, PACKET, 1).authorized === false);
+const structuralDriftDraft = { scene1Candidate: { beats: pass1Merge.merged.scene1Candidate.beats.slice(0, 20) } };
+structuralDriftDraft.scene1Candidate.beats[3] = { ...structuralDriftDraft.scene1Candidate.beats[3], image: 'd1' };
+ok('planNextRepairPass REFUSES when the current draft has structurally drifted (tampered image mapping), even with purely density violations reported', planNextRepairPass(structuralDriftDraft, { ok: false, violations: [{ rule: 'scene1_too_thin' }] }, PACKET, 0).authorized === false);
+
+// ── (e) NEVER a third pass — the hard ceiling ──
+ok('planNextRepairPass REFUSES a third pass (passesAlreadyRun=2 === MAX_REPAIR_PASSES) even with purely density violations and real residual deficiencies still present', planNextRepairPass(pass1Merge.merged, pass1MergedValidation, PACKET, 2).authorized === false);
+ok('planNextRepairPass REFUSES any passesAlreadyRun beyond the max (passesAlreadyRun=3, 4, ...)', [3, 4, 10].every(n => planNextRepairPass(pass1Merge.merged, pass1MergedValidation, PACKET, n).authorized === false));
+ok('MAX_REPAIR_PASSES is exactly 2 (primary + pass 1 + pass 2 — never more)', MAX_REPAIR_PASSES === 2);
+ok('planNextRepairPass throws on a malformed passesAlreadyRun rather than silently authorizing', (() => { try { planNextRepairPass(pass1Merge.merged, pass1MergedValidation, PACKET, -1); return false; } catch (e) { return /non-negative/.test(e.message); } })() && (() => { try { planNextRepairPass(pass1Merge.merged, pass1MergedValidation, PACKET, 'two'); return false; } catch (e) { return /non-negative/.test(e.message); } })());
+
+// ── (f) the second pass CANNOT alter the opener, post-interruption beat, image map, or already-valid slots ──
+const pass2WithOasOpening = { repairs: compliantPass2Repair.repairs, oasOpening: { speaker: 'Julian', text: 'An unauthorized replacement for the OAS opener that a residual repair pass must never be able to make.' } };
+ok('RED (pass 2): a repair response touching oasOpening is rejected wholesale, identically to pass 1', mergeRepairIntoDraft(pass1Merge.merged, pass2WithOasOpening, plan2.deficiencyReport.deficiencies).merged === null);
+const pass2WithPostInterruption = { repairs: compliantPass2Repair.repairs, postInterruptionBeat: { speaker: null, image: 'd4', kind: 'narration', text: 'An unauthorized replacement for the post-interruption beat.' } };
+ok('RED (pass 2): a repair response touching postInterruptionBeat is rejected wholesale', mergeRepairIntoDraft(pass1Merge.merged, pass2WithPostInterruption, plan2.deficiencyReport.deficiencies).merged === null);
+const pass2TouchingAlreadyValidSlot = { repairs: [...compliantPass2Repair.repairs, { n: 4, text: 'An unauthorized rewrite of a slot the first pass already fixed — the second pass must never be able to touch it.' }] };
+const pass2RedAlreadyValid = mergeRepairIntoDraft(pass1Merge.merged, pass2TouchingAlreadyValidSlot, plan2.deficiencyReport.deficiencies);
+ok('RED (pass 2): a repair response touching slot 4 (already fixed and valid after pass 1) is rejected wholesale, not silently applied on top of an already-good beat', pass2RedAlreadyValid.merged === null && pass2RedAlreadyValid.errors.some(e => /never flagged as deficient/.test(e)));
+const acceptedAfterPass1 = Array.from({ length: 20 }, (_, i) => i + 1).filter(n => !pass2DeficientNs.includes(n));
+ok('GREEN (pass 2): every beat NOT named in the second pass is byte-identical between the pass-1-merged draft and the doubly-merged final draft — the second pass touches ONLY its own named slots', acceptedAfterPass1.every(n => JSON.stringify(doublyMergedFullDraft.scene1Candidate.beats[n - 1]) === JSON.stringify(pass1Merge.merged.scene1Candidate.beats[n - 1])));
+ok('GREEN (pass 2): image occurrence mapping is IDENTICAL across primary, pass-1-merged, and doubly-merged drafts for every one of the 20 slots', doublyMergedFullDraft.scene1Candidate.beats.every((b, i) => b.image === attempt7Primary.scene1Candidate.beats[i].image));
+ok('GREEN (pass 2): scene1Coverage, first_person_lirael, oasOpening, and postInterruptionBeat are IDENTICAL between the primary artifact and the doubly-merged final draft (a repair pass never touches anything outside scene1Candidate.beats[].text)', JSON.stringify(doublyMergedFullDraft.scene1Coverage) === JSON.stringify(attempt7Primary.scene1Coverage) && doublyMergedFullDraft.first_person_lirael === attempt7Primary.first_person_lirael && JSON.stringify(doublyMergedFullDraft.oasOpening) === JSON.stringify(attempt7Primary.oasOpening) && JSON.stringify(doublyMergedFullDraft.postInterruptionBeat) === JSON.stringify(attempt7Primary.postInterruptionBeat));
+
+// ── (g) full provider/cost ceiling for primary + at most TWO bounded repairs ──
+const worstCaseRepair2Chain = buildRepairFallbackChain(PACKET, pass1Merge.merged, defWorstCase.deficiencies); // reuse the same 20-slot worst-case fixture from section 6
+const repair2Sys = worstCaseRepair2Chain[0].messages[0].content, repair2Usr = worstCaseRepair2Chain[0].messages[1].content;
+const repair2EstInputTokens = Math.round((repair2Sys.length + repair2Usr.length) / 4);
+const repair2TierCosts = worstCaseRepair2Chain.map(t => { const p = PRICING[t.billedModel || t.model]; return repair2EstInputTokens * p.in + t.max_tokens * p.out; });
+const repair2WorstCase = repair2TierCosts.reduce((a, b) => a + b, 0);
+const twoPassAbsoluteWorstCase = primaryWorstCase + repairWorstCase + repair2WorstCase;
+const twoPassExpectedSuccess = primaryTierCosts[0] + repairTierCosts[0] + repair2TierCosts[0];
+// A more REALISTIC ceiling using real Attempt 7 numbers: real primary + real pass-1 repair cost,
+// plus a dry-computed (never spent) estimate for a pass-2 call sized to the REAL 9 residual slots.
+const REAL_ATTEMPT7_PRIMARY_COST = 0.021108, REAL_ATTEMPT7_PASS1_REPAIR_COST = 0.00643;
+const realisticPass2Chain = buildRepairFallbackChain(PACKET, pass1Merge.merged, plan2.deficiencyReport.deficiencies);
+const realisticPass2Sys = realisticPass2Chain[0].messages[0].content, realisticPass2Usr = realisticPass2Chain[0].messages[1].content;
+const realisticPass2EstInputTokens = Math.round((realisticPass2Sys.length + realisticPass2Usr.length) / 4);
+const realisticPass2ExpectedCost = realisticPass2EstInputTokens * PRICING['grok-4.3'].in + realisticPass2Chain[0].max_tokens * PRICING['grok-4.3'].out;
+console.log('\n-- TWO-PASS COST CEILING (primary + at most TWO bounded repairs) --');
+console.log('  ABSOLUTE WORST CASE (primary 3-tier + repair-1 3-tier[20 slots] + repair-2 3-tier[20 slots]): $' + twoPassAbsoluteWorstCase.toFixed(4));
+console.log('  EXPECTED-SUCCESS CEILING (all 3 calls succeed on Grok, worst-case 20-slot sizing): $' + twoPassExpectedSuccess.toFixed(4));
+console.log('  REALISTIC (using REAL Attempt 7 primary + real pass-1 costs, dry-projected pass-2 sized to the real 9 residual slots): $' + (REAL_ATTEMPT7_PRIMARY_COST + REAL_ATTEMPT7_PASS1_REPAIR_COST + realisticPass2ExpectedCost).toFixed(4) + ' (pass-2 projected only — NOT spent)');
+ok('a second bounded repair pass, even worst case, keeps the ABSOLUTE worst-case ceiling for the whole 3-call operation under $0.30', twoPassAbsoluteWorstCase < 0.30, '$' + twoPassAbsoluteWorstCase.toFixed(4));
+ok('the REALISTIC two-pass estimate (grounded in Attempt 7\'s real primary + real pass-1 cost) stays well under $0.05 total for the whole operation', (REAL_ATTEMPT7_PRIMARY_COST + REAL_ATTEMPT7_PASS1_REPAIR_COST + realisticPass2ExpectedCost) < 0.05);
 
 console.log('\n' + '='.repeat(92));
 console.log('BOUNDED REPAIR ENGINE CONTROL: ' + pass + ' passed, ' + fail + ' failed');

@@ -33,9 +33,23 @@
 //      unflagged slot, any missing slot, or a malformed response rejects the WHOLE merge (fails
 //      closed — never a partial, silently-incomplete merge).
 //
+// POST-ATTEMPT-7 REDESIGN (Roman, 2026-09-20): a real, paid repair call ($0.00643) was told, per
+// slot, an explicit "at least N more words needed" delta against a stated floor, and still
+// undershot on 7 of 12 named slots. Delta-based expansion of an existing short fragment is the
+// wrong unit of work. Two changes:
+//   (a) buildRepairPrompt now demands a COMPLETE, SELF-CONTAINED replacement beat per deficient
+//       slot — never an appended/expanded fragment — targeting the MIDPOINT of the slot's own
+//       range (measureBeatDeficiencies now returns `targetWords` per deficiency), with the
+//       explicit allowed range stated as a hard floor/ceiling either side of that target.
+//   (b) planNextRepairPass / MAX_REPAIR_PASSES — an adaptive, bounded ORCHESTRATION primitive: at
+//       most ONE residual second pass is ever authorized, targeting ONLY whatever remains
+//       deficient after the first pass (re-measured fresh via measureBeatDeficiencies on the
+//       pass-1-merged draft), and ONLY when every remaining violation is still purely
+//       density-class. A third pass is never authorized under any circumstance.
+//
 // The caller (the real run script) is responsible for: running the REAL validator against the
-// merged candidate after step 3, and rejecting with ZERO package write if it still fails — this
-// module never marks anything "approved" itself.
+// merged candidate after each pass, and rejecting with ZERO package write if it still fails after
+// the authorized passes are exhausted — this module never marks anything "approved" itself.
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -91,6 +105,10 @@ export function measureBeatDeficiencies(scene1Candidate, packet) {
       deficiencies.push({
         n: slot.n, id: slot.id, image: slot.image, kind: slot.kind, wordRange: slot.wordRange, fn: slot.fn,
         actualWords: words, deficitWords: slot.wordRange[0] - words,
+        // Roman, 2026-09-20 (post-Attempt-7 full-slot-replacement redesign): the repair TARGET is
+        // the midpoint of the slot's own range, not its floor — landing near the floor is what a
+        // real, paid repair call did on over half its named slots and still fell short.
+        targetWords: Math.round((slot.wordRange[0] + slot.wordRange[1]) / 2),
       });
     }
   });
@@ -105,30 +123,38 @@ export function buildRepairPrompt(packet, primaryDraft, deficiencies) {
   const beats = primaryDraft.scene1Candidate.beats;
   const deficientN = new Set(deficiencies.map(d => d.n));
   const L = [];
-  L.push('You are performing a BOUNDED REPAIR on exactly ' + deficiencies.length + ' already-identified under-length beat slot(s) of an otherwise-accepted Scene 1 candidate. This is a SURGICAL patch, not a rewrite — everything else about this scene has already been accepted.');
+  // FULL-SLOT REPLACEMENT CONTRACT (Roman, 2026-09-20, following the real Attempt 7 finding: a
+  // real, paid repair call was told, per slot, exactly how many MORE words were needed against an
+  // explicit floor, and still undershot on 7 of 12 named slots — "add at least N words" to an
+  // existing fragment is the wrong unit of work; a delta instruction lets the model treat the ask
+  // as optional trimming room rather than a real target. Each deficient slot now gets a COMPLETE
+  // replacement beat, written fresh, targeting the MIDPOINT of its own assigned range with an
+  // explicit allowed range either side of it — never an appended/expanded fragment.
+  L.push('You are performing a BOUNDED REPAIR on exactly ' + deficiencies.length + ' already-identified deficient beat slot(s) of an otherwise-accepted Scene 1 candidate. This is a SURGICAL patch, not a rewrite — everything else about this scene has already been accepted.');
   L.push('');
   L.push('HARD SCOPE (any violation is a hard failure of this repair, rejected wholesale):');
   L.push('  - Return ONLY the ' + deficiencies.length + ' named slot(s) below, each keyed by its locked slot number "n". Do not return any other slot.');
   L.push('  - Do NOT return oasOpening, postInterruptionBeat, scene1Coverage, first_person_lirael, or any other top-level field — this repair touches beat TEXT only.');
-  L.push('  - Do NOT change any beat\'s image, kind, speaker, or provenance/objectClaims metadata — those are already approved and stay exactly as they are; you are extending existing approved prose in place, never re-authoring a beat\'s role.');
-  L.push('  - Do NOT invent new canon, new characters, new dialogue from another character, or move/reorder any event — expand the SAME moment already established in the accepted text with more concrete sensory detail, interior reaction, or physical action from that same instant.');
-  L.push('  - Never pad with generic description ("the air felt heavy," "time seemed to slow") — the expansion must be as concrete and grounded as the surrounding already-accepted prose.');
-  L.push('  - Aim comfortably INSIDE the stated word range for each slot, not barely at its floor — the scene-level total floor (1,100 words) is cleared by only a ~10-word margin if every slot lands exactly on its own minimum, so a slot landing a few words above its floor is safer than one landing exactly on it.');
+  L.push('  - Do NOT change any beat\'s image, kind, speaker, or provenance/objectClaims metadata — those are already approved and stay exactly as they are; you are replacing a beat\'s TEXT in place, never re-authoring its role.');
+  L.push('  - Do NOT invent new canon, new characters, new dialogue from another character, or move/reorder any event — the SAME moment already established in the accepted text, rewritten fresh and complete, with concrete sensory detail, interior reaction, or physical action from that same instant.');
+  L.push('  - Never pad with generic description ("the air felt heavy," "time seemed to slow").');
+  L.push('  - FULL-SLOT REPLACEMENT, NOT AN EXPANDED FRAGMENT (HARD): for each named slot, write a COMPLETE, SELF-CONTAINED replacement beat from scratch. Do NOT simply append more words onto the existing short text below — the existing text is shown only so you know what moment/content this beat must still cover, not as a stem to extend. A rewritten beat that happens to reuse some of the same phrasing is fine; one that is visibly "the old sentence plus a bolted-on continuation" is a hard failure of this repair.');
+  L.push('  - TARGET THE MIDPOINT of each slot\'s own stated range, not its floor — an explicit numeric target is given per slot below. Landing near the floor is what caused the last real repair attempt to fail on over half its slots; landing near the midpoint gives real margin on both sides.');
   L.push('');
   L.push('FULL ACCEPTED DRAFT — for continuity only (you are replacing ONLY the [NEEDS REPAIR] slots below; every other slot shown here is already final and must not be echoed back):');
   beats.forEach((b, i) => {
     const n = i + 1;
     const flagged = deficientN.has(n);
-    L.push('Beat ' + n + (flagged ? ' [NEEDS REPAIR]' : ' [ACCEPTED — do not return this one]') + ' (' + b.kind + ', image=' + b.image + '): ' + b.text);
+    L.push('Beat ' + n + (flagged ? ' [NEEDS REPAIR — REPLACE ENTIRELY]' : ' [ACCEPTED — do not return this one]') + ' (' + b.kind + ', image=' + b.image + '): ' + b.text);
   });
   L.push('');
-  L.push('SLOTS TO REPAIR — each MUST individually reach its own stated word-count floor:');
+  L.push('SLOTS TO REPLACE — each is a COMPLETE rewrite targeting its own midpoint, within its own allowed range:');
   deficiencies.forEach(d => {
-    L.push('  - Slot ' + d.n + ' (id=' + (d.id || 'null') + ', image=' + d.image + ', kind=' + d.kind + '): current text is ' + d.actualWords + ' words; REQUIRED range is ' + d.wordRange[0] + '-' + d.wordRange[1] + ' words (at least ' + d.deficitWords + ' more words needed). This slot\'s function: ' + d.fn);
+    L.push('  - Slot ' + d.n + ' (id=' + (d.id || 'null') + ', image=' + d.image + ', kind=' + d.kind + '): current text is ' + d.actualWords + ' words (too short — do not extend it). TARGET approximately ' + d.targetWords + ' words. ALLOWED RANGE ' + d.wordRange[0] + '-' + d.wordRange[1] + ' words, hard floor ' + d.wordRange[0] + ', hard ceiling ' + d.wordRange[1] + '. This slot\'s function: ' + d.fn);
   });
   L.push('');
-  L.push('OUTPUT SCHEMA (HARD — return ONLY this JSON object, nothing else): { "repairs": [ { "n": <slot number>, "text": "<expanded text>" }, ... ] } — exactly ' + deficiencies.length + ' entries, one per slot listed above, "n" values exactly: ' + deficiencies.map(d => d.n).join(', ') + '. No other top-level field. No other field inside a repair entry.');
-  const system = 'You are performing a bounded, surgical repair on specific under-length beats of an already-mostly-accepted scene. You return ONLY the repaired beat text for the named slots as structured JSON — nothing else, no commentary, no full-scene rewrite.';
+  L.push('OUTPUT SCHEMA (HARD — return ONLY this JSON object, nothing else): { "repairs": [ { "n": <slot number>, "text": "<complete replacement text>" }, ... ] } — exactly ' + deficiencies.length + ' entries, one per slot listed above, "n" values exactly: ' + deficiencies.map(d => d.n).join(', ') + '. No other top-level field. No other field inside a repair entry.');
+  const system = 'You are performing a bounded, surgical repair on specific deficient beats of an already-mostly-accepted scene. For each named slot you write a COMPLETE replacement beat from scratch, targeting the midpoint of its stated range — never an appended or expanded fragment of the existing short text. You return ONLY the repaired beat text for the named slots as structured JSON — nothing else, no commentary, no full-scene rewrite.';
   return { system, user: L.join('\n') };
 }
 
@@ -186,4 +212,38 @@ export const REPAIR_ELIGIBLE_VALIDATOR_RULES = Object.freeze(['scene1_too_thin',
 
 export function isRepairEligible(violations) {
   return Array.isArray(violations) && violations.length > 0 && violations.every(v => REPAIR_ELIGIBLE_VALIDATOR_RULES.includes(v.rule));
+}
+
+// ── 4. ADAPTIVE, BOUNDED TWO-PASS ORCHESTRATION (Roman, 2026-09-20, post-Attempt-7) ──────────
+// Attempt 7 (real, paid, $0.027538) proved the repair mechanism itself protects the package
+// correctly (it rejected with zero package write when the repaired candidate still failed) but
+// that a SINGLE delta-based repair pass was not enough — 7 of 12 named slots still undershot
+// their own explicit target. Rather than looping indefinitely, this authorizes AT MOST ONE
+// residual second pass, targeting ONLY whatever remains deficient after the first pass, and ONLY
+// when every remaining violation is still purely density-class. A third pass is never authorized,
+// under any circumstance — this function is the single place that decision is made, so it can be
+// proven once rather than re-implemented ad hoc by each caller.
+export const MAX_REPAIR_PASSES = 2;
+
+export function planNextRepairPass(currentDraft, currentValidation, packet, passesAlreadyRun) {
+  if (typeof passesAlreadyRun !== 'number' || passesAlreadyRun < 0) {
+    throw new Error('planNextRepairPass: passesAlreadyRun must be a non-negative number');
+  }
+  if (passesAlreadyRun >= MAX_REPAIR_PASSES) {
+    return { authorized: false, reason: 'maximum of ' + MAX_REPAIR_PASSES + ' bounded repair passes already used (passesAlreadyRun=' + passesAlreadyRun + ') — no further repair pass, ever, regardless of outcome' };
+  }
+  if (currentValidation.ok) {
+    return { authorized: false, reason: 'draft already passes validation — nothing to repair' };
+  }
+  if (!isRepairEligible(currentValidation.violations)) {
+    return { authorized: false, reason: 'remaining violations are not purely density-class, a repair pass must never be attempted to paper over a canon/structural/copy violation: ' + currentValidation.violations.map(v => v.rule).join(', ') };
+  }
+  const deficiencyReport = measureBeatDeficiencies(currentDraft.scene1Candidate, packet);
+  if (!deficiencyReport.structurallyRepairable) {
+    return { authorized: false, reason: deficiencyReport.reason };
+  }
+  if (deficiencyReport.deficiencies.length === 0) {
+    return { authorized: false, reason: 'validator reports density violations but local per-slot measurement finds no beat below its own slot floor — a mismatch this engine refuses to guess through; fails closed rather than repairing blind' };
+  }
+  return { authorized: true, deficiencyReport };
 }

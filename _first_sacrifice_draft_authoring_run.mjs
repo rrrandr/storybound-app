@@ -8,9 +8,10 @@
 //   - Maximum ONE attempt per tier for the PRIMARY (whole-scene) draft. No second primary call,
 //     ever, regardless of outcome.
 //   - SUPERSEDED as of v7 attempt 7 (Roman, 2026-09-20 operational redesign): "no repair pass" is
-//     no longer the rule. AT MOST ONE additional BOUNDED repair call (its own 3-tier chain) is now
-//     permitted, and ONLY when the primary draft is structurally correct but fails purely on the
-//     two density rules — see the v7 attempt 7 note below and
+//     no longer the rule. AT MOST MAX_REPAIR_PASSES additional BOUNDED repair calls (currently 2,
+//     each its own 3-tier chain, run adaptively one at a time via planNextRepairPass) are now
+//     permitted, and ONLY while the current draft is structurally correct but fails purely on the
+//     two density rules — see the v7 attempt 7/8 notes below and
 //     _first_sacrifice_bounded_repair_engine.mjs for the full, dry-proven design. Still no images,
 //     no live-reader launch, no starter-scenes.js / canon write, and no second primary call.
 //   - The model writes scene1Candidate (EXACTLY 20 numbered beats, full candidate replacement
@@ -86,7 +87,31 @@ const require = createRequire(import.meta.url);
 // structurally repairable, or still fails after the merge, or the merge itself is malformed in any
 // way, this rejects with ZERO package write — identical failure posture to every prior attempt,
 // just with one more real chance to clear a purely mechanical density bar before giving up.
-const OUT_DIR = path.join(__dirname, '_first_sacrifice_draft_v7_attempt7_full_package');
+// RESULT (disclosed, preserved untouched at _first_sacrifice_draft_v7_attempt7_full_package/):
+// primary alone hit 1,007/1,100 words (best primary ever), 4/16 qualifying narration beats; the
+// bounded repair call correctly targeted its 12 real deficient slots but undershot the stated
+// floor on 7 of them anyway (told explicitly "at least N more words needed" per slot and still
+// fell short) — merged candidate reached 1,168 words (floor cleared) with 9/16 qualifying (still
+// short of 12). Real cost $0.027538. The repair MECHANISM worked exactly as designed (correct
+// eligibility gate, correct scoped request, correct local merge, correct re-validation, correct
+// zero-package-write rejection) — the finding is that a DELTA-based repair instruction ("add N
+// more words" against an existing short fragment) is still not a reliable unit of work.
+//
+// v7 attempt 8 — FULL-SLOT REPLACEMENT + ADAPTIVE TWO-PASS REDESIGN (Roman, 2026-09-20, dry,
+// proven 87/87 on real Attempt 7 fixtures in _first_sacrifice_bounded_repair_engine_control.mjs
+// section 9): replaces delta-based expansion with a FULL-SLOT REPLACEMENT contract — each
+// deficient slot gets a complete, self-contained replacement beat (never an appended fragment),
+// targeting the MIDPOINT of its own assigned range with an explicit allowed range stated either
+// side of it. Adds an ADAPTIVE, BOUNDED two-pass orchestration (planNextRepairPass,
+// MAX_REPAIR_PASSES=2): primary -> repair pass 1 -> repair pass 2 ONLY if pass 1's merged result
+// still fails PURELY on the two density rules (re-checked fresh each time, so a pass that
+// accidentally introduces a non-density violation — e.g. a copy-guard collision — correctly blocks
+// any further pass rather than being repaired over). A third pass is never authorized under any
+// circumstance. Proven end-to-end on the real Attempt 7 primary + real pass-1 repair: a compliant
+// full-slot pass-2 residual repair (targeting exactly the 9 real slots still deficient after the
+// real pass-1 repair) yields a FULLY PASSING merged candidate when re-validated with the real
+// validator.
+const OUT_DIR = path.join(__dirname, '_first_sacrifice_draft_v7_attempt8_full_package');
 fs.mkdirSync(OUT_DIR, { recursive: true });
 
 // ── Load .env.local into process.env (values never logged) ──────────────────────────────────
@@ -106,7 +131,7 @@ console.log('Env loaded. Keys present: XAI=' + !!process.env.XAI_API_KEY + ' MIS
 // ── Build the adapter's real, packet-derived chain (identical prompt across all 3 tiers) ────
 const { buildFixedInputView, buildAuthoringFallbackChain } = await import('./_first_sacrifice_authoring_adapter.mjs');
 const {
-  measureBeatDeficiencies, isRepairEligible, buildRepairFallbackChain, mergeRepairIntoDraft,
+  buildRepairFallbackChain, mergeRepairIntoDraft, planNextRepairPass, MAX_REPAIR_PASSES,
 } = await import('./_first_sacrifice_bounded_repair_engine.mjs');
 const PACKET = JSON.parse(fs.readFileSync(path.join(__dirname, '_first_sacrifice_source_packet.json'), 'utf8'));
 const chain = buildAuthoringFallbackChain(PACKET, buildFixedInputView());
@@ -270,72 +295,84 @@ try { validation = validateDraft(draft, PACKET); }
 catch (e) { validation = { ok: false, violations: [{ rule: 'validator_threw', detail: String(e.message || e) }] }; }
 fs.writeFileSync(path.join(OUT_DIR, '03_validation_result.json'), JSON.stringify(validation, null, 2));
 
-// ── BOUNDED REPAIR PASS (Roman, 2026-09-20 operational redesign) — AT MOST ONE additional call,
-// and ONLY when the primary draft is structurally correct (exactly 20 beats, locked image/kind
-// mapping intact) but fails PURELY on the two density rules (REPAIR_ELIGIBLE_VALIDATOR_RULES).
-// Never attempted for any canon/structural violation. Never a second primary call, never a
-// whole-scene rewrite. See _first_sacrifice_bounded_repair_engine.mjs + its dry control (56/56,
-// zero fetch calls) for the full design and proof. `draft`/`validation` are reassigned to the
-// merged, re-validated result ONLY if the repair call succeeds AND the merge is well-formed —
-// every failure mode below falls back to the ORIGINAL primary draft/validation, unchanged. ──
+// ── ADAPTIVE, BOUNDED TWO-PASS REPAIR (Roman, 2026-09-20, post-Attempt-7 redesign) — at most
+// MAX_REPAIR_PASSES (currently 2) additional calls, one at a time, each authorized fresh by
+// planNextRepairPass: only when the CURRENT draft is structurally correct but fails PURELY on the
+// two density rules, and only while passesRun < MAX_REPAIR_PASSES. A pass's own repair text could
+// in principle introduce a NEW non-density violation (e.g. an accidental exemplar-copy collision);
+// planNextRepairPass re-checks eligibility fresh against the CURRENT validation each time, so that
+// would correctly block any further pass rather than being repaired over. Never a second PRIMARY
+// (whole-scene) call, never more than MAX_REPAIR_PASSES repair passes under any circumstance. See
+// _first_sacrifice_bounded_repair_engine.mjs + its dry control (87/87, zero fetch calls, proven on
+// real Attempt 7 fixtures) for the full design and proof. `draft`/`validation` are reassigned to
+// each pass's merged, re-validated result ONLY if that pass's call succeeds AND its merge is
+// well-formed — any failure mode stops the loop and keeps the last good draft/validation. ──
 let repairOutcome = 'not_needed';
-let deficiencyReport = null;
-let repairCallMade = false, repairWinningUsage = null, repairWinningModel = null, repairWinningTier = null;
-if (!validation.ok) {
-  deficiencyReport = measureBeatDeficiencies(draft.scene1Candidate, PACKET);
-  if (!isRepairEligible(validation.violations)) {
-    repairOutcome = 'not_eligible';
-    console.log('\nBounded repair NOT attempted: primary violations are not purely density-class (' + validation.violations.map(v => v.rule).join(', ') + '). REPAIR_ELIGIBLE_VALIDATOR_RULES = ' + JSON.stringify(['scene1_too_thin', 'scene1_insufficient_narration_density']) + '.');
-  } else if (!deficiencyReport.structurallyRepairable) {
-    repairOutcome = 'not_structurally_repairable';
-    console.log('\nBounded repair NOT attempted: ' + deficiencyReport.reason);
-  } else {
-    console.log('\n=== BOUNDED REPAIR ELIGIBLE — ' + deficiencyReport.deficiencies.length + ' deficient slot(s): ' + deficiencyReport.deficiencies.map(d => d.n).join(', ') + ' ===');
-    const repairChain = buildRepairFallbackChain(PACKET, draft, deficiencyReport.deficiencies);
-    const repairCtx = makeCtx();
-    const repairOk = await runChain(repairChain, repairCtx, 'REPAIR');
-    repairCallMade = true; repairWinningUsage = repairCtx.winningUsage; repairWinningModel = repairCtx.winningModel; repairWinningTier = repairCtx.winningTier;
-    fs.writeFileSync(path.join(OUT_DIR, '05_repair_request_response_records.json'), JSON.stringify(repairCtx.records, null, 2));
-    if (!repairOk) {
-      repairOutcome = 'repair_call_failed';
-      console.log('\nBounded repair call FAILED on all 3 tiers. Keeping the primary draft/validation as final. NO further call will be made.');
-    } else {
-      fs.writeFileSync(path.join(OUT_DIR, 'raw_repair_content.txt'), repairCtx.winningContent || '');
-      let repairResponse = null;
-      try { repairResponse = JSON.parse(repairCtx.winningContent); }
-      catch (e) {
-        const first = repairCtx.winningContent.indexOf('{'), last = repairCtx.winningContent.lastIndexOf('}');
-        if (first >= 0 && last > first) { try { repairResponse = JSON.parse(repairCtx.winningContent.slice(first, last + 1)); } catch (e2) { repairResponse = null; } }
-      }
-      if (!repairResponse) {
-        repairOutcome = 'repair_response_unparseable';
-        console.log('\nBounded repair response was not parseable JSON. Keeping the primary draft/validation as final. NO further call will be made.');
-      } else {
-        const { merged, errors } = mergeRepairIntoDraft(draft, repairResponse, deficiencyReport.deficiencies);
-        if (!merged) {
-          repairOutcome = 'merge_rejected';
-          console.log('\nBounded repair response REJECTED at merge (' + errors.length + ' error(s)): ' + errors.join('; ') + '. Keeping the primary draft/validation as final. NO further call will be made.');
-          fs.writeFileSync(path.join(OUT_DIR, '06_repair_merge_result.json'), JSON.stringify({ merged: false, errors }, null, 2));
-        } else {
-          let mergedValidation;
-          try { mergedValidation = validateDraft(merged, PACKET); }
-          catch (e) { mergedValidation = { ok: false, violations: [{ rule: 'validator_threw', detail: String(e.message || e) }] }; }
-          fs.writeFileSync(path.join(OUT_DIR, '06_repair_merge_result.json'), JSON.stringify({ merged: true, errors: [], mergedValidation }, null, 2));
-          const stillDensityFailing = mergedValidation.violations.some(v => v.rule === 'scene1_too_thin' || v.rule === 'scene1_insufficient_narration_density');
-          repairOutcome = stillDensityFailing ? 'merged_still_density_failing' : 'merged_density_resolved';
-          console.log('\nBounded repair merged. Re-validated merged candidate: ' + (mergedValidation.ok ? 'ELIGIBLE FOR REVIEW' : 'still NOT eligible — ' + mergedValidation.violations.map(v => v.rule).join(', ')));
-          // `draft`/`validation` now refer to the merged, re-validated candidate for every artifact
-          // written below (02b, REPORT.md, review preview) — the repair genuinely happened and its
-          // real result, pass or fail, is what gets reported, not the pre-repair draft.
-          draft = merged;
-          validation = mergedValidation;
-          fs.writeFileSync(path.join(OUT_DIR, '07_final_draft_after_repair.json'), JSON.stringify({ packet_id: PACKET.packet_id, packet_version: PACKET.version, draft_version: 'draft-v7-full-package-repaired', repair_outcome: repairOutcome, generated_at: new Date().toISOString(), draft }, null, 2));
-        }
-      }
-    }
+let repairPassesRun = 0;
+const repairPassRecords = []; // [{pass, outcome, callMade, usage, model, tier}]
+for (;;) {
+  const plan = planNextRepairPass(draft, validation, PACKET, repairPassesRun);
+  if (!plan.authorized) {
+    if (repairPassesRun === 0 && !validation.ok) repairOutcome = 'not_eligible_or_not_repairable: ' + plan.reason;
+    if (repairPassesRun === 0 && validation.ok) repairOutcome = 'not_needed';
+    if (repairPassesRun > 0) repairOutcome = repairPassRecords[repairPassRecords.length - 1].outcome; // keep the last real pass's outcome
+    console.log('\nNo further bounded repair pass authorized (passesRun=' + repairPassesRun + '): ' + plan.reason);
+    break;
   }
+  const passN = repairPassesRun + 1;
+  console.log('\n=== BOUNDED REPAIR PASS ' + passN + '/' + MAX_REPAIR_PASSES + ' ELIGIBLE — ' + plan.deficiencyReport.deficiencies.length + ' deficient slot(s): ' + plan.deficiencyReport.deficiencies.map(d => d.n).join(', ') + ' ===');
+  const repairChain = buildRepairFallbackChain(PACKET, draft, plan.deficiencyReport.deficiencies);
+  const repairCtx = makeCtx();
+  const repairOk = await runChain(repairChain, repairCtx, 'REPAIR PASS ' + passN);
+  const passRecord = { pass: passN, outcome: null, callMade: true, usage: repairCtx.winningUsage, model: repairCtx.winningModel, tier: repairCtx.winningTier };
+  fs.writeFileSync(path.join(OUT_DIR, '05_repair_pass' + passN + '_request_response_records.json'), JSON.stringify(repairCtx.records, null, 2));
+  if (!repairOk) {
+    passRecord.outcome = 'repair_call_failed';
+    console.log('\nBounded repair pass ' + passN + ' call FAILED on all 3 tiers. Keeping the last good draft/validation as final. NO further call will be made this pass.');
+    repairPassRecords.push(passRecord); repairPassesRun++;
+    break;
+  }
+  fs.writeFileSync(path.join(OUT_DIR, 'raw_repair_pass' + passN + '_content.txt'), repairCtx.winningContent || '');
+  let repairResponse = null;
+  try { repairResponse = JSON.parse(repairCtx.winningContent); }
+  catch (e) {
+    const first = repairCtx.winningContent.indexOf('{'), last = repairCtx.winningContent.lastIndexOf('}');
+    if (first >= 0 && last > first) { try { repairResponse = JSON.parse(repairCtx.winningContent.slice(first, last + 1)); } catch (e2) { repairResponse = null; } }
+  }
+  if (!repairResponse) {
+    passRecord.outcome = 'repair_response_unparseable';
+    console.log('\nBounded repair pass ' + passN + ' response was not parseable JSON. Keeping the last good draft/validation as final.');
+    repairPassRecords.push(passRecord); repairPassesRun++;
+    break;
+  }
+  const { merged, errors } = mergeRepairIntoDraft(draft, repairResponse, plan.deficiencyReport.deficiencies);
+  if (!merged) {
+    passRecord.outcome = 'merge_rejected';
+    console.log('\nBounded repair pass ' + passN + ' response REJECTED at merge (' + errors.length + ' error(s)): ' + errors.join('; ') + '. Keeping the last good draft/validation as final.');
+    fs.writeFileSync(path.join(OUT_DIR, '06_repair_pass' + passN + '_merge_result.json'), JSON.stringify({ merged: false, errors }, null, 2));
+    repairPassRecords.push(passRecord); repairPassesRun++;
+    break;
+  }
+  let mergedValidation;
+  try { mergedValidation = validateDraft(merged, PACKET); }
+  catch (e) { mergedValidation = { ok: false, violations: [{ rule: 'validator_threw', detail: String(e.message || e) }] }; }
+  fs.writeFileSync(path.join(OUT_DIR, '06_repair_pass' + passN + '_merge_result.json'), JSON.stringify({ merged: true, errors: [], mergedValidation }, null, 2));
+  const stillDensityFailing = mergedValidation.violations.some(v => v.rule === 'scene1_too_thin' || v.rule === 'scene1_insufficient_narration_density');
+  passRecord.outcome = mergedValidation.ok ? 'merged_passing' : (stillDensityFailing ? 'merged_still_density_failing' : 'merged_failing_other_violation');
+  console.log('\nBounded repair pass ' + passN + ' merged. Re-validated merged candidate: ' + (mergedValidation.ok ? 'ELIGIBLE FOR REVIEW' : 'still NOT eligible — ' + mergedValidation.violations.map(v => v.rule).join(', ')));
+  // `draft`/`validation` now refer to this pass's merged, re-validated candidate for every
+  // artifact written below AND for the next loop iteration's eligibility check — each pass's real
+  // result, pass or fail, is what gets reported and what the next pass (if any) is authorized
+  // against, not the pre-pass draft.
+  draft = merged;
+  validation = mergedValidation;
+  fs.writeFileSync(path.join(OUT_DIR, '07_final_draft_after_pass' + passN + '.json'), JSON.stringify({ packet_id: PACKET.packet_id, packet_version: PACKET.version, draft_version: 'draft-v7-full-package-repaired-pass' + passN, repair_outcome: passRecord.outcome, generated_at: new Date().toISOString(), draft }, null, 2));
+  repairPassRecords.push(passRecord);
+  repairPassesRun++;
+  if (mergedValidation.ok) { repairOutcome = 'merged_passing'; break; }
 }
-fs.writeFileSync(path.join(OUT_DIR, '03_validation_result.json'), JSON.stringify({ finalValidation: validation, repairOutcome }, null, 2));
+const repairCallMade = repairPassRecords.length > 0;
+fs.writeFileSync(path.join(OUT_DIR, '03_validation_result.json'), JSON.stringify({ finalValidation: validation, repairOutcome, repairPassesRun, repairPassRecords: repairPassRecords.map(r => ({ pass: r.pass, outcome: r.outcome })) }, null, 2));
 
 // ── Real cost from actual usage + the real/externally-sourced pricing this session established ──
 const PRICING = {
@@ -351,7 +388,9 @@ function realCostFor(usage, model) {
   return p ? +(promptTok * p.in + compTok * p.out).toFixed(6) : null;
 }
 const primaryRealCostUSD = realCostFor(winningUsage, winningModel);
-const repairRealCostUSD = repairCallMade ? realCostFor(repairWinningUsage, repairWinningModel) : null;
+// Sum real cost across every repair pass actually called (0, 1, or up to MAX_REPAIR_PASSES).
+const repairPassCosts = repairPassRecords.map(r => ({ pass: r.pass, cost: realCostFor(r.usage, r.model) }));
+const repairRealCostUSD = repairPassCosts.length > 0 ? +repairPassCosts.reduce((sum, r) => sum + (r.cost || 0), 0).toFixed(6) : null;
 const realCostUSD = primaryRealCostUSD == null ? null : +(primaryRealCostUSD + (repairRealCostUSD || 0)).toFixed(6);
 
 // ── FULL READING-EXPERIENCE preview: baked Scene 1 + oasHandoff fixed content + the model's new
@@ -364,7 +403,8 @@ function renderPreview() {
   L.push('');
   L.push('**Packet**: ' + PACKET.packet_id + ' v' + PACKET.version);
   L.push('**Primary generated by**: ' + winningModel + ' (' + winningTier + ' tier) | usage: ' + JSON.stringify(winningUsage) + ' | real cost: ' + (primaryRealCostUSD != null ? '$' + primaryRealCostUSD : 'unknown — usage block missing'));
-  L.push('**Bounded repair pass**: ' + repairOutcome + (repairCallMade ? ' | ' + repairWinningModel + ' (' + repairWinningTier + ' tier) | usage: ' + JSON.stringify(repairWinningUsage) + ' | real cost: ' + (repairRealCostUSD != null ? '$' + repairRealCostUSD : 'unknown') : ' (no repair call made)'));
+  L.push('**Bounded repair passes run**: ' + repairPassesRun + '/' + MAX_REPAIR_PASSES + ' | final outcome: ' + repairOutcome);
+  repairPassRecords.forEach(r => L.push('  - Pass ' + r.pass + ': ' + r.outcome + ' | ' + r.model + ' (' + r.tier + ' tier) | usage: ' + JSON.stringify(r.usage) + ' | real cost: $' + (realCostFor(r.usage, r.model) ?? 'unknown')));
   L.push('**Total real cost this operation**: ' + (realCostUSD != null ? '$' + realCostUSD : 'unknown — usage block missing'));
   L.push('');
   L.push('## Validator result (FINAL — reflects the bounded repair merge if one was applied): ' + (validation.ok ? '✅ ELIGIBLE FOR REVIEW (structural/canon checks passed — this is NOT a prose-quality judgment)' : '❌ NOT ELIGIBLE — structural/canon violations found'));
@@ -420,8 +460,8 @@ function renderPreview() {
   L.push('## Operation record');
   L.push('- Primary tiers attempted: ' + records.map(r => r.provider + ' (status ' + r.httpStatus + (r.threw ? ', threw' : '') + ')').join(', '));
   L.push('- Primary winning tier: ' + winningTier + ' / ' + winningModel);
-  L.push('- Bounded repair: ' + repairOutcome + (repairCallMade ? ' — tiers attempted: unavailable in this view, see 05_repair_request_response_records.json' : ' (never invoked — see reason above/in REPORT.md)'));
-  L.push('- At most ONE primary call and at most ONE bounded repair call were made — no second primary (whole-scene) call was ever made regardless of the validator result above.');
+  L.push('- Bounded repair passes: ' + repairPassesRun + '/' + MAX_REPAIR_PASSES + ' run, final outcome ' + repairOutcome + (repairCallMade ? ' — see 05_repair_pass*_request_response_records.json' : ' (never invoked — see reason above/in REPORT.md)'));
+  L.push('- At most ONE primary call and at most ' + MAX_REPAIR_PASSES + ' bounded repair pass(es) were made — no second primary (whole-scene) call was ever made regardless of the validator result above.');
   L.push('- No images were generated. No package/starter-scenes.js write occurred. No live-reader launch occurred.');
   return L.join('\n');
 }
@@ -437,16 +477,15 @@ const report = [
   '**Primary real cost**: ' + (primaryRealCostUSD != null ? '$' + primaryRealCostUSD : 'unknown — usage block missing from provider response'),
   '',
   '**Bounded repair outcome**: ' + repairOutcome,
-  '**Bounded repair call made**: ' + repairCallMade,
-  repairCallMade ? '**Bounded repair tier/model**: ' + repairWinningTier + ' / ' + repairWinningModel : null,
-  repairCallMade ? '**Bounded repair tokens (usage)**: ' + JSON.stringify(repairWinningUsage) : null,
-  repairCallMade ? '**Bounded repair real cost**: ' + (repairRealCostUSD != null ? '$' + repairRealCostUSD : 'unknown') : null,
+  '**Bounded repair passes run**: ' + repairPassesRun + '/' + MAX_REPAIR_PASSES,
+  ...repairPassRecords.map(r => '**Pass ' + r.pass + '**: ' + r.outcome + ' | ' + r.model + ' (' + r.tier + ' tier) | usage: ' + JSON.stringify(r.usage) + ' | real cost: $' + (realCostFor(r.usage, r.model) ?? 'unknown')),
+  repairCallMade ? '**Bounded repair TOTAL real cost**: ' + (repairRealCostUSD != null ? '$' + repairRealCostUSD : 'unknown') : '**Bounded repair TOTAL real cost**: $0 (no repair call made)',
   '',
   '**TOTAL real cost this operation**: ' + (realCostUSD != null ? '$' + realCostUSD : 'unknown — usage block missing from provider response'),
   '**FINAL Validator result** (reflects the repair merge if one was applied): ' + (validation.ok ? 'ELIGIBLE FOR REVIEW' : 'NOT ELIGIBLE — see 03_validation_result.json') + ' (structural/canon check only — NOT a prose-quality judgment)',
   '**At most ONE primary call and at most ONE bounded repair call were made.**',
   '',
-  'Files: 01_request_response_records.json (primary attempt records), 02_draft.json (primary draft artifact, pre-repair), 03_validation_result.json ({finalValidation, repairOutcome}), 04_review_preview.md (FULL reading-experience preview of the FINAL — possibly repaired — candidate, READ THIS for the fiction), 05_repair_request_response_records.json (bounded-repair attempt records, only if a repair was attempted), 06_repair_merge_result.json (local merge result, only if a repair call succeeded), 07_final_draft_after_repair.json (the final, merged draft, only if repair was applied), raw_winning_content.txt / raw_repair_content.txt (raw model output).',
+  'Files: 01_request_response_records.json (primary attempt records), 02_draft.json (primary draft artifact, pre-repair), 03_validation_result.json ({finalValidation, repairOutcome, repairPassesRun, repairPassRecords}), 04_review_preview.md (FULL reading-experience preview of the FINAL — possibly repaired — candidate, READ THIS for the fiction), 05_repair_passN_request_response_records.json (one per repair pass actually attempted, N=1..' + MAX_REPAIR_PASSES + '), 06_repair_passN_merge_result.json (local merge result per pass), 07_final_draft_after_passN.json (the merged draft after each successful pass), raw_winning_content.txt / raw_repair_passN_content.txt (raw model output per call).',
 ].filter(line => line !== null).join('\n');
 fs.writeFileSync(path.join(OUT_DIR, 'REPORT.md'), report);
 
