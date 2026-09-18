@@ -5,8 +5,14 @@
 // Scope (Roman's standing authorization, applied to the current full-package schema):
 //   - Grok-4.3 primary -> ministral-8b-2512 fallback ONLY on genuine Grok failure -> GPT-4o
 //     terminal ONLY if both fail. No DeepSeek.
-//   - Maximum ONE attempt per tier, no repair pass, no images, no live-reader launch, no
-//     starter-scenes.js / canon write.
+//   - Maximum ONE attempt per tier for the PRIMARY (whole-scene) draft. No second primary call,
+//     ever, regardless of outcome.
+//   - SUPERSEDED as of v7 attempt 7 (Roman, 2026-09-20 operational redesign): "no repair pass" is
+//     no longer the rule. AT MOST ONE additional BOUNDED repair call (its own 3-tier chain) is now
+//     permitted, and ONLY when the primary draft is structurally correct but fails purely on the
+//     two density rules — see the v7 attempt 7 note below and
+//     _first_sacrifice_bounded_repair_engine.mjs for the full, dry-proven design. Still no images,
+//     no live-reader launch, no starter-scenes.js / canon write, and no second primary call.
 //   - The model writes scene1Candidate (EXACTLY 20 numbered beats, full candidate replacement
 //     Scene 1) + scene1Coverage + first_person_lirael + oasOpening (Julian's ONE authored opening
 //     turn, 35-80 words) + postInterruptionBeat (authored beat crystallizing an unresolved choice
@@ -51,7 +57,36 @@ const require = createRequire(import.meta.url);
 // the packet). This attempt targets the editorial corrections (concrete Seren sacrifice, social
 // fallout beat, non-binary postInterruptionBeat), the shared dramatize-present-speech rule, and
 // the fate-card lifecycle correction (fateCards no longer authored).
-const OUT_DIR = path.join(__dirname, '_first_sacrifice_draft_v7_attempt5_full_package');
+// v7 attempt 6: attempts 1-5 preserved as disclosed history. Attempt 5 hit exactly 20 beats and
+// came closest on density (1,035/1,100 words) but the exemplar-copy guard caught real verbatim
+// copying on both exemplars — those are now removed from the prompt entirely (replaced with
+// abstract, non-quotable craft requirements) and the numbered template now declares kind + word
+// range + function per slot, unmissably. RESULT (disclosed, preserved untouched at
+// _first_sacrifice_draft_v7_attempt6_full_package/): 751/1,100 words, plus a NEW real
+// exemplar_verbatim_copy hit in oasOpening (7+ word match against a NEVER-RENDERED historical
+// exemplar) — real evidence that removing verbatim text from the prompt did not stop convergence,
+// because the abstract instruction replacing it still prescribed one specific rhetorical shape.
+// Two prompt-level fixes were made and committed (b1a9b2c2): a final self-check reminder, and a
+// generalized (non-prescriptive) craft requirement #2.
+//
+// v7 attempt 7 — OPERATIONAL REDESIGN (Roman, 2026-09-20): "five rejected samples say 'add another
+// reminder' is not enough." Real trace across all 6 attempts (finish_reason="stop" on every single
+// one, completion_tokens 1,570-2,412 against an 8,000-token ceiling never approached) proves this
+// is GENUINE MODEL EARLY COMPLETION, not truncation of any kind — see
+// _first_sacrifice_bounded_repair_engine_control.mjs section 8 for the full real-data trace. A
+// text-only reminder asks the model to notice its own under-delivery; it does not reliably change
+// it. This attempt adds a BOUNDED REPAIR PASS (_first_sacrifice_bounded_repair_engine.mjs, proven
+// dry, 56/56, zero fetch calls): if the primary draft is structurally correct (exactly 20 beats,
+// correct locked image/kind mapping) but fails ONLY on the two density rules
+// (scene1_too_thin / scene1_insufficient_narration_density — REPAIR_ELIGIBLE_VALIDATOR_RULES), ONE
+// additional bounded repair call (its own Grok -> Ministral -> GPT-4o fallback chain) requests
+// structured replacement text for ONLY the named deficient slots, preserving beat order, image
+// mapping, canon metadata, and every already-valid beat untouched. The merge happens LOCALLY (no
+// provider call), then the REAL validator runs again on the merged candidate. If the draft is not
+// structurally repairable, or still fails after the merge, or the merge itself is malformed in any
+// way, this rejects with ZERO package write — identical failure posture to every prior attempt,
+// just with one more real chance to clear a purely mechanical density bar before giving up.
+const OUT_DIR = path.join(__dirname, '_first_sacrifice_draft_v7_attempt7_full_package');
 fs.mkdirSync(OUT_DIR, { recursive: true });
 
 // ── Load .env.local into process.env (values never logged) ──────────────────────────────────
@@ -70,6 +105,9 @@ console.log('Env loaded. Keys present: XAI=' + !!process.env.XAI_API_KEY + ' MIS
 
 // ── Build the adapter's real, packet-derived chain (identical prompt across all 3 tiers) ────
 const { buildFixedInputView, buildAuthoringFallbackChain } = await import('./_first_sacrifice_authoring_adapter.mjs');
+const {
+  measureBeatDeficiencies, isRepairEligible, buildRepairFallbackChain, mergeRepairIntoDraft,
+} = await import('./_first_sacrifice_bounded_repair_engine.mjs');
 const PACKET = JSON.parse(fs.readFileSync(path.join(__dirname, '_first_sacrifice_source_packet.json'), 'utf8'));
 const chain = buildAuthoringFallbackChain(PACKET, buildFixedInputView());
 
@@ -93,10 +131,12 @@ function makeReqRes(body) {
   return { req, res };
 }
 
-const records = [];
-let winningTier = null, winningContent = null, winningUsage = null, winningModel = null;
+// ── Generic tiered-attempt dispatcher, shared by BOTH the primary chain and the (at most one)
+// bounded repair chain — identical real handler-calling logic either way, parameterized on a ctx
+// object instead of module-level state, so the two phases can never silently diverge in behavior. ──
+function makeCtx() { return { records: [], winningTier: null, winningContent: null, winningUsage: null, winningModel: null }; }
 
-async function attemptGrok(tier) {
+async function attemptGrok(tier, ctx) {
   const { default: grokHandler } = await import('./api/proxy.js');
   const body = { messages: tier.messages, role: tier.role, preferredModel: tier.preferredModel, temperature: tier.temperature, max_tokens: tier.max_tokens };
   const { req, res } = makeReqRes(body);
@@ -109,17 +149,17 @@ async function attemptGrok(tier) {
   const content = respBody && respBody.choices && respBody.choices[0] && respBody.choices[0].message && respBody.choices[0].message.content;
   const hadContent = !!(content && String(content).trim());
   const record = { tier: tier.tier, provider: tier.name, requestedModel: tier.preferredModel, endpoint: '/api/proxy (in-process)', requestBody: body, httpStatus, threw, elapsedMs: elapsed, responseBody: respBody, hadContent };
-  records.push(record);
+  ctx.records.push(record);
   console.log('[' + tier.name + '] status=' + httpStatus + ' hadContent=' + hadContent + ' elapsed=' + elapsed + 'ms' + (threw ? ' THREW: ' + threw : ''));
   if (!threw && httpStatus === 200 && hadContent) {
-    winningTier = tier.tier; winningContent = content; winningUsage = respBody.usage || null;
-    winningModel = (respBody._orchestration && respBody._orchestration.model) || tier.preferredModel;
+    ctx.winningTier = tier.tier; ctx.winningContent = content; ctx.winningUsage = respBody.usage || null;
+    ctx.winningModel = (respBody._orchestration && respBody._orchestration.model) || tier.preferredModel;
     return true;
   }
   return false;
 }
 
-async function attemptMistral(tier) {
+async function attemptMistral(tier, ctx) {
   const mistralHandler = require('./api/mistral-proxy.js');
   const body = { messages: tier.messages, model: tier.billedModel, temperature: tier.temperature, max_tokens: tier.max_tokens };
   const { req, res } = makeReqRes(body);
@@ -132,17 +172,17 @@ async function attemptMistral(tier) {
   const content = respBody && respBody.choices && respBody.choices[0] && respBody.choices[0].message && respBody.choices[0].message.content;
   const hadContent = !!(content && String(content).trim());
   const record = { tier: tier.tier, provider: tier.name, requestedModel: tier.billedModel, endpoint: '/api/mistral-proxy (in-process)', requestBody: body, httpStatus, threw, elapsedMs: elapsed, responseBody: respBody, hadContent };
-  records.push(record);
+  ctx.records.push(record);
   console.log('[' + tier.name + '] status=' + httpStatus + ' hadContent=' + hadContent + ' elapsed=' + elapsed + 'ms' + (threw ? ' THREW: ' + threw : ''));
   if (!threw && httpStatus === 200 && hadContent) {
-    winningTier = tier.tier; winningContent = content; winningUsage = respBody.usage || null;
-    winningModel = (respBody._orchestration && respBody._orchestration.model) || tier.billedModel;
+    ctx.winningTier = tier.tier; ctx.winningContent = content; ctx.winningUsage = respBody.usage || null;
+    ctx.winningModel = (respBody._orchestration && respBody._orchestration.model) || tier.billedModel;
     return true;
   }
   return false;
 }
 
-async function attemptOpenAI(tier) {
+async function attemptOpenAI(tier, ctx) {
   const chatgptHandler = require('./api/chatgpt-proxy.js');
   const body = { messages: tier.messages, role: tier.role, model: tier.model, temperature: tier.temperature, max_tokens: tier.max_tokens, response_format: { type: 'json_object' } };
   const { req, res } = makeReqRes(body);
@@ -155,32 +195,40 @@ async function attemptOpenAI(tier) {
   const content = respBody && respBody.content;
   const hadContent = !!(content && String(content).trim());
   const record = { tier: tier.tier, provider: tier.name, requestedModel: tier.model, endpoint: '/api/chatgpt-proxy (in-process)', requestBody: body, httpStatus, threw, elapsedMs: elapsed, responseBody: respBody, hadContent };
-  records.push(record);
+  ctx.records.push(record);
   console.log('[' + tier.name + '] status=' + httpStatus + ' hadContent=' + hadContent + ' elapsed=' + elapsed + 'ms' + (threw ? ' THREW: ' + threw : ''));
   if (!threw && httpStatus === 200 && hadContent) {
-    winningTier = tier.tier; winningContent = content; winningUsage = respBody.usage || null;
-    winningModel = (respBody._orchestration && respBody._orchestration.model) || tier.model;
+    ctx.winningTier = tier.tier; ctx.winningContent = content; ctx.winningUsage = respBody.usage || null;
+    ctx.winningModel = (respBody._orchestration && respBody._orchestration.model) || tier.model;
     return true;
   }
   return false;
 }
 
-console.log('\n=== TIER 1: Grok primary (ONE attempt) ===');
-let ok = await attemptGrok(chain[0]);
-if (!ok) {
-  console.log('\n=== Grok failed — TIER 2: ministral-8b-2512 fallback (ONE attempt) ===');
-  ok = await attemptMistral(chain[1]);
+async function runChain(theChain, ctx, label) {
+  console.log('\n=== ' + label + ' TIER 1: Grok primary (ONE attempt) ===');
+  let ok = await attemptGrok(theChain[0], ctx);
+  if (!ok) {
+    console.log('\n=== ' + label + ': Grok failed — TIER 2: ministral-8b-2512 fallback (ONE attempt) ===');
+    ok = await attemptMistral(theChain[1], ctx);
+  }
+  if (!ok) {
+    console.log('\n=== ' + label + ': Ministral-8B failed — TIER 3: GPT-4o terminal (ONE attempt) ===');
+    ok = await attemptOpenAI(theChain[2], ctx);
+  }
+  return ok;
 }
-if (!ok) {
-  console.log('\n=== Ministral-8B failed — TIER 3: GPT-4o terminal (ONE attempt) ===');
-  ok = await attemptOpenAI(chain[2]);
-}
+
+const primaryCtx = makeCtx();
+let ok = await runChain(chain, primaryCtx, 'PRIMARY');
+const records = primaryCtx.records;
+let winningTier = primaryCtx.winningTier, winningContent = primaryCtx.winningContent, winningUsage = primaryCtx.winningUsage, winningModel = primaryCtx.winningModel;
 
 fs.writeFileSync(path.join(OUT_DIR, '01_request_response_records.json'), JSON.stringify(records, null, 2));
 
 if (!ok) {
   console.log('\n' + '='.repeat(70));
-  console.log('ALL APPROVED TIERS EXHAUSTED. No draft produced. NO second call will be made (per authorization). Records saved to ' + OUT_DIR + '/01_request_response_records.json');
+  console.log('ALL APPROVED PRIMARY TIERS EXHAUSTED. No draft produced. NO second primary call will be made (per authorization). A bounded repair pass only ever applies to a real, structurally-valid primary draft — there is nothing to repair here. Records saved to ' + OUT_DIR + '/01_request_response_records.json');
   process.exit(1);
 }
 
@@ -222,19 +270,89 @@ try { validation = validateDraft(draft, PACKET); }
 catch (e) { validation = { ok: false, violations: [{ rule: 'validator_threw', detail: String(e.message || e) }] }; }
 fs.writeFileSync(path.join(OUT_DIR, '03_validation_result.json'), JSON.stringify(validation, null, 2));
 
+// ── BOUNDED REPAIR PASS (Roman, 2026-09-20 operational redesign) — AT MOST ONE additional call,
+// and ONLY when the primary draft is structurally correct (exactly 20 beats, locked image/kind
+// mapping intact) but fails PURELY on the two density rules (REPAIR_ELIGIBLE_VALIDATOR_RULES).
+// Never attempted for any canon/structural violation. Never a second primary call, never a
+// whole-scene rewrite. See _first_sacrifice_bounded_repair_engine.mjs + its dry control (56/56,
+// zero fetch calls) for the full design and proof. `draft`/`validation` are reassigned to the
+// merged, re-validated result ONLY if the repair call succeeds AND the merge is well-formed —
+// every failure mode below falls back to the ORIGINAL primary draft/validation, unchanged. ──
+let repairOutcome = 'not_needed';
+let deficiencyReport = null;
+let repairCallMade = false, repairWinningUsage = null, repairWinningModel = null, repairWinningTier = null;
+if (!validation.ok) {
+  deficiencyReport = measureBeatDeficiencies(draft.scene1Candidate, PACKET);
+  if (!isRepairEligible(validation.violations)) {
+    repairOutcome = 'not_eligible';
+    console.log('\nBounded repair NOT attempted: primary violations are not purely density-class (' + validation.violations.map(v => v.rule).join(', ') + '). REPAIR_ELIGIBLE_VALIDATOR_RULES = ' + JSON.stringify(['scene1_too_thin', 'scene1_insufficient_narration_density']) + '.');
+  } else if (!deficiencyReport.structurallyRepairable) {
+    repairOutcome = 'not_structurally_repairable';
+    console.log('\nBounded repair NOT attempted: ' + deficiencyReport.reason);
+  } else {
+    console.log('\n=== BOUNDED REPAIR ELIGIBLE — ' + deficiencyReport.deficiencies.length + ' deficient slot(s): ' + deficiencyReport.deficiencies.map(d => d.n).join(', ') + ' ===');
+    const repairChain = buildRepairFallbackChain(PACKET, draft, deficiencyReport.deficiencies);
+    const repairCtx = makeCtx();
+    const repairOk = await runChain(repairChain, repairCtx, 'REPAIR');
+    repairCallMade = true; repairWinningUsage = repairCtx.winningUsage; repairWinningModel = repairCtx.winningModel; repairWinningTier = repairCtx.winningTier;
+    fs.writeFileSync(path.join(OUT_DIR, '05_repair_request_response_records.json'), JSON.stringify(repairCtx.records, null, 2));
+    if (!repairOk) {
+      repairOutcome = 'repair_call_failed';
+      console.log('\nBounded repair call FAILED on all 3 tiers. Keeping the primary draft/validation as final. NO further call will be made.');
+    } else {
+      fs.writeFileSync(path.join(OUT_DIR, 'raw_repair_content.txt'), repairCtx.winningContent || '');
+      let repairResponse = null;
+      try { repairResponse = JSON.parse(repairCtx.winningContent); }
+      catch (e) {
+        const first = repairCtx.winningContent.indexOf('{'), last = repairCtx.winningContent.lastIndexOf('}');
+        if (first >= 0 && last > first) { try { repairResponse = JSON.parse(repairCtx.winningContent.slice(first, last + 1)); } catch (e2) { repairResponse = null; } }
+      }
+      if (!repairResponse) {
+        repairOutcome = 'repair_response_unparseable';
+        console.log('\nBounded repair response was not parseable JSON. Keeping the primary draft/validation as final. NO further call will be made.');
+      } else {
+        const { merged, errors } = mergeRepairIntoDraft(draft, repairResponse, deficiencyReport.deficiencies);
+        if (!merged) {
+          repairOutcome = 'merge_rejected';
+          console.log('\nBounded repair response REJECTED at merge (' + errors.length + ' error(s)): ' + errors.join('; ') + '. Keeping the primary draft/validation as final. NO further call will be made.');
+          fs.writeFileSync(path.join(OUT_DIR, '06_repair_merge_result.json'), JSON.stringify({ merged: false, errors }, null, 2));
+        } else {
+          let mergedValidation;
+          try { mergedValidation = validateDraft(merged, PACKET); }
+          catch (e) { mergedValidation = { ok: false, violations: [{ rule: 'validator_threw', detail: String(e.message || e) }] }; }
+          fs.writeFileSync(path.join(OUT_DIR, '06_repair_merge_result.json'), JSON.stringify({ merged: true, errors: [], mergedValidation }, null, 2));
+          const stillDensityFailing = mergedValidation.violations.some(v => v.rule === 'scene1_too_thin' || v.rule === 'scene1_insufficient_narration_density');
+          repairOutcome = stillDensityFailing ? 'merged_still_density_failing' : 'merged_density_resolved';
+          console.log('\nBounded repair merged. Re-validated merged candidate: ' + (mergedValidation.ok ? 'ELIGIBLE FOR REVIEW' : 'still NOT eligible — ' + mergedValidation.violations.map(v => v.rule).join(', ')));
+          // `draft`/`validation` now refer to the merged, re-validated candidate for every artifact
+          // written below (02b, REPORT.md, review preview) — the repair genuinely happened and its
+          // real result, pass or fail, is what gets reported, not the pre-repair draft.
+          draft = merged;
+          validation = mergedValidation;
+          fs.writeFileSync(path.join(OUT_DIR, '07_final_draft_after_repair.json'), JSON.stringify({ packet_id: PACKET.packet_id, packet_version: PACKET.version, draft_version: 'draft-v7-full-package-repaired', repair_outcome: repairOutcome, generated_at: new Date().toISOString(), draft }, null, 2));
+        }
+      }
+    }
+  }
+}
+fs.writeFileSync(path.join(OUT_DIR, '03_validation_result.json'), JSON.stringify({ finalValidation: validation, repairOutcome }, null, 2));
+
 // ── Real cost from actual usage + the real/externally-sourced pricing this session established ──
 const PRICING = {
   'grok-4.3': { in: 0.00000125, out: 0.0000025 }, 'grok-4-1-fast-reasoning': { in: 0.00000125, out: 0.0000025 },
   'ministral-8b-2512': { in: 0.00000015, out: 0.00000015 },
   'gpt-4o': { in: 0.0000025, out: 0.00001 },
 };
-let realCostUSD = null;
-if (winningUsage) {
-  const promptTok = winningUsage.prompt_tokens || winningUsage.promptTokens || 0;
-  const compTok = winningUsage.completion_tokens || winningUsage.completionTokens || 0;
-  const p = PRICING[winningModel] || PRICING[Object.keys(PRICING).find(k => winningModel && winningModel.indexOf(k) !== -1)];
-  if (p) realCostUSD = +(promptTok * p.in + compTok * p.out).toFixed(6);
+function realCostFor(usage, model) {
+  if (!usage) return null;
+  const promptTok = usage.prompt_tokens || usage.promptTokens || 0;
+  const compTok = usage.completion_tokens || usage.completionTokens || 0;
+  const p = PRICING[model] || PRICING[Object.keys(PRICING).find(k => model && model.indexOf(k) !== -1)];
+  return p ? +(promptTok * p.in + compTok * p.out).toFixed(6) : null;
 }
+const primaryRealCostUSD = realCostFor(winningUsage, winningModel);
+const repairRealCostUSD = repairCallMade ? realCostFor(repairWinningUsage, repairWinningModel) : null;
+const realCostUSD = primaryRealCostUSD == null ? null : +(primaryRealCostUSD + (repairRealCostUSD || 0)).toFixed(6);
 
 // ── FULL READING-EXPERIENCE preview: baked Scene 1 + oasHandoff fixed content + the model's new
 // oasOpening / postInterruptionBeat around the live OAS gap and the fixed 3-line tail + the 5
@@ -245,9 +363,11 @@ function renderPreview() {
   L.push('# First Sacrifice — Full-Package Draft (v3) Review Preview (REAL, authorized draft)');
   L.push('');
   L.push('**Packet**: ' + PACKET.packet_id + ' v' + PACKET.version);
-  L.push('**Generated by**: ' + winningModel + ' (' + winningTier + ' tier) | usage: ' + JSON.stringify(winningUsage) + ' | real cost: ' + (realCostUSD != null ? '$' + realCostUSD : 'unknown — usage block missing'));
+  L.push('**Primary generated by**: ' + winningModel + ' (' + winningTier + ' tier) | usage: ' + JSON.stringify(winningUsage) + ' | real cost: ' + (primaryRealCostUSD != null ? '$' + primaryRealCostUSD : 'unknown — usage block missing'));
+  L.push('**Bounded repair pass**: ' + repairOutcome + (repairCallMade ? ' | ' + repairWinningModel + ' (' + repairWinningTier + ' tier) | usage: ' + JSON.stringify(repairWinningUsage) + ' | real cost: ' + (repairRealCostUSD != null ? '$' + repairRealCostUSD : 'unknown') : ' (no repair call made)'));
+  L.push('**Total real cost this operation**: ' + (realCostUSD != null ? '$' + realCostUSD : 'unknown — usage block missing'));
   L.push('');
-  L.push('## Validator result: ' + (validation.ok ? '✅ ELIGIBLE FOR REVIEW (structural/canon checks passed — this is NOT a prose-quality judgment)' : '❌ NOT ELIGIBLE — structural/canon violations found'));
+  L.push('## Validator result (FINAL — reflects the bounded repair merge if one was applied): ' + (validation.ok ? '✅ ELIGIBLE FOR REVIEW (structural/canon checks passed — this is NOT a prose-quality judgment)' : '❌ NOT ELIGIBLE — structural/canon violations found'));
   if (!validation.ok) validation.violations.forEach(v => L.push('- **' + v.rule + '**: ' + v.detail));
   L.push('');
   L.push('═'.repeat(70));
@@ -298,9 +418,10 @@ function renderPreview() {
   L.push('');
   L.push('---');
   L.push('## Operation record');
-  L.push('- Tiers attempted: ' + records.map(r => r.provider + ' (status ' + r.httpStatus + (r.threw ? ', threw' : '') + ')').join(', '));
-  L.push('- Winning tier: ' + winningTier + ' / ' + winningModel);
-  L.push('- No second draft call was made regardless of the validator result above.');
+  L.push('- Primary tiers attempted: ' + records.map(r => r.provider + ' (status ' + r.httpStatus + (r.threw ? ', threw' : '') + ')').join(', '));
+  L.push('- Primary winning tier: ' + winningTier + ' / ' + winningModel);
+  L.push('- Bounded repair: ' + repairOutcome + (repairCallMade ? ' — tiers attempted: unavailable in this view, see 05_repair_request_response_records.json' : ' (never invoked — see reason above/in REPORT.md)'));
+  L.push('- At most ONE primary call and at most ONE bounded repair call were made — no second primary (whole-scene) call was ever made regardless of the validator result above.');
   L.push('- No images were generated. No package/starter-scenes.js write occurred. No live-reader launch occurred.');
   return L.join('\n');
 }
@@ -308,17 +429,25 @@ const preview = renderPreview();
 fs.writeFileSync(path.join(OUT_DIR, '04_review_preview.md'), preview);
 
 const report = [
-  '# First Sacrifice full-package draft-authoring operation (v3) — REPORT',
+  '# First Sacrifice full-package draft-authoring operation (v3, bounded-repair-capable) — REPORT',
   '',
-  '**Calls made**: ' + records.length + ' (' + records.map(r => r.provider).join(' -> ') + ')',
-  '**Winning tier/model**: ' + winningTier + ' / ' + winningModel,
-  '**Tokens (usage)**: ' + JSON.stringify(winningUsage),
-  '**Real cost**: ' + (realCostUSD != null ? '$' + realCostUSD : 'unknown — usage block missing from provider response'),
-  '**Validator**: ' + (validation.ok ? 'ELIGIBLE FOR REVIEW' : 'NOT ELIGIBLE — see 03_validation_result.json') + ' (structural/canon check only — NOT a prose-quality judgment)',
-  '**No second draft call was made.**',
+  '**Primary calls made**: ' + records.length + ' (' + records.map(r => r.provider).join(' -> ') + ')',
+  '**Primary winning tier/model**: ' + winningTier + ' / ' + winningModel,
+  '**Primary tokens (usage)**: ' + JSON.stringify(winningUsage),
+  '**Primary real cost**: ' + (primaryRealCostUSD != null ? '$' + primaryRealCostUSD : 'unknown — usage block missing from provider response'),
   '',
-  'Files: 01_request_response_records.json (full request/response/usage per attempt), 02_draft.json (versioned draft artifact), 03_validation_result.json, 04_review_preview.md (FULL reading-experience preview — READ THIS for the fiction), raw_winning_content.txt (raw model output).',
-].join('\n');
+  '**Bounded repair outcome**: ' + repairOutcome,
+  '**Bounded repair call made**: ' + repairCallMade,
+  repairCallMade ? '**Bounded repair tier/model**: ' + repairWinningTier + ' / ' + repairWinningModel : null,
+  repairCallMade ? '**Bounded repair tokens (usage)**: ' + JSON.stringify(repairWinningUsage) : null,
+  repairCallMade ? '**Bounded repair real cost**: ' + (repairRealCostUSD != null ? '$' + repairRealCostUSD : 'unknown') : null,
+  '',
+  '**TOTAL real cost this operation**: ' + (realCostUSD != null ? '$' + realCostUSD : 'unknown — usage block missing from provider response'),
+  '**FINAL Validator result** (reflects the repair merge if one was applied): ' + (validation.ok ? 'ELIGIBLE FOR REVIEW' : 'NOT ELIGIBLE — see 03_validation_result.json') + ' (structural/canon check only — NOT a prose-quality judgment)',
+  '**At most ONE primary call and at most ONE bounded repair call were made.**',
+  '',
+  'Files: 01_request_response_records.json (primary attempt records), 02_draft.json (primary draft artifact, pre-repair), 03_validation_result.json ({finalValidation, repairOutcome}), 04_review_preview.md (FULL reading-experience preview of the FINAL — possibly repaired — candidate, READ THIS for the fiction), 05_repair_request_response_records.json (bounded-repair attempt records, only if a repair was attempted), 06_repair_merge_result.json (local merge result, only if a repair call succeeded), 07_final_draft_after_repair.json (the final, merged draft, only if repair was applied), raw_winning_content.txt / raw_repair_content.txt (raw model output).',
+].filter(line => line !== null).join('\n');
 fs.writeFileSync(path.join(OUT_DIR, 'REPORT.md'), report);
 
 console.log('\n' + '='.repeat(70));
