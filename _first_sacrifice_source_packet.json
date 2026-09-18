@@ -1,6 +1,6 @@
 {
   "packet_id": "first_sacrifice_source_packet",
-  "version": "8.3.0-source-packet",
+  "version": "9.3.0-source-packet",
   "status": "DRAFT — awaiting Roman's review before any generation pass. Not baked. Not authoritative for starter-scenes.js.",
   "immutable": true,
   "scope_lock": {
@@ -95,9 +95,32 @@
     "the_answer": {
       "ownership": "the Institution's; Julian is its caretaker; it is NEVER PC/reader-owned — Lirael holds it only for the duration of the questioning",
       "description": "the double-ended shaft, a deep hooked blade curling from each end like a question asked twice",
+      "form": "staff (a double-ended shaft/polearm) — NEVER a stone, gem, orb, crystal, or any other handheld relic",
+      "heads": "a hooked, question-mark-shaped head at EACH of its two opposite ends (both ends alike)",
+      "banned_forms": ["stone", "gemstone", "gem", "orb", "crystal", "rock", "pebble", "jewel", "any other handheld relic form that is not a staff"],
+      "hard_boundary": "OBJECT-FIDELITY CONSTRAINT, NOT A STYLE SUGGESTION (Roman, 2026-09-19, locked and enforced by the the_answer_form_violation validator rule): any beat, opener, or post-interruption text that mentions The Answer must not assign it a conflicting physical form. A neutral reference (naming it, describing who holds it, what it does) is always fine; restating its FORM must agree with this record. Do not invent its material, color, weight, powers, or additional history beyond what is recorded here and in the description field above — this record states FORM ONLY.",
+      "form_audit_2026_09_19": "A 2026-09-19 audit found the shipped/baked starter-scenes.js text and the real production combat-image canon (public/app.js _firstFavoredCombatDirective — \"a DOUBLE-ENDED POLEARM with a DEEP QUESTION-MARK HOOK at EACH end... on a weighted central shaft\") both ALREADY correct and consistent with this record; no shipped/baked text required correction. The only drift found was in DISCLOSED, REJECTED, never-baked, never-rendered-into-any-prompt draft history: v7 attempt 1 (\"cool metal\"), attempt 4 (\"cool stone\"), attempt 5 (\"carved bone\") — each invented an ungrounded material because this packet had recorded the description but the authoring adapter never rendered it to the model (only .ownership was rendered, never .description/.form). That rendering gap is now closed (see _first_sacrifice_authoring_adapter.mjs TASK 0 / locked world facts). The historical attempt files are left untouched as disclosed rejected history, per standing practice — never overwritten.",
+      "structured_object_claim_correction_2026_09_19": "Roman's follow-up correction: a same-text-field co-occurrence guard is real but trivially evadable by adjacent sentences, pronouns, or a beat split (e.g. 'It was cold stone in my hands. The Answer dragged at my wrist.' across two sentences or two beats). The textual guard is KEPT as a fast guard (now widened to check adjacent scene1Candidate beat PAIRS, not just single-text co-occurrence), but the authoring output must ALSO carry STRUCTURED per-beat object-claim metadata wherever a beat names The Answer — see scene1_answer_object_claim_schema below. This closes the evasion path structurally: the model must explicitly declare, per beat, whether it is making a neutral reference or restating the canonical form, and a restated form must exactly match physical_form_claim_token.",
+      "physical_form_claim_token": "staff_double_ended_question_mark_hooks",
       "kind": "locked_canon_fact",
-      "cites": "starter-scenes.js:232,265 (\"The Answer is the Institution's; Julian is its caretaker; Lirael holds it only for the questioning. It is not hers.\")"
+      "cites": "starter-scenes.js:232,265 (\"The Answer is the Institution's; Julian is its caretaker; Lirael holds it only for the questioning. It is not hers.\"); starter-scenes.js:266 (\"the double-ended shaft, a deep hooked blade curling from each end like a question asked twice\"); public/app.js _firstFavoredCombatDirective (\"a DOUBLE-ENDED POLEARM with a DEEP QUESTION-MARK HOOK at EACH end... on a weighted central shaft\")"
     }
+  },
+  "scene1_answer_object_claim_schema": {
+    "status": "LOCKED (Roman, 2026-09-19) — closes the same-text-co-occurrence evasion (adjacent sentences, pronouns, a beat split). Whenever a scene1Candidate beat, oasOpening.text, or postInterruptionBeat.text contains the literal string \"The Answer\", that beat/field MUST carry an objectClaims array with exactly one entry naming it — no exceptions, this is mandatory disclosure, not optional metadata.",
+    "field": "objectClaims (array, on scene1Candidate.beats[i], oasOpening, and postInterruptionBeat — same shape in all three)",
+    "entry_shape": {
+      "object_ref": "MUST be exactly \"the_answer\" (the only object this packet tracks; any other value is rejected as an unapproved object_ref)",
+      "physical_form_claim": "MUST be exactly ONE of: \"neutral_reference\" (names/handles the object without restating its physical form — always safe, no citation needed) OR \"staff_double_ended_question_mark_hooks\" (the ONLY approved canonical-form token — restates the locked form exactly, nothing else). Any other string (a freeform description, a different material/shape word, an empty value) is REJECTED as the_answer_physical_claim_invalid — this field is a closed enum, not free text, precisely so a conflicting form claim cannot be smuggled through it.",
+      "claim_kind": "one of the packet's existing 3 provenance kinds (locked_canon_fact | grounded_inference | generated_expression) — SAME model as per-beat provenance. If physical_form_claim is the canonical token, claim_kind MUST be locked_canon_fact (restating a locked fact is always a citation, never a free invention) and cites is then REQUIRED. If physical_form_claim is neutral_reference, any of the 3 kinds is fine and cites is optional.",
+      "cites": "required exactly when claim_kind is locked_canon_fact — point at locked_world_facts.the_answer (this section), consistent with how every other locked_canon_fact beat cites its packet source."
+    },
+    "example_neutral": "{ object_ref: \"the_answer\", physical_form_claim: \"neutral_reference\", claim_kind: \"generated_expression\" }",
+    "example_canonical_form_restated": "{ object_ref: \"the_answer\", physical_form_claim: \"staff_double_ended_question_mark_hooks\", claim_kind: \"locked_canon_fact\", cites: \"locked_world_facts.the_answer\" }",
+    "no_added_lore": "Do NOT require or invent the word \"blade\", nor any material, color, weight, power, or additional history beyond the locked form and its two question-mark hooks — the canonical-form token states FORM ONLY, exactly like locked_world_facts.the_answer.hard_boundary already requires.",
+    "widened_textual_guard": "The direct textual check (the_answer_form_violation) is KEPT as a fast guard for the obvious same-text case, and WIDENED to also check EVERY CONSECUTIVE PAIR of scene1Candidate beats — if either beat of a pair names The Answer and either beat of that same pair carries a banned-form word, the pair is rejected, even when no single beat alone contains both (the adjacent-sentence / beat-split / one-hop-pronoun evasion). This is a disclosed, bounded (one-beat-lookback/lookahead) guard, not a claim that every possible cross-beat coreference is caught — the mandatory objectClaims metadata above is the real, structural closure; the widened textual check is defense in depth.",
+    "kind": "locked_canon_fact",
+    "cites": "Roman 2026-09-19, this message"
   },
   "scene1_causal_sequence": [
     {
@@ -725,19 +748,19 @@
     "cites": "_first_sacrifice_grok_authoring_census.mjs output, _first_sacrifice_ministral8b_fallback_compat_check.mjs output, public/app.js:4749-4795 (TEXT_PRICING), api/_mistral-governor.js, api/mistral-proxy.js, api/proxy.js:_resolveGrokModel"
   },
   "full_package_authoring_operation_census": {
-    "status": "REAL CENSUS — re-measured AGAIN (Roman, 2026-09-17) after adding the attempt4_positive_exemplars non-canonical safeguard (rendered twice in the prompt, once per exemplar, with full guardrail text each time) on top of: the attempt-4 editorial corrections (concrete/irrevocable Seren sacrifice, a new social_fallout_family_reaction beat, a non-binary postInterruptionBeat); the shared dramatize-consequential-present-speech AUTHOR FLOOR rule 4; and the fate-card lifecycle correction (fateCards REMOVED from the authored OUTPUT — 5 top-level fields, down from 6). Against the approved chain (Grok primary -> ministral-8b-2512 fallback -> GPT-4o terminal, no DeepSeek). Prior numbers below are superseded by this measurement, not deleted.",
-    "measured_on": "2026-09-17 (re-measured after the attempt4 exemplar non-canonical safeguard)",
+    "status": "REAL CENSUS — re-measured AGAIN (Roman, 2026-09-18) after v7 attempt 5 (real cost $0.018575, 20 beats achieved but 1,035/1,100 words, only 7/16 qualifying narration beats, AND the exemplar-copy guard fired on both exemplars — verbatim copying despite guardrails). Removed the quoted exemplars from the rendered prompt entirely (replaced with 3 abstract, non-quotable craft requirements) and rebuilt scene1_beat_number_template so all 20 slots declare kind + word range + dramatic function explicitly. Against the approved chain (Grok primary -> ministral-8b-2512 fallback -> GPT-4o terminal, no DeepSeek). Prior numbers below are superseded by this measurement, not deleted.",
+    "measured_on": "2026-09-18 (re-measured after removing verbatim exemplars + the rich per-slot numbered template)",
     "produced_by": "_first_sacrifice_scene1_candidate_budget_measurement.mjs, calling _first_sacrifice_authoring_adapter.mjs:buildAuthoringFallbackChain()",
     "real_prompt_size": {
       "system_bytes": 3486,
-      "user_bytes": 40575,
-      "total_bytes": 44061,
-      "est_input_tokens_chars_over_4_convention": 10888,
-      "note": "user grew 38474->40575 bytes once both craft exemplars (twist/arrest + Julian opener) were wired into the prompt with their full non-canonical guardrail text."
+      "user_bytes": 43548,
+      "total_bytes": 47034,
+      "est_input_tokens_chars_over_4_convention": 11600,
+      "note": "user grew 40575->43548 bytes: removing ~2 paragraphs of quoted exemplar text was more than offset by the much richer per-slot template (function + kind + word range x20 slots, versus the old 1-line-per-slot format)."
     },
     "max_tokens_ceiling": {
       "value": 8000,
-      "rationale": "Unchanged — the exemplar safeguard only grows the INPUT (instructions), the requested OUTPUT shape is unchanged (5 top-level fields, fateCards still not authored). Re-measured against the real governor to confirm continued admission, not assumed."
+      "rationale": "Unchanged — this revision only grows the INPUT (instructions), the requested OUTPUT shape is unchanged (5 top-level fields). Re-measured against the real governor to confirm continued admission, not assumed."
     },
     "governor_check": {
       "tier_checked": "ministral-8b-2512 (the only tier a local governor exists for)",
@@ -747,15 +770,15 @@
       },
       "admit_result": {
         "outcome": "admitted",
-        "reserve": 52061,
+        "reserve": 55034,
         "limitTpm": 625000
       },
-      "utilization_pct": 8
+      "utilization_pct": 9
     },
     "cost_ceilings": {
-      "expected_grok_success_1_call": 0.0336,
-      "three_tier_exhaustion_3_calls": 0.1436,
-      "caveat": "Both are CEILINGS (full max_tokens billed), not measured spend. Real spend across the 4 rejected v7 attempts: $0.013603 + $0.013815 + $0.014323 + $0.016714 = $0.058455 — a real completion under THIS (attempt-5) schema has not yet been measured."
+      "expected_grok_success_1_call": 0.0345,
+      "three_tier_exhaustion_3_calls": 0.1464,
+      "caveat": "Both are CEILINGS (full max_tokens billed), not measured spend. Real spend across all 5 rejected v7 attempts: $0.013603 + $0.013815 + $0.014323 + $0.016714 + $0.018575 = $0.07703 — a real completion under THIS (attempt-6) schema has not yet been measured."
     },
     "kind": "locked_canon_fact",
     "cites": "_first_sacrifice_scene1_candidate_budget_measurement.mjs output, api/_mistral-governor.js, app.js TEXT_PRICING"
@@ -946,8 +969,232 @@
     "superseded_min_narration_beats": "At least 12 of the scene's beats must be narration or exposition (not dialogue), each individually 55-110 words — checked PER-BEAT, not just in aggregate, so a few long beats cannot cover for many thin ones."
   },
   "scene1_beat_number_template": {
-    "status": "NEW (Roman, 2026-09-17) — 'exactly 20 numbered beats,' not a range. Each numbered slot below maps to one of the 8 fixed images; slots with an id MUST cover that required_content_beats id (see required_content_beats for its full text); slots with id=null are free — original narration/exposition or dialogue advancing the same causal beat, your own texture. UPDATED (2026-09-17): slot 16 (previously free) now carries the new social_fallout_family_reaction id.",
+    "status": "REVISED (Roman, 2026-09-18) — v7 attempt 5 hit exactly 20 beats (the template's count worked) but still failed density: 1,035 of 1,100+ words, only 7 of 16 narration/exposition beats in the 60-90 qualifying range. A slot that only says 'free' or names an id, with no explicit word range or kind, is not unmissable. Every slot below now declares its dramatic FUNCTION, its required KIND (narration-only vs. may-be-dialogue), and its required WORD RANGE — the model must complete all 20 at those ranges before returning JSON.",
     "slots": [
+      {
+        "n": 1,
+        "image": "intro_lirael",
+        "id": "ceremony_setting",
+        "kind": "narration",
+        "wordRange": [
+          70,
+          90
+        ],
+        "fn": "Dawn ceremony setting; Lirael in the sash and mouth-band, her first time as the responsible Sacrificiant, the personal stakes of her father's path."
+      },
+      {
+        "n": 2,
+        "image": "intro_lirael",
+        "id": null,
+        "kind": "narration",
+        "wordRange": [
+          60,
+          90
+        ],
+        "fn": "Free interiority beat — Lirael's private physical/sensory experience of the moment (the band, the cold, the watching crowd). Original prose, not a restatement of slot 1."
+      },
+      {
+        "n": 3,
+        "image": "intro_seren",
+        "id": "seren_kneeling_rehearsed",
+        "kind": "narration",
+        "wordRange": [
+          60,
+          90
+        ],
+        "fn": "Seren kneeling, composed from months of rehearsal — establish her visible performance of poise."
+      },
+      {
+        "n": 4,
+        "image": "intro_seren",
+        "id": null,
+        "kind": "narration",
+        "wordRange": [
+          60,
+          90
+        ],
+        "fn": "Free interiority/private-exchange beat — a brief reassurance between Lirael and Seren through gesture or glance, not yet the wish."
+      },
+      {
+        "n": 5,
+        "image": "intro_dohkar",
+        "id": "cost_offering_statement",
+        "kind": "dialogue",
+        "wordRange": [
+          30,
+          45
+        ],
+        "fn": "The presiding Dohkar calls for 'the cost' IN HIS OWN DIRECT SPEECH; Seren's actual quoted offering — a CONCRETE, irrevocable loss named with real particularity, not a poetic noun phrase."
+      },
+      {
+        "n": 6,
+        "image": "intro_dohkar",
+        "id": null,
+        "kind": "narration",
+        "wordRange": [
+          60,
+          90
+        ],
+        "fn": "Free narration beat — Lirael's interior reaction to the SPECIFIC cost Seren just named; why it costs Seren something real."
+      },
+      {
+        "n": 7,
+        "image": "intro_julian",
+        "id": "julian_introduced",
+        "kind": "narration",
+        "wordRange": [
+          60,
+          90
+        ],
+        "fn": "Julian introduced at the edge of the gathering — his stillness, his office, Lirael's private involuntary awareness of him."
+      },
+      {
+        "n": 8,
+        "image": "intro_julian",
+        "id": null,
+        "kind": "narration",
+        "wordRange": [
+          60,
+          90
+        ],
+        "fn": "Free interiority beat continuing Julian's introduction — what Lirael notices about him and tries not to."
+      },
+      {
+        "n": 9,
+        "image": "d1",
+        "id": "invocation_begins",
+        "kind": "narration",
+        "wordRange": [
+          60,
+          90
+        ],
+        "fn": "Seren begins the invocation; for a few words Lirael is not afraid."
+      },
+      {
+        "n": 10,
+        "image": "d1",
+        "id": null,
+        "kind": "narration",
+        "wordRange": [
+          60,
+          90
+        ],
+        "fn": "Free interiority beat — Lirael's private state in the moment just before the wish bends."
+      },
+      {
+        "n": 11,
+        "image": "d2",
+        "id": "wish_and_sacrifice",
+        "kind": "dialogue",
+        "wordRange": [
+          30,
+          45
+        ],
+        "fn": "Seren's actual spoken wish, naming Lirael, IN HER OWN DIRECT SPEECH — plus (narration around it) Lirael's immediate recognition, through Seren's actual words/gaze/behavior, that her performed empathy masks self-aggrandizement."
+      },
+      {
+        "n": 12,
+        "image": "d2",
+        "id": null,
+        "kind": "narration",
+        "wordRange": [
+          60,
+          90
+        ],
+        "fn": "Free narration bridging into the twist — Lirael's felt anticipation as the misaligned wish takes hold."
+      },
+      {
+        "n": 13,
+        "image": "d2",
+        "id": "wish_visibly_twists",
+        "kind": "narration",
+        "wordRange": [
+          70,
+          90
+        ],
+        "fn": "The twist as a concrete FORCE: a real, immediate physical/magical threat aimed at Lirael specifically, with real sensory detail — not merely 'the assembly turned to look.'"
+      },
+      {
+        "n": 14,
+        "image": "d2",
+        "id": "twist_unnaturally_arrested",
+        "kind": "narration",
+        "wordRange": [
+          70,
+          90
+        ],
+        "fn": "Witnessed residue remains, then an inexplicable arrest — abruptly checked before it fully lands, no cause given, Julian's own intervention never surfaced or implied."
+      },
+      {
+        "n": 15,
+        "image": "d3",
+        "id": "public_charge",
+        "kind": "dialogue",
+        "wordRange": [
+          30,
+          45
+        ],
+        "fn": "The presiding Dohkar's actual spoken charge — real quoted speech, not narrated summary — grounded in the visible residue the assembly just witnessed."
+      },
+      {
+        "n": 16,
+        "image": "d3",
+        "id": "social_fallout_family_reaction",
+        "kind": "narration_or_dialogue",
+        "wordRange": [
+          60,
+          90
+        ],
+        "fn": "Social fallout through a NAMED, SPECIFIC person's concrete action or actual speech (a family member stepping back, a guest's hand tightening, a real spoken line) — never a generic crowd reaction. Lirael becomes a real social target."
+      },
+      {
+        "n": 17,
+        "image": "d3",
+        "id": null,
+        "kind": "narration",
+        "wordRange": [
+          60,
+          90
+        ],
+        "fn": "Free narration beat — Lirael's interior reckoning with her collapsing path, her attention still pulled toward Julian."
+      },
+      {
+        "n": 18,
+        "image": "d4",
+        "id": "julian_claims_the_answer",
+        "kind": "dialogue",
+        "wordRange": [
+          30,
+          45
+        ],
+        "fn": "Julian's actual spoken claim — he can hear she is aligned with her own innocence, states his INTENT to question her before them all. Statement of intent ONLY — do not dramatize the interrogation itself here."
+      },
+      {
+        "n": 19,
+        "image": "d4",
+        "id": null,
+        "kind": "narration",
+        "wordRange": [
+          60,
+          90
+        ],
+        "fn": "Free narration — the physical handoff of The Answer, Julian closing her hands around it."
+      },
+      {
+        "n": 20,
+        "image": "d4",
+        "id": null,
+        "kind": "narration",
+        "wordRange": [
+          60,
+          90
+        ],
+        "fn": "Free narration — Lirael's final interior beat before the OAS handoff; what she feels holding The Answer."
+      }
+    ],
+    "kind": "generated_expression",
+    "cites": "Roman, 2026-09-17 — replaces the free-form 18-22 beat range following attempt 4's 14-beat undershoot",
+    "superseded_slots": [
       {
         "n": 1,
         "image": "intro_lirael",
@@ -1049,11 +1296,44 @@
         "id": null
       }
     ],
-    "kind": "generated_expression",
-    "cites": "Roman, 2026-09-17 — replaces the free-form 18-22 beat range following attempt 4's 14-beat undershoot"
+    "superseded_status_2": "NEW (Roman, 2026-09-17) — 'exactly 20 numbered beats,' not a range. Each numbered slot below maps to one of the 8 fixed images; slots with an id MUST cover that required_content_beats id (see required_content_beats for its full text); slots with id=null are free — original narration/exposition or dialogue advancing the same causal beat, your own texture. UPDATED (2026-09-17): slot 16 (previously free) now carries the new social_fallout_family_reaction id."
+  },
+  "scene1_visual_storyboard": {
+    "status": "LOCKED (Roman, 2026-09-19) — this is now the authoring packet's SOURCE OF TRUTH for how each of the 20 beats resolves to a real image occurrence, asset, and treatment. It is the authoring-facing declaration of the same locked facts the REAL RUNTIME RENDERER reads from public/starter-scenes.js's imageAssets/imageOccurrences (the actual source of truth for rendering — this section must never drift from it). Built by joining scene1_beat_number_template.slots[].image (already locked via the scene1_beat_asset_mapping_locked validator rule) against starter-scenes.js's imageOccurrences table. Consistency between the two is enforced by a dedicated dry control (_first_sacrifice_visual_storyboard_control.mjs) — this section is data for the model prompt and for Roman's review, never a second independent definition an author could diverge from.",
+    "asset_summary": "5 real assets: 4 solo intro portraits (intro_lirael, intro_seren, intro_dohkar, intro_julian — treatment 'full') + 1 shared 2x2 interaction sheet (interaction_sheet_1 — 4 quadrant occurrences d1-d4). 9 occurrences total across those 5 assets: the 8 beat-bearing occurrences (4 intro + d1-d4) plus a 9th occurrence, dohkar_interruption, which reuses the intro_dohkar asset at a 'close' treatment for the OAS interruption reprise — NO ninth asset is ever created.",
+    "beats": [
+      { "n": 1,  "occurrence": "intro_lirael", "assetId": "intro_lirael", "treatment": "full", "quadrant": null, "id": "ceremony_setting", "kind": "narration", "wordRange": [70, 90] },
+      { "n": 2,  "occurrence": "intro_lirael", "assetId": "intro_lirael", "treatment": "full", "quadrant": null, "id": null, "kind": "narration", "wordRange": [60, 90] },
+      { "n": 3,  "occurrence": "intro_seren",  "assetId": "intro_seren",  "treatment": "full", "quadrant": null, "id": "seren_kneeling_rehearsed", "kind": "narration", "wordRange": [60, 90] },
+      { "n": 4,  "occurrence": "intro_seren",  "assetId": "intro_seren",  "treatment": "full", "quadrant": null, "id": null, "kind": "narration", "wordRange": [60, 90] },
+      { "n": 5,  "occurrence": "intro_dohkar", "assetId": "intro_dohkar", "treatment": "full", "quadrant": null, "id": "cost_offering_statement", "kind": "dialogue", "wordRange": [30, 45] },
+      { "n": 6,  "occurrence": "intro_dohkar", "assetId": "intro_dohkar", "treatment": "full", "quadrant": null, "id": null, "kind": "narration", "wordRange": [60, 90] },
+      { "n": 7,  "occurrence": "intro_julian", "assetId": "intro_julian", "treatment": "full", "quadrant": null, "id": "julian_introduced", "kind": "narration", "wordRange": [60, 90] },
+      { "n": 8,  "occurrence": "intro_julian", "assetId": "intro_julian", "treatment": "full", "quadrant": null, "id": null, "kind": "narration", "wordRange": [60, 90] },
+      { "n": 9,  "occurrence": "d1", "assetId": "interaction_sheet_1", "treatment": "quadrant", "quadrant": 0, "id": "invocation_begins", "kind": "narration", "wordRange": [60, 90] },
+      { "n": 10, "occurrence": "d1", "assetId": "interaction_sheet_1", "treatment": "quadrant", "quadrant": 0, "id": null, "kind": "narration", "wordRange": [60, 90] },
+      { "n": 11, "occurrence": "d2", "assetId": "interaction_sheet_1", "treatment": "quadrant", "quadrant": 1, "id": "wish_and_sacrifice", "kind": "dialogue", "wordRange": [30, 45] },
+      { "n": 12, "occurrence": "d2", "assetId": "interaction_sheet_1", "treatment": "quadrant", "quadrant": 1, "id": null, "kind": "narration", "wordRange": [60, 90] },
+      { "n": 13, "occurrence": "d2", "assetId": "interaction_sheet_1", "treatment": "quadrant", "quadrant": 1, "id": "wish_visibly_twists", "kind": "narration", "wordRange": [70, 90] },
+      { "n": 14, "occurrence": "d2", "assetId": "interaction_sheet_1", "treatment": "quadrant", "quadrant": 1, "id": "twist_unnaturally_arrested", "kind": "narration", "wordRange": [70, 90] },
+      { "n": 15, "occurrence": "d3", "assetId": "interaction_sheet_1", "treatment": "quadrant", "quadrant": 2, "id": "public_charge", "kind": "dialogue", "wordRange": [30, 45] },
+      { "n": 16, "occurrence": "d3", "assetId": "interaction_sheet_1", "treatment": "quadrant", "quadrant": 2, "id": "social_fallout_family_reaction", "kind": "narration_or_dialogue", "wordRange": [60, 90] },
+      { "n": 17, "occurrence": "d3", "assetId": "interaction_sheet_1", "treatment": "quadrant", "quadrant": 2, "id": null, "kind": "narration", "wordRange": [60, 90] },
+      { "n": 18, "occurrence": "d4", "assetId": "interaction_sheet_1", "treatment": "quadrant", "quadrant": 3, "id": "julian_claims_the_answer", "kind": "dialogue", "wordRange": [30, 45] },
+      { "n": 19, "occurrence": "d4", "assetId": "interaction_sheet_1", "treatment": "quadrant", "quadrant": 3, "id": null, "kind": "narration", "wordRange": [60, 90] },
+      { "n": 20, "occurrence": "d4", "assetId": "interaction_sheet_1", "treatment": "quadrant", "quadrant": 3, "id": null, "kind": "narration", "wordRange": [60, 90] }
+    ],
+    "dohkar_reprise": {
+      "placement": "NOT a numbered beat — fires during the LIVE OAS interruption, after beat 20 hands off to the one-on-one and the Dohkar cuts the interrogation off. Mounted alongside the existing d3 interruption plate (the wide 'assembly turns / charge' quadrant), never replacing it.",
+      "occurrence": "dohkar_interruption",
+      "assetId": "intro_dohkar",
+      "treatment": "close",
+      "wiring": "public/starter-scenes.js starter_first_sacrifice.oasHandoff.interruptionPortrait = 'dohkar_interruption'; mounted by _mountIntimateInterruption via the structured renderer (_mountImageOccurrence), never as markup in the interruption's authored prose.",
+      "cites": "Roman 2026-09-19 — 'a later Dohkar interruption occurrence reusing his intro asset with an approved camera treatment... no ninth generated asset'"
+    }
   },
   "attempt4_positive_exemplars": {
-    "status": "NEW (Roman, 2026-09-17), SAFEGUARDED (Roman, 2026-09-17 follow-up) — v7 attempt 4 was structurally REJECTED (14 beats/943 words, short of the exact-20 contract) but is preserved as a rejected reference for real craft strengths worth keeping: concrete twist, unexplained arrest, first-person immediacy, and Julian's rescue-inversion opener. These are QUOTED VERBATIM from that real rejected draft, not invented — shown as register/craft models ONLY, per the non-canonical status below.",
+    "status": "HISTORICAL RECORD ONLY, NOT RENDERED IN THE PROMPT (Roman, 2026-09-18) — v7 attempt 5 proved these verbatim exemplars, even fully guardrailed as non-canonical/do-not-copy, were treated as answer keys: oasOpening was copied word-for-word, and scene1Candidate's twist/arrest beat closely echoed the exemplar's exact phrasing (multiple 6+ word matches). The quoted text below is KEPT ONLY so the exemplar_verbatim_copy validator guard still has real historical text to check future drafts against (in case attempt-5-style copying recurs even without direct prompting) — it is NEVER rendered to the model anymore. See attempt4_craft_requirements_abstract for what replaces it in the actual prompt.",
     "twist_and_arrest": "\"The misaligned wish took hold. A sharp, visible distortion ripped outward from Seren's kneeling form, a twisting rope of light aimed directly [at me]... Between one heartbeat and the next the distortion simply vanished. No flare, no sound, no hand I could point to. The spiralgrass stilled again.\" — concrete, physical, genuinely dangerous-feeling, and the arrest names NO cause.",
     "julian_opening_turn": "\"You glanced toward me three times during the invocation, fingers tightening on the sash each time Seren faltered. Did you shape her wish without knowing it, the way you shape everyone's attention, hoping I would step forward and rescue you?\" — concrete observed behavior (the glances, the fingers), a real question, and a genuine rescue-inversion (he frames HIMSELF as needing rescue from HER pull) that carries real subtext without stating his strategy.",
     "kind": "generated_expression",
@@ -1068,7 +1348,8 @@
         "No detail inside an exemplar becomes a locked world, character, or event fact unless it is ALREADY independently present in this packet's own approved canon (locked_world_facts, scene1_causal_sequence, cplus_eplus_fusion_grounds, required_content_beats) — an exemplar restates nothing new into canon just by existing."
       ],
       "cites": "Roman, 2026-09-17 follow-up — safeguard added before committing the shared author-floor/OAS-card-context correction"
-    }
+    },
+    "superseded_status_2": "NEW (Roman, 2026-09-17), SAFEGUARDED (Roman, 2026-09-17 follow-up) — v7 attempt 4 was structurally REJECTED (14 beats/943 words, short of the exact-20 contract) but is preserved as a rejected reference for real craft strengths worth keeping: concrete twist, unexplained arrest, first-person immediacy, and Julian's rescue-inversion opener. These are QUOTED VERBATIM from that real rejected draft, not invented — shown as register/craft models ONLY, per the non-canonical status below."
   },
   "fate_card_lifecycle_correction": {
     "status": "NEW (Roman, 2026-09-17) — corrects a real design error in the sixth/seventh-pass packet, which assumed the canonical package authors ONE permanent fateCards set for the final post-interruption state. That assumption is wrong and has been removed.",
@@ -1078,5 +1359,16 @@
     "card_click_semantics_unchanged": "A card click still only prefills the editable Say/Do inputs (confirmed real behavior, app.js _mountIntimateInterruption/_dealInterruptionFateCards, unchanged by this correction) — custom Say/Do, Petition Fate, and Tempt Fate all remain available at every turn; only a real Submit ever advances.",
     "kind": "locked_canon_fact",
     "cites": "public/orchestration-client.js:6511 (generateIntimateFatePreviewsBatch), public/app.js:184983 (_appendAuthoredOASFrame precedent), public/app.js:~197967 (_mountIntimateInterruption post-interruption call site) — real trace, 2026-09-17"
+  },
+  "attempt4_craft_requirements_abstract": {
+    "status": "NEW (Roman, 2026-09-18) — replaces the verbatim attempt4_positive_exemplars in the rendered prompt. Abstract craft REQUIREMENTS, not quotable prose — nothing here is a sentence to reproduce. Distilled from what made attempt 4 (structurally rejected, but craft-strong) work, generalized so there is nothing to copy.",
+    "requirements": [
+      "The twist must read as a concrete FORCE — an immediate physical or magical threat aimed at Lirael specifically, with real sensory detail (what it looks/sounds/smells like) — followed by witnessed residue the assembly can see, then an inexplicable arrest with no cause given.",
+      "Julian's opening turn must cite a SPECIFIC observed behavior (something he actually watched her do or fail to do), frame it as UNCONSCIOUS influence rather than deliberate action, and invert the expected accusation into something closer to an invitation — he is not merely accusing her, he is drawing her toward him while accusing her.",
+      "Social fallout must arrive through a NAMED, SPECIFIC person's concrete action or actual speech (a family member stepping back, a guest's hand tightening, an actual spoken line) — never a generic crowd reaction."
+    ],
+    "hard_boundary": "These are structural/functional requirements to SATISFY in fresh, original prose — not a template to fill in with paraphrased or reworded versions of any prior draft. Write new sentences that accomplish these functions; do not echo any specific wording you have seen before in this authoring process.",
+    "kind": "generated_expression",
+    "cites": "Roman, 2026-09-18 — replaces quoted exemplars after v7 attempt 5 proved they were copied despite explicit non-canonical/do-not-copy guardrails"
   }
 }

@@ -82,6 +82,28 @@ ok('a distinctive locked-fact string (the_answer.ownership) appears in the promp
 const scopeLockStatement = PACKET.scope_lock.statement;
 ok('the scope_lock statement appears in the prompt exactly once',
   countOccurrences(combinedPrompt, scopeLockStatement) === 1);
+// THE ANSWER — OBJECT-FIDELITY CONSTRAINT RECEIPT (Roman, 2026-09-19): "prove the authoring prompt
+// contains the staff-and-hooks identity." Real invocation, not static packet inspection — checks the
+// ACTUAL constructed prompt text contains the locked form + the explicit banned-forms list.
+const ansFact = PACKET.locked_world_facts.the_answer;
+ok('the constructed prompt states The Answer\'s locked form ("staff", "double-ended shaft") as a HARD object-fidelity constraint',
+  /HARD OBJECT-FIDELITY CONSTRAINT/.test(user) && new RegExp(ansFact.description.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).test(user) && /staff \(a double-ended shaft/.test(user));
+ok('the constructed prompt states the question-mark-hook-at-each-end identity',
+  new RegExp(ansFact.heads.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).test(user));
+ok('the constructed prompt explicitly lists "stone" among the banned physical forms for The Answer',
+  /NEVER describe it as: stone/.test(user));
+ok('the constructed prompt explicitly says not to invent material, color, weight, powers, or additional history',
+  /Do not invent its material, color, weight, powers, or additional history/.test(user));
+// STRUCTURED OBJECT-CLAIM METADATA RECEIPT (Roman, 2026-09-19, follow-up correction): "require the
+// authoring prompt to emit this metadata whenever the object appears materially in the beat."
+ok('the constructed prompt mandates objectClaims metadata whenever a beat names "The Answer"',
+  /MANDATORY WHENEVER YOU NAME "The Answer"/.test(user) && /objectClaims array with exactly one entry/.test(user));
+ok('the constructed prompt states physical_form_claim as a closed choice between neutral_reference and the one canonical token (never free text)',
+  /CLOSED CHOICE/.test(user) && /"neutral_reference"/.test(user) && new RegExp(ansFact.physical_form_claim_token).test(user) && /Never write a free-text form description here/.test(user));
+ok('the constructed prompt requires claim_kind="locked_canon_fact" + cites whenever the canonical form is restated',
+  /claim_kind MUST be "locked_canon_fact" and cites MUST be present/.test(user));
+ok('the constructed prompt gives a worked example of both the neutral and canonical-form-restated claim shapes',
+  user.includes(PACKET.scene1_answer_object_claim_schema.example_neutral) && user.includes(PACKET.scene1_answer_object_claim_schema.example_canonical_form_restated));
 // Live-reader-state / other-starter concepts that exist elsewhere in this codebase and must NEVER
 // appear in a packet-only prompt — if any of these leak in, the adapter silently pulled from a
 // broader source than the immutable packet.
@@ -143,17 +165,27 @@ ok('the constructed prompt no longer contains a TASK 4 / fateCards authoring tas
 ok('the constructed prompt explicitly tells the model it does NOT author fate cards, and names the real mechanism', /NOTE ON FATE CARDS \(you do NOT author these\)/.test(user) && /generated fresh by the real, already-existing app mechanism/.test(user));
 const SCENE1_IMAGES = ALLOWED_OUTPUT_SCHEMA.scene1_allowed_images_in_order;
 function compliantScene1() {
-  // EXACTLY 20 beats (Roman, 2026-09-17, scene1_beat_number_template — tightened from an 18-22
-  // range), walking the 8 fixed images in order, each cited. 4 images get 2 narration beats + 1
-  // dialogue beat (12 beats: 8 narration + 4 dialogue); the other 4 get 1 narration + 1 dialogue
-  // (8 beats: 4 narration + 4 dialogue) = 20 total, EXACTLY 12 narration beats, all padded to the
-  // 60-90 qualifying range, every dialogue beat immediately preceded by a qualifying narration beat.
-  const pad = (label) => label + ' repeated across a full placeholder paragraph so this structural fixture clears the real per-beat density range without pretending to be finished prose, padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding.';
+  // Walks the packet's OWN scene1_beat_number_template.slots in order — one output beat per slot,
+  // using that slot's exact image, an eligible kind, and a word count inside its declared
+  // wordRange — rather than a hand-rolled independent distribution. This is the fix for the real
+  // scene1_beat_asset_mapping_locked violations discovered 2026-09-18: this fixture's OWN prior
+  // uniform "4 images get 2 narr+1 dial, 4 get 1 narr+1 dial" distribution didn't match the rich
+  // template's actual non-uniform per-image beat counts (2,2,2,2,2,4,3,3), so most beat indices'
+  // images disagreed with the locked template slot at that index. Deriving directly from the
+  // template makes this fixture correct-by-construction and immune to future template edits.
+  const bntSlots = PACKET.scene1_beat_number_template.slots;
+  const word = (n) => Array.from({ length: n }, (_, i) => 'word' + i).join(' ');
   return {
-    beats: SCENE1_IMAGES.flatMap((img, i) => {
-      const narr = (n) => ({ kind: 'narration', speaker: null, image: img, text: pad('placeholder scene1 narration beat ' + n + ' for image ' + img + '.'), provenance: { kind: 'generated_expression' } });
-      const dial = () => ({ kind: 'dialogue', speaker: i % 2 ? 'Julian' : 'Lirael', image: img, text: pad('placeholder scene1 dialogue beat for image ' + img + '.'), provenance: { kind: 'generated_expression' } });
-      return i < 4 ? [narr(i * 2), narr(i * 2 + 1), dial()] : [narr(i * 2), dial()];
+    beats: bntSlots.map((slot, i) => {
+      const kind = slot.kind === 'dialogue' ? 'dialogue' : (slot.kind === 'narration_or_dialogue' && i % 2 ? 'dialogue' : 'narration');
+      const targetWords = Math.min(slot.wordRange[1], Math.max(slot.wordRange[0], slot.wordRange[0] + 5));
+      return {
+        kind,
+        speaker: kind === 'dialogue' ? (i % 2 ? 'Julian' : 'Lirael') : null,
+        image: slot.image,
+        text: 'placeholder scene1 ' + kind + ' beat ' + (i + 1) + ' for image ' + slot.image + ' — ' + word(targetWords) + '.',
+        provenance: { kind: 'generated_expression' },
+      };
     }),
   };
 }
@@ -211,6 +243,35 @@ ok('a scene1Candidate with only 4 beats (far short of ~20) is REJECTED', !tooSho
 const badImageScene1 = compliantDraft(); badImageScene1.scene1Candidate.beats[0].image = 'a_brand_new_image_never_generated_before';
 const badImageResult = validateDraft(badImageScene1, PACKET);
 ok('a scene1Candidate beat referencing an image outside the 8 existing ones is REJECTED — no new image generation', !badImageResult.ok);
+
+// ═══════════════════════════════════════════════════════════════════════════════
+section('3c. THE ADAPTER RECEIVES THE LOCKED scene1_visual_storyboard — cannot assign a beat elsewhere');
+// ═══════════════════════════════════════════════════════════════════════════════
+// "Prove the authoring adapter receives this locked mapping and cannot assign a candidate beat to a
+// different asset/occurrence" (Roman, 2026-09-19). Two real proofs: (a) the rendered prompt's per-
+// beat lines are BYTE-IDENTICAL to what scene1_visual_storyboard.beats declares — real receipt, not
+// a coincidence with the older template; (b) tampering the storyboard to disagree with the template
+// makes prompt construction THROW rather than silently build from an inconsistent packet — proving
+// the adapter's code path genuinely DEPENDS on the storyboard, it doesn't merely happen to agree.
+const sbForCheck = PACKET.scene1_visual_storyboard;
+ok('every rendered "Beat N [occurrence]" line in the prompt matches scene1_visual_storyboard.beats exactly (real receipt, not coincidence)',
+  sbForCheck.beats.every(b => user.includes('Beat ' + b.n + ' [' + b.occurrence + ']' + (b.id ? ' id="' + b.id + '"' : ' (free)') + ' — kind: ' + b.kind + ' — words: ' + b.wordRange[0] + '-' + b.wordRange[1])));
+{
+  const tamperedPacket = JSON.parse(JSON.stringify(PACKET));
+  tamperedPacket.scene1_visual_storyboard.beats[8].occurrence = 'd3'; // template slot 9 (n=9) says "d1" — deliberate drift
+  let threw = null;
+  try { buildPacketAuthoringPrompt(tamperedPacket, view); } catch (e) { threw = e && e.message; }
+  ok('RED: a packet whose scene1_visual_storyboard has been tampered to drift from scene1_beat_number_template makes prompt construction THROW — the adapter refuses to build a prompt from an internally-inconsistent packet',
+    !!threw && /drifted from the locked scene1_beat_number_template/.test(threw), threw);
+}
+{
+  const tamperedPacket2 = JSON.parse(JSON.stringify(PACKET));
+  delete tamperedPacket2.scene1_visual_storyboard;
+  let threw2 = null;
+  try { buildPacketAuthoringPrompt(tamperedPacket2, view); } catch (e) { threw2 = e && e.message; }
+  ok('RED: a packet with NO scene1_visual_storyboard at all makes prompt construction THROW rather than silently falling back to an unreviewed mapping',
+    !!threw2 && /refusing to construct a beat-plan prompt without the locked, reviewed storyboard/.test(threw2), threw2);
+}
 
 // ═══════════════════════════════════════════════════════════════════════════════
 section('4. STRUCTURAL SCOPE GATE REJECTS CONTINUATION-SHAPED OUTPUT');

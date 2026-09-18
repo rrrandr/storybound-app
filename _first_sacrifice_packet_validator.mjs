@@ -78,6 +78,85 @@ function _ngramOverlap(text, exemplarText, n) {
   for (let i = 0; i <= textWords.length - n; i++) { if (grams.has(textWords.slice(i, i + n).join(' '))) return true; }
   return false;
 }
+// THE ANSWER — OBJECT-FIDELITY GUARD (Roman, 2026-09-19). Hard constraint, not a style suggestion:
+// The Answer is a staff (double-ended shaft/polearm) with a question-mark-shaped hook at each end —
+// NEVER a stone, gem, orb, crystal, or any other handheld relic. Scoped to same-text co-occurrence:
+// fires only when a beat/opener/post-interruption text mentions "The Answer" AND a banned-form word
+// IN THAT SAME TEXT — a neutral reference to The Answer elsewhere, or an unrelated object described
+// with one of these words with no mention of The Answer in that same text, is never flagged. Matches
+// the real, historical failure shape (every drift found was the SAME sentence/beat naming both).
+const THE_ANSWER_RE = /\bThe Answer\b/;
+const THE_ANSWER_BANNED_FORM_RE = /\b(stones?|gem(?:stones?)?|orbs?|crystals?|rocks?|pebbles?|jewels?)\b/i;
+function _theAnswerFormViolation(text) {
+  const t = String(text || '');
+  if (!THE_ANSWER_RE.test(t)) return null;
+  const m = t.match(THE_ANSWER_BANNED_FORM_RE);
+  return m ? m[0] : null;
+}
+// WIDENED (Roman, 2026-09-19): the same-text check above is a real guard but is trivially evaded by
+// adjacent sentences, pronouns, or a beat split — "It was cold stone in my hands. The Answer dragged
+// at my wrist." reads as one physical claim about The Answer even split across two beats, neither of
+// which alone contains both the name and the banned word. This checks every CONSECUTIVE PAIR of
+// scene1Candidate beats: if EITHER beat of the pair names The Answer and EITHER beat of that SAME
+// pair carries a banned-form word, the pair is flagged — regardless of which beat carries which, and
+// regardless of pronoun use in the beat that doesn't name it. Bounded to one-beat lookback/lookahead
+// (a disclosed limit, not a claim every possible cross-beat coreference is caught — the MANDATORY
+// objectClaims metadata below is the real structural closure; this is defense in depth).
+function _theAnswerAdjacentPairViolations(beats) {
+  const hits = [];
+  if (!Array.isArray(beats)) return hits;
+  for (let i = 0; i < beats.length - 1; i++) {
+    const tA = String((beats[i] && beats[i].text) || '');
+    const tB = String((beats[i + 1] && beats[i + 1].text) || '');
+    const namesA = THE_ANSWER_RE.test(tA), namesB = THE_ANSWER_RE.test(tB);
+    if (!namesA && !namesB) continue;
+    // Skip pairs already fully caught by the same-text check on a single beat — only report when
+    // the name and the banned word are split ACROSS the two beats (avoids double-reporting the
+    // same-beat case under two different rules).
+    const sameTextAlreadyCaught = (namesA && THE_ANSWER_BANNED_FORM_RE.test(tA)) || (namesB && THE_ANSWER_BANNED_FORM_RE.test(tB));
+    if (sameTextAlreadyCaught) continue;
+    const mA = tA.match(THE_ANSWER_BANNED_FORM_RE), mB = tB.match(THE_ANSWER_BANNED_FORM_RE);
+    const hit = mA || mB;
+    if (hit) hits.push({ i, j: i + 1, word: hit[0] });
+  }
+  return hits;
+}
+// ── STRUCTURED PER-BEAT OBJECT-CLAIM METADATA (Roman, 2026-09-19) — the real structural closure.
+// See packet scene1_answer_object_claim_schema for the full schema. Summary: ANY beat/oasOpening/
+// postInterruptionBeat text that literally names "The Answer" MUST carry an objectClaims array with
+// exactly one entry {object_ref:"the_answer", physical_form_claim, claim_kind, cites?}.
+// physical_form_claim is a CLOSED ENUM (neutral_reference | the one canonical token) — never free
+// text — so a conflicting form claim cannot be smuggled through the metadata channel either.
+const ANSWER_OBJECT_REF = 'the_answer';
+const ANSWER_FORM_CLAIM_VALUES = new Set(['neutral_reference', 'staff_double_ended_question_mark_hooks']);
+const PROVENANCE_KINDS = new Set(['locked_canon_fact', 'grounded_inference', 'generated_expression']);
+const ALLOWED_OBJECT_CLAIM_FIELDS = new Set(['object_ref', 'physical_form_claim', 'claim_kind', 'cites']);
+// Validates one {where} field's objectClaims against its text — pushes violations, returns nothing.
+function _validateAnswerObjectClaims(text, objectClaims, where, violations) {
+  const namesAnswer = THE_ANSWER_RE.test(String(text || ''));
+  const claims = Array.isArray(objectClaims) ? objectClaims : (objectClaims == null ? [] : null);
+  if (claims === null) { violations.push({ rule: 'the_answer_claim_malformed', detail: where + '.objectClaims must be an array' }); return; }
+  const answerClaims = claims.filter(c => c && c.object_ref === ANSWER_OBJECT_REF);
+  if (namesAnswer && answerClaims.length === 0) {
+    violations.push({ rule: 'the_answer_missing_object_metadata', detail: where + ' names The Answer but carries no objectClaims entry for object_ref="the_answer" — required disclosure whenever the object appears materially, not optional' });
+  }
+  claims.forEach((c, ci) => {
+    if (!c || typeof c !== 'object') { violations.push({ rule: 'the_answer_claim_malformed', detail: where + '.objectClaims[' + ci + '] is not an object' }); return; }
+    const extra = Object.keys(c).filter(k => !ALLOWED_OBJECT_CLAIM_FIELDS.has(k));
+    if (extra.length) violations.push({ rule: 'unapproved_output_field', detail: 'unapproved field(s) "' + extra.join(', ') + '" in ' + where + '.objectClaims[' + ci + ']' });
+    if (c.object_ref !== ANSWER_OBJECT_REF) { violations.push({ rule: 'unapproved_object_ref', detail: where + '.objectClaims[' + ci + '].object_ref="' + c.object_ref + '" is not a recognized object — this packet tracks only "the_answer"' }); return; }
+    if (!ANSWER_FORM_CLAIM_VALUES.has(c.physical_form_claim)) {
+      violations.push({ rule: 'the_answer_physical_claim_invalid', detail: where + '.objectClaims[' + ci + '].physical_form_claim="' + c.physical_form_claim + '" is not an approved value — must be exactly "neutral_reference" or the locked canonical-form token "staff_double_ended_question_mark_hooks"; free-text form descriptions are never permitted here' });
+      return;
+    }
+    if (!PROVENANCE_KINDS.has(c.claim_kind)) {
+      violations.push({ rule: 'the_answer_claim_provenance_invalid', detail: where + '.objectClaims[' + ci + '].claim_kind="' + c.claim_kind + '" must be one of ' + [...PROVENANCE_KINDS].join('|') });
+    } else if (c.physical_form_claim === 'staff_double_ended_question_mark_hooks') {
+      if (c.claim_kind !== 'locked_canon_fact') violations.push({ rule: 'the_answer_claim_provenance_invalid', detail: where + '.objectClaims[' + ci + '] restates the canonical form but claim_kind is "' + c.claim_kind + '", not "locked_canon_fact" — restating a locked fact is always a citation, never a free invention' });
+      else if (!c.cites) violations.push({ rule: 'the_answer_claim_provenance_invalid', detail: where + '.objectClaims[' + ci + '] restates the canonical form as locked_canon_fact but has no cites' });
+    }
+  });
+}
 const FIXED_TAIL_TEXTS = [
   'That is enough, Provast', // Dohkar's fixed cutoff line — the model must not write this itself
   'Agreed. A formal inquiry', // Julian's fixed claim line
@@ -238,6 +317,29 @@ function validateDraft(draft, packet) {
     }
     // Per-beat kind/image/provenance checks
     let lastImageIdx = -1;
+    // LOCKED BEAT-TO-ASSET MAPPING (Roman, 2026-09-18; re-keyed to scene1_visual_storyboard 2026-
+    // 09-19) — the author cannot assign a beat to an arbitrary asset/occurrence. scene1_visual_
+    // storyboard.beats is now the PRIMARY source for this lock (each entry's .occurrence is the
+    // image/occurrence id) — it is the packet's authoring-facing declaration of the same locked
+    // facts the real runtime renderer reads from starter-scenes.js's imageOccurrences (kept in
+    // lockstep by _first_sacrifice_visual_storyboard_control.mjs). Falls back to the older
+    // scene1_beat_number_template.slots[].image for any packet that predates the storyboard section
+    // (backward compatibility for older fixtures) — but a packet carrying BOTH must agree, or this
+    // refuses to trust either rather than silently picking one.
+    const bntSlots = (packet.scene1_beat_number_template && packet.scene1_beat_number_template.slots) || [];
+    const sbBeats = (packet.scene1_visual_storyboard && packet.scene1_visual_storyboard.beats) || [];
+    let lockSource = null, lockLabel = null;
+    if (sbBeats.length && bntSlots.length) {
+      const agree = sbBeats.length === bntSlots.length && sbBeats.every((sb, i) => bntSlots[i] && sb.occurrence === bntSlots[i].image && sb.n === bntSlots[i].n);
+      if (!agree) { violations.push({ rule: 'visual_storyboard_template_drift', detail: 'scene1_visual_storyboard.beats disagrees with scene1_beat_number_template.slots — the packet\'s own locked sources contradict each other; refusing to trust either for the beat-asset-mapping lock until reconciled' }); }
+      else { lockSource = sbBeats.map(sb => ({ n: sb.n, image: sb.occurrence })); lockLabel = 'scene1_visual_storyboard'; }
+    } else if (sbBeats.length) { lockSource = sbBeats.map(sb => ({ n: sb.n, image: sb.occurrence })); lockLabel = 'scene1_visual_storyboard'; }
+    else if (bntSlots.length) { lockSource = bntSlots; lockLabel = 'scene1_beat_number_template'; }
+    const lockMappingApplies = !!lockSource && scene1Beats.length === lockSource.length;
+    // THE ANSWER — ADJACENT-PAIR GUARD (whole-array check, run once before the per-beat loop).
+    _theAnswerAdjacentPairViolations(scene1Beats).forEach(h => {
+      violations.push({ rule: 'the_answer_form_violation', detail: 'scene1Candidate.beats[' + h.i + '] and beats[' + h.j + '] together name The Answer and carry a banned physical form ("' + h.word + '") split across adjacent beats — The Answer is a staff (double-ended shaft) with a question-mark-shaped hook at each end, never a stone/gem/orb/crystal/other handheld relic (packet locked_world_facts.the_answer)' });
+    });
     scene1Beats.forEach((b, i) => {
       if (!b || typeof b !== 'object') { violations.push({ rule: 'scene1_beat_malformed', detail: 'scene1Candidate.beats[' + i + '] is not an object' }); return; }
       if (!SCENE1_KINDS.includes(b.kind)) violations.push({ rule: 'scene1_invalid_kind', detail: 'scene1Candidate.beats[' + i + '].kind="' + b.kind + '" must be one of ' + SCENE1_KINDS.join('|') });
@@ -245,6 +347,15 @@ function validateDraft(draft, packet) {
       if (imgIdx === -1) violations.push({ rule: 'scene1_invalid_image', detail: 'scene1Candidate.beats[' + i + '].image="' + b.image + '" is not one of the 8 existing images — no new image may be generated' });
       else if (imgIdx < lastImageIdx) violations.push({ rule: 'scene1_image_out_of_order', detail: 'scene1Candidate.beats[' + i + '].image="' + b.image + '" goes backward in the fixed 8-image sequence' });
       else lastImageIdx = imgIdx;
+      if (lockMappingApplies && imgIdx !== -1 && lockSource[i] && b.image !== lockSource[i].image) {
+        violations.push({ rule: 'scene1_beat_asset_mapping_locked', detail: 'scene1Candidate.beats[' + i + '].image="' + b.image + '" does not match the locked ' + lockLabel + ' beat ' + lockSource[i].n + ' (occurrence="' + lockSource[i].image + '") — the author cannot assign a beat to a different asset/occurrence' });
+      }
+      // THE ANSWER — OBJECT-FIDELITY (Roman, 2026-09-19, HARD): a locked canonical fact, not a
+      // style suggestion. See packet locked_world_facts.the_answer.hard_boundary and
+      // scene1_answer_object_claim_schema. Fast same-text guard + mandatory structured metadata.
+      { const _taHit = _theAnswerFormViolation(b.text);
+        if (_taHit) violations.push({ rule: 'the_answer_form_violation', detail: 'scene1Candidate.beats[' + i + '] mentions The Answer alongside a banned physical form ("' + _taHit + '") — The Answer is a staff (double-ended shaft) with a question-mark-shaped hook at each end, never a stone/gem/orb/crystal/other handheld relic (packet locked_world_facts.the_answer)' }); }
+      _validateAnswerObjectClaims(b.text, b.objectClaims, 'scene1Candidate.beats[' + i + ']', violations);
       // PROVENANCE PROPORTIONALITY (Roman, fifth pass, 2026-09-17): "keep provenance
       // proportional: only locked factual assertions need citations; dialogue, imagery,
       // interiority, and other generated_expression beats must not be rejected for being
@@ -302,6 +413,9 @@ function validateDraft(draft, packet) {
       if (packet.attempt4_positive_exemplars && _ngramOverlap(oasOpening.text, packet.attempt4_positive_exemplars.julian_opening_turn, 6)) {
         violations.push({ rule: 'exemplar_verbatim_copy', detail: 'oasOpening contains a 6+ word verbatim match against the non-canonical julian_opening_turn exemplar — craft reference only, never to be quoted or closely copied' });
       }
+      const _taHitOas = _theAnswerFormViolation(oasOpening.text);
+      if (_taHitOas) violations.push({ rule: 'the_answer_form_violation', detail: 'oasOpening.text mentions The Answer alongside a banned physical form ("' + _taHitOas + '") — The Answer is a staff (double-ended shaft) with a question-mark-shaped hook at each end, never a stone/gem/orb/crystal/other handheld relic (packet locked_world_facts.the_answer)' });
+      _validateAnswerObjectClaims(oasOpening.text, oasOpening.objectClaims, 'oasOpening', violations);
     }
   }
 
@@ -311,7 +425,12 @@ function validateDraft(draft, packet) {
     if (!['narration', 'dialogue'].includes(postInterruptionBeat.kind)) violations.push({ rule: 'post_interruption_invalid_kind', detail: 'postInterruptionBeat.kind must be narration|dialogue, got "' + postInterruptionBeat.kind + '"' });
     if (postInterruptionBeat.speaker !== null && postInterruptionBeat.speaker !== 'Lirael') violations.push({ rule: 'post_interruption_wrong_speaker', detail: 'postInterruptionBeat.speaker must be null or "Lirael", got "' + postInterruptionBeat.speaker + '"' });
     if (typeof postInterruptionBeat.text !== 'string' || !postInterruptionBeat.text.trim()) violations.push({ rule: 'post_interruption_empty', detail: 'postInterruptionBeat.text is missing or empty' });
-    else if (RESOLVING_LANGUAGE_PATTERN.test(postInterruptionBeat.text)) violations.push({ rule: 'post_interruption_resolves_choice', detail: 'postInterruptionBeat.text contains resolving language ("' + (postInterruptionBeat.text.match(RESOLVING_LANGUAGE_PATTERN) || [''])[0] + '") — this beat must crystallize the unresolved choice, never decide it for the player' });
+    else {
+      if (RESOLVING_LANGUAGE_PATTERN.test(postInterruptionBeat.text)) violations.push({ rule: 'post_interruption_resolves_choice', detail: 'postInterruptionBeat.text contains resolving language ("' + (postInterruptionBeat.text.match(RESOLVING_LANGUAGE_PATTERN) || [''])[0] + '") — this beat must crystallize the unresolved choice, never decide it for the player' });
+      const _taHitPib = _theAnswerFormViolation(postInterruptionBeat.text);
+      if (_taHitPib) violations.push({ rule: 'the_answer_form_violation', detail: 'postInterruptionBeat.text mentions The Answer alongside a banned physical form ("' + _taHitPib + '") — The Answer is a staff (double-ended shaft) with a question-mark-shaped hook at each end, never a stone/gem/orb/crystal/other handheld relic (packet locked_world_facts.the_answer)' });
+      _validateAnswerObjectClaims(postInterruptionBeat.text, postInterruptionBeat.objectClaims, 'postInterruptionBeat', violations);
+    }
   }
 
   // fateCards validation REMOVED (Roman, 2026-09-17) — no longer an authored field. The 5 fixed
@@ -325,9 +444,9 @@ function validateDraft(draft, packet) {
   // consumer must all agree on.
   const ALLOWED_TOP_LEVEL_FIELDS = new Set(['scene1Candidate', 'scene1Coverage', 'first_person_lirael', 'oasOpening', 'postInterruptionBeat']);
   const ALLOWED_SCENE1_FIELDS = new Set(['beats']);
-  const ALLOWED_SCENE1_BEAT_FIELDS = new Set(['kind', 'speaker', 'image', 'text', 'provenance']);
-  const ALLOWED_OAS_OPENING_FIELDS = new Set(['speaker', 'text']);
-  const ALLOWED_POST_INTERRUPTION_FIELDS = new Set(['speaker', 'image', 'kind', 'text']);
+  const ALLOWED_SCENE1_BEAT_FIELDS = new Set(['kind', 'speaker', 'image', 'text', 'provenance', 'objectClaims']);
+  const ALLOWED_OAS_OPENING_FIELDS = new Set(['speaker', 'text', 'objectClaims']);
+  const ALLOWED_POST_INTERRUPTION_FIELDS = new Set(['speaker', 'image', 'kind', 'text', 'objectClaims']);
 
   function checkAllowlist(obj, allowed, where) {
     if (!obj || typeof obj !== 'object') return;
@@ -353,7 +472,7 @@ function compliantScene1() {
   // fixture itself demonstrates the density this session's fifth-pass correction requires —
   // totals just over the validator's 900-word floor. Still a structural test fixture, not real
   // prose craft; the validator cannot and does not judge quality, only presence/shape/density.
-  const mk = (kind, speaker, image, text, prov) => ({ kind, speaker, image, text, provenance: prov || { kind: 'generated_expression' } });
+  const mk = (kind, speaker, image, text, prov, objectClaims) => { const o = { kind, speaker, image, text, provenance: prov || { kind: 'generated_expression' } }; if (objectClaims) o.objectClaims = objectClaims; return o; };
   return {
     beats: [
       mk('narration', null, 'intro_lirael', 'Dawn in the clearing, and I stood in the sash, the mouth-band tied close, the weight of being the responsible Sacrificiant settling into my shoulders for the first time. Every eye in the assembly already knew what I did not yet feel steady enough to trust: that today was mine to carry, mine to be measured against, whether I wanted the measuring or not.', { kind: 'locked_canon_fact', cites: 'locked_world_facts.cast_roles.Lirael' }),
@@ -370,12 +489,13 @@ function compliantScene1() {
       mk('narration', null, 'd2', 'Then the loose word found purchase. The deep-crimson spiralgrass beneath my bare feet convulsed once, hard, a ripple running the width of the clearing toward me like something under the ground had just been asked a question it meant to answer badly — a wish with teeth, closing, and every part of me understood before my mind caught up that it was closing on me.', { kind: 'generated_expression' }),
       mk('narration', null, 'd2', 'It should have reached me. I had already begun bracing for whatever a wrongly-spent First Sacrifice does to the person it lands on — and then it was simply gone, cut off mid-motion the way a held breath stops when someone else decides you may exhale. Nothing scorched. Nothing cried out. The spiralgrass went still under my feet. My own Weave-Script, which had been a heartbeat from telling the whole clearing exactly what I felt, dimmed instead, and I had no way to account for why, or for whose hand had reached in ahead of mine.', { kind: 'generated_expression' }),
       mk('narration', null, 'd2', 'I was sealed, forbidden to interfere, and I understood exactly how it would look before I ever moved, understood it the way you understand a fall while you are still only leaning — and I tore the band from my mouth and went to her anyway, because standing still felt like the one thing I truly could not survive doing.', { kind: 'locked_canon_fact', cites: 'scene1_causal_sequence.2' }),
-      mk('dialogue', 'Lirael', 'd2', '"Seren —" The first word I had spoken aloud since the sash went on, and it was already too late to be anything but evidence against me, evidence I had handed them myself, freely, with my own torn band still hanging from my hand.', { kind: 'generated_expression' }),
+      mk('dialogue', 'Lirael', 'd3', '"Seren —" The first word I had spoken aloud since the sash went on, and it was already too late to be anything but evidence against me, evidence I had handed them myself, freely, with my own torn band still hanging from my hand.', { kind: 'generated_expression' }),
       mk('narration', null, 'd3', 'Two dozen faces turned to me at once — not merely at the torn band and the step I had taken, but at the spiralgrass gone unnaturally still where it should have kept moving, reading in that stillness exactly the shape of an interferer they had not yet been told to look for, as though the clearing itself had already decided the shape of the story before I had said a single word in my own defense.', { kind: 'locked_canon_fact', cites: 'scene1_causal_sequence.3' }),
       mk('dialogue', 'the presiding Dohkar', 'd3', '"The wish was shaped for the Sacrificiant\'s own benefit," he said, to the clearing and not to me, each word placed like a stone he had been carrying since before I ever tore the band from my mouth. "She broke her seal. She interfered in her own ward\'s rite. Both charges stand."', { kind: 'grounded_inference', cites: 'scene1_causal_sequence.3' }),
-      mk('narration', null, 'd3', 'Seren\'s mother was already moving toward her, but her eyes had found me first, and there was nothing kind left in them. Two of the family\'s guests drew back half a step, the specific half-step people make around something they have decided might be catching, and I understood in that one motion that I was no longer merely a Sacrificiant under charge — I was a threat this family would carry home and repeat at every table for a season.', { kind: 'grounded_inference', cites: 'social_fallout_family_reaction' }),
+      mk('narration', null, 'd4', 'Seren\'s mother was already moving toward her, but her eyes had found me first, and there was nothing kind left in them. Two of the family\'s guests drew back half a step, the specific half-step people make around something they have decided might be catching, and I understood in that one motion that I was no longer merely a Sacrificiant under charge — I was a threat this family would carry home and repeat at every table for a season.', { kind: 'grounded_inference', cites: 'social_fallout_family_reaction' }),
       mk('narration', null, 'd4', 'Julian moved without hurry, coming in from the edge the way rooms only make space for someone they have already decided outranks them, and the presiding Dohkar\'s own Weave-Script went a flat, hard color at watching it happen in front of him, a color I recognized because I had seen it on my own arms more than once, in rooms where someone else had just quietly taken the floor from me.', { kind: 'locked_canon_fact', cites: 'scene1_causal_sequence.4' }),
-      mk('dialogue', 'Julian', 'd4', '"I can hear where she is aligned," he said, to all of them and to me, and drew out The Answer, closing my fingers around it with his own, the scarred wrist pressed for one deliberate second against my palm before he told me plainly, in front of everyone, that he meant to question me himself, here, now, and that whatever answer I gave would be judged by every person still watching us.', { kind: 'locked_canon_fact', cites: 'scene1_causal_sequence.4' }),
+      mk('dialogue', 'Julian', 'd4', '"I can hear where she is aligned," he said, to all of them and to me, and drew out The Answer, closing my fingers around it with his own, the scarred wrist pressed for one deliberate second against my palm before he told me plainly, in front of everyone, that he meant to question me himself, here, now, and that whatever answer I gave would be judged by every person still watching us.', { kind: 'locked_canon_fact', cites: 'scene1_causal_sequence.4' },
+        [{ object_ref: 'the_answer', physical_form_claim: 'neutral_reference', claim_kind: 'generated_expression' }]),
     ],
   };
 }
@@ -399,7 +519,8 @@ function compliantDraft() {
       julian_claims_the_answer: [18, 19],
     },
     oasOpening: { speaker: 'Julian', text: '"You watched Seren the entire time she spoke, and your hand moved to the band at your mouth before the wish even finished bending — did you feel it reaching for you, or did some part of you call it there yourself, the way you draw every eye in every room you enter without ever once asking to?"' },
-    postInterruptionBeat: { speaker: null, image: 'd4', kind: 'narration', text: 'The Answer sat heavy in my palms, still not mine, and the formal Inquiry Julian had just claimed hung over both of us, unopened and unanswered.' },
+    postInterruptionBeat: { speaker: null, image: 'd4', kind: 'narration', text: 'The Answer sat heavy in my palms, still not mine, and the formal Inquiry Julian had just claimed hung over both of us, unopened and unanswered.',
+      objectClaims: [{ object_ref: 'the_answer', physical_form_claim: 'neutral_reference', claim_kind: 'generated_expression' }] },
     // fateCards deliberately absent (Roman, 2026-09-17) — no longer an authored field.
   };
 }
@@ -451,6 +572,34 @@ section('RED CONTROLS — scene1Candidate (fourth redesign pass, 2026-09-17)');
   const v = validateDraft(d, PACKET);
   const totalWords = d.scene1Candidate.beats.reduce((n, b) => n + b.text.trim().split(/\s+/).filter(Boolean).length, 0);
   ok('RED: 20 compliant-count beats averaging ~25 words (the real recurring shape across all 3 rejected drafts) is rejected on both the total floor and the per-beat narration-density check', !v.ok && v.violations.some(x => x.rule === 'scene1_too_thin') && v.violations.some(x => x.rule === 'scene1_insufficient_narration_density'), 'totalWords=' + totalWords + ' violations=' + JSON.stringify(v.violations));
+}
+{
+  // Roman's explicit named scenario: reproduces v7 attempt 5's EXACT real shape — the numbered
+  // template's beat COUNT worked (exactly 20), but density still failed: 1,035 words total (65
+  // short of the 1,100 floor), only 7 of 16 narration/exposition beats in the 60-90 qualifying
+  // range. Real per-beat word counts and kinds from the actual rejected draft
+  // (_first_sacrifice_draft_v7_attempt5_full_package/02_draft.json), not invented.
+  const ATTEMPT5_REAL_SHAPE = [
+    ['narration', 83], ['exposition', 60], ['narration', 65], ['exposition', 49],
+    ['dialogue', 5], ['narration', 59], ['exposition', 67], ['narration', 49],
+    ['narration', 53], ['exposition', 49], ['dialogue', 27], ['narration', 66],
+    ['narration', 76], ['exposition', 56], ['dialogue', 23], ['narration', 56],
+    ['exposition', 61], ['dialogue', 26], ['narration', 51], ['exposition', 54],
+  ];
+  const IMAGES_20 = ['intro_lirael', 'intro_lirael', 'intro_seren', 'intro_seren', 'intro_dohkar', 'intro_dohkar', 'intro_julian', 'intro_julian', 'd1', 'd1', 'd2', 'd2', 'd2', 'd2', 'd3', 'd3', 'd3', 'd4', 'd4', 'd4'];
+  const mkWords = (n) => Array.from({ length: n }, (_, i) => 'word' + i).join(' ') + '.';
+  const d = compliantDraft();
+  d.scene1Candidate.beats = ATTEMPT5_REAL_SHAPE.map(([kind, n], i) => ({
+    kind, speaker: kind === 'dialogue' ? (i % 2 ? 'Julian' : 'Seren') : null, image: IMAGES_20[i],
+    text: mkWords(n), provenance: { kind: 'generated_expression' },
+  }));
+  const v = validateDraft(d, PACKET);
+  const totalWords = d.scene1Candidate.beats.reduce((n, b) => n + b.text.trim().split(/\s+/).filter(Boolean).length, 0);
+  const thinViolation = v.violations.find(x => x.rule === 'scene1_too_thin');
+  const densityViolation = v.violations.find(x => x.rule === 'scene1_insufficient_narration_density');
+  ok('RED: the exact real v7-attempt-5 shape (20 beats, 1,035 words, only 7/16 qualifying narration beats) is rejected on both the total floor and the per-beat density check',
+    !v.ok && totalWords === 1035 && !!thinViolation && !!densityViolation && /only 7 of 16/.test(densityViolation.detail),
+    'totalWords=' + totalWords + ' violations=' + JSON.stringify(v.violations));
 }
 {
   const goodResult = validateDraft(compliantDraft(), PACKET);
@@ -598,6 +747,149 @@ section('RED CONTROLS — scene1Candidate (fourth redesign pass, 2026-09-17)');
   d.scene1Candidate.beats[4].image = 'intro_lirael'; // then jump backward — out of order
   const v = validateDraft(d, PACKET);
   ok('RED: an image sequence that goes backward is rejected', !v.ok && v.violations.some(x => x.rule === 'scene1_image_out_of_order'), JSON.stringify(v.violations));
+}
+// ── LOCKED BEAT-TO-ASSET MAPPING (Roman, 2026-09-18): the author cannot assign a beat to an
+// arbitrary asset, even one that's still forward-moving and structurally "valid" on its own. ──
+{
+  const d = compliantDraft();
+  d.scene1Candidate.beats[10].image = 'd3'; // slot 11 is locked to "d2" — this is forward-moving and otherwise valid, but not the LOCKED asset for this slot
+  const v = validateDraft(d, PACKET);
+  ok('RED: a beat assigned a DIFFERENT (but still forward-moving, structurally "valid") image than its locked template slot declares is rejected', !v.ok && v.violations.some(x => x.rule === 'scene1_beat_asset_mapping_locked'), JSON.stringify(v.violations));
+}
+{
+  const d = compliantDraft();
+  const v = validateDraft(d, PACKET);
+  ok('GREEN: the compliant draft\'s beat-to-image assignments exactly match every locked template slot (no mapping violations)', !v.violations.some(x => x.rule === 'scene1_beat_asset_mapping_locked'), JSON.stringify(v.violations));
+}
+// ── RE-KEYED TO scene1_visual_storyboard (Roman, 2026-09-19): "prove the authoring adapter/
+// validator receive THIS locked mapping" — the lock now sources from scene1_visual_storyboard.beats
+// as primary (not merely the older template), and its own rejection message names that section by
+// name, proving the drift check is genuinely keyed to the storyboard Roman reviewed, not a separate,
+// silently-agreeing definition. ──
+{
+  const d = compliantDraft();
+  d.scene1Candidate.beats[14].image = 'd4'; // slot 15 (n=15) is locked to "d3" per scene1_visual_storyboard.beats[14].occurrence
+  const v = validateDraft(d, PACKET);
+  const hit = v.violations.find(x => x.rule === 'scene1_beat_asset_mapping_locked');
+  ok('RED: a beat drifting from scene1_visual_storyboard is rejected, and the rejection explicitly names scene1_visual_storyboard as the locked source', !v.ok && !!hit && /scene1_visual_storyboard/.test(hit.detail) && /occurrence="d3"/.test(hit.detail), JSON.stringify(hit));
+}
+{
+  // A packet whose scene1_visual_storyboard has been tampered to CONTRADICT its own
+  // scene1_beat_number_template must refuse to trust either — never silently pick one over the other.
+  const tamperedPacket = JSON.parse(JSON.stringify(PACKET));
+  tamperedPacket.scene1_visual_storyboard.beats[5].occurrence = 'd1'; // template still says "intro_dohkar" for n=6
+  const d = compliantDraft();
+  const v = validateDraft(d, tamperedPacket);
+  ok('RED: a packet whose scene1_visual_storyboard contradicts its own scene1_beat_number_template is rejected as internally inconsistent, not silently resolved', !v.ok && v.violations.some(x => x.rule === 'visual_storyboard_template_drift'), JSON.stringify(v.violations));
+}
+// ── THE ANSWER — OBJECT-FIDELITY GUARD (Roman, 2026-09-19): hard object-fidelity constraint, not a
+// style suggestion. Real historical failure shape: every prior draft attempt that mentioned The
+// Answer's form invented one (attempt 1 "cool metal", attempt 4 "cool stone", attempt 5 "carved
+// bone") because the packet recorded the correct form but the adapter never rendered it. Both sides
+// closed now: the adapter renders the locked form as a hard constraint (see TASK 0 / locked world
+// facts), and this validator mechanically rejects a candidate that assigns a conflicting form. ──
+{
+  const d = compliantDraft();
+  d.scene1Candidate.beats[18].text = 'Julian closed my hands around the cool stone of The Answer, its weight settling into my palms.';
+  const v = validateDraft(d, PACKET);
+  const hit = v.violations.find(x => x.rule === 'the_answer_form_violation');
+  ok('RED: "stone" assigned to The Answer in a scene1Candidate beat is rejected, citing the banned word and the staff/hook canon', !v.ok && !!hit && /"stone"/.test(hit.detail) && /staff/.test(hit.detail), JSON.stringify(hit));
+}
+{
+  const d = compliantDraft();
+  d.oasOpening.text = 'He closed her fingers around the smooth gemstone, cool against her palm, and asked if she was ready — his gaze steady, his patience visible, before all of them.';
+  const v = validateDraft(d, PACKET);
+  const hit = v.violations.find(x => x.rule === 'the_answer_form_violation');
+  ok('SCOPE: a banned form word ("gemstone") with an implied but not literally-named Answer reference in oasOpening is NOT flagged — the guard\'s documented scope is explicit "The Answer" co-occurrence in the same text, not inference across an antecedent', !hit, JSON.stringify(hit));
+  // Re-run WITH the literal name present, to confirm the guard genuinely fires on oasOpening too.
+  const d2 = compliantDraft();
+  d2.oasOpening.text = 'He closed her fingers around The Answer, a smooth cool orb pressed into her palm, and asked if she was ready before all of them, his gaze steady and unhurried.';
+  const v2 = validateDraft(d2, PACKET);
+  const hit2 = v2.violations.find(x => x.rule === 'the_answer_form_violation');
+  ok('RED: a banned form word ("orb") for The Answer in oasOpening.text IS rejected once the object is literally named in that same text', !v2.ok && !!hit2 && /"orb"/.test(hit2.detail), JSON.stringify(hit2));
+}
+{
+  const d = compliantDraft();
+  d.postInterruptionBeat.text = 'The Answer sat heavy and strange in my palm, a fragment of crystal cold against my skin as I waited.';
+  const v = validateDraft(d, PACKET);
+  const hit = v.violations.find(x => x.rule === 'the_answer_form_violation');
+  ok('RED: a banned form word ("crystal") for The Answer in postInterruptionBeat.text is rejected', !v.ok && !!hit && /"crystal"/.test(hit.detail), JSON.stringify(hit));
+}
+{
+  // A NEUTRAL reference — names The Answer, says who holds it and what is about to happen, but does
+  // NOT restate its physical form at all — must remain allowed, INCLUDING the now-mandatory
+  // objectClaims metadata (a neutral reference still requires disclosure, just the cheap kind).
+  const d = compliantDraft();
+  d.scene1Candidate.beats[18].text = 'Julian closed my hands around The Answer, its weight settling into my palms as the assembly watched.';
+  d.scene1Candidate.beats[18].objectClaims = [{ object_ref: 'the_answer', physical_form_claim: 'neutral_reference', claim_kind: 'generated_expression' }];
+  const v = validateDraft(d, PACKET);
+  const answerViolations = v.violations.filter(x => x.rule === 'the_answer_form_violation' || x.rule === 'the_answer_missing_object_metadata' || x.rule === 'the_answer_physical_claim_invalid' || x.rule === 'the_answer_claim_provenance_invalid');
+  ok('GREEN: a neutral reference to The Answer (with matching objectClaims metadata) that does not restate its physical form clears every the_answer_* rule (other violations here are unrelated density mechanics from shortening this one fixture beat, not this correction)', answerViolations.length === 0, JSON.stringify(answerViolations));
+}
+{
+  // An UNRELATED object described with one of the same banned words, nowhere near "The Answer" in
+  // that beat's text, must never be flagged — the guard is scoped to explicit co-occurrence only.
+  const d = compliantDraft();
+  d.scene1Candidate.beats[0].text = 'The clearing floor was cold stone beneath my bare feet, worn smooth by generations of witnessed rites.';
+  const v = validateDraft(d, PACKET);
+  const answerViolationsUnrelated = v.violations.filter(x => x.rule === 'the_answer_form_violation' || x.rule === 'the_answer_missing_object_metadata');
+  ok('GREEN: an unrelated object ("cold stone" flooring, no mention of The Answer in that beat) is unaffected by the guard or the metadata requirement', answerViolationsUnrelated.length === 0, JSON.stringify(answerViolationsUnrelated));
+}
+// ── STRUCTURED OBJECT-CLAIM METADATA — closing the evasion Roman identified: a same-text guard
+// alone misses adjacent sentences, pronouns, and a beat split. Five required RED/canonical cases. ──
+{
+  // RED 1: "It was cold stone in my hands. The Answer..." across ADJACENT SENTENCES — here modeled
+  // as the literal two-sentence text Roman gave, inside ONE beat (the same-text guard already
+  // catches this; the adjacent-pair guard is the one that catches it split across TWO beats, tested
+  // next) — this proves the two-sentence phrasing itself is still caught regardless of punctuation.
+  const d = compliantDraft();
+  d.scene1Candidate.beats[18].text = 'It was cold stone in my hands. The Answer dragged at my wrist as Julian let go.';
+  const v = validateDraft(d, PACKET);
+  const hit = v.violations.find(x => x.rule === 'the_answer_form_violation');
+  ok('RED 1: "It was cold stone in my hands. The Answer dragged at my wrist." — adjacent sentences in one beat — is rejected', !v.ok && !!hit && /"stone"/.test(hit.detail), JSON.stringify(hit));
+}
+{
+  // RED 1b: the SAME wrong claim, now split across two ADJACENT BEATS (a real "beat split" evasion
+  // of the same-text guard) — caught only by the widened adjacent-pair check.
+  const d = compliantDraft();
+  d.scene1Candidate.beats[17].text = 'It was cold stone in my hands, colder than I expected, and I did not yet understand what I was holding.';
+  d.scene1Candidate.beats[18].text = 'The Answer dragged at my wrist as Julian let go and stepped back to let the assembly see.';
+  const v = validateDraft(d, PACKET);
+  const hit = v.violations.find(x => x.rule === 'the_answer_form_violation' && /adjacent beats/.test(x.detail));
+  ok('RED 1b: the same wrong claim SPLIT across two adjacent beats (no single beat contains both "The Answer" and "stone") is still rejected, via the widened adjacent-pair guard', !v.ok && !!hit && /"stone"/.test(hit.detail), JSON.stringify(hit));
+}
+{
+  // RED 2: a PRONOUN-BEARING continuation of a PRIOR beat that named The Answer — no literal name in
+  // THIS beat, only "it" — caught by the same adjacent-pair guard (order-agnostic: prior beat names
+  // it, this beat carries the banned word via pronoun).
+  const d = compliantDraft();
+  d.scene1Candidate.beats[18].text = 'Julian closed my hands around The Answer before the whole assembly, his grip steady over mine.';
+  d.scene1Candidate.beats[18].objectClaims = [{ object_ref: 'the_answer', physical_form_claim: 'neutral_reference', claim_kind: 'generated_expression' }];
+  d.scene1Candidate.beats[19].text = 'It was smooth cold stone against my palm, and I could not stop staring at it even as he spoke.';
+  const v = validateDraft(d, PACKET);
+  const hit = v.violations.find(x => x.rule === 'the_answer_form_violation');
+  ok('RED 2: a pronoun-bearing continuation ("It was...cold") in the beat AFTER one naming The Answer is rejected, even with no literal name in that beat', !v.ok && !!hit, JSON.stringify(hit));
+}
+{
+  // RED 3: a physical HANDLING/description beat that names The Answer but supplies NO object
+  // metadata at all — no banned word either, so the fast guard is silent; only the mandatory-
+  // metadata rule catches this.
+  const d = compliantDraft();
+  d.scene1Candidate.beats[18].text = 'Julian closed my hands around The Answer, and I felt its weight settle strangely against my palm.';
+  delete d.scene1Candidate.beats[18].objectClaims;
+  const v = validateDraft(d, PACKET);
+  const hit = v.violations.find(x => x.rule === 'the_answer_missing_object_metadata');
+  ok('RED 3: a beat naming The Answer with no banned word but ALSO no objectClaims metadata is rejected — disclosure is mandatory, not conditional on a banned word being present', !v.ok && !!hit && /scene1Candidate\.beats\[18\]/.test(hit.detail), JSON.stringify(hit));
+}
+{
+  // CANONICAL: a valid staff-and-opposed-question-mark-hooks claim, properly cited as a locked fact
+  // — must be ACCEPTED. Does not require the word "blade"; states form only.
+  const d = compliantDraft();
+  d.scene1Candidate.beats[18].text = 'Julian closed my hands around The Answer, the double-ended shaft cool and steady between my palms, its two hooked heads catching the low light.';
+  d.scene1Candidate.beats[18].objectClaims = [{ object_ref: 'the_answer', physical_form_claim: 'staff_double_ended_question_mark_hooks', claim_kind: 'locked_canon_fact', cites: 'locked_world_facts.the_answer' }];
+  const v = validateDraft(d, PACKET);
+  const answerViolationsCanon = v.violations.filter(x => x.rule.startsWith('the_answer_'));
+  ok('CANONICAL: a valid staff/double-ended/question-mark-hooks claim, cited as locked_canon_fact, is fully accepted by every the_answer_* rule', answerViolationsCanon.length === 0, JSON.stringify(answerViolationsCanon));
 }
 {
   const d = compliantDraft(); d.scene1Candidate.beats[0].provenance = { kind: 'locked_canon_fact' }; // no cites
@@ -781,6 +1073,25 @@ ok('attempt4_positive_exemplars declares non_canonical_status with all 4 require
   const joined = nc.hard_boundary.join(' | ');
   return /Non-canonical/.test(joined) && /Craft reference only/.test(joined) && /Do NOT quote or closely copy/.test(joined) && /no detail inside an exemplar becomes a locked world, character, or event fact/i.test(joined);
 })());
+
+// ── VERBATIM EXEMPLARS REMOVED FROM PROMPT (Roman, 2026-09-18, following real v7-attempt-5
+// copying despite guardrails) ──
+ok('attempt4_positive_exemplars is explicitly marked historical-only, not rendered', /HISTORICAL RECORD ONLY, NOT RENDERED IN THE PROMPT/.test(PACKET.attempt4_positive_exemplars.status));
+ok('attempt4_craft_requirements_abstract present with all 3 non-quotable requirements', !!(PACKET.attempt4_craft_requirements_abstract && Array.isArray(PACKET.attempt4_craft_requirements_abstract.requirements) && PACKET.attempt4_craft_requirements_abstract.requirements.length === 3));
+{
+  // EMPIRICAL, not inferred: actually render the real prompt and confirm neither exemplar's
+  // distinctive real phrasing (the exact text that got copied in attempt 5) is present anymore.
+  const { buildFixedInputView, buildPacketAuthoringPrompt } = await import('./_first_sacrifice_authoring_adapter.mjs');
+  const { user } = buildPacketAuthoringPrompt(PACKET, buildFixedInputView());
+  const leaked = /twisting rope of light aimed directly/.test(user) || /fingers tightening on the sash each time Seren faltered/.test(user);
+  ok('EMPIRICAL: the real constructed prompt contains no verbatim exemplar text (the exact real attempt-4 phrasing that got copied in attempt 5)', !leaked);
+}
+
+// ── RICH NUMBERED TEMPLATE (Roman, 2026-09-18, following v7-attempt-5's density shortfall) ──
+ok('scene1_beat_number_template.slots all declare kind + wordRange + fn (unmissable per-slot requirements)', PACKET.scene1_beat_number_template.slots.every(s => typeof s.kind === 'string' && Array.isArray(s.wordRange) && s.wordRange.length === 2 && typeof s.fn === 'string' && s.fn.length > 10));
+ok('scene1_beat_number_template guarantees the 1,100 floor even at every slot\'s theoretical minimum', PACKET.scene1_beat_number_template.slots.reduce((n, s) => n + s.wordRange[0], 0) >= 1100);
+ok('at least 12 slots are kind=narration (matching the composition contract\'s min_narration_beats floor)', PACKET.scene1_beat_number_template.slots.filter(s => s.kind === 'narration').length >= 12);
+
 ok('post_interruption_beat_requirement forbids deciding the player’s choice', /MUST NOT decide/.test(PACKET.oas_sequence_v3.post_interruption_beat_requirement.hard_boundary));
 ok('oas_mechanism_trace records the real traced turn/exit mechanism and the disclosed release-condition gap', !!(PACKET.oas_mechanism_trace && PACKET.oas_mechanism_trace.real_gap_found && /beatCount >= 1/.test(PACKET.oas_mechanism_trace.real_gap_found.proposed_structural_condition)));
 ok('scope_lock section present and explicitly excludes Scene 2', !!PACKET.scope_lock && /does NOT extend into Scene 2/.test(PACKET.scope_lock.statement));

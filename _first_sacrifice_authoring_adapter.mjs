@@ -84,11 +84,17 @@ export function buildFixedInputView() {
 export const ALLOWED_OUTPUT_SCHEMA = {
   top_level: ['scene1Candidate', 'scene1Coverage', 'first_person_lirael', 'oasOpening', 'postInterruptionBeat'],
   scene1_fields: ['beats'],
-  scene1_beat_fields: ['kind', 'speaker', 'image', 'text', 'provenance'],
+  scene1_beat_fields: ['kind', 'speaker', 'image', 'text', 'provenance', 'objectClaims'],
   scene1_beat_kinds: ['narration', 'exposition', 'dialogue'],
   scene1_allowed_images_in_order: ['intro_lirael', 'intro_seren', 'intro_dohkar', 'intro_julian', 'd1', 'd2', 'd3', 'd4'],
-  oas_opening_fields: ['speaker', 'text'],
-  post_interruption_beat_fields: ['speaker', 'image', 'kind', 'text'],
+  oas_opening_fields: ['speaker', 'text', 'objectClaims'],
+  post_interruption_beat_fields: ['speaker', 'image', 'kind', 'text', 'objectClaims'],
+  // STRUCTURED OBJECT-CLAIM METADATA (Roman, 2026-09-19) — required on scene1Candidate beats,
+  // oasOpening, and postInterruptionBeat whenever their text literally names "The Answer". A closed
+  // enum, not free text, so a conflicting form claim cannot be smuggled through this channel either.
+  object_claim_fields: ['object_ref', 'physical_form_claim', 'claim_kind', 'cites'],
+  object_claim_object_refs: ['the_answer'],
+  object_claim_physical_form_values: ['neutral_reference', 'staff_double_ended_question_mark_hooks'],
 };
 
 function renderPacketAsPromptText(packet) {
@@ -107,7 +113,27 @@ function renderPacketAsPromptText(packet) {
   L.push('LOCKED WORLD FACTS:');
   L.push('- Institutional hierarchy: ' + packet.locked_world_facts.institutional_hierarchy.note);
   Object.entries(packet.locked_world_facts.cast_roles).forEach(([name, r]) => L.push('- ' + name + ': ' + r.role + (r.aspiration ? ' (aspires to: ' + r.aspiration + ')' : '')));
-  L.push('- The Answer: ' + packet.locked_world_facts.the_answer.ownership);
+  L.push('- The Answer (ownership): ' + packet.locked_world_facts.the_answer.ownership);
+  // OBJECT-FIDELITY CONSTRAINT (Roman, 2026-09-19) — HARD, not a style suggestion. Every prior draft
+  // attempt that mentioned The Answer invented its own ungrounded material (attempt 1 "cool metal",
+  // attempt 4 "cool stone", attempt 5 "carved bone") because only .ownership was ever rendered here,
+  // never its physical form. Rendering the locked form + explicit banned list closes that gap.
+  const ans = packet.locked_world_facts.the_answer;
+  L.push('- The Answer (LOCKED PHYSICAL FORM — HARD OBJECT-FIDELITY CONSTRAINT, not a style suggestion): ' + ans.description + '. Form: ' + ans.form + '. ' + ans.heads + '. If you mention The Answer\'s form at all, it MUST agree with this — NEVER describe it as: ' + ans.banned_forms.slice(0, -1).join(', ') + ', or ' + ans.banned_forms[ans.banned_forms.length - 1] + '. A neutral reference (naming it, who holds it, what it does) that does not restate its form is always fine. Do not invent its material, color, weight, powers, or additional history beyond what is stated here.');
+  L.push('');
+  // MANDATORY OBJECT-CLAIM METADATA (Roman, 2026-09-19) — closes the evasion a same-text guard alone
+  // cannot: adjacent sentences, pronouns, a beat split. A textual scan is kept as a fast guard, but
+  // the real requirement is structural — you must SELF-DISCLOSE, per beat, whenever you name The
+  // Answer, whether you are making a neutral reference or restating its canonical form.
+  const ocs = packet.scene1_answer_object_claim_schema;
+  L.push('OBJECT-CLAIM METADATA — MANDATORY WHENEVER YOU NAME "The Answer" (HARD, ' + ocs.status.split(' — ')[0] + '):');
+  L.push('Any scene1Candidate beat, oasOpening, or postInterruptionBeat whose text contains the literal words "The Answer" MUST carry an objectClaims array with exactly one entry: { object_ref: "the_answer", physical_form_claim, claim_kind, cites? }.');
+  L.push('  - physical_form_claim is a CLOSED CHOICE — exactly one of: "neutral_reference" (you name/handle it without restating its form — no citation needed) OR "' + ans.physical_form_claim_token + '" (restates the locked canonical form exactly — nothing else). Never write a free-text form description here.');
+  L.push('  - if physical_form_claim is the canonical token, claim_kind MUST be "locked_canon_fact" and cites MUST be present (e.g. "locked_world_facts.the_answer") — restating a locked fact is always cited, never freely invented.');
+  L.push('  - if physical_form_claim is "neutral_reference", claim_kind may be any of locked_canon_fact | grounded_inference | generated_expression, same as ordinary beat provenance.');
+  L.push('  - Example neutral: ' + ocs.example_neutral);
+  L.push('  - Example canonical-form-restated: ' + ocs.example_canonical_form_restated);
+  L.push('  - ' + ocs.no_added_lore);
   L.push('');
   L.push('SCENE 1 CAUSAL SEQUENCE (already happened; do not contradict or re-stage):');
   packet.scene1_causal_sequence.forEach(s => L.push((s.step) + '. ' + s.event));
@@ -160,20 +186,35 @@ function renderPacketAsPromptText(packet) {
   s1.required_content_beats.beats.forEach(b => L.push('  - id="' + b.id + '" [' + b.image + '] ' + b.required_event));
   L.push('');
   const bnt = packet.scene1_beat_number_template;
-  L.push('EXACT 20-BEAT NUMBERED TEMPLATE (HARD — ' + bnt.status + '):');
-  L.push('Write your scene1Candidate.beats array as EXACTLY these 20 slots, in this exact order — count as you go, beat 1 through beat 20, not fewer, not more:');
-  bnt.slots.forEach(s => L.push('  Beat ' + s.n + ' [' + s.image + ']' + (s.id ? ' — REQUIRED id="' + s.id + '"' : ' — free (your own texture/interiority, 60-90 words unless a short grounded dialogue line)')));
+  // LOCKED MAPPING RECEIPT (Roman, 2026-09-19): the prompt's per-beat image/id/kind/wordRange values
+  // are now SOURCED FROM scene1_visual_storyboard (the reviewed, locked storyboard), not the template
+  // directly — bnt.slots[i].fn supplies only the prose-function description, which the storyboard
+  // doesn't carry. Any drift between the two throws HERE, at prompt-construction time, rather than
+  // silently building a prompt from a packet whose two locked sections disagree — the adapter cannot
+  // assign a beat to a different asset/occurrence than what Roman reviewed and locked.
+  const sb = packet.scene1_visual_storyboard;
+  if (!sb || !Array.isArray(sb.beats) || sb.beats.length !== bnt.slots.length) {
+    throw new Error('scene1_visual_storyboard missing or beat-count mismatch (' + (sb && sb.beats && sb.beats.length) + ' vs ' + bnt.slots.length + ') — refusing to construct a beat-plan prompt without the locked, reviewed storyboard');
+  }
+  bnt.slots.forEach((s, i) => {
+    const sbBeat = sb.beats[i];
+    if (!sbBeat || sbBeat.n !== s.n || sbBeat.occurrence !== s.image || sbBeat.id !== s.id || sbBeat.kind !== s.kind || JSON.stringify(sbBeat.wordRange) !== JSON.stringify(s.wordRange)) {
+      throw new Error('scene1_visual_storyboard beat ' + s.n + ' has drifted from the locked scene1_beat_number_template slot — refusing to construct a prompt from an internally-inconsistent packet');
+    }
+  });
+  L.push('EXACT 20-BEAT NUMBERED TEMPLATE (HARD — ' + bnt.status + '; per-beat image/id/kind/words SOURCED FROM the locked scene1_visual_storyboard):');
+  L.push('Write your scene1Candidate.beats array as EXACTLY these 20 slots, in this exact order — count as you go, beat 1 through beat 20, not fewer, not more. Each slot below states its DRAMATIC FUNCTION, its REQUIRED KIND, and its REQUIRED WORD RANGE — complete all 20 slots at those ranges before returning JSON. "narration_or_dialogue" means either kind is acceptable; "dialogue" slots still need surrounding narration elsewhere per the composition contract\'s dialogue-adjacency rule, but THIS slot\'s own text must itself be the spoken/quoted line.');
+  sb.beats.forEach((sbBeat, i) => { const s = bnt.slots[i]; L.push('  Beat ' + sbBeat.n + ' [' + sbBeat.occurrence + ']' + (sbBeat.id ? ' id="' + sbBeat.id + '"' : ' (free)') + ' — kind: ' + sbBeat.kind + ' — words: ' + sbBeat.wordRange[0] + '-' + sbBeat.wordRange[1] + ' — ' + s.fn); });
   L.push('');
   const wta = packet.wish_twist_and_arrest_requirement;
   L.push('THE WISH MUST VISIBLY TWIST, THEN BE INEXPLICABLY ARRESTED (HARD): ' + wta.status);
   L.push('Hard boundary: ' + wta.hard_boundary);
   L.push('BANNED (a hard failure, not a style preference): ' + wta.banned_vague_consequence);
   L.push('');
-  const ex = packet.attempt4_positive_exemplars;
-  const exGuard = ex.non_canonical_status;
-  L.push('CRAFT EXEMPLAR — NON-CANONICAL, READ THE GUARDRAILS BELOW BEFORE READING IT: ' + exGuard.requirement);
-  exGuard.hard_boundary.forEach(h => L.push('  - ' + h));
-  L.push('Twist/arrest exemplar (from a REJECTED draft — craft register only): ' + ex.twist_and_arrest);
+  const exAbstract = packet.attempt4_craft_requirements_abstract;
+  L.push('CRAFT REQUIREMENTS (HARD — ' + exAbstract.status + '):');
+  exAbstract.requirements.forEach(r => L.push('  - ' + r));
+  L.push('Hard boundary: ' + exAbstract.hard_boundary);
   L.push('');
   const sob = packet.scene1_oas_boundary_requirement;
   L.push('SCENE1/OAS BOUNDARY (HARD — a real rejected draft violated this): ' + sob.status);
@@ -213,7 +254,7 @@ function renderPacketAsPromptText(packet) {
   jsl.strategic_logic.forEach(s => L.push('  - ' + s));
   L.push('Hard boundary: ' + jsl.hard_boundary);
   L.push('');
-  L.push('CRAFT EXEMPLAR — NON-CANONICAL (same guardrails as before: craft reference only, do NOT quote or closely copy, no detail here becomes canon): ' + ex.julian_opening_turn);
+  L.push('REMINDER — the Julian craft requirement above (cite specific observed behavior, frame as unconscious influence, invert rescue into accusation/invitation) applies directly to this line. Write fresh, original wording that accomplishes it — do not echo any specific phrasing you have seen before in this authoring process.');
   L.push('');
   L.push('═══ TASK 3 — postInterruptionBeat (ONE beat AFTER the fixed interruption tail — crystallizes, never decides) ═══');
   L.push('Requirement: ' + pib.content_requirement);
