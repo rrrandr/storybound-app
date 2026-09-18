@@ -7,7 +7,10 @@
 // silent-preservation of the current baked scene:
 //   1. packet facts appear once in the constructed prompt; no unrelated starter/live-reader state leaks in
 //   2. the adapter's output is a draft artifact only — never a starter-package or canon write
-//   3. the OAS output has exactly five reviewable interaction cards and no auto-advance behavior encoded
+//   3. fateCards is NOT an authored field (Roman, 2026-09-17 correction) — the real 5 fixed archetype
+//      cards are dealt live by the app's own dynamic mechanism after each OAS exchange, never
+//      pre-authored; this control proves the schema no longer declares it and the prompt no longer
+//      asks the model to write it
 //   3b. the schema REQUIRES a full candidate Scene 1 (~20 beats, existing images only, in order)
 //   4. the structural scope gate rejects continuation-shaped output
 //   5. a failure leaves no draft marked approved
@@ -128,29 +131,35 @@ ok('DeepSeek never appears anywhere in the actual returned chain — not an appr
 ok('buildAuthoringFallbackChain returns an unfired chain (no fetch invoked by constructing it)', fetchCalls === 0);
 
 // ═══════════════════════════════════════════════════════════════════════════════
-section('3. OAS OUTPUT HAS EXACTLY FIVE REVIEWABLE CARDS (FIXED ARCHETYPE KEYS); NO AUTO-ADVANCE');
+section('3. FATE CARDS ARE NOT AN AUTHORED FIELD — dealt live by the real dynamic mechanism');
 // ═══════════════════════════════════════════════════════════════════════════════
-// A hand-built draft matching the adapter's declared ALLOWED_OUTPUT_SCHEMA (v2, real 5-archetype
-// contract, traced from public/app.js:_INTR_SLOTS) exactly — proving the schema the adapter
-// promises to emit is itself validator-compliant.
-const CARD_KEYS = ALLOWED_OUTPUT_SCHEMA.card_keys_exact;
+// FATE-CARD LIFECYCLE CORRECTION (Roman, 2026-09-17): this packet no longer authors a fateCards
+// field. The 5 fixed archetypes (temptation/silence/reversal/boundary/confession) are dealt fresh
+// by the real, already-existing generateIntimateFatePreviewsBatch after EACH live OAS exchange,
+// including post-interruption — never pre-authored once. See packet fate_card_lifecycle_correction.
+ok('ALLOWED_OUTPUT_SCHEMA no longer declares fateCards anywhere (top-level or card-shape fields)',
+  !ALLOWED_OUTPUT_SCHEMA.top_level.includes('fateCards') && !ALLOWED_OUTPUT_SCHEMA.card_keys_exact && !ALLOWED_OUTPUT_SCHEMA.card_fields && !ALLOWED_OUTPUT_SCHEMA.variant_values);
+ok('the constructed prompt no longer contains a TASK 4 / fateCards authoring task', !/TASK 4/.test(user) && !/you choose HOW each manifests/.test(user));
+ok('the constructed prompt explicitly tells the model it does NOT author fate cards, and names the real mechanism', /NOTE ON FATE CARDS \(you do NOT author these\)/.test(user) && /generated fresh by the real, already-existing app mechanism/.test(user));
 const SCENE1_IMAGES = ALLOWED_OUTPUT_SCHEMA.scene1_allowed_images_in_order;
 function compliantScene1() {
-  // 16 beats (minimum of the 16–24 tolerance), walking the 8 fixed images in order, each cited.
-  // Each beat is a padded ~75-word placeholder paragraph — not real prose, but long enough to
-  // clear the validator's 1,100-word density floor (Roman, sixth pass, 2026-09-17, raised from
-  // 900), matching the real requirement that beats be full paragraphs, not flat one-liners.
-  const pad = (label) => label + ' repeated across a full placeholder paragraph so this structural fixture clears the real word-count density floor without pretending to be finished prose, padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding.';
+  // EXACTLY 20 beats (Roman, 2026-09-17, scene1_beat_number_template — tightened from an 18-22
+  // range), walking the 8 fixed images in order, each cited. 4 images get 2 narration beats + 1
+  // dialogue beat (12 beats: 8 narration + 4 dialogue); the other 4 get 1 narration + 1 dialogue
+  // (8 beats: 4 narration + 4 dialogue) = 20 total, EXACTLY 12 narration beats, all padded to the
+  // 60-90 qualifying range, every dialogue beat immediately preceded by a qualifying narration beat.
+  const pad = (label) => label + ' repeated across a full placeholder paragraph so this structural fixture clears the real per-beat density range without pretending to be finished prose, padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding.';
   return {
-    beats: SCENE1_IMAGES.flatMap((img, i) => ([
-      { kind: 'narration', speaker: null, image: img, text: pad('placeholder scene1 narration beat ' + i + ' for image ' + img + '.'), provenance: { kind: 'generated_expression' } },
-      { kind: 'dialogue', speaker: i % 2 ? 'Julian' : 'Lirael', image: img, text: pad('placeholder scene1 dialogue beat ' + i + ' for image ' + img + '.'), provenance: { kind: 'generated_expression' } },
-    ])),
+    beats: SCENE1_IMAGES.flatMap((img, i) => {
+      const narr = (n) => ({ kind: 'narration', speaker: null, image: img, text: pad('placeholder scene1 narration beat ' + n + ' for image ' + img + '.'), provenance: { kind: 'generated_expression' } });
+      const dial = () => ({ kind: 'dialogue', speaker: i % 2 ? 'Julian' : 'Lirael', image: img, text: pad('placeholder scene1 dialogue beat for image ' + img + '.'), provenance: { kind: 'generated_expression' } });
+      return i < 4 ? [narr(i * 2), narr(i * 2 + 1), dial()] : [narr(i * 2), dial()];
+    }),
   };
 }
 // SEVENTH PASS (Roman, 2026-09-17): 10 ids now (was 8) — wish_visibly_twists and
 // twist_unnaturally_arrested added for the mandatory causal-and-strategic revision.
-const REQUIRED_BEAT_IDS = ['ceremony_setting', 'seren_kneeling_rehearsed', 'cost_offering_statement', 'julian_introduced', 'invocation_begins', 'wish_and_sacrifice', 'wish_visibly_twists', 'twist_unnaturally_arrested', 'public_charge', 'julian_claims_the_answer'];
+const REQUIRED_BEAT_IDS = ['ceremony_setting', 'seren_kneeling_rehearsed', 'cost_offering_statement', 'julian_introduced', 'invocation_begins', 'wish_and_sacrifice', 'wish_visibly_twists', 'twist_unnaturally_arrested', 'public_charge', 'social_fallout_family_reaction', 'julian_claims_the_answer'];
 function compliantDraft() {
   const scene1Beats = compliantScene1().beats;
   return {
@@ -160,38 +169,21 @@ function compliantDraft() {
     // structurally validator-compliant, not a model of real non-overlapping content coverage (see
     // the packet validator's own compliantDraft() for that, which uses real distinct beat indices).
     scene1Coverage: Object.fromEntries(REQUIRED_BEAT_IDS.map((id, i) => [id, [(i * 2) % scene1Beats.length, (i * 2 + 1) % scene1Beats.length]])),
-    oasOpening: { speaker: 'Julian', text: 'placeholder opening accusation line.' },
+    oasOpening: { speaker: 'Julian', text: 'placeholder opening accusation turn, expanded to a full multi-sentence length so this structural fixture clears the real 35-80 word range requirement without pretending to be finished authored dialogue, padding padding padding padding padding padding padding.' },
     postInterruptionBeat: { speaker: null, image: 'd4', kind: 'narration', text: 'placeholder post-interruption beat crystallizing an unresolved choice.' },
-    fateCards: Object.fromEntries(CARD_KEYS.map((k, i) => [k, {
-      action: 'placeholder action ' + i, dialogue: 'placeholder dialogue text ' + i, variant: ['amplify', 'ruin', 'redirect'][i % 3],
-    }])),
+    // fateCards deliberately absent — no longer an authored field (Roman, 2026-09-17).
   };
 }
 const goodDraft = compliantDraft();
-ok('adapter-schema-shaped draft has exactly the 5 fixed archetype keys', JSON.stringify(Object.keys(goodDraft.fateCards).sort()) === JSON.stringify([...CARD_KEYS].sort()));
 const goodResult = validateDraft(goodDraft, PACKET);
 ok('the real validator ACCEPTS the compliant draft (no false rejection)', goodResult.ok, JSON.stringify(goodResult.violations));
 
-// RED: an invalid variant (auto-advance-equivalent misuse of the schema) must be rejected.
-const badVariantDraft = compliantDraft();
-badVariantDraft.fateCards.temptation.variant = 'auto_advance_on_click';
-const badVariantResult = validateDraft(badVariantDraft, PACKET);
-ok('a card with an invalid variant value is REJECTED', !badVariantResult.ok,
-  badVariantResult.ok ? 'validator wrongly accepted an invalid variant' : undefined);
-
-// RED: wrong card keys must be rejected (already covered by the packet validator's own suite,
-// re-asserted here against the adapter's exact schema shape for end-to-end confidence).
-const missingCardDraft = compliantDraft();
-delete missingCardDraft.fateCards.boundary;
-const missingCardResult = validateDraft(missingCardDraft, PACKET);
-ok('a draft missing one of the 5 fixed archetype keys is REJECTED', !missingCardResult.ok);
-
-// RED: an oversized action/dialogue line must be rejected — the real UI card contract is
-// short-form (≤12/≤15 words), not free-length prose.
-const oversizedDraft = compliantDraft();
-oversizedDraft.fateCards.confession.dialogue = 'this dialogue line is deliberately far too long and rambling to fit the fifteen word ceiling the real card contract requires of every single card';
-const oversizedResult = validateDraft(oversizedDraft, PACKET);
-ok('a card with a dialogue line over 15 words is REJECTED', !oversizedResult.ok);
+// RED: a draft that DOES include fateCards (old habit / stale model memory / regression) must now
+// be rejected as an unapproved field — the schema-removal has real teeth, not just documentation.
+const fateCardsDraft = compliantDraft();
+fateCardsDraft.fateCards = { temptation: { action: 'x', dialogue: 'y', variant: 'amplify' } };
+const fateCardsResult = validateDraft(fateCardsDraft, PACKET);
+ok('a draft that still includes fateCards is REJECTED as an unapproved top-level field', !fateCardsResult.ok && fateCardsResult.violations.some(v => v.rule === 'unapproved_output_field' && /fateCards/.test(v.detail)), JSON.stringify(fateCardsResult.violations));
 
 // ═══════════════════════════════════════════════════════════════════════════════
 section('3b. THE SCHEMA REQUIRES A FULL CANDIDATE SCENE 1 (fourth redesign pass)');
@@ -204,13 +196,13 @@ ok('ALLOWED_OUTPUT_SCHEMA declares scene1Candidate as a required top-level field
 ok('ALLOWED_OUTPUT_SCHEMA fixes the exact 8 existing images, in order — no new image may ever be requested',
   JSON.stringify(ALLOWED_OUTPUT_SCHEMA.scene1_allowed_images_in_order) === JSON.stringify(['intro_lirael', 'intro_seren', 'intro_dohkar', 'intro_julian', 'd1', 'd2', 'd3', 'd4']));
 ok('the constructed prompt actually instructs the model to write scene1Candidate (not just the packet, the real request text)',
-  /TASK 1 — scene1Candidate/.test(user) && /approximately 20 beats/.test(user));
+  /TASK 1 — scene1Candidate/.test(user) && /EXACTLY 20 beats/.test(user));
 ok('the constructed prompt states the current baked scene is not being shown/copied and is not pre-approved',
   /not approval of its quality or provenance/.test(user) && /CANDIDATE, not an approved rewrite/.test(user));
 
 const goodScene1Draft = compliantDraft();
 const goodScene1Result = validateDraft(goodScene1Draft, PACKET);
-ok('a compliant scene1Candidate (16 beats, images in order, all cited/tagged) is ACCEPTED', goodScene1Result.ok, JSON.stringify(goodScene1Result.violations));
+ok('a compliant scene1Candidate (exactly 20 beats, images in order, all cited/tagged) is ACCEPTED', goodScene1Result.ok, JSON.stringify(goodScene1Result.violations));
 
 const tooShortScene1 = compliantDraft(); tooShortScene1.scene1Candidate.beats = tooShortScene1.scene1Candidate.beats.slice(0, 4);
 const tooShortResult = validateDraft(tooShortScene1, PACKET);
@@ -249,13 +241,6 @@ nestedContinuationDraft.oasOpening.continuationHint = 'sets up scene 2';
 const nestedResult = validateDraft(nestedContinuationDraft, PACKET);
 ok('an unapproved field nested on oasOpening is REJECTED', !nestedResult.ok);
 
-// A field belonging to the OLD (superseded) card schema (posture_label/prefill_text) smuggled
-// onto a v2 card must also be caught — proves the gate did not just get lucky on new field names.
-const oldSchemaFieldDraft = compliantDraft();
-oldSchemaFieldDraft.fateCards.silence.posture_label = 'an old-schema leftover';
-const oldSchemaResult = validateDraft(oldSchemaFieldDraft, PACKET);
-ok('an old-schema field (posture_label) smuggled onto a v2 card is REJECTED', !oldSchemaResult.ok);
-
 // ═══════════════════════════════════════════════════════════════════════════════
 section('5. A FAILURE LEAVES NO DRAFT MARKED APPROVED');
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -268,8 +253,7 @@ function reviewGate(draft) {
   // on null/empty input, since there is nothing present to reject; a real approval pipeline adds
   // its own "is there actually content here" check on top, which is what this does).
   const hasMinimumContent = !!(draft && draft.oasOpening && typeof draft.oasOpening === 'object'
-    && draft.postInterruptionBeat && typeof draft.postInterruptionBeat === 'object'
-    && draft.fateCards && typeof draft.fateCards === 'object');
+    && draft.postInterruptionBeat && typeof draft.postInterruptionBeat === 'object');
   if (!hasMinimumContent) return { approved: false, violations: [{ rule: 'no_content_present', detail: 'draft is null/empty/malformed — nothing to approve' }] };
   try {
     const result = validateDraft(draft, PACKET);
@@ -279,7 +263,7 @@ function reviewGate(draft) {
     return { approved: false, violations: [{ rule: 'validator_threw', detail: String(e.message || e) }] };
   }
 }
-const failingDrafts = [badVariantDraft, missingCardDraft, oversizedDraft, continuationPlanDraft, sceneSpineDraft, nestedContinuationDraft, oldSchemaFieldDraft];
+const failingDrafts = [fateCardsDraft, tooShortScene1, badImageScene1, continuationPlanDraft, sceneSpineDraft, nestedContinuationDraft];
 const anyWronglyApproved = failingDrafts.some(d => reviewGate(d).approved === true);
 ok('every failing fixture used above results in approved:false through the review gate', !anyWronglyApproved);
 ok('a malformed/crashed adapter output (null) fails CLOSED — approved:false, not an uncaught throw',

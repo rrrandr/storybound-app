@@ -7,19 +7,20 @@
 //     terminal ONLY if both fail. No DeepSeek.
 //   - Maximum ONE attempt per tier, no repair pass, no images, no live-reader launch, no
 //     starter-scenes.js / canon write.
-//   - The model writes scene1Candidate (~20 beats, full candidate replacement Scene 1) +
-//     scene1Coverage + first_person_lirael + oasOpening (Julian's ONE authored opening line,
-//     ≤14 words) + postInterruptionBeat (authored beat crystallizing an unresolved choice after
-//     the Dohkar's interruption, WITHOUT deciding it) + fateCards (5 fixed archetype keys) — the
-//     fixed 3-line interruption tail is NEVER asked of the model; this script splices it in
-//     deterministically, in code, after a successful call.
+//   - The model writes scene1Candidate (EXACTLY 20 numbered beats, full candidate replacement
+//     Scene 1) + scene1Coverage + first_person_lirael + oasOpening (Julian's ONE authored opening
+//     turn, 35-80 words) + postInterruptionBeat (authored beat crystallizing an unresolved choice
+//     after the Dohkar's interruption, WITHOUT deciding it) — the fixed 3-line interruption tail
+//     is NEVER asked of the model; this script splices it in deterministically, in code, after a
+//     successful call. fateCards is NOT authored (Roman, 2026-09-17 correction) — the real 5 fixed
+//     archetype cards are dealt live by the app's own dynamic mechanism after each OAS exchange.
 //   - SIXTH REDESIGN PASS (Roman, 2026-09-17): the old scripted `interrogationExchange` (~7
 //     canned Julian/Lirael lines) is SUPERSEDED — the player IS Lirael, so no OAS reply is ever
 //     pre-scripted. Everything between `oasOpening` and the Dohkar's interruption is live,
 //     player-driven OAS, produced by the real app at read time, never by this script.
 //   - Emit a versioned draft artifact + a FULL side-by-side review preview (current baked Scene 1
 //     vs. the candidate, both converging into the shared oasOpening -> [LIVE OAS] -> fixed
-//     interruption/tail -> postInterruptionBeat -> 5 cards sequence).
+//     interruption/tail -> postInterruptionBeat -> [LIVE fate cards] sequence).
 //   - Validate structurally/canon-wise (eligibility for review, NOT a prose-quality pass) —
 //     including provenance proportionality: only locked_canon_fact needs a citation,
 //     grounded_inference needs named grounds, generated_expression needs neither.
@@ -37,7 +38,20 @@ import { createRequire } from 'node:module';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const require = createRequire(import.meta.url);
-const OUT_DIR = path.join(__dirname, '_first_sacrifice_draft_v3_full_package');
+// v7 attempt 3: attempt 1 (thin, 507 words, coverage-map bug) and attempt 2 (coverage-map fixed,
+// but thinner still at 425 words, plus a new scene1/OAS scope leak) are preserved untouched as
+// disclosed history, never overwritten. Both bugs found in attempt 2 are now patched: the density
+// instruction carries a worked example, and a mechanical scene1/OAS boundary guard is in place.
+// v7 attempt 4: attempts 1-3 preserved as disclosed history. Composition contract added
+// (18-22 beats, >=12 narration beats of 55-110 words each, dialogue adjacency, no synopsis
+// stand-ins) and oasOpening lengthened to 35-80 words with concrete-behavior/question/subtext
+// requirements, following the density fix's failure across all 3 prior attempts.
+// v7 attempt 5: attempts 1-4 preserved as disclosed history (attempt 4 in particular kept as a
+// REJECTED-BUT-USEFUL reference for its real craft strengths — see attempt4_positive_exemplars in
+// the packet). This attempt targets the editorial corrections (concrete Seren sacrifice, social
+// fallout beat, non-binary postInterruptionBeat), the shared dramatize-present-speech rule, and
+// the fate-card lifecycle correction (fateCards no longer authored).
+const OUT_DIR = path.join(__dirname, '_first_sacrifice_draft_v7_attempt5_full_package');
 fs.mkdirSync(OUT_DIR, { recursive: true });
 
 // ── Load .env.local into process.env (values never logged) ──────────────────────────────────
@@ -191,7 +205,7 @@ if (!draft) {
   process.exit(1);
 }
 
-const draftArtifact = { packet_id: PACKET.packet_id, packet_version: PACKET.version, draft_version: 'draft-v3-full-package', generated_by: { tier: winningTier, model: winningModel, usage: winningUsage }, generated_at: new Date().toISOString(), draft };
+const draftArtifact = { packet_id: PACKET.packet_id, packet_version: PACKET.version, draft_version: 'draft-v7-full-package', generated_by: { tier: winningTier, model: winningModel, usage: winningUsage }, generated_at: new Date().toISOString(), draft };
 fs.writeFileSync(path.join(OUT_DIR, '02_draft.json'), JSON.stringify(draftArtifact, null, 2));
 
 // ── Structural/canon validation — reuse the REAL validator function exactly as the other
@@ -226,7 +240,6 @@ if (winningUsage) {
 // oasOpening / postInterruptionBeat around the live OAS gap and the fixed 3-line tail + the 5
 // fate cards. Never the delta alone — Roman's explicit correction (2026-09-17): "where's the
 // 800-word scene itself?" ──
-const CARD_KEYS = ['temptation', 'silence', 'reversal', 'boundary', 'confession'];
 function renderPreview() {
   const L = [];
   L.push('# First Sacrifice — Full-Package Draft (v3) Review Preview (REAL, authorized draft)');
@@ -280,13 +293,8 @@ function renderPreview() {
   else L.push((pib.speaker ? '**' + pib.speaker + ':** ' : '_(' + pib.kind + ', image=' + pib.image + ')_ ') + pib.text);
   L.push('');
   L.push('---');
-  L.push('## FIVE FATE CARDS');
-  const fc = draft.fateCards && typeof draft.fateCards === 'object' ? draft.fateCards : {};
-  CARD_KEYS.forEach(k => {
-    const c = fc[k];
-    L.push('**' + k.toUpperCase() + '**' + (c ? ' (variant: ' + c.variant + ')' : ' — ⚠ MISSING'));
-    if (c) { L.push('  action: ' + c.action); L.push('  dialogue: ' + c.dialogue); }
-  });
+  L.push('## FIVE FATE CARDS — [LIVE, not authored by this operation]');
+  L.push('Dealt fresh by the real app mechanism (generateIntimateFatePreviewsBatch) after each OAS exchange, including right here — never a static authored set (Roman, 2026-09-17 correction). Nothing to render from this draft.');
   L.push('');
   L.push('---');
   L.push('## Operation record');

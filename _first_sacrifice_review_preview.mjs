@@ -58,25 +58,29 @@ const CARD_KEYS = ['temptation', 'silence', 'reversal', 'boundary', 'confession'
 const IMAGE_ORDER = ['intro_lirael', 'intro_seren', 'intro_dohkar', 'intro_julian', 'd1', 'd2', 'd3', 'd4'];
 // SEVENTH PASS (Roman, 2026-09-17): 10 ids now (was 8) — wish_visibly_twists and
 // twist_unnaturally_arrested added for the mandatory causal-and-strategic revision.
-const REQUIRED_BEAT_IDS = ['ceremony_setting', 'seren_kneeling_rehearsed', 'cost_offering_statement', 'julian_introduced', 'invocation_begins', 'wish_and_sacrifice', 'wish_visibly_twists', 'twist_unnaturally_arrested', 'public_charge', 'julian_claims_the_answer'];
-// Padded to clear the validator's 1,100-word density floor (Roman, sixth pass, raised from 900,
-// 2026-09-17) — still structurally placeholder, marked as such, not real prose.
-const padText = (label) => PLACEHOLDER + ' ' + label + ' padded to a full paragraph length so this placeholder fixture demonstrates the real required density rather than a flat one-line summary, padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding.';
-const candidateBeats = IMAGE_ORDER.flatMap((img, i) => ([
-  { kind: 'narration', speaker: null, image: img, text: padText('candidate narration for ' + img + ' (beat ' + (i * 2) + ')'), provenance: { kind: 'generated_expression' } },
-  { kind: 'dialogue', speaker: i % 2 ? 'Julian' : 'Lirael', image: img, text: padText('candidate dialogue for ' + img + ' (beat ' + (i * 2 + 1) + ')'), provenance: { kind: 'generated_expression' } },
-]));
+const REQUIRED_BEAT_IDS = ['ceremony_setting', 'seren_kneeling_rehearsed', 'cost_offering_statement', 'julian_introduced', 'invocation_begins', 'wish_and_sacrifice', 'wish_visibly_twists', 'twist_unnaturally_arrested', 'public_charge', 'social_fallout_family_reaction', 'julian_claims_the_answer'];
+// Padded to clear scene1_composition_contract's per-beat 60-90 word range (Roman, 2026-09-17,
+// tightened from 55-110) — still structurally placeholder, marked as such, not real prose.
+// EXACTLY 20 beats (scene1_beat_number_template, tightened from an 18-22 range): 4 images get 2
+// narration + 1 dialogue, the other 4 get 1 narration + 1 dialogue — EXACTLY 12 narration beats
+// total, all qualifying, every dialogue beat adjacency-grounded.
+const padText = (label) => PLACEHOLDER + ' ' + label + ' padded to a full paragraph length so this placeholder fixture demonstrates the real required per-beat density range rather than a flat one-line summary, padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding.';
+const candidateBeats = IMAGE_ORDER.flatMap((img, i) => {
+  const narr = (n) => ({ kind: 'narration', speaker: null, image: img, text: padText('candidate narration ' + n + ' for ' + img), provenance: { kind: 'generated_expression' } });
+  const dial = () => ({ kind: 'dialogue', speaker: i % 2 ? 'Julian' : 'Lirael', image: img, text: padText('candidate dialogue for ' + img), provenance: { kind: 'generated_expression' } });
+  return i < 4 ? [narr(i * 2), narr(i * 2 + 1), dial()] : [narr(i * 2), dial()];
+});
 const draft = {
   scene1Candidate: { beats: candidateBeats },
   first_person_lirael: true,
   // Modulo into the fixed placeholder beat set — this preview proves rendering, not real
   // non-overlapping content coverage (the packet validator's own compliantDraft() models that).
   scene1Coverage: Object.fromEntries(REQUIRED_BEAT_IDS.map((id, i) => [id, [(i * 2) % candidateBeats.length, (i * 2 + 1) % candidateBeats.length]])),
-  oasOpening: { speaker: 'Julian', text: PLACEHOLDER + ' Julian\'s opening accusation line.' },
+  oasOpening: { speaker: 'Julian', text: PLACEHOLDER + ' Julian\'s opening turn, expanded to a full multi-sentence length so this placeholder fixture demonstrates the real 35-80 word range rather than a single blunt clause, padding padding padding padding padding.' },
   postInterruptionBeat: { speaker: null, image: 'd4', kind: 'narration', text: PLACEHOLDER + ' post-interruption beat crystallizing an unresolved choice, without deciding it.' },
-  fateCards: Object.fromEntries(CARD_KEYS.map(k => [k, {
-    action: PLACEHOLDER + ' (' + k + ' action)', dialogue: PLACEHOLDER + ' (' + k + ' dialogue)', variant: 'amplify',
-  }])),
+  // fateCards deliberately absent — no longer an authored field (Roman, 2026-09-17 correction):
+  // the real 5 fixed archetype cards are dealt live by generateIntimateFatePreviewsBatch after
+  // each OAS exchange, including post-interruption, never pre-authored by this packet.
 };
 
 const validation = validateDraft(draft, PACKET);
@@ -149,19 +153,14 @@ function renderMarkdown() {
   L.push((draft.postInterruptionBeat.speaker ? '**' + draft.postInterruptionBeat.speaker + ':** ' : '_(' + draft.postInterruptionBeat.kind + ', image=' + draft.postInterruptionBeat.image + ')_ ') + draft.postInterruptionBeat.text);
   L.push('_(must crystallize an unresolved choice/threat/invitation WITHOUT deciding it — the player then gets editable Say/Do, the 5 Fate cards below, and Petition/Tempt Fate)_');
   L.push('');
-  L.push('## FIVE FATE CARDS (fixed archetypes: ' + CARD_KEYS.join(', ') + ' — placeholder content shown here, prefill Say/Do only, do not auto-advance)');
-  CARD_KEYS.forEach(k => {
-    const c = draft.fateCards[k];
-    L.push('**' + k.toUpperCase() + '** (variant: ' + c.variant + ')');
-    L.push('  action: ' + c.action);
-    L.push('  dialogue: ' + c.dialogue);
-  });
+  L.push('## FIVE FATE CARDS — [LIVE, NOT produced by this adapter] (fixed archetypes: ' + CARD_KEYS.join(', ') + ')');
+  L.push('Dealt fresh by the real, already-existing `generateIntimateFatePreviewsBatch` (public/orchestration-client.js:6511) — including right here, right after postInterruptionBeat — never a static authored set (Roman, 2026-09-17 correction). This packet authors nothing for them. Prefill Say/Do only; card click never advances, only a real Submit does.');
   L.push('');
   L.push('---');
   L.push('## Open review items (Roman\'s call, not decided by this preview)');
   L.push('- Roman authored the OUTLINE (locked facts, causal sequence, C+/E+ grounds, emotional requirement) — never the current baked Scene 1\'s prose, descriptions, or dialogue. Its presence is not approval; it is Option A, to be compared against Option B, not assumed superior.');
   L.push('- The candidate (Option B) must reuse ONLY the 8 existing images (' + IMAGE_ORDER.join(', ') + ') in this fixed order — no new image is ever generated.');
-  L.push('- The 5 fate cards are the REAL, FIXED archetype contract traced from public/app.js:_INTR_SLOTS (temptation/silence/reversal/boundary/confession) — never freely-labeled postures. They are `reviewable_package_interaction`: proposed package content, never world/character canon even once approved.');
+  L.push('- The 5 fate cards use the REAL, FIXED archetype contract traced from public/app.js:_INTR_SLOTS (temptation/silence/reversal/boundary/confession) — never freely-labeled postures. As of 2026-09-17 this packet authors NONE of their content: they are dealt live, fresh, per exchange, by generateIntimateFatePreviewsBatch, which now also receives this scene\'s authored context (see fate_card_lifecycle_correction in the packet).');
   L.push('- The whole `interrogationExchange` design is SUPERSEDED (Roman, sixth pass): the player is Lirael, so no OAS reply is ever pre-scripted. Only `oasOpening` and `postInterruptionBeat` are authored; the exchange between them is live, real-time player-driven OAS.');
   L.push('- The fixed tail (`interruptionImage`/`interruption`/`interruptionExchange`) is held for the real OAS exit event, not spliced immediately at OAS entry — this corrects a sequencing error in the pre-sixth-pass design.');
   L.push('- The authoring adapter (`_first_sacrifice_authoring_adapter.mjs`) is DRY — never calls a provider on its own. See full_package_authoring_operation_census in the packet for the real, re-measured budget (against the current oasOpening/postInterruptionBeat prompt, ~6,782 est. input tokens, $0.0285 expected-success ceiling, governor-admitted at 6% utilization) — no provider call has been made under this schema yet.');

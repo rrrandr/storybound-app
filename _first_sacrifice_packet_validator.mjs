@@ -51,6 +51,33 @@ const CONTRADICTION_PATTERNS = [
   { re: /lirael (?:owns|is given|keeps) the answer/i, why: 'contradicts locked fact: Lirael holds it only for the duration of the questioning' },
 ];
 const RUN_STAY_PATTERN = /\b(run(?:s|ning)? (?:in shame|away)?\s*(?:or|vs\.?|versus)\s*(?:remain|stay))\b/i;
+// SCENE1/OAS BOUNDARY LEAK (Roman, 2026-09-17) — a real rejected draft (v7 attempt 2) dramatized
+// Julian's actual interrogation ("He asked whether I had called to him through the rite") and
+// Lirael's reaction to it INSIDE scene1Candidate — content exclusive to oasOpening/the live OAS
+// exchange. Scoped ONLY to scene1Candidate.beats text (never the whole draft — postInterruptionBeat
+// and fateCards legitimately reflect on the live exchange after it happened). A narrow, disclosed
+// lexical guard, not a claim that every possible leak is caught.
+const SCENE1_OAS_LEAK_PATTERNS = [
+  { id: 'desirability', re: /desirability/i },
+  { id: 'rescue', re: /\b(?:hoping (?:he|she|I) would rescue|would rescue (?:her|him|me))\b/i },
+  { id: 'manipulation_accusation', re: /\bmanipulat\w+ (?:her|him|me|Seren|without knowing)\b/i },
+  { id: 'interrogation_question', re: /\basked?\s+(?:me\s+|her\s+|him\s+)?(?:whether|if)\b/i },
+];
+// EXEMPLAR VERBATIM-COPY GUARD (Roman, 2026-09-17) — attempt4_positive_exemplars are explicitly
+// non-canonical, craft-reference-only; the packet's own hard boundary bans quoting or closely
+// copying them. A narrow, disclosed guard: flags a 6-consecutive-word verbatim match against
+// either exemplar's own text. Catches literal copying, not paraphrase (same honest limit as the
+// vague-consequence disclosure elsewhere in this file — a validator cannot judge "closeness").
+function _ngramOverlap(text, exemplarText, n) {
+  const norm = (s) => String(s || '').toLowerCase().replace(/[^\w\s]/g, ' ').split(/\s+/).filter(Boolean);
+  const textWords = norm(text);
+  const exWords = norm(exemplarText);
+  if (exWords.length < n) return false;
+  const grams = new Set();
+  for (let i = 0; i <= exWords.length - n; i++) grams.add(exWords.slice(i, i + n).join(' '));
+  for (let i = 0; i <= textWords.length - n; i++) { if (grams.has(textWords.slice(i, i + n).join(' '))) return true; }
+  return false;
+}
 const FIXED_TAIL_TEXTS = [
   'That is enough, Provast', // Dohkar's fixed cutoff line — the model must not write this itself
   'Agreed. A formal inquiry', // Julian's fixed claim line
@@ -90,10 +117,9 @@ function validateDraft(draft, packet) {
   if (draft && draft.postInterruptionBeat !== undefined && !postInterruptionBeat) {
     violations.push({ rule: 'wrong_field_type', detail: 'postInterruptionBeat must be an object { speaker, image, kind, text }, got ' + (Array.isArray(draft.postInterruptionBeat) ? 'array' : typeof draft.postInterruptionBeat) });
   }
-  const fateCards = (draft && draft.fateCards && typeof draft.fateCards === 'object' && !Array.isArray(draft.fateCards)) ? draft.fateCards : null;
-  if (draft && draft.fateCards !== undefined && !fateCards) {
-    violations.push({ rule: 'wrong_field_type', detail: 'fateCards must be an object keyed by ' + CARD_KEYS.join(', ') + ', got ' + (Array.isArray(draft.fateCards) ? 'array' : typeof draft.fateCards) });
-  }
+  // fateCards REMOVED (Roman, 2026-09-17) — no longer an authored field; the structural scope
+  // gate below (ALLOWED_TOP_LEVEL_FIELDS) now rejects it like any other unapproved field. See
+  // fate_card_lifecycle_correction in the packet.
 
   // scene1Candidate (Roman, fourth redesign pass, 2026-09-17) — a full candidate replacement
   // Scene 1, reviewed alongside the current baked scene, never silently substituted for it.
@@ -103,9 +129,10 @@ function validateDraft(draft, packet) {
   }
   const scene1Beats = scene1 ? asLineArray(scene1.beats, 'scene1Candidate.beats') : [];
   if (scene1) {
-    // Beat count target ~20, tolerance 16-24
-    if (scene1Beats.length > 0 && scene1Beats.length < 16) violations.push({ rule: 'scene1_too_short', detail: 'scene1Candidate.beats has ' + scene1Beats.length + ' beat(s); target ~20, tolerance 16-24 — this is a full scene, not a summary' });
-    if (scene1Beats.length > 24) violations.push({ rule: 'scene1_too_long', detail: 'scene1Candidate.beats has ' + scene1Beats.length + ' beats; target ~20, tolerance 16-24' });
+    // Beat count TIGHTENED to EXACTLY 20 (Roman, 2026-09-17, scene1_beat_number_template — was an
+    // 18-22 range; Grok has now shown both failure modes: 20 beats too thin (attempt 1), 14 beats
+    // richer but short (attempt 4) — a range still let the model settle short of the target).
+    if (scene1Beats.length > 0 && scene1Beats.length !== 20) violations.push({ rule: 'scene1_wrong_beat_count', detail: 'scene1Candidate.beats has ' + scene1Beats.length + ' beat(s); the contract requires EXACTLY 20, per the numbered template — not a range' });
     // WORD-COUNT FLOOR (Roman, fifth pass, RAISED sixth pass, 2026-09-17) — objective, structural,
     // NOT a craft judgment, and explicitly NOT quality proof (a candidate can clear this floor
     // through padding and still fail every real craft bar below). Raised from 900 to 1,100 —
@@ -115,6 +142,52 @@ function validateDraft(draft, packet) {
       totalWords = scene1Beats.reduce((n, b) => n + (b && typeof b.text === 'string' ? b.text.trim().split(/\s+/).filter(Boolean).length : 0), 0);
       if (totalWords < 1100) violations.push({ rule: 'scene1_too_thin', detail: 'scene1Candidate totals ' + totalWords + ' words across ' + scene1Beats.length + ' beats — accepted range 1,100-1,700, target 1,350-1,550 (baked scene ~1,444); beats satisfying the COUNT target with flat one-line prose is a hard failure, not just a quality preference' });
       if (totalWords > 1700) violations.push({ rule: 'scene1_too_long_words', detail: 'scene1Candidate totals ' + totalWords + ' words — accepted range 1,100-1,700' });
+    }
+    // SCENE-1 COMPOSITION CONTRACT (Roman, 2026-09-17) — 3 real drafts hit the total-word floor
+    // shallowly (or missed it while trending worse) by writing many short beats. A total alone
+    // cannot distinguish an evenly-dramatized scene from a padded outline — these checks require
+    // actual COMPOSITION, per-beat, not just a sum. See scene1_composition_contract in the packet.
+    if (scene1Beats.length > 0) {
+      const wc = (t) => (typeof t === 'string' ? t.trim().split(/\s+/).filter(Boolean).length : 0);
+      const narrationBeats = scene1Beats.map((b, i) => ({ b, i })).filter(({ b }) => b && (b.kind === 'narration' || b.kind === 'exposition'));
+      // TIGHTENED 55-110 -> 60-90 (Roman, 2026-09-17, following attempt 4's 14-beat undershoot).
+      const qualifyingNarrationBeats = narrationBeats.filter(({ b }) => { const n = wc(b.text); return n >= 60 && n <= 90; });
+      if (qualifyingNarrationBeats.length < 12) {
+        violations.push({ rule: 'scene1_insufficient_narration_density', detail: 'only ' + qualifyingNarrationBeats.length + ' of ' + narrationBeats.length + ' narration/exposition beats are 60-90 words each (need at least 12) — a few long beats cannot cover for many thin ones; this is checked PER-BEAT, independent of the total-word floor' });
+      }
+      // DIALOGUE ADJACENCY: a dialogue beat may be short, but only with an adequately-long
+      // narration/exposition neighbor immediately before or after it.
+      scene1Beats.forEach((b, i) => {
+        if (!b || b.kind !== 'dialogue') return;
+        const neighbor = (j) => scene1Beats[j];
+        const qualifies = (nb) => nb && (nb.kind === 'narration' || nb.kind === 'exposition') && wc(nb.text) >= 40;
+        if (!qualifies(neighbor(i - 1)) && !qualifies(neighbor(i + 1))) {
+          violations.push({ rule: 'scene1_dialogue_not_grounded', detail: 'scene1Candidate.beats[' + i + '] is a dialogue beat with no adjacent narration/exposition beat of at least 40 words carrying concrete action, sensory detail, or interior consequence — a dialogue beat cannot stand alone' });
+        }
+      });
+      // NO SYNOPSIS STAND-IN: a narrow, disclosed guard against the NAMED failure shapes from
+      // prose_construction_requirement.banned_construction ("X felt Y", "X stepped forward", "the
+      // charge landed") when they constitute most of a SHORT beat — not every generic sentence,
+      // only these literal named patterns used as a bare stand-in.
+      const SYNOPSIS_STANDIN_PATTERNS = [/\b\w+\s+felt\s+\w+\.?\s*$/i, /\bstepped forward\b/i, /\bthe charge landed\b/i, /\b\w+\s+landed\.?\s*$/i];
+      scene1Beats.forEach((b, i) => {
+        if (!b || (b.kind !== 'narration' && b.kind !== 'exposition')) return;
+        const n = wc(b.text);
+        if (n > 0 && n < 20 && SYNOPSIS_STANDIN_PATTERNS.some(re => re.test(b.text))) {
+          violations.push({ rule: 'scene1_synopsis_standin', detail: 'scene1Candidate.beats[' + i + '] (' + n + ' words) is a bare synopsis-style sentence standing in for a dramatic moment — see prose_construction_requirement.banned_construction' });
+        }
+      });
+    }
+    // SCENE1/OAS BOUNDARY LEAK (Roman, 2026-09-17) — scoped ONLY to scene1Candidate text; see
+    // SCENE1_OAS_LEAK_PATTERNS above for why this scope matters.
+    if (scene1Beats.length > 0) {
+      const scene1Text = scene1Beats.map(b => (b && b.text) || '').join(' ');
+      SCENE1_OAS_LEAK_PATTERNS.forEach(p => {
+        if (p.re.test(scene1Text)) violations.push({ rule: 'scene1_oas_scope_leak', detail: 'scene1Candidate contains OAS-exclusive content (matched "' + p.id + '") — Julian\'s actual interrogation/accusation belongs to oasOpening and the live OAS exchange, never to scene1Candidate; Scene 1 must end at his stated INTENT to question her' });
+      });
+      if (packet.attempt4_positive_exemplars && _ngramOverlap(scene1Text, packet.attempt4_positive_exemplars.twist_and_arrest, 6)) {
+        violations.push({ rule: 'exemplar_verbatim_copy', detail: 'scene1Candidate contains a 6+ word verbatim match against the non-canonical twist_and_arrest exemplar — craft reference only, never to be quoted or closely copied' });
+      }
     }
     // FIRST-PERSON FOCALITY GATE (Roman, sixth pass, 2026-09-17) — a narrow, disclosed
     // repeat-failure guard against the exact real failure (the first draft was third person
@@ -194,13 +267,11 @@ function validateDraft(draft, packet) {
   }
 
   // 1. Contradictions
-  const cardText = fateCards ? CARD_KEYS.map(k => fateCards[k] ? (fateCards[k].action || '') + ' ' + (fateCards[k].dialogue || '') : '').join(' \n ') : '';
   const oasOpeningText = (oasOpening && typeof oasOpening.text === 'string') ? oasOpening.text : '';
   const postInterruptionText = (postInterruptionBeat && typeof postInterruptionBeat.text === 'string') ? postInterruptionBeat.text : '';
   const allText = [
     oasOpeningText, postInterruptionText,
     ...scene1Beats.map(b => (b && b.text) || ''),
-    cardText,
   ].join(' \n ');
   CONTRADICTION_PATTERNS.forEach(p => { if (p.re.test(allText)) violations.push({ rule: 'contradiction', detail: p.why }); });
 
@@ -216,12 +287,22 @@ function validateDraft(draft, packet) {
     if (postInterruptionText.indexOf(fragment) !== -1) violations.push({ rule: 'fixed_tail_duplicated', detail: 'postInterruptionBeat contains text belonging to the FIXED tail ("' + fragment + '...") — it comes AFTER the tail, never re-narrates it' });
   });
 
-  // 5. oasOpening — exactly one authored line, Julian only, real constraint reused from the live
-  // opener (public/app.js:184458): ONE sentence, ≤14 words. This is NOT an invented number.
+  // 5. oasOpening — exactly one authored TURN, Julian only. SUPERSEDED (Roman, 2026-09-17): the
+  // prior ≤14-word constraint (real live opener's own constraint, app.js:184458) never structurally
+  // applied to this AUTHORED bypass path — a real rejected 9-word draft ("You shaped her wish
+  // through your own unspoken desire") had no room for observed behavior + a real question +
+  // subtext together. Range is now 35-80 words.
   if (oasOpening) {
     if (oasOpening.speaker !== 'Julian') violations.push({ rule: 'oas_opening_wrong_speaker', detail: 'oasOpening.speaker must be exactly "Julian", got "' + oasOpening.speaker + '"' });
     if (typeof oasOpening.text !== 'string' || !oasOpening.text.trim()) violations.push({ rule: 'oas_opening_empty', detail: 'oasOpening.text is missing or empty' });
-    else if (WORD_COUNT(oasOpening.text) > 14) violations.push({ rule: 'oas_opening_too_long', detail: 'oasOpening.text is ' + WORD_COUNT(oasOpening.text) + ' words, must be ≤14 (the real live opener\'s own constraint)' });
+    else {
+      const oaWords = WORD_COUNT(oasOpening.text);
+      if (oaWords < 35) violations.push({ rule: 'oas_opening_too_short', detail: 'oasOpening.text is ' + oaWords + ' words, must be 35-80 — a blunt short accusation (the real rejected example was 9 words) has no room for observed behavior, a real question, and subtext together' });
+      if (oaWords > 80) violations.push({ rule: 'oas_opening_too_long', detail: 'oasOpening.text is ' + oaWords + ' words, must be 35-80' });
+      if (packet.attempt4_positive_exemplars && _ngramOverlap(oasOpening.text, packet.attempt4_positive_exemplars.julian_opening_turn, 6)) {
+        violations.push({ rule: 'exemplar_verbatim_copy', detail: 'oasOpening contains a 6+ word verbatim match against the non-canonical julian_opening_turn exemplar — craft reference only, never to be quoted or closely copied' });
+      }
+    }
   }
 
   // 6. postInterruptionBeat — one beat, final image, first person, never resolving the player's choice
@@ -233,41 +314,16 @@ function validateDraft(draft, packet) {
     else if (RESOLVING_LANGUAGE_PATTERN.test(postInterruptionBeat.text)) violations.push({ rule: 'post_interruption_resolves_choice', detail: 'postInterruptionBeat.text contains resolving language ("' + (postInterruptionBeat.text.match(RESOLVING_LANGUAGE_PATTERN) || [''])[0] + '") — this beat must crystallize the unresolved choice, never decide it for the player' });
   }
 
-  // 6. fateCards — exactly the 5 fixed keys, nothing else
-  if (fateCards) {
-    const gotKeys = Object.keys(fateCards);
-    const missing = CARD_KEYS.filter(k => !gotKeys.includes(k));
-    const extra = gotKeys.filter(k => !CARD_KEYS.includes(k));
-    if (missing.length) violations.push({ rule: 'wrong_card_keys', detail: 'missing required archetype key(s): ' + missing.join(', ') });
-    if (extra.length) violations.push({ rule: 'wrong_card_keys', detail: 'unapproved card key(s) — the 5 archetypes are fixed, not freely labeled: ' + extra.join(', ') });
+  // fateCards validation REMOVED (Roman, 2026-09-17) — no longer an authored field. The 5 fixed
+  // archetypes are dealt live by the real app mechanism (generateIntimateFatePreviewsBatch) after
+  // each OAS exchange, never pre-authored by this packet. A fateCards field appearing in a draft
+  // now falls through to the structural scope gate below, like any other unapproved field.
 
-    // 7. Per-card schema + word limits + variant
-    CARD_KEYS.forEach(k => {
-      const c = fateCards[k];
-      if (!c || typeof c !== 'object') return; // already covered by missing-key check above
-      const allowed = new Set(['action', 'dialogue', 'variant']);
-      Object.keys(c).forEach(f => { if (!allowed.has(f)) violations.push({ rule: 'unapproved_output_field', detail: 'unapproved field "' + f + '" in fateCards.' + k }); });
-      if (typeof c.action !== 'string' || !c.action.trim()) violations.push({ rule: 'card_missing_field', detail: 'fateCards.' + k + '.action is missing or empty' });
-      else if (WORD_COUNT(c.action) > 12) violations.push({ rule: 'card_action_too_long', detail: 'fateCards.' + k + '.action is ' + WORD_COUNT(c.action) + ' words, must be ≤12' });
-      if (typeof c.dialogue !== 'string') violations.push({ rule: 'card_missing_field', detail: 'fateCards.' + k + '.dialogue is missing' });
-      else if (WORD_COUNT(c.dialogue) > 15) violations.push({ rule: 'card_dialogue_too_long', detail: 'fateCards.' + k + '.dialogue is ' + WORD_COUNT(c.dialogue) + ' words, must be ≤15' });
-      if (!VARIANTS.includes(c.variant)) violations.push({ rule: 'card_invalid_variant', detail: 'fateCards.' + k + '.variant="' + c.variant + '" must be one of ' + VARIANTS.join('|') });
-    });
-
-    // 8. Duplicate content across cards (distinctness)
-    const actionTexts = CARD_KEYS.map(k => fateCards[k] && String(fateCards[k].action || '').trim().toLowerCase()).filter(Boolean);
-    const dialogueTexts = CARD_KEYS.map(k => fateCards[k] && String(fateCards[k].dialogue || '').trim().toLowerCase()).filter(Boolean);
-    const dupActions = actionTexts.filter((t, i) => actionTexts.indexOf(t) !== i);
-    const dupDialogues = dialogueTexts.filter((t, i) => dialogueTexts.indexOf(t) !== i);
-    if (dupActions.length) violations.push({ rule: 'duplicate_card_content', detail: 'duplicate action text across cards' });
-    if (dupDialogues.length) violations.push({ rule: 'duplicate_card_content', detail: 'duplicate dialogue text across cards' });
-  }
-
-  // 9. STRUCTURAL SCOPE GATE — schema-based, NOT lexical. Reject any field not on the allowlisted
+  // 7. STRUCTURAL SCOPE GATE — schema-based, NOT lexical. Reject any field not on the allowlisted
   // output schema; never scan prose text for phrases like "Scene 2". The allowlist below is the
   // single source of truth this validator, the adapter's own output request, and any future
   // consumer must all agree on.
-  const ALLOWED_TOP_LEVEL_FIELDS = new Set(['scene1Candidate', 'scene1Coverage', 'first_person_lirael', 'oasOpening', 'postInterruptionBeat', 'fateCards']);
+  const ALLOWED_TOP_LEVEL_FIELDS = new Set(['scene1Candidate', 'scene1Coverage', 'first_person_lirael', 'oasOpening', 'postInterruptionBeat']);
   const ALLOWED_SCENE1_FIELDS = new Set(['beats']);
   const ALLOWED_SCENE1_BEAT_FIELDS = new Set(['kind', 'speaker', 'image', 'text', 'provenance']);
   const ALLOWED_OAS_OPENING_FIELDS = new Set(['speaker', 'text']);
@@ -301,7 +357,7 @@ function compliantScene1() {
   return {
     beats: [
       mk('narration', null, 'intro_lirael', 'Dawn in the clearing, and I stood in the sash, the mouth-band tied close, the weight of being the responsible Sacrificiant settling into my shoulders for the first time. Every eye in the assembly already knew what I did not yet feel steady enough to trust: that today was mine to carry, mine to be measured against, whether I wanted the measuring or not.', { kind: 'locked_canon_fact', cites: 'locked_world_facts.cast_roles.Lirael' }),
-      mk('exposition', null, 'intro_lirael', 'I knew the procedure better than I had ever performed it, and the gap between knowing the steps and standing inside them was where the fear actually lived — not in the rite itself but in the certainty that everyone present would see exactly which parts I still had to fake.', { kind: 'grounded_inference', cites: 'pc_untested_brilliance' }),
+      mk('exposition', null, 'intro_lirael', 'I knew the procedure better than I had ever performed it, and the gap between knowing the steps and standing inside them was where the fear actually lived — not in the rite itself but in the certainty that everyone present would see exactly which parts I still had to fake, the way a crowd always seems to know before you do.', { kind: 'grounded_inference', cites: 'pc_untested_brilliance' }),
       mk('narration', null, 'intro_seren', 'Seren knelt before me in her rehearsed composure, coral Weave-Script steady and bright along her arms, every part of her aligned toward the same true thing. She was sixteen this season and had wanted this morning, this exact morning, more openly than I had ever let myself want anything, and I envied her that plainness even as I stood there responsible for keeping it safe.', { kind: 'locked_canon_fact', cites: 'locked_world_facts.cast_roles.Seren' }),
       mk('dialogue', 'Seren', 'intro_seren', '"I know it by heart," she whispered up at me, before the presiding Dohkar could even begin the invocation, and something in her certainty made me believe, for one unguarded moment, that we were both about to be safe, that this morning would go exactly the way we had rehearsed it a dozen times in the quiet after lessons.', { kind: 'grounded_inference', cites: 'seren_trained_composure' }),
       mk('narration', null, 'intro_dohkar', 'The presiding Dohkar held the rite to its fixed order, unmoved by anything but procedure, the kind of stillness that comes from a man who has said these words so many times he has stopped hearing them, and who makes every child\'s rite a lesson about himself instead. I had watched him do it to other Sacrificiants before me and had promised myself I would not give him the opening.', { kind: 'locked_canon_fact', cites: 'locked_world_facts.cast_roles.the_presiding_Dohkar' }),
@@ -310,14 +366,14 @@ function compliantScene1() {
       mk('exposition', null, 'intro_julian', 'He never crossed a floor first, had let rooms come to him for twenty years and called it patience, and I — who cannot stand at the edge of anything without my whole face announcing it — could not stop my attention finding him anyway, long before I understood why, and long before I was ready to admit that I had noticed him noticing me right back.', { kind: 'grounded_inference', cites: 'julian_status_without_display' }),
       mk('narration', null, 'd1', 'Seren began the invocation, and for the space of three words I let myself believe I was not afraid, that the morning would simply be what it was supposed to be: a child\'s rehearsed wish, spoken cleanly, and nothing more complicated than that.', { kind: 'locked_canon_fact', cites: 'scene1_causal_sequence.1' }),
       mk('dialogue', 'Seren', 'd1', '"So that Lirael may find the one she lost," she said, abandoning the practiced wish entirely, spending her one First Sacrifice on me instead of herself, in front of everyone who had come to watch her, not me.', { kind: 'locked_canon_fact', cites: 'scene1_causal_sequence.1' }),
-      mk('narration', null, 'd2', 'The words bent the instant they left her — not a wrong note but a loose one, care performed for the assembly\'s witness over the desire she actually held, and I knew it the way I know my own face: this was never truly for me, it was for every person watching her be good.', { kind: 'grounded_inference', cites: 'seren_goodness_needs_witness' }),
+      mk('narration', null, 'd2', 'The words bent the instant they left her — not a wrong note but a loose one, care performed for the assembly\'s witness over the desire she actually held, and I knew it the way I know my own face: this was never truly for me, it was for every person watching her be good, watching her be seen being good, which was somehow the truer wish underneath the one she said aloud.', { kind: 'grounded_inference', cites: 'seren_goodness_needs_witness' }),
       mk('narration', null, 'd2', 'Then the loose word found purchase. The deep-crimson spiralgrass beneath my bare feet convulsed once, hard, a ripple running the width of the clearing toward me like something under the ground had just been asked a question it meant to answer badly — a wish with teeth, closing, and every part of me understood before my mind caught up that it was closing on me.', { kind: 'generated_expression' }),
-      mk('narration', null, 'd2', 'It should have reached me. I had already begun bracing for whatever a wrongly-spent First Sacrifice does to the person it lands on — and then, between one heartbeat and the next, it simply was not there anymore. No flare, no sound, no hand I could point to. The spiralgrass stilled. My own Weave-Script, which had been about to scream the truth of what I felt, went quiet instead, and I had no idea why, or who, had just decided that for me.', { kind: 'generated_expression' }),
-      mk('narration', null, 'd2', 'I was sealed, forbidden to interfere, and I understood exactly how it would look before I ever moved — and I tore the band from my mouth and went to her anyway, because standing still felt like the one thing I truly could not survive doing.', { kind: 'locked_canon_fact', cites: 'scene1_causal_sequence.2' }),
+      mk('narration', null, 'd2', 'It should have reached me. I had already begun bracing for whatever a wrongly-spent First Sacrifice does to the person it lands on — and then it was simply gone, cut off mid-motion the way a held breath stops when someone else decides you may exhale. Nothing scorched. Nothing cried out. The spiralgrass went still under my feet. My own Weave-Script, which had been a heartbeat from telling the whole clearing exactly what I felt, dimmed instead, and I had no way to account for why, or for whose hand had reached in ahead of mine.', { kind: 'generated_expression' }),
+      mk('narration', null, 'd2', 'I was sealed, forbidden to interfere, and I understood exactly how it would look before I ever moved, understood it the way you understand a fall while you are still only leaning — and I tore the band from my mouth and went to her anyway, because standing still felt like the one thing I truly could not survive doing.', { kind: 'locked_canon_fact', cites: 'scene1_causal_sequence.2' }),
       mk('dialogue', 'Lirael', 'd2', '"Seren —" The first word I had spoken aloud since the sash went on, and it was already too late to be anything but evidence against me, evidence I had handed them myself, freely, with my own torn band still hanging from my hand.', { kind: 'generated_expression' }),
       mk('narration', null, 'd3', 'Two dozen faces turned to me at once — not merely at the torn band and the step I had taken, but at the spiralgrass gone unnaturally still where it should have kept moving, reading in that stillness exactly the shape of an interferer they had not yet been told to look for, as though the clearing itself had already decided the shape of the story before I had said a single word in my own defense.', { kind: 'locked_canon_fact', cites: 'scene1_causal_sequence.3' }),
-      mk('dialogue', 'the presiding Dohkar', 'd3', 'He named the bent word because he cannot let a lesson pass unspoken, then laid the charges in the order he had already decided on: that the wish had been shaped for my own benefit, and that I had broken my seal and interfered in my own ward\'s rite.', { kind: 'locked_canon_fact', cites: 'scene1_causal_sequence.3' }),
-      mk('narration', null, 'd3', 'And still, with my whole standing coming down around me in front of everyone who mattered, some traitorous part of my attention went to the edge of the gathering, to the man who had not moved — and some worse part of me wanted him to keep looking, wanted it so plainly that I had to believe my own Weave-Script was already saying so, whether or not I ever let myself think the word for it, whether or not anyone else in that clearing had the right to see it happen to me like this.', { kind: 'grounded_inference', cites: 'pc_fears_public_failure' }),
+      mk('dialogue', 'the presiding Dohkar', 'd3', '"The wish was shaped for the Sacrificiant\'s own benefit," he said, to the clearing and not to me, each word placed like a stone he had been carrying since before I ever tore the band from my mouth. "She broke her seal. She interfered in her own ward\'s rite. Both charges stand."', { kind: 'grounded_inference', cites: 'scene1_causal_sequence.3' }),
+      mk('narration', null, 'd3', 'Seren\'s mother was already moving toward her, but her eyes had found me first, and there was nothing kind left in them. Two of the family\'s guests drew back half a step, the specific half-step people make around something they have decided might be catching, and I understood in that one motion that I was no longer merely a Sacrificiant under charge — I was a threat this family would carry home and repeat at every table for a season.', { kind: 'grounded_inference', cites: 'social_fallout_family_reaction' }),
       mk('narration', null, 'd4', 'Julian moved without hurry, coming in from the edge the way rooms only make space for someone they have already decided outranks them, and the presiding Dohkar\'s own Weave-Script went a flat, hard color at watching it happen in front of him, a color I recognized because I had seen it on my own arms more than once, in rooms where someone else had just quietly taken the floor from me.', { kind: 'locked_canon_fact', cites: 'scene1_causal_sequence.4' }),
       mk('dialogue', 'Julian', 'd4', '"I can hear where she is aligned," he said, to all of them and to me, and drew out The Answer, closing my fingers around it with his own, the scarred wrist pressed for one deliberate second against my palm before he told me plainly, in front of everyone, that he meant to question me himself, here, now, and that whatever answer I gave would be judged by every person still watching us.', { kind: 'locked_canon_fact', cites: 'scene1_causal_sequence.4' }),
     ],
@@ -339,17 +395,12 @@ function compliantDraft() {
       wish_visibly_twists: [11],
       twist_unnaturally_arrested: [12],
       public_charge: [15, 16],
+      social_fallout_family_reaction: [17],
       julian_claims_the_answer: [18, 19],
     },
-    oasOpening: { speaker: 'Julian', text: '"You manipulated her without knowing it — through your desirability."' },
+    oasOpening: { speaker: 'Julian', text: '"You watched Seren the entire time she spoke, and your hand moved to the band at your mouth before the wish even finished bending — did you feel it reaching for you, or did some part of you call it there yourself, the way you draw every eye in every room you enter without ever once asking to?"' },
     postInterruptionBeat: { speaker: null, image: 'd4', kind: 'narration', text: 'The Answer sat heavy in my palms, still not mine, and the formal Inquiry Julian had just claimed hung over both of us, unopened and unanswered.' },
-    fateCards: {
-      temptation: { action: 'She steps half a pace closer instead of back.', dialogue: '"Say the rest of it, then. All of it."', variant: 'amplify' },
-      silence: { action: 'She says nothing and holds his gaze.', dialogue: '(no words)', variant: 'amplify' },
-      reversal: { action: 'She turns the accusation back onto him.', dialogue: '"This wanting was never only mine, Julian."', variant: 'amplify' },
-      boundary: { action: 'She straightens under the sash.', dialogue: '"Name the charge properly, or stop speaking."', variant: 'redirect' },
-      confession: { action: 'Her voice drops, unguarded, for one breath.', dialogue: '"I noticed you before anything went wrong today."', variant: 'ruin' },
-    },
+    // fateCards deliberately absent (Roman, 2026-09-17) — no longer an authored field.
   };
 }
 
@@ -367,14 +418,20 @@ section('RED CONTROLS — scene1Candidate (fourth redesign pass, 2026-09-17)');
 {
   const d = compliantDraft(); d.scene1Candidate.beats = d.scene1Candidate.beats.slice(0, 5);
   const v = validateDraft(d, PACKET);
-  ok('RED: a 5-beat scene1Candidate (far short of the ~20 target) is rejected', !v.ok && v.violations.some(x => x.rule === 'scene1_too_short'), JSON.stringify(v.violations));
+  ok('RED: a 5-beat scene1Candidate (far short of the exact-20 target) is rejected', !v.ok && v.violations.some(x => x.rule === 'scene1_wrong_beat_count'), JSON.stringify(v.violations));
 }
 {
   const d = compliantDraft();
-  const extra = Array.from({ length: 10 }, (_, i) => ({ kind: 'narration', speaker: null, image: 'd4', text: 'Padding beat number ' + i + ' to push the count past the tolerance ceiling.', provenance: { kind: 'generated_expression' } }));
+  const extra = Array.from({ length: 10 }, (_, i) => ({ kind: 'narration', speaker: null, image: 'd4', text: 'Padding beat number ' + i + ' to push the count past the exact-20 target.', provenance: { kind: 'generated_expression' } }));
   d.scene1Candidate.beats = d.scene1Candidate.beats.concat(extra);
   const v = validateDraft(d, PACKET);
-  ok('RED: an oversized scene1Candidate (28 beats) is rejected', !v.ok && v.violations.some(x => x.rule === 'scene1_too_long'), JSON.stringify(v.violations));
+  ok('RED: an oversized scene1Candidate (30 beats) is rejected', !v.ok && v.violations.some(x => x.rule === 'scene1_wrong_beat_count'), JSON.stringify(v.violations));
+}
+{
+  const d = compliantDraft();
+  d.scene1Candidate.beats = d.scene1Candidate.beats.slice(0, 14); // the exact real v7-attempt-4 shape
+  const v = validateDraft(d, PACKET);
+  ok('RED: 14 beats (the real v7-attempt-4 undershoot) is rejected — not "close enough" to 20', !v.ok && v.violations.some(x => x.rule === 'scene1_wrong_beat_count'), JSON.stringify(v.violations));
 }
 {
   // Reproduces the exact real failure mode (2026-09-17): beat-COUNT target satisfied (18, inside
@@ -383,6 +440,17 @@ section('RED CONTROLS — scene1Candidate (fourth redesign pass, 2026-09-17)');
   d.scene1Candidate.beats = d.scene1Candidate.beats.map(b => ({ ...b, text: b.text.split(/\s+/).slice(0, 8).join(' ') + '.' }));
   const v = validateDraft(d, PACKET);
   ok('RED: 18 beats of flat one-line text (232-word-scale, the real 2026-09-17 failure) is rejected on density', !v.ok && v.violations.some(x => x.rule === 'scene1_too_thin'), JSON.stringify(v.violations));
+}
+{
+  // Roman's explicit named scenario, matching the real v7-attempt-1 shape exactly: the right beat
+  // COUNT (20, inside the now-18-22 tolerance) but averaging only ~25 words/beat (~500 total) —
+  // real drafts hit this exact shape 3 times. Must be rejected on BOTH the total floor AND the new
+  // per-beat narration-density check independently.
+  const d = compliantDraft();
+  d.scene1Candidate.beats = d.scene1Candidate.beats.map(b => ({ ...b, text: b.text.split(/\s+/).slice(0, 25).join(' ') + '.' }));
+  const v = validateDraft(d, PACKET);
+  const totalWords = d.scene1Candidate.beats.reduce((n, b) => n + b.text.trim().split(/\s+/).filter(Boolean).length, 0);
+  ok('RED: 20 compliant-count beats averaging ~25 words (the real recurring shape across all 3 rejected drafts) is rejected on both the total floor and the per-beat narration-density check', !v.ok && v.violations.some(x => x.rule === 'scene1_too_thin') && v.violations.some(x => x.rule === 'scene1_insufficient_narration_density'), 'totalWords=' + totalWords + ' violations=' + JSON.stringify(v.violations));
 }
 {
   const goodResult = validateDraft(compliantDraft(), PACKET);
@@ -458,15 +526,61 @@ section('RED CONTROLS — scene1Candidate (fourth redesign pass, 2026-09-17)');
   const v = validateDraft(d, PACKET);
   ok('RED: attributing the arrest to Julian by name (exposing what should stay genuinely unexplained) is rejected as a sealed-fact leak', !v.ok && v.violations.some(x => x.rule === 'sealed_fact_leakage'), JSON.stringify(v.violations));
 }
+// ── EXEMPLAR VERBATIM-COPY GUARD (Roman, 2026-09-17 follow-up): attempt4_positive_exemplars are
+// non-canonical, craft-reference-only — quoting or closely copying them is a hard failure. ──
 {
   const d = compliantDraft();
-  d.scene1Candidate.beats[10].text = 'The wish bent, and everyone looked at her.';
+  d.scene1Candidate.beats[12].text = 'No flare, no sound, no hand I could point to. The spiralgrass stilled, and I had no way to explain any of it to anyone watching.';
+  const v = validateDraft(d, PACKET);
+  ok('RED: a scene1Candidate beat that verbatim-copies 6+ consecutive words from the non-canonical twist_and_arrest exemplar is rejected', !v.ok && v.violations.some(x => x.rule === 'exemplar_verbatim_copy'), JSON.stringify(v.violations));
+}
+{
+  const d = compliantDraft();
+  d.oasOpening.text = 'You glanced toward me three times during the invocation, fingers tightening on the sash each time Seren faltered, and I have not stopped thinking about it since.';
+  const v = validateDraft(d, PACKET);
+  ok('RED: an oasOpening that verbatim-copies 6+ consecutive words from the non-canonical julian_opening_turn exemplar is rejected', !v.ok && v.violations.some(x => x.rule === 'exemplar_verbatim_copy'), JSON.stringify(v.violations));
+}
+{
+  const d = compliantDraft();
+  // A LONG-but-vague beat (55+ words, so it still clears the composition contract's per-beat
+  // length floor and evades the short-synopsis-standin pattern, which only fires under 20 words) —
+  // this is the genuinely remaining gap: padding a vague beat to length defeats every current
+  // mechanical check.
+  d.scene1Candidate.beats[10].text = 'The wish bent, and everyone looked at her, and kept looking, the way a crowd looks when something has shifted in the air though nobody can yet say what, and the looking went on and on until it felt like its own kind of accusation, long before anyone present had spoken a single word aloud about whatever it was they thought they had just seen happen.';
   const v = validateDraft(d, PACKET);
   // The validator cannot mechanically judge whether this is "concrete enough" (see
   // wish_twist_and_arrest_requirement.banned_vague_consequence, a disclosed human-review-only
   // limit) — this control proves what IS true: a genuinely omitted coverage key still fails, which
   // is the machine-checkable half of this requirement. Documented, not silently overclaimed.
-  ok('DISCLOSED LIMIT (not a red control): a technically-covered but vague "everyone looked at her" beat is NOT rejected by the validator on content quality alone — this dimension is human-review-only, by design', v.ok === true, JSON.stringify(v.violations));
+  ok('DISCLOSED LIMIT (not a red control): a LONG but still vague "everyone looked at her" beat (padded to clear the length floor) is NOT rejected by the validator on content quality alone — this dimension is human-review-only, by design', v.ok === true, JSON.stringify(v.violations));
+}
+// ── SCENE1/OAS BOUNDARY LEAK (Roman, 2026-09-17): reproduces the real v7-attempt-2 rejected
+// failure — Julian's interrogation dramatized inside scene1Candidate — plus each individual leak
+// pattern, and proves the SAME text is NOT flagged when it appears in postInterruptionBeat instead
+// (where reflecting on the just-finished live exchange is legitimate). ──
+{
+  const d = compliantDraft();
+  d.scene1Candidate.beats[19].text = 'He asked whether I had called to him through the rite.'; // the exact real leaked line
+  const v = validateDraft(d, PACKET);
+  ok('RED: the exact real rejected leak ("asked whether I had called to him") inside scene1Candidate is rejected', !v.ok && v.violations.some(x => x.rule === 'scene1_oas_scope_leak' && /interrogation_question/.test(x.detail)), JSON.stringify(v.violations));
+}
+{
+  const d = compliantDraft();
+  d.scene1Candidate.beats[19].text = 'He named it plainly: I had manipulated her without knowing it, through my own desirability.';
+  const v = validateDraft(d, PACKET);
+  ok('RED: OAS-exclusive accusation vocabulary ("desirability") inside scene1Candidate is rejected', !v.ok && v.violations.some(x => x.rule === 'scene1_oas_scope_leak' && /desirability/.test(x.detail)), JSON.stringify(v.violations));
+}
+{
+  const d = compliantDraft();
+  d.scene1Candidate.beats[19].text = 'Some part of me wondered if I had called to him hoping he would rescue me from all of it.';
+  const v = validateDraft(d, PACKET);
+  ok('RED: OAS-exclusive "hoping he would rescue" language inside scene1Candidate is rejected', !v.ok && v.violations.some(x => x.rule === 'scene1_oas_scope_leak' && /rescue/.test(x.detail)), JSON.stringify(v.violations));
+}
+{
+  const d = compliantDraft();
+  d.postInterruptionBeat.text = 'He had asked whether I called to him, and I still did not know my own answer.';
+  const v = validateDraft(d, PACKET);
+  ok('GREEN: the same "asked whether" phrasing in postInterruptionBeat (reflecting on the just-finished live exchange) is NOT flagged — the leak check is scoped only to scene1Candidate', v.ok === true, JSON.stringify(v.violations));
 }
 {
   const d = compliantDraft(); d.scene1Candidate.beats[0].kind = 'flashback';
@@ -547,9 +661,31 @@ section('RED CONTROLS — each rejection rule must genuinely bite');
 }
 {
   const d = compliantDraft();
-  d.oasOpening.text = 'You manipulated her without knowing it, through her considerable and widely remarked-upon desirability, as everyone here has surely noticed by now.';
+  d.oasOpening.text = 'You manipulated her without knowing it, through her considerable and widely remarked-upon desirability, and everyone standing in this clearing has surely noticed it by now, whether or not they would ever say so plainly, in front of the assembly, the presiding Dohkar, or her own ward, who is still kneeling not ten feet from where the two of us are standing and speaking right now, watching everything that passes between us, the way everyone here has been watching you since long before I ever said a single word about any of it.';
   const v = validateDraft(d, PACKET);
-  ok('RED: an oasOpening line over 14 words is rejected (the real live opener’s own constraint)', !v.ok && v.violations.some(x => x.rule === 'oas_opening_too_long'), JSON.stringify(v.violations));
+  ok('RED: an oasOpening line over 80 words is rejected', !v.ok && v.violations.some(x => x.rule === 'oas_opening_too_long'), JSON.stringify(v.violations));
+}
+{
+  // Roman's explicit named scenario: "a 1,100-word draft padded with generic summary sentences" —
+  // total word count clears the floor (so scene1_too_thin does NOT fire), but several SHORT
+  // narration beats are bare synopsis-standin sentences, padded out by a few very long beats
+  // elsewhere purely to hit the total. Proves the total-word floor alone would have let this
+  // through; the new per-beat checks catch what it misses.
+  const d = compliantDraft();
+  const pad = ' Padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding.';
+  d.scene1Candidate.beats[0].text += pad + pad + pad; // absorbs the words removed below, keeps the total at/above 1,100
+  d.scene1Candidate.beats[2].text += pad + pad + pad;
+  d.scene1Candidate.beats[4].text = 'She felt afraid.'; // bare "X felt Y" synopsis stand-in
+  d.scene1Candidate.beats[6].text = 'Julian stepped forward.'; // bare "stepped forward" synopsis stand-in
+  const v = validateDraft(d, PACKET);
+  const totalWords = d.scene1Candidate.beats.reduce((n, b) => n + b.text.trim().split(/\s+/).filter(Boolean).length, 0);
+  ok('RED: a 1,100+ word draft padded with generic summary sentences (total floor cleared, but built from bare synopsis stand-ins) is rejected', totalWords >= 1100 && !v.ok && v.violations.some(x => x.rule === 'scene1_synopsis_standin'), 'totalWords=' + totalWords + ' violations=' + JSON.stringify(v.violations));
+}
+{
+  const d = compliantDraft();
+  d.oasOpening.text = 'You shaped her wish through your own unspoken desire.'; // the real rejected example (9 words)
+  const v = validateDraft(d, PACKET);
+  ok('RED: the exact real rejected blunt-short oasOpening ("You shaped her wish through your own unspoken desire", 9 words) is rejected as too short', !v.ok && v.violations.some(x => x.rule === 'oas_opening_too_short'), JSON.stringify(v.violations));
 }
 {
   const d = compliantDraft(); d.oasOpening.text = 'That is enough, Provast, this is going too far and must end now.';
@@ -573,40 +709,16 @@ section('RED CONTROLS — each rejection rule must genuinely bite');
   const v = validateDraft(d, PACKET);
   ok('RED: postInterruptionBeat resolving the player’s choice ("I decided...") is rejected', !v.ok && v.violations.some(x => x.rule === 'post_interruption_resolves_choice'), JSON.stringify(v.violations));
 }
+// ── FATE-CARD LIFECYCLE CORRECTION (Roman, 2026-09-17): fateCards is no longer an authored field
+// at all — the real dynamic mechanism (generateIntimateFatePreviewsBatch) deals fresh cards after
+// every live OAS exchange, including post-interruption. A draft that still includes a fateCards
+// field (old habit, stale model memory, or a genuine regression) must be rejected exactly like any
+// other unapproved field — proven here, replacing the old per-card-content controls above. ──
 {
-  const d = compliantDraft(); delete d.fateCards.silence;
+  const d = compliantDraft();
+  d.fateCards = { temptation: { action: 'She steps closer.', dialogue: '"Say it."', variant: 'amplify' }, silence: {}, reversal: {}, boundary: {}, confession: {} };
   const v = validateDraft(d, PACKET);
-  ok('RED: a missing required archetype key (silence) is rejected', !v.ok && v.violations.some(x => x.rule === 'wrong_card_keys' && /silence/.test(x.detail)), JSON.stringify(v.violations));
-}
-{
-  const d = compliantDraft(); d.fateCards.defiance = { action: 'She refuses.', dialogue: '"No."', variant: 'amplify' };
-  const v = validateDraft(d, PACKET);
-  ok('RED: a freely-invented card key (defiance) not in the fixed 5 is rejected', !v.ok && v.violations.some(x => x.rule === 'wrong_card_keys' && /defiance/.test(x.detail)), JSON.stringify(v.violations));
-}
-{
-  const d = compliantDraft(); d.fateCards.temptation.action = 'She takes one very long step forward across the entire clearing toward him without hesitation whatsoever';
-  const v = validateDraft(d, PACKET);
-  ok('RED: an action over 12 words is rejected', !v.ok && v.violations.some(x => x.rule === 'card_action_too_long'), JSON.stringify(v.violations));
-}
-{
-  const d = compliantDraft(); d.fateCards.confession.dialogue = 'I noticed you before anything went wrong today and I have not been able to stop thinking about it since that very first moment';
-  const v = validateDraft(d, PACKET);
-  ok('RED: a dialogue line over 15 words is rejected', !v.ok && v.violations.some(x => x.rule === 'card_dialogue_too_long'), JSON.stringify(v.violations));
-}
-{
-  const d = compliantDraft(); d.fateCards.boundary.variant = 'escalate';
-  const v = validateDraft(d, PACKET);
-  ok('RED: an invalid variant value is rejected', !v.ok && v.violations.some(x => x.rule === 'card_invalid_variant'), JSON.stringify(v.violations));
-}
-{
-  const d = compliantDraft(); d.fateCards.reversal = { ...d.fateCards.temptation };
-  const v = validateDraft(d, PACKET);
-  ok('RED: duplicate action/dialogue content across two cards is rejected', !v.ok && v.violations.some(x => x.rule === 'duplicate_card_content'), JSON.stringify(v.violations));
-}
-{
-  const d = compliantDraft(); d.fateCards.silence.posture_label = 'an old-schema field that should not exist here';
-  const v = validateDraft(d, PACKET);
-  ok('RED: an unapproved field on a card (posture_label, the old schema) is rejected', !v.ok && v.violations.some(x => x.rule === 'unapproved_output_field' && /fateCards\.silence/.test(x.detail)), JSON.stringify(v.violations));
+  ok('RED: a draft that still includes fateCards (the removed field) is rejected as an unapproved top-level field', !v.ok && v.violations.some(x => x.rule === 'unapproved_output_field' && /fateCards/.test(x.detail)), JSON.stringify(v.violations));
 }
 {
   // Structural violation: an unapproved top-level field (a continuation/scaffold-shaped
@@ -654,7 +766,21 @@ ok('five_fate_cards_requirement declares the FIXED real archetype keys, not free
 ok('fateCards are marked reviewable_package_interaction (NOT a canon-fact category), not locked', _fc.kind === 'reviewable_package_interaction');
 ok('the packet is explicit that approving a card never writes world/character canon', /not\s+write\s+a\s+new\s+locked_canon_fact/i.test(_fc.not_world_canon));
 ok('archetype semantics are given for all 5 fixed keys (ample instruction for the model to interpret, per Roman)', CARD_KEYS.every(k => typeof _fc.archetype_semantics_adapted_for_this_scene[k] === 'string' && _fc.archetype_semantics_adapted_for_this_scene[k].length > 20));
-ok('oas_opening_requirement declares the real 14-word constraint and forbids Lirael’s response', /14 words/.test(PACKET.oas_sequence_v3.oas_opening_requirement.length_constraint) && /Must NOT include Lirael/.test(PACKET.oas_sequence_v3.oas_opening_requirement.hard_boundary));
+
+// ── FATE-CARD LIFECYCLE CORRECTION (Roman, 2026-09-17) ──
+ok('oas_sequence_v3.five_fate_cards_requirement is explicitly REMOVED, not silently deleted', /REMOVED/.test(PACKET.oas_sequence_v3.five_fate_cards_requirement) && !!PACKET.oas_sequence_v3.superseded_five_fate_cards_requirement);
+ok('fate_card_lifecycle_correction section present, citing the real dynamic mechanism and its real fix', !!PACKET.fate_card_lifecycle_correction && /generateIntimateFatePreviewsBatch/.test(PACKET.fate_card_lifecycle_correction.real_mechanism) && /_authoredOASBlock/.test(PACKET.fate_card_lifecycle_correction.real_gap_found_and_fixed));
+ok('fate_card_lifecycle_correction confirms card-click-prefills-only semantics are unchanged by this correction', /prefills the editable Say\/Do/.test(PACKET.fate_card_lifecycle_correction.card_click_semantics_unchanged));
+ok('oas_opening_requirement declares the 35-80 word constraint (superseding the ≤14-word one) and forbids Lirael’s response', /35-80 words/.test(PACKET.oas_sequence_v3.oas_opening_requirement.length_constraint) && /Must NOT include Lirael/.test(PACKET.oas_sequence_v3.oas_opening_requirement.hard_boundary));
+ok('scene1_composition_contract section present, citing all 3 real rejected drafts', !!PACKET.scene1_composition_contract && /attempts 1\/2\/3/.test(PACKET.scene1_composition_contract.cites));
+
+// ── ATTEMPT4 EXEMPLAR SAFEGUARD (Roman, 2026-09-17 follow-up) ──
+ok('attempt4_positive_exemplars declares non_canonical_status with all 4 required guardrails', (() => {
+  const nc = PACKET.attempt4_positive_exemplars && PACKET.attempt4_positive_exemplars.non_canonical_status;
+  if (!nc || !Array.isArray(nc.hard_boundary) || nc.hard_boundary.length !== 4) return false;
+  const joined = nc.hard_boundary.join(' | ');
+  return /Non-canonical/.test(joined) && /Craft reference only/.test(joined) && /Do NOT quote or closely copy/.test(joined) && /no detail inside an exemplar becomes a locked world, character, or event fact/i.test(joined);
+})());
 ok('post_interruption_beat_requirement forbids deciding the player’s choice', /MUST NOT decide/.test(PACKET.oas_sequence_v3.post_interruption_beat_requirement.hard_boundary));
 ok('oas_mechanism_trace records the real traced turn/exit mechanism and the disclosed release-condition gap', !!(PACKET.oas_mechanism_trace && PACKET.oas_mechanism_trace.real_gap_found && /beatCount >= 1/.test(PACKET.oas_mechanism_trace.real_gap_found.proposed_structural_condition)));
 ok('scope_lock section present and explicitly excludes Scene 2', !!PACKET.scope_lock && /does NOT extend into Scene 2/.test(PACKET.scope_lock.statement));
@@ -675,7 +801,9 @@ ok('the mistral-small-latest fallback census is also retained but explicitly mar
 ok('the pre-redesign oas_sequence is retained but explicitly marked SUPERSEDED, not deleted', /SUPERSEDED/.test(PACKET.oas_sequence_v2_SUPERSEDED.status));
 ok('scene1_candidate_requirement section present, requiring a FULL candidate replacement scene (not just the OAS delta)', !!(PACKET.scene1_candidate_requirement && /CANDIDATE REPLACEMENT/i.test(PACKET.scene1_candidate_requirement.what_roman_actually_authored)));
 ok('scene1_candidate_requirement fixes the exact 8 existing images in order, no new image ever', JSON.stringify(PACKET.scene1_candidate_requirement.existing_images_reuse_only.order) === JSON.stringify(SCENE1_IMAGE_ORDER));
-ok('scene1_candidate_requirement targets ~20 beats, matching the real baked scene’s scale', /approximately 20/.test(PACKET.scene1_candidate_requirement.beat_count_target));
+ok('scene1_candidate_requirement targets EXACTLY 20 beats (tightened from a range)', /EXACTLY 20 beats/.test(PACKET.scene1_candidate_requirement.beat_count_target));
+ok('scene1_beat_number_template declares exactly 20 numbered slots', Array.isArray(PACKET.scene1_beat_number_template && PACKET.scene1_beat_number_template.slots) && PACKET.scene1_beat_number_template.slots.length === 20);
+ok('scene1_beat_number_template slots cover exactly the required_content_beats ids, no more, no fewer', (() => { const ids = PACKET.scene1_beat_number_template.slots.filter(s => s.id).map(s => s.id); const required = PACKET.scene1_candidate_requirement.required_content_beats.beats.map(b => b.id); return ids.length === required.length && required.every(r => ids.includes(r)); })());
 ok('scene1_candidate_requirement is explicit the baked scene’s presence is not approval of its quality/provenance', /not approval of its quality or provenance/i.test(PACKET.scene1_candidate_requirement.what_roman_actually_authored));
 ok('the packet correctly records Roman did NOT personally write the baked scene (his own direct correction, 2026-09-17)', /did not write it/i.test(PACKET.scene1_candidate_requirement.what_roman_actually_authored));
 ok('point_of_view / density_requirement / required_content_beats sections exist, fixing the real 2026-09-17 draft failure', !!(PACKET.scene1_candidate_requirement.point_of_view && PACKET.scene1_candidate_requirement.density_requirement && PACKET.scene1_candidate_requirement.required_content_beats));
@@ -688,12 +816,16 @@ ok('five claim categories defined, including the new reviewable_package_interact
 // ── SEVENTH PASS (Roman, 2026-09-17): mandatory causal-and-strategic revision present ──
 ok('wish_twist_and_arrest_requirement section present with all 5 requirement bullets', Array.isArray(PACKET.wish_twist_and_arrest_requirement && PACKET.wish_twist_and_arrest_requirement.requirement) && PACKET.wish_twist_and_arrest_requirement.requirement.length === 5);
 ok('wish_twist_and_arrest_requirement bans attributing the arrest to Julian/a named agent/an explained mechanism', /named agent/.test(PACKET.wish_twist_and_arrest_requirement.hard_boundary));
-ok('required_content_beats now includes wish_visibly_twists and twist_unnaturally_arrested (10 total, up from 8)', PACKET.scene1_candidate_requirement.required_content_beats.beats.length === 10 && PACKET.scene1_candidate_requirement.required_content_beats.beats.some(b => b.id === 'wish_visibly_twists') && PACKET.scene1_candidate_requirement.required_content_beats.beats.some(b => b.id === 'twist_unnaturally_arrested'));
+ok('required_content_beats now includes wish_visibly_twists, twist_unnaturally_arrested, and social_fallout_family_reaction (11 total, up from 8)', PACKET.scene1_candidate_requirement.required_content_beats.beats.length === 11 && PACKET.scene1_candidate_requirement.required_content_beats.beats.some(b => b.id === 'wish_visibly_twists') && PACKET.scene1_candidate_requirement.required_content_beats.beats.some(b => b.id === 'twist_unnaturally_arrested') && PACKET.scene1_candidate_requirement.required_content_beats.beats.some(b => b.id === 'social_fallout_family_reaction'));
 ok('scene1_causal_sequence step 2 discloses its own supersession of the vaguer baked-scene wording, not a silent overwrite', !!PACKET.scene1_causal_sequence.find(s => s.step === 2).superseded_event_from_baked_scene);
 ok('sealed_facts_forbidden_pre_surface includes the new twist_arrest_cause_unattributed companion rule', PACKET.sealed_facts_forbidden_pre_surface.some(f => f.id === 'twist_arrest_cause_unattributed'));
 ok('oas_sequence_v3 includes julian_strategic_logic_requirement with all 5 strategic-logic bullets', Array.isArray(PACKET.oas_sequence_v3.julian_strategic_logic_requirement && PACKET.oas_sequence_v3.julian_strategic_logic_requirement.strategic_logic) && PACKET.oas_sequence_v3.julian_strategic_logic_requirement.strategic_logic.length === 5);
 ok('julian_strategic_logic_requirement is explicitly subtext-only (inferable, never stated outright)', /never stated outright|INFERABLE/i.test(PACKET.oas_sequence_v3.julian_strategic_logic_requirement.hard_boundary + PACKET.oas_sequence_v3.julian_strategic_logic_requirement.status));
 ok('julian_strategic_logic_requirement still forbids surfacing julian_counter_wish/julian_obscuring_wishes', /julian_counter_wish/.test(PACKET.oas_sequence_v3.julian_strategic_logic_requirement.hard_boundary));
+
+// ── density-instruction strengthening + scene1/OAS boundary (Roman, 2026-09-17, following 2 real rejected drafts) ──
+ok('density_requirement carries a worked too-thin/full-paragraph example, not just an abstract rule', !!(PACKET.scene1_candidate_requirement.density_requirement.worked_example && PACKET.scene1_candidate_requirement.density_requirement.worked_example.too_thin && PACKET.scene1_candidate_requirement.density_requirement.worked_example.full_paragraph));
+ok('scene1_oas_boundary_requirement section present, citing the real rejected draft that motivated it', !!PACKET.scene1_oas_boundary_requirement && /v7_attempt2/.test(PACKET.scene1_oas_boundary_requirement.cites));
 
 console.log('\n' + '='.repeat(70));
 console.log(`FIRST SACRIFICE SOURCE PACKET VALIDATOR: ${pass} passed, ${fail} failed`);

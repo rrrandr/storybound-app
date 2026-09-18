@@ -1,6 +1,6 @@
 {
   "packet_id": "first_sacrifice_source_packet",
-  "version": "7.0.0-source-packet",
+  "version": "8.3.0-source-packet",
   "status": "DRAFT — awaiting Roman's review before any generation pass. Not baked. Not authoritative for starter-scenes.js.",
   "immutable": true,
   "scope_lock": {
@@ -536,7 +536,7 @@
         "d4": "The Answer — Julian closes her hands around it before them all"
       }
     },
-    "beat_count_target": "approximately 20 beats (tolerance 16–24) — matching the real baked scene’s own scale, not a compressed summary. Expand EVERY step of scene1_causal_sequence into full scene beats: setting/character introduction, the rite, the wish and its bending, the charge, Julian’s intervention and The Answer — the same causal shape, freshly authored prose.",
+    "beat_count_target": "EXACTLY 20 beats (TIGHTENED from an 18-22 range, per scene1_composition_contract and scene1_beat_number_template) — matching the real baked scene’s own scale, not a compressed summary. Expand EVERY step of scene1_causal_sequence into full scene beats: setting/character introduction, the rite, the wish and its bending, the charge, Julian’s intervention and The Answer — the same causal shape, freshly authored prose.",
     "grounding_requirement": "Every beat must be traceable to locked_world_facts, scene1_causal_sequence, or cplus_eplus_fusion_grounds — the SAME canon the current baked scene is supposed to dramatize, not new invented plot. This is a re-AUTHORING of the approved outline, not a new outline.",
     "sealed_facts_still_apply": "sealed_facts_forbidden_pre_surface applies to scene1Candidate AND oasOpening AND postInterruptionBeat exactly the same way — none of it may surface or be implied anywhere in this packet's authored content.",
     "emotional_dramatic_requirement_applies": "scene1Candidate must satisfy emotional_dramatic_requirement in full — pictureable, personally endangered, emotionally affected, a charged choice — across the whole scene, not only its ending.",
@@ -548,9 +548,15 @@
       "cites": "public/starter-scenes.js beats[0].text (verbatim first-person prose)"
     },
     "density_requirement": {
-      "requirement": "Accepted range 1,100–1,700 words TOTAL across all beats; TARGET 1,350–1,550 (the baked scene is ~1,444 words in 20 beats, averaging ~72 words/beat). A beat is a full paragraph carrying real interiority, sensory detail, and voice — NOT a single flat plot-summary sentence. Satisfying the beat-COUNT target with short one-liners is a hard failure, even if it passes the beat-count check.",
+      "requirement": "Accepted range 1,100–1,700 words TOTAL across all beats; TARGET 1,350–1,550 (the baked scene is ~1,444 words in 20 beats, averaging ~72 words/beat). PER-BEAT FLOOR: a narration or exposition beat under 45 words is almost never acceptable — you have up to 8,000 completion tokens available and are not using them; two real drafts (2026-09-17) totaled only 507 and 425 words by averaging ~21-25 words/beat throughout, spreading thinness evenly so no single beat looked obviously wrong. A beat is a full paragraph carrying real interiority, sensory detail, and voice — NOT a single flat plot-summary sentence. A short spoken DIALOGUE line is fine (dialogue is naturally shorter than narration); a short NARRATION line standing alone is not. Satisfying the beat-COUNT target with short one-liners is a hard failure, even if it passes the beat-count check.",
       "word_count_is_not_quality_proof": "CORRECTED (Roman, sixth pass, 2026-09-17): raising the floor from 900 to 1,100 closes the thinness gap but does NOT certify craft — a candidate can hit 1,100+ words through padding, generic summary sentences, or repetition and still fail every real craft bar below. The floor is a necessary filter, never a sufficient one; word count is explicitly NOT treated as quality proof anywhere in this packet or its validator.",
-      "why_this_was_missing": "The first real draft (2026-09-17) used only 1,505 of its 6,000 available completion tokens and wrote 232 words — this was NOT a token-limit truncation, it was the model satisfying an underspecified instruction (beat count only, no density/length requirement) as cheaply as possible."
+      "why_this_was_missing": "The first real draft (2026-09-17) used only 1,505 of its 6,000 available completion tokens and wrote 232 words — this was NOT a token-limit truncation, it was the model satisfying an underspecified instruction (beat count only, no density/length requirement) as cheaply as possible.",
+      "superseded_requirement": "Accepted range 1,100–1,700 words TOTAL across all beats; TARGET 1,350–1,550 (the baked scene is ~1,444 words in 20 beats, averaging ~72 words/beat). A beat is a full paragraph carrying real interiority, sensory detail, and voice — NOT a single flat plot-summary sentence. Satisfying the beat-COUNT target with short one-liners is a hard failure, even if it passes the beat-count check.",
+      "worked_example": {
+        "too_thin": "\"The tear stopped mid-reach, arrested by nothing I could name. The clearing held its breath around the half-formed ruin.\" (23 words — a real example from the second rejected draft. States WHAT happened; carries no sensory detail, no interior register, no felt duration.)",
+        "full_paragraph": "\"It should have reached me. I had already begun bracing for whatever a wrongly-spent First Sacrifice does to the person it lands on — and then, between one heartbeat and the next, it simply was not there anymore. No flare, no sound, no hand I could point to. The spiralgrass stilled. My own Weave-Script, which had been about to scream the truth of what I felt, went quiet instead, and I had no idea why, or who, had just decided that for me.\" (~75 words — same event, expanded with anticipatory dread, sensory absence, and a felt physiological detail (Weave-Script) that only this character would notice.)"
+      },
+      "superseded_note": "REVISED (Roman, 2026-09-17, following the density floor's two rejections of real drafts) — the total-word floor already correctly rejects both drafts; this revision strengthens the INSTRUCTION so a future attempt is more likely to succeed, not a new mechanical gate."
     },
     "required_content_beats": {
       "status": "NEW (Roman, fifth pass) — the 6-step scene1_causal_sequence is a compressed PLOT summary, not a granular beat outline; it omitted real content the baked scene has (e.g. Seren’s spoken cost/offering statement) and the first real draft consequently omitted it too. This list is the granular event sequence — still an OUTLINE (what happens, not the prose expression of it) — grounding every beat the candidate must include, mapped to the 8 fixed images. Each entry now carries a stable `id` for the required coverage map (below) to reference precisely — \"generic citation\" can no longer stand in for actually covering a specific required beat. SEVENTH PASS (Roman, 2026-09-17): 2 new ids inserted (wish_visibly_twists, twist_unnaturally_arrested) and wish_and_sacrifice/public_charge revised — the vague \"everyone looked at her\" consequence is rejected; the candidate must show a concrete twist, an unnatural arrest, and misreadable public residue. See wish_twist_and_arrest_requirement.",
@@ -567,8 +573,9 @@
         },
         {
           "image": "intro_dohkar",
-          "required_event": "The presiding Dohkar’s character established; he calls for \"the cost\" and Seren NAMES HER OFFERING ALOUD (her earliest memory) — this exact beat was MISSING from the first draft and MUST appear.",
-          "id": "cost_offering_statement"
+          "required_event": "The presiding Dohkar's character established; he calls for \"the cost\" and Seren NAMES HER OFFERING ALOUD, in her own direct speech (not narrated summary — see the shared dramatize-consequential-present-speech rule). The offering must be a CONCRETE, emotionally legible, IRREVOCABLE loss, not a poetic noun phrase standing in for one — the reader must understand specifically what she gives up (a real memory, relationship, sensation, or capacity named with enough particularity to picture) and WHY it costs her something real to give it, not just that she names a category of loss. This exact beat was MISSING from the first draft and MUST appear.",
+          "id": "cost_offering_statement",
+          "superseded_required_event": "The presiding Dohkar’s character established; he calls for \"the cost\" and Seren NAMES HER OFFERING ALOUD (her earliest memory) — this exact beat was MISSING from the first draft and MUST appear."
         },
         {
           "image": "intro_julian",
@@ -582,9 +589,10 @@
         },
         {
           "image": "d2",
-          "required_event": "Seren deviates from the rehearsed wish and speaks BOTH the actual wish and its cost aloud, naming Lirael; Lirael, in the moment, recognizes that Seren's performed empathy does not match the self-aggrandizing desire beneath it (facet: seren_goodness_needs_witness) — a specific interior observation, not a generic sense that \"something is off.\"",
+          "required_event": "Seren deviates from the rehearsed wish and speaks BOTH the actual wish and its cost aloud, IN HER OWN DIRECT SPEECH (not narrated summary — see the shared dramatize-consequential-present-speech rule, public/app.js:_buildAuthorFloorDirective rule 4), naming Lirael. Lirael then, in the moment, reads the misalignment THROUGH Seren's actual words, gaze, and behavior — recognizing that Seren's performed empathy does not match the self-aggrandizing desire beneath it (facet: seren_goodness_needs_witness) — a specific interior observation grounded in what was just said and seen, not a generic sense that \"something is off.\"",
           "id": "wish_and_sacrifice",
-          "superseded_required_event": "Seren deviates from the rehearsed wish and speaks the misaligned wish naming Lirael; the wish bends — no visible effect, only the assembly turning to look; Lirael, sealed and forbidden to interfere, moves toward her anyway."
+          "superseded_required_event": "Seren deviates from the rehearsed wish and speaks the misaligned wish naming Lirael; the wish bends — no visible effect, only the assembly turning to look; Lirael, sealed and forbidden to interfere, moves toward her anyway.",
+          "superseded_required_event_2": "Seren deviates from the rehearsed wish and speaks BOTH the actual wish and its cost aloud, naming Lirael; Lirael, in the moment, recognizes that Seren's performed empathy does not match the self-aggrandizing desire beneath it (facet: seren_goodness_needs_witness) — a specific interior observation, not a generic sense that \"something is off.\""
         },
         {
           "image": "d2",
@@ -600,9 +608,16 @@
         },
         {
           "image": "d3",
-          "required_event": "The presiding Dohkar names the bent word and lays the charges — shaping the wish, interfering in the rite — grounding the charge explicitly in visible residue from the arrested misfire (not a bare accusation): something concrete the assembly actually witnessed that can plausibly, if wrongly, be read as evidence Lirael herself manipulated Seren or interfered. Publicly jeopardizing Lirael's path; even as her standing collapses, some part of her attention goes to Julian.",
+          "required_event": "The presiding Dohkar puts the charge to Lirael IN ACTUAL SPEECH — a real quoted line or lines, not narrated summary (see the shared dramatize-consequential-present-speech rule; \"he named the bent word and laid the charges\" is explicitly BANNED as the substantive delivery of the charge — that sentence may describe HIS MANNER around the actual words, never stand in for them). The charge itself: shaping the wish, interfering in the rite. Narration may show each charge landing on Lirael, grounded explicitly in visible residue from the arrested misfire (not a bare accusation): something concrete the assembly actually witnessed that can plausibly, if wrongly, be read as evidence Lirael herself manipulated Seren or interfered. Publicly jeopardizing Lirael's path; even as her standing collapses, some part of her attention goes to Julian.",
           "id": "public_charge",
-          "superseded_required_event": "The presiding Dohkar names the bent word and lays the charges — shaping the wish, interfering in the rite — publicly jeopardizing Lirael’s path; even as her standing collapses, some part of her attention goes to Julian."
+          "superseded_required_event": "The presiding Dohkar names the bent word and lays the charges — shaping the wish, interfering in the rite — publicly jeopardizing Lirael’s path; even as her standing collapses, some part of her attention goes to Julian.",
+          "superseded_required_event_2": "The presiding Dohkar names the bent word and lays the charges — shaping the wish, interfering in the rite — grounding the charge explicitly in visible residue from the arrested misfire (not a bare accusation): something concrete the assembly actually witnessed that can plausibly, if wrongly, be read as evidence Lirael herself manipulated Seren or interfered. Publicly jeopardizing Lirael's path; even as her standing collapses, some part of her attention goes to Julian."
+        },
+        {
+          "image": "d3",
+          "required_event": "The immediate SOCIAL fallout lands, not just the abstract charge: Seren's family and the wider assembly visibly react to Lirael as a real threat — a concrete social turn (a specific gesture, word, or shift in how they stand/look at her), not a generic 'the assembly murmured.' Lirael becomes a real social target in this beat, not merely a defendant in a procedural sense.",
+          "id": "social_fallout_family_reaction",
+          "status": "NEW (Roman, 2026-09-17, following attempt 4 review) — attempt 4's \"assembly's murmurs pressed against my skin\" barely landed this; it needs its own dedicated beat, not a clause inside another one."
         },
         {
           "image": "d4",
@@ -620,7 +635,7 @@
     "required_beat_coverage_map": {
       "status": "NEW (Roman, sixth pass, 2026-09-17) — draft METADATA, never reader-facing prose. Maps every required_content_beats id to the scene1Candidate beat index/indices that actually cover it, so missing canon cannot hide behind a generic provenance.cites — the coverage claim is checked structurally against the actual beats array, not just asserted.",
       "output_field": "scene1Coverage",
-      "output_shape": "an object keyed by EXACTLY the 8 required_content_beats ids, each value an array of 0-indexed scene1Candidate.beats indices that cover it (at least one index required per id — an empty array means NOT covered and is a hard failure). Example: {\"cost_offering_statement\": [5], \"wish_and_sacrifice\": [9, 10]}",
+      "output_shape": "an object keyed by EXACTLY the 10 required_content_beats ids (their literal id=\"...\" strings, never an image name), each value an array of 0-indexed scene1Candidate.beats indices that cover it (at least one index required per id — an empty array means NOT covered and is a hard failure). Example: {\"cost_offering_statement\": [5], \"wish_and_sacrifice\": [9, 10]}",
       "rendered_in_review": "The review preview renders this map explicitly (required beat -> which candidate beat(s) claim to cover it) so a reviewer can see coverage at a glance, not hunt for it in prose."
     },
     "first_person_focality_gate": {
@@ -633,7 +648,9 @@
         "rule": "Across all scene1Candidate narration/exposition beat text (dialogue beats excluded — spoken lines legitimately use any grammatical person), count first-person pronouns (I, me, my, mine, myself) versus third-person-singular-feminine pronouns referring to the PC (she, her, hers, herself) referring to Lirael specifically. If third-person pronouns outnumber first-person pronouns across those beats, OR first_person_lirael is declared true while the count says otherwise, the draft is REJECTED by name as substantially-third-person.",
         "why_narrow": "This cannot distinguish EVERY malformed case (e.g. a beat about Seren legitimately using \"she\") — it is a blunt, disclosed, narrow instrument sized to catch exactly the real failure mode (an entire scene narrated in third person), not a general POV-quality judge."
       }
-    }
+    },
+    "superseded_beat_count_target": "approximately 20 beats (tolerance 16–24) — matching the real baked scene’s own scale, not a compressed summary. Expand EVERY step of scene1_causal_sequence into full scene beats: setting/character introduction, the rite, the wish and its bending, the charge, Julian’s intervention and The Answer — the same causal shape, freshly authored prose.",
+    "superseded_beat_count_target_2": "approximately 20 beats (TIGHTENED tolerance 18-22, per scene1_composition_contract) — matching the real baked scene’s own scale, not a compressed summary. Expand EVERY step of scene1_causal_sequence into full scene beats: setting/character introduction, the rite, the wish and its bending, the charge, Julian’s intervention and The Answer — the same causal shape, freshly authored prose."
   },
   "grok_ministral8b_openai_authoring_operation_census_SUPERSEDED_oas_only_schema": {
     "status": "SUPERSEDED (Roman, fourth redesign pass, 2026-09-17) — this census measured the OAS-ONLY schema (interrogationExchange + fateCards, 2,500-token ceiling). Roman corrected the scope: the canonical authoring task must also produce a full candidate Scene 1 (~20 beats). See full_package_authoring_operation_census below for the corrected, re-measured operation.",
@@ -708,19 +725,19 @@
     "cites": "_first_sacrifice_grok_authoring_census.mjs output, _first_sacrifice_ministral8b_fallback_compat_check.mjs output, public/app.js:4749-4795 (TEXT_PRICING), api/_mistral-governor.js, api/mistral-proxy.js, api/proxy.js:_resolveGrokModel"
   },
   "full_package_authoring_operation_census": {
-    "status": "REAL CENSUS — re-measured AGAIN (Roman, seventh pass, 2026-09-17) against the mandatory causal-and-strategic revision: 2 new required_content_beats (wish_visibly_twists, twist_unnaturally_arrested), the wish_twist_and_arrest_requirement block, and the julian_strategic_logic_requirement block, all now rendered in the prompt. Same schema (scene1Candidate/scene1Coverage/first_person_lirael/oasOpening/postInterruptionBeat/fateCards), against the approved chain (Grok primary -> ministral-8b-2512 fallback -> GPT-4o terminal, no DeepSeek). Prior sixth-pass numbers below are superseded by this measurement, not deleted.",
-    "measured_on": "2026-09-17 (re-measured after the seventh-pass causal-and-strategic revision)",
+    "status": "REAL CENSUS — re-measured AGAIN (Roman, 2026-09-17) after adding the attempt4_positive_exemplars non-canonical safeguard (rendered twice in the prompt, once per exemplar, with full guardrail text each time) on top of: the attempt-4 editorial corrections (concrete/irrevocable Seren sacrifice, a new social_fallout_family_reaction beat, a non-binary postInterruptionBeat); the shared dramatize-consequential-present-speech AUTHOR FLOOR rule 4; and the fate-card lifecycle correction (fateCards REMOVED from the authored OUTPUT — 5 top-level fields, down from 6). Against the approved chain (Grok primary -> ministral-8b-2512 fallback -> GPT-4o terminal, no DeepSeek). Prior numbers below are superseded by this measurement, not deleted.",
+    "measured_on": "2026-09-17 (re-measured after the attempt4 exemplar non-canonical safeguard)",
     "produced_by": "_first_sacrifice_scene1_candidate_budget_measurement.mjs, calling _first_sacrifice_authoring_adapter.mjs:buildAuthoringFallbackChain()",
     "real_prompt_size": {
-      "system_bytes": 2839,
-      "user_bytes": 30259,
-      "total_bytes": 33098,
-      "est_input_tokens_chars_over_4_convention": 8166,
-      "note": "grew again from ~27,531 bytes (sixth-pass prompt) to ~33,098 bytes once the wish-twist/arrest requirement and Julian's strategic-logic requirement were added to TASK 1 and TASK 2."
+      "system_bytes": 3486,
+      "user_bytes": 40575,
+      "total_bytes": 44061,
+      "est_input_tokens_chars_over_4_convention": 10888,
+      "note": "user grew 38474->40575 bytes once both craft exemplars (twist/arrest + Julian opener) were wired into the prompt with their full non-canonical guardrail text."
     },
     "max_tokens_ceiling": {
       "value": 8000,
-      "rationale": "Unchanged from the sixth pass — the seventh-pass revision only grows the INPUT (instructions), not the requested OUTPUT shape (still scene1Candidate + scene1Coverage + first_person_lirael + oasOpening + postInterruptionBeat + fateCards, same field count/sizes) — re-measured against the real governor to confirm the larger input still admits, not assumed."
+      "rationale": "Unchanged — the exemplar safeguard only grows the INPUT (instructions), the requested OUTPUT shape is unchanged (5 top-level fields, fateCards still not authored). Re-measured against the real governor to confirm continued admission, not assumed."
     },
     "governor_check": {
       "tier_checked": "ministral-8b-2512 (the only tier a local governor exists for)",
@@ -730,15 +747,15 @@
       },
       "admit_result": {
         "outcome": "admitted",
-        "reserve": 41098,
+        "reserve": 52061,
         "limitTpm": 625000
       },
-      "utilization_pct": 7
+      "utilization_pct": 8
     },
     "cost_ceilings": {
-      "expected_grok_success_1_call": 0.0302,
-      "three_tier_exhaustion_3_calls": 0.133,
-      "caveat": "Both are CEILINGS (full max_tokens billed), not measured spend. The only real completion-length data point available (232 words / 18 beats / third-person, the rejected v3 draft) was measured under the fifth-pass interrogationExchange schema, not this one — a real completion under the seventh-pass schema has not yet been measured."
+      "expected_grok_success_1_call": 0.0336,
+      "three_tier_exhaustion_3_calls": 0.1436,
+      "caveat": "Both are CEILINGS (full max_tokens billed), not measured spend. Real spend across the 4 rejected v7 attempts: $0.013603 + $0.013815 + $0.014323 + $0.016714 = $0.058455 — a real completion under THIS (attempt-5) schema has not yet been measured."
     },
     "kind": "locked_canon_fact",
     "cites": "_first_sacrifice_scene1_candidate_budget_measurement.mjs output, api/_mistral-governor.js, app.js TEXT_PRICING"
@@ -857,10 +874,13 @@
     "oas_opening_requirement": {
       "kind": "generated_expression",
       "output_field": "oasOpening",
-      "output_shape": "{ speaker: \"Julian\", text: string } — a SINGLE line. NOT an exchange, NOT a question-and-answer pair — Lirael never speaks here. This is the one moment this packet authors of what was, until now, always live-generated per-reader.",
-      "length_constraint": "ONE sentence, ≤14 words — reusing the REAL live opener’s own constraint (public/app.js:184458), for consistency with the register the live system already enforces, not an invented number.",
-      "content_requirement": "Distilled from opening_frame_brief (in fixed_baked_content) into ONE charged opening line: Julian’s accusation, not a comfort — that she manipulated Seren without knowing it, through desirability. Predatory confidence, framing himself as the one wronged. This line sets the register for the ENTIRE live exchange that follows (the live system already injects the surrounding context into every subsequent turn — see oas_mechanism_trace.opening_frame_precedent) — it must be charged enough to carry that weight alone.",
-      "hard_boundary": "Must NOT include Lirael’s response, reaction, or any dialogue/action attributed to her. Must NOT resolve or answer its own question. It is a question/accusation the player has not yet responded to."
+      "output_shape": "{ speaker: \"Julian\", text: string } — ONE authored TURN (35-80 words, may be multiple sentences). NOT an exchange, NOT a question-and-answer pair — Lirael never speaks here. This is the one moment this packet authors of what was, until now, always live-generated per-reader.",
+      "length_constraint": "35-80 words, roughly 2-5 sentences. Julian's ONE authored opening turn — no longer a single terse line.",
+      "content_requirement": "Distilled from opening_frame_brief (in fixed_baked_content) and julian_strategic_logic_requirement into Julian's opening turn. Must include ALL of: (1) a reference to CONCRETE behavior he actually observed during the rite — a specific gesture, glance, or moment, not an abstract accusation; (2) a posed or clearly implied QUESTION — not a flat statement; (3) strategic/intimate SUBTEXT — the unconscious-influence framing from julian_strategic_logic_requirement should be legible in how he frames the accusation, not stated outright; (4) predatory confidence, framing himself as the one wronged. This line sets the register for the ENTIRE live exchange that follows (the live system already injects the surrounding context into every subsequent turn — see oas_mechanism_trace.opening_frame_precedent).",
+      "hard_boundary": "Must NOT include Lirael's response, reaction, or any dialogue/action attributed to her. Must NOT resolve or answer its own question. It is a question/accusation the player has not yet responded to. A blunt, single-clause accusation with no observed behavior and no real question (e.g. \"You shaped her wish through your own unspoken desire\" — a real rejected example) is a hard failure even if grammatically correct.",
+      "superseded_length_constraint": "ONE sentence, ≤14 words — reusing the REAL live opener’s own constraint (public/app.js:184458), for consistency with the register the live system already enforces, not an invented number.",
+      "superseded_note": "SUPERSEDED (Roman, 2026-09-17) — the ≤14-word constraint matched the LIVE-GENERATED opener's own real code constraint (app.js:184458), but oasOpening is AUTHORED and rendered DIRECTLY (see _fireIntimacyOpener's authored-opener branch), bypassing that live-generation call entirely — the constraint never structurally applied to this authored bypass, only borrowed for register-consistency. Real rejected drafts (e.g. \"You shaped her wish through your own unspoken desire\", 9 words) had no room for concrete observed behavior, a real question, AND subtext all at once inside 14 words.",
+      "superseded_output_shape": "{ speaker: \"Julian\", text: string } — a SINGLE line. NOT an exchange, NOT a question-and-answer pair — Lirael never speaks here. This is the one moment this packet authors of what was, until now, always live-generated per-reader."
     },
     "live_exchange_note": "Everything between oasOpening and the interruption (Julian escalating toward inappropriately-intimate, sexually-charged territory in response to the PLAYER’S ACTUAL Say/Do or card choice, turn after turn, while the player retains real agency) is LIVE — generated by the existing _handleIntimacyTurn mechanism, exactly as it already works for every non-baked story. This packet authors NONE of it. The interruption tail below fires at the real OAS exit event (see oas_mechanism_trace.real_gap_found for the currently-open question of exactly which structural condition should gate that release).",
     "oas_interruption_requirement": {
@@ -872,10 +892,11 @@
       "kind": "generated_expression",
       "output_field": "postInterruptionBeat",
       "output_shape": "{ speaker: null | \"Lirael\", image: \"d4\", kind: \"narration\" | \"dialogue\", text: string } — ONE beat, first person, at the scene’s final image (matching scene1Candidate’s own image convention).",
-      "content_requirement": "Crystallizes an unresolved choice, threat, or invitation arising from the interruption (The Answer still in Lirael’s hands; the coming formal Inquiry Julian has just claimed) — the moment the player’s custom Say/Do, a Fate card, or Petition/Tempt Fate responds to.",
-      "hard_boundary": "MUST NOT decide, narrate, or imply what Lirael does next. No resolving language (\"I decided,\" \"I answered,\" \"I said yes,\" \"I chose to...\"). It ends ON the open question/threat/invitation, not past it. This is the single most important rule in this section — violating it silently pre-writes the player’s choice, which is exactly what this whole redesign exists to prevent."
+      "content_requirement": "REVISED (Roman, 2026-09-17, following attempt 4's real failure: it reduced the moment to an 'answer or stay silent' binary — another weak either/or, not the dangerous open field this needs). Crystallize the moment: Lirael holding The Answer, amid Julian's just-claimed formal Inquiry and the presiding Dohkar's reasserted authority. The scene must leave MULTIPLE genuinely dangerous possibilities open at once — not a binary. Real directions a player might take include (for YOUR own sense of the space only — do not name, list, or enumerate these as options in the actual prose, and do not limit the felt possibility-space to only these): defying someone present, redirecting the accusation, exposing something true, physically leaving, invoking formal procedure herself, or gambling on the attraction Julian has just forced into the open. The written beat should make the moment feel wide and unstable — many live wires, not two — through what Lirael notices/fears/wants in that instant, never through a stated menu.",
+      "hard_boundary": "MUST NOT decide, narrate, or imply what Lirael does next. No resolving language (\"I decided,\" \"I answered,\" \"I said yes,\" \"I chose to...\"). It ends ON the open question/threat/invitation, not past it. This is the single most important rule in this section — violating it silently pre-writes the player’s choice, which is exactly what this whole redesign exists to prevent. Also: must not collapse the open field into a binary framing (\"answer or stay silent,\" \"speak or don't,\" \"run or remain\") — that is a hard failure of the same kind as deciding her choice outright, just narrower.",
+      "superseded_content_requirement": "Crystallizes an unresolved choice, threat, or invitation arising from the interruption (The Answer still in Lirael’s hands; the coming formal Inquiry Julian has just claimed) — the moment the player’s custom Say/Do, a Fate card, or Petition/Tempt Fate responds to."
     },
-    "five_fate_cards_requirement": "UNCHANGED from oas_sequence_v2_SUPERSEDED_scripted_transcript.five_fate_cards_requirement in structure and archetype semantics (temptation/silence/reversal/boundary/confession, action/dialogue/variant schema) — RESCOPED: these 5 prefills now respond to postInterruptionBeat specifically (the post-interruption handoff), not a mid-conversation moment. See that section for the full archetype/variant semantics, still authoritative.",
+    "five_fate_cards_requirement": "REMOVED (Roman, 2026-09-17) — this packet no longer authors a fateCards field at all. Roman's correction: \"Remove the assumption that the canonical package authors one permanent fateCards set for the final post-interruption state.\" The 5 fixed slots (temptation/silence/reversal/boundary/confession) are generated fresh by the REAL, ALREADY-EXISTING dynamic mechanism (generateIntimateFatePreviewsBatch, public/orchestration-client.js:6511) after EACH live OAS exchange — including the post-interruption moment — never pre-authored once. See fate_card_lifecycle_correction below for the full trace and the real fix already made to that mechanism (it previously could not see this scene's authored context at all; that gap is now closed).",
     "julian_strategic_logic_requirement": {
       "kind": "generated_expression",
       "status": "NEW (Roman, seventh pass, 2026-09-17) — Julian's public accusation must read as a weaponized strategic maneuver with institutional purpose, not random public flirtation. This is a SUBTEXT requirement: the logic must be INFERABLE from his behavior and word choice, never stated outright by any character.",
@@ -888,7 +909,8 @@
       ],
       "hard_boundary": "Must not have Julian, Lirael, the Dohkar, or any narration state this strategy outright (\"Julian needed to seize the Inquiry,\" \"this was a calculated move to...\"). It must be legible through HIS CHOICES — which specific accusation he makes, the timing/publicness of it, how he behaves once the Dohkar objects — not through exposition. Must not surface or imply julian_counter_wish or julian_obscuring_wishes (unchanged from sealed_facts_forbidden_pre_surface).",
       "cites": "Roman, seventh redesign pass, 2026-09-17, this message"
-    }
+    },
+    "superseded_five_fate_cards_requirement": "UNCHANGED from oas_sequence_v2_SUPERSEDED_scripted_transcript.five_fate_cards_requirement in structure and archetype semantics (temptation/silence/reversal/boundary/confession, action/dialogue/variant schema) — RESCOPED: these 5 prefills now respond to postInterruptionBeat specifically (the post-interruption handoff), not a mid-conversation moment. See that section for the full archetype/variant semantics, still authoritative."
   },
   "wish_twist_and_arrest_requirement": {
     "status": "NEW (Roman, seventh pass, 2026-09-17) — mandatory causal revision, required before any second draft. The real baked scene (starter-scenes.js:254) describes the wish's effect vaguely: 'no visible effect, only the assembly turning to look.' Roman judges this a genuine craft flaw, not locked canon to preserve — matching this session's established pattern of correcting baked-scene deficiencies rather than reproducing them (see point_of_view/density_requirement/prose_construction_requirement). 'Everyone looked at you' is a vague consequence, not a magical disaster, a rescue, or a reason the accusation has weight.",
@@ -903,5 +925,158 @@
     "banned_vague_consequence": "Do not reduce the twist to a bare social-attention beat (e.g. 'everyone looked at her,' 'the assembly turned to stare,' with nothing else) — that is a vague consequence, not a visible twist. This dimension is a HUMAN REVIEW judgment (see the human review rubric) — the validator can only mechanically enforce that wish_visibly_twists/twist_unnaturally_arrested are covered at all, not that the covering text is genuinely concrete rather than vague.",
     "kind": "generated_expression",
     "cites": "Roman, seventh redesign pass, 2026-09-17, this message"
+  },
+  "scene1_oas_boundary_requirement": {
+    "status": "NEW (Roman, 2026-09-17) — found via a real rejected draft (v7 attempt 2): scene1Candidate's final beats (image d4) dramatized Julian ALREADY interrogating her (\"He asked whether I had called to him through the rite\") and Lirael reacting to it (\"I felt the pull of his attention and the heat it carried\") — content that belongs exclusively to the live OAS exchange (oasOpening + the player-driven turns that follow), never to scene1Candidate. The validator did not catch this — it is a real, disclosed gap this section and its matching mechanical guard close.",
+    "requirement": "scene1Candidate MUST end at Julian's stated INTENT to question her (\"he will question her before them all\" — required via julian_claims_the_answer) — it must NOT dramatize any part of the actual interrogation: no question from Julian beyond that stated intent, no accusation content (manipulation, desirability, being called to/rescued), and no reaction from Lirael to a question that has not yet been asked in the live exchange. That entire exchange is oasOpening's and the live OAS turns' exclusive territory (see oas_sequence_v3.live_exchange_note) — scene1Candidate authoring it too is a duplication/pre-emption failure, not merely an early reveal.",
+    "banned_leak_vocabulary": "The accusation-topic language reserved for oasOpening/opening_frame_brief — \"desirability\", \"rescue\"/\"rescued\", \"manipulated ... without knowing\", or Julian asking Lirael anything (\"asked whether\", \"asks whether\", \"asked if\") — must not appear anywhere inside scene1Candidate. This is mechanically checked, not merely instructed.",
+    "kind": "generated_expression",
+    "cites": "Roman, 2026-09-17 — direct finding from _first_sacrifice_draft_v7_attempt2_full_package/02_draft.json"
+  },
+  "scene1_composition_contract": {
+    "status": "NEW (Roman, 2026-09-17) — following the density fix's failure across 3 real drafts (507→425→381 words, TRENDING WORSE despite a strengthened instruction and worked example). A total-word floor alone lets a model satisfy the number with an outline-shaped scene, not a dramatized one. This section requires COMPOSITION, not merely a sum, and does not by itself guarantee good prose (see the human review rubric for that) — it prevents another valid-looking outline from passing the authoring call.",
+    "beat_count_range": "EXACTLY 20 beats (Roman, 2026-09-17, tightened from an 18-22 range — Grok has now shown both failure modes against this packet: 20 beats too thin (attempt 1, 507 words), and 14 beats richer per-beat but short of the target (attempt 4, 943 words). A single exact number, with an explicit numbered template (see scene1_beat_number_template), is the cleanest remaining mechanical correction — a range still lets the model settle short.",
+    "min_narration_beats": "At least 12 of the scene's beats must be narration or exposition (not dialogue), each individually 60-90 words (TIGHTENED from 55-110, Roman 2026-09-17) — checked PER-BEAT, not just in aggregate.",
+    "dialogue_adjacency": "A dialogue beat may be shorter than 55 words, but only if a beat immediately before or after it (narration or exposition) meets at least a 40-word floor, carrying concrete action, sensory detail, or Lirael's immediate interior consequence — a dialogue beat with no such neighbor is a hard failure.",
+    "prose_word_total": "1,100-1,700 actual Scene-1 prose words (unchanged floor/ceiling — now enforced ALONGSIDE the beat-level requirements above, never as the sole gate).",
+    "no_synopsis_standin": "No beat may be a bare synopsis sentence standing in for a dramatic moment — see prose_construction_requirement.banned_construction for the named examples (\"X felt Y\", \"X stepped forward\", \"the charge landed\"). A short beat built around one of these constructions with no elaboration is a hard failure, mechanically checked where the pattern is literal (a narrow, disclosed guard — it cannot catch every generic sentence, only the named failure shapes).",
+    "kind": "generated_expression",
+    "cites": "Roman, 2026-09-17 — 3 real rejected drafts (v7 attempts 1/2/3), all satisfying beat-count/total-word targets shallowly",
+    "superseded_beat_count_range": "18-22 beats (tightened from the prior 16-24 tolerance).",
+    "superseded_min_narration_beats": "At least 12 of the scene's beats must be narration or exposition (not dialogue), each individually 55-110 words — checked PER-BEAT, not just in aggregate, so a few long beats cannot cover for many thin ones."
+  },
+  "scene1_beat_number_template": {
+    "status": "NEW (Roman, 2026-09-17) — 'exactly 20 numbered beats,' not a range. Each numbered slot below maps to one of the 8 fixed images; slots with an id MUST cover that required_content_beats id (see required_content_beats for its full text); slots with id=null are free — original narration/exposition or dialogue advancing the same causal beat, your own texture. UPDATED (2026-09-17): slot 16 (previously free) now carries the new social_fallout_family_reaction id.",
+    "slots": [
+      {
+        "n": 1,
+        "image": "intro_lirael",
+        "id": "ceremony_setting"
+      },
+      {
+        "n": 2,
+        "image": "intro_lirael",
+        "id": null
+      },
+      {
+        "n": 3,
+        "image": "intro_seren",
+        "id": "seren_kneeling_rehearsed"
+      },
+      {
+        "n": 4,
+        "image": "intro_seren",
+        "id": null
+      },
+      {
+        "n": 5,
+        "image": "intro_dohkar",
+        "id": "cost_offering_statement"
+      },
+      {
+        "n": 6,
+        "image": "intro_dohkar",
+        "id": null
+      },
+      {
+        "n": 7,
+        "image": "intro_julian",
+        "id": "julian_introduced"
+      },
+      {
+        "n": 8,
+        "image": "intro_julian",
+        "id": null
+      },
+      {
+        "n": 9,
+        "image": "d1",
+        "id": "invocation_begins"
+      },
+      {
+        "n": 10,
+        "image": "d1",
+        "id": null
+      },
+      {
+        "n": 11,
+        "image": "d2",
+        "id": "wish_and_sacrifice"
+      },
+      {
+        "n": 12,
+        "image": "d2",
+        "id": null
+      },
+      {
+        "n": 13,
+        "image": "d2",
+        "id": "wish_visibly_twists"
+      },
+      {
+        "n": 14,
+        "image": "d2",
+        "id": "twist_unnaturally_arrested"
+      },
+      {
+        "n": 15,
+        "image": "d3",
+        "id": "public_charge"
+      },
+      {
+        "n": 16,
+        "image": "d3",
+        "id": "social_fallout_family_reaction"
+      },
+      {
+        "n": 17,
+        "image": "d3",
+        "id": null
+      },
+      {
+        "n": 18,
+        "image": "d4",
+        "id": "julian_claims_the_answer"
+      },
+      {
+        "n": 19,
+        "image": "d4",
+        "id": null
+      },
+      {
+        "n": 20,
+        "image": "d4",
+        "id": null
+      }
+    ],
+    "kind": "generated_expression",
+    "cites": "Roman, 2026-09-17 — replaces the free-form 18-22 beat range following attempt 4's 14-beat undershoot"
+  },
+  "attempt4_positive_exemplars": {
+    "status": "NEW (Roman, 2026-09-17), SAFEGUARDED (Roman, 2026-09-17 follow-up) — v7 attempt 4 was structurally REJECTED (14 beats/943 words, short of the exact-20 contract) but is preserved as a rejected reference for real craft strengths worth keeping: concrete twist, unexplained arrest, first-person immediacy, and Julian's rescue-inversion opener. These are QUOTED VERBATIM from that real rejected draft, not invented — shown as register/craft models ONLY, per the non-canonical status below.",
+    "twist_and_arrest": "\"The misaligned wish took hold. A sharp, visible distortion ripped outward from Seren's kneeling form, a twisting rope of light aimed directly [at me]... Between one heartbeat and the next the distortion simply vanished. No flare, no sound, no hand I could point to. The spiralgrass stilled again.\" — concrete, physical, genuinely dangerous-feeling, and the arrest names NO cause.",
+    "julian_opening_turn": "\"You glanced toward me three times during the invocation, fingers tightening on the sash each time Seren faltered. Did you shape her wish without knowing it, the way you shape everyone's attention, hoping I would step forward and rescue you?\" — concrete observed behavior (the glances, the fingers), a real question, and a genuine rescue-inversion (he frames HIMSELF as needing rescue from HER pull) that carries real subtext without stating his strategy.",
+    "kind": "generated_expression",
+    "cites": "_first_sacrifice_draft_v7_attempt4_full_package/02_draft.json (real rejected draft, preserved as reference — never overwritten, never re-run without Roman's explicit authorization)",
+    "superseded_status": "NEW (Roman, 2026-09-17) — v7 attempt 4 was structurally REJECTED (14 beats/943 words, short of the exact-20 contract) but is preserved as a rejected reference for real craft strengths worth keeping: concrete twist, unexplained arrest, first-person immediacy, and Julian's rescue-inversion opener. These are QUOTED VERBATIM from that real rejected draft, not invented — shown as register/craft models, not content to copy.",
+    "non_canonical_status": {
+      "requirement": "NON-CANONICAL. These exemplars are a CRAFT REFERENCE ONLY — they demonstrate register, structure, and technique (how a twist/arrest reads, how an opening turn carries observed behavior + a question + subtext), never approved content.",
+      "hard_boundary": [
+        "Non-canonical: nothing below is locked_canon_fact, grounded_inference, or any approved packet fact merely by appearing here.",
+        "Craft reference only: read these for HOW they accomplish concrete twist/arrest/charged-subtext, not WHAT they say.",
+        "Do NOT quote or closely copy: reproducing these lines or close paraphrases verbatim in scene1Candidate or oasOpening is a hard failure, not a shortcut.",
+        "No detail inside an exemplar becomes a locked world, character, or event fact unless it is ALREADY independently present in this packet's own approved canon (locked_world_facts, scene1_causal_sequence, cplus_eplus_fusion_grounds, required_content_beats) — an exemplar restates nothing new into canon just by existing."
+      ],
+      "cites": "Roman, 2026-09-17 follow-up — safeguard added before committing the shared author-floor/OAS-card-context correction"
+    }
+  },
+  "fate_card_lifecycle_correction": {
+    "status": "NEW (Roman, 2026-09-17) — corrects a real design error in the sixth/seventh-pass packet, which assumed the canonical package authors ONE permanent fateCards set for the final post-interruption state. That assumption is wrong and has been removed.",
+    "real_mechanism": "generateIntimateFatePreviewsBatch (public/orchestration-client.js:6511-6816+) already generates the 5 fixed-archetype card previews fresh, per turn, with real Grok-written action/dialogue responding to the current moment — for EVERY intimacy dialogue in the app, baked or not. It has exactly 3 real call sites, all parameterless (it reads window.state directly): the ordinary per-turn dealing path (app.js:~200964), a speculative prefetch (app.js:~105027), and — critically — the post-interruption path inside _mountIntimateInterruption (app.js:~197967), fired whenever no cards exist yet for the current interruption record.",
+    "real_gap_found_and_fixed": "Traced 2026-09-17: this function never received the scene's authored context (d._authoredFrame — openingFrame/cue/postInterruptionBeat) or the live OAS turn history (d.liTurnHistory) at all — confirmed by an exhaustive search of its body for those identifiers before the fix (zero matches except one unrelated rotation-tracker read). Its recentScene variable reads StoryPagination, which never ingests OAS turns (those render into a separate #oasHistoryLog DOM element), so it could not see the current Julian line or the player's just-submitted Say/Do either. FIXED: a new _authoredOASBlock (mirroring the real, already-precedented _appendAuthoredOASFrame pattern in app.js) now injects the authored opening frame, the postInterruptionBeat text (when present), and the last 3 liTurnHistory entries into the batch's own prompt — reaching all 3 call sites through one change, since they all invoke the same function.",
+    "what_this_packet_still_authors": "Only the FIXED Julian opener (oasOpening), the OAS context/constraints the live system already injects into every turn (opening_frame_brief, via the existing _appendAuthoredOASFrame precedent), the fixed interruption tail (unchanged, baked), and postInterruptionBeat. It does NOT pre-decide player responses through static card text at any point, including the moment right after postInterruptionBeat — cards there are dealt by the same real dynamic batch as everywhere else, now correctly informed by postInterruptionBeat's own text.",
+    "card_click_semantics_unchanged": "A card click still only prefills the editable Say/Do inputs (confirmed real behavior, app.js _mountIntimateInterruption/_dealInterruptionFateCards, unchanged by this correction) — custom Say/Do, Petition Fate, and Tempt Fate all remain available at every turn; only a real Submit ever advances.",
+    "kind": "locked_canon_fact",
+    "cites": "public/orchestration-client.js:6511 (generateIntimateFatePreviewsBatch), public/app.js:184983 (_appendAuthoredOASFrame precedent), public/app.js:~197967 (_mountIntimateInterruption post-interruption call site) — real trace, 2026-09-17"
   }
 }

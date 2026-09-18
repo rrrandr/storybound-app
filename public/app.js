@@ -97882,7 +97882,8 @@ function _buildAuthorFloorDirective(s) {
       var floor = '\n═══ AUTHOR FLOOR (HARD — outranks style, ornament and mystery) ═══\n'
         + '1. INTERIORITY DECODES; IT DOES NOT ENCODE. A reader must never have to reconstruct the external situation from a character\'s feelings about it. At any important moment they should know where we are, what physically happened, what the POV character wants now, what prevents it, and what she fears will follow. Mystery may conceal the ANSWER; it may not conceal the question, the immediate consequence, or why she cares.\n'
         + '2. ASSIGNED EVENT IS ACTION, NOT SUBJECT MATTER. If the scene is assigned an event, that event HAPPENS on the page — or a NEW concrete event prevents it and leaves the situation materially changed (a hand caught mid-reach counts; deciding not to reach does not). Thinking about it, arguing about it, almost doing it, or merely standing in the assigned location does NOT satisfy the assignment.\n'
-        + '3. THE SCENE ENDS SOMEWHERE ELSE. Something happens → it means something → somebody reacts → somebody acts → the situation is different. This is a test to apply, never a shape to make visible in the prose.\n';
+        + '3. THE SCENE ENDS SOMEWHERE ELSE. Something happens → it means something → somebody reacts → somebody acts → the situation is different. This is a test to apply, never a shape to make visible in the prose.\n'
+        + '4. DRAMATIZE CONSEQUENTIAL PRESENT SPEECH (added 2026-09-17). When a character present in the scene makes a consequential wish, sacrifice, accusation, confession, command, vow, threat, or ruling, render the act itself in its natural in-scene form — direct speech, written text, whisper, thought, sign, or performed gesture. Do not replace it with retrospective summary merely because narration is easier. Narration should carry perception, subtext, physical response, and consequence AROUND the utterance, never IN PLACE OF it. Summarize only where direct rendering is genuinely impossible, deliberately withheld, or dramatically inappropriate.\n';
       var romantasy = '\n═══ MODE: ROMANTASY ═══\n'
         + 'Strange event → understandable personal consequence → emotional/romantic reaction → decision → deeper world understanding. GROUND THE STRANGE BY CONSEQUENCE: a term, rank, rite or creature needs no definition, but the reader must feel what it permits, prevents, threatens or costs RIGHT NOW. The love interest\'s BEHAVIOUR is the primary decoder — he knows, she doesn\'t, he is afraid, now she is afraid — never a lecture. Naming a thing while leaving the reader unable to feel why it matters is confusion, not mystery.\n';
       var modern = '\n═══ MODE: CONTEMPORARY ROMANCE ═══\n'
@@ -194381,7 +194382,13 @@ No text, no watermark, no UI elements, share-ready.`;
             ? _computePlayerImpactRead(userDo, userSay, userDo, userSay, { noPersist: true }) : null;
           if (_oasImpact && _oasImpact.mustReact) return buildPlayerImpactDirective(_oasImpact);
           return '';
-        } catch(_) { return ''; } })();
+        } catch(_) { return ''; } })()
+      // AUTHOR FLOOR (Roman 2026-09-17): OAS/intimacy turns were the one authoring route never
+      // wired to the shared _buildAuthorFloorDirective (confirmed by trace — CG and both literary
+      // routes already had it). Closes that gap, most relevantly rule 4 (dramatize consequential
+      // present speech — a wish/accusation/confession/vow made mid-turn must be rendered in its
+      // own words, not summarized after the fact).
+      + (typeof _buildAuthorFloorDirective === 'function' ? _buildAuthorFloorDirective(state) : '');
     var responseRaw = '';
     var _llmFailed = false;
     // SPECULATIVE-CACHE SHORT-CIRCUIT: when a cached alternate matched, we

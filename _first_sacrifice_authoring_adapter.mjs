@@ -75,17 +75,20 @@ export function buildFixedInputView() {
 // crystallizes an unresolved choice WITHOUT deciding it), and scene1Coverage/first_person_lirael
 // (structural repeat-failure guards added the same pass, catching the real 2026-09-17 draft's
 // thinness/third-person/missing-content failures).
+// fateCards REMOVED from this schema (Roman, 2026-09-17) — the canonical package does not author
+// one permanent card set. The 5 fixed archetypes are generated fresh by the real, already-existing
+// dynamic mechanism (generateIntimateFatePreviewsBatch) after EACH live OAS exchange, including the
+// post-interruption moment — never pre-authored. See _first_sacrifice_source_packet.json
+// fate_card_lifecycle_correction for the full trace and the real fix already made to that
+// mechanism so it now receives this scene's authored context.
 export const ALLOWED_OUTPUT_SCHEMA = {
-  top_level: ['scene1Candidate', 'scene1Coverage', 'first_person_lirael', 'oasOpening', 'postInterruptionBeat', 'fateCards'],
+  top_level: ['scene1Candidate', 'scene1Coverage', 'first_person_lirael', 'oasOpening', 'postInterruptionBeat'],
   scene1_fields: ['beats'],
   scene1_beat_fields: ['kind', 'speaker', 'image', 'text', 'provenance'],
   scene1_beat_kinds: ['narration', 'exposition', 'dialogue'],
   scene1_allowed_images_in_order: ['intro_lirael', 'intro_seren', 'intro_dohkar', 'intro_julian', 'd1', 'd2', 'd3', 'd4'],
   oas_opening_fields: ['speaker', 'text'],
   post_interruption_beat_fields: ['speaker', 'image', 'kind', 'text'],
-  card_keys_exact: ['temptation', 'silence', 'reversal', 'boundary', 'confession'],
-  card_fields: ['action', 'dialogue', 'variant'],
-  variant_values: ['amplify', 'ruin', 'redirect'],
 };
 
 function renderPacketAsPromptText(packet) {
@@ -94,7 +97,8 @@ function renderPacketAsPromptText(packet) {
   const oo = oas.oas_opening_requirement;
   const jsl = oas.julian_strategic_logic_requirement;
   const pib = oas.post_interruption_beat_requirement;
-  const fc = packet.oas_sequence_v2_SUPERSEDED_scripted_transcript.five_fate_cards_requirement; // structure/semantics still authoritative, content unchanged
+  // fateCards no longer authored by this packet (Roman, 2026-09-17) — see
+  // fate_card_lifecycle_correction in the packet.
   const L = [];
   L.push('SOURCE PACKET: ' + packet.packet_id + ' v' + packet.version + ' (the ONLY story-content authority for this draft — do not invent facts beyond it)');
   L.push('');
@@ -135,6 +139,16 @@ function renderPacketAsPromptText(packet) {
   L.push('POINT OF VIEW (HARD): ' + s1.point_of_view.requirement);
   L.push('');
   L.push('LENGTH AND DENSITY (HARD): ' + s1.density_requirement.requirement);
+  L.push('TOO THIN (a real rejected example — do not write like this): ' + s1.density_requirement.worked_example.too_thin);
+  L.push('FULL PARAGRAPH (the same event, done right): ' + s1.density_requirement.worked_example.full_paragraph);
+  L.push('');
+  const comp = packet.scene1_composition_contract;
+  L.push('SCENE-1 COMPOSITION CONTRACT (HARD — a total word count alone is NOT enough; 3 real drafts satisfied the total shallowly and were still rejected): ' + comp.status);
+  L.push('  - Beat count: ' + comp.beat_count_range);
+  L.push('  - Narration/exposition floor: ' + comp.min_narration_beats);
+  L.push('  - Dialogue beats: ' + comp.dialogue_adjacency);
+  L.push('  - Total prose: ' + comp.prose_word_total);
+  L.push('  - ' + comp.no_synopsis_standin);
   L.push('');
   L.push('Beat count target: ' + s1.beat_count_target);
   L.push('Grounding requirement: ' + s1.grounding_requirement);
@@ -142,13 +156,29 @@ function renderPacketAsPromptText(packet) {
   L.push('Emotional/dramatic requirement applies throughout: ' + s1.emotional_dramatic_requirement_applies);
   L.push('Interiority requirement: ' + s1.interiority_requirement);
   L.push('');
-  L.push('REQUIRED CONTENT BEATS (HARD — every one of these events MUST appear somewhere in your beats, mapped to its image; do not skip any):');
-  s1.required_content_beats.beats.forEach(b => L.push('  - [' + b.image + '] ' + b.required_event));
+  L.push('REQUIRED CONTENT BEATS (HARD — every one of these events MUST appear somewhere in your beats, mapped to its image; do not skip any). Each is labeled with its id in id="..." — that EXACT id string is what scene1Coverage below must be keyed by, NOT the image name:');
+  s1.required_content_beats.beats.forEach(b => L.push('  - id="' + b.id + '" [' + b.image + '] ' + b.required_event));
+  L.push('');
+  const bnt = packet.scene1_beat_number_template;
+  L.push('EXACT 20-BEAT NUMBERED TEMPLATE (HARD — ' + bnt.status + '):');
+  L.push('Write your scene1Candidate.beats array as EXACTLY these 20 slots, in this exact order — count as you go, beat 1 through beat 20, not fewer, not more:');
+  bnt.slots.forEach(s => L.push('  Beat ' + s.n + ' [' + s.image + ']' + (s.id ? ' — REQUIRED id="' + s.id + '"' : ' — free (your own texture/interiority, 60-90 words unless a short grounded dialogue line)')));
   L.push('');
   const wta = packet.wish_twist_and_arrest_requirement;
   L.push('THE WISH MUST VISIBLY TWIST, THEN BE INEXPLICABLY ARRESTED (HARD): ' + wta.status);
   L.push('Hard boundary: ' + wta.hard_boundary);
   L.push('BANNED (a hard failure, not a style preference): ' + wta.banned_vague_consequence);
+  L.push('');
+  const ex = packet.attempt4_positive_exemplars;
+  const exGuard = ex.non_canonical_status;
+  L.push('CRAFT EXEMPLAR — NON-CANONICAL, READ THE GUARDRAILS BELOW BEFORE READING IT: ' + exGuard.requirement);
+  exGuard.hard_boundary.forEach(h => L.push('  - ' + h));
+  L.push('Twist/arrest exemplar (from a REJECTED draft — craft register only): ' + ex.twist_and_arrest);
+  L.push('');
+  const sob = packet.scene1_oas_boundary_requirement;
+  L.push('SCENE1/OAS BOUNDARY (HARD — a real rejected draft violated this): ' + sob.status);
+  L.push('Requirement: ' + sob.requirement);
+  L.push('BANNED — mechanically checked, not just instructed: ' + sob.banned_leak_vocabulary);
   L.push('');
   L.push('IMAGES: ' + s1.existing_images_reuse_only.rule);
   L.push('Use ONLY these 8, in this exact order (each may repeat across consecutive beats):');
@@ -166,11 +196,11 @@ function renderPacketAsPromptText(packet) {
   L.push('BANNED: ' + s1.prose_construction_requirement.banned_construction);
   L.push('');
   L.push('REQUIRED COVERAGE MAP (HARD — separate output field, draft metadata, never reader prose): ' + s1.required_beat_coverage_map.output_shape);
-  L.push('Every one of the ' + s1.required_content_beats.beats.length + ' required_content_beats ids above MUST appear as a key in scene1Coverage, mapped to at least one real beat index. A missing or empty mapping is a hard failure — this is what catches an omitted required beat structurally, not by a generic citation elsewhere.');
+  L.push('Every one of the ' + s1.required_content_beats.beats.length + ' required_content_beats ids above MUST appear as a key in scene1Coverage, mapped to at least one real beat index. Use the EXACT id="..." strings shown above (e.g. "' + s1.required_content_beats.beats[0].id + '", "' + s1.required_content_beats.beats[s1.required_content_beats.beats.length - 1].id + '") — NEVER an image name like "d2" or "intro_lirael", those are not valid scene1Coverage keys. A missing or empty mapping is a hard failure — this is what catches an omitted required beat structurally, not by a generic citation elsewhere.');
   L.push('');
   L.push('POINT-OF-VIEW DECLARATION (HARD): also return a top-level boolean field first_person_lirael — your own honest declaration of whether you wrote scene1Candidate in first person. This is checked independently against your actual pronoun usage; a false declaration is itself a hard failure.');
   L.push('');
-  L.push('═══ TASK 2 — oasOpening (Julian\'s ONE opening line — the ONLY OAS content you author) ═══');
+  L.push('═══ TASK 2 — oasOpening (Julian\'s ONE opening turn, 35-80 words — the ONLY OAS content you author) ═══');
   L.push(oas.live_exchange_note);
   L.push('');
   L.push('Brief: ' + fb.opening_frame_brief);
@@ -183,36 +213,22 @@ function renderPacketAsPromptText(packet) {
   jsl.strategic_logic.forEach(s => L.push('  - ' + s));
   L.push('Hard boundary: ' + jsl.hard_boundary);
   L.push('');
+  L.push('CRAFT EXEMPLAR — NON-CANONICAL (same guardrails as before: craft reference only, do NOT quote or closely copy, no detail here becomes canon): ' + ex.julian_opening_turn);
+  L.push('');
   L.push('═══ TASK 3 — postInterruptionBeat (ONE beat AFTER the fixed interruption tail — crystallizes, never decides) ═══');
   L.push('Requirement: ' + pib.content_requirement);
   L.push('Hard boundary (READ CAREFULLY — this is the single most important rule in this task): ' + pib.hard_boundary);
   L.push('Output shape: ' + pib.output_shape);
   L.push('');
-  L.push('═══ TASK 4 — fateCards (5 fixed archetypes, responding to postInterruptionBeat; you choose HOW each manifests here) ═══');
-  L.push(fc.status);
-  L.push('Required keys, EXACTLY these 5, nothing else: ' + fc.required_keys_exact.join(', '));
-  L.push('Per-card schema: ' + fc.per_card_schema);
+  L.push('NOTE ON FATE CARDS (you do NOT author these): the 5 fixed archetypes (temptation/silence/reversal/boundary/confession) are generated fresh by the real, already-existing app mechanism after EACH live OAS exchange — including right after your postInterruptionBeat — never pre-authored by this packet. This is a deliberate correction (Roman, 2026-09-17): a single static card set would pre-decide the player\'s response, which this whole packet exists to avoid. Petition Fate / Tempt Fate and fully custom Say/Do also remain available at every turn; you author nothing for any of them.');
   L.push('');
-  L.push('Archetype meanings (' + fc.archetype_semantics_adapted_for_this_scene.note + '):');
-  fc.required_keys_exact.forEach(k => L.push('  - ' + k + ': ' + fc.archetype_semantics_adapted_for_this_scene[k]));
-  L.push('');
-  L.push('Variant meanings — pick ONE per card:');
-  Object.entries(fc.variant_semantics_adapted).forEach(([k, v]) => L.push('  - ' + k + ': ' + v));
-  L.push('');
-  L.push('You have full latitude for what Lirael SAYS/DOES within each archetype — no fixed posture is prescribed. Ground every card in postInterruptionBeat\'s actual stakes and the C+/E+ facets above; genuinely distinct across the 5, never a run/remain binary, never generic. These respond to postInterruptionBeat, not to any earlier mid-conversation moment — there is no earlier authored moment; everything before the interruption was live and this operation never saw it.');
-  L.push('');
-  L.push('Note: Petition Fate / Tempt Fate are real, separate, already-wired player options that coexist alongside these 5 cards and custom Say/Do at this moment. You do not author anything for them.');
-  L.push('');
-  L.push('CLAIM CATEGORIES: fateCards are `reviewable_package_interaction` — proposed package content, never world/character canon, regardless of approval.');
-  L.push('');
-  L.push('OUTPUT SCHEMA (HARD — return ONLY these fields, nothing else; any other top-level or nested field, including anything about Scene 2, continuation, planning, or Lirael\'s OAS dialogue/response before the interruption, is a hard failure):');
+  L.push('OUTPUT SCHEMA (HARD — return ONLY these fields, nothing else; any other top-level or nested field, including anything about Scene 2, continuation, planning, Lirael\'s OAS dialogue/response before the interruption, or fateCards, is a hard failure):');
   L.push('  top-level: ' + ALLOWED_OUTPUT_SCHEMA.top_level.join(', '));
   L.push('  scene1Candidate: { beats[] } — each beat: ' + ALLOWED_OUTPUT_SCHEMA.scene1_beat_fields.join(', ') + '; kind one of ' + ALLOWED_OUTPUT_SCHEMA.scene1_beat_kinds.join('|') + '; image one of ' + ALLOWED_OUTPUT_SCHEMA.scene1_allowed_images_in_order.join(', '));
   L.push('  scene1Coverage: object keyed by the ' + s1.required_content_beats.beats.length + ' required_content_beats ids, each value a non-empty array of scene1Candidate.beats indices');
   L.push('  first_person_lirael: boolean');
-  L.push('  oasOpening: { ' + ALLOWED_OUTPUT_SCHEMA.oas_opening_fields.join(', ') + ' } — speaker "Julian", ONE line, ≤14 words');
+  L.push('  oasOpening: { ' + ALLOWED_OUTPUT_SCHEMA.oas_opening_fields.join(', ') + ' } — speaker "Julian", ONE turn, 35-80 words, concrete observed behavior + a posed/implied question + subtext');
   L.push('  postInterruptionBeat: { ' + ALLOWED_OUTPUT_SCHEMA.post_interruption_beat_fields.join(', ') + ' } — image "d4", first person, never resolving');
-  L.push('  fateCards: an object keyed EXACTLY by ' + ALLOWED_OUTPUT_SCHEMA.card_keys_exact.join(', ') + ' — each value { ' + ALLOWED_OUTPUT_SCHEMA.card_fields.join(', ') + ' }, variant one of ' + ALLOWED_OUTPUT_SCHEMA.variant_values.join('|'));
   return L.join('\n');
 }
 

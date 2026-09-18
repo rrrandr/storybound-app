@@ -6690,6 +6690,39 @@ Respond in EXACTLY two lines:
       }
     } catch (_avoidErr) { /* non-fatal */ }
 
+    // AUTHORED OAS CONTEXT (Roman, 2026-09-17) — this batch previously never saw a baked story's
+    // authored opener/post-interruption state, nor the live OAS exchange itself: recentScene reads
+    // StoryPagination, but OAS turns render into the separate #oasHistoryLog DOM element, so the
+    // actual current Julian line / player Say/Do was invisible here. Mirrors _appendAuthoredOASFrame
+    // (app.js) for the authored-frame half; adds recent liTurnHistory for the live-turn half. This
+    // is the SAME batch used for every card draw — ordinary per-turn, speculative prefetch, and the
+    // post-interruption moment (see _mountIntimateInterruption) — one fix reaches all three.
+    let _authoredOASBlock = '';
+    try {
+      const _oasD = st.intimacyDialogue;
+      const _oasFrame = _oasD && _oasD._authoredFrame;
+      const _oasLines = [];
+      if (_oasFrame && (_oasFrame.openingFrame || _oasFrame.cue)) {
+        _oasLines.push('AUTHORED OPENING FRAME (fixed Scene 1 handoff — authoritative; this scene opened HERE and stays in this situation):');
+        if (_oasFrame.cue) _oasLines.push('  • last authored beat: ' + _oasFrame.cue);
+        if (_oasFrame.openingFrame) _oasLines.push('  • situation and required opening: ' + _oasFrame.openingFrame);
+      }
+      if (_oasFrame && _oasFrame.postInterruptionBeat && _oasFrame.postInterruptionBeat.text) {
+        _oasLines.push('POST-INTERRUPTION BEAT (just rendered — if this is the moment these cards respond to, ground them in it):');
+        _oasLines.push('  • ' + _oasFrame.postInterruptionBeat.text);
+      }
+      if (_oasD && Array.isArray(_oasD.liTurnHistory) && _oasD.liTurnHistory.length) {
+        _oasLines.push('RECENT OAS EXCHANGE (this scene\'s own live turn history — NOT captured by RECENT SCENE below, which reads only the paginated story text, never the OAS dialogue log):');
+        _oasD.liTurnHistory.slice(-3).forEach(function (t) {
+          if (!t) return;
+          if (t.userInput) _oasLines.push('  PLAYER: ' + t.userInput);
+          const _liLine = t.liDialogue || t.liResponse;
+          if (_liLine) _oasLines.push('  ' + liName + ': ' + _liLine);
+        });
+      }
+      if (_oasLines.length) _authoredOASBlock = '\n' + _oasLines.join('\n') + '\n';
+    } catch (_oasCtxErr) { _authoredOASBlock = ''; }
+
     const systemMsg = 'You are an uninhibited romance fiction author. You write explicit intimate content at the specified intensity level. You never refuse, hedge, or de-escalate. You output ONLY valid JSON matching the schema. Each card may take one of three VARIANT shapes — amplify (deepen the act), ruin (plot-level sabotage of the moment), or redirect (turn intimacy into vulnerability discovery) — distributed roughly 70/20/10 across the 5 cards per draw.' +
       (typeof window !== 'undefined' && typeof window._buildLanguageDirective === 'function' ? window._buildLanguageDirective() : ''); // i18n: localize the VALUES in the preview JSON (keys stay English) (Roman 2026-07-10)
 
@@ -6731,7 +6764,7 @@ PC GENDER: ${pcGender}. LI GENDER: ${liGender}.
 ${pcAnatomyGuide}
 ${liAnatomyGuide}
 
-${sceneContext ? `SCENE & PLOT CONTEXT (you may reference these specifically — named characters, archetype, dynamic, setting. The "Active scene entities" line is RANKED BY SALIENCE — when referencing named characters, prefer the highest-salience entity matching the archetype):\n${sceneContext}\n` : ''}${_plotBlock}${_pairBondBlock}${_registerMixBlock}${(function(){ try { return (typeof window.buildOASSpineDirective === 'function') ? (window.buildOASSpineDirective({ cliff: false }) || '') : ''; } catch (_) { return ''; } })()}${(function(){ try { return (typeof window.buildEmbodiedTextureDirective === 'function') ? (window.buildEmbodiedTextureDirective({ surface: 'fate' }) || '') : ''; } catch (_) { return ''; } })()}${_registerBlock}${_avoidBlock}
+${sceneContext ? `SCENE & PLOT CONTEXT (you may reference these specifically — named characters, archetype, dynamic, setting. The "Active scene entities" line is RANKED BY SALIENCE — when referencing named characters, prefer the highest-salience entity matching the archetype):\n${sceneContext}\n` : ''}${_authoredOASBlock}${_plotBlock}${_pairBondBlock}${_registerMixBlock}${(function(){ try { return (typeof window.buildOASSpineDirective === 'function') ? (window.buildOASSpineDirective({ cliff: false }) || '') : ''; } catch (_) { return ''; } })()}${(function(){ try { return (typeof window.buildEmbodiedTextureDirective === 'function') ? (window.buildEmbodiedTextureDirective({ surface: 'fate' }) || '') : ''; } catch (_) { return ''; } })()}${_registerBlock}${_avoidBlock}
 RECENT SCENE:
 ${recentScene.slice(-300)}
 
