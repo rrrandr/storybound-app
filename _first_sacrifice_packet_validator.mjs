@@ -78,14 +78,22 @@ function _ngramOverlap(text, exemplarText, n) {
   for (let i = 0; i <= textWords.length - n; i++) { if (grams.has(textWords.slice(i, i + n).join(' '))) return true; }
   return false;
 }
-// THE ANSWER — OBJECT-FIDELITY GUARD (Roman, 2026-09-19). Hard constraint, not a style suggestion:
-// The Answer is a staff (double-ended shaft/polearm) with a question-mark-shaped hook at each end —
-// NEVER a stone, gem, orb, crystal, or any other handheld relic. Scoped to same-text co-occurrence:
-// fires only when a beat/opener/post-interruption text mentions "The Answer" AND a banned-form word
-// IN THAT SAME TEXT — a neutral reference to The Answer elsewhere, or an unrelated object described
-// with one of these words with no mention of The Answer in that same text, is never flagged. Matches
-// the real, historical failure shape (every drift found was the SAME sentence/beat naming both).
+// ══ THE ANSWER — STATEFUL MANIFESTATION CONTINUITY ENGINE (Roman, 2026-09-20) ═══════════════════
+// REPLACES the earlier permanent-form model (which wrongly treated the staff as fixed forever and
+// leaned on a human-review safety net that does not exist — Roman's own correction). The Answer's
+// IDENTITY persists; its physical MANIFESTATION is mutable state that changes ONLY as the declared
+// consequence of a concrete wielder need via a structured manifestation-change event — never because
+// prose/an author/a renderer wants a different image or metaphor. See packet
+// scene1_answer_manifestation for the full contract. This is a DETERMINISTIC mechanical check, not a
+// deferral to human review: it walks the ordered narrative stream, tracks which manifestation is
+// ACTIVE at each position, and requires every physical claim to match the one active there.
+const ANSWER_OBJECT_REF = 'the_answer';
+const PROVENANCE_KINDS = new Set(['locked_canon_fact', 'grounded_inference', 'generated_expression']);
+const ALLOWED_OBJECT_CLAIM_FIELDS = new Set(['object_ref', 'physical_form_claim', 'claim_kind', 'cites']);
 const THE_ANSWER_RE = /\bThe Answer\b/;
+// SECONDARY BACKUP ONLY (per Roman: "keep narrowly scoped lexical checks as a backup only") — tuned
+// against the only manifestation ever approved so far (the staff). Fires on same-text co-occurrence
+// with "The Answer", or (see _theAnswerAdjacentPairViolations) split across one adjacent beat pair.
 const THE_ANSWER_BANNED_FORM_RE = /\b(stones?|gem(?:stones?)?|orbs?|crystals?|rocks?|pebbles?|jewels?)\b/i;
 function _theAnswerFormViolation(text) {
   const t = String(text || '');
@@ -93,15 +101,6 @@ function _theAnswerFormViolation(text) {
   const m = t.match(THE_ANSWER_BANNED_FORM_RE);
   return m ? m[0] : null;
 }
-// WIDENED (Roman, 2026-09-19): the same-text check above is a real guard but is trivially evaded by
-// adjacent sentences, pronouns, or a beat split — "It was cold stone in my hands. The Answer dragged
-// at my wrist." reads as one physical claim about The Answer even split across two beats, neither of
-// which alone contains both the name and the banned word. This checks every CONSECUTIVE PAIR of
-// scene1Candidate beats: if EITHER beat of the pair names The Answer and EITHER beat of that SAME
-// pair carries a banned-form word, the pair is flagged — regardless of which beat carries which, and
-// regardless of pronoun use in the beat that doesn't name it. Bounded to one-beat lookback/lookahead
-// (a disclosed limit, not a claim every possible cross-beat coreference is caught — the MANDATORY
-// objectClaims metadata below is the real structural closure; this is defense in depth).
 function _theAnswerAdjacentPairViolations(beats) {
   const hits = [];
   if (!Array.isArray(beats)) return hits;
@@ -110,9 +109,6 @@ function _theAnswerAdjacentPairViolations(beats) {
     const tB = String((beats[i + 1] && beats[i + 1].text) || '');
     const namesA = THE_ANSWER_RE.test(tA), namesB = THE_ANSWER_RE.test(tB);
     if (!namesA && !namesB) continue;
-    // Skip pairs already fully caught by the same-text check on a single beat — only report when
-    // the name and the banned word are split ACROSS the two beats (avoids double-reporting the
-    // same-beat case under two different rules).
     const sameTextAlreadyCaught = (namesA && THE_ANSWER_BANNED_FORM_RE.test(tA)) || (namesB && THE_ANSWER_BANNED_FORM_RE.test(tB));
     if (sameTextAlreadyCaught) continue;
     const mA = tA.match(THE_ANSWER_BANNED_FORM_RE), mB = tB.match(THE_ANSWER_BANNED_FORM_RE);
@@ -121,40 +117,131 @@ function _theAnswerAdjacentPairViolations(beats) {
   }
   return hits;
 }
-// ── STRUCTURED PER-BEAT OBJECT-CLAIM METADATA (Roman, 2026-09-19) — the real structural closure.
-// See packet scene1_answer_object_claim_schema for the full schema. Summary: ANY beat/oasOpening/
-// postInterruptionBeat text that literally names "The Answer" MUST carry an objectClaims array with
-// exactly one entry {object_ref:"the_answer", physical_form_claim, claim_kind, cites?}.
-// physical_form_claim is a CLOSED ENUM (neutral_reference | the one canonical token) — never free
-// text — so a conflicting form claim cannot be smuggled through the metadata channel either.
-const ANSWER_OBJECT_REF = 'the_answer';
-const ANSWER_FORM_CLAIM_VALUES = new Set(['neutral_reference', 'staff_double_ended_question_mark_hooks']);
-const PROVENANCE_KINDS = new Set(['locked_canon_fact', 'grounded_inference', 'generated_expression']);
-const ALLOWED_OBJECT_CLAIM_FIELDS = new Set(['object_ref', 'physical_form_claim', 'claim_kind', 'cites']);
-// Validates one {where} field's objectClaims against its text — pushes violations, returns nothing.
-function _validateAnswerObjectClaims(text, objectClaims, where, violations) {
-  const namesAnswer = THE_ANSWER_RE.test(String(text || ''));
-  const claims = Array.isArray(objectClaims) ? objectClaims : (objectClaims == null ? [] : null);
-  if (claims === null) { violations.push({ rule: 'the_answer_claim_malformed', detail: where + '.objectClaims must be an array' }); return; }
-  const answerClaims = claims.filter(c => c && c.object_ref === ANSWER_OBJECT_REF);
-  if (namesAnswer && answerClaims.length === 0) {
-    violations.push({ rule: 'the_answer_missing_object_metadata', detail: where + ' names The Answer but carries no objectClaims entry for object_ref="the_answer" — required disclosure whenever the object appears materially, not optional' });
+// PRIMARY TRIGGER (Roman, 2026-09-20): "require object-claim metadata for any physical handling,
+// visual description, or transformation — not merely literal uses of its proper name." Gated on
+// hasEntered (only meaningful once The Answer has already appeared once in the stream) so an
+// unrelated early "it" doesn't false-trigger before the object exists in the scene. Bidirectional,
+// bounded 50-char window: a pronoun ("it"/"its") near a handling/description/transformation word, or
+// vice versa. A disclosed, bounded heuristic — not a claim every possible phrasing is caught; the
+// mandatory-metadata requirement plus this widened trigger is the real closure the earlier
+// literal-name-only version lacked.
+const ANSWER_HANDLING_WORDS = 'weight|shape|form|hook|hooks|shaft|staff|held|holding|closed|closing|drew|drawing|grip|gripped|palm|hands?|fingers?|became|become|becomes|shifted|shifting|shift|changed|changing|change|transformed|transforming|transform';
+const ANSWER_HANDLING_SIGNAL_RE = new RegExp('\\b(it|its)\\b[\\s\\S]{0,50}\\b(?:' + ANSWER_HANDLING_WORDS + ')\\b|\\b(?:' + ANSWER_HANDLING_WORDS + ')\\b[\\s\\S]{0,50}\\b(it|its)\\b', 'i');
+function _answerHandlingSignal(text) { return ANSWER_HANDLING_SIGNAL_RE.test(String(text || '')); }
+
+// Reads + structurally validates packet.scene1_answer_manifestation.permitted_manifestation_change_
+// events (packet-level validity — independent of any draft). Returns { current, events, violations }
+// where events is sorted by after_beat ascending, each { afterPos, manifestationId, form, ref }.
+//
+// WORLD-SCOPE GATE (Roman, 2026-09-20): manifestation variance is a SHARED Fatelands Fantasy reality
+// law (_fatelands_reality_seam_and_manifestation_law.json) — it must never be imposed on Famous Fate
+// or any other independently-canonical world. validateDraft() stays self-contained (no filesystem
+// reads — other scripts extract it by regex+eval), so the gate checks packet.world_scope directly
+// rather than re-reading the shared law file: a packet not scoped to "fatelands_fantasy" gets NO
+// manifestation-variance affordance at all — any declared event is refused outright, regardless of
+// how well-formed it otherwise is.
+function _buildAnswerManifestationTimeline(packet) {
+  const ms = packet && packet.scene1_answer_manifestation;
+  const violations = [];
+  const fatelandsScope = !!packet && packet.world_scope === 'fatelands_fantasy';
+  // The gate bites MISUSE (an actual attempt to invoke manifestation VARIANCE — a declared change
+  // event), not mere world identity: a single fixed current_manifestation is not itself a Fatelands-
+  // law claim (any world can say "this object currently looks like X"), so a non-Fatelands packet
+  // with zero declared events is not punished for a law it never invoked.
+  const rawEventsForGate = (ms && ms.permitted_manifestation_change_events) || [];
+  if (!fatelandsScope && rawEventsForGate.length > 0) {
+    violations.push({ rule: 'fatelands_manifestation_law_misapplied', detail: 'packet.world_scope is "' + (packet && packet.world_scope) + '", not "fatelands_fantasy", but this packet declares ' + rawEventsForGate.length + ' permitted_manifestation_change_event(s) — the shared Fatelands reality-seam/manifestation law (_fatelands_reality_seam_and_manifestation_law.json) never applies outside Fatelands Fantasy stories; it must never be imposed on Famous Fate or another independently-canonical world' });
   }
-  claims.forEach((c, ci) => {
-    if (!c || typeof c !== 'object') { violations.push({ rule: 'the_answer_claim_malformed', detail: where + '.objectClaims[' + ci + '] is not an object' }); return; }
-    const extra = Object.keys(c).filter(k => !ALLOWED_OBJECT_CLAIM_FIELDS.has(k));
-    if (extra.length) violations.push({ rule: 'unapproved_output_field', detail: 'unapproved field(s) "' + extra.join(', ') + '" in ' + where + '.objectClaims[' + ci + ']' });
-    if (c.object_ref !== ANSWER_OBJECT_REF) { violations.push({ rule: 'unapproved_object_ref', detail: where + '.objectClaims[' + ci + '].object_ref="' + c.object_ref + '" is not a recognized object — this packet tracks only "the_answer"' }); return; }
-    if (!ANSWER_FORM_CLAIM_VALUES.has(c.physical_form_claim)) {
-      violations.push({ rule: 'the_answer_physical_claim_invalid', detail: where + '.objectClaims[' + ci + '].physical_form_claim="' + c.physical_form_claim + '" is not an approved value — must be exactly "neutral_reference" or the locked canonical-form token "staff_double_ended_question_mark_hooks"; free-text form descriptions are never permitted here' });
-      return;
+  const current = ms && ms.current_manifestation;
+  if (!current || !current.manifestation_id || !current.form) {
+    violations.push({ rule: 'the_answer_manifestation_state_malformed', detail: 'packet.scene1_answer_manifestation.current_manifestation is missing or incomplete — every draft is refused until the packet declares a valid current manifestation' });
+  }
+  const events = [];
+  const rawEvents = (ms && ms.permitted_manifestation_change_events) || [];
+  rawEvents.forEach((ev, ei) => {
+    const ref = 'scene1_answer_manifestation.permitted_manifestation_change_events[' + ei + ']';
+    // Already reported once at the top (fatelands_manifestation_law_misapplied) when out of scope —
+    // just refuse to admit the event into the timeline here, no per-event duplicate violation.
+    if (!fatelandsScope) return;
+    if (!ev || !ev.wielder_need || !String(ev.wielder_need).trim()) { violations.push({ rule: 'the_answer_manifestation_event_invalid', detail: ref + ' has no concrete wielder_need — a manifestation change is never valid without one' }); return; }
+    if (!ev.resulting_manifestation || !ev.resulting_manifestation.manifestation_id || !ev.resulting_manifestation.form) { violations.push({ rule: 'the_answer_manifestation_event_invalid', detail: ref + ' has no complete resulting_manifestation {manifestation_id, form}' }); return; }
+    if (typeof ev.after_beat !== 'number' || !Number.isInteger(ev.after_beat)) { violations.push({ rule: 'the_answer_manifestation_event_invalid', detail: ref + ' has no integer after_beat position' }); return; }
+    events.push({ afterPos: ev.after_beat, manifestationId: ev.resulting_manifestation.manifestation_id, form: ev.resulting_manifestation.form, ref: ref });
+  });
+  events.sort((a, b) => a.afterPos - b.afterPos);
+  return { current: current || null, events, violations };
+}
+// The manifestation active AT a given stream position (see _buildAnswerNarrativeStream for what a
+// position means) — current_manifestation, superseded by the LAST valid event whose afterPos < pos.
+function _activeManifestationAt(pos, timeline) {
+  let active = timeline.current ? { manifestationId: timeline.current.manifestation_id, form: timeline.current.form, ref: 'scene1_answer_manifestation.current_manifestation' } : null;
+  for (const ev of timeline.events) { if (ev.afterPos < pos) active = ev; else break; }
+  return active;
+}
+// Every manifestation_id this packet has ever declared as valid (current + every structurally-valid
+// event) — the closed set physical_form_claim must resolve against, REGARDLESS of position; a
+// position-specific mismatch is the SEPARATE the_answer_manifestation_conflict check below.
+function _knownManifestationIds(timeline) {
+  const ids = new Set(['neutral_reference']);
+  if (timeline.current) ids.add(timeline.current.manifestation_id);
+  timeline.events.forEach(ev => ids.add(ev.manifestationId));
+  return ids;
+}
+
+// Builds the ordered narrative stream for the continuity walk: scene1Candidate.beats get positions
+// 1..N (their index+1), oasOpening gets 100 (after all scene1 beats — the live OAS opener), and
+// postInterruptionBeat gets 101 (after that) — simple, deterministic, sufficient since
+// manifestation-change events are declared in terms of scene1 beat numbers 1-20.
+function _buildAnswerNarrativeStream(scene1Beats, oasOpening, postInterruptionBeat) {
+  const stream = scene1Beats.map((b, i) => ({ pos: i + 1, where: 'scene1Candidate.beats[' + i + ']', text: b && b.text, objectClaims: b && b.objectClaims }));
+  if (oasOpening) stream.push({ pos: 100, where: 'oasOpening', text: oasOpening.text, objectClaims: oasOpening.objectClaims });
+  if (postInterruptionBeat) stream.push({ pos: 101, where: 'postInterruptionBeat', text: postInterruptionBeat.text, objectClaims: postInterruptionBeat.objectClaims });
+  return stream;
+}
+
+// THE main engine. Walks the stream in order; once The Answer has entered (literal name, an
+// explicit objectClaims entry, or — after entry — the widened handling-signal), every entry
+// involving it MUST carry objectClaims, and any form-restating claim must match the manifestation
+// ACTIVE at that entry's position (not merely a KNOWN manifestation — the right one, right now).
+function _validateAnswerContinuity(stream, packet, violations) {
+  const timeline = _buildAnswerManifestationTimeline(packet);
+  violations.push(...timeline.violations);
+  const knownIds = _knownManifestationIds(timeline);
+  let hasEntered = false;
+  stream.forEach(entry => {
+    const text = String(entry.text || '');
+    const claims = Array.isArray(entry.objectClaims) ? entry.objectClaims : (entry.objectClaims == null ? [] : null);
+    if (claims === null) { violations.push({ rule: 'the_answer_claim_malformed', detail: entry.where + '.objectClaims must be an array' }); return; }
+    const answerClaims = claims.filter(c => c && c.object_ref === ANSWER_OBJECT_REF);
+    const namesAnswer = THE_ANSWER_RE.test(text);
+    const handlingSignal = hasEntered && _answerHandlingSignal(text);
+    const involvesAnswer = namesAnswer || handlingSignal || answerClaims.length > 0;
+    if (!involvesAnswer) return;
+    hasEntered = true;
+    if (answerClaims.length === 0) {
+      violations.push({ rule: 'the_answer_missing_object_metadata', detail: entry.where + ' involves The Answer (naming, physical handling, visual description, or transformation) but carries no objectClaims entry for object_ref="the_answer" — required disclosure, not optional' });
     }
-    if (!PROVENANCE_KINDS.has(c.claim_kind)) {
-      violations.push({ rule: 'the_answer_claim_provenance_invalid', detail: where + '.objectClaims[' + ci + '].claim_kind="' + c.claim_kind + '" must be one of ' + [...PROVENANCE_KINDS].join('|') });
-    } else if (c.physical_form_claim === 'staff_double_ended_question_mark_hooks') {
-      if (c.claim_kind !== 'locked_canon_fact') violations.push({ rule: 'the_answer_claim_provenance_invalid', detail: where + '.objectClaims[' + ci + '] restates the canonical form but claim_kind is "' + c.claim_kind + '", not "locked_canon_fact" — restating a locked fact is always a citation, never a free invention' });
-      else if (!c.cites) violations.push({ rule: 'the_answer_claim_provenance_invalid', detail: where + '.objectClaims[' + ci + '] restates the canonical form as locked_canon_fact but has no cites' });
-    }
+    const active = _activeManifestationAt(entry.pos, timeline);
+    claims.forEach((c, ci) => {
+      if (!c || typeof c !== 'object') { violations.push({ rule: 'the_answer_claim_malformed', detail: entry.where + '.objectClaims[' + ci + '] is not an object' }); return; }
+      const extra = Object.keys(c).filter(k => !ALLOWED_OBJECT_CLAIM_FIELDS.has(k));
+      if (extra.length) violations.push({ rule: 'unapproved_output_field', detail: 'unapproved field(s) "' + extra.join(', ') + '" in ' + entry.where + '.objectClaims[' + ci + ']' });
+      if (c.object_ref !== ANSWER_OBJECT_REF) { violations.push({ rule: 'unapproved_object_ref', detail: entry.where + '.objectClaims[' + ci + '].object_ref="' + c.object_ref + '" is not a recognized object — this packet tracks only "the_answer"' }); return; }
+      if (!knownIds.has(c.physical_form_claim)) {
+        violations.push({ rule: 'the_answer_physical_claim_invalid', detail: entry.where + '.objectClaims[' + ci + '].physical_form_claim="' + c.physical_form_claim + '" is not a manifestation this packet has ever declared (known: ' + [...knownIds].join('|') + ') — free-text form descriptions and unrecognized manifestation ids are never permitted here' });
+        return;
+      }
+      if (c.physical_form_claim !== 'neutral_reference' && (!active || c.physical_form_claim !== active.manifestationId)) {
+        violations.push({ rule: 'the_answer_manifestation_conflict', detail: entry.where + '.objectClaims[' + ci + '] claims manifestation "' + c.physical_form_claim + '" but the manifestation ACTIVE at this position is "' + (active && active.manifestationId) + '" — a manifestation change is valid only as the declared consequence of a permitted wielder-need event, never because this beat wants a different form' });
+        return;
+      }
+      if (!PROVENANCE_KINDS.has(c.claim_kind)) {
+        violations.push({ rule: 'the_answer_claim_provenance_invalid', detail: entry.where + '.objectClaims[' + ci + '].claim_kind="' + c.claim_kind + '" must be one of ' + [...PROVENANCE_KINDS].join('|') });
+      } else if (c.physical_form_claim !== 'neutral_reference') {
+        if (c.claim_kind !== 'locked_canon_fact') violations.push({ rule: 'the_answer_claim_provenance_invalid', detail: entry.where + '.objectClaims[' + ci + '] restates a manifestation but claim_kind is "' + c.claim_kind + '", not "locked_canon_fact" — restating a declared fact is always a citation, never a free invention' });
+        else if (!c.cites) violations.push({ rule: 'the_answer_claim_provenance_invalid', detail: entry.where + '.objectClaims[' + ci + '] restates a manifestation as locked_canon_fact but has no cites' });
+      }
+    });
   });
 }
 const FIXED_TAIL_TEXTS = [
@@ -338,7 +425,7 @@ function validateDraft(draft, packet) {
     const lockMappingApplies = !!lockSource && scene1Beats.length === lockSource.length;
     // THE ANSWER — ADJACENT-PAIR GUARD (whole-array check, run once before the per-beat loop).
     _theAnswerAdjacentPairViolations(scene1Beats).forEach(h => {
-      violations.push({ rule: 'the_answer_form_violation', detail: 'scene1Candidate.beats[' + h.i + '] and beats[' + h.j + '] together name The Answer and carry a banned physical form ("' + h.word + '") split across adjacent beats — The Answer is a staff (double-ended shaft) with a question-mark-shaped hook at each end, never a stone/gem/orb/crystal/other handheld relic (packet locked_world_facts.the_answer)' });
+      violations.push({ rule: 'the_answer_form_violation', detail: 'scene1Candidate.beats[' + h.i + '] and beats[' + h.j + '] together name The Answer and carry a banned physical form ("' + h.word + '") split across adjacent beats — The Answer\'s current manifestation for this scene is a staff (double-ended shaft) with a question-mark-shaped hook at each end; no manifestation-change event is permitted here (packet scene1_answer_manifestation)' });
     });
     scene1Beats.forEach((b, i) => {
       if (!b || typeof b !== 'object') { violations.push({ rule: 'scene1_beat_malformed', detail: 'scene1Candidate.beats[' + i + '] is not an object' }); return; }
@@ -350,12 +437,10 @@ function validateDraft(draft, packet) {
       if (lockMappingApplies && imgIdx !== -1 && lockSource[i] && b.image !== lockSource[i].image) {
         violations.push({ rule: 'scene1_beat_asset_mapping_locked', detail: 'scene1Candidate.beats[' + i + '].image="' + b.image + '" does not match the locked ' + lockLabel + ' beat ' + lockSource[i].n + ' (occurrence="' + lockSource[i].image + '") — the author cannot assign a beat to a different asset/occurrence' });
       }
-      // THE ANSWER — OBJECT-FIDELITY (Roman, 2026-09-19, HARD): a locked canonical fact, not a
-      // style suggestion. See packet locked_world_facts.the_answer.hard_boundary and
-      // scene1_answer_object_claim_schema. Fast same-text guard + mandatory structured metadata.
+      // THE ANSWER — backup lexical guard only (secondary); the real check is the continuity
+      // engine run once below, after this loop, over the full ordered stream.
       { const _taHit = _theAnswerFormViolation(b.text);
-        if (_taHit) violations.push({ rule: 'the_answer_form_violation', detail: 'scene1Candidate.beats[' + i + '] mentions The Answer alongside a banned physical form ("' + _taHit + '") — The Answer is a staff (double-ended shaft) with a question-mark-shaped hook at each end, never a stone/gem/orb/crystal/other handheld relic (packet locked_world_facts.the_answer)' }); }
-      _validateAnswerObjectClaims(b.text, b.objectClaims, 'scene1Candidate.beats[' + i + ']', violations);
+        if (_taHit) violations.push({ rule: 'the_answer_form_violation', detail: 'scene1Candidate.beats[' + i + '] mentions The Answer alongside a banned physical form ("' + _taHit + '") — The Answer\'s current manifestation for this scene is a staff (double-ended shaft) with a question-mark-shaped hook at each end; no manifestation-change event is permitted here (packet scene1_answer_manifestation)' }); }
       // PROVENANCE PROPORTIONALITY (Roman, fifth pass, 2026-09-17): "keep provenance
       // proportional: only locked factual assertions need citations; dialogue, imagery,
       // interiority, and other generated_expression beats must not be rejected for being
@@ -414,8 +499,7 @@ function validateDraft(draft, packet) {
         violations.push({ rule: 'exemplar_verbatim_copy', detail: 'oasOpening contains a 6+ word verbatim match against the non-canonical julian_opening_turn exemplar — craft reference only, never to be quoted or closely copied' });
       }
       const _taHitOas = _theAnswerFormViolation(oasOpening.text);
-      if (_taHitOas) violations.push({ rule: 'the_answer_form_violation', detail: 'oasOpening.text mentions The Answer alongside a banned physical form ("' + _taHitOas + '") — The Answer is a staff (double-ended shaft) with a question-mark-shaped hook at each end, never a stone/gem/orb/crystal/other handheld relic (packet locked_world_facts.the_answer)' });
-      _validateAnswerObjectClaims(oasOpening.text, oasOpening.objectClaims, 'oasOpening', violations);
+      if (_taHitOas) violations.push({ rule: 'the_answer_form_violation', detail: 'oasOpening.text mentions The Answer alongside a banned physical form ("' + _taHitOas + '") — The Answer\'s current manifestation for this scene is a staff (double-ended shaft) with a question-mark-shaped hook at each end; no manifestation-change event is permitted here (packet scene1_answer_manifestation)' });
     }
   }
 
@@ -428,9 +512,16 @@ function validateDraft(draft, packet) {
     else {
       if (RESOLVING_LANGUAGE_PATTERN.test(postInterruptionBeat.text)) violations.push({ rule: 'post_interruption_resolves_choice', detail: 'postInterruptionBeat.text contains resolving language ("' + (postInterruptionBeat.text.match(RESOLVING_LANGUAGE_PATTERN) || [''])[0] + '") — this beat must crystallize the unresolved choice, never decide it for the player' });
       const _taHitPib = _theAnswerFormViolation(postInterruptionBeat.text);
-      if (_taHitPib) violations.push({ rule: 'the_answer_form_violation', detail: 'postInterruptionBeat.text mentions The Answer alongside a banned physical form ("' + _taHitPib + '") — The Answer is a staff (double-ended shaft) with a question-mark-shaped hook at each end, never a stone/gem/orb/crystal/other handheld relic (packet locked_world_facts.the_answer)' });
-      _validateAnswerObjectClaims(postInterruptionBeat.text, postInterruptionBeat.objectClaims, 'postInterruptionBeat', violations);
+      if (_taHitPib) violations.push({ rule: 'the_answer_form_violation', detail: 'postInterruptionBeat.text mentions The Answer alongside a banned physical form ("' + _taHitPib + '") — The Answer\'s current manifestation for this scene is a staff (double-ended shaft) with a question-mark-shaped hook at each end; no manifestation-change event is permitted here (packet scene1_answer_manifestation)' });
     }
+  }
+
+  // THE ANSWER — STATEFUL MANIFESTATION CONTINUITY (Roman, 2026-09-20): the real, primary check —
+  // run ONCE over the full ordered narrative stream (scene1 beats, then oasOpening, then
+  // postInterruptionBeat) so a manifestation established in one beat is verified consistent (or
+  // validly changed) through every later beat/field, not checked independently per field.
+  if (scene1) {
+    _validateAnswerContinuity(_buildAnswerNarrativeStream(scene1Beats, oasOpening, postInterruptionBeat), packet, violations);
   }
 
   // fateCards validation REMOVED (Roman, 2026-09-17) — no longer an authored field. The 5 fixed
@@ -800,7 +891,7 @@ section('RED CONTROLS — scene1Candidate (fourth redesign pass, 2026-09-17)');
   d.oasOpening.text = 'He closed her fingers around the smooth gemstone, cool against her palm, and asked if she was ready — his gaze steady, his patience visible, before all of them.';
   const v = validateDraft(d, PACKET);
   const hit = v.violations.find(x => x.rule === 'the_answer_form_violation');
-  ok('SCOPE: a banned form word ("gemstone") with an implied but not literally-named Answer reference in oasOpening is NOT flagged — the guard\'s documented scope is explicit "The Answer" co-occurrence in the same text, not inference across an antecedent', !hit, JSON.stringify(hit));
+  ok('SCOPE: a banned form word ("gemstone") in oasOpening with NO pronoun signal and no prior claim is NOT flagged — the continuity engine requires an actual involvement signal (name, handling-signal, or claim), not mere co-presence of an unrelated word', !hit, JSON.stringify(hit));
   // Re-run WITH the literal name present, to confirm the guard genuinely fires on oasOpening too.
   const d2 = compliantDraft();
   d2.oasOpening.text = 'He closed her fingers around The Answer, a smooth cool orb pressed into her palm, and asked if she was ready before all of them, his gaze steady and unhurried.';
@@ -886,10 +977,104 @@ section('RED CONTROLS — scene1Candidate (fourth redesign pass, 2026-09-17)');
   // — must be ACCEPTED. Does not require the word "blade"; states form only.
   const d = compliantDraft();
   d.scene1Candidate.beats[18].text = 'Julian closed my hands around The Answer, the double-ended shaft cool and steady between my palms, its two hooked heads catching the low light.';
-  d.scene1Candidate.beats[18].objectClaims = [{ object_ref: 'the_answer', physical_form_claim: 'staff_double_ended_question_mark_hooks', claim_kind: 'locked_canon_fact', cites: 'locked_world_facts.the_answer' }];
+  d.scene1Candidate.beats[18].objectClaims = [{ object_ref: 'the_answer', physical_form_claim: 'staff_double_ended_question_mark_hooks', claim_kind: 'locked_canon_fact', cites: 'scene1_answer_manifestation.current_manifestation' }];
   const v = validateDraft(d, PACKET);
   const answerViolationsCanon = v.violations.filter(x => x.rule.startsWith('the_answer_'));
   ok('CANONICAL: a valid staff/double-ended/question-mark-hooks claim, cited as locked_canon_fact, is fully accepted by every the_answer_* rule', answerViolationsCanon.length === 0, JSON.stringify(answerViolationsCanon));
+}
+// ── STATEFUL MANIFESTATION MODEL (Roman, 2026-09-20): identity persists, manifestation changes
+// only as the declared consequence of a concrete wielder need. Real packet declares ZERO permitted
+// change events for this scene (every test above proves that holds); these two controls exercise
+// the MECHANISM itself against a test-only packet that DOES declare one, proving it is a real,
+// working, deterministic mechanism — not a hypothetical never-exercised code path. ──
+{
+  // GREEN: a FUTURE valid need-driven change. Test-only packet declares one permitted event (a
+  // concrete wielder_need, a distinct resulting manifestation, after_beat: 20 — i.e. active from
+  // oasOpening/postInterruptionBeat onward, not during scene1Candidate.beats). A beat AT/BEFORE the
+  // threshold stays on the staff; postInterruptionBeat (position 101, past the threshold) correctly
+  // claims the NEW manifestation, cited to the event — must be ACCEPTED.
+  const eventPacket = JSON.parse(JSON.stringify(PACKET));
+  eventPacket.scene1_answer_manifestation.permitted_manifestation_change_events = [{
+    event_id: 'test_wielder_adapts_grip',
+    wielder_need: 'Julian needs The Answer small enough for Lirael to hold one-handed while he keeps her other hand in his',
+    resulting_manifestation: { manifestation_id: 'compact_wielder_blade', form: 'a short, balanced single-edged blade sized for a one-handed grip — states form only' },
+    after_beat: 20,
+  }];
+  const d = compliantDraft();
+  // beats[18] (n=19) stays on the staff — the threshold (after_beat 20) has not been reached yet.
+  d.scene1Candidate.beats[18].objectClaims = [{ object_ref: 'the_answer', physical_form_claim: 'staff_double_ended_question_mark_hooks', claim_kind: 'locked_canon_fact', cites: 'scene1_answer_manifestation.current_manifestation' }];
+  d.postInterruptionBeat.text = 'The Answer had changed in my hands — no longer the staff Julian first pressed into them, but a compact blade, fitted for one grip, for one hand, for whatever came next.';
+  d.postInterruptionBeat.objectClaims = [{ object_ref: 'the_answer', physical_form_claim: 'compact_wielder_blade', claim_kind: 'locked_canon_fact', cites: 'scene1_answer_manifestation.permitted_manifestation_change_events[0]' }];
+  const v = validateDraft(d, eventPacket);
+  const answerViolationsFuture = v.violations.filter(x => x.rule.startsWith('the_answer_'));
+  ok('GREEN: a future valid need-driven manifestation change (concrete wielder_need, declared resulting form, correct after_beat position) is fully accepted', answerViolationsFuture.length === 0, JSON.stringify(answerViolationsFuture));
+}
+{
+  // RED: the SAME test-only packet/event, but the new manifestation is claimed TOO EARLY — a
+  // scene1Candidate beat well before after_beat:20 claims the not-yet-active resulting form. The
+  // event is real and valid; the CLAIM is not justified at this position — rejected as a
+  // manifestation conflict, not merely an unknown value.
+  const eventPacket2 = JSON.parse(JSON.stringify(PACKET));
+  eventPacket2.scene1_answer_manifestation.permitted_manifestation_change_events = [{
+    event_id: 'test_wielder_adapts_grip',
+    wielder_need: 'Julian needs The Answer small enough for Lirael to hold one-handed while he keeps her other hand in his',
+    resulting_manifestation: { manifestation_id: 'compact_wielder_blade', form: 'a short, balanced single-edged blade sized for a one-handed grip — states form only' },
+    after_beat: 20,
+  }];
+  const d = compliantDraft();
+  d.scene1Candidate.beats[18].text = 'Julian closed my hands around The Answer, already the compact blade he would need later, though nothing here yet explained why.';
+  d.scene1Candidate.beats[18].objectClaims = [{ object_ref: 'the_answer', physical_form_claim: 'compact_wielder_blade', claim_kind: 'locked_canon_fact', cites: 'scene1_answer_manifestation.permitted_manifestation_change_events[0]' }];
+  const v = validateDraft(d, eventPacket2);
+  const hit = v.violations.find(x => x.rule === 'the_answer_manifestation_conflict');
+  ok('RED: claiming a validly-declared future manifestation BEFORE its after_beat position is rejected as a manifestation conflict (the event is real; the timing is not justified yet)', !v.ok && !!hit && /"compact_wielder_blade"/.test(hit.detail), JSON.stringify(hit));
+}
+{
+  // RED (Roman's explicit framing): an UNJUSTIFIED stone/bone/orb shift AFTER the staff has already
+  // been established via structured metadata earlier in the scene — the REAL packet (zero permitted
+  // events), via the structured metadata channel this time, not just the lexical backup.
+  const d = compliantDraft();
+  d.scene1Candidate.beats[16].text = 'Julian stood ready at the edge, The Answer already resting against his palm, waiting for the moment to give it to me.';
+  d.scene1Candidate.beats[16].objectClaims = [{ object_ref: 'the_answer', physical_form_claim: 'staff_double_ended_question_mark_hooks', claim_kind: 'locked_canon_fact', cites: 'scene1_answer_manifestation.current_manifestation' }];
+  d.scene1Candidate.beats[18].objectClaims = [{ object_ref: 'the_answer', physical_form_claim: 'carved_bone_relic', claim_kind: 'locked_canon_fact', cites: 'scene1_answer_manifestation.current_manifestation' }];
+  const v = validateDraft(d, PACKET);
+  const hit = v.violations.find(x => x.rule === 'the_answer_physical_claim_invalid');
+  ok('RED: an unjustified "bone" manifestation shift claimed after the staff is already established (no permitted change event exists in the real packet) is rejected — not a manifestation this packet has ever declared', !v.ok && !!hit && /carved_bone_relic/.test(hit.detail), JSON.stringify(hit));
+}
+// ── FATELANDS WORLD-SCOPE GATE (Roman, 2026-09-20): "It should be a Fatelands reality law, not
+// imposed on Famous Fate worlds with their own canon." Proves the gate is real, not documentation
+// only — a packet not scoped to fatelands_fantasy gets NO manifestation-variance affordance. ──
+{
+  ok('the real First Sacrifice packet declares world_scope "fatelands_fantasy" (the shared law\'s gate is satisfied for this story)', PACKET.world_scope === 'fatelands_fantasy', PACKET.world_scope);
+}
+{
+  // RED: a Famous-Fate-scoped copy of the SAME packet, with the SAME (otherwise valid) permitted
+  // change event used by the earlier GREEN "future valid change" control — the event itself is
+  // well-formed; only the world_scope differs. Must be refused wholesale.
+  const famousFatePacket = JSON.parse(JSON.stringify(PACKET));
+  famousFatePacket.world_scope = 'famous_fate';
+  famousFatePacket.scene1_answer_manifestation.permitted_manifestation_change_events = [{
+    event_id: 'test_wielder_adapts_grip',
+    wielder_need: 'Julian needs The Answer small enough for Lirael to hold one-handed while he keeps her other hand in his',
+    resulting_manifestation: { manifestation_id: 'compact_wielder_blade', form: 'a short, balanced single-edged blade sized for a one-handed grip — states form only' },
+    after_beat: 20,
+  }];
+  const d = compliantDraft();
+  d.postInterruptionBeat.text = 'The Answer had changed in my hands — no longer the staff Julian first pressed into them, but a compact blade, fitted for one grip, for one hand, for whatever came next.';
+  d.postInterruptionBeat.objectClaims = [{ object_ref: 'the_answer', physical_form_claim: 'compact_wielder_blade', claim_kind: 'locked_canon_fact', cites: 'scene1_answer_manifestation.permitted_manifestation_change_events[0]' }];
+  const v = validateDraft(d, famousFatePacket);
+  const gateHit = v.violations.filter(x => x.rule === 'fatelands_manifestation_law_misapplied');
+  ok('RED: a Famous-Fate-scoped packet with an OTHERWISE VALID permitted manifestation-change event is refused wholesale — the event is never honored, and the resulting_manifestation claim is rejected as unknown, not silently accepted', !v.ok && gateHit.length >= 1 && v.violations.some(x => x.rule === 'the_answer_physical_claim_invalid' && /compact_wielder_blade/.test(x.detail)), JSON.stringify({ gateHit, allAnswerViolations: v.violations.filter(x => x.rule.startsWith('the_answer_') || x.rule === 'fatelands_manifestation_law_misapplied') }));
+}
+{
+  // GREEN sanity: the SAME famous_fate world_scope, but with NO declared change event and only a
+  // neutral reference to The Answer, is unaffected — the gate only bites when a change is actually
+  // attempted; a story outside Fatelands scope making no manifestation claim at all is not punished
+  // for a law that was never invoked.
+  const famousFatePacket2 = JSON.parse(JSON.stringify(PACKET));
+  famousFatePacket2.world_scope = 'famous_fate';
+  const d = compliantDraft();
+  const v = validateDraft(d, famousFatePacket2);
+  ok('GREEN: a Famous-Fate-scoped packet with NO declared manifestation-change event and only neutral/current-manifestation claims triggers no fatelands_manifestation_law_misapplied violation (the gate bites misuse, not mere world identity)', !v.violations.some(x => x.rule === 'fatelands_manifestation_law_misapplied'), JSON.stringify(v.violations.filter(x => x.rule === 'fatelands_manifestation_law_misapplied')));
 }
 {
   const d = compliantDraft(); d.scene1Candidate.beats[0].provenance = { kind: 'locked_canon_fact' }; // no cites

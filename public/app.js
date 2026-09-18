@@ -35397,6 +35397,110 @@ WRY REFERENCE:
   // Insertion: AFTER existing narrative physics / tone directives, BEFORE
   // the final prose generation instruction (scene-length / TURN INSTRUCTIONS).
   // ═══════════════════════════════════════════════════════════════════
+  // ══ FATELANDS REALITY-SEAM / MANIFESTATION LAW — runtime ledger (Roman, 2026-09-20) ═════════════
+  // Corrects the earlier First-Sacrifice-only version: the shared law was defined in an orphaned
+  // dev-only JSON file (_fatelands_reality_seam_and_manifestation_law.json) that no runtime path
+  // ever read. THIS is the one real source of truth for what the shared law actually DOES at
+  // runtime — a generic, per-story, per-entity manifestation ledger, gated to ordinary Fatelands
+  // Fantasy stories (same world gate every other Fatelands-conditional directive in this file
+  // already uses: state.picks.world === 'Fantasy'), explicitly excluding Famous Fate and any other
+  // independently-canonical world. The static JSON file remains the human-readable canon document
+  // (law text, 3-level structure, entity_capability_registry) — this is its runtime enforcement.
+  //
+  // Ledger shape: state._fatelandsManifestationLedger[entityId] = {
+  //   entityId, displayName, capabilityCategory ('wish_crafted_relic' | 'altered_person'),
+  //   currentManifestationId, currentForm, registeredAtTurn, lastActiveTurn,
+  //   provenance: {kind, cites},
+  //   changeEvents: [{ eventId, resultingManifestationId, resultingForm, groundedIn, sceneOrBeat,
+  //                     recordedAtTurn, provenance }]
+  // }
+  // Persistence: rides the general state snapshot for free (saveStorySnapshot's cleanState spread
+  // includes any state field not explicitly deleted from it — this field is never deleted) and
+  // survives an Issue transition for free too (_startNextIssueFromCliffhanger/
+  // _advanceToNextIssueIfNeeded continue the SAME live state object forward; an issue boundary is
+  // not a story reset).
+  function _fatelandsFantasyWorldGate() {
+    return !!(state.picks && state.picks.world === 'Fantasy') && state.fateMode !== 'famous_fate';
+  }
+  window._fatelandsFantasyWorldGate = _fatelandsFantasyWorldGate;
+
+  // Register a NEW eligible entity (a wish-crafted relic or a heavily-altered person) with its
+  // INITIAL manifestation. No-ops (returns null) outside the Fatelands Fantasy gate — Famous Fate
+  // and other independently-canonical worlds get nothing from this mechanism, ever.
+  function _fatelandsRegisterManifestation(entityId, opts) {
+    if (!_fatelandsFantasyWorldGate()) return null;
+    if (!entityId || !opts || !opts.capabilityCategory || !opts.manifestationId || !opts.form) return null;
+    var ledger = state._fatelandsManifestationLedger || (state._fatelandsManifestationLedger = {});
+    ledger[entityId] = {
+      entityId: entityId,
+      displayName: opts.displayName || entityId,
+      capabilityCategory: opts.capabilityCategory,
+      currentManifestationId: opts.manifestationId,
+      currentForm: opts.form,
+      registeredAtTurn: state.turnCount || 0,
+      lastActiveTurn: state.turnCount || 0,
+      provenance: opts.provenance || { kind: 'generated_expression' },
+      changeEvents: []
+    };
+    try { console.log('[FATELANDS-MANIFEST] registered "' + entityId + '" (' + opts.capabilityCategory + ') @ turn ' + (state.turnCount || 0) + ' — ' + opts.form); } catch (_) {}
+    return ledger[entityId];
+  }
+  window._fatelandsRegisterManifestation = _fatelandsRegisterManifestation;
+
+  // Record a GROUNDED manifestation change for an already-registered entity. Refuses (returns null,
+  // records nothing) without a concrete groundedIn cause or a complete resulting manifestation — "a
+  // shift must be recorded before later prose/images may use the new form" only holds if THIS
+  // function is the sole path that ever advances currentManifestationId/currentForm.
+  function _fatelandsRecordManifestationChange(entityId, opts) {
+    if (!_fatelandsFantasyWorldGate()) return null;
+    var ledger = state._fatelandsManifestationLedger;
+    var rec = ledger && ledger[entityId];
+    if (!rec) return null; // must be registered first — no implicit registration via a "change"
+    if (!opts || !opts.groundedIn || !String(opts.groundedIn).trim()) return null;
+    if (!opts.resultingManifestationId || !opts.resultingForm) return null;
+    var turn = state.turnCount || 0;
+    rec.changeEvents.push({
+      eventId: opts.eventId || (entityId + '_change_' + (rec.changeEvents.length + 1)),
+      resultingManifestationId: opts.resultingManifestationId,
+      resultingForm: opts.resultingForm,
+      groundedIn: opts.groundedIn,
+      sceneOrBeat: (typeof opts.sceneOrBeat !== 'undefined') ? opts.sceneOrBeat : turn,
+      recordedAtTurn: turn,
+      provenance: opts.provenance || { kind: 'generated_expression' }
+    });
+    rec.currentManifestationId = opts.resultingManifestationId;
+    rec.currentForm = opts.resultingForm;
+    rec.lastActiveTurn = turn;
+    try { console.log('[FATELANDS-MANIFEST] "' + entityId + '" changed → ' + opts.resultingManifestationId + ' @ turn ' + turn + ' — grounded in: ' + opts.groundedIn); } catch (_) {}
+    return rec;
+  }
+  window._fatelandsRecordManifestationChange = _fatelandsRecordManifestationChange;
+
+  // The shared prompt-context feed — same call signature/convention as the other build*Directive
+  // functions in this file (no params, reads state via closure), wired into BOTH the literary
+  // directive stack and the CG author/screenplay assembly (see call sites). Surfaces ONLY entries
+  // "relevant" right now (registered or changed this turn or the immediately prior one) — a story
+  // with no registered entities, or whose registered entities haven't been touched recently, gets
+  // an empty string: this does not bloat every Fantasy prompt, and does not make every magical
+  // object visibly shift. Always states the CURRENTLY RECORDED form — never a hypothetical one; if
+  // no change event has been recorded, the previous manifested state is what reaches the author.
+  function buildFatelandsManifestationLawDirective() {
+    if (!_fatelandsFantasyWorldGate()) return '';
+    var ledger = state._fatelandsManifestationLedger;
+    if (!ledger) return '';
+    var turn = state.turnCount || 0;
+    var relevant = Object.keys(ledger).map(function (k) { return ledger[k]; })
+      .filter(function (rec) { return rec && typeof rec.lastActiveTurn === 'number' && (turn - rec.lastActiveTurn) <= 1; });
+    if (!relevant.length) return '';
+    var out = '\n═══ FATELANDS MANIFESTATION LAW (registered relic/altered-person state — HARD, states the CURRENTLY RECORDED form only) ═══\n'
+      + 'Wish-crafted relics and heavily-altered peoples may shift physical manifestation in this world, but ONLY as the declared, shown, grounded consequence of a wish/wielder-need/seam-disturbance/magical-pressure — never because prose wants a different image or metaphor. The entities below are currently registered:\n';
+    relevant.forEach(function (rec) {
+      out += '- ' + rec.displayName + ' (id: "' + rec.entityId + '", ' + rec.capabilityCategory + '): CURRENT recorded manifestation — ' + rec.currentForm + ' [manifestation_id: "' + rec.currentManifestationId + '"]. Its identity persists; do not assign it a conflicting form, and do not invent a different material, color, weight, power, or history beyond what is stated here.\n';
+    });
+    return out;
+  }
+  window.buildFatelandsManifestationLawDirective = buildFatelandsManifestationLawDirective;
+
   function buildFatelandsCognitiveMemoryBlock() {
     // World gate — Fatelands only.
     if (!state.picks || state.picks.world !== 'Fantasy') return '';
@@ -224385,6 +224489,12 @@ No text, no watermark, no UI elements, share-ready.`;
     try { if (typeof _buildAuthorFloorDirective === 'function') lines.push(_buildAuthorFloorDirective(state)); } catch (_) {}
     // LORE FIDELITY (Roman 2026-07-25) — universal, all worlds, every CG scene (mirrors the literary prose-stack injection).
     try { if (typeof _buildLoreFidelityDirective === 'function') lines.push(_buildLoreFidelityDirective()); } catch (_) {}
+    // FATELANDS MANIFESTATION LAW (Roman, 2026-09-20) — the SAME shared-law directive the literary
+    // stack gets (buildFatelandsManifestationLawDirective, defined once, called from both paths).
+    // Self-gates to Fatelands Fantasy + non-Famous-Fate and to relevant registered entities only —
+    // a no-op empty string for every other CG scene. This is the CG AUTHOR/screenplay-text context;
+    // it does not itself reach the image-generation prompt builders in this pass.
+    try { if (typeof buildFatelandsManifestationLawDirective === 'function') lines.push(buildFatelandsManifestationLawDirective()); } catch (_) {}
     var picks = (state && state.picks) || {};
     var pcName = (typeof _resolveStagedPlayerName === 'function' && _resolveStagedPlayerName())
                  || state.playerName
@@ -261464,7 +261574,7 @@ LOVE INTEREST POV — MANDATORY OPENER:
     //   - Fatelands cognitive memory (Phase 2): Fantasy world only
     //   - Chorus discourse (Glass House voice layer):      glass_house subtype
     //   - Dogma discourse (partial-adoption voice layer):  dogma subtype
-    const _fatelandsCognitiveMemoryBlock = buildFatelandsCognitiveMemoryBlock() + buildFatelandsAnachronismGuard() + buildHistoricalAnachronismGuard() + buildChorusDiscourseDirective() + buildDogmaDiscourseDirective() + buildWorldProfanityBandDirective() + _buildLytharynScholarlyRegisterDirective() + _buildLytharynInstituteDirective() + _buildFatelandsGroundingDirective() + _buildLoreEmissionDirective() + _buildFantasySpeciesIntimacyDirective() + _becomingFieldForAuthor() + _thornwildFormsForAuthor() + buildFatelandsDeepHistoryDirective() + buildPiercingLoreDirective() + buildFatelandsSecretQuestDirective() + buildFatelandsWorldEvolutionDirective()
+    const _fatelandsCognitiveMemoryBlock = buildFatelandsCognitiveMemoryBlock() + buildFatelandsAnachronismGuard() + buildHistoricalAnachronismGuard() + buildChorusDiscourseDirective() + buildDogmaDiscourseDirective() + buildWorldProfanityBandDirective() + _buildLytharynScholarlyRegisterDirective() + _buildLytharynInstituteDirective() + _buildFatelandsGroundingDirective() + _buildLoreEmissionDirective() + _buildFantasySpeciesIntimacyDirective() + _becomingFieldForAuthor() + _thornwildFormsForAuthor() + buildFatelandsDeepHistoryDirective() + buildPiercingLoreDirective() + buildFatelandsSecretQuestDirective() + buildFatelandsWorldEvolutionDirective() + buildFatelandsManifestationLawDirective()
       // WISH LAW AT THE OPENING (Roman 2026-07-30): the opening builder previously LACKED the wish
       // core/adjudication that the two per-turn builders carry — so a binding-sacrifice OPENING was told
       // "sacrifice-magic exists, do not name the law" with NO law supplied, forcing the author to
@@ -307189,7 +307299,7 @@ Must remain physical, not conceptual. Richness comes from specificity of interac
       //   - Fatelands cognitive memory (Phase 2): Fantasy world only
       //   - Chorus discourse (Glass House voice layer):      glass_house subtype
       //   - Dogma discourse (partial-adoption voice layer):  dogma subtype
-      const _fatelandsCognitiveMemoryBlock = buildFatelandsCognitiveMemoryBlock() + buildFatelandsAnachronismGuard() + buildHistoricalAnachronismGuard() + buildChorusDiscourseDirective() + buildDogmaDiscourseDirective() + buildWorldProfanityBandDirective() + _buildLytharynScholarlyRegisterDirective() + _buildLytharynInstituteDirective() + _buildFatelandsGroundingDirective() + _buildLoreEmissionDirective() + _buildFantasySpeciesIntimacyDirective() + _becomingFieldForAuthor() + _thornwildFormsForAuthor() + buildFatelandsDeepHistoryDirective() + buildPiercingLoreDirective() + buildFatelandsSecretQuestDirective() + buildFatelandsWorldEvolutionDirective()
+      const _fatelandsCognitiveMemoryBlock = buildFatelandsCognitiveMemoryBlock() + buildFatelandsAnachronismGuard() + buildHistoricalAnachronismGuard() + buildChorusDiscourseDirective() + buildDogmaDiscourseDirective() + buildWorldProfanityBandDirective() + _buildLytharynScholarlyRegisterDirective() + _buildLytharynInstituteDirective() + _buildFatelandsGroundingDirective() + _buildLoreEmissionDirective() + _buildFantasySpeciesIntimacyDirective() + _becomingFieldForAuthor() + _thornwildFormsForAuthor() + buildFatelandsDeepHistoryDirective() + buildPiercingLoreDirective() + buildFatelandsSecretQuestDirective() + buildFatelandsWorldEvolutionDirective() + buildFatelandsManifestationLawDirective()
         // LIVING THINGS (anti-bestiary) + WISH-BORN CURIOSITIES (light half); Fatelands-gated + each self-gates.
         + (function () { try { if (state.picks && state.picks.world === 'Fantasy') { var _t = (state.currentCrisis || '') + ' ' + ((state.aPlot && (state.aPlot.antagonistOrAntiForce || '')) || '') + ' ' + ((state.aPlot && (state.aPlot.goal || '')) || '') + ' ' + ((typeof window !== 'undefined' && window._canonGateText) ? window._canonGateText(state) : ''); var _o = ''; if (typeof _buildFatelandsLivingThingsDirective === 'function') _o += _buildFatelandsLivingThingsDirective(_t); if (typeof _buildFatelandsWishCuriositiesDirective === 'function') _o += _buildFatelandsWishCuriositiesDirective(_t); if (typeof _buildFatelandsWishArchaeologyDirective === 'function') _o += _buildFatelandsWishArchaeologyDirective(_t); if (typeof _buildThornwildFirstCurseDirective === 'function') _o += _buildThornwildFirstCurseDirective(_t); if (typeof _buildFatelandsMysteryLadderDirective === 'function') _o += _buildFatelandsMysteryLadderDirective(_t); if (typeof _buildFatelandsWishCoreDirective === 'function') _o += _buildFatelandsWishCoreDirective(_t); if (typeof _buildFatelandsWishAdjudicationDirective === 'function') _o += _buildFatelandsWishAdjudicationDirective(_t); if (typeof _buildFatelandsCompositeDirective === 'function') _o += _buildFatelandsCompositeDirective(_t); if (typeof _buildFatelandsVeilweaveLoreDirective === 'function') _o += _buildFatelandsVeilweaveLoreDirective(_t); if (typeof _buildFatelandsNamingDirective === 'function') _o += _buildFatelandsNamingDirective(_t); if (typeof _buildFatelandsGrantersDirective === 'function') _o += _buildFatelandsGrantersDirective(_t); if (typeof _buildFatelandsFFOrderDirective === 'function') _o += _buildFatelandsFFOrderDirective(_t); if (typeof _buildFatelandsFFRiteDirective === 'function') _o += _buildFatelandsFFRiteDirective(_t); if (typeof _buildFatelandsSpiralgrassDirective === 'function') _o += _buildFatelandsSpiralgrassDirective(_t); if (typeof _buildFatelandsWilderSocietyDirective === 'function') _o += _buildFatelandsWilderSocietyDirective(_t); if (typeof _buildFatelandsThornwildNightDirective === 'function') _o += _buildFatelandsThornwildNightDirective(_t); if (typeof _buildFatelandsWishFactionsDirective === 'function') _o += _buildFatelandsWishFactionsDirective(_t); if (typeof _buildFatelandsCoercionDirective === 'function') _o += _buildFatelandsCoercionDirective(_t); if (typeof _buildFatelandsCoercionCultureDirective === 'function') _o += _buildFatelandsCoercionCultureDirective(_t); if (typeof _buildFatelandsKwisheenSocietyDirective === 'function') _o += _buildFatelandsKwisheenSocietyDirective(_t); if (typeof _buildFatelandsKwisheenCallingDirective === 'function') _o += _buildFatelandsKwisheenCallingDirective(_t); if (typeof _buildFatelandsWishJudgmentDirective === 'function') _o += _buildFatelandsWishJudgmentDirective(_t); if (typeof _buildFatelandsFoldOntologyDirective === 'function') _o += _buildFatelandsFoldOntologyDirective(_t); if (typeof _buildFatelandsCraftParableDirective === 'function') _o += _buildFatelandsCraftParableDirective(_t); if (typeof _buildFatelandsWishLimitsDirective === 'function') _o += _buildFatelandsWishLimitsDirective(_t); if (typeof _buildFatelandsCombatDirective === 'function') _o += _buildFatelandsCombatDirective(); if (typeof _buildFatelandsWishPriceDirective === 'function' && typeof _FATELANDS_WISH_RESOLVE_RX !== 'undefined' && _FATELANDS_WISH_RESOLVE_RX.test(_t)) _o += _buildFatelandsWishPriceDirective(); if (typeof _buildFatelandsWishcraftPacingDirective === 'function') _o += _buildFatelandsWishcraftPacingDirective(); return _o; } } catch (_) {} return ''; })();
 
@@ -312124,7 +312234,7 @@ FATE CARD ADAPTATION (CRITICAL):
           //   - Fatelands cognitive memory (Phase 2): Fantasy world only
           //   - Chorus discourse (Glass House voice layer):      glass_house subtype
           //   - Dogma discourse (partial-adoption voice layer):  dogma subtype
-          const _fatelandsCognitiveMemoryBlock = buildFatelandsCognitiveMemoryBlock() + buildFatelandsAnachronismGuard() + buildHistoricalAnachronismGuard() + buildChorusDiscourseDirective() + buildDogmaDiscourseDirective() + buildWorldProfanityBandDirective() + _buildLytharynScholarlyRegisterDirective() + _buildLytharynInstituteDirective() + _buildFatelandsGroundingDirective() + _buildLoreEmissionDirective() + _buildFantasySpeciesIntimacyDirective() + _becomingFieldForAuthor() + _thornwildFormsForAuthor() + buildFatelandsDeepHistoryDirective() + buildPiercingLoreDirective() + buildFatelandsSecretQuestDirective() + buildFatelandsWorldEvolutionDirective()
+          const _fatelandsCognitiveMemoryBlock = buildFatelandsCognitiveMemoryBlock() + buildFatelandsAnachronismGuard() + buildHistoricalAnachronismGuard() + buildChorusDiscourseDirective() + buildDogmaDiscourseDirective() + buildWorldProfanityBandDirective() + _buildLytharynScholarlyRegisterDirective() + _buildLytharynInstituteDirective() + _buildFatelandsGroundingDirective() + _buildLoreEmissionDirective() + _buildFantasySpeciesIntimacyDirective() + _becomingFieldForAuthor() + _thornwildFormsForAuthor() + buildFatelandsDeepHistoryDirective() + buildPiercingLoreDirective() + buildFatelandsSecretQuestDirective() + buildFatelandsWorldEvolutionDirective() + buildFatelandsManifestationLawDirective()
         // LIVING THINGS (anti-bestiary) + WISH-BORN CURIOSITIES (light half); Fatelands-gated + each self-gates.
         + (function () { try { if (state.picks && state.picks.world === 'Fantasy') { var _t = (state.currentCrisis || '') + ' ' + ((state.aPlot && (state.aPlot.antagonistOrAntiForce || '')) || '') + ' ' + ((state.aPlot && (state.aPlot.goal || '')) || '') + ' ' + ((typeof window !== 'undefined' && window._canonGateText) ? window._canonGateText(state) : ''); var _o = ''; if (typeof _buildFatelandsLivingThingsDirective === 'function') _o += _buildFatelandsLivingThingsDirective(_t); if (typeof _buildFatelandsWishCuriositiesDirective === 'function') _o += _buildFatelandsWishCuriositiesDirective(_t); if (typeof _buildFatelandsWishArchaeologyDirective === 'function') _o += _buildFatelandsWishArchaeologyDirective(_t); if (typeof _buildThornwildFirstCurseDirective === 'function') _o += _buildThornwildFirstCurseDirective(_t); if (typeof _buildFatelandsMysteryLadderDirective === 'function') _o += _buildFatelandsMysteryLadderDirective(_t); if (typeof _buildFatelandsWishCoreDirective === 'function') _o += _buildFatelandsWishCoreDirective(_t); if (typeof _buildFatelandsWishAdjudicationDirective === 'function') _o += _buildFatelandsWishAdjudicationDirective(_t); if (typeof _buildFatelandsCompositeDirective === 'function') _o += _buildFatelandsCompositeDirective(_t); if (typeof _buildFatelandsVeilweaveLoreDirective === 'function') _o += _buildFatelandsVeilweaveLoreDirective(_t); if (typeof _buildFatelandsNamingDirective === 'function') _o += _buildFatelandsNamingDirective(_t); if (typeof _buildFatelandsGrantersDirective === 'function') _o += _buildFatelandsGrantersDirective(_t); if (typeof _buildFatelandsFFOrderDirective === 'function') _o += _buildFatelandsFFOrderDirective(_t); if (typeof _buildFatelandsFFRiteDirective === 'function') _o += _buildFatelandsFFRiteDirective(_t); if (typeof _buildFatelandsSpiralgrassDirective === 'function') _o += _buildFatelandsSpiralgrassDirective(_t); if (typeof _buildFatelandsWilderSocietyDirective === 'function') _o += _buildFatelandsWilderSocietyDirective(_t); if (typeof _buildFatelandsThornwildNightDirective === 'function') _o += _buildFatelandsThornwildNightDirective(_t); if (typeof _buildFatelandsWishFactionsDirective === 'function') _o += _buildFatelandsWishFactionsDirective(_t); if (typeof _buildFatelandsCoercionDirective === 'function') _o += _buildFatelandsCoercionDirective(_t); if (typeof _buildFatelandsCoercionCultureDirective === 'function') _o += _buildFatelandsCoercionCultureDirective(_t); if (typeof _buildFatelandsKwisheenSocietyDirective === 'function') _o += _buildFatelandsKwisheenSocietyDirective(_t); if (typeof _buildFatelandsKwisheenCallingDirective === 'function') _o += _buildFatelandsKwisheenCallingDirective(_t); if (typeof _buildFatelandsWishJudgmentDirective === 'function') _o += _buildFatelandsWishJudgmentDirective(_t); if (typeof _buildFatelandsFoldOntologyDirective === 'function') _o += _buildFatelandsFoldOntologyDirective(_t); if (typeof _buildFatelandsCraftParableDirective === 'function') _o += _buildFatelandsCraftParableDirective(_t); if (typeof _buildFatelandsWishLimitsDirective === 'function') _o += _buildFatelandsWishLimitsDirective(_t); if (typeof _buildFatelandsCombatDirective === 'function') _o += _buildFatelandsCombatDirective(); if (typeof _buildFatelandsWishPriceDirective === 'function' && typeof _FATELANDS_WISH_RESOLVE_RX !== 'undefined' && _FATELANDS_WISH_RESOLVE_RX.test(_t)) _o += _buildFatelandsWishPriceDirective(); if (typeof _buildFatelandsWishcraftPacingDirective === 'function') _o += _buildFatelandsWishcraftPacingDirective(); return _o; } } catch (_) {} return ''; })();
 

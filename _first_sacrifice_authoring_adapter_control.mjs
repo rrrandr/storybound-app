@@ -82,28 +82,32 @@ ok('a distinctive locked-fact string (the_answer.ownership) appears in the promp
 const scopeLockStatement = PACKET.scope_lock.statement;
 ok('the scope_lock statement appears in the prompt exactly once',
   countOccurrences(combinedPrompt, scopeLockStatement) === 1);
-// THE ANSWER — OBJECT-FIDELITY CONSTRAINT RECEIPT (Roman, 2026-09-19): "prove the authoring prompt
-// contains the staff-and-hooks identity." Real invocation, not static packet inspection — checks the
-// ACTUAL constructed prompt text contains the locked form + the explicit banned-forms list.
-const ansFact = PACKET.locked_world_facts.the_answer;
-ok('the constructed prompt states The Answer\'s locked form ("staff", "double-ended shaft") as a HARD object-fidelity constraint',
-  /HARD OBJECT-FIDELITY CONSTRAINT/.test(user) && new RegExp(ansFact.description.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).test(user) && /staff \(a double-ended shaft/.test(user));
-ok('the constructed prompt states the question-mark-hook-at-each-end identity',
-  new RegExp(ansFact.heads.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).test(user));
-ok('the constructed prompt explicitly lists "stone" among the banned physical forms for The Answer',
-  /NEVER describe it as: stone/.test(user));
+// THE ANSWER — STATEFUL MANIFESTATION RECEIPT (Roman, 2026-09-19, corrected to a stateful identity-
+// vs-manifestation model 2026-09-20): "prove the authoring prompt contains the staff-and-hooks
+// identity" as the CURRENT manifestation, not a permanently-fixed form. Real invocation, not static
+// packet inspection — checks the ACTUAL constructed prompt text.
+const manFact = PACKET.scene1_answer_manifestation;
+const curFact = manFact.current_manifestation;
+ok('the constructed prompt states The Answer\'s CURRENT manifestation ("staff", "double-ended shaft") as a HARD object-fidelity constraint',
+  /CURRENT MANIFESTATION for this scene/.test(user) && new RegExp(curFact.form.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).test(user) && new RegExp('manifestation_id: "' + curFact.manifestation_id + '"').test(user));
+ok('the constructed prompt states the SHARED FATELANDS REALITY LAW explicitly — wish-crafted relics may shift manifestation only via a declared wielder need, not a First-Sacrifice-only rule',
+  /SHARED FATELANDS REALITY LAW/.test(user) && /wish-crafted relics may shift physical manifestation/.test(user) && /only as the declared consequence of a concrete wielder need/.test(user) && /_fatelands_reality_seam_and_manifestation_law\.json/.test(user) && /this law never applies outside Fatelands Fantasy/.test(user));
+ok('the constructed prompt states that NO manifestation-change event is permitted in this scene (real packet state: zero permitted events)',
+  /NO manifestation-change event is permitted anywhere in this scene/.test(user));
+ok('constructing the prompt throws if the packet is not scoped to fatelands_fantasy (the shared law must never be imposed on Famous Fate or another independently-canonical world)',
+  (() => { const p = JSON.parse(JSON.stringify(PACKET)); p.world_scope = 'famous_fate'; try { buildPacketAuthoringPrompt(p, view); return false; } catch (e) { return /refusing to render the shared Fatelands manifestation law/.test(e.message); } })());
 ok('the constructed prompt explicitly says not to invent material, color, weight, powers, or additional history',
   /Do not invent its material, color, weight, powers, or additional history/.test(user));
-// STRUCTURED OBJECT-CLAIM METADATA RECEIPT (Roman, 2026-09-19, follow-up correction): "require the
-// authoring prompt to emit this metadata whenever the object appears materially in the beat."
-ok('the constructed prompt mandates objectClaims metadata whenever a beat names "The Answer"',
-  /MANDATORY WHENEVER YOU NAME "The Answer"/.test(user) && /objectClaims array with exactly one entry/.test(user));
-ok('the constructed prompt states physical_form_claim as a closed choice between neutral_reference and the one canonical token (never free text)',
-  /CLOSED CHOICE/.test(user) && /"neutral_reference"/.test(user) && new RegExp(ansFact.physical_form_claim_token).test(user) && /Never write a free-text form description here/.test(user));
-ok('the constructed prompt requires claim_kind="locked_canon_fact" + cites whenever the canonical form is restated',
+// STRUCTURED OBJECT-CLAIM METADATA RECEIPT — widened 2026-09-20: mandatory not merely on a literal
+// name, but on any physical handling, visual description, or transformation.
+ok('the constructed prompt mandates objectClaims metadata for naming, physical handling, visual description, OR transformation — not merely literal naming',
+  /MANDATORY WHENEVER YOU NAME, PHYSICALLY HANDLE, VISUALLY DESCRIBE, OR NARRATE A TRANSFORMATION/.test(user) && /objectClaims array with exactly one entry/.test(user));
+ok('the constructed prompt states physical_form_claim as a closed choice resolved against the packet\'s OWN declared manifestations (never free text)',
+  /CLOSED CHOICE/.test(user) && /"neutral_reference"/.test(user) && new RegExp(curFact.manifestation_id).test(user) && /Never write a free-text form description here/.test(user) && /never claim a manifestation_id that is not active at that exact position/.test(user));
+ok('the constructed prompt requires claim_kind="locked_canon_fact" + cites whenever a manifestation is restated',
   /claim_kind MUST be "locked_canon_fact" and cites MUST be present/.test(user));
-ok('the constructed prompt gives a worked example of both the neutral and canonical-form-restated claim shapes',
-  user.includes(PACKET.scene1_answer_object_claim_schema.example_neutral) && user.includes(PACKET.scene1_answer_object_claim_schema.example_canonical_form_restated));
+ok('the constructed prompt gives a worked example of both the neutral and current-manifestation-restated claim shapes',
+  user.includes(manFact.object_claim_schema.example_neutral) && user.includes(manFact.object_claim_schema.example_current_manifestation_restated));
 // Live-reader-state / other-starter concepts that exist elsewhere in this codebase and must NEVER
 // appear in a packet-only prompt — if any of these leak in, the adapter silently pulled from a
 // broader source than the immutable packet.

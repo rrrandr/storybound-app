@@ -1,0 +1,97 @@
+{
+  "law_id": "fatelands_reality_seam_and_manifestation",
+  "version": "1.1.0-shared-canon",
+  "status": "LOCKED — the CANON TEXT of a shared Fatelands Fantasy world law (Roman, 2026-09-20; corrected 2026-09-20 — see implementation_status below). This file is the human-readable design record of the law (what it says, its scope, its 3-level structure, the entity_capability_registry) — it is NOT itself the runtime mechanism, and eligibility under this law is NOT the same as a given story actually USING it. A story only consumes this law once it registers a specific entity through the real runtime ledger (see implementation_status) — most Fatelands Fantasy stories, at any given time, register nothing and are completely unaffected by it. The law makes manifestation variance part of the world's metaphysics for entities that DO get registered — never a loophole excusing inconsistent rendering. A manifestation may change ONLY through a structured, grounded, recorded event; never by free prose narrating a different prop, and never by an image model silently rendering a different form.",
+
+  "implementation_status": {
+    "real_runtime_source_of_truth": "public/app.js — a per-story runtime ledger (state._fatelandsManifestationLedger) plus 3 functions: _fatelandsRegisterManifestation, _fatelandsRecordManifestationChange, buildFatelandsManifestationLawDirective (the shared prompt-context feed, wired into BOTH the literary directive stack — 3 real call sites feeding the _fatelandsCognitiveMemoryBlock concatenation — and the CG author/screenplay assembly). This file does not get read at runtime (the browser never fetches it); it is the canon/design document ONLY. Consistency between this file's registry and the real runtime code is proven by _fatelands_manifestation_ledger_control.mjs (real invocation) and this file's own entity_capability_registry stays the shared reference the runtime functions' capability categories are drawn from.",
+    "eligibility_vs_consumption": "This law is ELIGIBLE to apply to any Fatelands Fantasy story (state.picks.world === 'Fantasy', state.fateMode !== 'famous_fate' — the same world gate every other Fatelands-conditional directive in app.js already uses). It is CONSUMED only by a story that actually calls _fatelandsRegisterManifestation for a specific entity. Do not describe 'every Fatelands story' as using this mechanism — as of 2026-09-20, only First Sacrifice's Answer-manifestation record (see consumers below) and this file's own control-script proof exercise it for real; an ordinary Fatelands Fantasy scene with no registered entity gets an empty directive and zero prompt cost, by design (see the CG/literary directive's own no-bloat gate).",
+    "first_sacrifice_note": "First Sacrifice's scene1_answer_manifestation (in _first_sacrifice_source_packet.json) is a PACKET-LEVEL authoring record for a dry, not-yet-live authoring pass — it is validated by _first_sacrifice_packet_validator.mjs, a separate Node-side mechanism from the live app.js runtime ledger above (First Sacrifice has not yet run a live authoring/generation pass that would register The Answer into the real runtime ledger). Both instantiate the SAME shared law and the SAME entity (the_answer); they are not in conflict, but they are two different consumers at two different pipeline stages, not one path."
+  },
+
+  "scope": {
+    "applies_to": "ELIGIBLE for any Fatelands Fantasy story (see implementation_status for the eligible-vs-consumed distinction) — the Fatelands setting broadly (Veilwood, the Open, the wider Fatelands geography; First Favored/Kwisheen/Wilder peoples; the wish economy).",
+    "explicitly_excluded": [
+      "famous_fate — a Famous Fate story is the player's own named world with its own independently authored canon; this law (or any Fatelands physics) must NEVER be imposed on it",
+      "any other world with independently authored canon that does not declare itself part of the Fatelands setting"
+    ],
+    "gate_contract": "The REAL runtime gate lives in public/app.js's _fatelandsFantasyWorldGate() — state.picks.world === 'Fantasy' AND state.fateMode !== 'famous_fate'. Registration and every subsequent change/context call re-checks this LIVE (not only at first registration), so a story that later flips into Famous Fate mode stops receiving this mechanism immediately, even if it had previously registered entities. A First-Sacrifice-style dry packet (not yet live) expresses the same gate via its own world_scope field, checked by its validator/adapter.",
+    "cites": "Roman 2026-09-20, this message — \"It should be a Fatelands reality law, not imposed on Famous Fate worlds with their own canon.\""
+  },
+
+  "reality_seam_law": {
+    "statement": "Fatelands wishes draw possibilities from adjacent realities into the present world, fracturing or thinning the seam between them. The Fold and The Staircase are major expressions of this same law.",
+    "kind": "locked_canon_fact",
+    "cites": "Roman 2026-09-20, this message"
+  },
+
+  "wish_crafted_manifestation_variance": {
+    "statement": "Wish-crafted magical items may shift physical manifestation because their chained wishes connect them to many adjacent possibilities. An item made from hundreds or thousands of chained wishes can therefore take different forms across time and circumstance.",
+    "kind": "locked_canon_fact",
+    "cites": "Roman 2026-09-20, this message"
+  },
+
+  "altered_peoples_manifestation_variance": {
+    "statement": "The most magically altered peoples may also manifest intermittent adjacent-reality variation — e.g. rounded ears becoming pointed, arcane markings appearing or fading, and comparable changes among First Favored, Kwisheen, and Wilders.",
+    "kind": "locked_canon_fact",
+    "cites": "Roman 2026-09-20, this message"
+  },
+
+  "hard_boundary": "This is NOT permission for arbitrary continuity errors. Manifestation variance is a real metaphysical property of eligible entities in this world, but every actual change must be (a) grounded in a relevant wish, wielder need, seam disturbance, or magical pressure, (b) shown or otherwise established IN THE STORY (never silently assumed), and (c) RECORDED as the new current manifested state so every later beat/scene stays consistent with it. An entity not listed in entity_capability_registry, or listed with capable_of_manifestation_variance: false, gets NO variance under this law regardless of world_scope.",
+
+  "three_level_structure": {
+    "level_1_shared_law": "SHARED FATELANDS LAW (this file): manifestation variance is POSSIBLE for wish-crafted relics and heavily-altered peoples — a real property of this world's metaphysics, not a rendering inconsistency. Scoped to fatelands_fantasy only.",
+    "level_2_entity_capability": "PER-ENTITY CAPABILITY (entity_capability_registry, this file): which entities CAN shift, what CATEGORY of variation is plausible for them, and whether their current form is currently known/recorded anywhere yet.",
+    "level_3_scene_manifested_state": "PER-SCENE/PER-STORY MANIFESTED STATE (lives in each story's own packet, e.g. _first_sacrifice_source_packet.json scene1_answer_manifestation): the entity's currently recorded form for THAT story, which authors and renderers must use consistently; a change must be shown/established and grounded, then recorded via a structured manifestation-change event — never asserted by free prose or a silently-different image."
+  },
+
+  "entity_capability_registry": {
+    "the_answer": {
+      "capable_of_manifestation_variance": true,
+      "basis": "wish_crafted_relic — hundreds or thousands of chained wishes connect it to many adjacent possibilities",
+      "variation_category": "full physical form (distinct object shape/mechanism) — a change is plausible ONLY when grounded in a concrete wielder need, per level 3",
+      "current_form_known": true,
+      "current_form_recorded_in": "_first_sacrifice_source_packet.json scene1_answer_manifestation.current_manifestation (First Sacrifice, Scene 1: the hooked staff — no change occurs in that scene)",
+      "no_added_lore": "This registry entry states CAPABILITY and CATEGORY only — it does not itself assert any particular alternate form, material, color, weight, power, or history for The Answer. Those facts, if ever authored, belong in a story-specific level-3 record, grounded and cited there."
+    },
+    "manta_cloak": {
+      "capable_of_manifestation_variance": true,
+      "basis": "wish_crafted_relic",
+      "variation_category": "full physical form, grounded only in a concrete wielder need — category only, no specific alternate form asserted here",
+      "current_form_known": false,
+      "current_form_recorded_in": null,
+      "no_added_lore": "No story has yet authored a level-3 manifested-state record for the Manta Cloak. Until one exists, no manifestation may be asserted for it beyond whatever that story's own baked/shipped canon already independently states."
+    },
+    "first_favored": {
+      "capable_of_manifestation_variance": true,
+      "basis": "heavily_altered_people",
+      "variation_category": "intermittent adjacent-reality BODILY variation only — e.g. rounded-to-pointed ears, arcane markings appearing/fading. NEVER a species-identity change, NEVER an unrelated new power or ability.",
+      "current_form_known": false,
+      "current_form_recorded_in": null,
+      "no_added_lore": "Category only — no specific variation is asserted for any named First Favored character here. A story asserting a variation for a specific character needs its own grounded, recorded, level-3 event."
+    },
+    "kwisheen": {
+      "capable_of_manifestation_variance": true,
+      "basis": "heavily_altered_people",
+      "variation_category": "intermittent adjacent-reality bodily variation only, same discipline as first_favored — category only, no specific variation asserted here",
+      "current_form_known": false,
+      "current_form_recorded_in": null,
+      "no_added_lore": "Category only, per first_favored's entry."
+    },
+    "wilders": {
+      "capable_of_manifestation_variance": true,
+      "basis": "heavily_altered_people",
+      "variation_category": "intermittent adjacent-reality bodily variation only, same discipline as first_favored — category only, no specific variation asserted here",
+      "current_form_known": false,
+      "current_form_recorded_in": null,
+      "no_added_lore": "Category only, per first_favored's entry."
+    }
+  },
+
+  "manifestation_change_event_schema_reference": "The structured event shape (a grounding cause, a resulting {manifestation_id, form}, and an ordering position) is defined per-consumer: First Sacrifice's dry packet uses wielder_need + after_beat (see _first_sacrifice_source_packet.json scene1_answer_manifestation.manifestation_change_event_schema); the real runtime ledger (public/app.js) uses groundedIn + sceneOrBeat via _fatelandsRecordManifestationChange. This file states the LAW that authorizes such a mechanism to exist at all; it does not itself define a single global event array shared across stories or pipeline stages, since ordering/positions and pipeline shape are inherently story/consumer-specific.",
+
+  "consumers": [
+    { "kind": "dry_authoring_packet_not_yet_live", "story": "First Sacrifice", "entity": "the_answer", "packet": "_first_sacrifice_source_packet.json", "record": "scene1_answer_manifestation", "validated_by": "_first_sacrifice_packet_validator.mjs" },
+    { "kind": "real_runtime_mechanism", "location": "public/app.js", "record": "state._fatelandsManifestationLedger via _fatelandsRegisterManifestation/_fatelandsRecordManifestationChange/buildFatelandsManifestationLawDirective", "proven_by": "_fatelands_manifestation_ledger_control.mjs (real invocation, register/change/save/reload/Issue-transition/Famous-Fate-exclusion)", "note": "no story registers a live entity through this path yet as of 2026-09-20 — proven by a dedicated control script's own test registration, not by any live production story." }
+  ]
+}

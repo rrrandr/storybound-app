@@ -89,11 +89,16 @@ export const ALLOWED_OUTPUT_SCHEMA = {
   scene1_allowed_images_in_order: ['intro_lirael', 'intro_seren', 'intro_dohkar', 'intro_julian', 'd1', 'd2', 'd3', 'd4'],
   oas_opening_fields: ['speaker', 'text', 'objectClaims'],
   post_interruption_beat_fields: ['speaker', 'image', 'kind', 'text', 'objectClaims'],
-  // STRUCTURED OBJECT-CLAIM METADATA (Roman, 2026-09-19) — required on scene1Candidate beats,
-  // oasOpening, and postInterruptionBeat whenever their text literally names "The Answer". A closed
-  // enum, not free text, so a conflicting form claim cannot be smuggled through this channel either.
+  // STRUCTURED OBJECT-CLAIM METADATA (Roman, 2026-09-19, widened to a stateful manifestation model
+  // 2026-09-20) — required whenever a beat/oasOpening/postInterruptionBeat names, physically
+  // handles, visually describes, or narrates a transformation of The Answer. A closed enum, not
+  // free text, so a conflicting claim cannot be smuggled through this channel either.
   object_claim_fields: ['object_ref', 'physical_form_claim', 'claim_kind', 'cites'],
   object_claim_object_refs: ['the_answer'],
+  // ILLUSTRATIVE ONLY — the actual valid set is resolved per-packet from
+  // scene1_answer_manifestation (current_manifestation + any structurally-valid
+  // permitted_manifestation_change_events); this static list just reflects today's real packet
+  // state (one approved manifestation, zero permitted change events) for quick reference.
   object_claim_physical_form_values: ['neutral_reference', 'staff_double_ended_question_mark_hooks'],
 };
 
@@ -114,25 +119,37 @@ function renderPacketAsPromptText(packet) {
   L.push('- Institutional hierarchy: ' + packet.locked_world_facts.institutional_hierarchy.note);
   Object.entries(packet.locked_world_facts.cast_roles).forEach(([name, r]) => L.push('- ' + name + ': ' + r.role + (r.aspiration ? ' (aspires to: ' + r.aspiration + ')' : '')));
   L.push('- The Answer (ownership): ' + packet.locked_world_facts.the_answer.ownership);
-  // OBJECT-FIDELITY CONSTRAINT (Roman, 2026-09-19) — HARD, not a style suggestion. Every prior draft
-  // attempt that mentioned The Answer invented its own ungrounded material (attempt 1 "cool metal",
-  // attempt 4 "cool stone", attempt 5 "carved bone") because only .ownership was ever rendered here,
-  // never its physical form. Rendering the locked form + explicit banned list closes that gap.
-  const ans = packet.locked_world_facts.the_answer;
-  L.push('- The Answer (LOCKED PHYSICAL FORM — HARD OBJECT-FIDELITY CONSTRAINT, not a style suggestion): ' + ans.description + '. Form: ' + ans.form + '. ' + ans.heads + '. If you mention The Answer\'s form at all, it MUST agree with this — NEVER describe it as: ' + ans.banned_forms.slice(0, -1).join(', ') + ', or ' + ans.banned_forms[ans.banned_forms.length - 1] + '. A neutral reference (naming it, who holds it, what it does) that does not restate its form is always fine. Do not invent its material, color, weight, powers, or additional history beyond what is stated here.');
+  // SHARED FATELANDS REALITY LAW (Roman, 2026-09-20) — this is NOT a First-Sacrifice-specific
+  // invention. Fatelands Fantasy wishes draw possibilities from adjacent realities into the present
+  // world; wish-crafted relics (built from hundreds/thousands of chained wishes, like The Answer)
+  // may therefore shift physical manifestation — but ONLY as the declared consequence of a concrete
+  // wielder need via a structured event, never because prose wants a different image or metaphor.
+  // This law is scoped to Fatelands Fantasy stories ONLY (this packet's world_scope must say so —
+  // see the throw below) and NEVER applies to Famous Fate or another independently-canonical world.
+  // Every prior draft attempt that mentioned The Answer invented its own ungrounded material
+  // (attempt 1 "cool metal", attempt 4 "cool stone", attempt 5 "carved bone") because no
+  // manifestation was ever rendered to the model at all. Rendering the CURRENT approved
+  // manifestation + the fact that no change is permitted here closes that gap.
+  if (packet.world_scope !== 'fatelands_fantasy') {
+    throw new Error('packet.world_scope is "' + packet.world_scope + '", not "fatelands_fantasy" — refusing to render the shared Fatelands manifestation law into a prompt for a packet not scoped to it (that law must never be imposed on Famous Fate or another independently-canonical world)');
+  }
+  const man = packet.scene1_answer_manifestation;
+  const cur = man.current_manifestation;
+  const events = man.permitted_manifestation_change_events || [];
+  L.push('- The Answer — SHARED FATELANDS REALITY LAW: wish-crafted relics may shift physical manifestation, but only as the declared consequence of a concrete wielder need (see _fatelands_reality_seam_and_manifestation_law.json — this law never applies outside Fatelands Fantasy). CURRENT MANIFESTATION for this scene (HARD OBJECT-FIDELITY CONSTRAINT, not a style suggestion): ' + cur.form + ' [manifestation_id: "' + cur.manifestation_id + '"]. ' + (events.length ? 'This packet declares ' + events.length + ' permitted change event(s) — see below.' : 'NO manifestation-change event is permitted anywhere in this scene — the current manifestation above is the ONLY one active from The Answer\'s first appearance through the end of this scene.') + ' A neutral reference (naming it, who holds it, what it does) that does not restate its form is always fine. Do not invent its material, color, weight, powers, or additional history beyond what is stated here — this record states FORM ONLY.');
+  events.forEach((ev, ei) => L.push('  - Permitted change event [' + ei + ']: after beat ' + ev.after_beat + ', IF the wielder need "' + ev.wielder_need + '" is genuinely and concretely present in your prose at that point, the manifestation may become: ' + ev.resulting_manifestation.form + ' [manifestation_id: "' + ev.resulting_manifestation.manifestation_id + '"] — active from the next beat onward. A manifestation change is never valid without this exact declared need.'));
   L.push('');
-  // MANDATORY OBJECT-CLAIM METADATA (Roman, 2026-09-19) — closes the evasion a same-text guard alone
-  // cannot: adjacent sentences, pronouns, a beat split. A textual scan is kept as a fast guard, but
-  // the real requirement is structural — you must SELF-DISCLOSE, per beat, whenever you name The
-  // Answer, whether you are making a neutral reference or restating its canonical form.
-  const ocs = packet.scene1_answer_object_claim_schema;
-  L.push('OBJECT-CLAIM METADATA — MANDATORY WHENEVER YOU NAME "The Answer" (HARD, ' + ocs.status.split(' — ')[0] + '):');
-  L.push('Any scene1Candidate beat, oasOpening, or postInterruptionBeat whose text contains the literal words "The Answer" MUST carry an objectClaims array with exactly one entry: { object_ref: "the_answer", physical_form_claim, claim_kind, cites? }.');
-  L.push('  - physical_form_claim is a CLOSED CHOICE — exactly one of: "neutral_reference" (you name/handle it without restating its form — no citation needed) OR "' + ans.physical_form_claim_token + '" (restates the locked canonical form exactly — nothing else). Never write a free-text form description here.');
-  L.push('  - if physical_form_claim is the canonical token, claim_kind MUST be "locked_canon_fact" and cites MUST be present (e.g. "locked_world_facts.the_answer") — restating a locked fact is always cited, never freely invented.');
+  // MANDATORY OBJECT-CLAIM METADATA (Roman, 2026-09-19, widened 2026-09-20) — closes the evasion a
+  // same-text guard alone cannot: adjacent sentences, pronouns, a beat split. Required not merely
+  // on a literal name, but on ANY physical handling, visual description, or transformation.
+  const ocs = man.object_claim_schema;
+  L.push('OBJECT-CLAIM METADATA — MANDATORY WHENEVER YOU NAME, PHYSICALLY HANDLE, VISUALLY DESCRIBE, OR NARRATE A TRANSFORMATION OF "The Answer" (HARD — this is disclosure, not optional, and applies even to a pronoun-only continuation of an earlier reference):');
+  L.push('Any such scene1Candidate beat, oasOpening, or postInterruptionBeat MUST carry an objectClaims array with exactly one entry: { object_ref: "the_answer", physical_form_claim, claim_kind, cites? }.');
+  L.push('  - physical_form_claim is a CLOSED CHOICE, resolved against this packet\'s OWN declared manifestations only — exactly one of: "neutral_reference" (you name/handle/describe it without restating its form — no citation needed) OR a manifestation_id that is CURRENTLY ACTIVE at that point in the scene (today: only "' + cur.manifestation_id + '", since no change event is permitted). Never write a free-text form description here, and never claim a manifestation_id that is not active at that exact position — a manifestation is not active just because it is declared somewhere in this packet.');
+  L.push('  - if physical_form_claim restates a manifestation (not neutral_reference), claim_kind MUST be "locked_canon_fact" and cites MUST be present (e.g. "scene1_answer_manifestation.current_manifestation") — restating a declared fact is always cited, never freely invented.');
   L.push('  - if physical_form_claim is "neutral_reference", claim_kind may be any of locked_canon_fact | grounded_inference | generated_expression, same as ordinary beat provenance.');
   L.push('  - Example neutral: ' + ocs.example_neutral);
-  L.push('  - Example canonical-form-restated: ' + ocs.example_canonical_form_restated);
+  L.push('  - Example current-manifestation-restated: ' + ocs.example_current_manifestation_restated);
   L.push('  - ' + ocs.no_added_lore);
   L.push('');
   L.push('SCENE 1 CAUSAL SEQUENCE (already happened; do not contradict or re-stage):');
