@@ -136591,6 +136591,33 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
     StoryPagination.addPage(formatStory(displayBody), true);
     try { _sceneLedgerCommit(state, { kind: 'baked', sceneNumber: 1, event: (pkg && pkg.emitted && (pkg.emitted.ledgerLine || pkg.emitted.sceneSummary)) ? String(pkg.emitted.ledgerLine || pkg.emitted.sceneSummary).slice(0, 300) : null, /* ledgerLine = the package's ≤300-char committed record; sceneSummary is the fuller orientation (SEED CONTINUITY) */ pageUid: StoryPagination.getCurrentPageUid() }); } catch (_) {}   // 2026-09-10: the ledger names what the fixed opening established
 
+    // ── BAKED IMAGE OCCURRENCES (Roman 2026-09-19) — structured DOM path, NEVER markup-in-text ──
+    // The reading copy above carries only [bracket] TEXT plates (harmless plain text, unchanged).
+    // Real images mount separately, through the dedicated structured renderer, into their OWN host
+    // container — never spliced into the prose passed to formatStory/StoryPagination. Fire-and-
+    // forget: an unrendered package (every real package today, until art is baked) resolves zero
+    // occurrences and mounts nothing, by design — see _mountBakedImageOccurrences.
+    if (isCG && pkg.imageOccurrences && typeof _mountBakedImageOccurrences === 'function') {
+      try {
+        var _bakedImgHost = document.getElementById('bakedSceneImages');
+        if (!_bakedImgHost) {
+          var _storyHost = document.getElementById('storyContent') || document.getElementById('gnPanelDisplay');
+          if (_storyHost) {
+            _bakedImgHost = document.createElement('div');
+            _bakedImgHost.id = 'bakedSceneImages';
+            _storyHost.insertBefore(_bakedImgHost, _storyHost.firstChild);
+          }
+        } else {
+          _bakedImgHost.innerHTML = '';
+        }
+        if (_bakedImgHost) {
+          _mountBakedImageOccurrences(pkg, _bakedImgHost).then(function (mounted) {
+            console.log('[BAKED-IMG] mounted ' + mounted.length + ' occurrence(s): ' + mounted.join(', '));
+          });
+        }
+      } catch (e) { console.warn('[BAKED-IMG] mount failed:', e && e.message); }
+    }
+
     // ── DISPLAY NOW, COMMIT AT UNLOCK ──
     // The scene is on screen but NOT committed to story state: turnCount stays
     // 0 and scenes[] stays empty until _commitBakedScene() runs after setup.
@@ -136718,6 +136745,110 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
     };
   }
 
+  // ══ GENERIC BAKED-IMAGE-OCCURRENCE SCHEMA + STRUCTURED RENDERER (Roman 2026-09-19) ═════════════
+  // CORRECTION: a baked scene's images must NEVER reach the DOM as `<img>` markup embedded in story
+  // prose, even though formatStory() does not escape HTML by default. That would collapse trusted
+  // layout data and untrusted author/model text into one channel. This is a GENERAL starter-package
+  // capability (not First-Sacrifice-specific): a package declares its image ASSETS and their
+  // approved OCCURRENCES; a dedicated renderer resolves and mounts them as real DOM nodes it builds
+  // itself. A model or prose field can never supply markup, a URL, or crop geometry — only a
+  // validated occurrence KEY (the same string already used in `beat.image`) selects what renders.
+  //
+  // Three distinct identities (Roman's explicit requirement):
+  //   ASSET      — a real generated/baked image (pkg.imageAssets[i]: {id, kind, label, url} —
+  //                deliberately separate from pkg.images, the pre-existing label registry the
+  //                bracket-text plates read; collapsing them would let a quadrant masquerade as its
+  //                own asset). kind
+  //                'intro' = a solo portrait; kind 'sheet' = one 2x2 four-quadrant sheet.
+  //   OCCURRENCE — one approved USE of an asset at a beat (pkg.imageOccurrences[key]: {assetId,
+  //                treatment, quadrant?}). Multiple occurrences may reuse the SAME asset (e.g. the
+  //                Dohkar's intro asset reused later at a tighter treatment) — occurrence identity is
+  //                the KEY (matches beat.image), never the asset id.
+  //   QUADRANT   — for a 'sheet' asset, which of its 4 panels (0-3) an occurrence selects. Distinct
+  //                from both: many occurrences can point at the same asset with different quadrants.
+  var _IMG_OCC_TREATMENTS = { full: 1, quadrant: 1, close: 1, extreme_close: 1, extreme_closeup_eye: 1, bust: 1, medium: 1 };
+  function _validateImageOccurrence(key, occ, assetsById) {
+    if (!occ || typeof occ !== 'object') return { ok: false, reason: 'missing_occurrence' };
+    var allowed = { assetId: 1, treatment: 1, quadrant: 1 };
+    var extra = Object.keys(occ).filter(function (k) { return !allowed[k]; });
+    if (extra.length) return { ok: false, reason: 'unapproved_occurrence_field:' + extra.join(',') };
+    if (typeof occ.assetId !== 'string' || !occ.assetId) return { ok: false, reason: 'missing_assetId' };
+    var asset = assetsById[occ.assetId];
+    if (!asset) return { ok: false, reason: 'unknown_assetId:' + occ.assetId };
+    if (!_IMG_OCC_TREATMENTS[occ.treatment]) return { ok: false, reason: 'unapproved_treatment:' + occ.treatment };
+    if (occ.treatment === 'quadrant') {
+      if (asset.kind !== 'sheet') return { ok: false, reason: 'quadrant_treatment_requires_sheet_asset' };
+      if (!Number.isInteger(occ.quadrant) || occ.quadrant < 0 || occ.quadrant > 3) return { ok: false, reason: 'invalid_quadrant' };
+    } else if (occ.quadrant != null) {
+      return { ok: false, reason: 'quadrant_field_only_valid_with_quadrant_treatment' };
+    }
+    return { ok: true, asset: asset };
+  }
+  window._validateImageOccurrence = _validateImageOccurrence;
+
+  // Resolve an occurrence to a real displayable URL — ZERO network calls. 'full' returns the asset's
+  // own url; 'quadrant' crops it via the REAL, existing _splitSheetQuadrants canvas splitter (the
+  // same function the live one-shot sheet path uses); any camera name reuses the REAL, existing
+  // _deriveFromFrame canvas crop. Returns null (never a placeholder/fallback URL) when the asset has
+  // no url yet — an unrendered baked package (First Sacrifice today) simply has nothing to mount.
+  async function _resolveImageOccurrenceUrl(occ, asset) {
+    if (!asset || !asset.url) return null;
+    if (occ.treatment === 'full') return asset.url;
+    if (occ.treatment === 'quadrant') {
+      var quads = await _splitSheetQuadrants(asset.url);
+      return (quads && quads[occ.quadrant]) || null;
+    }
+    return await _deriveFromFrame(asset.url, occ.treatment);
+  }
+  window._resolveImageOccurrenceUrl = _resolveImageOccurrenceUrl;
+
+  // THE structured renderer: the ONLY function permitted to create an <img> DOM node for a baked
+  // occurrence. Takes a validated occurrence KEY (never raw text) and the package; builds the
+  // element itself via document.createElement — a beat's `text` field is NEVER read here and could
+  // not supply markup, a src, or crop geometry even if it tried.
+  async function _mountImageOccurrence(hostEl, occurrenceKey, pkg) {
+    if (!hostEl || !pkg) return null;
+    var occ = pkg.imageOccurrences && pkg.imageOccurrences[occurrenceKey];
+    // ASSETS live in pkg.imageAssets — deliberately NOT pkg.images (the pre-existing label/plate
+    // registry _bakedCGBody reads for its bracket text, unchanged). A "sheet" asset is ONE real
+    // generated image; several images[] entries (d1..d4) can be quadrant OCCURRENCES of that one
+    // asset — collapsing them into the same registry would make every quadrant look like its own
+    // asset and erase the asset/occurrence distinction this whole layer exists to enforce.
+    var assetsById = {}; (pkg.imageAssets || []).forEach(function (im) { if (im && im.id) assetsById[im.id] = im; });
+    var v = _validateImageOccurrence(occurrenceKey, occ, assetsById);
+    if (!v.ok) { console.warn('[BAKED-IMG] occurrence "' + occurrenceKey + '" rejected: ' + v.reason); return null; }
+    var url = await _resolveImageOccurrenceUrl(occ, v.asset);
+    if (!url) return null;   // asset not yet rendered — nothing to mount, no placeholder markup either
+    var imgEl = document.createElement('img');
+    imgEl.className = 'baked-occurrence-img';
+    imgEl.alt = String((v.asset && v.asset.label) || occurrenceKey);
+    imgEl.dataset.occurrenceKey = occurrenceKey;
+    imgEl.dataset.assetId = occ.assetId;
+    imgEl.src = url;   // the ONLY place occ ever reaches a URL — always the resolved asset, never occ/beat text
+    hostEl.appendChild(imgEl);
+    return imgEl;
+  }
+  window._mountImageOccurrence = _mountImageOccurrence;
+
+  // Walk the beat sequence's real image-occurrence keys (in first-appearance order, deduplicated —
+  // each occurrence mounts once, even if several consecutive beats share it) and mount each through
+  // the structured renderer above, into a dedicated host container — never into the StoryPagination
+  // text stream. Returns the mounted keys (for proofs/telemetry), skipping any occurrence whose
+  // asset has no url yet (nothing to show — the reading copy's bracket-label plates already tell the
+  // reader an image belongs there).
+  async function _mountBakedImageOccurrences(pkg, hostEl) {
+    if (!pkg || !Array.isArray(pkg.beats) || !hostEl) return [];
+    var seen = {}, order = [];
+    pkg.beats.forEach(function (b) { if (b && b.image && !seen[b.image]) { seen[b.image] = 1; order.push(b.image); } });
+    var mounted = [];
+    for (var i = 0; i < order.length; i++) {
+      var el = await _mountImageOccurrence(hostEl, order[i], pkg);
+      if (el) mounted.push(order[i]);
+    }
+    return mounted;
+  }
+  window._mountBakedImageOccurrences = _mountBakedImageOccurrences;
+
   function _bakedCGBody(pkg, withPlates) {
     var out = [];
     if (Array.isArray(pkg.beats) && pkg.beats.length) {
@@ -136739,6 +136870,7 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
     });
     return out.join('\n\n');
   }
+  window._bakedCGBody = _bakedCGBody;
 
   /**
    * Apply the package's `emitted` block — what Scene 1 DID, which Scene 2 has to
@@ -163628,6 +163760,138 @@ No text, no watermark, no UI elements, share-ready.`;
       img.src = sourceUrl;
     });
   }
+  window._deriveFromFrame = _deriveFromFrame;
+
+  // ══ MULTI-SOURCE CROP COMPOSITE (Roman 2026-09-19) ═════════════════════════════════════════════
+  // The general "layout editor" capability: multiple approved source assets + named camera crops +
+  // an ordered layout template -> ONE new canvas-composed image, zero network calls. Supports the
+  // concrete example: 4 already-introduced characters' eye-strips stacked into one page for free.
+  // Same crop-rect table as _deriveFromFrame (duplicated intentionally — a small standalone table
+  // this rarely-changing function owns, rather than refactoring the live, heavily-tuned
+  // _deriveFromFrame to share it and risk that function's real generation behavior).
+  function _cropRectForCamera(sw, sh, camera) {
+    var cx = sw / 2, cy = sh / 2, cropW, cropH;
+    switch ((camera || '').toLowerCase()) {
+      case 'extreme_close':
+      case 'extreme_closeup_eye': cropW = sw * 0.3; cropH = sh * 0.3; cy = sh * 0.35; break;
+      case 'close': cropW = sw * 0.5; cropH = sh * 0.5; cy = sh * 0.4; break;
+      case 'bust': cropW = sw * 0.62; cropH = sh * 0.62; cy = sh * 0.40; break;
+      case 'medium': cropW = sw * 0.75; cropH = sh * 0.75; break;
+      default: cropW = sw * 0.6; cropH = sh * 0.6; break;
+    }
+    var sx = Math.max(0, cx - cropW / 2), sy = Math.max(0, cy - cropH / 2);
+    if (sx + cropW > sw) sx = sw - cropW;
+    if (sy + cropH > sh) sy = sh - cropH;
+    return { sx: sx, sy: sy, sw: cropW, sh: cropH };
+  }
+  window._cropRectForCamera = _cropRectForCamera;
+
+  // Validated layout templates — a composite may ONLY use one of these named, ordered slot sets
+  // (never an arbitrary caller-supplied geometry). eye_strip_stack_4 is the Mexican-standoff case:
+  // 4 horizontal strips stacked top to bottom, one per character, in the order sources are given.
+  var _COMPOSITE_LAYOUTS = {
+    eye_strip_stack_4: { width: 1024, height: 1024, slots: [
+      { x: 0, y: 0, w: 1024, h: 256 }, { x: 0, y: 256, w: 1024, h: 256 },
+      { x: 0, y: 512, w: 1024, h: 256 }, { x: 0, y: 768, w: 1024, h: 256 } ] },
+    quad_grid_4: { width: 1024, height: 1024, slots: [
+      { x: 0, y: 0, w: 512, h: 512 }, { x: 512, y: 0, w: 512, h: 512 },
+      { x: 0, y: 512, w: 512, h: 512 }, { x: 512, y: 512, w: 512, h: 512 } ] },
+  };
+  window._COMPOSITE_LAYOUTS = _COMPOSITE_LAYOUTS;
+
+  function _loadImageEl(url) {
+    return new Promise(function (resolve, reject) {
+      var img = new Image(); img.crossOrigin = 'anonymous';
+      img.onload = function () { resolve(img); };
+      img.onerror = function () { reject(new Error('failed to load composite source image')); };
+      img.src = url;
+    });
+  }
+
+  // sources: [{url, camera}] — each a REFERENCE TO AN EXISTING ASSET (never accepts raw markup or
+  // arbitrary geometry from a model/prose field; camera must be one of _deriveFromFrame's known
+  // vocabulary). layoutKey: a name from _COMPOSITE_LAYOUTS. Zero fetch() calls — pure canvas work.
+  async function _composeMultiSourceImage(sources, layoutKey) {
+    var layout = _COMPOSITE_LAYOUTS[layoutKey];
+    if (!layout) throw new Error('unknown composite layout: ' + layoutKey);
+    if (!Array.isArray(sources) || !sources.length) throw new Error('no composite sources supplied');
+    if (sources.length > layout.slots.length) throw new Error('too many sources for layout ' + layoutKey + ' (max ' + layout.slots.length + ')');
+    var canvas = document.createElement('canvas'); canvas.width = layout.width; canvas.height = layout.height;
+    var ctx = canvas.getContext('2d');
+    for (var i = 0; i < sources.length; i++) {
+      var src = sources[i], slot = layout.slots[i];
+      if (!src || !src.url) throw new Error('composite source ' + i + ' missing url');
+      var img = await _loadImageEl(src.url);
+      var rect = _cropRectForCamera(img.naturalWidth, img.naturalHeight, src.camera);
+      ctx.drawImage(img, rect.sx, rect.sy, rect.sw, rect.sh, slot.x, slot.y, slot.w, slot.h);
+    }
+    return canvas.toDataURL('image/png');
+  }
+  window._composeMultiSourceImage = _composeMultiSourceImage;
+
+  // ══ STORYBOARD DERIVE/COMPOSITE DECISION (Roman 2026-09-19) ════════════════════════════════════
+  // Deterministic, STRUCTURAL decision (camera ladder + Casting Library introduction state) — NEVER
+  // a keyword/regex scan of prose. The Storyboard Artist's own already-computed per-phase fields
+  // (camera_override, characters_present, _panel.establishing) are the only inputs; this is what
+  // "the Storyboard Artist/layout plan explicitly chooses derive or composite" means in practice —
+  // the choice is derived from the Storyboard's real structural output, not invented at render time.
+  // Kill switch: window._storyboardDeriveComposite === false (matches the codebase's existing
+  // always-on-unless-disabled convention). The caller (_renderStagedPhaseImage) VALIDATES this
+  // choice against real casting-library availability before ever honoring it — see
+  // _tryDeriveOrComposite; an ineligible choice here always falls back to normal generation.
+  var _DERIVABLE_CAMERAS = { close: 1, extreme_close: 1, extreme_closeup_eye: 1, bust: 1 };
+  function _storyboardChooseRenderAction(phase, visualState) {
+    if (!phase || window._storyboardDeriveComposite === false) return 'generate';
+    var cam = String(phase.camera_override || (visualState && visualState.camera) || '').toLowerCase();
+    var chars = Array.isArray(phase.characters_present) ? phase.characters_present : [];
+    var lib = (typeof _castingLib === 'function') ? _castingLib() : {};
+    function introduced(name) { var rec = lib[_castingToken(name)]; return !!(rec && rec.url); }
+    var namedOthers = chars.filter(function (c) { return c && c !== 'protagonist' && c !== 'li'; });
+    // COMPOSITE: >=2 named characters on this panel, ALL already introduced, an eye/extreme-close
+    // reaction shot — the Mexican-standoff case. A panel this tight with only already-known faces has
+    // nothing left to generate; it's a pure reaction-shot assembly.
+    if ((cam === 'extreme_close' || cam === 'extreme_closeup_eye') && namedOthers.length >= 2 && namedOthers.every(introduced)) return 'composite';
+    // DERIVE: exactly one named subject, already introduced, camera is a derivable crop, and this is
+    // NOT that character's own introduction panel (an intro always renders fresh).
+    if (_DERIVABLE_CAMERAS[cam] && namedOthers.length === 1 && introduced(namedOthers[0]) && !(phase._panel && phase._panel.establishing)) return 'derive';
+    return 'generate';
+  }
+  window._storyboardChooseRenderAction = _storyboardChooseRenderAction;
+
+  // VALIDATE + EXECUTE. Returns a real result (same shape _renderStagedPhaseImage's other paths
+  // return) on success, or null on ANY ineligibility/missing-source — null always means "fall
+  // through to normal generation," never a synthesized/placeholder image.
+  async function _tryDeriveOrComposite(action, phase, visualState, sceneIndex) {
+    var lib = (typeof _castingLib === 'function') ? _castingLib() : {};
+    var chars = Array.isArray(phase.characters_present) ? phase.characters_present : [];
+    var namedOthers = chars.filter(function (c) { return c && c !== 'protagonist' && c !== 'li'; });
+    var cam = String(phase.camera_override || (visualState && visualState.camera) || '').toLowerCase();
+    if (action === 'derive') {
+      var name = namedOthers[0]; if (!name) return null;
+      var rec = lib[_castingToken(name)]; if (!rec) return null;
+      var source = (cam !== 'bust' && rec.faceUrl) ? rec.faceUrl : rec.url;
+      if (!source) return null;
+      var url = await _deriveFromFrame(source, cam);
+      if (!url) return null;
+      console.log('[STAGED:DERIVE] phase ' + phase.phaseIdx + ' derived a "' + cam + '" crop of "' + name + '" from the casting library — zero generation');
+      return { imageUrl: url, fromCache: false, fingerprint: 'derive-' + _castingToken(name) + '-' + cam, phaseIdx: phase.phaseIdx, _derived: true };
+    }
+    if (action === 'composite') {
+      var sources = [];
+      for (var i = 0; i < namedOthers.length; i++) {
+        var rec2 = lib[_castingToken(namedOthers[i])];
+        var src2 = rec2 && (rec2.faceUrl || rec2.url);
+        if (!src2) return null; // any missing source = not eligible, fall back to generate
+        sources.push({ url: src2, camera: cam });
+      }
+      if (sources.length !== 4) return null; // only the validated 4-way layout is wired today
+      var compUrl = await _composeMultiSourceImage(sources, 'eye_strip_stack_4');
+      console.log('[STAGED:COMPOSITE] phase ' + phase.phaseIdx + ' composited ' + sources.length + ' existing crops (eye_strip_stack_4) — zero generation');
+      return { imageUrl: compUrl, fromCache: false, fingerprint: 'composite-eye4-s' + sceneIndex + '-p' + phase.phaseIdx, phaseIdx: phase.phaseIdx, _composited: true };
+    }
+    return null;
+  }
+  window._tryDeriveOrComposite = _tryDeriveOrComposite;
 
   // ── Render Scheduler State ──
   // Rolling continuity memory for stateful panel chain.
@@ -197926,6 +198190,19 @@ No text, no watermark, no UI elements, share-ready.`;
     var pPlate = document.createElement('p'); pPlate.className = 'intimate-interruption-plate'; pPlate.style.cssText = 'font-style:italic;color:#8f866f;margin:0 0 10px;'; pPlate.textContent = plateLabel;
     var pNarr = document.createElement('p'); pNarr.className = 'intimate-interruption-narration'; pNarr.style.cssText = 'color:#e7dcc2;margin:0 0 10px;'; pNarr.textContent = String(r.frame.interruption);
     wrap.appendChild(pPlate); wrap.appendChild(pNarr);
+    // ── INTERRUPTION PORTRAIT (Roman 2026-09-19) ── a SECOND occurrence of an ALREADY-declared intro
+    // asset (e.g. the Dohkar's), at an approved camera treatment — no ninth generated asset, routed
+    // through the same structured renderer as the opening (never markup-in-text). Optional field,
+    // absent from every package today; no-ops (and no console noise) when not declared.
+    try {
+      var _pkgForPortrait = (typeof window._bakedScene1For === 'function') ? window._bakedScene1For(state._starterId) : null;
+      var _portraitKey = _pkgForPortrait && _pkgForPortrait.oasHandoff && _pkgForPortrait.oasHandoff.interruptionPortrait;
+      if (_portraitKey && typeof _mountImageOccurrence === 'function') {
+        var _portraitHost = document.createElement('div'); _portraitHost.className = 'intimate-interruption-portrait'; _portraitHost.style.cssText = 'margin:0 0 10px;';
+        wrap.appendChild(_portraitHost);
+        _mountImageOccurrence(_portraitHost, _portraitKey, _pkgForPortrait);
+      }
+    } catch (_) {}
     (r.frame.interruptionExchange || []).forEach(function (ln) { if (!ln || !ln.text) return; var p = document.createElement('p'); p.className = 'intimate-interruption-line'; p.style.cssText = 'color:#e7dcc2;margin:0 0 8px;'; p.textContent = (ln.speaker ? ln.speaker + ': ' : '') + String(ln.text); wrap.appendChild(p); });
     // ── POST-INTERRUPTION BEAT (Roman, Option E, 2026-09-17) ──
     // Runs on every mount call (fresh mount AND resume-after-reload) so the
@@ -206998,6 +207275,24 @@ No text, no watermark, no UI elements, share-ready.`;
       console.warn('[STAGED:HERO:PHASE] generateImageWithFallback unavailable — aborting');
       return { error: 'no_image_gen', phaseIdx: phase.phaseIdx };
     }
+    // ── DERIVE/COMPOSITE EARLY EXIT (Roman 2026-09-19) ──
+    // The Storyboard's own structural signals can call for a zero-cost reuse of already-rendered
+    // pixels (an already-introduced character's close-up; a multi-character eye-strip reaction
+    // composite) instead of a fresh paid generation. Computed once and cached on phase._panel so a
+    // retry/resume doesn't re-derive the decision; VALIDATED against real casting-library
+    // availability before being honored — any miss (see _tryDeriveOrComposite) returns null and
+    // falls through to every line below, completely unchanged.
+    try {
+      if (phase._panel && !phase._panel.renderAction && typeof _storyboardChooseRenderAction === 'function') {
+        phase._panel.renderAction = _storyboardChooseRenderAction(phase, visualState);
+      }
+      var _drAction = phase._panel && phase._panel.renderAction;
+      if ((_drAction === 'derive' || _drAction === 'composite') && typeof _tryDeriveOrComposite === 'function') {
+        var _drResult = await _tryDeriveOrComposite(_drAction, phase, visualState, sceneIndex);
+        if (_drResult) return _drResult;
+        console.log('[STAGED:DERIVE] action=' + _drAction + ' had no eligible source at render time — falling back to generation');
+      }
+    } catch (_drErr) { console.warn('[STAGED:DERIVE] derive/composite attempt threw, falling back to generation:', _drErr && _drErr.message); }
     // ── OPPORTUNISTIC PC FACE RESTYLE RETRY (2026-05-22) ──────────
     // If the lock-time restyle failed (BFL 502 etc), state._pcFace
     // RestyleNeeded is armed. Fire the retry fire-and-forget here so
@@ -208741,11 +209036,189 @@ No text, no watermark, no UI elements, share-ready.`;
   window._sheetCombatBlock = _sheetCombatBlock;
 
   // DROP-IN replacement for _renderStagedPhaseImages when window._oneShotSheet is on and phases===4.
+  // ══ VISUAL-SLOT NORMALIZATION (Roman 2026-09-19) ══════════════════════════════════════════════
+  // CORRECTION to the 2026-09-18 "default for all CG scenes" pass: that pass only routed EXACTLY
+  // 4-phase scenes onto the sheet and left every 1/2/3/5+-phase scene on the serial independent-
+  // image path — i.e. the sheet was the default only when the planner happened to emit 4 phases,
+  // not a real default. "2x2 is the default for every CG scene" means every CG scene resolves to
+  // exactly FOUR ordered visual display slots, regardless of how many narrative phases it has.
+  // Narrative beats keep whatever count they are; this layer is the deterministic mapping from
+  // N phases -> 4 ordered slots, each carrying an explicit beatRange (contiguous phaseIdx span) and,
+  // for N<4, explicit recurrence tagging (a slot that intentionally reshows an earlier phase at a
+  // distinct camera moment rather than inventing content). No phase is ever silently discarded —
+  // this REPLACES the old hard "slice to 4" ceiling for the sheet default path (that ceiling now
+  // survives only as a cost-control cap on the STAGED FAILURE/ROLLBACK path — see
+  // _capPhasesToCeiling below).
+  //
+  // Algorithm (pure, deterministic, order-preserving):
+  //   N >= 4: contiguous near-even bucketing of the N phases into 4 groups (a slot may cover >1
+  //           phase — the "multiple beats" case).
+  //   N <  4: slot s covers phaseIdx floor(s*N/4); consecutive slots that land on the same phaseIdx
+  //           are tagged as a RECURRENCE of the first slot that used it (the "intentional
+  //           recurrence" case) — same narrative beat, a later slot is free to vary camera/moment.
+  //   N == 4: reduces to the identity mapping (one phase per slot) — the pre-existing exact-4 shape
+  //           is unchanged, so no behavior regresses for scenes that already had 4 phases.
+  function _normalizeVisualSlots(phases) {
+    var n = Array.isArray(phases) ? phases.length : 0;
+    var slots = [];
+    if (n <= 0) {
+      for (var e = 0; e < 4; e++) slots.push({ slot: e, phaseIdxs: [], beatRange: null, recurrenceOfSlot: null, recurrenceIndex: 0 });
+    } else if (n >= 4) {
+      var base = Math.floor(n / 4), rem = n % 4, idx = 0;
+      for (var s = 0; s < 4; s++) {
+        var size = base + (s < rem ? 1 : 0);
+        if (size < 1) size = 1;
+        var startIdx = idx, endIdx = Math.min(n - 1, idx + size - 1);
+        var phaseIdxs = [];
+        for (var p = startIdx; p <= endIdx; p++) phaseIdxs.push(p);
+        slots.push({ slot: s, phaseIdxs: phaseIdxs, beatRange: [startIdx, endIdx], recurrenceOfSlot: null, recurrenceIndex: 0 });
+        idx = endIdx + 1;
+      }
+      if (idx < n) { // defensive: rounding could not leave phases unassigned with this algorithm, but never lose one silently
+        for (var p2 = idx; p2 < n; p2++) slots[3].phaseIdxs.push(p2);
+        slots[3].beatRange[1] = n - 1;
+      }
+    } else {
+      var lastMapped = -1, lastSlotForPhase = -1, occ = {};
+      for (var s2 = 0; s2 < 4; s2++) {
+        var mapped = Math.min(n - 1, Math.floor(s2 * n / 4));
+        var isRecurrence = (s2 > 0 && mapped === lastMapped);
+        occ[mapped] = (occ[mapped] || 0) + 1;
+        slots.push({ slot: s2, phaseIdxs: [mapped], beatRange: [mapped, mapped], recurrenceOfSlot: isRecurrence ? lastSlotForPhase : null, recurrenceIndex: occ[mapped] - 1 });
+        lastMapped = mapped;
+        lastSlotForPhase = s2;
+      }
+    }
+    var phaseToSlot = {};
+    slots.forEach(function (sl) { sl.phaseIdxs.forEach(function (pIdx) { phaseToSlot[pIdx] = sl.slot; }); });
+    return { slots: slots, phaseToSlot: phaseToSlot, phaseCount: n };
+  }
+  window._normalizeVisualSlots = _normalizeVisualSlots;
+
+  function _shallowClonePhase(ph) {
+    if (!ph || typeof ph !== 'object') return ph;
+    var c = {};
+    for (var k in ph) { if (Object.prototype.hasOwnProperty.call(ph, k)) c[k] = ph[k]; }
+    return c;
+  }
+
+  // Fold >1 narrative phase into ONE synthetic phase object for a shared quadrant (the N>4 overflow
+  // case). Structural merge only (concatenate beats, union present characters) — NOT a prose rewrite;
+  // no model call, no text authoring. Keeps the reader-learning tag that drives the fate-burst quadrant
+  // tag (_quadBurstTag) if any phase in the group carries a Transformation/Consequence beat.
+  function _mergePhaseGroupForSlot(group, sl) {
+    var first = group[0] || {};
+    var merged = _shallowClonePhase(first);
+    merged.phaseIdx = sl.slot;
+    merged._mergedFromPhaseIdxs = sl.phaseIdxs.slice();
+    merged.label = group.map(function (g) { return g && g.label; }).filter(Boolean).join(' + ') || ('slot ' + sl.slot + ' (beats ' + sl.beatRange.join('-') + ')');
+    try {
+      merged.beats = [].concat.apply([], group.map(function (g) { return Array.isArray(g && g.beats) ? g.beats : []; }));
+    } catch (_) {}
+    try {
+      var chars = {};
+      group.forEach(function (g) { (g && g.characters_present || []).forEach(function (c) { chars[c] = 1; }); });
+      merged.characters_present = Object.keys(chars);
+    } catch (_) {}
+    var priority = group.find(function (g) { return g && (g._readerLearning === 'Transformation' || g._readerLearning === 'Consequence'); });
+    merged._readerLearning = (priority && priority._readerLearning) || (group[group.length - 1] && group[group.length - 1]._readerLearning) || merged._readerLearning;
+    return merged;
+  }
+
+  // Build the length-4 "slot phases" array _buildOneShotSheetPrompt actually renders per quadrant.
+  // A 1:1 slot passes its source phase through untouched (byte-identical to the pre-normalization N==4
+  // behavior — zero prompt drift for scenes that already had exactly 4 phases). A recurrence slot
+  // clones its source (never the same object reference twice — later camera-variation work can diverge
+  // it without mutating the original) and tags it so a future camera pass can vary the shot. A merged
+  // slot folds its phase group per _mergePhaseGroupForSlot.
+  function _buildSlotPhases(phases, norm) {
+    return norm.slots.map(function (sl) {
+      if (!sl.phaseIdxs.length) return { phaseIdx: sl.slot, label: 'slot ' + sl.slot + ' (no phase)', beats: [], characters_present: [], _slotMeta: sl };
+      if (sl.phaseIdxs.length === 1 && sl.recurrenceOfSlot == null) {
+        var clone = _shallowClonePhase(phases[sl.phaseIdxs[0]]);
+        clone._slotMeta = sl;
+        return clone;
+      }
+      if (sl.recurrenceOfSlot != null) {
+        var rclone = _shallowClonePhase(phases[sl.phaseIdxs[0]]);
+        rclone._slotMeta = sl;
+        rclone._isRecurrencePanel = true;
+        rclone._recurrenceIndex = sl.recurrenceIndex || 0;
+        return rclone;
+      }
+      var group = sl.phaseIdxs.map(function (i) { return phases[i]; }).filter(Boolean);
+      var merged = _mergePhaseGroupForSlot(group, sl);
+      merged._slotMeta = sl;
+      return merged;
+    });
+  }
+  window._buildSlotPhases = _buildSlotPhases;
+
+  // The hard 4-image cost ceiling — now scoped to the STAGED path only (see header note above). The
+  // sheet default path never discards a phase; this cap fires only when a scene falls back to serial
+  // independent generation (real sheet failure, or the window._oneShotSheet=false rollback hatch),
+  // where each additional phase is a real, billed generation call.
+  function _capPhasesToCeiling(phases, sceneIndex, planMeta) {
+    if (!Array.isArray(phases) || phases.length <= 4) return phases;
+    console.log('[CG:CEILING] scene ' + sceneIndex + ' had ' + phases.length + ' phases — capping at 4 for the staged path (hard image cost ceiling)');
+    var capped = phases.slice(0, 4);
+    capped.forEach(function (p, i) { if (p) p.phaseIdx = i; });
+    if (planMeta && Array.isArray(planMeta.phases)) planMeta.phases = capped;
+    return capped;
+  }
+  window._capPhasesToCeiling = _capPhasesToCeiling;
+
+  // A 2x2 sheet is ONE all-or-nothing billed generation call — deriving a SINGLE quadrant from
+  // existing pixels while still generating the other 3 saves nothing (the call still fires). The
+  // derive/composite scheduler (_storyboardChooseRenderAction/_tryDeriveOrComposite) only pays off
+  // against a sheet when EVERY quadrant qualifies — a real, if narrower, zero-cost scene. Checks all
+  // 4 slots' representative phases; aborts (returns null) the instant any one doesn't qualify, so a
+  // partial win never silently short-changes 3 quadrants of real generation.
+  async function _tryFullSceneDeriveComposite(visualState, phases, sceneIndex, norm, slotPhases) {
+    if (window._sceneFullDeriveComposite === false) return null;
+    var slotResults = [];
+    for (var s = 0; s < 4; s++) {
+      var slotPhase = slotPhases[s];
+      var action = (typeof _storyboardChooseRenderAction === 'function') ? _storyboardChooseRenderAction(slotPhase, visualState) : 'generate';
+      if (action !== 'derive' && action !== 'composite') return null;
+      var r = await _tryDeriveOrComposite(action, slotPhase, visualState, sceneIndex);
+      if (!r) return null;
+      slotResults.push(r);
+    }
+    console.log('[CG:DERIVE] scene ' + sceneIndex + ' — all 4 quadrants resolved via derive/composite, sheet generation skipped entirely (zero cost)');
+    var out = [];
+    phases.forEach(function (ph, i) {
+      var pIdx = (ph && typeof ph.phaseIdx === 'number') ? ph.phaseIdx : i;
+      var slotIdx = norm.phaseToSlot[i];
+      var sr = slotResults[typeof slotIdx === 'number' ? slotIdx : 0];
+      out.push({ phaseIdx: pIdx, imageUrl: sr.imageUrl, fingerprint: sr.fingerprint, _oneShot: false, _fullSceneDeriveComposite: true, _slotIdx: slotIdx });
+    });
+    return out;
+  }
+  window._tryFullSceneDeriveComposite = _tryFullSceneDeriveComposite;
+
   function _renderOneShotSheet(visualState, phases, sceneIndex, planMeta) {
     var firstResolve; var firstReady = new Promise(function (res) { firstResolve = res; });
+    // NORMALIZE (Roman 2026-09-19): compute the 4 ordered visual slots for THIS scene's real phase
+    // count once, up front — the prompt-building pass below renders exactly 4 quadrants regardless of
+    // N, and the result-mapping pass at the bottom uses the SAME norm to route each of the 4 rendered
+    // quadrants back onto every original phaseIdx it covers (never truncating to phases.slice(0,4)).
+    var _norm = _normalizeVisualSlots(phases);
+    var _slotPhases = _buildSlotPhases(phases, _norm);
+    try { if (state && state._stagedActive) state._stagedActive.visualSlotMap = { sceneIndex: sceneIndex, norm: _norm }; } catch (_) {}
     var allPromise = (async function () {
       try {
-        var prompt = _buildOneShotSheetPrompt(visualState, phases, sceneIndex, planMeta);
+        // FULL-SCENE DERIVE/COMPOSITE (Roman 2026-09-19) — checked FIRST, before the sheet fetch: if
+        // every one of the 4 quadrants can be filled from existing pixels (already-introduced
+        // characters at a derivable/composable camera), skip the billed sheet call entirely. Any
+        // single ineligible quadrant aborts this and falls through to the normal sheet below —
+        // unchanged, real generation, exactly as if this check didn't exist.
+        var _fullDC = await _tryFullSceneDeriveComposite(visualState, phases, sceneIndex, _norm, _slotPhases);
+        if (_fullDC) {
+          if (_fullDC[0]) firstResolve(_fullDC[0]);
+          return _fullDC;
+        }
+        var prompt = _buildOneShotSheetPrompt(visualState, _slotPhases, sceneIndex, planMeta);
         // Assemble refs the same way the per-phase path does: the region contract's species anchors are
         // already staged on state._stagedRegionContract; _renderStagedPhaseImage publishes the resolved
         // set to window._gnSpeciesAnchorPaths, which the image adapters consume. Prime it here for the sheet.
@@ -208919,20 +209392,35 @@ No text, no watermark, no UI elements, share-ready.`;
         try { window._lastOneShotSheet = { sceneIndex: sceneIndex, url: sheetUrl, at: (state && state.turnCount) }; } catch (_) {}   // observability: last full sheet, pre-split
         var quads = await _splitSheetQuadrants(sheetUrl);
         if (!quads) throw new Error('sheet split failed');
-        console.log('[ONESHOT] scene ' + sceneIndex + ' sheet done in ' + ((Date.now() - _t0) / 1000).toFixed(0) + 's → 4 quadrants');
+        console.log('[ONESHOT] scene ' + sceneIndex + ' sheet done in ' + ((Date.now() - _t0) / 1000).toFixed(0) + 's → 4 quadrants (covering ' + phases.length + ' phase(s) via ' + _norm.slots.filter(function (s) { return s.phaseIdxs.length; }).length + ' populated slot(s))');
+        // MAP BACK (Roman 2026-09-19): one result per ORIGINAL phaseIdx (not per quadrant index) — a
+        // slot's quadrant image is assigned to EVERY phase it covers, so no phase beyond a hard "4"
+        // truncation is ever dropped, and no phase goes unimaged just because N != 4.
         var results = [];
-        for (var q = 0; q < phases.length; q++) {
-          var res = { phaseIdx: phases[q].phaseIdx, imageUrl: quads[q] || sheetUrl,
-            fingerprint: 'oneshot-s' + sceneIndex + '-q' + q, _oneShot: true };
+        var firstSet = false;
+        phases.forEach(function (ph, i) {
+          var pIdx = (ph && typeof ph.phaseIdx === 'number') ? ph.phaseIdx : i;
+          var slotIdx = _norm.phaseToSlot[i];
+          if (typeof slotIdx !== 'number') slotIdx = Math.min(3, i); // defensive, should never hit
+          var slotMeta = _norm.slots[slotIdx];
+          var res = { phaseIdx: pIdx, imageUrl: quads[slotIdx] || sheetUrl,
+            fingerprint: 'oneshot-s' + sceneIndex + '-q' + slotIdx, _oneShot: true,
+            _slotIdx: slotIdx, _slotBeatRange: slotMeta && slotMeta.beatRange,
+            _slotRecurrence: !!(slotMeta && slotMeta.recurrenceOfSlot != null) };
           results.push(res);
-          if (q === 0) firstResolve(res);
-        }
+          if (!firstSet) { firstResolve(res); firstSet = true; }
+        });
+        if (!results.length) firstResolve({ phaseIdx: 0, error: 'no_phases' });
         return results;
       } catch (e) {
         console.warn('[ONESHOT] failed (' + (e && e.message) + ') — falling back to per-phase render');
         // Graceful fallback: run the real per-phase path so a sheet failure never blanks the scene.
+        // The staged path bills one real generation per phase, so the hard 4-image cost ceiling that
+        // the sheet default no longer needs still applies HERE (Roman 2026-09-19 — the ceiling moved,
+        // it did not disappear).
         try {
-          var fb = _renderStagedPhaseImages(visualState, phases, sceneIndex, planMeta);
+          var _fbPhases = _capPhasesToCeiling(phases, sceneIndex, planMeta);
+          var fb = _renderStagedPhaseImages(visualState, _fbPhases, sceneIndex, planMeta);
           fb.firstReady.then(function (r0) { firstResolve(r0); });
           return await fb;
         } catch (e2) {
@@ -208946,24 +209434,26 @@ No text, no watermark, no UI elements, share-ready.`;
   }
   window._renderOneShotSheet = _renderOneShotSheet;
 
-  // Scene-level chooser + the HARD 4-IMAGE CEILING chokepoint. `plan.phases` — not `plan.panels` — is
-  // the image-generating unit: the render loop makes ONE image per phase. The storyboard subsystem
-  // (plan._storyboardPhases swap) and motion phase-splitting can push the count past 4 AFTER the
-  // upstream phase cap, so the integration test authored 5 phases. Enforce the ceiling HERE, where both
-  // render paths converge, so no scene ever generates a 5th image regardless of what produced the phases.
-  // (If a scene needs to say more, it splits into two SCENES — see the panel-cap invariant.)
+  // Scene-level chooser (Roman 2026-09-19, widened). The one-shot 2x2 sheet is now the REAL default
+  // for every CG scene, independent of narrative phase count — _renderOneShotSheet normalizes any
+  // N>=1 phases into exactly 4 quadrant slots via _normalizeVisualSlots (see its header) and folds
+  // overflow phases into shared slots rather than discarding them past a hard "4" ceiling. The
+  // staged independent-image path (_renderStagedPhaseImages) is now a NAMED FAILURE/RECOVERY path
+  // ONLY, reached exclusively via: (a) _renderOneShotSheet's own internal catch-and-fallback on a
+  // real sheet failure, or (b) the explicit rollback escape hatch window._oneShotSheet === false.
+  // The old "slice to 4 and discard the rest" ceiling moved — it no longer gates which path a scene
+  // takes, and now applies ONLY inside the staged fallback (_capPhasesToCeiling), where each extra
+  // phase is a real, billed generation call the sheet path doesn't have.
   function _renderSceneImages(visualState, phases, sceneIndex, planMeta) {
-    if (Array.isArray(phases) && phases.length > 4) {
-      console.log('[CG:CEILING] scene ' + sceneIndex + ' had ' + phases.length + ' phases — capping at 4 (hard image ceiling)');
-      phases = phases.slice(0, 4);
-      phases.forEach(function (p, i) { if (p) p.phaseIdx = i; });   // keep phaseIdx sequential 0..3
-      if (planMeta && Array.isArray(planMeta.phases)) planMeta.phases = phases;   // downstream reads planMeta.phases
+    if (!Array.isArray(phases) || !phases.length) {
+      return _renderStagedPhaseImages(visualState, phases, sceneIndex, planMeta);
     }
-    if (window._oneShotSheet === true && Array.isArray(phases) && phases.length === 4) {
-      console.log('[ONESHOT] scene ' + sceneIndex + ' → one-shot sheet path (4 phases)');
+    if (window._oneShotSheet !== false) {
+      console.log('[ONESHOT] scene ' + sceneIndex + ' → one-shot sheet path (' + phases.length + ' phase(s), normalized to 4 slots, default)');
       return _renderOneShotSheet(visualState, phases, sceneIndex, planMeta);
     }
-    return _renderStagedPhaseImages(visualState, phases, sceneIndex, planMeta);
+    var capped = _capPhasesToCeiling(phases, sceneIndex, planMeta);
+    return _renderStagedPhaseImages(visualState, capped, sceneIndex, planMeta);
   }
   window._renderSceneImages = _renderSceneImages;
 
@@ -209527,9 +210017,13 @@ No text, no watermark, no UI elements, share-ready.`;
       // anchors and BANKS its crops silently (each surfaces later at that character's own introduction).
       var _anyPresent = batch.some(function (m) { return m.presentNow === true; });
       try {
-        var card = (batch.length === 1)
-          ? await _renderSituatedIntro(batch[0].o, batch[0].role, visualState, phases, sceneIndex, { bank: !batch[0].presentNow })   // lone leftover → solo
-          : await _renderSituatedCastPage(batch, visualState, phases, sceneIndex, { castingSession: true, bank: true }); // 1-4 heads → one 4K casting session (spare quads = extra reference shots), split into anchors
+        // ALWAYS the sheet path (Roman 2026-09-18) — was: a lone leftover (batch.length===1) silently
+        // fell back to a solo _renderSituatedIntro render instead of the sheet. _renderSituatedCastPage
+        // structurally handles 1-4 mains (mains.slice(0,4), no length assumption below that; a
+        // castingSession layout spends spare quadrants on extra reference shots of the same head(s)
+        // rather than leaving them empty) — so a 1-element batch still mints one real 2x2 sheet, never
+        // an individual image, matching the same rule dramatic-phase images now follow.
+        var card = await _renderSituatedCastPage(batch, visualState, phases, sceneIndex, { castingSession: true, bank: true }); // 1-4 heads → one 4K casting session (spare quads = extra reference shots), split into anchors
         if (card && _anyPresent) cards.push(card);
         else if (card) { try { console.log('[TIER2-FLUSH] anticipatory sheet banked (not shown) — ' + batch.length + ' head(s)'); } catch (_) {} }
       } catch (e) { try { console.warn('[TIER2-FLUSH] batch failed: ' + (e && e.message)); } catch (_) {} }
