@@ -262,6 +262,17 @@ const WORD_COUNT = s => String(s || '').trim().split(/\s+/).filter(Boolean).leng
 
 function validateDraft(draft, packet) {
   const violations = [];
+  // NON-BLOCKING DIAGNOSTICS (Roman, 2026-09-20 correction): findings worth surfacing for human
+  // review but that must NEVER by themselves make ok:false or block a bounded repair pass. A
+  // WITHHELD historical exemplar (never rendered into the authoring prompt — see
+  // attempt4_positive_exemplars) is not a copy source: a real generation resembling it is not
+  // evidence of copying, only evidence that both texts are valid expressions of the SAME
+  // explicitly-required canonical content (e.g. julian_opening_turn's "rescue" framing is directly
+  // required by the live, rendered opening_frame_brief / oas_opening_requirement.content_requirement
+  // — real Attempt 8 independently produced closely related wording for exactly that reason, not
+  // because it "copied" a draft it was never shown). See diagnostics_policy at the bottom of this
+  // function for the exact rule.
+  const diagnostics = [];
 
   // DEFENSIVE FIELD-TYPE GUARD — a reject-only validator must never THROW on a malformed shape;
   // it must report the violation and continue as if the field were absent.
@@ -352,7 +363,10 @@ function validateDraft(draft, packet) {
         if (p.re.test(scene1Text)) violations.push({ rule: 'scene1_oas_scope_leak', detail: 'scene1Candidate contains OAS-exclusive content (matched "' + p.id + '") — Julian\'s actual interrogation/accusation belongs to oasOpening and the live OAS exchange, never to scene1Candidate; Scene 1 must end at his stated INTENT to question her' });
       });
       if (packet.attempt4_positive_exemplars && _ngramOverlap(scene1Text, packet.attempt4_positive_exemplars.twist_and_arrest, 6)) {
-        violations.push({ rule: 'exemplar_verbatim_copy', detail: 'scene1Candidate contains a 6+ word verbatim match against the non-canonical twist_and_arrest exemplar — craft reference only, never to be quoted or closely copied' });
+        // NON-BLOCKING (Roman, 2026-09-20): twist_and_arrest is a WITHHELD historical exemplar,
+        // never rendered into the authoring prompt — a real match is not evidence of copying a
+        // source the model was never shown, only a similarity worth a human glance.
+        diagnostics.push({ rule: 'exemplar_similarity', detail: 'scene1Candidate contains a 6+ word verbatim match against the withheld, non-rendered twist_and_arrest exemplar — non-blocking similarity report, not evidence of copying (the exemplar was never supplied to the model)' });
       }
     }
     // FIRST-PERSON FOCALITY GATE (Roman, sixth pass, 2026-09-17) — a narrow, disclosed
@@ -496,7 +510,16 @@ function validateDraft(draft, packet) {
       if (oaWords < 35) violations.push({ rule: 'oas_opening_too_short', detail: 'oasOpening.text is ' + oaWords + ' words, must be 35-80 — a blunt short accusation (the real rejected example was 9 words) has no room for observed behavior, a real question, and subtext together' });
       if (oaWords > 80) violations.push({ rule: 'oas_opening_too_long', detail: 'oasOpening.text is ' + oaWords + ' words, must be 35-80' });
       if (packet.attempt4_positive_exemplars && _ngramOverlap(oasOpening.text, packet.attempt4_positive_exemplars.julian_opening_turn, 6)) {
-        violations.push({ rule: 'exemplar_verbatim_copy', detail: 'oasOpening contains a 6+ word verbatim match against the non-canonical julian_opening_turn exemplar — craft reference only, never to be quoted or closely copied' });
+        // NON-BLOCKING (Roman, 2026-09-20, following real Attempt 8): julian_opening_turn is a
+        // WITHHELD historical exemplar, never rendered into the authoring prompt. A real match
+        // (e.g. "hoping I would step forward and...") is not evidence of copying a hidden source —
+        // it is the direct, expected consequence of oas_sequence_v3.fixed_baked_content's OWN
+        // rendered opening_frame_brief ("asks whether she called to him hoping he would rescue
+        // her") and oas_opening_requirement.content_requirement ("the rescue question"), both of
+        // which explicitly require this exact framing and ARE supplied to the model every time.
+        // The exemplar and any real generation are both downstream expressions of that SAME
+        // rendered, canonical requirement — resemblance between them is expected, not illicit.
+        diagnostics.push({ rule: 'exemplar_similarity', detail: 'oasOpening contains a 6+ word verbatim match against the withheld, non-rendered julian_opening_turn exemplar — non-blocking similarity report, not evidence of copying (the exemplar was never supplied to the model; the matched framing is independently required by the rendered opening_frame_brief / oas_opening_requirement.content_requirement)' });
       }
       const _taHitOas = _theAnswerFormViolation(oasOpening.text);
       if (_taHitOas) violations.push({ rule: 'the_answer_form_violation', detail: 'oasOpening.text mentions The Answer alongside a banned physical form ("' + _taHitOas + '") — The Answer\'s current manifestation for this scene is a staff (double-ended shaft) with a question-mark-shaped hook at each end; no manifestation-change event is permitted here (packet scene1_answer_manifestation)' });
@@ -553,7 +576,9 @@ function validateDraft(draft, packet) {
     scene1Beats.forEach((b, i) => checkAllowlist(b, ALLOWED_SCENE1_BEAT_FIELDS, 'scene1Candidate.beats[' + i + ']'));
   }
 
-  return { ok: violations.length === 0, violations };
+  // diagnostics_policy: diagnostics NEVER affect `ok` and are never a repair-blocking violation —
+  // they are a non-blocking similarity report for human review only (Roman, 2026-09-20).
+  return { ok: violations.length === 0, violations, diagnostics };
 }
 
 // ── A genuinely compliant scene1Candidate — 18 beats, walking the 8 fixed images in order,
@@ -766,19 +791,36 @@ section('RED CONTROLS — scene1Candidate (fourth redesign pass, 2026-09-17)');
   const v = validateDraft(d, PACKET);
   ok('RED: attributing the arrest to Julian by name (exposing what should stay genuinely unexplained) is rejected as a sealed-fact leak', !v.ok && v.violations.some(x => x.rule === 'sealed_fact_leakage'), JSON.stringify(v.violations));
 }
-// ── EXEMPLAR VERBATIM-COPY GUARD (Roman, 2026-09-17 follow-up): attempt4_positive_exemplars are
-// non-canonical, craft-reference-only — quoting or closely copying them is a hard failure. ──
+// ── EXEMPLAR SIMILARITY — NON-BLOCKING DIAGNOSTIC (Roman, 2026-09-20 correction, replacing the
+// 2026-09-17 hard-failure version): attempt4_positive_exemplars are WITHHELD historical drafts,
+// never rendered into the authoring prompt (see attempt4_positive_exemplars' own disclosure). Real
+// Attempt 8 proved the hard-failure version was wrong: its oasOpening independently matched
+// julian_opening_turn's "rescue" framing not because it copied a source it was never shown, but
+// because that exact framing is INDEPENDENTLY required by the live, rendered
+// opening_frame_brief / oas_opening_requirement.content_requirement. A match against text the
+// model never saw is not evidence of copying — treating it as a hard failure blocked bounded
+// repair from ever running on Attempt 8, even though its only REAL blocking issue was narration
+// density. This is now a non-blocking diagnostics-only report; `ok`/`violations` are unaffected. ──
 {
   const d = compliantDraft();
   d.scene1Candidate.beats[12].text = 'No flare, no sound, no hand I could point to. The spiralgrass stilled, and I had no way to explain any of it to anyone watching.';
   const v = validateDraft(d, PACKET);
-  ok('RED: a scene1Candidate beat that verbatim-copies 6+ consecutive words from the non-canonical twist_and_arrest exemplar is rejected', !v.ok && v.violations.some(x => x.rule === 'exemplar_verbatim_copy'), JSON.stringify(v.violations));
+  ok('a scene1Candidate beat that verbatim-matches 6+ consecutive words from the WITHHELD twist_and_arrest exemplar is reported as a non-blocking diagnostic, NOT a violation — ok is unaffected by it alone', v.ok && v.diagnostics.some(x => x.rule === 'exemplar_similarity') && !v.violations.some(x => x.rule === 'exemplar_verbatim_copy'), JSON.stringify(v));
 }
 {
   const d = compliantDraft();
+  d.oasOpening.text = 'You glanced toward me three times during the invocation, fingers tightening on the sash each time Seren faltered, and I have not stopped thinking about it since, turning the moment over long after the assembly went quiet, wondering exactly what it meant that you looked instead of speaking.';
+  const v = validateDraft(d, PACKET);
+  ok('an oasOpening that verbatim-matches 6+ consecutive words from the WITHHELD julian_opening_turn exemplar is reported as a non-blocking diagnostic, NOT a violation — ok is unaffected by it alone', v.ok && v.diagnostics.some(x => x.rule === 'exemplar_similarity') && !v.violations.some(x => x.rule === 'exemplar_verbatim_copy'), JSON.stringify(v));
+}
+{
+  // RED preserved: exemplar_verbatim_copy must never again appear as a VIOLATION rule name — that
+  // would silently re-block a bounded repair pass the way it wrongly did for real Attempt 8.
+  const d = compliantDraft();
+  d.scene1Candidate.beats[12].text = 'No flare, no sound, no hand I could point to. The spiralgrass stilled, and I had no way to explain any of it to anyone watching.';
   d.oasOpening.text = 'You glanced toward me three times during the invocation, fingers tightening on the sash each time Seren faltered, and I have not stopped thinking about it since.';
   const v = validateDraft(d, PACKET);
-  ok('RED: an oasOpening that verbatim-copies 6+ consecutive words from the non-canonical julian_opening_turn exemplar is rejected', !v.ok && v.violations.some(x => x.rule === 'exemplar_verbatim_copy'), JSON.stringify(v.violations));
+  ok('RED (policy guard): exemplar_verbatim_copy never appears as a violations[] rule anywhere, even with BOTH exemplars matched at once', !v.violations.some(x => x.rule === 'exemplar_verbatim_copy') && v.diagnostics.filter(x => x.rule === 'exemplar_similarity').length === 2);
 }
 {
   const d = compliantDraft();

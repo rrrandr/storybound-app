@@ -409,6 +409,7 @@ function renderPreview() {
   L.push('');
   L.push('## Validator result (FINAL — reflects the bounded repair merge if one was applied): ' + (validation.ok ? '✅ ELIGIBLE FOR REVIEW (structural/canon checks passed — this is NOT a prose-quality judgment)' : '❌ NOT ELIGIBLE — structural/canon violations found'));
   if (!validation.ok) validation.violations.forEach(v => L.push('- **' + v.rule + '**: ' + v.detail));
+  if (validation.diagnostics && validation.diagnostics.length) { L.push('  (non-blocking diagnostics — human-review-only, never affect ELIGIBLE/NOT ELIGIBLE or repair eligibility):'); validation.diagnostics.forEach(d => L.push('  - **' + d.rule + '**: ' + d.detail)); }
   L.push('');
   L.push('═'.repeat(70));
   L.push('# OPTION A — CURRENT (baked, real, public/starter-scenes.js, read-only, ' + beats.length + ' beats)');
@@ -483,7 +484,8 @@ const report = [
   '',
   '**TOTAL real cost this operation**: ' + (realCostUSD != null ? '$' + realCostUSD : 'unknown — usage block missing from provider response'),
   '**FINAL Validator result** (reflects the repair merge if one was applied): ' + (validation.ok ? 'ELIGIBLE FOR REVIEW' : 'NOT ELIGIBLE — see 03_validation_result.json') + ' (structural/canon check only — NOT a prose-quality judgment)',
-  '**At most ONE primary call and at most ONE bounded repair call were made.**',
+  (validation.diagnostics && validation.diagnostics.length) ? '**Non-blocking diagnostics** (human-review-only, never affect ELIGIBLE/NOT ELIGIBLE or repair eligibility): ' + validation.diagnostics.map(d => d.rule + ' — ' + d.detail).join(' | ') : null,
+  '**At most ONE primary call and at most ' + MAX_REPAIR_PASSES + ' bounded repair pass(es) were made.**',
   '',
   'Files: 01_request_response_records.json (primary attempt records), 02_draft.json (primary draft artifact, pre-repair), 03_validation_result.json ({finalValidation, repairOutcome, repairPassesRun, repairPassRecords}), 04_review_preview.md (FULL reading-experience preview of the FINAL — possibly repaired — candidate, READ THIS for the fiction), 05_repair_passN_request_response_records.json (one per repair pass actually attempted, N=1..' + MAX_REPAIR_PASSES + '), 06_repair_passN_merge_result.json (local merge result per pass), 07_final_draft_after_passN.json (the merged draft after each successful pass), raw_winning_content.txt / raw_repair_passN_content.txt (raw model output per call).',
 ].filter(line => line !== null).join('\n');

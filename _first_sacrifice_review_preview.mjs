@@ -118,6 +118,7 @@ function renderMarkdown() {
   L.push('');
   L.push('## Validator result (on the placeholder candidate shape only): ' + (validation.ok ? '✅ PASS — zero violations' : '❌ FAIL'));
   if (!validation.ok) validation.violations.forEach(v => L.push('- **' + v.rule + '**: ' + v.detail));
+  if (validation.diagnostics && validation.diagnostics.length) { L.push('  (non-blocking diagnostics, human-review-only, never affect PASS/FAIL):'); validation.diagnostics.forEach(d => L.push('  - **' + d.rule + '**: ' + d.detail)); }
   L.push('');
   L.push('## Required-beat coverage map (scene1Coverage)');
   REQUIRED_BEAT_IDS.forEach(id => {

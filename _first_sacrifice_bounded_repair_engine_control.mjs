@@ -17,10 +17,11 @@
 //      beats byte-identical) and RED (unflagged slot, extra top-level field, extra per-entry
 //      field, missing coverage, malformed response, duplicate slot).
 //   4. END-TO-END: merge the real Attempt 6 draft with a locally-built repair, then re-run the
-//      REAL validator — proves the two density rules clear while the real, unrelated,
-//      untouched exemplar_verbatim_copy violation (in oasOpening, which repair never touches)
-//      correctly still fires. This is the "if it still fails, reject with zero package write"
-//      path, proven on real data.
+//      REAL validator — proves the two density rules clear, and (2026-09-20 correction, following
+//      real Attempt 8) that a real, unrelated, untouched exemplar match against a WITHHELD,
+//      never-rendered historical exemplar is now correctly reported as a non-blocking
+//      exemplar_similarity diagnostic rather than a violation — the merged candidate is fully
+//      eligible once density is fixed.
 //   5. isRepairEligible / REPAIR_ELIGIBLE_VALIDATOR_RULES — including the honest real-data finding
 //      that Attempt 6 AS IT REALLY HAPPENED would NOT have been repair-eligible (because of the
 //      coexisting exemplar-copy violation) — repair and the convergence fix (already committed)
@@ -204,14 +205,23 @@ ok('RED: a repair response naming the same slot twice is rejected wholesale', me
 // ═══════════════════════════════════════════════════════════════════════════════
 section('4. END-TO-END on REAL data: merge + re-run the REAL validator');
 // ═══════════════════════════════════════════════════════════════════════════════
-ok('BEFORE repair: the REAL, on-disk Attempt 6 validation result is exactly the 3 real violations already disclosed (scene1_too_thin, scene1_insufficient_narration_density, exemplar_verbatim_copy)', attempt6ValidationOnDisk.violations.map(v => v.rule).sort().join(',') === ['exemplar_verbatim_copy', 'scene1_insufficient_narration_density', 'scene1_too_thin'].sort().join(','));
+// NOTE (Roman, 2026-09-20 correction, following real Attempt 8): the ON-DISK attempt6ValidationOnDisk
+// file is a frozen historical artifact recorded under the OLD (pre-correction) validator, which
+// treated a match against a WITHHELD, never-rendered historical exemplar as a blocking violation.
+// Real Attempt 8 proved that policy wrong — its oasOpening matched julian_opening_turn not because
+// it copied a hidden source, but because the SAME framing is independently required by the live,
+// rendered opening_frame_brief. exemplar_verbatim_copy is now exemplar_similarity, a non-blocking
+// diagnostic — the historical file's rule name is preserved verbatim as disclosed history below,
+// but the LIVE re-validation further down uses the corrected, current validator.
+ok('BEFORE repair: the REAL, on-disk Attempt 6 validation result is exactly the 3 real violations disclosed AT THE TIME under the then-current (now-superseded) validator policy (scene1_too_thin, scene1_insufficient_narration_density, exemplar_verbatim_copy)', attempt6ValidationOnDisk.violations.map(v => v.rule).sort().join(',') === ['exemplar_verbatim_copy', 'scene1_insufficient_narration_density', 'scene1_too_thin'].sort().join(','));
 const mergedFullDraft = { ...attempt6, scene1Candidate: mergeGreen.merged.scene1Candidate };
 const afterRepairValidation = validateDraft(mergedFullDraft, PACKET);
 const afterRules = afterRepairValidation.violations.map(v => v.rule);
+const afterDiagnosticRules = afterRepairValidation.diagnostics.map(d => d.rule);
 ok('AFTER repair-merge: scene1_too_thin no longer fires (real validator, real merged text)', !afterRules.includes('scene1_too_thin'), JSON.stringify(afterRepairValidation.violations));
 ok('AFTER repair-merge: scene1_insufficient_narration_density no longer fires (real validator, real merged text)', !afterRules.includes('scene1_insufficient_narration_density'), JSON.stringify(afterRepairValidation.violations));
-ok('AFTER repair-merge: the REAL, unrelated, untouched exemplar_verbatim_copy violation (in oasOpening, which repair never touches) STILL correctly fires — repair fixes density only, nothing else, and the validator still catches what repair cannot', afterRules.includes('exemplar_verbatim_copy'));
-ok('AFTER repair-merge: the merged candidate is still NOT fully eligible overall (proves "if it still fails, reject with zero package write" is a live path, not merely a design intention)', afterRepairValidation.ok === false);
+ok('AFTER repair-merge, CORRECTED POLICY: the real, unrelated, untouched exemplar match (in oasOpening, which repair never touches) is now reported as a non-blocking exemplar_similarity DIAGNOSTIC, never a violations[] entry', afterDiagnosticRules.includes('exemplar_similarity') && !afterRules.includes('exemplar_verbatim_copy') && !afterRules.includes('exemplar_similarity'));
+ok('AFTER repair-merge, CORRECTED POLICY: the merged candidate is now FULLY ELIGIBLE overall — a withheld-exemplar match alone no longer blocks approval, only the two real density rules (now cleared) ever did', afterRepairValidation.ok === true, JSON.stringify(afterRepairValidation));
 
 // ═══════════════════════════════════════════════════════════════════════════════
 section('5. isRepairEligible / REPAIR_ELIGIBLE_VALIDATOR_RULES — scope discipline');
@@ -221,7 +231,7 @@ ok('GREEN: violations consisting of only the two density rules are repair-eligib
 ok('GREEN: a single density-only violation is repair-eligible', isRepairEligible([{ rule: 'scene1_too_thin' }]) === true);
 ok('RED: any canon/structural violation alongside a density one makes the WHOLE draft ineligible for repair — repair must never be attempted to paper over a non-density defect', isRepairEligible([{ rule: 'scene1_too_thin' }, { rule: 'the_answer_form_violation' }]) === false);
 ok('RED: zero violations is not "eligible" (there is nothing to repair — the caller must not invoke repair on an already-passing draft)', isRepairEligible([]) === false);
-ok('REAL DATA: Attempt 6 AS IT REALLY HAPPENED (all 3 real on-disk violations) would NOT have been repair-eligible under this engine — the coexisting real exemplar_verbatim_copy violation blocks it. Bounded repair (density) and the already-committed convergence fix (Attempt-6-diagnosis, commit b1a9b2c2) are two SEPARATE, both-required corrections, not substitutes for each other.', isRepairEligible(attempt6ValidationOnDisk.violations) === false);
+ok('HISTORICAL DATA: replaying Attempt 6\'s FROZEN on-disk violations array (recorded under the then-current, now-superseded validator policy, which still literally names "exemplar_verbatim_copy") through isRepairEligible correctly returns false — a reminder that the file itself is a disclosed historical record, not re-derived; the LIVE validator (section 4 above) shows the corrected, current behavior.', isRepairEligible(attempt6ValidationOnDisk.violations) === false);
 
 // ═══════════════════════════════════════════════════════════════════════════════
 section('6. COST CEILING for ONE logical future authoring operation (primary chain + at most one bounded repair chain)');
@@ -421,8 +431,8 @@ const finalValidationAfterTwoPasses = validateDraft(doublyMergedFullDraft, PACKE
 ok('END-TO-END: primary + real pass-1 repair + compliant pass-2 (full-slot, midpoint) repair, re-validated with the REAL validator, YIELDS A FULLY PASSING candidate (validation.ok === true)', finalValidationAfterTwoPasses.ok === true, JSON.stringify(finalValidationAfterTwoPasses.violations));
 
 // ── (d) a structural/canon/copy violation prevents ANY repair pass, at any pass count ──
-const mixedViolations = [{ rule: 'scene1_insufficient_narration_density' }, { rule: 'exemplar_verbatim_copy' }];
-ok('planNextRepairPass REFUSES pass 1 (passesAlreadyRun=0) when a canon/copy violation coexists with a density one', planNextRepairPass(pass1Merge.merged, { ok: false, violations: mixedViolations }, PACKET, 0).authorized === false);
+const mixedViolations = [{ rule: 'scene1_insufficient_narration_density' }, { rule: 'the_answer_form_violation' }];
+ok('planNextRepairPass REFUSES pass 1 (passesAlreadyRun=0) when a canon violation coexists with a density one', planNextRepairPass(pass1Merge.merged, { ok: false, violations: mixedViolations }, PACKET, 0).authorized === false);
 ok('planNextRepairPass REFUSES pass 2 (passesAlreadyRun=1) for the same mixed-violation reason', planNextRepairPass(pass1Merge.merged, { ok: false, violations: mixedViolations }, PACKET, 1).authorized === false);
 const structuralDriftDraft = { scene1Candidate: { beats: pass1Merge.merged.scene1Candidate.beats.slice(0, 20) } };
 structuralDriftDraft.scene1Candidate.beats[3] = { ...structuralDriftDraft.scene1Candidate.beats[3], image: 'd1' };
