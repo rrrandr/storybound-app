@@ -108,6 +108,28 @@ ok('the constructed prompt requires claim_kind="locked_canon_fact" + cites whene
   /claim_kind MUST be "locked_canon_fact" and cites MUST be present/.test(user));
 ok('the constructed prompt gives a worked example of both the neutral and current-manifestation-restated claim shapes',
   user.includes(manFact.object_claim_schema.example_neutral) && user.includes(manFact.object_claim_schema.example_current_manifestation_restated));
+// ATTEMPT-6 DIAGNOSIS FIXES (Roman, 2026-09-20) — real invocation, not static packet inspection:
+// Fix 1 (density): a FINAL SELF-CHECK block, placed last in the prompt to exploit recency, with a
+// dynamically-computed word-count arithmetic anchor (never a hardcoded number that could drift from
+// the real per-slot template).
+const bntCheck = PACKET.scene1_beat_number_template;
+const minTotalCheck = bntCheck.slots.reduce((n, s) => n + s.wordRange[0], 0);
+ok('the constructed prompt ends with a FINAL SELF-CHECK block instructing the model to verify each beat\'s word count before returning JSON',
+  /BEFORE YOU RETURN JSON — SELF-CHECK EVERY BEAT\'S WORD COUNT/.test(user) && /never by padding with generic description/.test(user));
+ok('the FINAL SELF-CHECK block states the correct, dynamically-computed sum of the 20 slots\' stated minimums (not a stale hardcoded figure)',
+  user.includes('those 20 minimums alone total ' + minTotalCheck + ' words'));
+ok('the FINAL SELF-CHECK block is the LAST thing in the constructed prompt (recency placement, not buried mid-prompt)',
+  user.trim().endsWith('length and density are not optional polish, they are the task.'));
+// Fix 2 (convergence): requirement #2 was generalized from a prescriptive 3-step rhetorical formula
+// to a looser functional requirement, after the real Attempt 6 draft independently converged on a
+// 7+ word verbatim match against a historical exemplar that was never rendered into the prompt.
+const req2 = PACKET.attempt4_craft_requirements_abstract.requirements[1];
+ok('the constructed prompt renders the GENERALIZED requirement #2 (specific observed behavior + genuine subtext, no fixed rhetorical shape) — real 2026-09-20 packet content',
+  user.includes(req2) && /Do NOT reuse any single fixed rhetorical shape/.test(user));
+ok('the constructed prompt does NOT contain the OLD prescriptive 3-step formula language retired after Attempt 6\'s convergence finding',
+  !/UNCONSCIOUS influence/.test(user) && !/invert the expected accusation into something closer to an invitation/.test(user));
+ok('the constructed prompt renders the strengthened hard_boundary warning that a shared convergent shape for requirement #2 is itself too prescriptive',
+  user.includes(PACKET.attempt4_craft_requirements_abstract.hard_boundary));
 // Live-reader-state / other-starter concepts that exist elsewhere in this codebase and must NEVER
 // appear in a packet-only prompt — if any of these leak in, the adapter silently pulled from a
 // broader source than the immutable packet.

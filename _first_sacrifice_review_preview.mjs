@@ -61,14 +61,23 @@ const IMAGE_ORDER = ['intro_lirael', 'intro_seren', 'intro_dohkar', 'intro_julia
 const REQUIRED_BEAT_IDS = ['ceremony_setting', 'seren_kneeling_rehearsed', 'cost_offering_statement', 'julian_introduced', 'invocation_begins', 'wish_and_sacrifice', 'wish_visibly_twists', 'twist_unnaturally_arrested', 'public_charge', 'social_fallout_family_reaction', 'julian_claims_the_answer'];
 // Padded to clear scene1_composition_contract's per-beat 60-90 word range (Roman, 2026-09-17,
 // tightened from 55-110) — still structurally placeholder, marked as such, not real prose.
-// EXACTLY 20 beats (scene1_beat_number_template, tightened from an 18-22 range): 4 images get 2
-// narration + 1 dialogue, the other 4 get 1 narration + 1 dialogue — EXACTLY 12 narration beats
-// total, all qualifying, every dialogue beat adjacency-grounded.
+// EXACTLY 20 beats — one per scene1_beat_number_template.slots entry, walking the packet's OWN
+// template in order (image, kind, wordRange) rather than a hand-rolled uniform distribution. Fix
+// for the real scene1_beat_asset_mapping_locked mismatches discovered 2026-09-18: the prior
+// "4 images get 2 narr+1 dial, 4 get 1 narr+1 dial" split didn't match the template's actual
+// non-uniform per-image beat counts (2,2,2,2,2,4,3,3), so most indices disagreed with the locked
+// template slot at that index. Deriving directly from the template is correct-by-construction.
 const padText = (label) => PLACEHOLDER + ' ' + label + ' padded to a full paragraph length so this placeholder fixture demonstrates the real required per-beat density range rather than a flat one-line summary, padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding padding.';
-const candidateBeats = IMAGE_ORDER.flatMap((img, i) => {
-  const narr = (n) => ({ kind: 'narration', speaker: null, image: img, text: padText('candidate narration ' + n + ' for ' + img), provenance: { kind: 'generated_expression' } });
-  const dial = () => ({ kind: 'dialogue', speaker: i % 2 ? 'Julian' : 'Lirael', image: img, text: padText('candidate dialogue for ' + img), provenance: { kind: 'generated_expression' } });
-  return i < 4 ? [narr(i * 2), narr(i * 2 + 1), dial()] : [narr(i * 2), dial()];
+const BNT_SLOTS = PACKET.scene1_beat_number_template.slots;
+const candidateBeats = BNT_SLOTS.map((slot, i) => {
+  const kind = slot.kind === 'dialogue' ? 'dialogue' : (slot.kind === 'narration_or_dialogue' && i % 2 ? 'dialogue' : 'narration');
+  return {
+    kind,
+    speaker: kind === 'dialogue' ? (i % 2 ? 'Julian' : 'Lirael') : null,
+    image: slot.image,
+    text: padText('candidate ' + kind + ' beat ' + (i + 1) + ' for ' + slot.image),
+    provenance: { kind: 'generated_expression' },
+  };
 });
 const draft = {
   scene1Candidate: { beats: candidateBeats },
@@ -163,7 +172,8 @@ function renderMarkdown() {
   L.push('- The 5 fate cards use the REAL, FIXED archetype contract traced from public/app.js:_INTR_SLOTS (temptation/silence/reversal/boundary/confession) — never freely-labeled postures. As of 2026-09-17 this packet authors NONE of their content: they are dealt live, fresh, per exchange, by generateIntimateFatePreviewsBatch, which now also receives this scene\'s authored context (see fate_card_lifecycle_correction in the packet).');
   L.push('- The whole `interrogationExchange` design is SUPERSEDED (Roman, sixth pass): the player is Lirael, so no OAS reply is ever pre-scripted. Only `oasOpening` and `postInterruptionBeat` are authored; the exchange between them is live, real-time player-driven OAS.');
   L.push('- The fixed tail (`interruptionImage`/`interruption`/`interruptionExchange`) is held for the real OAS exit event, not spliced immediately at OAS entry — this corrects a sequencing error in the pre-sixth-pass design.');
-  L.push('- The authoring adapter (`_first_sacrifice_authoring_adapter.mjs`) is DRY — never calls a provider on its own. See full_package_authoring_operation_census in the packet for the real, re-measured budget (against the current oasOpening/postInterruptionBeat prompt, ~6,782 est. input tokens, $0.0285 expected-success ceiling, governor-admitted at 6% utilization) — no provider call has been made under this schema yet.');
+  { const census = PACKET.full_package_authoring_operation_census;
+    L.push('- The authoring adapter (`_first_sacrifice_authoring_adapter.mjs`) is DRY — never calls a provider on its own. Real, current budget (measured ' + census.measured_on + '): ~' + census.real_prompt_size.est_input_tokens_chars_over_4_convention + ' est. input tokens, $' + census.cost_ceilings.expected_grok_success_1_call + ' expected-success ceiling, governor-admitted at ' + census.governor_check.utilization_pct + '% utilization — no provider call has been made under this exact schema yet.'); }
   return L.join('\n');
 }
 

@@ -1,6 +1,6 @@
 {
   "packet_id": "first_sacrifice_source_packet",
-  "version": "9.5.0-source-packet",
+  "version": "9.6.0-source-packet",
   "status": "DRAFT — awaiting Roman's review before any generation pass. Not baked. Not authoritative for starter-scenes.js.",
   "immutable": true,
   "world_scope": "fatelands_fantasy",
@@ -768,8 +768,8 @@
     "kind": "locked_canon_fact",
     "cites": "_first_sacrifice_grok_authoring_census.mjs output, _first_sacrifice_ministral8b_fallback_compat_check.mjs output, public/app.js:4749-4795 (TEXT_PRICING), api/_mistral-governor.js, api/mistral-proxy.js, api/proxy.js:_resolveGrokModel"
   },
-  "full_package_authoring_operation_census": {
-    "status": "REAL CENSUS — re-measured AGAIN (Roman, 2026-09-18) after v7 attempt 5 (real cost $0.018575, 20 beats achieved but 1,035/1,100 words, only 7/16 qualifying narration beats, AND the exemplar-copy guard fired on both exemplars — verbatim copying despite guardrails). Removed the quoted exemplars from the rendered prompt entirely (replaced with 3 abstract, non-quotable craft requirements) and rebuilt scene1_beat_number_template so all 20 slots declare kind + word range + dramatic function explicitly. Against the approved chain (Grok primary -> ministral-8b-2512 fallback -> GPT-4o terminal, no DeepSeek). Prior numbers below are superseded by this measurement, not deleted.",
+  "full_package_authoring_operation_census_2026_09_18_SUPERSEDED": {
+    "status": "SUPERSEDED (Roman, 2026-09-20) — measured before the locked visual storyboard, The Answer's stateful manifestation model, and the object-claim schema were added to the rendered prompt. See full_package_authoring_operation_census below for the current real measurement. Retained, not deleted.",
     "measured_on": "2026-09-18 (re-measured after removing verbatim exemplars + the rich per-slot numbered template)",
     "produced_by": "_first_sacrifice_scene1_candidate_budget_measurement.mjs, calling _first_sacrifice_authoring_adapter.mjs:buildAuthoringFallbackChain()",
     "real_prompt_size": {
@@ -779,9 +779,38 @@
       "est_input_tokens_chars_over_4_convention": 11600,
       "note": "user grew 40575->43548 bytes: removing ~2 paragraphs of quoted exemplar text was more than offset by the much richer per-slot template (function + kind + word range x20 slots, versus the old 1-line-per-slot format)."
     },
+    "max_tokens_ceiling": { "value": 8000 },
+    "governor_check": { "outcome": "admitted", "utilization_pct": 9 },
+    "cost_ceilings": {
+      "expected_grok_success_1_call": 0.0345,
+      "three_tier_exhaustion_3_calls": 0.1464
+    },
+    "kind": "locked_canon_fact",
+    "cites": "_first_sacrifice_scene1_candidate_budget_measurement.mjs output, api/_mistral-governor.js, app.js TEXT_PRICING"
+  },
+  "full_package_authoring_operation_census_2026_09_20a_SUPERSEDED": {
+    "status": "SUPERSEDED (Roman, 2026-09-20) — measured before Attempt 6's real failure (751/1,100 words, 1/16 qualifying narration beats, exemplar_verbatim_copy) drove the final self-check reminder and the generalized requirement #2 wording. See full_package_authoring_operation_census below for the current real measurement. Retained, not deleted.",
+    "measured_on": "2026-09-20",
+    "real_prompt_size": { "system_bytes": 3486, "user_bytes": 46796, "total_bytes": 50282, "est_input_tokens_chars_over_4_convention": 12406 },
+    "governor_check": { "outcome": "admitted", "utilization_pct": 9 },
+    "cost_ceilings": { "expected_grok_success_1_call": 0.0355, "three_tier_exhaustion_3_calls": 0.1496 },
+    "kind": "locked_canon_fact",
+    "cites": "_first_sacrifice_scene1_candidate_budget_measurement.mjs output"
+  },
+  "full_package_authoring_operation_census": {
+    "status": "REAL CENSUS — re-measured (Roman, 2026-09-20) after v7 ATTEMPT 6's REAL RUN: Grok-4.3 succeeded on the first call (real cost $0.02005), but the draft FAILED validation — scene1_too_thin (751/1,100 words), scene1_insufficient_narration_density (only 1 of 16 qualifying narration beats), and exemplar_verbatim_copy (oasOpening independently converged on a 7+ word match against the julian_opening_turn exemplar, despite that exemplar never being rendered into the prompt — see attempt4_craft_requirements_abstract.convergence_finding_2026_09_20). No second call was made, per authorization. Corrections made before this measurement: a final, high-salience self-check reminder (with the exact arithmetic worked out) placed at the very end of the prompt, immediately before the model returns JSON; and craft requirement #2 generalized so it no longer prescribes a single rhetorical shape. Against the approved chain (Grok primary -> ministral-8b-2512 fallback -> GPT-4o terminal, no DeepSeek). Prior measurement retained above, not deleted.",
+    "measured_on": "2026-09-20 (post-attempt-6 correction)",
+    "produced_by": "_first_sacrifice_scene1_candidate_budget_measurement.mjs, calling _first_sacrifice_authoring_adapter.mjs:buildAuthoringFallbackChain()",
+    "real_prompt_size": {
+      "system_bytes": 3486,
+      "user_bytes": 48271,
+      "total_bytes": 51757,
+      "est_input_tokens_chars_over_4_convention": 12772,
+      "note": "user grew 46796->48271 bytes (+1475, +3.2%) — the final self-check reminder + the expanded, generalized requirement #2 text."
+    },
     "max_tokens_ceiling": {
       "value": 8000,
-      "rationale": "Unchanged — this revision only grows the INPUT (instructions), the requested OUTPUT shape is unchanged (5 top-level fields). Re-measured against the real governor to confirm continued admission, not assumed."
+      "rationale": "Unchanged — this revision only grows the INPUT (instructions), the requested OUTPUT shape is unchanged. Re-measured against the real governor to confirm continued admission, not assumed."
     },
     "governor_check": {
       "tier_checked": "ministral-8b-2512 (the only tier a local governor exists for)",
@@ -791,15 +820,15 @@
       },
       "admit_result": {
         "outcome": "admitted",
-        "reserve": 55034,
+        "reserve": 59757,
         "limitTpm": 625000
       },
-      "utilization_pct": 9
+      "utilization_pct": 10
     },
     "cost_ceilings": {
-      "expected_grok_success_1_call": 0.0345,
-      "three_tier_exhaustion_3_calls": 0.1464,
-      "caveat": "Both are CEILINGS (full max_tokens billed), not measured spend. Real spend across all 5 rejected v7 attempts: $0.013603 + $0.013815 + $0.014323 + $0.016714 + $0.018575 = $0.07703 — a real completion under THIS (attempt-6) schema has not yet been measured."
+      "expected_grok_success_1_call": 0.036,
+      "three_tier_exhaustion_3_calls": 0.151,
+      "caveat": "Both are CEILINGS (full max_tokens billed), not measured spend. Real spend across all 6 rejected v7 attempts: $0.013603 + $0.013815 + $0.014323 + $0.016714 + $0.018575 + $0.02005 = $0.09708. A real completion under THIS (post-attempt-6-correction) schema has not yet been measured — Attempt 7 is authored but not authorized."
     },
     "kind": "locked_canon_fact",
     "cites": "_first_sacrifice_scene1_candidate_budget_measurement.mjs output, api/_mistral-governor.js, app.js TEXT_PRICING"
@@ -1382,14 +1411,15 @@
     "cites": "public/orchestration-client.js:6511 (generateIntimateFatePreviewsBatch), public/app.js:184983 (_appendAuthoredOASFrame precedent), public/app.js:~197967 (_mountIntimateInterruption post-interruption call site) — real trace, 2026-09-17"
   },
   "attempt4_craft_requirements_abstract": {
-    "status": "NEW (Roman, 2026-09-18) — replaces the verbatim attempt4_positive_exemplars in the rendered prompt. Abstract craft REQUIREMENTS, not quotable prose — nothing here is a sentence to reproduce. Distilled from what made attempt 4 (structurally rejected, but craft-strong) work, generalized so there is nothing to copy.",
+    "status": "NEW (Roman, 2026-09-18); requirement #2 GENERALIZED (2026-09-20) after v7 attempt 6's real failure. Replaces the verbatim attempt4_positive_exemplars in the rendered prompt. Abstract craft REQUIREMENTS, not quotable prose — nothing here is a sentence to reproduce. Distilled from what made attempt 4 (structurally rejected, but craft-strong) work, generalized so there is nothing to copy.",
+    "convergence_finding_2026_09_20": "v7 attempt 6's oasOpening independently produced 'hoping I would step forward and rescue you' — a 7+ word verbatim match against the julian_opening_turn exemplar — even though that exemplar text is NEVER rendered into the prompt (historical-only, used only by the copy-guard). The prior wording of requirement #2 below prescribed the exemplar's exact 3-step rhetorical formula (observed behavior -> reframe as unconscious influence -> invert accusation into invitation) specifically enough that it had essentially one natural sentence-level realization — abstracting the STRUCTURE did not stop convergence, because the structure itself was still exemplar-specific. The n-gram copy-guard correctly caught it (working as designed); the fix here is to stop prescribing a single rhetorical shape at all, so a compliant answer has real room to differ.",
     "requirements": [
       "The twist must read as a concrete FORCE — an immediate physical or magical threat aimed at Lirael specifically, with real sensory detail (what it looks/sounds/smells like) — followed by witnessed residue the assembly can see, then an inexplicable arrest with no cause given.",
-      "Julian's opening turn must cite a SPECIFIC observed behavior (something he actually watched her do or fail to do), frame it as UNCONSCIOUS influence rather than deliberate action, and invert the expected accusation into something closer to an invitation — he is not merely accusing her, he is drawing her toward him while accusing her.",
+      "Julian's opening turn must ground its accusation in a SPECIFIC observed behavior (something concrete he actually watched her do or fail to do in this scene) and must carry real subtext beyond the literal words spoken. Do NOT reuse any single fixed rhetorical shape for how that subtext works — invent your own: what he implies about himself versus her, what he withholds, what tone the accusation carries, whether it reads as cold, hungry, wounded, or something else entirely, is yours to originate freely. The only fixed requirements are: a real, specific observed behavior (not a vague accusation) and genuine subtext (not a flat statement of the charge).",
       "Social fallout must arrive through a NAMED, SPECIFIC person's concrete action or actual speech (a family member stepping back, a guest's hand tightening, an actual spoken line) — never a generic crowd reaction."
     ],
-    "hard_boundary": "These are structural/functional requirements to SATISFY in fresh, original prose — not a template to fill in with paraphrased or reworded versions of any prior draft. Write new sentences that accomplish these functions; do not echo any specific wording you have seen before in this authoring process.",
+    "hard_boundary": "These are structural/functional requirements to SATISFY in fresh, original prose — not a template to fill in with paraphrased or reworded versions of any prior draft. Write new sentences that accomplish these functions; do not echo any specific wording you have seen before in this authoring process. Requirement #2 specifically has NO single correct rhetorical shape — if two different attempts at this task would plausibly converge on close to the same sentence, that shared shape is too prescriptive and must be avoided.",
     "kind": "generated_expression",
-    "cites": "Roman, 2026-09-18 — replaces quoted exemplars after v7 attempt 5 proved they were copied despite explicit non-canonical/do-not-copy guardrails"
+    "cites": "Roman, 2026-09-18 — replaces quoted exemplars after v7 attempt 5 proved they were copied despite explicit non-canonical/do-not-copy guardrails; requirement #2 generalized 2026-09-20 after v7 attempt 6's real convergent near-copy"
   }
 }

@@ -271,7 +271,13 @@ function renderPacketAsPromptText(packet) {
   jsl.strategic_logic.forEach(s => L.push('  - ' + s));
   L.push('Hard boundary: ' + jsl.hard_boundary);
   L.push('');
-  L.push('REMINDER — the Julian craft requirement above (cite specific observed behavior, frame as unconscious influence, invert rescue into accusation/invitation) applies directly to this line. Write fresh, original wording that accomplishes it — do not echo any specific phrasing you have seen before in this authoring process.');
+  // Roman, 2026-09-20 (Attempt-6 convergence fix): this REMINDER previously restated the OLD
+  // retired 3-step formula ("frame as unconscious influence, invert rescue into
+  // accusation/invitation") directly in the adapter, independently of exAbstract.requirements —
+  // that duplication was the actual convergence hazard, since fixing the packet's own requirement
+  // wording alone left this line still prescribing the exemplar-specific shape. Now points at the
+  // real, current, generalized requirement text instead of re-describing it.
+  L.push('REMINDER — craft requirement #2 above (' + exAbstract.requirements[1] + ') applies directly to this line. Write fresh, original wording that accomplishes it — do not echo any specific phrasing you have seen before in this authoring process.');
   L.push('');
   L.push('═══ TASK 3 — postInterruptionBeat (ONE beat AFTER the fixed interruption tail — crystallizes, never decides) ═══');
   L.push('Requirement: ' + pib.content_requirement);
@@ -287,6 +293,17 @@ function renderPacketAsPromptText(packet) {
   L.push('  first_person_lirael: boolean');
   L.push('  oasOpening: { ' + ALLOWED_OUTPUT_SCHEMA.oas_opening_fields.join(', ') + ' } — speaker "Julian", ONE turn, 35-80 words, concrete observed behavior + a posed/implied question + subtext');
   L.push('  postInterruptionBeat: { ' + ALLOWED_OUTPUT_SCHEMA.post_interruption_beat_fields.join(', ') + ' } — image "d4", first person, never resolving');
+  L.push('');
+  // FINAL SELF-CHECK (Roman, 2026-09-20, following v7 attempt 6's real failure: 751/1,100 words,
+  // only 1 of 16 narration beats met its stated 60-90/70-90 range, despite every slot above stating
+  // its own word range explicitly). Placed LAST, immediately before the model returns JSON, on the
+  // theory that a long, dense prompt (12K+ tokens) can bury a fine-grained numeric constraint stated
+  // only once, early, among many other requirements — repeating it here, with the arithmetic worked
+  // out, is a second real attempt at making it unmissable, not a claim the first attempt was wrong
+  // to try.
+  const minTotal = bnt.slots.reduce((n, s) => n + s.wordRange[0], 0);
+  L.push('BEFORE YOU RETURN JSON — SELF-CHECK EVERY BEAT\'S WORD COUNT (HARD, do this last, after drafting):');
+  L.push('The 20 slots above each state their OWN minimum word count. Added together, those 20 minimums alone total ' + minTotal + ' words — if your finished scene1Candidate is anywhere close to or under 1,100 words, or if you have not actually counted each individual beat against its own stated range, you have NOT met this task\'s requirement, regardless of how the scene reads. Go back through your 20 beats ONE AT A TIME: for any beat under its stated minimum, EXPAND it with more concrete sensory detail, interior reaction, or physical action from the SAME moment — never by padding with generic description — until it meets its range. A scene that reads well at 750 words is still a hard failure here; length and density are not optional polish, they are the task.');
   return L.join('\n');
 }
 
