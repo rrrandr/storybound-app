@@ -152,11 +152,14 @@
     },
     {
       "step": 2,
-      "event": "Seren deviates from the rehearsed wish and speaks the misaligned wish naming Lirael; the wish is MISALIGNED — care performed for the assembly's witness over the self-aggrandizing desire Seren actually held (facet: seren_goodness_needs_witness), which Lirael recognizes in the moment. As it bends, the rite visibly begins a concrete, dangerous or socially catastrophic misfire aimed at Lirael — then, just as abruptly, it is unnaturally checked before it fully lands, with no explanation given to Lirael or the reader. The assembly is left with residue they can plausibly (if wrongly) read as evidence Lirael herself manipulated Seren or interfered. Julian's own concealed intervention is never surfaced or implied here (sealed until scene 16) — the reader is left with a real, unanswered question: what almost happened, and who stopped it?",
+      "event": "Seren deviates from the rehearsed wish and speaks the misaligned wish naming Lirael; the wish is MISALIGNED — care performed for the assembly's witness over the self-aggrandizing desire Seren actually held (facet: seren_goodness_needs_witness), which Lirael recognizes in the moment, and through that recognition understands the wish will therefore fulfill her stated loss WRONGLY or DANGEROUSLY. Fate begins a subtle, terrifying PULL toward an unknown, unwanted fulfillment — a SUBJECTIVE, internal dread Lirael feels, never a visible external attack (see _fatelands_ordinary_wish_misalignment_law.json — an ordinary misaligned wish is not a magical attack; no projectile, rift, seam, burst, or scorch). Then, just as abruptly, it is simply gone: no flare, no spectacle, no visible rescuer, no explanation given to Lirael or the reader — Julian's own concealed intervention remains sealed. The assembly witnesses enough of the visible misalignment and Lirael's own reaction to it to plausibly (if wrongly) read her as having manipulated Seren or interfered — grounded in what they directly perceived of the wrongness itself, never in invented physical damage or attack residue.",
       "kind": "generated_expression",
-      "cites": "Roman, seventh redesign pass, 2026-09-17 — see wish_twist_and_arrest_requirement; underlying fact that Seren's wish targets Lirael and bends remains locked_canon_fact per starter-scenes.js:254",
+      "cites": "Roman, seventh redesign pass, 2026-09-17 — see wish_twist_and_arrest_requirement; REVISED 2026-09-20 (Roman, real Attempt 8 finding) per _fatelands_ordinary_wish_misalignment_law.json — underlying fact that Seren's wish targets Lirael and bends remains locked_canon_fact per starter-scenes.js:254",
+      "wrong_visual_grammar_finding_2026_09_20": "Real attempts 4 through 8 independently converged on the SAME wrong shape here — a dark seam/rift, a twisting rope of light, a directed magical attack, scorch-mark residue cited as evidence — because the prior wording of this step (and wish_twist_and_arrest_requirement, required_content_beats, and scene1_beat_number_template) explicitly asked for 'a concrete, dangerous... misfire aimed at Lirael... a real threat' and 'visible residue.' That was the actual cause, not a coincidental model quirk. This is now corrected as a shared Fatelands law, not a First-Sacrifice-only patch.",
       "superseded_event_from_baked_scene": "The wish is MISALIGNED — care performed for the assembly's witness over the desire Seren actually held (facet: seren_goodness_needs_witness) — so it bends: no visible effect, only the assembly turning to look for Lirael's loss.",
-      "superseded_note": "The real baked scene (starter-scenes.js:254) uses this vaguer wording. Roman (seventh pass, 2026-09-17) judges it a genuine craft flaw, not locked canon to preserve — \"everyone looked at you\" is a vague consequence, not a magical disaster, a rescue, or a reason the accusation has weight. See wish_twist_and_arrest_requirement below for the full requirement."
+      "superseded_note": "The real baked scene (starter-scenes.js:254) uses this vaguer wording. Roman (seventh pass, 2026-09-17) judges it a genuine craft flaw, not locked canon to preserve — \"everyone looked at you\" is a vague consequence, not a magical disaster, a rescue, or a reason the accusation has weight. See wish_twist_and_arrest_requirement below for the full requirement.",
+      "superseded_event_2026_09_17": "Seren deviates from the rehearsed wish and speaks the misaligned wish naming Lirael; the wish is MISALIGNED — care performed for the assembly's witness over the self-aggrandizing desire Seren actually held (facet: seren_goodness_needs_witness), which Lirael recognizes in the moment. As it bends, the rite visibly begins a concrete, dangerous or socially catastrophic misfire aimed at Lirael — then, just as abruptly, it is unnaturally checked before it fully lands, with no explanation given to Lirael or the reader. The assembly is left with residue they can plausibly (if wrongly) read as evidence Lirael herself manipulated Seren or interfered. Julian's own concealed intervention is never surfaced or implied here (sealed until scene 16) — the reader is left with a real, unanswered question: what almost happened, and who stopped it?",
+      "superseded_note_2026_09_20": "SUPERSEDED (Roman, 2026-09-20) — this wording is the real, disclosed root cause of the wrong attack-grammar convergence across attempts 4-8 (see wrong_visual_grammar_finding_2026_09_20 above). Kept verbatim, not deleted, as disclosed history."
     },
     {
       "step": 3,
@@ -640,9 +643,9 @@
         },
         {
           "image": "d2",
-          "required_event": "As the misaligned wish takes hold, the rite visibly begins a concrete, dangerous or socially catastrophic misfire aimed at Lirael — a real magical or physical threat the reader can picture and feel the stakes of, not an abstraction and not merely 'the assembly turned to look.'",
+          "required_event": "As Lirael recognizes the wish will fulfill her stated loss wrongly, Fate begins a subtle, terrifying PULL toward an unknown, unwanted fulfillment — a subjective, internal experience of dread the reader feels through Lirael, concrete and specific in its FEELING, never an external magical attack (no projectile, beam, rope of light, seam, rift, or burst — see _fatelands_ordinary_wish_misalignment_law.json). Not an abstraction, and not merely 'the assembly turned to look' — but also never a directed physical force.",
           "id": "wish_visibly_twists",
-          "status": "NEW (Roman, seventh pass, 2026-09-17)"
+          "status": "NEW (Roman, seventh pass, 2026-09-17); REVISED 2026-09-20 (Roman, real Attempt 8 finding) — the prior wording ('a real magical or physical threat') is the disclosed root cause of every real attempt's wrong attack-grammar convergence."
         },
         {
           "image": "d2",
@@ -652,8 +655,9 @@
         },
         {
           "image": "d3",
-          "required_event": "The presiding Dohkar puts the charge to Lirael IN ACTUAL SPEECH — a real quoted line or lines, not narrated summary (see the shared dramatize-consequential-present-speech rule; \"he named the bent word and laid the charges\" is explicitly BANNED as the substantive delivery of the charge — that sentence may describe HIS MANNER around the actual words, never stand in for them). The charge itself: shaping the wish, interfering in the rite. Narration may show each charge landing on Lirael, grounded explicitly in visible residue from the arrested misfire (not a bare accusation): something concrete the assembly actually witnessed that can plausibly, if wrongly, be read as evidence Lirael herself manipulated Seren or interfered. Publicly jeopardizing Lirael's path; even as her standing collapses, some part of her attention goes to Julian.",
+          "required_event": "The presiding Dohkar puts the charge to Lirael IN ACTUAL SPEECH — a real quoted line or lines, not narrated summary (see the shared dramatize-consequential-present-speech rule; \"he named the bent word and laid the charges\" is explicitly BANNED as the substantive delivery of the charge — that sentence may describe HIS MANNER around the actual words, never stand in for them). The charge itself: shaping the wish, interfering in the rite. Narration may show each charge landing on Lirael, grounded explicitly in what the assembly directly perceived of the misalignment itself (not a bare accusation): Lirael's visible reaction, the felt wrongness, Seren's own words — something concrete the assembly actually witnessed that can plausibly, if wrongly, be read as evidence Lirael herself manipulated Seren or interfered. NEVER grounded in invented physical damage, scorch marks, or attack residue treated as forensic evidence (see _fatelands_ordinary_wish_misalignment_law.json). Publicly jeopardizing Lirael's path; even as her standing collapses, some part of her attention goes to Julian.",
           "id": "public_charge",
+          "status_2026_09_20": "REVISED (Roman, real Attempt 8 finding) — 'visible residue from the arrested misfire' is the disclosed root cause of real drafts manufacturing scorch-mark/damage evidence for the Dohkar to cite.",
           "superseded_required_event": "The presiding Dohkar names the bent word and lays the charges — shaping the wish, interfering in the rite — publicly jeopardizing Lirael’s path; even as her standing collapses, some part of her attention goes to Julian.",
           "superseded_required_event_2": "The presiding Dohkar names the bent word and lays the charges — shaping the wish, interfering in the rite — grounding the charge explicitly in visible residue from the arrested misfire (not a bare accusation): something concrete the assembly actually witnessed that can plausibly, if wrongly, be read as evidence Lirael herself manipulated Seren or interfered. Publicly jeopardizing Lirael's path; even as her standing collapses, some part of her attention goes to Julian."
         },
@@ -986,18 +990,27 @@
     "superseded_five_fate_cards_requirement": "UNCHANGED from oas_sequence_v2_SUPERSEDED_scripted_transcript.five_fate_cards_requirement in structure and archetype semantics (temptation/silence/reversal/boundary/confession, action/dialogue/variant schema) — RESCOPED: these 5 prefills now respond to postInterruptionBeat specifically (the post-interruption handoff), not a mid-conversation moment. See that section for the full archetype/variant semantics, still authoritative."
   },
   "wish_twist_and_arrest_requirement": {
-    "status": "NEW (Roman, seventh pass, 2026-09-17) — mandatory causal revision, required before any second draft. The real baked scene (starter-scenes.js:254) describes the wish's effect vaguely: 'no visible effect, only the assembly turning to look.' Roman judges this a genuine craft flaw, not locked canon to preserve — matching this session's established pattern of correcting baked-scene deficiencies rather than reproducing them (see point_of_view/density_requirement/prose_construction_requirement). 'Everyone looked at you' is a vague consequence, not a magical disaster, a rescue, or a reason the accusation has weight.",
+    "status": "NEW (Roman, seventh pass, 2026-09-17) — mandatory causal revision, required before any second draft. The real baked scene (starter-scenes.js:254) describes the wish's effect vaguely: 'no visible effect, only the assembly turning to look.' Roman judges this a genuine craft flaw, not locked canon to preserve — matching this session's established pattern of correcting baked-scene deficiencies rather than reproducing them (see point_of_view/density_requirement/prose_construction_requirement). 'Everyone looked at you' is a vague consequence, not a magical disaster, a rescue, or a reason the accusation has weight. REVISED 2026-09-20 (Roman, real Attempt 8 finding) — the ORIGINAL fix for vagueness ('a real threat, not an abstraction') overcorrected into a different, equally real defect: every real generation (attempts 4-8) converged on a dark seam/rift/attack visual grammar, because 'concrete threat' was never distinguished from 'external magical attack.' The fix is a THIRD shape, not a reversion to vagueness: internally felt, subjectively dreadful, still absolutely concrete — see _fatelands_ordinary_wish_misalignment_law.json (now a shared Fatelands law, not First-Sacrifice-only).",
+    "governing_law": {
+      "file": "_fatelands_ordinary_wish_misalignment_law.json",
+      "law_id": "fatelands_ordinary_wish_misalignment",
+      "entity": "wish_misalignment_visual_grammar",
+      "level": "first_sacrifice_application",
+      "world_scope_check": "this law never applies outside Fatelands Fantasy — see world_scope at the top of this packet"
+    },
     "requirement": [
       "Seren states the actual wish and the actual sacrifice aloud (required via required_content_beats ids cost_offering_statement + wish_and_sacrifice).",
-      "Lirael recognizes, in the moment, that Seren's performed empathy does not match the self-aggrandizing desire beneath it (required via wish_and_sacrifice).",
-      "The rite begins a concrete, dangerous or socially catastrophic misfire aimed at Lirael — a real threat, not an abstraction (required via NEW id wish_visibly_twists).",
-      "That misfire is abruptly, unnaturally checked before it fully lands (required via NEW id twist_unnaturally_arrested).",
-      "The public sees residue they can plausibly misread as evidence Lirael manipulated Seren or interfered (required via REVISED public_charge)."
+      "Lirael recognizes, in the moment, that Seren's performed empathy does not match the self-aggrandizing desire beneath it — her true desire is performed virtue and public admiration, not actually helping Lirael (required via wish_and_sacrifice).",
+      "Lirael understands, through that recognition, that the wish will therefore fulfill her stated loss WRONGLY or DANGEROUSLY — this understanding is what makes the next beat land as real stakes, not a random special effect (required via wish_and_sacrifice / bridging into wish_visibly_twists).",
+      "Fate begins a subtle, terrifying PULL toward an unknown, unwanted fulfillment — a SUBJECTIVE, internal experience of dread and directionality, NEVER an external magical attack (no projectile, beam, rope of light, seam, rift, or burst — required via NEW id wish_visibly_twists; see governing_law above, HARD boundary, not a style preference).",
+      "That pull is abruptly, unnaturally checked before it fully lands: simply gone, with no flare, no spectacle, no visible rescuer, and no explanation (required via NEW id twist_unnaturally_arrested).",
+      "The Dohkar can still recognize the rite's misalignment and publicly charge Lirael — grounded in what the assembly directly perceived of the wrongness itself (Lirael's visible reaction, the felt misalignment, Seren's own words), NEVER in invented physical damage, scorch marks, or attack residue treated as forensic evidence (required via REVISED public_charge)."
     ],
-    "hard_boundary": "The prose must NOT reveal Julian's counter-wish, his obfuscating wishes, or his knowledge (unchanged sealed_facts_forbidden_pre_surface rules). It must leave the reader with a real question: what almost happened, and who stopped it? Do not attribute the arrest to any named agent, magic performed by a visible character, or an explained mechanism.",
+    "hard_boundary": "The prose must NOT reveal Julian's counter-wish, his obfuscating wishes, or his knowledge (unchanged sealed_facts_forbidden_pre_surface rules). It must leave the reader with a real question: what almost happened, and who stopped it? Do not attribute the arrest to any named agent, magic performed by a visible character, or an explained mechanism. HARD, mechanically checked (2026-09-20): do not write an on-screen magical projectile, dark rift/seam, burst, beam, scorch trail, or any visible attack rushing toward Lirael — that is the wrong visual grammar for an ordinary Fatelands wish misalignment (reserved, if ever, for major world-scale phenomena like The Fold or The Staircase, never for one person's wish bending in an ordinary scene).",
     "banned_vague_consequence": "Do not reduce the twist to a bare social-attention beat (e.g. 'everyone looked at her,' 'the assembly turned to stare,' with nothing else) — that is a vague consequence, not a visible twist. This dimension is a HUMAN REVIEW judgment (see the human review rubric) — the validator can only mechanically enforce that wish_visibly_twists/twist_unnaturally_arrested are covered at all, not that the covering text is genuinely concrete rather than vague.",
+    "banned_wrong_visual_grammar": "Mechanically checked (2026-09-20): scene1Candidate's wish_visibly_twists/twist_unnaturally_arrested/public_charge beats must not contain attack-grammar vocabulary — seam, rift, projectile, beam, scorch(ed/ing), burst(ing), blast, explosion/explosive, rope of light, or residue framed as physical evidence. See the shared fatelands_ordinary_wish_misalignment law's effect_classification.invalid_for_ordinary_wish_misalignment for the full reasoning; this list is the mechanical backstop, not the primary fix (the primary fix is this section's own requirement wording above).",
     "kind": "generated_expression",
-    "cites": "Roman, seventh redesign pass, 2026-09-17, this message"
+    "cites": "Roman, seventh redesign pass, 2026-09-17, this message; REVISED 2026-09-20, real Attempt 8 finding, _fatelands_ordinary_wish_misalignment_law.json"
   },
   "scene1_oas_boundary_requirement": {
     "status": "NEW (Roman, 2026-09-17) — found via a real rejected draft (v7 attempt 2): scene1Candidate's final beats (image d4) dramatized Julian ALREADY interrogating her (\"He asked whether I had called to him through the rite\") and Lirael reacting to it (\"I felt the pull of his attention and the heat it carried\") — content that belongs exclusively to the live OAS exchange (oasOpening + the player-driven turns that follow), never to scene1Candidate. The validator did not catch this — it is a real, disclosed gap this section and its matching mechanical guard close.",
@@ -1151,7 +1164,7 @@
           60,
           90
         ],
-        "fn": "Free narration bridging into the twist — Lirael's felt anticipation as the misaligned wish takes hold."
+        "fn": "Free narration bridging into the twist — Lirael's dawning UNDERSTANDING that the wish will fulfill her stated loss wrongly or dangerously, through the recognition beat just established. Interior/cognitive, not a special effect."
       },
       {
         "n": 13,
@@ -1162,7 +1175,7 @@
           70,
           90
         ],
-        "fn": "The twist as a concrete FORCE: a real, immediate physical/magical threat aimed at Lirael specifically, with real sensory detail — not merely 'the assembly turned to look.'"
+        "fn": "The twist as a SUBJECTIVE, internal pull: a quiet, terrifying directionality toward an unknown, unwanted fulfillment — felt as dread, never as an external force with a visible trajectory. HARD: no projectile, beam, rope of light, seam, rift, or burst — see _fatelands_ordinary_wish_misalignment_law.json (fatelands_ordinary_wish_misalignment). Concrete in its FEELING and specificity, not in physical spectacle."
       },
       {
         "n": 14,
@@ -1173,7 +1186,7 @@
           70,
           90
         ],
-        "fn": "Witnessed residue remains, then an inexplicable arrest — abruptly checked before it fully lands, no cause given, Julian's own intervention never surfaced or implied."
+        "fn": "The pull simply stops: no flare, no spectacle, no visible rescuer, no mechanism named. An inexplicable arrest — abruptly checked before it fully lands, no cause given, Julian's own intervention never surfaced or implied. HARD: do not describe scorch marks, burn lines, or any other physical damage 'left behind' — the arrest leaves no forensic trace, only the felt absence of the pull."
       },
       {
         "n": 15,
@@ -1184,7 +1197,7 @@
           30,
           45
         ],
-        "fn": "The presiding Dohkar's actual spoken charge — real quoted speech, not narrated summary — grounded in the visible residue the assembly just witnessed."
+        "fn": "The presiding Dohkar's actual spoken charge — real quoted speech, not narrated summary — grounded in what the assembly directly perceived of the misalignment itself (Lirael's visible reaction, the felt wrongness), NEVER in scorch marks or other physical damage cited as evidence."
       },
       {
         "n": 16,
@@ -1385,6 +1398,7 @@
   "attempt4_positive_exemplars": {
     "status": "HISTORICAL RECORD ONLY, NOT RENDERED IN THE PROMPT (Roman, 2026-09-18) — v7 attempt 5 proved these verbatim exemplars, even fully guardrailed as non-canonical/do-not-copy, were treated as answer keys: oasOpening was copied word-for-word, and scene1Candidate's twist/arrest beat closely echoed the exemplar's exact phrasing (multiple 6+ word matches). The quoted text below is KEPT ONLY so the exemplar_verbatim_copy validator guard still has real historical text to check future drafts against (in case attempt-5-style copying recurs even without direct prompting) — it is NEVER rendered to the model anymore. See attempt4_craft_requirements_abstract for what replaces it in the actual prompt.",
     "twist_and_arrest": "\"The misaligned wish took hold. A sharp, visible distortion ripped outward from Seren's kneeling form, a twisting rope of light aimed directly [at me]... Between one heartbeat and the next the distortion simply vanished. No flare, no sound, no hand I could point to. The spiralgrass stilled again.\" — concrete, physical, genuinely dangerous-feeling, and the arrest names NO cause.",
+    "wrong_visual_grammar_finding_2026_09_20": "Roman's correction, following real Attempt 8: the physical/attack half of this exemplar's craft description ('concrete, physical' as praise, 'a twisting rope of light aimed directly [at me]') is exactly the WRONG shape for an ordinary Fatelands wish misalignment — see _fatelands_ordinary_wish_misalignment_law.json. It is real, disclosed evidence of how this convergence started (this line's own 'twisting rope of light' almost certainly seeded the packet's own prior 'a real threat, not an abstraction' wording, which every subsequent attempt then echoed). Kept verbatim as historical record, not deleted. Only the ARREST PACING remains a valid craft model going forward ('Between one heartbeat and the next... simply vanished. No flare, no sound, no hand I could point to.') — the TWIST's physicality ('sharp, visible distortion,' 'twisting rope of light,' 'aimed directly') must never be imitated again.",
     "julian_opening_turn": "\"You glanced toward me three times during the invocation, fingers tightening on the sash each time Seren faltered. Did you shape her wish without knowing it, the way you shape everyone's attention, hoping I would step forward and rescue you?\" — concrete observed behavior (the glances, the fingers), a real question, and a genuine rescue-inversion (he frames HIMSELF as needing rescue from HER pull) that carries real subtext without stating his strategy.",
     "kind": "generated_expression",
     "cites": "_first_sacrifice_draft_v7_attempt4_full_package/02_draft.json (real rejected draft, preserved as reference — never overwritten, never re-run without Roman's explicit authorization)",

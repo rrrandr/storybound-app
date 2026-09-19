@@ -1,0 +1,42 @@
+{
+  "law_id": "fatelands_ordinary_wish_misalignment",
+  "status": "NEW (Roman, 2026-09-20) — real Attempt 8 correction. Every real generation of First Sacrifice's Scene 1 wish-twist beat (attempts 4 through 8) independently converged on the SAME wrong visual grammar: a dark seam/rift, a twisting rope of light, a directed magical attack, scorch-mark residue cited as evidence. That convergence traces directly to this packet's own instructions (\"a concrete FORCE... a real, immediate physical/magical threat aimed at Lirael\", \"grounded in visible residue the assembly just witnessed\") — the model was doing exactly what it was told. Roman's correction: an ORDINARY misaligned wish is not a magical attack. This is now a SHARED FATELANDS LAW, not a First-Sacrifice-only fix, because the same instruction-shape (\"make the magic concrete/visible/threatening\") will recur in any Fatelands Fantasy story with a wish that bends — the wrongness is structural to how 'concrete' was specified, not particular to this one scene.",
+  "scope": {
+    "applies_to": "Fatelands Fantasy — ORDINARY wish misalignment only (a single character's wish bending away from its stated intent, the everyday texture of Fatelands magic).",
+    "explicitly_distinct_from": "Major, world-scale Fatelands phenomena — The Fold and The Staircase — which are large-scale reality-seam events with their own established, separately-canonical visual language (see project_fatelands_fold_ontology, project_fatelands_ascendant_staircase). This law does NOT govern those; it governs the far more common case of one person's wish going wrong in an ordinary social/dramatic moment.",
+    "explicitly_excluded": ["Famous Fate worlds (independently canonical, this law never applies)"],
+    "gate_contract": "Runtime: _fatelandsFantasyWorldGate() in public/app.js (state.picks.world === 'Fantasy' && state.fateMode !== 'famous_fate') — the same real gate every other Fatelands-conditional directive in this codebase uses. Authoring-packet: packet.world_scope === 'fatelands_fantasy', enforced by a throw in _first_sacrifice_authoring_adapter.mjs if a packet citing this law is not scoped correctly."
+  },
+  "statement": "An ordinary misaligned Fatelands wish does not manifest as a visible external attack. It manifests as a SUBJECTIVE experience for the person it targets: recognition of the wrongness taking shape, an inward pull toward an unwanted or dangerous fulfillment, and — if the misfire is checked — an unexplained cessation with no flare, no spectacle, no visible rescuer, and no mechanism the viewpoint character can name. The magic is real and the stakes are real; the VISUAL GRAMMAR is internal and dreadful, never a projectile, a rift, or a blast.",
+  "why": "A wish is an intention bending in the world, not a weapon being fired. Depicting misalignment as a physical attack (a beam, a seam, a burst) turns an intimate, character-driven wrongness into a generic action-magic effect — it also manufactures a physical event (residue, scorch, damage) that then gets cited as 'evidence' in a way that makes the surrounding social/legal drama (a public charge grounded in what people actually felt/recognized, not in forensic damage) read as an afterthought to a fight scene that never needed to happen.",
+  "effect_classification": {
+    "valid_for_ordinary_wish_misalignment": [
+      { "id": "quiet_pull", "description": "An inward, subjective sense of being drawn toward something — felt as directionality or dread, never as an external force with a visible trajectory or point of origin." },
+      { "id": "unsettling_recognition", "description": "The viewpoint character's own dawning understanding that the wish is resolving wrongly, grounded in what was just said/seen (a person's words, gaze, behavior) — a cognitive/emotional beat, not a special effect." },
+      { "id": "ambiguous_displacement", "description": "A deliberately unclear sense that something has shifted, is about to happen, or is already underway — the character (and reader) cannot yet name it. Never resolves into a described object, ray, or shape moving through space." },
+      { "id": "unexplained_arrest", "description": "The felt pull or dread simply stops. No visible mechanism, no rescuer shown or implied, no explanation offered to the viewpoint character or the reader in that moment." }
+    ],
+    "invalid_for_ordinary_wish_misalignment": [
+      { "id": "projectile_attack", "description": "Any directed magical bolt, beam, rope, seam, or blade of energy moving toward a target — the visual grammar of a weapon being fired, not a wish bending." },
+      { "id": "visible_rift", "description": "A literal tear, rift, or seam opening in the air or in reality." },
+      { "id": "explosive_manifestation", "description": "Bursts, blasts, flares, or other visible releases of magical force." },
+      { "id": "damage_residue", "description": "Scorch marks, burn lines, flattened/singed ground, or any other physical damage cited afterward as evidence of what happened — manufactures forensic 'proof' an ordinary wish misalignment does not produce." }
+    ],
+    "boundary_note": "This classification governs ORDINARY wish misalignment only. It says nothing about how The Fold, The Staircase, or other major world-scale phenomena may look — those are separately canonical and explicitly out of scope here (see scope.explicitly_distinct_from)."
+  },
+  "first_sacrifice_application": {
+    "note": "First Sacrifice Scene 1's wish-twist/arrest beats are the real case that surfaced this law. The packet's scene1_causal_sequence, wish_twist_and_arrest_requirement, required_content_beats, and scene1_beat_number_template have been corrected to require the quiet-misalignment shape (recognition -> pull -> unexplained arrest) and to explicitly forbid the attack-grammar vocabulary. See _first_sacrifice_source_packet.json's wish_twist_and_arrest_requirement.governing_law field (same governing_law citation shape as scene1_answer_manifestation.governing_law) for the exact pointer.",
+    "cites": "_first_sacrifice_source_packet.json wish_twist_and_arrest_requirement, scene1_causal_sequence[1], scene1_candidate_requirement.required_content_beats (wish_visibly_twists, twist_unnaturally_arrested, public_charge), scene1_beat_number_template.slots[11-14]"
+  },
+  "implementation_status": {
+    "real_runtime_source_of_truth": "public/app.js — buildFatelandsOrdinaryWishMisalignmentDirective(), a static (stateless) directive gated on _fatelandsFantasyWorldGate(), wired into the same 3 literary directive-stack call sites and 1 CG call site as buildFatelandsManifestationLawDirective.",
+    "eligibility_vs_consumption": "Unlike the manifestation ledger, this law needs no per-story registered state — it is a standing rule for ANY ordinary wish-misalignment content in ANY Fatelands Fantasy story, so it renders unconditionally (subject only to the world gate) rather than being relevance-gated to specific entities.",
+    "first_sacrifice_note": "First Sacrifice's packet-level citation (wish_misalignment_governing_law) and the real runtime directive are two separate consumers, same as the manifestation law's own disclosed pattern — the packet documents the requirement for this one scene's authoring pass; the runtime directive is what reaches an ordinary (non-baked) Fatelands Fantasy story's live author/CG context."
+  },
+  "consumers": [
+    { "kind": "dry_authoring_packet", "packet": "_first_sacrifice_source_packet.json", "record": "wish_twist_and_arrest_requirement.governing_law", "note": "First Sacrifice's one-time authoring pass — cites this law directly." },
+    { "kind": "real_runtime_mechanism", "location": "public/app.js buildFatelandsOrdinaryWishMisalignmentDirective()", "note": "Reaches any ordinary Fatelands Fantasy story's literary and CG author context when the world gate is open; no story-specific state required." }
+  ],
+  "kind": "locked_canon_fact",
+  "cites": "Roman, 2026-09-20 — real Attempt 8 finding, first_sacrifice_source_packet.json, public/app.js:_fatelandsFantasyWorldGate"
+}

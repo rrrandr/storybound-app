@@ -395,25 +395,46 @@ ok('real Attempt 7 primary draft (1,007 words) is structurally repairable with 1
 // pass-1-merged draft to build pass 2 against.
 const pass1Merge = mergeRepairIntoDraft(attempt7Primary, attempt7RealPass1Repair, defAttempt7Primary.deficiencies);
 ok('the REAL pass-1 repair response (as actually returned by the real, paid Grok call) merges cleanly under the bounded contract', pass1Merge.errors.length === 0, JSON.stringify(pass1Merge.errors));
-const pass1MergedValidation = validateDraft(pass1Merge.merged, PACKET);
-// NOTE (Roman, 2026-09-20 policy reversal): the on-disk attempt7RealMergedValidation was recorded
-// under the pre-reversal validator, whose density check disqualified beats OVER 90 words as well as
-// under 60. The CURRENT validator only disqualifies under-60 beats (over-90 is now a non-blocking
-// pacing diagnostic) — so the qualifying COUNT and detail text can genuinely differ from the frozen
-// historical record; that is the intended effect of the reversal, not a bug. What must still match
-// is the RULE NAME (still scene1_insufficient_narration_density, still and only that rule).
-ok('the locally-reproduced pass-1 merge, under the CURRENT (post-reversal) validator, still shows scene1_insufficient_narration_density as the only rule (rule NAME matches; exact count/detail may legitimately differ from the frozen pre-reversal record)', pass1MergedValidation.violations.length === 1 && pass1MergedValidation.violations[0].rule === 'scene1_insufficient_narration_density' && attempt7RealMergedValidation.finalValidation.violations.length === 1 && attempt7RealMergedValidation.finalValidation.violations[0].rule === 'scene1_insufficient_narration_density', JSON.stringify(pass1MergedValidation.violations));
+const pass1MergedValidationRaw = validateDraft(pass1Merge.merged, PACKET);
+// REAL FINDING (Roman, 2026-09-20, wish-misalignment correction): Attempt 7's own real pass-1-
+// merged draft independently contains the SAME wrong attack-grammar convergence real Attempt 8
+// showed — beat 12 (wish_visibly_twists) says "It smelled of scorched linen"; beat 13
+// (twist_unnaturally_arrested) says "the residue hung in the air". The NEW wish_twist_wrong_
+// visual_grammar rule correctly catches this on REAL, untouched historical data from a SECOND
+// independent attempt — real generalizing evidence the correction is necessary, not an Attempt-8-
+// only fluke — and correctly blocks any further repair pass on it (repair is never authorized to
+// paper over a canon violation).
+const rawAttackGrammarHits = pass1MergedValidationRaw.violations.filter(v => v.rule === 'wish_twist_wrong_visual_grammar');
+ok('REAL FINDING: Attempt 7\'s own real (untouched) pass-1-merged draft ALSO trips the new wish-misalignment visual-grammar rule ("scorched"/"residue", real convergence evidence from a SECOND independent attempt)', rawAttackGrammarHits.length > 0, JSON.stringify(rawAttackGrammarHits));
+ok('REAL FINDING: planNextRepairPass correctly REFUSES a residual pass on Attempt 7\'s raw real data once the visual-grammar violation coexists with the density one — repair is never authorized to paper over a canon violation', planNextRepairPass(pass1Merge.merged, pass1MergedValidationRaw, PACKET, 1).authorized === false);
+
+// SANITIZED FIXTURE, MECHANISM-TESTING ONLY (Roman, 2026-09-20): the two-pass ADAPTIVE ORCHESTRATION
+// mechanism (slot-targeting, pass-count cap, merge contract) is a SEPARATE concern from the wish-
+// misalignment content correction above, and deserves its own continued proof on real data. This
+// clone strips ONLY the 2 literal banned words found above (scorched -> acrid, residue -> phrased
+// without that noun) so the two-pass MECHANISM can keep being exercised on real Attempt 7 data —
+// this is NOT a claim the sanitized text now satisfies the wish-misalignment law's full conceptual
+// requirement (the surrounding "force"/"pressure"/"drove straight toward my chest" shape is still
+// the wrong conceptual grammar and would need the real, deferred, focused paid revision to fix
+// properly) — it only removes the 2 literal lexical triggers so this UNRELATED mechanism proof can
+// continue without being entangled with the wish-misalignment finding proven separately above.
+const pass1MergedSanitized = JSON.parse(JSON.stringify(pass1Merge.merged));
+pass1MergedSanitized.scene1Candidate.beats[12].text = pass1MergedSanitized.scene1Candidate.beats[12].text.replace('scorched linen', 'acrid linen');
+pass1MergedSanitized.scene1Candidate.beats[13].text = pass1MergedSanitized.scene1Candidate.beats[13].text.replace('the residue hung in the air', 'something unnamed lingered in the air');
+const pass1MergedValidation = validateDraft(pass1MergedSanitized, PACKET);
+ok('sanitized fixture: the 2 literal banned words are gone and wish_twist_wrong_visual_grammar no longer fires, isolating the two-pass MECHANISM proof below from the separately-proven wish-misalignment finding above', !pass1MergedValidation.violations.some(v => v.rule === 'wish_twist_wrong_visual_grammar'));
+ok('sanitized fixture still shows scene1_insufficient_narration_density as the only remaining rule (rule NAME matches the frozen pre-reversal record; exact count/detail may legitimately differ under the post-reversal ceiling policy)', pass1MergedValidation.violations.length === 1 && pass1MergedValidation.violations[0].rule === 'scene1_insufficient_narration_density' && attempt7RealMergedValidation.finalValidation.violations.length === 1 && attempt7RealMergedValidation.finalValidation.violations[0].rule === 'scene1_insufficient_narration_density', JSON.stringify(pass1MergedValidation.violations));
 
 // ── (a) "a too-short first repair leaves only its deficient slots eligible for the second pass" ──
-const plan2 = planNextRepairPass(pass1Merge.merged, pass1MergedValidation, PACKET, 1);
+const plan2 = planNextRepairPass(pass1MergedSanitized, pass1MergedValidation, PACKET, 1);
 ok('planNextRepairPass AUTHORIZES a second pass after a too-short real first repair (passesAlreadyRun=1, still < MAX_REPAIR_PASSES=' + MAX_REPAIR_PASSES + ')', plan2.authorized === true, JSON.stringify(plan2));
 const pass2DeficientNs = plan2.authorized ? plan2.deficiencyReport.deficiencies.map(d => d.n).sort((a, b) => a - b) : [];
 const EXPECTED_REAL_RESIDUAL_SLOTS = [9, 10, 12, 13, 14, 16, 17, 19, 20]; // hand-verified against the real merged draft's actual per-beat word counts
 ok('the second pass\'s deficient-slot set is EXACTLY the real 9 slots still below their own floor after the real pass-1 repair — not the original 12, not all 20, not a guess', JSON.stringify(pass2DeficientNs) === JSON.stringify(EXPECTED_REAL_RESIDUAL_SLOTS), 'got ' + JSON.stringify(pass2DeficientNs));
 ok('the 3 slots the real pass-1 repair DID fully fix (4, 7, 8) are correctly EXCLUDED from the second pass\'s target set', ![4, 7, 8].some(n => pass2DeficientNs.includes(n)));
 
-// ── (b) full-slot-replacement prompt for pass 2, real fixtures ──
-const { user: pass2User } = buildRepairPrompt(PACKET, pass1Merge.merged, plan2.deficiencyReport.deficiencies);
+// ── (b) full-slot-replacement prompt for pass 2, real (sanitized-for-mechanism) fixtures ──
+const { user: pass2User } = buildRepairPrompt(PACKET, pass1MergedSanitized, plan2.deficiencyReport.deficiencies);
 ok('the pass-2 repair prompt, built from real residual deficiencies, targets each slot\'s real midpoint (not the old delta framing)', plan2.deficiencyReport.deficiencies.every(d => pass2User.includes('TARGET approximately ' + d.targetWords + ' words')));
 ok('the pass-2 repair prompt does not re-request any slot the first pass already fixed (4, 7, 8 never appear as [NEEDS REPAIR — REPLACE ENTIRELY])', ![4, 7, 8].some(n => pass2User.includes('Beat ' + n + ' [NEEDS REPAIR — REPLACE ENTIRELY]')));
 

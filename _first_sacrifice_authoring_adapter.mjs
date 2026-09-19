@@ -225,8 +225,10 @@ function renderPacketAsPromptText(packet) {
   L.push('');
   const wta = packet.wish_twist_and_arrest_requirement;
   L.push('THE WISH MUST VISIBLY TWIST, THEN BE INEXPLICABLY ARRESTED (HARD): ' + wta.status);
+  wta.requirement.forEach((r, ri) => L.push('  ' + (ri + 1) + '. ' + r));
   L.push('Hard boundary: ' + wta.hard_boundary);
   L.push('BANNED (a hard failure, not a style preference): ' + wta.banned_vague_consequence);
+  L.push('BANNED VOCABULARY (mechanically checked, not merely instructed — see ' + wta.governing_law.file + '): ' + wta.banned_wrong_visual_grammar);
   L.push('');
   const exAbstract = packet.attempt4_craft_requirements_abstract;
   L.push('CRAFT REQUIREMENTS (HARD — ' + exAbstract.status + '):');

@@ -432,6 +432,25 @@ function validateDraft(draft, packet) {
         if (extraCoverageKeys.length) violations.push({ rule: 'unapproved_output_field', detail: 'scene1Coverage has unapproved key(s) not in required_content_beats: ' + extraCoverageKeys.join(', ') });
       }
     }
+    // WISH-MISALIGNMENT VISUAL GRAMMAR (Roman, 2026-09-20, real Attempt 8 finding) — mechanical
+    // backstop for wish_twist_and_arrest_requirement.banned_wrong_visual_grammar /
+    // _fatelands_ordinary_wish_misalignment_law.json. Scoped ONLY to the beats scene1Coverage
+    // itself maps to wish_visibly_twists / twist_unnaturally_arrested / public_charge — never a
+    // blanket scan of the whole scene, which could false-positive on unrelated prose. This is the
+    // BACKSTOP, not the primary fix — the primary fix is the corrected packet instructions
+    // themselves; this only catches convergence the instructions failed to prevent.
+    if (coverage) {
+      const WISH_MISALIGNMENT_ATTACK_GRAMMAR_RE = /\b(seams?|rifts?|projectiles?|beams?|scorch(?:ed|ing)?|burst(?:ing)?|blasts?|explosions?|explosive)\b|rope of light|residue/i;
+      ['wish_visibly_twists', 'twist_unnaturally_arrested', 'public_charge'].forEach(id => {
+        const idxs = Array.isArray(coverage[id]) ? coverage[id] : [];
+        idxs.forEach(i => {
+          const b = scene1Beats[i];
+          if (!b || typeof b.text !== 'string') return;
+          const m = b.text.match(WISH_MISALIGNMENT_ATTACK_GRAMMAR_RE);
+          if (m) violations.push({ rule: 'wish_twist_wrong_visual_grammar', detail: 'scene1Candidate.beats[' + i + '] (covering required beat "' + id + '") contains attack-grammar vocabulary ("' + m[0] + '") — an ordinary Fatelands wish misalignment is a subjective/internal pull, never an external magical attack, visible rift, or damage residue (see wish_twist_and_arrest_requirement.banned_wrong_visual_grammar / _fatelands_ordinary_wish_misalignment_law.json)' });
+        });
+      });
+    }
     // Per-beat kind/image/provenance checks
     let lastImageIdx = -1;
     // LOCKED BEAT-TO-ASSET MAPPING (Roman, 2026-09-18; re-keyed to scene1_visual_storyboard 2026-
@@ -619,7 +638,7 @@ function compliantScene1() {
       mk('dialogue', 'Seren', 'd1', '"So that Lirael may find the one she lost," she said, abandoning the practiced wish entirely, spending her one First Sacrifice on me instead of herself, in front of everyone who had come to watch her, not me.', { kind: 'locked_canon_fact', cites: 'scene1_causal_sequence.1' }),
       mk('narration', null, 'd2', 'The words bent the instant they left her — not a wrong note but a loose one, care performed for the assembly\'s witness over the desire she actually held, and I knew it the way I know my own face: this was never truly for me, it was for every person watching her be good, watching her be seen being good, which was somehow the truer wish underneath the one she said aloud.', { kind: 'grounded_inference', cites: 'seren_goodness_needs_witness' }),
       mk('narration', null, 'd2', 'Then the loose word found purchase. The deep-crimson spiralgrass beneath my bare feet convulsed once, hard, a ripple running the width of the clearing toward me like something under the ground had just been asked a question it meant to answer badly — a wish with teeth, closing, and every part of me understood before my mind caught up that it was closing on me.', { kind: 'generated_expression' }),
-      mk('narration', null, 'd2', 'It should have reached me. I had already begun bracing for whatever a wrongly-spent First Sacrifice does to the person it lands on — and then it was simply gone, cut off mid-motion the way a held breath stops when someone else decides you may exhale. Nothing scorched. Nothing cried out. The spiralgrass went still under my feet. My own Weave-Script, which had been a heartbeat from telling the whole clearing exactly what I felt, dimmed instead, and I had no way to account for why, or for whose hand had reached in ahead of mine.', { kind: 'generated_expression' }),
+      mk('narration', null, 'd2', 'It should have reached me. I had already begun bracing for whatever a wrongly-spent First Sacrifice does to the person it lands on — and then it was simply gone, cut off mid-motion the way a held breath stops when someone else decides you may exhale. Nothing marked me. Nothing cried out. The spiralgrass went still under my feet. My own Weave-Script, which had been a heartbeat from telling the whole clearing exactly what I felt, dimmed instead, and I had no way to account for why, or for whose hand had reached in ahead of mine.', { kind: 'generated_expression' }),
       mk('narration', null, 'd2', 'I was sealed, forbidden to interfere, and I understood exactly how it would look before I ever moved, understood it the way you understand a fall while you are still only leaning — and I tore the band from my mouth and went to her anyway, because standing still felt like the one thing I truly could not survive doing.', { kind: 'locked_canon_fact', cites: 'scene1_causal_sequence.2' }),
       mk('dialogue', 'Lirael', 'd3', '"Seren —" The first word I had spoken aloud since the sash went on, and it was already too late to be anything but evidence against me, evidence I had handed them myself, freely, with my own torn band still hanging from my hand.', { kind: 'generated_expression' }),
       mk('narration', null, 'd3', 'Two dozen faces turned to me at once — not merely at the torn band and the step I had taken, but at the spiralgrass gone unnaturally still where it should have kept moving, reading in that stillness exactly the shape of an interferer they had not yet been told to look for, as though the clearing itself had already decided the shape of the story before I had said a single word in my own defense.', { kind: 'locked_canon_fact', cites: 'scene1_causal_sequence.3' }),
@@ -824,6 +843,51 @@ section('RED CONTROLS — scene1Candidate (fourth redesign pass, 2026-09-17)');
   d.scene1Candidate.beats[12].text = 'It should have reached me — and then Julian stopped it, though I did not yet understand how.';
   const v = validateDraft(d, PACKET);
   ok('RED: attributing the arrest to Julian by name (exposing what should stay genuinely unexplained) is rejected as a sealed-fact leak', !v.ok && v.violations.some(x => x.rule === 'sealed_fact_leakage'), JSON.stringify(v.violations));
+}
+// ── WISH-MISALIGNMENT VISUAL GRAMMAR (Roman, 2026-09-20, real Attempt 8 finding): an ordinary
+// Fatelands wish misalignment must read as a subjective/internal pull, never an external magical
+// attack. Mechanical backstop scoped ONLY to the wish_visibly_twists/twist_unnaturally_arrested/
+// public_charge-covering beats. ──
+{
+  const d = compliantDraft();
+  d.scene1Candidate.beats[11].text = 'A dark seam tore open above Seren\'s head and stretched toward my chest, a thin rope of light aimed directly at me, closing the distance fast.';
+  const v = validateDraft(d, PACKET);
+  ok('RED: a wish_visibly_twists beat depicting a dark seam/rope-of-light attack is rejected (attack-grammar vocabulary)', !v.ok && v.violations.some(x => x.rule === 'wish_twist_wrong_visual_grammar'), JSON.stringify(v.violations));
+}
+{
+  const d = compliantDraft();
+  d.scene1Candidate.beats[12].text = 'The seam stopped three handspans from my chest, leaving a faint scorch mark on the grass where it had been.';
+  const v = validateDraft(d, PACKET);
+  ok('RED: a twist_unnaturally_arrested beat citing a scorch mark left behind is rejected', !v.ok && v.violations.some(x => x.rule === 'wish_twist_wrong_visual_grammar'), JSON.stringify(v.violations));
+}
+{
+  const d = compliantDraft();
+  d.scene1Candidate.beats[16].text = d.scene1Candidate.beats[16].text.replace('Both charges stand.', 'The residue on the grass stands as witness.');
+  const v = validateDraft(d, PACKET);
+  ok('RED: a public_charge beat citing physical residue as evidence is rejected', !v.ok && v.violations.some(x => x.rule === 'wish_twist_wrong_visual_grammar'), JSON.stringify(v.violations));
+}
+{
+  // Scope discipline: the SAME banned word appearing OUTSIDE the 3 mapped beats must never trigger
+  // this rule — it is scoped to real coverage-mapped indices, not a blanket scene-wide scan.
+  const d = compliantDraft();
+  d.scene1Candidate.beats[0].text = d.scene1Candidate.beats[0].text + ' A burst of birdsong crossed the clearing.';
+  const v = validateDraft(d, PACKET);
+  ok('GREEN (scope discipline): a banned word appearing in an UNRELATED beat (not covering wish_visibly_twists/twist_unnaturally_arrested/public_charge) never triggers wish_twist_wrong_visual_grammar', !v.violations.some(x => x.rule === 'wish_twist_wrong_visual_grammar'), JSON.stringify(v.violations));
+}
+{
+  // REAL DATA: the actual, on-disk Attempt 8 candidate (never hand-edited) genuinely violates this
+  // NEW law — real, disclosed evidence the correction is necessary and the rule fires on real
+  // content, not only synthetic fixtures. Attempt 8 remains preserved untouched and unshipped; a
+  // future focused paid revision is required to replace only the affected wish-twist beats.
+  const attempt8Path = path.join(__dirname, '_first_sacrifice_draft_v7_attempt8_full_package/08_corrected_candidate_from_pass1.json');
+  if (fs.existsSync(attempt8Path)) {
+    const attempt8Draft = JSON.parse(fs.readFileSync(attempt8Path, 'utf8')).draft;
+    const v = validateDraft(attempt8Draft, PACKET);
+    const hit = v.violations.filter(x => x.rule === 'wish_twist_wrong_visual_grammar');
+    ok('REAL DATA: the actual, on-disk Attempt 8 candidate (untouched, unshipped) genuinely fails the new wish-misalignment visual-grammar rule — real confirmation this correction is necessary, not merely theoretical', hit.length > 0, JSON.stringify(hit));
+  } else {
+    ok('REAL DATA: Attempt 8 candidate artifact not present in this environment — skipping real-data confirmation (not a failure; synthetic RED/GREEN coverage above already proves the rule)', true);
+  }
 }
 // ── EXEMPLAR SIMILARITY — NON-BLOCKING DIAGNOSTIC (Roman, 2026-09-20 correction, replacing the
 // 2026-09-17 hard-failure version): attempt4_positive_exemplars are WITHHELD historical drafts,
@@ -1386,7 +1450,10 @@ ok('Seren C+ grounds present (3 facets)', Array.isArray(PACKET.cplus_eplus_fusio
 ok('five claim categories defined, including the new reviewable_package_interaction kind', Object.keys(PACKET.claim_categories).length === 5 && PACKET.claim_categories.generated_expression && PACKET.claim_categories.flagged_new_canon_candidate && PACKET.claim_categories.reviewable_package_interaction);
 
 // ── SEVENTH PASS (Roman, 2026-09-17): mandatory causal-and-strategic revision present ──
-ok('wish_twist_and_arrest_requirement section present with all 5 requirement bullets', Array.isArray(PACKET.wish_twist_and_arrest_requirement && PACKET.wish_twist_and_arrest_requirement.requirement) && PACKET.wish_twist_and_arrest_requirement.requirement.length === 5);
+ok('wish_twist_and_arrest_requirement section present with all 6 requirement bullets (REVISED 2026-09-20: split the recognition step into recognition + understanding-wrongly-fulfilled, per the real Attempt 8 wish-misalignment correction)', Array.isArray(PACKET.wish_twist_and_arrest_requirement && PACKET.wish_twist_and_arrest_requirement.requirement) && PACKET.wish_twist_and_arrest_requirement.requirement.length === 6);
+ok('wish_twist_and_arrest_requirement cites the shared fatelands_ordinary_wish_misalignment governing_law', PACKET.wish_twist_and_arrest_requirement.governing_law && PACKET.wish_twist_and_arrest_requirement.governing_law.law_id === 'fatelands_ordinary_wish_misalignment' && PACKET.wish_twist_and_arrest_requirement.governing_law.file === '_fatelands_ordinary_wish_misalignment_law.json');
+ok('wish_twist_and_arrest_requirement.hard_boundary explicitly bans the wrong attack-grammar visual (projectile, rift/seam, burst, beam, scorch)', /magical projectile, dark rift\/seam, burst, beam, scorch trail/.test(PACKET.wish_twist_and_arrest_requirement.hard_boundary));
+ok('wish_twist_and_arrest_requirement declares banned_wrong_visual_grammar as the mechanical backstop', typeof PACKET.wish_twist_and_arrest_requirement.banned_wrong_visual_grammar === 'string' && /seam, rift, projectile, beam, scorch/.test(PACKET.wish_twist_and_arrest_requirement.banned_wrong_visual_grammar));
 ok('wish_twist_and_arrest_requirement bans attributing the arrest to Julian/a named agent/an explained mechanism', /named agent/.test(PACKET.wish_twist_and_arrest_requirement.hard_boundary));
 ok('required_content_beats now includes wish_visibly_twists, twist_unnaturally_arrested, and social_fallout_family_reaction (11 total, up from 8)', PACKET.scene1_candidate_requirement.required_content_beats.beats.length === 11 && PACKET.scene1_candidate_requirement.required_content_beats.beats.some(b => b.id === 'wish_visibly_twists') && PACKET.scene1_candidate_requirement.required_content_beats.beats.some(b => b.id === 'twist_unnaturally_arrested') && PACKET.scene1_candidate_requirement.required_content_beats.beats.some(b => b.id === 'social_fallout_family_reaction'));
 ok('scene1_causal_sequence step 2 discloses its own supersession of the vaguer baked-scene wording, not a silent overwrite', !!PACKET.scene1_causal_sequence.find(s => s.step === 2).superseded_event_from_baked_scene);

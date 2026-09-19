@@ -96,6 +96,18 @@ ok('the constructed prompt states that NO manifestation-change event is permitte
   /NO manifestation-change event is permitted anywhere in this scene/.test(user));
 ok('constructing the prompt throws if the packet is not scoped to fatelands_fantasy (the shared law must never be imposed on Famous Fate or another independently-canonical world)',
   (() => { const p = JSON.parse(JSON.stringify(PACKET)); p.world_scope = 'famous_fate'; try { buildPacketAuthoringPrompt(p, view); return false; } catch (e) { return /refusing to render the shared Fatelands manifestation law/.test(e.message); } })());
+// WISH-MISALIGNMENT VISUAL GRAMMAR (Roman, 2026-09-20, real Attempt 8 finding) — real invocation,
+// not static packet inspection: the constructed prompt must state all 6 requirement bullets, the
+// banned attack-grammar vocabulary list, and the shared law citation. Also proves the fix reaches
+// the model where it actually lands: the per-slot numbered template (which real Attempt 8's own
+// convergence traced back to) now states the corrected fn text, not the old "concrete FORCE" one.
+const wtaFact = PACKET.wish_twist_and_arrest_requirement;
+ok('the constructed prompt renders all 6 real wish_twist_and_arrest_requirement bullets, including the NEW recognition-of-wrongness and quiet-pull bullets', wtaFact.requirement.every(r => user.includes(r)));
+ok('the constructed prompt states the banned attack-grammar vocabulary list and cites the shared wish-misalignment law file', user.includes(wtaFact.banned_wrong_visual_grammar) && user.includes(wtaFact.governing_law.file));
+ok('the constructed prompt\'s hard boundary explicitly forbids a projectile/rift/burst/beam/scorch-trail visible attack', /do not write an on-screen magical projectile, dark rift\/seam, burst, beam, scorch trail/.test(user));
+ok('the per-slot numbered template (real convergence source) now states the CORRECTED wish_visibly_twists fn text — a subjective pull, never "concrete FORCE... physical/magical threat"', user.includes(PACKET.scene1_beat_number_template.slots[12].fn) && !/concrete FORCE: a real, immediate physical\/magical threat/.test(user));
+ok('the per-slot numbered template states the CORRECTED twist_unnaturally_arrested fn text — no scorch marks left behind', user.includes(PACKET.scene1_beat_number_template.slots[13].fn) && /do not describe scorch marks/.test(user));
+ok('the per-slot numbered template states the CORRECTED public_charge fn text — never scorch marks or physical damage as evidence', user.includes(PACKET.scene1_beat_number_template.slots[14].fn) && /NEVER in scorch marks or other physical damage/.test(user));
 ok('the constructed prompt explicitly says not to invent material, color, weight, powers, or additional history',
   /Do not invent its material, color, weight, powers, or additional history/.test(user));
 // STRUCTURED OBJECT-CLAIM METADATA RECEIPT — widened 2026-09-20: mandatory not merely on a literal
