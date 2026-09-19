@@ -229,7 +229,20 @@ const afterDiagnosticRules = afterRepairValidation.diagnostics.map(d => d.rule);
 ok('AFTER repair-merge: scene1_too_thin no longer fires (real validator, real merged text)', !afterRules.includes('scene1_too_thin'), JSON.stringify(afterRepairValidation.violations));
 ok('AFTER repair-merge: scene1_insufficient_narration_density no longer fires (real validator, real merged text)', !afterRules.includes('scene1_insufficient_narration_density'), JSON.stringify(afterRepairValidation.violations));
 ok('AFTER repair-merge, CORRECTED POLICY: the real, unrelated, untouched exemplar match (in oasOpening, which repair never touches) is now reported as a non-blocking exemplar_similarity DIAGNOSTIC, never a violations[] entry', afterDiagnosticRules.includes('exemplar_similarity') && !afterRules.includes('exemplar_verbatim_copy') && !afterRules.includes('exemplar_similarity'));
-ok('AFTER repair-merge, CORRECTED POLICY: the merged candidate is now FULLY ELIGIBLE overall — a withheld-exemplar match alone no longer blocks approval, only the two real density rules (now cleared) ever did', afterRepairValidation.ok === true, JSON.stringify(afterRepairValidation));
+// REAL FINDING (Roman, 2026-09-20, wish-twist causal-specificity correction): Attempt 6's own real,
+// untouched wish-twist beats independently lack the joint "lost"-referent + wrong/danger-fulfillment
+// language the now-BLOCKING wish_twist_causal_specificity check requires — a THIRD independent real
+// historical attempt converging on the same causal-vagueness gap (after Attempt 7 and Attempt 8),
+// real further evidence the check generalizes rather than overfitting to one attempt. The bounded
+// density-only repair pass correctly does NOT and cannot fix this: repair only ever touches word
+// counts on flagged slots, never rewrites content to add a missing causal claim, so this real,
+// pre-existing content gap survives the merge untouched — exactly the "repair is never authorized to
+// paper over a canon violation" principle proven elsewhere in this file, now demonstrated on a third
+// real dataset. The candidate is correctly NOT eligible until a real, separately-authorized content
+// pass (like Attempt 8's) adds the missing causal language — the density repair was never expected
+// to do that job.
+ok('AFTER repair-merge, CORRECTED POLICY: exemplar match alone and the two real density rules are cleared by the merge (repair does its own job correctly)', !afterRules.includes('exemplar_verbatim_copy') && !afterRules.includes('scene1_too_thin') && !afterRules.includes('scene1_insufficient_narration_density'));
+ok('REAL FINDING: Attempt 6\'s own real (untouched) wish-twist content ALSO independently lacks the causal-specificity language — a THIRD real historical attempt converging on the same gap — and the density-only bounded repair correctly leaves this pre-existing content gap untouched rather than papering over it, so the merged candidate correctly remains NOT ELIGIBLE for this separate, real, undisclosed-until-now reason', afterRepairValidation.ok === false && afterRules.length === 1 && afterRules[0] === 'wish_twist_causal_specificity', JSON.stringify(afterRepairValidation));
 
 // ═══════════════════════════════════════════════════════════════════════════════
 section('5. isRepairEligible / REPAIR_ELIGIBLE_VALIDATOR_RULES — scope discipline');
@@ -408,21 +421,29 @@ const rawAttackGrammarHits = pass1MergedValidationRaw.violations.filter(v => v.r
 ok('REAL FINDING: Attempt 7\'s own real (untouched) pass-1-merged draft ALSO trips the new wish-misalignment visual-grammar rule ("scorched"/"residue", real convergence evidence from a SECOND independent attempt)', rawAttackGrammarHits.length > 0, JSON.stringify(rawAttackGrammarHits));
 ok('REAL FINDING: planNextRepairPass correctly REFUSES a residual pass on Attempt 7\'s raw real data once the visual-grammar violation coexists with the density one — repair is never authorized to paper over a canon violation', planNextRepairPass(pass1Merge.merged, pass1MergedValidationRaw, PACKET, 1).authorized === false);
 
-// SANITIZED FIXTURE, MECHANISM-TESTING ONLY (Roman, 2026-09-20): the two-pass ADAPTIVE ORCHESTRATION
-// mechanism (slot-targeting, pass-count cap, merge contract) is a SEPARATE concern from the wish-
+// SANITIZED FIXTURE, MECHANISM-TESTING ONLY (Roman, 2026-09-20, updated 2026-09-20 after the
+// causal-specificity check became BLOCKING): the two-pass ADAPTIVE ORCHESTRATION mechanism
+// (slot-targeting, pass-count cap, merge contract) is a SEPARATE concern from the wish-
 // misalignment content correction above, and deserves its own continued proof on real data. This
-// clone strips ONLY the 2 literal banned words found above (scorched -> acrid, residue -> phrased
-// without that noun) so the two-pass MECHANISM can keep being exercised on real Attempt 7 data —
-// this is NOT a claim the sanitized text now satisfies the wish-misalignment law's full conceptual
-// requirement (the surrounding "force"/"pressure"/"drove straight toward my chest" shape is still
-// the wrong conceptual grammar and would need the real, deferred, focused paid revision to fix
-// properly) — it only removes the 2 literal lexical triggers so this UNRELATED mechanism proof can
-// continue without being entangled with the wish-misalignment finding proven separately above.
+// clone strips the 2 literal banned words found above (scorched -> acrid, residue -> phrased
+// without that noun, each a same-word-count swap so the residual-deficiency word counts below stay
+// real and unperturbed) AND adds one danger-language clause to beat 10 (wish_and_sacrifice — NOT a
+// residual-deficiency-tracked slot, so this does not perturb the word-count-based assertions below)
+// so the now-BLOCKING wish_twist_causal_specificity check also clears (that beat already names "the
+// one she lost"; only the danger-language half of the check was missing) — this is NOT a claim the
+// sanitized text now satisfies the wish-misalignment law's full conceptual requirement (the
+// surrounding "force"/"pressure"/"drove straight toward my chest" shape is still the wrong
+// conceptual grammar and would need the real, deferred, focused paid revision to fix properly) — it
+// only removes the literal lexical triggers and adds the minimal proxy signal so this UNRELATED
+// mechanism proof can continue without being entangled with the wish-misalignment findings proven
+// separately above.
 const pass1MergedSanitized = JSON.parse(JSON.stringify(pass1Merge.merged));
+pass1MergedSanitized.scene1Candidate.beats[10].text += ' Even as she spoke it I understood the danger: Fate might answer the letter of her wish and still get it horribly wrong.';
 pass1MergedSanitized.scene1Candidate.beats[12].text = pass1MergedSanitized.scene1Candidate.beats[12].text.replace('scorched linen', 'acrid linen');
 pass1MergedSanitized.scene1Candidate.beats[13].text = pass1MergedSanitized.scene1Candidate.beats[13].text.replace('the residue hung in the air', 'something unnamed lingered in the air');
 const pass1MergedValidation = validateDraft(pass1MergedSanitized, PACKET);
 ok('sanitized fixture: the 2 literal banned words are gone and wish_twist_wrong_visual_grammar no longer fires, isolating the two-pass MECHANISM proof below from the separately-proven wish-misalignment finding above', !pass1MergedValidation.violations.some(v => v.rule === 'wish_twist_wrong_visual_grammar'));
+ok('sanitized fixture: the added danger-language clause clears the now-BLOCKING wish_twist_causal_specificity check too, so only the density violation remains for the mechanism proof below', !pass1MergedValidation.violations.some(v => v.rule === 'wish_twist_causal_specificity'));
 ok('sanitized fixture still shows scene1_insufficient_narration_density as the only remaining rule (rule NAME matches the frozen pre-reversal record; exact count/detail may legitimately differ under the post-reversal ceiling policy)', pass1MergedValidation.violations.length === 1 && pass1MergedValidation.violations[0].rule === 'scene1_insufficient_narration_density' && attempt7RealMergedValidation.finalValidation.violations.length === 1 && attempt7RealMergedValidation.finalValidation.violations[0].rule === 'scene1_insufficient_narration_density', JSON.stringify(pass1MergedValidation.violations));
 
 // ── (a) "a too-short first repair leaves only its deficient slots eligible for the second pass" ──
@@ -463,7 +484,21 @@ const pass2Merge = mergeRepairIntoDraft(pass1Merge.merged, compliantPass2Repair,
 ok('GREEN: the compliant pass-2 (full-slot) repair merges cleanly on top of the pass-1-merged draft', pass2Merge.errors.length === 0, JSON.stringify(pass2Merge.errors));
 const doublyMergedFullDraft = { ...attempt7Primary, scene1Candidate: pass2Merge.merged.scene1Candidate };
 const finalValidationAfterTwoPasses = validateDraft(doublyMergedFullDraft, PACKET);
-ok('END-TO-END: primary + real pass-1 repair + compliant pass-2 (full-slot, midpoint) repair, re-validated with the REAL validator, YIELDS A FULLY PASSING candidate (validation.ok === true)', finalValidationAfterTwoPasses.ok === true, JSON.stringify(finalValidationAfterTwoPasses.violations));
+ok('END-TO-END: primary + real pass-1 repair + compliant pass-2 (full-slot, midpoint) repair, re-validated with the REAL validator, CLEARS every density rule AND the attack-grammar rule (wish_twist_wrong_visual_grammar no longer fires — beat 14, the one carrying "residue", was itself one of the real residual-deficiency slots this pass replaces)', !finalValidationAfterTwoPasses.violations.some(v => v.rule === 'scene1_too_thin' || v.rule === 'scene1_insufficient_narration_density' || v.rule === 'wish_twist_wrong_visual_grammar'), JSON.stringify(finalValidationAfterTwoPasses.violations));
+// REAL FINDING (Roman, 2026-09-20, wish-twist causal-specificity correction): this doubly-merged
+// draft is built from the REAL (unsanitized) pass-1-merged base, so beat 11 (wish_and_sacrifice,
+// untouched by either repair pass) still carries its real original text, which already names "the
+// one she lost" — but no beat in the real wish_and_sacrifice/wish_visibly_twists/twist_unnaturally_
+// arrested chain ever states wrong/dangerous-fulfillment language, in the real Attempt 7 primary or
+// in either bounded repair pass's compliant filler (filler text is deliberately generic and adds no
+// causal content by design). This is real, correct, honest behavior, not a bug: a density-only
+// bounded repair pass is NEVER authorized to invent or add causal/canon content — it only ever
+// widens or replaces text to satisfy a word-count floor — so this real, pre-existing content gap
+// (present since the real, paid Attempt 7 primary generation) correctly survives both repair passes
+// untouched. The candidate is correctly NOT eligible for this separate, real, content-completeness
+// reason, exactly matching the "repair never papers over a canon violation" principle already proven
+// for wrong-visual-grammar above, now also holding for causal-specificity.
+ok('REAL FINDING: even after two full, compliant density-repair passes, the doubly-merged candidate correctly remains NOT ELIGIBLE — wish_twist_causal_specificity still fires because neither the real Attempt 7 primary nor either bounded repair pass ever supplied wrong/dangerous-fulfillment language, and a density-only repair is never authorized to invent that content', finalValidationAfterTwoPasses.ok === false && finalValidationAfterTwoPasses.violations.length === 1 && finalValidationAfterTwoPasses.violations[0].rule === 'wish_twist_causal_specificity', JSON.stringify(finalValidationAfterTwoPasses.violations));
 
 // ── (d) a structural/canon/copy violation prevents ANY repair pass, at any pass count ──
 const mixedViolations = [{ rule: 'scene1_insufficient_narration_density' }, { rule: 'the_answer_form_violation' }];

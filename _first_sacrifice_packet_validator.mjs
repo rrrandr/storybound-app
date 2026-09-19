@@ -432,47 +432,69 @@ function validateDraft(draft, packet) {
         if (extraCoverageKeys.length) violations.push({ rule: 'unapproved_output_field', detail: 'scene1Coverage has unapproved key(s) not in required_content_beats: ' + extraCoverageKeys.join(', ') });
       }
     }
-    // WISH-MISALIGNMENT VISUAL GRAMMAR (Roman, 2026-09-20, real Attempt 8 finding) — mechanical
-    // backstop for wish_twist_and_arrest_requirement.banned_wrong_visual_grammar /
-    // _fatelands_ordinary_wish_misalignment_law.json. Scoped ONLY to the beats scene1Coverage
-    // itself maps to wish_visibly_twists / twist_unnaturally_arrested / public_charge — never a
-    // blanket scan of the whole scene, which could false-positive on unrelated prose. This is the
-    // BACKSTOP, not the primary fix — the primary fix is the corrected packet instructions
-    // themselves; this only catches convergence the instructions failed to prevent.
+    // WISH-MISALIGNMENT VISUAL GRAMMAR (Roman, 2026-09-20, real Attempt 8 finding; CONTINUITY
+    // SCOPE EXPANDED 2026-09-20 after a real, disclosed miss: the wish-twist content correction
+    // replaced beats 13-15 but left "the line of scorched grass" untouched in postInterruptionBeat
+    // AND "the scorch line still visible in the grass" untouched in beat 19 — both real, later
+    // callbacks carrying the incident forward. Scoped to every beat from wish_visibly_twists
+    // ONWARD (the twist and everything chronologically after it in scene1Candidate) PLUS
+    // oasOpening PLUS postInterruptionBeat — never beats BEFORE the twist (no risk of the
+    // misfire there) and never a blanket scan of the whole scene. This is the BACKSTOP, not the
+    // primary fix — the primary fix is the corrected packet instructions themselves; this only
+    // catches convergence/continuity the instructions failed to prevent.
     if (coverage) {
       const WISH_MISALIGNMENT_ATTACK_GRAMMAR_RE = /\b(seams?|rifts?|projectiles?|beams?|scorch(?:ed|ing)?|burst(?:ing)?|blasts?|explosions?|explosive)\b|rope of light|residue/i;
-      ['wish_visibly_twists', 'twist_unnaturally_arrested', 'public_charge'].forEach(id => {
-        const idxs = Array.isArray(coverage[id]) ? coverage[id] : [];
-        idxs.forEach(i => {
+      const twistStartIdxs = Array.isArray(coverage.wish_visibly_twists) ? coverage.wish_visibly_twists : [];
+      const twistStart = twistStartIdxs.length ? Math.min(...twistStartIdxs) : null;
+      const continuityFields = [];
+      if (twistStart !== null) {
+        for (let i = twistStart; i < scene1Beats.length; i++) {
           const b = scene1Beats[i];
-          if (!b || typeof b.text !== 'string') return;
-          const m = b.text.match(WISH_MISALIGNMENT_ATTACK_GRAMMAR_RE);
-          if (m) violations.push({ rule: 'wish_twist_wrong_visual_grammar', detail: 'scene1Candidate.beats[' + i + '] (covering required beat "' + id + '") contains attack-grammar vocabulary ("' + m[0] + '") — an ordinary Fatelands wish misalignment is a non-spectacular, causally legible event (recognition, naming, reaction, a subtle pull, or unexplained arrest), never an external magical attack, visible rift, or damage residue (see wish_twist_and_arrest_requirement.banned_wrong_visual_grammar / _fatelands_ordinary_wish_misalignment_law.json)' });
-        });
+          if (b && typeof b.text === 'string') continuityFields.push({ label: 'scene1Candidate.beats[' + i + ']', text: b.text });
+        }
+      }
+      if (oasOpening && typeof oasOpening.text === 'string') continuityFields.push({ label: 'oasOpening', text: oasOpening.text });
+      if (postInterruptionBeat && typeof postInterruptionBeat.text === 'string') continuityFields.push({ label: 'postInterruptionBeat', text: postInterruptionBeat.text });
+      continuityFields.forEach(({ label, text }) => {
+        const m = text.match(WISH_MISALIGNMENT_ATTACK_GRAMMAR_RE);
+        if (m) violations.push({ rule: 'wish_twist_wrong_visual_grammar', detail: label + ' contains attack-grammar vocabulary ("' + m[0] + '") — an ordinary Fatelands wish misalignment is a non-spectacular, causally legible event (recognition, naming, reaction, a subtle pull, or unexplained arrest), never an external magical attack, visible rift, or damage residue, and this must hold for every LATER field that carries the incident forward, not only the 3 beats that directly depict it (see wish_twist_and_arrest_requirement.banned_wrong_visual_grammar / _fatelands_ordinary_wish_misalignment_law.json)' });
       });
-      // CAUSAL-CHAIN SPECIFICITY — NON-BLOCKING DIAGNOSTIC (Roman, 2026-09-20, following a real
-      // human read-through finding on the wish-twist content correction: removing attack-grammar
-      // vocabulary is necessary but not sufficient — a beat can be mechanically clean and still be
-      // too ABSTRACT to dramatize the actual stakes ("cold directionality... a new anchor" named
-      // no danger and no referent). This is a COARSE, flexible presence proxy for two concepts —
-      // (a) the wish's own object (Seren's "find the one she lost" — still deliberately unnamed,
-      // never resolved by this check) and (b) danger/wrongness language — NOT a semantic judge and
-      // NEVER a blocking violation: it never requires one exact sentence or locks any specific
-      // wording (direct speech and first-person recognition both satisfy it equally). A human
-      // read-through remains the real check for genuine concreteness, exactly like
-      // banned_vague_consequence's own established limits.
-      const idxs = Array.isArray(coverage.wish_visibly_twists) ? coverage.wish_visibly_twists : [];
+      // CAUSAL-CHAIN SPECIFICITY — BLOCKING (Roman, 2026-09-20; UPGRADED from non-blocking after a
+      // real human read-through found the wish-twist correction still too abstract to dramatize
+      // the actual stakes, and there is no human-review gate this starter can rely on to catch it
+      // later). Requires the FULL causal chain to be legible across the wish_and_sacrifice ->
+      // wish_visibly_twists beats (direct speech or first-person recognition, no exact wording
+      // required): the wish's own object ("find the one she lost" — never resolved by this check),
+      // danger/wrongness language, AND — the real, specific failure mode found — this must NOT be
+      // satisfied by an abstract substitution that makes SEREN's own sacrificed memory/cost seem to
+      // be the thing relocating (the real bug: "the loss Seren had named was already searching for
+      // a new anchor"). Scoped to wish_and_sacrifice + wish_visibly_twists + twist_unnaturally_arrested
+      // (the causal-chain beats), never a blanket scan.
+      const wishAndSacrificeIdxs = Array.isArray(coverage.wish_and_sacrifice) ? coverage.wish_and_sacrifice : [];
+      const arrestIdxs = Array.isArray(coverage.twist_unnaturally_arrested) ? coverage.twist_unnaturally_arrested : [];
+      const chainIdxs = [...wishAndSacrificeIdxs, ...twistStartIdxs, ...arrestIdxs];
+      const chainText = chainIdxs.map(i => (scene1Beats[i] && scene1Beats[i].text) || '').join(' ');
       const LOST_REFERENT_RE = /\blost\b|\blose\b|\blosing\b/i;
       const DANGER_LANGUAGE_RE = /\bwrong(?:ly)?\b|\bhorribl\w*\b|\bhorror\b|\bdanger(?:ous)?\b|\bworse\b|\btwisted\b|\bcorrupt\w*\b/i;
-      idxs.forEach(i => {
+      // Misattribution guard: Seren's OWN loss/memory/cost framed (in the twist beat specifically)
+      // as the thing searching/anchoring/relocating — the exact real failure shape, not a ban on
+      // mentioning Seren's loss at all (which is legitimate, established content elsewhere).
+      const SEREN_LOSS_REF_RE = /\b(the\s+)?(loss|memory|cost)\b[\s\S]{0,60}\b(Seren|she)\b|\b(Seren|she)\b[\s\S]{0,60}\b(loss|memory|cost)\b/i;
+      const RELOCATION_VERB_RE = /\b(search(?:ing)?|anchor(?:ing)?|relocat\w*|settl(?:e|ing)\s+in|new\s+home|reach(?:ing)?\s+for\s+a\s+new)\b/i;
+      twistStartIdxs.forEach(i => {
         const b = scene1Beats[i];
         if (!b || typeof b.text !== 'string') return;
-        const hasReferent = LOST_REFERENT_RE.test(b.text);
-        const hasDanger = DANGER_LANGUAGE_RE.test(b.text);
-        if (!hasReferent || !hasDanger) {
-          diagnostics.push({ rule: 'wish_twist_causal_specificity', detail: 'scene1Candidate.beats[' + i + '] (wish_visibly_twists) does not clearly reference ' + (!hasReferent && !hasDanger ? 'the wish\'s own object ("the one she lost") or wrong/dangerous-fulfillment language' : !hasReferent ? 'the wish\'s own object ("the one she lost")' : 'wrong/dangerous-fulfillment language') + ' — non-blocking human-review flag: this beat may be too abstract to dramatize that Fate could fulfill Seren\'s wish WRONGLY or HORRIBLY, distinct from Seren\'s own separate sacrificed cost. No exact wording is required; this is a coarse presence proxy, not a semantic judge.' });
+        if (SEREN_LOSS_REF_RE.test(b.text) && RELOCATION_VERB_RE.test(b.text)) {
+          violations.push({ rule: 'wish_twist_referent_misattribution', detail: 'scene1Candidate.beats[' + i + '] (wish_visibly_twists) frames Seren\'s OWN sacrificed loss/memory/cost as the thing searching/anchoring/relocating — this is the real, disclosed failure shape: the beat must be about the WISH\'s object ("the one she lost") being at risk, not about Seren\'s separate sacrificed cost seeming to relocate into Lirael.' });
         }
       });
+      if (chainIdxs.length) {
+        const hasReferent = LOST_REFERENT_RE.test(chainText);
+        const hasDanger = DANGER_LANGUAGE_RE.test(chainText);
+        if (!hasReferent || !hasDanger) {
+          violations.push({ rule: 'wish_twist_causal_specificity', detail: 'The wish_and_sacrifice/wish_visibly_twists/twist_unnaturally_arrested beats do not clearly, jointly reference ' + (!hasReferent && !hasDanger ? 'the wish\'s own object ("the one she lost") or wrong/dangerous-fulfillment language' : !hasReferent ? 'the wish\'s own object ("the one she lost")' : 'wrong/dangerous-fulfillment language') + ' — the causal chain (spoken wish object -> Seren\'s self-serving desire -> danger of wrong fulfillment -> quiet pull -> unexplained arrest) must be legible, direct speech or first-person recognition both acceptable, no exact wording required. This starter has no human-review gate to rely on instead.' });
+        }
+      }
     }
     // Per-beat kind/image/provenance checks
     let lastImageIdx = -1;
@@ -912,33 +934,77 @@ section('RED CONTROLS — scene1Candidate (fourth redesign pass, 2026-09-17)');
     ok('REAL DATA: Attempt 8 candidate artifact not present in this environment — skipping real-data confirmation (not a failure; synthetic RED/GREEN coverage above already proves the rule)', true);
   }
 }
-// ── WISH-TWIST CAUSAL-CHAIN SPECIFICITY — NON-BLOCKING DIAGNOSTIC (Roman, 2026-09-20, following
-// a real human read-through finding: the mechanically-clean wish-twist correction was STILL too
-// abstract — "cold directionality... a new anchor" named no referent and no danger). Coarse
+// ── WISH-TWIST CAUSAL-CHAIN SPECIFICITY — BLOCKING (Roman, 2026-09-20, UPGRADED from non-blocking
+// after a real human read-through found the wish-twist correction still too abstract — "cold
+// directionality... a new anchor" named no referent and no danger — and Roman's own correction:
+// "the causal-specificity condition must be blocking for this starter; there is no human-review
+// gate that can be relied on to catch it later." Coarse
 // presence proxy only, never blocking, never locking exact wording. ──
 {
+  // Neuter the referent/danger signal across the WHOLE chain (wish_and_sacrifice + twist + arrest)
+  // — replacing only the twist beat is not enough to test "nothing anywhere in the chain," since
+  // beat 10 ("find the one she lost") and beat 12 ("wrongly-spent") already satisfy the check.
   const d = compliantDraft();
+  d.scene1Candidate.beats[9].text = 'Seren lifted her gaze to mine and said clearly, "So that Lirael may find comfort in what remains," abandoning the practiced wish entirely, spending her one First Sacrifice on me instead of herself.';
+  d.scene1Candidate.beats[10].text = 'The words bent the instant they left her — a loose note, care performed for the assembly\'s witness over the desire she actually held, and I knew it the way I know my own face: this was never truly for me.';
   d.scene1Candidate.beats[11].text = 'A cold directionality opened somewhere beneath my ribs, vague and unplaceable, and I could not yet say what it meant or where it was reaching toward.';
+  d.scene1Candidate.beats[12].text = 'It should have reached me. I had already begun bracing for whatever a First Sacrifice does to the person it lands on — and then it was simply gone, cut off mid-motion the way a held breath stops.';
   const v = validateDraft(d, PACKET);
-  ok('a wish_visibly_twists beat with no referent ("lost") and no danger language is ok (non-blocking) but flagged as a causal-specificity diagnostic', v.ok && v.diagnostics.some(x => x.rule === 'wish_twist_causal_specificity' && /the wish.s own object.*or wrong\/dangerous-fulfillment language/.test(x.detail)), JSON.stringify(v.diagnostics));
+  ok('RED: a wish_visibly_twists beat with no referent ("lost") and no danger language anywhere across the wish_and_sacrifice/twist/arrest chain is REJECTED (BLOCKING — no human-review gate to rely on)', !v.ok && v.violations.some(x => x.rule === 'wish_twist_causal_specificity'), JSON.stringify(v.violations));
 }
 {
   const d = compliantDraft();
   d.scene1Candidate.beats[11].text = 'I felt the pull begin, quiet and certain, toward the one she had said I had lost — and understood, in the same breath, that finding him this way could go wrong, even horribly wrong, precisely because her wish had never really been for me.';
   const v = validateDraft(d, PACKET);
-  ok('GREEN: a wish_visibly_twists beat that references the wish\'s referent language ("find", "the one") AND danger language ("wrong"/"horribly") is NOT flagged — direct first-person recognition satisfies it, no exact sentence required', v.ok && !v.diagnostics.some(x => x.rule === 'wish_twist_causal_specificity'), JSON.stringify(v.diagnostics));
+  ok('GREEN: a wish_visibly_twists beat that references the wish\'s referent language ("lost") AND danger language ("wrong"/"horribly") passes — direct first-person recognition satisfies it, no exact sentence required', v.ok && !v.violations.some(x => x.rule === 'wish_twist_causal_specificity'), JSON.stringify(v.violations));
 }
 {
-  // REAL DATA: the actual wish-twist content correction (mechanically clean, zero attack-grammar
-  // violations) is used as the fixture for Roman's own real human read-through finding — proving
-  // this diagnostic catches EXACTLY the real gap identified, not a synthetic strawman.
+  // RED: the exact real failure shape — Seren's OWN sacrificed loss/memory framed as the thing
+  // relocating/anchoring, rather than the wish's actual object being at risk. Must be rejected even
+  // though it happens to contain neither "lost" nor a danger word (the misattribution guard is a
+  // SEPARATE, additional check, not merely a fallback for the specificity check).
+  const d = compliantDraft();
+  d.scene1Candidate.beats[11].text = 'The loss Seren had named was already searching for a new anchor in the person conducting the rite, and I felt it settle somewhere beneath my ribs.';
+  const v = validateDraft(d, PACKET);
+  ok('RED: a wish_visibly_twists beat that frames Seren\'s own sacrificed loss/memory as the thing searching/anchoring is REJECTED (wish_twist_referent_misattribution) — this is the exact real failure shape, not a ban on mentioning Seren\'s loss at all', !v.ok && v.violations.some(x => x.rule === 'wish_twist_referent_misattribution'), JSON.stringify(v.violations));
+}
+{
+  // RED: attack-grammar vocabulary in postInterruptionBeat — a LATER field carrying the incident
+  // forward, beyond the 3 beats that directly depict it — must also be rejected.
+  const d = compliantDraft();
+  d.postInterruptionBeat.text = 'The Answer rested in my hands, and the assembly\'s attention had returned to the line of scorched grass at my feet.';
+  const v = validateDraft(d, PACKET);
+  ok('RED: postInterruptionBeat carrying forward attack-grammar vocabulary ("scorched") from the incident is REJECTED — the continuity check covers every later field, not only beats 13-15', !v.ok && v.violations.some(x => x.rule === 'wish_twist_wrong_visual_grammar' && /postInterruptionBeat/.test(x.detail)), JSON.stringify(v.violations));
+}
+{
+  // RED: attack-grammar vocabulary in a LATER scene1Candidate beat (after the twist, but not one
+  // of the 3 originally-mapped beats) — same continuity principle, applied within scene1Candidate.
+  const d = compliantDraft();
+  d.scene1Candidate.beats[19].text = d.scene1Candidate.beats[19].text + ' The scorch line was still visible in the grass.';
+  const v = validateDraft(d, PACKET);
+  ok('RED: a LATER scene1Candidate beat (beat 20, after the twist, not one of the 3 directly-depicting beats) carrying forward attack-grammar vocabulary is REJECTED', !v.ok && v.violations.some(x => x.rule === 'wish_twist_wrong_visual_grammar' && /beats\[19\]/.test(x.detail)), JSON.stringify(v.violations));
+}
+{
+  // GREEN (scope discipline): a beat BEFORE the twist is never scanned — no risk of the incident
+  // being "carried forward" there, and scanning it would risk false positives on unrelated prose.
+  const d = compliantDraft();
+  d.scene1Candidate.beats[0].text = d.scene1Candidate.beats[0].text + ' A burst of birdsong crossed the clearing.';
+  const v = validateDraft(d, PACKET);
+  ok('GREEN (scope discipline): a banned word in a beat BEFORE the twist (beat 1) is never flagged — the continuity scan only covers wish_visibly_twists onward plus oasOpening/postInterruptionBeat', !v.violations.some(x => x.rule === 'wish_twist_wrong_visual_grammar'), JSON.stringify(v.violations));
+}
+{
+  // REAL DATA: the actual wish-twist content correction now honestly FAILS — the exact real
+  // finding Roman surfaced from the human read-through PDF: postInterruptionBeat and beat 19 both
+  // still carry "scorch" language, and the misattribution guard fires on beat 12's real text. This
+  // is the intended, correct outcome: no ok:true until a later focused rewrite fixes these fields.
   const correctionPath = path.join(__dirname, '_first_sacrifice_draft_v7_attempt8_full_package/09_wish_twist_content_correction.json');
   if (fs.existsSync(correctionPath)) {
     const correctedDraft = JSON.parse(fs.readFileSync(correctionPath, 'utf8')).draft;
     const v = validateDraft(correctedDraft, PACKET);
-    ok('REAL DATA: the real wish-twist content correction has ZERO wish_twist_wrong_visual_grammar violations (the attack-grammar fix held)', !v.violations.some(x => x.rule === 'wish_twist_wrong_visual_grammar'), JSON.stringify(v.violations));
-    const specificityHit = v.diagnostics.filter(x => x.rule === 'wish_twist_causal_specificity');
-    ok('REAL DATA: the real wish-twist content correction IS flagged by the new causal-specificity diagnostic — confirms real human read-through finding ("cold directionality... new anchor" never names the wish\'s referent) mechanically, non-blocking, not requiring a re-run', specificityHit.length > 0, JSON.stringify(specificityHit));
+    ok('REAL DATA: the real wish-twist content correction is correctly marked NOT ELIGIBLE (validation.ok === false) — the continuity gap (postInterruptionBeat, beat 19) and the causal-specificity/misattribution issues are real and unresolved, no human-review gate papers over this', v.ok === false, JSON.stringify(v.violations));
+    ok('REAL DATA: postInterruptionBeat\'s real "scorched grass" callback is caught', v.violations.some(x => x.rule === 'wish_twist_wrong_visual_grammar' && /postInterruptionBeat/.test(x.detail)), JSON.stringify(v.violations));
+    ok('REAL DATA: beat[19]\'s real "scorch line" callback is caught', v.violations.some(x => x.rule === 'wish_twist_wrong_visual_grammar' && /beats\[19\]/.test(x.detail)), JSON.stringify(v.violations));
+    ok('REAL DATA: beat[12]\'s real Seren-loss-relocating misattribution is caught', v.violations.some(x => x.rule === 'wish_twist_referent_misattribution'), JSON.stringify(v.violations));
   } else {
     ok('REAL DATA: wish-twist content correction artifact not present in this environment — skipping (not a failure; synthetic coverage above already proves the rule)', true);
   }

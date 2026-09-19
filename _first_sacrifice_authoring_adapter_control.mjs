@@ -238,13 +238,23 @@ function compliantScene1() {
 const REQUIRED_BEAT_IDS = ['ceremony_setting', 'seren_kneeling_rehearsed', 'cost_offering_statement', 'julian_introduced', 'invocation_begins', 'wish_and_sacrifice', 'wish_visibly_twists', 'twist_unnaturally_arrested', 'public_charge', 'social_fallout_family_reaction', 'julian_claims_the_answer'];
 function compliantDraft() {
   const scene1Beats = compliantScene1().beats;
+  const coverage = Object.fromEntries(REQUIRED_BEAT_IDS.map((id, i) => [id, [(i * 2) % scene1Beats.length, (i * 2 + 1) % scene1Beats.length]]));
+  // WISH-TWIST CAUSAL-CHAIN SPECIFICITY (Roman, 2026-09-20, now BLOCKING) — this fixture's
+  // placeholder text is generic and never contains referent/danger language anywhere. Inject the
+  // minimum needed (real words, not a rewrite of the fixture's own disclosed non-content-modeling
+  // design) into whichever beat indices the modulo coverage formula above assigns to
+  // wish_and_sacrifice/wish_visibly_twists/twist_unnaturally_arrested, so this purely-structural
+  // fixture also clears the new causal-chain requirement without pretending to model real content.
+  [...coverage.wish_and_sacrifice, ...coverage.wish_visibly_twists, ...coverage.twist_unnaturally_arrested].forEach((idx, i) => {
+    scene1Beats[idx].text += (i === 0 ? ' the one she lost' : i === 1 ? ' wrongly and horribly' : '');
+  });
   return {
     scene1Candidate: { beats: scene1Beats },
     first_person_lirael: true,
     // Modulo into the fixed 16-beat fixture — this file proves the ADAPTER's declared schema is
     // structurally validator-compliant, not a model of real non-overlapping content coverage (see
     // the packet validator's own compliantDraft() for that, which uses real distinct beat indices).
-    scene1Coverage: Object.fromEntries(REQUIRED_BEAT_IDS.map((id, i) => [id, [(i * 2) % scene1Beats.length, (i * 2 + 1) % scene1Beats.length]])),
+    scene1Coverage: coverage,
     oasOpening: { speaker: 'Julian', text: 'placeholder opening accusation turn, expanded to a full multi-sentence length so this structural fixture clears the real 35-80 word range requirement without pretending to be finished authored dialogue, padding padding padding padding padding padding padding.' },
     postInterruptionBeat: { speaker: null, image: 'd4', kind: 'narration', text: 'placeholder post-interruption beat crystallizing an unresolved choice.' },
     // fateCards deliberately absent — no longer an authored field (Roman, 2026-09-17).
