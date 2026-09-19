@@ -447,7 +447,7 @@ function validateDraft(draft, packet) {
           const b = scene1Beats[i];
           if (!b || typeof b.text !== 'string') return;
           const m = b.text.match(WISH_MISALIGNMENT_ATTACK_GRAMMAR_RE);
-          if (m) violations.push({ rule: 'wish_twist_wrong_visual_grammar', detail: 'scene1Candidate.beats[' + i + '] (covering required beat "' + id + '") contains attack-grammar vocabulary ("' + m[0] + '") — an ordinary Fatelands wish misalignment is a subjective/internal pull, never an external magical attack, visible rift, or damage residue (see wish_twist_and_arrest_requirement.banned_wrong_visual_grammar / _fatelands_ordinary_wish_misalignment_law.json)' });
+          if (m) violations.push({ rule: 'wish_twist_wrong_visual_grammar', detail: 'scene1Candidate.beats[' + i + '] (covering required beat "' + id + '") contains attack-grammar vocabulary ("' + m[0] + '") — an ordinary Fatelands wish misalignment is a non-spectacular, causally legible event (recognition, naming, reaction, a subtle pull, or unexplained arrest), never an external magical attack, visible rift, or damage residue (see wish_twist_and_arrest_requirement.banned_wrong_visual_grammar / _fatelands_ordinary_wish_misalignment_law.json)' });
         });
       });
     }
