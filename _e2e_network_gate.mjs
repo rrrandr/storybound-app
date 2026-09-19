@@ -59,7 +59,12 @@
 //   active phase, is undeclared and aborted.
 // gate.closePhase() — closes the active phase.
 // gate.realCalls() — tracked requests that went through the REAL pass-through lane specifically:
-//   {roleTag, url, requestBody, status, responseBody, networkError, at, settledAt}.
+//   {roleTag, url, requestBody, status, responseBody, networkError, at, atMono, settledAt,
+//   settledAtMono, elapsedMs}. at/settledAt are wall-clock Date.now() ms (for correlating against
+//   other logs/timestamps); atMono/settledAtMono are performance.now() ms (monotonic, immune to
+//   wall-clock/timezone conversion — never subtract at/settledAt by hand to get a duration).
+//   elapsedMs = settledAtMono - atMono, computed once here at settlement time — the authoritative
+//   duration; use it instead of re-deriving one.
 // gate.trackedCalls(roleTag?) — every tracked request (real AND stub-served-under-a-phase),
 //   optionally filtered to one role — the same shape as realCalls() plus a `real` boolean.
 // gate.hasUnsettled(roleTag?) — true if any TRACKED call (optionally filtered to one role) has
@@ -71,6 +76,18 @@
 //   design (see the incident this fixes).
 
 import fs from 'node:fs';
+import { performance } from 'node:perf_hooks';
+
+// Incident 3 (2026-09-19): a chat-turn report hand-converted this module's wall-clock Date.now()
+// epoch ms into a local clock-time string and got the conversion backwards, making a real
+// dispatch->settle pair (settled ~14.8s AFTER dispatch) READ as if settlement preceded dispatch.
+// The underlying persisted data was correct — Date.now() is monotonic within one Node process over
+// timescales this short — but nothing in the record forced a reader (human or script) to use a
+// correlated, hand-off-proof duration instead of subtracting two wall-clock strings themselves.
+// Fix: every tracked record now also carries atMono/settledAtMono (performance.now(), a monotonic
+// clock immune to wall-clock/timezone conversion mistakes) and elapsedMs — computed ONCE, here, at
+// settlement time, from the monotonic pair — so no downstream report ever hand-computes a duration
+// again. See _e2e_network_gate_monotonic_elapsed_control.mjs for the dry proof.
 
 export async function installFailClosedNetworkGate(page, opts) {
   opts = opts || {};
@@ -111,13 +128,13 @@ export async function installFailClosedNetworkGate(page, opts) {
     if (real) {
       if (activePhase && activePhase.count < activePhase.ceiling) {
         activePhase.count++;
-        const rec = { roleTag: activePhase.roleTag, real: true, url, requestBody: parseBody(req), status: null, responseBody: null, networkError: null, at: Date.now(), settledAt: null };
+        const rec = { roleTag: activePhase.roleTag, real: true, url, requestBody: parseBody(req), status: null, responseBody: null, networkError: null, at: Date.now(), atMono: performance.now(), settledAt: null, settledAtMono: null, elapsedMs: null };
         tracked.push(rec);
         calls.push({ url, matched: true, real: true, roleTag: activePhase.roleTag, at: Date.now() });
         // PERSIST IMMEDIATELY — before route.continue() releases the request. This is the record
         // that survives even if the browser is killed a millisecond later. (Incident 2: this line
         // did not exist, so a killed-in-flight request left nothing on disk at all.)
-        persist({ kind: 'dispatch', roleTag: rec.roleTag, real: true, url, requestBody: rec.requestBody, at: rec.at });
+        persist({ kind: 'dispatch', roleTag: rec.roleTag, real: true, url, requestBody: rec.requestBody, at: rec.at, atMono: rec.atMono });
         await route.continue();
         return;
       }
@@ -149,9 +166,9 @@ export async function installFailClosedNetworkGate(page, opts) {
         return;
       }
       activePhase.count++;
-      rec = { roleTag: activePhase.roleTag, real: false, url, requestBody: parseBody(req), status: null, responseBody: null, networkError: null, at: Date.now(), settledAt: null };
+      rec = { roleTag: activePhase.roleTag, real: false, url, requestBody: parseBody(req), status: null, responseBody: null, networkError: null, at: Date.now(), atMono: performance.now(), settledAt: null, settledAtMono: null, elapsedMs: null };
       tracked.push(rec);
-      persist({ kind: 'dispatch', roleTag: rec.roleTag, real: false, url, requestBody: rec.requestBody, at: rec.at });
+      persist({ kind: 'dispatch', roleTag: rec.roleTag, real: false, url, requestBody: rec.requestBody, at: rec.at, atMono: rec.atMono });
     }
 
     let body;
@@ -159,14 +176,16 @@ export async function installFailClosedNetworkGate(page, opts) {
       const result = await stubFn(req);   // AWAITED — a stub may deliberately answer late.
       body = (typeof result === 'string') ? result : JSON.stringify(result);
       if (rec) {
-        rec.status = 200; rec.responseBody = (typeof result === 'string') ? { raw: result } : result; rec.settledAt = Date.now();
-        persist({ kind: 'response', roleTag: rec.roleTag, real: false, url, status: 200, responseBody: rec.responseBody, at: rec.settledAt });
+        rec.status = 200; rec.responseBody = (typeof result === 'string') ? { raw: result } : result;
+        rec.settledAt = Date.now(); rec.settledAtMono = performance.now(); rec.elapsedMs = rec.settledAtMono - rec.atMono;
+        persist({ kind: 'response', roleTag: rec.roleTag, real: false, url, status: 200, responseBody: rec.responseBody, at: rec.settledAt, settledAtMono: rec.settledAtMono, elapsedMs: rec.elapsedMs });
       }
     } catch (e) {
       body = JSON.stringify({ error: 'stub threw: ' + String(e && e.message) });
       if (rec) {
-        rec.status = 500; rec.responseBody = { error: String(e && e.message) }; rec.settledAt = Date.now();
-        persist({ kind: 'response', roleTag: rec.roleTag, real: false, url, status: 500, responseBody: rec.responseBody, at: rec.settledAt });
+        rec.status = 500; rec.responseBody = { error: String(e && e.message) };
+        rec.settledAt = Date.now(); rec.settledAtMono = performance.now(); rec.elapsedMs = rec.settledAtMono - rec.atMono;
+        persist({ kind: 'response', roleTag: rec.roleTag, real: false, url, status: 500, responseBody: rec.responseBody, at: rec.settledAt, settledAtMono: rec.settledAtMono, elapsedMs: rec.elapsedMs });
       }
     }
     route.fulfill({ status: 200, contentType: 'application/json', body: body });
@@ -181,8 +200,8 @@ export async function installFailClosedNetworkGate(page, opts) {
       if (!rec) return;
       rec.status = response.status();
       try { rec.responseBody = await response.json(); } catch (_) { rec.responseBody = null; }
-      rec.settledAt = Date.now();
-      persist({ kind: 'response', roleTag: rec.roleTag, real: true, url, status: rec.status, responseBody: rec.responseBody, at: rec.settledAt });
+      rec.settledAt = Date.now(); rec.settledAtMono = performance.now(); rec.elapsedMs = rec.settledAtMono - rec.atMono;
+      persist({ kind: 'response', roleTag: rec.roleTag, real: true, url, status: rec.status, responseBody: rec.responseBody, at: rec.settledAt, settledAtMono: rec.settledAtMono, elapsedMs: rec.elapsedMs });
     } catch (_) {}
   });
 
@@ -195,9 +214,9 @@ export async function installFailClosedNetworkGate(page, opts) {
       if (!rec) return;
       const failure = request.failure();
       rec.networkError = (failure && failure.errorText) || 'requestfailed (no errorText available)';
-      rec.settledAt = Date.now();
+      rec.settledAt = Date.now(); rec.settledAtMono = performance.now(); rec.elapsedMs = rec.settledAtMono - rec.atMono;
       // A TERMINAL NETWORK ERROR IS A SETTLEMENT, not a hang.
-      persist({ kind: 'network-error', roleTag: rec.roleTag, real: true, url, networkError: rec.networkError, at: rec.settledAt });
+      persist({ kind: 'network-error', roleTag: rec.roleTag, real: true, url, networkError: rec.networkError, at: rec.settledAt, settledAtMono: rec.settledAtMono, elapsedMs: rec.elapsedMs });
       try { console.warn('[NETWORK-GATE] terminal network error for ' + rec.roleTag + ' (' + url + '): ' + rec.networkError); } catch (_) {}
     } catch (_) {}
   });

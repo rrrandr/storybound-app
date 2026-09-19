@@ -51,7 +51,7 @@ function summarizeTracked(c) {
   const model = body.model || body.preferredModel || (c.responseBody && c.responseBody._orchestration && c.responseBody._orchestration.model) || null;
   const usage = c.responseBody && c.responseBody.usage;
   const costInfo = model ? realCost(model, usage) : { cost: null, note: 'model not identified in request body' };
-  return { url: c.url, model: model, status: c.status, networkError: c.networkError, usage: usage || null, costUsd: costInfo.cost, costNote: costInfo.note, at: c.at, settledAt: c.settledAt };
+  return { url: c.url, model: model, status: c.status, networkError: c.networkError, usage: usage || null, costUsd: costInfo.cost, costNote: costInfo.note, at: c.at, settledAt: c.settledAt, elapsedMs: c.elapsedMs != null ? Math.round(c.elapsedMs) : null };
 }
 
 (async () => {
