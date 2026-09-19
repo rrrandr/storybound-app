@@ -643,7 +643,7 @@
         },
         {
           "image": "d2",
-          "required_event": "As Lirael recognizes the wish will fulfill her stated loss wrongly, Fate begins a subtle PULL toward an unknown, unwanted fulfillment: a non-spectacular, causally legible event — participants may recognize, name, or react to the misalignment (Lirael's own dread, a wrong implication becoming apparent, others hearing or reacting), concrete and specific, never an external magical attack (no projectile, beam, rope of light, seam, rift, or burst — see _fatelands_ordinary_wish_misalignment_law.json). Not an abstraction, and not merely 'the assembly turned to look' — but also never a directed physical force.",
+          "required_event": "As Lirael recognizes that Seren's wish — 'find the one she lost' (still deliberately unnamed) — may now be fulfilled WRONGLY or HORRIBLY (not Seren's own separate sacrificed cost — this is about the WISH's object, distinct from Seren's offering), Fate begins a subtle PULL toward an unknown, unwanted fulfillment: a non-spectacular, causally legible event — participants may recognize, name, or react to the misalignment (Lirael's own dread, a wrong implication becoming apparent, others hearing or reacting), concrete and specific, never an external magical attack (no projectile, beam, rope of light, seam, rift, or burst — see _fatelands_ordinary_wish_misalignment_law.json). Not an abstraction, and not merely 'the assembly turned to look' — but also never a directed physical force.",
           "id": "wish_visibly_twists",
           "status": "NEW (Roman, seventh pass, 2026-09-17); REVISED 2026-09-20 (Roman, real Attempt 8 finding) — the prior wording ('a real magical or physical threat') is the disclosed root cause of every real attempt's wrong attack-grammar convergence."
         },
@@ -1002,7 +1002,7 @@
       "Seren states the actual wish and the actual sacrifice aloud (required via required_content_beats ids cost_offering_statement + wish_and_sacrifice).",
       "Lirael recognizes, in the moment, that Seren's performed empathy does not match the self-aggrandizing desire beneath it — her true desire is performed virtue and public admiration, not actually helping Lirael (required via wish_and_sacrifice).",
       "Lirael understands, through that recognition, that the wish will therefore fulfill her stated loss WRONGLY or DANGEROUSLY — this understanding is what makes the next beat land as real stakes, not a random special effect (required via wish_and_sacrifice / bridging into wish_visibly_twists).",
-      "Fate begins a subtle PULL toward an unknown, unwanted fulfillment — a non-spectacular, causally legible event: Lirael's own felt dread, a wrong implication becoming apparent, and/or another participant recognizing/naming/reacting to it. NEVER an external magical attack (no projectile, beam, rope of light, seam, rift, or burst — required via NEW id wish_visibly_twists; see governing_law above, HARD boundary, not a style preference).",
+      "Fate begins a subtle PULL toward an unknown, unwanted fulfillment — a non-spectacular, causally legible event that MUST stay connected to the wish's own object: this beat has to make legible (direct speech or first-person recognition, no exact wording required) that the danger is the WISH itself — 'find the one she lost' (still deliberately unnamed) — being fulfilled WRONGLY or HORRIBLY, not a generic unspecified dread; and that this is dangerous precisely BECAUSE Seren's actual desire was to be seen as good, not to genuinely help. Lirael's own felt dread, a wrong implication becoming apparent, and/or another participant recognizing/naming/reacting to it. NEVER an external magical attack (no projectile, beam, rope of light, seam, rift, or burst — required via NEW id wish_visibly_twists; see governing_law above, HARD boundary, not a style preference).",
       "That pull is abruptly, unnaturally checked before it fully lands: simply gone, with no flare, no spectacle, no visible rescuer, and no explanation (required via NEW id twist_unnaturally_arrested).",
       "The Dohkar can still recognize the rite's misalignment and publicly charge Lirael — grounded in what the assembly directly perceived of the wrongness itself (Lirael's visible reaction, the felt misalignment, Seren's own words), NEVER in invented physical damage, scorch marks, or attack residue treated as forensic evidence (required via REVISED public_charge)."
     ],
@@ -1164,7 +1164,7 @@
           60,
           90
         ],
-        "fn": "Free narration bridging into the twist — Lirael's dawning UNDERSTANDING that the wish will fulfill her stated loss wrongly or dangerously, through the recognition beat just established. Interior/cognitive, not a special effect."
+        "fn": "Free narration bridging into the twist — Lirael's dawning UNDERSTANDING that the WISH ITSELF (Seren's \"so that Lirael may find the one she lost\" — still deliberately unnamed/blurred, do not resolve who it is) may now be fulfilled WRONGLY or HORRIBLY, precisely because Seren's true desire was performed virtue, not genuine help. Distinguish clearly from Seren's OWN sacrificed cost (her mother's memory) — this beat is about what the WISH is now at risk of doing to \"the one Lirael lost,\" not about Seren's separate offering. Interior/cognitive, not a special effect."
       },
       {
         "n": 13,
@@ -1175,7 +1175,7 @@
           70,
           90
         ],
-        "fn": "The twist as a non-spectacular, causally legible pull: Lirael's own felt dread and directionality toward an unknown, unwanted fulfillment, AND/OR a wrong implication becoming apparent, AND/OR another participant recognizing, naming, or reacting to it — never as an external force with a visible trajectory. HARD: no projectile, beam, rope of light, seam, rift, or burst — see _fatelands_ordinary_wish_misalignment_law.json (fatelands_ordinary_wish_misalignment). Concrete in its specificity, not in physical spectacle."
+        "fn": "The twist as a non-spectacular, causally legible pull. HARD, must remain legible in THIS beat, not merely assumed from an earlier one (direct speech or first-person recognition both acceptable — no exact wording required): (a) the pull is toward fulfilling the WISH's own stated object — Seren's \"find the one she lost,\" still deliberately unnamed — never a generic/unspecified dread; (b) the danger is that this may be fulfilled WRONGLY or HORRIBLY, not merely 'toward Lirael' in the abstract; (c) grounded in what was just established — Seren's actual desire was to be seen as good, not to genuinely help. Lirael's own felt dread and directionality, AND/OR a wrong implication becoming apparent, AND/OR another participant recognizing/naming/reacting — never as an external force with a visible trajectory. HARD: no projectile, beam, rope of light, seam, rift, or burst — see _fatelands_ordinary_wish_misalignment_law.json (fatelands_ordinary_wish_misalignment). Concrete in its causal specificity, not in physical spectacle."
       },
       {
         "n": 14,

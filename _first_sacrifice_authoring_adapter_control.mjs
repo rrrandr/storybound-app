@@ -108,6 +108,12 @@ ok('the constructed prompt\'s hard boundary explicitly forbids a projectile/rift
 ok('the per-slot numbered template (real convergence source) now states the CORRECTED wish_visibly_twists fn text — a subjective pull, never "concrete FORCE... physical/magical threat"', user.includes(PACKET.scene1_beat_number_template.slots[12].fn) && !/concrete FORCE: a real, immediate physical\/magical threat/.test(user));
 ok('the per-slot numbered template states the CORRECTED twist_unnaturally_arrested fn text — no scorch marks left behind', user.includes(PACKET.scene1_beat_number_template.slots[13].fn) && /do not describe scorch marks/.test(user));
 ok('the per-slot numbered template states the CORRECTED public_charge fn text — never scorch marks or physical damage as evidence', user.includes(PACKET.scene1_beat_number_template.slots[14].fn) && /NEVER in scorch marks or other physical damage/.test(user));
+// CAUSAL-CHAIN SPECIFICITY (Roman, 2026-09-20, following a real human read-through finding: the
+// mechanically-clean wish-twist correction was still too abstract — "cold directionality... a new
+// anchor" named no referent and no danger). Real invocation proving the STRENGTHENED requirement
+// (not just the attack-grammar ban) reaches the actual prompt.
+ok('the constructed prompt requires the wish_visibly_twists beat to stay connected to the WISH\'s own object ("find the one she lost," still deliberately unnamed) and to WRONG/HORRIBLE-fulfillment danger language — not merely the absence of attack-grammar vocabulary', /must remain legible in THIS beat, not merely assumed from an earlier one/.test(user) && /find the one she lost/.test(user) && /WRONGLY or HORRIBLY/.test(user));
+ok('the constructed prompt explicitly distinguishes the WISH\'s object from Seren\'s own separate sacrificed cost — the real, disclosed root cause of the ambiguous "her stated loss" phrasing that produced the too-abstract real correction', /Distinguish clearly from Seren's OWN sacrificed cost/.test(user));
 ok('the constructed prompt explicitly says not to invent material, color, weight, powers, or additional history',
   /Do not invent its material, color, weight, powers, or additional history/.test(user));
 // STRUCTURED OBJECT-CLAIM METADATA RECEIPT — widened 2026-09-20: mandatory not merely on a literal

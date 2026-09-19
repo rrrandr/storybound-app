@@ -450,6 +450,29 @@ function validateDraft(draft, packet) {
           if (m) violations.push({ rule: 'wish_twist_wrong_visual_grammar', detail: 'scene1Candidate.beats[' + i + '] (covering required beat "' + id + '") contains attack-grammar vocabulary ("' + m[0] + '") — an ordinary Fatelands wish misalignment is a non-spectacular, causally legible event (recognition, naming, reaction, a subtle pull, or unexplained arrest), never an external magical attack, visible rift, or damage residue (see wish_twist_and_arrest_requirement.banned_wrong_visual_grammar / _fatelands_ordinary_wish_misalignment_law.json)' });
         });
       });
+      // CAUSAL-CHAIN SPECIFICITY — NON-BLOCKING DIAGNOSTIC (Roman, 2026-09-20, following a real
+      // human read-through finding on the wish-twist content correction: removing attack-grammar
+      // vocabulary is necessary but not sufficient — a beat can be mechanically clean and still be
+      // too ABSTRACT to dramatize the actual stakes ("cold directionality... a new anchor" named
+      // no danger and no referent). This is a COARSE, flexible presence proxy for two concepts —
+      // (a) the wish's own object (Seren's "find the one she lost" — still deliberately unnamed,
+      // never resolved by this check) and (b) danger/wrongness language — NOT a semantic judge and
+      // NEVER a blocking violation: it never requires one exact sentence or locks any specific
+      // wording (direct speech and first-person recognition both satisfy it equally). A human
+      // read-through remains the real check for genuine concreteness, exactly like
+      // banned_vague_consequence's own established limits.
+      const idxs = Array.isArray(coverage.wish_visibly_twists) ? coverage.wish_visibly_twists : [];
+      const LOST_REFERENT_RE = /\blost\b|\blose\b|\blosing\b/i;
+      const DANGER_LANGUAGE_RE = /\bwrong(?:ly)?\b|\bhorribl\w*\b|\bhorror\b|\bdanger(?:ous)?\b|\bworse\b|\btwisted\b|\bcorrupt\w*\b/i;
+      idxs.forEach(i => {
+        const b = scene1Beats[i];
+        if (!b || typeof b.text !== 'string') return;
+        const hasReferent = LOST_REFERENT_RE.test(b.text);
+        const hasDanger = DANGER_LANGUAGE_RE.test(b.text);
+        if (!hasReferent || !hasDanger) {
+          diagnostics.push({ rule: 'wish_twist_causal_specificity', detail: 'scene1Candidate.beats[' + i + '] (wish_visibly_twists) does not clearly reference ' + (!hasReferent && !hasDanger ? 'the wish\'s own object ("the one she lost") or wrong/dangerous-fulfillment language' : !hasReferent ? 'the wish\'s own object ("the one she lost")' : 'wrong/dangerous-fulfillment language') + ' — non-blocking human-review flag: this beat may be too abstract to dramatize that Fate could fulfill Seren\'s wish WRONGLY or HORRIBLY, distinct from Seren\'s own separate sacrificed cost. No exact wording is required; this is a coarse presence proxy, not a semantic judge.' });
+        }
+      });
     }
     // Per-beat kind/image/provenance checks
     let lastImageIdx = -1;
@@ -887,6 +910,37 @@ section('RED CONTROLS — scene1Candidate (fourth redesign pass, 2026-09-17)');
     ok('REAL DATA: the actual, on-disk Attempt 8 candidate (untouched, unshipped) genuinely fails the new wish-misalignment visual-grammar rule — real confirmation this correction is necessary, not merely theoretical', hit.length > 0, JSON.stringify(hit));
   } else {
     ok('REAL DATA: Attempt 8 candidate artifact not present in this environment — skipping real-data confirmation (not a failure; synthetic RED/GREEN coverage above already proves the rule)', true);
+  }
+}
+// ── WISH-TWIST CAUSAL-CHAIN SPECIFICITY — NON-BLOCKING DIAGNOSTIC (Roman, 2026-09-20, following
+// a real human read-through finding: the mechanically-clean wish-twist correction was STILL too
+// abstract — "cold directionality... a new anchor" named no referent and no danger). Coarse
+// presence proxy only, never blocking, never locking exact wording. ──
+{
+  const d = compliantDraft();
+  d.scene1Candidate.beats[11].text = 'A cold directionality opened somewhere beneath my ribs, vague and unplaceable, and I could not yet say what it meant or where it was reaching toward.';
+  const v = validateDraft(d, PACKET);
+  ok('a wish_visibly_twists beat with no referent ("lost") and no danger language is ok (non-blocking) but flagged as a causal-specificity diagnostic', v.ok && v.diagnostics.some(x => x.rule === 'wish_twist_causal_specificity' && /the wish.s own object.*or wrong\/dangerous-fulfillment language/.test(x.detail)), JSON.stringify(v.diagnostics));
+}
+{
+  const d = compliantDraft();
+  d.scene1Candidate.beats[11].text = 'I felt the pull begin, quiet and certain, toward the one she had said I had lost — and understood, in the same breath, that finding him this way could go wrong, even horribly wrong, precisely because her wish had never really been for me.';
+  const v = validateDraft(d, PACKET);
+  ok('GREEN: a wish_visibly_twists beat that references the wish\'s referent language ("find", "the one") AND danger language ("wrong"/"horribly") is NOT flagged — direct first-person recognition satisfies it, no exact sentence required', v.ok && !v.diagnostics.some(x => x.rule === 'wish_twist_causal_specificity'), JSON.stringify(v.diagnostics));
+}
+{
+  // REAL DATA: the actual wish-twist content correction (mechanically clean, zero attack-grammar
+  // violations) is used as the fixture for Roman's own real human read-through finding — proving
+  // this diagnostic catches EXACTLY the real gap identified, not a synthetic strawman.
+  const correctionPath = path.join(__dirname, '_first_sacrifice_draft_v7_attempt8_full_package/09_wish_twist_content_correction.json');
+  if (fs.existsSync(correctionPath)) {
+    const correctedDraft = JSON.parse(fs.readFileSync(correctionPath, 'utf8')).draft;
+    const v = validateDraft(correctedDraft, PACKET);
+    ok('REAL DATA: the real wish-twist content correction has ZERO wish_twist_wrong_visual_grammar violations (the attack-grammar fix held)', !v.violations.some(x => x.rule === 'wish_twist_wrong_visual_grammar'), JSON.stringify(v.violations));
+    const specificityHit = v.diagnostics.filter(x => x.rule === 'wish_twist_causal_specificity');
+    ok('REAL DATA: the real wish-twist content correction IS flagged by the new causal-specificity diagnostic — confirms real human read-through finding ("cold directionality... new anchor" never names the wish\'s referent) mechanically, non-blocking, not requiring a re-run', specificityHit.length > 0, JSON.stringify(specificityHit));
+  } else {
+    ok('REAL DATA: wish-twist content correction artifact not present in this environment — skipping (not a failure; synthetic coverage above already proves the rule)', true);
   }
 }
 // ── EXEMPLAR SIMILARITY — NON-BLOCKING DIAGNOSTIC (Roman, 2026-09-20 correction, replacing the
