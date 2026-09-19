@@ -4971,6 +4971,173 @@ ${_pcInteriorLock}`;
   }
   window._isGovernorRefusal = _isGovernorRefusal;
 
+  // ══════════════════════════════════════════════════════════════════════════════════════════
+  //  FULL-SCENE PROSE AUTHOR — ROUTING POLICY (Roman, 2026-09-19)
+  //
+  //  Grok is PRIMARY for every scene — not gated by editorial tier. The old tier gate (Grok for
+  //  "premium"/tentpole, Mistral Small first for ordinary "connecting" scenes) existed to protect
+  //  Mistral Small's tiny 20,000 TPM allowance from an author-sized prompt it structurally cannot
+  //  admit (see _first_sacrifice_scene2_call_census_2026_09_19.md §4: a real, measured ~205k-byte
+  //  CG screenplay payload exceeds that allowance by 6-20x, and the governor's own refusal-
+  //  handling correctly refuses to advance past a refusal it triggered on purpose — routing an
+  //  author-sized prompt to Mistral Small first was never going to work, tier or no tier).
+  //
+  //  Fallback #1: ministral-8b-2512 — ONLY if its real governor admission passes for the EXACT
+  //  prompt. Mirrors api/_mistral-governor.js's own reservationFor() + OVERSIZED pre-dispatch
+  //  check: UTF-8 bytes of every message's content + max_tokens, against ministral-8b-2512's real
+  //  625,000 TPM allowance (MODEL_LIMITS, source https://admin.mistral.ai/plateforme/limits, read
+  //  2026-09-04). A prompt whose reservation exceeds that ceiling skips ministral entirely — no
+  //  wasted round-trip — straight to the terminal fallback. A live 429/507 governor:true refusal
+  //  from a real dispatch (the client cannot see the server's stateful rolling-window traffic) is
+  //  treated the same way. Mistral Small must never appear in this chain.
+  //
+  //  Fallback #2 (terminal): OpenAI gpt-4o — tried only after BOTH Grok and ministral genuinely
+  //  fail (a real error/timeout/refusal, or ministral's static skip). No silent literary-engine
+  //  fallback substitutes for a real attempt at any of these three.
+  //
+  //  Grok caching is tracked as ELIGIBLE / observed HIT / observed MISS — never a promised
+  //  discount. ELIGIBLE is a structural judgment (a stable system-message prefix, with per-turn
+  //  material confined to the user message appended after it). HIT/MISS is read from the real
+  //  response's own usage block and is only ever known AFTER a real call — this labels it, never
+  //  predicts it.
+  // ══════════════════════════════════════════════════════════════════════════════════════════
+  var MINISTRAL_8B_TPM_LIMIT = 625000; // api/_mistral-governor.js MODEL_LIMITS['ministral-8b-2512'].tpm — source https://admin.mistral.ai/plateforme/limits, read 2026-09-04
+  function _fullSceneUtf8Len(s) {
+    try { return new TextEncoder().encode(String(s == null ? '' : s)).length; }
+    catch (_) { return String(s == null ? '' : s).length; } // conservative char-count fallback if TextEncoder is unavailable
+  }
+  // Mirrors api/_mistral-governor.js's reservationFor() + the OVERSIZED pre-dispatch check — the
+  // STATIC half of the real governor's admission decision, computable without a network call.
+  // The real server-side call still enforces its own STATEFUL rolling-window TPM/RPS check on top
+  // (unknowable client-side); a live governor refusal from that is handled by the caller
+  // identically to a failed static check — skip to the terminal fallback.
+  function _ministral8bGovernorAdmits(messages, maxTokens) {
+    var bytes = 0;
+    (Array.isArray(messages) ? messages : []).forEach(function (m) { bytes += _fullSceneUtf8Len(m && m.content); });
+    var reserve = bytes + (Number(maxTokens) > 0 ? Number(maxTokens) : 0);
+    return { admits: reserve <= MINISTRAL_8B_TPM_LIMIT, reserve: reserve, limitTpm: MINISTRAL_8B_TPM_LIMIT };
+  }
+  window._ministral8bGovernorAdmits = _ministral8bGovernorAdmits;
+
+  // Reads the real response usage block for a cache OBSERVATION — hit iff cached tokens > 0 were
+  // actually reported, miss iff a real usage block reported zero, unmeasured if no usage arrived
+  // at all (never guessed as either).
+  function _classifyGrokCacheObservation(usage) {
+    if (!usage || typeof usage !== 'object') return { observed: 'unmeasured', cachedTokens: null, promptTokens: null };
+    var cached = usage.cache_read_input_tokens
+      || (usage.prompt_tokens_details && usage.prompt_tokens_details.cached_tokens)
+      || 0;
+    var promptTokens = usage.prompt_tokens || usage.input_tokens || null;
+    return { observed: cached > 0 ? 'hit' : 'miss', cachedTokens: cached, promptTokens: promptTokens };
+  }
+  window._classifyGrokCacheObservation = _classifyGrokCacheObservation;
+
+  // Structural cache-ELIGIBILITY judgment for a [system, user] message pair — true only when the
+  // system message carries the stable, shared prefix and the user message carries the per-turn
+  // material, appended after it (the one shape that can ever hit a prefix cache). A shape check,
+  // not a guarantee: it says the prompt COULD cache, never that it WILL.
+  function _fullSceneCacheEligible(messages) {
+    if (!Array.isArray(messages) || messages.length < 2) return false;
+    var hasSys = messages.some(function (m) { return m && m.role === 'system'; });
+    var hasUser = messages.some(function (m) { return m && m.role === 'user'; });
+    return hasSys && hasUser && messages[messages.length - 1].role === 'user';
+  }
+  window._fullSceneCacheEligible = _fullSceneCacheEligible;
+
+  // THE SHARED CHAIN — Grok primary, ministral-8b-2512 admission-gated fallback, gpt-4o terminal.
+  // sysContent/userContent: the two message bodies (caller already folds any per-role guard text
+  // into sysContent). opts: { maxTokens, temperature, roleTag (cost-category + log label),
+  // grokModel }. Returns { text, provider, model, attempts, cache } on success; throws a labeled
+  // error (with `.attempts`) if every tier genuinely fails — the caller decides what "no
+  // response" means for its own engine (this layer never silently substitutes another engine).
+  // Accepts EITHER a pre-built messages array (messagesOrSys = [{role,content},...], the shape
+  // every real call site already has on hand — including a literary caller whose array may carry
+  // more than 2 entries or cache-boundary-marked content blocks, which this function must not
+  // reconstruct or flatten) OR the simpler (sysContent, userContent) two-string form for a caller
+  // building its prompt fresh (the CG screenplay + bounded-repair call sites use this form).
+  async function _authorFullScenePolicy(messagesOrSys, userContentOrOpts, maybeOpts) {
+    var messages, opts;
+    if (Array.isArray(messagesOrSys)) {
+      messages = messagesOrSys;
+      opts = userContentOrOpts || {};
+    } else {
+      messages = [{ role: 'system', content: messagesOrSys }, { role: 'user', content: userContentOrOpts }];
+      opts = maybeOpts || {};
+    }
+    var maxTokens = opts.maxTokens || 8000;
+    var temperature = (typeof opts.temperature === 'number') ? opts.temperature : 0.85;
+    var roleTag = opts.roleTag || 'full-scene-author';
+    var grokModel = opts.grokModel || 'grok-4-1-fast-reasoning';
+    var cacheEligible = _fullSceneCacheEligible(messages);
+    var attempts = [];
+
+    // ── TIER 1: Grok — unconditional, every scene, no admission gate (the xAI proxy carries no
+    // reservation governor). ──
+    try {
+      var gT0 = Date.now();
+      var gResp = await fetch('/api/proxy', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ role: 'STRUCTURE_GENERATOR', preferredModel: grokModel, messages: messages, max_tokens: maxTokens, temperature: temperature })
+      });
+      attempts.push({ tier: 1, provider: 'grok', model: grokModel, ok: gResp.ok, status: gResp.status, ms: Date.now() - gT0 });
+      if (gResp.ok) {
+        var gData = await gResp.json();
+        var gText = (gData && gData.choices && gData.choices[0] && gData.choices[0].message && gData.choices[0].message.content) || (gData && gData.content) || null;
+        if (gText) {
+          try { if (typeof _recordProxyTextCost === 'function') _recordProxyTextCost(gData, grokModel, roleTag); } catch (_) {}
+          var _gCache = _classifyGrokCacheObservation(gData && gData.usage);
+          return { text: gText, provider: 'grok', model: grokModel, attempts: attempts,
+                   cache: { eligible: cacheEligible, observed: _gCache.observed, cachedTokens: _gCache.cachedTokens, promptTokens: _gCache.promptTokens } };
+        }
+      }
+    } catch (gErr) { attempts.push({ tier: 1, provider: 'grok', model: grokModel, ok: false, error: String(gErr && gErr.message) }); }
+
+    // ── TIER 2: ministral-8b-2512 — ONLY if the static admission check passes for this exact
+    // prompt. Never Mistral Small. ──
+    var admission = _ministral8bGovernorAdmits(messages, maxTokens);
+    if (admission.admits) {
+      try {
+        var mT0 = Date.now();
+        var mResp = await fetch('/api/mistral-proxy', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ model: 'ministral-8b-2512', messages: messages, max_tokens: maxTokens, temperature: temperature })
+        });
+        var mGovernorRefused = !mResp.ok && await _isGovernorRefusal(mResp);
+        attempts.push({ tier: 2, provider: 'ministral', model: 'ministral-8b-2512', ok: mResp.ok, status: mResp.status, governorRefused: mGovernorRefused, reserve: admission.reserve, limitTpm: admission.limitTpm, ms: Date.now() - mT0 });
+        if (mResp.ok) {
+          var mData = await mResp.json();
+          var mText = (mData && mData.choices && mData.choices[0] && mData.choices[0].message && mData.choices[0].message.content) || (mData && mData.content) || null;
+          if (mText) {
+            try { if (typeof _recordProxyTextCost === 'function') _recordProxyTextCost(mData, 'ministral-8b-2512', roleTag); } catch (_) {}
+            return { text: mText, provider: 'ministral', model: 'ministral-8b-2512', attempts: attempts, cache: { eligible: null, observed: 'n/a', cachedTokens: null, promptTokens: null } };
+          }
+        }
+      } catch (mErr) { attempts.push({ tier: 2, provider: 'ministral', model: 'ministral-8b-2512', ok: false, error: String(mErr && mErr.message), reserve: admission.reserve, limitTpm: admission.limitTpm }); }
+    } else {
+      attempts.push({ tier: 2, provider: 'ministral', model: 'ministral-8b-2512', ok: false, skipped: true, reason: 'static reservation ' + admission.reserve + ' exceeds ' + admission.limitTpm + ' TPM — never dispatched', reserve: admission.reserve, limitTpm: admission.limitTpm });
+      try { console.warn('[FULL-SCENE-AUTHOR:' + roleTag + '] ministral-8b-2512 skipped (not dispatched) — reservation ' + admission.reserve + ' exceeds its ' + admission.limitTpm + ' TPM allowance'); } catch (_) {}
+    }
+
+    // ── TIER 3 (terminal): gpt-4o — only after both above genuinely failed. ──
+    if (!window.StoryboundOrchestration || typeof window.StoryboundOrchestration.callChatGPT !== 'function') {
+      var _noOrch = new Error('[FULL-SCENE-AUTHOR:' + roleTag + '] all tiers exhausted (orchestration unavailable for terminal fallback)');
+      _noOrch._attempts = attempts;
+      throw _noOrch;
+    }
+    try {
+      var oText = await window.StoryboundOrchestration.callChatGPT(messages, 'PRIMARY_AUTHOR', { model: 'gpt-4o', max_tokens: maxTokens, temperature: temperature });
+      var oTextStr = (typeof oText === 'string') ? oText : ((oText && oText.content) || null);
+      attempts.push({ tier: 3, provider: 'openai', model: 'gpt-4o', ok: !!oTextStr });
+      if (oTextStr) return { text: oTextStr, provider: 'openai', model: 'gpt-4o', attempts: attempts, cache: { eligible: null, observed: 'n/a', cachedTokens: null, promptTokens: null } };
+    } catch (oErr) { attempts.push({ tier: 3, provider: 'openai', model: 'gpt-4o', ok: false, error: String(oErr && oErr.message) }); }
+
+    var _term = new Error('[FULL-SCENE-AUTHOR:' + roleTag + '] all 3 tiers genuinely failed — Grok, ministral-8b-2512' + (admission.admits ? '' : ' (skipped, oversized)') + ', and gpt-4o');
+    _term._attempts = attempts;
+    try { console.error(_term.message + ' — ' + JSON.stringify(attempts)); } catch (_) {}
+    throw _term;
+  }
+  window._authorFullScenePolicy = _authorFullScenePolicy;
+
   async function _cheapLineEdit(originalText, fixInstruction, label) {
     // SOURCE-LEVEL TRACE HOOK (harness only, no production effect). Exported window symbols do NOT
     // intercept internal lexical callers, so dependent tests must prove they actually traversed THIS
@@ -136311,6 +136478,12 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
   // REPAIR via a cheap EDITOR model (Mistral Small) — NOT the author (Roman 2026-08-01: repair never returns to
   // Grok; it is a bounded editing task). Mistral emits an edit plan grounded ONLY in the seed's world facts;
   // Storybound patches it in, preserving Grok's voice. Returns the patched scene, or null on failure.
+  // NAME IS HISTORICAL (Roman, 2026-09-19 policy): this bounded prose repair no longer routes to
+  // Mistral Small first — it now uses the shared _authorFullScenePolicy chain (Grok primary,
+  // ministral-8b-2512 admission-gated fallback, gpt-4o terminal), same as full-scene authoring.
+  // Left named _repairViaMistral to avoid touching every call site for a cosmetic rename; the
+  // repair's own discipline (preserve the original scene, change only the named gaps, smallest
+  // possible edit) is unchanged — only which model writes the edit plan has changed.
   async function _repairViaMistral(prose, unmetVerdicts, seed) {
   var __rvmIn = prose;   // PROVENANCE: every delivered character must have a parent
 
@@ -136327,11 +136500,17 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       var usr = 'ESTABLISHED FACTS (use only these — do not invent):\n' + facts.map(function (f) { return '• ' + f; }).join('\n') +
         '\n\nWHAT THE READER STILL DOES NOT UNDERSTAND (fix these, nothing else):\n' + needs +
         '\n\nSCENE:\n' + prose;
-      // Mistral routes through /api/mistral-proxy (NOT /api/proxy, which only accepts Grok roles); no `role` field.
-      var res = await fetch('/api/mistral-proxy', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ model: 'mistral-small-latest', temperature: 0.2, max_tokens: 600, messages: [{ role: 'system', content: sys }, { role: 'user', content: usr }] }) });
-      if (!res.ok) { try { console.warn('[CONTRACT:REPAIR] mistral HTTP ' + res.status); } catch (_) {} { try { if (window.__proseSnap) window.__proseSnap.push({ owner:'_repairViaMistral', label:null, inText:String(__rvmIn||''), outText:String(null||''), changed:String(null||'')!==String(__rvmIn||'') }); } catch(_){} return null; } }
-      var data = await res.json();
-      var raw = (data && data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || (data && data.content) || '';
+      // Bounded prose repair — Grok primary, ministral-8b-2512 admission-gated fallback, gpt-4o
+      // terminal (Roman, 2026-09-19 policy; see _authorFullScenePolicy near _isGovernorRefusal).
+      var raw = '';
+      try {
+        var _repairResult = await _authorFullScenePolicy(sys, usr, { maxTokens: 600, temperature: 0.2, roleTag: 'repair', grokModel: 'grok-4-1-fast-reasoning' });
+        raw = _repairResult.text || '';
+        try { console.log('[CONTRACT:REPAIR] authored via ' + _repairResult.provider + '/' + _repairResult.model + ' — cache ' + JSON.stringify(_repairResult.cache)); } catch (_) {}
+      } catch (_rpErr) {
+        try { console.warn('[CONTRACT:REPAIR] all tiers failed: ' + (_rpErr && _rpErr.message)); } catch (_) {}
+        { try { if (window.__proseSnap) window.__proseSnap.push({ owner:'_repairViaMistral', label:null, inText:String(__rvmIn||''), outText:String(null||''), changed:String(null||'')!==String(__rvmIn||'') }); } catch(_){} return null; }
+      }
       raw = String(raw).replace(/```json?/gi, '').replace(/```/g, '').trim();
       var edits = null; try { edits = JSON.parse(raw); } catch (_) { var mm = raw.match(/\[[\s\S]*\]/); if (mm) { try { edits = JSON.parse(mm[0]); } catch (_2) {} } }
       if (!Array.isArray(edits) || !edits.length) { try { console.warn('[CONTRACT:REPAIR] no parseable edits'); } catch (_) {} { try { if (window.__proseSnap) window.__proseSnap.push({ owner:'_repairViaMistral', label:null, inText:String(__rvmIn||''), outText:String(null||''), changed:String(null||'')!==String(__rvmIn||'') }); } catch(_){} return null; } }
@@ -229057,222 +229236,88 @@ No text, no watermark, no UI elements, share-ready.`;
       // ladders — too expensive. Grok authors; gpt-4o / DeepSeek are the non-Anthropic
       // backstops. If every provider is down the scene fails and the user retries /
       // waits for Grok rather than falling to a paid Anthropic model.
-      // (Dead-code cleanup 2026-07-13, A3-F6): the _SCREENPLAY_GPT_FIRST and _SCREENPLAY_SONNET_FIRST_ADULT
-      // chains + their stale Sonnet-first rationale were defined but NEVER referenced by the routing.
-      // The live chains are _SCREENPLAY_GROK_FIRST and _SCREENPLAY_MISTRAL_SMALL_FIRST below.
-      var _SCREENPLAY_GROK_FIRST = [
-        { name: 'Grok-4.1-reasoning', endpoint: '/api/proxy',       grokModel: 'grok-4-1-fast-reasoning', timeoutMs: 75000 },
-        { name: 'DeepSeek-V4-Pro',    endpoint: '/api/deepseek-proxy', dsModel: 'deepseek-v4-pro',         timeoutMs: 75000 },
-        { name: 'GPT-4o',            model: 'gpt-4o',              timeoutMs: 60000 }
-      ];
-      // Connecting-scene author chain (Roman 2026-07-12): Mistral Small PRIMARY, then Grok as the
-      // immediate SAFETY fallback (never GPT next — so a Mistral refusal/soften on explicit content
-      // recovers on Grok), DeepSeek, then GPT-4o as the labeled last-resort fallback.
-      var _SCREENPLAY_MISTRAL_SMALL_FIRST = [
-        { name: 'Mistral-Small',      endpoint: '/api/mistral-proxy',  mistralModel: 'mistral-small-latest', timeoutMs: 60000 },
-        { name: 'Grok-4.1-reasoning', endpoint: '/api/proxy',          grokModel: 'grok-4-1-fast-reasoning', timeoutMs: 75000 },
-        { name: 'DeepSeek-V4-Pro',    endpoint: '/api/deepseek-proxy', dsModel: 'deepseek-v4-pro',           timeoutMs: 75000 },
-        { name: 'GPT-4o',             model: 'gpt-4o',                 timeoutMs: 60000 }
-      ];
+      // ── FULL-SCENE PROSE AUTHOR — Grok primary for EVERY scene (Roman, 2026-09-19 policy) ──
+      // Replaces the old complex/premium/connecting tier branching (Grok only for "premium"
+      // scenes, Mistral Small first for ordinary ones) with the shared _authorFullScenePolicy
+      // chain: Grok primary → ministral-8b-2512 admission-gated fallback → gpt-4o terminal. See
+      // that function's own header (near _isGovernorRefusal) for the full rationale and sourcing.
+      // DeepSeek is dropped from this role entirely — not part of the new 3-tier policy.
       var _sceneFlavorKey = (state && state.worldSubtype) ||
                             (state && state.picks && state.picks.flavor) || '';
       _sceneFlavorKey = String(_sceneFlavorKey).toLowerCase();
-      // (Dead-code cleanup 2026-07-13, A3-F6): _SCREENPLAY_RISKY + the runtime-intimacy / content-risk
-      // detection (_isRuntimeIntimate / _isRiskyForScreenplay and their _mode1* / _isDogmaFlavor /
-      // _sustainedProfanityActive / _isComedianLI inputs) were computed but NEVER read. Author routing is
-      // decided below by _isComplexAuthorMode / _isPremiumAuthorScene, matching the literary path.
-      // ── AUTHOR POLICY (Roman 2026-07-12) — CG author routing MATCHES Literary ──────────────
-      // complex mode → Grok every scene; Scene 1 / tentpole → Grok; connecting scene → Mistral
-      // Small. GPT-4o / Sonnet appear ONLY as a labeled fallback inside a chain, never as an
-      // ordinary primary author. Uses the SAME canonical author-tier fns the literary path uses
-      // (window._isComplexAuthorMode / window._isPremiumAuthorScene) so the two routings can't
-      // drift. Editorial tier stays INDEPENDENT of author (a complex/connecting scene keeps its own
-      // editorial budget). Runtime intimacy / content-risk do NOT pick the primary author (the old
-      // _isRuntimeIntimate / _isRiskyForScreenplay flags were dead and were removed above); the
-      // connecting chain falls to Grok (not GPT) so explicit content Mistral would soften/refuse
-      // recovers on Grok.
-      var _complexMode  = (typeof window._isComplexAuthorMode === 'function') && window._isComplexAuthorMode();
-      var _premiumScene = (typeof window._isPremiumAuthorScene === 'function')
-        ? window._isPremiumAuthorScene()
-        : (typeof window._sceneEditorialTier === 'function' && window._sceneEditorialTier(state) === 'premium');
-      var _SCREENPLAY_PROVIDERS, _routingReason;
-      // ── GROK-ONLY SCENE AUTHOR (Roman 2026-09-07; behind window._grokOnlySceneAuthor, default OFF) ──
-      // Grok primary with ONE bounded retry, then the existing exhaustion path (literary fallback, which
-      // under the same flag is Grok-only too, or a named terminal error). No Mistral Small author attempt,
-      // no DeepSeek, no OpenAI scene-author fallback. Two entries = two attempts, both visible.
+      // ── GROK-ONLY SCENE AUTHOR (Roman 2026-09-07; behind window._grokOnlySceneAuthor, default
+      // OFF) — unchanged test-only escape hatch: Grok primary with ONE bounded retry, no
+      // ministral, no OpenAI. The DEFAULT path below (flag off) is now the real production
+      // policy, not a special case of a tier system — every scene gets it.
       var _SCREENPLAY_GROK_ONLY = [
         { name: 'Grok-4.3',        endpoint: '/api/proxy', grokModel: 'grok-4.3', timeoutMs: 75000 },
         { name: 'Grok-4.3-retry',  endpoint: '/api/proxy', grokModel: 'grok-4.3', timeoutMs: 75000 }
       ];
       var _grokOnlyAuthor = false; try { _grokOnlyAuthor = (typeof window !== 'undefined' && window._grokOnlySceneAuthor === true); } catch (_) {}
-      if (_grokOnlyAuthor) {
-        _SCREENPLAY_PROVIDERS = _SCREENPLAY_GROK_ONLY;
-        _routingReason = ' (grok-only policy — Grok primary, one bounded retry, no Mistral/OpenAI)';
-      } else if (_complexMode) {
-        _SCREENPLAY_PROVIDERS = _SCREENPLAY_GROK_FIRST;
-        _routingReason = ' (complex mode — Grok primary)';
-      } else if (_premiumScene) {
-        _SCREENPLAY_PROVIDERS = _SCREENPLAY_GROK_FIRST;
-        _routingReason = ' (scene 1 / tentpole — Grok primary)';
-      } else {
-        _SCREENPLAY_PROVIDERS = _SCREENPLAY_MISTRAL_SMALL_FIRST;
-        _routingReason = ' (connecting scene — Mistral Small primary)';
-      }
-      // CONTINUITY BRIDGE (ported from literary): a connecting (Mistral) scene right after a Grok
-      // tentpole gets the bridge guard so the strong→light author seam is seamless. Track prev-scene
-      // author tier on the SHARED state flag (_authorPrevWasPremium) that the literary path also
-      // maintains, so a CG-after-literary (or CG-after-CG) seam is caught either way.
-      var _cgAuthorPremium = _complexMode || _premiumScene;
-      var _cgBridge = !_cgAuthorPremium && !!(state && state._authorPrevWasPremium);
-      try { if (state) state._authorPrevWasPremium = _cgAuthorPremium; } catch (_) {}
-      // A1-F7 (Fable CG audit 2026-07-13): compute the continuity-bridge guard ONCE here and apply it at
-      // the SHARED author-request layer (below) so it reaches EVERY provider that authors this connecting
-      // scene — previously it was appended only inside the Mistral branch, so a Mistral timeout falling
-      // through to Grok/DeepSeek/GPT-4o dropped the strong→light seam smoother.
-      var _cgBridgeGuard = (_cgBridge && typeof window._SMALL_BRIDGE_GUARD === 'string') ? window._SMALL_BRIDGE_GUARD : '';
+      // CONTINUITY BRIDGE (ported from literary) — the pre-dispatch tier GUESS this guard used to
+      // key off no longer exists (every scene attempts Grok first); the seam it protected against
+      // (a lighter-authored scene right after a heavier one) is now the RARE case where Grok
+      // itself failed last scene, known only AFTER that call resolved. _authorPrevWasPremium is
+      // still maintained (set post-hoc below, from the ACTUAL winning provider) for any other
+      // reader of that shared flag, but no pre-dispatch bridge guard is injected here anymore —
+      // a real architectural simplification, not an oversight.
+      var _cgBridgeGuard = '';
       // NOTE: the literary post-gen PURPLE LENS is intentionally NOT applied to CG. CG output is a
       // JSON screenplay (plan.panels[].captionText) whose caption fields sit well below the lens's
       // ~400-char prose threshold (it no-ops on short text, and running it on the raw JSON would
-      // corrupt structure). The strengthened PRE-gen restraint guard in the Mistral branch below is
-      // the structurally-correct equivalent for CG's short-caption prose.
-      try {
-        console.log('[CG:SCREENPLAY] flavor "' + _sceneFlavorKey + '" → chain leads with ' + _SCREENPLAY_PROVIDERS[0].name + _routingReason);
-      } catch (_) {}
+      // corrupt structure).
       var response = null;
       var _winningProvider = null, _winningModelSlug = null;
       var _lastErr = null;
+      var _sharedSys = sysPrompt + _cgBridgeGuard;
 
-      // Per-provider call helper. Routes Anthropic/OpenAI through
-      // callChatGPT (which picks proxy by model slug prefix), and
-      // Grok/Deepseek through their dedicated proxies directly.
-      var _callScreenplayProvider = async function(prov) {
-        // Shared system message — carries the continuity-bridge guard (A1-F7) so it reaches every
-        // provider. The Mistral branch layers its own (Mistral-specific) restraint guard on top.
-        var _sharedSys = sysPrompt + _cgBridgeGuard;
-        var msgs = [
-          { role: 'system', content: _sharedSys },
-          { role: 'user',   content: userPrompt }
-        ];
-        if (prov.endpoint === '/api/proxy') {
-          // Grok via specialist proxy with STRUCTURE_GENERATOR role.
-          var gResp = await fetch('/api/proxy', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              role: 'STRUCTURE_GENERATOR',
-              preferredModel: prov.grokModel,
-              messages: msgs,
-              max_tokens: 8000,
-              temperature: 0.85
-            })
-          });
-          if (!gResp.ok) throw new Error(prov.name + ' proxy ' + gResp.status);
-          var gData = await gResp.json();
-          // COST TELEMETRY (A3-F3): this raw fetch bypasses orchestration's _accumulateTokens, so record
-          // the author leg's token usage into the scene cost accumulator here.
-          try { if (typeof _recordProxyTextCost === 'function') _recordProxyTextCost(gData, prov.grokModel, 'scene'); } catch (_) {}
-          return (gData && gData.choices && gData.choices[0] && gData.choices[0].message && gData.choices[0].message.content) || (gData && gData.content) || null;
-        }
-        if (prov.endpoint === '/api/mistral-proxy') {
-          // Mistral Small — connecting-scene CG author. Strengthened restraint guard: the coherence
-          // + referent rules are ported from the literary _SMALL_RESTRAINT_GUARD but framed for
-          // screenplay JSON output (the literary guard's "return ONLY prose, no brackets" rule is
-          // dropped — it would forbid the JSON CG requires). The shared continuity-bridge guard is
-          // appended when this connecting scene follows a Grok tentpole.
-          var _cgRestraint = '\n\nRESTRAINT GUARD (write restrained screenplay prose within the panels, NOT ornate): MAXIMUM one simile/metaphor per beat — prefer ZERO; concrete grounded specific observation over comparison ("like / as if / as though"); NO ornate intensifiers (achingly, molten, electric, searing, primal, feral, velvet, liquid); do not invent biographical specifics (birthdays, place names, backstory) the brief did not give. COHERENCE: every action, gesture and body belongs to ONE unambiguous subject — never attribute one character\'s action or body to another; give every pronoun a single clear antecedent NAMED in the same or prior sentence (do not describe one feature then attach a pronoun to a different, unnamed one). Keep the JSON structure exactly as specified.';
-          // The continuity-bridge guard is applied at the shared layer (A1-F7) — _sharedSys already
-          // carries it when active. Here we add ONLY the Mistral-specific restraint guard on top.
-          var _mMsgs = [
-            { role: 'system', content: _sharedSys + _cgRestraint },
-            { role: 'user',   content: userPrompt }
-          ];
-          var mResp = await fetch('/api/mistral-proxy', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ model: prov.mistralModel, messages: _mMsgs, max_tokens: 8000, temperature: 0.7 })
-          });
-          if (!mResp.ok) {
-            // A GOVERNOR REFUSAL MUST NOT ADVANCE THE PROVIDER LOOP. The loop below tries the
-            // next provider on failure — which is right for an outage and wrong for our own
-            // budget decision: it would answer "do not spend on Mistral" by spending on Grok.
-            // The error is tagged so the loop can stop instead of escalating.
-            if (await _isGovernorRefusal(mResp)) {
-              var _mgErr = new Error(prov.name + ' refused by quota governor');
-              _mgErr._governorRefusal = true;
-              throw _mgErr;
+      if (_grokOnlyAuthor) {
+        try { console.log('[CG:SCREENPLAY] flavor "' + _sceneFlavorKey + '" → grok-only test policy (Grok primary, one bounded retry, no ministral/OpenAI)'); } catch (_) {}
+        for (var _pIdx = 0; _pIdx < _SCREENPLAY_GROK_ONLY.length && !response; _pIdx++) {
+          var _prov = _SCREENPLAY_GROK_ONLY[_pIdx];
+          var _pT0 = Date.now();
+          try {
+            var gResp = await fetch('/api/proxy', {
+              method: 'POST', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ role: 'STRUCTURE_GENERATOR', preferredModel: _prov.grokModel, messages: [{ role: 'system', content: _sharedSys }, { role: 'user', content: userPrompt }], max_tokens: 8000, temperature: 0.85 })
+            });
+            if (!gResp.ok) throw new Error(_prov.name + ' proxy ' + gResp.status);
+            var gData = await gResp.json();
+            try { if (typeof _recordProxyTextCost === 'function') _recordProxyTextCost(gData, _prov.grokModel, 'scene'); } catch (_) {}
+            var gText = (gData && gData.choices && gData.choices[0] && gData.choices[0].message && gData.choices[0].message.content) || (gData && gData.content) || null;
+            if (gText) {
+              response = gText; _winningProvider = _prov.name; _winningModelSlug = _prov.grokModel;
+              try { if (window.state) { window.state._lastCGAuthor = _prov.name; window.state._lastCGAuthorAtTurn = (window.state.turnCount || 0); window.state._authorPrevWasPremium = true; } } catch (_) {}
+              console.log('[CG:SCREENPLAY] generated via ' + _prov.name + ' in ' + (Date.now() - _pT0) + 'ms');
+            } else {
+              console.warn('[CG:SCREENPLAY] ' + _prov.name + ' returned empty response after ' + (Date.now() - _pT0) + 'ms');
             }
-            throw new Error(prov.name + ' proxy ' + mResp.status);
-          }
-          var mData = await mResp.json();
-          try { if (typeof _recordProxyTextCost === 'function') _recordProxyTextCost(mData, prov.mistralModel, 'scene'); } catch (_) {} // A3-F3 cost telemetry
-          return (mData && mData.choices && mData.choices[0] && mData.choices[0].message && mData.choices[0].message.content) || (mData && mData.content) || null;
+          } catch (e) { _lastErr = e; console.warn('[CG:SCREENPLAY] ' + _prov.name + ' failed after ' + (Date.now() - _pT0) + 'ms: ' + (e && e.message)); }
         }
-        if (prov.endpoint === '/api/deepseek-proxy') {
-          // Deepseek direct call. Proxy doesn't gate role.
-          var dResp = await fetch('/api/deepseek-proxy', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              role: 'STRUCTURE_GENERATOR',
-              model: prov.dsModel,
-              messages: msgs,
-              max_tokens: 8000,
-              temperature: 0.85
-            })
-          });
-          if (!dResp.ok) throw new Error(prov.name + ' proxy ' + dResp.status);
-          var dData = await dResp.json();
-          try { if (typeof _recordProxyTextCost === 'function') _recordProxyTextCost(dData, prov.dsModel, 'scene'); } catch (_) {} // A3-F3 cost telemetry
-          return (dData && dData.choices && dData.choices[0] && dData.choices[0].message && dData.choices[0].message.content) || null;
-        }
-        // Default: route through callChatGPT (Anthropic or OpenAI).
-        return await window.StoryboundOrchestration.callChatGPT(
-          msgs,
-          'PRIMARY_AUTHOR',
-          { model: prov.model, max_tokens: 8000, temperature: 0.85, response_format: { type: 'json_object' } }
-        );
-      };
-
-      for (var _pIdx = 0; _pIdx < _SCREENPLAY_PROVIDERS.length && !response; _pIdx++) {
-        var _prov = _SCREENPLAY_PROVIDERS[_pIdx];
-        var _pT0 = Date.now();
+      } else {
+        try { console.log('[CG:SCREENPLAY] flavor "' + _sceneFlavorKey + '" → full-scene-author policy (Grok primary, every scene)'); } catch (_) {}
         try {
-          var llmCall = _callScreenplayProvider(_prov);
-          // Optional override (default unset → production timeouts unchanged): a
-          // harness/probe can grant slow reasoning generation more time via
-          // window.__cgAuthorTimeoutMs without changing what real users wait.
-          var _effTimeoutMs = _prov.timeoutMs;
-          try { if (typeof window !== 'undefined' && window.__cgAuthorTimeoutMs) _effTimeoutMs = Math.max(_effTimeoutMs, window.__cgAuthorTimeoutMs); } catch (_) {}
-          var timeout = new Promise(function(_, reject) {
-            setTimeout(function() { reject(new Error('CG:SCREENPLAY timeout (' + (_effTimeoutMs/1000) + 's, ' + _prov.name + ')')); }, _effTimeoutMs);
-          });
-          var _resp = await Promise.race([llmCall, timeout]);
-          if (_resp && typeof _resp === 'string') {
-            response = _resp;
-            _winningProvider = _prov.name;
-            _winningModelSlug = _prov.grokModel || _prov.mistralModel || _prov.dsModel || _prov.model || _prov.name;
-            // AUTHOR ATTRIBUTION (A3-F8): persist which provider actually authored this scene so
-            // author-mix COGS (Grok premium vs Mistral connective vs fallback) is auditable from state.
-            try { if (window.state) { window.state._lastCGAuthor = _prov.name; window.state._lastCGAuthorAtTurn = (window.state.turnCount || 0); } } catch (_) {}
-            console.log('[CG:SCREENPLAY] generated via ' + _prov.name + ' in ' + (Date.now() - _pT0) + 'ms');
-          } else {
-            console.warn('[CG:SCREENPLAY] ' + _prov.name + ' returned empty response after ' + (Date.now() - _pT0) + 'ms' + (_pIdx < _SCREENPLAY_PROVIDERS.length - 1 ? ' — trying next provider' : ''));
-          }
+          var _policyResult = await _authorFullScenePolicy(_sharedSys, userPrompt, { maxTokens: 8000, temperature: 0.85, roleTag: 'scene', grokModel: 'grok-4-1-fast-reasoning' });
+          response = _policyResult.text; _winningProvider = _policyResult.provider; _winningModelSlug = _policyResult.model;
+          // AUTHOR ATTRIBUTION (A3-F8): persist which provider actually authored this scene so
+          // author-mix COGS is auditable from state. _authorPrevWasPremium now reflects the ACTUAL
+          // winning provider (grok = premium-quality voice), not a pre-call tier guess.
+          try {
+            if (window.state) {
+              window.state._lastCGAuthor = _policyResult.provider;
+              window.state._lastCGAuthorAtTurn = (window.state.turnCount || 0);
+              window.state._lastCGAuthorCache = _policyResult.cache;
+              window.state._authorPrevWasPremium = (_policyResult.provider === 'grok');
+            }
+          } catch (_) {}
+          console.log('[CG:SCREENPLAY] generated via ' + _policyResult.provider + '/' + _policyResult.model + ' — cache ' + JSON.stringify(_policyResult.cache));
         } catch (e) {
           _lastErr = e;
-          // STOP, DO NOT ESCALATE. Advancing to the next provider after OUR OWN refusal turns a
-          // decision not to spend into a larger spend on a pricier model. An outage still walks
-          // the list; a governor refusal ends the attempt here.
-          if (e && e._governorRefusal) {
-            try { console.warn('[CG:SCREENPLAY] quota governor refused ' + _prov.name
-              + ' — stopping, NOT trying the remaining ' + (_SCREENPLAY_PROVIDERS.length - _pIdx - 1) + ' provider(s)'); } catch (_) {}
-            break;
-          }
-          console.warn('[CG:SCREENPLAY] ' + _prov.name + ' failed after ' + (Date.now() - _pT0) + 'ms: ' + (e && e.message) + (_pIdx < _SCREENPLAY_PROVIDERS.length - 1 ? ' — trying next provider' : ''));
+          try { console.warn('[CG:SCREENPLAY] full-scene-author policy exhausted: ' + (e && e.message) + ' — attempts: ' + JSON.stringify(e && e._attempts)); } catch (_) {}
         }
       }
       if (!response) {
-        console.warn('[CG:SCREENPLAY] all ' + _SCREENPLAY_PROVIDERS.length + ' providers failed' + (_lastErr ? ' (last: ' + _lastErr.message + ')' : '') + ' — falling back to literary');
+        console.warn('[CG:SCREENPLAY] all providers failed' + (_lastErr ? ' (last: ' + _lastErr.message + ')' : '') + ' — falling back to literary');
         return null;
       }
       var dur = Date.now() - t0;

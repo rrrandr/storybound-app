@@ -2948,40 +2948,26 @@ FAILURE CONDITIONS (invalid outputs):
     // for a Sonnet rescue.
     let prose = '';
     const _extract = (r) => String((typeof r === 'string') ? r : ((r && r.content) || '')).trim();
-    // window._smallAuthorForceAll (test-only, default off): route EVERY scene to Small,
-    // including premium ones — lets a short harness run exercise the Small author + purple-lens
-    // path without depending on the harness reaching a non-premium turn. No prod effect (off).
-    const _prevWasPremium = (typeof window !== 'undefined' && window.state) ? window.state._authorPrevWasPremium === true : false;
-    const _premium = (_isPremiumAuthorScene() || _isComplexAuthorMode()) && !(typeof window !== 'undefined' && window._smallAuthorForceAll === true); // complex modes → Grok every scene (CG matches this)
     // ── GROK-ONLY SCENE AUTHOR (Roman 2026-09-07; behind window._grokOnlySceneAuthor, default OFF — not activated) ──
-    // Grok is the only scene author: no Mistral Small author attempt, no OpenAI scene-author fallback, no
-    // Mistral/OpenAI post-author rewrite. On a Grok failure: ONE bounded retry on Grok, then a NAMED terminal
-    // error the Scene-1 handler turns into an issue refund + honest message.
+    // Grok is the only scene author: no ministral/OpenAI fallback. On a Grok failure: ONE bounded
+    // retry on Grok, then a NAMED terminal error the Scene-1 handler turns into an issue refund +
+    // honest message. Unchanged by the 2026-09-19 routing policy below — still an explicit opt-in.
     const _grokOnly = (typeof window !== 'undefined' && window._grokOnlySceneAuthor === true);
-    const _smallAuthor = _smallAuthorEnabled() && !_premium && !_grokOnly;
-    const _bridge = _smallAuthor && _prevWasPremium; // Grok-tentpole → Mistral seam → continuity-style bridge
-    try { if (typeof window !== 'undefined' && window.state) window.state._authorPrevWasPremium = _premium; } catch (_) {} // record THIS scene's tier for the next scene's seam check
     const _grokAuthor = () => {
       // TEST HOOK (Roman 2026-07-30, default off): force a Grok author failure to verify the
-      // cross-provider Mistral fallback actually catches it. No production effect.
+      // fallback chain actually catches it. No production effect.
       if (typeof window !== 'undefined' && window.__forceGrokAuthorFail === true) return Promise.reject(new Error('forced Grok author failure (test hook)'));
       return callGrokNarrativeAuthor(messages, { preferredModel: CONFIG.NARRATIVE_AUTHOR_MODEL || CONFIG.SCENE_RENDERER_MODEL, max_tokens: _maxTokens,
         role: _grokOnly ? 'NARRATIVE_AUTHOR_GROK_ONLY' : undefined });   // grok-only: single-entry proxy chain, no hidden chain advance
     };
-    try {
-      if (_smallAuthor) {
-        try { console.log('[GROK-LIT] author = Mistral-small (non-premium' + (_bridge ? ', continuity-bridge after tentpole' : '') + ', restraint-guarded)'); } catch (_) {}
-        prose = _extract(await _mistralAuthor(messages, { max_tokens: _maxTokens, bridge: _bridge }));
-        if (!prose) throw new Error('mistral-small author empty');
-      } else {
-        try { console.log('[GROK-LIT] author = Grok 4.3 (premium/tentpole)'); } catch (_) {}
+    if (_grokOnly) {
+      try {
+        try { console.log('[GROK-LIT] author = Grok (grok-only policy)'); } catch (_) {}
         prose = _extract(await _grokAuthor());
         if (!prose) throw new Error('Grok author returned empty');
-      }
-    } catch (_authErr) {
-      if (_grokOnly) {
+      } catch (_authErr) {
         // GROK-ONLY POLICY: one bounded retry on the same author, then a named terminal failure.
-        // Nothing below this block runs under the flag — no Mistral, no OpenAI.
+        // No ministral, no OpenAI.
         const _first = String((_authErr && _authErr.message) || _authErr).slice(0, 160);
         console.warn('[GROK-LIT] grok-only: Grok author failed (' + _first + ') — ONE bounded retry on Grok');
         let _second = null;
@@ -2994,28 +2980,30 @@ FAILURE CONDITIONS (invalid outputs):
           throw _term;
         }
         try { console.log('[AUTHOR-FALLBACK] served=Grok (grok-only retry)'); } catch (_) {}
-      } else {
-      // CROSS-PROVIDER FALLBACK (Roman 2026-07-30 — health-based redundancy, never fail a scene if another
-      // provider can finish it). A Grok hang/glitch must NOT drop straight to gpt-4o (pricier + a different
-      // voice); it falls to the OTHER cheap INDEPENDENT vendor first. Each hop is a different provider so
-      // one outage can't kill the scene:  Grok(x.ai) fails → Mistral(mistral.ai) → gpt-4o(openai) terminal;
-      // Mistral fails → Grok → gpt-4o. gpt-4o stays TERMINAL only (no Sonnet/Opus rescue — cost-deprecated).
-      console.warn('[GROK-LIT] ' + (_smallAuthor ? 'Mistral-small' : 'Grok') + ' author failed/empty (' + (_authErr && _authErr.message) + ') — cross-provider fallback');
-      try {
-        if (_smallAuthor) {
-          prose = _extract(await _grokAuthor());
-          if (prose) { try { console.log('[AUTHOR-FALLBACK] served=Grok (Mistral primary failed)'); } catch (_) {} }
-        } else {
-          // Grok (premium/tentpole) primary failed → the CROSS-PROVIDER escape hatch: Mistral, not gpt-4o.
-          prose = _extract(await _mistralAuthor(messages, { max_tokens: _maxTokens, bridge: false }));
-          if (prose) { try { console.log('[AUTHOR-FALLBACK] served=Mistral (Grok primary failed — hang/glitch escape hatch)'); } catch (_) {} }
-        }
-      } catch (_x) { /* fall through to the gpt-4o terminal below */ }
-      if (!prose) {
-        prose = _extract(await callChatGPT(messages, 'PRIMARY_AUTHOR', { model: 'gpt-4o', max_tokens: _maxTokens, temperature: 0.8 }));
-        if (!prose) throw new Error('scene authors (grok/mistral/gpt-4o) all returned empty — Sonnet/Opus rescue is cost-deprecated; retry / wait for provider');
-        try { console.log('[AUTHOR-FALLBACK] served=gpt-4o (terminal — grok+mistral both failed)'); } catch (_) {}
       }
+    } else {
+      // ── FULL-SCENE PROSE AUTHOR — Grok primary for EVERY scene (Roman, 2026-09-19 policy) ──
+      // Replaces the old premium/complex-mode-vs-Mistral-Small-connecting-scene branching. Every
+      // scene now goes through the shared window._authorFullScenePolicy chain (app.js, near
+      // _isGovernorRefusal): Grok primary → ministral-8b-2512 admission-gated fallback → gpt-4o
+      // terminal. Mistral Small no longer appears in this role at all — _isPremiumAuthorScene /
+      // _isComplexAuthorMode / _smallAuthorEnabled / _mistralAuthor / _SMALL_BRIDGE_GUARD stay
+      // defined above for any other reader, but this call site no longer branches on them.
+      if (typeof window === 'undefined' || typeof window._authorFullScenePolicy !== 'function') {
+        throw new Error('scene author unavailable — window._authorFullScenePolicy (app.js) not loaded');
+      }
+      try {
+        const _policyResult = await window._authorFullScenePolicy(messages, { maxTokens: _maxTokens, temperature: 0.8, roleTag: 'literary-scene', grokModel: 'grok-4-1-fast-reasoning' });
+        prose = _extract(_policyResult.text);
+        try { console.log('[GROK-LIT] author = ' + _policyResult.provider + '/' + _policyResult.model + ' — cache ' + JSON.stringify(_policyResult.cache)); } catch (_) {}
+        try { if (window.state) { window.state._lastLiteraryAuthor = _policyResult.provider; window.state._lastLiteraryAuthorCache = _policyResult.cache; window.state._authorPrevWasPremium = (_policyResult.provider === 'grok'); } } catch (_) {}
+        if (!prose) throw new Error('full-scene-author policy returned empty text');
+      } catch (_authErr) {
+        const _term = new Error('scene authors (grok/ministral-8b/gpt-4o) all failed: ' + (_authErr && _authErr.message));
+        _term._authorTerminal = true;
+        _term._attempts = _authErr && _authErr._attempts;
+        console.error('[GROK-LIT] ' + _term.message + (_term._attempts ? ' — attempts: ' + JSON.stringify(_term._attempts) : ''));
+        throw _term;
       }
     }
     // 1.5 Strip leaked metadata tags (Roman 2026-06-25): Small sometimes prefixes the prose with
