@@ -43,7 +43,7 @@ function makeSandbox(initialState) {
   const body = 'var state = ' + JSON.stringify(initialState) + ';\n'
     + 'var window = {};\n'
     + block + '\n'
-    + 'function __testImageGate(prompt, context) {\n' + gateSnippet + '\n  return "NOT_REJECTED";\n}\n'
+    + 'function __testImageGate(prompt, context, panelMeta) {\n' + gateSnippet + '\n  return "NOT_REJECTED";\n}\n'
     + 'return { state: state, window: window, testImageGate: __testImageGate };';
   return new Function(body)();
 }
@@ -125,10 +125,15 @@ section('4. FORBIDDEN ATTACK GRAMMAR IS REJECTED BEFORE PROSE/IMAGE ASSEMBLY');
   ok('_fatelandsRegisterWishResolution REFUSES to record a forbidden-grammar wish at all (returns null; nothing enters the ledger for any prose/directive to ever read)', rejectedReg === null);
   ok('nothing was written to the ledger for the rejected wish', !sb.state._fatelandsWishResolutionLedger || !sb.state._fatelandsWishResolutionLedger.bad_wish);
 
-  // 4c. The CG image gate — the REAL extracted try/catch block, executed directly. An active
-  // ordinary_misaligned_wish is on record; a prompt carrying forbidden vocabulary must be
-  // rejected (return null) BEFORE any sanitization/provider call; a compliant prompt must pass
-  // through untouched (this gate never rewrites).
+  // 4c. The CG image gate — the REAL extracted try/catch block, executed directly. NARROWED
+  // (Roman, 2026-09-20, following real review): the gate only fires when the CALLER explicitly
+  // declares, via panelMeta.fatelandsWishId, which registered wish THIS image is depicting — it
+  // is never an ambient "some wish is active somewhere in the story" scan. A prompt carrying
+  // forbidden vocabulary must be rejected (return null) ONLY when explicitly tagged to a real,
+  // active ordinary_misaligned_wish record; a compliant tagged prompt passes through untouched
+  // (this gate never rewrites); and — the real review finding this section now proves — an
+  // UNTAGGED call carrying the exact same forbidden word, purely incidentally, is never even
+  // scanned, so it can never be wrongly blocked.
   sb.window._fatelandsRegisterWishResolution('active_misaligned_for_image', {
     wishingEntityId: 'seren', statedWish: 'the one Lirael lost', sacrificeCost: 'a named memory',
     alignmentStatus: 'misaligned', alignmentBasis: { kind: 'unattributed_narrative_recognition' },
@@ -136,10 +141,26 @@ section('4. FORBIDDEN ATTACK GRAMMAR IS REJECTED BEFORE PROSE/IMAGE ASSEMBLY');
   });
   const forbiddenPrompt = 'Lirael stands over the scorched grass where the seam of light burst outward.';
   const compliantPrompt = 'Lirael stands very still in the clearing, her breath caught, the moment unexplained.';
-  ok('the REAL image gate REJECTS (returns null) a prompt carrying forbidden attack-grammar vocabulary while an active ordinary_misaligned_wish is registered', sb.testImageGate(forbiddenPrompt, 'visualize') === null);
-  ok('the REAL image gate lets a compliant prompt PASS THROUGH UNCHANGED (never rewrites — a gate that rewrites is a competing author)', sb.testImageGate(compliantPrompt, 'visualize') === 'NOT_REJECTED');
+  const taggedMeta = { fatelandsWishId: 'active_misaligned_for_image' };
+  ok('the REAL image gate REJECTS (returns null) a prompt carrying forbidden attack-grammar vocabulary when the CALLER explicitly tags it to a real, active ordinary_misaligned_wish record', sb.testImageGate(forbiddenPrompt, 'visualize', taggedMeta) === null);
+  ok('the REAL image gate lets a compliant TAGGED prompt PASS THROUGH UNCHANGED (never rewrites — a gate that rewrites is a competing author)', sb.testImageGate(compliantPrompt, 'visualize', taggedMeta) === 'NOT_REJECTED');
   const sbNoActive = makeSandbox(FANTASY_STATE);
-  ok('the same forbidden-vocabulary prompt PASSES when there is no active ordinary_misaligned_wish on record (the gate is scoped to the real condition, not a blanket vocabulary ban)', sbNoActive.testImageGate(forbiddenPrompt, 'visualize') === 'NOT_REJECTED');
+  ok('the same forbidden-vocabulary prompt, TAGGED, PASSES when the declared wishId does not resolve to any real ledger record (no ambient assumption — the tag must resolve)', sbNoActive.testImageGate(forbiddenPrompt, 'visualize', taggedMeta) === 'NOT_REJECTED');
+
+  // REAL REVIEW FINDING, now proven: an image call that is NOT explicitly about the active wish —
+  // e.g. an unrelated panel whose prompt happens to contain "burst" in an entirely ordinary sense
+  // ("a burst of laughter") — is never even scanned, because it carries no panelMeta.fatelandsWishId
+  // at all. This is the exact false-positive shape the pre-narrowing gate was exposed to.
+  const unrelatedFalsePositivePrompt = 'She let out a burst of laughter, the seam of her sleeve catching the light as she turned.';
+  ok('FALSE-POSITIVE FIX: an UNTAGGED image call carrying the same incidental words ("burst", "seam" — ordinary English, not attack grammar) is NEVER rejected, even while the wish above is active — the gate no longer scans ambiently', sb.testImageGate(unrelatedFalsePositivePrompt, 'visualize', null) === 'NOT_REJECTED');
+  ok('FALSE-POSITIVE FIX, same story, no meta object at all (the common real call shape): still never rejected', sb.testImageGate(unrelatedFalsePositivePrompt, 'visualize') === 'NOT_REJECTED');
+  ok('FALSE-POSITIVE FIX: even a DIFFERENT declared wishId (a real record, but a genuinely aligned wish, not this misaligned one) never triggers the scan — the gate checks the SPECIFIC declared record\'s own classification, not just "any tag present"', (function () {
+    sb.window._fatelandsRegisterWishResolution('unrelated_aligned_wish', {
+      wishingEntityId: 'x', statedWish: 'x', sacrificeCost: 'x', alignmentStatus: 'aligned',
+      alignmentBasis: { kind: 'not_applicable_aligned' }, resolutionClass: 'ordinary_aligned_wish', status: 'active',
+    });
+    return sb.testImageGate(forbiddenPrompt, 'visualize', { fatelandsWishId: 'unrelated_aligned_wish' }) === 'NOT_REJECTED';
+  })());
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -155,7 +176,7 @@ section('5. FAMOUS FATE RECEIVES NO LEDGER REGISTRATION OR DIRECTIVE');
   ok('_fatelandsRegisterWishResolution no-ops (returns null) for a Famous Fate story, even with an otherwise-fully-compliant record', rec === null);
   ok('no ledger object is ever created on a Famous Fate story\'s state', typeof sb.state._fatelandsWishResolutionLedger === 'undefined');
   ok('buildFatelandsWishResolutionLedgerDirective returns an empty string for Famous Fate', sb.window.buildFatelandsWishResolutionLedgerDirective() === '');
-  ok('the real image gate never rejects anything for Famous Fate (it never even checks — the world gate short-circuits first)', sb.testImageGate('a scorched seam burst outward', 'visualize') === 'NOT_REJECTED');
+  ok('the real image gate never rejects anything for Famous Fate, even when a caller explicitly tags the call to the (never-registered) wishId — the world gate short-circuits the lookup before any scan', sb.testImageGate('a scorched seam burst outward', 'visualize', { fatelandsWishId: 'ff_wish' }) === 'NOT_REJECTED');
   ok('_fatelandsActiveOrdinaryMisalignedWishRecords returns an empty array for Famous Fate', Array.isArray(sb.window._fatelandsActiveOrdinaryMisalignedWishRecords()) && sb.window._fatelandsActiveOrdinaryMisalignedWishRecords().length === 0);
 
   // Sanity: the SAME gate, same story shape but Fantasy (not Famous Fate), DOES register — proves

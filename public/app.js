@@ -35697,9 +35697,11 @@ WRY REFERENCE:
   }
   window._fatelandsUpdateWishResolutionStatus = _fatelandsUpdateWishResolutionStatus;
 
-  // Read helper for the CG image gate (see generateImageWithFallback) — every currently
-  // active-or-arrested ordinary_misaligned_wish record, regardless of prompt-build recency (an
-  // image for the same incident may be generated several turns after the wish was first recorded).
+  // General read helper — every currently active-or-arrested ordinary_misaligned_wish record in
+  // this story. Used by callers that need the full relevant set (e.g. a future scene-assembly step
+  // deciding which incident a beat is about). NOT used by the CG image gate below — see
+  // _fatelandsGetWishResolution and the gate's own comment for why an ambient "any active wish
+  // anywhere in the story" check is the wrong scope for a single image call.
   function _fatelandsActiveOrdinaryMisalignedWishRecords() {
     if (!_fatelandsFantasyWorldGate()) return [];
     var ledger = state._fatelandsWishResolutionLedger;
@@ -35708,6 +35710,17 @@ WRY REFERENCE:
       .filter(function (rec) { return rec && rec.resolutionClass === 'ordinary_misaligned_wish' && (rec.status === 'active' || rec.status === 'arrested'); });
   }
   window._fatelandsActiveOrdinaryMisalignedWishRecords = _fatelandsActiveOrdinaryMisalignedWishRecords;
+
+  // Single-record lookup, by the SAME stable wishId a caller would have received back from
+  // _fatelandsRegisterWishResolution. Used by the CG image gate (see generateImageWithFallback) to
+  // scope its check to the ONE wish a specific image call is actually about, rather than scanning
+  // every image call in the entire story just because SOME wish, anywhere, happens to be active.
+  function _fatelandsGetWishResolution(wishId) {
+    if (!_fatelandsFantasyWorldGate() || !wishId) return null;
+    var ledger = state._fatelandsWishResolutionLedger;
+    return (ledger && ledger[wishId]) || null;
+  }
+  window._fatelandsGetWishResolution = _fatelandsGetWishResolution;
 
   // The shared prompt-context feed — same call signature/convention as the other build*Directive
   // functions in this file, wired into BOTH the literary directive stack and the CG author/
@@ -295449,23 +295462,47 @@ Do NOT describe Veilwood environments as static architecture or inert forests.`;
       }
 
       // ══════════════════════════════════════════════════════════════════════
-      // FATELANDS WISH-RESOLUTION IMAGE GATE (Roman, 2026-09-20) — generic, REJECT-ONLY, same
-      // single-chokepoint precedent as the Famous Fate kill-switch above. If this Fatelands
-      // Fantasy story has an active/arrested ordinary_misaligned_wish record in its
-      // _fatelandsWishResolutionLedger, the raw image prompt must never carry forbidden
-      // attack-grammar vocabulary (seam/rift/projectile/beam/scorch/burst/blast/explosion/
-      // residue/rope of light) — an ordinary wish misalignment is never a visible magical
-      // attack. This NEVER rewrites or sanitizes the prompt (a gate that can rewrite is a
-      // competing author) — it rejects the call outright, exactly like Famous Fate above, so
+      // FATELANDS WISH-RESOLUTION IMAGE GATE (Roman, 2026-09-20; NARROWED 2026-09-20 following
+      // real review) — generic, REJECT-ONLY, same single-chokepoint precedent as the Famous Fate
+      // kill-switch above.
+      //
+      // NARROWING, WHY (real review finding): the first version scanned every image prompt for
+      // forbidden attack-grammar vocabulary whenever ANY ordinary_misaligned_wish was active
+      // ANYWHERE in the story — an ambient, story-wide check with no relationship to what the
+      // specific image being generated is actually about. That is a real false-positive hazard: an
+      // ordinary word like "burst" (as in "a burst of laughter") or "seam" (a seam of a dress)
+      // could appear in a completely unrelated image call — a cover, an LI portrait, an unrelated
+      // panel — and wrongly block it, purely because some OTHER wish elsewhere in the story
+      // happened to be active. The fix is a STRUCTURED signal, not a broader/narrower word list:
+      // this gate now only ever fires when the CALLER explicitly declares, via
+      // panelMeta.fatelandsWishId, which registered wish THIS specific image is depicting. No tag,
+      // no check — the vast majority of image calls (covers, portraits, unrelated panels) never
+      // pass this and are never scanned. Only a call that is itself claiming "this image depicts
+      // wish X" gets checked against wish X's own real ledger record.
+      //
+      // The lexical scan is still necessary even with a real, structured, ALLOWED effectGrammar on
+      // the ledger record: effectGrammar is a list of abstract ids (quiet_pull, etc.), never itself
+      // the literal image prompt text — an author/prompt-assembly step could still describe that
+      // "quiet pull" using forbidden visual language despite the correct classification being on
+      // record. So the check remains: is the DECLARED wishId a real, active/arrested
+      // ordinary_misaligned_wish record, and if so, does the ACTUAL prompt text for THIS call carry
+      // forbidden vocabulary? This never rewrites or sanitizes the prompt (a gate that can rewrite
+      // is a competing author) — it rejects the call outright, exactly like Famous Fate above, so
       // the caller must fix its own prompt rather than have this gate silently launder it.
       try {
-          if (typeof _fatelandsFantasyWorldGate === 'function' && _fatelandsFantasyWorldGate()
-              && typeof _fatelandsActiveOrdinaryMisalignedWishRecords === 'function'
-              && _fatelandsActiveOrdinaryMisalignedWishRecords().length
-              && typeof FATELANDS_WISH_ATTACK_GRAMMAR_VOCABULARY_RE !== 'undefined'
-              && FATELANDS_WISH_ATTACK_GRAMMAR_VOCABULARY_RE.test(String(prompt || ''))) {
-              console.log('[IMAGE] Skipped — Fatelands wish-resolution gate: forbidden attack-grammar vocabulary in prompt while an active ordinary misaligned wish is registered (context=' + context + ').');
-              return null;
+          var _fatelandsDeclaredWishId = panelMeta && panelMeta.fatelandsWishId;
+          if (_fatelandsDeclaredWishId
+              && typeof _fatelandsFantasyWorldGate === 'function' && _fatelandsFantasyWorldGate()
+              && typeof _fatelandsGetWishResolution === 'function') {
+              var _fatelandsDeclaredWishRec = _fatelandsGetWishResolution(_fatelandsDeclaredWishId);
+              if (_fatelandsDeclaredWishRec
+                  && _fatelandsDeclaredWishRec.resolutionClass === 'ordinary_misaligned_wish'
+                  && (_fatelandsDeclaredWishRec.status === 'active' || _fatelandsDeclaredWishRec.status === 'arrested')
+                  && typeof FATELANDS_WISH_ATTACK_GRAMMAR_VOCABULARY_RE !== 'undefined'
+                  && FATELANDS_WISH_ATTACK_GRAMMAR_VOCABULARY_RE.test(String(prompt || ''))) {
+                  console.log('[IMAGE] Skipped — Fatelands wish-resolution gate: forbidden attack-grammar vocabulary in a prompt explicitly declared (panelMeta.fatelandsWishId="' + _fatelandsDeclaredWishId + '") to depict an active ordinary misaligned wish (context=' + context + ').');
+                  return null;
+              }
           }
       } catch (_) {}
 
