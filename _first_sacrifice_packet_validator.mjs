@@ -327,11 +327,27 @@ function validateDraft(draft, packet) {
     if (scene1Beats.length > 0) {
       const wc = (t) => (typeof t === 'string' ? t.trim().split(/\s+/).filter(Boolean).length : 0);
       const narrationBeats = scene1Beats.map((b, i) => ({ b, i })).filter(({ b }) => b && (b.kind === 'narration' || b.kind === 'exposition'));
-      // TIGHTENED 55-110 -> 60-90 (Roman, 2026-09-17, following attempt 4's 14-beat undershoot).
-      const qualifyingNarrationBeats = narrationBeats.filter(({ b }) => { const n = wc(b.text); return n >= 60 && n <= 90; });
+      // LOWER BOUND ONLY (Roman, 2026-09-20 correction, following real Attempt 8's regression): the
+      // 60-word floor exists to stop THIN, padded beats — it was never meant to force deletion of
+      // good, information-dense prose. A real 99-word beat that carried unique, causally load-bearing
+      // content (Seren's wish beginning to curve/misalign) was shrunk by a since-removed repair pass
+      // to satisfy this band's upper bound, and the shrink replaced that content with a near-duplicate
+      // of the adjacent beat — a real regression the validator's own upper bound caused. The 90-word
+      // side is now a NON-BLOCKING pacing diagnostic only (below), never part of the qualifying count
+      // and never a violation. TIGHTENED 55-110 -> 60-90 (Roman, 2026-09-17, following attempt 4's
+      // 14-beat undershoot) — that floor stays; only the ceiling's blocking status is reversed here.
+      const qualifyingNarrationBeats = narrationBeats.filter(({ b }) => wc(b.text) >= 60);
       if (qualifyingNarrationBeats.length < 12) {
-        violations.push({ rule: 'scene1_insufficient_narration_density', detail: 'only ' + qualifyingNarrationBeats.length + ' of ' + narrationBeats.length + ' narration/exposition beats are 60-90 words each (need at least 12) — a few long beats cannot cover for many thin ones; this is checked PER-BEAT, independent of the total-word floor' });
+        violations.push({ rule: 'scene1_insufficient_narration_density', detail: 'only ' + qualifyingNarrationBeats.length + ' of ' + narrationBeats.length + ' narration/exposition beats are at least 60 words each (need at least 12) — a few long beats cannot cover for many thin ones; this is checked PER-BEAT, independent of the total-word floor. A beat ABOVE 90 words still counts toward this floor-only requirement — see the non-blocking pacing diagnostic below for beats that run long.' });
       }
+      // PACING DIAGNOSTIC — NON-BLOCKING (Roman, 2026-09-20): a narration/exposition beat over 90
+      // words is flagged for human pacing review only. It NEVER affects `ok`, is NEVER a repair
+      // target, and never subtracts from qualifyingNarrationBeats above — length alone is not a
+      // defect; only genuine thinness is.
+      narrationBeats.forEach(({ b, i }) => {
+        const n = wc(b.text);
+        if (n > 90) diagnostics.push({ rule: 'narration_beat_pacing_long', detail: 'scene1Candidate.beats[' + i + '] is ' + n + ' words (over the 90-word pacing guideline) — non-blocking; long, information-dense prose is not itself a defect and this never triggers repair or rejection' });
+      });
       // DIALOGUE ADJACENCY: a dialogue beat may be short, but only with an adequately-long
       // narration/exposition neighbor immediately before or after it.
       scene1Beats.forEach((b, i) => {
@@ -688,6 +704,24 @@ section('RED CONTROLS — scene1Candidate (fourth redesign pass, 2026-09-17)');
   const v = validateDraft(d, PACKET);
   const totalWords = d.scene1Candidate.beats.reduce((n, b) => n + b.text.trim().split(/\s+/).filter(Boolean).length, 0);
   ok('RED: 20 compliant-count beats averaging ~25 words (the real recurring shape across all 3 rejected drafts) is rejected on both the total floor and the per-beat narration-density check', !v.ok && v.violations.some(x => x.rule === 'scene1_too_thin') && v.violations.some(x => x.rule === 'scene1_insufficient_narration_density'), 'totalWords=' + totalWords + ' violations=' + JSON.stringify(v.violations));
+}
+{
+  // REGRESSION FIXTURE (Roman, 2026-09-20): real Attempt 8's beat 10, in the model's own original
+  // words — 99 words, over the (now non-blocking) 90-word pacing guideline, carrying real, unique,
+  // causally load-bearing content (Seren's wish beginning to curve/misalign toward Lirael) found
+  // nowhere else in the scene. A since-removed shrink-to-midpoint repair pass rewrote this exact
+  // beat down to fit the old hard ceiling and, in doing so, replaced this content with a near-
+  // duplicate of the preceding beat — a real, disclosed regression. This beat must now be ACCEPTED
+  // as-is: no violation, no repair target, a non-blocking pacing diagnostic only.
+  const REAL_ATTEMPT8_BEAT10_TEXT = 'Then the rhythm of her voice changed by a single beat. The sentence she was meant to finish curved instead toward me, and I felt the misalignment arrive the way a rider feels a horse decide to leave the path. Her gaze lifted to mine and held it with the same careful softness she had practiced, yet the words that followed carried the shape of an audience she needed to witness her goodness rather than the private desire she had rehearsed for herself alone. I recognized the gap between the two in the same instant the rite felt it.';
+  const d = compliantDraft();
+  const targetIdx = d.scene1Candidate.beats.findIndex(b => b.kind === 'narration' || b.kind === 'exposition');
+  d.scene1Candidate.beats[targetIdx] = { ...d.scene1Candidate.beats[targetIdx], text: REAL_ATTEMPT8_BEAT10_TEXT };
+  const realBeatWords = REAL_ATTEMPT8_BEAT10_TEXT.trim().split(/\s+/).filter(Boolean).length;
+  const v = validateDraft(d, PACKET);
+  ok('the real Attempt 8 fixture text is genuinely 99 words (over the 90-word guideline) — real arithmetic, not a placeholder', realBeatWords === 99, 'got ' + realBeatWords);
+  ok('REGRESSION FIXTURE: an information-dense 99-word narration beat that uniquely advances its assigned function is ACCEPTED — no scene1_insufficient_narration_density violation caused by its length alone, draft otherwise still ok', v.ok && !v.violations.some(x => x.rule === 'scene1_insufficient_narration_density'), JSON.stringify(v.violations));
+  ok('REGRESSION FIXTURE: the beat is reported as a non-blocking narration_beat_pacing_long DIAGNOSTIC only — never a violation, never affecting ok', v.diagnostics.some(x => x.rule === 'narration_beat_pacing_long' && x.detail.includes('beats[' + targetIdx + ']') && x.detail.includes('99 words')));
 }
 {
   // Roman's explicit named scenario: reproduces v7 attempt 5's EXACT real shape — the numbered

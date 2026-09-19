@@ -133,7 +133,7 @@ ok('the constructed repair prompt states the exact bounded output schema, naming
 // explicit delta ("at least N more words needed") and still undershot on 7 of 12 named slots.
 // The prompt must now demand a COMPLETE replacement targeting each slot's own MIDPOINT, and must
 // NEVER again state the old delta/expansion framing.
-ok('the constructed repair prompt demands a COMPLETE, SELF-CONTAINED replacement beat, explicitly warning against an edited fragment of the existing text (both short-side append and long-side truncation)', /FULL-SLOT REPLACEMENT, NOT AN EDITED FRAGMENT/.test(repairUser) && /do NOT simply append more words onto the existing text/.test(repairUser) && /do NOT mechanically delete or truncate words\/sentences/.test(repairUser));
+ok('the constructed repair prompt demands a COMPLETE, SELF-CONTAINED replacement beat, explicitly warning against an appended fragment, and states repair never shrinks an already-long beat', /FULL-SLOT REPLACEMENT, NOT AN EDITED FRAGMENT/.test(repairUser) && /Do NOT simply append more words onto the existing text/.test(repairUser) && /Repair NEVER shrinks a beat that is already long enough/.test(repairUser));
 ok('the constructed repair prompt instructs the model to TARGET THE MIDPOINT of each slot\'s range', /TARGET THE MIDPOINT of each slot.s own stated range/.test(repairUser));
 ok('the constructed repair prompt states each deficient slot\'s real current word count, real MIDPOINT target, and real allowed range — the new full-slot contract, not the old delta contract (short-direction fixture)', defAttempt6.deficiencies.every(d => d.direction === 'short' && repairUser.includes('current text is ' + d.actualWords + ' words (too SHORT — do not extend it, REWRITE it fresh and complete at the target length). TARGET approximately ' + d.targetWords + ' words. ALLOWED RANGE ' + d.wordRange[0] + '-' + d.wordRange[1] + ' words')));
 ok('every deficiency\'s targetWords is genuinely the midpoint of its own wordRange (real arithmetic, not a placeholder)', defAttempt6.deficiencies.every(d => d.targetWords === Math.round((d.wordRange[0] + d.wordRange[1]) / 2)));
@@ -396,7 +396,13 @@ ok('real Attempt 7 primary draft (1,007 words) is structurally repairable with 1
 const pass1Merge = mergeRepairIntoDraft(attempt7Primary, attempt7RealPass1Repair, defAttempt7Primary.deficiencies);
 ok('the REAL pass-1 repair response (as actually returned by the real, paid Grok call) merges cleanly under the bounded contract', pass1Merge.errors.length === 0, JSON.stringify(pass1Merge.errors));
 const pass1MergedValidation = validateDraft(pass1Merge.merged, PACKET);
-ok('the locally-reproduced pass-1 merge EXACTLY reproduces the real, on-disk post-pass-1 validation result (scene1_insufficient_narration_density only)', JSON.stringify(pass1MergedValidation.violations) === JSON.stringify(attempt7RealMergedValidation.finalValidation.violations), JSON.stringify(pass1MergedValidation.violations));
+// NOTE (Roman, 2026-09-20 policy reversal): the on-disk attempt7RealMergedValidation was recorded
+// under the pre-reversal validator, whose density check disqualified beats OVER 90 words as well as
+// under 60. The CURRENT validator only disqualifies under-60 beats (over-90 is now a non-blocking
+// pacing diagnostic) — so the qualifying COUNT and detail text can genuinely differ from the frozen
+// historical record; that is the intended effect of the reversal, not a bug. What must still match
+// is the RULE NAME (still scene1_insufficient_narration_density, still and only that rule).
+ok('the locally-reproduced pass-1 merge, under the CURRENT (post-reversal) validator, still shows scene1_insufficient_narration_density as the only rule (rule NAME matches; exact count/detail may legitimately differ from the frozen pre-reversal record)', pass1MergedValidation.violations.length === 1 && pass1MergedValidation.violations[0].rule === 'scene1_insufficient_narration_density' && attempt7RealMergedValidation.finalValidation.violations.length === 1 && attempt7RealMergedValidation.finalValidation.violations[0].rule === 'scene1_insufficient_narration_density', JSON.stringify(pass1MergedValidation.violations));
 
 // ── (a) "a too-short first repair leaves only its deficient slots eligible for the second pass" ──
 const plan2 = planNextRepairPass(pass1Merge.merged, pass1MergedValidation, PACKET, 1);
@@ -488,56 +494,31 @@ ok('a second bounded repair pass, even worst case, keeps the ABSOLUTE worst-case
 ok('the REALISTIC two-pass estimate (grounded in Attempt 7\'s real primary + real pass-1 cost) stays well under $0.05 total for the whole operation', (REAL_ATTEMPT7_PRIMARY_COST + REAL_ATTEMPT7_PASS1_REPAIR_COST + realisticPass2ExpectedCost) < 0.05);
 
 // ═══════════════════════════════════════════════════════════════════════════════
-section('10. OVER-CEILING REPAIR — real Attempt 8 pass-1-merged fixture (8 real overlong narration beats)');
+section('10. SHRINK-TO-MIDPOINT REPAIR REMOVED — real Attempt 8 pass-1-merged fixture, reversed policy');
 // ═══════════════════════════════════════════════════════════════════════════════
+// Roman, 2026-09-20: a brief prior version of this engine flagged beats ABOVE their ceiling as
+// deficient and fed them to a shrink repair. Real Attempt 8 proved that wrong — a genuine 99-word
+// narration beat (real beat 10, pre-shrink) carried unique, causally load-bearing content (Seren's
+// wish beginning to curve/misalign) that the shrink discarded, replacing it with a near-duplicate
+// of the adjacent beat. This section proves the REVERSAL, using the SAME real fixture that
+// previously proved the (now-removed) capability: the 8 real overlong narration beats are no
+// longer detected as deficient, are never repair targets, and the real, information-dense
+// pre-shrink text is preserved when re-derived from the real pass-1-merged state.
 const attempt8Pass1Merged = JSON.parse(fs.readFileSync(path.join(__dirname, '_first_sacrifice_draft_v7_attempt8_full_package/07_final_draft_after_pass1.json'), 'utf8')).draft;
 const defAttempt8Pass1 = measureBeatDeficiencies(attempt8Pass1Merged.scene1Candidate, PACKET);
-const EXPECTED_REAL_OVERLONG_SLOTS = [1, 2, 3, 6, 7, 8, 10, 13]; // hand-verified against the real merged draft's actual per-beat word counts
-ok('real Attempt 8 pass-1-merged draft is structurally repairable and flags EXACTLY the 8 real overlong narration slots, in direction "long"', defAttempt8Pass1.structurallyRepairable === true && defAttempt8Pass1.deficiencies.length === 8 && defAttempt8Pass1.deficiencies.every(d => d.direction === 'long') && JSON.stringify(defAttempt8Pass1.deficiencies.map(d => d.n).sort((a, b) => a - b)) === JSON.stringify(EXPECTED_REAL_OVERLONG_SLOTS));
-ok('every flagged overlong deficiency genuinely exceeds its own slot ceiling (real arithmetic: excessWords === actualWords - ceiling)', defAttempt8Pass1.deficiencies.every(d => d.actualWords > d.wordRange[1] && d.excessWords === d.actualWords - d.wordRange[1]));
-ok('the 2 real dialogue slots that are ALSO over their own ceiling (11 and 18 — a real side-effect of pass 1\'s own repair) are correctly EXCLUDED — over-ceiling repair is scoped to narration/exposition only, matching exactly what scene1_insufficient_narration_density checks', ![11, 18].some(n => defAttempt8Pass1.deficiencies.some(d => d.n === n)));
-ok('the 8 slots that ALREADY qualify (4, 9, 12, 14, 16, 17, 19, 20) are correctly excluded from the deficiency list — repair never touches an already-compliant beat', [4, 9, 12, 14, 16, 17, 19, 20].every(n => !defAttempt8Pass1.deficiencies.some(d => d.n === n)));
+const REAL_OVERLONG_NARRATION_SLOTS = [1, 2, 3, 6, 7, 8, 10, 13]; // hand-verified against the real merged draft's actual per-beat word counts — all genuinely over 90 words
+ok('real Attempt 8 pass-1-merged draft: the 8 real overlong narration beats genuinely exceed 90 words (real arithmetic, confirming the fixture is real, not synthetic)', REAL_OVERLONG_NARRATION_SLOTS.every(n => { const w = attempt8Pass1Merged.scene1Candidate.beats[n - 1].text.trim().split(/\s+/).filter(Boolean).length; return w > 90; }));
+ok('REVERSED POLICY: measureBeatDeficiencies on the real Attempt 8 pass-1-merged draft now returns ZERO deficiencies — shrink-to-midpoint repair is fully removed, an over-ceiling beat is never flagged, never a repair target', defAttempt8Pass1.structurallyRepairable === true && defAttempt8Pass1.deficiencies.length === 0, JSON.stringify(defAttempt8Pass1.deficiencies));
+ok('REVERSED POLICY: no deficiency object anywhere in this engine can ever carry direction "long" any more (the field/branch was removed, not merely gated to zero results)', !/direction:\s*'long'|direction === 'long'/.test(fs.readFileSync(path.join(__dirname, '_first_sacrifice_bounded_repair_engine.mjs'), 'utf8')));
+ok('REVERSED POLICY: real beat 10\'s actual pass-1-merged text is preserved verbatim — the wish-curving content is still present, never discarded by any repair this engine could run now', attempt8Pass1Merged.scene1Candidate.beats[9].text.includes('The sentence she was meant to finish curved instead toward me') && attempt8Pass1Merged.scene1Candidate.beats[9].text.trim().split(/\s+/).filter(Boolean).length === 99);
 
-const { user: overCeilingUser } = buildRepairPrompt(PACKET, attempt8Pass1Merged, defAttempt8Pass1.deficiencies);
-ok('the constructed over-ceiling repair prompt frames every real overlong slot as "too LONG" with its real excess word count, and forbids mechanical truncation', defAttempt8Pass1.deficiencies.every(d => overCeilingUser.includes('too LONG — exceeds the ceiling by ' + d.excessWords + ' word(s); do NOT mechanically trim or truncate it')));
-ok('the constructed over-ceiling repair prompt still targets each slot\'s real midpoint (same contract as the short-direction case)', defAttempt8Pass1.deficiencies.every(d => overCeilingUser.includes('TARGET approximately ' + d.targetWords + ' words')));
-
-// Compliant simulated pass-2: shrink each overlong slot to its own real midpoint via a full,
-// self-contained rewrite (deterministic filler — a structural proof, not a prose-quality one).
-function buildCompliantDirectionalRepairFor(deficiencies) {
-  const FILLER_SENTENCES = [
-    'The moment held there, close and exact, and I let myself notice only what was actually in front of me.',
-    'Nothing about it needed more than what was already plain in the way the light fell across the grass.',
-    'I kept my attention on the one real detail that mattered and let the rest of the clearing blur.',
-    'The weight of it settled somewhere just beneath my ribs, quiet and entirely undeniable.',
-    'It was enough to know exactly what had happened without needing to name every part of it aloud.',
-  ];
-  return {
-    repairs: deficiencies.map((d, idx) => {
-      const need = d.targetWords;
-      const words = [];
-      let s = 0;
-      while (words.length < need) { words.push(...FILLER_SENTENCES[(idx + s) % FILLER_SENTENCES.length].split(' ')); s++; }
-      return { n: d.n, text: words.slice(0, need).join(' ') + '.' };
-    }),
-  };
-}
-const compliantOverCeilingRepair = buildCompliantDirectionalRepairFor(defAttempt8Pass1.deficiencies);
-const overCeilingMerge = mergeRepairIntoDraft(attempt8Pass1Merged, compliantOverCeilingRepair, defAttempt8Pass1.deficiencies);
-ok('GREEN: the compliant shrink-to-midpoint pass-2 repair merges cleanly on the real Attempt 8 pass-1-merged draft', overCeilingMerge.errors.length === 0, JSON.stringify(overCeilingMerge.errors));
-const overCeilingAcceptedNs = Array.from({ length: 20 }, (_, i) => i + 1).filter(n => !EXPECTED_REAL_OVERLONG_SLOTS.includes(n));
-ok('GREEN: every beat NOT targeted by the over-ceiling repair (including the 2 real over-ceiling dialogue slots and the 8 already-qualifying slots) is byte-identical before/after the merge', overCeilingAcceptedNs.every(n => JSON.stringify(overCeilingMerge.merged.scene1Candidate.beats[n - 1]) === JSON.stringify(attempt8Pass1Merged.scene1Candidate.beats[n - 1])));
-ok('GREEN: every shrunk beat now lands WITHIN its own allowed range (real word count check on the merged text)', defAttempt8Pass1.deficiencies.every(d => { const w = overCeilingMerge.merged.scene1Candidate.beats[d.n - 1].text.trim().split(/\s+/).filter(Boolean).length; return w >= d.wordRange[0] && w <= d.wordRange[1]; }));
-
-const doublyMergedOverCeilingDraft = { ...attempt8Pass1Merged, scene1Candidate: overCeilingMerge.merged.scene1Candidate };
-const overCeilingFinalValidation = validateDraft(doublyMergedOverCeilingDraft, PACKET);
-const qualifyingCountMatch = overCeilingFinalValidation.violations.find(v => v.rule === 'scene1_insufficient_narration_density');
-ok('END-TO-END: primary + real pass-1 repair + compliant shrink-to-midpoint pass-2 repair, re-validated with the REAL validator, reaches AT LEAST 12/16 qualifying narration beats (scene1_insufficient_narration_density no longer fires)', !qualifyingCountMatch, JSON.stringify(overCeilingFinalValidation.violations));
-ok('END-TO-END: the doubly-repaired candidate is now FULLY ELIGIBLE (validation.ok === true)', overCeilingFinalValidation.ok === true, JSON.stringify(overCeilingFinalValidation));
-
-// A structural/canon violation still blocks repair regardless of direction (short OR long).
-ok('RED: planNextRepairPass still REFUSES when a canon violation coexists with the density one, even though the deficiencies this time are over-ceiling (direction "long") rather than under-floor', planNextRepairPass(attempt8Pass1Merged, { ok: false, violations: [{ rule: 'scene1_insufficient_narration_density' }, { rule: 'the_answer_form_violation' }] }, PACKET, 1).authorized === false);
-ok('RED: measureBeatDeficiencies still refuses a structurally-drifted draft (tampered image) even when the only word-count issue present would otherwise be over-ceiling', (() => { const tampered = JSON.parse(JSON.stringify(attempt8Pass1Merged)); tampered.scene1Candidate.beats[0].image = 'd1'; return measureBeatDeficiencies(tampered.scene1Candidate, PACKET).structurallyRepairable === false; })());
+// planNextRepairPass on this real fixture: the validator's own diagnostics_policy (proven in
+// _first_sacrifice_packet_validator.mjs) means the ONLY remaining real violation on this draft is
+// density-from-thinness, if any — never an over-ceiling one. A structural/canon violation still
+// blocks repair regardless.
+ok('RED: planNextRepairPass still REFUSES when a canon violation coexists with a density one, on this same real fixture', planNextRepairPass(attempt8Pass1Merged, { ok: false, violations: [{ rule: 'scene1_insufficient_narration_density' }, { rule: 'the_answer_form_violation' }] }, PACKET, 1).authorized === false);
+ok('RED: measureBeatDeficiencies still refuses a structurally-drifted draft (tampered image) on this same real fixture', (() => { const tampered = JSON.parse(JSON.stringify(attempt8Pass1Merged)); tampered.scene1Candidate.beats[0].image = 'd1'; return measureBeatDeficiencies(tampered.scene1Candidate, PACKET).structurallyRepairable === false; })());
+ok('GREEN: planNextRepairPass correctly finds NOTHING to authorize on this real fixture once re-validated (already-passing or zero-eligible-deficiency, either way no blind repair)', (() => { const v = validateDraft(attempt8Pass1Merged, PACKET); const plan = planNextRepairPass(attempt8Pass1Merged, v, PACKET, 1); return v.ok === true ? plan.authorized === false : (plan.authorized === false || plan.deficiencyReport.deficiencies.length === 0); })());
 
 console.log('\n' + '='.repeat(92));
 console.log('BOUNDED REPAIR ENGINE CONTROL: ' + pass + ' passed, ' + fail + ' failed');
