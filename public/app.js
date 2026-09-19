@@ -161954,14 +161954,21 @@ No text, no watermark, no UI elements, share-ready.`;
           // "reader hid it" state across beats, by design (Roman, this message).
           //
           // Dialogue attribution is "Option C" from the presentation preview: a
-          // restrained left-accent block, speaker in a small label above the line —
-          // never a floating bubble, never color alone (weight/case/layout carry the
-          // distinction). Root-caused fix for the internal-key leak
+          // restrained left-accent block, speaker in a small "Name:" label above the
+          // line — never a floating bubble, never color alone (weight/case/layout
+          // carry the distinction). Root-caused fix for the internal-key leak
           // (locked_world_facts.cast_roles now keyed by real display names, e.g.
-          // "Dhokar Raes") lives upstream in the authoring packet — this renderer
-          // trusts p.speaker is already a real display name, and
-          // validateCGSpeakerDisplayNames (top-level, window-exposed) remains the
-          // reject-only guard against that class of bug reaching here at all.
+          // "Dhokar Raes") lives upstream in the authoring packet — but this renderer
+          // no longer merely TRUSTS p.speaker is a real display name: it refuses to
+          // print a raw internal key to the reader even if one somehow reaches this
+          // call site (Roman, 2026-09-20: "raw keys such as the_presiding_Dohkar must
+          // never render"). validateCGSpeakerDisplayNames (top-level, window-exposed)
+          // remains the authoring-time reject-only guard; this is the runtime
+          // fail-safe — same underscore heuristic, applied at the one real chokepoint
+          // every panel's dialogue passes through, never rewriting the value, only
+          // ever omitting an unsafe one (a dialogue line with no visible label reads
+          // as a real craft gap that gets noticed and fixed upstream; a raw
+          // "the_presiding_Dohkar" printed to a reader does not).
           var textboxHtml = '';
           if (p.captionText || (p.dialogue && p.dialoguePosition !== 'none')) {
               var _twInner = '';
@@ -161969,7 +161976,11 @@ No text, no watermark, no UI elements, share-ready.`;
                   _twInner += '<div class="gn-panel-text-caption">' + escapeHTML(p.captionText) + '</div>';
               }
               if (p.dialogue && p.dialoguePosition !== 'none') {
-                  var _twSpeaker = p.speaker ? '<span class="gn-panel-text-speaker">' + escapeHTML(p.speaker) + '</span>' : '';
+                  var _twSpeakerSafe = (p.speaker && !/_/.test(p.speaker)) ? p.speaker : null;
+                  if (p.speaker && !_twSpeakerSafe) {
+                      try { console.warn('[GN:PANEL] speaker "' + p.speaker + '" looks like an internal key/underscored id, not a reader-visible display name — omitting the label rather than printing it to the reader. Fix the source data (see validateCGSpeakerDisplayNames).'); } catch (_) {}
+                  }
+                  var _twSpeaker = _twSpeakerSafe ? '<span class="gn-panel-text-speaker">' + escapeHTML(_twSpeakerSafe) + ':</span>' : '';
                   _twInner += '<div class="gn-panel-text-dialogue">' + _twSpeaker + '<p class="gn-panel-text-dialogue-line">' + escapeHTML(p.dialogue) + '</p></div>';
               }
               textboxHtml = '<div class="gn-panel-textbox gn-dialogue-' + (p.dialoguePosition || 'bottom') + '">' +
