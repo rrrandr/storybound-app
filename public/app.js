@@ -128210,7 +128210,7 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
         n: L.entries.length + 1, sceneNumber: n, issue: issue, kind: kind, pageUid: opts.pageUid || null,
         plannedEvent: ev, plannedSource: src, setting: setting, participants: participants ? Object.freeze(participants.slice()) : null,
         act: useKey ? key.act : _slClip(opts.act, 240), dia: useKey ? key.dia : _slClip(opts.dia, 240),
-        card: useKey ? key.card : (opts.card || null), changes: Object.freeze(changes), committedAt: Date.now()
+        card: useKey ? key.card : (opts.card || null), posture: opts.posture || null, changes: Object.freeze(changes), committedAt: Date.now()
       };
       Object.freeze(entry); L.entries.push(entry);
       if (useKey) s._authoringSceneKey = null;
@@ -128284,6 +128284,11 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
             if (e.act) bits.push('reader did: ' + e.act);
             if (e.dia) bits.push('reader said: "' + e.dia + '"');
             if (e.card === 'tempt') bits.push('[Tempt Fate played]'); else if (e.card === 'petition') bits.push('[Petition made]');
+            // posture: the interruption fate-card slot the reader picked (context only — the
+            // reader's own act/dia above is the words; this never substitutes for them). A
+            // SEPARATE field from `card` on purpose — never collapse a posture slot into the
+            // tempt/petition/ordinary vocabulary that field carries.
+            if (e.posture) { var _pSlot = (typeof _INTR_SLOTS !== 'undefined') ? _INTR_SLOTS.filter(function (sl) { return sl.key === e.posture; })[0] : null; bits.push('answered from a posture of ' + (_pSlot ? _pSlot.label : e.posture)); }
             if (e.changes && e.changes.length) bits.push('[Fate recorded a permanent change]');
             var vf = verifiedBy[e.sceneNumber]; if (vf && vf.length) bits.push('verified on the page: ' + vf.join('; '));
             candidate.push('    ' + tag + ': ' + (bits.length ? bits.join(' — ') : 'page read (no recorded facts)'));
@@ -198769,8 +198774,15 @@ No text, no watermark, no UI elements, share-ready.`;
     r.phase = 'cards_open';
     var aEl = document.getElementById(H.action), dEl = document.getElementById(H.dialogue), sEl = document.getElementById(H.submit);
     [aEl, dEl, sEl].forEach(function (el) { if (el) { el.disabled = false; try { el.style.display = ''; } catch (_) {} } });
-    if (aEl) { aEl.value = r.draft.action || ''; aEl.oninput = function () { var rec = state._intimateInterruption; if (rec && !rec.submitted) rec.draft.action = aEl.value; }; }
-    if (dEl) { dEl.value = r.draft.dialogue || ''; dEl.oninput = function () { var rec = state._intimateInterruption; if (rec && !rec.submitted) rec.draft.dialogue = dEl.value; }; }
+    // A card click already saves immediately (see _dealInterruptionFateCards). Free typing did not
+    // — the reader's own edited words only ever lived in memory, so a reload mid-edit silently
+    // reverted to the last-clicked card's suggestion, discarding what the reader had actually typed
+    // (found via the real vertical-slice control, 2026-09-19; the words the reader submits are the
+    // one thing this whole feature must never lose). Debounced (reuses the file's own `debounce`),
+    // not per-keystroke, so typing doesn't hammer the snapshot save.
+    var _intrDraftSave = (typeof debounce === 'function') ? debounce(function () { try { if (typeof saveStorySnapshot === 'function') saveStorySnapshot(); } catch (_) {} }, 500) : function () { try { if (typeof saveStorySnapshot === 'function') saveStorySnapshot(); } catch (_) {} };
+    if (aEl) { aEl.value = r.draft.action || ''; aEl.oninput = function () { var rec = state._intimateInterruption; if (rec && !rec.submitted) { rec.draft.action = aEl.value; _intrDraftSave(); } }; }
+    if (dEl) { dEl.value = r.draft.dialogue || ''; dEl.oninput = function () { var rec = state._intimateInterruption; if (rec && !rec.submitted) { rec.draft.dialogue = dEl.value; _intrDraftSave(); } }; }
     try { var grid = aEl && aEl.closest('.gn-input-grid'); if (grid) grid.style.display = ''; } catch (_) {}
     if (!r.cards) {
       var orch = (typeof window !== 'undefined') && window.StoryboundOrchestration;
@@ -198788,7 +198800,17 @@ No text, no watermark, no UI elements, share-ready.`;
     r.submitted = true; r.submittedAt = Date.now(); r.action = String(action || ''); r.dialogue = String(dialogue || '');
     var label = (r.action || r.dialogue).slice(0, 80);
     try { _recordSceneDecision(r.sceneNum || 1, 'posture', label, 'interruption_submit'); } catch (_) {}
-    try { _sceneLedgerCommit(state, { kind: 'oas_interrupt', sceneNumber: r.sceneNum || 1, event: String(r.frame.interruption) + ' ' + (r.frame.interruptionExchange || []).map(function (l) { return l && l.text ? ((l.speaker ? l.speaker + ': ' : '') + l.text) : ''; }).filter(Boolean).join(' '), eventSource: 'interruption_submit', act: r.action, dia: r.dialogue }); } catch (_) {}
+    // posture (Roman, 2026-09-19 vertical-slice gap fix): the interruption's fate-card SLOT
+    // (temptation/silence/reversal/boundary/confession — see _INTR_SLOTS), if one was selected, is
+    // passed as its own field, NEVER as `card` — `card` is reserved for the pre-existing tempt/
+    // petition/ordinary distinction (_sceneLedgerCommit's `useKey` path, _sceneDecisionAxis'
+    // branch system) and must never be overloaded with a different vocabulary; a real Petition or
+    // Tempt Fate invoked from this same screen keeps its own resolution path entirely and is never
+    // recorded here as an interruption card. null for custom (no card selected) Say/Do, or once
+    // edited so far past the card's own suggestion that only the player's words remain meaningful —
+    // this still records the LAST selected slot even if the text was edited afterward, which is
+    // correct: it reflects what the reader started from, never rewrites what they actually said.
+    try { _sceneLedgerCommit(state, { kind: 'oas_interrupt', sceneNumber: r.sceneNum || 1, event: String(r.frame.interruption) + ' ' + (r.frame.interruptionExchange || []).map(function (l) { return l && l.text ? ((l.speaker ? l.speaker + ': ' : '') + l.text) : ''; }).filter(Boolean).join(' '), eventSource: 'interruption_submit', act: r.action, dia: r.dialogue, posture: r.selectedSlot || null }); } catch (_) {}
     try { var note = document.querySelector('#intimateInterruption .intimate-interruption-note'); if (note) note.remove(); } catch (_) {}
     try { console.log('[INTIMATE-INTERRUPT] submitted card=' + (r.selectedSlot || '-') + ' action="' + r.action.slice(0, 60) + '" dialogue="' + r.dialogue.slice(0, 60) + '"'); } catch (_) {}
     try { if (typeof saveStorySnapshot === 'function') saveStorySnapshot(); } catch (_) {}
