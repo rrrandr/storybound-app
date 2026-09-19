@@ -101,14 +101,28 @@ export function measureBeatDeficiencies(scene1Candidate, packet) {
     const beat = beats[i];
     const words = wordCount(beat.text);
     totalWords += words;
+    const targetWords = Math.round((slot.wordRange[0] + slot.wordRange[1]) / 2);
+    const isNarrationKind = beat.kind === 'narration' || beat.kind === 'exposition';
+    // OUT-OF-RANGE, BOTH DIRECTIONS (Roman, 2026-09-20, post-Attempt-8): the assigned range was
+    // always two-sided (e.g. 60-90) — a beat that overshoots its ceiling is exactly as deficient
+    // as one that undershoots its floor; the real Attempt 8 pass-1-merged draft had 8 of 16
+    // narration beats OVER 90 words, which the floor-only check below previously could never see
+    // or repair. Both directions use the SAME full-slot-replacement contract, targeting the SAME
+    // midpoint — only the framing differs. The SHORT side stays scope-unchanged (any kind, matching
+    // the behavior pass 1 already used on real dialogue slots 5/11/18). The LONG side is scoped to
+    // NARRATION/EXPOSITION beats only, matching exactly what scene1_insufficient_narration_density
+    // actually checks (dialogue length has no validator rule — flagging a merely-long dialogue line
+    // as "deficient" would ask a real repair call to touch content the validator was never going to
+    // reject, widening scope beyond what is actually required).
     if (words < slot.wordRange[0]) {
       deficiencies.push({
         n: slot.n, id: slot.id, image: slot.image, kind: slot.kind, wordRange: slot.wordRange, fn: slot.fn,
-        actualWords: words, deficitWords: slot.wordRange[0] - words,
-        // Roman, 2026-09-20 (post-Attempt-7 full-slot-replacement redesign): the repair TARGET is
-        // the midpoint of the slot's own range, not its floor — landing near the floor is what a
-        // real, paid repair call did on over half its named slots and still fell short.
-        targetWords: Math.round((slot.wordRange[0] + slot.wordRange[1]) / 2),
+        actualWords: words, direction: 'short', deficitWords: slot.wordRange[0] - words, targetWords,
+      });
+    } else if (words > slot.wordRange[1] && isNarrationKind) {
+      deficiencies.push({
+        n: slot.n, id: slot.id, image: slot.image, kind: slot.kind, wordRange: slot.wordRange, fn: slot.fn,
+        actualWords: words, direction: 'long', excessWords: words - slot.wordRange[1], targetWords,
       });
     }
   });
@@ -138,8 +152,8 @@ export function buildRepairPrompt(packet, primaryDraft, deficiencies) {
   L.push('  - Do NOT change any beat\'s image, kind, speaker, or provenance/objectClaims metadata — those are already approved and stay exactly as they are; you are replacing a beat\'s TEXT in place, never re-authoring its role.');
   L.push('  - Do NOT invent new canon, new characters, new dialogue from another character, or move/reorder any event — the SAME moment already established in the accepted text, rewritten fresh and complete, with concrete sensory detail, interior reaction, or physical action from that same instant.');
   L.push('  - Never pad with generic description ("the air felt heavy," "time seemed to slow").');
-  L.push('  - FULL-SLOT REPLACEMENT, NOT AN EXPANDED FRAGMENT (HARD): for each named slot, write a COMPLETE, SELF-CONTAINED replacement beat from scratch. Do NOT simply append more words onto the existing short text below — the existing text is shown only so you know what moment/content this beat must still cover, not as a stem to extend. A rewritten beat that happens to reuse some of the same phrasing is fine; one that is visibly "the old sentence plus a bolted-on continuation" is a hard failure of this repair.');
-  L.push('  - TARGET THE MIDPOINT of each slot\'s own stated range, not its floor — an explicit numeric target is given per slot below. Landing near the floor is what caused the last real repair attempt to fail on over half its slots; landing near the midpoint gives real margin on both sides.');
+  L.push('  - FULL-SLOT REPLACEMENT, NOT AN EDITED FRAGMENT (HARD): for each named slot, write a COMPLETE, SELF-CONTAINED replacement beat from scratch. If the slot is too SHORT, do NOT simply append more words onto the existing text — the existing text is shown only so you know what moment/content this beat must still cover, not as a stem to extend. If the slot is too LONG, do NOT mechanically delete or truncate words/sentences from the existing text (never cut it off mid-sentence, never just drop the last clause) — REWRITE it fresh and complete at the target length, preserving the same meaning, canon, and narrative function, simply expressed more economically. A rewritten beat that happens to reuse some of the same phrasing is fine; one that is visibly "the old text plus a bolted-on continuation" or "the old text with the end chopped off" is a hard failure of this repair either way.');
+  L.push('  - TARGET THE MIDPOINT of each slot\'s own stated range — an explicit numeric target is given per slot below, whether the slot is currently too short OR too long. Landing near an edge (the floor OR the ceiling) is what caused real repair attempts to fail; landing near the midpoint gives real margin on both sides.');
   L.push('');
   L.push('FULL ACCEPTED DRAFT — for continuity only (you are replacing ONLY the [NEEDS REPAIR] slots below; every other slot shown here is already final and must not be echoed back):');
   beats.forEach((b, i) => {
@@ -148,9 +162,12 @@ export function buildRepairPrompt(packet, primaryDraft, deficiencies) {
     L.push('Beat ' + n + (flagged ? ' [NEEDS REPAIR — REPLACE ENTIRELY]' : ' [ACCEPTED — do not return this one]') + ' (' + b.kind + ', image=' + b.image + '): ' + b.text);
   });
   L.push('');
-  L.push('SLOTS TO REPLACE — each is a COMPLETE rewrite targeting its own midpoint, within its own allowed range:');
+  L.push('SLOTS TO REPLACE — each is a COMPLETE rewrite targeting its own midpoint, within its own allowed range (some are too SHORT, some are too LONG — both use the same full-slot-rewrite contract):');
   deficiencies.forEach(d => {
-    L.push('  - Slot ' + d.n + ' (id=' + (d.id || 'null') + ', image=' + d.image + ', kind=' + d.kind + '): current text is ' + d.actualWords + ' words (too short — do not extend it). TARGET approximately ' + d.targetWords + ' words. ALLOWED RANGE ' + d.wordRange[0] + '-' + d.wordRange[1] + ' words, hard floor ' + d.wordRange[0] + ', hard ceiling ' + d.wordRange[1] + '. This slot\'s function: ' + d.fn);
+    const problem = d.direction === 'long'
+      ? 'too LONG — exceeds the ceiling by ' + d.excessWords + ' word(s); do NOT mechanically trim or truncate it, REWRITE it fresh and complete at the target length'
+      : 'too SHORT — do not extend it, REWRITE it fresh and complete at the target length';
+    L.push('  - Slot ' + d.n + ' (id=' + (d.id || 'null') + ', image=' + d.image + ', kind=' + d.kind + '): current text is ' + d.actualWords + ' words (' + problem + '). TARGET approximately ' + d.targetWords + ' words. ALLOWED RANGE ' + d.wordRange[0] + '-' + d.wordRange[1] + ' words, hard floor ' + d.wordRange[0] + ', hard ceiling ' + d.wordRange[1] + '. This slot\'s function: ' + d.fn);
   });
   L.push('');
   L.push('OUTPUT SCHEMA (HARD — return ONLY this JSON object, nothing else): { "repairs": [ { "n": <slot number>, "text": "<complete replacement text>" }, ... ] } — exactly ' + deficiencies.length + ' entries, one per slot listed above, "n" values exactly: ' + deficiencies.map(d => d.n).join(', ') + '. No other top-level field. No other field inside a repair entry.');

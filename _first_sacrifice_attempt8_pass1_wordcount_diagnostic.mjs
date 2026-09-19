@@ -29,3 +29,11 @@ draft.scene1Candidate.beats.forEach((b, i) => {
     (isNarration && aboveCeiling ? '  [OVER 90 — density-disqualifying, NOT detected by measureBeatDeficiencies]' : ''));
 });
 console.log('\nnarration-eligible beats: ' + narrationCount + ' | qualifying (60-90): ' + qualifying + ' | need 12');
+
+// Roman, 2026-09-20: the engine now also detects over-ceiling narration beats (dry check against
+// the same real fixture, confirming the live measureBeatDeficiencies output before any repair call).
+const { measureBeatDeficiencies } = await import('./_first_sacrifice_bounded_repair_engine.mjs');
+const def = measureBeatDeficiencies(draft.scene1Candidate, PACKET);
+console.log('\nmeasureBeatDeficiencies (extended engine) on this real fixture:');
+console.log('structurallyRepairable: ' + def.structurallyRepairable);
+console.log('deficiencies: ' + JSON.stringify(def.deficiencies.map(d => ({ n: d.n, direction: d.direction, actualWords: d.actualWords, targetWords: d.targetWords })), null, 2));

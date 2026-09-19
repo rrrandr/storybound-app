@@ -34,6 +34,14 @@
 //   8. Real trace across all 6 historical attempts: finish_reason and completion_tokens vs.
 //      max_tokens, ruling out truncation/schema/proxy caps and confirming genuine early
 //      completion.
+//   10. OVER-CEILING REPAIR (Roman, 2026-09-20, post-Attempt-8 pass 1): real Attempt 8's own
+//      pass-1-merged draft (07_final_draft_after_pass1.json) is used as a real fixture — 8 of its
+//      16 narration beats overshoot the 90-word ceiling, which the floor-only engine could not see.
+//      Proves: the 8 real overlong narration beats are selected (and ONLY those — no dialogue, no
+//      already-qualifying slot); a compliant simulated pass-2 (shrink-to-midpoint, full-slot
+//      rewrite) merges cleanly, leaves every non-targeted beat byte-identical, and — re-validated
+//      with the real validator — reaches 12+/16 qualifying; a structural/canon violation still
+//      blocks repair regardless of direction.
 //
 // usage: node _first_sacrifice_bounded_repair_engine_control.mjs
 import fs from 'node:fs';
@@ -125,9 +133,9 @@ ok('the constructed repair prompt states the exact bounded output schema, naming
 // explicit delta ("at least N more words needed") and still undershot on 7 of 12 named slots.
 // The prompt must now demand a COMPLETE replacement targeting each slot's own MIDPOINT, and must
 // NEVER again state the old delta/expansion framing.
-ok('the constructed repair prompt demands a COMPLETE, SELF-CONTAINED replacement beat, explicitly warning against an expanded fragment of the existing short text', /FULL-SLOT REPLACEMENT, NOT AN EXPANDED FRAGMENT/.test(repairUser) && /Do NOT simply append more words onto the existing short text/.test(repairUser));
-ok('the constructed repair prompt instructs the model to TARGET THE MIDPOINT of each slot\'s range, not its floor', /TARGET THE MIDPOINT of each slot.s own stated range, not its floor/.test(repairUser));
-ok('the constructed repair prompt states each deficient slot\'s real current word count, real MIDPOINT target, and real allowed range — the new full-slot contract, not the old delta contract', defAttempt6.deficiencies.every(d => repairUser.includes('current text is ' + d.actualWords + ' words (too short — do not extend it). TARGET approximately ' + d.targetWords + ' words. ALLOWED RANGE ' + d.wordRange[0] + '-' + d.wordRange[1] + ' words')));
+ok('the constructed repair prompt demands a COMPLETE, SELF-CONTAINED replacement beat, explicitly warning against an edited fragment of the existing text (both short-side append and long-side truncation)', /FULL-SLOT REPLACEMENT, NOT AN EDITED FRAGMENT/.test(repairUser) && /do NOT simply append more words onto the existing text/.test(repairUser) && /do NOT mechanically delete or truncate words\/sentences/.test(repairUser));
+ok('the constructed repair prompt instructs the model to TARGET THE MIDPOINT of each slot\'s range', /TARGET THE MIDPOINT of each slot.s own stated range/.test(repairUser));
+ok('the constructed repair prompt states each deficient slot\'s real current word count, real MIDPOINT target, and real allowed range — the new full-slot contract, not the old delta contract (short-direction fixture)', defAttempt6.deficiencies.every(d => d.direction === 'short' && repairUser.includes('current text is ' + d.actualWords + ' words (too SHORT — do not extend it, REWRITE it fresh and complete at the target length). TARGET approximately ' + d.targetWords + ' words. ALLOWED RANGE ' + d.wordRange[0] + '-' + d.wordRange[1] + ' words')));
 ok('every deficiency\'s targetWords is genuinely the midpoint of its own wordRange (real arithmetic, not a placeholder)', defAttempt6.deficiencies.every(d => d.targetWords === Math.round((d.wordRange[0] + d.wordRange[1]) / 2)));
 ok('the constructed repair prompt NEVER states the old, retired delta framing ("more words needed") anywhere', !/more words needed/.test(repairUser));
 ok('the constructed repair prompt\'s output schema calls for "complete replacement text", not "expanded text"', /complete replacement text/.test(repairUser) && !/expanded text/.test(repairUser));
@@ -478,6 +486,58 @@ console.log('  EXPECTED-SUCCESS CEILING (all 3 calls succeed on Grok, worst-case
 console.log('  REALISTIC (using REAL Attempt 7 primary + real pass-1 costs, dry-projected pass-2 sized to the real 9 residual slots): $' + (REAL_ATTEMPT7_PRIMARY_COST + REAL_ATTEMPT7_PASS1_REPAIR_COST + realisticPass2ExpectedCost).toFixed(4) + ' (pass-2 projected only — NOT spent)');
 ok('a second bounded repair pass, even worst case, keeps the ABSOLUTE worst-case ceiling for the whole 3-call operation under $0.30', twoPassAbsoluteWorstCase < 0.30, '$' + twoPassAbsoluteWorstCase.toFixed(4));
 ok('the REALISTIC two-pass estimate (grounded in Attempt 7\'s real primary + real pass-1 cost) stays well under $0.05 total for the whole operation', (REAL_ATTEMPT7_PRIMARY_COST + REAL_ATTEMPT7_PASS1_REPAIR_COST + realisticPass2ExpectedCost) < 0.05);
+
+// ═══════════════════════════════════════════════════════════════════════════════
+section('10. OVER-CEILING REPAIR — real Attempt 8 pass-1-merged fixture (8 real overlong narration beats)');
+// ═══════════════════════════════════════════════════════════════════════════════
+const attempt8Pass1Merged = JSON.parse(fs.readFileSync(path.join(__dirname, '_first_sacrifice_draft_v7_attempt8_full_package/07_final_draft_after_pass1.json'), 'utf8')).draft;
+const defAttempt8Pass1 = measureBeatDeficiencies(attempt8Pass1Merged.scene1Candidate, PACKET);
+const EXPECTED_REAL_OVERLONG_SLOTS = [1, 2, 3, 6, 7, 8, 10, 13]; // hand-verified against the real merged draft's actual per-beat word counts
+ok('real Attempt 8 pass-1-merged draft is structurally repairable and flags EXACTLY the 8 real overlong narration slots, in direction "long"', defAttempt8Pass1.structurallyRepairable === true && defAttempt8Pass1.deficiencies.length === 8 && defAttempt8Pass1.deficiencies.every(d => d.direction === 'long') && JSON.stringify(defAttempt8Pass1.deficiencies.map(d => d.n).sort((a, b) => a - b)) === JSON.stringify(EXPECTED_REAL_OVERLONG_SLOTS));
+ok('every flagged overlong deficiency genuinely exceeds its own slot ceiling (real arithmetic: excessWords === actualWords - ceiling)', defAttempt8Pass1.deficiencies.every(d => d.actualWords > d.wordRange[1] && d.excessWords === d.actualWords - d.wordRange[1]));
+ok('the 2 real dialogue slots that are ALSO over their own ceiling (11 and 18 — a real side-effect of pass 1\'s own repair) are correctly EXCLUDED — over-ceiling repair is scoped to narration/exposition only, matching exactly what scene1_insufficient_narration_density checks', ![11, 18].some(n => defAttempt8Pass1.deficiencies.some(d => d.n === n)));
+ok('the 8 slots that ALREADY qualify (4, 9, 12, 14, 16, 17, 19, 20) are correctly excluded from the deficiency list — repair never touches an already-compliant beat', [4, 9, 12, 14, 16, 17, 19, 20].every(n => !defAttempt8Pass1.deficiencies.some(d => d.n === n)));
+
+const { user: overCeilingUser } = buildRepairPrompt(PACKET, attempt8Pass1Merged, defAttempt8Pass1.deficiencies);
+ok('the constructed over-ceiling repair prompt frames every real overlong slot as "too LONG" with its real excess word count, and forbids mechanical truncation', defAttempt8Pass1.deficiencies.every(d => overCeilingUser.includes('too LONG — exceeds the ceiling by ' + d.excessWords + ' word(s); do NOT mechanically trim or truncate it')));
+ok('the constructed over-ceiling repair prompt still targets each slot\'s real midpoint (same contract as the short-direction case)', defAttempt8Pass1.deficiencies.every(d => overCeilingUser.includes('TARGET approximately ' + d.targetWords + ' words')));
+
+// Compliant simulated pass-2: shrink each overlong slot to its own real midpoint via a full,
+// self-contained rewrite (deterministic filler — a structural proof, not a prose-quality one).
+function buildCompliantDirectionalRepairFor(deficiencies) {
+  const FILLER_SENTENCES = [
+    'The moment held there, close and exact, and I let myself notice only what was actually in front of me.',
+    'Nothing about it needed more than what was already plain in the way the light fell across the grass.',
+    'I kept my attention on the one real detail that mattered and let the rest of the clearing blur.',
+    'The weight of it settled somewhere just beneath my ribs, quiet and entirely undeniable.',
+    'It was enough to know exactly what had happened without needing to name every part of it aloud.',
+  ];
+  return {
+    repairs: deficiencies.map((d, idx) => {
+      const need = d.targetWords;
+      const words = [];
+      let s = 0;
+      while (words.length < need) { words.push(...FILLER_SENTENCES[(idx + s) % FILLER_SENTENCES.length].split(' ')); s++; }
+      return { n: d.n, text: words.slice(0, need).join(' ') + '.' };
+    }),
+  };
+}
+const compliantOverCeilingRepair = buildCompliantDirectionalRepairFor(defAttempt8Pass1.deficiencies);
+const overCeilingMerge = mergeRepairIntoDraft(attempt8Pass1Merged, compliantOverCeilingRepair, defAttempt8Pass1.deficiencies);
+ok('GREEN: the compliant shrink-to-midpoint pass-2 repair merges cleanly on the real Attempt 8 pass-1-merged draft', overCeilingMerge.errors.length === 0, JSON.stringify(overCeilingMerge.errors));
+const overCeilingAcceptedNs = Array.from({ length: 20 }, (_, i) => i + 1).filter(n => !EXPECTED_REAL_OVERLONG_SLOTS.includes(n));
+ok('GREEN: every beat NOT targeted by the over-ceiling repair (including the 2 real over-ceiling dialogue slots and the 8 already-qualifying slots) is byte-identical before/after the merge', overCeilingAcceptedNs.every(n => JSON.stringify(overCeilingMerge.merged.scene1Candidate.beats[n - 1]) === JSON.stringify(attempt8Pass1Merged.scene1Candidate.beats[n - 1])));
+ok('GREEN: every shrunk beat now lands WITHIN its own allowed range (real word count check on the merged text)', defAttempt8Pass1.deficiencies.every(d => { const w = overCeilingMerge.merged.scene1Candidate.beats[d.n - 1].text.trim().split(/\s+/).filter(Boolean).length; return w >= d.wordRange[0] && w <= d.wordRange[1]; }));
+
+const doublyMergedOverCeilingDraft = { ...attempt8Pass1Merged, scene1Candidate: overCeilingMerge.merged.scene1Candidate };
+const overCeilingFinalValidation = validateDraft(doublyMergedOverCeilingDraft, PACKET);
+const qualifyingCountMatch = overCeilingFinalValidation.violations.find(v => v.rule === 'scene1_insufficient_narration_density');
+ok('END-TO-END: primary + real pass-1 repair + compliant shrink-to-midpoint pass-2 repair, re-validated with the REAL validator, reaches AT LEAST 12/16 qualifying narration beats (scene1_insufficient_narration_density no longer fires)', !qualifyingCountMatch, JSON.stringify(overCeilingFinalValidation.violations));
+ok('END-TO-END: the doubly-repaired candidate is now FULLY ELIGIBLE (validation.ok === true)', overCeilingFinalValidation.ok === true, JSON.stringify(overCeilingFinalValidation));
+
+// A structural/canon violation still blocks repair regardless of direction (short OR long).
+ok('RED: planNextRepairPass still REFUSES when a canon violation coexists with the density one, even though the deficiencies this time are over-ceiling (direction "long") rather than under-floor', planNextRepairPass(attempt8Pass1Merged, { ok: false, violations: [{ rule: 'scene1_insufficient_narration_density' }, { rule: 'the_answer_form_violation' }] }, PACKET, 1).authorized === false);
+ok('RED: measureBeatDeficiencies still refuses a structurally-drifted draft (tampered image) even when the only word-count issue present would otherwise be over-ceiling', (() => { const tampered = JSON.parse(JSON.stringify(attempt8Pass1Merged)); tampered.scene1Candidate.beats[0].image = 'd1'; return measureBeatDeficiencies(tampered.scene1Candidate, PACKET).structurallyRepairable === false; })());
 
 console.log('\n' + '='.repeat(92));
 console.log('BOUNDED REPAIR ENGINE CONTROL: ' + pass + ' passed, ' + fail + ' failed');
