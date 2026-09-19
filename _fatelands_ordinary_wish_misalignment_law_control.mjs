@@ -43,7 +43,10 @@ ok('scope.applies_to names ORDINARY wish misalignment in Fatelands Fantasy', /Fa
 ok('scope explicitly distinguishes this law from The Fold/The Staircase (major world-scale phenomena)', /The Fold/.test(LAW.scope.explicitly_distinct_from) && /The Staircase/.test(LAW.scope.explicitly_distinct_from));
 ok('scope declares a gate_contract pointing at the REAL runtime gate (_fatelandsFantasyWorldGate)', /_fatelandsFantasyWorldGate/.test(LAW.scope.gate_contract));
 ok('scope explicitly excludes Famous Fate', LAW.scope.explicitly_excluded.some(s => /famous_fate|Famous Fate/i.test(s)));
-ok('statement declares the core rule: subjective experience, not a visible external attack', /does not manifest as a visible external attack/.test(LAW.statement) && /SUBJECTIVE experience/.test(LAW.statement));
+ok('statement declares the core rule: a non-spectacular, causally legible event (recognition/naming/reaction/pull/displacement/arrest), not a visible magical attack — REVISED 2026-09-20, not restricted to "subjective/internal" only', /does not manifest as a visible magical attack/.test(LAW.statement) && /non-spectacular, causally legible event/.test(LAW.statement) && /participants may recognize, name, or react/.test(LAW.statement));
+ok('statement_revision_2026_09_20 discloses WHY the first version was too restrictive (private/internal-only) and that legibility through spoken recognition or others\' reactions is equally valid', /too restrictive/.test(LAW.statement_revision_2026_09_20) && /Lirael can realize and SAY/.test(LAW.statement_revision_2026_09_20));
+ok('related_law cross-references the sibling fatelands_misalignment_perception law', LAW.related_law && LAW.related_law.law_id === 'fatelands_misalignment_perception' && LAW.related_law.file === '_fatelands_misalignment_perception_law.json');
+ok('implementation_status.mechanical_check_scope_boundary explicitly states the DIRECTIVE is Fatelands-wide but the MECHANICAL validator check is First-Sacrifice-only, scoped to its own 3 beats — never a generic Fatelands-wide validator', /genuinely Fatelands-wide/.test(LAW.implementation_status.mechanical_check_scope_boundary) && /is NOT Fatelands-wide/.test(LAW.implementation_status.mechanical_check_scope_boundary) && /No generic Fatelands-wide mechanical validator exists/.test(LAW.implementation_status.mechanical_check_scope_boundary));
 
 // ── 2. Structured effect classification ──
 const validIds = LAW.effect_classification.valid_for_ordinary_wish_misalignment.map(e => e.id);
@@ -101,7 +104,15 @@ ok('REAL INVOCATION: the validator genuinely rejects a wish_visibly_twists beat 
 const quietDraft = { scene1Candidate: { beats: beats.map((b, i) => i === 12 ? { ...b, text: 'A quiet, terrible pull began somewhere beneath my ribs, drawing toward a fulfillment I could not name and did not want.' } : b) }, scene1Coverage: coverage, first_person_lirael: true };
 const resultQuiet = validateDraft(quietDraft, PACKET);
 const hitQuiet = resultQuiet.violations.filter(v => v.rule === 'wish_twist_wrong_visual_grammar');
-ok('REAL INVOCATION: the validator does NOT flag the quiet-misalignment shape (subjective pull, no attack vocabulary)', hitQuiet.length === 0, JSON.stringify(hitQuiet));
+ok('REAL INVOCATION: the validator does NOT flag the quiet-pull shape (internal dread, no attack vocabulary)', hitQuiet.length === 0, JSON.stringify(hitQuiet));
+
+// REVISED 2026-09-20: legibility through SPOKEN recognition / another participant's reaction is
+// equally valid, not only a private internal feeling — real invocation proving the validator does
+// not (and never did) block this shape either, since it contains no attack-grammar vocabulary.
+const spokenDraft = { scene1Candidate: { beats: beats.map((b, i) => i === 12 ? { ...b, text: '"Something is wrong," I heard myself say, though I had not decided to speak. Around me a few heads turned toward the sound of it, and I felt the wrongness pull at me, quiet and certain, toward an ending I could not name and did not want.' } : b) }, scene1Coverage: coverage, first_person_lirael: true };
+const resultSpoken = validateDraft(spokenDraft, PACKET);
+const hitSpoken = resultSpoken.violations.filter(v => v.rule === 'wish_twist_wrong_visual_grammar');
+ok('REAL INVOCATION: the validator does NOT flag the SPOKEN-recognition shape (Lirael saying the wrongness aloud, others reacting, then a felt pull) — legibility through speech/social reaction is valid, not only a private internal feeling', hitSpoken.length === 0, JSON.stringify(hitSpoken));
 
 console.log('\n' + '='.repeat(92));
 console.log('FATELANDS ORDINARY WISH MISALIGNMENT LAW — CONSISTENCY CONTROL: ' + pass + ' passed, ' + fail + ' failed');
