@@ -35751,6 +35751,62 @@ WRY REFERENCE:
   }
   window.buildFatelandsWishResolutionLedgerDirective = buildFatelandsWishResolutionLedgerDirective;
 
+  // ══ GENERIC CG SPEAKER-DISPLAY-NAME VALIDATOR (Roman, 2026-09-20) ══════════════════════════════
+  // WORLD-AGNOSTIC — NOT Fatelands-specific, NOT gated on _fatelandsFantasyWorldGate(). Colocated
+  // here only because this is the session's established cluster for shared, reject-only,
+  // cross-story validators; every other function in this immediate block IS Fatelands-scoped, this
+  // one deliberately is not.
+  //
+  // Real finding (First Sacrifice, 2026-09-20): a CG panel's dialogue renderer (the
+  // displayPanels.map(...) shell builder — see the "KNOWN BUG" comment near its gn-panel-dialogue/
+  // gn-speaker HTML, grep for it) prints a beat's `speaker` field to the reader verbatim, with NO
+  // display-name resolution step. First Sacrifice's own authoring packet independently produced
+  // "the_presiding_Dohkar" (an internal cast_roles key) as a beat's literal speaker value, which
+  // reached a real, on-disk candidate unresolved. This validator is the generic, reusable,
+  // reject-only guard against that whole CLASS of bug, for any CG story, not just this one —
+  // mirrors the discipline of validateFatelandsWishEffectGrammar above (structured reject-only,
+  // never rewrites; a validator that can rewrite is a competing author).
+  //
+  // Every significant, present, speaking character needs a stable internal id PLUS a separate
+  // reader-visible display name — an internal id/underscored key must never be the value a beat's
+  // `speaker` field carries. Anonymous/masked speakers are allowed ONLY when a beat explicitly
+  // declares it via beat.anonymousSpeakerDeclared === true (an opt-in exception, never assumed).
+  //
+  // knownDisplayNames accepts either shape a caller might already have on hand: a flat array of
+  // display-name strings (e.g. Object.keys(packet.locked_world_facts.cast_roles) — First Sacrifice's
+  // own real shape, already keyed by display name), OR a registry object keyed by internal id whose
+  // values carry a .displayName field (e.g. { the_presiding_dohkar: { displayName: "Dhokar Raes" } })
+  // — resolved to the same flat display-name set either way. Pass null/undefined to check ONLY the
+  // structural shape (no underscored ids) without requiring resolution against a known cast list.
+  function validateCGSpeakerDisplayNames(beats, knownDisplayNames) {
+    var violations = [];
+    var known = null;
+    if (Array.isArray(knownDisplayNames)) {
+      known = new Set(knownDisplayNames);
+    } else if (knownDisplayNames && typeof knownDisplayNames === 'object') {
+      known = new Set(Object.keys(knownDisplayNames).map(function (k) {
+        var v = knownDisplayNames[k];
+        return (v && typeof v === 'object' && v.displayName) ? v.displayName : k;
+      }));
+    }
+    (Array.isArray(beats) ? beats : []).forEach(function (b, i) {
+      if (!b || !b.speaker) return; // null/undefined speaker = narration, not this validator's concern
+      // anonymousSpeakerDeclared is an opt-in exception to the UNRESOLVED-REFERENCE check only — a
+      // genuinely anonymous/masked speaker still needs a real, display-shaped label ("a masked
+      // figure"), never an internal id: the underscored-key check below always applies regardless.
+      if (/_/.test(b.speaker)) {
+        violations.push({ index: i, speaker: b.speaker, rule: 'internal_key', detail: 'beats[' + i + '].speaker="' + b.speaker + '" looks like an internal key/underscored id, not a reader-visible display name — every significant speaking character needs a stable internal id PLUS a separate reader-visible display name; the display name belongs in speaker, never the internal id' });
+        return;
+      }
+      if (b.anonymousSpeakerDeclared === true) return; // explicit, scene-state-declared exception only
+      if (known && known.size && !known.has(b.speaker)) {
+        violations.push({ index: i, speaker: b.speaker, rule: 'unresolved_reference', detail: 'beats[' + i + '].speaker="' + b.speaker + '" does not match any known cast display name — an unresolved/undeclared speaker reference (declare beat.anonymousSpeakerDeclared=true for a genuinely anonymous/masked speaker)' });
+      }
+    });
+    return { ok: violations.length === 0, violations: violations };
+  }
+  window.validateCGSpeakerDisplayNames = validateCGSpeakerDisplayNames;
+
   function buildFatelandsCognitiveMemoryBlock() {
     // World gate — Fatelands only.
     if (!state.picks || state.picks.world !== 'Fantasy') return '';
@@ -161824,6 +161880,19 @@ No text, no watermark, no UI elements, share-ready.`;
               var pov = p.captionPOV || 'third';
               captionHtml = '<div class="gn-panel-caption gn-caption-' + pov + '">' + escapeHTML(p.captionText) + '</div>';
           }
+          // ══════════════════════════════════════════════════════════════════════
+          // KNOWN BUG (Roman, 2026-09-20, found via a real First Sacrifice read-through): p.speaker
+          // is rendered here verbatim (only HTML-escaped) with NO display-name resolution step — if
+          // an upstream authoring/planner pass ever hands this a raw internal id or role placeholder
+          // (e.g. "the_presiding_Dohkar" instead of "Dhokar Raes"), it reaches the reader unchanged.
+          // validateCGSpeakerDisplayNames (a top-level, window-exposed utility — grep for its own
+          // definition comment) is the generic, reject-only, world-agnostic guard against exactly
+          // this — but it is NOT wired
+          // into this render call yet: Roman asked for the naming/data fix + a CG presentation-
+          // preview comparison FIRST, and the production renderer itself (including whether/how to
+          // resolve display names here) waits for his choice on the presentation variant, dry-
+          // previewed separately. This comment marks the real defect and the available fix so it is
+          // not lost, without changing this call site's behavior yet.
           var dialogueHtml = '';
           if (p.dialogue && p.dialoguePosition !== 'none') {
               var sp = p.speaker ? '<span class="gn-speaker">' + escapeHTML(p.speaker) + '</span> ' : '';

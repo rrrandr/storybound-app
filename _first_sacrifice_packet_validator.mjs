@@ -517,6 +517,17 @@ function validateDraft(draft, packet) {
     } else if (sbBeats.length) { lockSource = sbBeats.map(sb => ({ n: sb.n, image: sb.occurrence })); lockLabel = 'scene1_visual_storyboard'; }
     else if (bntSlots.length) { lockSource = bntSlots; lockLabel = 'scene1_beat_number_template'; }
     const lockMappingApplies = !!lockSource && scene1Beats.length === lockSource.length;
+    // READER-VISIBLE SPEAKER DISPLAY NAME (Roman, 2026-09-20) — real finding: scene1Candidate.
+    // beats[4]/[14]'s speaker field literally contained "the_presiding_Dohkar" (the packet's OLD
+    // internal cast_roles key) in the real, on-disk 13_final_field_correction.json artifact — an
+    // internal id leaked straight to the reader because output_shape says "speaker is a cast
+    // name" and that key was the only cast_roles entry not already display-name-shaped.
+    // cast_roles is now keyed by real display names (Lirael/Seren/Julian/Dhokar Raes) — this set
+    // is the authoritative registry every non-null speaker must resolve against. Mirrors the
+    // generic, cross-story CG speaker-display validator (public/app.js:
+    // validateCGSpeakerDisplayNames) as this packet's own stricter, packet-scoped layer — same
+    // discipline as wish_twist_wrong_visual_grammar mirroring the shared Fatelands law.
+    const CAST_DISPLAY_NAMES = new Set(Object.keys((packet.locked_world_facts && packet.locked_world_facts.cast_roles) || {}));
     // THE ANSWER — ADJACENT-PAIR GUARD (whole-array check, run once before the per-beat loop).
     _theAnswerAdjacentPairViolations(scene1Beats).forEach(h => {
       violations.push({ rule: 'the_answer_form_violation', detail: 'scene1Candidate.beats[' + h.i + '] and beats[' + h.j + '] together name The Answer and carry a banned physical form ("' + h.word + '") split across adjacent beats — The Answer\'s current manifestation for this scene is a staff (double-ended shaft) with a question-mark-shaped hook at each end; no manifestation-change event is permitted here (packet scene1_answer_manifestation)' });
@@ -535,6 +546,14 @@ function validateDraft(draft, packet) {
       // engine run once below, after this loop, over the full ordered stream.
       { const _taHit = _theAnswerFormViolation(b.text);
         if (_taHit) violations.push({ rule: 'the_answer_form_violation', detail: 'scene1Candidate.beats[' + i + '] mentions The Answer alongside a banned physical form ("' + _taHit + '") — The Answer\'s current manifestation for this scene is a staff (double-ended shaft) with a question-mark-shaped hook at each end; no manifestation-change event is permitted here (packet scene1_answer_manifestation)' }); }
+      // Speaker display-name check (see CAST_DISPLAY_NAMES comment above the per-beat loop).
+      if (b.speaker) {
+        if (/_/.test(b.speaker)) {
+          violations.push({ rule: 'speaker_reader_visible_internal_key', detail: 'scene1Candidate.beats[' + i + '].speaker="' + b.speaker + '" looks like an internal key/underscored id, not a reader-visible display name — every significant speaking character needs a stable internal id PLUS a separate reader-visible display name; the display name belongs in speaker, never the internal id' });
+        } else if (!CAST_DISPLAY_NAMES.has(b.speaker)) {
+          violations.push({ rule: 'speaker_unresolved_cast_reference', detail: 'scene1Candidate.beats[' + i + '].speaker="' + b.speaker + '" does not match any declared cast_roles display name (' + [...CAST_DISPLAY_NAMES].join('|') + ') — an unresolved/undeclared speaker reference' });
+        }
+      }
       // PROVENANCE PROPORTIONALITY (Roman, fifth pass, 2026-09-17): "keep provenance
       // proportional: only locked factual assertions need citations; dialogue, imagery,
       // interiority, and other generated_expression beats must not be rejected for being
@@ -675,8 +694,8 @@ function compliantScene1() {
       mk('exposition', null, 'intro_lirael', 'I knew the procedure better than I had ever performed it, and the gap between knowing the steps and standing inside them was where the fear actually lived — not in the rite itself but in the certainty that everyone present would see exactly which parts I still had to fake, the way a crowd always seems to know before you do.', { kind: 'grounded_inference', cites: 'pc_untested_brilliance' }),
       mk('narration', null, 'intro_seren', 'Seren knelt before me in her rehearsed composure, coral Weave-Script steady and bright along her arms, every part of her aligned toward the same true thing. She was sixteen this season and had wanted this morning, this exact morning, more openly than I had ever let myself want anything, and I envied her that plainness even as I stood there responsible for keeping it safe.', { kind: 'locked_canon_fact', cites: 'locked_world_facts.cast_roles.Seren' }),
       mk('dialogue', 'Seren', 'intro_seren', '"I know it by heart," she whispered up at me, before the presiding Dohkar could even begin the invocation, and something in her certainty made me believe, for one unguarded moment, that we were both about to be safe, that this morning would go exactly the way we had rehearsed it a dozen times in the quiet after lessons.', { kind: 'grounded_inference', cites: 'seren_trained_composure' }),
-      mk('narration', null, 'intro_dohkar', 'The presiding Dohkar held the rite to its fixed order, unmoved by anything but procedure, the kind of stillness that comes from a man who has said these words so many times he has stopped hearing them, and who makes every child\'s rite a lesson about himself instead. I had watched him do it to other Sacrificiants before me and had promised myself I would not give him the opening.', { kind: 'locked_canon_fact', cites: 'locked_world_facts.cast_roles.the_presiding_Dohkar' }),
-      mk('dialogue', 'the presiding Dohkar', 'intro_dohkar', '"The cost first," he said, to Seren and to the whole clearing, and Seren named her offering aloud exactly as she had rehearsed it — her earliest memory, the one thing she could not get back and could not fake giving up in front of all these witnesses, her voice steady in a way I envied and did not trust myself to match if it had been my own memory on the line.', { kind: 'generated_expression' }),
+      mk('narration', null, 'intro_dohkar', 'Dhokar Raes, the presiding Dohkar, held the rite to its fixed order, unmoved by anything but procedure, the kind of stillness that comes from a man who has said these words so many times he has stopped hearing them, and who makes every child\'s rite a lesson about himself instead. I had watched him do it to other Sacrificiants before me and had promised myself I would not give him the opening.', { kind: 'locked_canon_fact', cites: 'locked_world_facts.cast_roles.Dhokar Raes' }),
+      mk('dialogue', 'Dhokar Raes', 'intro_dohkar', '"The cost first," he said, to Seren and to the whole clearing, and Seren named her offering aloud exactly as she had rehearsed it — her earliest memory, the one thing she could not get back and could not fake giving up in front of all these witnesses, her voice steady in a way I envied and did not trust myself to match if it had been my own memory on the line.', { kind: 'generated_expression' }),
       mk('narration', null, 'intro_julian', 'At the edge of the gathering, apart from Seren\'s family and guests, a man stood too still to be merely watching. Julian. The Provast, the office my own father had held before him, present only as an observer, and somehow already observing only me, in a way that made the whole crowded clearing feel, for one unwanted heartbeat, like it had narrowed down to just the two of us.', { kind: 'locked_canon_fact', cites: 'locked_world_facts.cast_roles.Julian' }),
       mk('exposition', null, 'intro_julian', 'He never crossed a floor first, had let rooms come to him for twenty years and called it patience, and I — who cannot stand at the edge of anything without my whole face announcing it — could not stop my attention finding him anyway, long before I understood why, and long before I was ready to admit that I had noticed him noticing me right back.', { kind: 'grounded_inference', cites: 'julian_status_without_display' }),
       mk('narration', null, 'd1', 'Seren began the invocation, and for the space of three words I let myself believe I was not afraid, that the morning would simply be what it was supposed to be: a child\'s rehearsed wish, spoken cleanly, and nothing more complicated than that.', { kind: 'locked_canon_fact', cites: 'scene1_causal_sequence.1' }),
@@ -687,7 +706,7 @@ function compliantScene1() {
       mk('narration', null, 'd2', 'I was sealed, forbidden to interfere, and I understood exactly how it would look before I ever moved, understood it the way you understand a fall while you are still only leaning — and I tore the band from my mouth and went to her anyway, because standing still felt like the one thing I truly could not survive doing.', { kind: 'locked_canon_fact', cites: 'scene1_causal_sequence.2' }),
       mk('dialogue', 'Lirael', 'd3', '"Seren —" The first word I had spoken aloud since the sash went on, and it was already too late to be anything but evidence against me, evidence I had handed them myself, freely, with my own torn band still hanging from my hand.', { kind: 'generated_expression' }),
       mk('narration', null, 'd3', 'Two dozen faces turned to me at once — not merely at the torn band and the step I had taken, but at the spiralgrass gone unnaturally still where it should have kept moving, reading in that stillness exactly the shape of an interferer they had not yet been told to look for, as though the clearing itself had already decided the shape of the story before I had said a single word in my own defense.', { kind: 'locked_canon_fact', cites: 'scene1_causal_sequence.3' }),
-      mk('dialogue', 'the presiding Dohkar', 'd3', '"The wish was shaped for the Sacrificiant\'s own benefit," he said, to the clearing and not to me, each word placed like a stone he had been carrying since before I ever tore the band from my mouth. "She broke her seal. She interfered in her own ward\'s rite. Both charges stand."', { kind: 'grounded_inference', cites: 'scene1_causal_sequence.3' }),
+      mk('dialogue', 'Dhokar Raes', 'd3', '"The wish was shaped for the Sacrificiant\'s own benefit," he said, to the clearing and not to me, each word placed like a stone he had been carrying since before I ever tore the band from my mouth. "She broke her seal. She interfered in her own ward\'s rite. Both charges stand."', { kind: 'grounded_inference', cites: 'scene1_causal_sequence.3' }),
       mk('narration', null, 'd4', 'Seren\'s mother was already moving toward her, but her eyes had found me first, and there was nothing kind left in them. Two of the family\'s guests drew back half a step, the specific half-step people make around something they have decided might be catching, and I understood in that one motion that I was no longer merely a Sacrificiant under charge — I was a threat this family would carry home and repeat at every table for a season.', { kind: 'grounded_inference', cites: 'social_fallout_family_reaction' }),
       mk('narration', null, 'd4', 'Julian moved without hurry, coming in from the edge the way rooms only make space for someone they have already decided outranks them, and the presiding Dohkar\'s own Weave-Script went a flat, hard color at watching it happen in front of him, a color I recognized because I had seen it on my own arms more than once, in rooms where someone else had just quietly taken the floor from me.', { kind: 'locked_canon_fact', cites: 'scene1_causal_sequence.4' }),
       mk('dialogue', 'Julian', 'd4', '"I can hear where she is aligned," he said, to all of them and to me, and drew out The Answer, closing my fingers around it with his own, the scarred wrist pressed for one deliberate second against my palm before he told me plainly, in front of everyone, that he meant to question me himself, here, now, and that whatever answer I gave would be judged by every person still watching us.', { kind: 'locked_canon_fact', cites: 'scene1_causal_sequence.4' },
@@ -1368,6 +1387,45 @@ section('RED CONTROLS — scene1Candidate (fourth redesign pass, 2026-09-17)');
   ok('RED: a contradiction inside scene1Candidate text is rejected (the same text-level rules apply there too)', !v.ok && v.violations.some(x => x.rule === 'contradiction'), JSON.stringify(v.violations));
 }
 
+// ── READER-VISIBLE SPEAKER DISPLAY NAME (Roman, 2026-09-20) — the real Dhokar Raes naming
+// correction. Real finding: the on-disk 13_final_field_correction.json's beats[4]/[14].speaker
+// literally contained "the_presiding_Dohkar" (the packet's OLD internal cast_roles key) — an
+// internal id leaked verbatim to the reader. cast_roles is now keyed by real display names; these
+// prove the new mechanical check genuinely bites and the corrected packet resolves cleanly.
+{
+  const d = compliantDraft(); d.scene1Candidate.beats[5].speaker = 'the_presiding_Dohkar';
+  const v = validateDraft(d, PACKET);
+  ok('RED: an underscored internal key ("the_presiding_Dohkar") as a beat speaker is rejected — the exact real leaked value', !v.ok && v.violations.some(x => x.rule === 'speaker_reader_visible_internal_key' && /the_presiding_Dohkar/.test(x.detail)), JSON.stringify(v.violations));
+}
+{
+  const d = compliantDraft(); d.scene1Candidate.beats[5].speaker = 'julian_provast_office_holder';
+  const v = validateDraft(d, PACKET);
+  ok('RED: ANY underscored speaker value is rejected, not only the specific historical one (generic pattern, not a lexical ban on one string)', !v.ok && v.violations.some(x => x.rule === 'speaker_reader_visible_internal_key'), JSON.stringify(v.violations));
+}
+{
+  const d = compliantDraft(); d.scene1Candidate.beats[5].speaker = 'the presiding Dohkar';
+  const v = validateDraft(d, PACKET);
+  ok('RED: a plain-English but UNDECLARED speaker reference ("the presiding Dohkar", no underscore, but not a real cast_roles display name) is rejected as unresolved — a real name is required, not just "not underscored"', !v.ok && v.violations.some(x => x.rule === 'speaker_unresolved_cast_reference'), JSON.stringify(v.violations));
+}
+{
+  const d = compliantDraft(); // already uses "Dhokar Raes" as beats[5]/[16].speaker post-correction
+  const v = validateDraft(d, PACKET);
+  ok('GREEN: "Dhokar Raes" (the canonized real display name) as a beat speaker passes cleanly — no speaker_reader_visible_internal_key or speaker_unresolved_cast_reference violation', v.ok && !v.violations.some(x => x.rule === 'speaker_reader_visible_internal_key' || x.rule === 'speaker_unresolved_cast_reference'), JSON.stringify(v.violations));
+}
+{
+  const d = compliantDraft(); d.scene1Candidate.beats[0].speaker = null;
+  const v = validateDraft(d, PACKET);
+  ok('GREEN (scope discipline): a null speaker (narration) is never flagged by either speaker-display rule', v.ok && !v.violations.some(x => x.rule === 'speaker_reader_visible_internal_key' || x.rule === 'speaker_unresolved_cast_reference'), JSON.stringify(v.violations));
+}
+{
+  // REAL DATA: the actual, on-disk candidate genuinely contains the leaked internal key — proving
+  // this correction was necessary, not merely theoretical, and that it fires on the real artifact.
+  const realArtifact = JSON.parse(fs.readFileSync(path.join(__dirname, '_first_sacrifice_draft_v7_attempt8_full_package/13_final_field_correction.json'), 'utf8'));
+  const realDraft = realArtifact.draft;
+  const v = validateDraft(realDraft, PACKET);
+  ok('REAL DATA: the actual, on-disk 13_final_field_correction.json candidate (untouched) genuinely fails the new speaker-display rule — real confirmation the Dhokar Raes naming correction is necessary, not merely theoretical', v.violations.some(x => x.rule === 'speaker_reader_visible_internal_key' && /the_presiding_Dohkar/.test(x.detail)), JSON.stringify(v.violations.filter(x => x.rule.startsWith('speaker_'))));
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 section('RED CONTROLS — each rejection rule must genuinely bite');
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -1530,6 +1588,16 @@ ok('attempt4_craft_requirements_abstract present with all 3 non-quotable require
   const { user } = buildPacketAuthoringPrompt(PACKET, buildFixedInputView());
   const leaked = /twisting rope of light aimed directly/.test(user) || /fingers tightening on the sash each time Seren faltered/.test(user);
   ok('EMPIRICAL: the real constructed prompt contains no verbatim exemplar text (the exact real attempt-4 phrasing that got copied in attempt 5)', !leaked);
+  // REAL FINDING (Roman, 2026-09-20, discovered while investigating the Dhokar Raes naming
+  // correction, unrelated to it): attempt4_craft_requirements_abstract.requirements[0] previously
+  // contradicted wish_twist_and_arrest_requirement in the SAME rendered prompt — one section said
+  // "never an external magical attack", the other said "must read as a concrete FORCE... physical
+  // or magical threat... followed by witnessed residue". Both fixed sections must now agree in the
+  // real rendered prompt, and the old contradictory phrasing must be gone.
+  ok('EMPIRICAL: the real constructed prompt no longer contains the contradictory "concrete FORCE — an immediate physical or magical threat" wording that used to directly contradict wish_twist_and_arrest_requirement in the same prompt', !/concrete FORCE.{0,40}immediate physical or magical threat/i.test(user));
+  ok('EMPIRICAL: the real constructed prompt no longer contains the contradictory "followed by witnessed residue" wording (residue-as-evidence is explicitly banned elsewhere in the same prompt)', !/followed by witnessed residue/i.test(user));
+  ok('attempt4_craft_requirements_abstract.requirements[0] is now internally consistent with the banned attack-grammar vocabulary (never a projectile/beam/rope of light/seam/rift/burst) instead of contradicting it', /never an external magical attack/i.test(PACKET.attempt4_craft_requirements_abstract.requirements[0]) && !/concrete FORCE/i.test(PACKET.attempt4_craft_requirements_abstract.requirements[0]));
+  ok('the old contradictory wording is preserved as disclosed history (superseded_requirement_1_2026_09_20), not silently deleted', !!PACKET.attempt4_craft_requirements_abstract.superseded_requirement_1_2026_09_20 && /concrete FORCE/.test(PACKET.attempt4_craft_requirements_abstract.superseded_requirement_1_2026_09_20));
 }
 
 // ── RICH NUMBERED TEMPLATE (Roman, 2026-09-18, following v7-attempt-5's density shortfall) ──

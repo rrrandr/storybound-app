@@ -244,7 +244,7 @@ function renderPacketAsPromptText(packet) {
   L.push('Use ONLY these 8, in this exact order (each may repeat across consecutive beats):');
   s1.existing_images_reuse_only.order.forEach(id => L.push('  - ' + id + ': ' + s1.existing_images_reuse_only.subjects[id]));
   L.push('');
-  L.push('Output shape: { beats: [ { kind, speaker, image, text, provenance } ] } — kind one of ' + ALLOWED_OUTPUT_SCHEMA.scene1_beat_kinds.join('|') + '; speaker a cast name or null; image one of the 8 IDs above, in that order (repeats allowed, no skipping backward).');
+  L.push('Output shape: { beats: [ { kind, speaker, image, text, provenance } ] } — kind one of ' + ALLOWED_OUTPUT_SCHEMA.scene1_beat_kinds.join('|') + '; speaker a cast READER-VISIBLE DISPLAY NAME or null (e.g. "Lirael", "Seren", "Julian", "Dhokar Raes") — NEVER an internal id, role placeholder, or underscored key (e.g. never write "the_presiding_Dohkar" as a speaker value, even though it may appear elsewhere in this prompt as an internal reference — her reader-visible name is "Dhokar Raes"); image one of the 8 IDs above, in that order (repeats allowed, no skipping backward).');
   L.push('');
   L.push('PROVENANCE — proportional, not a ban on prose. Tag every beat\'s provenance.kind as one of ' + Object.keys(packet.claim_categories).join(', ') + ':');
   L.push('  - locked_canon_fact: REQUIRES provenance.cites naming the exact packet section/fact. Use ONLY for a fact already stated above.');

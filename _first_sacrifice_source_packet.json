@@ -88,10 +88,14 @@
         "kind": "locked_canon_fact",
         "cites": "starter-scenes.js oasHandoff.openingFrame (\"Julian — the Provast...next in line for First Dohkar\")"
       },
-      "the_presiding_Dohkar": {
+      "Dhokar Raes": {
         "role": "the rank-Dohkar presiding over and ruling on this rite — a function of the rite, not a named permanent office beyond his own Dohkar rank",
+        "canonization_note": "NEW (Roman, 2026-09-20) — no proper name existed for this character anywhere in this repo before this correction (confirmed: neither the packet, starter-scenes.js, nor any other source ever named her). The packet previously used the internal-id-shaped key 'the_presiding_Dohkar' here, which — because output_shape instructs 'speaker is a cast name', and every OTHER cast_roles key (Lirael/Seren/Julian) is already display-name-shaped — leaked verbatim into scene1Candidate.beats[].speaker in real generated output (see _first_sacrifice_draft_v7_attempt8_full_package/13_final_field_correction.json beats[4]/[14]). Renaming this key to the real display name fixes the root cause structurally, not just the symptom.",
+        "internal_stable_id": "dhokar_raes",
+        "reader_visible_display_name": "Dhokar Raes",
+        "legacy_internal_key_do_not_use_as_speaker": "the_presiding_Dohkar — this was the internal role-tracking key before canonization. It must NEVER be written as a beat's speaker value, in this packet's own examples or in generated output. Where this packet needs to refer to her ROLE rather than her name (e.g. describing her function in the rite), 'the presiding Dohkar' (plain English title, lowercase, no underscore) remains fine as prose — only the underscored internal key is banned from reader-visible fields.",
         "kind": "locked_canon_fact",
-        "cites": "starter-scenes.js:202,244"
+        "cites": "starter-scenes.js:202,244 (role/function); name canonized 2026-09-20, Roman, this message — real naming/data correction following the read-through PDF exposing the raw internal key as her reader-visible speaker value"
       }
     },
     "the_answer": {
@@ -575,11 +579,11 @@
       "subjects": {
         "intro_lirael": "Lirael",
         "intro_seren": "Seren",
-        "intro_dohkar": "the presiding Dohkar",
+        "intro_dohkar": "Dhokar Raes, the presiding Dohkar",
         "intro_julian": "Julian",
         "d1": "the rite begins — Seren kneeling before Lirael in the dawn clearing",
         "d2": "the wish — Seren speaks it; Lirael tears the band and moves",
-        "d3": "the charge — the assembly turns; the presiding Dohkar names Lirael",
+        "d3": "the charge — the assembly turns; Dhokar Raes names Lirael",
         "d4": "The Answer — Julian closes her hands around it before them all"
       }
     },
@@ -620,7 +624,7 @@
         },
         {
           "image": "intro_dohkar",
-          "required_event": "The presiding Dohkar's character established; he calls for \"the cost\" and Seren NAMES HER OFFERING ALOUD, in her own direct speech (not narrated summary — see the shared dramatize-consequential-present-speech rule). The offering must be a CONCRETE, emotionally legible, IRREVOCABLE loss, not a poetic noun phrase standing in for one — the reader must understand specifically what she gives up (a real memory, relationship, sensation, or capacity named with enough particularity to picture) and WHY it costs her something real to give it, not just that she names a category of loss. This exact beat was MISSING from the first draft and MUST appear.",
+          "required_event": "Dhokar Raes (the presiding Dohkar)'s character established; he calls for \"the cost\" and Seren NAMES HER OFFERING ALOUD, in her own direct speech (not narrated summary — see the shared dramatize-consequential-present-speech rule). The offering must be a CONCRETE, emotionally legible, IRREVOCABLE loss, not a poetic noun phrase standing in for one — the reader must understand specifically what she gives up (a real memory, relationship, sensation, or capacity named with enough particularity to picture) and WHY it costs her something real to give it, not just that she names a category of loss. This exact beat was MISSING from the first draft and MUST appear.",
           "id": "cost_offering_statement",
           "superseded_required_event": "The presiding Dohkar’s character established; he calls for \"the cost\" and Seren NAMES HER OFFERING ALOUD (her earliest memory) — this exact beat was MISSING from the first draft and MUST appear."
         },
@@ -655,7 +659,7 @@
         },
         {
           "image": "d3",
-          "required_event": "The presiding Dohkar puts the charge to Lirael IN ACTUAL SPEECH — a real quoted line or lines, not narrated summary (see the shared dramatize-consequential-present-speech rule; \"he named the bent word and laid the charges\" is explicitly BANNED as the substantive delivery of the charge — that sentence may describe HIS MANNER around the actual words, never stand in for them). The charge itself: shaping the wish, interfering in the rite. Narration may show each charge landing on Lirael, grounded explicitly in what the assembly directly perceived of the misalignment itself (not a bare accusation): Lirael's visible reaction, the felt wrongness, Seren's own words — something concrete the assembly actually witnessed that can plausibly, if wrongly, be read as evidence Lirael herself manipulated Seren or interfered. NEVER grounded in invented physical damage, scorch marks, or attack residue treated as forensic evidence (see _fatelands_ordinary_wish_misalignment_law.json). Publicly jeopardizing Lirael's path; even as her standing collapses, some part of her attention goes to Julian.",
+          "required_event": "Dhokar Raes (the presiding Dohkar) puts the charge to Lirael IN ACTUAL SPEECH — a real quoted line or lines, not narrated summary (see the shared dramatize-consequential-present-speech rule; \"he named the bent word and laid the charges\" is explicitly BANNED as the substantive delivery of the charge — that sentence may describe HIS MANNER around the actual words, never stand in for them). The charge itself: shaping the wish, interfering in the rite. Narration may show each charge landing on Lirael, grounded explicitly in what the assembly directly perceived of the misalignment itself (not a bare accusation): Lirael's visible reaction, the felt wrongness, Seren's own words — something concrete the assembly actually witnessed that can plausibly, if wrongly, be read as evidence Lirael herself manipulated Seren or interfered. NEVER grounded in invented physical damage, scorch marks, or attack residue treated as forensic evidence (see _fatelands_ordinary_wish_misalignment_law.json). Publicly jeopardizing Lirael's path; even as her standing collapses, some part of her attention goes to Julian.",
           "id": "public_charge",
           "status_2026_09_20": "REVISED (Roman, real Attempt 8 finding) — 'visible residue from the arrested misfire' is the disclosed root cause of real drafts manufacturing scorch-mark/damage evidence for the Dohkar to cite.",
           "superseded_required_event": "The presiding Dohkar names the bent word and lays the charges — shaping the wish, interfering in the rite — publicly jeopardizing Lirael’s path; even as her standing collapses, some part of her attention goes to Julian.",
@@ -1087,7 +1091,7 @@
           30,
           45
         ],
-        "fn": "The presiding Dohkar calls for 'the cost' IN HIS OWN DIRECT SPEECH; Seren's actual quoted offering — a CONCRETE, irrevocable loss named with real particularity, not a poetic noun phrase."
+        "fn": "Dhokar Raes (the presiding Dohkar) calls for 'the cost' IN HIS OWN DIRECT SPEECH — this beat's speaker MUST be the reader-visible display name \"Dhokar Raes\", never an internal id or role placeholder; Seren's actual quoted offering — a CONCRETE, irrevocable loss named with real particularity, not a poetic noun phrase."
       },
       {
         "n": 6,
@@ -1197,7 +1201,7 @@
           30,
           45
         ],
-        "fn": "The presiding Dohkar's actual spoken charge — real quoted speech, not narrated summary — grounded in what the assembly directly perceived of the misalignment itself (Lirael's visible reaction, the felt wrongness), NEVER in scorch marks or other physical damage cited as evidence."
+        "fn": "Dhokar Raes (the presiding Dohkar)'s actual spoken charge — real quoted speech, not narrated summary — this beat's speaker MUST be the reader-visible display name \"Dhokar Raes\", never an internal id or role placeholder — grounded in what the assembly directly perceived of the misalignment itself (Lirael's visible reaction, the felt wrongness), NEVER in scorch marks or other physical damage cited as evidence."
       },
       {
         "n": 16,
@@ -1425,15 +1429,17 @@
     "cites": "public/orchestration-client.js:6511 (generateIntimateFatePreviewsBatch), public/app.js:184983 (_appendAuthoredOASFrame precedent), public/app.js:~197967 (_mountIntimateInterruption post-interruption call site) — real trace, 2026-09-17"
   },
   "attempt4_craft_requirements_abstract": {
-    "status": "NEW (Roman, 2026-09-18); requirement #2 GENERALIZED (2026-09-20) after v7 attempt 6's real failure. Replaces the verbatim attempt4_positive_exemplars in the rendered prompt. Abstract craft REQUIREMENTS, not quotable prose — nothing here is a sentence to reproduce. Distilled from what made attempt 4 (structurally rejected, but craft-strong) work, generalized so there is nothing to copy.",
+    "status": "NEW (Roman, 2026-09-18); requirement #2 GENERALIZED (2026-09-20) after v7 attempt 6's real failure; requirement #1 CORRECTED (2026-09-20, real finding) — see requirement_1_contradiction_finding_2026_09_20 below. Replaces the verbatim attempt4_positive_exemplars in the rendered prompt. Abstract craft REQUIREMENTS, not quotable prose — nothing here is a sentence to reproduce. Distilled from what made attempt 4 (structurally rejected, but craft-strong) work, generalized so there is nothing to copy.",
     "convergence_finding_2026_09_20": "v7 attempt 6's oasOpening independently produced 'hoping I would step forward and rescue you' — a 7+ word verbatim match against the julian_opening_turn exemplar — even though that exemplar text is NEVER rendered into the prompt (historical-only, used only by the copy-guard). The prior wording of requirement #2 below prescribed the exemplar's exact 3-step rhetorical formula (observed behavior -> reframe as unconscious influence -> invert accusation into invitation) specifically enough that it had essentially one natural sentence-level realization — abstracting the STRUCTURE did not stop convergence, because the structure itself was still exemplar-specific. The n-gram copy-guard correctly caught it (working as designed); the fix here is to stop prescribing a single rhetorical shape at all, so a compliant answer has real room to differ.",
+    "requirement_1_contradiction_finding_2026_09_20": "REAL, SEPARATE FINDING (Roman, 2026-09-20, discovered while investigating the Dhokar Raes naming correction, unrelated to it): _first_sacrifice_authoring_adapter.mjs renders BOTH wish_twist_and_arrest_requirement (corrected: never an external attack, no projectile/beam/rope of light/seam/rift/burst, banned vocabulary includes residue-as-evidence) AND this section's requirement #1 into the SAME prompt — and requirement #1's OLD wording directly contradicted the corrected requirement immediately above it in the same prompt, still instructing 'a concrete FORCE — an immediate physical or magical threat... followed by witnessed residue.' This was never caught because no control test checked this specific section's text against the wish-misalignment law after the law was added — every existing control only checked wish_twist_and_arrest_requirement and the per-slot template, not this separate craft-requirements-abstract section the adapter ALSO renders. Corrected below to match the law; the contradiction is the likely reason the wish-twist beats kept needing focused correction passes even after the 'primary' requirement text was fixed.",
     "requirements": [
-      "The twist must read as a concrete FORCE — an immediate physical or magical threat aimed at Lirael specifically, with real sensory detail (what it looks/sounds/smells like) — followed by witnessed residue the assembly can see, then an inexplicable arrest with no cause given.",
+      "The twist must read as a concrete, causally legible PULL — Lirael's own felt dread/directionality toward the WISH's own object, and/or a wrong implication becoming apparent, and/or another participant recognizing or reacting to it — with real sensory/interior detail (what it feels like, not what it looks like as a visible effect), followed by an inexplicable arrest with no cause given and no witnessed physical residue. NEVER an external magical attack (no projectile, beam, rope of light, seam, rift, or burst) — see _fatelands_ordinary_wish_misalignment_law.json (fatelands_ordinary_wish_misalignment); this requirement must never again diverge from that law's wording.",
       "Julian's opening turn must ground its accusation in a SPECIFIC observed behavior (something concrete he actually watched her do or fail to do in this scene) and must carry real subtext beyond the literal words spoken. Do NOT reuse any single fixed rhetorical shape for how that subtext works — invent your own: what he implies about himself versus her, what he withholds, what tone the accusation carries, whether it reads as cold, hungry, wounded, or something else entirely, is yours to originate freely. The only fixed requirements are: a real, specific observed behavior (not a vague accusation) and genuine subtext (not a flat statement of the charge).",
       "Social fallout must arrive through a NAMED, SPECIFIC person's concrete action or actual speech (a family member stepping back, a guest's hand tightening, an actual spoken line) — never a generic crowd reaction."
     ],
+    "superseded_requirement_1_2026_09_20": "The twist must read as a concrete FORCE — an immediate physical or magical threat aimed at Lirael specifically, with real sensory detail (what it looks/sounds/smells like) — followed by witnessed residue the assembly can see, then an inexplicable arrest with no cause given. SUPERSEDED — see requirement_1_contradiction_finding_2026_09_20 above; kept verbatim as disclosed history, not deleted.",
     "hard_boundary": "These are structural/functional requirements to SATISFY in fresh, original prose — not a template to fill in with paraphrased or reworded versions of any prior draft. Write new sentences that accomplish these functions; do not echo any specific wording you have seen before in this authoring process. Requirement #2 specifically has NO single correct rhetorical shape — if two different attempts at this task would plausibly converge on close to the same sentence, that shared shape is too prescriptive and must be avoided.",
     "kind": "generated_expression",
-    "cites": "Roman, 2026-09-18 — replaces quoted exemplars after v7 attempt 5 proved they were copied despite explicit non-canonical/do-not-copy guardrails; requirement #2 generalized 2026-09-20 after v7 attempt 6's real convergent near-copy"
+    "cites": "Roman, 2026-09-18 — replaces quoted exemplars after v7 attempt 5 proved they were copied despite explicit non-canonical/do-not-copy guardrails; requirement #2 generalized 2026-09-20 after v7 attempt 6's real convergent near-copy; requirement #1 corrected 2026-09-20 per requirement_1_contradiction_finding_2026_09_20"
   }
 }

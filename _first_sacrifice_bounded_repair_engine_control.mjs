@@ -242,7 +242,15 @@ ok('AFTER repair-merge, CORRECTED POLICY: the real, unrelated, untouched exempla
 // pass (like Attempt 8's) adds the missing causal language — the density repair was never expected
 // to do that job.
 ok('AFTER repair-merge, CORRECTED POLICY: exemplar match alone and the two real density rules are cleared by the merge (repair does its own job correctly)', !afterRules.includes('exemplar_verbatim_copy') && !afterRules.includes('scene1_too_thin') && !afterRules.includes('scene1_insufficient_narration_density'));
-ok('REAL FINDING: Attempt 6\'s own real (untouched) wish-twist content ALSO independently lacks the causal-specificity language — a THIRD real historical attempt converging on the same gap — and the density-only bounded repair correctly leaves this pre-existing content gap untouched rather than papering over it, so the merged candidate correctly remains NOT ELIGIBLE for this separate, real, undisclosed-until-now reason', afterRepairValidation.ok === false && afterRules.length === 1 && afterRules[0] === 'wish_twist_causal_specificity', JSON.stringify(afterRepairValidation));
+ok('REAL FINDING: Attempt 6\'s own real (untouched) wish-twist content ALSO independently lacks the causal-specificity language — a THIRD real historical attempt converging on the same gap — and the density-only bounded repair correctly leaves this pre-existing content gap untouched rather than papering over it, so the merged candidate correctly remains NOT ELIGIBLE for this separate, real, undisclosed-until-now reason', afterRepairValidation.ok === false && afterRules.includes('wish_twist_causal_specificity'), JSON.stringify(afterRepairValidation));
+// REAL FINDING (Roman, 2026-09-20, Dhokar Raes naming correction, discovered here — not planted):
+// Attempt 6's own real, untouched beats[4]/[14].speaker ALSO independently carry the exact leaked
+// internal key ("the_presiding_Dohkar") the naming correction fixed — a FOURTH real historical
+// attempt converging on the same bug (after the on-disk Attempt 8 candidate and, per the sanitized-
+// fixture note above, Attempt 7's own raw data too). Same principle as the causal-specificity
+// finding above: a density-only repair never touches speaker fields at all, so this real,
+// pre-existing naming defect correctly survives the merge untouched as well.
+ok('REAL FINDING: Attempt 6\'s own real (untouched) beats[4]/[14].speaker ALSO independently carry the leaked internal key — a FOURTH real historical attempt converging on the naming bug, left correctly untouched by the density-only repair (which never touches speaker fields)', afterRules.includes('speaker_reader_visible_internal_key'), JSON.stringify(afterRepairValidation.violations.filter(v => v.rule === 'speaker_reader_visible_internal_key')));
 
 // ═══════════════════════════════════════════════════════════════════════════════
 section('5. isRepairEligible / REPAIR_ELIGIBLE_VALIDATOR_RULES — scope discipline');
@@ -441,9 +449,19 @@ const pass1MergedSanitized = JSON.parse(JSON.stringify(pass1Merge.merged));
 pass1MergedSanitized.scene1Candidate.beats[10].text += ' Even as she spoke it I understood the danger: Fate might answer the letter of her wish and still get it horribly wrong.';
 pass1MergedSanitized.scene1Candidate.beats[12].text = pass1MergedSanitized.scene1Candidate.beats[12].text.replace('scorched linen', 'acrid linen');
 pass1MergedSanitized.scene1Candidate.beats[13].text = pass1MergedSanitized.scene1Candidate.beats[13].text.replace('the residue hung in the air', 'something unnamed lingered in the air');
+// SANITIZED FIXTURE, UPDATED AGAIN 2026-09-20 (Dhokar Raes naming correction): Attempt 7's own raw
+// real data independently carries the SAME leaked internal key the naming correction found in
+// Attempt 8 (beats[4]/[14].speaker === "the_presiding_Dohkar", the packet's OLD cast_roles key) —
+// a THIRD real historical attempt converging on the same bug (see the analogous causal-specificity
+// convergence note above). Renaming the speaker field (never counted by measureBeatDeficiencies,
+// so this cannot perturb the word-count-based assertions below) to the canonized real display name
+// isolates this UNRELATED two-pass MECHANISM proof from that separately-proven naming finding too.
+pass1MergedSanitized.scene1Candidate.beats[4].speaker = 'Dhokar Raes';
+pass1MergedSanitized.scene1Candidate.beats[14].speaker = 'Dhokar Raes';
 const pass1MergedValidation = validateDraft(pass1MergedSanitized, PACKET);
 ok('sanitized fixture: the 2 literal banned words are gone and wish_twist_wrong_visual_grammar no longer fires, isolating the two-pass MECHANISM proof below from the separately-proven wish-misalignment finding above', !pass1MergedValidation.violations.some(v => v.rule === 'wish_twist_wrong_visual_grammar'));
 ok('sanitized fixture: the added danger-language clause clears the now-BLOCKING wish_twist_causal_specificity check too, so only the density violation remains for the mechanism proof below', !pass1MergedValidation.violations.some(v => v.rule === 'wish_twist_causal_specificity'));
+ok('sanitized fixture: the renamed speaker fields clear the speaker-display rules too, isolating the mechanism proof from the separately-proven Dhokar Raes naming finding', !pass1MergedValidation.violations.some(v => v.rule === 'speaker_reader_visible_internal_key' || v.rule === 'speaker_unresolved_cast_reference'));
 ok('sanitized fixture still shows scene1_insufficient_narration_density as the only remaining rule (rule NAME matches the frozen pre-reversal record; exact count/detail may legitimately differ under the post-reversal ceiling policy)', pass1MergedValidation.violations.length === 1 && pass1MergedValidation.violations[0].rule === 'scene1_insufficient_narration_density' && attempt7RealMergedValidation.finalValidation.violations.length === 1 && attempt7RealMergedValidation.finalValidation.violations[0].rule === 'scene1_insufficient_narration_density', JSON.stringify(pass1MergedValidation.violations));
 
 // ── (a) "a too-short first repair leaves only its deficient slots eligible for the second pass" ──
@@ -498,7 +516,15 @@ ok('END-TO-END: primary + real pass-1 repair + compliant pass-2 (full-slot, midp
 // untouched. The candidate is correctly NOT eligible for this separate, real, content-completeness
 // reason, exactly matching the "repair never papers over a canon violation" principle already proven
 // for wrong-visual-grammar above, now also holding for causal-specificity.
-ok('REAL FINDING: even after two full, compliant density-repair passes, the doubly-merged candidate correctly remains NOT ELIGIBLE — wish_twist_causal_specificity still fires because neither the real Attempt 7 primary nor either bounded repair pass ever supplied wrong/dangerous-fulfillment language, and a density-only repair is never authorized to invent that content', finalValidationAfterTwoPasses.ok === false && finalValidationAfterTwoPasses.violations.length === 1 && finalValidationAfterTwoPasses.violations[0].rule === 'wish_twist_causal_specificity', JSON.stringify(finalValidationAfterTwoPasses.violations));
+const finalRules = finalValidationAfterTwoPasses.violations.map(v => v.rule);
+ok('REAL FINDING: even after two full, compliant density-repair passes, the doubly-merged candidate correctly remains NOT ELIGIBLE — wish_twist_causal_specificity still fires because neither the real Attempt 7 primary nor either bounded repair pass ever supplied wrong/dangerous-fulfillment language, and a density-only repair is never authorized to invent that content', finalValidationAfterTwoPasses.ok === false && finalRules.includes('wish_twist_causal_specificity'), JSON.stringify(finalValidationAfterTwoPasses.violations));
+// REAL FINDING (Roman, 2026-09-20, Dhokar Raes naming correction, discovered here — not planted):
+// beats[4]/[14] (n=5, n=15) are not in Attempt 7's residual-deficient slot set, so this doubly-
+// merged draft (built from the REAL, unsanitized attempt7Primary/pass1Merge base) still carries
+// their real, original "the_presiding_Dohkar" speaker value straight through both repair passes —
+// a density-only repair never touches speaker fields at all, so this real naming defect correctly
+// survives untouched too, exactly like the causal-specificity gap above.
+ok('REAL FINDING: the doubly-merged candidate ALSO still carries the real, untouched leaked-internal-key speaker naming defect (beats[4]/[14]) straight through both density-only repair passes — never fixed by a repair that only ever touches word counts', finalRules.includes('speaker_reader_visible_internal_key'), JSON.stringify(finalValidationAfterTwoPasses.violations.filter(v => v.rule === 'speaker_reader_visible_internal_key')));
 
 // ── (d) a structural/canon/copy violation prevents ANY repair pass, at any pass count ──
 const mixedViolations = [{ rule: 'scene1_insufficient_narration_density' }, { rule: 'the_answer_form_violation' }];
