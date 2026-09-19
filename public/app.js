@@ -35790,7 +35790,18 @@ WRY REFERENCE:
       }));
     }
     (Array.isArray(beats) ? beats : []).forEach(function (b, i) {
-      if (!b || !b.speaker) return; // null/undefined speaker = narration, not this validator's concern
+      if (!b) return;
+      // A beat "carries dialogue" either shape a caller might have on hand: the live CG panel
+      // shape (a separate .dialogue text field) or the packet/candidate shape (.kind === 'dialogue',
+      // the spoken line lives in .text). Only a dialogue-carrying beat can be MISSING a speaker —
+      // a narration beat with no speaker is simply narration, not this validator's concern.
+      var hasDialogueContent = !!b.dialogue || b.kind === 'dialogue';
+      if (!b.speaker) {
+        if (hasDialogueContent) {
+          violations.push({ index: i, speaker: b.speaker, rule: 'missing_speaker', detail: 'beats[' + i + '] carries dialogue (' + (b.kind === 'dialogue' ? 'kind="dialogue"' : 'a dialogue field') + ') but has no speaker attribution at all — every consequential dialogue beat needs a resolved reader-facing speaker label, not an absent one' });
+        }
+        return; // null/undefined speaker on a non-dialogue beat = narration, not this validator's concern
+      }
       // anonymousSpeakerDeclared is an opt-in exception to the UNRESOLVED-REFERENCE check only — a
       // genuinely anonymous/masked speaker still needs a real, display-shaped label ("a masked
       // figure"), never an internal id: the underscored-key check below always applies regardless.
@@ -232370,6 +232381,30 @@ No text, no watermark, no UI elements, share-ready.`;
         p.captionSpeaker = null;
       }
     });
+
+    // ══ CG CANDIDATE-ACCEPTANCE GATE: reader-facing speaker labels (Roman, 2026-09-20) ══════════
+    // This is the SINGLE real acceptance boundary every CG story's generated panels funnel
+    // through (all 3 _parseStructuredPanels call sites already treat a null return as "structured
+    // generation failed" and fall back to the existing prose-generation path — no new failure mode
+    // introduced here, just a new reason to take the one that already exists). Reject-only, never
+    // rewrites: an internal/underscored speaker key, or a dialogue beat with NO speaker at all,
+    // means this candidate never reaches acceptance, storage, or render. Passing `null` as the
+    // known-names registry keeps this generic across every CG story — no story-specific cast list
+    // is plumbed through this shared function; a story wanting stricter unresolved-reference
+    // checking against its own cast (e.g. First Sacrifice's packet validator) does that as an
+    // additional, story-scoped layer on top, not a replacement for this one.
+    //
+    // The renderer's own runtime fail-safe (displayPanels.map(...) shell builder — omits an unsafe
+    // label and console.warns rather than ever printing it) stays in place as defense in depth, but
+    // is no longer the PRIMARY protection now that a bad candidate is rejected here, before it is
+    // ever accepted.
+    if (typeof validateCGSpeakerDisplayNames === 'function') {
+      var _speakerGate = validateCGSpeakerDisplayNames(parsed.panels, null);
+      if (!_speakerGate.ok) {
+        console.warn('[GN:PARSE] Rejected — unresolved/internal-key/missing speaker label(s), candidate not accepted: ' + JSON.stringify(_speakerGate.violations));
+        return null;
+      }
+    }
 
     // Panel count enforcement
     // Scene 1 cap raised 2 → 4 to match _buildGNPanelPrompt's MAX PANELS bump.
