@@ -35807,6 +35807,71 @@ WRY REFERENCE:
   }
   window.validateCGSpeakerDisplayNames = validateCGSpeakerDisplayNames;
 
+  // ══ GN PANEL TEXT-DRAWER TOGGLE + AUTO-REVEAL (Roman, 2026-09-20) ═══════════════════════════
+  // Two idempotent, one-time wiring functions for .gn-panel-textbox/.gn-panel-text-handle (see
+  // their markup in the displayPanels.map(...) shell builder). Both delegate on `document`
+  // rather than attaching per-panel because panels are inserted/replaced as raw HTML strings on
+  // every scene render — a delegated listener/observer survives that without being re-wired.
+  //
+  // _gnWireTextDrawerToggle: the reader's own click on the handle toggles .is-revealed — the
+  // SAME class the auto-reveal below uses, so there is exactly one mechanism (a plain CSS
+  // transition on transform) driving both the automatic reveal and the manual show/hide. An
+  // earlier version used a CSS @keyframes animation with animation-delay + fill-mode:forwards
+  // for the auto-reveal; real, dry, browser-driven testing (_gn_panel_text_drawer_control.mjs)
+  // caught that a forwards-filled animation's value overrides even higher-specificity normal
+  // declarations, so the manual collapse-after-reveal never actually took visual effect — fixed
+  // by dropping the animation/keyframe approach for a transition + one shared toggle class.
+  function _gnWireTextDrawerToggle() {
+    if (window._gnTextDrawerToggleWired) return;
+    window._gnTextDrawerToggleWired = true;
+    document.addEventListener('click', function (e) {
+      var handle = e.target && e.target.closest && e.target.closest('.gn-panel-text-handle');
+      if (!handle) return;
+      var box = handle.previousElementSibling;
+      if (!box || !box.classList || !box.classList.contains('gn-panel-textbox')) return;
+      var revealed = box.classList.toggle('is-revealed');
+      handle.innerHTML = revealed ? '&minus;' : '&plus;';
+      handle.setAttribute('aria-expanded', revealed ? 'true' : 'false');
+    });
+  }
+  window._gnWireTextDrawerToggle = _gnWireTextDrawerToggle;
+
+  // _gnScheduleTextDrawerReveal: every panel mounts with its text drawer minimized (art fully
+  // visible) — this is what auto-slides it into view a beat later, per Roman's spec ("every beat
+  // start with the full image visible and the text minimized, and then the text box slides up
+  // into view"). A MutationObserver (not a fixed selector run once) catches every drawer as it's
+  // inserted, however/whenever the shell builder's HTML actually lands in the DOM, without this
+  // needing to know that insertion call site. Each drawer gets scheduled exactly once
+  // (data-gn-reveal-scheduled guards a node the observer might otherwise see more than once).
+  function _gnScheduleTextDrawerReveal() {
+    if (window._gnTextDrawerRevealWired) return;
+    window._gnTextDrawerRevealWired = true;
+    var REVEAL_DELAY_MS = 650;
+    function scheduleOne(box) {
+      if (box.dataset.gnRevealScheduled) return;
+      box.dataset.gnRevealScheduled = '1';
+      setTimeout(function () {
+        box.classList.add('is-revealed');
+        var handle = box.nextElementSibling;
+        if (handle && handle.classList && handle.classList.contains('gn-panel-text-handle')) {
+          handle.innerHTML = '&minus;';
+          handle.setAttribute('aria-expanded', 'true');
+        }
+      }, REVEAL_DELAY_MS);
+    }
+    var observer = new MutationObserver(function (mutations) {
+      mutations.forEach(function (m) {
+        m.addedNodes && m.addedNodes.forEach(function (node) {
+          if (node.nodeType !== 1) return;
+          if (node.classList && node.classList.contains('gn-panel-textbox')) scheduleOne(node);
+          if (node.querySelectorAll) node.querySelectorAll('.gn-panel-textbox').forEach(scheduleOne);
+        });
+      });
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+  }
+  window._gnScheduleTextDrawerReveal = _gnScheduleTextDrawerReveal;
+
   function buildFatelandsCognitiveMemoryBlock() {
     // World gate — Fatelands only.
     if (!state.picks || state.picks.world !== 'Fantasy') return '';
@@ -161874,29 +161939,43 @@ No text, no watermark, no UI elements, share-ready.`;
               '</div>';
           }
 
-          // Unified caption — POV-aware styling
-          var captionHtml = '';
-          if (p.captionText) {
-              var pov = p.captionPOV || 'third';
-              captionHtml = '<div class="gn-panel-caption gn-caption-' + pov + '">' + escapeHTML(p.captionText) + '</div>';
-          }
           // ══════════════════════════════════════════════════════════════════════
-          // KNOWN BUG (Roman, 2026-09-20, found via a real First Sacrifice read-through): p.speaker
-          // is rendered here verbatim (only HTML-escaped) with NO display-name resolution step — if
-          // an upstream authoring/planner pass ever hands this a raw internal id or role placeholder
-          // (e.g. "the_presiding_Dohkar" instead of "Dhokar Raes"), it reaches the reader unchanged.
-          // validateCGSpeakerDisplayNames (a top-level, window-exposed utility — grep for its own
-          // definition comment) is the generic, reject-only, world-agnostic guard against exactly
-          // this — but it is NOT wired
-          // into this render call yet: Roman asked for the naming/data fix + a CG presentation-
-          // preview comparison FIRST, and the production renderer itself (including whether/how to
-          // resolve display names here) waits for his choice on the presentation variant, dry-
-          // previewed separately. This comment marks the real defect and the available fix so it is
-          // not lost, without changing this call site's behavior yet.
-          var dialogueHtml = '';
-          if (p.dialogue && p.dialoguePosition !== 'none') {
-              var sp = p.speaker ? '<span class="gn-speaker">' + escapeHTML(p.speaker) + '</span> ' : '';
-              dialogueHtml = '<div class="gn-panel-dialogue gn-dialogue-' + (p.dialoguePosition || 'bottom') + '">' + sp + escapeHTML(p.dialogue) + '</div>';
+          // UNIFIED PANEL TEXT DRAWER (Roman, 2026-09-20) — replaces the separate,
+          // always-visible .gn-panel-caption / .gn-panel-dialogue overlays with ONE
+          // collapsible drawer per panel, staying ON the art (Roman: "Leave it on the
+          // art, inside a semi-transparent box... can be minimized"). Every panel
+          // mounts with the art fully visible and the drawer minimized to its handle
+          // bar; _gnScheduleTextDrawerReveal (a MutationObserver, wired once below)
+          // auto-adds .is-revealed a beat after each drawer lands in the DOM, and a
+          // plain CSS transition slides it into view. The reader can toggle the same
+          // class at any time via the handle (.gn-panel-text-handle, click wired once
+          // by _gnWireTextDrawerToggle below); toggling never removes the text, only
+          // tucks it below the panel's edge. Resets fresh per panel — no carried
+          // "reader hid it" state across beats, by design (Roman, this message).
+          //
+          // Dialogue attribution is "Option C" from the presentation preview: a
+          // restrained left-accent block, speaker in a small label above the line —
+          // never a floating bubble, never color alone (weight/case/layout carry the
+          // distinction). Root-caused fix for the internal-key leak
+          // (locked_world_facts.cast_roles now keyed by real display names, e.g.
+          // "Dhokar Raes") lives upstream in the authoring packet — this renderer
+          // trusts p.speaker is already a real display name, and
+          // validateCGSpeakerDisplayNames (top-level, window-exposed) remains the
+          // reject-only guard against that class of bug reaching here at all.
+          var textboxHtml = '';
+          if (p.captionText || (p.dialogue && p.dialoguePosition !== 'none')) {
+              var _twInner = '';
+              if (p.captionText) {
+                  _twInner += '<div class="gn-panel-text-caption">' + escapeHTML(p.captionText) + '</div>';
+              }
+              if (p.dialogue && p.dialoguePosition !== 'none') {
+                  var _twSpeaker = p.speaker ? '<span class="gn-panel-text-speaker">' + escapeHTML(p.speaker) + '</span>' : '';
+                  _twInner += '<div class="gn-panel-text-dialogue">' + _twSpeaker + '<p class="gn-panel-text-dialogue-line">' + escapeHTML(p.dialogue) + '</p></div>';
+              }
+              textboxHtml = '<div class="gn-panel-textbox gn-dialogue-' + (p.dialoguePosition || 'bottom') + '">' +
+                  '<div class="gn-panel-textbox-inner">' + _twInner + '</div>' +
+                  '</div>' +
+                  '<button type="button" class="gn-panel-text-handle" aria-label="Show/hide panel text" title="Show/hide panel text" aria-expanded="false">&plus;</button>';
           }
           var _debugHtml = (state._debugMetaphor && p._debug) ? _buildDebugOverlay(p, p._debug) : '';
           // Layout geometry → inline style
@@ -161923,9 +162002,11 @@ No text, no watermark, no UI elements, share-ready.`;
               (_bleedClass && p._bleed.type === 'break_frame' ? ' data-break-dir="' + (p._bleed.direction || 'up') + '"' : '') +
               ' ' + _geoStyle + '>' +
               '<div class="gn-panel-loading"></div>' +
-              _debugHtml + dialogueHtml + captionHtml +
+              _debugHtml + textboxHtml +
               '</div>';
       });
+      _gnWireTextDrawerToggle();
+      _gnScheduleTextDrawerReveal();
 
       // Fire image generations with TIMEOUT for ALL panels using NARRATIVE data
       var _gnResults = new Array(plan.panels.length);

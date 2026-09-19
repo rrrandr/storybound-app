@@ -27368,61 +27368,111 @@ body.oas-active.gn-cover-active .gn-ui-overlay {
     z-index: 1;
 }
 
-/* ── Dialogue bubble — positioned by dialoguePosition field ── */
-.gn-panel-dialogue {
+/* ── Unified panel text drawer (Roman, 2026-09-20) ──
+   Replaces the old always-visible .gn-panel-dialogue bubble + .gn-panel-caption
+   overlay with ONE semi-transparent, collapsible drawer per panel. Every panel
+   mounts with the art fully visible and the drawer minimized to just its handle
+   bar; _gnScheduleTextDrawerReveal (app.js, a MutationObserver) adds
+   .is-revealed a beat after each drawer lands in the DOM, and the plain CSS
+   transition below slides it into view (Roman: "make every beat start with the
+   full image visible and the text minimized, and then the text box slides up
+   into view"). The reader can re-collapse/expand it at any time via the SAME
+   class, toggled by .gn-panel-text-handle (click wired once, see
+   _gnWireTextDrawerToggle in app.js) — collapsing never removes the text, only
+   tucks it back below the panel edge. Resets fresh per panel; no state carries
+   between beats. Anchors bottom by default (.gn-dialogue-bottom, matching the
+   real per-panel default) or top (.gn-dialogue-top). */
+.gn-panel-textbox {
     position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-    max-width: 70%;
-    padding: 8px 16px 10px;
-    background: rgba(255, 255, 255, 0.94);
-    border-radius: 14px;
-    font-family: 'Lora', serif;
-    font-size: 0.82em;
-    color: #1a1a1a;
-    text-align: center;
-    line-height: 1.45;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+    left: 0;
+    right: 0;
+    z-index: 3;
+    overflow: hidden;
     pointer-events: none;
-    z-index: 2;
 }
-.gn-dialogue-bottom { bottom: 12px; }
-.gn-dialogue-top { top: 12px; }
-
-/* Bubble tail — bottom-positioned triangle */
-.gn-dialogue-bottom::after {
-    content: '';
-    position: absolute;
-    bottom: -7px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 0;
-    height: 0;
-    border-left: 7px solid transparent;
-    border-right: 7px solid transparent;
-    border-top: 7px solid rgba(255, 255, 255, 0.94);
+.gn-panel-textbox.gn-dialogue-bottom { bottom: 0; }
+.gn-panel-textbox.gn-dialogue-top { top: 0; }
+/* Default (no .is-revealed yet) = minimized: only a ~34px handle strip shows, art stays
+   clean. JS (_gnScheduleTextDrawerReveal, app.js) adds .is-revealed to each new drawer a
+   beat after it mounts, and the reader's own handle click toggles the SAME class — one
+   mechanism for both the automatic reveal and the manual show/hide, plain CSS transition,
+   no animation-fill-mode (that approach fought the collapsed-state override; see control). */
+.gn-panel-textbox .gn-panel-textbox-inner {
+    padding: 34px 40px 12px 14px;
+    pointer-events: auto;
+    transform: translateY(46px);
+    transition: transform 320ms cubic-bezier(0.22, 0.68, 0.32, 1);
 }
-.gn-dialogue-top::after {
-    content: '';
-    position: absolute;
-    top: -7px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 0;
-    height: 0;
-    border-left: 7px solid transparent;
-    border-right: 7px solid transparent;
-    border-bottom: 7px solid rgba(255, 255, 255, 0.94);
+.gn-panel-textbox.gn-dialogue-bottom .gn-panel-textbox-inner {
+    background: linear-gradient(to top, rgba(12,10,7,0.88) 0%, rgba(12,10,7,0.6) 68%, transparent 100%);
+}
+.gn-panel-textbox.gn-dialogue-top .gn-panel-textbox-inner {
+    padding: 12px 40px 20px 14px;
+    background: linear-gradient(to bottom, rgba(12,10,7,0.88) 0%, rgba(12,10,7,0.6) 68%, transparent 100%);
+    transform: translateY(-46px);
+}
+.gn-panel-textbox.is-revealed .gn-panel-textbox-inner {
+    transform: translateY(0);
 }
 
-/* Speaker name — bold prefix inside bubble */
-.gn-speaker {
+/* Narration/interiority — plain prose, never italicized */
+.gn-panel-text-caption {
+    font-family: 'Lora', serif;
+    font-size: 0.85em;
+    line-height: 1.45;
+    color: rgba(236, 226, 204, 0.94);
+    margin: 0 0 8px;
+}
+.gn-panel-text-caption:last-child { margin-bottom: 0; }
+
+/* Dialogue — "Option C": restrained left-accent block, speaker labeled above,
+   never a floating bubble, never distinguished by color alone (weight/case/
+   layout carry it). */
+.gn-panel-text-dialogue {
+    border-left: 2px solid rgba(212, 175, 94, 0.65);
+    padding-left: 10px;
+}
+.gn-panel-text-speaker {
+    display: block;
+    font-family: 'Lora', serif;
+    font-size: 0.7em;
     font-weight: 700;
-    font-size: 0.88em;
-    letter-spacing: 0.03em;
+    letter-spacing: 0.09em;
     text-transform: uppercase;
-    color: #333;
+    color: rgba(216, 182, 106, 0.92);
+    margin-bottom: 2px;
 }
+.gn-panel-text-dialogue-line {
+    font-family: 'Lora', serif;
+    font-size: 0.88em;
+    line-height: 1.45;
+    color: rgba(255, 251, 240, 0.97);
+    margin: 0;
+}
+
+/* Handle — always visible, fixed bottom-right, independent of collapsed state */
+.gn-panel-text-handle {
+    position: absolute;
+    right: 8px;
+    bottom: 8px;
+    z-index: 5;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: rgba(12, 10, 7, 0.74);
+    border: 1px solid rgba(212, 175, 94, 0.5);
+    color: rgba(236, 226, 204, 0.96);
+    font-family: 'Lora', serif;
+    font-size: 15px;
+    line-height: 24px;
+    text-align: center;
+    padding: 0;
+    cursor: pointer;
+    pointer-events: auto;
+    user-select: none;
+}
+.gn-panel-text-handle:hover { background: rgba(26, 19, 12, 0.9); }
+.gn-panel-text-handle:focus-visible { outline: 2px solid rgba(212, 175, 94, 0.8); outline-offset: 2px; }
 
 /* ── Readability gradient overlay — soft darkening behind text area ── */
 .gn-panel-readability {
@@ -27641,9 +27691,9 @@ body.oas-active.gn-cover-active .gn-ui-overlay {
     transform-origin: left center;
 }
 
-/* Ensure dialogue/captions stay above break content */
-.gn-bleed-break-frame .gn-panel-dialogue,
-.gn-bleed-break-frame .gn-panel-caption { z-index: 25; }
+/* Ensure the panel text drawer + its handle stay above break content */
+.gn-bleed-break-frame .gn-panel-textbox { z-index: 25; }
+.gn-bleed-break-frame .gn-panel-text-handle { z-index: 26; }
 
 /* ═══════════════════════════════════════════════════════════════════════════
    RHYTHM SPACING — tempo-driven panel gap and padding
@@ -27754,7 +27804,13 @@ body.oas-active.gn-cover-active .gn-ui-overlay {
     opacity: 0.52;
 }
 
-/* ── Unified panel caption — POV-variant styles ── */
+/* ── Unified panel caption — POV-variant styles ──
+   RETIRED from the primary GN panel render path (Roman, 2026-09-20): the
+   displayPanels.map(...) shell builder no longer emits .gn-panel-caption/
+   .gn-caption-* — narration now goes into .gn-panel-text-caption inside the
+   unified text drawer above (plain prose, never italic, incl. first-person).
+   Kept, not deleted, in case another render path still references these
+   classes; if none does, this block is dead CSS, not a visual regression. */
 .gn-panel-caption {
     position: absolute;
     left: 0;
