@@ -208,6 +208,18 @@ function summarizeTracked(c) {
     // the REAL, already-paid-for scaffold content from the original run, isolating this replay to
     // the structural/author path Roman actually asked to re-exercise.
     s.cgScaffold = Object.assign({}, scaffold, { storyId: s.storyId });
+    // HARNESS FIX (Roman 2026-09-20, found via retries 1-3 all missing "mouth-band torn away"):
+    // real production calls _hydrateBakedStoryState(pkg) when the baked Scene 1 is displayed —
+    // well before any player interaction — which sets state._bakedEmitted = pkg.emitted. That
+    // function is not exposed on window and this replay never reproduced its one load-bearing
+    // effect, so state._bakedEmitted stayed null across three real retries, silently starving the
+    // Scene 2 planner of real, already-authored continuity data (mouth-band state, "it happened;
+    // it is not re-staged" obligations) that real production would have supplied. Confirmed via
+    // _baked_emitted_probe.mjs that setting this one field closes the gap. Mirrors ONLY this field
+    // — not a reimplementation of _hydrateBakedStoryState's other (unconsumed, per its own
+    // disclosed comment) side effects.
+    var _pkgForEmitted = window._bakedScene1For('starter_first_sacrifice');
+    s._bakedEmitted = (_pkgForEmitted && _pkgForEmitted.emitted) || null;
   }, { scaffold: REAL_SCAFFOLD_JSON });
 
   console.log('── phase 0: candidate opener (zero-call) ──');

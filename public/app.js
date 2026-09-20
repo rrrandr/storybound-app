@@ -8828,6 +8828,76 @@ window.config = window.config || {
   // First Sacrifice, and plausibly in other stories' objects/titles too); "declares/announces"
   // already cover the same "responds decisively" ground without that ambiguity.
   var _SCENE_MOVEMENT_VERB_RX = /\bspeaks?\b|\bspoke\b|\bsteps?\s+forward\b|\bstepped\b|\bmoves?\b|\bmoved\b|\breaches?\b|\breached\b|\bturns?\b|\bturned\b|\bleaves?\b|\bleft\b|\barrives?\b|\barrived\b|\bannounces?\b|\bannounced\b|\bdeclares?\b|\bdeclared\b/i;
+
+  // ═══ FATELANDS COSMOLOGY BAN (Roman 2026-09-20) ═══
+  // Reject-only. Not First-Sacrifice-specific: keyed by starterId, extendable to any Fatelands-set
+  // starter. Real finding this closes: the Fate-card generator (orchestration-client.js,
+  // generateIntimateFatePreviewsBatch, no worldTruths/canon channel at all — confirmed by direct
+  // code trace) produced player-facing card text reading "I want you to burn for me, as the
+  // First-Favored did for the old gods" — a real-world religious idiom in a world whose own canon
+  // states there is no god, only Fate (session memory project_fatelands_oaths_and_idioms.md, Roman
+  // 2026-09-19). Mirrors that memory's confirmed replacement set. Checks Fate-card preview text AND
+  // generated scene prose alike — either surface can leak this.
+  var STARTER_COSMOLOGY_BANS = {
+    starter_first_sacrifice: { worldLabel: 'Fatelands', rx: /\b(?:gods?|goddess(?:es)?|deit(?:y|ies)|divine|heaven|hell|pray(?:er|ed|ing|s)?|blessed|cursed|damned)\b/i },
+  };
+  window.STARTER_COSMOLOGY_BANS = STARTER_COSMOLOGY_BANS;
+  function _detectFatelandsCosmologyViolation(text, opts) {
+    try {
+      opts = opts || {};
+      var ban = (opts.cosmologyBan) || ((typeof STARTER_COSMOLOGY_BANS !== 'undefined' && STARTER_COSMOLOGY_BANS[opts.starterId || '']) || null);
+      if (!ban || !ban.rx) return { failed: false, reasons: [] };
+      var m = ban.rx.exec(String(text || ''));
+      if (!m) return { failed: false, reasons: [] };
+      return { failed: true, reasons: ['real-world religious vocabulary "' + m[0] + '" has no place in ' + ban.worldLabel + ' — this world has no god, only Fate'], matched: m[0] };
+    } catch (e) { return { failed: false, error: e && e.message }; }
+  }
+  window._detectFatelandsCosmologyViolation = _detectFatelandsCosmologyViolation;
+
+  // ═══ ESTABLISHED OBJECT STATE / NO SILENT REVERSION (Roman 2026-09-20) ═══
+  // Reject-only, per-starter registry — generic mechanism, story contributes specific canon (same
+  // shape as STARTER_PROTECTED_RELICS). Real finding this closes: the real, canonical Scene 1
+  // package (starter-scenes.js, STARTER_SCENE1.starter_first_sacrifice.emitted.openState.pcCondition)
+  // states "mouth-band torn away" as an already-established fact — Lirael tore it off mid-Scene-1 and
+  // it stayed off through the OAS exchange (she speaks in full sentences throughout, which a sealed
+  // mouth-band would not allow). A real Scene 2 sample opened with "The sash knot gives under my
+  // fingers." / "The mouth-band falls against my collarbone, the cloth still warm from my breath." —
+  // re-staging the SAME already-happened removal as if it were happening for the first time, with no
+  // beat explaining how or when it was ever put back on. This check fires ONLY on the opening beats
+  // (the specific, evidenced failure shape — restaging an established transition at the open) and
+  // ONLY when the story's established state says the object is already in its post-transition state.
+  var STARTER_ESTABLISHED_OBJECT_STATES = {
+    starter_first_sacrifice: [
+      { id: 'mouth_band', label: 'the mouth-band', priorState: 'removed',
+        // Source of truth for the "removed" fact: STARTER_SCENE1.starter_first_sacrifice.emitted
+        // .openState.pcCondition ("mouth-band torn away...") and .obligations. Not re-derived here —
+        // this entry just names which object and what pattern re-staging its removal looks like.
+        reversionRx: /\b(?:mouth-?band|gossamer band)\b[\s\S]{0,60}\bfalls?\b|\bfalls?\b[\s\S]{0,60}\b(?:mouth-?band|gossamer band)\b|\b(?:mouth-?band|gossamer band)\b[\s\S]{0,60}\b(?:tied|drawn|draws?|ties?|covering|covers?|across (?:my|her) mouth|over (?:my|her) mouth)\b|\bsash knot\b[\s\S]{0,40}\bgives?\b/i },
+    ],
+  };
+  window.STARTER_ESTABLISHED_OBJECT_STATES = STARTER_ESTABLISHED_OBJECT_STATES;
+  function _detectEstablishedStateReversion(screenplay, opts) {
+    try {
+      opts = opts || {};
+      var beats = (screenplay && Array.isArray(screenplay.beats)) ? screenplay.beats : [];
+      var openN = opts.openingWindow || 5;
+      var openBeats = beats.slice(0, openN);
+      var openText = openBeats.map(function (b) { return (b && b.text) || ''; }).join(' \n ');
+      var entries = Array.isArray(opts.establishedObjectStates) ? opts.establishedObjectStates
+        : ((typeof STARTER_ESTABLISHED_OBJECT_STATES !== 'undefined' && STARTER_ESTABLISHED_OBJECT_STATES[opts.starterId || '']) || []);
+      var violations = [];
+      entries.forEach(function (e) {
+        if (e && e.priorState === 'removed' && e.reversionRx && e.reversionRx.test(openText)) {
+          var m = openText.match(e.reversionRx);
+          violations.push({ id: e.id, label: e.label, matched: m && m[0] });
+        }
+      });
+      var failed = violations.length > 0;
+      var reasons = violations.map(function (v) { return 'the scene\'s opening re-stages ' + v.label + ' as if it were still in its PRIOR (already-changed) state — the story\'s established continuity says it was already removed, with no beat explaining how it was put back (matched: "' + v.matched + '")'; });
+      return { failed: failed, reasons: reasons, violations: violations };
+    } catch (e) { return { failed: false, error: e && e.message }; }
+  }
+  window._detectEstablishedStateReversion = _detectEstablishedStateReversion;
   function _detectSceneAdequacyFailure(screenplay, opts) {
     try {
       opts = opts || {};
@@ -8858,6 +8928,14 @@ window.config = window.config || {
       var movementHit = _SCENE_MOVEMENT_VERB_RX.test(tailText);
       checks.ending = { suspensionVocabPresent: suspensionHit, movementVerbPresent: movementHit, tailBeatCount: tailBeats.length };
       if (suspensionHit && !movementHit) reasons.push('the scene\'s final ' + tailBeats.length + ' beat(s) are dominated by suspension vocabulary (waits/holds its breath/half-raised) with no completed forward movement — reads as suspended mood, not a concrete next step');
+
+      var cosmology = _detectFatelandsCosmologyViolation(allText, opts);
+      checks.cosmology = cosmology;
+      if (cosmology.failed) reasons.push(cosmology.reasons[0]);
+
+      var stateReversion = _detectEstablishedStateReversion(screenplay, opts);
+      checks.establishedStateReversion = stateReversion.violations || [];
+      stateReversion.reasons.forEach(function (r) { reasons.push(r); });
 
       var failed = reasons.length > 0;
       try { if (failed) console.warn('[SCENE:ADEQUACY] FAILED — ' + reasons.join(' | ')); } catch (_) {}
@@ -99541,6 +99619,34 @@ function _buildAuthorFloorDirective(s) {
               if (Array.isArray(_em.obligations) && _em.obligations.length) _ob.push('  • open obligations: ' + _em.obligations.map(String).join(' | ').slice(0, 1400));
               if (Array.isArray(_em.ledgerSeeds) && _em.ledgerSeeds.length) _ob.push('  • what the cast now perceive of each other: ' + _em.ledgerSeeds.map(String).join(' | ').slice(0, 800));
             } } catch (_) {}
+            // RECENT OAS EXCHANGE (Roman 2026-09-20) — a real Scene 2 sample staged an interrogation
+            // as if it were happening for the first time, ignoring the live flirty exchange that had
+            // just occurred. Traced: this planner received only the FINAL submitted Say/Do line, with
+            // no summary of what was actually said in the preceding live turns. A first attempt at
+            // this fix read state.intimacyDialogue.liTurnHistory directly — WRONG: _resolveIntimacyScene
+            // (the function that ends the OAS scene and hands off to Submit) sets
+            // state.intimacyDialogue = null before this planner ever runs, in both real production and
+            // this harness — confirmed by direct trace, not assumed. The correct, already-existing,
+            // DURABLE source is state._oasSceneSnapshots (built by that same function, BEFORE the
+            // null-out, specifically so Back-nav can replay the OAS scene) — each entry's `beats` carry
+            // pcSay/pcDo/liDialogue/liAction per real turn. Reused here, not reinvented. Generic: fires
+            // whenever a snapshot exists, any starter.
+            try {
+              var _oasSnaps = (typeof window !== 'undefined' && window.state && window.state._oasSceneSnapshots) || {};
+              var _oasSnapKeys = Object.keys(_oasSnaps).map(Number).filter(function (n) { return !isNaN(n); }).sort(function (a, b) { return b - a; });
+              var _latestSnap = _oasSnapKeys.length ? _oasSnaps[String(_oasSnapKeys[0])] : null;
+              var _oasBeats = (_latestSnap && Array.isArray(_latestSnap.beats)) ? _latestSnap.beats : [];
+              if (_oasBeats.length) {
+                var _liLines = [];
+                _oasBeats.slice(-3).forEach(function (b) {
+                  if (!b) return;
+                  var _sayDo = [b.pcSay, b.pcDo].filter(Boolean).join(' / ');
+                  if (_sayDo) _liLines.push('  PLAYER: ' + _sayDo);
+                  if (b.liDialogue) _liLines.push('  ' + (_latestSnap.liName || 'LI') + ': ' + String(b.liDialogue));
+                });
+                if (_liLines.length) _ob.push('RECENT OAS EXCHANGE (this scene\'s own live turn history, archived before handoff — what was ACTUALLY said just before the reader\'s posture below; your objective must carry this forward, not restage a question or accusation already answered here):\n' + _liLines.join('\n'));
+              }
+            } catch (_) {}
             if (_posture) {
               _ob.push('READER\'S RECORDED CHOICE at the end of the opening: ' + (_posture.label || '(none recorded)'));
               _ob.push('READER\'S SAY/DO for this scene (verbatim; this is the posture the objective must answer): action: ' + JSON.stringify(_posture.action) + ' · dialogue: ' + JSON.stringify(_posture.dialogue));

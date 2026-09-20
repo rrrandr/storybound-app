@@ -1,11 +1,15 @@
-# Scene 2 Capability Retry #3 — Real Result (2026-09-20)
+# Scene 2 Capability Retry #3 — Real Result (2026-09-20, CORRECTED)
+
+**Correction, same day:** the original version of this document said priorities 1-3 "passed cleanly."
+That was wrong. Retry 3 is not a prose-quality near miss — it failed on immediate continuity and
+canon ingestion, on top of the (real, smaller) adequacy-check gap already documented. Roman caught
+this from the read-through PDF; see `_scene2_skeleton_handoff_trace2_2026_09_20.md` for the full
+trace and dry fixes that followed. This document is corrected in place rather than left standing.
 
 Authorized retry testing root cause C's fix (the open-row planner now receives seed worldTruths and
-explicit register framing before it derives its event — see
-`_scene2_skeleton_handoff_trace_2026_09_20.md`), same Boundary card, same Say/Do as retries #1 and
-#2, run once, foreground, evaluated in the order Roman specified: event selection first, then prose
-quality. Capability evidence about the generator, **not** a claim the prose is approved or ready to
-ship.
+explicit register framing before it derives its event), same Boundary card, same Say/Do as retries
+#1 and #2. Capability evidence about the generator, **not** a claim the prose is approved or ready
+to ship.
 
 ## Real cost and usage
 
@@ -20,95 +24,66 @@ ship.
 4 physical requests — well under the $0.45 / ≤8-request ceiling. OAS turn-reply and Fate-Card were
 replayed from the already-paid original run, zero new cost.
 
-Author call: `finish_reason:"stop"`, `prompt_tokens:56592`, `completion_tokens:4560`
-(`reasoning_tokens:732`) — real headroom left unused.
-
 Full raw log (untouched, unique filename): `_scene2_repair_replay_sample_out/run_1789933193165.jsonl`.
-Raw author response, extracted to its own filename (does not overwrite the fixed-name fixture files
-the 4 committed dry controls still depend on — same overwrite-and-restore discipline as retry #2;
-confirmed clean via `git diff --stat` before and after extraction):
-`_scene2_repair_replay_sample_out/scene2_raw_response_retry3.txt`.
+Raw author response: `_scene2_repair_replay_sample_out/scene2_raw_response_retry3.txt`.
 
-## Evaluation priority 1 — did the planner stop literalizing "burn"?
+## Corrected verdict: FAILED on continuity and canon ingestion, not a prose near-miss
 
-**Yes, cleanly.** The real planner response's `posture_read`: *"The reader's demand to 'burn' for
-the old gods is a performative accusation against Julian's role in the twist, framing his
-questioning as a violation of her agency — she wants him to suffer the same misalignment she
-endured, but now as a public spectacle of institutional failure, not personal vengeance."* No fire,
-pyre, or ceremonial-burning language anywhere in the planner's `state_change` or `event_slots`.
-Grep-confirmed against the delivered prose: the only occurrence of "burn" in the entire scene is
-inside a quoted dialogue line (beat 13) — Lirael *says* the Fate-Card's exact line aloud, as a
-challenge to Julian in front of the assembly, rendered as spoken confrontation rather than narrated
-as a physical event. This is precisely the register-aware handling the fix was meant to produce.
+**1. Root cause C's fix (worldTruths reaching the planner) worked as designed, but real production
+already had a broader continuity channel this test never exercised.** The planner did stop
+literalizing "burn" into fire — that specific fix held. But separately: the real, canonical Scene 1
+package (`public/starter-scenes.js`, `STARTER_SCENE1.starter_first_sacrifice.emitted`) explicitly
+states `openState.pcCondition: "mouth-band torn away, ceremonial sash still on..."` and
+`obligations: ["Julian... has ALREADY questioned her... It happened; it is not re-staged."]` — this
+is real, already-authored continuity data. Confirmed by direct dry probe
+(`_baked_emitted_probe.mjs`): when `state._bakedEmitted` is populated the way real production
+populates it (`_hydrateBakedStoryState`, called when the baked Scene 1 is displayed — well before
+any player interaction), the Scene 2 planner's prompt DOES correctly receive "mouth-band torn away"
+and "not re-staged" as binding facts. **`_scene2_repair_replay_sample.mjs` — the replay script used
+for all three retries — never calls this hydration step, so `state._bakedEmitted` stayed `null`
+across retries 1, 2, AND 3.** This is a real replay-harness bug, not (on this specific point) a
+confirmed production bug — but it means retry 3's planner ran on an artificially impoverished
+prompt, missing continuity data real production supplies. Retry 3's opening beats ("The sash knot
+gives under my fingers." / "The mouth-band falls against my collarbone...") stage the mouth-band as
+freshly removed, directly contradicting the canonical Scene 1 end-state — a real, visible continuity
+break in the delivered prose, caused by an untested-until-now harness gap. Fixed in
+`_scene2_skeleton_handoff_trace2_2026_09_20.md`.
 
-## Evaluation priority 2 — did it choose a worldTruths-sanctioned event lane?
+**2. The live OAS exchange itself never reaches the Scene 2 planner, in the harness OR in real
+production.** Confirmed by direct code trace: the planner's OPEN ROW prompt (`app.js`,
+`_generateLiteraryPlotContract`) never reads `state.intimacyDialogue.liTurnHistory` — only the
+FINAL submitted action/dialogue line, with zero summary of what was actually said during the live
+flirty back-and-forth (Julian's actual reply, her actual response, how the tension escalated). This
+is a real production gap, not a harness artifact — the Fate-card generator (`orchestration-client.js`)
+already has an equivalent block (`_authoredOASBlock`, reading the last 3 `liTurnHistory` turns) that
+the Scene 2 planner never got. Retry 3's Dohkar-interrogation scene doesn't acknowledge or build on
+anything specific that happened in the live OAS exchange — a real, separate continuity gap from #1.
 
-**Yes.** `state_change`: *"Lirael publicly tears the mouth-band from her sash and declares her
-interference in Seren's wish before the assembly."* This is a real ACCUSATION/confession event,
-grounded in actual established canon (the Sacrificiant's sealed mouth-band, a real worldTruth
-object — not invented), squarely inside the seed's own sanctioned lane ("accusation... political
-pressure"). `forces_choice` gives an active binary: confess interference as personal failure, or
-accuse Julian's own questioning of being the true misalignment — both real, both consequential.
+**3. The Fate-card generator has zero worldTruths/canon awareness — confirmed by direct code trace,
+not inference.** `orchestration-client.js`'s `generateIntimateFatePreviewsBatch` (the function that
+produced "I want you to burn for me, as the First-Favored did for the old gods") has no call to
+`_activeSeed`, no reference to `worldTruths`, and no Fatelands-specific cosmology guard anywhere in
+its ~340-line prompt. This matches an existing, disclosed, not-yet-wired canon fact (session memory
+`project_fatelands_oaths_and_idioms.md`, Roman 2026-09-19): "there is no God in the Fatelands, only
+Fate... real-world religious idioms are off-canon." The generator has a PRECEDENT for exactly this
+kind of world-specific lexical guard — a static "GLASS HOUSE IS CONTEMPORARY MODERN SPEECH... BANNED
+in Glass House fate previews: aperture, resonance..." block already ships for a different world —
+but nothing equivalent exists for Fatelands. The "old gods" line was never caught because nothing
+was ever looking for it.
 
-## Evaluation priority 3 — did the author dramatize it without contradicting protected facts?
+## What actually passed, honestly re-stated
 
-**Yes.** `_detectSceneAdequacyFailure`'s `relicViolations` is empty — the Answer never appears; no
-ownership contradiction. No fire/flame/smoke/pyre anywhere in the narrated beats (one, quoted,
-spoken-aloud exception, addressed above). The Dohkar, Julian, and Seren's roles and the sealed sash
-are all rendered consistently with canon.
+- No literalized fire/pyre in the NARRATED prose (the register-aware planner fix, root cause C,
+  genuinely worked on this specific axis).
+- `relicViolations: []` — the Answer's institutional ownership was not contradicted.
+- Real dialogue appeared for the first time (6 of 24 beats).
 
-## Evaluation priority 4 — prose quality (assessed only after 1-3 passed)
-
-Real, measurable improvement over both prior samples: 24 beats, **6 of them `dialogue`** (both
-priors had zero) — a direct, first-time appearance of the beat-kind diversity the earlier
-(demoted-to-secondary) theory named. Real interiority ("the choice sits between my teeth, heavier
-than any vow I rehearsed"), real LI pressure (Julian's stillness, the scar/script imagery), real
-institutional pressure delivered as dialogue (the Dohkar: *"Explain yourself, Sacrificiant."* /
-*"You will name the misalignment, or you will name your interference."* / *"Choose."*).
-
-`_detectSceneAdequacyFailure` verdict: **still FAILED**, for two reasons, worth separating honestly:
-
-```json
-{
-  "failed": true,
-  "reasons": [
-    "no aftermath/procedure/consequence-movement signal found anywhere in the scene",
-    "the scene's final 5 beats are dominated by suspension vocabulary with no completed forward movement"
-  ],
-  "checks": {
-    "aftermath": { "present": false },
-    "relicViolations": [],
-    "ending": { "suspensionVocabPresent": true, "movementVerbPresent": false, "tailBeatCount": 5 }
-  }
-}
-```
-
-- **The "no aftermath" reason is very likely a detector-vocabulary limitation, not a real scene
-  defect.** `_SCENE_AFTERMATH_VOCAB_RX` requires literal words — "tribunal/inquiry/hearing/summons/
-  procedure/ruling/verdict/investigation/aftermath/consequences/recriminations" or "accusations
-  formally/publicly" or "date is set." The Dohkar's dialogue *is* substantively an institutional
-  accusation/preliminary-review confrontation — it just never uses those specific nouns, because
-  it's dramatized as direct speech rather than narrated with a procedural label. This is disclosed
-  as a checker gap, not re-litigated as a scene failure — fixing it would mean widening the
-  detector's vocabulary to recognize dialogue-delivered institutional pressure, not fixing the
-  generator again.
-- **The ending-suspension reason is a real, smaller remaining gap.** The Dohkar's "Choose." (beat
-  21) is a genuine forcing beat, but the two beats after it ("the choice sits between my teeth...",
-  "Julian watches without moving...") retreat into suspended interiority rather than landing the
-  choice or a concrete next action. Closer to adequate than either prior sample's fully-passive
-  endings, but still short of "ends on a concrete next choice," per Roman's original requirement 5.
-
-## Reading across all three retries
-
-Retry 1 and 2: literal ritual-burning invention, canon-violating, zero dialogue, no worldTruths-
-sanctioned lane. Retry 3, with root cause C's fix in place: no literalized burning, a real
-worldTruths-sanctioned accusation event, zero relic violations, real dialogue for the first time,
-and a forcing beat at the close — the planner and author both did meaningfully different, better
-work on the same causal input. What remains is narrower and better-characterized than before: an
-ending that raises the right pressure but doesn't cash it into a landed action, and a detector whose
-aftermath-vocabulary is too literal to credit dialogue-delivered institutional pressure.
+None of these are "clean passes" on the broader question of whether the generator produced a
+continuity- and canon-correct scene — they are narrower, real, still-standing results inside a
+scene that independently failed on stale prior-state handling and illegal world-lore leakage.
 
 ## Status
 
-Not shipped, not patched, not hand-authored. Preserved as a third real capability sample. Per
-Roman's explicit instruction, no further retry follows this one regardless of the FAILED verdict.
+Not shipped, not patched, not hand-authored. Preserved as a third real, now-correctly-classified
+FAILED capability sample. Per Roman's explicit instruction, no further paid retry follows this one
+until the dry fixes below are in place and proven.
