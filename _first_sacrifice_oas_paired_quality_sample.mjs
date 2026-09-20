@@ -56,15 +56,26 @@ const RATES = {
   'grok-4-1-fast-reasoning': { in: 0.00000125, out: 0.0000025, cacheRead: 0.0000002 },
   'mistral-small-latest': { in: 0.00000015, out: 0.0000006 },
 };
+// Corrected 2026-09-20 (Roman): this helper's first use (the paired sample's own Run A) undercounted
+// real Grok cost by ~7.5% — it only priced usage.completion_tokens, omitting reasoning tokens, which
+// Grok bills as output at the same rate. Fixed two ways, matching public/app.js's own
+// estimateTextCost fix: (1) prefer the provider's own authoritative usage.cost_in_usd_ticks when
+// present (1 tick = 1e-10 USD, OBSERVED from that same real response, not a published xAI doc — see
+// app.js's TEXT_COST_TICK_TO_USD comment for the derivation); (2) otherwise include
+// completion_tokens_details.reasoning_tokens in the output-token estimate.
+const TICK_TO_USD = 1e-10;
 function realCost(model, usage) {
-  if (!usage) return { cost: null, note: 'no usage block returned' };
+  if (!usage) return { cost: null, note: 'no usage block returned', source: null };
+  if (typeof usage.cost_in_usd_ticks === 'number' && usage.cost_in_usd_ticks > 0) {
+    return { cost: usage.cost_in_usd_ticks * TICK_TO_USD, note: null, source: 'provider_ticks' };
+  }
   const rate = RATES[model];
-  if (!rate) return { cost: null, note: 'no sourced price row for model="' + model + '"' };
+  if (!rate) return { cost: null, note: 'no sourced price row for model="' + model + '"', source: null };
   const cacheRead = usage.cache_read_input_tokens || (usage.prompt_tokens_details && usage.prompt_tokens_details.cached_tokens) || 0;
   const freshIn = Math.max(0, (usage.prompt_tokens || 0) - cacheRead);
-  const outTok = usage.completion_tokens || 0;
+  const outTok = (usage.completion_tokens || 0) + ((usage.completion_tokens_details && usage.completion_tokens_details.reasoning_tokens) || 0);
   const cost = freshIn * rate.in + cacheRead * (rate.cacheRead != null ? rate.cacheRead : rate.in) + outTok * rate.out;
-  return { cost, note: null };
+  return { cost, note: null, source: 'estimated' };
 }
 const COMBINED_CEILING_USD = 0.06;
 
@@ -150,7 +161,7 @@ async function runPinned({ label, allowedPath, expectedModel }) {
     if (c.status === 200 && c.responseBody) {
       const text = (c.responseBody.choices && c.responseBody.choices[0] && c.responseBody.choices[0].message && c.responseBody.choices[0].message.content) || c.responseBody.content || null;
       const costInfo = realCost(model, c.responseBody.usage);
-      result = { verdict: 'SUCCESS', model, rawResponseText: text, usage: c.responseBody.usage || null, costUsd: costInfo.cost, costNote: costInfo.note, elapsedMs: c.elapsedMs != null ? Math.round(c.elapsedMs) : null };
+      result = { verdict: 'SUCCESS', model, rawResponseText: text, usage: c.responseBody.usage || null, costUsd: costInfo.cost, costNote: costInfo.note, costSource: costInfo.source, elapsedMs: c.elapsedMs != null ? Math.round(c.elapsedMs) : null };
       fs.writeFileSync(path.join(OUT_DIR, label + '_raw_response.txt'), text || '');
     } else {
       result = { verdict: 'INCONCLUSIVE', reason: 'pinned tier settled without a 200 response', status: c.status, networkError: c.networkError, model };

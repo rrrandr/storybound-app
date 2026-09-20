@@ -72,11 +72,19 @@ const RATES = {
   'grok-4-1-fast-reasoning': { in: 0.00000125, out: 0.0000025 },
   'mistral-small-latest': { in: 0.00000015, out: 0.0000006 },
 };
+// Corrected 2026-09-20 (Roman): matches the fix in public/app.js's estimateTextCost and in
+// _first_sacrifice_oas_paired_quality_sample.mjs's own realCost — prefer the provider's
+// authoritative usage.cost_in_usd_ticks (1 tick = 1e-10 USD, observed 2026-09-19), otherwise
+// include reasoning tokens in the output estimate (a reasoning-class Grok call bills them as
+// output, same rate as the visible completion — confirmed by the real sample's own ticks).
+const TICK_TO_USD = 1e-10;
 function realCost(model, usage) {
   if (!usage) return null;
+  if (typeof usage.cost_in_usd_ticks === 'number' && usage.cost_in_usd_ticks > 0) return usage.cost_in_usd_ticks * TICK_TO_USD;
   const rate = RATES[model];
   if (!rate) return null;
-  return (usage.prompt_tokens || 0) * rate.in + (usage.completion_tokens || 0) * rate.out;
+  const outTok = (usage.completion_tokens || 0) + ((usage.completion_tokens_details && usage.completion_tokens_details.reasoning_tokens) || 0);
+  return (usage.prompt_tokens || 0) * rate.in + outTok * rate.out;
 }
 const COMBINED_CEILING_USD = 0.06;
 

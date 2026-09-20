@@ -4806,6 +4806,15 @@ ${_pcInteriorLock}`;
       // expensive model fires unrecognized; track new models explicitly.
       'default':                   { in: 0.00000015, out: 0.0000006  }
   };
+  // AUTHORITATIVE PROVIDER COST — TICK CONVERSION (Roman 2026-09-20). Some providers (observed:
+  // xAI/Grok) return usage.cost_in_usd_ticks — their own real, billed cost for the call, immune to
+  // any drift in this file's TEXT_PRICING table or to reasoning-token undercounting. Conversion
+  // factor OBSERVED, not from a published xAI pricing doc: the real paired OAS quality sample
+  // (2026-09-19) returned cost_in_usd_ticks=319521500 for a Grok reasoning call whose own token
+  // counts (23,251 prompt incl. 192 cached, 352 visible + 884 reasoning completion) price to
+  // $0.0319524 at this file's own TEXT_PRICING rates — a match to 5 significant figures at
+  // 1 tick = 1e-10 USD. Re-verify if a future response's ticks/token-derived costs diverge.
+  var TEXT_COST_TICK_TO_USD = 1e-10;
 
   // $/image (conservative, quality-aware). Keys lowercase-matched against
   // provider name passed by generateImageWithFallback (bfl / gemini /
@@ -5692,6 +5701,13 @@ ${_pcInteriorLock}`;
 
   function estimateTextCost(model, usage) {
       if (!usage) return 0;
+      // AUTHORITATIVE PROVIDER COST (Roman 2026-09-20) — when the provider itself reports its real
+      // billed cost, use it directly instead of re-deriving one from token counts. Immune to
+      // TEXT_PRICING drift and to any token-field undercounting below. See TEXT_COST_TICK_TO_USD's
+      // own comment for the sourcing of the 1e-10 conversion factor.
+      if (typeof usage.cost_in_usd_ticks === 'number' && usage.cost_in_usd_ticks > 0) {
+          return usage.cost_in_usd_ticks * TEXT_COST_TICK_TO_USD;
+      }
       const _pk = _resolveTextPricingKey(model);
       // FAIL VISIBLY (Roman 2026-08-16): a missing price row must never quietly inherit another
       // model's rate. Shape is preserved so downstream totals are not poisoned, but the
@@ -5712,7 +5728,14 @@ ${_pcInteriorLock}`;
       const freshIn = (typeof usage.input_tokens === 'number')
           ? usage.input_tokens
           : Math.max(0, (usage.prompt_tokens || 0) - cacheWrite - cacheRead);
-      const outT = usage.completion_tokens || 0;
+      // REASONING TOKENS (Roman 2026-09-20): a reasoning-class model (grok-4-1-fast-reasoning
+      // confirmed) bills its reasoning tokens as OUTPUT, same rate as the visible completion — a
+      // real, disclosed defect: this estimate previously counted only usage.completion_tokens,
+      // silently undercounting every reasoning call by the reasoning-token share (confirmed ~7.5%
+      // on the real 2026-09-19 sample: completion_tokens alone priced to $0.0297 vs the provider's
+      // own $0.0320 authoritative cost; completion_tokens + reasoning_tokens matches it). This path
+      // only runs when the provider did NOT supply cost_in_usd_ticks above.
+      const outT = (usage.completion_tokens || 0) + ((usage.completion_tokens_details && usage.completion_tokens_details.reasoning_tokens) || 0);
       const cacheWriteRate = (typeof p.cacheWrite === 'number') ? p.cacheWrite : p.in;       // 5-min (1.25x)
       const cacheWrite1hRate = (typeof p.cacheWrite1h === 'number') ? p.cacheWrite1h : cacheWriteRate; // 1-hour (2x)
       const cacheReadRate = (typeof p.cacheRead === 'number') ? p.cacheRead : p.in;
@@ -5811,10 +5834,16 @@ ${_pcInteriorLock}`;
                     + ' (' + Math.round(100 * _ct / _pt) + '%) cost=$' + c.toFixed(4));
               } catch (_) {}
               this.textCost += c;
+              // costSource (Roman 2026-09-20): 'provider_ticks' when the provider's own
+              // authoritative usage.cost_in_usd_ticks was used (see estimateTextCost), 'estimated'
+              // when derived from TEXT_PRICING. Raw `usage` is already preserved verbatim below —
+              // together these let any downstream reader tell a ground-truth cost from a derived
+              // one, and re-derive/audit either way.
+              const costSource = (usage && typeof usage.cost_in_usd_ticks === 'number' && usage.cost_in_usd_ticks > 0) ? 'provider_ticks' : 'estimated';
               // Roman 2026-06-02: category lets the finalize line split one-time
               // STORY-SETUP (bibles / r-plot / a-plot — amortized across the run)
               // from per-SCENE prose and AUDIT instrumentation overhead.
-              if (c > 0) this.breakdown.text.push({ model, usage, cost: c, category: category || 'main' });
+              if (c > 0) this.breakdown.text.push({ model, usage, cost: c, costSource, category: category || 'main' });
               // Roman 2026-06-03: scene-audit hook — records TTFT + call count.
               try { _auditOnTextCall(model, usage, category || 'main'); } catch (_) {}
           },
@@ -195464,19 +195493,28 @@ No text, no watermark, no UI elements, share-ready.`;
         if (_INTIMACY_THINKING_TIMER_2) { clearTimeout(_INTIMACY_THINKING_TIMER_2); _INTIMACY_THINKING_TIMER_2 = null; }
         console.log('[INTIMACY-DIALOGUE] Using cached alternate (' + _specHitSlot + ') — no LLM call');
       } else {
-        var _oasLLM = window.StoryboundOrchestration && window.StoryboundOrchestration.callOASTurnLLM;
-        if (typeof _oasLLM === 'function') {
-          responseRaw = await _oasLLM([
-            { role: 'system', content: _oasSystemMsg },
-            { role: 'user',   content: prompt }
-          ], { max_tokens: 400, temperature: 0.75, preferReasoning: _preferReasoning, roleTag: 'oas-turn' });
-        } else {
-          // Defensive fallback if orchestration-client.js doesn't export it
-          responseRaw = await window.StoryboundOrchestration.callChatGPT([
-            { role: 'system', content: _oasSystemMsg },
-            { role: 'user',   content: prompt }
-          ], 'PRIMARY_AUTHOR', { model: 'gpt-4o-mini', max_tokens: 400, temperature: 0.75 });
-        }
+        // LIVE OAS TURN REPLY — LONG-CONTEXT AUTHOR ROLE (Roman 2026-09-20). Reclassified off
+        // callOASTurnLLM (which still serves the opener's live-generated path, roleTag
+        // 'oas-opener', unchanged — its prompt is short). The real paired OAS quality sample
+        // (2026-09-19) proved the turn-reply prompt (system + user: kink memory, power dynamic,
+        // POV rules, honeypot, author floor, recent turns, etc.) is structurally oversized for
+        // Mistral Small: a real, deterministic, terminal governor 507
+        // ("reservation_exceeds_model_allowance", reserved 103,176 tokens vs a 20,000 TPM
+        // allowance — not a rate-limit fluke, static and reply-length-independent). This role now
+        // uses the same Grok-primary / ministral-8b-2512-admission-gated / gpt-4o-terminal policy
+        // as full-scene authoring (_authorFullScenePolicy, app.js ~5058) — Mistral Small is
+        // removed from this role's eligible chain entirely. _preferReasoning (the existing
+        // noise/opening-turn sniffer) still selects WHICH Grok variant leads (reasoning vs fast
+        // non-reasoning) — only the fallback chain beneath it changed.
+        var _grokModelForTurn = _preferReasoning ? 'grok-4-1-fast-reasoning' : 'grok-4.20-0309-non-reasoning';
+        var _oasTurnPolicy = await window._authorFullScenePolicy([
+          { role: 'system', content: _oasSystemMsg },
+          { role: 'user',   content: prompt }
+        ], { maxTokens: 400, temperature: 0.75, roleTag: 'oas-turn', grokModel: _grokModelForTurn });
+        responseRaw = _oasTurnPolicy.text;
+        state._lastOASTurnAuthor = _oasTurnPolicy.provider;
+        state._lastOASTurnAuthorModel = _oasTurnPolicy.model;
+        state._lastOASTurnAuthorCache = _oasTurnPolicy.cache;
         console.log('[INTIMACY-DIALOGUE] LLM raw response (first 400 chars):',
                     (responseRaw || '').slice(0, 400));
       }

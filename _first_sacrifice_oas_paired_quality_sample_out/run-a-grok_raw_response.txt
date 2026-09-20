@@ -1,0 +1,27 @@
+{
+  "pc_input_transmuted": {
+    "say": "Then step forward, Julian. But do not call it rescue when you want me to ask.",
+    "do": "I keep my hands folded at my waist and meet his eyes across Seren’s bowed head, refusing to give the assembly the satisfaction of looking away."
+  },
+  "li_dialogue": "You fold your hands as though that gesture could hide the way your gaze sought mine through the rite. Step forward yourself and name what you wanted from me.",
+  "li_action": "Julian takes one deliberate step closer, the weight of his stare pinning you across the space between you.",
+  "li_next_prompt": "Will you admit it now, or must I draw it from you before them all?",
+  "release_state": "none",
+  "li_face_state": "intense",
+  "user_signal": "positive",
+  "temperature_shift": 1,
+  "scene_state": "continue",
+  "scene_tone": "power",
+  "kink_introduced": null,
+  "pc_kink_response": "none",
+  "kink_affinity": null,
+  "kinks_used": [],
+  "primaryEngine": "control",
+  "alternates": {
+    "temptation": "Then name the hunger you felt when your eyes found mine.",
+    "silence": "The silence between us answers louder than any words you offer.",
+    "reversal": "If you wish to command the moment, then take it.",
+    "boundary": "Speak what you will not have me name before them.",
+    "confession": "Say it plainly—what did you want when your gaze called to me?"
+  }
+}
