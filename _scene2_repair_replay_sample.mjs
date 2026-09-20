@@ -21,11 +21,17 @@
 // run's scene2-generation phase was NOT the scene-spine planner — its content (runThesis/issueArcs/
 // motifBank/voiceAnchors/characterIcebergs) is the CG SCAFFOLD, a once-per-story setup generator
 // (_shouldGenerateCGScaffold, app.js ~219277), gated OFF only when
-// state.cgScaffold.storyId === state.storyId. The original run's fresh storyId triggered it
-// unnecessarily — a REAL Scene 2 continuation of an EXISTING story would already have one. This
-// replay seeds state.cgScaffold with THAT SAME real, already-paid-for scaffold content (also read
-// from the persisted log, never re-typed) so it is correctly suppressed — isolating the replay to
-// exactly what Roman asked for: the repaired planner, and the Grok Scene 2 author call.
+// state.cgScaffold.storyId === state.storyId.
+//
+// CORRECTION (Roman, 2026-09-20): the first real Scene 2 transition does NOT already have a
+// scaffold — scaffold generation is intentionally DEFERRED until that first Submit, so a genuine
+// cold first-transition legitimately generates one there. This replay does NOT reproduce that —
+// it deliberately REUSES the already-paid-for real scaffold content from the original 2026-09-19
+// run (read from its persisted log, never re-typed) specifically to avoid paying for scaffold
+// generation a second time and to ISOLATE the repaired planner -> author path from it. This replay
+// is therefore a valid, narrower proof of the repaired blocker — it is NOT a cold-start end-to-end
+// proof of the first real Scene 2 transition (which would legitimately include scaffold
+// generation as one of its real costs, not accounted for in this replay's ceiling).
 //
 // Only Phase 3 (Submit -> verifier/planner/author) is allow-listed for REAL network calls. Phases 0-2
 // are fully stubbed with the real, already-paid content — genuinely zero additional spend for them.
