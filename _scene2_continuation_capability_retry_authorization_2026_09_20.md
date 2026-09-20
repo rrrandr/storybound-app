@@ -1,65 +1,64 @@
-# Continuation Capability Retry — Future Authorization Sheet (2026-09-20, fifth revision)
+# Continuation Capability Retry — Future Authorization Sheet (2026-09-20, sixth revision)
 
 **Not authorized. Not run. No provider or image call has been made preparing this sheet.** This
 describes a proposed, separate, later paid operation for when you choose to authorize it.
 
-This revision follows retry #3 (real, run — see `_scene2_capability_retry3_report_2026_09_20.md`,
-**corrected**: not a prose-quality near-miss, a real continuity/canon FAILED) and the dry trace and
-fixes it prompted — see `_scene2_skeleton_handoff_trace2_2026_09_20.md`. Six fixes are now in place
-and dry-proven across three passes, not three.
+This revision follows retry #4 (real, run — "the first valid retry against the intended state," see
+`_scene2_capability_retry4_report_2026_09_20.md`) and Roman's verdict on it: **"The plumbing is now
+mostly proven; the remaining failure is planner capability."** Retry 4 confirmed all continuity/canon
+fixes hold live, and proved the planner can receive every fact it needs and still choose a weak
+event — caught only after a real, paid author call had already dramatized it. A new gate
+(`_detectPlannerFunctionGap`) now stops that class of failure before the author call. A separate
+trace (`_planner_role_ledger_2026_09_20.md`) establishes which model/policy actually decides scene
+direction and estimates the cost of a stronger planner tier — not yet acted on, Roman's call.
 
 ## What this is testing
 
-Not "does Scene 2 read well" — closed, three times, no. This would be retry #4: whether the
-**generic continuation generator** (same pipeline, same player decision, no hand-authoring) can
-produce a Scene 2 that clears `_detectSceneAdequacyFailure` — now including the two new continuity/
-canon checks — with all six fixes in place. Three real attempts have failed on the identical causal
-input; a fourth is evidence about this specific generation, never a guarantee, and never a
-substitute for a human read even if every automated check passes.
+Not "does Scene 2 read well" — closed, four times, no. Not "is the wiring correct" — closed, proven
+live in retry 4. This would be retry #5: whether the SAME planner (ministral-8b-2512, unless Roman
+separately authorizes a model-policy change first) can produce an adequate plan on a fresh attempt
+of the SAME causal input, now that an inadequate plan can no longer reach the author uncaught. Four
+real attempts have failed; a fifth is evidence about this specific generation, never a guarantee.
 
 ## What changed since the sample that failed
 
-- **Root cause A** (author contradicted binding planner facts) — `state._scenePlotContract` carries
-  `aftermathTruths`/`reservedConstraints`, rendered as a "WORLD FACTS... HARD — BINDING" block.
-  Proven 8/8, `_planner_author_contract_authority_control.mjs`.
-- **Root cause B** (CG/GN pacing stuck at setup-pace ST1) — `_buildCGScreenplayUserPrompt` overrides
-  density to `CONT_AFTERMATH` for continuation scenes with real committed aftermath. Proven 12/12,
-  `_cg_continuation_pacing_control.mjs`.
-- **Root cause C** (the open-row planner invented an ungrounded event before it saw canon) — the
-  planner prompt now includes the seed's `worldTruths` plus explicit register framing (Say/Do is
-  posture, never literal instruction), both before the planner derives its event. Proven 13/13,
-  `_openrow_planner_worldtruths_control.mjs`.
-- **Finding 1 / harness fix** — real production already wires Scene 1's canonical end-state (mouth-
-  band torn away, "not re-staged" obligations) to the planner via `state._bakedEmitted`
-  (`_hydrateBakedStoryState`, called when the baked opening displays). The REPLAY SCRIPT used for
-  all three retries never reproduced that hydration step, so retries 1-3 tested an artificially
-  impoverished prompt on this axis. `_scene2_repair_replay_sample.mjs` now sets
-  `state._bakedEmitted` the same way production does.
-- **Finding 2 / planner fix** — the live OAS exchange (what was actually said in the flirty back-
-  and-forth) never reached the Scene 2 planner, in the harness OR real production. The planner now
-  reads the real, already-existing `state._oasSceneSnapshots` archive (built by
-  `_resolveIntimacyScene` before it nulls `intimacyDialogue`) and renders a "RECENT OAS EXCHANGE"
-  block before the reader's Say/Do line.
-- **Finding 3 / Fate-card fix** — `orchestration-client.js`'s Fate-card generators had zero
-  worldTruths/canon channel, confirmed by direct trace — how "burn for me, as the First-Favored did
-  for the old gods" reached the player as a card option in a world with no gods, only Fate (a known,
-  previously-disclosed, not-yet-wired canon fact). Both fate-preview prompt builders now carry a
-  static "FATELANDS HAS NO GOD, ONLY FATE" ban, matching the existing Glass House lexical-guard
-  precedent.
-- **New reject-only detectors**, folded into `_detectSceneAdequacyFailure`: `STARTER_COSMOLOGY_BANS`
-  (flags religious vocabulary in a Fatelands-set scene or Fate-card text) and
-  `STARTER_ESTABLISHED_OBJECT_STATES` (flags a scene's opening beats restaging an
-  already-established object-removal as if new — First Sacrifice's mouth-band, sourced from the same
-  canonical data Finding 1 traces). Both generic, per-starter, inert without registered data.
-- **Disclosed, NOT fixed:** beat-`kind` diversity (secondary gap, unchanged) and retread-detection
-  for the pre-OAS accusation (addressed at the prompt level via Findings 1-2, not as a new detector
-  — judging semantic "retreading" isn't reliably regex-doable; see the trace doc for why).
+- **Root causes A/B/C** and **Findings 1-3** (harness/OAS-history/cosmology) — all fixed and
+  dry-proven across four prior passes; confirmed firing live in retry 4's real dispatch (RECENT OAS
+  EXCHANGE, mouth-band torn away, WORLD TRUTHS all present verbatim). See
+  `_scene2_skeleton_handoff_trace_2026_09_20.md` / `_scene2_skeleton_handoff_trace2_2026_09_20.md`
+  for full detail — unchanged this revision.
+- **NEW — Planner Function Gate** (this pass): `_detectPlannerFunctionGap` re-runs the same,
+  already-proven aftermath-vocabulary check against the planner's OWN proposed
+  `tactical_move`/`event`/`forces_choice` — BEFORE the author is ever dispatched. Wired into the CG
+  open-row flow immediately after the existing stale-objective gate, reusing its exact bounded-
+  retry-then-stop machinery (not a new mechanism). Gated on the same `requiresAftermath` condition
+  that already triggers `CONT_AFTERMATH` density (`sceneIndex > 0` with real committed aftermath/
+  reserved data) — a scene without that data is unaffected. Proven 10/10,
+  `_scene2_planner_function_gate_control.mjs`, using retry 4's REAL rejected planner output as the
+  red fixture, including a full-flow proof that the author is never dispatched (zero calls at
+  `max_tokens: 8000`) even across the one bounded retry.
+- **NEW — planner-role trace**: `_planner_role_ledger_2026_09_20.md` establishes, from source and
+  real retry logs, that exactly ONE role decides the actual next-scene event (the scene-spine/
+  open-row planner) — currently ministral-8b-2512 primary, Grok fallback ONLY on transport/parse
+  failure, never on plan quality. Real cost estimate: switching this one role to Grok-primary would
+  cost ≈$0.008/call more (≈9.4×) than ministral's real $0.00095, still small against the author
+  call's ~$0.085-0.09. Not yet acted on — a separate decision from this sheet.
 
-Proven 15/15, `_scene2_continuity_canon_control.mjs` (RED:MOUTHBAND — retry-3's real beats flagged;
-RED:COSMOLOGY — the real leaked card text flagged; GREEN — a clean synthetic scene on the same
-posture clears everything; GENERIC — both mechanisms inert for an unregistered starter; PROMPT:OAS —
-the real dispatch now carries RECENT OAS EXCHANGE + IMMUTABLE AFTERMATH together; HARNESS — the
-replay script fix confirmed). All four prior controls re-run green (8/8, 12/12, 13/13, 11/11).
+## Before the next paid attempt — Roman's choice, not decided here
+
+Per Roman's own framing, a fifth retry should run under ONE of:
+1. **The gate alone** (default, no model-policy change) — the planner still runs ministral-8b-2512
+   primary; if it produces another inadequate plan, the gate now catches it before author spend, and
+   the attempt ends in a resumable-stop with $0 author cost instead of a fourth ~$0.09 wasted author
+   call. This tests whether ministral can EVER pass its own gate on a fresh draw, cheaply.
+2. **A planner-model-policy change** (e.g. `window._scenePlannerEngine = 'grok'`, or a bespoke
+   change to `_scTiers`) tested FIRST, separately authorized, before spending on a full retry — this
+   tests whether a stronger planner model changes the outcome at all, which the gate alone cannot
+   answer (a gate only prevents bad plans from costing author spend; it doesn't make the planner
+   better).
+
+This sheet does not choose between them — that's explicitly Roman's decision, per
+`_planner_role_ledger_2026_09_20.md`'s "no policy change yet."
 
 ## Scope
 
@@ -68,20 +67,20 @@ replay script fix confirmed). All four prior controls re-run green (8/8, 12/12, 
   planner/author call.
 - Same player decision (Boundary card, the same real Say/Do) — a capability retry on the SAME
   causal input, not a new player branch.
-- New gate: after the real author call settles, run `_detectSceneAdequacyFailure` (now including the
-  continuity/canon checks) on the result before calling it usable. Fails → preserved as a fourth
-  failed capability sample, not shipped, not patched.
-- Judge event selection AND continuity/canon FIRST (does it avoid literalizing posture text, choose
-  a worldTruths-sanctioned lane, avoid restaging an already-established object state, avoid
-  cosmology leakage, carry the live OAS exchange forward); prose quality only after those hold.
-- If this retry ALSO fails, that is real evidence a further cause remains (beat-kind diversity is
-  the standing candidate) — reported honestly either way, not concealed.
+- NEW: if the planner's own plan fails the Planner Function Gate, the attempt stops there — $0
+  author spend, logged and reported as a gate rejection, not a failed generation sample.
+- Only if the gate passes does the author fire; THEN run `_detectSceneAdequacyFailure` (full
+  continuity/canon/aftermath/ending checks) on the delivered prose before calling it usable.
+- If this retry ALSO fails (gate-rejected OR author-adequacy-failed), that is real evidence
+  ministral-class planning may not be sufficient for this role regardless of data completeness —
+  reported honestly either way, not concealed.
 
 ## Cost ceiling (estimate, based on the measured real cost of the prior full generation)
 
-Retry #3's real, measured total was $0.127971 (planner $0.0008, author $0.0838, emotional-gravity
-audit $0.0006, image-style extraction $0.0428 — the latter two fire regardless of scene quality and
-aren't part of this test). Proposed ceiling, unchanged, already proven to hold with margin:
+Retry #4's real, measured total was $0.228671 (8 requests — more calls fired than prior retries;
+disclosed run-to-run variance, still under ceiling). If the Planner Function Gate rejects the plan,
+real cost would be roughly the planner-only cost (~$0.001-0.002, possibly ×2 for the bounded retry)
+— a large savings versus paying for an author call that was going to fail anyway. Ceiling unchanged:
 
 | Phase | Ceiling (USD) | Physical requests |
 |---|---|---|
@@ -89,24 +88,27 @@ aren't part of this test). Proposed ceiling, unchanged, already proven to hold w
 | scene2-author (unchanged) | $0.40 | ≤2 |
 | **Total** | **$0.45** | **≤8** |
 
-Adequacy re-validation is dry (`_detectSceneAdequacyFailure`) — $0 additional.
+Adequacy re-validation is dry (`_detectSceneAdequacyFailure`, `_detectPlannerFunctionGap`) — $0
+additional.
 
 ## What this would (and would not) prove
 
-Would prove: whether the generator, with root causes A/B/C and Findings 1-3 all fixed, can produce a
-continuity-correct, canon-correct, adequate Scene 2 on a fresh attempt.
+Would prove: whether the SAME planner model/policy, now gated, can produce a plan worth paying an
+author to dramatize — and if it does, whether that dramatization clears full adequacy.
 
-Would not prove: that Scenes 3-10 are adequate; that the same standard holds for a different player
-branch; that beat-kind diversity or semantic retreading (neither encoded as a reject-only check) are
-actually satisfied — those still require a human read even if every automated check passes. Three
-real attempts have already failed on the same causal input.
+Would not prove: that a stronger planner model would do better (a separate, not-yet-run comparison);
+that Scenes 3-10 are adequate; that a different player branch holds the same standard; that
+beat-kind diversity or semantic retreading (neither encoded as a reject-only check) are satisfied.
+Four real attempts have already failed on the same causal input.
 
 ## Status
 
-Six fixes in place and dry-proven (root causes A/B/C, Findings 1-3). Requirements and traces
-documented (`_continuation_scene_adequacy_requirements_2026_09_20.md`,
+Nine fixes in place and dry-proven across four passes (root causes A/B/C, Findings 1-3, the Planner
+Function Gate). Requirements and traces documented
+(`_continuation_scene_adequacy_requirements_2026_09_20.md`,
 `_scene2_capability_test_root_causes_2026_09_20.md`, `_scene2_skeleton_handoff_trace_2026_09_20.md`,
-`_scene2_skeleton_handoff_trace2_2026_09_20.md`). Three real capability samples on record, all
-FAILED, most recent correctly classified as a continuity/canon failure, not a prose near-miss
-(`_scene2_capability_retry3_report_2026_09_20.md`). No provider or image calls made preparing this
-sheet. Awaiting explicit authorization before running a fourth retry.
+`_scene2_skeleton_handoff_trace2_2026_09_20.md`, `_planner_role_ledger_2026_09_20.md`). Four real
+capability samples on record, all FAILED or (were this gate active at the time) would have been
+gate-rejected before author spend. No provider or image calls made preparing this sheet. Awaiting
+explicit authorization before running a fifth retry, and a separate decision on planner model policy
+before or instead of it.

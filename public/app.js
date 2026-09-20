@@ -8898,6 +8898,39 @@ window.config = window.config || {
     } catch (e) { return { failed: false, error: e && e.message }; }
   }
   window._detectEstablishedStateReversion = _detectEstablishedStateReversion;
+
+  // ═══ PLANNER FUNCTION GATE (Roman 2026-09-20) ═══
+  // Reject-only, runs on the PLANNER's own proposed event — BEFORE any author dispatch. Real finding
+  // this closes: retry 4 proved the wiring (mouth-band state, live OAS exchange, worldTruths,
+  // CONT_AFTERMATH pacing, protected-object constraints) all correctly reach the planner, and the
+  // planner still chose "more confrontation in the same ritual moment" over the required aftermath/
+  // procedure function — _detectSceneAdequacyFailure caught it only AFTER a real, paid author call
+  // had already dramatized the plan. Roman: "The current failure should have stopped at the planner,
+  // before spending on the author." This is that stop. Reuses _SCENE_AFTERMATH_VOCAB_RX (the same,
+  // already-proven vocabulary check _detectSceneAdequacyFailure runs against delivered prose) against
+  // the planner's own tactical_move/event/forces_choice — the short structured fields that describe
+  // what the scene will actually do, before any prose exists to check. Generic: gates on
+  // `opts.requiresAftermath` (the caller supplies this — mirrors the exact condition that already
+  // triggers CONT_AFTERMATH pacing, sceneIndex > 0 with real committed aftermath/reserved data), not
+  // on any starter-specific text.
+  function _detectPlannerFunctionGap(stateChange, opts) {
+    try {
+      opts = opts || {};
+      if (!opts.requiresAftermath) return { rejected: false };
+      var sc = stateChange || {};
+      var combined = [sc.tactical_move, sc.event, sc.forces_choice].filter(Boolean).join(' \n ');
+      if (!combined) return { rejected: false }; // nothing to judge — do not reject on absence of data itself
+      var aftermathPresent = _SCENE_AFTERMATH_VOCAB_RX.test(combined);
+      if (aftermathPresent) return { rejected: false, checkedText: combined };
+      return {
+        rejected: true,
+        reason: 'the planner\'s own proposed event/tactical-move/forces-choice shows no aftermath/procedure/consequence-movement signal, even though this continuation scene requires one (CONT_AFTERMATH-eligible) — rejected before the author call, not sent to be dramatized',
+        checkedText: combined,
+      };
+    } catch (e) { return { rejected: false, error: e && e.message }; }
+  }
+  window._detectPlannerFunctionGap = _detectPlannerFunctionGap;
+
   function _detectSceneAdequacyFailure(screenplay, opts) {
     try {
       opts = opts || {};
@@ -229849,6 +229882,29 @@ No text, no watermark, no UI elements, share-ready.`;
         return { __staleRejected: true, reason: 'local objective not accepted: ' + (_rj && _rj.sceneNum === ((sceneIndex | 0) + 1) ? _rj.reason : 'the planner produced no usable objective'), sceneIndex: sceneIndex };
       }
     } catch (_) {}
+    // PLANNER FUNCTION GATE (Roman 2026-09-20) — an ACCEPTED objective is not automatically a USABLE
+    // one. Real finding: retry 4 proved the planner can receive every fix (mouth-band state, live OAS
+    // exchange, worldTruths, protected-object constraints) and still pass _validateLocalObjective
+    // (structurally complete) while choosing an event with no aftermath/procedure/consequence
+    // movement — a real, paid author call then faithfully dramatized that inadequate plan, and only
+    // THEN did _detectSceneAdequacyFailure catch it. This gate runs the same aftermath-vocabulary
+    // check against the planner's OWN proposed event, before sysPrompt is even built, so a doomed
+    // plan never reaches the author. Same requiresAftermath condition as the CONT_AFTERMATH density
+    // override below (sceneIndex > 0, real committed aftermathTruths/reservedConstraints) — this gate
+    // and that override are deliberately kept in sync; a scene without real aftermath data is
+    // unaffected by either.
+    try {
+      var _pfRequiresAftermath = !!(sceneIndex > 0 && state._scenePlotContract &&
+        ((Array.isArray(state._scenePlotContract.aftermathTruths) && state._scenePlotContract.aftermathTruths.length) ||
+         (Array.isArray(state._scenePlotContract.reservedConstraints) && state._scenePlotContract.reservedConstraints.length)));
+      if (_pfRequiresAftermath && typeof _detectPlannerFunctionGap === 'function') {
+        var _pfGate = _detectPlannerFunctionGap(state._scenePlotContract.stateChange, { requiresAftermath: true });
+        if (_pfGate.rejected) {
+          try { console.warn('[CG:PLANNER-GATE] REJECTED before author dispatch, scene=' + sceneIndex + ' — ' + _pfGate.reason); } catch (_) {}
+          return { __plannerFunctionRejected: true, reason: _pfGate.reason, sceneIndex: sceneIndex };
+        }
+      }
+    } catch (_) {}
     // SCENE-1 DIRECT-vs-SUBTLE AXIS EMBODIMENT (Roman 2026-07-15) — match literary.
     // The literary scene-1 scaffold calls _genBespokeScene1Axis to embody the fixed
     // Direct-vs-Subtle probe in THIS scene's real stakes; CG never did, so its demand_hint
@@ -230581,7 +230637,10 @@ No text, no watermark, no UI elements, share-ready.`;
           return;
         }
         plan = await _runCGScreenplayGen(sceneIndex, playerAction, playerDialogue);
-        if (plan && plan.__staleRejected) {
+        // PLANNER FUNCTION GATE (Roman 2026-09-20): a rejected inadequate plan reuses the SAME bounded
+        // retry-then-stop machinery as a stale objective — the plan is discarded either way, never
+        // displayed, never committed, never sent to the author. See _detectPlannerFunctionGap.
+        if (plan && (plan.__staleRejected || plan.__plannerFunctionRejected)) {
           // The whole result is discarded (never displayed, never committed). ONE bounded retry with the CURRENT
           // snapshot. Whatever the retry does — a second stale result, a null or malformed reply, a thrown error —
           // the rejection context is preserved: STOP with resumable state and released locks. The ordinary
@@ -230589,9 +230648,9 @@ No text, no watermark, no UI elements, share-ready.`;
           try { console.warn('[CG:STALE-REJECTED] retrying once with the current branch/attempt: ' + plan.reason); } catch (_) {}
           var _retry = null, _retryErr = null;
           try { _retry = await _runCGScreenplayGen(sceneIndex, playerAction, playerDialogue); } catch (_re) { _retryErr = _re; }
-          var _retryOk = !!(_retry && !_retry.__staleRejected && Array.isArray(_retry.beats) && _retry.beats.length);
+          var _retryOk = !!(_retry && !_retry.__staleRejected && !_retry.__plannerFunctionRejected && Array.isArray(_retry.beats) && _retry.beats.length);
           if (!_retryOk) {
-            var _why = _retryErr ? ('retry threw: ' + (_retryErr && _retryErr.message)) : (_retry && _retry.__staleRejected ? ('retry stale: ' + _retry.reason) : 'retry returned no usable plan');
+            var _why = _retryErr ? ('retry threw: ' + (_retryErr && _retryErr.message)) : ((_retry && (_retry.__staleRejected || _retry.__plannerFunctionRejected)) ? ('retry stale: ' + _retry.reason) : 'retry returned no usable plan');
             state._cgResumable = { sceneIndex: sceneIndex, action: playerAction || '', dialogue: playerDialogue || '', reason: _why, at: Date.now(), storyId: state.storyId };
             try { console.warn('[CG:STALE-STOP] scene ' + sceneIndex + ' — ' + _why + ' — stopped; resumable; no engine switch'); } catch (_) {}
             try { _hideStagedComposingIndicator(); } catch (_) {}
