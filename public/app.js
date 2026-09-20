@@ -4795,6 +4795,12 @@ ${_pcInteriorLock}`;
       // session (the full-scene-author admission-gated fallback, the OAS-turn-reply fallback, and
       // two calls in the 2026-09-20 happy-path sample) had unrecoverable, unpriced cost until now.
       'ministral-8b-2512':           { in: 0.00000015, out: 0.00000015 },  // $0.15 in / $0.15 out per MTok
+      // gemini-2.5-flash — OFFICIAL list price (Roman 2026-09-20, ai.google.dev/gemini-api/docs/pricing,
+      // Gemini 2.5 Flash standard paid tier). Images are billed at the SAME rate as text input per that
+      // page ("$0.30 (text / image / video)"), so no separate per-image surcharge applies here. Added
+      // alongside the Gemini vision-adapter capability control (_extractStyleViaGemini) — not yet wired
+      // to any live call site.
+      'gemini-2.5-flash':            { in: 0.0000003,  out: 0.0000025  },  // $0.30 in / $2.50 out per MTok
       // Roman 2026-08-27 — added BEFORE any author A/B, not after. Both are already allowlisted in
       // the proxy (mistral-medium-latest is in fact its DEFAULT), so a test run would have fallen
       // through to 'default' and under-counted Large 3 input by ~3.3x and Medium 3.5 output by
@@ -4893,6 +4899,10 @@ ${_pcInteriorLock}`;
       // Mistral / DeepSeek — CG screenplay authors (A3-F3). Priced explicitly, no longer 'default'.
       if (m.indexOf('mistral') !== -1) return 'mistral-small-latest';
       if (m.indexOf('deepseek') !== -1) return 'deepseek-v4-pro';
+      // gemini-2.5-flash — see TEXT_PRICING entry above; without this explicit check every
+      // Gemini call (including the vision-adapter capability control) would silently fall
+      // through to 'default' (gpt-4o-mini's rate), the same gap ministral-8b-2512 had.
+      if (m.indexOf('gemini') !== -1) return 'gemini-2.5-flash';
       return 'default';
   }
 
@@ -5999,6 +6009,27 @@ ${_pcInteriorLock}`;
     } catch (e) { return { ok: false, status: 0, json: async function () { return {}; } }; }
   }
   window._auditPost = _auditPost;
+
+  // ── MISTRAL-ONLY AUDIT POST (Roman 2026-09-20) ── scoped to the emotional-gravity audit
+  // specifically (NOT a change to the shared _auditPost above, which several other audits still
+  // use unchanged — that is a separate decision). Roman: "It is telemetry-only, so it should
+  // never spend on expensive fallback tiers." ONE attempt, ministral-8b-2512 only, no tiered
+  // fallback to Grok/GPT — a genuine provider failure here should be cheap and silent, not
+  // escalate spend for a call that never gates or regenerates story content.
+  async function _auditPostMistralOnly(body) {
+    body = body || {};
+    try {
+      var r = await fetch('/api/mistral-proxy', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ model: 'ministral-8b-2512', temperature: (body.temperature != null ? body.temperature : 0.2), max_tokens: body.max_tokens || 600, messages: body.messages || [] })
+      });
+      if (!r.ok) return { ok: false, status: r.status, json: async function () { return {}; } };
+      var d = await r.json();
+      var content = (d && (d.content || (d.choices && d.choices[0] && d.choices[0].message && d.choices[0].message.content))) || '';
+      return { ok: true, status: 200, json: async function () { return { content: content, usage: (d && d.usage) || null, _orchestration: { model: 'ministral-8b-2512' } }; } };
+    } catch (e) { return { ok: false, status: 0, json: async function () { return {}; } }; }
+  }
+  window._auditPostMistralOnly = _auditPostMistralOnly;
 
   // ── SETUP REROLL ROUTING (Roman 2026-06-26) ──────────────────────────────────────────────
   // Short, schema-validated SETUP rerolls (bespoke axis, verb-guard, physical/behav-canon rewrite,
@@ -8276,19 +8307,36 @@ window.config = window.config || {
           '  "li_verdict": "<LEAD | PRESENT | ABSENT>",\n' +
           '  "reason": "<one sentence: what the reader is actually thinking about in this scene, and whether the pull toward the LI is DESIRE (wanting him) or PLOT-FIXATION (wanting to know his secret)>"\n' +
           '}';
-        var res = await _auditPost({ temperature: 0.2, max_tokens: 1400, messages: [ { role: 'system', content: sys }, { role: 'user', content: usr } ] });
-        if (!res.ok) { try { console.warn('[SCENE1:GRAVITY] HTTP ' + res.status); } catch (_) {} return null; }
+        // ROUTED TO MISTRAL-ONLY, NO EXPENSIVE FALLBACK (Roman 2026-09-20): this audit is
+        // telemetry-only (never gates or regenerates story content — see the header comment
+        // above), so a real provider failure must stay cheap, not escalate to Grok/GPT. On
+        // failure, record audit_skipped on state and return null; the caller already treats a
+        // null gravity result as "no data this scene," never as a blocker.
+        var res = await _auditPostMistralOnly({ temperature: 0.2, max_tokens: 1400, messages: [ { role: 'system', content: sys }, { role: 'user', content: usr } ] });
+        if (!res.ok) {
+          try { console.warn('[SCENE1:GRAVITY] audit_skipped — ministral-8b-2512 HTTP ' + res.status); } catch (_) {}
+          try { s.rPlot = s.rPlot || {}; s.rPlot._gravitySkipped = { reason: 'audit_skipped', status: res.status, model: 'ministral-8b-2512', at: Date.now() }; } catch (_) {}
+          return null;
+        }
         var data = await res.json();
-        try { if (typeof _recordProxyTextCost === 'function') _recordProxyTextCost(data, 'gpt-4o-mini', 'audit'); } catch (_) {}
+        try { if (typeof _recordProxyTextCost === 'function') _recordProxyTextCost(data, 'ministral-8b-2512', 'audit'); } catch (_) {}
         var raw = (data && typeof data.content === 'string') ? data.content : '';
         raw = raw.replace(/^\s*```[a-z]*\s*/i, '').replace(/\s*```\s*$/i, '').trim();
         var lb = raw.indexOf('{'), rb = raw.lastIndexOf('}');
-        if (lb === -1 || rb === -1 || rb <= lb) { try { console.warn('[SCENE1:GRAVITY] no JSON in response'); } catch (_) {} return null; }
+        if (lb === -1 || rb === -1 || rb <= lb) {
+          try { console.warn('[SCENE1:GRAVITY] audit_skipped — no JSON in response'); } catch (_) {}
+          try { s.rPlot = s.rPlot || {}; s.rPlot._gravitySkipped = { reason: 'audit_skipped', detail: 'no JSON in response', model: 'ministral-8b-2512', at: Date.now() }; } catch (_) {}
+          return null;
+        }
         var parsed;
         try { parsed = JSON.parse(raw.slice(lb, rb + 1)); }
         catch (_pe) {
           try { parsed = JSON.parse(raw.slice(lb, rb + 1).replace(/,\s*([}\]])/g, '$1').replace(/[“”]/g, '"').replace(/[‘’]/g, "'")); }
-          catch (_pe2) { try { console.warn('[SCENE1:GRAVITY] parse failed: ' + _pe.message); } catch (_) {} return null; }
+          catch (_pe2) {
+            try { console.warn('[SCENE1:GRAVITY] audit_skipped — parse failed: ' + _pe.message); } catch (_) {}
+            try { s.rPlot = s.rPlot || {}; s.rPlot._gravitySkipped = { reason: 'audit_skipped', detail: 'parse failed: ' + (_pe && _pe.message), model: 'ministral-8b-2512', at: Date.now() }; } catch (_) {}
+            return null;
+          }
         }
         var _liPct = Number(parsed.li_pct) || 0;
         var _verdict = String(parsed.li_verdict || '').toUpperCase();
@@ -159090,6 +159138,47 @@ ${_buildSettingImageOverrideSuffix()}`,
     window._4oReferenceExtracted = false;
     return null;
   }
+
+  /**
+   * GEMINI VISION ADAPTER — capability control ONLY (Roman 2026-09-20). NOT wired to any live
+   * call site; rewritePromptWith4o above is UNCHANGED and remains the real style-extraction path.
+   * Exists so _gemini_vision_adapter_capability_control.mjs can dry-prove request serialization,
+   * response parsing, fail-closed behavior, and cost accounting for a genuine drop-in candidate —
+   * without claiming BFL's own access to the reference images makes this extraction step
+   * redundant (that is a separate, image-quality question only a real A/B can answer).
+   *
+   * Mirrors rewritePromptWith4o's SAME system/user prompt text and the same 8-image structure —
+   * but built in gemini-proxy.js's ACTUAL content-block contract, confirmed by reading that file
+   * directly: { type:'image', mime_type, data } and { type:'text', text }. This is NOT the OpenAI
+   * shape ({ type:'image_url', image_url:{url} }) the 4o version sends — a real, load-bearing
+   * difference; passing the 4o shape here would silently produce empty parts server-side.
+   * Scope: reference-image-driven (vision) path only — the no-reference text-only fallback isn't
+   * part of this comparison (there is no vision decision to make without reference images).
+   */
+  async function _extractStyleViaGemini(refImagesB64, scene) {
+    if (!Array.isArray(refImagesB64) || !refImagesB64.length) return null;
+    var systemContent = 'You are a visual art director for a comic book / graphic novel. The reference image(s) are ILLUSTRATED ART — treat them as comic or webtoon panels, never as photography. The FIRST image defines the art style. Additional images show the setting/environment.\n\nExtract from the style reference: line quality (ink strokes, outlines, edge treatment), coloring style (flat cel-shading, soft gradients, or painted), lighting mood (warm/cool, rim lights, glow effects). Use setting references to inform environment details.\n\nConvert into a prompt that produces ILLUSTRATED comic art matching this style applied to the scene.\n\nRules:\n- 60-120 words maximum\n- The output MUST be comic book / manga / webtoon illustration — NEVER photorealistic, NEVER painterly realism, NEVER 3D render\n- Do NOT describe the reference image content — extract its illustration style\n- Start the prompt with the art medium (e.g. "digital comic illustration", "manga panel", "webtoon art")\n- All people must be clearly adults (mid-to-late 20s or older)\n- Always produce a full color image\n- Output ONLY the prompt, no explanation\n\n— STYLE-ONLY EXTRACTION (HARD): The reference image(s) may DEPICT specific compositions (two characters leaning toward each other, one character framed close, an intense embrace, etc.). DO NOT carry the SUBJECT COMPOSITION of the reference image into your output. Extract ONLY visual style attributes: medium, linework, color palette, rendering technique, lighting register, tonal range. NEVER write phrases like "two adults leaning toward each other", "faces close", "intense emotional moment between two figures", "characters embracing", "dramatic confrontation", "intimate exchange" — those are SUBJECT descriptions, not style descriptions. The subject of the rendered image is determined by the SCENE block, not by what the reference image depicts. If you find yourself describing what the people in the reference are doing, STOP — that is subject-matter leak, not style extraction.\n— BANNED COMPOSITION CARRY (HARD): The reference image\'s character poses and inter-character positioning are NOT part of the style. Do NOT echo positioning language from the reference. Output should be 100% style attributes (line, color, rendering, light) plus the scene as written, with no inter-character positioning derived from the reference.';
+    var userContent = [];
+    for (var _gi = 0; _gi < refImagesB64.length; _gi++) userContent.push({ type: 'image', mime_type: 'image/png', data: refImagesB64[_gi] });
+    var refNote = refImagesB64.length > 1 ? 'The first image is the art style reference. Additional images show the setting/location.' : 'This reference is comic/webtoon illustration art.';
+    userContent.push({ type: 'text', text: 'SCENE:\n' + scene + '\n\n' + refNote + ' Extract the illustration style and combine with this scene. The result MUST look like a comic book panel, not a photograph or painting.' });
+    try {
+      var r = await fetch('/api/gemini-proxy', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ role: 'PRIMARY_AUTHOR', model: 'gemini-2.5-flash', temperature: 0.4, max_tokens: 200, messages: [ { role: 'system', content: systemContent }, { role: 'user', content: userContent } ] })
+      });
+      if (!r.ok) { try { console.warn('[GEMINI-STYLE-ADAPTER] HTTP ' + r.status); } catch (_) {} return null; }
+      var d = await r.json();
+      try { if (typeof _recordProxyTextCost === 'function') _recordProxyTextCost(d, 'gemini-2.5-flash', 'style-extraction-gemini-adapter'); } catch (_) {}
+      var content = (d && d.choices && d.choices[0] && d.choices[0].message && typeof d.choices[0].message.content === 'string') ? d.choices[0].message.content : '';
+      if (content && content.trim().length > 20) {
+        console.log('[GEMINI-STYLE-ADAPTER] REFERENCE-DRIVEN (' + refImagesB64.length + ' refs) extraction (' + content.trim().length + ' chars)');
+        return content.trim();
+      }
+      return null;
+    } catch (e) { try { console.warn('[GEMINI-STYLE-ADAPTER] error: ' + (e && e.message)); } catch (_) {} return null; }
+  }
+  window._extractStyleViaGemini = _extractStyleViaGemini;
 
   /**
    * AUTHORITATIVE render prompt builder.
