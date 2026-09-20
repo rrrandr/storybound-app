@@ -1,0 +1,92 @@
+{
+  "at": "2026-09-20T08:01:10.114Z",
+  "baselineFile": "/Users/romantsukerman/storybound-app/_scene2_repair_replay_sample_out/scene2_raw_response.txt",
+  "preRepairDetector": {
+    "flagged": true,
+    "liBeatCount": 4,
+    "flatCount": 4,
+    "ratio": 1,
+    "flatBeats": [
+      {
+        "idx": 7,
+        "text": "Julian does not move."
+      },
+      {
+        "idx": 11,
+        "text": "Julian’s hands remain steady around the Answer."
+      },
+      {
+        "idx": 16,
+        "text": "Julian does not speak."
+      },
+      {
+        "idx": 22,
+        "text": "Julian’s gaze does not waver."
+      }
+    ],
+    "reason": "LI presence dominated by unanchored inert-negation forms (4/4 = 100%)"
+  },
+  "calls": [
+    {
+      "url": "http://localhost:3000/api/proxy",
+      "model": "grok-4-1-fast-reasoning",
+      "status": 200,
+      "networkError": null,
+      "usage": {
+        "prompt_tokens": 665,
+        "completion_tokens": 70,
+        "total_tokens": 1336,
+        "prompt_tokens_details": {
+          "text_tokens": 665,
+          "audio_tokens": 0,
+          "image_tokens": 0,
+          "cached_tokens": 192
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 601,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        },
+        "num_sources_used": 0,
+        "cost_in_usd_ticks": 23071500
+      },
+      "costUsd": 0.00230715,
+      "costNote": null,
+      "costSource": "provider_ticks",
+      "elapsedMs": 16887
+    }
+  ],
+  "totalCostUsd": 0.00230715,
+  "ceilingUsd": 0.05,
+  "ceilingHeld": true,
+  "outcome": "rejected",
+  "repairResult": {
+    "rejected": true,
+    "provider": "grok",
+    "model": "grok-4-1-fast-reasoning",
+    "appliedCount": 4,
+    "validation": {
+      "flagged": true,
+      "liBeatCount": 4,
+      "flatCount": 3,
+      "ratio": 0.75,
+      "flatBeats": [
+        {
+          "idx": 7,
+          "text": "Julian does not move, his focus locked."
+        },
+        {
+          "idx": 16,
+          "text": "Julian does not speak, his silence honed."
+        },
+        {
+          "idx": 22,
+          "text": "Julian’s gaze does not waver, eyes narrowed."
+        }
+      ],
+      "reason": "LI presence dominated by unanchored inert-negation forms (3/4 = 75%)"
+    }
+  },
+  "persistedLogFile": "/Users/romantsukerman/storybound-app/_scene2_li_presence_repair_out/run_1789891242699.jsonl"
+}

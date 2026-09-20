@@ -42,6 +42,25 @@ const REAL_SAMPLE_PATH = path.join(__dirname, '_scene2_repair_replay_sample_out'
 const REAL_SCENE2 = JSON.parse(fs.readFileSync(REAL_SAMPLE_PATH, 'utf8'));
 console.log('✓ loaded the real, preserved Scene 2 sample verbatim (' + REAL_SAMPLE_PATH + ') — unmodified, ' + REAL_SCENE2.beats.length + ' beats');
 
+// ── REGRESSION FIXTURE (Roman 2026-09-20, second pass): the REAL, real-money repair candidate
+// from the authorized $0.05 run — rejected by the FIRST version of this detector's anchor
+// vocabulary. Extracted directly from the persisted request/response log, never hand-typed. This
+// is the exact evidence the vocabulary widening above was built to address.
+const REPAIR_RUN_LOG_PATH = path.join(__dirname, '_scene2_li_presence_repair_out', 'run_1789891242699.jsonl');
+const repairRunEvents = fs.readFileSync(REPAIR_RUN_LOG_PATH, 'utf8').trim().split('\n').filter(Boolean).map((l) => JSON.parse(l));
+const repairResponseEvent = repairRunEvents.find((e) => e.kind === 'response' && e.roleTag === 'li-presence-repair');
+const REAL_REPAIR_COST_USD = repairResponseEvent.responseBody.usage.cost_in_usd_ticks * 1e-10;
+const REAL_REPAIR_EDITS = JSON.parse(repairResponseEvent.responseBody.choices[0].message.content);
+console.log('✓ loaded the real, rejected repair candidate verbatim (' + REPAIR_RUN_LOG_PATH + ') — real cost $' + REAL_REPAIR_COST_USD.toFixed(6) + ', ' + REAL_REPAIR_EDITS.length + ' edits');
+// Reconstruct the repaired screenplay EXACTLY as _repairLIPresenceBeats itself would — apply
+// ONLY to the named indices, copy everything else from the real baseline untouched.
+const REPAIRED_CANDIDATE_SCENE2 = Object.assign({}, REAL_SCENE2, {
+  beats: REAL_SCENE2.beats.map((b) => {
+    const edit = REAL_REPAIR_EDITS.find((e) => e.idx === b.idx);
+    return edit ? Object.assign({}, b, { text: edit.text }) : b;
+  }),
+});
+
 // ── GREEN fixture 1: controlled, ANCHORED stillness — should NOT flag ──
 const ANCHORED_STILLNESS_SCENE2 = {
   beats: [
@@ -93,6 +112,12 @@ const SPARSE_LI_SCENE2 = {
   ok('all 4 are unanchored inert-negation forms (100% — "does not move/speak/waver", "remains steady")', redResult.flatCount === 4 && redResult.ratio === 1, JSON.stringify(redResult));
   ok('the flagged beats are exactly idx 7, 11, 16, 22 — not the object-glow beat (idx 0) or Lirael\'s own choice-weighing beat (idx 20)', JSON.stringify((redResult.flatBeats || []).map(b => b.idx).sort((a, b) => a - b)) === JSON.stringify([7, 11, 16, 22]), JSON.stringify(redResult.flatBeats));
 
+  section('REGRESSION — the real, rejected repair candidate must now PASS under the widened anchor vocabulary');
+  const regressionResult = await page.evaluate(({ screenplay }) => window._detectLIPresenceDominance(screenplay, { liName: 'Julian' }), { screenplay: REPAIRED_CANDIDATE_SCENE2 });
+  console.log('  · ' + JSON.stringify(regressionResult));
+  ok('the real repair candidate ("his focus locked" / "grip tight" / "his silence honed" / "eyes narrowed") is NOT flagged under the corrected vocabulary', regressionResult.flagged === false, JSON.stringify(regressionResult));
+  ok('the real, unmodified baseline sample is STILL flagged (red fixture did not get accidentally weakened)', redResult.flagged === true, JSON.stringify(redResult));
+
   section('GREEN — controlled, ANCHORED stillness must NOT flag (stillness alone is not the violation)');
   const greenAnchoredResult = await page.evaluate(({ screenplay }) => window._detectLIPresenceDominance(screenplay, { liName: 'Julian' }), { screenplay: ANCHORED_STILLNESS_SCENE2 });
   console.log('  · ' + JSON.stringify(greenAnchoredResult));
@@ -119,5 +144,33 @@ const SPARSE_LI_SCENE2 = {
 
   console.log('\n' + '='.repeat(100));
   console.log('LI PRESENCE DOMINANCE DETECTOR CONTROL: ' + results.filter(r => r.pass).length + '/' + results.length + ' passed');
+
+  // ── FINALIZATION (Roman 2026-09-20): "if it passes, save it as the accepted repaired candidate
+  // without another model call." Writes ONLY the already-paid, already-real content — no new
+  // provider call, no hand-edited text. The candidate text is the same REAL_REPAIR_EDITS read
+  // verbatim from the persisted log above; this just re-applies the SAME reconstruction
+  // _repairLIPresenceBeats itself uses (replace named indices, copy everything else untouched)
+  // and writes the result only because regressionResult.flagged === false.
+  const REPAIR_OUT_DIR = path.join(__dirname, '_scene2_li_presence_repair_out');
+  if (regressionResult.flagged === false) {
+    const acceptedPath = path.join(REPAIR_OUT_DIR, 'scene2_repaired.json');
+    fs.writeFileSync(acceptedPath, JSON.stringify(REPAIRED_CANDIDATE_SCENE2, null, 2));
+    const finalReport = {
+      at: new Date().toISOString(),
+      source: 'revalidated dry under the widened LI-presence anchor vocabulary — NO new provider call',
+      originalPaidRunLog: REPAIR_RUN_LOG_PATH,
+      originalPaidCostUsd: REAL_REPAIR_COST_USD,
+      originallyRejectedBy: 'v1 anchor vocabulary (too narrow — did not recognize "focus locked" / "silence honed" / "eyes narrowed")',
+      acceptedUnder: 'v2 anchor vocabulary (this commit)',
+      finalValidation: regressionResult,
+      appliedEdits: REAL_REPAIR_EDITS,
+      outputFile: acceptedPath,
+    };
+    fs.writeFileSync(path.join(REPAIR_OUT_DIR, 'report_final.json'), JSON.stringify(finalReport, null, 2));
+    console.log('\n✓ ACCEPTED under the corrected detector — no new spend. Written to ' + acceptedPath);
+  } else {
+    console.log('\n✗ the real repair candidate STILL fails under the widened vocabulary — reason: ' + regressionResult.reason + '. Not saved. No new spend, no further action taken.');
+  }
+
   process.exitCode = results.every(r => r.pass) ? 0 : 1;
 })().catch((e) => { console.error('HARNESS ERROR:', e && e.stack || e); process.exit(2); });

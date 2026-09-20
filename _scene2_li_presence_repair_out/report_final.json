@@ -1,0 +1,35 @@
+{
+  "at": "2026-09-20T08:07:08.667Z",
+  "source": "revalidated dry under the widened LI-presence anchor vocabulary — NO new provider call",
+  "originalPaidRunLog": "/Users/romantsukerman/storybound-app/_scene2_li_presence_repair_out/run_1789891242699.jsonl",
+  "originalPaidCostUsd": 0.00230715,
+  "originallyRejectedBy": "v1 anchor vocabulary (too narrow — did not recognize \"focus locked\" / \"silence honed\" / \"eyes narrowed\")",
+  "acceptedUnder": "v2 anchor vocabulary (this commit)",
+  "finalValidation": {
+    "flagged": false,
+    "liBeatCount": 4,
+    "flatCount": 0,
+    "ratio": 0,
+    "flatBeats": [],
+    "reason": null
+  },
+  "appliedEdits": [
+    {
+      "idx": 7,
+      "text": "Julian does not move, his focus locked."
+    },
+    {
+      "idx": 11,
+      "text": "Julian’s hands remain steady around the Answer, grip tight."
+    },
+    {
+      "idx": 16,
+      "text": "Julian does not speak, his silence honed."
+    },
+    {
+      "idx": 22,
+      "text": "Julian’s gaze does not waver, eyes narrowed."
+    }
+  ],
+  "outputFile": "/Users/romantsukerman/storybound-app/_scene2_li_presence_repair_out/scene2_repaired.json"
+}

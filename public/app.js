@@ -8669,7 +8669,23 @@ window.config = window.config || {
   // _scene2_repair_replay_sample_out/run_1789884119160.jsonl, cost $0.0870534) tripped this at
   // 4/4 (100%) — see _scene2_li_presence_quality_note_2026_09_20.md.
   var _LI_INERT_NEGATION_RX = /\b(?:does not|doesn't|did not|didn't)\s+\w+|\b(?:remains?|stays?|holds?)\s+(?:steady|still|motionless|silent|unmoving|unchanged|impassive)\b|\b(?:unmoving|motionless|impassive)\b/i;
-  var _LI_PRESENCE_ANCHOR_RX = /\b(?:jaw|breath|pulse|heat|weight|throat|chest|fist|grip|leash|restraint|control|coil(?:ed|s)?|want(?:s|ed|ing)?|hunger|tension|ache|nerve|knuckles?|tighten(?:s|ed|ing)?|fixed on|gaze (?:holds|locks|traces)|watch(?:es|ing)?\s+(?:her|him))\b/i;
+  // WIDENED (Roman 2026-09-20, second pass): a real, paid repair call ($0.0023, grok-4.3 via the
+  // grok-4-1-fast-reasoning alias) rewrote 3 of the 4 flagged beats with genuinely felt detail —
+  // "his focus locked", "his silence honed", "eyes narrowed" — that the FIRST version of this
+  // vocabulary didn't recognize, so the repair was wrongly rejected as still-blank. Roman: "the
+  // detector is now too literal... it's judging against its own tiny vocabulary instead of the
+  // actual narrative job." Widened to recognize controlled attention (focus/attention/locked),
+  // sharpened silence (honed/sharpen), narrowed eyes (narrow), and stance/stillness-as-pressure
+  // (step/angle/shift/stance/shoulders/poised/stillness/posture), alongside the original physical-
+  // tell vocabulary (jaw/breath/grip/restraint/etc.).
+  // DELIBERATELY NOT widened to bare "gaze" or "eyes": the real Scene 2 red fixture's own flagged
+  // beat 22 is "Julian's gaze does not waver." — a bare, unqualified "gaze" anchor would wrongly
+  // exempt that exact beat (it would still fail the SCENE overall at 3/4=75%, since the flagging
+  // threshold is 60%, but that beat's own classification would become inaccurate). "gaze" only
+  // counts here when paired with an active verb that itself signals a felt shift (holds / locks /
+  // traces / fixed / sharpens / narrows / intent) — matching the distinction Roman drew: an anchor
+  // must be "surrounded by prose that makes them" non-inert, not just contain the word "gaze".
+  var _LI_PRESENCE_ANCHOR_RX = /\b(?:jaw|breath|pulse|heat|weight|throat|chest|fist|grip|knuckles?|leash|restrain(?:t|ed|s|ing)?|control(?:led)?|coil(?:ed|s|ing)?|contained|want(?:s|ed|ing)?|hunger|tension|ache|nerve|tighten(?:s|ed|ing)?|fixed on|gaze\s+(?:holds|locks|traces|fixed|sharpens?|narrows?|intent)|watch(?:es|ing)?\s+(?:her|him)|focus(?:ed|es|ing)?|attention|locked|sharpen(?:ed|s|ing)?|honed?|narrow(?:ed|s|ing)?|stare[sd]?|step(?:s|ped|ping)?|angle[ds]?|shift(?:s|ed|ing)?|stance|shoulders?|poised|stillness|posture)\b/i;
   function _detectLIPresenceDominance(screenplay, opts) {
     try {
       opts = opts || {};
@@ -8696,6 +8712,85 @@ window.config = window.config || {
     } catch (e) { return { flagged: false, error: e && e.message }; }
   }
   window._detectLIPresenceDominance = _detectLIPresenceDominance;
+
+  // ── LI PRESENCE REPAIR (Roman 2026-09-20) ──
+  // Bounded, reject-only prose repair for the LI-presence-dominance finding
+  // (_scene2_li_presence_quality_note_2026_09_20.md /
+  // _scene2_li_presence_repair_authorization_2026_09_20.md). Modeled on _repairViaMistral's
+  // discipline ("a precise line editor, NOT an author... fix ONLY those gaps with the SMALLEST
+  // possible change") but scoped to exact beat INDICES rather than a free-text splice — no
+  // text-matching ambiguity, so it is structurally impossible to touch any beat outside the
+  // flagged set. Dispatches via the SAME _authorFullScenePolicy chain (Grok primary /
+  // ministral-8b-2512 admission-gated fallback / gpt-4o terminal) already used for every other
+  // bounded repair and for the real Scene 2 author call itself — no new provider policy.
+  // REJECT-ONLY: re-validates the rewrite with _detectLIPresenceDominance before returning it as
+  // accepted; if it still flags, this returns {rejected:true, repaired:null} — it never ships a
+  // rewrite that still fails the same check it exists to fix. Never invoked automatically —
+  // only ever called explicitly, once, under its own authorization.
+  async function _repairLIPresenceBeats(screenplay, detectorResult, opts) {
+    opts = opts || {};
+    try {
+      if (!screenplay || !detectorResult || !detectorResult.flagged || !Array.isArray(detectorResult.flatBeats) || !detectorResult.flatBeats.length) return null;
+      var liName = opts.liName || 'Julian';
+      var beats = Array.isArray(screenplay.beats) ? screenplay.beats : [];
+      var flatIdx = detectorResult.flatBeats.map(function (b) { return b.idx; });
+      var vs = screenplay.visualState || {};
+      var stake = (screenplay.sceneCharge && screenplay.sceneCharge.stake) || '';
+      var contextLines = flatIdx.map(function (idx) {
+        var b = beats[idx];
+        var before = beats[idx - 1] ? beats[idx - 1].text : null;
+        var after = beats[idx + 1] ? beats[idx + 1].text : null;
+        return '  beat ' + idx + ': "' + (b ? b.text : '') + '"' +
+          (before ? ' (previous beat: "' + before + '")' : '') +
+          (after ? ' (next beat: "' + after + '")' : '');
+      }).join('\n');
+      var sys = 'You are a precise line editor, NOT an author. A finished comic-script scene has a few beats about ' + liName + ' (the love interest) that read as blank/inert — they only describe the ABSENCE of motion or speech, with no felt pressure. Fix ONLY those beats, one sentence each, with the SMALLEST possible change to each. ' +
+        'Each rewritten beat must give ' + liName + ' a felt anchor — face, voice, posture, gesture, proximity, restraint, desire, anger, control, or vulnerability — while PRESERVING whatever register the original beat already implied (stillness, silence, motion, or speech). Do NOT make ' + liName + ' chatty or emotionally obvious if the original beat was still/silent — controlled stillness that reads AS PRESSURE OR FEELING is correct; stillness that reads as ABSENCE is the defect being fixed. Never invent new plot events, never change who does what, never contradict the declared expression state below. Keep each line roughly the same length as the original (comic-panel narration, not a paragraph). ' +
+        'Return ONLY a JSON array: [{"idx": <beat index>, "text": "<rewritten beat text>"}], exactly one entry per beat listed below, nothing else — no commentary, no code fences.';
+      var usr = 'SCENE STAKE (context only, do not rewrite this): ' + stake + '\n' +
+        liName + '\'S DECLARED EXPRESSION STATE for this scene (the staging metadata — your rewrites should read as consistent with this, not contradict it): ' + (vs.li_expression || 'unspecified') + '\n' +
+        'THE FLAT BEATS TO FIX (' + flatIdx.length + '):\n' + contextLines;
+      var repairResult;
+      try {
+        repairResult = await _authorFullScenePolicy(sys, usr, { maxTokens: opts.maxTokens || 400, temperature: opts.temperature != null ? opts.temperature : 0.3, roleTag: 'li-presence-repair', grokModel: opts.grokModel || 'grok-4-1-fast-reasoning' });
+      } catch (_rpErr) {
+        try { console.warn('[LI-PRESENCE:REPAIR] all tiers failed: ' + (_rpErr && _rpErr.message)); } catch (_) {}
+        return null;
+      }
+      try {
+        var _wonModel = repairResult && repairResult.model;
+        if (typeof _recordProxyTextCost === 'function') _recordProxyTextCost({ usage: repairResult && repairResult.usage, _orchestration: { model: _wonModel } }, _wonModel, 'li-presence-repair');
+      } catch (_) {}
+      var raw = (repairResult && repairResult.text) || '';
+      raw = raw.replace(/```json?/gi, '').replace(/```/g, '').trim();
+      var edits = null;
+      try { edits = JSON.parse(raw); } catch (_) { var mm = raw.match(/\[[\s\S]*\]/); if (mm) { try { edits = JSON.parse(mm[0]); } catch (_2) {} } }
+      if (!Array.isArray(edits) || !edits.length) { try { console.warn('[LI-PRESENCE:REPAIR] no parseable edits'); } catch (_) {} return { repaired: null, rejected: true, reason: 'no parseable edits', raw: raw, provider: repairResult && repairResult.provider, model: repairResult && repairResult.model, usage: repairResult && repairResult.usage }; }
+      // Apply ONLY to the exact flagged indices — an edit naming any other index is dropped, never applied.
+      var newBeats = beats.map(function (b) { return b ? Object.assign({}, b) : b; });
+      var appliedCount = 0;
+      var droppedOffTarget = [];
+      edits.forEach(function (e) {
+        if (!e || typeof e.idx !== 'number') return;
+        if (flatIdx.indexOf(e.idx) === -1) { droppedOffTarget.push(e.idx); return; }
+        if (typeof e.text !== 'string' || !e.text.trim()) return;
+        newBeats[e.idx] = Object.assign({}, newBeats[e.idx], { text: e.text.trim() });
+        appliedCount++;
+      });
+      if (droppedOffTarget.length) { try { console.warn('[LI-PRESENCE:REPAIR] dropped ' + droppedOffTarget.length + ' edit(s) naming an index outside the flagged set: ' + droppedOffTarget.join(',')); } catch (_) {} }
+      if (!appliedCount) { try { console.warn('[LI-PRESENCE:REPAIR] edits parsed but none applied'); } catch (_) {} return { repaired: null, rejected: true, reason: 'no edits applied', provider: repairResult && repairResult.provider, model: repairResult && repairResult.model, usage: repairResult && repairResult.usage }; }
+      var repairedScreenplay = Object.assign({}, screenplay, { beats: newBeats });
+      // REJECT-ONLY re-validation — never ship a rewrite that still fails the check it was called to fix.
+      var reValidation = (typeof _detectLIPresenceDominance === 'function') ? _detectLIPresenceDominance(repairedScreenplay, { liName: liName }) : { flagged: true, error: 'validator unavailable' };
+      if (reValidation.flagged) {
+        try { console.warn('[LI-PRESENCE:REPAIR] rewrite still flagged after repair — REJECTED, not shipped: ' + reValidation.reason); } catch (_) {}
+        return { repaired: null, rejected: true, reason: 'still flagged after repair', screenplay: repairedScreenplay, validation: reValidation, appliedCount: appliedCount, provider: repairResult.provider, model: repairResult.model, usage: repairResult.usage };
+      }
+      try { console.log('[LI-PRESENCE:REPAIR] accepted — ' + appliedCount + ' beat(s) rewritten via ' + repairResult.provider + '/' + repairResult.model); } catch (_) {}
+      return { repaired: repairedScreenplay, rejected: false, validation: reValidation, appliedCount: appliedCount, droppedOffTarget: droppedOffTarget, provider: repairResult.provider, model: repairResult.model, usage: repairResult.usage };
+    } catch (e) { try { console.warn('[LI-PRESENCE:REPAIR] error: ' + (e && e.message)); } catch (_) {} return null; }
+  }
+  window._repairLIPresenceBeats = _repairLIPresenceBeats;
 
   // ════════════════════════════════════════════════════════════════
   // STORY QUALITY OBSERVATORY — Phase 1: telemetry CAPTURE + HEALTH (Roman 2026-06-21)
