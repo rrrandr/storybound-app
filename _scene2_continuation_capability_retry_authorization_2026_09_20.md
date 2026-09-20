@@ -1,43 +1,40 @@
-# Continuation Capability Retry — Future Authorization Sheet (2026-09-20, seventh revision)
+# Continuation Capability Retry — Future Authorization Sheet (2026-09-20, eighth revision)
 
 **Not authorized. Not run. No provider or image call has been made preparing this sheet.** This
 describes a proposed, separate, later paid operation for when you choose to authorize it.
 
-This revision follows Roman's decision after the planner-role trace: **"the default event-decider
-should be the stronger model... This is not where to save money."** The scene-spine/open-row
-planner's default is now Grok-primary (ministral-8b-2512 fallback, transport/parse failure only),
-alongside the Planner Function Gate from the prior revision. Both are dry-proven, not yet tested
-against a real, live generation.
+This revision follows retry #5 (real, run — the gate caught a bad Grok-sourced plan live, zero
+author spend, see `_scene2_capability_retry5_report_2026_09_20.md`) and Roman's verdict:
+**"Model strength alone is not the fix... The player choice should steer the story, not hijack the
+skeleton."** The planner contract itself changed this pass — a REQUIRED SCENE FUNCTION frame now
+renders before the reader's posture, and a new posture-echo check catches a plan that paraphrases
+the raw Say/Do text instead of translating it. See `_scene2_required_scene_function_trace_2026_09_20.md`.
 
 ## What this is testing
 
-Not "does Scene 2 read well" — closed, four times, no. Not "is the wiring correct" — closed, proven
-live in retry 4. Not "does the gate work" — proven dry, 10/10 and 12/12 across two controls. This
-would be retry #5: the FIRST real test of a Grok-primary planner, gated, on the SAME causal input
-four prior attempts have failed on. Five real attempts is a lot on one input — worth weighing
-against testing a different player branch instead, a decision for whoever authorizes this.
+Not "which model is smarter" — closed; retry 5 showed Grok alone didn't fix it. Not "does the gate
+work" — proven dry AND live (retry 5). This would be retry #6: the FIRST real test of whether a
+required-function frame — instantiated first, with posture as modulation rather than the event's
+source — changes what either model actually proposes. Six real attempts on one causal input is a
+lot; whoever authorizes this may want to weigh a fresh player branch instead.
 
-## What changed since retry 4
+## What changed since retry 5
 
-- **Root causes A/B/C** and **Findings 1-3** (harness/OAS-history/cosmology) — unchanged this
-  revision, all fixed and dry-proven, confirmed firing live in retry 4's real dispatch.
-- **Planner Function Gate** (prior revision) — `_detectPlannerFunctionGap` rejects a structurally-
-  valid-but-inadequate plan before the author is ever dispatched. Proven 10/10,
-  `_scene2_planner_function_gate_control.mjs`, using retry 4's real rejected plan as the red
-  fixture.
-- **NEW — Grok-primary planner policy** (this pass): the scene-spine/open-row planner's
-  `_plannerGrok` default is inverted (`public/app.js`, `_generateLiteraryPlotContract`) — Grok is
-  now PRIMARY, ministral-8b-2512 is the FALLBACK (unchanged trigger: transport/parse failure only).
-  `window._scenePlannerEngine='ministral'` is the escape hatch back to the old default. Proven
-  12/12, `_scene2_planner_grok_primary_control.mjs`: Grok is tried first and ministral is never even
-  attempted when it succeeds; ministral still serves correctly as fallback when Grok transport
-  fails; the Planner Function Gate still catches a bad plan regardless of which tier produced it;
-  CG scaffold and the commit verifier are confirmed untouched (separate, unchanged
-  `_callTieredProvider` role tags). All 8 pre-existing controls re-run green (90/90 total across the
-  suite after this addition).
-- Real, measured cost basis (Retry 4's actual planner-call tokens: 5468 prompt / 858 completion):
-  ministral $0.00095/call; Grok at the same counts ≈ $0.00898/call (≈9.4×, ≈+$0.008 absolute) —
-  small against the author call's own ~$0.085-0.09.
+- **Root causes A/B/C**, **Findings 1-3**, the **Planner Function Gate**, and the **Grok-primary
+  planner policy** — all unchanged this revision, confirmed coexisting with today's addition.
+- **NEW — REQUIRED SCENE FUNCTION frame**: `STARTER_PLANS.starter_first_sacrifice.scenes[n=2]`
+  carries a new `sceneFunction` field (not new canon — restated from this row's own `exitState` and
+  the seed's own worldTruths-sanctioned lanes), rendered in the planner prompt as a HARD block
+  BEFORE the reader's posture. The posture line itself is reframed as the reader's "ANGLE" into that
+  frame, never the source of the central event. Two new required JSON output keys
+  (`scene_function_instantiated`, `aftermath_obligations`) requested when the field is present.
+- **NEW — posture-echo reject check**: `_postureEchoBigram`, folded into
+  `_detectPlannerFunctionGap` as a second, independent rejection reason — catches a plan that
+  shares a meaningfully distinctive phrase with the reader's raw Say/Do text (retry 5's real plan
+  shared "to burn"/"burn for" with the Fate-Card line it was supposed to translate, not restate).
+- Proven 14/14, `_scene2_required_scene_function_control.mjs`, using retry 5's real posture + real
+  rejected plan as the red fixture. All 8 pre-existing controls re-run green (104/104 total across
+  the suite after this addition).
 
 ## Scope
 
@@ -45,24 +42,24 @@ against testing a different player branch instead, a decision for whoever author
   Fate-Card, and scaffold content via the zero-cost stub-lane replay — real spend starts only at the
   planner/author call.
 - Same player decision (Boundary card, the same real Say/Do) — a capability retry on the SAME
-  causal input, not a new player branch — unless whoever authorizes this prefers a fresh branch
-  instead, given four failures already on this one.
-- The planner now dispatches to Grok first (new default) — real spend at this step will be closer
-  to the ≈$0.009 estimate above than ministral's ≈$0.001, still small.
-- If the planner's own plan fails the Planner Function Gate, the attempt stops there — $0 author
-  spend, logged and reported as a gate rejection, not a failed generation sample.
-- Only if the gate passes does the author fire; THEN run `_detectSceneAdequacyFailure` (full
-  continuity/canon/aftermath/ending checks) on the delivered prose before calling it usable.
-- If this retry ALSO fails (gate-rejected OR author-adequacy-failed) even with Grok as the
-  event-decider, that is real, strong evidence the remaining gap is not model-tier-shaped — reported
-  honestly either way, not concealed.
+  causal input, not a new player branch — unless whoever authorizes this prefers a fresh branch,
+  given five failures/rejections already on this one.
+- The planner now sees the REQUIRED SCENE FUNCTION frame before the posture, and must return
+  `scene_function_instantiated`/`aftermath_obligations` alongside its existing fields.
+- If the plan fails the (now two-part) Planner Function Gate — no aftermath signal, OR echoes the
+  posture almost verbatim — the attempt stops there, $0 author spend, reported as a gate rejection.
+- Only if the gate passes does the author fire; THEN run `_detectSceneAdequacyFailure` on the
+  delivered prose before calling it usable.
+- If this retry ALSO fails or gate-rejects, that is real, strong evidence the remaining gap is
+  neither model-tier-shaped nor posture-framing-shaped — a genuinely harder open question, reported
+  honestly, not concealed.
 
 ## Cost ceiling (estimate)
 
-Retry #4's real, measured total was $0.228671. A Grok-primary planner adds an estimated ~$0.008 to
-the planner phase; a gate rejection would cap real cost near the planner-only estimate (~$0.009-
-0.018 across the one bounded retry) instead of paying for a doomed author call. Ceiling unchanged,
-already proven to hold with wide margin across four real runs:
+Retry #5's real, measured total was $0.00981465 (gate-rejected before author spend — the cheapest
+outcome so far). If this retry's plan clears the gate, real cost would run closer to retry #4's
+$0.228671 (Grok planner + Grok author + adjacent calls). Ceiling unchanged, already proven to hold
+with wide margin across five real runs:
 
 | Phase | Ceiling (USD) | Physical requests |
 |---|---|---|
@@ -75,23 +72,24 @@ additional.
 
 ## What this would (and would not) prove
 
-Would prove: whether a Grok-primary planner, gated, produces a meaningfully different plan than
-ministral did four times running — and if it does, whether the resulting dramatization clears full
-adequacy.
+Would prove: whether framing the required scene function explicitly, before the planner reads
+posture, changes what event it proposes — and if the gate now passes, whether the resulting
+dramatization clears full adequacy.
 
 Would not prove: that Scenes 3-10 are adequate; that a different player branch holds the same
-standard; that beat-kind diversity or semantic retreading (neither encoded as a reject-only check)
-are satisfied. Would also not, on its own, cleanly separate "the model got better" from "this
-specific draw got lucky" — a single sample from a stronger model is still one sample.
+standard; that beat-kind diversity (still not encoded as a reject-only check) is satisfied. A single
+sample is still one sample — this framework change deserves more than one real draw before anyone
+concludes it works, but that's a larger, separately-authorized program, not this one retry.
 
 ## Status
 
-Ten fixes in place and dry-proven across five passes (root causes A/B/C, Findings 1-3, the Planner
-Function Gate, the Grok-primary planner policy). Requirements and traces documented
+Twelve fixes in place and dry-proven across six passes (root causes A/B/C, Findings 1-3, the
+Planner Function Gate, the Grok-primary planner policy, the Required Scene Function frame, the
+posture-echo check). Requirements and traces documented
 (`_continuation_scene_adequacy_requirements_2026_09_20.md`,
 `_scene2_capability_test_root_causes_2026_09_20.md`, `_scene2_skeleton_handoff_trace_2026_09_20.md`,
-`_scene2_skeleton_handoff_trace2_2026_09_20.md`, `_planner_role_ledger_2026_09_20.md`). Four real
-capability samples on record, all FAILED (retries 1-3) or would-have-been-gate-rejected (retry 4,
-retroactively — the gate did not exist yet when it ran). No provider or image calls made preparing
-this sheet or making the policy change. Awaiting explicit authorization before running a fifth
-retry.
+`_scene2_skeleton_handoff_trace2_2026_09_20.md`, `_planner_role_ledger_2026_09_20.md`,
+`_scene2_required_scene_function_trace_2026_09_20.md`). Five real capability samples on record — all
+FAILED, gate-rejected, or (retroactively) would-have-been-gate-rejected. No provider or image calls
+made preparing this sheet or making today's changes. Awaiting explicit authorization before running
+a sixth retry.

@@ -8913,6 +8913,30 @@ window.config = window.config || {
   // `opts.requiresAftermath` (the caller supplies this — mirrors the exact condition that already
   // triggers CONT_AFTERMATH pacing, sceneIndex > 0 with real committed aftermath/reserved data), not
   // on any starter-specific text.
+  // POSTURE-ECHO DETECTION (Roman 2026-09-20) — a second, independent red flag: real retry 5 proved
+  // that even a Grok-primary planner can build its central event by paraphrasing the reader's raw
+  // Fate-Card/Say-Do text almost verbatim ("I want you to burn for me..." -> "she wants Julian to
+  // burn for her...") rather than treating that text as POSTURE modulating a required scene function.
+  // Conservative, generic, no starter-specific vocabulary: finds any 2-word window from the posture
+  // text (action+dialogue) that also appears in the planner's own text, PROVIDED at least one of the
+  // two words is not a common function word (so two-stopword windows like "as the" never count — only
+  // a shared, meaningfully distinctive phrase does).
+  var _POSTURE_STOPWORDS = { the:1,a:1,an:1,to:1,of:1,in:1,on:1,at:1,for:1,and:1,or:1,but:1,is:1,are:1,was:1,were:1,be:1,been:1,i:1,you:1,he:1,she:1,it:1,we:1,they:1,me:1,him:1,her:1,them:1,my:1,your:1,his:1,its:1,our:1,their:1,this:1,that:1,these:1,those:1,as:1,so:1,if:1,not:1,no:1,do:1,does:1,did:1,will:1,would:1,can:1,could:1,should:1,must:1,with:1,from:1,by:1 };
+  function _postureEchoBigram(postureText, plannerText) {
+    var _tok = function (t) { return String(t || '').toLowerCase().replace(/[^a-z0-9' -]+/g, ' ').split(/\s+/).filter(Boolean); };
+    var pWords = _tok(postureText), aWords = _tok(plannerText);
+    if (pWords.length < 2 || !aWords.length) return null;
+    var plannerJoined = ' ' + aWords.join(' ') + ' ';
+    for (var i = 0; i < pWords.length - 1; i++) {
+      var w1 = pWords[i], w2 = pWords[i + 1];
+      if (_POSTURE_STOPWORDS[w1] && _POSTURE_STOPWORDS[w2]) continue; // both function words — too generic to count
+      var bigram = ' ' + w1 + ' ' + w2 + ' ';
+      if (plannerJoined.indexOf(bigram) !== -1) return w1 + ' ' + w2;
+    }
+    return null;
+  }
+  window._postureEchoBigram = _postureEchoBigram;
+
   function _detectPlannerFunctionGap(stateChange, opts) {
     try {
       opts = opts || {};
@@ -8920,13 +8944,17 @@ window.config = window.config || {
       var sc = stateChange || {};
       var combined = [sc.tactical_move, sc.event, sc.forces_choice].filter(Boolean).join(' \n ');
       if (!combined) return { rejected: false }; // nothing to judge — do not reject on absence of data itself
+      var reasons = [];
       var aftermathPresent = _SCENE_AFTERMATH_VOCAB_RX.test(combined);
-      if (aftermathPresent) return { rejected: false, checkedText: combined };
-      return {
-        rejected: true,
-        reason: 'the planner\'s own proposed event/tactical-move/forces-choice shows no aftermath/procedure/consequence-movement signal, even though this continuation scene requires one (CONT_AFTERMATH-eligible) — rejected before the author call, not sent to be dramatized',
-        checkedText: combined,
-      };
+      if (!aftermathPresent) reasons.push('the planner\'s own proposed event/tactical-move/forces-choice shows no aftermath/procedure/consequence-movement signal, even though this continuation scene requires one (CONT_AFTERMATH-eligible) — rejected before the author call, not sent to be dramatized');
+      var echoMatch = null;
+      if (opts.posture && (opts.posture.action || opts.posture.dialogue)) {
+        var postureText = [opts.posture.action, opts.posture.dialogue].filter(Boolean).join(' ');
+        echoMatch = _postureEchoBigram(postureText, combined);
+        if (echoMatch) reasons.push('the planner\'s proposed event echoes the reader\'s raw Say/Do text almost verbatim (shared phrase: "' + echoMatch + '") rather than treating it as posture modulating the required scene function — the central event should be the planner\'s OWN translation, not a restatement of the reader\'s line');
+      }
+      if (!reasons.length) return { rejected: false, checkedText: combined };
+      return { rejected: true, reason: reasons.join(' | '), reasons: reasons, checkedText: combined, echoMatch: echoMatch };
     } catch (e) { return { rejected: false, error: e && e.message }; }
   }
   window._detectPlannerFunctionGap = _detectPlannerFunctionGap;
@@ -99680,15 +99708,31 @@ function _buildAuthorFloorDirective(s) {
                 if (_liLines.length) _ob.push('RECENT OAS EXCHANGE (this scene\'s own live turn history, archived before handoff — what was ACTUALLY said just before the reader\'s posture below; your objective must carry this forward, not restage a question or accusation already answered here):\n' + _liLines.join('\n'));
               }
             } catch (_) {}
+            // REQUIRED SCENE FUNCTION (Roman 2026-09-20) — five real planner attempts across two
+            // models (ministral ×4, Grok ×1) each independently derived the scene's central event
+            // from the reader's Fate-Card/Say-Do TEXT — one invented a literal ritual-burning
+            // (contradicting worldTruths outright); the rest stayed inside the same immediate
+            // confrontation the aftermath truths already establish, never moving toward the seed's
+            // own exitState. Root cause, traced: this planner was never told the scene has a required
+            // JOB independent of the posture text — only worldTruths (canon, passive) and exitState
+            // (a terse one-line target) existed before, neither framed as "instantiate THIS first."
+            // Roman: "The player choice should steer the story, not hijack the skeleton." This block
+            // renders the seed-authored `sceneFunction` (when present) as the FRAME the planner must
+            // instantiate — BEFORE the reader's posture below, which is now explicitly reframed as
+            // modulation of that frame, never a substitute for it. Generic: renders only when a scene
+            // row declares `sceneFunction`; absent otherwise, not First-Sacrifice-specific plumbing.
+            if (_oe.sceneFunction) {
+              _ob.push('REQUIRED SCENE FUNCTION (HARD — instantiate this FIRST; the reader\'s posture below modulates HOW you enter it, it does NOT replace it): ' + _oe.sceneFunction);
+            }
             if (_posture) {
               _ob.push('READER\'S RECORDED CHOICE at the end of the opening: ' + (_posture.label || '(none recorded)'));
-              _ob.push('READER\'S SAY/DO for this scene (verbatim; this is the posture the objective must answer): action: ' + JSON.stringify(_posture.action) + ' · dialogue: ' + JSON.stringify(_posture.dialogue));
+              _ob.push('READER\'S SAY/DO for this scene (verbatim — this is the reader\'s ANGLE into the required scene function above: defiance, seduction, evasion, appeal to procedure, counter-accusation, etc. It is NOT the source of the scene\'s central event.): action: ' + JSON.stringify(_posture.action) + ' · dialogue: ' + JSON.stringify(_posture.dialogue));
               // REGISTER (Roman 2026-09-20) — same real sample: the Say/Do above can be Fate-Card dialogue
               // (charged, metaphorical, performative — written for an intimate exchange in the moment), and
               // nothing previously told this planner not to read it as a literal instruction for the next
               // scene's physical event. "burn for me, as the First-Favored did for the old gods" is desire,
               // not a request for an actual immolation ritual; the planner took it literally anyway.
-              _ob.push('REGISTER (HARD): the Say/Do above is the reader\'s emotional/rhetorical posture — it tells you what she wants, fears, or is posturing about. It is NEVER a literal instruction to invent a new physical event, ritual, mechanic, or environmental fact — even when it uses concrete or violent imagery. Ground state_change in WORLD TRUTHS and AFTERMATH TRUTHS; use the posture to choose WHO acts and HOW, never WHAT becomes physically real.');
+              _ob.push('REGISTER (HARD): the Say/Do above is the reader\'s emotional/rhetorical posture — it tells you what she wants, fears, or is posturing about, and HOW she carries herself into the required scene function above. It is NEVER a literal instruction to invent a new physical event, ritual, mechanic, or environmental fact — even when it uses concrete or violent imagery — and it is NEVER a substitute for the required scene function: do not build state_change by paraphrasing or restating this text. Ground state_change in the REQUIRED SCENE FUNCTION, WORLD TRUTHS, and AFTERMATH TRUTHS; use the posture only to choose WHO acts and HOW, never WHAT the scene\'s job is.');
             }
             try { var _L = (typeof _relLedger === 'function') ? _relLedger(false) : null; var _ents = (_L && _L.entities) || {}; var _rl = (_oe.roster || []).map(function (r) { var e = _ents[r.ref]; var cp = (_L && _L.cplus && _L.cplus.rows && _L.cplus.rows[r.ref]) || null; return r.label + (e && e.anchorRole === 'li' ? ' (love interest)' : '') + (cp && cp.last_cplus_scene_ordinal != null ? ' — last Character+ scene ' + cp.last_cplus_scene_ordinal : ''); });
               if (_rl.length) _ob.push('ROSTER — who CAN be present (name only these; choose who IS): ' + _rl.join(' · ')); } catch (_) {}
@@ -99703,6 +99747,11 @@ function _buildAuthorFloorDirective(s) {
             if (_oe.constraints && _oe.constraints.length) _ob.push('SEED CONSTRAINTS: ' + _oe.constraints.join(' · '));
             _scUsr = 'READER POSTURE → LOCAL OBJECTIVE\n' + _ob.join('\n') + '\n\n' + _scUsr;
             _scSys += '\n\nOPEN ROW (REQUIRED — add these keys to your JSON): "posture_read" (one sentence: what the reader\'s recorded choice and Say/Do MEAN here), "local_objective" (one sentence: whose concrete act, where, that this scene exists to land — it must answer the reader\'s posture and build from the aftermath), "local_objective_actor" (one ROSTER name — NEVER a collective presence), "present" (array of ROSTER names who are in the scene, PLUS any declared collective presence, named exactly as given, if genuinely present — never invent a collective label that was not declared), "reserved" (object: every RESERVED id → "untouched" or "touched"), "aftermath" (object: every AFTERMATH TRUTH id → "kept"). Your state_change realizes the local_objective.';
+            // REQUIRED SCENE FUNCTION — output keys (Roman 2026-09-20). Only requested when the row
+            // declares sceneFunction (see above) — inert for any scene without one.
+            if (_oe.sceneFunction) {
+              _scSys += ' ALSO REQUIRED, same JSON: "scene_function_instantiated" (one sentence: WHICH part of the REQUIRED SCENE FUNCTION this state_change realizes — name the institutional/procedural/social-fallout lane you chose, not a restatement of the posture), "aftermath_obligations" (one or two sentences: the concrete aftermath/procedure/fallout content this scene commits to delivering — who reacts, what process moves forward, what changes in her standing; this must be NEW content beyond the AFTERMATH TRUTHS already listed above, not a restatement of them).';
+            }
             // CONTINUATION-STAGE ISSUER (Roman, authorized 2026-09-14) — SAME reply, SAME call, no
             // second provider round trip. All optional: an old-shaped reply that omits these keys
             // skips stage issuance without touching anything above (see _issueStageFromPlannerReply).
@@ -128719,7 +128768,19 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       player_decision_required: true,
       decision_axis: 'claim the interference openly vs let the assembly keep its assumption',
       decision_consequence: 'Whatever the player chose in scene 1 must be VISIBLE here — different witnesses, different judgement, different information available. If this scene reads the same either way, the choice was decorative.',
-      exitState: 'RESOLVED: the words came true and everyone can see how. NEW PROBLEM: Lirael\'s standing is at risk and the cost is still uncounted.' },
+      exitState: 'RESOLVED: the words came true and everyone can see how. NEW PROBLEM: Lirael\'s standing is at risk and the cost is still uncounted.',
+      // REQUIRED SCENE FUNCTION (Roman 2026-09-20) — grounded in this SAME row's own exitState above
+      // and the seed's own worldTruths ("LIRAEL'S FORMAL INQUIRY — WHERE AND WHEN": early scenes may
+      // carry "accusation, preliminary review, political pressure, investigation, concealment, or
+      // flight" — never the convened inquiry itself, reserved for later). Not new canon — this field
+      // states, as an explicit REQUIREMENT rather than passive background, what the exitState/
+      // worldTruths already imply this scene must accomplish. Real finding this closes: five real
+      // planner attempts (ministral ×4, Grok ×1) each independently derived the scene's central event
+      // from the reader's Fate-Card/Say-Do TEXT rather than this row's own mapped function — one
+      // invented a literal ritual-burning (contradicting worldTruths outright), the rest stayed inside
+      // the same immediate confrontation the aftermath truths already establish, never moving toward
+      // the exitState's own "NEW PROBLEM." See _ob's REQUIRED SCENE FUNCTION block below.
+      sceneFunction: 'This scene must land the AFTERMATH of Julian\'s public accusation and the Dohkar\'s authority claim: real institutional/procedural pressure (preliminary review, political pressure, or the opening steps toward investigation — NOT the convened formal inquiry itself, which is reserved for a later scene) and/or social fallout (family reaction, her standing visibly at risk), moving concretely toward the exitState\'s own "NEW PROBLEM." It must NOT simply extend or re-stage the same immediate ritual/interrogation moment the aftermath truths already establish.' },
     { n: 3, goal: 'THE PRICE AND THE THRESHOLD — step 7, then escalation. IN THIS ORDER: (A) The sacrifice is taken or identified — the offered MEMORY, expressed in the memory\'s own domain, never a faculty Seren did not offer. It lands only now, after the audience understands the twist, so cost is never confused with warp. (B) A NEW irreversible pressure arrives; this scene may NOT restage scene 2\'s accusation. (C) Julian\'s position shifts — a constraint, a knowledge, or a limit that changes what he is to her. (D) The deck surfaces and the temptation sharpens. (E) STOP at the threshold. Lirael does NOT choose. The player does.',
       participants: ['Lirael', 'Seren', 'Julian', 'the presiding Dohkar'],
       // MIGRATED B: same room, same people; the beats are contingent on the Scene-1 choice and
@@ -199813,6 +199874,10 @@ No text, no watermark, no UI elements, share-ready.`;
                      reserved: plan.scenes.filter(function (p) { return p && Number(p.n) > Number(sceneNum) && Number(p.n) <= Number(sceneNum) + 2 && Array.isArray(p.reservedEvents); }).reduce(function (acc, p) { return acc.concat(p.reservedEvents.map(function (r) { return Object.assign({ fromScene: Number(p.n) }, r); })); }, [])
                                .concat((Array.isArray(plan.sealedEvents) ? plan.sealedEvents : []).filter(function (e) { return e && e.id && Number(sceneNum) < Number(e.unsealsAtScene || Infinity); }).map(function (e) { return { id: e.id, sealed: true, label: e.label || 'a sealed future reveal', fromScene: Number(e.unsealsAtScene || 0), markers: [] }; })),
                      aftermathTruths: Array.isArray(row.aftermathTruths) ? row.aftermathTruths.slice() : [],
+                     // REQUIRED SCENE FUNCTION (Roman 2026-09-20) — see the field's own comment on the
+                     // authored row above. Carried through here so the OPEN ROW planner prompt (app.js
+                     // ~99513+) can render it as a HARD frame BEFORE the reader's posture.
+                     sceneFunction: row.sceneFunction || null,
                      _reconciliation: { withheld: [], source: { goal: obj ? 'spine:posture' : 'pending: no accepted local objective yet' } } };
         var newProblemO = (exit.match(/NEW PROBLEM:\s*(.+)$/i) || [])[1] || '';
         if (obj) {
@@ -229919,7 +229984,17 @@ No text, no watermark, no UI elements, share-ready.`;
         ((Array.isArray(state._scenePlotContract.aftermathTruths) && state._scenePlotContract.aftermathTruths.length) ||
          (Array.isArray(state._scenePlotContract.reservedConstraints) && state._scenePlotContract.reservedConstraints.length)));
       if (_pfRequiresAftermath && typeof _detectPlannerFunctionGap === 'function') {
-        var _pfGate = _detectPlannerFunctionGap(state._scenePlotContract.stateChange, { requiresAftermath: true });
+        // Most recent recorded posture (state._scenePosture, keyed by scene number via
+        // _recordScenePosture) — take the highest key rather than re-deriving sceneIndex's own
+        // scene-number formula independently (that formula lives inside _generateLiteraryPlotContract
+        // and differs from this outer function's sceneIndex; safer to read the latest real entry than
+        // risk a wrong key silently finding nothing).
+        var _pfPosture = null;
+        try {
+          var _psKeys = Object.keys(state._scenePosture || {}).map(Number).filter(function (n) { return !isNaN(n); }).sort(function (a, b) { return b - a; });
+          if (_psKeys.length) _pfPosture = state._scenePosture[String(_psKeys[0])];
+        } catch (_) {}
+        var _pfGate = _detectPlannerFunctionGap(state._scenePlotContract.stateChange, { requiresAftermath: true, posture: _pfPosture });
         if (_pfGate.rejected) {
           try { console.warn('[CG:PLANNER-GATE] REJECTED before author dispatch, scene=' + sceneIndex + ' — ' + _pfGate.reason); } catch (_) {}
           return { __plannerFunctionRejected: true, reason: _pfGate.reason, sceneIndex: sceneIndex };
