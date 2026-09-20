@@ -5777,12 +5777,49 @@ dialogue: <elevated dialogue>`;
     var maxTokens = options.max_tokens || 400;
     var temperature = options.temperature || 0.75;
     var preferReasoning = !!options.preferReasoning;
+    var roleTag = options.roleTag || 'oas-turn';
+
+    // ── REQUEST/COST/CACHE ACCOUNTING (Roman 2026-09-19) ──
+    // callOASTurnLLM previously had none of this — every successful call was invisible to the
+    // cost ledger, and a real provider failure (rate-limit, outage) was indistinguishable from a
+    // governor-imposed refusal. Mirrors the pattern already proven in _authorFullScenePolicy
+    // (app.js): an `attempts` ledger per dispatch, `_isGovernorRefusal` to label a 429/507 as
+    // governor-vs-provider, `_recordProxyTextCost`/`_classifyGrokCacheObservation` on any real
+    // success. Exposed via window.state._lastOASAuthorAttempts/_lastOASAuthorCache — a side
+    // channel, not a return-type change, so both existing callers (the opener + the turn handler,
+    // which only ever consume the returned text) keep working unmodified.
+    var attempts = [];
+    function _recordAttempt(rec) {
+      attempts.push(rec);
+      try { if (typeof window !== 'undefined' && window.state) window.state._lastOASAuthorAttempts = attempts.slice(); } catch (_) {}
+    }
+    async function _governorRefused(resp) {
+      try { return (typeof window !== 'undefined' && typeof window._isGovernorRefusal === 'function') ? await window._isGovernorRefusal(resp) : false; }
+      catch (_) { return false; }
+    }
+    function _recordCost(data, model) {
+      try { if (typeof window !== 'undefined' && typeof window._recordProxyTextCost === 'function') window._recordProxyTextCost(data, model, roleTag); } catch (_) {}
+    }
+    function _recordCache(data) {
+      try {
+        if (typeof window === 'undefined' || typeof window._classifyGrokCacheObservation !== 'function' || !window.state) return;
+        window.state._lastOASAuthorCache = window._classifyGrokCacheObservation(data && data.usage);
+      } catch (_) {}
+    }
+    // Established-safe Grok deadline (Roman 2026-09-19): callGrokIntimateFate's own commentary
+    // documents 6s as proven too short for Grok and deliberately bumped to 45s. Every Grok call in
+    // THIS function previously used 12000/15000/40000ms — inconsistent, and the 12s ones are what
+    // produced a real, observed net::ERR_ABORTED on a live Boundary-posture sample (see
+    // _first_sacrifice_live_scene2_boundary_sample_incident_2026_09_19.md). Standardized to the
+    // same established value everywhere Grok is dispatched from this function.
+    var GROK_TIMEOUT_MS = 45000;
 
     // ── Grok via specialist proxy ──
     // For REASONING: ask the proxy to start with reasoning model.
     // For FAST: ask it to start with non-reasoning. Either way the proxy
     // has its own server-side fallback chain behind whichever we picked.
     async function _callGrokWithPreferred(preferredModel, timeoutMs) {
+      var t0 = Date.now();
       try {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
@@ -5804,18 +5841,26 @@ dialogue: <elevated dialogue>`;
           const text = data.choices?.[0]?.message?.content || data.content || null;
           if (text) {
             console.log('[OAS-LLM] Grok (' + preferredModel + ') ok');
+            _recordCost(data, preferredModel);
+            _recordCache(data);
+            _recordAttempt({ provider: 'grok', model: preferredModel, ok: true, status: resp.status, ms: Date.now() - t0 });
             return text;
           }
+          _recordAttempt({ provider: 'grok', model: preferredModel, ok: false, status: resp.status, reason: 'empty content', ms: Date.now() - t0 });
         } else {
-          console.warn('[OAS-LLM] Grok (' + preferredModel + ') HTTP ' + resp.status);
+          const governorRefused = await _governorRefused(resp);
+          console.warn('[OAS-LLM] Grok (' + preferredModel + ') HTTP ' + resp.status + (governorRefused ? ' (governor refusal)' : ''));
+          _recordAttempt({ provider: 'grok', model: preferredModel, ok: false, status: resp.status, governorRefused: governorRefused, ms: Date.now() - t0 });
         }
       } catch (e) {
         console.warn('[OAS-LLM] Grok (' + preferredModel + ') threw:', e && e.message);
+        _recordAttempt({ provider: 'grok', model: preferredModel, ok: false, error: String(e && e.message), aborted: e && e.name === 'AbortError', ms: Date.now() - t0 });
       }
       return null;
     }
 
     async function _callDeepSeek(model, timeoutMs) {
+      var t0 = Date.now();
       try {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
@@ -5837,18 +5882,25 @@ dialogue: <elevated dialogue>`;
           const text = data.choices?.[0]?.message?.content || data.content || null;
           if (text) {
             console.log('[OAS-LLM] DeepSeek (' + model + ') ok');
+            _recordCost(data, model);
+            _recordAttempt({ provider: 'deepseek', model: model, ok: true, status: resp.status, ms: Date.now() - t0 });
             return text;
           }
+          _recordAttempt({ provider: 'deepseek', model: model, ok: false, status: resp.status, reason: 'empty content', ms: Date.now() - t0 });
         } else {
+          const governorRefused = await _governorRefused(resp);
           console.warn('[OAS-LLM] DeepSeek (' + model + ') HTTP ' + resp.status);
+          _recordAttempt({ provider: 'deepseek', model: model, ok: false, status: resp.status, governorRefused: governorRefused, ms: Date.now() - t0 });
         }
       } catch (e) {
         console.warn('[OAS-LLM] DeepSeek (' + model + ') threw:', e && e.message);
+        _recordAttempt({ provider: 'deepseek', model: model, ok: false, error: String(e && e.message), ms: Date.now() - t0 });
       }
       return null;
     }
 
     async function _callMistral() {
+      var t0 = Date.now();
       try {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 15000);
@@ -5872,13 +5924,19 @@ dialogue: <elevated dialogue>`;
           const text = data.choices?.[0]?.message?.content || data.content || null;
           if (text) {
             console.log('[OAS-LLM] mistral-small@180 ok');
+            _recordCost(data, 'mistral-small-latest');
+            _recordAttempt({ provider: 'mistral', model: 'mistral-small-latest', ok: true, status: resp.status, ms: Date.now() - t0 });
             return text;
           }
+          _recordAttempt({ provider: 'mistral', model: 'mistral-small-latest', ok: false, status: resp.status, reason: 'empty content', ms: Date.now() - t0 });
         } else {
-          console.warn('[OAS-LLM] mistral-small HTTP ' + resp.status);
+          const governorRefused = await _governorRefused(resp);
+          console.warn('[OAS-LLM] mistral-small HTTP ' + resp.status + (governorRefused ? ' (governor refusal)' : ''));
+          _recordAttempt({ provider: 'mistral', model: 'mistral-small-latest', ok: false, status: resp.status, governorRefused: governorRefused, ms: Date.now() - t0 });
         }
       } catch (e) {
         console.warn('[OAS-LLM] Mistral threw:', e && e.message);
+        _recordAttempt({ provider: 'mistral', model: 'mistral-small-latest', ok: false, error: String(e && e.message), ms: Date.now() - t0 });
       }
       return null;
     }
@@ -5909,9 +5967,9 @@ dialogue: <elevated dialogue>`;
       // perceived dead time. In dev shortcut mode (no story), reasoning
       // improvises but its improv tends to be plausible enough.
       console.log('[OAS-LLM] Mode: REASONING (depth chain)');
-      text = await _callGrokWithPreferred('grok-4-1-fast-reasoning', 40000);
+      text = await _callGrokWithPreferred('grok-4-1-fast-reasoning', GROK_TIMEOUT_MS);
       if (text) return text;
-      text = await _callGrokWithPreferred('grok-4-1-fast-non-reasoning', 15000);
+      text = await _callGrokWithPreferred('grok-4-1-fast-non-reasoning', GROK_TIMEOUT_MS);
       if (text) return text;
       text = await _callDeepSeek('deepseek-v4-pro', 30000);
       if (text) return text;
@@ -5933,9 +5991,9 @@ dialogue: <elevated dialogue>`;
       text = await _callMistral();
       if (text) return text;
     }
-    text = await _callGrokWithPreferred('grok-4.20-0309-non-reasoning', 12000);
+    text = await _callGrokWithPreferred('grok-4.20-0309-non-reasoning', GROK_TIMEOUT_MS);
     if (text) return text;
-    text = await _callGrokWithPreferred('grok-4-1-fast-non-reasoning', 12000);
+    text = await _callGrokWithPreferred('grok-4-1-fast-non-reasoning', GROK_TIMEOUT_MS);
     if (text) return text;
     text = await _callDeepSeek('deepseek-v4-flash', 15000);
     if (text) return text;

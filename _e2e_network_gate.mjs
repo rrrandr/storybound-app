@@ -171,16 +171,31 @@ export async function installFailClosedNetworkGate(page, opts) {
       persist({ kind: 'dispatch', roleTag: rec.roleTag, real: false, url, requestBody: rec.requestBody, at: rec.at, atMono: rec.atMono });
     }
 
-    let body;
+    let body, fulfillStatus = 200;
     try {
       const result = await stubFn(req);   // AWAITED — a stub may deliberately answer late.
-      body = (typeof result === 'string') ? result : JSON.stringify(result);
+      // OPTIONAL STATUS ENVELOPE (Roman 2026-09-19): a stub normally returns the body value
+      // directly and always gets fulfilled with 200 — unchanged default. To simulate a real
+      // non-2xx response (a provider 429/507, a governor refusal), a stub may instead return
+      // { __gateStatus: <code>, ...bodyFields }; that code becomes the fulfilled HTTP status and
+      // is stripped from the recorded body. Every pre-existing stub (plain object/string, no
+      // __gateStatus key) is byte-identical to before this change.
+      if (result && typeof result === 'object' && typeof result.__gateStatus === 'number') {
+        fulfillStatus = result.__gateStatus;
+        const { __gateStatus, ...rest } = result;
+        body = JSON.stringify(rest);
+        if (rec) rec.responseBody = rest;
+      } else {
+        body = (typeof result === 'string') ? result : JSON.stringify(result);
+        if (rec) rec.responseBody = (typeof result === 'string') ? { raw: result } : result;
+      }
       if (rec) {
-        rec.status = 200; rec.responseBody = (typeof result === 'string') ? { raw: result } : result;
+        rec.status = fulfillStatus;
         rec.settledAt = Date.now(); rec.settledAtMono = performance.now(); rec.elapsedMs = rec.settledAtMono - rec.atMono;
-        persist({ kind: 'response', roleTag: rec.roleTag, real: false, url, status: 200, responseBody: rec.responseBody, at: rec.settledAt, settledAtMono: rec.settledAtMono, elapsedMs: rec.elapsedMs });
+        persist({ kind: 'response', roleTag: rec.roleTag, real: false, url, status: fulfillStatus, responseBody: rec.responseBody, at: rec.settledAt, settledAtMono: rec.settledAtMono, elapsedMs: rec.elapsedMs });
       }
     } catch (e) {
+      fulfillStatus = 500;
       body = JSON.stringify({ error: 'stub threw: ' + String(e && e.message) });
       if (rec) {
         rec.status = 500; rec.responseBody = { error: String(e && e.message) };
@@ -188,7 +203,7 @@ export async function installFailClosedNetworkGate(page, opts) {
         persist({ kind: 'response', roleTag: rec.roleTag, real: false, url, status: 500, responseBody: rec.responseBody, at: rec.settledAt, settledAtMono: rec.settledAtMono, elapsedMs: rec.elapsedMs });
       }
     }
-    route.fulfill({ status: 200, contentType: 'application/json', body: body });
+    route.fulfill({ status: fulfillStatus, contentType: 'application/json', body: body });
   });
 
   page.on('response', async (response) => {

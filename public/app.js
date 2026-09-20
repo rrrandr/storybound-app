@@ -185538,7 +185538,7 @@ No text, no watermark, no UI elements, share-ready.`;
         responseRaw = await _oasLLM([
           { role: 'system', content: systemMsg },
           { role: 'user',   content: prompt }
-        ], { max_tokens: 250, temperature: 0.85 });
+        ], { max_tokens: 250, temperature: 0.85, roleTag: 'oas-opener' });
       } else if (window.StoryboundOrchestration && window.StoryboundOrchestration.callChatGPT) {
         responseRaw = await window.StoryboundOrchestration.callChatGPT([
           { role: 'system', content: systemMsg },
@@ -193611,6 +193611,11 @@ No text, no watermark, no UI elements, share-ready.`;
       '- One more turn before resolve.'
     ].join('\n');
   }
+  // Harness-only export (Roman 2026-09-19): pure/read-only, no behavior change — lets a dry
+  // control call the real prompt builder directly to verify content (authored opening, Scene 1
+  // context, player's exact words, prior turns) without round-tripping the full turn handler and
+  // faking a model's JSON response shape. See _oas_turn_chain_repair_control.mjs.
+  window._buildIntimacyTurnPrompt = _buildIntimacyTurnPrompt;
   // Detect "suggestively unhinged Mode-1 LI" register in the LI's
   // dialogue response — when matched, force li_face_state to
   // 'blowing_smirk' regardless of what the LLM picked. The
@@ -195457,7 +195462,7 @@ No text, no watermark, no UI elements, share-ready.`;
           responseRaw = await _oasLLM([
             { role: 'system', content: _oasSystemMsg },
             { role: 'user',   content: prompt }
-          ], { max_tokens: 400, temperature: 0.75, preferReasoning: _preferReasoning });
+          ], { max_tokens: 400, temperature: 0.75, preferReasoning: _preferReasoning, roleTag: 'oas-turn' });
         } else {
           // Defensive fallback if orchestration-client.js doesn't export it
           responseRaw = await window.StoryboundOrchestration.callChatGPT([
