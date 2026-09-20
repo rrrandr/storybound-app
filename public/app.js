@@ -8655,6 +8655,48 @@ window.config = window.config || {
   }
   window._detectLiteraryContinuityDrift = _detectLiteraryContinuityDrift;
 
+  // ── LI PRESENCE DOMINANCE DETECTOR (Roman 2026-09-20) ──
+  // Telemetry-only — NEVER rewrites (a validator that can rewrite is a competing author). Flags
+  // when the load-bearing LI's own beats are DOMINATED by unanchored inert-negation/stillness
+  // forms ("does not move", "remains steady", "does not speak") — presence without felt pressure.
+  // Controlled stillness is fine; the rule keys on DOMINANCE of the UNANCHORED form, not on the
+  // mere presence of any one such line — a beat carrying an emotional/sensory/relational anchor
+  // (jaw, breath, restraint, a fixed gaze, etc.) alongside stillness is NOT counted against the LI.
+  // Explicitly scoped to an individually-named, load-bearing LI only — a collective/group presence
+  // (the assembly, a crowd) may legitimately stay reactive/still throughout; this detector never
+  // looks at those beats at all (the subject pattern only matches the named LI / he / his).
+  // Finding this closes: a real paid Scene 2 sample (2026-09-20,
+  // _scene2_repair_replay_sample_out/run_1789884119160.jsonl, cost $0.0870534) tripped this at
+  // 4/4 (100%) — see _scene2_li_presence_quality_note_2026_09_20.md.
+  var _LI_INERT_NEGATION_RX = /\b(?:does not|doesn't|did not|didn't)\s+\w+|\b(?:remains?|stays?|holds?)\s+(?:steady|still|motionless|silent|unmoving|unchanged|impassive)\b|\b(?:unmoving|motionless|impassive)\b/i;
+  var _LI_PRESENCE_ANCHOR_RX = /\b(?:jaw|breath|pulse|heat|weight|throat|chest|fist|grip|leash|restraint|control|coil(?:ed|s)?|want(?:s|ed|ing)?|hunger|tension|ache|nerve|knuckles?|tighten(?:s|ed|ing)?|fixed on|gaze (?:holds|locks|traces)|watch(?:es|ing)?\s+(?:her|him))\b/i;
+  function _detectLIPresenceDominance(screenplay, opts) {
+    try {
+      opts = opts || {};
+      var minBeats = opts.minBeats != null ? opts.minBeats : 3;
+      var threshold = opts.dominanceThreshold != null ? opts.dominanceThreshold : 0.6;
+      var subjectRx = opts.subjectPattern;
+      if (!subjectRx) {
+        var name = String(opts.liName || '').trim();
+        var esc = name ? name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') : '';
+        subjectRx = esc ? new RegExp('^(?:' + esc + "(?:'s)?|He|His)\\b", 'i') : /^(?:He|His)\b/i;
+      }
+      var beats = (screenplay && Array.isArray(screenplay.beats)) ? screenplay.beats : [];
+      var liBeats = beats.filter(function (b) { return b && typeof b.text === 'string' && subjectRx.test(b.text.trim()); });
+      var flat = liBeats.filter(function (b) { return _LI_INERT_NEGATION_RX.test(b.text) && !_LI_PRESENCE_ANCHOR_RX.test(b.text); });
+      var ratio = liBeats.length ? (flat.length / liBeats.length) : 0;
+      var flagged = liBeats.length >= minBeats && ratio >= threshold;
+      var result = {
+        flagged: flagged, liBeatCount: liBeats.length, flatCount: flat.length, ratio: ratio,
+        flatBeats: flat.map(function (b) { return { idx: b.idx, text: b.text }; }),
+        reason: flagged ? ('LI presence dominated by unanchored inert-negation forms (' + flat.length + '/' + liBeats.length + ' = ' + Math.round(ratio * 100) + '%)') : null
+      };
+      try { if (flagged) console.warn('[LI-PRESENCE:DOMINANCE] ' + result.reason); } catch (_) {}
+      return result;
+    } catch (e) { return { flagged: false, error: e && e.message }; }
+  }
+  window._detectLIPresenceDominance = _detectLIPresenceDominance;
+
   // ════════════════════════════════════════════════════════════════
   // STORY QUALITY OBSERVATORY — Phase 1: telemetry CAPTURE + HEALTH (Roman 2026-06-21)
   // Prerequisite the plan glossed: most [TAG] telemetry is console-only (ephemeral) —
