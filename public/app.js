@@ -99162,6 +99162,23 @@ function _buildAuthorFloorDirective(s) {
         // See project_scene_causal_contract_gap. Flag exists so the old behavior can be A/B'd, not because the
         // old behavior is defensible.
         var _authV2 = !(typeof window !== 'undefined' && window._eventAuthorityV2 === false);
+        // BINDING WORLD FACTS (Roman 2026-09-20) — aftermathTruths + reserved-event text THIS SAME
+        // accepted objective already committed to preserving (see the comment at
+        // state._scenePlotContract's construction above for the real, paid failure this closes).
+        // Framed to match the existing EVENT CONTRACT precedent below: the author may dramatize,
+        // complicate, or put a character in tension with a fact — it may not invert, contradict, or
+        // narrate around it as if it were untrue, unless the EVENT above explicitly changes it.
+        var _bindingFactsBlock = '';
+        try {
+          var _aft = (pc.aftermathTruths || []);
+          var _res = (pc.reservedConstraints || []);
+          if (_aft.length || _res.length) {
+            _bindingFactsBlock = '\n  WORLD FACTS THIS SCENE\'S OWN ACCEPTED OBJECTIVE ALREADY COMMITTED TO (HARD — BINDING, not inspirational; you may dramatize, complicate, or put a character in tension with any fact below, but you may NOT invert it, contradict it, or let the narration treat it as untrue, UNLESS the EVENT above explicitly changes it):\n';
+            _aft.forEach(function (t) { if (t && t.text) _bindingFactsBlock += '    – ' + String(t.text) + '\n'; });
+            _res.forEach(function (r) { if (r && r.text) _bindingFactsBlock += '    – RESERVED for a LATER scene (do not deliver, name, or pre-empt it here): ' + String(r.text) + '\n'; });
+            _bindingFactsBlock += '  A character may WANT to act against one of these facts, argue it, resent it, or be corrected for misreading it — that is drama. The SCENE succeeding at overturning it, or the narration simply treating it as false or absent, is a CONTRACT BREACH — the same class of failure as rerouting the event, even if the prose is beautiful.\n';
+          }
+        } catch (_) {}
         var _spineBlock = '';
         if (_spineVerbatim && _authV2) {
           _spineBlock = '\n  ISSUE MILESTONE — NARRATIVE INTENT (context for WHY this scene matters to the arc; NOT staging authority, NOT the event to render):\n'
@@ -99208,6 +99225,19 @@ function _buildAuthorFloorDirective(s) {
                  + '    – EXIT STATE (THE invariant — this MUST be TRUE by the end of THIS scene): ' + _sc.slots.exitState + '\n'
                  + '    Rerouting the event (e.g. confessing to a different person), changing who acts, or leaving the exit state un-true is a CONTRACT BREACH — the scene FAILS even if the prose is beautiful. If the named target cannot plausibly be present, that is the PLANNER\'s error to surface, NOT yours to fix by rerouting — stage it as written.\n')
               : '')
+          // COMMITTED FACTS (Roman 2026-09-20): the accepted objective's aftermathTruths, carried
+          // here from _stateChange.committedFacts (see _generateLiteraryPlotContract). BINDING, not
+          // inspirational — real finding this closes: a real Scene 2 generation's own accepted
+          // aftermath.the_answer_institutional === "kept" ("The Answer belongs to the
+          // Institution... It is not hers"), and the delivered prose then directly contradicted it
+          // ("I can claim the Answer as my sacrifice") because the author never saw this text at
+          // all — only the planner's validation gate had seen it, and the gate's result was
+          // discarded after acceptance. Generic across any scene's aftermathTruths, not
+          // First-Sacrifice-specific; empty array when a scene has none.
+          + ((_sc.committedFacts && _sc.committedFacts.length)
+              ? ('  COMMITTED FACTS (HARD — BINDING, not inspirational: the planner already verified these against the seed and every one of them is REQUIRED to remain true. You may DRAMATIZE, COMPLICATE, or put PRESSURE ON any of these — a character can WANT to reverse one, ARGUE against one, or be TEMPTED to act as though one were false. You may NEVER simply INVERT or CONTRADICT one without the planner supplying an explicit new event that changes it — that did not happen in this scene, so none of these change here. If your prose has a character claim ownership of, dispose of, or otherwise treat a committed fact as reversed, THAT IS A CONTRACT BREACH — the scene FAILS even if the prose is beautiful):\n'
+                 + _sc.committedFacts.map(function (f) { return '  • ' + f.text; }).join('\n') + '\n')
+              : '')
           + '  DIALOGUE RULE (HARD): every significant line must ADVANCE TOWARD the event or RESPOND TO it — never keep pursuing an objective the event has already made obsolete.\n'
           + '  RELATIONSHIP DYNAMIC = BEHAVIOR, NOT SUBJECT: the characters\' clash or attraction governs HOW they behave before, during, and after this event — it does NOT replace the event as the scene\'s organizing subject. The scene is about the event; the dynamic is how they live through it.\n'
           // DELIVERY-MANDATE A/B (Roman 2026-07-27): Arm A = the directive above ("stage the transition"). Arm B
@@ -99215,7 +99245,8 @@ function _buildAuthorFloorDirective(s) {
           // a PRIORITY problem (B collapses rollback) vs a CAPABILITY limit (B barely moves it). window._deliveryMandate.
           + ((typeof window !== 'undefined' && window._deliveryMandate === 'B')
               ? '  SUCCESS CRITERION (ABSOLUTE): this scene is a FAILURE — unwritten — unless the event above becomes IRREVOCABLY TRUE by the final line. Atmosphere, mood, interiority, and dialogue EXIST TO DELIVER the event; they are NEVER a substitute for it. A beautiful scene in which the event did not happen has FAILED. Before finishing, confirm: did the event concretely occur on the page? If not, the scene is not done.\n'
-              : '');
+              : '')
+          + _bindingFactsBlock;
       }
       var beats = (pc && Array.isArray(pc.hardBeats)) ? pc.hardBeats.filter(function (b) { return b && b.description; }) : [];
       if (!beats.length) return '';
@@ -99771,6 +99802,22 @@ function _buildAuthorFloorDirective(s) {
           var _scEvent = _scP && String(_scP.state_change || '').trim();
           if (!_scEvent) return;
           var _stateChange = { precondition: String(_scP.state_change_precondition || '').trim(), event: _scEvent, forces_choice: String(_scP.forces_choice || '').trim(), tactical_move: String(_scP.tactical_move || '').trim(), branch_a: String(_scP.branch_a || '').trim(), branch_b: String(_scP.branch_b || '').trim(), sceneProposed: (s.turnCount || 0) };
+          // COMMITTED FACTS (Roman 2026-09-20): the OPEN ROW's aftermathTruths (full text, from
+          // _curMs._eff — the seed's own canon, e.g. "The Answer belongs to the Institution...
+          // It is not hers.") were previously used ONLY by _validateLocalObjective's accept/reject
+          // gate and then DISCARDED — never copied onto _stateChange, so _buildPlotContractDirective
+          // (the only channel that reaches the CG author's prompt) never saw them, and the author
+          // had zero explicit reminder of a fact the SAME accepted reply had just committed to
+          // keeping. Real finding this closes: a real Scene 2 generation's own accepted
+          // aftermath.the_answer_institutional === "kept", and the delivered prose then directly
+          // contradicted it ("I can claim the Answer as my sacrifice"). Carried here so the author
+          // prompt can render them as BINDING (see _buildPlotContractDirective's COMMITTED FACTS
+          // block) — generic across any scene's aftermathTruths, not First-Sacrifice-specific.
+          try {
+            if (_curMs && _curMs._eff && Array.isArray(_curMs._eff.aftermathTruths) && _curMs._eff.aftermathTruths.length) {
+              _stateChange.committedFacts = _curMs._eff.aftermathTruths.map(function (t) { return { id: t.id, text: t.text }; });
+            }
+          } catch (_) {}
           // ACCOMPLISHED-EVENT CONTRACT: attach the causal skeleton to the transition so it rides on
           // state._priorSceneStateChange (available to the next scene's context + the commit gate) and gets logged.
           if (_aecOn && _scP) {
@@ -99819,7 +99866,19 @@ function _buildAuthorFloorDirective(s) {
           // to reinterpret the scene). Downstream fulfillment scorer / obligation ledger / CG carryover consume
           // this UNCHANGED; state_change remains the sole authority.
           var _derivedBeat = { id: 'scene' + (s.turnCount || 0) + '_statechange', description: _stateChange.event, whyItMatters: _stateChange.forces_choice, type: 'plot', importance: 'hard', bornScene: (s.turnCount || 0), locationBound: null, carryStrategy: 'pay_if_plausible_else_adapt', dropAllowed: false, _derivedFromStateChange: true };
-          state._scenePlotContract = { sceneIndex: (s.turnCount || 0), stateChange: _stateChange, hardBeats: [_derivedBeat] };
+          // WORLD-FACT CONTRACT SCOPE FIX (Roman 2026-09-20): a real, paid Scene 2 generation had its
+          // planner objective correctly VALIDATED and ACCEPTED against every aftermathTruth (reply.aftermath[id]
+          // === 'kept' is REQUIRED by _validateLocalObjective above) — then the author contradicted one of
+          // them anyway ("I can claim the Answer as my sacrifice" vs. the seed's own aftermathTruth text: "The
+          // Answer belongs to the Institution... It is not hers"). Root cause, traced: aftermathTruths and
+          // reserved-event text were read ONCE, here, purely to VALIDATE the objective — then discarded. They
+          // were never forwarded to the author; state._scenePlotContract (the sole structured channel into
+          // _buildPlotContractDirective, the CG/literary author's one authoritative-contract prompt block)
+          // never carried them. The author didn't ignore a binding fact — it never received one. Carrying
+          // them here, generically (any starter's open-row scene, not just First Sacrifice), closes that gap.
+          state._scenePlotContract = { sceneIndex: (s.turnCount || 0), stateChange: _stateChange, hardBeats: [_derivedBeat],
+            aftermathTruths: (_curMs && _curMs._eff && Array.isArray(_curMs._eff.aftermathTruths)) ? _curMs._eff.aftermathTruths.slice() : [],
+            reservedConstraints: (_curMs && _curMs._eff && Array.isArray(_curMs._eff.reserved)) ? _curMs._eff.reserved.slice() : [] };
           state._priorSceneStateChange = _stateChange; // next scene's "before" (DECLARED, not delivery-verified — the commit gate verifies)
           if (_openAccept && _openAccept.ok) {
             s._sceneObjectives = s._sceneObjectives || {};
