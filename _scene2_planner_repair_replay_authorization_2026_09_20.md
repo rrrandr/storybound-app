@@ -1,4 +1,4 @@
-# Scene 2 Planner/Author Replay — Updated Authorization Sheet (2026-09-20, second pass)
+# Scene 2 Planner/Author Replay — Updated Authorization Sheet (2026-09-20, third pass)
 
 Supersedes the ceiling in `_scene2_repair_replay_sample.mjs`'s header (the $0.45 replay run 2 of
 this same day) for a **new** replay, now that the planner budget/retry repair below is committed.
@@ -20,6 +20,22 @@ making real calls only from the repaired planner call onward.
 - A structurally complete version of the real retained response (same prose, finished) was proven
   to reach the real Scene 2 author call boundary once validated — confirming the repaired path
   actually delivers a planner→author handoff, not just a cleaner rejection.
+- **Third pass (this update):** that same real retained response's `present[]` named "the
+  assembly", which the individual roster (Lirael/Seren/Julian/the presiding Dohkar) rejected as
+  unknown — the second pass's control had worked around this by stripping the entry, which Roman
+  flagged as masking a real defect: an unresolved scene entity would otherwise still reach the
+  author in production. Fixed properly: "the assembly" is now a structured, seed-authored
+  **collective** scene presence (`STARTER_PLANS.starter_first_sacrifice.scenes[n=2].collectives`),
+  distinct from the individual roster by construction. `present[]` may resolve to either a roster
+  member or a declared collective (never an undeclared freeform string); `local_objective_actor`
+  must always resolve to an individual roster member, so a collective can never get dialogue
+  attribution, a facet, or Character+/relationship grounding — it never enters `roster`, so it can
+  never become a `stage.participant` or an `eventFacts` actor either. Proven dry, 8/8, fully
+  zero-network (`_scene2_collective_presence_repair_control.mjs`): the collective is accepted in
+  present[]; an undeclared freeform collective is still rejected (negative control); a collective
+  named as actor is rejected; the real retained completed content now validates **unmodified** (no
+  stripping); and the collective is confirmed absent from `stage.participants`/`eventFacts` even
+  once accepted.
 
 ## Updated cost ceiling
 
@@ -45,8 +61,10 @@ prior $0.45 run (`_first_sacrifice_oas_grok_happy_path_sample_out/run_1789878699
 
 Would prove: the repaired planner now produces a usable objective within its new budget on a
 real `ministral-8b-2512` call, and — if it doesn't on the first try — that the retry and
-terminal-reason mechanics behave in production exactly as the dry control showed. Would finally
-produce real Scene 2 CG prose from the actual player journey.
+terminal-reason mechanics behave in production exactly as the dry control showed. Would also
+confirm, for real (not just dry), that a real planner response naming "the assembly" validates
+cleanly without stripping. Would finally produce real Scene 2 CG prose from the actual player
+journey.
 
 Would not prove: a cold-start end-to-end run (this still reuses the already-paid real scaffold,
 as disclosed in the prior replay's own corrected framing) — that remains a separate, not-yet-run
@@ -54,5 +72,6 @@ proof.
 
 ## Status
 
-Repaired, dry-proven, committed locally (`e30677fa`), not pushed. **No provider calls made in
-this repair pass.** Awaiting explicit authorization before running this replay for real.
+Repaired, dry-proven, committed locally (`e30677fa`, `2c1cb5f1`, `15854736`), not pushed. **No
+provider calls made in any repair pass.** Awaiting explicit authorization before running this
+replay for real.
