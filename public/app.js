@@ -4787,6 +4787,14 @@ ${_pcInteriorLock}`;
       // $0.10/$0.30 that under-counted every Mistral leg by ~1.5x, including the glint grounding call.
       // Multimodal image tokens arrive INSIDE prompt_tokens, so they are priced by this same rate.
       'mistral-small-latest':        { in: 0.00000015, out: 0.0000006  },  // $0.15 in / $0.60 out per MTok
+      // ministral-8b-2512 — OFFICIAL list price (Roman 2026-09-20, mistral.ai/pricing/api, listed
+      // there as "Ministral 3 (8B)" — the -2512 suffix is Mistral's Dec-2025 snapshot naming
+      // convention, same pattern as this file's other dated model slugs). FLAT $0.15 in / $0.15 out
+      // per MTok — unlike mistral-small-latest's 1:4 in:out asymmetry, this tier prices input and
+      // output identically. Closes a real, disclosed gap: every real ministral-8b-2512 call this
+      // session (the full-scene-author admission-gated fallback, the OAS-turn-reply fallback, and
+      // two calls in the 2026-09-20 happy-path sample) had unrecoverable, unpriced cost until now.
+      'ministral-8b-2512':           { in: 0.00000015, out: 0.00000015 },  // $0.15 in / $0.15 out per MTok
       // Roman 2026-08-27 — added BEFORE any author A/B, not after. Both are already allowlisted in
       // the proxy (mistral-medium-latest is in fact its DEFAULT), so a test run would have fallen
       // through to 'default' and under-counted Large 3 input by ~3.3x and Medium 3.5 output by
@@ -4877,6 +4885,11 @@ ${_pcInteriorLock}`;
       if (m.indexOf('gpt-4o-mini') !== -1) return 'gpt-4o-mini';
       if (m.indexOf('gpt-4o') !== -1) return 'gpt-4o';
       if (m.indexOf('gpt-4') !== -1) return 'gpt-4-turbo';
+      // ministral-8b-2512 MUST be checked before the 'mistral' substring check below — "mistral" is
+      // NOT a substring of "ministral" (m-i-n-i-s-t-r-a-l vs m-i-s-t-r-a-l, extra n/i), so without
+      // this explicit check every ministral-8b-2512 call silently fell through to 'default'
+      // (gpt-4o-mini's rate) — the real, disclosed pricing gap closed 2026-09-20.
+      if (m.indexOf('ministral') !== -1) return 'ministral-8b-2512';
       // Mistral / DeepSeek — CG screenplay authors (A3-F3). Priced explicitly, no longer 'default'.
       if (m.indexOf('mistral') !== -1) return 'mistral-small-latest';
       if (m.indexOf('deepseek') !== -1) return 'deepseek-v4-pro';
@@ -6117,7 +6130,13 @@ ${_pcInteriorLock}`;
     opts = opts || {};
     var maxTokens = opts.max_tokens || 1200;
     var temperature = (opts.temperature != null) ? opts.temperature : 0.6;
-    var tiers = [
+    // opts.tiers (Roman 2026-09-20, scene-spine planner repair): optional override of the default
+    // 3-tier chain — additive, fully backward-compatible (every existing caller omits this and gets
+    // the unchanged default below). Lets a caller with its own constraints (e.g. "no OpenAI in this
+    // chain") or its own admission check (skip a tier that a prompt won't fit) supply a custom,
+    // ordered tier list while still getting this function's existing RPS pacing, attempt logging,
+    // content validation, and clean tier-exhaustion throw.
+    var tiers = Array.isArray(opts.tiers) && opts.tiers.length ? opts.tiers : [
       { tier: 'primary',  provider: 'mistral', model: 'ministral-8b-2512' },
       { tier: 'fallback', provider: 'grok',    model: 'grok-4-1-fast-reasoning' },
       { tier: 'terminal', provider: 'openai',  model: opts.terminalModel || 'gpt-4o-mini' }
@@ -98649,6 +98668,13 @@ function _buildAuthorFloorDirective(s) {
           { role: 'system', content: _vSys },
           { role: 'user', content: _vUsr }
         ], { max_tokens: 280, temperature: 0.1 });
+        // COST ACCOUNTING (Roman 2026-09-20): this real per-scene call had zero cost/cache
+        // recording — invisible to the ledger since it was added (2026-09-13). Closed alongside the
+        // scene-spine planner's own accounting gap (same investigation, same continuation ledger).
+        try {
+          var _vWonModel = (_vData && _vData._orchestration && _vData._orchestration.model) || 'unknown';
+          if (typeof _recordProxyTextCost === 'function') _recordProxyTextCost({ usage: _vData && _vData.usage, _orchestration: { model: _vWonModel } }, _vWonModel, 'scene-commit-verifier');
+        } catch (_) {}
         {
           var _vC = _vData && _vData.content;
           var _vP; try { _vP = JSON.parse(_vC); } catch (e) { var _m = String(_vC || '').match(/\{[\s\S]*\}/); if (_m) { try { _vP = JSON.parse(_m[0]); } catch (_) {} } }
@@ -99396,14 +99422,47 @@ function _buildAuthorFloorDirective(s) {
           // Richer contracts (situation-driven / accomplished-event / structured-handoff) emit more fields; 320 tokens
           // truncated the output and DROPPED the trailing event_slots (found in channel validation). Give them room.
           var _scMaxTok = ((typeof window !== "undefined") && window._consequenceSelectionPlanner === true) ? 760 : (((typeof window !== "undefined") && (window._structuredEventHandoff === true || window._evidenceCommitCheck !== false || window._situationDrivenPlanner === true || window._accomplishedEventContract === true)) ? 640 : 320);
-          var _scRes = _plannerGrok
-            ? await fetch('/api/proxy', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ messages: [{ role: 'system', content: _scSys + '\nOutput STRICT JSON ONLY — no preamble, no code fences.' }, { role: 'user', content: _scUsr }], role: 'STRUCTURE_GENERATOR', preferredModel: (typeof window !== 'undefined' && window._scenePlannerModel) || 'grok-4-1-fast-non-reasoning', temperature: 0.3, max_tokens: _scMaxTok }) })
-            : await fetch('/api/mistral-proxy', { method: 'POST', headers: { 'Content-Type': 'application/json' },   // 2026-09-10 (Roman): scene-spine planner off gpt-4o-mini → Mistral Small (no OpenAI in the author chain)
-                body: JSON.stringify({ messages: [{ role: 'system', content: _scSys }, { role: 'user', content: _scUsr }], role: 'STRUCTURE_GENERATOR', model: 'mistral-small-latest', temperature: 0.3, max_tokens: _scMaxTok, response_format: { type: 'json_object' } }) });
-          if (!_scRes.ok) return;
-          var _scData = await _scRes.json();
-          var _scContent = (_scData && _scData.content) || (_scData && _scData.choices && _scData.choices[0] && _scData.choices[0].message && _scData.choices[0].message.content);
+          // ADMISSION-AWARE TIERED PLANNER (Roman 2026-09-20 repair). Root cause of the 2026-09-20
+          // happy-path incident: this call used to be a single bare fetch to mistral-small-latest
+          // with `if (!_scRes.ok) return;` — no fallback. Two real, consecutive 429s (a genuine
+          // rate-limit collision — three Mistral-family calls landed close together in one
+          // continuous operation, and mistral-small-latest is limited to 1 RPS) each triggered a
+          // downstream OPEN ROW GATE (app.js ~229156, reads whether this planner's own success wrote
+          // s._sceneObjectives[...].status='accepted') that aborts the WHOLE scene before the Grok
+          // author call is ever reached — the outer caller's one bounded retry re-ran this exact
+          // same single-shot call and hit the same rate limit again, then hard-stopped resumable.
+          // Fixed via _callTieredProvider (already proven elsewhere in this same function, for
+          // _commitScene's verifier) with a CUSTOM 2-tier chain — mistral(ministral-8b-2512) /
+          // grok(grok-4-1-fast-reasoning-class) only, preserving the original "no OpenAI in the
+          // author chain" constraint (2026-09-10) rather than adopting _callTieredProvider's default
+          // 3-tier chain's OpenAI terminal. ministral-8b-2512's real 625,000 TPM / 3.13 RPS ceiling
+          // (api/_mistral-governor.js MODEL_LIMITS) gives real headroom over mistral-small-latest's
+          // 20,000 TPM / 1 RPS — reduces collision risk directly — and a genuine admission check
+          // (_ministral8bGovernorAdmits, the same static reservation check _authorFullScenePolicy
+          // uses) skips that tier entirely, at zero cost, if this specific prompt would not fit,
+          // rather than dispatching and hoping. window._scenePlannerEngine='grok' still lets Grok
+          // lead (an existing, unchanged experiment toggle), now with ministral-8b as its own
+          // fallback rather than no fallback at all.
+          var _scGrokModel = (typeof window !== 'undefined' && window._scenePlannerModel) || 'grok-4-1-fast-non-reasoning';
+          var _scMessages = [{ role: 'system', content: _scSys + '\nOutput STRICT JSON ONLY — no preamble, no code fences.' }, { role: 'user', content: _scUsr }];
+          var _scMinistralAdmission = (typeof _ministral8bGovernorAdmits === 'function') ? _ministral8bGovernorAdmits(_scMessages, _scMaxTok) : { admits: true };
+          var _scTiers = [];
+          if (_plannerGrok) {
+            _scTiers.push({ tier: 'primary', provider: 'grok', model: _scGrokModel });
+            if (_scMinistralAdmission.admits) _scTiers.push({ tier: 'fallback', provider: 'mistral', model: 'ministral-8b-2512' });
+          } else {
+            if (_scMinistralAdmission.admits) _scTiers.push({ tier: 'primary', provider: 'mistral', model: 'ministral-8b-2512' });
+            _scTiers.push({ tier: _scTiers.length ? 'fallback' : 'primary', provider: 'grok', model: _scGrokModel });
+          }
+          var _scContent = null;
+          try {
+            var _scResult = await _callTieredProvider('scenePlanner', _scMessages, { max_tokens: _scMaxTok, temperature: 0.3, tiers: _scTiers });
+            _scContent = _scResult && _scResult.content;
+            try {
+              var _scWonModel = (_scResult && _scResult._orchestration && _scResult._orchestration.model) || 'unknown';
+              if (typeof _recordProxyTextCost === 'function') _recordProxyTextCost({ usage: _scResult && _scResult.usage, _orchestration: { model: _scWonModel } }, _scWonModel, 'scene-planner');
+            } catch (_) {}
+          } catch (_scErr) { try { console.warn('[SCENE-PLANNER] both tiers exhausted:', _scErr && _scErr.message); } catch (_) {} }
           if (!_scContent) return;
           var _scP; try { _scP = JSON.parse(_scContent); } catch (e) { var _scM = String(_scContent).match(/\{[\s\S]*\}/); if (!_scM) return; try { _scP = JSON.parse(_scM[0]); } catch (e2) { return; } }
           // ACCOMPLISHED-EVENT CONTRACT: normalize the richer schema back onto the legacy state_change keys so the

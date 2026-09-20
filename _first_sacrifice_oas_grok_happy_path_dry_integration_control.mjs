@@ -181,7 +181,13 @@ const REAL_DO = 'I keep my hands folded at my waist and meet his eyes across Ser
     // _oas_turn_reply_long_context_reclassification_control.mjs section 6 — same constant, same
     // shared _authorFullScenePolicy call site).
     const authorCall = sceneCalls.find((c) => c.requestBody && c.requestBody.max_tokens === 8000);
-    ok('a real commit-verifier and/or planner call genuinely preceded the author call (confirms this is the real pipeline, not a simplified stand-in)', sceneCalls.length > 1, JSON.stringify(sceneCalls.map((c) => c.url)));
+    // Corrected 2026-09-20 (found while building _scene2_planner_tiered_fallback_repair_control.mjs):
+    // the per-scene commit-verifier (_commitScene) only fires when state._priorSceneStateChange
+    // already exists — true for a REAL Scene 2+ continuation, NOT true for this control's minimal
+    // seeded state (no actual prior scene). So exactly one structural call (the scene-spine planner
+    // alone) is the CORRECT expectation here, not a sign of a simplified stand-in. >=1 confirms the
+    // real pipeline's structural step(s) fired at all (never asserted a specific count again).
+    ok('at least one real structural call (commit-verifier and/or scene-spine planner) genuinely preceded the author call (confirms this is the real pipeline, not a simplified stand-in)', sceneCalls.length >= 1, JSON.stringify(sceneCalls.map((c) => c.url)));
     // NOT asserted on (2026-09-20, after investigation): whether the author call (max_tokens: 8000)
     // itself dispatches depends on the commit-verifier/planner calls' CONTENT satisfying whatever
     // internal validation _generateLiteraryPlotContract/_commitScene apply before letting generation
