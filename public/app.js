@@ -99515,13 +99515,42 @@ function _buildAuthorFloorDirective(s) {
           if (_curMs && _curMs._open && _curMs._eff) {
             var _oe = _curMs._eff, _ob = [];
             _ob.push('THIS ROW IS OPEN: no authored objective. Derive THIS scene\'s LOCAL OBJECTIVE from the aftermath and the reader\'s actual posture below, inside the seed\'s constraints.');
+            // WORLD TRUTHS FOR THE OPEN-ROW PLANNER (Roman 2026-09-20) — root cause, traced: this planner
+            // invents the scene's one binding EVENT (the author is then HARD-bound to dramatize it, never
+            // override it), but until now it never received the seed's own worldTruths — only the AUTHOR
+            // did, via a separate, later builder (_buildSeedContextDirective/_continuitySpineBlock). A real,
+            // paid Scene 2 sample (run_1789930729650.jsonl) proved the gap: this planner, told only the
+            // reader's Say/Do dialogue ("I want you to burn for me, as the First-Favored did for the old
+            // gods" — a Fate-Card intimacy line) and nothing about canon, invented "Julian ignites the pyre
+            // beneath Lirael's feet" — a literal ritual-burning event that directly contradicts an existing
+            // worldTruth ("THE RITE HAS NO MAGICAL MACHINERY... responsive ceremonial fire" is explicitly
+            // named ABSENT) and the seed's own explicit guidance for what this exact scene may carry instead
+            // ("accusation, preliminary review, political pressure, investigation, concealment, or flight").
+            // Forwarding the same worldTruths the author already receives, before the planner locks in its
+            // event, lets the planner self-correct at the source instead of the author being bound to
+            // dramatize an already-invented, ungrounded event. Generic: any starter with worldTruths.
+            try {
+              var _seedWT = (typeof _activeSeed === 'function') ? _activeSeed(s) : null;
+              if (_seedWT && Array.isArray(_seedWT.worldTruths) && _seedWT.worldTruths.length) {
+                _ob.push('WORLD TRUTHS (canon — already true; your invented state_change must NOT contradict these, invent a mechanic/ritual/practice/environmental fact they do not name, or ignore guidance they give for what THIS scene may carry):\n' + _seedWT.worldTruths.map(function (t) { return '  • ' + t; }).join('\n'));
+              }
+            } catch (_) {}
             try { var _em = s._bakedEmitted; if (_oe.aftermathSource === 'baked_emitted' && _em) {
               _ob.push('IMMUTABLE AFTERMATH (already read; build FROM it, never re-establish or reverse it): ' + String(_em.sceneSummary || '').slice(0, 2000));
               if (_em.openState && _em.openState.pcCondition) _ob.push('  • her condition now: ' + String(_em.openState.pcCondition));
               if (Array.isArray(_em.obligations) && _em.obligations.length) _ob.push('  • open obligations: ' + _em.obligations.map(String).join(' | ').slice(0, 1400));
               if (Array.isArray(_em.ledgerSeeds) && _em.ledgerSeeds.length) _ob.push('  • what the cast now perceive of each other: ' + _em.ledgerSeeds.map(String).join(' | ').slice(0, 800));
             } } catch (_) {}
-            if (_posture) { _ob.push('READER\'S RECORDED CHOICE at the end of the opening: ' + (_posture.label || '(none recorded)')); _ob.push('READER\'S SAY/DO for this scene (verbatim; this is the posture the objective must answer): action: ' + JSON.stringify(_posture.action) + ' · dialogue: ' + JSON.stringify(_posture.dialogue)); }
+            if (_posture) {
+              _ob.push('READER\'S RECORDED CHOICE at the end of the opening: ' + (_posture.label || '(none recorded)'));
+              _ob.push('READER\'S SAY/DO for this scene (verbatim; this is the posture the objective must answer): action: ' + JSON.stringify(_posture.action) + ' · dialogue: ' + JSON.stringify(_posture.dialogue));
+              // REGISTER (Roman 2026-09-20) — same real sample: the Say/Do above can be Fate-Card dialogue
+              // (charged, metaphorical, performative — written for an intimate exchange in the moment), and
+              // nothing previously told this planner not to read it as a literal instruction for the next
+              // scene's physical event. "burn for me, as the First-Favored did for the old gods" is desire,
+              // not a request for an actual immolation ritual; the planner took it literally anyway.
+              _ob.push('REGISTER (HARD): the Say/Do above is the reader\'s emotional/rhetorical posture — it tells you what she wants, fears, or is posturing about. It is NEVER a literal instruction to invent a new physical event, ritual, mechanic, or environmental fact — even when it uses concrete or violent imagery. Ground state_change in WORLD TRUTHS and AFTERMATH TRUTHS; use the posture to choose WHO acts and HOW, never WHAT becomes physically real.');
+            }
             try { var _L = (typeof _relLedger === 'function') ? _relLedger(false) : null; var _ents = (_L && _L.entities) || {}; var _rl = (_oe.roster || []).map(function (r) { var e = _ents[r.ref]; var cp = (_L && _L.cplus && _L.cplus.rows && _L.cplus.rows[r.ref]) || null; return r.label + (e && e.anchorRole === 'li' ? ' (love interest)' : '') + (cp && cp.last_cplus_scene_ordinal != null ? ' — last Character+ scene ' + cp.last_cplus_scene_ordinal : ''); });
               if (_rl.length) _ob.push('ROSTER — who CAN be present (name only these; choose who IS): ' + _rl.join(' · ')); } catch (_) {}
             if (_oe.collectives && _oe.collectives.length) _ob.push('ALSO PRESENT — declared collective presence(s) (if genuinely present, add EXACTLY this label to "present": ' + _oe.collectives.map(function (c) { return '"' + c.label + '"'; }).join(', ') + '. A collective may witness, react, and supply pressure — it is NEVER "local_objective_actor", never speaks, never gets its own name or identity.)');
