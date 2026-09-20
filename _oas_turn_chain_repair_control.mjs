@@ -36,6 +36,9 @@
 //   D. Governor-refusal is distinguished from an ordinary provider failure in the attempt ledger,
 //      for both the "false" (real observed shape: a genuine Mistral 429, no governor flag) and
 //      "true" (governor: true) cases.
+//   E. The widened Mistral timeout (15s → 30s, 2026-09-19: the live Boundary sample's real 429
+//      settled at ~14.8s, too close to the old 15s ceiling to trust a slow-but-valid response
+//      wouldn't be misclassified as a timeout) actually works against a deliberately-delayed stub.
 //
 // Fully dry — every /api/** call is served by a local stub (no allowRealPaths at all); no real
 // provider is ever reached. Requires the local dev server at http://localhost:3000 (unchanged app
@@ -200,6 +203,27 @@ const TURN3_MARKER = 'ZZZ_PRIOR_TURN_3_MARKER';
   });
   ok('a real governor:true 429 is correctly recorded as governorRefused:true — the two failure shapes are no longer conflated', sectionD.attempts && sectionD.attempts[0] && sectionD.attempts[0].provider === 'mistral' && sectionD.attempts[0].governorRefused === true, JSON.stringify(sectionD.attempts && sectionD.attempts[0]));
   ok('the chain still correctly falls through to Grok afterward regardless of which failure shape Mistral returned', sectionD.text === 'fast grok reply, no delay this section', JSON.stringify(sectionD.text));
+
+  section('E. WIDENED MISTRAL TIMEOUT — a real, observed 14.8s near-miss against the OLD 15s deadline; proven fixed');
+  const MISTRAL_STUB_DELAY_MS = 22000; // between the OLD 15000ms deadline (would abort) and the NEW 30000ms one (should succeed)
+  let mistralStubStartedAt = null, mistralStubResolvedAt = null;
+  mistralHandler = async () => {
+    mistralStubStartedAt = Date.now();
+    await sleep(MISTRAL_STUB_DELAY_MS);
+    mistralStubResolvedAt = Date.now();
+    return { choices: [{ message: { content: 'mistral reply after the old-deadline window' } }], usage: { prompt_tokens: 300, completion_tokens: 40 } };
+  };
+  const sectionE = await page.evaluate(async () => {
+    const trueStart = Date.now();
+    const text = await window.StoryboundOrchestration.callOASTurnLLM(
+      [{ role: 'system', content: 'you are the LI' }, { role: 'user', content: 'turn content 3' }],
+      { max_tokens: 400, temperature: 0.75, roleTag: 'oas-turn' }
+    );
+    return { text, elapsedMs: Date.now() - trueStart, attempts: window.state._lastOASAuthorAttempts || null };
+  });
+  ok('the delayed Mistral stub genuinely took ~22s (a real delay, not an immediate mock standing in for "delayed")', mistralStubResolvedAt && mistralStubStartedAt && (mistralStubResolvedAt - mistralStubStartedAt) >= MISTRAL_STUB_DELAY_MS - 100, (mistralStubResolvedAt - mistralStubStartedAt) + 'ms');
+  ok('callOASTurnLLM returned Mistral\'s own reply despite the ~22s delay — the widened 30s deadline actually works (the OLD 15s deadline, which a real 429 settled within 14.8s of on the live sample, would have aborted this and fallen through to Grok instead)', sectionE.text === 'mistral reply after the old-deadline window', JSON.stringify(sectionE.text));
+  ok('the attempt ledger shows a single, successful Mistral attempt — no premature abort forced a fallback that shouldn\'t have been needed', Array.isArray(sectionE.attempts) && sectionE.attempts.length === 1 && sectionE.attempts[0].provider === 'mistral' && sectionE.attempts[0].ok === true, JSON.stringify(sectionE.attempts));
 
   await browser.close();
 

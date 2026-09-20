@@ -5899,11 +5899,18 @@ dialogue: <elevated dialogue>`;
       return null;
     }
 
+    // Timeout (Roman 2026-09-19): a real, observed Mistral 429 on the live Boundary sample settled
+    // at ~14.8s against the OLD 15000ms deadline here — too close to trust that a slow-but-VALID
+    // response wouldn't have been misclassified as a timeout instead of a genuine answer. Doubled
+    // for real margin; kept below Grok's 45000ms (mistral-small-latest is a smaller, normally-fast
+    // model that doesn't need reasoning-class headroom). See _oas_turn_chain_repair_control.mjs
+    // section E for the dry proof against a deliberately-delayed stub.
+    var MISTRAL_TIMEOUT_MS = 30000;
     async function _callMistral() {
       var t0 = Date.now();
       try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 15000);
+        const timeoutId = setTimeout(() => controller.abort(), MISTRAL_TIMEOUT_MS);
         const resp = await fetch(CONFIG.MISTRAL_PROXY, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
