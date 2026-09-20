@@ -8792,6 +8792,80 @@ window.config = window.config || {
   }
   window._repairLIPresenceBeats = _repairLIPresenceBeats;
 
+  // ── SCENE ADEQUACY DETECTOR (Roman 2026-09-20) ──
+  // Generic across generated Scenes 2-10 — NOT First-Sacrifice-specific machinery. Telemetry-only,
+  // NEVER rewrites (a validator that rewrites is a competing author). A generated continuation is
+  // capable, not just mechanically valid, only if it clears this.
+  // Real finding this closes: a real, paid Scene 2 generation (grok-4-1-fast-reasoning, $0.0870534,
+  // _scene2_repair_replay_sample_out/run_1789884119160.jsonl) — read as a single extended reaction
+  // beat with no real aftermath, contradicted its OWN committed planner contract by framing an
+  // institutional relic as the protagonist's personal sacrifice (the same generation's accepted
+  // aftermath field had "the_answer_institutional":"kept" — "The Answer belongs to the
+  // Institution... It is not hers" — beat 19 then said "I can claim the Answer as my sacrifice."),
+  // and ended on pure suspended-pressure vocabulary rather than concrete forward movement. Roman:
+  // "the pipeline made it through the doorway, but it did not yet understand the room."
+  // Three reject-only, deterministic sub-checks — see
+  // _continuation_scene_adequacy_requirements_2026_09_20.md for the full requirement set this is
+  // deliberately a PARTIAL, conservative encoding of (density/dialogue-proportion/aftermath
+  // QUALITY are real requirements but not reliably deterministic, so they stay documented
+  // requirements, not reject-only checks here):
+  //   A. AFTERMATH/PROCEDURE MOVEMENT — some signal, anywhere in the beats, that the story is
+  //      moving into consequence/procedure, not just extending the immediate reaction. Conservative
+  //      low bar: fires only on TOTAL absence of the whole vocabulary; presence does not certify
+  //      the aftermath is GOOD, only that some exists at all.
+  //   B. PROTECTED-RELIC OWNERSHIP VIOLATION — delivered prose must never frame a registered
+  //      protected object (STARTER_PROTECTED_RELICS) as the protagonist's own property/sacrifice.
+  //   C. ENDING-ON-SUSPENSION-ONLY — the scene's final beats must not be saturated with pure
+  //      suspension vocabulary (waits / holds its breath / remains half-raised) with zero completed
+  //      forward-movement verbs nearby.
+  // Player-branch flexibility is preserved BY DESIGN: all three checks key on vocabulary/pattern
+  // PRESENCE, never on exact wording or a fixed scene shape — two structurally different branches
+  // (different Say/Do/Fate posture, different content) can both clear every check; see the "two
+  // different adequate branches" proof in _scene2_continuation_adequacy_control.mjs.
+  var _SCENE_AFTERMATH_VOCAB_RX = /\b(?:family|kin|household|clan|parents?|mother|father|sister|brother)\b[\s\S]{0,50}\b(?:react\w*|recrimination|anger|arrive[sd]?|demands?|blames?|confronts?)\b|\b(?:tribunal|inquiry|hearing|summons|summoned|convene[ds]?|procedure|ruling|verdict|sentence|investigation|aftermath|consequences?|recriminations?)\b|\baccusations?\s+(?:formally|publicly|officially)\b|\bdate\s+(?:is\s+|was\s+)?set\b|\bschedule[ds]?\s+(?:for|to)\b/i;
+  var _SCENE_SUSPENSION_ONLY_RX = /\bwait(?:s|ed|ing)?\b|\bhold(?:s|ing)?\s+(?:its|his|her|their)\s+breath\b|\bsuspend(?:ed|s)?\b|\bpoised\b|\bhalf-raised\b|\bundecided\b|\bremains?\s+(?:still|silent|half-raised)\b|\bbreath\s+held\b/i;
+  // NOTE: no "answers?/answered" entry — collides with "the Answer" (a proper-noun relic name in
+  // First Sacrifice, and plausibly in other stories' objects/titles too); "declares/announces"
+  // already cover the same "responds decisively" ground without that ambiguity.
+  var _SCENE_MOVEMENT_VERB_RX = /\bspeaks?\b|\bspoke\b|\bsteps?\s+forward\b|\bstepped\b|\bmoves?\b|\bmoved\b|\breaches?\b|\breached\b|\bturns?\b|\bturned\b|\bleaves?\b|\bleft\b|\barrives?\b|\barrived\b|\bannounces?\b|\bannounced\b|\bdeclares?\b|\bdeclared\b/i;
+  function _detectSceneAdequacyFailure(screenplay, opts) {
+    try {
+      opts = opts || {};
+      var beats = (screenplay && Array.isArray(screenplay.beats)) ? screenplay.beats : [];
+      var allText = beats.map(function (b) { return (b && b.text) || ''; }).join(' \n ');
+      var checks = {}; var reasons = [];
+
+      var aftermathPresent = _SCENE_AFTERMATH_VOCAB_RX.test(allText);
+      checks.aftermath = { present: aftermathPresent };
+      if (!aftermathPresent) reasons.push('no aftermath/procedure/consequence-movement signal found anywhere in the scene — reads as a single extended reaction beat, not scene progression');
+
+      var relics = Array.isArray(opts.protectedRelics) ? opts.protectedRelics
+        : ((typeof STARTER_PROTECTED_RELICS !== 'undefined' && STARTER_PROTECTED_RELICS[opts.starterId || '']) || []);
+      var relicViolations = [];
+      relics.forEach(function (r) {
+        if (r && r.violationRx && r.violationRx.test(allText)) {
+          var m = allText.match(r.violationRx);
+          relicViolations.push({ id: r.id, label: r.label, canonSource: r.canonSource, matched: m && m[0] });
+        }
+      });
+      checks.relicViolations = relicViolations;
+      relicViolations.forEach(function (v) { reasons.push('protected relic "' + v.label + '" framed as personal property/sacrifice (matched: "' + v.matched + '") — contradicts its own registered canon (' + v.canonSource + ')'); });
+
+      var tailN = opts.endingWindow || 5;
+      var tailBeats = beats.slice(Math.max(0, beats.length - tailN));
+      var tailText = tailBeats.map(function (b) { return (b && b.text) || ''; }).join(' \n ');
+      var suspensionHit = _SCENE_SUSPENSION_ONLY_RX.test(tailText);
+      var movementHit = _SCENE_MOVEMENT_VERB_RX.test(tailText);
+      checks.ending = { suspensionVocabPresent: suspensionHit, movementVerbPresent: movementHit, tailBeatCount: tailBeats.length };
+      if (suspensionHit && !movementHit) reasons.push('the scene\'s final ' + tailBeats.length + ' beat(s) are dominated by suspension vocabulary (waits/holds its breath/half-raised) with no completed forward movement — reads as suspended mood, not a concrete next step');
+
+      var failed = reasons.length > 0;
+      try { if (failed) console.warn('[SCENE:ADEQUACY] FAILED — ' + reasons.join(' | ')); } catch (_) {}
+      return { failed: failed, reasons: reasons, checks: checks };
+    } catch (e) { return { failed: false, error: e && e.message }; }
+  }
+  window._detectSceneAdequacyFailure = _detectSceneAdequacyFailure;
+
   // ════════════════════════════════════════════════════════════════
   // STORY QUALITY OBSERVATORY — Phase 1: telemetry CAPTURE + HEALTH (Roman 2026-06-21)
   // Prerequisite the plan glossed: most [TAG] telemetry is console-only (ephemeral) —
@@ -128302,6 +128376,31 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
     } catch (_) { return []; }
   }
   try { if (typeof window !== 'undefined') { window._SEED_TRUTH_IDS = SEED_TRUTH_IDS; window._resolveRequiredTruths = _resolveRequiredTruths; } } catch (_) {}
+
+  // ═══ PROTECTED RELICS / OWNERSHIP REGISTRY (Roman 2026-09-20) ═══
+  // A per-starter list of objects the delivered PROSE must never frame as the protagonist's
+  // private property or personal sacrifice to spend — used by _detectSceneAdequacyFailure below.
+  // Not new canon: each entry cites the exact aftermathTruth id (STARTER_PLANS scene rows) whose
+  // text already states the ownership rule. Real finding this closes: the real, accepted Scene 2
+  // planner contract for starter_first_sacrifice (run_1789884119160.jsonl) declared
+  // aftermath.the_answer_institutional === "kept" — i.e. THIS SAME generation's own structured
+  // contract already committed to "The Answer belongs to the Institution... It is not hers" — and
+  // the delivered author prose then directly violated its own committed contract with beat 19,
+  // "I can claim the Answer as my sacrifice." This registry lets a generic detector catch that
+  // class of contradiction for any starter that registers a protected object, not just this one.
+  const STARTER_PROTECTED_RELICS = {
+    starter_first_sacrifice: [
+      {
+        id: 'the_answer',
+        label: 'the Answer',
+        canonSource: 'the_answer_institutional', // STARTER_PLANS.starter_first_sacrifice.scenes[n=2].aftermathTruths
+        // Fires on "claim/offer/give the Answer as MY/her own/his own sacrifice" in either word
+        // order — the exact pattern of the real violation, generalized to nearby phrasing.
+        violationRx: /\bclaim(?:ing|ed)?\s+the\s+answer\s+as\s+(?:my|her|his|their)\s+(?:own\s+)?sacrifice\b|\b(?:offer(?:ing|ed)?|give|giving|gave)\s+the\s+answer\s+as\s+(?:my|her|his|their)\s+(?:own\s+)?sacrifice\b|\bthe\s+answer\b[\s\S]{0,40}\bis\s+(?:my|her|his|their)\s+(?:own\s+)?sacrifice\b|\b(?:my|her|his|their)\s+(?:own\s+)?sacrifice\b[\s\S]{0,40}\bthe\s+answer\b/i,
+      },
+    ],
+  };
+  window.STARTER_PROTECTED_RELICS = STARTER_PROTECTED_RELICS;
 
   const STARTER_PLANS = {
     starter_first_sacrifice: {
