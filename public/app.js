@@ -225740,7 +225740,40 @@ No text, no watermark, no UI elements, share-ready.`;
     // of the felt effect for ~5% of the work: tell the model what THIS
     // scene's storyturn means for density, beat count, and emotional
     // velocity. Skip when storyturn is unset / stale.
-    var _currentST = state.storyturn || 'ST1';
+    // AFTERMATH-SHAPED CONTINUATION OVERRIDE (Roman 2026-09-20, root cause B of the failed Scene 2
+    // capability test — separate from root cause A, the binding-facts contract fix above/elsewhere).
+    // Real finding: the real Scene 2 request that produced the thin, excerpt-like sample carried
+    // storyturn: ST1 (confirmed from the persisted request log) — the SAME "SETUP PACE...
+    // establishing register... Do NOT race" register a genuine SCENE 1 opener gets, plus the HARD
+    // under-1000-word / 20-30-SHORT-beat ceiling below. Root cause: state.storyturn's real
+    // advancement is explicitly literary-only (advanceStoryturn()'s pacing-window clamp reads
+    // `if (state.currentEngine !== 'graphic') {...}` and is disclosed as "NOT verified" for CG/GN —
+    // so a CG continuation scene can reach this prompt with a stale/default ST1 that has nothing to
+    // do with what the scene actually needs to deliver. Rather than touch storyturn's real
+    // advancement (used elsewhere for intimacy-phase gating — a materially larger, riskier change
+    // out of scope here), this override is LOCAL to this one prompt: when the scene is a real
+    // continuation (sceneIndex > 0) whose OWN accepted planner contract already carries
+    // aftermathTruths or reservedConstraints (state._scenePlotContract — the exact data the
+    // WORLD FACTS binding-contract fix forwards), that is itself strong, reliable, already-available
+    // evidence this is a consequence/aftermath scene, not an opening — so density defaults to
+    // RESOLUTION PACE (ST5) for THIS PROMPT ONLY. state.storyturn itself is never written here;
+    // every other consumer of the real value is unaffected. Generic across any starter's open-row
+    // continuation, not First-Sacrifice-specific — and a scene with no real aftermath/reserved data
+    // (including every genuine Scene 1 opener) is completely unchanged by this.
+    var _hasBindingAftermathForDensity = false;
+    try {
+      var _pcForDensity = state._scenePlotContract;
+      _hasBindingAftermathForDensity = !!(sceneIndex > 0 && _pcForDensity &&
+        ((Array.isArray(_pcForDensity.aftermathTruths) && _pcForDensity.aftermathTruths.length) ||
+         (Array.isArray(_pcForDensity.reservedConstraints) && _pcForDensity.reservedConstraints.length)));
+    } catch (_) {}
+    // A distinct sentinel, NOT 'ST5' — the existing ST5/ST6 RESOLUTION PACE text below says "less
+    // interior" and "let the story END", written for a genuine series/arc conclusion. An aftermath-
+    // shaped continuation (family recrimination, institutional procedure, a NEW forward choice) is
+    // the opposite of ending — reusing that text verbatim would actively mislead the author toward
+    // wrapping up rather than escalating. 'CONT_AFTERMATH' gets its own density line below instead.
+    var _currentST = _hasBindingAftermathForDensity ? 'CONT_AFTERMATH' : (state.storyturn || 'ST1');
+    try { if (_hasBindingAftermathForDensity) console.log('[CG:DENSITY] scene=' + sceneIndex + ' aftermath-shaped continuation detected — density overridden to ST5 (RESOLUTION PACE), length ceiling suppressed (real storyturn=' + (state.storyturn || 'unset') + ', unmodified)'); } catch (_) {}
     var _stDensityLine = '';
     switch (_currentST) {
       case 'ST1':
@@ -225754,6 +225787,14 @@ No text, no watermark, no UI elements, share-ready.`;
       case 'ST5':
       case 'ST6':
         _stDensityLine = 'SCENE DENSITY (' + _currentST + ' — RESOLUTION PACE): consequence and aftermath dominate. Density: declarative beats, less interior, more landed action. Choices already made should feel WEIGHTED, not still-pending. Let the story end at the speed of acceptance, not deliberation.';
+        break;
+      case 'CONT_AFTERMATH':
+        // Roman 2026-09-20, root cause B: distinct from ST5/ST6 above on purpose — this is a
+        // continuation escalating INTO new consequence (family/institutional/procedural fallout,
+        // arguments over authority, a new forward choice), not an arc winding down. No length
+        // ceiling applies to this branch (see the LENGTH CEILING gate below, unchanged — it only
+        // fires for ST1/ST2).
+        _stDensityLine = 'SCENE DENSITY (CONTINUATION — AFTERMATH/CONSEQUENCE PACE): this scene follows a planner-committed event with real consequences still to land — it is NOT an opening/establishing beat and NOT an arc winding down. Give it FULL scene weight: real aftermath (who reacts, and how — family, witnesses, authority), institutional or social process where the story calls for it (a ruling, a summons, a date set, an argument over what happens next), enough DIALOGUE and INTERIORITY to carry it (this is not a declarative-only wrap-up — characters think, argue, and are changed by what just happened), and PLOT DIRECTION that moves the story somewhere new. End on a genuine NEW pressure point or choice the protagonist must now face — never on suspended mood alone ("waits", "holds its breath", "remains half-raised") with nothing concrete underneath it. No word-count ceiling applies to this scene — use the room a full scene actually needs.';
         break;
       default:
         _stDensityLine = '';
