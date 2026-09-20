@@ -99247,7 +99247,8 @@ function _buildAuthorFloorDirective(s) {
             if (_posture) { _ob.push('READER\'S RECORDED CHOICE at the end of the opening: ' + (_posture.label || '(none recorded)')); _ob.push('READER\'S SAY/DO for this scene (verbatim; this is the posture the objective must answer): action: ' + JSON.stringify(_posture.action) + ' · dialogue: ' + JSON.stringify(_posture.dialogue)); }
             try { var _L = (typeof _relLedger === 'function') ? _relLedger(false) : null; var _ents = (_L && _L.entities) || {}; var _rl = (_oe.roster || []).map(function (r) { var e = _ents[r.ref]; var cp = (_L && _L.cplus && _L.cplus.rows && _L.cplus.rows[r.ref]) || null; return r.label + (e && e.anchorRole === 'li' ? ' (love interest)' : '') + (cp && cp.last_cplus_scene_ordinal != null ? ' — last Character+ scene ' + cp.last_cplus_scene_ordinal : ''); });
               if (_rl.length) _ob.push('ROSTER — who CAN be present (name only these; choose who IS): ' + _rl.join(' · ')); } catch (_) {}
-            if (_oe.presentGroups && _oe.presentGroups.length) _ob.push('ALSO PRESENT (unnamed): ' + _oe.presentGroups.join(' · '));
+            if (_oe.collectives && _oe.collectives.length) _ob.push('ALSO PRESENT — declared collective presence(s) (if genuinely present, add EXACTLY this label to "present": ' + _oe.collectives.map(function (c) { return '"' + c.label + '"'; }).join(', ') + '. A collective may witness, react, and supply pressure — it is NEVER "local_objective_actor", never speaks, never gets its own name or identity.)');
+            else if (_oe.presentGroups && _oe.presentGroups.length) _ob.push('ALSO PRESENT (unnamed): ' + _oe.presentGroups.join(' · '));
             try { var _dc = Array.isArray(s._durableFateConsequences) ? s._durableFateConsequences : []; if (_dc.length) _ob.push('DURABLE CONSEQUENCES ALREADY IN FORCE: ' + _dc.map(function (d) { return String(d && (d.text || d.summary || d.kind) || ''); }).filter(Boolean).join(' | ').slice(0, 500)); } catch (_) {}
             if (_oe.requiredTruth) _ob.push('MUST STILL BE TRUE after this scene: ' + _oe.requiredTruth);
             if (_oe.exitState) _ob.push('TARGET STATE this scene leaves the story in: ' + _oe.exitState);
@@ -99256,7 +99257,7 @@ function _buildAuthorFloorDirective(s) {
             if (_oe.vectors && _oe.vectors.length) _ob.push('AFFORDANCES (any, none, or the reader\'s own — NOT a menu, NOT exhaustive, none required):\n' + _oe.vectors.map(function (v) { return '  • ' + v; }).join('\n'));
             if (_oe.constraints && _oe.constraints.length) _ob.push('SEED CONSTRAINTS: ' + _oe.constraints.join(' · '));
             _scUsr = 'READER POSTURE → LOCAL OBJECTIVE\n' + _ob.join('\n') + '\n\n' + _scUsr;
-            _scSys += '\n\nOPEN ROW (REQUIRED — add these keys to your JSON): "posture_read" (one sentence: what the reader\'s recorded choice and Say/Do MEAN here), "local_objective" (one sentence: whose concrete act, where, that this scene exists to land — it must answer the reader\'s posture and build from the aftermath), "local_objective_actor" (one ROSTER name), "present" (array of ROSTER names who are in the scene), "reserved" (object: every RESERVED id → "untouched" or "touched"), "aftermath" (object: every AFTERMATH TRUTH id → "kept"). Your state_change realizes the local_objective.';
+            _scSys += '\n\nOPEN ROW (REQUIRED — add these keys to your JSON): "posture_read" (one sentence: what the reader\'s recorded choice and Say/Do MEAN here), "local_objective" (one sentence: whose concrete act, where, that this scene exists to land — it must answer the reader\'s posture and build from the aftermath), "local_objective_actor" (one ROSTER name — NEVER a collective presence), "present" (array of ROSTER names who are in the scene, PLUS any declared collective presence, named exactly as given, if genuinely present — never invent a collective label that was not declared), "reserved" (object: every RESERVED id → "untouched" or "touched"), "aftermath" (object: every AFTERMATH TRUTH id → "kept"). Your state_change realizes the local_objective.';
             // CONTINUATION-STAGE ISSUER (Roman, authorized 2026-09-14) — SAME reply, SAME call, no
             // second provider round trip. All optional: an old-shaped reply that omits these keys
             // skips stage issuance without touching anything above (see _issueStageFromPlannerReply).
@@ -128203,6 +128204,14 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
           { ref: 'role:first_sacrifice_presiding_dohkar', label: 'the presiding Dohkar', presence: 'IN_PERSON' },
         ] },
       presentGroups: ['the assembly (unnamed, reacting, no dialogue)'],
+      // COLLECTIVE SCENE PRESENCE (Roman 2026-09-20): a structured, seed-authored counterpart to the free-text
+      // `presentGroups` above — a canonical label the planner's `present[]` may cite when the collective is
+      // genuinely part of the scene. Distinct from `roster`/`stage.participants` (individual, named cast) by
+      // design: a collective may supply public pressure/reaction/context, but is NEVER eligible to be
+      // `local_objective_actor`, never gets dialogue attribution, never gets a facet, never grounds a
+      // Character+/relationship event — it structurally cannot, since it is never added to roster or
+      // stage.participants and _validateLocalObjective rejects it as an actor explicitly (see there).
+      collectives: [{ id: 'the_assembly', label: 'the assembly' }],
       requiredTruth: 'The twist is an EVENT, not a recognition of one. Julian is not an antagonist. The price has not yet been named.',
       player_decision_required: true,
       decision_axis: 'claim the interference openly vs let the assembly keep its assumption',
@@ -199192,6 +199201,10 @@ No text, no watermark, no UI elements, share-ready.`;
         var effO = { n: Number(row.n), openObjective: true, objectivePending: !obj, decision_axis: row.decision_axis || null, decision_consequence: row.decision_consequence || null, player_decision_required: !!row.player_decision_required,
                      exitState: exit, requiredTruth: truth, branch: choice, branchDependent: false, offBranch: false, vectors: Array.isArray(row.vectors) ? row.vectors.slice() : [], constraints: Array.isArray(row.constraints) ? row.constraints.slice() : [],
                      aftermathSource: row.aftermathSource || null, roster: roster, presentGroups: row.presentGroups || null,
+                     // Declared collective scene presence(s) — seed-authored, structural, deliberately separate
+                     // from `roster`: see _validateLocalObjective for how `present[]` and `local_objective_actor`
+                     // treat this list differently (a collective may be named present; it may never be the actor).
+                     collectives: Array.isArray(row.collectives) ? row.collectives.slice() : [],
                      reserved: plan.scenes.filter(function (p) { return p && Number(p.n) > Number(sceneNum) && Number(p.n) <= Number(sceneNum) + 2 && Array.isArray(p.reservedEvents); }).reduce(function (acc, p) { return acc.concat(p.reservedEvents.map(function (r) { return Object.assign({ fromScene: Number(p.n) }, r); })); }, [])
                                .concat((Array.isArray(plan.sealedEvents) ? plan.sealedEvents : []).filter(function (e) { return e && e.id && Number(sceneNum) < Number(e.unsealsAtScene || Infinity); }).map(function (e) { return { id: e.id, sealed: true, label: e.label || 'a sealed future reveal', fromScene: Number(e.unsealsAtScene || 0), markers: [] }; })),
                      aftermathTruths: Array.isArray(row.aftermathTruths) ? row.aftermathTruths.slice() : [],
@@ -199283,12 +199296,19 @@ No text, no watermark, no UI elements, share-ready.`;
     if (!lo) why.push('no local_objective');
     if (!(reply && typeof reply.posture_read === 'string' && reply.posture_read.trim())) why.push('no posture_read');
     var rosterL = (eff.roster || []).map(function (r) { return String(r.label || '').toLowerCase(); }), rosterR = (eff.roster || []).map(function (r) { return String(r.ref || '').toLowerCase(); });
+    // COLLECTIVE SCENE PRESENCE (Roman 2026-09-20): a declared collective (e.g. "the assembly") is a valid
+    // `present[]` entry — it is NOT a freeform escape hatch, only the seed's own canonical label(s) count — but
+    // it is NEVER a valid `local_objective_actor` (below): a collective supplies pressure/reaction/context only,
+    // never dialogue attribution, a facet, or Character+/relationship grounding, because it is never added to
+    // `roster` and can therefore never become a stage.participant or an eventFacts actor either.
+    var collectiveL = (eff.collectives || []).map(function (c) { return String(c && c.label || '').toLowerCase(); });
     var present = Array.isArray(reply && reply.present) ? reply.present.map(String) : [];
     if (!present.length) why.push('no present cast');
-    present.forEach(function (x) { var k = x.toLowerCase(); if (rosterL.indexOf(k) === -1 && rosterR.indexOf(k) === -1) why.push('present names someone outside the seed roster: ' + x); });
+    present.forEach(function (x) { var k = x.toLowerCase(); if (rosterL.indexOf(k) === -1 && rosterR.indexOf(k) === -1 && collectiveL.indexOf(k) === -1) why.push('present names someone outside the seed roster or declared collectives: ' + x); });
     var actor = reply && reply.local_objective_actor ? String(reply.local_objective_actor) : '';
     if (!actor) why.push('no local_objective_actor');
     else if (present.map(function (x) { return x.toLowerCase(); }).indexOf(actor.toLowerCase()) === -1) why.push('actor is not among present: ' + actor);
+    else if (rosterL.indexOf(actor.toLowerCase()) === -1 && rosterR.indexOf(actor.toLowerCase()) === -1) why.push('local_objective_actor is a collective presence, not an individual cast member: ' + actor);
     // RESERVED EVENTS — structured ids the seed owns. Two enforcement legs, both reject-only: (1) the planner MUST return a
     // status for EVERY reserved id and it must be "untouched"; (2) the seed's own markers must not appear in the objective.
     var text = [reply && reply.state_change, lo, reply && reply.forces_choice, reply && reply.branch_a, reply && reply.branch_b].map(function (x) { return String(x || '').toLowerCase(); }).join(' \n ');
