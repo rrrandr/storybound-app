@@ -99421,7 +99421,21 @@ function _buildAuthorFloorDirective(s) {
           var _plannerGrok = (typeof window !== 'undefined' && window._scenePlannerEngine === 'grok');
           // Richer contracts (situation-driven / accomplished-event / structured-handoff) emit more fields; 320 tokens
           // truncated the output and DROPPED the trailing event_slots (found in channel validation). Give them room.
-          var _scMaxTok = ((typeof window !== "undefined") && window._consequenceSelectionPlanner === true) ? 760 : (((typeof window !== "undefined") && (window._structuredEventHandoff === true || window._evidenceCommitCheck !== false || window._situationDrivenPlanner === true || window._accomplishedEventContract === true)) ? 640 : 320);
+          // RAISED 640 -> 1200 (Roman 2026-09-20, second repair pass): _evidenceCommitCheck !== false is
+          // permanently true (none of the 4 gating flags are EVER set to their trigger value anywhere in
+          // this codebase — grepped every assignment site), so this branch is not an edge case: it is the
+          // ALWAYS-ACTIVE real production path. A real, paid replay (2026-09-20) hit exactly 640/640
+          // completion_tokens — the cap, not a natural stop — and the response was rejected as unusable.
+          // The base+event_slots schema alone (~11-17 short fields) needs only ~200-350 tokens; 640 was
+          // already ~2-3x that, so the truncation risk is the OPEN-ROW branch's own reserved{}/aftermath{}
+          // objects (one entry per id the scene's spine actually carries — UNBOUNDED by the prompt itself)
+          // plus optional stage_location/stage_issued_objects[]/stage_affordances[] arrays. 1200 gives
+          // ~3.5-6x the bare-schema floor — real headroom for a multi-id payload, not another arbitrary
+          // round number picked the same way 640 was. Admission re-checked: the real captured prompt was
+          // 2933 tokens; even at 1200 max_tokens the reservation (~4133) is nowhere near ministral-8b-2512's
+          // 625,000 TPM ceiling. The 760/320 branches are dead code in production (their gating flags are
+          // never set) — left untouched, a separate, disclosed, unfixed observation, not this repair's scope.
+          var _scMaxTok = ((typeof window !== "undefined") && window._consequenceSelectionPlanner === true) ? 760 : (((typeof window !== "undefined") && (window._structuredEventHandoff === true || window._evidenceCommitCheck !== false || window._situationDrivenPlanner === true || window._accomplishedEventContract === true)) ? 1200 : 320);
           // ADMISSION-AWARE TIERED PLANNER (Roman 2026-09-20 repair). Root cause of the 2026-09-20
           // happy-path incident: this call used to be a single bare fetch to mistral-small-latest
           // with `if (!_scRes.ok) return;` — no fallback. Two real, consecutive 429s (a genuine
