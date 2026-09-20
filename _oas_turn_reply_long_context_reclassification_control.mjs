@@ -200,6 +200,27 @@ section('5. COST ACCOUNTING — authoritative ticks preferred; reasoning tokens 
   ok('the fix materially changes the result vs the old (reasoning-tokens-omitted) calculation — not a no-op fix', acc2 && Math.abs(acc2.cost - withoutReasoning) > 0.000001, JSON.stringify({ fixed: acc2 && acc2.cost, oldBuggy: withoutReasoning }));
 }
 
+section('6. OUTPUT-TOKEN CAP — reusing _authorFullScenePolicy changed ONLY provider selection, not max_tokens (Roman 2026-09-20)');
+{
+  // Concrete, not just read-the-source: capture the REAL dispatched request body for every tier
+  // and assert max_tokens on the wire, not merely what the call site intends to pass.
+  let capturedBodies = [];
+  grokHandler = (req) => { capturedBodies.push({ tier: 'grok', body: JSON.parse(req.postData() || '{}') }); return { __gateStatus: 500, error: 'forced failure — fall through to ministral' }; };
+  mistralHandler = (req) => { capturedBodies.push({ tier: 'ministral', body: JSON.parse(req.postData() || '{}') }); return { choices: [{ message: { content: JSON.stringify({ li_dialogue: 'CAP-CHECK', li_action: '', li_face_state: 'closed_smile', li_next_prompt: '', user_signal: 'neutral', temperature_shift: 0, scene_state: 'continue', scene_tone: 'tender', primaryEngine: null, kink_introduced: null, pc_kink_response: 'none', kink_affinity: null, kinks_used: [] }) } }], usage: { prompt_tokens: 500, completion_tokens: 40 } }; };
+  await mountFreshCandidateState();
+  await page.evaluate(({ say, doText }) => window._handleIntimacyTurn(say, doText), { say: REAL_SAY, doText: REAL_DO });
+  const grokBody = capturedBodies.find((c) => c.tier === 'grok');
+  const ministralBody = capturedBodies.find((c) => c.tier === 'ministral');
+  ok('the REAL dispatched Grok request body carries max_tokens: 400 (the OAS turn cap), never the full-scene default of 8000', grokBody && grokBody.body.max_tokens === 400, JSON.stringify(grokBody && grokBody.body.max_tokens));
+  ok('the REAL dispatched ministral-8b-2512 fallback request body ALSO carries max_tokens: 400 — the cap is threaded through every tier, not just the primary one', ministralBody && ministralBody.body.max_tokens === 400, JSON.stringify(ministralBody && ministralBody.body.max_tokens));
+  // Cross-check against the CG screenplay call site, which genuinely wants the 8000 default — proves
+  // this is a real, live distinction (the same shared function correctly serving two different
+  // callers' different caps), not a coincidence of both being small.
+  const cgCallAnchor = appJs.indexOf('await _authorFullScenePolicy(_sharedSys, userPrompt');
+  const cgMaxTokensMatch = cgCallAnchor > -1 ? appJs.slice(cgCallAnchor, cgCallAnchor + 300).match(/maxTokens:\s*(\d+)/) : null;
+  ok('the CG screenplay call site (a genuinely different caller of the SAME shared function) still requests maxTokens: 8000 — confirms the cap is caller-controlled, not silently uniform', cgMaxTokensMatch && Number(cgMaxTokensMatch[1]) === 8000, cgMaxTokensMatch && cgMaxTokensMatch[1]);
+}
+
 await browser.close();
 
 console.log('\n' + '='.repeat(100));
