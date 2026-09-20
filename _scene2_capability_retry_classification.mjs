@@ -1,6 +1,6 @@
 // SCENE 2 CAPABILITY RETRY — CLASSIFICATION (Roman, 2026-09-20)
 //
-// Classifies the real retry sample (run_1789933193165.jsonl) against _detectSceneAdequacyFailure —
+// Classifies the real retry sample (run_1789937410539.jsonl) against _detectSceneAdequacyFailure —
 // dry, zero additional cost, per the authorization sheet's own gate. Reads the real, persisted
 // response content verbatim (never hand-typed) and reports the structured verdict as capability
 // evidence, not "approved prose."
@@ -12,7 +12,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const LOG_PATH = path.join(__dirname, '_scene2_repair_replay_sample_out', 'run_1789933193165.jsonl');
+const LOG_PATH = path.join(__dirname, '_scene2_repair_replay_sample_out', 'run_1789937410539.jsonl');
 const events = fs.readFileSync(LOG_PATH, 'utf8').trim().split('\n').filter(Boolean).map((l) => JSON.parse(l));
 const authorResponse = events.find((e) => e.kind === 'response' && e.roleTag === 'scene2-structural-author' && e.responseBody && e.responseBody.model === 'grok-4.3');
 const rawContent = authorResponse.responseBody.choices[0].message.content;
