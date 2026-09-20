@@ -194438,6 +194438,9 @@ No text, no watermark, no UI elements, share-ready.`;
     }
     return false;
   }
+  // Harness-only export (Roman 2026-09-19): pure/read-only, no behavior change. See
+  // _first_sacrifice_candidate_oas_opener_mount_control.mjs.
+  window._detectContextualEscalation = _detectContextualEscalation;
 
   // ── OFF-TOPIC NOISE DETECTOR ──
   // The sniffer routes plot-bearing input to the reasoning chain, which
@@ -194986,6 +194989,10 @@ No text, no watermark, no UI elements, share-ready.`;
     } catch (_) {}
     return false;
   }
+  // Harness-only export (Roman 2026-09-19): pure/read-only, no behavior change — lets a dry
+  // control determine the real _preferReasoning branch for an exact player reply without
+  // reimplementing this detector's logic by hand. See _first_sacrifice_candidate_oas_opener_mount_control.mjs.
+  window._detectOASOffTopicNoise = _detectOASOffTopicNoise;
 
   // ── OAS DE-CALC CLEANUP (gpt-4o-mini) — Roman 2026-06-20 ──
   // grok-4.20 non-reasoning authors OAS fast (~0.6s/turn) but motif-repetitive;

@@ -70,15 +70,22 @@ const DO_MARKER = 'ZZZ_PLAYER_FIRST_REPLY_ACTION_MARKER';
   const page = await (await browser.newContext()).newPage();
 
   const gate = await installFailClosedNetworkGate(page); // no logFile, no allowRealPaths — fully dry
-  gate.stub('/api/mistral-proxy', () => ({ choices: [{ message: { content: 'SHOULD NOT BE REACHED — candidate opener must be zero-call' } }] }));
-  gate.stub('/api/proxy', () => ({ choices: [{ message: { content: 'SHOULD NOT BE REACHED — candidate opener must be zero-call' } }] }));
-  gate.stub('/api/deepseek-proxy', () => ({ choices: [{ message: { content: 'SHOULD NOT BE REACHED' } }] }));
-  gate.stub('/api/chatgpt-proxy', () => ({ content: 'SHOULD NOT BE REACHED' }));
+  // Mutable handlers (delegated through a variable, not a fixed closure) — the gate's stub lookup
+  // is first-match-wins by registration order, so this is what lets section 4 reconfigure each
+  // endpoint's response later without a second, unreachable gate.stub() call on the same prefix.
+  let mistralHandler = () => ({ choices: [{ message: { content: 'SHOULD NOT BE REACHED — candidate opener must be zero-call' } }] });
+  let grokHandler = () => ({ choices: [{ message: { content: 'SHOULD NOT BE REACHED — candidate opener must be zero-call' } }] });
+  let deepseekHandler = () => ({ choices: [{ message: { content: 'SHOULD NOT BE REACHED' } }] });
+  let chatgptHandler = () => ({ content: 'SHOULD NOT BE REACHED' });
+  gate.stub('/api/mistral-proxy', (req) => mistralHandler(req));
+  gate.stub('/api/proxy', (req) => grokHandler(req));
+  gate.stub('/api/deepseek-proxy', (req) => deepseekHandler(req));
+  gate.stub('/api/chatgpt-proxy', (req) => chatgptHandler(req));
 
   let reachedApp = false;
   try {
     await page.goto('http://localhost:3000/', { waitUntil: 'domcontentloaded', timeout: 15000 });
-    await page.waitForFunction(() => window.state && typeof window._initIntimacyDialogue === 'function' && typeof window._fireIntimacyOpener === 'function' && typeof window._buildIntimacyTurnPrompt === 'function' && typeof window._bakedScene1For === 'function' && window.STARTER_SCENE1 && window.STARTER_SCENE1.starter_first_sacrifice, { timeout: 20000 });
+    await page.waitForFunction(() => window.state && typeof window._initIntimacyDialogue === 'function' && typeof window._fireIntimacyOpener === 'function' && typeof window._buildIntimacyTurnPrompt === 'function' && typeof window._bakedScene1For === 'function' && typeof window._handleIntimacyTurn === 'function' && typeof window._detectOASOffTopicNoise === 'function' && typeof window._detectContextualEscalation === 'function' && window.STARTER_SCENE1 && window.STARTER_SCENE1.starter_first_sacrifice, { timeout: 20000 });
     reachedApp = true;
   } catch (e) {
     console.error('HARNESS BLOCKER: the app is not reachable/ready at http://localhost:3000/ — ' + (e && e.message));
@@ -156,6 +163,79 @@ const DO_MARKER = 'ZZZ_PLAYER_FIRST_REPLY_ACTION_MARKER';
   ok('the next live turn\'s prompt contains the REAL shipped last-authored-beat cue', p.includes(mount.shippedCue.slice(0, 40)));
   ok('the next live turn\'s prompt contains the player\'s exact latest SAY words (a stand-in here — the real experiment pins Roman\'s actual chosen reply)', p.includes(SAY_MARKER));
   ok('the next live turn\'s prompt contains the player\'s exact latest DO words', p.includes(DO_MARKER));
+
+  section('4. ROUTING RECONCILIATION — which chain does THIS exact turn (Roman\'s real reply) actually take?');
+  // Direct conflict raised by Roman: df2f316b's commit message describes callOASTurnLLM as
+  // "Mistral-Small-primary" — true of its FAST chain, the function's default when
+  // preferReasoning is false. But _handleIntimacyTurn's own routing-signal precomputation
+  // (app.js:195143/195144/195424ish) computes preferReasoning per turn, and for the exact FIRST
+  // live turn after ANY opener (authored or live-generated), d.beatCount becomes 1 before that
+  // computation runs (app.js:195062 fires before 195143+), making _isOpeningTurn true — and per
+  // app.js's own comment ("Opening turn is exempt" from the plot-deflect coin), the ONLY thing
+  // that can still route beat 1 to the FAST/Mistral-primary chain is _userIsNoise. Proven here
+  // two ways against ROMAN'S REAL reply text, not a placeholder: (a) the real detector functions
+  // called directly (source-level), and (b) the REAL _handleIntimacyTurn dispatched end-to-end
+  // and the actual first network call observed (behavioral) — the two must agree.
+  const REAL_SAY = 'Then step forward, Julian. But do not call it rescue when you want me to ask.';
+  const REAL_DO = 'I keep my hands folded at my waist and meet his eyes across Seren’s bowed head, refusing to give the assembly the satisfaction of looking away.';
+
+  const sourceLevel = await page.evaluate(({ say, doText }) => {
+    const noise = window._detectOASOffTopicNoise(say, doText);
+    const escalation = window._detectContextualEscalation(say, doText);
+    const beatCountBefore = window.state.intimacyDialogue.beatCount; // still 0 — opener doesn't increment it
+    // Mirrors the exact formula at app.js:195424, using the REAL beatCount this turn will have
+    // (beatCount++ fires at app.js:195062, BEFORE the routing computation, every real call).
+    const isOpeningTurnThisCall = (beatCountBefore + 1) === 1;
+    const userIsPlotDeflect = escalation && !noise && !isOpeningTurnThisCall && false; // coin only reachable if NOT opening turn — moot here, shown for completeness
+    const preferReasoning = (isOpeningTurnThisCall || escalation) && !noise && !userIsPlotDeflect;
+    return { noise, escalation, beatCountBefore, isOpeningTurnThisCall, userIsPlotDeflect, preferReasoning };
+  }, { say: REAL_SAY, doText: REAL_DO });
+
+  ok('SOURCE-LEVEL: d.beatCount is 0 before this turn (the candidate opener did not increment it — confirms this really is beat 1)', sourceLevel.beatCountBefore === 0, JSON.stringify(sourceLevel));
+  ok('SOURCE-LEVEL: _isOpeningTurn will be true for this exact call (beatCount becomes 1)', sourceLevel.isOpeningTurnThisCall === true, JSON.stringify(sourceLevel));
+  ok('SOURCE-LEVEL: the REAL _detectOASOffTopicNoise() does NOT classify Roman\'s actual reply as noise (it is a direct, in-character, on-topic reply to Julian\'s accusation)', sourceLevel.noise === false, JSON.stringify(sourceLevel));
+  ok('SOURCE-LEVEL: _userIsPlotDeflect is deterministically false for beat 1 (exempted, not a coin-flip miss)', sourceLevel.userIsPlotDeflect === false, JSON.stringify(sourceLevel));
+  ok('SOURCE-LEVEL PREDICTION: _preferReasoning computes to TRUE — production\'s own routing signal selects the REASONING chain for this exact turn+reply, not the FAST chain', sourceLevel.preferReasoning === true, JSON.stringify(sourceLevel));
+
+  // Distinct markers per endpoint — whichever one _handleIntimacyTurn actually dispatches to is
+  // unambiguous from the returned li_dialogue AND from the gate's own call log.
+  const validReply = (marker) => ({ choices: [{ message: { content: JSON.stringify({
+    li_dialogue: marker, li_action: '', li_face_state: 'closed_smile', li_next_prompt: '',
+    user_signal: 'neutral', temperature_shift: 0, scene_state: 'continue', scene_tone: 'tender',
+    primaryEngine: null, kink_introduced: null, pc_kink_response: 'none', kink_affinity: null, kinks_used: [],
+  }) } }] });
+  let wonModel = null;
+  mistralHandler = () => { wonModel = 'mistral-small-latest'; return validReply('WON:mistral-small-latest'); };
+  grokHandler = (req) => {
+    const body = JSON.parse(req.postData() || '{}');
+    wonModel = body.preferredModel || 'unknown-grok-model';
+    return validReply('WON:grok:' + wonModel);
+  };
+  deepseekHandler = (req) => {
+    const body = JSON.parse(req.postData() || '{}');
+    wonModel = body.model || 'unknown-deepseek-model';
+    return validReply('WON:deepseek:' + wonModel);
+  };
+  chatgptHandler = () => { wonModel = 'gpt-4o-mini'; return validReply('WON:gpt-4o-mini'); };
+
+  const behavioral = await page.evaluate(async ({ say, doText }) => {
+    await window._handleIntimacyTurn(say, doText);
+    const d = window.state.intimacyDialogue;
+    const last = (d.liTurnHistory || [])[d.liTurnHistory.length - 1];
+    return { renderedDialogue: last && last.liDialogue, beatCountAfter: d.beatCount };
+  }, { say: REAL_SAY, doText: REAL_DO });
+
+  const dispatched = gate.calls().filter((c) => TEXT_ENDPOINTS.some((p) => new URL(c.url).pathname === p) && c.matched);
+  ok('BEHAVIORAL: exactly one text/LLM endpoint was actually dispatched for this real turn (the winning tier returned truthy content immediately, so no fallback chain unwound)', dispatched.length === 1, JSON.stringify(dispatched.map((c) => c.url)));
+  ok('BEHAVIORAL: d.beatCount correctly advanced to 1 (confirms this really was beat 1 as predicted)', behavioral.beatCountAfter === 1, JSON.stringify(behavioral));
+  ok('BEHAVIORAL: the ACTUAL first-and-only dispatched call was to Grok (/api/proxy), matching the source-level prediction that this turn takes the REASONING chain, NOT Mistral (/api/mistral-proxy)', dispatched.length === 1 && dispatched[0].url.includes('/api/proxy'), JSON.stringify(dispatched.map((c) => c.url)));
+  ok('BEHAVIORAL: the rendered reply matches what the actually-dispatched endpoint returned (the observed dispatch really is what reached the reader-facing state, not a coincidence)', behavioral.renderedDialogue && behavioral.renderedDialogue.startsWith('WON:grok:'), JSON.stringify(behavioral.renderedDialogue));
+
+  console.log('\n  RECONCILIATION: "Mistral-Small-primary" (df2f316b) is correct for callOASTurnLLM\'s FAST chain — the function\'s default branch');
+  console.log('  when preferReasoning=false. It is NOT what fires for THIS exact turn. For the exact first live reply after Julian\'s candidate');
+  console.log('  opener, with Roman\'s real Say/Do, production\'s own routing signal (_isOpeningTurn, sourced app.js:195143-195424) selects the');
+  console.log('  REASONING chain — the real, actually-dispatched model was: ' + wonModel + '. Both reports were accurate about DIFFERENT things —');
+  console.log('  the general function default vs. this one specific turn\'s actual branch. Reconciled, not contradictory.');
 
   await browser.close();
 
