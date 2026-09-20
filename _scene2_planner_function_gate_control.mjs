@@ -102,6 +102,12 @@ console.log('  real state_change (event): "' + RETRY4_STATE_CHANGE.event.slice(0
     // Any OTHER /api/proxy call at max_tokens 8000 is the structural author — the one call this gate
     // must prevent from ever firing. Counted, not silently allowed.
     if (body.max_tokens === 8000) { authorDispatchCount++; return { id: 'stub', model: 'grok-4.3', choices: [{ finish_reason: 'stop', message: { content: '```json\n' + JSON.stringify({ title: 'stub', beats: [{ idx: 0, kind: 'narration', text: 'stub' }], sceneCharge: { stake: 'stub' } }) + '\n```' } }], usage: { prompt_tokens: 10, completion_tokens: 10, total_tokens: 20 } }; }
+    // Grok is now PRIMARY for the scene-spine planner (2026-09-20 policy) — a small, non-8000-token
+    // /api/proxy call with "SCENE-SPINE planner" in its system prompt IS the planner role, now
+    // routed here first. Serve retry 4's real, rejected reply from whichever tier is actually hit,
+    // so this control proves the gate regardless of which model produced the plan.
+    const sysMsg = (body.messages && body.messages[0] && body.messages[0].content) || '';
+    if (/SCENE-SPINE planner/.test(sysMsg)) return { id: 'stub', model: 'grok-4.3', choices: [{ finish_reason: 'stop', message: { content: retry4PlannerRaw } }], usage: { prompt_tokens: 10, completion_tokens: 10, total_tokens: 20 } };
     return { id: 'stub', model: 'grok-4.3', choices: [{ finish_reason: 'stop', message: { content: 'stub' } }], usage: { prompt_tokens: 10, completion_tokens: 10, total_tokens: 20 } };
   });
   // The planner (mistral-proxy) ALWAYS returns retry 4's real, rejected reply — both the initial

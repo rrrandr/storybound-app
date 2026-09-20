@@ -99757,10 +99757,13 @@ function _buildAuthorFloorDirective(s) {
           if (typeof window !== 'undefined' && window._scenePlannerStageable === true) {
             _scSys += '\nSTAGEABILITY (HARD OVERRIDE — highest priority): the state_change MUST be a SINGLE simple physical action completable in ONE clause, immediately stageable RIGHT NOW using ONLY the characters and objects ALREADY PRESENT — introduce NO new person, crowd, ceremony, arrival, location, or magical object. Strongly PREFER an EMBODIED consequence on a PRESENT character\'s body (their hands, breath, voice, balance, sight, grip) over any public/ceremonial/crowd spectacle or object-reveal. If the event needs someone to ARRIVE, a crowd to react, a ceremony to occur, or an object to APPEAR/GLOW/REVEAL, it is TOO BIG — replace it with a smaller bodily action between people already here.';
           }
-          // CROSS-MODEL PLANNER experiment (flag-gated, default OFF = GPT unchanged). window._scenePlannerEngine==='grok'
-          // routes the SAME planner prompts to a Grok model via /api/proxy (STRUCTURE_GENERATOR = structured-JSON role),
-          // to test whether a Grok-generated plan is more naturally realizable by the Grok author (fewer competing_transition).
-          // Author + everything else stay identical; only the PLANNER model changes. window._scenePlannerModel overrides the model.
+          // PLANNER MODEL (Roman 2026-09-20 — this was a flag-gated "default OFF" experiment; now the
+          // decided default, see the _plannerGrok definition below). Routes the SAME planner prompts
+          // to a Grok model via /api/proxy (STRUCTURE_GENERATOR = structured-JSON role) as PRIMARY —
+          // the only traced role that decides the next scene's actual event should not default to
+          // the cheapest available model. Author + everything else stay identical; only the PLANNER
+          // model changes. window._scenePlannerModel overrides which Grok variant is used;
+          // window._scenePlannerEngine='ministral' is the escape hatch back to ministral-primary.
           // ═══ ACCOMPLISHED-EVENT SCENE CONTRACT (Roman 2026-08-08, flag-gated: window._accomplishedEventContract === true; default OFF = byte-identical) ═══
           // Tests the converged design: the planner emits an ACCOMPLISHED, irreversible EVENT derived WHY-NOW-FIRST
           // (what just changed → what is now unavoidable → the event), with a Pixar BUT/THEREFORE causal skeleton, a
@@ -99864,7 +99867,25 @@ function _buildAuthorFloorDirective(s) {
             try { s._spineEventVerbatim = String(_openReuse.local_objective || ''); s._sceneAssignment = (typeof _selectSceneAssignment === 'function') ? _selectSceneAssignment(s, _planSceneNum) : s._sceneAssignment; } catch (_) {}
             return;
           }
-          var _plannerGrok = (typeof window !== 'undefined' && window._scenePlannerEngine === 'grok');
+          // PLANNER MODEL POLICY (Roman 2026-09-20, decision — supersedes the CROSS-MODEL PLANNER
+          // experiment comment above): this planner is the ONLY traced role that decides the actual
+          // next-scene EVENT (not a checker, not a structurer, not the author who merely dramatizes
+          // an event already chosen) — see _planner_role_ledger_2026_09_20.md. It was defaulting to
+          // ministral-8b-2512, the cheapest available tier, escalating to Grok ONLY on transport/
+          // parse failure, never on plan quality. Real retry 4 proved this matters: the planner
+          // received every fix (mouth-band state, live OAS exchange, worldTruths, protected-object
+          // constraints) and still produced a structurally-valid-but-inadequate plan (caught only by
+          // the separate Planner Function Gate, _detectPlannerFunctionGap, AFTER the fact). Roman:
+          // "For a player-reactive story, [the cheapest model deciding direction] is backwards...
+          // This is not where to save money." Decision: Grok is now PRIMARY for this role;
+          // ministral-8b-2512 is the FALLBACK (transport/parse failure only, unchanged trigger
+          // condition). Real measured cost delta: ministral $0.00095/call (retry 4) vs an estimated
+          // ~$0.009/call on Grok at the same token counts — ~9x, but ~1 cent absolute, small against
+          // the author call's own ~$0.085-0.09. window._scenePlannerEngine='ministral' is the escape
+          // hatch back to the old ministral-primary behavior (rollback/A-B, not the default anymore).
+          // Nothing else changes: max_tok/admission logic, the OpenAI-free 2-tier shape, and the
+          // Planner Function Gate below are all unchanged by this policy flip.
+          var _plannerGrok = !(typeof window !== 'undefined' && window._scenePlannerEngine === 'ministral');
           // Richer contracts (situation-driven / accomplished-event / structured-handoff) emit more fields; 320 tokens
           // truncated the output and DROPPED the trailing event_slots (found in channel validation). Give them room.
           // RAISED 640 -> 1200 (Roman 2026-09-20, second repair pass): _evidenceCommitCheck !== false is
@@ -99900,9 +99921,9 @@ function _buildAuthorFloorDirective(s) {
           // 20,000 TPM / 1 RPS — reduces collision risk directly — and a genuine admission check
           // (_ministral8bGovernorAdmits, the same static reservation check _authorFullScenePolicy
           // uses) skips that tier entirely, at zero cost, if this specific prompt would not fit,
-          // rather than dispatching and hoping. window._scenePlannerEngine='grok' still lets Grok
-          // lead (an existing, unchanged experiment toggle), now with ministral-8b as its own
-          // fallback rather than no fallback at all.
+          // rather than dispatching and hoping. Grok leads by default now (2026-09-20 policy
+          // decision, see above); ministral-8b-2512 is its fallback — the admission check below
+          // still applies to that fallback tier.
           var _scGrokModel = (typeof window !== 'undefined' && window._scenePlannerModel) || 'grok-4-1-fast-non-reasoning';
           var _scMessages = [{ role: 'system', content: _scSys + '\nOutput STRICT JSON ONLY — no preamble, no code fences.' }, { role: 'user', content: _scUsr }];
           var _scMinistralAdmission = (typeof _ministral8bGovernorAdmits === 'function') ? _ministral8bGovernorAdmits(_scMessages, _scMaxTok) : { admits: true };

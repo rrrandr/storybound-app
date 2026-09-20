@@ -63,35 +63,34 @@ structures existing direction (scaffold, commit verifier) or executes a directio
 own output quality (today, fixed for the cosmology leak specifically) feeds directly into what the
 real direction-decider sees.
 
-## Recommendation
+## Recommendation — DECIDED, IMPLEMENTED (2026-09-20, same day)
 
-Roman's hunch is confirmed by the trace, not just plausible: the one role that chooses the actual
-next story event is currently the cheapest model, with no capability-aware escalation. Two real,
-independent, now-fixed structural gaps (missing worldTruths, missing continuity data) already
-proved that starving this planner of DATA causes bad plans; Retry 4 then proved that even with full
-data, this specific model, at this tier, can still choose a weak plan.
+Roman's hunch was confirmed by the trace, not just plausible: the one role that chooses the actual
+next story event was the cheapest model, with no capability-aware escalation. Two real, independent,
+now-fixed structural gaps (missing worldTruths, missing continuity data) already proved that
+starving this planner of DATA causes bad plans; Retry 4 then proved that even with full data, this
+specific model, at this tier, can still choose a weak plan. Roman's decision: **"For a
+player-reactive story, that's backwards... This is not where to save money."**
 
-Given the Planner Function Gate (this pass) now stops a bad plan before the ~90x-more-expensive
-author call fires, the immediate, lowest-risk move is: **ship the gate now** (done, see below),
-and treat a planner model/policy upgrade as a separate, explicit decision — not bundled into this
-pass, per "no policy change yet."
+**Policy change made, dry, same pass:** the scene-spine/open-row planner's `_plannerGrok` default is
+inverted (`public/app.js`, inside `_generateLiteraryPlotContract`) — Grok is now PRIMARY, ministral-
+8b-2512 is the FALLBACK, unchanged trigger (transport/parse failure only). Real, measured cost:
+ministral-8b-2512 $0.00095/call (Retry 4's actual token counts, prompt_tokens: 5468,
+completion_tokens: 858); Grok at the same counts ≈ $0.00898 (≈9.4× more, ≈+$0.008 absolute) — still
+small against the author call's own ~$0.085-0.09. `window._scenePlannerEngine='ministral'` is the
+new escape hatch back to the old default, for rollback or A/B. The Planner Function Gate stays as a
+second, independent safety layer — even Grok can produce a bad plan; proven 12/12,
+`_scene2_planner_grok_primary_control.mjs`, that the gate catches a Grok-sourced bad plan exactly as
+it catches a ministral-sourced one.
 
-For that separate decision: a real cost comparison, using Retry 4's actual planner-call token
-counts (prompt_tokens: 5468, completion_tokens: 858) — real ministral-8b-2512 cost was $0.00095;
-the SAME call on `grok-4-1-fast-reasoning`'s published per-token rate would cost approximately
-**$0.00898** (≈9.4× more per planner call, but still under a cent, against a scene whose author
-call alone already runs ~$0.085-0.09). Switching this ONE role to Grok-primary would add roughly
-$0.008 per scene — a small absolute increase. Whether that buys a meaningfully better plan is not
-something this trace can answer without a real, paid, controlled comparison (same posture, same
-data, planner-only on Grok vs. ministral) — which would itself need separate authorization.
-
-**Not recommended without further evidence:** upgrading every planner-adjacent role (scaffold,
-commit verifier) to Grok — those don't decide story direction, and Roman's own instinct ("don't
-make every tiny verifier Grok") is well-supported by this trace.
+**Not changed, confirmed unaffected by direct source read:** CG scaffold (`_callTieredProvider(
+'scaffold', ...)`) and the commit verifier (`_callTieredProvider('runtimeCommitVerifier', ...)`)
+still use their own, separate default 3-tier policy — neither decides story direction, and Roman's
+own instinct ("don't make every tiny verifier Grok") holds.
 
 ## Status
 
-Dry, no provider calls, no policy change made. The Planner Function Gate (rejects an inadequate
-plan before author spend) is implemented and proven in this same pass — see
-`_scene2_planner_function_gate_control.mjs`. The Grok-planner question is now well-evidenced for
-Roman to decide, not decided here.
+Dry, no provider calls. Two changes now shipped in this same pass, both proven: the Planner Function
+Gate (rejects an inadequate plan before author spend — `_scene2_planner_function_gate_control.mjs`,
+10/10) and the Grok-primary planner policy (`_scene2_planner_grok_primary_control.mjs`, 12/12). No
+paid retry run. Both changes await a live capability test whenever Roman authorizes one.
