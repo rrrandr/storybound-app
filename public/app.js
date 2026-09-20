@@ -99225,19 +99225,6 @@ function _buildAuthorFloorDirective(s) {
                  + '    – EXIT STATE (THE invariant — this MUST be TRUE by the end of THIS scene): ' + _sc.slots.exitState + '\n'
                  + '    Rerouting the event (e.g. confessing to a different person), changing who acts, or leaving the exit state un-true is a CONTRACT BREACH — the scene FAILS even if the prose is beautiful. If the named target cannot plausibly be present, that is the PLANNER\'s error to surface, NOT yours to fix by rerouting — stage it as written.\n')
               : '')
-          // COMMITTED FACTS (Roman 2026-09-20): the accepted objective's aftermathTruths, carried
-          // here from _stateChange.committedFacts (see _generateLiteraryPlotContract). BINDING, not
-          // inspirational — real finding this closes: a real Scene 2 generation's own accepted
-          // aftermath.the_answer_institutional === "kept" ("The Answer belongs to the
-          // Institution... It is not hers"), and the delivered prose then directly contradicted it
-          // ("I can claim the Answer as my sacrifice") because the author never saw this text at
-          // all — only the planner's validation gate had seen it, and the gate's result was
-          // discarded after acceptance. Generic across any scene's aftermathTruths, not
-          // First-Sacrifice-specific; empty array when a scene has none.
-          + ((_sc.committedFacts && _sc.committedFacts.length)
-              ? ('  COMMITTED FACTS (HARD — BINDING, not inspirational: the planner already verified these against the seed and every one of them is REQUIRED to remain true. You may DRAMATIZE, COMPLICATE, or put PRESSURE ON any of these — a character can WANT to reverse one, ARGUE against one, or be TEMPTED to act as though one were false. You may NEVER simply INVERT or CONTRADICT one without the planner supplying an explicit new event that changes it — that did not happen in this scene, so none of these change here. If your prose has a character claim ownership of, dispose of, or otherwise treat a committed fact as reversed, THAT IS A CONTRACT BREACH — the scene FAILS even if the prose is beautiful):\n'
-                 + _sc.committedFacts.map(function (f) { return '  • ' + f.text; }).join('\n') + '\n')
-              : '')
           + '  DIALOGUE RULE (HARD): every significant line must ADVANCE TOWARD the event or RESPOND TO it — never keep pursuing an objective the event has already made obsolete.\n'
           + '  RELATIONSHIP DYNAMIC = BEHAVIOR, NOT SUBJECT: the characters\' clash or attraction governs HOW they behave before, during, and after this event — it does NOT replace the event as the scene\'s organizing subject. The scene is about the event; the dynamic is how they live through it.\n'
           // DELIVERY-MANDATE A/B (Roman 2026-07-27): Arm A = the directive above ("stage the transition"). Arm B
@@ -99802,22 +99789,6 @@ function _buildAuthorFloorDirective(s) {
           var _scEvent = _scP && String(_scP.state_change || '').trim();
           if (!_scEvent) return;
           var _stateChange = { precondition: String(_scP.state_change_precondition || '').trim(), event: _scEvent, forces_choice: String(_scP.forces_choice || '').trim(), tactical_move: String(_scP.tactical_move || '').trim(), branch_a: String(_scP.branch_a || '').trim(), branch_b: String(_scP.branch_b || '').trim(), sceneProposed: (s.turnCount || 0) };
-          // COMMITTED FACTS (Roman 2026-09-20): the OPEN ROW's aftermathTruths (full text, from
-          // _curMs._eff — the seed's own canon, e.g. "The Answer belongs to the Institution...
-          // It is not hers.") were previously used ONLY by _validateLocalObjective's accept/reject
-          // gate and then DISCARDED — never copied onto _stateChange, so _buildPlotContractDirective
-          // (the only channel that reaches the CG author's prompt) never saw them, and the author
-          // had zero explicit reminder of a fact the SAME accepted reply had just committed to
-          // keeping. Real finding this closes: a real Scene 2 generation's own accepted
-          // aftermath.the_answer_institutional === "kept", and the delivered prose then directly
-          // contradicted it ("I can claim the Answer as my sacrifice"). Carried here so the author
-          // prompt can render them as BINDING (see _buildPlotContractDirective's COMMITTED FACTS
-          // block) — generic across any scene's aftermathTruths, not First-Sacrifice-specific.
-          try {
-            if (_curMs && _curMs._eff && Array.isArray(_curMs._eff.aftermathTruths) && _curMs._eff.aftermathTruths.length) {
-              _stateChange.committedFacts = _curMs._eff.aftermathTruths.map(function (t) { return { id: t.id, text: t.text }; });
-            }
-          } catch (_) {}
           // ACCOMPLISHED-EVENT CONTRACT: attach the causal skeleton to the transition so it rides on
           // state._priorSceneStateChange (available to the next scene's context + the commit gate) and gets logged.
           if (_aecOn && _scP) {
