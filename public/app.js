@@ -173145,7 +173145,7 @@ No text, no watermark, no UI elements, share-ready.`;
   // version exists in cache).
   var _TIER_RANK = { cheap: 0, mid: 1, hero: 2 };
 
-  function _resolvePhaseVisualState(visualState, phase, allPhases, beats) {
+  function _resolvePhaseVisualState(visualState, phase, allPhases, beats, sceneCharge) {
     if (!visualState || !phase) return visualState;
     var eff = {};
     for (var k in visualState) { if (Object.prototype.hasOwnProperty.call(visualState, k)) eff[k] = visualState[k]; }
@@ -173237,7 +173237,7 @@ No text, no watermark, no UI elements, share-ready.`;
     // given explicit body-language signals. This block tells the model
     // WHICH register of charge applies so the staging carries the
     // dynamic's chemistry rather than reading as neutral.
-    eff._phaseChargeDirective = _buildPhaseChargeDirective(eff._phaseLIAbsent, visualState.social_staging_mode, visualState.attractionPresence);
+    eff._phaseChargeDirective = _buildPhaseChargeDirective(eff._phaseLIAbsent, visualState.social_staging_mode, visualState.attractionPresence, sceneCharge && sceneCharge.stake);
 
     return eff;
   }
@@ -173250,7 +173250,14 @@ No text, no watermark, no UI elements, share-ready.`;
   // rather than emotional abstractions (longing, hunger) which models
   // tend to ignore. Tone modifies the FORM of the charge — wry tones
   // soften the expression while keeping the underlying tension.
-  function _buildPhaseChargeDirective(liAbsent, ssm, attraction) {
+  // Mirrors the intensity-cap escalator's stake vocabulary (app.js ~227665,
+  // `_STAKE_TRIGGERS`, inside the CG validator pass) — same pattern, hoisted to module scope so
+  // _buildPhaseChargeDirective can reach it. Left as a deliberate, disclosed duplicate rather than
+  // refactoring the existing (proven, live) escalator to share this constant — that code sits deep
+  // inside a large validator function far from here, and this repair does not touch it. Keep the
+  // two patterns in sync by hand if either changes.
+  var _CG_CHARGE_STAKE_TRIGGERS = /\b(contract|eviction|notice|notification|discovery|threat|accusation|secret|positive|negative|news|reveal|test result|pregnancy|disease|diagnosis|warrant|subpoena|firing|layoff|breakup|affair|cheating|blackmail|debt|loan|inheritance|will|death|missing|gone|disappeared)\b/i;
+  function _buildPhaseChargeDirective(liAbsent, ssm, attraction, stake) {
     if (liAbsent) return '';
     // Fix #4 (Roman 2026-07-14): the CHEMISTRY/CHARGE block is the ROMANTIC layer.
     // Firing it on LI-presence alone posed coworkers / friends / early-hostile pairs
@@ -173264,7 +173271,7 @@ No text, no watermark, no UI elements, share-ready.`;
     var _cssm = String(ssm || '').toLowerCase().trim();
     var _cap = String(attraction || 'none').toLowerCase().trim();
     var _romanceOn = (_cssm === 'romance_eligible') || (_cap === 'leaking') || (_cap === 'foreground');
-    if (!_romanceOn) return '';
+    if (!_romanceOn) return _buildRestrainedChargeDirective(_cssm, _cap, stake);
     var dynRaw = String((state.picks && state.picks.dynamic) || '').toLowerCase();
     var intRaw = String(state.intensity || (state.picks && state.picks.intensity) || 'Steamy').toLowerCase();
     var toneRaw = String((state.picks && state.picks.tone) || '').toLowerCase();
@@ -173312,6 +173319,52 @@ No text, no watermark, no UI elements, share-ready.`;
       '- ' + intLine + toneLine;
   }
 
+  // ── RESTRAINED CHARGE (Roman 2026-09-20) ──
+  // A narrower register for phases the ROMANTIC layer above correctly does NOT fire on — staging
+  // mode isn't 'romance_eligible' and attraction hasn't reached 'leaking'/'foreground' — but where
+  // the scene is not simply neutral either. Real finding: First Sacrifice's real Scene 2 sample
+  // (social_staging_mode='adversarial', attractionPresence='none', a public accusation scene) had
+  // NO charge directive at all, and its LI beats read as blank/inert
+  // (_scene2_li_presence_quality_note_2026_09_20.md) — the image prompt for that same scene would
+  // have had the identical gap: nothing telling the model this is charged pressure rather than flat
+  // staging. This does NOT invent romance where none is declared — it fires only when the CG
+  // author's OWN structured output already signals something above neutral:
+  //   (a) attractionPresence === 'latent' (a real, declared enum value one notch below 'leaking'
+  //       — the author already said attraction exists, just not surfaced yet), OR
+  //   (b) social_staging_mode is one the scene's own tension could plausibly run hot even without
+  //       attraction being open (adversarial / professional / crowded_public / stranger_awkward /
+  //       familial) AND sceneCharge.stake names EITHER the generic high-stakes vocabulary the
+  //       intensity-cap escalator already treats as tension-worthy (app.js ~227665 — reused for
+  //       coherence between the two systems) OR the romance/power/public-pressure vocabulary this
+  //       repair was actually asked for (_CG_RESTRAINED_CHARGE_TRIGGERS below). TESTED against the
+  //       real fixture: the escalator's own list alone does NOT match First Sacrifice Scene 2's real
+  //       stake text ("Lirael's standing collapses before the assembly as her words are fulfilled")
+  //       — no "accusation", no "threat", nothing from that generic-reveal-oriented list appears in
+  //       it. That list was built for a different problem (contract/diagnosis/breakup-class reveals);
+  //       it is not, by itself, a public-pressure/power/attraction vocabulary. Added a second,
+  //       purpose-built trigger set for exactly what was asked (public exposure, power/restraint,
+  //       jealousy, forbidden attraction, awe, tenderness) — this DOES match ("standing", "assembly").
+  // Vocabulary is deliberately NOT the romance register's (no "angled toward", no "leaning in",
+  // no heat-under-restraint language implying mutual pull) — this is pressure/danger/composure,
+  // which may or may not be romantic in nature; the scene's own prose stays the authority on that.
+  var _RESTRAINED_CHARGE_MODES = { adversarial: 1, professional: 1, crowded_public: 1, stranger_awkward: 1, familial: 1 };
+  var _CG_RESTRAINED_CHARGE_TRIGGERS = /\b(public(?:ly)?|assembly|witness(?:es|ing|ed)?|crowd|onlookers?|humiliat\w*|expos(?:e|ed|ing|ure)|shame\w*|scandal\w*|reputation|standing|judg(?:e|ment|ed|ing)\w*|scrutin\w*|forbidden|illicit|taboo|power|authority|control(?:led|ling)?|command\w*|obey\w*|defian\w*|rival\w*|jealous\w*|possessive\w*|restrain\w*|resist\w*|tempt\w*|desire\w*|want(?:ing)?|awe\b|reverence|worship\w*|devotion|tender\w*|protective\w*|danger\w*|threat\w*)\b/i;
+  function _buildRestrainedChargeDirective(cssm, cap, stake) {
+    var _stakeText = String(stake || '').toLowerCase();
+    var _stakeHit = _CG_CHARGE_STAKE_TRIGGERS.test(_stakeText) || _CG_RESTRAINED_CHARGE_TRIGGERS.test(_stakeText);
+    var _on = (cap === 'latent') || (!!_RESTRAINED_CHARGE_MODES[cssm] && _stakeHit);
+    if (!_on) return '';
+    return '\nRESTRAINED CHARGE (HARD — this is NOT romantic staging; do NOT pose the pair as a couple or ' +
+      'soften the scene\'s actual pressure into warmth. Composition must read as PRESSURE, not blankness):\n' +
+      '- A held gaze that lasts a beat longer than the situation calls for, OR a gaze deliberately NOT met at ' +
+      'all — either can read as charged; correct social distance is kept even as attention stays fixed on the ' +
+      'other.\n' +
+      '- Composure holds on the surface; the tension shows in exactly ONE controlled detail — a set jaw, a ' +
+      'closed hand, weight held rather than relaxed, a stillness that reads as restraint, not calm, not absence.\n' +
+      '- The charge sits UNDER the scene\'s real stakes (conflict, accusation, danger, duty, judgment) — it ' +
+      'does not replace them.';
+  }
+
   // Phase-aware fingerprint — combines scene visualState + per-phase
   // overlays + wardrobe + character/prop ensemble. A phase's image is
   // cached independently of other phases.
@@ -173321,7 +173374,7 @@ No text, no watermark, no UI elements, share-ready.`;
   // image (or trigger an upgrade), not bifurcate the cache. Quality
   // tracking lives on the cache entry itself (cached.quality), not in
   // the fingerprint.
-  function _phaseFingerprint(visualState, phase) {
+  function _phaseFingerprint(visualState, phase, sceneCharge) {
     if (!visualState || !phase) return null;
     var artist = state.gnArtist || 'ender_bond';
     var liVisEff = phase.li_visibility_phase || visualState.li_visibility || '';
@@ -173385,7 +173438,15 @@ No text, no watermark, no UI elements, share-ready.`;
       // Mindful even when the visualState matches.
       'dy:' + String((state.picks && state.picks.dynamic) || ''),
       'in:' + String(state.intensity || (state.picks && state.picks.intensity) || ''),
-      'tn:' + String((state.picks && state.picks.tone) || '')
+      'tn:' + String((state.picks && state.picks.tone) || ''),
+      // RESTRAINED CHARGE inputs (Roman 2026-09-20, _buildRestrainedChargeDirective): social_staging_mode
+      // and attractionPresence were NEVER fingerprinted before this change — a pre-existing gap this
+      // repair does not otherwise touch — but the new directive's output now depends on them directly
+      // (plus whether sceneCharge.stake hits the shared trigger vocabulary), so a scene whose charge
+      // computation changes must not silently reuse a stale cached image from before the change.
+      'ssm:' + String((visualState.social_staging_mode) || ''),
+      'atp:' + String((visualState.attractionPresence) || ''),
+      'stk:' + ((function () { var t = String((sceneCharge && sceneCharge.stake) || '').toLowerCase(); return (_CG_CHARGE_STAKE_TRIGGERS.test(t) || _CG_RESTRAINED_CHARGE_TRIGGERS.test(t)) ? '1' : '0'; })())
     ];
     return parts.join('|').toLowerCase();
   }
@@ -208314,7 +208375,8 @@ No text, no watermark, no UI elements, share-ready.`;
       visualState,
       phase,
       (planMeta && Array.isArray(planMeta.phases)) ? planMeta.phases : null,
-      (planMeta && Array.isArray(planMeta.beats)) ? planMeta.beats : null
+      (planMeta && Array.isArray(planMeta.beats)) ? planMeta.beats : null,
+      planMeta && planMeta.sceneCharge
     );
     // Carry the structured staging through to the prompt builder. _resolvePhaseVisualState merges the
     // scene visualState with phase overrides and does not know about these fields; rather than widen it,
@@ -208340,7 +208402,7 @@ No text, no watermark, no UI elements, share-ready.`;
         _cgRecordCameraAuthority(_pi, _compDiag, phase && phase.camera_override, visualState && visualState.camera);
       }
     } catch (_) {}
-    var fingerprint = _phaseFingerprint(visualState, phase);
+    var fingerprint = _phaseFingerprint(visualState, phase, planMeta && planMeta.sceneCharge);
     state._stagedHeroCache = state._stagedHeroCache || {};
 
     // ── PHASE C — STAGE CACHE LOOKUP (PHASE 0 ONLY) ──
@@ -208457,7 +208519,7 @@ No text, no watermark, no UI elements, share-ready.`;
           var _lastUrl = null;
           if (planMeta && Array.isArray(planMeta.phases)) {
             for (var _i = phase.phaseIdx - 1; _i >= 0 && !_lastUrl; _i--) {
-              var _prevFp = _phaseFingerprint(visualState, planMeta.phases[_i]);
+              var _prevFp = _phaseFingerprint(visualState, planMeta.phases[_i], planMeta && planMeta.sceneCharge);
               var _prevCached = state._stagedHeroCache[_prevFp];
               if (_prevCached && _prevCached.imageUrl) _lastUrl = _prevCached.imageUrl;
             }
@@ -209758,7 +209820,8 @@ No text, no watermark, no UI elements, share-ready.`;
       try {
         pvs = _resolvePhaseVisualState(visualState, phases[i],
           (planMeta && Array.isArray(planMeta.phases)) ? planMeta.phases : null,
-          (planMeta && Array.isArray(planMeta.beats)) ? planMeta.beats : null);
+          (planMeta && Array.isArray(planMeta.beats)) ? planMeta.beats : null,
+          planMeta && planMeta.sceneCharge);
       } catch (_) { pvs = visualState; }
       var body = '';
       try { body = _buildStagedHeroPrompt(pvs || visualState, sceneIndex, planMeta) || ''; } catch (_) { body = ''; }
@@ -292244,6 +292307,7 @@ Return ONLY the formatted prompt following the structure above. Do not explain o
 
       return sanitized;
   }
+  window.sanitizeImagePrompt = sanitizeImagePrompt;
 
   // Aggressive second-pass sanitizer — used on 400 retry
   function sanitizeImagePromptAggressive(prompt) {
