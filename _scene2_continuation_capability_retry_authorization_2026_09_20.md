@@ -166,17 +166,19 @@ concludes it works, but that's a larger, separately-authorized program, not this
 
 ## Status
 
-Fourteen fixes in place and dry-proven across eight passes (root causes A/B/C, Findings 1-3, the
+Fifteen fixes in place and dry-proven across nine passes (root causes A/B/C, Findings 1-3, the
 Planner Function Gate, the Grok-primary planner policy, the Required Scene Function frame, the
-posture-echo check, the gpt-4o terminal tier, the harness tier-log cross-check). Requirements and
-traces documented (`_continuation_scene_adequacy_requirements_2026_09_20.md`,
+posture-echo check, the gpt-4o terminal tier, the harness tier-log cross-check, the reserved/
+aftermath schema hardening). Requirements and traces documented
+(`_continuation_scene_adequacy_requirements_2026_09_20.md`,
 `_scene2_capability_test_root_causes_2026_09_20.md`, `_scene2_skeleton_handoff_trace_2026_09_20.md`,
 `_scene2_skeleton_handoff_trace2_2026_09_20.md`, `_planner_role_ledger_2026_09_20.md`,
 `_scene2_required_scene_function_trace_2026_09_20.md`,
-`_scene2_planner_terminal_tier_trace_2026_09_21.md`). Six real capability samples on record — all
-FAILED, gate-rejected, or (retroactively) would-have-been-gate-rejected, plus three real
-infrastructure non-results (retries 6-8, all $0, all `NO_RESPONSE_FROM_FUNCTION` 502s, resolved by
-the local dev-server cleanup — see `_local_dev_server_contamination_incident_2026_09_21.md`).
+`_scene2_planner_terminal_tier_trace_2026_09_21.md`, `_scene2_reserved_schema_trace_2026_09_21.md`).
+Seven real capability samples on record — six FAILED/gate-rejected/would-have-been-gate-rejected,
+plus retry 9 (schema-rejected, real content progress), plus three real infrastructure non-results
+(retries 6-8, all $0, resolved by the local dev-server cleanup — see
+`_local_dev_server_contamination_incident_2026_09_21.md`).
 
 **Fifth addendum, retry #9 (same day, after environment cleanup) — real content progress, blocked
 by a NEW, narrow bug.** First retry on the cleaned environment: zero 502s, two real HTTP 200 planner
@@ -187,4 +189,15 @@ pre-existing, earlier validator (`_validateLocalObjective`'s reserved-events com
 both replies returned `"reserved": {}` (empty) instead of the four required IDs, despite the
 planner's own system prompt requiring them. Full account: `_scene2_capability_retry9_report_2026_09_21.md`.
 This is a genuinely new, narrowly-diagnosed, mechanical schema-completeness issue — not a repeat of
-any prior finding, and not yet fixed. No further retry follows this one, per standing instruction.
+any prior finding. No further retry followed retry 9, per standing instruction.
+
+**Sixth addendum (same day, dry fix) — the reserved/aftermath schema gap is closed, not the
+validator loosened.** `reserved`/`aftermath` now get their own dedicated prompt block: an explicit
+"an EMPTY object {} for EITHER is INVALID" statement, the real ids restated, and a worked JSON
+example built from the scene's own real ids. `_validateLocalObjective`'s reject-only check is
+completely unchanged — proven by re-testing retry 9's real replies against it unmodified (still
+correctly rejected) and confirming attempt 1's real content, with ONLY reserved/aftermath corrected,
+is accepted. Proven 16/16, `_scene2_reserved_schema_control.mjs`; full trace:
+`_scene2_reserved_schema_trace_2026_09_21.md`. A future retry would be the first real test of
+whether the planner can now preserve retry 9's genuinely improved scene-function behavior WHILE
+satisfying the hardened schema — a combination not yet tested live. No live retry run in this pass.

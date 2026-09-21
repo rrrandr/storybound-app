@@ -99746,7 +99746,33 @@ function _buildAuthorFloorDirective(s) {
             if (_oe.vectors && _oe.vectors.length) _ob.push('AFFORDANCES (any, none, or the reader\'s own — NOT a menu, NOT exhaustive, none required):\n' + _oe.vectors.map(function (v) { return '  • ' + v; }).join('\n'));
             if (_oe.constraints && _oe.constraints.length) _ob.push('SEED CONSTRAINTS: ' + _oe.constraints.join(' · '));
             _scUsr = 'READER POSTURE → LOCAL OBJECTIVE\n' + _ob.join('\n') + '\n\n' + _scUsr;
-            _scSys += '\n\nOPEN ROW (REQUIRED — add these keys to your JSON): "posture_read" (one sentence: what the reader\'s recorded choice and Say/Do MEAN here), "local_objective" (one sentence: whose concrete act, where, that this scene exists to land — it must answer the reader\'s posture and build from the aftermath), "local_objective_actor" (one ROSTER name — NEVER a collective presence), "present" (array of ROSTER names who are in the scene, PLUS any declared collective presence, named exactly as given, if genuinely present — never invent a collective label that was not declared), "reserved" (object: every RESERVED id → "untouched" or "touched"), "aftermath" (object: every AFTERMATH TRUTH id → "kept"). Your state_change realizes the local_objective.';
+            _scSys += '\n\nOPEN ROW (REQUIRED — add these keys to your JSON): "posture_read" (one sentence: what the reader\'s recorded choice and Say/Do MEAN here), "local_objective" (one sentence: whose concrete act, where, that this scene exists to land — it must answer the reader\'s posture and build from the aftermath), "local_objective_actor" (one ROSTER name — NEVER a collective presence), "present" (array of ROSTER names who are in the scene, PLUS any declared collective presence, named exactly as given, if genuinely present — never invent a collective label that was not declared). Your state_change realizes the local_objective.';
+            // RESERVED/AFTERMATH SCHEMA — HARDENED (Roman 2026-09-21). Real finding: retry 9 — the
+            // first real attempt to reach this point with genuinely improved scene content (a real
+            // institutional-pressure event, not a Fate-card echo) — was rejected anyway, TWICE, because
+            // both real replies returned "reserved": {} (an empty object) instead of the required ids.
+            // The prior single-clause instruction ("reserved" (object: every RESERVED id →
+            // "untouched" or "touched")), buried inside one long run-on sentence alongside four other
+            // required keys, never said an empty object is invalid, and gave no example of the correct
+            // shape — an empty object is a plausible (wrong) way to read "nothing here is touched."
+            // Given its own block, an explicit invalidity statement, the exact real ids restated
+            // (not just earlier in the user prompt), and a concrete worked example built from the
+            // SAME real ids (dynamic, not hardcoded — generic for any starter/scene). This is a
+            // prompt/schema-compliance fix, not a validator downgrade — _validateLocalObjective's
+            // reject-only check is UNCHANGED; an empty object is still rejected exactly as before.
+            try {
+              var _reqReservedIds = (_oe.reserved || []).map(function (r) { return r.id; });
+              var _reqAftermathIds = (_oe.aftermathTruths || []).map(function (t) { return t.id; });
+              if (_reqReservedIds.length || _reqAftermathIds.length) {
+                var _exampleObj = {};
+                if (_reqReservedIds.length) { _exampleObj.reserved = {}; _reqReservedIds.forEach(function (id) { _exampleObj.reserved[id] = 'untouched'; }); }
+                if (_reqAftermathIds.length) { _exampleObj.aftermath = {}; _reqAftermathIds.forEach(function (id) { _exampleObj.aftermath[id] = 'kept'; }); }
+                _scSys += '\n\n"reserved" and "aftermath" (BOTH REQUIRED, HARD — an EMPTY object {} for EITHER is INVALID and will be rejected, exactly as a missing key is): '
+                  + (_reqReservedIds.length ? '"reserved" MUST be an object containing EVERY ONE of these exact keys, spelled exactly as given: [' + _reqReservedIds.join(', ') + '] — each value "untouched" unless you actually delivered/pre-empted that id (you must not), in which case "touched". ' : '')
+                  + (_reqAftermathIds.length ? '"aftermath" MUST be an object containing EVERY ONE of these exact keys: [' + _reqAftermathIds.join(', ') + '] — each value "kept". ' : '')
+                  + 'Neither object may be empty or omit any listed id. Worked example of the correct shape (yours will differ only in which ids apply to THIS scene): ' + JSON.stringify(_exampleObj);
+              }
+            } catch (_) {}
             // REQUIRED SCENE FUNCTION — output keys (Roman 2026-09-20). Only requested when the row
             // declares sceneFunction (see above) — inert for any scene without one.
             if (_oe.sceneFunction) {
