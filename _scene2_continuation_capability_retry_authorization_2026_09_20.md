@@ -216,6 +216,40 @@ of the five evaluation questions are answerable. $0 spent. Full account:
 Likely fix (NOT actioned, needs separate authorization distinct from "run a retry"): restart the
 `vercel dev` parent process itself, not just clean up children as before.
 
+**Eighth addendum, retry #11 (2026-09-21, after dev-server restart) — reserved-schema fix
+CONFIRMED live; a deeper, substantive gate correctly caught a different real gap.** The
+`vercel dev` parent process (PID 24065) was restarted per separate authorization; confirmed
+`localhost:3000` responded before the retry (a side effect of the restart: `vercel` self-updated
+its own `package.json`/`package-lock.json` entry `^59.5.0` → `^59.23.2`, left uncommitted,
+flagged not decided; `playwright-core@1.62.1` — an out-of-band, unpinned-in-lockfile dependency —
+was pruned by the same process and reinstalled with `--no-save` to match its original state).
+
+One real planner dispatch, HTTP 200 first try, $0.01018465. The real reply's `reserved` and
+`aftermath` objects carried all 8 required ids with the correct values, exactly as the hardened
+schema block asks — the first live confirmation the Sixth-addendum fix works. The plan then
+reached and was correctly rejected by the Planner Function Gate: the model's own
+`scene_function_instantiated` self-report and `tactical_move` field borrowed institutional/
+procedural vocabulary, but the actual `state_change` ("Julian crosses the circle and stands
+before Lirael, naming himself the one she lost") was still the same in-ritual confrontation
+beat as the scene's opening, not a genuine aftermath event — a label/content mismatch the gate
+is specifically built to catch (it reads the real proposed event, not the self-report). The
+retry mechanism reused the cached objective rather than drawing a fresh planner sample, so this
+is one real draw, correctly stopped resumably. No author call, no prose. Full account:
+`_scene2_capability_retry11_report_2026_09_21.md`. No follow-up retry run, per standing
+instruction.
+
+## Status update (after retry #11)
+
+Nine real capability samples now on record. The reserved-schema fix (Sixth addendum) is
+CONFIRMED against a live draw — no further work needed there absent new evidence. The remaining
+open problem is now narrower and better isolated than at any prior point this session: the
+planner's prompt does not yet reliably make the model choose a genuine aftermath event over
+re-staging the immediate ritual moment under aftermath-sounding vocabulary. Both gates
+(structural validator, Planner Function Gate) are confirmed working correctly against real
+model output in both directions (one pass, one correct catch) — the gates are not the problem.
+A future retry would be the first test of whether a fresh planner draw (not a cached-objective
+retry) can produce a genuinely new aftermath event on this same Boundary input.
+
 ## Status update (after retry #10)
 
 Eight real capability samples now on record: six FAILED/gate-rejected/would-have-been-gate-rejected,
