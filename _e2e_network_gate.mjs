@@ -256,11 +256,35 @@ export async function installFailClosedNetworkGate(page, opts) {
       waitOpts = waitOpts || {};
       const watchdogMs = waitOpts.watchdogMs > 0 ? waitOpts.watchdogMs : 15000;
       const pollMs = waitOpts.pollMs > 0 ? waitOpts.pollMs : 500;
+      // QUIET PERIOD (Roman 2026-09-20 repair). Real bug found via two consecutive real retries
+      // (Scene 2 retries 5 and 6) that each showed exactly ONE tracked call under this phase and no
+      // sign of the app's own documented follow-up (a bounded gate retry; a tier fallback after a
+      // 502) ever completing. Root cause: this function used to return the instant EVERY CURRENTLY
+      // TRACKED call under roleTag was settled — but "currently tracked" can be just the first call,
+      // checked in the gap between that call settling and the app's own async retry/fallback logic
+      // issuing its NEXT fetch (which hasn't been dispatched yet, so isn't in `tracked` yet either).
+      // A caller like _scene2_repair_replay_sample.mjs then sees "settlement resolved" with only one
+      // call on record and concludes failure, even when the app was correctly about to make a second,
+      // legitimate call it never got the chance to be observed making. Fix: once every currently-
+      // tracked call is settled, wait a short quiet period (default 3s) watching for a NEW call to
+      // appear under the same roleTag; if one does, treat it as not-yet-settled and keep waiting; only
+      // return once the quiet period passes with no new call. quietMs:0 restores the old (buggy for
+      // multi-attempt cases) immediate-return behavior, for callers that know only one call is ever
+      // possible under a given roleTag.
+      const quietMs = (waitOpts.quietMs != null) ? waitOpts.quietMs : 3000;
       const start = Date.now();
       let lastWatchdog = start;
+      let quietSince = null;
+      let lastCount = -1;
       for (;;) {
         const relevant = tracked.filter((r) => r.roleTag === roleTag);
-        if (relevant.length > 0 && relevant.every(isSettled)) return relevant.slice();
+        const allSettled = relevant.length > 0 && relevant.every(isSettled);
+        if (allSettled) {
+          if (relevant.length !== lastCount) { quietSince = Date.now(); lastCount = relevant.length; }
+          if (quietMs <= 0 || (Date.now() - quietSince) >= quietMs) return relevant.slice();
+        } else {
+          quietSince = null; lastCount = relevant.length;
+        }
         const now = Date.now();
         if (now - lastWatchdog >= watchdogMs) {
           lastWatchdog = now;
