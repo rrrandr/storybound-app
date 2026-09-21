@@ -99984,6 +99984,21 @@ function _buildAuthorFloorDirective(s) {
             if (_scMinistralAdmission.admits) _scTiers.push({ tier: 'primary', provider: 'mistral', model: 'ministral-8b-2512' });
             _scTiers.push({ tier: _scTiers.length ? 'fallback' : 'primary', provider: 'grok', model: _scGrokModel });
           }
+          // TERMINAL TIER (Roman 2026-09-21 decision, after two real, consecutive
+          // NO_RESPONSE_FROM_FUNCTION 502s from the Grok-primary tier on this exact role): this
+          // planner previously had NO third tier — Grok -> ministral -> stop — unlike the shared
+          // default _callTieredProvider chain (mistral -> grok -> OpenAI terminal) and
+          // _authorFullScenePolicy (grok -> ministral -> gpt-4o terminal), both of which already
+          // carry a terminal. The original "no OpenAI in this chain" constraint (2026-09-10) was a
+          // deliberate choice when this was a cheap, low-stakes structural step; it is the ONE role
+          // that decides the actual next-scene event (see _planner_role_ledger_2026_09_20.md), so
+          // Roman: "it should probably use the same robust shape as the other important text paths."
+          // gpt-4o terminal added, unconditionally (an admission/size check is unnecessary — gpt-4o's
+          // context window is far larger than this prompt could ever reach). The Planner Function
+          // Gate (_detectPlannerFunctionGap) runs identically regardless of which tier produced the
+          // plan — a gpt-4o-sourced plan gets no special treatment and can be rejected exactly like
+          // any other tier's.
+          _scTiers.push({ tier: 'terminal', provider: 'openai', model: 'gpt-4o' });
           var _scContent = null;
           try {
             var _scResult = await _callTieredProvider('scenePlanner', _scMessages, { max_tokens: _scMaxTok, temperature: 0.3, tiers: _scTiers });

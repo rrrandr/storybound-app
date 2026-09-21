@@ -283,9 +283,35 @@ export async function installFailClosedNetworkGate(page, opts) {
       let lastWatchdog = start;
       let quietSince = null;
       let lastCount = -1;
+      // TIER-LOG CROSS-CHECK (Roman 2026-09-21, third repair). Real retry #7 proved the quiet-period
+      // fix alone is not sufficient: the app's OWN console log showed _callTieredProvider correctly
+      // logging a fallback attempt ("[TIERED:scenePlanner] attempt 2 tier=fallback
+      // provider=mistral..."), synchronously, the instant the loop reaches that tier -- but the
+      // resulting network request never appeared in `tracked` before the calling script closed the
+      // browser. The quiet-period timer alone can't see an attempt that was DECLARED but never
+      // NETWORK-TRACKED. Fix: when the caller supplies `expectedTierLogRole` (the internal roleTag
+      // _callTieredProvider was given, e.g. 'scenePlanner' -- NOT this function's own `roleTag`
+      // phase-tracking argument, a different tagging system), cross-check the app's OWN ground-truth
+      // window._providerTierLog (written synchronously by _logProviderTierAttempt, before any network
+      // delay) against the network-tracked count. If the app has logged MORE attempts than the network
+      // layer has tracked, that is direct proof a request is missing from tracking -- treat it as
+      // NOT settled and keep waiting (resetting the quiet timer), rather than trusting network
+      // tracking alone. Optional and additive: omitting expectedTierLogRole preserves the exact
+      // quiet-period-only behavior above.
+      const expectedTierLogRole = waitOpts.expectedTierLogRole || null;
       for (;;) {
         const relevant = tracked.filter((r) => r.roleTag === roleTag);
-        const allSettled = relevant.length > 0 && relevant.every(isSettled);
+        let tierLogAhead = false;
+        if (expectedTierLogRole) {
+          try {
+            const tierLogCount = await page.evaluate((role) => {
+              try { return (window._providerTierLog || []).filter((r) => r && r.role === role).length; }
+              catch (_) { return 0; }
+            }, expectedTierLogRole);
+            if (tierLogCount > relevant.length) tierLogAhead = true;
+          } catch (_) { /* page may be mid-navigation; do not fail the wait over a transient read error */ }
+        }
+        const allSettled = !tierLogAhead && relevant.length > 0 && relevant.every(isSettled);
         if (allSettled) {
           if (relevant.length !== lastCount) { quietSince = Date.now(); lastCount = relevant.length; }
           if (quietMs <= 0 || (Date.now() - quietSince) >= quietMs) return relevant.slice();
@@ -295,7 +321,7 @@ export async function installFailClosedNetworkGate(page, opts) {
         const now = Date.now();
         if (now - lastWatchdog >= watchdogMs) {
           lastWatchdog = now;
-          try { if (typeof waitOpts.onWatchdog === 'function') waitOpts.onWatchdog(now - start); } catch (_) {}
+          try { if (typeof waitOpts.onWatchdog === 'function') waitOpts.onWatchdog(now - start, { tierLogAhead: tierLogAhead }); } catch (_) {}
         }
         await new Promise((r) => setTimeout(r, pollMs));
       }

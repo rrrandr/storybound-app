@@ -39,25 +39,38 @@ deciding whether to wait out possible endpoint instability or accept the residua
 is mostly testing whether that endpoint feels better, not whether Scene 2 works."** No further
 retry authorized as of this addendum. Retry now only when separately authorized.
 
-## Pre-run note — classify a `NO_RESPONSE_FROM_FUNCTION` 502 as infrastructure, not a story result
+**Third addendum (same day, dry work only):** the scene-spine planner chain gained a third tier —
+Grok primary → ministral-8b-2512 fallback → **gpt-4o terminal** (new) — since this is the one role
+that decides the actual next-scene event and previously had no terminal, unlike every other
+important text path in this codebase. A single Grok 502 (or a Grok+ministral double failure) no
+longer necessarily means the planner produced nothing; the terminal tier gives it one more real
+chance before genuinely exhausting. The Planner Function Gate is unchanged and applies identically
+regardless of which tier produced the plan. Also: the harness observation gap behind retries 6 and 7
+is now more precisely understood and directly addressed (not just widened) — see the corrected
+pre-run note and full trace below. Proven 19/19 (`_scene2_planner_terminal_tier_control.mjs`) + 3/3
+(`_harness_tier_log_cross_check_control.mjs`); full trace:
+`_scene2_planner_terminal_tier_trace_2026_09_21.md`. All 8 pre-existing controls re-run green
+(104/104 before this addition). No live retry run.
 
-If a future retry's Grok-primary planner call returns HTTP 502 with `NO_RESPONSE_FROM_FUNCTION`
-again (the exact shape of both retries 6 and 7): classify it immediately as provider/serving
-instability, record cost ($0, a 502 has no usage block) and stop — do NOT interpret it as evidence
-about the required-scene-function contract, the planner-policy change, or Scene 2 capability. That
-question stays open and untested until a real planner reply is obtained on some tier.
+## Pre-run note — classify a fully-exhausted chain as infrastructure, not a story result
+
+The chain is now Grok → ministral → gpt-4o terminal. If a future retry exhausts ALL THREE tiers
+(each returning a transport/parse failure — `_callTieredProvider` throws "all tiers exhausted"):
+classify it immediately as provider/serving instability across multiple providers simultaneously —
+record cost (likely near $0, since failed tiers rarely bill) and stop. Do NOT interpret total
+exhaustion as evidence about the required-scene-function contract, the planner-policy change, or
+Scene 2 capability. A single Grok 502 alone is no longer grounds to stop early — the chain should be
+given the chance to fall through to ministral and then gpt-4o before concluding infrastructure
+failure. That capability question stays open and untested until a real planner reply is obtained on
+some tier AND evaluated by the Planner Function Gate.
 
 ## Future option — controlled fallback-path test (not a policy change)
 
-While Grok planner serving may be unstable, a SEPARATE, explicitly-scoped option exists for later:
-force `window._scenePlannerEngine = 'ministral'` (the existing escape hatch, `public/app.js`) for
-one retry, to verify the REST of the continuation stack (required-scene-function frame, posture-echo
-gate, worldTruths, OAS history, mouth-band continuity, cosmology ban, the Planner Function Gate)
-against a planner tier that isn't currently 0-for-2 on transport failures. This is explicitly NOT a
-proposal to revert the Grok-primary policy decision — ministral-primary stays the deliberately
-deprioritized fallback tier in production; this option exists only to keep testing the rest of the
-stack moving if Grok-primary continues to be unreliable when retries do resume. Would need its own
-explicit authorization, separate from a Grok-primary retry.
+A SEPARATE, explicitly-scoped option still exists for later, now less urgent given the terminal
+tier: force `window._scenePlannerEngine = 'ministral'` (the existing escape hatch, `public/app.js`)
+for one retry, to verify the REST of the continuation stack against a planner tier that isn't Grok.
+Explicitly NOT a proposal to revert the Grok-primary policy decision. Would need its own explicit
+authorization, separate from a normal Grok-primary retry.
 
 ## What this is testing
 
@@ -106,18 +119,22 @@ lot; whoever authorizes this may want to weigh a fresh player branch instead.
 ## Cost ceiling (estimate)
 
 Retry #5's real, measured total was $0.00981465 (gate-rejected before author spend — the cheapest
-outcome so far). If this retry's plan clears the gate, real cost would run closer to retry #4's
-$0.228671 (Grok planner + Grok author + adjacent calls). Ceiling unchanged, already proven to hold
-with wide margin across five real runs:
+outcome so far). Retries 6-7 were $0.00 (pure 502 exhaustion under the old 2-tier chain). If a
+future retry's plan clears the gate, real cost would run closer to retry #4's $0.228671 (Grok
+planner + Grok author + adjacent calls). **Ceiling revised** for the new 3-tier planner chain (Grok
+→ ministral → gpt-4o terminal) — worst case now includes a real gpt-4o call if both earlier tiers
+fail transport-wise (estimated ≤$0.03 for that one call at this prompt's real size, ~24.3K chars /
+~6.1K tokens, `max_tokens: 1200`, well under the $0.08 line below):
 
 | Phase | Ceiling (USD) | Physical requests |
 |---|---|---|
-| scene2-planner (unchanged) | $0.05 | ≤2 |
+| scene2-planner (chain now 3-tier — Grok → ministral → gpt-4o terminal) | $0.08 | ≤3 |
 | scene2-author (unchanged) | $0.40 | ≤2 |
-| **Total** | **$0.45** | **≤8** |
+| **Total** | **$0.48** | **≤8** |
 
 Adequacy re-validation is dry (`_detectSceneAdequacyFailure`, `_detectPlannerFunctionGap`) — $0
-additional.
+additional. This is a proposed revision on an unauthorized, not-run sheet — not itself a spend
+commitment.
 
 ## What this would (and would not) prove
 
@@ -132,15 +149,17 @@ concludes it works, but that's a larger, separately-authorized program, not this
 
 ## Status
 
-Twelve fixes in place and dry-proven across six passes (root causes A/B/C, Findings 1-3, the
+Fourteen fixes in place and dry-proven across eight passes (root causes A/B/C, Findings 1-3, the
 Planner Function Gate, the Grok-primary planner policy, the Required Scene Function frame, the
-posture-echo check). Requirements and traces documented
-(`_continuation_scene_adequacy_requirements_2026_09_20.md`,
+posture-echo check, the gpt-4o terminal tier, the harness tier-log cross-check). Requirements and
+traces documented (`_continuation_scene_adequacy_requirements_2026_09_20.md`,
 `_scene2_capability_test_root_causes_2026_09_20.md`, `_scene2_skeleton_handoff_trace_2026_09_20.md`,
 `_scene2_skeleton_handoff_trace2_2026_09_20.md`, `_planner_role_ledger_2026_09_20.md`,
-`_scene2_required_scene_function_trace_2026_09_20.md`). Five real capability samples on record — all
+`_scene2_required_scene_function_trace_2026_09_20.md`,
+`_scene2_planner_terminal_tier_trace_2026_09_21.md`). Five real capability samples on record — all
 FAILED, gate-rejected, or (retroactively) would-have-been-gate-rejected, plus two real infrastructure
-non-results (retries 6-7, both $0, both `NO_RESPONSE_FROM_FUNCTION` 502s — see the pre-run note
-above). No provider or image calls made preparing this sheet or making today's changes. **On hold
-per Roman, 2026-09-21 — not testing again tonight.** Awaiting explicit authorization before running
-a sixth capability retry (or the separate, optional ministral-forced stack-verification retry).
+non-results (retries 6-7, both $0, both `NO_RESPONSE_FROM_FUNCTION` 502s under the OLD 2-tier chain
+— see the pre-run note above). No provider or image calls made preparing this sheet or making
+today's changes. **On hold per Roman, 2026-09-21 — not testing again tonight.** Awaiting explicit
+authorization before running a sixth capability retry (or the separate, optional ministral-forced
+stack-verification retry).

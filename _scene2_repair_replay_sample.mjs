@@ -278,7 +278,12 @@ function summarizeTracked(c) {
   gate.setPhase('scene2-structural-author', PHYSICAL_REQUEST_CEILING);
   await page.click('#gnSubmitBtn');
   console.log('  Submit clicked — waiting on REAL SETTLEMENT (no wall-clock deadline).');
-  await gate.waitForSettlement('scene2-structural-author', { watchdogMs: 15000, onWatchdog: (ms) => console.log('  ...still pending, ' + Math.round(ms / 1000) + 's — browser stays open, nothing aborted') });
+  // expectedTierLogRole: 'scenePlanner' (Roman 2026-09-21, third harness repair) — cross-checks the
+  // app's own window._providerTierLog against network-tracked calls, so this wait can no longer
+  // return early while the app has DECLARED a fallback/terminal-tier attempt (e.g. after a Grok 502)
+  // that hasn't been network-tracked yet — exactly the gap real retries 6 and 7 hit. Proven,
+  // _harness_tier_log_cross_check_control.mjs.
+  await gate.waitForSettlement('scene2-structural-author', { watchdogMs: 15000, expectedTierLogRole: 'scenePlanner', onWatchdog: (ms) => console.log('  ...still pending, ' + Math.round(ms / 1000) + 's — browser stays open, nothing aborted') });
 
   const structuralAuthorCalls = gate.trackedCalls('scene2-structural-author').map(summarizeTracked);
   const structuralAuthorCostUsd = structuralAuthorCalls.reduce((s, c) => s + (c.costUsd || 0), 0);
