@@ -202,6 +202,19 @@ const LANE_IDS = ['dohkar_preliminary_review', 'family_accusation', 'julian_juri
     s._bakedEmitted = (pkg && pkg.emitted) || null;
   }, { scaffold: REAL_SCAFFOLD_JSON });
 
+  // EVENT-FRAME RESOLVER COEXISTENCE (Roman 2026-09-21, added after that later fix): First
+  // Sacrifice's real scene 2 row now ALSO declares eventFrameBySlot/defaultEventFrame, so the SAME
+  // real Boundary card this control clicks below now resolves deterministically and renders the
+  // REQUIRED EVENT FRAME block instead of this free-choice menu — proving THAT mechanism is
+  // _scene2_event_frame_resolver_control.mjs's job, not this control's. This control's job is
+  // narrower and still real: prove the free-choice AFTERMATH LANE MENU mechanism itself still
+  // works, for any row that declares aftermathLanes WITHOUT a resolver. Neutralizing only the
+  // resolver fields on the real in-page row (not a synthetic stand-in) isolates exactly that.
+  await page.evaluate(() => {
+    const row = window.STARTER_PLANS.starter_first_sacrifice.scenes.find((sc) => sc.n === 2);
+    if (row) { row.eventFrameBySlot = null; row.defaultEventFrame = null; }
+  });
+
   const CANDIDATE_PATH = path.join(__dirname, '_first_sacrifice_draft_v7_attempt8_full_package', '13_final_field_correction.json');
   const candidateRaw = JSON.parse(fs.readFileSync(CANDIDATE_PATH, 'utf8'));
   await page.evaluate(async ({ candidateOasOpening, candidatePostInterruption }) => {

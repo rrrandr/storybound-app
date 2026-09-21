@@ -315,3 +315,34 @@ forms. This is two real samples in a row showing the same specific pattern, not 
 can never leave the ritual moment — but it is a real, replicated signal that the remaining problem
 may be deeper than schema/menu compliance: getting the model to actually write a DIFFERENT event,
 not merely label one correctly.
+
+**Eleventh addendum (2026-09-21, dry architecture change) — the model no longer decides the event;
+deterministic code resolves it before the model sees the task.** Roman: "The planner is not
+failing because it lacks a lane menu. It's failing because the event-deciding step is still too
+generative for a starter scene that has a known issue skeleton... Deterministically select or
+constrain the lane/event frame before the model sees the authoring task." `_resolveStarterEventFrame`
+(new, `public/app.js`) is a pure function — no model call — keyed on
+`state._intimateInterruption.selectedSlot`, the fate-card slot the READER already clicked
+(generic across every starter, not First-Sacrifice-specific plumbing). First Sacrifice's Scene 2
+row now declares `eventFrameBySlot` (all 5 slots, each mapped to one of the SAME 5 `aftermathLanes`
+ids, never a 6th) + `defaultEventFrame`. When a frame resolves, the prompt renders a REQUIRED
+EVENT FRAME block that REPLACES the free-choice menu entirely (not both), and the Planner
+Function Gate rejects ANY declared lane other than the resolved one — even a valid, menu-listed
+one — before the content-signal check runs. Old free-choice behavior is fully preserved for any
+row that doesn't declare the new fields. Proven 26/26,
+`_scene2_event_frame_resolver_control.mjs` — using retry 12's real reply as the red fixture (now
+rejected specifically as the WRONG lane, not just unmatched content) and a synthetic green
+fixture that both declares and instantiates the resolved lane; full trace:
+`_scene2_event_frame_resolver_trace_2026_09_21.md`. `_validateLocalObjective` untouched. No live
+retry run in this pass.
+
+## Status update (after the event-frame resolver fix)
+
+A future retry on this same Boundary input would be the first real test of whether the model,
+given a single deterministically-resolved event frame instead of any lane choice at all, actually
+writes into it — the model's only remaining job is prose, dialogue, interiority, argument, and
+local complications inside a fixed event, not deciding what the event is. If it still fails, the
+failure would newly distinguish between "the model can't write convincingly inside ANY fixed
+frame" (a much more fundamental capability question) and "the model still tries to substitute its
+own event even when told not to" (a compliance/instruction-following question) — either of which
+would be more informative than anything the freeform or menu-based attempts could show.

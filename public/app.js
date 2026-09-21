@@ -8961,8 +8961,19 @@ window.config = window.config || {
         chosenLaneId = String(sc.chosenAftermathLane || '').trim();
         var laneMatch = null;
         for (var _li = 0; _li < laneList.length; _li++) { if (laneList[_li] && laneList[_li].id === chosenLaneId) { laneMatch = laneList[_li]; break; } }
-        if (!chosenLaneId || !laneMatch) {
-          reasons.push('the planner declared no chosen_aftermath_lane (or one outside the required lane menu: ' + laneList.map(function (l) { return l.id; }).join(', ') + ') — this scene requires selecting and instantiating exactly one listed lane, not inventing an aftermath event from scratch');
+        // REQUIRED LANE (event-frame resolver) — real finding: retry 12 proved the planner can
+        // declare a VALID lane id (from the menu) while proposing content that fits neither that
+        // lane's own signal NOR the actual scene it should have written — the model was still
+        // making the event-selection decision itself. When opts.requiredLaneId is supplied (the
+        // caller deterministically resolved it via _resolveStarterEventFrame, keyed on the
+        // reader's own fate-card selection — never a model decision), lane selection is no longer
+        // a free choice: any OTHER declared lane, even a valid, menu-listed one, is rejected before
+        // the signal check even runs. Inert when opts.requiredLaneId is absent (any scene without a
+        // resolved frame keeps the free-choice behavior above, unaffected).
+        if (opts.requiredLaneId && chosenLaneId && laneMatch && chosenLaneId !== opts.requiredLaneId) {
+          reasons.push('the planner declared chosen_aftermath_lane="' + chosenLaneId + '" but the reader\'s own card selection deterministically resolved this scene to lane "' + opts.requiredLaneId + '" — the event frame is not a free choice for this scene; a different (even otherwise-valid) lane is not acceptable');
+        } else if (!chosenLaneId || !laneMatch) {
+          reasons.push('the planner declared no chosen_aftermath_lane (or one outside the required lane menu: ' + laneList.map(function (l) { return l.id; }).join(', ') + ') — this scene requires selecting and instantiating exactly one listed lane, not inventing an aftermath event from scratch' + (opts.requiredLaneId ? (' — specifically the resolved lane "' + opts.requiredLaneId + '"') : ''));
         } else if (laneMatch.signalRx && !laneMatch.signalRx.test(combined)) {
           reasons.push('the planner declared chosen_aftermath_lane="' + chosenLaneId + '" but its own proposed event/tactical-move/forces-choice does not actually instantiate that lane\'s content — a declared lane label alone is not enough; the event itself must move into it, not stay inside the same ritual/interrogation moment under a borrowed label');
         }
@@ -8978,6 +8989,39 @@ window.config = window.config || {
     } catch (e) { return { rejected: false, error: e && e.message }; }
   }
   window._detectPlannerFunctionGap = _detectPlannerFunctionGap;
+
+  // ═══ STARTER EVENT-FRAME RESOLVER (Roman 2026-09-21) ═══
+  // Real finding this closes: two real live samples in a row (retry 11 freeform, retry 12 with
+  // the aftermath lane menu) show the SAME planner behavior — it satisfies whatever compliance
+  // surface it is given (vocabulary, then a valid lane id) while its own proposed event stays
+  // anchored to the same Dohkar-interrogates-Lirael beat. Roman: "The planner is not failing
+  // because it lacks a lane menu. It's failing because the event-deciding step is still too
+  // generative for a starter scene that has a known issue skeleton... Deterministically select
+  // or constrain the lane/event frame before the model sees the authoring task."
+  // This is DETERMINISTIC CODE, not a model call: it keys off state._intimateInterruption.
+  // selectedSlot — the fate-card slot (temptation/silence/reversal/boundary/confession) the
+  // READER actually clicked, already a stable, finite, generic signal shared by every starter's
+  // intimate-interruption Fate Card UI (_INTR_SLOTS) — never freeform text-matching, never an
+  // LLM call. Player agency is preserved at the point the reader picks a card; this resolver only
+  // removes the model's LATER opportunity to re-litigate that choice into "ask the same question
+  // again." Generic: returns null (no-op) unless the row declares BOTH aftermathLanes and at
+  // least one of eventFrameBySlot/defaultEventFrame — any scene/starter without this declared
+  // mapping is completely unaffected; the row-declared free-choice lane menu still applies.
+  function _resolveStarterEventFrame(row, st) {
+    try {
+      if (!row || !Array.isArray(row.aftermathLanes) || !row.aftermathLanes.length) return null;
+      if (!row.eventFrameBySlot && !row.defaultEventFrame) return null;
+      var slot = null;
+      try { var ir = st && st._intimateInterruption; if (ir && ir.selectedSlot) slot = String(ir.selectedSlot); } catch (_) {}
+      var picked = (slot && row.eventFrameBySlot && row.eventFrameBySlot[slot]) ? row.eventFrameBySlot[slot] : (row.defaultEventFrame || null);
+      if (!picked || !picked.laneId || !picked.eventFrame) return null;
+      var lane = null;
+      for (var i = 0; i < row.aftermathLanes.length; i++) { if (row.aftermathLanes[i] && row.aftermathLanes[i].id === picked.laneId) { lane = row.aftermathLanes[i]; break; } }
+      if (!lane) return null; // a resolved laneId that isn't in the row's own menu is a data-authoring bug, not usable
+      return { laneId: picked.laneId, eventFrame: picked.eventFrame, sourceSlot: slot, lane: lane };
+    } catch (e) { return null; }
+  }
+  window._resolveStarterEventFrame = _resolveStarterEventFrame;
 
   function _detectSceneAdequacyFailure(screenplay, opts) {
     try {
@@ -99744,14 +99788,24 @@ function _buildAuthorFloorDirective(s) {
             if (_oe.sceneFunction) {
               _ob.push('REQUIRED SCENE FUNCTION (HARD — instantiate this FIRST; the reader\'s posture below modulates HOW you enter it, it does NOT replace it): ' + _oe.sceneFunction);
             }
-            // AFTERMATH LANE MENU (Roman 2026-09-21) — real finding: even with the REQUIRED SCENE
-            // FUNCTION frame above, a real live sample (retry 11) chose an event that stayed inside the
-            // same in-ritual confrontation while its own self-report CLAIMED institutional pressure —
-            // freeform "instantiate this" still let the planner invent an event and relabel it. This
-            // block replaces "invent an aftermath event" with "choose and instantiate ONE of these
-            // lanes" — a constrained menu, not hand-authored prose. Generic: renders only when the row
-            // declares aftermathLanes; inert otherwise.
-            if (_oe.aftermathLanes && _oe.aftermathLanes.length) {
+            // AFTERMATH LANE MENU / EVENT-FRAME RESOLVER (Roman 2026-09-21) — real finding: even
+            // with a free-choice lane menu (below), two real live samples in a row (retry 11
+            // freeform, retry 12 with the menu) chose or labeled a lane while the actual proposed
+            // event stayed inside the same in-ritual confrontation. Roman: "the event-deciding step
+            // is still too generative for a starter scene that has a known issue skeleton...
+            // Deterministically select or constrain the lane/event frame before the model sees the
+            // authoring task." When the row's own data (via state._intimateInterruption.
+            // selectedSlot — the fate-card the READER already clicked, not a model decision)
+            // resolves to a required lane, that REPLACES the free-choice menu below with a single,
+            // deterministically-selected frame the model must instantiate — no lane selection left
+            // to the model at all. Falls back to the free-choice menu when no resolution is
+            // available (row declares aftermathLanes but not eventFrameBySlot/defaultEventFrame, or
+            // _resolveStarterEventFrame itself returns null) — generic, not a hard requirement on
+            // every starter.
+            var _resolvedFrame = (_oe.aftermathLanes && _oe.aftermathLanes.length && typeof _resolveStarterEventFrame === 'function') ? _resolveStarterEventFrame(_oe, state) : null;
+            if (_resolvedFrame) {
+              _ob.push('REQUIRED EVENT FRAME (HARD, DETERMINISTICALLY RESOLVED — this is NOT a choice among options; the reader\'s own card selection already determined it before you were ever asked): the central event of this scene MUST be — ' + _resolvedFrame.eventFrame + ' You MUST set "chosen_aftermath_lane" to EXACTLY "' + _resolvedFrame.laneId + '" — you may NOT select a different lane, and satisfying this by staying inside the same ritual/interrogation moment under borrowed institutional/procedural VOCABULARY is NOT a valid instantiation; the event itself must actually move into this frame. The reader\'s posture below changes HOW this frame plays out — who pushes back, what tone, what she risks — it does NOT change WHICH event happens.');
+            } else if (_oe.aftermathLanes && _oe.aftermathLanes.length) {
               _ob.push('REQUIRED AFTERMATH LANE MENU (HARD — this REPLACES "invent any aftermath event": choose EXACTLY ONE of these lanes and instantiate IT as this scene\'s central event. Do not invent a lane outside this list. Satisfying this by staying inside the same ritual/interrogation moment the AFTERMATH TRUTHS below already establish — even dressed in institutional/procedural VOCABULARY — is NOT a valid instantiation; the event itself must actually move into the chosen lane. The reader\'s posture below changes HOW the chosen lane plays out — who pushes back, what tone, what she risks — it does NOT let you swap the lane for another in-ritual accusation beat):\n'
                 + _oe.aftermathLanes.map(function (l) { return '  • [' + l.id + '] ' + l.label; }).join('\n'));
             }
@@ -99809,11 +99863,19 @@ function _buildAuthorFloorDirective(s) {
             if (_oe.sceneFunction) {
               _scSys += ' ALSO REQUIRED, same JSON: "scene_function_instantiated" (one sentence: WHICH part of the REQUIRED SCENE FUNCTION this state_change realizes — name the institutional/procedural/social-fallout lane you chose, not a restatement of the posture), "aftermath_obligations" (one or two sentences: the concrete aftermath/procedure/fallout content this scene commits to delivering — who reacts, what process moves forward, what changes in her standing; this must be NEW content beyond the AFTERMATH TRUTHS already listed above, not a restatement of them).';
             }
-            // AFTERMATH LANE MENU — output keys (Roman 2026-09-21). Only requested when the row
-            // declares aftermathLanes (see above) — inert for any scene without one.
+            // AFTERMATH LANE MENU / EVENT-FRAME RESOLVER — output keys (Roman 2026-09-21). Only
+            // requested when the row declares aftermathLanes (see above) — inert for any scene
+            // without one. Wording tightens when a frame was deterministically resolved: the field
+            // is no longer "the lane you selected" (a choice) but "the lane already resolved for
+            // you" (a requirement) — same two JSON keys either way, so the gate/validator schema
+            // shape never changes based on which branch rendered.
             if (_oe.aftermathLanes && _oe.aftermathLanes.length) {
               var _laneIds = _oe.aftermathLanes.map(function (l) { return l.id; });
-              _scSys += ' ALSO REQUIRED, same JSON: "chosen_aftermath_lane" (EXACTLY one of these ids, spelled exactly as given — nothing else: [' + _laneIds.join(', ') + '] — the lane you selected from the REQUIRED AFTERMATH LANE MENU; state_change/tactical_move/forces_choice must actually instantiate THIS lane\'s content, not merely name it), "lane_posture_modulation" (one sentence: HOW the reader\'s recorded posture changes the way the chosen lane plays out — who pushes, what tone, what she risks — never a description of a different lane, and never a return to the ritual/interrogation moment).';
+              if (_resolvedFrame) {
+                _scSys += ' ALSO REQUIRED, same JSON: "chosen_aftermath_lane" (MUST be EXACTLY "' + _resolvedFrame.laneId + '" — the lane already resolved for you by the REQUIRED EVENT FRAME above, not a choice among [' + _laneIds.join(', ') + ']; state_change/tactical_move/forces_choice must actually instantiate that frame\'s content, not merely name it), "lane_posture_modulation" (one sentence: HOW the reader\'s recorded posture changes the way the resolved frame plays out — who pushes, what tone, what she risks — never a description of a different lane, and never a return to the ritual/interrogation moment).';
+              } else {
+                _scSys += ' ALSO REQUIRED, same JSON: "chosen_aftermath_lane" (EXACTLY one of these ids, spelled exactly as given — nothing else: [' + _laneIds.join(', ') + '] — the lane you selected from the REQUIRED AFTERMATH LANE MENU; state_change/tactical_move/forces_choice must actually instantiate THIS lane\'s content, not merely name it), "lane_posture_modulation" (one sentence: HOW the reader\'s recorded posture changes the way the chosen lane plays out — who pushes, what tone, what she risks — never a description of a different lane, and never a return to the ritual/interrogation moment).';
+              }
             }
             // CONTINUATION-STAGE ISSUER (Roman, authorized 2026-09-14) — SAME reply, SAME call, no
             // second provider round trip. All optional: an old-shaped reply that omits these keys
@@ -128884,7 +128946,32 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
         { id: 'julian_jurisdiction_challenge', label: 'Julian challenges jurisdiction, reframes the accusation politically, or contests who has authority to rule.', signalRx: /\b(jurisdiction|challenges? (?:the )?dohkar|contests? (?:his |the )?authority|reframes?|political(?:ly)?)\b/i },
         { id: 'lirael_constrained', label: 'Lirael is ordered separated, watched, or otherwise constrained pending the inquiry.', signalRx: /\b(separated|placed under (?:guard|watch)|confined|constrained|watched|pending (?:the )?inquiry|escorted (?:away|out)|removed from)\b/i },
         { id: 'lirael_defensive_path', label: 'Lirael herself chooses a defensive path: submits to procedure, gathers proof, conceals something, moves toward flight, counter-accuses, or forces Julian into a procedural bind.', signalRx: /\b(submits? to procedure|gathers? proof|conceals?|flees?|flight|counter-accus\w*|procedural bind)\b/i },
-      ] },
+      ],
+      // EVENT-FRAME RESOLVER (Roman 2026-09-21) — real finding this closes: two real live samples
+      // in a row (retry 11 freeform, retry 12 with the aftermath lane menu ABOVE as a free choice)
+      // showed the SAME planner behavior: satisfy whatever compliance surface is given while the
+      // actual proposed event stays the Dohkar-interrogates-Lirael beat. Roman: "the event-deciding
+      // step is still too generative for a starter scene that has a known issue skeleton...
+      // Deterministically select or constrain the lane/event frame before the model sees the
+      // authoring task." Keyed by state._intimateInterruption.selectedSlot — the fate-card slot
+      // the READER clicked (_INTR_SLOTS: temptation/silence/reversal/boundary/confession, generic
+      // across every starter's intimate-interruption UI, not new plumbing). Player agency lives in
+      // WHICH CARD the reader already picked; this only removes the model's later chance to
+      // re-litigate that choice back into another round of the same question. Each mapping below
+      // is grounded in the SAME 5 lanes above (reusing their ids, never inventing a 6th) — the
+      // difference from the free-choice menu is that here ONE lane + a CONCRETE event obligation is
+      // pre-selected, not offered as an open menu. _resolveStarterEventFrame (app.js, near
+      // _detectPlannerFunctionGap) is the generic, reusable mechanism; this data is First
+      // Sacrifice's own, same as aftermathLanes above.
+      eventFrameBySlot: {
+        temptation: { laneId: 'lirael_defensive_path', eventFrame: 'Lirael is tempted toward concealment: she catches herself weighing whether to let Julian\'s version of the accusation stand unchallenged rather than name what actually happened — a real choice to conceal or reveal something specific, not another round of the Dohkar\'s question about whether she shaped the wish.' },
+        silence:    { laneId: 'dohkar_preliminary_review', eventFrame: 'The charged silence after Julian\'s public claim is what prompts the presiding Dohkar to break it procedurally: he sets a preliminary review date and names its terms before the assembly disperses, moving the confrontation off the ritual floor and into procedure.' },
+        reversal:   { laneId: 'julian_jurisdiction_challenge', eventFrame: 'Someone seizes control of who gets to rule here: Julian challenges the presiding Dohkar\'s jurisdiction, reframing the accusation as his own to answer rather than Lirael\'s — a real jurisdictional contest over authority, not another question put to Lirael.' },
+        boundary:   { laneId: 'family_accusation', eventFrame: 'Lirael\'s open, unretreating want is what draws Seren\'s family forward: they step out of the assembly and publicly demand remedy for what the wish cost Seren, redirecting the confrontation from Julian\'s accusation to a new formal complaint — NOT another round of the Dohkar asking whether she shaped the wish.' },
+        confession: { laneId: 'dohkar_preliminary_review', eventFrame: 'Julian\'s own confession destabilizes his position as accuser — the presiding Dohkar reacts to that shift by setting formal terms and a date for review rather than letting the interrogation continue informally.' },
+      },
+      defaultEventFrame: { laneId: 'dohkar_preliminary_review', eventFrame: 'The presiding Dohkar formally sets a preliminary review of Lirael\'s conduct — naming who convenes it and roughly when — moving the confrontation off the ritual floor and into procedure. This is NOT another round of asking whether she shaped the wish.' },
+    },
     { n: 3, goal: 'THE PRICE AND THE THRESHOLD — step 7, then escalation. IN THIS ORDER: (A) The sacrifice is taken or identified — the offered MEMORY, expressed in the memory\'s own domain, never a faculty Seren did not offer. It lands only now, after the audience understands the twist, so cost is never confused with warp. (B) A NEW irreversible pressure arrives; this scene may NOT restage scene 2\'s accusation. (C) Julian\'s position shifts — a constraint, a knowledge, or a limit that changes what he is to her. (D) The deck surfaces and the temptation sharpens. (E) STOP at the threshold. Lirael does NOT choose. The player does.',
       participants: ['Lirael', 'Seren', 'Julian', 'the presiding Dohkar'],
       // MIGRATED B: same room, same people; the beats are contingent on the Scene-1 choice and
@@ -199986,6 +200073,10 @@ No text, no watermark, no UI elements, share-ready.`;
                      // authored row above. Carried through so the OPEN ROW planner prompt can render
                      // the lane menu and the Planner Function Gate can check the chosen lane's signal.
                      aftermathLanes: Array.isArray(row.aftermathLanes) ? row.aftermathLanes : null,
+                     // EVENT-FRAME RESOLVER (Roman 2026-09-21) — see the field's own comment on the
+                     // authored row above. Carried through so _resolveStarterEventFrame can run
+                     // against the real row from both the planner prompt and the gate call site.
+                     eventFrameBySlot: row.eventFrameBySlot || null, defaultEventFrame: row.defaultEventFrame || null,
                      _reconciliation: { withheld: [], source: { goal: obj ? 'spine:posture' : 'pending: no accepted local objective yet' } } };
         var newProblemO = (exit.match(/NEW PROBLEM:\s*(.+)$/i) || [])[1] || '';
         if (obj) {
@@ -230102,7 +230193,12 @@ No text, no watermark, no UI elements, share-ready.`;
           var _psKeys = Object.keys(state._scenePosture || {}).map(Number).filter(function (n) { return !isNaN(n); }).sort(function (a, b) { return b - a; });
           if (_psKeys.length) _pfPosture = state._scenePosture[String(_psKeys[0])];
         } catch (_) {}
-        var _pfGate = _detectPlannerFunctionGap(state._scenePlotContract.stateChange, { requiresAftermath: true, posture: _pfPosture, aftermathLanes: (_oeRow && Array.isArray(_oeRow.aftermathLanes)) ? _oeRow.aftermathLanes : null });
+        // EVENT-FRAME RESOLVER (Roman 2026-09-21) — same deterministic resolution the planner
+        // prompt itself used (state._intimateInterruption.selectedSlot, never a model decision);
+        // recomputed here rather than trusting anything the reply claims, so the gate's
+        // requiredLaneId can never be spoofed by the model's own output.
+        var _pfRequiredLane = (_oeRow && typeof _resolveStarterEventFrame === 'function') ? _resolveStarterEventFrame(_oeRow, state) : null;
+        var _pfGate = _detectPlannerFunctionGap(state._scenePlotContract.stateChange, { requiresAftermath: true, posture: _pfPosture, aftermathLanes: (_oeRow && Array.isArray(_oeRow.aftermathLanes)) ? _oeRow.aftermathLanes : null, requiredLaneId: _pfRequiredLane ? _pfRequiredLane.laneId : null });
         if (_pfGate.rejected) {
           try { console.warn('[CG:PLANNER-GATE] REJECTED before author dispatch, scene=' + sceneIndex + ' — ' + _pfGate.reason); } catch (_) {}
           return { __plannerFunctionRejected: true, reason: _pfGate.reason, sceneIndex: sceneIndex };
