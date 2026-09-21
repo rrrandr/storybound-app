@@ -198,3 +198,33 @@ survives the widening.
 **Status**: dry fix only, no branch retry run. Reversal may now be retried or the fixed gate
 otherwise revalidated live — not yet done, pending separate authorization. Temptation remains
 paused until Reversal is confirmed clean under the corrected gate.
+
+## Addendum — Reversal re-run, clean (2026-09-21)
+
+Reversal run again under the corrected gate: $0.133368, 4 real calls, author reached and
+produced a full scene. `local_objective_actor: "Julian"`, `chosen_aftermath_lane:
+"julian_jurisdiction_challenge"` both correct; the plan's consequence language (spread across
+`tactical_move`/`state_change_precondition`/`event_slots.exit_state`/`aftermath_obligations`,
+exactly the fields the gate-seam fix added) passed the corrected generic scan on the first real
+draw. Julian drove the scene's external institutional contest while Lirael's first-person
+POV/interiority remained the throughline, closing on her own agency ("The choice remains mine
+alone"). Continuity/canon preserved, no reserved id touched, real end choice. Full account:
+`_scene2_capability_reversal_attempt2_report_2026_09_21.md`.
+
+**Reversal is clean. Per the standing two-card authorization, proceeding to Temptation next.**
+
+## Addendum — Temptation, not clean; two-card plan concludes (2026-09-21)
+
+Temptation run once: $0.0104284, 1 real call, author never ran. `local_objective_actor: "Lirael"`
+and `chosen_aftermath_lane: "lirael_defensive_path"` both correct, but the proposed content
+("Lirael opens her mouth to name the true reason then closes it") stayed genuinely thin — a
+hesitation beat, not a landed defensive action. Both the widened generic scan and the unchanged
+lane-content check correctly found no real signal anywhere in the full contract — a GENUINE
+content-level rejection, not a repeat of Reversal's gate-seam finding (confirmed by direct
+inspection of every newly-added field; none contain the generic check's vocabulary either). One
+narrow regex-stemming observation noted (`"concealment"` vs the lane's `conceal`/`conceals`
+pattern) but not actioned. Full account: `_scene2_capability_temptation_report_2026_09_21.md`.
+
+**Per the two-card plan's stop condition, this concludes it: Reversal clean, Temptation not
+clean.** No follow-up retry within Temptation. Silence and confession remain untested and
+unauthorized — the original four-card plan's third and fourth cards.
