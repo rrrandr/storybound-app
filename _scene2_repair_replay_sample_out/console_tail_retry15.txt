@@ -1,0 +1,202 @@
+[GEMINI:PORTRAIT] No solo_master variant for artist=ender_bond — text-only rendering
+[GEMINI:PREFIX] No references — text-only rendering
+Failed to load resource: net::ERR_FAILED
+[Gemini] Error: Failed to fetch | attempt 1
+[GEMINI:PORTRAIT] No solo_master variant for artist=ender_bond — text-only rendering
+[GEMINI:PREFIX] No references — text-only rendering
+Failed to load resource: net::ERR_FAILED
+[Gemini] Error: Failed to fetch | attempt 2
+[IMAGE-GEN] {"provider":"Gemini","context":"li-face-reveal","reached":false,"blockedBy":"NoOutput","status":"FAILED","promptLength":5005,"promptPreview":"PRIMARY DIRECTIVE: Depict the scene exactly as described. Scene and anatomy rules are authoritative. SUBJECT MATTER (HAR...","timestamp":"2026-09-21T07:26:10.621Z","error":"returned null"}
+[IMAGE-GEN] {"provider":"BFL","context":"li-face-reveal","reached":true,"blockedBy":"None","status":"ATTEMPTING","promptLength":5005,"promptPreview":"PRIMARY DIRECTIVE: Depict the scene exactly as described. Scene and anatomy rules are authoritative. SUBJECT MATTER (HAR...","timestamp":"2026-09-21T07:26:10.621Z"}
+[IMAGE-GEN] {"provider":"BFL","context":"li-face-reveal","reached":false,"blockedBy":"None","status":"META","promptLength":21,"promptPreview":"styleAuthority: Genre","timestamp":"2026-09-21T07:26:10.622Z"}
+[BFL:REF:ENTRY] context=li-face-reveal | intent=portrait | turnCount=1 | fateAnchorPresent=false | gnArtist=unset
+[BFL:REF] Portrait context (li-face-reveal) — no solo_master variant for artist=?; skipping style ref
+[BFL:REF] Budget full (0 species refs) — style via prompt only
+[BFL:REF] Preloaded 0/0 refs (budget: 4, species first, style if room)
+[BFL:REF:DIAG] paths: [] | context=li-face-reveal | panelImportance=unset | gnArtist=unset | sceneIdx=1
+[DECK-LEAK:PROMPT-SCAN] portrait gen prompt CLEAN — no deck-related tokens detected (5005 chars)
+[BFL] Prompt truncated from 5005 to 5000 chars
+[DECK-LEAK:CACHE-SOURCE] BFL call (PORTRAIT CONTEXT) | model=flux-2-pro-preview | input_images=0
+  prompt-fingerprint: PRIMARY DIRECTIVE: Depict the scene exac…clarity takes priority over stylistic ef
+[DECK-LEAK:FINGERPRINT-DUMP] portrait gen — full input snapshot (context=?)
+{prompt.length: 5000, prompt.head120: PRIMARY DIRECTIVE: Depict the scene exactly as des…tomy rules are authoritative. SUBJECT MATTER (HAR, prompt.tail120: Mixed styles are incorrect. Style must not obscure…atomical clarity takes priority over stylistic ef, prompt.deckTokensInside: false, prompt.full: PRIMARY DIRECTIVE: Depict the scene exactly as des…atomical clarity takes priority over stylistic ef}
+console.groupEnd
+[BFL] Request: {model: flux-2-pro-preview, promptLength: 5000, images: 0, size: 1024x1024, health: healthy}
+Failed to load resource: net::ERR_FAILED
+[BFL] Attempt 1 failed (flux-2-pro-preview): Failed to fetch
+Failed to load resource: net::ERR_FAILED
+[BFL] Retry failed (flux-2-pro-preview): Failed to fetch
+[BFL] Falling back to flux-2-klein-9b-preview
+Failed to load resource: net::ERR_FAILED
+[IMAGE-GEN] {"provider":"BFL","context":"li-face-reveal","reached":false,"blockedBy":"Network","status":"FAILED","promptLength":5005,"promptPreview":"PRIMARY DIRECTIVE: Depict the scene exactly as described. Scene and anatomy rules are authoritative. SUBJECT MATTER (HAR...","timestamp":"2026-09-21T07:26:10.931Z","error":"Failed to fetch"}
+[IMAGE-GEN] {"provider":"BFL-Klein","context":"li-face-reveal","reached":true,"blockedBy":"None","status":"ATTEMPTING","promptLength":5005,"promptPreview":"PRIMARY DIRECTIVE: Depict the scene exactly as described. Scene and anatomy rules are authoritative. SUBJECT MATTER (HAR...","timestamp":"2026-09-21T07:26:10.931Z"}
+[IMAGE-GEN] {"provider":"BFL-Klein","context":"li-face-reveal","reached":false,"blockedBy":"None","status":"META","promptLength":21,"promptPreview":"styleAuthority: Genre","timestamp":"2026-09-21T07:26:10.932Z"}
+[DECK-LEAK:PROMPT-SCAN] portrait gen prompt CLEAN — no deck-related tokens detected (5005 chars)
+[BFL] Prompt truncated from 5005 to 5000 chars
+[DECK-LEAK:CACHE-SOURCE] BFL call (PORTRAIT CONTEXT) | model=flux-2-klein-9b-preview | input_images=0
+  prompt-fingerprint: PRIMARY DIRECTIVE: Depict the scene exac…clarity takes priority over stylistic ef
+[DECK-LEAK:FINGERPRINT-DUMP] portrait gen — full input snapshot (context=?)
+{prompt.length: 5000, prompt.head120: PRIMARY DIRECTIVE: Depict the scene exactly as des…tomy rules are authoritative. SUBJECT MATTER (HAR, prompt.tail120: Mixed styles are incorrect. Style must not obscure…atomical clarity takes priority over stylistic ef, prompt.deckTokensInside: false, prompt.full: PRIMARY DIRECTIVE: Depict the scene exactly as des…atomical clarity takes priority over stylistic ef}
+console.groupEnd
+[BFL] Request: {model: flux-2-klein-9b-preview, promptLength: 5000, images: 0, size: 1024x1024, health: healthy}
+Failed to load resource: net::ERR_FAILED
+[BFL] Attempt 1 failed (flux-2-klein-9b-preview): Failed to fetch
+Failed to load resource: net::ERR_FAILED
+[BFL] Retry failed (flux-2-klein-9b-preview): Failed to fetch
+[IMAGE-GEN] {"provider":"BFL-Klein","context":"li-face-reveal","reached":false,"blockedBy":"Network","status":"FAILED","promptLength":5005,"promptPreview":"PRIMARY DIRECTIVE: Depict the scene exactly as described. Scene and anatomy rules are authoritative. SUBJECT MATTER (HAR...","timestamp":"2026-09-21T07:26:11.238Z","error":"Failed to fetch"}
+[IMAGE-GEN] {"provider":"OpenAI","context":"li-face-reveal","reached":true,"blockedBy":"None","status":"ATTEMPTING","promptLength":3583,"promptPreview":"PRIMARY DIRECTIVE: Match the established graphic novel rendering style exactly. This scene must visually match prior pan...","timestamp":"2026-09-21T07:26:11.238Z"}
+[IMAGE-GEN] {"provider":"OpenAI","context":"li-face-reveal","reached":false,"blockedBy":"None","status":"META","promptLength":21,"promptPreview":"styleAuthority: Genre","timestamp":"2026-09-21T07:26:11.238Z"}
+Failed to load resource: net::ERR_FAILED
+[OpenAI] Error: Failed to fetch | attempt 1
+Failed to load resource: net::ERR_FAILED
+[OpenAI] Error: Failed to fetch | attempt 2
+[IMAGE-GEN] {"provider":"OpenAI","context":"li-face-reveal","reached":false,"blockedBy":"NoOutput","status":"FAILED","promptLength":3583,"promptPreview":"PRIMARY DIRECTIVE: Match the established graphic novel rendering style exactly. This scene must visually match prior pan...","timestamp":"2026-09-21T07:26:12.244Z","error":"returned null"}
+[IMAGE:PIPELINE] All providers failed for context=li-face-reveal | lastError: Failed to fetch
+[IMAGE:PIPELINE] Chain: Gemini → BFL → BFL-Klein → OpenAI
+[MOUTH-PREBATCH] generic_male worker drained (0 urls)
+[MODEL-SERVED] requested=grok-4-1-fast-reasoning served=grok-4.3 (cost priced at requested rates)
+[CACHE] grok-4-1-fast-reasoning scene prompt=54721 cached=192 (0%) cost=$0.0847
+[CG:SCREENPLAY] generated via grok/grok-4-1-fast-reasoning — cache {"eligible":true,"observed":"hit","cachedTokens":192,"promptTokens":54721}
+[CG:SCREENPLAY] gen returned in 52677ms
+[STAGED:PHASE] phase 0 re-inferring li_visibility_phase=partial → absent (post-safety-net characters_present has named non-LI, no LI token)
+[STAGED:PHASE] phase 1 re-inferring li_visibility_phase=partial → absent (post-safety-net characters_present has named non-LI, no LI token)
+[STAGED:PHASE] phase 2 re-inferring li_visibility_phase=revealed → absent (post-safety-net characters_present has named non-LI, no LI token)
+[STAGED:PHASE] phase 3 re-inferring li_visibility_phase=revealed → absent (post-safety-net characters_present has named non-LI, no LI token)
+[STAGED:DIST] scene 1 beats=29 bands: micro=19 subtle=3 readable=7 strong=0 extreme=0 | avg raw=0.13 clamped=0.13 | llm-emitted=10/29 clamps=0
+[CG:PROXY:OK] Scene 1 — 6 proxy beat(s): 2,6,10,16,21,26
+[CG:TENSION:WEAK] Scene 1 — 2 issue(s):
+  • beats[] declares 10 peak tension_state values but expression_arc only names 2 peak(s) — extras will be demoted by the cost cap: beat 2:suppressed, beat 6:tightening, beat 10:suppressed, beat 12:tightening, beat 16:suppressed, beat 17:tightening, beat 21:suppressed, beat 24:suppressed, beat 26:tightening, beat 27:cracking
+  • 1 beat(s) carry a peak tension_state whose family doesn't match expression_arc.baseline_family="suppression": beat 27:cracking (mixed family in suppression arc)
+[CG:ECHO:OK] Scene 1 — 10 peak(s), 3 distinct profile(s): suppressed×5, simmer×4, rupture×1
+[CG:INTENSITY:OK] Scene 1 — mode=adversarial cap=0.80 peaks: b2:suppressed@0.25, b6:tightening@0.35, b10:suppressed@0.30, b12:tightening@0.40, b16:suppressed@0.35, b17:tightening@0.40, b21:suppressed@0.30, b24:suppressed@0.35, b26:tightening@0.40, b27:cracking@0.55 (avg=0.36)
+[CG:CHARGE:OK] Scene 1 — stake="whether to claim the interference openly or let the assembly…" rhythm="words land and the ring stirs, family steps forward, demand …"
+[CG:LOCATION:OK] Scene 1 — all beats consistent with background "the veilwood ceremony clearing at dawn, crimson spiralgrass "
+[CG:STAGING:OK] Scene 1 — mode="adversarial" (li_absent=true, sideChars=3)
+[CG:ARC:MISMATCH] Scene 1 — 1 issue(s):
+  • peak_b_beat=27 has expression_target="mouth_parted" which doesn't belong to declared baseline_family="suppression"
+[CG:ARC:MISMATCH]  arc as emitted: {"baseline_family":"suppression","micro_drift":"guarded-then-cracking","peak_a_beat":12,"peak_b_beat":27,"decay_window":3}
+[CG:SCREENPLAY] Expression peak enforcement: kept 5 (family=suppression), demoted 5 to neutral [reasons: spacing<3, spacing<3, count-cap, count-cap, count-cap] (~ saved $0.10 on Klein mutations)
+[CG:ARC:SYNTHESIZED] Scene 1 — arc rebuilt from beats[]: family=suppression peaks=[2,6,10,16,21] (5 kept peaks; peak_a/peak_b carry first/last for downstream consumers)
+[STAGED:PHASE:VARIETY] auto-varied 1 camera(s) → over_shoulder_pc → medium_two_shot → profile_pc → wide_establishing (prevents cache-dedup of same-camera phases → distinct panels)
+[STAGED:VARIATION] Promoted beat 6 to PC face cut-in (face, expr=jaw_clench)
+[STAGED:VARIATION] Scene 1 recovered: promoted 1 beat(s) to closeup (6) — closeup density floor. Final state — peaks=5 phases=4 hands=0 closeups=1
+[STAGED:VARIATION] Scene 1 OK — beats=29 peaks=5 phases=4 hands=0 closeups=1
+[CG:ATTRACTION-PRESENCE] background (Roman absent)
+[CG:SOLO-SURVIVAL] pass
+[STORYBOARD-LINT] pre-repair: 0 error(s), 1 warning(s)
+[STORYBOARD] establishing shot reserved for "Seren" @ panel 0
+[STORYBOARD] Orientation → Transformation → Decision
+[PANEL-SPEC] 0:character_introduction(estab) cast=protagonist+the presiding dohkar  1:scene cast=seren+protagonist  2:scene cast=julian+protagonist
+[SHOT-DIRECTOR] wide/high/single → close/low/object_led → medium_close/eye_level/single
+[SCORECARD] overall 94 · storyboard 95  emotion 100  graphicLanguage 100  visualPolish 100  continuity 100  coverage 60  narrativeProgression 100  shotRhythm 92  identityDirective 100
+[STORY-DIRECTOR] v1 canon=[protagonist,julian,seren,the presiding dohkar] panels=3
+[CG:ASSIGN] scene 1 · issued · C+0 E+0 fusion0
+[CG:ROMANCE-PRESSURE-BASELINE] fail scene=1 reason=roman-absent, attractionPresence=background, engine=PROCEDURAL, no-panel-want (LI-absent/setup/solo allowed before baseline)
+[CGLENS:SKIP] scene 1 — cadence (tier=normal rate 0.3)
+[SCENE-ASSIGNMENT] scene=2 source=plan-scene setting=null event="Lirael speaks her burning want aloud in the rite space, drawing Seren's family forward to "
+[SCENE-LEDGER] +p2 kind=cg issue=1 uid=none planned="Lirael speaks her burning want aloud in the rite space, draw"
+[BETA] scene_generation_completed {"sceneIndex":2,"storyId":"scene2-repair-replay-1789975477579","fateMode":null,"turnCount":1,"userLanguage":"en","storyLanguage":"en","generationLanguage":"en","storyPath":"normal"}
+[BETA] scene_quality_scan_fail {"sceneIndex":2,"wordCount":255,"choiceCount":0,"repeatedBodyTells":[],"inventedProperNouns":[],"groundingCoverage":null,"deadAxisProseDetected":false,"missingChoiceFork":true,"emptyScene":false,"scan
+[CG:VISUAL-GRAMMAR] recorded cam=over_shoulder_pc lit=neutral_daylight (recent cam=over_shoulder_pc)
+[DESC:LEDGER] issue=scene2-repair-replay-1789975477579:1 scene=1 · eyeColor=0/1 greySilver=0/1 widowsPeak=0/1 pcHair=0/1 chandelier/ballroom=0/2 galaEntrance=0/2 events=[] · this scene +{"liEyeColor":0,"liGreySilver":0,"widowsPeak":0,"pcHair":0,"chandeliersBallroom":0,"galaEntrance":0}
+[CG:SCREENPLAY] region=Veilwood | species=[]
+[ONESHOT] scene 1 → one-shot sheet path (3 phase(s), normalized to 4 slots, default)
+[CG:IMG-PROMPT:GENDER] Identity-lock emitted for side chars: Seren=female, Julian=male, the presiding Dohkar=male
+[PANEL-AUTHORITY] character_introduction → roster [the presiding dohkar] (dropped [protagonist, seren, julian] — not in authoritative cast)
+[STAGED:STAGING-MODE] adversarial (liAbsent=true, sideChars=3)
+[LI:DIAG] image-prompt build — phase=0 phaseLIAbsent=true visualState.li_visibility=absent mysteryManInjected=false camera=over_shoulder_pc shotStyle=default
+[PANEL-AUTHORITY] p0 type=character_introduction cast=[the presiding dohkar] pcInCast=false  ✓ solo clean
+[CG:IMG-PROMPT:GENDER] Identity-lock emitted for side chars: Seren=female, Julian=male, the presiding Dohkar=male
+[PANEL-AUTHORITY] character_introduction → roster [the presiding dohkar] (dropped [protagonist, seren, julian] — not in authoritative cast)
+[STAGED:STAGING-MODE] adversarial (liAbsent=true, sideChars=3)
+[LI:DIAG] image-prompt build — phase=0 phaseLIAbsent=true visualState.li_visibility=absent mysteryManInjected=false camera=over_shoulder_pc shotStyle=default
+[PANEL-AUTHORITY] p0 type=character_introduction cast=[the presiding dohkar] pcInCast=false  ✓ solo clean
+[CG:IMG-PROMPT:GENDER] Identity-lock emitted for side chars: Seren=female, Julian=male, the presiding Dohkar=male
+[PANEL-AUTHORITY] scene → roster [protagonist, seren] (dropped [julian, the presiding dohkar] — not in authoritative cast)
+[STAGED:STAGING-MODE] adversarial (liAbsent=true, sideChars=3)
+[LI:DIAG] image-prompt build — phase=1 phaseLIAbsent=true visualState.li_visibility=absent mysteryManInjected=false camera=over_shoulder_pc shotStyle=default
+[PANEL-AUTHORITY] p1 type=scene cast=[seren, protagonist] pcInCast=true
+[CG:IMG-PROMPT:GENDER] Identity-lock emitted for side chars: Seren=female, Julian=male, the presiding Dohkar=male
+[PANEL-AUTHORITY] scene → roster [protagonist, julian] (dropped [seren, the presiding dohkar] — not in authoritative cast)
+[STAGED:STAGING-MODE] adversarial (liAbsent=true, sideChars=3)
+[LI:DIAG] image-prompt build — phase=2 phaseLIAbsent=true visualState.li_visibility=absent mysteryManInjected=false camera=over_shoulder_pc shotStyle=default
+[PANEL-AUTHORITY] p2 type=scene cast=[julian, protagonist] pcInCast=true
+[STYLE-REF:compressed] Loaded: /assets/GN-Artists/EnderSBond/first_favored_anchor_duo_fullbody_variants_v1.jpg (663KB)
+[ONESHOT] species anatomy anchor: first_favored
+[PC:LOOK] NOT using locked PC face — pcLookLocked=false (user never locked a look this story). storyId=scene2-repair-replay-1789975477579 pcLookLocked=false pcLookSkipped=true
+[STYLE-REF:CROP] /assets/GN-Artists/ender_mystery_man_master_v2.jpg?v=20260510 → BL panel for world=Fantasy
+[STYLE-REF:compressed] Loaded: /assets/GN-Artists/ender_mystery_man_master_v2.jpg?v=20260510|q=BL (358KB)
+[STYLE-REF:compressed] Loaded: /assets/Fatelands/Veilwood-photo-wisps.png?v=20260402 (505KB)
+[ASSET-INTEGRITY] preflight OK — 4 required species anchor(s) resolve
+[STYLE-REF:compressed] Loaded: /assets/Fatelands/Veilwood-interior.png (863KB)
+[STYLE-REF:compressed] Loaded: /assets/GN-Artists/EnderSBond/first_favored_anchor_female_hero_veilwood_v1.jpg (759KB)
+[STYLE-REF:compressed] Loaded: /assets/Fatelands/Wish_Burst_Clean_v1.png (182KB)
+[ONESHOT] canonical asset attached: wish_burst
+[ONESHOT] rendering 2x2 sheet for scene 1 @ 2K (6 refs, 90913 char prompt)
+Failed to load resource: net::ERR_FAILED
+[ONESHOT] failed (Failed to fetch) — falling back to per-phase render
+[STAGED:HERO] Generating 3 phase images for scene 1 (serial: phase 0 first, then 1+ as Kontext edits)
+[CAMERA-AUTHORITY] p0 ESTABLISH · derived=wide · declared=ots · CONFLICT
+[STAGED:TIER] phase 0 → simple → cheap
+[CG:IMG-PROMPT:GENDER] Identity-lock emitted for side chars: Seren=female, Julian=male, the presiding Dohkar=male
+[PANEL-AUTHORITY] character_introduction → roster [the presiding dohkar] (dropped [protagonist, seren, julian] — not in authoritative cast)
+[STAGED:STAGING-MODE] adversarial (liAbsent=true, sideChars=3)
+[LI:DIAG] image-prompt build — phase=0 phaseLIAbsent=true visualState.li_visibility=absent mysteryManInjected=false camera=over_shoulder_pc shotStyle=default
+[PANEL-AUTHORITY] p0 type=character_introduction cast=[the presiding dohkar] pcInCast=false  ✓ solo clean
+[STAGED:HERO:PHASE] Cache MISS — generating phase 0 (Orientation) for scene 1 at tier=cheap
+[PC:LOOK] NOT using locked PC face — pcLookLocked=false (user never locked a look this story). storyId=scene2-repair-replay-1789975477579 pcLookLocked=false pcLookSkipped=true
+[STAGED:STYLE] artist="ender_bond" → 2 style anchor(s): ender_mystery_man_master_v2.jpg?v=20260510, ender_golden_master_v3_bottom.jpg
+[STAGED:STYLE] canonical asset "composition:establishing_solo" (tier 2) attached (phase 0)
+[STAGED:STYLE] phase 0 — SUBSTITUTED li_absent master ender_golden_master_v3_bottom.jpg for stripped golden_master (full artist signature, no couple bleed)
+[STAGED:STYLE] phase 0 — passing 4 style anchors to Gemini (filtered 1 LI-implying refs, liAbsent=true)
+[STAGED:STYLE] artist=ender_bond styleAnchors=2 regionAnchors=2 contractInjected=true phaseIdx=0
+[IMAGE:SANITIZE] length: 33648 → 33528
+[IMAGE:NORMALIZE] density: 42 → 1 (early scene cap)
+[IMAGE:PURGE] removed: explicit
+[VIZ:TONE] No visual ontology for tone: Earnest — using Genre style
+[STYLE-REF:CROP] /assets/GN-Artists/ender_golden_master_v3.jpg → BL panel for world=Fantasy
+[STYLE-REF:compressed] Loaded: /assets/GN-Artists/ender_golden_master_v3.jpg|q=BL (414KB)
+[STYLE-REF:compressed] Loaded: /assets/GN-Artists/ender_anchor_face_closeup_v1.png?v=20260331 (811KB)
+[STYLE-REF:compressed] Loaded: /assets/GN-Artists/ender_anchor_fullbody_v1.png?v=20260331 (676KB)
+Failed to load resource: net::ERR_FAILED
+[STYLE-REF:compressed] Loaded: /assets/GN-Artists/ender_anchor_lighting_v1.png?v=20260331 (747KB)
+[STYLE-REF:compressed] Loaded: /assets/GN-Artists/ender_anchor_primary.png?v=20260331 (692KB)
+[STYLE-REF:compressed] Loaded: /assets/Fatelands/Vaelerynsreach.png (732KB)
+[STYLE-REF:compressed] Loaded: /assets/Fatelands/AshenVerge2.jpg?v=20260402 (569KB)
+[STYLE-REF:compressed] Loaded: /assets/Fatelands/Lytharyn.png (731KB)
+[4O] Sending 8 reference images to 4o for style extraction
+[CACHE] ministral-8b-2512 audit prompt=3260 cached=0 (0%) cost=$0.0006
+[SCENE1:GRAVITY] LI=the love interest → PRESENT (45%, kind: curiosity, register: PLOT_FIXATION) · dominant: Julian, Seren · dist: ★Julian (the love interest) 45% · Seren (protagonist) 25% · The presiding Dohkar (institution) 10% · Seren's family (side characters) 8% · The rite / inquiry (relationship_mystery) 7% · The assembly / ritual setting (place) 5% · The reader is fixated on Julian as a *plot function* (the silent questioner, the silent witness) rather than a person; his gravity is curiosity about his *role* in the rite, not attraction or desire.
+[ROMAN:MODE] the love interest holds 45% gravity = curiosity 55% · plot_object 30% · reputation 10%  ⟹  WANTING-HIM 55% / OBJECT(plot+reputation) 40% — ✓ WANTING-KIND: his gravity is curiosity/attraction/desire/obsession — she wants HIM (offstage or not).
+[SCENE1:GRAVITY:BUCKETS] Roman 45% · Dani 25% · Relationship 15% · R-mystery 12% · plot-mystery 10% · A-logistics 5% · Side 8%  ⟹  R-PLOT 97% / A-PLOT 15% (target 60/40 for scene 2) — ✓ R-plot owns the scene.
+[R-PLOT:OWNERSHIP] reported R-PLOT 97% = ROMANCE-REAL 60% / SELF-DIRECTED 55%  ⟹  TRUE romance share of scene ≈ 51% (laundered self-analysis ≈ 46%) · curiosity-LI 35% · self-reflection 20% · relationship 15% · wound-rumination 15% · roman 10% · introspection 10% · memory 5% · regret 5%  ⟹ ⚠ heavy self-analysis inside the R-PLOT number.
+[SCENE1:DESIRE] COLD — HOT(wanting) 40% · COLD(grief/reflection) 35% · CHARGED(resentment/fear) 0% · The protagonist is analyzing the *choice* between interference and complicity, not wanting Julian; she is introspecting her own role in the ritual and its audience, not drawn to him as a person. ⟹ ✗ THE ENGINE DRIFTED TO ELEGY: the relationship is present but nobody WANTS anybody. This is the deepest pathology — grief/meaning/wound instead of desire.
+[SCENE1:DESIRE] WARM-BODY-COLD-BLOOD — R-plot owns the scene (97%) but the register is grief/reflection, not wanting. Gravity passed; DESIRE failed. These are different axes.
+[DESIRE:OPENING] first250=false — desire absent from the opening (deferred to a later beat?); HOT romance-forward wants the wanting in the first 250 words
+[SCENE1:DESIRE-TARGET] PLOT_TRUTH — Roman 10% · plot-truth 40% · wound-repair 25% · self-understanding 25% · She wants to know *what the inquiry will reveal* (plot_truth) and *how her choices reflect on her own morality* (self_understanding), not Julian himself. ⟹ ✗ ROMAN-AS-OBJECT: her desire/attention points at the ANSWER (he is a mystery-container, not a person). THIS is the disease — make her want HIM, not the truth he is locked inside.
+[WOUND→SOURCE] wound-source "the presiding Dohkar (as the apparatus that forces the protagonist to confront her audience-management wound)" 25% vs LI the love interest 45% ⟹ ⚠ wound-source is a heavy secondary pull (under the LI, but large).
+[OWNERSHIP:HOLD] scene 2 — the love interest gravity 45% (Scene-1 45%) · ownership held.
+[CG:GRAVITY] LI=PRESENT li=45% · R-plot=97% · register=PLOT_FIXATION (scene 2)
+[CACHE] gpt-4o main prompt=15487 cached=0 (0%) cost=$0.0399
+[PROMPT-PROFILE] PRIMARY_AUTHOR · gpt-4o · prompt=15487 reasoning=0 visible=120 · turn 1
+[4O] REFERENCE-DRIVEN (8 refs) extraction (608 chars)
+[4O] REF-DRIVEN (608 chars) Digital comic illustration capturing a tense moment in the Veilwood. Render in a graphic-novel style with heavy, hand-drawn ink structure. Use thick, variable-weight black contour outlines and promine
+[ENDER-BOND:SCENE-TYPE] neutral
+[ENDER-BOND:GOLDEN-MASTER] Authoritative style source + 6 supporting anchors (SUBORDINATED — species anatomy active)
+[ENDER_BOND:GM-SUBORDINATED] Species anatomy anchors present — style authority demoted to RENDERING SURFACE only (anatomy + fabric + costume + surface = species-canon-locked)
+[STYLE-SUFFIX] Length: 648 chars | artist=ender_bond
+[MOMENT_CACHE] MISS — caching for scene 1 (v1.0)
+[SMART-CLAMP:PROTECTED] 7370 → 5005 (prefix:2647, suffix:840)
+[IMG PROMPT:REF] (5005 chars) PRIMARY DIRECTIVE: Depict the scene exactly as described. Scene and anatomy rules are authoritative. SUBJECT MATTER (HARD CONSTRAINT — overrides any subject-matter cues from reference images): Fantasy
+[SMART-CLAMP:PROTECTED] 7370 → 5005 (prefix:2647, suffix:840)
+[SMART-CLAMP:PROTECTED] 7370 → 5005 (prefix:2647, suffix:840)
+[IMAGE:TIER] hero → Gemini → BFL → BFL-Kontext → OpenAI
+[IMAGE-GEN] {"provider":"BFL-Kontext","context":"visualize","reached":true,"blockedBy":"None","status":"ATTEMPTING","promptLength":5005,"promptPreview":"PRIMARY DIRECTIVE: Depict the scene exactly as described. Scene and anatomy rules are authoritative. SUBJECT MATTER (HAR...","timestamp":"2026-09-21T07:26:31.316Z"}
+[IMAGE-GEN] {"provider":"BFL-Kontext","context":"visualize","reached":false,"blockedBy":"None","status":"META","promptLength":21,"promptPreview":"styleAuthority: Genre","timestamp":"2026-09-21T07:26:31.316Z"}
+[BFL:REF:ENTRY] context=visualize | intent=scene | turnCount=1 | fateAnchorPresent=false | gnArtist=unset
+[BFL:REF] Species anchor (ender_bond style): ender_bond golden_master_li_absent
+[BFL:REF] Species anchor (composition:establishing_solo): COMPOSITION / FRAMING reference (grayscale LAYOUT guide — NOT content to draw): frame this as a SINGLE figure, SMALL and OFF-CENTER, dwarfed by open environment — a lone-subject establishing shot, NOT two figures facing each other at equal size. Borrow ONLY the framing and the subject's small size-in-frame; do NOT render these gray shapes, this palette, or an empty set.
+[BFL:REF] Species anchor (Veilwood): Veilwood anchor
+[BFL:REF] phase LI-absent → li_absent_master (ender_golden_master_v3_bottom.jpg)
+[BFL:REF] Budget full (4 species refs) — style via prompt only
+[STYLE-REF:compressed] Loaded: /assets/GN-Artists/ender_golden_master_v3_bottom.jpg (590KB)

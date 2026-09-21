@@ -455,3 +455,33 @@ in `pressure_source` — closing the specific gap retry 14 found — and, if the
 gates and the author actually reaches prose, whether Julian gets a real moment under the LI
 PRESENCE FLOOR directive. LI presence itself remains untested against any real completion since
 retry 13; that question and this one are now both live for the next authorized retry.
+
+**Sixteenth addendum, retry #15 (2026-09-21, quality retry) — the best real sample yet, AND a
+real harness capture bug.** Corrected total real cost $0.0955956 (the replay script's own
+`report.json` undercounted this at $0.0108684 — its call-tracking failed to correlate the
+author's real 200 response, recorded `status: null`, and exited believing the scene was never
+captured; the real response existed in full in the same run's raw network log and was recovered
+from there, not reconstructed). On content: `local_objective_actor: "Lirael"`,
+`pressure_source: "Seren's family"` — the actor/pressure-source fix worked cleanly on the first
+real draw since it was built. Both gates passed. The author produced a full scene preserving
+continuity/canon (mouth-band, The Answer, the Dohkar's claimed authority, no reserved id
+touched) and, for the first time, a genuine, positive LI-presence result: Julian never speaks or
+acts to resolve anything, but gets his own dramatic-question panel, a restrained anchored beat
+("his stillness feels different now"), a canon-grounded emotional tell (his Weave-Script catching
+the light), a charged mutual-gaze beat with Lirael, and a closing "his stillness asks the question
+anyway" — exactly the "charged silence that changes the room" the LI PRESENCE FLOOR directive
+asked for, without hijacking the family-accusation scene. One small, honestly-noted quality gap:
+beat 9's dialogue narration implies a family member speaks ("one says") but its structured
+speaker tag says "the presiding Dohkar" — a minor internal inconsistency, not gate-relevant. Full
+account: `_scene2_capability_retry15_report_2026_09_21.md`. No follow-up retry run, per standing
+instruction. The harness capture bug is flagged, not fixed, in this pass.
+
+## Status update (after retry #15)
+
+Thirteen real capability samples now on record. This is the strongest sample yet — architecture,
+actor/pressure-source separation, and LI presence all held together on one real draw, closing
+every specific gap named across retries 11-14. It remains ONE sample, not proof of reliability
+across draws. Separately, `_scene2_repair_replay_sample.mjs` has a real call-tracking bug that
+can misreport a genuinely successful, billed generation as a failure — worth a dry fix before the
+next retry, since it both under-reports real spend and risks losing recoverable content to a
+false "never settled" exit.
