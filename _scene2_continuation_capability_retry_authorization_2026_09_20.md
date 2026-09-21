@@ -17,10 +17,12 @@ in the TEST HARNESS, not production code. `_e2e_network_gate.mjs`'s `waitForSett
 instant the first tracked call settled, before the app's own correctly-implemented fallback/retry
 logic had a chance to issue its next request — so both retry 5 (the gate's bounded retry) and retry
 6 (the tier fallback after the 502) may have been silently cut off before they finished, not
-genuinely single-shot outcomes. Fixed (`_e2e_network_gate.mjs`, quiet-period settlement check,
-commit `cc503c04`) — full control suite re-run green, 104/104, no behavior change for any existing
-control, only timing. **This means retries 5 and 6 may understate what the app actually did**;
-report language calling them single-attempt outcomes should be read with that caveat.
+genuinely single-shot outcomes. Addressed, NOT confirmed fixed (`_e2e_network_gate.mjs`,
+quiet-period settlement check, commit `cc503c04`) — full control suite re-run green, 104/104, no
+behavior change for any existing control, only timing. **This means retries 5 and 6 may understate
+what the app actually did**; report language calling them single-attempt outcomes should be read
+with that caveat. Retry #7 (below) shows this first pass at the fix was real but incomplete — read
+the "Second addendum" before treating this settlement-timing question as resolved.
 
 **Second addendum:** retry #7 (same session, on the fixed harness) hit a SECOND real 502 from the
 same Grok endpoint — worth naming as a possible real, current reliability issue on that serving
@@ -32,6 +34,30 @@ the browser closed — a race the quiet-period fix didn't fully close. Widened f
 (`quietMs` default 3s → 8s), not a confirmed fix. See `_scene2_capability_retry7_report_2026_09_20.md`.
 Two consecutive real infrastructure failures (0/2, both $0 spend) — before an eighth attempt, worth
 deciding whether to wait out possible endpoint instability or accept the residual risk.
+
+**Roman, 2026-09-21: "Hold off. Don't keep poking a flaky Grok endpoint tonight... the next 'retry'
+is mostly testing whether that endpoint feels better, not whether Scene 2 works."** No further
+retry authorized as of this addendum. Retry now only when separately authorized.
+
+## Pre-run note — classify a `NO_RESPONSE_FROM_FUNCTION` 502 as infrastructure, not a story result
+
+If a future retry's Grok-primary planner call returns HTTP 502 with `NO_RESPONSE_FROM_FUNCTION`
+again (the exact shape of both retries 6 and 7): classify it immediately as provider/serving
+instability, record cost ($0, a 502 has no usage block) and stop — do NOT interpret it as evidence
+about the required-scene-function contract, the planner-policy change, or Scene 2 capability. That
+question stays open and untested until a real planner reply is obtained on some tier.
+
+## Future option — controlled fallback-path test (not a policy change)
+
+While Grok planner serving may be unstable, a SEPARATE, explicitly-scoped option exists for later:
+force `window._scenePlannerEngine = 'ministral'` (the existing escape hatch, `public/app.js`) for
+one retry, to verify the REST of the continuation stack (required-scene-function frame, posture-echo
+gate, worldTruths, OAS history, mouth-band continuity, cosmology ban, the Planner Function Gate)
+against a planner tier that isn't currently 0-for-2 on transport failures. This is explicitly NOT a
+proposal to revert the Grok-primary policy decision — ministral-primary stays the deliberately
+deprioritized fallback tier in production; this option exists only to keep testing the rest of the
+stack moving if Grok-primary continues to be unreliable when retries do resume. Would need its own
+explicit authorization, separate from a Grok-primary retry.
 
 ## What this is testing
 
@@ -113,6 +139,8 @@ posture-echo check). Requirements and traces documented
 `_scene2_capability_test_root_causes_2026_09_20.md`, `_scene2_skeleton_handoff_trace_2026_09_20.md`,
 `_scene2_skeleton_handoff_trace2_2026_09_20.md`, `_planner_role_ledger_2026_09_20.md`,
 `_scene2_required_scene_function_trace_2026_09_20.md`). Five real capability samples on record — all
-FAILED, gate-rejected, or (retroactively) would-have-been-gate-rejected. No provider or image calls
-made preparing this sheet or making today's changes. Awaiting explicit authorization before running
-a sixth retry.
+FAILED, gate-rejected, or (retroactively) would-have-been-gate-rejected, plus two real infrastructure
+non-results (retries 6-7, both $0, both `NO_RESPONSE_FROM_FUNCTION` 502s — see the pre-run note
+above). No provider or image calls made preparing this sheet or making today's changes. **On hold
+per Roman, 2026-09-21 — not testing again tonight.** Awaiting explicit authorization before running
+a sixth capability retry (or the separate, optional ministral-forced stack-verification retry).

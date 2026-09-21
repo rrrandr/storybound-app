@@ -9,9 +9,19 @@ real, transient upstream error before any planner content was ever generated.
 Real cost: **$0.00.** Exactly one real network exchange occurred under the
 `scene2-structural-author` phase: a dispatch to `/api/proxy` (the Grok-primary planner tier,
 `grok-4-1-fast-non-reasoning`, `max_tokens: 1200`) that returned **HTTP 502** after 28.9 seconds —
-`usage: null`, no billable content. Confirmed by direct inspection of the persisted log
-(`_scene2_repair_replay_sample_out/run_1789944826136.jsonl`): no ministral fallback attempt is
-recorded anywhere in the log, and no author call was ever dispatched.
+`usage: null`, no billable content. Confirmed by direct inspection of the persisted NETWORK log
+(`_scene2_repair_replay_sample_out/run_1789944826136.jsonl`): no ministral fallback REQUEST is
+recorded anywhere in that log, and no author call was ever dispatched.
+
+**Correction (added after retry #7, 2026-09-21):** this report originally concluded the ministral
+fallback "did not fire." That claim was based on the NETWORK log only — this run's console output
+(`console_tail.txt`) was restored via the routine fixed-filename cleanup before being read, so
+whether the app's own `_callTieredProvider` code actually logged a fallback attempt for THIS run is
+**unverified, not confirmed absent**. Retry #7 (below the fixed harness, same failure shape) DID
+capture that console evidence and showed the fallback logic firing correctly
+(`_scene2_capability_retry7_report_2026_09_20.md`) — which means the original "the documented
+fallback did not fire" framing in this report was too strong a claim for what was actually verified
+here. Corrected below.
 
 The replay script exited (`exit code 2`) reporting "the real Scene 2 author call... never settled
 with a 200 response" — technically accurate, but the more precise fact is that the *planner* call
@@ -30,23 +40,22 @@ any content:
    was no plan to evaluate. This was not a gate rejection.
 5. Prose/continuity checks? — **N/A**, the author never ran.
 
-## A real, disclosed process concern: the documented fallback did not fire
+## A real, disclosed process concern: no ministral REQUEST was ever tracked (corrected framing)
 
-The scene-spine planner's tier policy (this session, prior pass) is: Grok primary → ministral-8b-
-2512 fallback, triggered on transport/parse failure. A 502 is exactly the kind of transport failure
-that policy is meant to catch — yet no ministral attempt appears anywhere in the persisted log. This
-is the **second** consecutive real retry (after retry 5) where the log shows only one dispatch under
-this phase and the replay script exits before a possible second attempt is visible. Two plausible,
-not-yet-distinguished explanations, neither confirmed:
-
-- `_callTieredProvider`'s fallback logic may not be firing correctly on a 502 specifically for this
-  role (worth a real, separate, dry investigation — NOT done here, out of scope for this retry).
-- The replay script's own settlement-detection may be racing ahead of the app's retry/fallback
-  sequence, exiting before a second attempt can complete or be tracked (the same ambiguity flagged,
-  unresolved, in retry 5's report).
-
-This recurrence across two consecutive runs makes it worth investigating on its own, separately from
-the planner-contract question this retry was meant to test.
+The scene-spine planner's tier policy is: Grok primary → ministral-8b-2512 fallback, triggered on
+transport/parse failure. A 502 is exactly the kind of transport failure that policy is meant to
+catch — and no ministral network request appears anywhere in this run's persisted log. At the time
+this report was first written, that was read as "the fallback did not fire." Retry #7's console
+evidence (preserved this time) showed the app's own code DOES correctly log a fallback attempt
+after a Grok 502 — the planner-policy code is not the problem. What both retries 6 and 7 actually
+share is narrower: **the fallback's resulting network request never got tracked/settled by the test
+harness before the browser closed** — a harness observation gap, not a confirmed defect in
+`_callTieredProvider` or the Grok-primary planner policy. See
+`_scene2_capability_retry7_report_2026_09_20.md` and
+`_scene2_planner_fallback_console_evidence_2026_09_21.md` for the preserved evidence and full
+account. The exact mechanism of the harness race (why the tracked request never appears) remains
+unresolved — a real, still-open question, not attributed to any specific cause without further
+evidence.
 
 ## Status
 
