@@ -173,11 +173,18 @@ traces documented (`_continuation_scene_adequacy_requirements_2026_09_20.md`,
 `_scene2_capability_test_root_causes_2026_09_20.md`, `_scene2_skeleton_handoff_trace_2026_09_20.md`,
 `_scene2_skeleton_handoff_trace2_2026_09_20.md`, `_planner_role_ledger_2026_09_20.md`,
 `_scene2_required_scene_function_trace_2026_09_20.md`,
-`_scene2_planner_terminal_tier_trace_2026_09_21.md`). Five real capability samples on record — all
+`_scene2_planner_terminal_tier_trace_2026_09_21.md`). Six real capability samples on record — all
 FAILED, gate-rejected, or (retroactively) would-have-been-gate-rejected, plus three real
-infrastructure non-results (retries 6-8, all $0, all `NO_RESPONSE_FROM_FUNCTION` 502s — retry 8's
-full 3-tier, all-providers-identical failure shifts the likely cause toward LOCAL dev-server
-infrastructure, not provider instability; see the fourth addendum above). No provider or image calls
-made preparing this sheet or making today's changes. Awaiting explicit authorization before running
-a sixth capability retry (or the separate, optional ministral-forced stack-verification retry) —
-recommend checking local dev-server health first, per the fourth addendum.
+infrastructure non-results (retries 6-8, all $0, all `NO_RESPONSE_FROM_FUNCTION` 502s, resolved by
+the local dev-server cleanup — see `_local_dev_server_contamination_incident_2026_09_21.md`).
+
+**Fifth addendum, retry #9 (same day, after environment cleanup) — real content progress, blocked
+by a NEW, narrow bug.** First retry on the cleaned environment: zero 502s, two real HTTP 200 planner
+replies ($0.014627 total). Both explicitly engaged the required-scene-function frame with real,
+specific `scene_function_instantiated`/`aftermath_obligations` content — the first time in nine real
+attempts. Both were rejected before reaching author OR the Planner Function Gate, by a different,
+pre-existing, earlier validator (`_validateLocalObjective`'s reserved-events completeness check):
+both replies returned `"reserved": {}` (empty) instead of the four required IDs, despite the
+planner's own system prompt requiring them. Full account: `_scene2_capability_retry9_report_2026_09_21.md`.
+This is a genuinely new, narrowly-diagnosed, mechanical schema-completeness issue — not a repeat of
+any prior finding, and not yet fixed. No further retry follows this one, per standing instruction.
