@@ -249,3 +249,20 @@ pre-existing controls re-verified individually with zero regressions
 **Status**: dry fix only, no branch retry run. Temptation may now be retried under the fixed lane
 — not yet done, pending separate authorization. Silence and confession remain untested and
 unauthorized. No image work of any kind.
+
+## Addendum — Temptation retry 2: fix worked on content, blocked by a narrower vocabulary gap (2026-09-21)
+
+Temptation run again under the fixed lane: $0.01100215, 1 real call, author never ran. Genuinely
+different result from Attempt 1 — `local_objective_actor: "Lirael"`, `chosen_aftermath_lane:
+"lirael_defensive_path"` both correct, and the actual content was a real landed action this time:
+"Lirael folds the torn mouth-band into her sash without naming what she lost" — a concrete,
+specific, external, observable defensive move, not hesitation. The `hesitationRx` diagnostic
+correctly did not fire. It was blocked by a narrower, different limitation: the lane's fixed
+vocabulary list doesn't cover "executes... concealment" (an unlisted verb) or the natural-prose
+mouth-band action itself (which never uses the literal word "conceal"). Two candidate fixes noted
+for a future pass (widen the verb whitelist; extend the lane-content check to also read
+`event_slots.action`, mirroring the generic-check widening) — neither actioned this pass. Full
+account: `_scene2_capability_temptation_attempt2_report_2026_09_21.md`.
+
+**Per the standing "no follow-up retries if it fails" rule, this concludes the Temptation retry.**
+No further retry on Temptation, Silence, or Confession. Images remain untouched.
