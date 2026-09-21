@@ -38,12 +38,42 @@
 // No images, ever. Ceiling 8 physical requests (unchanged safety margin) / $0.45 combined — the
 // isolated cost of ONLY the remaining structural + author calls (see the ceiling breakdown below).
 //
-// usage: node _scene2_repair_replay_sample.mjs   (DO NOT RUN without fresh, explicit authorization)
+// --slot PARAMETERIZATION (Roman 2026-09-21, four-card branch capability plan): the fate-card
+// batch replayed in phase 2 covers all 5 intimate-interruption slots (_INTR_SLOTS, app.js) in one
+// already-paid generation — selecting a DIFFERENT slot costs nothing extra to replay. Rather than
+// fork four near-duplicate scripts (which could drift out of sync with future harness fixes),
+// this ONE script now accepts which slot to click. `--slot=boundary` (or no flag) is
+// BYTE-IDENTICAL to every prior invocation — same selector, same output filenames
+// (report.json/scene2_raw_response.txt/console_tail.txt/partial_tracked_calls.json) — so every
+// existing committed report/dry-fixture that depends on those fixed names is unaffected. Any
+// OTHER slot writes to its OWN suffixed filenames (e.g. report_reversal.json) instead, so a
+// non-Boundary run never touches those fixed-name fixtures at all — no manual
+// git-status/extract/checkout dance needed for the new cards. Dry-proven,
+// _scene2_repair_replay_sample_slot_param_control.mjs.
+//
+// usage: node _scene2_repair_replay_sample.mjs [--slot=temptation|silence|reversal|boundary|confession]
+//   (DO NOT RUN without fresh, explicit authorization — for ANY slot)
 import { chromium } from 'playwright-core';
 import { installFailClosedNetworkGate } from './_e2e_network_gate.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+
+const VALID_SLOTS = ['temptation', 'silence', 'reversal', 'boundary', 'confession']; // must match _INTR_SLOTS, app.js
+function argVal(name, def) {
+  const hit = process.argv.slice(2).find((a) => a.startsWith('--' + name + '='));
+  return hit ? hit.slice(name.length + 3) : def;
+}
+const CARD_SLOT = argVal('slot', 'boundary');
+if (!VALID_SLOTS.includes(CARD_SLOT)) {
+  console.error('HARNESS BLOCKER: unknown --slot="' + CARD_SLOT + '" — must be one of ' + VALID_SLOTS.join(', '));
+  process.exit(2);
+}
+// Backward-compatible file naming: the default slot (boundary, or no flag at all) keeps the
+// EXACT existing fixed filenames every prior committed report/control depends on; any other slot
+// gets its own suffixed set, never colliding with those fixtures.
+const OUT_SUFFIX = CARD_SLOT === 'boundary' ? '' : ('_' + CARD_SLOT);
+function outFile(base) { return path.join(OUT_DIR, base.replace(/(\.[^.]+)$/, OUT_SUFFIX + '$1')); }
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const OUT_DIR = path.join(__dirname, '_scene2_repair_replay_sample_out');
@@ -177,7 +207,7 @@ function summarizeTracked(c) {
 }
 
 (async () => {
-  console.log('=== SCENE 2 REPAIR REPLAY (real, paid, isolated to the structural/author path) ===');
+  console.log('=== SCENE 2 REPAIR REPLAY — slot=' + CARD_SLOT + ' (real, paid, isolated to the structural/author path) ===');
   console.log('    persisted request/response log: ' + LOG_FILE);
   console.log('    combined hard ceiling: $' + COMBINED_CEILING_USD.toFixed(2) + ' — ' + JSON.stringify(PHASE_CEILINGS_USD) + ' | physical request ceiling: ' + PHYSICAL_REQUEST_CEILING);
   let browser;
@@ -210,9 +240,9 @@ function summarizeTracked(c) {
       const pending = gate.trackedCalls().find((c) => c.status == null && c.networkError == null);
       if (pending) await gate.waitForSettlement(pending.roleTag, { watchdogMs: 15000, onWatchdog: (ms) => console.error('  ...still waiting, ' + Math.round(ms / 1000) + 's (browser stays open)') });
     }
-    fs.writeFileSync(path.join(OUT_DIR, 'partial_tracked_calls.json'), JSON.stringify(gate.trackedCalls().map(summarizeTracked), null, 2));
-    fs.writeFileSync(path.join(OUT_DIR, 'console_tail.txt'), consoleLines.slice(-200).join('\n'));
-    fs.writeFileSync(path.join(OUT_DIR, 'report.json'), JSON.stringify({ phaseReports, runningCostUsd, ceilingUsd: COMBINED_CEILING_USD, exitReason: reason }, null, 2));
+    fs.writeFileSync(outFile('partial_tracked_calls.json'), JSON.stringify(gate.trackedCalls().map(summarizeTracked), null, 2));
+    fs.writeFileSync(outFile('console_tail.txt'), consoleLines.slice(-200).join('\n'));
+    fs.writeFileSync(outFile('report.json'), JSON.stringify({ slot: CARD_SLOT, phaseReports, runningCostUsd, ceilingUsd: COMBINED_CEILING_USD, exitReason: reason }, null, 2));
     await browser.close();
     console.error('EXIT (' + reason + ') — browser closed only after confirming nothing approved was left unsettled.');
     process.exit(exitCode);
@@ -303,16 +333,26 @@ function summarizeTracked(c) {
   gate.setPhase('fate-card-replay', 1);
   await page.evaluate(() => { window._resolveIntimacyScene('user_pivot_end'); });
   await gate.waitForSettlement('fate-card-replay', { watchdogMs: 10000 });
-  const boundarySlotExists = await page.evaluate(() => !!document.querySelector('#gnCardMount [data-fate-card-slot="boundary"]'));
-  console.log('  Boundary card slot rendered: ' + boundarySlotExists);
-  phaseReports.fateCardReplayed = { costUsd: 0, boundarySlotExists };
-  if (!boundarySlotExists) { await safeExit(2, 'the replayed Fate-Card batch did not render the Boundary slot — replay state reconstruction failed'); return; }
+  const cardSlotSelector = '#gnCardMount [data-fate-card-slot="' + CARD_SLOT + '"]';
+  const cardSlotExists = await page.evaluate((sel) => !!document.querySelector(sel), cardSlotSelector);
+  console.log('  ' + CARD_SLOT + ' card slot rendered: ' + cardSlotExists);
+  phaseReports.fateCardReplayed = { costUsd: 0, slot: CARD_SLOT, cardSlotExists };
+  if (!cardSlotExists) { await safeExit(2, 'the replayed Fate-Card batch did not render the ' + CARD_SLOT + ' slot — replay state reconstruction failed'); return; }
 
-  console.log('\n── phase 3 (REAL, PAID): select Boundary, real Submit, real verifier/planner/author path ──');
+  console.log('\n── phase 3 (REAL, PAID): select ' + CARD_SLOT + ', real Submit, real verifier/planner/author path ──');
   await checkBudgetBeforePhase('scene2-structural-author');
-  await page.click('#gnCardMount [data-fate-card-slot="boundary"]');
-  const boundaryDraft = await page.evaluate(() => ({ action: document.getElementById('gnActionInput').value, dialogue: document.getElementById('gnDialogueInput').value }));
-  console.log('  Boundary card selected — action="' + boundaryDraft.action + '" dialogue="' + boundaryDraft.dialogue + '"');
+  // CARD-CLICK RELIABILITY FIX (Roman 2026-09-21, four-card branch prep): a transient concierge/
+  // tutorial overlay can still be intercepting pointer events on the FIRST card in _INTR_SLOTS
+  // order (temptation) right after the fate-card mount appears — a plain Playwright click retried
+  // for the full 30s default timeout and never landed on that slot in dry testing
+  // (_scene2_repair_replay_sample_slot_param_control.mjs). Boundary (idx 3 of 5) was never
+  // affected in any prior real retry because enough other work happens first for the overlay to
+  // clear naturally — but temptation/silence (idx 0/1) are exactly the cards this prep enables.
+  // Dispatching the click natively, in-page, reaches the exact same addEventListener('click', ...)
+  // handler the real UI uses and is immune to the overlay's pointer-coordinate interception.
+  await page.evaluate((sel) => { const el = document.querySelector(sel); if (el) el.click(); }, cardSlotSelector);
+  const cardDraft = await page.evaluate(() => ({ action: document.getElementById('gnActionInput').value, dialogue: document.getElementById('gnDialogueInput').value }));
+  console.log('  ' + CARD_SLOT + ' card selected — action="' + cardDraft.action + '" dialogue="' + cardDraft.dialogue + '"');
 
   // NOW switch the gate to real pass-through for the structural/author phase only.
   gate.allowRealPaths(['/api/proxy', '/api/mistral-proxy', '/api/deepseek-proxy', '/api/chatgpt-proxy']);
@@ -371,7 +411,7 @@ function summarizeTracked(c) {
     return;
   }
   console.log('  ✓ real Scene 2 response captured (author=' + sceneResult.lastCGAuthor + '/' + sceneResult.originalModel + ')\n');
-  fs.writeFileSync(path.join(OUT_DIR, 'scene2_raw_response.txt'), sceneResult.rawOutput || '');
+  fs.writeFileSync(outFile('scene2_raw_response.txt'), sceneResult.rawOutput || '');
 
   if (gate.hasUnsettled()) {
     const pending = gate.trackedCalls().find((c) => c.status == null && c.networkError == null);
@@ -379,10 +419,10 @@ function summarizeTracked(c) {
   }
   await browser.close();
 
-  const report = { at: new Date().toISOString(), say: REAL_SAY, do: REAL_DO, phaseReports, runningCostUsd, ceilingUsd: COMBINED_CEILING_USD, ceilingHeld: runningCostUsd <= COMBINED_CEILING_USD, persistedLogFile: LOG_FILE };
-  fs.writeFileSync(path.join(OUT_DIR, 'report.json'), JSON.stringify(report, null, 2));
+  const report = { at: new Date().toISOString(), slot: CARD_SLOT, say: REAL_SAY, do: REAL_DO, phaseReports, runningCostUsd, ceilingUsd: COMBINED_CEILING_USD, ceilingHeld: runningCostUsd <= COMBINED_CEILING_USD, persistedLogFile: LOG_FILE };
+  fs.writeFileSync(outFile('report.json'), JSON.stringify(report, null, 2));
 
   console.log('\n' + '='.repeat(100));
-  console.log('SCENE 2 REPAIR REPLAY — real cost (structural + author only): $' + runningCostUsd.toFixed(6) + ' / ceiling $' + COMBINED_CEILING_USD.toFixed(2));
-  console.log('written to ' + OUT_DIR + '/: report.json, scene2_raw_response.txt, console_tail.txt');
+  console.log('SCENE 2 REPAIR REPLAY (' + CARD_SLOT + ') — real cost (structural + author only): $' + runningCostUsd.toFixed(6) + ' / ceiling $' + COMBINED_CEILING_USD.toFixed(2));
+  console.log('written to ' + OUT_DIR + '/: report' + OUT_SUFFIX + '.json, scene2_raw_response' + OUT_SUFFIX + '.txt, console_tail' + OUT_SUFFIX + '.txt');
 })().catch((e) => { console.error('HARNESS ERROR:', e && e.stack || e); process.exit(2); });
