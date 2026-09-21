@@ -1,0 +1,108 @@
+{
+  "phaseReports": {
+    "opener": {
+      "text": "You touched her shoulder exactly when the invocation began and your eyes found mine before the first word left her mouth. Did you call to me through the rite hoping I would step forward and claim you as the one who needed rescue?",
+      "costUsd": 0
+    },
+    "oasTurnReplyReplayed": {
+      "costUsd": 0,
+      "replyText": "The hunger in your gaze called louder than the rite itself. Ask, if you dare name it before them all."
+    },
+    "fateCardReplayed": {
+      "costUsd": 0,
+      "boundarySlotExists": true
+    },
+    "scene2StructuralAuthor": {
+      "calls": [
+        {
+          "url": "http://localhost:3000/api/proxy",
+          "model": "grok-4-1-fast-non-reasoning",
+          "maxTokens": 1200,
+          "isAuthorCall": false,
+          "isSuspectedScaffold": false,
+          "status": 502,
+          "networkError": null,
+          "usage": null,
+          "costUsd": null,
+          "costNote": "no usage block returned",
+          "costSource": null,
+          "elapsedMs": 11440
+        },
+        {
+          "url": "http://localhost:3000/api/mistral-proxy",
+          "model": "ministral-8b-2512",
+          "maxTokens": 1200,
+          "isAuthorCall": false,
+          "isSuspectedScaffold": false,
+          "status": 502,
+          "networkError": null,
+          "usage": null,
+          "costUsd": null,
+          "costNote": "no usage block returned",
+          "costSource": null,
+          "elapsedMs": 2578
+        },
+        {
+          "url": "http://localhost:3000/api/chatgpt-proxy",
+          "model": "gpt-4o",
+          "maxTokens": 1200,
+          "isAuthorCall": false,
+          "isSuspectedScaffold": false,
+          "status": 502,
+          "networkError": null,
+          "usage": null,
+          "costUsd": null,
+          "costNote": "no usage block returned",
+          "costSource": null,
+          "elapsedMs": 2350
+        },
+        {
+          "url": "http://localhost:3000/api/proxy",
+          "model": "grok-4-1-fast-non-reasoning",
+          "maxTokens": 1200,
+          "isAuthorCall": false,
+          "isSuspectedScaffold": false,
+          "status": 502,
+          "networkError": null,
+          "usage": null,
+          "costUsd": null,
+          "costNote": "no usage block returned",
+          "costSource": null,
+          "elapsedMs": 518
+        },
+        {
+          "url": "http://localhost:3000/api/mistral-proxy",
+          "model": "ministral-8b-2512",
+          "maxTokens": 1200,
+          "isAuthorCall": false,
+          "isSuspectedScaffold": false,
+          "status": 502,
+          "networkError": null,
+          "usage": null,
+          "costUsd": null,
+          "costNote": "no usage block returned",
+          "costSource": null,
+          "elapsedMs": 349
+        },
+        {
+          "url": "http://localhost:3000/api/chatgpt-proxy",
+          "model": "gpt-4o",
+          "maxTokens": 1200,
+          "isAuthorCall": false,
+          "isSuspectedScaffold": false,
+          "status": 502,
+          "networkError": null,
+          "usage": null,
+          "costUsd": null,
+          "costNote": "no usage block returned",
+          "costSource": null,
+          "elapsedMs": 554
+        }
+      ],
+      "costUsd": 0
+    }
+  },
+  "runningCostUsd": 0,
+  "ceilingUsd": 0.45,
+  "exitReason": "the real Scene 2 author call (max_tokens: 8000) never settled with a 200 response"
+}

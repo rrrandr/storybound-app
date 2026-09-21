@@ -201,3 +201,28 @@ is accepted. Proven 16/16, `_scene2_reserved_schema_control.mjs`; full trace:
 `_scene2_reserved_schema_trace_2026_09_21.md`. A future retry would be the first real test of
 whether the planner can now preserve retry 9's genuinely improved scene-function behavior WHILE
 satisfying the hardened schema — a combination not yet tested live. No live retry run in this pass.
+
+**Seventh addendum, retry #10 (2026-09-21) — zero capability evidence, a THIRD infra fault, distinct
+from retries 6-8.** One retry authorized to test the reserved-schema-hardened stack live. Both real
+dispatch rounds (2 × 3 tiers = 6 calls) returned 502 `NO_RESPONSE_FROM_FUNCTION` across all three
+providers, identically — the same symptom as retries 6-8, but a **different, more specific root
+cause** this time: the live `vercel dev` server log showed 95 `Error: spawn EBADF` lines landing
+exactly at the point of failure — the dev-server parent process (PID 24065, up since the prior
+Wednesday) failed to spawn a child handler at the OS level, independent of which provider endpoint
+was being called. `ps aux` ruled out the retry-6-8 cause (leaked stale children): only 6 fresh,
+~1-minute-old children existed this time, not 155. The planner never produced a single reply; none
+of the five evaluation questions are answerable. $0 spent. Full account:
+`_scene2_capability_retry10_report_2026_09_21.md`. No follow-up retry run, per standing instruction.
+Likely fix (NOT actioned, needs separate authorization distinct from "run a retry"): restart the
+`vercel dev` parent process itself, not just clean up children as before.
+
+## Status update (after retry #10)
+
+Eight real capability samples now on record: six FAILED/gate-rejected/would-have-been-gate-rejected,
+retry 9 (schema-rejected, real content progress), and now four real infrastructure non-results
+(retries 6, 7, 8 — leaked child processes, $0 each — and retry 10 — parent-process `spawn EBADF`,
+$0). All six dry-proven fixes remain unconfirmed end-to-end against a live 200 response. The local
+dev environment has now caused two DISTINCT infra failures in two days; before any further retry,
+the `vercel dev` parent process itself likely needs a clean restart (separate authorization required
+— this is more invasive than the prior child-process cleanup, since it stops the actively-listening
+server).
