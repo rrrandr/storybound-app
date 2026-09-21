@@ -429,3 +429,29 @@ guidance so the model reliably attributes agency to an individual (as retry 13 d
 naming the group itself (as retry 14 did, twice). LI presence remains untested against a real
 completion — retry 13 is still the only sample that reached the author, and it is still the one
 sample showing the LI-inertness gap this session's most recent fix targets.
+
+**Fifteenth addendum (2026-09-21, dry role-model fix) — the fix is who carries the objective, not
+a loosened validator.** Roman: "The fix is not to loosen collectives into actors. The fix is to
+make the lane specify who carries the objective versus who supplies pressure." Each of the 5
+`aftermathLanes` now declares `objectiveActor` (an individual roster member) and `pressureSource`
+(the group/institution applying pressure, when the lane is group-driven — `family_accusation` →
+objectiveActor "Lirael", pressureSource "Seren's family"; the other 4 lanes have no pressure
+source). The prompt now states this explicitly wherever a lane with a pressure source is in play
+— both the deterministic-resolution path (Boundary → `family_accusation`) and the free-choice
+fallback menu — and two new JSON keys (`pressure_source`, required when the lane has one;
+`institutional_actor`/`li_pressure_actor`, always optional) give the model somewhere to put group
+pressure that isn't `local_objective_actor`. `_validateLocalObjective`'s reject-only check is
+completely unchanged — proven by re-testing retry 14's real two replies against it unmodified
+(still correctly rejected, RED-B citing retry 14's exact real live rejection text) and confirming
+attempt 1's real content, with only the actor corrected to Lirael and `pressure_source` added, is
+accepted. Proven 21/21, `_scene2_actor_pressure_source_control.mjs`; full trace:
+`_scene2_actor_pressure_source_trace_2026_09_21.md`. No live retry run in this pass.
+
+## Status update (after the actor/pressure-source fix)
+
+A future retry on this same Boundary input would be the first real test of whether the model,
+given explicit role separation, reliably puts Lirael in `local_objective_actor` and Seren's family
+in `pressure_source` — closing the specific gap retry 14 found — and, if the plan passes both
+gates and the author actually reaches prose, whether Julian gets a real moment under the LI
+PRESENCE FLOOR directive. LI presence itself remains untested against any real completion since
+retry 13; that question and this one are now both live for the next authorized retry.

@@ -99850,9 +99850,22 @@ function _buildAuthorFloorDirective(s) {
             var _resolvedFrame = (_oe.aftermathLanes && _oe.aftermathLanes.length && typeof _resolveStarterEventFrame === 'function') ? _resolveStarterEventFrame(_oe, state) : null;
             if (_resolvedFrame) {
               _ob.push('REQUIRED EVENT FRAME (HARD, DETERMINISTICALLY RESOLVED — this is NOT a choice among options; the reader\'s own card selection already determined it before you were ever asked): the central event of this scene MUST be — ' + _resolvedFrame.eventFrame + ' You MUST set "chosen_aftermath_lane" to EXACTLY "' + _resolvedFrame.laneId + '" — you may NOT select a different lane, and satisfying this by staying inside the same ritual/interrogation moment under borrowed institutional/procedural VOCABULARY is NOT a valid instantiation; the event itself must actually move into this frame. The reader\'s posture below changes HOW this frame plays out — who pushes back, what tone, what she risks — it does NOT change WHICH event happens.');
+              // ACTOR / PRESSURE-SOURCE SEPARATION (Roman 2026-09-21) — real finding: retry 14 put
+              // a COLLECTIVE ("Seren's family", then "the assembly") into local_objective_actor
+              // twice on this exact frame, and the pre-existing _validateLocalObjective (UNCHANGED)
+              // correctly rejected both. "who causes pressure" and "whose objective drives the
+              // scene" are different things — this block states that distinction explicitly,
+              // before the model has to guess it, rather than relying on the validator alone to
+              // catch the mistake after spending a real dispatch.
+              var _laneRole = _resolvedFrame.lane || {};
+              if (_laneRole.pressureSource) {
+                _ob.push('WHO CARRIES THE OBJECTIVE vs WHO SUPPLIES PRESSURE (HARD): "' + _laneRole.pressureSource + '" is the PRESSURE SOURCE for this frame — the group applying public pressure. A pressure source is NEVER "local_objective_actor" and is NEVER "present" as an individual — it supplies the pressure, it does not drive the scene\'s objective. "local_objective_actor" MUST instead be ' + (_laneRole.objectiveActor ? ('"' + _laneRole.objectiveActor + '"') : 'a single individual roster member') + ' — the one person whose own concrete act this scene exists to land (unless there is a strong dramatic reason to choose a different INDIVIDUAL roster member; never a collective, and never the pressure source itself). Put "' + _laneRole.pressureSource + '" in the new required field "pressure_source" instead — never in "local_objective_actor".');
+              } else if (_laneRole.objectiveActor) {
+                _ob.push('OBJECTIVE ACTOR (HARD): "local_objective_actor" for this frame MUST be "' + _laneRole.objectiveActor + '" — the one person whose own concrete act this scene exists to land — unless there is a strong dramatic reason to choose a different INDIVIDUAL roster member. Never a collective.');
+              }
             } else if (_oe.aftermathLanes && _oe.aftermathLanes.length) {
-              _ob.push('REQUIRED AFTERMATH LANE MENU (HARD — this REPLACES "invent any aftermath event": choose EXACTLY ONE of these lanes and instantiate IT as this scene\'s central event. Do not invent a lane outside this list. Satisfying this by staying inside the same ritual/interrogation moment the AFTERMATH TRUTHS below already establish — even dressed in institutional/procedural VOCABULARY — is NOT a valid instantiation; the event itself must actually move into the chosen lane. The reader\'s posture below changes HOW the chosen lane plays out — who pushes back, what tone, what she risks — it does NOT let you swap the lane for another in-ritual accusation beat):\n'
-                + _oe.aftermathLanes.map(function (l) { return '  • [' + l.id + '] ' + l.label; }).join('\n'));
+              _ob.push('REQUIRED AFTERMATH LANE MENU (HARD — this REPLACES "invent any aftermath event": choose EXACTLY ONE of these lanes and instantiate IT as this scene\'s central event. Do not invent a lane outside this list. Satisfying this by staying inside the same ritual/interrogation moment the AFTERMATH TRUTHS below already establish — even dressed in institutional/procedural VOCABULARY — is NOT a valid instantiation; the event itself must actually move into the chosen lane. The reader\'s posture below changes HOW the chosen lane plays out — who pushes back, what tone, what she risks — it does NOT let you swap the lane for another in-ritual accusation beat. For EACH lane, "local_objective_actor" MUST be the individual roster member named — NEVER the pressure source, and NEVER a collective like "the assembly"):\n'
+                + _oe.aftermathLanes.map(function (l) { return '  • [' + l.id + '] ' + l.label + (l.pressureSource ? (' — local_objective_actor: "' + l.objectiveActor + '"; pressure_source: "' + l.pressureSource + '" (the group applying pressure, NEVER the actor)') : (l.objectiveActor ? (' — local_objective_actor: "' + l.objectiveActor + '"') : '')); }).join('\n'));
             }
             if (_posture) {
               _ob.push('READER\'S RECORDED CHOICE at the end of the opening: ' + (_posture.label || '(none recorded)'));
@@ -99921,6 +99934,16 @@ function _buildAuthorFloorDirective(s) {
               } else {
                 _scSys += ' ALSO REQUIRED, same JSON: "chosen_aftermath_lane" (EXACTLY one of these ids, spelled exactly as given — nothing else: [' + _laneIds.join(', ') + '] — the lane you selected from the REQUIRED AFTERMATH LANE MENU; state_change/tactical_move/forces_choice must actually instantiate THIS lane\'s content, not merely name it), "lane_posture_modulation" (one sentence: HOW the reader\'s recorded posture changes the way the chosen lane plays out — who pushes, what tone, what she risks — never a description of a different lane, and never a return to the ritual/interrogation moment).';
               }
+              // ACTOR / PRESSURE-SOURCE SEPARATION — output keys (Roman 2026-09-21). "pressure_source"
+              // is requested (not structurally validated — this is a prompt/role-clarity fix, NOT a
+              // validator change; _validateLocalObjective already, correctly, forbids a collective
+              // as local_objective_actor and stays completely unchanged) whenever the resolved or
+              // chosen lane has one; "institutional_actor"/"li_pressure_actor" are always optional,
+              // for any lane, and connect naturally to the LI PRESENCE FLOOR requirement above.
+              var _pressureSourceForSchema = (_resolvedFrame && _resolvedFrame.lane && _resolvedFrame.lane.pressureSource) || null;
+              _scSys += ' ALSO, same JSON: "local_objective_actor" MUST be a single INDIVIDUAL roster member — NEVER a collective (e.g. "the assembly") and NEVER a group label you invent (e.g. "Seren\'s family") — a collective or group can apply pressure but cannot carry the scene\'s objective.'
+                + (_pressureSourceForSchema ? (' REQUIRED for this frame: "pressure_source" (string, exactly "' + _pressureSourceForSchema + '" unless the scene genuinely has no group pressure) — the group/institution applying pressure, kept OUT of local_objective_actor.') : ' OPTIONAL: "pressure_source" (string, only if a group or institution is genuinely applying pressure this scene — never required to invent one).')
+                + ' Also OPTIONAL, same JSON: "institutional_actor" (the seated authority — Dohkar, tribunal, council — driving procedure THIS scene, if any, distinct from local_objective_actor when they differ), "li_pressure_actor" (one sentence: the concrete moment of pressure, response, restraint, refusal, or dialogue the love interest contributes this scene, if the LI is present).';
             }
             // CONTINUATION-STAGE ISSUER (Roman, authorized 2026-09-14) — SAME reply, SAME call, no
             // second provider round trip. All optional: an old-shaped reply that omits these keys
@@ -100215,7 +100238,11 @@ function _buildAuthorFloorDirective(s) {
             // AFTERMATH LANE MENU (Roman 2026-09-21) — carried so _detectPlannerFunctionGap can check
             // the declared lane against the row's own menu; see _generateLiteraryPlotContract's output
             // schema for where these keys are requested.
-            chosenAftermathLane: String(_scP.chosen_aftermath_lane || '').trim(), lanePostureModulation: String(_scP.lane_posture_modulation || '').trim() };
+            chosenAftermathLane: String(_scP.chosen_aftermath_lane || '').trim(), lanePostureModulation: String(_scP.lane_posture_modulation || '').trim(),
+            // ACTOR / PRESSURE-SOURCE SEPARATION (Roman 2026-09-21) — telemetry only; not read by
+            // any gate or validator yet. See the prompt's own comment (near the REQUIRED EVENT
+            // FRAME block) for why these exist.
+            pressureSource: String(_scP.pressure_source || '').trim(), institutionalActor: String(_scP.institutional_actor || '').trim(), liPressureActor: String(_scP.li_pressure_actor || '').trim() };
           // ACCOMPLISHED-EVENT CONTRACT: attach the causal skeleton to the transition so it rides on
           // state._priorSceneStateChange (available to the next scene's context + the commit gate) and gets logged.
           if (_aecOn && _scP) {
@@ -128985,12 +129012,26 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       // enough; the content must actually reflect it. Starter-specific content (First Sacrifice's own
       // lane menu, per Roman: "acceptable for First Sacrifice's starter plan to define its own lane menu
       // from its issue skeleton"); the CHECK MECHANISM in _detectPlannerFunctionGap is generic.
+      // ACTOR / PRESSURE-SOURCE SEPARATION (Roman 2026-09-21) — real finding this closes: retry
+      // 14, the first real draw to reach the family_accusation lane a THIRD time, was rejected
+      // twice by the pre-existing (unchanged) _validateLocalObjective check because the model put
+      // a COLLECTIVE into local_objective_actor — once an undeclared one ("Seren's family"), once
+      // the row's own declared collective ("the assembly"), which that validator has always
+      // forbidden as an actor. Roman: "The fix is not to loosen collectives into actors. The fix
+      // is to make the lane specify who carries the objective versus who supplies pressure."
+      // `objectiveActor` (an individual roster member — never a collective) and `pressureSource`
+      // (the group/institution applying pressure, when the lane is naturally group-driven) are new
+      // per-lane fields, read by the prompt (not by the validator, which stays completely
+      // unchanged) so the model is told explicitly which individual carries the scene's local
+      // objective before it ever has to guess. `family_accusation` is the one lane whose natural
+      // grammar is a group acting — per Roman: "Prefer Lirael unless there is a strong reason to
+      // use the presiding Dohkar; the family should be pressure source, not objective actor."
       aftermathLanes: [
-        { id: 'dohkar_preliminary_review', label: 'The presiding Dohkar (or another seated authority) sets a preliminary review, hearing date, or terms — a concrete procedural step TOWARD the formal inquiry, not the convened inquiry itself.', signalRx: /\b(preliminary review|review date|hearing date|sets? a date|scheduled?|convenes?|tribunal date|terms of (?:the )?review|date is set|date was set)\b/i },
-        { id: 'family_accusation', label: 'Seren\'s family (or another party with standing) publicly accuses Lirael or demands remedy for the twisted wish.', signalRx: /\b(seren'?s family|her family|his family|publicly accuses?|formal(?:ly)? accus\w*|demands? (?:remedy|restitution|compensation|redress)|blood[- ]price)\b/i },
-        { id: 'julian_jurisdiction_challenge', label: 'Julian challenges jurisdiction, reframes the accusation politically, or contests who has authority to rule.', signalRx: /\b(jurisdiction|challenges? (?:the )?dohkar|contests? (?:his |the )?authority|reframes?|political(?:ly)?)\b/i },
-        { id: 'lirael_constrained', label: 'Lirael is ordered separated, watched, or otherwise constrained pending the inquiry.', signalRx: /\b(separated|placed under (?:guard|watch)|confined|constrained|watched|pending (?:the )?inquiry|escorted (?:away|out)|removed from)\b/i },
-        { id: 'lirael_defensive_path', label: 'Lirael herself chooses a defensive path: submits to procedure, gathers proof, conceals something, moves toward flight, counter-accuses, or forces Julian into a procedural bind.', signalRx: /\b(submits? to procedure|gathers? proof|conceals?|flees?|flight|counter-accus\w*|procedural bind)\b/i },
+        { id: 'dohkar_preliminary_review', label: 'The presiding Dohkar (or another seated authority) sets a preliminary review, hearing date, or terms — a concrete procedural step TOWARD the formal inquiry, not the convened inquiry itself.', signalRx: /\b(preliminary review|review date|hearing date|sets? a date|scheduled?|convenes?|tribunal date|terms of (?:the )?review|date is set|date was set)\b/i, objectiveActor: 'the presiding Dohkar', pressureSource: null },
+        { id: 'family_accusation', label: 'Seren\'s family (or another party with standing) publicly accuses Lirael or demands remedy for the twisted wish.', signalRx: /\b(seren'?s family|her family|his family|publicly accuses?|formal(?:ly)? accus\w*|demands? (?:remedy|restitution|compensation|redress)|blood[- ]price)\b/i, objectiveActor: 'Lirael', pressureSource: 'Seren\'s family' },
+        { id: 'julian_jurisdiction_challenge', label: 'Julian challenges jurisdiction, reframes the accusation politically, or contests who has authority to rule.', signalRx: /\b(jurisdiction|challenges? (?:the )?dohkar|contests? (?:his |the )?authority|reframes?|political(?:ly)?)\b/i, objectiveActor: 'Julian', pressureSource: null },
+        { id: 'lirael_constrained', label: 'Lirael is ordered separated, watched, or otherwise constrained pending the inquiry.', signalRx: /\b(separated|placed under (?:guard|watch)|confined|constrained|watched|pending (?:the )?inquiry|escorted (?:away|out)|removed from)\b/i, objectiveActor: 'the presiding Dohkar', pressureSource: null },
+        { id: 'lirael_defensive_path', label: 'Lirael herself chooses a defensive path: submits to procedure, gathers proof, conceals something, moves toward flight, counter-accuses, or forces Julian into a procedural bind.', signalRx: /\b(submits? to procedure|gathers? proof|conceals?|flees?|flight|counter-accus\w*|procedural bind)\b/i, objectiveActor: 'Lirael', pressureSource: null },
       ],
       // EVENT-FRAME RESOLVER (Roman 2026-09-21) — real finding this closes: two real live samples
       // in a row (retry 11 freeform, retry 12 with the aftermath lane menu ABOVE as a free choice)
