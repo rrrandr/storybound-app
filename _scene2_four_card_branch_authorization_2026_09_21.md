@@ -161,5 +161,20 @@ timestamped `run_<epoch>.jsonl`, which never collides with anything.
 
 ## Status
 
-Planning document only. Committed, not executed. Awaiting Roman's authorization — all four, one
-at a time, or a decision to skip broad branch proof and move to images on Boundary instead.
+Planning document only, as committed. Superseded by execution below — Roman authorized Reversal
+first, then Temptation only if Reversal was clean.
+
+## Addendum — Reversal run (2026-09-21)
+
+Prep (`--slot` parameterization + card-click reliability fix) built, dry-proven 23/23
+(`_scene2_repair_replay_sample_slot_param_control.mjs`), and committed before any live call, per
+instruction. Reversal then run as its own isolated live sample: $0.0104359, 1 physical request.
+`local_objective_actor: "Julian"` and `chosen_aftermath_lane: "julian_jurisdiction_challenge"`
+both resolved correctly — the architecture worked. The plan was rejected by the Planner Function
+Gate's older, generic aftermath-vocabulary check (independent of the newer, lane-specific check,
+which DID pass) — a genuine, narrow, previously-latent gap between two gate mechanisms, not a
+content-quality problem. Full account: `_scene2_capability_reversal_report_2026_09_21.md`.
+
+**Per the explicit stop condition ("If Reversal fails structurally, stop before Temptation and
+report"), Temptation is NOT run this pass.** No follow-up retry within Reversal, per standing
+instruction.
