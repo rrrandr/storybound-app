@@ -64,6 +64,23 @@ given the chance to fall through to ministral and then gpt-4o before concluding 
 failure. That capability question stays open and untested until a real planner reply is obtained on
 some tier AND evaluated by the Planner Function Gate.
 
+**Fourth addendum, retry #8 (same day) — the harness fix worked; the diagnosis changes.** Under the
+full 3-tier chain with the tier-log-cross-checking harness, retry #8 ran correctly end to end: six
+real dispatches (grok/ministral/gpt-4o, twice — the initial pass and the app's own bounded retry),
+all observed through to real settlement, exactly as designed. **All six returned HTTP 502 with the
+identical error body** `"An error occurred with this application. NO_RESPONSE_FROM_FUNCTION"` —
+across THREE independent, unrelated providers (xAI, Mistral, OpenAI). That is not a plausible
+coincidence across three separate companies. Checked directly on this machine: **157** running
+`@vercel/node/dist/dev-server.mjs` processes, most dating back days, with only one actually bound to
+port 3000. This makes a LOCAL dev-server infrastructure problem the better-supported explanation for
+retries 6-8's failures than "Grok is flaky" — the earlier single-tier observations (retries 6-7)
+were consistent with either explanation; this run's three-independent-provider, identical-error
+result is not. Full account: `_scene2_capability_retry8_report_2026_09_21.md`. **Revise the pre-run
+note above accordingly:** a full chain exhaustion with this exact identical-error-across-providers
+signature should prompt checking local dev-server health (and the stale-process count) BEFORE
+assuming provider-side instability — the gpt-4o terminal tier, however well-built, cannot route
+around a problem in the shared local proxy layer all three tiers depend on.
+
 ## Future option — controlled fallback-path test (not a policy change)
 
 A SEPARATE, explicitly-scoped option still exists for later, now less urgent given the terminal
@@ -157,9 +174,10 @@ traces documented (`_continuation_scene_adequacy_requirements_2026_09_20.md`,
 `_scene2_skeleton_handoff_trace2_2026_09_20.md`, `_planner_role_ledger_2026_09_20.md`,
 `_scene2_required_scene_function_trace_2026_09_20.md`,
 `_scene2_planner_terminal_tier_trace_2026_09_21.md`). Five real capability samples on record — all
-FAILED, gate-rejected, or (retroactively) would-have-been-gate-rejected, plus two real infrastructure
-non-results (retries 6-7, both $0, both `NO_RESPONSE_FROM_FUNCTION` 502s under the OLD 2-tier chain
-— see the pre-run note above). No provider or image calls made preparing this sheet or making
-today's changes. **On hold per Roman, 2026-09-21 — not testing again tonight.** Awaiting explicit
-authorization before running a sixth capability retry (or the separate, optional ministral-forced
-stack-verification retry).
+FAILED, gate-rejected, or (retroactively) would-have-been-gate-rejected, plus three real
+infrastructure non-results (retries 6-8, all $0, all `NO_RESPONSE_FROM_FUNCTION` 502s — retry 8's
+full 3-tier, all-providers-identical failure shifts the likely cause toward LOCAL dev-server
+infrastructure, not provider instability; see the fourth addendum above). No provider or image calls
+made preparing this sheet or making today's changes. Awaiting explicit authorization before running
+a sixth capability retry (or the separate, optional ministral-forced stack-verification retry) —
+recommend checking local dev-server health first, per the fourth addendum.
