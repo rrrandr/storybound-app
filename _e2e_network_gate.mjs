@@ -271,7 +271,14 @@ export async function installFailClosedNetworkGate(page, opts) {
       // return once the quiet period passes with no new call. quietMs:0 restores the old (buggy for
       // multi-attempt cases) immediate-return behavior, for callers that know only one call is ever
       // possible under a given roleTag.
-      const quietMs = (waitOpts.quietMs != null) ? waitOpts.quietMs : 3000;
+      // 3000 -> 8000 (Roman 2026-09-21, second repair): a real retry (Scene 2 retry #7) showed the
+      // app's OWN console log recording "[TIERED:scenePlanner] attempt 2 tier=fallback
+      // provider=mistral..." (proof _callTieredProvider's fallback logic fired correctly) with NO
+      // corresponding network-gate-tracked request ever appearing before the calling script closed
+      // the browser -- the 3s quiet window from the first repair was not always enough margin between
+      // the app logging an attempt and Playwright's own request interceptor registering the resulting
+      // fetch. Widened for a larger safety margin; still overridable per call via quietMs.
+      const quietMs = (waitOpts.quietMs != null) ? waitOpts.quietMs : 8000;
       const start = Date.now();
       let lastWatchdog = start;
       let quietSince = null;

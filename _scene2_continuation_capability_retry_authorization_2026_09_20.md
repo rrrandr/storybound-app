@@ -20,9 +20,18 @@ logic had a chance to issue its next request — so both retry 5 (the gate's bou
 genuinely single-shot outcomes. Fixed (`_e2e_network_gate.mjs`, quiet-period settlement check,
 commit `cc503c04`) — full control suite re-run green, 104/104, no behavior change for any existing
 control, only timing. **This means retries 5 and 6 may understate what the app actually did**;
-report language calling them single-attempt outcomes should be read with that caveat. The next
-retry, whenever authorized, will be the first one run against a harness that can actually see a
-multi-tier attempt through to its real conclusion.
+report language calling them single-attempt outcomes should be read with that caveat.
+
+**Second addendum:** retry #7 (same session, on the fixed harness) hit a SECOND real 502 from the
+same Grok endpoint — worth naming as a possible real, current reliability issue on that serving
+function, separate from this codebase. New finding: the app's own console log proved
+`_callTieredProvider`'s fallback logic DID fire correctly this time ("attempt 2 tier=fallback
+provider=mistral...") — retry 6's implied "fallback never fires" read does not hold up. The gap is
+narrower than first thought: the fallback's own resulting request never got tracked/settled before
+the browser closed — a race the quiet-period fix didn't fully close. Widened further as a precaution
+(`quietMs` default 3s → 8s), not a confirmed fix. See `_scene2_capability_retry7_report_2026_09_20.md`.
+Two consecutive real infrastructure failures (0/2, both $0 spend) — before an eighth attempt, worth
+deciding whether to wait out possible endpoint instability or accept the residual risk.
 
 ## What this is testing
 
