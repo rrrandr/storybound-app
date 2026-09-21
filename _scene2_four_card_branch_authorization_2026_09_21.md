@@ -178,3 +178,23 @@ content-quality problem. Full account: `_scene2_capability_reversal_report_2026_
 **Per the explicit stop condition ("If Reversal fails structurally, stop before Temptation and
 report"), Temptation is NOT run this pass.** No follow-up retry within Reversal, per standing
 instruction.
+
+## Addendum — gate seam dry-fix (2026-09-21)
+
+Roman, after reviewing Reversal: "This sounds like a stale generic check is now fighting the more
+precise lane system... it needs to be aware of the richer schema." Diagnosed as a genuine gate
+blind spot, not a Reversal content failure — see `_scene2_gate_seam_widened_scan_trace_2026_09_21.md`
+for the full trace. `_detectPlannerFunctionGap`'s older, generic aftermath-vocabulary check now
+also reads `state_change_precondition`, `event_slots.action`/`exit_state`, and
+`aftermath_obligations` (newly carried into `stateChange` — it was requested in the schema but
+never parsed before this fix) — deliberately EXCLUDING `chosen_aftermath_lane` (an id, not prose)
+and `scene_function_instantiated` (the documented real gaming vector from retry 11). The
+lane-content check and posture-echo check are completely unchanged. Proven 7/7,
+`_scene2_gate_seam_widened_scan_control.mjs` — using Reversal's own real reply as the GREEN
+fixture (no longer rejected), retry 11's real reply as a no-regression RED fixture, and two
+synthetic adversarial fixtures proving the old check's "label only, no content" protection
+survives the widening.
+
+**Status**: dry fix only, no branch retry run. Reversal may now be retried or the fixed gate
+otherwise revalidated live — not yet done, pending separate authorization. Temptation remains
+paused until Reversal is confirmed clean under the corrected gate.

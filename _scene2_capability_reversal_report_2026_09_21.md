@@ -5,7 +5,20 @@ Authorized scope: Reversal card as the first of a two-card branch capability pla
 `--slot=reversal` invocation, all standing gates/fixes active, $0.45/8-request ceiling, no
 follow-up retry within this card.
 
-## Result: architecture correct, gate-rejected for a real, subtle, newly-isolated reason — NOT clean
+## Classification (updated 2026-09-21, after the gate-seam fix): a gate BLIND SPOT, not a branch content failure
+
+This was never a Reversal content failure. `local_objective_actor` was correct (Julian), the
+resolved lane was correct (`julian_jurisdiction_challenge`), and the lane's own content-signal
+check passed — the reply genuinely instantiated jurisdiction. The rejection came entirely from an
+older, narrower generic check that didn't read the fields where this reply's consequence language
+actually lived. That gap is now fixed (dry) — see
+`_scene2_gate_seam_widened_scan_trace_2026_09_21.md`. Re-running this exact same real reply against
+the fixed gate (proven in `_scene2_gate_seam_widened_scan_control.mjs`'s GREEN section) is no
+longer rejected. Reversal itself was never re-run — no branch retry was authorized alongside the
+gate fix; the sections below are preserved unedited as the original, honest record of what actually
+happened live.
+
+## Result (as originally recorded): architecture correct, gate-rejected for a real, subtle, newly-isolated reason — NOT clean
 
 Real cost: $0.0104359 (1 physical request — a single planner draw; the app's own bounded retry
 reused the cached objective, no second real call). The author never ran. Per Roman's own stop

@@ -8990,8 +8990,28 @@ window.config = window.config || {
       var combined = [sc.tactical_move, sc.event, sc.forces_choice].filter(Boolean).join(' \n ');
       if (!combined) return { rejected: false }; // nothing to judge — do not reject on absence of data itself
       var reasons = [];
-      var aftermathPresent = _SCENE_AFTERMATH_VOCAB_RX.test(combined);
-      if (!aftermathPresent) reasons.push('the planner\'s own proposed event/tactical-move/forces-choice shows no aftermath/procedure/consequence-movement signal, even though this continuation scene requires one (CONT_AFTERMATH-eligible) — rejected before the author call, not sent to be dramatized');
+      // GATE SEAM FIX (Roman 2026-09-21) — real finding: a real Reversal sample correctly chose
+      // lane julian_jurisdiction_challenge, correctly named Julian as local_objective_actor, and
+      // its tactical_move genuinely contained "jurisdiction" (satisfying the lane-specific
+      // signalRx check below) — yet this OLDER, generic vocabulary scan still rejected the plan,
+      // because the one word that would have satisfied it ("ruling") landed in
+      // state_change_precondition and event_slots.exit_state, two fields this scan never read.
+      // Roman: "If the Reversal plan chose the right lane, had Julian as actor, instantiated
+      // jurisdiction, and put the consequence language in valid adjacent fields, then the old
+      // aftermath-vocabulary scan should ... look at the full planner contract." Widened, for
+      // THIS check only, to also read the precondition and the structured event-slot fields (the
+      // planner's own mechanistic description of what changed) and aftermath_obligations (the
+      // self-reported concrete consequence content) — all real, load-bearing parts of the SAME
+      // accepted contract, not padding. Deliberately does NOT include chosen_aftermath_lane (just
+      // an id, not prose) or scene_function_instantiated — retry 11's own real finding was that
+      // field specifically carrying aftermath VOCABULARY while the underlying event stayed inert;
+      // including it here would reopen exactly the gap the lane system exists to close. The
+      // lane-content check and posture-echo check below are UNCHANGED — they still read only the
+      // narrow `combined` (the planner's actual proposed event), never this wider text, so a plan
+      // still cannot satisfy either of THOSE by padding out precondition/aftermath_obligations.
+      var extendedCombined = [combined, sc.precondition, sc.aftermathObligations, sc.slots && sc.slots.action, sc.slots && sc.slots.exitState].filter(Boolean).join(' \n ');
+      var aftermathPresent = _SCENE_AFTERMATH_VOCAB_RX.test(extendedCombined);
+      if (!aftermathPresent) reasons.push('the planner\'s own proposed event/tactical-move/forces-choice/precondition/event-slots/aftermath-obligations shows no aftermath/procedure/consequence-movement signal anywhere in the accepted contract, even though this continuation scene requires one (CONT_AFTERMATH-eligible) — rejected before the author call, not sent to be dramatized');
       // AFTERMATH LANE CHECK (Roman 2026-09-21) — real finding: retry 11 showed the planner's own
       // self-report and tactical_move borrowing institutional/procedural VOCABULARY while the actual
       // proposed event stayed inside the same in-ritual confrontation. A generic vocabulary check alone
@@ -100242,7 +100262,14 @@ function _buildAuthorFloorDirective(s) {
             // ACTOR / PRESSURE-SOURCE SEPARATION (Roman 2026-09-21) — telemetry only; not read by
             // any gate or validator yet. See the prompt's own comment (near the REQUIRED EVENT
             // FRAME block) for why these exist.
-            pressureSource: String(_scP.pressure_source || '').trim(), institutionalActor: String(_scP.institutional_actor || '').trim(), liPressureActor: String(_scP.li_pressure_actor || '').trim() };
+            pressureSource: String(_scP.pressure_source || '').trim(), institutionalActor: String(_scP.institutional_actor || '').trim(), liPressureActor: String(_scP.li_pressure_actor || '').trim(),
+            // GATE-SEAM FIX (Roman 2026-09-21) — aftermath_obligations was requested in the prompt
+            // (see the schema comment near "ALSO REQUIRED... aftermath_obligations") but never
+            // actually carried forward into stateChange — _detectPlannerFunctionGap's generic
+            // aftermath-vocabulary scan could never see it. Carried now so that scan can read it;
+            // see that function's own comment for scene_function_instantiated's DELIBERATE
+            // exclusion (a documented real gaming vector this session, not an oversight).
+            aftermathObligations: String(_scP.aftermath_obligations || '').trim() };
           // ACCOMPLISHED-EVENT CONTRACT: attach the causal skeleton to the transition so it rides on
           // state._priorSceneStateChange (available to the next scene's context + the commit gate) and gets logged.
           if (_aecOn && _scP) {
