@@ -286,3 +286,32 @@ dev environment has now caused two DISTINCT infra failures in two days; before a
 the `vercel dev` parent process itself likely needs a clean restart (separate authorization required
 — this is more invasive than the prior child-process cleanup, since it stops the actively-listening
 server).
+
+**Tenth addendum, retry #12 (2026-09-21, after the aftermath lane menu fix) — the planner chose a
+valid lane; its own content still did not instantiate it.** One real planner dispatch, HTTP 200
+first try, $0.0113159. `chosen_aftermath_lane: "lirael_defensive_path"` was populated with a valid
+id — real engagement with the new menu mechanism. But the real `state_change` ("The presiding
+Dohkar turns to Lirael and demands she state before the assembly whether she shaped Seren's wish")
+has the DOHKAR as actor, demanding an answer — not Lirael taking any of the lane's own defensive
+actions (submit to procedure, gather proof, conceal, flee, counter-accuse, force a procedural
+bind). The Planner Function Gate's new lane-content check rejected it correctly, naming the exact
+declared lane and exactly why the content doesn't back it. Reserved/aftermath schema again fully
+correct (4/4, 4/4) — that fix continues to hold. Retry mechanism reused the cached objective (no
+second real draw), so this is one real sample, correctly stopped resumable. Full account:
+`_scene2_capability_retry12_report_2026_09_21.md`. No follow-up retry run, per standing
+instruction.
+
+## Status update (after retry #12)
+
+Ten real capability samples now on record. Across the last two real samples (retries 11 and 12 —
+freeform, then lane-menu), the SAME underlying pattern recurs: the model satisfies whatever
+compliance surface it is given (aftermath vocabulary, then a valid lane id) while its actual
+proposed event stays anchored to the Dohkar-interrogates-Lirael beat the scene opens on. The lane
+menu did not solve the creative-jump problem; it made the same failure more precisely diagnosable
+— the gate now names exactly which lane was claimed and exactly why the content doesn't back it.
+Both gates (structural validator, Planner Function Gate, now including the lane-content check)
+continue to behave correctly against real model output, in both freeform and menu-constrained
+forms. This is two real samples in a row showing the same specific pattern, not proof the model
+can never leave the ritual moment — but it is a real, replicated signal that the remaining problem
+may be deeper than schema/menu compliance: getting the model to actually write a DIFFERENT event,
+not merely label one correctly.
