@@ -10,6 +10,14 @@ Real cost: $0.22553030 (8 physical requests, well under the $0.45 ceiling). The 
 both gates on the first draw; the author actually ran and produced a captured scene. This is the
 first time in this entire session's real retries that the author call succeeded end-to-end.
 
+**Status precision (Roman, 2026-09-21, after review): Boundary Scene 2 generation is
+architecturally successful — this sample is NOT final/approved prose.** It got through the whole
+chain (deterministic frame resolution, both gates, a real author dispatch) and produced a real,
+canon-consistent aftermath scene. The remaining reason it is not treated as finished content is
+named plainly in Q5 below: LI presence is weak. That gap is addressed dry, prompt-side, in a
+follow-up pass (`_scene2_li_presence_floor_trace_2026_09_21.md`) — this report is not revised
+retroactively; the gap stands as found.
+
 ## Evaluation against the five authorized questions
 
 **1. Did the deterministic resolver select the Boundary frame correctly?** Yes — confirmed

@@ -365,12 +365,40 @@ run, per standing instruction.
 
 ## Status update (after retry #13)
 
-Eleven real capability samples now on record; this is the first unqualified structural success —
-planner and author both completed, gates both passed for substantive reasons, real prose
-produced. The event-frame resolver architecture change is now confirmed live, not just dry-proven.
-Remaining open items, all narrower than anything found before this pass: (1) only the Boundary
+Eleven real capability samples now on record. **Boundary Scene 2 generation is architecturally
+successful — this sample is NOT final/approved prose.** Planner and author both completed, gates
+both passed for substantive reasons, real prose produced; the event-frame resolver architecture
+change is now confirmed live, not just dry-proven. It is not treated as finished content because
+of a real, named quality gap: LI presence is weak. Remaining open items: (1) only the Boundary
 card's frame (`family_accusation`) has been tested live — the other 4 slots
 (`temptation`/`silence`/`reversal`/`confession`) and the `defaultEventFrame` fallback remain
-untested against a real draw; (2) LI presence in this specific sample was thin — a real content
-quality gap, not an architecture or gate failure, worth a future dry pass of its own once more
-live samples confirm whether it recurs.
+untested against a real draw; (2) LI presence — addressed dry in the very next pass, see below.
+
+**Thirteenth addendum (2026-09-21, dry quality fix) — LI presence is now a required authoring
+axis for continuation scenes, not just a post-hoc detector.** Roman: "Julian still needs to exert
+pressure in it: a look, a line, a refusal to protect her, a procedural move, a charged silence
+that changes the room, something... The family accusation can be the public engine of the scene,
+but Julian must not disappear." A new LI PRESENCE FLOOR directive in
+`_buildCGScreenplayUserPrompt` (the real CG continuation author's prompt) requires at least one
+meaningful LI moment (dialogue, or a restrained-but-felt anchored reaction beat) whenever the LI
+is present in a continuation scene — explicitly NOT a dominance or rescue requirement, and inert
+for Scene 1 openers or any story with no LI configured. A new, complementary detector,
+`_detectLIPresenceFloor` (distinct from the earlier `_detectLIPresenceDominance`, which only
+judges beats that already mention the LI and needs >=3 of them to fire at all — too few for retry
+13's single Julian beat), is exposed for future QA/reporting use, not wired as a hard post-author
+reject gate in this pass (that would double author spend on every borderline scene — a separate
+decision, not requested here). Proven 15/15, `_scene2_li_presence_floor_control.mjs` — using
+retry 13's real captured scene as the red fixture (flagged: Julian present, no dialogue, no
+anchored beat) and two green fixtures (a restrained anchored beat; one dialogue line) each
+independently sufficient; full trace: `_scene2_li_presence_floor_trace_2026_09_21.md`. No live
+retry, no image calls, no prose rewrite — retry 13's real captured prose was not hand-edited.
+
+## Status update (after the LI presence floor fix)
+
+A future retry on this same Boundary input would be the first real test of whether the model,
+now given both a deterministic event frame AND an explicit LI-presence requirement, produces a
+scene that is both architecturally correct (moves into the resolved aftermath lane) AND romance-
+complete (the LI has at least one real moment). If Julian is still inert on a fresh draw, that
+would distinguish "the directive doesn't change model behavior" (a prompt-fidelity question, like
+the earlier lane-vocabulary gap) from "this was one draw's variance" — either way, more
+informative than treating retry 13 as finished.

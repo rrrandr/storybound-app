@@ -8713,6 +8713,51 @@ window.config = window.config || {
   }
   window._detectLIPresenceDominance = _detectLIPresenceDominance;
 
+  // ── LI PRESENCE FLOOR (Roman 2026-09-21) ──
+  // A DIFFERENT axis from _detectLIPresenceDominance above, which only evaluates beats that
+  // ALREADY mention the LI (and requires >=3 of them before it can even fire — it judges the
+  // QUALITY of existing LI beats, never their ABSENCE). Real finding this closes: retry 13, the
+  // first Scene 2 sample to reach a captured author output under the deterministic event-frame
+  // resolver, produced a genuinely successful aftermath scene (family accusation, real dialogue,
+  // a real end choice) — but Julian appears in exactly ONE beat ("Julian has not moved.", no
+  // anchor vocabulary, no dialogue) — too FEW LI-subject beats for _detectLIPresenceDominance to
+  // even evaluate (minBeats default 3), yet the actual romance-quality problem (the LI barely
+  // exists in the scene at all) is real. Roman: "Julian still needs to exert pressure in it: a
+  // look, a line, a refusal to protect her, a procedural move, a charged silence that changes the
+  // room, something... The family accusation can be the public engine of the scene, but Julian
+  // must not disappear." This does NOT require LI dominance or rescue — reuses the SAME, already-
+  // proven _LI_PRESENCE_ANCHOR_RX vocabulary (restrained-but-felt pressure counts as meaningful);
+  // a single anchored beat or one dialogue line is enough. Generic, reject-only, never rewrites:
+  // a no-op when the LI is not configured (opts.liName empty) or not actually present in the
+  // scene (checked against phases/visualState/beats, not assumed) — "genuinely irrelevant" scenes
+  // are unaffected.
+  function _detectLIPresenceFloor(screenplay, opts) {
+    try {
+      opts = opts || {};
+      var liName = String(opts.liName || '').trim();
+      if (!liName) return { flagged: false, liPresent: false, reason: null }; // no LI configured — nothing to check
+      var esc = liName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      var mentionRx = new RegExp('\\b' + esc + '\\b', 'i');
+      var subjectRx = new RegExp('^(?:' + esc + "(?:'s)?|He|His)\\b", 'i');
+      var beats = (screenplay && Array.isArray(screenplay.beats)) ? screenplay.beats : [];
+      var phasesPresent = !!(screenplay && Array.isArray(screenplay.phases) && screenplay.phases.some(function (p) { return p && Array.isArray(p.characters_present) && p.characters_present.some(function (c) { return mentionRx.test(String(c || '')); }); }));
+      var visualPresent = !!(screenplay && screenplay.visualState && Array.isArray(screenplay.visualState.other_characters_present) && screenplay.visualState.other_characters_present.some(function (c) { return mentionRx.test(String((c && c.name) || '')); }));
+      var beatMention = beats.some(function (b) { return b && typeof b.text === 'string' && mentionRx.test(b.text); });
+      var liPresent = phasesPresent || visualPresent || beatMention;
+      if (!liPresent) return { flagged: false, liPresent: false, reason: null }; // absent/irrelevant this scene — no requirement
+      var hasDialogue = beats.some(function (b) { return b && b.kind === 'dialogue' && String(b.speaker || '').trim().toLowerCase() === liName.toLowerCase(); });
+      var hasAnchoredBeat = beats.some(function (b) { return b && typeof b.text === 'string' && subjectRx.test(b.text.trim()) && _LI_PRESENCE_ANCHOR_RX.test(b.text); });
+      var flagged = !hasDialogue && !hasAnchoredBeat;
+      var result = {
+        flagged: flagged, liPresent: true, hasDialogue: hasDialogue, hasAnchoredBeat: hasAnchoredBeat,
+        reason: flagged ? (liName + ' is present in the scene but has no dialogue line and no anchored/felt reaction beat — at least one meaningful moment of pressure, response, restraint, or refusal is required when the LI is present, even if another party is the scene\'s public engine') : null
+      };
+      try { if (flagged) console.warn('[LI-PRESENCE:FLOOR] ' + result.reason); } catch (_) {}
+      return result;
+    } catch (e) { return { flagged: false, error: e && e.message }; }
+  }
+  window._detectLIPresenceFloor = _detectLIPresenceFloor;
+
   // ── LI PRESENCE REPAIR (Roman 2026-09-20) ──
   // Bounded, reject-only prose repair for the LI-presence-dominance finding
   // (_scene2_li_presence_quality_note_2026_09_20.md /
@@ -226253,6 +226298,22 @@ No text, no watermark, no UI elements, share-ready.`;
         _stDensityLine = '';
     }
     if (_stDensityLine) lines.push(_stDensityLine);
+    // LI PRESENCE FLOOR (Roman 2026-09-21) — real finding: retry 13, the first Scene 2 sample to
+    // reach a captured author output under the deterministic event-frame resolver, produced a
+    // genuinely successful aftermath scene (family accusation, real dialogue, a real end choice)
+    // — but Julian appeared in only ONE beat ("Julian has not moved."), no dialogue, no anchored
+    // reaction, no procedural or emotional contribution. Roman: "Julian still needs to exert
+    // pressure in it: a look, a line, a refusal to protect her, a procedural move, a charged
+    // silence that changes the room, something... The family accusation can be the public engine
+    // of the scene, but Julian must not disappear." This is NOT a requirement that the LI
+    // dominate the scene or rescue the protagonist — see _detectLIPresenceFloor (app.js, near
+    // _detectLIPresenceDominance) for the matching reject-only detector reusing the same
+    // restrained-but-felt anchor vocabulary. Generic: fires only when a love interest name is
+    // configured AND this is a continuation scene (sceneIndex > 0) — a genuine Scene 1 opener, or
+    // any story with no LI configured, renders nothing here.
+    if (liName && sceneIndex > 0) {
+      lines.push('LI PRESENCE FLOOR (HARD — Roman 2026-09-21): if ' + liName + ' is present in this scene, ' + liName + ' MUST have at least ONE meaningful moment that affects the scene — a line of dialogue, a visible/felt emotional reaction, a refusal, an intervention, a procedural move, or a charged silence the room reacts to. ' + liName + ' may remain restrained and let another party (family, an authority, an antagonist) be the scene\'s public engine — this is NOT a requirement that ' + liName + ' dominate the scene, rescue the protagonist, or speak more than once. It IS a requirement that ' + liName + ' never simply stand in the room doing nothing while everyone else acts — a bare "' + liName + ' has not moved" or "' + liName + ' says nothing" with no felt reaction underneath it is NOT enough on its own. If ' + liName + ' is not actually present in this scene, this requirement does not apply.');
+    }
     // ── LENGTH CEILING (Roman 2026-06-13) — Scene 1 was running 7600c+ ──
     // Generation-time upper bound for setup-pace short/fling/default tiers so the
     // scene is ONE charged detonation, not an exhaustive inventory. Backstopped by
