@@ -1,4 +1,4 @@
-# Continuation Capability Retry — Future Authorization Sheet (2026-09-20, eighth revision)
+# Continuation Capability Retry — Future Authorization Sheet (2026-09-20, eighth revision + harness fix note)
 
 **Not authorized. Not run. No provider or image call has been made preparing this sheet.** This
 describes a proposed, separate, later paid operation for when you choose to authorize it.
@@ -9,6 +9,20 @@ author spend, see `_scene2_capability_retry5_report_2026_09_20.md`) and Roman's 
 skeleton."** The planner contract itself changed this pass — a REQUIRED SCENE FUNCTION frame now
 renders before the reader's posture, and a new posture-echo check catches a plan that paraphrases
 the raw Say/Do text instead of translating it. See `_scene2_required_scene_function_trace_2026_09_20.md`.
+
+**Post-revision addendum:** retry #6 (same day) came back inconclusive — a real 502 from the
+Grok-primary planner tier, $0 spend, no capability evidence either way
+(`_scene2_capability_retry6_report_2026_09_20.md`). Traced dry, no provider calls: the real bug was
+in the TEST HARNESS, not production code. `_e2e_network_gate.mjs`'s `waitForSettlement` returned the
+instant the first tracked call settled, before the app's own correctly-implemented fallback/retry
+logic had a chance to issue its next request — so both retry 5 (the gate's bounded retry) and retry
+6 (the tier fallback after the 502) may have been silently cut off before they finished, not
+genuinely single-shot outcomes. Fixed (`_e2e_network_gate.mjs`, quiet-period settlement check,
+commit `cc503c04`) — full control suite re-run green, 104/104, no behavior change for any existing
+control, only timing. **This means retries 5 and 6 may understate what the app actually did**;
+report language calling them single-attempt outcomes should be read with that caveat. The next
+retry, whenever authorized, will be the first one run against a harness that can actually see a
+multi-tier attempt through to its real conclusion.
 
 ## What this is testing
 
