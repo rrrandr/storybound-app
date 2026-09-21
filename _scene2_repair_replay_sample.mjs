@@ -127,6 +127,47 @@ const PHASE_CEILINGS_USD = { 'scene2-planner': 0.05, 'scene2-author': 0.40 };
 const COMBINED_CEILING_USD = 0.45;
 const PHYSICAL_REQUEST_CEILING = 8;
 
+// LOG RECONCILIATION SAFETY NET (Roman 2026-09-21, fourth harness repair) — real incident: retry
+// #15 dispatched a real author call that settled with a genuine 200 and real content (confirmed
+// via the app's own console log AND the raw persisted log), yet this script's own in-memory
+// tracking (gate.trackedCalls()) reported it as `status: null` and this script gave up believing
+// the author "never settled" — undercounting real spend by ~$0.085 and never writing
+// scene2_raw_response.txt. Root cause traced to the network gate's response-correlation logic
+// (fixed separately in _e2e_network_gate.mjs — see its own comment). This function is an
+// INDEPENDENT second line of defense, specific to this script: LOG_FILE (this run's own persisted
+// JSONL) is the one guaranteed-complete record — every dispatch and every response is appended the
+// INSTANT it is observed, regardless of in-memory correlation. Before this script ever concludes
+// "never settled," it re-reads that file and reconciles dispatch/response pairs itself (FIFO within
+// each url — the order responses are actually observed to arrive in), independent of whatever the
+// live in-memory gate view showed. If the persisted log has a real, settled record the in-memory
+// view missed, THAT record — and its real cost — is used instead of giving up. Proven,
+// _e2e_network_gate_response_correlation_control.mjs.
+function reconcileFromPersistedLog(roleTag) {
+  let events;
+  try { events = fs.readFileSync(LOG_FILE, 'utf8').trim().split('\n').filter(Boolean).map((l) => JSON.parse(l)); }
+  catch (_) { return []; }
+  const relevant = events.filter((e) => e.roleTag === roleTag && e.real === true && (e.kind === 'dispatch' || e.kind === 'response'));
+  const pendingByUrl = {};
+  const matched = [];
+  relevant.forEach((e) => {
+    if (e.kind === 'dispatch') {
+      (pendingByUrl[e.url] = pendingByUrl[e.url] || []).push({ dispatch: e, response: null });
+    } else if (e.kind === 'response') {
+      const q = pendingByUrl[e.url] || [];
+      const slot = q.find((s) => !s.response); // FIFO: the oldest still-unclaimed dispatch for this url
+      if (slot) slot.response = e;
+    }
+  });
+  Object.values(pendingByUrl).forEach((q) => q.forEach((s) => matched.push(s)));
+  return matched.map(({ dispatch, response }) => {
+    const body = dispatch.requestBody || {};
+    const model = body.model || body.preferredModel || null;
+    const usage = response && response.responseBody && response.responseBody.usage;
+    const costInfo = model ? realCost(model, usage) : { cost: null, note: 'model not identified in request body', source: null };
+    return { url: dispatch.url, model, maxTokens: body.max_tokens != null ? body.max_tokens : null, isAuthorCall: body.max_tokens === 8000, isSuspectedScaffold: body.max_tokens === 2000, status: response ? response.status : null, networkError: null, usage: usage || null, costUsd: costInfo.cost, costNote: costInfo.note, costSource: costInfo.source, elapsedMs: response && response.elapsedMs != null ? Math.round(response.elapsedMs) : null };
+  });
+}
+
 function summarizeTracked(c) {
   const body = c.requestBody || {};
   const model = body.model || body.preferredModel || (c.responseBody && c.responseBody._orchestration && c.responseBody._orchestration.model) || null;
@@ -285,18 +326,32 @@ function summarizeTracked(c) {
   // _harness_tier_log_cross_check_control.mjs.
   await gate.waitForSettlement('scene2-structural-author', { watchdogMs: 15000, expectedTierLogRole: 'scenePlanner', onWatchdog: (ms) => console.log('  ...still pending, ' + Math.round(ms / 1000) + 's — browser stays open, nothing aborted') });
 
-  const structuralAuthorCalls = gate.trackedCalls('scene2-structural-author').map(summarizeTracked);
-  const structuralAuthorCostUsd = structuralAuthorCalls.reduce((s, c) => s + (c.costUsd || 0), 0);
+  let structuralAuthorCalls = gate.trackedCalls('scene2-structural-author').map(summarizeTracked);
+  let structuralAuthorCostUsd = structuralAuthorCalls.reduce((s, c) => s + (c.costUsd || 0), 0);
   runningCostUsd += structuralAuthorCostUsd;
   console.log('  scene2-structural-author call(s), in dispatch order:');
   console.log('  ' + JSON.stringify(structuralAuthorCalls.map((c) => ({ model: c.model, maxTokens: c.maxTokens, isAuthorCall: c.isAuthorCall, isSuspectedScaffold: c.isSuspectedScaffold, status: c.status, costUsd: c.costUsd, costNote: c.costNote }))));
   if (structuralAuthorCalls.some((c) => c.isSuspectedScaffold)) {
     console.warn('  ⚠ a scaffold-shaped call (max_tokens: 2000) fired despite seeding state.cgScaffold — the suppression did not work as designed. Disclosed, not silently absorbed.');
   }
-  const authorCall = structuralAuthorCalls.find((c) => c.isAuthorCall && c.status === 200);
-  phaseReports.scene2StructuralAuthor = { calls: structuralAuthorCalls, costUsd: structuralAuthorCostUsd };
+  let authorCall = structuralAuthorCalls.find((c) => c.isAuthorCall && c.status === 200);
+  let reconciledFromLog = false;
   if (!authorCall) {
-    await safeExit(2, 'the real Scene 2 author call (max_tokens: 8000) never settled with a 200 response');
+    console.warn('  ⚠ in-memory tracking shows no settled author call — cross-checking the persisted log (' + LOG_FILE + ') before giving up...');
+    const reconciled = reconcileFromPersistedLog('scene2-structural-author');
+    const reconciledAuthor = reconciled.find((c) => c.isAuthorCall && c.status === 200);
+    if (reconciledAuthor) {
+      console.warn('  ✓ RECOVERED from the persisted log: the author call DID settle (model=' + reconciledAuthor.model + ', status=' + reconciledAuthor.status + ', cost=$' + (reconciledAuthor.costUsd != null ? reconciledAuthor.costUsd.toFixed(6) : '?') + ') — in-memory tracking missed it.');
+      structuralAuthorCalls = reconciled;
+      structuralAuthorCostUsd = reconciled.reduce((s, c) => s + (c.costUsd || 0), 0);
+      runningCostUsd = structuralAuthorCostUsd; // this phase is the only contributor to runningCostUsd so far
+      authorCall = reconciledAuthor;
+      reconciledFromLog = true;
+    }
+  }
+  phaseReports.scene2StructuralAuthor = { calls: structuralAuthorCalls, costUsd: structuralAuthorCostUsd, reconciledFromLog };
+  if (!authorCall) {
+    await safeExit(2, 'the real Scene 2 author call (max_tokens: 8000) never settled with a 200 response (checked both in-memory tracking and the persisted log)');
     return;
   }
 

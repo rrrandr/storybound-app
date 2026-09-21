@@ -128,7 +128,9 @@ export async function installFailClosedNetworkGate(page, opts) {
     if (real) {
       if (activePhase && activePhase.count < activePhase.ceiling) {
         activePhase.count++;
-        const rec = { roleTag: activePhase.roleTag, real: true, url, requestBody: parseBody(req), status: null, responseBody: null, networkError: null, at: Date.now(), atMono: performance.now(), settledAt: null, settledAtMono: null, elapsedMs: null };
+        // `request: req` (Roman 2026-09-21, fourth repair — see the correlation-fix comment on
+        // page.on('response') below for the real incident this closes).
+        const rec = { roleTag: activePhase.roleTag, real: true, url, request: req, requestBody: parseBody(req), status: null, responseBody: null, networkError: null, at: Date.now(), atMono: performance.now(), settledAt: null, settledAtMono: null, elapsedMs: null };
         tracked.push(rec);
         calls.push({ url, matched: true, real: true, roleTag: activePhase.roleTag, at: Date.now() });
         // PERSIST IMMEDIATELY — before route.continue() releases the request. This is the record
@@ -206,12 +208,34 @@ export async function installFailClosedNetworkGate(page, opts) {
     route.fulfill({ status: fulfillStatus, contentType: 'application/json', body: body });
   });
 
+  // CORRELATION FIX (Roman 2026-09-21, fourth repair). Real incident: Scene 2 retry #15 dispatched
+  // a real author call (max_tokens: 8000) that the app's own console log AND the raw persisted log
+  // both prove settled with a real 200 response and real content — yet this script's own report
+  // recorded it as `status: null, "no usage block returned"` and exited via the "never settled"
+  // path, undercounting real spend by ~$0.085. Root cause: this handler used to match a response
+  // to its dispatch record by URL STRING alone (`r.url === url`), taking the "most recently
+  // dispatched, still-unsettled" record for that URL — a LIFO heuristic that silently
+  // misattributes when TWO OR MORE requests to the SAME URL (e.g. two /api/proxy calls — the
+  // scene-spine planner and the Scene 2 author both use it) are in flight concurrently and their
+  // responses arrive out of dispatch order: the wrong (also-unsettled) record gets marked settled
+  // with someone else's response, and the TRUE originating dispatch is left permanently unsettled
+  // even though its own real response genuinely arrived. Fix: match by Playwright's own REQUEST
+  // OBJECT IDENTITY (`response.request()` is documented to return the exact same Request object
+  // captured at dispatch time via `route.request()`) — unambiguous even under concurrent same-URL
+  // traffic, no ordering assumption required. The URL check is kept as a defense-in-depth
+  // secondary constraint, not the primary discriminator. Proven,
+  // _e2e_network_gate_response_correlation_control.mjs.
   page.on('response', async (response) => {
     try {
       const url = response.url();
       let pathname; try { pathname = new URL(url).pathname; } catch (_) { pathname = url; }
       if (!matchesAllowedReal(pathname)) return; // stub settlement is handled inline in the route handler above
-      const rec = [...tracked].reverse().find((r) => r.real === true && r.url === url && !isSettled(r));
+      const respReq = response.request();
+      let rec = tracked.find((r) => r.real === true && r.request === respReq && !isSettled(r));
+      // Fallback for the (expected-rare) case where Playwright's request object identity doesn't
+      // carry through — e.g. a redirect chain creates a new Request. Falls back to the OLD
+      // URL-based heuristic rather than silently dropping the response.
+      if (!rec) rec = [...tracked].reverse().find((r) => r.real === true && r.url === url && !isSettled(r));
       if (!rec) return;
       rec.status = response.status();
       try { rec.responseBody = await response.json(); } catch (_) { rec.responseBody = null; }
@@ -225,7 +249,10 @@ export async function installFailClosedNetworkGate(page, opts) {
       const url = request.url();
       let pathname; try { pathname = new URL(url).pathname; } catch (_) { pathname = url; }
       if (!matchesAllowedReal(pathname)) return;
-      const rec = [...tracked].reverse().find((r) => r.real === true && r.url === url && !isSettled(r));
+      // Same identity-based correlation fix as page.on('response') above — see that handler's
+      // comment for the real incident this closes.
+      let rec = tracked.find((r) => r.real === true && r.request === request && !isSettled(r));
+      if (!rec) rec = [...tracked].reverse().find((r) => r.real === true && r.url === url && !isSettled(r));
       if (!rec) return;
       const failure = request.failure();
       rec.networkError = (failure && failure.errorText) || 'requestfailed (no errorText available)';

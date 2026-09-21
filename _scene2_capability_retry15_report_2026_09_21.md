@@ -15,10 +15,16 @@ response body — the script's own higher-level call-tracking simply failed to c
 real content was recovered directly from that raw log (not reconstructed, not hand-written) and
 saved to `scene2_raw_response_retry15.txt`.
 
-**Corrected total real cost: $0.0955956** ($0.0108684 planner + $0.08472715 author, per the
-provider's own billed ticks in the raw log) — not the $0.0108684 the script's own `report.json`
-claims. Still well under the $0.45 ceiling. This harness bug is a genuine, separate finding from
-the content evaluation below — see "Harness bug" section.
+**Fully corrected total real cost: $0.13614335** — not the $0.0108684 the script's own
+`report.json` claims. This figure was itself corrected TWICE: a first pass (immediately after this
+run) found $0.0955956 by manually recovering the planner + author calls from the raw log; building
+the dry regression control for this fix (`_e2e_network_gate_response_correlation_control.mjs`)
+then surfaced that TWO MORE real calls that run — a `ministral-8b-2512` call ($0.0006303) and a
+`gpt-4o` call ($0.0399175), both real post-processing steps — were ALSO missed by the same
+in-memory tracking gap. The complete, reconciled total (4 real calls: planner $0.0108684 + author
+$0.08472715 + ministral $0.0006303 + gpt-4o $0.0399175) is $0.13614335, still well under the $0.45
+ceiling. This harness bug is a genuine, separate finding from the content evaluation below — see
+"Harness bug" section.
 
 ## Evaluation against the six authorized questions
 
@@ -82,18 +88,20 @@ success — but it is a real, specific craft gap, not glossed over.
 `_scene2_repair_replay_sample.mjs`'s own call-tracking failed to correlate the author call's real
 200 response — recording `status: null` and exiting via its "never settled" path even though the
 response existed, in full, in the same run's raw network log. This is a **capture bug in the
-replay script**, not evidence about the app, the model, or any of this session's prompt/gate
-changes. Practical consequences of this bug: (a) the script's own cost total under-reported real
-spend by $0.0847; (b) `scene2_raw_response.txt` was never written automatically; (c) recovering
-the real content required manually reading the raw `run_*.jsonl` log entry-by-entry rather than
-reading the script's own output. Not fixed in this pass — no dry work was authorized here beyond
-running and reporting; flagged as a real candidate for a future pass, since it could cause a
-genuinely successful (and billed) generation to be misreported as a failure.
+replay script/network-gate layer**, not evidence about the app, the model, or any of this
+session's prompt/gate changes. Practical consequences of this bug: (a) the script's own cost total
+under-reported real spend, initially by $0.0847, then found to be $0.1253 once two more real calls
+were located; (b) `scene2_raw_response.txt` was never written automatically; (c) recovering the
+real content required manually reading the raw `run_*.jsonl` log entry-by-entry rather than
+reading the script's own output. **Fixed in a follow-up dry pass** — see
+`_scene2_repair_replay_sample_harness_fix_trace_2026_09_21.md` — root-caused to a URL-string-only
+response correlation bug in `_e2e_network_gate.mjs` (fixed to match by Playwright request-object
+identity) plus a persisted-log reconciliation safety net added to the replay script itself.
 
 ## Cost
 
-$0.0955956 real total (corrected from the script's own undercount) — 2 physical requests, well
-under the $0.45 ceiling.
+$0.13614335 real total (fully corrected — see above) — 4 real calls, well under the $0.45
+ceiling.
 
 ## Artifacts
 

@@ -457,11 +457,12 @@ PRESENCE FLOOR directive. LI presence itself remains untested against any real c
 retry 13; that question and this one are now both live for the next authorized retry.
 
 **Sixteenth addendum, retry #15 (2026-09-21, quality retry) — the best real sample yet, AND a
-real harness capture bug.** Corrected total real cost $0.0955956 (the replay script's own
-`report.json` undercounted this at $0.0108684 — its call-tracking failed to correlate the
+real harness capture bug.** Fully corrected total real cost **$0.13614335** (the replay script's
+own `report.json` undercounted this at $0.0108684 — its call-tracking failed to correlate the
 author's real 200 response, recorded `status: null`, and exited believing the scene was never
-captured; the real response existed in full in the same run's raw network log and was recovered
-from there, not reconstructed). On content: `local_objective_actor: "Lirael"`,
+captured; a first recovery pass found $0.0955956 from the raw log, then building the regression
+control for the harness fix below surfaced two MORE real calls — $0.0006303 ministral +
+$0.0399175 gpt-4o — the same gap had also missed). On content: `local_objective_actor: "Lirael"`,
 `pressure_source: "Seren's family"` — the actor/pressure-source fix worked cleanly on the first
 real draw since it was built. Both gates passed. The author produced a full scene preserving
 continuity/canon (mouth-band, The Answer, the Dohkar's claimed authority, no reserved id
@@ -474,14 +475,32 @@ asked for, without hijacking the family-accusation scene. One small, honestly-no
 beat 9's dialogue narration implies a family member speaks ("one says") but its structured
 speaker tag says "the presiding Dohkar" — a minor internal inconsistency, not gate-relevant. Full
 account: `_scene2_capability_retry15_report_2026_09_21.md`. No follow-up retry run, per standing
-instruction. The harness capture bug is flagged, not fixed, in this pass.
+instruction.
 
-## Status update (after retry #15)
+**Seventeenth addendum (2026-09-21, dry harness fix) — the capture bug is fixed, not just
+flagged.** Root-caused to `_e2e_network_gate.mjs`'s response-correlation logic matching a settled
+response to its dispatch by URL STRING alone (a LIFO "most recent unsettled" heuristic), which can
+misattribute when multiple requests to the same URL (e.g. planner + author, both via `/api/proxy`)
+are in flight concurrently and their responses arrive out of order. Fixed to match by Playwright's
+own request-object identity — unambiguous regardless of ordering; benefits every real-browser
+control in the repo, not just this one script. A second, independent safety net was added directly
+to `_scene2_repair_replay_sample.mjs`: before ever concluding "never settled," it now cross-checks
+its own persisted JSONL log (guaranteed-complete by construction — every dispatch/response is
+appended the instant it's observed) and reconciles dispatch/response pairs itself; if the log has a
+real settled record the in-memory view missed, that record and its real cost are used instead of
+giving up. Proven 11/11, `_e2e_network_gate_response_correlation_control.mjs` — a synthetic
+concurrent-request race proving the general fix, plus retry 15's own real, unmodified persisted
+log fed through the new reconciliation logic, correctly recovering all 4 real calls and the fully
+corrected $0.13614335 total. Full trace:
+`_scene2_repair_replay_sample_harness_fix_trace_2026_09_21.md`. No provider or image calls, no
+story retry. Retry 15's real captured prose was not touched — only its report's cost figure and
+status language were corrected.
 
-Thirteen real capability samples now on record. This is the strongest sample yet — architecture,
+## Status update (after the harness fix)
+
+Thirteen real capability samples now on record; retry 15 remains the strongest — architecture,
 actor/pressure-source separation, and LI presence all held together on one real draw, closing
 every specific gap named across retries 11-14. It remains ONE sample, not proof of reliability
-across draws. Separately, `_scene2_repair_replay_sample.mjs` has a real call-tracking bug that
-can misreport a genuinely successful, billed generation as a failure — worth a dry fix before the
-next retry, since it both under-reports real spend and risks losing recoverable content to a
-false "never settled" exit.
+across draws. The run-summary accounting bug that made retry 15 hard to trust is now fixed and
+dry-proven; the next authorized paid retry (on Boundary or any other card) can be trusted to
+report its real settlement and real cost correctly.
