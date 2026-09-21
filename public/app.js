@@ -8947,14 +8947,34 @@ window.config = window.config || {
       var reasons = [];
       var aftermathPresent = _SCENE_AFTERMATH_VOCAB_RX.test(combined);
       if (!aftermathPresent) reasons.push('the planner\'s own proposed event/tactical-move/forces-choice shows no aftermath/procedure/consequence-movement signal, even though this continuation scene requires one (CONT_AFTERMATH-eligible) — rejected before the author call, not sent to be dramatized');
+      // AFTERMATH LANE CHECK (Roman 2026-09-21) — real finding: retry 11 showed the planner's own
+      // self-report and tactical_move borrowing institutional/procedural VOCABULARY while the actual
+      // proposed event stayed inside the same in-ritual confrontation. A generic vocabulary check alone
+      // is gameable by that mismatch. When the row declares a lane menu (opts.aftermathLanes), this
+      // replaces "did the planner invent SOME aftermath event" with "did the planner choose ONE of the
+      // required lanes AND does its own proposed content actually reflect that lane" — two independent,
+      // reject-only checks. Generic: inert when opts.aftermathLanes is absent/empty (any scene/starter
+      // without a declared lane menu behaves exactly as before this addition).
+      var laneList = Array.isArray(opts.aftermathLanes) ? opts.aftermathLanes : null;
+      var chosenLaneId = null;
+      if (laneList && laneList.length) {
+        chosenLaneId = String(sc.chosenAftermathLane || '').trim();
+        var laneMatch = null;
+        for (var _li = 0; _li < laneList.length; _li++) { if (laneList[_li] && laneList[_li].id === chosenLaneId) { laneMatch = laneList[_li]; break; } }
+        if (!chosenLaneId || !laneMatch) {
+          reasons.push('the planner declared no chosen_aftermath_lane (or one outside the required lane menu: ' + laneList.map(function (l) { return l.id; }).join(', ') + ') — this scene requires selecting and instantiating exactly one listed lane, not inventing an aftermath event from scratch');
+        } else if (laneMatch.signalRx && !laneMatch.signalRx.test(combined)) {
+          reasons.push('the planner declared chosen_aftermath_lane="' + chosenLaneId + '" but its own proposed event/tactical-move/forces-choice does not actually instantiate that lane\'s content — a declared lane label alone is not enough; the event itself must move into it, not stay inside the same ritual/interrogation moment under a borrowed label');
+        }
+      }
       var echoMatch = null;
       if (opts.posture && (opts.posture.action || opts.posture.dialogue)) {
         var postureText = [opts.posture.action, opts.posture.dialogue].filter(Boolean).join(' ');
         echoMatch = _postureEchoBigram(postureText, combined);
         if (echoMatch) reasons.push('the planner\'s proposed event echoes the reader\'s raw Say/Do text almost verbatim (shared phrase: "' + echoMatch + '") rather than treating it as posture modulating the required scene function — the central event should be the planner\'s OWN translation, not a restatement of the reader\'s line');
       }
-      if (!reasons.length) return { rejected: false, checkedText: combined };
-      return { rejected: true, reason: reasons.join(' | '), reasons: reasons, checkedText: combined, echoMatch: echoMatch };
+      if (!reasons.length) return { rejected: false, checkedText: combined, chosenAftermathLane: chosenLaneId };
+      return { rejected: true, reason: reasons.join(' | '), reasons: reasons, checkedText: combined, echoMatch: echoMatch, chosenAftermathLane: chosenLaneId };
     } catch (e) { return { rejected: false, error: e && e.message }; }
   }
   window._detectPlannerFunctionGap = _detectPlannerFunctionGap;
@@ -99724,6 +99744,17 @@ function _buildAuthorFloorDirective(s) {
             if (_oe.sceneFunction) {
               _ob.push('REQUIRED SCENE FUNCTION (HARD — instantiate this FIRST; the reader\'s posture below modulates HOW you enter it, it does NOT replace it): ' + _oe.sceneFunction);
             }
+            // AFTERMATH LANE MENU (Roman 2026-09-21) — real finding: even with the REQUIRED SCENE
+            // FUNCTION frame above, a real live sample (retry 11) chose an event that stayed inside the
+            // same in-ritual confrontation while its own self-report CLAIMED institutional pressure —
+            // freeform "instantiate this" still let the planner invent an event and relabel it. This
+            // block replaces "invent an aftermath event" with "choose and instantiate ONE of these
+            // lanes" — a constrained menu, not hand-authored prose. Generic: renders only when the row
+            // declares aftermathLanes; inert otherwise.
+            if (_oe.aftermathLanes && _oe.aftermathLanes.length) {
+              _ob.push('REQUIRED AFTERMATH LANE MENU (HARD — this REPLACES "invent any aftermath event": choose EXACTLY ONE of these lanes and instantiate IT as this scene\'s central event. Do not invent a lane outside this list. Satisfying this by staying inside the same ritual/interrogation moment the AFTERMATH TRUTHS below already establish — even dressed in institutional/procedural VOCABULARY — is NOT a valid instantiation; the event itself must actually move into the chosen lane. The reader\'s posture below changes HOW the chosen lane plays out — who pushes back, what tone, what she risks — it does NOT let you swap the lane for another in-ritual accusation beat):\n'
+                + _oe.aftermathLanes.map(function (l) { return '  • [' + l.id + '] ' + l.label; }).join('\n'));
+            }
             if (_posture) {
               _ob.push('READER\'S RECORDED CHOICE at the end of the opening: ' + (_posture.label || '(none recorded)'));
               _ob.push('READER\'S SAY/DO for this scene (verbatim — this is the reader\'s ANGLE into the required scene function above: defiance, seduction, evasion, appeal to procedure, counter-accusation, etc. It is NOT the source of the scene\'s central event.): action: ' + JSON.stringify(_posture.action) + ' · dialogue: ' + JSON.stringify(_posture.dialogue));
@@ -99732,7 +99763,7 @@ function _buildAuthorFloorDirective(s) {
               // nothing previously told this planner not to read it as a literal instruction for the next
               // scene's physical event. "burn for me, as the First-Favored did for the old gods" is desire,
               // not a request for an actual immolation ritual; the planner took it literally anyway.
-              _ob.push('REGISTER (HARD): the Say/Do above is the reader\'s emotional/rhetorical posture — it tells you what she wants, fears, or is posturing about, and HOW she carries herself into the required scene function above. It is NEVER a literal instruction to invent a new physical event, ritual, mechanic, or environmental fact — even when it uses concrete or violent imagery — and it is NEVER a substitute for the required scene function: do not build state_change by paraphrasing or restating this text. Ground state_change in the REQUIRED SCENE FUNCTION, WORLD TRUTHS, and AFTERMATH TRUTHS; use the posture only to choose WHO acts and HOW, never WHAT the scene\'s job is.');
+              _ob.push('REGISTER (HARD): the Say/Do above is the reader\'s emotional/rhetorical posture — it tells you what she wants, fears, or is posturing about, and HOW she carries herself into the required scene function above. It is NEVER a literal instruction to invent a new physical event, ritual, mechanic, or environmental fact — even when it uses concrete or violent imagery — and it is NEVER a substitute for the required scene function: do not build state_change by paraphrasing or restating this text. Ground state_change in the REQUIRED SCENE FUNCTION' + (_oe.aftermathLanes && _oe.aftermathLanes.length ? ', the chosen AFTERMATH LANE,' : ',') + ' WORLD TRUTHS, and AFTERMATH TRUTHS; use the posture only to choose WHO acts and HOW, never WHAT the scene\'s job is' + (_oe.aftermathLanes && _oe.aftermathLanes.length ? ', and never WHICH lane is chosen' : '') + '.');
             }
             try { var _L = (typeof _relLedger === 'function') ? _relLedger(false) : null; var _ents = (_L && _L.entities) || {}; var _rl = (_oe.roster || []).map(function (r) { var e = _ents[r.ref]; var cp = (_L && _L.cplus && _L.cplus.rows && _L.cplus.rows[r.ref]) || null; return r.label + (e && e.anchorRole === 'li' ? ' (love interest)' : '') + (cp && cp.last_cplus_scene_ordinal != null ? ' — last Character+ scene ' + cp.last_cplus_scene_ordinal : ''); });
               if (_rl.length) _ob.push('ROSTER — who CAN be present (name only these; choose who IS): ' + _rl.join(' · ')); } catch (_) {}
@@ -99777,6 +99808,12 @@ function _buildAuthorFloorDirective(s) {
             // declares sceneFunction (see above) — inert for any scene without one.
             if (_oe.sceneFunction) {
               _scSys += ' ALSO REQUIRED, same JSON: "scene_function_instantiated" (one sentence: WHICH part of the REQUIRED SCENE FUNCTION this state_change realizes — name the institutional/procedural/social-fallout lane you chose, not a restatement of the posture), "aftermath_obligations" (one or two sentences: the concrete aftermath/procedure/fallout content this scene commits to delivering — who reacts, what process moves forward, what changes in her standing; this must be NEW content beyond the AFTERMATH TRUTHS already listed above, not a restatement of them).';
+            }
+            // AFTERMATH LANE MENU — output keys (Roman 2026-09-21). Only requested when the row
+            // declares aftermathLanes (see above) — inert for any scene without one.
+            if (_oe.aftermathLanes && _oe.aftermathLanes.length) {
+              var _laneIds = _oe.aftermathLanes.map(function (l) { return l.id; });
+              _scSys += ' ALSO REQUIRED, same JSON: "chosen_aftermath_lane" (EXACTLY one of these ids, spelled exactly as given — nothing else: [' + _laneIds.join(', ') + '] — the lane you selected from the REQUIRED AFTERMATH LANE MENU; state_change/tactical_move/forces_choice must actually instantiate THIS lane\'s content, not merely name it), "lane_posture_modulation" (one sentence: HOW the reader\'s recorded posture changes the way the chosen lane plays out — who pushes, what tone, what she risks — never a description of a different lane, and never a return to the ritual/interrogation moment).';
             }
             // CONTINUATION-STAGE ISSUER (Roman, authorized 2026-09-14) — SAME reply, SAME call, no
             // second provider round trip. All optional: an old-shaped reply that omits these keys
@@ -100067,7 +100104,11 @@ function _buildAuthorFloorDirective(s) {
           }
           var _scEvent = _scP && String(_scP.state_change || '').trim();
           if (!_scEvent) return;
-          var _stateChange = { precondition: String(_scP.state_change_precondition || '').trim(), event: _scEvent, forces_choice: String(_scP.forces_choice || '').trim(), tactical_move: String(_scP.tactical_move || '').trim(), branch_a: String(_scP.branch_a || '').trim(), branch_b: String(_scP.branch_b || '').trim(), sceneProposed: (s.turnCount || 0) };
+          var _stateChange = { precondition: String(_scP.state_change_precondition || '').trim(), event: _scEvent, forces_choice: String(_scP.forces_choice || '').trim(), tactical_move: String(_scP.tactical_move || '').trim(), branch_a: String(_scP.branch_a || '').trim(), branch_b: String(_scP.branch_b || '').trim(), sceneProposed: (s.turnCount || 0),
+            // AFTERMATH LANE MENU (Roman 2026-09-21) — carried so _detectPlannerFunctionGap can check
+            // the declared lane against the row's own menu; see _generateLiteraryPlotContract's output
+            // schema for where these keys are requested.
+            chosenAftermathLane: String(_scP.chosen_aftermath_lane || '').trim(), lanePostureModulation: String(_scP.lane_posture_modulation || '').trim() };
           // ACCOMPLISHED-EVENT CONTRACT: attach the causal skeleton to the transition so it rides on
           // state._priorSceneStateChange (available to the next scene's context + the commit gate) and gets logged.
           if (_aecOn && _scP) {
@@ -128821,7 +128862,29 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       // invented a literal ritual-burning (contradicting worldTruths outright), the rest stayed inside
       // the same immediate confrontation the aftermath truths already establish, never moving toward
       // the exitState's own "NEW PROBLEM." See _ob's REQUIRED SCENE FUNCTION block below.
-      sceneFunction: 'This scene must land the AFTERMATH of Julian\'s public accusation and the Dohkar\'s authority claim: real institutional/procedural pressure (preliminary review, political pressure, or the opening steps toward investigation — NOT the convened formal inquiry itself, which is reserved for a later scene) and/or social fallout (family reaction, her standing visibly at risk), moving concretely toward the exitState\'s own "NEW PROBLEM." It must NOT simply extend or re-stage the same immediate ritual/interrogation moment the aftermath truths already establish.' },
+      sceneFunction: 'This scene must land the AFTERMATH of Julian\'s public accusation and the Dohkar\'s authority claim: real institutional/procedural pressure (preliminary review, political pressure, or the opening steps toward investigation — NOT the convened formal inquiry itself, which is reserved for a later scene) and/or social fallout (family reaction, her standing visibly at risk), moving concretely toward the exitState\'s own "NEW PROBLEM." It must NOT simply extend or re-stage the same immediate ritual/interrogation moment the aftermath truths already establish.',
+      // AFTERMATH LANE MENU (Roman 2026-09-21) — real finding this closes: retry 11, the first sample
+      // to reach this point with a clean environment and a schema-compliant reply, still chose an event
+      // ("Julian crosses the circle and stands before Lirael, naming himself the one she lost.") that
+      // stayed inside the SAME in-ritual confrontation the AFTERMATH TRUTHS above already establish —
+      // while its own scene_function_instantiated self-report CLAIMED institutional pressure. Freeform
+      // "instantiate the required scene function" leaves the planner free to invent an event and
+      // relabel it; this menu replaces "invent an aftermath event" with "choose and instantiate ONE of
+      // these" — the planner selects a lane, it does not invent the next beat from scratch. Grounded in
+      // this SAME row's own exitState + the seed's worldTruths sanctioned lanes ("accusation,
+      // preliminary review, political pressure, investigation, concealment, or flight") — not new canon.
+      // Each lane's `signalRx` is what the Planner Function Gate (_detectPlannerFunctionGap) checks the
+      // real proposed event/tactical_move/forces_choice against — a declared lane id alone is not
+      // enough; the content must actually reflect it. Starter-specific content (First Sacrifice's own
+      // lane menu, per Roman: "acceptable for First Sacrifice's starter plan to define its own lane menu
+      // from its issue skeleton"); the CHECK MECHANISM in _detectPlannerFunctionGap is generic.
+      aftermathLanes: [
+        { id: 'dohkar_preliminary_review', label: 'The presiding Dohkar (or another seated authority) sets a preliminary review, hearing date, or terms — a concrete procedural step TOWARD the formal inquiry, not the convened inquiry itself.', signalRx: /\b(preliminary review|review date|hearing date|sets? a date|scheduled?|convenes?|tribunal date|terms of (?:the )?review|date is set|date was set)\b/i },
+        { id: 'family_accusation', label: 'Seren\'s family (or another party with standing) publicly accuses Lirael or demands remedy for the twisted wish.', signalRx: /\b(seren'?s family|her family|his family|publicly accuses?|formal(?:ly)? accus\w*|demands? (?:remedy|restitution|compensation|redress)|blood[- ]price)\b/i },
+        { id: 'julian_jurisdiction_challenge', label: 'Julian challenges jurisdiction, reframes the accusation politically, or contests who has authority to rule.', signalRx: /\b(jurisdiction|challenges? (?:the )?dohkar|contests? (?:his |the )?authority|reframes?|political(?:ly)?)\b/i },
+        { id: 'lirael_constrained', label: 'Lirael is ordered separated, watched, or otherwise constrained pending the inquiry.', signalRx: /\b(separated|placed under (?:guard|watch)|confined|constrained|watched|pending (?:the )?inquiry|escorted (?:away|out)|removed from)\b/i },
+        { id: 'lirael_defensive_path', label: 'Lirael herself chooses a defensive path: submits to procedure, gathers proof, conceals something, moves toward flight, counter-accuses, or forces Julian into a procedural bind.', signalRx: /\b(submits? to procedure|gathers? proof|conceals?|flees?|flight|counter-accus\w*|procedural bind)\b/i },
+      ] },
     { n: 3, goal: 'THE PRICE AND THE THRESHOLD — step 7, then escalation. IN THIS ORDER: (A) The sacrifice is taken or identified — the offered MEMORY, expressed in the memory\'s own domain, never a faculty Seren did not offer. It lands only now, after the audience understands the twist, so cost is never confused with warp. (B) A NEW irreversible pressure arrives; this scene may NOT restage scene 2\'s accusation. (C) Julian\'s position shifts — a constraint, a knowledge, or a limit that changes what he is to her. (D) The deck surfaces and the temptation sharpens. (E) STOP at the threshold. Lirael does NOT choose. The player does.',
       participants: ['Lirael', 'Seren', 'Julian', 'the presiding Dohkar'],
       // MIGRATED B: same room, same people; the beats are contingent on the Scene-1 choice and
@@ -199919,6 +199982,10 @@ No text, no watermark, no UI elements, share-ready.`;
                      // authored row above. Carried through here so the OPEN ROW planner prompt (app.js
                      // ~99513+) can render it as a HARD frame BEFORE the reader's posture.
                      sceneFunction: row.sceneFunction || null,
+                     // AFTERMATH LANE MENU (Roman 2026-09-21) — see the field's own comment on the
+                     // authored row above. Carried through so the OPEN ROW planner prompt can render
+                     // the lane menu and the Planner Function Gate can check the chosen lane's signal.
+                     aftermathLanes: Array.isArray(row.aftermathLanes) ? row.aftermathLanes : null,
                      _reconciliation: { withheld: [], source: { goal: obj ? 'spine:posture' : 'pending: no accepted local objective yet' } } };
         var newProblemO = (exit.match(/NEW PROBLEM:\s*(.+)$/i) || [])[1] || '';
         if (obj) {
@@ -230035,7 +230102,7 @@ No text, no watermark, no UI elements, share-ready.`;
           var _psKeys = Object.keys(state._scenePosture || {}).map(Number).filter(function (n) { return !isNaN(n); }).sort(function (a, b) { return b - a; });
           if (_psKeys.length) _pfPosture = state._scenePosture[String(_psKeys[0])];
         } catch (_) {}
-        var _pfGate = _detectPlannerFunctionGap(state._scenePlotContract.stateChange, { requiresAftermath: true, posture: _pfPosture });
+        var _pfGate = _detectPlannerFunctionGap(state._scenePlotContract.stateChange, { requiresAftermath: true, posture: _pfPosture, aftermathLanes: (_oeRow && Array.isArray(_oeRow.aftermathLanes)) ? _oeRow.aftermathLanes : null });
         if (_pfGate.rejected) {
           try { console.warn('[CG:PLANNER-GATE] REJECTED before author dispatch, scene=' + sceneIndex + ' — ' + _pfGate.reason); } catch (_) {}
           return { __plannerFunctionRejected: true, reason: _pfGate.reason, sceneIndex: sceneIndex };

@@ -250,6 +250,32 @@ model output in both directions (one pass, one correct catch) — the gates are 
 A future retry would be the first test of whether a fresh planner draw (not a cached-objective
 retry) can produce a genuinely new aftermath event on this same Boundary input.
 
+**Ninth addendum (2026-09-21, dry fix) — freeform "instantiate the scene function" replaced with a
+constrained aftermath LANE MENU.** Roman: "The planner is now getting the scene function, filling
+the schema correctly, being checked by the right gates, failing cheaply before author spend... The
+planner model is the thing still not doing the creative jump: it can label 'procedural pressure,'
+but it keeps staging the same ritual moment... Change the Scene 2 planner contract from 'invent an
+aftermath event' to 'choose and instantiate an aftermath lane.'" `STARTER_PLANS.starter_
+first_sacrifice.scenes[2]` now declares 5 concrete `aftermathLanes` (Dohkar preliminary review,
+family accusation, Julian jurisdiction challenge, Lirael constrained, Lirael's own defensive
+path), each with a `signalRx` the Planner Function Gate checks the planner's real proposed content
+against. The prompt now requires `chosen_aftermath_lane` (one of the 5 ids) and
+`lane_posture_modulation`; the gate rejects a plan with no chosen lane OR one whose declared lane
+isn't backed by matching content — using retry 11's real (pre-fix) reply as the red fixture in both
+forms (no lane at all; a synthetic lane label added over the same unchanged content). Proven 22/22,
+`_scene2_aftermath_lane_control.mjs`; full trace: `_scene2_aftermath_lane_trace_2026_09_21.md`.
+`_validateLocalObjective` untouched — this is a Planner Function Gate change only. No live retry
+run in this pass.
+
+## Status update (after the aftermath lane menu fix)
+
+A future retry would be the first real test of lane-selection scaffolding, not just freeform
+planner fidelity: does the planner, given a concrete menu instead of open creative freedom, select
+one of the 5 allowed lanes AND produce content whose own text actually matches that lane's signal —
+on this same Boundary input, or a fresh one. If it still fails, the failure would newly distinguish
+between "the planner can't follow a menu at all" (a harder problem) and "the planner follows the
+menu but the signal patterns are too narrow" (a prompt/regex-tuning problem, not a capability one).
+
 ## Status update (after retry #10)
 
 Eight real capability samples now on record: six FAILED/gate-rejected/would-have-been-gate-rejected,
