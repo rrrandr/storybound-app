@@ -346,3 +346,31 @@ failure would newly distinguish between "the model can't write convincingly insi
 frame" (a much more fundamental capability question) and "the model still tries to substitute its
 own event even when told not to" (a compliance/instruction-following question) — either of which
 would be more informative than anything the freeform or menu-based attempts could show.
+
+**Twelfth addendum, retry #13 (2026-09-21, after the event-frame resolver fix) — FIRST FULL
+SUCCESS.** Real cost $0.2255553 (8 requests, well under the $0.45 ceiling). Confirmed directly
+from the real dispatched prompt: the resolver correctly selected `family_accusation` for the
+Boundary card, and the prompt presented it as a required fact ("this is NOT a choice among
+options"), not a menu. The planner instantiated it closely
+(`state_change`: "Seren's family steps out of the assembly and publicly demands remedy for what
+the wish cost Seren" — near-verbatim to the required frame). BOTH gates passed. The author ran
+and produced a full CG scene: three new named-role family characters step forward and formally
+accuse Lirael, real escalating dialogue (5 beats), real interiority, continuity/canon fully
+preserved (mouth-band, The Answer, the Dohkar's claimed authority, no reserved id touched), and a
+real forced end choice matching the row's own decision axis. One genuine, specific gap found and
+named honestly: Julian (the LI) is present but nearly inert in this draft — one beat references
+him, no dialogue, no direct exchange with Lirael — thinner than the standing adequacy standard
+calls for. Full account: `_scene2_capability_retry13_report_2026_09_21.md`. No follow-up retry
+run, per standing instruction.
+
+## Status update (after retry #13)
+
+Eleven real capability samples now on record; this is the first unqualified structural success —
+planner and author both completed, gates both passed for substantive reasons, real prose
+produced. The event-frame resolver architecture change is now confirmed live, not just dry-proven.
+Remaining open items, all narrower than anything found before this pass: (1) only the Boundary
+card's frame (`family_accusation`) has been tested live — the other 4 slots
+(`temptation`/`silence`/`reversal`/`confession`) and the `defaultEventFrame` fallback remain
+untested against a real draw; (2) LI presence in this specific sample was thin — a real content
+quality gap, not an architecture or gate failure, worth a future dry pass of its own once more
+live samples confirm whether it recurs.
