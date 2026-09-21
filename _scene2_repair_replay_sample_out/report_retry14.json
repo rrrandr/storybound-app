@@ -1,0 +1,88 @@
+{
+  "phaseReports": {
+    "opener": {
+      "text": "You touched her shoulder exactly when the invocation began and your eyes found mine before the first word left her mouth. Did you call to me through the rite hoping I would step forward and claim you as the one who needed rescue?",
+      "costUsd": 0
+    },
+    "oasTurnReplyReplayed": {
+      "costUsd": 0,
+      "replyText": "The hunger in your gaze called louder than the rite itself. Ask, if you dare name it before them all."
+    },
+    "fateCardReplayed": {
+      "costUsd": 0,
+      "boundarySlotExists": true
+    },
+    "scene2StructuralAuthor": {
+      "calls": [
+        {
+          "url": "http://localhost:3000/api/proxy",
+          "model": "grok-4-1-fast-non-reasoning",
+          "maxTokens": 1200,
+          "isAuthorCall": false,
+          "isSuspectedScaffold": false,
+          "status": 200,
+          "networkError": null,
+          "usage": {
+            "prompt_tokens": 6209,
+            "completion_tokens": 537,
+            "total_tokens": 7228,
+            "prompt_tokens_details": {
+              "text_tokens": 6209,
+              "audio_tokens": 0,
+              "image_tokens": 0,
+              "cached_tokens": 6208
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 482,
+              "audio_tokens": 0,
+              "accepted_prediction_tokens": 0,
+              "rejected_prediction_tokens": 0
+            },
+            "num_sources_used": 0,
+            "cost_in_usd_ticks": 37903500
+          },
+          "costUsd": 0.00379035,
+          "costNote": null,
+          "costSource": "provider_ticks",
+          "elapsedMs": 30140
+        },
+        {
+          "url": "http://localhost:3000/api/proxy",
+          "model": "grok-4-1-fast-non-reasoning",
+          "maxTokens": 1200,
+          "isAuthorCall": false,
+          "isSuspectedScaffold": false,
+          "status": 200,
+          "networkError": null,
+          "usage": {
+            "prompt_tokens": 6209,
+            "completion_tokens": 539,
+            "total_tokens": 7482,
+            "prompt_tokens_details": {
+              "text_tokens": 6209,
+              "audio_tokens": 0,
+              "image_tokens": 0,
+              "cached_tokens": 6208
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 734,
+              "audio_tokens": 0,
+              "accepted_prediction_tokens": 0,
+              "rejected_prediction_tokens": 0
+            },
+            "num_sources_used": 0,
+            "cost_in_usd_ticks": 44253500
+          },
+          "costUsd": 0.00442535,
+          "costNote": null,
+          "costSource": "provider_ticks",
+          "elapsedMs": 14573
+        }
+      ],
+      "costUsd": 0.0082157
+    }
+  },
+  "runningCostUsd": 0.0082157,
+  "ceilingUsd": 0.45,
+  "exitReason": "the real Scene 2 author call (max_tokens: 8000) never settled with a 200 response"
+}

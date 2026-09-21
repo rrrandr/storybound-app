@@ -402,3 +402,30 @@ complete (the LI has at least one real moment). If Julian is still inert on a fr
 would distinguish "the directive doesn't change model behavior" (a prompt-fidelity question, like
 the earlier lane-vocabulary gap) from "this was one draw's variance" — either way, more
 informative than treating retry 13 as finished.
+
+**Fourteenth addendum, retry #14 (2026-09-21, quality retry) — architecture held again; a
+DIFFERENT, narrower structural rejection blocked the author before LI presence could be tested.**
+$0.0082157, 2 real planner attempts, both instantiated `family_accusation` closely and
+consistently (matching retry 13's accepted content), both rejected by the pre-existing
+`_validateLocalObjective` check on `local_objective_actor` — NOT the Planner Function Gate, NOT
+anything LI-related. Attempt 1 invented an undeclared collective ("Seren's family"); attempt 2
+used the row's own declared collective ("the assembly"), which the validator explicitly forbids
+as an actor. Diagnosed as a genuine, narrow, previously-latent tension: the `family_accusation`
+lane's own natural grammar is a GROUP acting, but the individual-actor rule requires one roster
+member — retry 13 resolved this correctly (`local_objective_actor: "Lirael"`, her own agency
+driving the family's action); retry 14's two attempts resolved it more literally, and invalidly,
+both times. Not a regression from the LI presence floor change (that directive lives in the
+AUTHOR's prompt, never reached here) or from any other fix this session. Full account:
+`_scene2_capability_retry14_report_2026_09_21.md`. No follow-up retry run, per standing
+instruction. No dry fix authorized or made in this pass.
+
+## Status update (after retry #14)
+
+Twelve real capability samples now on record. The `family_accusation` frame itself continues to
+resolve and get instantiated reliably (three consecutive real draws: 12, 13, 14, all producing
+near-identical, on-target `state_change` text) — the event-frame resolver mechanism is solid. The
+open item is narrower still: `local_objective_actor` for a group-driven lane needs clearer
+guidance so the model reliably attributes agency to an individual (as retry 13 did) rather than
+naming the group itself (as retry 14 did, twice). LI presence remains untested against a real
+completion — retry 13 is still the only sample that reached the author, and it is still the one
+sample showing the LI-inertness gap this session's most recent fix targets.
