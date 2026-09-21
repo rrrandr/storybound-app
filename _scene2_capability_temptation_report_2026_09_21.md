@@ -5,7 +5,18 @@ Authorized scope: Temptation card as the second of the two-card branch plan
 was clean, `--slot=temptation`, all standing gates/fixes active (including the just-committed
 gate-seam widening), $0.45/8-request ceiling, no follow-up retry within this card.
 
-## Result: genuine content-level rejection — the gate worked correctly this time, NOT a repeat of the Reversal gate seam
+## Classification (updated 2026-09-21, after the lane-semantics fix)
+
+This finding held up as a genuine lane-semantics weakness, not a harness or gate-seam issue.
+`lirael_defensive_path` has been dry-fixed to require a landed defensive move — see
+`_scene2_lirael_defensive_path_lane_semantics_trace_2026_09_21.md`. Re-running this exact real
+content against the fixed lane (proven in
+`_scene2_lirael_defensive_path_lane_semantics_control.mjs`'s RED section) is still correctly
+rejected — the fix does not retroactively "pass" this sample, it only requires the NEXT draw to
+produce a real action instead of hesitation. Temptation itself was not re-run — the section below
+is preserved unedited as the original, honest record.
+
+## Result (as originally recorded): genuine content-level rejection — the gate worked correctly this time, NOT a repeat of the Reversal gate seam
 
 Real cost: $0.0104284 (1 physical request). The author never ran. Unlike Attempt 1 of Reversal,
 this is **not** a false rejection from an unread field — both the (now-widened) generic scan and

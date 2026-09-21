@@ -228,3 +228,24 @@ pattern) but not actioned. Full account: `_scene2_capability_temptation_report_2
 **Per the two-card plan's stop condition, this concludes it: Reversal clean, Temptation not
 clean.** No follow-up retry within Temptation. Silence and confession remain untested and
 unauthorized — the original four-card plan's third and fourth cards.
+
+## Addendum — `lirael_defensive_path` lane-semantics dry-fix (2026-09-21)
+
+Roman: "The lane needs to require a landed defensive move... 'Opens her mouth and closes it' is
+not a move." Diagnosed as a genuine lane-semantics weakness (not harness/gate-seam) — see
+`_scene2_lirael_defensive_path_lane_semantics_trace_2026_09_21.md` for the full trace, including a
+real near-miss caught while building the "concealment" stemming fix (a naive widening would have
+made the lane wrongly accept Temptation's own real "weighing of concealment" phrasing — fixed to
+require active-voice context instead). The `temptation` slot's event frame and the lane's own
+label/`signalRx` now explicitly require a landed, external, observable action; hesitation,
+silence, and "almost speaking then stopping" are explicitly ruled out. Boundary's and Reversal's
+lanes are completely untouched. Proven 12/12,
+`_scene2_lirael_defensive_path_lane_semantics_control.mjs`, plus four directly-affected
+pre-existing controls re-verified individually with zero regressions
+(`_scene2_aftermath_lane_control.mjs` 22/22, `_scene2_event_frame_resolver_control.mjs` 26/26,
+`_scene2_gate_seam_widened_scan_control.mjs` 7/7, `_scene2_planner_function_gate_control.mjs`
+10/10).
+
+**Status**: dry fix only, no branch retry run. Temptation may now be retried under the fixed lane
+— not yet done, pending separate authorization. Silence and confession remain untested and
+unauthorized. No image work of any kind.

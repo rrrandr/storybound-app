@@ -9040,7 +9040,14 @@ window.config = window.config || {
         } else if (!chosenLaneId || !laneMatch) {
           reasons.push('the planner declared no chosen_aftermath_lane (or one outside the required lane menu: ' + laneList.map(function (l) { return l.id; }).join(', ') + ') — this scene requires selecting and instantiating exactly one listed lane, not inventing an aftermath event from scratch' + (opts.requiredLaneId ? (' — specifically the resolved lane "' + opts.requiredLaneId + '"') : ''));
         } else if (laneMatch.signalRx && !laneMatch.signalRx.test(combined)) {
-          reasons.push('the planner declared chosen_aftermath_lane="' + chosenLaneId + '" but its own proposed event/tactical-move/forces-choice does not actually instantiate that lane\'s content — a declared lane label alone is not enough; the event itself must move into it, not stay inside the same ritual/interrogation moment under a borrowed label');
+          // HESITATION DIAGNOSTIC (Roman 2026-09-21) — real finding: Temptation's real reply chose
+          // this exact lane and produced a bare hesitation beat ("opens her mouth... then closes
+          // it") — the positive signalRx above already, correctly, rejects that (none of its
+          // vocabulary matches hesitation text), so this adds NOTHING to the gating decision; it
+          // only sharpens the rejection reason when the lane declares a hesitationRx and the text
+          // matches it, so a future sample's failure is immediately actionable rather than generic.
+          var _hesitationNote = (laneMatch.hesitationRx && laneMatch.hesitationRx.test(combined)) ? ' — the event reads as hesitation/withholding (an internal near-decision, staying silent, or "almost saying it then stopping") rather than a landed action; hesitation does not instantiate this lane by itself' : '';
+          reasons.push('the planner declared chosen_aftermath_lane="' + chosenLaneId + '" but its own proposed event/tactical-move/forces-choice does not actually instantiate that lane\'s content — a declared lane label alone is not enough; the event itself must move into it, not stay inside the same ritual/interrogation moment under a borrowed label' + _hesitationNote);
         }
       }
       var echoMatch = null;
@@ -129058,7 +129065,32 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
         { id: 'family_accusation', label: 'Seren\'s family (or another party with standing) publicly accuses Lirael or demands remedy for the twisted wish.', signalRx: /\b(seren'?s family|her family|his family|publicly accuses?|formal(?:ly)? accus\w*|demands? (?:remedy|restitution|compensation|redress)|blood[- ]price)\b/i, objectiveActor: 'Lirael', pressureSource: 'Seren\'s family' },
         { id: 'julian_jurisdiction_challenge', label: 'Julian challenges jurisdiction, reframes the accusation politically, or contests who has authority to rule.', signalRx: /\b(jurisdiction|challenges? (?:the )?dohkar|contests? (?:his |the )?authority|reframes?|political(?:ly)?)\b/i, objectiveActor: 'Julian', pressureSource: null },
         { id: 'lirael_constrained', label: 'Lirael is ordered separated, watched, or otherwise constrained pending the inquiry.', signalRx: /\b(separated|placed under (?:guard|watch)|confined|constrained|watched|pending (?:the )?inquiry|escorted (?:away|out)|removed from)\b/i, objectiveActor: 'the presiding Dohkar', pressureSource: null },
-        { id: 'lirael_defensive_path', label: 'Lirael herself chooses a defensive path: submits to procedure, gathers proof, conceals something, moves toward flight, counter-accuses, or forces Julian into a procedural bind.', signalRx: /\b(submits? to procedure|gathers? proof|conceals?|flees?|flight|counter-accus\w*|procedural bind)\b/i, objectiveActor: 'Lirael', pressureSource: null },
+        // LANE-SEMANTICS FIX (Roman 2026-09-21) — real finding: Temptation's real reply correctly
+        // chose Lirael + lirael_defensive_path, but its proposed content was a bare hesitation beat
+        // ("Lirael opens her mouth to name the true reason then closes it") — mood, not a landed
+        // action. Roman: "The lane needs to require a landed defensive move... 'Opens her mouth and
+        // closes it' is not a move." Label now states this explicitly as a negative rule; signalRx
+        // widened to catch "concealment" (the model's own real word, a noun form the old
+        // conceals?-only pattern missed — the same class of stemming gap found earlier this session
+        // for "procedural"/"procedure") plus the rest of Roman's explicit move list, deliberately
+        // NOT widened to anything hesitation/weighing-shaped. hesitationRx is diagnostic only — it
+        // does not gate anything by itself (the positive signalRx already correctly rejects
+        // hesitation-only text, since none of its vocabulary matches "opens her mouth... closes
+        // it") — it only sharpens the rejection MESSAGE when hesitation vocabulary is present but no
+        // landed-move vocabulary is, so a future real sample gets an immediately actionable reason
+        // instead of a generic "no signal found."
+        // STEMMING FIX, DONE CAREFULLY (Roman 2026-09-21) — a first pass simply added "ment" to
+        // conceal(?:s|ment|ed|ing)? to catch the noun form. Tested against Temptation's OWN real
+        // tactical_move ("staging Lirael's first internal weighing OF concealment"), that bare noun
+        // match would have made this check WRONGLY ACCEPT the exact hesitation-only sample this fix
+        // exists to reject — "weighing of concealment" is abstract/thematic, not a description of an
+        // actual concealment EVENT. Roman's own instruction: "recognize 'concealment' as related to
+        // conceal, without broadening so far that vague secrecy/mood passes." Fixed instead to
+        // require "concealment" in an ACTIVE-VOICE context (a verb phrase committing to it, or "of"
+        // immediately naming what's concealed) — "commits to concealment", "chooses concealment",
+        // "concealment of [something]" all count; bare "weighing of concealment" does not, since
+        // nothing there commits to the act or names its object.
+        { id: 'lirael_defensive_path', label: 'Lirael herself makes a LANDED defensive move that changes her tactical position — submits to procedure, demands specific terms, gathers proof, conceals a specific fact/object/admission, moves concretely toward flight, counter-accuses, forces Julian or the Dohkar into a procedural bind, or names a protected constraint. Hesitating, silently weighing, staying silent, or "almost speaking then stopping" does NOT satisfy this lane by itself — the move must be an actual, external, observable action.', signalRx: /\b(submits? to procedure|demands? (?:specific )?terms|gathers? proof|conceals?\b|concealed\b|concealing\b|(?:commits?|chooses?|turns?|moves?) (?:to|toward)? ?concealment|concealment of\b|flees?|flight|counter-accus\w*|procedural bind|names? a protected constraint)\b/i, hesitationRx: /\b(opens? (?:her|his|their)? ?mouth[\s\S]{0,30}closes?|catches? (?:her|him|them)self weighing|weighs? whether|weighing of|almost (?:speaks|says|names|spoke|said)|hesitates?|stays? silent|remains? silent|says? nothing|holds? (?:her|his|their) tongue|keeps? (?:her|his|their) silence)\b/i, objectiveActor: 'Lirael', pressureSource: null },
       ],
       // EVENT-FRAME RESOLVER (Roman 2026-09-21) — real finding this closes: two real live samples
       // in a row (retry 11 freeform, retry 12 with the aftermath lane menu ABOVE as a free choice)
@@ -129077,7 +129109,10 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       // _detectPlannerFunctionGap) is the generic, reusable mechanism; this data is First
       // Sacrifice's own, same as aftermathLanes above.
       eventFrameBySlot: {
-        temptation: { laneId: 'lirael_defensive_path', eventFrame: 'Lirael is tempted toward concealment: she catches herself weighing whether to let Julian\'s version of the accusation stand unchallenged rather than name what actually happened — a real choice to conceal or reveal something specific, not another round of the Dohkar\'s question about whether she shaped the wish.' },
+        // LANE-SEMANTICS FIX (Roman 2026-09-21) — the OLD text ("she catches herself weighing
+        // whether to...") directly invited exactly the hesitation-only beat the real Temptation
+        // sample produced; rewritten to require a landed, external, observable action.
+        temptation: { laneId: 'lirael_defensive_path', eventFrame: 'Lirael makes a landed defensive move under temptation: she actively conceals a SPECIFIC fact, object, or admission from the Dohkar or the assembly (not vague secrecy), or takes another concrete defensive action from the lane\'s own list — the scene must show her DOING something that changes her tactical position, not merely hesitating, weighing, or silently choosing not to speak. "She almost says it, then doesn\'t" is NOT sufficient — the temptation must resolve into a real, external, observable action, not stay inside a moment of internal weighing.' },
         silence:    { laneId: 'dohkar_preliminary_review', eventFrame: 'The charged silence after Julian\'s public claim is what prompts the presiding Dohkar to break it procedurally: he sets a preliminary review date and names its terms before the assembly disperses, moving the confrontation off the ritual floor and into procedure.' },
         reversal:   { laneId: 'julian_jurisdiction_challenge', eventFrame: 'Someone seizes control of who gets to rule here: Julian challenges the presiding Dohkar\'s jurisdiction, reframing the accusation as his own to answer rather than Lirael\'s — a real jurisdictional contest over authority, not another question put to Lirael.' },
         boundary:   { laneId: 'family_accusation', eventFrame: 'Lirael\'s open, unretreating want is what draws Seren\'s family forward: they step out of the assembly and publicly demand remedy for what the wish cost Seren, redirecting the confrontation from Julian\'s accusation to a new formal complaint — NOT another round of the Dohkar asking whether she shaped the wish.' },
