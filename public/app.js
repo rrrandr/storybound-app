@@ -8867,7 +8867,16 @@ window.config = window.config || {
   // PRESENCE, never on exact wording or a fixed scene shape — two structurally different branches
   // (different Say/Do/Fate posture, different content) can both clear every check; see the "two
   // different adequate branches" proof in _scene2_continuation_adequacy_control.mjs.
-  var _SCENE_AFTERMATH_VOCAB_RX = /\b(?:family|kin|household|clan|parents?|mother|father|sister|brother)\b[\s\S]{0,50}\b(?:react\w*|recrimination|anger|arrive[sd]?|demands?|blames?|confronts?)\b|\b(?:tribunal|inquiry|hearing|summons|summoned|convene[ds]?|procedure|ruling|verdict|sentence|investigation|aftermath|consequences?|recriminations?)\b|\baccusations?\s+(?:formally|publicly|officially)\b|\bdate\s+(?:is\s+|was\s+)?set\b|\bschedule[ds]?\s+(?:for|to)\b/i;
+  // STEMMING FIX (Roman 2026-09-21, discovered while widening the lane check for Temptation
+  // attempt 2) — real finding: this exact real sample's rejection was actually COMPOUND, not
+  // lane-only as first diagnosed. Its aftermath_obligations text ("The Dohkar's charge now carries
+  // visible procedural weight...") uses "procedural" (adjective), which the old `procedure\b`
+  // (noun-only) alternative does not match — "procedural" is not a substring of "procedure", the
+  // same class of gap as "concealment"/"conceal" found earlier this session. Widened `procedure` to
+  // `procedur\w*` to also catch "procedural"/"procedurally"/"procedures" — same institutional-vocab
+  // category, low gaming risk (it is not a generic secrecy/mood word, just an inflected form of an
+  // already-approved root).
+  var _SCENE_AFTERMATH_VOCAB_RX = /\b(?:family|kin|household|clan|parents?|mother|father|sister|brother)\b[\s\S]{0,50}\b(?:react\w*|recrimination|anger|arrive[sd]?|demands?|blames?|confronts?)\b|\b(?:tribunal|inquiry|hearing|summons|summoned|convene[ds]?|procedur\w*|ruling|verdict|sentence|investigation|aftermath|consequences?|recriminations?)\b|\baccusations?\s+(?:formally|publicly|officially)\b|\bdate\s+(?:is\s+|was\s+)?set\b|\bschedule[ds]?\s+(?:for|to)\b/i;
   var _SCENE_SUSPENSION_ONLY_RX = /\bwait(?:s|ed|ing)?\b|\bhold(?:s|ing)?\s+(?:its|his|her|their)\s+breath\b|\bsuspend(?:ed|s)?\b|\bpoised\b|\bhalf-raised\b|\bundecided\b|\bremains?\s+(?:still|silent|half-raised)\b|\bbreath\s+held\b/i;
   // NOTE: no "answers?/answered" entry — collides with "the Answer" (a proper-noun relic name in
   // First Sacrifice, and plausibly in other stories' objects/titles too); "declares/announces"
@@ -9039,15 +9048,55 @@ window.config = window.config || {
           reasons.push('the planner declared chosen_aftermath_lane="' + chosenLaneId + '" but the reader\'s own card selection deterministically resolved this scene to lane "' + opts.requiredLaneId + '" — the event frame is not a free choice for this scene; a different (even otherwise-valid) lane is not acceptable');
         } else if (!chosenLaneId || !laneMatch) {
           reasons.push('the planner declared no chosen_aftermath_lane (or one outside the required lane menu: ' + laneList.map(function (l) { return l.id; }).join(', ') + ') — this scene requires selecting and instantiating exactly one listed lane, not inventing an aftermath event from scratch' + (opts.requiredLaneId ? (' — specifically the resolved lane "' + opts.requiredLaneId + '"') : ''));
-        } else if (laneMatch.signalRx && !laneMatch.signalRx.test(combined)) {
-          // HESITATION DIAGNOSTIC (Roman 2026-09-21) — real finding: Temptation's real reply chose
-          // this exact lane and produced a bare hesitation beat ("opens her mouth... then closes
-          // it") — the positive signalRx above already, correctly, rejects that (none of its
-          // vocabulary matches hesitation text), so this adds NOTHING to the gating decision; it
-          // only sharpens the rejection reason when the lane declares a hesitationRx and the text
-          // matches it, so a future sample's failure is immediately actionable rather than generic.
-          var _hesitationNote = (laneMatch.hesitationRx && laneMatch.hesitationRx.test(combined)) ? ' — the event reads as hesitation/withholding (an internal near-decision, staying silent, or "almost saying it then stopping") rather than a landed action; hesitation does not instantiate this lane by itself' : '';
-          reasons.push('the planner declared chosen_aftermath_lane="' + chosenLaneId + '" but its own proposed event/tactical-move/forces-choice does not actually instantiate that lane\'s content — a declared lane label alone is not enough; the event itself must move into it, not stay inside the same ritual/interrogation moment under a borrowed label' + _hesitationNote);
+        } else {
+          // LANE-CHECK FIELD WIDENING (Roman 2026-09-21) — real finding: Temptation attempt 2
+          // produced a genuinely landed action — state_change: "Lirael folds the torn mouth-band
+          // into her sash without naming what she lost", event_slots.action: "folds the torn
+          // mouth-band into her sash", event_slots.exit_state: "Lirael has concealed her reason
+          // for the wish..." — but the lane check read only the narrow `combined`
+          // (tactical_move/event/forces_choice), the same seam Reversal hit in the generic check.
+          // Roman: "inspect the full planner contract, especially event_slots.action, and accept
+          // concrete action evidence when the prose itself instantiates the lane." Widened, for
+          // the lane-content check only, to also read event_slots.action/exit_state — the
+          // planner's own structured, mechanistic decomposition of the SAME central event, not
+          // free self-report padding. Deliberately does NOT add precondition or
+          // aftermathObligations here (unlike the generic check above) — those are open prose
+          // fields a model could pad with lane-flavored vocabulary while the real event stays
+          // inert; event_slots is scoped to "what actually happened," not a self-report.
+          var laneCombined = [combined, sc.slots && sc.slots.action, sc.slots && sc.slots.exitState].filter(Boolean).join(' \n ');
+          var laneOk = laneMatch.signalRx && laneMatch.signalRx.test(laneCombined);
+          // CONDITIONAL "executes" HANDLING (Roman 2026-09-21) — Temptation attempt 2's
+          // tactical_move said "Lirael executes a concrete defensive concealment..."; "executes"
+          // is not on the lane's active-move verb whitelist. Rather than add it to the whitelist
+          // outright (which would let a bare "executes a concealment" pass with NOTHING else
+          // described — the same abstraction risk as "weighing of concealment"), it counts only
+          // when corroborated by a real, concrete action in event_slots.action — the model's own
+          // structured "what she did" field actually populated with content, not just an
+          // abstract-noun claim in tactical_move alone.
+          if (!laneOk && laneMatch.executesRx && laneMatch.executesRx.test(combined)) {
+            var _hasConcreteAction = !!(sc.slots && String(sc.slots.action || '').trim());
+            if (_hasConcreteAction) laneOk = true;
+          }
+          // GUARDED "WITHOUT NAMING WHAT" HANDLING (Roman 2026-09-21) — see withholdActionRx's
+          // definition comment: accepted as a positive signal only when the same text does NOT
+          // also match the lane's own hesitationRx silence-cluster, so "says nothing, without
+          // revealing what she knows" (silence wrapped in the phrase) still fails while "folds the
+          // mouth-band into her sash without naming what she lost" (a real action wrapped in the
+          // phrase) passes.
+          if (!laneOk && laneMatch.withholdActionRx && laneMatch.withholdActionRx.test(laneCombined)) {
+            var _silenceGuardHit = laneMatch.hesitationRx && laneMatch.hesitationRx.test(laneCombined);
+            if (!_silenceGuardHit) laneOk = true;
+          }
+          if (!laneOk) {
+            // HESITATION DIAGNOSTIC (Roman 2026-09-21) — real finding: Temptation's real reply chose
+            // this exact lane and produced a bare hesitation beat ("opens her mouth... then closes
+            // it") — the positive signalRx above already, correctly, rejects that (none of its
+            // vocabulary matches hesitation text), so this adds NOTHING to the gating decision; it
+            // only sharpens the rejection reason when the lane declares a hesitationRx and the text
+            // matches it, so a future sample's failure is immediately actionable rather than generic.
+            var _hesitationNote = (laneMatch.hesitationRx && laneMatch.hesitationRx.test(laneCombined)) ? ' — the event reads as hesitation/withholding (an internal near-decision, staying silent, or "almost saying it then stopping") rather than a landed action; hesitation does not instantiate this lane by itself' : '';
+            reasons.push('the planner declared chosen_aftermath_lane="' + chosenLaneId + '" but its own proposed event/tactical-move/forces-choice/event-slots does not actually instantiate that lane\'s content — a declared lane label alone is not enough; the event itself must move into it, not stay inside the same ritual/interrogation moment under a borrowed label' + _hesitationNote);
+          }
         }
       }
       var echoMatch = null;
@@ -129090,7 +129139,31 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
         // immediately naming what's concealed) — "commits to concealment", "chooses concealment",
         // "concealment of [something]" all count; bare "weighing of concealment" does not, since
         // nothing there commits to the act or names its object.
-        { id: 'lirael_defensive_path', label: 'Lirael herself makes a LANDED defensive move that changes her tactical position — submits to procedure, demands specific terms, gathers proof, conceals a specific fact/object/admission, moves concretely toward flight, counter-accuses, forces Julian or the Dohkar into a procedural bind, or names a protected constraint. Hesitating, silently weighing, staying silent, or "almost speaking then stopping" does NOT satisfy this lane by itself — the move must be an actual, external, observable action.', signalRx: /\b(submits? to procedure|demands? (?:specific )?terms|gathers? proof|conceals?\b|concealed\b|concealing\b|(?:commits?|chooses?|turns?|moves?) (?:to|toward)? ?concealment|concealment of\b|flees?|flight|counter-accus\w*|procedural bind|names? a protected constraint)\b/i, hesitationRx: /\b(opens? (?:her|his|their)? ?mouth[\s\S]{0,30}closes?|catches? (?:her|him|them)self weighing|weighs? whether|weighing of|almost (?:speaks|says|names|spoke|said)|hesitates?|stays? silent|remains? silent|says? nothing|holds? (?:her|his|their) tongue|keeps? (?:her|his|their) silence)\b/i, objectiveActor: 'Lirael', pressureSource: null },
+        // VOCABULARY-COMPLETENESS FIX (Roman 2026-09-21) — real finding: Temptation attempt 2
+        // produced a landed physical action ("Lirael folds the torn mouth-band into her sash
+        // without naming what she lost", event_slots: actor Lirael, action "folds the torn
+        // mouth-band into her sash", exit_state "Lirael has concealed her reason for the wish...")
+        // that never uses the literal word "conceal" in the narrow tactical_move/event/
+        // forces_choice fields. Roman: "'Lirael folds the torn mouth-band into her sash without
+        // naming what she lost' should count as a concrete defensive/concealment move because it
+        // uses an established object ... and changes her tactical position." Added a new
+        // GENERALIZABLE pattern (`withholdActionRx`, kept OUT of signalRx itself and checked
+        // separately in _detectPlannerFunctionGap) — "WITHOUT naming/revealing/explaining/saying/
+        // disclosing what" — that recognizes the grammatical shape of "landed action + explicit
+        // non-disclosure" directly, rather than requiring the word "conceal" at all. Kept as its
+        // own field, not folded into signalRx, because the phrase alone is gameable in combination
+        // with silence-only text (e.g. "says nothing, without revealing what she knows" — silence
+        // wearing this phrase as a wrapper). The gate only accepts withholdActionRx as a positive
+        // signal when the SAME text does NOT also match the lane's own silence-cluster
+        // (stays/remains silent, says nothing, holds/keeps silence) — i.e. it must be paired with
+        // an actual described action, not standing in for one. Checked against Temptation attempt
+        // 1's real hesitation text ("opens her mouth to name the true reason then closes it") and
+        // its real "weighing of concealment" tactical_move — neither contains "without naming/
+        // revealing/explaining/saying/disclosing what", so both remain correctly rejected on that
+        // basis alone; the silence-guard is extra protection against a hypothetical FUTURE sample
+        // that pairs the phrase with silence instead of action (see the ANTI-GAMING/RED fixtures in
+        // the lane-semantics control, including a dedicated fixture for this exact combination).
+        { id: 'lirael_defensive_path', label: 'Lirael herself makes a LANDED defensive move that changes her tactical position — submits to procedure, demands specific terms, gathers proof, conceals a specific fact/object/admission, moves concretely toward flight, counter-accuses, forces Julian or the Dohkar into a procedural bind, or names a protected constraint. Hesitating, silently weighing, staying silent, or "almost speaking then stopping" does NOT satisfy this lane by itself — the move must be an actual, external, observable action.', signalRx: /\b(submits? to procedure|demands? (?:specific )?terms|gathers? proof|conceals?\b|concealed\b|concealing\b|(?:commits?|chooses?|turns?|moves?) (?:to|toward)? ?concealment|concealment of\b|flees?|flight|counter-accus\w*|procedural bind|names? a protected constraint)\b/i, executesRx: /\bexecutes? (?:a |an )?(?:concrete )?(?:defensive )?concealment\b/i, withholdActionRx: /\bwithout (?:naming|revealing|explaining|saying|disclosing) what\b/i, hesitationRx: /\b(opens? (?:her|his|their)? ?mouth[\s\S]{0,30}closes?|catches? (?:her|him|them)self weighing|weighs? whether|weighing of|almost (?:speaks|says|names|spoke|said)|hesitates?|stays? silent|remains? silent|says? nothing|holds? (?:her|his|their) tongue|keeps? (?:her|his|their) silence)\b/i, objectiveActor: 'Lirael', pressureSource: null },
       ],
       // EVENT-FRAME RESOLVER (Roman 2026-09-21) — real finding this closes: two real live samples
       // in a row (retry 11 freeform, retry 12 with the aftermath lane menu ABOVE as a free choice)

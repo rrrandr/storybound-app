@@ -71,6 +71,18 @@ const TEMPTATION_STATE_CHANGE = {
 console.log('✓ loaded the real Temptation reply verbatim from ' + TEMPTATION_LOG);
 console.log('  real state_change: "' + TEMPTATION_STATE_CHANGE.event + '"');
 
+// ── Real Temptation ATTEMPT 2 reply (the mouth-band fold — the new GREEN fixture) ──
+const TEMPTATION2_LOG = path.join(__dirname, '_scene2_repair_replay_sample_out', 'run_1790035049042.jsonl');
+const TEMPTATION2_JSON = parseReply(TEMPTATION2_LOG, realMatcher);
+const TEMPTATION2_STATE_CHANGE = {
+  precondition: TEMPTATION2_JSON.state_change_precondition, event: TEMPTATION2_JSON.state_change,
+  forces_choice: TEMPTATION2_JSON.forces_choice, tactical_move: TEMPTATION2_JSON.tactical_move,
+  chosenAftermathLane: TEMPTATION2_JSON.chosen_aftermath_lane, aftermathObligations: TEMPTATION2_JSON.aftermath_obligations,
+  slots: TEMPTATION2_JSON.event_slots ? { action: TEMPTATION2_JSON.event_slots.action, exitState: TEMPTATION2_JSON.event_slots.exit_state } : undefined,
+};
+console.log('✓ loaded the real Temptation attempt-2 reply verbatim from ' + TEMPTATION2_LOG);
+console.log('  real state_change: "' + TEMPTATION2_STATE_CHANGE.event + '"');
+
 // ── Real Boundary (retry 15) and Reversal (attempt 2) replies — COEXIST fixtures ──
 const BOUNDARY_LOG = path.join(__dirname, '_scene2_repair_replay_sample_out', 'run_1789975467864.jsonl');
 const boundaryEvents = fs.readFileSync(BOUNDARY_LOG, 'utf8').trim().split('\n').filter(Boolean).map((l) => JSON.parse(l));
@@ -94,10 +106,17 @@ const LANES_FOR_DIRECT_CALL_SOURCE = [
   { id: 'family_accusation', signalRx: /\b(seren'?s family|her family|his family|publicly accuses?|formal(?:ly)? accus\w*|demands? (?:remedy|restitution|compensation|redress)|blood[- ]price)\b/i },
   { id: 'julian_jurisdiction_challenge', signalRx: /\b(jurisdiction|challenges? (?:the )?dohkar|contests? (?:his |the )?authority|reframes?|political(?:ly)?)\b/i },
   { id: 'lirael_constrained', signalRx: /\b(separated|placed under (?:guard|watch)|confined|constrained|watched|pending (?:the )?inquiry|escorted (?:away|out)|removed from)\b/i },
-  // The FIXED lane under test — matches the real, committed app.js definition exactly.
-  { id: 'lirael_defensive_path', signalRx: /\b(submits? to procedure|demands? (?:specific )?terms|gathers? proof|conceals?\b|concealed\b|concealing\b|(?:commits?|chooses?|turns?|moves?) (?:to|toward)? ?concealment|concealment of\b|flees?|flight|counter-accus\w*|procedural bind|names? a protected constraint)\b/i, hesitationRx: /\b(opens? (?:her|his|their)? ?mouth[\s\S]{0,30}closes?|catches? (?:her|him|them)self weighing|weighs? whether|weighing of|almost (?:speaks|says|names|spoke|said)|hesitates?|stays? silent|remains? silent|says? nothing|holds? (?:her|his|their) tongue|keeps? (?:her|his|their) silence)\b/i },
+  // The FIXED lane under test — matches the real, committed app.js definition exactly, including
+  // the field-widening fix's executesRx (conditional "executes...concealment") and withholdActionRx
+  // ("without naming/revealing/explaining/saying/disclosing what", guarded against silence).
+  { id: 'lirael_defensive_path', signalRx: /\b(submits? to procedure|demands? (?:specific )?terms|gathers? proof|conceals?\b|concealed\b|concealing\b|(?:commits?|chooses?|turns?|moves?) (?:to|toward)? ?concealment|concealment of\b|flees?|flight|counter-accus\w*|procedural bind|names? a protected constraint)\b/i, executesRx: /\bexecutes? (?:a |an )?(?:concrete )?(?:defensive )?concealment\b/i, withholdActionRx: /\bwithout (?:naming|revealing|explaining|saying|disclosing) what\b/i, hesitationRx: /\b(opens? (?:her|his|their)? ?mouth[\s\S]{0,30}closes?|catches? (?:her|him|them)self weighing|weighs? whether|weighing of|almost (?:speaks|says|names|spoke|said)|hesitates?|stays? silent|remains? silent|says? nothing|holds? (?:her|his|their) tongue|keeps? (?:her|his|their) silence)\b/i },
 ];
-const laneOpt = () => ({ lanes: LANES_FOR_DIRECT_CALL_SOURCE.map((l) => ({ id: l.id, rxSource: l.signalRx.source, rxFlags: l.signalRx.flags, hRxSource: l.hesitationRx ? l.hesitationRx.source : null, hRxFlags: l.hesitationRx ? l.hesitationRx.flags : null })) });
+const rxPair = (rx) => rx ? { source: rx.source, flags: rx.flags } : null;
+const laneOpt = () => ({ lanes: LANES_FOR_DIRECT_CALL_SOURCE.map((l) => ({
+  id: l.id, rxSource: l.signalRx.source, rxFlags: l.signalRx.flags,
+  hRxSource: l.hesitationRx ? l.hesitationRx.source : null, hRxFlags: l.hesitationRx ? l.hesitationRx.flags : null,
+  eRx: rxPair(l.executesRx), wRx: rxPair(l.withholdActionRx),
+})) });
 
 (async () => {
   let browser;
@@ -111,7 +130,12 @@ const laneOpt = () => ({ lanes: LANES_FOR_DIRECT_CALL_SOURCE.map((l) => ({ id: l
   const callGate = (sc, requiredLaneId) => page.evaluate(
     ({ sc, lanes, requiredLaneId }) => window._detectPlannerFunctionGap(sc, {
       requiresAftermath: true,
-      aftermathLanes: lanes.map((l) => ({ id: l.id, signalRx: new RegExp(l.rxSource, l.rxFlags), hesitationRx: l.hRxSource ? new RegExp(l.hRxSource, l.hRxFlags) : null })),
+      aftermathLanes: lanes.map((l) => ({
+        id: l.id, signalRx: new RegExp(l.rxSource, l.rxFlags),
+        hesitationRx: l.hRxSource ? new RegExp(l.hRxSource, l.hRxFlags) : null,
+        executesRx: l.eRx ? new RegExp(l.eRx.source, l.eRx.flags) : null,
+        withholdActionRx: l.wRx ? new RegExp(l.wRx.source, l.wRx.flags) : null,
+      })),
       requiredLaneId,
     }),
     { sc, ...laneOpt(), requiredLaneId }
@@ -164,6 +188,47 @@ const laneOpt = () => ({ lanes: LANES_FOR_DIRECT_CALL_SOURCE.map((l) => ({ id: l
   const abstractOnly = { precondition: 'No procedure has yet addressed the matter.', event: '', tactical_move: 'Lirael\'s first internal weighing of concealment under assembly pressure.', forces_choice: '', chosenAftermathLane: 'lirael_defensive_path' };
   const abstractResult = await callGate(abstractOnly, 'lirael_defensive_path');
   ok('still rejected — abstract/thematic "weighing of concealment" is not an active move', abstractResult.rejected === true, JSON.stringify(abstractResult));
+
+  section('GREEN-2 — Temptation attempt 2\'s REAL content (the mouth-band fold) is NOT rejected');
+  // The real finding this pass closes: the model produced a genuinely landed action
+  // ("Lirael folds the torn mouth-band into her sash without naming what she lost") that the
+  // PRE-widening lane check missed entirely — it never contains the word "conceal" in
+  // tactical_move/event/forces_choice, and "executes" wasn't on the verb whitelist. Two
+  // independent signals now catch it: (a) event_slots.exit_state ("...has concealed her reason...")
+  // now reachable via the widened laneCombined, satisfying the ORIGINAL concealed\b pattern; (b)
+  // the new withholdActionRx matches "without naming what" directly in state_change.
+  const green2 = await callGate(TEMPTATION2_STATE_CHANGE, 'lirael_defensive_path');
+  ok('NOT rejected — the real mouth-band fold now instantiates the lane', green2.rejected === false, JSON.stringify(green2));
+
+  section('EXECUTES — conditional "executes...concealment" handling');
+  const executesAlone = {
+    precondition: 'No procedure has yet addressed what Lirael actually knows.',
+    event: 'Lirael executes a concrete defensive concealment during the assembly\'s pressure.',
+    tactical_move: '', forces_choice: '', chosenAftermathLane: 'lirael_defensive_path',
+    slots: { action: '', exitState: '' },
+  };
+  const executesAloneResult = await callGate(executesAlone, 'lirael_defensive_path');
+  ok('"executes...concealment" ALONE (no concrete action elsewhere) is still rejected — not trusted in isolation', executesAloneResult.rejected === true, JSON.stringify(executesAloneResult));
+  const executesCorroborated = {
+    precondition: 'No procedure has yet addressed what Lirael actually knows.',
+    event: 'Lirael executes a concrete defensive concealment during the assembly\'s pressure.',
+    tactical_move: '', forces_choice: '', chosenAftermathLane: 'lirael_defensive_path',
+    slots: { action: 'tucks the signed oath beneath her sleeve before the Dohkar can see it', exitState: '' },
+  };
+  const executesCorroboratedResult = await callGate(executesCorroborated, 'lirael_defensive_path');
+  ok('"executes...concealment" CORROBORATED by a real event_slots.action — NOT rejected', executesCorroboratedResult.rejected === false, JSON.stringify(executesCorroboratedResult));
+
+  section('ANTI-GAMING-2 — "without naming/revealing what" paired with SILENCE, not action, still fails');
+  // The specific gaming vector withholdActionRx's silence-guard exists to close: the phrase alone
+  // is not enough if the surrounding text is hesitation/silence wearing it as a wrapper, not a
+  // description of a real action.
+  const silenceWrapped = {
+    precondition: 'No procedure has yet addressed what Lirael actually knows.',
+    event: 'Lirael says nothing to the assembly, without revealing what she actually knows about the wish.',
+    tactical_move: '', forces_choice: '', chosenAftermathLane: 'lirael_defensive_path',
+  };
+  const silenceWrappedResult = await callGate(silenceWrapped, 'lirael_defensive_path');
+  ok('silence wearing "without revealing what" as a wrapper is still rejected', silenceWrappedResult.rejected === true, JSON.stringify(silenceWrappedResult));
 
   section('COEXIST — Boundary\'s and Reversal\'s real accepted content still pass their own, untouched lanes');
   const boundaryResult = await callGate(BOUNDARY_STATE_CHANGE, 'family_accusation');

@@ -132,7 +132,13 @@ const laneOpt = () => ({ lanes: LANES_FOR_DIRECT_CALL.map((l) => ({ id: l.id, rx
   // Roman's own framing. A real "label only" plan still writes PLAUSIBLE-SOUNDING prose in these
   // fields; it just never uses the specific vocabulary either check looks for.
   const labelOnly = {
-    precondition: 'Nothing procedural has happened yet in this moment.',
+    // NOTE (Roman 2026-09-21, updated alongside the lirael_defensive_path field-widening fix):
+    // this precondition previously read "Nothing procedural has happened..." — that word is now a
+    // real generic-check match (the same fix stemmed "procedure" to "procedur\w*" to also catch
+    // "procedural" for a genuine real-sample finding on Temptation attempt 2). Reworded with
+    // genuinely vocabulary-free filler so this fixture still isolates "no signal anywhere," not an
+    // accidental true positive.
+    precondition: 'Nothing has happened yet in this moment worth mentioning.',
     event: 'The scene continues as it was, unresolved.',
     forces_choice: 'forces Lirael to consider what happens next',
     tactical_move: 'The moment simply proceeds without incident.',

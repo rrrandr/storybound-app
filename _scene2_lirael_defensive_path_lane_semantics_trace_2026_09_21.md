@@ -81,8 +81,100 @@ to avoid shell loops/redirects this pass): `_scene2_aftermath_lane_control.mjs` 
   posture-echo check.
 - Does not authorize Silence or Confession, or any image work.
 
-## Status
+## Status (as of the original pass, superseded below)
 
 Dry, committed. No provider or image calls. No branch retry. A future retry on Temptation
 (separately authorized) would be the first real test of whether the fixed lane, given a fresh
 planner draw, produces a genuinely landed defensive move instead of hesitation.
+
+---
+
+## Addendum (2026-09-21): Temptation attempt 2 retried the fixed lane and hit a NARROWER,
+## DIFFERENT gap — the lane-content check's field set and vocabulary were too lexical
+
+That retry (`_scene2_capability_temptation_attempt2_report_2026_09_21.md`) proved the fix above
+worked on CONTENT: the model stopped producing hesitation and produced a genuine landed action —
+"Lirael folds the torn mouth-band into her sash without naming what she lost." But the gate still
+rejected it. Roman: "That's not a story failure. That's the gate being too lexical again... fix the
+gate, dry, exactly like Reversal: inspect the full planner contract, especially
+`event_slots.action`, and accept concrete action evidence when the prose itself instantiates the
+lane."
+
+### Root cause — TWO independent gaps, not one
+
+Diagnosis while fixing this turned up a correction to the ORIGINAL attempt-2 report: the real
+rejection was **compound**, not lane-only as first reported. The console log's actual gate message
+(`[CG:PLANNER-GATE] REJECTED...`) carries both reasons joined by `|`:
+
+1. **Lane-content check gap**: the check read only the narrow `tactical_move`/`event`/
+   `forces_choice` text. The real landed action lived in `event_slots.action` ("folds the torn
+   mouth-band into her sash") and `event_slots.exit_state` ("Lirael has concealed her reason for
+   the wish..."), both unread. `tactical_move` said "Lirael **executes** a concrete defensive
+   concealment," and "executes" wasn't on the verb whitelist.
+2. **Generic aftermath-vocabulary check gap (a separate check, not previously suspected for this
+   sample)**: `aftermath_obligations` said "...carries visible **procedural** weight..." —
+   "procedural" is not a substring of "procedure" (they diverge after "procedur"), so the old
+   `procedure\b`-only pattern missed it, the same stemming-gap class as "concealment"/"conceal"
+   found in the first lane-semantics pass. This is a genuinely NEW finding beyond what the
+   attempt-2 report originally diagnosed — surfaced only once the field-widening fix was tested end
+   to end and the GREEN-2 fixture (the real reply, unmodified) still failed for a reason the lane
+   fix alone did not explain.
+
+### Fix
+
+- **Lane-content check now reads a widened `laneCombined`** = narrow `combined` +
+  `event_slots.action` + `event_slots.exit_state` — mirroring the Reversal gate-seam fix, but kept
+  narrower than the generic check's widening (deliberately excludes `precondition` and
+  `aftermathObligations` for the LANE check specifically, since those are open self-report prose a
+  model could pad with lane-flavored vocabulary while the real event stays inert; `event_slots` is
+  a structured, mechanistic decomposition of the same central event, not padding).
+- **`executesRx` + conditional corroboration**: "executes...concealment" is accepted only when
+  `event_slots.action` is independently populated with real content — never in isolation, per
+  Roman's explicit task-4 requirement ("do not let 'executes a concealment' pass by itself if no
+  action is described elsewhere").
+- **`withholdActionRx`** — a new, GENERALIZABLE pattern ("without naming/revealing/explaining/
+  saying/disclosing what") recognizing the grammatical shape "landed action + explicit
+  non-disclosure" directly, rather than requiring the literal word "conceal." Kept OUT of the shared
+  `signalRx` and checked separately with a silence-guard: it only counts when the same text does
+  NOT also match the lane's `hesitationRx` silence-cluster — closing a hypothetical gaming vector
+  ("says nothing, without revealing what she knows" — silence wearing the phrase as a wrapper).
+- **Generic check stemming**: `_SCENE_AFTERMATH_VOCAB_RX`'s `procedure` alternative widened to
+  `procedur\w*`, catching "procedural"/"procedurally"/"procedures" — same institutional-vocab
+  category as the existing word, low gaming risk.
+
+### Proof — 16/16, `_scene2_lirael_defensive_path_lane_semantics_control.mjs` (updated)
+
+New sections added beyond the original 12: **GREEN-2** (Temptation attempt 2's real, unmodified
+content — the mouth-band fold — now passes, confirmed via TWO independent signals: `exit_state`'s
+"concealed" now reachable by the original `signalRx`, and `withholdActionRx` matching "without
+naming what" in `state_change`); **EXECUTES** (bare "executes...concealment" alone still rejected;
+corroborated by a populated `event_slots.action`, accepted); **ANTI-GAMING-2** ("without revealing
+what" paired with "says nothing" — silence wearing the phrase — still rejected, proving the
+silence-guard holds). All original 12 assertions (RED, GREEN, STEMMING, NEW-VOCAB, ANTI-GAMING,
+COEXIST, PROMPT) still pass unchanged.
+
+One fixture bug found and fixed during regression re-verification (not a real regression): the
+GATE SEAM WIDENED-SCAN control's RED-B fixture used "Nothing **procedural** has happened yet..." as
+intentionally vocabulary-free filler text — the stemming fix now correctly matches "procedural," so
+that filler accidentally became a true positive. Reworded to genuinely vocabulary-free filler
+("Nothing has happened yet in this moment worth mentioning"); no change to gate behavior itself.
+
+Directly-affected pre-existing controls re-verified individually, no shell loops/redirects:
+`_scene2_aftermath_lane_control.mjs` (22/22), `_scene2_event_frame_resolver_control.mjs` (26/26),
+`_scene2_gate_seam_widened_scan_control.mjs` (7/7, after the fixture fix),
+`_scene2_planner_function_gate_control.mjs` (10/10) — all green.
+
+### What this does NOT do
+
+- Does not retry Temptation live — no branch retry authorized alongside this fix.
+- Does not touch Boundary's or Reversal's lanes, or any other lane's signal vocabulary.
+- Does not add `executes` to the shared abstract-noun verb whitelist unconditionally — it stays
+  gated on corroboration.
+- Does not widen the LANE check to read `precondition`/`aftermathObligations` (unlike the generic
+  check) — that boundary is deliberate, to keep the lane check resistant to self-report padding.
+- Does not authorize Silence or Confession, or any image work.
+
+### Status
+
+Dry, committed. No provider or image calls. No branch retry. Temptation may be retried or
+revalidated after this fix — separately authorized, not part of this pass.

@@ -266,3 +266,27 @@ account: `_scene2_capability_temptation_attempt2_report_2026_09_21.md`.
 
 **Per the standing "no follow-up retries if it fails" rule, this concludes the Temptation retry.**
 No further retry on Temptation, Silence, or Confession. Images remain untouched.
+
+## Addendum — lane-check field-widening dry-fix (2026-09-21)
+
+Roman: "That's not a story failure. That's the gate being too lexical again... fix the gate, dry,
+exactly like Reversal: inspect the full planner contract, especially `event_slots.action`, and
+accept concrete action evidence when the prose itself instantiates the lane." Actioned the two
+candidate fixes noted (but not run) in the retry-2 addendum above, plus a second, independent gap
+found while proving the fix against the real sample: the generic aftermath-vocabulary check ALSO
+missed this exact real content on a separate stemming gap ("procedural" vs "procedure"). Both
+fixed. Full diagnosis and fix: the addendum to
+`_scene2_lirael_defensive_path_lane_semantics_trace_2026_09_21.md`. Classification note added to
+`_scene2_capability_temptation_attempt2_report_2026_09_21.md`. Proven 16/16 (updated
+`_scene2_lirael_defensive_path_lane_semantics_control.mjs`, including a new GREEN fixture built
+from Temptation attempt 2's own real reply, and dedicated fixtures proving the "executes" and
+"without naming what" conditional-corroboration/silence-guard logic each hold their anti-gaming
+line). Four directly-affected pre-existing controls re-verified individually with zero real
+regressions (`_scene2_aftermath_lane_control.mjs` 22/22, `_scene2_event_frame_resolver_control.mjs`
+26/26, `_scene2_gate_seam_widened_scan_control.mjs` 7/7 after fixing one fixture whose filler text
+had accidentally become a true positive under the new stemming, `_scene2_planner_function_gate_control.mjs`
+10/10).
+
+**Status**: dry fix only. **Temptation may now be retried or revalidated under the fixed gate** —
+not yet done, pending separate authorization, per "Do not retry Temptation yet." Silence and
+Confession remain untested and unauthorized. No image work of any kind.

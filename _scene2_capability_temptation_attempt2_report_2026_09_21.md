@@ -1,5 +1,25 @@
 # Scene 2 Capability Sample: Temptation, Attempt 2 (2026-09-21, after the lane-semantics fix)
 
+## Classification (updated 2026-09-21, after the lane-check field-widening fix)
+
+**This was not a story/branch failure. It was the gate being too lexical again**, the same class of
+issue the Reversal gate-seam fix closed. The planner produced a genuinely valid, landed defensive
+action ("Lirael folds the torn mouth-band into her sash without naming what she lost," corroborated
+by `event_slots.action`/`exit_state`) — the model did its job correctly. The gate rejected it
+because both its checks read too narrow a slice of the planner's own contract and too narrow a
+vocabulary list, not because the content was thin. Fixed dry, see
+`_scene2_lirael_defensive_path_lane_semantics_trace_2026_09_21.md`'s addendum for the full
+diagnosis and fix; proven against this exact real reply as a new GREEN fixture in
+`_scene2_lirael_defensive_path_lane_semantics_control.mjs` (16/16).
+
+**Correction to the original diagnosis below**: the "Root cause" section below states the rejection
+came from the lane-content check alone. That was incomplete — the actual gate message (recovered
+from the persisted console log during the fix) shows the rejection was **compound**: the generic
+aftermath-vocabulary check ALSO failed, on a separate stemming gap ("procedural" vs "procedure," the
+same class of gap as "concealment"/"conceal"). Both gaps are now fixed. Temptation was NOT re-run
+this pass — the section below remains the original, honest, unedited record of that draw and its
+(initially incomplete) diagnosis.
+
 Authorized scope: re-run Temptation under the fixed `lirael_defensive_path` lane, `--slot=temptation`
 only (no Silence/Confession), all standing gates/fixes active, $0.45/8-request ceiling, no
 follow-up retry within this card. Attempt 1 (`_scene2_capability_temptation_report_2026_09_21.md`)
