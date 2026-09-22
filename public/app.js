@@ -129496,7 +129496,18 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
         silence:    { laneId: 'dohkar_preliminary_review', eventFrame: 'The charged silence after Julian\'s public claim is what prompts the presiding Dohkar to break it procedurally: he sets a preliminary review date and names its terms before the assembly disperses, moving the confrontation off the ritual floor and into procedure.' },
         reversal:   { laneId: 'julian_jurisdiction_challenge', eventFrame: 'Someone seizes control of who gets to rule here: Julian challenges the presiding Dohkar\'s jurisdiction, reframing the accusation as his own to answer rather than Lirael\'s — a real jurisdictional contest over authority, not another question put to Lirael.' },
         boundary:   { laneId: 'family_accusation', eventFrame: 'Lirael\'s open, unretreating want is what draws Seren\'s family forward: they step out of the assembly and publicly demand remedy for what the wish cost Seren, redirecting the confrontation from Julian\'s accusation to a new formal complaint — NOT another round of the Dohkar asking whether she shaped the wish.' },
-        confession: { laneId: 'dohkar_preliminary_review', eventFrame: 'Julian\'s own confession destabilizes his position as accuser — the presiding Dohkar reacts to that shift by setting formal terms and a date for review rather than letting the interrogation continue informally.' },
+        // CONFESSING-PARTY FIX (Roman 2026-09-22) — the OLD text assumed Julian is always the
+        // one confessing. Real attempt 1 exposed the mismatch: the reader's actual submitted
+        // Confession-card dialogue was Lirael's OWN admission/deflection ("You're not the one
+        // who left me in the braided trees — she was"), redirecting blame to a third party, not
+        // an admission FROM Julian. The planner still labeled it "Julian's confession" because
+        // the frame text told it to. Rewritten so the default confessing party is Lirael
+        // herself (matching what the card mechanism actually produces), while still permitting
+        // — never requiring — Julian as the confessor when the reader's own custom text genuinely
+        // delivers that. Julian's own reaction is governed separately by the generic per-slot
+        // obligationType mechanism (confession -> 'register', see _INTR_OBLIGATION_TYPE); this
+        // frame only decides whose truth triggers the Dohkar's procedural response.
+        confession: { laneId: 'dohkar_preliminary_review', eventFrame: 'An admission has just landed — most naturally Lirael\'s OWN (redirected blame, a self-incriminating deflection, a truth she can no longer keep folded away), though if the reader\'s own submitted words instead have Julian confess something on his own account, that admission destabilizes HIS position exactly the same way; this frame does not require that — only allows it when the reader\'s own text actually delivers it. Whichever party\'s truth just surfaced, the presiding Dohkar reacts to that shift by setting formal terms and a date for review rather than letting the interrogation continue informally.' },
       },
       defaultEventFrame: { laneId: 'dohkar_preliminary_review', eventFrame: 'The presiding Dohkar formally sets a preliminary review of Lirael\'s conduct — naming who convenes it and roughly when — moving the confrontation off the ritual floor and into procedure. This is NOT another round of asking whether she shaped the wish.' },
     },
