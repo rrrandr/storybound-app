@@ -174,6 +174,91 @@ Directly-affected pre-existing controls re-verified individually, no shell loops
   check) — that boundary is deliberate, to keep the lane check resistant to self-report padding.
 - Does not authorize Silence or Confession, or any image work.
 
+### Status (as of this addendum, superseded below)
+
+Dry, committed. No provider or image calls. No branch retry. Temptation may be retried or
+revalidated after this fix — separately authorized, not part of this pass.
+
+---
+
+## Addendum 2 (2026-09-21): Temptation retry 3 hit a THIRD phrasing gap (deception) plus an
+## unrelated posture-echo false positive on a two-word common bigram
+
+Temptation retried once more under the field-widened gate (`_scene2_capability_temptation_attempt3_report_2026_09_21.md`).
+Real cost $0.005, author never ran. This draw chose a THIRD phrasing of a landed defensive move —
+an active false public statement ("Lirael tells the assembly the wish tested her alignment only" /
+`event_slots.action`: "gives a false public account") — matching none of the previous fixes'
+patterns. It was rejected on three joined reasons. Roman: "Temptation is telling us something
+useful now: the branch is not failing because the model is lazy anymore. It's finding plausible
+defensive moves, but the gate is still too phrase-driven to recognize the variety... This time,
+'gives a false public account' is a legitimate defensive/concealment action... it should not be
+rejected as 'not a move.'... Also, the posture-echo two-word hit on 'let the' sounds like pure
+noise."
+
+### Fix 1 — deception-as-concealment
+
+`lirael_defensive_path` gains `deceptionRx` (recognizing "gives a false account," "tells...only,"
+"falsely claims/states/tells/informs/declares," "feeds a false...," "offers a false account,"
+"deceives," "misleads," "lies to") and `publicTargetRx` (a text-based fallback public-audience
+check: "the assembly," "the Dohkar," "the tribunal," etc., used when `event_slots.target` is
+empty). Per Roman's explicit anti-gaming requirement ("add anti-gaming controls so vague 'she
+lies,' private resolve, or unspecified secrecy does not pass without a public target/content/
+effect"), a `deceptionRx` match is trusted ONLY when all three hold:
+
+1. **Not intention-only** — `hesitationRx` gains a NARROW set of deception-specific intention
+   phrasings ("decides to lie/deceive/give a false/tell a false/mislead," "resolves/plans/intends
+   to lie/deceive/mislead," "considers lying/deceiving," "would lie/deceive/mislead"), deliberately
+   scoped to deception verbs specifically so it does NOT collide with the standard, always-present
+   "forces her to decide whether to claim interference or..." boilerplate in every real sample's
+   `forces_choice`/`tactical_move` — a generic "decide whether" addition would have wrongly rejected
+   every real accepted plan.
+2. **A public target is named** — `event_slots.target` populated, or `publicTargetRx` matches the
+   text.
+3. **An effect is described** — `event_slots.exit_state` populated (what the deception actually
+   accomplished).
+
+A bare "Lirael lies to the assembly" with no described effect still fails (ANTI-GAMING-3); "Lirael
+decides to give a false account" — intention-only, even with a target and effect present — still
+fails (ANTI-GAMING-4), closing the same private-resolve risk as "weighing of concealment" in the
+first pass.
+
+### Fix 2 — posture-echo meaningful-phrase-length requirement
+
+`_postureEchoBigram` previously rejected a plan whenever a shared 2-word window had NOT-BOTH words
+be stopwords — "let the" (posture: "Let the wind of your breath unravel me...", planner:
+"...or let the assumption stand") passed that bar because "let" (3 letters, low information) simply
+wasn't in the stopword list. Roman: "A two-word overlap made of common words should never block a
+plan... require a meaningful phrase length or content-word density." Fixed: at least one word in
+the bigram must now be >= 4 characters — a generic length proxy for "carries real content," not a
+curated word list. Retry 5's real "burn for"/"to burn" (the word "burn," 4 letters) still passes the
+bar and is still correctly rejected, proving the check's original purpose survives.
+
+### Proof
+
+- `_scene2_lirael_defensive_path_lane_semantics_control.mjs`: 21/21 (5 new sections: REAL-DRAW,
+  DECEPTION-GREEN, ANTI-GAMING-3, ANTI-GAMING-4, plus the real Temptation attempt-3 reply loaded as
+  a fixture; all 16 prior assertions still pass unchanged).
+- `_scene2_required_scene_function_control.mjs`: 16/16 (new RED:ECHO-FALSE-POSITIVE section using
+  Temptation retry 3's real posture + real tactical_move, read verbatim from its persisted log;
+  retry 5's original RED:ECHO true-positive section unchanged and still passing).
+- Four directly-affected pre-existing controls re-verified individually, no shell loops/redirects:
+  `_scene2_aftermath_lane_control.mjs` (22/22), `_scene2_event_frame_resolver_control.mjs` (26/26),
+  `_scene2_gate_seam_widened_scan_control.mjs` (7/7), `_scene2_planner_function_gate_control.mjs`
+  (10/10) — all green, zero regressions.
+
+### What this does NOT do
+
+- Does not touch the GENERIC aftermath-vocabulary check's behavior for Temptation retry 3's own real
+  content — that draw's own contract genuinely contains no aftermath/procedure vocabulary anywhere,
+  and Roman explicitly asked this be PRESERVED as a real, separate finding, not routed around.
+- Does not touch the specificity diagnostic (`THEME-COLLAPSE`) — a real content-thinness observation
+  about this specific draw, not a gate defect.
+- Does not retry Temptation live — no branch retry authorized alongside this fix.
+- Does not touch Boundary's or Reversal's lanes, or any other lane's signal vocabulary.
+- Does not widen the posture-echo check's *purpose* — only requires the shared phrase to carry
+  actual content before it can block a plan.
+- Does not authorize Silence or Confession, or any image work.
+
 ### Status
 
 Dry, committed. No provider or image calls. No branch retry. Temptation may be retried or

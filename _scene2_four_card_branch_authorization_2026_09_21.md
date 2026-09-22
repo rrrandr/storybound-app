@@ -290,3 +290,44 @@ had accidentally become a true positive under the new stemming, `_scene2_planner
 **Status**: dry fix only. **Temptation may now be retried or revalidated under the fixed gate** —
 not yet done, pending separate authorization, per "Do not retry Temptation yet." Silence and
 Confession remain untested and unauthorized. No image work of any kind.
+
+## Addendum — Temptation retry 3: corrected gate still rejected, on a third phrasing gap plus an unrelated posture-echo false positive (2026-09-21)
+
+Temptation run again under the field-widened gate: $0.00500405, 1 real call, author never ran.
+Real cost + a genuinely different draw again — not hesitation, not the mouth-band. The model chose
+an active false public statement ("Lirael tells the assembly the wish tested her alignment only")
+as its defensive move. Rejected on three joined reasons: the GENERIC check (real absence of
+vocabulary in this draw's own contract — a legitimate finding), the LANE-content check (deception
+phrasing matched none of the existing patterns — a new gate gap), and the posture-echo check (fired
+on the common two-word bigram "let the" — a separate, pre-existing, previously-untouched check).
+Full account: `_scene2_capability_temptation_attempt3_report_2026_09_21.md`.
+
+## Addendum — deception + posture-echo-length dry-fix (2026-09-21)
+
+Roman: "Temptation is telling us something useful now... it's finding plausible defensive moves,
+but the gate is still too phrase-driven to recognize the variety... 'gives a false public account'
+is a legitimate defensive/concealment action... A two-word overlap made of common words should
+never block a plan." Two fixes:
+1. `lirael_defensive_path` gains `deceptionRx` (false-account/lies-to/deceives/misleads phrasing),
+   trusted only when corroborated by a named public target, a described effect, and NOT
+   intention-only phrasing ("decides to lie") — closing the same private-resolve risk as "weighing
+   of concealment."
+2. `_postureEchoBigram` now requires at least one word in a shared bigram to be 4+ characters before
+   it can block a plan — "let the" no longer fires; Retry 5's real "burn for"/"to burn" true
+   positive is unaffected.
+
+Full diagnosis and fix: the second addendum to
+`_scene2_lirael_defensive_path_lane_semantics_trace_2026_09_21.md`. Classification note added to
+`_scene2_capability_temptation_attempt3_report_2026_09_21.md`, explicitly preserving the GENERIC
+check's vocabulary-absence finding and the specificity diagnostic's thinness finding for this draw
+as real, unfixed observations. Proven 21/21 (updated
+`_scene2_lirael_defensive_path_lane_semantics_control.mjs`) and 16/16 (updated
+`_scene2_required_scene_function_control.mjs`, new RED:ECHO-FALSE-POSITIVE section using retry 3's
+real posture + planner text). Four directly-affected pre-existing controls re-verified individually
+with zero regressions (`_scene2_aftermath_lane_control.mjs` 22/22,
+`_scene2_event_frame_resolver_control.mjs` 26/26, `_scene2_gate_seam_widened_scan_control.mjs` 7/7,
+`_scene2_planner_function_gate_control.mjs` 10/10).
+
+**Status**: dry fix only. Temptation may now be retried or revalidated under the corrected gate —
+not yet done, pending separate authorization. Silence and Confession remain untested and
+unauthorized. No image work of any kind.

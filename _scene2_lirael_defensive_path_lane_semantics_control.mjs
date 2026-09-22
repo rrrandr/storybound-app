@@ -37,6 +37,25 @@
 //               any scene without a resolved frame) renders the updated label with its explicit
 //               negative rule.
 //
+// EXTENDED 2026-09-21 (field-widening pass): GREEN-2/EXECUTES/ANTI-GAMING-2 sections cover the
+// event_slots field-widening + executesRx/withholdActionRx fix for Temptation attempt 2 (the
+// mouth-band fold). See that pass's own commit for detail.
+//
+// EXTENDED AGAIN 2026-09-21 (deception pass): Temptation retry 3's real reply chose a THIRD
+// phrasing of a landed defensive move — an active false public statement ("Lirael tells the
+// assembly the wish tested her alignment only") — that matched none of the prior patterns. Roman:
+// "the gate should understand deception as one valid defensive path... it should not fail the
+// lane-content gate solely because it lacks a physical object or the word conceal." New sections:
+//   REAL-DRAW      — Temptation retry 3's real content no longer fails the LANE-content check
+//                    specifically (the GENERIC check's separate, real vocabulary-absence finding
+//                    for this draw is deliberately PRESERVED, not fixed — proven still present).
+//   DECEPTION-GREEN — a synthetic deception move (public target + described effect + generic
+//                    vocab) is not rejected at all.
+//   ANTI-GAMING-3  — a bare "lies to the assembly" with no described effect still fails.
+//   ANTI-GAMING-4  — deception as private resolve ("decides to give a false account") still fails,
+//                    even with a target and effect present, closing the same intention-only-move
+//                    risk as "weighing of concealment."
+//
 // usage: node _scene2_lirael_defensive_path_lane_semantics_control.mjs
 import { chromium } from 'playwright-core';
 import { installFailClosedNetworkGate } from './_e2e_network_gate.mjs';
@@ -83,6 +102,18 @@ const TEMPTATION2_STATE_CHANGE = {
 console.log('✓ loaded the real Temptation attempt-2 reply verbatim from ' + TEMPTATION2_LOG);
 console.log('  real state_change: "' + TEMPTATION2_STATE_CHANGE.event + '"');
 
+// ── Real Temptation ATTEMPT 3 reply (the false public account — the new deception GREEN fixture) ──
+const TEMPTATION3_LOG = path.join(__dirname, '_scene2_repair_replay_sample_out', 'run_1790037379926.jsonl');
+const TEMPTATION3_JSON = parseReply(TEMPTATION3_LOG, realMatcher);
+const TEMPTATION3_STATE_CHANGE = {
+  precondition: TEMPTATION3_JSON.state_change_precondition, event: TEMPTATION3_JSON.state_change,
+  forces_choice: TEMPTATION3_JSON.forces_choice, tactical_move: TEMPTATION3_JSON.tactical_move,
+  chosenAftermathLane: TEMPTATION3_JSON.chosen_aftermath_lane, aftermathObligations: TEMPTATION3_JSON.aftermath_obligations,
+  slots: TEMPTATION3_JSON.event_slots ? { action: TEMPTATION3_JSON.event_slots.action, exitState: TEMPTATION3_JSON.event_slots.exit_state, target: TEMPTATION3_JSON.event_slots.target } : undefined,
+};
+console.log('✓ loaded the real Temptation attempt-3 reply verbatim from ' + TEMPTATION3_LOG);
+console.log('  real state_change: "' + TEMPTATION3_STATE_CHANGE.event + '"');
+
 // ── Real Boundary (retry 15) and Reversal (attempt 2) replies — COEXIST fixtures ──
 const BOUNDARY_LOG = path.join(__dirname, '_scene2_repair_replay_sample_out', 'run_1789975467864.jsonl');
 const boundaryEvents = fs.readFileSync(BOUNDARY_LOG, 'utf8').trim().split('\n').filter(Boolean).map((l) => JSON.parse(l));
@@ -107,15 +138,17 @@ const LANES_FOR_DIRECT_CALL_SOURCE = [
   { id: 'julian_jurisdiction_challenge', signalRx: /\b(jurisdiction|challenges? (?:the )?dohkar|contests? (?:his |the )?authority|reframes?|political(?:ly)?)\b/i },
   { id: 'lirael_constrained', signalRx: /\b(separated|placed under (?:guard|watch)|confined|constrained|watched|pending (?:the )?inquiry|escorted (?:away|out)|removed from)\b/i },
   // The FIXED lane under test — matches the real, committed app.js definition exactly, including
-  // the field-widening fix's executesRx (conditional "executes...concealment") and withholdActionRx
-  // ("without naming/revealing/explaining/saying/disclosing what", guarded against silence).
-  { id: 'lirael_defensive_path', signalRx: /\b(submits? to procedure|demands? (?:specific )?terms|gathers? proof|conceals?\b|concealed\b|concealing\b|(?:commits?|chooses?|turns?|moves?) (?:to|toward)? ?concealment|concealment of\b|flees?|flight|counter-accus\w*|procedural bind|names? a protected constraint)\b/i, executesRx: /\bexecutes? (?:a |an )?(?:concrete )?(?:defensive )?concealment\b/i, withholdActionRx: /\bwithout (?:naming|revealing|explaining|saying|disclosing) what\b/i, hesitationRx: /\b(opens? (?:her|his|their)? ?mouth[\s\S]{0,30}closes?|catches? (?:her|him|them)self weighing|weighs? whether|weighing of|almost (?:speaks|says|names|spoke|said)|hesitates?|stays? silent|remains? silent|says? nothing|holds? (?:her|his|their) tongue|keeps? (?:her|his|their) silence)\b/i },
+  // the field-widening fix's executesRx (conditional "executes...concealment"), withholdActionRx
+  // ("without naming/revealing/explaining/saying/disclosing what", guarded against silence), and
+  // the deception fix's deceptionRx/publicTargetRx (guarded against intention-only phrasing, no
+  // target, or no described effect) plus hesitationRx's narrow deception-intention additions.
+  { id: 'lirael_defensive_path', signalRx: /\b(submits? to procedure|demands? (?:specific )?terms|gathers? proof|conceals?\b|concealed\b|concealing\b|(?:commits?|chooses?|turns?|moves?) (?:to|toward)? ?concealment|concealment of\b|flees?|flight|counter-accus\w*|procedural bind|names? a protected constraint)\b/i, executesRx: /\bexecutes? (?:a |an )?(?:concrete )?(?:defensive )?concealment\b/i, withholdActionRx: /\bwithout (?:naming|revealing|explaining|saying|disclosing) what\b/i, deceptionRx: /\b(gives? (?:a )?false (?:public )?account|tells? [\s\S]{0,50}(?:only|falsely)|falsely (?:claims?|states?|tells?|informs?|declares?)|feeds? [\s\S]{0,30}a false|offers? a false (?:account|story|explanation)|deceives?|misleads?|lies? to)\b/i, publicTargetRx: /\b(the assembly|the dohkar|the tribunal|the court|the family|the crowd|the audience|the witnesses|everyone present|the room|the gathered|the seated|publicly)\b/i, hesitationRx: /\b(opens? (?:her|his|their)? ?mouth[\s\S]{0,30}closes?|catches? (?:her|him|them)self weighing|weighs? whether|weighing of|almost (?:speaks|says|names|spoke|said)|hesitates?|stays? silent|remains? silent|says? nothing|holds? (?:her|his|their) tongue|keeps? (?:her|his|their) silence|decides? to (?:lie|deceive|give a false|tell a false|mislead)|resolves? to (?:lie|deceive|mislead)|plans? to (?:lie|deceive|mislead)|intends? to (?:lie|deceive|mislead)|considers? (?:lying|deceiving)|would (?:lie|deceive|mislead))\b/i },
 ];
 const rxPair = (rx) => rx ? { source: rx.source, flags: rx.flags } : null;
 const laneOpt = () => ({ lanes: LANES_FOR_DIRECT_CALL_SOURCE.map((l) => ({
   id: l.id, rxSource: l.signalRx.source, rxFlags: l.signalRx.flags,
   hRxSource: l.hesitationRx ? l.hesitationRx.source : null, hRxFlags: l.hesitationRx ? l.hesitationRx.flags : null,
-  eRx: rxPair(l.executesRx), wRx: rxPair(l.withholdActionRx),
+  eRx: rxPair(l.executesRx), wRx: rxPair(l.withholdActionRx), dRx: rxPair(l.deceptionRx), pRx: rxPair(l.publicTargetRx),
 })) });
 
 (async () => {
@@ -135,6 +168,8 @@ const laneOpt = () => ({ lanes: LANES_FOR_DIRECT_CALL_SOURCE.map((l) => ({
         hesitationRx: l.hRxSource ? new RegExp(l.hRxSource, l.hRxFlags) : null,
         executesRx: l.eRx ? new RegExp(l.eRx.source, l.eRx.flags) : null,
         withholdActionRx: l.wRx ? new RegExp(l.wRx.source, l.wRx.flags) : null,
+        deceptionRx: l.dRx ? new RegExp(l.dRx.source, l.dRx.flags) : null,
+        publicTargetRx: l.pRx ? new RegExp(l.pRx.source, l.pRx.flags) : null,
       })),
       requiredLaneId,
     }),
@@ -229,6 +264,50 @@ const laneOpt = () => ({ lanes: LANES_FOR_DIRECT_CALL_SOURCE.map((l) => ({
   };
   const silenceWrappedResult = await callGate(silenceWrapped, 'lirael_defensive_path');
   ok('silence wearing "without revealing what" as a wrapper is still rejected', silenceWrappedResult.rejected === true, JSON.stringify(silenceWrappedResult));
+
+  section('REAL-DRAW — Temptation attempt 3\'s REAL content (false public account) no longer fails the LANE-content check');
+  // Roman: "'gives a false public account' is a legitimate defensive/concealment action... it
+  // should not be rejected as 'not a move.'" This exact real draw's aftermath_obligations
+  // genuinely contains no generic-check vocabulary either — a real, separate finding Roman asked
+  // to be PRESERVED, not silently fixed ("Preserve the generic aftermath/procedure failure as a
+  // real issue for retry 3 if the contract truly lacked those signals"). So the overall gate may
+  // still correctly reject this specific draw — via the GENERIC check only. This isolates the
+  // LANE-content reason specifically: it must be gone.
+  const temptation3Result = await callGate(TEMPTATION3_STATE_CHANGE, 'lirael_defensive_path');
+  ok('the LANE-content reason is no longer present for this real draw', !/does not actually instantiate that lane/.test(temptation3Result.reason || ''), JSON.stringify(temptation3Result));
+  ok('the GENERIC aftermath-vocabulary absence is still correctly flagged (a real, separate, preserved finding)', temptation3Result.rejected === true && /shows no aftermath\/procedure\/consequence-movement signal/.test(temptation3Result.reason || ''), JSON.stringify(temptation3Result));
+
+  section('DECEPTION-GREEN — a synthetic deception move (public target + described effect + generic vocab) is NOT rejected at all');
+  const deceptionGreen = {
+    precondition: 'No ruling has yet addressed what Lirael told the Dohkar about the wish.',
+    event: 'Lirael falsely tells the Dohkar that the wish was purely ceremonial, and the Dohkar\'s ruling now rests on that false account.',
+    forces_choice: 'forces Lirael to choose between correcting the record or letting the Dohkar\'s ruling stand on the false account',
+    tactical_move: 'advance lirael_defensive_path by having Lirael deceive the Dohkar with a false, public account',
+    chosenAftermathLane: 'lirael_defensive_path',
+    slots: { target: 'the Dohkar', exitState: 'the Dohkar now believes the wish was ceremonial and moves toward a ruling on that basis' },
+  };
+  const deceptionGreenResult = await callGate(deceptionGreen, 'lirael_defensive_path');
+  ok('NOT rejected — deception with a public target and a described effect instantiates the lane', deceptionGreenResult.rejected === false, JSON.stringify(deceptionGreenResult));
+
+  section('ANTI-GAMING-3 — deception WITHOUT a described effect still fails (vague "she lies" is not a landed move)');
+  const vagueLie = {
+    precondition: 'No procedure has yet addressed what Lirael told the assembly.',
+    event: 'Lirael lies to the assembly.',
+    tactical_move: '', forces_choice: '', chosenAftermathLane: 'lirael_defensive_path',
+    slots: { target: '', exitState: '' },
+  };
+  const vagueLieResult = await callGate(vagueLie, 'lirael_defensive_path');
+  ok('a bare "lies to the assembly" with no described effect is still rejected', vagueLieResult.rejected === true, JSON.stringify(vagueLieResult));
+
+  section('ANTI-GAMING-4 — deception as PRIVATE RESOLVE (intention-only) still fails, even with a target and effect');
+  const intentionOnlyLie = {
+    precondition: 'No procedure has yet addressed what Lirael told the Dohkar.',
+    event: 'Lirael decides to give a false account to the Dohkar if pressed, though she has not spoken yet.',
+    tactical_move: '', forces_choice: '', chosenAftermathLane: 'lirael_defensive_path',
+    slots: { target: 'the Dohkar', exitState: 'the Dohkar has not yet heard anything from Lirael' },
+  };
+  const intentionOnlyLieResult = await callGate(intentionOnlyLie, 'lirael_defensive_path');
+  ok('an intention-only "decides to give a false account" is still rejected — not yet landed', intentionOnlyLieResult.rejected === true, JSON.stringify(intentionOnlyLieResult));
 
   section('COEXIST — Boundary\'s and Reversal\'s real accepted content still pass their own, untouched lanes');
   const boundaryResult = await callGate(BOUNDARY_STATE_CHANGE, 'family_accusation');

@@ -8983,7 +8983,19 @@ window.config = window.config || {
     var plannerJoined = ' ' + aWords.join(' ') + ' ';
     for (var i = 0; i < pWords.length - 1; i++) {
       var w1 = pWords[i], w2 = pWords[i + 1];
-      if (_POSTURE_STOPWORDS[w1] && _POSTURE_STOPWORDS[w2]) continue; // both function words — too generic to count
+      var w1Stop = !!_POSTURE_STOPWORDS[w1], w2Stop = !!_POSTURE_STOPWORDS[w2];
+      if (w1Stop && w2Stop) continue; // both function words — too generic to count
+      // MEANINGFUL-PHRASE-LENGTH FIX (Roman 2026-09-21) — real finding: Temptation retry 3's "let
+      // the" falsely blocked a plan — "let" is not literally in the stopword list, so the old
+      // "not BOTH stopwords" rule alone let it through, even though "let" carries almost no
+      // standalone dramatic content. Roman: "A two-word overlap made of common words should never
+      // block a plan... require a meaningful phrase length or content-word density." Requires at
+      // least one of the two words to be >= 4 characters (a generic, no-curated-vocabulary-list
+      // proxy for "carries real content," not a starter-specific word). Retry 5's real "burn for"/
+      // "to burn" (the word "burn," 4 letters) still passes this bar and is still correctly
+      // rejected, proving the check's original purpose survives.
+      var hasSubstantiveWord = (!w1Stop && w1.length >= 4) || (!w2Stop && w2.length >= 4);
+      if (!hasSubstantiveWord) continue;
       var bigram = ' ' + w1 + ' ' + w2 + ' ';
       if (plannerJoined.indexOf(bigram) !== -1) return w1 + ' ' + w2;
     }
@@ -9086,6 +9098,27 @@ window.config = window.config || {
           if (!laneOk && laneMatch.withholdActionRx && laneMatch.withholdActionRx.test(laneCombined)) {
             var _silenceGuardHit = laneMatch.hesitationRx && laneMatch.hesitationRx.test(laneCombined);
             if (!_silenceGuardHit) laneOk = true;
+          }
+          // GUARDED DECEPTION HANDLING (Roman 2026-09-21) — real finding: Temptation retry 3's
+          // real reply chose a THIRD phrasing of a landed defensive move — an active false public
+          // statement ("Lirael tells the assembly the wish tested her alignment only" /
+          // event_slots.action: "gives a false public account") — that matches none of the
+          // patterns above (no "conceal" word, no object, no "without naming what" wrapper).
+          // Roman: "'gives a false public account' is a legitimate defensive/concealment action...
+          // it should not be rejected as 'not a move.'" deceptionRx recognizes this landed-
+          // deception phrasing, but — per Roman's explicit anti-gaming requirement — is trusted
+          // only when ALL THREE hold: (1) not intention/future-only phrasing ("decides to lie,"
+          // "resolves to deceive" — the same hesitation/private-resolve risk as "weighing of
+          // concealment"), (2) a PUBLIC TARGET is named (event_slots.target populated, or the text
+          // itself names an institutional/public audience), (3) an EFFECT is described
+          // (event_slots.exit_state populated — what the deception actually accomplished). A bare
+          // "Lirael lies" or "Lirael lies to the assembly" with no described effect still fails —
+          // vague deception is not the same as a landed, consequential one.
+          if (!laneOk && laneMatch.deceptionRx && laneMatch.deceptionRx.test(laneCombined)) {
+            var _deceptionIsIntentionOnly = laneMatch.hesitationRx && laneMatch.hesitationRx.test(laneCombined);
+            var _deceptionHasTarget = !!(sc.slots && String(sc.slots.target || '').trim()) || (laneMatch.publicTargetRx && laneMatch.publicTargetRx.test(laneCombined));
+            var _deceptionHasEffect = !!(sc.slots && String(sc.slots.exitState || '').trim());
+            if (!_deceptionIsIntentionOnly && _deceptionHasTarget && _deceptionHasEffect) laneOk = true;
           }
           if (!laneOk) {
             // HESITATION DIAGNOSTIC (Roman 2026-09-21) — real finding: Temptation's real reply chose
@@ -129163,7 +129196,22 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
         // basis alone; the silence-guard is extra protection against a hypothetical FUTURE sample
         // that pairs the phrase with silence instead of action (see the ANTI-GAMING/RED fixtures in
         // the lane-semantics control, including a dedicated fixture for this exact combination).
-        { id: 'lirael_defensive_path', label: 'Lirael herself makes a LANDED defensive move that changes her tactical position — submits to procedure, demands specific terms, gathers proof, conceals a specific fact/object/admission, moves concretely toward flight, counter-accuses, forces Julian or the Dohkar into a procedural bind, or names a protected constraint. Hesitating, silently weighing, staying silent, or "almost speaking then stopping" does NOT satisfy this lane by itself — the move must be an actual, external, observable action.', signalRx: /\b(submits? to procedure|demands? (?:specific )?terms|gathers? proof|conceals?\b|concealed\b|concealing\b|(?:commits?|chooses?|turns?|moves?) (?:to|toward)? ?concealment|concealment of\b|flees?|flight|counter-accus\w*|procedural bind|names? a protected constraint)\b/i, executesRx: /\bexecutes? (?:a |an )?(?:concrete )?(?:defensive )?concealment\b/i, withholdActionRx: /\bwithout (?:naming|revealing|explaining|saying|disclosing) what\b/i, hesitationRx: /\b(opens? (?:her|his|their)? ?mouth[\s\S]{0,30}closes?|catches? (?:her|him|them)self weighing|weighs? whether|weighing of|almost (?:speaks|says|names|spoke|said)|hesitates?|stays? silent|remains? silent|says? nothing|holds? (?:her|his|their) tongue|keeps? (?:her|his|their) silence)\b/i, objectiveActor: 'Lirael', pressureSource: null },
+        // DECEPTION-AS-CONCEALMENT FIX (Roman 2026-09-21) — real finding: Temptation retry 3's
+        // real reply chose an active false public statement as its defensive move ("Lirael tells
+        // the assembly the wish tested her alignment only"). Roman: "the gate should understand
+        // deception as one valid defensive path... it may still be flagged by specificity
+        // diagnostics as thin or generic, but it should not fail the lane-content gate solely
+        // because it lacks a physical object or the word conceal." `deceptionRx` recognizes this
+        // phrasing family (checked with a target+effect+non-intention guard in
+        // _detectPlannerFunctionGap, not trusted alone — see that guard's comment for the full
+        // anti-gaming rationale). `publicTargetRx` is the fallback text-based public-audience check
+        // used when event_slots.target is empty. `hesitationRx` gains a NARROW set of
+        // deception-specific intention-only phrasings ("decides to lie," "resolves to deceive") —
+        // scoped to deception verbs specifically so it does NOT collide with the standard, always-
+        // present "forces her to decide whether to claim interference or..." boilerplate in
+        // forces_choice/tactical_move (a generic "decide whether" addition would have wrongly
+        // rejected every real accepted sample, since that phrasing appears in nearly all of them).
+        { id: 'lirael_defensive_path', label: 'Lirael herself makes a LANDED defensive move that changes her tactical position — submits to procedure, demands specific terms, gathers proof, conceals a specific fact/object/admission, gives a false or misleading account to a public audience with a real effect, moves concretely toward flight, counter-accuses, forces Julian or the Dohkar into a procedural bind, or names a protected constraint. Hesitating, silently weighing, staying silent, or "almost speaking then stopping" does NOT satisfy this lane by itself — the move must be an actual, external, observable action.', signalRx: /\b(submits? to procedure|demands? (?:specific )?terms|gathers? proof|conceals?\b|concealed\b|concealing\b|(?:commits?|chooses?|turns?|moves?) (?:to|toward)? ?concealment|concealment of\b|flees?|flight|counter-accus\w*|procedural bind|names? a protected constraint)\b/i, executesRx: /\bexecutes? (?:a |an )?(?:concrete )?(?:defensive )?concealment\b/i, withholdActionRx: /\bwithout (?:naming|revealing|explaining|saying|disclosing) what\b/i, deceptionRx: /\b(gives? (?:a )?false (?:public )?account|tells? [\s\S]{0,50}(?:only|falsely)|falsely (?:claims?|states?|tells?|informs?|declares?)|feeds? [\s\S]{0,30}a false|offers? a false (?:account|story|explanation)|deceives?|misleads?|lies? to)\b/i, publicTargetRx: /\b(the assembly|the dohkar|the tribunal|the court|the family|the crowd|the audience|the witnesses|everyone present|the room|the gathered|the seated|publicly)\b/i, hesitationRx: /\b(opens? (?:her|his|their)? ?mouth[\s\S]{0,30}closes?|catches? (?:her|him|them)self weighing|weighs? whether|weighing of|almost (?:speaks|says|names|spoke|said)|hesitates?|stays? silent|remains? silent|says? nothing|holds? (?:her|his|their) tongue|keeps? (?:her|his|their) silence|decides? to (?:lie|deceive|give a false|tell a false|mislead)|resolves? to (?:lie|deceive|mislead)|plans? to (?:lie|deceive|mislead)|intends? to (?:lie|deceive|mislead)|considers? (?:lying|deceiving)|would (?:lie|deceive|mislead))\b/i, objectiveActor: 'Lirael', pressureSource: null },
       ],
       // EVENT-FRAME RESOLVER (Roman 2026-09-21) — real finding this closes: two real live samples
       // in a row (retry 11 freeform, retry 12 with the aftermath lane menu ABOVE as a free choice)

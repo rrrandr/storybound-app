@@ -35,6 +35,20 @@
 //   COEXIST     — root causes A/B/C and the existing Planner Function Gate's aftermath-vocab check
 //                 are all still present and unaffected.
 //
+// MEANINGFUL-PHRASE-LENGTH FIX (Roman 2026-09-21) — real finding: Temptation retry 3's real posture
+// ("Let the wind of your breath unravel me...") and real planner tactical_move ("...or let the
+// assumption stand") shared the bigram "let the" — a two-word overlap of almost no dramatic content
+// ("let" carries little standalone weight; "the" is a pure function word) — and the OLD "not BOTH
+// stopwords" rule let it through, falsely blocking a plan whose actual event was NOT a paraphrase of
+// the reader's line at all. Roman: "A two-word overlap made of common words should never block a
+// plan... require a meaningful phrase length or content-word density." `_postureEchoBigram` now
+// additionally requires at least one word in the bigram to be >= 4 characters — a generic length
+// proxy for "carries real content," not a curated word list.
+//   RED:ECHO-FALSE-POSITIVE — Temptation retry 3's REAL posture + REAL planner tactical_move (read
+//                 verbatim from its persisted log) NO LONGER triggers a posture-echo rejection.
+//   RED:ECHO (unchanged) — retry 5's real "burn for"/"to burn" case above still fires — proving the
+//                 length fix did not weaken the check's original purpose.
+//
 // usage: node _scene2_required_scene_function_control.mjs
 import { chromium } from 'playwright-core';
 import { installFailClosedNetworkGate } from './_e2e_network_gate.mjs';
@@ -57,6 +71,22 @@ const RETRY5_POSTURE = { action: '**', dialogue: '*"I want you to burn for me, a
 console.log('✓ loaded retry 5\'s real planner output + real posture verbatim from ' + RETRY5_LOG);
 console.log('  real state_change: "' + RETRY5_STATE_CHANGE.event + '"');
 
+// ── Read Temptation retry 3's REAL planner output verbatim from its persisted log ──
+const RETRY3_TEMPTATION_LOG = path.join(__dirname, '_scene2_repair_replay_sample_out', 'run_1790037379926.jsonl');
+const retry3Events = fs.readFileSync(RETRY3_TEMPTATION_LOG, 'utf8').trim().split('\n').filter(Boolean).map((l) => JSON.parse(l));
+const retry3PlannerResp = retry3Events.find((e) => e.kind === 'response' && e.roleTag === 'scene2-structural-author' && e.real === true);
+const retry3Raw = retry3PlannerResp.responseBody.choices[0].message.content;
+const retry3Fenced = retry3Raw.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+const retry3Planner = JSON.parse(retry3Fenced ? retry3Fenced[1] : retry3Raw);
+const RETRY3_TEMPTATION_STATE_CHANGE = { precondition: retry3Planner.state_change_precondition, event: retry3Planner.state_change, forces_choice: retry3Planner.forces_choice, tactical_move: retry3Planner.tactical_move };
+// The reader's Fate-Card posture actually dispatched for this run — read verbatim from the
+// persisted request's own READER'S SAY/DO block (the dialogue prompt for the temptation card, not
+// the raw Say/Do the player typed): action: "**" · dialogue: "Let the wind of your breath unravel
+// me, as I've unraveled yours by oath."
+const RETRY3_TEMPTATION_POSTURE = { action: '**', dialogue: '*"Let the wind of your breath unravel me, as I’ve unraveled yours by oath."*' };
+console.log('✓ loaded Temptation retry 3\'s real planner output verbatim from ' + RETRY3_TEMPTATION_LOG);
+console.log('  real tactical_move: "' + RETRY3_TEMPTATION_STATE_CHANGE.tactical_move + '"');
+
 (async () => {
   let browser;
   try { browser = await chromium.launch({ headless: true, channel: 'chrome' }); }
@@ -71,6 +101,12 @@ console.log('  real state_change: "' + RETRY5_STATE_CHANGE.event + '"');
   ok('retry 5\'s real plan is rejected', redResult.rejected === true, JSON.stringify(redResult));
   ok('the rejection cites a real posture-echo bigram containing "burn"', typeof redResult.echoMatch === 'string' && redResult.echoMatch.indexOf('burn') !== -1, JSON.stringify(redResult));
   ok('the rejection ALSO cites the aftermath-signal absence (both real problems present, both reported)', /no aftermath\/procedure\/consequence-movement signal/.test(redResult.reason), redResult.reason);
+
+  section('RED:ECHO-FALSE-POSITIVE — Temptation retry 3\'s real "let the" overlap no longer triggers an echo rejection');
+  const falsePositiveResult = await page.evaluate(({ sc, posture }) => window._postureEchoBigram([posture.action, posture.dialogue].filter(Boolean).join(' '), [sc.tactical_move, sc.event, sc.forces_choice].filter(Boolean).join(' \n ')), { sc: RETRY3_TEMPTATION_STATE_CHANGE, posture: RETRY3_TEMPTATION_POSTURE });
+  ok('no echo match at all for the "let the" overlap (a 3-letter word + a stopword is not meaningful)', falsePositiveResult === null, JSON.stringify(falsePositiveResult));
+  const falsePositiveGateResult = await page.evaluate(({ sc, posture }) => window._detectPlannerFunctionGap(sc, { requiresAftermath: true, posture }), { sc: RETRY3_TEMPTATION_STATE_CHANGE, posture: RETRY3_TEMPTATION_POSTURE });
+  ok('the full gate no longer cites a posture echo for this real draw', !/echoes the reader/.test(falsePositiveGateResult.reason || ''), falsePositiveGateResult.reason);
 
   section('GREEN — a synthetic aftermath-shaped stateChange sharing no phrase with the same real posture is NOT rejected');
   const greenStateChange = { precondition: 'no formal procedure against her conduct has begun yet', event: 'the presiding Dohkar opens a formal procedure of preliminary review against her conduct before the assembly', forces_choice: 'forces Lirael to choose between speaking for herself or sending silence in her place', tactical_move: 'force Lirael to face institutional procedure and political pressure' };

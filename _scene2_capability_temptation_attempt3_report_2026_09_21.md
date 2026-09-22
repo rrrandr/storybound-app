@@ -1,5 +1,40 @@
 # Scene 2 Capability Sample: Temptation, Attempt 3 (2026-09-21, after the lane-check field-widening fix)
 
+## Classification (updated 2026-09-21, after the deception + posture-echo-length fixes)
+
+Roman: "Temptation is telling us something useful now: the branch is not failing because the model
+is lazy anymore. It's finding plausible defensive moves, but the gate is still too phrase-driven to
+recognize the variety." Splitting this draw's three joined rejection reasons by what they actually
+were:
+
+- **Lane-content check — GATE FALSE POSITIVE, now fixed.** "Lirael tells the assembly the wish
+  tested her alignment only" / `event_slots.action`: "gives a false public account" IS a legitimate
+  defensive/concealment move (an active deception with a named public target — the assembly — and a
+  described effect — the assembly now believes the false claim). The lane's vocabulary simply had no
+  pattern for deception-as-concealment. Fixed dry: `deceptionRx` + guarded corroboration (target +
+  effect + not-intention-only). See
+  `_scene2_lirael_defensive_path_lane_semantics_trace_2026_09_21.md`'s second addendum.
+- **Posture-echo check — GATE FALSE POSITIVE, now fixed.** The "let the" bigram shared between the
+  Temptation card's own dialogue prompt ("Let the wind of your breath unravel me...") and the
+  planner's tactical_move ("...or let the assumption stand") is not a meaningful phrase — "let" and
+  "the" are both near-content-free. Fixed dry: the check now requires at least one word in the
+  matched bigram to be 4+ characters. Retry 5's real "burn for"/"to burn" true positive is
+  unaffected. See `_scene2_required_scene_function_control.mjs`'s new RED:ECHO-FALSE-POSITIVE
+  section.
+- **Generic aftermath-vocabulary check — REAL, PRESERVED finding, not fixed.** This draw's own
+  contract (tactical_move/event/forces_choice/precondition/aftermath_obligations/event_slots)
+  genuinely contains no aftermath/procedure vocabulary anywhere. `aftermath_obligations` describes
+  real consequences in plain prose ("Seren's family visibly withdraws support") but never in this
+  check's vocabulary — left as an honest open question, not a bug to route around this pass.
+- **Specificity diagnostic** (`THEME-COLLAPSE`, `distinctive-tokens-in-event=0/0`) — a real content
+  observation, unrelated to any gate fix: this draw's phrasing is genuinely more generic/abstract
+  than attempt 2's mouth-band action (no named object). Not a gate defect.
+
+Both gate false positives are fixed and proven (21/21 in the updated
+`_scene2_lirael_defensive_path_lane_semantics_control.mjs`, 16/16 in the updated
+`_scene2_required_scene_function_control.mjs`). Temptation was NOT re-run this pass — the section
+below remains the original, honest, unedited record of this draw.
+
 Authorized scope: re-run Temptation once under the corrected `lirael_defensive_path` gate
 (field-widened lane check + `executesRx`/`withholdActionRx` + `procedur\w*` stemming),
 `--slot=temptation` only, no Silence/Confession, no images, replay already-paid OAS/Fate/scaffold
