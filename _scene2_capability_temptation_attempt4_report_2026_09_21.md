@@ -49,6 +49,13 @@ not retrying to avoid this cost — reporting it fully instead. If a future Temp
 to genuinely exclude image-style extraction, the harness's real-path allowlist would need a
 narrower scope than it currently has.
 
+**Fixed 2026-09-22** (dry, no paid calls): both the underlying cause (the prepared-but-unwired
+Gemini replacement) and the recurrence risk (endpoint-allowlist-only blocking) are now closed —
+see `_gemini_style_extraction_wiring_and_block_trace_2026_09_22.md`. This $0.0452025 charge itself
+remains classified exactly as originally reported here — outside this run's authorized scope — and
+is left unedited; the fix prevents a recurrence, it does not retroactively change what already
+happened.
+
 ## What the planner decided
 
 ```

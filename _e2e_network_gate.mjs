@@ -42,6 +42,22 @@
 // usage (real, explicitly authorized only):
 //   const gate = await installFailClosedNetworkGate(page, { logFile: '/path/to/run.jsonl' });
 //   gate.allowRealPaths(['/api/proxy', '/api/mistral-proxy', '/api/chatgpt-proxy']);
+//
+// opts.blockImageStyleExtraction (Roman 2026-09-22) — real finding: Temptation attempt 4 dispatched
+// a real, paid image-style-extraction call (a "visual art director" GPT-4o request, fed a reference
+// image) despite being run under an explicit "no image generation or image-style extraction"
+// authorization. An endpoint allowlist alone could not have caught this: /api/chatgpt-proxy is also
+// the path for OTHER, legitimate real calls in the same pipeline, and after this session's Gemini
+// wiring the same extraction can equally route through /api/gemini-proxy — so blocking by endpoint
+// either over-blocks or under-blocks. Roman: "An endpoint allowlist alone is insufficient when
+// prose and extraction share an endpoint." Set `blockImageStyleExtraction: true` to inspect every
+// REAL-lane request's own BODY CONTENT — provider-agnostic, endpoint-agnostic — for the
+// image-style-extraction shape (the shared "visual art director... STYLE-ONLY EXTRACTION" system
+// prompt both known real callers, rewriteImagePromptWithStyle's GPT-4o branch and
+// _extractStyleViaGemini, send verbatim) and ABORT it before dispatch even when the endpoint is
+// otherwise allowlisted — logged as its own violation kind, never silently swapped to a stub or a
+// different provider. Default false: every existing control that doesn't pass this option is
+// byte-identical in behavior. See _prose_only_blocks_image_style_extraction_control.mjs.
 //   gate.setPhase('scene2-cg-screenplay-author', 3);
 //   await page.click('#gnSubmitBtn');
 //   await gate.waitForSettlement('scene2-cg-screenplay-author', { onWatchdog: (ms) => console.log('still pending after ' + ms + 'ms') });
@@ -89,6 +105,31 @@ import { performance } from 'node:perf_hooks';
 // settlement time, from the monotonic pair — so no downstream report ever hand-computes a duration
 // again. See _e2e_network_gate_monotonic_elapsed_control.mjs for the dry proof.
 
+// IMAGE-STYLE-EXTRACTION CONTENT CLASSIFIER (Roman 2026-09-22) — see the blockImageStyleExtraction
+// doc comment above for the full rationale. Checks the request's OWN system-message text for the
+// "STYLE-ONLY EXTRACTION (HARD)" signature phrase — present verbatim in BOTH known real callers'
+// reference-image-driven system prompt (rewriteImagePromptWithStyle's Gemini branch and its GPT-4o
+// predecessor share the exact same text, by design — see public/app.js), and ONLY in that branch:
+// the same function's separate no-reference text-only rewrite (no image sent at all — not
+// extraction by the term's own meaning) uses a shorter, unrelated system prompt that does not
+// contain this phrase, so that harmless branch is correctly left unblocked. Deliberately
+// body-content-based, never URL/endpoint-based, so it works identically whichever
+// provider/endpoint carries the call, today or after a future provider change — a wording match
+// here is the SAME text this function ships, not a guess at a pattern. A narrower phrase (this one)
+// beats a broader one ("visual art director...", tried first and rejected — that phrase is also
+// the no-ref branch's opening line, so it would have over-blocked a call that sends no image at
+// all). Exported at MODULE scope (not nested inside installFailClosedNetworkGate) so it can be
+// unit-tested directly, without needing a live dispatch of anything — see
+// _prose_only_blocks_image_style_extraction_control.mjs.
+export function isImageStyleExtractionRequest(requestBody) {
+  try {
+    const msgs = (requestBody && requestBody.messages) || [];
+    const sys = msgs[0] && msgs[0].content;
+    const sysText = typeof sys === 'string' ? sys : '';
+    return /STYLE-ONLY EXTRACTION \(HARD\)/.test(sysText);
+  } catch (_) { return false; }
+}
+
 export async function installFailClosedNetworkGate(page, opts) {
   opts = opts || {};
   const stubs = [];        // [{ prefix, fn }], checked in registration order — first match wins
@@ -124,6 +165,17 @@ export async function installFailClosedNetworkGate(page, opts) {
     let pathname;
     try { pathname = new URL(url).pathname; } catch (_) { pathname = url; }
     const real = matchesAllowedReal(pathname);
+
+    if (real && opts.blockImageStyleExtraction) {
+      const bodyForClassify = parseBody(req);
+      if (isImageStyleExtractionRequest(bodyForClassify)) {
+        persist({ kind: 'abort-image-style-extraction', url, method: req.method(), reason: 'blockImageStyleExtraction: request body matches the image-style-extraction shape', at: Date.now() });
+        try { console.warn('[NETWORK-GATE] ABORT (image-style-extraction, blocked before dispatch): ' + url); } catch (_) {}
+        unstubbed.push({ url, method: req.method(), at: Date.now(), reason: 'blocked: image-style-extraction request body, blockImageStyleExtraction active' });
+        route.abort('failed');
+        return;
+      }
+    }
 
     if (real) {
       if (activePhase && activePhase.count < activePhase.ceiling) {

@@ -160063,9 +160063,22 @@ ${_buildSettingImageOverrideSuffix()}`,
    * When no reference image is available, falls back to style-based rewrite.
    * Non-blocking: falls back to original input on failure.
    */
-  async function rewritePromptWith4o(style, scene) {
-    if (!window.StoryboundOrchestration?.callChatGPT) return null;
-
+  // REFERENCE-DRIVEN IMAGE-STYLE EXTRACTION — PRODUCTION WIRING (Roman 2026-09-22)
+  // Completes the Gemini replacement prepared, dry-only, in 8d2e04e6 ("nothing is wired to a live
+  // call site" — see _extractStyleViaGemini's own doc comment below). Roman: "Complete the
+  // previously prepared Gemini replacement for image-style extraction. Trace the real extraction
+  // callers and wire the tested Gemini adapter into the production path... Do not silently fall
+  // back to GPT-4o." Scope, matching exactly what _gemini_vision_adapter_capability_control.mjs
+  // (15/15) already dry-proved: the REFERENCE-IMAGE-DRIVEN (vision) path now calls Gemini, not
+  // GPT-4o — same reference-image loading, same 8-image structure, same prompt text. The
+  // no-reference TEXT-ONLY rewrite branch (no image sent at all — not image-style extraction by the
+  // term's own meaning) is UNCHANGED, still GPT-4o, since that branch was explicitly out of scope
+  // for the capability adapter that was tested ("the no-reference text-only fallback isn't part of
+  // this comparison" — _extractStyleViaGemini's own doc comment). On a Gemini failure or empty
+  // response, this returns null — it does NOT retry via GPT-4o. That is a deliberate, visible "no
+  // style rewrite this pass" outcome (the scene proceeds with its un-rewritten prompt), not a
+  // silent reroute back to the provider being replaced.
+  async function rewriteImagePromptWithStyle(style, scene) {
     // Load artist reference images — with per-artist anchor selection
     var _refImages = [];
     var _artistPaths;
@@ -160133,23 +160146,31 @@ ${_buildSettingImageOverrideSuffix()}`,
     for (var _si = 0; _si < _loadedSceneRefs.length; _si++) { _refImages.push(_loadedSceneRefs[_si].b64); }
     var _hasRefs = _refImages.length > 0;
 
-    var systemContent = _hasRefs
-      ? 'You are a visual art director for a comic book / graphic novel. The reference image(s) are ILLUSTRATED ART — treat them as comic or webtoon panels, never as photography. The FIRST image defines the art style. Additional images show the setting/environment.\n\nExtract from the style reference: line quality (ink strokes, outlines, edge treatment), coloring style (flat cel-shading, soft gradients, or painted), lighting mood (warm/cool, rim lights, glow effects). Use setting references to inform environment details.\n\nConvert into a prompt that produces ILLUSTRATED comic art matching this style applied to the scene.\n\nRules:\n- 60-120 words maximum\n- The output MUST be comic book / manga / webtoon illustration — NEVER photorealistic, NEVER painterly realism, NEVER 3D render\n- Do NOT describe the reference image content — extract its illustration style\n- Start the prompt with the art medium (e.g. "digital comic illustration", "manga panel", "webtoon art")\n- All people must be clearly adults (mid-to-late 20s or older)\n- Always produce a full color image\n- Output ONLY the prompt, no explanation\n\n— STYLE-ONLY EXTRACTION (HARD): The reference image(s) may DEPICT specific compositions (two characters leaning toward each other, one character framed close, an intense embrace, etc.). DO NOT carry the SUBJECT COMPOSITION of the reference image into your output. Extract ONLY visual style attributes: medium, linework, color palette, rendering technique, lighting register, tonal range. NEVER write phrases like "two adults leaning toward each other", "faces close", "intense emotional moment between two figures", "characters embracing", "dramatic confrontation", "intimate exchange" — those are SUBJECT descriptions, not style descriptions. The subject of the rendered image is determined by the SCENE block, not by what the reference image depicts. If you find yourself describing what the people in the reference are doing, STOP — that is subject-matter leak, not style extraction.\n— BANNED COMPOSITION CARRY (HARD): The reference image\'s character poses and inter-character positioning are NOT part of the style. Do NOT echo positioning language from the reference. Output should be 100% style attributes (line, color, rendering, light) plus the scene as written, with no inter-character positioning derived from the reference.'
-      : 'You are a visual art director for a comic book / graphic novel.\n\nRules:\n- 60-120 words maximum\n- Output MUST be comic book / manga / webtoon illustration — NEVER photorealistic\n- Start with the art medium\n- Be visually specific (faces, pose, lighting, color)\n- All people must be clearly adults (mid-to-late 20s or older)\n- Always produce a full color image\n- Output ONLY the prompt, no explanation';
-
-    var userContent;
     if (_hasRefs) {
-      userContent = [];
-      for (var _img = 0; _img < _refImages.length; _img++) {
-        userContent.push({ type: 'image_url', image_url: { url: 'data:image/png;base64,' + _refImages[_img] } });
+      // VISION-DRIVEN PATH — Gemini, per this session's authorization. Same reference images,
+      // same prompt text, same 8-image structure as before; only the provider changed.
+      console.log('[STYLE-EXTRACT] Sending', _refImages.length, 'reference images to Gemini for style extraction');
+      var _geminiResult = await _extractStyleViaGemini(_refImages, scene);
+      if (_geminiResult) {
+        window._4oReferenceExtracted = true; // historical flag name — means "reference-driven style extraction succeeded"; other code reads this name, kept for contract stability
+        console.log('[STYLE-EXTRACT] Gemini REFERENCE-DRIVEN (' + _refImages.length + ' refs) extraction (' + _geminiResult.length + ' chars)');
+        return _geminiResult;
       }
-      var _refNote = _refImages.length > 1 ? 'The first image is the art style reference. Additional images show the setting/location.' : 'This reference is comic/webtoon illustration art.';
-      userContent.push({ type: 'text', text: 'SCENE:\n' + scene + '\n\n' + _refNote + ' Extract the illustration style and combine with this scene. The result MUST look like a comic book panel, not a photograph or painting.' });
-    } else {
-      userContent = 'STYLE:\n' + style.style_anchor + '\n\nSCENE:\n' + scene + '\n\nRewrite into a clean image prompt.';
+      // NO FALLBACK TO GPT-4O (deliberate — Roman: "Do not silently fall back to GPT-4o"). A
+      // Gemini failure/empty response means this scene proceeds with its un-rewritten prompt, the
+      // same visible outcome as any other extraction failure this function always had — it does
+      // not silently re-route to the provider being replaced.
+      window._4oReferenceExtracted = false;
+      console.warn('[STYLE-EXTRACT] Gemini extraction failed or returned nothing — NOT falling back to GPT-4o (by design). Proceeding without a style rewrite.');
+      return null;
     }
-    if (_hasRefs) console.log('[4O] Sending', _refImages.length, 'reference images to 4o for style extraction');
 
+    // NO REFERENCE IMAGES — plain text-only prompt rewrite. No image is sent at all, so this is
+    // not image-style extraction by the term's own meaning, and was explicitly out of scope for
+    // the Gemini capability adapter that was tested. Unchanged: GPT-4o.
+    if (!window.StoryboundOrchestration?.callChatGPT) return null;
+    var systemContent = 'You are a visual art director for a comic book / graphic novel.\n\nRules:\n- 60-120 words maximum\n- Output MUST be comic book / manga / webtoon illustration — NEVER photorealistic\n- Start with the art medium\n- Be visually specific (faces, pose, lighting, color)\n- All people must be clearly adults (mid-to-late 20s or older)\n- Always produce a full color image\n- Output ONLY the prompt, no explanation';
+    var userContent = 'STYLE:\n' + style.style_anchor + '\n\nSCENE:\n' + scene + '\n\nRewrite into a clean image prompt.';
     var result = await window.StoryboundOrchestration.callChatGPT([
       { role: 'system', content: systemContent },
       { role: 'user', content: userContent }
@@ -160157,29 +160178,34 @@ ${_buildSettingImageOverrideSuffix()}`,
 
     if (result && result.trim().length > 20) {
       var extracted = result.trim();
-      window._4oReferenceExtracted = _hasRefs;
-      console.log('[4O] ' + (_hasRefs ? 'REFERENCE-DRIVEN (' + _refImages.length + ' refs)' : 'STYLE-BASED') + ' extraction (' + extracted.length + ' chars)');
+      window._4oReferenceExtracted = false;
+      console.log('[4O] STYLE-BASED extraction (' + extracted.length + ' chars)');
       return extracted;
     }
     window._4oReferenceExtracted = false;
     return null;
   }
+  window.rewriteImagePromptWithStyle = rewriteImagePromptWithStyle;
 
   /**
-   * GEMINI VISION ADAPTER — capability control ONLY (Roman 2026-09-20). NOT wired to any live
-   * call site; rewritePromptWith4o above is UNCHANGED and remains the real style-extraction path.
-   * Exists so _gemini_vision_adapter_capability_control.mjs can dry-prove request serialization,
-   * response parsing, fail-closed behavior, and cost accounting for a genuine drop-in candidate —
-   * without claiming BFL's own access to the reference images makes this extraction step
-   * redundant (that is a separate, image-quality question only a real A/B can answer).
+   * GEMINI VISION ADAPTER — WIRED LIVE (Roman 2026-09-20 capability-tested dry, 2026-09-22 wired
+   * into production). Called directly from rewriteImagePromptWithStyle's reference-driven branch
+   * above — the REAL style-extraction path for any scene with reference images now goes through
+   * this function, not GPT-4o. Originally built so _gemini_vision_adapter_capability_control.mjs
+   * could dry-prove request serialization, response parsing, fail-closed behavior, and cost
+   * accounting for a genuine drop-in candidate before wiring it live — without claiming BFL's own
+   * access to the reference images makes this extraction step redundant (that is a separate,
+   * image-quality question only a real A/B can answer).
    *
-   * Mirrors rewritePromptWith4o's SAME system/user prompt text and the same 8-image structure —
-   * but built in gemini-proxy.js's ACTUAL content-block contract, confirmed by reading that file
-   * directly: { type:'image', mime_type, data } and { type:'text', text }. This is NOT the OpenAI
-   * shape ({ type:'image_url', image_url:{url} }) the 4o version sends — a real, load-bearing
-   * difference; passing the 4o shape here would silently produce empty parts server-side.
+   * Mirrors rewriteImagePromptWithStyle's SAME system/user prompt text and the same 8-image
+   * structure — but built in gemini-proxy.js's ACTUAL content-block contract, confirmed by reading
+   * that file directly: { type:'image', mime_type, data } and { type:'text', text }. This is NOT
+   * the OpenAI shape ({ type:'image_url', image_url:{url} }) the (now no-reference-only) GPT-4o
+   * branch sends — a real, load-bearing difference; passing the 4o shape here would silently
+   * produce empty parts server-side.
    * Scope: reference-image-driven (vision) path only — the no-reference text-only fallback isn't
-   * part of this comparison (there is no vision decision to make without reference images).
+   * part of this comparison (there is no vision decision to make without reference images) and
+   * stays on GPT-4o in rewriteImagePromptWithStyle above.
    */
   async function _extractStyleViaGemini(refImagesB64, scene) {
     if (!Array.isArray(refImagesB64) || !refImagesB64.length) return null;
@@ -297520,14 +297546,14 @@ REJECTION CRITERIA: Reject if pupils are not extremely small, if pupils vary bet
       var _isPortraitCtx = (context === 'pc-look' || context === 'li-face-reveal' || context === 'cast-customize');
       if (!window._gnDevFastMode && !_isGNPanel && !_isPortraitCtx && !_literarySetting && !_preAssembledBypass) {
         try {
-          var _rewritten = await rewritePromptWith4o(_style, _sceneDesc);
+          var _rewritten = await rewriteImagePromptWithStyle(_style, _sceneDesc);
           if (_rewritten) {
             _sceneDesc = _rewritten;
             _refDriven = window._4oReferenceExtracted === true;
-            console.log('[4O] ' + (_refDriven ? 'REF-DRIVEN' : 'STYLE-BASED') + ' (' + _sceneDesc.length + ' chars)', _sceneDesc.substring(0, 200));
+            console.log('[STYLE-EXTRACT] ' + (_refDriven ? 'REF-DRIVEN (Gemini)' : 'STYLE-BASED (GPT-4o)') + ' (' + _sceneDesc.length + ' chars)', _sceneDesc.substring(0, 200));
           }
         } catch (_4oErr) {
-          console.warn('[4O FAILED, using fallback]', _4oErr.message || _4oErr);
+          console.warn('[STYLE-EXTRACT FAILED, using un-rewritten prompt]', _4oErr.message || _4oErr);
         }
       } else if (_literarySetting) {
         console.log('[4O] Skipped for literary setting image — keeping the photoreal symbolic prompt (no comic rewrite)');

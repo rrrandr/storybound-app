@@ -217,7 +217,14 @@ function summarizeTracked(c) {
   const consoleLines = [];
   page.on('console', (m) => { consoleLines.push(m.text()); });
 
-  const gate = await installFailClosedNetworkGate(page, { logFile: LOG_FILE });
+  // blockImageStyleExtraction (Roman 2026-09-22): this harness runs PROSE-only continuations —
+  // Temptation attempt 4 showed the endpoint allowlist below (which must include /api/chatgpt-proxy
+  // and, after the Gemini wiring, would need to include /api/gemini-proxy for any other legitimate
+  // real call on that path) cannot by itself distinguish a real prose call from a real
+  // image-style-extraction call sharing the same endpoint. This inspects every real-lane request's
+  // own body content and aborts one that matches the extraction shape, before dispatch, regardless
+  // of which of the allowlisted endpoints it would have gone out on.
+  const gate = await installFailClosedNetworkGate(page, { logFile: LOG_FILE, blockImageStyleExtraction: true });
   // Phases 0-2 are served from the real, already-paid-for content — STUBBED, not real. Only the
   // structural/author phase (below) switches this same gate to allowRealPaths.
   gate.stub('/api/proxy', (req) => {

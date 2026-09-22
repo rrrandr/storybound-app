@@ -402,3 +402,33 @@ Full human read-through PDF generated automatically:
 
 **Status**: this concludes the authorized Temptation run. No repair, no resample, no further
 Temptation retry this pass. Silence, Confession, and images remain untouched and unauthorized.
+
+## Addendum — Gemini wired live; prose harness now blocks image-style extraction by content (2026-09-22)
+
+Roman: "Gemini was prepared as the replacement, but the live switch never happened... I should have
+kept that unfinished step visible. There's also a separate failure here: this run explicitly
+prohibited ANY image-style extraction. Switching providers alone wouldn't fix that unauthorized
+call." Two dry fixes, no paid calls, no regeneration:
+1. `rewritePromptWith4o` renamed to `rewriteImagePromptWithStyle`; its reference-image-driven
+   branch now calls the already-capability-tested `_extractStyleViaGemini` (built dry in
+   `8d2e04e6`, never wired) instead of GPT-4o. The no-reference text-only branch (no image sent,
+   not extraction) stays on GPT-4o, unchanged. No silent fallback to GPT-4o on a Gemini failure —
+   returns `null` instead.
+2. `_e2e_network_gate.mjs` gains `blockImageStyleExtraction` + an exported
+   `isImageStyleExtractionRequest(requestBody)` — inspects request BODY content (not the endpoint)
+   for the extraction shape and aborts it before dispatch, on any provider/endpoint. Wired into
+   `_scene2_repair_replay_sample.mjs` (the harness that ran Temptation 1–4).
+
+Proven: **NEW** `_gemini_style_extraction_production_wiring_control.mjs` (16/16 — real extraction
+path selects Gemini, no silent 4o fallback, no-ref branch preserved) and **NEW**
+`_prose_only_blocks_image_style_extraction_control.mjs` (9/9 — extraction blocked before dispatch
+through both Gemini and GPT-4o even when both endpoints are allowlisted with an active phase; real
+prose and the no-ref rewrite are not over-blocked, unit-tested with zero network calls to avoid any
+paid-call risk). `_gemini_vision_adapter_capability_control.mjs` re-verified unaffected (15/15).
+The $0.0452025 charge on attempt 4 remains classified exactly as originally reported — outside that
+run's authorized scope — left unedited; this fix prevents a recurrence, it does not retroactively
+change what already happened. Full trace:
+`_gemini_style_extraction_wiring_and_block_trace_2026_09_22.md`.
+
+**Status**: dry fix only. No provider/image calls, no branch retry, no regeneration. Silence,
+Confession, and images remain untouched and unauthorized.
