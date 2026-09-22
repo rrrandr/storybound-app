@@ -1,0 +1,183 @@
+{
+  "at": "2026-09-22T11:29:32.107Z",
+  "slot": "silence",
+  "say": "Then step forward, Julian. But do not call it rescue when you want me to ask.",
+  "do": "I keep my hands folded at my waist and meet his eyes across Seren’s bowed head, refusing to give the assembly the satisfaction of looking away.",
+  "phaseReports": {
+    "opener": {
+      "text": "You touched her shoulder exactly when the invocation began and your eyes found mine before the first word left her mouth. Did you call to me through the rite hoping I would step forward and claim you as the one who needed rescue?",
+      "costUsd": 0
+    },
+    "oasTurnReplyReplayed": {
+      "costUsd": 0,
+      "replyText": "The hunger in your gaze called louder than the rite itself. Ask, if you dare name it before them all."
+    },
+    "fateCardReplayed": {
+      "costUsd": 0,
+      "slot": "silence",
+      "cardSlotExists": true
+    },
+    "scene2StructuralAuthor": {
+      "calls": [
+        {
+          "url": "http://localhost:3000/api/proxy",
+          "model": "grok-4-1-fast-non-reasoning",
+          "maxTokens": 1200,
+          "isAuthorCall": false,
+          "isSuspectedScaffold": false,
+          "status": 200,
+          "networkError": null,
+          "usage": {
+            "prompt_tokens": 6768,
+            "completion_tokens": 560,
+            "total_tokens": 7782,
+            "prompt_tokens_details": {
+              "text_tokens": 6768,
+              "audio_tokens": 0,
+              "image_tokens": 0,
+              "cached_tokens": 192
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 454,
+              "audio_tokens": 0,
+              "accepted_prediction_tokens": 0,
+              "rejected_prediction_tokens": 0
+            },
+            "num_sources_used": 0,
+            "cost_in_usd_ticks": 107934000
+          },
+          "costUsd": 0.0107934,
+          "costNote": null,
+          "costSource": "provider_ticks",
+          "elapsedMs": 29046
+        },
+        {
+          "url": "http://localhost:3000/api/proxy",
+          "model": "grok-4-1-fast-reasoning",
+          "maxTokens": 8000,
+          "isAuthorCall": true,
+          "isSuspectedScaffold": false,
+          "status": 200,
+          "networkError": null,
+          "usage": {
+            "prompt_tokens": 55910,
+            "completion_tokens": 4820,
+            "total_tokens": 61746,
+            "prompt_tokens_details": {
+              "text_tokens": 55910,
+              "audio_tokens": 0,
+              "image_tokens": 0,
+              "cached_tokens": 192
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 1016,
+              "audio_tokens": 0,
+              "accepted_prediction_tokens": 0,
+              "rejected_prediction_tokens": 0
+            },
+            "num_sources_used": 0,
+            "cost_in_usd_ticks": 842759000
+          },
+          "costUsd": 0.0842759,
+          "costNote": null,
+          "costSource": "provider_ticks",
+          "elapsedMs": 44644
+        },
+        {
+          "url": "http://localhost:3000/api/mistral-proxy",
+          "model": "ministral-8b-2512",
+          "maxTokens": 1400,
+          "isAuthorCall": false,
+          "isSuspectedScaffold": false,
+          "status": 200,
+          "networkError": null,
+          "usage": {
+            "prompt_tokens": 3186,
+            "total_tokens": 4124,
+            "completion_tokens": 938,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            },
+            "service_tier": "standard"
+          },
+          "costUsd": 0.0006186,
+          "costNote": null,
+          "costSource": "estimated",
+          "elapsedMs": 13452
+        },
+        {
+          "url": "http://localhost:3000/api/proxy",
+          "model": "grok-4.20-0309-non-reasoning",
+          "maxTokens": 12,
+          "isAuthorCall": false,
+          "isSuspectedScaffold": false,
+          "status": 200,
+          "networkError": null,
+          "usage": {
+            "prompt_tokens": 3147,
+            "completion_tokens": 2,
+            "total_tokens": 3827,
+            "prompt_tokens_details": {
+              "text_tokens": 3147,
+              "audio_tokens": 0,
+              "image_tokens": 0,
+              "cached_tokens": 192
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 678,
+              "audio_tokens": 0,
+              "accepted_prediction_tokens": 0,
+              "rejected_prediction_tokens": 0
+            },
+            "num_sources_used": 0,
+            "cost_in_usd_ticks": 54321500
+          },
+          "costUsd": 0.00543215,
+          "costNote": null,
+          "costSource": "provider_ticks",
+          "elapsedMs": 7966
+        },
+        {
+          "url": "http://localhost:3000/api/mistral-proxy",
+          "model": "ministral-8b-2512",
+          "maxTokens": 1100,
+          "isAuthorCall": false,
+          "isSuspectedScaffold": false,
+          "status": 200,
+          "networkError": null,
+          "usage": {
+            "prompt_tokens": 1717,
+            "total_tokens": 2218,
+            "completion_tokens": 501,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            },
+            "service_tier": "standard"
+          },
+          "costUsd": 0.0003327,
+          "costNote": null,
+          "costSource": "estimated",
+          "elapsedMs": 6727
+        }
+      ],
+      "costUsd": 0.10145275,
+      "reconciledFromLog": false
+    },
+    "scene2CgAuthor": {
+      "author": "grok",
+      "model": "grok-4-1-fast-reasoning",
+      "cache": {
+        "eligible": true,
+        "observed": "hit",
+        "cachedTokens": 192,
+        "promptTokens": 55910
+      },
+      "captured": true,
+      "rawOutput": "{\n  \"visualState\": {\n    \"background\": \"Veilwood ceremony clearing at dawn, crimson spiralgrass underfoot, white weeping-willow veil-canopy overhead, measured light\",\n    \"camera\": \"over_shoulder_pc\",\n    \"pc_visibility\": \"side_profile\",\n    \"li_position\": \"standing_apart\",\n    \"li_expression\": \"guarded\",\n    \"lighting\": \"neutral_daylight\",\n    \"pc_wardrobe\": \"sheer gossamer tunic, ornamented ceremonial sash, torn mouth-band\",\n    \"li_wardrobe\": \"sheer gossamer tunic\",\n    \"other_characters_present\": [\n      {\"name\": \"Seren\", \"gender\": \"female\", \"species\": \"first_favored\", \"wardrobe\": \"gossamer child's tunic blooming luminous white over torso hips and seat\", \"position\": \"kneeling composed before the assembly\"},\n      {\"name\": \"the presiding Dohkar\", \"gender\": \"male\", \"species\": \"first_favored\", \"wardrobe\": \"sheer gossamer tunic with ornamented sash\", \"position\": \"centered before the assembly\"}\n    ],\n    \"key_props\": [\"The Answer\"],\n    \"social_staging_mode\": \"adversarial\",\n    \"sceneDuty\": \"political_alignment\",\n    \"attractionPresence\": \"latent\",\n    \"expression_arc\": {\n      \"baseline_family\": \"suppression\",\n      \"micro_drift\": \"guarded-then-tightening\",\n      \"peak_a_beat\": 8,\n      \"peak_b_beat\": 18,\n      \"decay_window\": 3\n    }\n  },\n  \"phases\": [\n    {\n      \"phaseIdx\": 0,\n      \"startBeat\": 0,\n      \"label\": \"Dohkar breaks silence\",\n      \"li_visibility_phase\": \"partial\",\n      \"characters_present\": [\"protagonist\", \"Seren\", \"Julian\", \"the presiding Dohkar\"],\n      \"props_present\": [\"The Answer\"],\n      \"camera_override\": \"over_shoulder_pc\",\n      \"li_position_override\": null,\n      \"li_expression_override\": null,\n      \"camera_move\": \"hold\",\n      \"shot_style\": \"default\",\n      \"focus_target\": null,\n      \"pc_posture\": \"shoulders forward, teeth set on torn lace\",\n      \"pc_emotional_state\": \"defiant\",\n      \"other_postures\": {\"Seren\": \"kneeling composed\", \"the presiding Dohkar\": \"centered formal\", \"Julian\": \"still, eyes tightening\"},\n      \"proximity\": \"public\"\n    },\n    {\n      \"phaseIdx\": 1,\n      \"startBeat\": 9,\n      \"label\": \"Date and terms named\",\n      \"li_visibility_phase\": \"shadowed\",\n      \"characters_present\": [\"protagonist\", \"Seren\", \"Julian\", \"the presiding Dohkar\"],\n      \"props_present\": [\"The Answer\"],\n      \"camera_override\": \"medium_two_shot\",\n      \"li_position_override\": null,\n      \"li_expression_override\": null,\n      \"camera_move\": \"push_in\",\n      \"shot_style\": \"default\",\n      \"focus_target\": null,\n      \"pc_posture\": \"weight back, hands tight on sash\",\n      \"pc_emotional_state\": \"braced\",\n      \"other_postures\": {\"Seren\": \"still kneeling\", \"the presiding Dohkar\": \"speaking to assembly\", \"Julian\": \"looking away\"},\n      \"proximity\": \"public\"\n    },\n    {\n      \"phaseIdx\": 2,\n      \"startBeat\": 19,\n      \"label\": \"Assembly begins to disperse\",\n      \"li_visibility_phase\": \"partial\",\n      \"characters_present\": [\"protagonist\", \"Seren\", \"Julian\", \"the presiding Dohkar\"],\n      \"props_present\": [\"The Answer\"],\n      \"camera_override\": \"profile_pc\",\n      \"li_position_override\": null,\n      \"li_expression_override\": null,\n      \"camera_move\": \"hold\",\n      \"shot_style\": \"default\",\n      \"focus_target\": null,\n      \"pc_posture\": \"one hand gripping The Answer, shoulders tight\",\n      \"pc_emotional_state\": \"held_breath\",\n      \"other_postures\": {\"Seren\": \"rising slowly\", \"the presiding Dohkar\": \"turning from assembly\", \"Julian\": \"still apart\"},\n      \"proximity\": \"public\"\n    }\n  ],\n  \"panels\": [\n    {\n      \"panelIdx\": 0,\n      \"dramaticQuestion\": \"Will Lirael claim the interference or let the assumption stand?\",\n      \"shotType\": \"conversation\",\n      \"subjects\": {\"primary\": \"protagonist\", \"secondary\": \"the presiding Dohkar\", \"background\": [\"Seren\", \"Julian\"]},\n      \"cast\": [{\"name\": \"protagonist\", \"performance\": {\"pose\": \"teeth on torn lace, eyes forward\", \"expression\": \"defiant\", \"looking_at\": \"the presiding Dohkar\", \"action_tags\": [\"holding\"]}}, {\"name\": \"Julian\", \"performance\": {\"pose\": \"still, eyes tightening\", \"expression\": \"guarded\", \"looking_at\": \"protagonist\", \"action_tags\": [\"turning\"]}}],\n      \"wish\": false,\n      \"sacrifice\": false,\n      \"fateAnswer\": false\n    },\n    {\n      \"panelIdx\": 1,\n      \"dramaticQuestion\": \"What terms will bind her standing?\",\n      \"shotType\": \"conversation\",\n      \"subjects\": {\"primary\": \"the presiding Dohkar\", \"secondary\": \"protagonist\", \"background\": [\"Seren\", \"Julian\"]},\n      \"cast\": [{\"name\": \"the presiding Dohkar\", \"performance\": {\"pose\": \"speaking formally\", \"expression\": \"measured\", \"looking_at\": \"assembly\", \"action_tags\": [\"speaking\"]}}, {\"name\": \"protagonist\", \"performance\": {\"pose\": \"weight back, hands tight\", \"expression\": \"braced\", \"looking_at\": \"the presiding Dohkar\", \"action_tags\": [\"holding\"]}}],\n      \"wish\": false,\n      \"sacrifice\": false,\n      \"fateAnswer\": false\n    },\n    {\n      \"panelIdx\": 2,\n      \"dramaticQuestion\": \"Which path will she take before they all leave?\",\n      \"shotType\": \"discovery\",\n      \"subjects\": {\"primary\": \"protagonist\", \"secondary\": null, \"background\": [\"Seren\", \"Julian\", \"the presiding Dohkar\"]},\n      \"cast\": [{\"name\": \"protagonist\", \"performance\": {\"pose\": \"hand gripping The Answer\", \"expression\": \"held_breath\", \"looking_at\": \"assembly dispersing\", \"action_tags\": [\"holding\"]}}],\n      \"wish\": false,\n      \"sacrifice\": false,\n      \"fateAnswer\": false\n    }\n  ],\n  \"beats\": [\n    {\"idx\": 0, \"kind\": \"narration\", \"text\": \"The clearing stills around the torn lace between my teeth.\", \"speaker\": null, \"tension_state\": \"composed\", \"echo_profile\": null, \"expression_target\": \"neutral\", \"expression_intensity\": null, \"cut_to_closeup\": false, \"closeup_target\": null, \"shot_type\": null, \"impact_burst\": false, \"metaphor_hint\": null, \"metaphor_peak\": false, \"pc_proxy_action\": null, \"hand_gesture\": null, \"posture_change\": null},\n    {\"idx\": 1, \"kind\": \"narration\", \"text\": \"Woodsmoke and iron linger on my tongue.\", \"speaker\": null, \"tension_state\": \"suppressed\", \"echo_profile\": null, \"expression_target\": \"lips_tighten\", \"expression_intensity\": 0.25, \"cut_to_closeup\": false, \"closeup_target\": null, \"shot_type\": null, \"impact_burst\": false, \"metaphor_hint\": null, \"metaphor_peak\": false, \"pc_proxy_action\": \"teeth press harder into the lace\", \"hand_gesture\": null, \"posture_change\": null},\n    {\"idx\": 2, \"kind\": \"narration\", \"text\": \"Julian's eyes tighten at the corners.\", \"speaker\": null, \"tension_state\": \"composed\", \"echo_profile\": null, \"expression_target\": \"neutral\", \"expression_intensity\": null, \"cut_to_closeup\": false, \"closeup_target\": null, \"shot_type\": null, \"impact_burst\": false, \"metaphor_hint\": null, \"metaphor_peak\": false, \"pc_proxy_action\": null, \"hand_gesture\": null, \"posture_change\": null},\n    {\"idx\": 3, \"kind\": \"narration\", \"text\": \"He looks away as the Dohkar steps forward.\", \"speaker\": null, \"tension_state\": \"composed\", \"echo_profile\": null, \"expression_target\": \"neutral\", \"expression_intensity\": null, \"cut_to_closeup\": false, \"closeup_target\": null, \"shot_type\": null, \"impact_burst\": false, \"metaphor_hint\": null, \"metaphor_peak\": false, \"pc_proxy_action\": null, \"hand_gesture\": null, \"posture_change\": null},\n    {\"idx\": 4, \"kind\": \"dialogue\", \"text\": \"\\\"The rite stands under my authority. A preliminary review will convene at the next moonrise.\\\"\", \"speaker\": \"the presiding Dohkar\", \"tension_state\": \"composed\", \"echo_profile\": null, \"expression_target\": \"neutral\", \"expression_intensity\": null, \"cut_to_closeup\": false, \"closeup_target\": null, \"shot_type\": null, \"impact_burst\": false, \"metaphor_hint\": null, \"metaphor_peak\": false, \"pc_proxy_action\": null, \"hand_gesture\": null, \"posture_change\": null},\n    {\"idx\": 5, \"kind\": \"narration\", \"text\": \"The assembly shifts, waiting.\", \"speaker\": null, \"tension_state\": \"composed\", \"echo_profile\": null, \"expression_target\": \"neutral\", \"expression_intensity\": null, \"cut_to_closeup\": false, \"closeup_target\": null, \"shot_type\": null, \"impact_burst\": false, \"metaphor_hint\": null, \"metaphor_peak\": false, \"pc_proxy_action\": null, \"hand_gesture\": null, \"posture_change\": null},\n    {\"idx\": 6, \"kind\": \"dialogue\", \"text\": \"\\\"Terms will be set then. Interference and conduct both.\\\"\", \"speaker\": \"the presiding Dohkar\", \"tension_state\": \"composed\", \"echo_profile\": null, \"expression_target\": \"neutral\", \"expression_intensity\": null, \"cut_to_closeup\": false, \"closeup_target\": null, \"shot_type\": null, \"impact_burst\": false, \"metaphor_hint\": null, \"metaphor_peak\": false, \"pc_proxy_action\": null, \"hand_gesture\": null, \"posture_change\": null},\n    {\"idx\": 7, \"kind\": \"narration\", \"text\": \"Seren stays kneeling, composed.\", \"speaker\": null, \"tension_state\": \"composed\", \"echo_profile\": null, \"expression_target\": \"neutral\", \"expression_intensity\": null, \"cut_to_closeup\": false, \"closeup_target\": null, \"shot_type\": null, \"impact_burst\": false, \"metaphor_hint\": null, \"metaphor_peak\": false, \"pc_proxy_action\": null, \"hand_gesture\": null, \"posture_change\": null},\n    {\"idx\": 8, \"kind\": \"narration\", \"text\": \"My fingers tighten on The Answer.\", \"speaker\": null, \"tension_state\": \"tightening\", \"echo_profile\": \"simmer\", \"expression_target\": \"jaw_clench\", \"expression_intensity\": 0.35, \"cut_to_closeup\": false, \"closeup_target\": null, \"shot_type\": null, \"impact_burst\": false, \"metaphor_hint\": null, \"metaphor_peak\": false, \"pc_proxy_action\": \"fingers press white on the edge\", \"hand_gesture\": \"on_table\", \"posture_change\": null},\n    {\"idx\": 9, \"kind\": \"narration\", \"text\": \"The Dohkar continues without pause.\", \"speaker\": null, \"tension_state\": \"composed\", \"echo_profile\": null, \"expression_target\": \"neutral\", \"expression_intensity\": null, \"cut_to_closeup\": false, \"closeup_target\": null, \"shot_type\": null, \"impact_burst\": false, \"metaphor_hint\": null, \"metaphor_peak\": false, \"pc_proxy_action\": null, \"hand_gesture\": null, \"posture_change\": null},\n    {\"idx\": 10, \"kind\": \"dialogue\", \"text\": \"\\\"No inquiry opens until then. All present will attend.\\\"\", \"speaker\": \"the presiding Dohkar\", \"tension_state\": \"composed\", \"echo_profile\": null, \"expression_target\": \"neutral\", \"expression_intensity\": null, \"cut_to_closeup\": false, \"closeup_target\": null, \"shot_type\": null, \"impact_burst\": false, \"metaphor_hint\": null, \"metaphor_peak\": false, \"pc_proxy_action\": null, \"hand_gesture\": null, \"posture_change\": null},\n    {\"idx\": 11, \"kind\": \"narration\", \"text\": \"Julian remains still, face half-curtained.\", \"speaker\": null, \"tension_state\": \"composed\", \"echo_profile\": null, \"expression_target\": \"neutral\", \"expression_intensity\": null, \"cut_to_closeup\": false, \"closeup_target\": null, \"shot_type\": null, \"impact_burst\": false, \"metaphor_hint\": null, \"metaphor_peak\": false, \"pc_proxy_action\": null, \"hand_gesture\": null, \"posture_change\": null},\n    {\"idx\": 12, \"kind\": \"narration\", \"text\": \"The assembly begins to turn.\", \"speaker\": null, \"tension_state\": \"composed\", \"echo_profile\": null, \"expression_target\": \"neutral\", \"expression_intensity\": null, \"cut_to_closeup\": false, \"closeup_target\": null, \"shot_type\": null, \"impact_burst\": false, \"metaphor_hint\": null, \"metaphor_peak\": false, \"pc_proxy_action\": null, \"hand_gesture\": null, \"posture_change\": null},\n    {\"idx\": 13, \"kind\": \"narration\", \"text\": \"Seren rises without a sound.\", \"speaker\": null, \"tension_state\": \"composed\", \"echo_profile\": null, \"expression_target\": \"neutral\", \"expression_intensity\": null, \"cut_to_closeup\": false, \"closeup_target\": null, \"shot_type\": null, \"impact_burst\": false, \"metaphor_hint\": null, \"metaphor_peak\": false, \"pc_proxy_action\": null, \"hand_gesture\": null, \"posture_change\": null},\n    {\"idx\": 14, \"kind\": \"narration\", \"text\": \"My mouth-band hangs torn against my throat.\", \"speaker\": null, \"tension_state\": \"suppressed\", \"echo_profile\": null, \"expression_target\": \"lips_pressed\", \"expression_intensity\": 0.25, \"cut_to_closeup\": false, \"closeup_target\": null, \"shot_type\": null, \"impact_burst\": false, \"metaphor_hint\": null, \"metaphor_peak\": false, \"pc_proxy_action\": null, \"hand_gesture\": null, \"posture_change\": null},\n    {\"idx\": 15, \"kind\": \"narration\", \"text\": \"The Dohkar's words hang between us all.\", \"speaker\": null, \"tension_state\": \"composed\", \"echo_profile\": null, \"expression_target\": \"neutral\", \"expression_intensity\": null, \"cut_to_closeup\": false, \"closeup_target\": null, \"shot_type\": null, \"impact_burst\": false, \"metaphor_hint\": null, \"metaphor_peak\": false, \"pc_proxy_action\": null, \"hand_gesture\": null, \"posture_change\": null},\n    {\"idx\": 16, \"kind\": \"narration\", \"text\": \"Julian's silver script catches the light once.\", \"speaker\": null, \"tension_state\": \"composed\", \"echo_profile\": null, \"expression_target\": \"neutral\", \"expression_intensity\": null, \"cut_to_closeup\": false, \"closeup_target\": null, \"shot_type\": null, \"impact_burst\": false, \"metaphor_hint\": null, \"metaphor_peak\": false, \"pc_proxy_action\": null, \"hand_gesture\": null, \"posture_change\": null},\n    {\"idx\": 17, \"kind\": \"narration\", \"text\": \"He does not speak.\", \"speaker\": null, \"tension_state\": \"composed\", \"echo_profile\": null, \"expression_target\": \"neutral\", \"expression_intensity\": null, \"cut_to_closeup\": false, \"closeup_target\": null, \"shot_type\": null, \"impact_burst\": false, \"metaphor_hint\": null, \"metaphor_peak\": false, \"pc_proxy_action\": null, \"hand_gesture\": null, \"posture_change\": null},\n    {\"idx\": 18, \"kind\": \"narration\", \"text\": \"The choice presses against my sealed mouth.\", \"speaker\": null, \"tension_state\": \"tightening\", \"echo_profile\": \"simmer\", \"expression_target\": \"jaw_set\", \"expression_intensity\": 0.35, \"cut_to_closeup\": false, \"closeup_target\": null, \"shot_type\": null, \"impact_burst\": false, \"metaphor_hint\": null, \"metaphor_peak\": false, \"pc_proxy_action\": \"thumb traces the edge of The Answer\", \"hand_gesture\": \"fidget\", \"posture_change\": null},\n    {\"idx\": 19, \"kind\": \"narration\", \"text\": \"Claim the interference or let them keep their assumption.\", \"speaker\": null, \"tension_state\": \"held_breath\", \"echo_profile\": \"hollow\", \"expression_target\": \"neutral\", \"expression_intensity\": null, \"cut_to_closeup\": false, \"closeup_target\": null, \"shot_type\": null, \"impact_burst\": true, \"metaphor_hint\": null, \"metaphor_peak\": false, \"pc_proxy_action\": null, \"hand_gesture\": null, \"posture_change\": \"shoulders_tighten\"},\n    {\"idx\": 20, \"kind\": \"narration\", \"text\": \"The assembly moves toward the trees.\", \"speaker\": null, \"tension_state\": \"composed\", \"echo_profile\": null, \"expression_target\": \"neutral\", \"expression_intensity\": null, \"cut_to_closeup\": false, \"closeup_target\": null, \"shot_type\": null, \"impact_burst\": false, \"metaphor_hint\": null, \"metaphor_peak\": false, \"pc_proxy_action\": null, \"hand_gesture\": null, \"posture_change\": null},\n    {\"idx\": 21, \"kind\": \"narration\", \"text\": \"Seren's coral hair catches the first light.\", \"speaker\": null, \"tension_state\": \"composed\", \"echo_profile\": null, \"expression_target\": \"neutral\", \"expression_intensity\": null, \"cut_to_closeup\": false, \"closeup_target\": null, \"shot_type\": null, \"impact_burst\": false, \"metaphor_hint\": null, \"metaphor_peak\": false, \"pc_proxy_action\": null, \"hand_gesture\": null, \"posture_change\": null},\n    {\"idx\": 22, \"kind\": \"narration\", \"text\": \"Julian stands too still at the edge.\", \"speaker\": null, \"tension_state\": \"composed\", \"echo_profile\": null, \"expression_target\": \"neutral\", \"expression_intensity\": null, \"cut_to_closeup\": false, \"closeup_target\": null, \"shot_type\": null, \"impact_burst\": false, \"metaphor_hint\": null, \"metaphor_peak\": false, \"pc_proxy_action\": null, \"hand_gesture\": null, \"posture_change\": null},\n    {\"idx\": 23, \"kind\": \"narration\", \"text\": \"The Dohkar waits for the last of them to turn.\", \"speaker\": null, \"tension_state\": \"composed\", \"echo_profile\": null, \"expression_target\": \"neutral\", \"expression_intensity\": null, \"cut_to_closeup\": false, \"closeup_target\": null, \"shot_type\": null, \"impact_burst\": false, \"metaphor_hint\": null, \"metaphor_peak\": false, \"pc_proxy_action\": null, \"hand_gesture\": null, \"posture_change\": null},\n    {\"idx\": 24, \"kind\": \"narration\", \"text\": \"My hand stays on The Answer.\", \"speaker\": null, \"tension_state\": \"suppressed\", \"echo_profile\": null, \"expression_target\": \"lips_pressed\", \"expression_intensity\": 0.25, \"cut_to_closeup\": false, \"closeup_target\": null, \"shot_type\": null, \"impact_burst\": false, \"metaphor_hint\": null, \"metaphor_peak\": false, \"pc_proxy_action\": null, \"hand_gesture\": null, \"posture_change\": null},\n    {\"idx\": 25, \"kind\": \"narration\", \"text\": \"Claim it or let the assumption stand.\", \"speaker\": null, \"tension_state\": \"held_breath\", \"echo_profile\": \"hollow\", \"expression_target\": \"neutral\", \"expression_intensity\": null, \"cut_to_closeup\": false, \"closeup_target\": null, \"shot_type\": null, \"impact_burst\": false, \"metaphor_hint\": null, \"metaphor_peak\": false, \"pc_proxy_action\": null, \"hand_gesture\": null, \"posture_change\": null}\n  ],\n  \"microDecision\": null,\n  \"decisionGateBeatIdx\": 25,\n  \"is_consummate_scene\": false,\n  \"kink_introduced\": null,\n  \"pc_kink_response\": \"none\",\n  \"kink_affinity\": null,\n  \"kinks_used\": [],\n  \"primaryEngine\": null,\n  \"interruption\": null,\n  \"sceneCharge\": {\n    \"stake\": \"her Dohkar qualification and path to Provast at risk after the bent wish\",\n    \"concrete_specific_beat_idx\": 8,\n    \"subtext_beat_idx\": 4,\n    \"almost_said_beat_idx\": 18,\n    \"escalation_rhythm\": \"Dohkar names terms while her bite holds the room, tightening the choice between claim and silence\"\n  }\n}"
+    }
+  },
+  "runningCostUsd": 0.10145275,
+  "ceilingUsd": 0.45,
+  "ceilingHeld": true,
+  "persistedLogFile": "/Users/romantsukerman/storybound-app/_scene2_repair_replay_sample_out/run_1790076441341.jsonl"
+}
