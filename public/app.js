@@ -32114,8 +32114,16 @@ window._reflowSceneDialogueLLM = _reflowSceneDialogueLLM;
     }
     var liId = _relLiId();
     if (!L.entities[liId]) {
+      // COSMETIC LABEL FIX (Roman 2026-09-22) — real finding: the relational-obligation gate's
+      // real, live directive to the planner read "the love interest" instead of "Julian" for
+      // First Sacrifice, because this fallback chain only checked TOP-LEVEL
+      // state.loveInterestName/partnerName, never the NESTED state.picks.identity.partnerName this
+      // starter (and dozens of other call sites across this file — see e.g. app.js ~8213, ~40795,
+      // ~60578, ~66097) actually populates the LI's name under. Brought into line with that SAME
+      // already-established, generic fallback chain — not a First-Sacrifice-specific fix; any
+      // starter using the nested field now resolves correctly here too.
       L.entities[liId] = { id: liId, kind: 'named', anchorRole: 'li',
-        label: String(s.loveInterestName || s.partnerName || 'the love interest'), aliases: [] };
+        label: String(s.loveInterestName || s.partnerName || (s.picks && s.picks.identity && s.picks.identity.partnerName) || 'the love interest'), aliases: [] };
     }
   }
   window._relLedger = function () { return _relLedger(false); };
@@ -129286,7 +129294,26 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
         // present "forces her to decide whether to claim interference or..." boilerplate in
         // forces_choice/tactical_move (a generic "decide whether" addition would have wrongly
         // rejected every real accepted sample, since that phrasing appears in nearly all of them).
-        { id: 'lirael_defensive_path', label: 'Lirael herself makes a LANDED defensive move that changes her tactical position — submits to procedure, demands specific terms, gathers proof, conceals a specific fact/object/admission, gives a false or misleading account to a public audience with a real effect, moves concretely toward flight, counter-accuses, forces Julian or the Dohkar into a procedural bind, or names a protected constraint. Hesitating, silently weighing, staying silent, or "almost speaking then stopping" does NOT satisfy this lane by itself — the move must be an actual, external, observable action.', signalRx: /\b(submits? to procedure|demands? (?:specific )?terms|gathers? proof|conceals?\b|concealed\b|concealing\b|(?:commits?|chooses?|turns?|moves?) (?:to|toward)? ?concealment|concealment of\b|flees?|flight|counter-accus\w*|procedural bind|names? a protected constraint)\b/i, executesRx: /\bexecutes? (?:a |an )?(?:concrete )?(?:defensive )?concealment\b/i, withholdActionRx: /\bwithout (?:naming|revealing|explaining|saying|disclosing) what\b/i, deceptionRx: /\b(gives? (?:a )?false (?:public )?account|tells? [\s\S]{0,50}(?:only|falsely)|falsely (?:claims?|states?|tells?|informs?|declares?)|feeds? [\s\S]{0,30}a false|offers? a false (?:account|story|explanation)|deceives?|misleads?|lies? to)\b/i, publicTargetRx: /\b(the assembly|the dohkar|the tribunal|the court|the family|the crowd|the audience|the witnesses|everyone present|the room|the gathered|the seated|publicly)\b/i, hesitationRx: /\b(opens? (?:her|his|their)? ?mouth[\s\S]{0,30}closes?|catches? (?:her|him|them)self weighing|weighs? whether|weighing of|almost (?:speaks|says|names|spoke|said)|hesitates?|stays? silent|remains? silent|says? nothing|holds? (?:her|his|their) tongue|keeps? (?:her|his|their) silence|decides? to (?:lie|deceive|give a false|tell a false|mislead)|resolves? to (?:lie|deceive|mislead)|plans? to (?:lie|deceive|mislead)|intends? to (?:lie|deceive|mislead)|considers? (?:lying|deceiving)|would (?:lie|deceive|mislead))\b/i, objectiveActor: 'Lirael', pressureSource: null },
+        // EXCLUSIVITY-REFRAMING FIX (Roman 2026-09-22, dry gate diagnosis after Temptation attempts
+        // 6 and 9 both real-dispatch-rejected) — real finding: attempt 9's real reply proposed
+        // "Lirael steps forward and tells the assembly the wish was Seren's alone" (event_slots:
+        // actor Lirael, action "addresses the assembly with a statement", target "the assembly",
+        // exit_state "Lirael has publicly declared the wish was Seren's alone") — a landed, public,
+        // effect-bearing defensive reframing (denying her own stake by asserting sole ownership
+        // elsewhere), squarely within this lane's own label ("gives a false or misleading account to
+        // a public audience with a real effect"), story-grounded in this seed's own canon (Seren's
+        // wish was genuinely spent ON Lirael — "the wish was Seren's alone" is misleading-by-
+        // omission, not a neutral fact). Rejected anyway: deceptionRx's tells-clause only recognized
+        // "only"/"falsely" as the exclusivity/falsity marker — "alone" (this real reply's own word)
+        // wasn't in the list. Attempt 6's real reply, by contrast ("places The Answer back in
+        // Julian's hands without speaking" — no statement, no target, no claim of any kind), is
+        // NOT affected by this widening and remains correctly rejected: this only extends WHICH
+        // WORD can mark the SAME already-guarded "tells + exclusivity/falsity word" pattern, not
+        // the guard itself (still requires target+effect+non-intention, unchanged, three lines
+        // below). Re-verified against every existing RED/anti-gaming fixture in
+        // _scene2_lirael_defensive_path_lane_semantics_control.mjs (22/22, unchanged) plus a new,
+        // dedicated fixture for this exact real phrasing.
+        { id: 'lirael_defensive_path', label: 'Lirael herself makes a LANDED defensive move that changes her tactical position — submits to procedure, demands specific terms, gathers proof, conceals a specific fact/object/admission, gives a false or misleading account to a public audience with a real effect, moves concretely toward flight, counter-accuses, forces Julian or the Dohkar into a procedural bind, or names a protected constraint. Hesitating, silently weighing, staying silent, or "almost speaking then stopping" does NOT satisfy this lane by itself — the move must be an actual, external, observable action.', signalRx: /\b(submits? to procedure|demands? (?:specific )?terms|gathers? proof|conceals?\b|concealed\b|concealing\b|(?:commits?|chooses?|turns?|moves?) (?:to|toward)? ?concealment|concealment of\b|flees?|flight|counter-accus\w*|procedural bind|names? a protected constraint)\b/i, executesRx: /\bexecutes? (?:a |an )?(?:concrete )?(?:defensive )?concealment\b/i, withholdActionRx: /\bwithout (?:naming|revealing|explaining|saying|disclosing) what\b/i, deceptionRx: /\b(gives? (?:a )?false (?:public )?account|tells? [\s\S]{0,50}(?:only|falsely|alone|solely|exclusively)|falsely (?:claims?|states?|tells?|informs?|declares?)|feeds? [\s\S]{0,30}a false|offers? a false (?:account|story|explanation)|deceives?|misleads?|lies? to)\b/i, publicTargetRx: /\b(the assembly|the dohkar|the tribunal|the court|the family|the crowd|the audience|the witnesses|everyone present|the room|the gathered|the seated|publicly)\b/i, hesitationRx: /\b(opens? (?:her|his|their)? ?mouth[\s\S]{0,30}closes?|catches? (?:her|him|them)self weighing|weighs? whether|weighing of|almost (?:speaks|says|names|spoke|said)|hesitates?|stays? silent|remains? silent|says? nothing|holds? (?:her|his|their) tongue|keeps? (?:her|his|their) silence|decides? to (?:lie|deceive|give a false|tell a false|mislead)|resolves? to (?:lie|deceive|mislead)|plans? to (?:lie|deceive|mislead)|intends? to (?:lie|deceive|mislead)|considers? (?:lying|deceiving)|would (?:lie|deceive|mislead))\b/i, objectiveActor: 'Lirael', pressureSource: null },
       ],
       // EVENT-FRAME RESOLVER (Roman 2026-09-21) — real finding this closes: two real live samples
       // in a row (retry 11 freeform, retry 12 with the aftermath lane menu ABOVE as a free choice)

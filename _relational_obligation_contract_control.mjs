@@ -180,6 +180,30 @@ const RAW_CARD_DIALOGUE = '*"Let the wind of your breath unravel me, as I\u2019v
       return window._relationalObligationForPosture(s, act, dia);
     }, { act: REAL_ACT, dia: REAL_DIA });
     ok('no oas_interrupt entry at all in the ledger returns null', r3 === null, JSON.stringify(r3));
+
+    // COSMETIC LABEL FIX (Roman 2026-09-22) — real finding: attempt 9's real dispatched planner
+    // request read "the love interest" instead of "Julian", because _relEnsureAnchors only checked
+    // TOP-LEVEL state.loveInterestName/partnerName — the real First Sacrifice harness (and the
+    // established convention at dozens of other call sites — app.js ~8213, ~40795, ~60578, etc.)
+    // populates the LI's name at the NESTED state.picks.identity.partnerName instead. This section
+    // uses ONLY that nested field (no top-level loveInterestName/partnerName at all) — the exact
+    // shape the earlier PRIMARY-path test above did NOT cover (it set loveInterestName directly,
+    // which already worked before this fix and would not have caught this gap).
+    const savedState4 = await page.evaluate(() => { const keys = ['storyId', 'loveInterestName', 'partnerName', 'picks', '_relationshipLedger', '_sceneLedger']; const saved = {}; keys.forEach((k) => { saved[k] = window.state[k]; }); return saved; });
+    const r4 = await page.evaluate(({ act, dia }) => {
+      window.state.storyId = 'relobl-B4-' + Date.now();
+      delete window.state.loveInterestName;
+      delete window.state.partnerName;
+      window.state.picks = Object.assign({}, window.state.picks, { identity: Object.assign({}, window.state.picks && window.state.picks.identity, { partnerName: 'Julian' }) });
+      delete window.state._relationshipLedger;
+      window.state._sceneLedger = null;
+      window._relEntityForName('Julian', {});
+      const L = window._sceneLedgerGet(window.state, true);
+      L.entries.push({ kind: 'oas_interrupt', sceneNumber: 1, act: act, dia: dia, posture: 'temptation' });
+      return window._relationalObligationForPosture(window.state, act, dia);
+    }, { act: REAL_ACT, dia: REAL_DIA });
+    await page.evaluate((saved) => { Object.keys(saved).forEach((k) => { window.state[k] = saved[k]; }); }, savedState4);
+    ok('NESTED-FIELD path — with ONLY state.picks.identity.partnerName set (matching the real harness/app), the target resolves to "Julian", not the generic fallback', r4 && r4.targetLabel === 'Julian', JSON.stringify(r4));
   }
 
   // ═══════════════════════════════════════════════════════════════════════════════════════════
