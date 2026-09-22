@@ -224485,6 +224485,8 @@ No text, no watermark, no UI elements, share-ready.`;
       '- The proxy action should COMPLEMENT, not REPEAT, the beat\'s main text. If the beat text already says "her hand tightened on the cup," do NOT also set pc_proxy_action to "her hand on the cup." The proxy adds a NEW physical signal the prose doesn\'t carry — when prose describes what the LI said, the proxy describes how the PC\'s body silently answered.\n' +
       '- Rhythm: cluster the 3-5 proxy actions around the SCENE CHARGE beats (subtext, almost-said, concrete specific) and the expression_arc peaks. The proxy is the PC\'s side of the conversation when she has no spoken line — surface her body language at the moments her emotion is highest.\n' +
       '- NULL is the default. Most beats have no proxy. The cumulative weight comes from the 3-5 moments where the body speaks.\n' +
+      '- WORLD REGISTER (HARD — added 2026-09-22 after a real Fatelands sample copied "coffee" from the GOOD examples list verbatim): the GOOD examples above are ENGLISH-REGISTER PLACEHOLDERS illustrating the SHAPE of a proxy action (a short, visible, concrete body/object beat) — they are not a literal prop list. If this story\'s world is not modern-day Earth, do NOT use a modern real-world commodity or technology by name (coffee, soda, a phone, a car, etc.) as the object in a proxy action. Substitute a world-appropriate object, or describe the gesture without naming an object at all ("her hand did not move").\n' +
+      ((typeof window.buildColloquialismGuardDirective === 'function') ? window.buildColloquialismGuardDirective() : '') +
       '\n' +
       // ═══════════════════════════════════════════════════════════
       // META-PRINCIPLES + DRAMATIZATION ADAPTER DOCTRINE
@@ -224666,6 +224668,128 @@ No text, no watermark, no UI elements, share-ready.`;
   // Dev introspection — inspect the exact system prompt the live CG generator
   // builds (e.g. window._buildCGScreenplaySystemPrompt().includes('SCENE GEOGRAPHY')).
   window._buildCGScreenplaySystemPrompt = _buildCGScreenplaySystemPrompt;
+
+  // ── WORLD-REGISTER MODERN-OBJECT GUARD (2026-09-22) ─────────────────────
+  // Diagnostic-only (never rewrites — a validator that rewrites is a
+  // competing author). Flags a scaffold string that names a modern real-
+  // world commodity/tech object when the story's world is anything but
+  // Modern. Discovered via Temptation attempt 11 (real paid run): the CG
+  // author copied the PC PROXY ACTION RULES prompt's own "she didn't reach
+  // for the coffee" worked example almost verbatim into a Fatelands scene's
+  // pc_proxy_action. Root cause: this CG author prompt never called the
+  // already-existing, already-correct buildColloquialismGuardDirective()
+  // (which already bans "coffee" by name for the literary/prose author) —
+  // that call was added above, inside _buildCGScreenplaySystemPrompt's PC
+  // PROXY ACTION RULES section. This is the second, defense-in-depth layer:
+  // a deterministic content check on the scaffold output itself, in case
+  // the model still ignores the prompt guard. Small, non-exhaustive term
+  // list (not just "coffee"); world-gated exactly like
+  // buildColloquialismGuardDirective — a Modern-world story always returns
+  // null here, unconditionally. Declared top-level (not inside the per-
+  // scene plan-normalizer) so it is exposed on window at script load, not
+  // only after a scene has actually been generated once. Consumed by the
+  // PC PROXY ACTION VALIDATOR further below.
+  var _WORLD_GUARD_MODERN_OBJECT_TERMS = [
+    'coffee', 'espresso', 'latte', 'cappuccino', 'soda', 'cola',
+    'pizza', 'popcorn',
+    'phone', 'cellphone', 'smartphone', 'laptop', 'computer',
+    'television', 'wifi', 'internet', 'microwave', 'elevator'
+  ];
+  var _WORLD_GUARD_MODERN_OBJECT_RX = new RegExp('\\b(' + _WORLD_GUARD_MODERN_OBJECT_TERMS.join('|') + ')\\b', 'i');
+  function _cgWorldGuardModernObjectHit(text, world) {
+    if (!text || !world || world === 'Modern') return null;
+    var m = String(text).match(_WORLD_GUARD_MODERN_OBJECT_RX);
+    return m ? m[0] : null;
+  }
+  window._cgWorldGuardModernObjectHit = _cgWorldGuardModernObjectHit;
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // COLLOQUIALISM GUARD — Prevent modern idioms in non-modern worlds
+  // Moved to true top-level scope 2026-09-22 (was previously nested inside
+  // an inner function that only ran once a literary continuation prompt was
+  // actually being built — never reached during a bare page load, so a
+  // sibling top-level function like _buildCGScreenplaySystemPrompt could
+  // never rely on it being defined yet). This position mirrors
+  // _buildCGScreenplaySystemPrompt's own, proven to execute at script-load
+  // time. The 3 pre-existing call sites elsewhere in this file (the
+  // literary/prose continuation prompt builder) still resolve the bare
+  // `buildColloquialismGuardDirective` identifier correctly — they are
+  // nested WITHIN this same top-level scope, and a declaration hoisted to
+  // an ancestor scope stays visible to every descendant closure.
+  // ═══════════════════════════════════════════════════════════════════════
+  function buildColloquialismGuardDirective() {
+      const world = state.picks?.world;
+      if (!world) return '';
+      // Modern and near-future worlds allow contemporary language
+      if (world === 'Modern') return '';
+
+      const worldLabel = world === 'Fantasy' ? 'the Fatelands'
+          : world === 'Historical' ? 'the historical era'
+          : world === 'SciFi' ? 'this future civilization'
+          : world === 'Dystopia' ? 'this dystopian society'
+          : world === 'PostApocalyptic' ? 'this post-collapse world'
+          : 'this world';
+
+      // World-specific slang generation guidelines
+      var _worldSlangGuide = '';
+      if (world === 'Fantasy') {
+        _worldSlangGuide = `\nWORLD-NATIVE LANGUAGE — FATELANDS:
+Draw slang, oaths, and idioms from: fate, oaths, moons (the Thirteen), magic, sacrifice, geography (Veilwood, Thornwild, Gloamwater), mythic forces, curses, the Weave, the Hungry Eye.
+Tone: poetic, grounded, slightly archaic but readable. Never stilted or Shakespearean.
+Pattern examples (use as templates, not fixed phrases):
+- surprise/disbelief: "By the Thirteen—" / "Fate's teeth—" / "You'd swear that oath?"
+- anger/frustration: "Curse the weave—" / "Moon-blind fool" / "Favor take you"
+- dismissal: "Not worth a sacrifice" / "That's dry-side talk"
+- affirmation: "On the Run" / "Weave-sworn" / "True as tidewater"`;
+      } else if (world === 'SciFi') {
+        _worldSlangGuide = `\nWORLD-NATIVE LANGUAGE — SCI-FI:
+Draw slang from: systems, signals, networks, physics, control layers, F.A.T.E. (Frontal Angular Telemetry Engine), tech failure, interference, anomalies, drift, latency.
+Tone: clipped, modern-adjacent, technical metaphor. Never fantasy-flavored.
+Pattern examples (use as templates, not fixed phrases):
+- surprise: "What the glitch—" / "That's off-signal"
+- frustration: "System's drifting" / "Total dropout"
+- dismissal: "That's noise" / "Low-priority input"
+- affirmation: "Locked in" / "Signal's clean" / "That's your input?"`;
+      } else if (world === 'Dystopia') {
+        _worldSlangGuide = `\nWORLD-NATIVE LANGUAGE — DYSTOPIA:
+Draw slang from: control systems, surveillance, compliance, resistance, rations, zones, permits, the regime's vocabulary repurposed sarcastically.
+Tone: dark, sardonic, compressed. Language shaped by oppression.`;
+      } else if (world === 'PostApocalyptic') {
+        _worldSlangGuide = `\nWORLD-NATIVE LANGUAGE — POST-APOCALYPTIC:
+Draw slang from: scarcity, salvage, radiation/contamination, old-world ruins, survival trades, weather patterns, territorial markers.
+Tone: blunt, practical, laced with dark humor. Language shaped by survival.`;
+      } else if (world === 'Historical') {
+        _worldSlangGuide = `\nWORLD-NATIVE LANGUAGE — HISTORICAL:
+Use period-appropriate idioms and speech patterns. Avoid modern cadence. Draw from the era's labor, religion, social hierarchy, and daily material reality.
+Tone: naturalistic for the period — readable but not anachronistic.`;
+      }
+
+      return `\n\nCOLLOQUIALISM & ANACHRONISM GUARD (MANDATORY — ${world.toUpperCase()} WORLD):
+Characters in ${worldLabel} do not use modern Earth idioms, slang, or culture-specific references.
+BANNED in dialogue and narration:
+- Modern food/drink names with no world equivalent (popcorn, pizza, coffee, soda, etc.) — invent a world-appropriate term or describe the item by its qualities
+- Modern idioms ("brought popcorn for this show", "hit the brakes", "dropped the mic", "game plan", "reality check", "red flag", etc.) — replace with world-native expressions that convey the same meaning
+- Contemporary slang ("okay", "cool", "chill", "no way", "whatever", "literally", "vibes", "dude", "bro", "wtf", "hell no", etc.) — use period/world-appropriate language
+- Modern profanity — transform into world-native curses and oaths
+- Modern filler ("yeah", "okay", "sure", "right") — replace with world-native affirmations
+- Earth-specific cultural references (movies, sports, brands, memes, pop culture) — these do not exist in ${worldLabel}
+- Modern measurements and systems unless they exist in-world
+
+SOURCE SUBSTITUTION LAW: Any slang, idiom, or curse MUST be derived from:
+1. The world's physical reality (materials, environment, creatures)
+2. The world's belief systems (religion, fate, tech, institutions)
+3. The world's daily life (currency, labor, risks, rituals)
+
+TRANSFORMATION RULE: When a modern phrase would naturally occur:
+1. Identify its intent (surprise, anger, disbelief, affection, threat, etc.)
+2. Replace with a metaphor or exclamation rooted in ${worldLabel}
+3. Keep it short, natural, and repeatable — not ornate or forced
+${_worldSlangGuide}
+
+CONSISTENCY RULE: Once a phrase style emerges in a scene, reuse similar structures. Maintain linguistic coherence — do NOT generate completely random slang each time. Characters should develop recognizable speech patterns rooted in their world.
+If uncertain whether a term is anachronistic, err on the side of world-appropriate language.`;
+  }
+  window.buildColloquialismGuardDirective = buildColloquialismGuardDirective;
 
   // World wardrobe / setting directives, ported from the literary engine's
   // _pcLookGenerate map (~app.js:31876). Stronger than the world LABEL
@@ -229036,7 +229160,10 @@ No text, no watermark, no UI elements, share-ready.`;
     //      "something shifted inside her").
     //   2. Proxy text echoes the beat's main text instead of
     //      complementing it (verbatim or near-verbatim substring).
-    //   3. Frequency check: too few (<2) or too many (>7) proxies per
+    //   3. World-register leak (2026-09-22): proxy names a modern
+    //      real-world commodity/tech object in a non-Modern-world story.
+    //      See _cgWorldGuardModernObjectHit above.
+    //   4. Frequency check: too few (<2) or too many (>7) proxies per
     //      scene. Sweet spot is 3-5; logs a hint when outside.
     // Logs [CG:PROXY:WEAK] / [CG:PROXY:OK]. Doesn't block render.
     try {
@@ -229072,6 +229199,12 @@ No text, no watermark, no UI elements, share-ready.`;
           if (tLow.indexOf(pLow.slice(0, Math.max(12, Math.floor(pLow.length * 0.6)))) !== -1) {
             proxyIssues.push('beat ' + b.idx + ': proxy="' + p.slice(0, 60) + '" appears to echo the beat text — proxy should add a NEW physical signal, not repeat what the prose said');
           }
+        }
+        // (c) World-register guard — see _cgWorldGuardModernObjectHit above.
+        var _proxyWorld = (state.picks && state.picks.world) || '';
+        var _worldHit = _cgWorldGuardModernObjectHit(p, _proxyWorld);
+        if (_worldHit) {
+          proxyIssues.push('beat ' + b.idx + ': proxy="' + p.slice(0, 60) + '" contains a modern real-world object ("' + _worldHit + '") not native to a ' + _proxyWorld + ' world — scaffold examples are placeholders, not literal objects to copy');
         }
       });
 
@@ -303561,79 +303694,16 @@ May NOT: jump to explicit anatomy, override consent, force non-consensual dynami
 
       // ═══════════════════════════════════════════════════════════════════
       // COLLOQUIALISM GUARD — Prevent modern idioms in non-modern worlds
+      // Relocated to true top-level scope 2026-09-22 (see the top-level
+      // buildColloquialismGuardDirective definition near
+      // _buildCGScreenplaySystemPrompt) so the CG screenplay author prompt
+      // builder can call it unconditionally at script-load time too — this
+      // inner position only became live once this closure actually ran,
+      // which the CG path could not rely on. Still called by bare
+      // identifier below (307518/307687/314769-ish) — unaffected, since a
+      // declaration hoisted to an ANCESTOR scope stays visible to every
+      // descendant closure that already referenced it.
       // ═══════════════════════════════════════════════════════════════════
-      function buildColloquialismGuardDirective() {
-          const world = state.picks?.world;
-          if (!world) return '';
-          // Modern and near-future worlds allow contemporary language
-          if (world === 'Modern') return '';
-
-          const worldLabel = world === 'Fantasy' ? 'the Fatelands'
-              : world === 'Historical' ? 'the historical era'
-              : world === 'SciFi' ? 'this future civilization'
-              : world === 'Dystopia' ? 'this dystopian society'
-              : world === 'PostApocalyptic' ? 'this post-collapse world'
-              : 'this world';
-
-          // World-specific slang generation guidelines
-          var _worldSlangGuide = '';
-          if (world === 'Fantasy') {
-            _worldSlangGuide = `\nWORLD-NATIVE LANGUAGE — FATELANDS:
-Draw slang, oaths, and idioms from: fate, oaths, moons (the Thirteen), magic, sacrifice, geography (Veilwood, Thornwild, Gloamwater), mythic forces, curses, the Weave, the Hungry Eye.
-Tone: poetic, grounded, slightly archaic but readable. Never stilted or Shakespearean.
-Pattern examples (use as templates, not fixed phrases):
-- surprise/disbelief: "By the Thirteen—" / "Fate's teeth—" / "You'd swear that oath?"
-- anger/frustration: "Curse the weave—" / "Moon-blind fool" / "Favor take you"
-- dismissal: "Not worth a sacrifice" / "That's dry-side talk"
-- affirmation: "On the Run" / "Weave-sworn" / "True as tidewater"`;
-          } else if (world === 'SciFi') {
-            _worldSlangGuide = `\nWORLD-NATIVE LANGUAGE — SCI-FI:
-Draw slang from: systems, signals, networks, physics, control layers, F.A.T.E. (Frontal Angular Telemetry Engine), tech failure, interference, anomalies, drift, latency.
-Tone: clipped, modern-adjacent, technical metaphor. Never fantasy-flavored.
-Pattern examples (use as templates, not fixed phrases):
-- surprise: "What the glitch—" / "That's off-signal"
-- frustration: "System's drifting" / "Total dropout"
-- dismissal: "That's noise" / "Low-priority input"
-- affirmation: "Locked in" / "Signal's clean" / "That's your input?"`;
-          } else if (world === 'Dystopia') {
-            _worldSlangGuide = `\nWORLD-NATIVE LANGUAGE — DYSTOPIA:
-Draw slang from: control systems, surveillance, compliance, resistance, rations, zones, permits, the regime's vocabulary repurposed sarcastically.
-Tone: dark, sardonic, compressed. Language shaped by oppression.`;
-          } else if (world === 'PostApocalyptic') {
-            _worldSlangGuide = `\nWORLD-NATIVE LANGUAGE — POST-APOCALYPTIC:
-Draw slang from: scarcity, salvage, radiation/contamination, old-world ruins, survival trades, weather patterns, territorial markers.
-Tone: blunt, practical, laced with dark humor. Language shaped by survival.`;
-          } else if (world === 'Historical') {
-            _worldSlangGuide = `\nWORLD-NATIVE LANGUAGE — HISTORICAL:
-Use period-appropriate idioms and speech patterns. Avoid modern cadence. Draw from the era's labor, religion, social hierarchy, and daily material reality.
-Tone: naturalistic for the period — readable but not anachronistic.`;
-          }
-
-          return `\n\nCOLLOQUIALISM & ANACHRONISM GUARD (MANDATORY — ${world.toUpperCase()} WORLD):
-Characters in ${worldLabel} do not use modern Earth idioms, slang, or culture-specific references.
-BANNED in dialogue and narration:
-- Modern food/drink names with no world equivalent (popcorn, pizza, coffee, soda, etc.) — invent a world-appropriate term or describe the item by its qualities
-- Modern idioms ("brought popcorn for this show", "hit the brakes", "dropped the mic", "game plan", "reality check", "red flag", etc.) — replace with world-native expressions that convey the same meaning
-- Contemporary slang ("okay", "cool", "chill", "no way", "whatever", "literally", "vibes", "dude", "bro", "wtf", "hell no", etc.) — use period/world-appropriate language
-- Modern profanity — transform into world-native curses and oaths
-- Modern filler ("yeah", "okay", "sure", "right") — replace with world-native affirmations
-- Earth-specific cultural references (movies, sports, brands, memes, pop culture) — these do not exist in ${worldLabel}
-- Modern measurements and systems unless they exist in-world
-
-SOURCE SUBSTITUTION LAW: Any slang, idiom, or curse MUST be derived from:
-1. The world's physical reality (materials, environment, creatures)
-2. The world's belief systems (religion, fate, tech, institutions)
-3. The world's daily life (currency, labor, risks, rituals)
-
-TRANSFORMATION RULE: When a modern phrase would naturally occur:
-1. Identify its intent (surprise, anger, disbelief, affection, threat, etc.)
-2. Replace with a metaphor or exclamation rooted in ${worldLabel}
-3. Keep it short, natural, and repeatable — not ornate or forced
-${_worldSlangGuide}
-
-CONSISTENCY RULE: Once a phrase style emerges in a scene, reuse similar structures. Maintain linguistic coherence — do NOT generate completely random slang each time. Characters should develop recognizable speech patterns rooted in their world.
-If uncertain whether a term is anachronistic, err on the side of world-appropriate language.`;
-      }
 
       function buildWorldPhysicsDirective() {
           const world = state.picks?.world;
