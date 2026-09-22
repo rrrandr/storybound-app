@@ -217,14 +217,17 @@ function summarizeTracked(c) {
   const consoleLines = [];
   page.on('console', (m) => { consoleLines.push(m.text()); });
 
-  // blockImageStyleExtraction (Roman 2026-09-22): this harness runs PROSE-only continuations —
-  // Temptation attempt 4 showed the endpoint allowlist below (which must include /api/chatgpt-proxy
-  // and, after the Gemini wiring, would need to include /api/gemini-proxy for any other legitimate
-  // real call on that path) cannot by itself distinguish a real prose call from a real
-  // image-style-extraction call sharing the same endpoint. This inspects every real-lane request's
-  // own body content and aborts one that matches the extraction shape, before dispatch, regardless
-  // of which of the allowlisted endpoints it would have gone out on.
-  const gate = await installFailClosedNetworkGate(page, { logFile: LOG_FILE, blockImageStyleExtraction: true });
+  // blockImagePreparation (Roman 2026-09-22, broadened same day): this harness runs PROSE-only
+  // continuations — Temptation attempt 4 showed the endpoint allowlist below (which must include
+  // /api/chatgpt-proxy and, after the Gemini wiring, would need to include /api/gemini-proxy for
+  // any other legitimate real call on that path) cannot by itself distinguish a real prose call
+  // from a real image-preparation call sharing the same endpoint. Blocks BOTH known
+  // image-preparation operations — reference-image style extraction AND the text-only
+  // image-prompt rewrite (the latter added same-day per Roman: "it's still image preparation...
+  // unnecessary spending during a prose-only test") — before dispatch, regardless of provider or
+  // which of the allowlisted endpoints it would have gone out on. Both operations remain fully
+  // available during an authorized image workflow (any script that doesn't pass this option).
+  const gate = await installFailClosedNetworkGate(page, { logFile: LOG_FILE, blockImagePreparation: true });
   // Phases 0-2 are served from the real, already-paid-for content — STUBBED, not real. Only the
   // structural/author phase (below) switches this same gate to allowRealPaths.
   gate.stub('/api/proxy', (req) => {

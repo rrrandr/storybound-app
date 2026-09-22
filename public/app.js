@@ -160078,6 +160078,15 @@ ${_buildSettingImageOverrideSuffix()}`,
   // response, this returns null — it does NOT retry via GPT-4o. That is a deliberate, visible "no
   // style rewrite this pass" outcome (the scene proceeds with its un-rewritten prompt), not a
   // silent reroute back to the provider being replaced.
+  //
+  // PROSE-ONLY BOUNDARY, FINISHED (Roman 2026-09-22, same day) — "the prose harness still permits
+  // the text-only image-prompt rewrite on GPT-4o. It isn't reference extraction, but it's still
+  // image preparation." Both branches below (this GPT-4o no-ref call and _extractStyleViaGemini's
+  // fetch) now carry an explicit `purpose` field on the outgoing payload
+  // ('image_prompt_rewrite'/'image_style_extraction') — a load-bearing operation-purpose
+  // identifier a content-inspecting boundary can key on directly, rather than only sniffing prompt
+  // wording. `_e2e_network_gate.mjs`'s blockImagePreparation reads this field as its PRIMARY
+  // signal and retains the prior text-signature match as a secondary/fallback check.
   async function rewriteImagePromptWithStyle(style, scene) {
     // Load artist reference images — with per-artist anchor selection
     var _refImages = [];
@@ -160174,7 +160183,7 @@ ${_buildSettingImageOverrideSuffix()}`,
     var result = await window.StoryboundOrchestration.callChatGPT([
       { role: 'system', content: systemContent },
       { role: 'user', content: userContent }
-    ], 'PRIMARY_AUTHOR', { model: 'gpt-4o', max_tokens: 200, temperature: 0.4 });
+    ], 'PRIMARY_AUTHOR', { model: 'gpt-4o', max_tokens: 200, temperature: 0.4, purpose: 'image_prompt_rewrite' });
 
     if (result && result.trim().length > 20) {
       var extracted = result.trim();
@@ -160217,7 +160226,7 @@ ${_buildSettingImageOverrideSuffix()}`,
     try {
       var r = await fetch('/api/gemini-proxy', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ role: 'PRIMARY_AUTHOR', model: 'gemini-2.5-flash', temperature: 0.4, max_tokens: 200, messages: [ { role: 'system', content: systemContent }, { role: 'user', content: userContent } ] })
+        body: JSON.stringify({ role: 'PRIMARY_AUTHOR', model: 'gemini-2.5-flash', purpose: 'image_style_extraction', temperature: 0.4, max_tokens: 200, messages: [ { role: 'system', content: systemContent }, { role: 'user', content: userContent } ] })
       });
       if (!r.ok) { try { console.warn('[GEMINI-STYLE-ADAPTER] HTTP ' + r.status); } catch (_) {} return null; }
       var d = await r.json();

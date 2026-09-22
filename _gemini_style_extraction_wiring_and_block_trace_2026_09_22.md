@@ -121,6 +121,88 @@ pattern of never rewriting a prior real-run record.
   `_scene2_repair_replay_sample.mjs` — the one harness explicitly implicated. Other dry controls in
   this repo never dispatch anything real in the first place.
 
-## Status
+## Status (as of the original fix, superseded below)
+
+Dry, committed. No provider or image calls. No branch retry, no regeneration.
+
+---
+
+## Addendum: the prose-only boundary finished — the no-ref rewrite closed too (2026-09-22, same day)
+
+Roman, after reviewing the fix above: "reference-image style extraction now uses Gemini, with no
+automatic GPT-4o fallback. That closes the unfinished switch. One remaining scope issue: the prose
+harness still permits the text-only image-prompt rewrite on GPT-4o. It isn't reference extraction,
+but it's still image preparation — and unnecessary spending during a prose-only test... Prefer an
+explicit operation-purpose identifier for this boundary; retain the signature-text check as
+additional protection."
+
+### What was missing
+
+`rewriteImagePromptWithStyle`'s NO-REFERENCE branch (a plain text-only GPT-4o rewrite — no image
+ever sent) was correctly left OUT of the original `blockImageStyleExtraction` classifier, on
+purpose: that classifier's phrase ("STYLE-ONLY EXTRACTION (HARD)") only appears in the
+reference-driven branch's system prompt, by design, specifically so the harmless no-ref branch
+wasn't over-blocked. But the no-ref branch is still real spend during a prose-only test, and Roman's
+point stands: "it's still image preparation."
+
+### Fix
+
+**1. An explicit operation-purpose identifier, carried on the wire.** `options.purpose` already
+existed in `orchestration-client.js`'s `callChatGPT` as a CLIENT-SIDE-ONLY logging tag (never sent
+to the server). Added one line — `if (options.purpose) payload.purpose = options.purpose;` — so it
+reaches the actual outgoing payload when a caller sets it; every existing caller (none of which set
+`options.purpose`) is byte-identical. Both real image-preparation call sites now set it explicitly:
+- `rewriteImagePromptWithStyle`'s no-ref GPT-4o call: `purpose: 'image_prompt_rewrite'`.
+- `_extractStyleViaGemini`'s direct fetch body: `purpose: 'image_style_extraction'`.
+
+**2. The gate classifier, renamed and broadened.** `isImageStyleExtractionRequest` →
+`isImagePreparationRequest` (module-level export, unchanged location). Classification order:
+- **PRIMARY**: `requestBody.purpose` is one of `{'image_style_extraction', 'image_prompt_rewrite'}`
+  — checked directly, no text sniffing needed for the common case (both real callers now send it).
+- **SECONDARY (retained, per Roman's explicit instruction)**: the request's own system-message
+  text — `"STYLE-ONLY EXTRACTION (HARD)"` (ref-driven only) OR `"visual art director for a comic
+  book / graphic novel"` (the shared opening line of BOTH image-preparation branches — safe to use
+  now that BOTH are in scope for blocking; the earlier, narrower pass had deliberately excluded this
+  broader phrase specifically because only the ref-driven branch was being blocked then).
+
+Gate option renamed `blockImageStyleExtraction` → `blockImagePreparation` to reflect the wider
+scope. `_scene2_repair_replay_sample.mjs` updated to the new option name.
+
+### Proof — `_prose_only_blocks_image_style_extraction_control.mjs`, rewritten, 17/17
+
+- **A/B** — the reference-driven extraction (Gemini, and the same shape sent directly to GPT-4o) is
+  still blocked before dispatch — no regression from the original fix.
+- **C** — the NO-REF text-only rewrite (the gap this addendum closes) is now ALSO blocked before
+  dispatch, proven against the real, live `rewriteImagePromptWithStyle` function.
+- **D** — the `purpose` field alone (PRIMARY signal) classifies correctly even with unrelated or
+  absent system text, including an explicit negative (an unrelated purpose value is NOT
+  misclassified).
+- **E** — the SECONDARY text-signature fallback still classifies both operations correctly even
+  when `purpose` is absent — proving the fallback survives the new field's addition, per Roman's
+  explicit "retain the signature-text check as additional protection."
+- **F** — real, unrelated request shapes this pipeline actually sends (a SCENE-SPINE planner body,
+  a genuine unrelated GPT-4o chat completion on the SAME endpoint) are not misclassified.
+
+One test-harness-only fix found and made while building this control (not a production bug): the
+no-ref branch's `callChatGPT` call isn't internally try/caught inside `rewriteImagePromptWithStyle`
+— the same as the original `rewritePromptWith4o` before this session. In production this is fine —
+the ONE real call site already wraps the whole function call in try/catch. My first draft of this
+control called the function directly without that wrapper and got an uncaught rejection; fixed by
+reproducing the same try/catch the real call site already has, not by changing the function.
+
+`_gemini_style_extraction_production_wiring_control.mjs` (16/16), `_gemini_vision_adapter_
+capability_control.mjs` (15/15), `_e2e_network_gate_response_correlation_control.mjs` (11/11), and
+`_scene2_repair_replay_sample_slot_param_control.mjs` (23/23) all re-verified unaffected.
+
+### What this does NOT do
+
+- Does not block either image-preparation operation during an authorized image workflow — any
+  script that doesn't pass `blockImagePreparation: true` is unaffected; both operations remain
+  fully available there.
+- Does not touch `_extractStyleViaGemini`'s or the no-ref branch's actual extraction/rewrite logic
+  — only adds a `purpose` tag to each one's outgoing payload.
+- Does not retry Temptation, run Silence/Confession, or generate any image.
+
+### Status
 
 Dry, committed. No provider or image calls. No branch retry, no regeneration.

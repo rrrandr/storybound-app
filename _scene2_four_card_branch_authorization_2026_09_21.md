@@ -432,3 +432,23 @@ change what already happened. Full trace:
 
 **Status**: dry fix only. No provider/image calls, no branch retry, no regeneration. Silence,
 Confession, and images remain untouched and unauthorized.
+
+## Addendum — prose-only boundary finished: no-ref rewrite closed, purpose field added (2026-09-22, same day)
+
+Roman: "the prose harness still permits the text-only image-prompt rewrite on GPT-4o... Finish the
+prose-only boundary: block both reference-image style extraction and text-only image-prompt
+rewriting before provider dispatch. Keep both available during authorized image workflows. Prefer
+an explicit operation-purpose identifier for this boundary; retain the signature-text check as
+additional protection." Two changes: (1) `orchestration-client.js`'s `callChatGPT` now carries an
+opt-in `purpose` field onto the wire; both real image-preparation call sites set it
+(`image_style_extraction` / `image_prompt_rewrite`). (2) The gate's classifier renamed
+`isImageStyleExtractionRequest` → `isImagePreparationRequest`, PRIMARY signal = the `purpose`
+field, SECONDARY = the retained/broadened text-signature fallback. Gate option renamed
+`blockImageStyleExtraction` → `blockImagePreparation`. Proven 17/17 in the rewritten
+`_prose_only_blocks_image_style_extraction_control.mjs` (both operations blocked before dispatch,
+purpose field alone sufficient, text fallback still works without it, real prose not over-blocked).
+Four other dependent controls re-verified unaffected. Full trace: the addendum to
+`_gemini_style_extraction_wiring_and_block_trace_2026_09_22.md`.
+
+**Status**: dry fix only. No provider/image calls, no branch retry, no regeneration. Silence,
+Confession, and images remain untouched and unauthorized.

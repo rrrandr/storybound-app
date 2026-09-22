@@ -1455,6 +1455,13 @@
       temperature: options.temperature || 0.7,
       max_tokens: options.max_tokens || 1500
     };
+    // OPERATION-PURPOSE IDENTIFIER (Roman 2026-09-22) — `options.purpose` already existed as a
+    // client-side-only logging tag (see the [CACHE:SEGMENTS] line above); this is the first caller
+    // to need it ON THE WIRE. Carried into the actual outgoing payload (opt-in — omitted entirely
+    // when a caller doesn't set it, so every existing call site is byte-identical) so a
+    // content-inspecting boundary (e.g. _e2e_network_gate.mjs's blockImagePreparation) can classify
+    // a request by an explicit, load-bearing tag rather than sniffing prompt wording alone.
+    if (options.purpose) payload.purpose = options.purpose;
 
     // ── THE REASONING LEVEL IS STATED, NEVER INHERITED ──
     // Reasoning tokens bill at the FULL completion rate and no request parameter bounds them, so

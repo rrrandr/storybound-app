@@ -43,21 +43,27 @@
 //   const gate = await installFailClosedNetworkGate(page, { logFile: '/path/to/run.jsonl' });
 //   gate.allowRealPaths(['/api/proxy', '/api/mistral-proxy', '/api/chatgpt-proxy']);
 //
-// opts.blockImageStyleExtraction (Roman 2026-09-22) — real finding: Temptation attempt 4 dispatched
-// a real, paid image-style-extraction call (a "visual art director" GPT-4o request, fed a reference
-// image) despite being run under an explicit "no image generation or image-style extraction"
-// authorization. An endpoint allowlist alone could not have caught this: /api/chatgpt-proxy is also
-// the path for OTHER, legitimate real calls in the same pipeline, and after this session's Gemini
-// wiring the same extraction can equally route through /api/gemini-proxy — so blocking by endpoint
-// either over-blocks or under-blocks. Roman: "An endpoint allowlist alone is insufficient when
-// prose and extraction share an endpoint." Set `blockImageStyleExtraction: true` to inspect every
-// REAL-lane request's own BODY CONTENT — provider-agnostic, endpoint-agnostic — for the
-// image-style-extraction shape (the shared "visual art director... STYLE-ONLY EXTRACTION" system
-// prompt both known real callers, rewriteImagePromptWithStyle's GPT-4o branch and
-// _extractStyleViaGemini, send verbatim) and ABORT it before dispatch even when the endpoint is
-// otherwise allowlisted — logged as its own violation kind, never silently swapped to a stub or a
-// different provider. Default false: every existing control that doesn't pass this option is
-// byte-identical in behavior. See _prose_only_blocks_image_style_extraction_control.mjs.
+// opts.blockImagePreparation (Roman 2026-09-22, broadened same day) — real finding: Temptation
+// attempt 4 dispatched a real, paid image-style-extraction call (a "visual art director" GPT-4o
+// request, fed a reference image) despite being run under an explicit "no image generation or
+// image-style extraction" authorization. An endpoint allowlist alone could not have caught this:
+// /api/chatgpt-proxy is also the path for OTHER, legitimate real calls in the same pipeline, and the
+// same style of call can route through /api/gemini-proxy too — so blocking by endpoint either
+// over-blocks or under-blocks. Roman: "An endpoint allowlist alone is insufficient when prose and
+// extraction share an endpoint." First shipped as `blockImageStyleExtraction` (reference-image
+// extraction only); broadened the same day per Roman: "the prose harness still permits the
+// text-only image-prompt rewrite on GPT-4o. It isn't reference extraction, but it's still image
+// preparation... Finish the prose-only boundary: block both." Renamed to
+// `blockImagePreparation` to reflect the wider scope. Set `blockImagePreparation: true` to inspect
+// every REAL-lane request's own BODY CONTENT — provider-agnostic, endpoint-agnostic — for either
+// image-preparation operation and ABORT it before dispatch even when the endpoint is otherwise
+// allowlisted, never silently swapped to a stub or a different provider. Classification is now
+// PRIMARILY an explicit `purpose` field both real callers carry on the wire
+// ('image_style_extraction' / 'image_prompt_rewrite' — see public/app.js and
+// orchestration-client.js), with the prior text-signature match RETAINED as a secondary/fallback
+// signal in case that field is ever missing or stripped. Default false: every existing control that
+// doesn't pass this option is byte-identical in behavior. See
+// _prose_only_blocks_image_style_extraction_control.mjs.
 //   gate.setPhase('scene2-cg-screenplay-author', 3);
 //   await page.click('#gnSubmitBtn');
 //   await gate.waitForSettlement('scene2-cg-screenplay-author', { onWatchdog: (ms) => console.log('still pending after ' + ms + 'ms') });
@@ -105,28 +111,39 @@ import { performance } from 'node:perf_hooks';
 // settlement time, from the monotonic pair — so no downstream report ever hand-computes a duration
 // again. See _e2e_network_gate_monotonic_elapsed_control.mjs for the dry proof.
 
-// IMAGE-STYLE-EXTRACTION CONTENT CLASSIFIER (Roman 2026-09-22) — see the blockImageStyleExtraction
-// doc comment above for the full rationale. Checks the request's OWN system-message text for the
-// "STYLE-ONLY EXTRACTION (HARD)" signature phrase — present verbatim in BOTH known real callers'
-// reference-image-driven system prompt (rewriteImagePromptWithStyle's Gemini branch and its GPT-4o
-// predecessor share the exact same text, by design — see public/app.js), and ONLY in that branch:
-// the same function's separate no-reference text-only rewrite (no image sent at all — not
-// extraction by the term's own meaning) uses a shorter, unrelated system prompt that does not
-// contain this phrase, so that harmless branch is correctly left unblocked. Deliberately
-// body-content-based, never URL/endpoint-based, so it works identically whichever
-// provider/endpoint carries the call, today or after a future provider change — a wording match
-// here is the SAME text this function ships, not a guess at a pattern. A narrower phrase (this one)
-// beats a broader one ("visual art director...", tried first and rejected — that phrase is also
-// the no-ref branch's opening line, so it would have over-blocked a call that sends no image at
-// all). Exported at MODULE scope (not nested inside installFailClosedNetworkGate) so it can be
-// unit-tested directly, without needing a live dispatch of anything — see
-// _prose_only_blocks_image_style_extraction_control.mjs.
-export function isImageStyleExtractionRequest(requestBody) {
+// IMAGE-PREPARATION CONTENT CLASSIFIER (Roman 2026-09-22, broadened same day) — see the
+// blockImagePreparation doc comment above for the full rationale. Two known real image-preparation
+// operations, both of which belong to rewriteImagePromptWithStyle (Gemini branch and its GPT-4o
+// no-ref branch) and _extractStyleViaGemini:
+//   'image_style_extraction' — the reference-image-driven (vision) extraction.
+//   'image_prompt_rewrite'   — the no-reference text-only rewrite (no image sent, but still image
+//                              preparation — Roman: "It isn't reference extraction, but it's still
+//                              image preparation... unnecessary spending during a prose-only test").
+// PRIMARY signal: the request's own `purpose` field — an explicit, load-bearing operation-purpose
+// identifier both real callers now carry on the wire (see public/app.js's two call sites and
+// orchestration-client.js's payload.purpose passthrough) — checked directly, no text sniffing
+// needed for the common case.
+// SECONDARY signal (retained as additional protection, per Roman's explicit instruction, in case
+// `purpose` is ever missing or stripped before reaching this check): the request's own
+// system-message text. "STYLE-ONLY EXTRACTION (HARD)" is present verbatim ONLY in the
+// reference-driven branch's system prompt (both providers mirror it exactly); "visual art director
+// for a comic book / graphic novel" is the shared opening line of BOTH image-preparation branches
+// (ref-driven AND no-ref rewrite) and is not used by any known real prose call in this pipeline —
+// broadened here specifically because BOTH operations are now in scope, unlike the narrower
+// first-pass version of this function which deliberately excluded that broader phrase to avoid
+// over-blocking the no-ref branch back when only ref-driven extraction was being blocked.
+// Deliberately body-content-based, never URL/endpoint-based, so it works identically whichever
+// provider/endpoint carries the call. Exported at MODULE scope (not nested inside
+// installFailClosedNetworkGate) so it can be unit-tested directly, without needing a live dispatch
+// of anything — see _prose_only_blocks_image_style_extraction_control.mjs.
+const IMAGE_PREP_PURPOSES = new Set(['image_style_extraction', 'image_prompt_rewrite']);
+export function isImagePreparationRequest(requestBody) {
   try {
+    if (requestBody && IMAGE_PREP_PURPOSES.has(requestBody.purpose)) return true;
     const msgs = (requestBody && requestBody.messages) || [];
     const sys = msgs[0] && msgs[0].content;
     const sysText = typeof sys === 'string' ? sys : '';
-    return /STYLE-ONLY EXTRACTION \(HARD\)/.test(sysText);
+    return /STYLE-ONLY EXTRACTION \(HARD\)/.test(sysText) || /visual art director for a comic book \/ graphic novel/i.test(sysText);
   } catch (_) { return false; }
 }
 
@@ -166,12 +183,12 @@ export async function installFailClosedNetworkGate(page, opts) {
     try { pathname = new URL(url).pathname; } catch (_) { pathname = url; }
     const real = matchesAllowedReal(pathname);
 
-    if (real && opts.blockImageStyleExtraction) {
+    if (real && opts.blockImagePreparation) {
       const bodyForClassify = parseBody(req);
-      if (isImageStyleExtractionRequest(bodyForClassify)) {
-        persist({ kind: 'abort-image-style-extraction', url, method: req.method(), reason: 'blockImageStyleExtraction: request body matches the image-style-extraction shape', at: Date.now() });
-        try { console.warn('[NETWORK-GATE] ABORT (image-style-extraction, blocked before dispatch): ' + url); } catch (_) {}
-        unstubbed.push({ url, method: req.method(), at: Date.now(), reason: 'blocked: image-style-extraction request body, blockImageStyleExtraction active' });
+      if (isImagePreparationRequest(bodyForClassify)) {
+        persist({ kind: 'abort-image-preparation', url, method: req.method(), reason: 'blockImagePreparation: request body matches an image-preparation operation (purpose="' + (bodyForClassify && bodyForClassify.purpose) + '")', at: Date.now() });
+        try { console.warn('[NETWORK-GATE] ABORT (image-preparation, blocked before dispatch): ' + url + ' purpose=' + (bodyForClassify && bodyForClassify.purpose)); } catch (_) {}
+        unstubbed.push({ url, method: req.method(), at: Date.now(), reason: 'blocked: image-preparation request body, blockImagePreparation active' });
         route.abort('failed');
         return;
       }
