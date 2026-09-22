@@ -129313,7 +129313,31 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
         // below). Re-verified against every existing RED/anti-gaming fixture in
         // _scene2_lirael_defensive_path_lane_semantics_control.mjs (22/22, unchanged) plus a new,
         // dedicated fixture for this exact real phrasing.
-        { id: 'lirael_defensive_path', label: 'Lirael herself makes a LANDED defensive move that changes her tactical position — submits to procedure, demands specific terms, gathers proof, conceals a specific fact/object/admission, gives a false or misleading account to a public audience with a real effect, moves concretely toward flight, counter-accuses, forces Julian or the Dohkar into a procedural bind, or names a protected constraint. Hesitating, silently weighing, staying silent, or "almost speaking then stopping" does NOT satisfy this lane by itself — the move must be an actual, external, observable action.', signalRx: /\b(submits? to procedure|demands? (?:specific )?terms|gathers? proof|conceals?\b|concealed\b|concealing\b|(?:commits?|chooses?|turns?|moves?) (?:to|toward)? ?concealment|concealment of\b|flees?|flight|counter-accus\w*|procedural bind|names? a protected constraint)\b/i, executesRx: /\bexecutes? (?:a |an )?(?:concrete )?(?:defensive )?concealment\b/i, withholdActionRx: /\bwithout (?:naming|revealing|explaining|saying|disclosing) what\b/i, deceptionRx: /\b(gives? (?:a )?false (?:public )?account|tells? [\s\S]{0,50}(?:only|falsely|alone|solely|exclusively)|falsely (?:claims?|states?|tells?|informs?|declares?)|feeds? [\s\S]{0,30}a false|offers? a false (?:account|story|explanation)|deceives?|misleads?|lies? to)\b/i, publicTargetRx: /\b(the assembly|the dohkar|the tribunal|the court|the family|the crowd|the audience|the witnesses|everyone present|the room|the gathered|the seated|publicly)\b/i, hesitationRx: /\b(opens? (?:her|his|their)? ?mouth[\s\S]{0,30}closes?|catches? (?:her|him|them)self weighing|weighs? whether|weighing of|almost (?:speaks|says|names|spoke|said)|hesitates?|stays? silent|remains? silent|says? nothing|holds? (?:her|his|their) tongue|keeps? (?:her|his|their) silence|decides? to (?:lie|deceive|give a false|tell a false|mislead)|resolves? to (?:lie|deceive|mislead)|plans? to (?:lie|deceive|mislead)|intends? to (?:lie|deceive|mislead)|considers? (?:lying|deceiving)|would (?:lie|deceive|mislead))\b/i, objectiveActor: 'Lirael', pressureSource: null },
+        // WITHHOLD-BY-CORRECTION FIX (Roman 2026-09-22, dry gate diagnosis after Temptation attempt
+        // 10) — real finding: attempt 10's real reply proposed "Lirael folds the torn mouth-band
+        // into her sash without correcting the Dohkar's assumption that she shaped the wish"
+        // (event_slots: actor Lirael, action "folds the torn mouth-band into her sash", target "the
+        // torn mouth-band", exit_state "the assembly now holds the unchallenged assumption that
+        // Lirael shaped the wish for her own benefit"; aftermath_obligations: "the Dohkar's charge
+        // gains visible traction as Lirael's silence lets suspicion settle without correction,
+        // tightening the procedural risk to her qualification"). This is the SAME real physical
+        // action as Temptation attempt 2's already-accepted precedent (folding the mouth-band into
+        // the sash — the exact case withholdActionRx was originally built for), with a genuine,
+        // described PUBLIC consequence (the assembly's false assumption now stands unchallenged,
+        // narrowing her institutional standing) — not a private, consequence-free avoidance beat.
+        // Rejected anyway: the existing withholdActionRx required the LITERAL word "what" after the
+        // non-disclosure verb ("without naming/revealing/... WHAT"); this reply passively declines
+        // to correct a specific, already-established false assumption instead — a distinct but
+        // equally concrete non-disclosure shape, not vague or gameable ("correcting" inherently
+        // implies a specific, prior, nameable wrong belief, unlike a bare "without revealing"
+        // could). Added as a narrow, SEPARATE alternative — not a broadening of the "what" pattern
+        // itself — still requiring a determiner (the/his/her/their) immediately after, so a bare
+        // "without correcting" alone (no implied specific object) does not qualify. Guarded by the
+        // SAME existing silence-check three lines below (hesitationRx), unchanged: proven, in the
+        // new RED fixtures accompanying this fix, that pairing "without correcting the..." with
+        // actual silence/hesitation vocabulary still fails, exactly like the sibling "without naming
+        // what" pattern already does.
+        { id: 'lirael_defensive_path', label: 'Lirael herself makes a LANDED defensive move that changes her tactical position — submits to procedure, demands specific terms, gathers proof, conceals a specific fact/object/admission, gives a false or misleading account to a public audience with a real effect, moves concretely toward flight, counter-accuses, forces Julian or the Dohkar into a procedural bind, or names a protected constraint. Hesitating, silently weighing, staying silent, or "almost speaking then stopping" does NOT satisfy this lane by itself — the move must be an actual, external, observable action.', signalRx: /\b(submits? to procedure|demands? (?:specific )?terms|gathers? proof|conceals?\b|concealed\b|concealing\b|(?:commits?|chooses?|turns?|moves?) (?:to|toward)? ?concealment|concealment of\b|flees?|flight|counter-accus\w*|procedural bind|names? a protected constraint)\b/i, executesRx: /\bexecutes? (?:a |an )?(?:concrete )?(?:defensive )?concealment\b/i, withholdActionRx: /\bwithout (?:naming|revealing|explaining|saying|disclosing) what\b|\bwithout correcting (?:the|his|her|their)\b/i, deceptionRx: /\b(gives? (?:a )?false (?:public )?account|tells? [\s\S]{0,50}(?:only|falsely|alone|solely|exclusively)|falsely (?:claims?|states?|tells?|informs?|declares?)|feeds? [\s\S]{0,30}a false|offers? a false (?:account|story|explanation)|deceives?|misleads?|lies? to)\b/i, publicTargetRx: /\b(the assembly|the dohkar|the tribunal|the court|the family|the crowd|the audience|the witnesses|everyone present|the room|the gathered|the seated|publicly)\b/i, hesitationRx: /\b(opens? (?:her|his|their)? ?mouth[\s\S]{0,30}closes?|catches? (?:her|him|them)self weighing|weighs? whether|weighing of|almost (?:speaks|says|names|spoke|said)|hesitates?|stays? silent|remains? silent|says? nothing|holds? (?:her|his|their) tongue|keeps? (?:her|his|their) silence|decides? to (?:lie|deceive|give a false|tell a false|mislead)|resolves? to (?:lie|deceive|mislead)|plans? to (?:lie|deceive|mislead)|intends? to (?:lie|deceive|mislead)|considers? (?:lying|deceiving)|would (?:lie|deceive|mislead))\b/i, objectiveActor: 'Lirael', pressureSource: null },
       ],
       // EVENT-FRAME RESOLVER (Roman 2026-09-21) — real finding this closes: two real live samples
       // in a row (retry 11 freeform, retry 12 with the aftermath lane menu ABOVE as a free choice)
@@ -200202,7 +200226,16 @@ No text, no watermark, no UI elements, share-ready.`;
         try { console.log('[INTIMACY-DEV:ARCHIVE] dev snapshot stashed (' + _devBeats.length + ' beats) for in-card "View OAS as scene" preview'); } catch (_) {}
       }
       if (!state._intimacyDevMode && d && Array.isArray(d._oasArchiveBuilder) && d._oasArchiveBuilder.length > 0) {
-        var _liName = (state.storybeau && state.storybeau.name) || state.loveInterestName || 'the love interest';
+        // NESTED-FIELD PARITY FIX (Roman 2026-09-22) — real finding: Temptation attempt 10's real
+        // planner dispatch still read "the love interest" instead of "Julian" even after the prior
+        // pass's _relEnsureAnchors fix, because THIS field — _oasSceneSnapshots[n].liName, read by
+        // _relationalObligationForPosture's FALLBACK path whenever no relationship ledger has been
+        // created yet (the real, unforced condition this early in a live session) — only checked
+        // state.storybeau.name/state.loveInterestName, never the NESTED
+        // state.picks.identity.partnerName this starter (and dozens of other call sites — app.js
+        // ~8213, ~40795, ~60578, ~66097, and the already-fixed _relEnsureAnchors itself) actually
+        // populates the LI's name under. Same generic fallback chain, same fix, second location.
+        var _liName = (state.storybeau && state.storybeau.name) || state.loveInterestName || (state.picks && state.picks.identity && state.picks.identity.partnerName) || 'the love interest';
         var _archiveBeats = d._oasArchiveBuilder.map(function(h) {
           // Split combined userInput (which may be "say / do") back into
           // PC say + PC do for the bubble render. userInput is the post-

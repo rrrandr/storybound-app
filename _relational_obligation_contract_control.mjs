@@ -204,6 +204,38 @@ const RAW_CARD_DIALOGUE = '*"Let the wind of your breath unravel me, as I\u2019v
     }, { act: REAL_ACT, dia: REAL_DIA });
     await page.evaluate((saved) => { Object.keys(saved).forEach((k) => { window.state[k] = saved[k]; }); }, savedState4);
     ok('NESTED-FIELD path — with ONLY state.picks.identity.partnerName set (matching the real harness/app), the target resolves to "Julian", not the generic fallback', r4 && r4.targetLabel === 'Julian', JSON.stringify(r4));
+
+    // NATURAL EARLY-RUN STATE (Roman 2026-09-22) — real finding, attempt 10: the PRIMARY path
+    // (_relLedger) genuinely returns null this early in a real run (no relationship ledger has been
+    // created yet by anything) — confirmed here directly, WITHOUT the _relEntityForName forcing call
+    // every other section in this file uses — so the FALLBACK path (_oasSceneSnapshots.liName) is
+    // what a real dispatch actually depends on. That field is populated by a SEPARATE function (the
+    // OAS-archive builder, ~app.js:200205) this control cannot trivially re-trigger in isolation
+    // (it requires a full live OAS turn + interruption commit) — so this proves the fix at the
+    // SOURCE level (the exact fixed expression is present, unmodified from what was written) AND by
+    // replicating that exact expression against the natural state shape, rather than re-deriving
+    // the whole OAS archive flow. A full live-flow re-confirmation remains open if ever warranted.
+    const primaryPathReallyEmpty = await page.evaluate(() => {
+      const sid = 'relobl-B5-' + Date.now();
+      window.state.storyId = sid;
+      delete window.state._relationshipLedger;
+      return window._relLedger() === null;   // exposed wrapper is always create:false
+    });
+    ok('CONFIRMED: with no prior ledger-creating call, _relLedger() genuinely returns null this early — the fallback path is not a hypothetical, it is what a real run actually hits', primaryPathReallyEmpty === true, primaryPathReallyEmpty);
+
+    const appJsSrc = fs.readFileSync(path.join(__dirname, 'public', 'app.js'), 'utf8');
+    const liNameSourceFixed = appJsSrc.indexOf("var _liName = (state.storybeau && state.storybeau.name) || state.loveInterestName || (state.picks && state.picks.identity && state.picks.identity.partnerName) || 'the love interest';") !== -1;
+    ok('SOURCE-TRACED: the OAS-archive builder\'s _liName line (the fallback the real dispatch actually depends on) now includes the nested state.picks.identity.partnerName check, exact text present in app.js', liNameSourceFixed === true, liNameSourceFixed);
+
+    // Replicates the EXACT fixed expression (copy-pasted, not reimplemented) against the natural
+    // early-run shape: only the nested field set, no storybeau, no top-level loveInterestName —
+    // proving the FORMULA itself resolves to "Julian" under the real conditions attempt 10 hit.
+    const naturalShapeResolvesToJulian = await page.evaluate(() => {
+      const state = { picks: { identity: { partnerName: 'Julian' } } };
+      var _liName = (state.storybeau && state.storybeau.name) || state.loveInterestName || (state.picks && state.picks.identity && state.picks.identity.partnerName) || 'the love interest';
+      return _liName;
+    });
+    ok('the exact fixed expression, given ONLY the nested field (no storybeau, no top-level loveInterestName — the natural early-run shape), resolves to "Julian", not "the love interest"', naturalShapeResolvesToJulian === 'Julian', naturalShapeResolvesToJulian);
   }
 
   // ═══════════════════════════════════════════════════════════════════════════════════════════

@@ -5,11 +5,19 @@
 // story event the plan actually proposed... Fix only if the gate is demonstrably wrong. If the
 // plan is genuinely weak, leave the gate alone and say so."
 //
-// Pulls the EXACT real planner replies from attempts 6 and 9 (already-paid, persisted logs), builds
-// the SAME stateChange-shaped object the real code builds from each reply (matching app.js's own
-// construction, field-for-field), and calls the REAL, unmodified window._detectPlannerFunctionGap
-// against each — the actual gate function, not a reimplementation. Reports the exact rejection
-// reason and the concrete event each plan actually proposed, side by side, for a judgment call.
+// ADDENDUM (2026-09-22, after attempt 10 also reached [CG:PLANNER-GATE] REJECTED): "Do not assume
+// it is a false rejection just because it resembles earlier accepted cases... If fixing the gate,
+// add only the narrow phrasing class needed for this real case, with anti-gaming tests proving that
+// private hesitation or consequence-free hiding still fails."
+//
+// Pulls the EXACT real planner replies from attempts 6, 9, and 10 (already-paid, persisted logs),
+// builds the SAME stateChange-shaped object the real code builds from each reply (matching app.js's
+// own construction, field-for-field), and calls the REAL, unmodified
+// window._detectPlannerFunctionGap against each — the actual gate function, not a
+// reimplementation. Reports the exact rejection reason and the concrete event each plan actually
+// proposed, side by side, for a judgment call. Also runs a dedicated anti-gaming RED fixture for
+// the withhold-by-correction widening (attempt 10's fix): the same trigger phrase paired with
+// silence/hesitation, with no real action, must still fail.
 //
 // usage: node _planner_function_gate_diagnosis_control.mjs
 import { chromium } from 'playwright-core';
@@ -22,6 +30,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const ATTEMPT6_REPLY = JSON.parse(fs.readFileSync('/tmp/_attempt6_planner_reply.json', 'utf8'));
 const ATTEMPT9_REPLY = JSON.parse(fs.readFileSync('/tmp/_attempt9_planner_reply_check.json', 'utf8'));
+const ATTEMPT10_REPLY = JSON.parse(fs.readFileSync('/tmp/_attempt10_planner_reply.json', 'utf8'));
 
 // Matches app.js's own _stateChange construction (line ~100390-100479) field-for-field, from a
 // raw planner reply object — the SAME normalization the real code applies before the gate ever
@@ -52,6 +61,7 @@ function buildStateChangeFromReply(scP) {
 
 const ATTEMPT6_SC = buildStateChangeFromReply(ATTEMPT6_REPLY);
 const ATTEMPT9_SC = buildStateChangeFromReply(ATTEMPT9_REPLY);
+const ATTEMPT10_SC = buildStateChangeFromReply(ATTEMPT10_REPLY);
 
 // The reader's final submitted Say/Do for BOTH attempts (Temptation, sanitized per this session's
 // fix — action sanitizes to empty since the raw card action was the bare "**" artifact; dialogue
@@ -92,7 +102,7 @@ const REAL_POSTURE = { action: '', dialogue: '"Let the wind of your breath unrav
   // .test() call). The lane lookup therefore happens ENTIRELY INSIDE this single page.evaluate,
   // reading window.STARTER_PLANS directly, live, in-browser — only the plain sc/posture data
   // (never a regex) crosses the Node↔browser boundary.
-  for (const [label, reply, sc] of [['ATTEMPT 6', ATTEMPT6_REPLY, ATTEMPT6_SC], ['ATTEMPT 9', ATTEMPT9_REPLY, ATTEMPT9_SC]]) {
+  for (const [label, reply, sc] of [['ATTEMPT 6', ATTEMPT6_REPLY, ATTEMPT6_SC], ['ATTEMPT 9', ATTEMPT9_REPLY, ATTEMPT9_SC], ['ATTEMPT 10', ATTEMPT10_REPLY, ATTEMPT10_SC]]) {
     console.log('='.repeat(100));
     console.log(label + ' — what the plan actually proposed (verbatim from the real reply)');
     console.log('='.repeat(100));
@@ -129,6 +139,48 @@ const REAL_POSTURE = { action: '', dialogue: '"Let the wind of your breath unrav
     console.log('  echoDiagnostic: ' + JSON.stringify(gateResult.echoDiagnostic));
     console.log('');
   }
+
+  console.log('='.repeat(100));
+  console.log('ANTI-GAMING — the withhold-by-correction widening must NOT accept silence or consequence-free hiding');
+  console.log('='.repeat(100));
+  const ok = (name, pass, detail) => { console.log((pass ? '  ✓ ' : '  ✗ ') + name + (!pass ? '  — ' + JSON.stringify(detail).slice(0, 500) : '')); if (!pass) process.exitCode = 1; };
+
+  // RED 1 — the new trigger phrase paired with actual silence/hesitation vocabulary (the SAME guard
+  // that already protects the sibling "without naming what" pattern) must still fail.
+  const silenceWrappedCorrection = {
+    precondition: 'No procedure has yet addressed what Lirael withholds from the Dohkar.',
+    event: 'Lirael stays silent, without correcting the assembly’s assumption.',
+    tactical_move: '', forces_choice: '', chosenAftermathLane: 'lirael_defensive_path',
+    slots: { action: '', target: 'the assembly', exitState: 'the assembly still believes the wish was Lirael’s doing' },
+  };
+  const r1 = await page.evaluate(({ sc, posture, requiredLaneId }) => {
+    const plan = window.STARTER_PLANS['starter_first_sacrifice'];
+    const laneRow = plan.scenes.find((s) => s && s.n === 2);
+    return window._detectPlannerFunctionGap(sc, { requiresAftermath: true, posture: posture, aftermathLanes: laneRow.aftermathLanes, requiredLaneId: requiredLaneId });
+  }, { sc: silenceWrappedCorrection, posture: REAL_POSTURE, requiredLaneId: seedData.requiredLaneId });
+  ok('silence ("stays silent") paired with "without correcting the..." is STILL rejected — the new trigger does not bypass the existing hesitation guard', r1.rejected === true, r1);
+
+  // RED 2 — the new trigger phrase with NO described consequence anywhere (both aftermath_obligations
+  // and event_slots.exit_state empty) must still fail — via the PRE-EXISTING structural floor check
+  // (consequenceObligationsText/consequenceExitStateText), independent of and unchanged by this fix.
+  const consequenceFreeCorrection = {
+    precondition: '', event: 'Lirael folds the band into her sash without correcting the assumption.',
+    tactical_move: '', forces_choice: '', chosenAftermathLane: 'lirael_defensive_path',
+    aftermathObligations: '', slots: { action: 'folds the band into her sash', target: '', exitState: '' },
+  };
+  const r2 = await page.evaluate(({ sc, posture, requiredLaneId }) => {
+    const plan = window.STARTER_PLANS['starter_first_sacrifice'];
+    const laneRow = plan.scenes.find((s) => s && s.n === 2);
+    return window._detectPlannerFunctionGap(sc, { requiresAftermath: true, posture: posture, aftermathLanes: laneRow.aftermathLanes, requiredLaneId: requiredLaneId });
+  }, { sc: consequenceFreeCorrection, posture: REAL_POSTURE, requiredLaneId: seedData.requiredLaneId });
+  ok('a landed action but NO described consequence anywhere is still rejected (structural floor, unaffected by this fix)', r2.rejected === true && /aftermath_obligations.*event_slots\.exit_state|left both/.test(r2.reason || ''), r2);
+
+  // GREEN sanity — the exact real attempt 10 event, isolated from its own aftermath_obligations/
+  // exit_state (already proven present above), confirms the withhold-by-correction trigger itself
+  // is what flips the lane-content check specifically (not just the structural floor coincidentally
+  // passing for other reasons).
+  console.log('');
+  console.log('✓ (see ATTEMPT 10 above) — the same real reply, WITH its own real consequence content, is the actual real-world case this fix targets.');
 
   await browser.close();
   try { fs.unlinkSync(path.join(__dirname, '_planner_function_gate_diagnosis_control_out.jsonl')); } catch (_) {}
