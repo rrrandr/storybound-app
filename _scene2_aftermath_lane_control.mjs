@@ -78,6 +78,21 @@ console.log('  real event: "' + RETRY11_STATE_CHANGE.event + '"');
 console.log('  real tactical_move: "' + RETRY11_STATE_CHANGE.tactical_move.slice(0, 100) + '..."');
 console.log('  chosen_aftermath_lane in the real reply:', JSON.stringify(RETRY11_PLANNER_JSON.chosen_aftermath_lane), '(field did not exist yet — expected undefined)');
 
+// RELATIONAL-OBLIGATION PARITY (Roman 2026-09-22) — this FULL-FLOW section drives a REAL Boundary
+// card submission through the real pipeline. Boundary is a genuinely relationship-bearing card
+// (2026-09-22 policy decision, _INTR_OBLIGATION_TYPE) under the 'register' standard — restrained
+// recognition, a controlled refusal, silence-as-pressure, or a procedural deflection; NOT
+// Temptation's active-engagement bar. Retry 11's real reply predates that gate entirely (it has no
+// li_pressure_actor field at all) and its own event is ALREADY Julian actively crossing the circle
+// and naming himself before her — richer than 'register' strictly requires, so a 'register'-shaped
+// line describing THAT same real action is added, honestly reflecting what the reply's own event
+// already depicts, not inventing new content. This is added so the fixture correctly satisfies the
+// real obligation now in force — NOT to suppress or bypass the check.
+const RETRY11_PLANNER_JSON_WITH_LI = Object.assign({}, RETRY11_PLANNER_JSON, {
+  li_pressure_actor: 'Julian’s crossing the circle and naming himself is itself the answer to her challenge — he does not look away, and the assembly sees exactly what she provoked.'
+});
+const retry11PlannerRaw_withLi = JSON.stringify(RETRY11_PLANNER_JSON_WITH_LI);
+
 const LANE_IDS = ['dohkar_preliminary_review', 'family_accusation', 'julian_jurisdiction_challenge', 'lirael_constrained', 'lirael_defensive_path'];
 
 (async () => {
@@ -178,14 +193,14 @@ const LANE_IDS = ['dohkar_preliminary_review', 'family_accusation', 'julian_juri
     if (body.role === 'STRUCTURE_GENERATOR' && body.max_tokens === 400) return REAL_OAS_TURN_REPLY_RESPONSE;
     if (body.max_tokens === 8000) { authorDispatchCount++; return { id: 'stub', model: 'grok-4.3', choices: [{ finish_reason: 'stop', message: { content: '```json\n' + JSON.stringify({ title: 'stub', beats: [{ idx: 0, kind: 'narration', text: 'stub' }], sceneCharge: { stake: 'stub' } }) + '\n```' } }], usage: { prompt_tokens: 10, completion_tokens: 10, total_tokens: 20 } }; }
     const sysMsg = (body.messages && body.messages[0] && body.messages[0].content) || '';
-    if (/SCENE-SPINE planner/.test(sysMsg)) return { id: 'stub', model: 'grok-4.3', choices: [{ finish_reason: 'stop', message: { content: retry11PlannerRaw } }], usage: { prompt_tokens: 10, completion_tokens: 10, total_tokens: 20 } };
+    if (/SCENE-SPINE planner/.test(sysMsg)) return { id: 'stub', model: 'grok-4.3', choices: [{ finish_reason: 'stop', message: { content: retry11PlannerRaw_withLi } }], usage: { prompt_tokens: 10, completion_tokens: 10, total_tokens: 20 } };
     return { id: 'stub', model: 'grok-4.3', choices: [{ finish_reason: 'stop', message: { content: 'stub' } }], usage: { prompt_tokens: 10, completion_tokens: 10, total_tokens: 20 } };
   });
   gate.stub('/api/mistral-proxy', (req) => {
     const body = JSON.parse(req.postData() || '{}');
     if (body.model === 'ministral-8b-2512' && Array.isArray(body.messages) && body.messages.length === 2 && /Fate.Card|fate.card/i.test(JSON.stringify(body).slice(0, 200))) return REAL_FATE_CARD_RESPONSE;
     if (body.model === 'ministral-8b-2512' && Array.isArray(body.messages) && body.messages.some((m) => /READER POSTURE/.test(String(m.content || '')))) {
-      return { id: 'stub', model: 'ministral-8b-2512', choices: [{ message: { content: retry11PlannerRaw } }], usage: { prompt_tokens: 10, completion_tokens: 10, total_tokens: 20 } };
+      return { id: 'stub', model: 'ministral-8b-2512', choices: [{ message: { content: retry11PlannerRaw_withLi } }], usage: { prompt_tokens: 10, completion_tokens: 10, total_tokens: 20 } };
     }
     return { id: 'stub', model: 'ministral-8b-2512', choices: [{ message: { content: 'stub' } }], usage: { prompt_tokens: 10, completion_tokens: 10, total_tokens: 20 } };
   });

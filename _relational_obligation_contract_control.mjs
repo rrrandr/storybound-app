@@ -334,6 +334,78 @@ const RAW_CARD_DIALOGUE = '*"Let the wind of your breath unravel me, as I\u2019v
     ok('the ledger entry itself carries the SAME clean dialogue', r.ledgerDia === r.recDialogue, JSON.stringify(r));
   }
 
+  // ═══════════════════════════════════════════════════════════════════════════════════════════
+  section('I. PER-SLOT OBLIGATION TYPE — Temptation (\'active\') and Boundary (\'register\') are genuinely distinct, not a single one-size-fits-all standard');
+  {
+    // Roman, after the Boundary side effect: "Boundary is still relationship-bearing... but the
+    // valid response can be much more restrained... It should not require the same kind of active
+    // LI pressure that Temptation does." Proves: (1) the detector classifies each slot's
+    // obligationType correctly, from the generic, per-slot _INTR_OBLIGATION_TYPE map, never
+    // hardcoded per-story; (2) the rendered prompt guidance genuinely differs in wording between
+    // the two; (3) both still share the SAME mechanical floor (non-empty + minimum length) — that
+    // floor exists to catch an omitted/placeholder field, not to judge semantic register, so it is
+    // deliberately identical for both — while the REJECTION MESSAGE names which standard applied.
+    const savedStateI = await page.evaluate(() => { const keys = ['storyId', 'loveInterestName', 'partnerName', '_relationshipLedger', '_sceneLedger']; const saved = {}; keys.forEach((k) => { saved[k] = window.state[k]; }); return saved; });
+
+    const typeCheck = await page.evaluate(({ act, dia }) => {
+      window.state.storyId = 'relobl-I-' + Date.now();
+      window.state.loveInterestName = 'Julian';
+      delete window.state._relationshipLedger;
+      window.state._sceneLedger = null;
+      window._relEntityForName('Julian', {});
+      const L = window._sceneLedgerGet(window.state, true);
+      L.entries.push({ kind: 'oas_interrupt', sceneNumber: 1, act: act, dia: dia, posture: 'temptation' });
+      const temptationObligation = window._relationalObligationForPosture(window.state, act, dia);
+
+      window.state._sceneLedger = null;
+      const L2 = window._sceneLedgerGet(window.state, true);
+      L2.entries.push({ kind: 'oas_interrupt', sceneNumber: 1, act: 'a boundary action', dia: 'a boundary line', posture: 'boundary' });
+      const boundaryObligation = window._relationalObligationForPosture(window.state, 'a boundary action', 'a boundary line');
+
+      window.state._sceneLedger = null;
+      const L3 = window._sceneLedgerGet(window.state, true);
+      L3.entries.push({ kind: 'oas_interrupt', sceneNumber: 1, act: 'a silence action', dia: 'a silence line', posture: 'silence' });
+      const silenceObligation = window._relationalObligationForPosture(window.state, 'a silence action', 'a silence line');
+
+      return { temptationObligation, boundaryObligation, silenceObligation };
+    }, { act: REAL_ACT, dia: REAL_DIA });
+    await page.evaluate((saved) => { Object.keys(saved).forEach((k) => { window.state[k] = saved[k]; }); }, savedStateI);
+
+    ok('Temptation resolves obligationType "active" (real evidence: attempts 5/6/9/10)', typeCheck.temptationObligation && typeCheck.temptationObligation.obligationType === 'active', JSON.stringify(typeCheck.temptationObligation));
+    ok('Boundary resolves obligationType "register" (2026-09-22 policy decision)', typeCheck.boundaryObligation && typeCheck.boundaryObligation.obligationType === 'register', JSON.stringify(typeCheck.boundaryObligation));
+    ok('Silence (no real evidence yet) defaults to the conservative "register", not assumed "active"', typeCheck.silenceObligation && typeCheck.silenceObligation.obligationType === 'register', JSON.stringify(typeCheck.silenceObligation));
+
+    // PROMPT GUIDANCE GENUINELY DIFFERS — source-traced, not assumed: the two branches of
+    // _relShapeText in the planner prompt builder.
+    const appJsSrcI = fs.readFileSync(path.join(__dirname, 'public', 'app.js'), 'utf8');
+    const hasActiveWording = appJsSrcI.indexOf('never silence alone and never absence') !== -1;
+    const hasRegisterWording = appJsSrcI.indexOf('silence described AS visible pressure') !== -1;
+    ok('the \'active\' branch\'s wording ("never silence alone and never absence") is present in source', hasActiveWording, hasActiveWording);
+    ok('the \'register\' branch\'s DISTINCT wording ("silence described AS visible pressure") is present in source, genuinely different text from the active branch', hasRegisterWording, hasRegisterWording);
+
+    // RED — Temptation, missing li_pressure_actor: rejected, reason names 'active'.
+    const temptationRed = Object.assign({}, REAL_PLANNER_REPLY);
+    delete temptationRed.li_pressure_actor;
+    const rTempRed = await page.evaluate(({ reply, eff, relObligation }) => window._validateLocalObjective(reply, eff, relObligation), { reply: temptationRed, eff: REAL_EFF, relObligation: { targetLabel: 'Julian', postureLabel: 'Temptation', obligationType: 'active' } });
+    ok('TEMPTATION RED — missing li_pressure_actor is rejected, reason explicitly names the (active) standard', rTempRed.ok === false && rTempRed.why.some((w) => /\(active\)/.test(w)), JSON.stringify(rTempRed.why));
+
+    // RED — Boundary, missing li_pressure_actor entirely: still rejected (the base requirement is
+    // NOT waived for the looser type — 'register' still means SOMETHING must be there), reason
+    // names 'register'.
+    const boundaryBase = { local_objective: 'Lirael names her want before the assembly, drawing a line Julian cannot cross unremarked', posture_read: 'defiant and direct', local_objective_actor: 'Lirael', present: ['Lirael', 'Julian', 'the assembly'], reserved: {}, aftermath: {}, chosen_aftermath_lane: 'family_accusation' };
+    const rBoundRed = await page.evaluate(({ reply, eff, relObligation }) => window._validateLocalObjective(reply, eff, relObligation), { reply: boundaryBase, eff: REAL_EFF, relObligation: { targetLabel: 'Julian', postureLabel: 'Boundary', obligationType: 'register' } });
+    ok('BOUNDARY RED — missing li_pressure_actor is STILL rejected under \'register\' (the type is looser, not absent), reason names (register)', rBoundRed.ok === false && rBoundRed.why.some((w) => /\(register\)/.test(w)), JSON.stringify(rBoundRed.why));
+
+    // GREEN — Boundary, a genuinely RESTRAINED response (no dialogue, no felt physical reaction
+    // beyond stillness) — exactly the shape Temptation's own prompt wording explicitly forbids
+    // ("never silence alone") but Boundary's explicitly allows ("silence described AS visible
+    // pressure... a procedural deflection"). Passes under the SAME mechanical floor (non-empty,
+    // length >= 15) both types share.
+    const boundaryGreen = Object.assign({}, boundaryBase, { li_pressure_actor: 'Julian says nothing, but he does not look away either — the silence itself is the answer the assembly reads.' });
+    const rBoundGreen = await page.evaluate(({ reply, eff, relObligation }) => window._validateLocalObjective(reply, eff, relObligation), { reply: boundaryGreen, eff: REAL_EFF, relObligation: { targetLabel: 'Julian', postureLabel: 'Boundary', obligationType: 'register' } });
+    ok('BOUNDARY GREEN — a restrained, silence-as-pressure response (the exact shape Temptation\'s own wording forbids) PASSES under \'register\'', rBoundGreen.ok === true, JSON.stringify(rBoundGreen));
+  }
+
   await browser.close();
 
   console.log('\n' + '='.repeat(100));

@@ -58,6 +58,22 @@ console.log('✓ loaded retry 4\'s real planner reply verbatim from ' + RETRY4_L
 console.log('  real tactical_move: "' + RETRY4_STATE_CHANGE.tactical_move.slice(0, 100) + '..."');
 console.log('  real state_change (event): "' + RETRY4_STATE_CHANGE.event.slice(0, 100) + '..."');
 
+// RELATIONAL-OBLIGATION PARITY (Roman 2026-09-22) — this control's full-flow section drives a REAL
+// Boundary card submission through the real pipeline. Boundary is a genuinely relationship-bearing
+// card (2026-09-22 policy decision, _INTR_OBLIGATION_TYPE) under the 'register' standard —
+// restrained recognition, a controlled refusal, silence-as-pressure, or a procedural deflection;
+// NOT Temptation's active-engagement bar. Retry 4's real reply predates that gate entirely (no
+// li_pressure_actor field) and its own stage_affordances already anticipates exactly this: "Julian
+// can respond to Lirael's words with a visible reaction (e.g., a shift in his posture, a gesture
+// toward The Answer, or a change in his voice)" — a 'register'-shaped line realizing that SAME
+// already-anticipated affordance is added, honestly reflecting the reply's own content, not
+// inventing new material. Added so the fixture correctly satisfies the real obligation now in
+// force — NOT to suppress or bypass the check.
+const RETRY4_PLANNER_JSON_WITH_LI = Object.assign({}, RETRY4_PLANNER_JSON, {
+  li_pressure_actor: 'Julian’s posture shifts at her words, his gaze fixing on her and The Answer in her hands — he says nothing, but the stillness itself answers her challenge before the assembly.'
+});
+const retry4PlannerRaw_withLi = JSON.stringify(RETRY4_PLANNER_JSON_WITH_LI);
+
 (async () => {
   let browser;
   try { browser = await chromium.launch({ headless: true, channel: 'chrome' }); }
@@ -112,7 +128,7 @@ console.log('  real state_change (event): "' + RETRY4_STATE_CHANGE.event.slice(0
     // routed here first. Serve retry 4's real, rejected reply from whichever tier is actually hit,
     // so this control proves the gate regardless of which model produced the plan.
     const sysMsg = (body.messages && body.messages[0] && body.messages[0].content) || '';
-    if (/SCENE-SPINE planner/.test(sysMsg)) return { id: 'stub', model: 'grok-4.3', choices: [{ finish_reason: 'stop', message: { content: retry4PlannerRaw } }], usage: { prompt_tokens: 10, completion_tokens: 10, total_tokens: 20 } };
+    if (/SCENE-SPINE planner/.test(sysMsg)) return { id: 'stub', model: 'grok-4.3', choices: [{ finish_reason: 'stop', message: { content: retry4PlannerRaw_withLi } }], usage: { prompt_tokens: 10, completion_tokens: 10, total_tokens: 20 } };
     return { id: 'stub', model: 'grok-4.3', choices: [{ finish_reason: 'stop', message: { content: 'stub' } }], usage: { prompt_tokens: 10, completion_tokens: 10, total_tokens: 20 } };
   });
   // The planner (mistral-proxy) ALWAYS returns retry 4's real, rejected reply — both the initial
@@ -122,7 +138,7 @@ console.log('  real state_change (event): "' + RETRY4_STATE_CHANGE.event.slice(0
     const body = JSON.parse(req.postData() || '{}');
     if (body.model === 'ministral-8b-2512' && Array.isArray(body.messages) && body.messages.length === 2 && /Fate.Card|fate.card/i.test(JSON.stringify(body).slice(0, 200))) return REAL_FATE_CARD_RESPONSE;
     if (body.model === 'ministral-8b-2512' && Array.isArray(body.messages) && body.messages.some((m) => /READER POSTURE/.test(String(m.content || '')))) {
-      return { id: 'stub', model: 'ministral-8b-2512', choices: [{ message: { content: retry4PlannerRaw } }], usage: { prompt_tokens: 10, completion_tokens: 10, total_tokens: 20 } };
+      return { id: 'stub', model: 'ministral-8b-2512', choices: [{ message: { content: retry4PlannerRaw_withLi } }], usage: { prompt_tokens: 10, completion_tokens: 10, total_tokens: 20 } };
     }
     return { id: 'stub', model: 'ministral-8b-2512', choices: [{ message: { content: 'stub' } }], usage: { prompt_tokens: 10, completion_tokens: 10, total_tokens: 20 } };
   });

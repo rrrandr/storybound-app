@@ -100056,8 +100056,23 @@ function _buildAuthorFloorDirective(s) {
               // _oe.sceneFunction/_oe.aftermathLanes above. Reject-only enforcement of this exact
               // requirement lives in _validateLocalObjective (mechanical: non-empty, minimum
               // length — never a semantic-quality judgment).
+              //
+              // PER-SLOT OBLIGATION SHAPE (Roman 2026-09-22, policy decision after the Boundary
+              // side effect) — the REQUIRED response shape now branches on _relObligation.
+              // obligationType (see _INTR_OBLIGATION_TYPE's own header for which slot gets which,
+              // and why): 'active' (Temptation) keeps the original, unchanged wording — dialogue, a
+              // felt reaction, a refusal, or a charged restraint; never silence alone, never
+              // absence. 'register' (Boundary, and — pending real evidence — silence/reversal/
+              // confession by conservative default) is deliberately looser: restrained recognition,
+              // a controlled refusal, silence-as-pressure the text ITSELF describes as pressure
+              // (never silence left unremarked, which is indistinguishable from absence), or a
+              // procedural deflection — never requiring active romantic engagement, only that the
+              // target visibly registers what she just did.
               if (_relObligation && _relObligation.targetLabel) {
-                _scSys += ' ALSO REQUIRED, same JSON, IF "' + _relObligation.targetLabel + '" is among "present" (OPTIONAL and unused otherwise): "li_pressure_actor" (one to two sentences — HARD: this scene follows the reader\'s own ' + (_relObligation.postureLabel ? '"' + _relObligation.postureLabel + '" ' : '') + 'submission to ' + _relObligation.targetLabel + ', and ' + _relObligation.targetLabel + ' must visibly register, answer, resist, or be affected by it — a line of dialogue, a felt reaction, a refusal, or a charged restraint that is ITSELF a response, never silence alone and never absence. This must respond to what she ACTUALLY submitted, not merely restate ' + _relObligation.targetLabel + '\'s presence in the room, and it must never override her own agency, touch her without her own action inviting it, or decide anything on her behalf. The plot lane above still governs the scene\'s central EVENT — this governs how ' + _relObligation.targetLabel + ' meets her IN it.)';
+                var _relShapeText = (_relObligation.obligationType === 'active')
+                  ? 'a line of dialogue, a felt reaction, a refusal, or a charged restraint that is ITSELF a response, never silence alone and never absence'
+                  : 'a restrained recognition, a controlled refusal, silence described AS visible pressure (never silence left unremarked — that reads as absence, not restraint), or a procedural deflection that clearly registers what she just did; a line of dialogue or a felt reaction also satisfies this, but neither is required the way it is for a Temptation-shaped submission';
+                _scSys += ' ALSO REQUIRED, same JSON, IF "' + _relObligation.targetLabel + '" is among "present" (OPTIONAL and unused otherwise): "li_pressure_actor" (one to two sentences — HARD: this scene follows the reader\'s own ' + (_relObligation.postureLabel ? '"' + _relObligation.postureLabel + '" ' : '') + 'submission to ' + _relObligation.targetLabel + ', and ' + _relObligation.targetLabel + ' must visibly register, answer, resist, or be affected by it — ' + _relShapeText + '. This must respond to what she ACTUALLY submitted, not merely restate ' + _relObligation.targetLabel + '\'s presence in the room, and it must never override her own agency, touch her without her own action inviting it, or decide anything on her behalf. The plot lane above still governs the scene\'s central EVENT — this governs how ' + _relObligation.targetLabel + ' meets her IN it.)';
               }
             }
             try { var _L = (typeof _relLedger === 'function') ? _relLedger(false) : null; var _ents = (_L && _L.entities) || {}; var _rl = (_oe.roster || []).map(function (r) { var e = _ents[r.ref]; var cp = (_L && _L.cplus && _L.cplus.rows && _L.cplus.rows[r.ref]) || null; return r.label + (e && e.anchorRole === 'li' ? ' (love interest)' : '') + (cp && cp.last_cplus_scene_ordinal != null ? ' — last Character+ scene ' + cp.last_cplus_scene_ordinal : ''); });
@@ -129781,9 +129796,15 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
         } catch (_) {}
       }
       if (!targetLabel) return null;   // no resolvable target — never require a response to nobody
+      // OBLIGATION TYPE (Roman 2026-09-22) — resolved from the RAW slot key (before postureLabel
+      // below overwrites it with the human-facing label), via the generic, per-slot
+      // _INTR_OBLIGATION_TYPE map (see its own header comment). A custom (no-card) submission has
+      // no slot key at all — defaults to 'register', the more conservative standard, for the same
+      // "never assume, only decide from real evidence" reason silence/reversal/confession do.
+      var obligationType = (last.posture && typeof _INTR_OBLIGATION_TYPE !== 'undefined' && _INTR_OBLIGATION_TYPE[last.posture]) || 'register';
       var postureLabel = last.posture || null;
       try { if (postureLabel && typeof _INTR_SLOTS !== 'undefined') { var slot = _INTR_SLOTS.filter(function (sl) { return sl.key === postureLabel; })[0]; if (slot) postureLabel = slot.label; } } catch (_) {}
-      return { targetLabel: targetLabel, targetRef: targetRef, postureLabel: postureLabel, sourceKind: last.posture ? 'card' : 'custom' };
+      return { targetLabel: targetLabel, targetRef: targetRef, postureLabel: postureLabel, sourceKind: last.posture ? 'card' : 'custom', obligationType: obligationType };
     } catch (_) { return null; }
   }
   window._relationalObligationForPosture = _relationalObligationForPosture;
@@ -200405,6 +200426,26 @@ No text, no watermark, no UI elements, share-ready.`;
     { key: 'boundary',   label: 'Boundary',   desc: 'Name the want.',                        art: 'Tarot-Gold-front-Boundary.png'   },
     { key: 'confession', label: 'Confession', desc: "Tell her the part you haven't said.",   art: 'Tarot-Gold-front-Confession.png' }
   ];
+  // PER-SLOT RELATIONAL-OBLIGATION TYPE (Roman 2026-09-22) — Roman, after the Boundary card's
+  // relational-obligation gate engagement (a correct, direct consequence of that session's
+  // Julian-label fix) surfaced as a policy question, not a bug: "Boundary is still
+  // relationship-bearing... but the valid response can be much more restrained: a look, a charged
+  // refusal, silence with visible pressure, a procedural deflection... It should not require the
+  // same kind of active LI pressure that Temptation does." Generic — keyed by the SAME 5 slot keys
+  // _INTR_SLOTS already declares, never story-specific (every starter's OAS interruption uses
+  // these same 5 cards). Two values DECIDED from real evidence: 'active' (Temptation — real
+  // attempts 5/6/9/10, all real: requires dialogue, a felt reaction, a refusal, or a charged
+  // restraint; never silence alone, never absence) and 'register' (Boundary — decided here:
+  // restrained recognition, a controlled refusal, silence-as-pressure the text itself describes,
+  // or a procedural deflection; still never absence, never requires active romantic engagement).
+  // silence/reversal/confession default to 'register' too — NOT because their own semantics have
+  // been individually decided (no real attempt has tested any of them against this mechanism yet),
+  // but because 'register' is the more conservative, less-likely-to-falsely-reject standard, and
+  // each of their own card descriptions above ("let the look land," "take control," "tell her the
+  // part you haven't said") reads as at least as restrained as Boundary's — never as demanding as
+  // Temptation's. Revisit each on real evidence, not assumption, matching this whole mechanism's
+  // established discipline (never fix/widen ahead of a real, demonstrated case).
+  var _INTR_OBLIGATION_TYPE = { temptation: 'active', silence: 'register', reversal: 'register', boundary: 'register', confession: 'register' };
   var _INTR_HOSTS = {
     cg:       { mount: 'gnCardMount', action: 'gnActionInput', dialogue: 'gnDialogueInput', submit: 'gnSubmitBtn' },
     literary: { mount: 'cardMount',   action: 'actionInput',   dialogue: 'dialogueInput',   submit: 'submitBtn' }
@@ -200901,8 +200942,15 @@ No text, no watermark, no UI elements, share-ready.`;
       var presentL = present.map(function (x) { return x.toLowerCase(); });
       var targetPresent = presentL.indexOf(String(relObligation.targetLabel).toLowerCase()) !== -1;
       if (targetPresent) {
-        if (!liPressureActor) why.push('relational obligation: no li_pressure_actor — this scene follows the reader\'s own ' + (relObligation.postureLabel ? '"' + relObligation.postureLabel + '" ' : '') + 'submission to ' + relObligation.targetLabel + ', and the plan must say how ' + relObligation.targetLabel + ' visibly responds to it');
-        else if (liPressureActor.length < 15) why.push('relational obligation: li_pressure_actor too thin to be a real response to ' + relObligation.targetLabel + ' ("' + liPressureActor + '")');
+        // PER-SLOT OBLIGATION TYPE (Roman 2026-09-22) — the MECHANICAL check (non-empty + a
+        // minimum-length floor) is intentionally UNCHANGED for both 'active' and 'register' — the
+        // floor exists to catch a placeholder/omitted field, not to judge semantic depth, and both
+        // types genuinely need SOME non-trivial content (a restrained "he watches" is exactly as
+        // much a non-answer for 'register' as for 'active'). Only the REJECTION MESSAGE names the
+        // type, so a future diagnosis never has to re-derive which standard applied.
+        var _obType = relObligation.obligationType || 'register';
+        if (!liPressureActor) why.push('relational obligation (' + _obType + '): no li_pressure_actor — this scene follows the reader\'s own ' + (relObligation.postureLabel ? '"' + relObligation.postureLabel + '" ' : '') + 'submission to ' + relObligation.targetLabel + ', and the plan must say how ' + relObligation.targetLabel + ' visibly ' + (_obType === 'active' ? 'responds to it' : 'registers it, even restrainedly') + '');
+        else if (liPressureActor.length < 15) why.push('relational obligation (' + _obType + '): li_pressure_actor too thin to be a real response to ' + relObligation.targetLabel + ' ("' + liPressureActor + '")');
       }
     }
     return { ok: why.length === 0, why: why, local_objective: lo, actor: actor, present: present, posture_read: reply && reply.posture_read ? String(reply.posture_read).trim() : '', liPressureActor: liPressureActor };
