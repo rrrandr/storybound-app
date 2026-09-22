@@ -99934,33 +99934,27 @@ function _buildAuthorFloorDirective(s) {
               if (Array.isArray(_em.obligations) && _em.obligations.length) _ob.push('  • open obligations: ' + _em.obligations.map(String).join(' | ').slice(0, 1400));
               if (Array.isArray(_em.ledgerSeeds) && _em.ledgerSeeds.length) _ob.push('  • what the cast now perceive of each other: ' + _em.ledgerSeeds.map(String).join(' | ').slice(0, 800));
             } } catch (_) {}
-            // RECENT OAS EXCHANGE (Roman 2026-09-20) — a real Scene 2 sample staged an interrogation
-            // as if it were happening for the first time, ignoring the live flirty exchange that had
-            // just occurred. Traced: this planner received only the FINAL submitted Say/Do line, with
-            // no summary of what was actually said in the preceding live turns. A first attempt at
-            // this fix read state.intimacyDialogue.liTurnHistory directly — WRONG: _resolveIntimacyScene
-            // (the function that ends the OAS scene and hands off to Submit) sets
-            // state.intimacyDialogue = null before this planner ever runs, in both real production and
-            // this harness — confirmed by direct trace, not assumed. The correct, already-existing,
-            // DURABLE source is state._oasSceneSnapshots (built by that same function, BEFORE the
-            // null-out, specifically so Back-nav can replay the OAS scene) — each entry's `beats` carry
-            // pcSay/pcDo/liDialogue/liAction per real turn. Reused here, not reinvented. Generic: fires
-            // whenever a snapshot exists, any starter.
+            // RECENT OAS EXCHANGE (Roman 2026-09-20, corrected 2026-09-22) — a real Scene 2 sample
+            // staged an interrogation as if it were happening for the first time, ignoring the live
+            // flirty exchange that had just occurred. Traced: this planner received only the FINAL
+            // submitted Say/Do line, with no summary of what was actually said in the preceding live
+            // turns. A first attempt at this fix read state.intimacyDialogue.liTurnHistory directly —
+            // WRONG: _resolveIntimacyScene (the function that ends the OAS scene and hands off to
+            // Submit) sets state.intimacyDialogue = null before this planner ever runs, in both real
+            // production and this harness — confirmed by direct trace, not assumed. The correct,
+            // already-existing, DURABLE source is state._oasSceneSnapshots (built by that same
+            // function, BEFORE the null-out, specifically so Back-nav can replay the OAS scene).
+            // 2026-09-22 correction (Roman: "the planner still reads the transformed player wording.
+            // That could make it plan around a different interaction from the one the author now
+            // receives"): this block originally read pcSay/pcDo — the POST-TRANSMUTE, world-register
+            // strings the live UI showed — not what the player actually typed. Now shares
+            // _extractRecentOASExchangeLines with the author's own live-handoff block (built
+            // 2026-09-22), which reads pcSayRaw/pcDoRaw first. Same source, same wording, one
+            // extraction, not two that can drift. Generic: fires whenever a snapshot exists, any
+            // starter.
             try {
-              var _oasSnaps = (typeof window !== 'undefined' && window.state && window.state._oasSceneSnapshots) || {};
-              var _oasSnapKeys = Object.keys(_oasSnaps).map(Number).filter(function (n) { return !isNaN(n); }).sort(function (a, b) { return b - a; });
-              var _latestSnap = _oasSnapKeys.length ? _oasSnaps[String(_oasSnapKeys[0])] : null;
-              var _oasBeats = (_latestSnap && Array.isArray(_latestSnap.beats)) ? _latestSnap.beats : [];
-              if (_oasBeats.length) {
-                var _liLines = [];
-                _oasBeats.slice(-3).forEach(function (b) {
-                  if (!b) return;
-                  var _sayDo = [b.pcSay, b.pcDo].filter(Boolean).join(' / ');
-                  if (_sayDo) _liLines.push('  PLAYER: ' + _sayDo);
-                  if (b.liDialogue) _liLines.push('  ' + (_latestSnap.liName || 'LI') + ': ' + String(b.liDialogue));
-                });
-                if (_liLines.length) _ob.push('RECENT OAS EXCHANGE (this scene\'s own live turn history, archived before handoff — what was ACTUALLY said just before the reader\'s posture below; your objective must carry this forward, not restage a question or accusation already answered here):\n' + _liLines.join('\n'));
-              }
+              var _liLines = _extractRecentOASExchangeLines(window.state, { limit: 3 });
+              if (_liLines.length) _ob.push('RECENT OAS EXCHANGE (this scene\'s own live turn history, archived before handoff — what was ACTUALLY said just before the reader\'s posture below; your objective must carry this forward, not restage a question or accusation already answered here):\n' + _liLines.join('\n'));
             } catch (_) {}
             // REQUIRED SCENE FUNCTION (Roman 2026-09-20) — five real planner attempts across two
             // models (ministral ×4, Grok ×1) each independently derived the scene's central event
@@ -129616,33 +129610,51 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
   // _SPINE_MAX_CHARS safety-truncation, deliberately: this content is small and bounded (one
   // scene's worth of exchange, never growing) unlike the ledger's own history, so it never
   // competes with that budget and is never the thing a truncation could cut mid-sentence.
+  // SHARED OAS-EXCHANGE EXTRACTION (Roman 2026-09-22) — Roman: "the planner still reads the
+  // transformed player wording. That could make it plan around a different interaction from the
+  // one the author now receives... Reuse the shared extraction logic where practical." Until now
+  // the open-row planner's own "RECENT OAS EXCHANGE" block (2026-09-20, below at its own call
+  // site) and this function's section 1 independently re-implemented the same read of
+  // state._oasSceneSnapshots, and only this one had been fixed to prefer pcSayRaw/pcDoRaw (the
+  // player's literal, untransmuted words) over pcSay/pcDo (the post-transmute, world-register
+  // prose the live UI shows). One function now serves both call sites, so they can never drift
+  // apart again. Deliberately does NOT also surface the transmuted pair — there is no consumer
+  // that has ever needed it, and reading raw-only is what actually satisfies "must not silently
+  // replace the player's input" (nothing here is ever mistaken for, or overwritten by, a
+  // world-register re-expression). opts.limit controls the window (planner keeps its existing 3,
+  // this function's own section 1 keeps its existing 4 — same extraction, different windows).
+  function _extractRecentOASExchangeLines(s, opts) {
+    try {
+      s = s || (typeof window !== 'undefined' ? window.state : null); if (!s) return [];
+      opts = opts || {};
+      var limit = opts.limit || 4;
+      var snaps = s._oasSceneSnapshots || {};
+      var snapKeys = Object.keys(snaps).map(Number).filter(function (n) { return !isNaN(n); }).sort(function (a, b) { return b - a; });
+      var latestSnap = snapKeys.length ? snaps[String(snapKeys[0])] : null;
+      var beats = (latestSnap && Array.isArray(latestSnap.beats)) ? latestSnap.beats : [];
+      if (!beats.length) return [];
+      var lines = [];
+      beats.slice(-limit).forEach(function (b) {
+        if (!b) return;
+        var sd = [(b.pcSayRaw || b.pcSay), (b.pcDoRaw || b.pcDo)].filter(Boolean).join(' / ');
+        if (sd) lines.push('  PLAYER: ' + sd);
+        if (b.liDialogue) lines.push('  ' + (latestSnap.liName || 'LI') + ': ' + String(b.liDialogue));
+      });
+      return lines;
+    } catch (_) { return []; }
+  }
+  try { if (typeof window !== 'undefined') window._extractRecentOASExchangeLines = _extractRecentOASExchangeLines; } catch (_) {}
+
   function _buildLiveHandoffDirective(s) {
     try {
       s = s || window.state; if (!s) return '';
       var lines = [];
 
-      // 1. THE COMPLETED OAS EXCHANGE — earlier turns, already happened.
+      // 1. THE COMPLETED OAS EXCHANGE — earlier turns, already happened. PRESERVE EXACT PLAYER
+      // WORDING via the shared extractor above (raw, not the post-transmute world-register text).
       try {
-        var snaps = s._oasSceneSnapshots || {};
-        var snapKeys = Object.keys(snaps).map(Number).filter(function (n) { return !isNaN(n); }).sort(function (a, b) { return b - a; });
-        var latestSnap = snapKeys.length ? snaps[String(snapKeys[0])] : null;
-        var beats = (latestSnap && Array.isArray(latestSnap.beats)) ? latestSnap.beats : [];
-        if (beats.length) {
-          var exch = [];
-          beats.slice(-4).forEach(function (b) {
-            if (!b) return;
-            // PRESERVE EXACT PLAYER WORDING (Roman 2026-09-22) — pcSay/pcDo are the POST-TRANSMUTE
-            // strings the live UI showed (world-register prose); pcSayRaw/pcDoRaw are the player's
-            // own literal, untransmuted words (see the archive-builder's own comment, ~line 200042:
-            // "userInput is the post-transmute string... userInputRaw is original"). The open-row
-            // planner's own earlier "RECENT OAS EXCHANGE" block (2026-09-20) read the transmuted
-            // pair — fine for that block's purpose, but this one must show what she actually typed.
-            var sd = [(b.pcSayRaw || b.pcSay), (b.pcDoRaw || b.pcDo)].filter(Boolean).join(' / ');
-            if (sd) exch.push('  PLAYER: ' + sd);
-            if (b.liDialogue) exch.push('  ' + (latestSnap.liName || 'LI') + ': ' + String(b.liDialogue));
-          });
-          if (exch.length) lines.push('1. EARLIER IN THIS LIVE EXCHANGE (already happened, archived before handoff — respond to its consequences; do not restage or re-answer a question already answered here):\n' + exch.join('\n'));
-        }
+        var exch = _extractRecentOASExchangeLines(s, { limit: 4 });
+        if (exch.length) lines.push('1. EARLIER IN THIS LIVE EXCHANGE (already happened, archived before handoff — respond to its consequences; do not restage or re-answer a question already answered here):\n' + exch.join('\n'));
       } catch (_) {}
 
       // 2. THE FINAL SUBMITTED SAY/DO, WITH POSTURE — authoritative. Sourced from the ledger's

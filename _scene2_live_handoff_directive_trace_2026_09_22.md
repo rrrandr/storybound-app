@@ -124,7 +124,92 @@ affected by it. `_stage_issuer_budget_control.mjs` (21/21) re-verified clean.
   question stays open and explicitly unresolved: this fixes missing context; whether the author
   actually uses it well is a question only a future real sample can answer.
 
-## Status
+## Status (original pass)
 
 Dry, committed. No provider or image calls. No branch retry, no regeneration, no candidate prose
 edits.
+
+## Addendum (2026-09-22, second pass): closing the disclosed planner-wording gap
+
+Roman, after the pass above: "This addresses the missing author context. One disclosed gap
+remains: the planner still reads the transformed player wording. That could make it plan around a
+different interaction from the one the author now receives. Close that small inconsistency before
+paying for another sample... Finish the handoff correction by updating the planner's OAS context to
+preserve the same original player Say/Do as the author. Reuse the shared extraction logic where
+practical... Extend the focused dry proof to capture both actual dispatched request bodies —
+planner and author — and verify that they receive the same relevant completed exchange and final
+committed submission, in order... Also verify scene scoping."
+
+**The gap.** The original pass fixed `_buildLiveHandoffDirective` (the author's channel) to read
+`pcSayRaw`/`pcDoRaw` — the player's literal, untransmuted wording — but never touched the open-row
+planner's own, older "RECENT OAS EXCHANGE" block (built 2026-09-20, independently, before the
+author ever had any channel for this at all), which still read `pcSay`/`pcDo` — the post-transmute,
+world-register prose the live UI shows. Two independent extractions of the same archive, reading
+two different fields, meant the planner could plan around wording the author would never see.
+
+**The fix.** `public/app.js` gains one shared function, `_extractRecentOASExchangeLines(s, opts)`,
+placed beside `_buildLiveHandoffDirective` (function-declaration hoisting within the shared
+top-level closure makes it callable from the earlier-positioned planner block too — already proven
+safe in this session's own control, which calls `_INTR_SLOTS` the same way). It reads
+`pcSayRaw||pcSay` / `pcDoRaw||pcDo` — raw first, always — and takes `opts.limit` for the two
+callers' different windows (planner keeps its existing 3 beats; the author's own section 1 keeps
+its existing 4). Both the planner's "RECENT OAS EXCHANGE" block and `_buildLiveHandoffDirective`'s
+section 1 now call this one function instead of each independently re-implementing the same read —
+the structural cause of the drift, closed, not patched over. The transmuted (`pcSay`/`pcDo`) pair is
+deliberately never surfaced by this helper to either caller: there was no consumer that needed it,
+and reading raw-only is what actually satisfies "must not silently replace the player's input" —
+nothing here can ever be mistaken for, or overwrite, the player's own words, because nothing but
+the player's own words is read.
+
+**Proof it reaches the REAL requests, not just the helper's own output** (Roman: "Source wiring and
+helper-output checks alone don't establish that the full requests contain the material"). Extended
+`_scene2_live_handoff_directive_control.mjs` section A to capture the ACTUAL, FULL request bodies
+dispatched to `/api/proxy` for both the REAL planner call (`max_tokens: 1200`,
+`_callTieredProvider('scenePlanner', ...)`) and the REAL author call (`max_tokens: 8000`,
+`_authorFullScenePolicy`'s Grok tier) — captured inside the stub function itself, before it answers,
+so nothing is reconstructed or assumed. Confirmed, from the captured bodies themselves: both the
+real planner request and the real author request contain the SAME raw player wording, verbatim
+("I keep my hands folded at my waist and meet his eyes…"); the real author request also contains
+Julian's real OAS response, the final committed card text, and the Temptation posture label, with
+the earlier exchange appearing before the final submission inside the LIVE HANDOFF section
+specifically (the STORY LEDGER, a separate and unrelated section of the same prompt, legitimately
+restates the final submission's own text earlier still — by design, documented in the original pass
+above — so the ordering check is scoped to the handoff section, not the whole request text).
+
+**Scene scoping** (Roman: "advancing again must not present an earlier scene's submission as the
+newest action or duplicate archived exchanges"). New section H: after Temptation's real scene 1
+exchange/submission, a second, later-numbered `_oasSceneSnapshots` entry and ledger `oas_interrupt`
+entry are added (direct state construction over the same durable, scene-number-keyed structures a
+real second scene would populate — this session's own established methodology, matching section D)
+and confirms: the later scene's own exchange and submission appear; the earlier scene's exchange no
+longer appears as the current live exchange; the later scene's exchange is not duplicated; and,
+scoped specifically to the handoff's own "2. THE READER'S FINAL SUBMITTED SAY/DO" section (not the
+whole block), the earlier scene's submission is never presented there as the newest action — while
+still correctly, legitimately appearing in the STORY LEDGER's own separate, budget-managed history
+listing, which is that section's actual job and was never in question.
+
+Two test-scoping bugs found and fixed while building sections A and H's new assertions themselves
+(not production bugs): a naive whole-request-text order check picked up the STORY LEDGER's own
+legitimate restatement of the final submission instead of the handoff section's own copy; and a
+naive whole-block "must not contain" check for the earlier scene's submission wrongly failed against
+that same legitimate STORY LEDGER listing. Both fixed by scoping the assertions to the specific
+handoff section under test, per the pattern above.
+
+**Proof — `_scene2_live_handoff_directive_control.mjs`, 49/49** (sections A–H; up from 28/28 in the
+original pass — the new checks above account for the difference).
+
+**Regression, re-verified via the same `git stash` A/B methodology**: `_continuity_spine_dry.mjs`
+(80 checks) — 69 passed / 11 failed BEFORE this correction, 69 passed / 11 failed AFTER, identical
+failing test names both times (S6, N1, R2, G3, R2d, G2, G6, R3, R5, R5b, R6a — all pre-existing,
+scene-numbering/turnCount/speculative-preload/story-gravity mechanics, unrelated to this change).
+This is **no additional failures**, not a clean suite — the 11 pre-existing failures are documented
+and were not touched, per Roman's explicit correction to the original pass's language.
+
+**What this does NOT do**: does not attempt to fix the 11 pre-existing `_continuity_spine_dry.mjs`
+failures — out of scope for this correction, left exactly as found. Does not run any paid call,
+retry Temptation, or edit any candidate prose.
+
+### Status (addendum)
+
+Dry, committed. No provider or image calls. No candidate prose edits. Cache-buster bumped
+(`?v=20260922d-live-handoff-wording-parity`).

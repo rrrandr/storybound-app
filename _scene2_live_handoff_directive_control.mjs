@@ -79,14 +79,21 @@ async function setupSession(label) {
   const browser = await chromium.launch({ headless: true, channel: 'chrome' });
   const page = await (await browser.newContext({ viewport: { width: 1000, height: 800 } })).newPage();
   const gate = await installFailClosedNetworkGate(page, { logFile: path.join(__dirname, '_scene2_live_handoff_directive_control_out.jsonl') });
+  // CAPTURE THE ACTUAL DISPATCHED REQUEST BODIES (Roman 2026-09-22): "Source wiring and
+  // helper-output checks alone don't establish that the full requests contain the material."
+  // Every planner (max_tokens 1200) and author (max_tokens 8000) request this session makes is
+  // pushed here, verbatim, BEFORE the stub returns a canned reply — so later sections can assert
+  // on the REAL serialized prompt text the real dispatch code built, not just on what
+  // _buildContinuitySpineBlock/_buildLiveHandoffDirective return when called directly.
+  const capturedRequests = { planner: [], author: [] };
   gate.stub('/api/proxy', (req) => {
     const body = JSON.parse(req.postData() || '{}');
     if (body.role === 'STRUCTURE_GENERATOR' && body.max_tokens === 400) return REAL_OAS_TURN_REPLY_RESPONSE;
-    if (body.max_tokens === 1200) return { id: 'stub', model: 'grok-4.3', choices: [{ finish_reason: 'stop', message: { content: JSON.stringify(TEMPT4_PLANNER_JSON) } }], usage: { prompt_tokens: 10, completion_tokens: 10, total_tokens: 20 } };
-    // The author call (max_tokens 8000) — never inspected by this control; a minimal valid stub
-    // just avoids parse-error console noise. Never reached with a REAL dispatch (gate stays
+    if (body.max_tokens === 1200) { capturedRequests.planner.push(body); return { id: 'stub', model: 'grok-4.3', choices: [{ finish_reason: 'stop', message: { content: JSON.stringify(TEMPT4_PLANNER_JSON) } }], usage: { prompt_tokens: 10, completion_tokens: 10, total_tokens: 20 } }; }
+    // The author call (max_tokens 8000) is now CAPTURED (not just passed through) so its full
+    // request body can be asserted on directly. Never reached with a REAL dispatch (gate stays
     // stub-only throughout — allowRealPaths is never called with a real path in this control).
-    if (body.max_tokens === 8000) return { id: 'stub', model: 'grok-4.3', choices: [{ finish_reason: 'stop', message: { content: JSON.stringify({ visualState: {}, phases: [], panels: [], beats: [] }) } }], usage: { prompt_tokens: 10, completion_tokens: 10, total_tokens: 20 } };
+    if (body.max_tokens === 8000) { capturedRequests.author.push(body); return { id: 'stub', model: 'grok-4.3', choices: [{ finish_reason: 'stop', message: { content: JSON.stringify({ visualState: {}, phases: [], panels: [], beats: [] }) } }], usage: { prompt_tokens: 10, completion_tokens: 10, total_tokens: 20 } }; }
     // TRUE catch-all — matches the proven harness's own philosophy (_scene2_repair_replay_sample.mjs:
     // "unexpected /api/proxy call during the stubbed replay phase") — deliberately a FAILURE, not a
     // fake success. Real finding this fixes: the fate-card-batch generation tries Grok (this
@@ -141,7 +148,36 @@ async function setupSession(label) {
     await window._fireIntimacyOpener();
   }, { candidateOasOpening: candidateRaw.draft.oasOpening, candidatePostInterruption: candidateRaw.draft.postInterruptionBeat });
 
-  return { browser, page, gate };
+  return { browser, page, gate, capturedRequests };
+}
+
+// Format a request body's messages the way the various providers accept them (array of
+// {role, content} or a single string prompt) into ONE searchable string, so assertions can check
+// substring containment without caring which shape a given call used.
+function _flattenRequestText(body) {
+  if (!body) return '';
+  const parts = [];
+  if (Array.isArray(body.messages)) body.messages.forEach((m) => { if (m && typeof m.content === 'string') parts.push(m.content); });
+  if (typeof body.prompt === 'string') parts.push(body.prompt);
+  if (typeof body.system === 'string') parts.push(body.system);
+  return parts.join('\n');
+}
+
+// Real finding while extending this control (2026-09-22): once the REAL author call resolves,
+// the app immediately fires its own panel-image-generation pipeline (/api/image, /api/bfl-kontext
+// — neither stubbed nor needed by this control's own assertions), which retries aggressively
+// against this control's fail-closed gate and can run for a long time inside the page, consuming
+// memory well past the point this control has everything it needs. Fix: poll the ALREADY-CAPTURED
+// request (populated synchronously inside the /api/proxy stub, the instant the real fetch lands —
+// no gate phase-settlement wait required) and close the browser the moment it's present, rather
+// than waiting out a quiet-period settle that only covers text calls while the image storm keeps
+// the page alive underneath it regardless.
+async function waitForCapturedAuthorRequest(capturedRequests, timeoutMs) {
+  const t0 = Date.now();
+  while (capturedRequests.author.length === 0 && Date.now() - t0 < timeoutMs) {
+    await new Promise((r) => setTimeout(r, 250));
+  }
+  return capturedRequests.author.length > 0;
 }
 
 async function driveOASTurnAndInterruption(page, gate, { say, doText }) {
@@ -159,7 +195,7 @@ async function driveOASTurnAndInterruption(page, gate, { say, doText }) {
 // ═══════════════════════════════════════════════════════════════════════════════════════════
 section('A. RETAINED REAL INPUT, IN ORDER — Temptation\'s real gaze/hands exchange, Julian\'s real response, and the final (unedited) card submission');
 {
-  const { browser, page, gate } = await setupSession('A');
+  const { browser, page, gate, capturedRequests } = await setupSession('A');
   await driveOASTurnAndInterruption(page, gate, { say: REAL_SAY, doText: REAL_DO });
 
   const slotSelector = '#gnCardMount [data-fate-card-slot="temptation"]';
@@ -172,7 +208,12 @@ section('A. RETAINED REAL INPUT, IN ORDER — Temptation\'s real gaze/hands exch
   gate.setPhase('planner-replay', 5);
   await page.click('#gnSubmitBtn');
   await gate.waitForSettlement('planner-replay', { watchdogMs: 10000 }).catch(() => {});
-  await new Promise((r) => setTimeout(r, 500));
+  // The planner's acceptance chains directly into the CG author call (the SAME continuation
+  // pipeline Submit kicks off). Poll the capture directly (see waitForCapturedAuthorRequest above)
+  // rather than a gate quiet-period wait, so this section moves on the instant it has what it
+  // needs instead of staying open through the unrelated post-author image-generation pipeline.
+  const gotAuthor = await waitForCapturedAuthorRequest(capturedRequests, 20000);
+  if (!gotAuthor) console.warn('[CONTROL] REAL author request (max_tokens 8000) never arrived within 20s — proceeding, assertions below will fail visibly.');
 
   const snap = await page.evaluate(() => {
     const s = window.state;
@@ -202,6 +243,45 @@ section('A. RETAINED REAL INPUT, IN ORDER — Temptation\'s real gaze/hands exch
   const idx3 = block.indexOf('3. THE PLANNER\'S POSTURE READING');
   ok('the three sections appear in the correct chronological order (earlier exchange -> final submission -> interpretation)', idx1 >= 0 && idx2 > idx1 && idx3 > idx2, JSON.stringify({ idx1, idx2, idx3 }));
   ok('section 3 is explicitly labeled as interpretation, subordinate — never presented as fact', /interpretation only/.test(block) && /subordinate to the reader.s own words/.test(block), block);
+
+  // ── ACTUAL DISPATCHED REQUEST BODIES (Roman 2026-09-22): "Source wiring and helper-output
+  // checks alone don't establish that the full requests contain the material." Everything above
+  // asserts on what _buildContinuitySpineBlock/_buildLiveHandoffDirective RETURN when called
+  // directly. These assertions instead inspect the REAL serialized request bodies this session's
+  // REAL planner (max_tokens 1200, _callTieredProvider('scenePlanner', ...)) and REAL author
+  // (max_tokens 8000, _authorFullScenePolicy) calls actually dispatched to /api/proxy — captured
+  // by the stub itself, before it answers, so nothing here is reconstructed or assumed.
+  ok('a REAL planner request (max_tokens 1200) was actually dispatched and captured', capturedRequests.planner.length >= 1, 'captured ' + capturedRequests.planner.length);
+  ok('a REAL author request (max_tokens 8000) was actually dispatched and captured', capturedRequests.author.length >= 1, 'captured ' + capturedRequests.author.length);
+  if (capturedRequests.planner.length && capturedRequests.author.length) {
+    const plannerText = _flattenRequestText(capturedRequests.planner[capturedRequests.planner.length - 1]);
+    const authorText = _flattenRequestText(capturedRequests.author[capturedRequests.author.length - 1]);
+    // THE DISCLOSED GAP THIS CORRECTION CLOSES: the planner's own "RECENT OAS EXCHANGE" block
+    // used to read pcSay/pcDo (transmuted). It must now match the author's raw wording exactly —
+    // proven here by requiring the SAME raw substring in BOTH real requests, not just checking
+    // each in isolation (which could pass even if the two sides diverged on different text).
+    ok('the REAL planner request body contains the player\'s raw gaze/hands wording (not the transmuted re-expression)', plannerText.includes('I keep my hands folded at my waist and meet his eyes'), plannerText.slice(0, 4000));
+    ok('the REAL author request body ALSO contains the SAME raw player wording, verbatim', authorText.includes('I keep my hands folded at my waist and meet his eyes'), authorText.slice(0, 4000));
+    ok('the REAL author request body contains Julian\'s real OAS response', authorText.includes('The hunger in your gaze called louder than the rite itself'), authorText.slice(0, 4000));
+    ok('the REAL author request body contains the final committed card submission text', authorText.includes('Let the wind of your breath unravel me'), authorText.slice(0, 4000));
+    ok('the REAL author request body names the Temptation posture', /Temptation/.test(authorText), authorText.slice(0, 4000));
+    // Scoped to the LIVE HANDOFF section specifically, not the whole request text. Real finding
+    // while extending this control: the STORY LEDGER (a SEPARATE, earlier section of the same
+    // prompt — the budget-managed history of committed past pages) legitimately restates the
+    // final submission's own text too (by design, documented in this control's own trace doc:
+    // "the SAME entry _buildContinuitySpineBlock's own STORY LEDGER already renders... restated
+    // here unconditionally"). A plain indexOf/indexOf comparison over the FULL request text picks
+    // up that EARLIER, legitimate ledger occurrence for "final submission" instead of the
+    // handoff's own section 2 — a test-scoping bug, not a production one. Scoping to the handoff
+    // header onward (uniquely present, appended after the ledger) fixes it without weakening what
+    // the assertion actually proves.
+    const handoffStart = authorText.indexOf('LIVE HANDOFF, IN ORDER');
+    ok('the REAL author request body contains the LIVE HANDOFF section at all', handoffStart >= 0, authorText.slice(0, 2000));
+    const handoffText = handoffStart >= 0 ? authorText.slice(handoffStart) : '';
+    const aIdxExch = handoffText.indexOf('I keep my hands folded at my waist and meet his eyes');
+    const aIdxFinal = handoffText.indexOf('Let the wind of your breath unravel me');
+    ok('within the LIVE HANDOFF section of the REAL author request body, the earlier exchange appears BEFORE the final submission, in order', aIdxExch >= 0 && aIdxFinal > aIdxExch, JSON.stringify({ aIdxExch, aIdxFinal }) + '\n' + handoffText.slice(0, 2000));
+  }
 
   await browser.close();
 }
@@ -304,7 +384,7 @@ section('F. NO PREMATURE COMMIT — a card CLICK alone (before Submit) must not 
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════════════════
-section('G. SHARED PATH, NOT ISOLATED — the SAME function both real author paths call');
+section('G. SHARED PATH, NOT ISOLATED — the SAME function both real author paths call, and the SAME extraction the planner and author both read');
 {
   const cgCallSite = fs.readFileSync(path.join(__dirname, 'public', 'app.js'), 'utf8');
   const cgMatch = /_continuitySpineBlock = window\._buildContinuitySpineBlock\(window\.state\)/.test(cgCallSite);
@@ -312,6 +392,79 @@ section('G. SHARED PATH, NOT ISOLATED — the SAME function both real author pat
   ok('the CG author prompt-builder calls _buildContinuitySpineBlock directly (source-traced)', cgMatch, 'not found');
   ok('the literary author prompt-builder(s) also call _buildContinuitySpineBlock directly (source-traced, at least one real call site)', literaryMatches >= 1, 'literary call sites found: ' + literaryMatches);
   ok('_buildLiveHandoffDirective is called FROM WITHIN _buildContinuitySpineBlock itself (one insertion point reaches every caller, not a per-engine directive)', /out \+= handoffBlock;/.test(cgCallSite), 'not found');
+
+  // 2026-09-22 correction — Roman: "Reuse the shared extraction logic where practical." Confirms,
+  // by source, that BOTH the open-row planner's own "RECENT OAS EXCHANGE" block AND
+  // _buildLiveHandoffDirective's section 1 now call the SAME _extractRecentOASExchangeLines
+  // function, rather than each independently re-implementing the same read (the structural cause
+  // of the disclosed wording drift this correction closes).
+  const plannerCallsShared = /_liLines = _extractRecentOASExchangeLines\(window\.state, \{ limit: 3 \}\)/.test(cgCallSite);
+  const authorCallsShared = /exch = _extractRecentOASExchangeLines\(s, \{ limit: 4 \}\)/.test(cgCallSite);
+  const plannerNoLongerInlines = !/_oasBeats\.slice\(-3\)\.forEach/.test(cgCallSite);
+  ok('the planner\'s "RECENT OAS EXCHANGE" block calls the shared _extractRecentOASExchangeLines helper (source-traced)', plannerCallsShared, 'not found');
+  ok('_buildLiveHandoffDirective\'s section 1 also calls the SAME shared helper (source-traced)', authorCallsShared, 'not found');
+  ok('the planner no longer has its own independent inline extraction loop (the duplicate implementation was removed, not merely supplemented)', plannerNoLongerInlines, 'the old inline loop is still present');
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════════════════
+section('H. SCENE SCOPING — a later scene\'s own separate OAS exchange/interruption must SUPERSEDE an earlier scene\'s, never present it as newest, never duplicate it');
+{
+  const { browser, page, gate } = await setupSession('H');
+  await driveOASTurnAndInterruption(page, gate, { say: REAL_SAY, doText: REAL_DO });
+  const slotSelector = '#gnCardMount [data-fate-card-slot="temptation"]';
+  await page.evaluate((sel) => { const el = document.querySelector(sel); if (el) el.click(); }, slotSelector);
+  gate.setPhase('planner-replay-h1', 5);
+  await page.click('#gnSubmitBtn');
+  await gate.waitForSettlement('planner-replay-h1', { watchdogMs: 10000 }).catch(() => {});
+  await new Promise((r) => setTimeout(r, 500));
+
+  const scene1Block = await page.evaluate(() => window._buildContinuitySpineBlock(window.state));
+  ok('scene 1\'s own exchange appears in scene 1\'s own handoff block (sanity baseline before advancing)', scene1Block.includes('I keep my hands folded at my waist and meet his eyes'), scene1Block);
+
+  // Advance into a SEPARATE, later scene with its OWN OAS exchange and its OWN committed
+  // interruption. Direct state construction (not a second full live UI cycle) — what's under test
+  // is the SELECTION logic over already-archived, durably-keyed data (_oasSceneSnapshots keyed by
+  // scene number; the ledger's chronological oas_interrupt entries), the SAME structures a real
+  // second scene produces regardless of how they got populated — matching this control's own
+  // section D methodology (direct state manipulation to isolate one mechanism).
+  const SCENE2_SAY = 'I will not kneel again, Julian — not even for you.';
+  const SCENE2_FINAL = 'I stop at the threshold, one hand on the frame, and finally look back at him.';
+  const dup = await page.evaluate(({ say2, final2 }) => {
+    const s = window.state;
+    const snaps = s._oasSceneSnapshots || (s._oasSceneSnapshots = {});
+    const existingKeys = Object.keys(snaps).map(Number).filter((n) => !isNaN(n));
+    const nextSceneNum = (existingKeys.length ? Math.max(...existingKeys) : 1) + 1;
+    snaps[String(nextSceneNum)] = { liName: 'Julian', beats: [{ pcSayRaw: say2, pcDoRaw: '', pcSay: say2, pcDo: '', liDialogue: 'Then go. But know the door only opens one way tonight.' }] };
+    const L = (typeof window._sceneLedgerGet === 'function') ? window._sceneLedgerGet(s, true) : null;
+    if (L && Array.isArray(L.entries)) L.entries.push({ kind: 'oas_interrupt', sceneNumber: nextSceneNum, event: 'user_pivot_end', eventSource: 'interruption_submit', act: final2, dia: '', posture: 'boundary' });
+    return { nextSceneNum };
+  }, { say2: SCENE2_SAY, final2: SCENE2_FINAL });
+
+  const scene2Block = await page.evaluate(() => window._buildContinuitySpineBlock(window.state));
+  ok('the later scene (' + dup.nextSceneNum + ')\'s own exchange now appears', scene2Block.includes(SCENE2_SAY), scene2Block);
+  ok('the later scene\'s own final submission now appears', scene2Block.includes(SCENE2_FINAL), scene2Block);
+  ok('the EARLIER scene\'s exchange is superseded, not shown as the current live exchange', !scene2Block.includes('I keep my hands folded at my waist and meet his eyes'), scene2Block);
+
+  // "NOT presented as the newest action" is a claim about the LIVE HANDOFF's own section 2
+  // specifically, not the whole block. Real finding while building this section: the STORY LEDGER
+  // (a SEPARATE, earlier part of the same block — the budget-managed history of committed past
+  // pages, unchanged by this session's work) LEGITIMATELY still lists the earlier scene's
+  // submission as PAST history — that is its job. Scoping this assertion to section 2 specifically
+  // (from its own header to section 3's) proves the actual claim ("not presented as NEWEST")
+  // without wrongly demanding the ledger stop doing its own, separate, correct job.
+  const sec2Start = scene2Block.indexOf('2. THE READER\'S FINAL SUBMITTED SAY/DO');
+  const sec3Start = scene2Block.indexOf('3. THE PLANNER\'S POSTURE READING');
+  ok('the handoff\'s own section 2 header is present', sec2Start >= 0, scene2Block);
+  const section2Text = (sec2Start >= 0) ? scene2Block.slice(sec2Start, sec3Start >= 0 ? sec3Start : undefined) : '';
+  ok('the handoff\'s section 2 ("newest action") shows the LATER scene\'s submission', section2Text.includes(SCENE2_FINAL), section2Text);
+  ok('the handoff\'s section 2 ("newest action") does NOT show the earlier scene\'s card submission — only the STORY LEDGER\'s separate history section may, and does, legitimately still list it as past history', !section2Text.includes('Let the wind of your breath unravel me'), section2Text);
+  ok('the earlier scene\'s submission legitimately STILL appears elsewhere in the block, in the STORY LEDGER\'s own committed-history listing (sanity check: it was not deleted, only correctly excluded from "newest")', scene2Block.slice(0, sec2Start >= 0 ? sec2Start : undefined).includes('Let the wind of your breath unravel me'), scene2Block.slice(0, 2000));
+
+  const firstIdx = scene2Block.indexOf(SCENE2_SAY);
+  const secondIdx = scene2Block.indexOf(SCENE2_SAY, firstIdx + 1);
+  ok('the later scene\'s own exchange is not duplicated within the block', firstIdx >= 0 && secondIdx === -1, JSON.stringify({ firstIdx, secondIdx }));
+
+  await browser.close();
 }
 
 console.log('\n' + '='.repeat(100));
