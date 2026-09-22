@@ -99760,9 +99760,17 @@ function _buildAuthorFloorDirective(s) {
             // ONE RESOLVED INTENT (2026-09-11): the spine planner's objective is the effective row for the recorded branch.
             var _effSpine = (_planScene && typeof _effectiveSceneRow === 'function') ? _effectiveSceneRow(s, _planSceneNum) : null;
             // OPEN ROW: record the reader's posture NOW (choice + exact Say/Do); an accepted objective with the same posture is reused.
-            var _openRow = !!(_effSpine && _effSpine.openObjective), _posture = null, _openReuse = null;
+            var _openRow = !!(_effSpine && _effSpine.openObjective), _posture = null, _openReuse = null, _relObligation = null;
             if (_openRow) {
               _posture = _recordScenePosture(_planSceneNum, act, dia);
+              // RELATIONAL OBLIGATION (Roman 2026-09-22) — GENERIC across every starter; see
+              // _relationalObligationForPosture's own header comment for the full rationale
+              // (Temptation attempt 5: context reached the planner, yet the accepted plan let an
+              // institutional plot lane crowd the reader's own relational submission out entirely).
+              // Computed once here, reused both for the schema-request wording below and for the
+              // reject-only check at acceptance — null (byte-identical, no behavior change) for any
+              // scene that isn't following a committed OAS interruption.
+              try { _relObligation = (_posture && typeof _relationalObligationForPosture === 'function') ? _relationalObligationForPosture(s, _posture.action, _posture.dialogue) : null; } catch (_) { _relObligation = null; }
               var _prevObj = s._sceneObjectives && s._sceneObjectives[String(_planSceneNum)];
               if (_prevObj && _prevObj.status === 'accepted' && _posture && _prevObj.postureHash === _posture.hash && _prevObj.storyId === s.storyId) _openReuse = _prevObj;
               else if (_prevObj && _prevObj.status === 'accepted') { try { console.log('[OBJECTIVE:SUPERSEDED] scene ' + _planSceneNum + ' posture changed (' + _prevObj.postureHash + ' → ' + (_posture && _posture.hash) + ') — the old objective is dropped'); } catch (_) {} s._sceneObjectives[String(_planSceneNum)] = Object.assign({}, _prevObj, { status: 'superseded', supersededAt: Date.now() }); _effSpine = _effectiveSceneRow(s, _planSceneNum); }
@@ -100029,6 +100037,20 @@ function _buildAuthorFloorDirective(s) {
               // scene's physical event. "burn for me, as the First-Favored did for the old gods" is desire,
               // not a request for an actual immolation ritual; the planner took it literally anyway.
               _ob.push('REGISTER (HARD): the Say/Do above is the reader\'s emotional/rhetorical posture — it tells you what she wants, fears, or is posturing about, and HOW she carries herself into the required scene function above. It is NEVER a literal instruction to invent a new physical event, ritual, mechanic, or environmental fact — even when it uses concrete or violent imagery — and it is NEVER a substitute for the required scene function: do not build state_change by paraphrasing or restating this text. Ground state_change in the REQUIRED SCENE FUNCTION' + (_oe.aftermathLanes && _oe.aftermathLanes.length ? ', the chosen AFTERMATH LANE,' : ',') + ' WORLD TRUTHS, and AFTERMATH TRUTHS; use the posture only to choose WHO acts and HOW, never WHAT the scene\'s job is' + (_oe.aftermathLanes && _oe.aftermathLanes.length ? ', and never WHICH lane is chosen' : '') + '.');
+              // RELATIONAL OBLIGATION — prompt side (Roman 2026-09-22, GENERIC across every
+              // starter): the reader's Say/Do above came from a committed OAS interruption (a
+              // Fate-card or her own custom words) — a relationship-bearing submission to
+              // _relObligation.targetLabel, whoever this starter's actual love interest is. The
+              // chosen plot lane above still governs WHAT the scene's event is — this does not
+              // reopen that choice — but it may not let the lane stand in for, or silently drop,
+              // the reader's own relational move. Decoupled from the aftermath-lane menu entirely
+              // (fires for any starter, whether or not it uses that system) — independent of
+              // _oe.sceneFunction/_oe.aftermathLanes above. Reject-only enforcement of this exact
+              // requirement lives in _validateLocalObjective (mechanical: non-empty, minimum
+              // length — never a semantic-quality judgment).
+              if (_relObligation && _relObligation.targetLabel) {
+                _scSys += ' ALSO REQUIRED, same JSON, IF "' + _relObligation.targetLabel + '" is among "present" (OPTIONAL and unused otherwise): "li_pressure_actor" (one to two sentences — HARD: this scene follows the reader\'s own ' + (_relObligation.postureLabel ? '"' + _relObligation.postureLabel + '" ' : '') + 'submission to ' + _relObligation.targetLabel + ', and ' + _relObligation.targetLabel + ' must visibly register, answer, resist, or be affected by it — a line of dialogue, a felt reaction, a refusal, or a charged restraint that is ITSELF a response, never silence alone and never absence. This must respond to what she ACTUALLY submitted, not merely restate ' + _relObligation.targetLabel + '\'s presence in the room, and it must never override her own agency, touch her without her own action inviting it, or decide anything on her behalf. The plot lane above still governs the scene\'s central EVENT — this governs how ' + _relObligation.targetLabel + ' meets her IN it.)';
+              }
             }
             try { var _L = (typeof _relLedger === 'function') ? _relLedger(false) : null; var _ents = (_L && _L.entities) || {}; var _rl = (_oe.roster || []).map(function (r) { var e = _ents[r.ref]; var cp = (_L && _L.cplus && _L.cplus.rows && _L.cplus.rows[r.ref]) || null; return r.label + (e && e.anchorRole === 'li' ? ' (love interest)' : '') + (cp && cp.last_cplus_scene_ordinal != null ? ' — last Character+ scene ' + cp.last_cplus_scene_ordinal : ''); });
               if (_rl.length) _ob.push('ROSTER — who CAN be present (name only these; choose who IS): ' + _rl.join(' · ')); } catch (_) {}
@@ -100096,7 +100118,16 @@ function _buildAuthorFloorDirective(s) {
               var _pressureSourceForSchema = (_resolvedFrame && _resolvedFrame.lane && _resolvedFrame.lane.pressureSource) || null;
               _scSys += ' ALSO, same JSON: "local_objective_actor" MUST be a single INDIVIDUAL roster member — NEVER a collective (e.g. "the assembly") and NEVER a group label you invent (e.g. "Seren\'s family") — a collective or group can apply pressure but cannot carry the scene\'s objective.'
                 + (_pressureSourceForSchema ? (' REQUIRED for this frame: "pressure_source" (string, exactly "' + _pressureSourceForSchema + '" unless the scene genuinely has no group pressure) — the group/institution applying pressure, kept OUT of local_objective_actor.') : ' OPTIONAL: "pressure_source" (string, only if a group or institution is genuinely applying pressure this scene — never required to invent one).')
-                + ' Also OPTIONAL, same JSON: "institutional_actor" (the seated authority — Dohkar, tribunal, council — driving procedure THIS scene, if any, distinct from local_objective_actor when they differ), "li_pressure_actor" (one sentence: the concrete moment of pressure, response, restraint, refusal, or dialogue the love interest contributes this scene, if the LI is present).';
+                + ' Also OPTIONAL, same JSON: "institutional_actor" (the seated authority — Dohkar, tribunal, council — driving procedure THIS scene, if any, distinct from local_objective_actor when they differ)'
+                // RELATIONAL OBLIGATION (Roman 2026-09-22): when _relObligation is set, the
+                // dedicated, HARD schema request above (right after REGISTER) already covers
+                // li_pressure_actor with story-specific, conditionally-REQUIRED wording — mentioning
+                // it again here, as merely optional, would contradict that requirement inside the
+                // SAME prompt. Only append this original optional mention when _relObligation is
+                // null, preserving its exact original behavior for any scene that isn't following a
+                // committed OAS interruption.
+                + (!_relObligation ? ', "li_pressure_actor" (one sentence: the concrete moment of pressure, response, restraint, refusal, or dialogue the love interest contributes this scene, if the LI is present)' : '')
+                + '.';
             }
             // CONTINUATION-STAGE ISSUER (Roman, authorized 2026-09-14) — SAME reply, SAME call, no
             // second provider round trip. All optional: an old-shaped reply that omits these keys
@@ -100378,7 +100409,7 @@ function _buildAuthorFloorDirective(s) {
           // OPEN ROW acceptance — reject-only, BEFORE anything is stored. A rejected reply stores no transition and no objective.
           var _openAccept = null;
           if (_curMs && _curMs._open && _curMs._eff) {
-            _openAccept = _validateLocalObjective(_scP, _curMs._eff);
+            _openAccept = _validateLocalObjective(_scP, _curMs._eff, _relObligation);
             if (!_openAccept.ok) {
               s._sceneObjectiveRejection = { sceneNum: _planSceneNum, reason: _openAccept.why.join('; '), postureHash: _posture && _posture.hash, at: Date.now() };
               try { console.warn('[OBJECTIVE:REJECTED] scene ' + _planSceneNum + ' — ' + s._sceneObjectiveRejection.reason); } catch (_) {}
@@ -129645,6 +129676,67 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
   }
   try { if (typeof window !== 'undefined') window._extractRecentOASExchangeLines = _extractRecentOASExchangeLines; } catch (_) {}
 
+  // RELATIONAL OBLIGATION DETECTION (Roman 2026-09-22) — GENERIC across every starter, not
+  // First-Sacrifice-specific. Roman, after Temptation attempt 5 (context now verifiably reaches
+  // planner+author, yet Julian never engages the reader's own Temptation submission at all — the
+  // planner instead built the whole scene around an institutional-concealment objective that
+  // crowds the romantic exchange out entirely): "The card choice has to shape both the aftermath
+  // lane and the LI/romance pressure. Otherwise the system can technically obey plot while
+  // emotionally ignoring the player... Build a general 'relationship-bearing card must produce a
+  // relationship-bearing consequence' contract, then let each starter define who/what bears that
+  // relationship pressure."
+  //
+  // Mechanism (generic): a scene follows a relationship-bearing submission when the act/dia the
+  // planner is about to reason over is BYTE-IDENTICAL to the scene ledger's own most recent
+  // oas_interrupt commit (written ONLY by _commitIntimateInterruption, which fires ONLY inside the
+  // open-one-on-one-scene intimate-interruption mechanism — for BOTH a selected Fate-card AND a
+  // fully custom typed Say/Do, identically; see that function's own comment). Detected by DATA
+  // IDENTITY, not scene-number arithmetic — this codebase's scene-numbering is its own
+  // known-fragile area (4 of the 11 pre-existing _continuity_spine_dry.mjs failures are
+  // scene-number/turnCount mechanics) — so this never needs to reason about which scene number an
+  // interrupt "belongs to."
+  //
+  // Content (story-specific): the target is resolved generically — the roster's own declared love
+  // interest, via the SAME anchorRole==='li' anchor entity _relEnsureAnchors always creates for
+  // ANY story (never a hardcoded name; label sourced from state.loveInterestName/partnerName,
+  // whatever this starter's actual LI is called) — falling back to the archived OAS snapshot's own
+  // liName (the scene the interruption actually happened in) if the roster ledger isn't available
+  // yet. Returns null (no obligation) when neither resolves — never invents a target.
+  function _relationalObligationForPosture(s, act, dia) {
+    try {
+      s = s || (typeof window !== 'undefined' ? window.state : null); if (!s) return null;
+      var L = (typeof _sceneLedgerGet === 'function') ? _sceneLedgerGet(s, false) : null;
+      var entries = (L && Array.isArray(L.entries)) ? L.entries : [];
+      var last = null;
+      for (var i = entries.length - 1; i >= 0; i--) { if (entries[i] && entries[i].kind === 'oas_interrupt') { last = entries[i]; break; } }
+      if (!last) return null;
+      var actStr = String(act || ''), diaStr = String(dia || '');
+      var actMatch = actStr && actStr === String(last.act || '');
+      var diaMatch = diaStr && diaStr === String(last.dia || '');
+      if (!actMatch && !diaMatch) return null;   // this planning pass is not reasoning over that commit
+      var targetLabel = null, targetRef = null;
+      try {
+        var Lrel = (typeof _relLedger === 'function') ? _relLedger(false) : null;
+        var ents = (Lrel && Lrel.entities) || {};
+        var liRef = Object.keys(ents).filter(function (r) { return ents[r] && ents[r].anchorRole === 'li'; })[0] || null;
+        if (liRef && ents[liRef].label) { targetRef = liRef; targetLabel = String(ents[liRef].label); }
+      } catch (_) {}
+      if (!targetLabel) {
+        try {
+          var snaps = s._oasSceneSnapshots || {};
+          var keys = Object.keys(snaps).map(Number).filter(function (n) { return !isNaN(n); }).sort(function (a, b) { return b - a; });
+          var latest = keys.length ? snaps[String(keys[0])] : null;
+          if (latest && latest.liName) targetLabel = String(latest.liName);
+        } catch (_) {}
+      }
+      if (!targetLabel) return null;   // no resolvable target — never require a response to nobody
+      var postureLabel = last.posture || null;
+      try { if (postureLabel && typeof _INTR_SLOTS !== 'undefined') { var slot = _INTR_SLOTS.filter(function (sl) { return sl.key === postureLabel; })[0]; if (slot) postureLabel = slot.label; } } catch (_) {}
+      return { targetLabel: targetLabel, targetRef: targetRef, postureLabel: postureLabel, sourceKind: last.posture ? 'card' : 'custom' };
+    } catch (_) { return null; }
+  }
+  window._relationalObligationForPosture = _relationalObligationForPosture;
+
   function _buildLiveHandoffDirective(s) {
     try {
       s = s || window.state; if (!s) return '';
@@ -129684,6 +129776,18 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
         if (pr) interp.push(pr);
         if (lpm && lpm !== pr) interp.push(lpm);
         if (interp.length) lines.push('3. THE PLANNER\'S POSTURE READING (interpretation only — a lens on 1 and 2 above, subordinate to the reader\'s own words and to canon; never a substitute for what she actually said or did, and never grounds for inventing a detail 1 or 2 did not give you): ' + interp.join(' '));
+      } catch (_) {}
+
+      // 4. REQUIRED RELATIONAL RESPONSE (Roman 2026-09-22) — GENERIC, not First-Sacrifice-specific:
+      // when 2 was a relationship-bearing submission (see _relationalObligationForPosture), the
+      // accepted plan's own li_pressure_actor is a validated COMMITMENT (this session's new
+      // reject-only check in _validateLocalObjective refuses any plan that omits it when the
+      // target is present) — not mere interpretation like 3 above, and never previously surfaced
+      // here at all (it existed only as unread telemetry until this pass). Still subordinate to 1
+      // and 2 in what actually happened, but HARD in that it must land, not merely be consulted.
+      try {
+        var lpa4 = (latestObj && latestObj.stateChange && latestObj.stateChange.liPressureActor) ? String(latestObj.stateChange.liPressureActor).trim() : '';
+        if (lpa4) lines.push('4. REQUIRED — HOW THE LOVE INTEREST RESPONDS THIS SCENE (HARD, planned and validated — the plan is invalid without this; land it as a real, felt moment: dialogue, a visible reaction, a refusal, or a charged restraint that is itself a response; never override her own agency or decide anything on her behalf, and never let the plot lane above replace this): ' + lpa4);
       } catch (_) {}
 
       if (!lines.length) return '';
@@ -200444,9 +200548,43 @@ No text, no watermark, no UI elements, share-ready.`;
     try { if (typeof saveStorySnapshot === 'function') saveStorySnapshot(); } catch (_) {}
     return wrap;
   }
+  // FATE-CARD MARKDOWN QUARANTINE (Roman 2026-09-22) — Temptation attempt 5 (a REAL, paid replay,
+  // traced not assumed) committed action="**" and dialogue="*"...quoted line..."*" verbatim into
+  // the ledger and, from there, into the author's own prompt. Root-caused to the batch preview's
+  // authoritative parser (_parseBatchFatePreview, orchestration-client.js) which strips only
+  // leading/trailing QUOTE characters, never markdown emphasis — the model wraps action in
+  // **bold** and dialogue in *"quoted"* despite the prompt explicitly saying not to, and nothing
+  // downstream correctly unwraps it (a pre-existing, differently-scoped sanitizer,
+  // _sanitizeFatePreviewLine, mis-strips the doubled-asterisk action wrapper down to a bare "**"
+  // rather than removing it — a separate defect, not touched here; this function is a new,
+  // independent last line of defense). Applied HERE, at the single authoritative commit point
+  // every source — a card clicked as-is, an edited card, or fully custom typed text — passes
+  // through before becoming r.action/r.dialogue, so it holds regardless of which upstream path the
+  // final text took, and regardless of that other sanitizer's own bugs.
+  function _sanitizeCommittedInterruptionText(text) {
+    try {
+      if (!text) return '';
+      var t = String(text);
+      // Balanced **bold** wrapper around the WHOLE field — strip the wrapper, keep the content.
+      // Tried before the single-asterisk case so a doubled wrapper is never mistaken for two
+      // singles (which would otherwise strip only the outermost single layer).
+      var m2 = t.match(/^\*\*([\s\S]*)\*\*$/);
+      if (m2) t = m2[1];
+      // Balanced *italic* wrapper around the WHOLE field (often itself wrapping a quoted line,
+      // e.g. *"..."*) — strip the wrapper, keep the content, quotes included (legitimate dialogue
+      // punctuation). Also correctly collapses a bare, contentless "**" leftover (Temptation
+      // attempt 5's own real artifact) to '' via this same match with an empty capture.
+      var m1 = t.match(/^\*([\s\S]*)\*$/);
+      if (m1) t = m1[1];
+      return t.trim();
+    } catch (_) { return String(text || ''); }
+  }
+  window._sanitizeCommittedInterruptionText = _sanitizeCommittedInterruptionText;
+
   function _commitIntimateInterruption(action, dialogue) {
     var r = state._intimateInterruption; if (!r || r.submitted) return false;
-    r.submitted = true; r.submittedAt = Date.now(); r.action = String(action || ''); r.dialogue = String(dialogue || '');
+    r.submitted = true; r.submittedAt = Date.now();
+    r.action = _sanitizeCommittedInterruptionText(action); r.dialogue = _sanitizeCommittedInterruptionText(dialogue);
     var label = (r.action || r.dialogue).slice(0, 80);
     try { _recordSceneDecision(r.sceneNum || 1, 'posture', label, 'interruption_submit'); } catch (_) {}
     // posture (Roman, 2026-09-19 vertical-slice gap fix): the interruption's fate-card SLOT
@@ -200640,7 +200778,7 @@ No text, no watermark, no UI elements, share-ready.`;
     } catch (_) { return null; }
   }
   // Reject-only validation of the planner's open-row reply against the seed's structured constraints. Never rewrites.
-  function _validateLocalObjective(reply, eff) {
+  function _validateLocalObjective(reply, eff, relObligation) {
     var why = [];
     var lo = reply && typeof reply.local_objective === 'string' ? reply.local_objective.trim() : '';
     if (!lo) why.push('no local_objective');
@@ -200670,7 +200808,26 @@ No text, no watermark, no UI elements, share-ready.`;
     });
     var am = (reply && reply.aftermath && typeof reply.aftermath === 'object') ? reply.aftermath : null;
     (eff.aftermathTruths || []).forEach(function (t) { var st2 = am ? am[t.id] : undefined; if (st2 !== 'kept') why.push('aftermath truth ' + t.id + ': ' + (st2 === undefined ? 'no status declared' : 'declared ' + JSON.stringify(st2))); });
-    return { ok: why.length === 0, why: why, local_objective: lo, actor: actor, present: present, posture_read: reply && reply.posture_read ? String(reply.posture_read).trim() : '' };
+    // RELATIONAL OBLIGATION (Roman 2026-09-22) — reject-only, additive, GENERIC (relObligation
+    // carries no starter-specific name; see _relationalObligationForPosture's own header comment).
+    // null for any scene that isn't following a committed OAS interruption — nothing changes for
+    // those, exactly as every other existing check here is unaffected. When it IS set AND the
+    // resolved target is among this reply's own declared `present` cast, the plan may not let the
+    // chosen plot lane crowd the reader's own relational submission out entirely: li_pressure_actor
+    // must be present and substantive. Mechanical, not a semantic-quality judgment — matching every
+    // other check in this function — so it catches exactly Temptation attempt 5's real failure mode
+    // (the field silently omitted) without second-guessing genuinely present, differently-worded
+    // content.
+    var liPressureActor = reply && reply.li_pressure_actor ? String(reply.li_pressure_actor).trim() : '';
+    if (relObligation && relObligation.targetLabel) {
+      var presentL = present.map(function (x) { return x.toLowerCase(); });
+      var targetPresent = presentL.indexOf(String(relObligation.targetLabel).toLowerCase()) !== -1;
+      if (targetPresent) {
+        if (!liPressureActor) why.push('relational obligation: no li_pressure_actor — this scene follows the reader\'s own ' + (relObligation.postureLabel ? '"' + relObligation.postureLabel + '" ' : '') + 'submission to ' + relObligation.targetLabel + ', and the plan must say how ' + relObligation.targetLabel + ' visibly responds to it');
+        else if (liPressureActor.length < 15) why.push('relational obligation: li_pressure_actor too thin to be a real response to ' + relObligation.targetLabel + ' ("' + liPressureActor + '")');
+      }
+    }
+    return { ok: why.length === 0, why: why, local_objective: lo, actor: actor, present: present, posture_read: reply && reply.posture_read ? String(reply.posture_read).trim() : '', liPressureActor: liPressureActor };
   }
   window._recordScenePosture = _recordScenePosture; window._validateLocalObjective = _validateLocalObjective; window._postureHash = _postureHash;
 
