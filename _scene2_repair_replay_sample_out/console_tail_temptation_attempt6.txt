@@ -1,0 +1,204 @@
+[IMAGE:SANITIZE] length: 1123 → 1105
+[IMAGE:NORMALIZE] density: 3 → 2 (early scene cap)
+[IMAGE:PURGE] removed: genital
+[VIZ:TONE] No visual ontology for tone: Earnest — using Genre style
+[4O] Skipped for portrait context (li-face-reveal) — preventing artist-ref visual cues (leather accessories, fantasy props) from being written into the prose prompt
+[ENDER-BOND:SCENE-TYPE] romance
+[ENDER-BOND:GOLDEN-MASTER] Authoritative style source + 6 supporting anchors
+[STYLE-SUFFIX] Length: 648 chars | artist=ender_bond
+[MOMENT_CACHE] HIT — reusing identity/anatomy from panel 0 (action recomputed)
+[SMART-CLAMP:PROTECTED] 8709 → 5005 (prefix:3190, suffix:840)
+[IMG PROMPT] (5005 chars) PRIMARY DIRECTIVE: Depict the scene exactly as described. Scene and anatomy rules are authoritative. SUBJECT MATTER (HARD CONSTRAINT — overrides any subject-matter cues from reference images): Fantasy
+[SMART-CLAMP:PROTECTED] 8709 → 5005 (prefix:3190, suffix:840)
+[SMART-CLAMP:PROTECTED] 8709 → 5005 (prefix:3190, suffix:840)
+[SMART-CLAMP:PROTECTED] 8709 → 5005 (prefix:3190, suffix:840)
+[IMG PROMPT] (5005 chars) PRIMARY DIRECTIVE: Depict the scene exactly as described. Scene and anatomy rules are authoritative. SUBJECT MATTER (HARD CONSTRAINT — overrides any subject-matter cues from reference images): Fantasy
+[SMART-CLAMP:PROTECTED] 8709 → 5005 (prefix:3190, suffix:840)
+[SMART-CLAMP:PROTECTED] 8709 → 5005 (prefix:3190, suffix:840)
+[IMAGE:TIER] portrait → Gemini → BFL → BFL-Klein → OpenAI (Nano-Banana identity-preserving primary)
+[IMAGE-GEN] {"provider":"Gemini","context":"li-face-reveal","reached":true,"blockedBy":"None","status":"ATTEMPTING","promptLength":5005,"promptPreview":"PRIMARY DIRECTIVE: Depict the scene exactly as described. Scene and anatomy rules are authoritative. SUBJECT MATTER (HAR...","timestamp":"2026-09-22T06:55:43.727Z"}
+[IMAGE-GEN] {"provider":"Gemini","context":"li-face-reveal","reached":false,"blockedBy":"None","status":"META","promptLength":21,"promptPreview":"styleAuthority: Genre","timestamp":"2026-09-22T06:55:43.727Z"}
+[GEMINI:ENTRY] intent=portrait | visualMeta.artistKey=ender_bond | promptLen=5005
+[GEMINI:PORTRAIT] No solo_master variant for artist=ender_bond — text-only rendering
+[GEMINI:PREFIX] No references — text-only rendering
+Failed to load resource: net::ERR_FAILED
+[Gemini] Error: Failed to fetch | attempt 1
+[GEMINI:PORTRAIT] No solo_master variant for artist=ender_bond — text-only rendering
+[GEMINI:PREFIX] No references — text-only rendering
+Failed to load resource: net::ERR_FAILED
+[Gemini] Error: Failed to fetch | attempt 2
+[IMAGE-GEN] {"provider":"Gemini","context":"li-face-reveal","reached":false,"blockedBy":"NoOutput","status":"FAILED","promptLength":5005,"promptPreview":"PRIMARY DIRECTIVE: Depict the scene exactly as described. Scene and anatomy rules are authoritative. SUBJECT MATTER (HAR...","timestamp":"2026-09-22T06:55:44.734Z","error":"returned null"}
+[IMAGE-GEN] {"provider":"BFL","context":"li-face-reveal","reached":true,"blockedBy":"None","status":"ATTEMPTING","promptLength":5005,"promptPreview":"PRIMARY DIRECTIVE: Depict the scene exactly as described. Scene and anatomy rules are authoritative. SUBJECT MATTER (HAR...","timestamp":"2026-09-22T06:55:44.734Z"}
+[IMAGE-GEN] {"provider":"BFL","context":"li-face-reveal","reached":false,"blockedBy":"None","status":"META","promptLength":21,"promptPreview":"styleAuthority: Genre","timestamp":"2026-09-22T06:55:44.734Z"}
+[BFL:REF:ENTRY] context=li-face-reveal | intent=portrait | turnCount=1 | fateAnchorPresent=false | gnArtist=unset
+[BFL:REF] Portrait context (li-face-reveal) — no solo_master variant for artist=?; skipping style ref
+[BFL:REF] Budget full (0 species refs) — style via prompt only
+[BFL:REF] Preloaded 0/0 refs (budget: 4, species first, style if room)
+[BFL:REF:DIAG] paths: [] | context=li-face-reveal | panelImportance=unset | gnArtist=unset | sceneIdx=1
+[DECK-LEAK:PROMPT-SCAN] portrait gen prompt CLEAN — no deck-related tokens detected (5005 chars)
+[BFL] Prompt truncated from 5005 to 5000 chars
+[DECK-LEAK:CACHE-SOURCE] BFL call (PORTRAIT CONTEXT) | model=flux-2-pro-preview | input_images=0
+  prompt-fingerprint: PRIMARY DIRECTIVE: Depict the scene exac…clarity takes priority over stylistic ef
+[DECK-LEAK:FINGERPRINT-DUMP] portrait gen — full input snapshot (context=?)
+{prompt.length: 5000, prompt.head120: PRIMARY DIRECTIVE: Depict the scene exactly as des…tomy rules are authoritative. SUBJECT MATTER (HAR, prompt.tail120: Mixed styles are incorrect. Style must not obscure…atomical clarity takes priority over stylistic ef, prompt.deckTokensInside: false, prompt.full: PRIMARY DIRECTIVE: Depict the scene exactly as des…atomical clarity takes priority over stylistic ef}
+console.groupEnd
+[BFL] Request: {model: flux-2-pro-preview, promptLength: 5000, images: 0, size: 1024x1024, health: healthy}
+Failed to load resource: net::ERR_FAILED
+[BFL] Attempt 1 failed (flux-2-pro-preview): Failed to fetch
+Failed to load resource: net::ERR_FAILED
+[BFL] Retry failed (flux-2-pro-preview): Failed to fetch
+[BFL] Falling back to flux-2-klein-9b-preview
+Failed to load resource: net::ERR_FAILED
+[IMAGE-GEN] {"provider":"BFL","context":"li-face-reveal","reached":false,"blockedBy":"Network","status":"FAILED","promptLength":5005,"promptPreview":"PRIMARY DIRECTIVE: Depict the scene exactly as described. Scene and anatomy rules are authoritative. SUBJECT MATTER (HAR...","timestamp":"2026-09-22T06:55:45.045Z","error":"Failed to fetch"}
+[IMAGE-GEN] {"provider":"BFL-Klein","context":"li-face-reveal","reached":true,"blockedBy":"None","status":"ATTEMPTING","promptLength":5005,"promptPreview":"PRIMARY DIRECTIVE: Depict the scene exactly as described. Scene and anatomy rules are authoritative. SUBJECT MATTER (HAR...","timestamp":"2026-09-22T06:55:45.045Z"}
+[IMAGE-GEN] {"provider":"BFL-Klein","context":"li-face-reveal","reached":false,"blockedBy":"None","status":"META","promptLength":21,"promptPreview":"styleAuthority: Genre","timestamp":"2026-09-22T06:55:45.046Z"}
+[DECK-LEAK:PROMPT-SCAN] portrait gen prompt CLEAN — no deck-related tokens detected (5005 chars)
+[BFL] Prompt truncated from 5005 to 5000 chars
+[DECK-LEAK:CACHE-SOURCE] BFL call (PORTRAIT CONTEXT) | model=flux-2-klein-9b-preview | input_images=0
+  prompt-fingerprint: PRIMARY DIRECTIVE: Depict the scene exac…clarity takes priority over stylistic ef
+[DECK-LEAK:FINGERPRINT-DUMP] portrait gen — full input snapshot (context=?)
+{prompt.length: 5000, prompt.head120: PRIMARY DIRECTIVE: Depict the scene exactly as des…tomy rules are authoritative. SUBJECT MATTER (HAR, prompt.tail120: Mixed styles are incorrect. Style must not obscure…atomical clarity takes priority over stylistic ef, prompt.deckTokensInside: false, prompt.full: PRIMARY DIRECTIVE: Depict the scene exactly as des…atomical clarity takes priority over stylistic ef}
+console.groupEnd
+[BFL] Request: {model: flux-2-klein-9b-preview, promptLength: 5000, images: 0, size: 1024x1024, health: healthy}
+Failed to load resource: net::ERR_FAILED
+[BFL] Attempt 1 failed (flux-2-klein-9b-preview): Failed to fetch
+Failed to load resource: net::ERR_FAILED
+[BFL] Retry failed (flux-2-klein-9b-preview): Failed to fetch
+[IMAGE-GEN] {"provider":"BFL-Klein","context":"li-face-reveal","reached":false,"blockedBy":"Network","status":"FAILED","promptLength":5005,"promptPreview":"PRIMARY DIRECTIVE: Depict the scene exactly as described. Scene and anatomy rules are authoritative. SUBJECT MATTER (HAR...","timestamp":"2026-09-22T06:55:45.351Z","error":"Failed to fetch"}
+[IMAGE-GEN] {"provider":"OpenAI","context":"li-face-reveal","reached":true,"blockedBy":"None","status":"ATTEMPTING","promptLength":3469,"promptPreview":"PRIMARY DIRECTIVE: Match the established graphic novel rendering style exactly. This scene must visually match prior pan...","timestamp":"2026-09-22T06:55:45.351Z"}
+[IMAGE-GEN] {"provider":"OpenAI","context":"li-face-reveal","reached":false,"blockedBy":"None","status":"META","promptLength":21,"promptPreview":"styleAuthority: Genre","timestamp":"2026-09-22T06:55:45.352Z"}
+Failed to load resource: net::ERR_FAILED
+[OpenAI] Error: Failed to fetch | attempt 1
+Failed to load resource: net::ERR_FAILED
+[OpenAI] Error: Failed to fetch | attempt 2
+[IMAGE-GEN] {"provider":"OpenAI","context":"li-face-reveal","reached":false,"blockedBy":"NoOutput","status":"FAILED","promptLength":3469,"promptPreview":"PRIMARY DIRECTIVE: Match the established graphic novel rendering style exactly. This scene must visually match prior pan...","timestamp":"2026-09-22T06:55:46.357Z","error":"returned null"}
+[IMAGE:PIPELINE] All providers failed for context=li-face-reveal | lastError: Failed to fetch
+[IMAGE:PIPELINE] Chain: Gemini → BFL → BFL-Klein → OpenAI
+[IMAGE:SANITIZE] length: 1168 → 1150
+[IMAGE:NORMALIZE] density: 3 → 1 (early scene cap)
+[IMAGE:PURGE] removed: genital
+[VIZ:TONE] No visual ontology for tone: Earnest — using Genre style
+[4O] Skipped for portrait context (li-face-reveal) — preventing artist-ref visual cues (leather accessories, fantasy props) from being written into the prose prompt
+[ENDER-BOND:SCENE-TYPE] romance
+[ENDER-BOND:GOLDEN-MASTER] Authoritative style source + 6 supporting anchors
+[STYLE-SUFFIX] Length: 648 chars | artist=ender_bond
+[MOMENT_CACHE] HIT — reusing identity/anatomy from panel 0 (action recomputed)
+[SMART-CLAMP:PROTECTED] 8758 → 5005 (prefix:3239, suffix:840)
+[IMG PROMPT] (5005 chars) PRIMARY DIRECTIVE: Depict the scene exactly as described. Scene and anatomy rules are authoritative. SUBJECT MATTER (HARD CONSTRAINT — overrides any subject-matter cues from reference images): Fantasy
+[SMART-CLAMP:PROTECTED] 8758 → 5005 (prefix:3239, suffix:840)
+[SMART-CLAMP:PROTECTED] 8758 → 5005 (prefix:3239, suffix:840)
+[SMART-CLAMP:PROTECTED] 8758 → 5005 (prefix:3239, suffix:840)
+[IMG PROMPT] (5005 chars) PRIMARY DIRECTIVE: Depict the scene exactly as described. Scene and anatomy rules are authoritative. SUBJECT MATTER (HARD CONSTRAINT — overrides any subject-matter cues from reference images): Fantasy
+[SMART-CLAMP:PROTECTED] 8758 → 5005 (prefix:3239, suffix:840)
+[SMART-CLAMP:PROTECTED] 8758 → 5005 (prefix:3239, suffix:840)
+[IMAGE:TIER] portrait → Gemini → BFL → BFL-Klein → OpenAI (Nano-Banana identity-preserving primary)
+[IMAGE-GEN] {"provider":"Gemini","context":"li-face-reveal","reached":true,"blockedBy":"None","status":"ATTEMPTING","promptLength":5005,"promptPreview":"PRIMARY DIRECTIVE: Depict the scene exactly as described. Scene and anatomy rules are authoritative. SUBJECT MATTER (HAR...","timestamp":"2026-09-22T06:55:46.361Z"}
+[IMAGE-GEN] {"provider":"Gemini","context":"li-face-reveal","reached":false,"blockedBy":"None","status":"META","promptLength":21,"promptPreview":"styleAuthority: Genre","timestamp":"2026-09-22T06:55:46.361Z"}
+[GEMINI:ENTRY] intent=portrait | visualMeta.artistKey=ender_bond | promptLen=5005
+[GEMINI:PORTRAIT] No solo_master variant for artist=ender_bond — text-only rendering
+[GEMINI:PREFIX] No references — text-only rendering
+Failed to load resource: net::ERR_FAILED
+[Gemini] Error: Failed to fetch | attempt 1
+[GEMINI:PORTRAIT] No solo_master variant for artist=ender_bond — text-only rendering
+[GEMINI:PREFIX] No references — text-only rendering
+Failed to load resource: net::ERR_FAILED
+[Gemini] Error: Failed to fetch | attempt 2
+[IMAGE-GEN] {"provider":"Gemini","context":"li-face-reveal","reached":false,"blockedBy":"NoOutput","status":"FAILED","promptLength":5005,"promptPreview":"PRIMARY DIRECTIVE: Depict the scene exactly as described. Scene and anatomy rules are authoritative. SUBJECT MATTER (HAR...","timestamp":"2026-09-22T06:55:47.369Z","error":"returned null"}
+[IMAGE-GEN] {"provider":"BFL","context":"li-face-reveal","reached":true,"blockedBy":"None","status":"ATTEMPTING","promptLength":5005,"promptPreview":"PRIMARY DIRECTIVE: Depict the scene exactly as described. Scene and anatomy rules are authoritative. SUBJECT MATTER (HAR...","timestamp":"2026-09-22T06:55:47.369Z"}
+[IMAGE-GEN] {"provider":"BFL","context":"li-face-reveal","reached":false,"blockedBy":"None","status":"META","promptLength":21,"promptPreview":"styleAuthority: Genre","timestamp":"2026-09-22T06:55:47.370Z"}
+[BFL:REF:ENTRY] context=li-face-reveal | intent=portrait | turnCount=1 | fateAnchorPresent=false | gnArtist=unset
+[BFL:REF] Portrait context (li-face-reveal) — no solo_master variant for artist=?; skipping style ref
+[BFL:REF] Budget full (0 species refs) — style via prompt only
+[BFL:REF] Preloaded 0/0 refs (budget: 4, species first, style if room)
+[BFL:REF:DIAG] paths: [] | context=li-face-reveal | panelImportance=unset | gnArtist=unset | sceneIdx=1
+[DECK-LEAK:PROMPT-SCAN] portrait gen prompt CLEAN — no deck-related tokens detected (5005 chars)
+[BFL] Prompt truncated from 5005 to 5000 chars
+[DECK-LEAK:CACHE-SOURCE] BFL call (PORTRAIT CONTEXT) | model=flux-2-pro-preview | input_images=0
+  prompt-fingerprint: PRIMARY DIRECTIVE: Depict the scene exac…clarity takes priority over stylistic ef
+[DECK-LEAK:FINGERPRINT-DUMP] portrait gen — full input snapshot (context=?)
+{prompt.length: 5000, prompt.head120: PRIMARY DIRECTIVE: Depict the scene exactly as des…tomy rules are authoritative. SUBJECT MATTER (HAR, prompt.tail120: Mixed styles are incorrect. Style must not obscure…atomical clarity takes priority over stylistic ef, prompt.deckTokensInside: false, prompt.full: PRIMARY DIRECTIVE: Depict the scene exactly as des…atomical clarity takes priority over stylistic ef}
+console.groupEnd
+[BFL] Request: {model: flux-2-pro-preview, promptLength: 5000, images: 0, size: 1024x1024, health: healthy}
+Failed to load resource: net::ERR_FAILED
+[BFL] Attempt 1 failed (flux-2-pro-preview): Failed to fetch
+Failed to load resource: net::ERR_FAILED
+[BFL] Retry failed (flux-2-pro-preview): Failed to fetch
+[BFL] Falling back to flux-2-klein-9b-preview
+Failed to load resource: net::ERR_FAILED
+[IMAGE-GEN] {"provider":"BFL","context":"li-face-reveal","reached":false,"blockedBy":"Network","status":"FAILED","promptLength":5005,"promptPreview":"PRIMARY DIRECTIVE: Depict the scene exactly as described. Scene and anatomy rules are authoritative. SUBJECT MATTER (HAR...","timestamp":"2026-09-22T06:55:47.680Z","error":"Failed to fetch"}
+[IMAGE-GEN] {"provider":"BFL-Klein","context":"li-face-reveal","reached":true,"blockedBy":"None","status":"ATTEMPTING","promptLength":5005,"promptPreview":"PRIMARY DIRECTIVE: Depict the scene exactly as described. Scene and anatomy rules are authoritative. SUBJECT MATTER (HAR...","timestamp":"2026-09-22T06:55:47.680Z"}
+[IMAGE-GEN] {"provider":"BFL-Klein","context":"li-face-reveal","reached":false,"blockedBy":"None","status":"META","promptLength":21,"promptPreview":"styleAuthority: Genre","timestamp":"2026-09-22T06:55:47.680Z"}
+[DECK-LEAK:PROMPT-SCAN] portrait gen prompt CLEAN — no deck-related tokens detected (5005 chars)
+[BFL] Prompt truncated from 5005 to 5000 chars
+[DECK-LEAK:CACHE-SOURCE] BFL call (PORTRAIT CONTEXT) | model=flux-2-klein-9b-preview | input_images=0
+  prompt-fingerprint: PRIMARY DIRECTIVE: Depict the scene exac…clarity takes priority over stylistic ef
+[DECK-LEAK:FINGERPRINT-DUMP] portrait gen — full input snapshot (context=?)
+{prompt.length: 5000, prompt.head120: PRIMARY DIRECTIVE: Depict the scene exactly as des…tomy rules are authoritative. SUBJECT MATTER (HAR, prompt.tail120: Mixed styles are incorrect. Style must not obscure…atomical clarity takes priority over stylistic ef, prompt.deckTokensInside: false, prompt.full: PRIMARY DIRECTIVE: Depict the scene exactly as des…atomical clarity takes priority over stylistic ef}
+console.groupEnd
+[BFL] Request: {model: flux-2-klein-9b-preview, promptLength: 5000, images: 0, size: 1024x1024, health: healthy}
+Failed to load resource: net::ERR_FAILED
+[BFL] Attempt 1 failed (flux-2-klein-9b-preview): Failed to fetch
+Failed to load resource: net::ERR_FAILED
+[BFL] Retry failed (flux-2-klein-9b-preview): Failed to fetch
+[IMAGE-GEN] {"provider":"BFL-Klein","context":"li-face-reveal","reached":false,"blockedBy":"Network","status":"FAILED","promptLength":5005,"promptPreview":"PRIMARY DIRECTIVE: Depict the scene exactly as described. Scene and anatomy rules are authoritative. SUBJECT MATTER (HAR...","timestamp":"2026-09-22T06:55:47.985Z","error":"Failed to fetch"}
+[IMAGE-GEN] {"provider":"OpenAI","context":"li-face-reveal","reached":true,"blockedBy":"None","status":"ATTEMPTING","promptLength":3518,"promptPreview":"PRIMARY DIRECTIVE: Match the established graphic novel rendering style exactly. This scene must visually match prior pan...","timestamp":"2026-09-22T06:55:47.985Z"}
+[IMAGE-GEN] {"provider":"OpenAI","context":"li-face-reveal","reached":false,"blockedBy":"None","status":"META","promptLength":21,"promptPreview":"styleAuthority: Genre","timestamp":"2026-09-22T06:55:47.985Z"}
+Failed to load resource: net::ERR_FAILED
+[OpenAI] Error: Failed to fetch | attempt 1
+[CACHE] grok-4-1-fast-non-reasoning scene-planner prompt=6660 cached=192 (3%) cost=$0.0110
+[EVENT-SLOTS] scene=1 actor="Lirael" action="places The Answer back into Julian's hands" target="Julian" exit="Lirael has visibly declined to answer the Dohkar's charge before the a"
+[SCENE-ASSIGNMENT] scene=2 source=plan-scene setting=null event="Lirael returns The Answer to Julian without answering the Dohkar, visibly deflecting the c"
+[OBJECTIVE:ACCEPTED] scene 2 branch=posture actor=Lirael present=Lirael/Seren/Julian/the presiding Dohkar/the assembly — "Lirael returns The Answer to Julian without answering the Dohkar, visibly deflecting the charge and moving the pressure "
+[STAGE-ISSUER] scene 2 — proposal rejected: stage packet exceeds the continuity-spine delivery budget: rendered directive is 305 chars but only 0 chars remain after durable consequences, reader posture/history, and header/footer lines (budget 2200)
+[PLOT-CONTRACT:ENABLED] true
+[COMMITTED-STATE] scene=1 facts=0 proposed="Lirael places The Answer back in Julian's hands without spea" (pending until delivery)
+[STATE-CHANGE] scene=1 move="deflect direct response to Dohkar's charge by returning The Answer, sh"
+[STATE-CHANGE:EVENT] scene=1 :: Lirael places The Answer back in Julian's hands without speaking.
+[STATE-CHANGE:PRECOND] Lirael has not yet answered the Dohkar's charge of interference before the assembly.
+[STATE-CHANGE:FORCES] forces Lirael to choose between claiming the interference openly and letting the assembly keep its assumption
+[STATE-CHANGE:OBSERVABLE] scene=1 event-is-observable=true
+[STATE-CHANGE:BRANCHES] A="claim the interference openly before the assembly" B="remain silent and let the assembly keep its assumption"
+[STATE-CHANGE:SPECIFICITY] scene=1 GENERIC distinctive-tokens-in-event=0/0 ⚠ THEME-COLLAPSE
+[MILESTONE-TRANSITION] scene=1 transition=INIT prev="" current="(none)"
+[CG:PLANNER-GATE] REJECTED before author dispatch, scene=1 — the planner declared chosen_aftermath_lane="lirael_defensive_path" but its own proposed event/tactical-move/forces-choice/event-slots does not actually instantiate that lane's content — a declared lane label alone is not enough; the event itself must move into it, not stay inside the same ritual/interrogation moment under a borrowed label
+[CG:STALE-REJECTED] retrying once with the current branch/attempt: the planner declared chosen_aftermath_lane="lirael_defensive_path" but its own proposed event/tactical-move/forces-choice/event-slots does not actually instantiate that lane's content — a declared lane label alone is not enough; the event itself must move into it, not stay inside the same ritual/interrogation moment under a borrowed label
+[ANT-BODY-BIBLE] skipped — shape=?, antagonist=?
+[CG:SCAFFOLD] active — scene_index=1, source=unknown, issues=2
+[COMMIT-SCENE:SKIP] plan-scene=1 reason=no-prior-text priorTxtLen=0
+[SCENE-ASSIGNMENT] scene=2 source=plan-scene setting=null event="Lirael returns The Answer to Julian without answering the Dohkar, visibly deflecting the c"
+[OBJECTIVE:REUSED] scene 2 posture unchanged (ph:1jhv2pi) — no planner call: "Lirael returns The Answer to Julian without answering the Dohkar, visibly deflecting the charge and "
+[SPINE-STAGING] compiled → setting=null cast=["Lirael","Julian"]
+[PLAN-SPINE] scene=2 OBJECTIVE from authored spine: "Lirael returns The Answer to Julian without answering the Dohkar, visibly deflecting the charge and moving the"
+[SCENE-ASSIGNMENT] scene=2 source=plan-scene setting=null event="Lirael returns The Answer to Julian without answering the Dohkar, visibly deflecting the c"
+[CG:PLANNER-GATE] REJECTED before author dispatch, scene=1 — the planner declared chosen_aftermath_lane="lirael_defensive_path" but its own proposed event/tactical-move/forces-choice/event-slots does not actually instantiate that lane's content — a declared lane label alone is not enough; the event itself must move into it, not stay inside the same ritual/interrogation moment under a borrowed label
+[CG:STALE-STOP] scene 1 — retry stale: the planner declared chosen_aftermath_lane="lirael_defensive_path" but its own proposed event/tactical-move/forces-choice/event-slots does not actually instantiate that lane's content — a declared lane label alone is not enough; the event itself must move into it, not stay inside the same ritual/interrogation moment under a borrowed label — stopped; resumable; no engine switch
+Failed to load resource: net::ERR_FAILED
+[OpenAI] Error: Failed to fetch | attempt 2
+[IMAGE-GEN] {"provider":"OpenAI","context":"li-face-reveal","reached":false,"blockedBy":"NoOutput","status":"FAILED","promptLength":3518,"promptPreview":"PRIMARY DIRECTIVE: Match the established graphic novel rendering style exactly. This scene must visually match prior pan...","timestamp":"2026-09-22T06:55:48.990Z","error":"returned null"}
+[IMAGE:PIPELINE] All providers failed for context=li-face-reveal | lastError: Failed to fetch
+[IMAGE:PIPELINE] Chain: Gemini → BFL → BFL-Klein → OpenAI
+[IMAGE:SANITIZE] length: 1149 → 1131
+[IMAGE:NORMALIZE] density: 3 → 1 (early scene cap)
+[IMAGE:PURGE] removed: genital
+[VIZ:TONE] No visual ontology for tone: Earnest — using Genre style
+[4O] Skipped for portrait context (li-face-reveal) — preventing artist-ref visual cues (leather accessories, fantasy props) from being written into the prose prompt
+[ENDER-BOND:SCENE-TYPE] romance
+[ENDER-BOND:GOLDEN-MASTER] Authoritative style source + 6 supporting anchors
+[STYLE-SUFFIX] Length: 648 chars | artist=ender_bond
+[MOMENT_CACHE] MISS — caching for scene 0 (v1.0)
+[SMART-CLAMP:PROTECTED] 8623 → 5005 (prefix:3104, suffix:840)
+[IMG PROMPT] (5005 chars) PRIMARY DIRECTIVE: Depict the scene exactly as described. Scene and anatomy rules are authoritative. SUBJECT MATTER (HARD CONSTRAINT — overrides any subject-matter cues from reference images): Fantasy
+[SMART-CLAMP:PROTECTED] 8623 → 5005 (prefix:3104, suffix:840)
+[SMART-CLAMP:PROTECTED] 8623 → 5005 (prefix:3104, suffix:840)
+[SMART-CLAMP:PROTECTED] 8623 → 5005 (prefix:3104, suffix:840)
+[IMG PROMPT] (5005 chars) PRIMARY DIRECTIVE: Depict the scene exactly as described. Scene and anatomy rules are authoritative. SUBJECT MATTER (HARD CONSTRAINT — overrides any subject-matter cues from reference images): Fantasy
+[SMART-CLAMP:PROTECTED] 8623 → 5005 (prefix:3104, suffix:840)
+[SMART-CLAMP:PROTECTED] 8623 → 5005 (prefix:3104, suffix:840)
+[IMAGE:TIER] portrait → Gemini → BFL → BFL-Klein → OpenAI (Nano-Banana identity-preserving primary)
+[IMAGE-GEN] {"provider":"Gemini","context":"li-face-reveal","reached":true,"blockedBy":"None","status":"ATTEMPTING","promptLength":5005,"promptPreview":"PRIMARY DIRECTIVE: Depict the scene exactly as described. Scene and anatomy rules are authoritative. SUBJECT MATTER (HAR...","timestamp":"2026-09-22T06:55:48.993Z"}
+[IMAGE-GEN] {"provider":"Gemini","context":"li-face-reveal","reached":false,"blockedBy":"None","status":"META","promptLength":21,"promptPreview":"styleAuthority: Genre","timestamp":"2026-09-22T06:55:48.993Z"}
+[GEMINI:ENTRY] intent=portrait | visualMeta.artistKey=ender_bond | promptLen=5005
+[GEMINI:PORTRAIT] No solo_master variant for artist=ender_bond — text-only rendering
+[GEMINI:PREFIX] No references — text-only rendering
+Failed to load resource: net::ERR_FAILED
+[Gemini] Error: Failed to fetch | attempt 1

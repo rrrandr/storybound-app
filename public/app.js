@@ -169275,7 +169275,25 @@ No text, no watermark, no UI elements, share-ready.`;
         } catch (_) {}
         // Staged mode → route to staged scene advance (S6 stub for now).
         // Legacy graphic_novel mode → existing panel renderer.
-        try { if (typeof _intimateInterruptionPending === 'function' && _intimateInterruptionPending()) _commitIntimateInterruption(action, dialogue); } catch (_) {}
+        // SANITIZE-ONCE, BEFORE THE FORK (Roman 2026-09-22, second Temptation retry — a real,
+        // paid dispatch, traced not assumed): _commitIntimateInterruption sanitizes its OWN
+        // action/dialogue params (_sanitizeCommittedInterruptionText, fixing the real
+        // "action":"**" artifact) but this local `action`/`dialogue` pair ALSO flows separately,
+        // UNSANITIZED, into _advanceStagedScene below → _generateLiteraryPlotContract →
+        // _recordScenePosture → _posture.action/dialogue — which _relationalObligationForPosture
+        // matches against the LEDGER's (now sanitized) oas_interrupt entry by byte-identity. Left
+        // as two different values (raw here, sanitized in the ledger), that identity check could
+        // never match, silently disarming the relational-obligation gate for every real card
+        // submission — confirmed as the actual cause when Temptation attempt 6's real dispatch
+        // showed a planner reply missing li_pressure_actor sail through ACCEPTED. Sanitizing HERE,
+        // once, before either consumer, keeps both paths looking at the identical committed text.
+        var _intrPending = false;
+        try { _intrPending = (typeof _intimateInterruptionPending === 'function' && _intimateInterruptionPending()); } catch (_) {}
+        if (_intrPending && typeof _sanitizeCommittedInterruptionText === 'function') {
+          action = _sanitizeCommittedInterruptionText(action);
+          dialogue = _sanitizeCommittedInterruptionText(dialogue);
+        }
+        try { if (_intrPending) _commitIntimateInterruption(action, dialogue); } catch (_) {}
         var _advancePromise;
         if (_isStagedMode()) {
           _advancePromise = _advanceStagedScene(action, dialogue);
