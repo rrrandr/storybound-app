@@ -51096,6 +51096,23 @@ AESTHETIC: Polished editorial illustration. The object's compromised state reads
   }
   window._detectMinorSignal = _detectMinorSignal;
 
+  // ── SELF-HARM SIGNAL DETECTOR (2026-09-22) ─────────────────────────
+  // Extracted from sanitizeWishInput's own inline self-harm regex (was
+  // duplicated nowhere until now — this makes it a shared, callable
+  // detector instead of logic trapped inside one function's reject-only
+  // branch, the same "single source of truth" move already applied to
+  // _detectMinorSignal/_detectGibberish elsewhere in this file). Same
+  // pattern, unchanged — sanitizeWishInput now calls this instead of
+  // re-testing its own copy, so there is exactly one place this regex
+  // can drift. Generic: any Storybound surface may call this, not
+  // First-Sacrifice-specific.
+  function _detectSelfHarmSignal(text) {
+    if (!text) return null;
+    var m = String(text).match(/\b(kill\s+(myself|me)|i\s+want\s+to\s+die|suicide|self.?harm|cut\s+(myself|my\s+wrists)|end\s+(my|it\s+all)\s+life)\b/i);
+    return m ? { matched: m[0], label: 'self-harm / suicide' } : null;
+  }
+  window._detectSelfHarmSignal = _detectSelfHarmSignal;
+
   // Shared rejection handler — explains what was caught, leaves the
   // user on the describe step so they can edit (not auto-cleared, in
   // case they have a long description to revise).
@@ -106132,6 +106149,7 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
 
       return t.trim();
   }
+  window.sanitizeShortInput = sanitizeShortInput;
 
   // ═══════════════════════════════════════════════════════════════════
   // SHARED WISH INPUT SANITIZER — runs before petition AND tempt validation
@@ -106200,8 +106218,8 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
           return { text: '', valid: false };
       }
 
-      // ── Self-harm / suicide ──
-      if (/\b(kill\s+(myself|me)|i\s+want\s+to\s+die|suicide|self.?harm|cut\s+(myself|my\s+wrists)|end\s+(my|it\s+all)\s+life)\b/i.test(t)) {
+      // ── Self-harm / suicide (shared detector — see _detectSelfHarmSignal) ──
+      if (_detectSelfHarmSignal(t)) {
           return { text: '', valid: false };
       }
 
@@ -106231,6 +106249,7 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
 
       return { text: t, valid: true };
   }
+  window.sanitizeWishInput = sanitizeWishInput;
 
   function validatePetitionText(text) {
       if (!text || text.length < 5) return { valid: false };
@@ -125397,6 +125416,30 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
     return sanitized;
   }
 
+  // ── HATE-SPEECH SIGNAL DETECTOR (2026-09-22) ────────────────────────
+  // Detect-only companion to _sanitizeHateSpeech above — reuses the SAME
+  // _BANNED_SLUR_PATTERNS list (single source of truth; no separate
+  // pattern set to drift) but returns a match instead of redacting, for
+  // callers (like the Say/Do safety gate below) that need to REJECT a
+  // submission outright rather than silently launder it with
+  // "[redacted]" and let the rest through. _sanitizeHateSpeech itself is
+  // untouched — its existing Narrative-Marketplace-diary consumer keeps
+  // its own redact-and-continue behavior. Uses .match() (not .test/.exec)
+  // deliberately: these patterns carry the /g flag for _sanitizeHateSpeech's
+  // replace-all use, and .test()/.exec() on a /g regex mutate and persist
+  // lastIndex across calls, causing an intermittent skip-every-other-call
+  // false negative; .match() does not carry that hazard.
+  function _detectHateSpeechSignal(text) {
+    if (!text) return null;
+    var t = String(text);
+    for (var i = 0; i < _BANNED_SLUR_PATTERNS.length; i++) {
+      var m = t.match(_BANNED_SLUR_PATTERNS[i]);
+      if (m && m.length) return { matched: m[0], label: 'hate speech / slur' };
+    }
+    return null;
+  }
+  window._detectHateSpeechSignal = _detectHateSpeechSignal;
+
   // Gibberish detection: >40% repeated chars or >40% punctuation/symbols
   function _detectGibberish(text) {
     if (!text) return { gibberish: false };
@@ -125463,6 +125506,89 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
 
     return { gibberish: false };
   }
+  window._detectGibberish = _detectGibberish;
+
+  // ── SAY/DO ADVERSARIAL-INPUT SAFETY GATE (2026-09-22) ───────────────────
+  // Roman, after the five-Fate-card capability sweep proved good-faith branches
+  // work: "We have not proved the system survives hostile, confused, horny,
+  // meta, weak, or world-breaking user input... Wire or adapt the existing
+  // minor sexual-content, hate/harassment, self-harm, and gibberish checks
+  // into the Fate-card / custom Say-Do interruption commit path before those
+  // inputs reach planner or author prompts." Generic — this is Storybound's
+  // shared Say/Do commit path, not First-Sacrifice-specific; any starter using
+  // the same gnActionInput/gnDialogueInput Submit flow gets this.
+  //
+  // TRACED (dry, this pass): the CG Submit handler (~gnSubmitBtn click, calls
+  // sanitizeShortInput on both fields) is the ONLY sanitization the Fate-card/
+  // custom Say/Do path receives today — injection/jailbreak/fourth-wall reject,
+  // real-person/franchise-name scrub. It does NOT call _detectMinorSignal,
+  // _detectSelfHarmSignal, _detectHateSpeechSignal, or _detectGibberish — those
+  // exist and are real, but are wired only to character-look/portrait fields,
+  // the Petition/Tempt wish box, and the Narrative-Marketplace diary surface
+  // respectively (see _adversarial_input_test_plan_2026_09_22.md). A separate,
+  // unrelated Say/Do-shaped validator for THAT diary surface,
+  // validateExpSayDo (~123998), already combines exactly these categories —
+  // useful precedent for this shape of gate, but scoped to forbidden-book ids
+  // and not callable here.
+  //
+  // DESIGN — four buckets, not one blanket reject (Roman: "preserve useful
+  // player agency... do not simply reject every weak, weird, or emotional
+  // input"):
+  //   1. HARD-BLOCK / safety redirect — minor sexual content, self-harm, hate
+  //      speech. Submit refused outright, a clear message shown, NOTHING
+  //      committed to the ledger, so the exact unsafe text never reaches the
+  //      planner or author. Matches the existing _detectMinorSignal precedent
+  //      (character-look fields): abort with a clear message, let the reader
+  //      edit and resubmit.
+  //   2. Graceful in-world fallback — gibberish. Submit is NOT blocked (the
+  //      player isn't punished for a typo-storm or an accidental keyboard
+  //      mash); the specific gibberish field is replaced with a short, generic,
+  //      deterministic placeholder describing a wordless/confused beat, and
+  //      THAT commits instead of the literal nonsense text. This is
+  //      substitution to a neutral, non-authored placeholder (matching the
+  //      existing Safe-Mode explicit-content fade's own precedent of
+  //      substituting a neutral line rather than generating new prose) — not
+  //      model authorship, so it doesn't cross the "a validator that rewrites
+  //      is a competing author" line the same way an LLM rewrite would.
+  //   3. Usable emotional posture / 4. safe literal input — weak responses
+  //      ("I don't know", "whatever", "...") and in-register adult content are
+  //      NOT touched by this gate at all; they pass through exactly as today,
+  //      unmodified, and keep reaching the relational-obligation /
+  //      causal-legibility machinery this session already built. No new check
+  //      needed for these two buckets — see the dry control for proof.
+  //
+  // Wall-breaking/meta input is deliberately OUT OF SCOPE for this pass — the
+  // existing sanitizeShortInput fourth-wall reject-to-empty already keeps it
+  // out of canon (see the test plan's category 2); Roman's priority list for
+  // this pass is minor/hate/self-harm/gibberish only. A dry CONTROL below
+  // proves current wall-breaking behavior without changing it.
+  function _detectSayDoSafetySignal(text) {
+    if (!text) return null;
+    var minor = (typeof _detectMinorSignal === 'function') ? _detectMinorSignal(text) : null;
+    if (minor) return { category: 'minor', matched: minor.matched, label: minor.label, message: 'This can\'t include a minor. Please rephrase — you\'re welcome to keep going with an adult (18+) subject.' };
+    var selfHarm = (typeof _detectSelfHarmSignal === 'function') ? _detectSelfHarmSignal(text) : null;
+    if (selfHarm) return { category: 'self-harm', matched: selfHarm.matched, label: selfHarm.label, message: 'This can\'t be submitted as written. If you\'re going through something difficult, please reach out to someone you trust or a crisis line — and feel free to rephrase and continue the story when you\'re ready.' };
+    var hate = (typeof _detectHateSpeechSignal === 'function') ? _detectHateSpeechSignal(text) : null;
+    if (hate) return { category: 'hate-speech', matched: hate.matched, label: hate.label, message: 'This can\'t be submitted as written. Please rephrase.' };
+    return null;
+  }
+  window._detectSayDoSafetySignal = _detectSayDoSafetySignal;
+
+  // Generic, deterministic, non-authored placeholders — deliberately short,
+  // world-agnostic (no Fatelands/First-Sacrifice vocabulary), and free of any
+  // markdown wrapper so _sanitizeCommittedInterruptionText has nothing to
+  // strip. Substituted ONLY for the specific field that failed the gibberish
+  // check; a clean sibling field is left untouched.
+  var _SAYDO_GIBBERISH_ACTION_FALLBACK = 'a beat of dazed, wordless hesitation';
+  var _SAYDO_GIBBERISH_DIALOGUE_FALLBACK = 'a confused, wordless sound that never resolves into words';
+  function _sayDoGibberishFallback(text, kind) {
+    if (!text || typeof _detectGibberish !== 'function') return text;
+    var g = _detectGibberish(text);
+    if (!g.gibberish) return text;
+    try { console.log('[SAYDO:GIBBERISH] ' + kind + ' replaced with a graceful fallback — reason: ' + g.reason); } catch (_) {}
+    return kind === 'action' ? _SAYDO_GIBBERISH_ACTION_FALLBACK : _SAYDO_GIBBERISH_DIALOGUE_FALLBACK;
+  }
+  window._sayDoGibberishFallback = _sayDoGibberishFallback;
 
   // ── PII Sanitization — redact personal info from user input ──
   // Applied only to user Say/Do input, never to engine-generated narrative.
@@ -169460,6 +169586,30 @@ No text, no watermark, no UI elements, share-ready.`;
         }
         var action = sanitizeShortInput(document.getElementById('gnActionInput')?.value || '', 2000);
         var dialogue = sanitizeShortInput(document.getElementById('gnDialogueInput')?.value || '', 2000);
+        // ── SAY/DO SAFETY GATE (2026-09-22) — see _detectSayDoSafetySignal's own
+        // header comment for the full design. Hard-block (minor/self-harm/hate)
+        // refuses Submit outright before anything commits; gibberish gets a
+        // graceful, non-authored placeholder substituted per-field instead of
+        // blocking. Runs on the already-sanitizeShortInput'd text (injection/
+        // real-person/franchise scrubbing has already happened by this point;
+        // none of those transforms could hide or manufacture a minor/self-harm/
+        // hate/gibberish signal, so checking the sanitized output is safe).
+        try {
+          var _sdSafety = (typeof _detectSayDoSafetySignal === 'function')
+            ? (_detectSayDoSafetySignal(action) || _detectSayDoSafetySignal(dialogue))
+            : null;
+          if (_sdSafety) {
+            try { console.warn('[SAYDO:SAFETY] blocked category=' + _sdSafety.category + ' matched="' + _sdSafety.matched + '"'); } catch (_) {}
+            if (typeof showToast === 'function') showToast(_sdSafety.message);
+            return;
+          }
+          if (typeof _sayDoGibberishFallback === 'function') {
+            action = _sayDoGibberishFallback(action, 'action');
+            dialogue = _sayDoGibberishFallback(dialogue, 'dialogue');
+          }
+        } catch (_sdErr) {
+          try { console.warn('[SAYDO:SAFETY] gate threw, allowing through unmodified:', _sdErr && _sdErr.message); } catch (__) {}
+        }
         // ── ALT POV INPUT BYPASS ──
         // Alt POV is a read-only companion narrative — no typed input
         // required. Don't gate on action/dialogue presence.
