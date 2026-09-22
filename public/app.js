@@ -129575,6 +129575,111 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
   function _sceneLedgerRestamp(json, newStoryId) {
     try { var L = JSON.parse(json); if (!L || !Array.isArray(L.entries)) return null; L.storyId = String(newStoryId || ''); L.entries = L.entries.map(function (e) { return Object.freeze(e); }); return L; } catch (_) { return null; }
   }
+  // LIVE HANDOFF CONTEXT — shared for literary + CG (Roman 2026-09-22)
+  // Roman: "the earlier OAS exchange and the final Fate-card submission are separate events. Both
+  // should reach the author in order, with the player's final edited submission authoritative...
+  // Give the continuation author an ordered account of the completed OAS exchange and the final
+  // submitted Say/Do, including its selected posture. Use the existing persisted OAS snapshots and
+  // committed submission records. Preserve exact player wording and distinguish earlier actions
+  // from the latest submission; a card preview or click must not replace interaction history or
+  // become a committed action before Submit. Carry the accepted planner's relevant posture
+  // interpretation into author context as interpretation, subordinate to the actual player input
+  // and canon... Apply this through shared continuation context for literary and CG wherever
+  // applicable."
+  //
+  // Real finding this closes (see _scene2_temptation_attempt4_omission_trace_2026_09_22.md): the
+  // author's dispatch never received the OAS-turn gaze/hands-folded exchange that preceded the
+  // Fate-Card interruption. state._playerImpactRead is overwritten wholesale by the Fate-Card
+  // submission (both a real OAS turn and a card click/submit route through the SAME generic
+  // per-turn pipeline), discarding the earlier, richer turn before the author ever reads it.
+  //
+  // Three sources, each already durable and already proven — nothing new is invented here:
+  //   1. state._oasSceneSnapshots — written by _resolveIntimacyScene BEFORE it nulls
+  //      state.intimacyDialogue, specifically so Back-nav can replay the scene. The SAME source
+  //      the open-row planner's own "RECENT OAS EXCHANGE" block already reads (2026-09-20) — that
+  //      block proved the mechanism works; this reuses it for the author, which never had it.
+  //   2. The scene ledger's most recent `oas_interrupt` entry — written ONLY by
+  //      _commitIntimateInterruption, which fires ONLY on Submit (r.action/r.dialogue are set
+  //      there, distinct from r.draft/r.selectedSlot which a card CLICK sets and which the player
+  //      may still change before Submit — a click never reaches the ledger, only a commit does).
+  //      This is the SAME entry _buildContinuitySpineBlock's own STORY LEDGER already renders when
+  //      budget allows; restated here, unconditionally, specifically so this ordered account never
+  //      depends on that budget-managed history window still having room for it.
+  //   3. state._sceneObjectives[<latest>].posture_read / .stateChange.lanePostureModulation — the
+  //      accepted planner's own synthesis of 1+2, carried explicitly as INTERPRETATION, last and
+  //      subordinate — never a substitute for what she actually said or did, and never grounds for
+  //      inventing a detail neither 1 nor 2 gave.
+  //
+  // Called from _buildContinuitySpineBlock — the ONE builder every real author path already calls
+  // (traced: CG ~line 223287, literary continuation ~line 309512 and ~line 314284) — not a new,
+  // isolated First-Sacrifice-specific directive. Appended AFTER that function's own
+  // _SPINE_MAX_CHARS safety-truncation, deliberately: this content is small and bounded (one
+  // scene's worth of exchange, never growing) unlike the ledger's own history, so it never
+  // competes with that budget and is never the thing a truncation could cut mid-sentence.
+  function _buildLiveHandoffDirective(s) {
+    try {
+      s = s || window.state; if (!s) return '';
+      var lines = [];
+
+      // 1. THE COMPLETED OAS EXCHANGE — earlier turns, already happened.
+      try {
+        var snaps = s._oasSceneSnapshots || {};
+        var snapKeys = Object.keys(snaps).map(Number).filter(function (n) { return !isNaN(n); }).sort(function (a, b) { return b - a; });
+        var latestSnap = snapKeys.length ? snaps[String(snapKeys[0])] : null;
+        var beats = (latestSnap && Array.isArray(latestSnap.beats)) ? latestSnap.beats : [];
+        if (beats.length) {
+          var exch = [];
+          beats.slice(-4).forEach(function (b) {
+            if (!b) return;
+            // PRESERVE EXACT PLAYER WORDING (Roman 2026-09-22) — pcSay/pcDo are the POST-TRANSMUTE
+            // strings the live UI showed (world-register prose); pcSayRaw/pcDoRaw are the player's
+            // own literal, untransmuted words (see the archive-builder's own comment, ~line 200042:
+            // "userInput is the post-transmute string... userInputRaw is original"). The open-row
+            // planner's own earlier "RECENT OAS EXCHANGE" block (2026-09-20) read the transmuted
+            // pair — fine for that block's purpose, but this one must show what she actually typed.
+            var sd = [(b.pcSayRaw || b.pcSay), (b.pcDoRaw || b.pcDo)].filter(Boolean).join(' / ');
+            if (sd) exch.push('  PLAYER: ' + sd);
+            if (b.liDialogue) exch.push('  ' + (latestSnap.liName || 'LI') + ': ' + String(b.liDialogue));
+          });
+          if (exch.length) lines.push('1. EARLIER IN THIS LIVE EXCHANGE (already happened, archived before handoff — respond to its consequences; do not restage or re-answer a question already answered here):\n' + exch.join('\n'));
+        }
+      } catch (_) {}
+
+      // 2. THE FINAL SUBMITTED SAY/DO, WITH POSTURE — authoritative. Sourced from the ledger's
+      // own committed oas_interrupt entry (written only at Submit, never at a card click/preview).
+      try {
+        var L2 = (typeof _sceneLedgerGet === 'function') ? _sceneLedgerGet(s, false) : null;
+        var entries2 = (L2 && Array.isArray(L2.entries)) ? L2.entries : [];
+        var lastInterrupt = null;
+        for (var i2 = entries2.length - 1; i2 >= 0; i2--) { if (entries2[i2] && entries2[i2].kind === 'oas_interrupt') { lastInterrupt = entries2[i2]; break; } }
+        if (lastInterrupt && (lastInterrupt.act || lastInterrupt.dia)) {
+          var postureLabel = lastInterrupt.posture || '';
+          try { var slot2 = (typeof _INTR_SLOTS !== 'undefined') ? _INTR_SLOTS.filter(function (sl) { return sl.key === lastInterrupt.posture; })[0] : null; if (slot2) postureLabel = slot2.label; } catch (_) {}
+          var bits2 = [];
+          if (lastInterrupt.act) bits2.push('action: "' + lastInterrupt.act + '"');
+          if (lastInterrupt.dia) bits2.push('dialogue: "' + lastInterrupt.dia + '"');
+          lines.push('2. THE READER\'S FINAL SUBMITTED SAY/DO (authoritative — this is what actually happened LAST; her own literal words at the moment she pressed Submit, never a card\'s own suggested text if she edited it. Your scene must respond to this and move beyond it, never restage it' + (postureLabel ? ', answered from a posture of ' + postureLabel : '') + '): ' + bits2.join(' · '));
+        }
+      } catch (_) {}
+
+      // 3. THE ACCEPTED PLANNER'S POSTURE READING — interpretation only, last and subordinate.
+      try {
+        var objKeys = Object.keys(s._sceneObjectives || {}).map(Number).filter(function (n) { return !isNaN(n); }).sort(function (a, b) { return b - a; });
+        var latestObj = objKeys.length ? s._sceneObjectives[String(objKeys[0])] : null;
+        var pr = (latestObj && latestObj.posture_read) ? String(latestObj.posture_read).trim() : '';
+        var lpm = (latestObj && latestObj.stateChange && latestObj.stateChange.lanePostureModulation) ? String(latestObj.stateChange.lanePostureModulation).trim() : '';
+        var interp = [];
+        if (pr) interp.push(pr);
+        if (lpm && lpm !== pr) interp.push(lpm);
+        if (interp.length) lines.push('3. THE PLANNER\'S POSTURE READING (interpretation only — a lens on 1 and 2 above, subordinate to the reader\'s own words and to canon; never a substitute for what she actually said or did, and never grounds for inventing a detail 1 or 2 did not give you): ' + interp.join(' '));
+      } catch (_) {}
+
+      if (!lines.length) return '';
+      return '\n\nLIVE HANDOFF, IN ORDER (HARD — what actually happened in this live exchange, oldest to newest; respond to its consequences, never restage it):\n' + lines.join('\n\n') + '\n';
+    } catch (_) { return ''; }
+  }
+  try { if (typeof window !== 'undefined') window._buildLiveHandoffDirective = _buildLiveHandoffDirective; } catch (_) {}
+
   // The block every author path receives. Same text on every path; '' when nothing is authoritative.
   // opts.includeStage (default true): pass {includeStage:false} to measure "everything else"
   // (header/who/durable/history/now) WITHOUT the current stage occupying its own headroom — this
@@ -129594,7 +129699,11 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       if (opts.includeStage !== false) {
         try { stageBlock = (typeof _buildCurrentStageDirective === 'function') ? (_buildCurrentStageDirective(s) || '') : ''; } catch (_) { stageBlock = ''; }
       }
-      if (!entries.length && !durable && !stageBlock) return '';
+      // Computed here, BEFORE the early-return below, so a live handoff with nothing else
+      // authoritative to say (no ledger entries yet, no durable consequence, no stage) still
+      // reaches the author instead of being silently dropped by that guard.
+      var handoffBlock = ''; try { handoffBlock = _buildLiveHandoffDirective(s) || ''; } catch (_) { handoffBlock = ''; }
+      if (!entries.length && !durable && !stageBlock && !handoffBlock) return '';
       // Verified facts: written ONLY by the runtime verifier when a declared state change was DELIVERED
       // on the page (slot-checked against the prose). Keyed by the scene it was committed at.
       var verifiedBy = {};
@@ -129660,6 +129769,12 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       // sizing is pre-existing and out of this slice's scope) already exceeds the budget with ZERO
       // history shown. Stage sizing cannot cause this — the validator guarantees it fits.
       if (out.length > _SPINE_MAX_CHARS) out = out.slice(0, _SPINE_MAX_CHARS - 2) + '…\n';
+      // Appended AFTER the truncation safety net above, deliberately — see _buildLiveHandoffDirective's
+      // own comment: this content is small/bounded (one scene's live exchange, never growing) and must
+      // never be the thing a length-based truncation cuts mid-sentence, nor compete with the ledger
+      // history's own budget. It DOES still count toward opts.includeStage:false's "everything else"
+      // measurement (correct: a stage proposal's real remaining room must account for it too).
+      out += handoffBlock;
       return out;
     } catch (_) { return ''; }
   }
