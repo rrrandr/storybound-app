@@ -380,3 +380,25 @@ structurally): `_scene2_lirael_defensive_path_lane_semantics_control.mjs` (22/22
 **Status**: dry fix only. Temptation may now be retried or revalidated under the corrected gate +
 prompt — not yet done, pending separate authorization. Silence and Confession remain untested and
 unauthorized. No image work of any kind.
+
+## Addendum — Temptation attempt 4: first full end-to-end draft, real cost $0.1449127 (2026-09-21)
+
+Roman: "Now a full Temptation test is worthwhile... Treat gate acceptance as mechanical evidence
+only... Do not repair or resample after this operation." Ran once. **The gate accepted the plan for
+the first time and the author ran** — real landed defensive action (conceals the mouth-band),
+genuine institutional escalation (the Dohkar's dialogue sharpens from procedural to direct demand),
+correct forced-choice ending matching the seed's decision axis, continuity preserved. Honest
+weakness found on independent evaluation (not a gate signal): Julian's engagement is passive
+throughout — the reader's own chosen physical beat (holding his gaze) is not delivered — independently
+corroborated by the pipeline's own separate "emotional gravity" auditor (`desire_verdict: "COLD"`).
+
+A scope finding: one of the four physical calls ($0.0452025, ~31% of total cost) was an
+**image-style-extraction** call via gpt-4o, outside this run's explicit "no image-style extraction"
+authorization — the harness's real-path allowlist was not audited against that new clause before
+running. No image was actually generated. Not repaired this pass, per "do not repair or resample" —
+reported directly instead. Full account: `_scene2_capability_temptation_attempt4_report_2026_09_21.md`.
+Full human read-through PDF generated automatically:
+`~/Desktop/First_Sacrifice_Scene2_Temptation_Attempt4_ReadThrough.pdf`.
+
+**Status**: this concludes the authorized Temptation run. No repair, no resample, no further
+Temptation retry this pass. Silence, Confession, and images remain untouched and unauthorized.
