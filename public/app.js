@@ -99615,7 +99615,7 @@ function _buildAuthorFloorDirective(s) {
               : '\n  SCENE SPINE — THE STATE CHANGE (HARD; what must BECOME TRUE by the end — the causal delta of the event above, not a competing event):\n')
           + (_sc.precondition ? '  • BEFORE (still FALSE at the first line — OPEN with this unresolved and establish it as not-yet-true): ' + _sc.precondition + '\n' : '')
           + '  • THE EVENT — stage THIS EXACT event as a concrete on-page MOMENT, witnessed, in motion (a sound, a movement, a body reacting, an object changing). SHOW what physically HAPPENS; NEVER render it as a flat summary or an abstract label that announces its meaning. FORBIDDEN shapes: "a sudden shift reveals a hidden thread…", "the fracture becomes visible, revealing a deeper truth…", "a change in the atmosphere…". The event to stage: ' + _sc.event + '\n'
-          + (_causalLinkPlanTrigger(_sc) ? '  • CAUSAL LEGIBILITY (HARD — this scene\'s own BEFORE condition is framed around someone\'s silence, refusal, restraint, or concealment, not an unrelated development): dramatize the event above as landing BECAUSE of that non-action, not merely AFTER it. Do not simply sequence them ("she said nothing. Then the review was set.") — bind them: a beat, a look, a line of dialogue, or blocking that ties the response to what was withheld, so the reader feels the causal thread even without the word "because." A response that reads as routine business that would have happened regardless is a FAILURE here, even if everything else in the scene is well-written.\n' : '')
+          + (_causalLinkPlanTrigger(_sc, state) ? '  • CAUSAL LEGIBILITY (HARD — this scene\'s own BEFORE condition is framed around someone\'s silence, refusal, restraint, or concealment, not an unrelated development): dramatize the event above as landing BECAUSE of that non-action, not merely AFTER it. Do not simply sequence them ("she said nothing. Then the review was set.") — bind them: a beat, a look, a line of dialogue, or blocking that ties the response to what was withheld, so the reader feels the causal thread even without the word "because." A response that reads as routine business that would have happened regardless is a FAILURE here, even if everything else in the scene is well-written.\n' : '')
           + _afterLine
           + (_sc.forces_choice ? '  • THE UNRESOLVED PRESSURE this unlocks (the CLOSING beat, reached through the event\'s aftermath; it exists ONLY because the event happened). Land it in ONE of two diegetic shapes — whichever the scene has earned: (a) a choice the POV character is now cornered into and has not yet made, or (b) a LINE OR ACT FROM ANOTHER CHARACTER — most often the love interest — that DEMANDS a response she has not given by the last sentence. Shape (b) does not require her to deliberate; it requires that the reader feel the answer is owed. NEVER address the player, never end on a bare imperative or question to the reader (\'Decide.\' / \'What will you do?\'), and never name the choice as a choice. The pressure: ' + _sc.forces_choice + '\n' : '')
           + ((typeof window !== 'undefined' && window._structuredEventHandoff === true && _sc.slots && _sc.slots.exitState)
@@ -99647,53 +99647,110 @@ function _buildAuthorFloorDirective(s) {
   }
   window._buildPlotContractDirective = _buildPlotContractDirective;
 
-  // ── CONSEQUENCE-DRIVING NON-ACTION — CAUSAL LEGIBILITY (2026-09-22) ────────────────────
+  // ── CONSEQUENCE-DRIVING NON-ACTION — CAUSAL LEGIBILITY (2026-09-22, retuned same day) ──
   // Roman, after Silence attempt 1 (real paid): "the planner carried the intended Silence
   // frame... The failure is in the authored beats: the procedure happens after the silence,
   // but the prose does not make it legible that it happens because of the silence." Generic
-  // across starters and Fate-card slots (and custom submissions) — reads only the accepted
-  // plan's own generic stateChange fields, never a story-specific eventFrame/lane id. Two
-  // parts:
-  //   1. _causalLinkPlanTrigger(sc) — pure detector: does THIS accepted scene's own
-  //      PRECONDITION (deliberately precondition ONLY, not event/tactical_move — see below)
-  //      describe a non-action (silence/refusal/restraint/concealment/non-answer)?
-  //      _buildPlotContractDirective above injects a HARD generation-time directive when it
-  //      fires, requiring the response to be dramatized as CAUSED by that non-action, not
-  //      merely sequenced after it.
-  //   2. _causalLinkBeatsCoOccurrence(beats, sc) — diagnostic-only (never rejects, never
+  // across starters and Fate-card slots (and custom submissions). Two parts:
+  //   1. _causalLinkPlanTrigger(sc, s) — pure detector, PRIMARY signal FIRST: does this
+  //      story's own RESOLVED lane/event-frame (_resolveStarterEventFrame — the same generic,
+  //      deterministic mechanism the planner prompt and the lane-instantiation gate already
+  //      use) itself describe the event as a response to a non-action, via
+  //      _causalLinkFrameTrigger below? If so, fires regardless of how the planner happened to
+  //      phrase state_change_precondition this run. FALLS BACK to scanning the accepted plan's
+  //      own PRECONDITION (never event/tactical_move — see below) only when no frame resolves
+  //      at all (a starter without this system, or a custom/no-card submission).
+  //      _buildPlotContractDirective above injects a HARD generation-time directive when
+  //      either fires, requiring the response to be dramatized as CAUSED by the non-action,
+  //      not merely sequenced after it.
+  //   2. _causalLinkBeatsCoOccurrence(beats, sc, s) — diagnostic-only (never rejects, never
   //      rewrites — a validator that rewrites is a competing author; and there is no retry
   //      path after a full paid author call to reject into anyway). A coarse, HONEST proxy:
   //      does any single authored beat's text contain BOTH a non-action term and a generic
   //      institutional/social-response term? Presence is a necessary-but-not-sufficient
   //      signal (bare juxtaposition is not proof of dramatized causation); ABSENCE across
-  //      every beat is strong evidence the scene never bound the two threads together at
-  //      all — exactly Silence attempt 1's real failure (beats 0-1 establish the silence,
-  //      beats 4/6/10 are pure procedure, and no single beat ever holds both). Deliberately
-  //      NOT a "because"/"since" phrase regex — that would reward a model that inserts the
-  //      bare connector word without earning it, and penalize genuine causation dramatized
-  //      through blocking/imagery/timing alone.
+  //      every beat is strong evidence the scene never bound the two threads together at all
+  //      (exactly Silence attempts 1 and 2's real failure). Deliberately NOT a "because"/
+  //      "since" phrase regex — that would reward a model that inserts the bare connector
+  //      word without earning it, and penalize genuine causation dramatized through blocking/
+  //      imagery/timing alone.
   //
-  // WHY PRECONDITION ONLY (found during dry proof, not assumed): an earlier draft scanned
-  // precondition + event + tactical_move together, and false-triggered on Temptation attempt
-  // 11's own real, already-proven-good plan — its tactical_move reads "...concealing her
-  // personal stake in the wish from the Dohkar and assembly," which matches the non-action
-  // vocabulary below, but that concealment is the MANNER of Lirael's own landed action, not a
-  // preceding non-action a separate event is responding to. precondition is structurally
-  // different: the app's own planner prompt defines it as "the ONE fact that is FALSE /
-  // not-yet-true when the scene begins" — i.e., it is ALWAYS the standing "before" condition
-  // the event resolves. Checking precondition specifically asks the right question ("is the
-  // condition this scene answers a non-action?") without being tripped by an action verb that
-  // merely happens to share vocabulary with withholding.
+  // TWO REAL FALSE-POSITIVE CATCHES, BOTH FOUND DURING DRY PROOF, NEITHER ASSUMED IN ADVANCE:
+  //
+  // (a) precondition-vs-event/tactical_move (Silence attempt 1's fix): an earlier draft
+  //     scanned precondition + event + tactical_move together and false-triggered on
+  //     Temptation attempt 11's own real, already-proven-good plan — its tactical_move reads
+  //     "...concealing her personal stake in the wish from the Dohkar and assembly," matching
+  //     non-action vocabulary, but that concealment is the MANNER of Lirael's own landed
+  //     action, not a preceding non-action a separate event responds to. precondition is
+  //     structurally different — the planner prompt defines it as "the ONE fact that is FALSE
+  //     / not-yet-true when the scene begins," always the standing "before" condition.
+  //
+  // (b) precondition-only was then proven too NARROW (Silence attempt 2, real paid data): the
+  //     SAME underlying silence-driven scene produced a precondition worded "No preliminary
+  //     review date... has been announced" — no trigger vocabulary — even though tactical_move
+  //     ("Dohkar breaks charged silence..."), posture_read, and li_pressure_actor all still
+  //     clearly described a silence-driven scene. Roman: "make the trigger read the resolved
+  //     event-frame / lane metadata first... if the required frame itself defines the scene as
+  //     a response to silence... the author should receive CAUSAL LEGIBILITY regardless of how
+  //     the planner phrases state_change_precondition." Moved detection to the RESOLVED FRAME
+  //     (the starter's own eventFrameBySlot/defaultEventFrame text, deterministic and
+  //     independent of the planner's per-run phrasing) as the primary signal.
+  //
+  //     But the frame's OWN text is not automatically safe either: re-checked against
+  //     Temptation's real eventFrame BEFORE trusting this — it reads "...she actively CONCEALS
+  //     a SPECIFIC fact..." — non-action vocabulary again, in the SAME field this fix now
+  //     reads as primary. A bare vocabulary scan of eventFrame text would have reopened
+  //     exactly the false positive (a) already closed. The actual distinguishing signal:
+  //     Silence's eventFrame contains an explicit CAUSAL-STRUCTURE connector ("...IS WHAT
+  //     PROMPTS the presiding Dohkar..."); Temptation's contains none (no prompts/causes/
+  //     triggers/provokes/"in response to" anywhere in its text — confirmed by direct read,
+  //     not assumed). So the frame-based trigger requires BOTH a non-action term AND a causal
+  //     connector within the SAME eventFrame text — this is checking the STARTER DESIGNER'S
+  //     OWN small, finite, deliberately-authored lane text, not a live model's freeform output,
+  //     so requiring a connector phrase here is a materially different (and much less brittle)
+  //     bar than the "no because/since in the model's prose" rule that governs part 2 above.
   var _CAUSAL_NON_ACTION_RX = /\b(silen(?:ce|t)|withh(?:eld|olding|olds?)|refus(?:e|es|ed|al)|restrain(?:t|ed|ing)?|conceal(?:s|ed|ment|ing)?|non-answer|unanswered|says? nothing|said nothing|remains? silent|remained silent|stays? silent|stayed silent|does(?:n't| not) (?:speak|answer)|did(?:n't| not) (?:speak|answer)|holds? (?:her|his|their) tongue|held (?:her|his|their) tongue)\b/i;
+  var _CAUSAL_TRIGGER_CONNECTOR_RX = /\b(prompts?|causes?|triggers?|provokes?|in response to|is what (?:prompts|causes|triggers))\b/i;
   var _CAUSAL_RESPONSE_RX = /\b(review|hearing|tribunal|inquiry|inquest|investigation|procedure|procedural|announce[sd]?|ruling|ruled|rules|verdict|sentence[sd]?|convene[sd]?|authority|orders?|ordered|decree[sd]?|summons|summoned|judg?ment|charge[sd]?|sanction(?:s|ed)?|penalty|penalized|demands?|demanded)\b/i;
-  function _causalLinkPlanTrigger(sc) {
+  // Pure classifier — takes a RAW event-frame text string directly (no story/state lookup),
+  // so it is testable on its own with any world's vocabulary. This is what actually decides
+  // "does this frame describe a non-action causing a response," independent of which starter
+  // or lane resolved it.
+  function _causalLinkFrameTextTrigger(eventFrameText) {
+    if (!eventFrameText) return null;
+    var _txt = String(eventFrameText);
+    var _na = _txt.match(_CAUSAL_NON_ACTION_RX);
+    if (_na && _CAUSAL_TRIGGER_CONNECTOR_RX.test(_txt)) return _na[0];
+    return null;
+  }
+  window._causalLinkFrameTextTrigger = _causalLinkFrameTextTrigger;
+  // PRIMARY — resolves the live story's own lane/event-frame metadata (generic: any starter
+  // that declares aftermathLanes + eventFrameBySlot/defaultEventFrame gets this; a starter
+  // without that system returns null here and _causalLinkPlanTrigger falls back to
+  // precondition alone), then delegates the actual text classification to the pure function
+  // above.
+  function _causalLinkFrameTrigger(s) {
+    try {
+      s = s || (typeof window !== 'undefined' ? window.state : null);
+      if (!s || typeof window === 'undefined' || typeof window._effectiveSceneRow !== 'function' || typeof _resolveStarterEventFrame !== 'function') return null;
+      var _n = (s.turnCount || 0) + 1;
+      var _row = window._effectiveSceneRow(s, _n);
+      var _frame = _row ? _resolveStarterEventFrame(_row, s) : null;
+      return _frame ? _causalLinkFrameTextTrigger(_frame.eventFrame) : null;
+    } catch (_) { return null; }
+  }
+  window._causalLinkFrameTrigger = _causalLinkFrameTrigger;
+  function _causalLinkPlanTrigger(sc, s) {
+    var frameHit = _causalLinkFrameTrigger(s);
+    if (frameHit) return frameHit;
     if (!sc || !sc.precondition) return null;
     var m = String(sc.precondition).match(_CAUSAL_NON_ACTION_RX);
     return m ? m[0] : null;
   }
   window._causalLinkPlanTrigger = _causalLinkPlanTrigger;
-  function _causalLinkBeatsCoOccurrence(beats, sc) {
-    var planTrigger = _causalLinkPlanTrigger(sc);
+  function _causalLinkBeatsCoOccurrence(beats, sc, s) {
+    var planTrigger = _causalLinkPlanTrigger(sc, s);
     if (!planTrigger) return { applicable: false, ok: null, evidenceBeatIdx: null, planTrigger: null };
     if (!Array.isArray(beats) || !beats.length) return { applicable: true, ok: false, evidenceBeatIdx: null, planTrigger: planTrigger };
     for (var i = 0; i < beats.length; i++) {
@@ -229299,7 +229356,7 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
     // saying nothing about those is correct, not a missed check).
     try {
       var _clSc = (state._scenePlotContract && state._scenePlotContract.stateChange) || null;
-      var _clResult = (typeof _causalLinkBeatsCoOccurrence === 'function') ? _causalLinkBeatsCoOccurrence(plan.beats, _clSc) : { applicable: false };
+      var _clResult = (typeof _causalLinkBeatsCoOccurrence === 'function') ? _causalLinkBeatsCoOccurrence(plan.beats, _clSc, state) : { applicable: false };
       if (_clResult.applicable) {
         if (_clResult.ok) {
           console.log('[CG:CAUSAL-LINK:OK] Scene ' + sceneIndex + ' — non-action trigger "' + _clResult.planTrigger + '" co-occurs with a response term in beat ' + _clResult.evidenceBeatIdx + ' (necessary, not sufficient, signal that the two threads were bound together at least once)');
