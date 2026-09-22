@@ -121,7 +121,7 @@ const boundaryResp = boundaryEvents.find((e) => realMatcher(e) && e.responseBody
 const boundaryRaw = boundaryResp.responseBody.choices[0].message.content;
 const boundaryFenced = boundaryRaw.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
 const BOUNDARY_JSON = JSON.parse(boundaryFenced ? boundaryFenced[1] : boundaryRaw);
-const BOUNDARY_STATE_CHANGE = { event: BOUNDARY_JSON.state_change, forces_choice: BOUNDARY_JSON.forces_choice, tactical_move: BOUNDARY_JSON.tactical_move, chosenAftermathLane: BOUNDARY_JSON.chosen_aftermath_lane };
+const BOUNDARY_STATE_CHANGE = { event: BOUNDARY_JSON.state_change, forces_choice: BOUNDARY_JSON.forces_choice, tactical_move: BOUNDARY_JSON.tactical_move, chosenAftermathLane: BOUNDARY_JSON.chosen_aftermath_lane, aftermathObligations: BOUNDARY_JSON.aftermath_obligations, slots: BOUNDARY_JSON.event_slots ? { action: BOUNDARY_JSON.event_slots.action, exitState: BOUNDARY_JSON.event_slots.exit_state } : undefined };
 
 const REVERSAL_LOG = path.join(__dirname, '_scene2_repair_replay_sample_out', 'run_1789981507927.jsonl');
 const reversalEvents = fs.readFileSync(REVERSAL_LOG, 'utf8').trim().split('\n').filter(Boolean).map((l) => JSON.parse(l));
@@ -129,7 +129,7 @@ const reversalResp = reversalEvents.find((e) => realMatcher(e) && e.responseBody
 const reversalRaw = reversalResp.responseBody.choices[0].message.content;
 const reversalFenced = reversalRaw.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
 const REVERSAL_JSON = JSON.parse(reversalFenced ? reversalFenced[1] : reversalRaw);
-const REVERSAL_STATE_CHANGE = { event: REVERSAL_JSON.state_change, forces_choice: REVERSAL_JSON.forces_choice, tactical_move: REVERSAL_JSON.tactical_move, chosenAftermathLane: REVERSAL_JSON.chosen_aftermath_lane };
+const REVERSAL_STATE_CHANGE = { event: REVERSAL_JSON.state_change, forces_choice: REVERSAL_JSON.forces_choice, tactical_move: REVERSAL_JSON.tactical_move, chosenAftermathLane: REVERSAL_JSON.chosen_aftermath_lane, aftermathObligations: REVERSAL_JSON.aftermath_obligations, slots: REVERSAL_JSON.event_slots ? { action: REVERSAL_JSON.event_slots.action, exitState: REVERSAL_JSON.event_slots.exit_state } : undefined };
 console.log('✓ loaded Boundary\'s and Reversal\'s real accepted replies for the COEXIST section');
 
 const LANES_FOR_DIRECT_CALL_SOURCE = [
@@ -181,12 +181,12 @@ const laneOpt = () => ({ lanes: LANES_FOR_DIRECT_CALL_SOURCE.map((l) => ({
   ok('rejected', red.rejected === true, JSON.stringify(red));
   ok('reason now specifically names hesitation/withholding, not just "no signal found"', /reads as hesitation\/withholding/.test(red.reason || ''), red.reason);
 
-  // NOTE: the gate requires BOTH the generic aftermath-vocabulary check AND the lane-content check
-  // to pass — exactly like every real accepted plan this session (Boundary, Reversal) naturally
-  // satisfies both at once. These fixtures include a real generic-check word (e.g. "procedure")
-  // alongside the lane-specific content, matching that real shape, so each one isolates the
-  // LANE fix specifically rather than accidentally failing on the unrelated, already-working
-  // generic check.
+  // NOTE: the gate requires BOTH the structural consequence floor (aftermath_obligations or
+  // event_slots.exit_state non-empty — NOT a vocabulary judgment as of 2026-09-21) AND the
+  // lane-content check to pass — exactly like every real accepted plan this session (Boundary,
+  // Reversal) naturally satisfies both at once. These fixtures include a populated exitState
+  // describing a real (if brief) consequence, matching that real shape, so each one isolates the
+  // LANE fix specifically rather than accidentally failing on the unrelated structural floor.
   section('GREEN — a landed Lirael defensive move (conceals a specific fact) is NOT rejected');
   const green = {
     precondition: 'No procedure has yet addressed what Lirael actually knows about Julian\'s counter-oath.',
@@ -194,6 +194,7 @@ const laneOpt = () => ({ lanes: LANES_FOR_DIRECT_CALL_SOURCE.map((l) => ({
     forces_choice: 'forces Lirael to choose between claiming the interference openly or letting the assembly keep its assumption',
     tactical_move: 'advance lirael_defensive_path by having Lirael actively conceal a specific fact from the assembly rather than merely hesitate over it',
     chosenAftermathLane: 'lirael_defensive_path',
+    slots: { exitState: 'the assembly now reads her silence as shame, not omission, and presses no further tonight' },
   };
   const greenResult = await callGate(green, 'lirael_defensive_path');
   ok('NOT rejected', greenResult.rejected === false, JSON.stringify(greenResult));
@@ -203,15 +204,16 @@ const laneOpt = () => ({ lanes: LANES_FOR_DIRECT_CALL_SOURCE.map((l) => ({
     precondition: 'No ruling has yet addressed what Lirael actually knows.',
     event: 'Lirael commits to concealment of the one fact that would clear Julian and condemn her instead.',
     tactical_move: '', forces_choice: '', chosenAftermathLane: 'lirael_defensive_path',
+    slots: { exitState: 'the fact stays hidden, and Julian remains the one the assembly suspects' },
   };
   const stemmingResult = await callGate(stemming, 'lirael_defensive_path');
   ok('NOT rejected — "concealment" alone is enough for the lane check', stemmingResult.rejected === false, JSON.stringify(stemmingResult));
 
   section('NEW-VOCAB — Roman\'s explicit additions each independently satisfy the lane');
-  const demandsTerms = { precondition: 'No procedure has yet been offered to Lirael.', event: 'Lirael demands specific terms before she will answer the assembly at all.', tactical_move: '', forces_choice: '', chosenAftermathLane: 'lirael_defensive_path' };
+  const demandsTerms = { precondition: 'No procedure has yet been offered to Lirael.', event: 'Lirael demands specific terms before she will answer the assembly at all.', tactical_move: '', forces_choice: '', chosenAftermathLane: 'lirael_defensive_path', slots: { exitState: 'the assembly waits on her terms before the Dohkar can proceed' } };
   const demandsResult = await callGate(demandsTerms, 'lirael_defensive_path');
   ok('"demands specific terms" — NOT rejected', demandsResult.rejected === false, JSON.stringify(demandsResult));
-  const protectedConstraint = { precondition: 'No ruling has yet addressed Lirael\'s standing.', event: 'Lirael names a protected constraint that shields her from answering the charge directly.', tactical_move: '', forces_choice: '', chosenAftermathLane: 'lirael_defensive_path' };
+  const protectedConstraint = { precondition: 'No ruling has yet addressed Lirael\'s standing.', event: 'Lirael names a protected constraint that shields her from answering the charge directly.', tactical_move: '', forces_choice: '', chosenAftermathLane: 'lirael_defensive_path', slots: { exitState: 'the Dohkar must now rule on the constraint before returning to the charge' } };
   const constraintResult = await callGate(protectedConstraint, 'lirael_defensive_path');
   ok('"names a protected constraint" — NOT rejected', constraintResult.rejected === false, JSON.stringify(constraintResult));
 
@@ -248,7 +250,7 @@ const laneOpt = () => ({ lanes: LANES_FOR_DIRECT_CALL_SOURCE.map((l) => ({
     precondition: 'No procedure has yet addressed what Lirael actually knows.',
     event: 'Lirael executes a concrete defensive concealment during the assembly\'s pressure.',
     tactical_move: '', forces_choice: '', chosenAftermathLane: 'lirael_defensive_path',
-    slots: { action: 'tucks the signed oath beneath her sleeve before the Dohkar can see it', exitState: '' },
+    slots: { action: 'tucks the signed oath beneath her sleeve before the Dohkar can see it', exitState: 'the oath stays hidden and the Dohkar\'s questioning moves on without it' },
   };
   const executesCorroboratedResult = await callGate(executesCorroborated, 'lirael_defensive_path');
   ok('"executes...concealment" CORROBORATED by a real event_slots.action — NOT rejected', executesCorroboratedResult.rejected === false, JSON.stringify(executesCorroboratedResult));
@@ -265,17 +267,23 @@ const laneOpt = () => ({ lanes: LANES_FOR_DIRECT_CALL_SOURCE.map((l) => ({
   const silenceWrappedResult = await callGate(silenceWrapped, 'lirael_defensive_path');
   ok('silence wearing "without revealing what" as a wrapper is still rejected', silenceWrappedResult.rejected === true, JSON.stringify(silenceWrappedResult));
 
-  section('REAL-DRAW — Temptation attempt 3\'s REAL content (false public account) no longer fails the LANE-content check');
-  // Roman: "'gives a false public account' is a legitimate defensive/concealment action... it
-  // should not be rejected as 'not a move.'" This exact real draw's aftermath_obligations
-  // genuinely contains no generic-check vocabulary either — a real, separate finding Roman asked
-  // to be PRESERVED, not silently fixed ("Preserve the generic aftermath/procedure failure as a
-  // real issue for retry 3 if the contract truly lacked those signals"). So the overall gate may
-  // still correctly reject this specific draw — via the GENERIC check only. This isolates the
-  // LANE-content reason specifically: it must be gone.
+  section('REAL-DRAW — Temptation attempt 3\'s REAL content (false public account) is NOT REJECTED AT ALL under the corrected gate');
+  // Roman (this pass): "missing 'tribunal' or 'procedure' vocabulary doesn't establish that a scene
+  // failed to advance." The PRIOR pass's diagnosis treated this draw's generic-check rejection as a
+  // real, separate finding to preserve — that diagnosis is now understood to have been wrong too:
+  // aftermath_obligations ("The Dohkar now weighs Lirael's false account against the bent wish;
+  // Seren's family visibly withdraws support; Julian watches the deflection without intervening")
+  // DOES describe a real, concrete, multi-party consequence — it just never happened to use this
+  // check's curated words. With the generic vocabulary scan demoted to diagnostic-only and replaced
+  // by the structural floor (aftermath_obligations/exit_state non-empty — both ARE, here), this
+  // exact real draw now passes BOTH remaining checks and is not rejected by
+  // _detectPlannerFunctionGap at all — the open question becomes whether the AUTHORED PROSE, if this
+  // draw reached the author, would actually deliver on what aftermath_obligations promises. That is
+  // only testable by a real paid run.
   const temptation3Result = await callGate(TEMPTATION3_STATE_CHANGE, 'lirael_defensive_path');
   ok('the LANE-content reason is no longer present for this real draw', !/does not actually instantiate that lane/.test(temptation3Result.reason || ''), JSON.stringify(temptation3Result));
-  ok('the GENERIC aftermath-vocabulary absence is still correctly flagged (a real, separate, preserved finding)', temptation3Result.rejected === true && /shows no aftermath\/procedure\/consequence-movement signal/.test(temptation3Result.reason || ''), JSON.stringify(temptation3Result));
+  ok('NOT REJECTED — the corrected gate would now let this exact real draw reach the author', temptation3Result.rejected === false, JSON.stringify(temptation3Result));
+  ok('aftermathVocabPresent is exposed as false (confirms this real draw genuinely used no curated vocabulary, and passed anyway)', temptation3Result.aftermathVocabPresent === false, JSON.stringify(temptation3Result));
 
   section('DECEPTION-GREEN — a synthetic deception move (public target + described effect + generic vocab) is NOT rejected at all');
   const deceptionGreen = {

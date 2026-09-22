@@ -66,7 +66,7 @@ const RETRY5_LOG = path.join(__dirname, '_scene2_repair_replay_sample_out', 'run
 const retry5Events = fs.readFileSync(RETRY5_LOG, 'utf8').trim().split('\n').filter(Boolean).map((l) => JSON.parse(l));
 const retry5PlannerResp = retry5Events.find((e) => e.kind === 'response' && e.roleTag === 'scene2-structural-author' && e.responseBody && e.responseBody.model === 'grok-4.3');
 const retry5Planner = JSON.parse(retry5PlannerResp.responseBody.choices[0].message.content);
-const RETRY5_STATE_CHANGE = { precondition: retry5Planner.state_change_precondition, event: retry5Planner.state_change, forces_choice: retry5Planner.forces_choice, tactical_move: retry5Planner.tactical_move };
+const RETRY5_STATE_CHANGE = { precondition: retry5Planner.state_change_precondition, event: retry5Planner.state_change, forces_choice: retry5Planner.forces_choice, tactical_move: retry5Planner.tactical_move, aftermathObligations: retry5Planner.aftermath_obligations, slots: retry5Planner.event_slots ? { action: retry5Planner.event_slots.action, exitState: retry5Planner.event_slots.exit_state } : undefined };
 const RETRY5_POSTURE = { action: '**', dialogue: '*"I want you to burn for me, as the First-Favored did for the old gods."*' };
 console.log('✓ loaded retry 5\'s real planner output + real posture verbatim from ' + RETRY5_LOG);
 console.log('  real state_change: "' + RETRY5_STATE_CHANGE.event + '"');
@@ -100,7 +100,14 @@ console.log('  real tactical_move: "' + RETRY3_TEMPTATION_STATE_CHANGE.tactical_
   const redResult = await page.evaluate(({ sc, posture }) => window._detectPlannerFunctionGap(sc, { requiresAftermath: true, posture }), { sc: RETRY5_STATE_CHANGE, posture: RETRY5_POSTURE });
   ok('retry 5\'s real plan is rejected', redResult.rejected === true, JSON.stringify(redResult));
   ok('the rejection cites a real posture-echo bigram containing "burn"', typeof redResult.echoMatch === 'string' && redResult.echoMatch.indexOf('burn') !== -1, JSON.stringify(redResult));
-  ok('the rejection ALSO cites the aftermath-signal absence (both real problems present, both reported)', /no aftermath\/procedure\/consequence-movement signal/.test(redResult.reason), redResult.reason);
+  // Roman (consequence-requirement pass, 2026-09-21): the generic aftermath-vocabulary check is now
+  // demoted to diagnostic-only, replaced by a structural floor (aftermath_obligations/exit_state
+  // non-empty). Retry 5's real event_slots.exit_state ("the assembly has witnessed Lirael's spoken
+  // want and Julian's visible response to it") IS populated — this real draw was never actually
+  // missing a described consequence; its real problem was always the echo. This is now a cleaner,
+  // single-cause diagnosis than the old dual-cause one.
+  ok('the rejection is NOT ALSO blamed on a missing consequence (the real exit_state was always populated — the echo was the one genuine problem)', !/left both "aftermath_obligations"/.test(redResult.reason), redResult.reason);
+  ok('aftermathVocabPresent is exposed as a diagnostic flag on the result (present here, but no longer independently gating)', typeof redResult.aftermathVocabPresent === 'boolean', JSON.stringify(redResult));
 
   section('RED:ECHO-FALSE-POSITIVE — Temptation retry 3\'s real "let the" overlap no longer triggers an echo rejection');
   const falsePositiveResult = await page.evaluate(({ sc, posture }) => window._postureEchoBigram([posture.action, posture.dialogue].filter(Boolean).join(' '), [sc.tactical_move, sc.event, sc.forces_choice].filter(Boolean).join(' \n ')), { sc: RETRY3_TEMPTATION_STATE_CHANGE, posture: RETRY3_TEMPTATION_POSTURE });
@@ -109,13 +116,17 @@ console.log('  real tactical_move: "' + RETRY3_TEMPTATION_STATE_CHANGE.tactical_
   ok('the full gate no longer cites a posture echo for this real draw', !/echoes the reader/.test(falsePositiveGateResult.reason || ''), falsePositiveGateResult.reason);
 
   section('GREEN — a synthetic aftermath-shaped stateChange sharing no phrase with the same real posture is NOT rejected');
-  const greenStateChange = { precondition: 'no formal procedure against her conduct has begun yet', event: 'the presiding Dohkar opens a formal procedure of preliminary review against her conduct before the assembly', forces_choice: 'forces Lirael to choose between speaking for herself or sending silence in her place', tactical_move: 'force Lirael to face institutional procedure and political pressure' };
+  const greenStateChange = { precondition: 'no formal procedure against her conduct has begun yet', event: 'the presiding Dohkar opens a formal procedure of preliminary review against her conduct before the assembly', forces_choice: 'forces Lirael to choose between speaking for herself or sending silence in her place', tactical_move: 'force Lirael to face institutional procedure and political pressure', slots: { exitState: 'the assembly now watches for the review date, and Lirael\'s silence tonight will be read as evasion' } };
   const greenResult = await page.evaluate(({ sc, posture }) => window._detectPlannerFunctionGap(sc, { requiresAftermath: true, posture }), { sc: greenStateChange, posture: RETRY5_POSTURE });
   ok('a real procedure lane sharing no phrase with the posture is NOT rejected', greenResult.rejected === false, JSON.stringify(greenResult));
 
   section('GENERIC — the echo check itself is a plain function, inert without opts.posture (no false rejection on missing data)');
+  // Retry 5's real content structurally describes a consequence (event_slots.exit_state is
+  // populated) — its one genuine problem was always the echo, not a missing consequence. Without a
+  // posture to compare against, there is nothing left to reject: this now correctly returns
+  // rejected:false, proving the echo check adds no rejection of its own when opts.posture is absent.
   const noPostureResult = await page.evaluate((sc) => window._detectPlannerFunctionGap(sc, { requiresAftermath: true }), RETRY5_STATE_CHANGE);
-  ok('with no posture supplied, only the aftermath-signal check runs (no echo reason)', noPostureResult.rejected === true && !/echoes the reader/.test(noPostureResult.reason), JSON.stringify(noPostureResult));
+  ok('with no posture supplied, this content is not rejected at all (no echo reason, no false rejection on missing posture data)', noPostureResult.rejected === false && !/echoes the reader/.test(noPostureResult.reason || ''), JSON.stringify(noPostureResult));
 
   section('FRAME + SCHEMA + COEXIST — full-flow proof against the real, live planner dispatch');
   const ORIGINAL_LOG = path.join(__dirname, '_first_sacrifice_oas_grok_happy_path_sample_out', 'run_1789878699028.jsonl');
@@ -196,6 +207,9 @@ console.log('  real tactical_move: "' + RETRY3_TEMPTATION_STATE_CHANGE.tactical_
   const full = sysMsg + '\n' + usrMsg;
 
   ok('REQUIRED SCENE FUNCTION block is present in the real dispatch', /REQUIRED SCENE FUNCTION \(HARD/.test(usrMsg), usrMsg.slice(0, 300));
+  ok('REQUIRED CONSEQUENCE block is present in the real dispatch, immediately after REQUIRED SCENE FUNCTION', /REQUIRED CONSEQUENCE \(HARD, GENERIC/.test(usrMsg), 'not found');
+  ok('the consequence clause states the causal chain (reaction + changed situation), generically, no First-Sacrifice-specific outcome named', /a real, observable reaction[\s\S]{0,150}changes her situation or narrows\/expands her choices/.test(usrMsg), 'not found');
+  ok('the consequence clause ties to this row\'s own TARGET STATE (exitState) rather than inventing new canon', /moving toward this scene.s own TARGET STATE below/.test(usrMsg), 'not found');
   ok('the real, seed-authored sceneFunction text is present verbatim', usrMsg.includes('This scene must land the AFTERMATH of Julian\'s public accusation'), 'not found');
   ok('REQUIRED SCENE FUNCTION appears BEFORE READER\'S SAY/DO (frame first, posture second)', usrMsg.indexOf('REQUIRED SCENE FUNCTION') < usrMsg.indexOf("READER'S SAY/DO"), 'indices: ' + usrMsg.indexOf('REQUIRED SCENE FUNCTION') + ' / ' + usrMsg.indexOf("READER'S SAY/DO"));
   ok('the reframed Say/Do line explicitly calls the posture an ANGLE, not the event source', /ANGLE into the required scene function/.test(usrMsg), 'not found');

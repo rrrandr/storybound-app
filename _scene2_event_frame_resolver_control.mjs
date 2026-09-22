@@ -154,6 +154,9 @@ const laneOptForCall = () => ({ lanes: LANES_FOR_DIRECT_CALL.map((l) => ({ id: l
     tactical_move: 'redirect the confrontation from Julian\'s accusation to Seren\'s family\'s formal demand for remedy',
     chosenAftermathLane: 'family_accusation',
     lanePostureModulation: 'her open, unretreating want is what draws the family forward now rather than later',
+    // 2026-09-21: the structural consequence floor requires aftermath_obligations OR
+    // event_slots.exit_state to be non-empty (replacing the old generic vocabulary scan).
+    slots: { exitState: 'the presiding Dohkar now has a formal demand on record and must respond to it before the assembly disperses' },
   };
   const green = await page.evaluate(
     ({ sc, lanes, requiredLaneId }) => window._detectPlannerFunctionGap(sc, { requiresAftermath: true, aftermathLanes: lanes.map((l) => ({ id: l.id, signalRx: new RegExp(l.rxSource, l.rxFlags) })), requiredLaneId }),

@@ -70,10 +70,15 @@ console.log('  real state_change (event): "' + RETRY4_STATE_CHANGE.event.slice(0
   section('RED — retry 4\'s real, rejected planner output is caught by the gate');
   const redResult = await page.evaluate((sc) => window._detectPlannerFunctionGap(sc, { requiresAftermath: true }), RETRY4_STATE_CHANGE);
   ok('retry 4\'s real stateChange is rejected', redResult.rejected === true, JSON.stringify(redResult));
-  ok('the rejection reason names the aftermath-signal gap', /no aftermath\/procedure\/consequence-movement signal/.test(redResult.reason || ''), redResult.reason);
+  // 2026-09-21: the generic vocabulary scan is now diagnostic-only, replaced by a structural floor
+  // (aftermath_obligations/event_slots.exit_state non-empty). Retry 4 predates that schema entirely
+  // (an old sample, from before this whole planner-function-gate mechanism existed) — this fixture
+  // genuinely never populated either field, so it is still correctly rejected, just with the new
+  // floor's wording rather than the old vocabulary-scan wording.
+  ok('the rejection reason names the missing-consequence structural floor', /left both "aftermath_obligations" and "event_slots.exit_state" empty/.test(redResult.reason || ''), redResult.reason);
 
   section('GREEN — a synthetic stateChange naming a real aftermath/procedure event is NOT rejected');
-  const greenStateChange = { precondition: 'no formal inquiry has been named yet', event: 'the presiding Dohkar names a formal inquiry before a Chayr and two Dohkars', forces_choice: 'forces Lirael to choose between speaking for herself or sending silence in her place', tactical_move: 'force the assembly to witness the opening of formal procedure against Lirael' };
+  const greenStateChange = { precondition: 'no formal inquiry has been named yet', event: 'the presiding Dohkar names a formal inquiry before a Chayr and two Dohkars', forces_choice: 'forces Lirael to choose between speaking for herself or sending silence in her place', tactical_move: 'force the assembly to witness the opening of formal procedure against Lirael', slots: { exitState: 'the assembly now knows the inquiry has formally begun and awaits its first summons' } };
   const greenResult = await page.evaluate((sc) => window._detectPlannerFunctionGap(sc, { requiresAftermath: true }), greenStateChange);
   ok('a real procedure/inquiry event is NOT rejected', greenResult.rejected === false, JSON.stringify(greenResult));
 

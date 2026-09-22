@@ -21,17 +21,34 @@ were:
   matched bigram to be 4+ characters. Retry 5's real "burn for"/"to burn" true positive is
   unaffected. See `_scene2_required_scene_function_control.mjs`'s new RED:ECHO-FALSE-POSITIVE
   section.
-- **Generic aftermath-vocabulary check — REAL, PRESERVED finding, not fixed.** This draw's own
-  contract (tactical_move/event/forces_choice/precondition/aftermath_obligations/event_slots)
-  genuinely contains no aftermath/procedure vocabulary anywhere. `aftermath_obligations` describes
-  real consequences in plain prose ("Seren's family visibly withdraws support") but never in this
-  check's vocabulary — left as an honest open question, not a bug to route around this pass.
+- **Generic aftermath-vocabulary check — CORRECTION: this was ALSO a gate false positive, not a
+  real preserved finding.** The classification note above (written the same day, before this
+  further pass) treated this draw's generic-check rejection as an honest, separate open question.
+  That was wrong. Re-examined directly: Roman: "missing 'tribunal' or 'procedure' vocabulary
+  doesn't establish that a scene failed to advance." `aftermath_obligations` — "The Dohkar now
+  weighs Lirael's false account against the bent wish; Seren's family visibly withdraws support;
+  Julian watches the deflection without intervening" — describes a real, concrete, THREE-PARTY
+  consequence; `event_slots.exit_state` — "the assembly now believes the wish was only an alignment
+  test" — describes a real collective-belief shift. Both are populated, specific, and load-bearing.
+  The check rejected this anyway purely because neither sentence happened to contain one of its
+  curated words. Fixed: the generic vocabulary scan is now diagnostic-only; a structural floor
+  (aftermath_obligations OR event_slots.exit_state non-empty — both ARE, here) replaces it. Under
+  the corrected gate, **this exact real draw is not rejected at all** — see
+  `_scene2_consequence_requirement_trace_2026_09_21.md` and
+  `_scene2_temptation_consequence_verification_control.mjs`.
 - **Specificity diagnostic** (`THEME-COLLAPSE`, `distinctive-tokens-in-event=0/0`) — a real content
   observation, unrelated to any gate fix: this draw's phrasing is genuinely more generic/abstract
-  than attempt 2's mouth-band action (no named object). Not a gate defect.
+  than attempt 2's mouth-band action (no named object). Still not a gate defect — left untouched.
+- **The underlying question this whole finding raised** ("what actually changes because Lirael
+  makes her defensive move?") was itself a real gap, but in the PROMPT, not just the gates: of the
+  five Fate-card event frames, only `temptation`'s never explicitly required a downstream reaction —
+  the other four bake one in by construction. Fixed generically (a new REQUIRED CONSEQUENCE prompt
+  block, tied to the existing `sceneFunction`/`exitState` fields, not new canon) — see the same
+  trace doc.
 
-Both gate false positives are fixed and proven (21/21 in the updated
-`_scene2_lirael_defensive_path_lane_semantics_control.mjs`, 16/16 in the updated
+All three gate-level issues (lane-content, posture-echo, generic-vocabulary) are now fixed and
+proven (22/22 in the updated
+`_scene2_lirael_defensive_path_lane_semantics_control.mjs`, 20/20 in the updated
 `_scene2_required_scene_function_control.mjs`). Temptation was NOT re-run this pass — the section
 below remains the original, honest, unedited record of this draw.
 

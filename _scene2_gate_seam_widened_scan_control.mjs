@@ -24,28 +24,48 @@
 // carrying aftermath vocabulary while the underlying event stayed inert; including it would
 // reopen exactly the gap the lane system exists to close.
 //
+// EXTENDED 2026-09-21 (consequence-requirement pass): Temptation attempt 3 proved the vocabulary
+// scan above STILL false-rejects real, substantive content — "Seren's family visibly withdraws
+// support" and "the assembly now believes the wish was only an alignment test" both describe real
+// consequences without using any of the check's curated words. Roman: "missing 'tribunal' or
+// 'procedure' vocabulary doesn't establish that a scene failed to advance... Keep uncertain
+// lexical signals diagnostic unless a stronger, independently supported contract violation
+// warrants rejection." The generic vocabulary scan is now DIAGNOSTIC ONLY — exposed on the
+// result as `aftermathVocabPresent`, never gating by itself. In its place, a STRUCTURAL floor: a
+// plan is rejected only if BOTH `aftermath_obligations` AND `event_slots.exit_state` are
+// completely empty — a genuine, wording-independent schema-compliance fact, not a vocabulary
+// judgment. RED-B/RED-C/COEXIST below are updated to reflect this: several fixtures that used to
+// be rejected BY THE GENERIC CHECK are still rejected overall, but now via the (unchanged)
+// LANE-content check instead, since non-empty-but-vocabulary-free fields no longer trip anything
+// by themselves. Two new sections (STRUCTURAL-FLOOR-RED, VOCAB-FREE-GREEN) test the new
+// mechanism directly, in isolation from the lane check.
+//
 // Proves, fully dry (no provider calls, no image calls, no branch retry, no forks):
-//   GREEN     — the REAL Reversal sample's stateChange (reconstructed verbatim from its persisted
-//               log, with precondition/event_slots/aftermath_obligations now carried) is NO
-//               LONGER rejected by the gate.
-//   RED-A     — retry 11's REAL stateChange (predates the lane/actor/precondition-carrying system
-//               entirely) is STILL rejected — a clean no-regression proof using real historical
-//               data.
-//   RED-B     — a synthetic "label only" plan: a valid chosen_aftermath_lane declared, but
-//               tactical_move/event/forces_choice/precondition/aftermath_obligations/event_slots
-//               are ALL empty of any real vocabulary — still rejected. The old check's purpose
-//               (reject a plan that merely labels procedure/aftermath with no actual content
-//               anywhere) survives the widening.
-//   RED-C     — a synthetic plan where ONLY scene_function_instantiated-equivalent vocabulary
-//               would have satisfied the OLD, narrower version of this exact widening (simulated
-//               by putting the aftermath vocabulary in a field NOT in the new field list) — still
-//               rejected. Proves the exclusion of scene_function_instantiated is real, not
-//               accidental.
-//   COEXIST   — a plan with aftermath vocabulary ONLY in aftermath_obligations (passing the now-
-//               widened generic scan) but whose declared lane's own signalRx does NOT match the
-//               narrow tactical_move/event/forces_choice text is STILL rejected by the
-//               LANE-CONTENT check — proving the widening did not also, even accidentally, widen
-//               or weaken that separate, unchanged check.
+//   GREEN             — the REAL Reversal sample's stateChange (reconstructed verbatim from its
+//                       persisted log) is NOT rejected by the gate.
+//   RED-A             — retry 11's REAL stateChange (predates the lane/actor/precondition-carrying
+//                       system entirely) is STILL rejected — a clean no-regression proof using real
+//                       historical data.
+//   RED-B             — a synthetic "label only" plan: a valid chosen_aftermath_lane declared, but
+//                       tactical_move/event/forces_choice/precondition/aftermath_obligations/
+//                       event_slots are ALL vocabulary-free AND describe no real lane-specific
+//                       content — still rejected, now via the LANE-content check (the fields are
+//                       technically non-empty, so the new structural floor alone would not catch
+//                       this one; the lane check does).
+//   RED-C             — a synthetic plan where the aftermath content lives ONLY in a deliberately-
+//                       excluded field (scene_function_instantiated) is STILL rejected — via the
+//                       structural floor this time (aftermath_obligations/exit_state genuinely
+//                       empty), proving the exclusion is still real under the new mechanism too.
+//   STRUCTURAL-FLOOR-RED — a plan whose LANE check passes (real lane-satisfying content) but whose
+//                       aftermath_obligations AND event_slots.exit_state are BOTH literally empty
+//                       is still rejected — isolating the new structural floor from the lane check.
+//   VOCAB-FREE-GREEN  — a plan whose lane check passes AND whose exit_state describes a real,
+//                       concrete consequence using ZERO words from the generic vocabulary list is
+//                       NOT rejected — proving vocabulary is no longer required to qualify.
+//   COEXIST           — a plan with a populated aftermath_obligations (passing the new structural
+//                       floor) but whose declared lane's own signalRx does NOT match the narrow
+//                       tactical_move/event/forces_choice/event_slots text is STILL rejected by the
+//                       LANE-CONTENT check — proving the two checks remain independent.
 //
 // usage: node _scene2_gate_seam_widened_scan_control.mjs
 import { chromium } from 'playwright-core';
@@ -148,28 +168,67 @@ const laneOpt = () => ({ lanes: LANES_FOR_DIRECT_CALL.map((l) => ({ id: l.id, rx
   };
   const redB = await callGate(labelOnly, null);
   ok('rejected', redB.rejected === true, JSON.stringify(redB));
-  ok('reason names the missing signal (generic check)', /shows no aftermath\/procedure\/consequence-movement signal anywhere/.test(redB.reason || ''), redB.reason);
+  ok('reason is now the LANE-content reason (its fields are non-empty, so the structural floor alone would not catch this — the lane check does, since none of its vocabulary describes real jurisdiction-challenge content)', /does not actually instantiate that lane.s content/.test(redB.reason || ''), redB.reason);
+  ok('aftermathVocabPresent is exposed as false (diagnostic only, not gating)', redB.aftermathVocabPresent === false, JSON.stringify(redB));
 
-  section('RED-C — vocabulary present ONLY in a deliberately-excluded field (simulating scene_function_instantiated) is STILL rejected');
+  section('RED-C — consequence content living ONLY in a deliberately-excluded field is STILL rejected (via the structural floor)');
   const excludedFieldOnly = Object.assign({}, labelOnly, {
     // Simulates scene_function_instantiated-style self-report text landing somewhere this gate
     // was never told to read (proves the exclusion is structural, not an accident of missing data).
+    // aftermathObligations/slots.exitState overridden back to EMPTY here (labelOnly's own
+    // "waits"/"the moment continues, unresolved" filler would otherwise satisfy the structural
+    // floor on its own and mask what this fixture is isolating) — the structural floor, not
+    // vocabulary location, is what must catch this.
+    aftermathObligations: '', slots: { action: '', exitState: '' },
     sceneFunctionInstantiatedDeliberatelyNotRead: 'institutional pressure via ruling tribunal procedure',
   });
   const redC = await callGate(excludedFieldOnly, null);
-  ok('rejected (vocabulary in an unread field does not count)', redC.rejected === true, JSON.stringify(redC));
+  ok('rejected (consequence content in an unread field does not count)', redC.rejected === true, JSON.stringify(redC));
+  ok('rejected via the structural floor specifically (both real consequence fields are empty)', /left both "aftermath_obligations" and "event_slots.exit_state" empty/.test(redC.reason || ''), redC.reason);
 
-  section('COEXIST — a plan with generic-vocab signal ONLY in aftermath_obligations still fails the UNCHANGED lane-content check');
-  const passesGenericFailsLane = {
+  section('STRUCTURAL-FLOOR-RED — lane check passes, but aftermath_obligations AND event_slots.exit_state are BOTH genuinely empty — still rejected');
+  const floorRed = {
+    precondition: 'No ruling has yet addressed Julian\'s standing.',
+    event: 'Julian challenges the presiding Dohkar\'s jurisdiction before the assembly.',
+    forces_choice: 'forces Lirael to choose between backing Julian\'s challenge or staying silent',
+    tactical_move: 'Julian contests the Dohkar\'s authority to rule at all.',
+    chosenAftermathLane: 'julian_jurisdiction_challenge',
+    aftermathObligations: '',
+    slots: { action: '', exitState: '' },
+  };
+  const floorRedResult = await callGate(floorRed, null);
+  ok('still rejected — the lane check passes (real jurisdiction content) but nothing describes any consequence at all', floorRedResult.rejected === true, JSON.stringify(floorRedResult));
+  ok('rejected via the structural floor specifically, not the lane check', /left both "aftermath_obligations" and "event_slots.exit_state" empty/.test(floorRedResult.reason || '') && !/does not actually instantiate/.test(floorRedResult.reason || ''), floorRedResult.reason);
+
+  section('VOCAB-FREE-GREEN — a real consequence described with ZERO generic-check vocabulary is NOT rejected');
+  const vocabFreeGreen = {
+    precondition: 'Julian has not yet been challenged on his standing before the assembly.',
+    event: 'Julian challenges the presiding Dohkar\'s jurisdiction before the assembly.',
+    forces_choice: 'forces Lirael to choose between backing Julian\'s challenge or staying silent',
+    tactical_move: 'Julian contests the Dohkar\'s authority to rule at all.',
+    chosenAftermathLane: 'julian_jurisdiction_challenge',
+    // Deliberately avoids every word in _SCENE_AFTERMATH_VOCAB_RX (tribunal/inquiry/hearing/
+    // summons/convene/procedure/ruling/verdict/sentence/investigation/aftermath/consequences/
+    // recriminations/accusations formally/date set/schedule for) while still describing a real,
+    // concrete downstream effect: two named parties react, and Lirael's footing visibly shifts.
+    aftermathObligations: 'Seren\'s cousin quietly steps back from Lirael at the edge of the circle, and word of Julian\'s open challenge begins moving through the gathered faces.',
+    slots: { action: '', exitState: 'the assembly now watches Lirael differently, uncertain whose side the Dohkar will take' },
+  };
+  const vocabFreeGreenResult = await callGate(vocabFreeGreen, null);
+  ok('NOT rejected — a described reaction is enough, no special vocabulary required', vocabFreeGreenResult.rejected === false, JSON.stringify(vocabFreeGreenResult));
+  ok('aftermathVocabPresent is exposed as false (confirms this genuinely used no curated vocabulary)', vocabFreeGreenResult.aftermathVocabPresent === false, JSON.stringify(vocabFreeGreenResult));
+
+  section('COEXIST — a plan with a populated aftermath_obligations (passing the structural floor) still fails the UNCHANGED lane-content check');
+  const passesFloorFailsLane = {
     precondition: '', event: 'Julian stands quietly at the edge of the ritual.', forces_choice: 'forces Lirael to decide whether to speak',
     tactical_move: 'Julian watches without acting.',
     chosenAftermathLane: 'julian_jurisdiction_challenge',
-    aftermathObligations: 'A formal ruling and tribunal procedure will eventually follow.', // generic vocab present HERE only
+    aftermathObligations: 'A formal ruling and tribunal procedure will eventually follow.', // real content HERE, but no lane-specific signal anywhere
     slots: { action: '', exitState: '' },
   };
-  const coexist = await callGate(passesGenericFailsLane, null);
-  ok('still rejected — by the lane-content check, since "jurisdiction/challenge/contest/reframe/political" never appears in the narrow tactical_move/event/forces_choice text', coexist.rejected === true, JSON.stringify(coexist));
-  ok('reason is the LANE-content reason, not the generic one (proving the generic check alone was satisfied by aftermath_obligations, as intended)', /does not actually instantiate that lane.s content/.test(coexist.reason || '') && !/anywhere in the accepted contract/.test(coexist.reason || ''), coexist.reason);
+  const coexist = await callGate(passesFloorFailsLane, null);
+  ok('still rejected — by the lane-content check, since "jurisdiction/challenge/contest/reframe/political" never appears in the narrow tactical_move/event/forces_choice/event_slots text', coexist.rejected === true, JSON.stringify(coexist));
+  ok('reason is the LANE-content reason, not the structural-floor one (proving the floor alone was satisfied by aftermath_obligations, as intended)', /does not actually instantiate that lane.s content/.test(coexist.reason || '') && !/left both "aftermath_obligations"/.test(coexist.reason || ''), coexist.reason);
 
   await browser.close();
 

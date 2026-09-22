@@ -140,6 +140,11 @@ const LANE_IDS = ['dohkar_preliminary_review', 'family_accusation', 'julian_juri
     tactical_move: 'convert Julian\'s public claim into a scheduled preliminary review, moving the confrontation off the ritual floor and into procedure',
     chosenAftermathLane: 'dohkar_preliminary_review',
     lanePostureModulation: 'her defiant, unretreating posture is what forces the Dohkar to act now rather than let the assembly\'s assumption stand unchallenged',
+    // 2026-09-21: the structural consequence floor requires aftermath_obligations OR
+    // event_slots.exit_state to be non-empty (replacing the old generic vocabulary scan) — this
+    // fixture's own event text already names a real consequence (a scheduled review), so exitState
+    // just needs to carry it structurally too.
+    slots: { exitState: 'the assembly now has a set date to watch for, and Lirael\'s three-day window has begun' },
   };
   const green = await page.evaluate(
     ({ sc, lanes }) => window._detectPlannerFunctionGap(sc, { requiresAftermath: true, aftermathLanes: lanes.map((l) => ({ id: l.id, signalRx: new RegExp(l.rxSource, l.rxFlags) })) }),

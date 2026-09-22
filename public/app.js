@@ -8976,30 +8976,39 @@ window.config = window.config || {
   // two words is not a common function word (so two-stopword windows like "as the" never count — only
   // a shared, meaningfully distinctive phrase does).
   var _POSTURE_STOPWORDS = { the:1,a:1,an:1,to:1,of:1,in:1,on:1,at:1,for:1,and:1,or:1,but:1,is:1,are:1,was:1,were:1,be:1,been:1,i:1,you:1,he:1,she:1,it:1,we:1,they:1,me:1,him:1,her:1,them:1,my:1,your:1,his:1,its:1,our:1,their:1,this:1,that:1,these:1,those:1,as:1,so:1,if:1,not:1,no:1,do:1,does:1,did:1,will:1,would:1,can:1,could:1,should:1,must:1,with:1,from:1,by:1 };
+  // STRENGTH-GRADED SHARED-SPAN FIX (Roman 2026-09-21) — real finding: even after the meaningful-
+  // phrase-length fix (>=4-char word required), a single shared 2-word window is still weak,
+  // coincidental evidence that a model "paraphrased the reader's line" rather than treating it as
+  // posture — two independently-written texts about the same scene can easily share one ordinary
+  // bigram (a shared subject, a common verb) without either being a restatement of the other. Roman:
+  // "a shared bigram containing a four-letter word is not sufficient proof that the planner merely
+  // restated the player's posture... Keep uncertain lexical signals diagnostic unless a stronger,
+  // independently supported contract violation warrants rejection." Rewritten to scan for the
+  // LONGEST shared word-run (up to 6 words, preferring the longest match found), and to grade it:
+  // `strong` only at 3+ shared words. Real retry 5 evidence: its true positive ("...to burn for
+  // me..." posture / "...to burn for her..." planner) is a shared THREE-word run ("to burn for"),
+  // comfortably clearing this bar — the check's original purpose survives unweakened. A 2-word match
+  // is still returned (diagnostic value — logged, inspectable via the result's `echoDiagnostic`) but
+  // is no longer `strong`, and the caller below no longer rejects on it alone.
   function _postureEchoBigram(postureText, plannerText) {
     var _tok = function (t) { return String(t || '').toLowerCase().replace(/[^a-z0-9' -]+/g, ' ').split(/\s+/).filter(Boolean); };
     var pWords = _tok(postureText), aWords = _tok(plannerText);
     if (pWords.length < 2 || !aWords.length) return null;
     var plannerJoined = ' ' + aWords.join(' ') + ' ';
-    for (var i = 0; i < pWords.length - 1; i++) {
-      var w1 = pWords[i], w2 = pWords[i + 1];
-      var w1Stop = !!_POSTURE_STOPWORDS[w1], w2Stop = !!_POSTURE_STOPWORDS[w2];
-      if (w1Stop && w2Stop) continue; // both function words — too generic to count
-      // MEANINGFUL-PHRASE-LENGTH FIX (Roman 2026-09-21) — real finding: Temptation retry 3's "let
-      // the" falsely blocked a plan — "let" is not literally in the stopword list, so the old
-      // "not BOTH stopwords" rule alone let it through, even though "let" carries almost no
-      // standalone dramatic content. Roman: "A two-word overlap made of common words should never
-      // block a plan... require a meaningful phrase length or content-word density." Requires at
-      // least one of the two words to be >= 4 characters (a generic, no-curated-vocabulary-list
-      // proxy for "carries real content," not a starter-specific word). Retry 5's real "burn for"/
-      // "to burn" (the word "burn," 4 letters) still passes this bar and is still correctly
-      // rejected, proving the check's original purpose survives.
-      var hasSubstantiveWord = (!w1Stop && w1.length >= 4) || (!w2Stop && w2.length >= 4);
-      if (!hasSubstantiveWord) continue;
-      var bigram = ' ' + w1 + ' ' + w2 + ' ';
-      if (plannerJoined.indexOf(bigram) !== -1) return w1 + ' ' + w2;
+    var best = null;
+    var maxWin = Math.min(pWords.length, 6);
+    for (var winLen = maxWin; winLen >= 2; winLen--) {
+      for (var i = 0; i + winLen <= pWords.length; i++) {
+        var windowWords = pWords.slice(i, i + winLen);
+        var hasSubstantiveWord = windowWords.some(function (w) { return !_POSTURE_STOPWORDS[w] && w.length >= 4; });
+        if (!hasSubstantiveWord) continue;
+        var phrase = ' ' + windowWords.join(' ') + ' ';
+        if (plannerJoined.indexOf(phrase) !== -1) { best = { span: windowWords.join(' '), wordCount: winLen }; break; }
+      }
+      if (best) break;
     }
-    return null;
+    if (!best) return null;
+    return { span: best.span, wordCount: best.wordCount, strong: best.wordCount >= 3 };
   }
   window._postureEchoBigram = _postureEchoBigram;
 
@@ -9031,8 +9040,28 @@ window.config = window.config || {
       // narrow `combined` (the planner's actual proposed event), never this wider text, so a plan
       // still cannot satisfy either of THOSE by padding out precondition/aftermath_obligations.
       var extendedCombined = [combined, sc.precondition, sc.aftermathObligations, sc.slots && sc.slots.action, sc.slots && sc.slots.exitState].filter(Boolean).join(' \n ');
-      var aftermathPresent = _SCENE_AFTERMATH_VOCAB_RX.test(extendedCombined);
-      if (!aftermathPresent) reasons.push('the planner\'s own proposed event/tactical-move/forces-choice/precondition/event-slots/aftermath-obligations shows no aftermath/procedure/consequence-movement signal anywhere in the accepted contract, even though this continuation scene requires one (CONT_AFTERMATH-eligible) — rejected before the author call, not sent to be dramatized');
+      // GENERIC CHECK DEMOTED TO DIAGNOSTIC-ONLY (Roman 2026-09-21) — real finding: Temptation
+      // attempt 3's real reply described a genuine consequence in plain prose ("Seren's family
+      // visibly withdraws support"; "the assembly now believes the wish was only an alignment
+      // test") but this vocabulary scan still rejected it, because neither sentence happened to use
+      // one of its curated words (tribunal/procedure/ruling/etc). Roman: "missing 'tribunal' or
+      // 'procedure' vocabulary doesn't establish that a scene failed to advance... Absence of
+      // procedure-related vocabulary is evidence about wording, not sufficient proof of missing
+      // consequences. Keep uncertain lexical signals diagnostic unless a stronger, independently
+      // supported contract violation warrants rejection." `aftermathVocabPresent` is now RETAINED
+      // (exposed on the return object, logged, inspectable) but no longer independently pushes a
+      // rejection reason. Replaced as the actual reject-capable check by a STRUCTURAL floor below —
+      // not a wording judgment, a genuine schema-compliance fact: did the planner leave BOTH of the
+      // two fields the schema explicitly asks it to use for consequence content (aftermath_
+      // obligations, event_slots.exit_state) completely empty. That is independently verifiable
+      // without reading a single word of prose, and catches the one thing the old check's own stated
+      // purpose actually needed to catch ("a procedural-sounding label with empty content" — Roman,
+      // during the Reversal gate-seam fix) — a plan can no longer dodge THIS floor by borrowing
+      // vocabulary anywhere, because vocabulary is no longer what it checks.
+      var aftermathVocabPresent = _SCENE_AFTERMATH_VOCAB_RX.test(extendedCombined);
+      var consequenceObligationsText = String(sc.aftermathObligations || '').trim();
+      var consequenceExitStateText = String((sc.slots && sc.slots.exitState) || '').trim();
+      if (!consequenceObligationsText && !consequenceExitStateText) reasons.push('the planner left both "aftermath_obligations" and "event_slots.exit_state" empty — no consequence of any kind (who reacts, what changes) is described anywhere in the accepted contract, even though this continuation scene requires one (CONT_AFTERMATH-eligible) — rejected before the author call, not sent to be dramatized');
       // AFTERMATH LANE CHECK (Roman 2026-09-21) — real finding: retry 11 showed the planner's own
       // self-report and tactical_move borrowing institutional/procedural VOCABULARY while the actual
       // proposed event stayed inside the same in-ritual confrontation. A generic vocabulary check alone
@@ -9132,14 +9161,21 @@ window.config = window.config || {
           }
         }
       }
-      var echoMatch = null;
+      var echoMatch = null; // only ever populated for a STRONG (3+ word) span — the one that can reject
+      var echoDiagnostic = null; // populated for ANY shared span found, strong or weak — logged, not gating
       if (opts.posture && (opts.posture.action || opts.posture.dialogue)) {
         var postureText = [opts.posture.action, opts.posture.dialogue].filter(Boolean).join(' ');
-        echoMatch = _postureEchoBigram(postureText, combined);
-        if (echoMatch) reasons.push('the planner\'s proposed event echoes the reader\'s raw Say/Do text almost verbatim (shared phrase: "' + echoMatch + '") rather than treating it as posture modulating the required scene function — the central event should be the planner\'s OWN translation, not a restatement of the reader\'s line');
+        var echoResult = _postureEchoBigram(postureText, combined);
+        if (echoResult) {
+          echoDiagnostic = echoResult;
+          if (echoResult.strong) {
+            echoMatch = echoResult.span;
+            reasons.push('the planner\'s proposed event echoes the reader\'s raw Say/Do text almost verbatim (shared phrase: "' + echoResult.span + '", ' + echoResult.wordCount + ' consecutive words) rather than treating it as posture modulating the required scene function — the central event should be the planner\'s OWN translation, not a restatement of the reader\'s line');
+          }
+        }
       }
-      if (!reasons.length) return { rejected: false, checkedText: combined, chosenAftermathLane: chosenLaneId };
-      return { rejected: true, reason: reasons.join(' | '), reasons: reasons, checkedText: combined, echoMatch: echoMatch, chosenAftermathLane: chosenLaneId };
+      if (!reasons.length) return { rejected: false, checkedText: combined, chosenAftermathLane: chosenLaneId, aftermathVocabPresent: aftermathVocabPresent, echoDiagnostic: echoDiagnostic };
+      return { rejected: true, reason: reasons.join(' | '), reasons: reasons, checkedText: combined, echoMatch: echoMatch, echoDiagnostic: echoDiagnostic, aftermathVocabPresent: aftermathVocabPresent, chosenAftermathLane: chosenLaneId };
     } catch (e) { return { rejected: false, error: e && e.message }; }
   }
   window._detectPlannerFunctionGap = _detectPlannerFunctionGap;
@@ -99941,6 +99977,20 @@ function _buildAuthorFloorDirective(s) {
             // row declares `sceneFunction`; absent otherwise, not First-Sacrifice-specific plumbing.
             if (_oe.sceneFunction) {
               _ob.push('REQUIRED SCENE FUNCTION (HARD — instantiate this FIRST; the reader\'s posture below modulates HOW you enter it, it does NOT replace it): ' + _oe.sceneFunction);
+              // REQUIRED CONSEQUENCE (Roman 2026-09-21) — real finding: across Temptation's three
+              // real attempts, even a genuinely landed action (concealing a specific object, giving
+              // a false account) can still leave the actual "so what" implicit or thin — the model
+              // was never told the gesture itself is not the whole job. Roman: "Determine whether
+              // the defensive-path frame actually requires a consequence: Lirael takes a defensive
+              // action, someone responds, and that changes her situation or available choices. The
+              // gesture alone cannot carry an entire continuation scene." Generic (renders whenever
+              // sceneFunction does, for ANY starter/lane/event this row resolves to — not a
+              // First-Sacrifice-specific outcome, and does not require every branch to route through
+              // tribunal/procedure vocabulary): states the causal-chain requirement explicitly and
+              // ties it to this SAME row's own TARGET STATE (rendered below as exitState) — an
+              // existing field, not new canon — as the concrete anchor for what "a real consequence"
+              // means for this scene.
+              _ob.push('REQUIRED CONSEQUENCE (HARD, GENERIC — applies to whichever event above you land): landing an action by itself is not sufficient. Whatever Lirael (or whoever the scene\'s objective actor is) does, you must also show what happens BECAUSE of it — a real, observable reaction (from an institution, a bystander, or a concrete shift in what people believe, know, or are prepared to do) that changes her situation or narrows/expands her choices going forward, visibly moving toward this scene\'s own TARGET STATE below rather than stalling before it. An isolated gesture with no reaction and no resulting change in her position does not satisfy this scene\'s required function, no matter how concrete the gesture itself is.');
             }
             // AFTERMATH LANE MENU / EVENT-FRAME RESOLVER (Roman 2026-09-21) — real finding: even
             // with a free-choice lane menu (below), two real live samples in a row (retry 11

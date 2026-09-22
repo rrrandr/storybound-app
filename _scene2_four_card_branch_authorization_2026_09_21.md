@@ -331,3 +331,52 @@ with zero regressions (`_scene2_aftermath_lane_control.mjs` 22/22,
 **Status**: dry fix only. Temptation may now be retried or revalidated under the corrected gate —
 not yet done, pending separate authorization. Silence and Confession remain untested and
 unauthorized. No image work of any kind.
+
+## Addendum — consequence-requirement fix: prompt + gate de-escalation (2026-09-21)
+
+Roman: "another paid retry would still face the unresolved question: what actually changes because
+Lirael makes her defensive move? ... missing 'tribunal' or 'procedure' vocabulary doesn't establish
+that a scene failed to advance ... a shared bigram containing a four-letter word is not sufficient
+proof ... Keep uncertain lexical signals diagnostic unless a stronger, independently supported
+contract violation warrants rejection."
+
+**Correction to the prior addendum**: the generic aftermath-vocabulary check's rejection of
+Temptation attempt 3 was NOT a real, preserved finding as previously classified — it was ALSO a
+gate false positive (the draw's aftermath_obligations/exit_state genuinely describe a rich,
+three-party consequence, just not in the check's curated words).
+
+Two fixes:
+1. **Prompt**: inspecting all five `eventFrameBySlot` entries side by side showed four of five
+   already bake in a reaction by construction (Dohkar sets a review; Julian challenges; family
+   demands; Dohkar reacts to confession) — only `temptation`'s frame stopped at the gesture. A new,
+   fully generic REQUIRED CONSEQUENCE prompt block (renders for any starter/scene using this
+   mechanism, tied to the existing `sceneFunction`/`exitState` fields, no new canon, no tribunal
+   requirement) now states this explicitly.
+2. **Gates**: the generic vocabulary scan is demoted to diagnostic-only (exposed as
+   `aftermathVocabPresent`, no longer gating); replaced by a structural floor (reject only if BOTH
+   `aftermath_obligations` and `event_slots.exit_state` are completely empty — a schema-compliance
+   fact, not a wording judgment). The posture-echo check now requires a 3+-word shared span to
+   reject (a single 2-word match, even a "meaningful-length" one, is diagnostic only) — retry 5's
+   real "to burn for" (3 words) still fires; a weaker 2-word overlap no longer can.
+
+Verified directly against Roman's own framing: **NEW**
+`_scene2_temptation_consequence_verification_control.mjs` (8/8) runs all three retained real
+Temptation attempts through the production-shape gate together — attempt 1 (hesitation) remains
+correctly inadequate; attempts 2 (mouth-band) and 3 (false account, the headline result) are BOTH
+now accepted, attempt 3 with `aftermathVocabPresent: false` confirmed — plus two contrasting
+synthetic fixtures proving "a concrete action without consequential movement remains inadequate"
+and "a concrete action with consequential movement needs no special vocabulary." Full diagnosis:
+`_scene2_consequence_requirement_trace_2026_09_21.md`. Classification note updated (again) on
+`_scene2_capability_temptation_attempt3_report_2026_09_21.md`. Six other directly-affected controls
+re-verified individually, zero real regressions (several fixtures needed a populated
+`slots.exitState` added — a fixture update to match the new floor, not a behavior change, since
+each fixture's own event text already implied the consequence its exitState now states
+structurally): `_scene2_lirael_defensive_path_lane_semantics_control.mjs` (22/22),
+`_scene2_gate_seam_widened_scan_control.mjs` (13/13, two new sections),
+`_scene2_required_scene_function_control.mjs` (20/20, three new assertions),
+`_scene2_aftermath_lane_control.mjs` (22/22), `_scene2_event_frame_resolver_control.mjs` (26/26),
+`_scene2_planner_function_gate_control.mjs` (10/10).
+
+**Status**: dry fix only. Temptation may now be retried or revalidated under the corrected gate +
+prompt — not yet done, pending separate authorization. Silence and Confession remain untested and
+unauthorized. No image work of any kind.
