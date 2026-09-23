@@ -70165,6 +70165,88 @@ HARD LIMITS: Effects must destabilize systems, not annihilate them. Regime bends
   }
 
   // ═════════════════════════════════════════════════════════════════════
+  // TEMPT FATE SATURATION + VOLATILITY WINDOW ACTIVATION — SHARED (Roman
+  // 2026-09-22, dry-fix pass). Extracted verbatim from the literary
+  // game-loop submit handler's inline "FATE SATURATION + VOLATILITY WINDOW
+  // UPDATE" block (unchanged behavior for the literary call site) so the CG
+  // turn-commit path (_completeStagedSceneFromScreenplay) can call the
+  // IDENTICAL activation semantics too. Trace found: CG already faithfully
+  // mirrors the DOWNSTREAM decay/taper/aftermath-seeding half (added in
+  // 6c6c752a, "full CG fate wiring", 2026-05-18) but never called anything
+  // that creates/activates state.volatility_window or bumps
+  // state.fate_saturation in the first place — that logic existed ONLY
+  // inline in this literary-only handler, which a deliberate WRONG-ENGINE
+  // GUARD (app.js ~302779) prevents a staged/CG turn from reaching under
+  // normal operation. See _tempt_fate_volatility_activation_2026_09_22.md.
+  //
+  // MUST be called once per turn, BEFORE the caller resets
+  // state.tempt_fate_invoked_this_turn / state.temptFateWish for the next
+  // turn — both the literary and CG call sites already reset those
+  // immediately after their equivalent of this call, so this reads the
+  // still-live invocation flag and wish text correctly either way.
+  function _updateTemptFateSaturationAndVolatility() {
+    if (state.tempt_fate_invoked_this_turn) {
+      // PART 5 — Saturation increment (invocation-gated only)
+      const satIncrement = 0.2 + ((state.consecutive_tempt_fate_count || 0) * 0.05);
+      state.fate_saturation = Math.min((state.fate_saturation || 0) + satIncrement, 1.0);
+
+      // PART 6 — Volatility window activation (invocation-gated only)
+      // Severity is snapshotted at invocation.
+      // Do NOT dynamically recompute during volatility window.
+      const severity = computeTemptFateSeverity();
+      const severityTier = computeTemptSeverityTier(severity);
+      state.volatility_window = {
+        active: true,
+        severity,
+        remaining_scenes: severity < 0.5 ? 1 : severity < 0.8 ? 2 : 3,
+        source: 'tempt',
+        // Mirror the Tempt wish onto the window so the scenario-weave
+        // directive can read vw.wishText uniformly. See
+        // buildFateScenarioWeaveDirective.
+        wishText: state.temptFateWish || ''
+      };
+      // Apply deferred downgrade from prior turn's double-failure, if any
+      // GUARD: Only on NEW Tempt invocation (this block is inside tempt_fate_invoked_this_turn gate)
+      if (state._nextTurnTemptTier != null && state._nextTurnTemptTier < severityTier) {
+          state._temptSeverityTier = state._nextTurnTemptTier;
+          // Consume transition note for prompt injection
+          state._activeDowngradeTransition = state._downgradeTransitionNote || null;
+          console.log(`[TEMPT_FATE] Applied deferred severity downgrade: ${severityTier} → ${state._nextTurnTemptTier}`);
+      } else {
+          state._temptSeverityTier = severityTier;
+          state._activeDowngradeTransition = null;
+      }
+      state._nextTurnTemptTier = null; // consumed
+      state._nextTurnDeferralAge = 0; // reset staleness counter
+      state._downgradeTransitionNote = null; // consumed
+
+      // CONSEQUENCE MODELING — instability accumulation (never blocks, never reduces severity)
+      state._temptUsageCount = (state._temptUsageCount || 0) + 1;
+      state._temptInstability = Math.min((state._temptInstability || 0) + (0.05 * state._temptSeverityTier), 1.0);
+      console.log(`[TEMPT_FATE] Invoked. Severity: ${severity}, Tier: ${state._temptSeverityTier}, Saturation: ${state.fate_saturation}, Instability: ${state._temptInstability.toFixed(2)}, Usage: ${state._temptUsageCount}`);
+    } else {
+      // Decay on non-invocation turns
+      state.fate_saturation = Math.max((state.fate_saturation || 0) - 0.1, 0);
+      // CONSEQUENCE MODELING — instability decay (cooling without punishment)
+      if (state._temptInstability > 0) {
+          state._temptInstability = Math.max(state._temptInstability - 0.02, 0);
+      }
+      // GUARD: Do NOT apply _nextTurnTemptTier during continuation scenes.
+      // Deferred downgrade is consumed ONLY on next Tempt invocation.
+      // If Tempt is never re-invoked, discard stale deferred tier after 3 non-invocation turns.
+      if (state._nextTurnTemptTier != null) {
+          state._nextTurnDeferralAge = (state._nextTurnDeferralAge || 0) + 1;
+          if (state._nextTurnDeferralAge >= 3) {
+              console.log('[TEMPT_FATE] Discarding stale deferred tier (3 turns without new invocation)');
+              state._nextTurnTemptTier = null;
+              state._nextTurnDeferralAge = 0;
+          }
+      }
+    }
+  }
+  window._updateTemptFateSaturationAndVolatility = _updateTemptFateSaturationAndVolatility;
+
+  // ═════════════════════════════════════════════════════════════════════
   // TEMPT FATE OVERUSE ESCALATION — length-aware thresholds, deck
   // instability axis + exposure axis. See design spec for full rationale.
   // Instability = physical deck behavior (decays on non-Tempt scenes).
@@ -232275,6 +232357,100 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
   }
   window._cgEnforceCalcifiedAndHook = _cgEnforceCalcifiedAndHook;
 
+  // ── FATE STATE POST-SCENE CLEANUP, CG screenplay path (added 2026-05-18,
+  // extracted to its own function 2026-09-22) — Tempt/Petition volatility
+  // taper → aftermath imprint/fading → per-scene bookkeeping reset. Called
+  // from _completeStagedSceneFromScreenplay. Pulled out to its own top-level
+  // function so it is directly callable from a dry control (real function,
+  // no reimplementation) without going through the full async screenplay-
+  // completion pipeline, which may dispatch real network calls elsewhere in
+  // its body. Pure extraction — behavior is unchanged from the inline
+  // version. See _tempt_fate_volatility_activation_2026_09_22.md.
+  function _cgTemptFateAftermathCleanup() {
+    try {
+      // 0) ACTIVATION (Roman 2026-09-22, dry-fix pass — CG volatility/imprint
+      //    activation gap). The taper/aftermath logic below (2026-05-18) has
+      //    always assumed state.volatility_window was already created for a
+      //    Tempt invocation, but nothing in this CG path ever created it —
+      //    that logic lived ONLY inline in the literary game-loop submit
+      //    handler, which a WRONG-ENGINE GUARD prevents a staged/CG turn
+      //    from reaching under normal operation. Call the shared helper
+      //    (extracted from that literary block, identical semantics) BEFORE
+      //    state.tempt_fate_invoked_this_turn / state.temptFateWish are
+      //    captured+reset just below, so it reads the still-live invocation
+      //    flag and wish text.
+      if (typeof _updateTemptFateSaturationAndVolatility === 'function') _updateTemptFateSaturationAndVolatility();
+
+      // 1) Capture the wish BEFORE we clear it — the aftermath setup
+      //    below needs to stash it for the next 2 scenes.
+      var _temptWishForAftermath = state.temptFateWish || '';
+      var _temptInvokedThisTurn = !!state.tempt_fate_invoked_this_turn;
+
+      state.tempt_fate_invoked_this_turn = false;
+      state.temptFateWish = '';
+
+      // 2) Volatility-window taper — mirrors literary lines 179260-179273.
+      //    When remaining_scenes hits 0: if severity > 0.2, halve severity
+      //    and grant 1 extra scene; else close window AND seed aftermath
+      //    counters so buildWorldLawDirective() emits the imprint/fading
+      //    block on the next 2 scenes.
+      //    SKIP the decrement on the SAME turn the window was just created
+      //    above (!_temptInvokedThisTurn) — mirrors literary's own
+      //    `!state.tempt_fate_invoked_this_turn` guard (app.js ~306718);
+      //    without it, a freshly-activated window would lose one scene of
+      //    its duration on its own activation turn (off-by-one).
+      if (state.volatility_window && state.volatility_window.active && !_temptInvokedThisTurn) {
+        state.volatility_window.remaining_scenes = (state.volatility_window.remaining_scenes || 1) - 1;
+        if (state.volatility_window.remaining_scenes <= 0) {
+          if (state.volatility_window.source === 'petition') {
+            // Petition scenario weave: precise offer-based duration. No Tempt
+            // taper or aftermath — close and return to the main thread.
+            state.volatility_window.active = false;
+            try { console.log('[PETITION:CG] scenario-weave window closed — returning to main thread'); } catch (_) {}
+          } else if (state.volatility_window.severity > 0.2) {
+            state.volatility_window.severity *= 0.5;
+            state.volatility_window.remaining_scenes = 1;
+            try { console.log('[TEMPT:CG] volatility window tapering. Severity: ' + state.volatility_window.severity.toFixed(2)); } catch (_) {}
+          } else {
+            state.volatility_window.active = false;
+            // Aftermath: characters process what Fate just did. 2 scenes
+            // — first is IMPRINT, second is FADING. See literary handler
+            // line 179270 for the source of these magic numbers.
+            state._temptAftermathScenes = 2;
+            state._temptAftermathWish = _temptWishForAftermath;
+            try { console.log('[TEMPT:CG] volatility window closed — aftermath active for 2 scenes'); } catch (_) {}
+          }
+        } else {
+          try { console.log('[TEMPT:CG] volatility window decremented to ' + state.volatility_window.remaining_scenes + ' scene(s) remaining'); } catch (_) {}
+        }
+      }
+
+      // 3) Aftermath decay — mirrors literary lines 179278-179284.
+      //    Decrement the imprint/fading counter when Tempt is NOT active
+      //    this turn and the volatility window is already closed.
+      if (state._temptAftermathScenes > 0 && !(state.volatility_window && state.volatility_window.active) && !_temptInvokedThisTurn) {
+        state._temptAftermathScenes -= 1;
+        if (state._temptAftermathScenes <= 0) {
+          state._temptAftermathWish = '';
+          try { console.log('[TEMPT:CG] aftermath period ended'); } catch (_) {}
+        } else {
+          try { console.log('[TEMPT:CG] aftermath decremented — ' + state._temptAftermathScenes + ' scene(s) remaining'); } catch (_) {}
+        }
+      }
+
+      // 4) Per-scene petition bookkeeping (matches literary line 184131-184135).
+      state.coincidenceBias = 0;
+      state._petitionTokenBoost = 0;
+      if (state.fate) {
+        state.fate.minorUsedThisScene = false;
+        state.fate.greaterUsedThisScene = false;
+      }
+    } catch (_cgFateCleanupErr) {
+      console.warn('[CG:FATE-CLEANUP] threw:', _cgFateCleanupErr && _cgFateCleanupErr.message);
+    }
+  }
+  window._cgTemptFateAftermathCleanup = _cgTemptFateAftermathCleanup;
+
   async function _completeStagedSceneFromScreenplay(sceneIndex, playerAction, playerDialogue) {
     if (!_isStagedMode()) return;
     state._stagedAwaitingProse = false;
@@ -232978,69 +233154,11 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
       // flow: volatility taper → aftermath imprint/fading → fully clear.
       // Without this, Tempt's distortion fires once and the aftermath
       // register (characters processing what just happened) never lands.
-      try {
-        // 1) Capture the wish BEFORE we clear it — the aftermath setup
-        //    below needs to stash it for the next 2 scenes.
-        var _temptWishForAftermath = state.temptFateWish || '';
-        var _temptInvokedThisTurn = !!state.tempt_fate_invoked_this_turn;
-
-        state.tempt_fate_invoked_this_turn = false;
-        state.temptFateWish = '';
-
-        // 2) Volatility-window taper — mirrors literary lines 179260-179273.
-        //    When remaining_scenes hits 0: if severity > 0.2, halve severity
-        //    and grant 1 extra scene; else close window AND seed aftermath
-        //    counters so buildWorldLawDirective() emits the imprint/fading
-        //    block on the next 2 scenes.
-        if (state.volatility_window && state.volatility_window.active) {
-          state.volatility_window.remaining_scenes = (state.volatility_window.remaining_scenes || 1) - 1;
-          if (state.volatility_window.remaining_scenes <= 0) {
-            if (state.volatility_window.source === 'petition') {
-              // Petition scenario weave: precise offer-based duration. No Tempt
-              // taper or aftermath — close and return to the main thread.
-              state.volatility_window.active = false;
-              try { console.log('[PETITION:CG] scenario-weave window closed — returning to main thread'); } catch (_) {}
-            } else if (state.volatility_window.severity > 0.2) {
-              state.volatility_window.severity *= 0.5;
-              state.volatility_window.remaining_scenes = 1;
-              try { console.log('[TEMPT:CG] volatility window tapering. Severity: ' + state.volatility_window.severity.toFixed(2)); } catch (_) {}
-            } else {
-              state.volatility_window.active = false;
-              // Aftermath: characters process what Fate just did. 2 scenes
-              // — first is IMPRINT, second is FADING. See literary handler
-              // line 179270 for the source of these magic numbers.
-              state._temptAftermathScenes = 2;
-              state._temptAftermathWish = _temptWishForAftermath;
-              try { console.log('[TEMPT:CG] volatility window closed — aftermath active for 2 scenes'); } catch (_) {}
-            }
-          } else {
-            try { console.log('[TEMPT:CG] volatility window decremented to ' + state.volatility_window.remaining_scenes + ' scene(s) remaining'); } catch (_) {}
-          }
-        }
-
-        // 3) Aftermath decay — mirrors literary lines 179278-179284.
-        //    Decrement the imprint/fading counter when Tempt is NOT active
-        //    this turn and the volatility window is already closed.
-        if (state._temptAftermathScenes > 0 && !(state.volatility_window && state.volatility_window.active) && !_temptInvokedThisTurn) {
-          state._temptAftermathScenes -= 1;
-          if (state._temptAftermathScenes <= 0) {
-            state._temptAftermathWish = '';
-            try { console.log('[TEMPT:CG] aftermath period ended'); } catch (_) {}
-          } else {
-            try { console.log('[TEMPT:CG] aftermath decremented — ' + state._temptAftermathScenes + ' scene(s) remaining'); } catch (_) {}
-          }
-        }
-
-        // 4) Per-scene petition bookkeeping (matches literary line 184131-184135).
-        state.coincidenceBias = 0;
-        state._petitionTokenBoost = 0;
-        if (state.fate) {
-          state.fate.minorUsedThisScene = false;
-          state.fate.greaterUsedThisScene = false;
-        }
-      } catch (_cgFateCleanupErr) {
-        console.warn('[CG:FATE-CLEANUP] threw:', _cgFateCleanupErr && _cgFateCleanupErr.message);
-      }
+      // Extracted to its own function (Roman 2026-09-22, dry-fix pass) so it
+      // is directly callable from a dry control without invoking this whole
+      // async screenplay-completion pipeline (which may dispatch real network
+      // calls elsewhere in its body) — pure extraction, unchanged behavior.
+      _cgTemptFateAftermathCleanup();
     } catch (e) {
       console.warn('[CG:SCREENPLAY] complete threw:', e && e.message);
       _hideStagedComposingIndicator();
@@ -306640,66 +306758,12 @@ FATE CARD ADAPTATION (CRITICAL):
       }
 
       // ═══════════════════════════════════════════════════════════════════
-      // FATE SATURATION + VOLATILITY WINDOW UPDATE
+      // FATE SATURATION + VOLATILITY WINDOW UPDATE — shared with CG (Roman
+      // 2026-09-22). Logic extracted to _updateTemptFateSaturationAndVolatility
+      // (app.js ~70166) so the CG turn-commit path can call the identical
+      // activation semantics — unchanged behavior at this call site.
       // ═══════════════════════════════════════════════════════════════════
-      if (state.tempt_fate_invoked_this_turn) {
-        // PART 5 — Saturation increment (invocation-gated only)
-        const satIncrement = 0.2 + ((state.consecutive_tempt_fate_count || 0) * 0.05);
-        state.fate_saturation = Math.min((state.fate_saturation || 0) + satIncrement, 1.0);
-
-        // PART 6 — Volatility window activation (invocation-gated only)
-        // Severity is snapshotted at invocation.
-        // Do NOT dynamically recompute during volatility window.
-        const severity = computeTemptFateSeverity();
-        const severityTier = computeTemptSeverityTier(severity);
-        state.volatility_window = {
-          active: true,
-          severity,
-          remaining_scenes: severity < 0.5 ? 1 : severity < 0.8 ? 2 : 3,
-          source: 'tempt',
-          // Mirror the Tempt wish onto the window so the scenario-weave
-          // directive can read vw.wishText uniformly. See
-          // buildFateScenarioWeaveDirective.
-          wishText: state.temptFateWish || ''
-        };
-        // Apply deferred downgrade from prior turn's double-failure, if any
-        // GUARD: Only on NEW Tempt invocation (this block is inside tempt_fate_invoked_this_turn gate)
-        if (state._nextTurnTemptTier != null && state._nextTurnTemptTier < severityTier) {
-            state._temptSeverityTier = state._nextTurnTemptTier;
-            // Consume transition note for prompt injection
-            state._activeDowngradeTransition = state._downgradeTransitionNote || null;
-            console.log(`[TEMPT_FATE] Applied deferred severity downgrade: ${severityTier} → ${state._nextTurnTemptTier}`);
-        } else {
-            state._temptSeverityTier = severityTier;
-            state._activeDowngradeTransition = null;
-        }
-        state._nextTurnTemptTier = null; // consumed
-        state._nextTurnDeferralAge = 0; // reset staleness counter
-        state._downgradeTransitionNote = null; // consumed
-
-        // CONSEQUENCE MODELING — instability accumulation (never blocks, never reduces severity)
-        state._temptUsageCount = (state._temptUsageCount || 0) + 1;
-        state._temptInstability = Math.min((state._temptInstability || 0) + (0.05 * state._temptSeverityTier), 1.0);
-        console.log(`[TEMPT_FATE] Invoked. Severity: ${severity}, Tier: ${state._temptSeverityTier}, Saturation: ${state.fate_saturation}, Instability: ${state._temptInstability.toFixed(2)}, Usage: ${state._temptUsageCount}`);
-      } else {
-        // Decay on non-invocation turns
-        state.fate_saturation = Math.max((state.fate_saturation || 0) - 0.1, 0);
-        // CONSEQUENCE MODELING — instability decay (cooling without punishment)
-        if (state._temptInstability > 0) {
-            state._temptInstability = Math.max(state._temptInstability - 0.02, 0);
-        }
-        // GUARD: Do NOT apply _nextTurnTemptTier during continuation scenes.
-        // Deferred downgrade is consumed ONLY on next Tempt invocation.
-        // If Tempt is never re-invoked, discard stale deferred tier after 3 non-invocation turns.
-        if (state._nextTurnTemptTier != null) {
-            state._nextTurnDeferralAge = (state._nextTurnDeferralAge || 0) + 1;
-            if (state._nextTurnDeferralAge >= 3) {
-                console.log('[TEMPT_FATE] Discarding stale deferred tier (3 turns without new invocation)');
-                state._nextTurnTemptTier = null;
-                state._nextTurnDeferralAge = 0;
-            }
-        }
-      }
+      _updateTemptFateSaturationAndVolatility();
 
       // Storybound Secrets (GATED) — per-scene bookkeeping + discovery offer.
       // Both internally no-op unless _secretsEnabled(). The Secret directive is a
