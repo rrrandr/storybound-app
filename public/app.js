@@ -100283,7 +100283,12 @@ function _buildAuthorFloorDirective(s) {
                   // THIS turn) — supersedes the ordinary tactical-beat derivation for THIS scene
                   // only: the wish's actual landing IS the required event, not flavor around an
                   // unrelated one.
-                  var _tfoActiveLine = (_tcInvoked && _tcWish) ? ('\nTEMPT FATE — ACTIVE INVOCATION THIS SCENE (HARD — supersedes the CURRENT MILESTONE/A-plot goal above for THIS scene\'s event only. A Tempt Fate rupture MAY permanently change present-world facts, memory, identity, access, possession, social reality, reputation, or public recognition — up to and including fame, infamy, or legendary status — when THIS scene actually earns it; do NOT refuse or soften the wish\'s real scope on an assumption that Tempt Fate cannot cause lasting change. Foundational setting rules and the fact that an already-read scene occurred remain history — Tempt cannot un-happen the past — but future seed-owned material is not off-limits: it stays story-bearing, and Tempt may change its route, interpretation, stakes, or who remembers why it matters, without erasing that it exists. A memory-erasure wish changes memory and the social knowledge that follows from it, not necessarily physical reality, unless the effect you write here establishes something broader.): the player is invoking Tempt Fate this turn with the wish "' + String(_tcWish).slice(0, 300) + '". The event/state_change MUST land this wish\'s actual invocation/effect as a concrete, testable, reachable-in-one-scene event — not a generic milestone beat that ignores it, and not a beat that merely references the wish without showing its landing.') : '';
+                  // Shared with the author via _buildTemptFateActiveInvocationDirective (defined
+                  // near buildTemptFateCallbackDirective) — one definition, so the two layers cannot
+                  // be edited out of step. Only the closing mandate differs by layer.
+                  var _tfoActiveLine = (typeof window._buildTemptFateActiveInvocationDirective === 'function')
+                    ? window._buildTemptFateActiveInvocationDirective({ invoked: _tcInvoked, wishText: _tcWish }, 'planner')
+                    : '';
                   return _tfoDurableLine + _tfoActiveLine;
                 } catch (_) { return ''; }
               })());
@@ -190805,6 +190810,44 @@ No text, no watermark, no UI elements, share-ready.`;
   //                affected target, "ever since X" references. Surfaces
   //                when the target's social orbit is present.
   //   • intimate — private bedroom callbacks (existing OAS register).
+  // ═══ OWNED INVOCATION — the single authority for "is a Tempt rupture active THIS generation" ═══
+  // (Roman 2026-09-23, after the first paid memory-erasure run.) Both prompt layers must agree, and
+  // they must agree on the PROPOSAL, not on a scene index.
+  //
+  // The paid run split because the two layers asked different questions. The planner read the
+  // ownership capture (_tfoCtxForPlanner, built from _tfoWasInvokedAtStart/_tfoProposalEntry) and
+  // correctly emitted ACTIVE INVOCATION THIS SCENE. The author-side callback builder read LIVE
+  // state: by the time the author prompt was built, turnCount had advanced to 1 while the ledger
+  // entry still carried its seal-time sceneIdx of 0, so the "same scene as seal" guard below did not
+  // match, and the author was handed "MEMORY CALLBACK — sealed 1 scene(s) ago" for the very wish it
+  // was supposed to be enacting. It then returned temptFateOutcome: null, correctly, for the prompt
+  // it actually received. Confirmed empirically by _tempt_fate_framing_split_control.mjs.
+  //
+  // state._tfoOwnedInvocation is set once at generation start and cleared when that generation ends.
+  // Everything downstream keys off the PROPOSAL ID it carries, which cannot drift with turnCount and
+  // cannot be captured by a different wish sealed mid-flight.
+  function _temptFateOwnedInvocation() {
+    try {
+      var o = (window.state || {})._tfoOwnedInvocation;
+      return (o && o.id) ? o : null;
+    } catch (_) { return null; }
+  }
+  window._temptFateOwnedInvocation = _temptFateOwnedInvocation;
+
+  // ONE definition of the active-invocation directive, shared by planner and author. Parity is
+  // structural here: there is no second copy that can be edited out of step with this one. Only the
+  // closing mandate differs, because the two layers own different output fields.
+  function _buildTemptFateActiveInvocationDirective(ctx, layer) {
+    var invoked = !!(ctx && ctx.invoked);
+    var wish = ctx ? String(ctx.wishText || '') : '';
+    if (!invoked || !wish) return '';
+    var mandate = (layer === 'author')
+      ? ' The beats MUST show this wish\'s actual landing as a concrete, witnessed, in-scene event — not a line that merely references the wish, and not a scene that proceeds as though it had not been made. Because the rupture IS active this scene, "temptFateOutcome" MUST be a populated object recording what actually changed; null is NOT a valid answer this scene.'
+      : ' The event/state_change MUST land this wish\'s actual invocation/effect as a concrete, testable, reachable-in-one-scene event — not a generic milestone beat that ignores it, and not a beat that merely references the wish without showing its landing.';
+    return '\nTEMPT FATE — ACTIVE INVOCATION THIS SCENE (HARD — supersedes the CURRENT MILESTONE/A-plot goal above for THIS scene\'s event only. A Tempt Fate rupture MAY permanently change present-world facts, memory, identity, access, possession, social reality, reputation, or public recognition — up to and including fame, infamy, or legendary status — when THIS scene actually earns it; do NOT refuse or soften the wish\'s real scope on an assumption that Tempt Fate cannot cause lasting change. Foundational setting rules and the fact that an already-read scene occurred remain history — Tempt cannot un-happen the past — but future seed-owned material is not off-limits: it stays story-bearing, and Tempt may change its route, interpretation, stakes, or who remembers why it matters, without erasing that it exists. A memory-erasure wish changes memory and the social knowledge that follows from it, not necessarily physical reality, unless the effect you write here establishes something broader.): the player is invoking Tempt Fate this turn with the wish "' + wish.slice(0, 300) + '".' + mandate;
+  }
+  window._buildTemptFateActiveInvocationDirective = _buildTemptFateActiveInvocationDirective;
+
   function buildTemptFateCallbackDirective() {
     var s = window.state || {};
     var ledger = s._temptFateLedger;
@@ -190815,8 +190858,15 @@ No text, no watermark, no UI elements, share-ready.`;
     if (fb && fb.type === 'tempt' && fb.turnsRemaining > 0) return '';
     // Per-scene throttle: only one event surfaces per scene.
     var currentScene = s.turnCount || 0;
+    // OWNERSHIP SUPPRESSION (Roman 2026-09-23) — the proposal THIS generation is enacting can never
+    // be rendered to any layer as history. The sceneIdx comparison below was the intended guard for
+    // exactly this, but it compares a seal-time index against a live turnCount that has already
+    // advanced by the time the author prompt is built, so it silently stopped matching. Identity
+    // cannot drift that way. The index check is kept as a second, independent guard.
+    var _owned = _temptFateOwnedInvocation();
     var entry = null;
     for (var i = ledger.length - 1; i >= 0; i--) {
+      if (_owned && ledger[i].id === _owned.id) continue;   // the invocation this generation owns
       if (ledger[i].lastCallbackScene === currentScene) continue;
       if (ledger[i].sceneIdx === currentScene) continue; // same scene as seal
       entry = ledger[i];
@@ -224357,7 +224407,14 @@ No text, no watermark, no UI elements, share-ready.`;
       '    "knowledgeStates": [ { "character": "<name>", "state": "knows | remembers | believes | suspects | unaware", "note": "<grounding>" } ],  /* per-character, never a single blanket claim about "everyone" */\n' +
       '    "establishedEvidence": ["<concrete evidence or consequence THIS scene actually put on the page>"],\n' +
       '    "openPossibilities": ["<unresolved thread a FUTURE scene could pursue — explicitly NOT established fact; do not phrase as already true>"]\n' +
-      '  }  /* ONLY meaningful when a Tempt Fate rupture is active THIS scene (see the TEMPT FATE section above in this prompt) — null when Tempt Fate was not invoked this scene. Applies IDENTICALLY to any wish, familiar or unprecedented — there is no fixed catalogue of wish types to match against; reason about THIS specific wish and THIS specific scene. */\n' +
+      // Roman 2026-09-23: the schema now states the REQUIREMENT for the invocation scene, not just
+      // the permission. Previously it only said "null when Tempt Fate was not invoked this scene",
+      // which an author handed a historical MEMORY CALLBACK reads as licence to null it — exactly
+      // what the first paid run produced. When the owned invocation is live, null is invalid.
+      '  }  /* ' + (((typeof window._temptFateOwnedInvocation === 'function') && window._temptFateOwnedInvocation())
+            ? 'A Tempt Fate rupture IS ACTIVE THIS SCENE (see the ACTIVE INVOCATION section above): this field MUST be a populated object recording what actually changed. null is NOT valid this scene.'
+            : 'ONLY meaningful when a Tempt Fate rupture is active THIS scene (see the TEMPT FATE section above in this prompt) — null when Tempt Fate was not invoked this scene.')
+          + ' Applies IDENTICALLY to any wish, familiar or unprecedented — there is no fixed catalogue of wish types to match against; reason about THIS specific wish and THIS specific scene. */\n' +
       '}'
     );
     // ── A-PLOT PRESSURE INJECTION (added 2026-05-16) ─────────────────
@@ -224690,6 +224747,7 @@ No text, no watermark, no UI elements, share-ready.`;
     var _mythicCoupleBlock = '';
     var _mythicForgettingBlock = '';
     var _temptCallbackBlock = '';
+    var _temptActiveInvocationBlock = '';
     var _temptInSceneReactionBlock = '';
     try {
       if (typeof window.buildNarrativeGravityDirective === 'function') {
@@ -224770,6 +224828,19 @@ No text, no watermark, no UI elements, share-ready.`;
         // no CG grammar (its in-scene sibling has _buildCGTemptDirective). Mirror that
         // treatment — render the surfacing as ONE beat, dialogue/staging not recap.
         if (_temptCallbackBlock) _temptCallbackBlock = '\nTEMPT-FATE CALLBACK — CG: surface the historical Tempt as ONE beat — a stranger\'s "were you there?" line, a witness using the coined nickname, the LI\'s half-disbelief request — realized as a DIALOGUE / STAGING beat, NOT a narrated recap. Keep the scale→scope mapping below intact; one beat, then back to the scene:\n' + _temptCallbackBlock;
+      }
+      // ACTIVE INVOCATION — the author's half of the parity fix (Roman 2026-09-23). Before this,
+      // only the planner received it: the author got the historical callback for the very wish it
+      // was enacting and nulled its outcome report, which is what the first paid run produced.
+      // Sourced from the OWNED proposal captured at generation start, never from live state, so a
+      // wish sealed mid-flight cannot contaminate this scene and an advanced turnCount cannot
+      // reclassify this one as history.
+      if (typeof window._buildTemptFateActiveInvocationDirective === 'function') {
+        var _tfoOwnedForAuthor = (typeof window._temptFateOwnedInvocation === 'function') ? window._temptFateOwnedInvocation() : null;
+        if (_tfoOwnedForAuthor) {
+          _temptActiveInvocationBlock = window._buildTemptFateActiveInvocationDirective(
+            { invoked: true, wishText: _tfoOwnedForAuthor.wishText }, 'author') || '';
+        }
       }
       // In-scene Holy-Shit reaction directive — fires only when a Tempt
       // is currently active in this scene (tempt_fate_invoked_this_turn
@@ -225112,6 +225183,7 @@ No text, no watermark, no UI elements, share-ready.`;
       // Self-gated; empty when no ledger entries or a Tempt window is
       // still live in OAS.
       (_temptInSceneReactionBlock ? _temptInSceneReactionBlock + '\n' : '') +
+      (_temptActiveInvocationBlock ? _temptActiveInvocationBlock + '\n' : '') +
       (_temptCallbackBlock        ? _temptCallbackBlock        + '\n' : '') +
       // CG migration punch-list ports — profanity bands (#7), fate seed (#3),
       // cliffhanger archetype rotation (#5). Self-gated; empty when not active.
@@ -231963,7 +232035,13 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
   async function _runCGScreenplayGen(sceneIndex, playerAction, playerDialogue) {
     try { state._stagedAuthoringSceneIndex = (typeof sceneIndex === 'number' && sceneIndex >= 0) ? sceneIndex : null; } catch (_) {}
     try { return await _runCGScreenplayGenInner(sceneIndex, playerAction, playerDialogue); }
-    finally { try { state._stagedAuthoringSceneIndex = null; } catch (_) {} }
+    finally {
+      try { state._stagedAuthoringSceneIndex = null; } catch (_) {}
+      // Release the owned invocation with the generation that owned it (Roman 2026-09-23). Held any
+      // longer, the NEXT ordinary continuation would still see an active rupture and keep demanding
+      // a non-null outcome report for a wish that was already resolved.
+      try { state._tfoOwnedInvocation = null; } catch (_) {}
+    }
   }
   // ── CG DELIVERED ASSIGNMENTS: mint · snapshot · accept (2026-09-11) ──
   function _cgBranchKey() { try { var d = (typeof _sceneDecision === 'function') ? _sceneDecision(1) : null; return d ? String(d.choice) : null; } catch (_) { return null; } }
@@ -232082,6 +232160,16 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
       if (Array.isArray(_tfoLedgerAtStart) && _tfoLedgerAtStart.length) _tfoProposalEntry = _tfoLedgerAtStart[_tfoLedgerAtStart.length - 1];
     } catch (_) {}
     var _tfoWasInvokedAtStart = !!(window.state && window.state.tempt_fate_invoked_this_turn);
+    // PUBLISH THE OWNED INVOCATION for the whole generation (Roman 2026-09-23). Until this existed,
+    // ownership was visible only to the planner (via _tfoCtxForPlanner); every other builder fell
+    // back to live state and could disagree about whether this wish is active or historical — which
+    // is exactly what the first paid run produced. Cleared in the finally below so an ordinary
+    // continuation, which owns no invocation, sees null and correctly emits no active directive.
+    try {
+      window.state._tfoOwnedInvocation = (_tfoWasInvokedAtStart && _tfoProposalEntry && _tfoProposalEntry.id)
+        ? { id: _tfoProposalEntry.id, wishText: _tfoProposalEntry.wishText || '' }
+        : null;
+    } catch (_) {}
     // Tick grievance contracts FIRST so visibility transitions land in
     // state before any directive builder reads them.
     try { if (typeof _tickGrievanceContracts === 'function') _tickGrievanceContracts(); } catch (_) {}

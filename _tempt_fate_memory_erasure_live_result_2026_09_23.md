@@ -1,9 +1,19 @@
-# Tempt Fate memory-erasure — first real capability result (2026-09-23, `remain` branch)
+# Tempt Fate memory-erasure — PLUMBING FAILURE, not a capability result (2026-09-23, `remain` branch)
 
-The authorized run completed. Scene A **generated and delivered**. The test produced its first
-genuine narrative-capability result, and the result is a **failure of the mechanism**, located
-precisely: the planner and the author were told two different things about the same wish in the
-same generation.
+**CLASSIFICATION (Roman, after review): this run is a PLUMBING FAILURE. It is NOT evidence about
+the model's ability to execute a Tempt Fate wish, and must not be cited as such.** The author never
+received an active Tempt invocation. It was handed a historical "MEMORY CALLBACK" for the very wish
+it was supposed to be enacting, plus a schema note saying the outcome field is null when Tempt was
+not invoked this scene. It then wrote a callback-flavoured continuation and nulled the outcome —
+which is **correct behaviour for the prompt it actually received**. Nothing here tests whether Grok
+can land a canon rupture; that question remains entirely open and untested.
+
+The authorized run completed and Scene A generated and delivered. What it produced was a precise
+localisation of a delivery defect: the planner and the author were told two different things about
+the same wish in the same generation.
+
+**Fixed and dry-proven after this run** — see the "Fix" section at the end and
+`_tempt_fate_framing_split_control.mjs` (9/9).
 
 ## What was run
 
@@ -95,13 +105,39 @@ Scene A had already settled and the outcome check had already decided to stop. C
   crashing rather than through the clean `safeExit` path, so that behaviour was not actually
   exercised. That is a real gap in the script, not a cosmetic one.
 
+## Fix (applied after this run, dry-proven, no further paid call)
+
+Diagnosed before changing any code, then fixed so the **owned proposal is authoritative for the
+whole generation**:
+
+- `state._tfoOwnedInvocation` is published at generation start from the proposal captured before any
+  await, and released in `_runCGScreenplayGen`'s `finally`.
+- One shared builder, `_buildTemptFateActiveInvocationDirective(ctx, layer)`, now emits the ACTIVE
+  directive for **both** planner and author — parity is structural, not two copies agreeing.
+- The callback builder suppresses any entry whose **id** matches the owned proposal. The old
+  `sceneIdx === turnCount` guard is kept as an independent second check, but identity cannot drift
+  the way an index did.
+- The author's schema now *requires* a populated `temptFateOutcome` while the owned invocation is
+  live, instead of only permitting null when it isn't.
+
+`_tempt_fate_framing_split_control.mjs` (real UI order, dry, zero dispatches) was RED at 5/7 —
+failing on exactly the two paid-run symptoms — and is now **9/9**. It also confirms the hypothesis
+empirically: ledger `sceneIdx=0` vs `turnCount=1` at author-dispatch time.
+
+**Two limits stated rather than papered over:** mid-flight isolation was NOT exercised (the real UI
+hides the Tempt card while a scene is composing, so a second wish could not be sealed in-flight);
+and Scene B separation is proven **at its gate** (owned invocation released ⇒ the author's active
+block is empty by construction) rather than through a full Scene B pipeline, because this control's
+stubbed plan omits the continuation-decision payload the app needs to advance.
+
 ## Status
 
 The authorization is consumed. Cumulative real spend across all five attempts: **≈$0.1107**.
 
 What this run established: providers and the function layer are healthy; the corrected UI order
-works end to end against real providers; Scene A generates; and the Tempt Fate rupture **does not
-land**, for a specific and fixable reason that no dry control could have surfaced.
+works end to end against real providers; Scene A generates; and a **delivery defect** prevented the
+rupture from reaching the author at all — now fixed and dry-proven.
 
-Not established, and deliberately not attempted: whether an ordinary Scene B would inherit a
-committed outcome — there was no committed outcome to inherit.
+Not established, and deliberately not attempted: **whether the model can actually land the wish**
+(the author was never asked to), and whether an ordinary Scene B inherits a committed outcome
+(there was no committed outcome to inherit). Both require a future authorized run.

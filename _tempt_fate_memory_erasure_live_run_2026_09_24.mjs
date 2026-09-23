@@ -41,6 +41,7 @@
 
 import { chromium } from 'playwright-core';
 import { installFailClosedNetworkGate } from './_e2e_network_gate.mjs';
+import { sceneToText } from './_tempt_fate_scene_text.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -85,6 +86,14 @@ function sumCost(recs) {
   return { total, anyUnknown };
 }
 function persist(name, data) { try { fs.writeFileSync(path.join(OUT_DIR, name), JSON.stringify(data, null, 2)); } catch (e) { console.warn('[ARTIFACT] persist failed for ' + name + ':', e && e.message); } }
+
+// sceneToText lives in its own module (_tempt_fate_scene_text.mjs) precisely because THIS file
+// starts a real, paid run at import time — anything that needs the helper must be able to import it
+// without launching a run.
+function writeText(name, value) {
+  try { fs.writeFileSync(path.join(OUT_DIR, name), typeof value === 'string' ? value : sceneToText(value)); }
+  catch (e) { console.warn('[ARTIFACT] text write failed for ' + name + ':', e && e.message); }
+}
 
 const COMBINED_CEILING = 0.40;
 const SCENE_A_CEILING = 0.20;
@@ -368,7 +377,7 @@ let browser = null, gate = null;
     await safeExit(2, 'scene A did not deliver');
     return;
   }
-  console.log('  ✓ Scene A delivered and rendered — ' + (sceneAResult.renderedSceneText ? sceneAResult.renderedSceneText.length : 0) + ' chars.');
+  console.log('  ✓ Scene A delivered and rendered — ' + sceneToText(sceneAResult.renderedSceneText).length + ' chars.');
 
   const outcomeCommitted = Array.isArray(sceneAResult.durableConsequences) && sceneAResult.durableConsequences.length === 1
     && sceneAResult.ownedProposal && sceneAResult.durableConsequences[0].proposalId === sceneAResult.ownedProposal.id;
@@ -376,10 +385,10 @@ let browser = null, gate = null;
 
   persist('outcome_record.json', { ownedProposal: sceneAResult.ownedProposal, durableConsequences: sceneAResult.durableConsequences, committed: outcomeCommitted });
   persist('scene_a_system_prompt.txt', sceneAResult.capture.sysPrompt || '');
-  fs.writeFileSync(path.join(OUT_DIR, 'scene_a_system_prompt.txt'), sceneAResult.capture.sysPrompt || '');
-  fs.writeFileSync(path.join(OUT_DIR, 'scene_a_user_prompt.txt'), sceneAResult.capture.userPrompt || '');
-  fs.writeFileSync(path.join(OUT_DIR, 'scene_a_raw_output.txt'), sceneAResult.capture.originalOutput || '');
-  fs.writeFileSync(path.join(OUT_DIR, 'scene_a_rendered_text.txt'), sceneAResult.renderedSceneText || '');
+  writeText('scene_a_system_prompt.txt', sceneAResult.capture.sysPrompt || '');
+  writeText('scene_a_user_prompt.txt', sceneAResult.capture.userPrompt || '');
+  writeText('scene_a_raw_output.txt', sceneAResult.capture.originalOutput || '');
+  writeText('scene_a_rendered_text.txt', sceneAResult.renderedSceneText);
 
   if (!outcomeCommitted) {
     console.error('  Per §6 of the authorization sheet: an unusable outcome report stops the run before Scene B. Stopping here.');
@@ -472,10 +481,10 @@ let browser = null, gate = null;
     };
   }).catch((e) => ({ error: String(e && e.message) }));
   persist('scene_b_result.json', sceneBResult);
-  fs.writeFileSync(path.join(OUT_DIR, 'scene_b_system_prompt.txt'), (sceneBResult.capture && sceneBResult.capture.sysPrompt) || '');
-  fs.writeFileSync(path.join(OUT_DIR, 'scene_b_user_prompt.txt'), (sceneBResult.capture && sceneBResult.capture.userPrompt) || '');
-  fs.writeFileSync(path.join(OUT_DIR, 'scene_b_raw_output.txt'), (sceneBResult.capture && sceneBResult.capture.originalOutput) || '');
-  fs.writeFileSync(path.join(OUT_DIR, 'scene_b_rendered_text.txt'), sceneBResult.renderedSceneText || '');
+  writeText('scene_b_system_prompt.txt', (sceneBResult.capture && sceneBResult.capture.sysPrompt) || '');
+  writeText('scene_b_user_prompt.txt', (sceneBResult.capture && sceneBResult.capture.userPrompt) || '');
+  writeText('scene_b_raw_output.txt', (sceneBResult.capture && sceneBResult.capture.originalOutput) || '');
+  writeText('scene_b_rendered_text.txt', sceneBResult.renderedSceneText);
 
   const noNewOutcome = Array.isArray(sceneBResult.durableConsequencesAfterB) && sceneBResult.durableConsequencesAfterB.length === 1;
   console.log('  Scene B delivered: ' + (sceneBResult.scenesLen >= 2) + ', no new Tempt invocation: ' + !sceneBResult.wasInvokedDuringB + ', still exactly one durable outcome (Scene A\'s): ' + noNewOutcome + '\n');
