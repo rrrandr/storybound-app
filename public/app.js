@@ -75877,6 +75877,16 @@ ${_buildDeckTraceDirective('volatility')}\n`;
 
     let directive = `\n${lawBlock}\n`;
 
+    // INSTRUCTION HIERARCHY (Roman 2026-09-23, HARD — fixes a real precedence gap: this scene may
+    // ALSO receive the generic Fatelands Wish doctrine — Circumstances Not Minds, the Eight
+    // Orders' resistance tiers, Wish Judgment, Wish Archaeology — whenever state.volatility_window
+    // is active, which Tempt Fate itself just set true. Nothing previously stated which one wins
+    // when they conflict for THIS invocation.):
+    if ((state.picks?.world || '') === 'Fantasy') {
+      directive += `\nTEMPT FATE OVERRIDES ORDINARY WISH LIMITS (NON-NEGOTIABLE): this scene may also deliver the Fatelands Wish doctrine (Circumstances Not Minds, the Eight Orders' resistance tiers, Wish Judgment, Wish Archaeology, and similar limits on ORDINARY wish-granting). That doctrine governs ordinary, in-world wishing — NPCs, granters, the player's own unpaid "I wish..." dialogue. It does NOT bind Tempt Fate's own intervention. Tempt Fate is the higher-order mechanic: it MAY directly alter minds, memory, history, or identity if the wish calls for it, even where ordinary doctrine would call the identical operation "nearly impossible" or "strongly resisted." "Circumstances, not minds" does not limit what Tempt Fate itself can do.
+The ordinary Fatelands doctrine still matters for this scene and every scene after — it governs how the world INTERPRETS, EXPLAINS, SUSPECTS, and INVESTIGATES the resulting impossibility once it has already happened. Never whether Tempt Fate's own intervention succeeds.\n`;
+    }
+
     // Saturation warnings
     const sat = state.fate_saturation || 0;
     if (sat > 0.85) {
@@ -82586,14 +82596,18 @@ Return ONLY valid JSON:
       // (L3 receipt book = _fateTollLedger above, promoted to append-only history.)
       state._openFateBargains = [];
       state._durableFateConsequences = [];
-      // Tempt Fate's OWN durable-consequence record (Roman 2026-09-22) —
-      // deliberately a SEPARATE array from _durableFateConsequences above:
-      // "Ordinary Fatelands wishes obey Fatelands wish doctrine... Tempt
-      // Fate is a higher-order Storybound mechanic... the world metabolizes
-      // it through local metaphysics, institutions, suspicion, records,
-      // costs, and investigation." Never collapse the two. See
-      // _recordTemptFateDurableConsequence / _tempt_fate_durable_consequences_2026_09_22.md.
+      // Tempt Fate's OWN durable-consequence record — deliberately a
+      // SEPARATE array from _durableFateConsequences above: "Ordinary
+      // Fatelands wishes obey Fatelands wish doctrine... Tempt Fate is a
+      // higher-order Storybound mechanic... the world metabolizes it
+      // through local metaphysics, institutions, suspicion, records, costs,
+      // and investigation." Never collapse the two. Populated only via the
+      // verified proposal->outcome-report->commit pipeline (_commitTemptFateOutcome), never by keyword guess. See
+      // _tempt_fate_model_driven_outcome_2026_09_23.md.
       state._temptFateDurableConsequences = [];
+      // Idempotency guard for that commit pipeline — mirrors
+      // _committedState._committedThroughScene's own duplicate-commit guard.
+      state._temptOutcomeCommittedScenes = {};
       state._sceneLedger = null;          // scene ledger (page record) — per story, carried across an issue boundary by explicit re-stamp only
       state._authoringSceneKey = null;
       state._stagedAuthoringSceneIndex = null;
@@ -101742,6 +101756,7 @@ Do NOT summarize Book 1. Do NOT reintroduce characters. Jump straight into the n
               _durableJson:       (function () { try { return Array.isArray(state._durableFateConsequences) && state._durableFateConsequences.length ? JSON.stringify(state._durableFateConsequences) : null; } catch (_) { return null; } })(),
               _temptLedgerJson:   (function () { try { return Array.isArray(state._temptFateLedger) && state._temptFateLedger.length ? JSON.stringify(state._temptFateLedger) : null; } catch (_) { return null; } })(),
               _temptDurableJson:  (function () { try { return Array.isArray(state._temptFateDurableConsequences) && state._temptFateDurableConsequences.length ? JSON.stringify(state._temptFateDurableConsequences) : null; } catch (_) { return null; } })(),
+              _temptOutcomeCommittedJson: (function () { try { return (state._temptOutcomeCommittedScenes && Object.keys(state._temptOutcomeCommittedScenes).length) ? JSON.stringify(state._temptOutcomeCommittedScenes) : null; } catch (_) { return null; } })(),
               _mythicJson:        (function () { try { return state._mythicCoupleStatus && state._mythicCoupleStatus.active ? JSON.stringify(state._mythicCoupleStatus) : null; } catch (_) { return null; } })(),
               _prefMemory:        state._prefMemory,  // reader-preference memory — same couple keeps their learned taste (Issue 2 remembers Issue 1's axes)
               // ── LIRAEL'S VALIDATED FOUNDATION, CARRIED THE SAME WAY (Roman, corrective
@@ -101794,6 +101809,7 @@ Do NOT summarize Book 1. Do NOT reintroduce characters. Jump straight into the n
                 if (_carriedRel._durableJson)     state._durableFateConsequences = JSON.parse(_carriedRel._durableJson);
                 if (_carriedRel._temptLedgerJson) state._temptFateLedger = JSON.parse(_carriedRel._temptLedgerJson);
                 if (_carriedRel._temptDurableJson) state._temptFateDurableConsequences = JSON.parse(_carriedRel._temptDurableJson);
+                if (_carriedRel._temptOutcomeCommittedJson) state._temptOutcomeCommittedScenes = JSON.parse(_carriedRel._temptOutcomeCommittedJson);
                 if (_carriedRel._mythicJson)      state._mythicCoupleStatus = JSON.parse(_carriedRel._mythicJson);
                 console.log('[ISSUE-CONTINUITY] carried scene ledger (' + (((state._sceneLedger || {}).entries || []).length) + ' pages), durable consequences ('
                   + ((state._durableFateConsequences || []).length) + '), tempt ledger (' + ((state._temptFateLedger || []).length) + '), tempt durable consequences ('
@@ -108900,21 +108916,14 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
             }
           } catch (_tlErr) { console.warn('[TEMPT-LEDGER] record threw:', _tlErr && _tlErr.message); }
 
-          // Durable consequence record (Roman 2026-09-22) — SEPARATE from
-          // the ledger above (social/attribution memory) and SEPARATE from
-          // ordinary-wish _durableFateConsequences (never collapse the two
-          // doctrines). Only fires when the wish is big enough to be
-          // story-bearing (_temptWishWarrantsDurableConsequence) — a
-          // harmless dramatic flourish leaves no durable record. Additive
-          // only; never mutates any protected character/canon state field.
-          try {
-            var _tdcFlavor = (window.state && window.state.picks && window.state.picks.worldSubtype) || (window.state && window.state.worldSubtype) || null;
-            if (typeof _temptWishWarrantsDurableConsequence === 'function' &&
-                _temptWishWarrantsDurableConsequence(wishText, _tdcFlavor) &&
-                typeof _recordTemptFateDurableConsequence === 'function') {
-              _recordTemptFateDurableConsequence(wishText, { sceneIdx: (window.state && window.state.turnCount) || 0, inOAS: !!(window.state && window.state.intimacyDialogue && window.state.intimacyDialogue.active) });
-            }
-          } catch (_tdcErr) { console.warn('[TEMPT-DURABLE] record threw:', _tdcErr && _tdcErr.message); }
+          // NOTE (Roman 2026-09-23): the durable-consequence COMMIT no longer
+          // happens here at seal time. This ledger entry (just above) IS the
+          // proposal — "a wish is a request" — and nothing commits it to
+          // durable canon until a later, evidence-grounded outcome report is
+          // validated and found delivered:true (see _commitTemptFateOutcome,
+          // LAYER 2b, ~189615). A prior version of this code guessed
+          // eligibility and content from wish keywords at this exact point;
+          // that guess has been removed entirely, not merely relocated.
 
           // Surface "Tempt invoked — reality bends" chip + red enamel lightning
           // medallion on Submit Turn so the player knows their wish is staged
@@ -189612,224 +189621,180 @@ No text, no watermark, no UI elements, share-ready.`;
   }
   window._buildDurableFateConsequenceDirective = _buildDurableFateConsequenceDirective;
 
-  // ── LAYER 2b: TEMPT FATE'S OWN DURABLE CONSEQUENCES (Roman 2026-09-22) ──
-  // Deliberately a SEPARATE array/record shape from LAYER 2 above. Roman,
-  // verbatim: "Ordinary Fatelands wishes obey Fatelands wish doctrine. They
-  // cannot cleanly duplicate The Answer or rewrite minds at will. Tempt Fate
-  // is a higher-order Storybound mechanic. It can create god-mode rupture,
-  // including temporary or permanent apparent violations of local rules.
-  // Once the rupture enters the story world, the world metabolizes it
-  // through local metaphysics, institutions, suspicion, records, costs, and
-  // investigation." So: Tempt Fate is never gated by ordinary wish doctrine
-  // (LAYER 2's _durableFateConsequences, _resolveOrdinaryWish's cost bands,
-  // classifyWishDisposition) — but once it lands, the SAME kind of durable,
-  // binding, story-bearing record ordinary wishes get is what makes the
-  // world's metabolization (suspicion/investigation/records) actually
-  // reach future prompts instead of evaporating with the aftermath window.
-  // See _tempt_fate_durable_consequences_2026_09_22.md for the full trace,
-  // design rationale, and dry proof.
+  // ── LAYER 2b: TEMPT FATE — PROPOSAL → VERIFIED OUTCOME → COMMIT (Roman
+  // 2026-09-23, replaces the prior pass's keyword-gated eligibility/template
+  // design entirely). Roman, verbatim: "The model should work out the
+  // consequences of an unfamiliar wish. Code should preserve those
+  // consequences and keep future scenes consistent; it shouldn't need a
+  // handwritten response for every possible wish... Remove the keyword-based
+  // eligibility gate and predefined residue/clue templates as authorities
+  // over its consequences."
+  //
+  // Mirrors the codebase's OWN existing proposal→verify→commit pattern
+  // (_commitScene, app.js ~99477: a proposed transition is checked,
+  // evidence-grounded, against what the rendered scene ACTUALLY shows, and
+  // only a DELIVERED verdict commits a fact) rather than trusting a
+  // self-report blindly, and rather than a keyword classifier:
+  //   STAGE 1 — PROPOSAL: state._temptFateLedger's entry (existing,
+  //     unchanged — _recordTemptFateEvent, recorded at Tempt seal time,
+  //     BEFORE generation). "A wish is a request."
+  //   STAGE 2 — VERIFIED OUTCOME REPORT: a structured report, grounded in
+  //     what the accepted scene actually shows, describing what changed and
+  //     how durable each effect is. "A plan is a proposal" — this stage is
+  //     what turns it into (or refuses to turn it into) accomplished
+  //     history. _validateTemptFateOutcomeReport checks only STRUCTURE
+  //     (dry-testable, never creative correctness — see the live-test
+  //     authorization sheet, _tempt_fate_model_driven_outcome_2026_09_23.md).
+  //   STAGE 3 — COMMIT: _commitTemptFateOutcome only writes a
+  //     state._temptFateDurableConsequences entry when the report is
+  //     well-formed AND delivered:true. Idempotent per scene
+  //     (state._temptOutcomeCommittedScenes) — a rejected, failed, or
+  //     duplicate call never creates a false or duplicate entry.
+  //
+  // NOTHING here classifies wish CONTENT by keyword. Genericity is
+  // structural: any wish, familiar or not, goes through the identical three
+  // stages; the record's content always comes from the verified report,
+  // never from a lookup table. See
+  // _tempt_fate_model_driven_outcome_2026_09_23.md for the full design,
+  // the corrected instruction hierarchy, and the live-test authorization
+  // sheet.
 
-  // GATE — only wishes big enough to be story-bearing leave a durable
-  // record; an ordinary dramatic flourish (a candle flares, a lucky
-  // coincidence) must NOT leave a permanent world-fact behind. Reuses
-  // EXISTING computed signals rather than a new duplicated classifier: the
-  // same cataclysmic-keyword set buildWorldLawDirective's own _wishScale
-  // uses for omen intensity (app.js ~75851), _classifyTemptScale's
-  // mass-scale detection (the ledger's own signal, ~189194 at the time of
-  // writing), and _detectPremiseBreak (~71980).
-  function _temptWishWarrantsDurableConsequence(wishText, premiseFlavor) {
-    try {
-      var t = String(wishText || '').toLowerCase();
-      var cataclysmic = /\b(gender|species|identity|world|destroy|annihilate|rewrite|transform.*into|everyone|all)\b/i.test(t);
-      var massScale = (typeof _classifyTemptScale === 'function') && _classifyTemptScale(wishText, false) === 'mass';
-      var premiseBreak = !!((typeof _detectPremiseBreak === 'function') && _detectPremiseBreak(wishText, premiseFlavor));
-      // A rupture that falls into one of the named STORY-BEARING categories
-      // (memory erasure, death/removal, materializing a significant object)
-      // is inherently the kind of change that needs residue/investigation
-      // regardless of raw scale — none of Roman's own worked examples
-      // ("materialize The Answer", "everyone forgets", "Julian dies") are
-      // reliably "mass"-scale or cataclysmic by keyword alone (a targeted,
-      // named-object/named-person wish classifies as 'social', not 'mass',
-      // under _classifyTemptScale — correctly, since it doesn't affect the
-      // whole world — but it is still exactly the kind of change this
-      // record exists for).
-      var category = (typeof _temptRuptureCategoryFromText === 'function') ? _temptRuptureCategoryFromText(wishText) : 'generic';
-      var namedCategory = (category === 'memory' || category === 'death_or_removal' || category === 'materialization');
-      return cataclysmic || massScale || premiseBreak || namedCategory;
-    } catch (_) { return false; }
+  // Real, usable prompt text for whoever asks the model to report the
+  // outcome (a dedicated verifier call mirroring _commitScene's, or a
+  // structured field appended to the author's own generation — the actual
+  // integration point is a live-testable follow-up, not built this pass;
+  // see the authorization sheet). Emphasizes per-EFFECT durability, since a
+  // single wish can produce effects with DIFFERENT lifespans (Roman's own
+  // example: a manifested Answer may disappear when the window closes while
+  // someone's witnessed use of it permanently changes an accusation).
+  function _buildTemptFateOutcomeReportingSchema() {
+    return 'Report the outcome of this Tempt Fate intervention as JSON, grounded ONLY in what the scene you just wrote ACTUALLY shows — never in what you intended, planned, or think would be dramatic to imply for later. Fields:\n'
+      + '  "delivered": true only if the intervention concretely happened on the page this scene (not merely implied, foreshadowed, or deferred) — else false.\n'
+      + '  "changed": [{"subject": who/what was affected, "whatChanged": concretely what changed about them}] — only things the scene actually shows changing.\n'
+      + '  "durability": [{"aspect": which changed thing, "status": "expires"|"persists"|"uncertain", "note": why}] — "expires" ONLY if the scene itself signals this specific effect is bound to the passing rupture window; default to "persists" or "uncertain" otherwise. Do NOT mark a memory/identity/history change as "expires" merely because Tempt Fate’s VISIBLE distortion window will close — the window closing governs how long the world visibly destabilizes, never whether the underlying change stuck. A single wish may produce BOTH kinds at once (e.g. a materialized object disappears, but a witnessed accusation it caused persists).\n'
+      + '  "knowledgeStates": [{"character": name, "state": "knows"|"remembers"|"believes"|"suspects"|"unaware", "note": grounding}] — per-character, never a single blanket claim about "everyone".\n'
+      + '  "establishedEvidence": [string...] — concrete evidence or consequences the scene ACTUALLY put on the page (an object out of place, a contradicted record, a witness reaction) — not things that could happen later.\n'
+      + '  "openPossibilities": [string...] — unresolved threads a FUTURE scene could pursue. These are explicitly NOT established fact — do not phrase them as if they already happened.\n'
+      + 'This treatment applies IDENTICALLY to any wish, familiar or unprecedented — there is no fixed catalogue of wish types to match against; reason about THIS specific wish and THIS specific scene.';
   }
-  window._temptWishWarrantsDurableConsequence = _temptWishWarrantsDurableConsequence;
+  window._buildTemptFateOutcomeReportingSchema = _buildTemptFateOutcomeReportingSchema;
 
-  // Descriptive-only classification of the rupture's SHAPE — mirrors the
-  // EMPOWERMENT CONTRACT's own worked TYPE 2 examples (app.js ~75761:
-  // "Kill the LI" / "Erase what happened" / "End the conflict"). This NEVER
-  // gates or blocks anything — Tempt Fate always resolves (the Empowerment
-  // Contract's own hard rule: "the outcome cannot be negated, inverted, or
-  // denied"). It only shapes what this record's outcome.description tells a
-  // future prompt it is obligated to honor.
-  function _classifyTemptRuptureShape(wishText) {
-    var t = String(wishText || '').toLowerCase();
-    // \w* endings throughout (not bare words) — an exact-word regex silently misses inflected
-    // forms ("destroys"/"destroyed"/"killing"/"erased"), the same F6 lesson from the earlier
-    // canon-rupture pass.
-    if (/\b(kill\w*|die[sd]?|dying|dead|destroy\w*|eras\w*|forget\w*|forgot\w*|end\w* (the|this|our) (conflict|relationship|bond)|undo\w*|never happened)\b/i.test(t)) {
-      return 'translated';
+  // STAGE 2 — structural validation ONLY (shape/types, never content or
+  // creative correctness — that is reserved for live testing).
+  function _validateTemptFateOutcomeReport(raw) {
+    var errors = [];
+    if (!raw || typeof raw !== 'object') return { valid: false, errors: ['report is not an object'] };
+    if (typeof raw.delivered !== 'boolean') errors.push('delivered must be boolean');
+    ['changed', 'durability', 'knowledgeStates', 'establishedEvidence', 'openPossibilities'].forEach(function (f) {
+      if (raw[f] !== undefined && !Array.isArray(raw[f])) errors.push(f + ' must be an array when present');
+    });
+    if (Array.isArray(raw.changed)) {
+      raw.changed.forEach(function (c, i) {
+        if (!c || typeof c.subject !== 'string' || !c.subject.trim()) errors.push('changed[' + i + '].subject missing');
+        if (!c || typeof c.whatChanged !== 'string' || !c.whatChanged.trim()) errors.push('changed[' + i + '].whatChanged missing');
+      });
     }
-    return 'granted';
+    if (Array.isArray(raw.durability)) {
+      var VALID_STATUS = { expires: true, persists: true, uncertain: true };
+      raw.durability.forEach(function (d, i) {
+        if (!d || !VALID_STATUS[d.status]) errors.push('durability[' + i + '].status must be expires|persists|uncertain');
+      });
+    }
+    if (Array.isArray(raw.knowledgeStates)) {
+      var VALID_KSTATE = { knows: true, remembers: true, believes: true, suspects: true, unaware: true };
+      raw.knowledgeStates.forEach(function (k, i) {
+        if (!k || typeof k.character !== 'string' || !k.character.trim()) errors.push('knowledgeStates[' + i + '].character missing');
+        if (!k || !VALID_KSTATE[k.state]) errors.push('knowledgeStates[' + i + '].state invalid');
+      });
+    }
+    // A delivered:true report with literally nothing established is a shape error — either the
+    // intervention changed something observable, or it did not deliver.
+    if (raw.delivered === true) {
+      var hasContent = (Array.isArray(raw.changed) && raw.changed.length) || (Array.isArray(raw.establishedEvidence) && raw.establishedEvidence.length);
+      if (!hasContent) errors.push('delivered:true but no changed[] or establishedEvidence[] reported');
+    }
+    return { valid: errors.length === 0, errors: errors };
   }
-  window._classifyTemptRuptureShape = _classifyTemptRuptureShape;
+  window._validateTemptFateOutcomeReport = _validateTemptFateOutcomeReport;
 
-  // Small, GENERIC (not First-Sacrifice-specific) clue-template bank, keyed
-  // by rupture CATEGORY rather than story content — the author fills in
-  // concrete specifics at generation time; this only guarantees the SHAPE
-  // of residue is present in the directive so a memory/identity/
-  // materialization wish never renders as a clean, consequence-free win.
-  var _TEMPT_RESIDUE_TEMPLATES = {
-    memory: [
-      'someone asks a question that assumes the erased event never happened ("when is the ceremony? wasn’t it today?")',
-      'a physical object, record, or ledger entry does not match the new memory state',
-      'at least one person has a partial gap, a flash of unease, or a conflicting account',
-      'an institution or procedure (a rite-keeper, a formal record) behaves as though the event DID happen'
-    ],
-    death_or_removal: [
-      'the body, or its absence, does not fully settle the question (no confirmed remains, a wound that should be fatal but is not conclusively witnessed)',
-      'someone who should grieve instead hesitates, hopes, or refuses to believe it',
-      'a formal declaration (succession, inheritance, a rite of mourning) stalls or is contested',
-      'a sighting, rumor, or physical trace suggests the outcome is not settled'
-    ],
-    materialization: [
-      'the materialized thing does not behave exactly like the true original in one verifiable way',
-      'someone with authority over the true original questions its sudden appearance',
-      'the manner of appearance leaves a physical trace (scorch, residue, a witness’s account) at odds with how it should have arrived',
-      'a custodian, order, or institution responsible for the true original begins asking where it has been'
-    ],
-    generic: [
-      'at least one witness reacts with unease, suspicion, or a question that goes unanswered',
-      'something physical is out of place relative to how the event should have unfolded',
-      'an account from one witness conflicts with another’s',
-      'an institution, record-keeper, or authority figure eventually takes notice'
-    ]
-  };
-  function _temptResidueTemplateFor(shapeCategory) {
-    return _TEMPT_RESIDUE_TEMPLATES[shapeCategory] || _TEMPT_RESIDUE_TEMPLATES.generic;
-  }
-  function _temptRuptureCategoryFromText(wishText) {
-    var t = String(wishText || '').toLowerCase();
-    if (/\b(forget|forgets|forgotten|memory|remember)\b/i.test(t)) return 'memory';
-    if (/\b(kill\w*|die[sd]?|dying|dead|death)\b/i.test(t)) return 'death_or_removal';
-    // \w* (not a bare word, per the F6 lesson from the earlier canon-rupture pass — an exact-word
-    // regex like \bmateriali[sz]e\b silently misses inflected forms such as "materializes") so
-    // "materializes"/"summons"/"appeared" etc. all match, not just the bare infinitive.
-    if (/\b(materiali[sz]e\w*|summon\w*|conjure\w*|appear\w*|bring(?:s|ing)? forth|brought forth)\b/i.test(t)) return 'materialization';
-    return 'generic';
-  }
-  window._temptRuptureCategoryFromText = _temptRuptureCategoryFromText;
-
-  function _temptDefaultExplanationPressure() {
-    // Generic across worlds — Fatelands-specific framing (mass delusion /
-    // rogue wish / contested miracle) is additionally supplied by
-    // buildWorldLawDirective's own per-world WORLD_LAW_DIRECTIVES and the
-    // Fatelands Wish doctrine (Eight Orders / Wish Judgment) when that
-    // world/flavor applies — this default keeps the record meaningful for
-    // every world, Fatelands or not.
-    return 'the local world (its institutions, records, and the people who witnessed or are affected) must eventually offer SOME account of what happened — mass delusion, a rogue wish, a contested miracle, a cover-up, or simple unresolved mystery — but the mechanism itself cannot be examined or produce proof; only ordinary evidence (witnesses, records, informants) can confirm or unravel it.';
-  }
-
-  function _buildTemptFutureObligationSentence(wishText, shape, permanenceDepth) {
-    var w = String(wishText || '').trim();
-    var depthClause = permanenceDepth === 'foundational'
-      ? 'is now part of the world’s fabric — future scenes must treat it as settled fact'
-      : permanenceDepth === 'temporary'
-        ? 'is temporary — future scenes must let it fade/resolve on its own schedule (via the volatility window / aftermath system), never treat it as durable canon'
-        : 'is a LASTING change — future scenes must treat it as currently true, but it remains a live, investigable, potentially contestable fact, not settled history';
-    return 'The wish "' + w + '" ' + depthClause + '. It must not be silently reverted, forgotten by the narrative, or treated as if it never happened; nor may it be casually resolved or explained away without in-world cost or investigation.';
-  }
-
-  // THE RECORD ITSELF. Structural guarantee (Roman: "without letting it
-  // silently overwrite protected character/canon state directly"): this
-  // function NEVER writes to any protected/canon state field — no
-  // character name/alive/identity mutation, nothing but an append to its
-  // OWN array. It is purely additive, exactly like _recordDurableConsequence
-  // above — a recorder, never a competing author of canon state (see
-  // feedback_validators_never_write).
-  function _recordTemptFateDurableConsequence(wishText, opts) {
+  // STAGE 3 — commit. Structural guarantee (Roman: "without letting it
+  // silently overwrite protected character/canon state directly"): purely
+  // additive to its own array — never writes any protected/canon state
+  // field (no character name/alive/identity mutation). Idempotent per
+  // scene, mirroring _commitScene's cs._committedThroughScene early-return
+  // — a rejected, failed, or duplicate call must not create a false or
+  // duplicate entry.
+  function _commitTemptFateOutcome(sceneIdx, ledgerEntry, rawReport) {
     try {
-      opts = opts || {};
       var s = window.state || {};
       if (!Array.isArray(s._temptFateDurableConsequences)) s._temptFateDurableConsequences = [];
-      var sceneIdx = (opts.sceneIdx != null) ? opts.sceneIdx : (s.turnCount || 0);
-      var shape = _classifyTemptRuptureShape(wishText);
-      var category = _temptRuptureCategoryFromText(wishText);
-      var scale = (typeof _classifyTemptScale === 'function') ? _classifyTemptScale(wishText, !!opts.inOAS) : 'social';
-
-      // PERMANENCE DEPTH — mirrors the Wish Archaeology doctrine's "Four
-      // Depths" (TRANSIENT/LINGERING/ANCHORED/FOUNDATIONAL), collapsed to
-      // the three tiers Roman asked for this pass. Explicit temporary-
-      // language IN THE WISH ITSELF ("temporarily", "for now", "briefly",
-      // "just this once") -> 'temporary'. 'foundational' is NEVER
-      // auto-assigned from a keyword heuristic alone — doctrine treats
-      // FOUNDATIONAL as something that accrues with TIME/age or an explicit
-      // story-structure decision, not an instant classification; it is only
-      // assigned when the caller explicitly passes
-      // opts.storyStructureAllowsPermanent (no current call site sets this
-      // true — the field exists for a future pass that has a real
-      // story-structure signal to offer, per Roman's own "Julian dies...
-      // unless explicitly allowed by story structure").
-      var explicitlyTemporary = /\b(temporarily|for now|briefly|just this once|for the moment|momentarily)\b/i.test(String(wishText || ''));
-      var permanenceDepth = opts.storyStructureAllowsPermanent ? 'foundational' : (explicitlyTemporary ? 'temporary' : 'lasting');
-
-      var noticers;
-      if (scale === 'mass') noticers = ['bystanders and the wider public', 'institutions/record-keepers whose records now disagree', 'investigators or scholars who hear of the anomaly'];
-      else if (scale === 'social') noticers = ['the witness circle present at the time', 'anyone with a direct stake in what changed'];
-      else noticers = ['the love interest', 'anyone else present in the intimate scene'];
-
-      var residue = _temptResidueTemplateFor(category);
-
-      var outcomeDescription = (shape === 'translated')
-        ? 'TRANSLATED (per the Empowerment Contract’s TYPE 2 rule): the literal request is never executed as a clean, casual fact — it must land as a high-intensity version of the same desire that preserves the story (e.g., mortal danger rather than a confirmed death; destabilized truth rather than a clean uniform memory wipe).'
-        : 'GRANTED (TYPE 1 power move): the wish lands directly and dramatically, and the change is real.';
-
+      if (!s._temptOutcomeCommittedScenes) s._temptOutcomeCommittedScenes = {};
+      if (s._temptOutcomeCommittedScenes[sceneIdx]) {
+        console.log('[TEMPT-OUTCOME] scene ' + sceneIdx + ' already committed — skipping duplicate');
+        return null;
+      }
+      var v = _validateTemptFateOutcomeReport(rawReport);
+      if (!v.valid) {
+        console.log('[TEMPT-OUTCOME] scene ' + sceneIdx + ' report invalid, no commit: ' + v.errors.join('; '));
+        return null;
+      }
+      if (rawReport.delivered !== true) {
+        console.log('[TEMPT-OUTCOME] scene ' + sceneIdx + ' delivered=false — no commit (matches _commitScene’s MISSED/no-commit behavior)');
+        return null;
+      }
       var entry = {
         id: 'tfc_' + sceneIdx + '_' + (s._temptFateDurableConsequences.length + 1),
         source: 'tempt', // distinct from ordinary-wish _durableFateConsequences entries — never merge
-        requestedRupture: String(wishText || ''),
-        outcome: { shape: shape, description: outcomeDescription },
-        permanenceDepth: permanenceDepth,
-        explanationPressure: (opts.worldExplanationPressure || _temptDefaultExplanationPressure()),
-        residueClues: residue,
-        noticers: noticers,
-        futureObligation: _buildTemptFutureObligationSentence(wishText, shape, permanenceDepth),
+        requestedRupture: (ledgerEntry && ledgerEntry.wishText) || '',
         sceneIdx: sceneIdx,
-        bargainId: opts.bargainId || null,
-        permanent: permanenceDepth !== 'temporary'
+        bargainId: (ledgerEntry && ledgerEntry.bargainId) || null,
+        changed: Array.isArray(rawReport.changed) ? rawReport.changed : [],
+        durability: Array.isArray(rawReport.durability) ? rawReport.durability : [],
+        knowledgeStates: Array.isArray(rawReport.knowledgeStates) ? rawReport.knowledgeStates : [],
+        establishedEvidence: Array.isArray(rawReport.establishedEvidence) ? rawReport.establishedEvidence : [],
+        openPossibilities: Array.isArray(rawReport.openPossibilities) ? rawReport.openPossibilities : [],
+        // permanent: true only if at least one reported effect persists or remains uncertain past
+        // the rupture window closing — an all-"expires" report is a temporary-only intervention.
+        permanent: (Array.isArray(rawReport.durability) ? rawReport.durability : []).some(function (d) { return d && (d.status === 'persists' || d.status === 'uncertain'); })
       };
       s._temptFateDurableConsequences.push(entry);
-      try { console.log('[TEMPT-DURABLE] +' + shape + '/' + permanenceDepth + ' @ scene ' + (sceneIdx + 1) + ': ' + entry.requestedRupture.slice(0, 80)); } catch (_) {}
+      s._temptOutcomeCommittedScenes[sceneIdx] = true;
+      try { console.log('[TEMPT-OUTCOME] committed scene ' + sceneIdx + ': ' + entry.changed.length + ' change(s), ' + entry.establishedEvidence.length + ' evidence item(s)'); } catch (_) {}
       return entry;
     } catch (e) {
-      try { console.warn('[TEMPT-DURABLE] _recordTemptFateDurableConsequence failed:', e && e.message); } catch (_) {}
+      try { console.warn('[TEMPT-OUTCOME] _commitTemptFateOutcome failed:', e && e.message); } catch (_) {}
       return null;
     }
   }
-  window._recordTemptFateDurableConsequence = _recordTemptFateDurableConsequence;
+  window._commitTemptFateOutcome = _commitTemptFateOutcome;
 
-  // Author-facing directive — the BINDING obligation future prompts must
-  // receive. '' when no entries. Mirrors _buildDurableFateConsequenceDirective
-  // 's shape/discipline but stays a SEPARATE function reading a SEPARATE
-  // array (never collapse Tempt Fate into ordinary wish doctrine).
+  // Author-facing directive — reaches future prompts via
+  // _buildContinuitySpineBlock (unchanged wiring from the prior pass).
+  // Explicitly separates ESTABLISHED fact (changed/durability/
+  // knowledgeStates/establishedEvidence — MUST be honored) from
+  // openPossibilities (future scenes MAY explore — explicitly NOT yet fact,
+  // per Roman: "Do not let proposed future clues become retroactively
+  // established facts").
   function _buildTemptFateDurableConsequenceDirective() {
     try {
       var s = window.state || {};
       var list = Array.isArray(s._temptFateDurableConsequences) ? s._temptFateDurableConsequences : [];
       if (!list.length) return '';
       var parts = list.map(function (c) {
-        return '  • "' + c.requestedRupture + '" (scene ' + ((c.sceneIdx != null ? c.sceneIdx : 0) + 1) + ', ' + c.permanenceDepth + ', ' + c.outcome.shape + '): '
-          + c.outcome.description + ' RESIDUE THIS WORLD MUST BE ABLE TO SHOW WHEN THE STORY CALLS FOR IT (not every scene, not all at once): '
-          + c.residueClues.join('; ') + '. MAY NOTICE, CONTEST, INVESTIGATE, EXPLOIT, OR MISREMEMBER IT: ' + c.noticers.join(', ') + '. EXPLANATION PRESSURE: '
-          + c.explanationPressure + ' ' + c.futureObligation;
+        var changedStr = (c.changed || []).map(function (x) { return x.subject + ': ' + x.whatChanged; }).join('; ') || '(no specific subject recorded)';
+        var durStr = (c.durability || []).map(function (d) { return d.aspect + ' ' + d.status + (d.note ? ' (' + d.note + ')' : ''); }).join('; ');
+        var knowStr = (c.knowledgeStates || []).map(function (k) { return k.character + ' ' + k.state + (k.note ? ' (' + k.note + ')' : ''); }).join('; ');
+        var evidStr = (c.establishedEvidence || []).join('; ');
+        var openStr = (c.openPossibilities || []).join('; ');
+        return '  • "' + c.requestedRupture + '" (scene ' + ((c.sceneIdx != null ? c.sceneIdx : 0) + 1) + '):\n'
+          + '    ESTABLISHED (binding — happened, do not silently revert or contradict): ' + changedStr + '.\n'
+          + (durStr ? '    DURATION PER EFFECT: ' + durStr + '.\n' : '')
+          + (knowStr ? '    WHO KNOWS/BELIEVES/SUSPECTS WHAT: ' + knowStr + '.\n' : '')
+          + (evidStr ? '    EVIDENCE ALREADY ON THE PAGE: ' + evidStr + '.\n' : '')
+          + (openStr ? '    NOT YET ESTABLISHED — future scenes MAY explore, must NOT be treated as already true: ' + openStr + '.\n' : '');
       });
-      return '\n═══ TEMPT FATE — DURABLE CONSEQUENCES (a higher-order Storybound mechanic, NOT ordinary Fatelands wish doctrine — the local world still metabolizes each of these through its OWN metaphysics, institutions, suspicion, and cost) ═══\n'
-        + parts.join('\n') + '\n';
+      return '\n═══ TEMPT FATE — DURABLE CONSEQUENCES (verified from what the accepted scene actually established, not from the wish’s literal text or a template — a higher-order Storybound mechanic, NOT ordinary Fatelands wish doctrine) ═══\n'
+        + parts.join('');
     } catch (e) {
       try { console.warn('[TEMPT-DURABLE] directive build failed:', e && e.message); } catch (_) {}
       return '';
