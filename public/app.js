@@ -82583,6 +82583,7 @@ Return ONLY valid JSON:
       // LI remembers across scenes. Cleared per story so a fresh story
       // starts with no Tempt history.
       state._temptFateLedger = null;
+      state._temptFateLedgerSeq = 0; // stable-identity counter for ledger entries — fresh per story
       state._fateTollLedger = null; // Fate Toll Phase 0 — embodied/world price per Fate bend (L3)
       // Fatelands three-rail wish STATE (Roman 2026-07-16, step C). THREE
       // SEPARATE L3 layers (per-story; survive intra-story SCENE resets because
@@ -101755,6 +101756,7 @@ Do NOT summarize Book 1. Do NOT reintroduce characters. Jump straight into the n
               _sceneLedgerJson:   (function () { try { return state._sceneLedger ? JSON.stringify(state._sceneLedger) : null; } catch (_) { return null; } })(),
               _durableJson:       (function () { try { return Array.isArray(state._durableFateConsequences) && state._durableFateConsequences.length ? JSON.stringify(state._durableFateConsequences) : null; } catch (_) { return null; } })(),
               _temptLedgerJson:   (function () { try { return Array.isArray(state._temptFateLedger) && state._temptFateLedger.length ? JSON.stringify(state._temptFateLedger) : null; } catch (_) { return null; } })(),
+              _temptLedgerSeq:    state._temptFateLedgerSeq || 0,
               _temptDurableJson:  (function () { try { return Array.isArray(state._temptFateDurableConsequences) && state._temptFateDurableConsequences.length ? JSON.stringify(state._temptFateDurableConsequences) : null; } catch (_) { return null; } })(),
               _temptOutcomeCommittedJson: (function () { try { return (state._temptOutcomeCommittedScenes && Object.keys(state._temptOutcomeCommittedScenes).length) ? JSON.stringify(state._temptOutcomeCommittedScenes) : null; } catch (_) { return null; } })(),
               _mythicJson:        (function () { try { return state._mythicCoupleStatus && state._mythicCoupleStatus.active ? JSON.stringify(state._mythicCoupleStatus) : null; } catch (_) { return null; } })(),
@@ -101808,6 +101810,7 @@ Do NOT summarize Book 1. Do NOT reintroduce characters. Jump straight into the n
                 if (_carriedRel._sceneLedgerJson) { var _sl2 = _sceneLedgerRestamp(_carriedRel._sceneLedgerJson, _newSid); if (_sl2) state._sceneLedger = _sl2; }
                 if (_carriedRel._durableJson)     state._durableFateConsequences = JSON.parse(_carriedRel._durableJson);
                 if (_carriedRel._temptLedgerJson) state._temptFateLedger = JSON.parse(_carriedRel._temptLedgerJson);
+                if (_carriedRel._temptLedgerSeq) state._temptFateLedgerSeq = _carriedRel._temptLedgerSeq;
                 if (_carriedRel._temptDurableJson) state._temptFateDurableConsequences = JSON.parse(_carriedRel._temptDurableJson);
                 if (_carriedRel._temptOutcomeCommittedJson) state._temptOutcomeCommittedScenes = JSON.parse(_carriedRel._temptOutcomeCommittedJson);
                 if (_carriedRel._mythicJson)      state._mythicCoupleStatus = JSON.parse(_carriedRel._mythicJson);
@@ -190588,7 +190591,13 @@ No text, no watermark, no UI elements, share-ready.`;
     if (scale === 'intimate') publicAttribution = 'private';
     else if (claimedByPlayer) publicAttribution = scale === 'mass' ? 'legend' : 'attributed';
     else publicAttribution = scale === 'mass' ? 'debated' : 'unsolved';
+    // STABLE IDENTITY (Roman 2026-09-23) — a monotonic id independent of sceneIdx/array position,
+    // so a caller mid-generation can carry a reference to THIS exact proposal forward and never
+    // accidentally resolve to a DIFFERENT wish sealed later while that generation was in flight.
+    // See _commitTemptFateOutcome / the "most recent ledger entry" fix this id replaces.
+    s._temptFateLedgerSeq = (s._temptFateLedgerSeq || 0) + 1;
     var entry = {
+      id:               'tfl_' + s._temptFateLedgerSeq,
       sceneIdx:         s.turnCount || 0,
       wishText:         String(wishText || '').slice(0, 240),
       anatomyKeywords:  kw.anatomy,
@@ -231951,6 +231960,22 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
   window._cgMintDeliveredAssignments = _cgMintDeliveredAssignments; window._cgAcceptDelivered = _cgAcceptDelivered; window._renderCGDeliveredAssignments = _renderCGDeliveredAssignments; window._cgBranchKey = _cgBranchKey;
 
   async function _runCGScreenplayGenInner(sceneIndex, playerAction, playerDialogue) {
+    // TEMPT FATE PROPOSAL — STABLE IDENTITY CAPTURED HERE (Roman 2026-09-23), before any await in
+    // this function. "Most recent ledger entry" (the prior version of this wiring) is safe ONLY if
+    // no newer/unrelated wish can be sealed while THIS generation is in flight. Traced the real
+    // path: the Tempt Fate zoom-card's own proceed handler (app.js ~108792) has NO
+    // _stagedSubmitting/_isAdvancingScene check of its own — the only protection is a CSS dimming
+    // class applied to "the staged surface" during composing, not a code-level state guard. That is
+    // not a reliable guarantee for a durable-canon commit, so this does not rely on it: the exact
+    // ledger entry (by stable id, not array position) and whether Tempt was genuinely invoked THIS
+    // turn are both captured NOW, at generation start, and carried forward to the commit point
+    // rather than re-resolved from mutable state after the awaited dispatch returns.
+    var _tfoProposalEntry = null;
+    try {
+      var _tfoLedgerAtStart = window.state && window.state._temptFateLedger;
+      if (Array.isArray(_tfoLedgerAtStart) && _tfoLedgerAtStart.length) _tfoProposalEntry = _tfoLedgerAtStart[_tfoLedgerAtStart.length - 1];
+    } catch (_) {}
+    var _tfoWasInvokedAtStart = !!(window.state && window.state.tempt_fate_invoked_this_turn);
     // Tick grievance contracts FIRST so visibility transitions land in
     // state before any directive builder reads them.
     try { if (typeof _tickGrievanceContracts === 'function') _tickGrievanceContracts(); } catch (_) {}
@@ -232349,55 +232374,58 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
         }
       }
 
-      // ── TEMPT FATE OUTCOME — COMMIT (Roman 2026-09-23) ──
+      // ── TEMPT FATE OUTCOME — COMMIT (Roman 2026-09-23, ownership fix same day) ──
       // Same gate as the kink-memory block above (`if (_normalized && plan)`) — the app's OWN
       // acceptance check (_acc.ok, checked above; a stale/rejected generation already returned
-      // early and never reaches this line at all) has ALREADY run before this point. The model's
-      // own "delivered:true" inside plan.temptFateOutcome is necessary but NOT sufficient by
-      // itself — Roman: "delivered:true must reflect the app's actual acceptance of the scene. A
-      // model asserting that flag cannot, by itself, establish that the player received the
-      // scene." Both must hold: the app accepted THIS generation (_normalized && plan, i.e.
-      // _acc.ok already passed) AND the model reports the intervention actually landed on the
-      // page (plan.temptFateOutcome.delivered) — _commitTemptFateOutcome itself re-validates the
-      // report's shape and re-checks delivered:true, so a malformed or undelivered report still
-      // produces no commit even if it reaches this line.
+      // early and never reaches this line at all) has ALREADY run before this point.
+      //
+      // TWO SEPARATE GUARANTEES, both required, neither trusting the model alone:
+      // (1) OWNERSHIP: uses _tfoProposalEntry / _tfoWasInvokedAtStart, captured at the TOP of this
+      //     function before any await — NOT re-resolved here from mutable "current" state. A prior
+      //     version used the ledger's most-recent entry AT COMPLETION time; Roman's review caught
+      //     that this is only correct if no NEWER wish can be sealed while this exact generation is
+      //     in flight, and traced (not assumed) that no such lock exists — the Tempt Fate zoom-
+      //     card's proceed handler (app.js ~108792) has no _stagedSubmitting/_isAdvancingScene
+      //     check of its own; the only protection is a CSS dimming class of unverified coverage.
+      //     Capturing the exact ledger entry (by stable id) and the invocation flag at generation
+      //     START, then carrying them through the awaited dispatch via closure, means a second
+      //     wish sealed mid-flight can never be misattributed to this generation's outcome.
+      // (2) DELIVERY: the model's own "delivered:true" inside plan.temptFateOutcome is necessary
+      //     but NOT sufficient — _commitTemptFateOutcome itself re-validates the report's shape and
+      //     re-checks delivered:true, so a malformed or undelivered report still produces no commit.
+      //
+      // _tfoWasInvokedAtStart is checked FIRST, before even looking at plan.temptFateOutcome — an
+      // ORDINARY CONTINUATION (Tempt not invoked this turn) must never process a temptFateOutcome
+      // field at all, even if the model stray-returns one (the schema is unconditionally documented
+      // every scene, so a drifting model could echo a stale one back) — that would silently
+      // recommit the PRIOR turn's wish as if it were a brand-new intervention.
       if (_normalized && plan) {
         try {
-          if (plan.temptFateOutcome && typeof _commitTemptFateOutcome === 'function') {
-            // LOOKUP FIX (Roman 2026-09-23, found by the production-integration control, not
-            // assumed from source reading alone): _recordTemptFateEvent stamps
-            // entry.sceneIdx = state.turnCount AT SEAL TIME — before the player even clicks
-            // Submit. _advanceStagedScene then does `state.turnCount = (state.turnCount||0)+1`
-            // and calls this generation with THAT incremented value as `sceneIndex` — so the
-            // ledger entry's sceneIdx is ALWAYS exactly one behind this function's own
-            // `sceneIndex` in real production flow. Matching on equality (the first version of
-            // this code) could never find the entry it was looking for. The append-only ledger
-            // plus the fact that plan.temptFateOutcome only exists when the Tempt directive was
-            // active THIS turn (see _buildCGTemptDirective's own gate) already guarantees the
-            // MOST RECENT ledger entry is the correct proposal for this generation — no sceneIdx
-            // arithmetic needed, and no risk of matching a stale entry from a much earlier turn.
-            var _tfoLedgerEntry = null;
-            try {
-              var _tfoLedger = window.state._temptFateLedger;
-              if (Array.isArray(_tfoLedger) && _tfoLedger.length) _tfoLedgerEntry = _tfoLedger[_tfoLedger.length - 1];
-            } catch (_) {}
-            if (_tfoLedgerEntry) {
-              var _tfoCommitted = _commitTemptFateOutcome(sceneIndex, _tfoLedgerEntry, plan.temptFateOutcome);
-              // EXPLICITLY SURFACED, never silent (Roman: "a missing/malformed report is
-              // explicitly surfaced rather than silently counted as successful durable
-              // handling") — _commitTemptFateOutcome itself already logs its own reason
-              // (invalid shape / delivered:false / duplicate scene); this line surfaces the
-              // higher-level fact that an active Tempt turn produced NO durable record.
-              if (!_tfoCommitted) {
-                console.warn('[TEMPT-OUTCOME] scene ' + sceneIndex + ' had an active Tempt ledger entry but produced no durable commit — see the [TEMPT-OUTCOME] log line immediately above for the exact reason (undelivered, malformed, or already committed).');
+          if (_tfoWasInvokedAtStart) {
+            if (plan.temptFateOutcome && typeof _commitTemptFateOutcome === 'function') {
+              if (_tfoProposalEntry) {
+                var _tfoCommitted = _commitTemptFateOutcome(sceneIndex, _tfoProposalEntry, plan.temptFateOutcome);
+                // EXPLICITLY SURFACED, never silent (Roman: "a missing/malformed report is
+                // explicitly surfaced rather than silently counted as successful durable
+                // handling") — _commitTemptFateOutcome itself already logs its own reason
+                // (invalid shape / delivered:false / duplicate scene); this line surfaces the
+                // higher-level fact that an active Tempt turn produced NO durable record.
+                if (!_tfoCommitted) {
+                  console.warn('[TEMPT-OUTCOME] scene ' + sceneIndex + ' had an active Tempt proposal (' + _tfoProposalEntry.id + ') but produced no durable commit — see the [TEMPT-OUTCOME] log line immediately above for the exact reason (undelivered, malformed, or already committed).');
+                }
+              } else {
+                console.warn('[TEMPT-OUTCOME] scene ' + sceneIndex + ' — Tempt was invoked at generation start but no ledger proposal entry was captured — not committing.');
               }
-            } else if (window.state.tempt_fate_invoked_this_turn) {
-              console.warn('[TEMPT-OUTCOME] scene ' + sceneIndex + ' — model returned temptFateOutcome but no matching ledger entry (proposal record) was found for this scene — not committing.');
+            } else {
+              // Tempt WAS invoked this turn but the model returned no temptFateOutcome at all —
+              // surfaced, not silently treated as "nothing to commit, therefore fine".
+              console.warn('[TEMPT-OUTCOME] scene ' + sceneIndex + ' — Tempt Fate was invoked this turn but the model returned no temptFateOutcome field. Not committing.');
             }
-          } else if (window.state.tempt_fate_invoked_this_turn) {
-            // Tempt WAS invoked this turn but the model returned no temptFateOutcome at all —
-            // surfaced, not silently treated as "nothing to commit, therefore fine".
-            console.warn('[TEMPT-OUTCOME] scene ' + sceneIndex + ' — Tempt Fate was invoked this turn but the model returned no temptFateOutcome field. Not committing.');
+          } else if (plan.temptFateOutcome) {
+            // Tempt was NOT invoked this turn (an ordinary continuation) but the model returned a
+            // temptFateOutcome anyway — almost certainly stale echo from an earlier turn's context,
+            // not a new intervention. Surfaced and deliberately ignored, never committed.
+            console.warn('[TEMPT-OUTCOME] scene ' + sceneIndex + ' — model returned temptFateOutcome on an ORDINARY continuation (Tempt not invoked this turn) — ignoring, will not recommit a prior wish as a new intervention.');
           }
         } catch (_tfoErr) {
           try { console.warn('[TEMPT-OUTCOME] wiring threw:', _tfoErr && _tfoErr.message); } catch (__) {}

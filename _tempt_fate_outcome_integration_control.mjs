@@ -91,9 +91,11 @@ const VALID_BEATS = [{ idx: 0, kind: 'narration', text: 'The ceremony hall stand
   // So the stub is registered EXACTLY ONCE here, backed by a mutable closure variable each section
   // reassigns before its own generation call — not by calling gate.stub() repeatedly.
   let _currentPlanFields = {};
-  gate.stub('/api/proxy', () => ({
-    content: JSON.stringify(Object.assign({ beats: VALID_BEATS, visualState: {}, is_consummate_scene: false }, _currentPlanFields))
-  }));
+  let _inFlightSideEffect = null; // optional async fn run WHILE the "network request" is pending — simulates a race
+  gate.stub('/api/proxy', async () => {
+    if (_inFlightSideEffect) { const fn = _inFlightSideEffect; _inFlightSideEffect = null; await fn(); }
+    return { content: JSON.stringify(Object.assign({ beats: VALID_BEATS, visualState: {}, is_consummate_scene: false }, _currentPlanFields)) };
+  });
   function stubProxyWithPlan(planFields) { _currentPlanFields = planFields; }
   // CG scaffold generation turned out to be UNCONDITIONAL (confirmed against source,
   // _shouldGenerateCGScaffold: "Spine is ALWAYS ON" — an earlier assumption that Fantasy-world
@@ -267,6 +269,76 @@ const VALID_BEATS = [{ idx: 0, kind: 'narration', text: 'The ceremony hall stand
   console.log('  NOTE: the exhaustive enumeration of malformed report SHAPES (6 variants) is already covered by');
   console.log('  _tempt_fate_model_driven_outcome_control.mjs §4 (calls the same real _commitTemptFateOutcome this');
   console.log('  pipeline calls) — not re-run here per "reuse existing controls where practical".');
+
+  // ═══════════════════════════════════════════════════════════════════════════════════════════
+  section('8. OWNERSHIP RACE — a second wish sealed WHILE the first generation is in flight must not be misattributed');
+  await resetBaseline();
+  {
+    // Traced (design doc, this pass): the Tempt Fate zoom-card's own proceed handler has no
+    // _stagedSubmitting/_isAdvancingScene check of its own, so this race is not proven impossible
+    // by the real UI code path — only by (at most) a CSS dimming class of unverified coverage. This
+    // section proves the FIX (stable identity captured at generation start) handles the race
+    // correctly regardless of whether the UI ever actually allows it in practice.
+    const sceneIdx = 1;
+    const firstWish = 'the FIRST wish — this exact generation is for this one';
+    const secondWish = 'a SECOND wish sealed while the first generation was still in flight';
+    await page.evaluate((w) => {
+      window.state.tempt_fate_invoked_this_turn = true;
+      window.state.temptFateWish = w;
+      window._recordTemptFateEvent(w);
+    }, firstWish);
+
+    stubProxyWithPlan({
+      temptFateOutcome: { delivered: true, changed: [{ subject: 'x', whatChanged: 'y' }], durability: [{ aspect: 'x', status: 'persists' }], establishedEvidence: ['from the FIRST generation'] }
+    });
+    // The in-flight side effect: WHILE the (stubbed) "network request" for the first generation is
+    // pending, seal a second, unrelated wish — exactly the scenario a missing UI lock would allow.
+    _inFlightSideEffect = () => page.evaluate((w) => {
+      window._recordTemptFateEvent(w); // does NOT touch state.tempt_fate_invoked_this_turn or temptFateWish — a SEPARATE, later seal
+    }, secondWish);
+
+    await page.evaluate((si) => window._runCGScreenplayGen(si, 'x', ''), sceneIdx);
+    const entry = await page.evaluate(() => window.state._temptFateDurableConsequences[0]);
+    const ledgerLen = await page.evaluate(() => window.state._temptFateLedger.length);
+
+    ok('the second wish really was sealed mid-flight (ledger now has 2 entries, proving the race actually happened, not a no-op test)', ledgerLen === 2, 'ledgerLen=' + ledgerLen);
+    ok('the committed entry is attributed to the FIRST wish (the one THIS generation was actually for) — not the second, later one', entry && entry.requestedRupture === firstWish, JSON.stringify(entry));
+    ok('the evidence content is the FIRST generation\'s own reported evidence, not contaminated by the second wish', entry && entry.establishedEvidence[0] === 'from the FIRST generation', JSON.stringify(entry && entry.establishedEvidence));
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════════════════════
+  section('9. Ordinary continuation after a Tempt invocation must not accidentally recommit the earlier wish');
+  await resetBaseline();
+  {
+    // Turn N: a real Tempt invocation and commit (establishes a "prior wish" the ledger remembers).
+    const sceneIdxA = 1;
+    const wish = 'the ORIGINAL wish from an earlier turn';
+    await page.evaluate((w) => {
+      window.state.tempt_fate_invoked_this_turn = true;
+      window.state.temptFateWish = w;
+      window._recordTemptFateEvent(w);
+    }, wish);
+    stubProxyWithPlan({ temptFateOutcome: { delivered: true, changed: [{ subject: 'x', whatChanged: 'y' }], durability: [{ aspect: 'x', status: 'persists' }], establishedEvidence: ['original'] } });
+    await page.evaluate((si) => window._runCGScreenplayGen(si, 'x', ''), sceneIdxA);
+    const countAfterA = await page.evaluate(() => window.state._temptFateDurableConsequences.length);
+
+    // Turn N+1: an ORDINARY continuation — Tempt genuinely NOT invoked this turn — but the
+    // (stubbed) model drifts and echoes a temptFateOutcome anyway (the schema is unconditionally
+    // documented every scene; a real model could plausibly do this by mistake).
+    const sceneIdxB = 2;
+    await page.evaluate(() => {
+      window.state.tempt_fate_invoked_this_turn = false; // the real app.js sets this false via cleanup between turns
+      window.state.temptFateWish = '';
+    });
+    stubProxyWithPlan({ temptFateOutcome: { delivered: true, changed: [{ subject: 'x', whatChanged: 'STRAY — should never be committed' }], durability: [{ aspect: 'x', status: 'persists' }], establishedEvidence: ['STRAY'] } });
+    consoleLines.length = 0;
+    await page.evaluate((si) => window._runCGScreenplayGen(si, 'x', ''), sceneIdxB);
+    const countAfterB = await page.evaluate(() => window.state._temptFateDurableConsequences.length);
+    const surfacedStray = consoleLines.some((l) => /ORDINARY continuation.*Tempt not invoked/i.test(l));
+
+    ok('the ordinary continuation (Tempt not invoked) does NOT create a second durable entry despite the model echoing a stray temptFateOutcome', countAfterB === countAfterA, 'countAfterA=' + countAfterA + ' countAfterB=' + countAfterB);
+    ok('the stray report is explicitly surfaced as ignored, not silently dropped', surfacedStray, JSON.stringify(consoleLines.filter(l => l.indexOf('TEMPT-OUTCOME') !== -1)));
+  }
 
   await browser.close();
 

@@ -1,10 +1,11 @@
 # Live-test authorization sheet — Tempt Fate memory-erasure scenario
 
-2026-09-23. Roman: "Then present the concrete authorization sheet for the memory-erasure scenario.
-It must distinguish what one generated scene can demonstrate from what requires a later
-continuation... A successful first scene would show that the wish lands. A later continuation is
-what proves the story can keep living with it." This sheet is a proposal to review and approve or
-adjust — nothing in it authorizes a paid call by itself.
+2026-09-23, updated same day after the ownership fix (§ pointer:
+`_tempt_fate_outcome_ownership_fix_2026_09_23.md`). Roman: "Then present the concrete authorization
+sheet for the memory-erasure scenario. It must distinguish what one generated scene can demonstrate
+from what requires a later continuation... A successful first scene would show that the wish lands.
+A later continuation is what proves the story can keep living with it." This sheet is a proposal to
+review and approve or adjust — nothing in it authorizes a paid call by itself. No paid run yet.
 
 ## What's already dry-proven, so this test isn't validating plumbing
 
@@ -42,21 +43,34 @@ SEPARATE, larger, later authorization if Scenes A and B look sound. Two scenes i
 that distinguishes "the wish lands" from "the story keeps living with it," per Roman's own framing
 — not the smallest test of everything eventually worth knowing.
 
-## What to actually read from the two scenes
+## Starting state
 
-- **Scene A**: does `temptFateOutcome.delivered` correctly track whether the prose actually
-  rendered the intervention (not a rubber-stamped `true`); is `changed`/`establishedEvidence`
-  grounded in real sentences from the prose, not invented; does the WISH ITSELF land as a
-  legible warp (per the Eight-Orders doctrine — a compound History+Agency wish like memory-erasure
-  should read as confused/inconsistent, not a clean uniform wipe) rather than either a flat refusal
-  or an unnaturally tidy success; does the instruction-hierarchy text (this session's own fix)
-  actually change the model's behavior versus a version without it — i.e., does the model let
-  memory bend at all, or does it flinch back toward "circumstances, not minds" caution.
-- **Scene B**: does the committed record's `establishedEvidence`/`knowledgeStates` actually surface
-  in the new prose in a way a reader would recognize as connected (not just present in the raw
-  prompt, but reflected in what gets written); does `openPossibilities` stay speculative rather than
-  reading as already-decided; is there any sign of the classic failure mode this whole arc exists to
-  prevent — the story quietly forgetting its own rupture ever happened.
+Continue from First Sacrifice's current, real, committed story state (whatever scene the story is
+actually sitting at right now) — not a synthetic/reset state. This is deliberate: the durable-
+consequence mechanism is meant to work against the app's real committed-state machinery
+(`_committedState`, the scene ledger, the real cast/canon), and a synthetic starting state would
+test less than the real one does. If the current real state isn't at a point where inserting a
+ceremony-erasure wish makes narrative sense, that's Roman's call to redirect before authorizing,
+not something to assume away here.
+
+## Evaluation criteria (Roman, 2026-09-23)
+
+- **Scene A** should establish actual memory erasure, with confusion and surviving evidence
+  consistent with the wish's scope — not a flat refusal, not a clean uniform wipe with no residue,
+  and not a metaphorical near-miss (the same "rendered as a feeling instead of literally happening"
+  failure mode this session's LITERAL MANIFESTATION rule already exists to prevent for other Tempt
+  wishes).
+- **Scene B** should honor the erased memories (no character suddenly and cleanly remembers the
+  ceremony) and develop consequences from that changed situation — WITHOUT automatically restoring
+  memories, and WITHOUT forcing a predetermined investigation script. The durable record's
+  `openPossibilities` are threads the model MAY pick up; Scene B is not required to start an
+  investigation, only to not contradict or quietly undo what Scene A established.
+- **Report explicitly whether Scene B occurs INSIDE or AFTER the volatility window** (check
+  `state.volatility_window.active` and `state._temptAftermathScenes` going into Scene B's
+  generation). If Scene B lands INSIDE the window, that's immediate-continuity evidence only —
+  persistence of the erasure BEYOND the window's own expiration remains untested by this
+  authorization and would need the larger, later multi-scene run already flagged as out of scope
+  below.
 
 ## Paid roles, request cap, and cost basis
 
@@ -83,6 +97,19 @@ that distinguishes "the wish lands" from "the story keeps living with it," per R
   console after the run rather than estimated further here.
 - **Everything else stays dry**: no image generation, no additional scenes beyond A and B, no
   batch, no exploratory retries beyond what the existing per-scene policy already allows.
+- **Per-scene spending limit**: Scene A ≤ 60 Fortunes + Scene A's own ordinary per-scene provider
+  cost (no batch/regeneration on top of the existing single-retry policy); Scene B ≤ First
+  Sacrifice's ordinary per-scene Fortune/provider cost, no Tempt surcharge (no Fate card used).
+- **Combined spending limit for this authorization**: 60 Fortunes total (Scene A's Tempt charge;
+  Scene B carries no Fortune cost of its own) + at most 2 provider generation calls' worth of real
+  spend (each within the SAME per-scene retry policy every ordinary CG scene already uses — not a
+  new, larger retry budget). No third scene, no image generation, under this authorization.
+- **Stop conditions**: if Scene A's generation is rejected/stale twice in a row (the real
+  `_cgAcceptDelivered`/provider-fallback path exhausting its existing retry policy), stop and report
+  rather than keep retrying past what an ordinary scene would; if Scene A's `temptFateOutcome`
+  report is malformed or reports `delivered:false`, stop, report the raw output, and do NOT proceed
+  to Scene B (there is nothing for Scene B to continue from yet); if Scene B's own generation fails
+  the same way, stop and report — do not substitute a third attempt.
 
 ## Recommended wish text for Scene A
 
