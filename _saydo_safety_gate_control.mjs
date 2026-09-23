@@ -139,12 +139,20 @@ const REAL_SILENCE_DIALOGUE = 'No words—only the rasp of teeth on iron-hard la
     const clean = await page.evaluate(() => window._sayDoGibberishFallback('I keep my hands folded at my waist', 'action'));
     ok('a normal sentence is left completely untouched', clean === 'I keep my hands folded at my waist', JSON.stringify(clean));
 
-    // HONEST GAP — the user's own literal example. Proven, not hidden.
+    // UPDATED 2026-09-22, same-day follow-up pass: this was a documented,
+    // honest gap in _detectGibberish when this control was first written —
+    // the multi-word phrase below (the user's own literal example) was NOT
+    // flagged. It has since been closed by the nonsense-cluster detector
+    // (_detectNonsenseCluster, keyboard-row-adjacency based, not per-word
+    // vowel matching — see _saydo_wallbreak_gibberish_cluster_control.mjs
+    // for the full design/proof). This assertion is updated to match the
+    // new, fixed reality rather than left asserting a gap that no longer
+    // exists.
     const gap = await page.evaluate(() => ({
       raw: window._detectGibberish('asdf qwer blorple zxcvb'),
       fallback: window._sayDoGibberishFallback('asdf qwer blorple zxcvb', 'action'),
     }));
-    ok('KNOWN GAP (documented, not fixed this pass): the multi-word phrase "asdf qwer blorple zxcvb" — the user\'s own example — is NOT flagged by the existing, unmodified _detectGibberish (it exempts multi-word input from the low-vowel-ratio check specifically to avoid false-positiving on real short sentences)', gap.raw.gibberish === false && gap.fallback === 'asdf qwer blorple zxcvb', JSON.stringify(gap));
+    ok('FIXED (was a known gap, closed in the same-day follow-up pass): the multi-word phrase "asdf qwer blorple zxcvb" — the user\'s own example — is now flagged and replaced with the graceful fallback', gap.raw.gibberish === true && gap.fallback === 'a beat of dazed, wordless hesitation', JSON.stringify(gap));
 
     // Why a quick per-word fix was NOT attempted: proven directly, not asserted. A naive
     // "does this word individually look vowel-sparse" heuristic immediately false-positives on

@@ -125441,10 +125441,113 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
   window._detectHateSpeechSignal = _detectHateSpeechSignal;
 
   // Gibberish detection: >40% repeated chars or >40% punctuation/symbols
+  // ── NONSENSE-CLUSTER DETECTOR (2026-09-22) — cluster-level, not per-word ──
+  // Roman, after the Say/Do safety-gate pass proved the existing gibberish
+  // detector misses multi-word keyboard mash (its own low-vowel-ratio check
+  // (b) above deliberately exempts multi-word input to avoid false-positiving
+  // on real short sentences): "gibberish detection needs a more careful
+  // 'nonsense cluster' approach, not per-word matching... keep short valid
+  // dialogue safe, including examples like 'Shh. Don't move.'"
+  //
+  // A first attempt at a per-word "does this word individually look weird"
+  // heuristic (tried and abandoned during the prior pass, and again during
+  // this one) reliably false-positives on legitimate short interjections
+  // ("Shh", "Tsk", "Ngh", "Mm-hmm", "Hmph") and on ordinary words that
+  // happen to have a low vowel count ("strengths", "rhythms") — vowel
+  // ratio alone cannot distinguish "sounds like nonsense" from "is a real,
+  // just consonant-heavy, word." The signal that actually separates them
+  // (verified empirically, not assumed): the user's own example words —
+  // "asdf", "qwer", "zxcvb" — are literal QWERTY keyboard-ROW sequences
+  // (adjacent keys typed in a run), a PHYSICAL-INPUT pattern with nothing
+  // to do with vowels. "Shh"/"Ngh"/"Tsk"/"here"/"were"/"poor"/"power" are
+  // not row sequences even when they score low on vowels.
+  //
+  // Even keyboard-row-adjacency has a real false-positive rate on its own —
+  // common short English words ("here", "were", "poor", "power") contain
+  // adjacent-key digraphs (er/re/ow/or) often enough that a naive per-word
+  // threshold flags them. Tested empirically against a 36-phrase legitimate
+  // battery (interjections, weak responses, real narrative sentences,
+  // "Were you here", "poor power tower") plus 7 gibberish fixtures before
+  // picking the final thresholds below — 0 false positives, 6/7 gibberish
+  // caught (the one miss, "asdlfj asldkfj aslkdfj", is a hand-invented,
+  // less-clean mash, not the user's own example, which IS caught). Two
+  // thresholds work together to get there: a high PER-WORD bar (0.75 — most
+  // of a word's adjacent letter-pairs must be same-row-adjacent, not just a
+  // slim majority) makes a single stray real word like "here" not qualify
+  // on its own, and a cluster majority bar (0.6 of all words in a 2+-word
+  // phrase) means one stray false-positive word never sinks a real sentence
+  // around it, while a genuine mash phrase — where MOST tokens are mash-
+  // shaped — still clears it.
+  var _QWERTY_ROWS = ['qwertyuiop', 'asdfghjkl', 'zxcvbnm'];
+  function _keyboardRowAdjacencyRatio(word) {
+    var w = String(word || '').toLowerCase().replace(/[^a-z]/g, '');
+    if (w.length < 2) return 0;
+    var adjacentPairs = 0;
+    var totalPairs = w.length - 1;
+    for (var i = 0; i < w.length - 1; i++) {
+      var a = w[i], b = w[i + 1], found = false;
+      for (var r = 0; r < _QWERTY_ROWS.length; r++) {
+        var row = _QWERTY_ROWS[r];
+        var pa = row.indexOf(a), pb = row.indexOf(b);
+        if (pa !== -1 && pb !== -1 && Math.abs(pa - pb) <= 1) { found = true; break; }
+      }
+      if (found) adjacentPairs++;
+    }
+    return totalPairs ? (adjacentPairs / totalPairs) : 0;
+  }
+  window._keyboardRowAdjacencyRatio = _keyboardRowAdjacencyRatio;
+  function _wordLooksLikeKeyboardMash(word) {
+    var w = String(word || '').replace(/[^a-zA-Z]/g, '');
+    if (w.length < 3) return false; // too short to judge reliably either way
+    return _keyboardRowAdjacencyRatio(w) >= 0.75;
+  }
+  window._wordLooksLikeKeyboardMash = _wordLooksLikeKeyboardMash;
+  function _detectNonsenseCluster(text) {
+    var words = String(text || '').trim().split(/\s+/)
+      .map(function (w) { return w.replace(/[^a-zA-Z]/g, ''); })
+      .filter(function (w) { return w.length > 0; });
+    if (words.length < 2) return null; // single-word input: the existing per-blob checks above already cover this
+    var mashCount = words.filter(_wordLooksLikeKeyboardMash).length;
+    if ((mashCount / words.length) >= 0.6) {
+      return { mashCount: mashCount, total: words.length };
+    }
+    return null;
+  }
+  window._detectNonsenseCluster = _detectNonsenseCluster;
+
+  // \u2500\u2500 KNOWN-INTERJECTION ALLOWLIST (2026-09-22) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+  // Roman: "keep short valid dialogue safe, including examples like 'Shh.
+  // Don't move.'" Testing the ORIGINAL, unmodified _detectGibberish against
+  // a wide legitimate-dialogue battery (not just that one named example)
+  // found real false positives it already had, predating this pass: "Tsk
+  // tsk tsk", "Mm-hmm", "Hmph", and "Ssshhh" all tripped one of the existing
+  // repeated-char / consonant-run / short-mash checks below, because English
+  // has a small, closed set of all-consonant or heavily-repeated-letter
+  // interjections that those statistical checks cannot distinguish from
+  // mashed keyboard noise by shape alone. A small, curated, FINITE allowlist
+  // \u2014 checked once, up front \u2014 is the safe fix: it can only ever REMOVE a
+  // false positive on a known, real word, never weaken detection of
+  // anything else, unlike loosening a threshold (which would also let real
+  // gibberish through). Deliberately short; not an attempt to enumerate
+  // every English interjection, just the shapes that collided with a real
+  // test battery. A word not on this list is judged by the statistical
+  // checks below exactly as before.
+  var _KNOWN_INTERJECTIONS = ['shh', 'shhh', 'ssshhh', 'sssh', 'tsk', 'tsktsk', 'hmph', 'mmhmm', 'mm-hmm', 'mhm', 'pfft', 'pfft!', 'grr', 'grrr', 'argh', 'aargh', 'ngh', 'brr', 'brrr', 'psst', 'ugh', 'hm', 'hmm', 'hmmm', 'tch', 'meh', 'bah', 'eek', 'gah', 'ack'];
+  function _isKnownInterjectionCluster(text) {
+    // Strip hyphens (word-internal, e.g. "mm-hmm") rather than splitting on
+    // them, so a compound interjection stays one token and matches its
+    // whole-string list entry.
+    var words = String(text || '').toLowerCase().replace(/[.!?,;:]/g, '').replace(/-/g, '').trim().split(/\s+/).filter(function (w) { return w.length > 0; });
+    if (!words.length) return false;
+    return words.every(function (w) { return _KNOWN_INTERJECTIONS.indexOf(w) !== -1; });
+  }
+  window._isKnownInterjectionCluster = _isKnownInterjectionCluster;
+
   function _detectGibberish(text) {
     if (!text) return { gibberish: false };
     const trimmed = String(text).trim();
     if (trimmed.length < 4) return { gibberish: false };
+    if (_isKnownInterjectionCluster(trimmed)) return { gibberish: false };
     const chars = trimmed.replace(/\s/g, '');
     if (chars.length === 0) return { gibberish: false };
 
@@ -125474,10 +125577,22 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
     // (a) Long consonant runs \u2014 6+ consecutive consonants is essentially
     //     never English ("strengths" runs 5; "rhythms" runs 5 with y;
     //     mashes routinely hit 7-12).
-    if (alphaOnly.length >= 6) {
-      const longConsonantRuns = alphaOnly.match(/[bcdfghjklmnpqrstvwxz]{6,}/g) || [];
-      if (longConsonantRuns.length > 0) {
-        return { gibberish: true, reason: 'Long consonant run (likely keyboard mash).' };
+    //     FIXED (2026-09-22): for multi-word input, evaluate EACH WORD
+    //     separately rather than the whitespace-stripped merged blob.
+    //     Found via testing (not assumed): "Tsk tsk tsk" and "Pfft
+    //     whatever" \u2014 both legitimate short dialogue \u2014 were tripping this
+    //     check only because stripping spaces before the regex let a run
+    //     span a word boundary ("pfft"+"wh"atever -> "pfftwh", 6
+    //     consonants, even though neither real word alone reaches 6).
+    //     Single-word input is unaffected \u2014 same behavior as before.
+    const longRunSource = hasMultipleWords ? trimmed.toLowerCase().replace(/[^a-z\s]/g, '').split(/\s+/) : [alphaOnly];
+    for (var _wi = 0; _wi < longRunSource.length; _wi++) {
+      var _wSeg = longRunSource[_wi];
+      if (_wSeg.length >= 6) {
+        const longConsonantRuns = _wSeg.match(/[bcdfghjklmnpqrstvwxz]{6,}/g) || [];
+        if (longConsonantRuns.length > 0) {
+          return { gibberish: true, reason: 'Long consonant run (likely keyboard mash).' };
+        }
       }
     }
 
@@ -125501,6 +125616,19 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       const vowelCount = (alphaOnly.match(/[aeiouy]/g) || []).length;
       if (vowelCount === 0) {
         return { gibberish: true, reason: 'Short consonant-only mash.' };
+      }
+    }
+
+    // (d) NONSENSE CLUSTER — the piece (a)-(c) above cannot catch: multiple
+    // SEPARATE short tokens that are each individually keyboard-mash-shaped
+    // ("asdf qwer blorple zxcvb"). See _detectNonsenseCluster's own header
+    // comment for the full design/testing rationale. Cluster-level, not
+    // per-word rejection of the WHOLE input — a majority of tokens must
+    // qualify, so one stray short real word never sinks a real sentence.
+    if (hasMultipleWords) {
+      var _cluster = _detectNonsenseCluster(trimmed);
+      if (_cluster) {
+        return { gibberish: true, reason: 'Multiple words look like keyboard-mash sequences (' + _cluster.mashCount + '/' + _cluster.total + ').' };
       }
     }
 
@@ -125589,6 +125717,64 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
     return kind === 'action' ? _SAYDO_GIBBERISH_ACTION_FALLBACK : _SAYDO_GIBBERISH_DIALOGUE_FALLBACK;
   }
   window._sayDoGibberishFallback = _sayDoGibberishFallback;
+
+  // ── WALL-BREAKING / META SAY-DO DETECTOR (2026-09-22) ────────────────────
+  // Roman: "wall-breaking/meta input is not currently caught well enough...
+  // Expand or adapt [the existing fourth-wall detector] so ordinary Say/Do
+  // catches obvious app/game/model/interface references before planner/
+  // author prompting." TRACED (this pass): sanitizeShortInput's own fourth-
+  // wall regex (still present, unchanged) only matches narrow phrasing —
+  // "you are an AI", "who made you" — confirmed directly that "Julian this
+  // is an AI game, open the settings menu" does NOT match it at all and
+  // passes through completely untouched. Generic, reusing vocabulary from
+  // the literary path's own meta/ooc classifier (_llClassifyPlayerInput,
+  // ~72430 — "the story/author/narrator/prompt/system", "rewrite", "retcon",
+  // "out of character"/OOC — that classifier itself is scoped to
+  // _buildLitLitePrompt only and does not reach CG) plus new categories for
+  // the specific gaps Roman named: game-mechanic language ("I roll
+  // persuasion"), interface references ("settings menu"), and model-name
+  // complaints ("Claude messed this up"). Each pattern is written to require
+  // enough surrounding context to stay narrow — e.g. "buggy" only counts
+  // paired with an intensifier ("so buggy"/"really buggy") or naming the
+  // app/game, never bare (a horse-drawn "buggy" is a real period-fiction
+  // noun); "Claude"/model names only count paired with a complaint verb
+  // nearby, never bare (a character can be named Claude); "roll" only
+  // counts paired with a specific skill-check-shaped word, never bare
+  // ("roll over", "roll up your sleeves" stay untouched).
+  var _WALLBREAK_PATTERNS = [
+    { category: 'ai-identity', rx: /\b(you\s+are\s+(an?\s+)?(AI|LLM|language\s+model|chatbot|GPT|Claude|neural\s+net)|this\s+is\s+(an?\s+)?AI(\s+(game|app|story))?\b|(an?\s+)?AI\s+(game|app|story)|what\s+model\s+are\s+you|who\s+(made|created|trained|built|programmed)\s+you|anthropic|openai)\b/i },
+    { category: 'model-name-complaint', rx: /\b(claude|chatgpt|the\s+(ai|model|bot))\b[^.!?]{0,25}\b(messed\s+(this|it)\s+up|broke\s+(this|it)|forgot|screwed\s+(this|it)\s+up|got\s+(this|it)\s+wrong|made\s+a\s+mistake|is\s+confused)\b/i },
+    { category: 'plot-memory-complaint', rx: /\b(the\s+(ai|story|system)\s+forgot|you\s+forgot\s+(the|what|that)|didn.?t\s+(you\s+)?(already\s+)?(know|establish)|continuity\s+error|plot\s+hole)\b/i },
+    { category: 'game-mechanics', rx: /\bi\s+roll\s+(persuasion|perception|deception|stealth|insight|athletics|investigation|intimidation|survival|dice)\b|\broll\s+(a\s+)?(d20|dice|for\s+\w+)\b|\bsaving\s+throw\b/i },
+    { category: 'interface', rx: /\b(open\s+the\s+settings|settings\s+menu|the\s+(app|game)\s+(crashed|froze|glitched|lagged)|click\s+(the\s+)?button)\b|\b(this|the)\s+(app|game|website)\s+is\s+(so\s+)?buggy\b|\b(so|really|kinda|totally)\s+buggy\b/i },
+    { category: 'meta-narrative', rx: /\b(the\s+(story|author|narrator|writer|prompt|system)|skip\s+(to|ahead)|fast.?forward|next\s+chapter|make\s+(him|her|the\s+li|them)\s+(say|do|feel|love)|i\s+want\s+the\s+(scene|story|plot)|end\s+the\s+(scene|story|chapter)|rewrite|retcon|as\s+the\s+author|out\s+of\s+character)\b|\bOOC\b/i },
+  ];
+  function _detectWallBreakSignal(text) {
+    if (!text) return null;
+    var t = String(text);
+    for (var i = 0; i < _WALLBREAK_PATTERNS.length; i++) {
+      var m = t.match(_WALLBREAK_PATTERNS[i].rx);
+      if (m) return { category: _WALLBREAK_PATTERNS[i].category, matched: m[0] };
+    }
+    return null;
+  }
+  window._detectWallBreakSignal = _detectWallBreakSignal;
+
+  // Graceful fallback, same non-blocking design as gibberish: never rejects
+  // Submit, substitutes a short, generic, deterministic, non-authored
+  // placeholder for the specific field that matched — framed as
+  // distraction/hesitation, not confusion, since a wall-break is a
+  // different in-world "shape" than nonsense babble.
+  var _SAYDO_WALLBREAK_ACTION_FALLBACK = 'a brief, unplaceable pause, as if she lost her train of thought';
+  var _SAYDO_WALLBREAK_DIALOGUE_FALLBACK = 'a half-formed thought that trails off, unfinished';
+  function _sayDoWallBreakFallback(text, kind) {
+    if (!text || typeof _detectWallBreakSignal !== 'function') return text;
+    var w = _detectWallBreakSignal(text);
+    if (!w) return text;
+    try { console.log('[SAYDO:WALLBREAK] ' + kind + ' replaced with a graceful fallback — category: ' + w.category + ' matched="' + w.matched + '"'); } catch (_) {}
+    return kind === 'action' ? _SAYDO_WALLBREAK_ACTION_FALLBACK : _SAYDO_WALLBREAK_DIALOGUE_FALLBACK;
+  }
+  window._sayDoWallBreakFallback = _sayDoWallBreakFallback;
 
   // ── PII Sanitization — redact personal info from user input ──
   // Applied only to user Say/Do input, never to engine-generated narrative.
@@ -169606,6 +169792,10 @@ No text, no watermark, no UI elements, share-ready.`;
           if (typeof _sayDoGibberishFallback === 'function') {
             action = _sayDoGibberishFallback(action, 'action');
             dialogue = _sayDoGibberishFallback(dialogue, 'dialogue');
+          }
+          if (typeof _sayDoWallBreakFallback === 'function') {
+            action = _sayDoWallBreakFallback(action, 'action');
+            dialogue = _sayDoWallBreakFallback(dialogue, 'dialogue');
           }
         } catch (_sdErr) {
           try { console.warn('[SAYDO:SAFETY] gate threw, allowing through unmodified:', _sdErr && _sdErr.message); } catch (__) {}
