@@ -61,7 +61,10 @@ const VALID_BEATS = [{ idx: 0, kind: 'narration', text: 'The ceremony hall stand
     && typeof window._generateLiteraryPlotContract === 'function'
     && typeof window._cgTemptFateCommitAtPersistence === 'function'
     && typeof window._cgTemptFateAftermathCleanup === 'function'
-    && typeof window._buildTemptFateDurableConsequenceDirective === 'function', { timeout: 30000 })
+    && typeof window._buildTemptFateDurableConsequenceDirective === 'function'
+    && typeof window._updateTemptFateSaturationAndVolatility === 'function'
+    && typeof window._detectMythicCoupleWish === 'function'
+    && typeof window._activateMythicCoupleStatus === 'function', { timeout: 30000 })
     .catch(async (e) => { console.error('HARNESS BLOCKER: app not ready or required functions not exposed — ' + (e && e.message)); await browser.close(); process.exit(2); });
   console.log('✓ real app reached, all required functions exposed on window\n');
 
@@ -580,6 +583,217 @@ const VALID_BEATS = [{ idx: 0, kind: 'narration', text: 'The ceremony hall stand
     const between = appJs.slice(ledgerCommitIdx, commitAtPersistenceCallIdx);
     ok('no function boundary sits between real persistence and the commit call (both remain in the same try scope)', between.indexOf('async function ') === -1 && between.indexOf('\n  function ') === -1, 'betweenLen=' + between.length);
     ok('_cgTemptFateCommitAtPersistence is defined as its own extracted function (mirrors _cgTemptFateAftermathCleanup extraction) — directly callable from a dry control, as sections 2/5/6/7/8/9 above already do', commitAtPersistenceDefIdx !== -1);
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════════════════════
+  section('15. VOLATILITY/SATURATION RACE — reproduced through the real production path (Codex\'s second-pass finding)');
+  await resetBaseline();
+  {
+    // Codex: "_cgTemptFateAftermathCleanup calls _updateTemptFateSaturationAndVolatility() before
+    // it consults the generation's captured proposal... If wish B is sealed while Scene A is being
+    // generated, Scene A's cleanup can create its window, saturation increment, and aftermath under
+    // wish B." Fixed by passing the OWNED invocation straight through as explicit arguments (no
+    // global ever temporarily overwritten) — reproduced here through the REAL functions in the REAL
+    // order (_runCGScreenplayGen -> _cgTemptFateCommitAtPersistence -> _cgTemptFateAftermathCleanup,
+    // the exact sequence _completeStagedSceneFromScreenplay itself runs), not a reimplementation.
+    const sceneIdxA = 1;
+    const wishA = 'wish A — this scene is being generated for THIS wish';
+    const wishB = 'wish B — sealed mid-flight, must survive intact and get its OWN separate activation';
+    await page.evaluate((w) => {
+      window.state.tempt_fate_invoked_this_turn = true;
+      window.state.temptFateWish = w;
+      window._recordTemptFateEvent(w);
+    }, wishA);
+    const ownedA = await page.evaluate(() => { const led = window.state._temptFateLedger; return led[led.length - 1]; });
+    stubProxyWithPlan({ temptFateOutcome: { delivered: true, changed: [{ subject: 'x', whatChanged: 'A landed' }], durability: [{ aspect: 'x', status: 'persists' }], establishedEvidence: ['A evidence'] } });
+    // The full real seal (ledger record AND the live wish/flag assignment — mirrors app.js
+    // ~108868/108965, not just the partial ledger-only race sections 8/11 above use to isolate a
+    // narrower race) fires WHILE Scene A's stubbed request is pending.
+    _inFlightSideEffect = () => page.evaluate((w) => {
+      window._recordTemptFateEvent(w);
+      window.state.temptFateWish = w;
+      window.state.tempt_fate_invoked_this_turn = true;
+    }, wishB);
+
+    const rpA = await page.evaluate((si) => window._runCGScreenplayGen(si, 'x', ''), sceneIdxA);
+    await page.evaluate((p) => window._cgTemptFateCommitAtPersistence(p), rpA);
+    await page.evaluate((o) => window._cgTemptFateAftermathCleanup(o, true), ownedA);
+
+    const windowWishTextA = await page.evaluate(() => window.state.volatility_window && window.state.volatility_window.wishText);
+    const satAfterA = await page.evaluate(() => window.state.fate_saturation);
+    const committedEntryA = await page.evaluate(() => window.state._temptFateDurableConsequences[0]);
+    const liveWishAfterA = await page.evaluate(() => window.state.temptFateWish);
+    const liveInvokedAfterA = await page.evaluate(() => window.state.tempt_fate_invoked_this_turn);
+    const ledgerLenAfterA = await page.evaluate(() => window.state._temptFateLedger.length);
+
+    ok('the race really happened (2 ledger entries — not a no-op test)', ledgerLenAfterA === 2, 'ledgerLenAfterA=' + ledgerLenAfterA);
+    ok('Scene A\'s volatility window carries wish A\'s text, not wish B\'s', windowWishTextA === wishA, 'windowWishTextA=' + windowWishTextA);
+    ok('saturation incremented for A\'s invocation (exactly once so far)', typeof satAfterA === 'number' && satAfterA > 0, 'satAfterA=' + satAfterA);
+    ok('the committed durable outcome is attributed to wish A', committedEntryA && committedEntryA.requestedRupture === wishA, JSON.stringify(committedEntryA));
+    ok('wish B survives Scene A\'s cleanup intact — NOT destroyed by it', liveWishAfterA === wishB && liveInvokedAfterA === true, 'liveWishAfterA=' + liveWishAfterA + ' liveInvokedAfterA=' + liveInvokedAfterA);
+
+    // B now runs its OWN real generation+commit+cleanup cycle — must produce exactly ONE separate
+    // activation, carrying B's own text, not still A's and not double-counted.
+    const satBeforeB = satAfterA;
+    const ownedB = await page.evaluate(() => { const led = window.state._temptFateLedger; return led[led.length - 1]; });
+    stubProxyWithPlan({ temptFateOutcome: { delivered: true, changed: [{ subject: 'y', whatChanged: 'B landed' }], durability: [{ aspect: 'y', status: 'persists' }], establishedEvidence: ['B evidence'] } });
+    const sceneIdxB = 2;
+    const rpB = await page.evaluate((si) => window._runCGScreenplayGen(si, 'x', ''), sceneIdxB);
+    await page.evaluate((p) => window._cgTemptFateCommitAtPersistence(p), rpB);
+    await page.evaluate((o) => window._cgTemptFateAftermathCleanup(o, true), ownedB);
+
+    const windowWishTextB = await page.evaluate(() => window.state.volatility_window && window.state.volatility_window.wishText);
+    const satAfterB = await page.evaluate(() => window.state.fate_saturation);
+    const committedEntryB = await page.evaluate(() => window.state._temptFateDurableConsequences[1]);
+
+    ok('B\'s own generation creates its OWN separate volatility window carrying B\'s text (not still A\'s, not blended)', windowWishTextB === wishB, 'windowWishTextB=' + windowWishTextB);
+    ok('B\'s own generation increments saturation exactly once more (a genuinely separate activation, not skipped or doubled)', typeof satAfterB === 'number' && satAfterB > satBeforeB, 'satBeforeB=' + satBeforeB + ' satAfterB=' + satAfterB);
+    ok('B\'s outcome commits separately, attributed to wish B, as a second distinct durable entry', committedEntryB && committedEntryB.requestedRupture === wishB, JSON.stringify(committedEntryB));
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════════════════════
+  section('16. MYTHIC COUPLE — a successful "let the world know" wish creates lasting, bounded public recognition, gated on the accepted commit (not seal-time keyword detection)');
+  await resetBaseline();
+  {
+    // Codex/Roman: "the legacy Mythic Couple path appears to activate directly from keyword
+    // detection when the wish is sealed, before a scene is accepted." Fixed: activation now lives
+    // inside _commitTemptFateOutcome, gated on the SAME dedup/validation/delivered:true bar every
+    // other durable Tempt effect meets. Proven here against the real functions.
+    await page.evaluate(() => { window.state._mythicCoupleStatus = null; });
+    const sceneIdx = 1;
+    const wish = 'let the world know us — what Julian and I did';
+    await page.evaluate((w) => {
+      window.state.tempt_fate_invoked_this_turn = true;
+      window.state.temptFateWish = w;
+      window._recordTemptFateEvent(w);
+    }, wish);
+
+    // Detection must have matched (this is a Shape-B "let the world know us" wish) but activation
+    // must NOT have happened yet — nothing has been generated, let alone accepted.
+    const detectedButNotYetActive = await page.evaluate((w) => ({
+      detected: window._detectMythicCoupleWish(w),
+      statusBeforeGeneration: window.state._mythicCoupleStatus
+    }), wish);
+    ok('the wish is correctly detected as mythic-shaped by the classifier', detectedButNotYetActive.detected === true);
+    ok('mythic status is NOT active before any scene has been generated or accepted (no seal-time activation)', !detectedButNotYetActive.statusBeforeGeneration || detectedButNotYetActive.statusBeforeGeneration.active !== true, JSON.stringify(detectedButNotYetActive.statusBeforeGeneration));
+
+    stubProxyWithPlan({
+      temptFateOutcome: {
+        delivered: true,
+        changed: [{ subject: 'the tavern crowd and every traveler who passes through', whatChanged: 'now recognizes Julian and Lirael by name and story' }],
+        durability: [{ aspect: 'the couple\'s public recognition', status: 'persists', note: 'the scene shows it spreading, not fading' }],
+        knowledgeStates: [{ character: 'the tavern crowd', state: 'knows', note: 'recites the story back to them unprompted' }],
+        establishedEvidence: ['a stranger at the bar toasts them by name before they introduce themselves'],
+        openPossibilities: ['a rival house could use the notoriety against them']
+      }
+    });
+    const rp = await page.evaluate((si) => window._runCGScreenplayGen(si, 'x', ''), sceneIdx);
+    await page.evaluate((p) => window._cgTemptFateCommitAtPersistence(p), rp);
+
+    const statusAfter = await page.evaluate(() => window.state._mythicCoupleStatus);
+    ok('mythic status activates ONLY once the scene\'s outcome actually commits — not at seal', statusAfter && statusAfter.active === true, JSON.stringify(statusAfter));
+    ok('the activated status carries the real wish text', statusAfter && statusAfter.wishText === wish, JSON.stringify(statusAfter));
+
+    const directive = await page.evaluate(() => window.buildMythicCoupleDirective());
+    ok('the real mythic-couple author directive now fires for future prompts', directive.indexOf('MYTHIC COUPLE RECOGNITION') !== -1, directive.slice(0, 300));
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════════════════════
+  section('17. MYTHIC COUPLE — an infamous/hostile recognition outcome carries different consequences than the celebratory case');
+  await resetBaseline();
+  {
+    await page.evaluate(() => { window.state._mythicCoupleStatus = null; });
+    const sceneIdx = 1;
+    const wish = 'make our names legend, even if they curse us for it';
+    await page.evaluate((w) => {
+      window.state.tempt_fate_invoked_this_turn = true;
+      window.state.temptFateWish = w;
+      window._recordTemptFateEvent(w);
+    }, wish);
+    stubProxyWithPlan({
+      temptFateOutcome: {
+        delivered: true,
+        changed: [{ subject: 'the assembly', whatChanged: 'now speaks their names as a warning, not a celebration' }],
+        durability: [{ aspect: 'the infamy', status: 'persists' }],
+        knowledgeStates: [{ character: 'the assembly', state: 'believes', note: 'treats them as a cautionary tale, not heroes' }],
+        establishedEvidence: ['parents invoke their names to frighten children into obedience'],
+        openPossibilities: ['someone could try to exploit the fear this infamy generates']
+      }
+    });
+    const rp = await page.evaluate((si) => window._runCGScreenplayGen(si, 'x', ''), sceneIdx);
+    await page.evaluate((p) => window._cgTemptFateCommitAtPersistence(p), rp);
+
+    const entry = await page.evaluate(() => window.state._temptFateDurableConsequences[0]);
+    const statusAfter = await page.evaluate(() => window.state._mythicCoupleStatus);
+    ok('the infamous outcome still commits as a durable consequence (fame and infamy are both valid lasting Tempt outcomes)', entry && entry.requestedRupture === wish, JSON.stringify(entry));
+    ok('the committed content reflects the HOSTILE register, not a celebratory one (a warning/cautionary-tale framing, distinct from section 16\'s celebratory one)', entry && entry.changed[0].whatChanged.indexOf('warning') !== -1, JSON.stringify(entry && entry.changed));
+    ok('mythic status also activates for this shape (recognition is recognition — the classifier does not distinguish tone, the outcome record itself carries that)', statusAfter && statusAfter.active === true);
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════════════════════
+  section('18. MYTHIC COUPLE — a wish that invokes fame but the scene does not deliver it must NOT commit mythic status');
+  await resetBaseline();
+  {
+    await page.evaluate(() => { window.state._mythicCoupleStatus = null; });
+    const sceneIdx = 1;
+    const wish = 'let the world know us';
+    await page.evaluate((w) => {
+      window.state.tempt_fate_invoked_this_turn = true;
+      window.state.temptFateWish = w;
+      window._recordTemptFateEvent(w);
+    }, wish);
+    stubProxyWithPlan({ temptFateOutcome: { delivered: false } }); // the scene did not deliver
+    const rp = await page.evaluate((si) => window._runCGScreenplayGen(si, 'x', ''), sceneIdx);
+    await page.evaluate((p) => window._cgTemptFateCommitAtPersistence(p), rp);
+
+    const statusAfter = await page.evaluate(() => window.state._mythicCoupleStatus);
+    const durableCount = await page.evaluate(() => window.state._temptFateDurableConsequences.length);
+    ok('an undelivered scene commits NO durable outcome', durableCount === 0, 'durableCount=' + durableCount);
+    ok('a mythic-shaped wish that was NOT delivered does NOT activate mythic status — a failed scene cannot make anyone famous', !statusAfter || statusAfter.active !== true, JSON.stringify(statusAfter));
+
+    // Same proof for a MALFORMED report (structurally invalid, never reaches delivered:true at all).
+    await page.evaluate(() => { window.state._mythicCoupleStatus = null; window.state.tempt_fate_invoked_this_turn = true; window.state.temptFateWish = 'let the world know us, again'; window._recordTemptFateEvent('let the world know us, again'); });
+    stubProxyWithPlan({ temptFateOutcome: { delivered: true } }); // delivered:true but nothing changed/established — shape error
+    const rp2 = await page.evaluate((si) => window._runCGScreenplayGen(si, 'x', ''), sceneIdx + 1);
+    await page.evaluate((p) => window._cgTemptFateCommitAtPersistence(p), rp2);
+    const statusAfterMalformed = await page.evaluate(() => window.state._mythicCoupleStatus);
+    ok('a malformed report (fails structural validation) also does NOT activate mythic status', !statusAfterMalformed || statusAfterMalformed.active !== true, JSON.stringify(statusAfterMalformed));
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════════════════════
+  section('19. MYTHIC COUPLE — an ordinary continuation carries the resulting social fact without reactivating or duplicating it');
+  await resetBaseline();
+  {
+    await page.evaluate(() => { window.state._mythicCoupleStatus = null; });
+    // Turn N: a real, successful mythic activation (mirrors section 16).
+    const sceneIdxA = 1;
+    const wish = 'let the world know us — what Julian and I did';
+    await page.evaluate((w) => {
+      window.state.tempt_fate_invoked_this_turn = true;
+      window.state.temptFateWish = w;
+      window._recordTemptFateEvent(w);
+    }, wish);
+    stubProxyWithPlan({ temptFateOutcome: { delivered: true, changed: [{ subject: 'the town', whatChanged: 'recognizes them on sight' }], durability: [{ aspect: 'recognition', status: 'persists' }], establishedEvidence: ['strangers greet them by name'] } });
+    const rpA = await page.evaluate((si) => window._runCGScreenplayGen(si, 'x', ''), sceneIdxA);
+    await page.evaluate((p) => window._cgTemptFateCommitAtPersistence(p), rpA);
+    const statusAfterA = await page.evaluate(() => window.state._mythicCoupleStatus);
+    ok('setup: mythic status is active after the real commit (section 16 pattern, re-verified here as this section\'s own baseline)', statusAfterA && statusAfterA.active === true);
+    const sealedAtSceneA = statusAfterA.sealedAtScene;
+
+    // Turn N+1: an ORDINARY continuation — Tempt not invoked, no new wish, mythic status already
+    // active from Turn N. The real author directive must carry the fact WITHOUT any reactivation.
+    const sceneIdxB = 2;
+    await page.evaluate(() => { window.state.tempt_fate_invoked_this_turn = false; window.state.temptFateWish = ''; });
+    stubProxyWithPlan({}); // no temptFateOutcome at all — ordinary continuation
+    const rpB = await page.evaluate((si) => window._runCGScreenplayGen(si, 'x', ''), sceneIdxB);
+    await page.evaluate((p) => window._cgTemptFateCommitAtPersistence(p), rpB);
+
+    const statusAfterB = await page.evaluate(() => window.state._mythicCoupleStatus);
+    const directiveB = await page.evaluate(() => window.buildMythicCoupleDirective());
+    ok('the ordinary continuation does NOT re-seal/reactivate mythic status (same sealedAtScene, not bumped to a later scene)', statusAfterB && statusAfterB.sealedAtScene === sealedAtSceneA, 'sealedAtSceneA=' + sealedAtSceneA + ' sealedAtSceneAfterB=' + (statusAfterB && statusAfterB.sealedAtScene));
+    ok('the real author directive still carries the recognition fact on the ordinary continuation (the social fact persists into future prompts without needing to be re-triggered)', directiveB.indexOf('MYTHIC COUPLE RECOGNITION') !== -1);
+    const durableCountAfterB = await page.evaluate(() => window.state._temptFateDurableConsequences.length);
+    ok('no duplicate durable entry was created by the ordinary continuation', durableCountAfterB === 1, 'durableCountAfterB=' + durableCountAfterB);
   }
 
   await browser.close();

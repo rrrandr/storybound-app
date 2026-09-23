@@ -70184,8 +70184,19 @@ HARD LIMITS: Effects must destabilize systems, not annihilate them. Regime bends
   // turn — both the literary and CG call sites already reset those
   // immediately after their equivalent of this call, so this reads the
   // still-live invocation flag and wish text correctly either way.
-  function _updateTemptFateSaturationAndVolatility() {
-    if (state.tempt_fate_invoked_this_turn) {
+  // OWNERSHIP (Roman/Codex review, 2026-09-24): optional (ownedWasInvoked, ownedWishText) — the
+  // invocation THIS generation owns, captured before any await at generation start. Without these,
+  // this function reads state.tempt_fate_invoked_this_turn/temptFateWish LIVE, which is exactly the
+  // race Codex found: _cgTemptFateAftermathCleanup called this BEFORE switching from live state to
+  // the owned proposal, so a wish sealed mid-flight (during THIS generation's own scaffold/planner/
+  // author awaits) could create Scene A's volatility window, saturation increment, and severity
+  // tier under wish B's text/flag — even though the outcome commit (already fixed, 2026-09-23/24)
+  // stays correctly attributed to A. Both params are optional and default to a live read so the
+  // literary call site (app.js ~307273, no args, not implicated in this race) is unchanged.
+  function _updateTemptFateSaturationAndVolatility(ownedWasInvoked, ownedWishText) {
+    var _tfoInvokedNow = (typeof ownedWasInvoked !== 'undefined') ? !!ownedWasInvoked : !!state.tempt_fate_invoked_this_turn;
+    var _tfoWishNow = (typeof ownedWasInvoked !== 'undefined') ? (ownedWishText || '') : (state.temptFateWish || '');
+    if (_tfoInvokedNow) {
       // PART 5 — Saturation increment (invocation-gated only)
       const satIncrement = 0.2 + ((state.consecutive_tempt_fate_count || 0) * 0.05);
       state.fate_saturation = Math.min((state.fate_saturation || 0) + satIncrement, 1.0);
@@ -70202,8 +70213,9 @@ HARD LIMITS: Effects must destabilize systems, not annihilate them. Regime bends
         source: 'tempt',
         // Mirror the Tempt wish onto the window so the scenario-weave
         // directive can read vw.wishText uniformly. See
-        // buildFateScenarioWeaveDirective.
-        wishText: state.temptFateWish || ''
+        // buildFateScenarioWeaveDirective. Uses the owned wish (see function
+        // header) — never live state, so a mid-flight race can't misattribute it.
+        wishText: _tfoWishNow
       };
       // Apply deferred downgrade from prior turn's double-failure, if any
       // GUARD: Only on NEW Tempt invocation (this block is inside tempt_fate_invoked_this_turn gate)
@@ -75957,7 +75969,7 @@ Fate grants what you ASK FOR, not what you MEANT.
 - A precise wish that includes conditions (e.g., "without anyone noticing") is rewarded with a cleaner, less visible outcome. Precision earns precision. The player feels clever because they WERE clever.
 - The player who learns to phrase wishes carefully is MASTERING THE SYSTEM. This is desirable.
 
-SINGLE-USE SCALE: One Tempt Fate invocation produces ONE scene of extraordinary effect. It does NOT reshape how the world sees the protagonist long-term. That kind of accumulated reputation shift is handled separately by the Fate Resonance system over multiple invocations. A single use creates a moment, not a status change.
+SINGLE-USE SCALE: One Tempt Fate invocation produces ONE scene of extraordinary effect — but that one scene CAN permanently alter public knowledge, reputation, recognition, relationships, memory, identity, or institutional standing, when THIS scene actually earns it (Roman/Codex correction, 2026-09-24: "Fame, infamy, legend, public sexual notoriety, being recognized as a mythic couple, a ruined reputation, or a new social role are all valid lasting Tempt outcomes... 'You're THE Roman and Dani?' is an intended payoff, not a failure mode."). The guard is against AUTOMATIC reputation inflation, never against a delivered one: do not grant lasting fame, infamy, or a changed social role from the mere PRESENCE of a Tempt invocation, a keyword match in the wish's own text, or a vague/glancing mention — the outcome must be something this scene concretely establishes (who saw it, what they now believe, how it spreads), the same way any other durable Tempt consequence is established, not assumed from the wish alone. A wish that asks only for something small and private stays small and private; a wish that asks the world to know earns exactly the scale it actually delivers on the page. Gradual, ACCUMULATED reputation drift from REPEATED ordinary (non-Tempt) behavior over many scenes is a separate system (Fate Resonance) — unrelated to whether ONE delivered Tempt scene can, on its own, change how the world sees the protagonist. It can.
 
 ONE MIRACLE PER WISH:
 Tempt Fate is not a genie contract system. It does not execute multi-clause bargains. Fate grants a moment, not a contract.
@@ -100266,12 +100278,12 @@ function _buildAuthorFloorDirective(s) {
             + ((function () {
                 try {
                   var _tfoDurableText = (typeof _buildTemptFateDurableConsequenceDirective === 'function') ? (_buildTemptFateDurableConsequenceDirective() || '') : '';
-                  var _tfoDurableLine = _tfoDurableText ? ('\nTEMPT FATE — DURABLE CONSEQUENCES ALREADY IN FORCE (HARD — HIGHER AUTHORITY than ordinary DURABLE CONSEQUENCES/COMMITTED WORLD STATE above where the two would conflict; a Tempt Fate rupture is a higher-order mechanic, not ordinary wish doctrine, but it does NOT override REQUIRED WORLD FACTS or any seed-owned reserved/aftermath content): ' + _tfoDurableText.trim()) : '';
+                  var _tfoDurableLine = _tfoDurableText ? ('\nTEMPT FATE — DURABLE CONSEQUENCES ALREADY IN FORCE (HARD — HIGHER AUTHORITY than ordinary DURABLE CONSEQUENCES/COMMITTED WORLD STATE above where they conflict — this is the ACCEPTED RECORD of a real rupture, not ordinary wish doctrine. Foundational setting rules and the fact that an already-read scene occurred remain history — Tempt does not un-happen the past. But everything listed below — a present-world fact, memory, identity, access, possession, social reality, reputation, or public recognition — IS the current, binding truth for exactly the scope, duration, and people this record states, no further and no less): ' + _tfoDurableText.trim()) : '';
                   // ACTIVE INVOCATION THIS SCENE (only present when the player is invoking a wish
                   // THIS turn) — supersedes the ordinary tactical-beat derivation for THIS scene
                   // only: the wish's actual landing IS the required event, not flavor around an
                   // unrelated one.
-                  var _tfoActiveLine = (_tcInvoked && _tcWish) ? ('\nTEMPT FATE — ACTIVE INVOCATION THIS SCENE (HARD — supersedes the CURRENT MILESTONE/A-plot goal above for THIS scene\'s event only; does not override REQUIRED WORLD FACTS or seed-owned reserved/aftermath content): the player is invoking Tempt Fate this turn with the wish "' + String(_tcWish).slice(0, 300) + '". The event/state_change MUST land this wish\'s actual invocation/effect as a concrete, testable, reachable-in-one-scene event — not a generic milestone beat that ignores it, and not a beat that merely references the wish without showing its landing.') : '';
+                  var _tfoActiveLine = (_tcInvoked && _tcWish) ? ('\nTEMPT FATE — ACTIVE INVOCATION THIS SCENE (HARD — supersedes the CURRENT MILESTONE/A-plot goal above for THIS scene\'s event only. A Tempt Fate rupture MAY permanently change present-world facts, memory, identity, access, possession, social reality, reputation, or public recognition — up to and including fame, infamy, or legendary status — when THIS scene actually earns it; do NOT refuse or soften the wish\'s real scope on an assumption that Tempt Fate cannot cause lasting change. Foundational setting rules and the fact that an already-read scene occurred remain history — Tempt cannot un-happen the past — but future seed-owned material is not off-limits: it stays story-bearing, and Tempt may change its route, interpretation, stakes, or who remembers why it matters, without erasing that it exists. A memory-erasure wish changes memory and the social knowledge that follows from it, not necessarily physical reality, unless the effect you write here establishes something broader.): the player is invoking Tempt Fate this turn with the wish "' + String(_tcWish).slice(0, 300) + '". The event/state_change MUST land this wish\'s actual invocation/effect as a concrete, testable, reachable-in-one-scene event — not a generic milestone beat that ignores it, and not a beat that merely references the wish without showing its landing.') : '';
                   return _tfoDurableLine + _tfoActiveLine;
                 } catch (_) { return ''; }
               })());
@@ -108930,32 +108942,20 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
             }
           } catch (_ftErr) { console.warn('[FATE-OAS:INIT] tempt init threw:', _ftErr && _ftErr.message); }
 
-          // Story-wide Mythic Couple status — when the Tempt wish is a
-          // "make us mythic / famous / legendary / known / remembered"
-          // variant, the effect SURVIVES past the 8-12 turn distortion
-          // window: every NPC the couple meets for the REST of the story
-          // recognizes their names with the Romeo-and-Juliet recognition
-          // pattern. Flag cleared only on full story reset OR via the
-          // forget-wish below (which costs another full Tempt).
-          //
-          // Activate vs Deactivate are mutually exclusive — a wish can
-          // be EITHER an activation OR a deactivation, not both. We check
-          // activation first; if no activation match, then check forget.
-          try {
-            var _mcActivated = false;
-            if (typeof _detectMythicCoupleWish === 'function' &&
-                _detectMythicCoupleWish(wishText) &&
-                typeof _activateMythicCoupleStatus === 'function') {
-              _activateMythicCoupleStatus(wishText);
-              _mcActivated = true;
-            }
-            if (!_mcActivated &&
-                typeof _detectMythicForgetWish === 'function' &&
-                _detectMythicForgetWish(wishText) &&
-                typeof _deactivateMythicCoupleStatus === 'function') {
-              _deactivateMythicCoupleStatus('tempt_forget_wish');
-            }
-          } catch (_mcErr) { console.warn('[MYTHIC-COUPLE] activation threw:', _mcErr && _mcErr.message); }
+          // Story-wide Mythic Couple status — MOVED to commit time (Roman/Codex review,
+          // 2026-09-24). This used to activate `state._mythicCoupleStatus` right here, at SEAL,
+          // from keyword detection alone — before any scene was generated, accepted, or its
+          // outcome validated. That is exactly the "guess eligibility and content from wish
+          // keywords" pattern the note just below already documents as removed for the general
+          // durable-consequence commit; this one surviving keyword-gated activation was never
+          // migrated when that refactor happened. A wish is still a proposal — see
+          // _commitTemptFateOutcome (LAYER 2b, ~189730), where activation now actually happens,
+          // gated on the SAME accepted/validated/delivered:true commit every other durable Tempt
+          // effect requires, re-deriving eligibility from the ledger entry's own wishText (not
+          // re-read from live state, so a wish sealed later cannot be misattributed either).
+          // _detectMythicCoupleWish/_detectMythicForgetWish stay exactly as they were — pure,
+          // stateless text classifiers — only WHEN their result is allowed to take durable effect
+          // has changed.
 
           // Record this Tempt event in the ledger so future scenes can
           // call back to it (LI remembers / debates / wonders / requests
@@ -189826,6 +189826,33 @@ No text, no watermark, no UI elements, share-ready.`;
       s._temptFateDurableConsequences.push(entry);
       s._temptOutcomeCommittedProposals[_tfoPropId] = true;
       try { console.log('[TEMPT-OUTCOME] committed scene ' + sceneIdx + ': ' + entry.changed.length + ' change(s), ' + entry.establishedEvidence.length + ' evidence item(s)'); } catch (_) {}
+
+      // MYTHIC COUPLE — activation/deactivation MOVED here from seal time (Roman/Codex review,
+      // 2026-09-24). Re-derives eligibility from ledgerEntry.wishText — the OWNED proposal's own
+      // text, never re-read from live state — using the SAME pure, stateless classifiers the seal
+      // handler used to call eagerly. The difference is WHEN: only a commit that reaches this
+      // exact line (passed dedup, structural validation, and delivered:true — the same bar every
+      // other durable Tempt effect meets) can flip the story-wide flag. A rejected, stale,
+      // malformed, or duplicate outcome returns above and never reaches here — so it cannot make
+      // anyone famous (or unfamous). Mutually exclusive, same ordering as before: activation
+      // checked first, forget checked only if activation didn't match.
+      try {
+        var _mcWishText = (ledgerEntry && ledgerEntry.wishText) || '';
+        var _mcActivated = false;
+        if (typeof _detectMythicCoupleWish === 'function' &&
+            _detectMythicCoupleWish(_mcWishText) &&
+            typeof _activateMythicCoupleStatus === 'function') {
+          _activateMythicCoupleStatus(_mcWishText);
+          _mcActivated = true;
+        }
+        if (!_mcActivated &&
+            typeof _detectMythicForgetWish === 'function' &&
+            _detectMythicForgetWish(_mcWishText) &&
+            typeof _deactivateMythicCoupleStatus === 'function') {
+          _deactivateMythicCoupleStatus('tempt_forget_wish_committed');
+        }
+      } catch (_mcErr) { try { console.warn('[MYTHIC-COUPLE] commit-gated activation threw:', _mcErr && _mcErr.message); } catch (__) {} }
+
       return entry;
     } catch (e) {
       try { console.warn('[TEMPT-OUTCOME] _commitTemptFateOutcome failed:', e && e.message); } catch (_) {}
@@ -232863,32 +232890,45 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
 
   function _cgTemptFateAftermathCleanup(_ownedProposalEntry, _ownedWasInvoked) {
     try {
-      // 0) ACTIVATION (Roman 2026-09-22, dry-fix pass — CG volatility/imprint
-      //    activation gap). The taper/aftermath logic below (2026-05-18) has
-      //    always assumed state.volatility_window was already created for a
-      //    Tempt invocation, but nothing in this CG path ever created it —
-      //    that logic lived ONLY inline in the literary game-loop submit
-      //    handler, which a WRONG-ENGINE GUARD prevents a staged/CG turn
-      //    from reaching under normal operation. Call the shared helper
-      //    (extracted from that literary block, identical semantics) BEFORE
-      //    state.tempt_fate_invoked_this_turn / state.temptFateWish are
-      //    read below (unrelated to the ownership fix beneath — this call
-      //    is about Fate's own saturation/heat bookkeeping, always live).
-      if (typeof _updateTemptFateSaturationAndVolatility === 'function') _updateTemptFateSaturationAndVolatility();
-
-      // 1) OWNERSHIP (Roman/Codex review, 2026-09-24): the caller (_completeStagedSceneFromScreenplay)
-      //    passes the invocation THIS generation owned — captured before any await at generation
-      //    start (_tfoProposalEntry / _tfoWasInvokedAtStart, _runCGScreenplayGenInner). Previously
-      //    this function read state.temptFateWish/tempt_fate_invoked_this_turn LIVE and cleared them
-      //    UNCONDITIONALLY: if a SECOND wish was sealed while this generation's scaffold/planner/
-      //    author calls were in flight, cleanup would (a) stash the WRONG wish text into scene A's
-      //    aftermath/imprint window, and (b) destroy the second wish's own live invocation before it
-      //    ever got a generation of its own — silently losing a legitimately sealed wish. Only clear
-      //    the live global when it still points at the SAME invocation this generation owned (by
-      //    stable ledger id); otherwise leave it alone so the NEXT generation picks it up correctly.
+      // 0/1) OWNERSHIP FIRST, THEN ACTIVATION (Roman/Codex review, 2026-09-24 — second pass).
+      //    Codex: "_cgTemptFateAftermathCleanup calls _updateTemptFateSaturationAndVolatility()
+      //    before it consults the generation's captured proposal. That helper reads the live
+      //    temptFateWish and invocation flag. If wish B is sealed while Scene A is being generated,
+      //    Scene A's cleanup can create its window, saturation increment, and aftermath under wish
+      //    B." Confirmed exactly right — the PRIOR version of this comment (2026-09-24, first pass)
+      //    called that call "unrelated to the ownership fix beneath — always live", which was the
+      //    bug: it wasn't unrelated, it read the SAME racy live globals the ownership fix below
+      //    exists to stop trusting. Fix: compute the OWNED invocation/wish FIRST (moved up from
+      //    where step "1" used to sit), then pass them explicitly into
+      //    _updateTemptFateSaturationAndVolatility(invoked, wishText) — that function now accepts
+      //    them (optional, defaults to a live read for the unrelated literary call site) instead of
+      //    reading state.tempt_fate_invoked_this_turn/temptFateWish itself. No global is ever
+      //    temporarily overwritten to make this work — the owned values are passed straight through
+      //    as arguments, so there is nothing for concurrent work to observe or race against.
+      //
+      //    The caller (_completeStagedSceneFromScreenplay) passes the invocation THIS generation
+      //    owned — captured before any await at generation start (_tfoProposalEntry /
+      //    _tfoWasInvokedAtStart, _runCGScreenplayGenInner). Previously this function read
+      //    state.temptFateWish/tempt_fate_invoked_this_turn LIVE and cleared them UNCONDITIONALLY:
+      //    if a SECOND wish was sealed while this generation's scaffold/planner/author calls were
+      //    in flight, cleanup would (a) stash the WRONG wish text into scene A's aftermath/imprint
+      //    window (now: into the volatility window too, via the fix above), and (b) destroy the
+      //    second wish's own live invocation before it ever got a generation of its own — silently
+      //    losing a legitimately sealed wish. Only clear the live global when it still points at
+      //    the SAME invocation this generation owned (by stable ledger id); otherwise leave it
+      //    alone so the NEXT generation picks it up correctly.
       var _haveOwnership = (typeof _ownedWasInvoked !== 'undefined');
       var _temptWishForAftermath = _haveOwnership ? (_ownedWasInvoked ? ((_ownedProposalEntry && _ownedProposalEntry.wishText) || '') : '') : (state.temptFateWish || '');
       var _temptInvokedThisTurn = _haveOwnership ? !!_ownedWasInvoked : !!state.tempt_fate_invoked_this_turn;
+
+      // ACTIVATION (Roman 2026-09-22, dry-fix pass — CG volatility/imprint activation gap). The
+      // taper/aftermath logic below (2026-05-18) has always assumed state.volatility_window was
+      // already created for a Tempt invocation, but nothing in this CG path ever created it — that
+      // logic lived ONLY inline in the literary game-loop submit handler, which a WRONG-ENGINE
+      // GUARD prevents a staged/CG turn from reaching under normal operation. Call the shared
+      // helper (extracted from that literary block, identical semantics) with the OWNED
+      // invoked/wish computed just above — not a live read.
+      if (typeof _updateTemptFateSaturationAndVolatility === 'function') _updateTemptFateSaturationAndVolatility(_temptInvokedThisTurn, _temptWishForAftermath);
 
       var _liveLedger = state._temptFateLedger;
       var _liveLastEntry = (Array.isArray(_liveLedger) && _liveLedger.length) ? _liveLedger[_liveLedger.length - 1] : null;

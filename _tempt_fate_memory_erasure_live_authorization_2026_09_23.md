@@ -1,25 +1,38 @@
-# Live-test authorization sheet — Tempt Fate memory-erasure scenario (RE-REVISED)
+# Live-test authorization sheet — Tempt Fate memory-erasure scenario (THIRD REVISION)
 
-2026-09-24. Second revision. Codex reviewed the first revision against real source and found real
-production gaps (planner never received Tempt context; a prompt-construction race; sceneIdx-keyed
-dedup that breaks across Issue boundaries; commit at generation instead of persistence) plus three
-inaccuracies in the sheet itself (scaffold/audit model census, planner-fallback framing, starting-
-state Tempt-availability). All four code gaps are now fixed and proven against the real dispatch
-(`_tempt_fate_codex_review_fixes_2026_09_24.md` has the full trace); the three sheet inaccuracies are
-corrected below. **Nothing in this sheet authorizes a paid call by itself. No paid run yet.**
+2026-09-24, second same-day pass. First revision: Codex found four production gaps (planner never
+received Tempt context; a prompt-construction race; sceneIdx-keyed dedup that breaks across Issue
+boundaries; commit at generation instead of persistence) plus three sheet inaccuracies (scaffold/
+audit model census, planner-fallback framing, starting-state Tempt-availability) — all fixed and
+corrected (`_tempt_fate_codex_review_fixes_2026_09_24.md`). **This pass**: Codex found a residual
+race (cleanup's volatility/saturation helper still read live state before switching to the owned
+proposal) and flagged the planner's new authority language as too absolute; Roman corrected Tempt
+Fate's reputation rule (fame/infamy/mythic recognition ARE valid lasting outcomes) and asked for the
+Mythic Couple mechanism's seal-time keyword activation to be reconciled with the accepted-outcome
+model; Roman also asked for the executable live-test harness itself to be built and run dry — it did
+not exist before this pass. All of this is now fixed/built and proven
+(`_tempt_fate_codex_review_pass2_2026_09_24.md` has the full trace), with one genuinely open item
+disclosed in §H below (a real, previously-unknown staleness quirk the new harness surfaced, not yet
+resolved). **Nothing in this sheet authorizes a paid call by itself. No paid run yet.**
 
 ## What's dry-proven now, so this test isn't validating plumbing
 
-`_tempt_fate_outcome_integration_control.mjs`, now **47/47**: the real CG system prompt asks for
+`_tempt_fate_outcome_integration_control.mjs`, now **70/70**: the real CG system prompt asks for
 `temptFateOutcome`; a real dispatch/parse/accept-then-persist/commit cycle works end-to-end; the
 commit is gated by the app's own `_cgAcceptDelivered` AND happens only after real scene persistence,
 never at generation acceptance alone; a stable ledger-entry id (not "most recent" state) survives a
-real mid-flight race at BOTH the commit step and the author's own prompt construction; cleanup
-preserves a newer invocation sealed mid-flight instead of destroying it; an ordinary continuation
-never recommits a stray echoed report; **the real planner request (captured, not simulated) carries
-Tempt Fate's durable consequences and the active invocation, for both an invoked scene and an
-ordinary continuation**; dedup is keyed on stable proposal identity, so a distinct wish at a reused
-local scene number (an Issue boundary) is never mistaken for a duplicate. This live test exists only
+real mid-flight race at the commit step, the author's own prompt construction, AND (this pass)
+the volatility-window/saturation/aftermath activation — a wish sealed mid-flight can no longer poison
+Scene A's window under the wrong wish's text, and gets its own separate, correctly-attributed
+activation once its own generation runs; cleanup preserves a newer invocation sealed mid-flight
+instead of destroying it; an ordinary continuation never recommits a stray echoed report; **the real
+planner request (captured, not simulated) carries Tempt Fate's durable consequences and the active
+invocation, for both an invoked scene and an ordinary continuation**; dedup is keyed on stable
+proposal identity, so a distinct wish at a reused local scene number (an Issue boundary) is never
+mistaken for a duplicate; **Mythic Couple recognition (this pass) activates only once a scene's
+outcome actually commits — never from wish-sealing keyword detection alone** — proven for a
+celebratory outcome, a hostile/infamous outcome, an invoked-but-undelivered wish (no commit), and an
+ordinary continuation that carries the fact forward without re-triggering it. This live test exists only
 to observe the model's actual creative judgment — the two things no dry test can certify: does the
 wish read as REAL erasure, and does an ordinary next scene honor it without contradicting or quietly
 undoing it.
@@ -225,14 +238,53 @@ mouth-band, "The Answer" changing hands) **unless the wish's own generated scope
 the wish targets memory, not necessarily physical consequence; report what the model actually did
 either way.
 
+**Reputation/fame authority, corrected this pass (Roman):** a single Tempt Fate invocation may
+permanently reshape how the world sees the protagonist and love interest — fame, infamy, legend,
+public notoriety, being recognized as a mythic couple, a ruined reputation, or a new social role are
+all valid lasting outcomes when the accepted scene earns them; the only guard is against AUTOMATIC
+reputation change from an invocation's mere presence or a keyword match. This wish ("everyone forgets
+the ceremony happened") is not itself a fame/mythic-recognition wish — traced against
+`_detectMythicCoupleWish`/`_detectMythicForgetWish`'s real regex shapes and confirmed it matches
+neither, so it does not interact with the Mythic Couple mechanism (also reconciled this pass to
+activate only on a real committed outcome, never at seal time — see
+`_tempt_fate_codex_review_pass2_2026_09_24.md`). Reported here for completeness, not because this
+specific test exercises it.
+
+## H. Open item this pass surfaced — the executable harness is real but not yet fully green
+
+`_tempt_fate_memory_erasure_live_test_harness.mjs` is now a real, executable script (not just this
+sheet) — run dry this pass, **20/24 checks passed**. Proven for real: hydration through the actual
+shipped starter's own mount function; the Tempt card's real onboarding-lock DOM state and a real
+click opening a real zoom overlay; `blockImagePreparation:true` against both classified shapes;
+an executable pre-dispatch reservation ledger with both a real ceiling stop and a real
+unsourced-pricing stop; continuous artifact persistence; Scene A's real planner AND author requests
+both carrying the active invocation; zero image-preparation dispatches anywhere in the run.
+
+**Not yet green**: getting a stubbed response through First Sacrifice's real, rich seed validation
+chain required matching three escalating real schema layers this pass (open-row local-objective,
+scene-function/aftermath-lane content signals) — each fixed by extracting the actual required
+fields/ids/phrases out of the real system prompt rather than guessing. A fourth, different check
+(`_cgAcceptDelivered`'s delivered-assignments staleness guard) now rejects Scene A's commit with
+"stale attempt: a newer request replaced this one (null ≠ cpa:...)" — a genuinely new,
+previously-unknown quirk in how `_cgMintDeliveredAssignments` behaves against this real seed,
+un-investigated further this pass given the depth already reached. This blocks 4 of the harness's 24
+checks (Scene A's commit proof and Scene B's continuation-content proof specifically) — it does not
+reopen anything already proven: `_tempt_fate_outcome_integration_control.mjs`'s own commit-at-
+persistence and planner/author wiring proofs (70/70) use a simpler, controlled seed state unaffected
+by this quirk.
+
 ## Go/no-go criteria
 
-Proceed if: the mechanism proof (47/47, production-integration-level, including all four Codex-
-identified fixes) is accepted as sufficient plumbing verification, the corrected paid-role census in
-§2 is accepted as complete, the widened ceilings in §3 are accepted as the enforced pre-dispatch
-reservations, and the `_intimacyDevMode` starting-state bypass (§1) and `blockImagePreparation: true`
-(§7) are accepted as the correct, disclosed mechanisms. Hold if: there's a reason to test a different
-wish first, want different ceilings, want the Lirael-knowledge-limits question narrowed or dropped,
-or want the full multi-scene volatility-window lifecycle folded into this same authorization (still
-out of scope — this sheet tests "the wish lands" + "one ordinary scene keeps living with it," not
-the full 3-5+ scene fade-out).
+Proceed if: the mechanism proof (70/70, production-integration-level, including all six Codex/Roman-
+identified fixes across both passes) is accepted as sufficient plumbing verification, the corrected
+paid-role census in §2 is accepted as complete, the widened ceilings in §3 are accepted as the
+enforced pre-dispatch reservations, the `_intimacyDevMode` starting-state bypass (§1) and
+`blockImagePreparation: true` (§7) are accepted as the correct, disclosed mechanisms, and the §H open
+item (a delivered-assignments staleness quirk against this specific real seed) is accepted as
+non-blocking for a live run (it is a harness-stub gap, not a production code defect — nothing in the
+trace suggests it would affect a REAL, non-stubbed generation, only a synthetic stub response reaching
+that far into the validation chain). Hold if: §H should be resolved and re-proven green first, there's
+a reason to test a different wish, want different ceilings, want the Lirael-knowledge-limits question
+narrowed or dropped, or want the full multi-scene volatility-window lifecycle folded into this same
+authorization (still out of scope — this sheet tests "the wish lands" + "one ordinary scene keeps
+living with it," not the full 3-5+ scene fade-out).
