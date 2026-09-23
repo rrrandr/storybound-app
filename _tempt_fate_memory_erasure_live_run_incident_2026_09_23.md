@@ -140,12 +140,47 @@ terminal).
 | Scene B attempted | No |
 | Tempt Fate narrative capability tested | No |
 
+## Resolution (added after Roman authorized the restart)
+
+**Restart.** SIGTERM to PID 406; it and all 28 accumulated children exited cleanly. Port 3000 was
+confirmed free, then a fresh `vercel dev --listen 3000` started (PID 94597) with zero child workers.
+
+**The function layer is now verified healthy — the restart's own proof, not an assumption.** A
+`GET /` returning 200 proves only static serving, which was never in question; the incident was a
+*function-layer* failure. `_local_api_function_health_check.mjs` closes that gap read-only:
+**8/8 passed**. All three provider proxies now return their OWN `405 {"error":"Method not allowed"}`
+— authored by the function's own code at `api/chatgpt-proxy.js:126`, `api/proxy.js:240`,
+`api/mistral-proxy.js:86`, all of which validate the HTTP method before any upstream contact — in
+place of the incident's platform-level `NO_RESPONSE_FROM_FUNCTION`. `/api/config` and `/api/geo`
+both return 200 as non-provider controls. **Scope limit, stated plainly: this proves the function
+layer executes and responds. It does NOT prove provider credentials are valid or that an upstream
+call would succeed** — establishing that requires a real billable dispatch, which this check
+deliberately never makes, so it remains an open unknown going into any next live attempt.
+
+**The wish-classifier correction is now executed, not merely written.**
+`_tempt_fate_memory_erasure_cost_audit.mjs` runs **25/25** (was 23/23): the new `wish-classifier`
+phase test observed the real role dispatch exactly **1** `gpt-4o-mini` request under its ceiling-1
+phase, priced at **$0.000177** — matching the source-derived estimate, and moving the enforced
+combined figure to **$0.334289** (verified by the same ledger that is again proven to refuse a phase
+before dispatch at the $0.40 ceiling). The classifier is now in the phase gate, the request cap
+(§2's corrected count and the per-phase caps), the cost reservation (pre-dispatch in the live-run
+script, not post-hoc), and the authorization sheet.
+
+**Sealing a wish is now dry-proven unable to bypass the controls.**
+`_tempt_fate_wish_seal_containment_control.mjs`: **17/17**, driving the REAL Proceed click under
+three postures with a master assertion that zero real dispatches occurred anywhere in the run. It is
+deliberately built to BITE — section 1 first proves the classifier request is genuinely attempted,
+because a containment proof in which the request never fires proves nothing. Fail-closed aborts it
+while the wish still seals; the shared-lane posture (the incident's actual shape) captures it under
+its declared phase and refuses a deliberate over-cap second request; and all three image endpoints
+plus an image-preparation body riding a real text lane are blocked before dispatch.
+
 ## What happens next
 
-No retry, no server restart, no image work, and no further UI-flow diagnostics will be run until
-Roman reviews this report. If a restart is the right next step, that requires its own explicit
-authorization — not assumed here. The corrected harness/cost-audit code is ready to re-verify the
-wish-classifier's real accounting the next time a dry run is authorized, and the live-run script
-(`_tempt_fate_memory_erasure_live_run_2026_09_24.mjs`) already has both real screen-transition fixes
-applied and is otherwise unchanged — it has not yet completed a single full run against a healthy
-server.
+The two blockers that stopped the last attempt are now closed: the accounting gap is corrected and
+executed, and the function layer is verified. The remaining unknown is deliberate and stated above —
+whether provider credentials/upstream calls actually succeed cannot be known without a real
+dispatch. The live-run script (`_tempt_fate_memory_erasure_live_run_2026_09_24.mjs`) carries both
+screen-transition fixes plus the classifier's pre-dispatch reservation, and has still never
+completed a single full run against a healthy server. **No further live attempt will be made without
+a fresh explicit authorization.**

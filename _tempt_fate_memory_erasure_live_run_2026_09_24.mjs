@@ -89,6 +89,11 @@ function persist(name, data) { try { fs.writeFileSync(path.join(OUT_DIR, name), 
 const COMBINED_CEILING = 0.40;
 const SCENE_A_CEILING = 0.20;
 const SCENE_B_CEILING = 0.18;
+// ADDED eighth revision: the wish-seal classifier's own sourced worst case (700 in + 120 out tokens
+// at gpt-4o-mini rates = $0.000177), rounded up to a $0.001 ceiling. Reserved BEFORE the Proceed
+// click below, not merely counted after it — the incident that surfaced this role was precisely a
+// dispatch that happened outside the sheet's declared, reserved set.
+const WISH_CLASSIFIER_CEILING = 0.001;
 
 // Module-level (not IIFE-local) so the top-level catch at the bottom of this file can still
 // attempt a safe, settlement-aware shutdown if an unexpected error escapes every in-flow try/catch
@@ -204,6 +209,18 @@ let browser = null, gate = null;
 
   // Classifier is fire-and-forget (not awaited by the Proceed handler) — track it under its own
   // phase, ceiling 1 (at most one real gpt-4o-mini call per _classifyWishCG's own source).
+  //
+  // PRE-DISPATCH RESERVATION (eighth revision): reserve this role's worst case against the combined
+  // ceiling BEFORE the click that can dispatch it — the same discipline every scene phase follows.
+  // Reserving after the fact is what let this role dispatch outside the declared budget during the
+  // 2026-09-23 incident.
+  const reservedBeforeSeal = WISH_CLASSIFIER_CEILING + SCENE_A_CEILING + SCENE_B_CEILING;
+  if (reservedBeforeSeal > COMBINED_CEILING) {
+    console.error('  REFUSING TO SEAL — reserving the wish-classifier ($' + WISH_CLASSIFIER_CEILING.toFixed(6) + ') on top of both scene ceilings ($' + (SCENE_A_CEILING + SCENE_B_CEILING).toFixed(2) + ') would exceed the $' + COMBINED_CEILING.toFixed(2) + ' combined ceiling.');
+    await safeExit(1, 'wish-classifier reservation would breach the combined ceiling');
+    return;
+  }
+  console.log('  reserved BEFORE the Proceed click: wish-classifier $' + WISH_CLASSIFIER_CEILING.toFixed(6) + ' + Scene A $' + SCENE_A_CEILING.toFixed(2) + ' + Scene B $' + SCENE_B_CEILING.toFixed(2) + ' = $' + reservedBeforeSeal.toFixed(6) + ' ≤ $' + COMBINED_CEILING.toFixed(2));
   gate.setPhase('wish-classifier', 1);
   await page.click('.tempt-proceed-btn', { timeout: 5000 });
   console.log('  Proceed clicked — wish sealed (local invocation + possible fire-and-forget classifier call)');
@@ -306,6 +323,11 @@ let browser = null, gate = null;
   const classifierCostInfo = sumCost(gate.trackedCalls('wish-classifier'));
   const spentSoFar = sceneACostInfo.total + classifierCostInfo.total;
   console.log('  spent so far (wish-classifier + Scene A): $' + spentSoFar.toFixed(6));
+  if (classifierCostInfo.total > WISH_CLASSIFIER_CEILING) {
+    console.error('  wish-classifier real cost ($' + classifierCostInfo.total.toFixed(6) + ') exceeds its own $' + WISH_CLASSIFIER_CEILING.toFixed(6) + ' reserved ceiling — stopping before Scene B.');
+    await safeExit(1, 'wish-classifier cost exceeded its own reserved ceiling');
+    return;
+  }
   if (sceneACostInfo.total > SCENE_A_CEILING) {
     console.error('  Scene A real cost ($' + sceneACostInfo.total.toFixed(6) + ') exceeds its own $' + SCENE_A_CEILING.toFixed(2) + ' ceiling — stopping before Scene B.');
     await safeExit(1, 'scene A cost exceeded its own ceiling');

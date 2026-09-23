@@ -58,9 +58,36 @@ infrastructure diagnosis (not a fix) found 28 accumulated, idle `@vercel/node` d
 processes under the long-running `vercel dev` process (up ~2+ days), and confirmed all three
 relevant provider API keys (`MISTRAL_API_KEY`/`OPENAI_API_KEY`/`XAI_API_KEY`) are present in
 `.env.local` — pointing at the local dev-server layer, not missing config or a per-provider outage.
-No restart attempted; that requires separate authorization. **Nothing in this sheet authorizes a
-paid call by itself. No paid run yet — and no retry is authorized until the dev-server issue is
-resolved.**
+**Server restart + verification (authorized separately, after that diagnosis).** Roman authorized
+the restart. The old process and all 28 accumulated children exited cleanly on SIGTERM; a fresh
+`vercel dev` came up on port 3000. **The function layer is now verified healthy, not merely
+"the page loads"**: `_local_api_function_health_check.mjs` — read-only, GET-only, provider-blocked
+by construction (all three provider proxies validate the HTTP method at the top of their handler
+before any upstream contact: `api/chatgpt-proxy.js:126`, `api/proxy.js:240`,
+`api/mistral-proxy.js:86`) — returns **8/8**, with `/api/chatgpt-proxy`, `/api/proxy` and
+`/api/mistral-proxy` each producing their OWN `405 {"error":"Method not allowed"}` instead of the
+incident's `NO_RESPONSE_FROM_FUNCTION`, plus `/api/config` and `/api/geo` at 200 as non-provider
+controls. **Scope limit, stated plainly: this proves the function layer executes; it does NOT prove
+provider credentials work or that an upstream call would succeed** — that cannot be established
+without a real billable dispatch, which this check deliberately never makes.
+
+**Wish-seal containment, now dry-proven rather than asserted.**
+`_tempt_fate_wish_seal_containment_control.mjs`: **17/17**. It drives the REAL Tempt click sequence
+through the REAL Proceed button under three postures and proves containment empirically, with a
+master assertion that `gate.realCalls()` is EMPTY across the whole run:
+(1) **fail-closed** (no real lane, no stub) — the classifier dispatch is genuinely ATTEMPTED (the
+control bites; a containment proof where the request never fires would be vacuous) and aborted
+before leaving the browser, while the wish still seals correctly — containment does not work by
+breaking the mechanism; (2) **shared-lane, the incident's actual shape** — `/api/chatgpt-proxy`
+claimed by an explicit stub plus an open `wish-classifier` phase at ceiling 1: the request is
+captured under its declared phase (attributable and countable, not escaping unaccounted), verified
+to be genuinely the wish classifier by its own prompt content, and a deliberate second request under
+that ceiling-1 phase is REFUSED — the cap bites; (3) **image controls** — `/api/image`,
+`/api/bfl-kontext` and `/api/dashscope-image` each attempted and aborted, plus an
+image-preparation-shaped body riding a REAL-allowed text lane blocked before dispatch by
+`blockImagePreparation`.
+
+**Nothing in this sheet authorizes a paid call by itself. No paid run yet.**
 
 ## What's dry-proven now, so this test isn't validating plumbing
 
@@ -170,15 +197,23 @@ the dispatch code this pass (not a comment, not an assumption), and every model 
 | CG screenplay author | Every scene, both A and B — the main event | grok-4-1-fast-reasoning (unconditional) → ministral-8b-2512 (conditional on a static TPM admission check — can be SKIPPED without dispatch if oversized) → gpt-4o (terminal) | Existing per-scene retry policy | up to 3 per scene |
 | **Outer scene retry (NEW this pass — previously entirely uncounted)** | Whenever a scene's plan comes back `__staleRejected`/`__plannerFunctionRejected` | `_completeStagedSceneFromScreenplay` (app.js ~233106-233118) retries the **entire** generation exactly **once**, then stops if the retry also fails | Bounded to 1 retry, confirmed from source | **doubles** scenePlanner + author + gravity-audit + (Scene B only) commitVerifier for the scene it fires on — never scaffold/Bibles, already cached |
 
-**Maximum physical-request count, no retry**: Scene A up to 3 (scaffold) + 9 (bibles) + 3
-(scenePlanner) + 1 (legacy fallback) + 1 (gravity audit) + 3 (author) = **up to 20**. Scene B up to 3
-(scenePlanner) + 1 (legacy fallback) + 3 (commit-verifier) + 1 (gravity audit) + 3 (author) = **up to
-11**. **With the outer retry** (bounded to 1, confirmed real): a scene that trips it adds one more
-full pass of its non-cached roles — worst case combined **up to 47** physical requests across the 2
+**Maximum physical-request count, no retry — CORRECTED, eighth revision** (the classifier was
+missing from every prior revision's count, not just from the table above): **wish-seal 0 or 1**
+(classifier; never more — it has no fallback tier and no retry). Scene A up to 3 (scaffold) + 9
+(bibles) + 3 (scenePlanner) + 1 (legacy fallback) + 1 (gravity audit) + 3 (author) = **up to 20**.
+Scene B up to 3 (scenePlanner) + 1 (legacy fallback) + 3 (commit-verifier) + 1 (gravity audit) + 3
+(author) = **up to 11**. **With the outer retry** (bounded to 1, confirmed real): a scene that trips
+it adds one more full pass of its non-cached roles — worst case combined **up to 48** physical
+requests (was stated as 47 before the classifier was counted) across the wish-seal plus the 2
 logical scene generations, though the REAL priced ceiling below (built from actual per-token costs,
 not a worst-case request count) is the number that actually matters for the enforcement — a request
 COUNT alone overstates risk since most tiers here are 2-3 orders of magnitude cheaper than the
 author's own primary tier.
+
+**Per-phase request caps actually enforced in code** (the gate aborts anything past the declared
+ceiling, so these are limits, not estimates): `wish-classifier` **1**, `scene-A` **28**, `scene-B`
+**21** — declared in `_tempt_fate_memory_erasure_live_run_2026_09_24.mjs` via
+`gate.setPhase(roleTag, ceiling)` before each corresponding real interaction.
 
 ## 3. Dollar ceiling and accounting/enforcement method
 
@@ -224,13 +259,12 @@ confirming the refusal occurs at the reservation step, before `gate.setPhase`/th
   scenePlanner are ONE call chain at this call site, not two independent roles — + its own retry
   ≈ $0.160 total).
 - **Combined ceiling**: **$0.40** (the executable ledger's own clean total, wish-classifier plus
-  both scenes' real worst case plus both scenes' own real bounded retry, no padding: previously
-  **$0.334112** before this correction; **recomputed to ≈$0.334289** with the wish-classifier's
-  ~$0.000177 worst case folded in — a source-derived recomputation, NOT yet re-verified by an
-  executed dry run, since no script has been run against the app since this correction was made
-  (the local dev-server incident, see the eighth-revision note above, blocks any such run until
-  resolved). `_tempt_fate_memory_erasure_cost_audit.mjs` now contains the `wish-classifier` phase
-  test needed to re-verify this figure for real — pending a dry re-run once the server issue clears).
+  both scenes' real worst case plus both scenes' own real bounded retry, no padding: **$0.334289**
+  — was $0.334112 before the classifier was counted). **Re-verified by execution, not derived**:
+  `_tempt_fate_memory_erasure_cost_audit.mjs` now runs **25/25** (was 23/23; +2 from the new
+  `wish-classifier` phase test), with the classifier observed dispatching exactly 1 `gpt-4o-mini`
+  request priced at **$0.000177** against its own ceiling-1 phase, and the ledger again proven to
+  refuse a phase before dispatch once the $0.40 ceiling is exhausted.
 - **Antagonist Body Bible, FIXED this (seventh) pass, not merely priced around**: previously traced
   by brace-matching the real source to a genuine cross-scope `ReferenceError`
   (`_ANTAGONIST_ARCHETYPES` was a `var` local to `handleBeginStory`, invisible to the sibling

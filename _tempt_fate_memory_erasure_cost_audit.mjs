@@ -195,8 +195,12 @@ class ReservationLedger {
       // live calls for this specific starter when the seed carries enough facet data, falling
       // through to the full paid cascade only if it doesn't. Both are correct; report which
       // happened rather than asserting one shape.
-      ok(roleTag + ': real dispatch count is either 0 (Tier-0 seed-derived, this starter\'s real common case) or the full ' + ceiling + '-tier cascade — both are legitimate, reporting which occurred', tracked.length === 0 || tracked.length === ceiling, 'tracked=' + tracked.length);
-      console.log('  ' + (tracked.length === 0 ? 'Tier-0 seed-derived — zero live calls, confirmed real behavior for this starter (see console log)' : 'fell through to the full live cascade — real tracked models: ' + JSON.stringify(tracked.map((r) => r.requestBody && (r.requestBody.model || r.requestBody.preferredModel)))));
+      // zeroReason names why THIS role can legitimately dispatch nothing — they are different
+      // mechanisms and must not be reported interchangeably (Body Bibles: Tier-0 seed derivation;
+      // wish classifier: its lexicon resolving the verdict locally before any LLM fallback).
+      const zeroReason = opts.zeroReason || 'Tier-0 seed-derived, this starter\'s real common case';
+      ok(roleTag + ': real dispatch count is either 0 (' + zeroReason + ') or the full ' + ceiling + '-tier cascade — both are legitimate, reporting which occurred', tracked.length === 0 || tracked.length === ceiling, 'tracked=' + tracked.length);
+      console.log('  ' + (tracked.length === 0 ? zeroReason + ' — zero live calls, confirmed real behavior (see console log)' : 'fell through to the full live cascade — real tracked models: ' + JSON.stringify(tracked.map((r) => r.requestBody && (r.requestBody.model || r.requestBody.preferredModel)))));
     } else {
       ok(roleTag + ': the real cascade reached its terminal tier — exactly ' + ceiling + ' physical request(s) tracked under this phase, no more, no fewer', tracked.length === ceiling, 'tracked=' + tracked.length + ' expected=' + ceiling + (threw ? ' (fn threw: ' + threw + ')' : ''));
     }
@@ -233,7 +237,7 @@ class ReservationLedger {
   section('0. WISH-SEAL ROLE SEQUENCE — fires BEFORE Scene A, at the real Proceed click');
   await runIsolatedRole('wish-classifier', 'wishClassifier', 1, 'window.WishSequence.queue({cardType:"tempt_fate", wishText:"everyone forgets the ceremony happened", cost:60, charged:true, mode:"cg"})',
     () => window.WishSequence.queue({ cardType: 'tempt_fate', wishText: 'everyone forgets the ceremony happened', cost: 60, charged: true, mode: 'cg' }),
-    undefined, { allowZeroReal: true });
+    undefined, { allowZeroReal: true, zeroReason: 'the in/out-of-scope lexicon resolved the verdict locally, before the gray-zone LLM fallback' });
 
   // ═══════════════════════════════════════════════════════════════════════════════════════════
   section('1. SCENE A ROLE SEQUENCE — each role isolated, deterministic, phase-tracked (no content classification)');
