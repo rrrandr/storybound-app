@@ -1,0 +1,449 @@
+// TEMPT FATE MEMORY-ERASURE — ONE LIVE, EXPLICITLY-AUTHORIZED RUN (Roman, 2026-09-24)
+//
+// Real, paid, one-shot run under the seventh-revision authorization sheet
+// (_tempt_fate_memory_erasure_live_authorization_2026_09_23.md). Roman: "Run the seventh-revision
+// memory-erasure test once, under the $0.40 combined cap. No images, no extra scenes, no retry
+// beyond the declared policy; preserve both raw scenes and the outcome record, then stop."
+//
+// PRE-FLIGHT FINDING (this run, before any dispatch): the real Tempt-zoom Proceed click drives a
+// previously-untested "wish cinesequence" subsystem (app.js ~199779-200348 + ~200350-200670+),
+// never exercised by any of the six prior dry passes (those bypassed the real Proceed click via
+// synthetic ledger/plan construction). Traced fully before this run:
+//   - _classifyWishCG (app.js ~199719) can fire ONE real gpt-4o-mini call ("gray zone" classifier)
+//     the instant Proceed is clicked, fire-and-forget, NOT awaited by the click handler. This
+//     directly contradicts this sheet's own §2 claim ("Sealing a wish... is local only") — disclosed
+//     here, tracked under its own gate phase below, and folded into the real cost total.
+//   - _prefireWishImage (app.js ~200491) fires a REAL BFL/Kontext image call the instant Scene A's
+//     turn renders (auto, not gated behind any click) — contained by never adding image endpoints to
+//     allowRealPaths (fail-closed default aborts it before it leaves the browser), same guarantee the
+//     dry harness already proved for image endpoints.
+//   - _renderWishBeat2/_renderWishBeat3 (the "Next"-button beats) are the ONLY path to
+//     _generateWishEffectNarrative (a real gpt-4o-mini call) and to actually consuming the pre-fired
+//     image — reached only by clicking a "Next" affordance that mounts after Scene A renders. This
+//     run NEVER clicks it; instead it resolves the sequence directly via window.WishSequence.resolve()
+//     (bypasses beat 2/3 entirely — confirmed by source that _resolveWishSequence() calls neither
+//     _renderWishBeat2 nor _renderWishBeat3, only the scope-branch handlers below).
+//   - _applyInScopeFateChangeCG / _exitCGForStoryRupture (app.js ~200669/200703), the scope-branch
+//     handlers _resolveWishSequence() calls, write state._pendingFateChangeCG / state._pendingFateRupture
+//     — confirmed via grep this run to have ZERO readers anywhere in app.js (unwired "Task 6" stub
+//     plumbing). Resolving the sequence is therefore side-effect-free with respect to the ALREADY
+//     load-bearing, extensively-tested temptFateOutcome / _temptFateDurableConsequences mechanism —
+//     the two systems are architecturally independent; this one is simply inert for CG mode.
+// This is exactly what "no images, no extra scenes" in Roman's authorization already anticipates —
+// this run's design routes around all three surfaces accordingly (see phases below).
+//
+// SAFETY: same fail-closed, persistently-logged pattern as the one real precedent in this repo
+// (_first_sacrifice_live_scene2_boundary_sample.mjs) — every approved request is persisted to disk
+// the instant it is released and the instant it settles; the browser is NEVER closed while anything
+// approved is still unsettled; image endpoints are NEVER in the allowed-real list.
+//
+// usage: node _tempt_fate_memory_erasure_live_run_2026_09_24.mjs   (real, paid — already authorized)
+
+import { chromium } from 'playwright-core';
+import { installFailClosedNetworkGate } from './_e2e_network_gate.mjs';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const OUT_DIR = path.join(__dirname, '_tempt_fate_memory_erasure_live_run_out');
+fs.mkdirSync(OUT_DIR, { recursive: true });
+const LOG_FILE = path.join(OUT_DIR, 'run_' + Date.now() + '.jsonl');
+
+// ── SOURCED RATES — verbatim from public/app.js TEXT_PRICING (~4764-4811). $/token. ──
+const TEXT_PRICING = {
+  'gpt-4o-mini': { in: 0.00000015, out: 0.0000006 },
+  'gpt-4o': { in: 0.0000025, out: 0.00001 },
+  'grok-4-1-fast-reasoning': { in: 0.00000125, out: 0.0000025 },
+  'grok-4-1-fast-non-reasoning': { in: 0.00000125, out: 0.0000025 },
+  'mistral-small-latest': { in: 0.00000015, out: 0.0000006 },
+  'ministral-8b-2512': { in: 0.00000015, out: 0.00000015 }
+};
+const TICK_TO_USD = 1e-10; // public/app.js TEXT_COST_TICK_TO_USD — provider-reported cost_in_usd_ticks, when present, is authoritative
+
+function realCost(model, usage) {
+  if (!usage) return { cost: null, note: 'no usage block returned' };
+  if (typeof usage.cost_in_usd_ticks === 'number' && usage.cost_in_usd_ticks > 0) {
+    return { cost: usage.cost_in_usd_ticks * TICK_TO_USD, note: 'provider_ticks' };
+  }
+  const rate = model && TEXT_PRICING[model];
+  if (!rate) return { cost: null, note: 'no sourced price row for model="' + model + '"' };
+  const promptTok = usage.prompt_tokens || usage.input_tokens || 0;
+  const compTok = usage.completion_tokens || usage.output_tokens || 0;
+  return { cost: promptTok * rate.in + compTok * rate.out, note: 'estimated_from_real_tokens' };
+}
+function summarizeTracked(c) {
+  const body = c.requestBody || {};
+  const model = body.model || body.preferredModel || (c.responseBody && c.responseBody._orchestration && c.responseBody._orchestration.model) || null;
+  const usage = c.responseBody && c.responseBody.usage;
+  const costInfo = model ? realCost(model, usage) : { cost: null, note: 'model not identified in request body' };
+  return { url: c.url, roleTag: c.roleTag, model, status: c.status, networkError: c.networkError, usage: usage || null, costUsd: costInfo.cost, costNote: costInfo.note, at: c.at, settledAt: c.settledAt, elapsedMs: c.elapsedMs != null ? Math.round(c.elapsedMs) : null };
+}
+function sumCost(recs) {
+  let total = 0, anyUnknown = false;
+  recs.forEach((r) => { const s = summarizeTracked(r); if (s.costUsd == null) anyUnknown = true; else total += s.costUsd; });
+  return { total, anyUnknown };
+}
+function persist(name, data) { try { fs.writeFileSync(path.join(OUT_DIR, name), JSON.stringify(data, null, 2)); } catch (e) { console.warn('[ARTIFACT] persist failed for ' + name + ':', e && e.message); } }
+
+const COMBINED_CEILING = 0.40;
+const SCENE_A_CEILING = 0.20;
+const SCENE_B_CEILING = 0.18;
+
+// Module-level (not IIFE-local) so the top-level catch at the bottom of this file can still
+// attempt a safe, settlement-aware shutdown if an unexpected error escapes every in-flow try/catch
+// below — never leaving an approved request's outcome unrecorded just because of an unrelated bug.
+let browser = null, gate = null;
+
+(async () => {
+  console.log('=== TEMPT FATE MEMORY-ERASURE — LIVE RUN (real, paid, one operation, seventh-revision sheet) ===');
+  console.log('    persisted request/response log: ' + LOG_FILE + '\n');
+
+  try { browser = await chromium.launch({ headless: true, channel: 'chrome' }); }
+  catch (e) { console.error('HARNESS BLOCKER: could not launch a real browser — ' + (e && e.message)); process.exit(2); }
+  const page = await (await browser.newContext({ viewport: { width: 1100, height: 900 } })).newPage();
+  const consoleLines = [];
+  page.on('console', (m) => { const t = m.text(); consoleLines.push(t); try { fs.appendFileSync(path.join(OUT_DIR, 'console_log.jsonl'), JSON.stringify({ text: t, at: Date.now() }) + '\n'); } catch (_) {} });
+  page.on('pageerror', (e) => { console.warn('[PAGE ERROR]', e && e.message); });
+
+  // ── FAIL-CLOSED GATE — image endpoints deliberately NEVER in allowRealPaths, so any attempt
+  // (the auto-fired _prefireWishImage included) is aborted before it leaves the browser, same
+  // fail-closed default the dry harness already proved for image endpoints. blockImagePreparation
+  // adds a second layer: even an allowed TEXT endpoint carrying an image-prep-shaped request body
+  // gets aborted before dispatch.
+  gate = await installFailClosedNetworkGate(page, { logFile: LOG_FILE, blockImagePreparation: true });
+  gate.allowRealPaths(['/api/proxy', '/api/mistral-proxy', '/api/chatgpt-proxy']);
+
+  async function safeExit(exitCode, reason) {
+    if (gate.hasUnsettled()) {
+      console.error('REFUSING TO CLOSE — an approved request is still unsettled (' + reason + '). Waiting on it before doing anything else.');
+      const pending = gate.trackedCalls().find((c) => c.status == null && c.networkError == null);
+      if (pending) {
+        await gate.waitForSettlement(pending.roleTag, { watchdogMs: 15000, onWatchdog: (ms) => console.error('  ...still waiting, ' + Math.round(ms / 1000) + 's (browser stays open)') });
+      }
+    }
+    persist('partial_tracked_calls.json', gate.trackedCalls().map(summarizeTracked));
+    persist('console_tail.json', consoleLines.slice(-300));
+    await browser.close();
+    console.error('EXIT (' + reason + ') — browser closed only after confirming nothing approved was left unsettled.');
+    process.exit(exitCode);
+  }
+
+  // ═══ PHASE 0 — reach the real app, real Scene 1 hydration (mirrors the dry harness exactly) ═══
+  try {
+    await page.goto('http://localhost:3000/', { waitUntil: 'domcontentloaded', timeout: 25000 });
+    await page.waitForFunction(() => window.state
+      && typeof window._renderBakedScene1 === 'function'
+      && typeof window._bakedScene1For === 'function'
+      && typeof window._syncFateCardLockState === 'function'
+      && typeof window._cgTemptFateCommitAtPersistence === 'function'
+      && window.WishSequence && typeof window.WishSequence.resolve === 'function', { timeout: 30000 });
+  } catch (e) {
+    console.error('HARNESS BLOCKER: the app is not reachable / required functions missing — ' + (e && e.message));
+    await safeExit(2, 'app unreachable');
+    return;
+  }
+  console.log('✓ real app reached, required functions exposed\n');
+
+  const freshStoryId = 'live-fs-tempt-erasure-' + Date.now();
+  const mount = await page.evaluate((storyId) => {
+    try {
+      window.state.storyId = storyId;
+      window.state.picks = { world: 'Fantasy', worldSubtype: 'the_fair_folk', tone: 'Earnest', intensity: 'Steamy', identity: { playerName: 'Lirael', partnerName: 'Julian' } };
+      window.state.gender = 'Female'; window.state.loveInterest = 'Male'; window.state.authorPronouns = 'She/Her';
+      window.state.renderMode = 'staged_story_mode'; window.state.currentEngine = 'graphic';
+      window.state.turnCount = 0; window.state.scenes = [];
+      window.state.subscribed = true; window.state.fortunes = 9999999; window.state.access = 'sub';
+      window.state._starterId = 'starter_first_sacrifice';
+      window.state._pcLookSkipped = true; window.state._bakedGenesisUnlocked = true;
+      window._devBypass = true; // Fortune-charge dev bypass ONLY — does not affect the Tempt-card lock
+      window.state._intimacyDevMode = true; // disclosed, real dev-only bypass for the Tempt fate-card onboarding lock
+      const pkg = window._bakedScene1For('starter_first_sacrifice');
+      if (!pkg) return { ok: false, reason: 'no baked package resolved for starter_first_sacrifice' };
+      window._renderBakedScene1({ id: 'starter_first_sacrifice' }, pkg);
+      // Screen is "game" right after mount — the Tempt card lives HERE, not in #gnReader (confirmed
+      // via two dry, zero-cost diagnostics after the first two live attempts each failed on exactly
+      // one of these two elements). showScreen('gnReader') is called LATER, after the wish is
+      // sealed, right before Scene A's Say/Do — see phase 2 below. Calling it here would hide the
+      // Tempt card before it's ever used.
+      const storyHtml = document.getElementById('storyContent');
+      return { ok: true, bodyLen: storyHtml ? storyHtml.innerHTML.length : 0 };
+    } catch (e) { return { ok: false, reason: e && e.message }; }
+  }, freshStoryId);
+  persist('scene1_mount.json', mount);
+  if (!mount.ok) { console.error('HARNESS BLOCKER: Scene 1 mount failed — ' + JSON.stringify(mount)); await safeExit(2, 'scene1 mount failed'); return; }
+  console.log('✓ real Scene 1 mounted (storyId=' + freshStoryId + ', bodyLen=' + mount.bodyLen + ')\n');
+
+  // The splash overlay's own .splash-done state makes IT hidden (fade-out), so waiting for that
+  // selector to be :visible (Playwright's waitForSelector default) always times out — checked via
+  // a dry diagnostic after the first live attempt. Poll the class directly instead.
+  await page.waitForFunction(() => { const s = document.getElementById('splashOverlay'); return !s || s.classList.contains('splash-done'); }, { timeout: 12000 }).catch(() => { console.warn('[HARNESS] splash overlay did not reach .splash-done within 12s — proceeding anyway'); });
+
+  // ═══ PHASE 1 — real Tempt card click, real wish entry, real Proceed click ═══
+  console.log('── phase 1: real Tempt Fate wish, sealed via real UI ──');
+  await page.evaluate(() => { if (typeof window._syncFateCardLockState === 'function') window._syncFateCardLockState(); });
+  const cardState = await page.evaluate(() => {
+    const c = document.querySelector('.tempt-fate-card');
+    if (!c) return { found: false };
+    const cs = window.getComputedStyle(c);
+    return { found: true, fateLocked: c.classList.contains('fate-locked'), pointerEvents: cs.pointerEvents };
+  });
+  if (!cardState.found || cardState.fateLocked || cardState.pointerEvents === 'none') {
+    console.error('HARNESS BLOCKER: Tempt card not clickable — ' + JSON.stringify(cardState));
+    await safeExit(2, 'tempt card not clickable');
+    return;
+  }
+  await page.click('.tempt-fate-card', { timeout: 5000 });
+  await page.waitForSelector('.tempt-wish-columns', { timeout: 5000 }).catch(() => {});
+  await page.click('.tempt-wish-columns', { timeout: 5000 });
+  await page.waitForSelector('#temptZoomInput:not(.hidden)', { timeout: 5000 }).catch(() => {});
+
+  const WISH_TEXT = 'everyone forgets the ceremony happened';
+  await page.fill('#temptZoomInput', WISH_TEXT);
+  console.log('  wish typed into the real textarea: "' + WISH_TEXT + '"');
+
+  // Classifier is fire-and-forget (not awaited by the Proceed handler) — track it under its own
+  // phase, ceiling 1 (at most one real gpt-4o-mini call per _classifyWishCG's own source).
+  gate.setPhase('wish-classifier', 1);
+  await page.click('.tempt-proceed-btn', { timeout: 5000 });
+  console.log('  Proceed clicked — wish sealed (local invocation + possible fire-and-forget classifier call)');
+  // Short probe first — the lexicon-vs-LLM branch decision happens near-instantly in JS, so a real
+  // dispatch (if any) shows up in tracked calls within ~2s. If one did fire, wait for its REAL
+  // settlement (observed ~31s once, in practice) before computing its cost — a bare bounded wait
+  // does not; it can only under-count a real cost as "unknown".
+  await page.waitForTimeout(2500);
+  if (gate.trackedCalls('wish-classifier').length) {
+    await gate.waitForSettlement('wish-classifier', { watchdogMs: 15000, onWatchdog: (ms) => console.log('  ...wish-classifier call still pending, ' + Math.round(ms / 1000) + 's') });
+  }
+  const classifierCalls = gate.trackedCalls('wish-classifier').map(summarizeTracked);
+  gate.closePhase();
+  console.log('  wish-classifier: ' + (classifierCalls.length ? JSON.stringify(classifierCalls.map((c) => ({ model: c.model, status: c.status, costUsd: c.costUsd }))) : 'did not fire (lexicon resolved locally)') + '\n');
+
+  // ═══ PHASE 2 — neutral Say/Do, real Submit, Scene A's real generation ═══
+  console.log('── phase 2: neutral Say/Do, real Submit — Scene A real generation ──');
+  // The wish is sealed in the "game" screen (where the Tempt card lives); #gnActionInput/#gnSubmitBtn
+  // live inside #gnReader, a separate screen (display:none until shown). Transition NOW, after the
+  // seal — confirmed via a dry, zero-cost diagnostic to be the correct real order (calling this any
+  // earlier hides the Tempt card before phase 1 can use it).
+  await page.evaluate(() => { try { window.showScreen('gnReader'); } catch (_) {} });
+  await page.waitForSelector('#gnActionInput', { state: 'visible', timeout: 8000 });
+  const sceneADo = 'Lirael closes her eyes for a long moment, then opens them again.';
+  await page.fill('#gnActionInput', sceneADo);
+  await page.fill('#gnDialogueInput', '');
+  // Combined phase covering the real cascade a Submit can trigger for a story's first generated
+  // scene (scaffold + 3 Body Bibles + scenePlanner + gravityAudit + author, each up to their own
+  // real tier ceiling, per the authorization sheet's §2 census) plus its own bounded retry —
+  // ceiling 28 = the sheet's documented "up to 20" no-retry max + 7 for the bounded retry's
+  // non-cached roles (scenePlanner+author+gravityAudit) + 1 margin.
+  gate.setPhase('scene-A', 28);
+  await page.click('#gnSubmitBtn', { timeout: 5000 });
+  console.log('  Submit clicked — waiting on REAL SETTLEMENT (no wall-clock deadline; the real cascade can legitimately take 60-120s+).');
+  await gate.waitForSettlement('scene-A', { watchdogMs: 15000, onWatchdog: (ms) => console.log('  ...Scene A still pending, ' + Math.round(ms / 1000) + 's — browser stays open, nothing aborted') });
+  console.log('  ✓ Scene A has settled (response or terminal network error observed for every tracked call).\n');
+
+  const sceneATracked = gate.trackedCalls('scene-A').map(summarizeTracked);
+  gate.closePhase();
+  const sceneACostInfo = sumCost(gate.trackedCalls('scene-A'));
+  persist('scene_a_tracked_calls.json', sceneATracked);
+  console.log('  Scene A real tracked calls: ' + sceneATracked.length + ', real cost: $' + sceneACostInfo.total.toFixed(6) + (sceneACostInfo.anyUnknown ? ' (WARNING: at least one tracked call has unknown cost)' : ''));
+
+  // Give the app a brief, bounded moment to finish LOCAL parsing of the already-settled network
+  // response into state (pure local JS, not a new network wait) before reading it.
+  const sceneAResult = await page.evaluate(async () => {
+    const start = Date.now();
+    while (Date.now() - start < 10000) {
+      const scenesLen = (window.state.scenes || []).length;
+      if (scenesLen >= 1) break;
+      await new Promise((r) => setTimeout(r, 200));
+    }
+    const caps = window.state._sceneCaptures || {};
+    const capKeys = Object.keys(caps).map(Number).sort((a, b) => a - b);
+    const lastCap = capKeys.length ? caps[capKeys[capKeys.length - 1]] : null;
+    const led = window.state._temptFateLedger || [];
+    const ownedA = led.length ? led[led.length - 1] : null;
+    const durable = window.state._temptFateDurableConsequences || [];
+    return {
+      scenesLen: (window.state.scenes || []).length,
+      renderedSceneText: (window.state.scenes && window.state.scenes.length) ? window.state.scenes[window.state.scenes.length - 1] : null,
+      capture: lastCap ? { sysPrompt: lastCap.sysPrompt, userPrompt: lastCap.userPrompt, originalOutput: lastCap.originalOutput, originalModel: lastCap.originalModel } : null,
+      ownedProposal: ownedA,
+      durableConsequences: durable,
+      wasInvoked: !!window.state.tempt_fate_invoked_this_turn,
+      wishSequenceActive: !!(window.state._wishSequence && window.state._wishSequence.active),
+      gnInputHidden: (function () { const el = document.getElementById('gnActionInput'); return el ? el.closest('.wish-seq-hidden') != null || el.classList.contains('wish-seq-hidden') : null; })()
+    };
+  }).catch((e) => ({ error: String(e && e.message) }));
+  persist('scene_a_result.json', sceneAResult);
+
+  if (!sceneAResult || sceneAResult.error || sceneAResult.scenesLen < 1 || !sceneAResult.capture || !sceneAResult.capture.originalOutput) {
+    console.error('  Scene A did not deliver a captured, rendered response within the local-parse window — stopping before Scene B.');
+    console.error('  ' + JSON.stringify(sceneAResult));
+    await safeExit(2, 'scene A did not deliver');
+    return;
+  }
+  console.log('  ✓ Scene A delivered and rendered — ' + (sceneAResult.renderedSceneText ? sceneAResult.renderedSceneText.length : 0) + ' chars.');
+
+  const outcomeCommitted = Array.isArray(sceneAResult.durableConsequences) && sceneAResult.durableConsequences.length === 1
+    && sceneAResult.ownedProposal && sceneAResult.durableConsequences[0].proposalId === sceneAResult.ownedProposal.id;
+  console.log('  outcome commit check: ' + (outcomeCommitted ? 'exactly one durable outcome, tied to the captured proposal id — committed' : 'NOT committed as expected — preserving raw scene + whatever outcome data exists, stopping before Scene B') + '\n');
+
+  persist('outcome_record.json', { ownedProposal: sceneAResult.ownedProposal, durableConsequences: sceneAResult.durableConsequences, committed: outcomeCommitted });
+  persist('scene_a_system_prompt.txt', sceneAResult.capture.sysPrompt || '');
+  fs.writeFileSync(path.join(OUT_DIR, 'scene_a_system_prompt.txt'), sceneAResult.capture.sysPrompt || '');
+  fs.writeFileSync(path.join(OUT_DIR, 'scene_a_user_prompt.txt'), sceneAResult.capture.userPrompt || '');
+  fs.writeFileSync(path.join(OUT_DIR, 'scene_a_raw_output.txt'), sceneAResult.capture.originalOutput || '');
+  fs.writeFileSync(path.join(OUT_DIR, 'scene_a_rendered_text.txt'), sceneAResult.renderedSceneText || '');
+
+  if (!outcomeCommitted) {
+    console.error('  Per §6 of the authorization sheet: an unusable outcome report stops the run before Scene B. Stopping here.');
+    await safeExit(1, 'scene A outcome not usable — see scene_a_result.json / outcome_record.json');
+    return;
+  }
+
+  // ── BUDGET GATE — real Scene A cost vs. its own ceiling and the combined ceiling before ANY
+  // Scene B dispatch. Uses Scene B's dry-verified worst-case reservation ($0.18, per §3), not a
+  // hopeful guess. ──
+  const classifierCostInfo = sumCost(gate.trackedCalls('wish-classifier'));
+  const spentSoFar = sceneACostInfo.total + classifierCostInfo.total;
+  console.log('  spent so far (wish-classifier + Scene A): $' + spentSoFar.toFixed(6));
+  if (sceneACostInfo.total > SCENE_A_CEILING) {
+    console.error('  Scene A real cost ($' + sceneACostInfo.total.toFixed(6) + ') exceeds its own $' + SCENE_A_CEILING.toFixed(2) + ' ceiling — stopping before Scene B.');
+    await safeExit(1, 'scene A cost exceeded its own ceiling');
+    return;
+  }
+  if (spentSoFar + SCENE_B_CEILING > COMBINED_CEILING) {
+    console.error('  spent so far ($' + spentSoFar.toFixed(6) + ') + Scene B\'s worst-case reservation ($' + SCENE_B_CEILING.toFixed(2) + ') would exceed the $' + COMBINED_CEILING.toFixed(2) + ' combined ceiling — stopping before Scene B.');
+    await safeExit(1, 'projected combined cost would exceed ceiling');
+    return;
+  }
+  console.log('  ✓ within budget — Scene B may proceed (spent $' + spentSoFar.toFixed(6) + ' + reserved $' + SCENE_B_CEILING.toFixed(2) + ' ≤ $' + COMBINED_CEILING.toFixed(2) + ')\n');
+
+  // ═══ PHASE 3 — resolve the wish-cinesequence DIRECTLY, never clicking through its beats ═══
+  // Confirmed by source before this run: _resolveWishSequence() calls neither _renderWishBeat2 nor
+  // _renderWishBeat3 (those fire only from the "Next" button's advanceWishBeat(), never called
+  // here) — so this cannot trigger _generateWishEffectNarrative's real LLM call. Its scope-branch
+  // handlers (_applyInScopeFateChangeCG / _exitCGForStoryRupture) write state fields confirmed via
+  // grep this run to have zero readers anywhere in app.js — side-effect-free w.r.t. the tested
+  // temptFateOutcome mechanism.
+  console.log('── phase 3: resolve the wish-cinesequence directly (no extra scenes, no beat 2/3 LLM/image calls) ──');
+  const resolveResult = await page.evaluate(() => {
+    const wasActive = !!(window.state._wishSequence && window.state._wishSequence.active);
+    if (wasActive) window.WishSequence.resolve();
+    const gnHidden = (function () { const el = document.getElementById('gnActionInput'); return el ? el.classList.contains('wish-seq-hidden') : null; })();
+    return { wasActive, gnHidden };
+  });
+  persist('wish_sequence_resolve.json', resolveResult);
+  console.log('  ' + (resolveResult.wasActive ? 'wish-cinesequence was active — resolved directly, no beats rendered' : 'wish-cinesequence never became active') + '; normal input hidden after resolve: ' + resolveResult.gnHidden + '\n');
+
+  const imageAttempts = gate.trackedCalls().filter((c) => /\/api\/(image|bfl-kontext|dashscope-image)/.test(c.url || ''));
+  console.log('  image-endpoint attempts observed so far: ' + imageAttempts.length + ' (' + (imageAttempts.length ? JSON.stringify(imageAttempts.map((c) => ({ url: c.url, real: c.real, status: c.status }))) : 'none — either never fired, or fired and was aborted as undeclared, see network_gate.jsonl') + ')\n');
+
+  // ═══ PHASE 4 — Scene B's exact declared neutral input, real Submit, real settlement ═══
+  console.log('── phase 4: Scene B — exact declared neutral input, real Submit ──');
+  await page.fill('#gnActionInput', 'Lirael takes a slow breath and steps back from the center of the clearing.');
+  await page.fill('#gnDialogueInput', '');
+  // Scene B has no scaffold/Bibles (one-time, already cached) — worst case no-retry = scenePlanner
+  // (3) + legacy fallback (1) + commitVerifier (3) + gravityAudit (1) + author (3) = 11; bounded
+  // retry doubles scenePlanner+commitVerifier+gravityAudit+author = +10 → ceiling 21 with margin.
+  gate.setPhase('scene-B', 21);
+  await page.click('#gnSubmitBtn', { timeout: 5000 });
+  console.log('  Submit clicked — waiting on REAL SETTLEMENT.');
+  await gate.waitForSettlement('scene-B', { watchdogMs: 15000, onWatchdog: (ms) => console.log('  ...Scene B still pending, ' + Math.round(ms / 1000) + 's') });
+  console.log('  ✓ Scene B has settled.\n');
+
+  const sceneBTracked = gate.trackedCalls('scene-B').map(summarizeTracked);
+  gate.closePhase();
+  const sceneBCostInfo = sumCost(gate.trackedCalls('scene-B'));
+  persist('scene_b_tracked_calls.json', sceneBTracked);
+  console.log('  Scene B real tracked calls: ' + sceneBTracked.length + ', real cost: $' + sceneBCostInfo.total.toFixed(6) + (sceneBCostInfo.anyUnknown ? ' (WARNING: at least one tracked call has unknown cost)' : ''));
+
+  const sceneBResult = await page.evaluate(async () => {
+    const start = Date.now();
+    const startLen = (window.state.scenes || []).length;
+    while (Date.now() - start < 10000) {
+      if ((window.state.scenes || []).length > startLen) break;
+      await new Promise((r) => setTimeout(r, 200));
+    }
+    const caps = window.state._sceneCaptures || {};
+    const capKeys = Object.keys(caps).map(Number).sort((a, b) => a - b);
+    const lastCap = capKeys.length ? caps[capKeys[capKeys.length - 1]] : null;
+    return {
+      scenesLen: (window.state.scenes || []).length,
+      renderedSceneText: (window.state.scenes && window.state.scenes.length) ? window.state.scenes[window.state.scenes.length - 1] : null,
+      capture: lastCap ? { sysPrompt: lastCap.sysPrompt, userPrompt: lastCap.userPrompt, originalOutput: lastCap.originalOutput, originalModel: lastCap.originalModel } : null,
+      wasInvokedDuringB: !!window.state.tempt_fate_invoked_this_turn,
+      durableConsequencesAfterB: window.state._temptFateDurableConsequences || []
+    };
+  }).catch((e) => ({ error: String(e && e.message) }));
+  persist('scene_b_result.json', sceneBResult);
+  fs.writeFileSync(path.join(OUT_DIR, 'scene_b_system_prompt.txt'), (sceneBResult.capture && sceneBResult.capture.sysPrompt) || '');
+  fs.writeFileSync(path.join(OUT_DIR, 'scene_b_user_prompt.txt'), (sceneBResult.capture && sceneBResult.capture.userPrompt) || '');
+  fs.writeFileSync(path.join(OUT_DIR, 'scene_b_raw_output.txt'), (sceneBResult.capture && sceneBResult.capture.originalOutput) || '');
+  fs.writeFileSync(path.join(OUT_DIR, 'scene_b_rendered_text.txt'), sceneBResult.renderedSceneText || '');
+
+  const noNewOutcome = Array.isArray(sceneBResult.durableConsequencesAfterB) && sceneBResult.durableConsequencesAfterB.length === 1;
+  console.log('  Scene B delivered: ' + (sceneBResult.scenesLen >= 2) + ', no new Tempt invocation: ' + !sceneBResult.wasInvokedDuringB + ', still exactly one durable outcome (Scene A\'s): ' + noNewOutcome + '\n');
+
+  // ── FINAL — confirm nothing approved is left unsettled ANYWHERE, then the one and only close. ──
+  if (gate.hasUnsettled()) {
+    console.error('REFUSING TO CLOSE — something is still unsettled even though both scenes settled. Waiting before closing.');
+    const pending = gate.trackedCalls().find((c) => c.status == null && c.networkError == null);
+    if (pending) await gate.waitForSettlement(pending.roleTag, { watchdogMs: 15000, onWatchdog: (ms) => console.log('  ...' + Math.round(ms / 1000) + 's') });
+  }
+  await browser.close();
+
+  const totalCost = spentSoFar + sceneBCostInfo.total;
+  const report = {
+    at: new Date().toISOString(),
+    storyId: freshStoryId,
+    wishText: WISH_TEXT,
+    sceneADo, sceneBDo: 'Lirael takes a slow breath and steps back from the center of the clearing.',
+    costs: {
+      wishClassifierUsd: classifierCostInfo.total,
+      sceneAUsd: sceneACostInfo.total,
+      sceneBUsd: sceneBCostInfo.total,
+      totalUsd: totalCost,
+      combinedCeilingUsd: COMBINED_CEILING,
+      withinCeiling: totalCost <= COMBINED_CEILING
+    },
+    outcomeCommitted,
+    sceneB: { delivered: sceneBResult.scenesLen >= 2, newInvocationDuringB: sceneBResult.wasInvokedDuringB, noDuplicateCommit: noNewOutcome },
+    imageAttemptsObserved: imageAttempts.length,
+    perPhaseTrackedCalls: {
+      'wish-classifier': classifierCalls,
+      'scene-A': sceneATracked,
+      'scene-B': sceneBTracked
+    },
+    anyUndeclaredOrAborted: gate.unstubbed(),
+    persistedLogFile: LOG_FILE
+  };
+  persist('report.json', report);
+
+  console.log('\n' + '='.repeat(100));
+  console.log('TEMPT FATE MEMORY-ERASURE — LIVE RUN COMPLETE');
+  console.log('real total cost: $' + totalCost.toFixed(6) + ' against $' + COMBINED_CEILING.toFixed(2) + ' combined ceiling — ' + (report.costs.withinCeiling ? 'WITHIN CEILING' : '*** OVER CEILING ***'));
+  console.log('outcome committed: ' + outcomeCommitted + ' | Scene B delivered: ' + report.sceneB.delivered + ' | no new invocation in B: ' + !sceneBResult.wasInvokedDuringB + ' | no duplicate commit: ' + noNewOutcome);
+  console.log('image-endpoint attempts observed: ' + imageAttempts.length + ' (expected: 0 real, or aborted-as-undeclared if any)');
+  if (report.anyUndeclaredOrAborted.length) {
+    console.log('\n⚠ requests aborted as undeclared (should be image endpoints only, if any):');
+    console.log(JSON.stringify(report.anyUndeclaredOrAborted, null, 2));
+  }
+  console.log('\nwritten to ' + OUT_DIR + '/: scene_a_*.txt, scene_b_*.txt, outcome_record.json, report.json, and every persisted per-phase call.');
+  console.log('full persisted request/response log: ' + LOG_FILE);
+})().catch(async (e) => {
+  console.error('HARNESS ERROR:', e && e.stack || e);
+  // Never let an unexpected error skip the settlement-aware shutdown — an approved request that
+  // was still in flight must still be waited on and persisted before the browser closes.
+  try {
+    if (gate) {
+      if (gate.hasUnsettled()) {
+        console.error('REFUSING TO CLOSE — an approved request is still unsettled after an unexpected error. Waiting on it.');
+        const pending = gate.trackedCalls().find((c) => c.status == null && c.networkError == null);
+        if (pending) await gate.waitForSettlement(pending.roleTag, { watchdogMs: 15000, onWatchdog: (ms) => console.error('  ...still waiting, ' + Math.round(ms / 1000) + 's') });
+      }
+      persist('partial_tracked_calls_on_error.json', gate.trackedCalls().map(summarizeTracked));
+    }
+  } catch (e2) { console.error('cleanup-on-error itself failed:', e2 && e2.message); }
+  try { if (browser) await browser.close(); } catch (_) {}
+  process.exit(2);
+});

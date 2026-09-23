@@ -202,8 +202,22 @@ class ReservationLedger {
   ok('a REAL Playwright click on the card was accepted (did not throw as unreachable/covered/pointer-events:none)', clickWorked === true, JSON.stringify({ clickWorked }));
   ok('the click produced an observable DOM change — a zoom overlay opened', cardAfterClick.zoomOverlayPresent === true, JSON.stringify(cardAfterClick));
   // Close the zoom without sealing anything (no wish typed yet) — leaves state clean for the
-  // stubbed generation sections below, which seal their own test wishes explicitly.
-  try { await page.evaluate(() => { if (typeof window.closeTemptZoom === 'function') window.closeTemptZoom(); }); } catch (_) {}
+  // stubbed generation sections below, which seal their own test wishes explicitly via direct
+  // ledger/plan construction, NOT via a real click on .tempt-proceed-btn.
+  //
+  // DELIBERATE SAFETY BOUNDARY (documented 2026-09-23, post-incident): this harness never fills
+  // #temptZoomInput or clicks .tempt-proceed-btn for real. That real click path drives
+  // window.WishSequence.queue(...) -> _classifyWishCG (app.js ~199719), which can fire ONE real,
+  // fire-and-forget gpt-4o-mini call the instant Proceed is clicked (confirmed via a real live-run
+  // attempt that dispatched it — 502'd, $0 realized, but a real unbudgeted provider call
+  // nonetheless; see _tempt_fate_memory_erasure_cost_audit.mjs's "wish-classifier" role, added the
+  // same pass this was found, and the authorization sheet's eighth revision). Any FUTURE extension
+  // of this harness that seals a real wish through the real Proceed button MUST either (a) stub
+  // /api/chatgpt-proxy's classifier-shaped request body before that click, or (b) keep the network
+  // gate fail-closed with no real lane declared for it, and MUST assert the resulting
+  // gate.trackedCalls() shows it as stubbed/aborted, not merely assume "no scene lane" implies no
+  // dispatch was attempted — a real dispatch attempt that happens to get blocked is not the same
+  // as a diagnostic that never risked one.
 
   // ═══════════════════════════════════════════════════════════════════════════════════════════
   section('3. IMAGE-PREPARATION BLOCKING — blockImagePreparation:true, exercised against both classified shapes');

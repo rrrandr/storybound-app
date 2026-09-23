@@ -1,4 +1,4 @@
-# Live-test authorization sheet — Tempt Fate memory-erasure scenario (SEVENTH REVISION)
+# Live-test authorization sheet — Tempt Fate memory-erasure scenario (EIGHTH REVISION)
 
 2026-09-24, seventh same-day pass. First revision: Codex found four production gaps (planner never
 received Tempt context; a prompt-construction race; sceneIdx-keyed dedup that breaks across Issue
@@ -32,8 +32,35 @@ and clearing a stale-accumulated-console-log false-positive in the test script i
 antagonist Body Bible now dispatches its real 3-tier cascade correctly, same shape as every other
 Bible role. Cost audit is now **23/23** (one section correctly simplified from a reachability-proof
 to a standard isolated-role test), enforced combined ceiling **$0.334112**
-(`_tempt_fate_codex_review_pass6_2026_09_24.md`). **Nothing in this sheet authorizes a paid call by
-itself. No paid run yet.**
+(`_tempt_fate_codex_review_pass6_2026_09_24.md`).
+
+**Eighth pass — INCIDENT CORRECTION, not a new fix.** Roman authorized one live run under this
+sheet's $0.40 cap. Three real attempts followed (see `_tempt_fate_memory_erasure_live_run_incident_2026_09_23.md`
+for the full account): the first two found and fixed genuine harness bugs (a missing/mis-ordered
+`showScreen('gnReader')` screen transition — never exercised by any prior dry pass, since none of
+them drove the real Proceed-button click). The first attempt's real click ALSO surfaced a mechanism
+this sheet had never accounted for: **sealing a Tempt wish is not local-only.** `_classifyWishCG`
+(app.js ~199719, reached only via the real `window.WishSequence.queue(...)` call the Proceed handler
+makes) can fire ONE real, fire-and-forget `gpt-4o-mini` "gray-zone" classifier call the instant
+Proceed is clicked — contradicting this sheet's own §2 claim through the seventh revision. It fired
+for real in attempt 1 (settled with a real HTTP 502, $0 realized) — a real, unbudgeted provider
+dispatch, not merely a documentation gap. **Corrected this pass**: the classifier is now its own
+explicit role — phase-gated, cost-reserved (`wishClassifier` in `_tempt_fate_memory_erasure_cost_audit.mjs`,
+worst-case ~$0.0001), and listed in §2/§3 below. The dry harness's own safety boundary (it never
+drives the real Proceed click) is now explicitly documented with the requirement any future
+extension must meet before doing so (see its section-2 comment).
+
+Attempt 3 (after both harness fixes) reached Scene A's real Submit and dispatched the real 3-tier
+scaffold cascade — all three tiers failed with `NO_RESPONSE_FROM_FUNCTION` (a generic local Vercel
+dev-function error, not a provider-specific one). **No Tempt Fate narrative capability has been
+tested by any of the three attempts** — this remains true after this correction. Read-only
+infrastructure diagnosis (not a fix) found 28 accumulated, idle `@vercel/node` dev-server worker
+processes under the long-running `vercel dev` process (up ~2+ days), and confirmed all three
+relevant provider API keys (`MISTRAL_API_KEY`/`OPENAI_API_KEY`/`XAI_API_KEY`) are present in
+`.env.local` — pointing at the local dev-server layer, not missing config or a per-provider outage.
+No restart attempted; that requires separate authorization. **Nothing in this sheet authorizes a
+paid call by itself. No paid run yet — and no retry is authorized until the dev-server issue is
+resolved.**
 
 ## What's dry-proven now, so this test isn't validating plumbing
 
@@ -113,11 +140,19 @@ This is a new, isolated copy; nothing about any other real story or saved state 
 
 ## 2. Paid roles per scene — corrected census, logical scenes vs. physical provider requests
 
-**Tempt Fate itself makes no network call.** Sealing a wish (zoom Proceed) is local only; the player
-separately clicks `#gnSubmitBtn` to trigger real generation. Click sequence: (a) reach Scene 2's
-submit-ready state — free; (b) open Tempt zoom, type wish, click Proceed — free, local only; (c)
-fill neutral Say/Do, click Submit — Scene A's real generation; (d) fill Scene B's input (§4), click
-Submit — Scene B's real generation. **Two logical scene generations.**
+**CORRECTED, eighth revision — sealing a Tempt wish is NOT local-only.** Every revision through the
+seventh claimed "Tempt Fate itself makes no network call... Sealing a wish (zoom Proceed) is local
+only." That was wrong, and a real live-run attempt proved it wrong by actually dispatching the call
+this claim said couldn't happen. The real Proceed handler calls `window.WishSequence.queue({cardType,
+wishText, cost, charged:true, mode:'cg'})` (app.js ~108999-109008), which internally awaits
+`_classifyWishCG` (~199719) — lexicon-first (free, local), but falling through to ONE real,
+fire-and-forget `gpt-4o-mini` "gray-zone" classification call when the wish text doesn't confidently
+match the lexicon. Not awaited by the click handler, so it can still be in flight when the player
+clicks Submit. Click sequence, corrected: (a) reach Scene 2's submit-ready state — free; (b) open
+Tempt zoom, type wish, click Proceed — free locally, but MAY dispatch the real wish-classifier call
+in the background; (c) fill neutral Say/Do, click Submit — Scene A's real generation; (d) fill Scene
+B's input (§4), click Submit — Scene B's real generation. **Two logical scene generations, plus one
+possible wish-classifier dispatch that precedes them.**
 
 **Corrected paid-role table, THIRD revision** — every model/tier below is re-traced directly from
 the dispatch code this pass (not a comment, not an assumption), and every model is confirmed against
@@ -125,6 +160,7 @@ the dispatch code this pass (not a comment, not an assumption), and every model 
 
 | Role | Fires on | Real tiers, in order | Gate | Max physical requests |
 |---|---|---|---|---|
+| **Wish-seal classifier (NEW, eighth revision)** | Once, at the real Proceed click, BEFORE Scene A — fire-and-forget, not awaited | `_classifyWishCG` (app.js ~199719): lexicon check (free, local) first; falls through to ONE `gpt-4o-mini` call (`max_tokens:120`) only in the "gray zone"; no further fallback on failure (catches and returns a default verdict) | Reached via `window.WishSequence.queue(...)`, the real public entry point — confirmed real-dispatched in a live-run attempt (settled HTTP 502, $0 realized) | 0 (lexicon resolves) or 1, never more |
 | CG scaffold generation | Scene A only (one-time per story) | `_callTieredProvider('scaffold', ...)` default chain: ministral-8b-2512 → grok-4-1-fast-reasoning → gpt-4o-mini (terminal). **(The dead `_isGrokScaffold`/`gpt-4o-mini`-"backup" branch cited in the prior revision is unreachable in default flow — confirmed again this pass.)** | `_shouldGenerateCGScaffold` — unconditional for staged/CG mode | up to 3, one-time |
 | 3 Body Bible generators (PC/LI/Antagonist) | Scene A only (one-time, each self-gated) | Same default chain as scaffold — `_callTieredProvider('pcBodyBible'/'liBodyBible'/'antagonistBodyBible', ...)`, no `tiers` override, confirmed by source for all three this pass | self-gated on `!s.pcBodyBible` etc. | up to 3 each, 3 run in parallel — up to 9, one-time |
 | scenePlanner (plot-contract generator's PRIMARY branch) | Every scene, both A and B | Custom `_scTiers`: grok-4-1-fast-non-reasoning (or ministral, order depends on an admission check) → the other → gpt-4o (terminal) | `_plotContractActive()` — default ON | up to 3 per scene |
@@ -177,15 +213,24 @@ not merely documented. The reservation ledger was then proven to actually BLOCK 
 before it happens — continuing to reserve real worst-case phases until the ceiling was exceeded, and
 confirming the refusal occurs at the reservation step, before `gate.setPhase`/the real function call.
 
+- **Wish-classifier ceiling (NEW, eighth revision)**: ≤ **$0.001** (sourced worst case: 700 in +
+  120 out tokens at gpt-4o-mini rates ≈ $0.000177; no retry — the real function has none). Reserved
+  BEFORE Scene A in the ledger, not folded into Scene A's own ceiling, since it fires at wish-seal
+  time, structurally before Scene A's Submit.
 - **Per-scene ceiling**: Scene A ≤ **$0.20** (real, phase-tracked worst case $0.091293 no-retry +
   its own real bounded-retry reservation ≈ $0.155 total — now correctly including the antagonist
   Body Bible's real $0.006025 worst-case phase, see below). Scene B ≤ **$0.18** (real,
   phase-tracked worst case $0.079913 no-retry — correctly reflecting that commitVerifier and
   scenePlanner are ONE call chain at this call site, not two independent roles — + its own retry
   ≈ $0.160 total).
-- **Combined ceiling**: **$0.40** (the executable ledger's own clean total, both scenes' real worst
-  case plus both scenes' own real bounded retry, no padding: **$0.334112** — computed by the SAME
-  ledger this pass proved blocks a real dispatch, not a separate calculation).
+- **Combined ceiling**: **$0.40** (the executable ledger's own clean total, wish-classifier plus
+  both scenes' real worst case plus both scenes' own real bounded retry, no padding: previously
+  **$0.334112** before this correction; **recomputed to ≈$0.334289** with the wish-classifier's
+  ~$0.000177 worst case folded in — a source-derived recomputation, NOT yet re-verified by an
+  executed dry run, since no script has been run against the app since this correction was made
+  (the local dev-server incident, see the eighth-revision note above, blocks any such run until
+  resolved). `_tempt_fate_memory_erasure_cost_audit.mjs` now contains the `wish-classifier` phase
+  test needed to re-verify this figure for real — pending a dry re-run once the server issue clears).
 - **Antagonist Body Bible, FIXED this (seventh) pass, not merely priced around**: previously traced
   by brace-matching the real source to a genuine cross-scope `ReferenceError`
   (`_ANTAGONIST_ARCHETYPES` was a `var` local to `handleBeginStory`, invisible to the sibling

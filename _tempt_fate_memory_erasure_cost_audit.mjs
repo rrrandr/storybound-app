@@ -53,7 +53,17 @@ const TEXT_PRICING = {
 // priced dollar figure. The request COUNT and MODEL come from the gate, never guessed.
 const WORST_CASE_TOKENS = {
   author: { in: 9000, out: 1600 }, scaffold: { in: 4000, out: 2500 }, bible: { in: 2000, out: 900 },
-  scenePlanner: { in: 2500, out: 420 }, commitVerifier: { in: 5200, out: 280 }, gravityAudit: { in: 2200, out: 1400 }
+  scenePlanner: { in: 2500, out: 420 }, commitVerifier: { in: 5200, out: 280 }, gravityAudit: { in: 2200, out: 1400 },
+  // ADDED 2026-09-23 (Roman correction, post-live-run incident): the Tempt-seal "wish classifier"
+  // (_classifyWishCG, app.js ~199719, reached via the real Proceed handler's window.WishSequence.queue
+  // call, ~108999-109008) — a real gpt-4o-mini "gray zone" LLM call, max_tokens:120, that can fire
+  // the instant a wish is sealed, fire-and-forget (not awaited by the click handler). Previously
+  // undocumented in every authorization sheet revision through the seventh; confirmed reachable via
+  // a real live-run attempt (2026-09-23) that dispatched it for real (settled 502, $0 realized, but a
+  // real, unbudgeted provider dispatch nonetheless — this table's whole point is to price it BEFORE
+  // that can happen again). Worst-case tokens conservative for its own fixed system+user prompt
+  // (~300-400 real tokens) plus its 120-token completion cap.
+  wishClassifier: { in: 700, out: 120 }
 };
 function costOfTrackedCall(rec, roleKey) {
   const model = (rec.requestBody && (rec.requestBody.model || rec.requestBody.preferredModel)) || null;
@@ -67,7 +77,7 @@ function costOfTrackedCall(rec, roleKey) {
 // make, traced from source this session (scaffold/bible/commitVerifier: _callTieredProvider default
 // chain, no `tiers` override; scenePlanner: its own custom 3-tier list; author: its own hand-rolled
 // 3-tier cascade in _authorFullScenePolicy; gravityAudit: single-attempt, no fallback).
-const ROLE_CEILING = { scaffold: 3, bible: 3, scenePlanner: 3, commitVerifier: 3, gravityAudit: 1, author: 3 };
+const ROLE_CEILING = { scaffold: 3, bible: 3, scenePlanner: 3, commitVerifier: 3, gravityAudit: 1, author: 3, wishClassifier: 1 };
 
 // A real, executable pre-dispatch reservation ledger — reserves BEFORE calling the real function,
 // never after. Unsourced pricing and over-ceiling both refuse OUTRIGHT (the real function is never
@@ -204,10 +214,26 @@ class ReservationLedger {
     scenePlanner: ['grok-4-1-fast-non-reasoning', 'ministral-8b-2512', 'gpt-4o'],
     commitVerifier: ['ministral-8b-2512', 'grok-4-1-fast-reasoning', 'gpt-4o-mini'],
     gravityAudit: ['ministral-8b-2512'],
-    author: ['grok-4-1-fast-reasoning', 'ministral-8b-2512', 'gpt-4o']
+    author: ['grok-4-1-fast-reasoning', 'ministral-8b-2512', 'gpt-4o'],
+    wishClassifier: ['gpt-4o-mini']
   };
 
   const gravityText = 'x'.repeat(220); // _auditSceneEmotionalGravity requires proseText.length >= 200 to do real work
+
+  // ═══════════════════════════════════════════════════════════════════════════════════════════
+  // 0. WISH-SEAL ROLE — ADDED 2026-09-23 after a real live-run attempt dispatched this for real,
+  // unbudgeted. _classifyWishCG (app.js ~199719) is NOT directly window-exposed — its only real
+  // entry point is the public window.WishSequence.queue(opts) API, the SAME call the real Proceed
+  // handler makes (app.js ~108999-109008: {cardType:'tempt_fate', wishText, cost, charged:true,
+  // mode:'cg'}). Unlike every other role, this one is lexicon-first — it makes ZERO real calls
+  // when the wish text confidently matches the OAS-borrowed in/out-of-scope lexicon, and at most
+  // ONE real gpt-4o-mini call (no further fallback on failure — its own catch just returns a
+  // fallback verdict) only in the "gray zone". allowZeroReal:true reports whichever legitimately
+  // occurred, exactly as it does for the Tier-0-eligible Body Bibles.
+  section('0. WISH-SEAL ROLE SEQUENCE — fires BEFORE Scene A, at the real Proceed click');
+  await runIsolatedRole('wish-classifier', 'wishClassifier', 1, 'window.WishSequence.queue({cardType:"tempt_fate", wishText:"everyone forgets the ceremony happened", cost:60, charged:true, mode:"cg"})',
+    () => window.WishSequence.queue({ cardType: 'tempt_fate', wishText: 'everyone forgets the ceremony happened', cost: 60, charged: true, mode: 'cg' }),
+    undefined, { allowZeroReal: true });
 
   // ═══════════════════════════════════════════════════════════════════════════════════════════
   section('1. SCENE A ROLE SEQUENCE — each role isolated, deterministic, phase-tracked (no content classification)');
@@ -337,14 +363,16 @@ class ReservationLedger {
 
   // ═══════════════════════════════════════════════════════════════════════════════════════════
   section('5. SUMMARY — real, tracked, priced worst case (no retry) vs. combined ceiling');
+  const wishClassifierUsd = realCostByRole['wish-classifier'] || 0;
   const sceneAUsd = (realCostByRole.scaffold || 0) + (realCostByRole['bible-pc'] || 0) + (realCostByRole['bible-li'] || 0) + (realCostByRole['bible-antagonist'] || 0) + (realCostByRole['scenePlanner-A'] || 0) + (realCostByRole['gravityAudit-A'] || 0) + (realCostByRole['author-A'] || 0);
   const sceneBUsd = (realCostByRole['scenePlanner+commitVerifier-B'] || 0) + (realCostByRole['gravityAudit-B'] || 0) + (realCostByRole['author-B'] || 0);
+  console.log('  Wish-seal classifier real worst-case (fires before Scene A): $' + wishClassifierUsd.toFixed(6));
   console.log('  Scene A real tracked worst-case (no retry): $' + sceneAUsd.toFixed(6));
   console.log('  Scene B real tracked worst-case (no retry): $' + sceneBUsd.toFixed(6));
-  console.log('  Combined, no retry: $' + (sceneAUsd + sceneBUsd).toFixed(6));
-  console.log('  ENFORCED FIGURE — real Scene A + Scene B worst case, PLUS both scenes\' own real bounded retry, no padding: $' + CLEAN_TOTAL_WITH_BOTH_RETRIES.toFixed(6) + ' against ceiling $' + ledger.ceilingUsd.toFixed(6));
-  ok('the clean combined figure (both scenes, both real bounded retries, no artificial padding) stays within the ceiling actually used this run', CLEAN_TOTAL_WITH_BOTH_RETRIES <= ledger.ceilingUsd, 'clean=' + CLEAN_TOTAL_WITH_BOTH_RETRIES.toFixed(6) + ' ceiling=' + ledger.ceilingUsd.toFixed(6));
-  fs.writeFileSync(path.join(OUT_DIR, 'cost_audit_summary.json'), JSON.stringify({ realCostByRole, sceneAUsd, sceneBUsd, ledgerEntries: ledger.entries, ledgerReservedUsd: ledger.reservedUsd }, null, 2));
+  console.log('  Combined, no retry: $' + (wishClassifierUsd + sceneAUsd + sceneBUsd).toFixed(6));
+  console.log('  ENFORCED FIGURE — wish-classifier + real Scene A + Scene B worst case, PLUS both scenes\' own real bounded retry, no padding: $' + CLEAN_TOTAL_WITH_BOTH_RETRIES.toFixed(6) + ' against ceiling $' + ledger.ceilingUsd.toFixed(6));
+  ok('the clean combined figure (wish-classifier, both scenes, both real bounded retries, no artificial padding) stays within the ceiling actually used this run', CLEAN_TOTAL_WITH_BOTH_RETRIES <= ledger.ceilingUsd, 'clean=' + CLEAN_TOTAL_WITH_BOTH_RETRIES.toFixed(6) + ' ceiling=' + ledger.ceilingUsd.toFixed(6));
+  fs.writeFileSync(path.join(OUT_DIR, 'cost_audit_summary.json'), JSON.stringify({ realCostByRole, wishClassifierUsd, sceneAUsd, sceneBUsd, ledgerEntries: ledger.entries, ledgerReservedUsd: ledger.reservedUsd }, null, 2));
 
   console.log('\n' + '='.repeat(100));
   console.log('TEMPT FATE COST/REQUEST AUDIT: ' + results.filter((r) => r.pass).length + '/' + results.length + ' passed');
