@@ -9085,7 +9085,13 @@ window.config = window.config || {
         // a free choice: any OTHER declared lane, even a valid, menu-listed one, is rejected before
         // the signal check even runs. Inert when opts.requiredLaneId is absent (any scene without a
         // resolved frame keeps the free-choice behavior above, unaffected).
-        if (opts.requiredLaneId && chosenLaneId && laneMatch && chosenLaneId !== opts.requiredLaneId) {
+        if (opts.ruptureActive) {
+          // An active Tempt rupture outranks the scheduled frame (see _buildEventFramePrecedence).
+          // The lane may legitimately be absent, null, or replaced this scene, so none of the
+          // lane checks below apply — enforcing them would reject a planner that correctly let the
+          // rupture break the schedule, leaving "narrow the wish" as the only passing strategy.
+          try { console.log('[CG:PLANNER-GATE] lane requirement waived — active Tempt rupture outranks the scheduled frame' + (opts.requiredLaneId ? ' ("' + opts.requiredLaneId + '")' : '')); } catch (_) {}
+        } else if (opts.requiredLaneId && chosenLaneId && laneMatch && chosenLaneId !== opts.requiredLaneId) {
           reasons.push('the planner declared chosen_aftermath_lane="' + chosenLaneId + '" but the reader\'s own card selection deterministically resolved this scene to lane "' + opts.requiredLaneId + '" — the event frame is not a free choice for this scene; a different (even otherwise-valid) lane is not acceptable');
         } else if (!chosenLaneId || !laneMatch) {
           reasons.push('the planner declared no chosen_aftermath_lane (or one outside the required lane menu: ' + laneList.map(function (l) { return l.id; }).join(', ') + ') — this scene requires selecting and instantiating exactly one listed lane, not inventing an aftermath event from scratch' + (opts.requiredLaneId ? (' — specifically the resolved lane "' + opts.requiredLaneId + '"') : ''));
@@ -100390,8 +100396,21 @@ function _buildAuthorFloorDirective(s) {
             // _resolveStarterEventFrame itself returns null) — generic, not a hard requirement on
             // every starter.
             var _resolvedFrame = (_oe.aftermathLanes && _oe.aftermathLanes.length && typeof _resolveStarterEventFrame === 'function') ? _resolveStarterEventFrame(_oe, state) : null;
+            // ── PRECEDENCE: AN ACTIVE TEMPT RUPTURE OUTRANKS A DETERMINISTIC EVENT FRAME ──
+            // (Roman 2026-09-23, after the first semantically-failed Scene A.) Both requirements
+            // used to be issued as HARD in the SAME planner request: "land this wish's actual
+            // effect" AND "the central event MUST be <pre-resolved frame>, set chosen_aftermath_lane
+            // to EXACTLY <laneId>". For a wish that attacks the very premise of the scheduled frame
+            // — "everyone forgets the ceremony happened" against a scheduled review OF that ceremony
+            // — those cannot both govern. The model resolved the contradiction the only way it
+            // could: by silently NARROWING the wish until the predetermined frame still fit, then
+            // the outcome record codified that narrowing as permanent canon.
+            // The rupture wins. History does not change (the events still occurred); what the
+            // rupture may change is who REMEMBERS them, and therefore whether the previously
+            // scheduled next event can still coherently happen at all.
+            var _tfoRuptureOutranksFrame = !!(_tcInvoked && _tcWish);
             if (_resolvedFrame) {
-              _ob.push('REQUIRED EVENT FRAME (HARD, DETERMINISTICALLY RESOLVED — this is NOT a choice among options; the reader\'s own card selection already determined it before you were ever asked): the central event of this scene MUST be — ' + _resolvedFrame.eventFrame + ' You MUST set "chosen_aftermath_lane" to EXACTLY "' + _resolvedFrame.laneId + '" — you may NOT select a different lane, and satisfying this by staying inside the same ritual/interrogation moment under borrowed institutional/procedural VOCABULARY is NOT a valid instantiation; the event itself must actually move into this frame. The reader\'s posture below changes HOW this frame plays out — who pushes back, what tone, what she risks — it does NOT change WHICH event happens.');
+              _ob.push(_buildEventFramePrecedence(_resolvedFrame, null, _tfoRuptureOutranksFrame).directive);
               // ACTOR / PRESSURE-SOURCE SEPARATION (Roman 2026-09-21) — real finding: retry 14 put
               // a COLLECTIVE ("Seren's family", then "the assembly") into local_objective_actor
               // twice on this exact frame, and the pre-existing _validateLocalObjective (UNCHANGED)
@@ -100501,7 +100520,9 @@ function _buildAuthorFloorDirective(s) {
             if (_oe.aftermathLanes && _oe.aftermathLanes.length) {
               var _laneIds = _oe.aftermathLanes.map(function (l) { return l.id; });
               if (_resolvedFrame) {
-                _scSys += ' ALSO REQUIRED, same JSON: "chosen_aftermath_lane" (MUST be EXACTLY "' + _resolvedFrame.laneId + '" — the lane already resolved for you by the REQUIRED EVENT FRAME above, not a choice among [' + _laneIds.join(', ') + ']; state_change/tactical_move/forces_choice must actually instantiate that frame\'s content, not merely name it), "lane_posture_modulation" (one sentence: HOW the reader\'s recorded posture changes the way the resolved frame plays out — who pushes, what tone, what she risks — never a description of a different lane, and never a return to the ritual/interrogation moment).';
+                // Same single definition as the directive above, so the JSON contract can never
+                // re-impose the constraint the directive just released.
+                _scSys += _buildEventFramePrecedence(_resolvedFrame, _laneIds, _tfoRuptureOutranksFrame).jsonRequirement;
               } else {
                 _scSys += ' ALSO REQUIRED, same JSON: "chosen_aftermath_lane" (EXACTLY one of these ids, spelled exactly as given — nothing else: [' + _laneIds.join(', ') + '] — the lane you selected from the REQUIRED AFTERMATH LANE MENU; state_change/tactical_move/forces_choice must actually instantiate THIS lane\'s content, not merely name it), "lane_posture_modulation" (one sentence: HOW the reader\'s recorded posture changes the way the chosen lane plays out — who pushes, what tone, what she risks — never a description of a different lane, and never a return to the ritual/interrogation moment).';
               }
@@ -189732,6 +189753,21 @@ No text, no watermark, no UI elements, share-ready.`;
       + '  "knowledgeStates": [{"character": name, "state": "knows"|"remembers"|"believes"|"suspects"|"unaware", "note": grounding}] — per-character, never a single blanket claim about "everyone".\n'
       + '  "establishedEvidence": [string...] — concrete evidence or consequences the scene ACTUALLY put on the page (an object out of place, a contradicted record, a witness reaction) — not things that could happen later.\n'
       + '  "openPossibilities": [string...] — unresolved threads a FUTURE scene could pursue. These are explicitly NOT established fact — do not phrase them as if they already happened.\n'
+      // SCOPE HONESTY (Roman 2026-09-23). A real scene granted "everyone forgets the ceremony
+      // happened" as "the assembly forgets the twisted wish", left the ceremony institutionally
+      // intact, and the durable record then codified that narrowing as permanent canon with nothing
+      // marking it as a partial grant. A narrowing may be legitimate — but it must be DECLARED, so
+      // it can be reviewed, rather than silently absorbed into canon as a clean success.
+      + '  "requestedScope": string — the wish\'s literal scope, in your own words, BEFORE considering what the scene managed to deliver.\n'
+      + '  "deliveredScope": string — the scope the scene ACTUALLY delivered on the page.\n'
+      + '  "scopeMatch": "full"|"narrower"|"broader" — compare the two honestly. "full" ONLY if the delivered scope covers the requested scope. If the scene granted less than the wish asked for (a subset of people, a subset of the events, a shorter duration), that is "narrower" — say so; do not relabel a partial grant as a success. If it did more than was asked, that is "broader".\n'
+      + '  "scopeNote": string — if scopeMatch is not "full", why the scene delivered a different scope, and what specifically was left untouched.\n'
+      + 'WHEN THE WISH TOUCHES MEMORY OR KNOWLEDGE, also make the scope explicit rather than implied:\n'
+      + '  • who forgot, and who did not — per character or per group, in knowledgeStates.\n'
+      + '  • whether the protagonist forgot. If she is exempt, the scene itself must EARN that exception on the page (the wish\'s own wording, the deck, her role in it) — an exemption that is merely asserted is not established. Record the grounding in the relevant knowledgeStates note.\n'
+      + '  • what physical or documentary evidence survived the forgetting (objects, records, wounds, written orders) — these outlast memory and belong in establishedEvidence.\n'
+      + '  • which previously scheduled plans, proceedings, or obligations became IMPOSSIBLE, SUSPENDED, or UNEXPLAINED because the knowledge that justified them is gone. Put these in "changed" — a proceeding nobody can now justify IS a change, and omitting it silently preserves a world-state the wish should have disturbed.\n'
+      + '  • which effects persist beyond the visible rupture window, in durability.\n'
       + 'This treatment applies IDENTICALLY to any wish, familiar or unprecedented — there is no fixed catalogue of wish types to match against; reason about THIS specific wish and THIS specific scene.';
   }
   window._buildTemptFateOutcomeReportingSchema = _buildTemptFateOutcomeReportingSchema;
@@ -189769,6 +189805,17 @@ No text, no watermark, no UI elements, share-ready.`;
     if (raw.delivered === true) {
       var hasContent = (Array.isArray(raw.changed) && raw.changed.length) || (Array.isArray(raw.establishedEvidence) && raw.establishedEvidence.length);
       if (!hasContent) errors.push('delivered:true but no changed[] or establishedEvidence[] reported');
+      // SCOPE DECLARATION (Roman 2026-09-23). A delivered report must say what scope it actually
+      // granted relative to what was asked. This is still STRUCTURAL — it does not judge whether the
+      // prose earned the claim — but it stops a partial grant from entering durable canon wearing
+      // the shape of a complete one, which is exactly what the first semantically-failed Scene A did.
+      var VALID_SCOPE = { full: true, narrower: true, broader: true };
+      if (typeof raw.requestedScope !== 'string' || !raw.requestedScope.trim()) errors.push('delivered:true but requestedScope missing — the wish\'s literal scope must be stated');
+      if (typeof raw.deliveredScope !== 'string' || !raw.deliveredScope.trim()) errors.push('delivered:true but deliveredScope missing — what the scene actually granted must be stated');
+      if (!VALID_SCOPE[raw.scopeMatch]) errors.push('delivered:true but scopeMatch must be full|narrower|broader');
+      if ((raw.scopeMatch === 'narrower' || raw.scopeMatch === 'broader') && (typeof raw.scopeNote !== 'string' || !raw.scopeNote.trim())) {
+        errors.push('scopeMatch="' + raw.scopeMatch + '" requires scopeNote explaining what was left untouched');
+      }
     }
     return { valid: errors.length === 0, errors: errors };
   }
@@ -189824,6 +189871,14 @@ No text, no watermark, no UI elements, share-ready.`;
         knowledgeStates: Array.isArray(rawReport.knowledgeStates) ? rawReport.knowledgeStates : [],
         establishedEvidence: Array.isArray(rawReport.establishedEvidence) ? rawReport.establishedEvidence : [],
         openPossibilities: Array.isArray(rawReport.openPossibilities) ? rawReport.openPossibilities : [],
+        // SCOPE, carried into canon (Roman 2026-09-23). Without these the durable record states a
+        // narrowed grant in the same voice as a complete one, and every later scene reads the
+        // narrowing as the wish's full, settled meaning. Recording the gap keeps a partial grant
+        // legible as partial — to future prompts and to review.
+        requestedScope: typeof rawReport.requestedScope === 'string' ? rawReport.requestedScope : '',
+        deliveredScope: typeof rawReport.deliveredScope === 'string' ? rawReport.deliveredScope : '',
+        scopeMatch: rawReport.scopeMatch || 'unstated',
+        scopeNote: typeof rawReport.scopeNote === 'string' ? rawReport.scopeNote : '',
         // permanent: true only if at least one reported effect persists or remains uncertain past
         // the rupture window closing — an all-"expires" report is a temporary-only intervention.
         permanent: (Array.isArray(rawReport.durability) ? rawReport.durability : []).some(function (d) { return d && (d.status === 'persists' || d.status === 'uncertain'); })
@@ -190826,6 +190881,32 @@ No text, no watermark, no UI elements, share-ready.`;
   // state._tfoOwnedInvocation is set once at generation start and cleared when that generation ends.
   // Everything downstream keys off the PROPOSAL ID it carries, which cannot drift with turnCount and
   // cannot be captured by a different wish sealed mid-flight.
+  // ═══ EVENT-FRAME PRECEDENCE UNDER AN ACTIVE TEMPT RUPTURE (generic; no story knows about this) ═══
+  // Extracted so the rule has ONE definition and can be proven directly against any frame/wish pair,
+  // not only the starter that exposed it. Returns the planner directive and the JSON requirement for
+  // a deterministically-resolved event frame, in one of two modes:
+  //   ruptureActive=false → the frame is HARD and the lane is forced (unchanged prior behaviour).
+  //   ruptureActive=true  → the frame is SUPERSEDED: the rupture is the event, the lane becomes
+  //                         optional/nullable, and narrowing the wish to preserve the frame is
+  //                         explicitly named as the failure to avoid.
+  function _buildEventFramePrecedence(resolvedFrame, laneIds, ruptureActive) {
+    if (!resolvedFrame) return { directive: '', jsonRequirement: '', mode: 'none' };
+    var lane = resolvedFrame.laneId;
+    if (ruptureActive) {
+      return {
+        mode: 'superseded',
+        directive: 'SCHEDULED EVENT FRAME — SUPERSEDED THIS SCENE BY AN ACTIVE TEMPT FATE RUPTURE (precedence rule, applies to ANY wish and ANY frame): before the wish, this scene was scheduled to be — ' + resolvedFrame.eventFrame + ' (lane "' + lane + '"). That schedule is now SUBORDINATE to the rupture, not binding on it. Do NOT narrow, reinterpret, or partially grant the wish in order to keep this frame reachable — that is the specific failure this rule exists to prevent. Plan the RUPTURE ITSELF as the central event. HISTORY IS UNCHANGED: the underlying events still objectively occurred, and Tempt cannot un-happen them. What the wish MAY change is who remembers them, what social knowledge survives, and what records or objects still testify — and therefore whether the scheduled frame above is now SUSPENDED, IMPOSSIBLE, UNEXPLAINED, REDIRECTED, or simply incoherent to the people who would have carried it out. If the wish\'s honest scope would leave the scheduled frame unable to proceed, say so and plan the consequences of THAT — confusion about why people gathered, missing shared knowledge, someone acting on a plan nobody else recalls agreeing to, objects or documents that outlast the memory of them. A scheduled proceeding may re-emerge LATER from surviving residue; it must NOT survive automatically as though nothing changed.',
+        jsonRequirement: ' ALSO REQUIRED, same JSON: "chosen_aftermath_lane" — because a Tempt Fate rupture is ACTIVE this scene, this is NOT forced to "' + lane + '". Set it to "' + lane + '" ONLY if the rupture genuinely leaves that frame able to proceed; set it to null if the rupture suspended, erased, redirected, or rendered it incoherent. Do not preserve the frame by weakening the wish. "lane_posture_modulation" (one sentence): if the lane survived, HOW the reader\'s posture changes the way it plays out; if it did not, WHAT the rupture did to it — suspended, impossible, unexplained, or redirected — and what now stands in its place.'
+      };
+    }
+    return {
+      mode: 'required',
+      directive: 'REQUIRED EVENT FRAME (HARD, DETERMINISTICALLY RESOLVED — this is NOT a choice among options; the reader\'s own card selection already determined it before you were ever asked): the central event of this scene MUST be — ' + resolvedFrame.eventFrame + ' You MUST set "chosen_aftermath_lane" to EXACTLY "' + lane + '" — you may NOT select a different lane, and satisfying this by staying inside the same ritual/interrogation moment under borrowed institutional/procedural VOCABULARY is NOT a valid instantiation; the event itself must actually move into this frame. The reader\'s posture below changes HOW this frame plays out — who pushes back, what tone, what she risks — it does NOT change WHICH event happens.',
+      jsonRequirement: ' ALSO REQUIRED, same JSON: "chosen_aftermath_lane" (MUST be EXACTLY "' + lane + '" — the lane already resolved for you by the REQUIRED EVENT FRAME above, not a choice among [' + (laneIds || []).join(', ') + ']; state_change/tactical_move/forces_choice must actually instantiate that frame\'s content, not merely name it), "lane_posture_modulation" (one sentence: HOW the reader\'s recorded posture changes the way the resolved frame plays out — who pushes, what tone, what she risks — never a description of a different lane, and never a return to the ritual/interrogation moment).'
+    };
+  }
+  window._buildEventFramePrecedence = _buildEventFramePrecedence;
+
   function _temptFateOwnedInvocation() {
     try {
       var o = (window.state || {})._tfoOwnedInvocation;
@@ -232276,7 +232357,13 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
         // recomputed here rather than trusting anything the reply claims, so the gate's
         // requiredLaneId can never be spoofed by the model's own output.
         var _pfRequiredLane = (_oeRow && typeof _resolveStarterEventFrame === 'function') ? _resolveStarterEventFrame(_oeRow, state) : null;
-        var _pfGate = _detectPlannerFunctionGap(state._scenePlotContract.stateChange, { requiresAftermath: true, posture: _pfPosture, aftermathLanes: (_oeRow && Array.isArray(_oeRow.aftermathLanes)) ? _oeRow.aftermathLanes : null, requiredLaneId: _pfRequiredLane ? _pfRequiredLane.laneId : null });
+        // RUPTURE PRECEDENCE (Roman 2026-09-23) — must mirror the planner prompt exactly. Under an
+        // active Tempt invocation the prompt now tells the planner the scheduled lane is SUPERSEDED
+        // and may be null; if this gate still demanded a lane, the planner would be rejected for
+        // obeying its own instructions, and the only way to pass would be the narrowing this whole
+        // fix exists to stop. Recomputed from the owned invocation, never from the model's reply.
+        var _pfRuptureActive = !!(typeof _temptFateOwnedInvocation === 'function' && _temptFateOwnedInvocation());
+        var _pfGate = _detectPlannerFunctionGap(state._scenePlotContract.stateChange, { requiresAftermath: true, posture: _pfPosture, aftermathLanes: (_oeRow && Array.isArray(_oeRow.aftermathLanes)) ? _oeRow.aftermathLanes : null, requiredLaneId: _pfRequiredLane ? _pfRequiredLane.laneId : null, ruptureActive: _pfRuptureActive });
         if (_pfGate.rejected) {
           try { console.warn('[CG:PLANNER-GATE] REJECTED before author dispatch, scene=' + sceneIndex + ' — ' + _pfGate.reason); } catch (_) {}
           return { __plannerFunctionRejected: true, reason: _pfGate.reason, sceneIndex: sceneIndex };

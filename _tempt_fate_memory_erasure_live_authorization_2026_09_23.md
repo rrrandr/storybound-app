@@ -1,4 +1,38 @@
-# Live-test authorization sheet — Tempt Fate memory-erasure scenario (TENTH REVISION)
+# Live-test authorization sheet — Tempt Fate memory-erasure scenario (ELEVENTH REVISION)
+
+**Eleventh revision — the rupture now outranks the scheduled frame.** The Scene-A-only run
+delivered, committed, and stayed inside its cap, but is classified a **semantic failure / partial
+grant**: "everyone forgets the ceremony happened" was narrowed to "the assembly forgets the twisted
+wish", leaving the ceremony and its scheduled review institutionally intact, and the durable record
+codified that narrowing as canon.
+
+**Cause:** the planner request carried two HARD requirements that cannot both govern such a wish —
+`ACTIVE INVOCATION THIS SCENE` ("the wish's effect MUST land") and `REQUIRED EVENT FRAME (HARD)`
+("you MUST set `chosen_aftermath_lane` to EXACTLY `dohkar_preliminary_review`"). The model resolved
+the contradiction by weakening the wish until the predetermined frame still fit.
+
+**Fix (generic, not First-Sacrifice-specific):** `_buildEventFramePrecedence` is now the single
+definition of that precedence. With no rupture, the frame stays HARD and the lane forced —
+unchanged. With an active rupture the frame is **superseded**: the rupture is the event, the lane
+becomes optional/nullable, narrowing-to-preserve-the-frame is named as the failure to avoid, history
+stays immutable (the events occurred), and the scheduled proceeding may be suspended, impossible,
+unexplained, or redirected rather than surviving automatically. The planner-function gate was
+released in the same change — leaving it demanding a lane would have rejected a planner for obeying
+its own instructions, and that inconsistency was caught in regression (dry harness 30/30 → 22/30 →
+30/30).
+
+**Scope honesty:** the outcome schema now requires `requestedScope` / `deliveredScope` /
+`scopeMatch` / `scopeNote`, plus explicit handling of who forgot, whether the protagonist is exempt
+and whether the page *earns* that exemption, what physical or documentary evidence survived, which
+prior proceedings became impossible/suspended/unexplained, and which effects persist past the
+window. The validator now **rejects a delivered report that does not declare its scope**, and the
+commit carries those fields into canon — so a partial grant can no longer enter durable canon
+wearing the shape of a complete one. Proven against the real failed outcome, which is now rejected
+and only validates once honestly declared `narrower`.
+
+`_tempt_fate_rupture_precedence_control.mjs`: **23/23**, built from the retained real planner request
+and real committed outcome, and proven on a non-Fatelands frame (a corporate `board_dismissal_vote`)
+to confirm the rule is generic.
 
 **Tenth revision — the framing split is fixed and the two-scene pipeline is dry-proven.** The first
 authorized run (2026-09-23, `remain` branch) delivered Scene A but was a **plumbing failure, not a

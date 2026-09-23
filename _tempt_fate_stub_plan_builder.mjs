@@ -14,7 +14,10 @@ export function buildScheduleAwareStubResponse(sysText, usrText, isTemptScene) {
   const beats = [{ idx: 0, kind: 'narration', text: isTemptScene ? 'The clearing forgets its own reason for gathering.' : 'Lirael steps back, and the clearing does not explain itself.', speaker: null, tension_state: 'composed' }];
   const base = { beats, visualState: {}, is_consummate_scene: false, hardBeats: [] };
   if (isTemptScene) {
-    base.temptFateOutcome = { delivered: true, changed: [{ subject: 'the assembly', whatChanged: 'no longer remembers the ceremony' }], durability: [{ aspect: 'the memory gap', status: 'persists' }], knowledgeStates: [{ character: 'Lirael', state: 'unaware', note: 'wisher exemption not yet established' }], establishedEvidence: ['torn mouth-band on the ground'], openPossibilities: ['someone could notice the arrangement of the clearing does not match anyone\'s memory of why they gathered'] };
+    // Scope fields added 2026-09-23 with the scope-honesty validator: a delivered report that does
+    // not declare requested-vs-delivered scope is now structurally invalid and will not commit, so
+    // a stub omitting them would silently stop exercising the commit path it exists to exercise.
+    base.temptFateOutcome = { delivered: true, changed: [{ subject: 'the assembly', whatChanged: 'no longer remembers the ceremony' }], durability: [{ aspect: 'the memory gap', status: 'persists' }], knowledgeStates: [{ character: 'Lirael', state: 'unaware', note: 'wisher exemption not yet established' }], establishedEvidence: ['torn mouth-band on the ground'], openPossibilities: ['someone could notice the arrangement of the clearing does not match anyone\'s memory of why they gathered'], requestedScope: 'everyone forgets the ceremony happened', deliveredScope: 'every witness present loses the memory of the ceremony', scopeMatch: 'full' };
   }
   if (!wantsLocalObjective) return base;
   const reservedMatch = /"reserved" MUST be an object containing EVERY ONE of these exact keys, spelled exactly as given: \[([^\]]*)\]/.exec(sysText);

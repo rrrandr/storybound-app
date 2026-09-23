@@ -1,4 +1,28 @@
-# Tempt Fate memory-erasure — Scene A result, post-fix (2026-09-23, `remain` branch)
+# Tempt Fate memory-erasure — Scene A: SEMANTIC FAILURE / PARTIAL GRANT (2026-09-23, `remain` branch)
+
+**CLASSIFICATION (Roman): semantic failure — a partial grant, NOT a successful memory-erasure
+outcome.** The scene produced a real supernatural memory alteration, but it narrowed
+"everyone forgets the ceremony happened" into "the assembly forgets the twisted wish and the
+interference." The ceremony, its institutional consequences, and the preliminary review all
+remained intact — most witnesses still remembered enough of the ceremony to schedule its formal
+review. Lirael's total exemption and Julian's suspicion are **asserted rather than earned**
+(his is grounded only in stillness). The durable record then codified that unauthorized narrowing
+as permanent canon.
+
+**Cause, visible in the planner request:** it was simultaneously ordered to enact Tempt Fate *and*
+to choose `chosen_aftermath_lane: dohkar_preliminary_review` as a HARD requirement. Grok reconciled
+two contradictory hard orders the only way available — by weakening the wish until the predetermined
+review could still happen. Fixed generically; see
+`_tempt_fate_rupture_precedence_control.mjs` (23/23) and the ELEVENTH REVISION note in the
+authorization sheet.
+
+**Secondary, kept separate and NOT conflated with the above:** the scene also reads cold in its
+romance register. That is a quality finding to pursue on its own terms; it is not the primary
+failure and must not be used to explain or excuse it.
+
+---
+
+## Original run record (structural facts, unchanged)
 
 Authorized: Scene A only, `remain` branch, additional hard cap **$0.20**, stop unconditionally after
 Scene A, no Scene B, no images, no automated semantic approval. All conditions met.
