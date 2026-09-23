@@ -224250,7 +224250,15 @@ No text, no watermark, no UI elements, share-ready.`;
       '    "subtext_beat_idx": <int — the beat index of a dialogue line whose surface CONFLICTS with what the protagonist actually feels. (She says \\"I\'m fine\\" right after her hand was shown shaking.) REQUIRED.>,\n' +
       '    "almost_said_beat_idx": <int — the beat index where the protagonist almost says something and stops: a sentence breaks off, a word is swapped, a topic she steers away from. REQUIRED.>,\n' +
       '    "escalation_rhythm": "<one phrase describing how pressure ratchets across the scene. Examples: \\"opens with held breath → article surfaces by beat 7 → friend probes by beat 14 → almost-confession at 20\\" / \\"slow ordinary surface for 8 beats → a phone vibration at 9 cracks composure → conversation pivots, never recovers\\".>"\n' +
-      '  }\n' +
+      '  },\n' +
+      '  "temptFateOutcome": null | {\n' +
+      '    "delivered": <bool — did the Tempt Fate intervention concretely happen on the page THIS scene (not merely implied, foreshadowed, or deferred)? If false, everything else in this object is ignored.>,\n' +
+      '    "changed": [ { "subject": "<who/what was affected>", "whatChanged": "<concretely what changed about them>" } ],  /* only things THIS scene actually shows changing */\n' +
+      '    "durability": [ { "aspect": "<which changed thing, matching a changed[].subject>", "status": "expires | persists | uncertain", "note": "<why>" } ],  /* PER-EFFECT — a single wish may produce effects with DIFFERENT lifespans (e.g. a materialized object disappears, but a witnessed accusation it caused persists). "expires" ONLY if THIS scene itself signals the effect is bound to the passing rupture window — do NOT mark a memory/identity/history change as "expires" merely because Tempt Fate\'s visible distortion window will close; that governs how long the world visibly destabilizes, never whether the underlying change stuck. */\n' +
+      '    "knowledgeStates": [ { "character": "<name>", "state": "knows | remembers | believes | suspects | unaware", "note": "<grounding>" } ],  /* per-character, never a single blanket claim about "everyone" */\n' +
+      '    "establishedEvidence": ["<concrete evidence or consequence THIS scene actually put on the page>"],\n' +
+      '    "openPossibilities": ["<unresolved thread a FUTURE scene could pursue — explicitly NOT established fact; do not phrase as already true>"]\n' +
+      '  }  /* ONLY meaningful when a Tempt Fate rupture is active THIS scene (see the TEMPT FATE section above in this prompt) — null when Tempt Fate was not invoked this scene. Applies IDENTICALLY to any wish, familiar or unprecedented — there is no fixed catalogue of wish types to match against; reason about THIS specific wish and THIS specific scene. */\n' +
       '}'
     );
     // ── A-PLOT PRESSURE INJECTION (added 2026-05-16) ─────────────────
@@ -232338,6 +232346,61 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
           }
         } catch (_kinkErr) {
           try { console.warn('[CG:SCREENPLAY:KINK] memory update failed:', _kinkErr && _kinkErr.message); } catch (__) {}
+        }
+      }
+
+      // ── TEMPT FATE OUTCOME — COMMIT (Roman 2026-09-23) ──
+      // Same gate as the kink-memory block above (`if (_normalized && plan)`) — the app's OWN
+      // acceptance check (_acc.ok, checked above; a stale/rejected generation already returned
+      // early and never reaches this line at all) has ALREADY run before this point. The model's
+      // own "delivered:true" inside plan.temptFateOutcome is necessary but NOT sufficient by
+      // itself — Roman: "delivered:true must reflect the app's actual acceptance of the scene. A
+      // model asserting that flag cannot, by itself, establish that the player received the
+      // scene." Both must hold: the app accepted THIS generation (_normalized && plan, i.e.
+      // _acc.ok already passed) AND the model reports the intervention actually landed on the
+      // page (plan.temptFateOutcome.delivered) — _commitTemptFateOutcome itself re-validates the
+      // report's shape and re-checks delivered:true, so a malformed or undelivered report still
+      // produces no commit even if it reaches this line.
+      if (_normalized && plan) {
+        try {
+          if (plan.temptFateOutcome && typeof _commitTemptFateOutcome === 'function') {
+            // LOOKUP FIX (Roman 2026-09-23, found by the production-integration control, not
+            // assumed from source reading alone): _recordTemptFateEvent stamps
+            // entry.sceneIdx = state.turnCount AT SEAL TIME — before the player even clicks
+            // Submit. _advanceStagedScene then does `state.turnCount = (state.turnCount||0)+1`
+            // and calls this generation with THAT incremented value as `sceneIndex` — so the
+            // ledger entry's sceneIdx is ALWAYS exactly one behind this function's own
+            // `sceneIndex` in real production flow. Matching on equality (the first version of
+            // this code) could never find the entry it was looking for. The append-only ledger
+            // plus the fact that plan.temptFateOutcome only exists when the Tempt directive was
+            // active THIS turn (see _buildCGTemptDirective's own gate) already guarantees the
+            // MOST RECENT ledger entry is the correct proposal for this generation — no sceneIdx
+            // arithmetic needed, and no risk of matching a stale entry from a much earlier turn.
+            var _tfoLedgerEntry = null;
+            try {
+              var _tfoLedger = window.state._temptFateLedger;
+              if (Array.isArray(_tfoLedger) && _tfoLedger.length) _tfoLedgerEntry = _tfoLedger[_tfoLedger.length - 1];
+            } catch (_) {}
+            if (_tfoLedgerEntry) {
+              var _tfoCommitted = _commitTemptFateOutcome(sceneIndex, _tfoLedgerEntry, plan.temptFateOutcome);
+              // EXPLICITLY SURFACED, never silent (Roman: "a missing/malformed report is
+              // explicitly surfaced rather than silently counted as successful durable
+              // handling") — _commitTemptFateOutcome itself already logs its own reason
+              // (invalid shape / delivered:false / duplicate scene); this line surfaces the
+              // higher-level fact that an active Tempt turn produced NO durable record.
+              if (!_tfoCommitted) {
+                console.warn('[TEMPT-OUTCOME] scene ' + sceneIndex + ' had an active Tempt ledger entry but produced no durable commit — see the [TEMPT-OUTCOME] log line immediately above for the exact reason (undelivered, malformed, or already committed).');
+              }
+            } else if (window.state.tempt_fate_invoked_this_turn) {
+              console.warn('[TEMPT-OUTCOME] scene ' + sceneIndex + ' — model returned temptFateOutcome but no matching ledger entry (proposal record) was found for this scene — not committing.');
+            }
+          } else if (window.state.tempt_fate_invoked_this_turn) {
+            // Tempt WAS invoked this turn but the model returned no temptFateOutcome at all —
+            // surfaced, not silently treated as "nothing to commit, therefore fine".
+            console.warn('[TEMPT-OUTCOME] scene ' + sceneIndex + ' — Tempt Fate was invoked this turn but the model returned no temptFateOutcome field. Not committing.');
+          }
+        } catch (_tfoErr) {
+          try { console.warn('[TEMPT-OUTCOME] wiring threw:', _tfoErr && _tfoErr.message); } catch (__) {}
         }
       }
       // ── CG ROMANCE-PRESSURE BASELINE (Roman 2026-06-12 design pass) ──────────
