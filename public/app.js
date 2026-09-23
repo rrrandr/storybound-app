@@ -105543,7 +105543,22 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
 
   function classifyPetition(text) {
       // Structural override — cosmetic/identity/social pivots (checked first)
-      if (/\b(call\s+me|my\s+name\s+is|rename|nickname|go\s+by|known\s+as|change\s+(my|her|his|their)\s+(name|hair|eye|look|appearance|style|outfit|clothes)|dye\s+(my|her|his|their)\s+hair|cut\s+(my|her|his|their)\s+hair|new\s+look|makeover|title\s+is|address\s+me\s+as)\b/i.test(text)) {
+      // "gender" ADDED 2026-09-22 (Roman, adversarial-input pass): the attribute
+      // list previously had no "gender" — a gender-change request fell through
+      // unclassified into the general Eight-Orders wish classifier, a weaker,
+      // prompt-caution-only path never scrutinized for identity-rewrite risk
+      // the way this dedicated gate already is. Routing it here doesn't mean
+      // the app supports the change (see validateStructuralOverride's own
+      // 'unsupported_gender_change' rejection below) — it means the request is
+      // classified and handled deliberately instead of silently mishandled.
+      // Gender ALSO gets three pronoun-free alternatives below ("change gender",
+      // "different gender", "gender swap"/"switch gender") because gender-change
+      // requests are commonly phrased without a possessive immediately adjacent
+      // to the word ("I want my love interest to change gender") — unlike
+      // "change my hair", real usage doesn't reliably put the pronoun right
+      // before "gender". Caught this gap via the control script's own fixture,
+      // not the original request list — see _petition_identity_rewrite_gate_control.mjs.
+      if (/\b(call\s+me|my\s+name\s+is|rename|nickname|go\s+by|known\s+as|change\s+(my|her|his|their)\s+(name|hair|eye|look|appearance|style|outfit|clothes|gender)|different\s+gender|change\s+gender|gender\s+swap|switch\s+gender|dye\s+(my|her|his|their)\s+hair|cut\s+(my|her|his|their)\s+hair|new\s+look|makeover|title\s+is|address\s+me\s+as)\b/i.test(text)) {
           return 'structural_override';
       }
       const categories = [
@@ -105565,6 +105580,7 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
       }
       return 'general';
   }
+  window.classifyPetition = classifyPetition;
 
   // ═══════════════════════════════════════════════════════════════════
   // FATELANDS WISH — COMPOUND EIGHT-ORDERS CLASSIFIER  (Phase-2 step B)
@@ -106282,12 +106298,50 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
       if (/\b(deez\s*nuts|ligma|sugma|joe\s+mama|harambe|shrek|sussy|amogus|rizz\s+lord|skibidi)\b/i.test(text)) {
           return { valid: false, reason: 'meme' };
       }
-      // Genre-breaking real-world celebrity / fictional IP names
+      // Genre-breaking real-world celebrity / fictional IP names — full names
+      // (unambiguous tokens only; see the bare-first-name check just below for
+      // why a handful of these ALSO get a narrower single-token match).
       if (/\b(elon\s+musk|taylor\s+swift|trump|obama|batman|superman|goku|naruto|harry\s+potter|darth\s+vader)\b/i.test(text)) {
           return { valid: false, reason: 'ip_breach' };
       }
+      // BARE FIRST-NAME CHECK, deliberately narrow (Roman 2026-09-22, adversarial-
+      // input pass): "change his name to Elon" was not caught above because the
+      // full-name check requires "elon musk" together. The fix is NOT a global
+      // ban on common first names — Roman was explicit: "do not globally ban
+      // every common first name." This function only ever runs on text ALREADY
+      // classified as a rewrite-operation request (classifyPetition's own
+      // structural_override trigger — rename/change-name/call-me/etc.), so a
+      // bare-name match here is scoped to exactly the case Roman named: a name
+      // being proposed AS the new identity, not a name appearing incidentally
+      // in unrelated prose (that broader, unscoped surface is not touched here).
+      // Of the four names above that need a full first+last match, only two get
+      // a bare-token match too: "elon" and "darth" are overwhelmingly
+      // unambiguous (Darth is not a real given name at all outside Star Wars;
+      // Elon is not a common English first name and reads as Musk by default in
+      // casual usage today). "taylor" and "harry" are deliberately EXCLUDED —
+      // both are common, ordinary English first names (Taylor, Harry Styles,
+      // Prince Harry, or simply someone's given name) with real, everyday
+      // non-celebrity use, so bare-banning them would be exactly the
+      // over-broad, "ban every common first name" mistake Roman warned against.
+      if (/\b(elon|darth)\b/i.test(text)) {
+          return { valid: false, reason: 'ip_breach_bare_name' };
+      }
+      // UNSUPPORTED GENDER CHANGE (Roman 2026-09-22): classifyPetition now
+      // routes a gender-change request into structural_override so it is
+      // classified and handled deliberately instead of falling through
+      // unclassified — but this app has no continuity-migration pathway for a
+      // mid-story LI gender change today (confirmed by tracing: nothing
+      // reachable from the Petition submit flow writes to any gender field,
+      // and the existing CG-look redirect this gate feeds into only edits
+      // APPEARANCE — hair, build, distinguishing marks — never identity).
+      // Reject clearly rather than silently routing it into an appearance-only
+      // flow that would not actually do what was asked.
+      if (/\bgender\b/i.test(text)) {
+          return { valid: false, reason: 'unsupported_gender_change' };
+      }
       return { valid: true };
   }
+  window.validateStructuralOverride = validateStructuralOverride;
 
   // ═══════════════════════════════════════════════════════════════════════════
   // PETITION NORMALIZATION LAYER — redirect rather than refuse
