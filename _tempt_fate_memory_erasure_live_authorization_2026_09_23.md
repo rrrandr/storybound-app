@@ -1,4 +1,4 @@
-# Live-test authorization sheet — Tempt Fate memory-erasure scenario (EIGHTH REVISION)
+# Live-test authorization sheet — Tempt Fate memory-erasure scenario (NINTH REVISION)
 
 2026-09-24, seventh same-day pass. First revision: Codex found four production gaps (planner never
 received Tempt context; a prompt-construction race; sceneIdx-keyed dedup that breaks across Issue
@@ -86,6 +86,23 @@ that ceiling-1 phase is REFUSED — the cap bites; (3) **image controls** — `/
 `/api/bfl-kontext` and `/api/dashscope-image` each attempted and aborted, plus an
 image-preparation-shaped body riding a REAL-allowed text lane blocked before dispatch by
 `blockImagePreparation`.
+
+**Ninth revision — request-count reconciliation.** Roman caught that this sheet claimed a **48**
+request maximum while declaring phase caps summing to **50**, and that the gap made $0.334289 hard
+to audit as a true hard cap. Both numbers were wrong. The census arithmetic was off (the real worst
+case is **51**), `scene-B`'s cap of 21 sat one *below* the true worst case (it omitted the legacy
+hard-beat planner fallback from the retry — a cap that low would have aborted a legitimate dispatch
+mid-run), and the cost basis had never reserved that same legacy fallback at all. All three
+quantities — expected max real dispatches, phase-gate allowance, and reservation basis — are now
+**51**, computed in code and asserted equal (see the request-count table in §2), with the enforced
+figure at **$0.336797**.
+
+**Known, deliberate unknown going into any authorized run.** The local function layer is verified
+alive (8/8), but that check is GET-only and provider-blocked by construction, so it proves nothing
+about credentials or upstream reachability. The incident's 502s could in principle have had a cause
+the restart did not touch. **A run may therefore still 502 and produce no capability result** — that
+outcome would again be an infrastructure result, not a Tempt Fate narrative result, and the
+$0.336797 ceiling would be unspent rather than validated.
 
 **Nothing in this sheet authorizes a paid call by itself. No paid run yet.**
 
@@ -197,23 +214,42 @@ the dispatch code this pass (not a comment, not an assumption), and every model 
 | CG screenplay author | Every scene, both A and B — the main event | grok-4-1-fast-reasoning (unconditional) → ministral-8b-2512 (conditional on a static TPM admission check — can be SKIPPED without dispatch if oversized) → gpt-4o (terminal) | Existing per-scene retry policy | up to 3 per scene |
 | **Outer scene retry (NEW this pass — previously entirely uncounted)** | Whenever a scene's plan comes back `__staleRejected`/`__plannerFunctionRejected` | `_completeStagedSceneFromScreenplay` (app.js ~233106-233118) retries the **entire** generation exactly **once**, then stops if the retry also fails | Bounded to 1 retry, confirmed from source | **doubles** scenePlanner + author + gravity-audit + (Scene B only) commitVerifier for the scene it fires on — never scaffold/Bibles, already cached |
 
-**Maximum physical-request count, no retry — CORRECTED, eighth revision** (the classifier was
-missing from every prior revision's count, not just from the table above): **wish-seal 0 or 1**
-(classifier; never more — it has no fallback tier and no retry). Scene A up to 3 (scaffold) + 9
-(bibles) + 3 (scenePlanner) + 1 (legacy fallback) + 1 (gravity audit) + 3 (author) = **up to 20**.
-Scene B up to 3 (scenePlanner) + 1 (legacy fallback) + 3 (commit-verifier) + 1 (gravity audit) + 3
-(author) = **up to 11**. **With the outer retry** (bounded to 1, confirmed real): a scene that trips
-it adds one more full pass of its non-cached roles — worst case combined **up to 48** physical
-requests (was stated as 47 before the classifier was counted) across the wish-seal plus the 2
-logical scene generations, though the REAL priced ceiling below (built from actual per-token costs,
-not a worst-case request count) is the number that actually matters for the enforcement — a request
-COUNT alone overstates risk since most tiers here are 2-3 orders of magnitude cheaper than the
-author's own primary tier.
+### Request counts — three distinct numbers, reconciled (ninth revision)
 
-**Per-phase request caps actually enforced in code** (the gate aborts anything past the declared
-ceiling, so these are limits, not estimates): `wish-classifier` **1**, `scene-A` **28**, `scene-B`
-**21** — declared in `_tempt_fate_memory_erasure_live_run_2026_09_24.mjs` via
-`gate.setPhase(roleTag, ceiling)` before each corresponding real interaction.
+Roman caught that this sheet stated a **48**-request maximum while declaring phase caps of
+**1 / 28 / 21 = 50**, and that an unexplained gap makes the dollar ceiling hard to audit as a true
+hard cap. Both numbers were wrong, in different ways, and they were wrong because they were
+hand-restated prose rather than computed. All three quantities below are now computed in
+`_tempt_fate_memory_erasure_cost_audit.mjs` and asserted equal there (the run prints a
+`RECONCILIATION` line); the sheet states them rather than deriving them independently.
+
+| Quantity | Value | What it means |
+|---|---|---|
+| **Expected maximum real dispatches** | **51** | The §2 census worst case: every physical provider request that can actually fire. |
+| **Phase-gate allowance** | **51** (`wish-classifier` 1 + `scene-A` 28 + `scene-B` 22) | The ceilings `_tempt_fate_memory_erasure_live_run_2026_09_24.mjs` declares via `gate.setPhase`. The gate aborts anything past them, so these are limits, not estimates. |
+| **Reservation / cost basis** | **51** request-equivalents = **$0.336797** | What the ledger actually priced, summed from its own entries. |
+
+Breakdown of the 51: wish-seal classifier **1** (0 or 1; no fallback tier, no retry) · Scene A
+no-retry **20** (scaffold 3 + bibles 9 + scenePlanner 3 + legacy fallback 1 + gravity 1 + author 3)
+· Scene A bounded retry **8** (scenePlanner 3 + legacy fallback 1 + gravity 1 + author 3 — never
+scaffold/bibles, already cached) · Scene B no-retry **11** (scenePlanner 3 + legacy fallback 1 +
+commitVerifier 3 + gravity 1 + author 3) · Scene B bounded retry **11** (the same set; the retry
+re-runs the whole generation).
+
+**The two errors this replaces, named rather than quietly overwritten:**
+- **The old 47/48 count was arithmetically wrong.** 20 + 11 no-retry plus 8 + 11 retry is 50, not
+  47; adding the classifier gives 51, not 48. The "47" appears to have come from the *reservation*
+  side (see next point), not from the census, and was then carried forward as if it were the census.
+- **`scene-B`'s cap of 21 was one BELOW the true worst case**, because it omitted the legacy
+  hard-beat planner fallback from the retry. That is the more serious of the two: a cap below the
+  census would have aborted a legitimate 22nd dispatch mid-run and failed the test for a budget
+  reason that was not real. Corrected to 22.
+- **The cost basis was excluding a reachable role.** The ledger priced 47 request-equivalents and
+  never reserved the legacy hard-beat planner fallback (`mistral-small-latest`, single-shot, reached
+  when the scenePlanner primary branch throws) — 4 possible requests across both scenes and both
+  retries. It is now reserved (not force-dispatched: deliberately breaking a provider to exercise a
+  fallback is banned outright), at $0.000627 each, +$0.002508 total. That is the entire difference
+  between the previous **$0.334289** and the current **$0.336797**.
 
 ## 3. Dollar ceiling and accounting/enforcement method
 
@@ -259,12 +295,15 @@ confirming the refusal occurs at the reservation step, before `gate.setPhase`/th
   scenePlanner are ONE call chain at this call site, not two independent roles — + its own retry
   ≈ $0.160 total).
 - **Combined ceiling**: **$0.40** (the executable ledger's own clean total, wish-classifier plus
-  both scenes' real worst case plus both scenes' own real bounded retry, no padding: **$0.334289**
-  — was $0.334112 before the classifier was counted). **Re-verified by execution, not derived**:
-  `_tempt_fate_memory_erasure_cost_audit.mjs` now runs **25/25** (was 23/23; +2 from the new
-  `wish-classifier` phase test), with the classifier observed dispatching exactly 1 `gpt-4o-mini`
-  request priced at **$0.000177** against its own ceiling-1 phase, and the ledger again proven to
-  refuse a phase before dispatch once the $0.40 ceiling is exhausted.
+  both scenes' real worst case plus both scenes' own real bounded retry plus the legacy planner
+  fallback, no padding: **$0.336797** — was $0.334112 before the classifier was counted, $0.334289
+  before the legacy fallback was reserved). **Re-verified by execution, not derived**:
+  `_tempt_fate_memory_erasure_cost_audit.mjs` now runs **27/27** (was 23/23; +2 from the
+  `wish-classifier` phase test, +2 from the reconciliation assertions), with the classifier observed
+  dispatching exactly 1 `gpt-4o-mini` request priced at **$0.000177** against its own ceiling-1
+  phase, the reconciliation asserting census = caps = reservation basis = 51, and the ledger again
+  proven to refuse a phase before dispatch once the $0.40 ceiling is exhausted. Headroom to the
+  authorized ceiling: **$0.063203**.
 - **Antagonist Body Bible, FIXED this (seventh) pass, not merely priced around**: previously traced
   by brace-matching the real source to a genuine cross-scope `ReferenceError`
   (`_ANTAGONIST_ARCHETYPES` was a `var` local to `handleBeginStory`, invisible to the sibling

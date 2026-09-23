@@ -63,7 +63,9 @@ const WORST_CASE_TOKENS = {
   // real, unbudgeted provider dispatch nonetheless — this table's whole point is to price it BEFORE
   // that can happen again). Worst-case tokens conservative for its own fixed system+user prompt
   // (~300-400 real tokens) plus its 120-token completion cap.
-  wishClassifier: { in: 700, out: 120 }
+  wishClassifier: { in: 700, out: 120 },
+  // Same prompt shape as the scenePlanner it substitutes for, so it inherits those token bounds.
+  plannerLegacyFallback: { in: 2500, out: 420 }
 };
 function costOfTrackedCall(rec, roleKey) {
   const model = (rec.requestBody && (rec.requestBody.model || rec.requestBody.preferredModel)) || null;
@@ -77,7 +79,7 @@ function costOfTrackedCall(rec, roleKey) {
 // make, traced from source this session (scaffold/bible/commitVerifier: _callTieredProvider default
 // chain, no `tiers` override; scenePlanner: its own custom 3-tier list; author: its own hand-rolled
 // 3-tier cascade in _authorFullScenePolicy; gravityAudit: single-attempt, no fallback).
-const ROLE_CEILING = { scaffold: 3, bible: 3, scenePlanner: 3, commitVerifier: 3, gravityAudit: 1, author: 3, wishClassifier: 1 };
+const ROLE_CEILING = { scaffold: 3, bible: 3, scenePlanner: 3, commitVerifier: 3, gravityAudit: 1, author: 3, wishClassifier: 1, plannerLegacyFallback: 1 };
 
 // A real, executable pre-dispatch reservation ledger — reserves BEFORE calling the real function,
 // never after. Unsourced pricing and over-ceiling both refuse OUTRIGHT (the real function is never
@@ -103,7 +105,10 @@ class ReservationLedger {
       return { ok: false, reason };
     }
     this.reservedUsd += phaseUsd;
-    this.entries.push({ roleTag, phaseUsd, runningTotalUsd: this.reservedUsd });
+    // `requests` = how many physical request-equivalents this reservation priced. Recorded so the
+    // reconciliation below can compute the cost basis from the ledger itself rather than restating
+    // it by hand — a hand-restated count is exactly how the 48-vs-50 discrepancy arose.
+    this.entries.push({ roleTag, requests: ceiling, phaseUsd, runningTotalUsd: this.reservedUsd });
     this._log('reserved', roleTag, null, phaseUsd);
     return { ok: true, phaseUsd, runningTotalUsd: this.reservedUsd };
   }
@@ -219,7 +224,13 @@ class ReservationLedger {
     commitVerifier: ['ministral-8b-2512', 'grok-4-1-fast-reasoning', 'gpt-4o-mini'],
     gravityAudit: ['ministral-8b-2512'],
     author: ['grok-4-1-fast-reasoning', 'ministral-8b-2512', 'gpt-4o'],
-    wishClassifier: ['gpt-4o-mini']
+    wishClassifier: ['gpt-4o-mini'],
+    // ADDED 2026-09-23 (count-reconciliation pass): the legacy hard-beat planner fallback. §2 of the
+    // authorization sheet has always listed it as reachable (single-shot mistral-small-latest, no
+    // further fallback, reached only if the scenePlanner primary branch throws) — but no revision of
+    // the ledger ever RESERVED it. That is exactly the 4-request gap between the traced dispatch
+    // census and the cost basis (once per scene, plus once per scene's bounded retry).
+    plannerLegacyFallback: ['mistral-small-latest']
   };
 
   const gravityText = 'x'.repeat(220); // _auditSceneEmotionalGravity requires proseText.length >= 200 to do real work
@@ -332,6 +343,16 @@ class ReservationLedger {
 
   // ═══════════════════════════════════════════════════════════════════════════════════════════
   section('3. THE OUTER RETRY, AS A RESERVATION — the real bounded retry (app.js ~233106-233118) doubles scenePlanner+author+gravityAudit(+commitVerifier for B); reserved, not re-dispatched, to keep this section\'s own failure surface small');
+  // ── LEGACY HARD-BEAT PLANNER FALLBACK, AS A RESERVATION (added in the count-reconciliation pass) ──
+  // Reserved, never force-dispatched: reaching it for real requires the scenePlanner primary branch
+  // to THROW, and deliberately breaking a provider to exercise a fallback is banned outright
+  // (feedback_no_deliberate_fallback_breaking_on_paid_runs). Reserving it is the honest treatment —
+  // it makes the cost basis cover every request the §2 census says can actually fire, instead of
+  // quietly excluding a reachable role because it is inconvenient to trigger.
+  const legacyA = ledger.reserveWorstCase('plannerLegacyFallback-A', 'plannerLegacyFallback', 1, ROLE_TIER_MODELS.plannerLegacyFallback);
+  const legacyB = ledger.reserveWorstCase('plannerLegacyFallback-B', 'plannerLegacyFallback', 1, ROLE_TIER_MODELS.plannerLegacyFallback);
+  console.log('  legacy hard-beat planner fallback reserved (never dispatched): A=' + JSON.stringify(legacyA) + ' B=' + JSON.stringify(legacyB));
+
   const retryA = ledger.reserveWorstCase('retry-scenePlanner-A', 'scenePlanner', 3, ROLE_TIER_MODELS.scenePlanner);
   const retryAuthorA = ledger.reserveWorstCase('retry-author-A', 'author', 3, ROLE_TIER_MODELS.author);
   const retryGravA = ledger.reserveWorstCase('retry-gravityAudit-A', 'gravityAudit', 1, ROLE_TIER_MODELS.gravityAudit);
@@ -341,6 +362,34 @@ class ReservationLedger {
   const retryAuthorB = ledger.reserveWorstCase('retry-author-B', 'author', 3, ROLE_TIER_MODELS.author);
   const retryGravB = ledger.reserveWorstCase('retry-gravityAudit-B', 'gravityAudit', 1, ROLE_TIER_MODELS.gravityAudit);
   console.log('  Scene B retry reservation: commitVerifier=' + JSON.stringify(retryCommitB) + ' scenePlanner=' + JSON.stringify(retryPlannerB) + ' author=' + JSON.stringify(retryAuthorB) + ' gravity=' + JSON.stringify(retryGravB));
+  // The retry re-runs the whole generation, so a scenePlanner that throws on the retry reaches the
+  // legacy fallback a second time for that scene — one more reservation per scene, not zero.
+  const retryLegacyA = ledger.reserveWorstCase('retry-plannerLegacyFallback-A', 'plannerLegacyFallback', 1, ROLE_TIER_MODELS.plannerLegacyFallback);
+  const retryLegacyB = ledger.reserveWorstCase('retry-plannerLegacyFallback-B', 'plannerLegacyFallback', 1, ROLE_TIER_MODELS.plannerLegacyFallback);
+  console.log('  legacy fallback on each scene\'s own retry: A=' + JSON.stringify(retryLegacyA) + ' B=' + JSON.stringify(retryLegacyB));
+
+  // ── RECONCILIATION (added after Roman caught the 48-vs-50 discrepancy) ──
+  // Three DIFFERENT quantities, each computed here rather than asserted prose-side, so the sheet
+  // can state each one exactly and they can be checked against each other:
+  //   (a) expected max REAL DISPATCHES — the §2 census worst case;
+  //   (b) PHASE-GATE ALLOWANCE — the sum of the caps the live-run script declares;
+  //   (c) RESERVATION BASIS — how many request-equivalents this ledger actually priced.
+  // (a) and (c) must now be equal: every request the census says can fire is priced. (b) must equal
+  // them too — a cap below (a) would abort a legitimate worst-case dispatch; a cap above (a) is
+  // unexplained headroom that makes the dollar figure unauditable.
+  const CENSUS_MAX_DISPATCHES = 1 /* wish classifier */
+    + (3 + 9 + 3 + 1 + 1 + 3) /* Scene A no-retry: scaffold, 3 bibles, scenePlanner, legacy, gravity, author = 20 */
+    + (3 + 1 + 1 + 3)         /* Scene A bounded retry: scenePlanner, legacy, gravity, author = 8 */
+    + (3 + 1 + 3 + 1 + 3)     /* Scene B no-retry: scenePlanner, legacy, commitVerifier, gravity, author = 11 */
+    + (3 + 1 + 3 + 1 + 3);    /* Scene B bounded retry: same set = 11 */
+  const LIVE_RUN_PHASE_CAPS = { 'wish-classifier': 1, 'scene-A': 28, 'scene-B': 22 }; // must mirror _tempt_fate_memory_erasure_live_run_2026_09_24.mjs
+  const PHASE_CAP_TOTAL = Object.values(LIVE_RUN_PHASE_CAPS).reduce((a, b) => a + b, 0);
+  const RESERVED_REQUEST_EQUIVALENTS = ledger.entries.reduce((n, e) => n + (e.requests || 0), 0);
+  console.log('  RECONCILIATION — census max real dispatches: ' + CENSUS_MAX_DISPATCHES
+    + ' | phase-gate allowance: ' + PHASE_CAP_TOTAL + ' ' + JSON.stringify(LIVE_RUN_PHASE_CAPS)
+    + ' | reservation basis (request-equivalents priced): ' + RESERVED_REQUEST_EQUIVALENTS);
+  ok('the reservation basis prices EVERY request the census says can fire — no reachable role is silently excluded from the dollar figure', RESERVED_REQUEST_EQUIVALENTS === CENSUS_MAX_DISPATCHES, 'reserved=' + RESERVED_REQUEST_EQUIVALENTS + ' census=' + CENSUS_MAX_DISPATCHES);
+  ok('the phase-gate allowance equals the census maximum exactly — no cap below it (which would abort a legitimate worst-case dispatch) and no unexplained headroom above it', PHASE_CAP_TOTAL === CENSUS_MAX_DISPATCHES, 'caps=' + PHASE_CAP_TOTAL + ' census=' + CENSUS_MAX_DISPATCHES);
   const CLEAN_TOTAL_WITH_BOTH_RETRIES = ledger.reservedUsd; // real Scene A + Scene B worst case, PLUS both scenes' own bounded retry — before any artificial padding below
   console.log('  CLEAN total (both scenes\' real worst case + both scenes\' own bounded retry, no padding): $' + CLEAN_TOTAL_WITH_BOTH_RETRIES.toFixed(6));
 

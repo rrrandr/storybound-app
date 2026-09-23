@@ -248,10 +248,10 @@ let browser = null, gate = null;
   await page.fill('#gnActionInput', sceneADo);
   await page.fill('#gnDialogueInput', '');
   // Combined phase covering the real cascade a Submit can trigger for a story's first generated
-  // scene (scaffold + 3 Body Bibles + scenePlanner + gravityAudit + author, each up to their own
-  // real tier ceiling, per the authorization sheet's §2 census) plus its own bounded retry —
-  // ceiling 28 = the sheet's documented "up to 20" no-retry max + 7 for the bounded retry's
-  // non-cached roles (scenePlanner+author+gravityAudit) + 1 margin.
+  // scene, plus its own bounded retry. Ceiling 28 is the §2 census worst case EXACTLY, with no
+  // margin — margin is what made the earlier counts unauditable:
+  //   no-retry 20 = scaffold 3 + bibles 9 + scenePlanner 3 + legacy fallback 1 + gravity 1 + author 3
+  //   retry     8 = scenePlanner 3 + legacy fallback 1 + gravity 1 + author 3 (never scaffold/bibles, cached)
   gate.setPhase('scene-A', 28);
   await page.click('#gnSubmitBtn', { timeout: 5000 });
   console.log('  Submit clicked — waiting on REAL SETTLEMENT (no wall-clock deadline; the real cascade can legitimately take 60-120s+).');
@@ -364,10 +364,14 @@ let browser = null, gate = null;
   console.log('── phase 4: Scene B — exact declared neutral input, real Submit ──');
   await page.fill('#gnActionInput', 'Lirael takes a slow breath and steps back from the center of the clearing.');
   await page.fill('#gnDialogueInput', '');
-  // Scene B has no scaffold/Bibles (one-time, already cached) — worst case no-retry = scenePlanner
-  // (3) + legacy fallback (1) + commitVerifier (3) + gravityAudit (1) + author (3) = 11; bounded
-  // retry doubles scenePlanner+commitVerifier+gravityAudit+author = +10 → ceiling 21 with margin.
-  gate.setPhase('scene-B', 21);
+  // Scene B has no scaffold/Bibles (one-time, already cached). Ceiling 22 is the §2 census worst
+  // case EXACTLY:
+  //   no-retry 11 = scenePlanner 3 + legacy fallback 1 + commitVerifier 3 + gravity 1 + author 3
+  //   retry    11 = the same set again (the retry re-runs the whole generation)
+  // CORRECTED from 21 (count-reconciliation pass): the old figure omitted the legacy hard-beat
+  // planner fallback from the RETRY, so it sat one BELOW the true worst case — a cap that low would
+  // have aborted a legitimate 22nd dispatch and failed the run for a budget reason that wasn't real.
+  gate.setPhase('scene-B', 22);
   await page.click('#gnSubmitBtn', { timeout: 5000 });
   console.log('  Submit clicked — waiting on REAL SETTLEMENT.');
   await gate.waitForSettlement('scene-B', { watchdogMs: 15000, onWatchdog: (ms) => console.log('  ...Scene B still pending, ' + Math.round(ms / 1000) + 's') });
