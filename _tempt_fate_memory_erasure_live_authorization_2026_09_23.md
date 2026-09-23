@@ -1,6 +1,6 @@
-# Live-test authorization sheet — Tempt Fate memory-erasure scenario (SIXTH REVISION)
+# Live-test authorization sheet — Tempt Fate memory-erasure scenario (SEVENTH REVISION)
 
-2026-09-24, fifth same-day pass. First revision: Codex found four production gaps (planner never
+2026-09-24, seventh same-day pass. First revision: Codex found four production gaps (planner never
 received Tempt context; a prompt-construction race; sceneIdx-keyed dedup that breaks across Issue
 boundaries; commit at generation instead of persistence) plus three sheet inaccuracies — all fixed
 (`_tempt_fate_codex_review_fixes_2026_09_24.md`). Second pass: a residual cleanup race, the planner's
@@ -18,10 +18,22 @@ gained the 5 specific checks Roman named and reached **30/30**; the cost audit w
 genuine, reachable production defect (a cross-scope reference bug — the variable is local to
 `handleBeginStory`, invisible to the sibling function that references it — unconditional in every
 context, not specific to this harness), confirmed by reproducing the exact documented error against
-the real function and real mounted state with zero requests tracked. The cost audit is now
-**24/24**, and computes/enforces a **real $0.328087 combined worst case** via the same ledger proven
-to block a real dispatch (`_tempt_fate_codex_review_pass5_2026_09_24.md`). **Nothing in this
-sheet authorizes a paid call by itself. No paid run yet.**
+the real function and real mounted state with zero requests tracked. The cost audit reached
+**24/24** with that defect priced at $0 (`_tempt_fate_codex_review_pass5_2026_09_24.md`). **Seventh
+pass**: Roman asked whether the defect is structurally bypassed by First Sacrifice's real Scene A →
+Scene B path, or reachable — fix first if reachable, since an unbilled exception could still derail
+a live run. Traced the real caller chain and found no seed/Tier-0 shortcut exists for First
+Sacrifice's antagonist classification (unlike PC/LI), meaning reachability depends on a real
+generative response this session cannot dry-test — so rather than assert bypass on inconclusive
+evidence, **the scope bug was fixed**: `_ANTAGONIST_ARCHETYPES`/`_ROMANCE_ARCHETYPES_FOR_EX`
+relocated from `handleBeginStory`'s local scope to the shared outer scope the CG-path generator can
+actually see. Re-verified clean (`node --check`, then a genuinely fresh test run after discovering
+and clearing a stale-accumulated-console-log false-positive in the test script itself): the
+antagonist Body Bible now dispatches its real 3-tier cascade correctly, same shape as every other
+Bible role. Cost audit is now **23/23** (one section correctly simplified from a reachability-proof
+to a standard isolated-role test), enforced combined ceiling **$0.334112**
+(`_tempt_fate_codex_review_pass6_2026_09_24.md`). **Nothing in this sheet authorizes a paid call by
+itself. No paid run yet.**
 
 ## What's dry-proven now, so this test isn't validating plumbing
 
@@ -165,25 +177,29 @@ not merely documented. The reservation ledger was then proven to actually BLOCK 
 before it happens — continuing to reserve real worst-case phases until the ceiling was exceeded, and
 confirming the refusal occurs at the reservation step, before `gate.setPhase`/the real function call.
 
-- **Per-scene ceiling**: Scene A ≤ **$0.20** (real, phase-tracked worst case $0.085268 no-retry +
-  its own real bounded-retry reservation ≈ $0.150 total — the antagonist Body Bible contributes $0
-  to this, proven structurally unable to dispatch this pass, see below). Scene B ≤ **$0.18** (real,
+- **Per-scene ceiling**: Scene A ≤ **$0.20** (real, phase-tracked worst case $0.091293 no-retry +
+  its own real bounded-retry reservation ≈ $0.155 total — now correctly including the antagonist
+  Body Bible's real $0.006025 worst-case phase, see below). Scene B ≤ **$0.18** (real,
   phase-tracked worst case $0.079913 no-retry — correctly reflecting that commitVerifier and
   scenePlanner are ONE call chain at this call site, not two independent roles — + its own retry
   ≈ $0.160 total).
 - **Combined ceiling**: **$0.40** (the executable ledger's own clean total, both scenes' real worst
-  case plus both scenes' own real bounded retry, no padding: **$0.328087** — computed by the SAME
+  case plus both scenes' own real bounded retry, no padding: **$0.334112** — computed by the SAME
   ledger this pass proved blocks a real dispatch, not a separate calculation).
-- **Antagonist Body Bible, resolved this pass**: traced by brace-matching the real source —
-  `_ANTAGONIST_ARCHETYPES` is a `var` local to `handleBeginStory` (`app.js` 262896-270219), while
-  `_generateAntagonistBodyBibleUncached` (`app.js` ~262697, the only real call path — `_bodyBibleOnce`
-  does nothing but forward to it), which references the bare identifier, is declared in a sibling
-  scope. This is a genuine, reachable PRODUCTION defect — an unconditional `ReferenceError` in every
-  context, not specific to this harness's boot — confirmed by reproducing the exact documented error
-  against the real function and real mounted state, with zero requests tracked. Its TRUE current
-  cost is $0, not an assumption; no reservation is carried for it. If that scope bug is ever fixed,
-  this reservation would need reinstating before the next live Tempt Fate run — disclosed as the
-  condition under which this figure would need revisiting.
+- **Antagonist Body Bible, FIXED this (seventh) pass, not merely priced around**: previously traced
+  by brace-matching the real source to a genuine cross-scope `ReferenceError`
+  (`_ANTAGONIST_ARCHETYPES` was a `var` local to `handleBeginStory`, invisible to the sibling
+  function `_generateAntagonistBodyBibleUncached` that referenced it). Whether this defect was
+  actually reachable during First Sacrifice's real Scene A → Scene B path could not be dry-proven —
+  no seed/Tier-0 data exists for this starter's antagonist classification (unlike PC/LI), so
+  reachability depends on a real generative response. Rather than assert bypass on that
+  inconclusive basis, the scope bug was fixed: both archetype arrays relocated to the shared outer
+  scope the CG-path generator can see, with `handleBeginStory`'s own literary-mode inner generators
+  unaffected (moving a variable outward in the scope chain never breaks inward/closure access).
+  Re-verified against the real function with a clean test run: it now dispatches its real 3-tier
+  cascade (ministral-8b-2512 → grok-4-1-fast-reasoning → gpt-4o-mini) exactly like every other
+  Bible role — real worst-case cost $0.006025, now genuinely reserved in the ceiling above, not
+  assumed $0.
 - **Basis**: computed directly from the re-traced tier lists (§2) and `TEXT_PRICING`'s sourced
   per-token rates, using conservative worst-case token estimates per role, INCLUDING the bounded
   outer retry — not from the withdrawn "up to 31 requests" estimate or the prior revisions' $0.65/
@@ -331,21 +347,33 @@ tracked. Cost audit now **24/24**; enforced combined figure **$0.328087** (the a
 now-unnecessary reservation removed as inaccurate, not as a shortcut). Full trace:
 `_tempt_fate_codex_review_pass5_2026_09_24.md`.
 
+**Seventh pass**: Roman asked for a plain statement of whether the antagonist-bible defect is
+structurally bypassed by First Sacrifice's real path, or reachable — fix first if reachable, since
+an unbilled exception could still derail a live run. Traced the real caller chain
+(`_generateAntagonistBodyBible` fires unconditionally from the real CG scaffold path whenever
+`!state.antagonistBodyBible`, right after a real, unstubbed `initAPlot()` call that has no
+seed/Tier-0 shortcut for this starter) and found reachability genuinely could not be dry-proven
+either way. Fixed the scope bug rather than asserting bypass on inconclusive evidence — relocated
+`_ANTAGONIST_ARCHETYPES`/`_ROMANCE_ARCHETYPES_FOR_EX` out of `handleBeginStory`'s local scope to the
+shared outer scope. Along the way, found and fixed a stale-accumulated-console-log false positive in
+the cost-audit script itself (never truncated between runs) that initially made the fix look like it
+hadn't worked. Re-verified clean from a fresh output directory: the antagonist Body Bible now
+dispatches its real 3-tier cascade correctly. Cost audit **23/23**; enforced combined figure
+**$0.334112** (now correctly including the antagonist bible's real, no-longer-zero reservation). Full
+trace: `_tempt_fate_codex_review_pass6_2026_09_24.md`.
+
 ## Go/no-go criteria
 
-Proceed if: the mechanism proof (70/70 integration control + 30/30 executable harness + **24/24
-executable cost audit, fully clean**, production-integration-level, including all seven Codex/Roman-
-identified fixes across five passes — planner wiring, the prompt-construction race, sceneIdx-keyed
+Proceed if: the mechanism proof (70/70 integration control + 30/30 executable harness + **23/23
+executable cost audit, fully clean**, production-integration-level, including all eight Codex/Roman-
+identified fixes across six passes — planner wiring, the prompt-construction race, sceneIdx-keyed
 dedup, commit-at-persistence, the cleanup volatility/saturation race, the Mythic Couple
-reconciliation, and the delivered-assignments staleness bug) is accepted as sufficient plumbing
-verification, the corrected paid-role census in §2 and the executably-enforced $0.328087 combined
-ceiling in §3 are accepted, the antagonist Body Bible's disclosed pre-existing, out-of-scope
-production defect (§3) is accepted as correctly priced at $0 with a stated re-reservation condition,
-and the `_intimacyDevMode` starting-state bypass (§1) and `blockImagePreparation: true` (§7) are
-accepted as the correct, disclosed mechanisms. Hold if: there's a reason to test a different wish
-first, want different ceilings, want the Lirael-knowledge-limits question narrowed or dropped, want
-the antagonist Body Bible's scope bug fixed before authorizing (out of scope for this Tempt Fate
-authorization, but a real, disclosed, separate product defect), or want the full multi-scene
+reconciliation, the delivered-assignments staleness bug, and the antagonist Body Bible scope bug) is
+accepted as sufficient plumbing verification, the corrected paid-role census in §2 and the
+executably-enforced $0.334112 combined ceiling in §3 are accepted, and the `_intimacyDevMode`
+starting-state bypass (§1) and `blockImagePreparation: true` (§7) are accepted as the correct,
+disclosed mechanisms. Hold if: there's a reason to test a different wish first, want different
+ceilings, want the Lirael-knowledge-limits question narrowed or dropped, or want the full multi-scene
 volatility-window lifecycle folded into this same authorization (still out of scope — this sheet
 tests "the wish lands" + "one ordinary scene keeps living with it," not the full 3-5+ scene
 fade-out).

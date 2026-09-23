@@ -262685,6 +262685,54 @@ Generate the synopsis now.` }
       var ap = (window.state && window.state.aPlot) || {}, sub = ap.antagonistSubject || {};
       return sub.canonicalId || ap.antagonistOrAntiForce || '';
     }
+    // (RELOCATED 2026-09-23, Roman — CG-path scope fix) — _ANTAGONIST_ARCHETYPES and
+    // _ROMANCE_ARCHETYPES_FOR_EX used to live only inside handleBeginStory (a sibling
+    // scope, not an ancestor of this function). _generateAntagonistBodyBibleUncached
+    // below referenced them as bare identifiers, which is a ReferenceError whenever
+    // this CG-path generator runs (it is not nested inside handleBeginStory, unlike
+    // the 2026-06-01 fix's literary-mode inner generators, which read handleBeginStory's
+    // own local copy and were never affected). Moved here so both the CG path (this
+    // function) and handleBeginStory's own literary-mode inner functions — which still
+    // resolve these names via the normal outer-scope lookup — see the same data.
+    // 8 entries oriented on CONTROL STYLE, not desire register — distinct from the
+    // 7 romance archetypes used for PC/LI which describe how someone HANDLES DESIRE.
+    // Villains aren't playing the romance game; they're playing coercion /
+    // extraction / wound-deepening. EXCEPTION: SPURNED_EX carries one of the 7
+    // romance archetypes precisely to corrupt them (crossed-wire villain).
+    var _ANTAGONIST_ARCHETYPES = [
+      { key: 'PREDATORY_CHARM',      label: 'Predatory Charm',      register: 'menace dressed as warmth',
+        gist: 'Weaponizes warmth; the salesman / cult leader / charismatic abuser / "uncle figure". Trust-as-bait. Tells: the smile that arrives the half-second too late; the use of her first name like a key; the easy laugh at the wrong moment; the "I just want to help".' },
+      { key: 'BUREAUCRATIC_COLD',    label: 'Bureaucratic Cold',    register: 'menace dressed as legality',
+        gist: 'Weaponizes procedure; the executor / regulator / corporate counsel / IRS agent / process-server. Process-as-weapon. Tells: the careful pause; the form slid across the table; the meeting time that suits them; the precise diction of someone who has read the contract more recently than she has.' },
+      { key: 'INTIMATE_KNOWING',     label: 'Intimate Knowing',     register: 'menace dressed as familiarity',
+        gist: 'Knows EXACTLY where the wound is, because they were there. Family member / former lover / mentor / sibling / childhood friend. Shared-history-as-leverage. Tells: the reference to something she has not told anyone in years; the use of an old name; the casual reminder of a private detail; the small smile when they land it.' },
+      { key: 'IDEOLOGICAL_CERTAIN',  label: 'Ideological Certain',  register: 'menace dressed as care',
+        gist: 'Hurts the PC for her own good. The true believer — religious figure / parent who Knows Best / friend "intervening" / wellness guru. Righteousness-as-bypass. Tells: the unbroken calm in the voice; the steady eye contact; the way they say "we" when they mean "I"; the certainty that this is love.' },
+      { key: 'WOUNDED_PROJECTOR',    label: 'Wounded Projector',    register: 'menace mixed with real damage',
+        gist: 'Also wounded, aimed at the PC; the most sympathetic villain. The bereaved who blames her / the betrayed who scapegoats her / the abandoned who needs someone to hurt. Their-pain-as-license. Tells: the small breaks in composure; the moments where the menace flickers into grief; the apology that arrives a heartbeat too late to be real.' },
+      { key: 'INSTITUTIONAL_AVATAR', label: 'Institutional Avatar', register: 'menace dressed as procedure with a face',
+        gist: 'The person who IS the system showing up in a body. Cop / HR rep / Karen / immigration officer / school administrator / TSA agent. Borrowed-authority-as-personal-authority. Tells: the badge / title / lanyard handled as identity; the deferral to "policy"; the polite immovability; the rote phrases delivered with personal weight.' },
+      { key: 'RIVAL_MIRRORED',       label: 'Rival Mirrored',       register: 'menace dressed as professional respect',
+        gist: 'Wants the same thing the PC wants and sees her as in the way. Competitor for the job / the parent / the LI / the legacy. Shared-ambition-as-collision. Tells: the calculation of her moves; the moments where they almost respect her; the way they fight her cleanly because she is a worthy obstacle; the unsettling realization she would have liked them if circumstances were different.' },
+      { key: 'SPURNED_EX',           label: 'Spurned Ex',           register: 'desire soured into entitlement — the crossed-wire villain',
+        gist: 'Former lover (or someone who believed they were owed love) whose desire has gone hostile. THE ONLY villain archetype that registers on the DESIRE axis — the wound IS desire-coded. Carries ONE of the 7 ROMANCE ARCHETYPES (HEART_WARDEN / OPEN_VEIN / SPELLBINDER / ARMORED_FOX / DARK_VICE / BEAUTIFUL_RUIN / ETERNAL_FLAME — the same set used for PC/LI). The romance archetype determines HOW his corrupted warmth lands: it is the SAME register she might have wanted in an LI, now weaponized. DANGEROUS specifically because the wires are crossed: her body trained on this exact register; she has to override desire-system responses consciously, scene after scene. The "almost the LI" villain — the body in the room that her body already knows.' }
+    ];
+    window._ANTAGONIST_ARCHETYPES = _ANTAGONIST_ARCHETYPES;
+
+    // The 7 canonical romance archetypes — surfaced here so SPURNED_EX can
+    // pick from the same set used for PC/LI. Lifted from ARCHETYPE_ORDER
+    // (line ~12762); keep this list IN SYNC if that one changes.
+    var _ROMANCE_ARCHETYPES_FOR_EX = [
+      { key: 'HEART_WARDEN',   sourCorruption: 'protection turned to surveillance — he tracks where she is "for her safety"; the same gravity that would have shielded her now hems her in. Tells: the unannounced appearance; the "I just wanted to make sure"; the texts that escalate when she does not answer fast enough.' },
+      { key: 'OPEN_VEIN',      sourCorruption: 'vulnerability turned to demand — he keeps surfacing wounded versions of himself she trained to respond to; the same openness that would have been brave is now extraction. Tells: the late-night call where he is "not okay"; the small confessions perfectly timed to land when she is exhausted; the threat of self-harm folded into the romance grammar.' },
+      { key: 'SPELLBINDER',    sourCorruption: 'magnetism turned to gravitational well — the room still reshapes around him, but she has stopped wanting it to. Tells: the silences that hold the room; the way other people defer; the moments when she catches herself orbiting back before she has decided to.' },
+      { key: 'ARMORED_FOX',    sourCorruption: 'charm turned to surveillance-grade charisma — the deflection-as-choreography that read playful now reads strategic; she can never be sure which version of him she is talking to. Tells: the crooked smile she used to find disarming, now landing like a feint; the exits left open the way a hunter leaves them.' },
+      { key: 'DARK_VICE',      sourCorruption: 'the dark dynamic itself, weaponized — he KNEW what she wanted dark-side and uses that knowledge as a key; the descent she might have chosen is now a place he expects her to live. Tells: the references to things they did together that he can deploy in front of others; the calm assumption that she still belongs to that part of herself.' },
+      { key: 'BEAUTIFUL_RUIN', sourCorruption: 'the test disguised as tenderness, weaponized — every touch is still a verification, but now of her loyalty rather than her interest. Tells: the questions inside the questions; the dares that have stakes she did not consent to; the magnetism still working on her, which is the part she cannot forgive.' },
+      { key: 'ETERNAL_FLAME',  sourCorruption: 'devotion turned to entitlement-by-duration — "after all these years" weaponized; the ember she might have loved is now the proof he uses that he is owed. Tells: the long-memory recitations of moments she has half-forgotten; the steady warmth that has gone unilateral; the patience of a man who believes time itself is on his side.' }
+    ];
+    window._ROMANCE_ARCHETYPES_FOR_EX = _ROMANCE_ARCHETYPES_FOR_EX;
+
     async function _generateAntagonistBodyBible() {
       if (window.state && window.state.antagonistBodyBible) return window.state.antagonistBodyBible;
       if (!_antagonistBibleEligible()) {
@@ -264772,44 +264820,16 @@ INCORRECT:
     // architecture-mandatory data must exist before any caller can invoke it; a
     // defensive null-return is symptom suppression, not a fix.
     //
-    // 8 entries oriented on CONTROL STYLE, not desire register — distinct from the
-    // 7 romance archetypes used for PC/LI which describe how someone HANDLES DESIRE.
-    // Villains aren't playing the romance game; they're playing coercion /
-    // extraction / wound-deepening. EXCEPTION: SPURNED_EX carries one of the 7
-    // romance archetypes precisely to corrupt them (crossed-wire villain).
-    var _ANTAGONIST_ARCHETYPES = [
-      { key: 'PREDATORY_CHARM',      label: 'Predatory Charm',      register: 'menace dressed as warmth',
-        gist: 'Weaponizes warmth; the salesman / cult leader / charismatic abuser / "uncle figure". Trust-as-bait. Tells: the smile that arrives the half-second too late; the use of her first name like a key; the easy laugh at the wrong moment; the "I just want to help".' },
-      { key: 'BUREAUCRATIC_COLD',    label: 'Bureaucratic Cold',    register: 'menace dressed as legality',
-        gist: 'Weaponizes procedure; the executor / regulator / corporate counsel / IRS agent / process-server. Process-as-weapon. Tells: the careful pause; the form slid across the table; the meeting time that suits them; the precise diction of someone who has read the contract more recently than she has.' },
-      { key: 'INTIMATE_KNOWING',     label: 'Intimate Knowing',     register: 'menace dressed as familiarity',
-        gist: 'Knows EXACTLY where the wound is, because they were there. Family member / former lover / mentor / sibling / childhood friend. Shared-history-as-leverage. Tells: the reference to something she has not told anyone in years; the use of an old name; the casual reminder of a private detail; the small smile when they land it.' },
-      { key: 'IDEOLOGICAL_CERTAIN',  label: 'Ideological Certain',  register: 'menace dressed as care',
-        gist: 'Hurts the PC for her own good. The true believer — religious figure / parent who Knows Best / friend "intervening" / wellness guru. Righteousness-as-bypass. Tells: the unbroken calm in the voice; the steady eye contact; the way they say "we" when they mean "I"; the certainty that this is love.' },
-      { key: 'WOUNDED_PROJECTOR',    label: 'Wounded Projector',    register: 'menace mixed with real damage',
-        gist: 'Also wounded, aimed at the PC; the most sympathetic villain. The bereaved who blames her / the betrayed who scapegoats her / the abandoned who needs someone to hurt. Their-pain-as-license. Tells: the small breaks in composure; the moments where the menace flickers into grief; the apology that arrives a heartbeat too late to be real.' },
-      { key: 'INSTITUTIONAL_AVATAR', label: 'Institutional Avatar', register: 'menace dressed as procedure with a face',
-        gist: 'The person who IS the system showing up in a body. Cop / HR rep / Karen / immigration officer / school administrator / TSA agent. Borrowed-authority-as-personal-authority. Tells: the badge / title / lanyard handled as identity; the deferral to "policy"; the polite immovability; the rote phrases delivered with personal weight.' },
-      { key: 'RIVAL_MIRRORED',       label: 'Rival Mirrored',       register: 'menace dressed as professional respect',
-        gist: 'Wants the same thing the PC wants and sees her as in the way. Competitor for the job / the parent / the LI / the legacy. Shared-ambition-as-collision. Tells: the calculation of her moves; the moments where they almost respect her; the way they fight her cleanly because she is a worthy obstacle; the unsettling realization she would have liked them if circumstances were different.' },
-      { key: 'SPURNED_EX',           label: 'Spurned Ex',           register: 'desire soured into entitlement — the crossed-wire villain',
-        gist: 'Former lover (or someone who believed they were owed love) whose desire has gone hostile. THE ONLY villain archetype that registers on the DESIRE axis — the wound IS desire-coded. Carries ONE of the 7 ROMANCE ARCHETYPES (HEART_WARDEN / OPEN_VEIN / SPELLBINDER / ARMORED_FOX / DARK_VICE / BEAUTIFUL_RUIN / ETERNAL_FLAME — the same set used for PC/LI). The romance archetype determines HOW his corrupted warmth lands: it is the SAME register she might have wanted in an LI, now weaponized. DANGEROUS specifically because the wires are crossed: her body trained on this exact register; she has to override desire-system responses consciously, scene after scene. The "almost the LI" villain — the body in the room that her body already knows.' }
-    ];
-    window._ANTAGONIST_ARCHETYPES = _ANTAGONIST_ARCHETYPES;
-
-    // The 7 canonical romance archetypes — surfaced here so SPURNED_EX can
-    // pick from the same set used for PC/LI. Lifted from ARCHETYPE_ORDER
-    // (line ~12762); keep this list IN SYNC if that one changes.
-    var _ROMANCE_ARCHETYPES_FOR_EX = [
-      { key: 'HEART_WARDEN',   sourCorruption: 'protection turned to surveillance — he tracks where she is "for her safety"; the same gravity that would have shielded her now hems her in. Tells: the unannounced appearance; the "I just wanted to make sure"; the texts that escalate when she does not answer fast enough.' },
-      { key: 'OPEN_VEIN',      sourCorruption: 'vulnerability turned to demand — he keeps surfacing wounded versions of himself she trained to respond to; the same openness that would have been brave is now extraction. Tells: the late-night call where he is "not okay"; the small confessions perfectly timed to land when she is exhausted; the threat of self-harm folded into the romance grammar.' },
-      { key: 'SPELLBINDER',    sourCorruption: 'magnetism turned to gravitational well — the room still reshapes around him, but she has stopped wanting it to. Tells: the silences that hold the room; the way other people defer; the moments when she catches herself orbiting back before she has decided to.' },
-      { key: 'ARMORED_FOX',    sourCorruption: 'charm turned to surveillance-grade charisma — the deflection-as-choreography that read playful now reads strategic; she can never be sure which version of him she is talking to. Tells: the crooked smile she used to find disarming, now landing like a feint; the exits left open the way a hunter leaves them.' },
-      { key: 'DARK_VICE',      sourCorruption: 'the dark dynamic itself, weaponized — he KNEW what she wanted dark-side and uses that knowledge as a key; the descent she might have chosen is now a place he expects her to live. Tells: the references to things they did together that he can deploy in front of others; the calm assumption that she still belongs to that part of herself.' },
-      { key: 'BEAUTIFUL_RUIN', sourCorruption: 'the test disguised as tenderness, weaponized — every touch is still a verification, but now of her loyalty rather than her interest. Tells: the questions inside the questions; the dares that have stakes she did not consent to; the magnetism still working on her, which is the part she cannot forgive.' },
-      { key: 'ETERNAL_FLAME',  sourCorruption: 'devotion turned to entitlement-by-duration — "after all these years" weaponized; the ember she might have loved is now the proof he uses that he is owed. Tells: the long-memory recitations of moments she has half-forgotten; the steady warmth that has gone unilateral; the patience of a man who believes time itself is on his side.' }
-    ];
-    window._ROMANCE_ARCHETYPES_FOR_EX = _ROMANCE_ARCHETYPES_FOR_EX;
+    // _ANTAGONIST_ARCHETYPES / _ROMANCE_ARCHETYPES_FOR_EX (RELOCATED 2026-09-23,
+    // Roman — CG-path scope fix): moved OUT of this function to shared outer scope,
+    // near _generateAntagonistBodyBibleUncached (app.js ~262688), since that CG-path
+    // generator is a sibling scope of handleBeginStory and could never see a local
+    // var declared in here. The literary-mode inner generators below still resolve
+    // these two names correctly via the normal outer-scope lookup — no behavior
+    // change for literary mode. See the relocation comment at ~262697 for the full
+    // history (this scope had already been the site of one prior, narrower fix,
+    // 2026-06-01, that only reordered declarations WITHIN this function and did not
+    // address the CG path).
 
     // ELIGIBILITY GATE (relocated 2026-06-01). Gated on antagonist shape — A
     // (wound-source IS antagonist) or B (recurring agent). Shape-C (external /
