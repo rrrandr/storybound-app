@@ -80,14 +80,21 @@ const CALLBACK_MARK = 'TEMPT FATE — MEMORY CALLBACK';
             // never depends on the Tempt directive whose presence is the thing under test. (Both
             // layers dispatch with role STRUCTURE_GENERATOR, so `role` cannot separate them.)
             isAuthor: body.indexOf('decisionGateBeatIdx') !== -1,
-            // 'local_objective' is a plot-contract field: present in the planner body, absent from
-            // the author system prompt (verified against the retained paid-run artifacts).
-            isPlanner: body.indexOf('local_objective') !== -1,
+            // Plot-contract fields: present in planner bodies, absent from the author system prompt
+            // (verified against the retained paid-run artifacts). Two markers because the
+            // continuation planner's schema differs from the opening scene's — matching only
+            // 'local_objective' silently missed Scene B's planner entirely.
+            isPlanner: body.indexOf('local_objective') !== -1 || body.indexOf('tactical_move') !== -1,
             hasActive: body.indexOf('ACTIVE INVOCATION THIS SCENE') !== -1,
             hasCallback: body.indexOf('TEMPT FATE — MEMORY CALLBACK') !== -1,
             // Which wish the active directive actually names — the decisive isolation evidence when
             // a second wish is sealed while this generation is in flight.
-            activeWish: (function () { var m = /invoking Tempt Fate this turn with the wish "([^"]*)"/.exec(body); return m ? m[1] : null; })(),
+            activeWish: (function () { var m = /invoking Tempt Fate this turn with the wish \\?"([^"\\]*)/.exec(body); return m ? m[1] : null; })(),
+            // Does this layer carry the COMMITTED durable consequence, and does its schema DEMAND a
+            // populated outcome? Both must be true on the invocation scene and false afterwards.
+            hasDurable: body.indexOf('DURABLE CONSEQUENCES ALREADY IN FORCE') !== -1,
+            mentionsWish: body.indexOf('everyone forgets the ceremony happened') !== -1,
+            requiresOutcome: body.indexOf('null is NOT valid this scene') !== -1,
             turnCount: s.turnCount,
             liveInvoked: !!s.tempt_fate_invoked_this_turn,
             liveWish: s.temptFateWish || null,
@@ -101,22 +108,28 @@ const CALLBACK_MARK = 'TEMPT FATE — MEMORY CALLBACK';
   });
 
   const page = await ctx.newPage();
+  const consoleLines = [];
+  page.on('console', (m) => consoleLines.push({ text: m.text(), at: Date.now() }));
   const gate = await installFailClosedNetworkGate(page, { logFile: path.join(OUT_DIR, 'gate.jsonl'), blockImagePreparation: true });
   const parse = (req) => { try { return JSON.parse(req.postData() || '{}'); } catch (_) { return {}; } };
   const isClassifierBody = (b) => JSON.stringify(b || {}).includes('classify whether a fate-card');
-  gate.stub('/api/mistral-proxy', async () => ({ content: null }));
-  gate.stub('/api/proxy', async (req) => {
-    const b = parse(req);
+  // SHAPE FIDELITY (repaired for the Scene B proof): whether the stub returns a temptFateOutcome is
+  // decided by whether the PROMPT actually carries the active-invocation directive — exactly the
+  // judgement a well-behaved model makes. Hardcoding it true injected an outcome into ordinary
+  // continuations too, which would have made the Scene B assertions meaningless.
+  const planFor = (b) => {
     const sys = (b.messages || []).find((m) => m.role === 'system');
     const usr = (b.messages || []).find((m) => m.role === 'user');
-    return { content: JSON.stringify(buildScheduleAwareStubResponse(sys && sys.content, usr && usr.content, true)) };
-  });
+    const sysText = (sys && sys.content) || '';
+    const active = sysText.indexOf(ACTIVE_MARK) !== -1 || String((usr && usr.content) || '').indexOf(ACTIVE_MARK) !== -1;
+    return buildScheduleAwareStubResponse(sysText, usr && usr.content, active);
+  };
+  gate.stub('/api/mistral-proxy', async () => ({ content: null }));
+  gate.stub('/api/proxy', async (req) => ({ content: JSON.stringify(planFor(parse(req))) }));
   gate.stub('/api/chatgpt-proxy', async (req) => {
     const b = parse(req);
     if (isClassifierBody(b)) return { choices: [{ message: { content: JSON.stringify({ scope: 'out_of_scope', reason: 'stubbed' }) } }] };
-    const sys = (b.messages || []).find((m) => m.role === 'system');
-    const usr = (b.messages || []).find((m) => m.role === 'user');
-    return { choices: [{ message: { content: JSON.stringify(buildScheduleAwareStubResponse(sys && sys.content, usr && usr.content, true)) } }] };
+    return { choices: [{ message: { content: JSON.stringify(planFor(b)) } }] };
   });
 
   const snap = (label) => page.evaluate((lbl) => {
@@ -175,30 +188,36 @@ const CALLBACK_MARK = 'TEMPT FATE — MEMORY CALLBACK';
   gate.setPhase('scene-A', 28);
   await page.click('#gnSubmitBtn', { timeout: 8000 });
 
-  // ── MID-FLIGHT SEAL, attempted while Scene A is genuinely in flight (the real scenario) ──
-  // Not awaited-then-sealed: ownership is captured at generation start, so the only meaningful test
-  // is a second wish arriving AFTER that capture and BEFORE the author prompt is built.
-  const WISH_B = 'the river runs backwards through the clearing';
-  const midFlight = { attempted: false, sealed: false, reason: null };
-  try {
-    await page.click('#gnFateSpecial .tempt-fate-card, .tempt-fate-card', { timeout: 6000 });
-    await page.waitForSelector('.tempt-wish-columns', { timeout: 5000 });
-    await page.click('.tempt-wish-columns', { timeout: 5000 });
-    await page.fill('#temptZoomInput', WISH_B);
-    await page.click('.tempt-proceed-btn', { timeout: 5000 });
-    midFlight.attempted = true;
-  } catch (e) { midFlight.reason = (e && e.message || '').split('\n')[0]; }
-
+  // MID-FLIGHT ISOLATION — deliberately NOT exercised here (Roman, 2026-09-23): "document that the
+  // production UI makes a second seal unreachable while composition is active... do not invent an
+  // artificial paid scenario solely to exercise it." Measured directly: with Scene A composing, the
+  // Tempt card is not clickable (the composing surface hides it), so a second seal cannot be reached
+  // through the product at all. An earlier revision of this control DID click at the card during
+  // composition; it never sealed anything and it intermittently corrupted Scene A's own run, which is
+  // exactly the artificial scenario the instruction rules out. Defense in depth for the race itself
+  // stays where it belongs — the lower-level ownership controls in
+  // _tempt_fate_outcome_integration_control.mjs (70/70) and the id-keyed capture this fix added.
   await page.waitForFunction(() => (window.state.scenes || []).length >= 1, { timeout: 90000 }).catch(() => {});
-  await page.waitForTimeout(2500);
+  // Wait on the app's OWN completion signal, not merely on the scene appearing. The post-scene
+  // aftermath cleanup (app.js:233796) — which clears tempt_fate_invoked_this_turn for the invocation
+  // that just resolved — runs at the very END of _completeStagedSceneFromScreenplay. Sampling as
+  // soon as scenes[] grows reads state from the middle of that tail and sees a still-live invocation.
+  let sceneACompleted = false;
+  try {
+    await page.waitForFunction(() => !window.state._stagedSubmitting, { timeout: 60000 });
+    sceneACompleted = true;
+  } catch (_) { sceneACompleted = false; }
+  await page.waitForTimeout(1500);
   gate.closePhase();
+  console.log('  Scene A completion signal (_stagedSubmitting cleared): ' + sceneACompleted);
   points.push(await snap('6-after-scene-persistence'));
   const ledgerAfterA = await page.evaluate(() => ({
     ledger: (window.state._temptFateLedger || []).map((e) => ({ id: e.id, sceneIdx: e.sceneIdx, wishText: e.wishText })),
-    owned: window.state._tfoOwnedInvocation || null
+    owned: window.state._tfoOwnedInvocation || null,
+    durable: (window.state._temptFateDurableConsequences || []).map((d) => ({ proposalId: d.proposalId, requestedRupture: d.requestedRupture })),
+    scenes: (window.state.scenes || []).length
   }));
-  midFlight.sealed = ledgerAfterA.ledger.length >= 2;
-  fs.writeFileSync(path.join(OUT_DIR, 'mid_flight.json'), JSON.stringify({ midFlight, ledgerAfterA, WISH_B }, null, 2));
+  fs.writeFileSync(path.join(OUT_DIR, 'after_scene_a.json'), JSON.stringify(ledgerAfterA, null, 2));
 
   const trace = await page.evaluate(() => window.__tfTrace || []);
   fs.writeFileSync(path.join(OUT_DIR, 'trace.json'), JSON.stringify({ points, trace }, null, 2));
@@ -240,55 +259,143 @@ const CALLBACK_MARK = 'TEMPT FATE — MEMORY CALLBACK';
   ok('exactly one wish classifier request fired, captured by the stub', classifierReqs.length === 1, 'classifier=' + classifierReqs.length);
 
   // ═══════════════════════════════════════════════════════════════════════════════════════════
-  section('MID-FLIGHT ISOLATION — a second wish sealed after ownership was captured must not contaminate this scene');
-  console.log('  second wish seal attempted in-flight: ' + midFlight.attempted + ' · actually sealed: ' + midFlight.sealed + ' · ledger: ' + JSON.stringify(ledgerAfterA.ledger.map((e) => e.id)));
-  ok('the owned invocation is RELEASED once its generation ends — a later wish is never inherited by a scene that did not own it', ledgerAfterA.owned === null, JSON.stringify(ledgerAfterA.owned));
-  if (midFlight.sealed) {
-    ok('the second wish is recorded as its OWN distinct proposal, not merged into or overwriting the first', ledgerAfterA.ledger.length === 2 && ledgerAfterA.ledger[1].wishText.indexOf(WISH_B) === 0, JSON.stringify(ledgerAfterA.ledger));
-    ok('the author directive named the OWNED wish, never the one sealed mid-flight — isolation held where it actually matters', !!(author && author.activeWish && author.activeWish.indexOf(WISH_A) === 0), 'author.activeWish=' + (author && author.activeWish));
-  } else {
-    // Honest negative: not claimed as proof. The structural guarantee (ownership keyed to a proposal
-    // id captured before any await) is what would hold if the UI ever permitted this; it is simply
-    // not exercised here, and the parity assertions above do not depend on it.
-    console.log('  NOTE: the real UI did not permit sealing a second wish while Scene A was composing');
-    console.log('        (' + (midFlight.reason || 'no error reported') + ').');
-    console.log('        Isolation is therefore NOT exercised by this run and is NOT claimed as proven.');
-  }
+  section('SCENE A PERSISTENCE — accepted scene and durable outcome, through the production commit path');
+  console.log('  scenes=' + ledgerAfterA.scenes + ' · durable=' + JSON.stringify(ledgerAfterA.durable) + ' · ledger=' + JSON.stringify(ledgerAfterA.ledger.map((e) => e.id)));
+  ok('Scene A persisted as a real scene', ledgerAfterA.scenes >= 1, JSON.stringify(ledgerAfterA));
+  ok('the author returned a POPULATED temptFateOutcome (the invocation-scene schema requirement is satisfied, not merely stated)', ledgerAfterA.durable.length === 1, JSON.stringify(ledgerAfterA.durable));
+  ok('the durable consequence committed through the production path is attributed to the OWNED proposal', ledgerAfterA.durable.length === 1 && ledgerAfterA.durable[0].proposalId === 'tfl_1', JSON.stringify(ledgerAfterA.durable));
+  ok('the owned invocation is RELEASED once its generation ends', ledgerAfterA.owned === null, JSON.stringify(ledgerAfterA.owned));
+
+  section('MID-FLIGHT ISOLATION — documented, deliberately not manufactured');
+  console.log('  The production UI makes a second seal UNREACHABLE while composition is active: the');
+  console.log('  Tempt card is not clickable once Scene A is composing. Per instruction this control');
+  console.log('  does not invent a scenario to force it. Defense in depth for the underlying race');
+  console.log('  remains the id-keyed ownership capture plus the lower-level controls in');
+  console.log('  _tempt_fate_outcome_integration_control.mjs (70/70). NOT claimed as proven here.');
 
   // ═══════════════════════════════════════════════════════════════════════════════════════════
   section('SCENE B SEPARATION — the ordinary continuation must lose the active directive entirely');
   const traceMark = trace.length;
+  const consoleMarkB = consoleLines.length;
   let sceneBOk = { ran: false };
   try {
     await page.evaluate(() => { try { if (window.state._wishSequence && window.state._wishSequence.active) window.WishSequence.resolve(); } catch (_) {} });
+    // ORDERING MATTERS HERE, and it took several revisions to get right:
+    //   • Submit too EARLY (before Scene A's completion tail runs) and the aftermath cleanup has not
+    //     yet cleared tempt_fate_invoked_this_turn, so Scene B re-captures ownership and correctly —
+    //     but uselessly — emits ACTIVE. That is a measurement artifact, not a product defect.
+    //   • Submit too LATE and the app has moved on to its image pipeline, which this control blocks;
+    //     the reader surface never remounts and the submit is swallowed.
+    // The completion signal (_stagedSubmitting false, awaited above) is the narrow window between
+    // those two, so drive the continuation immediately rather than waiting for anything else.
     await page.evaluate(() => { try { window.showScreen('gnReader'); } catch (_) {} });
-    await page.waitForSelector('#gnActionInput', { state: 'visible', timeout: 8000 });
-    await page.fill('#gnActionInput', 'Lirael takes a slow breath and steps back from the center of the clearing.');
-    await page.fill('#gnDialogueInput', '');
+    // The input row is not always remounted here: this control blocks every image endpoint, so the
+    // post-scene render leaves the reader surface in a state the product would never show a user.
+    // When that happens, drive the continuation through the app's OWN entry point instead —
+    // _advanceStagedScene is exactly what the decision-gate resume callback calls (app.js:233103).
+    // NOTHING about Tempt state is touched: the flags are whatever production left after Scene A.
+    // Only the click is substituted, and only because this control's own image blocking removed it.
+    // OPEN THE STAGED READING GATE. _advanceStagedScene's Guard 1 refuses a continuation while
+    // state._stagedActive.gateShown is false — "the user shouldn't be able to submit (they haven't
+    // read the scene)". That gate opens as part of the scene's image render, which this control
+    // blocks, so it never opens here and the continuation is refused with
+    // "[STAGED:SUBMIT] Blocked — gate not yet open" (confirmed in this run's console).
+    // Marking the scene as read is reading-progress state ONLY — it touches nothing about Tempt,
+    // ownership, the ledger, or the durable outcome, all of which remain exactly as production left
+    // them. Without it the continuation cannot be reached at all with images blocked.
+    const gateOpened = await page.evaluate(() => {
+      const a = window.state._stagedActive;
+      if (!a) return 'no staged session';
+      if (a.gateShown) return 'already open';
+      a.gateShown = true;
+      return 'opened by control (image render blocked)';
+    });
+    console.log('  staged reading gate: ' + gateOpened);
+    sceneBOk.gate = gateOpened;
+    let inputVisible = true;
+    try { await page.waitForSelector('#gnActionInput', { state: 'visible', timeout: 10000 }); }
+    catch (_) { inputVisible = false; }
+    sceneBOk.drivenBy = inputVisible ? 'real #gnSubmitBtn click' : '_advanceStagedScene (input row unmounted by this control\'s blocked image render)';
+    console.log('  Scene B driven by: ' + sceneBOk.drivenBy);
+    // PRE-FLIGHT: the continuation has its own prerequisites. Record them rather than discover a
+    // stall later — the Scene-1 decision gate taught this lesson once already.
+    const pre = await page.evaluate(() => ({
+      decisionNeeded: (typeof window._sceneDecisionNeeded === 'function') ? window._sceneDecisionNeeded() : 'missing',
+      stagedSubmitting: !!window.state._stagedSubmitting,
+      isAdvancing: !!window.state._isAdvancingScene,
+      wishSeqActive: !!(window.state._wishSequence && window.state._wishSequence.active),
+      delivered: window.state._cgDeliveredAssignments ? Object.keys(window.state._cgDeliveredAssignments) : null,
+      turnCount: window.state.turnCount,
+      inputHidden: (function () { const el = document.getElementById('gnActionInput'); return el ? el.classList.contains('wish-seq-hidden') : null; })()
+    }));
+    sceneBOk.pre = pre;
+    console.log('  Scene B pre-flight: ' + JSON.stringify(pre));
+    // Release the advance locks if the previous generation left them set — a stuck lock silently
+    // refuses the next submit as a duplicate (the same locks the decision-gate path releases at
+    // app.js:233102).
+    if (pre.stagedSubmitting || pre.isAdvancing) {
+      await page.evaluate(() => { window.state._stagedSubmitting = false; window.state._isAdvancingScene = false; });
+      console.log('  (released stale advance locks before submitting Scene B)');
+    }
+    const SCENE_B_DO = 'Lirael takes a slow breath and steps back from the center of the clearing.';
     gate.setPhase('scene-B', 22);
-    await page.click('#gnSubmitBtn', { timeout: 8000 });
-    await page.waitForFunction((n) => (window.state.scenes || []).length > n, { timeout: 90000 }, 1).catch(() => {});
-    await page.waitForTimeout(2500);
+    if (inputVisible) {
+      await page.fill('#gnActionInput', SCENE_B_DO);
+      await page.fill('#gnDialogueInput', '');
+      await page.click('#gnSubmitBtn', { timeout: 10000 });
+    } else {
+      await page.evaluate((doText) => { window._advanceStagedScene(doText, ''); }, SCENE_B_DO);
+    }
+    await page.waitForFunction((n) => (window.state.scenes || []).length > n, { timeout: 120000 }, 1).catch(() => {});
+    await page.waitForTimeout(3000);
     gate.closePhase();
     sceneBOk.ran = true;
-  } catch (e) { sceneBOk.error = e && e.message; }
+  } catch (e) { sceneBOk.error = (e && e.message || '').split('\n')[0]; }
   const trace2 = await page.evaluate(() => window.__tfTrace || []);
   const sceneBReqs = trace2.slice(traceMark);
   const authorB = sceneBReqs.filter((t) => t.isAuthor)[0] || null;
   fs.writeFileSync(path.join(OUT_DIR, 'scene_b.json'), JSON.stringify({ sceneBOk, authorB, sceneBReqs: sceneBReqs.map((t) => ({ isAuthor: t.isAuthor, isPlanner: t.isPlanner, hasActive: t.hasActive, hasCallback: t.hasCallback, turnCount: t.turnCount })) }, null, 2));
+  const plannerB = sceneBReqs.filter((t) => t.isPlanner && !t.isAuthor)[0] || null;
+  const afterB = await page.evaluate(() => ({
+    durable: (window.state._temptFateDurableConsequences || []).map((d) => ({ proposalId: d.proposalId })),
+    invoked: !!window.state.tempt_fate_invoked_this_turn,
+    scenes: (window.state.scenes || []).length
+  }));
+  const dupSkipped = consoleLines.some((l) => /already committed — skipping duplicate/.test(l.text));
+  fs.writeFileSync(path.join(OUT_DIR, 'scene_b_state.json'), JSON.stringify({ afterB, dupSkipped, authorB, plannerB }, null, 2));
   if (authorB) {
-    console.log('  Scene B author: turnCount=' + authorB.turnCount + ' ACTIVE=' + authorB.hasActive + ' CALLBACK=' + authorB.hasCallback);
+    console.log('  Scene B author : ACTIVE=' + authorB.hasActive + ' CALLBACK=' + authorB.hasCallback + ' requiresOutcome=' + authorB.requiresOutcome + ' durable=' + authorB.hasDurable + ' mentionsWish=' + authorB.mentionsWish);
+    if (plannerB) console.log('  Scene B planner: ACTIVE=' + plannerB.hasActive + ' durable=' + plannerB.hasDurable + ' mentionsWish=' + plannerB.mentionsWish);
     ok('SCENE B: the author does NOT receive ACTIVE INVOCATION — the directive disappears with the generation that owned it, so temptFateOutcome: null is the correct answer there', authorB.hasActive === false, JSON.stringify(authorB));
+    ok('SCENE B: the author\'s schema no longer REQUIRES a populated outcome — the invocation-scene demand is gone, so null is valid here', authorB.requiresOutcome === false, 'requiresOutcome=' + authorB.requiresOutcome);
+    ok('SCENE B: a planner request was captured for the continuation', !!plannerB, 'plannerB=' + !!plannerB);
+    ok('SCENE B: the planner does NOT receive ACTIVE INVOCATION either', !!plannerB && plannerB.hasActive === false, JSON.stringify(plannerB));
+    ok('SCENE B: the COMMITTED memory-erasure consequence reaches BOTH layers — planner and author each carry the wish forward as settled fact, not as a live rupture',
+      !!plannerB && plannerB.mentionsWish === true && authorB.mentionsWish === true,
+      'plannerMentions=' + (plannerB && plannerB.mentionsWish) + ' authorMentions=' + authorB.mentionsWish);
+    // Not committed twice. The dedup LOG is informational, not required: when the author correctly
+    // returns temptFateOutcome: null there is nothing to commit, so the guard is never reached. An
+    // earlier revision demanded that log and failed — it was asserting the wrong thing, requiring a
+    // duplicate attempt that correct behaviour avoids entirely.
+    console.log('  (production dedup guard logged a refusal this run: ' + dupSkipped + ' — informational; correct null outcomes never reach it)');
+    ok('SCENE B: the original proposal is NOT committed twice — still exactly one durable consequence, still attributed to the owned proposal',
+      afterB.durable.length === 1 && afterB.durable[0].proposalId === 'tfl_1',
+      JSON.stringify(afterB.durable));
+    ok('SCENE A REGRESSION PRESERVED: the same proposal was never simultaneously an active invocation and a historical callback',
+      !!author && author.hasActive === true && author.hasCallback === false && authorB.hasActive === false,
+      'sceneA(active=' + (author && author.hasActive) + ',callback=' + (author && author.hasCallback) + ') sceneB(active=' + authorB.hasActive + ')');
   } else {
-    // STATED LIMIT: the stubbed Scene A plan omits the continuation-decision payload (microDecision
-    // / decisionGateBeatIdx) the app needs to advance, so Scene B stalls before reaching an author.
-    // That is stub fidelity in THIS control, not an app defect — and it means the full Scene B
-    // pipeline is not exercised here. Rather than claim a pass from an absent request, the same
-    // requirement is proven directly at its gate: the author's active block is emitted only when
-    // _temptFateOwnedInvocation() is non-null, and that is null once the owning generation ended.
-    console.log('  NOTE: Scene B stalled before the author (' + sceneBReqs.length + ' requests, none author-shaped).');
-    console.log('        Cause is this control\'s stub omitting the continuation-decision payload, not the app.');
-    console.log('        Proving the Scene B requirement at its gate instead:');
+    // FALLBACK — not reached now that the staged reading gate is opened above. Kept so a future
+    // regression degrades to a weaker-but-honest proof rather than silently passing. Both blockers
+    // found while building this were environmental and are now handled: Scene A's completion tail
+    // not yet having run, and _advanceStagedScene's Guard 1 refusing while
+    // state._stagedActive.gateShown was false because this control blocks the image render.
+    const sceneBConsole = consoleLines.slice(consoleMarkB);
+    fs.writeFileSync(path.join(OUT_DIR, 'scene_b_console.json'), JSON.stringify(sceneBConsole, null, 2));
+    console.log('  Scene B console (first 25 app lines, for diagnosis):');
+    sceneBConsole.filter((l) => /^\[/.test(l.text)).slice(0, 25).forEach((l) => console.log('      ' + l.text.slice(0, 190)));
+    console.log('  NOTE: Scene B did not reach an author (' + sceneBReqs.length + ' requests, none author-shaped).');
+    console.log('        Falling back to proving the requirement at its gate:');
     const gateCheck = await page.evaluate(() => ({
       owned: window._temptFateOwnedInvocation ? window._temptFateOwnedInvocation() : 'missing',
       activeWhenOwned: (window._buildTemptFateActiveInvocationDirective
@@ -307,6 +414,7 @@ const CALLBACK_MARK = 'TEMPT FATE — MEMORY CALLBACK';
   ok('ZERO real provider dispatches anywhere in this control', gate.realCalls().length === 0, 'realCalls=' + gate.realCalls().length);
 
   await browser.close();
+  fs.writeFileSync(path.join(OUT_DIR, 'console_full.json'), JSON.stringify(consoleLines, null, 2));
   fs.writeFileSync(path.join(OUT_DIR, 'results.json'), JSON.stringify(results, null, 2));
   const passed = results.filter((r) => r.pass).length;
   console.log('\n' + '='.repeat(100));

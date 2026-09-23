@@ -1,4 +1,37 @@
-# Live-test authorization sheet — Tempt Fate memory-erasure scenario (NINTH REVISION)
+# Live-test authorization sheet — Tempt Fate memory-erasure scenario (TENTH REVISION)
+
+**Tenth revision — the framing split is fixed and the two-scene pipeline is dry-proven.** The first
+authorized run (2026-09-23, `remain` branch) delivered Scene A but was a **plumbing failure, not a
+capability result**: the planner received `ACTIVE INVOCATION THIS SCENE` while the author received a
+historical `MEMORY CALLBACK` for the same wish, so the author nulled its outcome — correctly, for
+the prompt it was given. Root cause proved before any code changed: the author-side callback guard
+compares the ledger's seal-time `sceneIdx` (0) against a live `turnCount` that has already advanced
+(1), so it stopped suppressing the very proposal being enacted. Fixed by making the **owned proposal
+authoritative for the whole generation** (id-keyed, published at generation start, released in the
+generation's `finally`), with one shared builder emitting the active directive to both layers.
+
+`_tempt_fate_framing_split_control.mjs` — real UI order, fully stubbed, zero dispatches — is
+**18/18** and now exercises the **actual two-scene continuation pipeline**, not a helper:
+Scene A captures identical active directives in the real planner and author bodies and returns a
+populated `temptFateOutcome`, which commits through the production path; Scene B then runs as an
+ordinary continuation where **both** layers lose the active directive, the invocation-schema demand
+disappears (`temptFateOutcome: null` is correct), the committed memory-erasure consequence reaches
+**both** layers as settled fact, and the proposal is **not** committed twice. The Scene A
+callback-suppression regression is asserted alongside it: the same proposal is never simultaneously
+an active invocation and a historical callback.
+
+**Mid-flight isolation is documented, not manufactured:** the production UI makes a second seal
+unreachable while composition is active (the Tempt card is not clickable), so this control does not
+invent a scenario to force it. Defense in depth remains the id-keyed ownership capture plus the
+lower-level race controls in `_tempt_fate_outcome_integration_control.mjs` (70/70).
+
+**Two environmental accommodations in that control, stated plainly** — both caused by this control
+blocking every image endpoint, neither touching Tempt state: Scene B is driven through
+`_advanceStagedScene` (the app's own continuation entry point, the same one the decision-gate resume
+callback calls) because the input row is not remounted; and `state._stagedActive.gateShown` is set
+so the staged reading gate opens, since `_advanceStagedScene` otherwise refuses with
+"Blocked — gate not yet open". Ledger, ownership, flags and durable outcome are exactly as
+production left them.
 
 2026-09-24, seventh same-day pass. First revision: Codex found four production gaps (planner never
 received Tempt context; a prompt-construction race; sceneIdx-keyed dedup that breaks across Issue
