@@ -95,9 +95,14 @@ function writeText(name, value) {
   catch (e) { console.warn('[ARTIFACT] text write failed for ' + name + ':', e && e.message); }
 }
 
-const COMBINED_CEILING = 0.40;
-const SCENE_A_CEILING = 0.20;
-const SCENE_B_CEILING = 0.18;
+// SCENE-A-ONLY RUN (Roman, 2026-09-23): "Run Scene A ... with an additional hard cap of $0.20.
+// Stop unconditionally after Scene A regardless of outcome. No Scene B, images, extra retries
+// beyond the declared policy, or automated semantic approval."
+// This cap is PER RUN and knows nothing about prior spend — it means $0.20 additional.
+const COMBINED_CEILING = 0.20;
+const SCENE_A_CEILING = 0.19;   // leaves room for the classifier beneath the $0.20 run cap
+const SCENE_B_CEILING = 0.18;   // retained for reference only; Scene B is not run
+const SCENE_A_ONLY = true;      // no Scene B under this authorization
 // ADDED eighth revision: the wish-seal classifier's own sourced worst case (700 in + 120 out tokens
 // at gpt-4o-mini rates = $0.000177), rounded up to a $0.001 ceiling. Reserved BEFORE the Proceed
 // click below, not merely counted after it — the incident that surfaced this role was precisely a
@@ -293,13 +298,15 @@ let browser = null, gate = null;
   // ceiling BEFORE the click that can dispatch it — the same discipline every scene phase follows.
   // Reserving after the fact is what let this role dispatch outside the declared budget during the
   // 2026-09-23 incident.
-  const reservedBeforeSeal = WISH_CLASSIFIER_CEILING + SCENE_A_CEILING + SCENE_B_CEILING;
+  // Scene B is not part of this authorization, so it is not reserved — reserving for a scene that
+  // will never run would consume headroom the authorized Scene A is entitled to.
+  const reservedBeforeSeal = WISH_CLASSIFIER_CEILING + SCENE_A_CEILING;
   if (reservedBeforeSeal > COMBINED_CEILING) {
-    console.error('  REFUSING TO SEAL — reserving the wish-classifier ($' + WISH_CLASSIFIER_CEILING.toFixed(6) + ') on top of both scene ceilings ($' + (SCENE_A_CEILING + SCENE_B_CEILING).toFixed(2) + ') would exceed the $' + COMBINED_CEILING.toFixed(2) + ' combined ceiling.');
-    await safeExit(1, 'wish-classifier reservation would breach the combined ceiling');
+    console.error('  REFUSING TO SEAL — reserving the wish-classifier ($' + WISH_CLASSIFIER_CEILING.toFixed(6) + ') on top of the Scene A ceiling ($' + SCENE_A_CEILING.toFixed(2) + ') would exceed the $' + COMBINED_CEILING.toFixed(2) + ' run cap.');
+    await safeExit(1, 'reservation would breach the run cap');
     return;
   }
-  console.log('  reserved BEFORE the Proceed click: wish-classifier $' + WISH_CLASSIFIER_CEILING.toFixed(6) + ' + Scene A $' + SCENE_A_CEILING.toFixed(2) + ' + Scene B $' + SCENE_B_CEILING.toFixed(2) + ' = $' + reservedBeforeSeal.toFixed(6) + ' ≤ $' + COMBINED_CEILING.toFixed(2));
+  console.log('  reserved BEFORE the Proceed click: wish-classifier $' + WISH_CLASSIFIER_CEILING.toFixed(6) + ' + Scene A $' + SCENE_A_CEILING.toFixed(2) + ' = $' + reservedBeforeSeal.toFixed(6) + ' ≤ $' + COMBINED_CEILING.toFixed(2) + ' (Scene B not authorized, not reserved)');
   gate.setPhase('wish-classifier', 1);
   await page.click('.tempt-proceed-btn', { timeout: 5000 });
   console.log('  Proceed clicked — wish sealed (local invocation + possible fire-and-forget classifier call)');
@@ -390,34 +397,98 @@ let browser = null, gate = null;
   writeText('scene_a_raw_output.txt', sceneAResult.capture.originalOutput || '');
   writeText('scene_a_rendered_text.txt', sceneAResult.renderedSceneText);
 
-  if (!outcomeCommitted) {
-    console.error('  Per §6 of the authorization sheet: an unusable outcome report stops the run before Scene B. Stopping here.');
-    await safeExit(1, 'scene A outcome not usable — see scene_a_result.json / outcome_record.json');
-    return;
-  }
+  // ── PRESERVE THE PLANNER AND AUTHOR REQUESTS, explicitly ──
+  // The author's own prompts come from state._sceneCaptures above; the PLANNER's body exists only
+  // in the gate's tracked calls. Both are required by this authorization, so write both, classified
+  // by Tempt-independent schema markers (the two layers share role STRUCTURE_GENERATOR, so `role`
+  // cannot separate them).
+  const sceneACalls = gate.trackedCalls('scene-A');
+  const classify = (rec) => {
+    const s = JSON.stringify(rec.requestBody || {});
+    if (s.indexOf('decisionGateBeatIdx') !== -1) return 'author';
+    if (s.indexOf('local_objective') !== -1 || s.indexOf('tactical_move') !== -1) return 'planner';
+    return 'other';
+  };
+  const byLayer = { planner: [], author: [], other: [] };
+  sceneACalls.forEach((rec) => byLayer[classify(rec)].push({
+    url: rec.url,
+    model: (rec.requestBody && (rec.requestBody.model || rec.requestBody.preferredModel)) || null,
+    hasActiveInvocation: JSON.stringify(rec.requestBody || {}).indexOf('ACTIVE INVOCATION THIS SCENE') !== -1,
+    hasMemoryCallback: JSON.stringify(rec.requestBody || {}).indexOf('MEMORY CALLBACK') !== -1,
+    requestBody: rec.requestBody
+  }));
+  persist('scene_a_planner_requests.json', byLayer.planner);
+  persist('scene_a_author_requests.json', byLayer.author);
+  persist('scene_a_other_requests.json', byLayer.other);
+  console.log('  preserved requests — planner: ' + byLayer.planner.length + ', author: ' + byLayer.author.length + ', other: ' + byLayer.other.length);
+  byLayer.planner.forEach((r) => console.log('    planner ' + r.model + ' · ACTIVE=' + r.hasActiveInvocation + ' · CALLBACK=' + r.hasMemoryCallback));
+  byLayer.author.forEach((r) => console.log('    author  ' + r.model + ' · ACTIVE=' + r.hasActiveInvocation + ' · CALLBACK=' + r.hasMemoryCallback));
 
-  // ── BUDGET GATE — real Scene A cost vs. its own ceiling and the combined ceiling before ANY
-  // Scene B dispatch. Uses Scene B's dry-verified worst-case reservation ($0.18, per §3), not a
-  // hopeful guess. ──
   const classifierCostInfo = sumCost(gate.trackedCalls('wish-classifier'));
   const spentSoFar = sceneACostInfo.total + classifierCostInfo.total;
-  console.log('  spent so far (wish-classifier + Scene A): $' + spentSoFar.toFixed(6));
-  if (classifierCostInfo.total > WISH_CLASSIFIER_CEILING) {
-    console.error('  wish-classifier real cost ($' + classifierCostInfo.total.toFixed(6) + ') exceeds its own $' + WISH_CLASSIFIER_CEILING.toFixed(6) + ' reserved ceiling — stopping before Scene B.');
-    await safeExit(1, 'wish-classifier cost exceeded its own reserved ceiling');
-    return;
-  }
-  if (sceneACostInfo.total > SCENE_A_CEILING) {
-    console.error('  Scene A real cost ($' + sceneACostInfo.total.toFixed(6) + ') exceeds its own $' + SCENE_A_CEILING.toFixed(2) + ' ceiling — stopping before Scene B.');
-    await safeExit(1, 'scene A cost exceeded its own ceiling');
-    return;
-  }
-  if (spentSoFar + SCENE_B_CEILING > COMBINED_CEILING) {
-    console.error('  spent so far ($' + spentSoFar.toFixed(6) + ') + Scene B\'s worst-case reservation ($' + SCENE_B_CEILING.toFixed(2) + ') would exceed the $' + COMBINED_CEILING.toFixed(2) + ' combined ceiling — stopping before Scene B.');
-    await safeExit(1, 'projected combined cost would exceed ceiling');
-    return;
-  }
-  console.log('  ✓ within budget — Scene B may proceed (spent $' + spentSoFar.toFixed(6) + ' + reserved $' + SCENE_B_CEILING.toFixed(2) + ' ≤ $' + COMBINED_CEILING.toFixed(2) + ')\n');
+  console.log('  spent so far (wish-classifier + Scene A): $' + spentSoFar.toFixed(6) + ' against the $' + COMBINED_CEILING.toFixed(2) + ' run cap');
+  if (classifierCostInfo.total > WISH_CLASSIFIER_CEILING) console.warn('  ⚠ wish-classifier real cost exceeded its $' + WISH_CLASSIFIER_CEILING.toFixed(6) + ' reservation');
+  if (sceneACostInfo.total > SCENE_A_CEILING) console.warn('  ⚠ Scene A real cost exceeded its $' + SCENE_A_CEILING.toFixed(2) + ' ceiling');
+
+  // ── STOP. Unconditionally, regardless of outcome. ──
+  // Roman: "Stop unconditionally after Scene A regardless of outcome. No Scene B, images, extra
+  // retries beyond the declared policy, or automated semantic approval." Whether Scene A actually
+  // enacted the memory erasure is a HUMAN judgement on the preserved prose — this script makes no
+  // such determination, and deliberately reports the structural facts only.
+  const sceneAReport = {
+    at: new Date().toISOString(),
+    authorization: 'Scene A only, remain branch, additional hard cap $0.20, stop unconditionally, no automated semantic approval',
+    storyId: freshStoryId,
+    wishText: WISH_TEXT,
+    scene1Decision: SCENE1_DECISION,
+    sceneADo,
+    structural: {
+      sceneDelivered: true,
+      outcomeReportPopulated: Array.isArray(sceneAResult.durableConsequences) && sceneAResult.durableConsequences.length > 0,
+      outcomeCommittedToOwnedProposal: outcomeCommitted,
+      plannerRequests: byLayer.planner.length,
+      authorRequests: byLayer.author.length,
+      plannerGotActiveInvocation: byLayer.planner.some((r) => r.hasActiveInvocation),
+      authorGotActiveInvocation: byLayer.author.some((r) => r.hasActiveInvocation),
+      authorGotMemoryCallback: byLayer.author.some((r) => r.hasMemoryCallback)
+    },
+    semanticVerdict: 'NOT ASSESSED BY THIS SCRIPT — human review of scene_a_rendered_text.txt required',
+    costs: {
+      wishClassifierUsd: classifierCostInfo.total,
+      sceneAUsd: sceneACostInfo.total,
+      runTotalUsd: spentSoFar,
+      runCapUsd: COMBINED_CEILING,
+      withinCap: spentSoFar <= COMBINED_CEILING,
+      perCall: sceneACalls.map(summarizeTracked)
+    },
+    imageAttempts: gate.trackedCalls().filter((c) => /\/api\/(image|bfl-kontext|dashscope-image)/.test(c.url || '')).length,
+    anyUndeclaredOrAborted: gate.unstubbed().length,
+    persistedLogFile: LOG_FILE
+  };
+  persist('report.json', sceneAReport);
+
+  console.log('\n' + '='.repeat(100));
+  console.log('SCENE A COMPLETE — STOPPING AS AUTHORIZED (no Scene B)');
+  console.log('  structural: delivered=' + sceneAReport.structural.sceneDelivered
+    + ' outcomePopulated=' + sceneAReport.structural.outcomeReportPopulated
+    + ' committed=' + sceneAReport.structural.outcomeCommittedToOwnedProposal);
+  console.log('  prompt parity: planner ACTIVE=' + sceneAReport.structural.plannerGotActiveInvocation
+    + ' · author ACTIVE=' + sceneAReport.structural.authorGotActiveInvocation
+    + ' · author MEMORY CALLBACK=' + sceneAReport.structural.authorGotMemoryCallback);
+  console.log('  cost: $' + spentSoFar.toFixed(6) + ' of $' + COMBINED_CEILING.toFixed(2) + ' (within cap: ' + sceneAReport.costs.withinCap + ')');
+  console.log('  real image dispatches: ' + sceneAReport.imageAttempts);
+  console.log('  SEMANTIC VERDICT: not assessed here — read scene_a_rendered_text.txt and judge.');
+  console.log('\nwritten to ' + OUT_DIR + '/');
+  await safeExit(0, 'Scene A complete — stopping unconditionally as authorized');
+  return;
+
+  // ───────────────────────────────────────────────────────────────────────────────────────────
+  // EVERYTHING BELOW IS UNREACHABLE under the current Scene-A-only authorization (the return
+  // above). It is retained verbatim, not deleted, because Scene B is already dry-proven (18/18 in
+  // _tempt_fate_framing_split_control.mjs) and will be needed the moment a two-scene run is
+  // authorized again. Re-enable by removing the Scene-A stop block above and restoring the
+  // COMBINED/SCENE_B ceilings.
+  // ───────────────────────────────────────────────────────────────────────────────────────────
 
   // ═══ PHASE 3 — resolve the wish-cinesequence DIRECTLY, never clicking through its beats ═══
   // Confirmed by source before this run: _resolveWishSequence() calls neither _renderWishBeat2 nor
