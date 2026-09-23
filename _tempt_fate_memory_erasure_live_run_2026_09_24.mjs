@@ -110,7 +110,11 @@ const WISH_CLASSIFIER_CEILING = 0.001;
 // WHICH BRANCH IS A STORY DECISION, NOT AN ENGINEERING ONE. It materially shapes Scene A, which is
 // the very thing this test exists to evaluate. Left null so the run FAILS CLOSED rather than
 // silently proceeding on an assumed choice. Set to 'run' or 'remain' only on Roman's explicit word.
-const SCENE1_DECISION = null; // 'run' = run in shame | 'remain' = remain and see where Julian was taking it
+// Roman's choice, 2026-09-23: "Let Lirael remain." Verified against the live axis by
+// _tempt_fate_real_ui_order_dry_proof.mjs, which reads the offered keys from the baked package
+// itself — A="run in shame" (run) | B="remain and see where Julian was taking it" (remain) — and
+// refuses to proceed if the declared value matches neither.
+const SCENE1_DECISION = 'remain';
 
 // Module-level (not IIFE-local) so the top-level catch at the bottom of this file can still
 // attempt a safe, settlement-aware shutdown if an unexpected error escapes every in-flow try/catch

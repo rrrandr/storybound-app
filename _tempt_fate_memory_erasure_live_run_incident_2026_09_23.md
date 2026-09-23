@@ -225,12 +225,55 @@ dug out from under it). `SCENE1_DECISION` is deliberately left `null`: the scrip
 a browser or spend anything until it is set, because **which branch to take is a story decision that
 materially shapes Scene A — the very thing the test exists to evaluate — and must not be guessed.**
 
+## Dry proof of the corrected UI order (required before any new paid run)
+
+Roman: "Before any new paid run, Claude should dry-prove the complete real UI order: choose Scene 1
+decision → seal Tempt wish → submit Scene A, with every provider call stubbed/fail-closed. It must
+verify the decision persists, Scene A is no longer prompt-mounted, and no image/classifier call
+escapes the dry gate."
+
+`_tempt_fate_real_ui_order_dry_proof.mjs`: **16/16**, zero real dispatches. No `allowRealPaths` is
+declared anywhere in it, so no provider path has a real lane at all; the three text endpoints are
+stubbed (answered locally, `route.continue()` never called) and image endpoints are neither stubbed
+nor allowed. It drives the exact click order the live script now performs:
+
+- **Decision gate is genuinely active before the click** — asserted first, so the proof cannot pass
+  as a no-op against an already-cleared gate.
+- The real prompt mounts with both authored branches read from the baked package:
+  A = "run in shame" (`run`), B = "remain and see where Julian was taking it" (`remain`). The
+  declared branch is matched against the offered keys, so a stale or mistyped value stops the run
+  rather than silently selecting the other scene.
+- A real click on `#sceneDecisionB` clears `_sceneDecisionNeeded()` and records `remain` as
+  structured state.
+- **The decision persists** through the Tempt seal, and still persists after generation.
+- The wish seals through the real zoom; the classifier request is captured by the stub (exactly one,
+  tracked under its declared phase) rather than escaping.
+- **Scene A is NOT prompt-mounted**: the `[SCENE-DECISION] requested before the reader's choice was
+  recorded` refusal that ended the paid run does not fire, scene-role requests dispatch, and Scene A
+  renders into `state.scenes` — the full dry pipeline completes, not merely passes the gate.
+- Image containment: three deliberate probes to `/api/image`, `/api/bfl-kontext` and
+  `/api/dashscope-image`, each attempted and aborted.
+
+**One honest negative result, reported rather than asserted.** In this healthy flow the app made
+**zero** image attempts of its own — no `[WISH-SEQ]` logs appear after Submit, so `_prefireWishImage`
+never ran. (In the paid run it did fire, because the decision gate aborted generation early while
+the post-turn hook still mounted the cinesequence.) An "all image attempts were blocked" assertion
+over an empty list passes vacuously, so it is **not** counted as evidence; the deliberate probes
+above are what prove the lane is closed. A side effect worth knowing before the next run: the
+live script's "resolve the cinesequence directly" step may simply be a no-op on the healthy path,
+which it already handles.
+
+Also extracted `buildScheduleAwareStubResponse` into `_tempt_fate_stub_plan_builder.mjs`, shared by
+this proof and the dry harness, so both stub the author with identical known-good shapes instead of
+two copies that can drift. Harness re-verified at 30/30 after the extraction.
+
 ## What happens next
 
-The infrastructure question is now closed in the affirmative: providers and the function layer both
-work, proven by two real 200s. The accounting is reconciled and executed. What remains is a single
-story decision — which branch of First Sacrifice's opening axis the reader takes — which gates
-whether Scene A can generate at all.
+The infrastructure question is closed in the affirmative: providers and the function layer both
+work, proven by two real 200s. The accounting is reconciled and executed. The missing prerequisite
+is identified, fixed, and dry-proven end to end. Roman has chosen the branch: **`remain`** — Lirael
+remains to see where Julian was taking her — and it is now set in the live-run script and verified
+against the live axis.
 
 Cumulative real spend across all four attempts: **$0.0011**. No Tempt Fate narrative capability has
 been tested yet. **The single authorized run is consumed; no further live attempt will be made
