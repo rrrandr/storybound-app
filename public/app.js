@@ -231971,7 +231971,23 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
     var sceneNum = (sceneIndex | 0) + 1;                       // sceneIndex is 0-based; minting speaks in scene numbers
     if (sceneNum < 2) return null;                             // Scene 1 is authored (baked) or planner-owned; nothing to mint here
     if (typeof _cpContinuationAssignment !== 'function') return null;
-    if (typeof _sceneDecisionNeeded === 'function' && _sceneDecisionNeeded()) { try { console.warn('[SCENE-DECISION] scene ' + sceneNum + ' requested with NO recorded choice — nothing is minted (fail closed)'); } catch (_) {} return { storyId: state.storyId, sceneIndex: sceneIndex, branchKey: null, attemptId: _cpMintAttemptId(), character_plus: [], environment_plus: null, fusion: null, reason: 'decision-absent', at: Date.now() }; }
+    if (typeof _sceneDecisionNeeded === 'function' && _sceneDecisionNeeded()) {
+      try { console.warn('[SCENE-DECISION] scene ' + sceneNum + ' requested with NO recorded choice — nothing is minted (fail closed)'); } catch (_) {}
+      // BUG FIX (Roman/Codex review, 2026-09-24): this fail-closed branch built and returned a
+      // snapshot carrying a freshly-minted attemptId, but — unlike the normal/success path just
+      // below, which explicitly does `state._cgDeliveredAssignments = snap` before returning —
+      // never wrote it to state. The caller (_runCGScreenplayGenInner) still captures the RETURNED
+      // object's real attemptId as its own request identity, but state._cgDeliveredAssignments
+      // itself stayed whatever it was before this call (null on a fresh story; a stale value from
+      // an earlier scene otherwise). _cgAcceptDelivered's later staleness check
+      // (`cur.attemptId !== reqAttemptId`) therefore ALWAYS failed for this branch — not a race, an
+      // unconditional mismatch, reproduced by direct+real-pipeline calls alike. Root cause: a
+      // missing state write, not a stale/racing value — fixed by writing it, exactly mirroring the
+      // success path below, not by touching _cgAcceptDelivered's own guard.
+      var _decisionAbsentSnap = { storyId: state.storyId, sceneIndex: sceneIndex, branchKey: null, attemptId: _cpMintAttemptId(), character_plus: [], environment_plus: null, fusion: null, reason: 'decision-absent', at: Date.now() };
+      state._cgDeliveredAssignments = _decisionAbsentSnap;
+      return _decisionAbsentSnap;
+    }
     var m = _cpContinuationAssignment(state, sceneNum);
     var cpList = (m && Array.isArray(m.character_plus)) ? m.character_plus : [];
     // PC SAY/DO GUARD (Roman, authorized 2026-09-14) — same discipline as the literary path

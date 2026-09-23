@@ -99,61 +99,63 @@ submit-ready state — free; (b) open Tempt zoom, type wish, click Proceed — f
 fill neutral Say/Do, click Submit — Scene A's real generation; (d) fill Scene B's input (§4), click
 Submit — Scene B's real generation. **Two logical scene generations.**
 
-**Corrected paid-role table** — three cells below were wrong in the prior revision, each corrected
-by reading the actual executable branch (not the nearest comment) this pass:
+**Corrected paid-role table, THIRD revision** — every model/tier below is re-traced directly from
+the dispatch code this pass (not a comment, not an assumption), and every model is confirmed against
+`public/app.js`'s own `TEXT_PRICING` table (~4764-4811):
 
-| Role | Fires on | Model / tier (CORRECTED) | Gate | Max physical requests |
+| Role | Fires on | Real tiers, in order | Gate | Max physical requests |
 |---|---|---|---|---|
-| CG scaffold generation | Scene A only (one-time per story) | `_callTieredProvider('scaffold', ...)` — ministral-8b-2512 primary → Grok fallback → Claude/OpenAI terminal. **(Corrected: NOT the `gpt-4o-mini` "backup" branch cited previously — that branch lives inside a dead `_isGrokScaffold` path, only reachable via an explicit bake-off harness never in play here.)** | `_shouldGenerateCGScaffold` — unconditional for staged/CG mode | up to 3, one-time |
-| 3 Body Bible generators (PC/LI/Antagonist) | Scene A only (one-time, each self-gated on the field not already existing) | `_callTieredProvider('pcBodyBible', ...)` and same-pattern siblings — ministral-8b primary → Grok → OpenAI/Claude terminal, run in parallel | self-gated on `!s.pcBodyBible` etc. | up to 3 each, 3 run in parallel — up to 9, one-time |
-| scenePlanner (the plot-contract generator's PRIMARY branch) | Every scene, Scene A and Scene B both — **now also carries Tempt Fate context (item 1 of the code fix)** | `_callTieredProvider('scenePlanner', ...)` — confirmed empirically (captured request) to use grok-4-1-fast-non-reasoning as its own primary tier (a custom `opts.tiers` override, not the shared default) → fallback tiers | `_plotContractActive()` — default ON | up to 3 per scene |
-| Legacy hard-beat planner (`mistral-small-latest` direct fetch) | **FALLBACK ONLY** — reached only if the scenePlanner primary branch throws. **(Corrected: the prior revision described this as THE planner call; it is not — it is a fallback that returns on success like the branch above it.)** Also now carries Tempt context. | `mistral-small-latest` via `/api/mistral-proxy`, single-shot, no further fallback | Only reached on scenePlanner exception | 0 typical, 1 worst-case fallback per scene |
-| `_commitScene` runtime-commit verifier | Scene B only (`state._priorSceneStateChange` is null going into Scene A) | `_callTieredProvider('runtimeCommitVerifier', ...)` — ministral primary → Grok → Claude/OpenAI terminal | Conditional on the prior scene's declared transition | up to 3, Scene B only |
-| CG emotional-gravity audit | Every scene, Scene A and Scene B both, fire-and-forget | `_auditPostMistralOnly` — **(Corrected: NOT Haiku/Sonnet, a stale comment; the real, live dispatch as of 2026-09-20 is ministral-8b-2512 ONLY, one attempt, no tiered fallback — "telemetry-only, so it should never spend on expensive fallback tiers.")** | `_auditSampleGate()` — FULL on localhost (where this test runs), not 5%-sampled | 1 per scene |
-| CG screenplay author | Every scene, Scene A and Scene B both — the main event | Tier 1 grok-4-1-fast-reasoning → Tier 2 ministral fallback → Tier 3 gpt-4o terminal | Existing per-scene retry policy | up to 3 per scene |
+| CG scaffold generation | Scene A only (one-time per story) | `_callTieredProvider('scaffold', ...)` default chain: ministral-8b-2512 → grok-4-1-fast-reasoning → gpt-4o-mini (terminal). **(The dead `_isGrokScaffold`/`gpt-4o-mini`-"backup" branch cited in the prior revision is unreachable in default flow — confirmed again this pass.)** | `_shouldGenerateCGScaffold` — unconditional for staged/CG mode | up to 3, one-time |
+| 3 Body Bible generators (PC/LI/Antagonist) | Scene A only (one-time, each self-gated) | Same default chain as scaffold — `_callTieredProvider('pcBodyBible'/'liBodyBible'/'antagonistBodyBible', ...)`, no `tiers` override, confirmed by source for all three this pass | self-gated on `!s.pcBodyBible` etc. | up to 3 each, 3 run in parallel — up to 9, one-time |
+| scenePlanner (plot-contract generator's PRIMARY branch) | Every scene, both A and B | Custom `_scTiers`: grok-4-1-fast-non-reasoning (or ministral, order depends on an admission check) → the other → gpt-4o (terminal) | `_plotContractActive()` — default ON | up to 3 per scene |
+| Legacy hard-beat planner (fallback only) | Reached only if scenePlanner's primary branch throws | `mistral-small-latest`, single attempt, no further fallback | Only on scenePlanner exception | 0 typical, 1 worst-case |
+| `_commitScene`-adjacent runtime-commit verifier | Scene B only | `_callTieredProvider('runtimeCommitVerifier', ...)` default chain: ministral-8b-2512 → grok-4-1-fast-reasoning → gpt-4o-mini (terminal). **(Corrected: prior passes' "Claude/OpenAI terminal" language was a stale comment — the actual default chain's terminal tier is `gpt-4o-mini` via OpenAI; no Claude call anywhere in this mechanism.)** | Conditional on the prior scene's declared transition | up to 3, Scene B only |
+| CG emotional-gravity audit | Every scene, both A and B, fire-and-forget | `_auditPostMistralOnly` — ministral-8b-2512 only, one attempt, no fallback | `_auditSampleGate()` — FULL on localhost | 1 per scene |
+| CG screenplay author | Every scene, both A and B — the main event | grok-4-1-fast-reasoning (unconditional) → ministral-8b-2512 (conditional on a static TPM admission check — can be SKIPPED without dispatch if oversized) → gpt-4o (terminal) | Existing per-scene retry policy | up to 3 per scene |
+| **Outer scene retry (NEW this pass — previously entirely uncounted)** | Whenever a scene's plan comes back `__staleRejected`/`__plannerFunctionRejected` | `_completeStagedSceneFromScreenplay` (app.js ~233106-233118) retries the **entire** generation exactly **once**, then stops if the retry also fails | Bounded to 1 retry, confirmed from source | **doubles** scenePlanner + author + gravity-audit + (Scene B only) commitVerifier for the scene it fires on — never scaffold/Bibles, already cached |
 
-**Maximum physical-request count**: Scene A up to 3 (scaffold) + 9 (bibles, parallel, one-time) + 3
-(scenePlanner) + 1 (legacy fallback, worst case) + 1 (gravity audit) + 3 (author) = **up to 20**.
-Scene B up to 3 (scenePlanner) + 1 (legacy fallback) + 3 (commit-verifier) + 1 (gravity audit) + 3
-(author) = **up to 11**. **Combined worst case: up to 31 physical provider requests across 2 logical
-scene generations.** This is higher than the prior revision's 17, because the scaffold/Bibles are
-now correctly identified as tiered (up to 3 requests each) rather than single calls, and the
-scenePlanner's own primary tier is itself a real network call (previously miscounted as "the legacy
-fallback" only). Typical case (every primary tier succeeds, no fallbacks): Scene A = 1+3+1+0+1+1 =
-7, Scene B = 1+0+1+1+1 = 4, **combined typical: 11** (unchanged from the prior estimate — the
-correction mainly widens the WORST case, which is what actually needs a hard ceiling).
+**Maximum physical-request count, no retry**: Scene A up to 3 (scaffold) + 9 (bibles) + 3
+(scenePlanner) + 1 (legacy fallback) + 1 (gravity audit) + 3 (author) = **up to 20**. Scene B up to 3
+(scenePlanner) + 1 (legacy fallback) + 3 (commit-verifier) + 1 (gravity audit) + 3 (author) = **up to
+11**. **With the outer retry** (bounded to 1, confirmed real): a scene that trips it adds one more
+full pass of its non-cached roles — worst case combined **up to 47** physical requests across the 2
+logical scene generations, though the REAL priced ceiling below (built from actual per-token costs,
+not a worst-case request count) is the number that actually matters for the enforcement — a request
+COUNT alone overstates risk since most tiers here are 2-3 orders of magnitude cheaper than the
+author's own primary tier.
 
 ## 3. Dollar ceiling and accounting/enforcement method
 
-**Accounting/enforcement method — corrected per Codex finding 6.** Checking real cost only AFTER a
-scene finishes cannot enforce that scene's own ceiling — the money is already spent by the time it's
-checked. The enforcement is instead a **pre-dispatch reservation**: before each declared phase
-(`gate.setPhase(roleTag, N)`), reserve `N × (the phase's most expensive plausible per-request cost,
-from the sourced rate table below)` against the running total; refuse to open the next phase if the
-reservation would push the running total past the phase's own or the combined ceiling. Reconcile
-against real per-request cost afterward — `cost_in_usd_ticks` where the response carries it (as the
-one true precedent's Confession attempt did for its two Grok calls), sourced-rate computation
-otherwise (`GROK_RATE`/`GPT4O_RATE` from the precedent, extended this pass with `MISTRAL_SMALL_RATE`
-for the plot-contract legacy fallback and a `MISTRAL_8B_RATE` row for ministral-8b, needed for
-scaffold/Bibles/scenePlanner/commit-verifier/gravity-audit). **An unsourced rate is a stop condition,
-not a zero** — if any tier this test's own census (§2) says could fire lacks a sourced per-token
-rate by the time of the live run, that is flagged and the reservation for that phase is computed
-from the MOST expensive sourced rate on the same tier as a conservative stand-in, not treated as
-free.
+**Accounting/enforcement method — corrected per Codex finding 6, THIRD revision.** Checking real
+cost only AFTER a scene finishes cannot enforce that scene's own ceiling. The enforcement is a
+**pre-dispatch reservation**: before each declared phase (`gate.setPhase(roleTag, N)`), reserve
+`N × (that tier's sourced per-token rate × a conservative worst-case token estimate)` against the
+running total; refuse to open the next phase if the reservation would push the total past the
+ceiling. Reconcile against real per-request cost afterward — `cost_in_usd_ticks` where the response
+carries it, sourced-rate computation otherwise.
 
-- **Per-scene ceiling**: Scene A ≤ **$0.65** (absorbs the widened worst-case scaffold+9-Bible-request
-  surface, the scenePlanner's own real tiered call, plus the author). Scene B ≤ **$0.45** (no
-  scaffold/Bibles, but adds the commit-verifier).
-- **Combined ceiling**: **$1.10**.
-- **Basis**: the one real, observed precedent (`_confession_attempt1_2026_09_22.md`) spent $0.094287
-  against a $0.45 ceiling for a LARGER 4-phase flow (this test needs no OAS dance, no fate-card
-  batch). The widened figures above absorb the corrected, larger worst-case physical-request count
-  from §2 — still built from small/cheap models (ministral-8b, mini, mistral-small) layered onto the
-  same core author call the precedent already measured cheap, so the real spend is expected to land
-  far under these ceilings, same as the precedent did. **These figures are the enforced pre-dispatch
-  reservation, not an estimate presented as a guarantee** — real tracked cost is reconciled after
-  each scene settles, and Scene B does not open if Scene A's real cost already exceeds its own
-  ceiling.
+**Every rate is now sourced directly from `public/app.js`'s own `TEXT_PRICING` table** — the SAME
+table the app's real cost accounting (`_recordProxyTextCost`) uses, each row cited to the provider's
+own published pricing page. The prior revision's "unsourced ministral-8b/mistral-small/gpt-4o-mini"
+claim was an error (checking only one precedent script's partial rate table, not the app's own
+authoritative one) — corrected this pass, confirmed programmatically by
+`_tempt_fate_memory_erasure_cost_audit.mjs`'s own passing assertion that every tier in this
+computation carries a sourced row. **No reachable tier remains unpriced; nothing here is enforced
+while any reachable price is unknown.**
+
+- **Per-scene ceiling**: Scene A ≤ **$0.20** (covers the ~$0.174 worst case including scaffold/9
+  Bibles one-time + the bounded outer retry). Scene B ≤ **$0.18** (covers the ~$0.160 worst case
+  including its own bounded outer retry).
+- **Combined ceiling**: **$0.40** (covers the ~$0.334 real worst-case sum, with headroom).
+- **Basis**: computed directly from the re-traced tier lists (§2) and `TEXT_PRICING`'s sourced
+  per-token rates, using conservative worst-case token estimates per role, INCLUDING the bounded
+  outer retry — not from the withdrawn "up to 31 requests" estimate or the prior revision's $0.65/
+  $0.45/$1.10 figures (both built on the incomplete pricing table). The one real, observed precedent
+  (`_confession_attempt1_2026_09_22.md`, a LARGER 4-phase flow this test doesn't need) spent
+  $0.094287 against its own $0.45 ceiling — consistent with real spend landing well under a
+  source-derived worst case, same pattern here. **These figures are the enforced pre-dispatch
+  reservation, not an estimate presented as a guarantee** — Scene B does not open if Scene A's real
+  cost already exceeds its own ceiling.
 
 **Fortunes, kept explicitly separate**: Scene A's Tempt invocation costs `getTemptFateCost()` = 60
 Fortunes flat. Traced `consumeFortune`'s dev-bypass branch (`app.js` ~142266) directly: gated to QA
@@ -250,41 +252,41 @@ activate only on a real committed outcome, never at seal time — see
 `_tempt_fate_codex_review_pass2_2026_09_24.md`). Reported here for completeness, not because this
 specific test exercises it.
 
-## H. Open item this pass surfaced — the executable harness is real but not yet fully green
+## H. The staleness gap — root-caused and fixed; harness now fully green
 
-`_tempt_fate_memory_erasure_live_test_harness.mjs` is now a real, executable script (not just this
-sheet) — run dry this pass, **20/24 checks passed**. Proven for real: hydration through the actual
-shipped starter's own mount function; the Tempt card's real onboarding-lock DOM state and a real
-click opening a real zoom overlay; `blockImagePreparation:true` against both classified shapes;
-an executable pre-dispatch reservation ledger with both a real ceiling stop and a real
-unsourced-pricing stop; continuous artifact persistence; Scene A's real planner AND author requests
-both carrying the active invocation; zero image-preparation dispatches anywhere in the run.
+The prior revision's §H mischaracterized the staleness rejection as "a harness-stub gap, not a
+production code defect." **That was wrong, and Roman correctly declined to authorize on it.** Traced
+to the actual root cause this pass: `_cgMintDeliveredAssignments`'s fail-closed branch (taken
+whenever a reader decision is genuinely outstanding — a real, ordinary production condition, not
+specific to this harness) built a snapshot with a real, freshly-minted `attemptId` and returned it
+directly, without ever writing it to `state._cgDeliveredAssignments` first — unlike the normal
+success path a few lines below, which does. `_cgAcceptDelivered`'s later staleness check therefore
+always compared the real captured id against a `state._cgDeliveredAssignments` that this branch had
+never touched, producing an unconditional (not racy) rejection for any real story reaching this
+scene. Confirmed via a direct write-trap on the real object during a real generation (zero writes
+logged, despite a real non-null id being captured) and via matching real console output. **Fixed** by
+writing the snapshot in that branch too, mirroring the success path exactly — `_cgAcceptDelivered`
+itself untouched, per instruction. The negative control (a genuinely stale pair, constructed by
+minting twice) still correctly rejects, confirmed re-run clean after the fix.
 
-**Not yet green**: getting a stubbed response through First Sacrifice's real, rich seed validation
-chain required matching three escalating real schema layers this pass (open-row local-objective,
-scene-function/aftermath-lane content signals) — each fixed by extracting the actual required
-fields/ids/phrases out of the real system prompt rather than guessing. A fourth, different check
-(`_cgAcceptDelivered`'s delivered-assignments staleness guard) now rejects Scene A's commit with
-"stale attempt: a newer request replaced this one (null ≠ cpa:...)" — a genuinely new,
-previously-unknown quirk in how `_cgMintDeliveredAssignments` behaves against this real seed,
-un-investigated further this pass given the depth already reached. This blocks 4 of the harness's 24
-checks (Scene A's commit proof and Scene B's continuation-content proof specifically) — it does not
-reopen anything already proven: `_tempt_fate_outcome_integration_control.mjs`'s own commit-at-
-persistence and planner/author wiring proofs (70/70) use a simpler, controlled seed state unaffected
-by this quirk.
+`_tempt_fate_memory_erasure_live_test_harness.mjs`, re-run after the fix: **24/24 dry checks
+passed** — Scene A generates, commits its outcome to the correct stable proposal, and Scene B
+inherits it in both planner and author context, all proven against the real dispatch, network fully
+stubbed. Full trace: `_tempt_fate_codex_review_pass3_2026_09_24.md`.
 
 ## Go/no-go criteria
 
-Proceed if: the mechanism proof (70/70, production-integration-level, including all six Codex/Roman-
-identified fixes across both passes) is accepted as sufficient plumbing verification, the corrected
-paid-role census in §2 is accepted as complete, the widened ceilings in §3 are accepted as the
-enforced pre-dispatch reservations, the `_intimacyDevMode` starting-state bypass (§1) and
-`blockImagePreparation: true` (§7) are accepted as the correct, disclosed mechanisms, and the §H open
-item (a delivered-assignments staleness quirk against this specific real seed) is accepted as
-non-blocking for a live run (it is a harness-stub gap, not a production code defect — nothing in the
-trace suggests it would affect a REAL, non-stubbed generation, only a synthetic stub response reaching
-that far into the validation chain). Hold if: §H should be resolved and re-proven green first, there's
-a reason to test a different wish, want different ceilings, want the Lirael-knowledge-limits question
-narrowed or dropped, or want the full multi-scene volatility-window lifecycle folded into this same
-authorization (still out of scope — this sheet tests "the wish lands" + "one ordinary scene keeps
-living with it," not the full 3-5+ scene fade-out).
+Proceed if: the mechanism proof (70/70 integration control + 24/24 executable harness, production-
+integration-level, including all seven Codex/Roman-identified fixes across three passes — planner
+wiring, the prompt-construction race, sceneIdx-keyed dedup, commit-at-persistence, the cleanup
+volatility/saturation race, the Mythic Couple reconciliation, and this pass's delivered-assignments
+staleness bug) is accepted as sufficient plumbing verification, the corrected paid-role census in §2
+and the fully-sourced dollar ceiling in §3 are accepted, and the `_intimacyDevMode` starting-state
+bypass (§1) and `blockImagePreparation: true` (§7) are accepted as the correct, disclosed mechanisms.
+Hold if: there's a reason to test a different wish first, want different ceilings, want the Lirael-
+knowledge-limits question narrowed or dropped, want the live forced-worst-case cost-audit script
+(`_tempt_fate_memory_erasure_cost_audit.mjs`, currently a partial diagnostic — see its own header)
+brought to a fully clean single-run proof before authorizing, or want the full multi-scene
+volatility-window lifecycle folded into this same authorization (still out of scope — this sheet
+tests "the wish lands" + "one ordinary scene keeps living with it," not the full 3-5+ scene
+fade-out).
