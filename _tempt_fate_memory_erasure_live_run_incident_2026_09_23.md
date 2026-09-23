@@ -175,12 +175,63 @@ while the wish still seals; the shared-lane posture (the incident's actual shape
 its declared phase and refuses a deliberate over-cap second request; and all three image endpoints
 plus an image-preparation body riding a real text lane are blocked before dispatch.
 
+## Attempt 4 — the authorized ninth-revision run (2026-09-23)
+
+Roman authorized exactly one run. It executed, and **the authorization is consumed**. It did not
+produce a Tempt Fate narrative result either — but for a completely different reason than attempts
+1–3, and this time nothing was wrong with the infrastructure.
+
+**Providers are working.** Both real dispatches returned **200**:
+
+| Role | Model | Status | Tokens | Cost |
+|---|---|---|---|---|
+| wish-classifier | `gpt-4o-mini` | 200 | — | $0.00004965 |
+| scaffold (primary tier) | `ministral-8b-2512` | 200 | 5703 in / 1314 out, 22.9s | $0.00105255 |
+| **Total** | | | | **$0.0011** against the $0.40 cap |
+
+The scaffold produced a complete object (run thesis, thematic direction, visual thesis, 2 issues,
+5 motifs, 5 forbidden). The Body Bibles resolved Tier-0 with zero calls exactly as the dry runs
+predicted (`[CG:SCAFFOLD] Bibles ready (0ms) — pc=y li=y antag=n`). Zero image dispatches: three
+`/api/bfl-kontext` attempts by the app's own `_prefireWishImage`, all aborted by the gate.
+
+**Why Scene A never generated — a deliberate app refusal, not a failure.** After the scaffold
+succeeded, the pipeline logged:
+
+```
+[SCENE-DECISION] scene 2 requested before the reader's choice was recorded — mounting the prompt, not generating
+[SCENE-DECISION] prompt mounted: run in shame vs remain and see where Julian was taking it
+```
+
+`app.js:233097`: a Scene-2+ request on a Book whose reader has not recorded the opening's decision
+mounts the decision prompt and returns **without generating** — "No unconstrained continuation, no
+fallback." The axis is read from the baked package itself
+(`state._bakedEmitted.axes.microDecision` via `_sceneDecisionAxis`, `app.js:201738`) and is
+"elicited from the package's own authored expansions, never inferred from dialogue."
+
+The live-run script never recorded that decision, so the app correctly refused to invent a
+continuation. The script's own stop-before-Scene-B rule then fired as designed.
+
+**This gate was hiding in plain sight for the whole workstream.** `_sceneDecisionNeeded()` is the
+exact branch whose fail-closed minting bug was root-caused and fixed in the third pass — that fix
+was made *inside* this branch without anyone noticing the branch itself would block the live test.
+No dry harness ever caught it because they all synthesize plans directly and never drive a real
+Submit through the real gate.
+
+**Fix applied (not yet run).** The live-run script now records the decision first, via a real click
+on the real `#sceneDecisionA`/`#sceneDecisionB` button, before the Tempt seal — the intended reader
+ordering, and it avoids the tangle of the gate firing at Submit time (the post-turn hook still
+mounts the wish-cinesequence UI and hides the Say/Do row, so a resumed generation would have to be
+dug out from under it). `SCENE1_DECISION` is deliberately left `null`: the script refuses to launch
+a browser or spend anything until it is set, because **which branch to take is a story decision that
+materially shapes Scene A — the very thing the test exists to evaluate — and must not be guessed.**
+
 ## What happens next
 
-The two blockers that stopped the last attempt are now closed: the accounting gap is corrected and
-executed, and the function layer is verified. The remaining unknown is deliberate and stated above —
-whether provider credentials/upstream calls actually succeed cannot be known without a real
-dispatch. The live-run script (`_tempt_fate_memory_erasure_live_run_2026_09_24.mjs`) carries both
-screen-transition fixes plus the classifier's pre-dispatch reservation, and has still never
-completed a single full run against a healthy server. **No further live attempt will be made without
-a fresh explicit authorization.**
+The infrastructure question is now closed in the affirmative: providers and the function layer both
+work, proven by two real 200s. The accounting is reconciled and executed. What remains is a single
+story decision — which branch of First Sacrifice's opening axis the reader takes — which gates
+whether Scene A can generate at all.
+
+Cumulative real spend across all four attempts: **$0.0011**. No Tempt Fate narrative capability has
+been tested yet. **The single authorized run is consumed; no further live attempt will be made
+without a fresh explicit authorization.**

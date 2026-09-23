@@ -95,14 +95,41 @@ const SCENE_B_CEILING = 0.18;
 // dispatch that happened outside the sheet's declared, reserved set.
 const WISH_CLASSIFIER_CEILING = 0.001;
 
+// ── SCENE-1 READER DECISION — REQUIRED, and deliberately UNSET ──────────────────────────────────
+// The first authorized run (2026-09-23) never generated Scene A. Not infrastructure, not cost: the
+// app DELIBERATELY refused. app.js:233097 — a Scene-2+ request on a Book whose reader has not
+// recorded the opening's decision mounts the decision prompt and returns WITHOUT generating, rather
+// than producing an unconstrained continuation:
+//   [SCENE-DECISION] scene 2 requested before the reader's choice was recorded — mounting the
+//   prompt, not generating
+//   [SCENE-DECISION] prompt mounted: run in shame vs remain and see where Julian was taking it
+// First Sacrifice's axis comes from the baked package itself (state._bakedEmitted.axes.microDecision,
+// read by _sceneDecisionAxis at app.js:201738) and is "elicited from the package's own authored
+// expansions, never inferred from dialogue" — so it cannot be guessed or synthesized here.
+//
+// WHICH BRANCH IS A STORY DECISION, NOT AN ENGINEERING ONE. It materially shapes Scene A, which is
+// the very thing this test exists to evaluate. Left null so the run FAILS CLOSED rather than
+// silently proceeding on an assumed choice. Set to 'run' or 'remain' only on Roman's explicit word.
+const SCENE1_DECISION = null; // 'run' = run in shame | 'remain' = remain and see where Julian was taking it
+
 // Module-level (not IIFE-local) so the top-level catch at the bottom of this file can still
 // attempt a safe, settlement-aware shutdown if an unexpected error escapes every in-flow try/catch
 // below — never leaving an approved request's outcome unrecorded just because of an unrelated bug.
 let browser = null, gate = null;
 
 (async () => {
-  console.log('=== TEMPT FATE MEMORY-ERASURE — LIVE RUN (real, paid, one operation, seventh-revision sheet) ===');
+  console.log('=== TEMPT FATE MEMORY-ERASURE — LIVE RUN (real, paid, one operation, ninth-revision sheet) ===');
   console.log('    persisted request/response log: ' + LOG_FILE + '\n');
+
+  // FAIL CLOSED before spending anything: without the Scene-1 decision the app will not generate
+  // Scene 2 at all (proven by the first authorized run), so dispatching the wish classifier and the
+  // scaffold cascade would again buy nothing.
+  if (SCENE1_DECISION !== 'run' && SCENE1_DECISION !== 'remain') {
+    console.error('REFUSING TO RUN — SCENE1_DECISION is unset. The app will not generate Scene 2 until the');
+    console.error('opening decision is recorded (app.js:233097), and which branch to take is a story decision');
+    console.error('that materially shapes Scene A. Set it to \'run\' or \'remain\' only on explicit authorization.');
+    process.exit(3);
+  }
 
   try { browser = await chromium.launch({ headless: true, channel: 'chrome' }); }
   catch (e) { console.error('HARNESS BLOCKER: could not launch a real browser — ' + (e && e.message)); process.exit(2); }
@@ -183,6 +210,45 @@ let browser = null, gate = null;
   // selector to be :visible (Playwright's waitForSelector default) always times out — checked via
   // a dry diagnostic after the first live attempt. Poll the class directly instead.
   await page.waitForFunction(() => { const s = document.getElementById('splashOverlay'); return !s || s.classList.contains('splash-done'); }, { timeout: 12000 }).catch(() => { console.warn('[HARNESS] splash overlay did not reach .splash-done within 12s — proceeding anyway'); });
+
+  // ═══ PHASE 0b — record the Scene-1 reader decision, via a REAL click on the REAL prompt ═══
+  // Done BEFORE the Tempt seal, which is the intended reader ordering (finish Scene 1, decide, then
+  // act). Doing it here also avoids the tangle the first run hit: when the decision gate fires at
+  // Submit time instead, the post-turn hook still mounts the wish-cinesequence UI and hides the
+  // Say/Do row, so the resumed generation would have to be dug out from under it.
+  console.log('── phase 0b: record the Scene-1 reader decision (real click, no provider dispatch) ──');
+  const decisionMount = await page.evaluate(() => {
+    if (typeof window._sceneDecisionNeeded !== 'function' || !window._sceneDecisionNeeded()) return { needed: false };
+    window._mountSceneDecisionPrompt(null);
+    const a = document.getElementById('sceneDecisionA'), b = document.getElementById('sceneDecisionB');
+    return { needed: true, mounted: !!(a && b), a: a && a.getAttribute('data-choice'), b: b && b.getAttribute('data-choice'), aLabel: a && a.textContent, bLabel: b && b.textContent };
+  });
+  persist('scene1_decision_prompt.json', decisionMount);
+  if (!decisionMount.needed) {
+    console.error('HARNESS BLOCKER: _sceneDecisionNeeded() is false — the gate this step exists to satisfy is not active, so the run\'s premise no longer holds. Stopping rather than guessing.');
+    await safeExit(2, 'scene decision not needed — unexpected state');
+    return;
+  }
+  if (!decisionMount.mounted) {
+    console.error('HARNESS BLOCKER: the decision prompt did not mount — ' + JSON.stringify(decisionMount));
+    await safeExit(2, 'decision prompt did not mount');
+    return;
+  }
+  const decisionBtn = decisionMount.a === SCENE1_DECISION ? '#sceneDecisionA' : decisionMount.b === SCENE1_DECISION ? '#sceneDecisionB' : null;
+  if (!decisionBtn) {
+    console.error('HARNESS BLOCKER: SCENE1_DECISION="' + SCENE1_DECISION + '" matches neither offered choice (' + decisionMount.a + ' / ' + decisionMount.b + ') — the baked axis may have changed. Stopping rather than picking one.');
+    await safeExit(2, 'declared decision does not match the offered axis');
+    return;
+  }
+  await page.click(decisionBtn, { timeout: 8000 });
+  const decisionRecorded = await page.evaluate(() => ({ stillNeeded: window._sceneDecisionNeeded(), recorded: window.state._sceneDecisions || null }));
+  persist('scene1_decision_recorded.json', decisionRecorded);
+  if (decisionRecorded.stillNeeded) {
+    console.error('HARNESS BLOCKER: the decision click did not clear _sceneDecisionNeeded() — ' + JSON.stringify(decisionRecorded));
+    await safeExit(2, 'decision click did not record');
+    return;
+  }
+  console.log('  ✓ recorded "' + SCENE1_DECISION + '" via a real click on ' + decisionBtn + ' — _sceneDecisionNeeded() is now false\n');
 
   // ═══ PHASE 1 — real Tempt card click, real wish entry, real Proceed click ═══
   console.log('── phase 1: real Tempt Fate wish, sealed via real UI ──');
