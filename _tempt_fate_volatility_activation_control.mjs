@@ -150,18 +150,14 @@ function section(t) { console.log('\n=== ' + t + ' ==='); }
     const endsEmpty = timeline.length > 0 && timeline[timeline.length - 1].directiveEmpty;
 
     ok('at least one continuation scene while the volatility window is still open receives the WORLD LAW / severity-band directive (bounded rupture)', anyWorldLaw, JSON.stringify(timeline));
-    // NOT asserted as a pass/fail here — see _tempt_fate_volatility_activation_2026_09_22.md §5
-    // (NEW FINDING, pre-existing in BOTH literary and CG, not introduced by this pass): the
-    // volatility-window-close step and the aftermath-decay step are NOT mutually exclusive within
-    // a single turn's cleanup — on the turn the window closes and seeds _temptAftermathScenes = 2,
-    // the very next check in the SAME call sees the (now-inactive) window and immediately
-    // decrements it to 1 before any directive is ever built from it. The IMPRINT phase (which
-    // requires the counter to read exactly 2) is therefore silently skipped every time — the
-    // player only ever sees FADING. Reported honestly, not forced to a false pass or fail; flagged
-    // to Roman as a separate decision per this session's adjacent-defect standing rule, not fixed
-    // inline as a scope-expansion of the CG-activation task this control was written to prove.
-    console.log('  INFO aftermath IMPRINT directive observed: ' + anyImprint + ' (expected false under the current, pre-existing both-paths double-decrement — NOT part of this pass\'s CG-activation fix; see design doc §5)');
-    ok('the aftermath FADING directive fires (the mechanism does deliver SOME bounded aftermath framing, even though IMPRINT is currently skipped)', anyFading, JSON.stringify(timeline));
+    // UPDATED 2026-09-22 (IMPRINT-phase lifecycle fix pass): this assertion previously logged
+    // anyImprint as INFO-only, since full lifecycle proof HERE is what surfaced the pre-existing,
+    // both-paths bug where IMPRINT never fired (window-close and aftermath-decay ran back-to-back
+    // in the same turn). That bug is now fixed (_temptFateWindowTaperAndAftermathDecay, app.js
+    // ~70253) — see _tempt_fate_imprint_lifecycle_2026_09_22.md and
+    // _tempt_fate_imprint_lifecycle_control.mjs for the dedicated fix + proof. Asserted for real now.
+    ok('the aftermath IMPRINT directive fires once the window closes (FIXED — previously always skipped; see _tempt_fate_imprint_lifecycle_2026_09_22.md)', anyImprint, JSON.stringify(timeline));
+    ok('the aftermath FADING directive fires on the second aftermath scene', anyFading, JSON.stringify(timeline));
     ok('the imprint fully decays/expires — the LAST scene in the walk gets an empty directive, with the window closed and aftermath counter at 0', endsEmpty, JSON.stringify(timeline));
   }
 
