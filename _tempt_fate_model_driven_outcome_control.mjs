@@ -72,7 +72,7 @@ function section(t) { console.log('\n=== ' + t + ' ==='); }
       window.state.canonicalLI = { committed: true, name: 'Julian' };
       window.state.turnCount = 5;
       window.state._temptFateDurableConsequences = [];
-      window.state._temptOutcomeCommittedScenes = {};
+      window.state._temptOutcomeCommittedProposals = {};
       window.state._durableFateConsequences = [];
       window.state.volatility_window = { active: false, severity: 0, remaining_scenes: 0 };
       window.state._temptAftermathScenes = 0;
@@ -102,7 +102,7 @@ function section(t) { console.log('\n=== ' + t + ' ==='); }
     // no category system left to match or miss; this proves genericity structurally, not by
     // picking a lucky keyword.
     const wish = "let the harbor tide-registry believe a ship that never sailed logged safe passage";
-    const ledgerEntry = { wishText: wish, sceneIdx: 5, bargainId: 'bg_1' };
+    const ledgerEntry = { id: 'tfl_test1', wishText: wish, sceneIdx: 5, bargainId: 'bg_1' };
     // A SIMULATED "normal generation response" — a hand-built object standing in for what a real
     // model-generated outcome report would contain. This is exactly what Roman's correction asked
     // for: build/prove the plumbing with simulated responses; reserve live testing for creative
@@ -157,6 +157,8 @@ function section(t) { console.log('\n=== ' + t + ' ==='); }
   section('2. Roman\'s own worked example — a manifested Answer disappears while a witnessed accusation persists (different durability, SAME wish)');
   await resetBaseline();
   {
+    // Roman/Codex review (2026-09-24): _commitTemptFateOutcome now dedupes by ledgerEntry.id (a
+    // stable identity), not local sceneIdx — every hand-built ledgerEntry below carries one.
     const wish = "Tempt Fate materializes The Answer in Lirael's hand";
     const report = {
       delivered: true,
@@ -172,7 +174,7 @@ function section(t) { console.log('\n=== ' + t + ' ==='); }
       establishedEvidence: ['the rite-keeper\'s stunned silence when it appeared'],
       openPossibilities: ['someone could demand The Answer be produced again as proof']
     };
-    const entry = await page.evaluate((args) => window._commitTemptFateOutcome(args.sceneIdx, { wishText: args.wish, sceneIdx: args.sceneIdx }, args.report), { wish, sceneIdx: 5, report });
+    const entry = await page.evaluate((args) => window._commitTemptFateOutcome(args.sceneIdx, { id: 'tfl_test2', wishText: args.wish, sceneIdx: args.sceneIdx }, args.report), { wish, sceneIdx: 5, report });
     ok('a SINGLE wish can produce effects with DIFFERENT durability — the manifestation expires, the accusation persists (exactly Roman\'s worked example)', entry && entry.durability.find(d => d.aspect.includes('Answer')).status === 'expires' && entry.durability.find(d => d.aspect.includes('accusation')).status === 'persists', JSON.stringify(entry && entry.durability));
   }
 
@@ -182,7 +184,7 @@ function section(t) { console.log('\n=== ' + t + ' ==='); }
   {
     const report = { delivered: false, changed: [], durability: [], knowledgeStates: [], establishedEvidence: [], openPossibilities: [] };
     const result = await page.evaluate((args) => {
-      var entry = window._commitTemptFateOutcome(args.sceneIdx, { wishText: args.wish, sceneIdx: args.sceneIdx }, args.report);
+      var entry = window._commitTemptFateOutcome(args.sceneIdx, { id: 'tfl_test3', wishText: args.wish, sceneIdx: args.sceneIdx }, args.report);
       return { entry, count: (window.state._temptFateDurableConsequences || []).length };
     }, { wish: 'some wish', sceneIdx: 5, report });
     ok('delivered:false produces NO entry', result.entry === null, JSON.stringify(result));
@@ -204,7 +206,7 @@ function section(t) { console.log('\n=== ' + t + ' ==='); }
     for (const bad of malformed) {
       const result = await page.evaluate((args) => {
         var before = (window.state._temptFateDurableConsequences || []).length;
-        var entry = window._commitTemptFateOutcome(args.sceneIdx, { wishText: 'x', sceneIdx: args.sceneIdx }, args.bad);
+        var entry = window._commitTemptFateOutcome(args.sceneIdx, { id: 'tfl_test4', wishText: 'x', sceneIdx: args.sceneIdx }, args.bad);
         var after = (window.state._temptFateDurableConsequences || []).length;
         return { entry, before, after };
       }, { sceneIdx: 5, bad });
@@ -219,9 +221,9 @@ function section(t) { console.log('\n=== ' + t + ' ==='); }
     const wish = 'a real rupture';
     const report = { delivered: true, changed: [{ subject: 'x', whatChanged: 'y' }], durability: [{ aspect: 'x', status: 'persists' }], knowledgeStates: [], establishedEvidence: ['z'], openPossibilities: [] };
     const result = await page.evaluate((args) => {
-      var first = window._commitTemptFateOutcome(args.sceneIdx, { wishText: args.wish, sceneIdx: args.sceneIdx }, args.report);
-      var second = window._commitTemptFateOutcome(args.sceneIdx, { wishText: args.wish, sceneIdx: args.sceneIdx }, args.report); // simulates a retry
-      var third = window._commitTemptFateOutcome(args.sceneIdx, { wishText: args.wish, sceneIdx: args.sceneIdx }, args.report); // simulates a second retry
+      var first = window._commitTemptFateOutcome(args.sceneIdx, { id: 'tfl_test5', wishText: args.wish, sceneIdx: args.sceneIdx }, args.report);
+      var second = window._commitTemptFateOutcome(args.sceneIdx, { id: 'tfl_test5', wishText: args.wish, sceneIdx: args.sceneIdx }, args.report); // simulates a retry — SAME proposal id
+      var third = window._commitTemptFateOutcome(args.sceneIdx, { id: 'tfl_test5', wishText: args.wish, sceneIdx: args.sceneIdx }, args.report); // simulates a second retry — SAME proposal id
       return { first: !!first, second: second, third: third, count: (window.state._temptFateDurableConsequences || []).length };
     }, { wish, sceneIdx: 7, report });
     ok('the first commit for a scene succeeds', result.first === true, JSON.stringify(result));
@@ -236,15 +238,18 @@ function section(t) { console.log('\n=== ' + t + ' ==='); }
     const wish = 'a durable rupture that must survive a save';
     const report = { delivered: true, changed: [{ subject: 'x', whatChanged: 'y' }], durability: [{ aspect: 'x', status: 'persists' }], knowledgeStates: [{ character: 'Julian', state: 'suspects' }], establishedEvidence: ['a torn page'], openPossibilities: ['a rumor could spread'] };
     const roundTripped = await page.evaluate((args) => {
-      window._commitTemptFateOutcome(args.sceneIdx, { wishText: args.wish, sceneIdx: args.sceneIdx }, args.report);
+      window._commitTemptFateOutcome(args.sceneIdx, { id: 'tfl_test6', wishText: args.wish, sceneIdx: args.sceneIdx }, args.report);
       // Mirror the REAL Issue-carry-forward capture/restore pattern (app.js ~101748/~101801):
-      // JSON.stringify before a reset-shaped wipe, JSON.parse to restore.
+      // JSON.stringify before a reset-shaped wipe, JSON.parse to restore. Field renamed
+      // _temptOutcomeCommittedScenes -> _temptOutcomeCommittedProposals (Roman/Codex review,
+      // 2026-09-24) — dedup now keys on the proposal's stable id, not local sceneIdx, which
+      // resets at Issue boundaries and this exact map is carried across them.
       var captured = JSON.stringify(window.state._temptFateDurableConsequences);
-      var capturedCommitted = JSON.stringify(window.state._temptOutcomeCommittedScenes);
+      var capturedCommitted = JSON.stringify(window.state._temptOutcomeCommittedProposals);
       window.state._temptFateDurableConsequences = [];
-      window.state._temptOutcomeCommittedScenes = {};
+      window.state._temptOutcomeCommittedProposals = {};
       window.state._temptFateDurableConsequences = JSON.parse(captured);
-      window.state._temptOutcomeCommittedScenes = JSON.parse(capturedCommitted);
+      window.state._temptOutcomeCommittedProposals = JSON.parse(capturedCommitted);
       return window.state._temptFateDurableConsequences;
     }, { wish, sceneIdx: 9, report });
     ok('the entry survives a save/reload round-trip byte-for-byte on its content fields', roundTripped.length === 1 && roundTripped[0].requestedRupture === wish && roundTripped[0].establishedEvidence[0] === 'a torn page', JSON.stringify(roundTripped));
@@ -252,7 +257,7 @@ function section(t) { console.log('\n=== ' + t + ' ==='); }
     // The idempotency guard must ALSO survive the round-trip — a retried commit for the SAME scene
     // after a reload must still be a no-op, not silently re-open the door to duplicates.
     const stillIdempotent = await page.evaluate((args) => {
-      var entry = window._commitTemptFateOutcome(args.sceneIdx, { wishText: args.wish, sceneIdx: args.sceneIdx }, args.report);
+      var entry = window._commitTemptFateOutcome(args.sceneIdx, { id: 'tfl_test6', wishText: args.wish, sceneIdx: args.sceneIdx }, args.report);
       return { entry, count: window.state._temptFateDurableConsequences.length };
     }, { wish, sceneIdx: 9, report });
     ok('the idempotency guard survives the round-trip — a post-reload retry is still a no-op', stillIdempotent.entry === null && stillIdempotent.count === 1, JSON.stringify(stillIdempotent));
@@ -271,7 +276,7 @@ function section(t) { console.log('\n=== ' + t + ' ==='); }
       establishedEvidence: ['the ceremonial hall is still arranged for a rite no one recalls starting', 'the registrar\'s ledger has an entry for that hour with no name filled in'],
       openPossibilities: ['someone could cross-reference the ledger against the hall\'s arrangement and notice the mismatch']
     };
-    await page.evaluate((args) => window._commitTemptFateOutcome(args.sceneIdx, { wishText: args.wish, sceneIdx: args.sceneIdx }, args.report), { wish, sceneIdx: 5, report });
+    await page.evaluate((args) => window._commitTemptFateOutcome(args.sceneIdx, { id: 'tfl_test7', wishText: args.wish, sceneIdx: args.sceneIdx }, args.report), { wish, sceneIdx: 5, report });
     const spine = await page.evaluate(() => window._buildContinuitySpineBlock(window.state, {}));
     ok('the REAL _buildContinuitySpineBlock includes the committed consequence', spine.indexOf(wish) !== -1, spine.slice(0, 500));
     ok('it carries the established evidence verbatim', spine.indexOf("registrar's ledger has an entry") !== -1, spine.slice(0, 900));
@@ -284,7 +289,7 @@ function section(t) { console.log('\n=== ' + t + ' ==='); }
   {
     const wish = 'a lasting rupture';
     const report = { delivered: true, changed: [{ subject: 'x', whatChanged: 'y' }], durability: [{ aspect: 'x', status: 'persists' }], knowledgeStates: [], establishedEvidence: ['z'], openPossibilities: [] };
-    await page.evaluate((args) => window._commitTemptFateOutcome(args.sceneIdx, { wishText: args.wish, sceneIdx: args.sceneIdx }, args.report), { wish, sceneIdx: 5, report });
+    await page.evaluate((args) => window._commitTemptFateOutcome(args.sceneIdx, { id: 'tfl_test8', wishText: args.wish, sceneIdx: args.sceneIdx }, args.report), { wish, sceneIdx: 5, report });
 
     const timeline = await page.evaluate(() => {
       var log = [];

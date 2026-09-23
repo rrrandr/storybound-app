@@ -1,127 +1,238 @@
-# Live-test authorization sheet — Tempt Fate memory-erasure scenario
+# Live-test authorization sheet — Tempt Fate memory-erasure scenario (RE-REVISED)
 
-2026-09-23, updated same day after the ownership fix (§ pointer:
-`_tempt_fate_outcome_ownership_fix_2026_09_23.md`). Roman: "Then present the concrete authorization
-sheet for the memory-erasure scenario. It must distinguish what one generated scene can demonstrate
-from what requires a later continuation... A successful first scene would show that the wish lands.
-A later continuation is what proves the story can keep living with it." This sheet is a proposal to
-review and approve or adjust — nothing in it authorizes a paid call by itself. No paid run yet.
+2026-09-24. Second revision. Codex reviewed the first revision against real source and found real
+production gaps (planner never received Tempt context; a prompt-construction race; sceneIdx-keyed
+dedup that breaks across Issue boundaries; commit at generation instead of persistence) plus three
+inaccuracies in the sheet itself (scaffold/audit model census, planner-fallback framing, starting-
+state Tempt-availability). All four code gaps are now fixed and proven against the real dispatch
+(`_tempt_fate_codex_review_fixes_2026_09_24.md` has the full trace); the three sheet inaccuracies are
+corrected below. **Nothing in this sheet authorizes a paid call by itself. No paid run yet.**
 
-## What's already dry-proven, so this test isn't validating plumbing
+## What's dry-proven now, so this test isn't validating plumbing
 
-`_tempt_fate_outcome_integration_control.mjs` (20/20) already proved, against the real production
-functions with the network stubbed: the real CG system prompt asks for `temptFateOutcome` in the
-same JSON schema as every other structured field; a real dispatch/parse/accept/commit cycle works
-end-to-end; the commit is gated by the app's own `_cgAcceptDelivered` check, not the model's
-self-report alone; rejected, missing, and duplicate reports are all handled safely and the missing
-case is explicitly logged; and a subsequent real system-prompt build genuinely carries the
-committed effect with established/not-yet-established and per-effect durability intact. **This live
-test is not needed to prove any of that — it exists only to observe the model's actual creative
-judgment**, which no dry test can certify.
+`_tempt_fate_outcome_integration_control.mjs`, now **47/47**: the real CG system prompt asks for
+`temptFateOutcome`; a real dispatch/parse/accept-then-persist/commit cycle works end-to-end; the
+commit is gated by the app's own `_cgAcceptDelivered` AND happens only after real scene persistence,
+never at generation acceptance alone; a stable ledger-entry id (not "most recent" state) survives a
+real mid-flight race at BOTH the commit step and the author's own prompt construction; cleanup
+preserves a newer invocation sealed mid-flight instead of destroying it; an ordinary continuation
+never recommits a stray echoed report; **the real planner request (captured, not simulated) carries
+Tempt Fate's durable consequences and the active invocation, for both an invoked scene and an
+ordinary continuation**; dedup is keyed on stable proposal identity, so a distinct wish at a reused
+local scene number (an Issue boundary) is never mistaken for a duplicate. This live test exists only
+to observe the model's actual creative judgment — the two things no dry test can certify: does the
+wish read as REAL erasure, and does an ordinary next scene honor it without contradicting or quietly
+undoing it.
 
-## The two-scene shape, and why not one or many
+## 1. Exact starting state, scene index, and why the wish makes sense there
 
-**Scene A (the invocation)** can show only that the wish LANDS — the omen/invocation/effect beats,
-the immediate confusion, the first evidence the scene itself puts on the page, and whether the
-model's own `temptFateOutcome` report is well-grounded in what it just wrote. It CANNOT show
-whether the change survives past this scene, whether evidence accumulates, or whether anyone
-begins investigating — those require time passing in the story, which a single scene doesn't have.
+Fresh, isolated, timestamped `storyId` built from the unmodified shipped `starter_first_sacrifice`
+package — the same mechanism the one precedent live sample in this repo used
+(`_first_sacrifice_live_scene2_boundary_sample.mjs`). No persisted snapshot to find; nothing about
+any other real story is touched.
 
-**Scene B (one ordinary continuation, no new Tempt invocation)** is where "the story keeps living
-with it" becomes observable: does the durable consequence correctly shape a REAL next scene's
-prose (not just its prompt, which is already proven); does new evidence or a character's suspicion
-plausibly build rather than the model quietly re-establishing the erased memory; does the
-aftermath IMPRINT-phase framing (if the volatility window happens to close on this exact turn)
-coexist sensibly with the durable consequence's own "persists" framing rather than contradicting
-it.
+```js
+s.storyId = 'live-fs-tempt-erasure-' + Date.now();
+s.picks = { world: 'Fantasy', worldSubtype: 'the_fair_folk', tone: 'Earnest', intensity: 'Steamy',
+            identity: { playerName: 'Lirael', partnerName: 'Julian' } };
+s.gender = 'Female'; s.loveInterest = 'Male'; s.authorPronouns = 'She/Her';
+s.renderMode = 'staged_story_mode'; s.currentEngine = 'graphic';
+s.turnCount = 0; s.scenes = [];
+s.subscribed = true; s.fortunes = 9999999; s.access = 'sub';
+s._starterId = 'starter_first_sacrifice';
+s._pcLookSkipped = true; s._bakedGenesisUnlocked = true;
+window._devBypass = true;                 // Fortune-charge dev bypass ONLY (consumeFortune) —
+                                            // confirmed this pass NOT to affect the Tempt fate-card
+                                            // lock below; kept because item 3 still needs it.
+s._intimacyDevMode = true;                 // ── NEW, per Codex finding 7 ──
+```
 
-**What this sheet deliberately does NOT authorize**: watching the volatility window taper through
-its full multi-scene lifecycle to FADING and full expiration (per the already-fixed lifecycle, this
-could take 3-5+ scenes depending on severity) — that's a real, valid question ("does the durable
-consequence still read cleanly once all the scene-level rupture framing has fully quieted?") but a
-SEPARATE, larger, later authorization if Scenes A and B look sound. Two scenes is the smallest test
-that distinguishes "the wish lands" from "the story keeps living with it," per Roman's own framing
-— not the smallest test of everything eventually worth knowing.
+**Item 7 correction (Codex): `window._devBypass` does not unlock the Tempt fate-card.** Traced the
+real gate (`_syncFateCardLockState`, `app.js` ~107076): `temptLocked = _withinWindow && turn < 2 &&
+!_isDevOAS`, and `_isDevOAS = !!state._intimacyDevMode` — a different flag entirely, gating the
+new-player onboarding reveal cadence (Tempt "wakes in Scene 3" for a real player; the card carries
+`.fate-locked` / `pointer-events:none` before that). **`state._intimacyDevMode = true` is added to
+the starting state above, explicitly disclosed here as a genuine, source-grounded dev-only bypass —
+the same one intimacy/OAS dev launches already use to exercise Petition/Tempt outside the normal
+reveal cadence — not ordinary player flow.** The live-test script must visually confirm this worked
+(DOM check: the `.tempt-fate-card` element does not carry `.fate-locked`, and responds to a real
+click) before proceeding, rather than assume the bypass is sufficient.
 
-## Starting state
+**Scene index: Scene 2 (turnCount 0→1), the first real generated scene.** Scene 1 is the shipped,
+baked, verbatim `starter-scenes.js` package (free, no prompt): at Seren's First Sacrifice rite,
+apprentice Sacrificiant Lirael supervising for the first time, Seren abandons her rehearsed wish and
+spends it on Lirael ("so that Lirael may find the one she lost") — the wish twists because it was
+misaligned. No visible effect except the ~24-person assembly turning to look for Lirael's loss.
+Lirael tears her mouth-band, moves toward her ward. The presiding Dohkar publicly charges Lirael with
+shaping the wish for her own benefit, jeopardizing her path. Seren's family is provoked. Julian (the
+Provast, next in line for First Dohkar) intervenes, puts "The Answer" in her hands to question her
+before the assembly, then interrogates her intimately/accusingly. The presiding Dohkar interrupts
+the interrogation as "grossly inappropriate," names a formal inquiry (before a Chayr and two
+Dohkars) as the venue; Julian publicly claims authority to convene and preside over it. **The
+inquiry has not yet been opened.** Location: the Veilwood ceremony clearing.
 
-Continue from First Sacrifice's current, real, committed story state (whatever scene the story is
-actually sitting at right now) — not a synthetic/reset state. This is deliberate: the durable-
-consequence mechanism is meant to work against the app's real committed-state machinery
-(`_committedState`, the scene ledger, the real cast/canon), and a synthetic starting state would
-test less than the real one does. If the current real state isn't at a point where inserting a
-ceremony-erasure wish makes narrative sense, that's Roman's call to redirect before authorizing,
-not something to assume away here.
+**Why the wish makes sense here**: Lirael has just been publicly accused, humiliated, and
+interrogated in front of ~24 witnesses, with a formal inquiry into her conduct already named.
+"Everyone forgets the ceremony happened" is the most legible thing she could wish for at this exact
+beat — undoing the specific, freshly-inflicted public damage, not a generic power.
 
-## Evaluation criteria (Roman, 2026-09-23)
+This is a new, isolated copy; nothing about any other real story or saved state is read or touched.
 
-- **Scene A** should establish actual memory erasure, with confusion and surviving evidence
-  consistent with the wish's scope — not a flat refusal, not a clean uniform wipe with no residue,
-  and not a metaphorical near-miss (the same "rendered as a feeling instead of literally happening"
-  failure mode this session's LITERAL MANIFESTATION rule already exists to prevent for other Tempt
-  wishes).
-- **Scene B** should honor the erased memories (no character suddenly and cleanly remembers the
-  ceremony) and develop consequences from that changed situation — WITHOUT automatically restoring
-  memories, and WITHOUT forcing a predetermined investigation script. The durable record's
-  `openPossibilities` are threads the model MAY pick up; Scene B is not required to start an
-  investigation, only to not contradict or quietly undo what Scene A established.
-- **Report explicitly whether Scene B occurs INSIDE or AFTER the volatility window** (check
-  `state.volatility_window.active` and `state._temptAftermathScenes` going into Scene B's
-  generation). If Scene B lands INSIDE the window, that's immediate-continuity evidence only —
-  persistence of the erasure BEYOND the window's own expiration remains untested by this
-  authorization and would need the larger, later multi-scene run already flagged as out of scope
-  below.
+## 2. Paid roles per scene — corrected census, logical scenes vs. physical provider requests
 
-## Paid roles, request cap, and cost basis
+**Tempt Fate itself makes no network call.** Sealing a wish (zoom Proceed) is local only; the player
+separately clicks `#gnSubmitBtn` to trigger real generation. Click sequence: (a) reach Scene 2's
+submit-ready state — free; (b) open Tempt zoom, type wish, click Proceed — free, local only; (c)
+fill neutral Say/Do, click Submit — Scene A's real generation; (d) fill Scene B's input (§4), click
+Submit — Scene B's real generation. **Two logical scene generations.**
 
-- **Provider/role**: CG screenplay author, TIER 1 of the existing `_authorFullScenePolicy` —
-  `grok-4-1-fast-reasoning` via `/api/proxy`, `role: STRUCTURE_GENERATOR`, the SAME call type every
-  ordinary CG scene already uses. **No new call type, no separate verifier call, no new
-  classifier** — `temptFateOutcome` is one more field in the SAME structured JSON response the
-  author already returns (confirmed this pass, not assumed).
-- **Request cap**: exactly 2 generation calls — Scene A (Tempt-invoked) and Scene B (ordinary
-  continuation). If either genuinely fails/retries (the existing `_cgAcceptDelivered`
-  staleness/rejection path, or a provider fallback to Tier 2/3), that's within the SAME existing
-  per-scene retry policy every CG scene already uses — not an extra budget line.
-- **In-app cost (Fortunes, charged to the story's balance)**: Scene A costs `getTemptFateCost()` —
-  `60 * 1.35^heat` Fortunes, rounded; for a first Tempt invocation in this story (heat = 0, ordinary
-  default scope, not OAS/intimacy-discounted), that's **60 Fortunes flat**, confirmed by reading the
-  live cost function directly. Scene B is an ordinary continuation with no Fate card — its Fortune
-  cost is whatever First Sacrifice's normal per-scene/per-Issue cost model already charges (unrelated to Tempt Fate).
-- **Provider spend (real money, unrelated to the in-app Fortune economy)**: no dedicated
-  measurement exists for a Tempt-augmented CG scene specifically; the closest known reference point
-  is the existing scene-cost telemetry (`project_scene_cost_breakdown` — Scene 1 ≈ $0.31,
-  continuation ≈ $0.12, console-corrected) — a Tempt-invoked scene plausibly runs a bit higher given
-  the added directive length (Empowerment Contract + Fatelands doctrine + the new
-  `temptFateOutcome` schema), but this has not been measured and should be read from the real
-  console after the run rather than estimated further here.
-- **Everything else stays dry**: no image generation, no additional scenes beyond A and B, no
-  batch, no exploratory retries beyond what the existing per-scene policy already allows.
-- **Per-scene spending limit**: Scene A ≤ 60 Fortunes + Scene A's own ordinary per-scene provider
-  cost (no batch/regeneration on top of the existing single-retry policy); Scene B ≤ First
-  Sacrifice's ordinary per-scene Fortune/provider cost, no Tempt surcharge (no Fate card used).
-- **Combined spending limit for this authorization**: 60 Fortunes total (Scene A's Tempt charge;
-  Scene B carries no Fortune cost of its own) + at most 2 provider generation calls' worth of real
-  spend (each within the SAME per-scene retry policy every ordinary CG scene already uses — not a
-  new, larger retry budget). No third scene, no image generation, under this authorization.
-- **Stop conditions**: if Scene A's generation is rejected/stale twice in a row (the real
-  `_cgAcceptDelivered`/provider-fallback path exhausting its existing retry policy), stop and report
-  rather than keep retrying past what an ordinary scene would; if Scene A's `temptFateOutcome`
-  report is malformed or reports `delivered:false`, stop, report the raw output, and do NOT proceed
-  to Scene B (there is nothing for Scene B to continue from yet); if Scene B's own generation fails
-  the same way, stop and report — do not substitute a third attempt.
+**Corrected paid-role table** — three cells below were wrong in the prior revision, each corrected
+by reading the actual executable branch (not the nearest comment) this pass:
 
-## Recommended wish text for Scene A
+| Role | Fires on | Model / tier (CORRECTED) | Gate | Max physical requests |
+|---|---|---|---|---|
+| CG scaffold generation | Scene A only (one-time per story) | `_callTieredProvider('scaffold', ...)` — ministral-8b-2512 primary → Grok fallback → Claude/OpenAI terminal. **(Corrected: NOT the `gpt-4o-mini` "backup" branch cited previously — that branch lives inside a dead `_isGrokScaffold` path, only reachable via an explicit bake-off harness never in play here.)** | `_shouldGenerateCGScaffold` — unconditional for staged/CG mode | up to 3, one-time |
+| 3 Body Bible generators (PC/LI/Antagonist) | Scene A only (one-time, each self-gated on the field not already existing) | `_callTieredProvider('pcBodyBible', ...)` and same-pattern siblings — ministral-8b primary → Grok → OpenAI/Claude terminal, run in parallel | self-gated on `!s.pcBodyBible` etc. | up to 3 each, 3 run in parallel — up to 9, one-time |
+| scenePlanner (the plot-contract generator's PRIMARY branch) | Every scene, Scene A and Scene B both — **now also carries Tempt Fate context (item 1 of the code fix)** | `_callTieredProvider('scenePlanner', ...)` — confirmed empirically (captured request) to use grok-4-1-fast-non-reasoning as its own primary tier (a custom `opts.tiers` override, not the shared default) → fallback tiers | `_plotContractActive()` — default ON | up to 3 per scene |
+| Legacy hard-beat planner (`mistral-small-latest` direct fetch) | **FALLBACK ONLY** — reached only if the scenePlanner primary branch throws. **(Corrected: the prior revision described this as THE planner call; it is not — it is a fallback that returns on success like the branch above it.)** Also now carries Tempt context. | `mistral-small-latest` via `/api/mistral-proxy`, single-shot, no further fallback | Only reached on scenePlanner exception | 0 typical, 1 worst-case fallback per scene |
+| `_commitScene` runtime-commit verifier | Scene B only (`state._priorSceneStateChange` is null going into Scene A) | `_callTieredProvider('runtimeCommitVerifier', ...)` — ministral primary → Grok → Claude/OpenAI terminal | Conditional on the prior scene's declared transition | up to 3, Scene B only |
+| CG emotional-gravity audit | Every scene, Scene A and Scene B both, fire-and-forget | `_auditPostMistralOnly` — **(Corrected: NOT Haiku/Sonnet, a stale comment; the real, live dispatch as of 2026-09-20 is ministral-8b-2512 ONLY, one attempt, no tiered fallback — "telemetry-only, so it should never spend on expensive fallback tiers.")** | `_auditSampleGate()` — FULL on localhost (where this test runs), not 5%-sampled | 1 per scene |
+| CG screenplay author | Every scene, Scene A and Scene B both — the main event | Tier 1 grok-4-1-fast-reasoning → Tier 2 ministral fallback → Tier 3 gpt-4o terminal | Existing per-scene retry policy | up to 3 per scene |
 
-Roman's own example, unchanged: **"everyone forgets the ceremony happened."** It's the specific
-case this whole multi-pass arc was built around, it's a compound History+Agency wish (the hardest
-case for the doctrine to get right), and using the same wording that motivated the design makes the
-result directly checkable against everything already written about it.
+**Maximum physical-request count**: Scene A up to 3 (scaffold) + 9 (bibles, parallel, one-time) + 3
+(scenePlanner) + 1 (legacy fallback, worst case) + 1 (gravity audit) + 3 (author) = **up to 20**.
+Scene B up to 3 (scenePlanner) + 1 (legacy fallback) + 3 (commit-verifier) + 1 (gravity audit) + 3
+(author) = **up to 11**. **Combined worst case: up to 31 physical provider requests across 2 logical
+scene generations.** This is higher than the prior revision's 17, because the scaffold/Bibles are
+now correctly identified as tiered (up to 3 requests each) rather than single calls, and the
+scenePlanner's own primary tier is itself a real network call (previously miscounted as "the legacy
+fallback" only). Typical case (every primary tier succeeds, no fallbacks): Scene A = 1+3+1+0+1+1 =
+7, Scene B = 1+0+1+1+1 = 4, **combined typical: 11** (unchanged from the prior estimate — the
+correction mainly widens the WORST case, which is what actually needs a hard ceiling).
 
-## Go/no-go criteria for this sheet
+## 3. Dollar ceiling and accounting/enforcement method
 
-Proceed if: the mechanism proof above (20/20, production-integration-level) is accepted as
-sufficient plumbing verification, and there is nothing else architecturally that should be dry-
-verified first. Hold if: there's a reason to test a DIFFERENT wish first, want a larger request cap,
-or want the multi-scene full-lifecycle observation included in this same authorization rather than
-deferred.
+**Accounting/enforcement method — corrected per Codex finding 6.** Checking real cost only AFTER a
+scene finishes cannot enforce that scene's own ceiling — the money is already spent by the time it's
+checked. The enforcement is instead a **pre-dispatch reservation**: before each declared phase
+(`gate.setPhase(roleTag, N)`), reserve `N × (the phase's most expensive plausible per-request cost,
+from the sourced rate table below)` against the running total; refuse to open the next phase if the
+reservation would push the running total past the phase's own or the combined ceiling. Reconcile
+against real per-request cost afterward — `cost_in_usd_ticks` where the response carries it (as the
+one true precedent's Confession attempt did for its two Grok calls), sourced-rate computation
+otherwise (`GROK_RATE`/`GPT4O_RATE` from the precedent, extended this pass with `MISTRAL_SMALL_RATE`
+for the plot-contract legacy fallback and a `MISTRAL_8B_RATE` row for ministral-8b, needed for
+scaffold/Bibles/scenePlanner/commit-verifier/gravity-audit). **An unsourced rate is a stop condition,
+not a zero** — if any tier this test's own census (§2) says could fire lacks a sourced per-token
+rate by the time of the live run, that is flagged and the reservation for that phase is computed
+from the MOST expensive sourced rate on the same tier as a conservative stand-in, not treated as
+free.
+
+- **Per-scene ceiling**: Scene A ≤ **$0.65** (absorbs the widened worst-case scaffold+9-Bible-request
+  surface, the scenePlanner's own real tiered call, plus the author). Scene B ≤ **$0.45** (no
+  scaffold/Bibles, but adds the commit-verifier).
+- **Combined ceiling**: **$1.10**.
+- **Basis**: the one real, observed precedent (`_confession_attempt1_2026_09_22.md`) spent $0.094287
+  against a $0.45 ceiling for a LARGER 4-phase flow (this test needs no OAS dance, no fate-card
+  batch). The widened figures above absorb the corrected, larger worst-case physical-request count
+  from §2 — still built from small/cheap models (ministral-8b, mini, mistral-small) layered onto the
+  same core author call the precedent already measured cheap, so the real spend is expected to land
+  far under these ceilings, same as the precedent did. **These figures are the enforced pre-dispatch
+  reservation, not an estimate presented as a guarantee** — real tracked cost is reconciled after
+  each scene settles, and Scene B does not open if Scene A's real cost already exceeds its own
+  ceiling.
+
+**Fortunes, kept explicitly separate**: Scene A's Tempt invocation costs `getTemptFateCost()` = 60
+Fortunes flat. Traced `consumeFortune`'s dev-bypass branch (`app.js` ~142266) directly: gated to QA
+host + `window._devBypass` — when active, a pure local JS decrement, `_postFortuneCharge` (the real
+server debit) is never called. This test's starting state sets both conditions. **The 60-Fortune
+charge is simulated, local-only, never a real account/payment debit — confirmed by reading the
+dev-bypass branch, not assumed.** Scene B carries no Fortune cost (ordinary continuation, no card).
+
+## 4. Exact neutral Scene B player input
+
+**Say**: (nothing — leave blank)
+**Do**: "Lirael takes a slow breath and steps back from the center of the clearing."
+
+Minimal, ordinary, non-investigative — no reference to the ceremony, memory, or forgetting, no
+question, no clue-hunting. Lets the durable consequence (§ below) shape Scene B's own prose entirely
+through the model's judgment, not a prompt that tells it what to invent.
+
+## 5. Scene B acceptance criteria — corrected
+
+`_runCGScreenplayGenInner`/`_completeStagedSceneFromScreenplay` check `_tfoWasInvokedAtStart` first,
+before ever looking at `plan.temptFateOutcome` — an ordinary continuation never processes an outcome
+field even if the model stray-returns one (proven, `_tempt_fate_outcome_integration_control.mjs`
+§9).
+
+- **A missing/absent `temptFateOutcome` on Scene B is the EXPECTED, correct result — not a failure.**
+- Scene B's success is measured by whether it **consumes** Scene A's already-committed durable
+  effects — do the assembly's confusion and any surviving evidence Scene A established shape Scene
+  B's real prose — **without recommitting the original invocation**. **Now also verify the real
+  planner request for Scene B** (captured, per the fixed wiring in item 1 of the code-fix trace)
+  actually carried the durable-consequence text — a direct, observable check that the failure mode
+  Codex named ("author receives information the planner never had") did not recur for this specific
+  live run, not just in the dry proof.
+- Scene B should not have any character "suddenly and cleanly" remember the ceremony, and should not
+  force a predetermined investigation.
+
+## 6. Scene delivery vs. outcome persistence — kept as separate, separately-reported outcomes
+
+- **Scene delivered**: prose rendered, passed the app's own `_cgAcceptDelivered` check.
+- **Outcome persisted**: `plan.temptFateOutcome` was well-formed, passed
+  `_validateTemptFateOutcomeReport`'s STRUCTURAL checks, and was committed via
+  `_cgTemptFateCommitAtPersistence` — now confirmed (item 4 of the code fix) to run only AFTER real
+  scene persistence (`state.scenes.push`/`_sceneLedgerCommit`), not at generation acceptance alone.
+
+**These can diverge.** If Scene A delivers with an unusable outcome report: preserve BOTH the
+rendered scene text and the raw/parsed `temptFateOutcome` output exactly as returned, report both
+explicitly, and **stop before Scene B**.
+
+**Per Codex finding 4's closing note**: `_validateTemptFateOutcomeReport`'s pass is STRUCTURAL
+(shape/types) only — it is not independent semantic verification that the reported changes actually
+happened in the prose. Report the model's `delivered`/`changed`/`establishedEvidence` fields as
+**model-reported claims**, cross-check them by reading the actual rendered scene text alongside the
+report (a human read, not an automated semantic check — none exists), and say explicitly whether the
+prose supports the claim, rather than presenting a structurally-valid report as proof the effect is
+real.
+
+## 7. Image generation and image preparation — corrected enforcement
+
+**Corrected per Codex finding 6.** The endpoint allowlist alone does NOT block image-preparation
+requests riding through an ALLOWED text endpoint — `isImagePreparationRequest`
+(`_e2e_network_gate.mjs` ~140) classifies by request-body `purpose` field or system-prompt text
+(`STYLE-ONLY EXTRACTION (HARD)` / "visual art director for a comic book / graphic novel"),
+independent of which endpoint carries the request. The live-test script must pass
+`installFailClosedNetworkGate(page, {blockImagePreparation: true})` **explicitly** — this
+body-inspects every allowed-endpoint request and aborts before dispatch if it matches either image-
+prep shape — and must include at least one assertion exercising each of the two classified shapes
+(a style-only extraction request, and a text-only image-rewriting request) to confirm both are
+caught, not just endpoint exclusion.
+
+## Preserved wish text, and the Lirael knowledge-limits evaluation criterion
+
+Wish, unchanged: **"everyone forgets the ceremony happened."**
+
+Real cast "everyone" plausibly reaches (per §1's Scene 1 grounding): Seren, Seren's family, the
+presiding Dohkar, the ~24-person assembly, Julian. **Open question, evaluated not presumed**: does
+it also include **Lirael herself** — both the wisher and the narrating POV, the genuinely hard case
+for "everyone forgets" to resolve coherently.
+
+Check in Scene B's prose specifically: **Lirael must not casually narrate the forgotten ceremony
+from memory while everyone else around her is confused**, unless the scene's own generated outcome
+explicitly establishes a justified exception. **Surviving physical evidence may remain** (torn
+mouth-band, "The Answer" changing hands) **unless the wish's own generated scope says otherwise** —
+the wish targets memory, not necessarily physical consequence; report what the model actually did
+either way.
+
+## Go/no-go criteria
+
+Proceed if: the mechanism proof (47/47, production-integration-level, including all four Codex-
+identified fixes) is accepted as sufficient plumbing verification, the corrected paid-role census in
+§2 is accepted as complete, the widened ceilings in §3 are accepted as the enforced pre-dispatch
+reservations, and the `_intimacyDevMode` starting-state bypass (§1) and `blockImagePreparation: true`
+(§7) are accepted as the correct, disclosed mechanisms. Hold if: there's a reason to test a different
+wish first, want different ceilings, want the Lirael-knowledge-limits question narrowed or dropped,
+or want the full multi-scene volatility-window lifecycle folded into this same authorization (still
+out of scope — this sheet tests "the wish lands" + "one ordinary scene keeps living with it," not
+the full 3-5+ scene fade-out).

@@ -1,4 +1,5 @@
-// TEMPT FATE OUTCOME — PRODUCTION INTEGRATION CONTROL (Roman, 2026-09-23)
+// TEMPT FATE OUTCOME — PRODUCTION INTEGRATION CONTROL (Roman, 2026-09-23; extended 2026-09-24
+// after Codex's source review of the proposed live-test authorization sheet)
 //
 // Roman: "The summary proves that simulated reports work, but doesn't say which real generation
 // call produces the report or where the real scene-acceptance path commits it. Given the earlier
@@ -6,13 +7,28 @@
 // app's actual acceptance of the scene. A model asserting that flag cannot, by itself, establish
 // that the player received the scene." No paid calls.
 //
+// 2026-09-24 (Codex review, addressed dry): five real production gaps found by reading source, not
+// assumed — (1) the planner (_generateLiteraryPlotContract) never read Tempt Fate's durable
+// consequences or the current invocation, only the ordinary-wish array; (2) prompt construction for
+// BOTH the planner and the author read state.temptFateWish LIVE, after the scaffold/planner awaits
+// — a second wish sealed mid-flight could leak into the wrong generation's prompt even though the
+// eventual commit stayed correctly attributed; cleanup also cleared the live global unconditionally,
+// which could destroy a legitimately newer invocation; (3) the outcome-commit dedup keyed on local
+// sceneIdx, which resets at Issue boundaries, so a genuinely new proposal at a reused scene number
+// was rejected as a duplicate; (4) the commit ran inside _runCGScreenplayGenInner, which only proves
+// GENERATION acceptance, not that the scene was ever persisted/displayed. §§10-14 below prove each
+// fix against the real functions; §§2/3/5-9 (unchanged from 2026-09-23) are adjusted only where the
+// commit's new location (at persistence, not at generation) changes what they must call to observe
+// it — their assertions and intent are otherwise unchanged.
+//
 // Unlike the prior control (which called _commitTemptFateOutcome directly with hand-built objects),
 // THIS control exercises the REAL production functions: the real system-prompt builder
-// (_buildCGScreenplaySystemPrompt), the real dispatch (_runCGScreenplayGen -> fetch('/api/proxy')),
-// the real JSON parse/normalize (_validateAndNormalizeCGPlan), the real acceptance gate
-// (_cgAcceptDelivered), and the wiring added this pass right after it (inside
-// _runCGScreenplayGenInner, gated the SAME way the pre-existing kink-memory recording already is).
-// The network layer is STUBBED (installFailClosedNetworkGate's gate.stub), never called for real.
+// (_buildCGScreenplaySystemPrompt), the real planner (_generateLiteraryPlotContract), the real
+// dispatch (_runCGScreenplayGen -> fetch('/api/proxy')), the real JSON parse/normalize
+// (_validateAndNormalizeCGPlan), the real acceptance gate (_cgAcceptDelivered), and the real
+// commit-at-persistence + cleanup functions (_cgTemptFateCommitAtPersistence,
+// _cgTemptFateAftermathCleanup). The network layer is STUBBED (installFailClosedNetworkGate's
+// gate.stub), never called for real.
 //
 // usage: node _tempt_fate_outcome_integration_control.mjs
 import { chromium } from 'playwright-core';
@@ -41,7 +57,11 @@ const VALID_BEATS = [{ idx: 0, kind: 'narration', text: 'The ceremony hall stand
     && typeof window._runCGScreenplayGen === 'function'
     && typeof window._cgAcceptDelivered === 'function'
     && typeof window._commitTemptFateOutcome === 'function'
-    && typeof window._recordTemptFateEvent === 'function', { timeout: 30000 })
+    && typeof window._recordTemptFateEvent === 'function'
+    && typeof window._generateLiteraryPlotContract === 'function'
+    && typeof window._cgTemptFateCommitAtPersistence === 'function'
+    && typeof window._cgTemptFateAftermathCleanup === 'function'
+    && typeof window._buildTemptFateDurableConsequenceDirective === 'function', { timeout: 30000 })
     .catch(async (e) => { console.error('HARNESS BLOCKER: app not ready or required functions not exposed — ' + (e && e.message)); await browser.close(); process.exit(2); });
   console.log('✓ real app reached, all required functions exposed on window\n');
 
@@ -58,7 +78,7 @@ const VALID_BEATS = [{ idx: 0, kind: 'narration', text: 'The ceremony hall stand
       window.state.playerName = 'Lirael';
       window.state.currentPrimaryLiId = 'julian';
       window.state._temptFateDurableConsequences = [];
-      window.state._temptOutcomeCommittedScenes = {};
+      window.state._temptOutcomeCommittedProposals = {};
       window.state._temptFateLedger = null;
       window.state._cgDeliveredAssignments = null;
       window.state.volatility_window = { active: false, severity: 0, remaining_scenes: 0 };
@@ -92,7 +112,10 @@ const VALID_BEATS = [{ idx: 0, kind: 'narration', text: 'The ceremony hall stand
   // reassigns before its own generation call — not by calling gate.stub() repeatedly.
   let _currentPlanFields = {};
   let _inFlightSideEffect = null; // optional async fn run WHILE the "network request" is pending — simulates a race
-  gate.stub('/api/proxy', async () => {
+  let _proxyRequestBodies = []; // every real request body this stub has seen, in order — for sections that need to inspect what was ACTUALLY sent, not just what came back (Roman/Codex review, 2026-09-24, §§11-12)
+  gate.stub('/api/proxy', async (req) => {
+    let _body = null; try { _body = JSON.parse(req.postData() || '{}'); } catch (_) {}
+    _proxyRequestBodies.push(_body);
     if (_inFlightSideEffect) { const fn = _inFlightSideEffect; _inFlightSideEffect = null; await fn(); }
     return { content: JSON.stringify(Object.assign({ beats: VALID_BEATS, visualState: {}, is_consummate_scene: false }, _currentPlanFields)) };
   });
@@ -147,12 +170,21 @@ const VALID_BEATS = [{ idx: 0, kind: 'narration', text: 'The ceremony hall stand
 
     const before = await page.evaluate(() => (window.state._temptFateDurableConsequences || []).length);
     const returnedPlan = await page.evaluate((si) => window._runCGScreenplayGen(si, 'she walks the empty hall', ''), sceneIdx);
+    const afterGenerationAlone = await page.evaluate(() => (window.state._temptFateDurableConsequences || []).length);
+    // COMMIT NOW HAPPENS AT PERSISTENCE, NOT AT GENERATION (Roman/Codex review, 2026-09-24 — see
+    // §14 below for the dedicated proof). _cgTemptFateCommitAtPersistence is the real function
+    // _completeStagedSceneFromScreenplay calls immediately after state.scenes.push/
+    // _sceneLedgerCommit; calling it directly here simulates "persistence happened" without
+    // invoking that whole async pipeline (same reasoning as _cgTemptFateAftermathCleanup's own
+    // extraction, which this control already relies on).
+    await page.evaluate((p) => window._cgTemptFateCommitAtPersistence(p), returnedPlan);
     const after = await page.evaluate(() => (window.state._temptFateDurableConsequences || []).length);
     const entry = await page.evaluate(() => window.state._temptFateDurableConsequences[0]);
 
     ok('the real dispatch returned a plan (not a stale-rejected/null result)', returnedPlan && !returnedPlan.__staleRejected && !returnedPlan.__plannerFunctionRejected, JSON.stringify(returnedPlan && { __staleRejected: returnedPlan.__staleRejected, __plannerFunctionRejected: returnedPlan.__plannerFunctionRejected, hasBeats: !!(returnedPlan && returnedPlan.beats) }));
     ok('the parser RETAINED temptFateOutcome on the returned plan (not stripped by normalization)', returnedPlan && returnedPlan.temptFateOutcome && returnedPlan.temptFateOutcome.delivered === true, JSON.stringify(returnedPlan && returnedPlan.temptFateOutcome));
-    ok('a durable consequence was actually committed via the REAL production path (not by calling the recorder directly)', after === before + 1, 'before=' + before + ' after=' + after);
+    ok('generation ALONE commits nothing — the returned plan carries the pending outcome, not yet a durable entry', afterGenerationAlone === before, 'before=' + before + ' afterGenerationAlone=' + afterGenerationAlone);
+    ok('a durable consequence was actually committed via the REAL production path once persistence is simulated (not by calling the recorder directly)', after === before + 1, 'before=' + before + ' after=' + after);
     ok('the committed entry content matches what the (stubbed) model reported', entry && entry.requestedRupture === 'everyone forgets the ceremony happened' && entry.establishedEvidence[0].indexOf('ceremonial hall') !== -1, JSON.stringify(entry));
 
     // Filters the standard ambient page-load calls (csp-report/config/geo/beta-events) present on
@@ -223,9 +255,10 @@ const VALID_BEATS = [{ idx: 0, kind: 'narration', text: 'The ceremony hall stand
     }, sceneIdx);
     stubProxyWithPlan({ temptFateOutcome: { delivered: false } });
     const before = await page.evaluate(() => (window.state._temptFateDurableConsequences || []).length);
-    await page.evaluate((si) => window._runCGScreenplayGen(si, 'x', ''), sceneIdx);
+    const rp5 = await page.evaluate((si) => window._runCGScreenplayGen(si, 'x', ''), sceneIdx);
+    await page.evaluate((p) => window._cgTemptFateCommitAtPersistence(p), rp5);
     const after = await page.evaluate(() => (window.state._temptFateDurableConsequences || []).length);
-    ok('a model-reported delivered:false produces NO commit through the real dispatch path', after === before, 'before=' + before + ' after=' + after);
+    ok('a model-reported delivered:false produces NO commit through the real dispatch + commit-at-persistence path', after === before, 'before=' + before + ' after=' + after);
   }
 
   // ═══════════════════════════════════════════════════════════════════════════════════════════
@@ -241,7 +274,8 @@ const VALID_BEATS = [{ idx: 0, kind: 'narration', text: 'The ceremony hall stand
     stubProxyWithPlan({}); // no temptFateOutcome field at all — simulates a model that omitted it
     consoleLines.length = 0;
     const before = await page.evaluate(() => (window.state._temptFateDurableConsequences || []).length);
-    await page.evaluate((si) => window._runCGScreenplayGen(si, 'x', ''), sceneIdx);
+    const rp6 = await page.evaluate((si) => window._runCGScreenplayGen(si, 'x', ''), sceneIdx);
+    await page.evaluate((p) => window._cgTemptFateCommitAtPersistence(p), rp6);
     const after = await page.evaluate(() => (window.state._temptFateDurableConsequences || []).length);
     const surfaced = consoleLines.some((l) => l.indexOf('[TEMPT-OUTCOME]') !== -1 && /no temptFateOutcome field/i.test(l));
     ok('no commit happens when the model omits the report entirely', after === before, 'before=' + before + ' after=' + after);
@@ -261,10 +295,12 @@ const VALID_BEATS = [{ idx: 0, kind: 'narration', text: 'The ceremony hall stand
     stubProxyWithPlan({
       temptFateOutcome: { delivered: true, changed: [{ subject: 'x', whatChanged: 'y' }], durability: [{ aspect: 'x', status: 'persists' }], establishedEvidence: ['z'] }
     });
-    await page.evaluate((si) => window._runCGScreenplayGen(si, 'x', ''), sceneIdx);
-    await page.evaluate((si) => window._runCGScreenplayGen(si, 'x', ''), sceneIdx); // simulates a retry/duplicate generation for the SAME scene
+    const rp7a = await page.evaluate((si) => window._runCGScreenplayGen(si, 'x', ''), sceneIdx);
+    await page.evaluate((p) => window._cgTemptFateCommitAtPersistence(p), rp7a);
+    const rp7b = await page.evaluate((si) => window._runCGScreenplayGen(si, 'x', ''), sceneIdx); // simulates a retry/duplicate generation for the SAME scene
+    await page.evaluate((p) => window._cgTemptFateCommitAtPersistence(p), rp7b); // simulates that retry ALSO reaching persistence
     const count = await page.evaluate(() => (window.state._temptFateDurableConsequences || []).length);
-    ok('exactly ONE entry exists after two real generation calls for the same scene (idempotent through the real path, not just the pure function)', count === 1, 'count=' + count);
+    ok('exactly ONE entry exists after two real generation+persistence-commit calls for the same scene (idempotent through the real path, deduplicated by proposal identity, not just the pure function)', count === 1, 'count=' + count);
   }
   console.log('  NOTE: the exhaustive enumeration of malformed report SHAPES (6 variants) is already covered by');
   console.log('  _tempt_fate_model_driven_outcome_control.mjs §4 (calls the same real _commitTemptFateOutcome this');
@@ -297,7 +333,8 @@ const VALID_BEATS = [{ idx: 0, kind: 'narration', text: 'The ceremony hall stand
       window._recordTemptFateEvent(w); // does NOT touch state.tempt_fate_invoked_this_turn or temptFateWish — a SEPARATE, later seal
     }, secondWish);
 
-    await page.evaluate((si) => window._runCGScreenplayGen(si, 'x', ''), sceneIdx);
+    const rp8 = await page.evaluate((si) => window._runCGScreenplayGen(si, 'x', ''), sceneIdx);
+    await page.evaluate((p) => window._cgTemptFateCommitAtPersistence(p), rp8);
     const entry = await page.evaluate(() => window.state._temptFateDurableConsequences[0]);
     const ledgerLen = await page.evaluate(() => window.state._temptFateLedger.length);
 
@@ -319,7 +356,8 @@ const VALID_BEATS = [{ idx: 0, kind: 'narration', text: 'The ceremony hall stand
       window._recordTemptFateEvent(w);
     }, wish);
     stubProxyWithPlan({ temptFateOutcome: { delivered: true, changed: [{ subject: 'x', whatChanged: 'y' }], durability: [{ aspect: 'x', status: 'persists' }], establishedEvidence: ['original'] } });
-    await page.evaluate((si) => window._runCGScreenplayGen(si, 'x', ''), sceneIdxA);
+    const rp9a = await page.evaluate((si) => window._runCGScreenplayGen(si, 'x', ''), sceneIdxA);
+    await page.evaluate((p) => window._cgTemptFateCommitAtPersistence(p), rp9a);
     const countAfterA = await page.evaluate(() => window.state._temptFateDurableConsequences.length);
 
     // Turn N+1: an ORDINARY continuation — Tempt genuinely NOT invoked this turn — but the
@@ -332,12 +370,216 @@ const VALID_BEATS = [{ idx: 0, kind: 'narration', text: 'The ceremony hall stand
     });
     stubProxyWithPlan({ temptFateOutcome: { delivered: true, changed: [{ subject: 'x', whatChanged: 'STRAY — should never be committed' }], durability: [{ aspect: 'x', status: 'persists' }], establishedEvidence: ['STRAY'] } });
     consoleLines.length = 0;
-    await page.evaluate((si) => window._runCGScreenplayGen(si, 'x', ''), sceneIdxB);
+    const rp9b = await page.evaluate((si) => window._runCGScreenplayGen(si, 'x', ''), sceneIdxB);
+    await page.evaluate((p) => window._cgTemptFateCommitAtPersistence(p), rp9b);
     const countAfterB = await page.evaluate(() => window.state._temptFateDurableConsequences.length);
     const surfacedStray = consoleLines.some((l) => /ORDINARY continuation.*Tempt not invoked/i.test(l));
 
     ok('the ordinary continuation (Tempt not invoked) does NOT create a second durable entry despite the model echoing a stray temptFateOutcome', countAfterB === countAfterA, 'countAfterA=' + countAfterA + ' countAfterB=' + countAfterB);
     ok('the stray report is explicitly surfaced as ignored, not silently dropped', surfacedStray, JSON.stringify(consoleLines.filter(l => l.indexOf('TEMPT-OUTCOME') !== -1)));
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════════════════════
+  section('10. PLANNER WIRING — the real planner request carries Tempt Fate context, Scene A (active invocation) and Scene B (durable-only)');
+  await resetBaseline();
+  {
+    // Codex: "_generateLiteraryPlotContract does not reference temptFateWish,
+    // _temptFateDurableConsequences, the new durable directive, or the shared continuity-spine
+    // builder... Prove both Scene A and Scene B through captured planner requests, with the
+    // planner enabled." window._plotContractKill is ON by default in resetBaseline (every other
+    // section deliberately suppresses this unrelated system) — flipped OFF here, restored after.
+    await page.evaluate(() => {
+      window._plotContractKill = false;
+      window.state.aPlot = { goal: 'stub goal' }; // no milestones/open-row structure — the plain default planner branch, matching an ordinary continuation
+      window.state._sceneStateCard = {};
+      window.state.rPlot = {};
+    });
+
+    // Scene A: an active invocation THIS turn — the planner's request must carry the wish itself.
+    // _proxyRequestBodies is the shared /api/proxy stub's own Node-side recorder (declared above,
+    // near stubProxyWithPlan) — every real request body this generation makes lands in it, in order.
+    const sceneIdxA = 1;
+    const wishA = 'everyone forgets the ceremony happened';
+    await page.evaluate((w) => {
+      window.state.tempt_fate_invoked_this_turn = true;
+      window.state.temptFateWish = w;
+      window._recordTemptFateEvent(w);
+    }, wishA);
+    _proxyRequestBodies.length = 0;
+    await page.evaluate((si) => window._runCGScreenplayGen(si, 'she steps back', ''), sceneIdxA);
+    const joinedA = JSON.stringify(_proxyRequestBodies);
+    ok('at least one real request this generation carried the planner\'s ACTIVE INVOCATION marker (Scene A)', joinedA.indexOf('ACTIVE INVOCATION THIS SCENE') !== -1, joinedA.slice(0, 400));
+    ok('that request carried the actual wish text, not a placeholder (Scene A)', joinedA.indexOf(wishA) !== -1);
+
+    // Scene B: an ORDINARY continuation — Tempt not invoked this turn — but a prior committed
+    // durable consequence exists. The planner's request must carry the durable consequence, and
+    // must NOT carry the active-invocation marker (nothing is being invoked this turn).
+    const sceneIdxB = 2;
+    await page.evaluate(() => {
+      window.state.tempt_fate_invoked_this_turn = false;
+      window.state.temptFateWish = '';
+      window.state._temptFateDurableConsequences = [{
+        id: 'tfc_probe', source: 'tempt', requestedRupture: 'everyone forgets the ceremony happened', proposalId: 'probe',
+        sceneIdx: 1, changed: [{ subject: 'the assembly', whatChanged: 'no longer remembers the ceremony' }],
+        durability: [{ aspect: 'the memory gap', status: 'persists' }], knowledgeStates: [], establishedEvidence: ['torn mouth-band on the ground'], openPossibilities: []
+      }];
+    });
+    _proxyRequestBodies.length = 0;
+    await page.evaluate((si) => window._runCGScreenplayGen(si, 'she looks around the clearing', ''), sceneIdxB);
+    const joinedB = JSON.stringify(_proxyRequestBodies);
+    ok('the ordinary continuation\'s real request carries the prior committed durable consequence (Scene B)', joinedB.indexOf('torn mouth-band on the ground') !== -1, joinedB.slice(0, 400));
+    ok('the ordinary continuation\'s real request does NOT carry the active-invocation marker (Scene B — nothing is being invoked this turn)', joinedB.indexOf('ACTIVE INVOCATION THIS SCENE') === -1);
+
+    await page.evaluate(() => { window._plotContractKill = true; }); // restore — every other section relies on this being suppressed
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════════════════════
+  section('11. AUTHOR-PROMPT OWNERSHIP — a wish sealed mid-flight (during the planner\'s own await) must not leak into the author\'s actual request');
+  await resetBaseline();
+  {
+    // Codex: "subsequent prompt construction still reads mutable state. A second wish sealed
+    // during scaffold/planner work can therefore change the wish the author sees while the
+    // eventual record remains attributed to the first proposal." Enable the planner so a REAL
+    // await exists between generation start and the author's own _buildCGScreenplayUserPrompt
+    // call (with the planner suppressed, as in every other section, there is no await in between
+    // to race against — this section exists specifically to open that window).
+    await page.evaluate(() => {
+      window._plotContractKill = false;
+      window.state.aPlot = { goal: 'stub goal' };
+      window.state._sceneStateCard = {};
+      window.state.rPlot = {};
+    });
+    const sceneIdx = 1;
+    const firstWish = 'the FIRST wish — every real request this generation makes must reflect only this one';
+    const secondWish = 'a SECOND wish sealed mid-flight, before the author\'s own prompt is built';
+    await page.evaluate((w) => {
+      window.state.tempt_fate_invoked_this_turn = true;
+      window.state.temptFateWish = w;
+      window._recordTemptFateEvent(w);
+    }, firstWish);
+    // Fires on the FIRST real /api/proxy call this generation makes (whichever role reaches it
+    // first — scaffold fallback, the planner, or the author; the point is it lands BEFORE the
+    // author's own prompt is built, since scaffold+planner both precede it in the real call order).
+    _inFlightSideEffect = () => page.evaluate((w) => { window._recordTemptFateEvent(w); }, secondWish);
+    _proxyRequestBodies.length = 0;
+    await page.evaluate((si) => window._runCGScreenplayGen(si, 'x', ''), sceneIdx);
+    const capturedBodies = _proxyRequestBodies.slice();
+    const allBodiesJSON = JSON.stringify(capturedBodies);
+    const ledgerLen = await page.evaluate(() => window.state._temptFateLedger.length);
+
+    ok('the second wish really was sealed mid-flight (ledger now has 2 entries — the race actually happened)', ledgerLen === 2, 'ledgerLen=' + ledgerLen);
+    ok('NO real request this generation made carries the second wish\'s text', allBodiesJSON.indexOf(secondWish) === -1, allBodiesJSON.slice(0, 200));
+    ok('the author\'s own request (the last one this generation makes) carries the FIRST wish\'s text', (() => { const last = JSON.stringify(capturedBodies[capturedBodies.length - 1] || {}); return last.indexOf(firstWish) !== -1; })(), allBodiesJSON.slice(-400));
+
+    await page.evaluate(() => { window._plotContractKill = true; });
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════════════════════
+  section('12. CLEANUP OWNERSHIP — a newer invocation sealed mid-flight must survive this generation\'s cleanup, not be destroyed by it');
+  await resetBaseline();
+  {
+    // Codex: "Cleanup also clears the current global wish and flag unconditionally... preserve
+    // that newer invocation after the first finishes." Exercises the REAL _cgTemptFateAftermathCleanup.
+    const firstWish = 'the FIRST wish — this generation\'s own invocation';
+    const secondWish = 'a SECOND wish sealed mid-flight — must survive cleanup for its OWN future generation';
+    const owned = await page.evaluate((w) => {
+      window.state.tempt_fate_invoked_this_turn = true;
+      window.state.temptFateWish = w;
+      const entry = window._recordTemptFateEvent(w);
+      return entry || window.state._temptFateLedger[window.state._temptFateLedger.length - 1];
+    }, firstWish);
+    // Simulate the second wish being sealed WHILE the first generation was still in flight —
+    // exactly what §11 proved actually happens to the ledger under a real UI race.
+    await page.evaluate((w) => { window._recordTemptFateEvent(w); window.state.temptFateWish = w; window.state.tempt_fate_invoked_this_turn = true; }, secondWish);
+
+    consoleLines.length = 0;
+    await page.evaluate((o) => window._cgTemptFateAftermathCleanup(o, true), owned);
+    const liveWishAfter = await page.evaluate(() => window.state.temptFateWish);
+    const liveInvokedAfter = await page.evaluate(() => window.state.tempt_fate_invoked_this_turn);
+    const preservedLog = consoleLines.some((l) => /preserving live state/i.test(l));
+
+    ok('the live wish still reads as the SECOND (newer) invocation — NOT destroyed by the first generation\'s cleanup', liveWishAfter === secondWish, 'liveWishAfter=' + liveWishAfter);
+    ok('the live invoked-this-turn flag was NOT cleared — the second invocation remains live for its own future generation', liveInvokedAfter === true, 'liveInvokedAfter=' + liveInvokedAfter);
+    ok('the preservation is explicitly logged, not silent', preservedLog, JSON.stringify(consoleLines.filter((l) => l.indexOf('TEMPT-CLEANUP') !== -1)));
+
+    // Regression: the ORDINARY case (no race — cleanup owns the still-current invocation) must
+    // still clear normally, exactly as before this fix.
+    await resetBaseline();
+    const ordinaryWish = 'an ordinary, unraced invocation';
+    const ordinaryOwned = await page.evaluate((w) => {
+      window.state.tempt_fate_invoked_this_turn = true;
+      window.state.temptFateWish = w;
+      const entry = window._recordTemptFateEvent(w);
+      return entry || window.state._temptFateLedger[window.state._temptFateLedger.length - 1];
+    }, ordinaryWish);
+    await page.evaluate((o) => window._cgTemptFateAftermathCleanup(o, true), ordinaryOwned);
+    const ordinaryWishAfter = await page.evaluate(() => window.state.temptFateWish);
+    const ordinaryInvokedAfter = await page.evaluate(() => window.state.tempt_fate_invoked_this_turn);
+    ok('REGRESSION: the ordinary (unraced) case still clears the live wish/flag normally, exactly as before this fix', ordinaryWishAfter === '' && ordinaryInvokedAfter === false, 'wish=' + JSON.stringify(ordinaryWishAfter) + ' invoked=' + ordinaryInvokedAfter);
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════════════════════
+  section('13. DEDUPLICATION BY PROPOSAL IDENTITY — a distinct later wish at the SAME local scene number must NOT be rejected as a duplicate; a genuine duplicate callback must still be rejected');
+  await resetBaseline();
+  {
+    // Codex: "_commitTemptFateOutcome still deduplicates solely by sceneIdx... The committed-scene
+    // map is carried into subsequent issues, where scene numbering restarts... Cover duplicate
+    // callbacks and a distinct later wish using the same local scene number." Calls the REAL
+    // _commitTemptFateOutcome directly (established pattern in this file's own §7 note) — this is
+    // a pure-function-level proof of the dedup KEY, independent of the full dispatch pipeline.
+    const sceneIdx = 5; // Issue 1's local scene 5
+    const entryIssue1 = { id: 'tfl_1001', wishText: 'Issue 1, local scene 5' };
+    const report1 = { delivered: true, changed: [{ subject: 'x', whatChanged: 'Issue 1 effect' }], durability: [{ aspect: 'x', status: 'persists' }], establishedEvidence: ['Issue 1 evidence'] };
+    const committed1 = await page.evaluate((args) => window._commitTemptFateOutcome(args.sceneIdx, args.entry, args.report), { sceneIdx, entry: entryIssue1, report: report1 });
+    ok('the first proposal (Issue 1, local scene 5) commits successfully', !!committed1, JSON.stringify(committed1));
+
+    // A DUPLICATE callback for the SAME proposal (same stable id) at the same sceneIdx — must be rejected.
+    const committedDup = await page.evaluate((args) => window._commitTemptFateOutcome(args.sceneIdx, args.entry, args.report), { sceneIdx, entry: entryIssue1, report: report1 });
+    ok('a genuine duplicate callback for the SAME proposal is rejected (returns null, no new entry)', committedDup === null, JSON.stringify(committedDup));
+
+    // A DISTINCT proposal (different stable id — a later Issue's own new invocation) reusing the
+    // SAME local sceneIdx (Issue 2's own scene numbering restarted from 0/low numbers, per the
+    // save-carry mechanism this file's own header notes) — must commit successfully, NOT be
+    // rejected as a duplicate of the unrelated Issue 1 proposal that happened to share a number.
+    const entryIssue2 = { id: 'tfl_2001', wishText: 'Issue 2, ALSO local scene 5 — a different proposal entirely' };
+    const report2 = { delivered: true, changed: [{ subject: 'y', whatChanged: 'Issue 2 effect' }], durability: [{ aspect: 'y', status: 'persists' }], establishedEvidence: ['Issue 2 evidence'] };
+    const committed2 = await page.evaluate((args) => window._commitTemptFateOutcome(args.sceneIdx, args.entry, args.report), { sceneIdx, entry: entryIssue2, report: report2 });
+    ok('a DISTINCT proposal at the SAME local sceneIdx (simulating an Issue-boundary reset) commits successfully — not rejected as a duplicate', !!committed2, JSON.stringify(committed2));
+
+    const finalCount = await page.evaluate(() => window.state._temptFateDurableConsequences.length);
+    ok('exactly TWO durable entries exist — one per genuine proposal, the duplicate callback added nothing', finalCount === 2, 'finalCount=' + finalCount);
+
+    // A proposal with NO stable id at all must be refused, not silently deduplicated against the
+    // wrong thing (defense-in-depth for the case a caller fails to capture a real ledger entry).
+    const committedNoId = await page.evaluate((args) => window._commitTemptFateOutcome(args.sceneIdx, args.entry, args.report), { sceneIdx: 6, entry: { wishText: 'no stable id' }, report: report1 });
+    ok('a proposal with no stable id is refused rather than committed unsafely', committedNoId === null, JSON.stringify(committedNoId));
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════════════════════
+  section('14. COMMIT-AT-PERSISTENCE — structural proof that a failure before real scene persistence leaves no durable outcome');
+  {
+    // §2 above already proves, dynamically, that GENERATION ALONE (before _cgTemptFateCommitAtPersistence
+    // is ever called) leaves state._temptFateDurableConsequences unchanged. What remains to prove
+    // is that in the REAL served source, the commit call sits textually AFTER real persistence
+    // (state.scenes.push / _sceneLedgerCommit) inside the SAME try block, so an exception anywhere
+    // in prose assembly/push/ledger-commit prevents the commit line from ever being reached — the
+    // same structural-proof style this file's own §4 already uses for the acceptance gate.
+    const appJs = await (await fetch('http://localhost:3000/app.js')).text();
+    const pushIdx = appJs.indexOf("state.scenes.push({ title: '', synopsis: '', text: proseAssembled, fateCard: null });");
+    const ledgerCommitIdx = appJs.indexOf("_sceneLedgerCommit(state, { kind: 'cg'");
+    const commitAtPersistenceCallIdx = appJs.indexOf('_cgTemptFateCommitAtPersistence(plan);');
+    const commitAtPersistenceDefIdx = appJs.indexOf('function _cgTemptFateCommitAtPersistence(plan)');
+    ok('found all four source anchors in the real served app.js', pushIdx !== -1 && ledgerCommitIdx !== -1 && commitAtPersistenceCallIdx !== -1 && commitAtPersistenceDefIdx !== -1, JSON.stringify({ pushIdx, ledgerCommitIdx, commitAtPersistenceCallIdx, commitAtPersistenceDefIdx }));
+    ok('real prose persistence (state.scenes.push) happens BEFORE the Tempt-outcome commit call in source order', pushIdx < commitAtPersistenceCallIdx, JSON.stringify({ pushIdx, commitAtPersistenceCallIdx }));
+    ok('the scene ledger commit ALSO happens BEFORE the Tempt-outcome commit call in source order', ledgerCommitIdx < commitAtPersistenceCallIdx, JSON.stringify({ ledgerCommitIdx, commitAtPersistenceCallIdx }));
+    // Both the push and the commit call sit inside the SAME try block if no unrelated `} catch` or
+    // `function` boundary appears between the ledger-commit line and the commit call line other
+    // than plain nested try/catch (which the source uses for defense-in-depth around each sub-step,
+    // never a function/scope boundary) — approximate but meaningful check: no top-level `async
+    // function` declaration appears between them (would mean they are NOT in the same function/try).
+    const between = appJs.slice(ledgerCommitIdx, commitAtPersistenceCallIdx);
+    ok('no function boundary sits between real persistence and the commit call (both remain in the same try scope)', between.indexOf('async function ') === -1 && between.indexOf('\n  function ') === -1, 'betweenLen=' + between.length);
+    ok('_cgTemptFateCommitAtPersistence is defined as its own extracted function (mirrors _cgTemptFateAftermathCleanup extraction) — directly callable from a dry control, as sections 2/5/6/7/8/9 above already do', commitAtPersistenceDefIdx !== -1);
   }
 
   await browser.close();

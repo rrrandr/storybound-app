@@ -82607,8 +82607,12 @@ Return ONLY valid JSON:
       // _tempt_fate_model_driven_outcome_2026_09_23.md.
       state._temptFateDurableConsequences = [];
       // Idempotency guard for that commit pipeline — mirrors
-      // _committedState._committedThroughScene's own duplicate-commit guard.
-      state._temptOutcomeCommittedScenes = {};
+      // _committedState._committedThroughScene's own duplicate-commit guard. Keyed by the
+      // ledger proposal's stable id (Roman/Codex review 2026-09-24), NOT local sceneIdx — sceneIdx
+      // resets at Issue boundaries and this map is itself carried across them (see the carry
+      // block below), so a sceneIdx key would misclassify a genuinely new proposal as a duplicate
+      // once local numbering wraps.
+      state._temptOutcomeCommittedProposals = {};
       state._sceneLedger = null;          // scene ledger (page record) — per story, carried across an issue boundary by explicit re-stamp only
       state._authoringSceneKey = null;
       state._stagedAuthoringSceneIndex = null;
@@ -99971,10 +99975,19 @@ function _buildAuthorFloorDirective(s) {
   // path, so contract-gen is a small dedicated gpt-4o-mini call (fires ONLY when the flag is on)
   // run before prompt-build for literary Scene 2+. Produces 1–3 concrete causal hard beats →
   // state._scenePlotContract, which _buildPlotContractDirective then injects at the two roots.
-  async function _generateLiteraryPlotContract(act, dia) {
+  async function _generateLiteraryPlotContract(act, dia, temptCtx) {
     try {
       var s = window.state || {};
       if (!_plotContractActive()) return;
+      // TEMPT FATE CONTEXT (Roman/Codex review, 2026-09-24): optional caller-supplied snapshot
+      // {invoked, wishText} of the invocation THIS generation owns, captured before any await at
+      // generation start (see _runCGScreenplayGenInner's _tfoProposalEntry/_tfoWasInvokedAtStart) —
+      // NOT re-read from live state here, for the same race reason the commit path already avoids
+      // it: a second wish sealed mid-flight must not leak into THIS scene's planning. Falls back to
+      // live state when the caller doesn't supply one (e.g. the literary submitBtn path, which has
+      // no ownership-capture of its own and is out of scope for this fix).
+      var _tcInvoked = temptCtx ? !!temptCtx.invoked : !!s.tempt_fate_invoked_this_turn;
+      var _tcWish = temptCtx ? (temptCtx.wishText || '') : (s.temptFateWish || '');
       // ═══ COMMIT SCENE (Roman 2026-07-27): commit the PREVIOUS scene's transaction BEFORE planning this one.
       // Making the commit the FIRST thing the planner does structurally enforces the ordering invariant:
       // the planner reads CommittedState(N) only AFTER Commit-Scene(N-1). Awaited; both paths; ONE commit point.
@@ -100239,7 +100252,29 @@ function _buildAuthorFloorDirective(s) {
             + '\nReachability (HARD): the event must be reachable in ONE scene FROM the committed world state above — a single irreversible step, not a leap past intermediate states the story has not reached.\n'
             + '\nContinuity (where the last scene ended — context only, NOT the event to repeat): ' + JSON.stringify(sc).slice(0, 300)
             + '\nPlayer action: ' + String(act || '').slice(0, 250) + '\nPlayer dialogue: ' + String(dia || '').slice(0, 200)
-            + '\nScene index: ' + (s.turnCount || 0);
+            + '\nScene index: ' + (s.turnCount || 0)
+            // TEMPT FATE — PLANNER CHANNEL (Roman/Codex review, 2026-09-24). Placed in the BASE
+            // _scUsr construction (unlike an earlier draft of this fix, which only reached the
+            // OPEN-ROW branch below and was empirically found, via a probe against the real
+            // dispatch, to be silently absent from an ordinary scenePlanner request) so it reaches
+            // EVERY scenePlanner call regardless of open-row/authored-spine branching. Previously
+            // this planner read ONLY _durableFateConsequences (the ordinary-wish array) — the same
+            // failure shape this codebase has hit before, where the author receives information the
+            // planner never had. Reuses _buildTemptFateDurableConsequenceDirective() UNCHANGED —
+            // the exact function the author already consumes via _buildContinuitySpineBlock — so
+            // planner and author read the identical rendering of accepted Tempt outcomes.
+            + ((function () {
+                try {
+                  var _tfoDurableText = (typeof _buildTemptFateDurableConsequenceDirective === 'function') ? (_buildTemptFateDurableConsequenceDirective() || '') : '';
+                  var _tfoDurableLine = _tfoDurableText ? ('\nTEMPT FATE — DURABLE CONSEQUENCES ALREADY IN FORCE (HARD — HIGHER AUTHORITY than ordinary DURABLE CONSEQUENCES/COMMITTED WORLD STATE above where the two would conflict; a Tempt Fate rupture is a higher-order mechanic, not ordinary wish doctrine, but it does NOT override REQUIRED WORLD FACTS or any seed-owned reserved/aftermath content): ' + _tfoDurableText.trim()) : '';
+                  // ACTIVE INVOCATION THIS SCENE (only present when the player is invoking a wish
+                  // THIS turn) — supersedes the ordinary tactical-beat derivation for THIS scene
+                  // only: the wish's actual landing IS the required event, not flavor around an
+                  // unrelated one.
+                  var _tfoActiveLine = (_tcInvoked && _tcWish) ? ('\nTEMPT FATE — ACTIVE INVOCATION THIS SCENE (HARD — supersedes the CURRENT MILESTONE/A-plot goal above for THIS scene\'s event only; does not override REQUIRED WORLD FACTS or seed-owned reserved/aftermath content): the player is invoking Tempt Fate this turn with the wish "' + String(_tcWish).slice(0, 300) + '". The event/state_change MUST land this wish\'s actual invocation/effect as a concrete, testable, reachable-in-one-scene event — not a generic milestone beat that ignores it, and not a beat that merely references the wish without showing its landing.') : '';
+                  return _tfoDurableLine + _tfoActiveLine;
+                } catch (_) { return ''; }
+              })());
           // ═══ OPEN ROW — READER POSTURE → BOUNDED LOCAL OBJECTIVE (Roman 2026-09-11) ═══
           // The seed owns the aftermath and the long arc; the reader owns the posture; the planner derives ONE local objective.
           if (_curMs && _curMs._open && _curMs._eff) {
@@ -100938,7 +100973,19 @@ function _buildAuthorFloorDirective(s) {
         + '\nIssue pressures: ' + JSON.stringify(pressures).slice(0, 300)
         + '\n' + (_v0 ? 'Prior scene end-state (CONTINUITY CONTEXT ONLY — not the beat to repeat): ' : 'Where the LAST scene ended: ') + JSON.stringify(sc).slice(0, 400)
         + '\nPlayer action: ' + String(act || '').slice(0, 300) + '\nPlayer dialogue: ' + String(dia || '').slice(0, 300)
-        + '\nScene index: ' + (s.turnCount || 0);
+        + '\nScene index: ' + (s.turnCount || 0)
+        // TEMPT FATE — LEGACY FALLBACK CHANNEL (Roman/Codex review, 2026-09-24): this planner only
+        // runs when the primary scene-spine branch above threw — same Tempt context, same
+        // owned-invocation source (temptCtx / _tcWish), so the fallback doesn't reopen the gap the
+        // primary branch's fix just closed.
+        + ((function () {
+            try {
+              var _tfoLegacy = (typeof _buildTemptFateDurableConsequenceDirective === 'function') ? (_buildTemptFateDurableConsequenceDirective() || '') : '';
+              var _tfoLegacyLine = _tfoLegacy ? ('\nTempt Fate durable consequences already in force (HARD, higher authority than ordinary durable consequences above where they conflict; does not override reserved/aftermath ids): ' + _tfoLegacy.trim().slice(0, 800)) : '';
+              var _tfoLegacyActive = (_tcInvoked && _tcWish) ? ('\nTempt Fate — active invocation THIS scene (HARD): the player is invoking a wish this turn: "' + String(_tcWish).slice(0, 300) + '". At least one hard beat MUST land its actual invocation/effect as a concrete, testable event.') : '';
+              return _tfoLegacyLine + _tfoLegacyActive;
+            } catch (_) { return ''; }
+          })());
       var res = await fetch('/api/mistral-proxy', { method: 'POST', headers: { 'Content-Type': 'application/json' },   // 2026-09-10 (Roman): legacy hard-beat planner off gpt-4o-mini → Mistral Small, same class as the spine planner above
         body: JSON.stringify({ messages: [{ role: 'system', content: sys }, { role: 'user', content: usr }], role: 'STRUCTURE_GENERATOR', model: 'mistral-small-latest', temperature: 0.3, max_tokens: 420, response_format: { type: 'json_object' } }) });
       if (!res.ok) return;
@@ -101758,7 +101805,7 @@ Do NOT summarize Book 1. Do NOT reintroduce characters. Jump straight into the n
               _temptLedgerJson:   (function () { try { return Array.isArray(state._temptFateLedger) && state._temptFateLedger.length ? JSON.stringify(state._temptFateLedger) : null; } catch (_) { return null; } })(),
               _temptLedgerSeq:    state._temptFateLedgerSeq || 0,
               _temptDurableJson:  (function () { try { return Array.isArray(state._temptFateDurableConsequences) && state._temptFateDurableConsequences.length ? JSON.stringify(state._temptFateDurableConsequences) : null; } catch (_) { return null; } })(),
-              _temptOutcomeCommittedJson: (function () { try { return (state._temptOutcomeCommittedScenes && Object.keys(state._temptOutcomeCommittedScenes).length) ? JSON.stringify(state._temptOutcomeCommittedScenes) : null; } catch (_) { return null; } })(),
+              _temptOutcomeCommittedJson: (function () { try { return (state._temptOutcomeCommittedProposals && Object.keys(state._temptOutcomeCommittedProposals).length) ? JSON.stringify(state._temptOutcomeCommittedProposals) : null; } catch (_) { return null; } })(),
               _mythicJson:        (function () { try { return state._mythicCoupleStatus && state._mythicCoupleStatus.active ? JSON.stringify(state._mythicCoupleStatus) : null; } catch (_) { return null; } })(),
               _prefMemory:        state._prefMemory,  // reader-preference memory — same couple keeps their learned taste (Issue 2 remembers Issue 1's axes)
               // ── LIRAEL'S VALIDATED FOUNDATION, CARRIED THE SAME WAY (Roman, corrective
@@ -101812,7 +101859,7 @@ Do NOT summarize Book 1. Do NOT reintroduce characters. Jump straight into the n
                 if (_carriedRel._temptLedgerJson) state._temptFateLedger = JSON.parse(_carriedRel._temptLedgerJson);
                 if (_carriedRel._temptLedgerSeq) state._temptFateLedgerSeq = _carriedRel._temptLedgerSeq;
                 if (_carriedRel._temptDurableJson) state._temptFateDurableConsequences = JSON.parse(_carriedRel._temptDurableJson);
-                if (_carriedRel._temptOutcomeCommittedJson) state._temptOutcomeCommittedScenes = JSON.parse(_carriedRel._temptOutcomeCommittedJson);
+                if (_carriedRel._temptOutcomeCommittedJson) state._temptOutcomeCommittedProposals = JSON.parse(_carriedRel._temptOutcomeCommittedJson);
                 if (_carriedRel._mythicJson)      state._mythicCoupleStatus = JSON.parse(_carriedRel._mythicJson);
                 console.log('[ISSUE-CONTINUITY] carried scene ledger (' + (((state._sceneLedger || {}).entries || []).length) + ' pages), durable consequences ('
                   + ((state._durableFateConsequences || []).length) + '), tempt ledger (' + ((state._temptFateLedger || []).length) + '), tempt durable consequences ('
@@ -189650,8 +189697,10 @@ No text, no watermark, no UI elements, share-ready.`;
   //     authorization sheet, _tempt_fate_model_driven_outcome_2026_09_23.md).
   //   STAGE 3 — COMMIT: _commitTemptFateOutcome only writes a
   //     state._temptFateDurableConsequences entry when the report is
-  //     well-formed AND delivered:true. Idempotent per scene
-  //     (state._temptOutcomeCommittedScenes) — a rejected, failed, or
+  //     well-formed AND delivered:true. Idempotent per PROPOSAL, not per local
+  //     scene number (state._temptOutcomeCommittedProposals, keyed by the ledger
+  //     entry's stable id — Roman/Codex review 2026-09-24, sceneIdx resets across
+  //     Issues and this map is carried across them) — a rejected, failed, or
   //     duplicate call never creates a false or duplicate entry.
   //
   // NOTHING here classifies wish CONTENT by keyword. Genericity is
@@ -189731,9 +189780,22 @@ No text, no watermark, no UI elements, share-ready.`;
     try {
       var s = window.state || {};
       if (!Array.isArray(s._temptFateDurableConsequences)) s._temptFateDurableConsequences = [];
-      if (!s._temptOutcomeCommittedScenes) s._temptOutcomeCommittedScenes = {};
-      if (s._temptOutcomeCommittedScenes[sceneIdx]) {
-        console.log('[TEMPT-OUTCOME] scene ' + sceneIdx + ' already committed — skipping duplicate');
+      // DEDUP BY PROPOSAL IDENTITY, NOT LOCAL sceneIdx (Roman/Codex review, 2026-09-24). sceneIdx
+      // is the story's LOCAL scene number, which RESETS at Issue boundaries — the prior
+      // sceneIdx-keyed map (_temptOutcomeCommittedScenes) is itself carried across Issues in the
+      // save payload (app.js ~101761/101815), so a genuinely NEW proposal that happens to land at
+      // the same local scene number in a later Issue was silently rejected as a duplicate.
+      // ledgerEntry.id is the stable, story-scoped, monotonic id assigned at invocation time
+      // (_recordTemptFateEvent, never reset across Issues, only on a new story) — dedupe against
+      // THAT identity instead.
+      if (!s._temptOutcomeCommittedProposals) s._temptOutcomeCommittedProposals = {};
+      var _tfoPropId = (ledgerEntry && ledgerEntry.id) || null;
+      if (!_tfoPropId) {
+        console.log('[TEMPT-OUTCOME] scene ' + sceneIdx + ' — no stable proposal id on the ledger entry; refusing to commit rather than risk deduplicating against the wrong invocation');
+        return null;
+      }
+      if (s._temptOutcomeCommittedProposals[_tfoPropId]) {
+        console.log('[TEMPT-OUTCOME] proposal ' + _tfoPropId + ' (scene ' + sceneIdx + ') already committed — skipping duplicate');
         return null;
       }
       var v = _validateTemptFateOutcomeReport(rawReport);
@@ -189746,9 +189808,10 @@ No text, no watermark, no UI elements, share-ready.`;
         return null;
       }
       var entry = {
-        id: 'tfc_' + sceneIdx + '_' + (s._temptFateDurableConsequences.length + 1),
+        id: 'tfc_' + _tfoPropId,
         source: 'tempt', // distinct from ordinary-wish _durableFateConsequences entries — never merge
         requestedRupture: (ledgerEntry && ledgerEntry.wishText) || '',
+        proposalId: _tfoPropId,
         sceneIdx: sceneIdx,
         bargainId: (ledgerEntry && ledgerEntry.bargainId) || null,
         changed: Array.isArray(rawReport.changed) ? rawReport.changed : [],
@@ -189761,7 +189824,7 @@ No text, no watermark, no UI elements, share-ready.`;
         permanent: (Array.isArray(rawReport.durability) ? rawReport.durability : []).some(function (d) { return d && (d.status === 'persists' || d.status === 'uncertain'); })
       };
       s._temptFateDurableConsequences.push(entry);
-      s._temptOutcomeCommittedScenes[sceneIdx] = true;
+      s._temptOutcomeCommittedProposals[_tfoPropId] = true;
       try { console.log('[TEMPT-OUTCOME] committed scene ' + sceneIdx + ': ' + entry.changed.length + ' change(s), ' + entry.establishedEvidence.length + ' evidence item(s)'); } catch (_) {}
       return entry;
     } catch (e) {
@@ -232033,7 +232096,15 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
     // generator (the screenplay-native CG path has no must_land_moments; this populates
     // state._scenePlotContract so the fulfillment audit + carryover operate on CG too). No-op when
     // killed (window._plotContractKill) — _generateLiteraryPlotContract self-gates on _plotContractActive().
-    try { if (typeof _generateLiteraryPlotContract === 'function') await _generateLiteraryPlotContract(playerAction, playerDialogue); } catch (_pcCgErr) {}
+    try {
+      if (typeof _generateLiteraryPlotContract === 'function') {
+        // Pass the OWNED invocation captured at this generation's start (above), not live state —
+        // the planner runs before the author, inside the same race window a second wish sealed
+        // mid-flight could otherwise poison (Roman/Codex review, 2026-09-24).
+        var _tfoCtxForPlanner = { invoked: _tfoWasInvokedAtStart, wishText: (_tfoWasInvokedAtStart && _tfoProposalEntry) ? (_tfoProposalEntry.wishText || '') : '' };
+        await _generateLiteraryPlotContract(playerAction, playerDialogue, _tfoCtxForPlanner);
+      }
+    } catch (_pcCgErr) {}
     // OPEN ROW GATE (2026-09-11): with no ACCEPTED local objective there is nothing to stage, assign or write. The caller
     // treats this exactly like a stale result — one bounded retry (a fresh planner reply), then STOP resumable. Never prose.
     try {
@@ -232109,7 +232180,34 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
     var _cgDelivered = null;
     try { _cgDelivered = _cgMintDeliveredAssignments(sceneIndex); } catch (_mdErr) { console.warn('[CG:ASSIGN] mint failed (non-fatal — no assignment this scene):', _mdErr && _mdErr.message); _cgDelivered = null; }
     var _cgReqAttemptId = _cgDelivered ? _cgDelivered.attemptId : null;
-    var userPrompt = _buildCGScreenplayUserPrompt(sceneIndex, playerAction, playerDialogue);
+    // OWNERSHIP PIN (Roman/Codex review, 2026-09-24): _buildCGScreenplayUserPrompt reads
+    // state.temptFateWish / state.tempt_fate_invoked_this_turn LIVE (via buildWorldLawDirective,
+    // shared with literary) — but by this point in the function, the scaffold ensure and the
+    // planner call above have already awaited real network calls, during which a SECOND wish could
+    // be sealed (the Tempt zoom's proceed handler has no _stagedSubmitting guard of its own — see
+    // the ownership-fix trace above _tfoProposalEntry is captured from). Without this pin, the
+    // author's prompt would render whatever wish is CURRENTLY live — which could be the second,
+    // newer one — while the eventual outcome commit stays correctly attributed to the FIRST
+    // (_tfoProposalEntry) by stable id: a real mismatch between what the author was told to write
+    // and what the durable record says it wrote. Pin to the OWNED invocation for this one
+    // synchronous call (no await between pin and restore — cannot itself race), then restore
+    // immediately so nothing else in this function or its caller observes the pinned value.
+    var _tfoWishAtDispatch = state.temptFateWish;
+    var _tfoInvokedAtDispatch = state.tempt_fate_invoked_this_turn;
+    if (_tfoWasInvokedAtStart) {
+      state.temptFateWish = _tfoProposalEntry ? (_tfoProposalEntry.wishText || '') : state.temptFateWish;
+      state.tempt_fate_invoked_this_turn = true;
+    } else if (state.tempt_fate_invoked_this_turn) {
+      // Tempt was NOT invoked when THIS generation started but IS live now — a wish sealed
+      // mid-flight with nothing yet to attribute it to (this generation's ownership predates it).
+      // Suppress it from THIS prompt; it survives in live state (see the cleanup-preservation fix
+      // below) for the NEXT generation, which will correctly capture it as its own invocation.
+      state.temptFateWish = '';
+      state.tempt_fate_invoked_this_turn = false;
+    }
+    var userPrompt;
+    try { userPrompt = _buildCGScreenplayUserPrompt(sceneIndex, playerAction, playerDialogue); }
+    finally { state.temptFateWish = _tfoWishAtDispatch; state.tempt_fate_invoked_this_turn = _tfoInvokedAtDispatch; }
     // [CG:PROMPT-SIZES] (Roman 2026-06-09): itemize the CG prompt mass so cuts are
     // MEASURED, not guessed (mirror of [SCENE1:PROMPT-SIZES]). system = the big
     // mostly-static block; user = per-scene. Token est = chars/4. Watch system before
@@ -232374,62 +232472,25 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
         }
       }
 
-      // ── TEMPT FATE OUTCOME — COMMIT (Roman 2026-09-23, ownership fix same day) ──
-      // Same gate as the kink-memory block above (`if (_normalized && plan)`) — the app's OWN
-      // acceptance check (_acc.ok, checked above; a stale/rejected generation already returned
-      // early and never reaches this line at all) has ALREADY run before this point.
-      //
-      // TWO SEPARATE GUARANTEES, both required, neither trusting the model alone:
-      // (1) OWNERSHIP: uses _tfoProposalEntry / _tfoWasInvokedAtStart, captured at the TOP of this
-      //     function before any await — NOT re-resolved here from mutable "current" state. A prior
-      //     version used the ledger's most-recent entry AT COMPLETION time; Roman's review caught
-      //     that this is only correct if no NEWER wish can be sealed while this exact generation is
-      //     in flight, and traced (not assumed) that no such lock exists — the Tempt Fate zoom-
-      //     card's proceed handler (app.js ~108792) has no _stagedSubmitting/_isAdvancingScene
-      //     check of its own; the only protection is a CSS dimming class of unverified coverage.
-      //     Capturing the exact ledger entry (by stable id) and the invocation flag at generation
-      //     START, then carrying them through the awaited dispatch via closure, means a second
-      //     wish sealed mid-flight can never be misattributed to this generation's outcome.
-      // (2) DELIVERY: the model's own "delivered:true" inside plan.temptFateOutcome is necessary
-      //     but NOT sufficient — _commitTemptFateOutcome itself re-validates the report's shape and
-      //     re-checks delivered:true, so a malformed or undelivered report still produces no commit.
-      //
-      // _tfoWasInvokedAtStart is checked FIRST, before even looking at plan.temptFateOutcome — an
-      // ORDINARY CONTINUATION (Tempt not invoked this turn) must never process a temptFateOutcome
-      // field at all, even if the model stray-returns one (the schema is unconditionally documented
-      // every scene, so a drifting model could echo a stale one back) — that would silently
-      // recommit the PRIOR turn's wish as if it were a brand-new intervention.
+      // ── TEMPT FATE OUTCOME — PENDING, ATTACHED FOR COMMIT AT REAL SCENE PERSISTENCE ──
+      // (Roman/Codex review, 2026-09-24 — supersedes the 2026-09-23 same-day ownership fix, which
+      // committed HERE.) Codex: "_cgAcceptDelivered checks request/assignment freshness; it does
+      // not prove prose was persisted or displayed." _normalized/plan passing the checks above
+      // means the GENERATION was accepted — not that the scene ever reached state.scenes or the
+      // reader. Committing at this point let a genuine intervention become durable canon even if
+      // something failed between here and the actual persistence step
+      // (_completeStagedSceneFromScreenplay, after _cgEnforceCalcifiedAndHook + state.scenes.push
+      // — see that function for the real commit call). So: only ATTACH the owned identity
+      // (captured before any await, at this generation's start — see _tfoProposalEntry /
+      // _tfoWasInvokedAtStart above) and the raw, still-uncommitted outcome report here. A
+      // generation that never reaches persistence therefore commits nothing, by construction.
       if (_normalized && plan) {
-        try {
-          if (_tfoWasInvokedAtStart) {
-            if (plan.temptFateOutcome && typeof _commitTemptFateOutcome === 'function') {
-              if (_tfoProposalEntry) {
-                var _tfoCommitted = _commitTemptFateOutcome(sceneIndex, _tfoProposalEntry, plan.temptFateOutcome);
-                // EXPLICITLY SURFACED, never silent (Roman: "a missing/malformed report is
-                // explicitly surfaced rather than silently counted as successful durable
-                // handling") — _commitTemptFateOutcome itself already logs its own reason
-                // (invalid shape / delivered:false / duplicate scene); this line surfaces the
-                // higher-level fact that an active Tempt turn produced NO durable record.
-                if (!_tfoCommitted) {
-                  console.warn('[TEMPT-OUTCOME] scene ' + sceneIndex + ' had an active Tempt proposal (' + _tfoProposalEntry.id + ') but produced no durable commit — see the [TEMPT-OUTCOME] log line immediately above for the exact reason (undelivered, malformed, or already committed).');
-                }
-              } else {
-                console.warn('[TEMPT-OUTCOME] scene ' + sceneIndex + ' — Tempt was invoked at generation start but no ledger proposal entry was captured — not committing.');
-              }
-            } else {
-              // Tempt WAS invoked this turn but the model returned no temptFateOutcome at all —
-              // surfaced, not silently treated as "nothing to commit, therefore fine".
-              console.warn('[TEMPT-OUTCOME] scene ' + sceneIndex + ' — Tempt Fate was invoked this turn but the model returned no temptFateOutcome field. Not committing.');
-            }
-          } else if (plan.temptFateOutcome) {
-            // Tempt was NOT invoked this turn (an ordinary continuation) but the model returned a
-            // temptFateOutcome anyway — almost certainly stale echo from an earlier turn's context,
-            // not a new intervention. Surfaced and deliberately ignored, never committed.
-            console.warn('[TEMPT-OUTCOME] scene ' + sceneIndex + ' — model returned temptFateOutcome on an ORDINARY continuation (Tempt not invoked this turn) — ignoring, will not recommit a prior wish as a new intervention.');
-          }
-        } catch (_tfoErr) {
-          try { console.warn('[TEMPT-OUTCOME] wiring threw:', _tfoErr && _tfoErr.message); } catch (__) {}
-        }
+        _normalized.__temptOwnership = {
+          proposalEntry: _tfoProposalEntry,
+          wasInvokedAtStart: _tfoWasInvokedAtStart,
+          pendingOutcome: plan.temptFateOutcome || null,
+          sceneIndex: sceneIndex
+        };
       }
       // ── CG ROMANCE-PRESSURE BASELINE (Roman 2026-06-12 design pass) ──────────
       // Set the baseline at the FIRST LI-PRESSURE scene (Roman present + foreground +
@@ -232761,7 +232822,46 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
   // completion pipeline, which may dispatch real network calls elsewhere in
   // its body. Pure extraction — behavior is unchanged from the inline
   // version. See _tempt_fate_volatility_activation_2026_09_22.md.
-  function _cgTemptFateAftermathCleanup() {
+  // TEMPT FATE OUTCOME — COMMIT AT ACTUAL SCENE PERSISTENCE (Roman/Codex review, 2026-09-24).
+  // Extracted from _completeStagedSceneFromScreenplay's prose-persistence block (mirrors
+  // _cgTemptFateAftermathCleanup's own extraction, same reasoning: directly callable from a dry
+  // control without invoking the whole async screenplay-completion pipeline, which may dispatch
+  // real network calls elsewhere in its body). Takes the RETURNED plan from _runCGScreenplayGen —
+  // reads plan.__temptOwnership, set by _runCGScreenplayGenInner from the identity it captured
+  // before any await at generation start (_tfoProposalEntry / _tfoWasInvokedAtStart), never
+  // re-resolved from mutable "current" state. Two separate guarantees, neither trusting the model
+  // alone: OWNERSHIP (the captured identity, immune to a second wish sealed mid-flight) and
+  // DELIVERY (_commitTemptFateOutcome itself re-validates shape and delivered:true).
+  function _cgTemptFateCommitAtPersistence(plan) {
+    try {
+      var _tfoOwn = plan && plan.__temptOwnership;
+      if (!_tfoOwn || typeof _commitTemptFateOutcome !== 'function') return null;
+      if (_tfoOwn.wasInvokedAtStart) {
+        if (_tfoOwn.pendingOutcome) {
+          if (_tfoOwn.proposalEntry) {
+            var _tfoCommitted = _commitTemptFateOutcome(_tfoOwn.sceneIndex, _tfoOwn.proposalEntry, _tfoOwn.pendingOutcome);
+            if (!_tfoCommitted) {
+              console.warn('[TEMPT-OUTCOME] scene ' + _tfoOwn.sceneIndex + ' had an active Tempt proposal (' + _tfoOwn.proposalEntry.id + ') but produced no durable commit — see the [TEMPT-OUTCOME] log line immediately above for the exact reason (undelivered, malformed, or already committed).');
+            }
+            return _tfoCommitted;
+          }
+          console.warn('[TEMPT-OUTCOME] scene ' + _tfoOwn.sceneIndex + ' — Tempt was invoked at generation start but no ledger proposal entry was captured — not committing.');
+          return null;
+        }
+        console.warn('[TEMPT-OUTCOME] scene ' + _tfoOwn.sceneIndex + ' — Tempt Fate was invoked this turn but the model returned no temptFateOutcome field. Not committing.');
+        return null;
+      } else if (_tfoOwn.pendingOutcome) {
+        console.warn('[TEMPT-OUTCOME] scene ' + _tfoOwn.sceneIndex + ' — model returned temptFateOutcome on an ORDINARY continuation (Tempt not invoked this turn) — ignoring, will not recommit a prior wish as a new intervention.');
+      }
+      return null;
+    } catch (_tfoCommitErr) {
+      try { console.warn('[TEMPT-OUTCOME] commit-at-persistence wiring threw:', _tfoCommitErr && _tfoCommitErr.message); } catch (__) {}
+      return null;
+    }
+  }
+  window._cgTemptFateCommitAtPersistence = _cgTemptFateCommitAtPersistence;
+
+  function _cgTemptFateAftermathCleanup(_ownedProposalEntry, _ownedWasInvoked) {
     try {
       // 0) ACTIVATION (Roman 2026-09-22, dry-fix pass — CG volatility/imprint
       //    activation gap). The taper/aftermath logic below (2026-05-18) has
@@ -232772,17 +232872,35 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
       //    from reaching under normal operation. Call the shared helper
       //    (extracted from that literary block, identical semantics) BEFORE
       //    state.tempt_fate_invoked_this_turn / state.temptFateWish are
-      //    captured+reset just below, so it reads the still-live invocation
-      //    flag and wish text.
+      //    read below (unrelated to the ownership fix beneath — this call
+      //    is about Fate's own saturation/heat bookkeeping, always live).
       if (typeof _updateTemptFateSaturationAndVolatility === 'function') _updateTemptFateSaturationAndVolatility();
 
-      // 1) Capture the wish BEFORE we clear it — the aftermath setup
-      //    below needs to stash it for the next 2 scenes.
-      var _temptWishForAftermath = state.temptFateWish || '';
-      var _temptInvokedThisTurn = !!state.tempt_fate_invoked_this_turn;
+      // 1) OWNERSHIP (Roman/Codex review, 2026-09-24): the caller (_completeStagedSceneFromScreenplay)
+      //    passes the invocation THIS generation owned — captured before any await at generation
+      //    start (_tfoProposalEntry / _tfoWasInvokedAtStart, _runCGScreenplayGenInner). Previously
+      //    this function read state.temptFateWish/tempt_fate_invoked_this_turn LIVE and cleared them
+      //    UNCONDITIONALLY: if a SECOND wish was sealed while this generation's scaffold/planner/
+      //    author calls were in flight, cleanup would (a) stash the WRONG wish text into scene A's
+      //    aftermath/imprint window, and (b) destroy the second wish's own live invocation before it
+      //    ever got a generation of its own — silently losing a legitimately sealed wish. Only clear
+      //    the live global when it still points at the SAME invocation this generation owned (by
+      //    stable ledger id); otherwise leave it alone so the NEXT generation picks it up correctly.
+      var _haveOwnership = (typeof _ownedWasInvoked !== 'undefined');
+      var _temptWishForAftermath = _haveOwnership ? (_ownedWasInvoked ? ((_ownedProposalEntry && _ownedProposalEntry.wishText) || '') : '') : (state.temptFateWish || '');
+      var _temptInvokedThisTurn = _haveOwnership ? !!_ownedWasInvoked : !!state.tempt_fate_invoked_this_turn;
 
-      state.tempt_fate_invoked_this_turn = false;
-      state.temptFateWish = '';
+      var _liveLedger = state._temptFateLedger;
+      var _liveLastEntry = (Array.isArray(_liveLedger) && _liveLedger.length) ? _liveLedger[_liveLedger.length - 1] : null;
+      var _ownedId = (_ownedProposalEntry && _ownedProposalEntry.id) || null;
+      var _stillSameInvocation = !_haveOwnership || (!_liveLastEntry && !_ownedId) || (_liveLastEntry && _ownedId && _liveLastEntry.id === _ownedId);
+
+      if (_stillSameInvocation) {
+        state.tempt_fate_invoked_this_turn = false;
+        state.temptFateWish = '';
+      } else {
+        try { console.log('[TEMPT-CLEANUP] a newer invocation (' + (_liveLastEntry && _liveLastEntry.id) + ') was sealed mid-flight — owned=' + _ownedId + ' — preserving live state for its own future generation, not clearing.'); } catch (_) {}
+      }
 
       // 2+3) Volatility-window taper + aftermath decay — shared with literary
       //    (Roman 2026-09-22, IMPRINT-phase lifecycle fix). Was two separate
@@ -233074,6 +233192,14 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
         state.scenes.push({ title: '', synopsis: '', text: proseAssembled, fateCard: null });
         try { _sceneLedgerCommit(state, { kind: 'cg', sceneNumber: (typeof sceneIndex === 'number' ? sceneIndex + 1 : undefined), act: playerAction, dia: playerDialogue }); } catch (_) {}
         try { if (typeof window._sbBetaSceneDone === 'function') window._sbBetaSceneDone(proseAssembled); } catch (_) {}
+        // TEMPT FATE OUTCOME — commit HERE, immediately after real persistence (state.scenes.push/
+        // _sceneLedgerCommit above). Extracted to its own function (mirrors
+        // _cgTemptFateAftermathCleanup's own extraction just below) so a dry control can call it
+        // directly to simulate "persistence happened, now commit" without invoking this whole
+        // async pipeline. If anything above in this same try throws, this line is never reached —
+        // a generation that produced a plan but never persisted therefore commits NO durable
+        // outcome, by construction.
+        _cgTemptFateCommitAtPersistence(plan);
       } catch (_) {}
 
       // ── CALCIFICATION CORPUS (CG path, Roman 2026-06-10) — record Scene-1 CG prose
@@ -233518,7 +233644,13 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
       // is directly callable from a dry control without invoking this whole
       // async screenplay-completion pipeline (which may dispatch real network
       // calls elsewhere in its body) — pure extraction, unchanged behavior.
-      _cgTemptFateAftermathCleanup();
+      // Pass the OWNED invocation (Roman/Codex review, 2026-09-24) — plan.__temptOwnership, set by
+      // _runCGScreenplayGenInner at generation start — so cleanup can tell whether the live global
+      // still belongs to THIS generation or was overwritten by a newer wish sealed mid-flight.
+      try {
+        var _tfoOwnForCleanup = plan && plan.__temptOwnership;
+        _cgTemptFateAftermathCleanup(_tfoOwnForCleanup ? _tfoOwnForCleanup.proposalEntry : undefined, _tfoOwnForCleanup ? _tfoOwnForCleanup.wasInvokedAtStart : undefined);
+      } catch (_tfoCleanupCallErr) { try { console.warn('[TEMPT-CLEANUP] call wiring threw:', _tfoCleanupCallErr && _tfoCleanupCallErr.message); } catch (__) {} }
     } catch (e) {
       console.warn('[CG:SCREENPLAY] complete threw:', e && e.message);
       _hideStagedComposingIndicator();
