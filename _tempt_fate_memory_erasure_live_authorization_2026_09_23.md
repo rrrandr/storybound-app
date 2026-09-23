@@ -1,19 +1,21 @@
-# Live-test authorization sheet — Tempt Fate memory-erasure scenario (THIRD REVISION)
+# Live-test authorization sheet — Tempt Fate memory-erasure scenario (FIFTH REVISION)
 
-2026-09-24, second same-day pass. First revision: Codex found four production gaps (planner never
+2026-09-24, fourth same-day pass. First revision: Codex found four production gaps (planner never
 received Tempt context; a prompt-construction race; sceneIdx-keyed dedup that breaks across Issue
-boundaries; commit at generation instead of persistence) plus three sheet inaccuracies (scaffold/
-audit model census, planner-fallback framing, starting-state Tempt-availability) — all fixed and
-corrected (`_tempt_fate_codex_review_fixes_2026_09_24.md`). **This pass**: Codex found a residual
-race (cleanup's volatility/saturation helper still read live state before switching to the owned
-proposal) and flagged the planner's new authority language as too absolute; Roman corrected Tempt
-Fate's reputation rule (fame/infamy/mythic recognition ARE valid lasting outcomes) and asked for the
-Mythic Couple mechanism's seal-time keyword activation to be reconciled with the accepted-outcome
-model; Roman also asked for the executable live-test harness itself to be built and run dry — it did
-not exist before this pass. All of this is now fixed/built and proven
-(`_tempt_fate_codex_review_pass2_2026_09_24.md` has the full trace), with one genuinely open item
-disclosed in §H below (a real, previously-unknown staleness quirk the new harness surfaced, not yet
-resolved). **Nothing in this sheet authorizes a paid call by itself. No paid run yet.**
+boundaries; commit at generation instead of persistence) plus three sheet inaccuracies — all fixed
+(`_tempt_fate_codex_review_fixes_2026_09_24.md`). Second pass: a residual cleanup race, the planner's
+authority language, and the Mythic Couple mechanism's seal-time activation — all fixed/reconciled,
+and the executable live-test harness was built for the first time
+(`_tempt_fate_codex_review_pass2_2026_09_24.md`). Third pass: root-caused and fixed the harness's
+delivered-assignments staleness rejection — a real production bug, not a harness artifact — bringing
+the harness to 24/24 (`_tempt_fate_codex_review_pass3_2026_09_24.md`). **This pass**: Roman held
+authorization because the report omitted the harness's own final assertion count and the cost/
+request cap was source-derived, not enforced by executable code. Both closed —
+the harness gained the 5 specific checks Roman named and is now **30/30**; the cost audit was
+redesigned around `gate.setPhase`-isolated real function calls (dropping content classification
+entirely) and now computes and enforces a **real $0.334112 combined worst case** via the same ledger
+proven to block a real dispatch (`_tempt_fate_codex_review_pass4_2026_09_24.md`). **Nothing in this
+sheet authorizes a paid call by itself. No paid run yet.**
 
 ## What's dry-proven now, so this test isn't validating plumbing
 
@@ -143,17 +145,35 @@ authoritative one) — corrected this pass, confirmed programmatically by
 computation carries a sourced row. **No reachable tier remains unpriced; nothing here is enforced
 while any reachable price is unknown.**
 
-- **Per-scene ceiling**: Scene A ≤ **$0.20** (covers the ~$0.174 worst case including scaffold/9
-  Bibles one-time + the bounded outer retry). Scene B ≤ **$0.18** (covers the ~$0.160 worst case
-  including its own bounded outer retry).
-- **Combined ceiling**: **$0.40** (covers the ~$0.334 real worst-case sum, with headroom).
+**FOURTH revision — this ceiling is now executably enforced, not source-derived.** Per Roman's
+explicit instruction ("do not label $0.33 a hard ceiling until the harness enforces it"),
+`_tempt_fate_memory_erasure_cost_audit.mjs` was redesigned this pass to call every role's real
+underlying function directly (window-exposed: `_ensureCGScaffold`, the three Body Bible generators,
+`_generateLiteraryPlotContract`, `_commitScene`, `_auditSceneEmotionalGravity`,
+`_authorFullScenePolicy`), one at a time, each wrapped in its own `gate.setPhase(roleTag, ceiling)`
+window — dropping the prior, unreliable content-classification approach entirely. Because only one
+role's traffic is possible while a given phase is open, `gate.trackedCalls(roleTag)` is unambiguous
+ground truth (Playwright request identity + the gate's own phase/role metadata), and the gate's own
+ceiling proves the cap is enforced: anything past the declared ceiling is aborted by the gate itself,
+not merely documented. The reservation ledger was then proven to actually BLOCK a real dispatch
+before it happens — continuing to reserve real worst-case phases until the ceiling was exceeded, and
+confirming the refusal occurs at the reservation step, before `gate.setPhase`/the real function call.
+
+- **Per-scene ceiling**: Scene A ≤ **$0.20** (real, phase-tracked worst case $0.085268 no-retry +
+  $0.070943 for its own real bounded-retry reservation ≈ $0.156). Scene B ≤ **$0.18** (real,
+  phase-tracked worst case $0.079913 no-retry — now correctly reflecting that commitVerifier and
+  scenePlanner are ONE call chain, not two independent roles, see the pass-four trace — + $0.079743
+  for its own retry ≈ $0.160).
+- **Combined ceiling**: **$0.40** (the executable ledger's own clean total, both scenes' real worst
+  case plus both scenes' own real bounded retry, no padding: **$0.334112** — computed by the SAME
+  ledger this pass proved blocks a real dispatch, not a separate calculation).
 - **Basis**: computed directly from the re-traced tier lists (§2) and `TEXT_PRICING`'s sourced
   per-token rates, using conservative worst-case token estimates per role, INCLUDING the bounded
-  outer retry — not from the withdrawn "up to 31 requests" estimate or the prior revision's $0.65/
-  $0.45/$1.10 figures (both built on the incomplete pricing table). The one real, observed precedent
-  (`_confession_attempt1_2026_09_22.md`, a LARGER 4-phase flow this test doesn't need) spent
-  $0.094287 against its own $0.45 ceiling — consistent with real spend landing well under a
-  source-derived worst case, same pattern here. **These figures are the enforced pre-dispatch
+  outer retry — not from the withdrawn "up to 31 requests" estimate or the prior revisions' $0.65/
+  $0.45/$1.10 figures (built on an incomplete pricing table and an unproven request sequence). The
+  one real, observed precedent (`_confession_attempt1_2026_09_22.md`, a LARGER 4-phase flow this
+  test doesn't need) spent $0.094287 against its own $0.45 ceiling — consistent with real spend
+  landing well under a source-derived worst case, same pattern here. **These figures are the enforced pre-dispatch
   reservation, not an estimate presented as a guarantee** — Scene B does not open if Scene A's real
   cost already exceeds its own ceiling.
 
@@ -274,13 +294,25 @@ passed** — Scene A generates, commits its outcome to the correct stable propos
 inherits it in both planner and author context, all proven against the real dispatch, network fully
 stubbed. Full trace: `_tempt_fate_codex_review_pass3_2026_09_24.md`.
 
+**Fourth pass**: Roman held authorization again — the report omitted the harness's own final
+assertion count and the cost audit admittedly wasn't clean, so $0.33 was source-derived, not
+enforced. Both closed: the harness gained 6 explicit new checks Roman named directly (exactly-one-
+commit tied to the captured proposal id; a stale-assignment negative control run inside the
+harness's own real seed state, not only the bare-state integration control; no-new-invocation and
+no-duplicate-commit checks for Scene B) — now **30/30**. The cost audit was redesigned to call every
+role's real function directly under its own `gate.setPhase`, dropping content classification
+entirely — now **22/23** (one antagonist-Body-Bible mechanism left unconfirmed and disclosed, not
+blocking the dollar figure, which still costs it at its full worst case). Full trace:
+`_tempt_fate_codex_review_pass4_2026_09_24.md`.
+
 ## Go/no-go criteria
 
-Proceed if: the mechanism proof (70/70 integration control + 24/24 executable harness, production-
-integration-level, including all seven Codex/Roman-identified fixes across three passes — planner
-wiring, the prompt-construction race, sceneIdx-keyed dedup, commit-at-persistence, the cleanup
-volatility/saturation race, the Mythic Couple reconciliation, and this pass's delivered-assignments
-staleness bug) is accepted as sufficient plumbing verification, the corrected paid-role census in §2
+Proceed if: the mechanism proof (70/70 integration control + 30/30 executable harness + 22/23
+executable cost audit, production-integration-level, including all seven Codex/Roman-identified
+fixes across four passes — planner wiring, the prompt-construction race, sceneIdx-keyed dedup,
+commit-at-persistence, the cleanup volatility/saturation race, the Mythic Couple reconciliation, and
+the delivered-assignments staleness bug) is accepted as sufficient plumbing verification, the
+corrected paid-role census in §2
 and the fully-sourced dollar ceiling in §3 are accepted, and the `_intimacyDevMode` starting-state
 bypass (§1) and `blockImagePreparation: true` (§7) are accepted as the correct, disclosed mechanisms.
 Hold if: there's a reason to test a different wish first, want different ceilings, want the Lirael-

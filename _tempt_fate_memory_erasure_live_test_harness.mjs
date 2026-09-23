@@ -391,14 +391,42 @@ class ReservationLedger {
   ok('the real author request for Scene A carried the wish (PLAYER WISH directive)', scA_all.indexOf('PLAYER WISH') !== -1 && scA_all.indexOf(wishA) !== -1);
   ok('Scene A\'s generation returned a usable plan (not stale-rejected)', sceneA && !sceneA.__staleRejected && !sceneA.__plannerFunctionRejected);
 
-  await page.evaluate((p) => window._cgTemptFateCommitAtPersistence(p), sceneA);
   const ownedA = await page.evaluate(() => { const led = window.state._temptFateLedger; return led[led.length - 1]; });
+  await page.evaluate((p) => window._cgTemptFateCommitAtPersistence(p), sceneA);
   await page.evaluate((o) => window._cgTemptFateAftermathCleanup(o, true), ownedA);
   const committedA = await page.evaluate(() => window.state._temptFateDurableConsequences[0]);
+  const durableCountAfterA = await page.evaluate(() => window.state._temptFateDurableConsequences.length);
   persistArtifact('outcomes', 'scene_a_committed', committedA);
   const renderedSceneAText = (sceneA && Array.isArray(sceneA.beats)) ? sceneA.beats.map((b) => b.text).join('\n\n') : '';
   persistArtifact('rendered_scenes', 'scene_a_text', { text: renderedSceneAText });
   ok('Scene A\'s outcome committed as a real durable consequence, attributed to the wish', committedA && committedA.requestedRupture === wishA, JSON.stringify(committedA));
+  ok('exactly ONE outcome committed, tied to the SAME stable proposal id this generation captured at start (not a re-resolved "most recent" one)', durableCountAfterA === 1 && committedA && committedA.proposalId === ownedA.id, JSON.stringify({ durableCountAfterA, proposalId: committedA && committedA.proposalId, ownedId: ownedA.id }));
+
+  // ═══════════════════════════════════════════════════════════════════════════════════════════
+  section('5b. NEGATIVE CONTROL — a deliberately stale delivered-assignment still rejects and cannot commit (Roman: preserve this inside the harness\'s own real, rich-seed context, not only the bare-state integration control)');
+  {
+    // Exercises the REAL _cgMintDeliveredAssignments / _cgAcceptDelivered pair — the exact
+    // mechanism the decision-absent fix (this session's prior pass) repaired — against THIS
+    // harness's real hydrated First Sacrifice state, not a synthetic minimal one. Mint once
+    // (capturing that snapshot's own attemptId), mint AGAIN (simulating a second/concurrent request
+        // superseding the first — exactly what happens in production when a slow first response
+    // arrives after a second request has already superseded it), then confirm the FIRST (now-stale)
+    // snapshot is rejected by the real, unmodified _cgAcceptDelivered.
+    const staleResult = await page.evaluate(() => {
+      const first = window._cgMintDeliveredAssignments(1);
+      const firstAttemptId = first ? first.attemptId : null;
+      const second = window._cgMintDeliveredAssignments(1); // supersedes the first in state
+      const acc = window._cgAcceptDelivered(first, 1, firstAttemptId); // the FIRST (now-stale) request's own check
+      return { firstAttemptId, secondAttemptId: second && second.attemptId, acc };
+    });
+    persistArtifact('outcomes', 'stale_assignment_negative_control', staleResult);
+    ok('minting twice against the real hydrated state produces two DIFFERENT attempt ids (a real, distinguishable stale-vs-current pair, not a no-op)', staleResult.firstAttemptId && staleResult.secondAttemptId && staleResult.firstAttemptId !== staleResult.secondAttemptId, JSON.stringify(staleResult));
+    ok('the real _cgAcceptDelivered — UNMODIFIED by this session\'s fix — still rejects the stale (first) request once a second request has superseded it: the negative control this fix must not weaken', staleResult.acc && staleResult.acc.ok === false && /stale attempt/i.test(staleResult.acc.reason || ''), JSON.stringify(staleResult.acc));
+    // The stale rejection itself proves "cannot commit": _completeStagedSceneFromScreenplay's real
+    // caller only reaches persistence/commit when _acc.ok is true (structural proof already covered
+    // by _tempt_fate_outcome_integration_control.mjs section 4 against the real served source) — a
+    // rejected _acc here means this exact call would never reach that point in the real pipeline.
+  }
 
   // ═══════════════════════════════════════════════════════════════════════════════════════════
   section('6. PLANNER + AUTHOR RECEIVE SCENE B — Scene A\'s committed outcome, an ordinary continuation, neutral Say/Do');
@@ -413,10 +441,16 @@ class ReservationLedger {
   ok('the real planner request for Scene B did NOT carry an active-invocation marker (ordinary continuation)', scB_all.indexOf('ACTIVE INVOCATION THIS SCENE') === -1);
   ok('the real author request for Scene B carried the durable-consequence directive too', scB_all.indexOf('TEMPT FATE — DURABLE CONSEQUENCES') !== -1);
 
+  const wasInvokedDuringB = await page.evaluate(() => window.state.tempt_fate_invoked_this_turn);
+  ok('no new Tempt invocation occurred during Scene B — state.tempt_fate_invoked_this_turn stayed false throughout the ordinary continuation', wasInvokedDuringB === false, 'wasInvokedDuringB=' + wasInvokedDuringB);
+
   const beforeCommitB = await page.evaluate(() => window.state._temptFateDurableConsequences.length);
   await page.evaluate((p) => window._cgTemptFateCommitAtPersistence(p), sceneB);
   const afterCommitB = await page.evaluate(() => window.state._temptFateDurableConsequences.length);
   ok('Scene B (ordinary continuation) commits NO new outcome — a missing temptFateOutcome here is the EXPECTED result, not a failure', afterCommitB === beforeCommitB, 'before=' + beforeCommitB + ' after=' + afterCommitB);
+  ok('no duplicate commit occurred — still exactly ONE durable outcome total (Scene A\'s), not two', afterCommitB === 1, 'afterCommitB=' + afterCommitB);
+  const finalOutcomeStillA = await page.evaluate(() => window.state._temptFateDurableConsequences[0] && window.state._temptFateDurableConsequences[0].requestedRupture);
+  ok('the single durable outcome remains attributed to Scene A\'s wish, unchanged by Scene B', finalOutcomeStillA === wishA, 'finalOutcomeStillA=' + finalOutcomeStillA);
   const renderedSceneBText = (sceneB && Array.isArray(sceneB.beats)) ? sceneB.beats.map((b) => b.text).join('\n\n') : '';
   persistArtifact('rendered_scenes', 'scene_b_text', { text: renderedSceneBText });
 
