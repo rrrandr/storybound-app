@@ -92,6 +92,16 @@ const CALLBACK_MARK = 'TEMPT FATE — MEMORY CALLBACK';
             activeWish: (function () { var m = /invoking Tempt Fate this turn with the wish \\?"([^"\\]*)/.exec(body); return m ? m[1] : null; })(),
             // Does this layer carry the COMMITTED durable consequence, and does its schema DEMAND a
             // populated outcome? Both must be true on the invocation scene and false afterwards.
+            // Does the author's REAL schema request the scope + rupture-class fields the validator
+            // requires? Asserted here because this is the only place the author's actual prompt
+            // exists — a builder that no prompt calls proved nothing (see the precedence control).
+            // Bare identifiers, NOT quoted forms: the prompt is embedded in a JSON request body, so
+            // every schema quote arrives escaped as \" and a quoted search silently never matches.
+            schemaAsksScope: body.indexOf('requestedScope') !== -1 && body.indexOf('deliveredScope') !== -1 && body.indexOf('scopeMatch') !== -1,
+            schemaAsksClass: body.indexOf('ruptureClass') !== -1 && body.indexOf('memory_perception') !== -1 && body.indexOf('history_rewrite') !== -1
+              && body.indexOf('identity_reputation') !== -1 && body.indexOf('materialization_possession') !== -1 && body.indexOf('relationship_social') !== -1,
+            schemaClassConditional: body.indexOf('do not populate fields of a class you did not deliver') !== -1,
+            schemaAsksInvalidatedPlans: body.indexOf('invalidatedPlans') !== -1,
             hasDurable: body.indexOf('DURABLE CONSEQUENCES ALREADY IN FORCE') !== -1,
             mentionsWish: body.indexOf('everyone forgets the ceremony happened') !== -1,
             requiresOutcome: body.indexOf('null is NOT valid this scene') !== -1,
@@ -257,6 +267,18 @@ const CALLBACK_MARK = 'TEMPT FATE — MEMORY CALLBACK';
   ok('AUTHOR receives ACTIVE INVOCATION THIS SCENE — the parity requirement this whole fix exists for', !!(author && author.hasActive), 'author.hasActive=' + (author && author.hasActive) + ' · this is the exact split the paid run produced');
   ok('AUTHOR does NOT receive a historical MEMORY CALLBACK for the proposal it is currently enacting', !!(author && !author.hasCallback), 'author.hasCallback=' + (author && author.hasCallback) + ' · the paid run had this true, which is why temptFateOutcome came back null');
   ok('exactly one wish classifier request fired, captured by the stub', classifierReqs.length === 1, 'classifier=' + classifierReqs.length);
+
+  // THE AUTHOR'S REAL SCHEMA must request everything the validator requires. A paid run was lost to
+  // this exact gap: the fields were added to a builder no prompt called, the validator demanded
+  // them anyway, and the delivered outcome was rejected for omitting what it was never asked for.
+  ok('the author\'s REAL schema requests the scope fields the validator requires (requestedScope / deliveredScope / scopeMatch)',
+    !!(author && author.schemaAsksScope), 'schemaAsksScope=' + (author && author.schemaAsksScope));
+  ok('the author\'s REAL schema requests ruptureClass, enumerating all five classes',
+    !!(author && author.schemaAsksClass), 'schemaAsksClass=' + (author && author.schemaAsksClass));
+  ok('the author\'s REAL schema tells it not to populate a class it did not deliver — class fields stay conditional',
+    !!(author && author.schemaClassConditional), 'schemaClassConditional=' + (author && author.schemaClassConditional));
+  ok('the author\'s REAL schema requests invalidatedPlans, which is generic to every class',
+    !!(author && author.schemaAsksInvalidatedPlans), 'schemaAsksInvalidatedPlans=' + (author && author.schemaAsksInvalidatedPlans));
 
   // ═══════════════════════════════════════════════════════════════════════════════════════════
   section('SCENE A PERSISTENCE — accepted scene and durable outcome, through the production commit path');

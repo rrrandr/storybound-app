@@ -189745,40 +189745,6 @@ No text, no watermark, no UI elements, share-ready.`;
   // single wish can produce effects with DIFFERENT lifespans (Roman's own
   // example: a manifested Answer may disappear when the window closes while
   // someone's witnessed use of it permanently changes an accusation).
-  function _buildTemptFateOutcomeReportingSchema() {
-    return 'Report the outcome of this Tempt Fate intervention as JSON, grounded ONLY in what the scene you just wrote ACTUALLY shows — never in what you intended, planned, or think would be dramatic to imply for later. Fields:\n'
-      + '  "delivered": true only if the intervention concretely happened on the page this scene (not merely implied, foreshadowed, or deferred) — else false.\n'
-      + '  "changed": [{"subject": who/what was affected, "whatChanged": concretely what changed about them}] — only things the scene actually shows changing.\n'
-      + '  "durability": [{"aspect": which changed thing, "status": "expires"|"persists"|"uncertain", "note": why}] — "expires" ONLY if the scene itself signals this specific effect is bound to the passing rupture window; default to "persists" or "uncertain" otherwise. Do NOT mark a memory/identity/history change as "expires" merely because Tempt Fate’s VISIBLE distortion window will close — the window closing governs how long the world visibly destabilizes, never whether the underlying change stuck. A single wish may produce BOTH kinds at once (e.g. a materialized object disappears, but a witnessed accusation it caused persists).\n'
-      + '  "knowledgeStates": [{"character": name, "state": "knows"|"remembers"|"believes"|"suspects"|"unaware", "note": grounding}] — per-character, never a single blanket claim about "everyone".\n'
-      + '  "establishedEvidence": [string...] — concrete evidence or consequences the scene ACTUALLY put on the page (an object out of place, a contradicted record, a witness reaction) — not things that could happen later.\n'
-      + '  "openPossibilities": [string...] — unresolved threads a FUTURE scene could pursue. These are explicitly NOT established fact — do not phrase them as if they already happened.\n'
-      // SCOPE HONESTY (Roman 2026-09-23). A real scene granted "everyone forgets the ceremony
-      // happened" as "the assembly forgets the twisted wish", left the ceremony institutionally
-      // intact, and the durable record then codified that narrowing as permanent canon with nothing
-      // marking it as a partial grant. A narrowing may be legitimate — but it must be DECLARED, so
-      // it can be reviewed, rather than silently absorbed into canon as a clean success.
-      + '  "requestedScope": string — the wish\'s literal scope, in your own words, BEFORE considering what the scene managed to deliver.\n'
-      + '  "deliveredScope": string — the scope the scene ACTUALLY delivered on the page.\n'
-      + '  "scopeMatch": "full"|"narrower"|"broader" — compare the two honestly. "full" ONLY if the delivered scope covers the requested scope. If the scene granted less than the wish asked for (a subset of people, a subset of the events, a shorter duration), that is "narrower" — say so; do not relabel a partial grant as a success. If it did more than was asked, that is "broader".\n'
-      + '  "scopeNote": string — if scopeMatch is not "full", why the scene delivered a different scope, and what specifically was left untouched.\n'
-      // GENERIC, every rupture class:
-      + '  "invalidatedPlans": [string...] — previously scheduled plans, proceedings or obligations that this rupture made IMPOSSIBLE, SUSPENDED, or UNEXPLAINED. A proceeding nobody can still justify IS a change; omitting it silently preserves a world-state the wish should have disturbed. Empty array if the rupture genuinely left every scheduled thing able to proceed.\n'
-      // RUPTURE CLASS — declared, then only that class's extra fields are required. (Roman
-      // 2026-09-23 overfitting audit: an earlier version demanded who-forgot/exemption fields from
-      // EVERY wish, which is meaningless for a possession or reputation rupture.)
-      + '  "ruptureClass": "memory_perception"|"history_rewrite"|"identity_reputation"|"materialization_possession"|"relationship_social"|"other" — what KIND of change the wish actually asked for and the scene actually delivered. Choose by what the wish asked for, not by what is easiest to report.\n'
-      + 'THEN, and ONLY for the class you declared, add that class\'s fields. Do not populate fields belonging to a class you did not deliver:\n'
-      + '  • memory_perception → "affectedKnowers": [{"who": name or group, "nowKnows": what they now know or no longer know}]. Use knowledgeStates for per-character detail. If the protagonist is EXEMPT from a forgetting, the scene itself must EARN that exception on the page (the wish\'s wording, the deck, her role in it) — an exemption merely asserted is not established; record the grounding in her knowledgeStates note. Evidence that outlasts memory (objects, records, wounds, written orders) goes in establishedEvidence.\n'
-      + '  • history_rewrite → "priorHistoryReplaced": what the history WAS before and what it now IS instead (a Tempt rupture MAY make an event never have occurred when that is what was wished and the scene delivers it), and "survivingContradictions": [string...] — residue that does not fit the rewritten history (an object, a record, a person who remembers wrongly), or an empty array if the rewrite left none.\n'
-      + '  • identity_reputation → "recognitionChanges": [{"who": whose standing changed, "howRecognized": how others now recognise, name, or treat them, "recordsChanged": what social or institutional records now say}].\n'
-      + '  • materialization_possession → "materialEffects": [{"what": what now exists or changed hands, "whoHolds": who has it, "duration": how long it lasts}]. A materialised object may expire with the rupture window while what its use CAUSED persists — report both in durability.\n'
-      + '  • relationship_social → "affectedParties": [{"who": party, "whatChanged": how the relationship or social reality changed, "witnesses": who saw or now assumes it}].\n'
-      + '  • other → explain in scopeNote what class this is and why none of the above fit.\n'
-      + 'Durability is per-effect for every class: which effects persist beyond the visible rupture window, in durability.\n'
-      + 'This treatment applies IDENTICALLY to any wish, familiar or unprecedented — there is no fixed catalogue of wish types to match against; reason about THIS specific wish and THIS specific scene.';
-  }
-  window._buildTemptFateOutcomeReportingSchema = _buildTemptFateOutcomeReportingSchema;
 
   // STAGE 2 — structural validation ONLY (shape/types, never content or
   // creative correctness — that is reserved for live testing).
@@ -224539,7 +224505,24 @@ No text, no watermark, no UI elements, share-ready.`;
       '    "durability": [ { "aspect": "<which changed thing, matching a changed[].subject>", "status": "expires | persists | uncertain", "note": "<why>" } ],  /* PER-EFFECT — a single wish may produce effects with DIFFERENT lifespans (e.g. a materialized object disappears, but a witnessed accusation it caused persists). "expires" ONLY if THIS scene itself signals the effect is bound to the passing rupture window — do NOT mark a memory/identity/history change as "expires" merely because Tempt Fate\'s visible distortion window will close; that governs how long the world visibly destabilizes, never whether the underlying change stuck. */\n' +
       '    "knowledgeStates": [ { "character": "<name>", "state": "knows | remembers | believes | suspects | unaware", "note": "<grounding>" } ],  /* per-character, never a single blanket claim about "everyone" */\n' +
       '    "establishedEvidence": ["<concrete evidence or consequence THIS scene actually put on the page>"],\n' +
-      '    "openPossibilities": ["<unresolved thread a FUTURE scene could pursue — explicitly NOT established fact; do not phrase as already true>"]\n' +
+      '    "openPossibilities": ["<unresolved thread a FUTURE scene could pursue — explicitly NOT established fact; do not phrase as already true>"],\n' +
+      // SCOPE + RUPTURE CLASS (Roman 2026-09-23). These MUST live here, in the schema the author
+      // actually receives. An earlier version put them only in _buildTemptFateOutcomeReportingSchema()
+      // — which is window-exposed but never called by any prompt — while the validator required
+      // them, so every delivered outcome was rejected and nothing could commit. Prompt and validator
+      // must be edited together; that mistake cost a real run.
+      '    "requestedScope": "<the wish\'s literal scope, in your own words, BEFORE considering what the scene managed to deliver>",\n' +
+      '    "deliveredScope": "<the scope the scene ACTUALLY delivered on the page>",\n' +
+      '    "scopeMatch": "full | narrower | broader",  /* compare the two honestly. "full" ONLY if delivered covers requested. Granting a subset of the people, the events, or the duration is "narrower" — say so; do NOT relabel a partial grant as a success. */\n' +
+      '    "scopeNote": "<required when scopeMatch is not \\"full\\": why the scene delivered a different scope, and what specifically was left untouched>",\n' +
+      '    "invalidatedPlans": ["<a previously scheduled plan, proceeding or obligation this rupture made IMPOSSIBLE, SUSPENDED or UNEXPLAINED. A proceeding nobody can still justify IS a change; omitting it silently preserves a world-state the wish should have disturbed. Empty array if every scheduled thing can genuinely still proceed.>"],\n' +
+      '    "ruptureClass": "memory_perception | history_rewrite | identity_reputation | materialization_possession | relationship_social | other",  /* what KIND of change the wish asked for and the scene delivered. Then add ONLY that class\'s fields below — do not populate fields of a class you did not deliver. */\n' +
+      '    "affectedKnowers": [ { "who": "<name or group>", "nowKnows": "<what they now know or no longer know>" } ],  /* memory_perception ONLY. If the protagonist is EXEMPT from a forgetting, the scene must EARN that exception on the page; record the grounding in her knowledgeStates note. */\n' +
+      '    "priorHistoryReplaced": "<history_rewrite ONLY — what the history WAS, and what it now IS instead. A rupture MAY make an event never have occurred when that is the wish and the scene delivers it.>",\n' +
+      '    "survivingContradictions": ["<history_rewrite ONLY — residue that does not fit the rewritten history; empty array if the rewrite left none>"],\n' +
+      '    "recognitionChanges": [ { "who": "<whose standing changed>", "howRecognized": "<how others now recognise, name or treat them>", "recordsChanged": "<what social or institutional records now say>" } ],  /* identity_reputation ONLY */\n' +
+      '    "materialEffects": [ { "what": "<what now exists or changed hands>", "whoHolds": "<who has it>", "duration": "<how long it lasts>" } ],  /* materialization_possession ONLY */\n' +
+      '    "affectedParties": [ { "who": "<party>", "whatChanged": "<how the relationship or social reality changed>", "witnesses": "<who saw or now assumes it>" } ]  /* relationship_social ONLY */\n' +
       // Roman 2026-09-23: the schema now states the REQUIREMENT for the invocation scene, not just
       // the permission. Previously it only said "null when Tempt Fate was not invoked this scene",
       // which an author handed a historical MEMORY CALLBACK reads as licence to null it — exactly

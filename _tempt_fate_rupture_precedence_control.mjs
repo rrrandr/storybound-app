@@ -55,8 +55,12 @@ const ACTIVE_RX = /ACTIVE INVOCATION THIS SCENE/;
 
   // ═══════════════════════════════════════════════════════════════════════════════════════════
   section('1. THE REAL FAILURE — reproduced from the retained planner request, not re-imagined');
-  const plannerReqs = JSON.parse(fs.readFileSync(path.join(RUN_OUT, 'scene_a_planner_requests.json'), 'utf8'));
-  const realBody = JSON.stringify(plannerReqs[0] && plannerReqs[0].requestBody);
+  // Reads the COMMITTED static fixture, not the transient run directory. The original raw artifacts
+  // lived in _tempt_fate_memory_erasure_live_run_out/, which every run clears — a later authorized
+  // run overwrote them and they were never committed, so they are gone. A fixture the next run can
+  // delete was never preserved; see the fixture's own _README for exactly what is verbatim.
+  const FIXTURE = JSON.parse(fs.readFileSync(path.join(__dirname, '_tempt_fate_fixtures', 'scene_a_failed_2026_09_23.json'), 'utf8'));
+  const realBody = [FIXTURE.plannerAlsoCarried, FIXTURE.plannerFrameDirective, FIXTURE.plannerRequestExcerpt].join(' ');
   ok('the retained planner request carries the ACTIVE INVOCATION directive', ACTIVE_RX.test(realBody));
   ok('the SAME request also hard-requires the pre-resolved lane — the contradiction that produced the partial grant',
     HARD_LANE_RX.test(realBody) && HARD_FRAME_RX.test(realBody),
@@ -65,8 +69,7 @@ const ACTIVE_RX = /ACTIVE INVOCATION THIS SCENE/;
 
   // ═══════════════════════════════════════════════════════════════════════════════════════════
   section('2. THE REAL OUTCOME — the narrowing it produced can no longer enter canon silently');
-  const realOutcome = JSON.parse(fs.readFileSync(path.join(RUN_OUT, 'outcome_record.json'), 'utf8'));
-  const committed = realOutcome.durableConsequences[0];
+  const committed = FIXTURE.committedOutcome;
   // Reconstruct the report shape the author actually returned (the committed record mirrors it).
   const asReported = {
     delivered: true,
@@ -161,24 +164,16 @@ const ACTIVE_RX = /ACTIVE INVOCATION THIS SCENE/;
 
   // ═══════════════════════════════════════════════════════════════════════════════════════════
   section('5. SCOPE HANDLING IS DEMANDED OF THE AUTHOR, not left implicit');
-  const schema = await page.evaluate(() => window._buildTemptFateOutcomeReportingSchema());
-  ok('the schema demands a declared ruptureClass covering all five kinds plus "other"',
-    /"ruptureClass"/.test(schema) && /memory_perception/.test(schema) && /history_rewrite/.test(schema)
-      && /identity_reputation/.test(schema) && /materialization_possession/.test(schema) && /relationship_social/.test(schema));
-  ok('class fields are CONDITIONAL — the schema says not to populate a class you did not deliver',
-    /ONLY for the class you declared/.test(schema) && /Do not populate fields belonging to a class you did not deliver/.test(schema));
-  ok('the memory class (and only it) carries the who-forgot / earned-exemption burden',
-    /memory_perception → "affectedKnowers"/.test(schema) && /must EARN that exception/.test(schema) && /merely asserted is not established/.test(schema));
-  ok('the history class may state an event never occurred, with surviving contradictions',
-    /history_rewrite → "priorHistoryReplaced"/.test(schema) && /MAY make an event never have occurred/.test(schema) && /survivingContradictions/.test(schema));
-  ok('reputation, possession and relationship classes each carry their own evidence instead of memory fields',
-    /identity_reputation → "recognitionChanges"/.test(schema) && /materialization_possession → "materialEffects"/.test(schema) && /relationship_social → "affectedParties"/.test(schema));
-  ok('invalidated plans stay GENERIC — demanded of every class, not only forgetting',
-    /"invalidatedPlans"/.test(schema) && /IMPOSSIBLE, SUSPENDED, or UNEXPLAINED/.test(schema) && /omitting it silently preserves a world-state/.test(schema));
-  ok('the outcome schema requires durable effects beyond the rupture window', /persist beyond the visible rupture window/.test(schema));
-  ok('the outcome schema requires an explicit requested-vs-delivered scope comparison',
-    /"requestedScope"/.test(schema) && /"deliveredScope"/.test(schema) && /"scopeMatch"/.test(schema)
-      && /do not relabel a partial grant as a success/.test(schema));
+  // MOVED. These assertions used to run against _buildTemptFateOutcomeReportingSchema() — a
+  // window-exposed builder that NO prompt ever called. They passed while the author received a
+  // completely different inline schema, which is exactly how the scope/class fields became REQUIRED
+  // by the validator while never being REQUESTED of the model: a real paid run delivered a scene,
+  // was rejected for omitting fields it was never asked for, and committed nothing. The dead builder
+  // is deleted; the schema is now asserted against the REAL captured author request body in
+  // _tempt_fate_framing_split_control.mjs, which is the only place the author's actual prompt exists.
+  console.log('  Schema assertions live in _tempt_fate_framing_split_control.mjs, against the REAL');
+  console.log('  captured author request body. Asserting them here against a builder no prompt used');
+  console.log('  is what produced a green control over a broken pipeline.');
 
   // ═══════════════════════════════════════════════════════════════════════════════════════════
   section('6. THE GATE MUST AGREE WITH THE PROMPT — a waived lane cannot then be rejected');

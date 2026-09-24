@@ -458,6 +458,30 @@ let browser = null, gate = null;
       authorGotActiveInvocation: byLayer.author.some((r) => r.hasActiveInvocation),
       authorGotMemoryCallback: byLayer.author.some((r) => r.hasMemoryCallback)
     },
+    // Declared rupture class + scope fields, surfaced from the committed record so review does not
+    // have to dig for them. These are the model's OWN declarations; nothing here validates that the
+    // class or the scope matches the wish or the prose — that is the human judgement.
+    declared: (function () {
+      const d = (sceneAResult.durableConsequences || [])[0] || {};
+      return {
+        ruptureClass: d.ruptureClass || null,
+        requestedScope: d.requestedScope || null,
+        deliveredScope: d.deliveredScope || null,
+        scopeMatch: d.scopeMatch || null,
+        scopeNote: d.scopeNote || null,
+        invalidatedPlans: d.invalidatedPlans || [],
+        classDetail: d.classDetail || {}
+      };
+    })(),
+    requestCapAccounting: {
+      sceneAPhaseCap: 32,
+      sceneAObserved: sceneACalls.length,
+      wishClassifierCap: 1,
+      wishClassifierObserved: gate.trackedCalls('wish-classifier').length,
+      totalCapForThisRun: 33,
+      totalObserved: sceneACalls.length + gate.trackedCalls('wish-classifier').length,
+      capBreached: (sceneACalls.length + gate.trackedCalls('wish-classifier').length) > 33
+    },
     semanticVerdict: 'NOT ASSESSED BY THIS SCRIPT — human review of scene_a_rendered_text.txt required',
     costs: {
       wishClassifierUsd: classifierCostInfo.total,
@@ -481,6 +505,12 @@ let browser = null, gate = null;
   console.log('  prompt parity: planner ACTIVE=' + sceneAReport.structural.plannerGotActiveInvocation
     + ' · author ACTIVE=' + sceneAReport.structural.authorGotActiveInvocation
     + ' · author MEMORY CALLBACK=' + sceneAReport.structural.authorGotMemoryCallback);
+  console.log('  declared: ruptureClass=' + sceneAReport.declared.ruptureClass + ' scopeMatch=' + sceneAReport.declared.scopeMatch);
+  console.log('    requested: ' + JSON.stringify(sceneAReport.declared.requestedScope));
+  console.log('    delivered: ' + JSON.stringify(sceneAReport.declared.deliveredScope));
+  console.log('    invalidatedPlans: ' + JSON.stringify(sceneAReport.declared.invalidatedPlans));
+  console.log('  requests: ' + sceneAReport.requestCapAccounting.totalObserved + ' of ' + sceneAReport.requestCapAccounting.totalCapForThisRun
+    + ' cap (scene-A ' + sceneACalls.length + '/32, classifier ' + sceneAReport.requestCapAccounting.wishClassifierObserved + '/1) — breached: ' + sceneAReport.requestCapAccounting.capBreached);
   console.log('  cost: $' + spentSoFar.toFixed(6) + ' of $' + COMBINED_CEILING.toFixed(2) + ' (within cap: ' + sceneAReport.costs.withinCap + ')');
   console.log('  real image dispatches: ' + sceneAReport.imageAttempts);
   console.log('  SEMANTIC VERDICT: not assessed here — read scene_a_rendered_text.txt and judge.');

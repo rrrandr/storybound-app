@@ -1,0 +1,69 @@
+{
+  "_README": [
+    "RED FIXTURE — the 2026-09-23 Scene A semantic failure (partial grant).",
+    "",
+    "PROVENANCE, stated exactly: the original raw artifacts were written to",
+    "_tempt_fate_memory_erasure_live_run_out/, which is a TRANSIENT output directory that each run",
+    "clears. A later authorized run overwrote it and the raw bytes are unrecoverable — the directory",
+    "was never committed. That was my error: a fixture that the next run can delete was never",
+    "actually preserved. It is a committed static file now, which is what it should have been.",
+    "",
+    "The two fields below are VERBATIM text captured from the original run and quoted in this",
+    "session's records (the authorization sheet's thirteenth-revision table and",
+    "_tempt_fate_memory_erasure_scene_a_result_2026_09_23.md):",
+    "  • plannerRequestExcerpt — the exact contradictory lane mandate, as it appeared in the real",
+    "    planner request body alongside the ACTIVE INVOCATION directive.",
+    "  • committedOutcome — the durable record exactly as it was committed, field for field.",
+    "They are reproductions of verbatim quotes, NOT the original request/response bytes. Nothing here",
+    "is invented; anything not quoted from the original is simply absent."
+  ],
+  "wish": "everyone forgets the ceremony happened",
+  "branch": "remain",
+  "plannerRequestExcerpt": "\"chosen_aftermath_lane\" (MUST be EXACTLY \"dohkar_preliminary_review\" — the lane already resolved for you by the REQUIRED EVENT FRAME above, not a choice among [dohkar_preliminary_review, family_accusation, julian_jurisdiction_challenge, lirael_constrained, lirael_defensive_path]; state_change/tactical_move/forces_choice must actually instantiate that frame's content, not merely name it)",
+  "plannerAlsoCarried": "TEMPT FATE — ACTIVE INVOCATION THIS SCENE",
+  "plannerFrameDirective": "REQUIRED EVENT FRAME (HARD, DETERMINISTICALLY RESOLVED — this is NOT a choice among options; the reader's own card selection already determined it before you were ever asked): the central event of this scene MUST be — the presiding Dohkar convenes the preliminary review of Lirael's conduct. You MUST set \"chosen_aftermath_lane\" to EXACTLY \"dohkar_preliminary_review\"",
+  "committedOutcome": {
+    "id": "tfc_tfl_1",
+    "source": "tempt",
+    "requestedRupture": "everyone forgets the ceremony happened",
+    "proposalId": "tfl_1",
+    "sceneIdx": 1,
+    "bargainId": null,
+    "changed": [
+      {
+        "subject": "the assembly's memory of the twisted wish and interference",
+        "whatChanged": "the specific event of the wish turning and the misalignment is no longer recalled by any witness"
+      }
+    ],
+    "durability": [
+      {
+        "aspect": "the assembly's memory of the twisted wish and interference",
+        "status": "persists",
+        "note": "the forgetting is clean and immediate; no one present can reconstruct the accusation that had already begun"
+      }
+    ],
+    "knowledgeStates": [
+      { "character": "the presiding Dohkar", "state": "unaware", "note": "proceeds with the review naming as though the interference never registered" },
+      { "character": "li", "state": "suspects", "note": "his stillness and single step forward suggest he registers the gap without naming it" },
+      { "character": "Seren", "state": "unaware", "note": "rises and leaves without any sign she recalls abandoning her prepared wish" },
+      { "character": "protagonist", "state": "knows", "note": "she alone carries the knowledge that the wish succeeded" }
+    ],
+    "establishedEvidence": [
+      "the assembly disperses without any reference to the twisted wish or the turning heads",
+      "the Dohkar names the review in three days with no mention of the earlier accusation"
+    ],
+    "openPossibilities": [
+      "whether Julian will press the gap in private before the review",
+      "whether the forgetting will hold when new witnesses are called"
+    ],
+    "permanent": true
+  },
+  "whyThisIsTheRedState": [
+    "The planner was ordered to land the wish AND to instantiate dohkar_preliminary_review as a HARD",
+    "requirement. For a wish that erases knowledge of the ceremony the review exists to examine, those",
+    "cannot both govern. The model narrowed the wish until the predetermined review still fit, and this",
+    "outcome record then codified the narrowing as permanent canon with nothing marking it partial:",
+    "requested 'everyone forgets the ceremony happened', delivered only 'the assembly forgets the",
+    "twisted wish and interference'."
+  ]
+}
