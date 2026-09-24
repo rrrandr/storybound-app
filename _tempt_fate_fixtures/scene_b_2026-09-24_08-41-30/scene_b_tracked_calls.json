@@ -1,0 +1,38 @@
+[
+  {
+    "url": "http://localhost:3000/api/mistral-proxy",
+    "model": "ministral-8b-2512",
+    "status": 200,
+    "elapsedMs": 52339.388292
+  },
+  {
+    "url": "http://localhost:3000/api/proxy",
+    "model": "grok-4-1-fast-non-reasoning",
+    "status": 200,
+    "elapsedMs": 9590.407542
+  },
+  {
+    "url": "http://localhost:3000/api/proxy",
+    "model": "grok-4-1-fast-reasoning",
+    "status": 200,
+    "elapsedMs": 109348.01058399999
+  },
+  {
+    "url": "http://localhost:3000/api/mistral-proxy",
+    "model": "ministral-8b-2512",
+    "status": 200,
+    "elapsedMs": 17822.230499999976
+  },
+  {
+    "url": "http://localhost:3000/api/proxy",
+    "model": null,
+    "status": 200,
+    "elapsedMs": 4854.235874999984
+  },
+  {
+    "url": "http://localhost:3000/api/mistral-proxy",
+    "model": "ministral-8b-2512",
+    "status": 200,
+    "elapsedMs": 9381.807832999999
+  }
+]

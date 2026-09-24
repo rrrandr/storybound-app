@@ -1,0 +1,148 @@
+{
+  "checks": [
+    {
+      "name": "Scene A's accepted scene object is preserved {title, synopsis, text, fateCard}",
+      "pass": true
+    },
+    {
+      "name": "...and its text matches the separately preserved rendered prose byte-for-byte",
+      "pass": true
+    },
+    {
+      "name": "the durable consequence is preserved and was COMMITTED",
+      "pass": true
+    },
+    {
+      "name": "the owned ledger proposal is preserved",
+      "pass": true
+    },
+    {
+      "name": "the Scene B census and reservation fit inside the $0.20 hard cap",
+      "pass": true
+    },
+    {
+      "name": "the phase-gate ceiling equals the census request count exactly",
+      "pass": true
+    },
+    {
+      "name": "Scene A's prose is in state byte-for-byte",
+      "pass": true
+    },
+    {
+      "name": "exactly ONE durable consequence, identical to the committed fixture",
+      "pass": true
+    },
+    {
+      "name": "the owned proposal is restored identically",
+      "pass": true
+    },
+    {
+      "name": "the proposal is marked already-committed",
+      "pass": true
+    },
+    {
+      "name": "NO new Tempt invocation is set",
+      "pass": true
+    },
+    {
+      "name": "NO extractor pending record exists",
+      "pass": true
+    },
+    {
+      "name": "an ordinary continuation writes NO extractor pending record",
+      "pass": true
+    },
+    {
+      "name": "...even when the model returns a hallucinated outcome on that continuation",
+      "pass": true
+    },
+    {
+      "name": "...and the already-committed consequence is untouched",
+      "pass": true
+    }
+  ],
+  "sceneBWorstUsd": 0.17433500000000002,
+  "capUsd": 0.2,
+  "requests": 26,
+  "hydrated": {
+    "scenes": 1,
+    "sceneTextLen": 867,
+    "durable": [
+      {
+        "id": "tfc_tfl_1",
+        "source": "tempt",
+        "requestedRupture": "everyone forgets the ceremony happened",
+        "proposalId": "tfl_1",
+        "sceneIdx": 1,
+        "bargainId": null,
+        "changed": [
+          {
+            "subject": "the assembly",
+            "whatChanged": "memories of the ceremony and accusation dissolved into blank confusion"
+          }
+        ],
+        "durability": [
+          {
+            "aspect": "memory loss",
+            "status": "persists",
+            "note": "no one recalls the bent wish or interrogation"
+          }
+        ],
+        "knowledgeStates": [
+          {
+            "character": "the assembly",
+            "state": "unaware",
+            "note": "no recollection of the rite's events"
+          }
+        ],
+        "establishedEvidence": [
+          "voices falter, faces blank, no one names the accusation"
+        ],
+        "openPossibilities": [
+          "Lirael may still speak or remain silent"
+        ],
+        "requestedScope": "everyone forgets the ceremony happened",
+        "deliveredScope": "the assembly forgets the ceremony and its accusations",
+        "scopeMatch": "full",
+        "scopeNote": "",
+        "ruptureClass": "memory_perception",
+        "invalidatedPlans": [
+          "the formal inquiry cannot be justified without memory of the events"
+        ],
+        "classDetail": {
+          "affectedKnowers": [
+            {
+              "who": "the assembly",
+              "nowKnows": "nothing of the bent wish or interrogation"
+            }
+          ]
+        },
+        "permanent": true
+      }
+    ],
+    "ledger": [
+      {
+        "id": "tfl_1",
+        "sceneIdx": 0,
+        "wishText": "everyone forgets the ceremony happened",
+        "anatomyKeywords": [],
+        "quantityKeywords": [],
+        "claimedByPlayer": false,
+        "scale": "mass",
+        "affectedTargets": [],
+        "landmarks": [],
+        "publicAttribution": "debated",
+        "witnessScope": "public",
+        "liName": "the love interest",
+        "sealedAt": 1790215883427,
+        "callbackCount": 0,
+        "lastCallbackScene": null
+      }
+    ],
+    "committed": [
+      "tfl_1"
+    ],
+    "pending": [],
+    "invoked": false
+  }
+}

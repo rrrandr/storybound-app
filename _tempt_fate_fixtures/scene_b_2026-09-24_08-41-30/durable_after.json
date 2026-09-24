@@ -1,0 +1,53 @@
+[
+  {
+    "id": "tfc_tfl_1",
+    "source": "tempt",
+    "requestedRupture": "everyone forgets the ceremony happened",
+    "proposalId": "tfl_1",
+    "sceneIdx": 1,
+    "bargainId": null,
+    "changed": [
+      {
+        "subject": "the assembly",
+        "whatChanged": "memories of the ceremony and accusation dissolved into blank confusion"
+      }
+    ],
+    "durability": [
+      {
+        "aspect": "memory loss",
+        "status": "persists",
+        "note": "no one recalls the bent wish or interrogation"
+      }
+    ],
+    "knowledgeStates": [
+      {
+        "character": "the assembly",
+        "state": "unaware",
+        "note": "no recollection of the rite's events"
+      }
+    ],
+    "establishedEvidence": [
+      "voices falter, faces blank, no one names the accusation"
+    ],
+    "openPossibilities": [
+      "Lirael may still speak or remain silent"
+    ],
+    "requestedScope": "everyone forgets the ceremony happened",
+    "deliveredScope": "the assembly forgets the ceremony and its accusations",
+    "scopeMatch": "full",
+    "scopeNote": "",
+    "ruptureClass": "memory_perception",
+    "invalidatedPlans": [
+      "the formal inquiry cannot be justified without memory of the events"
+    ],
+    "classDetail": {
+      "affectedKnowers": [
+        {
+          "who": "the assembly",
+          "nowKnows": "nothing of the bent wish or interrogation"
+        }
+      ]
+    },
+    "permanent": true
+  }
+]
