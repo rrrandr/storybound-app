@@ -9,8 +9,9 @@
         "invalidated_objective:inv_0"
       ],
       "score": {
-        "outcome": "caught",
-        "critical": false
+        "outcome": "unsupported_finding",
+        "critical": true,
+        "note": "verdict \"violation\" but no finding pairs an appropriate category (unsupported_capability/new_metaphysics) with a fact of a supporting kind (neg) — a real but irrelevant citation is not detection"
       }
     },
     {
@@ -46,8 +47,9 @@
         "invalidated_objective:neg_0"
       ],
       "score": {
-        "outcome": "caught",
-        "critical": false
+        "outcome": "unsupported_finding",
+        "critical": true,
+        "note": "verdict \"violation\" but no finding pairs an appropriate category (invalidated_objective) with a fact of a supporting kind (inv) — a real but irrelevant citation is not detection"
       }
     },
     {
@@ -110,10 +112,15 @@
     "infrastructureInconclusive": false,
     "skipped": 0,
     "skippedIds": [],
+    "unsupportedFindings": 2,
+    "unsupportedIds": [
+      "red_memory_extraction",
+      "red_invalidated_objective"
+    ],
     "infraFailures": 0,
     "reds": 4,
     "greens": 4,
-    "caught": 3,
+    "caught": 1,
     "correctPass": 0,
     "missed": 0,
     "falsePositives": 4,
@@ -136,7 +143,8 @@
     "totalFixtures": 8,
     "blockers": [
       "4 green false positive: green_confusion_records, green_alignment_sense, green_tempt_history_rewrite, green_mundane_invention",
-      "1 unavailable (no usable response): red_visible_glow"
+      "1 unavailable (no usable response): red_visible_glow",
+      "2 UNSUPPORTED finding (violation verdict, but cited an irrelevant real fact — not a catch): red_memory_extraction, red_invalidated_objective"
     ],
     "enableGenerally": false
   }

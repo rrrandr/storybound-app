@@ -192013,6 +192013,27 @@ No text, no watermark, no UI elements, share-ready.`;
   // The guarantee is deliberately narrow, and is NOT "canon safety": unsupported new metaphysics
   // should be stopped before author spend, while ordinary creative invention stays possible.
   // ══════════════════════════════════════════════════════════════════════════════════════════════
+  // ── THE SEMANTIC AUDITOR IS DISABLED BY DEFAULT (Roman 2026-09-24) ──────────────────────────
+  // The 2026-09-24 calibration REJECTED ministral-8b-2512 for this role: it returned "violation"
+  // on every reply that parsed, including all four green fixtures. The gate was nevertheless
+  // reachable with `window._canonAuditEnabled !== false`, which is TRUE when nothing sets it — so
+  // as committed, production would have run a rejected auditor against the default Mistral chain
+  // and blocked ordinary scenes. Default is now FALSE and the opt-in must be explicit.
+  //
+  // THIS DISABLES ONLY THE SEMANTIC AUDIT. The deterministic grounding check
+  // (_detectUngroundedCapability → _plannerGroundingRejection) is a separate, free, pre-author gate
+  // and remains active: a plan with no mechanism_grounding, a fabricated canon id, or a grounding
+  // that resolves to nothing is still rejected before the author.
+  var _CANON_AUDIT_DEFAULT_ENABLED = false;
+  function _canonAuditIsEnabled() {
+    try {
+      if (window._canonAuditEnabled === true) return true;    // explicit opt-in (calibration/tests)
+      if (window._canonAuditEnabled === false) return false;  // explicit opt-out
+      return _CANON_AUDIT_DEFAULT_ENABLED;                    // unset → OFF
+    } catch (_) { return false; }
+  }
+  window._canonAuditIsEnabled = _canonAuditIsEnabled;
+
   var CANON_VIOLATION_CATEGORIES = {
     unsupported_capability: true, new_metaphysics: true, contradicted_knowledge: true,
     rewritten_history: true, invalidated_objective: true, other: true
@@ -233838,7 +233859,7 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
       // OWNERSHIP CHECK, BEFORE ANYTHING ELSE. A proposal that is not provably this generation's
       // is not audited and is not trusted — it FAILS CLOSED rather than being ignored, because
       // silently skipping the audit is exactly the bypass this whole gate exists to prevent.
-      if (_caProposal && window._canonAuditEnabled !== false) {
+      if (_caProposal && _canonAuditIsEnabled()) {
         var _own = _caProposal.owner, _cur = state._cgGenAttempt;
         var _ownOk = !!(_own && _cur && _own.id === _cur.id
           && String(_own.storyId || '') === String(state.storyId || '')
@@ -233856,7 +233877,7 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
         }
       }
       if (_caProposal && typeof _buildCanonPacket === 'function' && typeof _canonAuditGate === 'function'
-          && window._canonAuditEnabled !== false) {
+          && _canonAuditIsEnabled()) {
         var _caPacket = _buildCanonPacket(state, { proposal: _caProposal });
         try {
           console.log('[CANON-AUDIT] gating scene ' + sceneIndex + ' — packet: ' + _caPacket.facts.length

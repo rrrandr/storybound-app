@@ -9,7 +9,8 @@ import { chromium } from 'playwright-core';
 import { installFailClosedNetworkGate } from './_e2e_network_gate.mjs';
 import {
   loadFixtures, makeLedger, installCalibrationRoute, scoreFixture, verdictSummary,
-  PRIMARY_MODEL, PRIMARY_ENDPOINT, PER_CALL_USD, CEILING_USD, isInfraFailure, INFRA_STOP_AFTER
+  PRIMARY_MODEL, PRIMARY_ENDPOINT, PER_CALL_USD, CEILING_USD, isInfraFailure, INFRA_STOP_AFTER,
+  candidate, CANDIDATES
 } from './_canon_audit_calibration_core.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -151,22 +152,31 @@ function section(t) { console.log('\n=== ' + t + ' ==='); }
   ok('memory detail reaches the packet — knower dispositions and the invoker anchor',
     /Julian — suspects/.test(classDetail.memory) && /Lirael \(the invoker\) is exempt/.test(classDetail.memory), classDetail.memory.slice(-260));
 
+  // A properly-supported violation FOR THIS FIXTURE: the generic stub cites neg_0 with
+  // unsupported_capability, which legitimately fails the rubric for reds expecting a different
+  // category/kind. Each red needs a reply that actually satisfies its own rule.
+  const supportedFor = (f) => ({ valid: true, verdict: 'violation', violations: [{
+    category: (f.expectCategories || ['other'])[0],
+    citedFactIds: [(f.supportingFactKinds || ['neg'])[0] + '_0'],
+    claim: f.plan.state_change }] });
+  const replyFor = (f) => f.expect === 'violation' ? supportedFor(f) : scored.pass;
+
   section('4. THE ENABLE GATE — a blocked green is a failure too');
   const mkRows = (f) => fixtures.map(f);
   const allGood = verdictSummary(mkRows((f) => ({ id: f.id, expect: f.expect,
-    score: scoreFixture(f, f.expect === 'violation' ? scored.violation : scored.pass, null) })));
+    score: scoreFixture(f, replyFor(f), null) })));
   const oneMissed = verdictSummary(fixtures.map((f, i) => ({ id: f.id, expect: f.expect,
-    score: scoreFixture(f, (f.expect === 'violation' && i === 0) ? scored.pass : (f.expect === 'violation' ? scored.violation : scored.pass), null) })));
+    score: scoreFixture(f, (f.expect === 'violation' && i === 0) ? scored.pass : replyFor(f), null) })));
   const oneFP = verdictSummary(mkRows((f) => ({ id: f.id, expect: f.expect,
-    score: scoreFixture(f, f.expect === 'violation' ? scored.violation : (f.id === 'green_mundane_invention' ? scored.violation : scored.pass), null) })));
+    score: scoreFixture(f, f.id === 'green_mundane_invention' ? scored.violation : replyFor(f), null) })));
   // THE THREE CASES THE OLD GATE LET THROUGH — each blocks a legitimate scene in production.
   const greenUndecided = verdictSummary(mkRows((f) => ({ id: f.id, expect: f.expect,
-    score: scoreFixture(f, f.expect === 'violation' ? scored.violation : (f.id === 'green_confusion_records' ? scored.undecided : scored.pass), null) })));
+    score: scoreFixture(f, f.id === 'green_confusion_records' ? scored.undecided : replyFor(f), null) })));
   const greenUnavailable = verdictSummary(mkRows((f) => ({ id: f.id, expect: f.expect,
     score: f.id === 'green_alignment_sense' ? scoreFixture(f, { valid: false, errors: [] }, 'transport failed')
-      : scoreFixture(f, f.expect === 'violation' ? scored.violation : scored.pass, null) })));
+      : scoreFixture(f, replyFor(f), null) })));
   const greenInvalid = verdictSummary(mkRows((f) => ({ id: f.id, expect: f.expect,
-    score: scoreFixture(f, f.expect === 'violation' ? scored.violation : (f.id === 'green_mundane_invention' ? scored.bogus : scored.pass), null) })));
+    score: scoreFixture(f, f.id === 'green_mundane_invention' ? scored.bogus : replyFor(f), null) })));
   ok('4 caught reds + 4 passing greens + no undecided/unavailable/invalid ⇒ ENABLE',
     allGood.enableGenerally === true && allGood.caught === 4 && allGood.correctPass === 4, JSON.stringify(allGood).slice(0, 220));
   ok('ONE missed red ⇒ DO NOT ENABLE', oneMissed.enableGenerally === false && oneMissed.missed === 1, JSON.stringify(oneMissed.blockers));
@@ -218,11 +228,50 @@ function section(t) { console.log('\n=== ' + t + ' ==='); }
   fixtures.forEach((f, i) => {
     if (s2) return;
     d2++;
-    const score = i === 0 ? scoreFixture(f, null, INFRA_ERR) : scoreFixture(f, f.expect === 'violation' ? scored.violation : scored.pass, null);
+    const score = i === 0 ? scoreFixture(f, null, INFRA_ERR) : scoreFixture(f, replyFor(f), null);
     if (score.infra) { c2++; if (c2 >= INFRA_STOP_AFTER) s2 = true; } else c2 = 0;
   });
   ok('a SINGLE dead call followed by a live one does NOT stop the run — the stop needs two consecutive',
     d2 === fixtures.length && s2 === false, 'dispatched=' + d2 + ' stopped=' + s2);
+
+  section('4c. A CATCH REQUIRES SUBSTANTIVE SUPPORT, NOT JUST A "violation" VERDICT');
+  // Roman: "A violation citing an irrelevant real ID must score as an unsupported finding, not a
+  // catch." Mistral produced exactly that in the real run — invalidated_objective citing neg_0.
+  const invRed = fixtures.find((f) => f.id === 'red_invalidated_objective');
+  const supported = { valid: true, verdict: 'violation', violations: [{ category: 'invalidated_objective',
+    claim: invRed.plan.state_change, citedFactIds: ['inv_0'] }] };
+  const irrelevant = { valid: true, verdict: 'violation', violations: [{ category: 'invalidated_objective',
+    claim: invRed.plan.state_change, citedFactIds: ['neg_0'] }] };
+  const wrongCat = { valid: true, verdict: 'violation', violations: [{ category: 'rewritten_history',
+    claim: invRed.plan.state_change, citedFactIds: ['inv_0'] }] };
+  const bracketed = { valid: true, verdict: 'violation', violations: [{ category: 'invalidated_objective',
+    claim: invRed.plan.state_change, citedFactIds: ['[inv_0]'] }] };
+  ok('an APPROPRIATE category citing a SUPPORTING fact scores caught',
+    scoreFixture(invRed, supported, null).outcome === 'caught', JSON.stringify(scoreFixture(invRed, supported, null)));
+  ok('the same category citing an IRRELEVANT real fact scores unsupported_finding, NOT caught',
+    scoreFixture(invRed, irrelevant, null).outcome === 'unsupported_finding', JSON.stringify(scoreFixture(invRed, irrelevant, null)));
+  ok('...and is flagged critical, with the reason named',
+    scoreFixture(invRed, irrelevant, null).critical === true
+    && /not detection/.test(scoreFixture(invRed, irrelevant, null).note || ''), 'note missing');
+  ok('a WRONG category citing a supporting fact also scores unsupported_finding',
+    scoreFixture(invRed, wrongCat, null).outcome === 'unsupported_finding', JSON.stringify(scoreFixture(invRed, wrongCat, null)));
+  ok('a bracketed-but-real id still counts as support — display brackets are normalised',
+    scoreFixture(invRed, bracketed, null).outcome === 'caught', JSON.stringify(scoreFixture(invRed, bracketed, null)));
+  const unsupSummary = verdictSummary(fixtures.map((f) => ({ id: f.id, expect: f.expect,
+    score: f.id === 'red_invalidated_objective' ? scoreFixture(f, irrelevant, null) : scoreFixture(f, replyFor(f), null) })));
+  ok('ONE unsupported finding ⇒ DO NOT ENABLE', unsupSummary.enableGenerally === false
+    && unsupSummary.unsupportedFindings === 1, JSON.stringify(unsupSummary.blockers));
+
+  section('4d. THE CANDIDATE MODEL IS PINNED AND PRICED');
+  ok('gpt-4o-mini is priced from the real table at $0.000810 per call',
+    Math.abs(candidate('gpt-4o-mini').perCallUsd - 0.00081) < 1e-9, JSON.stringify(candidate('gpt-4o-mini')));
+  ok('...so eight fixtures are $0.006480, inside the $0.01 ceiling',
+    Math.abs(8 * candidate('gpt-4o-mini').perCallUsd - 0.00648) < 1e-9 && 8 * candidate('gpt-4o-mini').perCallUsd < CEILING_USD);
+  ok('gpt-4o-mini routes to its OWN endpoint, not Mistral\'s',
+    candidate('gpt-4o-mini').endpoint === '/api/chatgpt-proxy' && candidate('gpt-4o-mini').provider === 'openai');
+  let unpriced = false;
+  try { candidate('grok-4-1-fast-reasoning'); } catch (_) { unpriced = true; }
+  ok('an UNLISTED model is refused rather than silently run', unpriced === true);
 
   section('5. PRIMARY-ONLY AND THE CEILING ARE ENFORCED BEFORE DISPATCH');
   const probes = await page.evaluate(async () => {

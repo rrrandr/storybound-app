@@ -126,6 +126,10 @@ const RED_NO_GROUNDING = (base) => Object.assign({}, base, {
       s._temptFateDurableConsequences = [d];
       s._temptOutcomeCommittedProposals = { tfl_1: true };
       s.tempt_fate_invoked_this_turn = false;
+      // The semantic auditor is DISABLED BY DEFAULT in production (rejected model, 2026-09-24).
+      // Every scenario below that exercises the gate must opt in EXPLICITLY — which is itself the
+      // proof that the opt-in is real and that nothing reaches the auditor without it.
+      window._canonAuditEnabled = true;
       delete s._acceptedPlannerProposal; delete s._canonAuditBlocked; delete s._lastCanonAudit;
     }, DURABLE);
   }
@@ -362,6 +366,60 @@ const RED_NO_GROUNDING = (base) => Object.assign({}, base, {
   }, DURABLE);
   ok('when NOTHING was omitted the packet may still claim completeness — First Sacrifice fits under both caps',
     complete.truncated === false && /nothing was omitted/.test(complete.sys), JSON.stringify(complete.truncated));
+
+  // ═══════════════════════════════════════════════════════════════════════════════════════════
+  section('10. THE SEMANTIC AUDITOR IS OFF BY DEFAULT — a normal scene reaches the author');
+  // Roman: "the report says DO NOT ENABLE, while production is enabled by default. The gate runs
+  // whenever window._canonAuditEnabled !== false, and nothing initializes it to false." Correct —
+  // as committed, a rejected auditor on the Mistral chain would have blocked ordinary scenes.
+  const defaultOff = await page.evaluate(() => {
+    delete window._canonAuditEnabled;                       // the real production state: unset
+    return { unsetEnabled: window._canonAuditIsEnabled(), explicitOn: (window._canonAuditEnabled = true, window._canonAuditIsEnabled()),
+             explicitOff: (window._canonAuditEnabled = false, window._canonAuditIsEnabled()) };
+  });
+  ok('UNSET means DISABLED — the production default is off', defaultOff.unsetEnabled === false, JSON.stringify(defaultOff));
+  ok('an explicit true enables it (the test-only opt-in)', defaultOff.explicitOn === true, JSON.stringify(defaultOff));
+  ok('an explicit false disables it', defaultOff.explicitOff === false, JSON.stringify(defaultOff));
+
+  // FULL FLOW with the flag UNSET, exactly as production ships.
+  plannerReply = LEGIT_ORDINARY; auditorReply = { verdict: 'pass', violations: [] };
+  seen.planner = seen.auditor = seen.author = seen.other = 0;
+  await setup();
+  await page.evaluate(() => { delete window._canonAuditEnabled; });   // ship state
+  gate.setPhase('auditor_disabled', 40);
+  const offPlan = await page.evaluate(async () => {
+    const r = await window._runCGScreenplayGen(1, 'Lirael closes her eyes for a long moment, then opens them again.', '');
+    return r && { rejected: !!r.__plannerFunctionRejected, canonBlocked: !!r.__canonAuditBlocked, beats: r.beats ? r.beats.length : 0 };
+  });
+  gate.closePhase();
+  console.log('    disabled-run dispatches: ' + JSON.stringify(seen));
+  ok('with the auditor OFF a normal scene makes ZERO auditor calls', seen.auditor === 0, JSON.stringify(seen));
+  ok('...and the AUTHOR is dispatched exactly once — the scene is not blocked',
+    seen.author === 1 && offPlan.canonBlocked !== true, JSON.stringify({ seen, offPlan }));
+  // The FREE deterministic grounding check must still bite while the semantic audit is off.
+  seen.planner = seen.auditor = seen.author = seen.other = 0;
+  plannerReply = RED_NO_GROUNDING;
+  await setup();
+  await page.evaluate(() => { delete window._canonAuditEnabled; });
+  gate.setPhase('deterministic_while_disabled', 40);
+  const detOff = await page.evaluate(async () => {
+    const r = await window._runCGScreenplayGen(1, 'Lirael closes her eyes for a long moment, then opens them again.', '');
+    return r && { rejected: !!r.__plannerFunctionRejected, reason: String(r.reason || '').slice(0, 120) };
+  });
+  gate.closePhase();
+  ok('DETERMINISTIC grounding still rejects an ungrounded plan while the semantic audit is OFF',
+    detOff.rejected === true && /ungrounded capability/.test(detOff.reason), JSON.stringify(detOff));
+  ok('...still making zero auditor calls and zero author calls', seen.auditor === 0 && seen.author === 0, JSON.stringify(seen));
+  // Checked against CODE lines only — the phrase survives in a comment that documents the defect,
+  // and matching that would be matching the history rather than the behaviour.
+  const liveImplicitEnable = src.split('\n')
+    .filter((l) => !l.trim().startsWith('//') && !l.trim().startsWith('*'))
+    .filter((l) => /_canonAuditEnabled\s*!==\s*false/.test(l));
+  ok('production carries NO implicit-enable path in code — the default constant is false',
+    /var _CANON_AUDIT_DEFAULT_ENABLED = false;/.test(src) && liveImplicitEnable.length === 0,
+    JSON.stringify(liveImplicitEnable));
+  ok('...and both gate sites route through the explicit opt-in helper',
+    (src.match(/_canonAuditIsEnabled\(\)/g) || []).length >= 2, 'gate sites not routed through the helper');
 
   section('CONTAINMENT');
   ok('ZERO real provider dispatches; no live auditor call', gate.realCalls().length === 0, 'realCalls=' + gate.realCalls().length);

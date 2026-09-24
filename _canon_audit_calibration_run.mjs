@@ -10,13 +10,20 @@ import { chromium } from 'playwright-core';
 import { installFailClosedNetworkGate } from './_e2e_network_gate.mjs';
 import {
   loadFixtures, makeLedger, installCalibrationRoute, scoreFixture, verdictSummary,
-  PRIMARY_MODEL, PRIMARY_ENDPOINT, PER_CALL_USD, CEILING_USD, INFRA_STOP_AFTER
+  CEILING_USD, INFRA_STOP_AFTER, candidate, DEFAULT_MODEL, CANDIDATES
 } from './_canon_audit_calibration_core.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+// ONE MODEL PER RUN, PINNED. --model selects the candidate; there is no chain and no fallback,
+// so a result can only ever describe the model named here.
+const mIdx = process.argv.indexOf('--model');
+const MODEL = mIdx !== -1 ? String(process.argv[mIdx + 1] || '') : DEFAULT_MODEL;
+if (!CANDIDATES[MODEL]) { console.error('REFUSING — unknown/unpriced model: ' + MODEL + '. Known: ' + Object.keys(CANDIDATES).join(', ')); process.exit(5); }
+const CAND = candidate(MODEL);
+const PRIMARY_MODEL = CAND.model, PRIMARY_ENDPOINT = CAND.endpoint, PER_CALL_USD = CAND.perCallUsd;
 const AUTH_PHRASE = 'run the canon auditor calibration once under $0.01';
 const argv = process.argv.slice(2);
 const i = argv.indexOf('--authorize');
@@ -34,7 +41,9 @@ if (given !== AUTH_PHRASE) {
   console.log('  mutation     : none — no scene generation, no author, no story write');
   console.log('\n  WHY PRIMARY-ONLY: a cascade would measure grok-4-1-fast-reasoning and report it as');
   console.log('  Mistral. It would also cost $0.050440 across all eight, above the ~$0.03 estimate.');
-  console.log('\n  PASS GATE: 4 reds caught, 4 greens returning a valid pass, and ZERO undecided,');
+  console.log('\n  PASS GATE: 4 SUBSTANTIVELY SUPPORTED red catches (appropriate category AND a cited');
+  console.log('  fact that genuinely supports it), 4 clean green passes, zero irrelevant citations,');
+  console.log('  and ZERO undecided,');
   console.log('  unavailable or invalid responses — every fixture must produce a usable answer.');
   console.log('  In production a cannot_decide, an invalid reply and a transport failure all BLOCK');
   console.log('  a legitimate scene, so none of them may count as success.');
@@ -93,7 +102,7 @@ fs.mkdirSync(OUT_DIR, { recursive: true });
         // to another model and be reported as this one.
         const res = await window._callTieredProvider('canonAuditCalibration', [
           { role: 'system', content: prompt.sys }, { role: 'user', content: prompt.usr }
-        ], { max_tokens: 700, temperature: 0, tiers: [{ tier: 'primary', provider: 'mistral', model: a.model }] });
+        ], { max_tokens: 700, temperature: 0, tiers: [{ tier: 'primary', provider: a.provider, model: a.model }] });
         content = res && res.content;
         try { raw = JSON.parse(content); }
         catch (e) {
@@ -104,7 +113,7 @@ fs.mkdirSync(OUT_DIR, { recursive: true });
       } catch (e) { error = (e && e.message) || String(e); }
       const validated = raw ? window._validateCanonAuditResponse(raw, packet, a.fx.plan) : null;
       return { packetIds: packet.ids, packetTruncated: packet.truncated, prompt, content, raw, validated, error };
-    }, { fx, durable, model: PRIMARY_MODEL });
+    }, { fx, durable, model: PRIMARY_MODEL, provider: CAND.provider });
     const latencyMs = Date.now() - t0;
     const score = scoreFixture(fx, r.validated || { valid: false, errors: ['no response'] }, r.error);
     rows.push({ id: fx.id, expect: fx.expect, why: fx.why, latencyMs, score,
@@ -135,6 +144,7 @@ fs.mkdirSync(OUT_DIR, { recursive: true });
 
   console.log('\n' + '='.repeat(90));
   console.log('  reds caught        : ' + summary.caught + '/' + summary.reds + (summary.missed ? ('   MISSED: ' + summary.missedIds.join(', ')) : ''));
+  console.log('  unsupported find.  : ' + summary.unsupportedFindings + (summary.unsupportedFindings ? ('   ' + summary.unsupportedIds.join(', ')) : ''));
   console.log('  greens passed      : ' + summary.correctPass + '/' + summary.greens + (summary.falsePositives ? ('   FALSE POS: ' + summary.falsePositiveIds.join(', ')) : ''));
   console.log('  undecided (blocks) : ' + summary.undecided + (summary.undecided ? ('   ' + summary.undecidedIds.join(', ')) : ''));
   console.log('  unavailable        : ' + summary.unavailable + (summary.unavailable ? ('   ' + summary.unavailableIds.join(', ')) : ''));

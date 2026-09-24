@@ -25,6 +25,18 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+// CANDIDATE MODELS. One is measured per run, pinned — never a chain (see correction 1 above).
+// Rates are verbatim from public/app.js TEXT_PRICING.
+export const CANDIDATES = {
+  'ministral-8b-2512':  { provider: 'mistral', endpoint: '/api/mistral-proxy',  rate: { in: 1.5e-7, out: 1.5e-7 } },
+  'gpt-4o-mini':        { provider: 'openai',  endpoint: '/api/chatgpt-proxy',  rate: { in: 1.5e-7, out: 6e-7 } }
+};
+export const DEFAULT_MODEL = 'gpt-4o-mini';
+export function candidate(model) {
+  const c = CANDIDATES[model];
+  if (!c) throw new Error('unpriced/unknown calibration model: ' + model);
+  return Object.assign({ model: model, perCallUsd: c.rate.in * 2600 + c.rate.out * 700 }, c);
+}
 export const PRIMARY_MODEL = 'ministral-8b-2512';
 export const PRIMARY_ENDPOINT = '/api/mistral-proxy';
 export const TOKENS = { in: 2600, out: 700 };
@@ -53,12 +65,18 @@ export function loadFixtures() {
     fixtures: [
       // ── REDS: each must be caught ────────────────────────────────────────────────────────
       { id: 'red_memory_extraction', expect: 'violation', hard: true,
+        // A catch must pair an APPROPRIATE category with a fact of a kind that actually supports it.
+        expectCategories: ['unsupported_capability','new_metaphysics'], supportingFactKinds: ['neg'],
         why: 'the retained failed Scene B proposal, relabelled ordinary — mind-extraction no canon grants',
         plan: Object.assign({}, redB, { event_slots: Object.assign({}, redB.event_slots, { mechanism_grounding: 'ordinary' }) }) },
       { id: 'red_visible_glow', expect: 'violation', hard: true,
+        // A catch must pair an APPROPRIATE category with a fact of a kind that actually supports it.
+        expectCategories: ['unsupported_capability','new_metaphysics'], supportingFactKinds: ['neg'],
         why: 'a REAL retained corpus plan asserting a visible magical effect, against "a wish produces NO visible magical effect"',
         plan: Object.assign({}, glow, { event_slots: ord(glow.event_slots) }) },
       { id: 'red_contradicted_knowledge', expect: 'violation', hard: true,
+        // A catch must pair an APPROPRIATE category with a fact of a kind that actually supports it.
+        expectCategories: ['contradicted_knowledge'], supportingFactKinds: ['know','dc'],
         why: 'the committed rupture left the assembly unaware; this plan has the Dohkar act on detailed knowledge of the forgotten accusation',
         plan: { tactical_move: 'press the accusation formally',
           state_change_precondition: 'The Dohkar has not yet named the accusation aloud.',
@@ -69,6 +87,8 @@ export function loadFixtures() {
             action: 'recounts in detail', target: 'the accusation nobody remembers',
             exit_state: 'the assembly now hears the accusation restated by the Dohkar' }) } },
       { id: 'red_invalidated_objective', expect: 'violation', hard: true,
+        // A catch must pair an APPROPRIATE category with a fact of a kind that actually supports it.
+        expectCategories: ['invalidated_objective'], supportingFactKinds: ['inv'],
         why: 'the committed record invalidated the formal inquiry; this plan convenes it anyway',
         plan: { tactical_move: 'open the scheduled proceeding',
           state_change_precondition: 'The formal inquiry has not yet been convened.',
@@ -220,7 +240,24 @@ export function scoreFixture(fx, validated, error, opts) {
   if (!validated.valid) return { outcome: 'invalid_response', critical: false, note: validated.errors.join('; ') };
   const v = validated.verdict;
   if (fx.expect === 'violation') {
-    if (v === 'violation') return { outcome: 'caught', critical: false };
+    if (v === 'violation') {
+      // SUBSTANTIVE SUPPORT REQUIRED (Roman 2026-09-24). A "violation" verdict is not a catch on
+      // its own. The finding must name a category appropriate to THIS fixture and cite a fact that
+      // genuinely supports that category for it — a real but irrelevant id is an unsupported
+      // finding, not detection. Mistral produced exactly that: it cited neg_0 (a world truth) for
+      // a rewritten_history finding, and cited the durable consequence for a capability claim that
+      // only a negative world truth could foreclose.
+      const supported = (validated.violations || []).some((x) => {
+        if (!fx.expectCategories || fx.expectCategories.indexOf(x.category) === -1) return false;
+        const ids = (x.citedFactIds || []).map((i) => String(i).trim().replace(/^\[+|\]+$/g, ''));
+        return ids.some((id) => (fx.supportingFactKinds || []).some((k) => id.indexOf(k + '_') === 0));
+      });
+      if (supported) return { outcome: 'caught', critical: false };
+      return { outcome: 'unsupported_finding', critical: true,
+        note: 'verdict "violation" but no finding pairs an appropriate category ('
+          + (fx.expectCategories || []).join('/') + ') with a fact of a supporting kind ('
+          + (fx.supportingFactKinds || []).join('/') + ') — a real but irrelevant citation is not detection' };
+    }
     if (v === 'pass') return { outcome: 'MISSED', critical: true,
       note: 'a VALID but incorrect pass — it triggers no tier fallback and would let this plan reach the author' };
     return { outcome: 'undecided', critical: false, note: 'fails closed, but did not catch it' };
@@ -242,6 +279,8 @@ export function verdictSummary(rows) {
   const unavailable = rows.filter((r) => r.score.outcome === 'unavailable');
   const invalid = rows.filter((r) => r.score.outcome === 'invalid_response');
   const skipped = rows.filter((r) => r.score.outcome === 'skipped');
+  // A "violation" verdict whose findings do not substantively support the expected violation.
+  const unsupported = rows.filter((r) => r.score.outcome === 'unsupported_finding');
   // INFRASTRUCTURE-INCONCLUSIVE: the run stopped on the local function layer, so it says nothing
   // about the model either way. Reported as its own state so it can never be read as a model
   // result — neither a pass nor a failure of the auditor.
@@ -256,16 +295,18 @@ export function verdictSummary(rows) {
     && correctPass.length === greens.length
     && missed.length === 0 && falsePos.length === 0
     && undecided.length === 0 && unavailable.length === 0 && invalid.length === 0
-    && skipped.length === 0;
+    && skipped.length === 0 && unsupported.length === 0;
   const blockers = [];
   if (missed.length) blockers.push(missed.length + ' missed red (VALID incorrect pass — no fallback fires): ' + missed.map((r) => r.id).join(', '));
   if (falsePos.length) blockers.push(falsePos.length + ' green false positive: ' + falsePos.map((r) => r.id).join(', '));
   if (undecided.length) blockers.push(undecided.length + ' undecided (blocks the scene in production): ' + undecided.map((r) => r.id).join(', '));
   if (unavailable.length) blockers.push(unavailable.length + ' unavailable (no usable response): ' + unavailable.map((r) => r.id).join(', '));
   if (invalid.length) blockers.push(invalid.length + ' invalid response (blocks the scene in production): ' + invalid.map((r) => r.id).join(', '));
+  if (unsupported.length) blockers.push(unsupported.length + ' UNSUPPORTED finding (violation verdict, but cited an irrelevant real fact — not a catch): ' + unsupported.map((r) => r.id).join(', '));
   if (skipped.length) blockers.push(skipped.length + ' NOT DISPATCHED — run stopped on the local function layer: ' + skipped.map((r) => r.id).join(', '));
   return {
     infrastructureInconclusive, skipped: skipped.length, skippedIds: skipped.map((r) => r.id),
+    unsupportedFindings: unsupported.length, unsupportedIds: unsupported.map((r) => r.id),
     infraFailures: infraFailures.length,
     reds: reds.length, greens: greens.length,
     caught: caught.length, correctPass: correctPass.length,
