@@ -142,6 +142,11 @@ const CALLBACK_MARK = 'TEMPT FATE — MEMORY CALLBACK';
   gate.stub('/api/mistral-proxy', async (req) => {
     const b = parse(req);
     const sys = ((b.messages || []).find((m) => m.role === 'system') || {}).content || '';
+    // CANON AUDIT (wired to production 2026-09-24). The gate now sits between planner and author
+    // and correctly FAILS CLOSED when no auditor answers — which would stop every scene here for a
+    // reason this control does not test. Answered as a clean pass, identified by the auditor's own
+    // system-prompt marker so no other mistral role is affected.
+    if (sys.indexOf('CANON AUDITOR') !== -1) return { content: JSON.stringify({ verdict: 'pass', violations: [] }) };
     if (sys.indexOf('CONSEQUENCE EXTRACTOR') === -1) return { content: null };
     const usr = ((b.messages || []).find((m) => m.role === 'user') || {}).content || '';
     // Cite a line that is genuinely in the prose the extractor was handed — the citation check is

@@ -111,6 +111,21 @@ function section(t) { console.log('\n=== ' + t + ' ==='); }
   ok('an auditor that tries to REWRITE the plan fails validation (req 4)', vs.rewrote.valid === false && /never rewrite/.test(vs.rewrote.errors.join()), JSON.stringify(vs.rewrote.errors));
   ok('an undefined category fails validation', vs.badCategory.valid === false, JSON.stringify(vs.badCategory.errors));
 
+  // HONEST LIMIT (Roman 2026-09-24, correcting an overclaim). Citation checking proves the fact
+  // EXISTS and the claim APPEARS in the plan. It does NOT prove the cited fact supports the
+  // finding. This asserts the limit rather than hiding it: an irrelevant-but-real citation passes.
+  const irrelevant = await page.evaluate((a) => {
+    const nonNeg = a.packet.facts.filter((f) => f.kind !== 'neg')[0];
+    return { usedId: nonNeg && nonNeg.id, usedText: nonNeg && nonNeg.text.slice(0, 70),
+      res: window._validateCanonAuditResponse({ verdict: 'violation', violations: [{
+        category: 'unsupported_capability',
+        claim: "The presiding Dohkar draws the memory of the accusation from Seren's mind",
+        citedFactIds: [nonNeg && nonNeg.id], why: 'an assertion that does not follow from this fact' }] }, a.packet, a.RED) };
+  }, { packet, RED });
+  ok('KNOWN LIMIT — a REAL but logically IRRELEVANT citation still validates: the check proves the fact exists, not that it supports the finding',
+    irrelevant.res.valid === true, JSON.stringify(irrelevant.res.errors));
+  console.log('      (cited [' + irrelevant.usedId + '] "' + irrelevant.usedText + '…" to support a mind-extraction finding — accepted, because resolvable is not the same as grounded)');
+
   section('5. FAIL CLOSED — uncertainty never becomes approval (req 7)');
   const closed = await page.evaluate(async (a) => ({
     cannotDecide: await window._canonAuditGate(a.plan, a.packet, { injectRaw: { verdict: 'cannot_decide', uncertainty: 'the canon does not say whether a Dohkar may do this' } }),

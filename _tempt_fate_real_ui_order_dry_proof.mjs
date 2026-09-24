@@ -58,7 +58,15 @@ const WISH_TEXT = 'everyone forgets the ceremony happened';
   // matched on the prompt the real _classifyWishCG builds (app.js ~199739), not on a guess.
   const isClassifier = (b) => JSON.stringify(b || {}).includes('classify whether a fate-card');
 
-  gate.stub('/api/mistral-proxy', async (req) => { sceneRequests.push({ endpoint: 'mistral-proxy', body: parse(req) }); return { content: null }; });
+  gate.stub('/api/mistral-proxy', async (req) => {
+    const b = parse(req);
+    sceneRequests.push({ endpoint: 'mistral-proxy', body: b });
+    // CANON AUDIT (wired to production 2026-09-24) — fails closed with no auditor answer, which
+    // would stop the pipeline this proof exists to walk end-to-end. Answered as a clean pass.
+    const sys = ((b && b.messages ? b.messages : []).find((m) => m.role === 'system') || {}).content || '';
+    if (sys.indexOf('CANON AUDITOR') !== -1) return { content: JSON.stringify({ verdict: 'pass', violations: [] }) };
+    return { content: null };
+  });
   gate.stub('/api/proxy', async (req) => {
     const b = parse(req);
     sceneRequests.push({ endpoint: 'proxy', body: b });

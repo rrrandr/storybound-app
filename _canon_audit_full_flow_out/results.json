@@ -1,0 +1,106 @@
+[
+  {
+    "name": "_buildCanonPacket has a real production consumer",
+    "pass": true
+  },
+  {
+    "name": "_canonAuditGate is AWAITED on the production path",
+    "pass": true
+  },
+  {
+    "name": "the planner ran",
+    "pass": true
+  },
+  {
+    "name": "an ORDINARY declaration DID reach the semantic auditor — it did not go straight to the author (req 4)",
+    "pass": true
+  },
+  {
+    "name": "THE AUTHOR WAS NEVER DISPATCHED — zero author requests (req 8)",
+    "pass": true
+  },
+  {
+    "name": "the generation returned a canon-audit block",
+    "pass": true
+  },
+  {
+    "name": "the proposal and audit result were PRESERVED for review (req 6)",
+    "pass": true
+  },
+  {
+    "name": "the auditor ran on the ordinary plan",
+    "pass": true
+  },
+  {
+    "name": "THE AUTHOR DISPATCHED EXACTLY ONCE (req 9)",
+    "pass": true
+  },
+  {
+    "name": "...and the generation was not blocked",
+    "pass": true
+  },
+  {
+    "name": "the AUDITOR was never dispatched — the local check already decided (req 10)",
+    "pass": true
+  },
+  {
+    "name": "the AUTHOR was never dispatched",
+    "pass": true
+  },
+  {
+    "name": "...and the block is attributed to the deterministic layer, unpaid",
+    "pass": true
+  },
+  {
+    "name": "cannot_decide → zero author dispatches",
+    "pass": true
+  },
+  {
+    "name": "an INVALID audit reply (fabricated id + fabricated claim) → zero author dispatches",
+    "pass": true
+  },
+  {
+    "name": "an auditor that tries to REWRITE the plan → zero author dispatches",
+    "pass": true
+  },
+  {
+    "name": "an unparsable audit reply → zero author dispatches",
+    "pass": true
+  },
+  {
+    "name": "an audit violation returns __plannerFunctionRejected — the signal the EXISTING bounded retry consumes",
+    "pass": true
+  },
+  {
+    "name": "no independent retry loop was introduced inside the audit gate",
+    "pass": true
+  },
+  {
+    "name": "the existing retry calls the generator exactly ONCE",
+    "pass": true
+  },
+  {
+    "name": "...and a SECOND rejection stops with resumable state rather than retrying again",
+    "pass": true
+  },
+  {
+    "name": "the production gate logged a packet built at dispatch time",
+    "pass": true
+  },
+  {
+    "name": "the PRODUCTION packet contains \"a wish produces NO visible magical effect\"",
+    "pass": true
+  },
+  {
+    "name": "...and the alignment-sense truth foreclosing mind-reading",
+    "pass": true
+  },
+  {
+    "name": "...and the committed durable consequence with its invalidatedPlans",
+    "pass": true
+  },
+  {
+    "name": "ZERO real provider dispatches; no live auditor call",
+    "pass": true
+  }
+]

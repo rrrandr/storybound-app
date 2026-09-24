@@ -66,7 +66,15 @@ const WISH = 'everyone forgets the ceremony happened';
     const sysText = (sys && sys.content) || '';
     return buildScheduleAwareStubResponse(sysText, usr && usr.content, sysText.indexOf('ACTIVE INVOCATION THIS SCENE') !== -1);
   };
-  gate.stub('/api/mistral-proxy', async () => ({ content: null }));
+  // CANON AUDIT (wired to production 2026-09-24) — the gate sits between planner and author and
+  // fails closed with no auditor answer, which would block every scene here for an unrelated
+  // reason. Answered as a clean pass, keyed on the auditor's own system-prompt marker.
+  gate.stub('/api/mistral-proxy', async (req) => {
+    const b = parse(req);
+    const sys = ((b.messages || []).find((m) => m.role === 'system') || {}).content || '';
+    if (sys.indexOf('CANON AUDITOR') !== -1) return { content: JSON.stringify({ verdict: 'pass', violations: [] }) };
+    return { content: null };
+  });
   gate.stub('/api/proxy', async (req) => ({ content: JSON.stringify(planFor(parse(req))) }));
   gate.stub('/api/chatgpt-proxy', async (req) => {
     const b = parse(req);

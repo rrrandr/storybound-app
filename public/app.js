@@ -101040,6 +101040,23 @@ function _buildAuthorFloorDirective(s) {
               } else {
                 s._plannerGroundingRejection = null;
               }
+              // THE ACCEPTED PROPOSAL, stashed for the pre-author CANON AUDIT (Roman 2026-09-24).
+              // Without this the audit gate had nothing real to inspect and stayed dead code: it
+              // was defined, exported, censused and unit-tested in isolation, while production's
+              // only pre-author canon check remained the planner's own self-declared
+              // mechanism_grounding. A self-label is not a review.
+              try {
+                s._acceptedPlannerProposal = {
+                  tactical_move: _scP && _scP.tactical_move,
+                  local_objective: _scP && _scP.local_objective,
+                  state_change: _scP && _scP.state_change,
+                  state_change_precondition: _scP && _scP.state_change_precondition,
+                  forces_choice: _scP && _scP.forces_choice,
+                  event_slots: (_scP && _scP.event_slots) || null,
+                  mechanism_grounding: (_scP && _scP.mechanism_grounding) || ((_scP && _scP.event_slots) ? _scP.event_slots.mechanism_grounding : null),
+                  acceptedAt: Date.now(), sceneNum: (s.turnCount || 0)
+                };
+              } catch (_) { s._acceptedPlannerProposal = null; }
             }
           } catch (_) {}
           // DERIVED one-element hardBeats (compat view — ONE DIRECTION ONLY: state_change → beat, never read back
@@ -192107,6 +192124,15 @@ No text, no watermark, no UI elements, share-ready.`;
   // ── RESPONSE VALIDATION (reqs 4, 5, 7) ───────────────────────────────────────────────────────
   // Rejects fabricated citations, rejects an auditor that tries to rewrite, and refuses to let
   // uncertainty become approval.
+  //
+  // WHAT "CITED" DOES AND DOES NOT PROVE (Roman 2026-09-24, correcting my own overclaim).
+  // This validator proves three things: the cited fact ID EXISTS in the supplied packet; the
+  // quoted offending claim actually APPEARS in the proposed plan; and the category is one of the
+  // defined ones. It does NOT prove that the cited fact logically SUPPORTS the finding. An auditor
+  // can cite a real, existing, irrelevant fact and pass this check. Resolvable ≠ grounded, and
+  // describing every existing-ID citation as "grounded" was wrong. What this buys is narrower:
+  // a finding can always be traced back to a real fact and a real line of the plan, so a human
+  // reviewing a block can see exactly what was claimed and check the reasoning themselves.
   function _validateCanonAuditResponse(raw, packet, proposal) {
     var errors = [], kept = [];
     if (!raw || typeof raw !== 'object') return { valid: false, errors: ['audit response is not an object'], verdict: null, violations: [] };
@@ -233639,6 +233665,58 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
         return { __plannerFunctionRejected: true, reason: 'ungrounded capability: ' + _gr.reasons.join(' | '), sceneIndex: sceneIndex };
       }
     } catch (_) {}
+
+    // ══════════════════════════════════════════════════════════════════════════════════════════
+    // CANON AUDIT — THE PRODUCTION CALL SITE (Roman 2026-09-24).
+    //
+    // This is the wiring that was missing. The audit gate existed, was exported, was censused and
+    // was green in an isolated control — and production never called it, so a planner that simply
+    // declared mechanism_grounding:"ordinary" reached the author with no semantic review at all.
+    // The 1-in-28 corpus plan asserting a visible glow would have gone straight through.
+    //
+    // Placed HERE deliberately: after the accepted planner proposal exists, and before ANY author
+    // request is built or released. Every exit below returns rather than falling through, so no
+    // author dispatch can happen behind a failed or undecided audit.
+    //
+    // A violation returns __plannerFunctionRejected, which routes into the EXISTING single bounded
+    // retry in _runCGScreenplayGen's caller — one retry, and a second rejection stops with
+    // resumable state. No independent retry loop is introduced here.
+    // ══════════════════════════════════════════════════════════════════════════════════════════
+    try {
+      var _caProposal = state._acceptedPlannerProposal;
+      if (_caProposal && typeof _buildCanonPacket === 'function' && typeof _canonAuditGate === 'function'
+          && window._canonAuditEnabled !== false) {
+        var _caPacket = _buildCanonPacket(state);
+        try {
+          console.log('[CANON-AUDIT] gating scene ' + sceneIndex + ' — packet: ' + _caPacket.facts.length
+            + ' facts (' + _caPacket.negatives.length + ' negative), ' + _caPacket.invalidated.length + ' invalidated plan(s)');
+        } catch (_) {}
+        var _caVerdict = await _canonAuditGate(_caProposal, _caPacket);
+        state._lastCanonAudit = {
+          at: Date.now(), sceneIndex: sceneIndex, allow: _caVerdict.allow, source: _caVerdict.source,
+          paid: _caVerdict.paid, reason: _caVerdict.reason || null, violations: _caVerdict.violations || [],
+          auditErrors: _caVerdict.auditErrors || null, uncertainty: _caVerdict.uncertainty || null
+        };
+        if (!_caVerdict.allow) {
+          // PRESERVE the proposal and the audit result for review before stopping.
+          state._canonAuditBlocked = {
+            at: Date.now(), sceneIndex: sceneIndex, proposal: _caProposal,
+            packetIds: _caPacket.ids, verdict: _caVerdict
+          };
+          try { console.warn('[CANON-AUDIT] BLOCKED before author dispatch (' + _caVerdict.source + '): ' + _caVerdict.reason); } catch (_) {}
+          return { __plannerFunctionRejected: true, __canonAuditBlocked: true, canonAuditSource: _caVerdict.source,
+                   reason: 'canon audit (' + _caVerdict.source + '): ' + _caVerdict.reason, sceneIndex: sceneIndex };
+        }
+        try { console.log('[CANON-AUDIT] PASS (' + _caVerdict.source + ', paid=' + _caVerdict.paid + ') — author may be dispatched'); } catch (_) {}
+      }
+    } catch (_caErr) {
+      // FAIL CLOSED. An audit that threw is not an approval — the whole point of the gate.
+      try { console.error('[CANON-AUDIT] gate threw, failing closed before author dispatch: ' + (_caErr && _caErr.message)); } catch (_) {}
+      state._canonAuditBlocked = { at: Date.now(), sceneIndex: sceneIndex, proposal: state._acceptedPlannerProposal || null,
+        verdict: { allow: false, source: 'gate-threw', reason: (_caErr && _caErr.message) || String(_caErr) } };
+      return { __plannerFunctionRejected: true, __canonAuditBlocked: true, canonAuditSource: 'gate-threw',
+               reason: 'canon audit gate threw: ' + ((_caErr && _caErr.message) || _caErr), sceneIndex: sceneIndex };
+    }
     // SCENE-1 DIRECT-vs-SUBTLE AXIS EMBODIMENT (Roman 2026-07-15) — match literary.
     // The literary scene-1 scaffold calls _genBespokeScene1Axis to embody the fixed
     // Direct-vs-Subtle probe in THIS scene's real stakes; CG never did, so its demand_hint

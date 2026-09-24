@@ -314,7 +314,16 @@ class ReservationLedger {
   // buildScheduleAwareStubResponse now lives in _tempt_fate_stub_plan_builder.mjs (extracted
   // 2026-09-23) so the dry UI-order proof stubs the author with the SAME shapes this harness does.
   // One authoritative definition; the two must never drift.
-  gate.stub('/api/mistral-proxy', async (req) => { let b = null; try { b = JSON.parse(req.postData() || '{}'); } catch (_) {} capturedBodies.push({ endpoint: 'mistral-proxy', body: b }); appendJsonl('request_log', { endpoint: 'mistral-proxy', body: b }); return { content: null }; });
+  gate.stub('/api/mistral-proxy', async (req) => { let b = null; try { b = JSON.parse(req.postData() || '{}'); } catch (_) {} capturedBodies.push({ endpoint: 'mistral-proxy', body: b }); appendJsonl('request_log', { endpoint: 'mistral-proxy', body: b }); 
+    // CANON AUDIT (wired to production 2026-09-24): the gate now sits between planner and author
+    // and FAILS CLOSED when no auditor answers — correct behaviour, but it would stop every scene
+    // in this harness for a reason unrelated to what the harness tests. Answered as a clean pass,
+    // identified by the auditor's own system-prompt marker so no other mistral role is affected.
+    try {
+      const _sys = ((b && b.messages ? b.messages : []).find((m) => m.role === 'system') || {}).content || '';
+      if (_sys.indexOf('CANON AUDITOR') !== -1) return { content: JSON.stringify({ verdict: 'pass', violations: [] }) };
+    } catch (_) {}
+    return { content: null }; });
   gate.stub('/api/proxy', async (req) => {
     let b = null; try { b = JSON.parse(req.postData() || '{}'); } catch (_) {}
     capturedBodies.push({ endpoint: 'proxy', body: b });

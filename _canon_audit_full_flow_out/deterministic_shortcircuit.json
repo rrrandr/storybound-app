@@ -1,0 +1,20 @@
+{
+  "label": "deterministic_shortcircuit",
+  "dispatches": {
+    "planner": 1,
+    "auditor": 0,
+    "author": 0,
+    "other": 3
+  },
+  "plan": {
+    "rejected": true,
+    "canonBlocked": false,
+    "reason": "ungrounded capability: the proposed event declares no mechanism_grounding — every event must state either \"ordinary\" (it needs no special capability) or the specific world truth, stage affordance, or established canon that makes it possible",
+    "beats": 0
+  },
+  "st": {
+    "blocked": null,
+    "lastAudit": null,
+    "accepted": true
+  }
+}

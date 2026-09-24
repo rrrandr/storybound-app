@@ -1,0 +1,98 @@
+{
+  "label": "red_ordinary_violation",
+  "dispatches": {
+    "planner": 1,
+    "auditor": 1,
+    "author": 0,
+    "other": 3
+  },
+  "plan": {
+    "rejected": true,
+    "canonBlocked": true,
+    "source": "audit",
+    "reason": "canon audit (audit): unsupported_capability [neg_0]: the cited truth forecloses a visible or extractive operation on a mind",
+    "beats": 0
+  },
+  "st": {
+    "blocked": {
+      "at": 1790268957254,
+      "sceneIndex": 1,
+      "proposal": {
+        "tactical_move": "Lirael steps back from the center of the clearing. — the presiding Dohkar sets a preliminary review date.",
+        "local_objective": "The assembly's confusion continues to play out without resolution.",
+        "state_change": "The assembly mills, unable to say why they gathered. — the presiding Dohkar sets a preliminary review date. — The presiding Dohkar draws the memory of the accusation from Seren's mind, the image dissolving between his fingers.",
+        "state_change_precondition": "The assembly is still gathered, confused.",
+        "forces_choice": "Lirael must decide whether to speak into the confusion or let it stand.",
+        "event_slots": {
+          "exit_state": "Seren's memory of the accusation has been removed from her mind",
+          "mechanism_grounding": "ordinary",
+          "precondition": "Seren and the presiding Dohkar are both present in the clearing.",
+          "actor": "the presiding Dohkar",
+          "action": "extracts",
+          "target": "Seren's offered memory of the accusation"
+        },
+        "mechanism_grounding": "ordinary",
+        "acceptedAt": 1790268956926,
+        "sceneNum": 1
+      },
+      "packetIds": [
+        "neg_0",
+        "neg_1",
+        "neg_2",
+        "neg_3",
+        "neg_4",
+        "neg_5",
+        "neg_6",
+        "neg_7",
+        "neg_8",
+        "neg_9",
+        "wt_0",
+        "wt_1",
+        "wt_2",
+        "wt_3",
+        "wt_4",
+        "wt_5",
+        "dc_0",
+        "know_0",
+        "inv_0"
+      ],
+      "verdict": {
+        "allow": false,
+        "source": "audit",
+        "violations": [
+          {
+            "category": "unsupported_capability",
+            "claim": "The presiding Dohkar draws the memory of the accusation from Seren's mind",
+            "citedFactIds": [
+              "neg_0"
+            ],
+            "why": "the cited truth forecloses a visible or extractive operation on a mind"
+          }
+        ],
+        "paid": true,
+        "reason": "unsupported_capability [neg_0]: the cited truth forecloses a visible or extractive operation on a mind"
+      }
+    },
+    "lastAudit": {
+      "at": 1790268957254,
+      "sceneIndex": 1,
+      "allow": false,
+      "source": "audit",
+      "paid": true,
+      "reason": "unsupported_capability [neg_0]: the cited truth forecloses a visible or extractive operation on a mind",
+      "violations": [
+        {
+          "category": "unsupported_capability",
+          "claim": "The presiding Dohkar draws the memory of the accusation from Seren's mind",
+          "citedFactIds": [
+            "neg_0"
+          ],
+          "why": "the cited truth forecloses a visible or extractive operation on a mind"
+        }
+      ],
+      "auditErrors": null,
+      "uncertainty": null
+    },
+    "accepted": true
+  }
+}
