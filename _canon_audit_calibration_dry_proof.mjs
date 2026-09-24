@@ -103,16 +103,82 @@ function section(t) { console.log('\n=== ' + t + ' ==='); }
   ok('a transport error is scored unavailable, never a pass',
     scoreFixture(reds[0], { valid: false, errors: [] }, 'boom').outcome === 'unavailable');
 
-  section('4. THE ENABLE GATE');
-  const allGood = verdictSummary(fixtures.map((f) => ({ id: f.id, expect: f.expect,
+  section('3b. THE HISTORY-REWRITE GREEN IS GENUINELY SUPPORTED BY THE PACKET');
+  // Roman: the earlier fixture mutated ruptureClass and bolted on priorHistoryReplaced, while
+  // _buildCanonPacket emitted no class detail at all — so the authorising fact never reached the
+  // auditor, and Mistral would have been condemned for a packet defect.
+  const histFx = fixtures.find((f) => f.id === 'green_tempt_history_rewrite');
+  const hist = await page.evaluate((a) => {
+    const s = window.state; s.storyId = 'hist-' + Date.now(); s._starterId = 'starter_first_sacrifice';
+    s._temptFateDurableConsequences = [JSON.parse(JSON.stringify(a.fx.durableOverride))];
+    const packet = window._buildCanonPacket(s, { proposal: a.fx.plan });
+    const prompt = window._buildCanonAuditPrompt(a.fx.plan, packet);
+    return { facts: packet.facts, sys: prompt.sys, usr: prompt.usr };
+  }, { fx: histFx });
+  fs.writeFileSync(path.join(OUT_DIR, 'history_rewrite_request.txt'), hist.sys + '\n\n' + hist.usr);
+  const AUTH_FACT = histFx.durableOverride.classDetail.priorHistoryReplaced;
+  ok('the fixture supplies a WHOLE internally consistent history_rewrite consequence, not a mutated memory one',
+    histFx.durableOverride.ruptureClass === 'history_rewrite'
+    && /never have stood for the rite/.test(histFx.durableOverride.requestedRupture)
+    && /never stood for the rite/.test(histFx.durableOverride.deliveredScope),
+    JSON.stringify({ c: histFx.durableOverride.ruptureClass, r: histFx.durableOverride.requestedRupture }));
+  ok('the AUTHORISING FACT appears VERBATIM in the real audit request',
+    hist.sys.indexOf(AUTH_FACT) !== -1, 'not found: ' + AUTH_FACT);
+  ok('...labelled as what now actually happened, not as a wish that was made',
+    /HISTORY REWRITTEN BY THAT RUPTURE \(this is now what happened\)/.test(hist.sys), 'label missing');
+  ok('...and the surviving contradiction the rewrite left is carried too',
+    hist.sys.indexOf('the ceremonial sash cut to her measure is still folded in the vestry') !== -1, 'contradiction missing');
+  ok('the packet no longer describes this rupture as a forgetting', !/every witness present loses the memory/.test(hist.sys), 'stale memory scope leaked in');
+
+  // Class detail must reach the packet for EVERY class, not only history.
+  const classDetail = await page.evaluate(() => {
+    const s = window.state; s._starterId = 'starter_first_sacrifice';
+    const base = { id: 'x', source: 'tempt', proposalId: 'p', requestedRupture: 'w', deliveredScope: 'd',
+      scopeMatch: 'full', invalidatedPlans: [], changed: [], durability: [], knowledgeStates: [] };
+    const mk = (cls, detail) => { s._temptFateDurableConsequences = [Object.assign({}, base, { ruptureClass: cls, classDetail: detail })];
+      return window._buildCanonPacket(s).facts.map((f) => f.text).join('\n'); };
+    return {
+      identity: mk('identity_reputation', { recognitionChanges: ['strangers greet her by name in the market'] }),
+      possession: mk('materialization_possession', { materialEffects: [{ what: 'The Answer', whoHolds: 'Lirael', duration: 'until the window closes' }] }),
+      relationship: mk('relationship_social', { affectedParties: ['the two houses are now formally allied'] }),
+      memory: mk('memory_perception', { affectedKnowers: [{ who: 'Julian', disposition: 'suspects', nowKnows: 'nothing, but senses a gap' }],
+        invokerExemption: { who: 'Lirael', status: 'exempt', reason: 'invoker_anchor' }, targetPopulation: { kind: 'all_present_except_invoker' } })
+    };
+  });
+  ok('identity/reputation detail reaches the packet', /strangers greet her by name in the market/.test(classDetail.identity), classDetail.identity.slice(-200));
+  ok('possession detail reaches the packet', /The Answer now held by Lirael/.test(classDetail.possession), classDetail.possession.slice(-200));
+  ok('relationship/social detail reaches the packet', /the two houses are now formally allied/.test(classDetail.relationship), classDetail.relationship.slice(-200));
+  ok('memory detail reaches the packet — knower dispositions and the invoker anchor',
+    /Julian — suspects/.test(classDetail.memory) && /Lirael \(the invoker\) is exempt/.test(classDetail.memory), classDetail.memory.slice(-260));
+
+  section('4. THE ENABLE GATE — a blocked green is a failure too');
+  const mkRows = (f) => fixtures.map(f);
+  const allGood = verdictSummary(mkRows((f) => ({ id: f.id, expect: f.expect,
     score: scoreFixture(f, f.expect === 'violation' ? scored.violation : scored.pass, null) })));
   const oneMissed = verdictSummary(fixtures.map((f, i) => ({ id: f.id, expect: f.expect,
     score: scoreFixture(f, (f.expect === 'violation' && i === 0) ? scored.pass : (f.expect === 'violation' ? scored.violation : scored.pass), null) })));
-  const oneFP = verdictSummary(fixtures.map((f) => ({ id: f.id, expect: f.expect,
+  const oneFP = verdictSummary(mkRows((f) => ({ id: f.id, expect: f.expect,
     score: scoreFixture(f, f.expect === 'violation' ? scored.violation : (f.id === 'green_mundane_invention' ? scored.violation : scored.pass), null) })));
-  ok('all reds caught + zero green false positives ⇒ ENABLE', allGood.enableGenerally === true, JSON.stringify(allGood));
-  ok('ONE missed red ⇒ DO NOT ENABLE', oneMissed.enableGenerally === false && oneMissed.missed === 1, JSON.stringify(oneMissed));
-  ok('ONE green false positive ⇒ DO NOT ENABLE', oneFP.enableGenerally === false && oneFP.falsePositives === 1, JSON.stringify(oneFP));
+  // THE THREE CASES THE OLD GATE LET THROUGH — each blocks a legitimate scene in production.
+  const greenUndecided = verdictSummary(mkRows((f) => ({ id: f.id, expect: f.expect,
+    score: scoreFixture(f, f.expect === 'violation' ? scored.violation : (f.id === 'green_confusion_records' ? scored.undecided : scored.pass), null) })));
+  const greenUnavailable = verdictSummary(mkRows((f) => ({ id: f.id, expect: f.expect,
+    score: f.id === 'green_alignment_sense' ? scoreFixture(f, { valid: false, errors: [] }, 'transport failed')
+      : scoreFixture(f, f.expect === 'violation' ? scored.violation : scored.pass, null) })));
+  const greenInvalid = verdictSummary(mkRows((f) => ({ id: f.id, expect: f.expect,
+    score: scoreFixture(f, f.expect === 'violation' ? scored.violation : (f.id === 'green_mundane_invention' ? scored.bogus : scored.pass), null) })));
+  ok('4 caught reds + 4 passing greens + no undecided/unavailable/invalid ⇒ ENABLE',
+    allGood.enableGenerally === true && allGood.caught === 4 && allGood.correctPass === 4, JSON.stringify(allGood).slice(0, 220));
+  ok('ONE missed red ⇒ DO NOT ENABLE', oneMissed.enableGenerally === false && oneMissed.missed === 1, JSON.stringify(oneMissed.blockers));
+  ok('ONE green false positive ⇒ DO NOT ENABLE', oneFP.enableGenerally === false && oneFP.falsePositives === 1, JSON.stringify(oneFP.blockers));
+  ok('a green returning CANNOT_DECIDE ⇒ DO NOT ENABLE (it blocks a legitimate scene)',
+    greenUndecided.enableGenerally === false && greenUndecided.undecided === 1, JSON.stringify(greenUndecided.blockers));
+  ok('a green that is UNAVAILABLE ⇒ DO NOT ENABLE (no usable response)',
+    greenUnavailable.enableGenerally === false && greenUnavailable.unavailable === 1, JSON.stringify(greenUnavailable.blockers));
+  ok('a green with an INVALID response ⇒ DO NOT ENABLE (it blocks a legitimate scene)',
+    greenInvalid.enableGenerally === false && greenInvalid.invalid === 1, JSON.stringify(greenInvalid.blockers));
+  ok('the summary reports usable responses out of total, so a partially-answered run cannot read as success',
+    allGood.usableResponses === 8 && greenUnavailable.usableResponses === 7, JSON.stringify({ a: allGood.usableResponses, u: greenUnavailable.usableResponses }));
 
   section('5. PRIMARY-ONLY AND THE CEILING ARE ENFORCED BEFORE DISPATCH');
   const probes = await page.evaluate(async () => {

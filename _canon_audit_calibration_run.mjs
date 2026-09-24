@@ -34,7 +34,10 @@ if (given !== AUTH_PHRASE) {
   console.log('  mutation     : none — no scene generation, no author, no story write');
   console.log('\n  WHY PRIMARY-ONLY: a cascade would measure grok-4-1-fast-reasoning and report it as');
   console.log('  Mistral. It would also cost $0.050440 across all eight, above the ~$0.03 estimate.');
-  console.log('\n  PASS GATE: every red caught AND zero green false positives.');
+  console.log('\n  PASS GATE: 4 reds caught, 4 greens returning a valid pass, and ZERO undecided,');
+  console.log('  unavailable or invalid responses — every fixture must produce a usable answer.');
+  console.log('  In production a cannot_decide, an invalid reply and a transport failure all BLOCK');
+  console.log('  a legitimate scene, so none of them may count as success.');
   console.log('  A VALID but incorrect "pass" on a red is the critical failure — no fallback fires.');
   console.log('\n  To run, pass exactly:  --authorize "' + AUTH_PHRASE + '"');
   process.exit(3);
@@ -70,8 +73,8 @@ fs.mkdirSync(OUT_DIR, { recursive: true });
       s.storyId = 'calib-' + Date.now();
       s._starterId = 'starter_first_sacrifice';
       const d = JSON.parse(JSON.stringify(a.durable));
-      if (a.fx.usesHistoryRewrite) { d.ruptureClass = 'history_rewrite'; d.priorHistoryReplaced = 'Seren never stood for the rite'; }
-      s._temptFateDurableConsequences = [d];
+      // A fixture may supply its OWN whole consequence rather than mutating the default one.
+      s._temptFateDurableConsequences = [a.fx.durableOverride ? JSON.parse(JSON.stringify(a.fx.durableOverride)) : d];
       const packet = window._buildCanonPacket(s, { proposal: a.fx.plan });
       const prompt = window._buildCanonAuditPrompt(a.fx.plan, packet);
       let raw = null, error = null, content = null;
@@ -113,10 +116,16 @@ fs.mkdirSync(OUT_DIR, { recursive: true });
 
   console.log('\n' + '='.repeat(90));
   console.log('  reds caught        : ' + summary.caught + '/' + summary.reds + (summary.missed ? ('   MISSED: ' + summary.missedIds.join(', ')) : ''));
-  console.log('  green false pos.   : ' + summary.falsePositives + (summary.falsePositives ? ('   ' + summary.falsePositiveIds.join(', ')) : ''));
+  console.log('  greens passed      : ' + summary.correctPass + '/' + summary.greens + (summary.falsePositives ? ('   FALSE POS: ' + summary.falsePositiveIds.join(', ')) : ''));
   console.log('  undecided (blocks) : ' + summary.undecided + (summary.undecided ? ('   ' + summary.undecidedIds.join(', ')) : ''));
+  console.log('  unavailable        : ' + summary.unavailable + (summary.unavailable ? ('   ' + summary.unavailableIds.join(', ')) : ''));
+  console.log('  invalid responses  : ' + summary.invalid + (summary.invalid ? ('   ' + summary.invalidIds.join(', ')) : ''));
+  console.log('  usable responses   : ' + summary.usableResponses + '/' + summary.totalFixtures);
   console.log('  dispatches         : ' + gate.trackedCalls().length + '   reserved $' + ledger.totalUsd.toFixed(6) + ' of $' + CEILING_USD.toFixed(6));
-  console.log('\n  ENABLE GENERALLY: ' + (summary.enableGenerally ? 'YES — every red caught, no green false positive' : 'NO'));
+  console.log('\n  ENABLE GENERALLY: ' + (summary.enableGenerally
+    ? 'YES — 4/4 reds caught, 4/4 greens passed, no undecided, unavailable or invalid'
+    : 'NO'));
+  summary.blockers.forEach((b) => console.log('    BLOCKER — ' + b));
   if (summary.missed) console.log('  A missed red is a VALID incorrect pass: no fallback fires, and the plan reaches the author.');
   console.log('\n  Evidence: ' + OUT_DIR);
   await browser.close();

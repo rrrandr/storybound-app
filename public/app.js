@@ -192120,6 +192120,54 @@ No text, no watermark, no UI elements, share-ready.`;
         (Array.isArray(d.knowledgeStates) ? d.knowledgeStates : []).forEach(function (k) {
           if (k && k.character) push('know', k.character + ' is now ' + (k.state || '?') + (k.note ? (' — ' + k.note) : ''));
         });
+        // CLASS-SPECIFIC CONSEQUENCE DETAIL (Roman 2026-09-24). Without this the packet described
+        // only the wish and its delivered scope — so a plan resting on WHAT THE RUPTURE ACTUALLY
+        // DID (a rewritten history, a changed owner, a changed reputation) was audited against a
+        // packet that never contained the authorising fact. The auditor would then correctly
+        // report an unsupported claim, and the blame would land on the model for a packet defect.
+        // Every rupture class emits its own committed detail, from classDetail (the commit record)
+        // with a top-level fallback for older records.
+        try {
+          var cd = d.classDetail || {};
+          var pick = function (k) { return (cd[k] !== undefined) ? cd[k] : d[k]; };
+          switch (d.ruptureClass) {
+            case 'history_rewrite': {
+              var ph = pick('priorHistoryReplaced');
+              if (ph) push('dc', 'HISTORY REWRITTEN BY THAT RUPTURE (this is now what happened): ' + ph);
+              (pick('survivingContradictions') || []).forEach(function (x) { push('dc', 'surviving contradiction the rewrite left: ' + x); });
+              break;
+            }
+            case 'memory_perception': {
+              var tp = pick('targetPopulation');
+              if (tp && tp.kind) push('dc', 'the forgetting targeted: ' + tp.kind + (Array.isArray(tp.members) && tp.members.length ? (' — ' + tp.members.join(', ')) : ''));
+              (pick('affectedKnowers') || []).forEach(function (k) {
+                if (k && k.who) push('dc', k.who + ' — ' + (k.disposition || '?') + (k.nowKnows ? (': ' + k.nowKnows) : ''));
+              });
+              var ie = pick('invokerExemption');
+              if (ie && ie.who) push('dc', ie.who + ' (the invoker) is ' + (ie.status || '?') + ' — ' + (ie.reason || '?'));
+              break;
+            }
+            case 'identity_reputation':
+              (pick('recognitionChanges') || []).forEach(function (r) {
+                push('dc', 'recognition changed: ' + (typeof r === 'string' ? r : JSON.stringify(r)));
+              });
+              break;
+            case 'materialization_possession':
+              (pick('materialEffects') || []).forEach(function (m) {
+                push('dc', 'material change: ' + (typeof m === 'string' ? m
+                  : ((m.what || '?') + (m.whoHolds ? (' now held by ' + m.whoHolds) : '') + (m.duration ? (' (' + m.duration + ')') : ''))));
+              });
+              break;
+            case 'relationship_social':
+              (pick('affectedParties') || []).forEach(function (p) {
+                push('dc', 'relationship changed: ' + (typeof p === 'string' ? p : JSON.stringify(p)));
+              });
+              break;
+          }
+          (Array.isArray(d.changed) ? d.changed : []).forEach(function (c) {
+            if (c && c.subject) push('dc', 'changed — ' + c.subject + ': ' + (c.whatChanged || ''));
+          });
+        } catch (_) {}
       });
       idx.entries.forEach(function (e) { e.invalidatedPlans.forEach(function (p) { push('inv', p); invalidated.push(p); }); });
     } catch (_) {}

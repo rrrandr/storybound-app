@@ -103,7 +103,32 @@ export function loadFixtures() {
             mechanism_grounding: 'ALIGNMENT-SENSE (the First Favored gift): they perceive ALIGNMENT, how far a person’s desire, intention, sacrifice, and deepest self all point at one truth' } } },
       { id: 'green_tempt_history_rewrite', expect: 'pass', hard: true,
         why: 'a committed history_rewrite rupture legitimately changed the past; building on it is not an invention',
-        usesHistoryRewrite: true,
+        // A GENUINE, INTERNALLY CONSISTENT record (Roman 2026-09-24). The earlier version mutated
+        // the memory-erasure consequence's ruptureClass and bolted on priorHistoryReplaced, leaving
+        // a record whose requestedRupture and deliveredScope still described a forgetting — and
+        // _buildCanonPacket did not emit class detail at all, so the authorising fact never reached
+        // the auditor. Mistral would have been asked to approve a plan resting on a fact it was
+        // never shown, and condemned for a packet defect. This is a whole coherent consequence.
+        durableOverride: {
+          id: 'tfc_hist_1', source: 'tempt', proposalId: 'tfl_hist_1',
+          requestedRupture: 'let Seren never have stood for the rite at all',
+          sceneIdx: 1, bargainId: null,
+          changed: [{ subject: 'Seren', whatChanged: 'never stood for the rite; the ceremony had no graduant' }],
+          durability: [{ aspect: 'the rewritten history', status: 'persists' }],
+          knowledgeStates: [{ character: 'the assembly', state: 'believes', note: 'that no graduant was ever called' }],
+          establishedEvidence: ["the registrar's ledger has no entry against Seren's name"],
+          openPossibilities: ['someone could find the older copy of the ledger'],
+          requestedScope: 'let Seren never have stood for the rite at all',
+          deliveredScope: 'Seren never stood for the rite; the ceremony convened with no graduant',
+          scopeMatch: 'full', scopeNote: '',
+          ruptureClass: 'history_rewrite',
+          invalidatedPlans: ["Seren's sacrifice cannot be taken — there was no sacrifice to take"],
+          classDetail: {
+            priorHistoryReplaced: 'Seren never stood for the rite; the ceremony convened with no graduant at all',
+            survivingContradictions: ['the ceremonial sash cut to her measure is still folded in the vestry']
+          },
+          permanent: true
+        },
         plan: { tactical_move: 'act from the history that now holds',
           state_change_precondition: 'Seren has not yet been addressed as someone who never stood for the rite.',
           state_change: 'The assembly addresses Seren as a youth who never stood for the rite at all',
@@ -187,16 +212,37 @@ export function scoreFixture(fx, validated, error) {
 export function verdictSummary(rows) {
   const reds = rows.filter((r) => r.expect === 'violation');
   const greens = rows.filter((r) => r.expect === 'pass');
-  const caught = reds.filter((r) => r.score.outcome === 'caught').length;
+  const caught = reds.filter((r) => r.score.outcome === 'caught');
   const missed = reds.filter((r) => r.score.outcome === 'MISSED');
+  const correctPass = greens.filter((r) => r.score.outcome === 'correct_pass');
   const falsePos = greens.filter((r) => r.score.outcome === 'FALSE_POSITIVE');
   const undecided = rows.filter((r) => /undecided/.test(r.score.outcome));
+  const unavailable = rows.filter((r) => r.score.outcome === 'unavailable');
+  const invalid = rows.filter((r) => r.score.outcome === 'invalid_response');
+  // THE GATE, CORRECTED (Roman 2026-09-24). The earlier version required only "all reds caught and
+  // no FALSE_POSITIVE" — so a green returning cannot_decide, invalid JSON or a transport failure
+  // still produced ENABLE. In production every one of those BLOCKS a legitimate scene before the
+  // author, which is a different failure from a false accusation but not a smaller one. Enabling
+  // now requires every fixture to have produced a usable response AND the right one.
+  const enableGenerally = caught.length === reds.length
+    && correctPass.length === greens.length
+    && missed.length === 0 && falsePos.length === 0
+    && undecided.length === 0 && unavailable.length === 0 && invalid.length === 0;
+  const blockers = [];
+  if (missed.length) blockers.push(missed.length + ' missed red (VALID incorrect pass — no fallback fires): ' + missed.map((r) => r.id).join(', '));
+  if (falsePos.length) blockers.push(falsePos.length + ' green false positive: ' + falsePos.map((r) => r.id).join(', '));
+  if (undecided.length) blockers.push(undecided.length + ' undecided (blocks the scene in production): ' + undecided.map((r) => r.id).join(', '));
+  if (unavailable.length) blockers.push(unavailable.length + ' unavailable (no usable response): ' + unavailable.map((r) => r.id).join(', '));
+  if (invalid.length) blockers.push(invalid.length + ' invalid response (blocks the scene in production): ' + invalid.map((r) => r.id).join(', '));
   return {
-    reds: reds.length, greens: greens.length, caught, missed: missed.length, falsePositives: falsePos.length,
-    undecided: undecided.length,
+    reds: reds.length, greens: greens.length,
+    caught: caught.length, correctPass: correctPass.length,
+    missed: missed.length, falsePositives: falsePos.length,
+    undecided: undecided.length, unavailable: unavailable.length, invalid: invalid.length,
     missedIds: missed.map((r) => r.id), falsePositiveIds: falsePos.map((r) => r.id),
-    undecidedIds: undecided.map((r) => r.id),
-    // The gate Roman set: ALL hard reds caught AND zero green false positives.
-    enableGenerally: caught === reds.length && falsePos.length === 0
+    undecidedIds: undecided.map((r) => r.id), unavailableIds: unavailable.map((r) => r.id),
+    invalidIds: invalid.map((r) => r.id),
+    usableResponses: rows.length - unavailable.length - invalid.length, totalFixtures: rows.length,
+    blockers, enableGenerally
   };
 }
