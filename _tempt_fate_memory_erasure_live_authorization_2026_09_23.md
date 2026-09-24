@@ -1,4 +1,50 @@
-# Live-test authorization sheet — Tempt Fate memory-erasure scenario (TWELFTH REVISION)
+# Live-test authorization sheet — Tempt Fate memory-erasure scenario (THIRTEENTH REVISION)
+
+**Thirteenth revision — the real six-call Scene A trace, reconciled line by line.** The live run
+exposed an uncounted post-scene call. Tracing it found **two** uncounted roles, not one.
+
+| # | Model | Role | Enumerated before? | Cost |
+|---|---|---|---|---|
+| 1 | `ministral-8b-2512` | CG scaffold (CONTINUITY ARCHITECT) | yes | $0.001143 |
+| 2 | `grok-4-1-fast-non-reasoning` | scenePlanner | yes | $0.013810 |
+| 3 | `grok-4-1-fast-reasoning` | CG author | yes | $0.095741 |
+| 4 | `ministral-8b-2512` | emotional-gravity audit | yes | $0.000686 |
+| 5 | `grok-4.20-0309-non-reasoning` | **scene-ambient classifier — WAS NOT** | **no** | $0.004752 |
+| 6 | `ministral-8b-2512` | **character-memory extractor — WAS NOT** | **no** | $0.000406 |
+
+Plus the wish classifier (`gpt-4o-mini`, $0.000049) in its own phase. Six Scene A calls; both
+post-scene roles were previously invisible to the census.
+
+**Call 5 — scene-ambient classifier.** Production call site: the `sb:scene-page-added` listener and
+`_sceneAmbientClassifyStaged` (`app.js` ~14594-14712) → `orch.callGrokSceneAmbientClassifier`
+(`orchestration-client.js` :6069) → a single `fetch` to `CONFIG.SPECIALIST_PROXY` with
+`{role:'INTIMACY_SPECIALIST', max_tokens:12, temperature:0.2}` and **no `model` field** — the server
+picks the `INTIMACY_SPECIALIST` default, which is why it arrived as `grok-4.20-0309-non-reasoning`
+and why a model-keyed census never saw it coming. **No fallback and no retry**: one attempt, a 12s
+`AbortController`, and its `catch` returns `null`. Ceiling **1**. Suppressed when the scene is a
+baked Scene 1, when a region override applies, on cache hit, when already in flight, or when there
+is no prose — so 0 or 1 per completed scene.
+
+**Call 6 — character-memory extractor.** `app.js` ~31622, dispatched via
+`_callTieredProvider('characterDisclosure', …)` — the **default 3-tier chain**
+(`ministral-8b-2512` → `grok-4-1-fast-reasoning` → `gpt-4o-mini`). So it is **not** one call; it can
+cascade to 3. Ceiling **3**.
+
+Both fire once per **completed** scene, so the bounded generation retry does not double them.
+`grok-4.20-0309-non-reasoning` was already priced in `public/app.js`'s own `TEXT_PRICING` (~4781);
+it was simply missing from this workstream's copies, which are now aligned.
+
+**Reconciled totals:** census max dispatches **59** = phase-gate allowance **59**
+(`wish-classifier` 1 + `scene-A` 32 + `scene-B` 26) = reservation basis **59**, asserted equal in
+`_tempt_fate_memory_erasure_cost_audit.mjs` (**29/29**). Enforced combined figure **$0.363307**
+against $0.40 (was $0.336797 before these two roles were priced: +$0.005030 ambient and +$0.008225
+disclosure per scene).
+
+**Scene-A-only worst case: $0.188972 across 33 requests** — wish classifier $0.000177 + scaffold
+$0.014325 + three Bibles $0.018075 + scenePlanner $0.015063 + legacy fallback $0.000627 + gravity
+$0.000540 + author $0.055340 + **ambient $0.005030** + **disclosure $0.008225** + the bounded retry's
+$0.071570. That fits beneath a **$0.20** run cap with $0.011 of headroom, which is why
+`SCENE_A_CEILING` is 0.19 and the pre-dispatch reservation is classifier + Scene A only.
 
 **Twelfth revision — overfitting audit: the precedence fix was memory-shaped; it is now
 rupture-class conditional.** Roman caught that the eleventh revision generalised two

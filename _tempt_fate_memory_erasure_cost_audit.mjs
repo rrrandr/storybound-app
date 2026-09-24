@@ -46,7 +46,10 @@ const TEXT_PRICING = {
   'grok-4-1-fast-reasoning': { in: 0.00000125, out: 0.0000025 },
   'grok-4-1-fast-non-reasoning': { in: 0.00000125, out: 0.0000025 },
   'mistral-small-latest': { in: 0.00000015, out: 0.0000006 },
-  'ministral-8b-2512': { in: 0.00000015, out: 0.00000015 }
+  'ministral-8b-2512': { in: 0.00000015, out: 0.00000015 },
+  // Added after the live Scene A exposed an uncounted post-scene call on this model. Sourced from
+  // the same public/app.js TEXT_PRICING table as every row above (~4781).
+  'grok-4.20-0309-non-reasoning': { in: 0.00000125, out: 0.0000025 }
 };
 // Conservative worst-case tokens PER PHYSICAL REQUEST, by role — used only to convert a REAL
 // observed request (and its REAL model, read from gate.trackedCalls' own requestBody) into a REAL
@@ -65,7 +68,18 @@ const WORST_CASE_TOKENS = {
   // (~300-400 real tokens) plus its 120-token completion cap.
   wishClassifier: { in: 700, out: 120 },
   // Same prompt shape as the scenePlanner it substitutes for, so it inherits those token bounds.
-  plannerLegacyFallback: { in: 2500, out: 420 }
+  plannerLegacyFallback: { in: 2500, out: 420 },
+  // ── POST-SCENE ROLES, added 2026-09-23 after the live Scene A trace exposed both as uncounted ──
+  // sceneAmbient: the ambient-soundscape classifier (orchestration-client.js:6069
+  // callGrokSceneAmbientClassifier → CONFIG.SPECIALIST_PROXY, role INTIMACY_SPECIALIST,
+  // max_tokens 12, NO model field — the server picks the INTIMACY_SPECIALIST default, which is why
+  // it arrived as grok-4.20-0309-non-reasoning). Output is capped at 12 tokens; the cost is almost
+  // entirely the trimmed scene prose on the way in. The real call billed $0.00475215.
+  sceneAmbient: { in: 4000, out: 12 },
+  // characterDisclosure: the CHARACTER MEMORY EXTRACTOR (app.js ~31622), dispatched through
+  // _callTieredProvider('characterDisclosure', ...) — so it is NOT one call, it can cascade the
+  // default 3-tier chain like every other tiered role.
+  characterDisclosure: { in: 3000, out: 1100 }
 };
 function costOfTrackedCall(rec, roleKey) {
   const model = (rec.requestBody && (rec.requestBody.model || rec.requestBody.preferredModel)) || null;
@@ -79,7 +93,7 @@ function costOfTrackedCall(rec, roleKey) {
 // make, traced from source this session (scaffold/bible/commitVerifier: _callTieredProvider default
 // chain, no `tiers` override; scenePlanner: its own custom 3-tier list; author: its own hand-rolled
 // 3-tier cascade in _authorFullScenePolicy; gravityAudit: single-attempt, no fallback).
-const ROLE_CEILING = { scaffold: 3, bible: 3, scenePlanner: 3, commitVerifier: 3, gravityAudit: 1, author: 3, wishClassifier: 1, plannerLegacyFallback: 1 };
+const ROLE_CEILING = { scaffold: 3, bible: 3, scenePlanner: 3, commitVerifier: 3, gravityAudit: 1, author: 3, wishClassifier: 1, plannerLegacyFallback: 1, sceneAmbient: 1, characterDisclosure: 3 };
 
 // A real, executable pre-dispatch reservation ledger — reserves BEFORE calling the real function,
 // never after. Unsourced pricing and over-ceiling both refuse OUTRIGHT (the real function is never
@@ -230,7 +244,12 @@ class ReservationLedger {
     // further fallback, reached only if the scenePlanner primary branch throws) — but no revision of
     // the ledger ever RESERVED it. That is exactly the 4-request gap between the traced dispatch
     // census and the cost basis (once per scene, plus once per scene's bounded retry).
-    plannerLegacyFallback: ['mistral-small-latest']
+    plannerLegacyFallback: ['mistral-small-latest'],
+    // Single attempt, no fallback: one fetch to CONFIG.SPECIALIST_PROXY with a 12s AbortController,
+    // and its catch returns null rather than retrying (orchestration-client.js ~6150-6172).
+    sceneAmbient: ['grok-4.20-0309-non-reasoning'],
+    // _callTieredProvider default chain — same three tiers as scaffold/bible/commitVerifier.
+    characterDisclosure: ['ministral-8b-2512', 'grok-4-1-fast-reasoning', 'gpt-4o-mini']
   };
 
   const gravityText = 'x'.repeat(220); // _auditSceneEmotionalGravity requires proseText.length >= 200 to do real work
@@ -353,6 +372,20 @@ class ReservationLedger {
   const legacyB = ledger.reserveWorstCase('plannerLegacyFallback-B', 'plannerLegacyFallback', 1, ROLE_TIER_MODELS.plannerLegacyFallback);
   console.log('  legacy hard-beat planner fallback reserved (never dispatched): A=' + JSON.stringify(legacyA) + ' B=' + JSON.stringify(legacyB));
 
+  // ── POST-SCENE ROLES, RESERVED (added after the live Scene A exposed both as uncounted) ──
+  // Both fire AFTER a scene completes, once per COMPLETED scene — so a bounded generation retry does
+  // not double them (the retry re-generates; it does not re-complete a scene twice). Reserved rather
+  // than force-dispatched: triggering them means driving a full scene to completion, which the
+  // isolated-role sections above deliberately avoid.
+  const ambientA = ledger.reserveWorstCase('sceneAmbient-A', 'sceneAmbient', 1, ROLE_TIER_MODELS.sceneAmbient);
+  const discloseA = ledger.reserveWorstCase('characterDisclosure-A', 'characterDisclosure', 3, ROLE_TIER_MODELS.characterDisclosure);
+  const ambientB = ledger.reserveWorstCase('sceneAmbient-B', 'sceneAmbient', 1, ROLE_TIER_MODELS.sceneAmbient);
+  const discloseB = ledger.reserveWorstCase('characterDisclosure-B', 'characterDisclosure', 3, ROLE_TIER_MODELS.characterDisclosure);
+  console.log('  post-scene reserved — Scene A: ambient=' + JSON.stringify(ambientA) + ' disclosure=' + JSON.stringify(discloseA));
+  console.log('  post-scene reserved — Scene B: ambient=' + JSON.stringify(ambientB) + ' disclosure=' + JSON.stringify(discloseB));
+  ok('the post-scene ambient classifier is RESERVED with a sourced price before any release — it is no longer merely inside a broad scene allowance', ambientA.ok === true && ambientA.phaseUsd > 0, JSON.stringify(ambientA));
+  ok('the character-disclosure extractor is reserved at its FULL 3-tier ceiling, not as a single call', discloseA.ok === true && Math.abs(discloseA.phaseUsd - 0.008225) < 1e-9, JSON.stringify(discloseA));
+
   const retryA = ledger.reserveWorstCase('retry-scenePlanner-A', 'scenePlanner', 3, ROLE_TIER_MODELS.scenePlanner);
   const retryAuthorA = ledger.reserveWorstCase('retry-author-A', 'author', 3, ROLE_TIER_MODELS.author);
   const retryGravA = ledger.reserveWorstCase('retry-gravityAudit-A', 'gravityAudit', 1, ROLE_TIER_MODELS.gravityAudit);
@@ -379,10 +412,12 @@ class ReservationLedger {
   // unexplained headroom that makes the dollar figure unauditable.
   const CENSUS_MAX_DISPATCHES = 1 /* wish classifier */
     + (3 + 9 + 3 + 1 + 1 + 3) /* Scene A no-retry: scaffold, 3 bibles, scenePlanner, legacy, gravity, author = 20 */
+    + (1 + 3)                 /* Scene A post-scene: sceneAmbient 1 + characterDisclosure 3 = 4 */
     + (3 + 1 + 1 + 3)         /* Scene A bounded retry: scenePlanner, legacy, gravity, author = 8 */
     + (3 + 1 + 3 + 1 + 3)     /* Scene B no-retry: scenePlanner, legacy, commitVerifier, gravity, author = 11 */
+    + (1 + 3)                 /* Scene B post-scene: sceneAmbient 1 + characterDisclosure 3 = 4 */
     + (3 + 1 + 3 + 1 + 3);    /* Scene B bounded retry: same set = 11 */
-  const LIVE_RUN_PHASE_CAPS = { 'wish-classifier': 1, 'scene-A': 28, 'scene-B': 22 }; // must mirror _tempt_fate_memory_erasure_live_run_2026_09_24.mjs
+  const LIVE_RUN_PHASE_CAPS = { 'wish-classifier': 1, 'scene-A': 32, 'scene-B': 26 }; // must mirror _tempt_fate_memory_erasure_live_run_2026_09_24.mjs
   const PHASE_CAP_TOTAL = Object.values(LIVE_RUN_PHASE_CAPS).reduce((a, b) => a + b, 0);
   const RESERVED_REQUEST_EQUIVALENTS = ledger.entries.reduce((n, e) => n + (e.requests || 0), 0);
   console.log('  RECONCILIATION — census max real dispatches: ' + CENSUS_MAX_DISPATCHES

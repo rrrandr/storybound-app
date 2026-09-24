@@ -58,7 +58,10 @@ const TEXT_PRICING = {
   'grok-4-1-fast-reasoning': { in: 0.00000125, out: 0.0000025 },
   'grok-4-1-fast-non-reasoning': { in: 0.00000125, out: 0.0000025 },
   'mistral-small-latest': { in: 0.00000015, out: 0.0000006 },
-  'ministral-8b-2512': { in: 0.00000015, out: 0.00000015 }
+  'ministral-8b-2512': { in: 0.00000015, out: 0.00000015 },
+  // Post-scene ambient classifier's model (app.js TEXT_PRICING ~4781) — added after the live Scene A
+  // trace exposed it as an uncounted role.
+  'grok-4.20-0309-non-reasoning': { in: 0.00000125, out: 0.0000025 }
 };
 const TICK_TO_USD = 1e-10; // public/app.js TEXT_COST_TICK_TO_USD — provider-reported cost_in_usd_ticks, when present, is authoritative
 
@@ -334,11 +337,14 @@ let browser = null, gate = null;
   await page.fill('#gnActionInput', sceneADo);
   await page.fill('#gnDialogueInput', '');
   // Combined phase covering the real cascade a Submit can trigger for a story's first generated
-  // scene, plus its own bounded retry. Ceiling 28 is the §2 census worst case EXACTLY, with no
-  // margin — margin is what made the earlier counts unauditable:
-  //   no-retry 20 = scaffold 3 + bibles 9 + scenePlanner 3 + legacy fallback 1 + gravity 1 + author 3
-  //   retry     8 = scenePlanner 3 + legacy fallback 1 + gravity 1 + author 3 (never scaffold/bibles, cached)
-  gate.setPhase('scene-A', 28);
+  // scene, its post-scene roles, and its own bounded retry. Ceiling 32 is the §2 census worst case
+  // EXACTLY, with no margin — margin is what made the earlier counts unauditable:
+  //   no-retry   20 = scaffold 3 + bibles 9 + scenePlanner 3 + legacy fallback 1 + gravity 1 + author 3
+  //   post-scene  4 = sceneAmbient 1 + characterDisclosure 3   (added 2026-09-23; the live run
+  //                   exposed BOTH as uncounted — they fire once per COMPLETED scene, so the
+  //                   bounded retry does not double them)
+  //   retry       8 = scenePlanner 3 + legacy fallback 1 + gravity 1 + author 3 (never scaffold/bibles, cached)
+  gate.setPhase('scene-A', 32);
   await page.click('#gnSubmitBtn', { timeout: 5000 });
   console.log('  Submit clicked — waiting on REAL SETTLEMENT (no wall-clock deadline; the real cascade can legitimately take 60-120s+).');
   await gate.waitForSettlement('scene-A', { watchdogMs: 15000, onWatchdog: (ms) => console.log('  ...Scene A still pending, ' + Math.round(ms / 1000) + 's — browser stays open, nothing aborted') });
@@ -516,12 +522,13 @@ let browser = null, gate = null;
   await page.fill('#gnDialogueInput', '');
   // Scene B has no scaffold/Bibles (one-time, already cached). Ceiling 22 is the §2 census worst
   // case EXACTLY:
-  //   no-retry 11 = scenePlanner 3 + legacy fallback 1 + commitVerifier 3 + gravity 1 + author 3
-  //   retry    11 = the same set again (the retry re-runs the whole generation)
+  //   no-retry   11 = scenePlanner 3 + legacy fallback 1 + commitVerifier 3 + gravity 1 + author 3
+  //   post-scene  4 = sceneAmbient 1 + characterDisclosure 3
+  //   retry      11 = the same generation set again (post-scene roles are not doubled)
   // CORRECTED from 21 (count-reconciliation pass): the old figure omitted the legacy hard-beat
   // planner fallback from the RETRY, so it sat one BELOW the true worst case — a cap that low would
   // have aborted a legitimate 22nd dispatch and failed the run for a budget reason that wasn't real.
-  gate.setPhase('scene-B', 22);
+  gate.setPhase('scene-B', 26);
   await page.click('#gnSubmitBtn', { timeout: 5000 });
   console.log('  Submit clicked — waiting on REAL SETTLEMENT.');
   await gate.waitForSettlement('scene-B', { watchdogMs: 15000, onWatchdog: (ms) => console.log('  ...Scene B still pending, ' + Math.round(ms / 1000) + 's') });
