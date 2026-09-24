@@ -15,7 +15,7 @@
   },
   "st": {
     "blocked": {
-      "at": 1790268957254,
+      "at": 1790270743338,
       "sceneIndex": 1,
       "proposal": {
         "tactical_move": "Lirael steps back from the center of the clearing. — the presiding Dohkar sets a preliminary review date.",
@@ -32,8 +32,14 @@
           "target": "Seren's offered memory of the accusation"
         },
         "mechanism_grounding": "ordinary",
-        "acceptedAt": 1790268956926,
-        "sceneNum": 1
+        "acceptedAt": 1790270743009,
+        "sceneNum": 1,
+        "owner": {
+          "id": "cpa:36a1527d-e1e4-4b8a-b973-adbcadaef6b6",
+          "storyId": "flow-1790270742657",
+          "sceneIndex": 1,
+          "branch": null
+        }
       },
       "packetIds": [
         "neg_0",
@@ -74,7 +80,7 @@
       }
     },
     "lastAudit": {
-      "at": 1790268957254,
+      "at": 1790270743338,
       "sceneIndex": 1,
       "allow": false,
       "source": "audit",
@@ -93,6 +99,6 @@
       "auditErrors": null,
       "uncertainty": null
     },
-    "accepted": true
+    "accepted": false
   }
 }

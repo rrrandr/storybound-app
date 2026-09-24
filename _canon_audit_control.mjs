@@ -90,7 +90,16 @@ function section(t) { console.log('\n=== ' + t + ' ==='); }
     ['unsupported_capability', 'new_metaphysics', 'contradicted_knowledge', 'rewritten_history', 'invalidated_objective'].every((c) => prompt.indexOf(c) !== -1));
   ok('it protects ordinary creative invention explicitly — dialogue, movement, tactics, consequence',
     /Creative invention of dialogue, movement, tactics and consequence is the planner's JOB/.test(prompt));
-  ok('the packet is declared the COMPLETE and ONLY canon', /the complete and only canon/.test(prompt));
+  // The completeness claim is now CONDITIONAL (Roman 2026-09-24): an unconditional "complete and
+  // only canon" over a truncated packet manufactures false violations, because the fact that
+  // AUTHORISES a capability may simply have been cut. First Sacrifice fits under both caps, so
+  // here the honest claim is completeness; the truncated branch is proven in the full-flow control.
+  ok('the packet declares completeness ONLY because nothing was actually omitted',
+    packet.truncated === false && /the complete canon for this scene — nothing was omitted/.test(prompt),
+    'truncated=' + packet.truncated);
+  ok('...and the packet reports its own truncation state rather than leaving it implicit',
+    typeof packet.truncated === 'boolean' && typeof packet.omittedTotal === 'number',
+    JSON.stringify({ t: packet.truncated, o: packet.omittedTotal }));
 
   section('4. RESPONSE VALIDATION — fabricated citations and rewrite attempts (req 5, 4)');
   const good = { verdict: 'violation', violations: [{ category: 'unsupported_capability',

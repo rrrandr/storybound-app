@@ -15,7 +15,7 @@
   },
   "st": {
     "blocked": {
-      "at": 1790268959625,
+      "at": 1790270745744,
       "sceneIndex": 1,
       "proposal": {
         "tactical_move": "Lirael steps back from the center of the clearing. — the presiding Dohkar sets a preliminary review date.",
@@ -28,8 +28,14 @@
           "mechanism_grounding": "ordinary"
         },
         "mechanism_grounding": "ordinary",
-        "acceptedAt": 1790268959301,
-        "sceneNum": 1
+        "acceptedAt": 1790270745417,
+        "sceneNum": 1,
+        "owner": {
+          "id": "cpa:f273f7c4-6b63-43f6-a3a4-c0430e289014",
+          "storyId": "flow-1790270745078",
+          "sceneIndex": 1,
+          "branch": null
+        }
       },
       "packetIds": [
         "neg_0",
@@ -65,7 +71,7 @@
       }
     },
     "lastAudit": {
-      "at": 1790268959625,
+      "at": 1790270745744,
       "sceneIndex": 1,
       "allow": false,
       "source": "audit-invalid",
@@ -77,6 +83,6 @@
       ],
       "uncertainty": null
     },
-    "accepted": true
+    "accepted": false
   }
 }

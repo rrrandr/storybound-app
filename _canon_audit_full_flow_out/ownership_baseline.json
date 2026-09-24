@@ -1,0 +1,29 @@
+{
+  "label": "ownership_baseline",
+  "dispatches": {
+    "planner": 1,
+    "auditor": 1,
+    "author": 1,
+    "other": 3
+  },
+  "plan": {
+    "rejected": false,
+    "canonBlocked": false,
+    "beats": 1
+  },
+  "st": {
+    "blocked": null,
+    "lastAudit": {
+      "at": 1790270747772,
+      "sceneIndex": 1,
+      "allow": true,
+      "source": "audit",
+      "paid": true,
+      "reason": null,
+      "violations": [],
+      "auditErrors": null,
+      "uncertainty": null
+    },
+    "accepted": false
+  }
+}

@@ -101054,7 +101054,14 @@ function _buildAuthorFloorDirective(s) {
                   forces_choice: _scP && _scP.forces_choice,
                   event_slots: (_scP && _scP.event_slots) || null,
                   mechanism_grounding: (_scP && _scP.mechanism_grounding) || ((_scP && _scP.event_slots) ? _scP.event_slots.mechanism_grounding : null),
-                  acceptedAt: Date.now(), sceneNum: (s.turnCount || 0)
+                  acceptedAt: Date.now(), sceneNum: (s.turnCount || 0),
+                  // OWNERSHIP — copied from the token this generation minted at start. The audit
+                  // gate compares all four fields and fails closed on any mismatch, so a proposal
+                  // from another story, scene, branch or attempt can never be the thing audited.
+                  owner: s._cgGenAttempt ? {
+                    id: s._cgGenAttempt.id, storyId: s._cgGenAttempt.storyId,
+                    sceneIndex: s._cgGenAttempt.sceneIndex, branch: s._cgGenAttempt.branch
+                  } : null
                 };
               } catch (_) { s._acceptedPlannerProposal = null; }
             }
@@ -192026,27 +192033,82 @@ No text, no watermark, no UI elements, share-ready.`;
       if (!t) return;
       facts.push({ id: kind + '_' + facts.filter(function (f) { return f.kind === kind; }).length, kind: kind, text: t });
     };
+    // PROPOSAL-AWARE SELECTION (Roman 2026-09-24). A fixed head-of-array slice made the packet's
+    // own "complete and only canon" claim false in any story with more truths than the cap: the
+    // fact that AUTHORISES a capability could be cut, and the auditor would then correctly
+    // conclude the capability is ungrounded — a false violation manufactured by truncation.
+    // Selection is now scored against THIS proposal's own text, so a relevant fact beyond the
+    // cutoff is pulled in ahead of an irrelevant one above it. Truncation is also REPORTED
+    // (packet.truncated) so the prompt can stop claiming completeness when it is not complete.
+    var _relWords = (function () {
+      try {
+        var p = opts.proposal || {};
+        var t = [p.state_change, p.local_objective, p.tactical_move, p.forces_choice,
+                 p.mechanism_grounding, p.event_slots && p.event_slots.action,
+                 p.event_slots && p.event_slots.target, p.event_slots && p.event_slots.actor,
+                 p.event_slots && p.event_slots.mechanism_grounding]
+          .filter(function (x) { return typeof x === 'string'; }).join(' ').toLowerCase();
+        return t.replace(/[^a-z0-9\s]/g, ' ').split(/\s+/).filter(function (w) { return w.length >= 5; });
+      } catch (_) { return []; }
+    })();
+    function _score(text) {
+      if (!_relWords.length) return 0;
+      var h = String(text || '').toLowerCase();
+      var n = 0;
+      for (var i = 0; i < _relWords.length; i++) if (h.indexOf(_relWords[i]) !== -1) n++;
+      return n;
+    }
+    // Stable, relevance-first ordering: higher score first, original order preserved on ties, so a
+    // packet is deterministic for a given proposal.
+    function _rank(list) {
+      return list.map(function (t, i) { return { t: t, i: i, s: _score(t) }; })
+        .sort(function (a, b) { return (b.s - a.s) || (a.i - b.i); })
+        .map(function (x) { return x.t; });
+    }
+    var _omitted = { neg: 0, wt: 0, aff: 0, cap: 0 };
     try {
       var seed = (typeof STARTER_SEEDS !== 'undefined' && s._starterId) ? STARTER_SEEDS[s._starterId] : null;
       var wt = (seed && Array.isArray(seed.worldTruths)) ? seed.worldTruths : [];
-      // Relevance: cap the packet. Negative truths are kept preferentially — they are the ones a
-      // proposal can violate, and the ones the failed Scene B walked straight through.
-      var neg = wt.filter(function (t) { return _CANON_NEGATIVE_RX.test(String(t)); });
-      var pos = wt.filter(function (t) { return !_CANON_NEGATIVE_RX.test(String(t)); });
-      neg.slice(0, 12).forEach(function (t) { push('neg', t); });
-      pos.slice(0, 10).forEach(function (t) { push('wt', t); });
+      // Negative truths are kept preferentially — they are the ones a proposal can violate, and
+      // the ones the failed Scene B walked straight through.
+      var neg = _rank(wt.filter(function (t) { return _CANON_NEGATIVE_RX.test(String(t)); }));
+      var pos = _rank(wt.filter(function (t) { return !_CANON_NEGATIVE_RX.test(String(t)); }));
+      var NEG_CAP = 12, POS_CAP = 10;
+      // Never drop a POSITIVE fact that the proposal actually touches — that is the one most
+      // likely to be the authorisation for its capability.
+      var posKeep = pos.slice(0, POS_CAP);
+      pos.slice(POS_CAP).forEach(function (t) { if (_score(t) > 0) posKeep.push(t); });
+      var negKeep = neg.slice(0, NEG_CAP);
+      neg.slice(NEG_CAP).forEach(function (t) { if (_score(t) > 0) negKeep.push(t); });
+      _omitted.neg = Math.max(0, neg.length - negKeep.length);
+      _omitted.wt = Math.max(0, pos.length - posKeep.length);
+      negKeep.forEach(function (t) { push('neg', t); });
+      posKeep.forEach(function (t) { push('wt', t); });
     } catch (_) {}
     try {
       var rec = (typeof _activeStageRecord === 'function') ? _activeStageRecord(s) : null;
-      if (rec && Array.isArray(rec.affordances)) rec.affordances.slice(0, 10).forEach(function (a) { push('aff', a); });
+      if (rec && Array.isArray(rec.affordances)) {
+        var affR = _rank(rec.affordances), affKeep = affR.slice(0, 10);
+        affR.slice(10).forEach(function (a) { if (_score(a) > 0) affKeep.push(a); });
+        _omitted.aff = Math.max(0, affR.length - affKeep.length);
+        affKeep.forEach(function (a) { push('aff', a); });
+      }
     } catch (_) {}
     // Established character capability + knowledge, from the character ledger's revealed layers.
+    // A character the proposal NAMES is never dropped — their established capability is exactly
+    // what decides whether the proposed action is grounded.
     try {
       var L = (typeof _charLedger === 'function') ? _charLedger() : null;
-      if (L) Object.keys(L).slice(0, 10).forEach(function (k) {
-        var e = L[k];
-        if (e && e.name) push('cap', e.name + ': ' + ((e.revealedLayers || []).slice(-3).join(' | ') || '(nothing established yet)'));
-      });
+      if (L) {
+        var rows = Object.keys(L).map(function (k) {
+          var e = L[k];
+          return (e && e.name) ? (e.name + ': ' + ((e.revealedLayers || []).slice(-3).join(' | ') || '(nothing established yet)')) : null;
+        }).filter(Boolean);
+        var capR = _rank(rows), capKeep = capR.slice(0, 10);
+        capR.slice(10).forEach(function (r) { if (_score(r) > 0) capKeep.push(r); });
+        _omitted.cap = Math.max(0, capR.length - capKeep.length);
+        capKeep.forEach(function (r) { push('cap', r); });
+      }
     } catch (_) {}
     // Committed durable consequences and what they invalidated.
     var invalidated = [];
@@ -192061,8 +192123,13 @@ No text, no watermark, no UI elements, share-ready.`;
       });
       idx.entries.forEach(function (e) { e.invalidatedPlans.forEach(function (p) { push('inv', p); invalidated.push(p); }); });
     } catch (_) {}
+    var _omittedTotal = _omitted.neg + _omitted.wt + _omitted.aff + _omitted.cap;
     return { facts: facts, ids: facts.map(function (f) { return f.id; }), invalidated: invalidated,
-             negatives: facts.filter(function (f) { return f.kind === 'neg'; }) };
+             negatives: facts.filter(function (f) { return f.kind === 'neg'; }),
+             // Reported, not hidden: the prompt stops claiming completeness when anything was cut,
+             // and a reviewer can see that a finding was made against a partial packet.
+             truncated: _omittedTotal > 0, omitted: _omitted, omittedTotal: _omittedTotal,
+             proposalAware: _relWords.length > 0 };
   }
   window._buildCanonPacket = _buildCanonPacket;
 
@@ -192110,7 +192177,16 @@ No text, no watermark, no UI elements, share-ready.`;
       + '- EVERY violation you report MUST cite at least one supplied fact by its id. A finding you cannot ground in a supplied fact is not a finding — omit it.\n'
       + '- Ordinary human action is ALWAYS allowed and is never a violation: speaking, lying, refusing, arriving, leaving, deciding, withholding, confronting, grieving, institutions convening or suspending, people being confused, records disagreeing, someone noticing an inconsistency. Creative invention of dialogue, movement, tactics and consequence is the planner\'s JOB — do not flag it.\n'
       + '- Flag ONLY: a capability or mechanism the canon does not grant; metaphysics the canon does not contain; a character knowing something the canon says they do not; history rewritten when no committed rupture rewrote it; or an objective a committed rupture already invalidated.\n\n'
-      + 'CANON PACKET (the complete and only canon — anything not here does not exist):\n'
+      // HONESTY ABOUT COMPLETENESS (Roman 2026-09-24). Claiming "the complete and only canon" over
+      // a truncated packet manufactures false violations: the fact that AUTHORISES a capability may
+      // simply have been cut, and an auditor told the packet is exhaustive will confidently
+      // conclude the capability is ungrounded. Selection is now proposal-aware, but when anything
+      // was still omitted the auditor is told so and told what to do about it.
+      + (packet.truncated
+          ? ('CANON PACKET — RELEVANCE-SELECTED, NOT EXHAUSTIVE. ' + packet.omittedTotal
+             + ' further canon entr' + (packet.omittedTotal === 1 ? 'y was' : 'ies were')
+             + ' judged less relevant to this plan and omitted. Facts here were selected by relevance to THIS plan, so what is present is what matters most — but you may NOT conclude that something is ungrounded merely because it is absent. If the plan appears to rely on a capability or rule you cannot find here, that is exactly the case for verdict "cannot_decide", not for a violation:\n')
+          : 'CANON PACKET (the complete canon for this scene — nothing was omitted):\n')
       + packet.facts.map(function (f) { return '  [' + f.id + '] ' + f.text; }).join('\n') + '\n\n'
       + 'CATEGORIES: unsupported_capability | new_metaphysics | contradicted_knowledge | rewritten_history | invalidated_objective | other\n\n'
       + 'Return ONLY this JSON, no markdown:\n'
@@ -233400,9 +233476,29 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
   // _currentSceneNumber while this runs; cleared on every exit so a literary turn never inherits it.
   async function _runCGScreenplayGen(sceneIndex, playerAction, playerDialogue) {
     try { state._stagedAuthoringSceneIndex = (typeof sceneIndex === 'number' && sceneIndex >= 0) ? sceneIndex : null; } catch (_) {}
+    // ── ACCEPTED-PROPOSAL OWNERSHIP (Roman 2026-09-24) ──────────────────────────────────────
+    // The canon audit reads state._acceptedPlannerProposal. Stored with only a sceneNum and never
+    // cleared, a proposal from a previous scene, a previous branch, or another story could still
+    // be sitting there when a later path reached the author — and the auditor would have cleared
+    // a stale plan while the real one went unexamined. The generation now mints an attempt token
+    // at start, the acceptance stamps it, and the gate refuses anything that does not match.
+    // CLEARED AT START, not only at the end, so a throw on the previous turn cannot leave one
+    // behind for this one.
+    try {
+      state._acceptedPlannerProposal = null;
+      state._cgGenAttempt = {
+        id: (typeof _cpMintAttemptId === 'function') ? _cpMintAttemptId() : ('gen:' + Date.now() + ':' + Math.random().toString(36).slice(2, 10)),
+        storyId: String(state.storyId || ''),
+        sceneIndex: (typeof sceneIndex === 'number') ? sceneIndex : null,
+        branch: (typeof _cgBranchKey === 'function') ? _cgBranchKey() : null,
+        at: Date.now()
+      };
+    } catch (_) {}
     try { return await _runCGScreenplayGenInner(sceneIndex, playerAction, playerDialogue); }
     finally {
       try { state._stagedAuthoringSceneIndex = null; } catch (_) {}
+      // Released with the generation that owned it — same discipline as _tfoOwnedInvocation below.
+      try { state._acceptedPlannerProposal = null; state._cgGenAttempt = null; } catch (_) {}
       // Release the owned invocation with the generation that owned it (Roman 2026-09-23). Held any
       // longer, the NEXT ordinary continuation would still see an active rupture and keep demanding
       // a non-null outcome report for a wish that was already resolved.
@@ -233684,9 +233780,29 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
     // ══════════════════════════════════════════════════════════════════════════════════════════
     try {
       var _caProposal = state._acceptedPlannerProposal;
+      // OWNERSHIP CHECK, BEFORE ANYTHING ELSE. A proposal that is not provably this generation's
+      // is not audited and is not trusted — it FAILS CLOSED rather than being ignored, because
+      // silently skipping the audit is exactly the bypass this whole gate exists to prevent.
+      if (_caProposal && window._canonAuditEnabled !== false) {
+        var _own = _caProposal.owner, _cur = state._cgGenAttempt;
+        var _ownOk = !!(_own && _cur && _own.id === _cur.id
+          && String(_own.storyId || '') === String(state.storyId || '')
+          && _own.sceneIndex === sceneIndex
+          && String(_own.branch == null ? '' : _own.branch) === String((typeof _cgBranchKey === 'function' ? _cgBranchKey() : null) == null ? '' : _cgBranchKey()));
+        if (!_ownOk) {
+          var _ownWhy = 'accepted proposal does not belong to this generation (proposal owner '
+            + JSON.stringify(_own) + ' vs current { id: ' + (_cur && _cur.id) + ', storyId: ' + state.storyId
+            + ', sceneIndex: ' + sceneIndex + ', branch: ' + (typeof _cgBranchKey === 'function' ? _cgBranchKey() : null) + ' })';
+          try { console.error('[CANON-AUDIT] STALE PROPOSAL — failing closed: ' + _ownWhy); } catch (_) {}
+          state._canonAuditBlocked = { at: Date.now(), sceneIndex: sceneIndex, proposal: _caProposal,
+            verdict: { allow: false, source: 'stale-proposal', reason: _ownWhy } };
+          return { __plannerFunctionRejected: true, __canonAuditBlocked: true, canonAuditSource: 'stale-proposal',
+                   reason: 'canon audit (stale-proposal): ' + _ownWhy, sceneIndex: sceneIndex };
+        }
+      }
       if (_caProposal && typeof _buildCanonPacket === 'function' && typeof _canonAuditGate === 'function'
           && window._canonAuditEnabled !== false) {
-        var _caPacket = _buildCanonPacket(state);
+        var _caPacket = _buildCanonPacket(state, { proposal: _caProposal });
         try {
           console.log('[CANON-AUDIT] gating scene ' + sceneIndex + ' — packet: ' + _caPacket.facts.length
             + ' facts (' + _caPacket.negatives.length + ' negative), ' + _caPacket.invalidated.length + ' invalidated plan(s)');

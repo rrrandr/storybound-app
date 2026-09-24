@@ -100,6 +100,90 @@
     "pass": true
   },
   {
+    "name": "the accepted proposal is CLEARED when the generation ends",
+    "pass": true
+  },
+  {
+    "name": "...and so is the generation attempt token",
+    "pass": true
+  },
+  {
+    "name": "a proposal carries an owner stamped with id, storyId, sceneIndex and branch",
+    "pass": true
+  },
+  {
+    "name": "...and it is cleared at generation START too, so a throw on the previous turn cannot leave one behind",
+    "pass": true
+  },
+  {
+    "name": "ownership matches only on an EXACT id+story+scene+branch tuple",
+    "pass": true
+  },
+  {
+    "name": "a PRIOR-SCENE proposal does not match",
+    "pass": true
+  },
+  {
+    "name": "a PRIOR-STORY proposal does not match",
+    "pass": true
+  },
+  {
+    "name": "a DIFFERENT-BRANCH proposal does not match",
+    "pass": true
+  },
+  {
+    "name": "a PRIOR-ATTEMPT proposal does not match",
+    "pass": true
+  },
+  {
+    "name": "an UNSTAMPED proposal does not match",
+    "pass": true
+  },
+  {
+    "name": "FULL FLOW — a planted PRIOR-STORY/PRIOR-SCENE proposal is NEVER what the auditor inspects",
+    "pass": true
+  },
+  {
+    "name": "...because generation START clears it, so a stale proposal cannot survive into a new scene at all",
+    "pass": true
+  },
+  {
+    "name": "...and the ownership branch that would otherwise fail closed is present in production source",
+    "pass": true
+  },
+  {
+    "name": "the synthetic seed genuinely exceeds both caps, so this test is not vacuous",
+    "pass": true
+  },
+  {
+    "name": "WITHOUT the proposal the authorising fact is CUT — this is the false-violation risk Roman identified",
+    "pass": true
+  },
+  {
+    "name": "WITH the proposal it is INCLUDED, despite sitting 15 entries beyond the cap",
+    "pass": true
+  },
+  {
+    "name": "...and the packet reports itself proposal-aware",
+    "pass": true
+  },
+  {
+    "name": "a truncated packet STOPS claiming to be the complete and only canon",
+    "pass": true
+  },
+  {
+    "name": "...and forbids concluding \"ungrounded\" from mere absence",
+    "pass": true
+  },
+  {
+    "name": "...directing an unfindable capability to \"cannot_decide\" rather than a violation",
+    "pass": true
+  },
+  {
+    "name": "when NOTHING was omitted the packet may still claim completeness — First Sacrifice fits under both caps",
+    "pass": true
+  },
+  {
     "name": "ZERO real provider dispatches; no live auditor call",
     "pass": true
   }
