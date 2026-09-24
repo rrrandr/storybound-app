@@ -123,8 +123,33 @@ validated. Whether the reading is *right* stays a human judgement, as it has thr
       (now proving the real end-to-end path with the extractor stubbed), precedence 26/26,
       UI order 16/16, seal 17/17, cost audit 31/31, QA miss 13/13
 - [x] legacy trust requires stamped provenance; a hallucinated obsolete field cannot bypass citations
-- [ ] **the runner script itself** — not yet written; will be written only if this sheet is approved
+- [x] **the runner exists and is dry-proven fail-closed** — `_tempt_outcome_extractor_live_run.mjs`
+      (CLI) over `_tempt_outcome_extractor_runner_core.mjs` (side-effect-free core), proven by
+      `_tempt_outcome_extractor_runner_dry_proof.mjs` **41/41**, zero dispatches
 - [ ] **Roman's explicit authorization**
+
+### What the dry proof established — the boundaries are in code, not in this document
+
+| scenario | result |
+|---|---|
+| A valid primary | **1 dispatch**, structurally valid, state unchanged, $0.000750 reserved |
+| B invalid-but-parseable primary | **1 dispatch** — stops as a validation failure, **no fallthrough**, $0.000750 |
+| C transport failure on primary | 2 dispatches, fallback succeeds, both reserved in order |
+| D empty primary + fallback | 3 dispatches, terminal succeeds, full cascade under the ceiling |
+| D2 unparsable primary | **1 dispatch** — a parse error in the extractor, reported, not retried elsewhere |
+| E all tiers fail | exactly 3 dispatches, clean exhaustion, tier attempt log preserved, nothing mutated |
+
+Boundary proofs: an image endpoint, a non-declared text endpoint, and a declared endpoint carrying
+a **non-declared model** are each blocked *before* dispatch with a recorded reason and **zero cost
+reserved**; the ledger refuses a dispatch that would breach its ceiling; an unsourced model is
+refused rather than priced at zero. The CLI refuses with exit 3 when invoked bare **and** when given
+an approximate authorization phrase.
+
+**Scenario B is the one that mattered.** The asymmetry is not merely configured — it is structural,
+and the proof asserts the structure: `_extractTemptOutcome` passes **no** `opts.validateContent`,
+so `_callTieredProvider` *cannot* cascade on a semantic rejection. Only a transport failure or an
+unusable (empty) reply advances a tier. A response that parses but fails citations or coverage is a
+useful finding and stops there, having spent one tier.
 
 ## 8. The authorization line, if you want it
 
@@ -133,4 +158,18 @@ validated. Whether the reading is *right* stays a human judgement, as it has thr
 > scaffold, image, or story mutation. Preserve the raw request, raw response, validation result and
 > tier log, then stop.
 
+The runner enforces this itself. It dispatches only when given, verbatim:
+
+```
+node _tempt_outcome_extractor_live_run.mjs --authorize "run the extractor-only live test once under $0.02"
+```
+
+Anything else — no argument, a paraphrase, a near-miss — exits 3 and dispatches nothing.
+
 Until that line is given, nothing runs.
+
+## 9. After the run — freeze, then evaluate
+
+Per Roman: once this executes, **Tempt Fate architecture is frozen**. The next step is to read what
+the extractor returned and judge it — not to open another design branch off whatever it reveals.
+Anything the result argues for gets written down as a finding, not built.
