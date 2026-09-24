@@ -1,0 +1,301 @@
+{
+  "runId": "2026-09-24_18-06-42",
+  "model": "ministral-8b-2512",
+  "dispatches": 8,
+  "reservedUsd": 0.003959999999999999,
+  "ceilingUsd": 0.01,
+  "reservations": [
+    {
+      "label": "red_memory_extraction",
+      "ok": true,
+      "usd": 0.000495,
+      "runningTotalUsd": 0.000495
+    },
+    {
+      "label": "red_visible_glow",
+      "ok": true,
+      "usd": 0.000495,
+      "runningTotalUsd": 0.00099
+    },
+    {
+      "label": "red_contradicted_knowledge",
+      "ok": true,
+      "usd": 0.000495,
+      "runningTotalUsd": 0.001485
+    },
+    {
+      "label": "red_invalidated_objective",
+      "ok": true,
+      "usd": 0.000495,
+      "runningTotalUsd": 0.00198
+    },
+    {
+      "label": "green_confusion_records",
+      "ok": true,
+      "usd": 0.000495,
+      "runningTotalUsd": 0.0024749999999999998
+    },
+    {
+      "label": "green_alignment_sense",
+      "ok": true,
+      "usd": 0.000495,
+      "runningTotalUsd": 0.0029699999999999996
+    },
+    {
+      "label": "green_tempt_history_rewrite",
+      "ok": true,
+      "usd": 0.000495,
+      "runningTotalUsd": 0.0034649999999999993
+    },
+    {
+      "label": "green_mundane_invention",
+      "ok": true,
+      "usd": 0.000495,
+      "runningTotalUsd": 0.003959999999999999
+    }
+  ],
+  "routeLog": [
+    {
+      "kind": "blocked-endpoint",
+      "pathname": "/api/csp-report",
+      "reason": "calibration allows only /api/mistral-proxy"
+    },
+    {
+      "kind": "blocked-endpoint",
+      "pathname": "/api/config",
+      "reason": "calibration allows only /api/mistral-proxy"
+    },
+    {
+      "kind": "blocked-endpoint",
+      "pathname": "/api/csp-report",
+      "reason": "calibration allows only /api/mistral-proxy"
+    },
+    {
+      "kind": "blocked-endpoint",
+      "pathname": "/api/geo",
+      "reason": "calibration allows only /api/mistral-proxy"
+    },
+    {
+      "kind": "reserved",
+      "fixture": "red_memory_extraction",
+      "usd": 0.000495,
+      "runningTotalUsd": 0.000495
+    },
+    {
+      "kind": "blocked-endpoint",
+      "pathname": "/api/beta-events",
+      "reason": "calibration allows only /api/mistral-proxy"
+    },
+    {
+      "kind": "reserved",
+      "fixture": "red_visible_glow",
+      "usd": 0.000495,
+      "runningTotalUsd": 0.00099
+    },
+    {
+      "kind": "reserved",
+      "fixture": "red_contradicted_knowledge",
+      "usd": 0.000495,
+      "runningTotalUsd": 0.001485
+    },
+    {
+      "kind": "reserved",
+      "fixture": "red_invalidated_objective",
+      "usd": 0.000495,
+      "runningTotalUsd": 0.00198
+    },
+    {
+      "kind": "reserved",
+      "fixture": "green_confusion_records",
+      "usd": 0.000495,
+      "runningTotalUsd": 0.0024749999999999998
+    },
+    {
+      "kind": "reserved",
+      "fixture": "green_alignment_sense",
+      "usd": 0.000495,
+      "runningTotalUsd": 0.0029699999999999996
+    },
+    {
+      "kind": "reserved",
+      "fixture": "green_tempt_history_rewrite",
+      "usd": 0.000495,
+      "runningTotalUsd": 0.0034649999999999993
+    },
+    {
+      "kind": "reserved",
+      "fixture": "green_mundane_invention",
+      "usd": 0.000495,
+      "runningTotalUsd": 0.003959999999999999
+    }
+  ],
+  "rows": [
+    {
+      "id": "red_memory_extraction",
+      "expect": "violation",
+      "why": "the retained failed Scene B proposal, relabelled ordinary — mind-extraction no canon grants",
+      "latencyMs": 8382,
+      "score": {
+        "outcome": "unavailable",
+        "critical": false,
+        "note": "[TIERED:canonAuditCalibration] all tiers exhausted — last error: mistral HTTP 502 An error occurred with this application.\n\nNO_RESPONSE_FROM_FUNCTION\n"
+      },
+      "verdict": null,
+      "citations": [],
+      "violations": [],
+      "validationErrors": [],
+      "error": "[TIERED:canonAuditCalibration] all tiers exhausted — last error: mistral HTTP 502 An error occurred with this application.\n\nNO_RESPONSE_FROM_FUNCTION\n",
+      "packetTruncated": false
+    },
+    {
+      "id": "red_visible_glow",
+      "expect": "violation",
+      "why": "a REAL retained corpus plan asserting a visible magical effect, against \"a wish produces NO visible magical effect\"",
+      "latencyMs": 22929,
+      "score": {
+        "outcome": "unavailable",
+        "critical": false,
+        "note": "[TIERED:canonAuditCalibration] all tiers exhausted — last error: mistral HTTP 502 An error occurred with this application.\n\nNO_RESPONSE_FROM_FUNCTION\n"
+      },
+      "verdict": null,
+      "citations": [],
+      "violations": [],
+      "validationErrors": [],
+      "error": "[TIERED:canonAuditCalibration] all tiers exhausted — last error: mistral HTTP 502 An error occurred with this application.\n\nNO_RESPONSE_FROM_FUNCTION\n",
+      "packetTruncated": false
+    },
+    {
+      "id": "red_contradicted_knowledge",
+      "expect": "violation",
+      "why": "the committed rupture left the assembly unaware; this plan has the Dohkar act on detailed knowledge of the forgotten accusation",
+      "latencyMs": 2833,
+      "score": {
+        "outcome": "unavailable",
+        "critical": false,
+        "note": "[TIERED:canonAuditCalibration] all tiers exhausted — last error: mistral HTTP 502 An error occurred with this application.\n\nNO_RESPONSE_FROM_FUNCTION\n"
+      },
+      "verdict": null,
+      "citations": [],
+      "violations": [],
+      "validationErrors": [],
+      "error": "[TIERED:canonAuditCalibration] all tiers exhausted — last error: mistral HTTP 502 An error occurred with this application.\n\nNO_RESPONSE_FROM_FUNCTION\n",
+      "packetTruncated": false
+    },
+    {
+      "id": "red_invalidated_objective",
+      "expect": "violation",
+      "why": "the committed record invalidated the formal inquiry; this plan convenes it anyway",
+      "latencyMs": 991,
+      "score": {
+        "outcome": "unavailable",
+        "critical": false,
+        "note": "[TIERED:canonAuditCalibration] all tiers exhausted — last error: mistral HTTP 502 An error occurred with this application.\n\nNO_RESPONSE_FROM_FUNCTION\n"
+      },
+      "verdict": null,
+      "citations": [],
+      "violations": [],
+      "validationErrors": [],
+      "error": "[TIERED:canonAuditCalibration] all tiers exhausted — last error: mistral HTTP 502 An error occurred with this application.\n\nNO_RESPONSE_FROM_FUNCTION\n",
+      "packetTruncated": false
+    },
+    {
+      "id": "green_confusion_records",
+      "expect": "pass",
+      "why": "unexplained confusion and a contradictory ledger — ordinary, invents no metaphysics",
+      "latencyMs": 920,
+      "score": {
+        "outcome": "unavailable",
+        "critical": false,
+        "note": "[TIERED:canonAuditCalibration] all tiers exhausted — last error: mistral HTTP 502 An error occurred with this application.\n\nNO_RESPONSE_FROM_FUNCTION\n"
+      },
+      "verdict": null,
+      "citations": [],
+      "violations": [],
+      "validationErrors": [],
+      "error": "[TIERED:canonAuditCalibration] all tiers exhausted — last error: mistral HTTP 502 An error occurred with this application.\n\nNO_RESPONSE_FROM_FUNCTION\n",
+      "packetTruncated": false
+    },
+    {
+      "id": "green_alignment_sense",
+      "expect": "pass",
+      "why": "alignment-sense is EXPLICITLY established canon for First Favored",
+      "latencyMs": 752,
+      "score": {
+        "outcome": "unavailable",
+        "critical": false,
+        "note": "[TIERED:canonAuditCalibration] all tiers exhausted — last error: mistral HTTP 502 An error occurred with this application.\n\nNO_RESPONSE_FROM_FUNCTION\n"
+      },
+      "verdict": null,
+      "citations": [],
+      "violations": [],
+      "validationErrors": [],
+      "error": "[TIERED:canonAuditCalibration] all tiers exhausted — last error: mistral HTTP 502 An error occurred with this application.\n\nNO_RESPONSE_FROM_FUNCTION\n",
+      "packetTruncated": false
+    },
+    {
+      "id": "green_tempt_history_rewrite",
+      "expect": "pass",
+      "why": "a committed history_rewrite rupture legitimately changed the past; building on it is not an invention",
+      "latencyMs": 772,
+      "score": {
+        "outcome": "unavailable",
+        "critical": false,
+        "note": "[TIERED:canonAuditCalibration] all tiers exhausted — last error: mistral HTTP 502 An error occurred with this application.\n\nNO_RESPONSE_FROM_FUNCTION\n"
+      },
+      "verdict": null,
+      "citations": [],
+      "violations": [],
+      "validationErrors": [],
+      "error": "[TIERED:canonAuditCalibration] all tiers exhausted — last error: mistral HTTP 502 An error occurred with this application.\n\nNO_RESPONSE_FROM_FUNCTION\n",
+      "packetTruncated": false
+    },
+    {
+      "id": "green_mundane_invention",
+      "expect": "pass",
+      "why": "invented dialogue, movement and consequence within established capability — the planner's job",
+      "latencyMs": 786,
+      "score": {
+        "outcome": "unavailable",
+        "critical": false,
+        "note": "[TIERED:canonAuditCalibration] all tiers exhausted — last error: mistral HTTP 502 An error occurred with this application.\n\nNO_RESPONSE_FROM_FUNCTION\n"
+      },
+      "verdict": null,
+      "citations": [],
+      "violations": [],
+      "validationErrors": [],
+      "error": "[TIERED:canonAuditCalibration] all tiers exhausted — last error: mistral HTTP 502 An error occurred with this application.\n\nNO_RESPONSE_FROM_FUNCTION\n",
+      "packetTruncated": false
+    }
+  ],
+  "summary": {
+    "reds": 4,
+    "greens": 4,
+    "caught": 0,
+    "correctPass": 0,
+    "missed": 0,
+    "falsePositives": 0,
+    "undecided": 0,
+    "unavailable": 8,
+    "invalid": 0,
+    "missedIds": [],
+    "falsePositiveIds": [],
+    "undecidedIds": [],
+    "unavailableIds": [
+      "red_memory_extraction",
+      "red_visible_glow",
+      "red_contradicted_knowledge",
+      "red_invalidated_objective",
+      "green_confusion_records",
+      "green_alignment_sense",
+      "green_tempt_history_rewrite",
+      "green_mundane_invention"
+    ],
+    "invalidIds": [],
+    "usableResponses": 0,
+    "totalFixtures": 8,
+    "blockers": [
+      "8 unavailable (no usable response): red_memory_extraction, red_visible_glow, red_contradicted_knowledge, red_invalidated_objective, green_confusion_records, green_alignment_sense, green_tempt_history_rewrite, green_mundane_invention"
+    ],
+    "enableGenerally": false
+  }
+}
