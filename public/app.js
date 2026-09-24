@@ -6123,15 +6123,59 @@ ${_pcInteriorLock}`;
     e.hadContent = !!(meta && meta.hadContent);
     return e;
   }
-  async function _tieredProviderDispatch(provider, model, messages, maxTokens, temperature) {
+  // ── REASONING-MODE CONTENT SHAPE (Roman 2026-09-24) ──────────────────────────────────────────
+  // With reasoning_effort on, Mistral returns choices[0].message.content as an ARRAY OF BLOCKS
+  // ({type:'thinking'} then {type:'text'}), not a string. Every consumer here does
+  // String(content) or JSON.parse(content), so an unflattened array becomes the literal
+  // "[object Object],[object Object]" — and, worse, it is TRUTHY, so the hadContent check passes
+  // and no tier fallback fires. The caller receives garbage that looks like a success.
+  //
+  // This flattener is the single place that shape is normalised: text blocks are concatenated into
+  // the string every consumer already expects, and the thinking blocks are returned SEPARATELY as
+  // .thinking rather than discarded, so a reasoning trace stays available as a diagnostic instead
+  // of being silently dropped or pasted into prose. A plain string passes through untouched, so
+  // every non-reasoning caller is byte-identical.
+  function _flattenProviderContent(raw) {
+    if (typeof raw === 'string') return { text: raw, thinking: null };
+    if (!Array.isArray(raw)) return { text: raw == null ? '' : String(raw), thinking: null };
+    var text = [], think = [];
+    for (var i = 0; i < raw.length; i++) {
+      var b = raw[i];
+      if (b == null) continue;
+      if (typeof b === 'string') { text.push(b); continue; }
+      var t = String(b.type || '');
+      // Mistral nests thinking as an array of inner blocks; keep it readable, never as prose.
+      var val = (typeof b.text === 'string') ? b.text
+        : (Array.isArray(b.thinking) ? b.thinking.map(function (x) { return (x && x.text) || ''; }).join('') : '');
+      if (t === 'thinking') think.push(val); else if (t === 'text' || !t) text.push(val);
+    }
+    return { text: text.join(''), thinking: think.length ? think.join('\n') : null };
+  }
+  window._flattenProviderContent = _flattenProviderContent;
+
+  // `extra` (Roman 2026-09-24) — additive per-request provider options. Today it carries only
+  // reasoning_effort, forwarded to /api/mistral-proxy, which validates it against its own
+  // allowlist (none|low|medium|high) and echoes the value actually used back as
+  // _orchestration.reasoning_effort. Every existing caller omits `extra` and is unchanged: the
+  // field is only added to the body when a caller explicitly asks for it, so a request that names
+  // no effort still sends no effort key.
+  async function _tieredProviderDispatch(provider, model, messages, maxTokens, temperature, extra) {
+    var _re = (extra && extra.reasoning_effort != null) ? String(extra.reasoning_effort) : null;
     if (provider === 'mistral') {
       return _tierPaced('mistral:' + model, async function () {
+        var _body = { role: 'STRUCTURE_GENERATOR', model: model, temperature: temperature, max_tokens: maxTokens, messages: messages };
+        if (_re) _body.reasoning_effort = _re;
         var r = await fetch('/api/mistral-proxy', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ role: 'STRUCTURE_GENERATOR', model: model, temperature: temperature, max_tokens: maxTokens, messages: messages }) });
+          body: JSON.stringify(_body) });
         if (!r.ok) { var eb = await r.text().catch(function () { return ''; }); throw _tierErr('mistral HTTP ' + r.status + (eb ? ' ' + eb.slice(0, 200) : ''), { provider: 'mistral', model: model, httpStatus: r.status, hadContent: false }); }
         var d = await r.json();
-        var content = (d && (d.content || (d.choices && d.choices[0] && d.choices[0].message && d.choices[0].message.content))) || '';
-        return { content: content, usage: (d && d.usage) || null, _orchestration: { model: model } };
+        var rawContent = (d && (d.content || (d.choices && d.choices[0] && d.choices[0].message && d.choices[0].message.content))) || '';
+        var flat = _flattenProviderContent(rawContent);
+        return { content: flat.text, thinking: flat.thinking, usage: (d && d.usage) || null,
+          // The effort the PROXY reports having sent — not the one we asked for. They differ when
+          // the proxy applies its author-class default, and only the proxy's number is evidence.
+          reasoningEffort: (d && d._orchestration && d._orchestration.reasoning_effort) || null,
+          _orchestration: (d && d._orchestration) || { model: model } };
       });
     }
     if (provider === 'grok') {
@@ -6194,7 +6238,14 @@ ${_pcInteriorLock}`;
       var fallbackReason = (i === 0) ? null : String((lastErr && lastErr.message) || lastErr || 'unknown');
       _logProviderTierAttempt(roleTag, t.tier, t.provider, t.model, fallbackReason, attempt);
       try {
-        var result = await _tieredProviderDispatch(t.provider, t.model, messages, maxTokens, temperature);
+        // REASONING is per-TIER first, then per-call (Roman 2026-09-24). A chain may legitimately
+        // want reasoning on one tier and not another, so the tier's own value wins; opts is the
+        // whole-call default. Omitting both sends no effort key at all, which is what every
+        // existing caller does.
+        var _tierExtra = (t.reasoning_effort != null)
+          ? { reasoning_effort: t.reasoning_effort }
+          : (opts.reasoning_effort != null ? { reasoning_effort: opts.reasoning_effort } : null);
+        var result = await _tieredProviderDispatch(t.provider, t.model, messages, maxTokens, temperature, _tierExtra);
         var hadContent = !!(result && result.content && String(result.content).trim());
         if (!hadContent) throw _tierErr(t.provider + ' returned empty content', { provider: t.provider, model: t.model, httpStatus: 200, hadContent: false });
         if (validateContent && !validateContent(result.content)) throw _tierErr(t.provider + ' returned unparsable content', { provider: t.provider, model: t.model, httpStatus: 200, hadContent: true });

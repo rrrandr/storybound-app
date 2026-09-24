@@ -24,7 +24,14 @@ const MODEL = mIdx !== -1 ? String(process.argv[mIdx + 1] || '') : DEFAULT_MODEL
 if (!CANDIDATES[MODEL]) { console.error('REFUSING — unknown/unpriced model: ' + MODEL + '. Known: ' + Object.keys(CANDIDATES).join(', ')); process.exit(5); }
 const CAND = candidate(MODEL);
 const PRIMARY_MODEL = CAND.model, PRIMARY_ENDPOINT = CAND.endpoint, PER_CALL_USD = CAND.perCallUsd;
-const AUTH_PHRASE = 'run the canon auditor calibration once under $0.01';
+// PER-CANDIDATE CEILING AND AUTHORIZATION PHRASE. The reasoning candidate costs more per call
+// (reasoning tokens bill as output and are invisible in Mistral's usage object, so they can only
+// be bounded by max_tokens) and carries its own $0.02 ceiling. The phrase names the ceiling it
+// authorizes, so an authorization for the $0.01 runs cannot silently release a $0.02 one.
+const RUN_CEILING = CAND.ceilingUsd;
+const AUTH_PHRASE = RUN_CEILING === 0.02
+  ? 'run the reasoning-mistral canon auditor calibration once under $0.02'
+  : 'run the canon auditor calibration once under $0.01';
 const argv = process.argv.slice(2);
 const i = argv.indexOf('--authorize');
 const given = i !== -1 ? String(argv[i + 1] || '') : null;
@@ -32,12 +39,15 @@ const { fixtures } = loadFixtures();
 
 if (given !== AUTH_PHRASE) {
   console.log('CANON AUDITOR CALIBRATION — NOT AUTHORIZED, NOTHING DISPATCHED.\n');
-  console.log('  measures     : ' + PRIMARY_MODEL + ' ONLY, via ' + PRIMARY_ENDPOINT);
+  console.log('  measures     : ' + PRIMARY_MODEL + ' ONLY, via ' + PRIMARY_ENDPOINT
+    + (CAND.reasoningEffort ? '   reasoning_effort="' + CAND.reasoningEffort + '" (explicit, enforced pre-dispatch)' : ''));
+  console.log('  max_tokens   : ' + CAND.maxTokens
+    + (CAND.reasoningEffort ? '   (thinking bills as OUTPUT and Mistral reports no reasoning_tokens; max_tokens is the only bound)' : ''));
   console.log('  fixtures     : ' + fixtures.length + ' (' + fixtures.filter((f) => f.expect === 'violation').length
     + ' red, ' + fixtures.filter((f) => f.expect === 'pass').length + ' green), all retained');
   fixtures.forEach((f) => console.log('     ' + (f.expect === 'violation' ? 'RED  ' : 'GREEN') + '  ' + f.id));
   console.log('  dispatches   : ' + fixtures.length + ', one per fixture, NO tier cascade');
-  console.log('  expected     : $' + (fixtures.length * PER_CALL_USD).toFixed(6) + '   ceiling: $' + CEILING_USD.toFixed(6));
+  console.log('  expected     : $' + (fixtures.length * PER_CALL_USD).toFixed(6) + '   ceiling: $' + RUN_CEILING.toFixed(6));
   console.log('  mutation     : none — no scene generation, no author, no story write');
   console.log('\n  WHY PRIMARY-ONLY: a cascade would measure grok-4-1-fast-reasoning and report it as');
   console.log('  Mistral. It would also cost $0.050440 across all eight, above the ~$0.03 estimate.');
@@ -64,7 +74,7 @@ fs.mkdirSync(OUT_DIR, { recursive: true });
   const page = await (await browser.newContext()).newPage();
   const gate = await installFailClosedNetworkGate(page, { logFile: path.join(OUT_DIR, 'gate.jsonl'), blockImagePreparation: true });
   gate.allowRealPaths([PRIMARY_ENDPOINT]);
-  const ledger = makeLedger(CEILING_USD, PER_CALL_USD);
+  const ledger = makeLedger(RUN_CEILING, PER_CALL_USD);
   const holder = { ledger, log: [], currentFixture: null, candidate: CAND };
   await installCalibrationRoute(page, holder);
 
@@ -96,14 +106,29 @@ fs.mkdirSync(OUT_DIR, { recursive: true });
       s._temptFateDurableConsequences = [a.fx.durableOverride ? JSON.parse(JSON.stringify(a.fx.durableOverride)) : d];
       const packet = window._buildCanonPacket(s, { proposal: a.fx.plan });
       const prompt = window._buildCanonAuditPrompt(a.fx.plan, packet);
-      let raw = null, error = null, content = null;
+      let raw = null, error = null, content = null, meta = null;
       try {
         // PRIMARY TIER ONLY — an explicit single-tier list, so a transport failure cannot cascade
-        // to another model and be reported as this one.
+        // to another model and be reported as this one. reasoning_effort rides on the TIER, which
+        // is where a per-model reasoning setting belongs; omitting it sends no effort key at all.
+        const tier = { tier: 'primary', provider: a.provider, model: a.model };
+        if (a.reasoningEffort) tier.reasoning_effort = a.reasoningEffort;
         const res = await window._callTieredProvider('canonAuditCalibration', [
           { role: 'system', content: prompt.sys }, { role: 'user', content: prompt.usr }
-        ], { max_tokens: 700, temperature: 0, tiers: [{ tier: 'primary', provider: a.provider, model: a.model }] });
+        ], { max_tokens: a.maxTokens, temperature: 0, tiers: [tier] });
         content = res && res.content;
+        // PRESERVE THE PROVIDER'S OWN METADATA, not our intent: the model it says it served, the
+        // reasoning effort it says it applied, the usage it reports, and the thinking trace when
+        // one is returned. Our request said what we asked for; only this says what we got.
+        meta = {
+          servedModel: (res && res._orchestration && res._orchestration.model) || null,
+          reasoningEffortReported: (res && res.reasoningEffort) || null,
+          usage: (res && res.usage) || null,
+          thinking: (res && res.thinking) || null,
+          thinkingChars: (res && res.thinking) ? String(res.thinking).length : 0,
+          orchestration: (res && res._orchestration) || null,
+          attemptLog: (res && res.attemptLog) || null
+        };
         try { raw = JSON.parse(content); }
         catch (e) {
           const m = String(content || '').replace(/^\s*```(?:json)?/i, '').match(/\{[\s\S]*\}/);
@@ -112,15 +137,28 @@ fs.mkdirSync(OUT_DIR, { recursive: true });
         }
       } catch (e) { error = (e && e.message) || String(e); }
       const validated = raw ? window._validateCanonAuditResponse(raw, packet, a.fx.plan) : null;
-      return { packetIds: packet.ids, packetTruncated: packet.truncated, prompt, content, raw, validated, error };
-    }, { fx, durable, model: PRIMARY_MODEL, provider: CAND.provider });
+      return { packetIds: packet.ids, packetTruncated: packet.truncated, prompt, content, raw, validated, error, meta };
+    }, { fx, durable, model: PRIMARY_MODEL, provider: CAND.provider,
+         reasoningEffort: CAND.reasoningEffort, maxTokens: CAND.maxTokens });
     const latencyMs = Date.now() - t0;
     const score = scoreFixture(fx, r.validated || { valid: false, errors: ['no response'] }, r.error);
+    // REALIZED COST FROM THE PROVIDER'S OWN USAGE, per fixture — never from the reservation. On a
+    // reasoning model the completion count silently INCLUDES thinking tokens (Mistral publishes no
+    // reasoning_tokens field on chat completions), so this is the only honest cost figure.
+    const _u = (r.meta && r.meta.usage) || null;
+    const realizedUsd = _u ? (CAND.rate.in * (_u.prompt_tokens || 0) + CAND.rate.out * (_u.completion_tokens || 0)) : null;
+    // The EXACT outgoing body for this fixture, as captured at the route before dispatch.
+    const requestBody = (holder.log.filter((e) => e.kind === 'request-body' && e.fixture === fx.id).pop() || {}).body || null;
     rows.push({ id: fx.id, expect: fx.expect, why: fx.why, latencyMs, score,
       verdict: r.validated && r.validated.verdict, citations: (r.validated && r.validated.violations || []).map((v) => v.citedFactIds),
       violations: (r.validated && r.validated.violations) || [], validationErrors: (r.validated && r.validated.errors) || [],
-      error: r.error, packetTruncated: r.packetTruncated });
-    fs.writeFileSync(path.join(OUT_DIR, fx.id + '.json'), JSON.stringify({ fixture: fx, result: r, score, latencyMs }, null, 2));
+      error: r.error, packetTruncated: r.packetTruncated,
+      servedModel: r.meta && r.meta.servedModel, reasoningEffortReported: r.meta && r.meta.reasoningEffortReported,
+      usage: _u, realizedUsd, thinkingChars: (r.meta && r.meta.thinkingChars) || 0,
+      requestModel: requestBody && requestBody.model,
+      requestReasoningEffort: requestBody ? (requestBody.reasoning_effort == null ? null : String(requestBody.reasoning_effort)) : null });
+    fs.writeFileSync(path.join(OUT_DIR, fx.id + '.json'),
+      JSON.stringify({ fixture: fx, requestBody, result: r, score, latencyMs, realizedUsd }, null, 2));
     console.log('  ' + (fx.expect === 'violation' ? 'RED  ' : 'GREEN') + ' ' + fx.id.padEnd(30)
       + ' → ' + String(score.outcome).padEnd(16) + (r.validated && r.validated.verdict ? ('verdict=' + r.validated.verdict) : ('error=' + r.error))
       + '  ' + latencyMs + 'ms');
@@ -137,8 +175,22 @@ fs.mkdirSync(OUT_DIR, { recursive: true });
   gate.closePhase();
 
   const summary = verdictSummary(rows);
-  const report = { runId: RUN_ID, model: PRIMARY_MODEL, dispatches: gate.trackedCalls().length,
-    reservedUsd: ledger.totalUsd, ceilingUsd: CEILING_USD, reservations: ledger.entries, routeLog: holder.log,
+  const realizedTotal = rows.reduce((t, r) => t + (r.realizedUsd || 0), 0);
+  const tokIn = rows.reduce((t, r) => t + ((r.usage && r.usage.prompt_tokens) || 0), 0);
+  const tokOut = rows.reduce((t, r) => t + ((r.usage && r.usage.completion_tokens) || 0), 0);
+  // MODEL IDENTITY IS ASSERTED, NOT ASSUMED. If any fixture was served by something other than the
+  // pinned model, or (for a reasoning candidate) the proxy reports an effort other than the one
+  // requested, the run does not describe the candidate it claims to and must not be scored as it.
+  const wrongModel = rows.filter((r) => r.servedModel && r.servedModel !== PRIMARY_MODEL);
+  const wrongEffort = CAND.reasoningEffort
+    ? rows.filter((r) => r.usage && String(r.reasoningEffortReported || '') !== String(CAND.reasoningEffort))
+    : [];
+  const report = { runId: RUN_ID, model: PRIMARY_MODEL, reasoningEffort: CAND.reasoningEffort || null,
+    maxTokens: CAND.maxTokens, dispatches: gate.trackedCalls().length,
+    reservedUsd: ledger.totalUsd, realizedUsd: realizedTotal, tokensIn: tokIn, tokensOut: tokOut,
+    ceilingUsd: RUN_CEILING, reservations: ledger.entries, routeLog: holder.log,
+    modelIdentityClean: wrongModel.length === 0 && wrongEffort.length === 0,
+    wrongModelIds: wrongModel.map((r) => r.id), wrongEffortIds: wrongEffort.map((r) => r.id),
     rows, summary };
   fs.writeFileSync(path.join(OUT_DIR, 'report.json'), JSON.stringify(report, null, 2));
 
@@ -150,7 +202,15 @@ fs.mkdirSync(OUT_DIR, { recursive: true });
   console.log('  unavailable        : ' + summary.unavailable + (summary.unavailable ? ('   ' + summary.unavailableIds.join(', ')) : ''));
   console.log('  invalid responses  : ' + summary.invalid + (summary.invalid ? ('   ' + summary.invalidIds.join(', ')) : ''));
   console.log('  usable responses   : ' + summary.usableResponses + '/' + summary.totalFixtures);
-  console.log('  dispatches         : ' + gate.trackedCalls().length + '   reserved $' + ledger.totalUsd.toFixed(6) + ' of $' + CEILING_USD.toFixed(6));
+  console.log('  dispatches         : ' + gate.trackedCalls().length + '   reserved $' + ledger.totalUsd.toFixed(6) + ' of $' + RUN_CEILING.toFixed(6));
+  console.log('  REALIZED cost      : $' + realizedTotal.toFixed(6) + '   ' + tokIn + ' in / ' + tokOut + ' out'
+    + (CAND.reasoningEffort ? '  (completion INCLUDES thinking — Mistral reports no separate reasoning_tokens)' : ''));
+  console.log('  model identity     : ' + (report.modelIdentityClean ? 'clean — every served response was ' + PRIMARY_MODEL
+      + (CAND.reasoningEffort ? ' at reasoning_effort=' + CAND.reasoningEffort : '')
+    : 'MISMATCH — wrongModel[' + report.wrongModelIds.join(',') + '] wrongEffort[' + report.wrongEffortIds.join(',') + ']'));
+  if (!report.modelIdentityClean) {
+    console.log('    This run does NOT describe ' + PRIMARY_MODEL + (CAND.reasoningEffort ? ' in reasoning mode' : '') + '. Do not score it as such.');
+  }
   if (summary.infrastructureInconclusive) {
     console.log('\n  RESULT: INFRASTRUCTURE-INCONCLUSIVE — the local function layer failed; this says');
     console.log('  NOTHING about the model. ' + summary.skipped + ' fixture(s) were never dispatched.');

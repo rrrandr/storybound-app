@@ -26,16 +26,55 @@ import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // CANDIDATE MODELS. One is measured per run, pinned — never a chain (see correction 1 above).
-// Rates are verbatim from public/app.js TEXT_PRICING.
+// Rates are verbatim from public/app.js TEXT_PRICING, and for mistral-small-2603 from Mistral's
+// own published pricing (mistral.ai/pricing/api and docs.mistral.ai/inference/pricing, both read
+// 2026-09-24: $0.15/M in, $0.60/M out).
+//
+// ── mistral-small-2603 (Mistral Small 4) — VERIFIED AGAINST OFFICIAL DOCS, NOT INFERRED ───────
+//  · The id exists and is CURRENT. docs.mistral.ai/models/mistral-small-4-0-26-03 gives the API
+//    id `mistral-small-2603`, v26.03, 256k context. Every earlier Small snapshot (-2506, -2503,
+//    -2501, -2409, -2402) is listed DEPRECATED in the models-overview table.
+//  · The PINNED SNAPSHOT is used deliberately, never `mistral-small-latest`. Mistral's own
+//    lifecycle page warns that an alias "may expose you to silent updates in model behavior and
+//    pricing" and tells you to pin for precise control. A calibration whose model can change
+//    underneath it measures nothing.
+//  · reasoning_effort is a REAL parameter on chat completions, confirmed in the official OpenAPI
+//    schema (docs.mistral.ai/openapi.yaml): ChatCompletionRequest.reasoning_effort, enum
+//    none|minimal|low|medium|high|xhigh. 'high' is one of only two values the prose docs actually
+//    describe, and is the one they recommend. This is NOT inferred from the model's name.
+//  · The separate reasoning family is GONE: Magistral is deprecated and its retirement dates
+//    (2026-07-31) have passed. Reasoning is a parameter on Small 4, not a model.
+//
+// TOKEN BUDGET AND THE $0.02 CEILING. Reasoning tokens bill as OUTPUT and Mistral does NOT break
+// them out — chat usage exposes only prompt/completion/total, with no reasoning_tokens field. So
+// thinking is invisible in the usage object and can only be bounded by max_tokens. The measured
+// gpt-4o-mini run used ~2,200 input tokens per fixture; a prior in-repo probe measured thinking
+// inflating completion by 2.0–2.7x. max_tokens is therefore raised to 2000 for this candidate (at
+// 700 the thinking blocks could consume the entire budget and truncate the JSON answer), and the
+// reservation is priced at that FULL ceiling rather than an expected value:
+//   in  3000 x $0.15/M = $0.00045      out 2000 x $0.60/M = $0.00120
+//   per call $0.00165  x 8 fixtures   = $0.01320, inside a $0.02 ceiling.
+// $0.02 is kept rather than tightened to ~$0.014 precisely because thinking-token billing is
+// undocumented; a tighter bound would be asserting something Mistral does not state.
 export const CANDIDATES = {
   'ministral-8b-2512':  { provider: 'mistral', endpoint: '/api/mistral-proxy',  rate: { in: 1.5e-7, out: 1.5e-7 } },
-  'gpt-4o-mini':        { provider: 'openai',  endpoint: '/api/chatgpt-proxy',  rate: { in: 1.5e-7, out: 6e-7 } }
+  'gpt-4o-mini':        { provider: 'openai',  endpoint: '/api/chatgpt-proxy',  rate: { in: 1.5e-7, out: 6e-7 } },
+  'mistral-small-2603': { provider: 'mistral', endpoint: '/api/mistral-proxy',  rate: { in: 1.5e-7, out: 6e-7 },
+                          reasoningEffort: 'high', maxTokens: 2000, tokens: { in: 3000, out: 2000 },
+                          ceilingUsd: 0.02 }
 };
 export const DEFAULT_MODEL = 'gpt-4o-mini';
 export function candidate(model) {
   const c = CANDIDATES[model];
   if (!c) throw new Error('unpriced/unknown calibration model: ' + model);
-  return Object.assign({ model: model, perCallUsd: c.rate.in * 2600 + c.rate.out * 700 }, c);
+  const tk = c.tokens || { in: 2600, out: 700 };
+  return Object.assign({
+    model: model,
+    perCallUsd: c.rate.in * tk.in + c.rate.out * tk.out,
+    maxTokens: c.maxTokens || 700,
+    reasoningEffort: c.reasoningEffort || null,
+    ceilingUsd: (typeof c.ceilingUsd === 'number') ? c.ceilingUsd : CEILING_USD
+  }, c);
 }
 export const PRIMARY_MODEL = 'ministral-8b-2512';
 export const PRIMARY_ENDPOINT = '/api/mistral-proxy';
@@ -215,6 +254,28 @@ export async function installCalibrationRoute(page, holder) {
       log.push({ kind: 'blocked-model', pathname, model, reason: 'calibration measures ' + wantModel + ' only; a cascade would report another model as this one' });
       await route.abort('failed'); return;
     }
+    // REASONING MUST BE EXPLICIT ON THE WIRE (Roman 2026-09-24). The whole point of this candidate
+    // is reasoning mode, and the failure it must never have is a silent one: /api/mistral-proxy
+    // auto-defaults reasoning_effort=high ONLY for author-class payloads (detected by the
+    // "STORYBOUND ARCHITECTURE LAWS" system prompt), and the canon-audit prompt does not match. So
+    // a request that omits the parameter is served happily as ORDINARY Mistral Small 4 and the
+    // result would be filed under "reasoning Mistral" — measuring the wrong model at full price.
+    // A missing or altered value is therefore aborted BEFORE dispatch, not merely noted.
+    const wantEffort = holder.candidate && holder.candidate.reasoningEffort;
+    if (wantEffort) {
+      const sent = body && body.reasoning_effort;
+      if (String(sent || '') !== String(wantEffort)) {
+        log.push({ kind: 'blocked-reasoning', pathname, model, sent: sent == null ? null : String(sent),
+          reason: 'calibration requires reasoning_effort="' + wantEffort + '" explicitly on the wire; '
+            + (sent == null
+              ? 'the request carried none, and the proxy would serve this as ordinary (non-reasoning) ' + wantModel
+              : 'the request carried "' + sent + '"') });
+        await route.abort('failed'); return;
+      }
+    }
+    // Preserve the EXACT outgoing body per fixture — the request actually sent, not a description
+    // of it — so model, reasoning parameter and token budget are all auditable after the fact.
+    log.push({ kind: 'request-body', fixture: holder.currentFixture, pathname, body });
     const r = ledger.reserve(holder.currentFixture || pathname);
     if (!r.ok) { log.push({ kind: 'blocked-ceiling', reason: r.reason }); await route.abort('failed'); return; }
     log.push({ kind: 'reserved', fixture: holder.currentFixture, usd: r.usd, runningTotalUsd: r.runningTotalUsd });
