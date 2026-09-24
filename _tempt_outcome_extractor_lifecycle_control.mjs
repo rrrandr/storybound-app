@@ -315,6 +315,83 @@ const GOOD = {
   ok('the resolve path NEVER reads live owned-invocation state — the whole point of the immutable context',
     r9.resolveReadsOwnedInvocation === false, 'resolve path references owned-invocation state');
 
+  // ═══════════════════════════════════════════════════════════════════════════════════════════
+  section('10. LEGACY TRUST REQUIRES STAMPED PROVENANCE — a field is not evidence');
+  // Roman: "the presence of a self-certified outcome does NOT prove a scene predates the
+  // migration. A new model can hallucinate an obsolete field even when it was not requested.
+  // Legacy trust needs an explicit persisted version marker — not field presence."
+  const LEGACY = JSON.parse(JSON.stringify(GOOD));
+  delete LEGACY.affectedKnowers[0].evidenceQuote;      // a pre-migration report has no citations —
+  delete LEGACY.affectedKnowers[1].evidenceQuote;      // it was never asked for any.
+
+  const leg = await page.evaluate(async (a) => {
+    const out = {};
+    const reset = () => {
+      window.state.storyId = a.ctx.storyId;
+      window.state._temptFateDurableConsequences = [];
+      window.state._temptOutcomeCommittedProposals = {};
+      window.state._temptOutcomePending = {};
+    };
+    // (a) GENUINE MARKED LEGACY — durable provenance recording architecture v1.
+    reset();
+    const recA = window._tfoAdoptLegacyPending(a.ctx, a.legacy, { outcomeArchitectureV: 1, source: 'save_payload.schemaVersion' });
+    const resA = recA ? await window._tfoResolvePendingRecord(recA) : null;
+    out.marked = { adopted: !!recA, res: resA, durable: (window.state._temptFateDurableConsequences || []).length,
+      pending: Object.keys(window.state._temptOutcomePending || {}).length };
+
+    // (b) UNMARKED old-shaped data — same payload, no provenance at all.
+    reset();
+    const recB = window._tfoAdoptLegacyPending(a.ctx, a.legacy, null);
+    const recB2 = window._tfoAdoptLegacyPending(a.ctx, a.legacy, { source: 'a claim with no version' });
+    const recB3 = window._tfoAdoptLegacyPending(a.ctx, a.legacy, { outcomeArchitectureV: 2, source: 'claims to be current' });
+    out.unmarked = { noProvenance: recB, noVersion: recB2, currentVersion: recB3 };
+
+    // (c) A NEW response containing a hallucinated self-certified outcome: the pending record is
+    //     written WITHOUT legacy privilege, so resolving it uncited must fail.
+    reset();
+    const recC = window._tfoWritePending(a.ctx);
+    const resC = await window._tfoResolvePendingRecord(recC, { injectRaw: a.legacy });
+    out.hallucinated = { res: resC, durable: (window.state._temptFateDurableConsequences || []).length,
+      pending: Object.keys(window.state._temptOutcomePending || {}).length,
+      hadLegacyProvenance: !!recC.legacyProvenance };
+
+    // (d) IDEMPOTENCE ACROSS RELOAD — adopt, serialise/restore, adopt again, resolve twice.
+    reset();
+    window._tfoAdoptLegacyPending(a.ctx, a.legacy, { outcomeArchitectureV: 1, source: 'save_payload.schemaVersion' });
+    window.state._temptOutcomePending = JSON.parse(JSON.stringify(window.state._temptOutcomePending));
+    const again = window._tfoAdoptLegacyPending(a.ctx, a.legacy, { outcomeArchitectureV: 1, source: 'save_payload.schemaVersion' });
+    const pendAfterReadopt = Object.keys(window.state._temptOutcomePending || {}).length;
+    const pend = window._tfoUnresolvedPending(window.state);
+    const first = await window._tfoResolvePendingRecord(pend[0]);
+    const second = pend[0] ? await window._tfoResolvePendingRecord(pend[0]) : null;
+    out.idempotent = { pendAfterReadopt, readoptedSameKey: !!again, first, second,
+      durable: (window.state._temptFateDurableConsequences || []).length,
+      pending: Object.keys(window.state._temptOutcomePending || {}).length };
+    return out;
+  }, { ctx: withRoster(c0.ctx, ['Lirael', 'Julian', 'the assembly']), legacy: LEGACY });
+
+  ok('(a) a GENUINELY MARKED legacy scene migrates — uncited, because it was never asked for citations',
+    leg.marked.adopted === true && leg.marked.res && leg.marked.res.ok === true
+    && leg.marked.durable === 1 && leg.marked.pending === 0, JSON.stringify(leg.marked).slice(0, 300));
+  ok('(b) UNMARKED old-shaped data is REFUSED — no provenance at all',
+    leg.unmarked.noProvenance === null, JSON.stringify(leg.unmarked.noProvenance));
+  ok('...refused when provenance names a source but records NO architecture version',
+    leg.unmarked.noVersion === null, JSON.stringify(leg.unmarked.noVersion));
+  ok('...and refused when the recorded version claims to be CURRENT (only a version BELOW the migration counts)',
+    leg.unmarked.currentVersion === null, JSON.stringify(leg.unmarked.currentVersion));
+  ok('(c) a NEW response carrying a hallucinated self-certified outcome gets NO legacy privilege',
+    leg.hallucinated.hadLegacyProvenance === false, JSON.stringify(leg.hallucinated).slice(0, 220));
+  ok('...it is REJECTED on the citation check it cannot satisfy, commits nothing, and still requires extraction',
+    leg.hallucinated.res.ok === false
+    && (leg.hallucinated.res.errors || []).some((e) => /evidenceQuote/.test(e))
+    && leg.hallucinated.durable === 0 && leg.hallucinated.pending === 1,
+    JSON.stringify(leg.hallucinated.res.errors));
+  ok('(d) legacy adoption is IDEMPOTENT across a reload — one record, not re-armed on re-adoption',
+    leg.idempotent.pendAfterReadopt === 1, JSON.stringify(leg.idempotent).slice(0, 220));
+  ok('...and resolving twice commits exactly once',
+    leg.idempotent.first.ok === true && leg.idempotent.durable === 1 && leg.idempotent.pending === 0,
+    JSON.stringify({ first: leg.idempotent.first, second: leg.idempotent.second }).slice(0, 300));
+
   section('CONTAINMENT');
   ok('ZERO real provider dispatches across the whole control', gate.realCalls().length === 0, 'realCalls=' + gate.realCalls().length);
 

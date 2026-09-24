@@ -190440,6 +190440,23 @@ No text, no watermark, no UI elements, share-ready.`;
   // ══════════════════════════════════════════════════════════════════════════════════════════════
   var _TFO_PENDING_V = 1;
 
+  // OUTCOME ARCHITECTURE VERSION (Roman 2026-09-24).
+  //   1 = the author self-certified temptFateOutcome in its own generation response.
+  //   2 = the dedicated extractor reads the ACCEPTED prose and is the authoritative witness.
+  //
+  // This exists because an earlier version of the back-compat path treated the PRESENCE of a
+  // self-certified outcome as proof that a scene predated the migration. That reasoning is
+  // unsound: a model can hallucinate an obsolete field it was never asked for, and doing so would
+  // have bypassed the citation check and resolved a pending extraction on the model's own say-so —
+  // reinstating exactly the self-witnessing this migration removed.
+  //
+  // Provenance is therefore something OUR CODE stamps, never something a response can claim.
+  // Legacy trust requires an explicit, durable, persisted marker recorded before the extractor
+  // architecture existed. Absence of that marker is not legacy; it is simply unmarked, and
+  // unmarked data gets no privileged trust.
+  var _TFO_ARCHITECTURE_V = 2;
+  window._TFO_ARCHITECTURE_V = _TFO_ARCHITECTURE_V;
+
   function _tfoDeepFreeze(o) {
     try {
       if (!o || typeof o !== 'object' || Object.isFrozen(o)) return o;
@@ -190462,6 +190479,9 @@ No text, no watermark, no UI elements, share-ready.`;
     } catch (_) {}
     return _tfoDeepFreeze({
       v: _TFO_PENDING_V,
+      // Stamped by THIS code, at capture. A context built here is by construction a
+      // post-migration one, so it can never be mistaken for legacy later.
+      architectureV: _TFO_ARCHITECTURE_V,
       storyId: String(s.storyId || ''),
       proposalId: String(entry.id || ''),
       wishText: String(entry.wishText || ''),
@@ -190504,11 +190524,46 @@ No text, no watermark, no UI elements, share-ready.`;
     var m = _tfoPendingMap(true); if (!m) return null;
     var key = _tfoPendingKey(ctx);
     if (m[key]) return m[key];            // idempotent: never overwrite an existing attempt record
-    m[key] = { v: _TFO_PENDING_V, key: key, ctx: ctx, attempts: 0, lastError: null, createdAt: Date.now() };
+    m[key] = { v: _TFO_PENDING_V, architectureV: (ctx && ctx.architectureV) || _TFO_ARCHITECTURE_V,
+      key: key, ctx: ctx, attempts: 0, lastError: null, createdAt: Date.now() };
     try { console.log('[TEMPT-PENDING] recorded ' + key + ' — the scene is accepted; its consequence is not yet extracted'); } catch (_) {}
     return m[key];
   }
   window._tfoWritePending = _tfoWritePending;
+
+  // THE ONLY ROUTE TO LEGACY TRUST. A caller must supply durable, persisted provenance that was
+  // established BEFORE the extractor architecture — a recorded outcome-architecture version below
+  // the current one, plus a named source. This is deliberately not reachable from a model
+  // response: nothing a provider returns can construct it, so a hallucinated obsolete field can
+  // never buy its way past the citation check.
+  //
+  // A save-loader migrating a genuinely pre-migration story is the intended caller.
+  function _tfoAdoptLegacyPending(ctx, selfCertified, provenance) {
+    if (!ctx || !selfCertified || typeof selfCertified !== 'object') return null;
+    var p = provenance || {};
+    var recordedV = p.outcomeArchitectureV;
+    if (typeof recordedV !== 'number' || recordedV >= _TFO_ARCHITECTURE_V) {
+      try { console.warn('[TEMPT-LEGACY] refused: provenance carries no recorded outcomeArchitectureV below ' + _TFO_ARCHITECTURE_V + ' (got ' + JSON.stringify(recordedV) + ') — unmarked data gets no privileged trust'); } catch (_) {}
+      return null;
+    }
+    if (typeof p.source !== 'string' || !p.source.trim()) {
+      try { console.warn('[TEMPT-LEGACY] refused: provenance names no durable source'); } catch (_) {}
+      return null;
+    }
+    var rec = _tfoWritePending(ctx);
+    if (!rec) return null;
+    // Idempotent: a second adoption of the same key must not re-arm or re-migrate.
+    if (rec.legacyProvenance) {
+      try { console.log('[TEMPT-LEGACY] ' + rec.key + ' already carries legacy provenance — not re-adopted'); } catch (_) {}
+      return rec;
+    }
+    rec.legacySelfCertified = selfCertified;
+    rec.legacyProvenance = { outcomeArchitectureV: recordedV, source: String(p.source), adoptedAt: Date.now() };
+    rec.architectureV = recordedV;
+    try { console.log('[TEMPT-LEGACY] adopted ' + rec.key + ' as a pre-extractor scene (recorded architecture v' + recordedV + ', source "' + p.source + '")'); } catch (_) {}
+    return rec;
+  }
+  window._tfoAdoptLegacyPending = _tfoAdoptLegacyPending;
 
   function _tfoClearPending(key) {
     var m = _tfoPendingMap(false); if (!m) return false;
@@ -190637,7 +190692,14 @@ No text, no watermark, no UI elements, share-ready.`;
       // present ONLY because a post-migration author never produces it — so its presence is proof
       // the scene predates the extractor. It still passes full structural + roster validation; it
       // is exempt from the CITATION check alone, which it was never asked to satisfy.
-      var legacy = (!opts.injectRaw && rec.legacySelfCertified && opts.allowLegacy !== false)
+      // LEGACY REQUIRES STAMPED PROVENANCE, NOT A FIELD. rec.legacySelfCertified alone is never
+      // enough — only _tfoAdoptLegacyPending can attach legacyProvenance, and only from durable
+      // persisted data. A response that merely contains the obsolete field gets nothing.
+      var legacyOk = !!(rec.legacyProvenance
+        && typeof rec.legacyProvenance.outcomeArchitectureV === 'number'
+        && rec.legacyProvenance.outcomeArchitectureV < _TFO_ARCHITECTURE_V
+        && rec.legacySelfCertified);
+      var legacy = (!opts.injectRaw && legacyOk && opts.allowLegacy !== false)
         ? rec.legacySelfCertified : null;
       var raw = opts.injectRaw || legacy || await _extractTemptOutcome(ctx);
       var skipCitations = !!legacy;
@@ -233889,11 +233951,16 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
             var _tfoProse = (typeof _extractCGSceneText === 'function') ? _extractCGSceneText(plan) : '';
             var _tfoCtx = _tfoBuildExtractionContext(plan, _tfoOwn, _tfoProse, (plan && plan.__sceneUid) || null);
             var _tfoRec = _tfoWritePending(_tfoCtx);
-            // BACK-COMPAT: an already-saved scene (or a legacy author reply) may still carry a
-            // self-certified temptFateOutcome. It is NOT authoritative any more — it is only used
-            // to seed a resolution when no extractor result exists, and it still has to pass the
-            // same validation, minus the citation check it was never asked to satisfy.
-            if (_tfoRec && _tfoOwn.pendingOutcome) _tfoRec.legacySelfCertified = _tfoOwn.pendingOutcome;
+            // A NEW GENERATION THAT RETURNS THE OBSOLETE FIELD IS IGNORED, NOT TRUSTED
+            // (Roman 2026-09-24). The author is no longer asked for temptFateOutcome, so a
+            // response carrying one is a hallucinated leftover — and field presence is NOT
+            // evidence the scene predates the migration. Adopting it here would let a model
+            // bypass the citation check and resolve its own pending extraction, which is the
+            // exact self-witnessing this architecture removed. It is logged and dropped; the
+            // extractor still has to do the work.
+            if (_tfoOwn.pendingOutcome) {
+              try { console.warn('[TEMPT-OUTCOME] the author returned a temptFateOutcome it was never asked for (architecture v' + _TFO_ARCHITECTURE_V + ') — IGNORED. Only _tfoAdoptLegacyPending, with durable persisted provenance, can supply a legacy outcome; this scene still requires extraction.'); } catch (_) {}
+            }
             return _tfoRec;
           }
           console.warn('[TEMPT-OUTCOME] scene ' + _tfoOwn.sceneIndex + ' — Tempt was invoked at generation start but no ledger proposal entry was captured — nothing to extract against.');

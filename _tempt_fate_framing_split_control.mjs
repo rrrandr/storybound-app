@@ -134,7 +134,37 @@ const CALLBACK_MARK = 'TEMPT FATE — MEMORY CALLBACK';
     const active = sysText.indexOf(ACTIVE_MARK) !== -1 || String((usr && usr.content) || '').indexOf(ACTIVE_MARK) !== -1;
     return buildScheduleAwareStubResponse(sysText, usr && usr.content, active);
   };
-  gate.stub('/api/mistral-proxy', async () => ({ content: null }));
+  // THE TEMPT OUTCOME EXTRACTOR runs through _callTieredProvider's default chain, whose PRIMARY
+  // tier is ministral-8b-2512 → /api/mistral-proxy. Stubbing it here lets the REAL end-to-end
+  // production path complete — persistence records a pending outcome, the extractor reads the
+  // accepted prose, cites it, and commits — without a single dispatch. Identified by the
+  // extractor's own system-prompt marker, not by endpoint, so no other mistral role is affected.
+  gate.stub('/api/mistral-proxy', async (req) => {
+    const b = parse(req);
+    const sys = ((b.messages || []).find((m) => m.role === 'system') || {}).content || '';
+    if (sys.indexOf('CONSEQUENCE EXTRACTOR') === -1) return { content: null };
+    const usr = ((b.messages || []).find((m) => m.role === 'user') || {}).content || '';
+    // Cite a line that is genuinely in the prose the extractor was handed — the citation check is
+    // real here, so a made-up quote would (correctly) fail.
+    const quote = String(usr).split('\n').map((s) => s.trim()).filter((s) => s.length > 12)
+      .filter((s) => s.indexOf('THE ACCEPTED SCENE') === -1)[0] || '';
+    return { content: JSON.stringify({
+      delivered: true,
+      changed: [{ subject: 'the assembly', whatChanged: 'no longer remembers the ceremony' }],
+      durability: [{ aspect: 'the memory gap', status: 'persists' }],
+      establishedEvidence: ['the clearing does not explain itself'],
+      requestedScope: 'everyone forgets the ceremony happened',
+      deliveredScope: 'every witness present loses the memory',
+      scopeMatch: 'full', ruptureClass: 'memory_perception',
+      targetPopulation: { kind: 'all_present_except_invoker' },
+      affectedKnowers: [
+        { who: 'the assembly', disposition: 'forgot', memoryAbsent: true, suspicionFromResidue: false, nowKnows: 'nothing of the ceremony', evidenceQuote: quote },
+        { who: 'Julian', disposition: 'suspects', memoryAbsent: true, suspicionFromResidue: true, nowKnows: 'nothing, but senses a gap', evidenceQuote: quote }
+      ],
+      invokerExemption: { who: 'Lirael', status: 'exempt', reason: 'invoker_anchor', note: 'anchor' },
+      unaccountedParties: []
+    }) };
+  });
   gate.stub('/api/proxy', async (req) => ({ content: JSON.stringify(planFor(parse(req))) }));
   gate.stub('/api/chatgpt-proxy', async (req) => {
     const b = parse(req);

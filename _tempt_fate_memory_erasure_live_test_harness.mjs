@@ -340,7 +340,19 @@ class ReservationLedger {
   ok('Scene A\'s generation returned a usable plan (not stale-rejected)', sceneA && !sceneA.__staleRejected && !sceneA.__plannerFunctionRejected);
 
   const ownedA = await page.evaluate(() => { const led = window.state._temptFateLedger; return led[led.length - 1]; });
-  await page.evaluate(async (p) => { window._cgTemptFateCommitAtPersistence(p); await window._tfoResumePending(); }, sceneA);
+  await page.evaluate(async (p) => {
+    // Persistence records a pending outcome; the EXTRACTOR commits. This control stubs an AUTHOR
+    // response, whose self-certified outcome is deliberately ignored post-migration, so it is
+    // re-injected here as if extracted, cited into the scene's own first beat.
+    window._cgTemptFateCommitAtPersistence(p);
+    const ownedId = p && p.__temptOwnership && p.__temptOwnership.proposalEntry && p.__temptOwnership.proposalEntry.id;
+    const quote = (p && Array.isArray(p.beats) && p.beats[0] && p.beats[0].text) || '';
+    for (const rec of window._tfoUnresolvedPending(window.state).filter((r) => !ownedId || (r.ctx && r.ctx.proposalId === ownedId))) {
+      let raw = (p && p.temptFateOutcome) ? JSON.parse(JSON.stringify(p.temptFateOutcome)) : null;
+      if (raw && Array.isArray(raw.affectedKnowers)) raw.affectedKnowers.forEach((k) => { if (k && k.disposition !== 'absent') k.evidenceQuote = quote; });
+      await window._tfoResolvePendingRecord(rec, raw ? { injectRaw: raw } : {});
+    }
+  }, sceneA);
   await page.evaluate((o) => window._cgTemptFateAftermathCleanup(o, true), ownedA);
   const committedA = await page.evaluate(() => window.state._temptFateDurableConsequences[0]);
   const durableCountAfterA = await page.evaluate(() => window.state._temptFateDurableConsequences.length);
@@ -393,7 +405,19 @@ class ReservationLedger {
   ok('no new Tempt invocation occurred during Scene B — state.tempt_fate_invoked_this_turn stayed false throughout the ordinary continuation', wasInvokedDuringB === false, 'wasInvokedDuringB=' + wasInvokedDuringB);
 
   const beforeCommitB = await page.evaluate(() => window.state._temptFateDurableConsequences.length);
-  await page.evaluate(async (p) => { window._cgTemptFateCommitAtPersistence(p); await window._tfoResumePending(); }, sceneB);
+  await page.evaluate(async (p) => {
+    // Persistence records a pending outcome; the EXTRACTOR commits. This control stubs an AUTHOR
+    // response, whose self-certified outcome is deliberately ignored post-migration, so it is
+    // re-injected here as if extracted, cited into the scene's own first beat.
+    window._cgTemptFateCommitAtPersistence(p);
+    const ownedId = p && p.__temptOwnership && p.__temptOwnership.proposalEntry && p.__temptOwnership.proposalEntry.id;
+    const quote = (p && Array.isArray(p.beats) && p.beats[0] && p.beats[0].text) || '';
+    for (const rec of window._tfoUnresolvedPending(window.state).filter((r) => !ownedId || (r.ctx && r.ctx.proposalId === ownedId))) {
+      let raw = (p && p.temptFateOutcome) ? JSON.parse(JSON.stringify(p.temptFateOutcome)) : null;
+      if (raw && Array.isArray(raw.affectedKnowers)) raw.affectedKnowers.forEach((k) => { if (k && k.disposition !== 'absent') k.evidenceQuote = quote; });
+      await window._tfoResolvePendingRecord(rec, raw ? { injectRaw: raw } : {});
+    }
+  }, sceneB);
   const afterCommitB = await page.evaluate(() => window.state._temptFateDurableConsequences.length);
   ok('Scene B (ordinary continuation) commits NO new outcome — a missing temptFateOutcome here is the EXPECTED result, not a failure', afterCommitB === beforeCommitB, 'before=' + beforeCommitB + ' after=' + afterCommitB);
   ok('no duplicate commit occurred — still exactly ONE durable outcome total (Scene A\'s), not two', afterCommitB === 1, 'afterCommitB=' + afterCommitB);
