@@ -1,0 +1,162 @@
+{
+  "at": "2026-09-24T02:13:43.841Z",
+  "authorization": "Scene A only, remain branch, additional hard cap $0.20, stop unconditionally, no automated semantic approval",
+  "storyId": "live-fs-tempt-erasure-1790215875924",
+  "wishText": "everyone forgets the ceremony happened",
+  "scene1Decision": "remain",
+  "sceneADo": "Lirael closes her eyes for a long moment, then opens them again.",
+  "structural": {
+    "sceneDelivered": true,
+    "outcomeReportPopulated": true,
+    "outcomeCommittedToOwnedProposal": true,
+    "plannerRequests": 1,
+    "authorRequests": 1,
+    "plannerGotActiveInvocation": true,
+    "authorGotActiveInvocation": true,
+    "authorGotMemoryCallback": false
+  },
+  "declared": {
+    "ruptureClass": "memory_perception",
+    "requestedScope": "everyone forgets the ceremony happened",
+    "deliveredScope": "the assembly forgets the ceremony and its accusations",
+    "scopeMatch": "full",
+    "scopeNote": null,
+    "invalidatedPlans": [
+      "the formal inquiry cannot be justified without memory of the events"
+    ],
+    "classDetail": {
+      "affectedKnowers": [
+        {
+          "who": "the assembly",
+          "nowKnows": "nothing of the bent wish or interrogation"
+        }
+      ]
+    }
+  },
+  "requestCapAccounting": {
+    "sceneAPhaseCap": 32,
+    "sceneAObserved": 4,
+    "wishClassifierCap": 1,
+    "wishClassifierObserved": 1,
+    "totalCapForThisRun": 33,
+    "totalObserved": 5,
+    "capBreached": false
+  },
+  "semanticVerdict": "NOT ASSESSED BY THIS SCRIPT — human review of scene_a_rendered_text.txt required",
+  "costs": {
+    "wishClassifierUsd": 0.00004905,
+    "sceneAUsd": 0.10370085,
+    "runTotalUsd": 0.10374989999999999,
+    "runCapUsd": 0.2,
+    "withinCap": true,
+    "perCall": [
+      {
+        "url": "http://localhost:3000/api/mistral-proxy",
+        "roleTag": "scene-A",
+        "model": "ministral-8b-2512",
+        "status": 200,
+        "networkError": null,
+        "usage": {
+          "prompt_tokens": 5676,
+          "total_tokens": 7403,
+          "completion_tokens": 1727,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          },
+          "service_tier": "standard"
+        },
+        "costUsd": 0.00111045,
+        "costNote": "estimated_from_real_tokens",
+        "at": 1790215927429,
+        "settledAt": 1790215959089,
+        "elapsedMs": 31659
+      },
+      {
+        "url": "http://localhost:3000/api/proxy",
+        "roleTag": "scene-A",
+        "model": "grok-4-1-fast-non-reasoning",
+        "status": 200,
+        "networkError": null,
+        "usage": {
+          "prompt_tokens": 6918,
+          "completion_tokens": 496,
+          "total_tokens": 8759,
+          "prompt_tokens_details": {
+            "text_tokens": 6918,
+            "audio_tokens": 0,
+            "image_tokens": 0,
+            "cached_tokens": 192
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 1345,
+            "audio_tokens": 0,
+            "accepted_prediction_tokens": 0,
+            "rejected_prediction_tokens": 0
+          },
+          "num_sources_used": 0,
+          "cost_in_usd_ticks": 130484000
+        },
+        "costUsd": 0.0130484,
+        "costNote": "provider_ticks",
+        "at": 1790215959088,
+        "settledAt": 1790215975949,
+        "elapsedMs": 16862
+      },
+      {
+        "url": "http://localhost:3000/api/proxy",
+        "roleTag": "scene-A",
+        "model": "grok-4-1-fast-reasoning",
+        "status": 200,
+        "networkError": null,
+        "usage": {
+          "prompt_tokens": 61024,
+          "completion_tokens": 3830,
+          "total_tokens": 66162,
+          "prompt_tokens_details": {
+            "text_tokens": 61024,
+            "audio_tokens": 0,
+            "image_tokens": 0,
+            "cached_tokens": 192
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 1308,
+            "audio_tokens": 0,
+            "accepted_prediction_tokens": 0,
+            "rejected_prediction_tokens": 0
+          },
+          "num_sources_used": 0,
+          "cost_in_usd_ticks": 889234000
+        },
+        "costUsd": 0.0889234,
+        "costNote": "provider_ticks",
+        "at": 1790215975948,
+        "settledAt": 1790216011696,
+        "elapsedMs": 35748
+      },
+      {
+        "url": "http://localhost:3000/api/mistral-proxy",
+        "roleTag": "scene-A",
+        "model": "ministral-8b-2512",
+        "status": 200,
+        "networkError": null,
+        "usage": {
+          "prompt_tokens": 3124,
+          "total_tokens": 4124,
+          "completion_tokens": 1000,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          },
+          "service_tier": "standard"
+        },
+        "costUsd": 0.0006186,
+        "costNote": "estimated_from_real_tokens",
+        "at": 1790216011684,
+        "settledAt": 1790216023503,
+        "elapsedMs": 11819
+      }
+    ]
+  },
+  "imageAttempts": 0,
+  "anyUndeclaredOrAborted": 13,
+  "persistedLogFile": "/Users/romantsukerman/storybound-app/_tempt_fate_fixtures/run_2026-09-24_02-11-02_scene_a/run_requests.jsonl"
+}

@@ -1,0 +1,133 @@
+[
+  {
+    "url": "http://localhost:3000/api/chatgpt-proxy",
+    "roleTag": "wish-classifier",
+    "model": "gpt-4o-mini",
+    "status": 200,
+    "networkError": null,
+    "usage": {
+      "prompt_tokens": 215,
+      "completion_tokens": 28,
+      "total_tokens": 243,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "audio_tokens": 0
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 0,
+        "audio_tokens": 0,
+        "accepted_prediction_tokens": 0,
+        "rejected_prediction_tokens": 0
+      }
+    },
+    "costUsd": 0.00004905,
+    "costNote": "estimated_from_real_tokens",
+    "at": 1790215883430,
+    "settledAt": 1790215926598,
+    "elapsedMs": 43168
+  },
+  {
+    "url": "http://localhost:3000/api/mistral-proxy",
+    "roleTag": "scene-A",
+    "model": "ministral-8b-2512",
+    "status": 200,
+    "networkError": null,
+    "usage": {
+      "prompt_tokens": 5676,
+      "total_tokens": 7403,
+      "completion_tokens": 1727,
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      },
+      "service_tier": "standard"
+    },
+    "costUsd": 0.00111045,
+    "costNote": "estimated_from_real_tokens",
+    "at": 1790215927429,
+    "settledAt": 1790215959089,
+    "elapsedMs": 31659
+  },
+  {
+    "url": "http://localhost:3000/api/proxy",
+    "roleTag": "scene-A",
+    "model": "grok-4-1-fast-non-reasoning",
+    "status": 200,
+    "networkError": null,
+    "usage": {
+      "prompt_tokens": 6918,
+      "completion_tokens": 496,
+      "total_tokens": 8759,
+      "prompt_tokens_details": {
+        "text_tokens": 6918,
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "cached_tokens": 192
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 1345,
+        "audio_tokens": 0,
+        "accepted_prediction_tokens": 0,
+        "rejected_prediction_tokens": 0
+      },
+      "num_sources_used": 0,
+      "cost_in_usd_ticks": 130484000
+    },
+    "costUsd": 0.0130484,
+    "costNote": "provider_ticks",
+    "at": 1790215959088,
+    "settledAt": 1790215975949,
+    "elapsedMs": 16862
+  },
+  {
+    "url": "http://localhost:3000/api/proxy",
+    "roleTag": "scene-A",
+    "model": "grok-4-1-fast-reasoning",
+    "status": 200,
+    "networkError": null,
+    "usage": {
+      "prompt_tokens": 61024,
+      "completion_tokens": 3830,
+      "total_tokens": 66162,
+      "prompt_tokens_details": {
+        "text_tokens": 61024,
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "cached_tokens": 192
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 1308,
+        "audio_tokens": 0,
+        "accepted_prediction_tokens": 0,
+        "rejected_prediction_tokens": 0
+      },
+      "num_sources_used": 0,
+      "cost_in_usd_ticks": 889234000
+    },
+    "costUsd": 0.0889234,
+    "costNote": "provider_ticks",
+    "at": 1790215975948,
+    "settledAt": 1790216011696,
+    "elapsedMs": 35748
+  },
+  {
+    "url": "http://localhost:3000/api/mistral-proxy",
+    "roleTag": "scene-A",
+    "model": "ministral-8b-2512",
+    "status": 200,
+    "networkError": null,
+    "usage": {
+      "prompt_tokens": 3124,
+      "total_tokens": 4124,
+      "completion_tokens": 1000,
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      },
+      "service_tier": "standard"
+    },
+    "costUsd": 0.0006186,
+    "costNote": "estimated_from_real_tokens",
+    "at": 1790216011684,
+    "settledAt": 1790216023503,
+    "elapsedMs": 11819
+  }
+]

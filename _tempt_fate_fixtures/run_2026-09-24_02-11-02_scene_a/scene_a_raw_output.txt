@@ -1,0 +1,88 @@
+{
+  "visualState": {
+    "background": "the ritual clearing of crimson spiralgrass under the conjunct moons, gossamer-clad First Favored gathered",
+    "camera": "over_shoulder_pc",
+    "pc_visibility": "back_only",
+    "li_position": "standing_apart",
+    "li_expression": "guarded",
+    "lighting": "neutral_daylight",
+    "pc_wardrobe": "sheer gossamer tunic with ornamented ceremonial sash, mouth-band torn away",
+    "li_wardrobe": "sheer gossamer tunic",
+    "other_characters_present": [
+      {"name": "Seren", "gender": "female", "species": "first_favored", "wardrobe": "gossamer child's tunic blooming to soft luminous white", "position": "kneeling, composed"},
+      {"name": "Julian", "gender": "male", "species": "first_favored", "wardrobe": "sheer gossamer tunic", "position": "standing apart, too still"},
+      {"name": "the presiding Dohkar", "gender": "male", "species": "first_favored", "wardrobe": "sheer gossamer tunic with ceremonial sash", "position": "at the center"}
+    ],
+    "key_props": ["The Answer", "ceremonial sash"],
+    "social_staging_mode": "professional",
+    "sceneDuty": "world_revelation",
+    "attractionPresence": "latent",
+    "expression_arc": {
+      "baseline_family": "suppression",
+      "micro_drift": "guarded-then-cracking",
+      "peak_a_beat": 5,
+      "peak_b_beat": 12,
+      "decay_window": 3
+    }
+  },
+  "phases": [
+    {"phaseIdx": 0, "startBeat": 0, "label": "Invocation", "li_visibility_phase": "shadowed", "characters_present": ["protagonist"], "props_present": ["deck"], "camera_override": "over_shoulder_pc", "li_position_override": null, "li_expression_override": null, "camera_move": "hold", "shot_style": "default", "focus_target": null, "pc_posture": "shoulders forward, hands at sides", "pc_emotional_state": "braced", "other_postures": {}, "proximity": "public"},
+    {"phaseIdx": 1, "startBeat": 3, "label": "Omen", "li_visibility_phase": "partial", "characters_present": ["protagonist", "Seren", "Julian", "the presiding Dohkar"], "props_present": ["The Answer"], "camera_override": "wide_establishing", "li_position_override": null, "li_expression_override": null, "camera_move": "hold", "shot_style": "default", "focus_target": null, "pc_posture": "weight back, arms loose at her sides", "pc_emotional_state": "quiet dread", "other_postures": {"Seren": "kneeling, composed", "Julian": "standing too still", "the presiding Dohkar": "at the center"}, "proximity": "public"},
+    {"phaseIdx": 2, "startBeat": 6, "label": "Effect lands", "li_visibility_phase": "revealed", "characters_present": ["protagonist", "Seren", "Julian", "the presiding Dohkar"], "props_present": ["The Answer"], "camera_override": "medium_two_shot", "li_position_override": null, "li_expression_override": null, "camera_move": "hold", "shot_style": "default", "focus_target": null, "pc_posture": "one hand gripping the doorframe", "pc_emotional_state": "defiant", "other_postures": {"Seren": "kneeling, composed", "Julian": "standing too still", "the presiding Dohkar": "at the center"}, "proximity": "social"},
+    {"phaseIdx": 3, "startBeat": 15, "label": "Choice forms", "li_visibility_phase": "revealed", "characters_present": ["protagonist", "Seren", "Julian", "the presiding Dohkar"], "props_present": ["The Answer"], "camera_override": "close_pc", "li_position_override": null, "li_expression_override": null, "camera_move": "hold", "shot_style": "default", "focus_target": null, "pc_posture": "shoulders forward, hands flat on the table", "pc_emotional_state": "unraveling but holding", "other_postures": {"Seren": "kneeling, composed", "Julian": "standing too still", "the presiding Dohkar": "at the center"}, "proximity": "personal"}
+  ],
+  "panels": [
+    {"panelIdx": 0, "dramaticQuestion": "Will the wish hold?", "shotType": "discovery", "subjects": {"primary": "protagonist", "secondary": null, "background": ["Seren", "Julian", "the presiding Dohkar"]}, "cast": [{"name": "protagonist", "performance": {"pose": "eyes closed then opening", "expression": "braced", "looking_at": "the clearing", "action_tags": ["holding"]}}], "wish": true, "sacrifice": false, "fateAnswer": true}
+  ],
+  "beats": [
+    {"idx": 0, "kind": "narration", "text": "The deck shifts against my hip.", "speaker": null, "tension_state": "composed", "echo_profile": null, "expression_target": "neutral", "expression_intensity": null, "cut_to_closeup": false, "closeup_target": null, "shot_type": null, "impact_burst": false, "metaphor_hint": null, "metaphor_peak": false, "pc_proxy_action": null, "hand_gesture": null, "posture_change": null},
+    {"idx": 1, "kind": "exposition", "text": "If only everyone would forget the ceremony happened.", "speaker": null, "tension_state": "suppressed", "echo_profile": null, "expression_target": "lips_tighten", "expression_intensity": 0.25, "cut_to_closeup": false, "closeup_target": null, "shot_type": null, "impact_burst": false, "metaphor_hint": null, "metaphor_peak": false, "pc_proxy_action": "her hand pressed flat against the deck", "hand_gesture": "on_table", "posture_change": null},
+    {"idx": 2, "kind": "narration", "text": "A card edges forward, the image of reversal clear for one breath.", "speaker": null, "tension_state": "tightening", "echo_profile": null, "expression_target": "jaw_clench", "expression_intensity": 0.35, "cut_to_closeup": true, "closeup_target": "deck", "shot_type": "object", "impact_burst": false, "metaphor_hint": null, "metaphor_peak": false, "pc_proxy_action": null, "hand_gesture": null, "posture_change": null},
+    {"idx": 3, "kind": "narration", "text": "The air stills. Voices falter mid-word.", "speaker": null, "tension_state": "held_breath", "echo_profile": null, "expression_target": "neutral", "expression_intensity": null, "cut_to_closeup": false, "closeup_target": null, "shot_type": null, "impact_burst": false, "metaphor_hint": null, "metaphor_peak": false, "pc_proxy_action": null, "hand_gesture": null, "posture_change": null},
+    {"idx": 4, "kind": "narration", "text": "I open my eyes to blank faces and scattered murmurs.", "speaker": null, "tension_state": "cracking", "echo_profile": null, "expression_target": "mouth_parted", "expression_intensity": 0.65, "cut_to_closeup": false, "closeup_target": null, "shot_type": null, "impact_burst": true, "metaphor_hint": null, "metaphor_peak": false, "pc_proxy_action": "the breath caught and held", "hand_gesture": null, "posture_change": "shoulders_tighten"},
+    {"idx": 5, "kind": "narration", "text": "The presiding Dohkar blinks as if waking.", "speaker": null, "tension_state": "composed", "echo_profile": null, "expression_target": "neutral", "expression_intensity": null, "cut_to_closeup": false, "closeup_target": null, "shot_type": null, "impact_burst": false, "metaphor_hint": null, "metaphor_peak": false, "pc_proxy_action": null, "hand_gesture": null, "posture_change": null},
+    {"idx": 6, "kind": "dialogue", "text": "\"What gathering is this?\"", "speaker": "the presiding Dohkar", "tension_state": "composed", "echo_profile": null, "expression_target": "neutral", "expression_intensity": null, "cut_to_closeup": false, "closeup_target": null, "shot_type": null, "impact_burst": false, "metaphor_hint": null, "metaphor_peak": false, "pc_proxy_action": null, "hand_gesture": null, "posture_change": null},
+    {"idx": 7, "kind": "narration", "text": "Seren remains kneeling, her composure untouched.", "speaker": null, "tension_state": "composed", "echo_profile": null, "expression_target": "neutral", "expression_intensity": null, "cut_to_closeup": false, "closeup_target": null, "shot_type": null, "impact_burst": false, "metaphor_hint": null, "metaphor_peak": false, "pc_proxy_action": null, "hand_gesture": null, "posture_change": null},
+    {"idx": 8, "kind": "dialogue", "text": "\"We were to begin the rite.\"", "speaker": "Seren", "tension_state": "composed", "echo_profile": null, "expression_target": "neutral", "expression_intensity": null, "cut_to_closeup": false, "closeup_target": null, "shot_type": null, "impact_burst": false, "metaphor_hint": null, "metaphor_peak": false, "pc_proxy_action": null, "hand_gesture": null, "posture_change": null},
+    {"idx": 9, "kind": "narration", "text": "Julian has not moved, yet his gaze finds mine across the clearing.", "speaker": null, "tension_state": "suppressed", "echo_profile": null, "expression_target": "lips_tighten", "expression_intensity": 0.25, "cut_to_closeup": false, "closeup_target": null, "shot_type": null, "impact_burst": false, "metaphor_hint": null, "metaphor_peak": false, "pc_proxy_action": null, "hand_gesture": null, "posture_change": null},
+    {"idx": 10, "kind": "dialogue", "text": "\"The question stands.\"", "speaker": "Julian", "tension_state": "tightening", "echo_profile": null, "expression_target": "jaw_clench", "expression_intensity": 0.35, "cut_to_closeup": false, "closeup_target": null, "shot_type": null, "impact_burst": false, "metaphor_hint": null, "metaphor_peak": false, "pc_proxy_action": null, "hand_gesture": null, "posture_change": null},
+    {"idx": 11, "kind": "narration", "text": "No one names the bent wish or the torn band.", "speaker": null, "tension_state": "composed", "echo_profile": null, "expression_target": "neutral", "expression_intensity": null, "cut_to_closeup": false, "closeup_target": null, "shot_type": null, "impact_burst": false, "metaphor_hint": null, "metaphor_peak": false, "pc_proxy_action": null, "hand_gesture": null, "posture_change": null},
+    {"idx": 12, "kind": "narration", "text": "I feel the weight of his gaze even when he looks away.", "speaker": null, "tension_state": "softening", "echo_profile": null, "expression_target": "mouth_soft", "expression_intensity": 0.25, "cut_to_closeup": false, "closeup_target": null, "shot_type": null, "impact_burst": false, "metaphor_hint": null, "metaphor_peak": false, "pc_proxy_action": "her gaze dropped to her hands", "hand_gesture": "in_lap", "posture_change": null},
+    {"idx": 13, "kind": "narration", "text": "The assembly settles into confusion that carries no memory of accusation.", "speaker": null, "tension_state": "composed", "echo_profile": null, "expression_target": "neutral", "expression_intensity": null, "cut_to_closeup": false, "closeup_target": null, "shot_type": null, "impact_burst": false, "metaphor_hint": null, "metaphor_peak": false, "pc_proxy_action": null, "hand_gesture": null, "posture_change": null},
+    {"idx": 14, "kind": "narration", "text": "I could speak now and claim what I did.", "speaker": null, "tension_state": "suppressed", "echo_profile": null, "expression_target": "lips_pressed", "expression_intensity": 0.25, "cut_to_closeup": false, "closeup_target": null, "shot_type": null, "impact_burst": false, "metaphor_hint": null, "metaphor_peak": false, "pc_proxy_action": null, "hand_gesture": null, "posture_change": null},
+    {"idx": 15, "kind": "narration", "text": "Or I could let the forgetting stand and keep my place.", "speaker": null, "tension_state": "tightening", "echo_profile": null, "expression_target": "jaw_set", "expression_intensity": 0.35, "cut_to_closeup": false, "closeup_target": null, "shot_type": null, "impact_burst": false, "metaphor_hint": null, "metaphor_peak": false, "pc_proxy_action": null, "hand_gesture": null, "posture_change": null},
+    {"idx": 16, "kind": "narration", "text": "Julian waits without moving.", "speaker": null, "tension_state": "composed", "echo_profile": null, "expression_target": "neutral", "expression_intensity": null, "cut_to_closeup": false, "closeup_target": null, "shot_type": null, "impact_burst": false, "metaphor_hint": null, "metaphor_peak": false, "pc_proxy_action": null, "hand_gesture": null, "posture_change": null},
+    {"idx": 17, "kind": "narration", "text": "The choice is mine to name or bury.", "speaker": null, "tension_state": "cracking", "echo_profile": null, "expression_target": "mouth_parted", "expression_intensity": 0.65, "cut_to_closeup": false, "closeup_target": null, "shot_type": null, "impact_burst": false, "metaphor_hint": null, "metaphor_peak": false, "pc_proxy_action": null, "hand_gesture": null, "posture_change": null}
+  ],
+  "microDecision": null,
+  "decisionGateBeatIdx": 17,
+  "is_consummate_scene": false,
+  "kink_introduced": null,
+  "pc_kink_response": null,
+  "kink_affinity": null,
+  "kinks_used": [],
+  "primaryEngine": null,
+  "interruption": null,
+  "sceneCharge": {
+    "stake": "whether to claim the interference or let the assembly keep its assumption",
+    "concrete_specific_beat_idx": 14,
+    "subtext_beat_idx": 9,
+    "almost_said_beat_idx": 15,
+    "escalation_rhythm": "invocation lands, memories dissolve, choice forms"
+  },
+  "temptFateOutcome": {
+    "delivered": true,
+    "changed": [{"subject": "the assembly", "whatChanged": "memories of the ceremony and accusation dissolved into blank confusion"}],
+    "durability": [{"aspect": "memory loss", "status": "persists", "note": "no one recalls the bent wish or interrogation"}],
+    "knowledgeStates": [{"character": "the assembly", "state": "unaware", "note": "no recollection of the rite's events"}],
+    "establishedEvidence": ["voices falter, faces blank, no one names the accusation"],
+    "openPossibilities": ["Lirael may still speak or remain silent"],
+    "requestedScope": "everyone forgets the ceremony happened",
+    "deliveredScope": "the assembly forgets the ceremony and its accusations",
+    "scopeMatch": "full",
+    "scopeNote": "",
+    "invalidatedPlans": ["the formal inquiry cannot be justified without memory of the events"],
+    "ruptureClass": "memory_perception",
+    "affectedKnowers": [{"who": "the assembly", "nowKnows": "nothing of the bent wish or interrogation"}]
+  }
+}

@@ -47,9 +47,16 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const OUT_DIR = path.join(__dirname, '_tempt_fate_memory_erasure_live_run_out');
+// UNIQUE, PERMANENT RUN FIXTURE (Roman 2026-09-23). Every run gets its own directory under the
+// committed fixtures tree, named for the moment it started. Previously this wrote to a single
+// transient _tempt_fate_memory_erasure_live_run_out/ that each run cleared — which is exactly how a
+// paid run's raw artifacts were destroyed before being committed. Nothing is ever cleared now, so a
+// later run cannot overwrite an earlier one's evidence.
+const RUN_ID = new Date().toISOString().replace(/[:.]/g, '-').replace('T', '_').slice(0, 19);
+const OUT_DIR = path.join(__dirname, '_tempt_fate_fixtures', 'run_' + RUN_ID + '_scene_a');
+if (fs.existsSync(OUT_DIR)) { console.error('REFUSING TO RUN — fixture directory already exists: ' + OUT_DIR); process.exit(4); }
 fs.mkdirSync(OUT_DIR, { recursive: true });
-const LOG_FILE = path.join(OUT_DIR, 'run_' + Date.now() + '.jsonl');
+const LOG_FILE = path.join(OUT_DIR, 'run_requests.jsonl');
 
 // ── SOURCED RATES — verbatim from public/app.js TEXT_PRICING (~4764-4811). $/token. ──
 const TEXT_PRICING = {
