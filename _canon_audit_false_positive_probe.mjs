@@ -14,7 +14,7 @@ import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const OUT = path.join(__dirname, '_canon_audit_control_out');
-const CORPUS = JSON.parse(fs.readFileSync(path.join(OUT, 'known_good_planner_corpus.json'), 'utf8'));
+const CORPUS = JSON.parse(fs.readFileSync(path.join(__dirname, '_tempt_fate_fixtures', 'known_good_planner_corpus.json'), 'utf8'));
 const DURABLE = JSON.parse(fs.readFileSync(path.join(__dirname, '_tempt_fate_fixtures', 'run_2026-09-24_02-11-02_scene_a', 'outcome_record.json'), 'utf8')).durableConsequences[0];
 
 (async () => {

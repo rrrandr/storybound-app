@@ -1,0 +1,1271 @@
+[
+  {
+    "tactical_move": "force the assembly to witness Lirael’s standing collapse under the literal fulfillment of her words, revealing the institutional cost of her defiance—while Julian’s role as caretaker of the Answer is exposed as a double-edged sword",
+    "posture_read": "The player’s demand to ‘burn’ for the old gods was a calculated provocation—either a desperate plea for divine intervention or a calculated gambit to force the assembly’s hand, and now the words must be taken literally in front of everyone",
+    "local_objective": "Lirael must publicly lose her standing before the assembly as her words are fulfilled, making the cost of her defiance visible to the presiding Dohkar and Julian—while the assembly’s reaction determines whether they assume her guilt or her sacrifice",
+    "local_objective_actor": "Lirael",
+    "present": [
+      "Lirael",
+      "Seren",
+      "Julian",
+      "the presiding Dohkar",
+      "the assembly"
+    ],
+    "reserved": {
+      "price_identified": "untouched",
+      "inquiry_opened": "untouched",
+      "julian_counter_wish": "untouched",
+      "julian_obscuring_wishes": "untouched"
+    },
+    "aftermath": {
+      "twist_manifested": "kept",
+      "interrogation_interrupted": "kept",
+      "the_answer_institutional": "kept",
+      "inquiry_authority_claimed": "kept"
+    },
+    "stage_location": "the assembly’s ceremonial hall, where the First-Favored stand exposed to the assembly’s gaze",
+    "stage_issued_objects": [
+      {
+        "label": "the Answer",
+        "kind": "a sacred object held by Julian, now visibly reacting to Lirael’s standing"
+      }
+    ],
+    "stage_affordances": [
+      "Lirael can step forward to claim the Answer and force Julian to acknowledge her sacrifice",
+      "Lirael can retreat and let Julian take the Answer, implying she surrenders to the institution’s judgment",
+      "Seren can intervene to shield Lirael, but only by revealing her own misalignment with the assembly’s expectations",
+      "The assembly can turn away or gasp, either accepting the literal fulfillment or demanding an explanation"
+    ],
+    "state_change_precondition": "the assembly has not yet seen Lirael’s standing collapse under the literal meaning of her words",
+    "state_change": "the Answer in Julian’s hands begins to glow faintly as Lirael’s words ignite a slow, visible burn at her feet, marking her as the Sacrificiant before the assembly",
+    "forces_choice": "forces Lirael to choose between claiming the Answer as her sacrifice or letting Julian take it as proof of her guilt",
+    "branch_a": "Lirael steps forward and takes the Answer from Julian’s hands, declaring her sacrifice to the assembly—now everyone must witness her standing as lost, but the cost remains uncounted",
+    "branch_b": "Lirael steps back and lets Julian take the Answer, implying she surrenders to the institution’s judgment—now the assembly assumes her guilt, but the literal fulfillment of her words is still visible",
+    "event_slots": {
+      "precondition": "Lirael is present in the scene and the Answer is in Julian’s hands",
+      "actor": "the Answer",
+      "action": "glows faintly and ignites a slow burn at Lirael’s feet",
+      "target": "Lirael’s standing before the assembly",
+      "exit_state": "the assembly now sees Lirael’s standing as irrevocably compromised by the literal fulfillment of her words, and Julian’s role as caretaker of the Answer is exposed as the source of the sacrifice"
+    }
+  },
+  {
+    "tactical_move": "force the assembly to witness Lirael's standing as a First-Favored burn under Julian's authority, revealing the institutional power dynamic and the cost of her defiance",
+    "posture_read": "The reader’s demand for Lirael to be burned as a First-Favored for the old gods is a challenge to Julian’s authority and the assembly’s perception of her standing—it forces the scene to confront the institutional power over Lirael’s body and the visible consequences of her defiance",
+    "local_objective": "Lirael must publicly demonstrate the institutional power over her body by either accepting or rejecting the assembly’s witnessing of her burning under Julian’s authority, making the cost of her standing visible to everyone",
+    "local_objective_actor": "Lirael",
+    "present": [
+      "Lirael",
+      "Seren",
+      "Julian",
+      "the presiding Dohkar",
+      "the assembly"
+    ],
+    "reserved": {
+      "price_identified": "untouched",
+      "inquiry_opened": "untouched",
+      "julian_counter_wish": "untouched",
+      "julian_obscuring_wishes": "untouched"
+    },
+    "aftermath": {
+      "twist_manifested": "kept",
+      "interrogation_interrupted": "kept",
+      "the_answer_institutional": "kept",
+      "inquiry_authority_claimed": "kept"
+    },
+    "stage_location": "the assembly hall’s central dais, where the First-Favored are traditionally burned",
+    "stage_issued_objects": [
+      {
+        "label": "the Answer",
+        "kind": "a sacred object held by Julian"
+      }
+    ],
+    "stage_affordances": [
+      "Lirael can take the Answer from Julian’s hand",
+      "Lirael can refuse to take it and walk away",
+      "Julian can insist she take it as part of the rite",
+      "Seren can intervene or remain silent",
+      "The assembly can watch in silence or react visibly"
+    ],
+    "state_change_precondition": "the assembly has not yet witnessed Lirael’s standing as a First-Favored burn under Julian’s authority",
+    "state_change": "Julian ignites the pyre beneath Lirael’s feet as she holds the Answer, making her standing as a First-Favored burn visible to the assembly",
+    "forces_choice": "forces Lirael to choose between accepting the assembly’s witnessing of her burning or openly claiming the interference was Julian’s doing",
+    "branch_a": "Lirael drops the Answer into the flames and lets the pyre consume her, accepting the assembly’s witnessing of her standing as a First-Favored burn",
+    "branch_b": "Lirael shouts that Julian forced her to take the Answer and the pyre, exposing his interference to the assembly",
+    "event_slots": {
+      "precondition": "Julian is present in the scene with the Answer and Lirael is standing on the pyre",
+      "actor": "Julian",
+      "action": "ignites the pyre",
+      "target": "Lirael (standing on the pyre holding the Answer)",
+      "exit_state": "the assembly now witnesses Lirael’s standing as a First-Favored burn under Julian’s authority, making her defiance and the cost of her standing visible"
+    }
+  },
+  {
+    "tactical_move": "force Lirael to confront the public misalignment of her wish and Julian’s accusation in a way that reveals her standing as both victim and instigator of the twist—making the assembly’s judgment visible and irreversible",
+    "posture_read": "The reader’s demand to ‘burn’ for the old gods is a performative accusation against Julian’s role in the twist, framing his questioning as a violation of her agency—she wants him to suffer the same misalignment she endured, but now as a public spectacle of institutional failure, not personal vengeance.",
+    "local_objective": "Lirael must publicly declare her interference in Seren’s wish—either as a confession of guilt or as a rebuke of Julian’s accusation—before the assembly, forcing the presiding Dohkar to judge her standing in real time and making the cost of her choice visible to everyone present.",
+    "local_objective_actor": "Lirael",
+    "present": [
+      "Lirael",
+      "Seren",
+      "Julian",
+      "the presiding Dohkar",
+      "the assembly"
+    ],
+    "reserved": {
+      "price_identified": "untouched",
+      "inquiry_opened": "untouched",
+      "julian_counter_wish": "untouched",
+      "julian_obscuring_wishes": "untouched"
+    },
+    "aftermath": {
+      "twist_manifested": "kept",
+      "interrogation_interrupted": "kept",
+      "the_answer_institutional": "kept",
+      "inquiry_authority_claimed": "kept"
+    },
+    "stage_location": "the assembly’s public space (the same hall where Seren’s rite occurred)",
+    "stage_issued_objects": [
+      {
+        "label": "the sealed Sacrificiant’s sash (with the mouth-band drawn in)",
+        "kind": "ceremonial sash"
+      }
+    ],
+    "stage_affordances": [
+      "Lirael can speak directly to the assembly, Julian, or the presiding Dohkar",
+      "Lirael can gesture toward Julian or Seren to emphasize her words",
+      "The presiding Dohkar can interrupt or affirm Lirael’s declaration",
+      "The assembly can react with visible alignment-sense discord (e.g., shifting postures, muffled murmurs)"
+    ],
+    "state_change_precondition": "the assembly still assumes Lirael’s silence means she accepts Julian’s accusation without interference",
+    "state_change": "Lirael publicly tears the mouth-band from her sash and declares her interference in Seren’s wish before the assembly",
+    "forces_choice": "forces Lirael to choose between A) confessing her interference as a personal failure and B) framing Julian’s accusation as the true misalignment that twisted the rite",
+    "branch_a": "Lirael confesses: ‘I misaligned Seren’s wish—my words led to the twist. I am guilty.’",
+    "branch_b": "Lirael accuses: ‘Julian’s questioning misaligned the rite—his desire to punish me twisted the outcome. I did not interfere.’",
+    "event_slots": {
+      "precondition": "Lirael is present in the scene with the presiding Dohkar, Julian, Seren, and the assembly, and the sealed Sacrificiant’s sash is drawn in",
+      "actor": "Lirael",
+      "action": "tears the mouth-band from her sash and speaks aloud",
+      "target": "the assembly (and Julian)",
+      "exit_state": "the assembly now witnesses Lirael’s public declaration of either interference or innocence, making her standing as either guilty or wronged visible to the presiding Dohkar and the institution"
+    }
+  },
+  {
+    "tactical_move": "force Lirael to confront the public’s misinterpretation of her wish and the assembly’s witnessing of her misalignment, revealing the truth of her intent to Julian and the assembly—making the words’ literal fulfillment visible and irreversible",
+    "posture_read": "The player’s demand for Julian to ‘burn for me’ as the First-Favored did for the old gods is a posturing of *desire* and *sacrifice*—a challenge to Julian’s authority and a demand for him to *feel* the weight of her wish’s misalignment, while also exposing the assembly’s role in witnessing her misstep. It is a refusal to retreat and a demand for *visibility* of the twist’s consequences—publicly and irrevocably.",
+    "local_objective": "Lirael must make the assembly’s witnessing of her misalignment and the literal fulfillment of Seren’s wish *publicly visible*—forcing Julian to acknowledge the truth of her intent and the assembly to see how the words came true, while also choosing whether to claim the interference openly or let the assembly’s assumption stand.",
+    "local_objective_actor": "Lirael",
+    "present": [
+      "Lirael",
+      "Julian",
+      "the presiding Dohkar",
+      "the assembly"
+    ],
+    "reserved": {
+      "price_identified": "untouched",
+      "inquiry_opened": "untouched",
+      "julian_counter_wish": "untouched",
+      "julian_obscuring_wishes": "untouched"
+    },
+    "aftermath": {
+      "twist_manifested": "kept",
+      "interrogation_interrupted": "kept",
+      "the_answer_institutional": "kept",
+      "inquiry_authority_claimed": "kept"
+    },
+    "stage_location": "the open space of the First Sacrifice assembly",
+    "stage_issued_objects": [
+      {
+        "label": "The Answer",
+        "kind": "ceremonial artifact"
+      },
+      {
+        "label": "Lirael’s torn mouth-band",
+        "kind": "ceremonial cloth"
+      }
+    ],
+    "stage_affordances": [
+      "Lirael can speak directly to Julian, the Dohkar, or the assembly",
+      "Lirael can gesture toward The Answer or her torn mouth-band",
+      "Julian can respond to Lirael’s words with a visible reaction (e.g., a shift in his posture, a gesture toward The Answer, or a change in his voice)",
+      "The assembly can react to Lirael’s words with visible signs of misalignment-sensing (e.g., turning to look at Julian, shifting their gaze, or murmuring)"
+    ],
+    "state_change_precondition": "the assembly has not yet seen the literal fulfillment of Seren’s wish or the truth of Lirael’s intent",
+    "state_change": "Lirael points to Julian and declares ‘this is the one I lost’ as the assembly’s gaze shifts to him, revealing the wish’s literal fulfillment and the truth of her misalignment",
+    "forces_choice": "forces Lirael to choose between claiming the interference openly or letting the assembly’s assumption of her misconduct stand",
+    "branch_a": "Lirael openly claims the interference, naming the truth of her wish and the assembly’s witnessing of her misalignment",
+    "branch_b": "Lirael lets the assembly’s assumption stand, refusing to name the truth of her wish or the assembly’s role in witnessing it",
+    "event_slots": {
+      "precondition": "Julian is present in the scene and Lirael holds The Answer",
+      "actor": "Lirael",
+      "action": "declares",
+      "target": "Julian",
+      "exit_state": "the assembly now sees the literal fulfillment of Seren’s wish and the truth of Lirael’s intent, making her misalignment and the words’ consequences visible"
+    }
+  },
+  {
+    "tactical_move": "Escalate Lirael's counter to Julian's interrogation into a public claim of mutual desire, forcing the assembly to witness the attraction as interference evidence.",
+    "state_change_precondition": "Lirael has not yet voiced her desire for Julian before the assembly.",
+    "state_change": "Lirael declares she wants Julian to burn for her and his posture answers visibly to the assembly.",
+    "forces_choice": "forces Lirael to choose between claiming the interference openly or letting the assembly keep its assumption",
+    "branch_a": "Claim openly that her desirability shaped Seren's wish",
+    "branch_b": "Remain silent on the interference and let the Dohkar's charge stand unchallenged",
+    "posture_read": "The reader is confronting Julian provocatively with her desire rather than retreating or denying the attraction.",
+    "local_objective": "Lirael speaks her provocative want aloud to Julian so the assembly sees his visible response and the interference claim becomes concrete.",
+    "local_objective_actor": "Lirael",
+    "present": [
+      "Lirael",
+      "Seren",
+      "Julian",
+      "the presiding Dohkar",
+      "the assembly"
+    ],
+    "reserved": {
+      "price_identified": "untouched",
+      "inquiry_opened": "untouched",
+      "julian_counter_wish": "untouched",
+      "julian_obscuring_wishes": "untouched"
+    },
+    "aftermath": {
+      "twist_manifested": "kept",
+      "interrogation_interrupted": "kept",
+      "the_answer_institutional": "kept",
+      "inquiry_authority_claimed": "kept"
+    },
+    "stage_location": "the rite chamber before the assembly",
+    "stage_issued_objects": [],
+    "stage_affordances": [
+      "Lirael meets Julian's eyes across the space",
+      "the assembly watches both"
+    ],
+    "event_slots": {
+      "precondition": "Lirael and Julian are both present before the assembly",
+      "actor": "Lirael",
+      "action": "declares her desire for Julian to burn for her",
+      "target": "Julian",
+      "exit_state": "the assembly has witnessed Lirael's spoken want and Julian's visible response to it"
+    }
+  },
+  {
+    "tactical_move": "Convert the Dohkar's charge into visible institutional pressure by surfacing the assembly's assumption that Lirael interfered, forcing her to own or disclaim it before any formal inquiry opens.",
+    "state_change_precondition": "No one has yet named Lirael aloud as the one who shaped Seren's wish.",
+    "state_change": "The presiding Dohkar turns to the assembly and asks who among them saw Lirael twist the rite for her own gain.",
+    "forces_choice": "forces Lirael to choose between claiming the interference openly and letting the assembly keep its assumption",
+    "branch_a": "claim the interference openly before the assembly",
+    "branch_b": "remain silent and let the assumption stand unchallenged",
+    "posture_read": "Lirael meets Julian's accusation with defiant seduction, refusing retreat while naming her desire for him to burn.",
+    "local_objective": "Have the presiding Dohkar publicly surface the interference assumption so the assembly's judgment becomes the immediate pressure on Lirael's standing.",
+    "local_objective_actor": "the presiding Dohkar",
+    "present": [
+      "Lirael",
+      "Seren",
+      "Julian",
+      "the presiding Dohkar",
+      "the assembly"
+    ],
+    "reserved": {},
+    "aftermath": {
+      "twist_manifested": "kept",
+      "interrogation_interrupted": "kept",
+      "the_answer_institutional": "kept",
+      "inquiry_authority_claimed": "kept"
+    },
+    "scene_function_instantiated": "Institutional pressure through preliminary public accusation and assembly judgment on the Sacrificiant's conduct.",
+    "aftermath_obligations": "The assembly now treats Lirael as the presumed interferer; her Dohkar qualification is visibly at risk in front of Seren's family and peers, with no ruling yet issued.",
+    "stage_location": "the rite chamber before the assembly",
+    "stage_issued_objects": [],
+    "stage_affordances": [],
+    "event_slots": {
+      "precondition": "the presiding Dohkar and the assembly are present",
+      "actor": "the presiding Dohkar",
+      "action": "asks the assembly who saw Lirael twist the rite",
+      "target": "Lirael",
+      "exit_state": "the assembly now treats Lirael as the presumed interferer"
+    }
+  },
+  {
+    "tactical_move": "forcing Lirael to publicly surface the source of the misalignment before the assembly to convert accusation into visible standing risk",
+    "state_change_precondition": "Lirael has not yet spoken the source of the wish's misalignment before the assembly.",
+    "state_change": "Lirael declares her desire for Julian before the assembly.",
+    "forces_choice": "forces Lirael to choose between claiming the interference openly or letting the assembly keep its assumption",
+    "branch_a": "claim the interference openly by naming her own alignment as the cause",
+    "branch_b": "let the assembly keep its assumption that the Dohkar's charge already covers an unnamed interferer",
+    "posture_read": "Lirael meets Julian's accusation with defiant seduction, refusing retreat and demanding he own his hunger in public.",
+    "local_objective": "Lirael speaks her desire for Julian aloud to the assembly, making the misalignment's source visible and shifting the Dohkar's charge into concrete professional jeopardy.",
+    "local_objective_actor": "Lirael",
+    "present": [
+      "Lirael",
+      "Seren",
+      "Julian",
+      "the presiding Dohkar",
+      "the assembly"
+    ],
+    "reserved": {},
+    "aftermath": {
+      "twist_manifested": "kept",
+      "interrogation_interrupted": "kept",
+      "the_answer_institutional": "kept",
+      "inquiry_authority_claimed": "kept"
+    },
+    "scene_function_instantiated": "institutional pressure via public alignment declaration that converts the Dohkar's charge into visible standing risk before any formal inquiry",
+    "aftermath_obligations": "The assembly now holds visible evidence of Lirael's alignment; the presiding Dohkar's review gains a concrete target while Julian's authority claim remains unexercised.",
+    "stage_location": "the rite chamber before the assembly",
+    "stage_issued_objects": [],
+    "stage_affordances": [
+      "Lirael speaks directly to Julian across the space",
+      "the assembly turns as one to watch her"
+    ],
+    "event_slots": {
+      "precondition": "Julian and the presiding Dohkar are present in the scene with the assembly.",
+      "actor": "Lirael",
+      "action": "declares her desire for Julian aloud",
+      "target": "Julian",
+      "exit_state": "the assembly now holds visible evidence that Lirael's alignment caused the misalignment"
+    }
+  },
+  {
+    "tactical_move": "convert the Dohkar's authority claim into visible procedural pressure that makes the wish's literal words externally true through Julian's public action",
+    "state_change_precondition": "No one has yet publicly identified Lirael as the one Seren's wish sought to find.",
+    "state_change": "Julian crosses the circle and stands before Lirael, naming himself the one she lost.",
+    "forces_choice": "forces Lirael to choose between claiming she shaped the wish or letting the assembly keep its assumption",
+    "branch_a": "claim openly that she shaped Seren's wish to draw Julian",
+    "branch_b": "deny any interference and demand the Dohkar rule on the charge",
+    "posture_read": "Lirael meets Julian's accusation with defiant seduction, refusing retreat and turning the hunger back on him before the assembly.",
+    "local_objective": "Julian publicly claims the role of the one Lirael lost, making the wish's words visibly true and exposing her standing to immediate procedural risk.",
+    "local_objective_actor": "Julian",
+    "present": [
+      "Lirael",
+      "Seren",
+      "Julian",
+      "the presiding Dohkar",
+      "the assembly"
+    ],
+    "reserved": {
+      "price_identified": "untouched",
+      "inquiry_opened": "untouched",
+      "julian_counter_wish": "untouched",
+      "julian_obscuring_wishes": "untouched"
+    },
+    "aftermath": {
+      "twist_manifested": "kept",
+      "interrogation_interrupted": "kept",
+      "the_answer_institutional": "kept",
+      "inquiry_authority_claimed": "kept"
+    },
+    "scene_function_instantiated": "institutional pressure via the Dohkar's public assertion of authority over the ruling and the visible social fallout of Julian's claim on Lirael",
+    "aftermath_obligations": "The presiding Dohkar must now address Julian's claim as part of the conduct ruling; Lirael's standing is visibly at risk before the assembly with the cost of the wish still unnamed.",
+    "stage_location": "the ceremonial circle after the rite",
+    "stage_issued_objects": [],
+    "stage_affordances": [
+      "Lirael can step toward Julian or the Dohkar",
+      "the assembly can shift attention between them"
+    ],
+    "event_slots": {
+      "precondition": "Julian and the presiding Dohkar are present in the scene",
+      "actor": "Julian",
+      "action": "crosses the circle and stands before Lirael",
+      "target": "Lirael",
+      "exit_state": "Julian has publicly named himself the one Lirael lost"
+    }
+  },
+  {
+    "tactical_move": "Advance the institutional pressure by forcing Lirael into an immediate public defense that makes her stance on the interference charge visible to the assembly",
+    "state_change_precondition": "Lirael has not yet declared whether she claims or denies interfering in the rite",
+    "state_change": "The presiding Dohkar turns to Lirael and demands she state before the assembly whether she shaped Seren's wish",
+    "forces_choice": "forces Lirael to choose between claiming the interference openly and letting the assembly keep its assumption",
+    "branch_a": "claim the interference openly by naming Julian's interrogation as the true interference",
+    "branch_b": "let the assembly keep its assumption by remaining silent on who shaped the wish",
+    "posture_read": "The reader's defiant posture and direct address to Julian signal she intends to confront rather than retreat or submit to the charge",
+    "local_objective": "Lirael publicly counters the Dohkar's charge by turning scrutiny onto Julian's interrogation before the assembly",
+    "local_objective_actor": "Lirael",
+    "present": [
+      "Lirael",
+      "Seren",
+      "Julian",
+      "the presiding Dohkar",
+      "the assembly"
+    ],
+    "reserved": {
+      "price_identified": "untouched",
+      "inquiry_opened": "untouched",
+      "julian_counter_wish": "untouched",
+      "julian_obscuring_wishes": "untouched"
+    },
+    "aftermath": {
+      "twist_manifested": "kept",
+      "interrogation_interrupted": "kept",
+      "the_answer_institutional": "kept",
+      "inquiry_authority_claimed": "kept"
+    },
+    "scene_function_instantiated": "Lirael initiates a defensive path by publicly challenging the assumption of her interference",
+    "aftermath_obligations": "The assembly now weighs Lirael's counter-claim against Julian, visibly shifting her standing and leaving the Dohkar to decide next procedural steps",
+    "chosen_aftermath_lane": "lirael_defensive_path",
+    "lane_posture_modulation": "Her defiant confrontation with Julian raises the stakes so the Dohkar's demand for her statement becomes a direct response to her challenge rather than neutral procedure",
+    "event_slots": {
+      "precondition": "Julian and the presiding Dohkar are present in the scene",
+      "actor": "the presiding Dohkar",
+      "action": "demands Lirael declare whether she interfered",
+      "target": "Lirael",
+      "exit_state": "the assembly now awaits Lirael's public answer on whether she claims interference"
+    },
+    "stage_location": "the rite chamber before the assembly",
+    "stage_issued_objects": [],
+    "stage_affordances": [
+      "Lirael meets Julian's eyes while answering",
+      "Seren watches from her place",
+      "the assembly shifts attention between Lirael and Julian"
+    ]
+  },
+  {
+    "tactical_move": "provokes family intervention by owning desire publicly",
+    "state_change_precondition": "Seren's family has not yet stepped forward from the assembly.",
+    "state_change": "Seren's family steps out of the assembly and publicly demands remedy for what the wish cost Seren.",
+    "forces_choice": "forces Lirael to choose between claiming the interference openly and letting the assembly keep its assumption",
+    "branch_a": "claim the interference openly",
+    "branch_b": "let the assembly keep its assumption",
+    "posture_read": "Lirael's defiant dialogue owns her desire and turns Julian's accusation back on him without retreat.",
+    "local_objective": "Lirael's open want draws Seren's family forward to issue a public demand for remedy.",
+    "local_objective_actor": "Lirael",
+    "present": [
+      "Lirael",
+      "Seren",
+      "Julian",
+      "the presiding Dohkar",
+      "the assembly"
+    ],
+    "reserved": {
+      "price_identified": "untouched",
+      "inquiry_opened": "untouched",
+      "julian_counter_wish": "untouched",
+      "julian_obscuring_wishes": "untouched"
+    },
+    "aftermath": {
+      "twist_manifested": "kept",
+      "interrogation_interrupted": "kept",
+      "the_answer_institutional": "kept",
+      "inquiry_authority_claimed": "kept"
+    },
+    "scene_function_instantiated": "family_accusation through public demand for remedy shifting confrontation",
+    "aftermath_obligations": "Seren's family complaint places Lirael's standing under immediate procedural pressure before the assembly; the Dohkar must now address the new formal demand.",
+    "chosen_aftermath_lane": "family_accusation",
+    "lane_posture_modulation": "Lirael's provocative ownership of desire draws the family forward aggressively, heightening risk to her standing by making her want the visible trigger.",
+    "stage_location": "the rite space before the assembly",
+    "event_slots": {
+      "precondition": "Lirael is present and has spoken her want openly",
+      "actor": "Seren's family",
+      "action": "step forward and demand remedy",
+      "target": "Lirael",
+      "exit_state": "Seren's family has publicly demanded remedy for the wish"
+    }
+  },
+  {
+    "tactical_move": "shift accusation from Julian's interrogation to family formal complaint via Lirael's defiant posture",
+    "state_change_precondition": "Seren's family has not yet stepped forward from the assembly to demand remedy.",
+    "state_change": "Seren's family steps out of the assembly and publicly demands remedy for what the wish cost Seren.",
+    "forces_choice": "forces Lirael to choose between claiming the interference openly or letting the assembly keep its assumption",
+    "branch_a": "claim openly that she shaped the wish for Seren's benefit",
+    "branch_b": "remain silent and let the family complaint stand without her admission",
+    "posture_read": "The reader meets Julian's gaze without retreat and turns his accusation into an open declaration of mutual desire.",
+    "local_objective": "Land Seren's family stepping forward to issue a public demand for remedy against Lirael in the assembly hall.",
+    "local_objective_actor": "Seren's family",
+    "present": [
+      "Lirael",
+      "Seren",
+      "Julian",
+      "the presiding Dohkar",
+      "the assembly"
+    ],
+    "reserved": {
+      "price_identified": "untouched",
+      "inquiry_opened": "untouched",
+      "julian_counter_wish": "untouched",
+      "julian_obscuring_wishes": "untouched"
+    },
+    "aftermath": {
+      "twist_manifested": "kept",
+      "interrogation_interrupted": "kept",
+      "the_answer_institutional": "kept",
+      "inquiry_authority_claimed": "kept"
+    },
+    "scene_function_instantiated": "institutional pressure through family accusation and new formal complaint",
+    "aftermath_obligations": "Seren's family complaint places Lirael's Dohkar qualification under immediate public review by the assembly; the presiding Dohkar must now address both the original charge and this new demand before any inquiry convenes.",
+    "chosen_aftermath_lane": "family_accusation",
+    "lane_posture_modulation": "Her unretreating, defiant claim of desire provokes the family to act as the visible source of pressure rather than Julian.",
+    "stage_location": "the assembly hall after the rite",
+    "stage_issued_objects": [],
+    "stage_affordances": [
+      "Lirael can address the family directly",
+      "Lirael can turn back to Julian"
+    ],
+    "event_slots": {
+      "precondition": "Seren's family is present in the assembly.",
+      "actor": "Seren's family",
+      "action": "step forward and publicly demand remedy",
+      "target": "Lirael",
+      "exit_state": "Seren's family has publicly demanded remedy for the wish's cost to Seren"
+    }
+  },
+  {
+    "tactical_move": "Shift the accusation from Julian's personal interrogation to the family's public demand for remedy, making Lirael's standing visibly at risk through institutional pressure and social fallout.",
+    "state_change_precondition": "Seren's family has not yet stepped forward from the assembly to demand remedy.",
+    "state_change": "Seren's family steps out of the assembly and publicly demands remedy for what the wish cost Seren.",
+    "forces_choice": "forces Lirael to choose between claiming the interference openly or letting the assembly keep its assumption",
+    "branch_a": "Claim openly that she shaped the wish for her own benefit.",
+    "branch_b": "Remain silent and let the family's demand stand without her admission.",
+    "posture_read": "The reader's defiant declaration reframes Julian's accusation as mutual desire, holding ground without retreat while inviting escalation.",
+    "local_objective": "Have Seren's family step forward from the assembly to publicly demand remedy for the wish's cost to Seren, triggered by Lirael's unretreating stance.",
+    "local_objective_actor": "the assembly",
+    "present": [
+      "Lirael",
+      "Seren",
+      "Julian",
+      "the presiding Dohkar",
+      "the assembly"
+    ],
+    "reserved": {
+      "price_identified": "untouched",
+      "inquiry_opened": "untouched",
+      "julian_counter_wish": "untouched",
+      "julian_obscuring_wishes": "untouched"
+    },
+    "aftermath": {
+      "twist_manifested": "kept",
+      "interrogation_interrupted": "kept",
+      "the_answer_institutional": "kept",
+      "inquiry_authority_claimed": "kept"
+    },
+    "scene_function_instantiated": "landing the family accusation as institutional pressure and social fallout from the bent wish.",
+    "aftermath_obligations": "The family's demand creates a new formal complaint that must be addressed before any inquiry proceeds, visibly shifting focus to Seren's loss and Lirael's accountability in the eyes of the assembly.",
+    "chosen_aftermath_lane": "family_accusation",
+    "lane_posture_modulation": "Her provocative stance toward Julian provokes the family to intervene directly, heightening the risk to her standing by making her desire visible as the cause of Seren's misalignment.",
+    "stage_location": "the site of Seren's First Sacrifice",
+    "event_slots": {
+      "precondition": "Lirael, Seren, Julian, the presiding Dohkar and the assembly are present",
+      "actor": "Seren's family",
+      "action": "step forward and demand remedy",
+      "target": "Lirael",
+      "exit_state": "Seren's family has publicly demanded remedy for the wish's cost to Seren"
+    }
+  },
+  {
+    "tactical_move": "redirect confrontation from Julian's accusation to family demand for remedy",
+    "state_change_precondition": "Seren's family has not yet stepped forward from the assembly to demand remedy.",
+    "state_change": "Seren's family steps out of the assembly and publicly demands remedy for the wish's cost to Seren.",
+    "forces_choice": "forces Lirael to choose between claiming the interference openly and letting the assembly keep its assumption",
+    "branch_a": "claim the interference openly before the assembly",
+    "branch_b": "let the assembly keep its assumption that she shaped the wish",
+    "posture_read": "Her defiant, burning declaration refuses retreat and turns the accusation into an open challenge of desire.",
+    "local_objective": "Lirael speaks her burning want aloud in the rite space, drawing Seren's family forward to voice their complaint.",
+    "local_objective_actor": "Lirael",
+    "present": [
+      "Lirael",
+      "Seren",
+      "Julian",
+      "the presiding Dohkar",
+      "the assembly"
+    ],
+    "reserved": {
+      "price_identified": "untouched",
+      "inquiry_opened": "untouched",
+      "julian_counter_wish": "untouched",
+      "julian_obscuring_wishes": "untouched"
+    },
+    "aftermath": {
+      "twist_manifested": "kept",
+      "interrogation_interrupted": "kept",
+      "the_answer_institutional": "kept",
+      "inquiry_authority_claimed": "kept"
+    },
+    "scene_function_instantiated": "family_accusation lane: Seren's family publicly demands remedy, shifting pressure from Julian's interrogation to a new formal complaint against Lirael.",
+    "aftermath_obligations": "Seren's family complaint now stands as a visible institutional pressure on Lirael's standing; the Dohkar must address the new demand before any ruling on interference.",
+    "chosen_aftermath_lane": "family_accusation",
+    "lane_posture_modulation": "Her burning, unretreating declaration makes the family accusation land as a direct response to her open want rather than Julian's flirtation, raising the risk that her desire itself becomes the cited harm.",
+    "pressure_source": "Seren's family",
+    "event_slots": {
+      "precondition": "Lirael, Seren, Julian, the presiding Dohkar and the assembly are all present in the rite space.",
+      "actor": "Seren's family",
+      "action": "step forward from the assembly and publicly demand remedy",
+      "target": "Lirael",
+      "exit_state": "Seren's family has publicly demanded remedy for the wish's cost to Seren"
+    }
+  },
+  {
+    "tactical_move": "Julian publicly seizes jurisdiction over the accusation, reframing it as his to answer rather than the Dohkar's, advancing the institutional pressure lane while Lirael's defiant posture forces the assembly to witness the contest.",
+    "state_change_precondition": "Julian has not yet challenged the presiding Dohkar's authority over the ruling on Lirael's conduct.",
+    "state_change": "Julian steps between Lirael and the Dohkar and declares the accusation his to answer as Provast.",
+    "forces_choice": "forces Lirael to choose between claiming the interference openly and letting the assembly keep its assumption",
+    "branch_a": "claim the interference openly before the assembly",
+    "branch_b": "let the assembly keep its assumption that she shaped the wish",
+    "posture_read": "Lirael meets Julian's gaze without retreat, folding her hands and demanding he name why her touch feels like a curse, turning his accusation back on him as she stands accused.",
+    "local_objective": "Julian seizes control of the ruling by publicly challenging the Dohkar's jurisdiction over Lirael's conduct before the assembly.",
+    "local_objective_actor": "Julian",
+    "present": [
+      "Lirael",
+      "Seren",
+      "Julian",
+      "the presiding Dohkar",
+      "the assembly"
+    ],
+    "reserved": {
+      "price_identified": "untouched",
+      "inquiry_opened": "untouched",
+      "julian_counter_wish": "untouched",
+      "julian_obscuring_wishes": "untouched"
+    },
+    "aftermath": {
+      "twist_manifested": "kept",
+      "interrogation_interrupted": "kept",
+      "the_answer_institutional": "kept",
+      "inquiry_authority_claimed": "kept"
+    },
+    "scene_function_instantiated": "Julian's jurisdictional challenge moves the accusation into institutional review pressure, placing Lirael's standing visibly at risk under competing authorities.",
+    "aftermath_obligations": "The assembly now sees two authorities contesting the right to judge Lirael; her Dohkar qualification remains in jeopardy while the cost of Seren's wish stays unnamed.",
+    "chosen_aftermath_lane": "julian_jurisdiction_challenge",
+    "lane_posture_modulation": "Lirael's defiant counter-question forces Julian to answer her directly while claiming jurisdiction, raising the risk that her refusal to retreat will make the contest more public and damaging to her standing.",
+    "event_slots": {
+      "precondition": "Julian and the presiding Dohkar are both present before the assembly",
+      "actor": "Julian",
+      "action": "publicly declares the accusation his to answer",
+      "target": "the presiding Dohkar",
+      "exit_state": "Julian now claims authority to rule on Lirael's conduct instead of the Dohkar"
+    },
+    "stage_location": "the rite chamber before the assembly",
+    "stage_issued_objects": [],
+    "stage_affordances": [
+      "Lirael can step forward and speak",
+      "Julian can address the Dohkar directly",
+      "the assembly can turn to watch the contest"
+    ]
+  },
+  {
+    "tactical_move": "Julian publicly seizes jurisdiction over the accusation, reframing it as his institutional matter rather than the Dohkar's rite-ruling",
+    "state_change_precondition": "Julian has not yet challenged the Dohkar's authority to rule on Lirael's conduct",
+    "state_change": "Julian steps between Lirael and the presiding Dohkar and declares the accusation his to answer as Provast",
+    "forces_choice": "forces Lirael to choose between claiming the interference openly or letting the assembly keep its assumption",
+    "branch_a": "claim openly that she shaped the wish for Seren's sake alone",
+    "branch_b": "remain silent and let the assembly assume she interfered for her own gain",
+    "posture_read": "Lirael's defiant question turns Julian's prior accusation back on him, demanding he account for the personal hunger he named",
+    "local_objective": "Julian seizes control of the ruling by publicly challenging the Dohkar's jurisdiction over Lirael's conduct before the assembly",
+    "local_objective_actor": "Julian",
+    "present": [
+      "Lirael",
+      "Seren",
+      "Julian",
+      "the presiding Dohkar",
+      "the assembly"
+    ],
+    "reserved": {
+      "price_identified": "untouched",
+      "inquiry_opened": "untouched",
+      "julian_counter_wish": "untouched",
+      "julian_obscuring_wishes": "untouched"
+    },
+    "aftermath": {
+      "twist_manifested": "kept",
+      "interrogation_interrupted": "kept",
+      "the_answer_institutional": "kept",
+      "inquiry_authority_claimed": "kept"
+    },
+    "scene_function_instantiated": "lands the institutional jurisdictional contest and preliminary procedural pressure on Lirael's standing",
+    "aftermath_obligations": "Julian's claim visibly shifts authority away from the Dohkar; the assembly now treats the accusation as the Provast's matter, leaving Lirael's Dohkar qualification under new institutional scrutiny",
+    "chosen_aftermath_lane": "julian_jurisdiction_challenge",
+    "lane_posture_modulation": "Lirael's defiant posture forces Julian to answer her challenge while seizing jurisdiction, risking that his personal hunger is now visible to the assembly",
+    "event_slots": {
+      "precondition": "Julian and the presiding Dohkar are both present before the assembly",
+      "actor": "Julian",
+      "action": "publicly challenges jurisdiction over the accusation",
+      "target": "the presiding Dohkar",
+      "exit_state": "Julian now holds authority to rule on Lirael's conduct"
+    }
+  },
+  {
+    "tactical_move": "advance lirael_defensive_path by staging Lirael's first internal weighing of concealment under assembly pressure",
+    "state_change_precondition": "Lirael has not yet weighed correcting the Dohkar's accusation",
+    "state_change": "Lirael opens her mouth to name the true reason then closes it",
+    "forces_choice": "forces Lirael to choose between claiming the interference openly and letting the assembly keep its assumption",
+    "branch_a": "claim the interference openly before the assembly",
+    "branch_b": "let the assembly keep its assumption unchallenged",
+    "posture_read": "The reader adopts seductive defiance, turning Julian's accusation back on him while refusing retreat.",
+    "local_objective": "Lirael catches herself weighing whether to let Julian's version stand rather than name what happened",
+    "local_objective_actor": "Lirael",
+    "present": [
+      "Lirael",
+      "Seren",
+      "Julian",
+      "the presiding Dohkar",
+      "the assembly"
+    ],
+    "reserved": {
+      "price_identified": "untouched",
+      "inquiry_opened": "untouched",
+      "julian_counter_wish": "untouched",
+      "julian_obscuring_wishes": "untouched"
+    },
+    "aftermath": {
+      "twist_manifested": "kept",
+      "interrogation_interrupted": "kept",
+      "the_answer_institutional": "kept",
+      "inquiry_authority_claimed": "kept"
+    },
+    "scene_function_instantiated": "institutional pressure via Dohkar's charge and Julian's authority claim creates social fallout that tempts Lirael toward defensive concealment",
+    "aftermath_obligations": "The assembly's gaze shifts between Lirael and Julian, visibly eroding her standing as a future Dohkar; the presiding Dohkar waits for her response while Julian watches for any sign she will challenge him.",
+    "chosen_aftermath_lane": "lirael_defensive_path",
+    "lane_posture_modulation": "Her seductive defiance sharpens the temptation, making concealment feel like a counter-move that reclaims power from Julian's accusation rather than retreat.",
+    "stage_location": "the rite circle before the assembly",
+    "event_slots": {
+      "precondition": "Lirael, Julian, the presiding Dohkar and the assembly are all present",
+      "actor": "Lirael",
+      "action": "begins to correct the accusation then stops",
+      "target": "the presiding Dohkar",
+      "exit_state": "Lirael has weighed whether to let the accusation stand unchallenged"
+    }
+  },
+  {
+    "tactical_move": "Lirael executes a concrete defensive concealment during the Dohkar's preliminary pressure, shifting her tactical position before the assembly",
+    "state_change_precondition": "Lirael has not yet hidden her reason for the wish from the Dohkar or assembly",
+    "state_change": "Lirael folds the torn mouth-band into her sash without naming what she lost",
+    "forces_choice": "forces Lirael to choose between claiming the interference openly and letting the assembly keep its assumption",
+    "branch_a": "claim the interference openly before the Dohkar rules",
+    "branch_b": "let the assembly keep its assumption that she shaped the wish",
+    "posture_read": "The reader's defiant seductive posture meets Julian's gaze while refusing retreat, carrying that tension into institutional pressure",
+    "local_objective": "Lirael performs the concrete defensive act of concealing her personal stake in the wish from the Dohkar and assembly",
+    "local_objective_actor": "Lirael",
+    "present": [
+      "Lirael",
+      "Seren",
+      "Julian",
+      "the presiding Dohkar",
+      "the assembly"
+    ],
+    "reserved": {
+      "price_identified": "untouched",
+      "inquiry_opened": "untouched",
+      "julian_counter_wish": "untouched",
+      "julian_obscuring_wishes": "untouched"
+    },
+    "aftermath": {
+      "twist_manifested": "kept",
+      "interrogation_interrupted": "kept",
+      "the_answer_institutional": "kept",
+      "inquiry_authority_claimed": "kept"
+    },
+    "scene_function_instantiated": "preliminary institutional review with social fallout as Lirael takes a defensive action under pressure",
+    "aftermath_obligations": "The Dohkar's charge now carries visible procedural weight with Lirael's standing visibly at risk; the assembly's attention shifts to her silence on the wish's personal meaning",
+    "chosen_aftermath_lane": "lirael_defensive_path",
+    "lane_posture_modulation": "The reader's defiant posture makes Lirael conceal under direct challenge from Julian while the Dohkar watches, raising the risk of immediate judgment",
+    "event_slots": {
+      "precondition": "Lirael, the presiding Dohkar, Julian and the assembly are all present",
+      "actor": "Lirael",
+      "action": "folds the torn mouth-band into her sash",
+      "target": "the mouth-band",
+      "exit_state": "Lirael has concealed her reason for the wish from the Dohkar and assembly"
+    },
+    "stage_location": "the rite chamber before the assembly",
+    "stage_issued_objects": [],
+    "stage_affordances": [
+      "Lirael folds the mouth-band without explanation",
+      "the Dohkar observes her silence",
+      "Julian watches her hands"
+    ]
+  },
+  {
+    "tactical_move": "Lirael lands a concrete defensive concealment that shifts the assembly's information and forces her to decide whether to claim interference or let the assumption stand",
+    "state_change_precondition": "Lirael has not yet given the assembly any account of why the wish mattered to her",
+    "state_change": "Lirael tells the assembly the wish tested her alignment only",
+    "forces_choice": "forces Lirael to choose between claiming the interference openly and letting the assembly keep its assumption",
+    "branch_a": "claim the interference openly before the Dohkar rules",
+    "branch_b": "let the assembly keep its assumption and answer only the alignment question",
+    "posture_read": "The reader is posturing defiant seduction and evasion, turning Julian's accusation back on him while refusing retreat or shame",
+    "local_objective": "Lirael speaks a false account of the wish to the assembly, concealing its personal meaning from the Dohkar and everyone present",
+    "local_objective_actor": "Lirael",
+    "present": [
+      "Lirael",
+      "Seren",
+      "Julian",
+      "the presiding Dohkar",
+      "the assembly"
+    ],
+    "reserved": {
+      "price_identified": "untouched",
+      "inquiry_opened": "untouched",
+      "julian_counter_wish": "untouched",
+      "julian_obscuring_wishes": "untouched"
+    },
+    "aftermath": {
+      "twist_manifested": "kept",
+      "interrogation_interrupted": "kept",
+      "the_answer_institutional": "kept",
+      "inquiry_authority_claimed": "kept"
+    },
+    "scene_function_instantiated": "Lirael executes a landed defensive concealment under the Dohkar's preliminary review pressure, moving her standing visibly at risk",
+    "aftermath_obligations": "The Dohkar now weighs Lirael's false account against the bent wish; Seren's family visibly withdraws support; Julian watches the deflection without intervening",
+    "chosen_aftermath_lane": "lirael_defensive_path",
+    "lane_posture_modulation": "Her defiant seduction of Julian sharpens the concealment into a public counter-accusation that risks exposing her attraction while protecting the true reason for the wish",
+    "event_slots": {
+      "precondition": "Lirael and the assembly are both present",
+      "actor": "Lirael",
+      "action": "gives a false public account",
+      "target": "the assembly",
+      "exit_state": "the assembly now believes the wish was only an alignment test"
+    },
+    "stage_location": "the rite circle before the assembly",
+    "stage_issued_objects": [],
+    "stage_affordances": [
+      "address the Dohkar directly",
+      "meet Julian's eyes while speaking",
+      "keep The Answer visible in her hands"
+    ]
+  },
+  {
+    "tactical_move": "Lirael executes a concrete defensive concealment under the Dohkar's charge and Julian's accusation to alter what the assembly can later prove about her stake in the wish",
+    "state_change_precondition": "Lirael has not yet hidden her reason for the wish from the Dohkar or assembly",
+    "state_change": "Lirael tucks the torn mouth-band into her sash without naming why Seren's wish matters to her",
+    "forces_choice": "forces Lirael to choose between claiming the interference openly and letting the assembly keep its assumption",
+    "branch_a": "claim the interference openly before the Dohkar rules",
+    "branch_b": "let the assembly keep its assumption that she shaped the wish for gain",
+    "posture_read": "The reader steps forward with folded hands and defiant gaze, meeting Julian's eyes while owning the accusation through seductive language that reframes unraveling as mutual",
+    "local_objective": "Lirael tucks the mouth-band away without voicing her stake in the wish, visibly narrowing what the Dohkar can later demand as proof",
+    "local_objective_actor": "Lirael",
+    "present": [
+      "Lirael",
+      "Seren",
+      "Julian",
+      "the presiding Dohkar",
+      "the assembly"
+    ],
+    "reserved": {
+      "price_identified": "untouched",
+      "inquiry_opened": "untouched",
+      "julian_counter_wish": "untouched",
+      "julian_obscuring_wishes": "untouched"
+    },
+    "aftermath": {
+      "twist_manifested": "kept",
+      "interrogation_interrupted": "kept",
+      "the_answer_institutional": "kept",
+      "inquiry_authority_claimed": "kept"
+    },
+    "scene_function_instantiated": "preliminary institutional pressure via the Dohkar's standing charge and visible social fallout on Lirael's standing",
+    "aftermath_obligations": "The Dohkar's gaze lingers on the concealed band; the assembly's murmurs shift from accusation to uncertainty about what Lirael withholds, tightening scrutiny on her qualification",
+    "chosen_aftermath_lane": "lirael_defensive_path",
+    "lane_posture_modulation": "The defiant, seductive posture makes Lirael conceal the fact while holding Julian's gaze, risking that her refusal to retreat reads as further manipulation to the Dohkar",
+    "event_slots": {
+      "precondition": "Lirael and the presiding Dohkar are both present with the assembly watching",
+      "actor": "Lirael",
+      "action": "tucks the torn mouth-band into her sash",
+      "target": "the torn mouth-band",
+      "exit_state": "the assembly cannot yet demand Lirael name her personal stake in the wish"
+    },
+    "stage_location": "the rite circle before the assembly",
+    "stage_issued_objects": [],
+    "stage_affordances": [
+      "Lirael folds the band deeper into the sash",
+      "Julian watches the concealment",
+      "the Dohkar notes the silence"
+    ]
+  },
+  {
+    "tactical_move": "Lirael uses the Dohkar's interruption to bury her personal stake in the wish before formal pressure mounts",
+    "state_change_precondition": "Lirael has not yet hidden her personal stake in Seren's wish from the Dohkar",
+    "state_change": "Lirael folds the torn mouth-band into her sash, concealing the bloodied edge from the Dohkar",
+    "forces_choice": "forces Lirael to choose between claiming the interference openly and letting the assembly keep its assumption",
+    "branch_a": "claim the interference openly before the assembly",
+    "branch_b": "let the assembly keep its assumption that she shaped the wish",
+    "posture_read": "The reader meets Julian's accusation with defiant poetic surrender, refusing shame while holding the assembly's gaze",
+    "local_objective": "Lirael tucks the torn mouth-band into her sash to hide evidence of her reaction while the Dohkar's charge hangs",
+    "local_objective_actor": "Lirael",
+    "present": [
+      "Lirael",
+      "Seren",
+      "Julian",
+      "the presiding Dohkar",
+      "the assembly"
+    ],
+    "reserved": {
+      "price_identified": "untouched",
+      "inquiry_opened": "untouched",
+      "julian_counter_wish": "untouched",
+      "julian_obscuring_wishes": "untouched"
+    },
+    "aftermath": {
+      "twist_manifested": "kept",
+      "interrogation_interrupted": "kept",
+      "the_answer_institutional": "kept",
+      "inquiry_authority_claimed": "kept"
+    },
+    "scene_function_instantiated": "preliminary institutional pressure via the Dohkar's unresolved charge and visible social fallout on Lirael's standing",
+    "aftermath_obligations": "The Dohkar's gaze lingers on Lirael's sash; the assembly's attention narrows, narrowing her path to Dohkar qualification",
+    "chosen_aftermath_lane": "lirael_defensive_path",
+    "lane_posture_modulation": "Her defiant posture turns the concealment into a bold refusal of shame rather than quiet evasion, raising the risk that Julian notices the gesture",
+    "stage_location": "the rite chamber before the assembly",
+    "event_slots": {
+      "precondition": "Lirael and the presiding Dohkar are both present in the scene",
+      "actor": "Lirael",
+      "action": "folds the torn mouth-band into her sash",
+      "target": "the bloodied edge",
+      "exit_state": "the Dohkar has not seen the bloodied edge of the mouth-band"
+    },
+    "stage_issued_objects": [],
+    "stage_affordances": []
+  },
+  {
+    "tactical_move": "deflect direct response to Dohkar's charge by returning The Answer, shifting from interrogation to procedural standoff",
+    "state_change_precondition": "Lirael has not yet answered the Dohkar's charge of interference before the assembly.",
+    "state_change": "Lirael places The Answer back in Julian's hands without speaking.",
+    "forces_choice": "forces Lirael to choose between claiming the interference openly and letting the assembly keep its assumption",
+    "branch_a": "claim the interference openly before the assembly",
+    "branch_b": "remain silent and let the assembly keep its assumption",
+    "posture_read": "The reader adopts a defiant, seductive posture that turns Julian's accusation of desirability back on him while refusing to look away.",
+    "local_objective": "Lirael returns The Answer to Julian without answering the Dohkar, visibly deflecting the charge and moving the pressure into institutional channels.",
+    "local_objective_actor": "Lirael",
+    "present": [
+      "Lirael",
+      "Seren",
+      "Julian",
+      "the presiding Dohkar",
+      "the assembly"
+    ],
+    "reserved": {
+      "price_identified": "untouched",
+      "inquiry_opened": "untouched",
+      "julian_counter_wish": "untouched",
+      "julian_obscuring_wishes": "untouched"
+    },
+    "aftermath": {
+      "twist_manifested": "kept",
+      "interrogation_interrupted": "kept",
+      "the_answer_institutional": "kept",
+      "inquiry_authority_claimed": "kept"
+    },
+    "scene_function_instantiated": "preliminary institutional pressure via Dohkar's unresolved charge and Julian's claimed authority, with visible social fallout on Lirael's standing",
+    "aftermath_obligations": "The assembly now watches Lirael for any further move; the Dohkar's pending ruling narrows her path to Dohkar qualification until she responds or the inquiry is convened.",
+    "chosen_aftermath_lane": "lirael_defensive_path",
+    "lane_posture_modulation": "Her defiant posture sharpens the defensive move into a public refusal to be interrogated by Julian, risking the Dohkar viewing her silence as further interference.",
+    "stage_location": "the rite chamber before the assembly",
+    "event_slots": {
+      "precondition": "Julian, the presiding Dohkar, and the assembly are present with Lirael holding The Answer.",
+      "actor": "Lirael",
+      "action": "places The Answer back into Julian's hands",
+      "target": "Julian",
+      "exit_state": "Lirael has visibly declined to answer the Dohkar's charge before the assembly."
+    }
+  },
+  {
+    "tactical_move": "Lirael lands a defensive concealment under Julian's temptation, shifting from accused to active shaper of the narrative before the assembly",
+    "state_change_precondition": "Lirael has not yet spoken to the assembly about her involvement in the bent wish",
+    "state_change": "Lirael steps forward and tells the assembly the wish was Seren's alone",
+    "forces_choice": "forces Lirael to choose between claiming the interference openly and letting the assembly keep its assumption",
+    "branch_a": "claim openly that she interfered to protect Seren from misalignment",
+    "branch_b": "remain silent on the true reason, allowing the assumption of her shaping to stand",
+    "li_pressure_actor": "Julian's gaze sharpens at her words, the hunger in it flaring as he registers her turning his accusation into a public challenge that draws every eye back to him",
+    "posture_read": "The reader meets Julian's accusation with defiant seduction, reframing his words as an unraveling she now invites while holding her ground before the assembly",
+    "local_objective": "Lirael addresses the assembly to conceal her personal stake in the wish while answering the reader's posture toward Julian",
+    "local_objective_actor": "Lirael",
+    "present": [
+      "Lirael",
+      "Seren",
+      "Julian",
+      "the presiding Dohkar",
+      "the assembly"
+    ],
+    "reserved": {
+      "price_identified": "untouched",
+      "inquiry_opened": "untouched",
+      "julian_counter_wish": "untouched",
+      "julian_obscuring_wishes": "untouched"
+    },
+    "aftermath": {
+      "twist_manifested": "kept",
+      "interrogation_interrupted": "kept",
+      "the_answer_institutional": "kept",
+      "inquiry_authority_claimed": "kept"
+    },
+    "scene_function_instantiated": "Lirael executes a concrete defensive concealment that moves the institutional pressure from immediate interrogation into preliminary review of her conduct",
+    "aftermath_obligations": "The assembly now holds a public statement from Lirael that narrows the Dohkar's options for ruling; Julian's reaction visibly tightens the political pressure on her standing",
+    "chosen_aftermath_lane": "lirael_defensive_path",
+    "lane_posture_modulation": "Her seductive defiance reframes Julian's accusation as leverage she can use to conceal while forcing him to register the public challenge",
+    "stage_location": "the rite chamber before the assembly",
+    "stage_issued_objects": [],
+    "stage_affordances": [
+      "Lirael addresses the assembly",
+      "Julian visibly reacts to her words"
+    ],
+    "event_slots": {
+      "precondition": "Lirael and the assembly are present in the rite chamber",
+      "actor": "Lirael",
+      "action": "addresses the assembly with a statement",
+      "target": "the assembly",
+      "exit_state": "Lirael has publicly declared the wish was Seren's alone"
+    }
+  },
+  {
+    "tactical_move": "Lirael lands a concrete defensive concealment under Julian's temptation, shifting the assembly's assumption without naming her stake",
+    "state_change_precondition": "Lirael has not yet withheld her personal reason for the wish from the Dohkar or assembly",
+    "state_change": "Lirael folds the torn mouth-band into her sash without correcting the Dohkar's assumption that she shaped the wish",
+    "forces_choice": "forces Lirael to choose between claiming the interference openly and letting the assembly keep its assumption",
+    "branch_a": "claim the interference openly before the Dohkar rules",
+    "branch_b": "let the assembly keep its assumption that she prompted the wish",
+    "li_pressure_actor": "Julian's gaze lingers on the folded band at her waist, the hunger in his eyes sharpening as he registers her silence as an answer to his earlier accusation and waits for her to name what she withholds.",
+    "posture_read": "The reader's defiant, oath-bound seduction reframes the required concealment as a charged refusal to yield her inner loss to Julian or the assembly.",
+    "local_objective": "Lirael tucks the torn mouth-band away without naming the lost person, visibly altering how the Dohkar's charge lands with the assembly",
+    "local_objective_actor": "Lirael",
+    "present": [
+      "Lirael",
+      "Seren",
+      "Julian",
+      "the presiding Dohkar",
+      "the assembly"
+    ],
+    "reserved": {
+      "price_identified": "untouched",
+      "inquiry_opened": "untouched",
+      "julian_counter_wish": "untouched",
+      "julian_obscuring_wishes": "untouched"
+    },
+    "aftermath": {
+      "twist_manifested": "kept",
+      "interrogation_interrupted": "kept",
+      "the_answer_institutional": "kept",
+      "inquiry_authority_claimed": "kept"
+    },
+    "scene_function_instantiated": "preliminary review under Dohkar authority with social fallout from the bent wish",
+    "aftermath_obligations": "The Dohkar's charge gains visible traction as Lirael's silence lets suspicion settle without correction, tightening the procedural risk to her qualification before any formal inquiry opens.",
+    "chosen_aftermath_lane": "lirael_defensive_path",
+    "lane_posture_modulation": "Her seductive defiance makes the concealment read as deliberate provocation, raising the personal stakes Julian can exploit while the Dohkar watches.",
+    "stage_location": "the rite circle before the assembly",
+    "event_slots": {
+      "precondition": "Lirael, Julian, the presiding Dohkar and the assembly are all present",
+      "actor": "Lirael",
+      "action": "folds the torn mouth-band into her sash",
+      "target": "the torn mouth-band",
+      "exit_state": "the assembly now holds the unchallenged assumption that Lirael shaped the wish for her own benefit"
+    }
+  },
+  {
+    "tactical_move": "Lirael executes a concrete defensive deflection under Julian's temptation by returning The Answer publicly, concealing her personal stake in the wish from the Dohkar and assembly.",
+    "state_change_precondition": "Lirael has not yet returned The Answer or named her stake in the wish before the assembly.",
+    "state_change": "Lirael steps forward and places The Answer back in Julian's hands before the assembly.",
+    "forces_choice": "forces Lirael to choose between claiming the interference openly or letting the assembly keep its assumption",
+    "branch_a": "claim the interference openly by naming why the wish mattered to her",
+    "branch_b": "let the assembly keep its assumption by remaining silent on her stake",
+    "li_pressure_actor": "Julian's gaze lingers on her mouth where the band once sat as he accepts The Answer, his fingers brushing hers in a restraint that answers her oath with visible hunger held in check.",
+    "posture_read": "The reader's defiant, seductive posture turns Julian's accusation back on him while inviting further unraveling.",
+    "local_objective": "Lirael returns The Answer to Julian in full view of the Dohkar and assembly, visibly shifting the procedural weight of the charge onto her silence.",
+    "local_objective_actor": "Lirael",
+    "present": [
+      "Lirael",
+      "Seren",
+      "Julian",
+      "the presiding Dohkar",
+      "the assembly"
+    ],
+    "reserved": {
+      "price_identified": "untouched",
+      "inquiry_opened": "untouched",
+      "julian_counter_wish": "untouched",
+      "julian_obscuring_wishes": "untouched"
+    },
+    "aftermath": {
+      "twist_manifested": "kept",
+      "interrogation_interrupted": "kept",
+      "the_answer_institutional": "kept",
+      "inquiry_authority_claimed": "kept"
+    },
+    "scene_function_instantiated": "preliminary review under institutional pressure from the Dohkar's charge and Julian's authority claim",
+    "aftermath_obligations": "The Dohkar's charge now visibly rests on Lirael's silence after the return; the assembly's attention narrows on whether she will name an interferer.",
+    "chosen_aftermath_lane": "lirael_defensive_path",
+    "lane_posture_modulation": "Her seductive defiance makes the concealment read as a provocative counter-challenge rather than retreat, raising the personal stakes with Julian while the Dohkar watches.",
+    "stage_location": "the rite circle before the assembly",
+    "event_slots": {
+      "precondition": "Julian and the presiding Dohkar are present in the scene",
+      "actor": "Lirael",
+      "action": "places The Answer back in Julian's hands",
+      "target": "Julian",
+      "exit_state": "the assembly now sees Lirael has returned The Answer without naming her stake or an interferer"
+    }
+  },
+  {
+    "tactical_move": "advance institutional pressure by moving the confrontation into Dohkar-led preliminary review",
+    "state_change_precondition": "The assembly holds charged silence after Julian's public claim with no procedural move yet.",
+    "state_change": "The presiding Dohkar names a preliminary review date and its terms before the assembly disperses.",
+    "forces_choice": "forces Lirael to choose between claiming the interference openly and letting the assembly keep its assumption",
+    "branch_a": "claim the interference openly before the assembly disperses",
+    "branch_b": "remain silent and let the assembly keep its assumption",
+    "li_pressure_actor": "Julian registers the rasp of her teeth on the lace with a visible tightening at the corners of his eyes, then looks away as the Dohkar speaks.",
+    "posture_read": "Her non-verbal bite on the lace signals defiant tension and refusal to speak or yield ground after Julian's accusation.",
+    "local_objective": "The presiding Dohkar breaks the silence by setting the preliminary review date and terms before the assembly disperses.",
+    "local_objective_actor": "the presiding Dohkar",
+    "present": [
+      "Lirael",
+      "Seren",
+      "Julian",
+      "the presiding Dohkar",
+      "the assembly"
+    ],
+    "reserved": {
+      "price_identified": "untouched",
+      "inquiry_opened": "untouched",
+      "julian_counter_wish": "untouched",
+      "julian_obscuring_wishes": "untouched"
+    },
+    "aftermath": {
+      "twist_manifested": "kept",
+      "interrogation_interrupted": "kept",
+      "the_answer_institutional": "kept",
+      "inquiry_authority_claimed": "kept"
+    },
+    "scene_function_instantiated": "lands the Dohkar's procedural move to preliminary review, shifting the confrontation off the ritual floor",
+    "aftermath_obligations": "The presiding Dohkar's announcement places Lirael's conduct under scheduled review; the assembly begins to disperse with the new terms now public.",
+    "chosen_aftermath_lane": "dohkar_preliminary_review",
+    "lane_posture_modulation": "Her defiant bite on the lace prompts the Dohkar to speak with measured formality, risking her standing further if she remains silent.",
+    "stage_location": "the ritual floor before the dispersing assembly",
+    "stage_issued_objects": [],
+    "stage_affordances": [
+      "claim interference openly",
+      "remain silent as the assembly disperses"
+    ],
+    "event_slots": {
+      "precondition": "The presiding Dohkar and the assembly are present after Julian's claim.",
+      "actor": "the presiding Dohkar",
+      "action": "names a preliminary review date and its terms",
+      "target": "the assembly",
+      "exit_state": "a preliminary review date and terms are now set before the assembly"
+    }
+  },
+  {
+    "tactical_move": "Dohkar breaks charged silence with procedural scheduling to move confrontation into review",
+    "state_change_precondition": "No preliminary review date or terms have been announced after Julian's claim",
+    "state_change": "The presiding Dohkar names a preliminary review date and its terms before the assembly",
+    "forces_choice": "forces Lirael to choose between claiming the interference openly or letting the assembly keep its assumption",
+    "branch_a": "claim the interference openly before the assembly disperses",
+    "branch_b": "remain silent and let the assembly retain its assumption about the wish",
+    "li_pressure_actor": "Julian registers the rasp of teeth on lace as visible refusal to answer his accusation; his posture shifts minutely, eyes narrowing in restrained acknowledgment of her defiance without further speech.",
+    "posture_read": "The reader's non-verbal rasp of teeth on lace and taste of woodsmoke and iron registers as sustained defiant silence under accusation.",
+    "local_objective": "The presiding Dohkar announces the preliminary review date and terms before the assembly disperses",
+    "local_objective_actor": "the presiding Dohkar",
+    "present": [
+      "Lirael",
+      "Seren",
+      "Julian",
+      "the presiding Dohkar",
+      "the assembly"
+    ],
+    "reserved": {
+      "price_identified": "untouched",
+      "inquiry_opened": "untouched",
+      "julian_counter_wish": "untouched",
+      "julian_obscuring_wishes": "untouched"
+    },
+    "aftermath": {
+      "twist_manifested": "kept",
+      "interrogation_interrupted": "kept",
+      "the_answer_institutional": "kept",
+      "inquiry_authority_claimed": "kept"
+    },
+    "scene_function_instantiated": "Dohkar breaks the silence procedurally by setting preliminary review date and terms before dispersal",
+    "aftermath_obligations": "The presiding Dohkar's announcement moves the matter into scheduled review, visibly narrowing Lirael's standing and exposing her to further institutional scrutiny from the assembly.",
+    "chosen_aftermath_lane": "dohkar_preliminary_review",
+    "lane_posture_modulation": "The reader's defiant silence prompts the Dohkar to act swiftly and formally, heightening procedural pressure on Lirael without softening Julian's prior accusation.",
+    "stage_location": "the ritual floor before the dispersing assembly",
+    "event_slots": {
+      "precondition": "Julian and the presiding Dohkar are both present in the scene",
+      "actor": "the presiding Dohkar",
+      "action": "announces a preliminary review date and its terms",
+      "target": "the assembly",
+      "exit_state": "a preliminary review date and terms are now set before the assembly"
+    },
+    "stage_issued_objects": [],
+    "stage_affordances": []
+  },
+  {
+    "tactical_move": "The presiding Dohkar converts the charged silence into scheduled procedural review, shifting authority from ritual floor to institutional process.",
+    "state_change_precondition": "The presiding Dohkar has not yet announced any preliminary review date or terms before the assembly.",
+    "state_change": "The presiding Dohkar announces the date and terms of a preliminary review before the assembly disperses.",
+    "forces_choice": "forces Lirael to choose between claiming the interference openly or letting the assembly keep its assumption",
+    "branch_a": "claim the interference openly",
+    "branch_b": "let the assembly keep its assumption",
+    "li_pressure_actor": "Julian registers the rasp of Lirael's teeth on the lace with a single controlled glance, his shoulders settling as he absorbs her wordless refusal without stepping forward.",
+    "posture_read": "Lirael holds defiant silence, biting the iron-hard lace to refuse speech while meeting the moment without retreat.",
+    "local_objective": "The presiding Dohkar announces the preliminary review date and terms before the assembly disperses.",
+    "local_objective_actor": "the presiding Dohkar",
+    "present": [
+      "Lirael",
+      "Seren",
+      "Julian",
+      "the presiding Dohkar",
+      "the assembly"
+    ],
+    "reserved": {
+      "price_identified": "untouched",
+      "inquiry_opened": "untouched",
+      "julian_counter_wish": "untouched",
+      "julian_obscuring_wishes": "untouched"
+    },
+    "aftermath": {
+      "twist_manifested": "kept",
+      "interrogation_interrupted": "kept",
+      "the_answer_institutional": "kept",
+      "inquiry_authority_claimed": "kept"
+    },
+    "scene_function_instantiated": "The presiding Dohkar initiates preliminary procedural review by setting a review date and terms before the assembly disperses.",
+    "aftermath_obligations": "The assembly disperses carrying the scheduled review, visibly narrowing Lirael's standing into formal institutional scrutiny with the Dohkar's terms now public.",
+    "chosen_aftermath_lane": "dohkar_preliminary_review",
+    "lane_posture_modulation": "Lirael's silent bite on the lace raises the tension, causing the Dohkar to name the review terms more sharply to reassert control over the dispersing assembly.",
+    "event_slots": {
+      "precondition": "The presiding Dohkar and the assembly are present after Julian's claim.",
+      "actor": "the presiding Dohkar",
+      "action": "announces a preliminary review date and its terms",
+      "target": "the assembly",
+      "exit_state": "A preliminary review date and terms have been set before the assembly disperses."
+    }
+  },
+  {
+    "tactical_move": "Julian's confession destabilizes his accuser position, prompting the Dohkar to shift from informal interrogation to formal preliminary review terms",
+    "state_change_precondition": "The presiding Dohkar has not yet set formal terms or a date for Lirael's review.",
+    "state_change": "The presiding Dohkar names a date and terms for preliminary review before a Chayr and two Dohkars.",
+    "forces_choice": "forces Lirael to choose between claiming the interference openly or letting the assembly keep its assumption",
+    "branch_a": "claim the interference openly before the assembly",
+    "branch_b": "remain silent and let the assembly retain its assumption about the bent wish",
+    "posture_read": "Lirael counters Julian's accusation by redirecting blame to the one who left her, maintaining defiance while holding The Answer.",
+    "local_objective": "The presiding Dohkar sets formal terms and a date for preliminary review in response to Julian's destabilized position.",
+    "local_objective_actor": "the presiding Dohkar",
+    "present": [
+      "Lirael",
+      "Seren",
+      "Julian",
+      "the presiding Dohkar",
+      "the assembly"
+    ],
+    "reserved": {
+      "price_identified": "untouched",
+      "inquiry_opened": "untouched",
+      "julian_counter_wish": "untouched",
+      "julian_obscuring_wishes": "untouched"
+    },
+    "aftermath": {
+      "twist_manifested": "kept",
+      "interrogation_interrupted": "kept",
+      "the_answer_institutional": "kept",
+      "inquiry_authority_claimed": "kept"
+    },
+    "scene_function_instantiated": "Dohkar initiates preliminary review by setting formal terms and date after Julian's confession weakens his informal authority.",
+    "aftermath_obligations": "The presiding Dohkar's announcement places Lirael's conduct under scheduled institutional scrutiny; witnesses now anticipate a formal proceeding that will examine her alignment and interference.",
+    "chosen_aftermath_lane": "dohkar_preliminary_review",
+    "lane_posture_modulation": "Lirael's defiant redirection of blame toward the absent party heightens the Dohkar's need to contain the exchange through procedural structure rather than continued public accusation.",
+    "stage_location": "the rite chamber before the assembly",
+    "stage_issued_objects": [],
+    "stage_affordances": [
+      "Lirael steps forward to speak",
+      "Julian meets her gaze across the space",
+      "the presiding Dohkar raises a hand to halt further exchange"
+    ],
+    "event_slots": {
+      "precondition": "Julian, Lirael, the presiding Dohkar and the assembly are all present in the rite chamber",
+      "actor": "the presiding Dohkar",
+      "action": "names a date and terms for preliminary review",
+      "target": "Lirael",
+      "exit_state": "a date and terms for preliminary review before a Chayr and two Dohkars have been publicly set"
+    },
+    "li_pressure_actor": "Julian registers Lirael's counter that the one who left her in the braided trees bears the true fault, his posture tightening as the Dohkar's intervention removes the space for further personal questioning."
+  }
+]
