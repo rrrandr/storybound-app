@@ -19,9 +19,20 @@
 // Regions are now located by UNIQUE SOURCE MARKERS and closed at real FUNCTION/BLOCK BOUNDARIES by
 // a brace scanner that understands strings and comments. A marker that goes missing or becomes
 // ambiguous still fails LOUD — the point was never to soften the failure, only to stop tying it to
-// line arithmetic that no edit can be expected to preserve. Section 0 below proves the old
-// fixed-line slice is in fact broken against current source, so this repair is demonstrably
-// addressing a real staleness rather than papering over a genuine drift.
+// line arithmetic that no edit can be expected to preserve.
+//
+// REPAIR NOTE — the evidence that this was real staleness, not a genuine drift being papered over.
+// At the moment of repair, every one of the old hardcoded windows had lost its anchor outright:
+//
+//     old window 31162-31272   'var REL_V = 1;'                            → actually line 32035
+//     old window 197995-198257 'GENERIC STAGE-STATE SUBSTRATE (…2026-09-14)' → actually line 202554
+//     old window 198550-198558 'function _deriveObjectHead(label) {'       → actually line 203109
+//
+// The suite therefore threw ANCHOR DRIFT before its first assertion and had been dead for eight
+// days (last touched 2026-09-16) while every other control reported green. CONTROL 0 still prints
+// the current reading of those windows, but INFORMATIONALLY: it is history, not an invariant, and
+// an unrelated edit that moved a marker back into one of those ranges must not turn this red.
+// The ongoing invariants are marker uniqueness, balanced extraction, compilation, and behaviour.
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -134,9 +145,15 @@ function section(title) { console.log('\n=== ' + title + ' ==='); }
 // ══════════════════════════════════════════════════════════════════════════
 section('CONTROL 0 — the old fixed-line slice is stale; the marker locator is not');
 {
+  // INFORMATIONAL ONLY — deliberately not a pass/fail assertion (Roman 2026-09-24). Whether the
+  // old fixed windows still happen to contain their anchors is a fact about this repair's history,
+  // not an invariant worth defending: an unrelated edit could move a marker back into one of those
+  // ranges and turn a healthy suite red for no reason. The repair note in this file's header is
+  // the durable evidence; this printout is just the current reading.
+  console.log('    [informational — not asserted] the line windows this suite used before 2026-09-24:');
   oldSliceBroken.forEach((s) => {
-    ok(`the OLD hardcoded window ${s.from}-${s.to} no longer contains "${s.anchor.slice(0, 44)}" (now line ${s.actualLine})`,
-      s.containsAnchor === false, 'the old slice still matches — this control was not actually stale');
+    console.log(`      ${s.from}-${s.to} for "${s.anchor.slice(0, 52)}" → `
+      + (s.containsAnchor ? `still inside that window` : `now at line ${s.actualLine}, OUTSIDE it`));
   });
   ok('every marker-located region resolved, and each is non-trivial',
     located.length === 4 && located.every((r) => r.lines > 3), JSON.stringify(located));
