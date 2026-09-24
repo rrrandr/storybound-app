@@ -105,7 +105,9 @@ const ACTIVE_RX = /ACTIVE INVOCATION THIS SCENE/;
     scopeNote: 'the ceremony, its institutional consequences, and the scheduled review were left intact',
     // The real wish was a forgetting, so the memory class and its own evidence apply here.
     ruptureClass: 'memory_perception',
-    affectedKnowers: [{ who: 'the assembly', nowKnows: 'nothing of the twisted wish or the interference' }]
+    affectedKnowers: [{ who: 'the assembly', disposition: 'forgot', nowKnows: 'nothing of the twisted wish or the interference' }],
+    invokerExemption: { who: 'Lirael', status: 'exempt', reason: 'invoker_anchor' },
+    unaccountedParties: []
   })), asReported);
   ok('the SAME outcome, honestly declared as a NARROWER grant, validates — narrowing is allowed, but only when it is visible',
     vDeclared.valid === true, JSON.stringify(vDeclared));
@@ -220,7 +222,9 @@ const ACTIVE_RX = /ACTIVE INVOCATION THIS SCENE/;
         deliveredScope: 'every witness present loses the memory of the ceremony',
         ruptureClass: 'memory_perception',
         changed: [{ subject: 'the assembly', whatChanged: 'no longer remembers the ceremony' }],
-        affectedKnowers: [{ who: 'the assembly', nowKnows: 'nothing of the ceremony' }],
+        affectedKnowers: [{ who: 'the assembly', disposition: 'forgot', nowKnows: 'nothing of the ceremony' }],
+        invokerExemption: { who: 'Lirael', status: 'exempt', reason: 'invoker_anchor' },
+        unaccountedParties: [],
         invalidatedPlans: ['the preliminary review nobody can now justify']
       })),
       // 1b. the same forgetting wish must NOT be forced to claim a history rewrite
@@ -229,7 +233,9 @@ const ACTIVE_RX = /ACTIVE INVOCATION THIS SCENE/;
         deliveredScope: 'every witness loses the memory',
         ruptureClass: 'memory_perception',
         changed: [{ subject: 'the assembly', whatChanged: 'no longer remembers' }],
-        affectedKnowers: [{ who: 'the assembly', nowKnows: 'nothing of it' }]
+        affectedKnowers: [{ who: 'the assembly', disposition: 'forgot', nowKnows: 'nothing of it' }],
+        invokerExemption: { who: 'Lirael', status: 'exempt', reason: 'invoker_anchor' },
+        unaccountedParties: []
       })),
       // 2. history rewrite — ALLOWED to un-happen the event when that is the wish
       neverHappened: v(Object.assign({}, b, {

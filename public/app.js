@@ -189791,8 +189791,33 @@ No text, no watermark, no UI elements, share-ready.`;
     // fields; a forgetting is never asked to claim a history rewrite.
     classes: {
       memory_perception: [
-        { key: 'affectedKnowers', line: '"affectedKnowers": [ { "who": "<name or group>", "nowKnows": "<what they now know or no longer know>" } ],  /* memory_perception ONLY. If the protagonist is EXEMPT from a forgetting, the scene must EARN that exception on the page; record the grounding in her knowledgeStates note. */',
-          check: function (v) { return Array.isArray(v) && v.length > 0; }, err: 'ruptureClass="memory_perception" requires a non-empty affectedKnowers (who now knows or no longer knows what)' }
+        { key: 'affectedKnowers', line: '"affectedKnowers": [ { "who": "<name or collective>", "disposition": "forgot | retained | partial | suspects | resisted | exempt", "nowKnows": "<what they now know or no longer know>" } ],  /* memory_perception ONLY. EVERY present party gets an entry: the love interest, every named character present, and each declared collective. A party you do not resolve is not "unaffected" — it is unaccounted, and that is a scope failure. */',
+          check: function (v) {
+            if (!Array.isArray(v) || !v.length) return false;
+            var VALID = { forgot: true, retained: true, partial: true, suspects: true, resisted: true, exempt: true };
+            return v.every(function (k) { return k && typeof k.who === 'string' && k.who.trim() && VALID[k.disposition]; });
+          },
+          err: 'ruptureClass="memory_perception" requires a non-empty affectedKnowers, each entry naming a party and a disposition of forgot|retained|partial|suspects|resisted|exempt' },
+        // INVOKER ANCHOR (Roman 2026-09-23). The wisher normally keeps an anchor to what they
+        // changed — without it they could not experience or navigate the consequence. That
+        // exemption is the DEFAULT and the prose does NOT have to earn it. It is removed only when
+        // the submitted wording targets the invoker, and ambiguity that Fate exploits must be
+        // declared as a wording consequence rather than done silently.
+        { key: 'invokerExemption', line: '"invokerExemption": { "who": "<the invoking protagonist\'s name>", "status": "exempt | targeted", "reason": "invoker_anchor | wish_explicitly_includes_self | ambiguous_wording_consequence", "note": "<one line>" },  /* memory_perception ONLY. DEFAULT is status "exempt", reason "invoker_anchor": the invoker keeps an anchor to what they changed, and the scene does NOT need to justify it. Use "targeted" ONLY when the submitted wish explicitly includes the self ("including me", "make me forget") — reason "wish_explicitly_includes_self" — or when the wording was materially ambiguous and Fate took the invoker as a consequence of that sloppiness — reason "ambiguous_wording_consequence", which you must state openly rather than apply silently. */',
+          check: function (v) {
+            if (!v || typeof v !== 'object') return false;
+            if (typeof v.who !== 'string' || !v.who.trim()) return false;
+            if (v.status === 'exempt') return v.reason === 'invoker_anchor' || v.reason === 'ambiguous_wording_consequence';
+            if (v.status === 'targeted') return (v.reason === 'wish_explicitly_includes_self' || v.reason === 'ambiguous_wording_consequence') && typeof v.note === 'string' && !!v.note.trim();
+            return false;
+          },
+          err: 'ruptureClass="memory_perception" requires invokerExemption {who, status:exempt|targeted, reason} — default exempt/invoker_anchor; a targeted invoker needs wish_explicitly_includes_self or ambiguous_wording_consequence plus a note' },
+        { key: 'unaccountedParties', line: '"unaccountedParties": ["<any present party whose memory state this scene did NOT resolve — empty array if every present party is accounted for above>"],  /* memory_perception ONLY. scopeMatch "full" REQUIRES this to be empty: the standard invoker exemption still counts as full, but no other present party may be left unresolved. */',
+          check: function (v, raw) {
+            if (!Array.isArray(v)) return false;
+            return raw.scopeMatch !== 'full' || v.length === 0;
+          },
+          err: 'ruptureClass="memory_perception" requires unaccountedParties to be an array, and scopeMatch="full" requires it to be EMPTY — every present party except the standard invoker exemption must be resolved' }
       ],
       history_rewrite: [
         { key: 'priorHistoryReplaced', line: '"priorHistoryReplaced": "<history_rewrite ONLY — what the history WAS, and what it now IS instead. A rupture MAY make an event never have occurred when that is the wish and the scene delivers it.>",',
@@ -189847,9 +189872,44 @@ No text, no watermark, no UI elements, share-ready.`;
   }
   window._renderTemptOutcomeSchema = _renderTemptOutcomeSchema;
 
+  // WHO WAS DEMONSTRABLY ON THE PAGE — derived from the REAL rendered plan, never guessed from
+  // prose (Roman 2026-09-23: Julian spoke a line and the outcome record never mentioned him).
+  // beat.speaker is the reader-visible display name the CG pipeline already produces and
+  // validateCGSpeakerDisplayNames already checks against the known cast, so a speaking character
+  // is present by construction — this is a roster read, not a keyword classifier over narration.
+  // Narration beats carry no speaker and contribute nothing; silent bystanders are genuinely
+  // outside what this can prove, which is why it is a FLOOR on accounting, not a census.
+  function _temptOutcomeSceneRoster(plan) {
+    var out = [];
+    var beats = (plan && Array.isArray(plan.beats)) ? plan.beats : [];
+    beats.forEach(function (b) {
+      var s = b && b.speaker;
+      if (typeof s !== 'string' || !s.trim()) return;
+      if (out.indexOf(s) === -1) out.push(s);
+    });
+    return out;
+  }
+  window._temptOutcomeSceneRoster = _temptOutcomeSceneRoster;
+
+  // Name comparison for coverage only. Display labels drift in case and articles between the
+  // screenplay ("THE PRESIDING DOHKAR") and the report ("the Presiding Dohkar"), and a report may
+  // name a character more fully than the beat label. Deliberately loose: its job is to accept an
+  // honest account, so that the errors it does raise are genuine omissions.
+  function _tfoNameKey(s) {
+    return String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').replace(/^\s*the\s+/, '').trim();
+  }
+  function _tfoNamesMatch(a, b) {
+    var x = _tfoNameKey(a), y = _tfoNameKey(b);
+    if (!x || !y) return false;
+    if (x === y) return true;
+    return (' ' + x + ' ').indexOf(' ' + y + ' ') !== -1 || (' ' + y + ' ').indexOf(' ' + x + ' ') !== -1;
+  }
+
   // STAGE 2 — structural validation ONLY (shape/types, never content or
   // creative correctness — that is reserved for live testing). Driven by the contract above.
-  function _validateTemptFateOutcomeReport(raw) {
+  // ctx is optional: { presentSpeakers: [displayName] } from the real rendered plan. When it
+  // carries a roster, memory_perception reports must RESOLVE every party on it.
+  function _validateTemptFateOutcomeReport(raw, ctx) {
     var errors = [];
     if (!raw || typeof raw !== 'object') return { valid: false, errors: ['report is not an object'] };
     if (typeof raw.delivered !== 'boolean') errors.push('delivered must be boolean');
@@ -189878,6 +189938,28 @@ No text, no watermark, no UI elements, share-ready.`;
       }
       var classFields = TEMPT_OUTCOME_CONTRACT.classes[raw.ruptureClass];
       if (classFields) classFields.forEach(function (f) { if (!f.check(raw[f.key], raw)) errors.push(f.err); });
+
+      // NON-INVOKER WITNESS ACCOUNTING (Roman 2026-09-23). The invoker keeping an anchor is
+      // normal and needs no justification; a bystander who spoke on the page and appears nowhere
+      // in the record is the actual scope failure. Every party the scene demonstrably put on the
+      // page must be RESOLVED somewhere: given a disposition in affectedKnowers, declared as the
+      // exempt invoker, or named openly in unaccountedParties — which in turn forbids "full".
+      var roster = (ctx && Array.isArray(ctx.presentSpeakers)) ? ctx.presentSpeakers : null;
+      if (roster && roster.length && raw.ruptureClass === 'memory_perception') {
+        var knowers = Array.isArray(raw.affectedKnowers) ? raw.affectedKnowers : [];
+        var unaccounted = Array.isArray(raw.unaccountedParties) ? raw.unaccountedParties : [];
+        var invokerName = (raw.invokerExemption && raw.invokerExemption.who) || '';
+        var unresolved = roster.filter(function (name) {
+          if (invokerName && _tfoNamesMatch(name, invokerName)) return false;
+          if (knowers.some(function (k) { return k && _tfoNamesMatch(name, k.who); })) return false;
+          if (unaccounted.some(function (u) { return _tfoNamesMatch(name, u); })) return false;
+          return true;
+        });
+        if (unresolved.length) {
+          errors.push('memory_perception scope is unaccounted: ' + unresolved.join(', ') +
+            ' spoke on the page but appear in neither affectedKnowers, unaccountedParties, nor the invoker exemption — say whether each forgot, retained, partially retained, suspects a gap, resisted, or was exempt');
+        }
+      }
     }
     return { valid: errors.length === 0, errors: errors };
   }
@@ -189901,7 +189983,7 @@ No text, no watermark, no UI elements, share-ready.`;
   // scene, mirroring _commitScene's cs._committedThroughScene early-return
   // — a rejected, failed, or duplicate call must not create a false or
   // duplicate entry.
-  function _commitTemptFateOutcome(sceneIdx, ledgerEntry, rawReport) {
+  function _commitTemptFateOutcome(sceneIdx, ledgerEntry, rawReport, ctx) {
     try {
       var s = window.state || {};
       if (!Array.isArray(s._temptFateDurableConsequences)) s._temptFateDurableConsequences = [];
@@ -189923,7 +190005,7 @@ No text, no watermark, no UI elements, share-ready.`;
         console.log('[TEMPT-OUTCOME] proposal ' + _tfoPropId + ' (scene ' + sceneIdx + ') already committed — skipping duplicate');
         return null;
       }
-      var v = _validateTemptFateOutcomeReport(rawReport);
+      var v = _validateTemptFateOutcomeReport(rawReport, ctx);
       if (!v.valid) {
         console.log('[TEMPT-OUTCOME] scene ' + sceneIdx + ' report invalid, no commit: ' + v.errors.join('; '));
         return null;
@@ -189958,7 +190040,13 @@ No text, no watermark, no UI elements, share-ready.`;
         invalidatedPlans: Array.isArray(rawReport.invalidatedPlans) ? rawReport.invalidatedPlans : [],
         classDetail: (function () {
           switch (rawReport.ruptureClass) {
-            case 'memory_perception': return { affectedKnowers: rawReport.affectedKnowers || [] };
+            case 'memory_perception': return {
+              affectedKnowers: rawReport.affectedKnowers || [],
+              // The invoker's anchor is canon too: a later scene must know Lirael remembers, and
+              // WHY — a default anchor reads differently from an earned self-targeting.
+              invokerExemption: rawReport.invokerExemption || null,
+              unaccountedParties: Array.isArray(rawReport.unaccountedParties) ? rawReport.unaccountedParties : []
+            };
             case 'history_rewrite': return { priorHistoryReplaced: rawReport.priorHistoryReplaced || '', survivingContradictions: rawReport.survivingContradictions || [] };
             case 'identity_reputation': return { recognitionChanges: rawReport.recognitionChanges || [] };
             case 'materialization_possession': return { materialEffects: rawReport.materialEffects || [] };
@@ -233157,7 +233245,9 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
       if (_tfoOwn.wasInvokedAtStart) {
         if (_tfoOwn.pendingOutcome) {
           if (_tfoOwn.proposalEntry) {
-            var _tfoCommitted = _commitTemptFateOutcome(_tfoOwn.sceneIndex, _tfoOwn.proposalEntry, _tfoOwn.pendingOutcome);
+            var _tfoRoster = (typeof _temptOutcomeSceneRoster === 'function') ? _temptOutcomeSceneRoster(plan) : [];
+            try { console.log('[TEMPT-OUTCOME] on-page speaking roster for scope accounting: ' + (_tfoRoster.length ? _tfoRoster.join(', ') : '(none — narration only)')); } catch (_) {}
+            var _tfoCommitted = _commitTemptFateOutcome(_tfoOwn.sceneIndex, _tfoOwn.proposalEntry, _tfoOwn.pendingOutcome, { presentSpeakers: _tfoRoster });
             if (!_tfoCommitted) {
               console.warn('[TEMPT-OUTCOME] scene ' + _tfoOwn.sceneIndex + ' had an active Tempt proposal (' + _tfoOwn.proposalEntry.id + ') but produced no durable commit — see the [TEMPT-OUTCOME] log line immediately above for the exact reason (undelivered, malformed, or already committed).');
             }

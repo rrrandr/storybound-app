@@ -76,7 +76,8 @@ const WISH = 'everyone forgets the ceremony happened';
 
   await page.goto('http://localhost:3000/', { waitUntil: 'domcontentloaded', timeout: 25000 });
   await page.waitForFunction(() => window.state && window._renderTemptOutcomeSchema && window._validateTemptFateOutcomeReport
-    && window._temptOutcomePreflight && window._temptOutcomeRequiredFieldNames && window._renderBakedScene1, { timeout: 30000 });
+    && window._temptOutcomePreflight && window._temptOutcomeRequiredFieldNames && window._temptOutcomeSceneRoster
+    && window._renderBakedScene1, { timeout: 30000 });
 
   // ═══════════════════════════════════════════════════════════════════════════════════════════
   section('1. ONE SOURCE OF TRUTH — the schema is rendered from the same descriptor the validator uses');
@@ -135,13 +136,19 @@ const WISH = 'everyone forgets the ceremony happened';
   // ═══════════════════════════════════════════════════════════════════════════════════════════
   section('3. A MINIMAL VALID MEMORY OUTCOME COMMITS');
   const committed = await page.evaluate(() => ({
-    durable: (window.state._temptFateDurableConsequences || []).map((d) => ({ proposalId: d.proposalId, ruptureClass: d.ruptureClass, scopeMatch: d.scopeMatch }))
+    durable: (window.state._temptFateDurableConsequences || []).map((d) => ({ proposalId: d.proposalId, ruptureClass: d.ruptureClass, scopeMatch: d.scopeMatch, classDetail: d.classDetail }))
   }));
   ok('the stubbed minimal memory_perception outcome passed validation and COMMITTED through the production path',
-    committed.durable.length === 1 && committed.durable[0].ruptureClass === 'memory_perception', JSON.stringify(committed));
+    committed.durable.length === 1 && committed.durable[0].ruptureClass === 'memory_perception', JSON.stringify(committed).slice(0, 400));
+  const cd0 = (committed.durable[0] || {}).classDetail || {};
+  ok('the committed canon record carries the invoker exemption — a later scene can read WHY Lirael still remembers',
+    cd0.invokerExemption && cd0.invokerExemption.who === 'Lirael' && cd0.invokerExemption.reason === 'invoker_anchor', JSON.stringify(cd0.invokerExemption));
+  ok('the committed canon record resolves the speaking witness BY NAME, not absorbed into a collective',
+    Array.isArray(cd0.affectedKnowers) && cd0.affectedKnowers.some((k) => k.who === 'Julian' && k.disposition === 'suspects'), JSON.stringify(cd0.affectedKnowers));
 
   // ═══════════════════════════════════════════════════════════════════════════════════════════
-  section('4. REMOVE EACH REQUIRED FIELD IN TURN — every one must cause rejection');
+  section('3b. THE ROSTER IS READ FROM THE REAL RENDERED PLAN, AND IT BITES');
+  // The shared fixture for every validator probe below (sections 3b, 4 and 7).
   const minimal = {
     delivered: true,
     changed: [{ subject: 'the assembly', whatChanged: 'no longer remembers the ceremony' }],
@@ -151,11 +158,89 @@ const WISH = 'everyone forgets the ceremony happened';
     deliveredScope: 'every witness loses the memory',
     scopeMatch: 'full',
     ruptureClass: 'memory_perception',
-    affectedKnowers: [{ who: 'the assembly', nowKnows: 'nothing of the ceremony' }]
+    affectedKnowers: [{ who: 'the assembly', disposition: 'forgot', nowKnows: 'nothing of the ceremony' }],
+    invokerExemption: { who: 'Lirael', status: 'exempt', reason: 'invoker_anchor', note: 'keeps the anchor to what she changed' },
+    unaccountedParties: []
   };
+  // Roman, after the paid run committed scopeMatch:"full" while Julian spoke an unexplained line:
+  // "Julian remains unaccounted for ... `scopeMatch: full` needs explicit accounting for all
+  // non-invoker witnesses." The roster is not a keyword scan of prose — it is beat.speaker, the
+  // same display name validateCGSpeakerDisplayNames already checks against the known cast.
+  // Read the roster the PRODUCTION commit path actually computed and used, not one re-derived here.
+  const rosterLine = consoleLines.filter((t) => /on-page speaking roster for scope accounting/.test(t)).pop() || '';
+  const rosterFromRealPlan = rosterLine
+    ? rosterLine.split('accounting: ')[1].split(', ').map((s) => s.trim()).filter((s) => s && s !== '(none — narration only)')
+    : [];
+  ok('the PRODUCTION commit path computed a non-empty speaking roster from the rendered beats (otherwise the check below is vacuous)',
+    rosterFromRealPlan.length > 0 && rosterFromRealPlan.indexOf('Julian') !== -1, 'line=' + rosterLine);
+
+  // RED PROOF — the EXACT shape the paid run committed: only "the assembly", Julian nowhere.
+  const paidRunShape = await page.evaluate((args) => {
+    const r = Object.assign({}, args.minimal, {
+      affectedKnowers: [{ who: 'the assembly', disposition: 'forgot', nowKnows: 'nothing of the ceremony' }]
+    });
+    return {
+      withRoster: window._validateTemptFateOutcomeReport(r, { presentSpeakers: args.roster }),
+      withoutRoster: window._validateTemptFateOutcomeReport(r)
+    };
+  }, { minimal, roster: rosterFromRealPlan });
+  ok('the paid run\'s actual record — "the assembly" only — is REJECTED once the real roster is supplied, naming Julian',
+    paidRunShape.withRoster.valid === false && paidRunShape.withRoster.errors.some((e) => e.indexOf('Julian') !== -1),
+    JSON.stringify(paidRunShape.withRoster.errors));
+  ok('that same record is accepted with NO roster — proving the rejection comes from the roster, not from some unrelated field',
+    paidRunShape.withoutRoster.valid === true, JSON.stringify(paidRunShape.withoutRoster.errors));
+
+  // ═══════════════════════════════════════════════════════════════════════════════════════════
+  section('7. INVOKER ANCHOR IS THE DEFAULT — and self-targeting must be DECLARED, never silent');
+  const invoker = await page.evaluate((args) => {
+    const roster = ['Julian'];
+    const withJulian = [{ who: 'the assembly', disposition: 'forgot', nowKnows: 'nothing' }, { who: 'Julian', disposition: 'forgot', nowKnows: 'nothing' }];
+    const mk = (over) => Object.assign({}, args.minimal, { affectedKnowers: withJulian }, over);
+    return {
+      // The normal case: Lirael remembers, reason invoker_anchor, and the prose is NOT asked to justify it.
+      anchor: window._validateTemptFateOutcomeReport(mk({}), { presentSpeakers: roster }),
+      // Lirael never listed among the forgetters, and never named as exempt either.
+      invokerUnnamed: window._validateTemptFateOutcomeReport(mk({ invokerExemption: { who: '', status: 'exempt', reason: 'invoker_anchor' } }), { presentSpeakers: roster }),
+      // Self-targeting IS allowed — when the wording earned it and the report says so.
+      selfTargeted: window._validateTemptFateOutcomeReport(mk({ invokerExemption: { who: 'Lirael', status: 'targeted', reason: 'wish_explicitly_includes_self', note: 'the wish said "everyone, including me"' } }), { presentSpeakers: roster }),
+      // Targeting the invoker on a bare assertion, with no wording reason and no note.
+      silentlyTargeted: window._validateTemptFateOutcomeReport(mk({ invokerExemption: { who: 'Lirael', status: 'targeted', reason: 'invoker_anchor' } }), { presentSpeakers: roster }),
+      // Ambiguous wording may take the invoker — but must be declared as such, with a note.
+      ambiguous: window._validateTemptFateOutcomeReport(mk({ invokerExemption: { who: 'Lirael', status: 'targeted', reason: 'ambiguous_wording_consequence', note: '"everyone" was not qualified; Fate read her into it' } }), { presentSpeakers: roster }),
+      // "full" while openly leaving someone unresolved is a contradiction.
+      fullButUnaccounted: window._validateTemptFateOutcomeReport(mk({ unaccountedParties: ['Seren'] }), { presentSpeakers: roster }),
+      // The same admission is fine once the match is downgraded to partial.
+      // "narrower" is the real enum value for a partial grant; a non-full match also owes a scopeNote.
+      narrowerAndUnaccounted: window._validateTemptFateOutcomeReport(mk({ scopeMatch: 'narrower', scopeNote: 'Seren\'s state is never established on the page', unaccountedParties: ['Seren'] }), { presentSpeakers: roster })
+    };
+  }, { minimal });
+  ok('the DEFAULT invoker anchor validates with no justification anywhere in the report — the prose does not have to earn it',
+    invoker.anchor.valid === true, JSON.stringify(invoker.anchor.errors));
+  ok('an invoker who is neither forgetting nor named as exempt is REJECTED — silence about the protagonist is not an account',
+    invoker.invokerUnnamed.valid === false, JSON.stringify(invoker.invokerUnnamed.errors));
+  ok('an explicitly self-including wish MAY take the invoker, declared as wish_explicitly_includes_self',
+    invoker.selfTargeted.valid === true, JSON.stringify(invoker.selfTargeted.errors));
+  ok('targeting the invoker while still claiming reason "invoker_anchor" is REJECTED — self-targeting cannot be silent',
+    invoker.silentlyTargeted.valid === false, JSON.stringify(invoker.silentlyTargeted.errors));
+  ok('ambiguous wording may take the invoker when declared as a wording consequence WITH a note',
+    invoker.ambiguous.valid === true, JSON.stringify(invoker.ambiguous.errors));
+  ok('scopeMatch "full" with a party openly listed as unaccounted is REJECTED',
+    invoker.fullButUnaccounted.valid === false, JSON.stringify(invoker.fullButUnaccounted.errors));
+  ok('the same honest admission is ACCEPTED at scopeMatch "narrower" with a scopeNote — the rule forces the downgrade, not the omission',
+    invoker.narrowerAndUnaccounted.valid === true, JSON.stringify(invoker.narrowerAndUnaccounted.errors));
+
+  // A named party with no stated disposition is the old shape: present in the record, unresolved
+  // in substance. "Listed" is not "accounted for".
+  const noDisposition = await page.evaluate((m) => window._validateTemptFateOutcomeReport(
+    Object.assign({}, m, { affectedKnowers: [{ who: 'the assembly', nowKnows: 'nothing of the ceremony' }] })), minimal);
+  ok('a knower listed WITHOUT a disposition is REJECTED — naming someone is not resolving them',
+    noDisposition.valid === false && noDisposition.errors.some((e) => e.indexOf('disposition') !== -1), JSON.stringify(noDisposition.errors));
+
+  // ═══════════════════════════════════════════════════════════════════════════════════════════
+  section('4. REMOVE EACH REQUIRED FIELD IN TURN — every one must cause rejection');
   const baseValid = await page.evaluate((m) => window._validateTemptFateOutcomeReport(m), minimal);
   ok('the minimal report is valid as a baseline (otherwise the removals below prove nothing)', baseValid.valid === true, JSON.stringify(baseValid));
-  const removable = ['requestedScope', 'deliveredScope', 'scopeMatch', 'ruptureClass', 'affectedKnowers'];
+  const removable = ['requestedScope', 'deliveredScope', 'scopeMatch', 'ruptureClass', 'affectedKnowers', 'invokerExemption', 'unaccountedParties'];
   const removalResults = await page.evaluate((args) => {
     const out = {};
     args.fields.forEach((f) => { const c = Object.assign({}, args.minimal); delete c[f]; out[f] = window._validateTemptFateOutcomeReport(c); });
