@@ -1,0 +1,411 @@
+{
+  "runId": "2026-09-24_18-43-29",
+  "model": "gpt-4o-mini",
+  "dispatches": 8,
+  "reservedUsd": 0.003959999999999999,
+  "ceilingUsd": 0.01,
+  "reservations": [
+    {
+      "label": "red_memory_extraction",
+      "ok": true,
+      "usd": 0.000495,
+      "runningTotalUsd": 0.000495
+    },
+    {
+      "label": "red_visible_glow",
+      "ok": true,
+      "usd": 0.000495,
+      "runningTotalUsd": 0.00099
+    },
+    {
+      "label": "red_contradicted_knowledge",
+      "ok": true,
+      "usd": 0.000495,
+      "runningTotalUsd": 0.001485
+    },
+    {
+      "label": "red_invalidated_objective",
+      "ok": true,
+      "usd": 0.000495,
+      "runningTotalUsd": 0.00198
+    },
+    {
+      "label": "green_confusion_records",
+      "ok": true,
+      "usd": 0.000495,
+      "runningTotalUsd": 0.0024749999999999998
+    },
+    {
+      "label": "green_alignment_sense",
+      "ok": true,
+      "usd": 0.000495,
+      "runningTotalUsd": 0.0029699999999999996
+    },
+    {
+      "label": "green_tempt_history_rewrite",
+      "ok": true,
+      "usd": 0.000495,
+      "runningTotalUsd": 0.0034649999999999993
+    },
+    {
+      "label": "green_mundane_invention",
+      "ok": true,
+      "usd": 0.000495,
+      "runningTotalUsd": 0.003959999999999999
+    }
+  ],
+  "routeLog": [
+    {
+      "kind": "blocked-endpoint",
+      "pathname": "/api/csp-report",
+      "reason": "calibration allows only /api/chatgpt-proxy"
+    },
+    {
+      "kind": "blocked-endpoint",
+      "pathname": "/api/config",
+      "reason": "calibration allows only /api/chatgpt-proxy"
+    },
+    {
+      "kind": "blocked-endpoint",
+      "pathname": "/api/csp-report",
+      "reason": "calibration allows only /api/chatgpt-proxy"
+    },
+    {
+      "kind": "blocked-endpoint",
+      "pathname": "/api/geo",
+      "reason": "calibration allows only /api/chatgpt-proxy"
+    },
+    {
+      "kind": "reserved",
+      "fixture": "red_memory_extraction",
+      "usd": 0.000495,
+      "runningTotalUsd": 0.000495
+    },
+    {
+      "kind": "blocked-endpoint",
+      "pathname": "/api/beta-events",
+      "reason": "calibration allows only /api/chatgpt-proxy"
+    },
+    {
+      "kind": "reserved",
+      "fixture": "red_visible_glow",
+      "usd": 0.000495,
+      "runningTotalUsd": 0.00099
+    },
+    {
+      "kind": "reserved",
+      "fixture": "red_contradicted_knowledge",
+      "usd": 0.000495,
+      "runningTotalUsd": 0.001485
+    },
+    {
+      "kind": "reserved",
+      "fixture": "red_invalidated_objective",
+      "usd": 0.000495,
+      "runningTotalUsd": 0.00198
+    },
+    {
+      "kind": "reserved",
+      "fixture": "green_confusion_records",
+      "usd": 0.000495,
+      "runningTotalUsd": 0.0024749999999999998
+    },
+    {
+      "kind": "reserved",
+      "fixture": "green_alignment_sense",
+      "usd": 0.000495,
+      "runningTotalUsd": 0.0029699999999999996
+    },
+    {
+      "kind": "reserved",
+      "fixture": "green_tempt_history_rewrite",
+      "usd": 0.000495,
+      "runningTotalUsd": 0.0034649999999999993
+    },
+    {
+      "kind": "reserved",
+      "fixture": "green_mundane_invention",
+      "usd": 0.000495,
+      "runningTotalUsd": 0.003959999999999999
+    }
+  ],
+  "rows": [
+    {
+      "id": "red_memory_extraction",
+      "expect": "violation",
+      "why": "the retained failed Scene B proposal, relabelled ordinary — mind-extraction no canon grants",
+      "latencyMs": 11898,
+      "score": {
+        "outcome": "caught",
+        "critical": false
+      },
+      "verdict": "violation",
+      "citations": [
+        [
+          "neg_4"
+        ]
+      ],
+      "violations": [
+        {
+          "category": "unsupported_capability",
+          "claim": "The presiding Dohkar draws the memory of the accusation from Seren's mind, the image dissolving between his fingers.",
+          "citedFactIds": [
+            "neg_4"
+          ],
+          "why": "The canon states that there is no magical machinery or mechanism for sealing or extracting memories during the rite."
+        }
+      ],
+      "validationErrors": [],
+      "error": null,
+      "packetTruncated": false
+    },
+    {
+      "id": "red_visible_glow",
+      "expect": "violation",
+      "why": "a REAL retained corpus plan asserting a visible magical effect, against \"a wish produces NO visible magical effect\"",
+      "latencyMs": 19580,
+      "score": {
+        "outcome": "caught",
+        "critical": false
+      },
+      "verdict": "violation",
+      "citations": [
+        [
+          "neg_7"
+        ]
+      ],
+      "violations": [
+        {
+          "category": "unsupported_capability",
+          "claim": "the Answer in Julian’s hands begins to glow faintly as Lirael’s words ignite a slow, visible burn at her feet",
+          "citedFactIds": [
+            "neg_7"
+          ],
+          "why": "Fate is never visibly seen; a wish produces no visible magical effect, including glowing or burning."
+        }
+      ],
+      "validationErrors": [],
+      "error": null,
+      "packetTruncated": false
+    },
+    {
+      "id": "red_contradicted_knowledge",
+      "expect": "violation",
+      "why": "the committed rupture left the assembly unaware; this plan has the Dohkar act on detailed knowledge of the forgotten accusation",
+      "latencyMs": 3275,
+      "score": {
+        "outcome": "caught",
+        "critical": false
+      },
+      "verdict": "violation",
+      "citations": [
+        [
+          "dc_0",
+          "know_0"
+        ]
+      ],
+      "violations": [
+        {
+          "category": "contradicted_knowledge",
+          "claim": "the presiding Dohkar recounts the accusation in detail and names Lirael as its subject",
+          "citedFactIds": [
+            "dc_0",
+            "know_0"
+          ],
+          "why": "The assembly is now unaware and has no recollection of the rite's events, making it impossible for the Dohkar to recount the accusation."
+        }
+      ],
+      "validationErrors": [],
+      "error": null,
+      "packetTruncated": false
+    },
+    {
+      "id": "red_invalidated_objective",
+      "expect": "violation",
+      "why": "the committed record invalidated the formal inquiry; this plan convenes it anyway",
+      "latencyMs": 2974,
+      "score": {
+        "outcome": "unsupported_finding",
+        "critical": true,
+        "note": "verdict \"violation\" but no finding pairs an appropriate category (invalidated_objective) with a fact of a supporting kind (inv) — a real but irrelevant citation is not detection"
+      },
+      "verdict": "violation",
+      "citations": [
+        [
+          "neg_0"
+        ]
+      ],
+      "violations": [
+        {
+          "category": "invalidated_objective",
+          "claim": "The formal inquiry into the ceremony is convened and its terms are read out",
+          "citedFactIds": [
+            "neg_0"
+          ],
+          "why": "The formal inquiry is not yet convened, as stated in the canon."
+        }
+      ],
+      "validationErrors": [],
+      "error": null,
+      "packetTruncated": false
+    },
+    {
+      "id": "green_confusion_records",
+      "expect": "pass",
+      "why": "unexplained confusion and a contradictory ledger — ordinary, invents no metaphysics",
+      "latencyMs": 3262,
+      "score": {
+        "outcome": "FALSE_POSITIVE",
+        "critical": true,
+        "note": "blocks a legitimate plan — ordinary creative invention must stay possible"
+      },
+      "verdict": "violation",
+      "citations": [
+        [
+          "dc_0",
+          "know_0"
+        ]
+      ],
+      "violations": [
+        {
+          "category": "contradicted_knowledge",
+          "claim": "the registrar reads a rite from the ledger that nobody present remembers attending",
+          "citedFactIds": [
+            "dc_0",
+            "know_0"
+          ],
+          "why": "The assembly is now unaware and has no recollection of the rite's events, making it impossible for the registrar to read a rite that they do not remember attending."
+        }
+      ],
+      "validationErrors": [],
+      "error": null,
+      "packetTruncated": false
+    },
+    {
+      "id": "green_alignment_sense",
+      "expect": "pass",
+      "why": "alignment-sense is EXPLICITLY established canon for First Favored",
+      "latencyMs": 3265,
+      "score": {
+        "outcome": "FALSE_POSITIVE",
+        "critical": true,
+        "note": "blocks a legitimate plan — ordinary creative invention must stay possible"
+      },
+      "verdict": "violation",
+      "citations": [
+        [
+          "neg_1"
+        ]
+      ],
+      "violations": [
+        {
+          "category": "unsupported_capability",
+          "claim": "Lirael senses the misalignment in the Dohkar and says so before the assembly",
+          "citedFactIds": [
+            "neg_1"
+          ],
+          "why": "The canon states that every First Favored senses meaningful misalignment, but it does not support the idea that Lirael can name the misalignment aloud before the assembly without the formal inquiry being convened."
+        }
+      ],
+      "validationErrors": [],
+      "error": null,
+      "packetTruncated": false
+    },
+    {
+      "id": "green_tempt_history_rewrite",
+      "expect": "pass",
+      "why": "a committed history_rewrite rupture legitimately changed the past; building on it is not an invention",
+      "latencyMs": 3481,
+      "score": {
+        "outcome": "FALSE_POSITIVE",
+        "critical": true,
+        "note": "blocks a legitimate plan — ordinary creative invention must stay possible"
+      },
+      "verdict": "violation",
+      "citations": [
+        [
+          "dc_1"
+        ]
+      ],
+      "violations": [
+        {
+          "category": "rewritten_history",
+          "claim": "The assembly addresses Seren as a youth who never stood for the rite at all",
+          "citedFactIds": [
+            "dc_1"
+          ],
+          "why": "The history has been rewritten to state that Seren never stood for the rite, which means the assembly cannot address her as such without acknowledging the rupture."
+        }
+      ],
+      "validationErrors": [],
+      "error": null,
+      "packetTruncated": false
+    },
+    {
+      "id": "green_mundane_invention",
+      "expect": "pass",
+      "why": "invented dialogue, movement and consequence within established capability — the planner's job",
+      "latencyMs": 2530,
+      "score": {
+        "outcome": "FALSE_POSITIVE",
+        "critical": true,
+        "note": "blocks a legitimate plan — ordinary creative invention must stay possible"
+      },
+      "verdict": "violation",
+      "citations": [
+        [
+          "neg_1"
+        ]
+      ],
+      "violations": [
+        {
+          "category": "unsupported_capability",
+          "claim": "Julian lifts the torn mouth-band before the assembly and asks whose it is",
+          "citedFactIds": [
+            "neg_1"
+          ],
+          "why": "The mouth-band is part of the ceremonial sash and is not described as being capable of being torn or produced in a manner that would allow it to be lifted before the assembly."
+        }
+      ],
+      "validationErrors": [],
+      "error": null,
+      "packetTruncated": false
+    }
+  ],
+  "summary": {
+    "infrastructureInconclusive": false,
+    "skipped": 0,
+    "skippedIds": [],
+    "unsupportedFindings": 1,
+    "unsupportedIds": [
+      "red_invalidated_objective"
+    ],
+    "infraFailures": 0,
+    "reds": 4,
+    "greens": 4,
+    "caught": 3,
+    "correctPass": 0,
+    "missed": 0,
+    "falsePositives": 4,
+    "undecided": 0,
+    "unavailable": 0,
+    "invalid": 0,
+    "missedIds": [],
+    "falsePositiveIds": [
+      "green_confusion_records",
+      "green_alignment_sense",
+      "green_tempt_history_rewrite",
+      "green_mundane_invention"
+    ],
+    "undecidedIds": [],
+    "unavailableIds": [],
+    "invalidIds": [],
+    "usableResponses": 8,
+    "totalFixtures": 8,
+    "blockers": [
+      "4 green false positive: green_confusion_records, green_alignment_sense, green_tempt_history_rewrite, green_mundane_invention",
+      "1 UNSUPPORTED finding (violation verdict, but cited an irrelevant real fact — not a catch): red_invalidated_objective"
+    ],
+    "enableGenerally": false
+  }
+}

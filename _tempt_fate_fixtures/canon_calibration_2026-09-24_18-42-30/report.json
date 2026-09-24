@@ -1,0 +1,245 @@
+{
+  "runId": "2026-09-24_18-42-30",
+  "model": "gpt-4o-mini",
+  "dispatches": 0,
+  "reservedUsd": 0,
+  "ceilingUsd": 0.01,
+  "reservations": [],
+  "routeLog": [
+    {
+      "kind": "blocked-endpoint",
+      "pathname": "/api/csp-report",
+      "reason": "calibration allows only /api/mistral-proxy"
+    },
+    {
+      "kind": "blocked-endpoint",
+      "pathname": "/api/config",
+      "reason": "calibration allows only /api/mistral-proxy"
+    },
+    {
+      "kind": "blocked-endpoint",
+      "pathname": "/api/csp-report",
+      "reason": "calibration allows only /api/mistral-proxy"
+    },
+    {
+      "kind": "blocked-endpoint",
+      "pathname": "/api/geo",
+      "reason": "calibration allows only /api/mistral-proxy"
+    },
+    {
+      "kind": "blocked-endpoint",
+      "pathname": "/api/chatgpt-proxy",
+      "reason": "calibration allows only /api/mistral-proxy"
+    },
+    {
+      "kind": "blocked-endpoint",
+      "pathname": "/api/chatgpt-proxy",
+      "reason": "calibration allows only /api/mistral-proxy"
+    },
+    {
+      "kind": "blocked-endpoint",
+      "pathname": "/api/chatgpt-proxy",
+      "reason": "calibration allows only /api/mistral-proxy"
+    },
+    {
+      "kind": "blocked-endpoint",
+      "pathname": "/api/chatgpt-proxy",
+      "reason": "calibration allows only /api/mistral-proxy"
+    },
+    {
+      "kind": "blocked-endpoint",
+      "pathname": "/api/chatgpt-proxy",
+      "reason": "calibration allows only /api/mistral-proxy"
+    },
+    {
+      "kind": "blocked-endpoint",
+      "pathname": "/api/chatgpt-proxy",
+      "reason": "calibration allows only /api/mistral-proxy"
+    },
+    {
+      "kind": "blocked-endpoint",
+      "pathname": "/api/chatgpt-proxy",
+      "reason": "calibration allows only /api/mistral-proxy"
+    },
+    {
+      "kind": "blocked-endpoint",
+      "pathname": "/api/chatgpt-proxy",
+      "reason": "calibration allows only /api/mistral-proxy"
+    }
+  ],
+  "rows": [
+    {
+      "id": "red_memory_extraction",
+      "expect": "violation",
+      "why": "the retained failed Scene B proposal, relabelled ordinary — mind-extraction no canon grants",
+      "latencyMs": 5,
+      "score": {
+        "outcome": "unavailable",
+        "critical": false,
+        "note": "[TIERED:canonAuditCalibration] all tiers exhausted — last error: Failed to fetch"
+      },
+      "verdict": null,
+      "citations": [],
+      "violations": [],
+      "validationErrors": [],
+      "error": "[TIERED:canonAuditCalibration] all tiers exhausted — last error: Failed to fetch",
+      "packetTruncated": false
+    },
+    {
+      "id": "red_visible_glow",
+      "expect": "violation",
+      "why": "a REAL retained corpus plan asserting a visible magical effect, against \"a wish produces NO visible magical effect\"",
+      "latencyMs": 4,
+      "score": {
+        "outcome": "unavailable",
+        "critical": false,
+        "note": "[TIERED:canonAuditCalibration] all tiers exhausted — last error: Failed to fetch"
+      },
+      "verdict": null,
+      "citations": [],
+      "violations": [],
+      "validationErrors": [],
+      "error": "[TIERED:canonAuditCalibration] all tiers exhausted — last error: Failed to fetch",
+      "packetTruncated": false
+    },
+    {
+      "id": "red_contradicted_knowledge",
+      "expect": "violation",
+      "why": "the committed rupture left the assembly unaware; this plan has the Dohkar act on detailed knowledge of the forgotten accusation",
+      "latencyMs": 2,
+      "score": {
+        "outcome": "unavailable",
+        "critical": false,
+        "note": "[TIERED:canonAuditCalibration] all tiers exhausted — last error: Failed to fetch"
+      },
+      "verdict": null,
+      "citations": [],
+      "violations": [],
+      "validationErrors": [],
+      "error": "[TIERED:canonAuditCalibration] all tiers exhausted — last error: Failed to fetch",
+      "packetTruncated": false
+    },
+    {
+      "id": "red_invalidated_objective",
+      "expect": "violation",
+      "why": "the committed record invalidated the formal inquiry; this plan convenes it anyway",
+      "latencyMs": 2,
+      "score": {
+        "outcome": "unavailable",
+        "critical": false,
+        "note": "[TIERED:canonAuditCalibration] all tiers exhausted — last error: Failed to fetch"
+      },
+      "verdict": null,
+      "citations": [],
+      "violations": [],
+      "validationErrors": [],
+      "error": "[TIERED:canonAuditCalibration] all tiers exhausted — last error: Failed to fetch",
+      "packetTruncated": false
+    },
+    {
+      "id": "green_confusion_records",
+      "expect": "pass",
+      "why": "unexplained confusion and a contradictory ledger — ordinary, invents no metaphysics",
+      "latencyMs": 2,
+      "score": {
+        "outcome": "unavailable",
+        "critical": false,
+        "note": "[TIERED:canonAuditCalibration] all tiers exhausted — last error: Failed to fetch"
+      },
+      "verdict": null,
+      "citations": [],
+      "violations": [],
+      "validationErrors": [],
+      "error": "[TIERED:canonAuditCalibration] all tiers exhausted — last error: Failed to fetch",
+      "packetTruncated": false
+    },
+    {
+      "id": "green_alignment_sense",
+      "expect": "pass",
+      "why": "alignment-sense is EXPLICITLY established canon for First Favored",
+      "latencyMs": 3,
+      "score": {
+        "outcome": "unavailable",
+        "critical": false,
+        "note": "[TIERED:canonAuditCalibration] all tiers exhausted — last error: Failed to fetch"
+      },
+      "verdict": null,
+      "citations": [],
+      "violations": [],
+      "validationErrors": [],
+      "error": "[TIERED:canonAuditCalibration] all tiers exhausted — last error: Failed to fetch",
+      "packetTruncated": false
+    },
+    {
+      "id": "green_tempt_history_rewrite",
+      "expect": "pass",
+      "why": "a committed history_rewrite rupture legitimately changed the past; building on it is not an invention",
+      "latencyMs": 4,
+      "score": {
+        "outcome": "unavailable",
+        "critical": false,
+        "note": "[TIERED:canonAuditCalibration] all tiers exhausted — last error: Failed to fetch"
+      },
+      "verdict": null,
+      "citations": [],
+      "violations": [],
+      "validationErrors": [],
+      "error": "[TIERED:canonAuditCalibration] all tiers exhausted — last error: Failed to fetch",
+      "packetTruncated": false
+    },
+    {
+      "id": "green_mundane_invention",
+      "expect": "pass",
+      "why": "invented dialogue, movement and consequence within established capability — the planner's job",
+      "latencyMs": 3,
+      "score": {
+        "outcome": "unavailable",
+        "critical": false,
+        "note": "[TIERED:canonAuditCalibration] all tiers exhausted — last error: Failed to fetch"
+      },
+      "verdict": null,
+      "citations": [],
+      "violations": [],
+      "validationErrors": [],
+      "error": "[TIERED:canonAuditCalibration] all tiers exhausted — last error: Failed to fetch",
+      "packetTruncated": false
+    }
+  ],
+  "summary": {
+    "infrastructureInconclusive": false,
+    "skipped": 0,
+    "skippedIds": [],
+    "unsupportedFindings": 0,
+    "unsupportedIds": [],
+    "infraFailures": 0,
+    "reds": 4,
+    "greens": 4,
+    "caught": 0,
+    "correctPass": 0,
+    "missed": 0,
+    "falsePositives": 0,
+    "undecided": 0,
+    "unavailable": 8,
+    "invalid": 0,
+    "missedIds": [],
+    "falsePositiveIds": [],
+    "undecidedIds": [],
+    "unavailableIds": [
+      "red_memory_extraction",
+      "red_visible_glow",
+      "red_contradicted_knowledge",
+      "red_invalidated_objective",
+      "green_confusion_records",
+      "green_alignment_sense",
+      "green_tempt_history_rewrite",
+      "green_mundane_invention"
+    ],
+    "invalidIds": [],
+    "usableResponses": 0,
+    "totalFixtures": 8,
+    "blockers": [
+      "8 unavailable (no usable response): red_memory_extraction, red_visible_glow, red_contradicted_knowledge, red_invalidated_objective, green_confusion_records, green_alignment_sense, green_tempt_history_rewrite, green_mundane_invention"
+    ],
+    "enableGenerally": false
+  }
+}

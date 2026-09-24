@@ -1,0 +1,64 @@
+{
+  "fixture": {
+    "id": "green_confusion_records",
+    "expect": "pass",
+    "hard": true,
+    "why": "unexplained confusion and a contradictory ledger — ordinary, invents no metaphysics",
+    "plan": {
+      "tactical_move": "let the record contradict the room",
+      "state_change_precondition": "The registrar has not yet read the ledger aloud.",
+      "state_change": "The registrar reads a rite from the ledger that nobody present remembers attending",
+      "forces_choice": "forces Lirael to choose between correcting the record and letting it stand",
+      "branch_a": "correct the record",
+      "branch_b": "let it stand",
+      "event_slots": {
+        "mechanism_grounding": "ordinary",
+        "precondition": "the registrar and the assembly are present",
+        "actor": "the registrar",
+        "action": "reads the ledger aloud",
+        "target": "the assembly",
+        "exit_state": "the assembly now knows the ledger and their memories disagree"
+      }
+    }
+  },
+  "result": {
+    "packetIds": [
+      "neg_0",
+      "neg_1",
+      "neg_2",
+      "neg_3",
+      "neg_4",
+      "neg_5",
+      "neg_6",
+      "neg_7",
+      "neg_8",
+      "neg_9",
+      "wt_0",
+      "wt_1",
+      "wt_2",
+      "wt_3",
+      "wt_4",
+      "wt_5",
+      "dc_0",
+      "know_0",
+      "dc_1",
+      "dc_2",
+      "inv_0"
+    ],
+    "packetTruncated": false,
+    "prompt": {
+      "sys": "You are a CANON AUDITOR for an interactive fiction engine. You classify; you do NOT write.\n\nYou are given a PROPOSED SCENE PLAN and the ONLY canon that applies to it. Decide whether the plan asserts anything the supplied canon does not support.\n\nABSOLUTE LIMITS ON YOU:\n- You may NOT rewrite the plan, propose replacement events, suggest prose, or say what should happen instead.\n- You may NOT invent canon, infer unstated rules, or rely on knowledge from any other story or from the real world.\n- EVERY violation you report MUST cite at least one supplied fact by its id. A finding you cannot ground in a supplied fact is not a finding — omit it.\n- Ordinary human action is ALWAYS allowed and is never a violation: speaking, lying, refusing, arriving, leaving, deciding, withholding, confronting, grieving, institutions convening or suspending, people being confused, records disagreeing, someone noticing an inconsistency. Creative invention of dialogue, movement, tactics and consequence is the planner's JOB — do not flag it.\n- Flag ONLY: a capability or mechanism the canon does not grant; metaphysics the canon does not contain; a character knowing something the canon says they do not; history rewritten when no committed rupture rewrote it; or an objective a committed rupture already invalidated.\n\nCANON PACKET (the complete canon for this scene — nothing was omitted):\n  [neg_0] The supervisor is a SACRIFICIANT (the role): one whose misalignment-sense is honed enough to supervise (the PC is an apprentice Sacrificiant). THE SACRIFICIANT SEAL — worn by whoever supervises, during ANY official First Sacrifice rite: because a supervisor bolstering the youth’s sacrifice with a wish of their OWN would be a ruinous breach, every Sacrificiant is ceremonially SEALED for the rite — a gossamer BAND drawn across the mouth and tied behind the head (just cloth, part of their ceremonial sash; NO orb, NO bead, NO gag), so they cannot cleanly voice a wish while officiating. Vestments are otherwise the same sheer gossamer as everyone, with ONE ornamented ceremonial SASH (never robes). LITERARY: a sealed Sacrificiant’s cries and speech are MUFFLED behind the cloth — emotion reads through the eyes and body. CG: the mouth-band is drawn IN on the supervising Sacrificiant for the duration of the rite.\n  [neg_1] A First Sacrifice is a COMING-OF-AGE RITE — closest analogue a Bar Mitzvah / quinceañera / confirmation / graduation, NOT a death ritual. At 16 (younger minds are too unformed to wish safely) a youth, after long study and practice, publicly makes their first wish and offers its price to Fate. It can be stern and formal, but when it goes well it ENDS IN CELEBRATION; catastrophe is UNUSUAL — everyone understands the safeguards the way we understand fire drills. Do NOT default to disaster, apocalypse, curses, or world-ending stakes.\n  [neg_2] WHO SENSES MISALIGNMENT: EVERY First Favored senses meaningful misalignment - it is part of being First Favored, not a rare talent. TRAINING CHANGES RESOLUTION, NOT POSSESSION: Sacrificiants, Dohkars and unusual savants perceive small semantic divergences early enough to know a wish may twist before it is obvious to everyone else. Never write a scene in which one First Favored senses misalignment while the other trained professionals present cannot.\n  [neg_3] LIRAEL’S FORMAL INQUIRY — WHERE AND WHEN: the presiding Dohkar has asserted the rite and the ruling on the Sacrificiant’s conduct are his, and Julian has publicly claimed authority to convene and preside over a formal inquiry (a Chayr and two Dohkars) into Lirael. When that inquiry is formally convened, it would be held at The Open (the Fatelands’ site for trials, treaties, coronations, and matters of comparable institutional gravity). It is NOT yet convened, and its convening is LATE-ISSUE-1 content, not an early scene’s. Early scenes may carry accusation, preliminary review, political pressure, investigation, concealment, or flight — never the convened inquiry itself, and never a scene staged at The Open before that point.\n  [neg_4] ALIGNMENT-SENSE (the First Favored gift): they do NOT read thoughts or emotions — they perceive ALIGNMENT, how far a person’s desire, intention, sacrifice, and deepest self all point at one truth. Misalignment is as unmistakable to them as a sour note in music.\n  [neg_5] Youth are barred from wishcraft until 16 — but kids sneak little illegal wishes all the time, the way modern teens sneak alcohol.\n  [neg_6] Fate is never visibly seen; a wish produces NO visible magical effect — no light, glow, surge, or sign.\n  [neg_7] Misalignment is SENSED directly by First Favored (their alignment-sense — like a sour note), and by non-First-Favored ONLY through trained observation of BODY-LANGUAGE signs — changed breathing, a faltering or discordant voice, collapsing posture, ritual cues. It is NEVER visible on the Weave-Script: the Weave-Script glows/shifts with EMOTION only (each FF their own colours), and does NOT indicate alignment or a twisting wish. Reading misalignment is a perception / trained expertise, NOT a psychic mind-read and NOT a light show.\n  [neg_8] During a First Sacrifice, NO ONE may interfere.\n  [neg_9] THE RITE HAS NO MAGICAL MACHINERY. There is NO \"sealing of the rite\" - no seal to finish, no ward to close, no circle that locks, no ceremony-state whose incompletion makes a wish malfunction. Also absent: wardens, glowing ward-signs, warding gestures, visible wish-energy, responsive ceremonial fire, and any \"elder\" caste (First Favored authority is professional - Dohkar / Profer / Chayr). NO touch transfers, bends, contaminates or redirects a wish. The non-interference rule is PROCEDURAL AND CULTURAL, not magical.\n  [wt_0] First Favored are hired to GUIDE and SUPERVISE the rite — their alignment-sense and powerful wish-strength make them the preferred (and pricier) choice over human or Kwisheen wishcraft scholars. The supervisor reads the alignment of EVERYONE present, above all the wishing youth, ready to HALT and re-align the wish before it can twist.\n  [wt_1] The rite is PUBLIC partly because anyone present who wishes the youth ILL can twist the outcome — which is exactly what the supervising First Favored guards against.\n  [wt_2] Everyone present is First Favored.\n  [wt_3] The GRADUANT (the role) is the person making the wish at their own First Sacrifice — the one who pays the sacrifice and speaks the desire. The Sacrificiant officiates and supervises; the Graduant wishes. Use the title only where the ceremonial role matters; otherwise the person is called by name.\n  [wt_4] Wishing on another person’s First Sacrifice is among the gravest taboos: the sacrifice and its consequences must belong ENTIRELY to the wisher.\n  [wt_5] A First Sacrifice is ALSO the supervising Sacrificiant’s professional threshold. Successfully guiding a youth through the rite WITHOUT interfering earns the guide the title DOHKAR. If the guide is judged to have interfered, manipulated the wish, or otherwise compromised the rite, the qualification can be DENIED and the guide may face formal inquiry (a Chayr and Dohkars). So the guide has their own rise at stake in the same ceremony as Seren’s coming of age.\n  [dc_0] [memory_perception] everyone forgets the ceremony happened → the assembly forgets the ceremony and its accusations (scope full)\n  [know_0] the assembly is now unaware — no recollection of the rite's events\n  [dc_1] the assembly — ?: nothing of the bent wish or interrogation\n  [dc_2] changed — the assembly: memories of the ceremony and accusation dissolved into blank confusion\n  [inv_0] the formal inquiry cannot be justified without memory of the events\n\nCATEGORIES: unsupported_capability | new_metaphysics | contradicted_knowledge | rewritten_history | invalidated_objective | other\n\nReturn ONLY this JSON, no markdown:\n{ \"verdict\": \"pass\" | \"violation\" | \"cannot_decide\",\n  \"violations\": [ { \"category\": \"<one of the categories>\", \"claim\": \"<the EXACT offending text copied from the plan>\", \"citedFactIds\": [\"<id>\"], \"why\": \"<one sentence, what the cited fact forecloses>\" } ],\n  \"uncertainty\": \"<present ONLY when verdict is cannot_decide: what you could not determine from the supplied canon>\" }",
+      "usr": "PROPOSED SCENE PLAN:\n{\n  \"tactical_move\": \"let the record contradict the room\",\n  \"state_change_precondition\": \"The registrar has not yet read the ledger aloud.\",\n  \"state_change\": \"The registrar reads a rite from the ledger that nobody present remembers attending\",\n  \"forces_choice\": \"forces Lirael to choose between correcting the record and letting it stand\",\n  \"branch_a\": \"correct the record\",\n  \"branch_b\": \"let it stand\",\n  \"event_slots\": {\n    \"mechanism_grounding\": \"ordinary\",\n    \"precondition\": \"the registrar and the assembly are present\",\n    \"actor\": \"the registrar\",\n    \"action\": \"reads the ledger aloud\",\n    \"target\": \"the assembly\",\n    \"exit_state\": \"the assembly now knows the ledger and their memories disagree\"\n  }\n}"
+    },
+    "content": null,
+    "raw": null,
+    "validated": null,
+    "error": "[TIERED:canonAuditCalibration] all tiers exhausted — last error: Failed to fetch"
+  },
+  "score": {
+    "outcome": "unavailable",
+    "critical": false,
+    "note": "[TIERED:canonAuditCalibration] all tiers exhausted — last error: Failed to fetch"
+  },
+  "latencyMs": 2
+}

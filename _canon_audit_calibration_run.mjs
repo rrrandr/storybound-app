@@ -64,8 +64,8 @@ fs.mkdirSync(OUT_DIR, { recursive: true });
   const page = await (await browser.newContext()).newPage();
   const gate = await installFailClosedNetworkGate(page, { logFile: path.join(OUT_DIR, 'gate.jsonl'), blockImagePreparation: true });
   gate.allowRealPaths([PRIMARY_ENDPOINT]);
-  const ledger = makeLedger(CEILING_USD);
-  const holder = { ledger, log: [], currentFixture: null };
+  const ledger = makeLedger(CEILING_USD, PER_CALL_USD);
+  const holder = { ledger, log: [], currentFixture: null, candidate: CAND };
   await installCalibrationRoute(page, holder);
 
   await page.goto('http://localhost:3000/', { waitUntil: 'domcontentloaded', timeout: 25000 });

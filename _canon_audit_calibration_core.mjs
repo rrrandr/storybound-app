@@ -172,18 +172,22 @@ export function loadFixtures() {
 }
 
 // ── RESERVATION: one call per fixture, primary tier only, refused past the ceiling ───────────
-export function makeLedger(ceilingUsd = CEILING_USD) {
+// perCallUsd MUST be the CANDIDATE's rate. It defaulted to the module constant (Mistral's), so the
+// gpt-4o-mini run reserved at $0.000495/call while actually spending $0.000810 — under the ceiling
+// either way, but the reported reservation was simply the wrong number for the model being run.
+export function makeLedger(ceilingUsd = CEILING_USD, perCallUsd = PER_CALL_USD) {
   const entries = []; let total = 0;
   return {
-    get entries() { return entries.slice(); }, get totalUsd() { return total; }, ceilingUsd,
+    get entries() { return entries.slice(); }, get totalUsd() { return total; }, ceilingUsd, perCallUsd,
     reserve(label) {
-      if (total + PER_CALL_USD > ceilingUsd + 1e-12) {
-        const e = { label, ok: false, usd: PER_CALL_USD, runningTotalUsd: total,
-          reason: 'reserving ' + label + ' ($' + PER_CALL_USD.toFixed(6) + ') would pass the ceiling $' + ceilingUsd.toFixed(6) };
+      const perCall = perCallUsd;
+      if (total + perCall > ceilingUsd + 1e-12) {
+        const e = { label, ok: false, usd: perCall, runningTotalUsd: total,
+          reason: 'reserving ' + label + ' ($' + perCall.toFixed(6) + ') would pass the ceiling $' + ceilingUsd.toFixed(6) };
         entries.push(e); return e;
       }
-      total += PER_CALL_USD;
-      const e = { label, ok: true, usd: PER_CALL_USD, runningTotalUsd: total };
+      total += perCall;
+      const e = { label, ok: true, usd: perCall, runningTotalUsd: total };
       entries.push(e); return e;
     }
   };
@@ -197,12 +201,18 @@ export async function installCalibrationRoute(page, holder) {
     let body = null; try { body = JSON.parse(req.postData() || '{}'); } catch (_) {}
     const model = (body && (body.model || body.preferredModel)) || null;
     const log = holder.log, ledger = holder.ledger;
-    if (pathname.indexOf(PRIMARY_ENDPOINT) !== 0) {
-      log.push({ kind: 'blocked-endpoint', pathname, reason: 'calibration allows only ' + PRIMARY_ENDPOINT });
+    // The pinned candidate comes from the HOLDER, not from module constants. Those constants are
+    // Mistral's, and reading them here silently blocked the gpt-4o-mini run at its own endpoint —
+    // zero dispatches, zero cost, and a result that said nothing. Fail-closed worked; the pin was
+    // simply pointed at the wrong model.
+    const wantEndpoint = (holder.candidate && holder.candidate.endpoint) || PRIMARY_ENDPOINT;
+    const wantModel = (holder.candidate && holder.candidate.model) || PRIMARY_MODEL;
+    if (pathname.indexOf(wantEndpoint) !== 0) {
+      log.push({ kind: 'blocked-endpoint', pathname, reason: 'calibration allows only ' + wantEndpoint });
       await route.abort('failed'); return;
     }
-    if (model !== PRIMARY_MODEL) {
-      log.push({ kind: 'blocked-model', pathname, model, reason: 'calibration measures ' + PRIMARY_MODEL + ' only; a cascade would report another model as Mistral' });
+    if (model !== wantModel) {
+      log.push({ kind: 'blocked-model', pathname, model, reason: 'calibration measures ' + wantModel + ' only; a cascade would report another model as this one' });
       await route.abort('failed'); return;
     }
     const r = ledger.reserve(holder.currentFixture || pathname);
