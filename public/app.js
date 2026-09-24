@@ -100352,6 +100352,21 @@ function _buildAuthorFloorDirective(s) {
                    })())
               : ('CURRENT MILESTONE (distant TARGET — constrains what the next event may be; NOT a per-scene mandate): ' + JSON.stringify((_curMs && _curMs.event) || goal).slice(0, 300)
                  + '\nA-plot goal: ' + JSON.stringify(goal).slice(0, 200)))
+            // RUPTURE OBJECTIVE PRECEDENCE — resolved HERE, before dispatch, so the planner never
+            // receives an incompatible scheduled objective as simultaneously mandatory. Inert
+            // (empty string) unless a committed Tempt consequence actually recorded invalidated
+            // plans, so every non-rupture story is byte-identical to before.
+            + (function () {
+                try {
+                  var _op = (typeof _resolveObjectivePrecedence === 'function')
+                    ? _resolveObjectivePrecedence(s, (_curMs && _curMs.event) || goal) : null;
+                  if (_op && _op.mode === 'contingent') {
+                    try { console.log('[PLANNER:PRECEDENCE] scheduled objective DEMOTED to contingent — ' + _op.invalidated.length + ' committed rupture(s) recorded invalidated plans'); } catch (_) {}
+                    return '\n' + _op.directive;
+                  }
+                } catch (_) {}
+                return '';
+              })()
             + '\nIssue pressures: ' + JSON.stringify(pressures).slice(0, 250)
             + '\nCOMMITTED WORLD STATE — facts already TRUE (irreversible; do NOT re-establish or re-flip; your event MUST build FROM these): ' + JSON.stringify((_csGen.facts || []).slice(-8).map(function (f) { return f.fact; })).slice(0, 480)
             + ((_csGen.pendingIntent && !(typeof window !== 'undefined' && window._suppressPendingIntent === true)) ? ('\nPENDING INTENT — a prior scene tried to advance toward the milestone but did NOT deliver. Continue TOWARD the milestone, but choose the BEST reachable event NOW from the committed state; do NOT blindly repeat the failed attempt: ' + JSON.stringify(_csGen.pendingIntent.proposed || '').slice(0, 200)) : '')
@@ -100791,7 +100806,7 @@ function _buildAuthorFloorDirective(s) {
           // headroom). Event SELECTION semantics are unchanged — slots decompose the event already chosen —
           // but this is not literally a zero-delta planner call.
           if (typeof window !== 'undefined' && (window._structuredEventHandoff === true || window._evidenceCommitCheck !== false)) {
-            _scSys += '\n\nSTRUCTURED EVENT HANDOFF (REQUIRED — add ONE more key to your JSON): also return "event_slots", decomposing THE SAME single event you chose (do NOT invent a different one) into its SEMANTIC core: { "precondition":"WHAT MUST BE PRESENT for this event to be STAGEABLE — the actor and target must exist / be present in the scene (e.g. \\"Julian is present in the scene\\"). A PRESENCE / availability condition, NOT the before-state the event overturns. If the needed party cannot be present, the event is IMPOSSIBLE — pick a different event", "actor":"who performs it", "action":"the core thing they do", "target":"who or what it is done TO / BEFORE / WITH — a specific character or object; if genuinely none, \\"none\\"", "exit_state":"the ONE fact about the world that is now TRUE because it happened, phrased as a STATE (e.g. \\"the elders now believe Julian caused it\\")" }. EXIT_STATE is the PRIMARY invariant. These four are the author\'s SEMANTIC contract — MEANING, not wording: the author may freely choose location, phrasing, imagery, pacing, AND invent additional micro-beats (hesitation, a lie, an escalation, a reversal), but may NEVER change WHO acts, the core action, WHOM it targets, or the exit_state.';
+            _scSys += '\n\nSTRUCTURED EVENT HANDOFF (REQUIRED — add ONE more key to your JSON): also return "event_slots", decomposing THE SAME single event you chose (do NOT invent a different one) into its SEMANTIC core: { "precondition":"WHAT MUST BE PRESENT for this event to be STAGEABLE — the actor and target must exist / be present in the scene (e.g. \\"Julian is present in the scene\\"). A PRESENCE / availability condition, NOT the before-state the event overturns. If the needed party cannot be present, the event is IMPOSSIBLE — pick a different event", "actor":"who performs it", "action":"the core thing they do", "target":"who or what it is done TO / BEFORE / WITH — a specific character or object; if genuinely none, \\"none\\"", "exit_state":"the ONE fact about the world that is now TRUE because it happened, phrased as a STATE (e.g. \\"the elders now believe Julian caused it\\")", "mechanism_grounding":"REQUIRED. What makes this event PHYSICALLY POSSIBLE in this world. Write exactly \\"ordinary\\" when it needs no special capability — speaking, moving, refusing, arriving, deciding, withholding, and institutions convening or suspending are ALL ordinary. Otherwise name the specific WORLD TRUTH, stage affordance, or established canon that grants the capability, in its own words. You may NOT invent a capability, power, faculty or supernatural mechanism to make an event possible — if no grounded source supports it, choose a different event." }. EXIT_STATE is the PRIMARY invariant. These four are the author\'s SEMANTIC contract — MEANING, not wording: the author may freely choose location, phrasing, imagery, pacing, AND invent additional micro-beats (hesitation, a lie, an escalation, a reversal), but may NEVER change WHO acts, the core action, WHOM it targets, or the exit_state.';
           }
           if (_openReuse) {
             // Same posture, accepted objective on record: no planner call; the persisted transition stands.
@@ -100984,6 +100999,31 @@ function _buildAuthorFloorDirective(s) {
             _stateChange.slots = { precondition: String(_es.precondition || '').trim(), actor: String(_es.actor || '').trim(), action: String(_es.action || '').trim(), target: String(_es.target || '').trim(), exitState: String(_es.exit_state || '').trim() };
             try { console.log('[EVENT-SLOTS] scene=' + (s.turnCount || 0) + ' actor="' + _stateChange.slots.actor + '" action="' + _stateChange.slots.action + '" target="' + _stateChange.slots.target + '" exit="' + _stateChange.slots.exitState.slice(0, 70) + '"'); } catch (_) {}
           }
+          // CAPABILITY GROUNDING GATE — BEFORE the author ever sees this event (Roman 2026-09-24).
+          // Grounded sources come from real supplied state, never assembled inside the detector.
+          try {
+            if (typeof _detectUngroundedCapability === 'function') {
+              var _cgWT = [];
+              try { _cgWT = (typeof _resolveRequiredTruths === 'function' && _curMs) ? (_resolveRequiredTruths(s, _curMs.requiredTruths) || []) : []; } catch (_) {}
+              var _cgAff = [];
+              try {
+                var _cgRec = (typeof _activeStageRecord === 'function') ? _activeStageRecord(s) : null;
+                if (_cgRec && Array.isArray(_cgRec.affordances)) _cgAff = _cgRec.affordances.slice();
+              } catch (_) {}
+              var _cgFacts = [];
+              try { _cgFacts = ((_csGen && Array.isArray(_csGen.facts)) ? _csGen.facts : []).map(function (f) { return f && f.fact; }).filter(Boolean); } catch (_) {}
+              var _cgGround = _detectUngroundedCapability(_scP, {
+                worldTruths: _cgWT, affordances: _cgAff, canonFacts: _cgFacts,
+                canonText: (s._spineConstraints || '')
+              });
+              if (_cgGround.flagged) {
+                try { console.warn('[PLANNER:GROUNDING] REJECTED before the author — ' + _cgGround.reasons.join(' | ')); } catch (_) {}
+                s._plannerGroundingRejection = { at: Date.now(), reasons: _cgGround.reasons, declared: _cgGround.declared, proposed: _stateChange && _stateChange.event };
+              } else {
+                s._plannerGroundingRejection = null;
+              }
+            }
+          } catch (_) {}
           // DERIVED one-element hardBeats (compat view — ONE DIRECTION ONLY: state_change → beat, never read back
           // to reinterpret the scene). Downstream fulfillment scorer / obligation ledger / CG carryover consume
           // this UNCHANGED; state_change remains the sole authority.
@@ -191782,6 +191822,146 @@ No text, no watermark, no UI elements, share-ready.`;
   }
   window._buildTemptFateActiveInvocationDirective = _buildTemptFateActiveInvocationDirective;
 
+  // ══════════════════════════════════════════════════════════════════════════════════════════════
+  // RUPTURE OBJECTIVE PRECEDENCE (Roman 2026-09-24, after the failed Scene B)
+  //
+  // THE DEFECT. Scene A committed a memory rupture whose own record declared
+  // invalidatedPlans: ["the formal inquiry cannot be justified without memory of the events"].
+  // Scene B's planner was then handed First Sacrifice's seed-authored row-3 goal — "THE PRICE AND
+  // THE THRESHOLD" — as a MANDATORY objective, and dutifully proposed that the presiding Dohkar
+  // "draws the memory of the accusation from Seren's mind". Three separate contradictions followed:
+  // a memory the rupture had already erased was reintroduced so it could be removed again; a Dohkar
+  // who had asked "What gathering is this?" was given specific knowledge of the forgotten
+  // accusation; and a mind-extraction capability no world truth grants was invented outright.
+  //
+  // Traced cause, both halves structural:
+  //   1. invalidatedPlans was written into canon and then read by NOTHING. Its only appearances
+  //      were the schema line, its own type check, and the commit record. It never participated in
+  //      objective selection — it was advisory prose in a prompt, nothing more.
+  //   2. The existing rupture precedence (_buildEventFramePrecedence, and the lane waiver in
+  //      _detectPlannerFunctionGap) only ever displaced the deterministic AFTERMATH LANE on an OPEN
+  //      row. A fixed seed goal, a milestone, a scheduled proceeding or a reserved future beat could
+  //      not be displaced by anything.
+  //
+  // THE FIX, deliberately generic. Any committed rupture of ANY class — possession, reputation,
+  // relationship, history rewrite, memory — that recorded invalidated plans DEMOTES a scheduled
+  // objective from mandatory to contingent, and hands the planner the changed reality to replan
+  // from. It does NOT prescribe a replacement: choosing the new event stays the planner's job.
+  // History stays history; only FUTURE plans are reopened.
+  // ══════════════════════════════════════════════════════════════════════════════════════════════
+  function _tfoInvalidatedPlanIndex(s) {
+    s = s || window.state || {};
+    var out = { any: false, entries: [] };
+    try {
+      var dc = Array.isArray(s._temptFateDurableConsequences) ? s._temptFateDurableConsequences : [];
+      dc.forEach(function (d) {
+        if (!d || d.source !== 'tempt') return;
+        var inv = Array.isArray(d.invalidatedPlans) ? d.invalidatedPlans.filter(function (x) { return typeof x === 'string' && x.trim(); }) : [];
+        if (!inv.length) return;
+        out.any = true;
+        out.entries.push({
+          proposalId: d.proposalId || null,
+          wish: d.requestedRupture || '',
+          ruptureClass: d.ruptureClass || 'other',
+          scopeMatch: d.scopeMatch || 'unstated',
+          invalidatedPlans: inv,
+          changed: Array.isArray(d.changed) ? d.changed : [],
+          establishedEvidence: Array.isArray(d.establishedEvidence) ? d.establishedEvidence : [],
+          openPossibilities: Array.isArray(d.openPossibilities) ? d.openPossibilities : [],
+          knowledgeStates: Array.isArray(d.knowledgeStates) ? d.knowledgeStates : []
+        });
+      });
+    } catch (_) {}
+    return out;
+  }
+  window._tfoInvalidatedPlanIndex = _tfoInvalidatedPlanIndex;
+
+  // Resolved BEFORE dispatch. Returns {mode:'mandatory'|'contingent', directive, invalidated}.
+  function _resolveObjectivePrecedence(s, scheduledGoalText) {
+    var idx = _tfoInvalidatedPlanIndex(s);
+    if (!idx.any) return { mode: 'mandatory', directive: '', invalidated: [] };
+
+    var lines = ['\nSCHEDULED OBJECTIVE — CONTINGENT, NOT MANDATORY (HARD, resolved before this prompt was built):'];
+    lines.push('A Tempt Fate rupture has ALREADY been committed to canon, and its own accepted outcome record declares that it made specific scheduled things impossible, suspended, or unexplained. The scheduled objective you were given below is therefore NOT automatically still your objective.');
+    idx.entries.forEach(function (e) {
+      lines.push('  • COMMITTED RUPTURE (' + e.ruptureClass + ', scope ' + e.scopeMatch + '): "' + String(e.wish).slice(0, 200) + '"');
+      e.invalidatedPlans.forEach(function (p) { lines.push('      NO LONGER SUPPORTED: ' + String(p).slice(0, 220)); });
+      if (e.changed.length) lines.push('      WHAT CHANGED: ' + e.changed.map(function (c) { return (c && c.subject ? c.subject + ' — ' : '') + (c && c.whatChanged ? c.whatChanged : ''); }).join(' | ').slice(0, 300));
+      if (e.knowledgeStates.length) lines.push('      WHO KNOWS WHAT NOW: ' + e.knowledgeStates.map(function (k) { return (k && k.character ? k.character + ': ' + (k.state || '?') : ''); }).filter(Boolean).join(' | ').slice(0, 300));
+      if (e.establishedEvidence.length) lines.push('      SURVIVING EVIDENCE (still on the page, still usable): ' + e.establishedEvidence.join(' | ').slice(0, 300));
+      if (e.openPossibilities.length) lines.push('      OPEN POSSIBILITIES the rupture created: ' + e.openPossibilities.join(' | ').slice(0, 300));
+    });
+    lines.push('DECIDE FIRST, BEFORE ANYTHING ELSE: does the scheduled objective still make CAUSAL sense given the facts above?');
+    lines.push('  — If it does, pursue it as written.');
+    lines.push('  — If it does NOT, you must NOT stage it anyway, and you must NOT quietly restore a fact the rupture removed so that the scheduled event becomes possible again. Reintroducing an erased memory, an undone possession, a repaired reputation or a rewritten history purely so a scheduled beat can still happen is the single worst failure available to you here.');
+    lines.push('  Instead DERIVE a fresh event from the changed reality above: from what actually changed, from the surviving evidence, from the open possibilities, from who now knows what, and from the relationships and story-bearing material that remain valid.');
+    lines.push('HISTORY IS NOT REOPENED. Scenes the reader has already read still happened. What is reopened is only the FUTURE plan that no longer follows from the present.');
+    lines.push('NOTHING IS PRESCRIBED HERE. Confusion, contradictory physical records, people asking why they gathered, a proceeding nobody can justify, someone noticing an inconsistency — these are all AVAILABLE, none is required, and this directive does not tell you which (if any) to write. Choose what actually follows.');
+    if (scheduledGoalText) lines.push('THE SCHEDULED OBJECTIVE NOW UNDER REVIEW: ' + String(scheduledGoalText).slice(0, 300));
+    return { mode: 'contingent', directive: lines.join('\n') + '\n', invalidated: idx.entries };
+  }
+  window._resolveObjectivePrecedence = _resolveObjectivePrecedence;
+
+  // ── CAPABILITY GROUNDING GATE (Roman 2026-09-24, requirement 5) ─────────────────────────────
+  // The failed Scene B planner proposed event_slots {actor: "the presiding Dohkar", action:
+  // "extracts", target: "Seren's offered memory of the accusation"} — a supernatural capability no
+  // world truth grants, in a setting whose own canon has wishes produce no visible magical effect
+  // and gives Dohkars no mind-extraction power. Nothing checked it, and the author faithfully
+  // dramatised it as a pale thread carrying an image between two people.
+  //
+  // The check is the same shape as the outcome citation check: the proposal must DECLARE what
+  // makes its event possible, and the declaration is verified against the grounded material the
+  // planner was actually given. It never carries its own list of "allowed magic" — that would be
+  // a hardcoded lexicon and would not survive contact with a second story.
+  //
+  // KNOWN LIMIT, stated rather than hidden: a planner that falsely declares "ordinary" while
+  // proposing something supernatural is not caught here, exactly as a model that fabricates a
+  // citation quote is only caught because the quote is checkable. This raises the cost of the
+  // failure from free to a deliberate false declaration; it does not make it impossible.
+  function _detectUngroundedCapability(proposal, opts) {
+    opts = opts || {};
+    var reasons = [];
+    try {
+      if (!proposal || typeof proposal !== 'object') return { flagged: false, reasons: [] };
+      var slots = proposal.event_slots || {};
+      var declared = proposal.mechanism_grounding || slots.mechanism_grounding;
+      var eventText = [proposal.state_change, proposal.local_objective, slots.action, slots.target]
+        .filter(function (x) { return typeof x === 'string'; }).join(' ');
+      if (!eventText.trim()) return { flagged: false, reasons: [] };
+
+      if (typeof declared !== 'string' || !declared.trim()) {
+        reasons.push('the proposed event declares no mechanism_grounding — every event must state either "ordinary" (it needs no special capability) or the specific world truth, stage affordance, or established canon that makes it possible');
+        return { flagged: true, reasons: reasons, declared: null };
+      }
+      if (/^\s*ordinary\s*$/i.test(declared)) return { flagged: false, reasons: [], declared: 'ordinary' };
+
+      // Verify the declaration against what the planner was actually given. Sources are supplied
+      // by the caller from real state — never assembled here.
+      var sources = []
+        .concat(Array.isArray(opts.worldTruths) ? opts.worldTruths : [])
+        .concat(Array.isArray(opts.affordances) ? opts.affordances : [])
+        .concat(Array.isArray(opts.canonFacts) ? opts.canonFacts : [])
+        .concat(typeof opts.canonText === 'string' ? [opts.canonText] : []);
+      var hay = sources.join('\n').toLowerCase();
+      if (!hay.trim()) {
+        reasons.push('the proposed event claims a non-ordinary mechanism ("' + String(declared).slice(0, 120) + '") but no world truths, stage affordances or canon were available to ground it against');
+        return { flagged: true, reasons: reasons, declared: declared };
+      }
+      // Substantive overlap: at least one content word of 5+ characters from the declaration must
+      // appear in the grounded material. Deliberately loose — its job is to catch a declaration
+      // grounded in NOTHING, not to adjudicate wording.
+      var words = String(declared).toLowerCase().replace(/[^a-z0-9\s]/g, ' ').split(/\s+/)
+        .filter(function (w) { return w.length >= 5; });
+      var hit = words.some(function (w) { return hay.indexOf(w) !== -1; });
+      if (!hit) {
+        reasons.push('the proposed event grounds itself in "' + String(declared).slice(0, 120)
+          + '", which appears nowhere in this story\'s world truths, accepted stage affordances or established canon — a capability or mechanism cannot be invented to make a scheduled event possible');
+      }
+    } catch (e) { return { flagged: false, reasons: [], error: e && e.message }; }
+    return { flagged: reasons.length > 0, reasons: reasons, declared: (proposal && (proposal.mechanism_grounding || (proposal.event_slots || {}).mechanism_grounding)) || null };
+  }
+  window._detectUngroundedCapability = _detectUngroundedCapability;
+
   function buildTemptFateCallbackDirective() {
     var s = window.state || {};
     var ledger = s._temptFateLedger;
@@ -233214,6 +233394,16 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
           try { console.warn('[CG:PLANNER-GATE] REJECTED before author dispatch, scene=' + sceneIndex + ' — ' + _pfGate.reason); } catch (_) {}
           return { __plannerFunctionRejected: true, reason: _pfGate.reason, sceneIndex: sceneIndex };
         }
+      }
+    } catch (_) {}
+    // CAPABILITY GROUNDING — reject here, on the same footing as the planner function gate, so an
+    // ungrounded supernatural mechanism cannot reach a paid author call.
+    try {
+      if (state._plannerGroundingRejection) {
+        var _gr = state._plannerGroundingRejection;
+        state._plannerGroundingRejection = null;
+        console.warn('[CG:SCREENPLAY] planner grounding rejection — refusing to dispatch the author: ' + _gr.reasons.join(' | '));
+        return { __plannerFunctionRejected: true, reason: 'ungrounded capability: ' + _gr.reasons.join(' | '), sceneIndex: sceneIndex };
       }
     } catch (_) {}
     // SCENE-1 DIRECT-vs-SUBTLE AXIS EMBODIMENT (Roman 2026-07-15) — match literary.

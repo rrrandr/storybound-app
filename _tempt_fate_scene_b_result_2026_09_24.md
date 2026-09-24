@@ -1,4 +1,34 @@
-# Scene B — does an ordinary continuation live with the rupture?
+# Scene B — FAILED continuity/canon result
+
+> **RECLASSIFIED 2026-09-24 (Roman).** My original verdict below — "the story does keep living with
+> the rupture" — was **wrong**. I graded the prose and missed that the *planner* was following a
+> stale objective. The infrastructure passed; the story did not. The corrected verdict:
+>
+> **PLUMBING: PASS.** No new invocation, the committed consequence unchanged, and it reached both
+> Scene B's planner and author prompts.
+>
+> **STORY: FAIL.** The planner followed the stale seed goal **"THE PRICE AND THE THRESHOLD"** and
+> proposed that the Dohkar *"draws the memory of the accusation from Seren's mind."* The author
+> faithfully dramatised it as a visible pale thread carrying an image between two people. That is:
+> - an **erased** memory reintroduced so it could be removed again;
+> - a Dohkar who asked *"What gathering is this?"* given specific knowledge of, and agency over, the
+>   forgotten accusation;
+> - **invented magic** — Fatelands wishes produce no visible effect, the rite has no magical
+>   machinery, and no canon grants Dohkars mind-extraction. "Old words", visible memory threads and
+>   a spoken undo mechanism are all new.
+> - Julian **inert across both scenes**, so the romance test failed too.
+>
+> **The failure begins in the planner, not the author.** Root cause, fix and dry proof:
+> `_rupture_objective_precedence_control.mjs` (29/29) and the commit that carries it.
+>
+> What survives from the analysis below: the **density** measurement (24 beats / 1105 chars, inside
+> the ordinary range) and the **containment** table. Sections 1–5 of my original review are left
+> intact as the record of a verdict that was too generous — in particular §2's praise for
+> "developing the Seren gap" was crediting the model for a contradiction.
+
+---
+
+## ORIGINAL (SUPERSEDED) REVIEW — does an ordinary continuation live with the rupture?
 
 **Authorized and run once, 2026-09-24.** Hydrated byte-for-byte from the committed 09-24 Scene A.
 6 dispatches of 26 permitted. Realized **≈$0.041** (app's own `[SCENE-COST] Finalized: $0.0411`,
@@ -93,12 +123,14 @@ he should not have, Scene B violates the rupture it otherwise honours. If it rea
 it is a genuinely sophisticated development. The prose does not settle it, and I am not going to
 settle it for you.
 
-## Summary
+## Summary — SUPERSEDED, see the reclassification at the top
 
-The story does keep living with the rupture. Memory stays gone, the unaccounted party becomes the
-plot, the scheduled inquiry does not happen, density is normal, and every containment guarantee
-held. What it does not do is develop Julian or generate any romantic pressure — and it leaves one
-continuity question open that only you can rule on.
+My original summary read "The story does keep living with the rupture." That was wrong, and it was wrong
+in a specific way worth recording: I evaluated the prose against the committed record and never
+asked what OBJECTIVE the planner had been given. The scene is internally fluent, which is exactly
+what made it easy to over-credit. The Dohkar question I flagged as "the sharpest thing for human
+review" was not an ambiguity to adjudicate — it was the visible surface of a planner following a
+stale mandate, and I should have traced it rather than handed it over as a judgement call.
 
 ## Accounting
 

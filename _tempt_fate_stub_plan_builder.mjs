@@ -63,7 +63,11 @@ export function buildScheduleAwareStubResponse(sysText, usrText, isTemptScene) {
     // "event_slots.exit_state" (a real, separate rejection reason seen empirically, from a DIFFERENT
     // gate than _validateLocalObjective — the planner-function/aftermath-lane gate) needs a
     // non-empty nested exit_state alongside aftermath_obligations below.
-    event_slots: { exit_state: 'The assembly disperses, still not agreeing on what just happened.' }
+    // mechanism_grounding added 2026-09-24 with the capability grounding gate. A stub that omits
+    // it is now REJECTED before the author — which is the gate working, but it makes every
+    // downstream assertion in this harness fail for a reason unrelated to what it tests. 'ordinary'
+    // is the honest value: nothing in this stub's event needs a special capability.
+    event_slots: { exit_state: 'The assembly disperses, still not agreeing on what just happened.', mechanism_grounding: 'ordinary' }
   });
   // scene_function / aftermath_obligations — required whenever the seed declares a sceneFunction
   // row (app.js ~100488).
