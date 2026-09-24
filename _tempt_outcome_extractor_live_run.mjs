@@ -97,7 +97,12 @@ fs.mkdirSync(OUT_DIR, { recursive: true });
   gate.setPhase('extractor-only', DECLARED_TIERS.length);
   const res = await runExtractorOnly(page, built.ctx);
   gate.closePhase();
-  await gate.waitForSettlement({ quietMs: 8000 }).catch(() => {});
+  // waitForSettlement(roleTag, opts) — the FIRST argument is the roleTag. Passing an options
+  // object here made it wait on a roleTag that never existed, and the 2026-09-24 authorized run
+  // hung after its (successful, single) dispatch until it was killed. The response had already
+  // settled and was preserved in gate.jsonl, so nothing was lost and nothing was re-dispatched —
+  // but the report had to be rebuilt from the log afterwards.
+  await gate.waitForSettlement('extractor-only', { quietMs: 8000 }).catch(() => {});
 
   const findings = evaluateFindings(res.raw, built.ctx.rosterNames);
   const tracked = gate.trackedCalls ? gate.trackedCalls() : [];
