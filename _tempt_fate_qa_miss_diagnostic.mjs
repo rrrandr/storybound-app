@@ -62,12 +62,18 @@ const SCENE = JSON.parse(fs.readFileSync(path.join(__dirname, '_tempt_fate_fixtu
   console.log('    verdict: ' + (adequacy.failed ? 'FAILED' : 'PASSED') + '  reasons=' + JSON.stringify(adequacy.reasons || []));
   console.log('    ending check: ' + JSON.stringify((adequacy.checks || {}).ending));
 
-  // MISS 1 — the suspended-mood ending. The detector has the rule; it did not fire.
+  // MISS 1 — the suspended-mood ending. ORIGINAL DIAGNOSIS (2026-09-24, before the fix): the
+  // detector had the rule but did not fire, because \bspeaks?\b matched "I could speak now and
+  // claim what I did" and set movementVerbPresent=true. These assertions now check the REPAIR.
   const endingChecks = (adequacy.checks || {}).ending || {};
-  ok('MISS CONFIRMED — the scene ends on suspended mood, and the adequacy detector did NOT flag it',
-    endingChecks.suspensionVocabPresent === true && endingChecks.movementVerbPresent === true
-    && !(adequacy.reasons || []).some((r) => /suspended mood/.test(r)),
-    JSON.stringify(endingChecks) + ' reasons=' + JSON.stringify(adequacy.reasons));
+  ok('FIXED — the modality-aware movement test no longer counts "I could speak now" as completed forward movement',
+    endingChecks.suspensionVocabPresent === true && endingChecks.movementVerbPresent === false,
+    JSON.stringify(endingChecks));
+  ok('...and with no post-scene fulfilment data the ending is recorded as UNKNOWN, not failed — an absent signal must not manufacture a defect',
+    endingChecks.assignedEventLanded === 'unknown'
+    && !(adequacy.reasons || []).some((r) => /suspended mood/.test(r))
+    && (adequacy.warnings || []).some((w) => /UNKNOWN/.test(w)),
+    JSON.stringify(endingChecks) + ' warnings=' + JSON.stringify(adequacy.warnings));
 
   // WHY: the movement-verb test is mood-blind. Prove it on the tail text directly, using the
   // production regexes rather than a copy.
@@ -85,8 +91,18 @@ const SCENE = JSON.parse(fs.readFileSync(path.join(__dirname, '_tempt_fate_fixtu
 
   // MISS 2 — beat count. The prompt sets three floors; the detector has no such check at all.
   section('2. BEAT COUNT — the prompt sets floors of 18 / 22 / 30-38. What enforces them?');
-  ok('ROOT CAUSE — _detectSceneAdequacyFailure contains NO beat-count check whatsoever',
-    why.srcHasBeatCount === false, 'a beats.length comparison WAS found — re-read the detector');
+  // ORIGINAL DIAGNOSIS: no beat-count check existed anywhere, against three prompt-stated floors.
+  // Now checks the REPAIR — a density floor exists, and is WARN-only.
+  ok('FIXED — _detectSceneAdequacyFailure now carries a beat-count floor',
+    why.srcHasBeatCount === true, 'no beats.length comparison found — the density floor is missing');
+  const density = (adequacy.checks || {}).density || {};
+  ok('...the density floor reports BOTH axes (beats and prose), never beats alone',
+    typeof density.beats === 'number' && typeof density.proseChars === 'number'
+    && density.beatFloor === 23 && density.proseFloor === 915, JSON.stringify(density));
+  ok('...and it WARNS without failing — this 18-beat/796-char scene is recorded, not rejected',
+    (adequacy.warnings || []).some((w) => /density below the observed corpus floor/.test(w))
+    && !(adequacy.reasons || []).some((r) => /density/.test(r)),
+    'warnings=' + JSON.stringify(adequacy.warnings));
   // Narrowed deliberately. A first pass matched `length < <two digits>` on ANY array and turned up
   // five unrelated validators; that was a bad probe, not a finding. Only a floor applied to a
   // screenplay BEATS array is relevant here.
@@ -100,8 +116,8 @@ const SCENE = JSON.parse(fs.readFileSync(path.join(__dirname, '_tempt_fate_fixtu
     });
   });
   console.log('    exported detectors applying a numeric floor to a BEATS array: ' + JSON.stringify(anyBeatFloor));
-  ok('the 30-38 beat target exists ONLY as prompt text — no exported validator enforces a beat floor',
-    anyBeatFloor.length === 0, 'found: ' + JSON.stringify(anyBeatFloor));
+  ok('FIXED — a beat floor now exists in an exported detector (it existed nowhere at diagnosis time)',
+    anyBeatFloor.indexOf('_detectSceneAdequacyFailure') !== -1, 'found: ' + JSON.stringify(anyBeatFloor));
 
   // ── 2b. THE HEADLINE: is the QA layer wired into production at all? ──────────────────────────
   section('2b. IS THE QA LAYER EVEN CALLED? (reading app.js from disk, not trusting the runtime)');

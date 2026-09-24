@@ -143,9 +143,19 @@ const VALID_BEATS = [{ idx: 0, kind: 'narration', text: 'The ceremony hall stand
     // The REAL system-prompt builder — the exact function _runCGScreenplayGenInner calls to build
     // sysPrompt for the real fetch('/api/proxy', ...) request.
     const sysPrompt = await page.evaluate(() => window._buildCGScreenplaySystemPrompt());
-    ok('the REAL CG system prompt (the one actually sent to the provider) asks for "temptFateOutcome"', sysPrompt.indexOf('"temptFateOutcome"') !== -1, 'len=' + sysPrompt.length);
-    ok('it asks for it in the SAME JSON output schema documentation as other structured fields (kink_introduced appears earlier, temptFateOutcome closes the same object)', (() => { const a = sysPrompt.indexOf('"kink_introduced"'); const b = sysPrompt.indexOf('"temptFateOutcome"'); return a !== -1 && b !== -1 && a < b; })());
-    ok('it carries per-effect durability instructions (expires|persists|uncertain)', sysPrompt.indexOf('expires | persists | uncertain') !== -1);
+    // MIGRATED 2026-09-24 — these three used to prove the author was ASKED to self-certify the
+    // outcome. It no longer is: the dedicated extractor reads the accepted page instead. The
+    // assertions invert, and the contract itself is proven on the EXTRACTOR prompt in
+    // _tempt_fate_outcome_contract_control.mjs §2.
+    ok('the REAL CG system prompt NO LONGER asks the author to self-certify "temptFateOutcome"', sysPrompt.indexOf('"temptFateOutcome"') === -1, 'len=' + sysPrompt.length);
+    ok('...nor for any of the outcome contract\'s own fields (affectedKnowers, scopeMatch)', sysPrompt.indexOf('affectedKnowers') === -1 && sysPrompt.indexOf('scopeMatch') === -1);
+    // Removing the schema removed the key it closed, so the JSON schema block must still be
+    // well-formed — no trailing comma left dangling before the closing brace. (This prompt is
+    // built with no active rupture, so the ACTIVE INVOCATION directive is legitimately absent
+    // here; the contract control covers that directive on a rupture prompt.)
+    ok('...and the output schema block still closes cleanly — no dangling comma where the outcome key used to be',
+      /"escalation_rhythm":[^\n]*\n\s*\}\s*\n\}/.test(sysPrompt) && sysPrompt.indexOf('},\n}') === -1,
+      sysPrompt.slice(sysPrompt.indexOf('"escalation_rhythm"'), sysPrompt.indexOf('"escalation_rhythm"') + 400).slice(-120));
     await page.evaluate(() => { window.state.tempt_fate_invoked_this_turn = false; window.state.temptFateWish = ''; });
   }
 
@@ -180,7 +190,7 @@ const VALID_BEATS = [{ idx: 0, kind: 'narration', text: 'The ceremony hall stand
     // _sceneLedgerCommit; calling it directly here simulates "persistence happened" without
     // invoking that whole async pipeline (same reasoning as _cgTemptFateAftermathCleanup's own
     // extraction, which this control already relies on).
-    await page.evaluate((p) => window._cgTemptFateCommitAtPersistence(p), returnedPlan);
+    await page.evaluate(async (p) => { window._cgTemptFateCommitAtPersistence(p); await window._tfoResumePending(); }, returnedPlan);
     const after = await page.evaluate(() => (window.state._temptFateDurableConsequences || []).length);
     const entry = await page.evaluate(() => window.state._temptFateDurableConsequences[0]);
 
@@ -259,7 +269,7 @@ const VALID_BEATS = [{ idx: 0, kind: 'narration', text: 'The ceremony hall stand
     stubProxyWithPlan({ temptFateOutcome: { delivered: false } });
     const before = await page.evaluate(() => (window.state._temptFateDurableConsequences || []).length);
     const rp5 = await page.evaluate((si) => window._runCGScreenplayGen(si, 'x', ''), sceneIdx);
-    await page.evaluate((p) => window._cgTemptFateCommitAtPersistence(p), rp5);
+    await page.evaluate(async (p) => { window._cgTemptFateCommitAtPersistence(p); await window._tfoResumePending(); }, rp5);
     const after = await page.evaluate(() => (window.state._temptFateDurableConsequences || []).length);
     ok('a model-reported delivered:false produces NO commit through the real dispatch + commit-at-persistence path', after === before, 'before=' + before + ' after=' + after);
   }
@@ -278,11 +288,18 @@ const VALID_BEATS = [{ idx: 0, kind: 'narration', text: 'The ceremony hall stand
     consoleLines.length = 0;
     const before = await page.evaluate(() => (window.state._temptFateDurableConsequences || []).length);
     const rp6 = await page.evaluate((si) => window._runCGScreenplayGen(si, 'x', ''), sceneIdx);
-    await page.evaluate((p) => window._cgTemptFateCommitAtPersistence(p), rp6);
+    await page.evaluate(async (p) => { window._cgTemptFateCommitAtPersistence(p); await window._tfoResumePending(); }, rp6);
     const after = await page.evaluate(() => (window.state._temptFateDurableConsequences || []).length);
-    const surfaced = consoleLines.some((l) => l.indexOf('[TEMPT-OUTCOME]') !== -1 && /no temptFateOutcome field/i.test(l));
-    ok('no commit happens when the model omits the report entirely', after === before, 'before=' + before + ' after=' + after);
-    ok('a missing report is EXPLICITLY logged/surfaced (a real console warning), not silently swallowed', surfaced, JSON.stringify(consoleLines.filter((l) => l.indexOf('TEMPT') !== -1)));
+    // MIGRATED 2026-09-24. An absent temptFateOutcome used to be a reportable failure. It is now
+    // the EXPECTED shape — the author is not asked for one. What must still hold is that nothing
+    // is committed until the extractor supplies and cites an outcome, and that the scene's
+    // consequence is recorded as OUTSTANDING rather than quietly dropped.
+    const pendingAfter = await page.evaluate(() => Object.keys(window.state._temptOutcomePending || {}).length);
+    const blockedAfter = await page.evaluate(() => !!window._tfoContinuationBlocked(window.state));
+    ok('no commit happens when no extracted outcome is available', after === before, 'before=' + before + ' after=' + after);
+    ok('...the scene is instead recorded as an OUTSTANDING pending outcome, not silently dropped',
+      pendingAfter >= 1, 'pending=' + pendingAfter);
+    ok('...and the next continuation is blocked while it stays unresolved', blockedAfter === true, 'blocked=' + blockedAfter);
   }
 
   // ═══════════════════════════════════════════════════════════════════════════════════════════
@@ -299,9 +316,9 @@ const VALID_BEATS = [{ idx: 0, kind: 'narration', text: 'The ceremony hall stand
       temptFateOutcome: { delivered: true, requestedScope: 'the wish as written', deliveredScope: 'what the scene delivered', scopeMatch: 'full', ruptureClass: 'memory_perception', targetPopulation: { kind: 'all_present_except_invoker' }, affectedKnowers: [{ who: 'the assembly', disposition: 'forgot', memoryAbsent: true, suspicionFromResidue: false, nowKnows: 'nothing of it' }], invokerExemption: { who: 'Lirael', status: 'exempt', reason: 'invoker_anchor' }, unaccountedParties: [], changed: [{ subject: 'x', whatChanged: 'y' }], durability: [{ aspect: 'x', status: 'persists' }], establishedEvidence: ['z'] }
     });
     const rp7a = await page.evaluate((si) => window._runCGScreenplayGen(si, 'x', ''), sceneIdx);
-    await page.evaluate((p) => window._cgTemptFateCommitAtPersistence(p), rp7a);
+    await page.evaluate(async (p) => { window._cgTemptFateCommitAtPersistence(p); await window._tfoResumePending(); }, rp7a);
     const rp7b = await page.evaluate((si) => window._runCGScreenplayGen(si, 'x', ''), sceneIdx); // simulates a retry/duplicate generation for the SAME scene
-    await page.evaluate((p) => window._cgTemptFateCommitAtPersistence(p), rp7b); // simulates that retry ALSO reaching persistence
+    await page.evaluate(async (p) => { window._cgTemptFateCommitAtPersistence(p); await window._tfoResumePending(); }, rp7b); // simulates that retry ALSO reaching persistence
     const count = await page.evaluate(() => (window.state._temptFateDurableConsequences || []).length);
     ok('exactly ONE entry exists after two real generation+persistence-commit calls for the same scene (idempotent through the real path, deduplicated by proposal identity, not just the pure function)', count === 1, 'count=' + count);
   }
@@ -337,7 +354,7 @@ const VALID_BEATS = [{ idx: 0, kind: 'narration', text: 'The ceremony hall stand
     }, secondWish);
 
     const rp8 = await page.evaluate((si) => window._runCGScreenplayGen(si, 'x', ''), sceneIdx);
-    await page.evaluate((p) => window._cgTemptFateCommitAtPersistence(p), rp8);
+    await page.evaluate(async (p) => { window._cgTemptFateCommitAtPersistence(p); await window._tfoResumePending(); }, rp8);
     const entry = await page.evaluate(() => window.state._temptFateDurableConsequences[0]);
     const ledgerLen = await page.evaluate(() => window.state._temptFateLedger.length);
 
@@ -360,7 +377,7 @@ const VALID_BEATS = [{ idx: 0, kind: 'narration', text: 'The ceremony hall stand
     }, wish);
     stubProxyWithPlan({ temptFateOutcome: { delivered: true, requestedScope: 'the wish as written', deliveredScope: 'what the scene delivered', scopeMatch: 'full', ruptureClass: 'memory_perception', targetPopulation: { kind: 'all_present_except_invoker' }, affectedKnowers: [{ who: 'the assembly', disposition: 'forgot', memoryAbsent: true, suspicionFromResidue: false, nowKnows: 'nothing of it' }], invokerExemption: { who: 'Lirael', status: 'exempt', reason: 'invoker_anchor' }, unaccountedParties: [], changed: [{ subject: 'x', whatChanged: 'y' }], durability: [{ aspect: 'x', status: 'persists' }], establishedEvidence: ['original'] } });
     const rp9a = await page.evaluate((si) => window._runCGScreenplayGen(si, 'x', ''), sceneIdxA);
-    await page.evaluate((p) => window._cgTemptFateCommitAtPersistence(p), rp9a);
+    await page.evaluate(async (p) => { window._cgTemptFateCommitAtPersistence(p); await window._tfoResumePending(); }, rp9a);
     const countAfterA = await page.evaluate(() => window.state._temptFateDurableConsequences.length);
 
     // Turn N+1: an ORDINARY continuation — Tempt genuinely NOT invoked this turn — but the
@@ -374,7 +391,7 @@ const VALID_BEATS = [{ idx: 0, kind: 'narration', text: 'The ceremony hall stand
     stubProxyWithPlan({ temptFateOutcome: { delivered: true, requestedScope: 'the wish as written', deliveredScope: 'what the scene delivered', scopeMatch: 'full', ruptureClass: 'memory_perception', targetPopulation: { kind: 'all_present_except_invoker' }, affectedKnowers: [{ who: 'the assembly', disposition: 'forgot', memoryAbsent: true, suspicionFromResidue: false, nowKnows: 'nothing of it' }], invokerExemption: { who: 'Lirael', status: 'exempt', reason: 'invoker_anchor' }, unaccountedParties: [], changed: [{ subject: 'x', whatChanged: 'STRAY — should never be committed' }], durability: [{ aspect: 'x', status: 'persists' }], establishedEvidence: ['STRAY'] } });
     consoleLines.length = 0;
     const rp9b = await page.evaluate((si) => window._runCGScreenplayGen(si, 'x', ''), sceneIdxB);
-    await page.evaluate((p) => window._cgTemptFateCommitAtPersistence(p), rp9b);
+    await page.evaluate(async (p) => { window._cgTemptFateCommitAtPersistence(p); await window._tfoResumePending(); }, rp9b);
     const countAfterB = await page.evaluate(() => window.state._temptFateDurableConsequences.length);
     const surfacedStray = consoleLines.some((l) => /ORDINARY continuation.*Tempt not invoked/i.test(l));
 
@@ -616,7 +633,7 @@ const VALID_BEATS = [{ idx: 0, kind: 'narration', text: 'The ceremony hall stand
     }, wishB);
 
     const rpA = await page.evaluate((si) => window._runCGScreenplayGen(si, 'x', ''), sceneIdxA);
-    await page.evaluate((p) => window._cgTemptFateCommitAtPersistence(p), rpA);
+    await page.evaluate(async (p) => { window._cgTemptFateCommitAtPersistence(p); await window._tfoResumePending(); }, rpA);
     await page.evaluate((o) => window._cgTemptFateAftermathCleanup(o, true), ownedA);
 
     const windowWishTextA = await page.evaluate(() => window.state.volatility_window && window.state.volatility_window.wishText);
@@ -639,7 +656,7 @@ const VALID_BEATS = [{ idx: 0, kind: 'narration', text: 'The ceremony hall stand
     stubProxyWithPlan({ temptFateOutcome: { delivered: true, requestedScope: 'the wish as written', deliveredScope: 'what the scene delivered', scopeMatch: 'full', ruptureClass: 'memory_perception', targetPopulation: { kind: 'all_present_except_invoker' }, affectedKnowers: [{ who: 'the assembly', disposition: 'forgot', memoryAbsent: true, suspicionFromResidue: false, nowKnows: 'nothing of it' }], invokerExemption: { who: 'Lirael', status: 'exempt', reason: 'invoker_anchor' }, unaccountedParties: [], changed: [{ subject: 'y', whatChanged: 'B landed' }], durability: [{ aspect: 'y', status: 'persists' }], establishedEvidence: ['B evidence'] } });
     const sceneIdxB = 2;
     const rpB = await page.evaluate((si) => window._runCGScreenplayGen(si, 'x', ''), sceneIdxB);
-    await page.evaluate((p) => window._cgTemptFateCommitAtPersistence(p), rpB);
+    await page.evaluate(async (p) => { window._cgTemptFateCommitAtPersistence(p); await window._tfoResumePending(); }, rpB);
     await page.evaluate((o) => window._cgTemptFateAftermathCleanup(o, true), ownedB);
 
     const windowWishTextB = await page.evaluate(() => window.state.volatility_window && window.state.volatility_window.wishText);
@@ -688,7 +705,7 @@ const VALID_BEATS = [{ idx: 0, kind: 'narration', text: 'The ceremony hall stand
       }
     });
     const rp = await page.evaluate((si) => window._runCGScreenplayGen(si, 'x', ''), sceneIdx);
-    await page.evaluate((p) => window._cgTemptFateCommitAtPersistence(p), rp);
+    await page.evaluate(async (p) => { window._cgTemptFateCommitAtPersistence(p); await window._tfoResumePending(); }, rp);
 
     const statusAfter = await page.evaluate(() => window.state._mythicCoupleStatus);
     ok('mythic status activates ONLY once the scene\'s outcome actually commits — not at seal', statusAfter && statusAfter.active === true, JSON.stringify(statusAfter));
@@ -721,7 +738,7 @@ const VALID_BEATS = [{ idx: 0, kind: 'narration', text: 'The ceremony hall stand
       }
     });
     const rp = await page.evaluate((si) => window._runCGScreenplayGen(si, 'x', ''), sceneIdx);
-    await page.evaluate((p) => window._cgTemptFateCommitAtPersistence(p), rp);
+    await page.evaluate(async (p) => { window._cgTemptFateCommitAtPersistence(p); await window._tfoResumePending(); }, rp);
 
     const entry = await page.evaluate(() => window.state._temptFateDurableConsequences[0]);
     const statusAfter = await page.evaluate(() => window.state._mythicCoupleStatus);
@@ -744,7 +761,7 @@ const VALID_BEATS = [{ idx: 0, kind: 'narration', text: 'The ceremony hall stand
     }, wish);
     stubProxyWithPlan({ temptFateOutcome: { delivered: false } }); // the scene did not deliver
     const rp = await page.evaluate((si) => window._runCGScreenplayGen(si, 'x', ''), sceneIdx);
-    await page.evaluate((p) => window._cgTemptFateCommitAtPersistence(p), rp);
+    await page.evaluate(async (p) => { window._cgTemptFateCommitAtPersistence(p); await window._tfoResumePending(); }, rp);
 
     const statusAfter = await page.evaluate(() => window.state._mythicCoupleStatus);
     const durableCount = await page.evaluate(() => window.state._temptFateDurableConsequences.length);
@@ -755,7 +772,7 @@ const VALID_BEATS = [{ idx: 0, kind: 'narration', text: 'The ceremony hall stand
     await page.evaluate(() => { window.state._mythicCoupleStatus = null; window.state.tempt_fate_invoked_this_turn = true; window.state.temptFateWish = 'let the world know us, again'; window._recordTemptFateEvent('let the world know us, again'); });
     stubProxyWithPlan({ temptFateOutcome: { delivered: true } }); // delivered:true but nothing changed/established — shape error
     const rp2 = await page.evaluate((si) => window._runCGScreenplayGen(si, 'x', ''), sceneIdx + 1);
-    await page.evaluate((p) => window._cgTemptFateCommitAtPersistence(p), rp2);
+    await page.evaluate(async (p) => { window._cgTemptFateCommitAtPersistence(p); await window._tfoResumePending(); }, rp2);
     const statusAfterMalformed = await page.evaluate(() => window.state._mythicCoupleStatus);
     ok('a malformed report (fails structural validation) also does NOT activate mythic status', !statusAfterMalformed || statusAfterMalformed.active !== true, JSON.stringify(statusAfterMalformed));
   }
@@ -775,7 +792,7 @@ const VALID_BEATS = [{ idx: 0, kind: 'narration', text: 'The ceremony hall stand
     }, wish);
     stubProxyWithPlan({ temptFateOutcome: { delivered: true, requestedScope: 'the wish as written', deliveredScope: 'what the scene delivered', scopeMatch: 'full', ruptureClass: 'memory_perception', targetPopulation: { kind: 'all_present_except_invoker' }, affectedKnowers: [{ who: 'the assembly', disposition: 'forgot', memoryAbsent: true, suspicionFromResidue: false, nowKnows: 'nothing of it' }], invokerExemption: { who: 'Lirael', status: 'exempt', reason: 'invoker_anchor' }, unaccountedParties: [], changed: [{ subject: 'the town', whatChanged: 'recognizes them on sight' }], durability: [{ aspect: 'recognition', status: 'persists' }], establishedEvidence: ['strangers greet them by name'] } });
     const rpA = await page.evaluate((si) => window._runCGScreenplayGen(si, 'x', ''), sceneIdxA);
-    await page.evaluate((p) => window._cgTemptFateCommitAtPersistence(p), rpA);
+    await page.evaluate(async (p) => { window._cgTemptFateCommitAtPersistence(p); await window._tfoResumePending(); }, rpA);
     const statusAfterA = await page.evaluate(() => window.state._mythicCoupleStatus);
     ok('setup: mythic status is active after the real commit (section 16 pattern, re-verified here as this section\'s own baseline)', statusAfterA && statusAfterA.active === true);
     const sealedAtSceneA = statusAfterA.sealedAtScene;
@@ -786,7 +803,7 @@ const VALID_BEATS = [{ idx: 0, kind: 'narration', text: 'The ceremony hall stand
     await page.evaluate(() => { window.state.tempt_fate_invoked_this_turn = false; window.state.temptFateWish = ''; });
     stubProxyWithPlan({}); // no temptFateOutcome at all — ordinary continuation
     const rpB = await page.evaluate((si) => window._runCGScreenplayGen(si, 'x', ''), sceneIdxB);
-    await page.evaluate((p) => window._cgTemptFateCommitAtPersistence(p), rpB);
+    await page.evaluate(async (p) => { window._cgTemptFateCommitAtPersistence(p); await window._tfoResumePending(); }, rpB);
 
     const statusAfterB = await page.evaluate(() => window.state._mythicCoupleStatus);
     const directiveB = await page.evaluate(() => window.buildMythicCoupleDirective());

@@ -68,11 +68,31 @@ Both fire once per **completed** scene, so the bounded generation retry does not
 `grok-4.20-0309-non-reasoning` was already priced in `public/app.js`'s own `TEXT_PRICING` (~4781);
 it was simply missing from this workstream's copies, which are now aligned.
 
-**Reconciled totals:** census max dispatches **59** = phase-gate allowance **59**
-(`wish-classifier` 1 + `scene-A` 32 + `scene-B` 26) = reservation basis **59**, asserted equal in
-`_tempt_fate_memory_erasure_cost_audit.mjs` (**29/29**). Enforced combined figure **$0.363307**
-against $0.40 (was $0.336797 before these two roles were priced: +$0.005030 ambient and +$0.008225
-disclosure per scene).
+**Call 7 — Tempt outcome extractor** *(added 2026-09-24, censused before any provider use).*
+`_extractTemptOutcome` in `app.js`, dispatched via
+`_callTieredProvider('temptOutcomeExtractor', …)` with **no `opts.tiers` override**, so it inherits
+the same **default 3-tier chain** (`ministral-8b-2512` → `grok-4-1-fast-reasoning` →
+`gpt-4o-mini`). `max_tokens: 1400`, `temperature: 0.1`. Ceiling **3** per attempt.
+
+This is the role that replaces the author's self-certified `temptFateOutcome`: it reads the
+**accepted** prose and is the authoritative outcome witness. It fires **only on a delivered Tempt
+scene** — never on an ordinary continuation, so Scene B reserves none of it. A rejected extraction
+is **retryable**, and a retry re-dispatches the whole chain, so **one bounded retry is reserved
+too**: 3 + 3 = **6 request-equivalents**, all on Scene A.
+
+**Reconciled totals:** census max dispatches **65** = phase-gate allowance **65**
+(`wish-classifier` 1 + `scene-A` **38** + `scene-B` 26) = reservation basis **65**, asserted equal in
+`_tempt_fate_memory_erasure_cost_audit.mjs` (**31/31**). Enforced combined figure **$0.383567**
+against $0.40 (was $0.363307 before the extractor was priced: +$0.010130 first pass and +$0.010130
+bounded retry, Scene A only).
+
+`scene-A` rose 32 → 38 in **both** `_tempt_fate_memory_erasure_cost_audit.mjs` and
+`_tempt_fate_memory_erasure_live_run_2026_09_24.mjs`; the audit asserts the two agree, so they
+cannot drift apart silently.
+
+**Headroom note, stated plainly:** $0.383567 of $0.400000 leaves **$0.016433**. That is now under
+one extractor pass plus retry. Any further role added to Scene A will breach the $0.40 ceiling and
+must raise it explicitly rather than be absorbed.
 
 **Scene-A-only worst case: $0.188972 across 33 requests** — wish classifier $0.000177 + scaffold
 $0.014325 + three Bibles $0.018075 + scenePlanner $0.015063 + legacy fallback $0.000627 + gravity

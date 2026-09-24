@@ -271,14 +271,26 @@ const CALLBACK_MARK = 'TEMPT FATE — MEMORY CALLBACK';
   // THE AUTHOR'S REAL SCHEMA must request everything the validator requires. A paid run was lost to
   // this exact gap: the fields were added to a builder no prompt called, the validator demanded
   // them anyway, and the delivered outcome was rejected for omitting what it was never asked for.
-  ok('the author\'s REAL schema requests the scope fields the validator requires (requestedScope / deliveredScope / scopeMatch)',
-    !!(author && author.schemaAsksScope), 'schemaAsksScope=' + (author && author.schemaAsksScope));
-  ok('the author\'s REAL schema requests ruptureClass, enumerating all five classes',
-    !!(author && author.schemaAsksClass), 'schemaAsksClass=' + (author && author.schemaAsksClass));
-  ok('the author\'s REAL schema tells it not to populate a class it did not deliver — class fields stay conditional',
-    !!(author && author.schemaClassConditional), 'schemaClassConditional=' + (author && author.schemaClassConditional));
-  ok('the author\'s REAL schema requests invalidatedPlans, which is generic to every class',
-    !!(author && author.schemaAsksInvalidatedPlans), 'schemaAsksInvalidatedPlans=' + (author && author.schemaAsksInvalidatedPlans));
+  // MIGRATED 2026-09-24. These four proved the AUTHOR's schema carried the outcome contract. The
+  // author no longer receives it — the dedicated extractor does — so the drift guard moves with
+  // the contract rather than being dropped. The gap being defended is unchanged: fields the
+  // validator demands must appear in the prompt of whoever is actually asked to produce them.
+  const ex = await page.evaluate(() => {
+    const p = window._tfoBuildExtractorPrompt({
+      wishText: 'everyone forgets the ceremony happened', invokerName: 'Lirael',
+      rosterNames: ['Lirael', 'Julian', 'the assembly'], prose: 'accepted prose'
+    });
+    return p.sys + '\n' + p.usr;
+  });
+  ok('the author is no longer asked for the outcome contract at all — no scope fields in its real request',
+    !!(author && author.schemaAsksScope === false), 'schemaAsksScope=' + (author && author.schemaAsksScope));
+  ok('the EXTRACTOR\'s real prompt requests the scope fields the validator requires (requestedScope / deliveredScope / scopeMatch)',
+    ex.indexOf('requestedScope') !== -1 && ex.indexOf('deliveredScope') !== -1 && ex.indexOf('scopeMatch') !== -1);
+  ok('the EXTRACTOR\'s real prompt requests ruptureClass, enumerating all five classes',
+    ex.indexOf('ruptureClass') !== -1 && ex.indexOf('memory_perception') !== -1 && ex.indexOf('history_rewrite') !== -1
+    && ex.indexOf('identity_reputation') !== -1 && ex.indexOf('materialization_possession') !== -1 && ex.indexOf('relationship_social') !== -1);
+  ok('the EXTRACTOR\'s real prompt keeps class fields conditional, and requests invalidatedPlans',
+    ex.indexOf('do not populate fields of a class you did not deliver') !== -1 && ex.indexOf('invalidatedPlans') !== -1);
 
   // ═══════════════════════════════════════════════════════════════════════════════════════════
   section('SCENE A PERSISTENCE — accepted scene and durable outcome, through the production commit path');

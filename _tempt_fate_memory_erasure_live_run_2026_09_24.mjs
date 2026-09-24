@@ -351,7 +351,7 @@ let browser = null, gate = null;
   //                   exposed BOTH as uncounted — they fire once per COMPLETED scene, so the
   //                   bounded retry does not double them)
   //   retry       8 = scenePlanner 3 + legacy fallback 1 + gravity 1 + author 3 (never scaffold/bibles, cached)
-  gate.setPhase('scene-A', 32);
+  gate.setPhase('scene-A', 38);   // 32 + 6 for the Tempt outcome extractor (3 tiers + one bounded retry), censused 2026-09-24
   await page.click('#gnSubmitBtn', { timeout: 5000 });
   console.log('  Submit clicked — waiting on REAL SETTLEMENT (no wall-clock deadline; the real cascade can legitimately take 60-120s+).');
   await gate.waitForSettlement('scene-A', { watchdogMs: 15000, onWatchdog: (ms) => console.log('  ...Scene A still pending, ' + Math.round(ms / 1000) + 's — browser stays open, nothing aborted') });
@@ -517,7 +517,7 @@ let browser = null, gate = null;
   console.log('    delivered: ' + JSON.stringify(sceneAReport.declared.deliveredScope));
   console.log('    invalidatedPlans: ' + JSON.stringify(sceneAReport.declared.invalidatedPlans));
   console.log('  requests: ' + sceneAReport.requestCapAccounting.totalObserved + ' of ' + sceneAReport.requestCapAccounting.totalCapForThisRun
-    + ' cap (scene-A ' + sceneACalls.length + '/32, classifier ' + sceneAReport.requestCapAccounting.wishClassifierObserved + '/1) — breached: ' + sceneAReport.requestCapAccounting.capBreached);
+    + ' cap (scene-A ' + sceneACalls.length + '/38, classifier ' + sceneAReport.requestCapAccounting.wishClassifierObserved + '/1) — breached: ' + sceneAReport.requestCapAccounting.capBreached);
   console.log('  cost: $' + spentSoFar.toFixed(6) + ' of $' + COMBINED_CEILING.toFixed(2) + ' (within cap: ' + sceneAReport.costs.withinCap + ')');
   console.log('  real image dispatches: ' + sceneAReport.imageAttempts);
   console.log('  SEMANTIC VERDICT: not assessed here — read scene_a_rendered_text.txt and judge.');

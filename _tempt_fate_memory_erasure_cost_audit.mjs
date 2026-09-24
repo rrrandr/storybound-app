@@ -79,7 +79,18 @@ const WORST_CASE_TOKENS = {
   // characterDisclosure: the CHARACTER MEMORY EXTRACTOR (app.js ~31622), dispatched through
   // _callTieredProvider('characterDisclosure', ...) — so it is NOT one call, it can cascade the
   // default 3-tier chain like every other tiered role.
-  characterDisclosure: { in: 3000, out: 1100 }
+  characterDisclosure: { in: 3000, out: 1100 },
+  // temptOutcomeExtractor (Roman 2026-09-24): the DEDICATED Tempt outcome witness (app.js, see
+  // _extractTemptOutcome), dispatched through _callTieredProvider('temptOutcomeExtractor', ...) so
+  // it cascades the SAME default 3-tier chain as every other tiered role. Censused here BEFORE any
+  // provider use, per the standing rule that produced this file — a role that can dispatch and is
+  // not in the census, cap, reservation and sheet is exactly the classifyWishCG failure again.
+  // IN: the extractor prompt carries the accepted scene prose (capped at 8000 chars ≈ 2000 tok),
+  // the full rendered outcome schema, the wish and the roster — call it 3600 in.
+  // OUT: max_tokens 1400, the real ceiling set at the call site.
+  // Fires at most ONCE per DELIVERED Tempt scene (never on an ordinary continuation), but a retry
+  // after a rejected extraction re-dispatches, so the cap below is per-attempt, not per-scene.
+  temptOutcomeExtractor: { in: 3600, out: 1400 }
 };
 function costOfTrackedCall(rec, roleKey) {
   const model = (rec.requestBody && (rec.requestBody.model || rec.requestBody.preferredModel)) || null;
@@ -93,7 +104,7 @@ function costOfTrackedCall(rec, roleKey) {
 // make, traced from source this session (scaffold/bible/commitVerifier: _callTieredProvider default
 // chain, no `tiers` override; scenePlanner: its own custom 3-tier list; author: its own hand-rolled
 // 3-tier cascade in _authorFullScenePolicy; gravityAudit: single-attempt, no fallback).
-const ROLE_CEILING = { scaffold: 3, bible: 3, scenePlanner: 3, commitVerifier: 3, gravityAudit: 1, author: 3, wishClassifier: 1, plannerLegacyFallback: 1, sceneAmbient: 1, characterDisclosure: 3 };
+const ROLE_CEILING = { scaffold: 3, bible: 3, scenePlanner: 3, commitVerifier: 3, gravityAudit: 1, author: 3, wishClassifier: 1, plannerLegacyFallback: 1, sceneAmbient: 1, characterDisclosure: 3, temptOutcomeExtractor: 3 };
 
 // A real, executable pre-dispatch reservation ledger — reserves BEFORE calling the real function,
 // never after. Unsourced pricing and over-ceiling both refuse OUTRIGHT (the real function is never
@@ -249,7 +260,9 @@ class ReservationLedger {
     // and its catch returns null rather than retrying (orchestration-client.js ~6150-6172).
     sceneAmbient: ['grok-4.20-0309-non-reasoning'],
     // _callTieredProvider default chain — same three tiers as scaffold/bible/commitVerifier.
-    characterDisclosure: ['ministral-8b-2512', 'grok-4-1-fast-reasoning', 'gpt-4o-mini']
+    characterDisclosure: ['ministral-8b-2512', 'grok-4-1-fast-reasoning', 'gpt-4o-mini'],
+    // Same default chain — the extractor supplies no opts.tiers override.
+    temptOutcomeExtractor: ['ministral-8b-2512', 'grok-4-1-fast-reasoning', 'gpt-4o-mini']
   };
 
   const gravityText = 'x'.repeat(220); // _auditSceneEmotionalGravity requires proseText.length >= 200 to do real work
@@ -381,6 +394,16 @@ class ReservationLedger {
   const discloseA = ledger.reserveWorstCase('characterDisclosure-A', 'characterDisclosure', 3, ROLE_TIER_MODELS.characterDisclosure);
   const ambientB = ledger.reserveWorstCase('sceneAmbient-B', 'sceneAmbient', 1, ROLE_TIER_MODELS.sceneAmbient);
   const discloseB = ledger.reserveWorstCase('characterDisclosure-B', 'characterDisclosure', 3, ROLE_TIER_MODELS.characterDisclosure);
+  // TEMPT OUTCOME EXTRACTOR (Roman 2026-09-24) — reserved at its FULL 3-tier ceiling on the Tempt
+  // scene ONLY. It cannot fire on an ordinary continuation, so Scene B gets no reservation for it;
+  // what Scene B does get is the RETRY allowance below, because a rejected extraction re-dispatches.
+  const extractA = ledger.reserveWorstCase('temptOutcomeExtractor-A', 'temptOutcomeExtractor', 3, ROLE_TIER_MODELS.temptOutcomeExtractor);
+  const extractRetryA = ledger.reserveWorstCase('temptOutcomeExtractor-A-retry', 'temptOutcomeExtractor', 3, ROLE_TIER_MODELS.temptOutcomeExtractor);
+  console.log('  tempt outcome extractor reserved — first pass=' + JSON.stringify(extractA) + ' one bounded retry=' + JSON.stringify(extractRetryA));
+  ok('the Tempt outcome extractor is reserved at its FULL 3-tier ceiling, not as a single call',
+    extractA.ok === true && Math.abs(extractA.phaseUsd - 0.01013) < 1e-9, JSON.stringify(extractA));
+  ok('one bounded extraction RETRY is reserved too — a rejected extraction re-dispatches, and an unreserved retry is an unbudgeted call',
+    extractRetryA.ok === true, JSON.stringify(extractRetryA));
   console.log('  post-scene reserved — Scene A: ambient=' + JSON.stringify(ambientA) + ' disclosure=' + JSON.stringify(discloseA));
   console.log('  post-scene reserved — Scene B: ambient=' + JSON.stringify(ambientB) + ' disclosure=' + JSON.stringify(discloseB));
   ok('the post-scene ambient classifier is RESERVED with a sourced price before any release — it is no longer merely inside a broad scene allowance', ambientA.ok === true && ambientA.phaseUsd > 0, JSON.stringify(ambientA));
@@ -413,11 +436,12 @@ class ReservationLedger {
   const CENSUS_MAX_DISPATCHES = 1 /* wish classifier */
     + (3 + 9 + 3 + 1 + 1 + 3) /* Scene A no-retry: scaffold, 3 bibles, scenePlanner, legacy, gravity, author = 20 */
     + (1 + 3)                 /* Scene A post-scene: sceneAmbient 1 + characterDisclosure 3 = 4 */
+    + (3 + 3)                 /* Scene A Tempt outcome extractor: first pass 3 tiers + one bounded retry 3 = 6 (2026-09-24) */
     + (3 + 1 + 1 + 3)         /* Scene A bounded retry: scenePlanner, legacy, gravity, author = 8 */
     + (3 + 1 + 3 + 1 + 3)     /* Scene B no-retry: scenePlanner, legacy, commitVerifier, gravity, author = 11 */
     + (1 + 3)                 /* Scene B post-scene: sceneAmbient 1 + characterDisclosure 3 = 4 */
     + (3 + 1 + 3 + 1 + 3);    /* Scene B bounded retry: same set = 11 */
-  const LIVE_RUN_PHASE_CAPS = { 'wish-classifier': 1, 'scene-A': 32, 'scene-B': 26 }; // must mirror _tempt_fate_memory_erasure_live_run_2026_09_24.mjs
+  const LIVE_RUN_PHASE_CAPS = { 'wish-classifier': 1, 'scene-A': 38, 'scene-B': 26 }; // must mirror _tempt_fate_memory_erasure_live_run_2026_09_24.mjs
   const PHASE_CAP_TOTAL = Object.values(LIVE_RUN_PHASE_CAPS).reduce((a, b) => a + b, 0);
   const RESERVED_REQUEST_EQUIVALENTS = ledger.entries.reduce((n, e) => n + (e.requests || 0), 0);
   console.log('  RECONCILIATION — census max real dispatches: ' + CENSUS_MAX_DISPATCHES

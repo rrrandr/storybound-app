@@ -8881,6 +8881,8 @@ window.config = window.config || {
   // NOTE: no "answers?/answered" entry — collides with "the Answer" (a proper-noun relic name in
   // First Sacrifice, and plausibly in other stories' objects/titles too); "declares/announces"
   // already cover the same "responds decisively" ground without that ambiguity.
+  // Modal hedges that turn a movement verb into an INTENTION rather than a completed action.
+  var _SCENE_MODAL_HEDGE_RX = /\b(?:could|might|would|may|should|must|ought|about\s+to|going\s+to|want(?:s|ed)?\s+to|plan(?:s|ned)?\s+to)\b/i;
   var _SCENE_MOVEMENT_VERB_RX = /\bspeaks?\b|\bspoke\b|\bsteps?\s+forward\b|\bstepped\b|\bmoves?\b|\bmoved\b|\breaches?\b|\breached\b|\bturns?\b|\bturned\b|\bleaves?\b|\bleft\b|\barrives?\b|\barrived\b|\bannounces?\b|\bannounced\b|\bdeclares?\b|\bdeclared\b/i;
 
   // ═══ FATELANDS COSMOLOGY BAN (Roman 2026-09-20) ═══
@@ -9224,7 +9226,30 @@ window.config = window.config || {
       opts = opts || {};
       var beats = (screenplay && Array.isArray(screenplay.beats)) ? screenplay.beats : [];
       var allText = beats.map(function (b) { return (b && b.text) || ''; }).join(' \n ');
-      var checks = {}; var reasons = [];
+      // reasons = hard findings that make the scene FAIL. warnings = recorded observations that
+      // deliberately do NOT fail it (Roman 2026-09-24) — currently the density floor, which is
+      // telemetry-only on a 16-sample corpus, and an ending whose event-landed signal is unknown.
+      var checks = {}; var reasons = []; var warnings = [];
+
+      // ── DENSITY FLOOR — TELEMETRY ONLY (Roman 2026-09-24) ──
+      // "Implement only WARN telemetry for the beat/prose floor. Do not wire automatic
+      // regeneration or rejection from the current 16-sample corpus." Thresholds are the OBSERVED
+      // corpus minimum across 14 real ordinary Scene 2 generations plus 2 rupture runs
+      // (beats 23-35, prose 915-1532 ordinary; the one outlier at 18 beats / 796 chars). Both axes,
+      // never beats alone: a 25-beat scene at 30 chars/beat is thinner than anything observed and
+      // would pass a beat-only floor. These WARN; they never reject.
+      var _proseChars = beats.reduce(function (n, b) { return n + String((b && b.text) || '').length; }, 0);
+      checks.density = {
+        beats: beats.length, proseChars: _proseChars,
+        charsPerBeat: beats.length ? Math.round(_proseChars / beats.length) : 0,
+        beatFloor: 23, proseFloor: 915
+      };
+      if (beats.length && (beats.length < 23 || _proseChars < 915)) {
+        warnings.push('density below the observed corpus floor: ' + beats.length + ' beats / ' + _proseChars
+          + ' chars (corpus minimum 23 beats / 915 chars across 16 real scenes) — RECORDED ONLY, not a rejection');
+        try { console.log('[SCENE:DENSITY] WARN — beats=' + beats.length + ' prose=' + _proseChars
+          + ' charsPerBeat=' + checks.density.charsPerBeat + ' (floor 23/915; telemetry only, scene accepted)'); } catch (_) {}
+      }
 
       var aftermathPresent = _SCENE_AFTERMATH_VOCAB_RX.test(allText);
       checks.aftermath = { present: aftermathPresent };
@@ -9246,9 +9271,39 @@ window.config = window.config || {
       var tailBeats = beats.slice(Math.max(0, beats.length - tailN));
       var tailText = tailBeats.map(function (b) { return (b && b.text) || ''; }).join(' \n ');
       var suspensionHit = _SCENE_SUSPENSION_ONLY_RX.test(tailText);
-      var movementHit = _SCENE_MOVEMENT_VERB_RX.test(tailText);
-      checks.ending = { suspensionVocabPresent: suspensionHit, movementVerbPresent: movementHit, tailBeatCount: tailBeats.length };
-      if (suspensionHit && !movementHit) reasons.push('the scene\'s final ' + tailBeats.length + ' beat(s) are dominated by suspension vocabulary (waits/holds its breath/half-raised) with no completed forward movement — reads as suspended mood, not a concrete next step');
+      // MODALITY-AWARE (Roman 2026-09-24). The old test matched \bspeaks?\b anywhere in the tail,
+      // so "I could speak now and claim what I did" — a hypothetical the protagonist declines in
+      // the very next beat — counted as completed forward movement. A movement verb governed by
+      // could/might/would/may/should/must/about to/going to is an INTENTION, not an action. Judged
+      // per beat, because a modal in one beat must not excuse a real action in another.
+      var movementHit = tailBeats.some(function (b) {
+        var t = (b && b.text) || '';
+        return _SCENE_MOVEMENT_VERB_RX.test(t) && !_SCENE_MODAL_HEDGE_RX.test(t);
+      });
+      // EVENT-AWARE (Roman 2026-09-24): "A decision-gate ending is valid when the rupture already
+      // happened." A scene that lands its assigned event and then opens a choice is doing its job;
+      // only a scene where NOTHING landed and the ending is indecision is the failure this check
+      // exists for. opts.assignedEventLanded is a TRISTATE — true / false / undefined. Undefined
+      // means the post-scene fulfilment data has not arrived yet, and is treated as UNKNOWN, never
+      // as automatic failure: an absent signal must not manufacture a defect.
+      var eventLanded = opts.assignedEventLanded;
+      var eventUnknown = (eventLanded === undefined || eventLanded === null);
+      checks.ending = {
+        suspensionVocabPresent: suspensionHit, movementVerbPresent: movementHit,
+        tailBeatCount: tailBeats.length,
+        assignedEventLanded: eventUnknown ? 'unknown' : !!eventLanded
+      };
+      if (suspensionHit && !movementHit) {
+        var _endMsg = 'the scene\'s final ' + tailBeats.length + ' beat(s) are dominated by suspension vocabulary (waits/holds its breath/half-raised) with no completed forward movement';
+        if (eventLanded === false) {
+          reasons.push(_endMsg + ' and the assigned event did NOT land — reads as suspended mood, not a concrete next step');
+        } else if (eventUnknown) {
+          // NOT a failure. Without fulfilment data we cannot tell a decision gate after a landed
+          // event from genuine indecision, and an absent signal must never manufacture a defect.
+          warnings.push(_endMsg + ' — but whether the assigned event landed is UNKNOWN (no post-scene fulfilment data), so this is recorded, not failed');
+        }
+        // eventLanded === true → a decision-gate ending after a landed event. Valid. Silent.
+      }
 
       var cosmology = _detectFatelandsCosmologyViolation(allText, opts);
       checks.cosmology = cosmology;
@@ -9260,7 +9315,7 @@ window.config = window.config || {
 
       var failed = reasons.length > 0;
       try { if (failed) console.warn('[SCENE:ADEQUACY] FAILED — ' + reasons.join(' | ')); } catch (_) {}
-      return { failed: failed, reasons: reasons, checks: checks };
+      return { failed: failed, reasons: reasons, warnings: warnings, checks: checks };
     } catch (e) { return { failed: false, error: e && e.message }; }
   }
   window._detectSceneAdequacyFailure = _detectSceneAdequacyFailure;
@@ -190368,6 +190423,283 @@ No text, no watermark, no UI elements, share-ready.`;
   }
   window._commitTemptFateOutcome = _commitTemptFateOutcome;
 
+  // ══════════════════════════════════════════════════════════════════════════════════════════════
+  // TEMPT OUTCOME EXTRACTION — the extractor is the authoritative outcome witness
+  // (Roman 2026-09-24)
+  //
+  // The author used to write the prose AND self-certify what the prose did, in one response,
+  // before the prose was accepted. It was its own witness. The extractor reads the ACCEPTED scene
+  // and cites it instead.
+  //
+  // IMMUTABLE CONTEXT, NOT LIVE STATE. Roman: "Do not keep _tfoOwnedInvocation globally published
+  // longer while awaiting extraction. Capture an immutable extraction context ... Never re-resolve
+  // the 'latest' wish or live ownership state after an await." Every field the extractor and the
+  // commit need is frozen into one object BEFORE the first await. Nothing downstream reads
+  // window.state to decide WHAT it is committing — only to decide WHERE to write it, and even that
+  // is re-checked against the captured storyId first.
+  // ══════════════════════════════════════════════════════════════════════════════════════════════
+  var _TFO_PENDING_V = 1;
+
+  function _tfoDeepFreeze(o) {
+    try {
+      if (!o || typeof o !== 'object' || Object.isFrozen(o)) return o;
+      Object.keys(o).forEach(function (k) { _tfoDeepFreeze(o[k]); });
+      return Object.freeze(o);
+    } catch (_) { return o; }
+  }
+
+  // Built at ACCEPTANCE, from the generation's own captured ownership — never from live state.
+  function _tfoBuildExtractionContext(plan, own, prose, sceneUid) {
+    var s = window.state || {};
+    var entry = (own && own.proposalEntry) || {};
+    var roster = (typeof _temptOutcomeSceneRosterDetailed === 'function')
+      ? _temptOutcomeSceneRosterDetailed(plan, own && own.sceneIndex) : [];
+    var invoker = '';
+    try {
+      var L = (typeof _relLedger === 'function') ? _relLedger(false) : null;
+      var ents = (L && L.entities) || {};
+      Object.keys(ents).forEach(function (id) { if (ents[id] && ents[id].anchorRole === 'pc') invoker = String(ents[id].label || ''); });
+    } catch (_) {}
+    return _tfoDeepFreeze({
+      v: _TFO_PENDING_V,
+      storyId: String(s.storyId || ''),
+      proposalId: String(entry.id || ''),
+      wishText: String(entry.wishText || ''),
+      bargainId: entry.bargainId || null,
+      invokerName: invoker,
+      roster: roster.map(function (r) { return { name: r.name, sources: (r.sources || []).slice() }; }),
+      rosterNames: roster.map(function (r) { return r.name; }),
+      sceneIdx: (own && own.sceneIndex),
+      sceneUid: String(sceneUid || ''),
+      prose: String(prose || ''),
+      // Requested-scope metadata: what the reader asked for, as recorded at seal time. Frozen here
+      // so a later wish can never retro-describe this one's request.
+      requestedScope: String(entry.wishText || ''),
+      sealedAtScene: (entry.sceneIdx != null) ? entry.sceneIdx : null,
+      capturedAt: Date.now()
+    });
+  }
+  window._tfoBuildExtractionContext = _tfoBuildExtractionContext;
+
+  // KEY = storyId + proposalId + scene identity. All three, deliberately: storyId alone crosses
+  // stories, proposalId alone repeats if the same proposal somehow reaches two scenes, and scene
+  // identity alone repeats across Issues (the same bug _commitTemptFateOutcome's dedup already fixed).
+  function _tfoPendingKey(ctx) {
+    return String(ctx.storyId) + '::' + String(ctx.proposalId) + '::' + String(ctx.sceneUid || ctx.sceneIdx);
+  }
+  window._tfoPendingKey = _tfoPendingKey;
+
+  function _tfoPendingMap(create) {
+    var s = window.state; if (!s) return null;
+    if (!s._temptOutcomePending || typeof s._temptOutcomePending !== 'object') {
+      if (!create) return null;
+      s._temptOutcomePending = {};
+    }
+    return s._temptOutcomePending;
+  }
+
+  // Persisted BEFORE extraction runs. If the tab closes, the story is reloaded, or every provider
+  // tier fails, this record is what makes the outcome recoverable instead of silently lost.
+  function _tfoWritePending(ctx) {
+    var m = _tfoPendingMap(true); if (!m) return null;
+    var key = _tfoPendingKey(ctx);
+    if (m[key]) return m[key];            // idempotent: never overwrite an existing attempt record
+    m[key] = { v: _TFO_PENDING_V, key: key, ctx: ctx, attempts: 0, lastError: null, createdAt: Date.now() };
+    try { console.log('[TEMPT-PENDING] recorded ' + key + ' — the scene is accepted; its consequence is not yet extracted'); } catch (_) {}
+    return m[key];
+  }
+  window._tfoWritePending = _tfoWritePending;
+
+  function _tfoClearPending(key) {
+    var m = _tfoPendingMap(false); if (!m) return false;
+    if (!m[key]) return false;
+    delete m[key];
+    try { console.log('[TEMPT-PENDING] cleared ' + key); } catch (_) {}
+    return true;
+  }
+  window._tfoClearPending = _tfoClearPending;
+
+  // Unresolved pending records for the CURRENT story only. A record belonging to another story is
+  // not this story's problem and must never block it.
+  function _tfoUnresolvedPending(s) {
+    s = s || window.state || {};
+    var m = (s._temptOutcomePending && typeof s._temptOutcomePending === 'object') ? s._temptOutcomePending : {};
+    var sid = String(s.storyId || '');
+    return Object.keys(m).map(function (k) { return m[k]; })
+      .filter(function (r) { return r && r.ctx && String(r.ctx.storyId) === sid; });
+  }
+  window._tfoUnresolvedPending = _tfoUnresolvedPending;
+
+  // CONTINUATION BLOCK. Roman: "Scene B must never generate without the consequence simply because
+  // extraction failed." A delivered Tempt scene whose consequence is unresolved blocks the next
+  // continuation until it resolves or is explicitly resumed.
+  function _tfoContinuationBlocked(s) {
+    var pend = _tfoUnresolvedPending(s);
+    if (!pend.length) return null;
+    return {
+      blocked: true,
+      keys: pend.map(function (r) { return r.key; }),
+      reason: 'a delivered Tempt Fate scene still has an unresolved outcome (' + pend.length
+        + ' pending) — the next scene cannot be generated without its consequence. Resolve or resume it first.'
+    };
+  }
+  window._tfoContinuationBlocked = _tfoContinuationBlocked;
+
+  // ── THE EXTRACTOR ───────────────────────────────────────────────────────────────────────────
+  // Reads the ACCEPTED prose. No prose-writing authority: it cannot rewrite, extend or reorder a
+  // beat, and nothing it returns is ever written back into the scene. Every claim about a party
+  // must carry a VERBATIM quote from that prose — the same discipline _extractCharacterDisclosure
+  // already enforces ("copied VERBATIM from the scene ... It is checked against the text").
+  function _tfoBuildExtractorPrompt(ctx) {
+    var sys = 'You are a CONSEQUENCE EXTRACTOR for an interactive fantasy romance engine. You do NOT write prose. '
+      + 'You are given a scene that has ALREADY been written and accepted, and the exact supernatural wish that was invoked in it. '
+      + 'Your only job is to report what the scene ON THE PAGE actually did about that wish, and to CITE the page for every claim.\n\n'
+      + 'THE WISH AS SUBMITTED (verbatim, never reinterpret it): "' + ctx.wishText + '"\n\n'
+      + 'THE INVOKER: ' + (ctx.invokerName || 'the protagonist') + '\n\n'
+      + 'EVERY PARTY PRESENT IN THIS SCENE (authoritative — resolve EACH of these by name; do not add people who are not listed and do not omit any):\n'
+      + (ctx.rosterNames.length ? ctx.rosterNames.map(function (n) { return '  - ' + n; }).join('\n') : '  (none recorded)') + '\n\n'
+      + 'RULES:\n'
+      + '- Report ONLY what the scene text supports. If the scene does not establish something, say so — do not infer it from the wish.\n'
+      + '- EVERY entry in affectedKnowers (except one whose disposition is "absent") MUST include "evidenceQuote": a span copied EXACTLY from the scene text, 10-120 characters, which is checked against the text. If the scene gives you no line that establishes a party\'s state, use disposition "absent" only if they are genuinely not in the scene; otherwise list them in unaccountedParties.\n'
+      + '- Do not invent, soften, or complete the scene. An incomplete grant is a real and valid finding.\n\n'
+      + _renderTemptOutcomeSchema(true) + '\n\n'
+      + 'Return ONLY the JSON object for "temptFateOutcome" itself (not wrapped in another key). No markdown, no commentary.';
+    return { sys: sys, usr: 'THE ACCEPTED SCENE:\n\n' + String(ctx.prose || '').slice(0, 8000) };
+  }
+  window._tfoBuildExtractorPrompt = _tfoBuildExtractorPrompt;
+
+  async function _extractTemptOutcome(ctx) {
+    var p = _tfoBuildExtractorPrompt(ctx);
+    var data = await _callTieredProvider('temptOutcomeExtractor', [
+      { role: 'system', content: p.sys },
+      { role: 'user', content: p.usr }
+    ], { max_tokens: 1400, temperature: 0.1 });
+    try { if (typeof _recordProxyTextCost === 'function') _recordProxyTextCost(data, (data && data._orchestration && data._orchestration.model), 'tempt-extract'); } catch (_) {}
+    var content = data && data.content;
+    if (!content) throw new Error('extractor returned no content');
+    var parsed;
+    try { parsed = JSON.parse(content); }
+    catch (e) {
+      var m = String(content).match(/\{[\s\S]*\}/);
+      if (!m) throw new Error('extractor reply was not JSON');
+      parsed = JSON.parse(m[0]);
+    }
+    // Tolerate a wrapper if the model adds one anyway.
+    return (parsed && parsed.temptFateOutcome) ? parsed.temptFateOutcome : parsed;
+  }
+  window._extractTemptOutcome = _extractTemptOutcome;
+
+  // ── CITATION CHECK ──────────────────────────────────────────────────────────────────────────
+  // A claim whose quote is not in the prose is dropped, not committed. This is the check the
+  // roster coverage rule cannot make: it catches a disposition asserted about a party the page
+  // never says anything about.
+  function _tfoNormalizeForQuote(s) {
+    return String(s || '').replace(/[‘’]/g, "'").replace(/[“”]/g, '"')
+      .replace(/\s+/g, ' ').trim().toLowerCase();
+  }
+  function _tfoVerifyCitations(raw, prose) {
+    var errors = [];
+    var hay = _tfoNormalizeForQuote(prose);
+    if (!hay) return errors;                       // no prose supplied — citation check inert
+    var knowers = Array.isArray(raw && raw.affectedKnowers) ? raw.affectedKnowers : [];
+    knowers.forEach(function (k, i) {
+      if (!k || k.disposition === 'absent') return;
+      var q = k.evidenceQuote;
+      if (typeof q !== 'string' || !q.trim()) {
+        errors.push((k.who || ('affectedKnowers[' + i + ']')) + ': no evidenceQuote — every disposition must cite the line that establishes it');
+        return;
+      }
+      if (hay.indexOf(_tfoNormalizeForQuote(q)) === -1) {
+        errors.push((k.who || ('affectedKnowers[' + i + ']')) + ': evidenceQuote is not present verbatim in the accepted scene ("' + String(q).slice(0, 60) + '")');
+      }
+    });
+    return errors;
+  }
+  window._tfoVerifyCitations = _tfoVerifyCitations;
+
+  // ── RESOLVE: extract → validate → commit atomically → clear ─────────────────────────────────
+  // Everything it needs comes from the frozen ctx. The ONLY live-state read is the storyId guard
+  // below, which exists precisely to refuse a write when the world moved underneath us.
+  var _tfoResolveInFlight = (typeof Set === 'function') ? new Set() : null;
+
+  async function _tfoResolvePendingRecord(rec, opts) {
+    opts = opts || {};
+    if (!rec || !rec.ctx) return { ok: false, reason: 'no record' };
+    var ctx = rec.ctx, key = rec.key;
+    if (_tfoResolveInFlight && _tfoResolveInFlight.has(key)) return { ok: false, reason: 'already in flight' };
+    if (_tfoResolveInFlight) _tfoResolveInFlight.add(key);
+    try {
+      rec.attempts = (rec.attempts || 0) + 1;
+      // SOURCE ORDER. injectRaw is a control seam. legacySelfCertified is BACK-COMPAT ONLY: a
+      // scene saved before the extractor migration (or a legacy author reply) still carries a
+      // self-certified outcome, and re-dispatching an extractor at that scene's prose would be
+      // both a surprise cost and a second opinion on already-settled canon. It is preferred when
+      // present ONLY because a post-migration author never produces it — so its presence is proof
+      // the scene predates the extractor. It still passes full structural + roster validation; it
+      // is exempt from the CITATION check alone, which it was never asked to satisfy.
+      var legacy = (!opts.injectRaw && rec.legacySelfCertified && opts.allowLegacy !== false)
+        ? rec.legacySelfCertified : null;
+      var raw = opts.injectRaw || legacy || await _extractTemptOutcome(ctx);
+      var skipCitations = !!legacy;
+      if (legacy) { try { console.log('[TEMPT-EXTRACT] ' + key + ' resolved from a PRE-MIGRATION self-certified outcome (back-compat; citation check not applicable)'); } catch (_) {} }
+
+      // STALE-WORLD GUARD. Between dispatch and here the reader may have switched stories or
+      // started a new one. The captured storyId decides; live state never gets to redirect the
+      // write. The pending record is left intact so the right story can still resolve it.
+      var live = window.state || {};
+      if (String(live.storyId || '') !== String(ctx.storyId)) {
+        rec.lastError = 'story switched mid-extraction (captured ' + ctx.storyId + ', live ' + live.storyId + ')';
+        try { console.warn('[TEMPT-EXTRACT] ' + rec.lastError + ' — refusing to write; record stays pending'); } catch (_) {}
+        return { ok: false, reason: 'stale-story', staleStory: true };
+      }
+
+      var v = _validateTemptFateOutcomeReport(raw, { presentRoster: ctx.rosterNames });
+      var citeErrors = skipCitations ? [] : _tfoVerifyCitations(raw, ctx.prose);
+      if (!v.valid || citeErrors.length) {
+        rec.lastError = (v.errors || []).concat(citeErrors).join('; ');
+        try { console.warn('[TEMPT-EXTRACT] attempt ' + rec.attempts + ' rejected for ' + key + ': ' + rec.lastError); } catch (_) {}
+        return { ok: false, reason: 'invalid', errors: (v.errors || []).concat(citeErrors), retryable: true };
+      }
+
+      // ATOMIC: commit, then clear. _commitTemptFateOutcome is already idempotent per proposal id,
+      // so a duplicate completion cannot double-commit; if it refuses, we do NOT clear pending.
+      var committed = _commitTemptFateOutcome(ctx.sceneIdx, {
+        id: ctx.proposalId, wishText: ctx.wishText, bargainId: ctx.bargainId
+      }, raw, { presentRoster: ctx.rosterNames });
+      if (!committed) {
+        // Already committed by an earlier completion of the same proposal → the work is done and
+        // the pending record is obsolete. Any other refusal leaves it pending.
+        var already = !!(window.state && window.state._temptOutcomeCommittedProposals
+          && window.state._temptOutcomeCommittedProposals[ctx.proposalId]);
+        if (already) { _tfoClearPending(key); return { ok: true, duplicate: true }; }
+        rec.lastError = 'commit refused';
+        return { ok: false, reason: 'commit-refused', retryable: true };
+      }
+      _tfoClearPending(key);
+      try { console.log('[TEMPT-EXTRACT] committed ' + key + ' from extracted, citation-checked evidence'); } catch (_) {}
+      return { ok: true, entry: committed };
+    } catch (e) {
+      rec.lastError = (e && e.message) || String(e);
+      try { console.warn('[TEMPT-EXTRACT] attempt ' + rec.attempts + ' threw for ' + key + ': ' + rec.lastError); } catch (_) {}
+      return { ok: false, reason: 'threw', error: rec.lastError, retryable: true };
+    } finally {
+      if (_tfoResolveInFlight) _tfoResolveInFlight.delete(key);
+    }
+  }
+  window._tfoResolvePendingRecord = _tfoResolvePendingRecord;
+
+  // BOUNDED RESUME — the path a reload, a failed attempt, or a blocked continuation takes.
+  async function _tfoResumePending(opts) {
+    opts = opts || {};
+    var pend = _tfoUnresolvedPending(window.state);
+    var out = [];
+    for (var i = 0; i < pend.length; i++) {
+      out.push(await _tfoResolvePendingRecord(pend[i], opts));
+    }
+    return out;
+  }
+  window._tfoResumePending = _tfoResumePending;
+
   // Author-facing directive — reaches future prompts via
   // _buildContinuitySpineBlock (unchanged wiring from the prior pass).
   // Explicitly separates ESTABLISHED fact (changed/durability/
@@ -191377,7 +191709,12 @@ No text, no watermark, no UI elements, share-ready.`;
     var wish = ctx ? String(ctx.wishText || '') : '';
     if (!invoked || !wish) return '';
     var mandate = (layer === 'author')
-      ? ' The beats MUST show this wish\'s actual landing as a concrete, witnessed, in-scene event — not a line that merely references the wish, and not a scene that proceeds as though it had not been made. Because the rupture IS active this scene, "temptFateOutcome" MUST be a populated object recording what actually changed; null is NOT a valid answer this scene.'
+      // The closing clause used to demand a populated "temptFateOutcome" object. Removed
+      // 2026-09-24 with the extractor migration: the author is no longer the witness, so asking it
+      // to certify its own scene here would reintroduce exactly that. What survives is the part
+      // that governs the PROSE — the wish must visibly land on the page, which is the only thing
+      // the author is responsible for, and the only thing the extractor can later find.
+      ? ' The beats MUST show this wish\'s actual landing as a concrete, witnessed, in-scene event — not a line that merely references the wish, and not a scene that proceeds as though it had not been made. Write the landing so plainly that a later reader could point to the exact lines that establish who was changed and how.'
       : ' The event/state_change MUST land this wish\'s actual invocation/effect as a concrete, testable, reachable-in-one-scene event — not a generic milestone beat that ignores it, and not a beat that merely references the wish without showing its landing.';
     return '\nTEMPT FATE — ACTIVE INVOCATION THIS SCENE (HARD — supersedes the CURRENT MILESTONE/A-plot goal above for THIS scene\'s event only. A Tempt Fate rupture MAY permanently change present-world facts, memory, identity, access, possession, social reality, reputation, or public recognition — up to and including fame, infamy, or legendary status — when THIS scene actually earns it; do NOT refuse or soften the wish\'s real scope on an assumption that Tempt Fate cannot cause lasting change. Foundational setting rules and the fact that an already-read scene occurred remain history — Tempt cannot un-happen the past — but future seed-owned material is not off-limits: it stays story-bearing, and Tempt may change its route, interpretation, stakes, or who remembers why it matters, without erasing that it exists. A memory-erasure wish changes memory and the social knowledge that follows from it, not necessarily physical reality, unless the effect you write here establishes something broader.): the player is invoking Tempt Fate this turn with the wish "' + wish.slice(0, 300) + '".' + mandate;
   }
@@ -224934,8 +225271,15 @@ No text, no watermark, no UI elements, share-ready.`;
       '    "subtext_beat_idx": <int — the beat index of a dialogue line whose surface CONFLICTS with what the protagonist actually feels. (She says \\"I\'m fine\\" right after her hand was shown shaking.) REQUIRED.>,\n' +
       '    "almost_said_beat_idx": <int — the beat index where the protagonist almost says something and stops: a sentence breaks off, a word is swapped, a topic she steers away from. REQUIRED.>,\n' +
       '    "escalation_rhythm": "<one phrase describing how pressure ratchets across the scene. Examples: \\"opens with held breath → article surfaces by beat 7 → friend probes by beat 14 → almost-confession at 20\\" / \\"slow ordinary surface for 8 beats → a phone vibration at 9 cracks composure → conversation pivots, never recovers\\".>"\n' +
-      '  },\n' +
-      window._renderTemptOutcomeSchema(!!((typeof window._temptFateOwnedInvocation === 'function') && window._temptFateOwnedInvocation())) + '\n' +
+      // THE AUTHOR NO LONGER SELF-CERTIFIES (Roman 2026-09-24). It used to be handed the full
+      // temptFateOutcome schema here and asked to report what its own unwritten prose would do —
+      // simultaneously the author and the witness, reporting before the prose was even accepted.
+      // The dedicated extractor (_extractTemptOutcome) now reads the ACCEPTED page and cites it.
+      // Emitting the schema would still invite the author to write the field, and anything it
+      // wrote would be ignored — so it is simply not asked. _renderTemptOutcomeSchema remains the
+      // single source of truth, for the EXTRACTOR's prompt and for the validator.
+      // (The trailing comma after sceneCharge went with it — this is now the last key.)
+      '  }\n' +
       '}'
     );
     // ── A-PLOT PRESSURE INJECTION (added 2026-05-16) ─────────────────
@@ -232878,10 +233222,19 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
     // Checks the ASSEMBLED request: every field _validateTemptFateOutcomeReport can demand must be
     // represented in the emitted schema. This is a drift guard, not semantic judgement — it exists
     // because a paid run once delivered a scene and committed nothing after the validator began
-    // requiring fields the author's schema never mentioned. Only enforced when a rupture is
-    // actually active, since that is the only time the outcome object is required.
+    // requiring fields the author's schema never mentioned.
+    //
+    // RETIRED FOR THE AUTHOR PATH (Roman 2026-09-24). The author is no longer asked for the
+    // outcome object at all, so there is no author-side schema left to drift from the validator —
+    // the invariant it guarded is now vacuously true here. It is deliberately NOT deleted: the
+    // same drift is possible on the EXTRACTOR's prompt, which is built from the same
+    // _renderTemptOutcomeSchema, and _temptOutcomePreflight still guards that in
+    // _tfoBuildExtractorPrompt's own control. Leaving the code in place with the gate turned off
+    // keeps that lineage visible rather than silently dropping a hard-won check.
+    var _TFO_AUTHOR_SELF_CERTIFIES = false;
     try {
-      var _tfoPreflightActive = !!(typeof _temptFateOwnedInvocation === 'function' && _temptFateOwnedInvocation());
+      var _tfoPreflightActive = _TFO_AUTHOR_SELF_CERTIFIES
+        && !!(typeof _temptFateOwnedInvocation === 'function' && _temptFateOwnedInvocation());
       if (_tfoPreflightActive && typeof _temptOutcomePreflight === 'function') {
         var _pf = _temptOutcomePreflight(String(sysPrompt || '') + '\n' + String(userPrompt || ''));
         if (!_pf.ok) {
@@ -233519,7 +233872,6 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
           if (_tfoOwn.proposalEntry) {
             var _tfoRosterDetail = (typeof _temptOutcomeSceneRosterDetailed === 'function')
               ? _temptOutcomeSceneRosterDetailed(plan, _tfoOwn.sceneIndex) : [];
-            var _tfoRoster = _tfoRosterDetail.map(function (r) { return r.name; });
             try {
               // JSON, not a prose join: a display label may itself contain commas, which silently
               // corrupts any reader that splits on them.
@@ -233527,16 +233879,33 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
                 + _tfoOwn.sceneIndex + ' planRow=' + _tfoPlanSceneNum(_tfoOwn.sceneIndex)
                 + ' roster=' + JSON.stringify(_tfoRosterDetail));
             } catch (_) {}
-            var _tfoCommitted = _commitTemptFateOutcome(_tfoOwn.sceneIndex, _tfoOwn.proposalEntry, _tfoOwn.pendingOutcome, { presentRoster: _tfoRoster });
-            if (!_tfoCommitted) {
-              console.warn('[TEMPT-OUTCOME] scene ' + _tfoOwn.sceneIndex + ' had an active Tempt proposal (' + _tfoOwn.proposalEntry.id + ') but produced no durable commit — see the [TEMPT-OUTCOME] log line immediately above for the exact reason (undelivered, malformed, or already committed).');
-            }
-            return _tfoCommitted;
+            // EXTRACTOR LIFECYCLE (Roman 2026-09-24). This no longer commits. It freezes an
+            // immutable extraction context and persists a PENDING record; the extractor reads the
+            // accepted prose and is the authoritative witness. Nothing about WHAT gets committed
+            // is re-resolved from live state afterwards — see _tfoBuildExtractionContext.
+            // _extractCGSceneText is the production reader-facing text builder: it carries
+            // speaker-attributed dialogue as well as narration, which a bare beats.map(text) drops.
+            // The extractor must see exactly what the reader saw, or its citations cannot match.
+            var _tfoProse = (typeof _extractCGSceneText === 'function') ? _extractCGSceneText(plan) : '';
+            var _tfoCtx = _tfoBuildExtractionContext(plan, _tfoOwn, _tfoProse, (plan && plan.__sceneUid) || null);
+            var _tfoRec = _tfoWritePending(_tfoCtx);
+            // BACK-COMPAT: an already-saved scene (or a legacy author reply) may still carry a
+            // self-certified temptFateOutcome. It is NOT authoritative any more — it is only used
+            // to seed a resolution when no extractor result exists, and it still has to pass the
+            // same validation, minus the citation check it was never asked to satisfy.
+            if (_tfoRec && _tfoOwn.pendingOutcome) _tfoRec.legacySelfCertified = _tfoOwn.pendingOutcome;
+            return _tfoRec;
           }
-          console.warn('[TEMPT-OUTCOME] scene ' + _tfoOwn.sceneIndex + ' — Tempt was invoked at generation start but no ledger proposal entry was captured — not committing.');
+          console.warn('[TEMPT-OUTCOME] scene ' + _tfoOwn.sceneIndex + ' — Tempt was invoked at generation start but no ledger proposal entry was captured — nothing to extract against.');
           return null;
         }
-        console.warn('[TEMPT-OUTCOME] scene ' + _tfoOwn.sceneIndex + ' — Tempt Fate was invoked this turn but the model returned no temptFateOutcome field. Not committing.');
+        // NO LONGER A FAILURE. The author is not asked to self-certify any more, so an absent
+        // temptFateOutcome is the expected shape; the extractor supplies it from the accepted page.
+        var _tfoProseB = (typeof _extractCGSceneText === 'function') ? _extractCGSceneText(plan) : '';
+        if (_tfoOwn.proposalEntry) {
+          return _tfoWritePending(_tfoBuildExtractionContext(plan, _tfoOwn, _tfoProseB, (plan && plan.__sceneUid) || null));
+        }
+        console.warn('[TEMPT-OUTCOME] scene ' + _tfoOwn.sceneIndex + ' — Tempt invoked but no proposal entry captured — nothing to extract against.');
         return null;
       } else if (_tfoOwn.pendingOutcome) {
         console.warn('[TEMPT-OUTCOME] scene ' + _tfoOwn.sceneIndex + ' — model returned temptFateOutcome on an ORDINARY continuation (Tempt not invoked this turn) — ignoring, will not recommit a prior wish as a new intervention.');
@@ -233901,6 +234270,20 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
         // a generation that produced a plan but never persisted therefore commits NO durable
         // outcome, by construction.
         _cgTemptFateCommitAtPersistence(plan);
+        // EXTRACTION TRIGGER (Roman 2026-09-24). The line above no longer commits — it records a
+        // PENDING outcome against an immutable context. Extraction runs here, after persistence,
+        // fire-and-forget, on the same discipline as _extractCharacterDisclosure: the scene is
+        // already safe on disk, a failure leaves the pending record retryable, and nothing about
+        // WHAT gets committed is re-read from live state afterwards. Deliberately not awaited —
+        // the reader is not made to wait on it — but the next continuation IS blocked while a
+        // pending record is unresolved (see _tfoContinuationBlocked), so a silent failure cannot
+        // let Scene B proceed without its consequence.
+        try {
+          if (typeof _tfoResumePending === 'function' && _tfoUnresolvedPending(window.state).length) {
+            Promise.resolve().then(function () { return _tfoResumePending(); })
+              .catch(function (_e) { /* stays pending, stays retryable */ });
+          }
+        } catch (_) {}
       } catch (_) {}
 
       // ── CALCIFICATION CORPUS (CG path, Roman 2026-06-10) — record Scene-1 CG prose

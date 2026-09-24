@@ -128,18 +128,70 @@ const WISH = 'everyone forgets the ceremony happened';
   fs.writeFileSync(path.join(OUT_DIR, 'author_body_len.txt'), String(authorBody.length));
   ok('a REAL author request was captured through the full UI-shaped path', authorBody.length > 1000, 'len=' + authorBody.length);
 
-  const missingFromReal = required.filter((n) => authorBody.indexOf(n) === -1);
-  ok('the ACTUAL author request represents every field the validator can require — universal AND all five class contracts',
-    missingFromReal.length === 0, 'missing from the real request: ' + JSON.stringify(missingFromReal));
-  ok('the preflight invariant ran and passed on the real request', consoleLines.some((t) => /preflight OK/.test(t)), consoleLines.filter((t) => /preflight/i.test(t)).slice(-2).join(' | '));
+  // MIGRATED 2026-09-24. The author used to be handed the whole outcome schema and asked to
+  // self-certify; these assertions checked that it was. It is no longer asked at all — the
+  // dedicated extractor reads the ACCEPTED page instead — so the assertion inverts: the author
+  // request must NOT carry the outcome contract, and the EXTRACTOR's prompt must carry all of it.
+  ok('the author is NO LONGER asked to self-certify the outcome — the schema is absent from the real author request',
+    authorBody.indexOf('temptFateOutcome') === -1 && authorBody.indexOf('affectedKnowers') === -1,
+    'author request still mentions the outcome contract');
+  const extractorPrompt = await page.evaluate(() => {
+    const p = window._tfoBuildExtractorPrompt({
+      wishText: 'everyone forgets the ceremony happened', invokerName: 'Lirael',
+      rosterNames: ['Lirael', 'Julian', 'the assembly'], prose: 'some accepted prose'
+    });
+    return p.sys + '\n' + p.usr;
+  });
+  const missingFromExtractor = required.filter((n) => extractorPrompt.indexOf(n) === -1);
+  ok('the EXTRACTOR prompt represents every field the validator can require — the contract moved layer, it did not weaken',
+    missingFromExtractor.length === 0, 'missing from the extractor prompt: ' + JSON.stringify(missingFromExtractor));
+  ok('the preflight invariant is retired for the author path (it guarded a schema the author no longer receives)',
+    !consoleLines.some((t) => /PREFLIGHT ABORT/.test(t)), consoleLines.filter((t) => /preflight/i.test(t)).slice(-2).join(' | '));
 
   // ═══════════════════════════════════════════════════════════════════════════════════════════
   section('3. A MINIMAL VALID MEMORY OUTCOME COMMITS');
-  const committed = await page.evaluate(() => ({
-    durable: (window.state._temptFateDurableConsequences || []).map((d) => ({ proposalId: d.proposalId, ruptureClass: d.ruptureClass, scopeMatch: d.scopeMatch, classDetail: d.classDetail }))
+  // MIGRATED 2026-09-24: persistence no longer commits. It writes a PENDING record; the extractor
+  // reads the accepted page and commits. So the path is proven in two steps, not one.
+  const pendingState = await page.evaluate(() => ({
+    pending: Object.keys(window.state._temptOutcomePending || {}),
+    durableBefore: (window.state._temptFateDurableConsequences || []).length,
+    blocked: !!window._tfoContinuationBlocked(window.state)
   }));
-  ok('the stubbed minimal memory_perception outcome passed validation and COMMITTED through the production path',
-    committed.durable.length === 1 && committed.durable[0].ruptureClass === 'memory_perception', JSON.stringify(committed).slice(0, 400));
+  ok('scene persistence writes a PENDING outcome record rather than committing',
+    pendingState.pending.length === 1 && pendingState.durableBefore === 0, JSON.stringify(pendingState));
+  ok('...and the next continuation is blocked until it resolves',
+    pendingState.blocked === true, JSON.stringify(pendingState));
+
+  // Resolve it through the REAL resolver with the extractor response injected (no dispatch).
+  const committed = await page.evaluate(async () => {
+    const pend = window._tfoUnresolvedPending(window.state);
+    const ctx = pend[0] && pend[0].ctx;
+    const quote = (ctx && ctx.prose ? String(ctx.prose).split('\n').filter(Boolean)[0] : '') || '';
+    const res = await window._tfoResolvePendingRecord(pend[0], { injectRaw: {
+      delivered: true,
+      changed: [{ subject: 'the assembly', whatChanged: 'no longer remembers the ceremony' }],
+      durability: [{ aspect: 'the memory gap', status: 'persists' }],
+      establishedEvidence: ['the clearing does not explain itself'],
+      requestedScope: 'everyone forgets the ceremony happened',
+      deliveredScope: 'every witness present loses the memory',
+      scopeMatch: 'full', ruptureClass: 'memory_perception',
+      targetPopulation: { kind: 'all_present_except_invoker' },
+      affectedKnowers: [
+        { who: 'the assembly', disposition: 'forgot', memoryAbsent: true, suspicionFromResidue: false, nowKnows: 'nothing', evidenceQuote: quote },
+        { who: 'Julian', disposition: 'suspects', memoryAbsent: true, suspicionFromResidue: true, nowKnows: 'nothing, but senses a gap', evidenceQuote: quote }
+      ],
+      invokerExemption: { who: 'Lirael', status: 'exempt', reason: 'invoker_anchor', note: 'anchor' },
+      unaccountedParties: []
+    } });
+    return {
+      res,
+      durable: (window.state._temptFateDurableConsequences || []).map((d) => ({ proposalId: d.proposalId, ruptureClass: d.ruptureClass, scopeMatch: d.scopeMatch, classDetail: d.classDetail })),
+      pendingLeft: Object.keys(window.state._temptOutcomePending || {}).length
+    };
+  });
+  ok('the EXTRACTED, citation-checked outcome commits through the production resolver',
+    committed.durable.length === 1 && committed.durable[0].ruptureClass === 'memory_perception' && committed.pendingLeft === 0,
+    JSON.stringify(committed.res).slice(0, 300));
   const cd0 = (committed.durable[0] || {}).classDetail || {};
   ok('the committed canon record carries the invoker exemption — a later scene can read WHY Lirael still remembers',
     cd0.invokerExemption && cd0.invokerExemption.who === 'Lirael' && cd0.invokerExemption.reason === 'invoker_anchor', JSON.stringify(cd0.invokerExemption));
