@@ -189762,12 +189762,20 @@ No text, no watermark, no UI elements, share-ready.`;
       + '  "deliveredScope": string — the scope the scene ACTUALLY delivered on the page.\n'
       + '  "scopeMatch": "full"|"narrower"|"broader" — compare the two honestly. "full" ONLY if the delivered scope covers the requested scope. If the scene granted less than the wish asked for (a subset of people, a subset of the events, a shorter duration), that is "narrower" — say so; do not relabel a partial grant as a success. If it did more than was asked, that is "broader".\n'
       + '  "scopeNote": string — if scopeMatch is not "full", why the scene delivered a different scope, and what specifically was left untouched.\n'
-      + 'WHEN THE WISH TOUCHES MEMORY OR KNOWLEDGE, also make the scope explicit rather than implied:\n'
-      + '  • who forgot, and who did not — per character or per group, in knowledgeStates.\n'
-      + '  • whether the protagonist forgot. If she is exempt, the scene itself must EARN that exception on the page (the wish\'s own wording, the deck, her role in it) — an exemption that is merely asserted is not established. Record the grounding in the relevant knowledgeStates note.\n'
-      + '  • what physical or documentary evidence survived the forgetting (objects, records, wounds, written orders) — these outlast memory and belong in establishedEvidence.\n'
-      + '  • which previously scheduled plans, proceedings, or obligations became IMPOSSIBLE, SUSPENDED, or UNEXPLAINED because the knowledge that justified them is gone. Put these in "changed" — a proceeding nobody can now justify IS a change, and omitting it silently preserves a world-state the wish should have disturbed.\n'
-      + '  • which effects persist beyond the visible rupture window, in durability.\n'
+      // GENERIC, every rupture class:
+      + '  "invalidatedPlans": [string...] — previously scheduled plans, proceedings or obligations that this rupture made IMPOSSIBLE, SUSPENDED, or UNEXPLAINED. A proceeding nobody can still justify IS a change; omitting it silently preserves a world-state the wish should have disturbed. Empty array if the rupture genuinely left every scheduled thing able to proceed.\n'
+      // RUPTURE CLASS — declared, then only that class's extra fields are required. (Roman
+      // 2026-09-23 overfitting audit: an earlier version demanded who-forgot/exemption fields from
+      // EVERY wish, which is meaningless for a possession or reputation rupture.)
+      + '  "ruptureClass": "memory_perception"|"history_rewrite"|"identity_reputation"|"materialization_possession"|"relationship_social"|"other" — what KIND of change the wish actually asked for and the scene actually delivered. Choose by what the wish asked for, not by what is easiest to report.\n'
+      + 'THEN, and ONLY for the class you declared, add that class\'s fields. Do not populate fields belonging to a class you did not deliver:\n'
+      + '  • memory_perception → "affectedKnowers": [{"who": name or group, "nowKnows": what they now know or no longer know}]. Use knowledgeStates for per-character detail. If the protagonist is EXEMPT from a forgetting, the scene itself must EARN that exception on the page (the wish\'s wording, the deck, her role in it) — an exemption merely asserted is not established; record the grounding in her knowledgeStates note. Evidence that outlasts memory (objects, records, wounds, written orders) goes in establishedEvidence.\n'
+      + '  • history_rewrite → "priorHistoryReplaced": what the history WAS before and what it now IS instead (a Tempt rupture MAY make an event never have occurred when that is what was wished and the scene delivers it), and "survivingContradictions": [string...] — residue that does not fit the rewritten history (an object, a record, a person who remembers wrongly), or an empty array if the rewrite left none.\n'
+      + '  • identity_reputation → "recognitionChanges": [{"who": whose standing changed, "howRecognized": how others now recognise, name, or treat them, "recordsChanged": what social or institutional records now say}].\n'
+      + '  • materialization_possession → "materialEffects": [{"what": what now exists or changed hands, "whoHolds": who has it, "duration": how long it lasts}]. A materialised object may expire with the rupture window while what its use CAUSED persists — report both in durability.\n'
+      + '  • relationship_social → "affectedParties": [{"who": party, "whatChanged": how the relationship or social reality changed, "witnesses": who saw or now assumes it}].\n'
+      + '  • other → explain in scopeNote what class this is and why none of the above fit.\n'
+      + 'Durability is per-effect for every class: which effects persist beyond the visible rupture window, in durability.\n'
       + 'This treatment applies IDENTICALLY to any wish, familiar or unprecedented — there is no fixed catalogue of wish types to match against; reason about THIS specific wish and THIS specific scene.';
   }
   window._buildTemptFateOutcomeReportingSchema = _buildTemptFateOutcomeReportingSchema;
@@ -189816,6 +189824,29 @@ No text, no watermark, no UI elements, share-ready.`;
       if ((raw.scopeMatch === 'narrower' || raw.scopeMatch === 'broader') && (typeof raw.scopeNote !== 'string' || !raw.scopeNote.trim())) {
         errors.push('scopeMatch="' + raw.scopeMatch + '" requires scopeNote explaining what was left untouched');
       }
+      // RUPTURE-CLASS CONDITIONAL REQUIREMENTS (Roman 2026-09-23 overfitting audit). Only the
+      // declared class's fields are demanded. A possession or reputation rupture is never asked to
+      // populate memory fields, and a forgetting rupture is never asked to claim a history rewrite.
+      var VALID_CLASS = { memory_perception: true, history_rewrite: true, identity_reputation: true, materialization_possession: true, relationship_social: true, other: true };
+      if (!VALID_CLASS[raw.ruptureClass]) {
+        errors.push('delivered:true but ruptureClass must be memory_perception|history_rewrite|identity_reputation|materialization_possession|relationship_social|other');
+      } else {
+        var needArray = function (field, why) {
+          if (!Array.isArray(raw[field]) || !raw[field].length) errors.push('ruptureClass="' + raw.ruptureClass + '" requires a non-empty ' + field + ' (' + why + ')');
+        };
+        if (raw.ruptureClass === 'memory_perception') needArray('affectedKnowers', 'who now knows or no longer knows what');
+        if (raw.ruptureClass === 'history_rewrite') {
+          if (typeof raw.priorHistoryReplaced !== 'string' || !raw.priorHistoryReplaced.trim()) errors.push('ruptureClass="history_rewrite" requires priorHistoryReplaced (what the history was, and what it now is)');
+          if (!Array.isArray(raw.survivingContradictions)) errors.push('ruptureClass="history_rewrite" requires survivingContradictions to be an array (empty is allowed — it means the rewrite left no residue)');
+        }
+        if (raw.ruptureClass === 'identity_reputation') needArray('recognitionChanges', 'who is now recognised how, and what records changed');
+        if (raw.ruptureClass === 'materialization_possession') needArray('materialEffects', 'what exists, who holds it, how long it lasts');
+        if (raw.ruptureClass === 'relationship_social') needArray('affectedParties', 'who is affected and who witnessed it');
+        if (raw.ruptureClass === 'other' && (typeof raw.scopeNote !== 'string' || !raw.scopeNote.trim())) {
+          errors.push('ruptureClass="other" requires scopeNote explaining what class this is and why the listed ones do not fit');
+        }
+      }
+      if (raw.invalidatedPlans !== undefined && !Array.isArray(raw.invalidatedPlans)) errors.push('invalidatedPlans must be an array when present');
     }
     return { valid: errors.length === 0, errors: errors };
   }
@@ -189879,6 +189910,20 @@ No text, no watermark, no UI elements, share-ready.`;
         deliveredScope: typeof rawReport.deliveredScope === 'string' ? rawReport.deliveredScope : '',
         scopeMatch: rawReport.scopeMatch || 'unstated',
         scopeNote: typeof rawReport.scopeNote === 'string' ? rawReport.scopeNote : '',
+        // Rupture class + only that class's own detail, carried into canon so a later scene reads
+        // what KIND of change is in force rather than inferring a memory reading from every wish.
+        ruptureClass: rawReport.ruptureClass || 'other',
+        invalidatedPlans: Array.isArray(rawReport.invalidatedPlans) ? rawReport.invalidatedPlans : [],
+        classDetail: (function () {
+          switch (rawReport.ruptureClass) {
+            case 'memory_perception': return { affectedKnowers: rawReport.affectedKnowers || [] };
+            case 'history_rewrite': return { priorHistoryReplaced: rawReport.priorHistoryReplaced || '', survivingContradictions: rawReport.survivingContradictions || [] };
+            case 'identity_reputation': return { recognitionChanges: rawReport.recognitionChanges || [] };
+            case 'materialization_possession': return { materialEffects: rawReport.materialEffects || [] };
+            case 'relationship_social': return { affectedParties: rawReport.affectedParties || [] };
+            default: return {};
+          }
+        })(),
         // permanent: true only if at least one reported effect persists or remains uncertain past
         // the rupture window closing — an all-"expires" report is a temporary-only intervention.
         permanent: (Array.isArray(rawReport.durability) ? rawReport.durability : []).some(function (d) { return d && (d.status === 'persists' || d.status === 'uncertain'); })
@@ -190895,7 +190940,14 @@ No text, no watermark, no UI elements, share-ready.`;
     if (ruptureActive) {
       return {
         mode: 'superseded',
-        directive: 'SCHEDULED EVENT FRAME — SUPERSEDED THIS SCENE BY AN ACTIVE TEMPT FATE RUPTURE (precedence rule, applies to ANY wish and ANY frame): before the wish, this scene was scheduled to be — ' + resolvedFrame.eventFrame + ' (lane "' + lane + '"). That schedule is now SUBORDINATE to the rupture, not binding on it. Do NOT narrow, reinterpret, or partially grant the wish in order to keep this frame reachable — that is the specific failure this rule exists to prevent. Plan the RUPTURE ITSELF as the central event. HISTORY IS UNCHANGED: the underlying events still objectively occurred, and Tempt cannot un-happen them. What the wish MAY change is who remembers them, what social knowledge survives, and what records or objects still testify — and therefore whether the scheduled frame above is now SUSPENDED, IMPOSSIBLE, UNEXPLAINED, REDIRECTED, or simply incoherent to the people who would have carried it out. If the wish\'s honest scope would leave the scheduled frame unable to proceed, say so and plan the consequences of THAT — confusion about why people gathered, missing shared knowledge, someone acting on a plan nobody else recalls agreeing to, objects or documents that outlast the memory of them. A scheduled proceeding may re-emerge LATER from surviving residue; it must NOT survive automatically as though nothing changed.',
+        // RUPTURE-CLASS NEUTRAL (Roman 2026-09-23, overfitting audit). The first version of this
+        // directive asserted "HISTORY IS UNCHANGED ... what the wish MAY change is who remembers".
+        // That is correct for a FORGETTING wish and wrong as a universal rule: Tempt Fate outranks
+        // ordinary wish doctrine, and a wish that explicitly asks for a rewritten history, a changed
+        // identity, a new possession, or a new social reality may deliver exactly that. The rule
+        // below therefore states the PRECEDENCE only and lets the wish's own nature decide what
+        // changes — it never prescribes a memory reading.
+        directive: 'SCHEDULED EVENT FRAME — SUPERSEDED THIS SCENE BY AN ACTIVE TEMPT FATE RUPTURE (precedence rule, applies to ANY wish and ANY frame): before the wish, this scene was scheduled to be — ' + resolvedFrame.eventFrame + ' (lane "' + lane + '"). That schedule is now SUBORDINATE to the rupture, not binding on it. Do NOT narrow, reinterpret, or partially grant the wish in order to keep this frame reachable — that is the specific failure this rule exists to prevent. Plan the RUPTURE ITSELF as the central event. WHAT THE RUPTURE CHANGES IS DECIDED BY THE WISH, NOT BY THIS RULE: depending on what was actually asked for, a Tempt Fate rupture may change memory and social knowledge, or history itself (up to an event never having occurred), or identity, reputation and how people recognise each other, or possession and material reality, or a relationship and the social reality around it. Do not impose a memory/forgetting reading on a wish that asks for something else, and do not assume history has been rewritten when the wish only asks to be forgotten — read THIS wish. Whatever the rupture actually delivers, the scheduled frame above may now be SUSPENDED, IMPOSSIBLE, UNEXPLAINED, REDIRECTED, or simply incoherent to the people who would have carried it out. If the wish\'s honest scope leaves that frame unable to proceed, say so and plan the consequences of THAT — people unable to justify why they gathered, a plan nobody recalls agreeing to, records or objects that contradict what everyone now believes, a proceeding whose subject no longer exists. A scheduled proceeding may re-emerge LATER from surviving residue; it must NOT survive automatically as though nothing changed.',
         jsonRequirement: ' ALSO REQUIRED, same JSON: "chosen_aftermath_lane" — because a Tempt Fate rupture is ACTIVE this scene, this is NOT forced to "' + lane + '". Set it to "' + lane + '" ONLY if the rupture genuinely leaves that frame able to proceed; set it to null if the rupture suspended, erased, redirected, or rendered it incoherent. Do not preserve the frame by weakening the wish. "lane_posture_modulation" (one sentence): if the lane survived, HOW the reader\'s posture changes the way it plays out; if it did not, WHAT the rupture did to it — suspended, impossible, unexplained, or redirected — and what now stands in its place.'
       };
     }

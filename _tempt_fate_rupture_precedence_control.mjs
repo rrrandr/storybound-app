@@ -99,7 +99,10 @@ const ACTIVE_RX = /ACTIVE INVOCATION THIS SCENE/;
     requestedScope: 'everyone forgets that the ceremony happened at all',
     deliveredScope: 'the assembly forgets the twisted wish and the interference; the ceremony itself and its review remain known',
     scopeMatch: 'narrower',
-    scopeNote: 'the ceremony, its institutional consequences, and the scheduled review were left intact'
+    scopeNote: 'the ceremony, its institutional consequences, and the scheduled review were left intact',
+    // The real wish was a forgetting, so the memory class and its own evidence apply here.
+    ruptureClass: 'memory_perception',
+    affectedKnowers: [{ who: 'the assembly', nowKnows: 'nothing of the twisted wish or the interference' }]
   })), asReported);
   ok('the SAME outcome, honestly declared as a NARROWER grant, validates — narrowing is allowed, but only when it is visible',
     vDeclared.valid === true, JSON.stringify(vDeclared));
@@ -129,8 +132,10 @@ const ACTIVE_RX = /ACTIVE INVOCATION THIS SCENE/;
     fl.rupture.jsonRequirement.slice(0, 260));
   ok('the superseded directive names the exact failure mode it exists to prevent (narrowing the wish to save the frame)',
     /Do NOT narrow, reinterpret, or partially grant the wish/.test(fl.rupture.directive));
-  ok('it preserves history explicitly — the events still occurred; only who REMEMBERS them may change',
-    /HISTORY IS UNCHANGED/.test(fl.rupture.directive) && /still objectively occurred/.test(fl.rupture.directive));
+  // (The former assertion here demanded the directive state "history is unchanged; only who
+  // remembers may change". That was the overfitting itself — asserted as a universal rule it would
+  // forbid a history-rewrite wish from ever delivering. Section 7 now asserts the opposite property:
+  // the directive must NOT carry that universal claim, and must name every rupture class instead.)
   ok('it permits the scheduled proceeding to be suspended/impossible/unexplained/redirected rather than automatically surviving',
     /SUSPENDED, IMPOSSIBLE, UNEXPLAINED, REDIRECTED/.test(fl.rupture.directive) && /must NOT survive automatically/.test(fl.rupture.directive));
   ok('the lane may be set to null when the rupture breaks it', /set it to null/.test(fl.rupture.jsonRequirement));
@@ -157,12 +162,19 @@ const ACTIVE_RX = /ACTIVE INVOCATION THIS SCENE/;
   // ═══════════════════════════════════════════════════════════════════════════════════════════
   section('5. SCOPE HANDLING IS DEMANDED OF THE AUTHOR, not left implicit');
   const schema = await page.evaluate(() => window._buildTemptFateOutcomeReportingSchema());
-  ok('the outcome schema requires who forgot and who did not', /who forgot, and who did not/.test(schema));
-  ok('the outcome schema requires the protagonist\'s exemption to be EARNED on the page, not asserted',
-    /whether the protagonist forgot/.test(schema) && /must EARN that exception/.test(schema) && /merely asserted is not established/.test(schema));
-  ok('the outcome schema requires surviving physical/documentary evidence', /physical or documentary evidence survived/.test(schema));
-  ok('the outcome schema requires naming proceedings made impossible, suspended or unexplained',
-    /IMPOSSIBLE, SUSPENDED, or UNEXPLAINED/.test(schema) && /omitting it silently preserves a world-state/.test(schema));
+  ok('the schema demands a declared ruptureClass covering all five kinds plus "other"',
+    /"ruptureClass"/.test(schema) && /memory_perception/.test(schema) && /history_rewrite/.test(schema)
+      && /identity_reputation/.test(schema) && /materialization_possession/.test(schema) && /relationship_social/.test(schema));
+  ok('class fields are CONDITIONAL — the schema says not to populate a class you did not deliver',
+    /ONLY for the class you declared/.test(schema) && /Do not populate fields belonging to a class you did not deliver/.test(schema));
+  ok('the memory class (and only it) carries the who-forgot / earned-exemption burden',
+    /memory_perception → "affectedKnowers"/.test(schema) && /must EARN that exception/.test(schema) && /merely asserted is not established/.test(schema));
+  ok('the history class may state an event never occurred, with surviving contradictions',
+    /history_rewrite → "priorHistoryReplaced"/.test(schema) && /MAY make an event never have occurred/.test(schema) && /survivingContradictions/.test(schema));
+  ok('reputation, possession and relationship classes each carry their own evidence instead of memory fields',
+    /identity_reputation → "recognitionChanges"/.test(schema) && /materialization_possession → "materialEffects"/.test(schema) && /relationship_social → "affectedParties"/.test(schema));
+  ok('invalidated plans stay GENERIC — demanded of every class, not only forgetting',
+    /"invalidatedPlans"/.test(schema) && /IMPOSSIBLE, SUSPENDED, or UNEXPLAINED/.test(schema) && /omitting it silently preserves a world-state/.test(schema));
   ok('the outcome schema requires durable effects beyond the rupture window', /persist beyond the visible rupture window/.test(schema));
   ok('the outcome schema requires an explicit requested-vs-delivered scope comparison',
     /"requestedScope"/.test(schema) && /"deliveredScope"/.test(schema) && /"scopeMatch"/.test(schema)
@@ -191,6 +203,103 @@ const ACTIVE_RX = /ACTIVE INVOCATION THIS SCENE/;
   console.log('  Prompt and gate are released together (app.js: _buildEventFramePrecedence and the');
   console.log('  _detectPlannerFunctionGap ruptureActive waiver). Not re-proved synthetically here —');
   console.log('  see the comment in this file for why a synthetic fixture would have passed vacuously.');
+
+  // ═══════════════════════════════════════════════════════════════════════════════════════════
+  section('7. NO MEMORY-ERASURE OVERFITTING — four contrasting rupture classes');
+  // Roman's audit: the first version of this fix baked a FORGETTING wish's metaphysics into the
+  // generic rule ("history stays immutable; only who remembers may change") and demanded
+  // memory fields from every wish. Tempt Fate outranks ordinary wish doctrine: what changes is
+  // decided by what was actually asked for. These four cases must each validate on their own terms.
+  const base = {
+    delivered: true,
+    durability: [{ aspect: 'the effect', status: 'persists' }],
+    establishedEvidence: ['something the scene put on the page'],
+    scopeMatch: 'full'
+  };
+  const cases = await page.evaluate((b) => {
+    const v = (r) => window._validateTemptFateOutcomeReport(r);
+    return {
+      // 1. forgetting — occurrence preserved, memory changed
+      forget: v(Object.assign({}, b, {
+        requestedScope: 'everyone forgets the ceremony happened',
+        deliveredScope: 'every witness present loses the memory of the ceremony',
+        ruptureClass: 'memory_perception',
+        changed: [{ subject: 'the assembly', whatChanged: 'no longer remembers the ceremony' }],
+        affectedKnowers: [{ who: 'the assembly', nowKnows: 'nothing of the ceremony' }],
+        invalidatedPlans: ['the preliminary review nobody can now justify']
+      })),
+      // 1b. the same forgetting wish must NOT be forced to claim a history rewrite
+      forgetWithoutHistoryFields: v(Object.assign({}, b, {
+        requestedScope: 'everyone forgets the ceremony happened',
+        deliveredScope: 'every witness loses the memory',
+        ruptureClass: 'memory_perception',
+        changed: [{ subject: 'the assembly', whatChanged: 'no longer remembers' }],
+        affectedKnowers: [{ who: 'the assembly', nowKnows: 'nothing of it' }]
+      })),
+      // 2. history rewrite — ALLOWED to un-happen the event when that is the wish
+      neverHappened: v(Object.assign({}, b, {
+        requestedScope: 'the ceremony never happened',
+        deliveredScope: 'the ceremony is undone; it did not take place',
+        ruptureClass: 'history_rewrite',
+        changed: [{ subject: 'the ceremony', whatChanged: 'never occurred' }],
+        priorHistoryReplaced: 'the rite was held and Seren spent her wish; now no rite was ever convened',
+        survivingContradictions: ['the torn mouth-band still in Lirael\'s hand']
+      })),
+      // 2b. a history rewrite must NOT be forced to populate memory fields
+      neverHappenedNoMemoryFields: v(Object.assign({}, b, {
+        requestedScope: 'the ceremony never happened',
+        deliveredScope: 'undone',
+        ruptureClass: 'history_rewrite',
+        changed: [{ subject: 'the ceremony', whatChanged: 'never occurred' }],
+        priorHistoryReplaced: 'held → never convened',
+        survivingContradictions: []
+      })),
+      // 3. reputation — durable public recognition, no memory fields
+      infamous: v(Object.assign({}, b, {
+        requestedScope: 'make us infamous lovers everyone recognises',
+        deliveredScope: 'the pair are recognised on sight across the region',
+        ruptureClass: 'identity_reputation',
+        changed: [{ subject: 'the pair', whatChanged: 'are publicly known as lovers' }],
+        recognitionChanges: [{ who: 'Lirael and Julian', howRecognized: 'named on sight by strangers', recordsChanged: 'the assembly rolls now list them together' }]
+      })),
+      // 4. possession/material — temporary object, institutional history intact
+      answerInHand: v(Object.assign({}, b, {
+        requestedScope: 'put The Answer in my hand',
+        deliveredScope: 'The Answer is in her hand for the duration of the window',
+        ruptureClass: 'materialization_possession',
+        changed: [{ subject: 'The Answer', whatChanged: 'changed hands' }],
+        materialEffects: [{ what: 'The Answer', whoHolds: 'Lirael', duration: 'until the rupture window closes' }],
+        durability: [{ aspect: 'possession of The Answer', status: 'expires' }, { aspect: 'that the assembly saw her holding it', status: 'persists' }],
+        invalidatedPlans: []
+      })),
+      // NEGATIVE: declaring a class without its own evidence must still fail
+      memoryClassMissingKnowers: v(Object.assign({}, b, {
+        requestedScope: 'everyone forgets', deliveredScope: 'they forgot', ruptureClass: 'memory_perception',
+        changed: [{ subject: 'x', whatChanged: 'y' }]
+      })),
+      possessionClassMissingEffects: v(Object.assign({}, b, {
+        requestedScope: 'give me the blade', deliveredScope: 'she holds it', ruptureClass: 'materialization_possession',
+        changed: [{ subject: 'x', whatChanged: 'y' }]
+      }))
+    };
+  }, base);
+
+  ok('"everyone forgets the ceremony" validates as a MEMORY rupture (occurrence preserved, memory changed)', cases.forget.valid === true, JSON.stringify(cases.forget));
+  ok('…and is NOT required to claim a history rewrite it did not perform', cases.forgetWithoutHistoryFields.valid === true, JSON.stringify(cases.forgetWithoutHistoryFields));
+  ok('"the ceremony never happened" is ALLOWED to rewrite history when delivered — no universal immutability rule blocks it', cases.neverHappened.valid === true, JSON.stringify(cases.neverHappened));
+  ok('…and is NOT forced to populate memory fields (no whoForgot/exemption demanded of a history rewrite)', cases.neverHappenedNoMemoryFields.valid === true, JSON.stringify(cases.neverHappenedNoMemoryFields));
+  ok('"make us infamous lovers everyone recognises" validates as durable public recognition, with NO memory fields required', cases.infamous.valid === true, JSON.stringify(cases.infamous));
+  ok('"put The Answer in my hand" validates as possession/material with a duration, institutional history untouched, NO memory fields required', cases.answerInHand.valid === true, JSON.stringify(cases.answerInHand));
+  ok('a declared memory rupture with no affectedKnowers is still REJECTED — the class carries its own burden of evidence', cases.memoryClassMissingKnowers.valid === false && cases.memoryClassMissingKnowers.errors.some((e) => /affectedKnowers/.test(e)), JSON.stringify(cases.memoryClassMissingKnowers.errors));
+  ok('a declared possession rupture with no materialEffects is still REJECTED', cases.possessionClassMissingEffects.valid === false && cases.possessionClassMissingEffects.errors.some((e) => /materialEffects/.test(e)), JSON.stringify(cases.possessionClassMissingEffects.errors));
+
+  const directiveText = fl.rupture.directive;
+  ok('the precedence directive no longer asserts universal history-immutability', !/HISTORY IS UNCHANGED/.test(directiveText) && !/Tempt cannot un-happen/.test(directiveText), directiveText.slice(0, 200));
+  ok('it explicitly names every rupture class the wish may fall into, and forbids imposing a memory reading',
+    /history itself \(up to an event never having occurred\)/.test(directiveText)
+      && /identity, reputation/.test(directiveText) && /possession and material reality/.test(directiveText)
+      && /Do not impose a memory\/forgetting reading/.test(directiveText),
+    directiveText.slice(0, 400));
 
   section('CONTAINMENT');
   ok('ZERO real provider dispatches — this control only calls pure builders and validators', gate.realCalls().length === 0, 'realCalls=' + gate.realCalls().length);

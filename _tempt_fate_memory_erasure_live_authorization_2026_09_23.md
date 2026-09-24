@@ -1,4 +1,36 @@
-# Live-test authorization sheet — Tempt Fate memory-erasure scenario (ELEVENTH REVISION)
+# Live-test authorization sheet — Tempt Fate memory-erasure scenario (TWELFTH REVISION)
+
+**Twelfth revision — overfitting audit: the precedence fix was memory-shaped; it is now
+rupture-class conditional.** Roman caught that the eleventh revision generalised two
+*memory-erasure-specific* rules into all of Tempt Fate:
+
+1. The precedence directive asserted **"HISTORY IS UNCHANGED … Tempt cannot un-happen the past;
+   what the wish MAY change is who remembers"**. Correct for a forgetting wish, wrong as a universal
+   law — Tempt Fate outranks ordinary wish doctrine, and a wish that asks for a rewritten history
+   may deliver exactly that. The directive now states the **precedence only** and explicitly lets
+   the wish decide what changes: memory, history (up to an event never having occurred), identity
+   and reputation, possession and material reality, or relationship and social reality. It also
+   forbids imposing a memory reading on a wish that asked for something else.
+2. `whoForgot` / protagonist-exemption / surviving-memory evidence were demanded of **every**
+   delivered report. They are now required **only for a memory/perception rupture**.
+
+**Generic fields, every class:** requestedScope · deliveredScope · scopeMatch · scopeNote ·
+changed · durability (per effect) · establishedEvidence · **invalidatedPlans**.
+
+**Conditional on declared `ruptureClass`:** `memory_perception` → affectedKnowers (+ exemption must
+be *earned*, not asserted) · `history_rewrite` → priorHistoryReplaced + survivingContradictions ·
+`identity_reputation` → recognitionChanges · `materialization_possession` → materialEffects (what
+exists, who holds it, duration) · `relationship_social` → affectedParties (+ witnesses) · `other` →
+must explain itself in scopeNote. The validator enforces only the declared class's fields, and the
+commit carries `ruptureClass` plus that class's detail into canon.
+
+`_tempt_fate_rupture_precedence_control.mjs`: **34/34**, including four contrasting cases proving
+the rule is not memory-shaped — "everyone forgets the ceremony" (occurrence preserved, memory
+changed), "the ceremony never happened" (history rewrite *permitted*, and not forced to populate
+memory fields), "make us infamous lovers everyone recognises" (durable public recognition, no memory
+fields), "put The Answer in my hand" (possession/material with duration, institutional history
+intact) — plus negatives proving each class still carries its own burden of evidence. The real
+failed fixture and its honest `narrower`-scope rejection are preserved.
 
 **Eleventh revision — the rupture now outranks the scheduled frame.** The Scene-A-only run
 delivered, committed, and stayed inside its cap, but is classified a **semantic failure / partial
