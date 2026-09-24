@@ -32114,9 +32114,43 @@ window._reflowSceneDialogueLLM = _reflowSceneDialogueLLM;
   // "your father" can be asserted before either has been named in prose.
   function _relEnsureAnchors(L) {
     var s = window.state || {};
-    if (!L.entities[_relPcId()]) {
-      L.entities[_relPcId()] = { id: _relPcId(), kind: 'named', anchorRole: 'pc',
-        label: String(s.name || s.playerName || 'the protagonist'), aliases: [] };
+    // PC LABEL — READ THE CANONICAL RESOLVER, NEVER A PRIVATE CHAIN (Roman 2026-09-24).
+    // This used to be `s.name || s.playerName || 'the protagonist'`, which is precisely the
+    // mistake _resolvePcIdentity exists to prevent ("Every consumer reads this — never its own
+    // chain", app.js ~132665): it never consulted the starter seed's own PC, nor the nested
+    // state.picks.identity.playerName that First Sacrifice and the other nested-identity starters
+    // populate, and it had no placeholder test — so state.playerName holding the KERNEL ("the one
+    // who carries the story") won over the real name. First Sacrifice's PC anchor therefore
+    // labelled itself "the protagonist", and every relational directive built from this ledger
+    // carried that instead of "Lirael". _resolvePcIdentity returns the first NON-PLACEHOLDER
+    // candidate across starterSeed.cast.PC.name → state.playerName → state.name →
+    // state.identity.playerName → state.picks.identity.playerName, or null when a story genuinely
+    // has no configured name — which keeps the generic fallback below intact.
+    var pcResolved = null;
+    try {
+      var _pcHit = (typeof window._resolvePcIdentity === 'function') ? window._resolvePcIdentity(s) : null;
+      if (_pcHit && _pcHit.v) pcResolved = String(_pcHit.v).trim() || null;
+    } catch (_) {}
+    var _pcId = _relPcId();
+    if (!L.entities[_pcId]) {
+      L.entities[_pcId] = { id: _pcId, kind: 'named', anchorRole: 'pc',
+        label: pcResolved || 'the protagonist', aliases: [] };
+    } else if (pcResolved) {
+      // A LEDGER CARRIED IN FROM A SAVE keeps the placeholder label it was created with. Upgrade
+      // it IN PLACE — same id, same entity, same edges — never a second protagonist. Only a label
+      // that is still a placeholder is replaced: a real name already on the entity is left alone,
+      // so this can never rename someone's protagonist out from under them. The old label is kept
+      // as an alias so any assertion or prose match already made against it still resolves.
+      var _pcEnt = L.entities[_pcId];
+      var _pcStale = (typeof window._isPlaceholderPcName === 'function')
+        ? window._isPlaceholderPcName(_pcEnt.label) : !String(_pcEnt.label || '').trim();
+      if (_pcStale && String(_pcEnt.label || '') !== pcResolved) {
+        if (!Array.isArray(_pcEnt.aliases)) _pcEnt.aliases = [];
+        var _oldLabel = String(_pcEnt.label || '').trim();
+        if (_oldLabel && _pcEnt.aliases.indexOf(_oldLabel) === -1) _pcEnt.aliases.push(_oldLabel);
+        _pcEnt.label = pcResolved;
+        try { console.log('[REL-LEDGER] PC anchor label upgraded in place: "' + _oldLabel + '" → "' + pcResolved + '" (same entity id, old label kept as alias)'); } catch (_) {}
+      }
     }
     var liId = _relLiId();
     if (!L.entities[liId]) {
@@ -189922,6 +189956,20 @@ No text, no watermark, no UI elements, share-ready.`;
   //      anyone the author actually put on the page whom the stage record did not anticipate.
   // Each returned entry records WHICH sources vouched for it, so a control can prove the composite
   // is genuinely wider than the speakers alone rather than taking it on trust.
+  //
+  // ── THE BOUNDARY, AS INTENDED (Roman 2026-09-24) ────────────────────────────────────────────
+  // Accepted stage/objective presence, plus declared collectives, plus structured beat
+  // participation ARE the scene's authoritative epistemic census. That is the whole roster, by
+  // design — not a best effort that ought to grow.
+  //
+  // If an author invents an undeclared silent named character, this validator will not see them,
+  // and it SHOULD NOT: that is an author-contract violation (the cast is declared upstream, and
+  // _validateLocalObjective and validateCGSpeakerDisplayNames already police who may appear),
+  // belonging to the layer that owns the cast — not something an outcome validator should chase
+  // with prose regex. Scanning narration for capitalised words to widen this list would trade a
+  // precise, provable census for a guess, and would re-import exactly the inference this design
+  // removed. Leave the gap where it is and fix it in the author contract.
+  // ────────────────────────────────────────────────────────────────────────────────────────────
   // WHICH PLAN ROW THIS SCENE IS. The stage record, the accepted objective and the declared
   // collectives are all keyed by the PLAN's 1-based scene number (the baked opening is n=1), which
   // is NOT the generation's own 0-based sceneIndex. The planner derives the same number at
@@ -189957,23 +190005,16 @@ No text, no watermark, no UI elements, share-ready.`;
       // 1 + 2 — the anchors. Present or not, both must be RESOLVED by the report; an anchor who
       // was not in the scene is answered with disposition "absent", never with silence.
       //
-      // PC LABEL CAVEAT (empirically found here, 2026-09-23): _relEnsureAnchors resolves the LI
-      // through state.loveInterestName || state.partnerName || state.picks.identity.partnerName,
-      // but resolves the PC through only state.name || state.playerName — it never consults the
-      // NESTED state.picks.identity.playerName that First Sacrifice (and the other starters that
-      // populate the nested field) actually use. The PC anchor therefore labels itself "the
-      // protagonist" for those stories. Applying the same nested fallback LOCALLY here keeps the
-      // invoker resolvable by name without changing the ledger label that feeds every other
-      // author-facing directive in the app — that asymmetry is a real but separate defect.
-      var pcAnchorLabel = '';
+      // Both anchors are read straight off the ledger. This deliberately keeps NO fallback of its
+      // own: the PC anchor is now resolved by _relEnsureAnchors through the canonical
+      // _resolvePcIdentity (fixed 2026-09-24), so a second chain here would be exactly the
+      // competing name-resolution rule that defect created in the first place.
       Object.keys(ents).forEach(function (id) {
         var e = ents[id];
         if (!e || !e.label) return;
-        if (e.anchorRole === 'pc') pcAnchorLabel = String(e.label);
+        if (e.anchorRole === 'pc') add(e.label, 'invoker');
         else if (e.anchorRole === 'li') add(e.label, 'love_interest');
       });
-      var pcResolved = String(s.name || s.playerName || (s.picks && s.picks.identity && s.picks.identity.playerName) || '').trim();
-      add(pcResolved || pcAnchorLabel, 'invoker');
       // 3 — the accepted stage record's present cast, resolved exactly as the author saw it.
       var rec = (typeof _activeStageRecord === 'function') ? _activeStageRecord(s) : null;
       if (rec && Array.isArray(rec.present)) {

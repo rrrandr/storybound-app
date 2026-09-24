@@ -113,17 +113,31 @@ passed before: Julian listed as `retained`, `unaccountedParties` empty, `scopeMa
 
 ### Two production defects found while building this — both real, neither invented
 
-1. **PC anchor label.** `_relEnsureAnchors` resolves the LI through
-   `loveInterestName || partnerName || picks.identity.partnerName`, but resolves the PC through only
-   `state.name || state.playerName` — never the nested `picks.identity.playerName` that First
-   Sacrifice actually populates. The PC anchor therefore labels itself *"the protagonist"*. The
-   roster applies the nested fallback locally so the invoker stays resolvable; the shared ledger
-   label is deliberately **left alone**, because changing it would alter author-facing directives
-   across the whole app. That asymmetry is a separate decision, not folded into this change.
+1. **PC anchor label — FIXED 2026-09-24.** `_relEnsureAnchors` resolved the PC through
+   `state.name || state.playerName || 'the protagonist'`: a private chain that never consulted the
+   starter seed's own PC, never consulted the nested `picks.identity.playerName`, and had no
+   placeholder test — so `state.playerName` holding the *kernel* ("the one who carries the story")
+   beat the real name. First Sacrifice's PC anchor therefore labelled itself *"the protagonist"*,
+   and every author-facing relational directive built from the ledger carried that instead of
+   *Lirael*. It now reads `_resolvePcIdentity`, the app's canonical resolver, whose own header
+   already said **"Every consumer reads this — never its own chain."** A carried ledger's
+   placeholder label is upgraded **in place** (same entity id, edges intact, old label kept as an
+   alias); a real name already on the entity is never overwritten. The Tempt roster's temporary
+   local fallback is deleted — it consumes the shared anchor.
+   Proof: `_rel_pc_anchor_resolution_control.mjs`, 20/20, and **8 of those 20 go red** when the old
+   chain is restored.
 2. **Plan-row indexing.** A generation's `sceneIndex` is *not* the plan's 1-based scene number. The
    first attempt read row 3 instead of row 2 and silently found no collectives — caught only because
    the roster log prints its sources. `_tfoPlanSceneNum` now derives the row the way the planner
    does, verified empirically rather than assumed.
+
+### The roster boundary is intended, not a shortfall
+
+Accepted stage/objective presence, declared collectives, and structured beat participation **are**
+the scene's authoritative epistemic census. An author inventing an undeclared silent named character
+is an *author-contract* violation — the cast is declared upstream, and `_validateLocalObjective` and
+`validateCGSpeakerDisplayNames` already police who may appear. It is not something this outcome
+validator should chase with prose regex, which would trade a precise, provable census for a guess.
 
 ### Secondary quality finding — NOT conflated with the above
 
