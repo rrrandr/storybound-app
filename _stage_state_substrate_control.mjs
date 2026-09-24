@@ -4,14 +4,24 @@
 // OFFLINE control suite for the generic stage-state substrate (Roman, authorized 2026-09-14).
 // Design: _audit_out/generic_stage_state_substrate_design.md (+ corrections).
 //
-// Loads the REAL, unmodified source of _relationshipLedger (public/app.js ~31116-31226) and the
-// new stage-state helpers (~196969-197153) verbatim by line range, executes them in a sandboxed
+// Loads the REAL, unmodified source of _relationshipLedger, the canonical PC-identity resolver and
+// the stage-state helpers verbatim out of public/app.js, executes them in a sandboxed
 // `new Function('window', ...)` scope with a minimal state stub, and runs the six required
 // controls against the real functions. No server, no browser, no network, no provider call.
 //
-// If public/app.js is edited such that these line ranges drift, the anchor checks below fail
-// LOUD (not silently test stale code) — this suite is tied to specific line numbers by design,
-// consistent with this session's other extraction-based proofs.
+// ── LOCATING THE SOURCE: MARKERS, NOT LINE NUMBERS (Roman 2026-09-24) ───────────────────────────
+// This suite used to slice app.js by hardcoded line ranges (31162-31272 etc.). That is not
+// regression protection: app.js moved ~870 lines under it and the suite simply stopped running,
+// throwing ANCHOR DRIFT for eight days while every other control reported green.
+//
+//   "Hardcoded line windows are not meaningful regression protection."
+//
+// Regions are now located by UNIQUE SOURCE MARKERS and closed at real FUNCTION/BLOCK BOUNDARIES by
+// a brace scanner that understands strings and comments. A marker that goes missing or becomes
+// ambiguous still fails LOUD — the point was never to soften the failure, only to stop tying it to
+// line arithmetic that no edit can be expected to preserve. Section 0 below proves the old
+// fixed-line slice is in fact broken against current source, so this repair is demonstrably
+// addressing a real staleness rather than papering over a genuine drift.
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -21,20 +31,88 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const APP_PATH = path.join(__dirname, 'public/app.js');
 const lines = fs.readFileSync(APP_PATH, 'utf8').split('\n');
 
-function sliceLines(from1, to1, startAnchor, endAnchor) {
-  const slice = lines.slice(from1 - 1, to1).join('\n');
-  if (!slice.includes(startAnchor)) throw new Error(`ANCHOR DRIFT: expected "${startAnchor}" in lines ${from1}-${to1}`);
-  if (!slice.includes(endAnchor)) throw new Error(`ANCHOR DRIFT: expected "${endAnchor}" in lines ${from1}-${to1}`);
-  return slice;
+// Brace depth of a chunk of source, ignoring braces inside strings, template literals, line
+// comments and block comments. Used only to find where a region's outermost block closes.
+function braceDelta(src, startState) {
+  let depth = startState.depth, i = 0;
+  let inLine = false, inBlock = startState.inBlock, quote = startState.quote;
+  while (i < src.length) {
+    const c = src[i], n = src[i + 1];
+    if (inLine) { if (c === '\n') inLine = false; i++; continue; }
+    if (inBlock) { if (c === '*' && n === '/') { inBlock = false; i += 2; continue; } i++; continue; }
+    if (quote) {
+      if (c === '\\') { i += 2; continue; }
+      if (c === quote) quote = null;
+      i++; continue;
+    }
+    if (c === '/' && n === '/') { inLine = true; i += 2; continue; }
+    if (c === '/' && n === '*') { inBlock = true; i += 2; continue; }
+    if (c === '"' || c === "'" || c === '`') { quote = c; i++; continue; }
+    if (c === '{') depth++;
+    else if (c === '}') depth--;
+    i++;
+  }
+  return { depth, inBlock, quote };
 }
 
-const relLedgerSrc = sliceLines(31162, 31272, 'var REL_V = 1;', 'function _relEnsureEntity(L, id, patch)');
-const stageStateSrc = sliceLines(197995, 198257,
+function uniqueMarkerLine(marker) {
+  const hits = [];
+  for (let i = 0; i < lines.length; i++) if (lines[i].includes(marker)) hits.push(i);
+  if (hits.length === 0) throw new Error(`MARKER MISSING: "${marker}" is not in public/app.js — the region it anchors was renamed or removed`);
+  if (hits.length > 1) throw new Error(`MARKER AMBIGUOUS: "${marker}" appears on ${hits.length} lines (${hits.map((h) => h + 1).join(', ')}) — pick a more specific anchor`);
+  return hits[0];
+}
+
+// From startMarker through endMarker, then extended forward to whatever line actually closes the
+// region's outermost open block — so an end marker that sits INSIDE a function or try block
+// (e.g. an export line) still yields syntactically complete source.
+const located = [];
+function sliceRegion(label, startMarker, endMarker) {
+  const from = uniqueMarkerLine(startMarker);
+  const to = uniqueMarkerLine(endMarker);
+  if (to < from) throw new Error(`MARKER ORDER: "${endMarker}" (line ${to + 1}) precedes "${startMarker}" (line ${from + 1})`);
+  let state = { depth: 0, inBlock: false, quote: null };
+  for (let i = from; i <= to; i++) state = braceDelta(lines[i] + '\n', state);
+  let end = to;
+  while (state.depth > 0 && end + 1 < lines.length) { end++; state = braceDelta(lines[end] + '\n', state); }
+  if (state.depth !== 0) throw new Error(`UNBALANCED REGION: "${label}" never closes (depth ${state.depth} at EOF)`);
+  located.push({ label, from: from + 1, to: end + 1, lines: end - from + 1 });
+  return lines.slice(from, end + 1).join('\n');
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// SECTION 0 — the repair itself: the OLD fixed-line slice is broken, the
+// marker-based locator is not. Proven here rather than asserted in a comment.
+// ══════════════════════════════════════════════════════════════════════════
+const OLD_FIXED_SLICES = [
+  { from: 31162, to: 31272, anchor: 'var REL_V = 1;' },
+  { from: 197995, to: 198257, anchor: 'GENERIC STAGE-STATE SUBSTRATE (Roman, authorized 2026-09-14)' },
+  { from: 198550, to: 198558, anchor: 'function _deriveObjectHead(label) {' }
+];
+const oldSliceBroken = OLD_FIXED_SLICES.map((s) => ({
+  ...s,
+  actualLine: (() => { try { return uniqueMarkerLine(s.anchor) + 1; } catch (_) { return null; } })(),
+  containsAnchor: lines.slice(s.from - 1, s.to).join('\n').includes(s.anchor)
+}));
+
+const relLedgerSrc = sliceRegion('relationship ledger',
+  'var REL_V = 1;',
+  'function _relEnsureEntity(L, id, patch) {');
+// ADDED 2026-09-24: the canonical PC-identity resolver. _relEnsureAnchors now labels the PC anchor
+// through _resolvePcIdentity, so a sandbox without it exercises a degraded fallback rather than the
+// code that actually ships. STARTER_SEEDS is absent here, but the resolver already guards it with
+// `typeof`, so seedless resolution is the real behaviour, not a stub.
+const pcIdentitySrc = sliceRegion('canonical PC identity',
+  'function _isPlaceholderPcName(v) {',
+  'window._isPlaceholderPcName = _isPlaceholderPcName;');
+const stageStateSrc = sliceRegion('stage-state substrate',
   'GENERIC STAGE-STATE SUBSTRATE (Roman, authorized 2026-09-14)',
   'window._acceptStageProposal = _acceptStageProposal;') + '\n'
-  + sliceLines(198550, 198558, 'function _deriveObjectHead(label) {', 'window._deriveObjectHead = _deriveObjectHead;');
+  + sliceRegion('_deriveObjectHead',
+    'function _deriveObjectHead(label) {',
+    'window._deriveObjectHead = _deriveObjectHead;');
 
-const body = relLedgerSrc + '\n' + stageStateSrc;
+const body = pcIdentitySrc + '\n' + relLedgerSrc + '\n' + stageStateSrc;
 const factory = new Function('window', body);
 
 function freshSandbox(storyId) {
@@ -50,6 +128,49 @@ function ok(label, cond, detail) {
   else { fail++; fails.push(label + (detail ? ' — ' + detail : '')); console.log('  ✗ ' + label + (detail ? ' — ' + detail : '')); }
 }
 function section(title) { console.log('\n=== ' + title + ' ==='); }
+
+// ══════════════════════════════════════════════════════════════════════════
+// SECTION 0 — THE STALENESS REPAIR ITSELF
+// ══════════════════════════════════════════════════════════════════════════
+section('CONTROL 0 — the old fixed-line slice is stale; the marker locator is not');
+{
+  oldSliceBroken.forEach((s) => {
+    ok(`the OLD hardcoded window ${s.from}-${s.to} no longer contains "${s.anchor.slice(0, 44)}" (now line ${s.actualLine})`,
+      s.containsAnchor === false, 'the old slice still matches — this control was not actually stale');
+  });
+  ok('every marker-located region resolved, and each is non-trivial',
+    located.length === 4 && located.every((r) => r.lines > 3), JSON.stringify(located));
+  ok('every located region is syntactically COMPLETE — the extracted source compiled',
+    typeof factory === 'function');
+  located.forEach((r) => console.log(`    located "${r.label}" at ${r.from}-${r.to} (${r.lines} lines)`));
+  // The locator must fail LOUD, not silently return something plausible, when a marker goes.
+  let missingThrew = false;
+  try { uniqueMarkerLine('var REL_V = 9999;'); } catch (_) { missingThrew = true; }
+  ok('a MISSING marker still throws rather than silently testing stale code', missingThrew);
+  let ambiguousThrew = false;
+  try { uniqueMarkerLine('  }'); } catch (e) { ambiguousThrew = /MARKER AMBIGUOUS/.test(e.message); }
+  ok('an AMBIGUOUS marker throws rather than picking the first match', ambiguousThrew);
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// SECTION 0b — the sandbox now runs the PC anchor as it actually ships
+// ══════════════════════════════════════════════════════════════════════════
+section('CONTROL 0b — PC anchor labels through the canonical resolver');
+{
+  const win = freshSandbox('story-c0b');
+  // Real path into _relLedger(true) → _relEnsureAnchors, via the same production bootstrap
+  // BOOTSTRAP CONTROL A uses (_relEntityForName sits outside the extracted region).
+  win._ensureStoryEntityAnchors();
+  const pc = win.state._relationshipLedger.entities.pc;
+  ok('the canonical resolver is present in the sandbox, so the anchor is not running a degraded fallback',
+    typeof win._resolvePcIdentity === 'function');
+  ok('the PC anchor resolves the configured name rather than "the protagonist"',
+    pc && pc.label === 'Lirael', JSON.stringify(pc));
+  // By anchorRole, not by id: _relLiId() derives the LI's id from the configured name, so 'li' is
+  // not a stable key (BOOTSTRAP CONTROL A hedges the same way).
+  const liEnt = Object.values(win.state._relationshipLedger.entities).filter((e) => e && e.anchorRole === 'li')[0];
+  ok('the LI anchor still resolves alongside it', liEnt && liEnt.label === 'Julian', JSON.stringify(liEnt));
+}
 
 // ══════════════════════════════════════════════════════════════════════════
 // CONTROL 1 — Unissued recurring entity: bare name / unminted id as a present
