@@ -26,7 +26,16 @@ export function buildScheduleAwareStubResponse(sysText, usrText, isTemptScene) {
     // Invoker exemption + per-witness dispositions added 2026-09-23. Lirael's retained memory is
     // the DEFAULT anchor, declared rather than earned; Julian is on the page and so must be
     // resolved by name, not absorbed into "the assembly".
-    base.temptFateOutcome = { delivered: true, changed: [{ subject: 'the assembly', whatChanged: 'no longer remembers the ceremony' }], durability: [{ aspect: 'the memory gap', status: 'persists' }], knowledgeStates: [{ character: 'Lirael', state: 'remembers', note: 'invoker anchor' }], establishedEvidence: ['torn mouth-band on the ground'], openPossibilities: ['someone could notice the arrangement of the clearing does not match anyone\'s memory of why they gathered'], requestedScope: 'everyone forgets the ceremony happened', deliveredScope: 'every witness present loses the memory of the ceremony', scopeMatch: 'full', ruptureClass: 'memory_perception', affectedKnowers: [{ who: 'the assembly', disposition: 'forgot', nowKnows: 'nothing of the ceremony' }, { who: 'Julian', disposition: 'suspects', nowKnows: 'nothing of the ceremony, but registers a gap he cannot name' }], invokerExemption: { who: 'Lirael', status: 'exempt', reason: 'invoker_anchor', note: 'she keeps the memory of what she changed' }, unaccountedParties: [] };
+    base.temptFateOutcome = { delivered: true, changed: [{ subject: 'the assembly', whatChanged: 'no longer remembers the ceremony' }], durability: [{ aspect: 'the memory gap', status: 'persists' }], knowledgeStates: [{ character: 'Lirael', state: 'remembers', note: 'invoker anchor' }], establishedEvidence: ['torn mouth-band on the ground'], openPossibilities: ['someone could notice the arrangement of the clearing does not match anyone\'s memory of why they gathered'], requestedScope: 'everyone forgets the ceremony happened', deliveredScope: 'every witness present loses the memory of the ceremony', scopeMatch: 'full', ruptureClass: 'memory_perception',
+      targetPopulation: { kind: 'all_present_except_invoker' },
+      // Julian SATISFIES the effect: the memory is gone (memoryAbsent) and his unease comes from
+      // the residue in the clearing, not from remembering. That is what lets this stay "full".
+      affectedKnowers: [
+        { who: 'the assembly', disposition: 'forgot', memoryAbsent: true, suspicionFromResidue: false, nowKnows: 'nothing of the ceremony' },
+        { who: 'Julian', disposition: 'suspects', memoryAbsent: true, suspicionFromResidue: true, nowKnows: 'nothing of the ceremony, but the torn band on the ground does not fit the morning he remembers' }
+      ],
+      invokerExemption: { who: 'Lirael', status: 'exempt', reason: 'invoker_anchor', note: 'she keeps the memory of what she changed' },
+      unaccountedParties: [] };
   }
   if (!wantsLocalObjective) return base;
   const reservedMatch = /"reserved" MUST be an object containing EVERY ONE of these exact keys, spelled exactly as given: \[([^\]]*)\]/.exec(sysText);

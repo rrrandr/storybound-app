@@ -162,7 +162,7 @@ const VALID_BEATS = [{ idx: 0, kind: 'narration', text: 'The ceremony hall stand
 
     stubProxyWithPlan({
       temptFateOutcome: {
-        delivered: true, requestedScope: 'the wish as written', deliveredScope: 'what the scene delivered', scopeMatch: 'full', ruptureClass: 'memory_perception', affectedKnowers: [{ who: 'the assembly', disposition: 'forgot', nowKnows: 'nothing of it' }], invokerExemption: { who: 'Lirael', status: 'exempt', reason: 'invoker_anchor' }, unaccountedParties: [],
+        delivered: true, requestedScope: 'the wish as written', deliveredScope: 'what the scene delivered', scopeMatch: 'full', ruptureClass: 'memory_perception', targetPopulation: { kind: 'all_present_except_invoker' }, affectedKnowers: [{ who: 'the assembly', disposition: 'forgot', memoryAbsent: true, suspicionFromResidue: false, nowKnows: 'nothing of it' }], invokerExemption: { who: 'Lirael', status: 'exempt', reason: 'invoker_anchor' }, unaccountedParties: [],
         changed: [{ subject: 'everyone present at the ceremony', whatChanged: 'no longer remembers it happening' }],
         durability: [{ aspect: 'the collective memory gap', status: 'persists', note: 'the scene never shows it fading' }],
         knowledgeStates: [{ character: 'Lirael', state: 'suspects', note: 'something is wrong even though she cannot name it' }],
@@ -296,7 +296,7 @@ const VALID_BEATS = [{ idx: 0, kind: 'narration', text: 'The ceremony hall stand
       window._recordTemptFateEvent(window.state.temptFateWish);
     }, sceneIdx);
     stubProxyWithPlan({
-      temptFateOutcome: { delivered: true, requestedScope: 'the wish as written', deliveredScope: 'what the scene delivered', scopeMatch: 'full', ruptureClass: 'memory_perception', affectedKnowers: [{ who: 'the assembly', disposition: 'forgot', nowKnows: 'nothing of it' }], invokerExemption: { who: 'Lirael', status: 'exempt', reason: 'invoker_anchor' }, unaccountedParties: [], changed: [{ subject: 'x', whatChanged: 'y' }], durability: [{ aspect: 'x', status: 'persists' }], establishedEvidence: ['z'] }
+      temptFateOutcome: { delivered: true, requestedScope: 'the wish as written', deliveredScope: 'what the scene delivered', scopeMatch: 'full', ruptureClass: 'memory_perception', targetPopulation: { kind: 'all_present_except_invoker' }, affectedKnowers: [{ who: 'the assembly', disposition: 'forgot', memoryAbsent: true, suspicionFromResidue: false, nowKnows: 'nothing of it' }], invokerExemption: { who: 'Lirael', status: 'exempt', reason: 'invoker_anchor' }, unaccountedParties: [], changed: [{ subject: 'x', whatChanged: 'y' }], durability: [{ aspect: 'x', status: 'persists' }], establishedEvidence: ['z'] }
     });
     const rp7a = await page.evaluate((si) => window._runCGScreenplayGen(si, 'x', ''), sceneIdx);
     await page.evaluate((p) => window._cgTemptFateCommitAtPersistence(p), rp7a);
@@ -328,7 +328,7 @@ const VALID_BEATS = [{ idx: 0, kind: 'narration', text: 'The ceremony hall stand
     }, firstWish);
 
     stubProxyWithPlan({
-      temptFateOutcome: { delivered: true, requestedScope: 'the wish as written', deliveredScope: 'what the scene delivered', scopeMatch: 'full', ruptureClass: 'memory_perception', affectedKnowers: [{ who: 'the assembly', disposition: 'forgot', nowKnows: 'nothing of it' }], invokerExemption: { who: 'Lirael', status: 'exempt', reason: 'invoker_anchor' }, unaccountedParties: [], changed: [{ subject: 'x', whatChanged: 'y' }], durability: [{ aspect: 'x', status: 'persists' }], establishedEvidence: ['from the FIRST generation'] }
+      temptFateOutcome: { delivered: true, requestedScope: 'the wish as written', deliveredScope: 'what the scene delivered', scopeMatch: 'full', ruptureClass: 'memory_perception', targetPopulation: { kind: 'all_present_except_invoker' }, affectedKnowers: [{ who: 'the assembly', disposition: 'forgot', memoryAbsent: true, suspicionFromResidue: false, nowKnows: 'nothing of it' }], invokerExemption: { who: 'Lirael', status: 'exempt', reason: 'invoker_anchor' }, unaccountedParties: [], changed: [{ subject: 'x', whatChanged: 'y' }], durability: [{ aspect: 'x', status: 'persists' }], establishedEvidence: ['from the FIRST generation'] }
     });
     // The in-flight side effect: WHILE the (stubbed) "network request" for the first generation is
     // pending, seal a second, unrelated wish — exactly the scenario a missing UI lock would allow.
@@ -358,7 +358,7 @@ const VALID_BEATS = [{ idx: 0, kind: 'narration', text: 'The ceremony hall stand
       window.state.temptFateWish = w;
       window._recordTemptFateEvent(w);
     }, wish);
-    stubProxyWithPlan({ temptFateOutcome: { delivered: true, requestedScope: 'the wish as written', deliveredScope: 'what the scene delivered', scopeMatch: 'full', ruptureClass: 'memory_perception', affectedKnowers: [{ who: 'the assembly', disposition: 'forgot', nowKnows: 'nothing of it' }], invokerExemption: { who: 'Lirael', status: 'exempt', reason: 'invoker_anchor' }, unaccountedParties: [], changed: [{ subject: 'x', whatChanged: 'y' }], durability: [{ aspect: 'x', status: 'persists' }], establishedEvidence: ['original'] } });
+    stubProxyWithPlan({ temptFateOutcome: { delivered: true, requestedScope: 'the wish as written', deliveredScope: 'what the scene delivered', scopeMatch: 'full', ruptureClass: 'memory_perception', targetPopulation: { kind: 'all_present_except_invoker' }, affectedKnowers: [{ who: 'the assembly', disposition: 'forgot', memoryAbsent: true, suspicionFromResidue: false, nowKnows: 'nothing of it' }], invokerExemption: { who: 'Lirael', status: 'exempt', reason: 'invoker_anchor' }, unaccountedParties: [], changed: [{ subject: 'x', whatChanged: 'y' }], durability: [{ aspect: 'x', status: 'persists' }], establishedEvidence: ['original'] } });
     const rp9a = await page.evaluate((si) => window._runCGScreenplayGen(si, 'x', ''), sceneIdxA);
     await page.evaluate((p) => window._cgTemptFateCommitAtPersistence(p), rp9a);
     const countAfterA = await page.evaluate(() => window.state._temptFateDurableConsequences.length);
@@ -371,7 +371,7 @@ const VALID_BEATS = [{ idx: 0, kind: 'narration', text: 'The ceremony hall stand
       window.state.tempt_fate_invoked_this_turn = false; // the real app.js sets this false via cleanup between turns
       window.state.temptFateWish = '';
     });
-    stubProxyWithPlan({ temptFateOutcome: { delivered: true, requestedScope: 'the wish as written', deliveredScope: 'what the scene delivered', scopeMatch: 'full', ruptureClass: 'memory_perception', affectedKnowers: [{ who: 'the assembly', disposition: 'forgot', nowKnows: 'nothing of it' }], invokerExemption: { who: 'Lirael', status: 'exempt', reason: 'invoker_anchor' }, unaccountedParties: [], changed: [{ subject: 'x', whatChanged: 'STRAY — should never be committed' }], durability: [{ aspect: 'x', status: 'persists' }], establishedEvidence: ['STRAY'] } });
+    stubProxyWithPlan({ temptFateOutcome: { delivered: true, requestedScope: 'the wish as written', deliveredScope: 'what the scene delivered', scopeMatch: 'full', ruptureClass: 'memory_perception', targetPopulation: { kind: 'all_present_except_invoker' }, affectedKnowers: [{ who: 'the assembly', disposition: 'forgot', memoryAbsent: true, suspicionFromResidue: false, nowKnows: 'nothing of it' }], invokerExemption: { who: 'Lirael', status: 'exempt', reason: 'invoker_anchor' }, unaccountedParties: [], changed: [{ subject: 'x', whatChanged: 'STRAY — should never be committed' }], durability: [{ aspect: 'x', status: 'persists' }], establishedEvidence: ['STRAY'] } });
     consoleLines.length = 0;
     const rp9b = await page.evaluate((si) => window._runCGScreenplayGen(si, 'x', ''), sceneIdxB);
     await page.evaluate((p) => window._cgTemptFateCommitAtPersistence(p), rp9b);
@@ -532,7 +532,7 @@ const VALID_BEATS = [{ idx: 0, kind: 'narration', text: 'The ceremony hall stand
     // a pure-function-level proof of the dedup KEY, independent of the full dispatch pipeline.
     const sceneIdx = 5; // Issue 1's local scene 5
     const entryIssue1 = { id: 'tfl_1001', wishText: 'Issue 1, local scene 5' };
-    const report1 = { delivered: true, requestedScope: 'the wish as written', deliveredScope: 'what the scene delivered', scopeMatch: 'full', ruptureClass: 'memory_perception', affectedKnowers: [{ who: 'the assembly', disposition: 'forgot', nowKnows: 'nothing of it' }], invokerExemption: { who: 'Lirael', status: 'exempt', reason: 'invoker_anchor' }, unaccountedParties: [], changed: [{ subject: 'x', whatChanged: 'Issue 1 effect' }], durability: [{ aspect: 'x', status: 'persists' }], establishedEvidence: ['Issue 1 evidence'] };
+    const report1 = { delivered: true, requestedScope: 'the wish as written', deliveredScope: 'what the scene delivered', scopeMatch: 'full', ruptureClass: 'memory_perception', targetPopulation: { kind: 'all_present_except_invoker' }, affectedKnowers: [{ who: 'the assembly', disposition: 'forgot', memoryAbsent: true, suspicionFromResidue: false, nowKnows: 'nothing of it' }], invokerExemption: { who: 'Lirael', status: 'exempt', reason: 'invoker_anchor' }, unaccountedParties: [], changed: [{ subject: 'x', whatChanged: 'Issue 1 effect' }], durability: [{ aspect: 'x', status: 'persists' }], establishedEvidence: ['Issue 1 evidence'] };
     const committed1 = await page.evaluate((args) => window._commitTemptFateOutcome(args.sceneIdx, args.entry, args.report), { sceneIdx, entry: entryIssue1, report: report1 });
     ok('the first proposal (Issue 1, local scene 5) commits successfully', !!committed1, JSON.stringify(committed1));
 
@@ -545,7 +545,7 @@ const VALID_BEATS = [{ idx: 0, kind: 'narration', text: 'The ceremony hall stand
     // save-carry mechanism this file's own header notes) — must commit successfully, NOT be
     // rejected as a duplicate of the unrelated Issue 1 proposal that happened to share a number.
     const entryIssue2 = { id: 'tfl_2001', wishText: 'Issue 2, ALSO local scene 5 — a different proposal entirely' };
-    const report2 = { delivered: true, requestedScope: 'the wish as written', deliveredScope: 'what the scene delivered', scopeMatch: 'full', ruptureClass: 'memory_perception', affectedKnowers: [{ who: 'the assembly', disposition: 'forgot', nowKnows: 'nothing of it' }], invokerExemption: { who: 'Lirael', status: 'exempt', reason: 'invoker_anchor' }, unaccountedParties: [], changed: [{ subject: 'y', whatChanged: 'Issue 2 effect' }], durability: [{ aspect: 'y', status: 'persists' }], establishedEvidence: ['Issue 2 evidence'] };
+    const report2 = { delivered: true, requestedScope: 'the wish as written', deliveredScope: 'what the scene delivered', scopeMatch: 'full', ruptureClass: 'memory_perception', targetPopulation: { kind: 'all_present_except_invoker' }, affectedKnowers: [{ who: 'the assembly', disposition: 'forgot', memoryAbsent: true, suspicionFromResidue: false, nowKnows: 'nothing of it' }], invokerExemption: { who: 'Lirael', status: 'exempt', reason: 'invoker_anchor' }, unaccountedParties: [], changed: [{ subject: 'y', whatChanged: 'Issue 2 effect' }], durability: [{ aspect: 'y', status: 'persists' }], establishedEvidence: ['Issue 2 evidence'] };
     const committed2 = await page.evaluate((args) => window._commitTemptFateOutcome(args.sceneIdx, args.entry, args.report), { sceneIdx, entry: entryIssue2, report: report2 });
     ok('a DISTINCT proposal at the SAME local sceneIdx (simulating an Issue-boundary reset) commits successfully — not rejected as a duplicate', !!committed2, JSON.stringify(committed2));
 
@@ -605,7 +605,7 @@ const VALID_BEATS = [{ idx: 0, kind: 'narration', text: 'The ceremony hall stand
       window._recordTemptFateEvent(w);
     }, wishA);
     const ownedA = await page.evaluate(() => { const led = window.state._temptFateLedger; return led[led.length - 1]; });
-    stubProxyWithPlan({ temptFateOutcome: { delivered: true, requestedScope: 'the wish as written', deliveredScope: 'what the scene delivered', scopeMatch: 'full', ruptureClass: 'memory_perception', affectedKnowers: [{ who: 'the assembly', disposition: 'forgot', nowKnows: 'nothing of it' }], invokerExemption: { who: 'Lirael', status: 'exempt', reason: 'invoker_anchor' }, unaccountedParties: [], changed: [{ subject: 'x', whatChanged: 'A landed' }], durability: [{ aspect: 'x', status: 'persists' }], establishedEvidence: ['A evidence'] } });
+    stubProxyWithPlan({ temptFateOutcome: { delivered: true, requestedScope: 'the wish as written', deliveredScope: 'what the scene delivered', scopeMatch: 'full', ruptureClass: 'memory_perception', targetPopulation: { kind: 'all_present_except_invoker' }, affectedKnowers: [{ who: 'the assembly', disposition: 'forgot', memoryAbsent: true, suspicionFromResidue: false, nowKnows: 'nothing of it' }], invokerExemption: { who: 'Lirael', status: 'exempt', reason: 'invoker_anchor' }, unaccountedParties: [], changed: [{ subject: 'x', whatChanged: 'A landed' }], durability: [{ aspect: 'x', status: 'persists' }], establishedEvidence: ['A evidence'] } });
     // The full real seal (ledger record AND the live wish/flag assignment — mirrors app.js
     // ~108868/108965, not just the partial ledger-only race sections 8/11 above use to isolate a
     // narrower race) fires WHILE Scene A's stubbed request is pending.
@@ -636,7 +636,7 @@ const VALID_BEATS = [{ idx: 0, kind: 'narration', text: 'The ceremony hall stand
     // activation, carrying B's own text, not still A's and not double-counted.
     const satBeforeB = satAfterA;
     const ownedB = await page.evaluate(() => { const led = window.state._temptFateLedger; return led[led.length - 1]; });
-    stubProxyWithPlan({ temptFateOutcome: { delivered: true, requestedScope: 'the wish as written', deliveredScope: 'what the scene delivered', scopeMatch: 'full', ruptureClass: 'memory_perception', affectedKnowers: [{ who: 'the assembly', disposition: 'forgot', nowKnows: 'nothing of it' }], invokerExemption: { who: 'Lirael', status: 'exempt', reason: 'invoker_anchor' }, unaccountedParties: [], changed: [{ subject: 'y', whatChanged: 'B landed' }], durability: [{ aspect: 'y', status: 'persists' }], establishedEvidence: ['B evidence'] } });
+    stubProxyWithPlan({ temptFateOutcome: { delivered: true, requestedScope: 'the wish as written', deliveredScope: 'what the scene delivered', scopeMatch: 'full', ruptureClass: 'memory_perception', targetPopulation: { kind: 'all_present_except_invoker' }, affectedKnowers: [{ who: 'the assembly', disposition: 'forgot', memoryAbsent: true, suspicionFromResidue: false, nowKnows: 'nothing of it' }], invokerExemption: { who: 'Lirael', status: 'exempt', reason: 'invoker_anchor' }, unaccountedParties: [], changed: [{ subject: 'y', whatChanged: 'B landed' }], durability: [{ aspect: 'y', status: 'persists' }], establishedEvidence: ['B evidence'] } });
     const sceneIdxB = 2;
     const rpB = await page.evaluate((si) => window._runCGScreenplayGen(si, 'x', ''), sceneIdxB);
     await page.evaluate((p) => window._cgTemptFateCommitAtPersistence(p), rpB);
@@ -679,7 +679,7 @@ const VALID_BEATS = [{ idx: 0, kind: 'narration', text: 'The ceremony hall stand
 
     stubProxyWithPlan({
       temptFateOutcome: {
-        delivered: true, requestedScope: 'the wish as written', deliveredScope: 'what the scene delivered', scopeMatch: 'full', ruptureClass: 'memory_perception', affectedKnowers: [{ who: 'the assembly', disposition: 'forgot', nowKnows: 'nothing of it' }], invokerExemption: { who: 'Lirael', status: 'exempt', reason: 'invoker_anchor' }, unaccountedParties: [],
+        delivered: true, requestedScope: 'the wish as written', deliveredScope: 'what the scene delivered', scopeMatch: 'full', ruptureClass: 'memory_perception', targetPopulation: { kind: 'all_present_except_invoker' }, affectedKnowers: [{ who: 'the assembly', disposition: 'forgot', memoryAbsent: true, suspicionFromResidue: false, nowKnows: 'nothing of it' }], invokerExemption: { who: 'Lirael', status: 'exempt', reason: 'invoker_anchor' }, unaccountedParties: [],
         changed: [{ subject: 'the tavern crowd and every traveler who passes through', whatChanged: 'now recognizes Julian and Lirael by name and story' }],
         durability: [{ aspect: 'the couple\'s public recognition', status: 'persists', note: 'the scene shows it spreading, not fading' }],
         knowledgeStates: [{ character: 'the tavern crowd', state: 'knows', note: 'recites the story back to them unprompted' }],
@@ -712,7 +712,7 @@ const VALID_BEATS = [{ idx: 0, kind: 'narration', text: 'The ceremony hall stand
     }, wish);
     stubProxyWithPlan({
       temptFateOutcome: {
-        delivered: true, requestedScope: 'the wish as written', deliveredScope: 'what the scene delivered', scopeMatch: 'full', ruptureClass: 'memory_perception', affectedKnowers: [{ who: 'the assembly', disposition: 'forgot', nowKnows: 'nothing of it' }], invokerExemption: { who: 'Lirael', status: 'exempt', reason: 'invoker_anchor' }, unaccountedParties: [],
+        delivered: true, requestedScope: 'the wish as written', deliveredScope: 'what the scene delivered', scopeMatch: 'full', ruptureClass: 'memory_perception', targetPopulation: { kind: 'all_present_except_invoker' }, affectedKnowers: [{ who: 'the assembly', disposition: 'forgot', memoryAbsent: true, suspicionFromResidue: false, nowKnows: 'nothing of it' }], invokerExemption: { who: 'Lirael', status: 'exempt', reason: 'invoker_anchor' }, unaccountedParties: [],
         changed: [{ subject: 'the assembly', whatChanged: 'now speaks their names as a warning, not a celebration' }],
         durability: [{ aspect: 'the infamy', status: 'persists' }],
         knowledgeStates: [{ character: 'the assembly', state: 'believes', note: 'treats them as a cautionary tale, not heroes' }],
@@ -773,7 +773,7 @@ const VALID_BEATS = [{ idx: 0, kind: 'narration', text: 'The ceremony hall stand
       window.state.temptFateWish = w;
       window._recordTemptFateEvent(w);
     }, wish);
-    stubProxyWithPlan({ temptFateOutcome: { delivered: true, requestedScope: 'the wish as written', deliveredScope: 'what the scene delivered', scopeMatch: 'full', ruptureClass: 'memory_perception', affectedKnowers: [{ who: 'the assembly', disposition: 'forgot', nowKnows: 'nothing of it' }], invokerExemption: { who: 'Lirael', status: 'exempt', reason: 'invoker_anchor' }, unaccountedParties: [], changed: [{ subject: 'the town', whatChanged: 'recognizes them on sight' }], durability: [{ aspect: 'recognition', status: 'persists' }], establishedEvidence: ['strangers greet them by name'] } });
+    stubProxyWithPlan({ temptFateOutcome: { delivered: true, requestedScope: 'the wish as written', deliveredScope: 'what the scene delivered', scopeMatch: 'full', ruptureClass: 'memory_perception', targetPopulation: { kind: 'all_present_except_invoker' }, affectedKnowers: [{ who: 'the assembly', disposition: 'forgot', memoryAbsent: true, suspicionFromResidue: false, nowKnows: 'nothing of it' }], invokerExemption: { who: 'Lirael', status: 'exempt', reason: 'invoker_anchor' }, unaccountedParties: [], changed: [{ subject: 'the town', whatChanged: 'recognizes them on sight' }], durability: [{ aspect: 'recognition', status: 'persists' }], establishedEvidence: ['strangers greet them by name'] } });
     const rpA = await page.evaluate((si) => window._runCGScreenplayGen(si, 'x', ''), sceneIdxA);
     await page.evaluate((p) => window._cgTemptFateCommitAtPersistence(p), rpA);
     const statusAfterA = await page.evaluate(() => window.state._mythicCoupleStatus);

@@ -71,6 +71,10 @@ still claims `scopeMatch: "full"`. Seren and the presiding Dohkar are likewise u
 Julian forgot, resisted, suspects a gap, or was exempted is exactly what the record had to say and
 did not. A party who is merely absorbed into a collective is not accounted for.
 
+And accounting for him would not have been enough on its own. The record could have named Julian as
+`retained`, left `unaccountedParties` empty, and still claimed `full` — structurally complete, and
+still a narrower grant than the wish asked for. Coverage and delivery are now checked separately.
+
 ### What changed in response
 
 `TEMPT_OUTCOME_CONTRACT`'s `memory_perception` class now requires, and `_validateTemptFateOutcomeReport`
@@ -79,16 +83,47 @@ now enforces:
 - `invokerExemption` — the invoker is `exempt` / `invoker_anchor` **by default**, needing no
   justification in the prose. Self-targeting is permitted but must be *declared* as
   `wish_explicitly_includes_self` or `ambiguous_wording_consequence`, never applied silently.
-- `affectedKnowers[].disposition` — `forgot | retained | partial | suspects | resisted | exempt`.
-  Naming a party without resolving them is no longer an account.
+- `targetPopulation` — `all_present_except_invoker | named_subset | collective | self |
+  other_declared`. The wish's intended reach is now a stated, checkable claim rather than an
+  implicit one the model can shrink to fit whatever it wrote.
+- `affectedKnowers[]` — `disposition` (`forgot | retained | partial | suspects | resisted | exempt |
+  absent`) **plus** `memoryAbsent` and `suspicionFromResidue`. Separating these is the point:
+  *accounted for* is not *affected*.
 - `unaccountedParties[]` — and `scopeMatch: "full"` requires it to be **empty**.
-- Witness coverage against `_temptOutcomeSceneRoster(plan)`, read from `beat.speaker` on the real
-  rendered plan (the same display names `validateCGSpeakerDisplayNames` checks against the cast —
-  a roster read, not a keyword scan of prose). Every speaking party must be resolved somewhere.
+
+**Coverage** is checked against the **composite roster** `_temptOutcomeSceneRosterDetailed(plan,
+sceneIdx)`, built entirely from already-resolved production identities — the relationship ledger's
+invoker and love-interest anchors, the accepted stage record's `present` (resolved through the same
+labels the author's `PRESENT:` directive uses), the accepted objective's own present list, the
+seed-declared `collectives`, and the rendered `beat.speaker` list. No prose is parsed. The earlier
+speaker-only roster was too weak in one direction: a silent named character or a declared collective
+(which *never* speaks, by construction) was invisible to it.
+
+**Effect** is checked separately, and only against the **declared target population**: under `full`,
+`forgot` qualifies; `suspects` qualifies only when `memoryAbsent` **and** `suspicionFromResidue` are
+both true; `partial`, `retained`, `resisted` and a non-invoker `exempt` all force `narrower`. A
+named-subset wish therefore never has to make unrelated bystanders forget — they need accounting,
+not amnesia.
 
 `_tempt_fate_outcome_contract_control.mjs` §3b replays **this run's exact record** against **this
-run's real roster** and it is now rejected, naming Julian; the same record with no roster still
-validates, proving the rejection comes from the coverage check and not some unrelated field.
+run's real composite roster** and it is rejected, naming *every* omitted party; the same record with
+no roster still validates, proving the rejection comes from the coverage check and not some
+unrelated field. §8 covers the seven delivery cases, including the one this record would still have
+passed before: Julian listed as `retained`, `unaccountedParties` empty, `scopeMatch: full`.
+
+### Two production defects found while building this — both real, neither invented
+
+1. **PC anchor label.** `_relEnsureAnchors` resolves the LI through
+   `loveInterestName || partnerName || picks.identity.partnerName`, but resolves the PC through only
+   `state.name || state.playerName` — never the nested `picks.identity.playerName` that First
+   Sacrifice actually populates. The PC anchor therefore labels itself *"the protagonist"*. The
+   roster applies the nested fallback locally so the invoker stays resolvable; the shared ledger
+   label is deliberately **left alone**, because changing it would alter author-facing directives
+   across the whole app. That asymmetry is a separate decision, not folded into this change.
+2. **Plan-row indexing.** A generation's `sceneIndex` is *not* the plan's 1-based scene number. The
+   first attempt read row 3 instead of row 2 and silently found no collectives — caught only because
+   the roster log prints its sources. `_tfoPlanSceneNum` now derives the row the way the planner
+   does, verified empirically rather than assumed.
 
 ### Secondary quality finding — NOT conflated with the above
 

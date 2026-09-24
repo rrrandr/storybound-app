@@ -105,7 +105,8 @@ const ACTIVE_RX = /ACTIVE INVOCATION THIS SCENE/;
     scopeNote: 'the ceremony, its institutional consequences, and the scheduled review were left intact',
     // The real wish was a forgetting, so the memory class and its own evidence apply here.
     ruptureClass: 'memory_perception',
-    affectedKnowers: [{ who: 'the assembly', disposition: 'forgot', nowKnows: 'nothing of the twisted wish or the interference' }],
+    targetPopulation: { kind: 'all_present_except_invoker' },
+    affectedKnowers: [{ who: 'the assembly', disposition: 'forgot', memoryAbsent: true, suspicionFromResidue: false, nowKnows: 'nothing of the twisted wish or the interference' }],
     invokerExemption: { who: 'Lirael', status: 'exempt', reason: 'invoker_anchor' },
     unaccountedParties: []
   })), asReported);
@@ -222,7 +223,8 @@ const ACTIVE_RX = /ACTIVE INVOCATION THIS SCENE/;
         deliveredScope: 'every witness present loses the memory of the ceremony',
         ruptureClass: 'memory_perception',
         changed: [{ subject: 'the assembly', whatChanged: 'no longer remembers the ceremony' }],
-        affectedKnowers: [{ who: 'the assembly', disposition: 'forgot', nowKnows: 'nothing of the ceremony' }],
+        targetPopulation: { kind: 'all_present_except_invoker' },
+        affectedKnowers: [{ who: 'the assembly', disposition: 'forgot', memoryAbsent: true, suspicionFromResidue: false, nowKnows: 'nothing of the ceremony' }],
         invokerExemption: { who: 'Lirael', status: 'exempt', reason: 'invoker_anchor' },
         unaccountedParties: [],
         invalidatedPlans: ['the preliminary review nobody can now justify']
@@ -233,7 +235,8 @@ const ACTIVE_RX = /ACTIVE INVOCATION THIS SCENE/;
         deliveredScope: 'every witness loses the memory',
         ruptureClass: 'memory_perception',
         changed: [{ subject: 'the assembly', whatChanged: 'no longer remembers' }],
-        affectedKnowers: [{ who: 'the assembly', disposition: 'forgot', nowKnows: 'nothing of it' }],
+        targetPopulation: { kind: 'all_present_except_invoker' },
+        affectedKnowers: [{ who: 'the assembly', disposition: 'forgot', memoryAbsent: true, suspicionFromResidue: false, nowKnows: 'nothing of it' }],
         invokerExemption: { who: 'Lirael', status: 'exempt', reason: 'invoker_anchor' },
         unaccountedParties: []
       })),

@@ -147,8 +147,8 @@ const WISH = 'everyone forgets the ceremony happened';
     Array.isArray(cd0.affectedKnowers) && cd0.affectedKnowers.some((k) => k.who === 'Julian' && k.disposition === 'suspects'), JSON.stringify(cd0.affectedKnowers));
 
   // ═══════════════════════════════════════════════════════════════════════════════════════════
-  section('3b. THE ROSTER IS READ FROM THE REAL RENDERED PLAN, AND IT BITES');
-  // The shared fixture for every validator probe below (sections 3b, 4 and 7).
+  section('3b. THE COMPOSITE ROSTER — built from resolved identities, wider than the speakers, and it BITES');
+  // The shared fixture for every validator probe below (sections 3b, 4, 7 and 8).
   const minimal = {
     delivered: true,
     changed: [{ subject: 'the assembly', whatChanged: 'no longer remembers the ceremony' }],
@@ -158,7 +158,8 @@ const WISH = 'everyone forgets the ceremony happened';
     deliveredScope: 'every witness loses the memory',
     scopeMatch: 'full',
     ruptureClass: 'memory_perception',
-    affectedKnowers: [{ who: 'the assembly', disposition: 'forgot', nowKnows: 'nothing of the ceremony' }],
+    targetPopulation: { kind: 'all_present_except_invoker' },
+    affectedKnowers: [{ who: 'the assembly', disposition: 'forgot', memoryAbsent: true, suspicionFromResidue: false, nowKnows: 'nothing of the ceremony' }],
     invokerExemption: { who: 'Lirael', status: 'exempt', reason: 'invoker_anchor', note: 'keeps the anchor to what she changed' },
     unaccountedParties: []
   };
@@ -167,26 +168,47 @@ const WISH = 'everyone forgets the ceremony happened';
   // non-invoker witnesses." The roster is not a keyword scan of prose — it is beat.speaker, the
   // same display name validateCGSpeakerDisplayNames already checks against the known cast.
   // Read the roster the PRODUCTION commit path actually computed and used, not one re-derived here.
-  const rosterLine = consoleLines.filter((t) => /on-page speaking roster for scope accounting/.test(t)).pop() || '';
-  const rosterFromRealPlan = rosterLine
-    ? rosterLine.split('accounting: ')[1].split(', ').map((s) => s.trim()).filter((s) => s && s !== '(none — narration only)')
-    : [];
-  ok('the PRODUCTION commit path computed a non-empty speaking roster from the rendered beats (otherwise the check below is vacuous)',
-    rosterFromRealPlan.length > 0 && rosterFromRealPlan.indexOf('Julian') !== -1, 'line=' + rosterLine);
+  // The log records each name with the sources that vouched for it, so "wider than the speakers"
+  // is proven from the real path rather than asserted.
+  const rosterLine = consoleLines.filter((t) => /composite present roster for scope accounting/.test(t)).pop() || '';
+  let rosterEntries = [];
+  try { rosterEntries = JSON.parse(rosterLine.split(' roster=')[1]); } catch (_) { rosterEntries = []; }
+  const rosterFromRealPlan = rosterEntries.map((r) => r.name);
+  console.log('    composite roster: ' + JSON.stringify(rosterEntries));
+  ok('the PRODUCTION commit path computed a non-empty composite roster (otherwise every check below is vacuous)',
+    rosterFromRealPlan.length > 0, 'line=' + rosterLine);
+  // Every composite source must be LIVE on the real path, not merely coded. A source that never
+  // fires here would be an untested branch dressed as coverage.
+  const sourcesSeen = [...new Set(rosterEntries.flatMap((r) => r.sources))];
+  ['invoker', 'love_interest', 'accepted_stage', 'declared_collective', 'beat_speaker'].forEach((src) => {
+    ok('roster source "' + src + '" actually fired on the real path', sourcesSeen.includes(src), 'sources seen: ' + JSON.stringify(sourcesSeen));
+  });
+  // The decisive property: at least one roster member NEVER spoke. A speaker-only roster could not
+  // have seen them, which is exactly the weakness this composite replaces.
+  const silentMembers = rosterEntries.filter((r) => !r.sources.includes('beat_speaker'));
+  ok('the composite is strictly WIDER than the speakers — it carries parties who never spoke a line',
+    silentMembers.length > 0, 'silent members: ' + JSON.stringify(silentMembers.map((r) => r.name + ' [' + r.sources.join('+') + ']')));
+  ok('...including a DECLARED COLLECTIVE, which by construction never speaks and so is invisible to any speaker-based roster',
+    silentMembers.some((r) => r.sources.includes('declared_collective')),
+    'silent members: ' + JSON.stringify(silentMembers));
 
-  // RED PROOF — the EXACT shape the paid run committed: only "the assembly", Julian nowhere.
+  // RED PROOF — the EXACT shape the paid run committed: only "the assembly", everyone else nowhere.
   const paidRunShape = await page.evaluate((args) => {
     const r = Object.assign({}, args.minimal, {
-      affectedKnowers: [{ who: 'the assembly', disposition: 'forgot', nowKnows: 'nothing of the ceremony' }]
+      affectedKnowers: [{ who: 'the assembly', disposition: 'forgot', memoryAbsent: true, suspicionFromResidue: false, nowKnows: 'nothing of the ceremony' }]
     });
     return {
-      withRoster: window._validateTemptFateOutcomeReport(r, { presentSpeakers: args.roster }),
+      withRoster: window._validateTemptFateOutcomeReport(r, { presentRoster: args.roster }),
       withoutRoster: window._validateTemptFateOutcomeReport(r)
     };
   }, { minimal, roster: rosterFromRealPlan });
-  ok('the paid run\'s actual record — "the assembly" only — is REJECTED once the real roster is supplied, naming Julian',
-    paidRunShape.withRoster.valid === false && paidRunShape.withRoster.errors.some((e) => e.indexOf('Julian') !== -1),
-    JSON.stringify(paidRunShape.withRoster.errors));
+  // Every roster member except "the assembly" and the invoker must be named in the rejection.
+  const expectedOmitted = rosterFromRealPlan.filter((n) => !/assembly/i.test(n) && !/lirael/i.test(n));
+  ok('the paid run\'s actual record — "the assembly" only — is REJECTED against the composite roster, naming EVERY omitted party',
+    paidRunShape.withRoster.valid === false &&
+    expectedOmitted.length > 0 &&
+    expectedOmitted.every((n) => paidRunShape.withRoster.errors.some((e) => e.indexOf(n) !== -1)),
+    'expected named: ' + JSON.stringify(expectedOmitted) + ' — errors: ' + JSON.stringify(paidRunShape.withRoster.errors));
   ok('that same record is accepted with NO roster — proving the rejection comes from the roster, not from some unrelated field',
     paidRunShape.withoutRoster.valid === true, JSON.stringify(paidRunShape.withoutRoster.errors));
 
@@ -194,24 +216,34 @@ const WISH = 'everyone forgets the ceremony happened';
   section('7. INVOKER ANCHOR IS THE DEFAULT — and self-targeting must be DECLARED, never silent');
   const invoker = await page.evaluate((args) => {
     const roster = ['Julian'];
-    const withJulian = [{ who: 'the assembly', disposition: 'forgot', nowKnows: 'nothing' }, { who: 'Julian', disposition: 'forgot', nowKnows: 'nothing' }];
+    const withJulian = [
+      { who: 'the assembly', disposition: 'forgot', memoryAbsent: true, suspicionFromResidue: false, nowKnows: 'nothing' },
+      { who: 'Julian', disposition: 'forgot', memoryAbsent: true, suspicionFromResidue: false, nowKnows: 'nothing' }
+    ];
     const mk = (over) => Object.assign({}, args.minimal, { affectedKnowers: withJulian }, over);
     return {
       // The normal case: Lirael remembers, reason invoker_anchor, and the prose is NOT asked to justify it.
       anchor: window._validateTemptFateOutcomeReport(mk({}), { presentSpeakers: roster }),
       // Lirael never listed among the forgetters, and never named as exempt either.
       invokerUnnamed: window._validateTemptFateOutcomeReport(mk({ invokerExemption: { who: '', status: 'exempt', reason: 'invoker_anchor' } }), { presentSpeakers: roster }),
-      // Self-targeting IS allowed — when the wording earned it and the report says so.
-      selfTargeted: window._validateTemptFateOutcomeReport(mk({ invokerExemption: { who: 'Lirael', status: 'targeted', reason: 'wish_explicitly_includes_self', note: 'the wish said "everyone, including me"' } }), { presentSpeakers: roster }),
+      // Self-targeting IS allowed — when the wording earned it, the report says so, AND the
+      // invoker actually loses the memory like everyone else.
+      selfTargeted: window._validateTemptFateOutcomeReport(mk({
+        affectedKnowers: withJulian.concat([{ who: 'Lirael', disposition: 'forgot', memoryAbsent: true, suspicionFromResidue: false, nowKnows: 'nothing' }]),
+        invokerExemption: { who: 'Lirael', status: 'targeted', reason: 'wish_explicitly_includes_self', note: 'the wish said "everyone, including me"' }
+      }), { presentRoster: roster }),
       // Targeting the invoker on a bare assertion, with no wording reason and no note.
-      silentlyTargeted: window._validateTemptFateOutcomeReport(mk({ invokerExemption: { who: 'Lirael', status: 'targeted', reason: 'invoker_anchor' } }), { presentSpeakers: roster }),
+      silentlyTargeted: window._validateTemptFateOutcomeReport(mk({ invokerExemption: { who: 'Lirael', status: 'targeted', reason: 'invoker_anchor' } }), { presentRoster: roster }),
       // Ambiguous wording may take the invoker — but must be declared as such, with a note.
-      ambiguous: window._validateTemptFateOutcomeReport(mk({ invokerExemption: { who: 'Lirael', status: 'targeted', reason: 'ambiguous_wording_consequence', note: '"everyone" was not qualified; Fate read her into it' } }), { presentSpeakers: roster }),
+      ambiguous: window._validateTemptFateOutcomeReport(mk({
+        affectedKnowers: withJulian.concat([{ who: 'Lirael', disposition: 'forgot', memoryAbsent: true, suspicionFromResidue: false, nowKnows: 'nothing' }]),
+        invokerExemption: { who: 'Lirael', status: 'targeted', reason: 'ambiguous_wording_consequence', note: '"everyone" was not qualified; Fate read her into it' }
+      }), { presentRoster: roster }),
       // "full" while openly leaving someone unresolved is a contradiction.
-      fullButUnaccounted: window._validateTemptFateOutcomeReport(mk({ unaccountedParties: ['Seren'] }), { presentSpeakers: roster }),
-      // The same admission is fine once the match is downgraded to partial.
+      fullButUnaccounted: window._validateTemptFateOutcomeReport(mk({ unaccountedParties: ['Seren'] }), { presentRoster: roster }),
+      // The same admission is fine once the match is downgraded.
       // "narrower" is the real enum value for a partial grant; a non-full match also owes a scopeNote.
-      narrowerAndUnaccounted: window._validateTemptFateOutcomeReport(mk({ scopeMatch: 'narrower', scopeNote: 'Seren\'s state is never established on the page', unaccountedParties: ['Seren'] }), { presentSpeakers: roster })
+      narrowerAndUnaccounted: window._validateTemptFateOutcomeReport(mk({ scopeMatch: 'narrower', scopeNote: 'Seren\'s state is never established on the page', unaccountedParties: ['Seren'] }), { presentRoster: roster })
     };
   }, { minimal });
   ok('the DEFAULT invoker anchor validates with no justification anywhere in the report — the prose does not have to earn it',
@@ -237,10 +269,100 @@ const WISH = 'everyone forgets the ceremony happened';
     noDisposition.valid === false && noDisposition.errors.some((e) => e.indexOf('disposition') !== -1), JSON.stringify(noDisposition.errors));
 
   // ═══════════════════════════════════════════════════════════════════════════════════════════
+  section('8. ACCOUNTED FOR ≠ AFFECTED — the seven cases that separate coverage from delivery');
+  // Roman: "merely accounting for someone does not mean the wish affected them. A report could
+  // currently list Julian as `retained`, leave `unaccountedParties` empty, and still claim
+  // `scopeMatch: full`. That would be structurally complete but semantically narrower."
+  const eff = await page.evaluate((args) => {
+    const m = args.minimal;
+    const ASSEMBLY = { who: 'the assembly', disposition: 'forgot', memoryAbsent: true, suspicionFromResidue: false, nowKnows: 'nothing of the ceremony' };
+    // A roster carrying a character who never speaks, plus a collective that by construction never speaks.
+    const ROSTER = ['Lirael', 'Julian', 'Seren', 'the assembly'];
+    const mk = (over) => Object.assign({}, m, over);
+    const v = (r, roster) => window._validateTemptFateOutcomeReport(r, roster ? { presentRoster: roster } : undefined);
+    const julian = (d, extra) => Object.assign({ who: 'Julian', disposition: d, memoryAbsent: d === 'forgot', suspicionFromResidue: false, nowKnows: '—' }, extra || {});
+    const seren = (d, extra) => Object.assign({ who: 'Seren', disposition: d, memoryAbsent: d === 'forgot', suspicionFromResidue: false, nowKnows: '—' }, extra || {});
+    return {
+      // 1. A NAMED BYSTANDER WHO NEVER SPOKE, omitted entirely.
+      silentNamedOmitted: v(mk({ affectedKnowers: [ASSEMBLY, julian('forgot')] }), ROSTER),
+      // 2. A DECLARED COLLECTIVE, omitted entirely (collectives never speak, so only the composite roster can see them).
+      silentCollectiveOmitted: v(mk({ affectedKnowers: [julian('forgot'), seren('forgot')] }), ROSTER),
+      // 3. Julian RETAINED but properly accounted for — complete coverage, incomplete delivery.
+      retainedClaimingFull: v(mk({ affectedKnowers: [ASSEMBLY, julian('retained'), seren('forgot')] }), ROSTER),
+      retainedDeclaredNarrower: v(mk({
+        scopeMatch: 'narrower', scopeNote: 'Julian kept the memory; the rest of the assembly lost it',
+        deliveredScope: 'every witness but Julian loses the memory',
+        affectedKnowers: [ASSEMBLY, julian('retained'), seren('forgot')]
+      }), ROSTER),
+      // 4. Julian SUSPECTS from residue with no memory — the wish DID reach him.
+      suspectsFromResidue: v(mk({
+        affectedKnowers: [ASSEMBLY, julian('suspects', { memoryAbsent: true, suspicionFromResidue: true, nowKnows: 'nothing of the ceremony, but the torn band does not fit his morning' }), seren('forgot')]
+      }), ROSTER),
+      // 4b. ...versus "suspects" while still REMEMBERING: a retained memory wearing a softer word.
+      suspectsButRemembers: v(mk({
+        affectedKnowers: [ASSEMBLY, julian('suspects', { memoryAbsent: false, suspicionFromResidue: false, nowKnows: 'he remembers it and is uneasy' }), seren('forgot')]
+      }), ROSTER),
+      // 5. The standard invoker anchor under "full".
+      invokerAnchorUnderFull: v(mk({ affectedKnowers: [ASSEMBLY, julian('forgot'), seren('forgot')] }), ROSTER),
+      // 6. Explicit self-targeting, invoker RETAINED — inconsistent under "full".
+      selfTargetedButRetained: v(mk({
+        affectedKnowers: [ASSEMBLY, julian('forgot'), seren('forgot'), { who: 'Lirael', disposition: 'retained', memoryAbsent: false, suspicionFromResidue: false, nowKnows: 'she remembers everything' }],
+        invokerExemption: { who: 'Lirael', status: 'targeted', reason: 'wish_explicitly_includes_self', note: 'the wish said "make everyone including me forget"' }
+      }), ROSTER),
+      selfTargetedRetainedNarrower: v(mk({
+        scopeMatch: 'narrower', scopeNote: 'the wish named herself but her own memory survived',
+        affectedKnowers: [ASSEMBLY, julian('forgot'), seren('forgot'), { who: 'Lirael', disposition: 'retained', memoryAbsent: false, suspicionFromResidue: false, nowKnows: 'she remembers everything' }],
+        invokerExemption: { who: 'Lirael', status: 'targeted', reason: 'wish_explicitly_includes_self', note: 'the wish said "make everyone including me forget"' }
+      }), ROSTER),
+      // 7. A NAMED-SUBSET wish: only the Dohkar was targeted. Bystanders must be ACCOUNTED FOR,
+      //    but are under no obligation to forget anything.
+      namedSubsetBystandersKeep: v(mk({
+        requestedScope: 'make the presiding Dohkar forget what he saw',
+        deliveredScope: 'the presiding Dohkar loses the memory',
+        targetPopulation: { kind: 'named_subset', members: ['the presiding Dohkar'] },
+        affectedKnowers: [
+          { who: 'the presiding Dohkar', disposition: 'forgot', memoryAbsent: true, suspicionFromResidue: false, nowKnows: 'nothing of what he saw' },
+          julian('retained'), seren('retained'),
+          { who: 'the assembly', disposition: 'retained', memoryAbsent: false, suspicionFromResidue: false, nowKnows: 'everything, unchanged' }
+        ]
+      }), ROSTER.concat(['the presiding Dohkar'])),
+      // 7b. ...but a named target the report never resolves is still rejected.
+      namedSubsetTargetOmitted: v(mk({
+        requestedScope: 'make the presiding Dohkar forget what he saw',
+        targetPopulation: { kind: 'named_subset', members: ['the presiding Dohkar'] },
+        affectedKnowers: [ASSEMBLY, julian('retained'), seren('retained')]
+      }), ROSTER)
+    };
+  }, { minimal });
+
+  ok('1. a silent NAMED bystander omitted from the record is REJECTED — a speaker-only roster could never have caught this',
+    eff.silentNamedOmitted.valid === false && eff.silentNamedOmitted.errors.some((e) => e.indexOf('Seren') !== -1), JSON.stringify(eff.silentNamedOmitted.errors));
+  ok('2. a silent declared COLLECTIVE omitted from the record is REJECTED — collectives never speak by construction',
+    eff.silentCollectiveOmitted.valid === false && eff.silentCollectiveOmitted.errors.some((e) => /assembly/.test(e)), JSON.stringify(eff.silentCollectiveOmitted.errors));
+  ok('3. Julian RETAINED but fully accounted for is REJECTED at "full" — the exact gap: structurally complete, semantically narrower',
+    eff.retainedClaimingFull.valid === false && eff.retainedClaimingFull.errors.some((e) => /did not reach every targeted party/.test(e)), JSON.stringify(eff.retainedClaimingFull.errors));
+  ok('3b. the SAME record declared "narrower" is VALID — the rule forces an honest downgrade, never an omission',
+    eff.retainedDeclaredNarrower.valid === true, JSON.stringify(eff.retainedDeclaredNarrower.errors));
+  ok('4. Julian SUSPECTS from residue with the memory genuinely absent may remain "full" — the wish did reach him',
+    eff.suspectsFromResidue.valid === true, JSON.stringify(eff.suspectsFromResidue.errors));
+  ok('4b. "suspects" while still REMEMBERING is REJECTED at "full" — a retained memory cannot pass as delivery',
+    eff.suspectsButRemembers.valid === false, JSON.stringify(eff.suspectsButRemembers.errors));
+  ok('5. the standard invoker anchor is ALLOWED under "full"',
+    eff.invokerAnchorUnderFull.valid === true, JSON.stringify(eff.invokerAnchorUnderFull.errors));
+  ok('6. explicit self-targeting with the invoker RETAINED is REJECTED at "full" as inconsistent',
+    eff.selfTargetedButRetained.valid === false && eff.selfTargetedButRetained.errors.some((e) => /invoker/i.test(e)), JSON.stringify(eff.selfTargetedButRetained.errors));
+  ok('6b. ...and is VALID once declared "narrower" — the second half of Roman\'s "narrower or rejected as inconsistent"',
+    eff.selfTargetedRetainedNarrower.valid === true, JSON.stringify(eff.selfTargetedRetainedNarrower.errors));
+  ok('7. a NAMED-SUBSET wish does NOT require unrelated bystanders to forget — they need accounting, not amnesia',
+    eff.namedSubsetBystandersKeep.valid === true, JSON.stringify(eff.namedSubsetBystandersKeep.errors));
+  ok('7b. ...but a declared target the report never resolves is still REJECTED',
+    eff.namedSubsetTargetOmitted.valid === false && eff.namedSubsetTargetOmitted.errors.some((e) => /Dohkar/.test(e)), JSON.stringify(eff.namedSubsetTargetOmitted.errors));
+
+  // ═══════════════════════════════════════════════════════════════════════════════════════════
   section('4. REMOVE EACH REQUIRED FIELD IN TURN — every one must cause rejection');
   const baseValid = await page.evaluate((m) => window._validateTemptFateOutcomeReport(m), minimal);
   ok('the minimal report is valid as a baseline (otherwise the removals below prove nothing)', baseValid.valid === true, JSON.stringify(baseValid));
-  const removable = ['requestedScope', 'deliveredScope', 'scopeMatch', 'ruptureClass', 'affectedKnowers', 'invokerExemption', 'unaccountedParties'];
+  const removable = ['requestedScope', 'deliveredScope', 'scopeMatch', 'ruptureClass', 'targetPopulation', 'affectedKnowers', 'invokerExemption', 'unaccountedParties'];
   const removalResults = await page.evaluate((args) => {
     const out = {};
     args.fields.forEach((f) => { const c = Object.assign({}, args.minimal); delete c[f]; out[f] = window._validateTemptFateOutcomeReport(c); });

@@ -189758,6 +189758,13 @@ No text, no watermark, no UI elements, share-ready.`;
   // schema text FROM it, _validateTemptFateOutcomeReport() enforces FROM it, and
   // _temptOutcomeRequiredFieldNames() lists what a preflight must find in an assembled request.
   // Adding a field here changes prompt, validator and preflight together, or not at all.
+  // MEMORY DISPOSITIONS — what happened to one party's memory. Split into two groups because
+  // "accounted for" and "the wish actually reached them" are different questions (Roman
+  // 2026-09-23): every value below RESOLVES a party for coverage purposes, but only some of them
+  // SATISFY the requested effect. 'absent' means not in the scene at all, so the rupture had
+  // nothing to reach — it resolves the party without bearing on scope either way.
+  var _TFO_DISPOSITIONS = { forgot: true, retained: true, partial: true, suspects: true, resisted: true, exempt: true, absent: true };
+
   var TEMPT_OUTCOME_CONTRACT = {
     // Required whenever delivered === true. `line` is what the author sees; `check` is what the
     // validator runs; they cannot diverge because they are the same entry.
@@ -189791,13 +189798,35 @@ No text, no watermark, no UI elements, share-ready.`;
     // fields; a forgetting is never asked to claim a history rewrite.
     classes: {
       memory_perception: [
-        { key: 'affectedKnowers', line: '"affectedKnowers": [ { "who": "<name or collective>", "disposition": "forgot | retained | partial | suspects | resisted | exempt", "nowKnows": "<what they now know or no longer know>" } ],  /* memory_perception ONLY. EVERY present party gets an entry: the love interest, every named character present, and each declared collective. A party you do not resolve is not "unaffected" — it is unaccounted, and that is a scope failure. */',
+        // WHO THE WISH ASKED FOR (Roman 2026-09-23). Without this the model picks its own target
+        // population implicitly, covers part of it, and still calls the result "full". Declaring the
+        // population makes "full" a checkable claim rather than a self-assessment.
+        { key: 'targetPopulation', line: '"targetPopulation": { "kind": "all_present_except_invoker | named_subset | collective | self | other_declared", "members": ["<REQUIRED for named_subset, collective and other_declared — exactly who the wish targets; omit for the other two kinds>"] },  /* memory_perception ONLY. WHO the SUBMITTED WISH asked to change, read from its own wording — not whoever you found convenient to write. Declare the population honestly even when the scene only managed part of it; that is what makes the grant narrower rather than full. */',
+          check: function (v) {
+            if (!v || typeof v !== 'object') return false;
+            var KINDS = { all_present_except_invoker: true, named_subset: true, collective: true, self: true, other_declared: true };
+            if (!KINDS[v.kind]) return false;
+            if (v.kind === 'all_present_except_invoker' || v.kind === 'self') return true;
+            return Array.isArray(v.members) && v.members.length > 0 &&
+              v.members.every(function (m) { return typeof m === 'string' && !!m.trim(); });
+          },
+          err: 'ruptureClass="memory_perception" requires targetPopulation {kind: all_present_except_invoker|named_subset|collective|self|other_declared}, with a non-empty members[] for named_subset, collective and other_declared' },
+        // ACCOUNTED FOR ≠ AFFECTED (Roman 2026-09-23). Listing Julian as "retained" resolves him but
+        // does NOT deliver the wish to him. disposition says what happened to him; memoryAbsent says
+        // whether the memory is actually GONE; suspicionFromResidue distinguishes "remembers and is
+        // suspicious" from "remembers nothing but can see the room does not add up".
+        { key: 'affectedKnowers', line: '"affectedKnowers": [ { "who": "<name or collective>", "disposition": "forgot | retained | partial | suspects | resisted | exempt | absent", "memoryAbsent": <bool — is the targeted memory actually GONE for them?>, "suspicionFromResidue": <bool — do they merely notice something does not add up, from surviving evidence rather than from memory?>, "nowKnows": "<what they now know or no longer know>" } ],  /* memory_perception ONLY. EVERY party on the page gets an entry: the love interest, every named character present, and each declared collective — silent ones included. "absent" means genuinely not in this scene; it is NOT a way to skip someone who was here. Being listed is not the same as being affected: a party you name but do not change still narrows the grant. */',
           check: function (v) {
             if (!Array.isArray(v) || !v.length) return false;
-            var VALID = { forgot: true, retained: true, partial: true, suspects: true, resisted: true, exempt: true };
-            return v.every(function (k) { return k && typeof k.who === 'string' && k.who.trim() && VALID[k.disposition]; });
+            return v.every(function (k) {
+              if (!k || typeof k.who !== 'string' || !k.who.trim()) return false;
+              if (!_TFO_DISPOSITIONS[k.disposition]) return false;
+              // An absent party has no memory state to report; everyone else owes both booleans.
+              if (k.disposition === 'absent') return true;
+              return typeof k.memoryAbsent === 'boolean' && typeof k.suspicionFromResidue === 'boolean';
+            });
           },
-          err: 'ruptureClass="memory_perception" requires a non-empty affectedKnowers, each entry naming a party and a disposition of forgot|retained|partial|suspects|resisted|exempt' },
+          err: 'ruptureClass="memory_perception" requires a non-empty affectedKnowers, each entry naming a party, a disposition of forgot|retained|partial|suspects|resisted|exempt|absent, and — unless absent — both memoryAbsent and suspicionFromResidue as booleans' },
         // INVOKER ANCHOR (Roman 2026-09-23). The wisher normally keeps an anchor to what they
         // changed — without it they could not experience or navigate the consequence. That
         // exemption is the DEFAULT and the prose does NOT have to earn it. It is removed only when
@@ -189872,22 +189901,118 @@ No text, no watermark, no UI elements, share-ready.`;
   }
   window._renderTemptOutcomeSchema = _renderTemptOutcomeSchema;
 
-  // WHO WAS DEMONSTRABLY ON THE PAGE — derived from the REAL rendered plan, never guessed from
-  // prose (Roman 2026-09-23: Julian spoke a line and the outcome record never mentioned him).
-  // beat.speaker is the reader-visible display name the CG pipeline already produces and
-  // validateCGSpeakerDisplayNames already checks against the known cast, so a speaking character
-  // is present by construction — this is a roster read, not a keyword classifier over narration.
-  // Narration beats carry no speaker and contribute nothing; silent bystanders are genuinely
-  // outside what this can prove, which is why it is a FLOOR on accounting, not a census.
-  function _temptOutcomeSceneRoster(plan) {
+  // WHO THE SCENE PUT IN THE ROOM — the AUTHORITATIVE COMPOSITE ROSTER (Roman 2026-09-23:
+  // "Replace the speaker-only roster with an authoritative composite roster ... silent present
+  // characters must not disappear. Use existing resolved roster identities; do not infer names
+  // with prose regex.")
+  //
+  // A speaker-only roster was too weak in exactly one direction: it could only see who TALKED.
+  // A named character standing silently through the whole scene, or a declared collective that
+  // never speaks by construction ("A collective ... never speaks"), vanished from it entirely.
+  //
+  // Every source below is an ALREADY-RESOLVED production identity. Nothing here parses prose:
+  //   1. invoker + 2. love interest — the two anchor entities _relEnsureAnchors always creates in
+  //      the relationship ledger, carrying the same labels the author's own prompts use.
+  //   3. accepted planner `present` — _activeStageRecord's ACCEPTED, validated stage record,
+  //      resolved through the same entity labels + present_disambiguators that
+  //      _renderStageDirectiveText feeds the author as "PRESENT:".
+  //   4. declared collective presences — _effectiveSceneRow(...).collectives, the seed-authored
+  //      structural list (e.g. "the assembly"), deliberately separate from `roster`.
+  //   5. final rendered beat speakers — corroboration only now, but still load-bearing: it catches
+  //      anyone the author actually put on the page whom the stage record did not anticipate.
+  // Each returned entry records WHICH sources vouched for it, so a control can prove the composite
+  // is genuinely wider than the speakers alone rather than taking it on trust.
+  // WHICH PLAN ROW THIS SCENE IS. The stage record, the accepted objective and the declared
+  // collectives are all keyed by the PLAN's 1-based scene number (the baked opening is n=1), which
+  // is NOT the generation's own 0-based sceneIndex. The planner derives the same number at
+  // app.js ~100118 from _stagedAuthoringSceneIndex, falling back to turnCount + 2; a generation's
+  // sceneIndex is turnCount + 1, so the equivalent fallback here is sceneIndex + 1. Verified
+  // empirically rather than assumed: with sceneIndex 1 this resolves row 2, the row whose
+  // `collectives` actually carries "the assembly".
+  function _tfoPlanSceneNum(sceneIdx) {
+    var s = window.state || {};
+    if (typeof s._stagedAuthoringSceneIndex === 'number' && s._stagedAuthoringSceneIndex >= 0) return s._stagedAuthoringSceneIndex + 1;
+    if (typeof sceneIdx === 'number' && sceneIdx >= 0) return sceneIdx + 1;
+    return (s.turnCount || 0) + 2;
+  }
+
+  function _temptOutcomeSceneRosterDetailed(plan, sceneIdx) {
     var out = [];
+    function add(name, source) {
+      if (typeof name !== 'string') return;
+      var n = name.trim();
+      if (!n) return;
+      for (var i = 0; i < out.length; i++) {
+        if (_tfoNamesMatch(out[i].name, n)) {
+          if (out[i].sources.indexOf(source) === -1) out[i].sources.push(source);
+          return;
+        }
+      }
+      out.push({ name: n, sources: [source] });
+    }
+    try {
+      var s = window.state || {};
+      var L = (typeof _relLedger === 'function') ? _relLedger(false) : null;
+      var ents = (L && L.entities) || {};
+      // 1 + 2 — the anchors. Present or not, both must be RESOLVED by the report; an anchor who
+      // was not in the scene is answered with disposition "absent", never with silence.
+      //
+      // PC LABEL CAVEAT (empirically found here, 2026-09-23): _relEnsureAnchors resolves the LI
+      // through state.loveInterestName || state.partnerName || state.picks.identity.partnerName,
+      // but resolves the PC through only state.name || state.playerName — it never consults the
+      // NESTED state.picks.identity.playerName that First Sacrifice (and the other starters that
+      // populate the nested field) actually use. The PC anchor therefore labels itself "the
+      // protagonist" for those stories. Applying the same nested fallback LOCALLY here keeps the
+      // invoker resolvable by name without changing the ledger label that feeds every other
+      // author-facing directive in the app — that asymmetry is a real but separate defect.
+      var pcAnchorLabel = '';
+      Object.keys(ents).forEach(function (id) {
+        var e = ents[id];
+        if (!e || !e.label) return;
+        if (e.anchorRole === 'pc') pcAnchorLabel = String(e.label);
+        else if (e.anchorRole === 'li') add(e.label, 'love_interest');
+      });
+      var pcResolved = String(s.name || s.playerName || (s.picks && s.picks.identity && s.picks.identity.playerName) || '').trim();
+      add(pcResolved || pcAnchorLabel, 'invoker');
+      // 3 — the accepted stage record's present cast, resolved exactly as the author saw it.
+      var rec = (typeof _activeStageRecord === 'function') ? _activeStageRecord(s) : null;
+      if (rec && Array.isArray(rec.present)) {
+        rec.present.forEach(function (id) {
+          var disamb = rec.present_disambiguators && rec.present_disambiguators[id];
+          var e = ents[id];
+          add(disamb || (e && e.label) || String(id), 'accepted_stage');
+        });
+      }
+      var planSceneNum = _tfoPlanSceneNum(sceneIdx);
+      // 3b — the accepted objective's own present list. Same planner decision, recorded separately
+      // (already display labels), so a scene whose stage record was never issued still contributes.
+      try {
+        var objRec = s._sceneObjectives && s._sceneObjectives[String(planSceneNum)];
+        if (objRec && objRec.status === 'accepted' && Array.isArray(objRec.present)) {
+          objRec.present.forEach(function (n) { add(n, 'accepted_objective'); });
+        }
+      } catch (_) {}
+      // 4 — declared collectives for this scene row.
+      try {
+        var row = (typeof _effectiveSceneRow === 'function') ? _effectiveSceneRow(s, planSceneNum) : null;
+        if (row && Array.isArray(row.collectives)) {
+          row.collectives.forEach(function (c) { add(c && c.label, 'declared_collective'); });
+        }
+        // NOT row.presentGroups: that field holds DESCRIPTIVE prose ("the assembly (unnamed,
+        // reacting, no dialogue)"), not a resolved identity, and feeding it in would put a
+        // sentence fragment into the roster as if it were somebody's name. `collectives` is the
+        // structural, id+label form and is the only collective source read here.
+      } catch (_) {}
+    } catch (_) {}
+    // 5 — who actually spoke on the rendered page.
     var beats = (plan && Array.isArray(plan.beats)) ? plan.beats : [];
-    beats.forEach(function (b) {
-      var s = b && b.speaker;
-      if (typeof s !== 'string' || !s.trim()) return;
-      if (out.indexOf(s) === -1) out.push(s);
-    });
+    beats.forEach(function (b) { if (b) add(b.speaker, 'beat_speaker'); });
     return out;
+  }
+  window._temptOutcomeSceneRosterDetailed = _temptOutcomeSceneRosterDetailed;
+
+  function _temptOutcomeSceneRoster(plan, sceneIdx) {
+    return _temptOutcomeSceneRosterDetailed(plan, sceneIdx).map(function (r) { return r.name; });
   }
   window._temptOutcomeSceneRoster = _temptOutcomeSceneRoster;
 
@@ -189905,10 +190030,130 @@ No text, no watermark, no UI elements, share-ready.`;
     return (' ' + x + ' ').indexOf(' ' + y + ' ') !== -1 || (' ' + y + ' ').indexOf(' ' + x + ' ') !== -1;
   }
 
+  // MEMORY SCOPE — the two questions the old check collapsed into one (Roman 2026-09-23):
+  //
+  //   COVERAGE  — is every party in the room RESOLVED anywhere in the record?
+  //   EFFECT    — did the wish actually REACH each party it claimed to target?
+  //
+  // The gap this closes: a report could list Julian as "retained", leave unaccountedParties empty,
+  // and still claim scopeMatch "full". Structurally complete, semantically narrower. Coverage
+  // applies to the whole composite roster; effect applies only to the DECLARED target population,
+  // so a named-subset wish never has to make unrelated bystanders forget.
+  //
+  // Still structural throughout: every rule below compares the report against ITSELF or against a
+  // roster of already-resolved identities. Whether the declared target population is a fair reading
+  // of the player's words stays a human judgement — this only stops a model from declaring one
+  // population and then calling partial coverage of it "full".
+  function _tfoMemoryScopeErrors(raw, roster) {
+    var errors = [];
+    var knowers = Array.isArray(raw.affectedKnowers) ? raw.affectedKnowers : [];
+    var unaccounted = Array.isArray(raw.unaccountedParties) ? raw.unaccountedParties : [];
+    var inv = raw.invokerExemption || {};
+    var invokerName = (typeof inv.who === 'string') ? inv.who : '';
+    var pop = raw.targetPopulation || {};
+    var isFull = raw.scopeMatch === 'full';
+    var isInvoker = function (name) { return !!invokerName && _tfoNamesMatch(name, invokerName); };
+
+    // ── INTERNAL CONSISTENCY — a disposition and its memory facts must agree ─────────────────
+    // Pure self-consistency, no outside knowledge: "forgot" cannot coexist with a memory that is
+    // still there, and "retained"/"resisted"/"exempt" cannot coexist with one that is gone.
+    knowers.forEach(function (k, i) {
+      if (!k || k.disposition === 'absent') return;
+      var who = (k.who || ('affectedKnowers[' + i + ']'));
+      if (k.disposition === 'forgot' && k.memoryAbsent !== true) {
+        errors.push(who + ': disposition "forgot" but memoryAbsent is not true — a forgetting means the memory is gone');
+      }
+      if ((k.disposition === 'retained' || k.disposition === 'resisted' || k.disposition === 'exempt') && k.memoryAbsent === true) {
+        errors.push(who + ': disposition "' + k.disposition + '" but memoryAbsent is true — they cannot both keep the memory and have lost it');
+      }
+      if (k.suspicionFromResidue === true && k.disposition !== 'suspects' && k.disposition !== 'partial') {
+        errors.push(who + ': suspicionFromResidue is true but disposition is "' + k.disposition + '" — residue-driven suspicion belongs to "suspects" or "partial"');
+      }
+    });
+
+    // ── COVERAGE — everyone in the room is resolved somewhere ───────────────────────────────
+    if (roster && roster.length) {
+      var unresolved = roster.filter(function (name) {
+        if (isInvoker(name)) return false;
+        if (knowers.some(function (k) { return k && _tfoNamesMatch(name, k.who); })) return false;
+        if (unaccounted.some(function (u) { return _tfoNamesMatch(name, u); })) return false;
+        return true;
+      });
+      if (unresolved.length) {
+        errors.push('memory_perception scope is unaccounted: ' + unresolved.join(', ') +
+          ' — each was present (named cast, declared collective, or a speaker on the page) but appears in neither affectedKnowers, unaccountedParties, nor the invoker exemption. Say whether each forgot, retained, partially retained, suspects a gap, resisted, was exempt, or was absent.');
+      }
+    }
+
+    // ── WHO THE WISH TARGETED ───────────────────────────────────────────────────────────────
+    // A declared member list must at least be COVERED, whatever the scopeMatch: a wish cannot name
+    // its targets and then leave one of them entirely out of the record.
+    var declaredMembers = Array.isArray(pop.members) ? pop.members : [];
+    if (pop.kind === 'named_subset' || pop.kind === 'collective' || pop.kind === 'other_declared') {
+      var missingTargets = declaredMembers.filter(function (m) {
+        if (isInvoker(m)) return false;
+        return !knowers.some(function (k) { return k && _tfoNamesMatch(m, k.who); });
+      });
+      if (missingTargets.length) {
+        errors.push('targetPopulation names ' + missingTargets.join(', ') + ' but affectedKnowers never resolves them — a wish cannot declare its own targets and then omit them');
+      }
+    }
+    if (pop.kind === 'other_declared' && !(typeof raw.scopeNote === 'string' && raw.scopeNote.trim())) {
+      errors.push('targetPopulation.kind "other_declared" requires scopeNote to say what that population actually is');
+    }
+    if (pop.kind === 'self' && inv.status !== 'targeted') {
+      errors.push('targetPopulation.kind "self" but invokerExemption.status is "' + (inv.status || 'missing') + '" — a wish aimed at the invoker cannot also exempt them');
+    }
+
+    // Which knower entries the wish actually aimed at. 'absent' parties were never reachable, so
+    // they are outside the target set regardless of kind.
+    var targeted = knowers.filter(function (k) {
+      if (!k || k.disposition === 'absent') return false;
+      if (isInvoker(k.who)) return false;   // the invoker is judged through invokerExemption below
+      if (pop.kind === 'all_present_except_invoker') return true;
+      if (pop.kind === 'self') return false;
+      return declaredMembers.some(function (m) { return _tfoNamesMatch(m, k.who); });
+    });
+
+    // ── EFFECT — did the wish reach everyone it targeted? ───────────────────────────────────
+    // Only "full" makes this claim, so only "full" has to survive it. A narrower or broader grant
+    // is already declaring that delivery and request came apart.
+    if (isFull) {
+      var shortfalls = [];
+      targeted.forEach(function (k) {
+        if (k.disposition === 'forgot') return;                       // qualifies outright
+        if (k.disposition === 'suspects') {
+          // Qualifies ONLY as "remembers nothing, but the room does not add up" — never as
+          // "remembers, and is suspicious", which is a retained memory wearing a softer word.
+          if (k.memoryAbsent === true && k.suspicionFromResidue === true) return;
+          shortfalls.push(k.who + ' (suspects, but the report does not say the memory is absent and the suspicion comes from residue)');
+          return;
+        }
+        shortfalls.push(k.who + ' (' + k.disposition + ')');
+      });
+      if (shortfalls.length) {
+        errors.push('scopeMatch "full" but the wish did not reach every targeted party: ' + shortfalls.join(', ') +
+          ' — being accounted for is not the same as being affected. A targeted party who kept, partly kept, resisted, or was spared the memory makes the delivered scope NARROWER; declare it as "narrower" with a scopeNote.');
+      }
+      // The invoker only has to satisfy the effect when the wish actually aimed at them.
+      if (inv.status === 'targeted') {
+        var invEntry = knowers.filter(function (k) { return k && isInvoker(k.who); })[0];
+        if (!invEntry) {
+          errors.push('invokerExemption.status "targeted" but affectedKnowers never records what happened to ' + (invokerName || 'the invoker') + ' — a targeted invoker needs a disposition like anyone else');
+        } else if (!(invEntry.disposition === 'forgot' ||
+                     (invEntry.disposition === 'suspects' && invEntry.memoryAbsent === true && invEntry.suspicionFromResidue === true))) {
+          errors.push('scopeMatch "full" with the invoker explicitly targeted, but ' + (invokerName || 'the invoker') + ' is "' + invEntry.disposition + '" — a self-targeting wish that leaves the invoker\'s memory intact delivered a NARROWER grant, not a full one');
+        }
+      }
+    }
+    return errors;
+  }
+
   // STAGE 2 — structural validation ONLY (shape/types, never content or
   // creative correctness — that is reserved for live testing). Driven by the contract above.
-  // ctx is optional: { presentSpeakers: [displayName] } from the real rendered plan. When it
-  // carries a roster, memory_perception reports must RESOLVE every party on it.
+  // ctx is optional: { presentRoster: [displayName] } — the composite roster from
+  // _temptOutcomeSceneRoster. When it carries names, memory_perception reports must RESOLVE every
+  // one of them. The effect rules in _tfoMemoryScopeErrors apply with or without a roster.
   function _validateTemptFateOutcomeReport(raw, ctx) {
     var errors = [];
     if (!raw || typeof raw !== 'object') return { valid: false, errors: ['report is not an object'] };
@@ -189939,26 +190184,9 @@ No text, no watermark, no UI elements, share-ready.`;
       var classFields = TEMPT_OUTCOME_CONTRACT.classes[raw.ruptureClass];
       if (classFields) classFields.forEach(function (f) { if (!f.check(raw[f.key], raw)) errors.push(f.err); });
 
-      // NON-INVOKER WITNESS ACCOUNTING (Roman 2026-09-23). The invoker keeping an anchor is
-      // normal and needs no justification; a bystander who spoke on the page and appears nowhere
-      // in the record is the actual scope failure. Every party the scene demonstrably put on the
-      // page must be RESOLVED somewhere: given a disposition in affectedKnowers, declared as the
-      // exempt invoker, or named openly in unaccountedParties — which in turn forbids "full".
-      var roster = (ctx && Array.isArray(ctx.presentSpeakers)) ? ctx.presentSpeakers : null;
-      if (roster && roster.length && raw.ruptureClass === 'memory_perception') {
-        var knowers = Array.isArray(raw.affectedKnowers) ? raw.affectedKnowers : [];
-        var unaccounted = Array.isArray(raw.unaccountedParties) ? raw.unaccountedParties : [];
-        var invokerName = (raw.invokerExemption && raw.invokerExemption.who) || '';
-        var unresolved = roster.filter(function (name) {
-          if (invokerName && _tfoNamesMatch(name, invokerName)) return false;
-          if (knowers.some(function (k) { return k && _tfoNamesMatch(name, k.who); })) return false;
-          if (unaccounted.some(function (u) { return _tfoNamesMatch(name, u); })) return false;
-          return true;
-        });
-        if (unresolved.length) {
-          errors.push('memory_perception scope is unaccounted: ' + unresolved.join(', ') +
-            ' spoke on the page but appear in neither affectedKnowers, unaccountedParties, nor the invoker exemption — say whether each forgot, retained, partially retained, suspects a gap, resisted, or was exempt');
-        }
+      if (raw.ruptureClass === 'memory_perception') {
+        _tfoMemoryScopeErrors(raw, (ctx && Array.isArray(ctx.presentRoster)) ? ctx.presentRoster : null)
+          .forEach(function (e) { errors.push(e); });
       }
     }
     return { valid: errors.length === 0, errors: errors };
@@ -190045,7 +190273,10 @@ No text, no watermark, no UI elements, share-ready.`;
               // The invoker's anchor is canon too: a later scene must know Lirael remembers, and
               // WHY — a default anchor reads differently from an earned self-targeting.
               invokerExemption: rawReport.invokerExemption || null,
-              unaccountedParties: Array.isArray(rawReport.unaccountedParties) ? rawReport.unaccountedParties : []
+              unaccountedParties: Array.isArray(rawReport.unaccountedParties) ? rawReport.unaccountedParties : [],
+              // WHO the wish aimed at, carried forward so a later scene reads the grant's intended
+              // reach rather than re-deriving it from whoever happened to be written.
+              targetPopulation: rawReport.targetPopulation || null
             };
             case 'history_rewrite': return { priorHistoryReplaced: rawReport.priorHistoryReplaced || '', survivingContradictions: rawReport.survivingContradictions || [] };
             case 'identity_reputation': return { recognitionChanges: rawReport.recognitionChanges || [] };
@@ -233245,9 +233476,17 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
       if (_tfoOwn.wasInvokedAtStart) {
         if (_tfoOwn.pendingOutcome) {
           if (_tfoOwn.proposalEntry) {
-            var _tfoRoster = (typeof _temptOutcomeSceneRoster === 'function') ? _temptOutcomeSceneRoster(plan) : [];
-            try { console.log('[TEMPT-OUTCOME] on-page speaking roster for scope accounting: ' + (_tfoRoster.length ? _tfoRoster.join(', ') : '(none — narration only)')); } catch (_) {}
-            var _tfoCommitted = _commitTemptFateOutcome(_tfoOwn.sceneIndex, _tfoOwn.proposalEntry, _tfoOwn.pendingOutcome, { presentSpeakers: _tfoRoster });
+            var _tfoRosterDetail = (typeof _temptOutcomeSceneRosterDetailed === 'function')
+              ? _temptOutcomeSceneRosterDetailed(plan, _tfoOwn.sceneIndex) : [];
+            var _tfoRoster = _tfoRosterDetail.map(function (r) { return r.name; });
+            try {
+              // JSON, not a prose join: a display label may itself contain commas, which silently
+              // corrupts any reader that splits on them.
+              console.log('[TEMPT-OUTCOME] composite present roster for scope accounting — sceneIndex='
+                + _tfoOwn.sceneIndex + ' planRow=' + _tfoPlanSceneNum(_tfoOwn.sceneIndex)
+                + ' roster=' + JSON.stringify(_tfoRosterDetail));
+            } catch (_) {}
+            var _tfoCommitted = _commitTemptFateOutcome(_tfoOwn.sceneIndex, _tfoOwn.proposalEntry, _tfoOwn.pendingOutcome, { presentRoster: _tfoRoster });
             if (!_tfoCommitted) {
               console.warn('[TEMPT-OUTCOME] scene ' + _tfoOwn.sceneIndex + ' had an active Tempt proposal (' + _tfoOwn.proposalEntry.id + ') but produced no durable commit — see the [TEMPT-OUTCOME] log line immediately above for the exact reason (undelivered, malformed, or already committed).');
             }
