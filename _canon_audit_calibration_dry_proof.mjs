@@ -9,7 +9,7 @@ import { chromium } from 'playwright-core';
 import { installFailClosedNetworkGate } from './_e2e_network_gate.mjs';
 import {
   loadFixtures, makeLedger, installCalibrationRoute, scoreFixture, verdictSummary,
-  PRIMARY_MODEL, PRIMARY_ENDPOINT, PER_CALL_USD, CEILING_USD
+  PRIMARY_MODEL, PRIMARY_ENDPOINT, PER_CALL_USD, CEILING_USD, isInfraFailure, INFRA_STOP_AFTER
 } from './_canon_audit_calibration_core.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -179,6 +179,50 @@ function section(t) { console.log('\n=== ' + t + ' ==='); }
     greenInvalid.enableGenerally === false && greenInvalid.invalid === 1, JSON.stringify(greenInvalid.blockers));
   ok('the summary reports usable responses out of total, so a partially-answered run cannot read as success',
     allGood.usableResponses === 8 && greenUnavailable.usableResponses === 7, JSON.stringify({ a: allGood.usableResponses, u: greenUnavailable.usableResponses }));
+
+  section('4b. INFRASTRUCTURE FAIL-FAST — two dead calls stop the run');
+  // Roman, after the first attempt burned all eight requests against a dead function layer:
+  // "Add a calibration-level stop after two consecutive 502 NO_RESPONSE_FROM_FUNCTION responses
+  // with no provider usage." The first fixture IS the provider-path health check.
+  const INFRA_ERR = '[TIERED:canonAuditCalibration] all tiers exhausted — last error: mistral HTTP 502 An error occurred with this application.\n\nNO_RESPONSE_FROM_FUNCTION';
+  ok('the signature is recognised: 502 + NO_RESPONSE_FROM_FUNCTION + no provider usage',
+    isInfraFailure(INFRA_ERR, false) === true);
+  ok('...and is NOT tripped when the provider actually answered', isInfraFailure(INFRA_ERR, true) === false);
+  ok('...nor by an ordinary upstream error', isInfraFailure('mistral HTTP 429 rate limited', false) === false);
+  ok('...nor by a bare 502 without the function-layer marker', isInfraFailure('mistral HTTP 502 upstream', false) === false);
+
+  // Simulate the loop exactly as the runner runs it.
+  let consecutive = 0, stopped = false, dispatched = 0;
+  const simRows = fixtures.map((f) => {
+    if (stopped) return { id: f.id, expect: f.expect, score: scoreFixture(f, null, null, { skipped: true }) };
+    dispatched++;
+    const score = scoreFixture(f, null, INFRA_ERR);
+    if (score.infra) { consecutive++; if (consecutive >= INFRA_STOP_AFTER) stopped = true; } else consecutive = 0;
+    return { id: f.id, expect: f.expect, score };
+  });
+  const simSummary = verdictSummary(simRows);
+  const simLedger = makeLedger(CEILING_USD);
+  for (let i = 0; i < dispatched; i++) simLedger.reserve('sim-' + i);
+  console.log('    dispatched ' + dispatched + ', skipped ' + simSummary.skipped + ', reserved $' + simLedger.totalUsd.toFixed(6));
+  ok('TWO consecutive dead calls produce EXACTLY TWO requests', dispatched === 2, 'dispatched=' + dispatched);
+  ok('...and SIX fixtures are never dispatched', simSummary.skipped === 6, JSON.stringify(simSummary.skippedIds));
+  ok('...realized provider cost is ZERO — the requests never reached the provider',
+    simRows.slice(0, 2).every((r) => r.score.infra === true), 'infra flag missing');
+  ok('...the run is marked INFRASTRUCTURE-INCONCLUSIVE, not a model result',
+    simSummary.infrastructureInconclusive === true, JSON.stringify(simSummary.infrastructureInconclusive));
+  ok('...and the verdict is DO NOT ENABLE', simSummary.enableGenerally === false, JSON.stringify(simSummary.blockers));
+  ok('...with the undispatched fixtures named as a blocker, so a short run cannot read as success',
+    simSummary.blockers.some((b) => /NOT DISPATCHED/.test(b)), JSON.stringify(simSummary.blockers));
+  // A single dead call followed by a good one must NOT stop the run.
+  let c2 = 0, s2 = false, d2 = 0;
+  fixtures.forEach((f, i) => {
+    if (s2) return;
+    d2++;
+    const score = i === 0 ? scoreFixture(f, null, INFRA_ERR) : scoreFixture(f, f.expect === 'violation' ? scored.violation : scored.pass, null);
+    if (score.infra) { c2++; if (c2 >= INFRA_STOP_AFTER) s2 = true; } else c2 = 0;
+  });
+  ok('a SINGLE dead call followed by a live one does NOT stop the run — the stop needs two consecutive',
+    d2 === fixtures.length && s2 === false, 'dispatched=' + d2 + ' stopped=' + s2);
 
   section('5. PRIMARY-ONLY AND THE CEILING ARE ENFORCED BEFORE DISPATCH');
   const probes = await page.evaluate(async () => {

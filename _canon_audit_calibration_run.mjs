@@ -10,7 +10,7 @@ import { chromium } from 'playwright-core';
 import { installFailClosedNetworkGate } from './_e2e_network_gate.mjs';
 import {
   loadFixtures, makeLedger, installCalibrationRoute, scoreFixture, verdictSummary,
-  PRIMARY_MODEL, PRIMARY_ENDPOINT, PER_CALL_USD, CEILING_USD
+  PRIMARY_MODEL, PRIMARY_ENDPOINT, PER_CALL_USD, CEILING_USD, INFRA_STOP_AFTER
 } from './_canon_audit_calibration_core.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -64,8 +64,18 @@ fs.mkdirSync(OUT_DIR, { recursive: true });
     && window._validateCanonAuditResponse && window._callTieredProvider, { timeout: 30000 });
 
   const rows = [];
+  // FAIL-FAST on the local function layer. The first fixture is the provider-path health check;
+  // once two consecutive requests come back 502/NO_RESPONSE_FROM_FUNCTION with no provider usage,
+  // every remaining fixture would do the same. Stop and mark the run infrastructure-inconclusive.
+  let consecutiveInfra = 0, stopped = false;
   gate.setPhase('canon-calibration', fixtures.length);
   for (const fx of fixtures) {
+    if (stopped) {
+      const score = scoreFixture(fx, null, null, { skipped: true });
+      rows.push({ id: fx.id, expect: fx.expect, why: fx.why, latencyMs: 0, score, skipped: true });
+      console.log('  ' + (fx.expect === 'violation' ? 'RED  ' : 'GREEN') + ' ' + fx.id.padEnd(30) + ' → skipped (run stopped)');
+      continue;
+    }
     holder.currentFixture = fx.id;
     const t0 = Date.now();
     const r = await page.evaluate(async (a) => {
@@ -105,6 +115,15 @@ fs.mkdirSync(OUT_DIR, { recursive: true });
     console.log('  ' + (fx.expect === 'violation' ? 'RED  ' : 'GREEN') + ' ' + fx.id.padEnd(30)
       + ' → ' + String(score.outcome).padEnd(16) + (r.validated && r.validated.verdict ? ('verdict=' + r.validated.verdict) : ('error=' + r.error))
       + '  ' + latencyMs + 'ms');
+    if (score.infra) {
+      consecutiveInfra++;
+      if (consecutiveInfra >= INFRA_STOP_AFTER) {
+        stopped = true;
+        console.log('\n  STOPPING — ' + INFRA_STOP_AFTER + ' consecutive local function-layer failures '
+          + '(502 / NO_RESPONSE_FROM_FUNCTION, no provider usage). Remaining fixtures are NOT dispatched;\n'
+          + '  this run is INFRASTRUCTURE-INCONCLUSIVE and says nothing about the model.\n');
+      }
+    } else { consecutiveInfra = 0; }
   }
   gate.closePhase();
 
@@ -122,6 +141,10 @@ fs.mkdirSync(OUT_DIR, { recursive: true });
   console.log('  invalid responses  : ' + summary.invalid + (summary.invalid ? ('   ' + summary.invalidIds.join(', ')) : ''));
   console.log('  usable responses   : ' + summary.usableResponses + '/' + summary.totalFixtures);
   console.log('  dispatches         : ' + gate.trackedCalls().length + '   reserved $' + ledger.totalUsd.toFixed(6) + ' of $' + CEILING_USD.toFixed(6));
+  if (summary.infrastructureInconclusive) {
+    console.log('\n  RESULT: INFRASTRUCTURE-INCONCLUSIVE — the local function layer failed; this says');
+    console.log('  NOTHING about the model. ' + summary.skipped + ' fixture(s) were never dispatched.');
+  }
   console.log('\n  ENABLE GENERALLY: ' + (summary.enableGenerally
     ? 'YES — 4/4 reds caught, 4/4 greens passed, no undecided, unavailable or invalid'
     : 'NO'));

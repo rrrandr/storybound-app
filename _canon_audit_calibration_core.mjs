@@ -192,9 +192,31 @@ export async function installCalibrationRoute(page, holder) {
   });
 }
 
+// ── INFRASTRUCTURE FAIL-FAST (Roman 2026-09-24) ──────────────────────────────────────────────
+// The first calibration attempt sent all eight requests even though the local function layer was
+// plainly dead after the first two — six pointless dispatches against a service that was going to
+// 502 every time. The first fixture IS the provider-path health check; no separate paid probe is
+// needed, and no further fixture should be spent once the signature is unmistakable.
+//
+// The signature is narrow on purpose: HTTP 502 AND NO_RESPONSE_FROM_FUNCTION AND no provider usage
+// recorded. That is the local `vercel dev` function layer failing to answer — it is NOT an upstream
+// model error, a rate limit, or a bad reply, and none of those trip this.
+export const INFRA_SIGNATURE = /\b502\b/;
+export function isInfraFailure(error, hadProviderUsage) {
+  if (hadProviderUsage) return false;                       // it reached the provider; not this
+  const e = String(error || '');
+  return INFRA_SIGNATURE.test(e) && /NO_RESPONSE_FROM_FUNCTION/i.test(e);
+}
+export const INFRA_STOP_AFTER = 2;                          // two CONSECUTIVE, then stop
+
 // ── SCORING — the critical distinction is a VALID but incorrect pass ─────────────────────────
-export function scoreFixture(fx, validated, error) {
-  if (error) return { outcome: 'unavailable', critical: false, note: error };
+export function scoreFixture(fx, validated, error, opts) {
+  if (opts && opts.skipped) return { outcome: 'skipped', critical: false,
+    note: 'not dispatched — the run stopped after ' + INFRA_STOP_AFTER + ' consecutive local function-layer failures' };
+  if (error) {
+    if (isInfraFailure(error, false)) return { outcome: 'unavailable', critical: false, infra: true, note: error };
+    return { outcome: 'unavailable', critical: false, note: error };
+  }
   if (!validated.valid) return { outcome: 'invalid_response', critical: false, note: validated.errors.join('; ') };
   const v = validated.verdict;
   if (fx.expect === 'violation') {
@@ -219,6 +241,12 @@ export function verdictSummary(rows) {
   const undecided = rows.filter((r) => /undecided/.test(r.score.outcome));
   const unavailable = rows.filter((r) => r.score.outcome === 'unavailable');
   const invalid = rows.filter((r) => r.score.outcome === 'invalid_response');
+  const skipped = rows.filter((r) => r.score.outcome === 'skipped');
+  // INFRASTRUCTURE-INCONCLUSIVE: the run stopped on the local function layer, so it says nothing
+  // about the model either way. Reported as its own state so it can never be read as a model
+  // result — neither a pass nor a failure of the auditor.
+  const infraFailures = rows.filter((r) => r.score && r.score.infra);
+  const infrastructureInconclusive = skipped.length > 0 || infraFailures.length >= INFRA_STOP_AFTER;
   // THE GATE, CORRECTED (Roman 2026-09-24). The earlier version required only "all reds caught and
   // no FALSE_POSITIVE" — so a green returning cannot_decide, invalid JSON or a transport failure
   // still produced ENABLE. In production every one of those BLOCKS a legitimate scene before the
@@ -227,14 +255,18 @@ export function verdictSummary(rows) {
   const enableGenerally = caught.length === reds.length
     && correctPass.length === greens.length
     && missed.length === 0 && falsePos.length === 0
-    && undecided.length === 0 && unavailable.length === 0 && invalid.length === 0;
+    && undecided.length === 0 && unavailable.length === 0 && invalid.length === 0
+    && skipped.length === 0;
   const blockers = [];
   if (missed.length) blockers.push(missed.length + ' missed red (VALID incorrect pass — no fallback fires): ' + missed.map((r) => r.id).join(', '));
   if (falsePos.length) blockers.push(falsePos.length + ' green false positive: ' + falsePos.map((r) => r.id).join(', '));
   if (undecided.length) blockers.push(undecided.length + ' undecided (blocks the scene in production): ' + undecided.map((r) => r.id).join(', '));
   if (unavailable.length) blockers.push(unavailable.length + ' unavailable (no usable response): ' + unavailable.map((r) => r.id).join(', '));
   if (invalid.length) blockers.push(invalid.length + ' invalid response (blocks the scene in production): ' + invalid.map((r) => r.id).join(', '));
+  if (skipped.length) blockers.push(skipped.length + ' NOT DISPATCHED — run stopped on the local function layer: ' + skipped.map((r) => r.id).join(', '));
   return {
+    infrastructureInconclusive, skipped: skipped.length, skippedIds: skipped.map((r) => r.id),
+    infraFailures: infraFailures.length,
     reds: reds.length, greens: greens.length,
     caught: caught.length, correctPass: correctPass.length,
     missed: missed.length, falsePositives: falsePos.length,

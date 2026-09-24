@@ -1,0 +1,2 @@
+romantsukerman   86061   0.0  1.1 455362064 383152   ??  S     2:18PM   0:05.20 node node_modules/.bin/vercel dev --listen 3000
+romantsukerman   86059   0.0  0.0 435308864   2512   ??  Ss    2:18PM   0:00.01 /bin/zsh -c source /Users/romantsukerman/.claude/shell-snaps

@@ -1,0 +1,380 @@
+{
+  "runId": "2026-09-24_18-22-08",
+  "model": "ministral-8b-2512",
+  "dispatches": 8,
+  "reservedUsd": 0.003959999999999999,
+  "ceilingUsd": 0.01,
+  "reservations": [
+    {
+      "label": "red_memory_extraction",
+      "ok": true,
+      "usd": 0.000495,
+      "runningTotalUsd": 0.000495
+    },
+    {
+      "label": "red_visible_glow",
+      "ok": true,
+      "usd": 0.000495,
+      "runningTotalUsd": 0.00099
+    },
+    {
+      "label": "red_contradicted_knowledge",
+      "ok": true,
+      "usd": 0.000495,
+      "runningTotalUsd": 0.001485
+    },
+    {
+      "label": "red_invalidated_objective",
+      "ok": true,
+      "usd": 0.000495,
+      "runningTotalUsd": 0.00198
+    },
+    {
+      "label": "green_confusion_records",
+      "ok": true,
+      "usd": 0.000495,
+      "runningTotalUsd": 0.0024749999999999998
+    },
+    {
+      "label": "green_alignment_sense",
+      "ok": true,
+      "usd": 0.000495,
+      "runningTotalUsd": 0.0029699999999999996
+    },
+    {
+      "label": "green_tempt_history_rewrite",
+      "ok": true,
+      "usd": 0.000495,
+      "runningTotalUsd": 0.0034649999999999993
+    },
+    {
+      "label": "green_mundane_invention",
+      "ok": true,
+      "usd": 0.000495,
+      "runningTotalUsd": 0.003959999999999999
+    }
+  ],
+  "routeLog": [
+    {
+      "kind": "blocked-endpoint",
+      "pathname": "/api/csp-report",
+      "reason": "calibration allows only /api/mistral-proxy"
+    },
+    {
+      "kind": "blocked-endpoint",
+      "pathname": "/api/config",
+      "reason": "calibration allows only /api/mistral-proxy"
+    },
+    {
+      "kind": "blocked-endpoint",
+      "pathname": "/api/csp-report",
+      "reason": "calibration allows only /api/mistral-proxy"
+    },
+    {
+      "kind": "blocked-endpoint",
+      "pathname": "/api/geo",
+      "reason": "calibration allows only /api/mistral-proxy"
+    },
+    {
+      "kind": "reserved",
+      "fixture": "red_memory_extraction",
+      "usd": 0.000495,
+      "runningTotalUsd": 0.000495
+    },
+    {
+      "kind": "blocked-endpoint",
+      "pathname": "/api/beta-events",
+      "reason": "calibration allows only /api/mistral-proxy"
+    },
+    {
+      "kind": "reserved",
+      "fixture": "red_visible_glow",
+      "usd": 0.000495,
+      "runningTotalUsd": 0.00099
+    },
+    {
+      "kind": "reserved",
+      "fixture": "red_contradicted_knowledge",
+      "usd": 0.000495,
+      "runningTotalUsd": 0.001485
+    },
+    {
+      "kind": "reserved",
+      "fixture": "red_invalidated_objective",
+      "usd": 0.000495,
+      "runningTotalUsd": 0.00198
+    },
+    {
+      "kind": "reserved",
+      "fixture": "green_confusion_records",
+      "usd": 0.000495,
+      "runningTotalUsd": 0.0024749999999999998
+    },
+    {
+      "kind": "reserved",
+      "fixture": "green_alignment_sense",
+      "usd": 0.000495,
+      "runningTotalUsd": 0.0029699999999999996
+    },
+    {
+      "kind": "reserved",
+      "fixture": "green_tempt_history_rewrite",
+      "usd": 0.000495,
+      "runningTotalUsd": 0.0034649999999999993
+    },
+    {
+      "kind": "reserved",
+      "fixture": "green_mundane_invention",
+      "usd": 0.000495,
+      "runningTotalUsd": 0.003959999999999999
+    }
+  ],
+  "rows": [
+    {
+      "id": "red_memory_extraction",
+      "expect": "violation",
+      "why": "the retained failed Scene B proposal, relabelled ordinary — mind-extraction no canon grants",
+      "latencyMs": 11956,
+      "score": {
+        "outcome": "invalid_response",
+        "critical": false,
+        "note": "violations[0] cites fact id(s) outside the supplied packet: [dc_0], [dc_1], [dc_2]; violations[1] cites fact id(s) outside the supplied packet: [inv_0]"
+      },
+      "verdict": "violation",
+      "citations": [],
+      "violations": [],
+      "validationErrors": [
+        "violations[0] cites fact id(s) outside the supplied packet: [dc_0], [dc_1], [dc_2]",
+        "violations[1] cites fact id(s) outside the supplied packet: [inv_0]"
+      ],
+      "error": null,
+      "packetTruncated": false
+    },
+    {
+      "id": "red_visible_glow",
+      "expect": "violation",
+      "why": "a REAL retained corpus plan asserting a visible magical effect, against \"a wish produces NO visible magical effect\"",
+      "latencyMs": 20933,
+      "score": {
+        "outcome": "unavailable",
+        "critical": false,
+        "note": "Expected ',' or ']' after array element in JSON at position 2552 (line 39 column 6)"
+      },
+      "verdict": null,
+      "citations": [],
+      "violations": [],
+      "validationErrors": [],
+      "error": "Expected ',' or ']' after array element in JSON at position 2552 (line 39 column 6)",
+      "packetTruncated": false
+    },
+    {
+      "id": "red_contradicted_knowledge",
+      "expect": "violation",
+      "why": "the committed rupture left the assembly unaware; this plan has the Dohkar act on detailed knowledge of the forgotten accusation",
+      "latencyMs": 3837,
+      "score": {
+        "outcome": "invalid_response",
+        "critical": false,
+        "note": "violations[0] cites fact id(s) outside the supplied packet: [know_0], [dc_0], [dc_1], [dc_2]; violations[1] cites fact id(s) outside the supplied packet: [inv_0]"
+      },
+      "verdict": "violation",
+      "citations": [],
+      "violations": [],
+      "validationErrors": [
+        "violations[0] cites fact id(s) outside the supplied packet: [know_0], [dc_0], [dc_1], [dc_2]",
+        "violations[1] cites fact id(s) outside the supplied packet: [inv_0]"
+      ],
+      "error": null,
+      "packetTruncated": false
+    },
+    {
+      "id": "red_invalidated_objective",
+      "expect": "violation",
+      "why": "the committed record invalidated the formal inquiry; this plan convenes it anyway",
+      "latencyMs": 4281,
+      "score": {
+        "outcome": "caught",
+        "critical": false
+      },
+      "verdict": "violation",
+      "citations": [
+        [
+          "neg_0"
+        ],
+        [
+          "neg_0"
+        ],
+        [
+          "neg_0"
+        ]
+      ],
+      "violations": [
+        {
+          "category": "rewritten_history",
+          "claim": "The formal inquiry into the ceremony is convened and its terms are read out",
+          "citedFactIds": [
+            "neg_0"
+          ],
+          "why": "The canon explicitly states the formal inquiry is not yet convened and its convening is LATE-ISSUE-1 content, not an early scene’s."
+        },
+        {
+          "category": "invalidated_objective",
+          "claim": "forces Lirael to choose between testifying and refusing",
+          "citedFactIds": [
+            "neg_0"
+          ],
+          "why": "The formal inquiry is not convened in early scenes, so Lirael cannot be forced to testify or refuse in that context."
+        },
+        {
+          "category": "invalidated_objective",
+          "claim": "The formal inquiry into the ceremony is convened and its terms are read out",
+          "citedFactIds": [
+            "neg_0"
+          ],
+          "why": "The convening of the formal inquiry is explicitly excluded from early scenes and is reserved for later content."
+        }
+      ],
+      "validationErrors": [],
+      "error": null,
+      "packetTruncated": false
+    },
+    {
+      "id": "green_confusion_records",
+      "expect": "pass",
+      "why": "unexplained confusion and a contradictory ledger — ordinary, invents no metaphysics",
+      "latencyMs": 3721,
+      "score": {
+        "outcome": "invalid_response",
+        "critical": false,
+        "note": "violations[0] cites fact id(s) outside the supplied packet: [dc_0], [know_0]; violations[1] cites fact id(s) outside the supplied packet: [inv_0]"
+      },
+      "verdict": "violation",
+      "citations": [],
+      "violations": [],
+      "validationErrors": [
+        "violations[0] cites fact id(s) outside the supplied packet: [dc_0], [know_0]",
+        "violations[1] cites fact id(s) outside the supplied packet: [inv_0]"
+      ],
+      "error": null,
+      "packetTruncated": false
+    },
+    {
+      "id": "green_alignment_sense",
+      "expect": "pass",
+      "why": "alignment-sense is EXPLICITLY established canon for First Favored",
+      "latencyMs": 3970,
+      "score": {
+        "outcome": "FALSE_POSITIVE",
+        "critical": true,
+        "note": "blocks a legitimate plan — ordinary creative invention must stay possible"
+      },
+      "verdict": "violation",
+      "citations": [
+        [
+          "neg_1"
+        ],
+        [
+          "neg_2"
+        ]
+      ],
+      "violations": [
+        {
+          "category": "contradicted_knowledge",
+          "claim": "Lirael senses the misalignment in the Dohkar and says so before the assembly",
+          "citedFactIds": [
+            "neg_1"
+          ],
+          "why": "The canon states that every First Favored senses misalignment, not just Lirael, and that Dohkars (trained professionals) perceive small semantic divergences early enough to know a wish may twist before it is obvious to others, making Lirael’s unique sensing of misalignment in the Dohkar unsupported."
+        },
+        {
+          "category": "contradicted_knowledge",
+          "claim": "Lirael senses the misalignment in the Dohkar and says so before the assembly",
+          "citedFactIds": [
+            "neg_2"
+          ],
+          "why": "The formal inquiry into Lirael has not yet been convened, and the scene is not staged at The Open, so Lirael cannot publicly accuse the Dohkar of misalignment in a way that would justify a formal inquiry."
+        }
+      ],
+      "validationErrors": [],
+      "error": null,
+      "packetTruncated": false
+    },
+    {
+      "id": "green_tempt_history_rewrite",
+      "expect": "pass",
+      "why": "a committed history_rewrite rupture legitimately changed the past; building on it is not an invention",
+      "latencyMs": 5371,
+      "score": {
+        "outcome": "invalid_response",
+        "critical": false,
+        "note": "violations[0] cites fact id(s) outside the supplied packet: [dc_1]; violations[1] cites fact id(s) outside the supplied packet: [know_0]"
+      },
+      "verdict": "violation",
+      "citations": [],
+      "violations": [],
+      "validationErrors": [
+        "violations[0] cites fact id(s) outside the supplied packet: [dc_1]",
+        "violations[1] cites fact id(s) outside the supplied packet: [know_0]"
+      ],
+      "error": null,
+      "packetTruncated": false
+    },
+    {
+      "id": "green_mundane_invention",
+      "expect": "pass",
+      "why": "invented dialogue, movement and consequence within established capability — the planner's job",
+      "latencyMs": 3417,
+      "score": {
+        "outcome": "invalid_response",
+        "critical": false,
+        "note": "violations[0] cites fact id(s) outside the supplied packet: [dc_0], [know_0], [dc_1]"
+      },
+      "verdict": "violation",
+      "citations": [],
+      "violations": [],
+      "validationErrors": [
+        "violations[0] cites fact id(s) outside the supplied packet: [dc_0], [know_0], [dc_1]"
+      ],
+      "error": null,
+      "packetTruncated": false
+    }
+  ],
+  "summary": {
+    "infrastructureInconclusive": false,
+    "skipped": 0,
+    "skippedIds": [],
+    "infraFailures": 0,
+    "reds": 4,
+    "greens": 4,
+    "caught": 1,
+    "correctPass": 0,
+    "missed": 0,
+    "falsePositives": 1,
+    "undecided": 0,
+    "unavailable": 1,
+    "invalid": 5,
+    "missedIds": [],
+    "falsePositiveIds": [
+      "green_alignment_sense"
+    ],
+    "undecidedIds": [],
+    "unavailableIds": [
+      "red_visible_glow"
+    ],
+    "invalidIds": [
+      "red_memory_extraction",
+      "red_contradicted_knowledge",
+      "green_confusion_records",
+      "green_tempt_history_rewrite",
+      "green_mundane_invention"
+    ],
+    "usableResponses": 2,
+    "totalFixtures": 8,
+    "blockers": [
+      "1 green false positive: green_alignment_sense",
+      "1 unavailable (no usable response): red_visible_glow",
+      "5 invalid response (blocks the scene in production): red_memory_extraction, red_contradicted_knowledge, green_confusion_records, green_tempt_history_rewrite, green_mundane_invention"
+    ],
+    "enableGenerally": false
+  }
+}

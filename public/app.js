@@ -192270,7 +192270,14 @@ No text, no watermark, no UI elements, share-ready.`;
     (Array.isArray(raw.violations) ? raw.violations : []).forEach(function (x, i) {
       if (!x || typeof x !== 'object') { errors.push('violations[' + i + '] is not an object'); return; }
       if (!CANON_VIOLATION_CATEGORIES[x.category]) { errors.push('violations[' + i + '] category "' + x.category + '" is not a defined category'); return; }
-      var ids = Array.isArray(x.citedFactIds) ? x.citedFactIds : [];
+      // NORMALISE THE CITED ID (Roman 2026-09-24, found in the first real calibration). The packet
+      // is RENDERED to the model as "  [dc_0] text", so a model that copies the id back copies the
+      // brackets with it. Five of eight real replies cited genuine facts as "[dc_0]" and were
+      // rejected as fabricated — my formatting, not the model's comprehension. Strip the display
+      // brackets and surrounding space before comparing; a genuinely invented id still fails.
+      var ids = (Array.isArray(x.citedFactIds) ? x.citedFactIds : [])
+        .map(function (id) { return String(id == null ? '' : id).trim().replace(/^\[+|\]+$/g, '').trim(); })
+        .filter(Boolean);
       if (!ids.length) { errors.push('violations[' + i + '] (' + x.category + ') cites no canon fact — an ungrounded finding is not a finding'); return; }
       var bogus = ids.filter(function (id) { return packet.ids.indexOf(id) === -1; });
       if (bogus.length) { errors.push('violations[' + i + '] cites fact id(s) outside the supplied packet: ' + bogus.join(', ')); return; }

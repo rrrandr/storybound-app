@@ -1,0 +1,143 @@
+{
+  "rows": [
+    {
+      "id": "red_memory_extraction",
+      "expect": "violation",
+      "verdict": "violation",
+      "citedAfterNorm": [
+        "unsupported_capability:dc_0+dc_1+dc_2",
+        "invalidated_objective:inv_0"
+      ],
+      "score": {
+        "outcome": "caught",
+        "critical": false
+      }
+    },
+    {
+      "id": "red_visible_glow",
+      "expect": "violation",
+      "verdict": null,
+      "score": {
+        "outcome": "unavailable",
+        "critical": false,
+        "note": "Expected ',' or ']' after array element in JSON at position 2552 (line 39 column 6)"
+      }
+    },
+    {
+      "id": "red_contradicted_knowledge",
+      "expect": "violation",
+      "verdict": "violation",
+      "citedAfterNorm": [
+        "contradicted_knowledge:know_0+dc_0+dc_1+dc_2",
+        "invalidated_objective:inv_0"
+      ],
+      "score": {
+        "outcome": "caught",
+        "critical": false
+      }
+    },
+    {
+      "id": "red_invalidated_objective",
+      "expect": "violation",
+      "verdict": "violation",
+      "citedAfterNorm": [
+        "rewritten_history:neg_0",
+        "invalidated_objective:neg_0",
+        "invalidated_objective:neg_0"
+      ],
+      "score": {
+        "outcome": "caught",
+        "critical": false
+      }
+    },
+    {
+      "id": "green_confusion_records",
+      "expect": "pass",
+      "verdict": "violation",
+      "citedAfterNorm": [
+        "contradicted_knowledge:dc_0+know_0",
+        "invalidated_objective:inv_0"
+      ],
+      "score": {
+        "outcome": "FALSE_POSITIVE",
+        "critical": true,
+        "note": "blocks a legitimate plan — ordinary creative invention must stay possible"
+      }
+    },
+    {
+      "id": "green_alignment_sense",
+      "expect": "pass",
+      "verdict": "violation",
+      "citedAfterNorm": [
+        "contradicted_knowledge:neg_1",
+        "contradicted_knowledge:neg_2"
+      ],
+      "score": {
+        "outcome": "FALSE_POSITIVE",
+        "critical": true,
+        "note": "blocks a legitimate plan — ordinary creative invention must stay possible"
+      }
+    },
+    {
+      "id": "green_tempt_history_rewrite",
+      "expect": "pass",
+      "verdict": "violation",
+      "citedAfterNorm": [
+        "rewritten_history:dc_1",
+        "contradicted_knowledge:know_0"
+      ],
+      "score": {
+        "outcome": "FALSE_POSITIVE",
+        "critical": true,
+        "note": "blocks a legitimate plan — ordinary creative invention must stay possible"
+      }
+    },
+    {
+      "id": "green_mundane_invention",
+      "expect": "pass",
+      "verdict": "violation",
+      "citedAfterNorm": [
+        "contradicted_knowledge:dc_0+know_0+dc_1"
+      ],
+      "score": {
+        "outcome": "FALSE_POSITIVE",
+        "critical": true,
+        "note": "blocks a legitimate plan — ordinary creative invention must stay possible"
+      }
+    }
+  ],
+  "summary": {
+    "infrastructureInconclusive": false,
+    "skipped": 0,
+    "skippedIds": [],
+    "infraFailures": 0,
+    "reds": 4,
+    "greens": 4,
+    "caught": 3,
+    "correctPass": 0,
+    "missed": 0,
+    "falsePositives": 4,
+    "undecided": 0,
+    "unavailable": 1,
+    "invalid": 0,
+    "missedIds": [],
+    "falsePositiveIds": [
+      "green_confusion_records",
+      "green_alignment_sense",
+      "green_tempt_history_rewrite",
+      "green_mundane_invention"
+    ],
+    "undecidedIds": [],
+    "unavailableIds": [
+      "red_visible_glow"
+    ],
+    "invalidIds": [],
+    "usableResponses": 7,
+    "totalFixtures": 8,
+    "blockers": [
+      "4 green false positive: green_confusion_records, green_alignment_sense, green_tempt_history_rewrite, green_mundane_invention",
+      "1 unavailable (no usable response): red_visible_glow"
+    ],
+    "enableGenerally": false
+  }
+}
