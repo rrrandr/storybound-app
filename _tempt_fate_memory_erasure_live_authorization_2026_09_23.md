@@ -1,4 +1,38 @@
-# Live-test authorization sheet — Tempt Fate memory-erasure scenario (THIRTEENTH REVISION)
+# Live-test authorization sheet — Tempt Fate memory-erasure scenario (FOURTEENTH REVISION)
+
+**Fourteenth revision — the prompt/validator drift is closed structurally.** The thirteenth-revision
+run delivered a scene and **committed nothing**: scope and rupture-class fields had been added to a
+schema builder no prompt ever called while the validator began requiring them, so the author was
+rejected for omitting fields it was never asked for. Controls stayed green because they asserted
+against the unused builder. Cost of finding that: one paid run, $0.114544.
+
+**Structural fix — one contract, two consumers.** `TEMPT_OUTCOME_CONTRACT` is now the only
+definition of the outcome contract. `_renderTemptOutcomeSchema()` builds the author's schema **from
+it**; `_validateTemptFateOutcomeReport()` enforces **from it**; `_temptOutcomeRequiredFieldNames()`
+lists what a preflight must find. Each entry carries its own schema line *and* its own check, so a
+field cannot exist in one and not the other. There is no second builder and no hand-maintained
+required-field list; the dead builder is deleted.
+
+**Zero-cost preflight invariant.** Before any author dispatch, when a rupture is active, the
+**assembled** request body is inspected: every field the validator can require must appear. If not,
+the run **aborts before dispatch** and names the missing fields — a drift guard, never a semantic
+judgement. Logged as `[CG:SCREENPLAY] preflight OK …` or `PREFLIGHT ABORT …`.
+
+`_tempt_fate_outcome_contract_control.mjs`: **16/16**, zero dispatches, proving through the full
+UI-shaped path — the real author request is captured and represents all **18** fields the validator
+can require (universal plus all five class contracts); the preflight ran and passed on it; a minimal
+memory-perception outcome commits; removing each of `requestedScope`, `deliveredScope`, `scopeMatch`,
+`ruptureClass`, `affectedKnowers` in turn is rejected; a `materialization_possession` outcome
+validates with no memory-only fields; and the preflight itself **fails and names the field** when the
+emitted schema is deliberately crippled.
+
+**Evidence preservation.** The latest paid run's raw requests, prompts, prose, per-call costs and
+full request log are committed at `_tempt_fate_fixtures/run_2026_09_23_scene_a_no_commit/` — byte-for-byte
+copies, not a reconstruction. The earlier `scene_a_failed_2026_09_23.json` remains a **reconstruction
+from verbatim quotes**, and its README continues to say so explicitly; its original bytes were
+destroyed by a later run before anything was committed.
+
+**Cumulative spend: ≈$0.3418.** No paid retry is authorized by this revision.
 
 **Thirteenth revision — the real six-call Scene A trace, reconciled line by line.** The live run
 exposed an uncounted post-scene call. Tracing it found **two** uncounted roles, not one.

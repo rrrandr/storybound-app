@@ -189746,77 +189746,153 @@ No text, no watermark, no UI elements, share-ready.`;
   // example: a manifested Answer may disappear when the window closes while
   // someone's witnessed use of it permanently changes an accusation).
 
+  // ═══ THE TEMPT OUTCOME CONTRACT — ONE DESCRIPTOR, TWO CONSUMERS ═══════════════════════════════
+  // (Roman 2026-09-23, after a paid run delivered a scene and committed nothing.) The schema the
+  // author is shown and the rules the validator enforces used to be two hand-maintained things in
+  // two different places. They drifted: scope/class fields were added to a builder no prompt called
+  // while the validator began requiring them, so a real delivered outcome was rejected for omitting
+  // fields it was never asked for. Assertions did not catch it because they tested the unused
+  // builder.
+  //
+  // This descriptor is now the ONLY definition. _renderTemptOutcomeSchema() builds the author's
+  // schema text FROM it, _validateTemptFateOutcomeReport() enforces FROM it, and
+  // _temptOutcomeRequiredFieldNames() lists what a preflight must find in an assembled request.
+  // Adding a field here changes prompt, validator and preflight together, or not at all.
+  var TEMPT_OUTCOME_CONTRACT = {
+    // Required whenever delivered === true. `line` is what the author sees; `check` is what the
+    // validator runs; they cannot diverge because they are the same entry.
+    universal: [
+      { key: 'changed', line: '"changed": [ { "subject": "<who/what was affected>", "whatChanged": "<concretely what changed about them>" } ],  /* only things THIS scene actually shows changing */',
+        check: function (v) { return v === undefined || Array.isArray(v); }, err: 'changed must be an array when present' },
+      { key: 'durability', line: '"durability": [ { "aspect": "<which changed thing>", "status": "expires | persists | uncertain", "note": "<why>" } ],  /* PER-EFFECT — one wish may produce effects with DIFFERENT lifespans. "expires" ONLY if THIS scene signals the effect is bound to the passing rupture window; the window closing governs how long the world visibly destabilizes, never whether the underlying change stuck. */',
+        check: function (v) { return v === undefined || Array.isArray(v); }, err: 'durability must be an array when present' },
+      { key: 'knowledgeStates', line: '"knowledgeStates": [ { "character": "<name>", "state": "knows | remembers | believes | suspects | unaware", "note": "<grounding>" } ],  /* per-character, never a blanket claim about "everyone" */',
+        check: function (v) { return v === undefined || Array.isArray(v); }, err: 'knowledgeStates must be an array when present' },
+      { key: 'establishedEvidence', line: '"establishedEvidence": ["<concrete evidence or consequence THIS scene actually put on the page>"],',
+        check: function (v) { return v === undefined || Array.isArray(v); }, err: 'establishedEvidence must be an array when present' },
+      { key: 'openPossibilities', line: '"openPossibilities": ["<unresolved thread a FUTURE scene could pursue — explicitly NOT established fact>"],',
+        check: function (v) { return v === undefined || Array.isArray(v); }, err: 'openPossibilities must be an array when present' },
+      { key: 'requestedScope', line: '"requestedScope": "<the wish\'s literal scope, in your own words, BEFORE considering what the scene managed to deliver>",',
+        check: function (v) { return typeof v === 'string' && !!v.trim(); }, err: 'delivered:true but requestedScope missing — the wish\'s literal scope must be stated' },
+      { key: 'deliveredScope', line: '"deliveredScope": "<the scope the scene ACTUALLY delivered on the page>",',
+        check: function (v) { return typeof v === 'string' && !!v.trim(); }, err: 'delivered:true but deliveredScope missing — what the scene actually granted must be stated' },
+      { key: 'scopeMatch', line: '"scopeMatch": "full | narrower | broader",  /* compare honestly. "full" ONLY if delivered covers requested. A subset of the people, the events, or the duration is "narrower" — say so; do NOT relabel a partial grant as a success. */',
+        check: function (v) { return v === 'full' || v === 'narrower' || v === 'broader'; }, err: 'delivered:true but scopeMatch must be full|narrower|broader' },
+      { key: 'scopeNote', line: '"scopeNote": "<required when scopeMatch is not \\"full\\": why the scene delivered a different scope, and what specifically was left untouched>",',
+        check: function (v, raw) { return (raw.scopeMatch === 'full') || (typeof v === 'string' && !!v.trim()); },
+        err: 'scopeMatch is not "full" — scopeNote must explain what was left untouched' },
+      { key: 'invalidatedPlans', line: '"invalidatedPlans": ["<a previously scheduled plan, proceeding or obligation this rupture made IMPOSSIBLE, SUSPENDED or UNEXPLAINED. A proceeding nobody can still justify IS a change. Empty array if every scheduled thing can genuinely still proceed.>"],',
+        check: function (v) { return v === undefined || Array.isArray(v); }, err: 'invalidatedPlans must be an array when present' },
+      { key: 'ruptureClass', line: '"ruptureClass": "memory_perception | history_rewrite | identity_reputation | materialization_possession | relationship_social | other",  /* what KIND of change the wish asked for and the scene delivered. Then add ONLY that class\'s fields below — do not populate fields of a class you did not deliver. */',
+        check: function (v) { return !!TEMPT_OUTCOME_CONTRACT.classes[v]; },
+        err: 'delivered:true but ruptureClass must be memory_perception|history_rewrite|identity_reputation|materialization_possession|relationship_social|other' }
+    ],
+    // Only the DECLARED class's fields are required. A possession rupture is never asked for memory
+    // fields; a forgetting is never asked to claim a history rewrite.
+    classes: {
+      memory_perception: [
+        { key: 'affectedKnowers', line: '"affectedKnowers": [ { "who": "<name or group>", "nowKnows": "<what they now know or no longer know>" } ],  /* memory_perception ONLY. If the protagonist is EXEMPT from a forgetting, the scene must EARN that exception on the page; record the grounding in her knowledgeStates note. */',
+          check: function (v) { return Array.isArray(v) && v.length > 0; }, err: 'ruptureClass="memory_perception" requires a non-empty affectedKnowers (who now knows or no longer knows what)' }
+      ],
+      history_rewrite: [
+        { key: 'priorHistoryReplaced', line: '"priorHistoryReplaced": "<history_rewrite ONLY — what the history WAS, and what it now IS instead. A rupture MAY make an event never have occurred when that is the wish and the scene delivers it.>",',
+          check: function (v) { return typeof v === 'string' && !!v.trim(); }, err: 'ruptureClass="history_rewrite" requires priorHistoryReplaced (what the history was, and what it now is)' },
+        { key: 'survivingContradictions', line: '"survivingContradictions": ["<history_rewrite ONLY — residue that does not fit the rewritten history; empty array if the rewrite left none>"],',
+          check: function (v) { return Array.isArray(v); }, err: 'ruptureClass="history_rewrite" requires survivingContradictions to be an array (empty is allowed)' }
+      ],
+      identity_reputation: [
+        { key: 'recognitionChanges', line: '"recognitionChanges": [ { "who": "<whose standing changed>", "howRecognized": "<how others now recognise, name or treat them>", "recordsChanged": "<what social or institutional records now say>" } ],  /* identity_reputation ONLY */',
+          check: function (v) { return Array.isArray(v) && v.length > 0; }, err: 'ruptureClass="identity_reputation" requires a non-empty recognitionChanges' }
+      ],
+      materialization_possession: [
+        { key: 'materialEffects', line: '"materialEffects": [ { "what": "<what now exists or changed hands>", "whoHolds": "<who has it>", "duration": "<how long it lasts>" } ],  /* materialization_possession ONLY */',
+          check: function (v) { return Array.isArray(v) && v.length > 0; }, err: 'ruptureClass="materialization_possession" requires a non-empty materialEffects (what exists, who holds it, how long)' }
+      ],
+      relationship_social: [
+        { key: 'affectedParties', line: '"affectedParties": [ { "who": "<party>", "whatChanged": "<how the relationship or social reality changed>", "witnesses": "<who saw or now assumes it>" } ]  /* relationship_social ONLY */',
+          check: function (v) { return Array.isArray(v) && v.length > 0; }, err: 'ruptureClass="relationship_social" requires a non-empty affectedParties' }
+      ],
+      other: [
+        { key: 'scopeNote', line: null, // already emitted universally; no second schema line
+          check: function (v) { return typeof v === 'string' && !!v.trim(); }, err: 'ruptureClass="other" requires scopeNote explaining what class this is and why the listed ones do not fit' }
+      ]
+    }
+  };
+
+  // Every field name the validator can demand — what a preflight must find in the emitted schema.
+  function _temptOutcomeRequiredFieldNames() {
+    var names = ['delivered'];
+    TEMPT_OUTCOME_CONTRACT.universal.forEach(function (f) { if (names.indexOf(f.key) === -1) names.push(f.key); });
+    Object.keys(TEMPT_OUTCOME_CONTRACT.classes).forEach(function (cls) {
+      TEMPT_OUTCOME_CONTRACT.classes[cls].forEach(function (f) { if (names.indexOf(f.key) === -1) names.push(f.key); });
+    });
+    return names;
+  }
+  window._temptOutcomeRequiredFieldNames = _temptOutcomeRequiredFieldNames;
+
+  // The author's schema, rendered FROM the contract. activeNow flips the null-permission line only.
+  function _renderTemptOutcomeSchema(activeNow) {
+    var body = ['  "temptFateOutcome": null | {',
+      '    "delivered": <bool — did the Tempt Fate intervention concretely happen on the page THIS scene (not merely implied, foreshadowed, or deferred)? If false, everything else is ignored.>,'];
+    TEMPT_OUTCOME_CONTRACT.universal.forEach(function (f) { if (f.line) body.push('    ' + f.line); });
+    body.push('    /* THEN add ONLY the fields of the ruptureClass you declared: */');
+    Object.keys(TEMPT_OUTCOME_CONTRACT.classes).forEach(function (cls) {
+      TEMPT_OUTCOME_CONTRACT.classes[cls].forEach(function (f) { if (f.line) body.push('    ' + f.line); });
+    });
+    body.push('  }  /* ' + (activeNow
+      ? 'A Tempt Fate rupture IS ACTIVE THIS SCENE (see the ACTIVE INVOCATION section above): this field MUST be a populated object recording what actually changed. null is NOT valid this scene.'
+      : 'ONLY meaningful when a Tempt Fate rupture is active THIS scene — null when Tempt Fate was not invoked this scene.')
+      + ' Applies IDENTICALLY to any wish, familiar or unprecedented — there is no fixed catalogue of wish types; reason about THIS specific wish and THIS specific scene. */');
+    return body.join('\n');
+  }
+  window._renderTemptOutcomeSchema = _renderTemptOutcomeSchema;
+
   // STAGE 2 — structural validation ONLY (shape/types, never content or
-  // creative correctness — that is reserved for live testing).
+  // creative correctness — that is reserved for live testing). Driven by the contract above.
   function _validateTemptFateOutcomeReport(raw) {
     var errors = [];
     if (!raw || typeof raw !== 'object') return { valid: false, errors: ['report is not an object'] };
     if (typeof raw.delivered !== 'boolean') errors.push('delivered must be boolean');
-    ['changed', 'durability', 'knowledgeStates', 'establishedEvidence', 'openPossibilities'].forEach(function (f) {
-      if (raw[f] !== undefined && !Array.isArray(raw[f])) errors.push(f + ' must be an array when present');
-    });
-    if (Array.isArray(raw.changed)) {
-      raw.changed.forEach(function (c, i) {
-        if (!c || typeof c.subject !== 'string' || !c.subject.trim()) errors.push('changed[' + i + '].subject missing');
-        if (!c || typeof c.whatChanged !== 'string' || !c.whatChanged.trim()) errors.push('changed[' + i + '].whatChanged missing');
-      });
-    }
-    if (Array.isArray(raw.durability)) {
-      var VALID_STATUS = { expires: true, persists: true, uncertain: true };
-      raw.durability.forEach(function (d, i) {
-        if (!d || !VALID_STATUS[d.status]) errors.push('durability[' + i + '].status must be expires|persists|uncertain');
-      });
-    }
-    if (Array.isArray(raw.knowledgeStates)) {
-      var VALID_KSTATE = { knows: true, remembers: true, believes: true, suspects: true, unaware: true };
-      raw.knowledgeStates.forEach(function (k, i) {
-        if (!k || typeof k.character !== 'string' || !k.character.trim()) errors.push('knowledgeStates[' + i + '].character missing');
-        if (!k || !VALID_KSTATE[k.state]) errors.push('knowledgeStates[' + i + '].state invalid');
-      });
-    }
-    // A delivered:true report with literally nothing established is a shape error — either the
-    // intervention changed something observable, or it did not deliver.
     if (raw.delivered === true) {
+      TEMPT_OUTCOME_CONTRACT.universal.forEach(function (f) {
+        if (!f.check(raw[f.key], raw)) errors.push(f.err);
+      });
       var hasContent = (Array.isArray(raw.changed) && raw.changed.length) || (Array.isArray(raw.establishedEvidence) && raw.establishedEvidence.length);
       if (!hasContent) errors.push('delivered:true but no changed[] or establishedEvidence[] reported');
-      // SCOPE DECLARATION (Roman 2026-09-23). A delivered report must say what scope it actually
-      // granted relative to what was asked. This is still STRUCTURAL — it does not judge whether the
-      // prose earned the claim — but it stops a partial grant from entering durable canon wearing
-      // the shape of a complete one, which is exactly what the first semantically-failed Scene A did.
-      var VALID_SCOPE = { full: true, narrower: true, broader: true };
-      if (typeof raw.requestedScope !== 'string' || !raw.requestedScope.trim()) errors.push('delivered:true but requestedScope missing — the wish\'s literal scope must be stated');
-      if (typeof raw.deliveredScope !== 'string' || !raw.deliveredScope.trim()) errors.push('delivered:true but deliveredScope missing — what the scene actually granted must be stated');
-      if (!VALID_SCOPE[raw.scopeMatch]) errors.push('delivered:true but scopeMatch must be full|narrower|broader');
-      if ((raw.scopeMatch === 'narrower' || raw.scopeMatch === 'broader') && (typeof raw.scopeNote !== 'string' || !raw.scopeNote.trim())) {
-        errors.push('scopeMatch="' + raw.scopeMatch + '" requires scopeNote explaining what was left untouched');
+      if (Array.isArray(raw.changed)) {
+        raw.changed.forEach(function (c, i) {
+          if (!c || typeof c.subject !== 'string' || !c.subject.trim()) errors.push('changed[' + i + '].subject missing');
+          if (!c || typeof c.whatChanged !== 'string' || !c.whatChanged.trim()) errors.push('changed[' + i + '].whatChanged missing');
+        });
       }
-      // RUPTURE-CLASS CONDITIONAL REQUIREMENTS (Roman 2026-09-23 overfitting audit). Only the
-      // declared class's fields are demanded. A possession or reputation rupture is never asked to
-      // populate memory fields, and a forgetting rupture is never asked to claim a history rewrite.
-      var VALID_CLASS = { memory_perception: true, history_rewrite: true, identity_reputation: true, materialization_possession: true, relationship_social: true, other: true };
-      if (!VALID_CLASS[raw.ruptureClass]) {
-        errors.push('delivered:true but ruptureClass must be memory_perception|history_rewrite|identity_reputation|materialization_possession|relationship_social|other');
-      } else {
-        var needArray = function (field, why) {
-          if (!Array.isArray(raw[field]) || !raw[field].length) errors.push('ruptureClass="' + raw.ruptureClass + '" requires a non-empty ' + field + ' (' + why + ')');
-        };
-        if (raw.ruptureClass === 'memory_perception') needArray('affectedKnowers', 'who now knows or no longer knows what');
-        if (raw.ruptureClass === 'history_rewrite') {
-          if (typeof raw.priorHistoryReplaced !== 'string' || !raw.priorHistoryReplaced.trim()) errors.push('ruptureClass="history_rewrite" requires priorHistoryReplaced (what the history was, and what it now is)');
-          if (!Array.isArray(raw.survivingContradictions)) errors.push('ruptureClass="history_rewrite" requires survivingContradictions to be an array (empty is allowed — it means the rewrite left no residue)');
-        }
-        if (raw.ruptureClass === 'identity_reputation') needArray('recognitionChanges', 'who is now recognised how, and what records changed');
-        if (raw.ruptureClass === 'materialization_possession') needArray('materialEffects', 'what exists, who holds it, how long it lasts');
-        if (raw.ruptureClass === 'relationship_social') needArray('affectedParties', 'who is affected and who witnessed it');
-        if (raw.ruptureClass === 'other' && (typeof raw.scopeNote !== 'string' || !raw.scopeNote.trim())) {
-          errors.push('ruptureClass="other" requires scopeNote explaining what class this is and why the listed ones do not fit');
-        }
+      if (Array.isArray(raw.durability)) {
+        var VALID_STATUS = { expires: true, persists: true, uncertain: true };
+        raw.durability.forEach(function (d, i) { if (!d || !VALID_STATUS[d.status]) errors.push('durability[' + i + '].status must be expires|persists|uncertain'); });
       }
-      if (raw.invalidatedPlans !== undefined && !Array.isArray(raw.invalidatedPlans)) errors.push('invalidatedPlans must be an array when present');
+      if (Array.isArray(raw.knowledgeStates)) {
+        var VALID_KSTATE = { knows: true, remembers: true, believes: true, suspects: true, unaware: true };
+        raw.knowledgeStates.forEach(function (k, i) {
+          if (!k || typeof k.character !== 'string' || !k.character.trim()) errors.push('knowledgeStates[' + i + '].character missing');
+          if (!k || !VALID_KSTATE[k.state]) errors.push('knowledgeStates[' + i + '].state invalid');
+        });
+      }
+      var classFields = TEMPT_OUTCOME_CONTRACT.classes[raw.ruptureClass];
+      if (classFields) classFields.forEach(function (f) { if (!f.check(raw[f.key], raw)) errors.push(f.err); });
     }
     return { valid: errors.length === 0, errors: errors };
   }
   window._validateTemptFateOutcomeReport = _validateTemptFateOutcomeReport;
+
+  // PREFLIGHT INVARIANT — zero cost, runs on the ASSEMBLED request before any dispatch.
+  // Safety check against code drift, never semantic judgement: if the validator can demand a field
+  // the emitted schema never mentions, the request must not be released.
+  function _temptOutcomePreflight(assembledText) {
+    var text = String(assembledText || '');
+    var missing = _temptOutcomeRequiredFieldNames().filter(function (n) { return text.indexOf(n) === -1; });
+    return { ok: missing.length === 0, missing: missing };
+  }
+  window._temptOutcomePreflight = _temptOutcomePreflight;
+
 
   // STAGE 3 — commit. Structural guarantee (Roman: "without letting it
   // silently overwrite protected character/canon state directly"): purely
@@ -224499,38 +224575,7 @@ No text, no watermark, no UI elements, share-ready.`;
       '    "almost_said_beat_idx": <int — the beat index where the protagonist almost says something and stops: a sentence breaks off, a word is swapped, a topic she steers away from. REQUIRED.>,\n' +
       '    "escalation_rhythm": "<one phrase describing how pressure ratchets across the scene. Examples: \\"opens with held breath → article surfaces by beat 7 → friend probes by beat 14 → almost-confession at 20\\" / \\"slow ordinary surface for 8 beats → a phone vibration at 9 cracks composure → conversation pivots, never recovers\\".>"\n' +
       '  },\n' +
-      '  "temptFateOutcome": null | {\n' +
-      '    "delivered": <bool — did the Tempt Fate intervention concretely happen on the page THIS scene (not merely implied, foreshadowed, or deferred)? If false, everything else in this object is ignored.>,\n' +
-      '    "changed": [ { "subject": "<who/what was affected>", "whatChanged": "<concretely what changed about them>" } ],  /* only things THIS scene actually shows changing */\n' +
-      '    "durability": [ { "aspect": "<which changed thing, matching a changed[].subject>", "status": "expires | persists | uncertain", "note": "<why>" } ],  /* PER-EFFECT — a single wish may produce effects with DIFFERENT lifespans (e.g. a materialized object disappears, but a witnessed accusation it caused persists). "expires" ONLY if THIS scene itself signals the effect is bound to the passing rupture window — do NOT mark a memory/identity/history change as "expires" merely because Tempt Fate\'s visible distortion window will close; that governs how long the world visibly destabilizes, never whether the underlying change stuck. */\n' +
-      '    "knowledgeStates": [ { "character": "<name>", "state": "knows | remembers | believes | suspects | unaware", "note": "<grounding>" } ],  /* per-character, never a single blanket claim about "everyone" */\n' +
-      '    "establishedEvidence": ["<concrete evidence or consequence THIS scene actually put on the page>"],\n' +
-      '    "openPossibilities": ["<unresolved thread a FUTURE scene could pursue — explicitly NOT established fact; do not phrase as already true>"],\n' +
-      // SCOPE + RUPTURE CLASS (Roman 2026-09-23). These MUST live here, in the schema the author
-      // actually receives. An earlier version put them only in _buildTemptFateOutcomeReportingSchema()
-      // — which is window-exposed but never called by any prompt — while the validator required
-      // them, so every delivered outcome was rejected and nothing could commit. Prompt and validator
-      // must be edited together; that mistake cost a real run.
-      '    "requestedScope": "<the wish\'s literal scope, in your own words, BEFORE considering what the scene managed to deliver>",\n' +
-      '    "deliveredScope": "<the scope the scene ACTUALLY delivered on the page>",\n' +
-      '    "scopeMatch": "full | narrower | broader",  /* compare the two honestly. "full" ONLY if delivered covers requested. Granting a subset of the people, the events, or the duration is "narrower" — say so; do NOT relabel a partial grant as a success. */\n' +
-      '    "scopeNote": "<required when scopeMatch is not \\"full\\": why the scene delivered a different scope, and what specifically was left untouched>",\n' +
-      '    "invalidatedPlans": ["<a previously scheduled plan, proceeding or obligation this rupture made IMPOSSIBLE, SUSPENDED or UNEXPLAINED. A proceeding nobody can still justify IS a change; omitting it silently preserves a world-state the wish should have disturbed. Empty array if every scheduled thing can genuinely still proceed.>"],\n' +
-      '    "ruptureClass": "memory_perception | history_rewrite | identity_reputation | materialization_possession | relationship_social | other",  /* what KIND of change the wish asked for and the scene delivered. Then add ONLY that class\'s fields below — do not populate fields of a class you did not deliver. */\n' +
-      '    "affectedKnowers": [ { "who": "<name or group>", "nowKnows": "<what they now know or no longer know>" } ],  /* memory_perception ONLY. If the protagonist is EXEMPT from a forgetting, the scene must EARN that exception on the page; record the grounding in her knowledgeStates note. */\n' +
-      '    "priorHistoryReplaced": "<history_rewrite ONLY — what the history WAS, and what it now IS instead. A rupture MAY make an event never have occurred when that is the wish and the scene delivers it.>",\n' +
-      '    "survivingContradictions": ["<history_rewrite ONLY — residue that does not fit the rewritten history; empty array if the rewrite left none>"],\n' +
-      '    "recognitionChanges": [ { "who": "<whose standing changed>", "howRecognized": "<how others now recognise, name or treat them>", "recordsChanged": "<what social or institutional records now say>" } ],  /* identity_reputation ONLY */\n' +
-      '    "materialEffects": [ { "what": "<what now exists or changed hands>", "whoHolds": "<who has it>", "duration": "<how long it lasts>" } ],  /* materialization_possession ONLY */\n' +
-      '    "affectedParties": [ { "who": "<party>", "whatChanged": "<how the relationship or social reality changed>", "witnesses": "<who saw or now assumes it>" } ]  /* relationship_social ONLY */\n' +
-      // Roman 2026-09-23: the schema now states the REQUIREMENT for the invocation scene, not just
-      // the permission. Previously it only said "null when Tempt Fate was not invoked this scene",
-      // which an author handed a historical MEMORY CALLBACK reads as licence to null it — exactly
-      // what the first paid run produced. When the owned invocation is live, null is invalid.
-      '  }  /* ' + (((typeof window._temptFateOwnedInvocation === 'function') && window._temptFateOwnedInvocation())
-            ? 'A Tempt Fate rupture IS ACTIVE THIS SCENE (see the ACTIVE INVOCATION section above): this field MUST be a populated object recording what actually changed. null is NOT valid this scene.'
-            : 'ONLY meaningful when a Tempt Fate rupture is active THIS scene (see the TEMPT FATE section above in this prompt) — null when Tempt Fate was not invoked this scene.')
-          + ' Applies IDENTICALLY to any wish, familiar or unprecedented — there is no fixed catalogue of wish types to match against; reason about THIS specific wish and THIS specific scene. */\n' +
+      window._renderTemptOutcomeSchema(!!((typeof window._temptFateOwnedInvocation === 'function') && window._temptFateOwnedInvocation())) + '\n' +
       '}'
     );
     // ── A-PLOT PRESSURE INJECTION (added 2026-05-16) ─────────────────
@@ -232469,6 +232514,26 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
       var _cgSys = (sysPrompt || '').length, _cgUsr = (userPrompt || '').length, _cgTot = _cgSys + _cgUsr;
       console.log('[CG:PROMPT-SIZES] scene ' + sceneIndex + ' · total=' + _cgTot + 'c(~' + Math.round(_cgTot / 4) + 't) | system=' + _cgSys + 'c(~' + Math.round(_cgSys / 4) + 't) · user=' + _cgUsr + 'c(~' + Math.round(_cgUsr / 4) + 't)');
     } catch (_) {}
+    // ── PREFLIGHT INVARIANT (Roman 2026-09-23) — zero cost, before ANY dispatch ──
+    // Checks the ASSEMBLED request: every field _validateTemptFateOutcomeReport can demand must be
+    // represented in the emitted schema. This is a drift guard, not semantic judgement — it exists
+    // because a paid run once delivered a scene and committed nothing after the validator began
+    // requiring fields the author's schema never mentioned. Only enforced when a rupture is
+    // actually active, since that is the only time the outcome object is required.
+    try {
+      var _tfoPreflightActive = !!(typeof _temptFateOwnedInvocation === 'function' && _temptFateOwnedInvocation());
+      if (_tfoPreflightActive && typeof _temptOutcomePreflight === 'function') {
+        var _pf = _temptOutcomePreflight(String(sysPrompt || '') + '\n' + String(userPrompt || ''));
+        if (!_pf.ok) {
+          var _pfMsg = '[CG:SCREENPLAY] PREFLIGHT ABORT — a Tempt rupture is active and the validator can require field(s) the emitted schema never mentions: ' + _pf.missing.join(', ') + '. Refusing to dispatch; this would deliver a scene that cannot commit.';
+          try { console.error(_pfMsg); } catch (_) {}
+          throw new Error(_pfMsg);
+        }
+        try { console.log('[CG:SCREENPLAY] preflight OK — all ' + _temptOutcomeRequiredFieldNames().length + ' contract fields present in the assembled request'); } catch (_) {}
+      }
+    } catch (_pfErr) {
+      if (_pfErr && /PREFLIGHT ABORT/.test(_pfErr.message || '')) throw _pfErr;
+    }
     var t0 = Date.now();
     console.log('[CG:SCREENPLAY] gen start (scene ' + sceneIndex + ')');
     // Diagnostic: log the user prompt the model is actually receiving so
