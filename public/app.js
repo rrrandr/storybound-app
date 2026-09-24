@@ -100314,6 +100314,19 @@ function _buildAuthorFloorDirective(s) {
       if (_scSpineOn) {
         try {
           var _prevSc = s._priorSceneStateChange || null;
+          // ── OBJECTIVE PRECEDENCE, RESOLVED BEFORE THE PROMPT IS BUILT (Roman 2026-09-24) ──
+          // Computed HERE, not appended later, because appending a "this is contingent" directive
+          // beneath a goal still labelled "realize NOW as this scene's state_change" leaves the
+          // planner holding two contradictory mandates — which is the authority conflict that let
+          // the failed Scene B proceed. When a committed rupture has invalidated the objective's
+          // causal foundation, the MANDATORY FRAMING ITSELF is replaced, not supplemented.
+          var _opPrec = { mode: 'mandatory', directive: '', invalidated: [] };
+          try {
+            if (typeof _resolveObjectivePrecedence === 'function') {
+              _opPrec = _resolveObjectivePrecedence(s, (_curMs && _curMs.event) || goal) || _opPrec;
+            }
+          } catch (_) {}
+          var _opContingent = _opPrec.mode === 'contingent';
           var _scSys = 'You are the SCENE-SPINE planner for an interactive romance engine. The scene has ONE organizing event: a STATE CHANGE — an irreversible, externally observable event that flips a specific fact from FALSE to TRUE. Everything else in the scene serves it. First name the TACTICAL MOVE (what this scene does to advance the current milestone — an input constraint, NOT the event), then express it as a state_change per the CONTRACT.\n'
             + 'STATE_CHANGE CONTRACT (HARD — reused from the proven Scene-1 primitive, do NOT soften):\n'
             + '  • state_change_precondition: ONE sentence naming the single fact NOT YET TRUE when the scene opens — the "before", the negation of the state_change, phrased so the scene must OPEN with it still false. 8-16 words.\n'
@@ -100322,16 +100335,27 @@ function _buildAuthorFloorDirective(s) {
             + '  • SPECIFICITY (HARD — the state_change must UNIQUELY identify THIS milestone): realize the milestone\'s SPECIFIC concrete content — its named objects, places, and actions — NOT a generic version of the theme. If the milestone names "a submerged bell that rings for their bond", the event must involve THAT bell ("the submerged bell tolls once beneath the water"); do NOT abstract it to "their bond glows" / "the thread pulses" / "the vow binds them". SPECIFICITY TEST: hide the milestone text and show ONLY your state_change — a reader must be able to point to WHICH milestone it came from. If your event could equally belong to a DIFFERENT milestone in this arc, or to "their bond" in general, it has FAILED — rewrite it using the milestone\'s OWN nouns and actions.\n'
             + '  • forces_choice — NO ESCAPE HATCH (HARD): both branches must be ACTIVE responses to the new fact. "reject it / retreat / flee / wait / do nothing / walk away / leave" are opt-outs — if EITHER branch is an opt-out, the choice is INVALID; both must be things the PC DOES about the new reality. Provide branch_a and branch_b explicitly.\n'
             + '  • DELETE TEST (the sufficiency invariant — the state_change is valid ONLY if it passes): delete the event, and BOTH branch_a AND branch_b become impossible or materially different. If either branch would still stand unchanged without the event, the event is too weak — pick a stronger one.\n'
-            + 'DERIVE from: THE CURRENT MILESTONE (strategic anchor — realize ITS specific event, do NOT collapse it to the theme) + the tactical move + the PRIOR scene\'s state (below). The new state MUST differ from the prior scene\'s — never re-flip an already-true fact, and never re-emit the prior event merely reworded.\n'
+            + (_opContingent
+                ? 'DERIVE from: THE CHANGED REALITY the committed rupture left behind (see RUPTURE PRECEDENCE below) + the tactical move + the PRIOR scene\'s state. The scheduled milestone is UNDER REVIEW this scene, not an anchor to realize — do not treat it as the thing to land unless you first conclude it still causally holds. The new state MUST differ from the prior scene\'s — never re-flip an already-true fact, and never re-emit the prior event merely reworded.\n'
+                : 'DERIVE from: THE CURRENT MILESTONE (strategic anchor — realize ITS specific event, do NOT collapse it to the theme) + the tactical move + the PRIOR scene\'s state (below). The new state MUST differ from the prior scene\'s — never re-flip an already-true fact, and never re-emit the prior event merely reworded.\n')
             + 'Return ONLY JSON: { "tactical_move":"", "state_change_precondition":"", "state_change":"", "forces_choice":"", "branch_a":"", "branch_b":"" }';
           var _csGen = (typeof _ensureCommittedState === 'function') ? _ensureCommittedState() : { facts: [], pendingIntent: null };
           var _scUsr = ((_curMs && _curMs._fromPlan)
               // AUTHORED SPINE: the plan goal is a PER-SCENE objective (not a distant milestone) — present it as
               // this scene's central development to realize NOW, and suppress the competing generic A-plot goal
               // so the planner has ONE objective (no blending — the whole point of the Phase-0 experiment).
-              ? ('THIS SCENE\'S OBJECTIVE (authored story spine — the scene\'s central development to realize NOW as this scene\'s state_change, NOT a distant target): ' + JSON.stringify(_curMs.event).slice(0, 300)
-                 + (_curMs.requiredTruth ? '\nMUST STILL BE TRUE for the reader after this scene: ' + JSON.stringify(_curMs.requiredTruth).slice(0, 160) : '')
-                 + (_curMs.exitState ? '\nSCENE EXIT STATE (where this scene should leave the story): ' + JSON.stringify(_curMs.exitState).slice(0, 160) : '')
+              ? ((_opContingent
+                    // The scheduled objective is SHOWN — never hidden, so the planner can judge it —
+                    // but it is no longer labelled as the thing to realize. One authority, not two.
+                    ? 'THIS SCENE\'S SCHEDULED OBJECTIVE — UNDER REVIEW, NOT YET YOUR OBJECTIVE (a committed rupture may have removed its causal foundation; decide under RUPTURE PRECEDENCE below before treating it as anything): '
+                    : 'THIS SCENE\'S OBJECTIVE (authored story spine — the scene\'s central development to realize NOW as this scene\'s state_change, NOT a distant target): ')
+                 + JSON.stringify(_curMs.event).slice(0, 300)
+                 + (_curMs.requiredTruth ? ((_opContingent
+                     ? '\nWAS TO REMAIN TRUE after this scene (verify it still can — a rupture may have changed what is true): '
+                     : '\nMUST STILL BE TRUE for the reader after this scene: ') + JSON.stringify(_curMs.requiredTruth).slice(0, 160)) : '')
+                 + (_curMs.exitState ? ((_opContingent
+                     ? '\nSCHEDULED SCENE EXIT STATE (only if the objective above survives review): '
+                     : '\nSCENE EXIT STATE (where this scene should leave the story): ') + JSON.stringify(_curMs.exitState).slice(0, 160)) : '')
                  // AVAILABLE SCENE CAST — the planner previously had NO roster at all (usr was ~900 chars,
                  // no PC name, no LI name), so it could only invent anonymous agents ("a guest").
                  + ((_curMs.participants && _curMs.participants.length)
@@ -100357,15 +100381,9 @@ function _buildAuthorFloorDirective(s) {
             // (empty string) unless a committed Tempt consequence actually recorded invalidated
             // plans, so every non-rupture story is byte-identical to before.
             + (function () {
-                try {
-                  var _op = (typeof _resolveObjectivePrecedence === 'function')
-                    ? _resolveObjectivePrecedence(s, (_curMs && _curMs.event) || goal) : null;
-                  if (_op && _op.mode === 'contingent') {
-                    try { console.log('[PLANNER:PRECEDENCE] scheduled objective DEMOTED to contingent — ' + _op.invalidated.length + ' committed rupture(s) recorded invalidated plans'); } catch (_) {}
-                    return '\n' + _op.directive;
-                  }
-                } catch (_) {}
-                return '';
+                if (!_opContingent) return '';
+                try { console.log('[PLANNER:PRECEDENCE] scheduled objective DEMOTED to contingent — ' + _opPrec.invalidated.length + ' committed rupture(s) recorded invalidated plans; mandatory framing replaced, not supplemented'); } catch (_) {}
+                return '\n' + _opPrec.directive;
               })()
             + '\nIssue pressures: ' + JSON.stringify(pressures).slice(0, 250)
             + '\nCOMMITTED WORLD STATE — facts already TRUE (irreversible; do NOT re-establish or re-flip; your event MUST build FROM these): ' + JSON.stringify((_csGen.facts || []).slice(-8).map(function (f) { return f.fact; })).slice(0, 480)
@@ -191961,6 +191979,221 @@ No text, no watermark, no UI elements, share-ready.`;
     return { flagged: reasons.length > 0, reasons: reasons, declared: (proposal && (proposal.mechanism_grounding || (proposal.event_slots || {}).mechanism_grounding)) || null };
   }
   window._detectUngroundedCapability = _detectUngroundedCapability;
+
+  // ══════════════════════════════════════════════════════════════════════════════════════════════
+  // CANON AUDIT (Roman 2026-09-24) — an AUDIT, never a repair.
+  //
+  // Runs after the planner produces a proposal and BEFORE the author is dispatched. It classifies;
+  // it does not rewrite, propose prose, invent canon, or decide what should happen creatively.
+  //
+  // The guarantee is deliberately narrow, and is NOT "canon safety": unsupported new metaphysics
+  // should be stopped before author spend, while ordinary creative invention stays possible.
+  // ══════════════════════════════════════════════════════════════════════════════════════════════
+  var CANON_VIOLATION_CATEGORIES = {
+    unsupported_capability: true, new_metaphysics: true, contradicted_knowledge: true,
+    rewritten_history: true, invalidated_objective: true, other: true
+  };
+  window.CANON_VIOLATION_CATEGORIES = CANON_VIOLATION_CATEGORIES;
+
+  // A NEGATIVE world truth is one that forecloses something. Detected from the story's own canon
+  // text, never from a list kept here — First Sacrifice already carries "a wish produces NO visible
+  // magical effect" and "NOT a psychic mind-read and NOT a light show"; nothing had ever read them.
+  var _CANON_NEGATIVE_RX = /\b(?:NO|NOT|NEVER|cannot|can not|may not|barred|forbidden|banned|do NOT|does NOT)\b/;
+
+  // Compact, relevant, and ID-ADDRESSED so an audit finding can be resolved back to a real fact.
+  function _buildCanonPacket(s, opts) {
+    s = s || window.state || {};
+    opts = opts || {};
+    var facts = [], push = function (kind, text) {
+      var t = String(text || '').trim();
+      if (!t) return;
+      facts.push({ id: kind + '_' + facts.filter(function (f) { return f.kind === kind; }).length, kind: kind, text: t });
+    };
+    try {
+      var seed = (typeof STARTER_SEEDS !== 'undefined' && s._starterId) ? STARTER_SEEDS[s._starterId] : null;
+      var wt = (seed && Array.isArray(seed.worldTruths)) ? seed.worldTruths : [];
+      // Relevance: cap the packet. Negative truths are kept preferentially — they are the ones a
+      // proposal can violate, and the ones the failed Scene B walked straight through.
+      var neg = wt.filter(function (t) { return _CANON_NEGATIVE_RX.test(String(t)); });
+      var pos = wt.filter(function (t) { return !_CANON_NEGATIVE_RX.test(String(t)); });
+      neg.slice(0, 12).forEach(function (t) { push('neg', t); });
+      pos.slice(0, 10).forEach(function (t) { push('wt', t); });
+    } catch (_) {}
+    try {
+      var rec = (typeof _activeStageRecord === 'function') ? _activeStageRecord(s) : null;
+      if (rec && Array.isArray(rec.affordances)) rec.affordances.slice(0, 10).forEach(function (a) { push('aff', a); });
+    } catch (_) {}
+    // Established character capability + knowledge, from the character ledger's revealed layers.
+    try {
+      var L = (typeof _charLedger === 'function') ? _charLedger() : null;
+      if (L) Object.keys(L).slice(0, 10).forEach(function (k) {
+        var e = L[k];
+        if (e && e.name) push('cap', e.name + ': ' + ((e.revealedLayers || []).slice(-3).join(' | ') || '(nothing established yet)'));
+      });
+    } catch (_) {}
+    // Committed durable consequences and what they invalidated.
+    var invalidated = [];
+    try {
+      var idx = _tfoInvalidatedPlanIndex(s);
+      (Array.isArray(s._temptFateDurableConsequences) ? s._temptFateDurableConsequences : []).slice(-4).forEach(function (d) {
+        if (!d) return;
+        push('dc', '[' + (d.ruptureClass || 'other') + '] ' + (d.requestedRupture || '') + ' → ' + (d.deliveredScope || '') + ' (scope ' + (d.scopeMatch || '?') + ')');
+        (Array.isArray(d.knowledgeStates) ? d.knowledgeStates : []).forEach(function (k) {
+          if (k && k.character) push('know', k.character + ' is now ' + (k.state || '?') + (k.note ? (' — ' + k.note) : ''));
+        });
+      });
+      idx.entries.forEach(function (e) { e.invalidatedPlans.forEach(function (p) { push('inv', p); invalidated.push(p); }); });
+    } catch (_) {}
+    return { facts: facts, ids: facts.map(function (f) { return f.id; }), invalidated: invalidated,
+             negatives: facts.filter(function (f) { return f.kind === 'neg'; }) };
+  }
+  window._buildCanonPacket = _buildCanonPacket;
+
+  // ── DETERMINISTIC FIRST (req 8) — never pay a model for what is locally decidable ────────────
+  function _canonDeterministicCheck(proposal, packet) {
+    var violations = [];
+    try {
+      var slots = (proposal && proposal.event_slots) || {};
+      var declared = (proposal && proposal.mechanism_grounding) || slots.mechanism_grounding;
+      // (a) no declaration at all — free rejection, no model needed.
+      if (typeof declared !== 'string' || !declared.trim()) {
+        violations.push({ category: 'unsupported_capability', claim: String(proposal && proposal.state_change || '').slice(0, 200),
+          citedFactIds: [], why: 'the proposal declares no mechanism_grounding — decided locally, no audit needed' });
+        return { decided: true, violations: violations, source: 'deterministic' };
+      }
+      if (/^\s*ordinary\s*$/i.test(declared)) return { decided: false, violations: [], source: 'deterministic' };
+      // (b) a declaration that names a canon ID which does not exist — free rejection.
+      var idLike = String(declared).match(/\b(?:neg|wt|aff|cap|dc|know|inv)_\d+\b/g) || [];
+      var bogus = idLike.filter(function (id) { return packet.ids.indexOf(id) === -1; });
+      if (bogus.length) {
+        violations.push({ category: 'unsupported_capability', claim: String(declared).slice(0, 200),
+          citedFactIds: bogus, why: 'cites canon fact id(s) that do not exist in the supplied packet — decided locally' });
+        return { decided: true, violations: violations, source: 'deterministic' };
+      }
+      // (c) a non-ordinary declaration grounded in nothing the packet contains — free rejection.
+      var hay = packet.facts.map(function (f) { return f.text; }).join('\n').toLowerCase();
+      var words = String(declared).toLowerCase().replace(/[^a-z0-9\s]/g, ' ').split(/\s+/).filter(function (w) { return w.length >= 5; });
+      if (hay.trim() && words.length && !words.some(function (w) { return hay.indexOf(w) !== -1; })) {
+        violations.push({ category: 'unsupported_capability', claim: String(declared).slice(0, 200), citedFactIds: [],
+          why: 'the declared grounding resolves to nothing in the supplied canon — decided locally' });
+        return { decided: true, violations: violations, source: 'deterministic' };
+      }
+    } catch (e) { return { decided: false, violations: [], error: e && e.message }; }
+    return { decided: false, violations: [], source: 'deterministic' };
+  }
+  window._canonDeterministicCheck = _canonDeterministicCheck;
+
+  // ── THE AUDIT PROMPT — classification only ───────────────────────────────────────────────────
+  function _buildCanonAuditPrompt(proposal, packet) {
+    var sys = 'You are a CANON AUDITOR for an interactive fiction engine. You classify; you do NOT write.\n\n'
+      + 'You are given a PROPOSED SCENE PLAN and the ONLY canon that applies to it. Decide whether the plan asserts anything the supplied canon does not support.\n\n'
+      + 'ABSOLUTE LIMITS ON YOU:\n'
+      + '- You may NOT rewrite the plan, propose replacement events, suggest prose, or say what should happen instead.\n'
+      + '- You may NOT invent canon, infer unstated rules, or rely on knowledge from any other story or from the real world.\n'
+      + '- EVERY violation you report MUST cite at least one supplied fact by its id. A finding you cannot ground in a supplied fact is not a finding — omit it.\n'
+      + '- Ordinary human action is ALWAYS allowed and is never a violation: speaking, lying, refusing, arriving, leaving, deciding, withholding, confronting, grieving, institutions convening or suspending, people being confused, records disagreeing, someone noticing an inconsistency. Creative invention of dialogue, movement, tactics and consequence is the planner\'s JOB — do not flag it.\n'
+      + '- Flag ONLY: a capability or mechanism the canon does not grant; metaphysics the canon does not contain; a character knowing something the canon says they do not; history rewritten when no committed rupture rewrote it; or an objective a committed rupture already invalidated.\n\n'
+      + 'CANON PACKET (the complete and only canon — anything not here does not exist):\n'
+      + packet.facts.map(function (f) { return '  [' + f.id + '] ' + f.text; }).join('\n') + '\n\n'
+      + 'CATEGORIES: unsupported_capability | new_metaphysics | contradicted_knowledge | rewritten_history | invalidated_objective | other\n\n'
+      + 'Return ONLY this JSON, no markdown:\n'
+      + '{ "verdict": "pass" | "violation" | "cannot_decide",\n'
+      + '  "violations": [ { "category": "<one of the categories>", "claim": "<the EXACT offending text copied from the plan>", "citedFactIds": ["<id>"], "why": "<one sentence, what the cited fact forecloses>" } ],\n'
+      + '  "uncertainty": "<present ONLY when verdict is cannot_decide: what you could not determine from the supplied canon>" }';
+    return { sys: sys, usr: 'PROPOSED SCENE PLAN:\n' + JSON.stringify(proposal, null, 2).slice(0, 4000) };
+  }
+  window._buildCanonAuditPrompt = _buildCanonAuditPrompt;
+
+  // ── RESPONSE VALIDATION (reqs 4, 5, 7) ───────────────────────────────────────────────────────
+  // Rejects fabricated citations, rejects an auditor that tries to rewrite, and refuses to let
+  // uncertainty become approval.
+  function _validateCanonAuditResponse(raw, packet, proposal) {
+    var errors = [], kept = [];
+    if (!raw || typeof raw !== 'object') return { valid: false, errors: ['audit response is not an object'], verdict: null, violations: [] };
+    var v = raw.verdict;
+    if (v !== 'pass' && v !== 'violation' && v !== 'cannot_decide') errors.push('verdict must be pass|violation|cannot_decide');
+    // An auditor that proposes content has exceeded its authority — the whole response is void.
+    var REWRITE_KEYS = ['rewritten_plan', 'revised_plan', 'replacement', 'suggested_plan', 'state_change', 'event_slots', 'prose', 'beats', 'instead'];
+    var offending = REWRITE_KEYS.filter(function (k) { return Object.prototype.hasOwnProperty.call(raw, k); });
+    if (offending.length) errors.push('the auditor returned plan-authoring field(s) ' + offending.join(', ') + ' — an auditor may classify, never rewrite');
+    var planText = JSON.stringify(proposal || {}).toLowerCase();
+    (Array.isArray(raw.violations) ? raw.violations : []).forEach(function (x, i) {
+      if (!x || typeof x !== 'object') { errors.push('violations[' + i + '] is not an object'); return; }
+      if (!CANON_VIOLATION_CATEGORIES[x.category]) { errors.push('violations[' + i + '] category "' + x.category + '" is not a defined category'); return; }
+      var ids = Array.isArray(x.citedFactIds) ? x.citedFactIds : [];
+      if (!ids.length) { errors.push('violations[' + i + '] (' + x.category + ') cites no canon fact — an ungrounded finding is not a finding'); return; }
+      var bogus = ids.filter(function (id) { return packet.ids.indexOf(id) === -1; });
+      if (bogus.length) { errors.push('violations[' + i + '] cites fact id(s) outside the supplied packet: ' + bogus.join(', ')); return; }
+      // The offending claim must actually appear in the plan — not paraphrased into existence.
+      var claim = String(x.claim || '').trim().toLowerCase();
+      if (!claim) { errors.push('violations[' + i + '] quotes no offending claim from the plan'); return; }
+      var claimWords = claim.replace(/[^a-z0-9\s]/g, ' ').split(/\s+/).filter(function (w) { return w.length >= 4; });
+      var overlap = claimWords.filter(function (w) { return planText.indexOf(w) !== -1; }).length;
+      if (!claimWords.length || overlap / claimWords.length < 0.6) {
+        errors.push('violations[' + i + '] quotes text that does not appear in the proposed plan: "' + String(x.claim).slice(0, 80) + '"');
+        return;
+      }
+      kept.push(x);
+    });
+    if (v === 'violation' && !kept.length && !errors.length) errors.push('verdict "violation" but no finding survived citation checking');
+    return { valid: errors.length === 0, errors: errors, verdict: v, violations: kept,
+             uncertainty: (v === 'cannot_decide') ? String(raw.uncertainty || '') : null };
+  }
+  window._validateCanonAuditResponse = _validateCanonAuditResponse;
+
+  async function _runCanonAudit(proposal, packet) {
+    var p = _buildCanonAuditPrompt(proposal, packet);
+    var data = await _callTieredProvider('canonAudit', [
+      { role: 'system', content: p.sys }, { role: 'user', content: p.usr }
+    ], { max_tokens: 700, temperature: 0 });
+    try { if (typeof _recordProxyTextCost === 'function') _recordProxyTextCost(data, (data && data._orchestration && data._orchestration.model), 'canon-audit'); } catch (_) {}
+    var c = data && data.content;
+    if (!c) throw new Error('canon audit returned no content');
+    var parsed;
+    try { parsed = JSON.parse(c); }
+    catch (e) {
+      var m = String(c).replace(/^\s*```(?:json)?/i, '').match(/\{[\s\S]*\}/);
+      if (!m) throw new Error('canon audit reply was not JSON');
+      parsed = JSON.parse(m[0]);
+    }
+    return parsed;
+  }
+  window._runCanonAudit = _runCanonAudit;
+
+  // ── THE GATE — deterministic first, audit only if undecided, FAIL CLOSED on uncertainty ──────
+  async function _canonAuditGate(proposal, packet, opts) {
+    opts = opts || {};
+    var det = _canonDeterministicCheck(proposal, packet);
+    if (det.decided) {
+      return { allow: false, source: 'deterministic', violations: det.violations, paid: false,
+               reason: det.violations.map(function (x) { return x.category + ': ' + x.why; }).join(' | ') };
+    }
+    if (opts.skipAudit) return { allow: true, source: 'deterministic', violations: [], paid: false };
+    var raw;
+    try { raw = opts.injectRaw || await _runCanonAudit(proposal, packet); }
+    catch (e) {
+      // Transport/parse failure follows the existing bounded tier policy inside
+      // _callTieredProvider. Exhaustion arrives here, and it FAILS CLOSED — an audit that could
+      // not run is not an approval.
+      return { allow: false, source: 'audit-unavailable', violations: [], paid: true,
+               reason: 'canon audit could not complete (' + ((e && e.message) || e) + ') — failing closed before author spend', preserveForReview: true };
+    }
+    var v = _validateCanonAuditResponse(raw, packet, proposal);
+    if (!v.valid) {
+      return { allow: false, source: 'audit-invalid', violations: [], paid: true, auditErrors: v.errors,
+               reason: 'the audit response failed validation: ' + v.errors.join('; '), preserveForReview: true };
+    }
+    if (v.verdict === 'cannot_decide') {
+      return { allow: false, source: 'audit-undecided', violations: [], paid: true, uncertainty: v.uncertainty,
+               reason: 'the auditor could not decide from the supplied canon — failing closed rather than converting uncertainty into approval', preserveForReview: true };
+    }
+    if (v.verdict === 'violation') {
+      return { allow: false, source: 'audit', violations: v.violations, paid: true,
+               reason: v.violations.map(function (x) { return x.category + ' [' + x.citedFactIds.join(',') + ']: ' + x.why; }).join(' | ') };
+    }
+    return { allow: true, source: 'audit', violations: [], paid: true };
+  }
+  window._canonAuditGate = _canonAuditGate;
 
   function buildTemptFateCallbackDirective() {
     var s = window.state || {};

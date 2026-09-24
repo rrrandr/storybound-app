@@ -90,7 +90,14 @@ const WORST_CASE_TOKENS = {
   // OUT: max_tokens 1400, the real ceiling set at the call site.
   // Fires at most ONCE per DELIVERED Tempt scene (never on an ordinary continuation), but a retry
   // after a rejected extraction re-dispatches, so the cap below is per-attempt, not per-scene.
-  temptOutcomeExtractor: { in: 3600, out: 1400 }
+  temptOutcomeExtractor: { in: 3600, out: 1400 },
+  // canonAudit (Roman 2026-09-24): the pre-author CANON AUDITOR. Classification only — it never
+  // rewrites a plan. Dispatched through _callTieredProvider('canonAudit', ...) with no opts.tiers
+  // override, so it cascades the SAME default 3-tier chain. Censused BEFORE it can dispatch.
+  // IN: the compact canon packet plus the proposed plan (~2600 tok). OUT: max_tokens 700.
+  // Fires at most ONCE per scene, and ONLY when the free deterministic check did not already
+  // decide — so a plan with no mechanism_grounding costs nothing at all.
+  canonAudit: { in: 2600, out: 700 }
 };
 function costOfTrackedCall(rec, roleKey) {
   const model = (rec.requestBody && (rec.requestBody.model || rec.requestBody.preferredModel)) || null;
@@ -104,7 +111,7 @@ function costOfTrackedCall(rec, roleKey) {
 // make, traced from source this session (scaffold/bible/commitVerifier: _callTieredProvider default
 // chain, no `tiers` override; scenePlanner: its own custom 3-tier list; author: its own hand-rolled
 // 3-tier cascade in _authorFullScenePolicy; gravityAudit: single-attempt, no fallback).
-const ROLE_CEILING = { scaffold: 3, bible: 3, scenePlanner: 3, commitVerifier: 3, gravityAudit: 1, author: 3, wishClassifier: 1, plannerLegacyFallback: 1, sceneAmbient: 1, characterDisclosure: 3, temptOutcomeExtractor: 3 };
+const ROLE_CEILING = { scaffold: 3, bible: 3, scenePlanner: 3, commitVerifier: 3, gravityAudit: 1, author: 3, wishClassifier: 1, plannerLegacyFallback: 1, sceneAmbient: 1, characterDisclosure: 3, temptOutcomeExtractor: 3, canonAudit: 3 };
 
 // A real, executable pre-dispatch reservation ledger — reserves BEFORE calling the real function,
 // never after. Unsourced pricing and over-ceiling both refuse OUTRIGHT (the real function is never
@@ -262,7 +269,9 @@ class ReservationLedger {
     // _callTieredProvider default chain — same three tiers as scaffold/bible/commitVerifier.
     characterDisclosure: ['ministral-8b-2512', 'grok-4-1-fast-reasoning', 'gpt-4o-mini'],
     // Same default chain — the extractor supplies no opts.tiers override.
-    temptOutcomeExtractor: ['ministral-8b-2512', 'grok-4-1-fast-reasoning', 'gpt-4o-mini']
+    temptOutcomeExtractor: ['ministral-8b-2512', 'grok-4-1-fast-reasoning', 'gpt-4o-mini'],
+    // Same default chain.
+    canonAudit: ['ministral-8b-2512', 'grok-4-1-fast-reasoning', 'gpt-4o-mini']
   };
 
   const gravityText = 'x'.repeat(220); // _auditSceneEmotionalGravity requires proseText.length >= 200 to do real work
@@ -399,6 +408,11 @@ class ReservationLedger {
   // what Scene B does get is the RETRY allowance below, because a rejected extraction re-dispatches.
   const extractA = ledger.reserveWorstCase('temptOutcomeExtractor-A', 'temptOutcomeExtractor', 3, ROLE_TIER_MODELS.temptOutcomeExtractor);
   const extractRetryA = ledger.reserveWorstCase('temptOutcomeExtractor-A-retry', 'temptOutcomeExtractor', 3, ROLE_TIER_MODELS.temptOutcomeExtractor);
+  // CANON AUDIT (Roman 2026-09-24) — pre-author, once per scene, on BOTH scenes. It fires only when
+  // the free deterministic check did not already decide, so this is a ceiling, not an expectation.
+  const auditA = ledger.reserveWorstCase('canonAudit-A', 'canonAudit', 3, ROLE_TIER_MODELS.canonAudit);
+  const auditB = ledger.reserveWorstCase('canonAudit-B', 'canonAudit', 3, ROLE_TIER_MODELS.canonAudit);
+  ok('the canon auditor is reserved at its FULL 3-tier ceiling on each scene', auditA.ok === true && auditB.ok === true, JSON.stringify([auditA, auditB]));
   console.log('  tempt outcome extractor reserved — first pass=' + JSON.stringify(extractA) + ' one bounded retry=' + JSON.stringify(extractRetryA));
   ok('the Tempt outcome extractor is reserved at its FULL 3-tier ceiling, not as a single call',
     extractA.ok === true && Math.abs(extractA.phaseUsd - 0.01013) < 1e-9, JSON.stringify(extractA));
@@ -437,11 +451,13 @@ class ReservationLedger {
     + (3 + 9 + 3 + 1 + 1 + 3) /* Scene A no-retry: scaffold, 3 bibles, scenePlanner, legacy, gravity, author = 20 */
     + (1 + 3)                 /* Scene A post-scene: sceneAmbient 1 + characterDisclosure 3 = 4 */
     + (3 + 3)                 /* Scene A Tempt outcome extractor: first pass 3 tiers + one bounded retry 3 = 6 (2026-09-24) */
+    + 3                       /* Scene A canon audit: 3 tiers, once, pre-author (2026-09-24) */
     + (3 + 1 + 1 + 3)         /* Scene A bounded retry: scenePlanner, legacy, gravity, author = 8 */
     + (3 + 1 + 3 + 1 + 3)     /* Scene B no-retry: scenePlanner, legacy, commitVerifier, gravity, author = 11 */
     + (1 + 3)                 /* Scene B post-scene: sceneAmbient 1 + characterDisclosure 3 = 4 */
+    + 3                       /* Scene B canon audit: 3 tiers, once, pre-author (2026-09-24) */
     + (3 + 1 + 3 + 1 + 3);    /* Scene B bounded retry: same set = 11 */
-  const LIVE_RUN_PHASE_CAPS = { 'wish-classifier': 1, 'scene-A': 38, 'scene-B': 26 }; // must mirror _tempt_fate_memory_erasure_live_run_2026_09_24.mjs
+  const LIVE_RUN_PHASE_CAPS = { 'wish-classifier': 1, 'scene-A': 41, 'scene-B': 29 }; // must mirror _tempt_fate_memory_erasure_live_run_2026_09_24.mjs
   const PHASE_CAP_TOTAL = Object.values(LIVE_RUN_PHASE_CAPS).reduce((a, b) => a + b, 0);
   const RESERVED_REQUEST_EQUIVALENTS = ledger.entries.reduce((n, e) => n + (e.requests || 0), 0);
   console.log('  RECONCILIATION — census max real dispatches: ' + CENSUS_MAX_DISPATCHES

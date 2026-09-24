@@ -351,7 +351,7 @@ let browser = null, gate = null;
   //                   exposed BOTH as uncounted — they fire once per COMPLETED scene, so the
   //                   bounded retry does not double them)
   //   retry       8 = scenePlanner 3 + legacy fallback 1 + gravity 1 + author 3 (never scaffold/bibles, cached)
-  gate.setPhase('scene-A', 38);   // 32 + 6 for the Tempt outcome extractor (3 tiers + one bounded retry), censused 2026-09-24
+  gate.setPhase('scene-A', 41);   // 32 + 6 for the Tempt outcome extractor (3 tiers + one bounded retry), censused 2026-09-24
   await page.click('#gnSubmitBtn', { timeout: 5000 });
   console.log('  Submit clicked — waiting on REAL SETTLEMENT (no wall-clock deadline; the real cascade can legitimately take 60-120s+).');
   await gate.waitForSettlement('scene-A', { watchdogMs: 15000, onWatchdog: (ms) => console.log('  ...Scene A still pending, ' + Math.round(ms / 1000) + 's — browser stays open, nothing aborted') });
@@ -565,7 +565,7 @@ let browser = null, gate = null;
   // CORRECTED from 21 (count-reconciliation pass): the old figure omitted the legacy hard-beat
   // planner fallback from the RETRY, so it sat one BELOW the true worst case — a cap that low would
   // have aborted a legitimate 22nd dispatch and failed the run for a budget reason that wasn't real.
-  gate.setPhase('scene-B', 26);
+  gate.setPhase('scene-B', 29);
   await page.click('#gnSubmitBtn', { timeout: 5000 });
   console.log('  Submit clicked — waiting on REAL SETTLEMENT.');
   await gate.waitForSettlement('scene-B', { watchdogMs: 15000, onWatchdog: (ms) => console.log('  ...Scene B still pending, ' + Math.round(ms / 1000) + 's') });

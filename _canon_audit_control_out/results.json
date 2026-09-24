@@ -1,0 +1,166 @@
+[
+  {
+    "name": "the packet carries NEGATIVE world truths — the ones a proposal can violate",
+    "pass": true
+  },
+  {
+    "name": "...including the one the failed Scene B walked through: a wish produces no visible effect",
+    "pass": true
+  },
+  {
+    "name": "...and the alignment-sense truth that forecloses mind-reading",
+    "pass": true
+  },
+  {
+    "name": "the packet carries the committed consequence and its invalidatedPlans",
+    "pass": true
+  },
+  {
+    "name": "every fact is ID-addressed so a finding can be resolved back to it (req 3, 5)",
+    "pass": true
+  },
+  {
+    "name": "the REAL Scene B proposal is rejected DETERMINISTICALLY — no auditor call needed at all",
+    "pass": true
+  },
+  {
+    "name": "...classified as unsupported_capability, with the local reason stated",
+    "pass": true
+  },
+  {
+    "name": "a grounding citing NONEXISTENT canon ids is rejected locally, free",
+    "pass": true
+  },
+  {
+    "name": "an ORDINARY event is NOT decided locally — it passes through to the semantic layer, unpaid so far",
+    "pass": true
+  },
+  {
+    "name": "THE GATE refuses the real Scene B proposal WITHOUT paying (paid=false)",
+    "pass": true
+  },
+  {
+    "name": "THE AUTHOR IS NEVER DISPATCHED for the retained Scene B red fixture",
+    "pass": true
+  },
+  {
+    "name": "it forbids rewriting, proposing prose, or saying what should happen instead (req 4)",
+    "pass": true
+  },
+  {
+    "name": "it forbids inventing canon or using outside knowledge",
+    "pass": true
+  },
+  {
+    "name": "it requires every violation to cite a supplied fact id (req 5)",
+    "pass": true
+  },
+  {
+    "name": "it enumerates exactly the defined categories (req 3)",
+    "pass": true
+  },
+  {
+    "name": "it protects ordinary creative invention explicitly — dialogue, movement, tactics, consequence",
+    "pass": true
+  },
+  {
+    "name": "the packet is declared the COMPLETE and ONLY canon",
+    "pass": true
+  },
+  {
+    "name": "a well-formed, properly cited finding VALIDATES",
+    "pass": true
+  },
+  {
+    "name": "a FABRICATED fact id fails validation (req 5)",
+    "pass": true
+  },
+  {
+    "name": "a finding citing NOTHING fails validation",
+    "pass": true
+  },
+  {
+    "name": "a finding quoting text that is NOT in the plan fails validation",
+    "pass": true
+  },
+  {
+    "name": "an auditor that tries to REWRITE the plan fails validation (req 4)",
+    "pass": true
+  },
+  {
+    "name": "an undefined category fails validation",
+    "pass": true
+  },
+  {
+    "name": "verdict \"cannot_decide\" BLOCKS and preserves the plan for review",
+    "pass": true
+  },
+  {
+    "name": "an INVALID audit response blocks too — a broken auditor is not an approval",
+    "pass": true
+  },
+  {
+    "name": "a clean PASS allows the author",
+    "pass": true
+  },
+  {
+    "name": "GREEN — dialogue: ordinary invention is allowed",
+    "pass": true
+  },
+  {
+    "name": "GREEN — evidence: ordinary invention is allowed",
+    "pass": true
+  },
+  {
+    "name": "GREEN — records: ordinary invention is allowed",
+    "pass": true
+  },
+  {
+    "name": "GREEN — confusion: ordinary invention is allowed",
+    "pass": true
+  },
+  {
+    "name": "GREEN — suspended: ordinary invention is allowed",
+    "pass": true
+  },
+  {
+    "name": "GREEN — an EXPLICITLY ESTABLISHED supernatural capability (alignment-sense) passes",
+    "pass": true
+  },
+  {
+    "name": "a capability established in ANOTHER story does not ground an event in this one",
+    "pass": true
+  },
+  {
+    "name": "a committed Tempt change is carried into the packet as canon, able to override an earlier present-world fact",
+    "pass": true
+  },
+  {
+    "name": "...and the packet records the declared rupture CLASS, so history is only reopened when a history_rewrite actually occurred",
+    "pass": true
+  },
+  {
+    "name": "the auditor passes NO opts.validateContent, so _callTieredProvider cannot cascade on a semantic rejection",
+    "pass": true
+  },
+  {
+    "name": "a violation verdict RETURNS — it is never retried against the next tier",
+    "pass": true
+  },
+  {
+    "name": "canonAudit is in the token census, the role ceiling, and the tier-model allowlist",
+    "pass": true
+  },
+  {
+    "name": "...and reserved on both scenes",
+    "pass": true
+  },
+  {
+    "name": "no broad endpoint allowance — it uses the same default tier chain, declaring no opts.tiers override",
+    "pass": true
+  },
+  {
+    "name": "ZERO provider dispatches — no live auditor call was made in this pass",
+    "pass": true
+  }
+]
