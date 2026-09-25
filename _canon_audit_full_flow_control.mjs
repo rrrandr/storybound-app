@@ -86,7 +86,14 @@ const RED_NO_GROUNDING = (base) => Object.assign({}, base, {
       // The auditor's user prompt CARRIES the proposal it was given — the only place to see which
       // proposal production actually handed it.
       lastAuditorPrompt = ((b.messages || []).find((m) => m.role === 'user') || {}).content || '';
-      return { content: typeof auditorReply === 'string' ? auditorReply : JSON.stringify(auditorReply) };
+      // SHAPE-FAITHFUL (Roman 2026-09-25): the auditor now PROVES identity before accepting a
+      // verdict — resolvedModel must be grok-4.3 and upstreamAttempts must be 1. A stub that omits
+      // them is not a lighter version of the real response, it is a DIFFERENT one, and it made this
+      // control report the production gate as broken when the gate was doing exactly its job.
+      return { choices: [{ message: { content: typeof auditorReply === 'string' ? auditorReply : JSON.stringify(auditorReply) } }],
+        usage: { prompt_tokens: 3200, completion_tokens: 90, cost_in_usd_ticks: 53000000 },
+        _orchestration: { model: 'grok-4.3', chainEntry: 'grok-4.3', resolvedModel: 'grok-4.3',
+                          reasoningEffort: 'high', upstreamAttempts: 1 } };
     }
     if (kind === 'planner') {
       // The open row's own validator (_validateLocalObjective) demands local_objective,

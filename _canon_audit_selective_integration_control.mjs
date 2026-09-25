@@ -53,11 +53,17 @@ const ORDINARY = {
   const seen = [];
   let auditReply = { verdict: 'pass', violations: [] };
   let unreachable = false;
-  let wrongModelReply = false;
+  let wrongModelReply = false, missingModelReply = false, retryReply = false;
   gate.stub('/api/proxy', async (req) => {
     let b = null; try { b = JSON.parse(req.postData() || '{}'); } catch (_) {}
     seen.push({ pathname: '/api/proxy', body: b });
     if (unreachable) return { __gateStatus: 503, error: 'upstream unavailable' };
+    if (missingModelReply) return { choices: [{ message: { content: '{"verdict":"pass","violations":[]}' } }],
+      usage: { prompt_tokens: 3200, completion_tokens: 90 },
+      _orchestration: { model: 'grok-4.3', upstreamAttempts: 1 } };   // no resolvedModel at all
+    if (retryReply) return { choices: [{ message: { content: '{"verdict":"pass","violations":[]}' } }],
+      usage: { prompt_tokens: 3200, completion_tokens: 90 },
+      _orchestration: { model: 'grok-4.3', resolvedModel: 'grok-4.3', upstreamAttempts: 3 } };
     if (wrongModelReply) return { choices: [{ message: { content: '{"verdict":"pass","violations":[]}' } }],
       usage: { prompt_tokens: 3200, completion_tokens: 90 },
       _orchestration: { model: 'grok-4.3', resolvedModel: 'grok-4-1-fast-non-reasoning', upstreamAttempts: 2 } };
@@ -229,6 +235,36 @@ const ORDINARY = {
   ok('but a trigger that THROWS audits rather than skipping — skipping is the costly failure',
     throwTrig.risky === true && /threw/.test((throwTrig.reasons || []).join(' ')), JSON.stringify(throwTrig));
 
+  section('7a. A PARAPHRASED CONTRADICTION MUST STILL TRIGGER');
+  // THE CASE LEXICAL OVERLAP CANNOT SEE. The durable fact says the assembly FORGOT the ceremony
+  // and its accusations. This plan has the Dohkar resume questioning her about what transpired
+  // before the gathered witnesses — a flat contradiction that shares NO 5+ character word with the
+  // fact it contradicts. Relying on shared spelling would wave through exactly the plans the
+  // auditor exists to catch.
+  const PARAPHRASE = JSON.parse(JSON.stringify(ORDINARY));
+  PARAPHRASE.state_change = 'The presiding Dohkar resumes questioning her about what transpired before the gathered witnesses';
+  PARAPHRASE.event_slots.action = 'resumes questioning her about what transpired';
+  PARAPHRASE.event_slots.target = 'the gathered witnesses';
+  const paraTrig = await page.evaluate((a) => {
+    const s = window.state; s._starterId = 'starter_first_sacrifice';
+    s._temptFateDurableConsequences = [JSON.parse(JSON.stringify(a.durable))];
+    const packet = window._buildCanonPacket(s, { proposal: a.plan });
+    // Prove the lexical test alone really does fail here, so the structured signal is load-bearing.
+    const factTexts = packet.facts.filter((f) => f.kind === 'dc' || f.kind === 'know' || f.kind === 'dur').map((f) => f.text);
+    const planText = [a.plan.state_change, a.plan.event_slots.action, a.plan.event_slots.target].join(' ').toLowerCase();
+    const lexicalHit = factTexts.some((t) => t.toLowerCase().replace(/[^a-z0-9\s]/g, ' ').split(/\s+/)
+      .filter((w) => w.length >= 5).some((w) => planText.indexOf(w) !== -1));
+    return { trig: window._canonAuditRiskTrigger(a.plan, packet, s), lexicalHit };
+  }, { plan: PARAPHRASE, durable });
+  console.log('    trigger reasons: ' + JSON.stringify(paraTrig.trig.reasons));
+  ok('RED PROOF — no durable fact shares a 5+ character word with this plan',
+    paraTrig.lexicalHit === false, 'lexical overlap found; this fixture no longer proves the gap');
+  ok('...yet the paraphrased contradiction STILL triggers, via structured signals',
+    paraTrig.trig.risky === true, JSON.stringify(paraTrig.trig));
+  ok('...and says which structured signal fired, not just that something did',
+    /party a committed rupture affected|sensitive act while that rupture stands/.test(paraTrig.trig.reasons.join(' ')),
+    JSON.stringify(paraTrig.trig.reasons));
+
   section('7b. THE ANSWER IS ONLY ACCEPTED FROM grok-4.3');
   // Asking for grok-4.3 is not evidence grok-4.3 answered — the grok-4.7 run proved that. The
   // auditor now checks the RESOLVED model the proxy reports and refuses anything else.
@@ -242,6 +278,37 @@ const ORDINARY = {
     imposter.verdict.source === 'audit-unavailable'
     && /not the calibrated grok-4\.3/.test(imposter.verdict.reason || ''), JSON.stringify(imposter.verdict).slice(0, 220));
   ok('...having made exactly one call', seen.slice(b6).length === 1);
+  // MISSING identity is not weaker than WRONG identity — an unidentified upstream must not be able
+  // to supply a binding verdict either.
+  missingModelReply = true;
+  const anon = await run(RISKY, { withDurable: true });
+  missingModelReply = false;
+  ok('a reply with NO resolvedModel is refused too — absent is treated exactly like wrong',
+    anon.verdict.allow === false && anon.verdict.source === 'audit-unavailable'
+    && /ABSENT/.test(anon.verdict.reason || ''), JSON.stringify(anon.verdict).slice(0, 220));
+  // The one-call guarantee is enforced, not merely logged.
+  retryReply = true;
+  const retried = await run(RISKY, { withDurable: true });
+  retryReply = false;
+  ok('a reply reporting MORE THAN ONE upstream attempt is refused — the _noFallback contract is enforced',
+    retried.verdict.allow === false && /upstream attempts/.test(retried.verdict.reason || ''),
+    JSON.stringify(retried.verdict).slice(0, 220));
+
+  section('7c. TELEMETRY BELONGS TO ITS OWN AUDIT');
+  // It used to live in ambient globals written only AFTER a success and never cleared, so a
+  // failure following a success inherited the previous audit's cost and attempt count.
+  const good = await run(RISKY, { withDurable: true });
+  ok('a successful audit carries its own telemetry on the verdict',
+    good.verdict.telemetry && typeof good.verdict.telemetry.realizedUsd === 'number'
+    && good.verdict.telemetry.upstreamAttempts === 1, JSON.stringify(good.verdict.telemetry));
+  ok('...sourced from the provider\'s own reported cost', good.verdict.telemetry.costSource === 'provider');
+  unreachable = true;
+  const afterFail = await run(RISKY, { withDurable: true });
+  unreachable = false;
+  ok('RED PROOF — a FAILED audit right after a successful one inherits NOTHING',
+    afterFail.verdict.telemetry === null, JSON.stringify(afterFail.verdict.telemetry));
+  ok('...and a skipped (ordinary) plan reports no telemetry either, not a stale receipt',
+    (await run(ORDINARY, { withDurable: false })).verdict.telemetry === null);
 
   section('8. CONTAINMENT');
   ok('no request ever reached a real provider', gate.trackedCalls().filter((c) => c.real).length === 0);

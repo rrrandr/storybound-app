@@ -192598,26 +192598,44 @@ No text, no watermark, no UI elements, share-ready.`;
     // proxy served grok-4.3 — that was the whole grok-4.7 lesson. resolvedModel is the model
     // _resolveGrokModel actually called; anything else is not the calibrated auditor and its
     // verdict must not be trusted.
+    // IDENTITY MUST BE PROVEN, NOT MERELY NOT-CONTRADICTED. Accepting a response whose
+    // resolvedModel is ABSENT lets an unidentified upstream supply a binding verdict — which is
+    // the opposite of failing closed. Missing is treated exactly like wrong.
     var _served = data && data.resolvedModel;
-    if (_served && String(_served) !== 'grok-4.3') {
-      throw new Error('canon audit was served by ' + _served + ', not the calibrated grok-4.3 — refusing the verdict');
+    if (String(_served || '') !== 'grok-4.3') {
+      throw new Error('canon audit identity unproven: resolvedModel was '
+        + (_served ? String(_served) : 'ABSENT') + ', not the calibrated grok-4.3 — refusing the verdict');
     }
-    if (typeof data.upstreamAttempts === 'number' && data.upstreamAttempts > 1) {
-      try { console.warn('[CANON-AUDIT] proxy made ' + data.upstreamAttempts + ' upstream attempts despite _noFallback'); } catch (_) {}
+    // The one-call guarantee is part of the contract, so it is enforced, not merely logged.
+    if (data.upstreamAttempts !== 1) {
+      throw new Error('canon audit made ' + (data.upstreamAttempts == null ? 'an unreported number of' : data.upstreamAttempts)
+        + ' upstream attempts; the _noFallback contract requires exactly 1 — refusing the verdict');
     }
     try { if (typeof _recordProxyTextCost === 'function') _recordProxyTextCost(data, (data && data._orchestration && data._orchestration.model), 'canon-audit'); } catch (_) {}
     // PER-AUDIT REALIZED COST. The previous telemetry read state._sceneCostAcc.lastCanonAuditUsd,
     // a field NOTHING in the repository ever writes — so every "realized cost" it recorded was
     // null. xAI reports its own exact cost in ticks (1e-10 USD); fall back to list-price
     // arithmetic when it does not. Attached to the RESULT so the caller owns it.
+    // TELEMETRY TRAVELS WITH THE RESULT (Roman 2026-09-25). It used to be written to ambient
+    // globals AFTER a valid response and never cleared before dispatch — so a transport failure,
+    // a malformed reply, or an identity rejection following an earlier success would report the
+    // PREVIOUS audit's cost and attempt count as if it were this one's. An audit that never
+    // happened must not inherit the receipt of one that did.
+    var _telemetry = null;
     try {
       var _u = data && data.usage;
       var _rt = (_u && _u.completion_tokens_details && _u.completion_tokens_details.reasoning_tokens) || 0;
-      window._lastCanonAuditUsd = (_u && typeof _u.cost_in_usd_ticks === 'number')
-        ? _u.cost_in_usd_ticks * 1e-10
-        : (_u ? (1.25e-6 * (_u.prompt_tokens || 0) + 2.5e-6 * ((_u.completion_tokens || 0) + _rt)) : null);
-      window._lastCanonAuditUpstreamAttempts = (typeof data.upstreamAttempts === 'number') ? data.upstreamAttempts : null;
-    } catch (_) { window._lastCanonAuditUsd = null; }
+      _telemetry = {
+        realizedUsd: (_u && typeof _u.cost_in_usd_ticks === 'number')
+          ? _u.cost_in_usd_ticks * 1e-10
+          : (_u ? (1.25e-6 * (_u.prompt_tokens || 0) + 2.5e-6 * ((_u.completion_tokens || 0) + _rt)) : null),
+        costSource: (_u && typeof _u.cost_in_usd_ticks === 'number') ? 'provider' : (_u ? 'computed' : 'none'),
+        upstreamAttempts: (typeof data.upstreamAttempts === 'number') ? data.upstreamAttempts : null,
+        resolvedModel: _served || null,
+        promptTokens: (_u && _u.prompt_tokens) || 0,
+        reasoningTokens: _rt
+      };
+    } catch (_) { _telemetry = null; }
     var c = data && data.content;
     if (!c) throw new Error('canon audit returned no content');
     var parsed;
@@ -192627,7 +192645,7 @@ No text, no watermark, no UI elements, share-ready.`;
       if (!m) throw new Error('canon audit reply was not JSON');
       parsed = JSON.parse(m[0]);
     }
-    return parsed;
+    return { parsed: parsed, telemetry: _telemetry };
   }
   window._runCanonAudit = _runCanonAudit;
 
@@ -192676,13 +192694,62 @@ No text, no watermark, no UI elements, share-ready.`;
       return false;
     } catch (_) { return true; }   // unknowable → audit, never skip
   }
-  function _canonAuditRiskTrigger(proposal, packet) {
+
+  // ── STRUCTURED RELEVANCE (Roman 2026-09-25) ─────────────────────────────────────────────────
+  // Lexical overlap alone misses the case the auditor exists for: a PARAPHRASED contradiction.
+  // "the assembly forgot the ceremony and accusation" shares no 5+ character word with "the
+  // presiding Dohkar resumes questioning her about what transpired before the gathered witnesses"
+  // — yet the second flatly contradicts the first. Relying on shared spelling would let exactly the
+  // dangerous plans through while auditing harmless ones that happen to reuse a noun.
+  //
+  // So relevance is decided from what the commit record STRUCTURALLY says: who it affected, what
+  // KIND of change it was, and what it invalidated. Any one signal is enough — this is a routing
+  // decision, and the cost of a false positive is one audit while the cost of a false negative is
+  // a canon break reaching the reader.
+  var _RUPTURE_CLASS_VERBS = {
+    // A memory/perception rupture is contradicted by anyone treating the erased thing as known.
+    memory_perception: /\b(?:question\w*|interrogat\w*|asks?|asked|recall\w*|remember\w*|recount\w*|testif\w*|describ\w*|confirm\w*|denie?[sd]?|denying|admit\w*|reveal\w*|tells?|told|what\s+(?:happened|transpired|occurred)|witness\w*|account\s+of)\b/i,
+    history_rewrite: /\b(?:happened|transpired|occurred|history|past|before|earlier|records?|ledger|entry|entries|stood\s+for|took\s+place)\b/i,
+    identity_reputation: /\b(?:names?|named|naming|recogni[sz]\w*|introduc\w*|addresses?|addressed|calls?\s+h(?:im|er)|reputation|known\s+as|accus\w*)\b/i,
+    materialization_possession: /\b(?:holds?|held|carries|carrying|produces?|hands?|gives?|gave|takes?|took|shows?|showed|possess\w*|owns?)\b/i,
+    relationship_social: /\b(?:trusts?|betray\w*|forgiv\w*|allies|alliance|marri\w*|bond|estrang\w*|sides?\s+with)\b/i
+  };
+  function _canonRiskEntities(d) {
+    var out = [];
+    try {
+      (Array.isArray(d.knowledgeStates) ? d.knowledgeStates : []).forEach(function (k) { if (k && k.character) out.push(String(k.character)); });
+      var cd = d.classDetail || {};
+      (Array.isArray(cd.affectedKnowers) ? cd.affectedKnowers : (Array.isArray(d.affectedKnowers) ? d.affectedKnowers : []))
+        .forEach(function (k) { if (k && k.who) out.push(String(k.who)); });
+      (Array.isArray(d.changed) ? d.changed : []).forEach(function (c) { if (c && c.subject) out.push(String(c.subject)); });
+      var tp = cd.targetPopulation || d.targetPopulation;
+      if (tp && Array.isArray(tp.members)) tp.members.forEach(function (m) { if (m) out.push(String(m)); });
+    } catch (_) {}
+    return out;
+  }
+  // Does the plan NAME a party this rupture affected? Matched on significant tokens so "the
+  // assembly" is found inside "before the gathered assembly", without matching articles.
+  function _canonRiskNamesParty(planText, entities) {
+    var hay = String(planText || '').toLowerCase();
+    for (var i = 0; i < entities.length; i++) {
+      var toks = String(entities[i]).toLowerCase().replace(/[^a-z0-9\s]/g, ' ').split(/\s+/)
+        .filter(function (w) { return w.length >= 4 && w !== 'the' && w !== 'their' && w !== 'every'; });
+      for (var j = 0; j < toks.length; j++) if (hay.indexOf(toks[j]) !== -1) return entities[i];
+    }
+    return null;
+  }
+  function _canonAuditRiskTrigger(proposal, packet, s) {
     var reasons = [];
     try {
       if (!proposal || typeof proposal !== 'object') return { risky: false, reasons: [] };
       var slots = proposal.event_slots || {};
       var declared = String(proposal.mechanism_grounding || slots.mechanism_grounding || '');
-      var text = [proposal.state_change, proposal.local_objective, proposal.tactical_move,
+      // WHAT THE PLAN ASSERTS, NOT WHAT IT CALLS ITS STRATEGY. tactical_move is a planner LABEL
+      // and is idiomatic by convention — "press the question in the open", "let the record
+      // contradict the room". Scanning it for capability verbs matched "question" in a plan whose
+      // actual event is a man setting a sash on a table, and audited it against a memory rupture.
+      // The authoritative claims are state_change, local_objective and the event slots.
+      var text = [proposal.state_change, proposal.local_objective,
                   slots.action, slots.target, slots.exit_state]
         .filter(function (x) { return typeof x === 'string'; }).join(' ');
 
@@ -192697,20 +192764,38 @@ No text, no watermark, no UI elements, share-ready.`;
       }
       // 3/4. A durable consequence or an invalidated objective matters only when THIS PLAN TOUCHES
       // IT. Firing on mere existence meant that after one permanent Tempt Fate change, every
-      // subsequent ordinary scene paid for an audit forever — which is not selective routing, it is
-      // unconditional routing with extra steps.
-      var _facts = (packet && packet.facts) || [];
-      for (var i = 0; i < _facts.length; i++) {
-        var f = _facts[i];
-        if (f.kind !== 'dc' && f.kind !== 'know' && f.kind !== 'dur') continue;
-        if (_canonRiskTouches(text, f.text)) {
-          reasons.push('the plan touches a committed change [' + f.id + ']');
+      // subsequent ordinary scene paid for an audit forever — unconditional routing with extra
+      // steps. But "touches" cannot be decided by shared spelling alone: a paraphrased
+      // contradiction shares no words with the fact it contradicts. THREE independent signals,
+      // any one of which is enough.
+      var _st = s || (typeof window !== 'undefined' ? window.state : null);
+      var _durables = (_st && Array.isArray(_st._temptFateDurableConsequences)) ? _st._temptFateDurableConsequences : [];
+      for (var d = 0; d < _durables.length; d++) {
+        var _d = _durables[d]; if (!_d) continue;
+        // (a) STRUCTURAL — the plan names a party this rupture actually affected.
+        var _party = _canonRiskNamesParty(text, _canonRiskEntities(_d));
+        if (_party) { reasons.push('the plan involves "' + _party + '", a party a committed rupture affected'); break; }
+        // (b) CLASS — the plan performs the kind of act this class of rupture makes contentious,
+        //     even with no shared vocabulary. This is the paraphrase case.
+        var _rx = _RUPTURE_CLASS_VERBS[String(_d.ruptureClass || '')];
+        if (_rx && _rx.test(text)) {
+          reasons.push('the plan performs a ' + _d.ruptureClass + '-sensitive act while that rupture stands');
           break;
+        }
+      }
+      // (c) LEXICAL — kept as a third signal for facts with no structured parties.
+      if (!reasons.length || !/committed rupture|rupture stands/.test(reasons.join(' '))) {
+        var _facts = (packet && packet.facts) || [];
+        for (var i = 0; i < _facts.length; i++) {
+          var f = _facts[i];
+          if (f.kind !== 'dc' && f.kind !== 'know' && f.kind !== 'dur') continue;
+          if (_canonRiskTouches(text, f.text)) { reasons.push('the plan touches a committed change [' + f.id + ']'); break; }
         }
       }
       var _inv = (packet && packet.invalidated) || [];
       for (var j = 0; j < _inv.length; j++) {
-        if (_canonRiskTouches(text, _inv[j])) {
+        if (_canonRiskTouches(text, _inv[j])
+            || _canonRiskNamesParty(text, [String(_inv[j])])) {
           reasons.push('the plan touches a previously invalidated objective');
           break;
         }
@@ -192727,33 +192812,38 @@ No text, no watermark, no UI elements, share-ready.`;
     opts = opts || {};
     var det = _canonDeterministicCheck(proposal, packet);
     if (det.decided) {
-      return { allow: false, source: 'deterministic', violations: det.violations, paid: false,
+      return { allow: false, source: 'deterministic', violations: det.violations, paid: false, telemetry: null,
                reason: det.violations.map(function (x) { return x.category + ': ' + x.why; }).join(' | ') };
     }
-    if (opts.skipAudit) return { allow: true, source: 'deterministic', violations: [], paid: false };
-    var raw;
-    try { raw = opts.injectRaw || await _runCanonAudit(proposal, packet); }
+    if (opts.skipAudit) return { allow: true, source: 'deterministic', violations: [], paid: false, telemetry: null };
+    var raw, _tel = null;
+    try {
+      if (opts.injectRaw) { raw = opts.injectRaw; }
+      else { var _r = await _runCanonAudit(proposal, packet); raw = _r.parsed; _tel = _r.telemetry; }
+    }
     catch (e) {
       // Transport/parse failure follows the existing bounded tier policy inside
       // _callTieredProvider. Exhaustion arrives here, and it FAILS CLOSED — an audit that could
       // not run is not an approval.
-      return { allow: false, source: 'audit-unavailable', violations: [], paid: true,
+      // telemetry stays NULL here: no usable response means no receipt, and inheriting the last
+      // successful audit's cost would be a fabricated number.
+      return { allow: false, source: 'audit-unavailable', violations: [], paid: true, telemetry: null,
                reason: 'canon audit could not complete (' + ((e && e.message) || e) + ') — failing closed before author spend', preserveForReview: true };
     }
     var v = _validateCanonAuditResponse(raw, packet, proposal);
     if (!v.valid) {
-      return { allow: false, source: 'audit-invalid', violations: [], paid: true, auditErrors: v.errors,
+      return { allow: false, source: 'audit-invalid', violations: [], paid: true, auditErrors: v.errors, telemetry: _tel,
                reason: 'the audit response failed validation: ' + v.errors.join('; '), preserveForReview: true };
     }
     if (v.verdict === 'cannot_decide') {
-      return { allow: false, source: 'audit-undecided', violations: [], paid: true, uncertainty: v.uncertainty,
+      return { allow: false, source: 'audit-undecided', violations: [], paid: true, uncertainty: v.uncertainty, telemetry: _tel,
                reason: 'the auditor could not decide from the supplied canon — failing closed rather than converting uncertainty into approval', preserveForReview: true };
     }
     if (v.verdict === 'violation') {
-      return { allow: false, source: 'audit', violations: v.violations, paid: true,
+      return { allow: false, source: 'audit', violations: v.violations, paid: true, telemetry: _tel,
                reason: v.violations.map(function (x) { return x.category + ' [' + x.citedFactIds.join(',') + ']: ' + x.why; }).join(' | ') };
     }
-    return { allow: true, source: 'audit', violations: [], paid: true };
+    return { allow: true, source: 'audit', violations: [], paid: true, telemetry: _tel };
   }
   window._canonAuditGate = _canonAuditGate;
 
@@ -234266,7 +234356,7 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
         // SELECTIVE: ordinary dialogue, movement, props and established capabilities get NO model
         // audit. The deterministic check still runs inside the gate either way, and its rejection
         // is final — a model pass can never overturn it, because the gate returns before dispatch.
-        var _caRisk = _canonAuditRiskTrigger(_caProposal, _caPacket);
+        var _caRisk = _canonAuditRiskTrigger(_caProposal, _caPacket, state);
         try {
           console.log('[CANON-AUDIT] scene ' + sceneIndex + ' — ' + (_caRisk.risky
               ? ('RISK TRIGGERED, auditing: ' + _caRisk.reasons.join(' | '))
@@ -234282,12 +234372,13 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
           triggered: _caRisk.risky, triggerReasons: _caRisk.reasons,
           model: _caVerdict.paid ? 'grok-4.3' : null,
           latencyMs: Date.now() - _caT0,
-          realizedUsd: _caVerdict.paid ? (function () {
-            try { return (typeof window._lastCanonAuditUsd === 'number') ? window._lastCanonAuditUsd : null; } catch (_) { return null; }
-          })() : 0,
-          upstreamAttempts: _caVerdict.paid ? (function () {
-            try { return window._lastCanonAuditUpstreamAttempts; } catch (_) { return null; }
-          })() : 0,
+          // Straight off THIS verdict. No ambient global can leak a previous audit's receipt in.
+          realizedUsd: _caVerdict.paid ? ((_caVerdict.telemetry && _caVerdict.telemetry.realizedUsd) != null
+            ? _caVerdict.telemetry.realizedUsd : null) : 0,
+          costSource: (_caVerdict.telemetry && _caVerdict.telemetry.costSource) || 'none',
+          upstreamAttempts: (_caVerdict.telemetry && _caVerdict.telemetry.upstreamAttempts) != null
+            ? _caVerdict.telemetry.upstreamAttempts : null,
+          resolvedModel: (_caVerdict.telemetry && _caVerdict.telemetry.resolvedModel) || null,
           paid: _caVerdict.paid, reason: _caVerdict.reason || null, violations: _caVerdict.violations || [],
           citedFactIds: (_caVerdict.violations || []).reduce(function (a, v) { return a.concat(v.citedFactIds || []); }, []),
           auditErrors: _caVerdict.auditErrors || null, uncertainty: _caVerdict.uncertainty || null
