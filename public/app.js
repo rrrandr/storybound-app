@@ -126590,143 +126590,199 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
   // A continuity complaint may be TRUE. It may also be the player misremembering. Either way the
   // answer is evidence, never a reflexive apology and never a retcon: this reports what the record
   // actually contains and proposes NOTHING on its own.
-  // THREE-WAY, AND UNRESOLVED IS THE DEFAULT. The first version declared a claim "preserved" on a
-  // SINGLE shared word, so "You forgot Julian admitted the accusation" would be answered "Nothing
-  // was lost" by a record saying "Julian DENIED the accusation" — the exact opposite — because
-  // `julian` matched. Keyword overlap is not verification; it is topic detection.
+  // ── BOUNDED PROPOSITION GRAMMAR (Roman 2026-09-25) ──────────────────────────────────────────
+  // Token counting cannot verify anything, and the previous version proved it three ways:
+  // "Julian carried The Answer after Seren stole it" would SUPPORT "Julian stole The Answer" on
+  // three shared tokens; "Julian denied it; Seren admitted it" would CONTRADICT the true claim
+  // "Seren admitted it" because `denied` appeared somewhere in the same string; and "Julian did
+  // not admit it" lost its `not` because short tokens were discarded.
   //
-  // What this does instead: gather candidate evidence from the PRODUCTION ledgers, then decide at
-  // the PROPOSITION level — same subject AND same predicate polarity = supported; same subject with
-  // OPPOSED polarity = contradicted; anything else = UNRESOLVED. Unresolved is not a failure mode,
-  // it is the honest answer most of the time, and it never claims nothing was lost.
-  var _CLAIM_POLARITY_PAIRS = [
-    ['admit', 'deny'], ['admitted', 'denied'], ['confess', 'deny'], ['confessed', 'denied'],
-    ['accept', 'refuse'], ['accepted', 'refused'], ['agree', 'refuse'], ['agreed', 'refused'],
-    ['stay', 'leave'], ['stayed', 'left'], ['remember', 'forget'], ['remembered', 'forgot'],
-    ['alive', 'dead'], ['open', 'closed'], ['arrived', 'departed'], ['won', 'lost']
-  ];
-  var _CLAIM_STOP = /^(?:forgot|forget|forgotten|remember|remembered|already|didn|continuity|happened|about|there|their|that|this|what|when|where|which|would|could|should)$/;
-  function _claimTokens(t) {
-    var seen = {}, out = [];
-    String(t || '').toLowerCase().replace(/[^a-z0-9\s]/g, ' ').split(/\s+/).forEach(function (w) {
-      if (w.length >= 4 && !_CLAIM_STOP.test(w) && !seen[w]) { seen[w] = 1; out.push(w); }
-    });
+  // The fix is not a bigger vocabulary. It is a SMALL grammar that either binds actor, relation,
+  // object and polarity together — or refuses to answer. Anything outside the grammar is
+  // `unresolved` and goes to the Concierge conversation, which is the correct place for a
+  // question this code cannot settle.
+  var _REL_LEMMA = {
+    admit: 'admit', admits: 'admit', admitted: 'admit', confess: 'admit', confessed: 'admit', confesses: 'admit',
+    deny: 'admit', denies: 'admit', denied: 'admit',                       // same axis, opposite pole
+    accept: 'accept', accepts: 'accept', accepted: 'accept',
+    refuse: 'accept', refuses: 'accept', refused: 'accept',
+    stay: 'stay', stays: 'stay', stayed: 'stay', leave: 'stay', leaves: 'stay', left: 'stay',
+    steal: 'steal', steals: 'steal', stole: 'steal', stolen: 'steal',
+    carry: 'carry', carries: 'carry', carried: 'carry',
+    sign: 'sign', signs: 'sign', signed: 'sign',
+    name: 'name', names: 'name', named: 'name',
+    kill: 'kill', kills: 'kill', killed: 'kill',
+    see: 'see', sees: 'see', saw: 'see',
+    know: 'know', knows: 'know', knew: 'know'
+  };
+  // Which surface forms are the NEGATIVE pole of their own axis.
+  var _REL_NEGATIVE_POLE = { deny: 1, denies: 1, denied: 1, refuse: 1, refuses: 1, refused: 1,
+                             leave: 1, leaves: 1, left: 1 };
+  var _REL_WORDS = Object.keys(_REL_LEMMA).join('|');
+  // <actor> [negation] <relation> <object>. Actor is 1–3 words; object is the remainder, clipped.
+  var _PROP_RX = new RegExp(
+    '\\b([A-Za-z][\\w\'-]*(?:\\s+[A-Za-z][\\w\'-]*){0,2}?)\\s+' +
+    '(did\\s+not|didn\'?t|does\\s+not|doesn\'?t|do\\s+not|don\'?t|never|has\\s+not|hasn\'?t|had\\s+not|hadn\'?t|was\\s+not|wasn\'?t|is\\s+not|isn\'?t)?\\s*' +
+    '(' + _REL_WORDS + ')\\s+' +
+    '([A-Za-z0-9][^.;,!?]{1,60})', 'i');
+  var _PROP_ACTOR_STOP = /^(?:the|a|an|and|but|then|she|he|they|it|i|you|we|that|this|who|which|after|before|when|while)$/i;
+  function _parseProposition(text) {
+    try {
+      var m = String(text || '').match(_PROP_RX);
+      if (!m) return null;
+      var actorRaw = String(m[1] || '').trim();
+      // Strip leading articles/conjunctions; an actor must survive as a real name-ish token.
+      var actorToks = actorRaw.split(/\s+/).filter(function (w) { return !_PROP_ACTOR_STOP.test(w); });
+      if (!actorToks.length) return null;
+      var actor = actorToks.join(' ').toLowerCase();
+      var surface = String(m[3] || '').toLowerCase();
+      var lemma = _REL_LEMMA[surface];
+      if (!lemma) return null;
+      // EFFECTIVE POLARITY = explicit negation XOR the relation's own pole. "did not deny" is
+      // positive on the admit axis; "denied" is negative; "admitted" is positive.
+      var negated = !!m[2];
+      var negPole = !!_REL_NEGATIVE_POLE[surface];
+      return { actor: actor, relation: lemma, surface: surface,
+               object: String(m[4] || '').trim().toLowerCase().slice(0, 60),
+               // POSITIVE when the two agree: plain "admitted" (no negation, positive pole) and
+               // "did not deny" (negation of the negative pole) both assert the thing. The first
+               // version had this inverted; comparisons still worked because claim and evidence
+               // shared the error, but every exported polarity label was backwards.
+               polarity: (negated === negPole) ? 'positive' : 'negative',
+               negated: negated };
+    } catch (_) { return null; }
+  }
+  // Evidence is split into CLAUSES first, so "Julian denied it; Seren admitted it" yields two
+  // propositions each bound to its own actor — the case that produced a false contradiction.
+  function _propositionsIn(text) {
+    var out = [];
+    try {
+      String(text || '').split(/[.;!?]|\band\b|\bbut\b|\bwhile\b|\bafter\b|\bbefore\b/i)
+        .forEach(function (clause) {
+          var p = _parseProposition(clause);
+          if (p) out.push(p);
+        });
+    } catch (_) {}
     return out;
   }
-  function _polarityConflict(claimTokens, evidenceText) {
-    var hay = ' ' + String(evidenceText || '').toLowerCase() + ' ';
-    for (var i = 0; i < _CLAIM_POLARITY_PAIRS.length; i++) {
-      var a = _CLAIM_POLARITY_PAIRS[i][0], b = _CLAIM_POLARITY_PAIRS[i][1];
-      var claimHasA = claimTokens.indexOf(a) !== -1, claimHasB = claimTokens.indexOf(b) !== -1;
-      if (claimHasA && hay.indexOf(' ' + b) !== -1) return { claim: a, record: b };
-      if (claimHasB && hay.indexOf(' ' + a) !== -1) return { claim: b, record: a };
-    }
-    // Explicit negation on one side only.
-    var claimNeg = /\b(?:never|not|no)\b/.test(claimTokens.join(' '));
-    var recNeg = /\b(?:never|not|no)\b/.test(hay);
-    if (claimNeg !== recNeg && claimNeg) return { claim: 'negated', record: 'affirmed' };
-    return null;
+  function _objectsOverlap(a, b) {
+    var wa = String(a || '').split(/\s+/).filter(function (w) { return w.length >= 3; });
+    var wb = ' ' + String(b || '') + ' ';
+    return wa.some(function (w) { return wb.indexOf(w) !== -1; });
   }
-  // AUTHORITATIVE SOURCES ONLY. Read through the production accessors so storyId isolation and the
-  // real entry shapes apply — a ledger belonging to another story must never be read, and entries
-  // carry `plannedEvent`, not `event`.
+
+  // ── SOURCE AUTHORITY (Roman 2026-09-25) ─────────────────────────────────────────────────────
+  // plannedEvent is PROPOSAL data. The ledger's own documentation says it is diagnostic and never
+  // rendered — so treating it as history could tell a reader that an undelivered plan is canon.
+  // Reserved constraints are the same: they describe what a scene must preserve, not what happened.
+  // Both may narrow a search; neither may prove an event occurred.
   function _continuityEvidenceSources(s) {
     var sources = [];
+    var add = function (kind, at, text, authority) {
+      if (text) sources.push({ kind: kind, at: at, text: String(text), authority: authority });
+    };
     try {
       (Array.isArray(s.scenes) ? s.scenes : []).forEach(function (sc, i) {
-        if (sc && sc.text) sources.push({ kind: 'scene', at: i, text: String(sc.text) });
+        add('scene', i, sc && sc.text, 'delivered');           // delivered prose — the strongest
       });
     } catch (_) {}
     try {
       var L = (typeof _sceneLedgerGet === 'function') ? _sceneLedgerGet(s, false) : null;
       (L && Array.isArray(L.entries) ? L.entries : []).forEach(function (e, i) {
-        var t = [e && e.plannedEvent, e && e.act, e && e.dia].filter(Boolean).join(' ');
-        if (t) sources.push({ kind: 'sceneLedger', at: i, text: t });
+        add('playerInput', i, [e && e.act, e && e.dia].filter(Boolean).join(' '), 'delivered');
+        add('plannedEvent', i, e && e.plannedEvent, 'context');   // PROPOSAL ONLY — never proof
       });
     } catch (_) {}
     try {
       var R = (typeof _relLedger === 'function') ? _relLedger(false) : null;
       if (R && R.edges) Object.keys(R.edges).forEach(function (k) {
-        var e = R.edges[k];
-        if (e) sources.push({ kind: 'relLedger', at: k, text: JSON.stringify(e) });
+        add('relLedger', k, JSON.stringify(R.edges[k]), 'delivered');
       });
     } catch (_) {}
     try {
       var pc = s._scenePlotContract;
       (pc && Array.isArray(pc.aftermathTruths) ? pc.aftermathTruths : []).forEach(function (t, i) {
-        if (t && t.text) sources.push({ kind: 'aftermathTruth', at: (t.id || i), text: String(t.text) });
+        add('aftermathTruth', (t && t.id) || i, t && t.text, 'delivered');   // already true
       });
       (pc && Array.isArray(pc.reservedConstraints) ? pc.reservedConstraints : []).forEach(function (t, i) {
-        sources.push({ kind: 'reservedConstraint', at: i, text: (t && t.text) ? String(t.text) : String(t) });
+        add('reservedConstraint', i, (t && t.text) || t, 'context');         // a constraint, not an event
       });
     } catch (_) {}
     try {
       var seed = (typeof STARTER_SEEDS !== 'undefined' && s._starterId) ? STARTER_SEEDS[s._starterId] : null;
       (seed && Array.isArray(seed.worldTruths) ? seed.worldTruths : []).forEach(function (t, i) {
-        sources.push({ kind: 'worldTruth', at: i, text: String(t) });
+        add('worldTruth', i, t, 'delivered');
       });
     } catch (_) {}
     try {
       (Array.isArray(s._temptFateDurableConsequences) ? s._temptFateDurableConsequences : []).forEach(function (d, i) {
-        if (d) sources.push({ kind: 'durable', at: i, text: JSON.stringify(d) });
+        add('durable', i, d && JSON.stringify(d), 'delivered');
       });
     } catch (_) {}
     return sources;
   }
+
   function _conciergeVerifyContinuityClaim(claimText) {
     var result = { claim: String(claimText || ''), checked: [], evidence: [],
-                   verdict: 'unresolved', handedOff: false };
+                   verdict: 'unresolved', proposition: null, handedOff: false, handoff: null };
     try {
       var s = window.state || {};
-      var toks = _claimTokens(claimText);
+      var claimProp = _parseProposition(String(claimText || '').replace(/^\s*you\s+forgot\s+/i, ''));
+      result.proposition = claimProp;
       var sources = _continuityEvidenceSources(s);
-      result.checked = sources.map(function (x) { return x.kind + '[' + x.at + ']'; });
-      if (!toks.length) result.verdict = 'unresolved';
-      else if (!sources.length) result.verdict = 'unresolved';
-      else {
-        // CANDIDATE EVIDENCE: two or more shared content words. One is topic, not aboutness.
+      result.checked = sources.map(function (x) { return x.kind + '[' + x.at + ']' + (x.authority === 'context' ? ':context' : ''); });
+      // OUTSIDE THE GRAMMAR → UNRESOLVED. No token count may substitute for a parse.
+      if (!claimProp) {
+        result.verdict = 'unresolved';
+        result.reason = 'the claim does not fit the bounded proposition grammar';
+      } else {
+        var support = null, contradiction = null;
         sources.forEach(function (src) {
-          var hay = src.text.toLowerCase();
-          var hits = toks.filter(function (w) { return hay.indexOf(w) !== -1; });
-          if (hits.length >= 2) result.evidence.push({ where: src.kind + '[' + src.at + ']', matched: hits, text: src.text.slice(0, 300) });
-        });
-        var contradiction = null, support = null;
-        result.evidence.forEach(function (ev) {
-          var conflict = _polarityConflict(toks, ev.text);
-          if (conflict && !contradiction) contradiction = { where: ev.where, conflict: conflict };
-          else if (!conflict && !support && ev.matched.length >= 3) support = { where: ev.where, matched: ev.matched };
+          _propositionsIn(src.text).forEach(function (p) {
+            if (p.actor !== claimProp.actor) return;                 // ACTOR MUST MATCH
+            if (p.relation !== claimProp.relation) return;           // SAME AXIS
+            if (!_objectsOverlap(claimProp.object, p.object)) return; // SAME OBJECT
+            var rec = { where: src.kind + '[' + src.at + ']', authority: src.authority,
+                        recorded: p.surface, polarity: p.polarity };
+            result.evidence.push(rec);
+            // CONTEXT-ONLY SOURCES NEVER PROVE ANYTHING.
+            if (src.authority !== 'delivered') return;
+            if (p.polarity === claimProp.polarity) { if (!support) support = rec; }
+            else if (!contradiction) contradiction = rec;
+          });
         });
         if (contradiction) { result.verdict = 'contradicted'; result.contradiction = contradiction; }
         else if (support) { result.verdict = 'supported'; result.support = support; }
-        else result.verdict = 'unresolved';
+        else { result.verdict = 'unresolved'; result.reason = result.evidence.length
+          ? 'only non-authoritative sources matched' : 'no delivered record matches this proposition'; }
       }
-      // THE MESSAGE NEVER OVERSTATES THE VERDICT.
       var msg;
       if (result.verdict === 'supported') {
         msg = 'I checked the record — it is still there (' + result.support.where + '). Nothing was lost.';
       } else if (result.verdict === 'contradicted') {
-        msg = 'I checked, and the record says something different ("' + result.contradiction.conflict.record
-            + '" where you recall "' + result.contradiction.conflict.claim + '"). Let us go through it.';
+        msg = 'I checked, and the record has it the other way (' + result.contradiction.where
+            + ' says "' + result.contradiction.recorded + '"). Let us go through it.';
       } else {
         msg = 'I could not settle that from the record either way. Let us look at it together — nothing has been changed.';
       }
       result.message = msg;
-      // REAL CONVERSATIONAL HANDOFF for anything not cleanly supported. The whisper bubble is a
-      // hint that auto-dismisses and cannot take a reply; a continuity dispute needs the
-      // conversational Concierge, opened with the complaint as its first line.
-      if (result.verdict !== 'supported' && typeof window._openConciergePanel === 'function') {
-        try { window._openConciergePanel(msg); result.handedOff = true; } catch (_) {}
+      // A REAL HANDOFF, with a real success boolean, for anything not cleanly supported.
+      if (result.verdict !== 'supported' && typeof window._conciergeHandoffContinuity === 'function') {
+        result.handoff = window._conciergeHandoffContinuity(result.claim, msg);
+        result.handedOff = !!(result.handoff && result.handoff.delivered);
       }
       if (!result.handedOff) {
         if (typeof _paintConciergeWhisper === 'function') _paintConciergeWhisper(msg, 9000);
         else if (typeof showToast === 'function') showToast(msg);
       }
       try { console.log('[CONCIERGE:CONTINUITY] verdict=' + result.verdict + ' sources=' + result.checked.length
-        + ' evidence=' + result.evidence.length + ' handedOff=' + result.handedOff); } catch (_) {}
+        + ' evidence=' + result.evidence.length + ' handedOff=' + result.handedOff
+        + (result.handoff && !result.handoff.delivered ? (' (' + result.handoff.reason + ')') : '')); } catch (_) {}
     } catch (e) { result.verdict = 'unresolved'; result.error = (e && e.message) || String(e); }
     try { (window.state || {})._lastContinuityVerification = result; } catch (_) {}
     return result;
   }
+  window._parseProposition = _parseProposition;
   window._conciergeVerifyContinuityClaim = _conciergeVerifyContinuityClaim;
 
   // TRANSIENT OUT-OF-CHARACTER ACKNOWLEDGEMENT. Named for what it is: a whisper bubble that
@@ -334904,6 +334960,52 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
   // conversational, gold-bell Concierge — distinct from the auto-dismissing whisper bubble, which
   // is a hint and cannot accept a handoff.
   window._openConciergePanel = _openPanel;
+
+  // ── CONTINUITY HANDOFF (Roman 2026-09-25) ───────────────────────────────────────────────────
+  // _openPanel alone is NOT a handoff: it returns immediately when the panel is already open,
+  // when a recent close asked for suppression, or when the library zoom has focus — and it drops
+  // firstLine entirely whenever any dialogue history exists. A caller that set handedOff=true off
+  // the back of it was reporting a delivery that frequently never happened.
+  //
+  // This opens OR focuses the panel, appends the claim and the finding REGARDLESS of existing
+  // history, and returns whether the message was actually delivered. When opening is genuinely
+  // suppressed it queues the message and says so — it never claims success it did not have.
+  var _continuityHandoffQueue = [];
+  function _conciergeHandoffContinuity(claimText, finding) {
+    var out = { delivered: false, reason: null, alreadyOpen: !!_panelOpen, queued: false };
+    try {
+      var claim = String(claimText || '').trim();
+      var note = String(finding || '').trim();
+      if (!claim && !note) { out.reason = 'nothing to hand off'; return out; }
+      var blockedByZoom = !!window._libraryZoomActive;
+      var blockedBySuppress = Date.now() < _suppressOpenUntil;
+      if (!_panelOpen && (blockedByZoom || blockedBySuppress)) {
+        // HONEST FAILURE. Queue it so the next open delivers it, and report delivered=false.
+        _continuityHandoffQueue.push({ claim: claim, note: note, at: Date.now() });
+        out.reason = blockedByZoom ? 'library zoom has focus' : 'panel opening is suppressed';
+        out.queued = true;
+        return out;
+      }
+      if (!_panelOpen) _openPanel();
+      else if (typeof dialogueEl !== 'undefined' && dialogueEl) dialogueEl.classList.add('visible');
+      if (!_panelOpen) { out.reason = 'panel did not open'; return out; }
+      // APPENDED UNCONDITIONALLY — this is the difference from firstLine, which only lands on an
+      // empty history. A continuity dispute raised during an existing conversation must still be
+      // seen, and it must carry the player's exact words so they can check we heard them right.
+      if (claim) _appendMessage('user', claim, { skipCCL: true, isAuthored: true });
+      if (note) _appendMessage('ai', note, { skipCCL: true, isAuthored: true });
+      out.delivered = true;
+      // Drain anything queued while the panel was unavailable.
+      while (_continuityHandoffQueue.length) {
+        var q = _continuityHandoffQueue.shift();
+        if (q.claim) _appendMessage('user', q.claim, { skipCCL: true, isAuthored: true });
+        if (q.note) _appendMessage('ai', q.note, { skipCCL: true, isAuthored: true });
+      }
+    } catch (e) { out.reason = (e && e.message) || String(e); }
+    return out;
+  }
+  window._conciergeHandoffContinuity = _conciergeHandoffContinuity;
+  window._conciergeHandoffQueueDepth = function () { return _continuityHandoffQueue.length; };
 
   // ── Concierge Design Mode (Ctrl+Shift+D) ──
   // Works on ALL screens: library masks + library concierge + summon figure

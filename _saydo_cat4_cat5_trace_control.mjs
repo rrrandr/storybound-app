@@ -323,84 +323,127 @@ const CAT5 = ['I don\'t know', 'whatever', '...', 'sure'];
     actSide && actSide.field === 'action' && actSide.text === 'The Continue button is broken.',
     JSON.stringify(actSide));
 
-  section('8c. CONTINUITY VERIFICATION — THREE-WAY, PRODUCTION-SHAPED, STORY-ISOLATED');
-  // The first version declared a claim "preserved" on ONE shared word, so a record saying
-  // "Julian DENIED the accusation" would answer "Nothing was lost" to "Julian ADMITTED the
-  // accusation". Keyword overlap is topic detection, not verification.
-  const seedLedger = (storyId, entries) => page.evaluate((a) => {
+  section('8c. CONTINUITY — A BOUNDED PROPOSITION GRAMMAR, NOT TOKEN COUNTING');
+  // Token counting cannot verify anything. The reds below are the three ways the previous version
+  // was provably wrong, plus the authority and handoff cases.
+  const seedStory = (opts) => page.evaluate((a) => {
     const s = window.state;
-    s.storyId = a.storyId;
-    s._starterId = 'starter_first_sacrifice';
+    s.storyId = a.storyId; s._starterId = 'starter_first_sacrifice';
     s.scenes = a.scenes || [];
-    // PRODUCTION-SHAPED entries, written through the real ledger contract: storyId stamped on the
-    // ledger itself, and plannedEvent — not the invented `event` field the old test used.
-    s._sceneLedger = { storyId: a.ledgerStoryId, entries: a.entries };
+    s._sceneLedger = a.ledger || null;
+    s._scenePlotContract = a.plotContract || null;
     delete s._lastContinuityVerification;
-  }, { storyId, ledgerStoryId: entries.ledgerStoryId, entries: entries.rows, scenes: entries.scenes || [] });
+  }, opts);
+  const verify = (claim) => page.evaluate((c) => window._conciergeVerifyContinuityClaim(c), claim);
 
-  const PROD_ROWS = [
-    { sceneNumber: 1, plannedEvent: 'Julian denied the accusation before the assembly',
-      act: 'I stepped forward', dia: 'Name it, then.', plannedSource: 'spine' }
-  ];
+  // RED 1 — WRONG ACTOR, SAME WORDS. Three shared tokens used to be enough.
+  await seedStory({ storyId: 'S1', scenes: [
+    { text: 'Julian carried The Answer after Seren stole it from the vestry.' }] });
+  const wrongActor = await verify('You forgot Julian stole The Answer.');
+  note('wrong actor: ' + JSON.stringify({ v: wrongActor.verdict, p: wrongActor.proposition }));
+  ok('RED — a claim about the WRONG ACTOR is not supported by the right words',
+    wrongActor.verdict !== 'supported', JSON.stringify(wrongActor).slice(0, 220));
+  ok('...and the true actor IS matched when the claim names them',
+    (await verify('You forgot Seren stole The Answer.')).verdict === 'supported');
 
-  // (a) CONTRADICTED — the record says the opposite of the claim.
-  await seedLedger('story-A', { ledgerStoryId: 'story-A', rows: PROD_ROWS });
-  const contra = await page.evaluate(() => window._conciergeVerifyContinuityClaim('You forgot Julian admitted the accusation.'));
-  note('contradicted: ' + JSON.stringify({ v: contra.verdict, c: contra.contradiction }));
-  ok('a claim the record CONTRADICTS is reported as contradicted, not as preserved',
-    contra.verdict === 'contradicted', JSON.stringify(contra).slice(0, 240));
-  ok('...naming the opposition it found (admitted vs denied)',
-    contra.contradiction && contra.contradiction.conflict.claim === 'admitted'
-    && contra.contradiction.conflict.record === 'denied', JSON.stringify(contra.contradiction));
-  ok('RED PROOF — it does NOT say "Nothing was lost"',
-    !/Nothing was lost/.test(contra.message), contra.message);
+  // RED 2 — TWO ACTORS, OPPOSITE PREDICATES, ONE RECORD.
+  await seedStory({ storyId: 'S2', scenes: [
+    { text: 'Julian denied the accusation; Seren admitted the accusation.' }] });
+  const twoActors = await verify('You forgot Seren admitted the accusation.');
+  note('two actors: ' + JSON.stringify({ v: twoActors.verdict, ev: twoActors.evidence }));
+  ok('RED — a TRUE claim is not contradicted by the other actor\'s opposite predicate',
+    twoActors.verdict === 'supported', JSON.stringify(twoActors).slice(0, 260));
+  ok('...while the genuinely opposed claim about the SAME actor IS contradicted',
+    (await verify('You forgot Julian admitted the accusation.')).verdict === 'contradicted');
 
-  // (b) UNRESOLVED — topical overlap but nothing proposition-level.
-  const unres = await page.evaluate(() => window._conciergeVerifyContinuityClaim('You forgot the accusation.'));
-  note('unresolved: ' + JSON.stringify({ v: unres.verdict, ev: unres.evidence.length }));
-  ok('a merely TOPICAL match is UNRESOLVED, never verified',
-    unres.verdict === 'unresolved', JSON.stringify(unres).slice(0, 240));
-  ok('...and says so honestly, without claiming nothing was lost',
-    /could not settle that from the record either way/.test(unres.message)
-    && !/Nothing was lost/.test(unres.message), unres.message);
+  // RED 3 — "DID NOT ADMIT" vs "ADMITTED". The negation used to be discarded as a short token.
+  await seedStory({ storyId: 'S3', scenes: [
+    { text: 'Julian did not admit the accusation that night.' }] });
+  const negated = await verify('You forgot Julian admitted the accusation.');
+  note('negation: ' + JSON.stringify({ v: negated.verdict, c: negated.contradiction }));
+  ok('RED — "did not admit" CONTRADICTS "admitted" instead of supporting it',
+    negated.verdict === 'contradicted', JSON.stringify(negated).slice(0, 240));
+  ok('...and the negated claim itself is supported by the negated record',
+    (await verify('You forgot Julian did not admit the accusation.')).verdict === 'supported');
+  ok('the parser binds polarity to the relation, so "denied" is the negative pole of the same axis',
+    (await page.evaluate(() => window._parseProposition('Julian denied the accusation'))).polarity === 'negative');
+  ok('...and "did not deny" is positive on that axis',
+    (await page.evaluate(() => window._parseProposition('Julian did not deny the accusation'))).polarity === 'positive');
 
-  // (c) SUPPORTED — enough proposition-level agreement, no polarity conflict.
-  const supp = await page.evaluate(() => window._conciergeVerifyContinuityClaim('You forgot Julian denied the accusation before the assembly.'));
-  note('supported: ' + JSON.stringify({ v: supp.verdict, w: supp.support && supp.support.where }));
-  ok('a claim the record genuinely supports verifies as supported, with where',
-    supp.verdict === 'supported' && !!supp.support, JSON.stringify(supp).slice(0, 240));
-  ok('...and only THEN is "Nothing was lost" said', /Nothing was lost/.test(supp.message));
+  // RED 4 — A PLANNED EVENT THAT NEVER APPEARED IN PROSE.
+  await seedStory({ storyId: 'S4', scenes: [{ text: 'The lamp guttered and no one spoke.' }],
+    ledger: { storyId: 'S4', entries: [
+      { sceneNumber: 1, plannedEvent: 'Julian admitted the accusation before the assembly',
+        act: 'I waited', dia: 'Say it.', plannedSource: 'spine' }] } });
+  const planned = await verify('You forgot Julian admitted the accusation.');
+  note('planned only: ' + JSON.stringify({ v: planned.verdict, ev: planned.evidence }));
+  ok('RED — a PLANNED event that never reached prose cannot prove it happened',
+    planned.verdict === 'unresolved', JSON.stringify(planned).slice(0, 260));
+  ok('...the planned entry is visible as CONTEXT, and is labelled as such',
+    planned.checked.some((c) => /^plannedEvent\[\d+\]:context$/.test(c)), JSON.stringify(planned.checked));
+  ok('...and the reason names the authority problem, not a matching problem',
+    /only non-authoritative sources matched/.test(planned.reason || ''), planned.reason);
+  ok('DELIVERED prose in the same story DOES support it',
+    (await page.evaluate(async () => {
+      window.state.scenes = [{ text: 'Julian admitted the accusation before the assembly.' }];
+      return (await window._conciergeVerifyContinuityClaim('You forgot Julian admitted the accusation.')).verdict;
+    })) === 'supported');
 
-  section('8c-2. THE SOURCES ARE THE PRODUCTION ONES, AND STORY-ISOLATED');
-  ok('it reads the scene ledger through the accessor — entries appear as sceneLedger[...]',
-    supp.checked.some((c) => /^sceneLedger\[/.test(c)), JSON.stringify(supp.checked));
-  ok('...and includes seed world truths, which the first version omitted',
-    supp.checked.some((c) => /^worldTruth\[/.test(c)), JSON.stringify(supp.checked.slice(0, 8)));
-  // STALE-LEDGER NEGATIVE: a ledger stamped for a DIFFERENT story must never be read.
-  await seedLedger('story-B', { ledgerStoryId: 'story-A-STALE', rows: PROD_ROWS });
-  const stale = await page.evaluate(() => window._conciergeVerifyContinuityClaim('You forgot Julian denied the accusation before the assembly.'));
-  note('stale ledger: ' + JSON.stringify({ v: stale.verdict, checked: stale.checked.filter((c) => /sceneLedger/.test(c)) }));
-  ok('STALE-LEDGER NEGATIVE — a ledger from another story is NOT read',
-    !stale.checked.some((c) => /^sceneLedger\[/.test(c)), JSON.stringify(stale.checked));
-  // PRECISION MATTERS HERE. The claim may still be supported by a DIFFERENT, legitimate source
-  // (seed world truths belong to the starter, not to a story), so asserting "not supported" would
-  // be asserting the wrong thing. What must be true is narrower: no support may come FROM the
-  // foreign ledger.
-  ok('...and no support is drawn FROM that foreign ledger',
-    !stale.support || !/^sceneLedger\[/.test(stale.support.where),
-    JSON.stringify(stale.support));
-  ok('...nor any evidence at all', !stale.evidence.some((e) => /^sceneLedger\[/.test(e.where)),
-    JSON.stringify(stale.evidence.map((e) => e.where)));
+  // Anything outside the grammar must refuse to answer.
+  const outside = await verify('You forgot the whole thing about the sash and the weather.');
+  ok('a claim OUTSIDE the bounded grammar returns unresolved, never a confident verdict',
+    outside.verdict === 'unresolved' && /bounded proposition grammar/.test(outside.reason || ''),
+    JSON.stringify(outside).slice(0, 200));
 
-  section('8c-3. THE HANDOFF IS THE CONVERSATIONAL CONCIERGE, NOT A WHISPER');
-  ok('the conversational panel opener is exposed for the handoff',
-    (await page.evaluate(() => typeof window._openConciergePanel)) === 'function');
-  ok('a CONTRADICTED claim is handed off to the conversational Concierge',
-    contra.handedOff === true, JSON.stringify({ handedOff: contra.handedOff }));
-  ok('an UNRESOLVED claim is handed off too — it needs a conversation, not a hint',
-    unres.handedOff === true, JSON.stringify({ handedOff: unres.handedOff }));
-  ok('a cleanly SUPPORTED claim needs no conversation and stays a whisper',
-    supp.handedOff === false, JSON.stringify({ handedOff: supp.handedOff }));
+  section('8c-2. STORY ISOLATION, THROUGH THE PRODUCTION ACCESSOR');
+  await seedStory({ storyId: 'S5', scenes: [],
+    ledger: { storyId: 'SOMEONE-ELSE', entries: [
+      { sceneNumber: 1, act: 'Seren admitted the accusation', dia: '', plannedEvent: null }] } });
+  const stale = await verify('You forgot Seren admitted the accusation.');
+  ok('STALE-LEDGER NEGATIVE — a ledger stamped for another story is not read',
+    !stale.checked.some((c) => /^playerInput\[/.test(c)), JSON.stringify(stale.checked));
+  ok('...so it cannot support the claim', stale.verdict !== 'supported', JSON.stringify(stale.verdict));
+
+  section('8c-3. THE HANDOFF REPORTS WHAT IT ACTUALLY DELIVERED');
+  // _openPanel returns early when already open, suppressed, or zoomed, and drops firstLine once
+  // any history exists. The old caller set handedOff=true regardless.
+  const handoff = await page.evaluate(() => {
+    const out = {};
+    const scroll = () => document.getElementById('conciergeDialogueScroll');
+    const count = () => { const el = scroll(); return el ? el.children.length : -1; };
+    // (a) ALREADY OPEN, WITH EXISTING HISTORY — the case firstLine silently drops.
+    window._openConciergePanel('An earlier line of conversation.');
+    const before = count();
+    out.already = window._conciergeHandoffContinuity('You forgot Seren admitted it.', 'Let us go through it.');
+    out.alreadyAppended = count() - before;
+    out.alreadyText = (scroll() || { textContent: '' }).textContent;
+    // (b) SUPPRESSED — library zoom has focus and the panel is shut.
+    if (typeof window._closeConciergePanel === 'function') window._closeConciergePanel();
+    window._libraryZoomActive = true;
+    out.suppressed = window._conciergeHandoffContinuity('You forgot the ledger.', 'Unresolved.');
+    out.queueDepth = window._conciergeHandoffQueueDepth();
+    window._libraryZoomActive = false;
+    // (c) after suppression lifts, the queued message is delivered.
+    out.afterLift = window._conciergeHandoffContinuity('You forgot the sash.', 'Unresolved too.');
+    out.afterText = (scroll() || { textContent: '' }).textContent;
+    out.queueAfter = window._conciergeHandoffQueueDepth();
+    return out;
+  });
+  fs.writeFileSync(path.join(OUT_DIR, 'handoff.json'), JSON.stringify(handoff, null, 2));
+  ok('ALREADY-OPEN WITH HISTORY — the handoff still delivers',
+    handoff.already.delivered === true && handoff.already.alreadyOpen === true, JSON.stringify(handoff.already));
+  ok('...appending BOTH the claim and the finding to the visible dialogue',
+    handoff.alreadyAppended >= 2, String(handoff.alreadyAppended));
+  ok('...and the player\'s exact words are on screen, not just the finding',
+    /You forgot Seren admitted it\./.test(handoff.alreadyText || ''), (handoff.alreadyText || '').slice(-160));
+  ok('SUPPRESSED — it reports delivered=FALSE rather than claiming success',
+    handoff.suppressed.delivered === false && /zoom|suppress/.test(handoff.suppressed.reason || ''),
+    JSON.stringify(handoff.suppressed));
+  ok('...and queues the message instead of dropping it',
+    handoff.suppressed.queued === true && handoff.queueDepth >= 1, JSON.stringify(handoff));
+  ok('...then delivers the queued message once suppression lifts',
+    handoff.afterLift.delivered === true && handoff.queueAfter === 0
+    && /You forgot the ledger\./.test(handoff.afterText || ''), JSON.stringify({ q: handoff.queueAfter }));
 
   section('8c-4. THE OOC BRANCH IS NAMED HONESTLY');
   const oocRes = await page.evaluate(() => {
@@ -414,13 +457,10 @@ const CAT5 = ['I don\'t know', 'whatever', '...', 'sure'];
   ok('it answers out-of-character and states the story is untouched',
     /feedback for me, not for the scene/.test(oocRes.ooc.message)
     && oocRes.ooc.storyFactsChanged === false, JSON.stringify(oocRes.ooc));
-  ok('...on the transient whisper surface, which is honestly what it is',
-    /feedback for me/.test(oocRes.text || ''), JSON.stringify(oocRes.text));
   ok('NO STORY FACT CHANGED', oocRes.beforeState.scenes === oocRes.after.scenes
     && oocRes.beforeState.turn === oocRes.after.turn, JSON.stringify(oocRes));
   const srcHonest = fs.readFileSync(path.join(__dirname, 'public', 'app.js'), 'utf8');
-  ok('and the code says so — the OOC branch is documented as a transient acknowledgement,\n'
-    + '     not as routing to the Concierge',
+  ok('and the code documents it as a TRANSIENT acknowledgement, not Concierge routing',
     /TRANSIENT OUT-OF-CHARACTER ACKNOWLEDGEMENT[\s\S]{0,300}?NOT the conversational Concierge/.test(srcHonest));
 
   section('8d. WEAK-TURN STATE — REAL GENERATION PATH, AND NO LEAK INTO THE NEXT TURN');
