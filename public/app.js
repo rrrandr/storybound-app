@@ -192095,6 +192095,9 @@ No text, no watermark, no UI elements, share-ready.`;
   // text, never from a list kept here — First Sacrifice already carries "a wish produces NO visible
   // magical effect" and "NOT a psychic mind-read and NOT a light show"; nothing had ever read them.
   var _CANON_NEGATIVE_RX = /\b(?:NO|NOT|NEVER|cannot|can not|may not|barred|forbidden|banned|do NOT|does NOT)\b/;
+  // Exposed so a control can measure the REAL classifier rather than a copy of it. Reading a
+  // second regex that merely looks the same would prove nothing about this one.
+  window._CANON_NEGATIVE_RX = _CANON_NEGATIVE_RX;
 
   // Compact, relevant, and ID-ADDRESSED so an audit finding can be resolved back to a real fact.
   function _buildCanonPacket(s, opts) {
@@ -192239,6 +192242,20 @@ No text, no watermark, no UI elements, share-ready.`;
           (Array.isArray(d.changed) ? d.changed : []).forEach(function (c) {
             if (c && c.subject) push('dc', 'changed — ' + c.subject + ': ' + (c.whatChanged || ''));
           });
+          // WHAT THE RUPTURE LEFT INTACT (Roman 2026-09-24). Measured defect: the commit record
+          // stores establishedEvidence and openPossibilities, and NEITHER reached the packet. For a
+          // memory rupture that is the difference between "nobody remembers" and "nobody remembers
+          // BUT the written record survives" — and a plan turning on a ledger contradicting the
+          // room was audited with only the first half. Both candidate models then reasoned that
+          // the assembly could not read a ledger it did not remember, collapsing RECORD into
+          // MEMORY, because no supplied fact said the record survived. Same class of defect as the
+          // missing classDetail: the authorising fact existed in the record and was withheld.
+          (Array.isArray(d.establishedEvidence) ? d.establishedEvidence : []).forEach(function (e) {
+            if (e) push('ev', 'SURVIVED that rupture and is still true: ' + e);
+          });
+          (Array.isArray(d.openPossibilities) ? d.openPossibilities : []).forEach(function (o) {
+            if (o) push('ev', 'the rupture left this OPEN (a plan may legitimately use it): ' + o);
+          });
         } catch (_) {}
       });
       idx.entries.forEach(function (e) { e.invalidatedPlans.forEach(function (p) { push('inv', p); invalidated.push(p); }); });
@@ -192288,9 +192305,44 @@ No text, no watermark, no UI elements, share-ready.`;
   window._canonDeterministicCheck = _canonDeterministicCheck;
 
   // ── THE AUDIT PROMPT — classification only ───────────────────────────────────────────────────
+  // PROMPT VERSION (Roman 2026-09-24). v1 is retained VERBATIM, not deleted, because it is the
+  // arm two candidate models were measured against: ministral-8b-2512 and gpt-4o-mini each
+  // returned "violation" on 4/4 greens under it. Re-running a already-rejected model against v2
+  // with v1 still available is the CONTROLLED test of whether the prompt was the cause — one
+  // variable changed, no new model bought. Deleting v1 would make that experiment impossible.
+  var _CANON_AUDIT_PROMPT_V = 2;
+  function _canonAuditPromptVersion() {
+    try {
+      var v = window._canonAuditPromptVersion;
+      return (v === 1 || v === 2) ? v : _CANON_AUDIT_PROMPT_V;
+    } catch (_) { return _CANON_AUDIT_PROMPT_V; }
+  }
+  window._canonAuditPromptVersionActive = _canonAuditPromptVersion;
+
   function _buildCanonAuditPrompt(proposal, packet) {
+    var _v = _canonAuditPromptVersion();
+    // ── THE FRAMING QUESTION ─────────────────────────────────────────────────────────────────
+    // v1 asked: "Decide whether the plan asserts anything the supplied canon does not support."
+    // That is ABSENCE-DETECTION, and it is a RULE. The ordinary-action permission below is a LIST
+    // OF EXAMPLES. When they conflicted, the rule won — measurably: gpt-4o-mini blocked Julian
+    // lifting a torn mouth-band because the band "is not described as being capable of being
+    // torn", and blocked Lirael naming a misalignment she is canonically able to sense because
+    // canon "does not support the idea that [she] can name the misalignment aloud". Both are
+    // absence treated as prohibition, by a model that had been told ordinary action is allowed.
+    // v2 makes the DEFAULT the rule and states the silence principle explicitly.
+    var framing = (_v === 1)
+      ? 'You are given a PROPOSED SCENE PLAN and the ONLY canon that applies to it. Decide whether the plan asserts anything the supplied canon does not support.\n\n'
+      : 'You are given a PROPOSED SCENE PLAN and the canon that applies to it.\n\n'
+        + 'YOUR DEFAULT VERDICT IS "pass". Most plans are legitimate and must return "pass".\n\n'
+        + 'CANON SILENCE IS PERMISSION, NEVER PROHIBITION. A supplied fact that simply does not mention\n'
+        + 'what the plan does is NOT grounds for a violation. "The canon does not describe X", "the canon\n'
+        + 'does not say they can X", and "X is not established" are NOT violations — they are the normal\n'
+        + 'condition of every invented scene, and reporting them is the single most common way to get\n'
+        + 'this task wrong. Return "violation" ONLY when a supplied fact AFFIRMATIVELY FORBIDS or\n'
+        + 'DIRECTLY CONTRADICTS something the plan asserts. If your reason for a finding could be\n'
+        + 'phrased as "canon is silent about this", it is not a finding.\n\n';
     var sys = 'You are a CANON AUDITOR for an interactive fiction engine. You classify; you do NOT write.\n\n'
-      + 'You are given a PROPOSED SCENE PLAN and the ONLY canon that applies to it. Decide whether the plan asserts anything the supplied canon does not support.\n\n'
+      + framing
       + 'ABSOLUTE LIMITS ON YOU:\n'
       + '- You may NOT rewrite the plan, propose replacement events, suggest prose, or say what should happen instead.\n'
       + '- You may NOT invent canon, infer unstated rules, or rely on knowledge from any other story or from the real world.\n'
@@ -192308,7 +192360,36 @@ No text, no watermark, no UI elements, share-ready.`;
              + ' judged less relevant to this plan and omitted. Facts here were selected by relevance to THIS plan, so what is present is what matters most — but you may NOT conclude that something is ungrounded merely because it is absent. If the plan appears to rely on a capability or rule you cannot find here, that is exactly the case for verdict "cannot_decide", not for a violation:\n')
           : 'CANON PACKET (the complete canon for this scene — nothing was omitted):\n')
       + packet.facts.map(function (f) { return '  [' + f.id + '] ' + f.text; }).join('\n') + '\n\n'
-      + 'CATEGORIES: unsupported_capability | new_metaphysics | contradicted_knowledge | rewritten_history | invalidated_objective | other\n\n'
+      // A FACT'S ID PREFIX IS A GROUPING HINT, NOT A JUDGEMENT (Roman 2026-09-24). Polarity is
+      // assigned by a substring match for NO/NOT/NEVER/cannot, so a purely DESCRIPTIVE fact lands
+      // under a "neg_" id: the Sacrificiant-seal costume note is filed negative because it reads
+      // "(just cloth ...; NO orb, NO bead, NO gag)", and the two facts that GRANT alignment-sense
+      // are filed negative for their scoping clauses. Measured, 4 of 10. Both candidate models
+      // cited such a fact to block a legitimate plan. The ids are LEFT UNCHANGED for now — the
+      // retained runs' citations and the scoring rubric both key off them, and changing them in
+      // the same pass as the framing would confound the one experiment this is meant to enable —
+      // so v2 states the truth about them instead of implying a prohibition that isn't there.
+      + (_v === 1 ? '' :
+          'ABOUT THESE IDS: the prefix groups a fact by where it came from, NOT by whether it forbids\n'
+          + 'anything. A "neg_" fact is NOT automatically a prohibition — many are plain descriptions or\n'
+          + 'grants of ability that happen to contain the word "no" or "not". Judge every fact by what it\n'
+          + 'SAYS, never by its id. An "ev_" fact records what a committed rupture LEFT INTACT and is a\n'
+          + 'grant: a plan relying on it is supported, not unsupported.\n\n')
+      + (_v === 1
+          ? 'CATEGORIES: unsupported_capability | new_metaphysics | contradicted_knowledge | rewritten_history | invalidated_objective | other\n\n'
+          // THE MENU MUST CARRY ITS OWN QUALIFIERS (Roman 2026-09-24). v1 stated them once, in the
+          // "Flag ONLY" rule, then offered a BARE list of names right next to the output schema —
+          // which is where the model actually chooses. Both models then applied rewritten_history
+          // to a plan CONFORMING to a committed rewrite, the exact case the qualifier excludes,
+          // and gpt-4o-mini applied contradicted_knowledge to characters knowing LESS than canon
+          // allows rather than more. The qualifier now travels with the name.
+          : 'CATEGORIES — each applies ONLY under its stated condition:\n'
+            + '  unsupported_capability  — the plan needs an ability a supplied fact AFFIRMATIVELY denies. Not "canon never mentions it".\n'
+            + '  new_metaphysics         — the plan introduces a world mechanism a supplied fact AFFIRMATIVELY rules out.\n'
+            + '  contradicted_knowledge  — a character knows MORE than canon allows. A character knowing LESS, being confused, or misremembering is NEVER this.\n'
+            + '  rewritten_history       — the plan rewrites the past when NO committed rupture rewrote it. A plan BUILDING ON a committed rewrite is correct behaviour, not a violation.\n'
+            + '  invalidated_objective   — the plan pursues a goal a committed rupture already invalidated. Cite the invalidation (an "inv_" fact), not a general world truth.\n'
+            + '  other                   — only if a supplied fact affirmatively forecloses the plan and no category above fits.\n\n')
       + 'Return ONLY this JSON, no markdown:\n'
       + '{ "verdict": "pass" | "violation" | "cannot_decide",\n'
       + '  "violations": [ { "category": "<one of the categories>", "claim": "<the EXACT offending text copied from the plan>", "citedFactIds": ["<id>"], "why": "<one sentence, what the cited fact forecloses>" } ],\n'

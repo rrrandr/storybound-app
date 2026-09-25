@@ -29,6 +29,13 @@ const PRIMARY_MODEL = CAND.model, PRIMARY_ENDPOINT = CAND.endpoint, PER_CALL_USD
 // be bounded by max_tokens) and carries its own $0.02 ceiling. The phrase names the ceiling it
 // authorizes, so an authorization for the $0.01 runs cannot silently release a $0.02 one.
 const RUN_CEILING = CAND.ceilingUsd;
+// PROMPT VERSION, PINNED PER RUN (Roman 2026-09-24). The retained runs of ministral-8b-2512 and
+// gpt-4o-mini were both measured against v1. Re-running an ALREADY-REJECTED model against v2 with
+// the prompt as the single changed variable is the controlled test of whether the prompt caused
+// the 0/4 green scores — and it buys no new model. --prompt-version 1 reproduces the original arm.
+const pIdx = process.argv.indexOf('--prompt-version');
+const PROMPT_V = pIdx !== -1 ? Number(process.argv[pIdx + 1]) : 2;
+if (PROMPT_V !== 1 && PROMPT_V !== 2) { console.error('REFUSING — --prompt-version must be 1 or 2'); process.exit(6); }
 const AUTH_PHRASE = RUN_CEILING === 0.02
   ? 'run the reasoning-mistral canon auditor calibration once under $0.02'
   : 'run the canon auditor calibration once under $0.01';
@@ -39,6 +46,7 @@ const { fixtures } = loadFixtures();
 
 if (given !== AUTH_PHRASE) {
   console.log('CANON AUDITOR CALIBRATION — NOT AUTHORIZED, NOTHING DISPATCHED.\n');
+  console.log('  prompt arm   : v' + PROMPT_V + (PROMPT_V === 1 ? '   (the arm both rejected models were measured against)' : '   (silence-is-permission + qualified categories + surviving-evidence facts)'));
   console.log('  measures     : ' + PRIMARY_MODEL + ' ONLY, via ' + PRIMARY_ENDPOINT
     + (CAND.reasoningEffort ? '   reasoning_effort="' + CAND.reasoningEffort + '" (explicit, enforced pre-dispatch)' : ''));
   console.log('  max_tokens   : ' + CAND.maxTokens
@@ -104,6 +112,8 @@ fs.mkdirSync(OUT_DIR, { recursive: true });
       const d = JSON.parse(JSON.stringify(a.durable));
       // A fixture may supply its OWN whole consequence rather than mutating the default one.
       s._temptFateDurableConsequences = [a.fx.durableOverride ? JSON.parse(JSON.stringify(a.fx.durableOverride)) : d];
+      // Pin the prompt arm for this whole run, so a result can only describe one version.
+      window._canonAuditPromptVersion = a.promptVersion;
       const packet = window._buildCanonPacket(s, { proposal: a.fx.plan });
       const prompt = window._buildCanonAuditPrompt(a.fx.plan, packet);
       let raw = null, error = null, content = null, meta = null;
@@ -137,8 +147,9 @@ fs.mkdirSync(OUT_DIR, { recursive: true });
         }
       } catch (e) { error = (e && e.message) || String(e); }
       const validated = raw ? window._validateCanonAuditResponse(raw, packet, a.fx.plan) : null;
-      return { packetIds: packet.ids, packetTruncated: packet.truncated, prompt, content, raw, validated, error, meta };
-    }, { fx, durable, model: PRIMARY_MODEL, provider: CAND.provider,
+      return { packetIds: packet.ids, packetTruncated: packet.truncated,
+        promptVersionActive: window._canonAuditPromptVersionActive(), prompt, content, raw, validated, error, meta };
+    }, { fx, durable, model: PRIMARY_MODEL, provider: CAND.provider, promptVersion: PROMPT_V,
          reasoningEffort: CAND.reasoningEffort, maxTokens: CAND.maxTokens });
     const latencyMs = Date.now() - t0;
     const score = scoreFixture(fx, r.validated || { valid: false, errors: ['no response'] }, r.error);
@@ -185,7 +196,8 @@ fs.mkdirSync(OUT_DIR, { recursive: true });
   const wrongEffort = CAND.reasoningEffort
     ? rows.filter((r) => r.usage && String(r.reasoningEffortReported || '') !== String(CAND.reasoningEffort))
     : [];
-  const report = { runId: RUN_ID, model: PRIMARY_MODEL, reasoningEffort: CAND.reasoningEffort || null,
+  const report = { runId: RUN_ID, model: PRIMARY_MODEL, promptVersion: PROMPT_V,
+    reasoningEffort: CAND.reasoningEffort || null,
     maxTokens: CAND.maxTokens, dispatches: gate.trackedCalls().length,
     reservedUsd: ledger.totalUsd, realizedUsd: realizedTotal, tokensIn: tokIn, tokensOut: tokOut,
     ceilingUsd: RUN_CEILING, reservations: ledger.entries, routeLog: holder.log,
