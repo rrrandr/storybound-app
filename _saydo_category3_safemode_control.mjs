@@ -180,6 +180,10 @@ const ADULT_SAYDO = {
   // arms is STORY STATE, which is rebuilt from scratch for each.
   const arms = {};
   let capture = [];
+  let currentMode = 'full';
+  // Planted in the Safe Mode arm's authored beat so the diagnostic has a genuine finding to report
+  // on a plan that actually came back through production.
+  const SAFE_ARM_EXPLICIT = 'He fucks her against the vestry door until she cries out.';
   const serve = async (req) => {
     let b = {}; try { b = JSON.parse(req.postData() || '{}'); } catch (_) {}
     const sys = ((b.messages || []).find((m) => m.role === 'system') || {}).content || '';
@@ -196,13 +200,30 @@ const ADULT_SAYDO = {
       base.event_slots = Object.assign({}, base.event_slots, { mechanism_grounding: 'ordinary' });
       return { content: JSON.stringify(base) };
     }
-    return { content: JSON.stringify({ beats: [] }) };
+    if (kind === 'author') {
+      // THE ACCEPTED-PLAN SHAPE, reused from _canon_audit_full_flow_control.mjs where it is already
+      // proven to survive the CG pipeline: a valid narration beat plus visualState,
+      // decisionGateBeatIdx and hardBeats. The previous `{beats: []}` could never become an
+      // accepted plan, so production correctly returned null and the diagnostic call site was
+      // unreachable BY CONSTRUCTION — the harness was guaranteeing its own failure.
+      //
+      // The Safe Mode arm's beat deliberately carries SAFE_ARM_EXPLICIT so there is something real
+      // for the diagnostic to find, and so "it identified it without mutating it" is a claim about
+      // an actual round trip rather than a hand-fed array.
+      const beatText = (currentMode === 'safe')
+        ? SAFE_ARM_EXPLICIT
+        : 'He stops in the doorway with the lamp still burning behind him.';
+      return { content: JSON.stringify({
+        beats: [{ idx: 0, kind: 'narration', text: beatText, speaker: null }],
+        visualState: {}, decisionGateBeatIdx: 0, hardBeats: [] }) };
+    }
+    return { content: null };
   };
   ['/api/proxy', '/api/mistral-proxy'].forEach((ep) => gate.stub(ep, serve));
   gate.stub('/api/chatgpt-proxy', async (req) => ({ choices: [{ message: { content: (await serve(req)).content } }] }));
 
   for (const mode of ['full', 'safe']) {
-    capture = [];
+    capture = []; currentMode = mode;
     await page.evaluate((m) => {
       const s = window.state;
       // Full rebuild per arm: nothing from the other mode survives into this one.
@@ -222,11 +243,10 @@ const ADULT_SAYDO = {
       s.contentMode = m;                          // THE ONLY DIFFERENCE BETWEEN THE ARMS
     }, mode);
     gate.setPhase('cat3-' + mode, 40);
-    // DRIVE THE COMPLETION FUNCTION, not just the generator. _completeStagedSceneFromScreenplay
-    // calls _runCGScreenplayGen internally and then PERSISTS — and persistence is where the
-    // diagnostic call site lives. Calling only the generator exercised generation and left the
-    // production diagnostic untouched, which is exactly the "helper exists but is never delivered"
-    // gap this section is supposed to close.
+    // Drives _runCGScreenplayGen — which is where the diagnostic call site now lives, at the
+    // point a generated plan is ACCEPTED. (An earlier version of this comment described driving
+    // _completeStagedSceneFromScreenplay; that was true when the call site was at the persistence
+    // point, and stopped being true when it moved.)
     const diagAfter = await page.evaluate(async (io) => {
       const fn = window._completeStagedSceneFromScreenplay;
       let genOut = null;
@@ -234,7 +254,8 @@ const ADULT_SAYDO = {
         genOut = await window._runCGScreenplayGen(1, io.action, io.dialogue);
       } catch (e) { window.__cat3Err = String((e && e.message) || e).slice(0, 200); }
       window.__cat3Gen = genOut ? { beats: (genOut.beats || []).length,
-        rejected: !!genOut.__plannerFunctionRejected, keys: Object.keys(genOut).slice(0, 8) } : null;
+        rejected: !!genOut.__plannerFunctionRejected,
+        beatTexts: (genOut.beats || []).map(function (b) { return (b && b.text) || ''; }) } : null;
       return { diag: window.state._lastSafeModeDiagnostic || null,
                completionReachable: typeof fn === 'function',
                scenes: (window.state.scenes || []).length,
@@ -249,12 +270,15 @@ const ADULT_SAYDO = {
       JSON.stringify(capture.map((r) => ({ kind: r.kind, sysLen: r.sys.length, usrLen: r.usr.length })), null, 2));
   }
 
-  const pick = (m) => (arms[m].reqs.find((r) => r.kind === 'author') || arms[m].reqs.find((r) => r.kind === 'planner') || null);
+  // AUTHOR ONLY. Falling back to the planner would keep this section green after a regression that
+  // stopped before author dispatch — while still claiming both arms reached the author.
+  const pick = (m) => (arms[m].reqs.find((r) => r.kind === 'author') || null);
   const fullReq = pick('full'), safeReq = pick('safe');
   console.log('    full arm requests: ' + JSON.stringify(arms.full.reqs.map((r) => r.kind)));
   console.log('    safe arm requests: ' + JSON.stringify(arms.safe.reqs.map((r) => r.kind)));
-  ok('both arms actually reached a downstream request — the input was SUBMITTED, not printed',
-    !!fullReq && !!safeReq, JSON.stringify({ full: arms.full.reqs.length, safe: arms.safe.reqs.length }));
+  ok('both arms reached an AUTHOR request specifically — not a planner request counted as one',
+    !!fullReq && !!safeReq,
+    JSON.stringify({ full: arms.full.reqs.map((r) => r.kind), safe: arms.safe.reqs.map((r) => r.kind) }));
 
   const bodyOf = (r) => (r ? (r.sys + '\n' + r.usr) : '');
   const fullBody = bodyOf(fullReq), safeBody = bodyOf(safeReq);
@@ -274,17 +298,11 @@ const ADULT_SAYDO = {
   ok('neither arm let anything reach a real provider',
     gate.trackedCalls().filter((c) => c.real).length === 0);
 
-  section('8b. DIAGNOSTIC DELIVERY — WIRED, BUT END-TO-END DELIVERY IS NOT YET PROVEN');
-  // HONEST SCOPE. The helper is now called from production code, at the point a generated plan is
-  // ACCEPTED — before persistence and before render. That placement is asserted structurally
-  // below, and the helper's behaviour is proven in section 7.
-  //
-  // WHAT IS NOT PROVEN: that a full CG generation in THIS harness reaches that call site. It does
-  // not — _runCGScreenplayGen returns null in both arms, with no thrown error, so something
-  // downstream of the author reply rejects the plan and the diagnostic never runs. The A/B above
-  // is unaffected (it asserts on the REQUESTS, which are real and captured), but the delivery
-  // claim is not closed, and an assertion that passed anyway would be exactly the vacuous test
-  // this control exists to avoid.
+  section('8b. DIAGNOSTIC DELIVERY — END TO END, THROUGH A REAL ACCEPTED PLAN');
+  // The previous author fixture returned {beats: []}, which can never become an accepted CG plan.
+  // Production correctly returned null, so the call site was unreachable BY CONSTRUCTION — the
+  // harness was guaranteeing its own failure and I had reported that as an open gap. With the
+  // accepted-plan shape reused from _canon_audit_full_flow_control, the real path completes.
   const prodSrc = fs.readFileSync(path.join(__dirname, 'public', 'app.js'), 'utf8');
   ok('there is a production CALL SITE, not just an export',
     /_safeModeBeatDiagnostic\(_cgPlan\.beats, \{ state: state \}\)/.test(prodSrc));
@@ -292,14 +310,34 @@ const ADULT_SAYDO = {
     prodSrc.indexOf('_safeModeBeatDiagnostic(_cgPlan.beats') < prodSrc.indexOf('state.scenes.push({ title:'));
   ok('...guarded so a diagnostic can never break a finished scene',
     /_safeModeBeatDiagnostic\(_cgPlan\.beats[\s\S]{0,400}?catch \(_\) \{\}   \/\/ a diagnostic must never be able to break a finished scene/.test(prodSrc));
-  ok('...and it cannot gate acceptance — the plan is returned regardless of what it reports',
-    /\}\s*catch \(_\) \{\}   \/\/ a diagnostic must never be able to break a finished scene\s*\n\s*return _cgPlan;/.test(prodSrc));
-  ok('the report is retained in a BOUNDED log, so review data cannot grow without limit',
+  ok('the report is retained in a BOUNDED log',
     /_safeModeDiagnosticLog\.length > 30\) state\._safeModeDiagnosticLog\.shift\(\)/.test(prodSrc));
-  console.log('\n    ⚠ NOT PROVEN END-TO-END: _runCGScreenplayGen returned null in both arms of this');
-  console.log('      harness, so the call site was never reached. gen=' + JSON.stringify(arms.safe.gen || null));
-  console.log('      Delivery is wired and structurally asserted; a generation that actually');
-  console.log('      produces a plan is still needed to close it.');
+
+  // THE ROUND TRIP. A real generation, a real accepted plan, a report recorded automatically.
+  console.log('    safe-arm plan beats: ' + JSON.stringify(arms.safe.gen && arms.safe.gen.beatTexts));
+  console.log('    safe-arm diagnostic: ' + JSON.stringify(arms.safe.diag));
+  ok('a REAL Safe Mode generation produced an ACCEPTED plan',
+    !!(arms.safe.gen && arms.safe.gen.beats === 1 && !arms.safe.gen.rejected), JSON.stringify(arms.safe.gen));
+  ok('...and the diagnostic ran AUTOMATICALLY — nothing in this control called it',
+    !!arms.safe.diag && arms.safe.diag.contentMode === 'safe', JSON.stringify(arms.safe.diag));
+  ok('...stamped with the scene it describes', arms.safe.diag && arms.safe.diag.sceneIndex === 1,
+    JSON.stringify(arms.safe.diag && arms.safe.diag.sceneIndex));
+  ok('it IDENTIFIED the planted explicit phrase in the authored beat',
+    arms.safe.diag && arms.safe.diag.explicitBeats === 1
+    && (arms.safe.diag.flagged[0] || {}).beatIndex === 0, JSON.stringify(arms.safe.diag.flagged));
+  ok('...and reported the directive as NOT held, which is the signal to fix the PROMPT',
+    arms.safe.diag && arms.safe.diag.directiveHeld === false);
+  // NON-MUTATION, on the plan production actually returned — not on a hand-fed array.
+  ok('THE BEAT SURVIVED UNTOUCHED — the returned plan still carries the phrase verbatim',
+    !!(arms.safe.gen && arms.safe.gen.beatTexts.indexOf(SAFE_ARM_EXPLICIT) !== -1),
+    JSON.stringify(arms.safe.gen && arms.safe.gen.beatTexts));
+  ok('...and acceptance was never gated — the plan came back despite the finding',
+    !!(arms.safe.gen && !arms.safe.gen.rejected && arms.safe.gen.beats === 1));
+  ok('the normal adult arm recorded a clean report — no false alarm on ordinary prose',
+    !!arms.full.diag && arms.full.diag.explicitBeats === 0 && arms.full.diag.directiveHeld === true,
+    JSON.stringify(arms.full.diag));
+  const logged = await page.evaluate(() => (window.state._safeModeDiagnosticLog || []).length);
+  ok('...and the report is retained for later review', logged >= 1, String(logged));
 
   section('9. CONTAINMENT');
   ok('zero provider dispatches', gate.trackedCalls().filter((c) => c.real).length === 0);
@@ -312,11 +350,8 @@ const ADULT_SAYDO = {
   console.log('\n' + '='.repeat(86));
   console.log('  ' + passed + '/' + results.length + ' assertions passed');
   if (passed !== results.length) console.log('  FAILED: ' + results.filter((r) => !r.pass).map((r) => r.name).join(' | '));
-  console.log('\n  NOT PROVEN, stated plainly:');
-  console.log('   1. that a model OBEYS the directive — needs a paid A/B sample;');
-  console.log('   2. that a full CG generation REACHES the diagnostic call site — this harness');
-  console.log('      cannot get a plan accepted, so delivery is wired and structurally asserted');
-  console.log('      but not yet demonstrated end to end.');
+  console.log('\n  NOT PROVEN: that a model OBEYS the directive. That needs a paid A/B sample,');
+  console.log('  and the diagnostic — now proven to run automatically — is what will measure it.');
   await browser.close();
   process.exit(passed === results.length ? 0 : 1);
 })().catch((e) => { console.error('CONTROL ERROR:', e && e.stack || e); process.exit(2); });
