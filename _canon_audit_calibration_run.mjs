@@ -45,7 +45,9 @@ const paceIdx = process.argv.indexOf('--pace-ms');
 const PACE_MS = paceIdx !== -1 ? Math.max(0, Number(process.argv[paceIdx + 1]) || 0) : (CANARY ? 9000 : 0);
 const pIdx = process.argv.indexOf('--prompt-version');
 const PROMPT_V = pIdx !== -1 ? Number(process.argv[pIdx + 1]) : 2;
-if (PROMPT_V !== 1 && PROMPT_V !== 2) { console.error('REFUSING — --prompt-version must be 1 or 2'); process.exit(6); }
+// v3 was added and this guard was not — it refused the run outright. Fail-closed, so nothing was
+// spent, but the allowed set must track the versions that actually exist.
+if (![1, 2, 3].includes(PROMPT_V)) { console.error('REFUSING — --prompt-version must be 1, 2 or 3'); process.exit(6); }
 // The phrase NAMES THE CEILING IT AUTHORIZES, so an authorization for a cheap run can never
 // release an expensive one. A new candidate with a new ceiling gets a new phrase, by construction.
 const AUTH_PHRASE = RUN_CEILING === 0.11
@@ -70,7 +72,9 @@ if (given !== AUTH_PHRASE) {
     console.log('                 account/quota, do not retry. Succeeds -> preserve it as fixture 1');
     console.log('                 and continue the remaining seven at ' + PACE_MS + 'ms pacing, never repeating it.');
   }
-  console.log('  prompt arm   : v' + PROMPT_V + (PROMPT_V === 1 ? '   (the arm both rejected models were measured against)' : '   (silence-is-permission + qualified categories + surviving-evidence facts)'));
+  console.log('  prompt arm   : v' + PROMPT_V + (PROMPT_V === 1 ? '   (the arm both rejected models were measured against)'
+    : PROMPT_V === 2 ? '   (capability-rooted; carries the FALSE "ev_ is still true" claim)'
+    : '   (v3 — a moment is not a rule; durability must be asserted)'));
   console.log('  measures     : ' + PRIMARY_MODEL + ' ONLY, via ' + PRIMARY_ENDPOINT
     + (CAND.reasoningEffort ? '   reasoning_effort="' + CAND.reasoningEffort + '" (explicit, enforced pre-dispatch)' : ''));
   if (CAND.thinkingBudgetTokens) console.log('  thinking     : EXTENDED, budget ' + CAND.thinkingBudgetTokens + ' tokens (explicit, enforced pre-dispatch)');

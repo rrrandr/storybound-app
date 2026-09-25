@@ -329,6 +329,13 @@ export default async function handler(req, res) {
     // reasoning Grok per-turn while still keeping the full fallback
     // chain behind it.
     const preferredModel = req.body && req.body.preferredModel;
+    // A preferredModel that is allowlisted but NOT in this role's chain used to be silently
+    // ignored — the calibration asked for grok-4.7, the guard failed quietly, and the default
+    // legacy chain ran instead. Say so rather than dropping it on the floor.
+    if (preferredModel && !modelChain.includes(preferredModel)) {
+      console.warn(`[SPECIALIST-PROXY] preferredModel "${preferredModel}" is not in this role's chain — NOT reordering. `
+        + `The chain will run its own entries; only _sbModelOverride changes the model actually called.`);
+    }
     if (preferredModel && modelChain.includes(preferredModel)) {
       modelChain = [preferredModel].concat(modelChain.filter(m => m !== preferredModel));
       console.log(`[SPECIALIST-PROXY] Client preferredModel: ${preferredModel} → chain reordered.`);
@@ -382,6 +389,8 @@ export default async function handler(req, res) {
     let selectedModel = null;
     let lastErrorStatus = 0;
     let lastErrorData = null;
+    // Observability for the internal fallback chain — see _orchestration below.
+    let _resolvedModelUsed = null, _resolvedEffortUsed = null, _upstreamAttempts = 0;
     // Per-request override of the hang-guard timeout (for tuning/verification); defaults to the constant.
     const _xaiTimeoutMs = Number(req.body && req.body.__xaiTimeoutMs) || XAI_CALL_TIMEOUT_MS;
 
@@ -406,6 +415,7 @@ export default async function handler(req, res) {
         } catch (_) {}
       }
       const _grok = _resolveGrokModel(tryModel, req.body && req.body.reasoningEffort, _sbOv);
+      _resolvedModelUsed = _grok.model; _resolvedEffortUsed = _grok.effort; _upstreamAttempts++;
       const _xaiBody = {
         model: _grok.model,
         messages: messages,
@@ -538,7 +548,21 @@ export default async function handler(req, res) {
       ...data,
       _orchestration: {
         role: role,
-        model: selectedModel,
+        // CHAIN LABEL vs MODEL ACTUALLY CALLED (Roman 2026-09-25). selectedModel is the CHAIN
+        // ENTRY name, and _resolveGrokModel rewrites every entry to a live model — grok-4.3 for
+        // the retired aliases, or an _sbModelOverride pin. Echoing only the label made a
+        // grok-4.7 calibration report "served=grok-4-1-fast-reasoning", which reads as a model
+        // substitution when it is nothing of the kind. The RESOLVED model is what was billed and
+        // what answered, so it is reported alongside — and an experiment can finally prove which
+        // model served it.
+        model: (typeof _resolvedModelUsed !== 'undefined' && _resolvedModelUsed) || selectedModel,
+        chainEntry: selectedModel,
+        resolvedModel: (typeof _resolvedModelUsed !== 'undefined' && _resolvedModelUsed) || null,
+        reasoningEffort: (typeof _resolvedEffortUsed !== 'undefined' && _resolvedEffortUsed) || null,
+        // How many upstream attempts this ONE client request actually made. The internal fallback
+        // chain can call the provider several times; a caller that pinned a single tier client-side
+        // has NO control over that, and every attempt is billable.
+        upstreamAttempts: (typeof _upstreamAttempts !== 'undefined' ? _upstreamAttempts : null),
         isSpecialistRenderer: true,
         timestamp: new Date().toISOString()
       }
