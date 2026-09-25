@@ -130897,7 +130897,7 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       // grammar is a group acting — per Roman: "Prefer Lirael unless there is a strong reason to
       // use the presiding Dohkar; the family should be pressure source, not objective actor."
       aftermathLanes: [
-        { id: 'dohkar_preliminary_review', label: 'The presiding Dohkar (or another seated authority) sets a preliminary review, hearing date, or terms — a concrete procedural step TOWARD the formal inquiry, not the convened inquiry itself.', signalRx: /\b(preliminary review|review date|hearing date|sets? a date|scheduled?|convenes?|tribunal date|terms of (?:the )?review|date is set|date was set)\b/i, objectiveActor: 'the presiding Dohkar', pressureSource: null },
+        { id: 'dohkar_preliminary_review', label: 'The presiding Dohkar (or another seated authority) applies PROCEDURAL PRESSURE toward a review of the Sacrificiant\'s conduct — he DEMANDS, RECOMMENDS, CALLS FOR, or warns that a review will follow, and the assembly registers it. HARD LIMITS, because the seed reserves the formal inquiry for LATE Issue 1: do NOT name who convenes it, do NOT give a date or a timeframe, do NOT name The Open, a Chayr, or \"two Dohkars\", and do NOT set terms. A preliminary review may be DEMANDED here; it may not be CONVENED, SCHEDULED, or CONSTITUTED. If the scene would need any of those to land, pick a different lane.', signalRx: /\b(preliminary review|calls? for (?:a )?review|demands? (?:a )?review|recommends? (?:a )?review|warns? of (?:a )?review|review will follow|answer for (?:her|his) conduct|matter (?:of conduct )?(?:is |be )?referred)\b/i, objectiveActor: 'the presiding Dohkar', pressureSource: null },
         { id: 'family_accusation', label: 'Seren\'s family (or another party with standing) publicly accuses Lirael or demands remedy for the twisted wish.', signalRx: /\b(seren'?s family|her family|his family|publicly accuses?|formal(?:ly)? accus\w*|demands? (?:remedy|restitution|compensation|redress)|blood[- ]price)\b/i, objectiveActor: 'Lirael', pressureSource: 'Seren\'s family' },
         { id: 'julian_jurisdiction_challenge', label: 'Julian challenges jurisdiction, reframes the accusation politically, or contests who has authority to rule.', signalRx: /\b(jurisdiction|challenges? (?:the )?dohkar|contests? (?:his |the )?authority|reframes?|political(?:ly)?)\b/i, objectiveActor: 'Julian', pressureSource: null },
         { id: 'lirael_constrained', label: 'Lirael is ordered separated, watched, or otherwise constrained pending the inquiry.', signalRx: /\b(separated|placed under (?:guard|watch)|confined|constrained|watched|pending (?:the )?inquiry|escorted (?:away|out)|removed from)\b/i, objectiveActor: 'the presiding Dohkar', pressureSource: null },
@@ -131031,7 +131031,7 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
         // whether to...") directly invited exactly the hesitation-only beat the real Temptation
         // sample produced; rewritten to require a landed, external, observable action.
         temptation: { laneId: 'lirael_defensive_path', eventFrame: 'Lirael makes a landed defensive move under temptation: she actively conceals a SPECIFIC fact, object, or admission from the Dohkar or the assembly (not vague secrecy), or takes another concrete defensive action from the lane\'s own list — the scene must show her DOING something that changes her tactical position, not merely hesitating, weighing, or silently choosing not to speak. "She almost says it, then doesn\'t" is NOT sufficient — the temptation must resolve into a real, external, observable action, not stay inside a moment of internal weighing.' },
-        silence:    { laneId: 'dohkar_preliminary_review', eventFrame: 'The charged silence after Julian\'s public claim is what prompts the presiding Dohkar to break it procedurally: he sets a preliminary review date and names its terms before the assembly disperses, moving the confrontation off the ritual floor and into procedure.' },
+        silence:    { laneId: 'dohkar_preliminary_review', eventFrame: 'The charged silence after Julian\'s public claim is what prompts the presiding Dohkar to break it procedurally: he states before the assembly disperses that her conduct will be reviewed and that she will answer for it — WITHOUT naming conveners, a date, or terms, which the seed reserves for late Issue 1, moving the confrontation off the ritual floor and into procedure.' },
         reversal:   { laneId: 'julian_jurisdiction_challenge', eventFrame: 'Someone seizes control of who gets to rule here: Julian challenges the presiding Dohkar\'s jurisdiction, reframing the accusation as his own to answer rather than Lirael\'s — a real jurisdictional contest over authority, not another question put to Lirael.' },
         boundary:   { laneId: 'family_accusation', eventFrame: 'Lirael\'s open, unretreating want is what draws Seren\'s family forward: they step out of the assembly and publicly demand remedy for what the wish cost Seren, redirecting the confrontation from Julian\'s accusation to a new formal complaint — NOT another round of the Dohkar asking whether she shaped the wish.' },
         // CONFESSING-PARTY FIX (Roman 2026-09-22) — the OLD text assumed Julian is always the
@@ -131045,9 +131045,9 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
         // delivers that. Julian's own reaction is governed separately by the generic per-slot
         // obligationType mechanism (confession -> 'register', see _INTR_OBLIGATION_TYPE); this
         // frame only decides whose truth triggers the Dohkar's procedural response.
-        confession: { laneId: 'dohkar_preliminary_review', eventFrame: 'An admission has just landed — most naturally Lirael\'s OWN (redirected blame, a self-incriminating deflection, a truth she can no longer keep folded away), though if the reader\'s own submitted words instead have Julian confess something on his own account, that admission destabilizes HIS position exactly the same way; this frame does not require that — only allows it when the reader\'s own text actually delivers it. Whichever party\'s truth just surfaced, the presiding Dohkar reacts to that shift by setting formal terms and a date for review rather than letting the interrogation continue informally.' },
+        confession: { laneId: 'dohkar_preliminary_review', eventFrame: 'An admission has just landed — most naturally Lirael\'s OWN (redirected blame, a self-incriminating deflection, a truth she can no longer keep folded away), though if the reader\'s own submitted words instead have Julian confess something on his own account, that admission destabilizes HIS position exactly the same way; this frame does not require that — only allows it when the reader\'s own text actually delivers it. Whichever party\'s truth just surfaced, the presiding Dohkar reacts to that shift by declaring that the matter now passes out of his hands and into review rather than letting the interrogation continue informally — he does NOT name conveners, a date, or terms, which the seed reserves for late Issue 1.' },
       },
-      defaultEventFrame: { laneId: 'dohkar_preliminary_review', eventFrame: 'The presiding Dohkar formally sets a preliminary review of Lirael\'s conduct — naming who convenes it and roughly when — moving the confrontation off the ritual floor and into procedure. This is NOT another round of asking whether she shaped the wish.' },
+      defaultEventFrame: { laneId: 'dohkar_preliminary_review', eventFrame: 'The presiding Dohkar puts Lirael\'s conduct formally in question before the assembly — he states that it WILL be reviewed and that she will answer for it, moving the confrontation off the ritual floor and into procedure. He does NOT name who will convene it, does NOT give a date or timeframe, and does NOT name The Open, a Chayr, or \"two Dohkars\" — the seed reserves the constituted inquiry for LATE Issue 1, and naming its conveners or its date IS constituting it. The pressure is the event; the proceeding is not. This is also NOT another round of asking whether she shaped the wish.' },
     },
     { n: 3, goal: 'THE PRICE AND THE THRESHOLD — step 7, then escalation. IN THIS ORDER: (A) The sacrifice is taken or identified — the offered MEMORY, expressed in the memory\'s own domain, never a faculty Seren did not offer. It lands only now, after the audience understands the twist, so cost is never confused with warp. (B) A NEW irreversible pressure arrives; this scene may NOT restage scene 2\'s accusation. (C) Julian\'s position shifts — a constraint, a knowledge, or a limit that changes what he is to her. (D) The deck surfaces and the temptation sharpens. (E) STOP at the threshold. Lirael does NOT choose. The player does.',
       participants: ['Lirael', 'Seren', 'Julian', 'the presiding Dohkar'],
@@ -235160,7 +235160,10 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
       // OWNERSHIP CHECK, BEFORE ANYTHING ELSE. A proposal that is not provably this generation's
       // is not audited and is not trusted — it FAILS CLOSED rather than being ignored, because
       // silently skipping the audit is exactly the bypass this whole gate exists to prevent.
-      if (_caProposal && _canonAuditIsEnabled()) {
+      // OWNERSHIP IS CHECKED ALWAYS (Roman 2026-09-25). It used to be gated on
+      // _canonAuditIsEnabled(), so switching the PAID auditor off also switched off the free
+      // stale-proposal guard. Ownership costs nothing and has nothing to do with the model.
+      if (_caProposal) {
         var _own = _caProposal.owner, _cur = state._cgGenAttempt;
         var _ownOk = !!(_own && _cur && _own.id === _cur.id
           && String(_own.storyId || '') === String(state.storyId || '')
@@ -235175,6 +235178,33 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
             verdict: { allow: false, source: 'stale-proposal', reason: _ownWhy } };
           return { __plannerFunctionRejected: true, __canonAuditBlocked: true, canonAuditSource: 'stale-proposal',
                    reason: 'canon audit (stale-proposal): ' + _ownWhy, sceneIndex: sceneIndex };
+        }
+      }
+      // ── FREE DETERMINISTIC CHECKS RUN UNCONDITIONALLY (Roman 2026-09-25) ──────────────────
+      // ARCHITECTURE BUG, found by the Safe Mode A/B: the whole block below was wrapped in
+      // _canonAuditIsEnabled(), so _canonDeterministicCheck() never ran with the auditor off.
+      // A deterministic, FREE rejection has no business depending on whether a PAID model audit
+      // is switched on — and with it off, ungrounded capabilities and seed-reserved content
+      // reached the author unchecked. That is exactly the state both live samples ran in.
+      //
+      // Now: ownership, packet and deterministic checks ALWAYS; only the paid Grok audit is gated
+      // by _canonAuditIsEnabled() and the risk trigger.
+      if (_caProposal && typeof _buildCanonPacket === 'function' && typeof _canonDeterministicCheck === 'function') {
+        var _caPacket = _buildCanonPacket(state, { proposal: _caProposal });
+        var _caDet = _canonDeterministicCheck(_caProposal, _caPacket);
+        if (_caDet.decided) {
+          state._canonAuditBlocked = { at: Date.now(), sceneIndex: sceneIndex, proposal: _caProposal,
+            packetIds: _caPacket.ids, verdict: { allow: false, source: 'deterministic', paid: false,
+              violations: _caDet.violations,
+              reason: _caDet.violations.map(function (x) { return x.category + ': ' + x.why; }).join(' | ') } };
+          state._lastCanonAudit = { at: Date.now(), sceneIndex: sceneIndex, allow: false,
+            source: 'deterministic', paid: false, triggered: false, triggerReasons: [],
+            violations: _caDet.violations, telemetry: null,
+            reason: state._canonAuditBlocked.verdict.reason };
+          try { console.warn('[CANON-DET] BLOCKED before author dispatch (free, auditor-independent): '
+            + state._canonAuditBlocked.verdict.reason); } catch (_) {}
+          return { __plannerFunctionRejected: true, __canonAuditBlocked: true, canonAuditSource: 'deterministic',
+                   reason: 'canon (deterministic): ' + state._canonAuditBlocked.verdict.reason, sceneIndex: sceneIndex };
         }
       }
       if (_caProposal && typeof _buildCanonPacket === 'function' && typeof _canonAuditGate === 'function'

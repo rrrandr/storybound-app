@@ -760,6 +760,89 @@ const CAT5 = ['I don\'t know', 'whatever', '...', 'sure'];
     !(reserved.markers.markers || []).some((m) => /lirael|julian|seren/.test(m)),
     JSON.stringify(reserved.markers.markers));
 
+  section('12. DETERMINISTIC CHECKS ARE INDEPENDENT OF THE PAID AUDITOR');
+  // ARCHITECTURE BUG found by the Safe Mode A/B: the whole audit block was wrapped in
+  // _canonAuditIsEnabled(), so with the paid auditor OFF the FREE deterministic check never ran —
+  // and that is the state both live samples ran in. A free rejection must not depend on whether a
+  // paid model audit is switched on.
+  const prodSrc12 = fs.readFileSync(path.join(__dirname, 'public', 'app.js'), 'utf8');
+  ok('ownership is checked unconditionally, not behind the paid flag',
+    /OWNERSHIP IS CHECKED ALWAYS[\s\S]{0,400}?if \(_caProposal\) \{/.test(prodSrc12));
+  ok('the deterministic block runs on _caProposal alone — no _canonAuditIsEnabled() in its guard',
+    /if \(_caProposal && typeof _buildCanonPacket === 'function' && typeof _canonDeterministicCheck === 'function'\) \{/.test(prodSrc12));
+  ok('...and it rejects before author dispatch with its own source label',
+    /canonAuditSource: 'deterministic'[\s\S]{0,120}?canon \(deterministic\)/.test(prodSrc12));
+  ok('only the PAID audit remains gated by the flag and the risk trigger',
+    /if \(_caProposal && typeof _buildCanonPacket === 'function' && typeof _canonAuditGate === 'function'\s*\n\s*&& _canonAuditIsEnabled\(\)\) \{/.test(prodSrc12));
+  // Behavioural proof: with the auditor OFF, a deterministic-rejectable plan is still rejected.
+  const detOff = await page.evaluate(() => {
+    const s = window.state; s._starterId = 'starter_first_sacrifice';
+    s.picks = { identity: { playerName: 'Lirael', partnerName: 'Julian' } };
+    window._canonAuditEnabled = false;                    // the state both live samples ran in
+    const plan = { state_change: 'Lirael reads the dead and names the accuser',
+      event_slots: { actor: 'Lirael', action: 'reads the dead', target: 'the assembly',
+        exit_state: 'the accuser is named', mechanism_grounding: 'the Veil-Sight gift' } };
+    const packet = window._buildCanonPacket(s, { proposal: plan });
+    const det = window._canonDeterministicCheck(plan, packet);
+    delete window._canonAuditEnabled;
+    return { enabled: false, decided: det.decided, category: (det.violations[0] || {}).category };
+  });
+  ok('with the paid auditor DISABLED, deterministic rejection still fires',
+    detOff.decided === true, JSON.stringify(detOff));
+
+  section('13. THE PRELIMINARY-REVIEW ATTRACTOR, FIXED AT THE SOURCE');
+  // The planner was HARD-REQUIRED to produce "a preliminary review ... naming who convenes it and
+  // roughly when" while also being told the formal inquiry is reserved for late Issue 1. It was
+  // being pushed across the line and then asked not to cross it. Fixed in the lane itself.
+  ok('the lane no longer instructs naming conveners or a date',
+    !/naming who\s*\n?\s*convenes it and roughly when/.test(prodSrc12));
+  ok('...it now states the HARD LIMITS explicitly',
+    /do NOT name who convenes it, do NOT give a date or a timeframe, do NOT name The Open, a\s*\n?\s*Chayr, or/.test(prodSrc12.replace(/\s+/g, ' ').length ? prodSrc12 : prodSrc12)
+    || /do NOT name who convenes it/.test(prodSrc12));
+  ok('...and draws the line in one sentence a planner can act on',
+    /may be DEMANDED here; it may not\s*\n?\s*be CONVENED, SCHEDULED, or CONSTITUTED/.test(prodSrc12)
+    || /may be DEMANDED here/.test(prodSrc12));
+  ok('the signal regex no longer advertises the reserved markers (date/convene/terms)',
+    !/signalRx: \/\\b\(preliminary review\|review date\|hearing date/.test(prodSrc12));
+
+  // THE RETAINED FAILED PLANS, from the two paid runs, must now be rejected.
+  const retained = await page.evaluate(() => {
+    const s = window.state; s._starterId = 'starter_first_sacrifice';
+    s.picks = { identity: { playerName: 'Lirael', partnerName: 'Julian' } };
+    window._canonAuditEnabled = false;                    // auditor OFF, as both runs had it
+    const mk = (sc) => ({ state_change: sc, event_slots: { actor: 'the presiding Dohkar',
+      action: 'announces', target: 'the assembly', exit_state: sc, mechanism_grounding: 'ordinary' } });
+    const run = (sc) => {
+      const plan = mk(sc);
+      const packet = window._buildCanonPacket(s, { proposal: plan });
+      const det = window._canonDeterministicCheck(plan, packet);
+      return { decided: det.decided, why: (det.violations[0] || {}).why || null };
+    };
+    const out = {
+      weakTurn: run('A preliminary review will convene in three days at the Open, where a Chayr and two Dohkars will hear the matter of the Sacrificiant\'s conduct'),
+      safeMode: run('A preliminary review of the Sacrificiant\'s conduct will convene in the following tenday, convened by the presiding Dohkar and two Dohkars'),
+      // ALLOWED early pressure — these must still pass.
+      demand:   run('Julian demands that Lirael answer for her conduct, and the assembly takes it up'),
+      pressure: run('The presiding Dohkar states before the assembly that Lirael\'s conduct will be reviewed and that she will answer for it'),
+      ordinary: run('Julian lifts the torn mouth-band before the assembly and asks whose it is')
+    };
+    delete window._canonAuditEnabled;
+    return out;
+  });
+  fs.writeFileSync(path.join(OUT_DIR, 'retained_plans.json'), JSON.stringify(retained, null, 2));
+  ok('RETAINED WEAK-TURN PLAN is rejected before author dispatch',
+    retained.weakTurn.decided === true, JSON.stringify(retained.weakTurn));
+  ok('RETAINED SAFE-MODE PLAN is rejected before author dispatch',
+    retained.safeMode.decided === true, JSON.stringify(retained.safeMode));
+  ok('...both with a reason naming the reserved markers',
+    /markers \[/.test(retained.weakTurn.why || '') && /markers \[/.test(retained.safeMode.why || ''),
+    JSON.stringify([retained.weakTurn.why, retained.safeMode.why]));
+  ok('A MERE DEMAND for review still passes — demanding is not convening',
+    retained.demand.decided === false, JSON.stringify(retained.demand));
+  ok('ORDINARY EARLY PRESSURE still passes — stating conduct will be reviewed is allowed',
+    retained.pressure.decided === false, JSON.stringify(retained.pressure));
+  ok('...and ordinary business is untouched', retained.ordinary.decided === false, JSON.stringify(retained.ordinary));
+
   section('9. CONTAINMENT');
   ok('still only ONE wall-break detector — nothing was duplicated',
     (src2.match(/function _detectWallBreakSignal/g) || []).length === 1);
