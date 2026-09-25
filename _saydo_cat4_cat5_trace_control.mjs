@@ -343,8 +343,16 @@ const CAT5 = ['I don\'t know', 'whatever', '...', 'sure'];
   note('wrong actor: ' + JSON.stringify({ v: wrongActor.verdict, p: wrongActor.proposition }));
   ok('RED — a claim about the WRONG ACTOR is not supported by the right words',
     wrongActor.verdict !== 'supported', JSON.stringify(wrongActor).slice(0, 220));
-  ok('...and the true actor IS matched when the claim names them',
-    (await verify('You forgot Seren stole The Answer.')).verdict === 'supported');
+  // The record's own object there is a PRONOUN ("Seren stole it"), which canonical comparison
+  // cannot resolve — so unresolved is the correct answer, not a miss. My first version of this
+  // assertion expected 'supported', which only held under the loose matching being removed.
+  ok('...and a pronoun object in the record is UNRESOLVED, not guessed at',
+    (await verify('You forgot Seren stole The Answer.')).verdict === 'unresolved');
+  ok('...while a record naming the object explicitly DOES support the right actor',
+    (await page.evaluate(async () => {
+      window.state.scenes = [{ text: 'Seren stole The Answer from the vestry.' }];
+      return (await window._conciergeVerifyContinuityClaim('You forgot Seren stole The Answer.')).verdict;
+    })) === 'supported');
 
   // RED 2 — TWO ACTORS, OPPOSITE PREDICATES, ONE RECORD.
   await seedStory({ storyId: 'S2', scenes: [
@@ -395,6 +403,53 @@ const CAT5 = ['I don\'t know', 'whatever', '...', 'sure'];
     outside.verdict === 'unresolved' && /bounded proposition grammar/.test(outside.reason || ''),
     JSON.stringify(outside).slice(0, 200));
 
+  section('8c-1b. OBJECT EQUALITY, NOT SHARED FILLER WORDS');
+  // One shared 3+ character token accepted "the", "before", "after" — so a MURDER before the
+  // ASSEMBLY matched an ACCUSATION before the COUNCIL and was confidently supported.
+  await seedStory({ storyId: 'S1b', scenes: [
+    { text: 'Julian admitted the accusation before the council.' }] });
+  const wrongObject = await verify('You forgot Julian admitted the murder before the assembly.');
+  note('wrong object: ' + JSON.stringify({ v: wrongObject.verdict, ev: wrongObject.evidence.length }));
+  ok('RED — a DIFFERENT object sharing only filler words is not supported',
+    wrongObject.verdict === 'unresolved', JSON.stringify(wrongObject).slice(0, 240));
+  ok('...and no evidence was accepted at all', wrongObject.evidence.length === 0,
+    JSON.stringify(wrongObject.evidence));
+  ok('the SAME object still matches across a differing adjunct — the object is the direct object,\n'
+    + '     not the phrase that follows it',
+    (await verify('You forgot Julian admitted the accusation before the assembly.')).verdict === 'supported');
+
+  section('8c-1c. RAW PLAYER INPUT PROVES THE UTTERANCE, NOT ITS CONTENTS');
+  // Lirael SAYING "Julian admitted it" establishes that she said it. Treating the embedded
+  // proposition as history would let a player assert anything into canon by typing it.
+  await seedStory({ storyId: 'S1c', scenes: [{ text: 'The lamp guttered and no one spoke.' }],
+    ledger: { storyId: 'S1c', entries: [
+      { sceneNumber: 1, act: 'I stepped forward', dia: 'Julian admitted the accusation.', plannedEvent: null }] } });
+  const fromInput = await verify('You forgot Julian admitted the accusation.');
+  note('from player input: ' + JSON.stringify({ v: fromInput.verdict, checked: fromInput.checked.filter((c) => /playerInput/.test(c)) }));
+  ok('RED — a proposition embedded in the player\'s own dialogue cannot prove itself',
+    fromInput.verdict === 'unresolved', JSON.stringify(fromInput).slice(0, 240));
+  ok('...the player input is visible but labelled CONTEXT, not delivered fact',
+    fromInput.checked.some((c) => /^playerInput\[\d+\]:context$/.test(c)), JSON.stringify(fromInput.checked));
+  ok('...and delivered prose asserting the same thing DOES support it',
+    (await page.evaluate(async () => {
+      window.state.scenes = [{ text: 'Julian admitted the accusation before the council.' }];
+      return (await window._conciergeVerifyContinuityClaim('You forgot Julian admitted the accusation.')).verdict;
+    })) === 'supported');
+
+  section('8c-1d. A RECORD THAT DISAGREES WITH ITSELF IS UNRESOLVED');
+  await seedStory({ storyId: 'S1d', scenes: [
+    { text: 'Julian admitted the accusation.' },
+    { text: 'Julian did not admit the accusation.' }] });
+  const conflicted = await verify('You forgot Julian admitted the accusation.');
+  note('self-conflicting record: ' + JSON.stringify({ v: conflicted.verdict, c: !!conflicted.conflict }));
+  ok('RED — matching AND opposing authoritative evidence yields UNRESOLVED, not contradicted',
+    conflicted.verdict === 'unresolved', JSON.stringify(conflicted).slice(0, 240));
+  ok('...and both sides of the conflict are preserved for the conversation',
+    !!(conflicted.conflict && conflicted.conflict.support && conflicted.conflict.contradiction),
+    JSON.stringify(conflicted.conflict));
+  ok('...with a reason that names the disagreement',
+    /both a matching and an opposing account/.test(conflicted.reason || ''), conflicted.reason);
+
   section('8c-2. STORY ISOLATION, THROUGH THE PRODUCTION ACCESSOR');
   await seedStory({ storyId: 'S5', scenes: [],
     ledger: { storyId: 'SOMEONE-ELSE', entries: [
@@ -407,7 +462,8 @@ const CAT5 = ['I don\'t know', 'whatever', '...', 'sure'];
   section('8c-3. THE HANDOFF REPORTS WHAT IT ACTUALLY DELIVERED');
   // _openPanel returns early when already open, suppressed, or zoomed, and drops firstLine once
   // any history exists. The old caller set handedOff=true regardless.
-  const handoff = await page.evaluate(() => {
+  const handoff = await page.evaluate(async () => {
+    const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
     const out = {};
     const scroll = () => document.getElementById('conciergeDialogueScroll');
     const count = () => { const el = scroll(); return el ? el.children.length : -1; };
@@ -423,10 +479,28 @@ const CAT5 = ['I don\'t know', 'whatever', '...', 'sure'];
     out.suppressed = window._conciergeHandoffContinuity('You forgot the ledger.', 'Unresolved.');
     out.queueDepth = window._conciergeHandoffQueueDepth();
     window._libraryZoomActive = false;
-    // (c) after suppression lifts, the queued message is delivered.
-    out.afterLift = window._conciergeHandoffContinuity('You forgot the sash.', 'Unresolved too.');
+    // (c) SUPPRESSION LIFTS AND THE PLAYER JUST OPENS THE CONCIERGE NORMALLY — no second
+    // complaint. The queue must drain from the panel-open lifecycle itself.
+    // _closePanel sets a 1500ms _suppressOpenUntil window, which is real production behaviour and
+    // not something to work around — so the test waits it out, exactly as a player would.
+    await sleep(1600);
+    window._openConciergePanel();                       // an ordinary bell-style open
     out.afterText = (scroll() || { textContent: '' }).textContent;
     out.queueAfter = window._conciergeHandoffQueueDepth();
+    // (d) a dispute queued under a DIFFERENT story must not surface in this one.
+    // The panel must be CLOSED for the queue path to be exercised at all — an open panel
+    // delivers directly and zoom is irrelevant to it, which is correct but not what this tests.
+    if (typeof window._closeConciergePanel === 'function') window._closeConciergePanel();
+    window.state.storyId = 'story-ONE';
+    window._libraryZoomActive = true;
+    window._conciergeHandoffContinuity('A dispute from another book.', 'Unresolved.');
+    window._libraryZoomActive = false;
+    window.state.storyId = 'story-TWO';
+    if (typeof window._closeConciergePanel === 'function') window._closeConciergePanel();
+    await sleep(1600);
+    window._openConciergePanel();
+    out.crossStoryText = (scroll() || { textContent: '' }).textContent;
+    out.crossStoryQueue = window._conciergeHandoffQueueDepth();
     return out;
   });
   fs.writeFileSync(path.join(OUT_DIR, 'handoff.json'), JSON.stringify(handoff, null, 2));
@@ -441,9 +515,12 @@ const CAT5 = ['I don\'t know', 'whatever', '...', 'sure'];
     JSON.stringify(handoff.suppressed));
   ok('...and queues the message instead of dropping it',
     handoff.suppressed.queued === true && handoff.queueDepth >= 1, JSON.stringify(handoff));
-  ok('...then delivers the queued message once suppression lifts',
-    handoff.afterLift.delivered === true && handoff.queueAfter === 0
-    && /You forgot the ledger\./.test(handoff.afterText || ''), JSON.stringify({ q: handoff.queueAfter }));
+  ok('...and an ORDINARY panel open drains it — no second complaint required',
+    handoff.queueAfter === 0 && /You forgot the ledger\./.test(handoff.afterText || ''),
+    JSON.stringify({ q: handoff.queueAfter, tail: (handoff.afterText || '').slice(-120) }));
+  ok('a dispute queued under ANOTHER story is discarded, not surfaced in this one',
+    handoff.crossStoryQueue === 0 && !/A dispute from another book\./.test(handoff.crossStoryText || ''),
+    JSON.stringify({ q: handoff.crossStoryQueue, tail: (handoff.crossStoryText || '').slice(-120) }));
 
   section('8c-4. THE OOC BRANCH IS NAMED HONESTLY');
   const oocRes = await page.evaluate(() => {

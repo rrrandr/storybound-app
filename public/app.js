@@ -126665,10 +126665,31 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
     } catch (_) {}
     return out;
   }
-  function _objectsOverlap(a, b) {
-    var wa = String(a || '').split(/\s+/).filter(function (w) { return w.length >= 3; });
-    var wb = ' ' + String(b || '') + ' ';
-    return wa.some(function (w) { return wb.indexOf(w) !== -1; });
+  // OBJECT EQUALITY, NOT OVERLAP (Roman 2026-09-25). One shared 3+ character token accepted
+  // "the", "before", "after" and friends — so "Julian admitted the MURDER before the ASSEMBLY"
+  // matched "Julian admitted the ACCUSATION before the COUNCIL" and was confidently supported.
+  //
+  // The object of a proposition is its DIRECT object, not the adjunct that follows it. So the
+  // phrase is cut at the first prepositional boundary, stripped of determiners and filler, and
+  // compared for CANONICAL EQUALITY. A deliberately declared alias is the only other way through.
+  // Anything that cannot be compared cleanly contributes nothing, which lands as unresolved.
+  // Relative and temporal tails are adjuncts too: "the accusation THAT night" and "the ledger
+  // WHICH she signed" both have "the accusation" / "the ledger" as their direct object.
+  var _OBJ_CUT_RX = /\s+\b(?:before|after|at|in|into|to|from|with|for|about|against|during|beside|behind|under|over|while|when|and|or|that|which|who|whom|whose)\b\s+/i;
+  var _OBJ_FILLER = /^(?:the|a|an|this|that|these|those|his|her|their|its|my|your|our|of|it|them|him|us)$/;
+  // Aliases are DECLARED, never inferred — two names for the same object, nothing looser.
+  var _OBJ_ALIASES = { 'answer': 'the answer', 'accusation': 'accusation', 'rite': 'ceremony', 'ceremony': 'ceremony' };
+  function _canonObject(t) {
+    var head = String(t || '').toLowerCase().split(_OBJ_CUT_RX)[0];
+    var toks = head.replace(/[^a-z0-9\s]/g, ' ').split(/\s+/)
+      .filter(function (w) { return w && !_OBJ_FILLER.test(w); })
+      .map(function (w) { return _OBJ_ALIASES[w] || w; });
+    return toks.join(' ').trim();
+  }
+  function _objectsMatch(a, b) {
+    var ca = _canonObject(a), cb = _canonObject(b);
+    if (!ca || !cb) return false;          // nothing comparable → contributes nothing
+    return ca === cb;
   }
 
   // ── SOURCE AUTHORITY (Roman 2026-09-25) ─────────────────────────────────────────────────────
@@ -126689,7 +126710,15 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
     try {
       var L = (typeof _sceneLedgerGet === 'function') ? _sceneLedgerGet(s, false) : null;
       (L && Array.isArray(L.entries) ? L.entries : []).forEach(function (e, i) {
-        add('playerInput', i, [e && e.act, e && e.dia].filter(Boolean).join(' '), 'delivered');
+        // A COMMITTED SAY/DO PROVES THE UTTERANCE, NOT ITS CONTENTS. Lirael saying "Julian
+        // admitted the accusation" establishes that she said it — not that he did. Treating the
+        // embedded proposition as history would let a player assert anything into canon simply by
+        // typing it. Context only.
+        //
+        // The narrow exception — a claim explicitly ABOUT the player's own utterance or action,
+        // matched as a structured speech act — is NOT in the bounded grammar yet, so such a claim
+        // lands as unresolved and goes to the Concierge. That is the conservative direction.
+        add('playerInput', i, [e && e.act, e && e.dia].filter(Boolean).join(' '), 'context');
         add('plannedEvent', i, e && e.plannedEvent, 'context');   // PROPOSAL ONLY — never proof
       });
     } catch (_) {}
@@ -126741,7 +126770,7 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
           _propositionsIn(src.text).forEach(function (p) {
             if (p.actor !== claimProp.actor) return;                 // ACTOR MUST MATCH
             if (p.relation !== claimProp.relation) return;           // SAME AXIS
-            if (!_objectsOverlap(claimProp.object, p.object)) return; // SAME OBJECT
+            if (!_objectsMatch(claimProp.object, p.object)) return;   // SAME OBJECT, canonically
             var rec = { where: src.kind + '[' + src.at + ']', authority: src.authority,
                         recorded: p.surface, polarity: p.polarity };
             result.evidence.push(rec);
@@ -126751,7 +126780,14 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
             else if (!contradiction) contradiction = rec;
           });
         });
-        if (contradiction) { result.verdict = 'contradicted'; result.contradiction = contradiction; }
+        // THE RECORD DISAGREES WITH ITSELF ⇒ UNRESOLVED. Picking either pole would be asserting
+        // one half of a genuine conflict as fact; the conversation is the only honest destination.
+        if (support && contradiction) {
+          result.verdict = 'unresolved';
+          result.reason = 'the record contains both a matching and an opposing account';
+          result.conflict = { support: support, contradiction: contradiction };
+        }
+        else if (contradiction) { result.verdict = 'contradicted'; result.contradiction = contradiction; }
         else if (support) { result.verdict = 'supported'; result.support = support; }
         else { result.verdict = 'unresolved'; result.reason = result.evidence.length
           ? 'only non-authoritative sources matched' : 'no delivered record matches this proposition'; }
@@ -333596,6 +333632,11 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
       }, settleDelay + 130);
     }
 
+    // ANY successful open drains queued continuity disputes — including an ordinary bell tap with
+    // no handoff involved. Without this, a dispute raised while the panel was suppressed waited
+    // for a SECOND complaint that a real player would never bother to make.
+    try { if (typeof _drainContinuityHandoffQueue === 'function') _drainContinuityHandoffQueue(); } catch (_) {}
+
     _resetInactivityTimer();
   }
 
@@ -334971,6 +335012,29 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
   // history, and returns whether the message was actually delivered. When opening is genuinely
   // suppressed it queues the message and says so — it never claims success it did not have.
   var _continuityHandoffQueue = [];
+  // DRAINED FROM THE PANEL-OPEN LIFECYCLE, not only from another handoff call. Draining only on
+  // the next _conciergeHandoffContinuity meant that closing a zoom and opening the Concierge the
+  // ordinary way — the bell — left a queued dispute stranded indefinitely. The old test passed
+  // only because it submitted a SECOND complaint, which is not what a player does.
+  //
+  // Entries keep chronological order and carry the storyId they were raised in; a queued dispute
+  // from a different story is discarded rather than surfacing in the wrong book.
+  function _drainContinuityHandoffQueue() {
+    try {
+      if (!_continuityHandoffQueue.length) return 0;
+      var sid = String((window.state && window.state.storyId) || '');
+      var pending = _continuityHandoffQueue.slice();      // chronological, as queued
+      _continuityHandoffQueue.length = 0;
+      var delivered = 0;
+      pending.forEach(function (q) {
+        if (q.storyId && sid && q.storyId !== sid) return;   // stale story → discard
+        if (q.claim) _appendMessage('user', q.claim, { skipCCL: true, isAuthored: true });
+        if (q.note) _appendMessage('ai', q.note, { skipCCL: true, isAuthored: true });
+        delivered++;
+      });
+      return delivered;
+    } catch (_) { return 0; }
+  }
   function _conciergeHandoffContinuity(claimText, finding) {
     var out = { delivered: false, reason: null, alreadyOpen: !!_panelOpen, queued: false };
     try {
@@ -334981,7 +335045,8 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
       var blockedBySuppress = Date.now() < _suppressOpenUntil;
       if (!_panelOpen && (blockedByZoom || blockedBySuppress)) {
         // HONEST FAILURE. Queue it so the next open delivers it, and report delivered=false.
-        _continuityHandoffQueue.push({ claim: claim, note: note, at: Date.now() });
+        _continuityHandoffQueue.push({ claim: claim, note: note, at: Date.now(),
+          storyId: String((window.state && window.state.storyId) || '') });
         out.reason = blockedByZoom ? 'library zoom has focus' : 'panel opening is suppressed';
         out.queued = true;
         return out;
@@ -334995,12 +335060,7 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
       if (claim) _appendMessage('user', claim, { skipCCL: true, isAuthored: true });
       if (note) _appendMessage('ai', note, { skipCCL: true, isAuthored: true });
       out.delivered = true;
-      // Drain anything queued while the panel was unavailable.
-      while (_continuityHandoffQueue.length) {
-        var q = _continuityHandoffQueue.shift();
-        if (q.claim) _appendMessage('user', q.claim, { skipCCL: true, isAuthored: true });
-        if (q.note) _appendMessage('ai', q.note, { skipCCL: true, isAuthored: true });
-      }
+      _drainContinuityHandoffQueue();
     } catch (e) { out.reason = (e && e.message) || String(e); }
     return out;
   }
