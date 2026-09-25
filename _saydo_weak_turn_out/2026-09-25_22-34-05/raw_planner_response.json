@@ -1,0 +1,93 @@
+[
+  {
+    "id": "11af0d753fc84b199cd1e49fa9e6fd8f",
+    "created": 1790375686,
+    "model": "ministral-8b-2512",
+    "usage": {
+      "prompt_tokens": 5401,
+      "total_tokens": 6634,
+      "completion_tokens": 1233,
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      },
+      "service_tier": "standard"
+    },
+    "object": "chat.completion",
+    "choices": [
+      {
+        "index": 0,
+        "finish_reason": "stop",
+        "message": {
+          "role": "assistant",
+          "tool_calls": null,
+          "content": "```json\n{\n  \"runThesis\": \"She seeks to prove her worth by earning his trust, but he tests her with every kindness—does she pass the mirror or shatter it?\",\n  \"thematicDirection\": \"The cost of intimacy is not vulnerability, but the refusal to be a reflection.\",\n  \"visualThesis\": \"From fractured reflections and deliberate distance to unguarded closeness—each issue peels back a layer of his armor until the final scene where the glass finally clears\",\n\n  \"worldPhysics\": \"Beauty is a shield; desire is a test—every act of care carries the question of whether you are real or a mirror.\",\n  \"hiddenPressure\": \"Is she safe with him if she stops wanting to be his equal?\",\n  \"socialGeometry\": \"Public intimacy is a performance; private moments are the only place the test can be failed or passed.\",\n  \"permittedAnomalyStyle\": \"The world’s strangeness is in the way he moves through it—unseen cracks in the armor, like a wound that never quite heals\",\n\n  \"issueArcs\": [\n    {\n      \"issueLabel\": \"Issue 1 — The First Test\",\n      \"thesis\": \"She earns his trust by proving she won’t break, but every kindness is a question: *Will you pass the mirror?*\",\n      \"ambiguityTargets\": [\n        \"Is his beauty a weapon or a wound?\",\n        \"Does she want to fix him or be fixed by him?\",\n        \"What does it mean to fail the test?\"\n      ],\n      \"pressureVectors\": [\n        \"The weight of his gaze—every glance feels like a test\",\n        \"Her growing fear that kindness is a trap\",\n        \"The cost of her own reflection in his eyes\"\n      ],\n      \"endingShape\": \"quiet rupture\",\n      \"regimePhase\": \"instability\",\n      \"cliffShape\": {\n        \"preferredFamilies\": [\n          \"pre_completion_charged_interrupt\",\n          \"emotional_inversion\"\n        ],\n        \"avoidFamilies\": [\n          \"identity_rupture\"\n        ],\n        \"escalation\": \"soft proximity early → hard inversion at the issue boundary\"\n      },\n      \"visualArc\": {\n        \"tendencies\": [\n          \"mirrored compositions with deliberate separation\",\n          \"warm lighting only in private moments\",\n          \"his face always half-lit, half-shadowed\"\n        ],\n        \"escalation\": [\n          \"eye contact stays interrupted until the final scene\",\n          \"her hands become a barrier between them\"\n        ],\n        \"withhold\": [\n          \"a centered, unbroken couple composition\",\n          \"direct warmth in his gaze\"\n        ]\n      }\n    },\n    {\n      \"issueLabel\": \"Issue 2 — The Cost of Entanglement\",\n      \"thesis\": \"She can’t untangle herself from him, but every shared moment deepens the question: *Is she his equal or his burden?*\",\n      \"ambiguityTargets\": [\n        \"Is dependence the price of intimacy, or its proof?\",\n        \"Does he want her to stay or to prove she can leave?\",\n        \"What does it mean to be his equal?\"\n      ],\n      \"pressureVectors\": [\n        \"The proximity that feels like a cage\",\n        \"Her fear of becoming what he needs\",\n        \"The cost of his silence—what is he hiding?\"\n      ],\n      \"endingShape\": \"rupture-and-pursuit\",\n      \"regimePhase\": \"pressure_accumulation\",\n      \"cliffShape\": {\n        \"preferredFamilies\": [\n          \"external_shock\",\n          \"forced_separation\"\n        ],\n        \"avoidFamilies\": [\n          \"countdown\"\n        ],\n        \"escalation\": \"soft dependency early → hard separation at the issue boundary\"\n      },\n      \"visualArc\": {\n        \"tendencies\": [\n          \"tight framing that feels like confinement\",\n          \"her movements restricted by his presence\",\n          \"his armor now visible in the cracks of their shared space\"\n        ],\n        \"escalation\": [\n          \"lighting shifts from cold to warm as dependency grows\",\n          \"his reflection in her eyes becomes unavoidable\"\n        ],\n        \"withhold\": [\n          \"a scene where he fully lowers his guard\",\n          \"her unguarded vulnerability\"\n        ]\n      }\n    }\n  ],\n\n  \"motifBank\": [\n    \"a shattered mirror\",\n    \"a hand reaching toward a door she can’t open\",\n    \"the sound of glass breaking\",\n    \"a wound that never quite closes\",\n    \"a key that fits no lock\"\n  ],\n\n  \"voiceAnchors\": {\n    \"li_register\": \"He speaks in riddles—every kindness is a question, every silence a test; his words are armor, his pauses are the cracks.\",\n    \"pc_register\": \"She narrates in fragments—her thoughts are a series of questions, her desires a series of half-formed answers; she fears being seen as a reflection, not a person.\"\n  },\n\n  \"characterIcebergs\": {\n    \"the LI\": [\n      \"The boy who saved her from drowning—only to vanish without explanation\",\n      \"He collects broken things and fixes them, but never himself\",\n      \"His beauty is a wound; he doesn’t know how to be seen as anything but a shield\",\n      \"He tests her not because he doesn’t trust her, but because he fears she’ll fail the mirror\",\n      \"The truth is, he’s afraid of being loved for himself, not his armor\"\n    ]\n  },\n\n  \"forbiddenDefaults\": [\n    \"the LI as a tragic villain\",\n    \"her as a passive victim\",\n    \"the test framed as a game\",\n    \"his silence as a lack of emotion\",\n    \"the mirror as a literal object (not a metaphor)\"\n  ]\n}\n```"
+        }
+      }
+    ],
+    "_orchestration": {
+      "role": "STRUCTURE_GENERATOR",
+      "model": "ministral-8b-2512",
+      "provider": "mistral",
+      "reasoning_effort": null,
+      "usage": {
+        "prompt_tokens": 5401,
+        "total_tokens": 6634,
+        "completion_tokens": 1233,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "service_tier": "standard"
+      },
+      "timestamp": "2026-09-25T22:34:58.188Z"
+    }
+  },
+  {
+    "id": "76f23aec-fccd-9476-99bf-fd3cce64dbb8",
+    "object": "chat.completion",
+    "created": 1790375699,
+    "model": "grok-4.3",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "{\n  \"tactical_move\": \"advances the milestone by moving the accusation into Dohkar-led preliminary review procedure\",\n  \"state_change_precondition\": \"Lirael's conduct has not yet been formally placed in question by the Dohkar\",\n  \"state_change\": \"The presiding Dohkar states that Lirael's conduct will be reviewed and she will answer for it\",\n  \"forces_choice\": \"forces Lirael to choose between claiming the interference openly and letting the assembly keep its assumption\",\n  \"branch_a\": \"claim the interference openly\",\n  \"branch_b\": \"let the assembly keep its assumption\",\n  \"posture_read\": \"The reader remains uncertain and answers only 'I don't know' without committing to any stance or action\",\n  \"local_objective\": \"The presiding Dohkar places Lirael's conduct formally in question before the assembly and moves the matter into procedure\",\n  \"local_objective_actor\": \"the presiding Dohkar\",\n  \"present\": [\"Lirael\", \"Seren\", \"Julian\", \"the presiding Dohkar\", \"the assembly\"],\n  \"reserved\": {\"price_identified\":\"untouched\",\"inquiry_opened\":\"untouched\",\"julian_counter_wish\":\"untouched\",\"julian_obscuring_wishes\":\"untouched\"},\n  \"aftermath\": {\"twist_manifested\":\"kept\",\"interrogation_interrupted\":\"kept\",\"the_answer_institutional\":\"kept\",\"inquiry_authority_claimed\":\"kept\"},\n  \"scene_function_instantiated\": \"lands the Dohkar's preliminary review declaration that moves the confrontation off the ritual floor into institutional procedure\",\n  \"aftermath_obligations\": \"The assembly registers the Dohkar's declaration as binding; Lirael's standing visibly shifts from cleared supervisor to subject of review while the price remains unnamed\",\n  \"chosen_aftermath_lane\": \"dohkar_preliminary_review\",\n  \"lane_posture_modulation\": \"Her uncertain 'I don't know' leaves the Dohkar's declaration unchallenged so the review proceeds on institutional momentum alone\",\n  \"event_slots\": {\"precondition\":\"The presiding Dohkar and the assembly are present\",\"actor\":\"the presiding Dohkar\",\"action\":\"states that Lirael's conduct will be reviewed and she will answer for it\",\"target\":\"Lirael\",\"exit_state\":\"Lirael's conduct is now formally in question before the assembly\",\"mechanism_grounding\":\"ordinary\"}\n}",
+          "reasoning_content": "I am deriving the scene's local objective from the reader's posture and the First Sacrifice canon, constrained to a single irreversible step.\n\nThe local objective is the presiding Dohkar formally questioning Lirael's conduct before the assembly. This shifts the confrontation from ritual floor to procedural review. The reader's uncertainty is preserved. The state change is the Dohkar's declaration that her conduct will be reviewed.\n\nThe precondition is that Lirael's conduct has not yet been formally questioned by the Dohkar. The event is the Dohkar declaring that her conduct will be reviewed before the assembly. This forces Lirael to choose between claiming the interference openly or letting the assembly keep its assumption.",
+          "refusal": null
+        },
+        "finish_reason": "stop"
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 6341,
+      "completion_tokens": 490,
+      "total_tokens": 7261,
+      "prompt_tokens_details": {
+        "text_tokens": 6341,
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "cached_tokens": 192
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 430,
+        "audio_tokens": 0,
+        "accepted_prediction_tokens": 0,
+        "rejected_prediction_tokens": 0
+      },
+      "num_sources_used": 0,
+      "cost_in_usd_ticks": 100246500
+    },
+    "system_fingerprint": "fp_eb3c003fc66c14ed",
+    "service_tier": "default",
+    "_orchestration": {
+      "role": "STRUCTURE_GENERATOR",
+      "model": "grok-4.3",
+      "chainEntry": "grok-4-1-fast-non-reasoning",
+      "resolvedModel": "grok-4.3",
+      "reasoningEffort": "none",
+      "upstreamAttempts": 1,
+      "isSpecialistRenderer": true,
+      "timestamp": "2026-09-25T22:35:06.538Z"
+    }
+  }
+]

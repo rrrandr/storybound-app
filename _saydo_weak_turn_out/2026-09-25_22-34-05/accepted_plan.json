@@ -1,0 +1,24 @@
+{
+  "tactical_move": "advances the milestone by moving the accusation into Dohkar-led preliminary review procedure",
+  "local_objective": "The presiding Dohkar places Lirael's conduct formally in question before the assembly and moves the matter into procedure",
+  "state_change": "The presiding Dohkar states that Lirael's conduct will be reviewed and she will answer for it",
+  "state_change_precondition": "Lirael's conduct has not yet been formally placed in question by the Dohkar",
+  "forces_choice": "forces Lirael to choose between claiming the interference openly and letting the assembly keep its assumption",
+  "event_slots": {
+    "precondition": "The presiding Dohkar and the assembly are present",
+    "actor": "the presiding Dohkar",
+    "action": "states that Lirael's conduct will be reviewed and she will answer for it",
+    "target": "Lirael",
+    "exit_state": "Lirael's conduct is now formally in question before the assembly",
+    "mechanism_grounding": "ordinary"
+  },
+  "mechanism_grounding": "ordinary",
+  "acceptedAt": 1790375706549,
+  "sceneNum": 1,
+  "owner": {
+    "id": "cpa:612b6a11-7584-4f04-93fa-396300069c60",
+    "storyId": "live-weakturn-1790375657390",
+    "sceneIndex": 1,
+    "branch": "remain"
+  }
+}

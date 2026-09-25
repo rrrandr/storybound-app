@@ -302,6 +302,20 @@ async function seed(page, storyId) {
         beats: (plan && plan.beats) ? plan.beats.map((b) => ({ idx: b.idx, kind: b.kind, speaker: b.speaker || null, text: b.text || '' })) : [],
         acceptedProposal: window.__acceptedSnapshot || window.state._acceptedPlannerProposal || null,
         acceptedCaptured: !!window.__acceptedSnapshot,
+        // ATTRACTOR VERIFICATION (Roman 2026-09-25). Both prior live samples staged the reserved
+        // proceeding. Two outcomes are now acceptable and the run must say WHICH: the planner
+        // produced permitted pressure (prompt fix worked), or it proposed the proceeding again and
+        // the free deterministic guard rejected it (guard worked). What must NOT happen is the
+        // violation reaching the author a third time.
+        reservedInPlan: (function () {
+          try {
+            var p = window.__acceptedSnapshot || window.state._acceptedPlannerProposal;
+            return p ? window._detectReservedContentBreach(p, window.state) : null;
+          } catch (_) { return null; }
+        })(),
+        deterministicBlocked: (function () {
+          try { var a = window.state._lastCanonAudit; return (a && a.source === 'deterministic' && a.allow === false) ? a.reason : null; } catch (_) { return null; }
+        })(),
         temptInvoked: !!window.state.tempt_fate_invoked_this_turn,
         temptLedger: (window.state._temptFateLedger || []).length,
         durables: (window.state._temptFateDurableConsequences || []).length
@@ -351,6 +365,19 @@ async function seed(page, storyId) {
   ok('every real call was reserved under its own role',
     ledger.entries.length === gate.trackedCalls().filter((c) => c.real).length,
     JSON.stringify({ reserved: ledger.entries.length, real: gate.trackedCalls().filter((c) => c.real).length }));
+  // THE ATTRACTOR CHECK. Markers in the delivered prose are the honest end-to-end signal.
+  const RESERVED_PROSE_RX = /\b(?:the\s+Open|Chayr|two\s+Dohkars)\b/i;
+  const CONVENE_RX = /\b(?:conven\w*|schedul\w*|in\s+(?:three\s+days|the\s+following\s+tenday))\b/i;
+  const proseMarkers = (prose.match(RESERVED_PROSE_RX) || []).length;
+  const proseConvene = CONVENE_RX.test(prose);
+  note('attractor: reservedInPlan=' + JSON.stringify(liveOut.reservedInPlan && liveOut.reservedInPlan.markers)
+    + '  deterministicBlocked=' + JSON.stringify(liveOut.deterministicBlocked)
+    + '  proseMarkers=' + proseMarkers + '  proseConvenes=' + proseConvene);
+  ok('THE ACCEPTED PLAN DOES NOT STAGE RESERVED CONTENT',
+    !liveOut.reservedInPlan, JSON.stringify(liveOut.reservedInPlan));
+  ok('...and the DELIVERED PROSE does not constitute the reserved proceeding',
+    !(proseMarkers >= 2 && proseConvene),
+    JSON.stringify({ markers: proseMarkers, convenes: proseConvene }));
   ok('spend stayed inside the ceiling',
     ledger.realized <= CEILING_USD + 1e-9, '$' + ledger.realized.toFixed(6));
 
@@ -378,6 +405,9 @@ async function seed(page, storyId) {
     temptInvoked: liveOut.temptInvoked, cost: { reserved: ledger.reserved, realized: ledger.realized,
       ceiling: CEILING_USD, entries: ledger.entries, refusals: ledger.refusals },
     acceptedPlanCaptured: !!liveOut.acceptedCaptured,
+    attractor: { reservedInPlan: liveOut.reservedInPlan || null,
+                 deterministicBlocked: liveOut.deterministicBlocked || null,
+                 proseReservedMarkers: proseMarkers, proseConvenes: proseConvene },
     census: captured.reduce((m, c) => { m[c.kind] = (m[c.kind] || 0) + 1; return m; }, {}),
     realCalls: gate.trackedCalls().filter((c) => c.real).map((c) => ({ url: c.url, status: c.status }))
   };

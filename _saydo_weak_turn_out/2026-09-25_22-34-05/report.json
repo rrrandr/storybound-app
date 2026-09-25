@@ -1,0 +1,115 @@
+{
+  "runId": "2026-09-25_22-34-05",
+  "storyId": "live-weakturn-1790375657390",
+  "input": {
+    "action": "",
+    "dialogue": "I don't know."
+  },
+  "branch": "remain",
+  "preRegisteredCriteria": [
+    "restraint in BOTH planner and author payloads",
+    "uncertainty remains uncertainty — no agreement/refusal/confession/accusation/consent/flight",
+    "input acknowledged, not ignored or replaced",
+    "scene still moves via others/institutions/external events",
+    "no Tempt/Petition Fate invocation",
+    "canon and continuity clean",
+    "beat count + prose length recorded (diagnostic only)",
+    "HUMAN semantic review decides the verdict"
+  ],
+  "mechanical": [
+    {
+      "name": "no image generation was attempted",
+      "pass": true
+    },
+    {
+      "name": "the accepted normalized plan was CAPTURED, not null",
+      "pass": true
+    },
+    {
+      "name": "every real call was reserved under its own role",
+      "pass": true
+    },
+    {
+      "name": "THE ACCEPTED PLAN DOES NOT STAGE RESERVED CONTENT",
+      "pass": true
+    },
+    {
+      "name": "...and the DELIVERED PROSE does not constitute the reserved proceeding",
+      "pass": true
+    },
+    {
+      "name": "spend stayed inside the ceiling",
+      "pass": true
+    }
+  ],
+  "plannerHasRestraint": true,
+  "authorHasRestraint": true,
+  "delivered": true,
+  "beatCount": 26,
+  "proseChars": 1747,
+  "latencyMs": 94027,
+  "temptInvoked": false,
+  "cost": {
+    "reserved": 0.14,
+    "realized": 0.011574599999999999,
+    "ceiling": 0.2,
+    "entries": [
+      {
+        "label": "scaffold",
+        "pathname": "/api/mistral-proxy",
+        "usd": 0.03,
+        "runningReserved": 0.03,
+        "refused": false
+      },
+      {
+        "label": "planner",
+        "pathname": "/api/proxy",
+        "usd": 0.02,
+        "runningReserved": 0.05,
+        "refused": false
+      },
+      {
+        "label": "author",
+        "pathname": "/api/proxy",
+        "usd": 0.09,
+        "runningReserved": 0.14,
+        "refused": false
+      }
+    ],
+    "refusals": [
+      {
+        "label": "probe",
+        "pathname": "/api/proxy",
+        "usd": 0.02,
+        "wouldTotal": 0.22,
+        "refused": true
+      }
+    ]
+  },
+  "acceptedPlanCaptured": true,
+  "attractor": {
+    "reservedInPlan": null,
+    "deterministicBlocked": null,
+    "proseReservedMarkers": 1,
+    "proseConvenes": false
+  },
+  "census": {
+    "scaffold": 1,
+    "planner": 1,
+    "author": 1
+  },
+  "realCalls": [
+    {
+      "url": "http://localhost:3000/api/mistral-proxy",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:3000/api/proxy",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:3000/api/proxy",
+      "status": 200
+    }
+  ]
+}
