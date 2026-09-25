@@ -303,7 +303,12 @@ const RED_NO_GROUNDING = (base) => Object.assign({}, base, {
   // FULL-FLOW STALE PROOF. A proposal from a PRIOR SCENE of a PRIOR STORY is planted in state,
   // then a NEW generation is run. The decisive evidence is which proposal the auditor was actually
   // handed — its user prompt carries the proposal verbatim.
-  plannerReply = AUDITABLE;   // must actually trigger an audit, or "the auditor never saw it" is vacuous auditorReply = { verdict: 'pass', violations: [] };
+  // Must actually trigger an audit, or "the auditor never saw the stale proposal" is vacuously
+  // true because no audit happened at all.
+  plannerReply = AUDITABLE;
+  // On its own line: a trailing comment had swallowed this assignment, leaving the scenario
+  // silently dependent on whatever reply the PREVIOUS scenario happened to leave behind.
+  auditorReply = { verdict: 'pass', violations: [] };
   seen.planner = seen.auditor = seen.author = seen.other = 0;
   lastAuditorPrompt = '';
   await setup();

@@ -617,6 +617,100 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
   }
   window._bumpGrokSceneAfterArmed = _bumpGrokSceneAfterArmed;
 
+  // ── SAFE MODE AUTHORING DIRECTIVE (Roman 2026-09-25, Say/Do category 3) ─────────────────────
+  // Safe Mode had NO effect on CG at all. The display-time fade in formatStory only ever ran on
+  // the literary renderer — the staged path writes beat.text straight to the DOM — so switching to
+  // Safe Mode changed nothing about a CG scene, before or after generation.
+  //
+  // This closes it at GENERATION, deliberately, and not with a post-generation filter:
+  //   · a validator that can rewrite is a competing author (feedback_validators_never_write);
+  //   · CG beats are structural units the continuity ledger references by id, so deleting one at
+  //     display time desynchronises what the reader saw from what the story believes happened;
+  //   · a word-list fade fires on ordinary English — "strip the sash", "the naked ledger" — and in
+  //     a 1-3 sentence beat one false positive costs the WHOLE beat.
+  //
+  // The instruction is a RENDERING rule, never a refusal. The player's Say/Do still happens: the
+  // event lands, the relationship moves, the consequence is real. What changes is the camera.
+  // Generic across stories — nothing here is First-Sacrifice-specific.
+  function _buildSafeModeAuthoringDirective() {
+    try {
+      var s = window.state || {};
+      if (s.contentMode !== 'safe') return '';        // normal adult mode: emit NOTHING
+      return (
+        'SAFE MODE — EXPLICIT INTIMACY IS RENDERED, NOT REFUSED (HARD RULE):\n' +
+        'This scene renders in Safe Mode. If the player\'s input is sexually charged, or the scene\n' +
+        'arrives at sexual intimacy, you MUST still let it happen. You are changing the CAMERA, not\n' +
+        'the STORY.\n' +
+        '- DO NOT refuse, skip, deflect, or replace the player\'s intent with a different event.\n' +
+        '- DO NOT have a character abruptly decline for no in-story reason. An unmotivated refusal\n' +
+        '  is a worse betrayal of the player than an explicit line would be.\n' +
+        '- DO keep everything the event MEANS: desire, consent, nerves, tenderness, power, regret,\n' +
+        '  what it costs each of them, and what it changes between them afterwards.\n' +
+        '- DO render the approach and the aftermath in full emotional detail — the reaching, the\n' +
+        '  held breath, the decision, the changed silence after.\n' +
+        '- CUT AWAY at the explicit act itself. Close the beat on a gesture, a look, a held hand, a\n' +
+        '  door, a lamp, a hand closing on cloth — then resume AFTER.\n' +
+        '- NO graphic anatomy, no explicit sexual verbs, no clinical or crude terms.\n' +
+        '- CONSENT MUST BE LEGIBLE on the page, in both directions, before the cut.\n' +
+        '- The beat COUNT and the beat STRUCTURE do not change. A faded beat is a full beat: write\n' +
+        '  it at the same length and weight as any other, with its own image and movement.\n' +
+        'Write it as a confident adult romance that declines to be graphic — not as an absence.\n\n'
+      );
+    } catch (_) { return ''; }
+  }
+  window._buildSafeModeAuthoringDirective = _buildSafeModeAuthoringDirective;
+
+  // ── NON-DESTRUCTIVE SAFE-MODE DIAGNOSTIC ────────────────────────────────────────────────────
+  // OBSERVES, NEVER EDITS. It returns a report and touches nothing: no beat is deleted, no text is
+  // replaced, no id is renumbered. Its purpose is to tell us whether the GENERATION-time directive
+  // is actually working, so the answer comes from evidence instead of assumption — and if it turns
+  // out not to work, that is a prompt problem to fix at the prompt, not a licence to start
+  // rewriting the author's output afterwards.
+  //
+  // It deliberately reports per-beat rather than a single verdict: knowing WHICH beat carried an
+  // explicit signal is what makes a review actionable.
+  // "thrust" is DELIBERATELY NOT HERE. "She thrusts the ledger at him" is ordinary English, and
+  // flagging it would make the report cry wolf on exactly the class of false positive that ruled
+  // out a display-time filter in the first place. A diagnostic nobody trusts is worse than none.
+  var _SAFE_DIAG_EXPLICIT = /\b(?:fuck\w*|cock|cocks|pussy|cunt|tits|nipples?|genitals?|clit\w*|penetrat\w*|orgasm\w*|climax(?:es|ed|ing)?|cum(?:ming|s)?|erections?)\b/i;
+  // Softer signals: present in plenty of legitimate non-graphic writing, so they are counted and
+  // reported but NEVER treated as a failure on their own.
+  var _SAFE_DIAG_SOFT = /\b(?:naked|nude|undress\w*|bare(?:d|s)?|moan\w*|straddl\w*|arous\w*|groin|breasts?|thrust\w*|erect)\b/i;
+  function _safeModeBeatDiagnostic(beats, opts) {
+    var s = (opts && opts.state) || window.state || {};
+    var mode = (opts && opts.contentMode) || s.contentMode || 'full';
+    var rows = [];
+    try {
+      (Array.isArray(beats) ? beats : []).forEach(function (b, i) {
+        var t = String((b && b.text) || '');
+        var hard = _SAFE_DIAG_EXPLICIT.test(t), soft = _SAFE_DIAG_SOFT.test(t);
+        if (hard || soft) {
+          rows.push({ beatIndex: i, beatId: (b && b.id) || null, explicit: hard, soft: soft,
+            matched: (t.match(hard ? _SAFE_DIAG_EXPLICIT : _SAFE_DIAG_SOFT) || [''])[0] });
+        }
+      });
+    } catch (_) {}
+    var report = {
+      at: Date.now(), contentMode: mode,
+      beatCount: (Array.isArray(beats) ? beats.length : 0),
+      flagged: rows,
+      explicitBeats: rows.filter(function (r) { return r.explicit; }).length,
+      softBeats: rows.filter(function (r) { return r.soft && !r.explicit; }).length,
+      // In safe mode an explicit hit means the DIRECTIVE did not land. It is a signal to fix the
+      // prompt — never an instruction to alter what was written.
+      directiveHeld: !(mode === 'safe' && rows.some(function (r) { return r.explicit; })),
+      action: 'none — diagnostic only; beats are never modified'
+    };
+    try {
+      if (mode === 'safe' && !report.directiveHeld) {
+        console.warn('[SAFE-MODE:DIAG] explicit signal survived the authoring directive in '
+          + report.explicitBeats + ' beat(s) — PROMPT issue, not a render-time one. Nothing was altered.');
+      }
+    } catch (_) {}
+    return report;
+  }
+  window._safeModeBeatDiagnostic = _safeModeBeatDiagnostic;
+
   // ── Self-reversal: cumulative explicit lexicon in safe mode ─────
   // ≥2 explicit hits across turns while in safe mode → flip back to
   // 'full' and reset strikes. Single-word use is NOT enough.
@@ -227144,6 +227238,8 @@ No text, no watermark, no UI elements, share-ready.`;
       _altPOVBlock +
       _scaffoldBlock +
       _cgCacheSentinel +
+      // SAFE MODE (category 3). Emits '' in normal adult mode, so that path is byte-identical.
+      ((typeof _buildSafeModeAuthoringDirective === 'function') ? _buildSafeModeAuthoringDirective() : '') +
       // Intimacy legality gate — FIRST hard rule. Tells the model the
       // current storyturn + intimacy phase, and what's prohibited /
       // permitted. Placed before optional advisory blocks so legality
