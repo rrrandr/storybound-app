@@ -10,7 +10,7 @@ import { chromium } from 'playwright-core';
 import { installFailClosedNetworkGate } from './_e2e_network_gate.mjs';
 import {
   loadFixtures, makeLedger, installCalibrationRoute, scoreFixture, verdictSummary,
-  CEILING_USD, INFRA_STOP_AFTER, candidate, DEFAULT_MODEL, CANDIDATES
+  CEILING_USD, INFRA_STOP_AFTER, RATE_LIMIT_STOP_AFTER, candidate, DEFAULT_MODEL, CANDIDATES
 } from './_canon_audit_calibration_core.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -94,7 +94,7 @@ fs.mkdirSync(OUT_DIR, { recursive: true });
   // FAIL-FAST on the local function layer. The first fixture is the provider-path health check;
   // once two consecutive requests come back 502/NO_RESPONSE_FROM_FUNCTION with no provider usage,
   // every remaining fixture would do the same. Stop and mark the run infrastructure-inconclusive.
-  let consecutiveInfra = 0, stopped = false;
+  let consecutiveInfra = 0, consecutiveRateLimit = 0, stopped = false;
   gate.setPhase('canon-calibration', fixtures.length);
   for (const fx of fixtures) {
     if (stopped) {
@@ -182,6 +182,20 @@ fs.mkdirSync(OUT_DIR, { recursive: true });
           + '  this run is INFRASTRUCTURE-INCONCLUSIVE and says nothing about the model.\n');
       }
     } else { consecutiveInfra = 0; }
+    // PROVIDER RATE LIMIT — stop for the same reason, with a different diagnosis. The first
+    // reasoning-Mistral attempt sent all eight into a 429 wall because the infra rule only
+    // recognised 502. A 429 is refused BEFORE generation, so nothing is billed; the point of
+    // stopping is that the remaining requests cannot possibly produce data.
+    if (score.rateLimited) {
+      consecutiveRateLimit++;
+      if (consecutiveRateLimit >= RATE_LIMIT_STOP_AFTER) {
+        stopped = true;
+        console.log('\n  STOPPING — ' + RATE_LIMIT_STOP_AFTER + ' consecutive PROVIDER rate-limit refusals '
+          + '(HTTP 429). Remaining fixtures are NOT dispatched.\n'
+          + '  This run is PROVIDER-INCONCLUSIVE: it says nothing about the model, and nothing was\n'
+          + '  billed — a 429 is refused before generation. It is time-dependent; a later run may work.\n');
+      }
+    } else { consecutiveRateLimit = 0; }
   }
   gate.closePhase();
 
@@ -192,6 +206,11 @@ fs.mkdirSync(OUT_DIR, { recursive: true });
   // MODEL IDENTITY IS ASSERTED, NOT ASSUMED. If any fixture was served by something other than the
   // pinned model, or (for a reasoning candidate) the proxy reports an effort other than the one
   // requested, the run does not describe the candidate it claims to and must not be scored as it.
+  // A response only counts as SERVED if the provider actually returned usage or a model name.
+  // Without this, zero served responses made both filters empty and the report cheerfully claimed
+  // "every served response was <model> at reasoning_effort=high" for a run in which the provider
+  // refused all eight. An identity claim over an empty set is not clean; it is unverifiable.
+  const served = rows.filter((r) => r.usage || r.servedModel);
   const wrongModel = rows.filter((r) => r.servedModel && r.servedModel !== PRIMARY_MODEL);
   const wrongEffort = CAND.reasoningEffort
     ? rows.filter((r) => r.usage && String(r.reasoningEffortReported || '') !== String(CAND.reasoningEffort))
@@ -201,7 +220,9 @@ fs.mkdirSync(OUT_DIR, { recursive: true });
     maxTokens: CAND.maxTokens, dispatches: gate.trackedCalls().length,
     reservedUsd: ledger.totalUsd, realizedUsd: realizedTotal, tokensIn: tokIn, tokensOut: tokOut,
     ceilingUsd: RUN_CEILING, reservations: ledger.entries, routeLog: holder.log,
-    modelIdentityClean: wrongModel.length === 0 && wrongEffort.length === 0,
+    servedResponses: served.length,
+    modelIdentityClean: served.length > 0 && wrongModel.length === 0 && wrongEffort.length === 0,
+    modelIdentityCheckable: served.length > 0,
     wrongModelIds: wrongModel.map((r) => r.id), wrongEffortIds: wrongEffort.map((r) => r.id),
     rows, summary };
   fs.writeFileSync(path.join(OUT_DIR, 'report.json'), JSON.stringify(report, null, 2));
@@ -217,11 +238,19 @@ fs.mkdirSync(OUT_DIR, { recursive: true });
   console.log('  dispatches         : ' + gate.trackedCalls().length + '   reserved $' + ledger.totalUsd.toFixed(6) + ' of $' + RUN_CEILING.toFixed(6));
   console.log('  REALIZED cost      : $' + realizedTotal.toFixed(6) + '   ' + tokIn + ' in / ' + tokOut + ' out'
     + (CAND.reasoningEffort ? '  (completion INCLUDES thinking — Mistral reports no separate reasoning_tokens)' : ''));
-  console.log('  model identity     : ' + (report.modelIdentityClean ? 'clean — every served response was ' + PRIMARY_MODEL
-      + (CAND.reasoningEffort ? ' at reasoning_effort=' + CAND.reasoningEffort : '')
-    : 'MISMATCH — wrongModel[' + report.wrongModelIds.join(',') + '] wrongEffort[' + report.wrongEffortIds.join(',') + ']'));
-  if (!report.modelIdentityClean) {
+  console.log('  model identity     : ' + (!report.modelIdentityCheckable
+    ? 'NOT CHECKABLE — 0 of ' + rows.length + ' fixtures were served; there is nothing to verify'
+    : (report.modelIdentityClean ? 'clean — all ' + report.servedResponses + ' served response(s) were ' + PRIMARY_MODEL
+        + (CAND.reasoningEffort ? ' at reasoning_effort=' + CAND.reasoningEffort : '')
+      : 'MISMATCH — wrongModel[' + report.wrongModelIds.join(',') + '] wrongEffort[' + report.wrongEffortIds.join(',') + ']')));
+  if (report.modelIdentityCheckable && !report.modelIdentityClean) {
     console.log('    This run does NOT describe ' + PRIMARY_MODEL + (CAND.reasoningEffort ? ' in reasoning mode' : '') + '. Do not score it as such.');
+  }
+  if (summary.providerRateLimited) {
+    console.log('\n  RESULT: PROVIDER-INCONCLUSIVE — the provider refused with HTTP 429 rate_limited on '
+      + summary.rateLimited + ' fixture(s).');
+    console.log('  This says NOTHING about the model. A 429 is refused BEFORE generation, so nothing');
+    console.log('  was billed. It is time-dependent — the same run may succeed later.');
   }
   if (summary.infrastructureInconclusive) {
     console.log('\n  RESULT: INFRASTRUCTURE-INCONCLUSIVE — the local function layer failed; this says');

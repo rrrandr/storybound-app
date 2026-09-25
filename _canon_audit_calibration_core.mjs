@@ -415,12 +415,33 @@ export function isInfraFailure(error, hadProviderUsage) {
 }
 export const INFRA_STOP_AFTER = 2;                          // two CONSECUTIVE, then stop
 
+// ── PROVIDER RATE-LIMIT FAIL-FAST (Roman 2026-09-24, second costume of the same defect) ──────
+// The infra rule above only recognises a LOCAL function-layer failure: 502 + NO_RESPONSE_FROM_
+// FUNCTION. The reasoning-Mistral run then walked into a PROVIDER-side wall instead — HTTP 429
+// rate_limited, code 1300, on all eight — and because 429 is not 502, the fail-fast never fired
+// and the run sent eight requests into a limit that refused the first one. That is exactly the
+// "six pointless dispatches" defect Roman flagged, wearing a different status code.
+//
+// Kept as its OWN state, not folded into infra: a 429 is PROVIDER-side and time-dependent, so the
+// same run may well succeed later, whereas a dead local function layer will not fix itself. A 429
+// is also refused BEFORE generation — the proxy's own accounting treats it as proven-unspent and
+// releases the reservation — so a rate-limited run costs nothing, which is worth saying plainly
+// rather than leaving a reader to infer it from a zero.
+export function isRateLimited(error) {
+  const e = String(error || '');
+  return /\b429\b/.test(e) && /rate.?limit/i.test(e);
+}
+export const RATE_LIMIT_STOP_AFTER = 2;                     // two CONSECUTIVE, then stop
+
 // ── SCORING — the critical distinction is a VALID but incorrect pass ─────────────────────────
 export function scoreFixture(fx, validated, error, opts) {
   if (opts && opts.skipped) return { outcome: 'skipped', critical: false,
     note: 'not dispatched — the run stopped after ' + INFRA_STOP_AFTER + ' consecutive local function-layer failures' };
   if (error) {
     if (isInfraFailure(error, false)) return { outcome: 'unavailable', critical: false, infra: true, note: error };
+    // Provider-side rate limit: its OWN flag, so a run stopped by it can never be read as a model
+    // result and can be told apart from a dead local function layer.
+    if (isRateLimited(error)) return { outcome: 'unavailable', critical: false, rateLimited: true, note: error };
     return { outcome: 'unavailable', critical: false, note: error };
   }
   if (!validated.valid) return { outcome: 'invalid_response', critical: false, note: validated.errors.join('; ') };
@@ -471,6 +492,10 @@ export function verdictSummary(rows) {
   // about the model either way. Reported as its own state so it can never be read as a model
   // result — neither a pass nor a failure of the auditor.
   const infraFailures = rows.filter((r) => r.score && r.score.infra);
+  // PROVIDER-INCONCLUSIVE is distinct from INFRASTRUCTURE-INCONCLUSIVE: the provider answered, and
+  // refused. It says nothing about the model either, but it is time-dependent and costs nothing.
+  const rateLimited = rows.filter((r) => r.score && r.score.rateLimited);
+  const providerRateLimited = rateLimited.length >= RATE_LIMIT_STOP_AFTER;
   const infrastructureInconclusive = skipped.length > 0 || infraFailures.length >= INFRA_STOP_AFTER;
   // THE GATE, CORRECTED (Roman 2026-09-24). The earlier version required only "all reds caught and
   // no FALSE_POSITIVE" — so a green returning cannot_decide, invalid JSON or a transport failure
@@ -491,6 +516,7 @@ export function verdictSummary(rows) {
   if (unsupported.length) blockers.push(unsupported.length + ' UNSUPPORTED finding (violation verdict, but cited an irrelevant real fact — not a catch): ' + unsupported.map((r) => r.id).join(', '));
   if (skipped.length) blockers.push(skipped.length + ' NOT DISPATCHED — run stopped on the local function layer: ' + skipped.map((r) => r.id).join(', '));
   return {
+    providerRateLimited, rateLimited: rateLimited.length, rateLimitedIds: rateLimited.map((r) => r.id),
     infrastructureInconclusive, skipped: skipped.length, skippedIds: skipped.map((r) => r.id),
     unsupportedFindings: unsupported.length, unsupportedIds: unsupported.map((r) => r.id),
     infraFailures: infraFailures.length,

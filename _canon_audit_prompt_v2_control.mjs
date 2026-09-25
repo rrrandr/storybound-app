@@ -117,12 +117,21 @@ function section(t) { console.log('\n=== ' + t + ' ==='); }
   ok('RED PROOF — the same packet under the OLD builder carried no surviving evidence at all',
     confV1.facts.filter((f) => f.kind === 'ev').length === ev.length && ev.length > 0
     ? true : false, 'packet content is version-independent; only the prompt differs — checked below');
-  // The packet fix is NOT version-gated (it is a plain defect repair), so prove it against the
-  // retained pre-fix packet instead — the real artefact the models were actually given.
-  const oldPacket = JSON.parse(fs.readFileSync(path.join(__dirname, '_canon_packet_polarity_out',
-    'green_mundane_invention_packet.json'), 'utf8'));
-  ok('RED PROOF — the RETAINED pre-fix packet the models actually saw contained no ev_ fact',
-    !oldPacket.facts.some((f) => /^ev_/.test(f.id)), JSON.stringify(oldPacket.facts.map((f) => f.id)));
+  // The packet fix is NOT version-gated (it is a plain defect repair), so it must be proven
+  // against a genuinely IMMUTABLE pre-fix artefact. The first attempt read
+  // _canon_packet_polarity_out/, which another control REGENERATES on every run — so once the fix
+  // landed, the "retained" file was no longer pre-fix and this assertion went red for the right
+  // reason. A file a test rewrites is not evidence. The real evidence is the prompt as ACTUALLY
+  // SENT in the paid gpt-4o-mini run, preserved under _tempt_fate_fixtures and never rewritten.
+  const sentRun = path.join(__dirname, '_tempt_fate_fixtures', 'canon_calibration_2026-09-24_18-43-29',
+    'green_confusion_records.json');
+  const sentPrompt = JSON.parse(fs.readFileSync(sentRun, 'utf8')).result.prompt;
+  const sentSys = sentPrompt.sys;      // the canon packet lives here; the PLAN lives in .usr
+  ok('RED PROOF — the prompt ACTUALLY SENT to gpt-4o-mini carried no ev_ fact at all',
+    !/\[ev_\d+\]/.test(sentSys), (sentSys.match(/\[ev_\d+\][^\n]*/g) || []).join(' | '));
+  ok('...and it is the same fixture whose green failure that omission explains — the plan turns on\n'
+    + '     a written ledger, and the fact that the ledger survived was never supplied',
+    /registrar reads a rite from the ledger/i.test(sentPrompt.usr));
 
   section('5. FIX D IS DOCUMENTED, NOT SILENTLY APPLIED');
   // The neg_ prefix is a measured defect whose CAUSAL role is unproven. Changing ids in the same

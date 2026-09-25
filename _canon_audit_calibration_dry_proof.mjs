@@ -10,7 +10,7 @@ import { installFailClosedNetworkGate } from './_e2e_network_gate.mjs';
 import {
   loadFixtures, makeLedger, installCalibrationRoute, scoreFixture, verdictSummary,
   PRIMARY_MODEL, PRIMARY_ENDPOINT, PER_CALL_USD, CEILING_USD, isInfraFailure, INFRA_STOP_AFTER,
-  candidate, CANDIDATES
+  isRateLimited, RATE_LIMIT_STOP_AFTER, candidate, CANDIDATES
 } from './_canon_audit_calibration_core.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -304,6 +304,47 @@ function section(t) { console.log('\n=== ' + t + ' ==='); }
   try { execFileSync('node', [path.join(__dirname, '_canon_audit_calibration_run.mjs'), '--authorize', 'go ahead'], { encoding: 'utf8' }); wrong.code = 0; }
   catch (e) { wrong.code = e.status; }
   ok('an approximate phrase is refused', wrong.code === 3, 'exit=' + wrong.code);
+
+  section('7. PROVIDER RATE LIMIT IS ITS OWN STATE — the real 429 that produced no data');
+  // The reasoning-Mistral run walked into HTTP 429 rate_limited on all eight. The infra rule only
+  // recognised 502 + NO_RESPONSE_FROM_FUNCTION, so the fail-fast never fired and the run sent
+  // eight requests into a wall that refused the first. Both defects are fixed; both are shown red.
+  const REAL_429 = '[TIERED:canonAuditCalibration] all tiers exhausted — last error: mistral HTTP 429 '
+    + '{"error":"Mistral API request failed","provider_status":429,"governor":false,'
+    + '"details":{"object":"error","message":"Rate limit exceeded","type":"rate_limited","code":"1300"}}';
+  const REAL_502 = 'mistral HTTP 502 {"error":"NO_RESPONSE_FROM_FUNCTION"}';
+  ok('the REAL 429 text from the failed run is recognised as a rate limit', isRateLimited(REAL_429));
+  ok('RED PROOF — it was NOT recognised by the infra rule, which is why eight requests were sent',
+    !isInfraFailure(REAL_429, false));
+  ok('and the 502 infra signature is still NOT treated as a rate limit', !isRateLimited(REAL_502));
+  ok('a scored 429 fixture carries its own rateLimited flag, never the infra flag',
+    (() => { const sc = scoreFixture({ expect: 'violation' }, null, REAL_429);
+      return sc.outcome === 'unavailable' && sc.rateLimited === true && !sc.infra; })());
+  const rlRows = ['a', 'b', 'c'].map((id) => ({ id, expect: 'violation',
+    score: scoreFixture({ expect: 'violation' }, null, REAL_429) }));
+  const rlSum = verdictSummary(rlRows);
+  ok('the summary reports PROVIDER-INCONCLUSIVE as a distinct state from infrastructure',
+    rlSum.providerRateLimited === true && rlSum.infrastructureInconclusive === false, JSON.stringify(rlSum).slice(0, 200));
+  ok('a rate-limited run can never read as ENABLE', rlSum.enableGenerally === false);
+  ok('the stop threshold is two consecutive, matching the infra rule', RATE_LIMIT_STOP_AFTER === 2);
+
+  section('8. AN IDENTITY CLAIM OVER AN EMPTY SET IS NOT "CLEAN"');
+  // The failed run printed "clean — every served response was mistral-small-2603 at
+  // reasoning_effort=high" for a run in which the provider served NOTHING. Both filters were empty,
+  // so the conjunction was vacuously true. It must report NOT CHECKABLE instead.
+  const runSrc = fs.readFileSync(path.join(__dirname, '_canon_audit_calibration_run.mjs'), 'utf8');
+  ok('the runner now counts SERVED responses before making any identity claim',
+    /const served = rows\.filter\(\(r\) => r\.usage \|\| r\.servedModel\)/.test(runSrc));
+  ok('modelIdentityClean now REQUIRES at least one served response',
+    /modelIdentityClean: served\.length > 0 &&/.test(runSrc));
+  ok('and an unserved run prints NOT CHECKABLE rather than clean',
+    /NOT CHECKABLE — 0 of/.test(runSrc));
+  ok('RED PROOF — the retained failed run really did claim identity over zero served responses',
+    (() => { const f = path.join(__dirname, '_tempt_fate_fixtures', 'canon_calibration_2026-09-25_01-25-12', 'report.json');
+      if (!fs.existsSync(f)) return false;
+      const r = JSON.parse(fs.readFileSync(f, 'utf8'));
+      return r.modelIdentityClean === true && r.rows.every((x) => !x.usage); })(),
+    'the retained report should show modelIdentityClean true with no usage anywhere');
 
   section('CONTAINMENT');
   ok('ZERO real provider dispatches', gate.realCalls().length === 0, 'realCalls=' + gate.realCalls().length);
