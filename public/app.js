@@ -126958,6 +126958,28 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       var w = _detectWeakTurn(action, dialogue, opts);
       if (!w.weak) return '';
       var posture = w.postures.join(' / ');
+      // MODALITY IS PART OF THE POSTURE (Roman 2026-09-25). The first live sample preserved the
+      // uncertainty and then converted the SPOKEN line "I don't know." into silence and
+      // interiority — never uttered, never attempted, never received by anyone. Honouring what a
+      // player FELT while discarding what they DID is only half the contract.
+      var _spoke = (w.fields || []).indexOf('dialogue') !== -1;
+      var _did = (w.fields || []).indexOf('action') !== -1;
+      var _modality = '';
+      if (_spoke) {
+        _modality =
+          '- THE PLAYER SPOKE. This was DIALOGUE, so it must remain an ATTEMPTED UTTERANCE. She says\n'
+          + '  it — or tries to. It may be quiet, halting, cut off, mumbled, muffled by the seal,\n'
+          + '  talked over, or misheard. It may NOT become silence, an unspoken thought, or a line she\n'
+          + '  only considers saying.\n'
+          + '- AND IT MUST BE VISIBLY RECEIVED. Someone hears it, reacts to it, answers it, ignores it\n'
+          + '  pointedly, or fails to catch it — on the page. An utterance nobody registers is the same\n'
+          + '  as one that never happened, and the player will read it as being ignored.\n';
+      }
+      if (_did) {
+        _modality +=
+          '- THE PLAYER ACTED. Their action is ATTEMPTED on the page — it may fail, be interrupted, or\n'
+          + '  land differently than intended, but it is never silently dropped.\n';
+      }
       return (
         'WEAK-TURN RESTRAINT (HARD — the player did NOT make a strong choice):\n' +
         'Everything the player entered this turn reads as ' + posture.toUpperCase() + '. That is a real\n' +
@@ -126968,6 +126990,7 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
         '  no commitment, no decisive action. "I don\'t know" does not become "I choose you", and\n' +
         '  "sure" does not become eagerness.\n' +
         '- DO NOT read hidden resolve into it and then write the resolve. A shrug is a shrug.\n' +
+        _modality +
         '- THE SCENE STILL MOVES — but from OUTSIDE the protagonist: another character presses,\n' +
         '  decides, or reacts to the non-answer; an external event lands; time or circumstance\n' +
         '  forces the issue. Their hesitation can cost them something, and that cost is legitimate.\n' +
@@ -192948,11 +192971,93 @@ No text, no watermark, no UI elements, share-ready.`;
   window._buildCanonPacket = _buildCanonPacket;
 
   // ── DETERMINISTIC FIRST (req 8) — never pay a model for what is locally decidable ────────────
+  // ── SEED-RESERVED CONTENT GUARD (Roman 2026-09-25) ──────────────────────────────────────────
+  // The first live weak-turn sample failed canon because the PLANNER scheduled the formal
+  // late-Issue-1 inquiry while calling it a "preliminary review" — The Open, a Chayr and two
+  // Dohkars, and a convening date. Every reserved marker, under a permitted label. The author
+  // merely executed an invalid plan faithfully, so the fix belongs at the objective gate.
+  //
+  // A LABEL CANNOT LAUNDER RESERVED CONTENT. The guard ignores what the plan calls the event and
+  // looks at what it actually stages. Markers are harvested FROM THE SEED'S OWN reserved world
+  // truths rather than hardcoded, so this generalises to any story that reserves late content.
+  // Cast names are excluded, or every scene naming a character would trip it.
+  var _RESERVED_TRUTH_RX = /\bLATE-ISSUE|\blate-issue|NOT yet convened|never (?:a scene )?stage[d]? at|before that point/i;
+  var _RESERVED_ACT_RX = /\b(?:conven\w*|summon\w*|call(?:s|ed)?\s+(?:to\s+)?(?:order|session)|schedul\w*|sit(?:s|ting)?\s+in\s+session|hear(?:s|ing)?\s+the\s+matter|formal(?:ly)?\s+hear\w*|open(?:s|ed|ing)?\s+the\s+(?:inquiry|proceeding|hearing))\b/i;
+  var _RESERVED_STOP = /^(?:The|This|That|Their|Every|When|Where|Early|It|A|An|And|But|Fate)$/;
+  function _seedReservedMarkers(s) {
+    var out = [];
+    try {
+      var seed = (typeof STARTER_SEEDS !== 'undefined' && s && s._starterId) ? STARTER_SEEDS[s._starterId] : null;
+      var truths = (seed && Array.isArray(seed.worldTruths)) ? seed.worldTruths : [];
+      // Cast names are NOT markers — a scene naming Lirael must not be rejected for it.
+      var cast = [];
+      try {
+        var L = (typeof _charLedger === 'function') ? _charLedger() : null;
+        if (L) Object.keys(L).forEach(function (k) { if (L[k] && L[k].name) cast.push(String(L[k].name).toLowerCase()); });
+      } catch (_) {}
+      try {
+        var id = (s.picks && s.picks.identity) || {};
+        [id.playerName, id.partnerName, s.playerName, s.loveInterestName].forEach(function (n) { if (n) cast.push(String(n).toLowerCase()); });
+      } catch (_) {}
+      truths.forEach(function (t, i) {
+        var txt = String(t || '');
+        if (!_RESERVED_TRUTH_RX.test(txt)) return;
+        var seen = {}, marks = [];
+        (txt.match(/\b[A-Z][a-z]{2,}\b/g) || []).forEach(function (w) {
+          if (_RESERVED_STOP.test(w)) return;
+          var lw = w.toLowerCase();
+          if (cast.indexOf(lw) !== -1) return;
+          // Singular/plural collapse so "Dohkar" and "Dohkars" are one marker, not two.
+          var key = lw.replace(/s$/, '');
+          if (seen[key]) return;
+          seen[key] = 1; marks.push(key);
+        });
+        if (marks.length) out.push({ truthIndex: i, markers: marks, text: txt.slice(0, 180) });
+      });
+    } catch (_) {}
+    return out;
+  }
+  function _detectReservedContentBreach(proposal, s) {
+    try {
+      var slots = (proposal && proposal.event_slots) || {};
+      var text = [proposal && proposal.state_change, proposal && proposal.local_objective,
+                  slots.action, slots.target, slots.exit_state]
+        .filter(function (x) { return typeof x === 'string'; }).join(' ');
+      if (!text.trim()) return null;
+      if (!_RESERVED_ACT_RX.test(text)) return null;      // nothing is being convened or scheduled
+      var groups = _seedReservedMarkers(s || window.state);
+      var hay = text.toLowerCase();
+      for (var i = 0; i < groups.length; i++) {
+        var hits = groups[i].markers.filter(function (m) { return hay.indexOf(m) !== -1; });
+        // TWO markers plus a convening act. One marker is a mention; two staged together with a
+        // convening verb is the reserved proceeding itself, whatever it is being called.
+        if (hits.length >= 2) {
+          return { markers: hits, truthIndex: groups[i].truthIndex, truth: groups[i].text,
+                   act: (text.match(_RESERVED_ACT_RX) || [''])[0] };
+        }
+      }
+    } catch (_) {}
+    return null;
+  }
+  window._detectReservedContentBreach = _detectReservedContentBreach;
+
   function _canonDeterministicCheck(proposal, packet) {
     var violations = [];
     try {
       var slots = (proposal && proposal.event_slots) || {};
       var declared = (proposal && proposal.mechanism_grounding) || slots.mechanism_grounding;
+      // (0) SEED-RESERVED CONTENT. Checked FIRST, and deliberately BEFORE the "ordinary"
+      // short-circuit: convening a hearing needs no supernatural capability, so an ordinary
+      // grounding is exactly how reserved content slips through. This is a scheduling violation,
+      // not a capability one.
+      var _rb = _detectReservedContentBreach(proposal, window.state);
+      if (_rb) {
+        violations.push({ category: 'invalidated_objective',
+          claim: String((proposal && proposal.state_change) || '').slice(0, 200), citedFactIds: [],
+          why: 'stages seed-RESERVED content early — markers [' + _rb.markers.join(', ') + '] with "'
+            + _rb.act + '". A permitted label does not make it permitted content: ' + _rb.truth });
+        return { decided: true, violations: violations, source: 'deterministic' };
+      }
       // (a) no declaration at all — free rejection, no model needed.
       if (typeof declared !== 'string' || !declared.trim()) {
         violations.push({ category: 'unsupported_capability', claim: String(proposal && proposal.state_change || '').slice(0, 200),

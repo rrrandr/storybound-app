@@ -697,6 +697,69 @@ const CAT5 = ['I don\'t know', 'whatever', '...', 'sure'];
   ok('...nor in the author', !!a2 && a2.sys.indexOf('WEAK-TURN RESTRAINT') === -1);
   ok('...and nothing was left on state', ordRun.leaked === undefined, JSON.stringify(ordRun));
 
+  section('10. WEAK DIALOGUE MUST STAY AN ATTEMPTED UTTERANCE');
+  // The first live sample preserved the uncertainty and then converted the SPOKEN line
+  // "I don't know." into silence and interiority — never uttered, never received. Honouring what
+  // the player FELT while discarding what they DID is only half the contract.
+  const spoken = await page.evaluate(() => window._buildWeakTurnRestraintDirective('', "I don't know."));
+  const acted = await page.evaluate(() => window._buildWeakTurnRestraintDirective('...', ''));
+  fs.writeFileSync(path.join(OUT_DIR, 'weak_directive_dialogue.txt'), spoken);
+  ok('a spoken weak turn requires the line to remain an ATTEMPTED UTTERANCE',
+    /THE PLAYER SPOKE[\s\S]{0,200}?ATTEMPTED UTTERANCE/.test(spoken), spoken.slice(0, 200));
+  ok('...and explicitly forbids turning it into silence or unspoken thought',
+    /may NOT become silence, an unspoken thought, or a line she\n *only considers saying/.test(spoken));
+  ok('...names the softenings that ARE allowed, so it is not a demand for volume',
+    /quiet, halting, cut off, mumbled, muffled by the seal/.test(spoken));
+  ok('...and requires it to be VISIBLY RECEIVED on the page',
+    /AND IT MUST BE VISIBLY RECEIVED/.test(spoken)
+    && /An utterance nobody registers is the same/.test(spoken));
+  ok('an ACTION-only weak turn gets the action rule, not the speech rule',
+    /THE PLAYER ACTED/.test(acted) && !/THE PLAYER SPOKE/.test(acted), acted.slice(0, 160));
+  ok('an ordinary turn still emits nothing',
+    (await page.evaluate(() => window._buildWeakTurnRestraintDirective('I take the ledger', 'Say it.'))) === '');
+
+  section('11. SEED-RESERVED CONTENT CANNOT BE LAUNDERED BY A LABEL');
+  // THE ACTUAL FAILING PLAN from the live run: the formal late-Issue-1 inquiry, called a
+  // "preliminary review", carrying The Open + a Chayr + two Dohkars + a convening date.
+  const reserved = await page.evaluate(() => {
+    const s = window.state; s._starterId = 'starter_first_sacrifice';
+    s.picks = { identity: { playerName: 'Lirael', partnerName: 'Julian' } };
+    const mk = (sc, obj) => ({ state_change: sc, local_objective: obj || '',
+      event_slots: { actor: 'the presiding Dohkar', action: 'announces', target: 'the assembly',
+        exit_state: sc, mechanism_grounding: 'ordinary' } });
+    const RED = mk('A preliminary review will convene in three days at the Open, where a Chayr and two Dohkars will hear the matter of the Sacrificiant\'s conduct');
+    return {
+      markers: window._detectReservedContentBreach(RED, s),
+      // The deterministic gate must REJECT it, despite mechanism_grounding being "ordinary".
+      det: window._canonDeterministicCheck(RED, { ids: [], facts: [] }),
+      // NEGATIVES — permitted early content must survive.
+      accusation: window._detectReservedContentBreach(mk('The presiding Dohkar recounts the accusation and names Lirael as its subject'), s),
+      pressure: window._detectReservedContentBreach(mk('Julian demands a preliminary review of Lirael\'s conduct, and the crowd takes it up'), s),
+      oneMarker: window._detectReservedContentBreach(mk('The presiding Dohkar convenes the morning assembly in the clearing'), s),
+      ordinary: window._detectReservedContentBreach(mk('Julian lifts the torn mouth-band and asks whose it is'), s)
+    };
+  });
+  fs.writeFileSync(path.join(OUT_DIR, 'reserved_guard.json'), JSON.stringify(reserved, null, 2));
+  note('markers hit: ' + JSON.stringify(reserved.markers && reserved.markers.markers));
+  ok('RED — the ACTUAL failing plan is detected as seed-reserved content',
+    !!reserved.markers && reserved.markers.markers.length >= 2, JSON.stringify(reserved.markers));
+  ok('...and the DETERMINISTIC gate rejects it, despite grounding being "ordinary"',
+    reserved.det.decided === true && (reserved.det.violations[0] || {}).category === 'invalidated_objective',
+    JSON.stringify(reserved.det).slice(0, 260));
+  ok('...with a reason that says a label does not launder the content',
+    /A permitted label does not make it permitted content/.test((reserved.det.violations[0] || {}).why || ''),
+    (reserved.det.violations[0] || {}).why);
+  ok('NEGATIVE — an accusation (explicitly permitted early) is NOT flagged',
+    reserved.accusation === null, JSON.stringify(reserved.accusation));
+  ok('NEGATIVE — DEMANDING a preliminary review is not CONVENING one',
+    reserved.pressure === null, JSON.stringify(reserved.pressure));
+  ok('NEGATIVE — one marker plus a convening verb is a mention, not the proceeding',
+    reserved.oneMarker === null, JSON.stringify(reserved.oneMarker));
+  ok('NEGATIVE — ordinary business is untouched', reserved.ordinary === null, JSON.stringify(reserved.ordinary));
+  ok('cast names are excluded from markers, or every scene naming a character would trip it',
+    !(reserved.markers.markers || []).some((m) => /lirael|julian|seren/.test(m)),
+    JSON.stringify(reserved.markers.markers));
+
   section('9. CONTAINMENT');
   ok('still only ONE wall-break detector — nothing was duplicated',
     (src2.match(/function _detectWallBreakSignal/g) || []).length === 1);

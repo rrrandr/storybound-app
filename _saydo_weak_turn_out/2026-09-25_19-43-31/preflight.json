@@ -1,0 +1,52 @@
+{
+  "results": [
+    {
+      "name": "the seed is deterministic and on the \"remain\" branch",
+      "pass": true
+    },
+    {
+      "name": "the authorized input classifies as a WEAK TURN",
+      "pass": true
+    },
+    {
+      "name": "...with the posture recorded as uncertainty",
+      "pass": true
+    },
+    {
+      "name": "a dry generation reaches a PLANNER request",
+      "pass": true
+    },
+    {
+      "name": "...carrying the restraint",
+      "pass": true
+    },
+    {
+      "name": "a dry generation reaches an AUTHOR request",
+      "pass": true
+    },
+    {
+      "name": "...carrying the restraint",
+      "pass": true
+    },
+    {
+      "name": "...and a plan is produced, so the live path can deliver a scene",
+      "pass": true
+    },
+    {
+      "name": "NO REAL DISPATCH occurred during preflight",
+      "pass": true
+    },
+    {
+      "name": "RED PROOF — a payload WITHOUT the restraint is aborted at the wire",
+      "pass": true
+    },
+    {
+      "name": "RED PROOF — a reservation that would pass the ceiling is REFUSED",
+      "pass": true
+    },
+    {
+      "name": "image preparation is blocked for the whole run",
+      "pass": true
+    }
+  ]
+}

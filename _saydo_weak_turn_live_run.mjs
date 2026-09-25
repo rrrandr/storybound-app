@@ -54,13 +54,15 @@ function section(t) { console.log('\n=== ' + t + ' ==='); }
 // ── COST. Reserved BEFORE dispatch, realized from the provider's own usage afterwards. ────────
 // Conservative per-endpoint reservations: a request is refused if reserving it would pass the
 // ceiling, so the ceiling is enforced ahead of the spend rather than measured after it.
-const RESERVE = { '/api/proxy': 0.090, '/api/mistral-proxy': 0.010, '/api/chatgpt-proxy': 0.020 };
+// Reserved PER ROLE, not per endpoint — the same endpoint serves the planner, the author and the
+// scaffold at very different sizes, and the first run's unreserved scaffold is why this changed.
+const RESERVE_BY_ROLE = { planner: 0.020, author: 0.090, scaffold: 0.030, other: 0.020 };
 const RATES = { '/api/proxy': { in: 1.25e-6, out: 2.5e-6 },
                 '/api/mistral-proxy': { in: 1.5e-7, out: 6e-7 },
                 '/api/chatgpt-proxy': { in: 1.5e-7, out: 6e-7 } };
 const ledger = { reserved: 0, realized: 0, entries: [], refusals: [] };
 function reserve(pathname, label) {
-  const amt = RESERVE[pathname] != null ? RESERVE[pathname] : 0.02;
+  const amt = RESERVE_BY_ROLE[label] != null ? RESERVE_BY_ROLE[label] : 0.02;
   if (ledger.reserved + amt > CEILING_USD + 1e-12) {
     const r = { label, pathname, usd: amt, wouldTotal: ledger.reserved + amt, refused: true };
     ledger.refusals.push(r); return r;
@@ -83,12 +85,18 @@ function realize(pathname, usage) {
 }
 
 // Classify an outgoing body the same way the full-flow control does.
+// THE SCAFFOLD IS ITS OWN ROLE (Roman 2026-09-25). The first run made THREE real calls and this
+// classifier named only two — the third fell through to 'other', was never reserved against the
+// ceiling, and RESULT.md reported two. The ceiling held anyway, but an unreserved billable role is
+// an accounting hole, not a rounding detail.
 function classify(b) {
   const all = JSON.stringify(b || {});
   if (all.indexOf('decisionGateBeatIdx') !== -1) return 'author';
   if (all.indexOf('state_change') !== -1 || all.indexOf('tactical_move') !== -1) return 'planner';
+  if (/scaffold|beat_plan|beatPlan|SCENE SCAFFOLD|skeleton/i.test(all)) return 'scaffold';
   return 'other';
 }
+const BILLABLE_ROLES = ['planner', 'author', 'scaffold'];
 function bodyText(b) {
   return ((b && b.messages) || []).map((m) => String((m && m.content) || '')).join('\n');
 }
@@ -147,12 +155,14 @@ async function seed(page, storyId) {
     let pathname; try { pathname = new URL(req.url()).pathname; } catch (_) { pathname = req.url(); }
     let body = null; try { body = JSON.parse(req.postData() || '{}'); } catch (_) {}
     const kind = classify(body);
-    if (kind === 'planner' || kind === 'author') {
+    if (BILLABLE_ROLES.indexOf(kind) !== -1) {
       const text = bodyText(body);
       const hasRestraint = text.indexOf(RESTRAINT_MARK) !== -1;
       captured.push({ kind, pathname, hasRestraint, body, at: Date.now() });
-      // STOP CONDITION 1 — the restraint must be in the REAL payload.
-      if (!hasRestraint) {
+      // STOP CONDITION 1 — the restraint must be in the REAL payload. Required of the planner and
+      // the author, which is where the contract has to land; the scaffold is reserved and censused
+      // but is not gated on it.
+      if (!hasRestraint && (kind === 'planner' || kind === 'author')) {
         abortReason = abortReason || ('the ' + kind + ' payload did NOT carry ' + RESTRAINT_MARK);
         console.error('  ✗ ABORT before dispatch — ' + abortReason);
         await route.abort('failed'); return;
@@ -274,17 +284,30 @@ async function seed(page, storyId) {
 
   const t0 = Date.now();
   const liveOut = await page.evaluate(async (io) => {
+    // THE ACCEPTED PROPOSAL IS RELEASED IN THE GENERATION'S OWN finally, so reading it afterwards
+    // returns null — which is exactly what the first run preserved. Snapshot it the moment the
+    // planner stamps it, via a poll that runs alongside the generation. The RAW planner response
+    // is kept separately at the wire; nothing here reconstructs fields that were never retained.
+    window.__acceptedSnapshot = null;
+    const poll = setInterval(() => {
+      try {
+        const p = window.state && window.state._acceptedPlannerProposal;
+        if (p && !window.__acceptedSnapshot) window.__acceptedSnapshot = JSON.parse(JSON.stringify(p));
+      } catch (_) {}
+    }, 50);
     try {
       const plan = await window._runCGScreenplayGen(1, io.action, io.dialogue);
       return {
         got: !!plan,
         beats: (plan && plan.beats) ? plan.beats.map((b) => ({ idx: b.idx, kind: b.kind, speaker: b.speaker || null, text: b.text || '' })) : [],
-        acceptedProposal: window.state._acceptedPlannerProposal || null,
+        acceptedProposal: window.__acceptedSnapshot || window.state._acceptedPlannerProposal || null,
+        acceptedCaptured: !!window.__acceptedSnapshot,
         temptInvoked: !!window.state.tempt_fate_invoked_this_turn,
         temptLedger: (window.state._temptFateLedger || []).length,
         durables: (window.state._temptFateDurableConsequences || []).length
       };
     } catch (e) { return { error: (e && e.message) || String(e) }; }
+    finally { clearInterval(poll); }
   }, INPUT);
   const latencyMs = Date.now() - t0;
   gate.closePhase();
@@ -304,6 +327,10 @@ async function seed(page, storyId) {
   fs.writeFileSync(path.join(OUT_DIR, 'planner_request.json'), JSON.stringify(livePlanner ? livePlanner.body : null, null, 2));
   fs.writeFileSync(path.join(OUT_DIR, 'author_request.json'), JSON.stringify(liveAuthor ? liveAuthor.body : null, null, 2));
   fs.writeFileSync(path.join(OUT_DIR, 'accepted_plan.json'), JSON.stringify(liveOut.acceptedProposal, null, 2));
+  // The RAW planner response, kept DISTINCT from the accepted normalized proposal.
+  const rawPlanner = gate.trackedCalls().filter((c) => c.real)
+    .map((c) => c.responseBody).filter((b) => b && (b.content || b.choices));
+  fs.writeFileSync(path.join(OUT_DIR, 'raw_planner_response.json'), JSON.stringify(rawPlanner, null, 2));
   fs.writeFileSync(path.join(OUT_DIR, 'beats.json'), JSON.stringify(liveOut.beats, null, 2));
   fs.writeFileSync(path.join(OUT_DIR, 'prose.txt'), prose);
 
@@ -317,6 +344,13 @@ async function seed(page, storyId) {
     JSON.stringify({ t: liveOut.temptInvoked, l: liveOut.temptLedger, d: liveOut.durables }));
   ok('no image generation was attempted',
     gate.trackedCalls().filter((c) => c.real && /image|flux|dashscope|bfl/i.test(c.url)).length === 0);
+  ok('the accepted normalized plan was CAPTURED, not null',
+    !!liveOut.acceptedProposal && liveOut.acceptedCaptured === true,
+    JSON.stringify({ captured: liveOut.acceptedCaptured }));
+  note('census by role: ' + JSON.stringify(captured.reduce((m, c) => { m[c.kind] = (m[c.kind] || 0) + 1; return m; }, {})));
+  ok('every real call was reserved under its own role',
+    ledger.entries.length === gate.trackedCalls().filter((c) => c.real).length,
+    JSON.stringify({ reserved: ledger.entries.length, real: gate.trackedCalls().filter((c) => c.real).length }));
   ok('spend stayed inside the ceiling',
     ledger.realized <= CEILING_USD + 1e-9, '$' + ledger.realized.toFixed(6));
 
@@ -343,6 +377,8 @@ async function seed(page, storyId) {
     delivered: liveOut.got === true, beatCount, proseChars: prose.length, latencyMs,
     temptInvoked: liveOut.temptInvoked, cost: { reserved: ledger.reserved, realized: ledger.realized,
       ceiling: CEILING_USD, entries: ledger.entries, refusals: ledger.refusals },
+    acceptedPlanCaptured: !!liveOut.acceptedCaptured,
+    census: captured.reduce((m, c) => { m[c.kind] = (m[c.kind] || 0) + 1; return m; }, {}),
     realCalls: gate.trackedCalls().filter((c) => c.real).map((c) => ({ url: c.url, status: c.status }))
   };
   fs.writeFileSync(path.join(OUT_DIR, 'report.json'), JSON.stringify(report, null, 2));
