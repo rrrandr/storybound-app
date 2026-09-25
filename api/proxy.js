@@ -193,7 +193,10 @@ const XAI_CALL_TIMEOUT_MS = Number(process.env.XAI_CALL_TIMEOUT_MS) || 90000;
 // grok-4.3, which is correct for the retired 4.1/4.20 aliases but would silently turn a deliberate
 // grok-4.7 request into a 4.3 one — measuring the wrong model at 4.7 prices. A name listed here is
 // passed through verbatim when the caller sends it as _sbModelOverride.
-const _SB_MODEL_OVERRIDES = ['grok-4.6', 'grok-4.7'];
+// grok-4.3 is listed so the CANON AUDITOR can pin it EXPLICITLY. Every legacy alias already
+// resolves to 4.3 by default, but a default is not a pin — and the internal chain is exactly where
+// the grok-4.7 run lost its model identity.
+const _SB_MODEL_OVERRIDES = ['grok-4.3', 'grok-4.6', 'grok-4.7'];
 function _resolveGrokModel(name, overrideEffort, sbOverride) {
   const n = String(name || '');
   let effort = (/non-reasoning|4\.20/.test(n)) ? 'none' : 'high';

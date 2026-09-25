@@ -192111,7 +192111,11 @@ No text, no watermark, no UI elements, share-ready.`;
   // (_detectUngroundedCapability → _plannerGroundingRejection) is a separate, free, pre-author gate
   // and remains active: a plan with no mechanism_grounding, a fabricated canon id, or a grounding
   // that resolves to nothing is still rejected before the author.
-  var _CANON_AUDIT_DEFAULT_ENABLED = false;
+  // ENABLED (Roman 2026-09-25). It was default-OFF while every candidate model was rejected and
+  // the routing was unconditional. Both reasons are now gone: grok-4.3 is calibrated for this role
+  // and the audit fires only on deterministic-identified risk. window._canonAuditEnabled = false
+  // still disables it outright.
+  var _CANON_AUDIT_DEFAULT_ENABLED = true;
   function _canonAuditIsEnabled() {
     try {
       if (window._canonAuditEnabled === true) return true;    // explicit opt-in (calibration/tests)
@@ -192565,9 +192569,23 @@ No text, no watermark, no UI elements, share-ready.`;
 
   async function _runCanonAudit(proposal, packet) {
     var p = _buildCanonAuditPrompt(proposal, packet);
+    // PINNED TO grok-4.3, NO FALLBACK (Roman 2026-09-25, closing the auditor bake-off).
+    // The default chain was ministral-8b-2512 -> grok-4-1-fast-reasoning -> gpt-4o-mini, and all
+    // three of those were REJECTED for this role by calibration. A single explicit tier means a
+    // transport failure cannot silently substitute a model that cannot do the job.
+    //
+    // _sbModelOverride closes the SECOND substitution path, which the grok-4.7 run exposed the hard
+    // way: api/proxy.js runs its OWN internal model chain that a client-side tier pin has no
+    // authority over. Sending the override makes every chain entry resolve to grok-4.3, so the
+    // model that answers is the model that was calibrated — whichever entry the proxy reaches.
+    //
+    // max_tokens 2000 matches the CALIBRATED configuration exactly ($0.0053/audit, ~6s median).
+    // 700 was the old default and is not what was measured.
     var data = await _callTieredProvider('canonAudit', [
       { role: 'system', content: p.sys }, { role: 'user', content: p.usr }
-    ], { max_tokens: 700, temperature: 0 });
+    ], { max_tokens: 2000, temperature: 0,
+         tiers: [{ tier: 'primary', provider: 'grok', model: 'grok-4.3',
+                   reasoning_effort: 'high', sbModelOverride: 'grok-4.3' }] });
     try { if (typeof _recordProxyTextCost === 'function') _recordProxyTextCost(data, (data && data._orchestration && data._orchestration.model), 'canon-audit'); } catch (_) {}
     var c = data && data.content;
     if (!c) throw new Error('canon audit returned no content');
@@ -192583,6 +192601,67 @@ No text, no watermark, no UI elements, share-ready.`;
   window._runCanonAudit = _runCanonAudit;
 
   // ── THE GATE — deterministic first, audit only if undecided, FAIL CLOSED on uncertainty ──────
+  // ── SELECTIVE ROUTING (Roman 2026-09-25) ────────────────────────────────────────────────────
+  // The auditor does NOT run on every scene. Calibration put grok-4.3 at ~$0.0053 and ~6s per
+  // audited plan — cheap per call, but paid on EVERY generation it touches, and the overwhelming
+  // majority of plans are ordinary dialogue and movement that no model needs to read.
+  //
+  // It fires only where the deterministic checks cannot safely resolve a plan-level claim. That is
+  // the gap the whole workstream exists to close: _detectUngroundedCapability returns
+  // {flagged:false} the instant mechanism_grounding reads "ordinary", WITHOUT inspecting the event
+  // text — so supernatural content falsely labelled ordinary walks straight through it. A model
+  // audit is the only thing that reads what the plan actually says.
+  //
+  // Returns { risky, reasons } — reasons are recorded so false positives can be reviewed later
+  // against what actually triggered them.
+  var _CANON_RISK_RX = {
+    // NOTE the "memory" bug this very pattern shipped with: `memories?` matches "memorie"/"memories"
+    // and NOT "memory", so the headline case — "draws the MEMORY out of Seren" labelled ordinary —
+    // did not trigger at all. Caught by the integration control, which is the whole reason the
+    // control asserts the mislabelled case separately from the durable-consequence case rather
+    // than letting one mask the other.
+    supernatural: /\b(?:wish|wishes|wished|fate|rupture|magic|magical|spell|enchant|curse|vanish|vanishes|materiali[sz]\w*|teleport\w*|portal|resurrect\w*|possess\w*|glow|glowing|aura|levitat\w*|transform\w*|fuse[sd]?|fusing|mind[- ]?read\w*|memor(?:y|ies)|remember\w*|recall\w*|forget\w*|forgot|erase[sd]?|erasing|dissolve[sd]?|unmake|unmade|rewrite[sd]?|rewrote|seal(?:s|ed|ing)?|sever\w*|bind|binds|bound)\b/i,
+    knowledge: /\b(?:knows?|knew|unaware|recalls?|recollection|remembers?|reveals?|confess|admits?|learns?|discovers?)\b/i
+  };
+  function _canonAuditRiskTrigger(proposal, packet) {
+    var reasons = [];
+    try {
+      if (!proposal || typeof proposal !== 'object') return { risky: false, reasons: [] };
+      var slots = proposal.event_slots || {};
+      var declared = String(proposal.mechanism_grounding || slots.mechanism_grounding || '');
+      var text = [proposal.state_change, proposal.local_objective, proposal.tactical_move,
+                  slots.action, slots.target, slots.exit_state]
+        .filter(function (x) { return typeof x === 'string'; }).join(' ');
+
+      // 1. A NON-ORDINARY MECHANISM is an asserted capability by definition.
+      if (declared && !/^\s*ordinary\s*$/i.test(declared)) {
+        reasons.push('asserted mechanism: "' + declared.slice(0, 80) + '"');
+      }
+      // 2. Supernatural VOCABULARY while claiming to be ordinary — the exact blind spot.
+      else if (_CANON_RISK_RX.supernatural.test(text)) {
+        reasons.push('declared "ordinary" but the event text asserts supernatural content the deterministic check cannot see');
+      }
+      // 3. Changed knowledge or history in play.
+      if (_CANON_RISK_RX.knowledge.test(text)
+          && (packet.facts || []).some(function (f) { return f.kind === 'know' || f.kind === 'dc'; })) {
+        reasons.push('the plan turns on knowledge/history while a committed change to it exists');
+      }
+      // 4. A durable Tempt Fate consequence is on the board at all.
+      if ((packet.facts || []).some(function (f) { return f.kind === 'dc' || f.kind === 'dur'; })) {
+        reasons.push('a durable Tempt Fate consequence is in force');
+      }
+      // 5. A previously invalidated objective exists.
+      if ((packet.invalidated || []).length) {
+        reasons.push('a committed rupture has invalidated ' + packet.invalidated.length + ' prior plan(s)');
+      }
+    } catch (e) {
+      // An erroring trigger must AUDIT, never skip. Skipping is the failure that costs canon.
+      return { risky: true, reasons: ['risk trigger threw (' + ((e && e.message) || e) + ') — auditing rather than skipping'] };
+    }
+    return { risky: reasons.length > 0, reasons: reasons };
+  }
+  window._canonAuditRiskTrigger = _canonAuditRiskTrigger;
+
   async function _canonAuditGate(proposal, packet, opts) {
     opts = opts || {};
     var det = _canonDeterministicCheck(proposal, packet);
@@ -234123,16 +234202,36 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
       if (_caProposal && typeof _buildCanonPacket === 'function' && typeof _canonAuditGate === 'function'
           && _canonAuditIsEnabled()) {
         var _caPacket = _buildCanonPacket(state, { proposal: _caProposal });
+        // SELECTIVE: ordinary dialogue, movement, props and established capabilities get NO model
+        // audit. The deterministic check still runs inside the gate either way, and its rejection
+        // is final — a model pass can never overturn it, because the gate returns before dispatch.
+        var _caRisk = _canonAuditRiskTrigger(_caProposal, _caPacket);
         try {
-          console.log('[CANON-AUDIT] gating scene ' + sceneIndex + ' — packet: ' + _caPacket.facts.length
-            + ' facts (' + _caPacket.negatives.length + ' negative), ' + _caPacket.invalidated.length + ' invalidated plan(s)');
+          console.log('[CANON-AUDIT] scene ' + sceneIndex + ' — ' + (_caRisk.risky
+              ? ('RISK TRIGGERED, auditing: ' + _caRisk.reasons.join(' | '))
+              : 'no canon risk identified — deterministic only, NO model call')
+            + ' (packet: ' + _caPacket.facts.length + ' facts, ' + _caPacket.invalidated.length + ' invalidated)');
         } catch (_) {}
-        var _caVerdict = await _canonAuditGate(_caProposal, _caPacket);
+        var _caT0 = Date.now();
+        var _caVerdict = await _canonAuditGate(_caProposal, _caPacket, { skipAudit: !_caRisk.risky });
+        // RECORDED FOR FALSE-POSITIVE REVIEW: why it fired, what it decided, what it cited, how
+        // long it took and what it cost. A rejection nobody can audit later is not reviewable.
         state._lastCanonAudit = {
           at: Date.now(), sceneIndex: sceneIndex, allow: _caVerdict.allow, source: _caVerdict.source,
+          triggered: _caRisk.risky, triggerReasons: _caRisk.reasons,
+          model: _caVerdict.paid ? 'grok-4.3' : null,
+          latencyMs: Date.now() - _caT0,
+          realizedUsd: _caVerdict.paid ? (function () {
+            try { var c = state._sceneCostAcc; return (c && c.lastCanonAuditUsd) || null; } catch (_) { return null; }
+          })() : 0,
           paid: _caVerdict.paid, reason: _caVerdict.reason || null, violations: _caVerdict.violations || [],
+          citedFactIds: (_caVerdict.violations || []).reduce(function (a, v) { return a.concat(v.citedFactIds || []); }, []),
           auditErrors: _caVerdict.auditErrors || null, uncertainty: _caVerdict.uncertainty || null
         };
+        try {
+          (state._canonAuditLog = state._canonAuditLog || []).push(state._lastCanonAudit);
+          if (state._canonAuditLog.length > 50) state._canonAuditLog.shift();
+        } catch (_) {}
         if (!_caVerdict.allow) {
           // PRESERVE the proposal and the audit result for review before stopping.
           state._canonAuditBlocked = {

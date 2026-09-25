@@ -227,9 +227,10 @@ const RED_NO_GROUNDING = (base) => Object.assign({}, base, {
 
   // ═══════════════════════════════════════════════════════════════════════════════════════════
   section('7. THE PRODUCTION PACKET CARRIES THE REAL CANON (req 11)');
-  const prodPacket = consoleLines.filter((l) => /\[CANON-AUDIT\] gating scene/.test(l)).pop() || '';
+  // The gate's log line changed shape when selective routing landed; match the packet report.
+  const prodPacket = consoleLines.filter((l) => /\[CANON-AUDIT\] scene \d+ —/.test(l)).pop() || '';
   console.log('    ' + prodPacket);
-  ok('the production gate logged a packet built at dispatch time', /facts \(/.test(prodPacket), prodPacket);
+  ok('the production gate logged a packet built at dispatch time', /packet: \d+ facts/.test(prodPacket), prodPacket);
   const packetDetail = await page.evaluate((d) => {
     window.state._starterId = 'starter_first_sacrifice'; window.state._temptFateDurableConsequences = [d];
     const p = window._buildCanonPacket(window.state);
@@ -377,7 +378,11 @@ const RED_NO_GROUNDING = (base) => Object.assign({}, base, {
     return { unsetEnabled: window._canonAuditIsEnabled(), explicitOn: (window._canonAuditEnabled = true, window._canonAuditIsEnabled()),
              explicitOff: (window._canonAuditEnabled = false, window._canonAuditIsEnabled()) };
   });
-  ok('UNSET means DISABLED — the production default is off', defaultOff.unsetEnabled === false, JSON.stringify(defaultOff));
+  // POLICY CHANGED 2026-09-25: the auditor is ENABLED by default and SELECTIVE. It was default-off
+  // only while every candidate model was rejected and routing was unconditional; grok-4.3 is now
+  // calibrated for the role and the audit fires only on deterministic-identified risk.
+  ok('UNSET means ENABLED — selective auditing is the production default',
+    defaultOff.unsetEnabled === true, JSON.stringify(defaultOff));
   ok('an explicit true enables it (the test-only opt-in)', defaultOff.explicitOn === true, JSON.stringify(defaultOff));
   ok('an explicit false disables it', defaultOff.explicitOff === false, JSON.stringify(defaultOff));
 
@@ -385,7 +390,10 @@ const RED_NO_GROUNDING = (base) => Object.assign({}, base, {
   plannerReply = LEGIT_ORDINARY; auditorReply = { verdict: 'pass', violations: [] };
   seen.planner = seen.auditor = seen.author = seen.other = 0;
   await setup();
-  await page.evaluate(() => { delete window._canonAuditEnabled; });   // ship state
+  // SHIP STATE is now "enabled and selective", so leaving the flag unset no longer disables
+  // anything. This run must therefore be driven by the EXPLICIT kill switch to test the off path —
+  // relying on unset was the assumption the policy change invalidated.
+  await page.evaluate(() => { window._canonAuditEnabled = false; });
   gate.setPhase('auditor_disabled', 40);
   const offPlan = await page.evaluate(async () => {
     const r = await window._runCGScreenplayGen(1, 'Lirael closes her eyes for a long moment, then opens them again.', '');
@@ -393,9 +401,26 @@ const RED_NO_GROUNDING = (base) => Object.assign({}, base, {
   });
   gate.closePhase();
   console.log('    disabled-run dispatches: ' + JSON.stringify(seen));
-  ok('with the auditor OFF a normal scene makes ZERO auditor calls', seen.auditor === 0, JSON.stringify(seen));
+  // The kill switch must still be absolute: an explicit false means no auditor call, ever.
+  ok('with the auditor EXPLICITLY disabled a normal scene makes ZERO auditor calls',
+    seen.auditor === 0, JSON.stringify(seen));
   ok('...and the AUTHOR is dispatched exactly once — the scene is not blocked',
     seen.author === 1 && offPlan.canonBlocked !== true, JSON.stringify({ seen, offPlan }));
+  // And the converse, which is the actual ship state: enabled, selective, and still not blocking a
+  // legitimate scene. Whether it audits depends on the trigger, so the invariant asserted here is
+  // the one that matters — the author runs and the scene is not blocked either way.
+  seen.planner = seen.auditor = seen.author = seen.other = 0;
+  await setup();
+  await page.evaluate(() => { delete window._canonAuditEnabled; });   // true ship state
+  const shipPlan = await page.evaluate(async () => {
+    const r = await window._runCGScreenplayGen(1, 'Lirael closes her eyes for a long moment, then opens them again.', '');
+    return r && { blocked: !!r.__canonAuditBlocked, beats: r.beats ? r.beats.length : 0 };
+  });
+  console.log('    ship-state dispatches: ' + JSON.stringify(seen));
+  ok('SHIP STATE (unset = enabled + selective): the author still dispatches once, unblocked',
+    seen.author === 1 && shipPlan.blocked !== true, JSON.stringify({ seen, shipPlan }));
+  ok('...and at most ONE auditor call was made for the one candidate plan',
+    seen.auditor <= 1, JSON.stringify(seen));
   // The FREE deterministic grounding check must still bite while the semantic audit is off.
   seen.planner = seen.auditor = seen.author = seen.other = 0;
   plannerReply = RED_NO_GROUNDING;
@@ -415,8 +440,11 @@ const RED_NO_GROUNDING = (base) => Object.assign({}, base, {
   const liveImplicitEnable = src.split('\n')
     .filter((l) => !l.trim().startsWith('//') && !l.trim().startsWith('*'))
     .filter((l) => /_canonAuditEnabled\s*!==\s*false/.test(l));
-  ok('production carries NO implicit-enable path in code — the default constant is false',
-    /var _CANON_AUDIT_DEFAULT_ENABLED = false;/.test(src) && liveImplicitEnable.length === 0,
+  // The dangerous pattern was `_canonAuditEnabled !== false`, which is TRUE when unset and made the
+  // flag meaningless. Enabling by DEFAULT is a deliberate policy; an implicit-enable EXPRESSION is
+  // still a bug, because it cannot be turned off. That distinction is what this asserts.
+  ok('production carries NO implicit-enable expression — the default is a named constant',
+    /var _CANON_AUDIT_DEFAULT_ENABLED = (?:true|false);/.test(src) && liveImplicitEnable.length === 0,
     JSON.stringify(liveImplicitEnable));
   ok('...and both gate sites route through the explicit opt-in helper',
     (src.match(/_canonAuditIsEnabled\(\)/g) || []).length >= 2, 'gate sites not routed through the helper');
