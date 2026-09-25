@@ -384,6 +384,36 @@ function section(t) { console.log('\n=== ' + t + ' ==='); }
     infraSum.infrastructureInconclusive === true && infraSum.providerRateLimited === false,
     JSON.stringify(infraSum).slice(0, 200));
 
+  section('10. THE GROK RUN\'S TWO REPORTING DEFECTS');
+  // Both are mine, both were found by the run's own output, and both are proven against the REAL
+  // usage object grok-4.3 returned — not a synthetic one.
+  const runSrc2 = fs.readFileSync(path.join(__dirname, '_canon_audit_calibration_run.mjs'), 'utf8');
+  const REAL_GROK_USAGE = { prompt_tokens: 3229, completion_tokens: 120, total_tokens: 4142,
+    prompt_tokens_details: { cached_tokens: 192 },
+    completion_tokens_details: { reasoning_tokens: 793 },
+    cost_in_usd_ticks: 61171500 };
+  // (a) completion_tokens EXCLUDES reasoning here — arithmetic, not assumption.
+  const derivedReasoning = REAL_GROK_USAGE.total_tokens - REAL_GROK_USAGE.prompt_tokens - REAL_GROK_USAGE.completion_tokens;
+  ok('REAL usage proves completion_tokens EXCLUDES reasoning tokens on xAI',
+    derivedReasoning === REAL_GROK_USAGE.completion_tokens_details.reasoning_tokens,
+    derivedReasoning + ' vs ' + REAL_GROK_USAGE.completion_tokens_details.reasoning_tokens);
+  ok('RED PROOF — charging only completion_tokens understates this fixture badly',
+    (1.25e-6 * 3229 + 2.5e-6 * 120) < (REAL_GROK_USAGE.cost_in_usd_ticks * 1e-10) * 0.75,
+    'old $' + (1.25e-6 * 3229 + 2.5e-6 * 120).toFixed(6));
+  ok('the runner now adds reasoning tokens to billed output',
+    /billedOutputTokens/.test(runSrc2) && /reasoning_tokens/.test(runSrc2));
+  ok('and PREFERS the provider\'s own reported cost when it publishes one',
+    /cost_in_usd_ticks \* 1e-10/.test(runSrc2) && /realizedFrom/.test(runSrc2));
+  ok('xAI\'s own tick cost matches list-price arithmetic on the real numbers, so the tick scale is right',
+    Math.abs((REAL_GROK_USAGE.cost_in_usd_ticks * 1e-10)
+      - (1.25e-6 * (3229 - 192) + 2e-7 * 192 + 2.5e-6 * (120 + 793))) < 5e-6,
+    'ticks $' + (REAL_GROK_USAGE.cost_in_usd_ticks * 1e-10).toFixed(6));
+  // (b) a provider that does not echo the effort must read UNKNOWN, never MISMATCH.
+  ok('an un-echoed reasoning effort is no longer counted as a mismatch',
+    /effortEchoed\.filter/.test(runSrc2) && /A missing echo is unknown, never a mismatch/.test(runSrc2));
+  ok('and reasoning is corroborated independently from reasoning_tokens',
+    /reasoningObserved/.test(runSrc2) && /reasoning corroborated on/.test(runSrc2));
+
   section('CONTAINMENT');
   ok('ZERO real provider dispatches', gate.realCalls().length === 0, 'realCalls=' + gate.realCalls().length);
 

@@ -200,7 +200,17 @@ fs.mkdirSync(OUT_DIR, { recursive: true });
     // reasoning model the completion count silently INCLUDES thinking tokens (Mistral publishes no
     // reasoning_tokens field on chat completions), so this is the only honest cost figure.
     const _u = (r.meta && r.meta.usage) || null;
-    const realizedUsd = _u ? (CAND.rate.in * (_u.prompt_tokens || 0) + CAND.rate.out * (_u.completion_tokens || 0)) : null;
+    // REASONING TOKENS ARE BILLED OUTPUT AND ARE NOT ALWAYS INSIDE completion_tokens.
+    // On xAI: total_tokens - prompt_tokens - completion_tokens == completion_tokens_details
+    // .reasoning_tokens exactly, i.e. completion_tokens EXCLUDES thinking. Charging only
+    // completion_tokens understated this run's cost by ~43% (4,041 reasoning tokens ignored).
+    // And when the provider reports its OWN cost, that beats any arithmetic of mine.
+    const _rt = ((_u && _u.completion_tokens_details && _u.completion_tokens_details.reasoning_tokens) || 0);
+    const _outTok = ((_u && _u.completion_tokens) || 0)
+      + ((_u && _u.total_tokens && (_u.total_tokens - (_u.prompt_tokens || 0) - (_u.completion_tokens || 0)) === _rt) ? _rt : 0);
+    const _providerUsd = (_u && typeof _u.cost_in_usd_ticks === 'number') ? _u.cost_in_usd_ticks * 1e-10 : null;
+    const realizedUsd = _providerUsd != null ? _providerUsd
+      : (_u ? (CAND.rate.in * (_u.prompt_tokens || 0) + CAND.rate.out * _outTok) : null);
     // The EXACT outgoing body for this fixture, as captured at the route before dispatch.
     const requestBody = (holder.log.filter((e) => e.kind === 'request-body' && e.fixture === fx.id).pop() || {}).body || null;
     rows.push({ id: fx.id, expect: fx.expect, why: fx.why, latencyMs, score,
@@ -208,7 +218,9 @@ fs.mkdirSync(OUT_DIR, { recursive: true });
       violations: (r.validated && r.validated.violations) || [], validationErrors: (r.validated && r.validated.errors) || [],
       error: r.error, packetTruncated: r.packetTruncated,
       servedModel: r.meta && r.meta.servedModel, reasoningEffortReported: r.meta && r.meta.reasoningEffortReported,
-      usage: _u, realizedUsd, thinkingChars: (r.meta && r.meta.thinkingChars) || 0,
+      usage: _u, realizedUsd, realizedFrom: _providerUsd != null ? 'provider' : 'computed',
+      reasoningTokens: _rt, billedOutputTokens: _outTok,
+      thinkingChars: (r.meta && r.meta.thinkingChars) || 0,
       requestModel: requestBody && requestBody.model,
       requestReasoningEffort: requestBody ? (requestBody.reasoning_effort == null ? null : String(requestBody.reasoning_effort)) : null });
     fs.writeFileSync(path.join(OUT_DIR, fx.id + '.json'),
@@ -276,15 +288,26 @@ fs.mkdirSync(OUT_DIR, { recursive: true });
   // refused all eight. An identity claim over an empty set is not clean; it is unverifiable.
   const served = rows.filter((r) => r.usage || r.servedModel);
   const wrongModel = rows.filter((r) => r.servedModel && r.servedModel !== PRIMARY_MODEL);
+  // EFFORT CAN ONLY BE CHECKED WHERE THE PROVIDER ECHOES IT. /api/mistral-proxy returns
+  // _orchestration.reasoning_effort; /api/proxy (xAI) returns role/model/timestamp and NO effort
+  // field. This filter assumed a universal echo, so the grok run reported "MISMATCH ... does NOT
+  // describe grok-4.3 in reasoning mode" on all eight — a false alarm about my own reporting, while
+  // usage.completion_tokens_details.reasoning_tokens showed 793 per fixture and reasoning plainly
+  // HAD run. A missing echo is unknown, never a mismatch.
+  const effortEchoed = rows.filter((r) => r.reasoningEffortReported != null);
   const wrongEffort = CAND.reasoningEffort
-    ? rows.filter((r) => r.usage && String(r.reasoningEffortReported || '') !== String(CAND.reasoningEffort))
+    ? effortEchoed.filter((r) => String(r.reasoningEffortReported) !== String(CAND.reasoningEffort))
     : [];
+  // Independent corroboration that reasoning ran, for providers that do not echo the setting.
+  const reasoningObserved = rows.filter((r) => (r.reasoningTokens || 0) > 0);
   const report = { runId: RUN_ID, model: PRIMARY_MODEL, promptVersion: PROMPT_V,
     reasoningEffort: CAND.reasoningEffort || null,
     maxTokens: CAND.maxTokens, dispatches: gate.trackedCalls().length,
     reservedUsd: ledger.totalUsd, realizedUsd: realizedTotal, tokensIn: tokIn, tokensOut: tokOut,
     ceilingUsd: RUN_CEILING, reservations: ledger.entries, routeLog: holder.log,
-    servedResponses: served.length,
+    servedResponses: served.length, effortEchoedCount: effortEchoed.length,
+    reasoningObservedCount: reasoningObserved.length,
+    reasoningTokensTotal: rows.reduce((t, r) => t + (r.reasoningTokens || 0), 0),
     modelIdentityClean: served.length > 0 && wrongModel.length === 0 && wrongEffort.length === 0,
     modelIdentityCheckable: served.length > 0,
     wrongModelIds: wrongModel.map((r) => r.id), wrongEffortIds: wrongEffort.map((r) => r.id),
@@ -301,12 +324,20 @@ fs.mkdirSync(OUT_DIR, { recursive: true });
   console.log('  usable responses   : ' + summary.usableResponses + '/' + summary.totalFixtures
     + '   (dispatched ' + summary.dispatchedFixtures + ', skipped ' + summary.skipped + ')');
   console.log('  dispatches         : ' + gate.trackedCalls().length + '   reserved $' + ledger.totalUsd.toFixed(6) + ' of $' + RUN_CEILING.toFixed(6));
-  console.log('  REALIZED cost      : $' + realizedTotal.toFixed(6) + '   ' + tokIn + ' in / ' + tokOut + ' out'
+  const rtTotal = rows.reduce((t, r) => t + (r.reasoningTokens || 0), 0);
+  const fromProvider = rows.filter((r) => r.realizedFrom === 'provider').length;
+  console.log('  REALIZED cost      : $' + realizedTotal.toFixed(6)
+    + (fromProvider ? '   (' + fromProvider + '/' + rows.length + ' from the PROVIDER\'s own reported cost)' : '')
+    + '   ' + tokIn + ' in / ' + tokOut + ' out' + (rtTotal ? (' + ' + rtTotal + ' reasoning (billed as output)') : '')
     + (CAND.reasoningEffort ? '  (completion INCLUDES thinking — Mistral reports no separate reasoning_tokens)' : ''));
   console.log('  model identity     : ' + (!report.modelIdentityCheckable
     ? 'NOT CHECKABLE — 0 of ' + rows.length + ' fixtures were served; there is nothing to verify'
     : (report.modelIdentityClean ? 'clean — all ' + report.servedResponses + ' served response(s) were ' + PRIMARY_MODEL
-        + (CAND.reasoningEffort ? ' at reasoning_effort=' + CAND.reasoningEffort : '')
+        + (CAND.reasoningEffort ? (report.effortEchoedCount
+            ? ' at reasoning effort=' + CAND.reasoningEffort
+            : ' (effort NOT echoed by this provider; reasoning corroborated on '
+              + report.reasoningObservedCount + '/' + rows.length + ' fixtures by '
+              + report.reasoningTokensTotal + ' reasoning tokens)') : '')
       : 'MISMATCH — wrongModel[' + report.wrongModelIds.join(',') + '] wrongEffort[' + report.wrongEffortIds.join(',') + ']')));
   if (report.modelIdentityCheckable && !report.modelIdentityClean) {
     console.log('    This run does NOT describe ' + PRIMARY_MODEL + (CAND.reasoningEffort ? ' in reasoning mode' : '') + '. Do not score it as such.');

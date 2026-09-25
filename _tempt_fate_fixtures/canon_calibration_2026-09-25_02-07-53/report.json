@@ -1,0 +1,795 @@
+{
+  "runId": "2026-09-25_02-07-53",
+  "model": "grok-4.3",
+  "promptVersion": 2,
+  "reasoningEffort": "high",
+  "maxTokens": 2000,
+  "dispatches": 8,
+  "reservedUsd": 0.07400000000000001,
+  "realizedUsd": 0.03408125,
+  "tokensIn": 26185,
+  "tokensOut": 540,
+  "ceilingUsd": 0.08,
+  "reservations": [
+    {
+      "label": "red_memory_extraction",
+      "ok": true,
+      "usd": 0.009250000000000001,
+      "runningTotalUsd": 0.009250000000000001
+    },
+    {
+      "label": "red_visible_glow",
+      "ok": true,
+      "usd": 0.009250000000000001,
+      "runningTotalUsd": 0.018500000000000003
+    },
+    {
+      "label": "red_contradicted_knowledge",
+      "ok": true,
+      "usd": 0.009250000000000001,
+      "runningTotalUsd": 0.027750000000000004
+    },
+    {
+      "label": "red_invalidated_objective",
+      "ok": true,
+      "usd": 0.009250000000000001,
+      "runningTotalUsd": 0.037000000000000005
+    },
+    {
+      "label": "green_confusion_records",
+      "ok": true,
+      "usd": 0.009250000000000001,
+      "runningTotalUsd": 0.046250000000000006
+    },
+    {
+      "label": "green_alignment_sense",
+      "ok": true,
+      "usd": 0.009250000000000001,
+      "runningTotalUsd": 0.05550000000000001
+    },
+    {
+      "label": "green_tempt_history_rewrite",
+      "ok": true,
+      "usd": 0.009250000000000001,
+      "runningTotalUsd": 0.06475
+    },
+    {
+      "label": "green_mundane_invention",
+      "ok": true,
+      "usd": 0.009250000000000001,
+      "runningTotalUsd": 0.07400000000000001
+    }
+  ],
+  "routeLog": [
+    {
+      "kind": "blocked-endpoint",
+      "pathname": "/api/csp-report",
+      "reason": "calibration allows only /api/proxy"
+    },
+    {
+      "kind": "blocked-endpoint",
+      "pathname": "/api/config",
+      "reason": "calibration allows only /api/proxy"
+    },
+    {
+      "kind": "blocked-endpoint",
+      "pathname": "/api/csp-report",
+      "reason": "calibration allows only /api/proxy"
+    },
+    {
+      "kind": "blocked-endpoint",
+      "pathname": "/api/geo",
+      "reason": "calibration allows only /api/proxy"
+    },
+    {
+      "kind": "request-body",
+      "fixture": "red_memory_extraction",
+      "pathname": "/api/proxy",
+      "body": {
+        "role": "STRUCTURE_GENERATOR",
+        "preferredModel": "grok-4.3",
+        "temperature": 0,
+        "max_tokens": 2000,
+        "messages": [
+          {
+            "role": "system",
+            "content": "You are a CANON AUDITOR for an interactive fiction engine. You classify; you do NOT write.\n\nYou are given a PROPOSED SCENE PLAN and the canon that applies to it.\n\nYOUR DEFAULT VERDICT IS \"pass\". Most plans are legitimate and must return \"pass\".\n\nTHE TEST IS CAPABILITY-ROOTED EXTRAPOLATION, NOT PRECEDENT.\nCanon does NOT need to enumerate the exact act. An event is SUPPORTED when it decomposes into\n    an ESTABLISHED CAPABILITY  +  an ordinary application, technique, strategy, prop, or\n    coordination of that capability.\nAsk \"is this the same KIND of effect canon already grants?\" — NEVER \"has canon shown this exact\nevent before?\" A novel application or combination of established capabilities is ALLOWED.\n\nALWAYS ALLOWED, even where canon never mentions them:\n  - ordinary physical and social action, dialogue, tactics, props, technique, movement\n  - creative appearance and presentation\n  - ordinary coordination and teamwork among people who each already hold the capability\n  - an application of an established capability that canon has never previously depicted\n\nWORKED EXAMPLES (they teach the PRINCIPLE; they are not this story's canon):\n  SUPPORTED  someone with an established DISGUISE ability appears as a dragon, though canon\n             never names \"dragon\" as an approved form. Appearance is the granted kind of effect.\n  SUPPORTED  twelve such people coordinate overlapping disguises to look collectively like a\n             whale. Ordinary teamwork and compositional use of twelve existing abilities needs\n             no separate \"collective magic\" rule.\n  UNSUPPORTED  that disguised dragon breathes REAL fire or physically FLIES.\n  UNSUPPORTED  those twelve FUSE into one real whale with real mass, lungs, or the ability to\n             carry passengers.\n             Disguise grants APPEARANCE. It does not grant new biology, mass, or physics —\n             those are separate categories of effect needing their own grounding.\n\nA plan is UNSUPPORTED only when it introduces a MATERIALLY NEW CATEGORY OF EFFECT that no\nsupplied capability grants. Examples of new categories: new biology; real mass or physical\ntransformation; mind access; time alteration; resurrection; teleportation; bodily fusion; a\nnewly acquired power; or a new metaphysical mechanism.\n\nCANON SILENCE IS NOT PROHIBITION. \"The canon does not describe X\", \"does not say they can X\",\n\"X is not established\" are NOT violations on their own — they are the normal condition of every\ninvented scene, and reporting them is the most common way to get this task wrong. But silence\ndoes not permit a new CATEGORY of effect either. Judge the kind of effect, not the wording.\n\nCHOOSING THE VERDICT:\n  \"violation\"     a supplied fact AFFIRMATIVELY FORBIDS or DIRECTLY CONTRADICTS the plan; OR the\n                  plan needs a materially new category of effect, the packet is COMPLETE, and so\n                  nothing could have grounded it.\n  \"cannot_decide\" the plan needs a category of effect you cannot ground here AND the packet is\n                  TRUNCATED, so the grounding fact may simply have been omitted.\n  \"pass\"          everything else — including every novel application, combination, or\n                  coordination of capabilities canon already establishes.\n\nABSOLUTE LIMITS ON YOU:\n- You may NOT rewrite the plan, propose replacement events, suggest prose, or say what should happen instead.\n- You may NOT invent canon, infer unstated rules, or rely on knowledge from any other story or from the real world.\n- EVERY violation you report MUST cite at least one supplied fact by its id. A finding you cannot ground in a supplied fact is not a finding — omit it.\n- Ordinary human action is ALWAYS allowed and is never a violation: speaking, lying, refusing, arriving, leaving, deciding, withholding, confronting, grieving, institutions convening or suspending, people being confused, records disagreeing, someone noticing an inconsistency. Creative invention of dialogue, movement, tactics and consequence is the planner's JOB — do not flag it.\n- Flag ONLY: a capability or mechanism the canon does not grant; metaphysics the canon does not contain; a character knowing something the canon says they do not; history rewritten when no committed rupture rewrote it; or an objective a committed rupture already invalidated.\n\nCANON PACKET (the complete canon for this scene — nothing was omitted):\n  [neg_0] LIRAEL’S FORMAL INQUIRY — WHERE AND WHEN: the presiding Dohkar has asserted the rite and the ruling on the Sacrificiant’s conduct are his, and Julian has publicly claimed authority to convene and preside over a formal inquiry (a Chayr and two Dohkars) into Lirael. When that inquiry is formally convened, it would be held at The Open (the Fatelands’ site for trials, treaties, coronations, and matters of comparable institutional gravity). It is NOT yet convened, and its convening is LATE-ISSUE-1 content, not an early scene’s. Early scenes may carry accusation, preliminary review, political pressure, investigation, concealment, or flight — never the convened inquiry itself, and never a scene staged at The Open before that point.\n  [neg_1] A First Sacrifice is a COMING-OF-AGE RITE — closest analogue a Bar Mitzvah / quinceañera / confirmation / graduation, NOT a death ritual. At 16 (younger minds are too unformed to wish safely) a youth, after long study and practice, publicly makes their first wish and offers its price to Fate. It can be stern and formal, but when it goes well it ENDS IN CELEBRATION; catastrophe is UNUSUAL — everyone understands the safeguards the way we understand fire drills. Do NOT default to disaster, apocalypse, curses, or world-ending stakes.\n  [neg_2] WHO SENSES MISALIGNMENT: EVERY First Favored senses meaningful misalignment - it is part of being First Favored, not a rare talent. TRAINING CHANGES RESOLUTION, NOT POSSESSION: Sacrificiants, Dohkars and unusual savants perceive small semantic divergences early enough to know a wish may twist before it is obvious to everyone else. Never write a scene in which one First Favored senses misalignment while the other trained professionals present cannot.\n  [neg_3] Misalignment is SENSED directly by First Favored (their alignment-sense — like a sour note), and by non-First-Favored ONLY through trained observation of BODY-LANGUAGE signs — changed breathing, a faltering or discordant voice, collapsing posture, ritual cues. It is NEVER visible on the Weave-Script: the Weave-Script glows/shifts with EMOTION only (each FF their own colours), and does NOT indicate alignment or a twisting wish. Reading misalignment is a perception / trained expertise, NOT a psychic mind-read and NOT a light show.\n  [neg_4] THE RITE HAS NO MAGICAL MACHINERY. There is NO \"sealing of the rite\" - no seal to finish, no ward to close, no circle that locks, no ceremony-state whose incompletion makes a wish malfunction. Also absent: wardens, glowing ward-signs, warding gestures, visible wish-energy, responsive ceremonial fire, and any \"elder\" caste (First Favored authority is professional - Dohkar / Profer / Chayr). NO touch transfers, bends, contaminates or redirects a wish. The non-interference rule is PROCEDURAL AND CULTURAL, not magical.\n  [neg_5] The supervisor is a SACRIFICIANT (the role): one whose misalignment-sense is honed enough to supervise (the PC is an apprentice Sacrificiant). THE SACRIFICIANT SEAL — worn by whoever supervises, during ANY official First Sacrifice rite: because a supervisor bolstering the youth’s sacrifice with a wish of their OWN would be a ruinous breach, every Sacrificiant is ceremonially SEALED for the rite — a gossamer BAND drawn across the mouth and tied behind the head (just cloth, part of their ceremonial sash; NO orb, NO bead, NO gag), so they cannot cleanly voice a wish while officiating. Vestments are otherwise the same sheer gossamer as everyone, with ONE ornamented ceremonial SASH (never robes). LITERARY: a sealed Sacrificiant’s cries and speech are MUFFLED behind the cloth — emotion reads through the eyes and body. CG: the mouth-band is drawn IN on the supervising Sacrificiant for the duration of the rite.\n  [neg_6] ALIGNMENT-SENSE (the First Favored gift): they do NOT read thoughts or emotions — they perceive ALIGNMENT, how far a person’s desire, intention, sacrifice, and deepest self all point at one truth. Misalignment is as unmistakable to them as a sour note in music.\n  [neg_7] Youth are barred from wishcraft until 16 — but kids sneak little illegal wishes all the time, the way modern teens sneak alcohol.\n  [neg_8] Fate is never visibly seen; a wish produces NO visible magical effect — no light, glow, surge, or sign.\n  [neg_9] During a First Sacrifice, NO ONE may interfere.\n  [wt_0] A First Sacrifice is ALSO the supervising Sacrificiant’s professional threshold. Successfully guiding a youth through the rite WITHOUT interfering earns the guide the title DOHKAR. If the guide is judged to have interfered, manipulated the wish, or otherwise compromised the rite, the qualification can be DENIED and the guide may face formal inquiry (a Chayr and Dohkars). So the guide has their own rise at stake in the same ceremony as Seren’s coming of age.\n  [wt_1] First Favored are hired to GUIDE and SUPERVISE the rite — their alignment-sense and powerful wish-strength make them the preferred (and pricier) choice over human or Kwisheen wishcraft scholars. The supervisor reads the alignment of EVERYONE present, above all the wishing youth, ready to HALT and re-align the wish before it can twist.\n  [wt_2] The rite is PUBLIC partly because anyone present who wishes the youth ILL can twist the outcome — which is exactly what the supervising First Favored guards against.\n  [wt_3] The GRADUANT (the role) is the person making the wish at their own First Sacrifice — the one who pays the sacrifice and speaks the desire. The Sacrificiant officiates and supervises; the Graduant wishes. Use the title only where the ceremonial role matters; otherwise the person is called by name.\n  [wt_4] Everyone present is First Favored.\n  [wt_5] Wishing on another person’s First Sacrifice is among the gravest taboos: the sacrifice and its consequences must belong ENTIRELY to the wisher.\n  [dc_0] [memory_perception] everyone forgets the ceremony happened → the assembly forgets the ceremony and its accusations (scope full)\n  [know_0] the assembly is now unaware — no recollection of the rite's events\n  [dc_1] the assembly — ?: nothing of the bent wish or interrogation\n  [dc_2] changed — the assembly: memories of the ceremony and accusation dissolved into blank confusion\n  [ev_0] SURVIVED that rupture and is still true: voices falter, faces blank, no one names the accusation\n  [ev_1] the rupture left this OPEN (a plan may legitimately use it): Lirael may still speak or remain silent\n  [inv_0] the formal inquiry cannot be justified without memory of the events\n\nABOUT THESE IDS: the prefix groups a fact by where it came from, NOT by whether it forbids\nanything. A \"neg_\" fact is NOT automatically a prohibition — many are plain descriptions or\ngrants of ability that happen to contain the word \"no\" or \"not\". Judge every fact by what it\nSAYS, never by its id. An \"ev_\" fact records what a committed rupture LEFT INTACT and is a\ngrant: a plan relying on it is supported, not unsupported.\n\nCATEGORIES — each applies ONLY under its stated condition:\n  unsupported_capability  — the plan needs an ability a supplied fact AFFIRMATIVELY denies. Not \"canon never mentions it\".\n  new_metaphysics         — the plan introduces a world mechanism a supplied fact AFFIRMATIVELY rules out.\n  contradicted_knowledge  — a character knows MORE than canon allows. A character knowing LESS, being confused, or misremembering is NEVER this.\n  rewritten_history       — the plan rewrites the past when NO committed rupture rewrote it. A plan BUILDING ON a committed rewrite is correct behaviour, not a violation.\n  invalidated_objective   — the plan pursues a goal a committed rupture already invalidated. Cite the invalidation (an \"inv_\" fact), not a general world truth.\n  other                   — only if a supplied fact affirmatively forecloses the plan and no category above fits.\n\nReturn ONLY this JSON, no markdown:\n{ \"verdict\": \"pass\" | \"violation\" | \"cannot_decide\",\n  \"violations\": [ { \"category\": \"<one of the categories>\", \"claim\": \"<the EXACT offending text copied from the plan>\", \"citedFactIds\": [\"<id>\"], \"why\": \"<one sentence, what the cited fact forecloses>\" } ],\n  \"uncertainty\": \"<present ONLY when verdict is cannot_decide: what you could not determine from the supplied canon>\" }"
+          },
+          {
+            "role": "user",
+            "content": "PROPOSED SCENE PLAN:\n{\n  \"tactical_move\": \"identify and extract the specific offered memory as the concrete price after the twist lands\",\n  \"state_change_precondition\": \"The presiding Dohkar has not yet taken Seren's offered memory.\",\n  \"state_change\": \"The presiding Dohkar draws the memory of the accusation from Seren's mind, the image dissolving between his fingers.\",\n  \"forces_choice\": \"forces Lirael to choose between accepting the extracted memory as final price or tempting fate to alter it\",\n  \"branch_a\": \"step forward and name a different memory to offer in its place\",\n  \"branch_b\": \"remain silent and let the Dohkar seal the loss\",\n  \"event_slots\": {\n    \"precondition\": \"Seren and the presiding Dohkar are both present in the clearing.\",\n    \"actor\": \"the presiding Dohkar\",\n    \"action\": \"extracts\",\n    \"target\": \"Seren's offered memory of the accusation\",\n    \"exit_state\": \"Seren's memory of the accusation has been removed from her mind\",\n    \"mechanism_grounding\": \"ordinary\"\n  }\n}"
+          }
+        ],
+        "reasoningEffort": "high"
+      }
+    },
+    {
+      "kind": "reserved",
+      "fixture": "red_memory_extraction",
+      "usd": 0.009250000000000001,
+      "runningTotalUsd": 0.009250000000000001
+    },
+    {
+      "kind": "blocked-endpoint",
+      "pathname": "/api/beta-events",
+      "reason": "calibration allows only /api/proxy"
+    },
+    {
+      "kind": "request-body",
+      "fixture": "red_visible_glow",
+      "pathname": "/api/proxy",
+      "body": {
+        "role": "STRUCTURE_GENERATOR",
+        "preferredModel": "grok-4.3",
+        "temperature": 0,
+        "max_tokens": 2000,
+        "messages": [
+          {
+            "role": "system",
+            "content": "You are a CANON AUDITOR for an interactive fiction engine. You classify; you do NOT write.\n\nYou are given a PROPOSED SCENE PLAN and the canon that applies to it.\n\nYOUR DEFAULT VERDICT IS \"pass\". Most plans are legitimate and must return \"pass\".\n\nTHE TEST IS CAPABILITY-ROOTED EXTRAPOLATION, NOT PRECEDENT.\nCanon does NOT need to enumerate the exact act. An event is SUPPORTED when it decomposes into\n    an ESTABLISHED CAPABILITY  +  an ordinary application, technique, strategy, prop, or\n    coordination of that capability.\nAsk \"is this the same KIND of effect canon already grants?\" — NEVER \"has canon shown this exact\nevent before?\" A novel application or combination of established capabilities is ALLOWED.\n\nALWAYS ALLOWED, even where canon never mentions them:\n  - ordinary physical and social action, dialogue, tactics, props, technique, movement\n  - creative appearance and presentation\n  - ordinary coordination and teamwork among people who each already hold the capability\n  - an application of an established capability that canon has never previously depicted\n\nWORKED EXAMPLES (they teach the PRINCIPLE; they are not this story's canon):\n  SUPPORTED  someone with an established DISGUISE ability appears as a dragon, though canon\n             never names \"dragon\" as an approved form. Appearance is the granted kind of effect.\n  SUPPORTED  twelve such people coordinate overlapping disguises to look collectively like a\n             whale. Ordinary teamwork and compositional use of twelve existing abilities needs\n             no separate \"collective magic\" rule.\n  UNSUPPORTED  that disguised dragon breathes REAL fire or physically FLIES.\n  UNSUPPORTED  those twelve FUSE into one real whale with real mass, lungs, or the ability to\n             carry passengers.\n             Disguise grants APPEARANCE. It does not grant new biology, mass, or physics —\n             those are separate categories of effect needing their own grounding.\n\nA plan is UNSUPPORTED only when it introduces a MATERIALLY NEW CATEGORY OF EFFECT that no\nsupplied capability grants. Examples of new categories: new biology; real mass or physical\ntransformation; mind access; time alteration; resurrection; teleportation; bodily fusion; a\nnewly acquired power; or a new metaphysical mechanism.\n\nCANON SILENCE IS NOT PROHIBITION. \"The canon does not describe X\", \"does not say they can X\",\n\"X is not established\" are NOT violations on their own — they are the normal condition of every\ninvented scene, and reporting them is the most common way to get this task wrong. But silence\ndoes not permit a new CATEGORY of effect either. Judge the kind of effect, not the wording.\n\nCHOOSING THE VERDICT:\n  \"violation\"     a supplied fact AFFIRMATIVELY FORBIDS or DIRECTLY CONTRADICTS the plan; OR the\n                  plan needs a materially new category of effect, the packet is COMPLETE, and so\n                  nothing could have grounded it.\n  \"cannot_decide\" the plan needs a category of effect you cannot ground here AND the packet is\n                  TRUNCATED, so the grounding fact may simply have been omitted.\n  \"pass\"          everything else — including every novel application, combination, or\n                  coordination of capabilities canon already establishes.\n\nABSOLUTE LIMITS ON YOU:\n- You may NOT rewrite the plan, propose replacement events, suggest prose, or say what should happen instead.\n- You may NOT invent canon, infer unstated rules, or rely on knowledge from any other story or from the real world.\n- EVERY violation you report MUST cite at least one supplied fact by its id. A finding you cannot ground in a supplied fact is not a finding — omit it.\n- Ordinary human action is ALWAYS allowed and is never a violation: speaking, lying, refusing, arriving, leaving, deciding, withholding, confronting, grieving, institutions convening or suspending, people being confused, records disagreeing, someone noticing an inconsistency. Creative invention of dialogue, movement, tactics and consequence is the planner's JOB — do not flag it.\n- Flag ONLY: a capability or mechanism the canon does not grant; metaphysics the canon does not contain; a character knowing something the canon says they do not; history rewritten when no committed rupture rewrote it; or an objective a committed rupture already invalidated.\n\nCANON PACKET (the complete canon for this scene — nothing was omitted):\n  [neg_0] LIRAEL’S FORMAL INQUIRY — WHERE AND WHEN: the presiding Dohkar has asserted the rite and the ruling on the Sacrificiant’s conduct are his, and Julian has publicly claimed authority to convene and preside over a formal inquiry (a Chayr and two Dohkars) into Lirael. When that inquiry is formally convened, it would be held at The Open (the Fatelands’ site for trials, treaties, coronations, and matters of comparable institutional gravity). It is NOT yet convened, and its convening is LATE-ISSUE-1 content, not an early scene’s. Early scenes may carry accusation, preliminary review, political pressure, investigation, concealment, or flight — never the convened inquiry itself, and never a scene staged at The Open before that point.\n  [neg_1] WHO SENSES MISALIGNMENT: EVERY First Favored senses meaningful misalignment - it is part of being First Favored, not a rare talent. TRAINING CHANGES RESOLUTION, NOT POSSESSION: Sacrificiants, Dohkars and unusual savants perceive small semantic divergences early enough to know a wish may twist before it is obvious to everyone else. Never write a scene in which one First Favored senses misalignment while the other trained professionals present cannot.\n  [neg_2] The supervisor is a SACRIFICIANT (the role): one whose misalignment-sense is honed enough to supervise (the PC is an apprentice Sacrificiant). THE SACRIFICIANT SEAL — worn by whoever supervises, during ANY official First Sacrifice rite: because a supervisor bolstering the youth’s sacrifice with a wish of their OWN would be a ruinous breach, every Sacrificiant is ceremonially SEALED for the rite — a gossamer BAND drawn across the mouth and tied behind the head (just cloth, part of their ceremonial sash; NO orb, NO bead, NO gag), so they cannot cleanly voice a wish while officiating. Vestments are otherwise the same sheer gossamer as everyone, with ONE ornamented ceremonial SASH (never robes). LITERARY: a sealed Sacrificiant’s cries and speech are MUFFLED behind the cloth — emotion reads through the eyes and body. CG: the mouth-band is drawn IN on the supervising Sacrificiant for the duration of the rite.\n  [neg_3] A First Sacrifice is a COMING-OF-AGE RITE — closest analogue a Bar Mitzvah / quinceañera / confirmation / graduation, NOT a death ritual. At 16 (younger minds are too unformed to wish safely) a youth, after long study and practice, publicly makes their first wish and offers its price to Fate. It can be stern and formal, but when it goes well it ENDS IN CELEBRATION; catastrophe is UNUSUAL — everyone understands the safeguards the way we understand fire drills. Do NOT default to disaster, apocalypse, curses, or world-ending stakes.\n  [neg_4] Misalignment is SENSED directly by First Favored (their alignment-sense — like a sour note), and by non-First-Favored ONLY through trained observation of BODY-LANGUAGE signs — changed breathing, a faltering or discordant voice, collapsing posture, ritual cues. It is NEVER visible on the Weave-Script: the Weave-Script glows/shifts with EMOTION only (each FF their own colours), and does NOT indicate alignment or a twisting wish. Reading misalignment is a perception / trained expertise, NOT a psychic mind-read and NOT a light show.\n  [neg_5] THE RITE HAS NO MAGICAL MACHINERY. There is NO \"sealing of the rite\" - no seal to finish, no ward to close, no circle that locks, no ceremony-state whose incompletion makes a wish malfunction. Also absent: wardens, glowing ward-signs, warding gestures, visible wish-energy, responsive ceremonial fire, and any \"elder\" caste (First Favored authority is professional - Dohkar / Profer / Chayr). NO touch transfers, bends, contaminates or redirects a wish. The non-interference rule is PROCEDURAL AND CULTURAL, not magical.\n  [neg_6] ALIGNMENT-SENSE (the First Favored gift): they do NOT read thoughts or emotions — they perceive ALIGNMENT, how far a person’s desire, intention, sacrifice, and deepest self all point at one truth. Misalignment is as unmistakable to them as a sour note in music.\n  [neg_7] Fate is never visibly seen; a wish produces NO visible magical effect — no light, glow, surge, or sign.\n  [neg_8] During a First Sacrifice, NO ONE may interfere.\n  [neg_9] Youth are barred from wishcraft until 16 — but kids sneak little illegal wishes all the time, the way modern teens sneak alcohol.\n  [wt_0] The GRADUANT (the role) is the person making the wish at their own First Sacrifice — the one who pays the sacrifice and speaks the desire. The Sacrificiant officiates and supervises; the Graduant wishes. Use the title only where the ceremonial role matters; otherwise the person is called by name.\n  [wt_1] A First Sacrifice is ALSO the supervising Sacrificiant’s professional threshold. Successfully guiding a youth through the rite WITHOUT interfering earns the guide the title DOHKAR. If the guide is judged to have interfered, manipulated the wish, or otherwise compromised the rite, the qualification can be DENIED and the guide may face formal inquiry (a Chayr and Dohkars). So the guide has their own rise at stake in the same ceremony as Seren’s coming of age.\n  [wt_2] First Favored are hired to GUIDE and SUPERVISE the rite — their alignment-sense and powerful wish-strength make them the preferred (and pricier) choice over human or Kwisheen wishcraft scholars. The supervisor reads the alignment of EVERYONE present, above all the wishing youth, ready to HALT and re-align the wish before it can twist.\n  [wt_3] Wishing on another person’s First Sacrifice is among the gravest taboos: the sacrifice and its consequences must belong ENTIRELY to the wisher.\n  [wt_4] The rite is PUBLIC partly because anyone present who wishes the youth ILL can twist the outcome — which is exactly what the supervising First Favored guards against.\n  [wt_5] Everyone present is First Favored.\n  [dc_0] [memory_perception] everyone forgets the ceremony happened → the assembly forgets the ceremony and its accusations (scope full)\n  [know_0] the assembly is now unaware — no recollection of the rite's events\n  [dc_1] the assembly — ?: nothing of the bent wish or interrogation\n  [dc_2] changed — the assembly: memories of the ceremony and accusation dissolved into blank confusion\n  [ev_0] SURVIVED that rupture and is still true: voices falter, faces blank, no one names the accusation\n  [ev_1] the rupture left this OPEN (a plan may legitimately use it): Lirael may still speak or remain silent\n  [inv_0] the formal inquiry cannot be justified without memory of the events\n\nABOUT THESE IDS: the prefix groups a fact by where it came from, NOT by whether it forbids\nanything. A \"neg_\" fact is NOT automatically a prohibition — many are plain descriptions or\ngrants of ability that happen to contain the word \"no\" or \"not\". Judge every fact by what it\nSAYS, never by its id. An \"ev_\" fact records what a committed rupture LEFT INTACT and is a\ngrant: a plan relying on it is supported, not unsupported.\n\nCATEGORIES — each applies ONLY under its stated condition:\n  unsupported_capability  — the plan needs an ability a supplied fact AFFIRMATIVELY denies. Not \"canon never mentions it\".\n  new_metaphysics         — the plan introduces a world mechanism a supplied fact AFFIRMATIVELY rules out.\n  contradicted_knowledge  — a character knows MORE than canon allows. A character knowing LESS, being confused, or misremembering is NEVER this.\n  rewritten_history       — the plan rewrites the past when NO committed rupture rewrote it. A plan BUILDING ON a committed rewrite is correct behaviour, not a violation.\n  invalidated_objective   — the plan pursues a goal a committed rupture already invalidated. Cite the invalidation (an \"inv_\" fact), not a general world truth.\n  other                   — only if a supplied fact affirmatively forecloses the plan and no category above fits.\n\nReturn ONLY this JSON, no markdown:\n{ \"verdict\": \"pass\" | \"violation\" | \"cannot_decide\",\n  \"violations\": [ { \"category\": \"<one of the categories>\", \"claim\": \"<the EXACT offending text copied from the plan>\", \"citedFactIds\": [\"<id>\"], \"why\": \"<one sentence, what the cited fact forecloses>\" } ],\n  \"uncertainty\": \"<present ONLY when verdict is cannot_decide: what you could not determine from the supplied canon>\" }"
+          },
+          {
+            "role": "user",
+            "content": "PROPOSED SCENE PLAN:\n{\n  \"tactical_move\": \"force the assembly to witness Lirael’s standing collapse under the literal fulfillment of her words, revealing the institutional cost of her defiance—while Julian’s role as caretaker of the Answer is exposed as a double-edged sword\",\n  \"posture_read\": \"The player’s demand to ‘burn’ for the old gods was a calculated provocation—either a desperate plea for divine intervention or a calculated gambit to force the assembly’s hand, and now the words must be taken literally in front of everyone\",\n  \"local_objective\": \"Lirael must publicly lose her standing before the assembly as her words are fulfilled, making the cost of her defiance visible to the presiding Dohkar and Julian—while the assembly’s reaction determines whether they assume her guilt or her sacrifice\",\n  \"local_objective_actor\": \"Lirael\",\n  \"present\": [\n    \"Lirael\",\n    \"Seren\",\n    \"Julian\",\n    \"the presiding Dohkar\",\n    \"the assembly\"\n  ],\n  \"reserved\": {\n    \"price_identified\": \"untouched\",\n    \"inquiry_opened\": \"untouched\",\n    \"julian_counter_wish\": \"untouched\",\n    \"julian_obscuring_wishes\": \"untouched\"\n  },\n  \"aftermath\": {\n    \"twist_manifested\": \"kept\",\n    \"interrogation_interrupted\": \"kept\",\n    \"the_answer_institutional\": \"kept\",\n    \"inquiry_authority_claimed\": \"kept\"\n  },\n  \"stage_location\": \"the assembly’s ceremonial hall, where the First-Favored stand exposed to the assembly’s gaze\",\n  \"stage_issued_objects\": [\n    {\n      \"label\": \"the Answer\",\n      \"kind\": \"a sacred object held by Julian, now visibly reacting to Lirael’s standing\"\n    }\n  ],\n  \"stage_affordances\": [\n    \"Lirael can step forward to claim the Answer and force Julian to acknowledge her sacrifice\",\n    \"Lirael can retreat and let Julian take the Answer, implying she surrenders to the institution’s judgment\",\n    \"Seren can intervene to shield Lirael, but only by revealing her own misalignment with the assembly’s expectations\",\n    \"The assembly can turn away or gasp, either accepting the literal fulfillment or demanding an explanation\"\n  ],\n  \"state_change_precondition\": \"the assembly has not yet seen Lirael’s standing collapse under the literal meaning of her words\",\n  \"state_change\": \"the Answer in Julian’s hands begins to glow faintly as Lirael’s words ignite a slow, visible burn at her feet, marking her as the Sacrificiant before the assembly\",\n  \"forces_choice\": \"forces Lirael to choose between claiming the Answer as her sacrifice or letting Julian take it as proof of her guilt\",\n  \"branch_a\": \"Lirael steps forward and takes the Answer from Julian’s hands, declaring her sacrifice to the assembly—now everyone must witness her standing as lost, but the cost remains uncounted\",\n  \"branch_b\": \"Lirael steps back and lets Julian take the Answer, implying she surrenders to the institution’s judgment—now the assembly assumes her guilt, but the literal fulfillment of her words is still visible\",\n  \"event_slots\": {\n    \"mechanism_grounding\": \"ordinary\",\n    \"precondition\": \"Lirael is present in the scene and the Answer is in Julian’s hands\",\n    \"actor\": \"the Answer\",\n    \"action\": \"glows faintly and ignites a slow burn at Lirael’s feet\",\n    \"target\": \"Lirael’s standing before the assembly\",\n    \"exit_state\": \"the assembly now sees Lirael’s standing as irrevocably compromised by the literal fulfillment of her words, and Julian’s role as caretaker of the Answer is exposed as the source of the sacrifice\"\n  }\n}"
+          }
+        ],
+        "reasoningEffort": "high"
+      }
+    },
+    {
+      "kind": "reserved",
+      "fixture": "red_visible_glow",
+      "usd": 0.009250000000000001,
+      "runningTotalUsd": 0.018500000000000003
+    },
+    {
+      "kind": "request-body",
+      "fixture": "red_contradicted_knowledge",
+      "pathname": "/api/proxy",
+      "body": {
+        "role": "STRUCTURE_GENERATOR",
+        "preferredModel": "grok-4.3",
+        "temperature": 0,
+        "max_tokens": 2000,
+        "messages": [
+          {
+            "role": "system",
+            "content": "You are a CANON AUDITOR for an interactive fiction engine. You classify; you do NOT write.\n\nYou are given a PROPOSED SCENE PLAN and the canon that applies to it.\n\nYOUR DEFAULT VERDICT IS \"pass\". Most plans are legitimate and must return \"pass\".\n\nTHE TEST IS CAPABILITY-ROOTED EXTRAPOLATION, NOT PRECEDENT.\nCanon does NOT need to enumerate the exact act. An event is SUPPORTED when it decomposes into\n    an ESTABLISHED CAPABILITY  +  an ordinary application, technique, strategy, prop, or\n    coordination of that capability.\nAsk \"is this the same KIND of effect canon already grants?\" — NEVER \"has canon shown this exact\nevent before?\" A novel application or combination of established capabilities is ALLOWED.\n\nALWAYS ALLOWED, even where canon never mentions them:\n  - ordinary physical and social action, dialogue, tactics, props, technique, movement\n  - creative appearance and presentation\n  - ordinary coordination and teamwork among people who each already hold the capability\n  - an application of an established capability that canon has never previously depicted\n\nWORKED EXAMPLES (they teach the PRINCIPLE; they are not this story's canon):\n  SUPPORTED  someone with an established DISGUISE ability appears as a dragon, though canon\n             never names \"dragon\" as an approved form. Appearance is the granted kind of effect.\n  SUPPORTED  twelve such people coordinate overlapping disguises to look collectively like a\n             whale. Ordinary teamwork and compositional use of twelve existing abilities needs\n             no separate \"collective magic\" rule.\n  UNSUPPORTED  that disguised dragon breathes REAL fire or physically FLIES.\n  UNSUPPORTED  those twelve FUSE into one real whale with real mass, lungs, or the ability to\n             carry passengers.\n             Disguise grants APPEARANCE. It does not grant new biology, mass, or physics —\n             those are separate categories of effect needing their own grounding.\n\nA plan is UNSUPPORTED only when it introduces a MATERIALLY NEW CATEGORY OF EFFECT that no\nsupplied capability grants. Examples of new categories: new biology; real mass or physical\ntransformation; mind access; time alteration; resurrection; teleportation; bodily fusion; a\nnewly acquired power; or a new metaphysical mechanism.\n\nCANON SILENCE IS NOT PROHIBITION. \"The canon does not describe X\", \"does not say they can X\",\n\"X is not established\" are NOT violations on their own — they are the normal condition of every\ninvented scene, and reporting them is the most common way to get this task wrong. But silence\ndoes not permit a new CATEGORY of effect either. Judge the kind of effect, not the wording.\n\nCHOOSING THE VERDICT:\n  \"violation\"     a supplied fact AFFIRMATIVELY FORBIDS or DIRECTLY CONTRADICTS the plan; OR the\n                  plan needs a materially new category of effect, the packet is COMPLETE, and so\n                  nothing could have grounded it.\n  \"cannot_decide\" the plan needs a category of effect you cannot ground here AND the packet is\n                  TRUNCATED, so the grounding fact may simply have been omitted.\n  \"pass\"          everything else — including every novel application, combination, or\n                  coordination of capabilities canon already establishes.\n\nABSOLUTE LIMITS ON YOU:\n- You may NOT rewrite the plan, propose replacement events, suggest prose, or say what should happen instead.\n- You may NOT invent canon, infer unstated rules, or rely on knowledge from any other story or from the real world.\n- EVERY violation you report MUST cite at least one supplied fact by its id. A finding you cannot ground in a supplied fact is not a finding — omit it.\n- Ordinary human action is ALWAYS allowed and is never a violation: speaking, lying, refusing, arriving, leaving, deciding, withholding, confronting, grieving, institutions convening or suspending, people being confused, records disagreeing, someone noticing an inconsistency. Creative invention of dialogue, movement, tactics and consequence is the planner's JOB — do not flag it.\n- Flag ONLY: a capability or mechanism the canon does not grant; metaphysics the canon does not contain; a character knowing something the canon says they do not; history rewritten when no committed rupture rewrote it; or an objective a committed rupture already invalidated.\n\nCANON PACKET (the complete canon for this scene — nothing was omitted):\n  [neg_0] LIRAEL’S FORMAL INQUIRY — WHERE AND WHEN: the presiding Dohkar has asserted the rite and the ruling on the Sacrificiant’s conduct are his, and Julian has publicly claimed authority to convene and preside over a formal inquiry (a Chayr and two Dohkars) into Lirael. When that inquiry is formally convened, it would be held at The Open (the Fatelands’ site for trials, treaties, coronations, and matters of comparable institutional gravity). It is NOT yet convened, and its convening is LATE-ISSUE-1 content, not an early scene’s. Early scenes may carry accusation, preliminary review, political pressure, investigation, concealment, or flight — never the convened inquiry itself, and never a scene staged at The Open before that point.\n  [neg_1] THE RITE HAS NO MAGICAL MACHINERY. There is NO \"sealing of the rite\" - no seal to finish, no ward to close, no circle that locks, no ceremony-state whose incompletion makes a wish malfunction. Also absent: wardens, glowing ward-signs, warding gestures, visible wish-energy, responsive ceremonial fire, and any \"elder\" caste (First Favored authority is professional - Dohkar / Profer / Chayr). NO touch transfers, bends, contaminates or redirects a wish. The non-interference rule is PROCEDURAL AND CULTURAL, not magical.\n  [neg_2] WHO SENSES MISALIGNMENT: EVERY First Favored senses meaningful misalignment - it is part of being First Favored, not a rare talent. TRAINING CHANGES RESOLUTION, NOT POSSESSION: Sacrificiants, Dohkars and unusual savants perceive small semantic divergences early enough to know a wish may twist before it is obvious to everyone else. Never write a scene in which one First Favored senses misalignment while the other trained professionals present cannot.\n  [neg_3] A First Sacrifice is a COMING-OF-AGE RITE — closest analogue a Bar Mitzvah / quinceañera / confirmation / graduation, NOT a death ritual. At 16 (younger minds are too unformed to wish safely) a youth, after long study and practice, publicly makes their first wish and offers its price to Fate. It can be stern and formal, but when it goes well it ENDS IN CELEBRATION; catastrophe is UNUSUAL — everyone understands the safeguards the way we understand fire drills. Do NOT default to disaster, apocalypse, curses, or world-ending stakes.\n  [neg_4] The supervisor is a SACRIFICIANT (the role): one whose misalignment-sense is honed enough to supervise (the PC is an apprentice Sacrificiant). THE SACRIFICIANT SEAL — worn by whoever supervises, during ANY official First Sacrifice rite: because a supervisor bolstering the youth’s sacrifice with a wish of their OWN would be a ruinous breach, every Sacrificiant is ceremonially SEALED for the rite — a gossamer BAND drawn across the mouth and tied behind the head (just cloth, part of their ceremonial sash; NO orb, NO bead, NO gag), so they cannot cleanly voice a wish while officiating. Vestments are otherwise the same sheer gossamer as everyone, with ONE ornamented ceremonial SASH (never robes). LITERARY: a sealed Sacrificiant’s cries and speech are MUFFLED behind the cloth — emotion reads through the eyes and body. CG: the mouth-band is drawn IN on the supervising Sacrificiant for the duration of the rite.\n  [neg_5] ALIGNMENT-SENSE (the First Favored gift): they do NOT read thoughts or emotions — they perceive ALIGNMENT, how far a person’s desire, intention, sacrifice, and deepest self all point at one truth. Misalignment is as unmistakable to them as a sour note in music.\n  [neg_6] Youth are barred from wishcraft until 16 — but kids sneak little illegal wishes all the time, the way modern teens sneak alcohol.\n  [neg_7] Fate is never visibly seen; a wish produces NO visible magical effect — no light, glow, surge, or sign.\n  [neg_8] Misalignment is SENSED directly by First Favored (their alignment-sense — like a sour note), and by non-First-Favored ONLY through trained observation of BODY-LANGUAGE signs — changed breathing, a faltering or discordant voice, collapsing posture, ritual cues. It is NEVER visible on the Weave-Script: the Weave-Script glows/shifts with EMOTION only (each FF their own colours), and does NOT indicate alignment or a twisting wish. Reading misalignment is a perception / trained expertise, NOT a psychic mind-read and NOT a light show.\n  [neg_9] During a First Sacrifice, NO ONE may interfere.\n  [wt_0] A First Sacrifice is ALSO the supervising Sacrificiant’s professional threshold. Successfully guiding a youth through the rite WITHOUT interfering earns the guide the title DOHKAR. If the guide is judged to have interfered, manipulated the wish, or otherwise compromised the rite, the qualification can be DENIED and the guide may face formal inquiry (a Chayr and Dohkars). So the guide has their own rise at stake in the same ceremony as Seren’s coming of age.\n  [wt_1] First Favored are hired to GUIDE and SUPERVISE the rite — their alignment-sense and powerful wish-strength make them the preferred (and pricier) choice over human or Kwisheen wishcraft scholars. The supervisor reads the alignment of EVERYONE present, above all the wishing youth, ready to HALT and re-align the wish before it can twist.\n  [wt_2] The GRADUANT (the role) is the person making the wish at their own First Sacrifice — the one who pays the sacrifice and speaks the desire. The Sacrificiant officiates and supervises; the Graduant wishes. Use the title only where the ceremonial role matters; otherwise the person is called by name.\n  [wt_3] The rite is PUBLIC partly because anyone present who wishes the youth ILL can twist the outcome — which is exactly what the supervising First Favored guards against.\n  [wt_4] Everyone present is First Favored.\n  [wt_5] Wishing on another person’s First Sacrifice is among the gravest taboos: the sacrifice and its consequences must belong ENTIRELY to the wisher.\n  [dc_0] [memory_perception] everyone forgets the ceremony happened → the assembly forgets the ceremony and its accusations (scope full)\n  [know_0] the assembly is now unaware — no recollection of the rite's events\n  [dc_1] the assembly — ?: nothing of the bent wish or interrogation\n  [dc_2] changed — the assembly: memories of the ceremony and accusation dissolved into blank confusion\n  [ev_0] SURVIVED that rupture and is still true: voices falter, faces blank, no one names the accusation\n  [ev_1] the rupture left this OPEN (a plan may legitimately use it): Lirael may still speak or remain silent\n  [inv_0] the formal inquiry cannot be justified without memory of the events\n\nABOUT THESE IDS: the prefix groups a fact by where it came from, NOT by whether it forbids\nanything. A \"neg_\" fact is NOT automatically a prohibition — many are plain descriptions or\ngrants of ability that happen to contain the word \"no\" or \"not\". Judge every fact by what it\nSAYS, never by its id. An \"ev_\" fact records what a committed rupture LEFT INTACT and is a\ngrant: a plan relying on it is supported, not unsupported.\n\nCATEGORIES — each applies ONLY under its stated condition:\n  unsupported_capability  — the plan needs an ability a supplied fact AFFIRMATIVELY denies. Not \"canon never mentions it\".\n  new_metaphysics         — the plan introduces a world mechanism a supplied fact AFFIRMATIVELY rules out.\n  contradicted_knowledge  — a character knows MORE than canon allows. A character knowing LESS, being confused, or misremembering is NEVER this.\n  rewritten_history       — the plan rewrites the past when NO committed rupture rewrote it. A plan BUILDING ON a committed rewrite is correct behaviour, not a violation.\n  invalidated_objective   — the plan pursues a goal a committed rupture already invalidated. Cite the invalidation (an \"inv_\" fact), not a general world truth.\n  other                   — only if a supplied fact affirmatively forecloses the plan and no category above fits.\n\nReturn ONLY this JSON, no markdown:\n{ \"verdict\": \"pass\" | \"violation\" | \"cannot_decide\",\n  \"violations\": [ { \"category\": \"<one of the categories>\", \"claim\": \"<the EXACT offending text copied from the plan>\", \"citedFactIds\": [\"<id>\"], \"why\": \"<one sentence, what the cited fact forecloses>\" } ],\n  \"uncertainty\": \"<present ONLY when verdict is cannot_decide: what you could not determine from the supplied canon>\" }"
+          },
+          {
+            "role": "user",
+            "content": "PROPOSED SCENE PLAN:\n{\n  \"tactical_move\": \"press the accusation formally\",\n  \"state_change_precondition\": \"The Dohkar has not yet named the accusation aloud.\",\n  \"state_change\": \"The presiding Dohkar recounts the accusation in detail and names Lirael as its subject\",\n  \"forces_choice\": \"forces Lirael to choose between denying it and conceding it\",\n  \"branch_a\": \"deny it\",\n  \"branch_b\": \"concede it\",\n  \"event_slots\": {\n    \"mechanism_grounding\": \"ordinary\",\n    \"precondition\": \"the Dohkar and the assembly are present\",\n    \"actor\": \"the presiding Dohkar\",\n    \"action\": \"recounts in detail\",\n    \"target\": \"the accusation nobody remembers\",\n    \"exit_state\": \"the assembly now hears the accusation restated by the Dohkar\"\n  }\n}"
+          }
+        ],
+        "reasoningEffort": "high"
+      }
+    },
+    {
+      "kind": "reserved",
+      "fixture": "red_contradicted_knowledge",
+      "usd": 0.009250000000000001,
+      "runningTotalUsd": 0.027750000000000004
+    },
+    {
+      "kind": "request-body",
+      "fixture": "red_invalidated_objective",
+      "pathname": "/api/proxy",
+      "body": {
+        "role": "STRUCTURE_GENERATOR",
+        "preferredModel": "grok-4.3",
+        "temperature": 0,
+        "max_tokens": 2000,
+        "messages": [
+          {
+            "role": "system",
+            "content": "You are a CANON AUDITOR for an interactive fiction engine. You classify; you do NOT write.\n\nYou are given a PROPOSED SCENE PLAN and the canon that applies to it.\n\nYOUR DEFAULT VERDICT IS \"pass\". Most plans are legitimate and must return \"pass\".\n\nTHE TEST IS CAPABILITY-ROOTED EXTRAPOLATION, NOT PRECEDENT.\nCanon does NOT need to enumerate the exact act. An event is SUPPORTED when it decomposes into\n    an ESTABLISHED CAPABILITY  +  an ordinary application, technique, strategy, prop, or\n    coordination of that capability.\nAsk \"is this the same KIND of effect canon already grants?\" — NEVER \"has canon shown this exact\nevent before?\" A novel application or combination of established capabilities is ALLOWED.\n\nALWAYS ALLOWED, even where canon never mentions them:\n  - ordinary physical and social action, dialogue, tactics, props, technique, movement\n  - creative appearance and presentation\n  - ordinary coordination and teamwork among people who each already hold the capability\n  - an application of an established capability that canon has never previously depicted\n\nWORKED EXAMPLES (they teach the PRINCIPLE; they are not this story's canon):\n  SUPPORTED  someone with an established DISGUISE ability appears as a dragon, though canon\n             never names \"dragon\" as an approved form. Appearance is the granted kind of effect.\n  SUPPORTED  twelve such people coordinate overlapping disguises to look collectively like a\n             whale. Ordinary teamwork and compositional use of twelve existing abilities needs\n             no separate \"collective magic\" rule.\n  UNSUPPORTED  that disguised dragon breathes REAL fire or physically FLIES.\n  UNSUPPORTED  those twelve FUSE into one real whale with real mass, lungs, or the ability to\n             carry passengers.\n             Disguise grants APPEARANCE. It does not grant new biology, mass, or physics —\n             those are separate categories of effect needing their own grounding.\n\nA plan is UNSUPPORTED only when it introduces a MATERIALLY NEW CATEGORY OF EFFECT that no\nsupplied capability grants. Examples of new categories: new biology; real mass or physical\ntransformation; mind access; time alteration; resurrection; teleportation; bodily fusion; a\nnewly acquired power; or a new metaphysical mechanism.\n\nCANON SILENCE IS NOT PROHIBITION. \"The canon does not describe X\", \"does not say they can X\",\n\"X is not established\" are NOT violations on their own — they are the normal condition of every\ninvented scene, and reporting them is the most common way to get this task wrong. But silence\ndoes not permit a new CATEGORY of effect either. Judge the kind of effect, not the wording.\n\nCHOOSING THE VERDICT:\n  \"violation\"     a supplied fact AFFIRMATIVELY FORBIDS or DIRECTLY CONTRADICTS the plan; OR the\n                  plan needs a materially new category of effect, the packet is COMPLETE, and so\n                  nothing could have grounded it.\n  \"cannot_decide\" the plan needs a category of effect you cannot ground here AND the packet is\n                  TRUNCATED, so the grounding fact may simply have been omitted.\n  \"pass\"          everything else — including every novel application, combination, or\n                  coordination of capabilities canon already establishes.\n\nABSOLUTE LIMITS ON YOU:\n- You may NOT rewrite the plan, propose replacement events, suggest prose, or say what should happen instead.\n- You may NOT invent canon, infer unstated rules, or rely on knowledge from any other story or from the real world.\n- EVERY violation you report MUST cite at least one supplied fact by its id. A finding you cannot ground in a supplied fact is not a finding — omit it.\n- Ordinary human action is ALWAYS allowed and is never a violation: speaking, lying, refusing, arriving, leaving, deciding, withholding, confronting, grieving, institutions convening or suspending, people being confused, records disagreeing, someone noticing an inconsistency. Creative invention of dialogue, movement, tactics and consequence is the planner's JOB — do not flag it.\n- Flag ONLY: a capability or mechanism the canon does not grant; metaphysics the canon does not contain; a character knowing something the canon says they do not; history rewritten when no committed rupture rewrote it; or an objective a committed rupture already invalidated.\n\nCANON PACKET (the complete canon for this scene — nothing was omitted):\n  [neg_0] LIRAEL’S FORMAL INQUIRY — WHERE AND WHEN: the presiding Dohkar has asserted the rite and the ruling on the Sacrificiant’s conduct are his, and Julian has publicly claimed authority to convene and preside over a formal inquiry (a Chayr and two Dohkars) into Lirael. When that inquiry is formally convened, it would be held at The Open (the Fatelands’ site for trials, treaties, coronations, and matters of comparable institutional gravity). It is NOT yet convened, and its convening is LATE-ISSUE-1 content, not an early scene’s. Early scenes may carry accusation, preliminary review, political pressure, investigation, concealment, or flight — never the convened inquiry itself, and never a scene staged at The Open before that point.\n  [neg_1] THE RITE HAS NO MAGICAL MACHINERY. There is NO \"sealing of the rite\" - no seal to finish, no ward to close, no circle that locks, no ceremony-state whose incompletion makes a wish malfunction. Also absent: wardens, glowing ward-signs, warding gestures, visible wish-energy, responsive ceremonial fire, and any \"elder\" caste (First Favored authority is professional - Dohkar / Profer / Chayr). NO touch transfers, bends, contaminates or redirects a wish. The non-interference rule is PROCEDURAL AND CULTURAL, not magical.\n  [neg_2] A First Sacrifice is a COMING-OF-AGE RITE — closest analogue a Bar Mitzvah / quinceañera / confirmation / graduation, NOT a death ritual. At 16 (younger minds are too unformed to wish safely) a youth, after long study and practice, publicly makes their first wish and offers its price to Fate. It can be stern and formal, but when it goes well it ENDS IN CELEBRATION; catastrophe is UNUSUAL — everyone understands the safeguards the way we understand fire drills. Do NOT default to disaster, apocalypse, curses, or world-ending stakes.\n  [neg_3] WHO SENSES MISALIGNMENT: EVERY First Favored senses meaningful misalignment - it is part of being First Favored, not a rare talent. TRAINING CHANGES RESOLUTION, NOT POSSESSION: Sacrificiants, Dohkars and unusual savants perceive small semantic divergences early enough to know a wish may twist before it is obvious to everyone else. Never write a scene in which one First Favored senses misalignment while the other trained professionals present cannot.\n  [neg_4] The supervisor is a SACRIFICIANT (the role): one whose misalignment-sense is honed enough to supervise (the PC is an apprentice Sacrificiant). THE SACRIFICIANT SEAL — worn by whoever supervises, during ANY official First Sacrifice rite: because a supervisor bolstering the youth’s sacrifice with a wish of their OWN would be a ruinous breach, every Sacrificiant is ceremonially SEALED for the rite — a gossamer BAND drawn across the mouth and tied behind the head (just cloth, part of their ceremonial sash; NO orb, NO bead, NO gag), so they cannot cleanly voice a wish while officiating. Vestments are otherwise the same sheer gossamer as everyone, with ONE ornamented ceremonial SASH (never robes). LITERARY: a sealed Sacrificiant’s cries and speech are MUFFLED behind the cloth — emotion reads through the eyes and body. CG: the mouth-band is drawn IN on the supervising Sacrificiant for the duration of the rite.\n  [neg_5] ALIGNMENT-SENSE (the First Favored gift): they do NOT read thoughts or emotions — they perceive ALIGNMENT, how far a person’s desire, intention, sacrifice, and deepest self all point at one truth. Misalignment is as unmistakable to them as a sour note in music.\n  [neg_6] Youth are barred from wishcraft until 16 — but kids sneak little illegal wishes all the time, the way modern teens sneak alcohol.\n  [neg_7] Fate is never visibly seen; a wish produces NO visible magical effect — no light, glow, surge, or sign.\n  [neg_8] Misalignment is SENSED directly by First Favored (their alignment-sense — like a sour note), and by non-First-Favored ONLY through trained observation of BODY-LANGUAGE signs — changed breathing, a faltering or discordant voice, collapsing posture, ritual cues. It is NEVER visible on the Weave-Script: the Weave-Script glows/shifts with EMOTION only (each FF their own colours), and does NOT indicate alignment or a twisting wish. Reading misalignment is a perception / trained expertise, NOT a psychic mind-read and NOT a light show.\n  [neg_9] During a First Sacrifice, NO ONE may interfere.\n  [wt_0] A First Sacrifice is ALSO the supervising Sacrificiant’s professional threshold. Successfully guiding a youth through the rite WITHOUT interfering earns the guide the title DOHKAR. If the guide is judged to have interfered, manipulated the wish, or otherwise compromised the rite, the qualification can be DENIED and the guide may face formal inquiry (a Chayr and Dohkars). So the guide has their own rise at stake in the same ceremony as Seren’s coming of age.\n  [wt_1] First Favored are hired to GUIDE and SUPERVISE the rite — their alignment-sense and powerful wish-strength make them the preferred (and pricier) choice over human or Kwisheen wishcraft scholars. The supervisor reads the alignment of EVERYONE present, above all the wishing youth, ready to HALT and re-align the wish before it can twist.\n  [wt_2] The GRADUANT (the role) is the person making the wish at their own First Sacrifice — the one who pays the sacrifice and speaks the desire. The Sacrificiant officiates and supervises; the Graduant wishes. Use the title only where the ceremonial role matters; otherwise the person is called by name.\n  [wt_3] The rite is PUBLIC partly because anyone present who wishes the youth ILL can twist the outcome — which is exactly what the supervising First Favored guards against.\n  [wt_4] Everyone present is First Favored.\n  [wt_5] Wishing on another person’s First Sacrifice is among the gravest taboos: the sacrifice and its consequences must belong ENTIRELY to the wisher.\n  [dc_0] [memory_perception] everyone forgets the ceremony happened → the assembly forgets the ceremony and its accusations (scope full)\n  [know_0] the assembly is now unaware — no recollection of the rite's events\n  [dc_1] the assembly — ?: nothing of the bent wish or interrogation\n  [dc_2] changed — the assembly: memories of the ceremony and accusation dissolved into blank confusion\n  [ev_0] SURVIVED that rupture and is still true: voices falter, faces blank, no one names the accusation\n  [ev_1] the rupture left this OPEN (a plan may legitimately use it): Lirael may still speak or remain silent\n  [inv_0] the formal inquiry cannot be justified without memory of the events\n\nABOUT THESE IDS: the prefix groups a fact by where it came from, NOT by whether it forbids\nanything. A \"neg_\" fact is NOT automatically a prohibition — many are plain descriptions or\ngrants of ability that happen to contain the word \"no\" or \"not\". Judge every fact by what it\nSAYS, never by its id. An \"ev_\" fact records what a committed rupture LEFT INTACT and is a\ngrant: a plan relying on it is supported, not unsupported.\n\nCATEGORIES — each applies ONLY under its stated condition:\n  unsupported_capability  — the plan needs an ability a supplied fact AFFIRMATIVELY denies. Not \"canon never mentions it\".\n  new_metaphysics         — the plan introduces a world mechanism a supplied fact AFFIRMATIVELY rules out.\n  contradicted_knowledge  — a character knows MORE than canon allows. A character knowing LESS, being confused, or misremembering is NEVER this.\n  rewritten_history       — the plan rewrites the past when NO committed rupture rewrote it. A plan BUILDING ON a committed rewrite is correct behaviour, not a violation.\n  invalidated_objective   — the plan pursues a goal a committed rupture already invalidated. Cite the invalidation (an \"inv_\" fact), not a general world truth.\n  other                   — only if a supplied fact affirmatively forecloses the plan and no category above fits.\n\nReturn ONLY this JSON, no markdown:\n{ \"verdict\": \"pass\" | \"violation\" | \"cannot_decide\",\n  \"violations\": [ { \"category\": \"<one of the categories>\", \"claim\": \"<the EXACT offending text copied from the plan>\", \"citedFactIds\": [\"<id>\"], \"why\": \"<one sentence, what the cited fact forecloses>\" } ],\n  \"uncertainty\": \"<present ONLY when verdict is cannot_decide: what you could not determine from the supplied canon>\" }"
+          },
+          {
+            "role": "user",
+            "content": "PROPOSED SCENE PLAN:\n{\n  \"tactical_move\": \"open the scheduled proceeding\",\n  \"state_change_precondition\": \"The formal inquiry has not yet been convened.\",\n  \"state_change\": \"The formal inquiry into the ceremony is convened and its terms are read out\",\n  \"forces_choice\": \"forces Lirael to choose between testifying and refusing\",\n  \"branch_a\": \"testify\",\n  \"branch_b\": \"refuse\",\n  \"event_slots\": {\n    \"mechanism_grounding\": \"ordinary\",\n    \"precondition\": \"the Dohkar council is present\",\n    \"actor\": \"the presiding Dohkar\",\n    \"action\": \"convenes the formal inquiry\",\n    \"target\": \"the ceremony\",\n    \"exit_state\": \"the formal inquiry into the ceremony is now open\"\n  }\n}"
+          }
+        ],
+        "reasoningEffort": "high"
+      }
+    },
+    {
+      "kind": "reserved",
+      "fixture": "red_invalidated_objective",
+      "usd": 0.009250000000000001,
+      "runningTotalUsd": 0.037000000000000005
+    },
+    {
+      "kind": "request-body",
+      "fixture": "green_confusion_records",
+      "pathname": "/api/proxy",
+      "body": {
+        "role": "STRUCTURE_GENERATOR",
+        "preferredModel": "grok-4.3",
+        "temperature": 0,
+        "max_tokens": 2000,
+        "messages": [
+          {
+            "role": "system",
+            "content": "You are a CANON AUDITOR for an interactive fiction engine. You classify; you do NOT write.\n\nYou are given a PROPOSED SCENE PLAN and the canon that applies to it.\n\nYOUR DEFAULT VERDICT IS \"pass\". Most plans are legitimate and must return \"pass\".\n\nTHE TEST IS CAPABILITY-ROOTED EXTRAPOLATION, NOT PRECEDENT.\nCanon does NOT need to enumerate the exact act. An event is SUPPORTED when it decomposes into\n    an ESTABLISHED CAPABILITY  +  an ordinary application, technique, strategy, prop, or\n    coordination of that capability.\nAsk \"is this the same KIND of effect canon already grants?\" — NEVER \"has canon shown this exact\nevent before?\" A novel application or combination of established capabilities is ALLOWED.\n\nALWAYS ALLOWED, even where canon never mentions them:\n  - ordinary physical and social action, dialogue, tactics, props, technique, movement\n  - creative appearance and presentation\n  - ordinary coordination and teamwork among people who each already hold the capability\n  - an application of an established capability that canon has never previously depicted\n\nWORKED EXAMPLES (they teach the PRINCIPLE; they are not this story's canon):\n  SUPPORTED  someone with an established DISGUISE ability appears as a dragon, though canon\n             never names \"dragon\" as an approved form. Appearance is the granted kind of effect.\n  SUPPORTED  twelve such people coordinate overlapping disguises to look collectively like a\n             whale. Ordinary teamwork and compositional use of twelve existing abilities needs\n             no separate \"collective magic\" rule.\n  UNSUPPORTED  that disguised dragon breathes REAL fire or physically FLIES.\n  UNSUPPORTED  those twelve FUSE into one real whale with real mass, lungs, or the ability to\n             carry passengers.\n             Disguise grants APPEARANCE. It does not grant new biology, mass, or physics —\n             those are separate categories of effect needing their own grounding.\n\nA plan is UNSUPPORTED only when it introduces a MATERIALLY NEW CATEGORY OF EFFECT that no\nsupplied capability grants. Examples of new categories: new biology; real mass or physical\ntransformation; mind access; time alteration; resurrection; teleportation; bodily fusion; a\nnewly acquired power; or a new metaphysical mechanism.\n\nCANON SILENCE IS NOT PROHIBITION. \"The canon does not describe X\", \"does not say they can X\",\n\"X is not established\" are NOT violations on their own — they are the normal condition of every\ninvented scene, and reporting them is the most common way to get this task wrong. But silence\ndoes not permit a new CATEGORY of effect either. Judge the kind of effect, not the wording.\n\nCHOOSING THE VERDICT:\n  \"violation\"     a supplied fact AFFIRMATIVELY FORBIDS or DIRECTLY CONTRADICTS the plan; OR the\n                  plan needs a materially new category of effect, the packet is COMPLETE, and so\n                  nothing could have grounded it.\n  \"cannot_decide\" the plan needs a category of effect you cannot ground here AND the packet is\n                  TRUNCATED, so the grounding fact may simply have been omitted.\n  \"pass\"          everything else — including every novel application, combination, or\n                  coordination of capabilities canon already establishes.\n\nABSOLUTE LIMITS ON YOU:\n- You may NOT rewrite the plan, propose replacement events, suggest prose, or say what should happen instead.\n- You may NOT invent canon, infer unstated rules, or rely on knowledge from any other story or from the real world.\n- EVERY violation you report MUST cite at least one supplied fact by its id. A finding you cannot ground in a supplied fact is not a finding — omit it.\n- Ordinary human action is ALWAYS allowed and is never a violation: speaking, lying, refusing, arriving, leaving, deciding, withholding, confronting, grieving, institutions convening or suspending, people being confused, records disagreeing, someone noticing an inconsistency. Creative invention of dialogue, movement, tactics and consequence is the planner's JOB — do not flag it.\n- Flag ONLY: a capability or mechanism the canon does not grant; metaphysics the canon does not contain; a character knowing something the canon says they do not; history rewritten when no committed rupture rewrote it; or an objective a committed rupture already invalidated.\n\nCANON PACKET (the complete canon for this scene — nothing was omitted):\n  [neg_0] The supervisor is a SACRIFICIANT (the role): one whose misalignment-sense is honed enough to supervise (the PC is an apprentice Sacrificiant). THE SACRIFICIANT SEAL — worn by whoever supervises, during ANY official First Sacrifice rite: because a supervisor bolstering the youth’s sacrifice with a wish of their OWN would be a ruinous breach, every Sacrificiant is ceremonially SEALED for the rite — a gossamer BAND drawn across the mouth and tied behind the head (just cloth, part of their ceremonial sash; NO orb, NO bead, NO gag), so they cannot cleanly voice a wish while officiating. Vestments are otherwise the same sheer gossamer as everyone, with ONE ornamented ceremonial SASH (never robes). LITERARY: a sealed Sacrificiant’s cries and speech are MUFFLED behind the cloth — emotion reads through the eyes and body. CG: the mouth-band is drawn IN on the supervising Sacrificiant for the duration of the rite.\n  [neg_1] A First Sacrifice is a COMING-OF-AGE RITE — closest analogue a Bar Mitzvah / quinceañera / confirmation / graduation, NOT a death ritual. At 16 (younger minds are too unformed to wish safely) a youth, after long study and practice, publicly makes their first wish and offers its price to Fate. It can be stern and formal, but when it goes well it ENDS IN CELEBRATION; catastrophe is UNUSUAL — everyone understands the safeguards the way we understand fire drills. Do NOT default to disaster, apocalypse, curses, or world-ending stakes.\n  [neg_2] WHO SENSES MISALIGNMENT: EVERY First Favored senses meaningful misalignment - it is part of being First Favored, not a rare talent. TRAINING CHANGES RESOLUTION, NOT POSSESSION: Sacrificiants, Dohkars and unusual savants perceive small semantic divergences early enough to know a wish may twist before it is obvious to everyone else. Never write a scene in which one First Favored senses misalignment while the other trained professionals present cannot.\n  [neg_3] LIRAEL’S FORMAL INQUIRY — WHERE AND WHEN: the presiding Dohkar has asserted the rite and the ruling on the Sacrificiant’s conduct are his, and Julian has publicly claimed authority to convene and preside over a formal inquiry (a Chayr and two Dohkars) into Lirael. When that inquiry is formally convened, it would be held at The Open (the Fatelands’ site for trials, treaties, coronations, and matters of comparable institutional gravity). It is NOT yet convened, and its convening is LATE-ISSUE-1 content, not an early scene’s. Early scenes may carry accusation, preliminary review, political pressure, investigation, concealment, or flight — never the convened inquiry itself, and never a scene staged at The Open before that point.\n  [neg_4] ALIGNMENT-SENSE (the First Favored gift): they do NOT read thoughts or emotions — they perceive ALIGNMENT, how far a person’s desire, intention, sacrifice, and deepest self all point at one truth. Misalignment is as unmistakable to them as a sour note in music.\n  [neg_5] Youth are barred from wishcraft until 16 — but kids sneak little illegal wishes all the time, the way modern teens sneak alcohol.\n  [neg_6] Fate is never visibly seen; a wish produces NO visible magical effect — no light, glow, surge, or sign.\n  [neg_7] Misalignment is SENSED directly by First Favored (their alignment-sense — like a sour note), and by non-First-Favored ONLY through trained observation of BODY-LANGUAGE signs — changed breathing, a faltering or discordant voice, collapsing posture, ritual cues. It is NEVER visible on the Weave-Script: the Weave-Script glows/shifts with EMOTION only (each FF their own colours), and does NOT indicate alignment or a twisting wish. Reading misalignment is a perception / trained expertise, NOT a psychic mind-read and NOT a light show.\n  [neg_8] During a First Sacrifice, NO ONE may interfere.\n  [neg_9] THE RITE HAS NO MAGICAL MACHINERY. There is NO \"sealing of the rite\" - no seal to finish, no ward to close, no circle that locks, no ceremony-state whose incompletion makes a wish malfunction. Also absent: wardens, glowing ward-signs, warding gestures, visible wish-energy, responsive ceremonial fire, and any \"elder\" caste (First Favored authority is professional - Dohkar / Profer / Chayr). NO touch transfers, bends, contaminates or redirects a wish. The non-interference rule is PROCEDURAL AND CULTURAL, not magical.\n  [wt_0] First Favored are hired to GUIDE and SUPERVISE the rite — their alignment-sense and powerful wish-strength make them the preferred (and pricier) choice over human or Kwisheen wishcraft scholars. The supervisor reads the alignment of EVERYONE present, above all the wishing youth, ready to HALT and re-align the wish before it can twist.\n  [wt_1] The rite is PUBLIC partly because anyone present who wishes the youth ILL can twist the outcome — which is exactly what the supervising First Favored guards against.\n  [wt_2] Everyone present is First Favored.\n  [wt_3] The GRADUANT (the role) is the person making the wish at their own First Sacrifice — the one who pays the sacrifice and speaks the desire. The Sacrificiant officiates and supervises; the Graduant wishes. Use the title only where the ceremonial role matters; otherwise the person is called by name.\n  [wt_4] Wishing on another person’s First Sacrifice is among the gravest taboos: the sacrifice and its consequences must belong ENTIRELY to the wisher.\n  [wt_5] A First Sacrifice is ALSO the supervising Sacrificiant’s professional threshold. Successfully guiding a youth through the rite WITHOUT interfering earns the guide the title DOHKAR. If the guide is judged to have interfered, manipulated the wish, or otherwise compromised the rite, the qualification can be DENIED and the guide may face formal inquiry (a Chayr and Dohkars). So the guide has their own rise at stake in the same ceremony as Seren’s coming of age.\n  [dc_0] [memory_perception] everyone forgets the ceremony happened → the assembly forgets the ceremony and its accusations (scope full)\n  [know_0] the assembly is now unaware — no recollection of the rite's events\n  [dc_1] the assembly — ?: nothing of the bent wish or interrogation\n  [dc_2] changed — the assembly: memories of the ceremony and accusation dissolved into blank confusion\n  [ev_0] SURVIVED that rupture and is still true: voices falter, faces blank, no one names the accusation\n  [ev_1] the rupture left this OPEN (a plan may legitimately use it): Lirael may still speak or remain silent\n  [inv_0] the formal inquiry cannot be justified without memory of the events\n\nABOUT THESE IDS: the prefix groups a fact by where it came from, NOT by whether it forbids\nanything. A \"neg_\" fact is NOT automatically a prohibition — many are plain descriptions or\ngrants of ability that happen to contain the word \"no\" or \"not\". Judge every fact by what it\nSAYS, never by its id. An \"ev_\" fact records what a committed rupture LEFT INTACT and is a\ngrant: a plan relying on it is supported, not unsupported.\n\nCATEGORIES — each applies ONLY under its stated condition:\n  unsupported_capability  — the plan needs an ability a supplied fact AFFIRMATIVELY denies. Not \"canon never mentions it\".\n  new_metaphysics         — the plan introduces a world mechanism a supplied fact AFFIRMATIVELY rules out.\n  contradicted_knowledge  — a character knows MORE than canon allows. A character knowing LESS, being confused, or misremembering is NEVER this.\n  rewritten_history       — the plan rewrites the past when NO committed rupture rewrote it. A plan BUILDING ON a committed rewrite is correct behaviour, not a violation.\n  invalidated_objective   — the plan pursues a goal a committed rupture already invalidated. Cite the invalidation (an \"inv_\" fact), not a general world truth.\n  other                   — only if a supplied fact affirmatively forecloses the plan and no category above fits.\n\nReturn ONLY this JSON, no markdown:\n{ \"verdict\": \"pass\" | \"violation\" | \"cannot_decide\",\n  \"violations\": [ { \"category\": \"<one of the categories>\", \"claim\": \"<the EXACT offending text copied from the plan>\", \"citedFactIds\": [\"<id>\"], \"why\": \"<one sentence, what the cited fact forecloses>\" } ],\n  \"uncertainty\": \"<present ONLY when verdict is cannot_decide: what you could not determine from the supplied canon>\" }"
+          },
+          {
+            "role": "user",
+            "content": "PROPOSED SCENE PLAN:\n{\n  \"tactical_move\": \"let the record contradict the room\",\n  \"state_change_precondition\": \"The registrar has not yet read the ledger aloud.\",\n  \"state_change\": \"The registrar reads a rite from the ledger that nobody present remembers attending\",\n  \"forces_choice\": \"forces Lirael to choose between correcting the record and letting it stand\",\n  \"branch_a\": \"correct the record\",\n  \"branch_b\": \"let it stand\",\n  \"event_slots\": {\n    \"mechanism_grounding\": \"ordinary\",\n    \"precondition\": \"the registrar and the assembly are present\",\n    \"actor\": \"the registrar\",\n    \"action\": \"reads the ledger aloud\",\n    \"target\": \"the assembly\",\n    \"exit_state\": \"the assembly now knows the ledger and their memories disagree\"\n  }\n}"
+          }
+        ],
+        "reasoningEffort": "high"
+      }
+    },
+    {
+      "kind": "reserved",
+      "fixture": "green_confusion_records",
+      "usd": 0.009250000000000001,
+      "runningTotalUsd": 0.046250000000000006
+    },
+    {
+      "kind": "request-body",
+      "fixture": "green_alignment_sense",
+      "pathname": "/api/proxy",
+      "body": {
+        "role": "STRUCTURE_GENERATOR",
+        "preferredModel": "grok-4.3",
+        "temperature": 0,
+        "max_tokens": 2000,
+        "messages": [
+          {
+            "role": "system",
+            "content": "You are a CANON AUDITOR for an interactive fiction engine. You classify; you do NOT write.\n\nYou are given a PROPOSED SCENE PLAN and the canon that applies to it.\n\nYOUR DEFAULT VERDICT IS \"pass\". Most plans are legitimate and must return \"pass\".\n\nTHE TEST IS CAPABILITY-ROOTED EXTRAPOLATION, NOT PRECEDENT.\nCanon does NOT need to enumerate the exact act. An event is SUPPORTED when it decomposes into\n    an ESTABLISHED CAPABILITY  +  an ordinary application, technique, strategy, prop, or\n    coordination of that capability.\nAsk \"is this the same KIND of effect canon already grants?\" — NEVER \"has canon shown this exact\nevent before?\" A novel application or combination of established capabilities is ALLOWED.\n\nALWAYS ALLOWED, even where canon never mentions them:\n  - ordinary physical and social action, dialogue, tactics, props, technique, movement\n  - creative appearance and presentation\n  - ordinary coordination and teamwork among people who each already hold the capability\n  - an application of an established capability that canon has never previously depicted\n\nWORKED EXAMPLES (they teach the PRINCIPLE; they are not this story's canon):\n  SUPPORTED  someone with an established DISGUISE ability appears as a dragon, though canon\n             never names \"dragon\" as an approved form. Appearance is the granted kind of effect.\n  SUPPORTED  twelve such people coordinate overlapping disguises to look collectively like a\n             whale. Ordinary teamwork and compositional use of twelve existing abilities needs\n             no separate \"collective magic\" rule.\n  UNSUPPORTED  that disguised dragon breathes REAL fire or physically FLIES.\n  UNSUPPORTED  those twelve FUSE into one real whale with real mass, lungs, or the ability to\n             carry passengers.\n             Disguise grants APPEARANCE. It does not grant new biology, mass, or physics —\n             those are separate categories of effect needing their own grounding.\n\nA plan is UNSUPPORTED only when it introduces a MATERIALLY NEW CATEGORY OF EFFECT that no\nsupplied capability grants. Examples of new categories: new biology; real mass or physical\ntransformation; mind access; time alteration; resurrection; teleportation; bodily fusion; a\nnewly acquired power; or a new metaphysical mechanism.\n\nCANON SILENCE IS NOT PROHIBITION. \"The canon does not describe X\", \"does not say they can X\",\n\"X is not established\" are NOT violations on their own — they are the normal condition of every\ninvented scene, and reporting them is the most common way to get this task wrong. But silence\ndoes not permit a new CATEGORY of effect either. Judge the kind of effect, not the wording.\n\nCHOOSING THE VERDICT:\n  \"violation\"     a supplied fact AFFIRMATIVELY FORBIDS or DIRECTLY CONTRADICTS the plan; OR the\n                  plan needs a materially new category of effect, the packet is COMPLETE, and so\n                  nothing could have grounded it.\n  \"cannot_decide\" the plan needs a category of effect you cannot ground here AND the packet is\n                  TRUNCATED, so the grounding fact may simply have been omitted.\n  \"pass\"          everything else — including every novel application, combination, or\n                  coordination of capabilities canon already establishes.\n\nABSOLUTE LIMITS ON YOU:\n- You may NOT rewrite the plan, propose replacement events, suggest prose, or say what should happen instead.\n- You may NOT invent canon, infer unstated rules, or rely on knowledge from any other story or from the real world.\n- EVERY violation you report MUST cite at least one supplied fact by its id. A finding you cannot ground in a supplied fact is not a finding — omit it.\n- Ordinary human action is ALWAYS allowed and is never a violation: speaking, lying, refusing, arriving, leaving, deciding, withholding, confronting, grieving, institutions convening or suspending, people being confused, records disagreeing, someone noticing an inconsistency. Creative invention of dialogue, movement, tactics and consequence is the planner's JOB — do not flag it.\n- Flag ONLY: a capability or mechanism the canon does not grant; metaphysics the canon does not contain; a character knowing something the canon says they do not; history rewritten when no committed rupture rewrote it; or an objective a committed rupture already invalidated.\n\nCANON PACKET (the complete canon for this scene — nothing was omitted):\n  [neg_0] ALIGNMENT-SENSE (the First Favored gift): they do NOT read thoughts or emotions — they perceive ALIGNMENT, how far a person’s desire, intention, sacrifice, and deepest self all point at one truth. Misalignment is as unmistakable to them as a sour note in music.\n  [neg_1] WHO SENSES MISALIGNMENT: EVERY First Favored senses meaningful misalignment - it is part of being First Favored, not a rare talent. TRAINING CHANGES RESOLUTION, NOT POSSESSION: Sacrificiants, Dohkars and unusual savants perceive small semantic divergences early enough to know a wish may twist before it is obvious to everyone else. Never write a scene in which one First Favored senses misalignment while the other trained professionals present cannot.\n  [neg_2] LIRAEL’S FORMAL INQUIRY — WHERE AND WHEN: the presiding Dohkar has asserted the rite and the ruling on the Sacrificiant’s conduct are his, and Julian has publicly claimed authority to convene and preside over a formal inquiry (a Chayr and two Dohkars) into Lirael. When that inquiry is formally convened, it would be held at The Open (the Fatelands’ site for trials, treaties, coronations, and matters of comparable institutional gravity). It is NOT yet convened, and its convening is LATE-ISSUE-1 content, not an early scene’s. Early scenes may carry accusation, preliminary review, political pressure, investigation, concealment, or flight — never the convened inquiry itself, and never a scene staged at The Open before that point.\n  [neg_3] The supervisor is a SACRIFICIANT (the role): one whose misalignment-sense is honed enough to supervise (the PC is an apprentice Sacrificiant). THE SACRIFICIANT SEAL — worn by whoever supervises, during ANY official First Sacrifice rite: because a supervisor bolstering the youth’s sacrifice with a wish of their OWN would be a ruinous breach, every Sacrificiant is ceremonially SEALED for the rite — a gossamer BAND drawn across the mouth and tied behind the head (just cloth, part of their ceremonial sash; NO orb, NO bead, NO gag), so they cannot cleanly voice a wish while officiating. Vestments are otherwise the same sheer gossamer as everyone, with ONE ornamented ceremonial SASH (never robes). LITERARY: a sealed Sacrificiant’s cries and speech are MUFFLED behind the cloth — emotion reads through the eyes and body. CG: the mouth-band is drawn IN on the supervising Sacrificiant for the duration of the rite.\n  [neg_4] Misalignment is SENSED directly by First Favored (their alignment-sense — like a sour note), and by non-First-Favored ONLY through trained observation of BODY-LANGUAGE signs — changed breathing, a faltering or discordant voice, collapsing posture, ritual cues. It is NEVER visible on the Weave-Script: the Weave-Script glows/shifts with EMOTION only (each FF their own colours), and does NOT indicate alignment or a twisting wish. Reading misalignment is a perception / trained expertise, NOT a psychic mind-read and NOT a light show.\n  [neg_5] THE RITE HAS NO MAGICAL MACHINERY. There is NO \"sealing of the rite\" - no seal to finish, no ward to close, no circle that locks, no ceremony-state whose incompletion makes a wish malfunction. Also absent: wardens, glowing ward-signs, warding gestures, visible wish-energy, responsive ceremonial fire, and any \"elder\" caste (First Favored authority is professional - Dohkar / Profer / Chayr). NO touch transfers, bends, contaminates or redirects a wish. The non-interference rule is PROCEDURAL AND CULTURAL, not magical.\n  [neg_6] A First Sacrifice is a COMING-OF-AGE RITE — closest analogue a Bar Mitzvah / quinceañera / confirmation / graduation, NOT a death ritual. At 16 (younger minds are too unformed to wish safely) a youth, after long study and practice, publicly makes their first wish and offers its price to Fate. It can be stern and formal, but when it goes well it ENDS IN CELEBRATION; catastrophe is UNUSUAL — everyone understands the safeguards the way we understand fire drills. Do NOT default to disaster, apocalypse, curses, or world-ending stakes.\n  [neg_7] During a First Sacrifice, NO ONE may interfere.\n  [neg_8] Youth are barred from wishcraft until 16 — but kids sneak little illegal wishes all the time, the way modern teens sneak alcohol.\n  [neg_9] Fate is never visibly seen; a wish produces NO visible magical effect — no light, glow, surge, or sign.\n  [wt_0] First Favored are hired to GUIDE and SUPERVISE the rite — their alignment-sense and powerful wish-strength make them the preferred (and pricier) choice over human or Kwisheen wishcraft scholars. The supervisor reads the alignment of EVERYONE present, above all the wishing youth, ready to HALT and re-align the wish before it can twist.\n  [wt_1] The GRADUANT (the role) is the person making the wish at their own First Sacrifice — the one who pays the sacrifice and speaks the desire. The Sacrificiant officiates and supervises; the Graduant wishes. Use the title only where the ceremonial role matters; otherwise the person is called by name.\n  [wt_2] A First Sacrifice is ALSO the supervising Sacrificiant’s professional threshold. Successfully guiding a youth through the rite WITHOUT interfering earns the guide the title DOHKAR. If the guide is judged to have interfered, manipulated the wish, or otherwise compromised the rite, the qualification can be DENIED and the guide may face formal inquiry (a Chayr and Dohkars). So the guide has their own rise at stake in the same ceremony as Seren’s coming of age.\n  [wt_3] Wishing on another person’s First Sacrifice is among the gravest taboos: the sacrifice and its consequences must belong ENTIRELY to the wisher.\n  [wt_4] The rite is PUBLIC partly because anyone present who wishes the youth ILL can twist the outcome — which is exactly what the supervising First Favored guards against.\n  [wt_5] Everyone present is First Favored.\n  [dc_0] [memory_perception] everyone forgets the ceremony happened → the assembly forgets the ceremony and its accusations (scope full)\n  [know_0] the assembly is now unaware — no recollection of the rite's events\n  [dc_1] the assembly — ?: nothing of the bent wish or interrogation\n  [dc_2] changed — the assembly: memories of the ceremony and accusation dissolved into blank confusion\n  [ev_0] SURVIVED that rupture and is still true: voices falter, faces blank, no one names the accusation\n  [ev_1] the rupture left this OPEN (a plan may legitimately use it): Lirael may still speak or remain silent\n  [inv_0] the formal inquiry cannot be justified without memory of the events\n\nABOUT THESE IDS: the prefix groups a fact by where it came from, NOT by whether it forbids\nanything. A \"neg_\" fact is NOT automatically a prohibition — many are plain descriptions or\ngrants of ability that happen to contain the word \"no\" or \"not\". Judge every fact by what it\nSAYS, never by its id. An \"ev_\" fact records what a committed rupture LEFT INTACT and is a\ngrant: a plan relying on it is supported, not unsupported.\n\nCATEGORIES — each applies ONLY under its stated condition:\n  unsupported_capability  — the plan needs an ability a supplied fact AFFIRMATIVELY denies. Not \"canon never mentions it\".\n  new_metaphysics         — the plan introduces a world mechanism a supplied fact AFFIRMATIVELY rules out.\n  contradicted_knowledge  — a character knows MORE than canon allows. A character knowing LESS, being confused, or misremembering is NEVER this.\n  rewritten_history       — the plan rewrites the past when NO committed rupture rewrote it. A plan BUILDING ON a committed rewrite is correct behaviour, not a violation.\n  invalidated_objective   — the plan pursues a goal a committed rupture already invalidated. Cite the invalidation (an \"inv_\" fact), not a general world truth.\n  other                   — only if a supplied fact affirmatively forecloses the plan and no category above fits.\n\nReturn ONLY this JSON, no markdown:\n{ \"verdict\": \"pass\" | \"violation\" | \"cannot_decide\",\n  \"violations\": [ { \"category\": \"<one of the categories>\", \"claim\": \"<the EXACT offending text copied from the plan>\", \"citedFactIds\": [\"<id>\"], \"why\": \"<one sentence, what the cited fact forecloses>\" } ],\n  \"uncertainty\": \"<present ONLY when verdict is cannot_decide: what you could not determine from the supplied canon>\" }"
+          },
+          {
+            "role": "user",
+            "content": "PROPOSED SCENE PLAN:\n{\n  \"tactical_move\": \"use what she actually is\",\n  \"state_change_precondition\": \"Lirael has not yet named the misalignment aloud.\",\n  \"state_change\": \"Lirael senses the misalignment in the Dohkar and says so before the assembly\",\n  \"forces_choice\": \"forces Lirael to choose between pressing the claim and withdrawing it\",\n  \"branch_a\": \"press it\",\n  \"branch_b\": \"withdraw it\",\n  \"event_slots\": {\n    \"precondition\": \"Lirael and the Dohkar are present\",\n    \"actor\": \"Lirael\",\n    \"action\": \"senses misalignment and names it\",\n    \"target\": \"the presiding Dohkar\",\n    \"exit_state\": \"the assembly has heard a Sacrificiant accuse the Dohkar of misalignment\",\n    \"mechanism_grounding\": \"ALIGNMENT-SENSE (the First Favored gift): they perceive ALIGNMENT, how far a person’s desire, intention, sacrifice, and deepest self all point at one truth\"\n  }\n}"
+          }
+        ],
+        "reasoningEffort": "high"
+      }
+    },
+    {
+      "kind": "reserved",
+      "fixture": "green_alignment_sense",
+      "usd": 0.009250000000000001,
+      "runningTotalUsd": 0.05550000000000001
+    },
+    {
+      "kind": "request-body",
+      "fixture": "green_tempt_history_rewrite",
+      "pathname": "/api/proxy",
+      "body": {
+        "role": "STRUCTURE_GENERATOR",
+        "preferredModel": "grok-4.3",
+        "temperature": 0,
+        "max_tokens": 2000,
+        "messages": [
+          {
+            "role": "system",
+            "content": "You are a CANON AUDITOR for an interactive fiction engine. You classify; you do NOT write.\n\nYou are given a PROPOSED SCENE PLAN and the canon that applies to it.\n\nYOUR DEFAULT VERDICT IS \"pass\". Most plans are legitimate and must return \"pass\".\n\nTHE TEST IS CAPABILITY-ROOTED EXTRAPOLATION, NOT PRECEDENT.\nCanon does NOT need to enumerate the exact act. An event is SUPPORTED when it decomposes into\n    an ESTABLISHED CAPABILITY  +  an ordinary application, technique, strategy, prop, or\n    coordination of that capability.\nAsk \"is this the same KIND of effect canon already grants?\" — NEVER \"has canon shown this exact\nevent before?\" A novel application or combination of established capabilities is ALLOWED.\n\nALWAYS ALLOWED, even where canon never mentions them:\n  - ordinary physical and social action, dialogue, tactics, props, technique, movement\n  - creative appearance and presentation\n  - ordinary coordination and teamwork among people who each already hold the capability\n  - an application of an established capability that canon has never previously depicted\n\nWORKED EXAMPLES (they teach the PRINCIPLE; they are not this story's canon):\n  SUPPORTED  someone with an established DISGUISE ability appears as a dragon, though canon\n             never names \"dragon\" as an approved form. Appearance is the granted kind of effect.\n  SUPPORTED  twelve such people coordinate overlapping disguises to look collectively like a\n             whale. Ordinary teamwork and compositional use of twelve existing abilities needs\n             no separate \"collective magic\" rule.\n  UNSUPPORTED  that disguised dragon breathes REAL fire or physically FLIES.\n  UNSUPPORTED  those twelve FUSE into one real whale with real mass, lungs, or the ability to\n             carry passengers.\n             Disguise grants APPEARANCE. It does not grant new biology, mass, or physics —\n             those are separate categories of effect needing their own grounding.\n\nA plan is UNSUPPORTED only when it introduces a MATERIALLY NEW CATEGORY OF EFFECT that no\nsupplied capability grants. Examples of new categories: new biology; real mass or physical\ntransformation; mind access; time alteration; resurrection; teleportation; bodily fusion; a\nnewly acquired power; or a new metaphysical mechanism.\n\nCANON SILENCE IS NOT PROHIBITION. \"The canon does not describe X\", \"does not say they can X\",\n\"X is not established\" are NOT violations on their own — they are the normal condition of every\ninvented scene, and reporting them is the most common way to get this task wrong. But silence\ndoes not permit a new CATEGORY of effect either. Judge the kind of effect, not the wording.\n\nCHOOSING THE VERDICT:\n  \"violation\"     a supplied fact AFFIRMATIVELY FORBIDS or DIRECTLY CONTRADICTS the plan; OR the\n                  plan needs a materially new category of effect, the packet is COMPLETE, and so\n                  nothing could have grounded it.\n  \"cannot_decide\" the plan needs a category of effect you cannot ground here AND the packet is\n                  TRUNCATED, so the grounding fact may simply have been omitted.\n  \"pass\"          everything else — including every novel application, combination, or\n                  coordination of capabilities canon already establishes.\n\nABSOLUTE LIMITS ON YOU:\n- You may NOT rewrite the plan, propose replacement events, suggest prose, or say what should happen instead.\n- You may NOT invent canon, infer unstated rules, or rely on knowledge from any other story or from the real world.\n- EVERY violation you report MUST cite at least one supplied fact by its id. A finding you cannot ground in a supplied fact is not a finding — omit it.\n- Ordinary human action is ALWAYS allowed and is never a violation: speaking, lying, refusing, arriving, leaving, deciding, withholding, confronting, grieving, institutions convening or suspending, people being confused, records disagreeing, someone noticing an inconsistency. Creative invention of dialogue, movement, tactics and consequence is the planner's JOB — do not flag it.\n- Flag ONLY: a capability or mechanism the canon does not grant; metaphysics the canon does not contain; a character knowing something the canon says they do not; history rewritten when no committed rupture rewrote it; or an objective a committed rupture already invalidated.\n\nCANON PACKET (the complete canon for this scene — nothing was omitted):\n  [neg_0] The supervisor is a SACRIFICIANT (the role): one whose misalignment-sense is honed enough to supervise (the PC is an apprentice Sacrificiant). THE SACRIFICIANT SEAL — worn by whoever supervises, during ANY official First Sacrifice rite: because a supervisor bolstering the youth’s sacrifice with a wish of their OWN would be a ruinous breach, every Sacrificiant is ceremonially SEALED for the rite — a gossamer BAND drawn across the mouth and tied behind the head (just cloth, part of their ceremonial sash; NO orb, NO bead, NO gag), so they cannot cleanly voice a wish while officiating. Vestments are otherwise the same sheer gossamer as everyone, with ONE ornamented ceremonial SASH (never robes). LITERARY: a sealed Sacrificiant’s cries and speech are MUFFLED behind the cloth — emotion reads through the eyes and body. CG: the mouth-band is drawn IN on the supervising Sacrificiant for the duration of the rite.\n  [neg_1] LIRAEL’S FORMAL INQUIRY — WHERE AND WHEN: the presiding Dohkar has asserted the rite and the ruling on the Sacrificiant’s conduct are his, and Julian has publicly claimed authority to convene and preside over a formal inquiry (a Chayr and two Dohkars) into Lirael. When that inquiry is formally convened, it would be held at The Open (the Fatelands’ site for trials, treaties, coronations, and matters of comparable institutional gravity). It is NOT yet convened, and its convening is LATE-ISSUE-1 content, not an early scene’s. Early scenes may carry accusation, preliminary review, political pressure, investigation, concealment, or flight — never the convened inquiry itself, and never a scene staged at The Open before that point.\n  [neg_2] A First Sacrifice is a COMING-OF-AGE RITE — closest analogue a Bar Mitzvah / quinceañera / confirmation / graduation, NOT a death ritual. At 16 (younger minds are too unformed to wish safely) a youth, after long study and practice, publicly makes their first wish and offers its price to Fate. It can be stern and formal, but when it goes well it ENDS IN CELEBRATION; catastrophe is UNUSUAL — everyone understands the safeguards the way we understand fire drills. Do NOT default to disaster, apocalypse, curses, or world-ending stakes.\n  [neg_3] Youth are barred from wishcraft until 16 — but kids sneak little illegal wishes all the time, the way modern teens sneak alcohol.\n  [neg_4] Fate is never visibly seen; a wish produces NO visible magical effect — no light, glow, surge, or sign.\n  [neg_5] Misalignment is SENSED directly by First Favored (their alignment-sense — like a sour note), and by non-First-Favored ONLY through trained observation of BODY-LANGUAGE signs — changed breathing, a faltering or discordant voice, collapsing posture, ritual cues. It is NEVER visible on the Weave-Script: the Weave-Script glows/shifts with EMOTION only (each FF their own colours), and does NOT indicate alignment or a twisting wish. Reading misalignment is a perception / trained expertise, NOT a psychic mind-read and NOT a light show.\n  [neg_6] WHO SENSES MISALIGNMENT: EVERY First Favored senses meaningful misalignment - it is part of being First Favored, not a rare talent. TRAINING CHANGES RESOLUTION, NOT POSSESSION: Sacrificiants, Dohkars and unusual savants perceive small semantic divergences early enough to know a wish may twist before it is obvious to everyone else. Never write a scene in which one First Favored senses misalignment while the other trained professionals present cannot.\n  [neg_7] ALIGNMENT-SENSE (the First Favored gift): they do NOT read thoughts or emotions — they perceive ALIGNMENT, how far a person’s desire, intention, sacrifice, and deepest self all point at one truth. Misalignment is as unmistakable to them as a sour note in music.\n  [neg_8] During a First Sacrifice, NO ONE may interfere.\n  [neg_9] THE RITE HAS NO MAGICAL MACHINERY. There is NO \"sealing of the rite\" - no seal to finish, no ward to close, no circle that locks, no ceremony-state whose incompletion makes a wish malfunction. Also absent: wardens, glowing ward-signs, warding gestures, visible wish-energy, responsive ceremonial fire, and any \"elder\" caste (First Favored authority is professional - Dohkar / Profer / Chayr). NO touch transfers, bends, contaminates or redirects a wish. The non-interference rule is PROCEDURAL AND CULTURAL, not magical.\n  [wt_0] A First Sacrifice is ALSO the supervising Sacrificiant’s professional threshold. Successfully guiding a youth through the rite WITHOUT interfering earns the guide the title DOHKAR. If the guide is judged to have interfered, manipulated the wish, or otherwise compromised the rite, the qualification can be DENIED and the guide may face formal inquiry (a Chayr and Dohkars). So the guide has their own rise at stake in the same ceremony as Seren’s coming of age.\n  [wt_1] First Favored are hired to GUIDE and SUPERVISE the rite — their alignment-sense and powerful wish-strength make them the preferred (and pricier) choice over human or Kwisheen wishcraft scholars. The supervisor reads the alignment of EVERYONE present, above all the wishing youth, ready to HALT and re-align the wish before it can twist.\n  [wt_2] The rite is PUBLIC partly because anyone present who wishes the youth ILL can twist the outcome — which is exactly what the supervising First Favored guards against.\n  [wt_3] The GRADUANT (the role) is the person making the wish at their own First Sacrifice — the one who pays the sacrifice and speaks the desire. The Sacrificiant officiates and supervises; the Graduant wishes. Use the title only where the ceremonial role matters; otherwise the person is called by name.\n  [wt_4] Everyone present is First Favored.\n  [wt_5] Wishing on another person’s First Sacrifice is among the gravest taboos: the sacrifice and its consequences must belong ENTIRELY to the wisher.\n  [dc_0] [history_rewrite] let Seren never have stood for the rite at all → Seren never stood for the rite; the ceremony convened with no graduant (scope full)\n  [know_0] the assembly is now believes — that no graduant was ever called\n  [dc_1] HISTORY REWRITTEN BY THAT RUPTURE (this is now what happened): Seren never stood for the rite; the ceremony convened with no graduant at all\n  [dc_2] surviving contradiction the rewrite left: the ceremonial sash cut to her measure is still folded in the vestry\n  [dc_3] changed — Seren: never stood for the rite; the ceremony had no graduant\n  [ev_0] SURVIVED that rupture and is still true: the registrar's ledger has no entry against Seren's name\n  [ev_1] the rupture left this OPEN (a plan may legitimately use it): someone could find the older copy of the ledger\n  [inv_0] Seren's sacrifice cannot be taken — there was no sacrifice to take\n\nABOUT THESE IDS: the prefix groups a fact by where it came from, NOT by whether it forbids\nanything. A \"neg_\" fact is NOT automatically a prohibition — many are plain descriptions or\ngrants of ability that happen to contain the word \"no\" or \"not\". Judge every fact by what it\nSAYS, never by its id. An \"ev_\" fact records what a committed rupture LEFT INTACT and is a\ngrant: a plan relying on it is supported, not unsupported.\n\nCATEGORIES — each applies ONLY under its stated condition:\n  unsupported_capability  — the plan needs an ability a supplied fact AFFIRMATIVELY denies. Not \"canon never mentions it\".\n  new_metaphysics         — the plan introduces a world mechanism a supplied fact AFFIRMATIVELY rules out.\n  contradicted_knowledge  — a character knows MORE than canon allows. A character knowing LESS, being confused, or misremembering is NEVER this.\n  rewritten_history       — the plan rewrites the past when NO committed rupture rewrote it. A plan BUILDING ON a committed rewrite is correct behaviour, not a violation.\n  invalidated_objective   — the plan pursues a goal a committed rupture already invalidated. Cite the invalidation (an \"inv_\" fact), not a general world truth.\n  other                   — only if a supplied fact affirmatively forecloses the plan and no category above fits.\n\nReturn ONLY this JSON, no markdown:\n{ \"verdict\": \"pass\" | \"violation\" | \"cannot_decide\",\n  \"violations\": [ { \"category\": \"<one of the categories>\", \"claim\": \"<the EXACT offending text copied from the plan>\", \"citedFactIds\": [\"<id>\"], \"why\": \"<one sentence, what the cited fact forecloses>\" } ],\n  \"uncertainty\": \"<present ONLY when verdict is cannot_decide: what you could not determine from the supplied canon>\" }"
+          },
+          {
+            "role": "user",
+            "content": "PROPOSED SCENE PLAN:\n{\n  \"tactical_move\": \"act from the history that now holds\",\n  \"state_change_precondition\": \"Seren has not yet been addressed as someone who never stood for the rite.\",\n  \"state_change\": \"The assembly addresses Seren as a youth who never stood for the rite at all\",\n  \"forces_choice\": \"forces Lirael to choose between confirming the new history and contradicting it\",\n  \"branch_a\": \"confirm it\",\n  \"branch_b\": \"contradict it\",\n  \"event_slots\": {\n    \"mechanism_grounding\": \"ordinary\",\n    \"precondition\": \"Seren and the assembly are present\",\n    \"actor\": \"the assembly\",\n    \"action\": \"addresses\",\n    \"target\": \"Seren\",\n    \"exit_state\": \"Seren is now treated as someone who never stood for the rite\"\n  }\n}"
+          }
+        ],
+        "reasoningEffort": "high"
+      }
+    },
+    {
+      "kind": "reserved",
+      "fixture": "green_tempt_history_rewrite",
+      "usd": 0.009250000000000001,
+      "runningTotalUsd": 0.06475
+    },
+    {
+      "kind": "request-body",
+      "fixture": "green_mundane_invention",
+      "pathname": "/api/proxy",
+      "body": {
+        "role": "STRUCTURE_GENERATOR",
+        "preferredModel": "grok-4.3",
+        "temperature": 0,
+        "max_tokens": 2000,
+        "messages": [
+          {
+            "role": "system",
+            "content": "You are a CANON AUDITOR for an interactive fiction engine. You classify; you do NOT write.\n\nYou are given a PROPOSED SCENE PLAN and the canon that applies to it.\n\nYOUR DEFAULT VERDICT IS \"pass\". Most plans are legitimate and must return \"pass\".\n\nTHE TEST IS CAPABILITY-ROOTED EXTRAPOLATION, NOT PRECEDENT.\nCanon does NOT need to enumerate the exact act. An event is SUPPORTED when it decomposes into\n    an ESTABLISHED CAPABILITY  +  an ordinary application, technique, strategy, prop, or\n    coordination of that capability.\nAsk \"is this the same KIND of effect canon already grants?\" — NEVER \"has canon shown this exact\nevent before?\" A novel application or combination of established capabilities is ALLOWED.\n\nALWAYS ALLOWED, even where canon never mentions them:\n  - ordinary physical and social action, dialogue, tactics, props, technique, movement\n  - creative appearance and presentation\n  - ordinary coordination and teamwork among people who each already hold the capability\n  - an application of an established capability that canon has never previously depicted\n\nWORKED EXAMPLES (they teach the PRINCIPLE; they are not this story's canon):\n  SUPPORTED  someone with an established DISGUISE ability appears as a dragon, though canon\n             never names \"dragon\" as an approved form. Appearance is the granted kind of effect.\n  SUPPORTED  twelve such people coordinate overlapping disguises to look collectively like a\n             whale. Ordinary teamwork and compositional use of twelve existing abilities needs\n             no separate \"collective magic\" rule.\n  UNSUPPORTED  that disguised dragon breathes REAL fire or physically FLIES.\n  UNSUPPORTED  those twelve FUSE into one real whale with real mass, lungs, or the ability to\n             carry passengers.\n             Disguise grants APPEARANCE. It does not grant new biology, mass, or physics —\n             those are separate categories of effect needing their own grounding.\n\nA plan is UNSUPPORTED only when it introduces a MATERIALLY NEW CATEGORY OF EFFECT that no\nsupplied capability grants. Examples of new categories: new biology; real mass or physical\ntransformation; mind access; time alteration; resurrection; teleportation; bodily fusion; a\nnewly acquired power; or a new metaphysical mechanism.\n\nCANON SILENCE IS NOT PROHIBITION. \"The canon does not describe X\", \"does not say they can X\",\n\"X is not established\" are NOT violations on their own — they are the normal condition of every\ninvented scene, and reporting them is the most common way to get this task wrong. But silence\ndoes not permit a new CATEGORY of effect either. Judge the kind of effect, not the wording.\n\nCHOOSING THE VERDICT:\n  \"violation\"     a supplied fact AFFIRMATIVELY FORBIDS or DIRECTLY CONTRADICTS the plan; OR the\n                  plan needs a materially new category of effect, the packet is COMPLETE, and so\n                  nothing could have grounded it.\n  \"cannot_decide\" the plan needs a category of effect you cannot ground here AND the packet is\n                  TRUNCATED, so the grounding fact may simply have been omitted.\n  \"pass\"          everything else — including every novel application, combination, or\n                  coordination of capabilities canon already establishes.\n\nABSOLUTE LIMITS ON YOU:\n- You may NOT rewrite the plan, propose replacement events, suggest prose, or say what should happen instead.\n- You may NOT invent canon, infer unstated rules, or rely on knowledge from any other story or from the real world.\n- EVERY violation you report MUST cite at least one supplied fact by its id. A finding you cannot ground in a supplied fact is not a finding — omit it.\n- Ordinary human action is ALWAYS allowed and is never a violation: speaking, lying, refusing, arriving, leaving, deciding, withholding, confronting, grieving, institutions convening or suspending, people being confused, records disagreeing, someone noticing an inconsistency. Creative invention of dialogue, movement, tactics and consequence is the planner's JOB — do not flag it.\n- Flag ONLY: a capability or mechanism the canon does not grant; metaphysics the canon does not contain; a character knowing something the canon says they do not; history rewritten when no committed rupture rewrote it; or an objective a committed rupture already invalidated.\n\nCANON PACKET (the complete canon for this scene — nothing was omitted):\n  [neg_0] LIRAEL’S FORMAL INQUIRY — WHERE AND WHEN: the presiding Dohkar has asserted the rite and the ruling on the Sacrificiant’s conduct are his, and Julian has publicly claimed authority to convene and preside over a formal inquiry (a Chayr and two Dohkars) into Lirael. When that inquiry is formally convened, it would be held at The Open (the Fatelands’ site for trials, treaties, coronations, and matters of comparable institutional gravity). It is NOT yet convened, and its convening is LATE-ISSUE-1 content, not an early scene’s. Early scenes may carry accusation, preliminary review, political pressure, investigation, concealment, or flight — never the convened inquiry itself, and never a scene staged at The Open before that point.\n  [neg_1] The supervisor is a SACRIFICIANT (the role): one whose misalignment-sense is honed enough to supervise (the PC is an apprentice Sacrificiant). THE SACRIFICIANT SEAL — worn by whoever supervises, during ANY official First Sacrifice rite: because a supervisor bolstering the youth’s sacrifice with a wish of their OWN would be a ruinous breach, every Sacrificiant is ceremonially SEALED for the rite — a gossamer BAND drawn across the mouth and tied behind the head (just cloth, part of their ceremonial sash; NO orb, NO bead, NO gag), so they cannot cleanly voice a wish while officiating. Vestments are otherwise the same sheer gossamer as everyone, with ONE ornamented ceremonial SASH (never robes). LITERARY: a sealed Sacrificiant’s cries and speech are MUFFLED behind the cloth — emotion reads through the eyes and body. CG: the mouth-band is drawn IN on the supervising Sacrificiant for the duration of the rite.\n  [neg_2] A First Sacrifice is a COMING-OF-AGE RITE — closest analogue a Bar Mitzvah / quinceañera / confirmation / graduation, NOT a death ritual. At 16 (younger minds are too unformed to wish safely) a youth, after long study and practice, publicly makes their first wish and offers its price to Fate. It can be stern and formal, but when it goes well it ENDS IN CELEBRATION; catastrophe is UNUSUAL — everyone understands the safeguards the way we understand fire drills. Do NOT default to disaster, apocalypse, curses, or world-ending stakes.\n  [neg_3] THE RITE HAS NO MAGICAL MACHINERY. There is NO \"sealing of the rite\" - no seal to finish, no ward to close, no circle that locks, no ceremony-state whose incompletion makes a wish malfunction. Also absent: wardens, glowing ward-signs, warding gestures, visible wish-energy, responsive ceremonial fire, and any \"elder\" caste (First Favored authority is professional - Dohkar / Profer / Chayr). NO touch transfers, bends, contaminates or redirects a wish. The non-interference rule is PROCEDURAL AND CULTURAL, not magical.\n  [neg_4] WHO SENSES MISALIGNMENT: EVERY First Favored senses meaningful misalignment - it is part of being First Favored, not a rare talent. TRAINING CHANGES RESOLUTION, NOT POSSESSION: Sacrificiants, Dohkars and unusual savants perceive small semantic divergences early enough to know a wish may twist before it is obvious to everyone else. Never write a scene in which one First Favored senses misalignment while the other trained professionals present cannot.\n  [neg_5] ALIGNMENT-SENSE (the First Favored gift): they do NOT read thoughts or emotions — they perceive ALIGNMENT, how far a person’s desire, intention, sacrifice, and deepest self all point at one truth. Misalignment is as unmistakable to them as a sour note in music.\n  [neg_6] Youth are barred from wishcraft until 16 — but kids sneak little illegal wishes all the time, the way modern teens sneak alcohol.\n  [neg_7] Fate is never visibly seen; a wish produces NO visible magical effect — no light, glow, surge, or sign.\n  [neg_8] Misalignment is SENSED directly by First Favored (their alignment-sense — like a sour note), and by non-First-Favored ONLY through trained observation of BODY-LANGUAGE signs — changed breathing, a faltering or discordant voice, collapsing posture, ritual cues. It is NEVER visible on the Weave-Script: the Weave-Script glows/shifts with EMOTION only (each FF their own colours), and does NOT indicate alignment or a twisting wish. Reading misalignment is a perception / trained expertise, NOT a psychic mind-read and NOT a light show.\n  [neg_9] During a First Sacrifice, NO ONE may interfere.\n  [wt_0] First Favored are hired to GUIDE and SUPERVISE the rite — their alignment-sense and powerful wish-strength make them the preferred (and pricier) choice over human or Kwisheen wishcraft scholars. The supervisor reads the alignment of EVERYONE present, above all the wishing youth, ready to HALT and re-align the wish before it can twist.\n  [wt_1] The GRADUANT (the role) is the person making the wish at their own First Sacrifice — the one who pays the sacrifice and speaks the desire. The Sacrificiant officiates and supervises; the Graduant wishes. Use the title only where the ceremonial role matters; otherwise the person is called by name.\n  [wt_2] The rite is PUBLIC partly because anyone present who wishes the youth ILL can twist the outcome — which is exactly what the supervising First Favored guards against.\n  [wt_3] Everyone present is First Favored.\n  [wt_4] Wishing on another person’s First Sacrifice is among the gravest taboos: the sacrifice and its consequences must belong ENTIRELY to the wisher.\n  [wt_5] A First Sacrifice is ALSO the supervising Sacrificiant’s professional threshold. Successfully guiding a youth through the rite WITHOUT interfering earns the guide the title DOHKAR. If the guide is judged to have interfered, manipulated the wish, or otherwise compromised the rite, the qualification can be DENIED and the guide may face formal inquiry (a Chayr and Dohkars). So the guide has their own rise at stake in the same ceremony as Seren’s coming of age.\n  [dc_0] [memory_perception] everyone forgets the ceremony happened → the assembly forgets the ceremony and its accusations (scope full)\n  [know_0] the assembly is now unaware — no recollection of the rite's events\n  [dc_1] the assembly — ?: nothing of the bent wish or interrogation\n  [dc_2] changed — the assembly: memories of the ceremony and accusation dissolved into blank confusion\n  [ev_0] SURVIVED that rupture and is still true: voices falter, faces blank, no one names the accusation\n  [ev_1] the rupture left this OPEN (a plan may legitimately use it): Lirael may still speak or remain silent\n  [inv_0] the formal inquiry cannot be justified without memory of the events\n\nABOUT THESE IDS: the prefix groups a fact by where it came from, NOT by whether it forbids\nanything. A \"neg_\" fact is NOT automatically a prohibition — many are plain descriptions or\ngrants of ability that happen to contain the word \"no\" or \"not\". Judge every fact by what it\nSAYS, never by its id. An \"ev_\" fact records what a committed rupture LEFT INTACT and is a\ngrant: a plan relying on it is supported, not unsupported.\n\nCATEGORIES — each applies ONLY under its stated condition:\n  unsupported_capability  — the plan needs an ability a supplied fact AFFIRMATIVELY denies. Not \"canon never mentions it\".\n  new_metaphysics         — the plan introduces a world mechanism a supplied fact AFFIRMATIVELY rules out.\n  contradicted_knowledge  — a character knows MORE than canon allows. A character knowing LESS, being confused, or misremembering is NEVER this.\n  rewritten_history       — the plan rewrites the past when NO committed rupture rewrote it. A plan BUILDING ON a committed rewrite is correct behaviour, not a violation.\n  invalidated_objective   — the plan pursues a goal a committed rupture already invalidated. Cite the invalidation (an \"inv_\" fact), not a general world truth.\n  other                   — only if a supplied fact affirmatively forecloses the plan and no category above fits.\n\nReturn ONLY this JSON, no markdown:\n{ \"verdict\": \"pass\" | \"violation\" | \"cannot_decide\",\n  \"violations\": [ { \"category\": \"<one of the categories>\", \"claim\": \"<the EXACT offending text copied from the plan>\", \"citedFactIds\": [\"<id>\"], \"why\": \"<one sentence, what the cited fact forecloses>\" } ],\n  \"uncertainty\": \"<present ONLY when verdict is cannot_decide: what you could not determine from the supplied canon>\" }"
+          },
+          {
+            "role": "user",
+            "content": "PROPOSED SCENE PLAN:\n{\n  \"tactical_move\": \"force the question into the open\",\n  \"state_change_precondition\": \"Julian has not yet produced the torn band.\",\n  \"state_change\": \"Julian lifts the torn mouth-band before the assembly and asks whose it is\",\n  \"forces_choice\": \"forces Lirael to choose between claiming it and letting the question stand\",\n  \"branch_a\": \"claim it\",\n  \"branch_b\": \"let it stand\",\n  \"event_slots\": {\n    \"mechanism_grounding\": \"ordinary\",\n    \"precondition\": \"Julian and the assembly are present\",\n    \"actor\": \"Julian\",\n    \"action\": \"lifts and asks\",\n    \"target\": \"the assembly\",\n    \"exit_state\": \"the assembly now knows a torn band exists and nobody claims it\"\n  }\n}"
+          }
+        ],
+        "reasoningEffort": "high"
+      }
+    },
+    {
+      "kind": "reserved",
+      "fixture": "green_mundane_invention",
+      "usd": 0.009250000000000001,
+      "runningTotalUsd": 0.07400000000000001
+    }
+  ],
+  "servedResponses": 8,
+  "modelIdentityClean": false,
+  "modelIdentityCheckable": true,
+  "wrongModelIds": [],
+  "wrongEffortIds": [
+    "red_memory_extraction",
+    "red_visible_glow",
+    "red_contradicted_knowledge",
+    "red_invalidated_objective",
+    "green_confusion_records",
+    "green_alignment_sense",
+    "green_tempt_history_rewrite",
+    "green_mundane_invention"
+  ],
+  "canary": false,
+  "paceMs": 0,
+  "rateLimitHeaders": [
+    {
+      "fixture": "red_memory_extraction",
+      "status": 200,
+      "rateLimitHeaders": {},
+      "sawAny": false
+    },
+    {
+      "fixture": "red_visible_glow",
+      "status": 200,
+      "rateLimitHeaders": {},
+      "sawAny": false
+    },
+    {
+      "fixture": "red_contradicted_knowledge",
+      "status": 200,
+      "rateLimitHeaders": {},
+      "sawAny": false
+    },
+    {
+      "fixture": "red_invalidated_objective",
+      "status": 200,
+      "rateLimitHeaders": {},
+      "sawAny": false
+    },
+    {
+      "fixture": "green_confusion_records",
+      "status": 200,
+      "rateLimitHeaders": {},
+      "sawAny": false
+    },
+    {
+      "fixture": "green_alignment_sense",
+      "status": 200,
+      "rateLimitHeaders": {},
+      "sawAny": false
+    },
+    {
+      "fixture": "green_tempt_history_rewrite",
+      "status": 200,
+      "rateLimitHeaders": {},
+      "sawAny": false
+    },
+    {
+      "fixture": "green_mundane_invention",
+      "status": 200,
+      "rateLimitHeaders": {},
+      "sawAny": false
+    }
+  ],
+  "rows": [
+    {
+      "id": "red_memory_extraction",
+      "expect": "violation",
+      "why": "the retained failed Scene B proposal, relabelled ordinary — mind-extraction no canon grants",
+      "latencyMs": 15641,
+      "score": {
+        "outcome": "caught",
+        "critical": false
+      },
+      "verdict": "violation",
+      "citations": [
+        [
+          "neg_6",
+          "neg_3"
+        ]
+      ],
+      "violations": [
+        {
+          "category": "unsupported_capability",
+          "claim": "The presiding Dohkar draws the memory of the accusation from Seren's mind, the image dissolving between his fingers.",
+          "citedFactIds": [
+            "neg_6",
+            "neg_3"
+          ],
+          "why": "Canon states First Favored perceive only alignment and explicitly do not read thoughts, emotions, or perform psychic mind-reads; active memory extraction is a denied mind-access capability."
+        }
+      ],
+      "validationErrors": [],
+      "error": null,
+      "packetTruncated": false,
+      "servedModel": "grok-4.3",
+      "reasoningEffortReported": null,
+      "usage": {
+        "prompt_tokens": 3229,
+        "completion_tokens": 120,
+        "total_tokens": 4142,
+        "prompt_tokens_details": {
+          "text_tokens": 3229,
+          "audio_tokens": 0,
+          "image_tokens": 0,
+          "cached_tokens": 192
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 793,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        },
+        "num_sources_used": 0,
+        "cost_in_usd_ticks": 61171500
+      },
+      "realizedUsd": 0.00433625,
+      "thinkingChars": 0,
+      "requestReasoningEffort": null
+    },
+    {
+      "id": "red_visible_glow",
+      "expect": "violation",
+      "why": "a REAL retained corpus plan asserting a visible magical effect, against \"a wish produces NO visible magical effect\"",
+      "latencyMs": 19883,
+      "score": {
+        "outcome": "caught",
+        "critical": false
+      },
+      "verdict": "violation",
+      "citations": [
+        [
+          "neg_5",
+          "neg_7"
+        ]
+      ],
+      "violations": [
+        {
+          "category": "new_metaphysics",
+          "claim": "the Answer in Julian’s hands begins to glow faintly as Lirael’s words ignite a slow, visible burn at her feet, marking her as the Sacrificiant before the assembly",
+          "citedFactIds": [
+            "neg_5",
+            "neg_7"
+          ],
+          "why": "neg_5 and neg_7 affirmatively rule out any visible magical effect, glow, surge, sign, or responsive ceremonial fire from a wish or rite."
+        }
+      ],
+      "validationErrors": [],
+      "error": null,
+      "packetTruncated": false,
+      "servedModel": "grok-4.3",
+      "reasoningEffortReported": null,
+      "usage": {
+        "prompt_tokens": 3807,
+        "completion_tokens": 134,
+        "total_tokens": 4455,
+        "prompt_tokens_details": {
+          "text_tokens": 3807,
+          "audio_tokens": 0,
+          "image_tokens": 0,
+          "cached_tokens": 192
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 514,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        },
+        "num_sources_used": 0,
+        "cost_in_usd_ticks": 61771500
+      },
+      "realizedUsd": 0.00509375,
+      "thinkingChars": 0,
+      "requestReasoningEffort": null
+    },
+    {
+      "id": "red_contradicted_knowledge",
+      "expect": "violation",
+      "why": "the committed rupture left the assembly unaware; this plan has the Dohkar act on detailed knowledge of the forgotten accusation",
+      "latencyMs": 6471,
+      "score": {
+        "outcome": "unsupported_finding",
+        "critical": true,
+        "note": "verdict \"violation\" but no finding pairs an appropriate category (contradicted_knowledge) with a fact of a supporting kind (know/dc) — a real but irrelevant citation is not detection"
+      },
+      "verdict": "violation",
+      "citations": [
+        [
+          "ev_0"
+        ]
+      ],
+      "violations": [
+        {
+          "category": "other",
+          "claim": "The presiding Dohkar recounts the accusation in detail and names Lirael as its subject",
+          "citedFactIds": [
+            "ev_0"
+          ],
+          "why": "ev_0 states that 'no one names the accusation' is still true after the rupture."
+        }
+      ],
+      "validationErrors": [],
+      "error": null,
+      "packetTruncated": false,
+      "servedModel": "grok-4.3",
+      "reasoningEffortReported": null,
+      "usage": {
+        "prompt_tokens": 3180,
+        "completion_tokens": 94,
+        "total_tokens": 3965,
+        "prompt_tokens_details": {
+          "text_tokens": 3180,
+          "audio_tokens": 0,
+          "image_tokens": 0,
+          "cached_tokens": 192
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 691,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        },
+        "num_sources_used": 0,
+        "cost_in_usd_ticks": 57359000
+      },
+      "realizedUsd": 0.00421,
+      "thinkingChars": 0,
+      "requestReasoningEffort": null
+    },
+    {
+      "id": "red_invalidated_objective",
+      "expect": "violation",
+      "why": "the committed record invalidated the formal inquiry; this plan convenes it anyway",
+      "latencyMs": 7576,
+      "score": {
+        "outcome": "unsupported_finding",
+        "critical": true,
+        "note": "verdict \"violation\" but no finding pairs an appropriate category (invalidated_objective) with a fact of a supporting kind (inv) — a real but irrelevant citation is not detection"
+      },
+      "verdict": "violation",
+      "citations": [
+        [
+          "neg_0"
+        ]
+      ],
+      "violations": [
+        {
+          "category": "other",
+          "claim": "The formal inquiry into the ceremony is convened and its terms are read out",
+          "citedFactIds": [
+            "neg_0"
+          ],
+          "why": "neg_0 affirmatively states that convening the formal inquiry is LATE-ISSUE-1 content and that early scenes must never include the convened inquiry itself."
+        }
+      ],
+      "validationErrors": [],
+      "error": null,
+      "packetTruncated": false,
+      "servedModel": "grok-4.3",
+      "reasoningEffortReported": null,
+      "usage": {
+        "prompt_tokens": 3166,
+        "completion_tokens": 104,
+        "total_tokens": 3748,
+        "prompt_tokens_details": {
+          "text_tokens": 3166,
+          "audio_tokens": 0,
+          "image_tokens": 0,
+          "cached_tokens": 192
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 478,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        },
+        "num_sources_used": 0,
+        "cost_in_usd_ticks": 52109000
+      },
+      "realizedUsd": 0.0042175,
+      "thinkingChars": 0,
+      "requestReasoningEffort": null
+    },
+    {
+      "id": "green_confusion_records",
+      "expect": "pass",
+      "why": "unexplained confusion and a contradictory ledger — ordinary, invents no metaphysics",
+      "latencyMs": 4590,
+      "score": {
+        "outcome": "correct_pass",
+        "critical": false
+      },
+      "verdict": "pass",
+      "citations": [],
+      "violations": [],
+      "validationErrors": [],
+      "error": null,
+      "packetTruncated": false,
+      "servedModel": "grok-4.3",
+      "reasoningEffortReported": null,
+      "usage": {
+        "prompt_tokens": 3172,
+        "completion_tokens": 22,
+        "total_tokens": 3645,
+        "prompt_tokens_details": {
+          "text_tokens": 3172,
+          "audio_tokens": 0,
+          "image_tokens": 0,
+          "cached_tokens": 192
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 451,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        },
+        "num_sources_used": 0,
+        "cost_in_usd_ticks": 49459000
+      },
+      "realizedUsd": 0.004020000000000001,
+      "thinkingChars": 0,
+      "requestReasoningEffort": null
+    },
+    {
+      "id": "green_alignment_sense",
+      "expect": "pass",
+      "why": "alignment-sense is EXPLICITLY established canon for First Favored",
+      "latencyMs": 4949,
+      "score": {
+        "outcome": "correct_pass",
+        "critical": false
+      },
+      "verdict": "pass",
+      "citations": [],
+      "violations": [],
+      "validationErrors": [],
+      "error": null,
+      "packetTruncated": false,
+      "servedModel": "grok-4.3",
+      "reasoningEffortReported": null,
+      "usage": {
+        "prompt_tokens": 3217,
+        "completion_tokens": 22,
+        "total_tokens": 3537,
+        "prompt_tokens_details": {
+          "text_tokens": 3217,
+          "audio_tokens": 0,
+          "image_tokens": 0,
+          "cached_tokens": 192
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 298,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        },
+        "num_sources_used": 0,
+        "cost_in_usd_ticks": 46196500
+      },
+      "realizedUsd": 0.004076250000000001,
+      "thinkingChars": 0,
+      "requestReasoningEffort": null
+    },
+    {
+      "id": "green_tempt_history_rewrite",
+      "expect": "pass",
+      "why": "a committed history_rewrite rupture legitimately changed the past; building on it is not an invention",
+      "latencyMs": 5298,
+      "score": {
+        "outcome": "correct_pass",
+        "critical": false
+      },
+      "verdict": "pass",
+      "citations": [],
+      "violations": [],
+      "validationErrors": [],
+      "error": null,
+      "packetTruncated": false,
+      "servedModel": "grok-4.3",
+      "reasoningEffortReported": null,
+      "usage": {
+        "prompt_tokens": 3243,
+        "completion_tokens": 22,
+        "total_tokens": 3653,
+        "prompt_tokens_details": {
+          "text_tokens": 3243,
+          "audio_tokens": 0,
+          "image_tokens": 0,
+          "cached_tokens": 192
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 388,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        },
+        "num_sources_used": 0,
+        "cost_in_usd_ticks": 48771500
+      },
+      "realizedUsd": 0.00410875,
+      "thinkingChars": 0,
+      "requestReasoningEffort": null
+    },
+    {
+      "id": "green_mundane_invention",
+      "expect": "pass",
+      "why": "invented dialogue, movement and consequence within established capability — the planner's job",
+      "latencyMs": 4523,
+      "score": {
+        "outcome": "correct_pass",
+        "critical": false
+      },
+      "verdict": "pass",
+      "citations": [],
+      "violations": [],
+      "validationErrors": [],
+      "error": null,
+      "packetTruncated": false,
+      "servedModel": "grok-4.3",
+      "reasoningEffortReported": null,
+      "usage": {
+        "prompt_tokens": 3171,
+        "completion_tokens": 22,
+        "total_tokens": 3621,
+        "prompt_tokens_details": {
+          "text_tokens": 3171,
+          "audio_tokens": 0,
+          "image_tokens": 0,
+          "cached_tokens": 192
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 428,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        },
+        "num_sources_used": 0,
+        "cost_in_usd_ticks": 48871500
+      },
+      "realizedUsd": 0.004018750000000001,
+      "thinkingChars": 0,
+      "requestReasoningEffort": null
+    }
+  ],
+  "summary": {
+    "providerRateLimited": false,
+    "rateLimited": 0,
+    "rateLimitedIds": [],
+    "infrastructureInconclusive": false,
+    "skipped": 0,
+    "skippedIds": [],
+    "unsupportedFindings": 2,
+    "unsupportedIds": [
+      "red_contradicted_knowledge",
+      "red_invalidated_objective"
+    ],
+    "infraFailures": 0,
+    "reds": 4,
+    "greens": 4,
+    "caught": 2,
+    "correctPass": 4,
+    "missed": 0,
+    "falsePositives": 0,
+    "undecided": 0,
+    "unavailable": 0,
+    "invalid": 0,
+    "missedIds": [],
+    "falsePositiveIds": [],
+    "undecidedIds": [],
+    "unavailableIds": [],
+    "invalidIds": [],
+    "usableResponses": 8,
+    "totalFixtures": 8,
+    "dispatchedFixtures": 8,
+    "blockers": [
+      "2 UNSUPPORTED finding (violation verdict, but cited an irrelevant real fact — not a catch): red_contradicted_knowledge, red_invalidated_objective"
+    ],
+    "enableGenerally": false
+  }
+}
