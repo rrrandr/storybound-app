@@ -6179,12 +6179,21 @@ ${_pcInteriorLock}`;
       });
     }
     if (provider === 'grok') {
+      // xAI spells it reasoningEffort (camelCase), NOT reasoning_effort — api/proxy.js reads
+      // req.body.reasoningEffort and feeds it to _resolveGrokModel as the explicit override.
+      // Omitting it leaves the effort to that function's name-based default, which is a default,
+      // not a pin. Additive: every existing caller omits `extra` and sends no field.
+      var _gBody = { role: 'STRUCTURE_GENERATOR', preferredModel: model, temperature: temperature, max_tokens: maxTokens, messages: messages };
+      if (_re) _gBody.reasoningEffort = _re;
       var r2 = await fetch('/api/proxy', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ role: 'STRUCTURE_GENERATOR', preferredModel: model, temperature: temperature, max_tokens: maxTokens, messages: messages }) });
+        body: JSON.stringify(_gBody) });
       if (!r2.ok) { var eb2 = await r2.text().catch(function () { return ''; }); throw _tierErr('grok HTTP ' + r2.status + (eb2 ? ' ' + eb2.slice(0, 200) : ''), { provider: 'grok', model: model, httpStatus: r2.status, hadContent: false }); }
       var d2 = await r2.json();
-      var content2 = (d2 && d2.choices && d2.choices[0] && d2.choices[0].message && d2.choices[0].message.content) || (d2 && d2.content) || '';
-      return { content: content2, usage: (d2 && d2.usage) || null, _orchestration: { model: model } };
+      var _raw2 = (d2 && d2.choices && d2.choices[0] && d2.choices[0].message && d2.choices[0].message.content) || (d2 && d2.content) || '';
+      var _flat2 = _flattenProviderContent(_raw2);
+      return { content: _flat2.text, thinking: _flat2.thinking, usage: (d2 && d2.usage) || null,
+        reasoningEffort: (d2 && d2._orchestration && (d2._orchestration.reasoning_effort || d2._orchestration.reasoningEffort)) || null,
+        _orchestration: (d2 && d2._orchestration) || { model: model } };
     }
     if (provider === 'openai') {
       var r3 = await fetch('/api/chatgpt-proxy', { method: 'POST', headers: { 'Content-Type': 'application/json' },

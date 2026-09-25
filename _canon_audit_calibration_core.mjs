@@ -61,7 +61,38 @@ export const CANDIDATES = {
   'gpt-4o-mini':        { provider: 'openai',  endpoint: '/api/chatgpt-proxy',  rate: { in: 1.5e-7, out: 6e-7 } },
   'mistral-small-2603': { provider: 'mistral', endpoint: '/api/mistral-proxy',  rate: { in: 1.5e-7, out: 6e-7 },
                           reasoningEffort: 'high', maxTokens: 2000, tokens: { in: 3000, out: 2000 },
-                          ceilingUsd: 0.02 }
+                          ceilingUsd: 0.02 },
+  // ── grok-4.3 — THE FINAL CANDIDATE, AND THE PRICE IS NOT WHAT I SAID ─────────────────────────
+  // I told Roman ~$0.005/fixture for "grok-4-1-fast-reasoning", giving ~$0.04 for eight. That was
+  // WRONG, and this file's own pricing table says why: api/proxy.js:_resolveGrokModel maps EVERY
+  // grok-* name to grok-4.3, so every alias BILLS AT 4.3 RATES. The old cheap-4.1 SKU does not
+  // exist — xAI retired the Grok-4-Fast tier on 2026-05-15 — and app.js TEXT_PRICING carries an
+  // explicit warning that pricing those aliases at the old rate understated real spend by 6.25x
+  // input / 5x output. Real list price: $1.25/M in, $2.50/M out.
+  //
+  // ARITHMETIC AT THE BOUND (the discipline this session has kept throughout — reserve at the full
+  // max_tokens, never at an expected value, because reasoning tokens bill as output and are not
+  // separately reported):
+  //     in  3400 x $1.25/M = $0.004250      out 2000 x $2.50/M = $0.005000
+  //     per call $0.009250   x 8 fixtures  = $0.074000
+  // Input bound 3400 comes from the MEASURED v2 run: 25,271 prompt tokens / 8 = 3,159 per fixture,
+  // plus headroom. So eight fixtures do NOT fit a $0.05 ceiling, and squeezing max_tokens down to
+  // ~800 to make them fit would risk truncating a reasoning model mid-answer — which scores as an
+  // invalid response and fails the strict standard on a TECHNICALITY, spending the money and
+  // answering nothing. The ceiling is therefore set from the arithmetic.
+  //
+  // REALIZED will likely land well under: xAI caches prompts automatically at $0.20/M (16% of
+  // input), and all eight fixtures share one large identical system prompt, so fixtures 2-8 should
+  // read mostly cached. That is a reason to expect a smaller bill, never a reason to reserve less.
+  //
+  // Reasoning is pinned EXPLICITLY. `grok-4.3` already defaults to effort 'high' in
+  // _resolveGrokModel, but the Mistral lesson stands: a default is not a pin, and an experiment
+  // that relies on one is measuring something it did not specify. The client field is
+  // `reasoningEffort` (camelCase) — NOT `reasoning_effort`, which is Mistral's spelling.
+  'grok-4.3':           { provider: 'grok',    endpoint: '/api/proxy',          rate: { in: 1.25e-6, out: 2.5e-6 },
+                          reasoningEffort: 'high', reasoningField: 'reasoningEffort',
+                          maxTokens: 2000, tokens: { in: 3400, out: 2000 },
+                          ceilingUsd: 0.08 }
 };
 export const DEFAULT_MODEL = 'gpt-4o-mini';
 export function candidate(model) {
@@ -73,6 +104,9 @@ export function candidate(model) {
     perCallUsd: c.rate.in * tk.in + c.rate.out * tk.out,
     maxTokens: c.maxTokens || 700,
     reasoningEffort: c.reasoningEffort || null,
+    // Providers spell the field differently: Mistral takes reasoning_effort, xAI takes
+    // reasoningEffort. The enforcement below must check the one this provider actually uses.
+    reasoningField: c.reasoningField || 'reasoning_effort',
     ceilingUsd: (typeof c.ceilingUsd === 'number') ? c.ceilingUsd : CEILING_USD
   }, c);
 }
@@ -378,10 +412,11 @@ export async function installCalibrationRoute(page, holder) {
     // A missing or altered value is therefore aborted BEFORE dispatch, not merely noted.
     const wantEffort = holder.candidate && holder.candidate.reasoningEffort;
     if (wantEffort) {
-      const sent = body && body.reasoning_effort;
+      const field = (holder.candidate && holder.candidate.reasoningField) || 'reasoning_effort';
+      const sent = body && body[field];
       if (String(sent || '') !== String(wantEffort)) {
-        log.push({ kind: 'blocked-reasoning', pathname, model, sent: sent == null ? null : String(sent),
-          reason: 'calibration requires reasoning_effort="' + wantEffort + '" explicitly on the wire; '
+        log.push({ kind: 'blocked-reasoning', pathname, model, field, sent: sent == null ? null : String(sent),
+          reason: 'calibration requires ' + field + '="' + wantEffort + '" explicitly on the wire; '
             + (sent == null
               ? 'the request carried none, and the proxy would serve this as ordinary (non-reasoning) ' + wantModel
               : 'the request carried "' + sent + '"') });

@@ -227,11 +227,61 @@ const REASONING_REPLY = {
     plain.content === '{"verdict":"pass","violations":[]}' && plain.thinking === null, JSON.stringify(plain));
   holder.candidate = CAND;
 
+  section('6b. GROK 4.3 — THE SAME PIN, A DIFFERENT FIELD NAME AND A DIFFERENT ENDPOINT');
+  // xAI spells it reasoningEffort (camelCase) and routes via /api/proxy with preferredModel.
+  // Getting either wrong would send an unpinned request that api/proxy.js silently resolves with
+  // its OWN name-based default — a default, not a pin, which is the exact Mistral trap again.
+  const GROK = candidate('grok-4.3');
+  gate.stub('/api/proxy', async (req) => {
+    let b = null; try { b = JSON.parse(req.postData() || '{}'); } catch (_) {}
+    seen.push({ pathname: new URL(req.url()).pathname, body: b });
+    return { choices: [{ message: { content: '{"verdict":"pass","violations":[]}' } }],
+      usage: { prompt_tokens: 3211, completion_tokens: 512 },
+      _orchestration: { model: 'grok-4.3', reasoning_effort: 'high' } };
+  });
+  holder.candidate = GROK;
+  holder.currentFixture = 'control_grok_pinned';
+  const gk = await dispatch({ tier: 'primary', provider: 'grok', model: GROK.model, reasoning_effort: GROK.reasoningEffort }, GROK.maxTokens);
+  const gwire = seen[seen.length - 1];
+  ok('the grok request goes to /api/proxy, not the mistral or openai endpoint',
+    gwire && gwire.pathname === '/api/proxy', gwire && gwire.pathname);
+  ok('it names grok-4.3 via preferredModel, which is how api/proxy.js reads it',
+    gwire && gwire.body.preferredModel === 'grok-4.3', gwire && JSON.stringify(gwire.body.preferredModel));
+  ok('THE WIRE CARRIES reasoningEffort:"high" in xAI\'s camelCase spelling',
+    gwire && gwire.body.reasoningEffort === 'high', gwire && JSON.stringify(gwire.body.reasoningEffort));
+  ok('RED PROOF — it does NOT use Mistral\'s snake_case spelling, which api/proxy.js would ignore',
+    gwire && !('reasoning_effort' in gwire.body), gwire && JSON.stringify(Object.keys(gwire.body)));
+  ok('the candidate declares the field name it enforces, rather than assuming one spelling',
+    GROK.reasoningField === 'reasoningEffort' && candidate('mistral-small-2603').reasoningField === 'reasoning_effort');
+  ok('the dispatch succeeded and returned the model\'s answer', gk.ok && /"verdict"/.test(gk.content || ''), gk.error || gk.content);
+  ok('usage survives for realized cost', !!(gk.usage && gk.usage.completion_tokens), JSON.stringify(gk.usage));
+  // A stripped reasoning field must abort for grok exactly as it does for mistral.
+  const gSeenBefore = seen.length, gLogBefore = holder.log.length;
+  holder.currentFixture = 'control_grok_no_reasoning';
+  const gkNone = await dispatch({ tier: 'primary', provider: 'grok', model: GROK.model }, GROK.maxTokens);
+  ok('RED PROOF — a grok dispatch missing reasoningEffort is ABORTED before the wire',
+    gkNone.ok === false && seen.length === gSeenBefore
+    && holder.log.slice(gLogBefore).some((e) => e.kind === 'blocked-reasoning' && e.field === 'reasoningEffort'),
+    JSON.stringify(holder.log.slice(gLogBefore)).slice(0, 220));
+  // Pricing is the correction that matters most here.
+  ok('grok-4.3 is priced at the REAL 4.3 rate, not the retired cheap-4.1 SKU',
+    GROK.rate.in === 1.25e-6 && GROK.rate.out === 2.5e-6, JSON.stringify(GROK.rate));
+  const gWorst = GROK.perCallUsd * 8;
+  console.log('    grok worst case: $' + gWorst.toFixed(6) + ' for eight, ceiling $' + GROK.ceilingUsd.toFixed(6));
+  ok('eight fixtures genuinely do NOT fit a $0.05 ceiling — the number was checked, not assumed',
+    gWorst > 0.05, '$' + gWorst.toFixed(6));
+  ok('the ceiling is set above the worst case so the run cannot be refused mid-way',
+    gWorst <= GROK.ceilingUsd, '$' + gWorst.toFixed(6) + ' vs $' + GROK.ceilingUsd);
+  holder.candidate = CAND;
+
   section('7. THE RUN IS STILL LOCKED');
   ok('mistral-small-2603 is a registered, priced candidate', !!CANDIDATES['mistral-small-2603']);
+  const runSrc = fs.readFileSync(path.join(__dirname, '_canon_audit_calibration_run.mjs'), 'utf8');
+  const phraseBlock = runSrc.match(/const AUTH_PHRASE[\s\S]{0,420}/)[0];
   ok('its authorization phrase names its OWN $0.02 ceiling, so a $0.01 authorization cannot release it',
-    /under \$0\.02/.test(fs.readFileSync(path.join(__dirname, '_canon_audit_calibration_run.mjs'), 'utf8')
-      .match(/const AUTH_PHRASE[\s\S]{0,260}/)[0]));
+    /under \$0\.02/.test(phraseBlock));
+  ok('grok-4.3 has its own phrase naming its own $0.08 ceiling — no cheaper authorization releases it',
+    /under \$0\.08/.test(phraseBlock) && /grok-4\.3/.test(phraseBlock), phraseBlock.slice(0, 200));
 
   section('8. ZERO PROVIDER DISPATCHES');
   const real = gate.trackedCalls().filter((c) => c.real);

@@ -46,7 +46,11 @@ const PACE_MS = paceIdx !== -1 ? Math.max(0, Number(process.argv[paceIdx + 1]) |
 const pIdx = process.argv.indexOf('--prompt-version');
 const PROMPT_V = pIdx !== -1 ? Number(process.argv[pIdx + 1]) : 2;
 if (PROMPT_V !== 1 && PROMPT_V !== 2) { console.error('REFUSING — --prompt-version must be 1 or 2'); process.exit(6); }
-const AUTH_PHRASE = RUN_CEILING === 0.02
+// The phrase NAMES THE CEILING IT AUTHORIZES, so an authorization for a cheap run can never
+// release an expensive one. A new candidate with a new ceiling gets a new phrase, by construction.
+const AUTH_PHRASE = RUN_CEILING === 0.08
+  ? 'run the grok-4.3 canon auditor calibration once under $0.08'
+  : RUN_CEILING === 0.02
   ? 'run the reasoning-mistral canon auditor calibration once under $0.02'
   : 'run the canon auditor calibration once under $0.01';
 const argv = process.argv.slice(2);
