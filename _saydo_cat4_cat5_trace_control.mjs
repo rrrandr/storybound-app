@@ -843,6 +843,108 @@ const CAT5 = ['I don\'t know', 'whatever', '...', 'sure'];
     retained.pressure.decided === false, JSON.stringify(retained.pressure));
   ok('...and ordinary business is untouched', retained.ordinary.decided === false, JSON.stringify(retained.ordinary));
 
+  section('14. THE PROSE LAYER — AUTHOR-SIDE PREVENTION, AND MY OWN CHECK\'S /g BUG');
+  // Run 4 produced a CLEAN PLAN (reservedInPlan = null, deterministicBlocked = null) and the author
+  // still wrote the reserved composition into the scene — as DIALOGUE, downstream of every
+  // plan-level gate in sections 11–13. Two things are proven here: the check that missed it now
+  // catches it, and the author is now told not to write it in the first place.
+  const RUN4_LINE = 'THE PRESIDING DOHKAR: "The matter will be placed before a Chayr and two Dohkars."';
+  const run4Prose = path.join(__dirname, '_saydo_weak_turn_out', '2026-09-25_22-34-05', 'prose.txt');
+  const haveRun4 = fs.existsSync(run4Prose);
+  ok('the retained run-4 prose is on disk and still contains the offending line',
+    haveRun4 && fs.readFileSync(run4Prose, 'utf8').includes(RUN4_LINE),
+    haveRun4 ? 'line not found in prose.txt' : 'prose.txt missing at ' + run4Prose);
+
+  // The CORRECTED logic, and the ORIGINAL buggy logic, run side by side on that real line.
+  const BAD_RX  = /\b(?:the\s+Open|Chayr|two\s+Dohkars)\b/i;                     // no /g  ← the bug
+  const BAD_CV  = /\b(?:conven\w*|schedul\w*|in\s+(?:three\s+days|the\s+following\s+tenday))\b/i;
+  const GOOD_RX = /\b(?:the\s+Open|Chayr|(?:two|three)\s+Dohkars?|a\s+Dohkar\s+and)\b/g;
+  const GOOD_CV = /\b(?:conven\w*|schedul\w*|placed?\s+before|brought\s+before|will\s+(?:sit|hear)|set\s+for|in\s+(?:three\s+days|the\s+following\s+tenday|a\s+tenday))\b/i;
+  const badCount  = (RUN4_LINE.match(BAD_RX) || []).length;
+  const goodHits  = RUN4_LINE.match(GOOD_RX) || [];
+  const goodCount = new Set(goodHits.map((h) => h.toLowerCase().replace(/\s+/g, ' '))).size;
+  note('old logic: markers=' + badCount + ' convenes=' + BAD_CV.test(RUN4_LINE)
+     + '  |  corrected: markers=' + goodCount + ' convenes=' + GOOD_CV.test(RUN4_LINE));
+  // RED — the control must bite: reproduce the false pass before claiming the fix.
+  ok('RED — the ORIGINAL check reported ONE marker and no convening verb on that line',
+    badCount === 1 && BAD_CV.test(RUN4_LINE) === false, JSON.stringify({ badCount }));
+  ok('RED — so the ORIGINAL assertion (!(markers>=2 && convenes)) PASSED on reserved prose',
+    !(badCount >= 2 && BAD_CV.test(RUN4_LINE)) === true);
+  ok('CORRECTED — /g plus distinct counting finds BOTH markers',
+    goodCount >= 2, JSON.stringify(goodHits));
+  ok('CORRECTED — "placed before" now counts as constituting the proceeding',
+    GOOD_CV.test(RUN4_LINE) === true);
+  // Identity-pinned to the real runner, so the two copies cannot drift apart.
+  const runnerSrc = fs.readFileSync(path.join(__dirname, '_saydo_weak_turn_live_run.mjs'), 'utf8');
+  ok('the live runner\'s own regex carries the global flag, and is case-SENSITIVE',
+    /const RESERVED_PROSE_RX = \/[^\n]*\/g;/.test(runnerSrc));
+  // NEGATIVE that bites: with the assertion now "not named at all", a case-insensitive regex would
+  // fail a perfectly clean scene on ordinary English.
+  ok('...so ordinary English "the open air" is NOT a reserved marker',
+    new Set((('She stepped into the open air, in the open, and waited.').match(GOOD_RX) || []))
+      .size === 0, JSON.stringify(('She stepped into the open air, in the open, and waited.').match(GOOD_RX)));
+  ok('...while the capitalised venue still is',
+    (('They will meet at the Open.').match(GOOD_RX) || []).length === 1);
+  ok('...counts DISTINCT markers through a Set, not match-array length',
+    /new Set\(proseHits\.map/.test(runnerSrc));
+  ok('...includes "placed before" in the convening vocabulary',
+    /placed\?\\s\+before/.test(runnerSrc));
+  ok('...and now asserts the reserved body is not named AT ALL, not merely under-counted',
+    /does not name the reserved body at all[\s\S]{0,80}?proseMarkers === 0/.test(runnerSrc));
+
+  // PREVENTION. The directive must reach the real author payload for a seed that reserves content.
+  const resAuthor = await page.evaluate(() => {
+    const s = window.state;
+    s._starterId = 'starter_first_sacrifice';
+    s.picks = { identity: { playerName: 'Lirael', partnerName: 'Julian' } };
+    const groups = window._seedReservedMarkers ? window._seedReservedMarkers(s) : null;
+    const d = window._buildReservedContentAuthoringDirective();
+    let sys = ''; try { sys = window._buildCGScreenplaySystemPrompt() || ''; } catch (e) { sys = 'ERR ' + e.message; }
+    // A seed with NO reserved world truths must produce NOTHING, so other stories are unchanged.
+    s._starterId = 'starter_no_such_seed_for_control';
+    const none = window._buildReservedContentAuthoringDirective();
+    let sysNone = ''; try { sysNone = window._buildCGScreenplaySystemPrompt() || ''; } catch (e) { sysNone = 'ERR ' + e.message; }
+    s._starterId = 'starter_first_sacrifice';
+    return { directive: d, sys, none, sysNone,
+             markers: groups ? (groups[0] || {}).markers : null,
+             harvesterFnExists: typeof window._buildReservedContentAuthoringDirective === 'function' };
+  });
+  fs.writeFileSync(path.join(OUT_DIR, 'reserved_author_directive.txt'), resAuthor.directive || '(empty)');
+  ok('the author-side directive is exposed and emits for a seed that reserves content',
+    resAuthor.harvesterFnExists && resAuthor.directive.length > 0, String(resAuthor.directive.length));
+  ok('THE VALUE REACHES THE AUTHOR PAYLOAD — present in the real CG system prompt',
+    resAuthor.sys.indexOf('RESERVED CANON — NOT YET (HARD RULE)') !== -1,
+    resAuthor.sys.slice(0, 200));
+  ok('...and the whole directive is embedded verbatim, not a paraphrase of it',
+    resAuthor.sys.indexOf(resAuthor.directive.trim()) !== -1);
+  ok('it forbids naming the body and its composition', /DO NOT name the body that would hear it, or its composition/.test(resAuthor.directive));
+  ok('it forbids the venue, a date, and terms',
+    /DO NOT name where it will be held/.test(resAuthor.directive)
+    && /DO NOT give a date, a day count, or any timeframe/.test(resAuthor.directive)
+    && /DO NOT state its terms/.test(resAuthor.directive));
+  ok('IT COVERS DIALOGUE — the exact channel run 4 used to smuggle it in',
+    /dialogue counts/.test(resAuthor.directive)
+    && /placed before/.test(resAuthor.directive));
+  ok('it names the permitted pressure, so the scene is redirected and not merely blocked',
+    /DEMANDS, CALLS FOR, RECOMMENDS, or THREATENS/.test(resAuthor.directive)
+    && /without saying\n?\s*by whom, where, or when/.test(resAuthor.directive));
+  // THE TRAP. The marker harvester legitimately returns ordinary role words; a directive built as a
+  // word-ban would tell the author never to write "Sacrificiant" in a story about Sacrificiants.
+  note('harvested markers: ' + JSON.stringify(resAuthor.markers));
+  ok('the harvester really does return an ordinary role word among its markers',
+    (resAuthor.markers || []).indexOf('sacrificiant') !== -1, JSON.stringify(resAuthor.markers));
+  ok('...and the directive does NOT ban it — it forbids CATEGORIES, never a word list',
+    !/Sacrificiant/i.test(resAuthor.directive), resAuthor.directive);
+  ok('...nor does it re-print the reserved composition or venue back to the author',
+    !/Chayr/i.test(resAuthor.directive) && !/Dohkars/i.test(resAuthor.directive)
+    && !/The Open/.test(resAuthor.directive), resAuthor.directive);
+  ok('it cites the reserved canon by HEADING so the author knows which proceeding is meant',
+    /LIRAEL.{0,3}S FORMAL INQUIRY/.test(resAuthor.directive), resAuthor.directive.slice(0, 300));
+  ok('NEGATIVE — a seed with no reserved world truths gets NOTHING',
+    resAuthor.none === '', JSON.stringify(resAuthor.none).slice(0, 200));
+  ok('...so its author payload carries no reserved-canon block at all',
+    resAuthor.sysNone.indexOf('RESERVED CANON') === -1);
+
   section('9. CONTAINMENT');
   ok('still only ONE wall-break detector — nothing was duplicated',
     (src2.match(/function _detectWallBreakSignal/g) || []).length === 1);

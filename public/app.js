@@ -193040,6 +193040,60 @@ No text, no watermark, no UI elements, share-ready.`;
     return null;
   }
   window._detectReservedContentBreach = _detectReservedContentBreach;
+  window._seedReservedMarkers = _seedReservedMarkers;
+
+  // ── RESERVED CONTENT, AUTHOR-SIDE (Roman 2026-09-25) ────────────────────────────────────────
+  // The gate chain stops at the PLAN. The attractor-verification run produced a clean plan — no
+  // conveners, no date, no venue — and the AUTHOR still wrote "The matter will be placed before a
+  // Chayr and two Dohkars" into the prose, downstream of every gate. Detection cannot reach that;
+  // prevention can.
+  //
+  // IT STATES CATEGORIES, NOT A WORD LIST, deliberately. The marker harvester legitimately returns
+  // ordinary role words — "sacrificiant" among them — because two markers plus a convening verb is
+  // a safe threshold for REJECTION. It is not a safe basis for PROHIBITION: telling the author
+  // never to write "Sacrificiant" in a story about Sacrificiants would wreck every scene. So the
+  // rule forbids the ACTS of constituting (naming the body, its composition, its venue, its
+  // timing, its terms) and quotes the reserved canon so the author knows which proceeding is meant.
+  function _buildReservedContentAuthoringDirective() {
+    try {
+      var s = window.state || {};
+      var groups = _seedReservedMarkers(s);
+      if (!groups.length) return '';                  // no reserved content in this seed → nothing
+      // CITE BY HEADING, DO NOT RE-PRINT THE TRUTH. The author already receives every world truth
+      // verbatim (the CG author opts carry `worldTruths`, and the literary builder prints them under
+      // "WORLD (established …)"), so this directive does not need to reproduce one — and must not,
+      // because the truth text itself spells out the composition and venue it is telling the author
+      // not to write. Heading = the text before its first colon, which is the truth's own label.
+      var cited = groups.map(function (g) {
+        var t = String(g.text || '');
+        var head = (t.split(':')[0] || '').trim();
+        return '  • ' + ((head && head.length <= 90) ? head : t.slice(0, 90).trim() + '…');
+      }).join('\n');
+      return (
+        'RESERVED CANON — NOT YET (HARD RULE):\n' +
+        'This story\'s canon holds content back for later. The scene may build PRESSURE toward it; it\n' +
+        'may not stage it, and it may not describe it as already arranged.\n' +
+        cited + '\n' +
+        'SO, FOR ANY PROCEEDING OR EVENT THE CANON ABOVE RESERVES:\n' +
+        '- DO NOT name the body that would hear it, or its composition — not how many, not which\n' +
+        '  offices, not who presides or convenes.\n' +
+        '- DO NOT name where it will be held.\n' +
+        '- DO NOT give a date, a day count, or any timeframe.\n' +
+        '- DO NOT state its terms, or that terms have been set.\n' +
+        '- DO NOT let any character announce it as scheduled, constituted, or already arranged —\n' +
+        '  dialogue counts. A line like "the matter will be placed before <the reserved body>" stages\n' +
+        '  it just as surely as a narrator saying so.\n' +
+        'WHAT IS FULLY ALLOWED, and is where the pressure should go instead:\n' +
+        '- someone DEMANDS, CALLS FOR, RECOMMENDS, or THREATENS it;\n' +
+        '- an authority says it WILL happen, or that she will answer for her conduct, without saying\n' +
+        '  by whom, where, or when;\n' +
+        '- political pressure, accusation, investigation, concealment, rumour, or flight;\n' +
+        '- everyone\'s dread of it, which is stronger before it has a shape than after.\n' +
+        'The threat is the material. The machinery is not yours to build yet.\n\n'
+      );
+    } catch (_) { return ''; }
+  }
+  window._buildReservedContentAuthoringDirective = _buildReservedContentAuthoringDirective;
 
   function _canonDeterministicCheck(proposal, packet) {
     var violations = [];
@@ -227863,6 +227917,10 @@ No text, no watermark, no UI elements, share-ready.`;
       _cgCacheSentinel +
       // SAFE MODE (category 3). Emits '' in normal adult mode, so that path is byte-identical.
       ((typeof _buildSafeModeAuthoringDirective === 'function') ? _buildSafeModeAuthoringDirective() : '') +
+      // RESERVED CANON (author-side). Emits '' for any seed without reserved content, so those
+      // stories are byte-identical. Closes the prose-layer gap the attractor run exposed.
+      ((typeof _buildReservedContentAuthoringDirective === 'function')
+        ? _buildReservedContentAuthoringDirective() : '') +
       // WEAK-TURN RESTRAINT (category 5). The planner already received this; the author receives
       // the SAME contract so the restraint survives the handoff. Emits '' on any ordinary turn.
       ((typeof _buildWeakTurnRestraintDirective === 'function')

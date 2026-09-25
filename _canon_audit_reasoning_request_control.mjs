@@ -347,8 +347,14 @@ const REASONING_REPLY = {
     holder.log.slice(sbLog).some((e) => /serves grok-4\.3 while this run reports grok-4\.7/.test(e.reason || '')));
   // The bypass is only useful if the server actually honours it.
   const proxySrc = fs.readFileSync(path.join(__dirname, 'api', 'proxy.js'), 'utf8');
+  // PIN MEMBERSHIP, NOT THE WHOLE ARRAY. This assertion used to pin the list as exactly
+  // ['grok-4.6', 'grok-4.7'] and went stale the moment 'grok-4.3' was legitimately added — the
+  // selective production auditor pins sbModelOverride:'grok-4.3', which the bypass must honour.
+  // What this assertion exists to prove is that 4.7 is honoured, so that is what it checks.
   ok('api/proxy.js allowlists grok-4.7 for the _sbModelOverride bypass',
-    /_SB_MODEL_OVERRIDES = \['grok-4\.6', 'grok-4\.7'\]/.test(proxySrc));
+    /_SB_MODEL_OVERRIDES = \[[^\]]*'grok-4\.7'[^\]]*\]/.test(proxySrc));
+  ok('...and the production auditor\'s own pin, grok-4.3, is honoured by the same bypass',
+    /_SB_MODEL_OVERRIDES = \[[^\]]*'grok-4\.3'[^\]]*\]/.test(proxySrc));
   ok('...and grok-4.7 is an allowed model, so validation cannot refuse it',
     /'grok-4\.7'\s+\/\/ EXPERIMENT ONLY/.test(proxySrc));
   const g47Worst = G47.perCallUsd * 8;

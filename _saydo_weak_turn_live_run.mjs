@@ -366,18 +366,25 @@ async function seed(page, storyId) {
     ledger.entries.length === gate.trackedCalls().filter((c) => c.real).length,
     JSON.stringify({ reserved: ledger.entries.length, real: gate.trackedCalls().filter((c) => c.real).length }));
   // THE ATTRACTOR CHECK. Markers in the delivered prose are the honest end-to-end signal.
-  const RESERVED_PROSE_RX = /\b(?:the\s+Open|Chayr|two\s+Dohkars)\b/i;
-  const CONVENE_RX = /\b(?:conven\w*|schedul\w*|in\s+(?:three\s+days|the\s+following\s+tenday))\b/i;
-  const proseMarkers = (prose.match(RESERVED_PROSE_RX) || []).length;
+  // /g IS LOAD-BEARING HERE. Without it String.match returns [fullMatch] and the count is capped
+  // at 1 — which is exactly what happened: two distinct markers ("Chayr", "two Dohkars") were
+  // reported as one, and with the verb list missing "placed before" the assertion PASSED and called
+  // the prose clean. The check agreed with the thing it was meant to catch.
+  // CASE-SENSITIVE ON PURPOSE. These are capitalised proper nouns, and the assertion below is now
+  // "not named at all" — under /i, ordinary English ("the open air", "in the open") would match
+  // `the\s+Open` and fail a clean run. Capital O is the difference between the venue and an adjective.
+  const RESERVED_PROSE_RX = /\b(?:the\s+Open|Chayr|(?:two|three)\s+Dohkars?|a\s+Dohkar\s+and)\b/g;
+  const CONVENE_RX = /\b(?:conven\w*|schedul\w*|placed?\s+before|brought\s+before|will\s+(?:sit|hear)|set\s+for|in\s+(?:three\s+days|the\s+following\s+tenday|a\s+tenday))\b/i;
+  const proseHits = prose.match(RESERVED_PROSE_RX) || [];
+  const proseMarkers = new Set(proseHits.map((h) => h.toLowerCase().replace(/\s+/g, ' '))).size;
   const proseConvene = CONVENE_RX.test(prose);
   note('attractor: reservedInPlan=' + JSON.stringify(liveOut.reservedInPlan && liveOut.reservedInPlan.markers)
     + '  deterministicBlocked=' + JSON.stringify(liveOut.deterministicBlocked)
     + '  proseMarkers=' + proseMarkers + '  proseConvenes=' + proseConvene);
   ok('THE ACCEPTED PLAN DOES NOT STAGE RESERVED CONTENT',
     !liveOut.reservedInPlan, JSON.stringify(liveOut.reservedInPlan));
-  ok('...and the DELIVERED PROSE does not constitute the reserved proceeding',
-    !(proseMarkers >= 2 && proseConvene),
-    JSON.stringify({ markers: proseMarkers, convenes: proseConvene }));
+  ok('...and the DELIVERED PROSE does not name the reserved body at all',
+    proseMarkers === 0, JSON.stringify({ distinctMarkers: proseMarkers, hits: proseHits, convenes: proseConvene }));
   ok('spend stayed inside the ceiling',
     ledger.realized <= CEILING_USD + 1e-9, '$' + ledger.realized.toFixed(6));
 
