@@ -1,0 +1,24 @@
+{
+  "tactical_move": "The presiding Dohkar moves Julian's accusation into a named preliminary review, visibly shifting Lirael's standing from questioned to procedurally at risk while she remains.",
+  "local_objective": "The presiding Dohkar names the preliminary review date and conveners, moving the matter off the ritual floor into procedure while Lirael stays and engages Julian.",
+  "state_change": "The presiding Dohkar names a preliminary review for the following tenday, convened by himself and two Dohkars.",
+  "state_change_precondition": "The presiding Dohkar has not yet named any preliminary review of Lirael's conduct.",
+  "forces_choice": "forces Lirael to choose between claiming the interference openly and letting the assembly keep its assumption",
+  "event_slots": {
+    "precondition": "The presiding Dohkar is present with the assembly",
+    "actor": "the presiding Dohkar",
+    "action": "names a preliminary review",
+    "target": "Lirael",
+    "exit_state": "a preliminary review of Lirael's conduct has been formally named with date and conveners",
+    "mechanism_grounding": "ordinary"
+  },
+  "mechanism_grounding": "ordinary",
+  "acceptedAt": 1790366344117,
+  "sceneNum": 1,
+  "owner": {
+    "id": "cpa:e4f3fe63-c6da-40c1-bf3a-6b4248e45944",
+    "storyId": "live-safemode-full-1790366285296",
+    "sceneIndex": 1,
+    "branch": "remain"
+  }
+}
