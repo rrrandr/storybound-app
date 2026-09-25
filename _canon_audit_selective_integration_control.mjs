@@ -262,8 +262,44 @@ const ORDINARY = {
   ok('...yet the paraphrased contradiction STILL triggers, via structured signals',
     paraTrig.trig.risky === true, JSON.stringify(paraTrig.trig));
   ok('...and says which structured signal fired, not just that something did',
-    /party a committed rupture affected|sensitive act while that rupture stands/.test(paraTrig.trig.reasons.join(' ')),
+    /-sensitive act involving/.test(paraTrig.trig.reasons.join(' ')),
     JSON.stringify(paraTrig.trig.reasons));
+
+  section('7a-2. UNRELATED ACTIONS UNDER EVERY RUPTURE CLASS MUST STAY SILENT');
+  // The signals used to fire independently, so merely naming an affected character audited the
+  // scene whatever the action was — and a mass rupture affects everyone. These are the negative
+  // fixtures: each NAMES an affected party, under its own rupture class, doing something
+  // unrelated. Every one must cost nothing.
+  const NEG = [
+    ['memory_perception', 'The assembly parts to let Lirael through and someone offers her a cup of water'],
+    ['history_rewrite', 'Seren straightens the bench she is sitting on and looks at the floor'],
+    ['identity_reputation', 'Lirael ties back her hair and steps out of the doorway into the cold'],
+    ['materialization_possession', 'The assembly settles onto the benches as the lamps are lit'],
+    ['relationship_social', 'Julian sits down beside Lirael without speaking and watches the door']
+  ];
+  for (const [cls, change] of NEG) {
+    const plan = JSON.parse(JSON.stringify(ORDINARY));
+    plan.state_change = change;
+    plan.event_slots.action = change.split(' ').slice(1, 4).join(' ');
+    plan.event_slots.target = 'the room';
+    const r = await page.evaluate((a) => {
+      const s = window.state; s._starterId = 'starter_first_sacrifice';
+      const d = JSON.parse(JSON.stringify(a.durable));
+      d.ruptureClass = a.cls;                       // same rupture, different class
+      s._temptFateDurableConsequences = [d];
+      return window._canonAuditRiskTrigger(a.plan, window._buildCanonPacket(s, { proposal: a.plan }), s);
+    }, { plan, durable, cls });
+    ok('NEGATIVE (' + cls + '): an unrelated action naming affected parties costs nothing',
+      r.risky === false, JSON.stringify(r));
+  }
+  // And the combination really is a combination: a class-relevant act with NO affected party and
+  // no durable rupture at all must also stay silent.
+  const noRupture = await page.evaluate((a) => {
+    const s = window.state; s._starterId = 'starter_first_sacrifice'; s._temptFateDurableConsequences = [];
+    return window._canonAuditRiskTrigger(a.plan, window._buildCanonPacket(s, { proposal: a.plan }), s);
+  }, { plan: PARAPHRASE });
+  ok('a class-relevant act with NO rupture in force stays silent — the act alone is not the signal',
+    noRupture.risky === false, JSON.stringify(noRupture));
 
   section('7b. THE ANSWER IS ONLY ACCEPTED FROM grok-4.3');
   // Asking for grok-4.3 is not evidence grok-4.3 answered — the grok-4.7 run proved that. The
@@ -305,8 +341,19 @@ const ORDINARY = {
   unreachable = true;
   const afterFail = await run(RISKY, { withDurable: true });
   unreachable = false;
-  ok('RED PROOF — a FAILED audit right after a successful one inherits NOTHING',
+  ok('RED PROOF — a TRANSPORT failure carries no receipt, because none was issued',
     afterFail.verdict.telemetry === null, JSON.stringify(afterFail.verdict.telemetry));
+  // But a call the provider ANSWERED and billed must keep its receipt even when we refuse the
+  // verdict — otherwise a rejected-but-paid audit vanishes from the ledger and undercounts spend.
+  wrongModelReply = true;
+  const paidReject = await run(RISKY, { withDurable: true });
+  wrongModelReply = false;
+  ok('a BILLABLE failure (wrong model) still reports its cost — the provider charged for it',
+    paidReject.verdict.telemetry && typeof paidReject.verdict.telemetry.realizedUsd === 'number'
+    && paidReject.verdict.telemetry.realizedUsd > 0, JSON.stringify(paidReject.verdict.telemetry));
+  ok('...and records the model that actually answered, for the review trail',
+    paidReject.verdict.telemetry.resolvedModel === 'grok-4-1-fast-non-reasoning',
+    JSON.stringify(paidReject.verdict.telemetry));
   ok('...and a skipped (ordinary) plan reports no telemetry either, not a stale receipt',
     (await run(ORDINARY, { withDurable: false })).verdict.telemetry === null);
 

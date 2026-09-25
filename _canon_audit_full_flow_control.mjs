@@ -51,6 +51,16 @@ const RED_ORDINARY = (base) => Object.assign({}, base, {
 const LEGIT_ORDINARY = (base) => Object.assign({}, base, {
   event_slots: Object.assign({}, base.event_slots, { mechanism_grounding: 'ordinary' })
 });
+// AUDITABLE (Roman 2026-09-25): selective routing means a genuinely ordinary plan no longer
+// reaches the model at all — correct behaviour, but it would leave every fail-closed scenario
+// below exercising NOTHING. These scenarios test what the gate does WITH an auditor verdict, so
+// they need a plan that actually triggers one: declared ordinary (so the deterministic check lets
+// it through) while the event text asserts a produced effect.
+const AUDITABLE = (base) => Object.assign({}, base, {
+  state_change: 'Julian draws the memory of the accusation out of Seren and it dissolves',
+  event_slots: Object.assign({}, base.event_slots, {
+    action: 'draws the memory out', target: 'Seren', mechanism_grounding: 'ordinary' })
+});
 // The retained proposal with NO grounding at all — the deterministic short-circuit case.
 const RED_NO_GROUNDING = (base) => Object.assign({}, base, {
   state_change: String(base.state_change || '') + ' — ' + RED_CLAIM,
@@ -193,9 +203,9 @@ const RED_NO_GROUNDING = (base) => Object.assign({}, base, {
 
   // ═══════════════════════════════════════════════════════════════════════════════════════════
   section('3. GREEN FULL-FLOW — legitimate ordinary plan, auditor passes, author dispatches ONCE (req 9)');
-  const green = await run('green_ordinary_pass', LEGIT_ORDINARY, { verdict: 'pass', violations: [] });
+  const green = await run('green_ordinary_pass', AUDITABLE, { verdict: 'pass', violations: [] });
   console.log('    dispatches: ' + JSON.stringify(green.dispatches));
-  ok('the auditor ran on the ordinary plan', green.dispatches.auditor >= 1, JSON.stringify(green.dispatches));
+  ok('the auditor ran on the auditable plan', green.dispatches.auditor >= 1, JSON.stringify(green.dispatches));
   ok('THE AUTHOR DISPATCHED EXACTLY ONCE (req 9)', green.dispatches.author === 1, JSON.stringify(green.dispatches));
   ok('...and the generation was not blocked', green.plan.canonBlocked !== true, JSON.stringify(green.plan));
 
@@ -210,14 +220,14 @@ const RED_NO_GROUNDING = (base) => Object.assign({}, base, {
 
   // ═══════════════════════════════════════════════════════════════════════════════════════════
   section('5. FAIL-CLOSED FULL-FLOW — every undecided path stops before the author (req 6)');
-  const undec = await run('cannot_decide', LEGIT_ORDINARY, { verdict: 'cannot_decide', uncertainty: 'canon does not say' });
+  const undec = await run('cannot_decide', AUDITABLE, { verdict: 'cannot_decide', uncertainty: 'canon does not say' });
   ok('cannot_decide → zero author dispatches', undec.dispatches.author === 0 && undec.plan.canonBlocked === true, JSON.stringify(undec.dispatches));
-  const invalid = await run('invalid_reply', LEGIT_ORDINARY, { verdict: 'violation', violations: [{ category: 'other', claim: 'not in the plan at all', citedFactIds: ['wt_999'], why: 'x' }] });
+  const invalid = await run('invalid_reply', AUDITABLE, { verdict: 'violation', violations: [{ category: 'other', claim: 'not in the plan at all', citedFactIds: ['wt_999'], why: 'x' }] });
   ok('an INVALID audit reply (fabricated id + fabricated claim) → zero author dispatches',
     invalid.dispatches.author === 0 && invalid.plan.canonBlocked === true && invalid.plan.source === 'audit-invalid', JSON.stringify(invalid.plan));
-  const rewrote = await run('auditor_rewrote', LEGIT_ORDINARY, { verdict: 'pass', violations: [], rewritten_plan: { state_change: 'something else entirely' } });
+  const rewrote = await run('auditor_rewrote', AUDITABLE, { verdict: 'pass', violations: [], rewritten_plan: { state_change: 'something else entirely' } });
   ok('an auditor that tries to REWRITE the plan → zero author dispatches', rewrote.dispatches.author === 0 && rewrote.plan.canonBlocked === true, JSON.stringify(rewrote.plan));
-  const garbage = await run('unparsable_reply', LEGIT_ORDINARY, 'not json at all');
+  const garbage = await run('unparsable_reply', AUDITABLE, 'not json at all');
   ok('an unparsable audit reply → zero author dispatches', garbage.dispatches.author === 0, JSON.stringify(garbage.dispatches));
 
   // ═══════════════════════════════════════════════════════════════════════════════════════════
@@ -255,7 +265,7 @@ const RED_NO_GROUNDING = (base) => Object.assign({}, base, {
   // Roman: "state._acceptedPlannerProposal has no ownership guard... the value is never cleared.
   // If a later path reaches the author without refreshing it, the auditor could inspect a stale
   // proposal."
-  const ownership = await run('ownership_baseline', LEGIT_ORDINARY, { verdict: 'pass', violations: [] });
+  const ownership = await run('ownership_baseline', AUDITABLE, { verdict: 'pass', violations: [] });
   const cleared = await page.evaluate(() => ({
     proposal: window.state._acceptedPlannerProposal, attempt: window.state._cgGenAttempt }));
   ok('the accepted proposal is CLEARED when the generation ends', cleared.proposal === null, JSON.stringify(cleared.proposal));
@@ -293,7 +303,7 @@ const RED_NO_GROUNDING = (base) => Object.assign({}, base, {
   // FULL-FLOW STALE PROOF. A proposal from a PRIOR SCENE of a PRIOR STORY is planted in state,
   // then a NEW generation is run. The decisive evidence is which proposal the auditor was actually
   // handed — its user prompt carries the proposal verbatim.
-  plannerReply = LEGIT_ORDINARY; auditorReply = { verdict: 'pass', violations: [] };
+  plannerReply = AUDITABLE;   // must actually trigger an audit, or "the auditor never saw it" is vacuous auditorReply = { verdict: 'pass', violations: [] };
   seen.planner = seen.auditor = seen.author = seen.other = 0;
   lastAuditorPrompt = '';
   await setup();

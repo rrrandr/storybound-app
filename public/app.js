@@ -192598,17 +192598,43 @@ No text, no watermark, no UI elements, share-ready.`;
     // proxy served grok-4.3 — that was the whole grok-4.7 lesson. resolvedModel is the model
     // _resolveGrokModel actually called; anything else is not the calibrated auditor and its
     // verdict must not be trusted.
+    // THE RECEIPT IS TAKEN BEFORE ANY REJECTION (Roman 2026-09-25). Identity rejection happened
+    // before telemetry was built, and a parse failure discarded telemetry already built — so a
+    // BILLABLE call that was refused reported null cost, undercounting real spend. The provider
+    // charged for it regardless of whether we accepted the answer.
+    var _telemetry = null;
+    try {
+      var _u0 = data && data.usage;
+      if (_u0) {
+        var _rt0 = (_u0.completion_tokens_details && _u0.completion_tokens_details.reasoning_tokens) || 0;
+        _telemetry = {
+          realizedUsd: (typeof _u0.cost_in_usd_ticks === 'number')
+            ? _u0.cost_in_usd_ticks * 1e-10
+            : (1.25e-6 * (_u0.prompt_tokens || 0) + 2.5e-6 * ((_u0.completion_tokens || 0) + _rt0)),
+          costSource: (typeof _u0.cost_in_usd_ticks === 'number') ? 'provider' : 'computed',
+          upstreamAttempts: (typeof data.upstreamAttempts === 'number') ? data.upstreamAttempts : null,
+          resolvedModel: (data && data.resolvedModel) || null,
+          promptTokens: _u0.prompt_tokens || 0,
+          reasoningTokens: _rt0
+        };
+      }
+    } catch (_) { _telemetry = null; }
+    // A rejection must carry the receipt out with it, or the spend vanishes from the ledger.
+    var _reject = function (msg) {
+      var e = new Error(msg); e.telemetry = _telemetry; throw e;
+    };
+
     // IDENTITY MUST BE PROVEN, NOT MERELY NOT-CONTRADICTED. Accepting a response whose
     // resolvedModel is ABSENT lets an unidentified upstream supply a binding verdict — which is
     // the opposite of failing closed. Missing is treated exactly like wrong.
     var _served = data && data.resolvedModel;
     if (String(_served || '') !== 'grok-4.3') {
-      throw new Error('canon audit identity unproven: resolvedModel was '
+      _reject('canon audit identity unproven: resolvedModel was '
         + (_served ? String(_served) : 'ABSENT') + ', not the calibrated grok-4.3 — refusing the verdict');
     }
     // The one-call guarantee is part of the contract, so it is enforced, not merely logged.
     if (data.upstreamAttempts !== 1) {
-      throw new Error('canon audit made ' + (data.upstreamAttempts == null ? 'an unreported number of' : data.upstreamAttempts)
+      _reject('canon audit made ' + (data.upstreamAttempts == null ? 'an unreported number of' : data.upstreamAttempts)
         + ' upstream attempts; the _noFallback contract requires exactly 1 — refusing the verdict');
     }
     try { if (typeof _recordProxyTextCost === 'function') _recordProxyTextCost(data, (data && data._orchestration && data._orchestration.model), 'canon-audit'); } catch (_) {}
@@ -192616,34 +192642,15 @@ No text, no watermark, no UI elements, share-ready.`;
     // a field NOTHING in the repository ever writes — so every "realized cost" it recorded was
     // null. xAI reports its own exact cost in ticks (1e-10 USD); fall back to list-price
     // arithmetic when it does not. Attached to the RESULT so the caller owns it.
-    // TELEMETRY TRAVELS WITH THE RESULT (Roman 2026-09-25). It used to be written to ambient
-    // globals AFTER a valid response and never cleared before dispatch — so a transport failure,
-    // a malformed reply, or an identity rejection following an earlier success would report the
-    // PREVIOUS audit's cost and attempt count as if it were this one's. An audit that never
-    // happened must not inherit the receipt of one that did.
-    var _telemetry = null;
-    try {
-      var _u = data && data.usage;
-      var _rt = (_u && _u.completion_tokens_details && _u.completion_tokens_details.reasoning_tokens) || 0;
-      _telemetry = {
-        realizedUsd: (_u && typeof _u.cost_in_usd_ticks === 'number')
-          ? _u.cost_in_usd_ticks * 1e-10
-          : (_u ? (1.25e-6 * (_u.prompt_tokens || 0) + 2.5e-6 * ((_u.completion_tokens || 0) + _rt)) : null),
-        costSource: (_u && typeof _u.cost_in_usd_ticks === 'number') ? 'provider' : (_u ? 'computed' : 'none'),
-        upstreamAttempts: (typeof data.upstreamAttempts === 'number') ? data.upstreamAttempts : null,
-        resolvedModel: _served || null,
-        promptTokens: (_u && _u.prompt_tokens) || 0,
-        reasoningTokens: _rt
-      };
-    } catch (_) { _telemetry = null; }
+    // TELEMETRY TRAVELS WITH THE RESULT — built above, before any rejection could discard it.
     var c = data && data.content;
-    if (!c) throw new Error('canon audit returned no content');
+    if (!c) _reject('canon audit returned no content');
     var parsed;
     try { parsed = JSON.parse(c); }
     catch (e) {
       var m = String(c).replace(/^\s*```(?:json)?/i, '').match(/\{[\s\S]*\}/);
-      if (!m) throw new Error('canon audit reply was not JSON');
-      parsed = JSON.parse(m[0]);
+      if (!m) _reject('canon audit reply was not JSON');
+      try { parsed = JSON.parse(m[0]); } catch (e2) { _reject('canon audit reply was not parseable JSON'); }
     }
     return { parsed: parsed, telemetry: _telemetry };
   }
@@ -192684,13 +192691,23 @@ No text, no watermark, no UI elements, share-ready.`;
   // Does the plan actually TOUCH this fact? Mere coexistence is not relevance. Shared content
   // words of 5+ characters are a deliberately loose test — its job is to separate "the plan is
   // about this" from "this happens to be on the board", not to adjudicate meaning.
+  // Common 5+ character words carry no aboutness — "without", "before", "through", and crowd
+  // nouns appear in every scene. A SINGLE shared token fired this on plans that merely happened
+  // near a rupture ("the assembly parts to let Lirael through"), so a real overlap is required.
+  var _CANON_LEX_STOP = /^(?:without|within|before|after|during|through|around|again|still|where|which|while|whose|would|could|should|there|their|those|these|other|another|about|because|between|against|already|almost|assembly|everyone|someone|anything|nothing|something)$/;
+  var _CANON_LEX_MIN_OVERLAP = 2;
   function _canonRiskTouches(planText, factText) {
     try {
-      var words = String(factText || '').toLowerCase().replace(/[^a-z0-9\s]/g, ' ').split(/\s+/)
-        .filter(function (w) { return w.length >= 5; });
-      if (!words.length) return false;
-      var hay = String(planText || '').toLowerCase();
-      for (var i = 0; i < words.length; i++) if (hay.indexOf(words[i]) !== -1) return true;
+      var seen = {}, words = [];
+      String(factText || '').toLowerCase().replace(/[^a-z0-9\s]/g, ' ').split(/\s+/)
+        .forEach(function (w) {
+          if (w.length >= 5 && !_CANON_LEX_STOP.test(w) && !seen[w]) { seen[w] = 1; words.push(w); }
+        });
+      if (words.length < _CANON_LEX_MIN_OVERLAP) return false;
+      var hay = String(planText || '').toLowerCase(), hits = 0;
+      for (var i = 0; i < words.length; i++) {
+        if (hay.indexOf(words[i]) !== -1 && ++hits >= _CANON_LEX_MIN_OVERLAP) return true;
+      }
       return false;
     } catch (_) { return true; }   // unknowable → audit, never skip
   }
@@ -192706,13 +192723,43 @@ No text, no watermark, no UI elements, share-ready.`;
   // KIND of change it was, and what it invalidated. Any one signal is enough — this is a routing
   // decision, and the cost of a false positive is one audit while the cost of a false negative is
   // a canon break reaching the reader.
+  // CLASS-RELEVANT ACTS, NARROWED (Roman 2026-09-25). The first set matched asks / tells /
+  // before / earlier / holds / takes / shows — ordinary words in every scene ever written. Paired
+  // with a mass rupture (which affects everyone present, so the party test is satisfied by
+  // construction) that made most later scenes paid again, which is the broadness this routing
+  // exists to avoid.
+  //
+  // What remains matches an act that PRESUMES the ruptured thing — not an act that merely happens
+  // near it. Someone asking a question is ordinary; someone asking what transpired, recounting it,
+  // or taking testimony about it PRESUMES a memory the rupture removed. Containment rests on this
+  // narrowness, because for a collective rupture the party test cannot discriminate.
   var _RUPTURE_CLASS_VERBS = {
-    // A memory/perception rupture is contradicted by anyone treating the erased thing as known.
-    memory_perception: /\b(?:question\w*|interrogat\w*|asks?|asked|recall\w*|remember\w*|recount\w*|testif\w*|describ\w*|confirm\w*|denie?[sd]?|denying|admit\w*|reveal\w*|tells?|told|what\s+(?:happened|transpired|occurred)|witness\w*|account\s+of)\b/i,
-    history_rewrite: /\b(?:happened|transpired|occurred|history|past|before|earlier|records?|ledger|entry|entries|stood\s+for|took\s+place)\b/i,
-    identity_reputation: /\b(?:names?|named|naming|recogni[sz]\w*|introduc\w*|addresses?|addressed|calls?\s+h(?:im|er)|reputation|known\s+as|accus\w*)\b/i,
-    materialization_possession: /\b(?:holds?|held|carries|carrying|produces?|hands?|gives?|gave|takes?|took|shows?|showed|possess\w*|owns?)\b/i,
-    relationship_social: /\b(?:trusts?|betray\w*|forgiv\w*|allies|alliance|marri\w*|bond|estrang\w*|sides?\s+with)\b/i
+    memory_perception: new RegExp([
+      '\\b(?:question\\w*|interrogat\\w*|ask\\w*|press\\w*)\\s+(?:\\w+\\s+){0,4}?(?:about|what|whether|regarding)\\b',
+      '\\bwhat\\s+(?:happened|transpired|occurred|was\\s+said|she\\s+said|he\\s+said)\\b',
+      '\\b(?:recount\\w*|recall\\w*|remember\\w*|testif\\w*|testimony|deposition)\\b',
+      '\\b(?:describ\\w*|confirm\\w*|denie?[sd]?|denying|admit\\w*|reveal\\w*)\\s+(?:\\w+\\s+){0,3}?(?:accusation|ceremony|rite|event|events|incident|what)\\b',
+      '\\baccount\\s+of\\s+(?:the\\s+)?(?:accusation|ceremony|rite|event|events|night|incident)\\b'
+    ].join('|'), 'i'),
+    history_rewrite: new RegExp([
+      '\\b(?:what\\s+(?:happened|transpired|occurred)|the\\s+(?:record|records|ledger|entry|entries)\\b)',
+      '\\b(?:stood\\s+for|took\\s+place|was\\s+held|never\\s+happened|did\\s+not\\s+happen)\\b',
+      '\\b(?:histor\\w*|chronicle\\w*|archive\\w*)\\b'
+    ].join('|'), 'i'),
+    identity_reputation: new RegExp([
+      '\\b(?:recogni[sz]\\w*|identif\\w*|introduc\\w*)\\b',
+      '\\b(?:known\\s+as|goes\\s+by|calls?\\s+h(?:im|er)self|addressed\\s+as|named\\s+as)\\b',
+      '\\b(?:reputation|standing|disgrace|accus\\w*)\\b'
+    ].join('|'), 'i'),
+    materialization_possession: new RegExp([
+      '\\b(?:produces?|produced|draws?\\s+out|brings?\\s+out|reveals?)\\s+(?:\\w+\\s+){0,3}?(?:object|item|relic|token|band|sash|ledger|letter)\\b',
+      '\\b(?:still\\s+(?:holds?|has|carries)|no\\s+longer\\s+(?:holds?|has)|whereabouts|where\\s+it\\s+went)\\b',
+      '\\b(?:materiali[sz]\\w*|vanish\\w*|reappear\\w*)\\b'
+    ].join('|'), 'i'),
+    relationship_social: new RegExp([
+      '\\b(?:betray\\w*|forgiv\\w*|estrang\\w*|reconcil\\w*|disown\\w*)\\b',
+      '\\b(?:no\\s+longer\\s+(?:trusts?|speaks?)|sides?\\s+with|breaks?\\s+with|swears?\\s+to)\\b'
+    ].join('|'), 'i')
   };
   function _canonRiskEntities(d) {
     var out = [];
@@ -192762,29 +192809,44 @@ No text, no watermark, no UI elements, share-ready.`;
       else if (_CANON_RISK_RX.supernatural.test(text)) {
         reasons.push('declared "ordinary" but the event text asserts a produced effect the deterministic check cannot see');
       }
-      // 3/4. A durable consequence or an invalidated objective matters only when THIS PLAN TOUCHES
-      // IT. Firing on mere existence meant that after one permanent Tempt Fate change, every
-      // subsequent ordinary scene paid for an audit forever — unconditional routing with extra
-      // steps. But "touches" cannot be decided by shared spelling alone: a paraphrased
-      // contradiction shares no words with the fact it contradicts. THREE independent signals,
-      // any one of which is enough.
+      // 3/4. RELEVANCE IS A COMBINATION, NOT A DISJUNCTION (Roman 2026-09-25). Each signal firing
+      // independently meant that after a durable rupture, merely NAMING an affected character
+      // audited the scene even when the action was unrelated — and for a mass rupture, or one
+      // involving the PC or LI, that is nearly every later scene.
+      //
+      //   PRIMARY : an affected party is involved AND the plan performs a class-relevant act.
+      //   INDEPENDENT : direct lexical overlap with a committed fact.
+      //   INDEPENDENT : explicit linkage to a recorded invalidated objective.
       var _st = s || (typeof window !== 'undefined' ? window.state : null);
       var _durables = (_st && Array.isArray(_st._temptFateDurableConsequences)) ? _st._temptFateDurableConsequences : [];
       for (var d = 0; d < _durables.length; d++) {
         var _d = _durables[d]; if (!_d) continue;
-        // (a) STRUCTURAL — the plan names a party this rupture actually affected.
-        var _party = _canonRiskNamesParty(text, _canonRiskEntities(_d));
-        if (_party) { reasons.push('the plan involves "' + _party + '", a party a committed rupture affected'); break; }
-        // (b) CLASS — the plan performs the kind of act this class of rupture makes contentious,
-        //     even with no shared vocabulary. This is the paraphrase case.
-        var _rx = _RUPTURE_CLASS_VERBS[String(_d.ruptureClass || '')];
-        if (_rx && _rx.test(text)) {
-          reasons.push('the plan performs a ' + _d.ruptureClass + '-sensitive act while that rupture stands');
+        var _cls = String(_d.ruptureClass || '');
+        var _rx = _RUPTURE_CLASS_VERBS[_cls];
+        var _actMatches = !!(_rx && _rx.test(text));
+        if (!_actMatches) continue;                       // no class-relevant act → not relevant
+        // A COLLECTIVE rupture affects everyone present, so the party test cannot discriminate and
+        // is satisfied by construction. Containment for that case rests entirely on the act test
+        // above being narrow — which is why it was narrowed.
+        var _cd = _d.classDetail || {};
+        var _tp = _cd.targetPopulation || _d.targetPopulation || null;
+        var _ents = _canonRiskEntities(_d);
+        // targetPopulation is frequently absent on real records (the retained Scene A outcome has
+        // none), so collectiveness is also read from the PARTY LABELS themselves. "the assembly"
+        // is a crowd; a later scene calling that same crowd "the gathered witnesses" is the
+        // paraphrase problem one level down, and matching on spelling would miss it again.
+        var _COLLECTIVE_RX = /\b(?:assembly|everyone|all\s+present|crowd|gathering|gathered|witnesses|company|congregation|council|chamber|room|delegation)\b/i;
+        var _collective = !!(_tp && /all_present|collective/.test(String(_tp.kind || '')))
+          || _ents.some(function (e) { return _COLLECTIVE_RX.test(String(e)); });
+        var _party = _collective ? '(a collective the rupture affected)'
+                                 : _canonRiskNamesParty(text, _ents);
+        if (_party) {
+          reasons.push('the plan performs a ' + _cls + '-sensitive act involving ' + _party);
           break;
         }
       }
-      // (c) LEXICAL — kept as a third signal for facts with no structured parties.
-      if (!reasons.length || !/committed rupture|rupture stands/.test(reasons.join(' '))) {
+      // INDEPENDENT: the plan reuses the language of a committed fact.
+      if (!reasons.length) {
         var _facts = (packet && packet.facts) || [];
         for (var i = 0; i < _facts.length; i++) {
           var f = _facts[i];
@@ -192792,10 +192854,14 @@ No text, no watermark, no UI elements, share-ready.`;
           if (_canonRiskTouches(text, f.text)) { reasons.push('the plan touches a committed change [' + f.id + ']'); break; }
         }
       }
+      // INDEPENDENT: explicit linkage to something a rupture already invalidated.
       var _inv = (packet && packet.invalidated) || [];
       for (var j = 0; j < _inv.length; j++) {
-        if (_canonRiskTouches(text, _inv[j])
-            || _canonRiskNamesParty(text, [String(_inv[j])])) {
+        // _canonRiskNamesParty was ALSO applied here, which is a category error: it is a
+        // PARTY-NAME matcher that accepts any single 4+ character token, so an invalidated
+        // objective reading "...cannot be justified without memory of the events" matched any plan
+        // containing the word "without". Objective linkage uses the overlap test only.
+        if (_canonRiskTouches(text, _inv[j])) {
           reasons.push('the plan touches a previously invalidated objective');
           break;
         }
@@ -192825,9 +192891,11 @@ No text, no watermark, no UI elements, share-ready.`;
       // Transport/parse failure follows the existing bounded tier policy inside
       // _callTieredProvider. Exhaustion arrives here, and it FAILS CLOSED — an audit that could
       // not run is not an approval.
-      // telemetry stays NULL here: no usable response means no receipt, and inheriting the last
-      // successful audit's cost would be a fabricated number.
-      return { allow: false, source: 'audit-unavailable', violations: [], paid: true, telemetry: null,
+      // The receipt rides on the error when the call WAS billable (identity rejection, parse
+      // failure). A pure transport failure carries none, and null is then the honest answer —
+      // never a stale one, since nothing ambient survives between audits.
+      return { allow: false, source: 'audit-unavailable', violations: [], paid: true,
+               telemetry: (e && e.telemetry) || null,
                reason: 'canon audit could not complete (' + ((e && e.message) || e) + ') — failing closed before author spend', preserveForReview: true };
     }
     var v = _validateCanonAuditResponse(raw, packet, proposal);
