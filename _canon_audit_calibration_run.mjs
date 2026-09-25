@@ -202,12 +202,19 @@ fs.mkdirSync(OUT_DIR, { recursive: true });
       } catch (e) { error = (e && e.message) || String(e); }
       const validated = raw ? window._validateCanonAuditResponse(raw, packet, a.fx.plan) : null;
       return { packetIds: packet.ids, packetTruncated: packet.truncated,
+        packetFacts: packet.facts.map(function (f) { return { id: f.id, kind: f.kind, text: f.text }; }),
         promptVersionActive: window._canonAuditPromptVersionActive(), prompt, content, raw, validated, error, meta };
-    }, { fx, durable, model: PRIMARY_MODEL, provider: CAND.provider, promptVersion: PROMPT_V,
+      // fx carries a supportingFact PREDICATE (v3). A function cannot cross the page.evaluate
+      // boundary — Playwright throws on serialization — so only the plan and the optional
+      // durable override are sent. Scoring happens node-side, where the predicate lives.
+    }, { fx: { id: fx.id, plan: fx.plan, durableOverride: fx.durableOverride || null },
+         durable, model: PRIMARY_MODEL, provider: CAND.provider, promptVersion: PROMPT_V,
          reasoningEffort: CAND.reasoningEffort, maxTokens: CAND.maxTokens,
          sbModelOverride: CAND.sbModelOverride, thinkingBudgetTokens: CAND.thinkingBudgetTokens });
     const latencyMs = Date.now() - t0;
-    const score = scoreFixture(fx, r.validated || { valid: false, errors: ['no response'] }, r.error);
+    // The scorer judges what the CITED FACT ASSERTS, so it needs the packet that was actually sent.
+    const score = scoreFixture(fx, r.validated || { valid: false, errors: ['no response'] }, r.error,
+      { facts: r.packetFacts });
     // REALIZED COST FROM THE PROVIDER'S OWN USAGE, per fixture — never from the reservation. On a
     // reasoning model the completion count silently INCLUDES thinking tokens (Mistral publishes no
     // reasoning_tokens field on chat completions), so this is the only honest cost figure.

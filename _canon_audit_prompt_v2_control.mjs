@@ -52,14 +52,18 @@ function section(t) { console.log('\n=== ' + t + ' ==='); }
     const active = window._canonAuditPromptVersionActive();
     delete window._canonAuditPromptVersion;
     return { sys, active, ids: packet.ids, facts: packet.facts.map((f) => ({ id: f.id, kind: f.kind, text: f.text })) };
-  }, { fx: fixtures.find((f) => f.id === fixtureId), durable, version });
+  }, { fx: { plan: (fixtures.find((f) => f.id === fixtureId) || {}).plan, durableOverride: (fixtures.find((f) => f.id === fixtureId) || {}).durableOverride || null }, durable, version });
 
   section('1. BOTH ARMS ARE REAL AND SELECTABLE — v1 was not deleted');
   const green = await build('green_mundane_invention', 2);
   const greenV1 = await build('green_mundane_invention', 1);
   fs.writeFileSync(path.join(OUT_DIR, 'prompt_v2.txt'), green.sys);
   fs.writeFileSync(path.join(OUT_DIR, 'prompt_v1.txt'), greenV1.sys);
-  ok('v2 is the DEFAULT — an unset flag selects it', (await build('green_mundane_invention', 0)).active === 2);
+  // v3 SUPERSEDED v2 AS THE DEFAULT (Roman 2026-09-24). This control now guards the v2 ARM, which
+  // stays selectable because it is what grok-4.3, claude-haiku-4-5 and gpt-4o-mini were measured
+  // against; deleting it would make those results unreproducible.
+  ok('v3 is now the default arm, and v2 is no longer selected by an unset flag',
+    (await build('green_mundane_invention', 0)).active === 3);
   ok('v1 is still reachable verbatim, so the A/B has a control arm', greenV1.active === 1);
   ok('the two arms genuinely differ', green.sys !== greenV1.sys);
   ok('v1 is UNCHANGED — it still carries the exact framing the two models were measured against',
@@ -108,12 +112,21 @@ function section(t) { console.log('\n=== ' + t + ' ==='); }
   const ev = conf.facts.filter((f) => f.kind === 'ev');
   console.log('    ev_ facts now in the packet:');
   ev.forEach((f) => console.log('      [' + f.id + '] ' + f.text.slice(0, 110)));
-  ok('the committed rupture\'s surviving evidence now appears as its own fact',
-    ev.length > 0 && ev.some((f) => /SURVIVED that rupture/.test(f.text)), JSON.stringify(ev));
-  ok('and it is labelled as a GRANT, not as another constraint',
-    ev.some((f) => /still true/.test(f.text)));
-  ok('v2 tells the auditor explicitly that an ev_ fact supports a plan relying on it',
-    /"ev_" fact records what a committed rupture LEFT INTACT and is a\ngrant/.test(green.sys));
+  ok('the committed rupture\'s evidence still reaches the packet as its own fact',
+    ev.length > 0, JSON.stringify(ev));
+  // The v2 CLAIM about those facts — that they record what "SURVIVED ... and is still true" — was
+  // FALSE and is corrected in v3. The packet builder is not version-gated, so the live packet now
+  // carries the honest wording; the false version survives only in the retained v2 artefacts, and
+  // that is where it must be asserted.
+  ok('v2\'s false "still true" wording is GONE from the live packet',
+    !ev.some((f) => /SURVIVED that rupture and is still true/.test(f.text)), JSON.stringify(ev));
+  ok('...and the retained v2 run preserves it, so the v2 arm stays reproducible',
+    /SURVIVED that rupture and is still true/.test(
+      JSON.parse(fs.readFileSync(path.join(__dirname, '_tempt_fate_fixtures',
+        'canon_calibration_2026-09-25_02-36-54', 'red_contradicted_knowledge.json'), 'utf8')).result.prompt.sys));
+  ok('the v2 ARM still says what it said — it is preserved verbatim, mistake included',
+    /"ev_" fact records what a committed rupture LEFT INTACT and is a\ngrant/.test(
+      (await build('green_mundane_invention', 2)).sys));
   ok('RED PROOF — the same packet under the OLD builder carried no surviving evidence at all',
     confV1.facts.filter((f) => f.kind === 'ev').length === ev.length && ev.length > 0
     ? true : false, 'packet content is version-independent; only the prompt differs — checked below');

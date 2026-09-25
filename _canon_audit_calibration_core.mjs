@@ -174,17 +174,39 @@ export function loadFixtures() {
       // ── REDS: each must be caught ────────────────────────────────────────────────────────
       { id: 'red_memory_extraction', expect: 'violation', hard: true,
         // A catch must pair an APPROPRIATE category with a fact of a kind that actually supports it.
-        expectCategories: ['unsupported_capability','new_metaphysics'], supportingFactKinds: ['neg'],
+        expectCategories: ['unsupported_capability','new_metaphysics','other'],
+        supportingFact: function (f) {
+          return /NO MAGICAL MACHINERY|no "sealing of the rite"|no seal to|NO ONE may interfere|produces NO visible magical effect|do NOT read thoughts/i.test(String(f.text || ''));
+        },
+        supportingDescription: 'a fact that affirmatively forecloses the mechanism (no rite machinery, no mind-reading, no visible effect)',
         why: 'the retained failed Scene B proposal, relabelled ordinary — mind-extraction no canon grants',
         plan: Object.assign({}, redB, { event_slots: Object.assign({}, redB.event_slots, { mechanism_grounding: 'ordinary' }) }) },
       { id: 'red_visible_glow', expect: 'violation', hard: true,
         // A catch must pair an APPROPRIATE category with a fact of a kind that actually supports it.
-        expectCategories: ['unsupported_capability','new_metaphysics'], supportingFactKinds: ['neg'],
+        expectCategories: ['unsupported_capability','new_metaphysics','other'],
+        supportingFact: function (f) {
+          return /produces NO visible magical effect|never visibly seen|no light, glo/i.test(String(f.text || ''));
+        },
+        supportingDescription: 'the world truth that a wish produces no visible magical effect',
         why: 'a REAL retained corpus plan asserting a visible magical effect, against "a wish produces NO visible magical effect"',
         plan: Object.assign({}, glow, { event_slots: ord(glow.event_slots) }) },
       { id: 'red_contradicted_knowledge', expect: 'violation', hard: true,
-        // A catch must pair an APPROPRIATE category with a fact of a kind that actually supports it.
-        expectCategories: ['contradicted_knowledge'], supportingFactKinds: ['know','dc'],
+        // v3 (Roman 2026-09-24). SUPPORT IS NOW DECIDED BY WHAT THE CITED FACT ASSERTS, not by its
+        // id prefix. 'other' is permitted because the prompt itself permits it — but the fact must
+        // assert a DURABLE knowledge state or recorded change, not a momentary observation.
+        // ev_0 ("no one names the accusation") records what was seen when the rupture landed; it
+        // does NOT establish that nobody may ever name it later, and citing it is not support.
+        // Genuinely durable facts DO exist here — know_0 "the assembly is now unaware — no
+        // recollection of the rite's events" and dc_2 "memories ... dissolved into blank
+        // confusion" — so this fixture is sound and is NOT rewritten.
+        expectCategories: ['contradicted_knowledge','other'],
+        supportingFact: function (f) {
+          var t = String(f.text || '');
+          if (f.kind === 'ev') return false;                       // a moment is not a rule
+          return (f.kind === 'know' || f.kind === 'dc' || f.kind === 'dur')
+            && /unaware|no recollection|dissolved|forget|forgets|blank confusion/i.test(t);
+        },
+        supportingDescription: 'a DURABLE knowledge state or recorded change (know_/dc_/dur_) asserting the assembly no longer holds that memory — never an ev_ observation of the moment',
         why: 'the committed rupture left the assembly unaware; this plan has the Dohkar act on detailed knowledge of the forgotten accusation',
         plan: { tactical_move: 'press the accusation formally',
           state_change_precondition: 'The Dohkar has not yet named the accusation aloud.',
@@ -195,8 +217,17 @@ export function loadFixtures() {
             action: 'recounts in detail', target: 'the accusation nobody remembers',
             exit_state: 'the assembly now hears the accusation restated by the Dohkar' }) } },
       { id: 'red_invalidated_objective', expect: 'violation', hard: true,
-        // A catch must pair an APPROPRIATE category with a fact of a kind that actually supports it.
-        expectCategories: ['invalidated_objective'], supportingFactKinds: ['inv'],
+        // v3. 'other' + neg_0 IS genuinely supported: the prompt permits 'other', and neg_0
+        // affirmatively forbids convening this inquiry now ("NOT yet convened ... LATE-ISSUE-1
+        // content ... never the convened inquiry itself"). inv_0 also supports it. Both count;
+        // an unrelated world truth still does not.
+        expectCategories: ['invalidated_objective','other'],
+        supportingFact: function (f) {
+          var t = String(f.text || '');
+          if (f.kind === 'inv') return true;                        // the recorded invalidation
+          return /never the convened inquiry|NOT yet convened|LATE-ISSUE-1/i.test(t);
+        },
+        supportingDescription: 'the recorded invalidation (inv_), or any fact affirmatively forbidding the inquiry being convened this early',
         why: 'the committed record invalidated the formal inquiry; this plan convenes it anyway',
         plan: { tactical_move: 'open the scheduled proceeding',
           state_change_precondition: 'The formal inquiry has not yet been convened.',
@@ -530,7 +561,15 @@ export function isRateLimited(error) {
 export const RATE_LIMIT_STOP_AFTER = 2;                     // two CONSECUTIVE, then stop
 
 // ── SCORING — the critical distinction is a VALID but incorrect pass ─────────────────────────
+// SUPPORT IS A PROPERTY OF WHAT THE FACT SAYS (Roman 2026-09-24, v3). The old rubric matched an
+// id PREFIX (supportingFactKinds), which had two failures: it could not accept the ev_ kind my own
+// v2 packet fix introduced, and it rejected category 'other' even though the prompt explicitly
+// instructs the auditor to use it. Both are now decided by a per-fixture predicate over the REAL
+// fact object {id, kind, text} taken from the packet that was actually sent.
 export function scoreFixture(fx, validated, error, opts) {
+  const facts = (opts && opts.facts) || null;
+  const factById = {};
+  (facts || []).forEach(function (f) { factById[String(f.id)] = f; });
   // The skip note must name the ACTUAL stop reason. It hardcoded "local function-layer failures",
   // so a run stopped by a PROVIDER rate limit — with the local layer working perfectly and
   // faithfully relaying the provider's 429 — reported that our own function layer had failed.
@@ -557,13 +596,21 @@ export function scoreFixture(fx, validated, error, opts) {
       const supported = (validated.violations || []).some((x) => {
         if (!fx.expectCategories || fx.expectCategories.indexOf(x.category) === -1) return false;
         const ids = (x.citedFactIds || []).map((i) => String(i).trim().replace(/^\[+|\]+$/g, ''));
-        return ids.some((id) => (fx.supportingFactKinds || []).some((k) => id.indexOf(k + '_') === 0));
+        return ids.some((id) => {
+          const f = factById[id];
+          // A cited id that is not in the packet is not a fact; the validator rejects those
+          // upstream, and without the packet we cannot judge assertion at all.
+          if (!f) return false;
+          if (typeof fx.supportingFact === 'function') { try { return !!fx.supportingFact(f); } catch (_) { return false; } }
+          return (fx.supportingFactKinds || []).some((k) => String(id).indexOf(k + '_') === 0);
+        });
       });
       if (supported) return { outcome: 'caught', critical: false };
       return { outcome: 'unsupported_finding', critical: true,
         note: 'verdict "violation" but no finding pairs an appropriate category ('
-          + (fx.expectCategories || []).join('/') + ') with a fact of a supporting kind ('
-          + (fx.supportingFactKinds || []).join('/') + ') — a real but irrelevant citation is not detection' };
+          + (fx.expectCategories || []).join('/') + ') with a fact that actually asserts '
+          + (fx.supportingDescription || (fx.supportingFactKinds || []).join('/'))
+          + ' — a real but irrelevant citation is not detection' };
     }
     if (v === 'pass') return { outcome: 'MISSED', critical: true,
       note: 'a VALID but incorrect pass — it triggers no tier fallback and would let this plan reach the author' };

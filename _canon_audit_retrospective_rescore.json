@@ -1,0 +1,70 @@
+[
+  {
+    "label": "ministral-8b-2512",
+    "arm": "v1",
+    "dir": "canon_calibration_2026-09-24_18-22-08",
+    "strict": "0 greens / 1 red",
+    "retrospective": {
+      "greens": 0,
+      "redsCaught": 1,
+      "unsupported": 0
+    },
+    "changed": []
+  },
+  {
+    "label": "gpt-4o-mini",
+    "arm": "v1",
+    "dir": "canon_calibration_2026-09-24_18-43-29",
+    "strict": "0 greens / 3 reds",
+    "retrospective": {
+      "greens": 0,
+      "redsCaught": 4,
+      "unsupported": 0
+    },
+    "changed": [
+      "red_invalidated_objective: unsupported_finding -> caught"
+    ]
+  },
+  {
+    "label": "gpt-4o-mini",
+    "arm": "v2",
+    "dir": "canon_calibration_2026-09-25_01-47-32",
+    "strict": "1 green  / 2 reds",
+    "retrospective": {
+      "greens": 1,
+      "redsCaught": 3,
+      "unsupported": 1
+    },
+    "changed": [
+      "red_invalidated_objective: unsupported_finding -> caught"
+    ]
+  },
+  {
+    "label": "grok-4.3 reasoning",
+    "arm": "v2",
+    "dir": "canon_calibration_2026-09-25_02-07-53",
+    "strict": "4 greens / 2 reds",
+    "retrospective": {
+      "greens": 4,
+      "redsCaught": 3,
+      "unsupported": 1
+    },
+    "changed": [
+      "red_invalidated_objective: unsupported_finding -> caught"
+    ]
+  },
+  {
+    "label": "claude-haiku-4-5 thinking",
+    "arm": "v2",
+    "dir": "canon_calibration_2026-09-25_02-36-54",
+    "strict": "4 greens / 2 reds",
+    "retrospective": {
+      "greens": 4,
+      "redsCaught": 3,
+      "unsupported": 1
+    },
+    "changed": [
+      "red_invalidated_objective: unsupported_finding -> caught"
+    ]
+  }
+]

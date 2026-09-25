@@ -192286,11 +192286,28 @@ No text, no watermark, no UI elements, share-ready.`;
           // the assembly could not read a ledger it did not remember, collapsing RECORD into
           // MEMORY, because no supplied fact said the record survived. Same class of defect as the
           // missing classDetail: the authorising fact existed in the record and was withheld.
+          // ── WHAT establishedEvidence ACTUALLY IS (Roman 2026-09-24, correcting v2) ──────────
+          // v2 emitted these as "SURVIVED that rupture and is still true", which PROMOTED a
+          // momentary observation into a standing rule — and it was the most authoritative-
+          // sounding line in the packet. Both grok-4.3 and claude-haiku-4-5 then cited
+          // "no one names the accusation" as though it forbade anyone ever naming it later,
+          // when it only records what was seen at the instant the outcome landed. Two models
+          // agreeing is not corroboration when the packet misled them identically.
+          //
+          // establishedEvidence = WHAT WAS OBSERVED WHEN THE OUTCOME LANDED. Nothing more.
+          // Persistence comes from a fact that actually asserts it: `changed`, per-effect
+          // durability, a class-specific knowledge state, or another explicitly durable entry.
           (Array.isArray(d.establishedEvidence) ? d.establishedEvidence : []).forEach(function (e) {
-            if (e) push('ev', 'SURVIVED that rupture and is still true: ' + e);
+            if (e) push('ev', 'OBSERVED at the moment that rupture landed (a record of that moment, NOT a standing rule — it does not by itself establish that this still holds later): ' + e);
           });
           (Array.isArray(d.openPossibilities) ? d.openPossibilities : []).forEach(function (o) {
-            if (o) push('ev', 'the rupture left this OPEN (a plan may legitimately use it): ' + o);
+            if (o) push('ev', 'left OPEN by that rupture (a plan may legitimately use it): ' + o);
+          });
+          // DURABILITY IS ITS OWN ASSERTION, and was never emitted at all. This is the fact kind
+          // that genuinely answers "does it still hold?", so withholding it while emitting a
+          // momentary observation as durable was the worst possible combination.
+          (Array.isArray(d.durability) ? d.durability : []).forEach(function (x) {
+            if (x && x.aspect) push('dur', x.aspect + ' — ' + (x.status || '?') + ' (an explicit DURABILITY statement: this is what persists)');
           });
         } catch (_) {}
       });
@@ -192346,11 +192363,15 @@ No text, no watermark, no UI elements, share-ready.`;
   // returned "violation" on 4/4 greens under it. Re-running a already-rejected model against v2
   // with v1 still available is the CONTROLLED test of whether the prompt was the cause — one
   // variable changed, no new model bought. Deleting v1 would make that experiment impossible.
-  var _CANON_AUDIT_PROMPT_V = 2;
+  // v3 (Roman 2026-09-24) corrects a claim v2 made about ev_ facts that was simply false, and
+  // that measurably misled two independent models. v1 and v2 both stay selectable: they are the
+  // arms earlier candidates were measured against, and deleting them would make those results
+  // unreproducible.
+  var _CANON_AUDIT_PROMPT_V = 3;
   function _canonAuditPromptVersion() {
     try {
       var v = window._canonAuditPromptVersion;
-      return (v === 1 || v === 2) ? v : _CANON_AUDIT_PROMPT_V;
+      return (v === 1 || v === 2 || v === 3) ? v : _CANON_AUDIT_PROMPT_V;
     } catch (_) { return _CANON_AUDIT_PROMPT_V; }
   }
   window._canonAuditPromptVersionActive = _canonAuditPromptVersion;
@@ -192366,6 +192387,7 @@ No text, no watermark, no UI elements, share-ready.`;
     // canon "does not support the idea that [she] can name the misalignment aloud". Both are
     // absence treated as prohibition, by a model that had been told ordinary action is allowed.
     // v2 makes the DEFAULT the rule and states the silence principle explicitly.
+    var _v2plus = (_v >= 2);
     var framing = (_v === 1)
       ? 'You are given a PROPOSED SCENE PLAN and the ONLY canon that applies to it. Decide whether the plan asserts anything the supplied canon does not support.\n\n'
       // CAPABILITY-ROOTED EXTRAPOLATION (Roman 2026-09-24). The first v2 draft over-corrected: a
@@ -192442,12 +192464,29 @@ No text, no watermark, no UI elements, share-ready.`;
       // retained runs' citations and the scoring rubric both key off them, and changing them in
       // the same pass as the framing would confound the one experiment this is meant to enable —
       // so v2 states the truth about them instead of implying a prohibition that isn't there.
-      + (_v === 1 ? '' :
+      + (_v === 1 ? '' : _v === 2 ?
           'ABOUT THESE IDS: the prefix groups a fact by where it came from, NOT by whether it forbids\n'
           + 'anything. A "neg_" fact is NOT automatically a prohibition — many are plain descriptions or\n'
           + 'grants of ability that happen to contain the word "no" or "not". Judge every fact by what it\n'
           + 'SAYS, never by its id. An "ev_" fact records what a committed rupture LEFT INTACT and is a\n'
-          + 'grant: a plan relying on it is supported, not unsupported.\n\n')
+          + 'grant: a plan relying on it is supported, not unsupported.\n\n'
+          // ── v3 (Roman 2026-09-24) ─────────────────────────────────────────────────────────────
+          // v2's last sentence was FALSE and it did damage: it told the auditor an ev_ fact records
+          // what "LEFT INTACT", so both grok-4.3 and claude-haiku-4-5 cited "no one names the
+          // accusation" as if it forbade anyone ever naming it later. It records only what was seen
+          // at the instant the outcome landed.
+          : 'ABOUT THESE IDS: the prefix groups a fact by where it came from, NOT by whether it forbids\n'
+          + 'anything. A "neg_" fact is NOT automatically a prohibition — many are plain descriptions or\n'
+          + 'grants of ability that happen to contain the word "no" or "not". Judge every fact by what it\n'
+          + 'SAYS, never by its id.\n\n'
+          + 'A MOMENT IS NOT A RULE. An "ev_" fact records what was OBSERVED when a rupture landed. It is\n'
+          + 'NOT a standing prohibition and does NOT by itself establish that the same thing still holds\n'
+          + 'later. "No one named it at that moment" does not mean no one may ever name it. Do not cite an\n'
+          + 'ev_ observation as the ground for a violation unless the plan contradicts THAT RECORDED\n'
+          + 'MOMENT, or the fact itself says it is still current.\n\n'
+          + 'WHAT PERSISTS IS STATED EXPLICITLY. Durability comes from facts that assert it: a "dur_"\n'
+          + 'durability statement, a "know_" knowledge state, or a "dc_" recorded change. If you want to\n'
+          + 'argue that something is still true now, cite one of those — not an observation.\n\n')
       + (_v === 1
           ? 'CATEGORIES: unsupported_capability | new_metaphysics | contradicted_knowledge | rewritten_history | invalidated_objective | other\n\n'
           // THE MENU MUST CARRY ITS OWN QUALIFIERS (Roman 2026-09-24). v1 stated them once, in the

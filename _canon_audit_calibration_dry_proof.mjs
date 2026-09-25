@@ -63,7 +63,8 @@ function section(t) { console.log('\n=== ' + t + ' ==='); }
     s._temptFateDurableConsequences = [a.durable];
     const packet = window._buildCanonPacket(s, { proposal: a.plan });
     const p = window._buildCanonAuditPrompt(a.plan, packet);
-    return { sys: p.sys, usr: p.usr, ids: packet.ids, truncated: packet.truncated };
+    return { sys: p.sys, usr: p.usr, ids: packet.ids, truncated: packet.truncated,
+      facts: packet.facts.map(function (f) { return { id: f.id, kind: f.kind, text: f.text }; }) };
   }, { durable, plan: reds[0].plan });
   fs.writeFileSync(path.join(OUT_DIR, 'sample_prompt.txt'), built.sys + '\n\n' + built.usr);
   ok('the prompt is the production CANON AUDITOR prompt, not a calibration-only copy',
@@ -72,8 +73,17 @@ function section(t) { console.log('\n=== ' + t + ' ==='); }
 
   section('3. SCORING — a VALID but incorrect pass is the critical failure');
   const packetIds = built.ids;
+  // v3: support is decided by what the CITED FACT ASSERTS, so every scoreFixture call needs the
+  // packet that was actually built. One wrapper injects it rather than threading it by hand.
+  const PACKET_FACTS = built.facts;
+  const sf = (fx, validated, error, opts) =>
+    scoreFixture(fx, validated, error, Object.assign({ facts: PACKET_FACTS }, opts || {}));
+  // And a "caught" case must cite a fact that GENUINELY supports this fixture — chosen by the
+  // fixture's own predicate rather than by grabbing whichever id happens to be first.
+  const supFact = PACKET_FACTS.find((f) => reds[0].supportingFact(f));
+  if (!supFact) throw new Error('dry proof: no supporting fact for ' + reds[0].id + ' — fixture or packet drift');
   const validViolation = { verdict: 'violation', violations: [{ category: 'unsupported_capability',
-    claim: reds[0].plan.state_change, citedFactIds: [packetIds[0]], why: 'x' }] };
+    claim: reds[0].plan.state_change, citedFactIds: [supFact.id], why: 'x' }] };
   const scored = await page.evaluate((a) => {
     const s = window.state; s._starterId = 'starter_first_sacrifice'; s._temptFateDurableConsequences = [a.durable];
     const packet = window._buildCanonPacket(s, { proposal: a.plan });
@@ -84,11 +94,11 @@ function section(t) { console.log('\n=== ' + t + ' ==='); }
       bogus: window._validateCanonAuditResponse({ verdict: 'violation', violations: [{ category: 'other', claim: 'not in plan', citedFactIds: ['zz_9'], why: 'x' }] }, packet, a.plan)
     };
   }, { durable, plan: reds[0].plan, validViolation });
-  const sRedPass = scoreFixture(reds[0], scored.pass, null);
-  const sRedCaught = scoreFixture(reds[0], scored.violation, null);
-  const sRedUndec = scoreFixture(reds[0], scored.undecided, null);
-  const sGreenFP = scoreFixture(greens[0], scored.violation, null);
-  const sGreenOk = scoreFixture(greens[0], scored.pass, null);
+  const sRedPass = sf(reds[0], scored.pass, null);
+  const sRedCaught = sf(reds[0], scored.violation, null);
+  const sRedUndec = sf(reds[0], scored.undecided, null);
+  const sGreenFP = sf(greens[0], scored.violation, null);
+  const sGreenOk = sf(greens[0], scored.pass, null);
   ok('a VALID pass on a RED is scored MISSED and flagged CRITICAL',
     sRedPass.outcome === 'MISSED' && sRedPass.critical === true, JSON.stringify(sRedPass));
   ok('...and the note says why it is the worst case: no tier fallback fires',
@@ -100,9 +110,9 @@ function section(t) { console.log('\n=== ' + t + ' ==='); }
     sGreenFP.outcome === 'FALSE_POSITIVE' && sGreenFP.critical === true, JSON.stringify(sGreenFP));
   ok('a pass on a GREEN is scored correct', sGreenOk.outcome === 'correct_pass', JSON.stringify(sGreenOk));
   ok('an invalid reply is scored invalid_response, never silently counted as a pass',
-    scoreFixture(greens[0], scored.bogus, null).outcome === 'invalid_response', JSON.stringify(scored.bogus.errors));
+    sf(greens[0], scored.bogus, null).outcome === 'invalid_response', JSON.stringify(scored.bogus.errors));
   ok('a transport error is scored unavailable, never a pass',
-    scoreFixture(reds[0], { valid: false, errors: [] }, 'boom').outcome === 'unavailable');
+    sf(reds[0], { valid: false, errors: [] }, 'boom').outcome === 'unavailable');
 
   section('3b. THE HISTORY-REWRITE GREEN IS GENUINELY SUPPORTED BY THE PACKET');
   // Roman: the earlier fixture mutated ruptureClass and bolted on priorHistoryReplaced, while
@@ -155,28 +165,45 @@ function section(t) { console.log('\n=== ' + t + ' ==='); }
   // A properly-supported violation FOR THIS FIXTURE: the generic stub cites neg_0 with
   // unsupported_capability, which legitimately fails the rubric for reds expecting a different
   // category/kind. Each red needs a reply that actually satisfies its own rule.
-  const supportedFor = (f) => ({ valid: true, verdict: 'violation', violations: [{
-    category: (f.expectCategories || ['other'])[0],
-    citedFactIds: [(f.supportingFactKinds || ['neg'])[0] + '_0'],
-    claim: f.plan.state_change }] });
+  // v3: a citation is supporting because of what the FACT ASSERTS, and each fixture gets its own
+  // relevance-ranked packet, so ids are not interchangeable between fixtures. Build every
+  // fixture's real packet once and let each red's own predicate choose its own supporting fact.
+  const FACTS_BY_FIXTURE = await page.evaluate((a) => {
+    const out = {};
+    a.plans.forEach(function (p) {
+      const s = window.state; s._starterId = 'starter_first_sacrifice';
+      s._temptFateDurableConsequences = [p.durableOverride ? JSON.parse(JSON.stringify(p.durableOverride)) : a.durable];
+      const packet = window._buildCanonPacket(s, { proposal: p.plan });
+      out[p.id] = packet.facts.map(function (f) { return { id: f.id, kind: f.kind, text: f.text }; });
+    });
+    return out;
+  }, { durable, plans: fixtures.map((f) => ({ id: f.id, plan: f.plan, durableOverride: f.durableOverride || null })) });
+  const factsOf = (f) => FACTS_BY_FIXTURE[f.id] || PACKET_FACTS;
+  const supportedFor = (f) => {
+    const hit = (factsOf(f) || []).find((x) => f.supportingFact && f.supportingFact(x));
+    if (!hit) throw new Error('dry proof: no supporting fact in the real packet for ' + f.id);
+    return { valid: true, verdict: 'violation', violations: [{
+      category: (f.expectCategories || ['other'])[0],
+      citedFactIds: [hit.id], claim: f.plan.state_change }] };
+  };
   const replyFor = (f) => f.expect === 'violation' ? supportedFor(f) : scored.pass;
 
   section('4. THE ENABLE GATE — a blocked green is a failure too');
   const mkRows = (f) => fixtures.map(f);
   const allGood = verdictSummary(mkRows((f) => ({ id: f.id, expect: f.expect,
-    score: scoreFixture(f, replyFor(f), null) })));
+    score: sf(f, replyFor(f), null, { facts: factsOf(f) }) })));
   const oneMissed = verdictSummary(fixtures.map((f, i) => ({ id: f.id, expect: f.expect,
-    score: scoreFixture(f, (f.expect === 'violation' && i === 0) ? scored.pass : replyFor(f), null) })));
+    score: sf(f, (f.expect === 'violation' && i === 0) ? scored.pass : replyFor(f), null, { facts: factsOf(f) }) })));
   const oneFP = verdictSummary(mkRows((f) => ({ id: f.id, expect: f.expect,
-    score: scoreFixture(f, f.id === 'green_mundane_invention' ? scored.violation : replyFor(f), null) })));
+    score: sf(f, f.id === 'green_mundane_invention' ? scored.violation : replyFor(f), null, { facts: factsOf(f) }) })));
   // THE THREE CASES THE OLD GATE LET THROUGH — each blocks a legitimate scene in production.
   const greenUndecided = verdictSummary(mkRows((f) => ({ id: f.id, expect: f.expect,
-    score: scoreFixture(f, f.id === 'green_confusion_records' ? scored.undecided : replyFor(f), null) })));
+    score: sf(f, f.id === 'green_confusion_records' ? scored.undecided : replyFor(f), null, { facts: factsOf(f) }) })));
   const greenUnavailable = verdictSummary(mkRows((f) => ({ id: f.id, expect: f.expect,
-    score: f.id === 'green_alignment_sense' ? scoreFixture(f, { valid: false, errors: [] }, 'transport failed')
-      : scoreFixture(f, replyFor(f), null) })));
+    score: f.id === 'green_alignment_sense' ? sf(f, { valid: false, errors: [] }, 'transport failed')
+      : sf(f, replyFor(f), null, { facts: factsOf(f) }) })));
   const greenInvalid = verdictSummary(mkRows((f) => ({ id: f.id, expect: f.expect,
-    score: scoreFixture(f, f.id === 'green_mundane_invention' ? scored.bogus : replyFor(f), null) })));
+    score: sf(f, f.id === 'green_mundane_invention' ? scored.bogus : replyFor(f), null, { facts: factsOf(f) }) })));
   ok('4 caught reds + 4 passing greens + no undecided/unavailable/invalid ⇒ ENABLE',
     allGood.enableGenerally === true && allGood.caught === 4 && allGood.correctPass === 4, JSON.stringify(allGood).slice(0, 220));
   ok('ONE missed red ⇒ DO NOT ENABLE', oneMissed.enableGenerally === false && oneMissed.missed === 1, JSON.stringify(oneMissed.blockers));
@@ -204,9 +231,9 @@ function section(t) { console.log('\n=== ' + t + ' ==='); }
   // Simulate the loop exactly as the runner runs it.
   let consecutive = 0, stopped = false, dispatched = 0;
   const simRows = fixtures.map((f) => {
-    if (stopped) return { id: f.id, expect: f.expect, score: scoreFixture(f, null, null, { skipped: true }) };
+    if (stopped) return { id: f.id, expect: f.expect, score: sf(f, null, null, { skipped: true }) };
     dispatched++;
-    const score = scoreFixture(f, null, INFRA_ERR);
+    const score = sf(f, null, INFRA_ERR);
     if (score.infra) { consecutive++; if (consecutive >= INFRA_STOP_AFTER) stopped = true; } else consecutive = 0;
     return { id: f.id, expect: f.expect, score };
   });
@@ -228,7 +255,7 @@ function section(t) { console.log('\n=== ' + t + ' ==='); }
   fixtures.forEach((f, i) => {
     if (s2) return;
     d2++;
-    const score = i === 0 ? scoreFixture(f, null, INFRA_ERR) : scoreFixture(f, replyFor(f), null);
+    const score = i === 0 ? sf(f, null, INFRA_ERR) : sf(f, replyFor(f), null);
     if (score.infra) { c2++; if (c2 >= INFRA_STOP_AFTER) s2 = true; } else c2 = 0;
   });
   ok('a SINGLE dead call followed by a live one does NOT stop the run — the stop needs two consecutive',
@@ -240,25 +267,30 @@ function section(t) { console.log('\n=== ' + t + ' ==='); }
   const invRed = fixtures.find((f) => f.id === 'red_invalidated_objective');
   const supported = { valid: true, verdict: 'violation', violations: [{ category: 'invalidated_objective',
     claim: invRed.plan.state_change, citedFactIds: ['inv_0'] }] };
+  // v3 (Roman 2026-09-24): neg_0 is now GENUINELY supporting here — it affirmatively forbids
+  // convening this inquiry early — so it can no longer stand as the "irrelevant" example. The old
+  // assertion was encoding the very bug this correction removes. neg_1 (the Sacrificiant-seal
+  // costume note) is a real fact that forecloses nothing about convening an inquiry.
   const irrelevant = { valid: true, verdict: 'violation', violations: [{ category: 'invalidated_objective',
-    claim: invRed.plan.state_change, citedFactIds: ['neg_0'] }] };
+    claim: invRed.plan.state_change, citedFactIds: ['neg_1'] }] };
   const wrongCat = { valid: true, verdict: 'violation', violations: [{ category: 'rewritten_history',
     claim: invRed.plan.state_change, citedFactIds: ['inv_0'] }] };
   const bracketed = { valid: true, verdict: 'violation', violations: [{ category: 'invalidated_objective',
     claim: invRed.plan.state_change, citedFactIds: ['[inv_0]'] }] };
   ok('an APPROPRIATE category citing a SUPPORTING fact scores caught',
-    scoreFixture(invRed, supported, null).outcome === 'caught', JSON.stringify(scoreFixture(invRed, supported, null)));
+    sf(invRed, supported, null).outcome === 'caught', JSON.stringify(sf(invRed, supported, null)));
   ok('the same category citing an IRRELEVANT real fact scores unsupported_finding, NOT caught',
-    scoreFixture(invRed, irrelevant, null).outcome === 'unsupported_finding', JSON.stringify(scoreFixture(invRed, irrelevant, null)));
+    sf(invRed, irrelevant, null).outcome === 'unsupported_finding', JSON.stringify(sf(invRed, irrelevant, null)));
   ok('...and is flagged critical, with the reason named',
-    scoreFixture(invRed, irrelevant, null).critical === true
-    && /not detection/.test(scoreFixture(invRed, irrelevant, null).note || ''), 'note missing');
+    sf(invRed, irrelevant, null).critical === true
+    && /not detection/.test(sf(invRed, irrelevant, null).note || ''), 'note missing');
   ok('a WRONG category citing a supporting fact also scores unsupported_finding',
-    scoreFixture(invRed, wrongCat, null).outcome === 'unsupported_finding', JSON.stringify(scoreFixture(invRed, wrongCat, null)));
+    sf(invRed, wrongCat, null).outcome === 'unsupported_finding', JSON.stringify(sf(invRed, wrongCat, null)));
   ok('a bracketed-but-real id still counts as support — display brackets are normalised',
-    scoreFixture(invRed, bracketed, null).outcome === 'caught', JSON.stringify(scoreFixture(invRed, bracketed, null)));
+    sf(invRed, bracketed, null).outcome === 'caught', JSON.stringify(sf(invRed, bracketed, null)));
   const unsupSummary = verdictSummary(fixtures.map((f) => ({ id: f.id, expect: f.expect,
-    score: f.id === 'red_invalidated_objective' ? scoreFixture(f, irrelevant, null) : scoreFixture(f, replyFor(f), null) })));
+    score: f.id === 'red_invalidated_objective' ? sf(f, irrelevant, null, { facts: factsOf(f) })
+      : sf(f, replyFor(f), null, { facts: factsOf(f) }) })));
   ok('ONE unsupported finding ⇒ DO NOT ENABLE', unsupSummary.enableGenerally === false
     && unsupSummary.unsupportedFindings === 1, JSON.stringify(unsupSummary.blockers));
 
@@ -318,10 +350,10 @@ function section(t) { console.log('\n=== ' + t + ' ==='); }
     !isInfraFailure(REAL_429, false));
   ok('and the 502 infra signature is still NOT treated as a rate limit', !isRateLimited(REAL_502));
   ok('a scored 429 fixture carries its own rateLimited flag, never the infra flag',
-    (() => { const sc = scoreFixture({ expect: 'violation' }, null, REAL_429);
+    (() => { const sc = sf({ expect: 'violation' }, null, REAL_429);
       return sc.outcome === 'unavailable' && sc.rateLimited === true && !sc.infra; })());
   const rlRows = ['a', 'b', 'c'].map((id) => ({ id, expect: 'violation',
-    score: scoreFixture({ expect: 'violation' }, null, REAL_429) }));
+    score: sf({ expect: 'violation' }, null, REAL_429) }));
   const rlSum = verdictSummary(rlRows);
   ok('the summary reports PROVIDER-INCONCLUSIVE as a distinct state from infrastructure',
     rlSum.providerRateLimited === true && rlSum.infrastructureInconclusive === false, JSON.stringify(rlSum).slice(0, 200));
@@ -353,9 +385,9 @@ function section(t) { console.log('\n=== ' + t + ' ==='); }
   // seven fixtures it never touched. Reconstructed here as the exact row shape that produced them.
   const RL_ERR = 'mistral HTTP 429 {"type":"rate_limited","code":"1300"}';
   const canaryRows = [
-    { id: 'red_memory_extraction', expect: 'violation', score: scoreFixture({ expect: 'violation' }, null, RL_ERR) }
+    { id: 'red_memory_extraction', expect: 'violation', score: sf({ expect: 'violation' }, null, RL_ERR) }
   ].concat(['a','b','c','d','e','f','g'].map((id) => ({ id, expect: 'pass',
-    score: scoreFixture({ expect: 'pass' }, null, null, { skipped: true,
+    score: sf({ expect: 'pass' }, null, null, { skipped: true,
       stopReason: 'the CANARY probe was refused by the PROVIDER (HTTP 429) — the local function layer worked and relayed it' }) })));
   const canarySum = verdictSummary(canaryRows, { rateLimitStopAfter: 1 });
   ok('a canary that dispatched ONCE reports 0 usable responses, not 7',
@@ -376,9 +408,9 @@ function section(t) { console.log('\n=== ' + t + ' ==='); }
   ok('a canary run can never read as ENABLE', canarySum.enableGenerally === false);
   // And the converse still holds: a GENUINE local function-layer failure is still called that.
   const infraRows = ['a','b'].map((id) => ({ id, expect: 'violation',
-    score: scoreFixture({ expect: 'violation' }, null, 'mistral HTTP 502 {"error":"NO_RESPONSE_FROM_FUNCTION"}') }))
+    score: sf({ expect: 'violation' }, null, 'mistral HTTP 502 {"error":"NO_RESPONSE_FROM_FUNCTION"}') }))
     .concat(['c'].map((id) => ({ id, expect: 'pass',
-      score: scoreFixture({ expect: 'pass' }, null, null, { skipped: true, stopReason: 'local function layer' }) })));
+      score: sf({ expect: 'pass' }, null, null, { skipped: true, stopReason: 'local function layer' }) })));
   const infraSum = verdictSummary(infraRows);
   ok('RED PROOF — a genuine 502 run is STILL reported as infrastructure-inconclusive',
     infraSum.infrastructureInconclusive === true && infraSum.providerRateLimited === false,
