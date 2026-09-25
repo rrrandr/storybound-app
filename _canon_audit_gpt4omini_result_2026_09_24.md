@@ -1,7 +1,9 @@
 # GPT-4o-mini canon-auditor calibration — REJECTED
 
-Run once, 2026-09-24, pinned to `gpt-4o-mini` only. 8 dispatches, **$0.003121 realized** (17,600 in
-/ 802 out) against a $0.01 ceiling.
+Run once, 2026-09-24, pinned to `gpt-4o-mini` only. 8 dispatches.
+**Reservation basis (the enforced maximum): $0.00081 x 8 = $0.00648** against the $0.01 ceiling.
+**Realized: $0.003121** (17,600 in / 802 out) — an after-the-fact measurement and an ESTIMATE for
+any future run, never the bound. A spending decision uses the reservation basis, not this.
 Evidence: `_tempt_fate_fixtures/canon_calibration_2026-09-24_18-43-29/`.
 
 **Reported independently of the Ministral 8B result. Scores are not merged.**
@@ -42,8 +44,11 @@ support?", which invites a yes, and the packet it supplies is a list of constrai
 positive permission to weigh against them.
 
 That is a hypothesis, not a finding. It is testable dry — the prompt can be rebalanced and re-run
-against the same eight fixtures for the same ~$0.003–0.006 — and it should be tested before any
-third model is bought, because a third rejection would otherwise tell us nothing new.
+against the same eight fixtures on the same $0.00648 reservation basis — and it should be tested
+before any third model is bought, because a third rejection would otherwise tell us nothing new.
+
+UPDATE 2026-09-24: it WAS tested dry, and the hypothesis was mostly wrong — v1 already carried an
+explicit ordinary-action permission clause. See `_canon_audit_prompt_bias_tested_2026_09_24.md`.
 
 ## A defect of mine, found by this run
 

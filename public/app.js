@@ -192332,15 +192332,52 @@ No text, no watermark, no UI elements, share-ready.`;
     // v2 makes the DEFAULT the rule and states the silence principle explicitly.
     var framing = (_v === 1)
       ? 'You are given a PROPOSED SCENE PLAN and the ONLY canon that applies to it. Decide whether the plan asserts anything the supplied canon does not support.\n\n'
+      // CAPABILITY-ROOTED EXTRAPOLATION (Roman 2026-09-24). The first v2 draft over-corrected: a
+      // blunt "silence is permission" licenses anything canon fails to mention, which is as wrong
+      // as demanding a precedent for the exact act. The real test is COMPOSITIONAL — an event is
+      // supported when it decomposes into an established capability plus an ordinary application,
+      // technique, prop, or coordination of it. Judge the KIND OF EFFECT, never whether this exact
+      // stunt has been depicted before.
       : 'You are given a PROPOSED SCENE PLAN and the canon that applies to it.\n\n'
         + 'YOUR DEFAULT VERDICT IS "pass". Most plans are legitimate and must return "pass".\n\n'
-        + 'CANON SILENCE IS PERMISSION, NEVER PROHIBITION. A supplied fact that simply does not mention\n'
-        + 'what the plan does is NOT grounds for a violation. "The canon does not describe X", "the canon\n'
-        + 'does not say they can X", and "X is not established" are NOT violations — they are the normal\n'
-        + 'condition of every invented scene, and reporting them is the single most common way to get\n'
-        + 'this task wrong. Return "violation" ONLY when a supplied fact AFFIRMATIVELY FORBIDS or\n'
-        + 'DIRECTLY CONTRADICTS something the plan asserts. If your reason for a finding could be\n'
-        + 'phrased as "canon is silent about this", it is not a finding.\n\n';
+        + 'THE TEST IS CAPABILITY-ROOTED EXTRAPOLATION, NOT PRECEDENT.\n'
+        + 'Canon does NOT need to enumerate the exact act. An event is SUPPORTED when it decomposes into\n'
+        + '    an ESTABLISHED CAPABILITY  +  an ordinary application, technique, strategy, prop, or\n'
+        + '    coordination of that capability.\n'
+        + 'Ask "is this the same KIND of effect canon already grants?" — NEVER "has canon shown this exact\n'
+        + 'event before?" A novel application or combination of established capabilities is ALLOWED.\n\n'
+        + 'ALWAYS ALLOWED, even where canon never mentions them:\n'
+        + '  - ordinary physical and social action, dialogue, tactics, props, technique, movement\n'
+        + '  - creative appearance and presentation\n'
+        + '  - ordinary coordination and teamwork among people who each already hold the capability\n'
+        + '  - an application of an established capability that canon has never previously depicted\n\n'
+        + 'WORKED EXAMPLES (they teach the PRINCIPLE; they are not this story\'s canon):\n'
+        + '  SUPPORTED  someone with an established DISGUISE ability appears as a dragon, though canon\n'
+        + '             never names "dragon" as an approved form. Appearance is the granted kind of effect.\n'
+        + '  SUPPORTED  twelve such people coordinate overlapping disguises to look collectively like a\n'
+        + '             whale. Ordinary teamwork and compositional use of twelve existing abilities needs\n'
+        + '             no separate "collective magic" rule.\n'
+        + '  UNSUPPORTED  that disguised dragon breathes REAL fire or physically FLIES.\n'
+        + '  UNSUPPORTED  those twelve FUSE into one real whale with real mass, lungs, or the ability to\n'
+        + '             carry passengers.\n'
+        + '             Disguise grants APPEARANCE. It does not grant new biology, mass, or physics —\n'
+        + '             those are separate categories of effect needing their own grounding.\n\n'
+        + 'A plan is UNSUPPORTED only when it introduces a MATERIALLY NEW CATEGORY OF EFFECT that no\n'
+        + 'supplied capability grants. Examples of new categories: new biology; real mass or physical\n'
+        + 'transformation; mind access; time alteration; resurrection; teleportation; bodily fusion; a\n'
+        + 'newly acquired power; or a new metaphysical mechanism.\n\n'
+        + 'CANON SILENCE IS NOT PROHIBITION. "The canon does not describe X", "does not say they can X",\n'
+        + '"X is not established" are NOT violations on their own — they are the normal condition of every\n'
+        + 'invented scene, and reporting them is the most common way to get this task wrong. But silence\n'
+        + 'does not permit a new CATEGORY of effect either. Judge the kind of effect, not the wording.\n\n'
+        + 'CHOOSING THE VERDICT:\n'
+        + '  "violation"     a supplied fact AFFIRMATIVELY FORBIDS or DIRECTLY CONTRADICTS the plan; OR the\n'
+        + '                  plan needs a materially new category of effect, the packet is COMPLETE, and so\n'
+        + '                  nothing could have grounded it.\n'
+        + '  "cannot_decide" the plan needs a category of effect you cannot ground here AND the packet is\n'
+        + '                  TRUNCATED, so the grounding fact may simply have been omitted.\n'
+        + '  "pass"          everything else — including every novel application, combination, or\n'
+        + '                  coordination of capabilities canon already establishes.\n\n';
     var sys = 'You are a CANON AUDITOR for an interactive fiction engine. You classify; you do NOT write.\n\n'
       + framing
       + 'ABSOLUTE LIMITS ON YOU:\n'

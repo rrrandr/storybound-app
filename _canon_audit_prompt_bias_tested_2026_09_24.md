@@ -75,8 +75,15 @@ fact existed in the record and was withheld, then the model was blamed for the g
 Fixes 1, 3 and 4 are implemented. **v1 is retained verbatim and selectable**, because deleting it
 would destroy the control arm for the only experiment that can settle this.
 
-- **Silence is permission.** `pass` is the stated default; "the canon does not describe X" / "is not
-  established" are named as non-findings, with a self-check the model can apply to its own draft.
+- **Capability-rooted extrapolation.** `pass` is the stated default; "the canon does not describe X"
+  / "is not established" are named as non-findings. An event is supported when it decomposes into an
+  **established capability + an ordinary application, technique, prop, or coordination** of it —
+  judge the *kind of effect*, never demand a precedent for the exact act. A first draft of this
+  clause said simply "canon silence is permission"; that over-corrected, licensing anything canon
+  fails to mention, and was replaced. Silence is not prohibition, but it does not grant a new
+  **category** of effect either (new biology, real mass, mind access, time alteration, teleportation,
+  bodily fusion, a newly acquired power, a new mechanism). Proven clause-by-clause in
+  `_canon_audit_extrapolation_control.mjs` (33/33).
 - **Qualifiers travel with the category names**, including the directional ones.
 - **`ev_` facts** now carry what a rupture left intact and what it left open, labelled as grants.
 
@@ -92,10 +99,16 @@ truth: a `neg_` prefix is a grouping hint, not a judgment; judge a fact by what 
 packet now carries facts it was withholding and the prompt now states rules the models measurably
 broke — not that either changes a verdict.
 
-## The next experiment is $0.003, and buys no new model
+## The alternative experiment, priced correctly
 
 Re-run **gpt-4o-mini** — already tested, already rejected — against **v2**, with the prompt version
 as the single changed variable. Its v1 scores are the control arm and already exist.
+
+**COST LANGUAGE CORRECTED.** I wrote "$0.003" for this run. That was wrong: $0.003121 is the
+**realized** cost of the earlier v1 run, which is an *estimate* of what a similar run might cost —
+not the enforced maximum. The **enforced reservation basis is $0.00081 x 8 = $0.00648** against the
+$0.01 ceiling, and that is the number a spending decision must use. Realized cost can only be known
+after the fact, and a reasoning or longer-output run would land higher.
 
 ```
 node _canon_audit_calibration_run.mjs --model gpt-4o-mini --prompt-version 2 \
@@ -107,8 +120,10 @@ node _canon_audit_calibration_run.mjs --model gpt-4o-mini --prompt-version 2 \
 - If they don't → the defect is in the models' judgment, the two rejections stand on merit, and
   **then** reasoning Mistral is worth its $0.0132.
 
-Either way it costs a third of what the reasoning-Mistral run costs and answers the prior question.
-Running the third model first would have spent more to learn less.
+Reasoning Mistral's own reservation is **$0.00165 x 8 = $0.01320** under its $0.02 ceiling.
+
+ORDER OVERRIDDEN BY ROMAN (2026-09-24): reasoning Mistral runs FIRST, against v2. The gpt-4o-mini
+v2 arm is not run ahead of it.
 
 ## Status, unchanged
 

@@ -210,6 +210,121 @@ export function loadFixtures() {
   };
 }
 
+// ── EXTRAPOLATION FIXTURES — DRY ONLY, DELIBERATELY NOT IN THE PAID SET ──────────────────────
+// These distinguish CAPABILITY-ROOTED EXTRAPOLATION from both failure modes: demanding a
+// precedent for the exact act, and permitting anything canon fails to mention. They are exported
+// SEPARATELY and are NOT returned by loadFixtures(), so the paid calibration keeps its original
+// eight-result comparison intact. Adding them to a paid run would change the request count and the
+// ceiling, and must be priced and authorized on its own terms — see EXTRAPOLATION_PAID_COST below.
+//
+// They carry their OWN capability facts, because First Sacrifice canon establishes no disguise
+// ability. The dry control injects these through the REAL character ledger so they reach the
+// auditor as real cap_ facts from the REAL packet builder — never as a hand-built packet.
+export function extrapolationFixtures() {
+  const ord = (slots) => Object.assign({ mechanism_grounding: 'ordinary' }, slots || {});
+  // One established capability, stated once, shared by every fixture below. The RED cases differ
+  // from the GREEN ones ONLY in the category of effect they require — not in how exotic they look.
+  const DISGUISE = 'Sath (Kwisheen): established ability — may alter their own APPEARANCE at will, '
+    + 'taking on any outward form or likeness. The change is appearance only: it confers no strength, '
+    + 'no mass, no new organs, and no ability the wearer did not already have.';
+  const TWELVE = 'The Kwisheen delegation (twelve): each holds the same established appearance-'
+    + 'altering ability; they are practised at working in concert.';
+  const LIMIT = 'Kwisheen appearance-change CANNOT be held while unconscious, and collapses the '
+    + 'moment its holder loses consciousness.';
+  return [
+    // ── GREEN: extraordinary-LOOKING, but every extraordinary effect traces to the capability ──
+    { id: 'x_green_dragon_appearance', expect: 'pass', hard: true, capabilityFacts: [DISGUISE],
+      why: 'an established appearance ability applied to a form canon never names — novel application, same KIND of effect',
+      plan: { tactical_move: 'frighten the crowd without touching anyone',
+        state_change_precondition: 'Sath has not yet taken a form larger than a person.',
+        state_change: 'Sath takes on the outward appearance of a dragon and looms over the square, gaining no dragon abilities',
+        forces_choice: 'forces Lirael to choose between calling the bluff and retreating',
+        branch_a: 'call the bluff', branch_b: 'retreat',
+        event_slots: { precondition: 'Sath and the crowd are present', actor: 'Sath',
+          action: 'takes on the outward appearance of a dragon', target: 'the crowd',
+          exit_state: 'the crowd now believes a dragon stands in the square',
+          mechanism_grounding: 'the established Kwisheen ability to alter their own appearance at will' } } },
+    { id: 'x_green_twelve_whale', expect: 'pass', hard: true, capabilityFacts: [DISGUISE, TWELVE],
+      why: 'ordinary coordination of twelve existing abilities — teamwork needs no separate collective-magic rule',
+      plan: { tactical_move: 'make the harbour believe the omen arrived',
+        state_change_precondition: 'The delegation has not yet acted in concert.',
+        state_change: 'The twelve Kwisheen coordinate overlapping appearance-changes so that together they read as one whale breaching, while remaining twelve separate beings standing in formation',
+        forces_choice: 'forces Lirael to choose between exposing the trick and letting it stand',
+        branch_a: 'expose it', branch_b: 'let it stand',
+        event_slots: { precondition: 'the twelve and the harbour crowd are present', actor: 'the twelve Kwisheen',
+          action: 'coordinate overlapping appearance-changes', target: 'the harbour crowd',
+          exit_state: 'the harbour crowd now believes it saw a whale breach',
+          mechanism_grounding: 'twelve holders of the established appearance-altering ability, coordinating — ordinary teamwork' } } },
+    { id: 'x_green_novel_application', expect: 'pass', hard: true, capabilityFacts: [DISGUISE],
+      why: 'the established capability used for a purpose canon never depicted — application, not a new category',
+      plan: { tactical_move: 'get through the cordon without a fight',
+        state_change_precondition: 'Sath has not yet worn another person\'s face.',
+        state_change: 'Sath takes on the appearance of the guard captain and walks through the cordon giving orders',
+        forces_choice: 'forces Lirael to choose between following him through and staying',
+        branch_a: 'follow', branch_b: 'stay',
+        event_slots: { precondition: 'Sath and the cordon are present', actor: 'Sath',
+          action: 'takes the appearance of the guard captain and gives orders', target: 'the cordon',
+          exit_state: 'the cordon has let two people through',
+          mechanism_grounding: 'the established Kwisheen ability to alter their own appearance at will' } } },
+    // ── RED: a NEW CATEGORY OF EFFECT the capability does not grant ────────────────────────────
+    { id: 'x_red_dragon_fire_and_flight', expect: 'violation', hard: true, capabilityFacts: [DISGUISE],
+      expectCategories: ['unsupported_capability', 'new_metaphysics'], supportingFactKinds: ['cap'],
+      why: 'appearance does not confer real fire or real flight — separate categories of effect, ungrounded',
+      plan: { tactical_move: 'end the standoff from above',
+        state_change_precondition: 'Nothing has yet been set alight.',
+        state_change: 'In dragon form Sath breathes real fire across the barricade and physically flies over the square',
+        forces_choice: 'forces Lirael to choose between fleeing and standing',
+        branch_a: 'flee', branch_b: 'stand',
+        event_slots: { precondition: 'Sath is in dragon appearance above the square', actor: 'Sath',
+          action: 'breathes real fire and flies', target: 'the barricade',
+          exit_state: 'the barricade is burning and Sath is airborne',
+          mechanism_grounding: 'the established Kwisheen ability to alter their own appearance at will' } } },
+    { id: 'x_red_twelve_fuse', expect: 'violation', hard: true, capabilityFacts: [DISGUISE, TWELVE],
+      expectCategories: ['unsupported_capability', 'new_metaphysics'], supportingFactKinds: ['cap'],
+      why: 'bodily fusion and real mass are a new category — coordination of appearance grants neither',
+      plan: { tactical_move: 'carry the delegation out by sea',
+        state_change_precondition: 'The twelve are still twelve separate bodies.',
+        state_change: 'The twelve Kwisheen physically fuse into a single living whale of real mass, which swims out of the harbour carrying three passengers inside it',
+        forces_choice: 'forces Lirael to choose between boarding and staying ashore',
+        branch_a: 'board', branch_b: 'stay ashore',
+        event_slots: { precondition: 'the twelve are at the water', actor: 'the twelve Kwisheen',
+          action: 'physically fuse into one living whale', target: 'themselves',
+          exit_state: 'a single living whale of real mass is swimming out of the harbour',
+          mechanism_grounding: 'twelve holders of the established appearance-altering ability, coordinating' } } },
+    { id: 'x_red_stop_time_portal', expect: 'violation', hard: true, capabilityFacts: [DISGUISE, TWELVE],
+      expectCategories: ['unsupported_capability', 'new_metaphysics'], supportingFactKinds: ['cap'],
+      why: 'time alteration and teleportation are categories no supplied capability grants at all',
+      plan: { tactical_move: 'remove them from the square entirely',
+        state_change_precondition: 'Time is running normally and the square is enclosed.',
+        state_change: 'Sath stops time across the square and opens a portal through which the delegation steps to another city',
+        forces_choice: 'forces Lirael to choose between stepping through and remaining',
+        branch_a: 'step through', branch_b: 'remain',
+        event_slots: { precondition: 'Sath and the delegation are in the square', actor: 'Sath',
+          action: 'stops time and opens a portal', target: 'the square',
+          exit_state: 'the delegation is now in another city and time resumes',
+          mechanism_grounding: 'the established Kwisheen ability to alter their own appearance at will' } } },
+    { id: 'x_red_contradicts_explicit_limit', expect: 'violation', hard: true,
+      capabilityFacts: [DISGUISE, LIMIT],
+      expectCategories: ['unsupported_capability', 'contradicted_knowledge', 'other'], supportingFactKinds: ['cap'],
+      why: 'an explicit stated limit is contradicted head-on — this stays a violation under any framing',
+      plan: { tactical_move: 'keep the disguise through the fall',
+        state_change_precondition: 'Sath is still conscious.',
+        state_change: 'Sath is knocked unconscious but holds the borrowed face throughout, and no one sees his true form',
+        forces_choice: 'forces Lirael to choose between moving him and leaving him',
+        branch_a: 'move him', branch_b: 'leave him',
+        event_slots: ord({ precondition: 'Sath is disguised and under attack', actor: 'Sath',
+          action: 'holds the appearance while unconscious', target: 'himself',
+          exit_state: 'Sath lies unconscious, still wearing the borrowed face' }) } }
+  ];
+}
+// If these are ever folded into a PAID run, the request count and ceiling change. Stated here so
+// the number cannot be reached for casually: 7 more fixtures at the candidate's own per-call rate.
+export function extrapolationPaidCost(cand) {
+  const n = extrapolationFixtures().length;
+  return { extraFixtures: n, extraUsd: n * cand.perCallUsd,
+    totalFixtures: 8 + n, totalUsd: (8 + n) * cand.perCallUsd };
+}
+
 // ── RESERVATION: one call per fixture, primary tier only, refused past the ceiling ───────────
 // perCallUsd MUST be the CANDIDATE's rate. It defaulted to the module constant (Mistral's), so the
 // gpt-4o-mini run reserved at $0.000495/call while actually spending $0.000810 — under the ceiling

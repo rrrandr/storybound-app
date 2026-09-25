@@ -67,16 +67,27 @@ function section(t) { console.log('\n=== ' + t + ' ==='); }
 
   section('2. FIX C — SILENCE IS PERMISSION (the proven false-positive reason)');
   // gpt-4o-mini blocked a green because the band "is not described as being capable of being torn".
-  ok('v2 states that canon silence is permission, never prohibition',
-    /CANON SILENCE IS PERMISSION, NEVER PROHIBITION/.test(green.sys));
+  // REVISED (Roman 2026-09-24): the blunt "silence is permission" rule over-corrected — it
+  // licenses anything canon fails to mention. It was replaced by CAPABILITY-ROOTED EXTRAPOLATION,
+  // which keeps the absence-as-prohibition fix while still refusing a new CATEGORY of effect.
+  // See _canon_audit_extrapolation_control.mjs for the full clause-by-clause proof.
+  ok('v2 keeps the absence-as-prohibition correction',
+    /CANON SILENCE IS NOT PROHIBITION/.test(green.sys));
+  ok('but does NOT extend silence to a new category of effect',
+    /silence\ndoes not permit a new CATEGORY of effect either/.test(green.sys));
   ok('v2 names the exact wording the models used, so the rule is not abstract',
     /does not describe X/.test(green.sys) && /is not established/.test(green.sys));
   ok('v2 makes "pass" the stated DEFAULT verdict, not merely an available one',
     /YOUR DEFAULT VERDICT IS "pass"/.test(green.sys));
-  ok('v2 gives a self-check a model can actually apply to its own draft finding',
-    /could be\s+phrased as "canon is silent about this", it is not a finding/.test(green.sys));
+  // The old blanket self-check ("if your reason is 'canon is silent', it is not a finding") was
+  // DELIBERATELY DROPPED in the capability-rooted revision: for a new-category red the reason
+  // genuinely IS that nothing grounds it, so the blanket form would have taught the wrong lesson.
+  // What replaces it is the kind-of-effect test, which discriminates instead of blanketing.
+  ok('v2 replaces the blanket self-check with the kind-of-effect test that discriminates',
+    /Judge the kind of effect, not the wording/.test(green.sys)
+    && !/could be\s+phrased as "canon is silent about this", it is not a finding/.test(green.sys));
   ok('RED PROOF — v1 contains NONE of that, which is why the clause is the change',
-    !/SILENCE IS PERMISSION/.test(greenV1.sys) && !/DEFAULT VERDICT/.test(greenV1.sys));
+    !/SILENCE IS NOT PROHIBITION/.test(greenV1.sys) && !/DEFAULT VERDICT/.test(greenV1.sys));
   ok('the ordinary-action clause v1 ALREADY had is still present in v2 — it was never the missing piece',
     /Ordinary human action is ALWAYS allowed/.test(green.sys) && /Ordinary human action is ALWAYS allowed/.test(greenV1.sys));
 

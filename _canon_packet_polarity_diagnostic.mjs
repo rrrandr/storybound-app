@@ -154,9 +154,14 @@ function section(t) { console.log('\n=== ' + t + ' ==='); }
     evidenceProbe.packetText.includes(String(e).slice(0, 40)));
   ok('the committed consequence DOES record surviving evidence',
     evidenceProbe.establishedEvidence.length > 0, JSON.stringify(evidenceProbe.establishedEvidence));
-  ok('DEFECT — none of that surviving evidence reaches the canon packet the auditor sees',
-    evidenceProbe.establishedEvidence.length > 0 && reached.length === 0,
-    'reached: ' + JSON.stringify(reached));
+  // WAS THE DEFECT, NOW THE REGRESSION GUARD (Roman 2026-09-24). When this diagnostic first ran,
+  // reached.length was 0 — the commit record stored surviving evidence and the packet dropped it,
+  // which is why both models reasoned the assembly could not read a ledger it did not remember.
+  // The repair emits ev_ facts, so the assertion is INVERTED rather than deleted: it now fails if
+  // the defect ever comes back.
+  ok('FIXED (was the defect) — every piece of surviving evidence now reaches the packet',
+    evidenceProbe.establishedEvidence.length > 0 && reached.length === evidenceProbe.establishedEvidence.length,
+    'reached ' + reached.length + ' of ' + evidenceProbe.establishedEvidence.length);
 
   section('5. A THIRD DEFECT — THE CATEGORY MENU DROPS THE QUALIFIERS');
   const prompt = await page.evaluate((a) => {
@@ -174,9 +179,22 @@ function section(t) { console.log('\n=== ' + t + ' ==='); }
   // ...but the menu the model picks from at output time is bare.
   const menu = (prompt.match(/CATEGORIES:.*/) || [''])[0];
   console.log('    menu as sent: ' + menu);
-  ok('DEFECT — the CATEGORIES menu lists bare names with NO qualifier, and it sits next to the '
-    + 'output schema where the model actually chooses',
-    /CATEGORIES:/.test(menu) && !/committed rupture/i.test(menu), menu);
+  // Same inversion. v1's menu was a bare list of names; v2 carries each qualifier with its name.
+  // The v1 arm is still built below, so the original defect is still demonstrated, not just claimed.
+  const menuV1 = await page.evaluate((a) => {
+    const s = window.state; s._starterId = 'starter_first_sacrifice';
+    s._temptFateDurableConsequences = [a.durable];
+    window._canonAuditPromptVersion = 1;
+    const p = window._buildCanonPacket(s, { proposal: a.plan });
+    const sys = window._buildCanonAuditPrompt(a.plan, p).sys;
+    delete window._canonAuditPromptVersion;
+    return (sys.match(/CATEGORIES:.*/) || [''])[0];
+  }, { durable, plan: green.plan });
+  console.log('    v1 menu (the defect, still reproducible): ' + menuV1);
+  ok('WAS THE DEFECT — v1\'s menu really is a bare list with no qualifier',
+    /CATEGORIES: unsupported_capability/.test(menuV1) && !/committed rupture/i.test(menuV1), menuV1);
+  ok('FIXED — the live menu now carries the qualifier with each category name',
+    /committed rupture/i.test(prompt) && /knowing LESS/.test(prompt), menu);
   const misapplied = [];
   for (const [model, dir] of Object.entries(RUNS)) {
     const p = path.join(dir, 'green_tempt_history_rewrite.json');

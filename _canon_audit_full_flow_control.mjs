@@ -341,7 +341,7 @@ const RED_NO_GROUNDING = (base) => Object.assign({}, base, {
     return { totalPos: pos.length, totalNeg: neg.length, auth: AUTH,
       blindHas: blind.facts.some((f) => f.text === AUTH), awareHas: aware.facts.some((f) => f.text === AUTH),
       blindTruncated: blind.truncated, blindOmitted: blind.omittedTotal,
-      awareProposalAware: aware.proposalAware, sys: built.sys.slice(0, 2400) };
+      awareProposalAware: aware.proposalAware, sys: built.sys };
   }, DURABLE);
   console.log('    synthetic seed: ' + sel.totalPos + ' positive / ' + sel.totalNeg + ' negative truths (caps 10/12)');
   console.log('    authorising fact at index 25: "' + sel.auth + '"');
