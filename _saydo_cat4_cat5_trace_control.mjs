@@ -19,6 +19,7 @@
 
 import { chromium } from 'playwright-core';
 import { installFailClosedNetworkGate } from './_e2e_network_gate.mjs';
+import { buildScheduleAwareStubResponse } from './_tempt_fate_stub_plan_builder.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -298,6 +299,172 @@ const CAT5 = ['I don\'t know', 'whatever', '...', 'sure'];
   });
   ok('THE VALUE REACHES THE AUTHOR PAYLOAD — present in the real CG system prompt',
     inAuthor.has === true, JSON.stringify(inAuthor));
+
+  section('8b. MIXED SAY/DO MUST ROUTE THE FIELD THAT ACTUALLY COMPLAINED');
+  // Detection ran per field but the routed TEXT was always `action || dialogue`, so an ordinary
+  // action beside a complaint in dialogue opened the bug report prefilled with the wrong sentence.
+  const MIXED = [
+    ['interface',              'I fold my arms',            'The Continue button is broken.', 'bug-report'],
+    ['plot-memory-complaint',  'I step back from the table','You forgot what happened.',      'concierge-verify'],
+    ['model-name-complaint',   'I look at the door',        'Claude messed this up.',         'concierge-ooc']
+  ];
+  for (const [cat, act, dia, route] of MIXED) {
+    const r = await page.evaluate((a) => window._routeWallBreakComplaint(a.act, a.dia), { act, dia });
+    note((cat + ':').padEnd(24) + 'field=' + (r && r.field) + '  text=' + JSON.stringify(r && r.text));
+    ok('mixed ' + cat + ': the DIALOGUE field is identified as the source',
+      !!r && r.field === 'dialogue', JSON.stringify(r));
+    ok('...and the routed text is the COMPLAINT, not the innocent action',
+      !!r && r.text === dia && r.text !== act, JSON.stringify(r && r.text));
+    ok('...routed to ' + route, !!r && r.route === route, JSON.stringify(r && r.route));
+  }
+  // And the converse: a complaint in the ACTION field still routes the action.
+  const actSide = await page.evaluate(() => window._routeWallBreakComplaint('The Continue button is broken.', 'Then say it plainly.'));
+  ok('a complaint in the ACTION field routes the action text',
+    actSide && actSide.field === 'action' && actSide.text === 'The Continue button is broken.',
+    JSON.stringify(actSide));
+
+  section('8c. THE CONCIERGE BRANCHES DO REAL WORK — observed at the UI, not by route label');
+  const concierge = await page.evaluate(() => {
+    const s = window.state;
+    // A record that genuinely CONTAINS what the player claims was forgotten.
+    s.scenes = [{ title: '', synopsis: '', text: 'The registrar read the accusation aloud and the assembly went silent.', fateCard: null }];
+    s._sceneLedger = { entries: [{ sceneNumber: 1, act: 'I stepped forward', dia: 'Name it, then.' }] };
+    const el0 = document.getElementById('conciergeWhisper');
+    const before = { text: el0 ? el0.textContent : null, scenes: s.scenes.length, turn: s.turnCount };
+    const verified = window._conciergeVerifyContinuityClaim('You forgot the accusation.');
+    const el1 = document.getElementById('conciergeWhisper');
+    const afterFound = { visible: !!el1, text: el1 ? el1.textContent : null };
+    // Now a claim the record does NOT contain.
+    const missing = window._conciergeVerifyContinuityClaim('You forgot the shipwreck in Calenhad.');
+    const el2 = document.getElementById('conciergeWhisper');
+    const ooc = window._conciergeOOCAcknowledge('This game is boring.', 'subjective-frustration');
+    const el3 = document.getElementById('conciergeWhisper');
+    return { before, verified, afterFound, missing, missingText: el2 ? el2.textContent : null,
+      ooc, oocText: el3 ? el3.textContent : null,
+      after: { scenes: s.scenes.length, turn: s.turnCount },
+      recordedVerification: s._lastContinuityVerification || null,
+      recordedOOC: s._lastOOCAcknowledgement || null };
+  });
+  fs.writeFileSync(path.join(OUT_DIR, 'concierge.json'), JSON.stringify(concierge, null, 2));
+  ok('the continuity handler EXISTS and returns a structured verification',
+    !!concierge.verified && Array.isArray(concierge.verified.checked), JSON.stringify(concierge.verified).slice(0, 200));
+  ok('it ACTUALLY SEARCHED the ledgers — sources are named, not assumed',
+    concierge.verified.checked.length >= 2, JSON.stringify(concierge.verified.checked));
+  ok('a claim the record DOES contain verifies as found, with where',
+    concierge.verified.verdict === 'the record contains this' && concierge.verified.found.length > 0,
+    JSON.stringify(concierge.verified.found));
+  ok('a claim the record does NOT contain says so plainly — no reflexive apology, no retcon',
+    concierge.missing.verdict === 'not found in the record'
+    && /You may be right — nothing has been changed/.test(concierge.missing.message),
+    JSON.stringify(concierge.missing));
+  ok('THE CONCIERGE UI ACTUALLY OPENED — the whisper element exists and carries the verdict',
+    concierge.afterFound.visible === true && /checked the record/.test(concierge.afterFound.text || ''),
+    JSON.stringify(concierge.afterFound));
+  ok('the OOC branch answers out-of-character and says the story is untouched',
+    /feedback for me, not for the scene/.test(concierge.ooc.message)
+    && concierge.ooc.storyFactsChanged === false, JSON.stringify(concierge.ooc));
+  ok('...and that reply reaches the same Concierge surface',
+    /feedback for me/.test(concierge.oocText || ''), JSON.stringify(concierge.oocText));
+  ok('NO STORY FACT CHANGED across all three interactions',
+    concierge.before.scenes === concierge.after.scenes && concierge.before.turn === concierge.after.turn,
+    JSON.stringify({ b: concierge.before, a: concierge.after }));
+  ok('both outcomes are retained on state for review',
+    !!concierge.recordedVerification && !!concierge.recordedOOC);
+
+  section('8d. WEAK-TURN STATE — REAL GENERATION PATH, AND NO LEAK INTO THE NEXT TURN');
+  // The cleanup was accidentally placed in the Chrome-translation finally block. That could erase
+  // the contract mid-generation, or let it survive into a later ordinary turn. Both are tested.
+  const src0 = fs.readFileSync(path.join(__dirname, 'public', 'app.js'), 'utf8');
+  ok('the cleanup is NOT in the translation block any more',
+    !/_chromeI18nBusy = false;[\s\S]{0,200}?delete state\._lastSayDoAction/.test(src0)
+    && !/delete state\._lastSayDoAction[\s\S]{0,120}?_chromeI18nBusy = false/.test(src0));
+  ok('...and there is exactly ONE cleanup site',
+    (src0.match(/delete state\._lastSayDoAction/g) || []).length === 1,
+    String((src0.match(/delete state\._lastSayDoAction/g) || []).length));
+  ok('...and it sits in the generation\'s own finally, right after the plan is returned',
+    src0.indexOf('delete state._lastSayDoAction') > src0.indexOf('return _cgPlan;')
+    && (src0.indexOf('delete state._lastSayDoAction') - src0.indexOf('return _cgPlan;')) < 600,
+    'distance=' + (src0.indexOf('delete state._lastSayDoAction') - src0.indexOf('return _cgPlan;')));
+
+  const reqs = [];
+  const serveGen = async (req) => {
+    let b = {}; try { b = JSON.parse(req.postData() || '{}'); } catch (_) {}
+    const sys = ((b.messages || []).find((m) => m.role === 'system') || {}).content || '';
+    const usr = ((b.messages || []).find((m) => m.role === 'user') || {}).content || '';
+    const all = JSON.stringify(b);
+    const kind = all.indexOf('decisionGateBeatIdx') !== -1 ? 'author'
+      : (all.indexOf('state_change') !== -1 || all.indexOf('tactical_move') !== -1) ? 'planner' : 'other';
+    reqs.push({ kind, sys });
+    if (kind === 'planner') {
+      const base = buildScheduleAwareStubResponse(sys, usr, false);
+      base.event_slots = Object.assign({}, base.event_slots, { mechanism_grounding: 'ordinary' });
+      return { content: JSON.stringify(base) };
+    }
+    if (kind === 'author') return { content: JSON.stringify({
+      beats: [{ idx: 0, kind: 'narration', text: 'The lamp gutters and no one speaks.', speaker: null }],
+      visualState: {}, decisionGateBeatIdx: 0, hardBeats: [] }) };
+    return { content: null };
+  };
+  ['/api/proxy', '/api/mistral-proxy'].forEach((ep) => gate.stub(ep, serveGen));
+  gate.stub('/api/chatgpt-proxy', async (req) => ({ choices: [{ message: { content: (await serveGen(req)).content } }] }));
+
+  const seedGen = (extra) => page.evaluate((e) => {
+    const s = window.state;
+    s.storyId = 'cat5-' + Date.now();
+    s.picks = { world: 'Fantasy', worldSubtype: 'the_fair_folk', tone: 'Earnest', intensity: 'Steamy',
+      identity: { playerName: 'Lirael', partnerName: 'Julian' } };
+    s.gender = 'Female'; s.loveInterest = 'Male';
+    s.renderMode = 'staged_story_mode'; s.currentEngine = 'graphic';
+    s.turnCount = 1; s.scenes = [{ title: 'A', synopsis: 'a', text: 'The clearing holds its silence.', fateCard: null }];
+    s.subscribed = true; s.fortunes = 9999999; s.access = 'sub';
+    s._starterId = 'starter_first_sacrifice'; s._pcLookSkipped = true; s._bakedGenesisUnlocked = true;
+    window._devBypass = true; s._intimacyDevMode = true; window._canonAuditEnabled = false;
+    s.contentMode = 'full';
+    delete s._acceptedPlannerProposal; delete s._lastSayDoAction; delete s._lastSayDoDialogue;
+    Object.assign(s, e || {});
+  }, extra);
+
+  // TURN 1 — a weak turn driven through the REAL generator.
+  reqs.length = 0;
+  await seedGen({});
+  gate.setPhase('cat5-weak', 40);
+  const weakRun = await page.evaluate(async () => {
+    const p = await window._runCGScreenplayGen(1, "I don't know", '');
+    return { got: !!p, leakedAction: window.state._lastSayDoAction, leakedDialogue: window.state._lastSayDoDialogue };
+  });
+  gate.closePhase();
+  const plannerReq = reqs.find((r) => r.kind === 'planner');
+  const authorReq = reqs.find((r) => r.kind === 'author');
+  note('weak turn requests: ' + JSON.stringify(reqs.map((r) => r.kind)));
+  ok('the weak turn reached a real PLANNER request', !!plannerReq);
+  ok('THE RESTRAINT REACHED THE PLANNER PAYLOAD',
+    !!plannerReq && plannerReq.sys.indexOf('WEAK-TURN RESTRAINT') !== -1,
+    plannerReq ? plannerReq.sys.slice(-200) : 'no planner request');
+  ok('the weak turn reached a real AUTHOR request', !!authorReq);
+  ok('THE RESTRAINT REACHED THE AUTHOR PAYLOAD',
+    !!authorReq && authorReq.sys.indexOf('WEAK-TURN RESTRAINT') !== -1);
+  ok('...and it is the SAME contract in both, not two drifting copies',
+    !!plannerReq && !!authorReq
+    && plannerReq.sys.indexOf('PRESERVE THE POSTURE EXACTLY') !== -1
+    && authorReq.sys.indexOf('PRESERVE THE POSTURE EXACTLY') !== -1);
+  ok('THE STATE WAS CLEARED after generation — nothing is left behind',
+    weakRun.leakedAction === undefined && weakRun.leakedDialogue === undefined,
+    JSON.stringify(weakRun));
+
+  // TURN 2 — an ORDINARY turn immediately after. The contract must NOT appear.
+  reqs.length = 0;
+  gate.setPhase('cat5-ordinary', 40);
+  const ordRun = await page.evaluate(async () => {
+    await window._runCGScreenplayGen(1, 'I take the ledger from his hands and hold it up', 'Then say it plainly.');
+    return { leaked: window.state._lastSayDoAction };
+  });
+  gate.closePhase();
+  const p2 = reqs.find((r) => r.kind === 'planner'), a2 = reqs.find((r) => r.kind === 'author');
+  ok('the NEXT ordinary turn still reached planner and author', !!p2 && !!a2);
+  ok('NO LEAK — the ordinary turn carries NO weak-turn restraint in the planner',
+    !!p2 && p2.sys.indexOf('WEAK-TURN RESTRAINT') === -1);
+  ok('...nor in the author', !!a2 && a2.sys.indexOf('WEAK-TURN RESTRAINT') === -1);
+  ok('...and nothing was left on state', ordRun.leaked === undefined, JSON.stringify(ordRun));
 
   section('9. CONTAINMENT');
   ok('still only ONE wall-break detector — nothing was duplicated',

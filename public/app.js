@@ -9961,7 +9961,6 @@ window.config = window.config || {
       try { if (typeof _autofitTranslatedButtons === 'function') _autofitTranslatedButtons(); } catch (_) {}
     } catch (e) { try { console.warn('[CHROME-I18N] apply failed:', e && e.message); } catch (_) {} }
     finally {
-      try { delete state._lastSayDoAction; delete state._lastSayDoDialogue; } catch (_) {}
       _chromeI18nBusy = false;
       if (_chromeI18nDirty) { _chromeI18nDirty = false; setTimeout(function () { _applyChromeTranslation(getUserLanguage(), true); }, 60); }  // background rerun → silent (no toast)
     }
@@ -101103,9 +101102,11 @@ function _buildAuthorFloorDirective(s) {
           // WHOLE turn is weak, so every ordinary turn is byte-identical.
           try {
             if (typeof _buildWeakTurnRestraintDirective === 'function') {
-              var _wtr = _buildWeakTurnRestraintDirective(
-                (typeof playerAction !== 'undefined') ? playerAction : '',
-                (typeof playerDialogue !== 'undefined') ? playerDialogue : '');
+              // The enclosing function is _generateLiteraryPlotContract(act, dia, ...) — its
+              // parameters are `act` and `dia`. An earlier version referenced playerAction /
+              // playerDialogue, which are not in scope here, so the directive silently emitted ''
+              // and the planner never received the restraint at all.
+              var _wtr = _buildWeakTurnRestraintDirective(act || '', dia || '');
               if (_wtr) _scSys += '\n\n' + _wtr;
             }
           } catch (_) {}
@@ -126525,12 +126526,20 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
   };
   function _routeWallBreakComplaint(action, dialogue) {
     try {
-      var hit = _detectWallBreakSignal(action) || _detectWallBreakSignal(dialogue);
+      // WHICH FIELD HIT MATTERS. Detection ran per-field but the routed text was always
+      // `action || dialogue`, so an ordinary action beside a complaint in dialogue opened the bug
+      // report prefilled with "I fold my arms" — routing the wrong sentence to a human reviewer.
+      var hit = null, field = null, text = '';
+      var a = _detectWallBreakSignal(action);
+      if (a) { hit = a; field = 'action'; text = String(action || ''); }
+      else {
+        var d = _detectWallBreakSignal(dialogue);
+        if (d) { hit = d; field = 'dialogue'; text = String(dialogue || ''); }
+      }
       if (!hit) return null;
       var r = _WALLBREAK_ROUTES[hit.category] || { route: 'concierge-ooc', advancesStory: false };
       return { category: hit.category, matched: hit.matched, route: r.route,
-               advancesStory: r.advancesStory,
-               text: String(action || dialogue || '') };
+               advancesStory: r.advancesStory, field: field, text: text };
     } catch (_) { return null; }
   }
   window._routeWallBreakComplaint = _routeWallBreakComplaint;
@@ -126571,6 +126580,85 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
     return true;
   }
   window._handleWallBreakComplaint = _handleWallBreakComplaint;
+
+  // ── CONCIERGE COMPLAINT HANDLERS (Roman 2026-09-25, Say/Do category 4) ──────────────────────
+  // These were called before they existed, so continuity claims and OOC frustration fell through
+  // to a toast — and the continuity toast PROMISED a check that never ran. A promise the code does
+  // not keep is worse than no promise.
+
+  // REAL VERIFICATION, against the ledgers, before anything is conceded.
+  // A continuity complaint may be TRUE. It may also be the player misremembering. Either way the
+  // answer is evidence, never a reflexive apology and never a retcon: this reports what the record
+  // actually contains and proposes NOTHING on its own.
+  function _conciergeVerifyContinuityClaim(claimText) {
+    var result = { claim: String(claimText || ''), checked: [], found: [], verdict: 'unverifiable' };
+    try {
+      var s = window.state || {};
+      var words = String(claimText || '').toLowerCase().replace(/[^a-z0-9\s]/g, ' ').split(/\s+/)
+        .filter(function (w) { return w.length >= 5 && !/^(?:forgot|forget|remember|already|didn|continuity|happened)$/.test(w); });
+      // Sources searched, named so the verdict can be audited rather than trusted.
+      var sources = [];
+      (Array.isArray(s.scenes) ? s.scenes : []).forEach(function (sc, i) {
+        if (sc && sc.text) sources.push({ kind: 'scene', at: i, text: String(sc.text) });
+      });
+      try {
+        var L = s._sceneLedger;
+        (L && Array.isArray(L.entries) ? L.entries : []).forEach(function (e, i) {
+          sources.push({ kind: 'ledger', at: i, text: [e && e.act, e && e.dia, e && e.event].filter(Boolean).join(' ') });
+        });
+      } catch (_) {}
+      (Array.isArray(s._temptFateDurableConsequences) ? s._temptFateDurableConsequences : []).forEach(function (d, i) {
+        if (d) sources.push({ kind: 'durable', at: i, text: JSON.stringify(d) });
+      });
+      result.checked = sources.map(function (x) { return x.kind + '[' + x.at + ']'; });
+      if (!words.length) result.verdict = 'no checkable claim';
+      else if (!sources.length) result.verdict = 'nothing recorded yet to check against';
+      else {
+        sources.forEach(function (src) {
+          var hay = src.text.toLowerCase();
+          var hits = words.filter(function (w) { return hay.indexOf(w) !== -1; });
+          if (hits.length) result.found.push({ where: src.kind + '[' + src.at + ']', matched: hits });
+        });
+        // The record CONTAINS what the player says was forgotten → the story did not drop it.
+        // It does NOT → the complaint may well be right, and that is said plainly.
+        result.verdict = result.found.length ? 'the record contains this' : 'not found in the record';
+      }
+      var msg = result.found.length
+        ? 'I checked the record — it is still there (' + result.found[0].where + '). Nothing was lost.'
+        : (result.verdict === 'not found in the record'
+            ? 'I checked the record and could not find that. You may be right — nothing has been changed.'
+            : 'I could not check that against the record.');
+      if (typeof _paintConciergeWhisper === 'function') _paintConciergeWhisper(msg, 9000);
+      else if (typeof showToast === 'function') showToast(msg);
+      result.message = msg;
+      try { console.log('[CONCIERGE:CONTINUITY] verdict=' + result.verdict + ' checked=' + result.checked.length + ' found=' + result.found.length); } catch (_) {}
+    } catch (e) { result.verdict = 'verification threw'; }
+    try { (window.state || {})._lastContinuityVerification = result; } catch (_) {}
+    return result;
+  }
+  window._conciergeVerifyContinuityClaim = _conciergeVerifyContinuityClaim;
+
+  // OUT-OF-CHARACTER ACKNOWLEDGEMENT. Changes no story facts, proposes no correction, and does not
+  // pretend to have investigated anything.
+  var _OOC_REPLIES = {
+    'model-name-complaint':  'That one is on me, not on her. The story is untouched — say or do something when you are ready.',
+    'subjective-frustration':'Heard. That is feedback for me, not for the scene — the story is untouched.',
+    'ai-identity':           'Fair question, and it is for me rather than the story. Nothing in the scene has changed.',
+    'game-mechanics':        'No dice here — the scene turns on what she says and does. Nothing has changed.',
+    'meta-narrative':        'That is a note for me rather than a move in the scene. The story is untouched.'
+  };
+  function _conciergeOOCAcknowledge(text, category) {
+    var msg = _OOC_REPLIES[String(category)] || _OOC_REPLIES['subjective-frustration'];
+    var out = { category: String(category || ''), message: msg, storyFactsChanged: false };
+    try {
+      if (typeof _paintConciergeWhisper === 'function') _paintConciergeWhisper(msg, 9000);
+      else if (typeof showToast === 'function') showToast(msg);
+      try { console.log('[CONCIERGE:OOC] category=' + out.category + ' — story facts untouched'); } catch (_) {}
+      (window.state || {})._lastOOCAcknowledgement = out;
+    } catch (_) {}
+    return out;
+  }
+  window._conciergeOOCAcknowledge = _conciergeOOCAcknowledge;
 
   // ── WEAK-TURN RESTRAINT (Roman 2026-09-25, Say/Do category 5) ───────────────────────────────
   // Weak input is NEVER blocked — "I don't know" is a legitimate thing for a person to feel, and
@@ -234429,6 +234517,12 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
       return _cgPlan;
     }
     finally {
+      // THIS TURN'S SAY/DO IS CLEARED HERE — in the generation's OWN finally, beside the attempt
+      // release. A previous edit put this in _applyChromeTranslation's finally by accident, which
+      // was wrong in both directions: a translation firing mid-generation would erase the weak-turn
+      // contract before the author ever saw it, and with no translation the fields survived into
+      // later turns.
+      try { delete state._lastSayDoAction; delete state._lastSayDoDialogue; } catch (_) {}
       try { state._stagedAuthoringSceneIndex = null; } catch (_) {}
       // Released with the generation that owned it — same discipline as _tfoOwnedInvocation below.
       try { state._acceptedPlannerProposal = null; state._cgGenAttempt = null; } catch (_) {}
