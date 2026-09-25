@@ -323,53 +323,105 @@ const CAT5 = ['I don\'t know', 'whatever', '...', 'sure'];
     actSide && actSide.field === 'action' && actSide.text === 'The Continue button is broken.',
     JSON.stringify(actSide));
 
-  section('8c. THE CONCIERGE BRANCHES DO REAL WORK — observed at the UI, not by route label');
-  const concierge = await page.evaluate(() => {
+  section('8c. CONTINUITY VERIFICATION — THREE-WAY, PRODUCTION-SHAPED, STORY-ISOLATED');
+  // The first version declared a claim "preserved" on ONE shared word, so a record saying
+  // "Julian DENIED the accusation" would answer "Nothing was lost" to "Julian ADMITTED the
+  // accusation". Keyword overlap is topic detection, not verification.
+  const seedLedger = (storyId, entries) => page.evaluate((a) => {
     const s = window.state;
-    // A record that genuinely CONTAINS what the player claims was forgotten.
-    s.scenes = [{ title: '', synopsis: '', text: 'The registrar read the accusation aloud and the assembly went silent.', fateCard: null }];
-    s._sceneLedger = { entries: [{ sceneNumber: 1, act: 'I stepped forward', dia: 'Name it, then.' }] };
-    const el0 = document.getElementById('conciergeWhisper');
-    const before = { text: el0 ? el0.textContent : null, scenes: s.scenes.length, turn: s.turnCount };
-    const verified = window._conciergeVerifyContinuityClaim('You forgot the accusation.');
-    const el1 = document.getElementById('conciergeWhisper');
-    const afterFound = { visible: !!el1, text: el1 ? el1.textContent : null };
-    // Now a claim the record does NOT contain.
-    const missing = window._conciergeVerifyContinuityClaim('You forgot the shipwreck in Calenhad.');
-    const el2 = document.getElementById('conciergeWhisper');
+    s.storyId = a.storyId;
+    s._starterId = 'starter_first_sacrifice';
+    s.scenes = a.scenes || [];
+    // PRODUCTION-SHAPED entries, written through the real ledger contract: storyId stamped on the
+    // ledger itself, and plannedEvent — not the invented `event` field the old test used.
+    s._sceneLedger = { storyId: a.ledgerStoryId, entries: a.entries };
+    delete s._lastContinuityVerification;
+  }, { storyId, ledgerStoryId: entries.ledgerStoryId, entries: entries.rows, scenes: entries.scenes || [] });
+
+  const PROD_ROWS = [
+    { sceneNumber: 1, plannedEvent: 'Julian denied the accusation before the assembly',
+      act: 'I stepped forward', dia: 'Name it, then.', plannedSource: 'spine' }
+  ];
+
+  // (a) CONTRADICTED — the record says the opposite of the claim.
+  await seedLedger('story-A', { ledgerStoryId: 'story-A', rows: PROD_ROWS });
+  const contra = await page.evaluate(() => window._conciergeVerifyContinuityClaim('You forgot Julian admitted the accusation.'));
+  note('contradicted: ' + JSON.stringify({ v: contra.verdict, c: contra.contradiction }));
+  ok('a claim the record CONTRADICTS is reported as contradicted, not as preserved',
+    contra.verdict === 'contradicted', JSON.stringify(contra).slice(0, 240));
+  ok('...naming the opposition it found (admitted vs denied)',
+    contra.contradiction && contra.contradiction.conflict.claim === 'admitted'
+    && contra.contradiction.conflict.record === 'denied', JSON.stringify(contra.contradiction));
+  ok('RED PROOF — it does NOT say "Nothing was lost"',
+    !/Nothing was lost/.test(contra.message), contra.message);
+
+  // (b) UNRESOLVED — topical overlap but nothing proposition-level.
+  const unres = await page.evaluate(() => window._conciergeVerifyContinuityClaim('You forgot the accusation.'));
+  note('unresolved: ' + JSON.stringify({ v: unres.verdict, ev: unres.evidence.length }));
+  ok('a merely TOPICAL match is UNRESOLVED, never verified',
+    unres.verdict === 'unresolved', JSON.stringify(unres).slice(0, 240));
+  ok('...and says so honestly, without claiming nothing was lost',
+    /could not settle that from the record either way/.test(unres.message)
+    && !/Nothing was lost/.test(unres.message), unres.message);
+
+  // (c) SUPPORTED — enough proposition-level agreement, no polarity conflict.
+  const supp = await page.evaluate(() => window._conciergeVerifyContinuityClaim('You forgot Julian denied the accusation before the assembly.'));
+  note('supported: ' + JSON.stringify({ v: supp.verdict, w: supp.support && supp.support.where }));
+  ok('a claim the record genuinely supports verifies as supported, with where',
+    supp.verdict === 'supported' && !!supp.support, JSON.stringify(supp).slice(0, 240));
+  ok('...and only THEN is "Nothing was lost" said', /Nothing was lost/.test(supp.message));
+
+  section('8c-2. THE SOURCES ARE THE PRODUCTION ONES, AND STORY-ISOLATED');
+  ok('it reads the scene ledger through the accessor — entries appear as sceneLedger[...]',
+    supp.checked.some((c) => /^sceneLedger\[/.test(c)), JSON.stringify(supp.checked));
+  ok('...and includes seed world truths, which the first version omitted',
+    supp.checked.some((c) => /^worldTruth\[/.test(c)), JSON.stringify(supp.checked.slice(0, 8)));
+  // STALE-LEDGER NEGATIVE: a ledger stamped for a DIFFERENT story must never be read.
+  await seedLedger('story-B', { ledgerStoryId: 'story-A-STALE', rows: PROD_ROWS });
+  const stale = await page.evaluate(() => window._conciergeVerifyContinuityClaim('You forgot Julian denied the accusation before the assembly.'));
+  note('stale ledger: ' + JSON.stringify({ v: stale.verdict, checked: stale.checked.filter((c) => /sceneLedger/.test(c)) }));
+  ok('STALE-LEDGER NEGATIVE — a ledger from another story is NOT read',
+    !stale.checked.some((c) => /^sceneLedger\[/.test(c)), JSON.stringify(stale.checked));
+  // PRECISION MATTERS HERE. The claim may still be supported by a DIFFERENT, legitimate source
+  // (seed world truths belong to the starter, not to a story), so asserting "not supported" would
+  // be asserting the wrong thing. What must be true is narrower: no support may come FROM the
+  // foreign ledger.
+  ok('...and no support is drawn FROM that foreign ledger',
+    !stale.support || !/^sceneLedger\[/.test(stale.support.where),
+    JSON.stringify(stale.support));
+  ok('...nor any evidence at all', !stale.evidence.some((e) => /^sceneLedger\[/.test(e.where)),
+    JSON.stringify(stale.evidence.map((e) => e.where)));
+
+  section('8c-3. THE HANDOFF IS THE CONVERSATIONAL CONCIERGE, NOT A WHISPER');
+  ok('the conversational panel opener is exposed for the handoff',
+    (await page.evaluate(() => typeof window._openConciergePanel)) === 'function');
+  ok('a CONTRADICTED claim is handed off to the conversational Concierge',
+    contra.handedOff === true, JSON.stringify({ handedOff: contra.handedOff }));
+  ok('an UNRESOLVED claim is handed off too — it needs a conversation, not a hint',
+    unres.handedOff === true, JSON.stringify({ handedOff: unres.handedOff }));
+  ok('a cleanly SUPPORTED claim needs no conversation and stays a whisper',
+    supp.handedOff === false, JSON.stringify({ handedOff: supp.handedOff }));
+
+  section('8c-4. THE OOC BRANCH IS NAMED HONESTLY');
+  const oocRes = await page.evaluate(() => {
+    const s = window.state;
+    const beforeState = { scenes: (s.scenes || []).length, turn: s.turnCount };
     const ooc = window._conciergeOOCAcknowledge('This game is boring.', 'subjective-frustration');
-    const el3 = document.getElementById('conciergeWhisper');
-    return { before, verified, afterFound, missing, missingText: el2 ? el2.textContent : null,
-      ooc, oocText: el3 ? el3.textContent : null,
-      after: { scenes: s.scenes.length, turn: s.turnCount },
-      recordedVerification: s._lastContinuityVerification || null,
-      recordedOOC: s._lastOOCAcknowledgement || null };
+    const el = document.getElementById('conciergeWhisper');
+    return { ooc, text: el ? el.textContent : null, beforeState,
+      after: { scenes: (s.scenes || []).length, turn: s.turnCount } };
   });
-  fs.writeFileSync(path.join(OUT_DIR, 'concierge.json'), JSON.stringify(concierge, null, 2));
-  ok('the continuity handler EXISTS and returns a structured verification',
-    !!concierge.verified && Array.isArray(concierge.verified.checked), JSON.stringify(concierge.verified).slice(0, 200));
-  ok('it ACTUALLY SEARCHED the ledgers — sources are named, not assumed',
-    concierge.verified.checked.length >= 2, JSON.stringify(concierge.verified.checked));
-  ok('a claim the record DOES contain verifies as found, with where',
-    concierge.verified.verdict === 'the record contains this' && concierge.verified.found.length > 0,
-    JSON.stringify(concierge.verified.found));
-  ok('a claim the record does NOT contain says so plainly — no reflexive apology, no retcon',
-    concierge.missing.verdict === 'not found in the record'
-    && /You may be right — nothing has been changed/.test(concierge.missing.message),
-    JSON.stringify(concierge.missing));
-  ok('THE CONCIERGE UI ACTUALLY OPENED — the whisper element exists and carries the verdict',
-    concierge.afterFound.visible === true && /checked the record/.test(concierge.afterFound.text || ''),
-    JSON.stringify(concierge.afterFound));
-  ok('the OOC branch answers out-of-character and says the story is untouched',
-    /feedback for me, not for the scene/.test(concierge.ooc.message)
-    && concierge.ooc.storyFactsChanged === false, JSON.stringify(concierge.ooc));
-  ok('...and that reply reaches the same Concierge surface',
-    /feedback for me/.test(concierge.oocText || ''), JSON.stringify(concierge.oocText));
-  ok('NO STORY FACT CHANGED across all three interactions',
-    concierge.before.scenes === concierge.after.scenes && concierge.before.turn === concierge.after.turn,
-    JSON.stringify({ b: concierge.before, a: concierge.after }));
-  ok('both outcomes are retained on state for review',
-    !!concierge.recordedVerification && !!concierge.recordedOOC);
+  ok('it answers out-of-character and states the story is untouched',
+    /feedback for me, not for the scene/.test(oocRes.ooc.message)
+    && oocRes.ooc.storyFactsChanged === false, JSON.stringify(oocRes.ooc));
+  ok('...on the transient whisper surface, which is honestly what it is',
+    /feedback for me/.test(oocRes.text || ''), JSON.stringify(oocRes.text));
+  ok('NO STORY FACT CHANGED', oocRes.beforeState.scenes === oocRes.after.scenes
+    && oocRes.beforeState.turn === oocRes.after.turn, JSON.stringify(oocRes));
+  const srcHonest = fs.readFileSync(path.join(__dirname, 'public', 'app.js'), 'utf8');
+  ok('and the code says so — the OOC branch is documented as a transient acknowledgement,\n'
+    + '     not as routing to the Concierge',
+    /TRANSIENT OUT-OF-CHARACTER ACKNOWLEDGEMENT[\s\S]{0,300}?NOT the conversational Concierge/.test(srcHonest));
 
   section('8d. WEAK-TURN STATE — REAL GENERATION PATH, AND NO LEAK INTO THE NEXT TURN');
   // The cleanup was accidentally placed in the Chrome-translation finally block. That could erase

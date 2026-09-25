@@ -126590,56 +126590,149 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
   // A continuity complaint may be TRUE. It may also be the player misremembering. Either way the
   // answer is evidence, never a reflexive apology and never a retcon: this reports what the record
   // actually contains and proposes NOTHING on its own.
-  function _conciergeVerifyContinuityClaim(claimText) {
-    var result = { claim: String(claimText || ''), checked: [], found: [], verdict: 'unverifiable' };
+  // THREE-WAY, AND UNRESOLVED IS THE DEFAULT. The first version declared a claim "preserved" on a
+  // SINGLE shared word, so "You forgot Julian admitted the accusation" would be answered "Nothing
+  // was lost" by a record saying "Julian DENIED the accusation" — the exact opposite — because
+  // `julian` matched. Keyword overlap is not verification; it is topic detection.
+  //
+  // What this does instead: gather candidate evidence from the PRODUCTION ledgers, then decide at
+  // the PROPOSITION level — same subject AND same predicate polarity = supported; same subject with
+  // OPPOSED polarity = contradicted; anything else = UNRESOLVED. Unresolved is not a failure mode,
+  // it is the honest answer most of the time, and it never claims nothing was lost.
+  var _CLAIM_POLARITY_PAIRS = [
+    ['admit', 'deny'], ['admitted', 'denied'], ['confess', 'deny'], ['confessed', 'denied'],
+    ['accept', 'refuse'], ['accepted', 'refused'], ['agree', 'refuse'], ['agreed', 'refused'],
+    ['stay', 'leave'], ['stayed', 'left'], ['remember', 'forget'], ['remembered', 'forgot'],
+    ['alive', 'dead'], ['open', 'closed'], ['arrived', 'departed'], ['won', 'lost']
+  ];
+  var _CLAIM_STOP = /^(?:forgot|forget|forgotten|remember|remembered|already|didn|continuity|happened|about|there|their|that|this|what|when|where|which|would|could|should)$/;
+  function _claimTokens(t) {
+    var seen = {}, out = [];
+    String(t || '').toLowerCase().replace(/[^a-z0-9\s]/g, ' ').split(/\s+/).forEach(function (w) {
+      if (w.length >= 4 && !_CLAIM_STOP.test(w) && !seen[w]) { seen[w] = 1; out.push(w); }
+    });
+    return out;
+  }
+  function _polarityConflict(claimTokens, evidenceText) {
+    var hay = ' ' + String(evidenceText || '').toLowerCase() + ' ';
+    for (var i = 0; i < _CLAIM_POLARITY_PAIRS.length; i++) {
+      var a = _CLAIM_POLARITY_PAIRS[i][0], b = _CLAIM_POLARITY_PAIRS[i][1];
+      var claimHasA = claimTokens.indexOf(a) !== -1, claimHasB = claimTokens.indexOf(b) !== -1;
+      if (claimHasA && hay.indexOf(' ' + b) !== -1) return { claim: a, record: b };
+      if (claimHasB && hay.indexOf(' ' + a) !== -1) return { claim: b, record: a };
+    }
+    // Explicit negation on one side only.
+    var claimNeg = /\b(?:never|not|no)\b/.test(claimTokens.join(' '));
+    var recNeg = /\b(?:never|not|no)\b/.test(hay);
+    if (claimNeg !== recNeg && claimNeg) return { claim: 'negated', record: 'affirmed' };
+    return null;
+  }
+  // AUTHORITATIVE SOURCES ONLY. Read through the production accessors so storyId isolation and the
+  // real entry shapes apply — a ledger belonging to another story must never be read, and entries
+  // carry `plannedEvent`, not `event`.
+  function _continuityEvidenceSources(s) {
+    var sources = [];
     try {
-      var s = window.state || {};
-      var words = String(claimText || '').toLowerCase().replace(/[^a-z0-9\s]/g, ' ').split(/\s+/)
-        .filter(function (w) { return w.length >= 5 && !/^(?:forgot|forget|remember|already|didn|continuity|happened)$/.test(w); });
-      // Sources searched, named so the verdict can be audited rather than trusted.
-      var sources = [];
       (Array.isArray(s.scenes) ? s.scenes : []).forEach(function (sc, i) {
         if (sc && sc.text) sources.push({ kind: 'scene', at: i, text: String(sc.text) });
       });
-      try {
-        var L = s._sceneLedger;
-        (L && Array.isArray(L.entries) ? L.entries : []).forEach(function (e, i) {
-          sources.push({ kind: 'ledger', at: i, text: [e && e.act, e && e.dia, e && e.event].filter(Boolean).join(' ') });
-        });
-      } catch (_) {}
+    } catch (_) {}
+    try {
+      var L = (typeof _sceneLedgerGet === 'function') ? _sceneLedgerGet(s, false) : null;
+      (L && Array.isArray(L.entries) ? L.entries : []).forEach(function (e, i) {
+        var t = [e && e.plannedEvent, e && e.act, e && e.dia].filter(Boolean).join(' ');
+        if (t) sources.push({ kind: 'sceneLedger', at: i, text: t });
+      });
+    } catch (_) {}
+    try {
+      var R = (typeof _relLedger === 'function') ? _relLedger(false) : null;
+      if (R && R.edges) Object.keys(R.edges).forEach(function (k) {
+        var e = R.edges[k];
+        if (e) sources.push({ kind: 'relLedger', at: k, text: JSON.stringify(e) });
+      });
+    } catch (_) {}
+    try {
+      var pc = s._scenePlotContract;
+      (pc && Array.isArray(pc.aftermathTruths) ? pc.aftermathTruths : []).forEach(function (t, i) {
+        if (t && t.text) sources.push({ kind: 'aftermathTruth', at: (t.id || i), text: String(t.text) });
+      });
+      (pc && Array.isArray(pc.reservedConstraints) ? pc.reservedConstraints : []).forEach(function (t, i) {
+        sources.push({ kind: 'reservedConstraint', at: i, text: (t && t.text) ? String(t.text) : String(t) });
+      });
+    } catch (_) {}
+    try {
+      var seed = (typeof STARTER_SEEDS !== 'undefined' && s._starterId) ? STARTER_SEEDS[s._starterId] : null;
+      (seed && Array.isArray(seed.worldTruths) ? seed.worldTruths : []).forEach(function (t, i) {
+        sources.push({ kind: 'worldTruth', at: i, text: String(t) });
+      });
+    } catch (_) {}
+    try {
       (Array.isArray(s._temptFateDurableConsequences) ? s._temptFateDurableConsequences : []).forEach(function (d, i) {
         if (d) sources.push({ kind: 'durable', at: i, text: JSON.stringify(d) });
       });
+    } catch (_) {}
+    return sources;
+  }
+  function _conciergeVerifyContinuityClaim(claimText) {
+    var result = { claim: String(claimText || ''), checked: [], evidence: [],
+                   verdict: 'unresolved', handedOff: false };
+    try {
+      var s = window.state || {};
+      var toks = _claimTokens(claimText);
+      var sources = _continuityEvidenceSources(s);
       result.checked = sources.map(function (x) { return x.kind + '[' + x.at + ']'; });
-      if (!words.length) result.verdict = 'no checkable claim';
-      else if (!sources.length) result.verdict = 'nothing recorded yet to check against';
+      if (!toks.length) result.verdict = 'unresolved';
+      else if (!sources.length) result.verdict = 'unresolved';
       else {
+        // CANDIDATE EVIDENCE: two or more shared content words. One is topic, not aboutness.
         sources.forEach(function (src) {
           var hay = src.text.toLowerCase();
-          var hits = words.filter(function (w) { return hay.indexOf(w) !== -1; });
-          if (hits.length) result.found.push({ where: src.kind + '[' + src.at + ']', matched: hits });
+          var hits = toks.filter(function (w) { return hay.indexOf(w) !== -1; });
+          if (hits.length >= 2) result.evidence.push({ where: src.kind + '[' + src.at + ']', matched: hits, text: src.text.slice(0, 300) });
         });
-        // The record CONTAINS what the player says was forgotten → the story did not drop it.
-        // It does NOT → the complaint may well be right, and that is said plainly.
-        result.verdict = result.found.length ? 'the record contains this' : 'not found in the record';
+        var contradiction = null, support = null;
+        result.evidence.forEach(function (ev) {
+          var conflict = _polarityConflict(toks, ev.text);
+          if (conflict && !contradiction) contradiction = { where: ev.where, conflict: conflict };
+          else if (!conflict && !support && ev.matched.length >= 3) support = { where: ev.where, matched: ev.matched };
+        });
+        if (contradiction) { result.verdict = 'contradicted'; result.contradiction = contradiction; }
+        else if (support) { result.verdict = 'supported'; result.support = support; }
+        else result.verdict = 'unresolved';
       }
-      var msg = result.found.length
-        ? 'I checked the record — it is still there (' + result.found[0].where + '). Nothing was lost.'
-        : (result.verdict === 'not found in the record'
-            ? 'I checked the record and could not find that. You may be right — nothing has been changed.'
-            : 'I could not check that against the record.');
-      if (typeof _paintConciergeWhisper === 'function') _paintConciergeWhisper(msg, 9000);
-      else if (typeof showToast === 'function') showToast(msg);
+      // THE MESSAGE NEVER OVERSTATES THE VERDICT.
+      var msg;
+      if (result.verdict === 'supported') {
+        msg = 'I checked the record — it is still there (' + result.support.where + '). Nothing was lost.';
+      } else if (result.verdict === 'contradicted') {
+        msg = 'I checked, and the record says something different ("' + result.contradiction.conflict.record
+            + '" where you recall "' + result.contradiction.conflict.claim + '"). Let us go through it.';
+      } else {
+        msg = 'I could not settle that from the record either way. Let us look at it together — nothing has been changed.';
+      }
       result.message = msg;
-      try { console.log('[CONCIERGE:CONTINUITY] verdict=' + result.verdict + ' checked=' + result.checked.length + ' found=' + result.found.length); } catch (_) {}
-    } catch (e) { result.verdict = 'verification threw'; }
+      // REAL CONVERSATIONAL HANDOFF for anything not cleanly supported. The whisper bubble is a
+      // hint that auto-dismisses and cannot take a reply; a continuity dispute needs the
+      // conversational Concierge, opened with the complaint as its first line.
+      if (result.verdict !== 'supported' && typeof window._openConciergePanel === 'function') {
+        try { window._openConciergePanel(msg); result.handedOff = true; } catch (_) {}
+      }
+      if (!result.handedOff) {
+        if (typeof _paintConciergeWhisper === 'function') _paintConciergeWhisper(msg, 9000);
+        else if (typeof showToast === 'function') showToast(msg);
+      }
+      try { console.log('[CONCIERGE:CONTINUITY] verdict=' + result.verdict + ' sources=' + result.checked.length
+        + ' evidence=' + result.evidence.length + ' handedOff=' + result.handedOff); } catch (_) {}
+    } catch (e) { result.verdict = 'unresolved'; result.error = (e && e.message) || String(e); }
     try { (window.state || {})._lastContinuityVerification = result; } catch (_) {}
     return result;
   }
   window._conciergeVerifyContinuityClaim = _conciergeVerifyContinuityClaim;
 
-  // OUT-OF-CHARACTER ACKNOWLEDGEMENT. Changes no story facts, proposes no correction, and does not
-  // pretend to have investigated anything.
+  // TRANSIENT OUT-OF-CHARACTER ACKNOWLEDGEMENT. Named for what it is: a whisper bubble that
+  // auto-dismisses, NOT the conversational Concierge. That is the right surface here — there is
+  // nothing to discuss and nothing to verify — but it must not be described as "routing to the
+  // Concierge", which would imply a conversation the player never gets.
   var _OOC_REPLIES = {
     'model-name-complaint':  'That one is on me, not on her. The story is untouched — say or do something when you are ready.',
     'subjective-frustration':'Heard. That is feedback for me, not for the scene — the story is untouched.',
@@ -334807,6 +334900,10 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
 
   window._startMaskCeremony = _startMaskCeremony;
   window._closeConciergePanel = _closePanel;
+  // EXPOSED for the Say/Do continuity handoff (Roman 2026-09-25, category 4). This is the
+  // conversational, gold-bell Concierge — distinct from the auto-dismissing whisper bubble, which
+  // is a hint and cannot accept a handoff.
+  window._openConciergePanel = _openPanel;
 
   // ── Concierge Design Mode (Ctrl+Shift+D) ──
   // Works on ALL screens: library masks + library concierge + summon figure
