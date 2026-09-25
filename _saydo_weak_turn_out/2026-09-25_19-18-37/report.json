@@ -1,0 +1,115 @@
+{
+  "runId": "2026-09-25_19-18-37",
+  "storyId": "live-weakturn-1790363929431",
+  "input": {
+    "action": "",
+    "dialogue": "I don't know."
+  },
+  "branch": "remain",
+  "preRegisteredCriteria": [
+    "restraint in BOTH planner and author payloads",
+    "uncertainty remains uncertainty — no agreement/refusal/confession/accusation/consent/flight",
+    "input acknowledged, not ignored or replaced",
+    "scene still moves via others/institutions/external events",
+    "no Tempt/Petition Fate invocation",
+    "canon and continuity clean",
+    "beat count + prose length recorded (diagnostic only)",
+    "HUMAN semantic review decides the verdict"
+  ],
+  "mechanical": [
+    {
+      "name": "the scene was DELIVERED",
+      "pass": false
+    },
+    {
+      "name": "the PLANNER payload carried the restraint",
+      "pass": true
+    },
+    {
+      "name": "the AUTHOR payload carried the restraint",
+      "pass": false
+    },
+    {
+      "name": "no Tempt/Petition Fate was invoked",
+      "pass": true
+    },
+    {
+      "name": "no image generation was attempted",
+      "pass": true
+    },
+    {
+      "name": "spend stayed inside the ceiling",
+      "pass": true
+    }
+  ],
+  "plannerHasRestraint": true,
+  "authorHasRestraint": false,
+  "delivered": true,
+  "beatCount": 0,
+  "proseChars": 0,
+  "latencyMs": 33125,
+  "temptInvoked": false,
+  "cost": {
+    "reserved": 0.12,
+    "realized": 0,
+    "ceiling": 0.2,
+    "entries": [
+      {
+        "label": "planner",
+        "pathname": "/api/proxy",
+        "usd": 0.09,
+        "runningReserved": 0.09,
+        "refused": false
+      },
+      {
+        "label": "planner",
+        "pathname": "/api/mistral-proxy",
+        "usd": 0.01,
+        "runningReserved": 0.09999999999999999,
+        "refused": false
+      },
+      {
+        "label": "planner",
+        "pathname": "/api/chatgpt-proxy",
+        "usd": 0.02,
+        "runningReserved": 0.12,
+        "refused": false
+      }
+    ],
+    "refusals": [
+      {
+        "label": "probe",
+        "pathname": "/api/proxy",
+        "usd": 0.09,
+        "wouldTotal": 0.29000000000000004,
+        "refused": true
+      }
+    ]
+  },
+  "realCalls": [
+    {
+      "url": "http://localhost:3000/api/mistral-proxy",
+      "status": 502
+    },
+    {
+      "url": "http://localhost:3000/api/proxy",
+      "status": 502
+    },
+    {
+      "url": "http://localhost:3000/api/chatgpt-proxy",
+      "status": 502
+    },
+    {
+      "url": "http://localhost:3000/api/proxy",
+      "status": 502
+    },
+    {
+      "url": "http://localhost:3000/api/mistral-proxy",
+      "status": 502
+    },
+    {
+      "url": "http://localhost:3000/api/chatgpt-proxy",
+      "status": 502
+    }
+  ]
+}
