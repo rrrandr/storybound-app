@@ -1,6 +1,9 @@
 // SAY/DO CATEGORIES 4 & 5 — TEST-FIRST TRACE. ZERO dispatches, $0.
 //
-// This is a DIAGNOSTIC, not a fix. Per the original test plan both categories are test-first:
+// NOW A CONTROL, NOT ONLY A TRACE (Roman 2026-09-25). The measured gaps were approved for
+// implementation, so this file proves the fixes as well as the behaviour they replaced.
+//
+// Originally a DIAGNOSTIC. Per the original test plan both categories are test-first:
 // trace what production does today, then decide whether anything needs building. Nothing in
 // public/app.js is modified by this pass.
 //
@@ -99,21 +102,23 @@ const CAT5 = ['I don\'t know', 'whatever', '...', 'sure'];
     byId['NEG-oath'].afterFallbackAction === byId['NEG-oath'].sanitized
     && !byId['NEG-oath'].sanitizedToEmpty);
 
-  section('3. CATEGORY 4 — THE GAPS, MEASURED');
-  const gaps = cat4.filter((r) => r.expectCaught === null && !r.detected);
-  gaps.forEach((g) => note('GAP: ' + JSON.stringify(g.text) + '  (' + g.kind + ') — enters story canon verbatim'));
-  ok('MEASURED: subjective frustration ("This game is boring.") is NOT covered',
-    !byId['boring'].detected, JSON.stringify(byId['boring'].detected));
-  ok('MEASURED: a real bug report ("The Continue button is broken.") is NOT covered',
-    !byId['button-broken'].detected, JSON.stringify(byId['button-broken'].detected));
-  ok('...and both currently reach the story as literal canon text',
-    byId['boring'].afterFallbackAction === byId['boring'].sanitized
-    && byId['button-broken'].afterFallbackAction === byId['button-broken'].sanitized);
+  section('3. CATEGORY 4 — THE TWO MEASURED GAPS ARE NOW CLOSED');
+  // These began as the trace's findings: both reached story canon verbatim. The assertions are
+  // INVERTED rather than deleted, so they now fail if the coverage regresses — and section 2
+  // above still proves the negative controls survive, which is the risk that coverage creates.
+  ok('WAS A GAP, NOW COVERED — "This game is boring." is caught',
+    !!byId['boring'].detected, JSON.stringify(byId['boring'].detected));
+  ok('WAS A GAP, NOW COVERED — "The Continue button is broken." is caught',
+    !!byId['button-broken'].detected, JSON.stringify(byId['button-broken'].detected));
+  ok('...and each is caught as its OWN kind, not lumped together',
+    byId['boring'].detected.category === 'subjective-frustration'
+    && byId['button-broken'].detected.category === 'interface',
+    JSON.stringify([byId['boring'].detected.category, byId['button-broken'].detected.category]));
 
-  section('4. CATEGORY 4 — ALL CAUGHT COMPLAINTS GET THE SAME RESPONSE');
-  // Roman's point: a bug report, a continuity claim and subjective frustration are different
-  // things and should not collapse to one behaviour. The taxonomy EXISTS in the detector; the
-  // HANDLING does not use it.
+  section('4. CATEGORY 4 — THE OLD COLLAPSING FALLBACK, AND WHY IT IS OFF THE PATH');
+  // The old handling ran every caught complaint through ONE fallback string. The function still
+  // exists (other callers may use it), so its collapsing behaviour is asserted here as the thing
+  // that was replaced — and section 7 proves it is no longer on the Submit path at all.
   const caught = cat4.filter((r) => r.detected);
   const distinctCategories = [...new Set(caught.map((r) => r.detected.category))];
   const distinctOutputs = [...new Set(caught.map((r) => r.afterFallbackAction))];
@@ -177,12 +182,128 @@ const CAT5 = ['I don\'t know', 'whatever', '...', 'sure'];
   ok('the high-impact variant escalates harder still — "the moment escalates or breaks from the plan"',
     /the moment escalates or breaks from the plan/.test(impact.__mustReact));
 
-  section('7. CONTAINMENT — THIS PASS CHANGED NOTHING');
-  const src = fs.readFileSync(path.join(__dirname, 'public', 'app.js'), 'utf8');
-  ok('no category-4 detector was added — the existing one is the only one',
-    (src.match(/function _detectWallBreakSignal/g) || []).length === 1);
-  ok('no weak-input blocker was added',
-    !/weak(Input|Response)(Block|Gate|Reject)/i.test(src));
+  section('7. CATEGORY 4 FIX — COMPLAINTS ROUTE BY KIND AND NEVER TOUCH CANON');
+  const routed = await page.evaluate((cases) => {
+    const out = {};
+    cases.forEach((c) => {
+      const r = window._routeWallBreakComplaint(c.text, '');
+      out[c.id] = r ? { category: r.category, route: r.route, advancesStory: r.advancesStory } : null;
+    });
+    return out;
+  }, CAT4);
+  Object.entries(routed).forEach(([k, v]) => note((k + ':').padEnd(18) + (v ? (v.category + ' → ' + v.route) : 'not routed (reaches the story)')));
+  fs.writeFileSync(path.join(OUT_DIR, 'routes.json'), JSON.stringify(routed, null, 2));
+  ok('the NEW coverage catches "This game is boring." as subjective frustration',
+    routed['boring'] && routed['boring'].category === 'subjective-frustration', JSON.stringify(routed['boring']));
+  ok('the NEW coverage catches "The Continue button is broken." as interface',
+    routed['button-broken'] && routed['button-broken'].category === 'interface', JSON.stringify(routed['button-broken']));
+  ok('THE NEGATIVE CONTROLS STILL SURVIVE — "This ceremony is boring." is not routed',
+    routed['NEG-ceremony'] === null, JSON.stringify(routed['NEG-ceremony']));
+  ok('...and "You forgot your oath." is not routed', routed['NEG-oath'] === null, JSON.stringify(routed['NEG-oath']));
+  // Roman's additional negative control: an in-world broken button.
+  const coat = await page.evaluate(() => window._routeWallBreakComplaint('My coat button is broken.', ''));
+  ok('...and "My coat button is broken." is NOT routed — the pattern needs a UI noun nearby',
+    coat === null, JSON.stringify(coat));
+
+  ok('THE CATEGORY IS PRESERVED THROUGH ROUTING, not discarded',
+    ['model-complaint', 'boring', 'continuity', 'button-broken'].every((k) => routed[k] && routed[k].category));
+  ok('a bug report opens the BUG-REPORT panel',
+    routed['button-broken'].route === 'bug-report');
+  ok('a continuity claim goes to VERIFICATION, not to an apology or a retcon',
+    routed['continuity'].route === 'concierge-verify');
+  ok('model complaints and frustration go to the OOC concierge',
+    routed['model-complaint'].route === 'concierge-ooc' && routed['boring'].route === 'concierge-ooc');
+  ok('NO routed complaint advances the story',
+    ['model-complaint', 'boring', 'continuity', 'button-broken'].every((k) => routed[k].advancesStory === false));
+
+  // THE TURN MUST NOT BE CONSUMED, and nothing may reach the ledger.
+  const consumed = await page.evaluate(() => {
+    const s = window.state;
+    s.turnCount = 7; s.scenes = [{ title: 'A', synopsis: 'a', text: 'x', fateCard: null }];
+    delete s._lastComplaintRoute;
+    const before = { turn: s.turnCount, scenes: s.scenes.length };
+    const handled = window._handleWallBreakComplaint('The Continue button is broken.', '');
+    return { handled, before, after: { turn: s.turnCount, scenes: s.scenes.length },
+      recorded: s._lastComplaintRoute || null };
+  });
+  ok('the handler reports the turn was CONSUMED BY ROUTING, so the caller stops', consumed.handled === true);
+  ok('THE TURN COUNT DID NOT ADVANCE', consumed.before.turn === consumed.after.turn,
+    JSON.stringify(consumed));
+  ok('NOTHING WAS WRITTEN TO THE SCENE LEDGER', consumed.before.scenes === consumed.after.scenes,
+    JSON.stringify(consumed));
+  ok('...and the route was recorded for review, with its category',
+    consumed.recorded && consumed.recorded.category === 'interface'
+    && consumed.recorded.advancedStory === false, JSON.stringify(consumed.recorded));
+  ok('RED PROOF — the old in-world fallback no longer runs on the Submit path, so no fake\n'
+    + '     canonical action is manufactured',
+    !/action = _sayDoWallBreakFallback\(action, 'action'\)/.test(
+      fs.readFileSync(path.join(__dirname, 'public', 'app.js'), 'utf8')));
+
+  section('8. CATEGORY 5 FIX — RESTRAINT REACHES THE PLANNER *AND* THE AUTHOR');
+  const weak = await page.evaluate((cases) => {
+    const out = {};
+    cases.forEach((t) => { out[t] = window._detectWeakTurn(t, ''); });
+    out.__substantivePlusSure = window._detectWeakTurn(
+      'I take the ledger from his hands and hold it up so the room can see', 'sure');
+    out.__mixed = window._detectWeakTurn('whatever', 'I refuse to sign it and walk out');
+    out.__withFate = window._detectWeakTurn('whatever', '', { fateAction: true });
+    out.__empty = window._detectWeakTurn('', '');
+    return out;
+  }, CAT5);
+  CAT5.forEach((t) => note(JSON.stringify(t).padEnd(16) + ' → weak=' + weak[t].weak + '  posture=' + JSON.stringify(weak[t].postures)));
+  ok('every whole-response weak shape is recognised', CAT5.every((t) => weak[t].weak === true),
+    JSON.stringify(CAT5.map((t) => [t, weak[t].weak])));
+  ok('the posture is identified, not just the weakness',
+    weak["I don't know"].postures[0] === 'uncertainty' && weak['whatever'].postures[0] === 'disengagement'
+    && weak['...'].postures[0] === 'silence' && weak['sure'].postures[0] === 'weak assent',
+    JSON.stringify(CAT5.map((t) => weak[t].postures)));
+  ok('A SUBSTANTIVE ACTION PLUS "sure" IS NOT A WEAK TURN — the substance is the move',
+    weak.__substantivePlusSure.weak === false, JSON.stringify(weak.__substantivePlusSure));
+  ok('...nor is a weak action beside a substantive line',
+    weak.__mixed.weak === false, JSON.stringify(weak.__mixed));
+  ok('a Fate action beside weak text disables it — that turn is not weak',
+    weak.__withFate.weak === false, JSON.stringify(weak.__withFate));
+  ok('an empty turn is not a weak turn', weak.__empty.weak === false, JSON.stringify(weak.__empty));
+
+  const directive = await page.evaluate(() => window._buildWeakTurnRestraintDirective("I don't know", ''));
+  fs.writeFileSync(path.join(OUT_DIR, 'weak_directive.txt'), directive);
+  ok('the contract preserves the posture exactly',
+    /PRESERVE THE POSTURE EXACTLY/.test(directive) && /uncertainty stays uncertain/.test(directive));
+  ok('it forbids upgrading to enthusiasm, confession, refusal, commitment or decisive action',
+    /No sudden enthusiasm, no confession, no declaration, no firm refusal,\n *no commitment, no decisive action/.test(directive));
+  ok('...and names the exact inflation it prevents',
+    /"I don't know" does not become "I choose you"/.test(directive));
+  ok('the scene may still move — from OUTSIDE the protagonist',
+    /THE SCENE STILL MOVES — but from OUTSIDE the protagonist/.test(directive));
+  ok('a new pressure or consequence is allowed; pretending the player chose is not',
+    /A NEW PRESSURE OR CONSEQUENCE IS ALLOWED\. Pretending the player chose is NOT/.test(directive));
+  ok('an ORDINARY turn emits nothing, so every normal scene is byte-identical',
+    (await page.evaluate(() => window._buildWeakTurnRestraintDirective(
+      'I take the ledger and hold it up', 'Then say it plainly.'))) === '');
+
+  // DELIVERY TO BOTH. The planner is the one that matters most — author-only would be too late.
+  const src2 = fs.readFileSync(path.join(__dirname, 'public', 'app.js'), 'utf8');
+  ok('DELIVERED TO THE PLANNER — before the event is chosen',
+    /_scSys \+= '\\n\\n' \+ _wtr;/.test(src2));
+  ok('...and that happens BEFORE the planner messages are assembled',
+    src2.indexOf("_scSys += '\\n\\n' + _wtr;") < src2.indexOf('var _scMessages = ['));
+  ok('DELIVERED TO THE AUTHOR — the same contract survives the handoff',
+    /_buildWeakTurnRestraintDirective\(\s*\n?\s*\(window\.state && window\.state\._lastSayDoAction\)/.test(src2));
+  const inAuthor = await page.evaluate(() => {
+    const s = window.state; s._starterId = 'starter_first_sacrifice';
+    s._lastSayDoAction = "I don't know"; s._lastSayDoDialogue = '';
+    let sys = ''; try { sys = window._buildCGScreenplaySystemPrompt() || ''; } catch (e) { sys = 'ERR ' + e.message; }
+    delete s._lastSayDoAction; delete s._lastSayDoDialogue;
+    return { has: sys.indexOf('WEAK-TURN RESTRAINT') !== -1, len: sys.length };
+  });
+  ok('THE VALUE REACHES THE AUTHOR PAYLOAD — present in the real CG system prompt',
+    inAuthor.has === true, JSON.stringify(inAuthor));
+
+  section('9. CONTAINMENT');
+  ok('still only ONE wall-break detector — nothing was duplicated',
+    (src2.match(/function _detectWallBreakSignal/g) || []).length === 1);
+  ok('weak input is still never BLOCKED — the contract restrains the scene, not the player',
+    cat5.every((r) => !r.changedByFallback && r.sanitized === r.text));
   ok('zero provider dispatches', gate.trackedCalls().filter((c) => c.real).length === 0);
 
   fs.writeFileSync(path.join(OUT_DIR, 'results.json'), JSON.stringify({ results, cat4, cat5 }, null, 2));

@@ -9961,6 +9961,7 @@ window.config = window.config || {
       try { if (typeof _autofitTranslatedButtons === 'function') _autofitTranslatedButtons(); } catch (_) {}
     } catch (e) { try { console.warn('[CHROME-I18N] apply failed:', e && e.message); } catch (_) {} }
     finally {
+      try { delete state._lastSayDoAction; delete state._lastSayDoDialogue; } catch (_) {}
       _chromeI18nBusy = false;
       if (_chromeI18nDirty) { _chromeI18nDirty = false; setTimeout(function () { _applyChromeTranslation(getUserLanguage(), true); }, 60); }  // background rerun → silent (no toast)
     }
@@ -101095,6 +101096,19 @@ function _buildAuthorFloorDirective(s) {
           // decision, see above); ministral-8b-2512 is its fallback — the admission check below
           // still applies to that fallback tier.
           var _scGrokModel = (typeof window !== 'undefined' && window._scenePlannerModel) || 'grok-4-1-fast-non-reasoning';
+          // WEAK-TURN RESTRAINT REACHES THE PLANNER FIRST (Roman 2026-09-25, category 5).
+          // Author-only restraint would be too late: by the time the author writes, the planner has
+          // already chosen the scene's single irreversible EVENT, and if it chose one that presumes
+          // the player decided, no amount of authorial care can un-choose it. Emits '' unless the
+          // WHOLE turn is weak, so every ordinary turn is byte-identical.
+          try {
+            if (typeof _buildWeakTurnRestraintDirective === 'function') {
+              var _wtr = _buildWeakTurnRestraintDirective(
+                (typeof playerAction !== 'undefined') ? playerAction : '',
+                (typeof playerDialogue !== 'undefined') ? playerDialogue : '');
+              if (_wtr) _scSys += '\n\n' + _wtr;
+            }
+          } catch (_) {}
           var _scMessages = [{ role: 'system', content: _scSys + '\nOutput STRICT JSON ONLY — no preamble, no code fences.' }, { role: 'user', content: _scUsr }];
           var _scMinistralAdmission = (typeof _ministral8bGovernorAdmits === 'function') ? _ministral8bGovernorAdmits(_scMessages, _scMaxTok) : { admits: true };
           var _scTiers = [];
@@ -126452,6 +126466,11 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
     { category: 'plot-memory-complaint', rx: /\b(the\s+(ai|story|system)\s+forgot|you\s+forgot\s+(the|what|that)|didn.?t\s+(you\s+)?(already\s+)?(know|establish)|continuity\s+error|plot\s+hole)\b/i },
     { category: 'game-mechanics', rx: /\bi\s+roll\s+(persuasion|perception|deception|stealth|insight|athletics|investigation|intimidation|survival|dice)\b|\broll\s+(a\s+)?(d20|dice|for\s+\w+)\b|\bsaving\s+throw\b/i },
     { category: 'interface', rx: /\b(open\s+the\s+settings|settings\s+menu|the\s+(app|game)\s+(crashed|froze|glitched|lagged)|click\s+(the\s+)?button)\b|\b(this|the)\s+(app|game|website)\s+is\s+(so\s+)?buggy\b|\b(so|really|kinda|totally)\s+buggy\b/i },
+    // NARROW ADDITIONS (Roman 2026-09-25, Say/Do category 4). Both are deliberately keyed to
+    // PRODUCT nouns, because the negative controls are the whole risk: "This ceremony is boring"
+    // and "My coat button is broken" are ordinary in-character lines and must survive untouched.
+    { category: 'subjective-frustration', rx: /\b(?:this|the|your)\s+(?:game|app|story|book|chapter)\s+is\s+(?:so\s+|really\s+|kinda\s+|pretty\s+|super\s+|totally\s+)?(?:boring|dull|bad|terrible|awful|stupid|pointless|repetitive)\b|\bi'?m\s+bored\s+(?:of|with)\s+this\s+(?:game|app|story)\b/i },
+    { category: 'interface', rx: /\b(?:the\s+)?(?:continue|submit|next|back|close|menu|settings|save|retry)\s+button\s+(?:is|isn'?t|does\s*n'?t|doesn'?t|wo\s*n'?t|won'?t)\b|\bbutton\s+(?:is\s+)?(?:broken|not\s+working|doesn'?t\s+work)\b(?=[\s\S]{0,40}\b(?:game|app|screen|page|ui)\b)/i },
     { category: 'meta-narrative', rx: /\b(the\s+(story|author|narrator|writer|prompt|system)|skip\s+(to|ahead)|fast.?forward|next\s+chapter|make\s+(him|her|the\s+li|them)\s+(say|do|feel|love)|i\s+want\s+the\s+(scene|story|plot)|end\s+the\s+(scene|story|chapter)|rewrite|retcon|as\s+the\s+author|out\s+of\s+character)\b|\bOOC\b/i },
   ];
   function _detectWallBreakSignal(text) {
@@ -126480,6 +126499,152 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
     return kind === 'action' ? _SAYDO_WALLBREAK_ACTION_FALLBACK : _SAYDO_WALLBREAK_DIALOGUE_FALLBACK;
   }
   window._sayDoWallBreakFallback = _sayDoWallBreakFallback;
+
+  // ── COMPLAINT ROUTING (Roman 2026-09-25, Say/Do category 4) ─────────────────────────────────
+  // The old handling substituted a neutral in-world line and let the turn proceed. That was wrong
+  // twice over: it MANUFACTURED a canonical action the player never took ("a brief, unplaceable
+  // pause"), and it CONSUMED the player's turn to do it. A complaint is not a story move. It must
+  // stay entirely out of canon and cost the player nothing.
+  //
+  // The detector already computes WHICH KIND of complaint this is and the old path threw that
+  // away. The category is preserved through routing, because a bug report, a continuity claim and
+  // plain frustration are three different things that deserve three different answers.
+  var _WALLBREAK_ROUTES = {
+    // A real defect report. Open the existing bug-report panel with the text prefilled — and NEVER
+    // submit it automatically: what gets filed is the player's decision, not ours.
+    'interface':             { route: 'bug-report',       advancesStory: false },
+    // A claim about what the story forgot. It may be TRUE, so it goes to verification against the
+    // ledgers before anything is proposed — never straight to an apology or a retcon.
+    'plot-memory-complaint': { route: 'concierge-verify', advancesStory: false },
+    // Everything else is out-of-character talk to the system, not to the world.
+    'model-name-complaint':  { route: 'concierge-ooc',    advancesStory: false },
+    'subjective-frustration':{ route: 'concierge-ooc',    advancesStory: false },
+    'ai-identity':           { route: 'concierge-ooc',    advancesStory: false },
+    'game-mechanics':        { route: 'concierge-ooc',    advancesStory: false },
+    'meta-narrative':        { route: 'concierge-ooc',    advancesStory: false }
+  };
+  function _routeWallBreakComplaint(action, dialogue) {
+    try {
+      var hit = _detectWallBreakSignal(action) || _detectWallBreakSignal(dialogue);
+      if (!hit) return null;
+      var r = _WALLBREAK_ROUTES[hit.category] || { route: 'concierge-ooc', advancesStory: false };
+      return { category: hit.category, matched: hit.matched, route: r.route,
+               advancesStory: r.advancesStory,
+               text: String(action || dialogue || '') };
+    } catch (_) { return null; }
+  }
+  window._routeWallBreakComplaint = _routeWallBreakComplaint;
+
+  // Performs the routing. Returns true when the turn was CONSUMED BY ROUTING and the caller must
+  // stop — no generation, no ledger write, no turn increment.
+  function _handleWallBreakComplaint(action, dialogue) {
+    var r = _routeWallBreakComplaint(action, dialogue);
+    if (!r) return false;
+    try { console.log('[SAYDO:COMPLAINT] category=' + r.category + ' route=' + r.route + ' matched="' + r.matched + '" — story NOT advanced'); } catch (_) {}
+    try {
+      var s = window.state || {};
+      s._lastComplaintRoute = { at: Date.now(), category: r.category, route: r.route,
+                                matched: r.matched, advancedStory: false };
+      (s._complaintRouteLog = s._complaintRouteLog || []).push(s._lastComplaintRoute);
+      if (s._complaintRouteLog.length > 30) s._complaintRouteLog.shift();
+    } catch (_) {}
+    try {
+      if (r.route === 'bug-report') {
+        // PREFILL ONLY. The player still presses the button themselves.
+        try {
+          var ta = document.getElementById('bugReportDescription');
+          if (ta && !String(ta.value || '').trim()) {
+            ta.value = (typeof sanitizeShortInput === 'function') ? sanitizeShortInput(r.text, 2000) : r.text;
+          }
+        } catch (_) {}
+        if (typeof window.openVault === 'function') window.openVault('report');
+        else if (typeof showToast === 'function') showToast('Looks like a bug — you can report it from the Vault.');
+      } else if (r.route === 'concierge-verify') {
+        // Verification FIRST. Nothing is conceded or corrected before the ledgers are checked.
+        if (typeof window._conciergeVerifyContinuityClaim === 'function') window._conciergeVerifyContinuityClaim(r.text);
+        else if (typeof showToast === 'function') showToast('Let me check the record on that — one moment.');
+      } else {
+        if (typeof window._conciergeOOCAcknowledge === 'function') window._conciergeOOCAcknowledge(r.text, r.category);
+        else if (typeof showToast === 'function') showToast('Heard — that one\'s for me, not the story.');
+      }
+    } catch (_) {}
+    return true;
+  }
+  window._handleWallBreakComplaint = _handleWallBreakComplaint;
+
+  // ── WEAK-TURN RESTRAINT (Roman 2026-09-25, Say/Do category 5) ───────────────────────────────
+  // Weak input is NEVER blocked — "I don't know" is a legitimate thing for a person to feel, and
+  // refusing it would be worse than mishandling it. The risk is the opposite direction:
+  // buildPlayerImpactDirective tells the author the input is CANON and the scene must react
+  // "proportionally", which for a shrug is exactly where a non-decision becomes a decision the
+  // player never made.
+  //
+  // DELIBERATELY NARROW. Only WHOLE-RESPONSE weak shapes, and only when EVERY non-empty field is
+  // weak and no Fate action accompanies the turn. A substantive action plus "sure" is not a weak
+  // turn — the substance is the move, and the assent is just its tone.
+  var _WEAK_SHAPES = [
+    { posture: 'uncertainty',   rx: /^(?:i\s+(?:don'?t|do\s+not)\s+know|idk|dunno|not\s+sure|no\s+idea)[.!?]*$/i },
+    { posture: 'disengagement', rx: /^(?:whatever|meh|shrug|\*?shrugs?\*?|don'?t\s+care|either\s+way)[.!?]*$/i },
+    { posture: 'silence',       rx: /^(?:\.{2,}|…|\s*)$/ },
+    { posture: 'weak assent',   rx: /^(?:sure|ok|okay|k|fine|i\s+guess|alright|yeah|yes)[.!?]*$/i }
+  ];
+  function _weakShapeOf(text) {
+    var t = String(text == null ? '' : text).trim();
+    if (!t) return null;
+    for (var i = 0; i < _WEAK_SHAPES.length; i++) if (_WEAK_SHAPES[i].rx.test(t)) return _WEAK_SHAPES[i].posture;
+    return null;
+  }
+  // Returns { weak, postures, fields } — weak ONLY when every non-empty field is a weak shape and
+  // no Fate action is in play.
+  function _detectWeakTurn(action, dialogue, opts) {
+    try {
+      var s = (opts && opts.state) || window.state || {};
+      var fate = (opts && opts.fateAction !== undefined) ? opts.fateAction
+        : !!(s._playerImpactRead && s._playerImpactRead.fate);
+      var fields = [];
+      if (String(action || '').trim()) fields.push({ field: 'action', text: String(action).trim() });
+      if (String(dialogue || '').trim()) fields.push({ field: 'dialogue', text: String(dialogue).trim() });
+      if (!fields.length) return { weak: false, postures: [], reason: 'no input' };
+      if (fate) return { weak: false, postures: [], reason: 'a Fate action accompanies this turn' };
+      var postures = [];
+      for (var i = 0; i < fields.length; i++) {
+        var p = _weakShapeOf(fields[i].text);
+        if (!p) return { weak: false, postures: [], reason: 'field "' + fields[i].field + '" is substantive' };
+        postures.push(p);
+      }
+      return { weak: true, postures: postures, fields: fields.map(function (f) { return f.field; }) };
+    } catch (_) { return { weak: false, postures: [], reason: 'detector threw' }; }
+  }
+  window._detectWeakTurn = _detectWeakTurn;
+
+  // ONE contract, delivered to BOTH the planner and the author. Author-only restraint is too late:
+  // by then the planner has already chosen an event, and if it chose one that presumes a decision,
+  // no amount of authorial care can un-choose it.
+  function _buildWeakTurnRestraintDirective(action, dialogue, opts) {
+    try {
+      var w = _detectWeakTurn(action, dialogue, opts);
+      if (!w.weak) return '';
+      var posture = w.postures.join(' / ');
+      return (
+        'WEAK-TURN RESTRAINT (HARD — the player did NOT make a strong choice):\n' +
+        'Everything the player entered this turn reads as ' + posture.toUpperCase() + '. That is a real\n' +
+        'answer and must be honoured as what it is.\n' +
+        '- PRESERVE THE POSTURE EXACTLY: uncertainty stays uncertain, disengagement stays\n' +
+        '  disengaged, silence stays silent, low-commitment assent stays low-commitment.\n' +
+        '- DO NOT UPGRADE IT. No sudden enthusiasm, no confession, no declaration, no firm refusal,\n' +
+        '  no commitment, no decisive action. "I don\'t know" does not become "I choose you", and\n' +
+        '  "sure" does not become eagerness.\n' +
+        '- DO NOT read hidden resolve into it and then write the resolve. A shrug is a shrug.\n' +
+        '- THE SCENE STILL MOVES — but from OUTSIDE the protagonist: another character presses,\n' +
+        '  decides, or reacts to the non-answer; an external event lands; time or circumstance\n' +
+        '  forces the issue. Their hesitation can cost them something, and that cost is legitimate.\n' +
+        '- A NEW PRESSURE OR CONSEQUENCE IS ALLOWED. Pretending the player chose is NOT.\n' +
+        'The protagonist may be swept along, cornered, or left behind. They may not be quietly\n' +
+        'rewritten into someone who knew what they wanted.\n\n'
+      );
+    } catch (_) { return ''; }
+  }
+  window._buildWeakTurnRestraintDirective = _buildWeakTurnRestraintDirective;
 
   // ── PII Sanitization — redact personal info from user input ──
   // Applied only to user Say/Do input, never to engine-generated narrative.
@@ -170504,9 +170669,13 @@ No text, no watermark, no UI elements, share-ready.`;
             action = _sayDoGibberishFallback(action, 'action');
             dialogue = _sayDoGibberishFallback(dialogue, 'dialogue');
           }
-          if (typeof _sayDoWallBreakFallback === 'function') {
-            action = _sayDoWallBreakFallback(action, 'action');
-            dialogue = _sayDoWallBreakFallback(dialogue, 'dialogue');
+          // COMPLAINTS ARE ROUTED, NOT NARRATED (Roman 2026-09-25, category 4). This returns
+          // BEFORE any generation, ledger write or turn increment — a complaint costs the player
+          // nothing and puts nothing in canon. It replaces the old in-world fallback, which
+          // manufactured a canonical "brief pause" the player never performed and spent their turn.
+          if (typeof _handleWallBreakComplaint === 'function'
+              && _handleWallBreakComplaint(action, dialogue)) {
+            return;
           }
         } catch (_sdErr) {
           try { console.warn('[SAYDO:SAFETY] gate threw, allowing through unmodified:', _sdErr && _sdErr.message); } catch (__) {}
@@ -227256,6 +227425,13 @@ No text, no watermark, no UI elements, share-ready.`;
       _cgCacheSentinel +
       // SAFE MODE (category 3). Emits '' in normal adult mode, so that path is byte-identical.
       ((typeof _buildSafeModeAuthoringDirective === 'function') ? _buildSafeModeAuthoringDirective() : '') +
+      // WEAK-TURN RESTRAINT (category 5). The planner already received this; the author receives
+      // the SAME contract so the restraint survives the handoff. Emits '' on any ordinary turn.
+      ((typeof _buildWeakTurnRestraintDirective === 'function')
+        ? _buildWeakTurnRestraintDirective(
+            (window.state && window.state._lastSayDoAction) || '',
+            (window.state && window.state._lastSayDoDialogue) || '')
+        : '') +
       // Intimacy legality gate — FIRST hard rule. Tells the model the
       // current storyturn + intimacy phase, and what's prohibited /
       // permitted. Placed before optional advisory blocks so legality
@@ -234224,6 +234400,11 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
         at: Date.now()
       };
     } catch (_) {}
+    // THIS TURN'S SAY/DO, where the prompt builders can reach it. _buildCGScreenplaySystemPrompt
+    // takes no arguments, so the weak-turn contract has no other way to see what the player
+    // actually entered. Set per generation and cleared in the same finally that releases the
+    // attempt, so it can never leak into a later turn.
+    try { state._lastSayDoAction = playerAction || ''; state._lastSayDoDialogue = playerDialogue || ''; } catch (_) {}
     try {
       var _cgPlan = await _runCGScreenplayGenInner(sceneIndex, playerAction, playerDialogue);
       // ── SAFE-MODE DIAGNOSTIC, NON-DESTRUCTIVE (Roman 2026-09-25, Say/Do category 3) ──────────
