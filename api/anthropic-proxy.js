@@ -1,0 +1,151 @@
+/**
+ * ISOLATED ANTHROPIC ROUTE — calibration only. NOT part of Storybound orchestration.
+ *
+ * WHY THIS EXISTS AND WHY IT IS SEPARATE (Roman 2026-09-24):
+ * Storybound's normal orchestration redirects Anthropic model names to Mistral, so a calibration
+ * that went through the usual path would silently measure a different vendor's model and file the
+ * result under "Claude Haiku". That is the exact class of silent substitution this session has
+ * already been bitten by twice (the proxy's author-class reasoning default, and every grok-* alias
+ * resolving to 4.3). This route is deliberately NOT reachable from any production caller: nothing
+ * in public/app.js routes here except the canon-auditor calibration's explicit single-tier pin.
+ *
+ * It is narrow on purpose:
+ *   - a hard model allowlist; anything else is refused, never silently swapped;
+ *   - extended thinking is EXPLICIT — the caller asks for it and the response reports what was
+ *     actually served, so "thinking was enabled" is evidence, not an assumption;
+ *   - the API key is read from env and never logged, echoed, or returned.
+ */
+
+// Only models this calibration is allowed to measure. A name outside this list is refused rather
+// than resolved to something else — the whole point of the route.
+const ALLOWED_ANTHROPIC_MODELS = [
+  'claude-haiku-4-5-20251001'    // Claude Haiku 4.5 — canon-auditor calibration candidate
+];
+
+// Extended thinking has a documented floor of 1024 budget tokens, and max_tokens must exceed the
+// budget or the answer has no room left after thinking.
+const MIN_THINKING_BUDGET = 1024;
+
+module.exports = async (req, res) => {
+  if (req.method !== 'POST') return res.status(405).json({ error: 'method_not_allowed' });
+
+  const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
+  if (!ANTHROPIC_API_KEY) {
+    return res.status(500).json({ error: 'missing_api_key', detail: 'ANTHROPIC_API_KEY is not configured' });
+  }
+
+  try {
+    const {
+      model, messages, max_tokens, temperature,
+      thinking_budget_tokens,        // explicit opt-in; omitted = thinking OFF
+      role
+    } = req.body || {};
+
+    if (!ALLOWED_ANTHROPIC_MODELS.includes(String(model))) {
+      return res.status(400).json({
+        error: 'disallowed_model',
+        detail: 'this isolated calibration route serves only: ' + ALLOWED_ANTHROPIC_MODELS.join(', '),
+        received: String(model)
+      });
+    }
+    if (!Array.isArray(messages) || !messages.length) {
+      return res.status(400).json({ error: 'missing_messages' });
+    }
+
+    // Anthropic takes the system prompt as a TOP-LEVEL field, not as a messages[] entry. Leaving a
+    // system message in the array would be rejected — or worse, silently treated as a user turn,
+    // changing what the model was actually asked.
+    const systemMsgs = messages.filter((m) => m && m.role === 'system');
+    const turnMsgs = messages.filter((m) => m && m.role !== 'system')
+      .map((m) => ({ role: m.role === 'assistant' ? 'assistant' : 'user', content: String(m.content || '') }));
+    const system = systemMsgs.map((m) => String(m.content || '')).join('\n\n');
+
+    const maxTokens = Number(max_tokens) || 2000;
+    let budget = (thinking_budget_tokens != null) ? Number(thinking_budget_tokens) : 0;
+    const wantThinking = budget > 0;
+    if (wantThinking) {
+      if (budget < MIN_THINKING_BUDGET) budget = MIN_THINKING_BUDGET;
+      if (budget >= maxTokens) {
+        return res.status(400).json({
+          error: 'invalid_thinking_budget',
+          detail: 'max_tokens (' + maxTokens + ') must exceed thinking_budget_tokens (' + budget + ')'
+        });
+      }
+    }
+
+    const body = { model: String(model), max_tokens: maxTokens, messages: turnMsgs };
+    if (system) body.system = system;
+    if (wantThinking) {
+      body.thinking = { type: 'enabled', budget_tokens: budget };
+      // Extended thinking requires temperature 1; sending anything else is rejected upstream. The
+      // caller's temperature is deliberately IGNORED here rather than passed through to fail.
+    } else if (temperature != null) {
+      body.temperature = Number(temperature);
+    }
+
+    const upstream = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01'
+      },
+      body: JSON.stringify(body)
+    });
+
+    const text = await upstream.text();
+    let data;
+    try { data = JSON.parse(text); }
+    catch (_) {
+      return res.status(502).json({ error: 'invalid_response_from_anthropic', details: text.slice(0, 300) });
+    }
+
+    if (!upstream.ok) {
+      console.error('[ANTHROPIC-PROXY] provider error ' + upstream.status);
+      for (const h of ['retry-after', 'anthropic-ratelimit-requests-remaining',
+                       'anthropic-ratelimit-tokens-remaining', 'anthropic-ratelimit-tokens-reset']) {
+        const v = upstream.headers.get(h);
+        if (v != null) res.setHeader(h, v);
+      }
+      return res.status(upstream.status).json({
+        error: (data && data.error && data.error.message) || 'Anthropic API request failed',
+        provider_status: upstream.status,
+        details: data
+      });
+    }
+
+    // Anthropic returns content as an ARRAY OF BLOCKS. Flatten text blocks for the caller and keep
+    // the thinking separate — pasting a reasoning trace into the answer would corrupt the reply,
+    // and discarding it would lose the only direct evidence that thinking actually ran.
+    const blocks = Array.isArray(data.content) ? data.content : [];
+    const contentText = blocks.filter((b) => b && b.type === 'text').map((b) => String(b.text || '')).join('');
+    const thinkingText = blocks.filter((b) => b && b.type === 'thinking')
+      .map((b) => String(b.thinking || b.text || '')).join('\n');
+
+    console.log('[ANTHROPIC-PROXY] ' + String(model) + ' in=' + ((data.usage && data.usage.input_tokens) || 0)
+      + ' out=' + ((data.usage && data.usage.output_tokens) || 0)
+      + ' thinking=' + (wantThinking ? ('enabled(' + budget + ')') : 'off')
+      + ' thinkingChars=' + thinkingText.length);
+
+    return res.status(200).json({
+      content: contentText,
+      thinking: thinkingText || null,
+      usage: data.usage || null,
+      stop_reason: data.stop_reason || null,
+      _orchestration: {
+        role: role || null,
+        provider: 'anthropic',
+        // The model the PROVIDER says it served, not the one we asked for.
+        model: data.model || String(model),
+        thinking_enabled: wantThinking,
+        thinking_budget_tokens: wantThinking ? budget : 0,
+        // Direct evidence thinking actually happened, independent of the requested flag.
+        thinking_chars: thinkingText.length,
+        timestamp: new Date().toISOString()
+      }
+    });
+  } catch (err) {
+    console.error('[ANTHROPIC-PROXY] failure:', err && err.message);
+    return res.status(500).json({ error: 'anthropic_proxy_failure', detail: (err && err.message) || String(err) });
+  }
+};

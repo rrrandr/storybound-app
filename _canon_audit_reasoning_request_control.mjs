@@ -19,7 +19,7 @@
 
 import { chromium } from 'playwright-core';
 import { installFailClosedNetworkGate } from './_e2e_network_gate.mjs';
-import { installCalibrationRoute, makeLedger, candidate, CANDIDATES } from './_canon_audit_calibration_core.mjs';
+import { installCalibrationRoute, makeLedger, candidate, CANDIDATES, COMBINED_CEILING_USD } from './_canon_audit_calibration_core.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -272,6 +272,92 @@ const REASONING_REPLY = {
     gWorst > 0.05, '$' + gWorst.toFixed(6));
   ok('the ceiling is set above the worst case so the run cannot be refused mid-way',
     gWorst <= GROK.ceilingUsd, '$' + gWorst.toFixed(6) + ' vs $' + GROK.ceilingUsd);
+  holder.candidate = CAND;
+
+  section('6c. CLAUDE HAIKU 4.5 — ISOLATED ROUTE, EXTENDED THINKING EXPLICIT');
+  // Storybound's normal orchestration redirects Anthropic model names to MISTRAL. A calibration on
+  // that path would measure Mistral and file it as Claude Haiku — the same silent substitution as
+  // the reasoning default and the grok alias collapse, and the hardest kind to notice because
+  // nothing errors. /api/anthropic-proxy exists only for this, reachable from nowhere else.
+  const HAIKU = candidate('claude-haiku-4-5-20251001');
+  gate.stub('/api/anthropic-proxy', async (req) => {
+    let b = null; try { b = JSON.parse(req.postData() || '{}'); } catch (_) {}
+    seen.push({ pathname: new URL(req.url()).pathname, body: b });
+    return { content: '{"verdict":"pass","violations":[]}', thinking: 'Considering whether appearance implies biology...',
+      usage: { input_tokens: 3402, output_tokens: 1180 },
+      _orchestration: { provider: 'anthropic', model: 'claude-haiku-4-5-20251001',
+        thinking_enabled: true, thinking_budget_tokens: 1024, thinking_chars: 47 } };
+  });
+  holder.candidate = HAIKU;
+  holder.currentFixture = 'control_haiku';
+  const hk = await dispatch({ tier: 'primary', provider: 'anthropic', model: HAIKU.model,
+    thinking_budget_tokens: HAIKU.thinkingBudgetTokens }, HAIKU.maxTokens);
+  const hwire = seen[seen.length - 1];
+  ok('the Haiku request goes to the ISOLATED /api/anthropic-proxy, not the Mistral route',
+    hwire && hwire.pathname === '/api/anthropic-proxy', hwire && hwire.pathname);
+  ok('it names the pinned snapshot claude-haiku-4-5-20251001, not a floating alias',
+    hwire && hwire.body.model === 'claude-haiku-4-5-20251001' && !/latest/.test(hwire.body.model),
+    hwire && hwire.body.model);
+  ok('EXTENDED THINKING IS EXPLICIT ON THE WIRE, with a real budget',
+    hwire && hwire.body.thinking_budget_tokens === 1024, hwire && JSON.stringify(hwire.body.thinking_budget_tokens));
+  ok('max_tokens exceeds the thinking budget, so the answer has room after thinking',
+    hwire && hwire.body.max_tokens > hwire.body.thinking_budget_tokens,
+    hwire && (hwire.body.max_tokens + ' vs ' + hwire.body.thinking_budget_tokens));
+  ok('the dispatch returned the answer with the thinking kept SEPARATE from it',
+    hk.ok && /"verdict"/.test(hk.content || '') && /Considering whether/.test(hk.thinking || '')
+    && !/Considering whether/.test(hk.content || ''), hk.error || hk.content);
+  ok('Anthropic usage (input_tokens/output_tokens) survives for realized cost',
+    !!(hk.usage && hk.usage.output_tokens), JSON.stringify(hk.usage));
+  const hSeen = seen.length, hLog = holder.log.length;
+  holder.currentFixture = 'control_haiku_no_thinking';
+  const hkNone = await dispatch({ tier: 'primary', provider: 'anthropic', model: HAIKU.model }, HAIKU.maxTokens);
+  ok('RED PROOF — a Haiku dispatch with no thinking budget is ABORTED before the wire',
+    hkNone.ok === false && seen.length === hSeen
+    && holder.log.slice(hLog).some((e) => e.kind === 'blocked-thinking'),
+    JSON.stringify(holder.log.slice(hLog)).slice(0, 200));
+  ok('and the block says what the silent failure would have been',
+    holder.log.slice(hLog).some((e) => /served as ORDINARY/.test(e.reason || '')));
+  const hWorst = HAIKU.perCallUsd * 8;
+  ok('Haiku priced $1/M in, $5/M out; worst case fits the $0.11 ceiling',
+    HAIKU.rate.in === 1e-6 && HAIKU.rate.out === 5e-6 && hWorst <= 0.11 && HAIKU.ceilingUsd === 0.11,
+    '$' + hWorst.toFixed(6));
+
+  section('6d. GROK 4.7 — THE RESOLVER MUST NOT SILENTLY SERVE 4.3');
+  const G47 = candidate('grok-4.7');
+  holder.candidate = G47;
+  holder.currentFixture = 'control_grok47';
+  const g47 = await dispatch({ tier: 'primary', provider: 'grok', model: G47.model,
+    reasoning_effort: G47.reasoningEffort, sbModelOverride: G47.sbModelOverride }, G47.maxTokens);
+  const g47wire = seen[seen.length - 1];
+  ok('the wire names grok-4.7 exactly, not a legacy grok-* alias',
+    g47wire && g47wire.body.preferredModel === 'grok-4.7', g47wire && g47wire.body.preferredModel);
+  ok('THE RESOLVER BYPASS IS ON THE WIRE — _sbModelOverride="grok-4.7"',
+    g47wire && g47wire.body._sbModelOverride === 'grok-4.7', g47wire && JSON.stringify(g47wire.body._sbModelOverride));
+  ok('reasoning high is sent explicitly rather than relying on 4.7\'s default',
+    g47wire && g47wire.body.reasoningEffort === 'high');
+  const sbSeen = seen.length, sbLog = holder.log.length;
+  holder.currentFixture = 'control_grok47_no_bypass';
+  const g47bad = await dispatch({ tier: 'primary', provider: 'grok', model: G47.model,
+    reasoning_effort: G47.reasoningEffort }, G47.maxTokens);
+  ok('RED PROOF — without the bypass the dispatch is ABORTED, not silently served as 4.3',
+    g47bad.ok === false && seen.length === sbSeen
+    && holder.log.slice(sbLog).some((e) => e.kind === 'blocked-resolver-bypass'),
+    JSON.stringify(holder.log.slice(sbLog)).slice(0, 220));
+  ok('and the block names the exact substitution it prevents',
+    holder.log.slice(sbLog).some((e) => /serves grok-4\.3 while this run reports grok-4\.7/.test(e.reason || '')));
+  // The bypass is only useful if the server actually honours it.
+  const proxySrc = fs.readFileSync(path.join(__dirname, 'api', 'proxy.js'), 'utf8');
+  ok('api/proxy.js allowlists grok-4.7 for the _sbModelOverride bypass',
+    /_SB_MODEL_OVERRIDES = \['grok-4\.6', 'grok-4\.7'\]/.test(proxySrc));
+  ok('...and grok-4.7 is an allowed model, so validation cannot refuse it',
+    /'grok-4\.7'\s+\/\/ EXPERIMENT ONLY/.test(proxySrc));
+  const g47Worst = G47.perCallUsd * 8;
+  ok('grok-4.7 priced from xAI docs at $2/M in, $6/M out; worst case fits $0.16',
+    G47.rate.in === 2e-6 && G47.rate.out === 6e-6 && g47Worst <= 0.16 && G47.ceilingUsd === 0.16,
+    '$' + g47Worst.toFixed(6));
+  console.log('    combined worst case: $' + (hWorst + g47Worst).toFixed(6) + '  vs hard ceiling $' + COMBINED_CEILING_USD);
+  ok('the two runs together stay inside the $0.27 combined hard ceiling',
+    hWorst + g47Worst <= COMBINED_CEILING_USD, '$' + (hWorst + g47Worst).toFixed(6));
   holder.candidate = CAND;
 
   section('7. THE RUN IS STILL LOCKED');

@@ -64,7 +64,8 @@ const ALLOWED_GROK_MODELS = [
   'grok-4-1-fast-non-reasoning',  // RENDERER primary + INTIMACY_SPECIALIST fallback
   'grok-4-1-fast-reasoning',      // INTIMACY_SPECIALIST primary
   'grok-4.3',                     // Universal fallback if 4-1 names get renamed/deprecated
-  'grok-4.6'                      // EXPERIMENT ONLY (_sbModelOverride); remove when the 4.3-vs-4.6 question closes
+  'grok-4.6',                     // EXPERIMENT ONLY (_sbModelOverride); remove when the 4.3-vs-4.6 question closes
+  'grok-4.7'                      // EXPERIMENT ONLY (_sbModelOverride) — canon-auditor calibration
 ];
 
 /**
@@ -188,7 +189,11 @@ const XAI_CALL_TIMEOUT_MS = Number(process.env.XAI_CALL_TIMEOUT_MS) || 90000;
 // 'none' (skips the reasoning phase: fewer output tokens, lower latency, fewer of
 // the 80k-prompt hangs); reasoning intent → 'high'. A client may override per call
 // with body.reasoningEffort (used by the per-scene effort routing + the author A/B).
-const _SB_MODEL_OVERRIDES = ['grok-4.6'];
+// MODELS THAT MAY BYPASS THE 4.3 COLLAPSE. _resolveGrokModel maps EVERY legacy grok-* name to
+// grok-4.3, which is correct for the retired 4.1/4.20 aliases but would silently turn a deliberate
+// grok-4.7 request into a 4.3 one — measuring the wrong model at 4.7 prices. A name listed here is
+// passed through verbatim when the caller sends it as _sbModelOverride.
+const _SB_MODEL_OVERRIDES = ['grok-4.6', 'grok-4.7'];
 function _resolveGrokModel(name, overrideEffort, sbOverride) {
   const n = String(name || '');
   let effort = (/non-reasoning|4\.20/.test(n)) ? 'none' : 'high';

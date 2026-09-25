@@ -6185,6 +6185,11 @@ ${_pcInteriorLock}`;
       // not a pin. Additive: every existing caller omits `extra` and sends no field.
       var _gBody = { role: 'STRUCTURE_GENERATOR', preferredModel: model, temperature: temperature, max_tokens: maxTokens, messages: messages };
       if (_re) _gBody.reasoningEffort = _re;
+      // api/proxy.js:_resolveGrokModel collapses EVERY legacy grok-* name to grok-4.3. That is right
+      // for the retired 4.1/4.20 aliases and WRONG for a deliberate pin to a newer model, which would
+      // be served as 4.3 while being billed and reported as the model asked for. _sbModelOverride is
+      // the existing, allowlisted bypass; a caller that wants a specific model must say so.
+      if (extra && extra.sbModelOverride) _gBody._sbModelOverride = String(extra.sbModelOverride);
       var r2 = await fetch('/api/proxy', { method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(_gBody) });
       if (!r2.ok) { var eb2 = await r2.text().catch(function () { return ''; }); throw _tierErr('grok HTTP ' + r2.status + (eb2 ? ' ' + eb2.slice(0, 200) : ''), { provider: 'grok', model: model, httpStatus: r2.status, hadContent: false }); }
@@ -6201,6 +6206,23 @@ ${_pcInteriorLock}`;
       if (!r3.ok) { var eb3 = await r3.text().catch(function () { return ''; }); throw _tierErr('chatgpt-proxy HTTP ' + r3.status + (eb3 ? ' ' + eb3.slice(0, 200) : ''), { provider: 'openai', model: model, httpStatus: r3.status, hadContent: false }); }
       var d3 = await r3.json();
       return { content: (d3 && d3.content) || '', usage: (d3 && d3.usage) || null, _orchestration: { model: model } };
+    }
+    if (provider === 'anthropic') {
+      // ISOLATED ROUTE. Storybound's normal orchestration redirects Anthropic model names to
+      // Mistral, so a calibration using the usual path would measure Mistral and call it Claude.
+      // /api/anthropic-proxy exists only for that reason and is reachable from nowhere else.
+      var _aBody = { role: 'STRUCTURE_GENERATOR', model: model, max_tokens: maxTokens, messages: messages };
+      if (extra && extra.thinking_budget_tokens) _aBody.thinking_budget_tokens = Number(extra.thinking_budget_tokens);
+      else if (temperature != null) _aBody.temperature = temperature;
+      var r4 = await fetch('/api/anthropic-proxy', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(_aBody) });
+      if (!r4.ok) { var eb4 = await r4.text().catch(function () { return ''; }); throw _tierErr('anthropic HTTP ' + r4.status + (eb4 ? ' ' + eb4.slice(0, 200) : ''), { provider: 'anthropic', model: model, httpStatus: r4.status, hadContent: false }); }
+      var d4 = await r4.json();
+      var _flat4 = _flattenProviderContent((d4 && d4.content) || '');
+      return { content: _flat4.text, thinking: (d4 && d4.thinking) || _flat4.thinking,
+        usage: (d4 && d4.usage) || null,
+        reasoningEffort: (d4 && d4._orchestration && d4._orchestration.thinking_enabled) ? 'extended-thinking' : null,
+        _orchestration: (d4 && d4._orchestration) || { model: model } };
     }
     throw _tierErr('[TIERED] unknown provider: ' + provider, { provider: provider, model: model });
   }
@@ -6251,9 +6273,14 @@ ${_pcInteriorLock}`;
         // want reasoning on one tier and not another, so the tier's own value wins; opts is the
         // whole-call default. Omitting both sends no effort key at all, which is what every
         // existing caller does.
-        var _tierExtra = (t.reasoning_effort != null)
-          ? { reasoning_effort: t.reasoning_effort }
-          : (opts.reasoning_effort != null ? { reasoning_effort: opts.reasoning_effort } : null);
+        var _tierExtra = null;
+        var _eff = (t.reasoning_effort != null) ? t.reasoning_effort : opts.reasoning_effort;
+        if (_eff != null) _tierExtra = { reasoning_effort: _eff };
+        // Provider-specific pins ride alongside, per tier first then per call.
+        var _sbo = (t.sbModelOverride != null) ? t.sbModelOverride : opts.sbModelOverride;
+        if (_sbo != null) _tierExtra = Object.assign(_tierExtra || {}, { sbModelOverride: _sbo });
+        var _tb = (t.thinking_budget_tokens != null) ? t.thinking_budget_tokens : opts.thinking_budget_tokens;
+        if (_tb != null) _tierExtra = Object.assign(_tierExtra || {}, { thinking_budget_tokens: _tb });
         var result = await _tieredProviderDispatch(t.provider, t.model, messages, maxTokens, temperature, _tierExtra);
         var hadContent = !!(result && result.content && String(result.content).trim());
         if (!hadContent) throw _tierErr(t.provider + ' returned empty content', { provider: t.provider, model: t.model, httpStatus: 200, hadContent: false });

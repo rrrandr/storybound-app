@@ -92,8 +92,41 @@ export const CANDIDATES = {
   'grok-4.3':           { provider: 'grok',    endpoint: '/api/proxy',          rate: { in: 1.25e-6, out: 2.5e-6 },
                           reasoningEffort: 'high', reasoningField: 'reasoningEffort',
                           maxTokens: 2000, tokens: { in: 3400, out: 2000 },
-                          ceilingUsd: 0.08 }
+                          ceilingUsd: 0.08 },
+  // ── claude-haiku-4-5-20251001, EXTENDED THINKING — via the ISOLATED Anthropic route ─────────
+  // Storybound's normal orchestration redirects Anthropic model names to Mistral, so the usual
+  // path would measure Mistral and file it under "Claude Haiku". api/anthropic-proxy.js exists
+  // solely so this calibration can reach the real vendor, and nothing in production routes there.
+  // Thinking is an EXPLICIT budget, not a flag: Anthropic requires budget_tokens >= 1024 and
+  // max_tokens > budget, and the response reports thinking_chars so "thinking ran" is evidence
+  // rather than an assumption about a requested field.
+  // Price $1.00/M in, $5.00/M out. At the bound: 3400 x $1/M + 2000 x $5/M = $0.013400/call
+  // x 8 = $0.107200, inside the $0.11 ceiling.
+  'claude-haiku-4-5-20251001': {
+                          provider: 'anthropic', endpoint: '/api/anthropic-proxy',
+                          rate: { in: 1e-6, out: 5e-6 },
+                          thinkingBudgetTokens: 1024, maxTokens: 2000, tokens: { in: 3400, out: 2000 },
+                          ceilingUsd: 0.11 },
+  // ── grok-4.7 at reasoning high — VERIFIED AGAINST xAI'S OWN DOCS ─────────────────────────────
+  // docs.x.ai/developers/models/grok-4.7, read 2026-09-24: model id "grok-4.7"; $2.00/M input,
+  // $0.50/M cached input, $6.00/M output under 200k context (double above it — our prompts are
+  // ~3.4k, so the lower tier applies); reasoning effort low|medium|high|xhigh, default high.
+  //
+  // THE RESOLVER WOULD OTHERWISE EAT THIS. api/proxy.js:_resolveGrokModel maps EVERY grok-* name
+  // to grok-4.3 — correct for the retired 4.1/4.20 aliases, catastrophic for a deliberate 4.7 pin,
+  // which would be SERVED as 4.3 while being reported and priced as 4.7. The existing allowlisted
+  // bypass is _sbModelOverride, so the candidate carries it and the run proves the SERVED model.
+  // Default effort is already 'high', but a default is not a pin — it is sent explicitly.
+  // At the bound: 3400 x $2/M + 2000 x $6/M = $0.018800/call x 8 = $0.150400, inside $0.16.
+  'grok-4.7':           { provider: 'grok',    endpoint: '/api/proxy',          rate: { in: 2e-6, out: 6e-6 },
+                          reasoningEffort: 'high', reasoningField: 'reasoningEffort',
+                          sbModelOverride: 'grok-4.7',
+                          maxTokens: 2000, tokens: { in: 3400, out: 2000 },
+                          ceilingUsd: 0.16 }
 };
+// COMBINED HARD CEILING across the Haiku + Grok-4.7 pair (Roman 2026-09-24). Each run also has its
+// own enforced ceiling; this is the number neither may push the pair past.
+export const COMBINED_CEILING_USD = 0.27;
 export const DEFAULT_MODEL = 'gpt-4o-mini';
 export function candidate(model) {
   const c = CANDIDATES[model];
@@ -107,6 +140,8 @@ export function candidate(model) {
     // Providers spell the field differently: Mistral takes reasoning_effort, xAI takes
     // reasoningEffort. The enforcement below must check the one this provider actually uses.
     reasoningField: c.reasoningField || 'reasoning_effort',
+    sbModelOverride: c.sbModelOverride || null,
+    thinkingBudgetTokens: c.thinkingBudgetTokens || 0,
     ceilingUsd: (typeof c.ceilingUsd === 'number') ? c.ceilingUsd : CEILING_USD
   }, c);
 }
@@ -420,6 +455,32 @@ export async function installCalibrationRoute(page, holder) {
             + (sent == null
               ? 'the request carried none, and the proxy would serve this as ordinary (non-reasoning) ' + wantModel
               : 'the request carried "' + sent + '"') });
+        await route.abort('failed'); return;
+      }
+    }
+    // EXTENDED THINKING MUST BE EXPLICIT ON THE WIRE (Anthropic). A request that omits the budget
+    // is served as ordinary Haiku with no error, and the result would be filed as "Haiku with
+    // extended thinking" — the same silent-substitution trap as Mistral's reasoning default.
+    const wantBudget = holder.candidate && holder.candidate.thinkingBudgetTokens;
+    if (wantBudget) {
+      const sentB = body && body.thinking_budget_tokens;
+      if (Number(sentB) !== Number(wantBudget)) {
+        log.push({ kind: 'blocked-thinking', pathname, model, sent: sentB == null ? null : Number(sentB),
+          reason: 'calibration requires thinking_budget_tokens=' + wantBudget + ' explicitly; '
+            + (sentB == null ? 'the request carried none and would be served as ORDINARY ' + wantModel
+               : 'the request carried ' + sentB) });
+        await route.abort('failed'); return;
+      }
+    }
+    // A PINNED GROK MODEL MUST CARRY ITS BYPASS. Without _sbModelOverride the proxy's resolver
+    // collapses the name to grok-4.3 and serves a different model at this one's price.
+    const wantSbo = holder.candidate && holder.candidate.sbModelOverride;
+    if (wantSbo) {
+      const sentSbo = body && body._sbModelOverride;
+      if (String(sentSbo || '') !== String(wantSbo)) {
+        log.push({ kind: 'blocked-resolver-bypass', pathname, model, sent: sentSbo == null ? null : String(sentSbo),
+          reason: 'calibration requires _sbModelOverride="' + wantSbo + '"; without it '
+            + 'api/proxy.js:_resolveGrokModel serves grok-4.3 while this run reports ' + wantModel });
         await route.abort('failed'); return;
       }
     }

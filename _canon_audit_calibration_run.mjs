@@ -48,7 +48,11 @@ const PROMPT_V = pIdx !== -1 ? Number(process.argv[pIdx + 1]) : 2;
 if (PROMPT_V !== 1 && PROMPT_V !== 2) { console.error('REFUSING — --prompt-version must be 1 or 2'); process.exit(6); }
 // The phrase NAMES THE CEILING IT AUTHORIZES, so an authorization for a cheap run can never
 // release an expensive one. A new candidate with a new ceiling gets a new phrase, by construction.
-const AUTH_PHRASE = RUN_CEILING === 0.08
+const AUTH_PHRASE = RUN_CEILING === 0.11
+  ? 'run the haiku canon auditor calibration once under $0.11'
+  : RUN_CEILING === 0.16
+  ? 'run the grok-4.7 canon auditor calibration once under $0.16'
+  : RUN_CEILING === 0.08
   ? 'run the grok-4.3 canon auditor calibration once under $0.08'
   : RUN_CEILING === 0.02
   ? 'run the reasoning-mistral canon auditor calibration once under $0.02'
@@ -69,6 +73,8 @@ if (given !== AUTH_PHRASE) {
   console.log('  prompt arm   : v' + PROMPT_V + (PROMPT_V === 1 ? '   (the arm both rejected models were measured against)' : '   (silence-is-permission + qualified categories + surviving-evidence facts)'));
   console.log('  measures     : ' + PRIMARY_MODEL + ' ONLY, via ' + PRIMARY_ENDPOINT
     + (CAND.reasoningEffort ? '   reasoning_effort="' + CAND.reasoningEffort + '" (explicit, enforced pre-dispatch)' : ''));
+  if (CAND.thinkingBudgetTokens) console.log('  thinking     : EXTENDED, budget ' + CAND.thinkingBudgetTokens + ' tokens (explicit, enforced pre-dispatch)');
+  if (CAND.sbModelOverride) console.log('  resolver     : _sbModelOverride="' + CAND.sbModelOverride + '" — without it api/proxy.js serves grok-4.3');
   console.log('  max_tokens   : ' + CAND.maxTokens
     + (CAND.reasoningEffort ? '   (thinking bills as OUTPUT and Mistral reports no reasoning_tokens; max_tokens is the only bound)' : ''));
   console.log('  fixtures     : ' + fixtures.length + ' (' + fixtures.filter((f) => f.expect === 'violation').length
@@ -166,6 +172,9 @@ fs.mkdirSync(OUT_DIR, { recursive: true });
         // is where a per-model reasoning setting belongs; omitting it sends no effort key at all.
         const tier = { tier: 'primary', provider: a.provider, model: a.model };
         if (a.reasoningEffort) tier.reasoning_effort = a.reasoningEffort;
+        // Pins that must survive a provider-side resolver or default.
+        if (a.sbModelOverride) tier.sbModelOverride = a.sbModelOverride;
+        if (a.thinkingBudgetTokens) tier.thinking_budget_tokens = a.thinkingBudgetTokens;
         const res = await window._callTieredProvider('canonAuditCalibration', [
           { role: 'system', content: prompt.sys }, { role: 'user', content: prompt.usr }
         ], { max_tokens: a.maxTokens, temperature: 0, tiers: [tier] });
@@ -175,6 +184,8 @@ fs.mkdirSync(OUT_DIR, { recursive: true });
         // one is returned. Our request said what we asked for; only this says what we got.
         meta = {
           servedModel: (res && res._orchestration && res._orchestration.model) || null,
+          thinkingEnabled: (res && res._orchestration && res._orchestration.thinking_enabled) || false,
+          thinkingBudget: (res && res._orchestration && res._orchestration.thinking_budget_tokens) || 0,
           reasoningEffortReported: (res && res.reasoningEffort) || null,
           usage: (res && res.usage) || null,
           thinking: (res && res.thinking) || null,
@@ -193,7 +204,8 @@ fs.mkdirSync(OUT_DIR, { recursive: true });
       return { packetIds: packet.ids, packetTruncated: packet.truncated,
         promptVersionActive: window._canonAuditPromptVersionActive(), prompt, content, raw, validated, error, meta };
     }, { fx, durable, model: PRIMARY_MODEL, provider: CAND.provider, promptVersion: PROMPT_V,
-         reasoningEffort: CAND.reasoningEffort, maxTokens: CAND.maxTokens });
+         reasoningEffort: CAND.reasoningEffort, maxTokens: CAND.maxTokens,
+         sbModelOverride: CAND.sbModelOverride, thinkingBudgetTokens: CAND.thinkingBudgetTokens });
     const latencyMs = Date.now() - t0;
     const score = scoreFixture(fx, r.validated || { valid: false, errors: ['no response'] }, r.error);
     // REALIZED COST FROM THE PROVIDER'S OWN USAGE, per fixture — never from the reservation. On a
@@ -205,12 +217,15 @@ fs.mkdirSync(OUT_DIR, { recursive: true });
     // .reasoning_tokens exactly, i.e. completion_tokens EXCLUDES thinking. Charging only
     // completion_tokens understated this run's cost by ~43% (4,041 reasoning tokens ignored).
     // And when the provider reports its OWN cost, that beats any arithmetic of mine.
+    // Anthropic reports input_tokens/output_tokens; output INCLUDES thinking tokens already.
+    const _inTok = (_u && (_u.prompt_tokens != null ? _u.prompt_tokens : _u.input_tokens)) || 0;
     const _rt = ((_u && _u.completion_tokens_details && _u.completion_tokens_details.reasoning_tokens) || 0);
-    const _outTok = ((_u && _u.completion_tokens) || 0)
+    const _outTok = ((_u && (_u.completion_tokens != null ? _u.completion_tokens : _u.output_tokens)) || 0)
       + ((_u && _u.total_tokens && (_u.total_tokens - (_u.prompt_tokens || 0) - (_u.completion_tokens || 0)) === _rt) ? _rt : 0);
+    const _thinkChars = (r.meta && r.meta.thinkingChars) || 0;
     const _providerUsd = (_u && typeof _u.cost_in_usd_ticks === 'number') ? _u.cost_in_usd_ticks * 1e-10 : null;
     const realizedUsd = _providerUsd != null ? _providerUsd
-      : (_u ? (CAND.rate.in * (_u.prompt_tokens || 0) + CAND.rate.out * _outTok) : null);
+      : (_u ? (CAND.rate.in * _inTok + CAND.rate.out * _outTok) : null);
     // The EXACT outgoing body for this fixture, as captured at the route before dispatch.
     const requestBody = (holder.log.filter((e) => e.kind === 'request-body' && e.fixture === fx.id).pop() || {}).body || null;
     rows.push({ id: fx.id, expect: fx.expect, why: fx.why, latencyMs, score,
@@ -277,8 +292,8 @@ fs.mkdirSync(OUT_DIR, { recursive: true });
 
   const summary = verdictSummary(rows, CANARY ? { rateLimitStopAfter: 1 } : {});
   const realizedTotal = rows.reduce((t, r) => t + (r.realizedUsd || 0), 0);
-  const tokIn = rows.reduce((t, r) => t + ((r.usage && r.usage.prompt_tokens) || 0), 0);
-  const tokOut = rows.reduce((t, r) => t + ((r.usage && r.usage.completion_tokens) || 0), 0);
+  const tokIn = rows.reduce((t, r) => t + ((r.usage && (r.usage.prompt_tokens != null ? r.usage.prompt_tokens : r.usage.input_tokens)) || 0), 0);
+  const tokOut = rows.reduce((t, r) => t + ((r.usage && (r.usage.completion_tokens != null ? r.usage.completion_tokens : r.usage.output_tokens)) || 0), 0);
   // MODEL IDENTITY IS ASSERTED, NOT ASSUMED. If any fixture was served by something other than the
   // pinned model, or (for a reasoning candidate) the proxy reports an effort other than the one
   // requested, the run does not describe the candidate it claims to and must not be scored as it.
@@ -299,7 +314,7 @@ fs.mkdirSync(OUT_DIR, { recursive: true });
     ? effortEchoed.filter((r) => String(r.reasoningEffortReported) !== String(CAND.reasoningEffort))
     : [];
   // Independent corroboration that reasoning ran, for providers that do not echo the setting.
-  const reasoningObserved = rows.filter((r) => (r.reasoningTokens || 0) > 0);
+  const reasoningObserved = rows.filter((r) => (r.reasoningTokens || 0) > 0 || (r.thinkingChars || 0) > 0);
   const report = { runId: RUN_ID, model: PRIMARY_MODEL, promptVersion: PROMPT_V,
     reasoningEffort: CAND.reasoningEffort || null,
     maxTokens: CAND.maxTokens, dispatches: gate.trackedCalls().length,
