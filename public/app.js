@@ -268544,7 +268544,13 @@ LOVE INTEREST POV — MANDATORY OPENER:
       // the opening; self-gates on wish-relevance via _wt (title/crisis/aPlot), same regex the turns use.
       + (function () { try { if (state.picks && state.picks.world === 'Fantasy') { var _wt = (state.currentCrisis || '') + ' ' + ((state.aPlot && state.aPlot.antagonistOrAntiForce) || '') + ' ' + ((state.aPlot && state.aPlot.goal) || '') + ' ' + (state.immutableTitle || '') + ' ' + ((state.picks && state.picks.synopsis) || '') + ' ' + ((typeof window !== 'undefined' && window._canonGateText) ? window._canonGateText(state) : ''); var _wo = ''; if (typeof _buildFatelandsWishCoreDirective === 'function') _wo += _buildFatelandsWishCoreDirective(_wt); if (typeof _buildFatelandsWishAdjudicationDirective === 'function') _wo += _buildFatelandsWishAdjudicationDirective(_wt); return _wo; } } catch (_) {} return ''; })();
 
-    const introPrompt = `${(typeof _buildSeedContextDirective === 'function' ? _buildSeedContextDirective() : '')}${fifthPersonContract}${fourthPersonContract}${toneEnforcementBlock}${materialChainDirective}${_fatelandsCognitiveMemoryBlock}Write the opening scene (${tempoBand.range} words). Tempo: ${tempoBand.label}. Establish the world THROUGH character interaction and tension. Do NOT delay conflict for setup. World details should emerge from action, dialogue, and pressure. Begin with something happening, not just existing.
+    // RESERVED CANON, LITERARY OPENING (Roman 2026-09-25). Placed immediately after the seed-context
+    // directive because that is what DELIVERS the reserved world truth to this prompt — the
+    // prohibition has to sit next to the canon it constrains. The CG author builder got this first;
+    // this was the only other payload receiving the reserved truth without the rule. Latent rather
+    // than live today (First Sacrifice is the sole seed with reserved truths, its Scene 1 is a fixed
+    // package and its continuations run CG), so this closes it before a second such seed exists.
+    const introPrompt = `${(typeof _buildSeedContextDirective === 'function' ? _buildSeedContextDirective() : '')}${(typeof _buildReservedContentAuthoringDirective === 'function' ? _buildReservedContentAuthoringDirective() : '')}${fifthPersonContract}${fourthPersonContract}${toneEnforcementBlock}${materialChainDirective}${_fatelandsCognitiveMemoryBlock}Write the opening scene (${tempoBand.range} words). Tempo: ${tempoBand.label}. Establish the world THROUGH character interaction and tension. Do NOT delay conflict for setup. World details should emerge from action, dialogue, and pressure. Begin with something happening, not just existing.
 ${authorOpeningDirective}
 ═══════════════════════════════════════════════════════
 SCENE COMPOSITION
