@@ -331,6 +331,21 @@ export default async function handler(req, res) {
     // the client (e.g., OAS turn router) request reasoning vs non-
     // reasoning Grok per-turn while still keeping the full fallback
     // chain behind it.
+    // ── ENFORCED NO-FALLBACK (Roman 2026-09-25) ────────────────────────────────────────────────
+    // _sbModelOverride rewrites every chain entry to one model, but it does NOT shorten the chain:
+    // on a timeout or fetch error the loop still `continue`s and calls that same model again, up to
+    // three times for ONE client request. That is the containment failure the grok-4.7 run hit, and
+    // a client-side single-tier pin cannot see it — a stub at /api/proxy intercepts the request
+    // BEFORE this loop, so "exactly one request" proves nothing about upstream attempts.
+    //
+    // A caller that must make exactly one upstream call (the canon auditor) sends _noFallback and
+    // gets a ONE-ENTRY chain. A failure then returns the error instead of silently retrying.
+    const _noFallback = !!(req.body && req.body._noFallback);
+    if (_noFallback) {
+      const _pin = (req.body && req.body._sbModelOverride) || (req.body && req.body.preferredModel) || modelChain[0];
+      modelChain = [modelChain.includes(_pin) ? _pin : modelChain[0]];
+      console.log(`[SPECIALIST-PROXY] _noFallback — chain reduced to ONE entry: ${modelChain[0]}`);
+    }
     const preferredModel = req.body && req.body.preferredModel;
     // A preferredModel that is allowlisted but NOT in this role's chain used to be silently
     // ignored — the calibration asked for grok-4.7, the guard failed quietly, and the default

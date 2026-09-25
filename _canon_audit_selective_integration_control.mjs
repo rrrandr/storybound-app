@@ -53,10 +53,14 @@ const ORDINARY = {
   const seen = [];
   let auditReply = { verdict: 'pass', violations: [] };
   let unreachable = false;
+  let wrongModelReply = false;
   gate.stub('/api/proxy', async (req) => {
     let b = null; try { b = JSON.parse(req.postData() || '{}'); } catch (_) {}
     seen.push({ pathname: '/api/proxy', body: b });
     if (unreachable) return { __gateStatus: 503, error: 'upstream unavailable' };
+    if (wrongModelReply) return { choices: [{ message: { content: '{"verdict":"pass","violations":[]}' } }],
+      usage: { prompt_tokens: 3200, completion_tokens: 90 },
+      _orchestration: { model: 'grok-4.3', resolvedModel: 'grok-4-1-fast-non-reasoning', upstreamAttempts: 2 } };
     return { choices: [{ message: { content: JSON.stringify(auditReply) } }],
       usage: { prompt_tokens: 3200, completion_tokens: 90, cost_in_usd_ticks: 53000000 },
       _orchestration: { model: 'grok-4.3', resolvedModel: 'grok-4.3', upstreamAttempts: 1 } };
@@ -119,6 +123,9 @@ const ORDINARY = {
   ok('...with the resolver bypass, so the proxy\'s internal chain cannot substitute a model',
     calls.length === 1 && calls[0].body._sbModelOverride === 'grok-4.3',
     calls.length === 1 ? String(calls[0].body._sbModelOverride) : 'n/a');
+  ok('...with _noFallback, so the proxy runs a ONE-ENTRY chain instead of retrying upstream',
+    calls.length === 1 && calls[0].body._noFallback === true,
+    calls.length === 1 ? String(calls[0].body._noFallback) : 'n/a');
   ok('...at the CALIBRATED configuration — reasoning high, max_tokens 2000',
     calls.length === 1 && calls[0].body.reasoningEffort === 'high' && calls[0].body.max_tokens === 2000,
     calls.length === 1 ? JSON.stringify({ e: calls[0].body.reasoningEffort, m: calls[0].body.max_tokens }) : 'n/a');
@@ -177,20 +184,41 @@ const ORDINARY = {
     !seen.slice(b5).some((x) => x.pathname !== '/api/proxy'), JSON.stringify(seen.slice(b5).map((x) => x.pathname)));
 
   section('7. THE TRIGGERS ROMAN SPECIFIED ALL FIRE');
+  // RELEVANCE, NOT COEXISTENCE (Roman 2026-09-25). The first version fired whenever ANY durable
+  // consequence existed, so one permanent Tempt Fate change made every later ordinary scene paid,
+  // forever — unconditional routing wearing selective clothing. This control previously CODIFIED
+  // that bug by expecting an ordinary plan plus a durable record to trigger. It now asserts the
+  // opposite, which is the actual policy.
+  const TOUCHES = JSON.parse(JSON.stringify(ORDINARY));
+  TOUCHES.state_change = 'The registrar asks the assembly what they recall of the ceremony and the accusation';
+  TOUCHES.event_slots.action = 'asks what they recall of the ceremony';
   const cases = [
-    ['asserted supernatural mechanism', UNGROUNDED, false],
-    ['supernatural content mislabelled ordinary', RISKY, false],
-    ['durable Tempt Fate consequence in force', ORDINARY, true]
+    ['asserted supernatural mechanism', UNGROUNDED, false, true],
+    ['supernatural content mislabelled ordinary', RISKY, false, true],
+    ['a plan that TOUCHES the committed change', TOUCHES, true, true],
+    ['ordinary plan while an UNTOUCHED durable consequence exists — must NOT audit', ORDINARY, true, false]
   ];
-  for (const [label, plan, withDurable] of cases) {
+  for (const [label, plan, withDurable, expectRisky] of cases) {
     const r = await page.evaluate((a) => {
       const s = window.state; s._starterId = 'starter_first_sacrifice';
       s._temptFateDurableConsequences = a.withDurable ? [JSON.parse(JSON.stringify(a.durable))] : [];
       const packet = window._buildCanonPacket(s, { proposal: a.plan });
       return window._canonAuditRiskTrigger(a.plan, packet);
     }, { plan, durable, withDurable });
-    ok('trigger fires: ' + label, r.risky === true, JSON.stringify(r));
+    ok((expectRisky ? 'trigger FIRES: ' : 'trigger stays SILENT: ') + label,
+      r.risky === expectRisky, JSON.stringify(r));
   }
+  // And the vocabulary must not fire on First Sacrifice's own ordinary language. A story whose
+  // premise is a wish rite with a ceremonially SEALED Sacrificiant will say these words constantly.
+  const ORDINARY_WORDS = JSON.parse(JSON.stringify(ORDINARY));
+  ORDINARY_WORDS.state_change = 'Lirael remembers her own First Sacrifice and confesses she still fears the seal';
+  ORDINARY_WORDS.event_slots.action = 'remembers and confesses';
+  const ow = await page.evaluate((a) => {
+    const s = window.state; s._starterId = 'starter_first_sacrifice'; s._temptFateDurableConsequences = [];
+    return window._canonAuditRiskTrigger(a.plan, window._buildCanonPacket(s, { proposal: a.plan }));
+  }, { plan: ORDINARY_WORDS });
+  ok('ordinary story words (wish / fate / seal / remember / confess) do NOT trigger an audit',
+    ow.risky === false, JSON.stringify(ow));
   const nullTrig = await page.evaluate(() => window._canonAuditRiskTrigger(null, null));
   const throwTrig = await page.evaluate(() => {
     // A packet whose accessors throw — the trigger must AUDIT, never silently skip.
@@ -200,6 +228,20 @@ const ORDINARY = {
   ok('a null proposal is simply not risky (nothing to audit)', nullTrig.risky === false, JSON.stringify(nullTrig));
   ok('but a trigger that THROWS audits rather than skipping — skipping is the costly failure',
     throwTrig.risky === true && /threw/.test((throwTrig.reasons || []).join(' ')), JSON.stringify(throwTrig));
+
+  section('7b. THE ANSWER IS ONLY ACCEPTED FROM grok-4.3');
+  // Asking for grok-4.3 is not evidence grok-4.3 answered — the grok-4.7 run proved that. The
+  // auditor now checks the RESOLVED model the proxy reports and refuses anything else.
+  wrongModelReply = true;
+  const b6 = seen.length;
+  const imposter = await run(RISKY, { withDurable: true });
+  wrongModelReply = false;
+  ok('a reply served by a DIFFERENT model is refused, not accepted',
+    imposter.verdict.allow === false, JSON.stringify(imposter.verdict).slice(0, 220));
+  ok('...and it fails closed as unavailable rather than as a canon violation',
+    imposter.verdict.source === 'audit-unavailable'
+    && /not the calibrated grok-4\.3/.test(imposter.verdict.reason || ''), JSON.stringify(imposter.verdict).slice(0, 220));
+  ok('...having made exactly one call', seen.slice(b6).length === 1);
 
   section('8. CONTAINMENT');
   ok('no request ever reached a real provider', gate.trackedCalls().filter((c) => c.real).length === 0);

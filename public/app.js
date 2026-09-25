@@ -6185,6 +6185,9 @@ ${_pcInteriorLock}`;
       // not a pin. Additive: every existing caller omits `extra` and sends no field.
       var _gBody = { role: 'STRUCTURE_GENERATOR', preferredModel: model, temperature: temperature, max_tokens: maxTokens, messages: messages };
       if (_re) _gBody.reasoningEffort = _re;
+      // Ask the proxy for a ONE-ENTRY chain. Without this its internal loop can retry the same
+      // model up to three times per client request, invisibly to any client-side pin.
+      if (extra && extra.noFallback) _gBody._noFallback = true;
       // api/proxy.js:_resolveGrokModel collapses EVERY legacy grok-* name to grok-4.3. That is right
       // for the retired 4.1/4.20 aliases and WRONG for a deliberate pin to a newer model, which would
       // be served as 4.3 while being billed and reported as the model asked for. _sbModelOverride is
@@ -6197,6 +6200,9 @@ ${_pcInteriorLock}`;
       var _raw2 = (d2 && d2.choices && d2.choices[0] && d2.choices[0].message && d2.choices[0].message.content) || (d2 && d2.content) || '';
       var _flat2 = _flattenProviderContent(_raw2);
       return { content: _flat2.text, thinking: _flat2.thinking, usage: (d2 && d2.usage) || null,
+        resolvedModel: (d2 && d2._orchestration && d2._orchestration.resolvedModel) || null,
+        upstreamAttempts: (d2 && d2._orchestration && typeof d2._orchestration.upstreamAttempts === 'number')
+          ? d2._orchestration.upstreamAttempts : null,
         reasoningEffort: (d2 && d2._orchestration && (d2._orchestration.reasoning_effort || d2._orchestration.reasoningEffort)) || null,
         _orchestration: (d2 && d2._orchestration) || { model: model } };
     }
@@ -6281,6 +6287,8 @@ ${_pcInteriorLock}`;
         if (_sbo != null) _tierExtra = Object.assign(_tierExtra || {}, { sbModelOverride: _sbo });
         var _tb = (t.thinking_budget_tokens != null) ? t.thinking_budget_tokens : opts.thinking_budget_tokens;
         if (_tb != null) _tierExtra = Object.assign(_tierExtra || {}, { thinking_budget_tokens: _tb });
+        var _nf = (t.noFallback != null) ? t.noFallback : opts.noFallback;
+        if (_nf) _tierExtra = Object.assign(_tierExtra || {}, { noFallback: true });
         var result = await _tieredProviderDispatch(t.provider, t.model, messages, maxTokens, temperature, _tierExtra);
         var hadContent = !!(result && result.content && String(result.content).trim());
         if (!hadContent) throw _tierErr(t.provider + ' returned empty content', { provider: t.provider, model: t.model, httpStatus: 200, hadContent: false });
@@ -192585,8 +192593,31 @@ No text, no watermark, no UI elements, share-ready.`;
       { role: 'system', content: p.sys }, { role: 'user', content: p.usr }
     ], { max_tokens: 2000, temperature: 0,
          tiers: [{ tier: 'primary', provider: 'grok', model: 'grok-4.3',
-                   reasoning_effort: 'high', sbModelOverride: 'grok-4.3' }] });
+                   reasoning_effort: 'high', sbModelOverride: 'grok-4.3', noFallback: true }] });
+    // VERIFY WHAT ANSWERED, don't assume it. The request naming grok-4.3 is not evidence the
+    // proxy served grok-4.3 — that was the whole grok-4.7 lesson. resolvedModel is the model
+    // _resolveGrokModel actually called; anything else is not the calibrated auditor and its
+    // verdict must not be trusted.
+    var _served = data && data.resolvedModel;
+    if (_served && String(_served) !== 'grok-4.3') {
+      throw new Error('canon audit was served by ' + _served + ', not the calibrated grok-4.3 — refusing the verdict');
+    }
+    if (typeof data.upstreamAttempts === 'number' && data.upstreamAttempts > 1) {
+      try { console.warn('[CANON-AUDIT] proxy made ' + data.upstreamAttempts + ' upstream attempts despite _noFallback'); } catch (_) {}
+    }
     try { if (typeof _recordProxyTextCost === 'function') _recordProxyTextCost(data, (data && data._orchestration && data._orchestration.model), 'canon-audit'); } catch (_) {}
+    // PER-AUDIT REALIZED COST. The previous telemetry read state._sceneCostAcc.lastCanonAuditUsd,
+    // a field NOTHING in the repository ever writes — so every "realized cost" it recorded was
+    // null. xAI reports its own exact cost in ticks (1e-10 USD); fall back to list-price
+    // arithmetic when it does not. Attached to the RESULT so the caller owns it.
+    try {
+      var _u = data && data.usage;
+      var _rt = (_u && _u.completion_tokens_details && _u.completion_tokens_details.reasoning_tokens) || 0;
+      window._lastCanonAuditUsd = (_u && typeof _u.cost_in_usd_ticks === 'number')
+        ? _u.cost_in_usd_ticks * 1e-10
+        : (_u ? (1.25e-6 * (_u.prompt_tokens || 0) + 2.5e-6 * ((_u.completion_tokens || 0) + _rt)) : null);
+      window._lastCanonAuditUpstreamAttempts = (typeof data.upstreamAttempts === 'number') ? data.upstreamAttempts : null;
+    } catch (_) { window._lastCanonAuditUsd = null; }
     var c = data && data.content;
     if (!c) throw new Error('canon audit returned no content');
     var parsed;
@@ -192614,15 +192645,37 @@ No text, no watermark, no UI elements, share-ready.`;
   //
   // Returns { risky, reasons } — reasons are recorded so false positives can be reviewed later
   // against what actually triggered them.
+  // VOCABULARY, NARROWED (Roman 2026-09-25). The first list included wish, fate, seal, remember,
+  // bind and confess — all ORDINARY words in First Sacrifice, where the entire premise is a wish
+  // rite with a ceremonially SEALED Sacrificiant. Matching them audited routine plans forever.
+  // What remains is vocabulary that asserts an EFFECT BEING PRODUCED, not a subject being
+  // discussed: a character may talk about a wish all day; a character CAUSING a memory to
+  // dissolve is a capability claim.
   var _CANON_RISK_RX = {
-    // NOTE the "memory" bug this very pattern shipped with: `memories?` matches "memorie"/"memories"
-    // and NOT "memory", so the headline case — "draws the MEMORY out of Seren" labelled ordinary —
-    // did not trigger at all. Caught by the integration control, which is the whole reason the
-    // control asserts the mislabelled case separately from the durable-consequence case rather
-    // than letting one mask the other.
-    supernatural: /\b(?:wish|wishes|wished|fate|rupture|magic|magical|spell|enchant|curse|vanish|vanishes|materiali[sz]\w*|teleport\w*|portal|resurrect\w*|possess\w*|glow|glowing|aura|levitat\w*|transform\w*|fuse[sd]?|fusing|mind[- ]?read\w*|memor(?:y|ies)|remember\w*|recall\w*|forget\w*|forgot|erase[sd]?|erasing|dissolve[sd]?|unmake|unmade|rewrite[sd]?|rewrote|seal(?:s|ed|ing)?|sever\w*|bind|binds|bound)\b/i,
-    knowledge: /\b(?:knows?|knew|unaware|recalls?|recollection|remembers?|reveals?|confess|admits?|learns?|discovers?)\b/i
+    // Effect-producing verbs paired with what they act on. Bare nouns are deliberately absent.
+    supernatural: new RegExp([
+      '\\b(?:erases?|erasing|erased|dissolves?|dissolving|dissolved|unmakes?|unmade|rewrites?|rewrote|rewritten)\\b',
+      '\\b(?:draws?|pulls?|extracts?|rips?|tears?)\\s+(?:\\w+\\s+){0,3}?(?:memory|memories|thoughts?|mind)\\b',
+      '\\b(?:reads?|hears?|sees?)\\s+(?:\\w+\\s+){0,2}?(?:thoughts?|mind|minds)\\b',
+      '\\b(?:teleports?|materiali[sz]es?|vanishes? into|resurrect\\w*|possess(?:es|ed|ing)\\b)',
+      '\\b(?:stops?|freezes?|reverses?)\\s+time\\b',
+      '\\bportal\\b|\\blevitat\\w*|\\btransforms?\\s+into\\b|\\bfuse[sd]?\\s+into\\b',
+      '\\b(?:glows?|glowing|burns?)\\s+(?:with\\s+)?(?:light|fire|power)\\b'
+    ].join('|'), 'i')
   };
+  // Does the plan actually TOUCH this fact? Mere coexistence is not relevance. Shared content
+  // words of 5+ characters are a deliberately loose test — its job is to separate "the plan is
+  // about this" from "this happens to be on the board", not to adjudicate meaning.
+  function _canonRiskTouches(planText, factText) {
+    try {
+      var words = String(factText || '').toLowerCase().replace(/[^a-z0-9\s]/g, ' ').split(/\s+/)
+        .filter(function (w) { return w.length >= 5; });
+      if (!words.length) return false;
+      var hay = String(planText || '').toLowerCase();
+      for (var i = 0; i < words.length; i++) if (hay.indexOf(words[i]) !== -1) return true;
+      return false;
+    } catch (_) { return true; }   // unknowable → audit, never skip
+  }
   function _canonAuditRiskTrigger(proposal, packet) {
     var reasons = [];
     try {
@@ -192637,22 +192690,30 @@ No text, no watermark, no UI elements, share-ready.`;
       if (declared && !/^\s*ordinary\s*$/i.test(declared)) {
         reasons.push('asserted mechanism: "' + declared.slice(0, 80) + '"');
       }
-      // 2. Supernatural VOCABULARY while claiming to be ordinary — the exact blind spot.
+      // 2. An effect-producing claim while declaring "ordinary" — the exact blind spot, since
+      //    _detectUngroundedCapability stops the instant it reads "ordinary".
       else if (_CANON_RISK_RX.supernatural.test(text)) {
-        reasons.push('declared "ordinary" but the event text asserts supernatural content the deterministic check cannot see');
+        reasons.push('declared "ordinary" but the event text asserts a produced effect the deterministic check cannot see');
       }
-      // 3. Changed knowledge or history in play.
-      if (_CANON_RISK_RX.knowledge.test(text)
-          && (packet.facts || []).some(function (f) { return f.kind === 'know' || f.kind === 'dc'; })) {
-        reasons.push('the plan turns on knowledge/history while a committed change to it exists');
+      // 3/4. A durable consequence or an invalidated objective matters only when THIS PLAN TOUCHES
+      // IT. Firing on mere existence meant that after one permanent Tempt Fate change, every
+      // subsequent ordinary scene paid for an audit forever — which is not selective routing, it is
+      // unconditional routing with extra steps.
+      var _facts = (packet && packet.facts) || [];
+      for (var i = 0; i < _facts.length; i++) {
+        var f = _facts[i];
+        if (f.kind !== 'dc' && f.kind !== 'know' && f.kind !== 'dur') continue;
+        if (_canonRiskTouches(text, f.text)) {
+          reasons.push('the plan touches a committed change [' + f.id + ']');
+          break;
+        }
       }
-      // 4. A durable Tempt Fate consequence is on the board at all.
-      if ((packet.facts || []).some(function (f) { return f.kind === 'dc' || f.kind === 'dur'; })) {
-        reasons.push('a durable Tempt Fate consequence is in force');
-      }
-      // 5. A previously invalidated objective exists.
-      if ((packet.invalidated || []).length) {
-        reasons.push('a committed rupture has invalidated ' + packet.invalidated.length + ' prior plan(s)');
+      var _inv = (packet && packet.invalidated) || [];
+      for (var j = 0; j < _inv.length; j++) {
+        if (_canonRiskTouches(text, _inv[j])) {
+          reasons.push('the plan touches a previously invalidated objective');
+          break;
+        }
       }
     } catch (e) {
       // An erroring trigger must AUDIT, never skip. Skipping is the failure that costs canon.
@@ -234222,7 +234283,10 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
           model: _caVerdict.paid ? 'grok-4.3' : null,
           latencyMs: Date.now() - _caT0,
           realizedUsd: _caVerdict.paid ? (function () {
-            try { var c = state._sceneCostAcc; return (c && c.lastCanonAuditUsd) || null; } catch (_) { return null; }
+            try { return (typeof window._lastCanonAuditUsd === 'number') ? window._lastCanonAuditUsd : null; } catch (_) { return null; }
+          })() : 0,
+          upstreamAttempts: _caVerdict.paid ? (function () {
+            try { return window._lastCanonAuditUpstreamAttempts; } catch (_) { return null; }
           })() : 0,
           paid: _caVerdict.paid, reason: _caVerdict.reason || null, violations: _caVerdict.violations || [],
           citedFactIds: (_caVerdict.violations || []).reduce(function (a, v) { return a.concat(v.citedFactIds || []); }, []),
