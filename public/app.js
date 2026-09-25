@@ -126622,7 +126622,9 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
   // <actor> [negation] <relation> <object>. Actor is 1–3 words; object is the remainder, clipped.
   var _PROP_RX = new RegExp(
     '\\b([A-Za-z][\\w\'-]*(?:\\s+[A-Za-z][\\w\'-]*){0,2}?)\\s+' +
-    '(did\\s+not|didn\'?t|does\\s+not|doesn\'?t|do\\s+not|don\'?t|never|has\\s+not|hasn\'?t|had\\s+not|hadn\'?t|was\\s+not|wasn\'?t|is\\s+not|isn\'?t)?\\s*' +
+    // Auxiliary + not/never must be ONE unit, or "has never admitted" loses its negation and
+    // reads as a plain admission — the exact inversion this verifier exists to catch.
+    '((?:(?:has|have|had|is|are|was|were|did|do|does)\\s+)?(?:not|never)|didn\'?t|doesn\'?t|don\'?t|hasn\'?t|haven\'?t|hadn\'?t|wasn\'?t|isn\'?t|aren\'?t)?\\s*' +
     '(' + _REL_WORDS + ')\\s+' +
     '([A-Za-z0-9][^.;,!?]{1,60})', 'i');
   var _PROP_ACTOR_STOP = /^(?:the|a|an|and|but|then|she|he|they|it|i|you|we|that|this|who|which|after|before|when|while)$/i;
@@ -126676,7 +126678,9 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
   // Relative and temporal tails are adjuncts too: "the accusation THAT night" and "the ledger
   // WHICH she signed" both have "the accusation" / "the ledger" as their direct object.
   var _OBJ_CUT_RX = /\s+\b(?:before|after|at|in|into|to|from|with|for|about|against|during|beside|behind|under|over|while|when|and|or|that|which|who|whom|whose)\b\s+/i;
-  var _OBJ_FILLER = /^(?:the|a|an|this|that|these|those|his|her|their|its|my|your|our|of|it|them|him|us)$/;
+  // Adverbial tails are adjuncts too: "the accusation AGAIN", "the ledger ONCE more". They modify
+  // the verb phrase, not the object, and leaving them in made an otherwise identical object fail.
+  var _OBJ_FILLER = /^(?:the|a|an|this|that|these|those|his|her|their|its|my|your|our|of|it|them|him|us|again|also|still|then|once|twice|now|today|tonight|yesterday|already|finally|openly|publicly)$/;
   // Aliases are DECLARED, never inferred — two names for the same object, nothing looser.
   var _OBJ_ALIASES = { 'answer': 'the answer', 'accusation': 'accusation', 'rite': 'ceremony', 'ceremony': 'ceremony' };
   function _canonObject(t) {
@@ -126699,12 +126703,16 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
   // Both may narrow a search; neither may prove an event occurred.
   function _continuityEvidenceSources(s) {
     var sources = [];
-    var add = function (kind, at, text, authority) {
-      if (text) sources.push({ kind: kind, at: at, text: String(text), authority: authority });
+    var add = function (kind, at, text, authority, tier) {
+      if (text) sources.push({ kind: kind, at: at, text: String(text), authority: authority,
+                               tier: tier || 'prior' });
     };
     try {
-      (Array.isArray(s.scenes) ? s.scenes : []).forEach(function (sc, i) {
-        add('scene', i, sc && sc.text, 'delivered');           // delivered prose — the strongest
+      // THE LATEST RENDERED SCENE IS A DIFFERENT THING FROM PRIOR CANON. A forgetting complaint is
+      // about what the MOST RECENT scene did, and prior canon is only the premise it rests on.
+      var scenes = Array.isArray(s.scenes) ? s.scenes : [];
+      scenes.forEach(function (sc, i) {
+        add('scene', i, sc && sc.text, 'delivered', (i === scenes.length - 1) ? 'latest' : 'prior');
       });
     } catch (_) {}
     try {
@@ -126751,59 +126759,111 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
     return sources;
   }
 
+  // ── THE COMPLAINT IS NOT THE FACT (Roman 2026-09-25) ────────────────────────────────────────
+  // "You forgot Julian admitted the accusation" is a claim about the LATEST SCENE, not about
+  // whether the admission is in canon. Finding prior support CONFIRMS THE COMPLAINT'S PREMISE —
+  // it does not show the latest scene remembered. The old branch answered the fact question,
+  // said "Nothing was lost", and skipped the Concierge on exactly the reader who was right.
+  //
+  //   factStatus      — what PRIOR canon establishes.
+  //   complaintStatus — whether the LATEST scene honoured it. This is what the player asked.
+  //
+  //   prior support + latest CONTRADICTION  -> reader-supported      (they are right)
+  //   prior support + latest SUPPORT        -> reader-contradicted   (it was remembered)
+  //   prior support + latest SILENCE        -> unresolved            (absence is not forgetting)
+  //   target unestablished                  -> unresolved, hand off  (never dismiss)
+  function _poleOver(sources, claimProp, evidenceSink) {
+    var support = null, contradiction = null;
+    sources.forEach(function (src) {
+      _propositionsIn(src.text).forEach(function (p) {
+        if (p.actor !== claimProp.actor) return;
+        if (p.relation !== claimProp.relation) return;
+        if (!_objectsMatch(claimProp.object, p.object)) return;
+        var rec = { where: src.kind + '[' + src.at + ']', authority: src.authority,
+                    tier: src.tier, recorded: p.surface, polarity: p.polarity };
+        if (evidenceSink) evidenceSink.push(rec);
+        if (src.authority !== 'delivered') return;          // context can never decide
+        if (p.polarity === claimProp.polarity) { if (!support) support = rec; }
+        else if (!contradiction) contradiction = rec;
+      });
+    });
+    // A tier that disagrees with itself decides nothing.
+    if (support && contradiction) return { status: 'unresolved', support: support, contradiction: contradiction, conflict: true };
+    if (contradiction) return { status: 'contradicted', contradiction: contradiction };
+    if (support) return { status: 'supported', support: support };
+    return { status: 'unresolved' };
+  }
   function _conciergeVerifyContinuityClaim(claimText) {
     var result = { claim: String(claimText || ''), checked: [], evidence: [],
+                   factStatus: 'unresolved', complaintStatus: 'unresolved',
                    verdict: 'unresolved', proposition: null, handedOff: false, handoff: null };
     try {
       var s = window.state || {};
       var claimProp = _parseProposition(String(claimText || '').replace(/^\s*you\s+forgot\s+/i, ''));
       result.proposition = claimProp;
       var sources = _continuityEvidenceSources(s);
-      result.checked = sources.map(function (x) { return x.kind + '[' + x.at + ']' + (x.authority === 'context' ? ':context' : ''); });
-      // OUTSIDE THE GRAMMAR → UNRESOLVED. No token count may substitute for a parse.
+      result.checked = sources.map(function (x) {
+        return x.kind + '[' + x.at + ']' + (x.authority === 'context' ? ':context' : '') + (x.tier === 'latest' ? ':latest' : '');
+      });
+      var latestSources = sources.filter(function (x) { return x.tier === 'latest'; });
+      var priorSources = sources.filter(function (x) { return x.tier !== 'latest'; });
+      result.targetEstablished = latestSources.length > 0;
+
       if (!claimProp) {
-        result.verdict = 'unresolved';
         result.reason = 'the claim does not fit the bounded proposition grammar';
       } else {
-        var support = null, contradiction = null;
-        sources.forEach(function (src) {
-          _propositionsIn(src.text).forEach(function (p) {
-            if (p.actor !== claimProp.actor) return;                 // ACTOR MUST MATCH
-            if (p.relation !== claimProp.relation) return;           // SAME AXIS
-            if (!_objectsMatch(claimProp.object, p.object)) return;   // SAME OBJECT, canonically
-            var rec = { where: src.kind + '[' + src.at + ']', authority: src.authority,
-                        recorded: p.surface, polarity: p.polarity };
-            result.evidence.push(rec);
-            // CONTEXT-ONLY SOURCES NEVER PROVE ANYTHING.
-            if (src.authority !== 'delivered') return;
-            if (p.polarity === claimProp.polarity) { if (!support) support = rec; }
-            else if (!contradiction) contradiction = rec;
-          });
-        });
-        // THE RECORD DISAGREES WITH ITSELF ⇒ UNRESOLVED. Picking either pole would be asserting
-        // one half of a genuine conflict as fact; the conversation is the only honest destination.
-        if (support && contradiction) {
-          result.verdict = 'unresolved';
-          result.reason = 'the record contains both a matching and an opposing account';
-          result.conflict = { support: support, contradiction: contradiction };
+        var prior = _poleOver(priorSources, claimProp, result.evidence);
+        var latest = _poleOver(latestSources, claimProp, result.evidence);
+        result.factStatus = prior.status;
+        // WHY the fact layer landed where it did — separate from why the COMPLAINT did, because
+        // "the record disagrees with itself" and "the latest scene said nothing" are different
+        // answers to different questions.
+        if (prior.conflict) result.factReason = 'the record contains both a matching and an opposing account';
+        else if (prior.status === 'unresolved') {
+          result.factReason = result.evidence.some(function (e) { return e.authority !== 'delivered'; })
+            ? 'only non-authoritative sources matched'
+            : 'no delivered record matches this proposition';
         }
-        else if (contradiction) { result.verdict = 'contradicted'; result.contradiction = contradiction; }
-        else if (support) { result.verdict = 'supported'; result.support = support; }
-        else { result.verdict = 'unresolved'; result.reason = result.evidence.length
-          ? 'only non-authoritative sources matched' : 'no delivered record matches this proposition'; }
+        result.latestStatus = latest.status;
+        if (prior.support) result.support = prior.support;
+        if (prior.contradiction) result.contradiction = prior.contradiction;
+        if (prior.conflict) result.conflict = { support: prior.support, contradiction: prior.contradiction };
+
+        if (!result.targetEstablished) {
+          result.complaintStatus = 'unresolved';
+          result.reason = 'the latest scene could not be established, so nothing can be said about what it forgot';
+        } else if (prior.status === 'supported' && latest.status === 'contradicted') {
+          result.complaintStatus = 'reader-supported';
+          result.latestContradiction = latest.contradiction;
+        } else if (prior.status === 'supported' && latest.status === 'supported') {
+          result.complaintStatus = 'reader-contradicted';
+          result.latestSupport = latest.support;
+        } else if (prior.status === 'supported') {
+          result.complaintStatus = 'unresolved';
+          result.reason = 'the latest scene neither honoured nor contradicted it — absence alone is not forgetting';
+        } else if (prior.status === 'contradicted') {
+          result.complaintStatus = 'unresolved';
+          result.reason = 'prior canon has it the other way, so the complaint\'s own premise is in doubt';
+        } else {
+          result.complaintStatus = 'unresolved';
+          result.reason = result.reason || 'prior canon does not establish the premise';
+        }
       }
+      result.verdict = result.complaintStatus;      // the verdict IS the answer to what was asked
+
       var msg;
-      if (result.verdict === 'supported') {
-        msg = 'I checked the record — it is still there (' + result.support.where + '). Nothing was lost.';
-      } else if (result.verdict === 'contradicted') {
-        msg = 'I checked, and the record has it the other way (' + result.contradiction.where
-            + ' says "' + result.contradiction.recorded + '"). Let us go through it.';
+      if (result.complaintStatus === 'reader-contradicted') {
+        msg = 'I checked — the latest scene does have it (' + result.latestSupport.where + '). Nothing was lost.';
+      } else if (result.complaintStatus === 'reader-supported') {
+        msg = 'You are right. The record has it (' + result.support.where + ') and the latest scene says otherwise ('
+            + result.latestContradiction.where + '). Let us go through it.';
       } else {
         msg = 'I could not settle that from the record either way. Let us look at it together — nothing has been changed.';
       }
       result.message = msg;
-      // A REAL HANDOFF, with a real success boolean, for anything not cleanly supported.
-      if (result.verdict !== 'supported' && typeof window._conciergeHandoffContinuity === 'function') {
+      // HAND OFF FOR ANYTHING BUT A CLEAN "it was remembered". A reader who is RIGHT must never be
+      // answered with a dismissal and no conversation.
+      if (result.complaintStatus !== 'reader-contradicted' && typeof window._conciergeHandoffContinuity === 'function') {
         result.handoff = window._conciergeHandoffContinuity(result.claim, msg);
         result.handedOff = !!(result.handoff && result.handoff.delivered);
       }
@@ -126811,10 +126871,10 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
         if (typeof _paintConciergeWhisper === 'function') _paintConciergeWhisper(msg, 9000);
         else if (typeof showToast === 'function') showToast(msg);
       }
-      try { console.log('[CONCIERGE:CONTINUITY] verdict=' + result.verdict + ' sources=' + result.checked.length
-        + ' evidence=' + result.evidence.length + ' handedOff=' + result.handedOff
-        + (result.handoff && !result.handoff.delivered ? (' (' + result.handoff.reason + ')') : '')); } catch (_) {}
-    } catch (e) { result.verdict = 'unresolved'; result.error = (e && e.message) || String(e); }
+      try { console.log('[CONCIERGE:CONTINUITY] complaint=' + result.complaintStatus + ' fact=' + result.factStatus
+        + ' latest=' + (result.latestStatus || 'n/a') + ' sources=' + result.checked.length
+        + ' handedOff=' + result.handedOff); } catch (_) {}
+    } catch (e) { result.complaintStatus = 'unresolved'; result.verdict = 'unresolved'; result.error = (e && e.message) || String(e); }
     try { (window.state || {})._lastContinuityVerification = result; } catch (_) {}
     return result;
   }

@@ -337,118 +337,180 @@ const CAT5 = ['I don\'t know', 'whatever', '...', 'sure'];
   const verify = (claim) => page.evaluate((c) => window._conciergeVerifyContinuityClaim(c), claim);
 
   // RED 1 — WRONG ACTOR, SAME WORDS. Three shared tokens used to be enough.
+  // A NEUTRAL LATEST SCENE is appended to every fact-layer fixture below, so the evidence under
+  // test sits in PRIOR canon — these assert factStatus, which is the layer they were written for.
   await seedStory({ storyId: 'S1', scenes: [
-    { text: 'Julian carried The Answer after Seren stole it from the vestry.' }] });
+    { text: 'Julian carried The Answer after Seren stole it from the vestry.' }, { text: 'The lamp guttered and the room went quiet.' }] });
   const wrongActor = await verify('You forgot Julian stole The Answer.');
   note('wrong actor: ' + JSON.stringify({ v: wrongActor.verdict, p: wrongActor.proposition }));
   ok('RED — a claim about the WRONG ACTOR is not supported by the right words',
-    wrongActor.verdict !== 'supported', JSON.stringify(wrongActor).slice(0, 220));
+    wrongActor.factStatus !== 'supported', JSON.stringify(wrongActor).slice(0, 220));
   // The record's own object there is a PRONOUN ("Seren stole it"), which canonical comparison
   // cannot resolve — so unresolved is the correct answer, not a miss. My first version of this
   // assertion expected 'supported', which only held under the loose matching being removed.
   ok('...and a pronoun object in the record is UNRESOLVED, not guessed at',
-    (await verify('You forgot Seren stole The Answer.')).verdict === 'unresolved');
+    (await verify('You forgot Seren stole The Answer.')).factStatus === 'unresolved');
   ok('...while a record naming the object explicitly DOES support the right actor',
     (await page.evaluate(async () => {
-      window.state.scenes = [{ text: 'Seren stole The Answer from the vestry.' }];
-      return (await window._conciergeVerifyContinuityClaim('You forgot Seren stole The Answer.')).verdict;
+      window.state.scenes = [{ text: 'Seren stole The Answer from the vestry.' },
+                             { text: 'The lamp guttered and the room went quiet.' }];
+      return (await window._conciergeVerifyContinuityClaim('You forgot Seren stole The Answer.')).factStatus;
     })) === 'supported');
 
   // RED 2 — TWO ACTORS, OPPOSITE PREDICATES, ONE RECORD.
   await seedStory({ storyId: 'S2', scenes: [
-    { text: 'Julian denied the accusation; Seren admitted the accusation.' }] });
+    { text: 'Julian denied the accusation; Seren admitted the accusation.' }, { text: 'The lamp guttered and the room went quiet.' }] });
   const twoActors = await verify('You forgot Seren admitted the accusation.');
   note('two actors: ' + JSON.stringify({ v: twoActors.verdict, ev: twoActors.evidence }));
   ok('RED — a TRUE claim is not contradicted by the other actor\'s opposite predicate',
-    twoActors.verdict === 'supported', JSON.stringify(twoActors).slice(0, 260));
+    twoActors.factStatus === 'supported', JSON.stringify(twoActors).slice(0, 260));
   ok('...while the genuinely opposed claim about the SAME actor IS contradicted',
-    (await verify('You forgot Julian admitted the accusation.')).verdict === 'contradicted');
+    (await verify('You forgot Julian admitted the accusation.')).factStatus === 'contradicted');
 
   // RED 3 — "DID NOT ADMIT" vs "ADMITTED". The negation used to be discarded as a short token.
   await seedStory({ storyId: 'S3', scenes: [
-    { text: 'Julian did not admit the accusation that night.' }] });
+    { text: 'Julian did not admit the accusation that night.' }, { text: 'The lamp guttered and the room went quiet.' }] });
   const negated = await verify('You forgot Julian admitted the accusation.');
   note('negation: ' + JSON.stringify({ v: negated.verdict, c: negated.contradiction }));
   ok('RED — "did not admit" CONTRADICTS "admitted" instead of supporting it',
-    negated.verdict === 'contradicted', JSON.stringify(negated).slice(0, 240));
+    negated.factStatus === 'contradicted', JSON.stringify(negated).slice(0, 240));
   ok('...and the negated claim itself is supported by the negated record',
-    (await verify('You forgot Julian did not admit the accusation.')).verdict === 'supported');
+    (await verify('You forgot Julian did not admit the accusation.')).factStatus === 'supported');
   ok('the parser binds polarity to the relation, so "denied" is the negative pole of the same axis',
     (await page.evaluate(() => window._parseProposition('Julian denied the accusation'))).polarity === 'negative');
   ok('...and "did not deny" is positive on that axis',
     (await page.evaluate(() => window._parseProposition('Julian did not deny the accusation'))).polarity === 'positive');
 
   // RED 4 — A PLANNED EVENT THAT NEVER APPEARED IN PROSE.
-  await seedStory({ storyId: 'S4', scenes: [{ text: 'The lamp guttered and no one spoke.' }],
+  await seedStory({ storyId: 'S4', scenes: [{ text: 'The lamp guttered and no one spoke.' }, { text: 'The lamp guttered and the room went quiet.' }],
     ledger: { storyId: 'S4', entries: [
       { sceneNumber: 1, plannedEvent: 'Julian admitted the accusation before the assembly',
         act: 'I waited', dia: 'Say it.', plannedSource: 'spine' }] } });
   const planned = await verify('You forgot Julian admitted the accusation.');
   note('planned only: ' + JSON.stringify({ v: planned.verdict, ev: planned.evidence }));
   ok('RED — a PLANNED event that never reached prose cannot prove it happened',
-    planned.verdict === 'unresolved', JSON.stringify(planned).slice(0, 260));
+    planned.factStatus === 'unresolved', JSON.stringify(planned).slice(0, 260));
   ok('...the planned entry is visible as CONTEXT, and is labelled as such',
     planned.checked.some((c) => /^plannedEvent\[\d+\]:context$/.test(c)), JSON.stringify(planned.checked));
   ok('...and the reason names the authority problem, not a matching problem',
-    /only non-authoritative sources matched/.test(planned.reason || ''), planned.reason);
+    /only non-authoritative sources matched/.test(planned.factReason || ''), planned.factReason);
   ok('DELIVERED prose in the same story DOES support it',
     (await page.evaluate(async () => {
-      window.state.scenes = [{ text: 'Julian admitted the accusation before the assembly.' }];
-      return (await window._conciergeVerifyContinuityClaim('You forgot Julian admitted the accusation.')).verdict;
+      window.state.scenes = [{ text: 'Julian admitted the accusation before the assembly.' },
+                             { text: 'The lamp guttered and the room went quiet.' }];
+      return (await window._conciergeVerifyContinuityClaim('You forgot Julian admitted the accusation.')).factStatus;
     })) === 'supported');
 
   // Anything outside the grammar must refuse to answer.
   const outside = await verify('You forgot the whole thing about the sash and the weather.');
   ok('a claim OUTSIDE the bounded grammar returns unresolved, never a confident verdict',
-    outside.verdict === 'unresolved' && /bounded proposition grammar/.test(outside.reason || ''),
+    outside.complaintStatus === 'unresolved' && /bounded proposition grammar/.test(outside.reason || ''),
     JSON.stringify(outside).slice(0, 200));
 
   section('8c-1b. OBJECT EQUALITY, NOT SHARED FILLER WORDS');
   // One shared 3+ character token accepted "the", "before", "after" — so a MURDER before the
   // ASSEMBLY matched an ACCUSATION before the COUNCIL and was confidently supported.
   await seedStory({ storyId: 'S1b', scenes: [
-    { text: 'Julian admitted the accusation before the council.' }] });
+    { text: 'Julian admitted the accusation before the council.' }, { text: 'The lamp guttered and the room went quiet.' }] });
   const wrongObject = await verify('You forgot Julian admitted the murder before the assembly.');
   note('wrong object: ' + JSON.stringify({ v: wrongObject.verdict, ev: wrongObject.evidence.length }));
   ok('RED — a DIFFERENT object sharing only filler words is not supported',
-    wrongObject.verdict === 'unresolved', JSON.stringify(wrongObject).slice(0, 240));
+    wrongObject.factStatus === 'unresolved', JSON.stringify(wrongObject).slice(0, 240));
   ok('...and no evidence was accepted at all', wrongObject.evidence.length === 0,
     JSON.stringify(wrongObject.evidence));
   ok('the SAME object still matches across a differing adjunct — the object is the direct object,\n'
     + '     not the phrase that follows it',
-    (await verify('You forgot Julian admitted the accusation before the assembly.')).verdict === 'supported');
+    (await verify('You forgot Julian admitted the accusation before the assembly.')).factStatus === 'supported');
 
   section('8c-1c. RAW PLAYER INPUT PROVES THE UTTERANCE, NOT ITS CONTENTS');
   // Lirael SAYING "Julian admitted it" establishes that she said it. Treating the embedded
   // proposition as history would let a player assert anything into canon by typing it.
-  await seedStory({ storyId: 'S1c', scenes: [{ text: 'The lamp guttered and no one spoke.' }],
+  await seedStory({ storyId: 'S1c', scenes: [{ text: 'The lamp guttered and no one spoke.' }, { text: 'The lamp guttered and the room went quiet.' }],
     ledger: { storyId: 'S1c', entries: [
       { sceneNumber: 1, act: 'I stepped forward', dia: 'Julian admitted the accusation.', plannedEvent: null }] } });
   const fromInput = await verify('You forgot Julian admitted the accusation.');
   note('from player input: ' + JSON.stringify({ v: fromInput.verdict, checked: fromInput.checked.filter((c) => /playerInput/.test(c)) }));
   ok('RED — a proposition embedded in the player\'s own dialogue cannot prove itself',
-    fromInput.verdict === 'unresolved', JSON.stringify(fromInput).slice(0, 240));
+    fromInput.factStatus === 'unresolved', JSON.stringify(fromInput).slice(0, 240));
   ok('...the player input is visible but labelled CONTEXT, not delivered fact',
     fromInput.checked.some((c) => /^playerInput\[\d+\]:context$/.test(c)), JSON.stringify(fromInput.checked));
   ok('...and delivered prose asserting the same thing DOES support it',
     (await page.evaluate(async () => {
-      window.state.scenes = [{ text: 'Julian admitted the accusation before the council.' }];
-      return (await window._conciergeVerifyContinuityClaim('You forgot Julian admitted the accusation.')).verdict;
+      window.state.scenes = [{ text: 'Julian admitted the accusation before the council.' },
+                             { text: 'The lamp guttered and the room went quiet.' }];
+      return (await window._conciergeVerifyContinuityClaim('You forgot Julian admitted the accusation.')).factStatus;
     })) === 'supported');
 
   section('8c-1d. A RECORD THAT DISAGREES WITH ITSELF IS UNRESOLVED');
   await seedStory({ storyId: 'S1d', scenes: [
     { text: 'Julian admitted the accusation.' },
-    { text: 'Julian did not admit the accusation.' }] });
+    { text: 'Julian did not admit the accusation.' }, { text: 'The lamp guttered and the room went quiet.' }] });
   const conflicted = await verify('You forgot Julian admitted the accusation.');
   note('self-conflicting record: ' + JSON.stringify({ v: conflicted.verdict, c: !!conflicted.conflict }));
   ok('RED — matching AND opposing authoritative evidence yields UNRESOLVED, not contradicted',
-    conflicted.verdict === 'unresolved', JSON.stringify(conflicted).slice(0, 240));
+    conflicted.factStatus === 'unresolved', JSON.stringify(conflicted).slice(0, 240));
   ok('...and both sides of the conflict are preserved for the conversation',
     !!(conflicted.conflict && conflicted.conflict.support && conflicted.conflict.contradiction),
     JSON.stringify(conflicted.conflict));
   ok('...with a reason that names the disagreement',
-    /both a matching and an opposing account/.test(conflicted.reason || ''), conflicted.reason);
+    /both a matching and an opposing account/.test(conflicted.factReason || ''), conflicted.factReason);
+
+  section('8c-1e. THE COMPLAINT IS NOT THE FACT — THE DECISIVE FIXTURE');
+  // "You forgot X" asks whether the LATEST SCENE honoured X. Finding prior support only confirms
+  // the complaint's PREMISE. The old branch answered the fact question, said "Nothing was lost",
+  // and skipped the Concierge on exactly the reader who was right.
+  await seedStory({ storyId: 'S1e', scenes: [
+    { text: 'Julian admitted the accusation.' },
+    { text: 'Julian has never admitted the accusation.' }] });
+  const readerRight = await verify('You forgot Julian admitted the accusation.');
+  note('reader right: ' + JSON.stringify({ complaint: readerRight.complaintStatus,
+    fact: readerRight.factStatus, latest: readerRight.latestStatus }));
+  ok('THE READER IS RIGHT — prior canon supports it and the LATEST scene contradicts it',
+    readerRight.complaintStatus === 'reader-supported', JSON.stringify(readerRight).slice(0, 280));
+  ok('...factStatus and complaintStatus are reported SEPARATELY',
+    readerRight.factStatus === 'supported' && readerRight.latestStatus === 'contradicted',
+    JSON.stringify({ f: readerRight.factStatus, l: readerRight.latestStatus }));
+  ok('...the message AGREES with the reader instead of dismissing them',
+    /You are right/.test(readerRight.message) && !/Nothing was lost/.test(readerRight.message),
+    readerRight.message);
+  ok('...and it is HANDED OFF to the conversation, not answered with a whisper',
+    readerRight.handedOff === true, JSON.stringify(readerRight.handoff));
+  ok('RED PROOF — this is no longer filed as a self-conflicting record',
+    readerRight.complaintStatus !== 'unresolved');
+
+  // THE CONVERSE — the latest scene repeats the admission, so the complaint is wrong.
+  await seedStory({ storyId: 'S1e2', scenes: [
+    { text: 'Julian admitted the accusation.' },
+    { text: 'Julian admitted the accusation again, in front of the council.' }] });
+  const readerWrong = await verify('You forgot Julian admitted the accusation.');
+  note('reader wrong: ' + JSON.stringify({ complaint: readerWrong.complaintStatus,
+    fact: readerWrong.factStatus, latest: readerWrong.latestStatus }));
+  ok('CONVERSE — the latest scene remembered it, so the complaint is contradicted',
+    readerWrong.complaintStatus === 'reader-contradicted', JSON.stringify(readerWrong).slice(0, 260));
+  ok('...and ONLY here is "Nothing was lost" said',
+    /Nothing was lost/.test(readerWrong.message), readerWrong.message);
+  ok('...and only here is no conversation needed', readerWrong.handedOff === false);
+
+  // ABSENCE IS NOT FORGETTING.
+  await seedStory({ storyId: 'S1e3', scenes: [
+    { text: 'Julian admitted the accusation.' },
+    { text: 'The lamp guttered and the room emptied.' }] });
+  const silent = await verify('You forgot Julian admitted the accusation.');
+  ok('SILENCE in the latest scene is UNRESOLVED — absence alone is not forgetting',
+    silent.complaintStatus === 'unresolved'
+    && /absence alone is not forgetting/.test(silent.reason || ''), JSON.stringify(silent).slice(0, 240));
+  ok('...and it still reaches the conversation rather than being dismissed',
+    silent.handedOff === true);
+
+  // TARGET UNESTABLISHED — hand off, never dismiss.
+  await seedStory({ storyId: 'S1e4', scenes: [] });
+  const noTarget = await verify('You forgot Julian admitted the accusation.');
+  ok('with NO latest scene the complaint cannot be judged, and is handed off',
+    noTarget.complaintStatus === 'unresolved' && noTarget.targetEstablished === false
+    && noTarget.handedOff === true, JSON.stringify(noTarget).slice(0, 240));
+
+  ok('the parser keeps auxiliary negation intact — "has never admitted" is negative',
+    (await page.evaluate(() => window._parseProposition('Julian has never admitted the accusation'))).polarity === 'negative');
 
   section('8c-2. STORY ISOLATION, THROUGH THE PRODUCTION ACCESSOR');
   await seedStory({ storyId: 'S5', scenes: [],
@@ -457,7 +519,7 @@ const CAT5 = ['I don\'t know', 'whatever', '...', 'sure'];
   const stale = await verify('You forgot Seren admitted the accusation.');
   ok('STALE-LEDGER NEGATIVE — a ledger stamped for another story is not read',
     !stale.checked.some((c) => /^playerInput\[/.test(c)), JSON.stringify(stale.checked));
-  ok('...so it cannot support the claim', stale.verdict !== 'supported', JSON.stringify(stale.verdict));
+  ok('...so it cannot support the claim', stale.factStatus !== 'supported', JSON.stringify(stale.verdict));
 
   section('8c-3. THE HANDOFF REPORTS WHAT IT ACTUALLY DELIVERED');
   // _openPanel returns early when already open, suppressed, or zoomed, and drops firstLine once
