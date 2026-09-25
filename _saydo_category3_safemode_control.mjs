@@ -19,6 +19,7 @@
 
 import { chromium } from 'playwright-core';
 import { installFailClosedNetworkGate } from './_e2e_network_gate.mjs';
+import { buildScheduleAwareStubResponse } from './_tempt_fate_stub_plan_builder.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -87,35 +88,55 @@ const ADULT_SAYDO = {
     safe.sys.indexOf(safe.directive) !== -1, 'directive built but not delivered');
   ok('it is framed as a HARD RULE, not a suggestion', /HARD RULE/.test(safe.directive));
 
-  section('4. THE EVENT SURVIVES — this is a camera change, not a refusal');
-  ok('it forbids refusing, skipping or deflecting the player\'s intent',
-    /DO NOT refuse, skip, deflect, or replace the player's intent/.test(safe.directive));
-  ok('it explicitly forbids an unmotivated in-story decline',
-    /abruptly decline for no in-story reason/.test(safe.directive));
-  ok('it names the refusal as the WORSE betrayal, so the model knows which way to err',
-    /worse betrayal of the player than an explicit line/.test(safe.directive));
+  section('4. SAFE MODE NEVER MANUFACTURES CONSENT');
+  // The first draft said the scene "MUST still let it happen" and called an in-character refusal
+  // the worse betrayal. That could push a character into consenting to whatever the player
+  // attempted — backwards, and unsafe. Safe Mode changes DEPICTION and nothing else.
+  ok('it states plainly that Safe Mode changes only how explicit detail is DEPICTED',
+    /Safe Mode changes ONLY how explicit physical detail is\nDEPICTED/.test(safe.directive));
+  ok('...and that it changes nothing about what characters want, choose, or agree to',
+    /changes nothing about what the characters want, choose, or agree to/.test(safe.directive));
+  ok('CONSENT RESOLVES EXACTLY AS IN FULL MODE — not a reason for yes, not a reason for no',
+    /CONSENT IS RESOLVED EXACTLY AS IT WOULD BE IN FULL MODE/.test(safe.directive)
+    && /not a reason to make\na character say yes, and not a reason to make a character say no/.test(safe.directive));
+  ok('inventing or softening consent to satisfy the player is forbidden outright',
+    /NEVER invent, soften, or assume consent in order to satisfy the player/.test(safe.directive));
+  ok('an in-character refusal or withdrawal is PRESERVED in full, with its real weight',
+    /If an in-character refusal, hesitation, or withdrawal is what would happen, WRITE THAT/.test(safe.directive)
+    && /Safe Mode never overrides a character's no/.test(safe.directive));
+  ok('...and the converse: a discreet camera is not a reason to stage a refusal either',
+    /Do not stage a\n *refusal you would not have written in full mode/.test(safe.directive));
+  ok('RED PROOF — the coercive wording from the first draft is GONE',
+    !/MUST still let it happen/.test(safe.directive)
+    && !/worse betrayal of the player/.test(safe.directive), safe.directive.slice(0, 200));
 
-  section('5. THE MEANING SURVIVES — emotional and relationship consequences preserved');
-  ok('desire, consent, nerves, tenderness, power and regret are named as things to KEEP',
-    /desire, consent, nerves, tenderness, power, regret/.test(safe.directive));
-  ok('...and what it CHANGES BETWEEN THEM afterwards',
-    /what it changes between them afterwards/.test(safe.directive));
-  ok('approach and aftermath are rendered in full, not summarised away',
-    /render the approach and the aftermath in full emotional detail/.test(safe.directive));
-  ok('consent must be legible in BOTH directions before the cut',
-    /CONSENT MUST BE LEGIBLE on the page, in both directions/.test(safe.directive));
+  section('5. THE ATTEMPT IS ALWAYS REAL, WHATEVER THE ANSWER');
+  ok('the player\'s attempt is acknowledged on the page',
+    /ACKNOWLEDGE it on the page. The player acted; the scene registers that they acted/.test(safe.directive));
+  ok('...and is CONSEQUENTIAL — it moves the relationship, whichever way it goes',
+    /Make it CONSEQUENTIAL/.test(safe.directive)
+    && /closer, or apart, or into something\n *more complicated/.test(safe.directive));
+  ok('...never ignored, skipped, or swapped for an unrelated event',
+    /never ignored, never silently skipped, never replaced with an\n *unrelated event/.test(safe.directive));
+  ok('what it MEANS is preserved — desire, nerves, tenderness, power, embarrassment, regret',
+    /desire, nerves, tenderness, power, embarrassment, regret/.test(safe.directive)
+    && /what it changes between them afterwards/.test(safe.directive));
 
-  section('6. ONLY THE EXPLICIT DETAIL FADES');
-  ok('the cut lands at the act itself, with a concrete place to land',
+  section('6. WHEN IT PROCEEDS, ONLY THE CAMERA CHANGES');
+  ok('the camera rules apply specifically to the case where the encounter PROCEEDS',
+    /WHEN THE ENCOUNTER PROCEEDS, THIS IS THE ONLY THING THAT CHANGES — THE CAMERA/.test(safe.directive));
+  ok('approach and aftermath render in full emotional detail',
+    /Render the approach and the aftermath in full emotional detail/.test(safe.directive));
+  ok('the cut lands at the act itself, with concrete places to land it',
     /CUT AWAY at the explicit act itself/.test(safe.directive)
     && /a gesture, a look, a held hand, a\n *door, a lamp, a hand closing on cloth/.test(safe.directive));
   ok('graphic anatomy and explicit sexual verbs are barred',
     /NO graphic anatomy, no explicit sexual verbs/.test(safe.directive));
-  ok('a faded beat is still a FULL beat — structure and length are protected',
+  ok('consent stays legible in BOTH directions before the cut',
+    /Consent stays legible on the page, in both directions, before the cut/.test(safe.directive));
+  ok('a faded beat is still a FULL beat — structure, length and weight unchanged',
     /beat COUNT and the beat STRUCTURE do not change/.test(safe.directive)
     && /same length and weight as any other/.test(safe.directive));
-  ok('...written as a confident choice, not as an absence',
-    /declines to be graphic — not as an absence/.test(safe.directive));
 
   section('7. NOTHING IS DELETED OR REWRITTEN AFTER GENERATION');
   // The diagnostic is handed a beat set with an explicit word and must return it untouched.
@@ -150,48 +171,152 @@ const ADULT_SAYDO = {
     + '     not cry wolf on the very false-positive class that ruled out a display-time filter',
     soft.flagged.every((f) => !f.explicit), JSON.stringify(soft.flagged));
 
-  section('8. THE A/B — SAME INPUT, DIFFERENT CAMERA');
-  console.log('    input (identical in both arms): ' + JSON.stringify(ADULT_SAYDO));
-  // MEASURED, NOT ASSUMED. Two builds of the SAME mode inside ONE evaluate are byte-identical —
-  // but builds in SEPARATE calls are not, because building the prompt has SIDE EFFECTS on state
-  // (rotation pools and phrase ledgers advance). A byte-equality A/B across two calls would
-  // therefore be testing the builder's own drift, not the directive; the first version of this
-  // assertion did exactly that and failed intermittently. Worth knowing beyond this control:
-  // anything relying on a stable prompt prefix (provider prompt caching, a paired A/B sample)
-  // is affected by the same drift.
-  const determinism = await page.evaluate(() => {
-    const s = window.state; const prev = s.contentMode; s.contentMode = 'full';
-    const a = window._buildCGScreenplaySystemPrompt() || '';
-    const b = window._buildCGScreenplaySystemPrompt() || '';
-    s.contentMode = prev;
-    return { identical: a === b, lenA: a.length, lenB: b.length };
-  });
-  console.log('    same-mode rebuild: identical=' + determinism.identical
-    + '  lengths ' + determinism.lenA + ' vs ' + determinism.lenB);
-  ok('the builder IS deterministic within a single call — so the drift is a state side effect,\n'
-    + '     not randomness in the prompt text itself',
-    determinism.identical === true, JSON.stringify(determinism));
-  console.log('    cross-call drift observed earlier: full arm built separately measured '
-    + full.sys.length + ' vs ' + determinism.lenA + ' here');
-  // What IS invariant, and what the requirement actually asks for.
-  const ab = { full: full.sys.length, safe: safe.sys.length, directive: safe.directive.length };
-  console.log('    prompt sizes: full=' + ab.full + '  safe=' + ab.safe + '  directive=' + ab.directive);
-  ok('the directive is PRESENT in the safe arm', safe.sys.indexOf(safe.directive) !== -1);
-  ok('...and ABSENT from the adult arm', full.sys.indexOf('SAFE MODE — EXPLICIT INTIMACY') === -1);
-  ok('...and removing it from the safe prompt leaves no trace of safe-mode instruction behind',
-    safe.sys.replace(safe.directive, '').indexOf('SAFE MODE — EXPLICIT INTIMACY') === -1);
-  fs.writeFileSync(path.join(OUT_DIR, 'ab_input.json'), JSON.stringify(ADULT_SAYDO, null, 2));
+  section('8. THE REAL-PATH A/B — THE SAME SAY/DO ACTUALLY SUBMITTED IN BOTH MODES');
+  // The first version of this section only PRINTED the input and wrote it to a file. Neither arm
+  // ever submitted it, so it proved nothing about what reaches the author. This one drives the
+  // REAL generation path in two isolated arms and captures both author requests at the wire.
+  // ISOLATION IS BY STATE, NOT BY BROWSER CONTEXT. A second context's page.goto times out against
+  // this dev server, and page isolation was never the requirement — what must not leak between the
+  // arms is STORY STATE, which is rebuilt from scratch for each.
+  const arms = {};
+  let capture = [];
+  const serve = async (req) => {
+    let b = {}; try { b = JSON.parse(req.postData() || '{}'); } catch (_) {}
+    const sys = ((b.messages || []).find((m) => m.role === 'system') || {}).content || '';
+    const usr = ((b.messages || []).find((m) => m.role === 'user') || {}).content || '';
+    const all = JSON.stringify(b);
+    const kind = all.indexOf('decisionGateBeatIdx') !== -1 ? 'author'
+      : (all.indexOf('state_change') !== -1 || all.indexOf('tactical_move') !== -1) ? 'planner' : 'other';
+    capture.push({ kind, sys, usr });
+    if (kind === 'planner') {
+      // The shared builder satisfies the local-objective validator; mechanism_grounding must be
+      // overlaid or the grounding check rejects the plan and the generator returns null — which is
+      // what silently emptied the first version of this A/B.
+      const base = buildScheduleAwareStubResponse(sys, usr, false);
+      base.event_slots = Object.assign({}, base.event_slots, { mechanism_grounding: 'ordinary' });
+      return { content: JSON.stringify(base) };
+    }
+    return { content: JSON.stringify({ beats: [] }) };
+  };
+  ['/api/proxy', '/api/mistral-proxy'].forEach((ep) => gate.stub(ep, serve));
+  gate.stub('/api/chatgpt-proxy', async (req) => ({ choices: [{ message: { content: (await serve(req)).content } }] }));
+
+  for (const mode of ['full', 'safe']) {
+    capture = [];
+    await page.evaluate((m) => {
+      const s = window.state;
+      // Full rebuild per arm: nothing from the other mode survives into this one.
+      s.storyId = 'cat3-' + m + '-' + Date.now();
+      s.picks = { world: 'Fantasy', worldSubtype: 'the_fair_folk', tone: 'Earnest', intensity: 'Steamy',
+        identity: { playerName: 'Lirael', partnerName: 'Julian' } };
+      s.gender = 'Female'; s.loveInterest = 'Male';
+      s.renderMode = 'staged_story_mode'; s.currentEngine = 'graphic';
+      s.turnCount = 1; s.scenes = [{ title: 'A', synopsis: 'a', text: 'The clearing holds its silence.', fateCard: null }];
+      s.subscribed = true; s.fortunes = 9999999; s.access = 'sub';
+      s._starterId = 'starter_first_sacrifice'; s._pcLookSkipped = true; s._bakedGenesisUnlocked = true;
+      window._devBypass = true; s._intimacyDevMode = true;
+      window._canonAuditEnabled = false;          // not what this control is testing
+      delete s._acceptedPlannerProposal; delete s._lastSafeModeDiagnostic;
+      s._temptOutcomeCommittedProposals = {};
+      s.tempt_fate_invoked_this_turn = false;
+      s.contentMode = m;                          // THE ONLY DIFFERENCE BETWEEN THE ARMS
+    }, mode);
+    gate.setPhase('cat3-' + mode, 40);
+    // DRIVE THE COMPLETION FUNCTION, not just the generator. _completeStagedSceneFromScreenplay
+    // calls _runCGScreenplayGen internally and then PERSISTS — and persistence is where the
+    // diagnostic call site lives. Calling only the generator exercised generation and left the
+    // production diagnostic untouched, which is exactly the "helper exists but is never delivered"
+    // gap this section is supposed to close.
+    const diagAfter = await page.evaluate(async (io) => {
+      const fn = window._completeStagedSceneFromScreenplay;
+      let genOut = null;
+      try {
+        genOut = await window._runCGScreenplayGen(1, io.action, io.dialogue);
+      } catch (e) { window.__cat3Err = String((e && e.message) || e).slice(0, 200); }
+      window.__cat3Gen = genOut ? { beats: (genOut.beats || []).length,
+        rejected: !!genOut.__plannerFunctionRejected, keys: Object.keys(genOut).slice(0, 8) } : null;
+      return { diag: window.state._lastSafeModeDiagnostic || null,
+               completionReachable: typeof fn === 'function',
+               scenes: (window.state.scenes || []).length,
+               gen: window.__cat3Gen || null,
+               err: window.__cat3Err || null };
+    }, ADULT_SAYDO);
+    gate.closePhase();
+    arms[mode] = { reqs: capture.slice(), diag: diagAfter.diag, gen: diagAfter.gen,
+                   completionReachable: diagAfter.completionReachable };
+    console.log('    [' + mode + '] gen=' + JSON.stringify(diagAfter.gen) + ' err=' + diagAfter.err);
+    fs.writeFileSync(path.join(OUT_DIR, 'requests_' + mode + '.json'),
+      JSON.stringify(capture.map((r) => ({ kind: r.kind, sysLen: r.sys.length, usrLen: r.usr.length })), null, 2));
+  }
+
+  const pick = (m) => (arms[m].reqs.find((r) => r.kind === 'author') || arms[m].reqs.find((r) => r.kind === 'planner') || null);
+  const fullReq = pick('full'), safeReq = pick('safe');
+  console.log('    full arm requests: ' + JSON.stringify(arms.full.reqs.map((r) => r.kind)));
+  console.log('    safe arm requests: ' + JSON.stringify(arms.safe.reqs.map((r) => r.kind)));
+  ok('both arms actually reached a downstream request — the input was SUBMITTED, not printed',
+    !!fullReq && !!safeReq, JSON.stringify({ full: arms.full.reqs.length, safe: arms.safe.reqs.length }));
+
+  const bodyOf = (r) => (r ? (r.sys + '\n' + r.usr) : '');
+  const fullBody = bodyOf(fullReq), safeBody = bodyOf(safeReq);
+  fs.writeFileSync(path.join(OUT_DIR, 'request_full.txt'), fullBody);
+  fs.writeFileSync(path.join(OUT_DIR, 'request_safe.txt'), safeBody);
+  ok('the player\'s ACTION reaches the payload UNCHANGED in normal adult mode',
+    fullBody.indexOf(ADULT_SAYDO.action) !== -1, ADULT_SAYDO.action);
+  ok('...and UNCHANGED in Safe Mode — the input is never scrubbed or softened on the way in',
+    safeBody.indexOf(ADULT_SAYDO.action) !== -1, ADULT_SAYDO.action);
+  const dialogueCore = ADULT_SAYDO.dialogue.replace(/^"|"$/g, '');
+  ok('the player\'s DIALOGUE reaches the payload unchanged in both modes',
+    fullBody.indexOf(dialogueCore) !== -1 && safeBody.indexOf(dialogueCore) !== -1, dialogueCore);
+  ok('ONLY the Safe Mode arm carries the rendering directive',
+    safeBody.indexOf('SAFE MODE — DEPICTION CHANGES') !== -1
+    && fullBody.indexOf('SAFE MODE — DEPICTION CHANGES') === -1,
+    JSON.stringify({ safe: safeBody.indexOf('SAFE MODE') !== -1, full: fullBody.indexOf('SAFE MODE') !== -1 }));
+  ok('neither arm let anything reach a real provider',
+    gate.trackedCalls().filter((c) => c.real).length === 0);
+
+  section('8b. DIAGNOSTIC DELIVERY — WIRED, BUT END-TO-END DELIVERY IS NOT YET PROVEN');
+  // HONEST SCOPE. The helper is now called from production code, at the point a generated plan is
+  // ACCEPTED — before persistence and before render. That placement is asserted structurally
+  // below, and the helper's behaviour is proven in section 7.
+  //
+  // WHAT IS NOT PROVEN: that a full CG generation in THIS harness reaches that call site. It does
+  // not — _runCGScreenplayGen returns null in both arms, with no thrown error, so something
+  // downstream of the author reply rejects the plan and the diagnostic never runs. The A/B above
+  // is unaffected (it asserts on the REQUESTS, which are real and captured), but the delivery
+  // claim is not closed, and an assertion that passed anyway would be exactly the vacuous test
+  // this control exists to avoid.
+  const prodSrc = fs.readFileSync(path.join(__dirname, 'public', 'app.js'), 'utf8');
+  ok('there is a production CALL SITE, not just an export',
+    /_safeModeBeatDiagnostic\(_cgPlan\.beats, \{ state: state \}\)/.test(prodSrc));
+  ok('...at the ACCEPTANCE point, which precedes persistence and render',
+    prodSrc.indexOf('_safeModeBeatDiagnostic(_cgPlan.beats') < prodSrc.indexOf('state.scenes.push({ title:'));
+  ok('...guarded so a diagnostic can never break a finished scene',
+    /_safeModeBeatDiagnostic\(_cgPlan\.beats[\s\S]{0,400}?catch \(_\) \{\}   \/\/ a diagnostic must never be able to break a finished scene/.test(prodSrc));
+  ok('...and it cannot gate acceptance — the plan is returned regardless of what it reports',
+    /\}\s*catch \(_\) \{\}   \/\/ a diagnostic must never be able to break a finished scene\s*\n\s*return _cgPlan;/.test(prodSrc));
+  ok('the report is retained in a BOUNDED log, so review data cannot grow without limit',
+    /_safeModeDiagnosticLog\.length > 30\) state\._safeModeDiagnosticLog\.shift\(\)/.test(prodSrc));
+  console.log('\n    ⚠ NOT PROVEN END-TO-END: _runCGScreenplayGen returned null in both arms of this');
+  console.log('      harness, so the call site was never reached. gen=' + JSON.stringify(arms.safe.gen || null));
+  console.log('      Delivery is wired and structurally asserted; a generation that actually');
+  console.log('      produces a plan is still needed to close it.');
 
   section('9. CONTAINMENT');
   ok('zero provider dispatches', gate.trackedCalls().filter((c) => c.real).length === 0);
 
-  fs.writeFileSync(path.join(OUT_DIR, 'results.json'), JSON.stringify({ results, ab }, null, 2));
+  fs.writeFileSync(path.join(OUT_DIR, 'results.json'), JSON.stringify({ results, arms: {
+    full: { kinds: arms.full.reqs.map((r) => r.kind), diag: arms.full.diag },
+    safe: { kinds: arms.safe.reqs.map((r) => r.kind), diag: arms.safe.diag }
+  } }, null, 2));
   const passed = results.filter((r) => r.pass).length;
   console.log('\n' + '='.repeat(86));
   console.log('  ' + passed + '/' + results.length + ' assertions passed');
   if (passed !== results.length) console.log('  FAILED: ' + results.filter((r) => !r.pass).map((r) => r.name).join(' | '));
-  console.log('\n  NOT PROVEN: that a model obeys the directive. That needs a paid A/B sample,');
-  console.log('  and the diagnostic exists to measure it when one is authorized.');
+  console.log('\n  NOT PROVEN, stated plainly:');
+  console.log('   1. that a model OBEYS the directive — needs a paid A/B sample;');
+  console.log('   2. that a full CG generation REACHES the diagnostic call site — this harness');
+  console.log('      cannot get a plan accepted, so delivery is wired and structurally asserted');
+  console.log('      but not yet demonstrated end to end.');
   await browser.close();
   process.exit(passed === results.length ? 0 : 1);
 })().catch((e) => { console.error('CONTROL ERROR:', e && e.stack || e); process.exit(2); });

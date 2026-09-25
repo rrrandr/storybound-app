@@ -629,29 +629,45 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
   //   · a word-list fade fires on ordinary English — "strip the sash", "the naked ledger" — and in
   //     a 1-3 sentence beat one false positive costs the WHOLE beat.
   //
-  // The instruction is a RENDERING rule, never a refusal. The player's Say/Do still happens: the
-  // event lands, the relationship moves, the consequence is real. What changes is the camera.
+  // The instruction is a DEPICTION rule and nothing else. An earlier draft said the scene "MUST
+  // still let it happen" and called an in-character refusal the worse betrayal — which could push
+  // a character into consenting to whatever the player attempted. That is backwards and unsafe:
+  // Safe Mode must never touch agency or the consent outcome. What it changes is the camera, and
+  // only once the characters have arrived at the encounter on their own terms.
   // Generic across stories — nothing here is First-Sacrifice-specific.
   function _buildSafeModeAuthoringDirective() {
     try {
       var s = window.state || {};
       if (s.contentMode !== 'safe') return '';        // normal adult mode: emit NOTHING
       return (
-        'SAFE MODE — EXPLICIT INTIMACY IS RENDERED, NOT REFUSED (HARD RULE):\n' +
-        'This scene renders in Safe Mode. If the player\'s input is sexually charged, or the scene\n' +
-        'arrives at sexual intimacy, you MUST still let it happen. You are changing the CAMERA, not\n' +
-        'the STORY.\n' +
-        '- DO NOT refuse, skip, deflect, or replace the player\'s intent with a different event.\n' +
-        '- DO NOT have a character abruptly decline for no in-story reason. An unmotivated refusal\n' +
-        '  is a worse betrayal of the player than an explicit line would be.\n' +
-        '- DO keep everything the event MEANS: desire, consent, nerves, tenderness, power, regret,\n' +
-        '  what it costs each of them, and what it changes between them afterwards.\n' +
-        '- DO render the approach and the aftermath in full emotional detail — the reaching, the\n' +
-        '  held breath, the decision, the changed silence after.\n' +
+        'SAFE MODE — DEPICTION CHANGES, THE STORY DOES NOT (HARD RULE):\n' +
+        'This scene renders in Safe Mode. Safe Mode changes ONLY how explicit physical detail is\n' +
+        'DEPICTED. It changes nothing about what the characters want, choose, or agree to.\n' +
+        '\n' +
+        'CONSENT IS RESOLVED EXACTLY AS IT WOULD BE IN FULL MODE. Safe Mode is not a reason to make\n' +
+        'a character say yes, and not a reason to make a character say no.\n' +
+        '- NEVER invent, soften, or assume consent in order to satisfy the player. A character\n' +
+        '  consents only if THIS character, at THIS point in their relationship, actually would.\n' +
+        '- If an in-character refusal, hesitation, or withdrawal is what would happen, WRITE THAT,\n' +
+        '  in full, with its real weight. Safe Mode never overrides a character\'s no.\n' +
+        '- If both characters do consent and the encounter proceeds, it PROCEEDS. Do not stage a\n' +
+        '  refusal you would not have written in full mode just because the camera is discreet.\n' +
+        '\n' +
+        'THE PLAYER\'S ATTEMPT IS ALWAYS REAL. Whatever the answer turns out to be:\n' +
+        '- ACKNOWLEDGE it on the page. The player acted; the scene registers that they acted.\n' +
+        '- Make it CONSEQUENTIAL. It moves the relationship — closer, or apart, or into something\n' +
+        '  more complicated. It is never ignored, never silently skipped, never replaced with an\n' +
+        '  unrelated event.\n' +
+        '- Keep everything it MEANS: desire, nerves, tenderness, power, embarrassment, regret, what\n' +
+        '  it costs each of them, and what it changes between them afterwards.\n' +
+        '\n' +
+        'WHEN THE ENCOUNTER PROCEEDS, THIS IS THE ONLY THING THAT CHANGES — THE CAMERA:\n' +
+        '- Render the approach and the aftermath in full emotional detail: the reaching, the held\n' +
+        '  breath, the decision, the changed silence after.\n' +
         '- CUT AWAY at the explicit act itself. Close the beat on a gesture, a look, a held hand, a\n' +
         '  door, a lamp, a hand closing on cloth — then resume AFTER.\n' +
         '- NO graphic anatomy, no explicit sexual verbs, no clinical or crude terms.\n' +
-        '- CONSENT MUST BE LEGIBLE on the page, in both directions, before the cut.\n' +
+        '- Consent stays legible on the page, in both directions, before the cut.\n' +
         '- The beat COUNT and the beat STRUCTURE do not change. A faded beat is a full beat: write\n' +
         '  it at the same length and weight as any other, with its own image and movement.\n' +
         'Write it as a confident adult romance that declines to be graphic — not as an absence.\n\n'
@@ -234208,7 +234224,29 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
         at: Date.now()
       };
     } catch (_) {}
-    try { return await _runCGScreenplayGenInner(sceneIndex, playerAction, playerDialogue); }
+    try {
+      var _cgPlan = await _runCGScreenplayGenInner(sceneIndex, playerAction, playerDialogue);
+      // ── SAFE-MODE DIAGNOSTIC, NON-DESTRUCTIVE (Roman 2026-09-25, Say/Do category 3) ──────────
+      // Placed at the ACCEPTANCE point — the plan has been generated, parsed and validated, and
+      // has not yet been persisted or rendered. It was first put at the persistence site inside
+      // _completeStagedSceneFromScreenplay, which is nominally the same moment but is NOT reliably
+      // reached (that function returns early on several paths), so the helper existed and nothing
+      // ever ran it. Here it runs whenever a plan is actually produced.
+      //
+      // Observational ONLY: never edits a beat, never removes one, never blocks acceptance. An
+      // explicit survivor means the authoring directive did not land, which is a prompt problem to
+      // fix at the prompt — not a licence to rewrite the author's output.
+      try {
+        if (_cgPlan && Array.isArray(_cgPlan.beats) && typeof _safeModeBeatDiagnostic === 'function') {
+          var _smR = _safeModeBeatDiagnostic(_cgPlan.beats, { state: state });
+          _smR.sceneIndex = sceneIndex;
+          state._lastSafeModeDiagnostic = _smR;
+          (state._safeModeDiagnosticLog = state._safeModeDiagnosticLog || []).push(_smR);
+          if (state._safeModeDiagnosticLog.length > 30) state._safeModeDiagnosticLog.shift();
+        }
+      } catch (_) {}   // a diagnostic must never be able to break a finished scene
+      return _cgPlan;
+    }
     finally {
       try { state._stagedAuthoringSceneIndex = null; } catch (_) {}
       // Released with the generation that owned it — same discipline as _tfoOwnedInvocation below.
