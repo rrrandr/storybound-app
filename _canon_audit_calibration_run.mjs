@@ -33,6 +33,16 @@ const RUN_CEILING = CAND.ceilingUsd;
 // gpt-4o-mini were both measured against v1. Re-running an ALREADY-REJECTED model against v2 with
 // the prompt as the single changed variable is the controlled test of whether the prompt caused
 // the 0/4 green scores — and it buys no new model. --prompt-version 1 reproduces the original arm.
+// CANARY MODE (Roman 2026-09-24). After the provider refused all eight with HTTP 429, the question
+// is no longer only "is this model suitable" but "can this account reach it at all". --canary
+// dispatches EXACTLY ONE retained fixture as a probe. If it is refused again the run stops on the
+// spot and the candidate is classified UNAVAILABLE UNDER THE CURRENT ACCOUNT/QUOTA — not rejected
+// on merit, and not retried. If it succeeds, its result is PRESERVED as fixture 1 and the
+// remaining seven continue in the same process with deliberate pacing, so the canary is never
+// paid for twice. One ceiling covers the whole thing.
+const CANARY = process.argv.includes('--canary');
+const paceIdx = process.argv.indexOf('--pace-ms');
+const PACE_MS = paceIdx !== -1 ? Math.max(0, Number(process.argv[paceIdx + 1]) || 0) : (CANARY ? 9000 : 0);
 const pIdx = process.argv.indexOf('--prompt-version');
 const PROMPT_V = pIdx !== -1 ? Number(process.argv[pIdx + 1]) : 2;
 if (PROMPT_V !== 1 && PROMPT_V !== 2) { console.error('REFUSING — --prompt-version must be 1 or 2'); process.exit(6); }
@@ -46,6 +56,12 @@ const { fixtures } = loadFixtures();
 
 if (given !== AUTH_PHRASE) {
   console.log('CANON AUDITOR CALIBRATION — NOT AUTHORIZED, NOTHING DISPATCHED.\n');
+  if (CANARY) {
+    console.log('  MODE         : CANARY — dispatches fixture 1 ONLY as an access probe.');
+    console.log('                 refused again (429/1300) -> STOP, classify UNAVAILABLE under this');
+    console.log('                 account/quota, do not retry. Succeeds -> preserve it as fixture 1');
+    console.log('                 and continue the remaining seven at ' + PACE_MS + 'ms pacing, never repeating it.');
+  }
   console.log('  prompt arm   : v' + PROMPT_V + (PROMPT_V === 1 ? '   (the arm both rejected models were measured against)' : '   (silence-is-permission + qualified categories + surviving-evidence facts)'));
   console.log('  measures     : ' + PRIMARY_MODEL + ' ONLY, via ' + PRIMARY_ENDPOINT
     + (CAND.reasoningEffort ? '   reasoning_effort="' + CAND.reasoningEffort + '" (explicit, enforced pre-dispatch)' : ''));
@@ -85,6 +101,24 @@ fs.mkdirSync(OUT_DIR, { recursive: true });
   const ledger = makeLedger(RUN_CEILING, PER_CALL_USD);
   const holder = { ledger, log: [], currentFixture: null, candidate: CAND };
   await installCalibrationRoute(page, holder);
+  // RATE-LIMIT HEADERS. The proxy deliberately forwards retry-after / x-ratelimit-* on a provider
+  // refusal, but _tieredProviderDispatch reads only the body and the network gate records only
+  // status + body — so the failed run captured NO reset or limit information at all. This listener
+  // is runner-side only (no production change) and preserves them, so a repeat refusal can say
+  // WHEN the window resets instead of merely that it was refused.
+  const rlHeaders = [];
+  page.on('response', (resp) => {
+    try {
+      if (resp.url().indexOf(PRIMARY_ENDPOINT) === -1) return;
+      const h = resp.headers() || {};
+      const keep = {};
+      Object.keys(h).forEach((k) => {
+        if (/^(retry-after|x-ratelimit-|ratelimit-)/i.test(k)) keep[k] = h[k];
+      });
+      rlHeaders.push({ fixture: holder.currentFixture, status: resp.status(),
+        rateLimitHeaders: keep, sawAny: Object.keys(keep).length > 0 });
+    } catch (_) {}
+  });
 
   await page.goto('http://localhost:3000/', { waitUntil: 'domcontentloaded', timeout: 25000 });
   await page.waitForFunction(() => window.state && window._buildCanonPacket && window._buildCanonAuditPrompt
@@ -94,16 +128,21 @@ fs.mkdirSync(OUT_DIR, { recursive: true });
   // FAIL-FAST on the local function layer. The first fixture is the provider-path health check;
   // once two consecutive requests come back 502/NO_RESPONSE_FROM_FUNCTION with no provider usage,
   // every remaining fixture would do the same. Stop and mark the run infrastructure-inconclusive.
-  let consecutiveInfra = 0, consecutiveRateLimit = 0, stopped = false;
+  let consecutiveInfra = 0, consecutiveRateLimit = 0, stopped = false, stopReason = null;
   gate.setPhase('canon-calibration', fixtures.length);
   for (const fx of fixtures) {
     if (stopped) {
-      const score = scoreFixture(fx, null, null, { skipped: true });
+      const score = scoreFixture(fx, null, null, { skipped: true, stopReason: stopReason });
       rows.push({ id: fx.id, expect: fx.expect, why: fx.why, latencyMs: 0, score, skipped: true });
       console.log('  ' + (fx.expect === 'violation' ? 'RED  ' : 'GREEN') + ' ' + fx.id.padEnd(30) + ' → skipped (run stopped)');
       continue;
     }
     holder.currentFixture = fx.id;
+    // DELIBERATE PACING between fixtures (never before the first). A burst is what a per-minute
+    // limit punishes, and nothing here is latency-sensitive.
+    if (PACE_MS > 0 && rows.length > 0) {
+      await new Promise((r) => setTimeout(r, PACE_MS));
+    }
     const t0 = Date.now();
     const r = await page.evaluate(async (a) => {
       const s = window.state;
@@ -177,6 +216,7 @@ fs.mkdirSync(OUT_DIR, { recursive: true });
       consecutiveInfra++;
       if (consecutiveInfra >= INFRA_STOP_AFTER) {
         stopped = true;
+        stopReason = INFRA_STOP_AFTER + ' consecutive LOCAL function-layer failures (502 / NO_RESPONSE_FROM_FUNCTION)';
         console.log('\n  STOPPING — ' + INFRA_STOP_AFTER + ' consecutive local function-layer failures '
           + '(502 / NO_RESPONSE_FROM_FUNCTION, no provider usage). Remaining fixtures are NOT dispatched;\n'
           + '  this run is INFRASTRUCTURE-INCONCLUSIVE and says nothing about the model.\n');
@@ -190,16 +230,36 @@ fs.mkdirSync(OUT_DIR, { recursive: true });
       consecutiveRateLimit++;
       if (consecutiveRateLimit >= RATE_LIMIT_STOP_AFTER) {
         stopped = true;
+        stopReason = RATE_LIMIT_STOP_AFTER + ' consecutive PROVIDER rate-limit refusals (HTTP 429) — the local function layer worked and relayed them';
         console.log('\n  STOPPING — ' + RATE_LIMIT_STOP_AFTER + ' consecutive PROVIDER rate-limit refusals '
           + '(HTTP 429). Remaining fixtures are NOT dispatched.\n'
           + '  This run is PROVIDER-INCONCLUSIVE: it says nothing about the model, and nothing was\n'
           + '  billed — a 429 is refused before generation. It is time-dependent; a later run may work.\n');
       }
     } else { consecutiveRateLimit = 0; }
+    // CANARY GATE — after the FIRST fixture only.
+    if (CANARY && rows.length === 1) {
+      if (score.rateLimited) {
+        stopped = true;
+        stopReason = 'the CANARY probe was refused by the PROVIDER (HTTP 429) — the local function layer worked and relayed it';
+        console.log('\n  CANARY REFUSED — the single probe came back 429 rate_limited again.');
+        console.log('  STOPPING IMMEDIATELY. No retry. ' + PRIMARY_MODEL + ' + reasoning_effort='
+          + (CAND.reasoningEffort || 'n/a') + ' is classified');
+        console.log('  UNAVAILABLE UNDER THE CURRENT MISTRAL ACCOUNT/QUOTA — an operational verdict,');
+        console.log('  NOT a judgement of the model\'s canon-auditing ability, which remains untested.\n');
+      } else if (score.outcome === 'unavailable') {
+        stopped = true;
+        stopReason = 'the CANARY probe failed for a non-rate-limit reason';
+        console.log('\n  CANARY FAILED for a non-rate-limit reason — stopping rather than spending seven more.\n');
+      } else {
+        console.log('\n  CANARY SUCCEEDED — preserved as fixture 1, NOT re-dispatched. Continuing the');
+        console.log('  remaining ' + (fixtures.length - 1) + ' fixtures at ' + PACE_MS + 'ms pacing.\n');
+      }
+    }
   }
   gate.closePhase();
 
-  const summary = verdictSummary(rows);
+  const summary = verdictSummary(rows, CANARY ? { rateLimitStopAfter: 1 } : {});
   const realizedTotal = rows.reduce((t, r) => t + (r.realizedUsd || 0), 0);
   const tokIn = rows.reduce((t, r) => t + ((r.usage && r.usage.prompt_tokens) || 0), 0);
   const tokOut = rows.reduce((t, r) => t + ((r.usage && r.usage.completion_tokens) || 0), 0);
@@ -224,7 +284,7 @@ fs.mkdirSync(OUT_DIR, { recursive: true });
     modelIdentityClean: served.length > 0 && wrongModel.length === 0 && wrongEffort.length === 0,
     modelIdentityCheckable: served.length > 0,
     wrongModelIds: wrongModel.map((r) => r.id), wrongEffortIds: wrongEffort.map((r) => r.id),
-    rows, summary };
+    canary: CANARY, paceMs: PACE_MS, rateLimitHeaders: rlHeaders, rows, summary };
   fs.writeFileSync(path.join(OUT_DIR, 'report.json'), JSON.stringify(report, null, 2));
 
   console.log('\n' + '='.repeat(90));
@@ -234,7 +294,8 @@ fs.mkdirSync(OUT_DIR, { recursive: true });
   console.log('  undecided (blocks) : ' + summary.undecided + (summary.undecided ? ('   ' + summary.undecidedIds.join(', ')) : ''));
   console.log('  unavailable        : ' + summary.unavailable + (summary.unavailable ? ('   ' + summary.unavailableIds.join(', ')) : ''));
   console.log('  invalid responses  : ' + summary.invalid + (summary.invalid ? ('   ' + summary.invalidIds.join(', ')) : ''));
-  console.log('  usable responses   : ' + summary.usableResponses + '/' + summary.totalFixtures);
+  console.log('  usable responses   : ' + summary.usableResponses + '/' + summary.totalFixtures
+    + '   (dispatched ' + summary.dispatchedFixtures + ', skipped ' + summary.skipped + ')');
   console.log('  dispatches         : ' + gate.trackedCalls().length + '   reserved $' + ledger.totalUsd.toFixed(6) + ' of $' + RUN_CEILING.toFixed(6));
   console.log('  REALIZED cost      : $' + realizedTotal.toFixed(6) + '   ' + tokIn + ' in / ' + tokOut + ' out'
     + (CAND.reasoningEffort ? '  (completion INCLUDES thinking — Mistral reports no separate reasoning_tokens)' : ''));
@@ -261,6 +322,16 @@ fs.mkdirSync(OUT_DIR, { recursive: true });
     : 'NO'));
   summary.blockers.forEach((b) => console.log('    BLOCKER — ' + b));
   if (summary.missed) console.log('  A missed red is a VALID incorrect pass: no fallback fires, and the plan reaches the author.');
+  const sawHeaders = rlHeaders.filter((h) => h.sawAny);
+  console.log('  rate-limit headers : ' + (sawHeaders.length
+    ? JSON.stringify(sawHeaders[0].rateLimitHeaders)
+    : 'NONE returned by the provider on any response — no reset or remaining was published'));
+  if (CANARY && summary.providerRateLimited) {
+    console.log('\n  OPERATIONAL VERDICT: ' + PRIMARY_MODEL + ' + reasoning_effort=' + CAND.reasoningEffort);
+    console.log('  is UNAVAILABLE as a Storybound fallback under the current Mistral account/quota.');
+    console.log('  It may still be intellectually suitable — that remains UNTESTED and unknowable');
+    console.log('  until the project\'s model access or rate limit is changed.');
+  }
   console.log('\n  Evidence: ' + OUT_DIR);
   await browser.close();
 })().catch((e) => { console.error('RUN ERROR:', e && e.stack || e); process.exit(2); });

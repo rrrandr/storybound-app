@@ -346,6 +346,44 @@ function section(t) { console.log('\n=== ' + t + ' ==='); }
       return r.modelIdentityClean === true && r.rows.every((x) => !x.usage); })(),
     'the retained report should show modelIdentityClean true with no usage anywhere');
 
+  section('9. THE CANARY SHAPE MUST NOT MISREPORT ITSELF');
+  // The real canary run printed three false things: "usable responses 7/8" when it dispatched ONCE;
+  // "INFRASTRUCTURE-INCONCLUSIVE — the local function layer failed" when the local layer worked
+  // perfectly and faithfully relayed the provider's 429; and a blocker blaming that same layer for
+  // seven fixtures it never touched. Reconstructed here as the exact row shape that produced them.
+  const RL_ERR = 'mistral HTTP 429 {"type":"rate_limited","code":"1300"}';
+  const canaryRows = [
+    { id: 'red_memory_extraction', expect: 'violation', score: scoreFixture({ expect: 'violation' }, null, RL_ERR) }
+  ].concat(['a','b','c','d','e','f','g'].map((id) => ({ id, expect: 'pass',
+    score: scoreFixture({ expect: 'pass' }, null, null, { skipped: true,
+      stopReason: 'the CANARY probe was refused by the PROVIDER (HTTP 429) — the local function layer worked and relayed it' }) })));
+  const canarySum = verdictSummary(canaryRows, { rateLimitStopAfter: 1 });
+  ok('a canary that dispatched ONCE reports 0 usable responses, not 7',
+    canarySum.usableResponses === 0, 'usable=' + canarySum.usableResponses + ' of ' + canarySum.totalFixtures);
+  ok('...and reports how many were actually dispatched',
+    canarySum.dispatchedFixtures === 1 && canarySum.skipped === 7,
+    'dispatched=' + canarySum.dispatchedFixtures + ' skipped=' + canarySum.skipped);
+  ok('it is PROVIDER-inconclusive, and one refusal is decisive in canary mode',
+    canarySum.providerRateLimited === true);
+  ok('CRITICAL — it does NOT claim the local function layer failed; that layer worked and relayed the 429',
+    canarySum.infrastructureInconclusive === false, JSON.stringify(canarySum).slice(0, 200));
+  ok('the skip blocker names the PROVIDER, and says the local layer worked',
+    canarySum.blockers.some((b) => /PROVIDER rate limit \(the local function layer worked and relayed it\)/.test(b)),
+    canarySum.blockers.join(' | '));
+  ok('the skipped fixtures each carry the real stop reason, not a hardcoded infra one',
+    canaryRows.slice(1).every((r) => /CANARY probe was refused by the PROVIDER/.test(r.score.note)),
+    canaryRows[1].score.note);
+  ok('a canary run can never read as ENABLE', canarySum.enableGenerally === false);
+  // And the converse still holds: a GENUINE local function-layer failure is still called that.
+  const infraRows = ['a','b'].map((id) => ({ id, expect: 'violation',
+    score: scoreFixture({ expect: 'violation' }, null, 'mistral HTTP 502 {"error":"NO_RESPONSE_FROM_FUNCTION"}') }))
+    .concat(['c'].map((id) => ({ id, expect: 'pass',
+      score: scoreFixture({ expect: 'pass' }, null, null, { skipped: true, stopReason: 'local function layer' }) })));
+  const infraSum = verdictSummary(infraRows);
+  ok('RED PROOF — a genuine 502 run is STILL reported as infrastructure-inconclusive',
+    infraSum.infrastructureInconclusive === true && infraSum.providerRateLimited === false,
+    JSON.stringify(infraSum).slice(0, 200));
+
   section('CONTAINMENT');
   ok('ZERO real provider dispatches', gate.realCalls().length === 0, 'realCalls=' + gate.realCalls().length);
 

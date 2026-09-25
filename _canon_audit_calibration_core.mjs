@@ -435,8 +435,12 @@ export const RATE_LIMIT_STOP_AFTER = 2;                     // two CONSECUTIVE, 
 
 // ── SCORING — the critical distinction is a VALID but incorrect pass ─────────────────────────
 export function scoreFixture(fx, validated, error, opts) {
+  // The skip note must name the ACTUAL stop reason. It hardcoded "local function-layer failures",
+  // so a run stopped by a PROVIDER rate limit — with the local layer working perfectly and
+  // faithfully relaying the provider's 429 — reported that our own function layer had failed.
   if (opts && opts.skipped) return { outcome: 'skipped', critical: false,
-    note: 'not dispatched — the run stopped after ' + INFRA_STOP_AFTER + ' consecutive local function-layer failures' };
+    note: 'not dispatched — ' + (opts.stopReason
+      || ('the run stopped after ' + INFRA_STOP_AFTER + ' consecutive local function-layer failures')) };
   if (error) {
     if (isInfraFailure(error, false)) return { outcome: 'unavailable', critical: false, infra: true, note: error };
     // Provider-side rate limit: its OWN flag, so a run stopped by it can never be read as a model
@@ -475,7 +479,11 @@ export function scoreFixture(fx, validated, error, opts) {
   return { outcome: 'undecided_green', critical: false, note: 'fails closed on a legitimate plan — blocks it, but not a false accusation' };
 }
 
-export function verdictSummary(rows) {
+export function verdictSummary(rows, opts) {
+  opts = opts || {};
+  // In CANARY mode a single refusal is decisive by design — the probe exists to answer "can this
+  // account reach the model at all", and one refusal answers it.
+  const rlStopAfter = (typeof opts.rateLimitStopAfter === 'number') ? opts.rateLimitStopAfter : RATE_LIMIT_STOP_AFTER;
   const reds = rows.filter((r) => r.expect === 'violation');
   const greens = rows.filter((r) => r.expect === 'pass');
   const caught = reds.filter((r) => r.score.outcome === 'caught');
@@ -495,8 +503,15 @@ export function verdictSummary(rows) {
   // PROVIDER-INCONCLUSIVE is distinct from INFRASTRUCTURE-INCONCLUSIVE: the provider answered, and
   // refused. It says nothing about the model either, but it is time-dependent and costs nothing.
   const rateLimited = rows.filter((r) => r.score && r.score.rateLimited);
-  const providerRateLimited = rateLimited.length >= RATE_LIMIT_STOP_AFTER;
-  const infrastructureInconclusive = skipped.length > 0 || infraFailures.length >= INFRA_STOP_AFTER;
+  const providerRateLimited = rateLimited.length >= rlStopAfter;
+  // INFRASTRUCTURE-INCONCLUSIVE REQUIRES AN ACTUAL INFRASTRUCTURE FAILURE. It previously fired on
+  // `skipped.length > 0` alone, on the assumption that the only thing that ever skipped fixtures
+  // was the infra fail-fast. The provider rate-limit stop and the canary stop also skip — so a run
+  // in which the local function layer worked flawlessly and relayed a real provider 429 was
+  // reported as "the local function layer failed". A skip is evidence that something stopped the
+  // run, never evidence of WHAT stopped it.
+  const infrastructureInconclusive = infraFailures.length >= INFRA_STOP_AFTER
+    || (skipped.length > 0 && infraFailures.length > 0 && !providerRateLimited);
   // THE GATE, CORRECTED (Roman 2026-09-24). The earlier version required only "all reds caught and
   // no FALSE_POSITIVE" — so a green returning cannot_decide, invalid JSON or a transport failure
   // still produced ENABLE. In production every one of those BLOCKS a legitimate scene before the
@@ -514,7 +529,10 @@ export function verdictSummary(rows) {
   if (unavailable.length) blockers.push(unavailable.length + ' unavailable (no usable response): ' + unavailable.map((r) => r.id).join(', '));
   if (invalid.length) blockers.push(invalid.length + ' invalid response (blocks the scene in production): ' + invalid.map((r) => r.id).join(', '));
   if (unsupported.length) blockers.push(unsupported.length + ' UNSUPPORTED finding (violation verdict, but cited an irrelevant real fact — not a catch): ' + unsupported.map((r) => r.id).join(', '));
-  if (skipped.length) blockers.push(skipped.length + ' NOT DISPATCHED — run stopped on the local function layer: ' + skipped.map((r) => r.id).join(', '));
+  if (skipped.length) blockers.push(skipped.length + ' NOT DISPATCHED — the run stopped '
+    + (providerRateLimited ? 'on a PROVIDER rate limit (the local function layer worked and relayed it)'
+       : infrastructureInconclusive ? 'on the local function layer' : 'early')
+    + ': ' + skipped.map((r) => r.id).join(', '));
   return {
     providerRateLimited, rateLimited: rateLimited.length, rateLimitedIds: rateLimited.map((r) => r.id),
     infrastructureInconclusive, skipped: skipped.length, skippedIds: skipped.map((r) => r.id),
@@ -527,7 +545,11 @@ export function verdictSummary(rows) {
     missedIds: missed.map((r) => r.id), falsePositiveIds: falsePos.map((r) => r.id),
     undecidedIds: undecided.map((r) => r.id), unavailableIds: unavailable.map((r) => r.id),
     invalidIds: invalid.map((r) => r.id),
-    usableResponses: rows.length - unavailable.length - invalid.length, totalFixtures: rows.length,
+    // A SKIPPED fixture produced no response, so it cannot count as a usable one. This read
+    // `rows.length - unavailable - invalid`, so a canary run that dispatched ONCE and skipped seven
+    // reported "usable responses 7/8" — the exact inverse of the truth.
+    usableResponses: rows.length - unavailable.length - invalid.length - skipped.length,
+    totalFixtures: rows.length, dispatchedFixtures: rows.length - skipped.length,
     blockers, enableGenerally
   };
 }

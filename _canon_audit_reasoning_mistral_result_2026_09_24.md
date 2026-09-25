@@ -71,6 +71,53 @@ assertion went red for the right reason. A file a test rewrites is not evidence.
 prompt **as actually sent** in the paid gpt-4o-mini run, preserved under `_tempt_fate_fixtures` and
 never rewritten.
 
+## FOLLOW-UP: the canary was refused too — OPERATIONAL VERDICT
+
+After **16 minutes of complete Mistral quiet**, one single retained fixture was dispatched as an
+access probe (`--canary`). It came back **HTTP 429 `rate_limited`, code 1300** again.
+Stopped immediately, seven fixtures never dispatched, **$0.000000 realized**.
+Evidence: `_tempt_fate_fixtures/canon_calibration_2026-09-25_01-42-23/`.
+
+### `mistral-small-2603` + `reasoning_effort: "high"` is UNAVAILABLE as a Storybound fallback
+
+This is an **operational** verdict, not an intellectual one. The model may well be suitable for the
+canon-auditor role — that remains **untested and unknowable** until the Mistral project's model
+access or rate limit is changed. It cannot serve as a fallback that the account cannot reach.
+
+No further retries. Moving on.
+
+### Two inspections, both answered
+
+**Other local traffic on the same account: none.** `ps` did surface a stray process — PID 4830,
+`_tempt_outcome_extractor_live_run.mjs`, alive for 17h38m, never exited (a violation of the
+harness-must-exit rule). But `lsof` shows it holds **zero sockets and zero child processes**: its
+browser is long gone and it has been inert, not consuming quota. Nothing else on the machine holds
+a Mistral connection — `vercel dev` has only local listeners, and the unrelated `aicontact` backend
+has no outbound sockets at all. **No evidence of local quota contention; the limit is account-side.**
+PID 4830 was NOT killed — that needs its own authorization, and it is harmless where it sits.
+
+**Reset/limit headers: the provider published NONE.** The proxy does forward `retry-after` /
+`x-ratelimit-*` on a refusal, but `_tieredProviderDispatch` reads only the body and the network gate
+records only status+body — so the first run preserved nothing. Runner-side header capture was added
+(no production change, no keys logged), and the canary confirms: **no reset, limit, or remaining
+value was returned on any response.** There is no published window to wait for.
+
+### Three reporting defects of mine, found by the canary's own output
+
+The canary printed three false things, all from the summariser:
+
+| Printed | Truth |
+|---|---|
+| `usable responses : 7/8` | **0/8** — one dispatched, seven never sent. `usableResponses` subtracted unavailable+invalid but not skipped, counting seven unsent requests as usable. |
+| `INFRASTRUCTURE-INCONCLUSIVE — the local function layer failed` | The local layer **worked** and relayed the provider's real 429. The flag fired on `skipped.length > 0` alone, assuming only the infra fail-fast ever skips. |
+| `7 NOT DISPATCHED — run stopped on the local function layer` | Stopped on a **provider** rate limit; the per-fixture skip note also hardcoded the infra reason. |
+
+Plus: in canary mode one 429 must be decisive, so the operational verdict prints rather than
+falling through to the infrastructure branch. All four fixed and dry-proven (79/79) against this
+run's exact row shape — including the converse, that a genuine 502 run is *still* called
+infrastructure-inconclusive. The run's own `report.json` is preserved unedited, with
+`SUMMARY_CORRECTION.md` alongside it.
+
 ## Where this leaves the question
 
 Three candidates, and the scoreboard is still only two entries long:
@@ -79,26 +126,20 @@ Three candidates, and the scoreboard is still only two entries long:
 |---|---|---|
 | `ministral-8b-2512` | v1 | REJECTED — 1/4 reds substantively caught, 0/4 greens |
 | `gpt-4o-mini` | v1 | REJECTED — 3/4 reds, 0/4 greens, all eight verdicts "violation" |
-| `mistral-small-2603` + reasoning high | v2 | **NO DATA** — provider 429 on all eight, $0 |
+| `mistral-small-2603` + reasoning high | v2 | **UNAVAILABLE** — provider 429 on all eight AND on a single canary probe after cooldown; $0. Intellectual suitability untested. |
 
 Nothing about v2 has been tested against any model yet.
 
-## Next step needs your authorization — I am not re-running anything
+## Next step — reasoning Mistral is closed until account access changes
 
-The rate limit is time-dependent, so the same run may simply work later. I have **not** retried, and
-I have **not** touched the environment, restarted the dev server, or changed any configuration.
+No more retries. The blocker is the Mistral project's model access or rate limit, which is an
+account-side change, not something further testing can resolve.
 
-Two options, both priced honestly (reservation basis = enforced maximum, not a realized estimate):
-
-- **Re-run reasoning Mistral** as specified — `$0.00165 x 8 = $0.01320` under the $0.02 ceiling.
-  Now with the rate-limit fail-fast, a repeat refusal stops after two, not eight.
-- **gpt-4o-mini against v2** — `$0.00081 x 8 = $0.00648` under the $0.01 ceiling. Its v1 scores are
-  an existing control arm, so this isolates the prompt variable. You ordered reasoning Mistral
-  first, so this stays unrun unless you say otherwise.
-
-A standing rate limit may also indicate something else on the account is consuming Mistral quota.
-That is worth checking before spending again, and it is not something I should investigate by
-firing more requests.
+The one experiment still standing, unrun and awaiting your call: **gpt-4o-mini against v2** —
+reservation basis `$0.00081 x 8 = $0.00648` under the $0.01 ceiling (that is the enforced maximum;
+the $0.003121 from its v1 run was a realized measurement, an estimate, never the bound). Its v1
+scores are an existing control arm, so this isolates the prompt variable — the only remaining way
+to learn whether v2's capability-rooted rule actually changes a verdict.
 
 ## Status, unchanged
 
