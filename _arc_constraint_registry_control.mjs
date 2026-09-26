@@ -20,16 +20,23 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const APP_PATH = path.join(__dirname, 'public/app.js');
 const lines = fs.readFileSync(APP_PATH, 'utf8').split('\n');
 
-function sliceLines(from1, to1, startAnchor, endAnchor) {
-  const slice = lines.slice(from1 - 1, to1).join('\n');
-  if (!slice.includes(startAnchor)) throw new Error(`ANCHOR DRIFT: expected "${startAnchor}" in lines ${from1}-${to1}`);
-  if (!slice.includes(endAnchor)) throw new Error(`ANCHOR DRIFT: expected "${endAnchor}" in lines ${from1}-${to1}`);
-  return slice;
+// SLICE BY CONTENT, NOT BY LINE NUMBER (2026-09-25). This harness used to slice app.js with
+// hardcoded line ranges and then assert the anchors fell inside them. app.js grows constantly, so the
+// ranges rotted: `const STARTER_SEEDS = {` was pinned to 126979-127320 and has actually been at
+// ~130349 for a long while, which made this control throw ANCHOR DRIFT before running a single
+// assertion. Verified against git: it was already failing at 1cea2600, before the reserved-canon
+// work — a line number is not an identity. Anchors are now LOCATED, so only a real rename breaks it.
+function sliceBetween(startAnchor, endAnchor) {
+  const si = lines.findIndex((l) => l.includes(startAnchor));
+  if (si === -1) throw new Error(`ANCHOR MISSING: "${startAnchor}" is no longer in public/app.js`);
+  const ei = lines.findIndex((l, i) => i >= si && l.includes(endAnchor));
+  if (ei === -1) throw new Error(`ANCHOR MISSING: "${endAnchor}" not found at or after "${startAnchor}"`);
+  return lines.slice(si, ei + 1).join('\n');
 }
 
-const starterSeedsSrc = sliceLines(126979, 127320, 'const STARTER_SEEDS = {', 'window.STARTER_SEEDS = STARTER_SEEDS;');
-const activeSeedSrc = sliceLines(127612, 127612, 'function _activeSeed(s)', 'function _activeSeed(s)');
-const registrySrc = sliceLines(198320, 198441,
+const starterSeedsSrc = sliceBetween('const STARTER_SEEDS = {', 'window.STARTER_SEEDS = STARTER_SEEDS;');
+const activeSeedSrc = sliceBetween('function _activeSeed(s)', 'function _activeSeed(s)');
+const registrySrc = sliceBetween(
   'GENERIC ARC-CONSTRAINT REGISTRY (Roman, authorized 2026-09-14)',
   'window._attemptArcConstraintTarget = _attemptArcConstraintTarget;');
 

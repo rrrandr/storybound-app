@@ -131084,17 +131084,30 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
     //
     // pc:self — never `pc:lirael`. The player names the protagonist, and a hardcoded name would
     // become a second entity for anyone who chose a different one.
-    { n: 4, goal: 'A Chayr and two Dohkars formally open an inquiry into the PC.',
-      reservedEvents: [{ id: 'inquiry_opened', text: 'A Chayr and two Dohkars formally open an inquiry into the PC', markers: ['open an inquiry', 'opens an inquiry', 'formal inquiry', 'the inquiry'] }],
-      participants: ['Lirael', 'the Chayr', 'the presiding Dohkar'],
+    // ROW 4 — RESCHEDULED (Roman 2026-09-25). This row used to BE the convened inquiry ("A Chayr and
+    // two Dohkars formally open an inquiry into the PC") and it carried reservedEvents.inquiry_opened,
+    // which made scene 4 the RELEASE point for content the seed's own worldTruths call late: "its
+    // convening is LATE-ISSUE-1 content, not an early scene's". Row 2's dohkar_preliminary_review lane
+    // already fenced the same thing as "reserved for LATE Issue 1", so the plan contradicted both.
+    // Scene 4 of 20 is not late. The CALENDAR was wrong, not the rule — inquiry_opened now lives on
+    // row 14, and this row keeps the early procedural pressure that scene 5 ("Julian quietly prevents
+    // the investigation") needs to already exist.
+    //
+    // WHAT STAYS: this is still the Character+ representative case — the people the goal names are
+    // IN_PERSON, one person the goal names is REPORTED rather than present (Julian, who acts in scene
+    // 5), and beats are owned by a ROLE rather than a name.
+    // WHAT CHANGES: the beat is NOTICE AND RESTRICTION, not a hearing. The inquiry Chayr is gone; he
+    // belongs to the convened panel, which is now row 14's business. Beat 1 deliberately WITHHOLDS
+    // who will hear the matter, turning the old attractor into an explicit refusal.
+    { n: 4, goal: 'NOTICE AND RESTRICTION — procedural pressure closes on Lirael and NOTHING is convened. The presiding Dohkar serves her formal notice that her conduct at the rite is under investigation, and states the restrictions she must keep while it runs. Julian is named aloud as having demanded a review; he is NOT in the room. Do NOT name who will hear the matter, do NOT name a venue, do NOT give a date or a timeframe, and do NOT constitute a panel — the formal inquiry is LATE-Issue-1 content and belongs to row 14. END with Lirael formally under investigation, supervised, and still unable to explain herself.',
+      participants: ['Lirael', 'the presiding Dohkar'],
+      presentGroups: ['the assembly (unnamed, no dialogue)'],
       stage: {
         v: 1,
         provenance: 'authored_seed_spine',
         participants: [
           { ref: 'pc:self', label: 'Lirael', presence: 'IN_PERSON' },
-          { ref: 'role:first_sacrifice_inquiry_chayr', label: 'the Chayr', presence: 'IN_PERSON' },
           { ref: 'role:first_sacrifice_presiding_dohkar', label: 'the presiding Dohkar', presence: 'IN_PERSON' },
-          { ref: 'role:first_sacrifice_second_dohkar', label: 'the second Dohkar', presence: 'IN_PERSON' },
           // Julian is DISCUSSED, not here. Scene 5 is where he acts. Declaring him REPORTED is
           // what stops "he is named in this scene" from quietly meaning "he is in this room" —
           // and Character+ may still reveal him in that mode, because presence never was the
@@ -131106,14 +131119,15 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
         // Lirael is the SUBJECT of the inquiry and the TARGET of the reading — target does not
         // ground, which is why she can be in both without grounding on either.
         eventFacts: [
-          { text: 'The Chayr reads the charge aloud and does not look up from the page while doing it',
-            participants: [{ ref: 'role:first_sacrifice_inquiry_chayr', role: 'actor', label: 'the Chayr' },
+          { text: 'The presiding Dohkar serves Lirael notice that her conduct at the rite is under investigation, and does not say who will hear it',
+            participants: [{ ref: 'role:first_sacrifice_presiding_dohkar', role: 'actor', label: 'the presiding Dohkar' },
                            { ref: 'pc:self', role: 'target', label: 'Lirael' }] },
-          { text: 'The presiding Dohkar corrects the Chayr on the order of the rite, in front of the room',
+          { text: 'The presiding Dohkar names the restrictions she must keep while it runs — she may not supervise a rite, and she may not leave the Veilwood',
             participants: [{ ref: 'role:first_sacrifice_presiding_dohkar', role: 'speaker', label: 'the presiding Dohkar' }] },
-          { text: 'The second Dohkar writes down what Lirael says before she has finished saying it',
-            participants: [{ ref: 'role:first_sacrifice_second_dohkar', role: 'actor', label: 'the second Dohkar' },
-                           { ref: 'pc:self', role: 'subject', label: 'Lirael' }] },
+          { text: 'Lirael learns that Julian demanded a review of her conduct, and that he did not come to say it to her himself',
+            participants: [{ ref: 'role:first_sacrifice_presiding_dohkar', role: 'speaker', label: 'the presiding Dohkar' },
+                           { ref: 'named:julian', role: 'subject', label: 'Julian' },
+                           { ref: 'pc:self', role: 'target', label: 'Lirael' }] },
         ],
       } },
         { n: 5, goal: 'Julian quietly prevents the investigation from uncovering the truth.',
@@ -131164,7 +131178,24 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
         { n: 11, goal: 'The consequences of the hidden sacrifice begin manifesting.' },
         { n: 12, goal: 'The PC discovers every miracle has a sacrifice — but cannot determine whose.' },
         { n: 13, goal: 'Someone else is endangered by the hidden bargain.' },
-        { n: 14, goal: 'The investigation closes in on Julian.',
+        // ROW 14 — THE DUE ROW FOR inquiry_opened (Roman 2026-09-25). The date was NOT chosen by
+        // taste; the seed's own staging fixes it. This is the FIRST row in the spine that seats the
+        // panel in person — `role:first_sacrifice_inquiry_chayr` is IN_PERSON here and its officers
+        // act, and the beat reads back "Julian's own earlier answer", which only exists if a
+        // proceeding has been taking answers. So:
+        //   • anything EARLIER (row 4, where it used to sit) releases content the worldTruths call
+        //     "LATE-ISSUE-1 content, not an early scene's", and which row 2's dohkar_preliminary_review
+        //     lane independently fences as "reserved for LATE Issue 1";
+        //   • anything LATER (row 19 was tried first, and was wrong) leaves THIS row staging a body
+        //     that canon says does not exist yet — the Chayr would be in the room before he had been
+        //     constituted.
+        // Rows 5-13 stay INVESTIGATION, which the world truth explicitly permits early ("accusation,
+        // preliminary review, political pressure, investigation, concealment, or flight"), and the
+        // Chayr is REPORTED not present in row 5. 14 of 20 is late Issue 1.
+        // The event's id, text and markers are UNCHANGED, so every consumer keyed to them — and the
+        // lexical link from the world-truth group — still resolves, only to a later scene.
+        { n: 14, goal: 'THE INQUIRY CONVENES, AND CLOSES IN ON JULIAN — a Chayr and two Dohkars formally open the inquiry into Lirael, held at The Open; under it the investigation turns toward Julian. The panel is constituted HERE for the first time; nothing earlier may have convened it.',
+          reservedEvents: [{ id: 'inquiry_opened', text: 'A Chayr and two Dohkars formally open an inquiry into the PC', markers: ['open an inquiry', 'opens an inquiry', 'formal inquiry', 'the inquiry'] }],
         // MIGRATED A: the actors are the inquiry officers; Julian is the OBJECT, present but not
         // acting. Naming him a TARGET is what stops him grounding on their behaviour.
           stage: { v: 1, provenance: 'authored_seed_spine',
