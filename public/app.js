@@ -126454,6 +126454,160 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
   }
   window._sayDoGibberishFallback = _sayDoGibberishFallback;
 
+  // ── GIBBERISH POLICY, THREE TIERS (Roman 2026-09-26) ────────────────────────────────────────
+  // The old behaviour was one-size: any wholly-gibberish field became a fixed placeholder, and that
+  // placeholder then read as a COMMITTED player move — so the strong Say/Do delivery rule fired and
+  // the author was effectively told a keyboard mash was a deliberate dramatic beat. That is the exact
+  // nonsense inflation this category exists to prevent.
+  //
+  // Roman's policy, and the reasoning behind it: the player paid for the story, so we never block and
+  // never scold. But intent matters, and it is legible from REPETITION:
+  //   1. ISOLATED pure gibberish — probably a stumble. Substitute lightly. Not agency.
+  //   2. MIXED intelligible + a gibberish fragment — the player IS communicating. Preserve the
+  //      sentence; render only the corrupt fragment as a broken sound. Never discard the whole input.
+  //   3. REPEATED pure gibberish — no longer accidental. Promote it to IN-WORLD CHARACTER BEHAVIOUR:
+  //      the PC repeatedly cannot or will not produce coherent speech, and the world may respond
+  //      seriously — incapacity, defiance, shock, contamination, evidence. The story metabolizes it.
+  // IN NO TIER does the raw keystroke string enter canon. The authored fact is never 'she said
+  // "vslkfjdn"'; it is 'she failed to produce coherent speech'. And repetition is NOT a diagnosis of
+  // the player: Concierge is for app complaints and help requests, never for this.
+  var _GIB_TOKEN_MIN = 5;
+  // INVERTED ON PURPOSE. Measured against the project's own _detectGibberish per token: it has ZERO
+  // false positives on real words (strength, Dohkar, spiralgrass, Sacrificiant, rhythms all pass) but
+  // it MISSES keyboard rolls — 'lkjwerlkj', 'lkjwer' and 'qwerty' all come back clean. If mixed-field
+  // scrubbing only removed what a gibberish test catches, those rolls would survive into canon and
+  // break the raw-keystrokes guarantee. So the mixed path keeps only what is CONFIDENTLY INTELLIGIBLE
+  // and renders everything else, which fails safe: an unusual real word costs one broken-sound phrase,
+  // whereas a missed mash costs the guarantee.
+  // Common English clusters are removed before measuring consonant runs, so 'strength' (str + ngth)
+  // reads as a word while 'lkjwerlkj' does not.
+  // NARROW POSITIVE SIGNALS ONLY. An earlier version tried to certify tokens as English by stripping
+  // common consonant clusters and then measuring runs — it mangled "right" ("ght" is a 3-run) and was
+  // an open-ended list of exceptions. English is too irregular to whitelist, so this asks only
+  // "is there a POSITIVE reason to think this is a mash?" and keeps everything else.
+  // Calibrated against real tokens: right, Dohkar, spiralgrass, assembly, Sacrificiant, strength,
+  // rhythms, unbuckling all pass; sdkfjhsdkf, asdkfjh, sdkfj, zzzz, lkjwerlkj are all caught.
+  function _isIntelligibleToken(tok) {
+    var t = String(tok || '').replace(/[^A-Za-z']/g, '');
+    if (!t) return true;                                          // punctuation/whitespace: keep
+    if (t.length < 5) return true;                                // short words are never mashes here
+    if (!/[aeiouy]/i.test(t)) return false;                       // no vowel at all
+    if (/([A-Za-z])\1{3,}/.test(t)) return false;                 // 4+ of the same letter
+    if (/[bcdfghjklmnpqrstvwxz]{5,}/i.test(t)) return false;      // 5+ consonants in a row
+    try {
+      if (typeof _detectGibberish === 'function') {
+        var d = _detectGibberish(t);                               // the project's own detector: no
+        if (d && d.gibberish === true) return false;               // false positives on real words
+      }
+    } catch (_) {}
+    // Keyboard rolls the detector misses ('lkjwerlkj') are long AND vowel-starved. Length 9 is
+    // deliberate: it clears 'strength' (8) rather than mangling it.
+    var vowels = (t.match(/[aeiouy]/gi) || []).length;
+    if (t.length >= 9 && (vowels / t.length) < 0.2) return false;
+    return true;
+  }
+  function _isGibberishToken(tok) {
+    var t = String(tok || '').replace(/[^A-Za-z]/g, '');
+    if (t.length < _GIB_TOKEN_MIN) return false;
+    return !_isIntelligibleToken(t);
+  }
+  // One broken-sound rendering, used for a fragment inside otherwise intelligible text.
+  var _GIB_FRAGMENT_RENDER = 'a syllable that comes apart before it is a word';
+  function _scrubGibberishFragments(text) {
+    var out = String(text || '').split(/(\s+)/).map(function (tok) {
+      if (/^\s*$/.test(tok)) return tok;
+      return _isIntelligibleToken(tok) ? tok : _GIB_FRAGMENT_RENDER;
+    }).join('');
+    // Collapse a run of adjacent renderings into one — three mashed tokens is still one broken sound.
+    var rx = new RegExp('(?:' + _GIB_FRAGMENT_RENDER.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')(?:\\s+(?:'
+      + _GIB_FRAGMENT_RENDER.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '))+', 'g');
+    return out.replace(rx, _GIB_FRAGMENT_RENDER);
+  }
+  function _fieldGibberishState(text) {
+    var t = String(text || '').trim();
+    if (!t) return 'empty';
+    // MIXED IS TESTED FIRST, and that ordering is the fix. _detectGibberish judges the WHOLE field, and
+    // it calls "You have no right to judge me sdkfjhsdkf" gibberish — so testing pure first replaced the
+    // entire sentence and discarded the player's actual intent, which is precisely what tier 2 exists
+    // to prevent. If enough real words are present, the field is mixed however the whole-field
+    // detector reads it.
+    var toks = t.split(/\s+/).filter(Boolean);
+    var intelligible = toks.filter(_isIntelligibleToken).length;
+    var mashed = toks.length - intelligible;
+    if (mashed > 0 && intelligible >= 2) return 'mixed';
+    var whole = null;
+    try { whole = (typeof _detectGibberish === 'function') ? _detectGibberish(t) : null; } catch (_) {}
+    if (whole && whole.gibberish === true) return 'pure';
+    if (mashed > 0 && intelligible === 0) return 'pure';
+    if (mashed > 0) return 'mixed';
+    return 'clean';
+  }
+  // Applies the policy. Returns the values the Submit handler should actually use, plus the tier and
+  // the evidence behind it. PURE FUNCTION over (action, dialogue, streak) — the caller owns the state.
+  function _applyGibberishPolicy(action, dialogue, opts) {
+    opts = opts || {};
+    var prevStreak = Number(opts.streak || 0) || 0;
+    var aState = _fieldGibberishState(action), dState = _fieldGibberishState(dialogue);
+    var filled = [aState, dState].filter(function (x) { return x !== 'empty'; });
+    var anyPure = aState === 'pure' || dState === 'pure';
+    var anyMixed = aState === 'mixed' || dState === 'mixed';
+    var allPure = filled.length > 0 && filled.every(function (x) { return x === 'pure'; });
+    var tier = 'none', streak = prevStreak;
+    if (allPure) { streak = prevStreak + 1; tier = (streak >= 2) ? 'repeated' : 'isolated'; }
+    else if (anyMixed || anyPure) { tier = 'mixed'; streak = 0; }   // the player IS communicating
+    else { tier = 'none'; streak = 0; }
+    var outA = action, outD = dialogue;
+    if (tier === 'isolated' || tier === 'repeated') {
+      // Reuse the documented placeholders as the single source of that wording.
+      if (aState === 'pure') outA = _sayDoGibberishFallback(action, 'action');
+      if (dState === 'pure') outD = _sayDoGibberishFallback(dialogue, 'dialogue');
+    } else if (tier === 'mixed') {
+      if (aState === 'pure') outA = _sayDoGibberishFallback(action, 'action');
+      else if (aState === 'mixed') outA = _scrubGibberishFragments(action);
+      if (dState === 'pure') outD = _sayDoGibberishFallback(dialogue, 'dialogue');
+      else if (dState === 'mixed') outD = _scrubGibberishFragments(dialogue);
+    }
+    return { action: outA, dialogue: outD, tier: tier, streak: streak,
+             fields: { action: aState, dialogue: dState },
+             fallbackGenerated: tier === 'isolated' || tier === 'repeated' || anyPure || anyMixed };
+  }
+  // The author-facing rule per tier. Emits '' for tier 'none' so ordinary play is byte-identical.
+  function _buildGibberishHandlingDirective(tier) {
+    if (tier === 'isolated' || tier === 'mixed') {
+      return 'UNCLEAR PLAYER INPUT — ACKNOWLEDGE LIGHTLY (HARD RULE):\n'
+        + 'What the player submitted did not resolve into an intelligible move. It has already been\n'
+        + 'replaced with a description of an unclear sound or gesture; that description is what you\n'
+        + 'have, and the player\'s literal keystrokes are NOT canon and must never be quoted.\n'
+        + '- Give it ONE light beat: an unfinished sound, a gesture that does not land, a breath.\n'
+        + '- Do NOT treat it as a deliberate, meaningful statement, and do NOT build the scene on it.\n'
+        + '  Nobody interprets it, answers its content, or acts on it as though it carried intent.\n'
+        + '- Do NOT comment on the player, the interface, or the input itself. Stay in the world.\n'
+        + '- The scene continues on its own momentum. Let the other characters carry it.\n\n';
+    }
+    if (tier === 'repeated') {
+      return 'REPEATED INCOHERENCE — THIS IS NOW THE CHARACTER\'S BEHAVIOUR (HARD RULE):\n'
+        + 'The protagonist has now failed to produce coherent speech or action more than once. Stop\n'
+        + 'treating it as a stumble to be smoothed over: it is a STATE she is in, and the world may\n'
+        + 'respond to it seriously.\n'
+        + '- The canon fact is that she REPEATEDLY COULD NOT, or would not, make herself understood.\n'
+        + '  It is NEVER the literal text she typed — do not quote, spell, or transcribe it, ever.\n'
+        + '- Characters may now react, and consequentially: concern, fear, guilt, impatience, or a\n'
+        + '  reading of incapacity, defiance, shock, contamination, or evidence — whichever the world\n'
+        + '  and this scene actually support. The social cost may rise.\n'
+        + '- The story does NOT halt, refuse, or stall waiting for better input, and it does not break\n'
+        + '  frame to address the player. There is no apology and no instruction.\n'
+        + '- She keeps her agency: this is something happening to or chosen by HER, rendered as\n'
+        + '  behaviour, not a malfunction of the game.\n\n';
+    }
+    return '';
+  }
+  window._isGibberishToken = _isGibberishToken;
+  window._isIntelligibleToken = _isIntelligibleToken;
+  window._scrubGibberishFragments = _scrubGibberishFragments;
+  window._fieldGibberishState = _fieldGibberishState;
+  window._applyGibberishPolicy = _applyGibberishPolicy;
+  window._buildGibberishHandlingDirective = _buildGibberishHandlingDirective;
+
   // ── WALL-BREAKING / META SAY-DO DETECTOR (2026-09-22) ────────────────────
   // Roman: "wall-breaking/meta input is not currently caught well enough...
   // Expand or adapt [the existing fourth-wall detector] so ordinary Say/Do
@@ -127114,6 +127268,16 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
     try {
       var act = String(action || '').trim(), dia = String(dialogue || '').trim();
       if (!act && !dia) return '';
+      // FALLBACK-GENERATED TEXT IS NOT A COMMITTED MOVE. This rule's whole premise is that the player
+      // chose something specific; a substituted gibberish placeholder explicitly failed that premise,
+      // and firing here would tell the author a keyboard mash was a deliberate dramatic beat. Found by
+      // the gibberish preflight, which refused to spend until it was fixed.
+      try {
+        var _fg = (opts && opts.fallbackGenerated !== undefined)
+          ? opts.fallbackGenerated
+          : (typeof window !== 'undefined' && window.state && window.state._sayDoFallbackGenerated === true);
+        if (_fg) return '';
+      } catch (_) {}
       // Weak turns are the weak-turn directive's business; the two must never both fire.
       try {
         if (typeof _detectWeakTurn === 'function') {
@@ -171282,7 +171446,24 @@ No text, no watermark, no UI elements, share-ready.`;
             if (typeof showToast === 'function') showToast(_sdSafety.message);
             return;
           }
-          if (typeof _sayDoGibberishFallback === 'function') {
+          // THREE-TIER GIBBERISH POLICY (2026-09-26). Was two flat _sayDoGibberishFallback calls,
+          // which made a keyboard mash indistinguishable from a committed move downstream. Now the
+          // tier is computed from the fields plus the player's recent streak, the streak is persisted,
+          // and the substituted values are MARKED as fallback-generated so the strong Say/Do delivery
+          // rule cannot mistake a placeholder for intentional specificity.
+          if (typeof _applyGibberishPolicy === 'function') {
+            var _gp = _applyGibberishPolicy(action, dialogue, { streak: state._gibberishStreak || 0 });
+            action = _gp.action; dialogue = _gp.dialogue;
+            state._gibberishStreak = _gp.streak;
+            if (_gp.tier !== 'none') {
+              state._sayDoFallbackGenerated = true;
+              state._gibberishTier = _gp.tier;
+              try { console.log('[SAYDO:GIBBERISH] tier=' + _gp.tier + ' streak=' + _gp.streak
+                + ' fields=' + JSON.stringify(_gp.fields)); } catch (_) {}
+            } else {
+              delete state._sayDoFallbackGenerated; delete state._gibberishTier;
+            }
+          } else if (typeof _sayDoGibberishFallback === 'function') {
             action = _sayDoGibberishFallback(action, 'action');
             dialogue = _sayDoGibberishFallback(dialogue, 'dialogue');
           }
@@ -228263,6 +228444,9 @@ No text, no watermark, no UI elements, share-ready.`;
         ? _buildCollectiveSpeechDirective({
             collectives: (window.state && window.state._cgRowCollectives) || null,
             presentGroups: (window.state && window.state._cgRowPresentGroups) || null }) : '') +
+      // GIBBERISH HANDLING (2026-09-26). Emits '' for tier 'none', so ordinary play is byte-identical.
+      ((typeof _buildGibberishHandlingDirective === 'function')
+        ? _buildGibberishHandlingDirective((window.state && window.state._gibberishTier) || 'none') : '') +
       // STRONG SAY/DO DELIVERY (2026-09-26). Mutually exclusive with the weak-turn restraint below —
       // each returns '' when the other applies, so exactly one modality rule is ever in force.
       ((typeof _buildStrongTurnDeliveryDirective === 'function')
@@ -235320,7 +235504,8 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
       // later turns.
       try { delete state._lastSayDoAction; delete state._lastSayDoDialogue;
         delete state._sayDoResolvedSlot; delete state._sayDoSlotClassification;
-        delete state._cgRowCollectives; delete state._cgRowPresentGroups; } catch (_) {}
+        delete state._cgRowCollectives; delete state._cgRowPresentGroups;
+        delete state._sayDoFallbackGenerated; delete state._gibberishTier; } catch (_) {}
       try { state._stagedAuthoringSceneIndex = null; } catch (_) {}
       // Released with the generation that owned it — same discipline as _tfoOwnedInvocation below.
       try { state._acceptedPlannerProposal = null; state._cgGenAttempt = null; } catch (_) {}

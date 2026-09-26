@@ -247,8 +247,14 @@ const ADULT_FAILURE = [
   const srcH = fs.readFileSync(path.join(__dirname, 'public', 'app.js'), 'utf8');
   ok('the collective context is HARVESTED from the row and the resolved lane, not left unset',
     /_cgRowPresentGroups = _csGroups\.filter/.test(srcH) && /_csFrame\.lane\.pressureSource/.test(srcH));
+  // PINNED TO CO-LOCATION, NOT TO THE END OF THE LINE. A first version required the collective deletes
+  // to be immediately followed by `} catch (_) {}` and went red the moment the gibberish-tier deletes
+  // were appended to that same cleanup — the cleanup had grown, not broken. What matters is that the
+  // collective context is torn down in the SAME block that clears the Say/Do stash.
+  const cleanupBlock = (srcH.match(/delete state\._lastSayDoAction;[\s\S]{0,400}?\} catch \(_\) \{\}/) || [''])[0];
   ok('...and cleared in the same finally as the Say/Do stash',
-    /delete state\._cgRowCollectives; delete state\._cgRowPresentGroups; \} catch \(_\) \{\}/.test(srcH));
+    /delete state\._cgRowCollectives/.test(cleanupBlock) && /delete state\._cgRowPresentGroups/.test(cleanupBlock),
+    cleanupBlock.slice(0, 300));
 
   section('7. CONTAINMENT');
   ok('zero provider dispatches', gate.trackedCalls().filter((c) => c.real).length === 0);
