@@ -10,38 +10,57 @@ So `other` owes all eleven **plus** its class requirement (a non-empty `scopeNot
 class it is and why the listed ones do not fit). `materialization_possession` adds
 **`materialEffects`** and **`affectedParties`**.
 
-## 2. Extractor readiness — the blocker was real, and it WAS fixed (dry only)
+## 2. CORRECTED CHRONOLOGY — I traced the wrong failure
 
-Established from retained artifacts, not assumed.
+My previous section conflated three distinct stages and reached a wrong conclusion. Withdrawn.
 
-**The run** (`_tempt_fate_memory_erasure_live_run_out/report.json`, 2026-09-24T00:53Z):
-```
-sceneDelivered:                    true
-outcomeReportPopulated:            FALSE
-outcomeCommittedToOwnedProposal:   FALSE
-durableConsequences:               []
-declared: ruptureClass=None requestedScope=None deliveredScope=None scopeMatch=None scopeNote=None
-cost: $0.11454445 of a $0.20 cap
-```
-So the scene was delivered and **nothing was declared or committed**.
+**Stage 1 — `2e19c342` (2026-09-23 21:10).** Fixed MISSING FIELDS in the author's actual schema: the
+scope/rupture-class fields had been added to a window-exposed builder no prompt called while the
+validator required them. This is the fix I described, and it is NOT the readiness blocker.
 
-**The cause and the fix** — commit `2e19c342`, *"put scope/class fields in the schema the author
-actually receives"*, whose own message names this run:
-> "The authorized Scene A run delivered a scene and committed NOTHING… I had added the scope and
-> rupture-class fields to `_buildTemptFateOutcomeReportingSchema()` — a window-exposed builder that NO
-> prompt has ever called — while making the validator require them. The author's real schema is an
-> inline block elsewhere, so the model was rejected for omitting fields it was never asked for."
+**Stage 2 — `955a10f0` (2026-09-23 22:18). THE AUTHOR DELIVERED AND COMMITTED, LIVE.**
+> "delivered yes (867 chars) · outcome populated yes · committed yes, to the owned proposal tfl_1 ·
+> ruptureClass memory_perception · scopeMatch full (model-declared)"
 
-Timeline: run at 20:53 local, fix committed 21:10 local — **17 minutes later**. The blocker is fixed.
+**I WITHDRAW the claim that memory declaration and commitment never happened.** They did, live, under
+the AUTHOR-SELF-REPORTED architecture. Its scope claims were later challenged — the author certified
+`scopeMatch: full` naming only "the assembly" — but the commitment itself occurred.
 
-**BUT: the fix has never been exercised LIVE.** It is dry-verified only
-(`_tempt_fate_outcome_integration_control` 73/73 proves commitment through the real production path
-with a stubbed model; `_tempt_fate_outcome_contract_control` proves the contract). A
-`materialization_possession` run would be the **first live exercise of the corrected schema**, so
-"the author declares the contract fields" is itself under test, not a given.
+**Stage 3 — `daefe5aa` (2026-09-24 04:19). THE DEDICATED EXTRACTOR'S LIVE TEST FAILED. This is the
+readiness blocker.** One dispatch, ministral-8b-2512, 2005 in / 1400 out, ~$0.00051.
+- THE READING WAS RIGHT, and better than the author's: it resolved FOUR parties by name, applied the
+  invoker anchor, and reported the grant as NARROWER with a scopeNote naming who fell short — a
+  separate witness reading beat an author certifying its own unwritten work.
+- THE OUTPUT WAS UNUSABLE: `evidenceQuote` undefined on all four knowers despite an explicit
+  instruction; `completion_tokens` hit **max_tokens 1400 EXACTLY**, truncated mid-sentence inside
+  `invokerExemption.note` with `unaccountedParties` never emitted; markdown-fenced despite "No
+  markdown"; `JSON.parse` failed, the regex fallback produced invalid JSON, `_extractTemptOutcome`
+  threw, **nothing committed**. The safety property held — no consequence was manufactured from a
+  truncated, uncited reply.
 
-**Program record corrected:** `memory_perception` is NOT fully live-proven. Its SCENE was delivered
-live; its outcome declaration and durable commitment were **not**. Earlier notes overstated this.
+## 2b. CURRENT EXTRACTOR READINESS: NOT READY. Nothing was changed after that test.
+
+Traced in the code, not inferred:
+- `_extractTemptOutcome` (app.js ~191880) still calls `_callTieredProvider('temptOutcomeExtractor', …,
+  { max_tokens: 1400, temperature: 0.1 })` — **the exact value that truncated is unchanged.**
+- `git log -S"temptOutcomeExtractor" -- public/app.js` returns ONE commit: `864c0db9`, the commit that
+  CREATED the extractor. `git diff daefe5aa..HEAD` shows no change to `max_tokens: 1400`,
+  `evidenceQuote`, `_tfoBuildExtractorPrompt` or the dispatch. **34 commits touched app.js since; none
+  touched the extractor.**
+- The citation instruction and its enforcement DO exist (prompt ~191872 requires a verbatim 10-120
+  char `evidenceQuote`; the validator rejects missing or non-verbatim quotes ~191916-191922). So the
+  demand is present — what failed live was compliance, and the truncation that cut the reply short.
+- The JSON path is unchanged too: `JSON.parse` then a `{[\s\S]*}` regex fallback, which is what
+  produced invalid JSON from a truncated body.
+
+**CONSEQUENCE: a materialization run under the current extractor would likely truncate again.** Raising
+`max_tokens` (or reducing what the extractor must emit) is a PRODUCT change and Roman's call — I am not
+making it as part of preparing a test. Stubbing the extractor is not an option here: it would prove
+nothing about live extraction, which is the thing under test.
+
+Separately recorded: the earlier AUTHOR-SELF-REPORTED commitment (stage 2) is historical evidence about
+a DIFFERENT architecture. It does not transfer to the current extractor, whose live success is
+unestablished.
 
 ## 3. The test — `materialization_possession`
 
@@ -75,23 +94,31 @@ passed (a) and failed (b) completely, and one verdict would have hidden that.
 granted possession should have a *cost or contest*. That is a quality observation for the human read,
 not a mechanical criterion.
 
-## 4. Proposed reservation allowance
+## 4. Corrected call inventory and reservation allowance
 
-One paid scene; commitment and next-prompt inclusion verified LOCALLY at $0 afterwards, the way
-`_tempt_fate_outcome_integration_control` already does — no second generated scene needed.
+The extractor was MISSING from my previous inventory. Validation, commitment and next-prompt
+inspection can all be local and free — but **obtaining the extracted report requires a provider call**,
+and stubbing it would not prove live extraction.
 
-| Role | Allowance | Basis |
-|---|---|---|
-| continuity | $0.03 | measured $0.0109 |
-| planner | $0.03 | measured ~$0.0099 |
-| author | $0.12 | measured $0.0793–0.0857; covers max_tokens 8000 + reasoning headroom |
-| editorial | $0.03 | measured unreported, cheap tier |
-| mistral tier (any role) | $0.01 | measured ~$0.0016 |
-| wish classifier (gpt-4o-mini) | $0.01 | measured $0.000049 |
+| # | Call | Route / model | Measured | Allowance |
+|---|---|---|---|---|
+| 1 | continuity | proxy or mistral tier | $0.0109 | $0.03 |
+| 2 | planner | /api/proxy grok-4.3 | ~$0.0099 | $0.03 |
+| 3 | author | /api/proxy grok-4.3 | $0.0793–0.0857 | $0.12 |
+| 4 | editorial | mistral tier | unreported | $0.03 |
+| 5 | wish classifier | gpt-4o-mini | $0.000049 | $0.01 |
+| 6 | **temptOutcomeExtractor** | **ministral-8b-2512** | **~$0.00051** | **$0.01** |
+| — | Mistral-tier attempt of any role | | ~$0.0016 | $0.01 |
 
-**Reservation limit: $0.25.** Expected from the comparable measured run: **~$0.115**.
-Same disclosure as before: this is an enforced limit on the **number and class of calls**, refused
-before dispatch — **not** a guaranteed maximum charge, because reasoning output is uncapped.
+**Reservation limit: $0.26** (was $0.25 and omitted call 6). **Expected ~$0.116** — the comparable
+Scene A run measured $0.11454 and the extractor adds ~$0.0005.
 
-**Not built, not authorized.** No runner has been written for this; the proven two-process gibberish
-runner is the template to reuse. No paid calls were made to produce this sheet.
+Unchanged disclosure: an enforced limit on the NUMBER AND CLASS of calls, refused before dispatch —
+**not** a guaranteed maximum charge, because reasoning output is uncapped.
+
+**PREREQUISITE BEFORE AUTHORIZING: the truncation defect.** With `max_tokens` still 1400 the extractor
+is expected to fail the same way, so a run now would most likely re-purchase a known failure. That
+decision is Roman's.
+
+**Not built, not authorized.** No runner written; the proven two-process gibberish runner is the
+template. No paid calls produced this sheet.
