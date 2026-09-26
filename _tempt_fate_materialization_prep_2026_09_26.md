@@ -148,15 +148,25 @@ And it could not have described a bound anyway — `grok-4-1-fast-reasoning` is 
 model and reasoning-token accounting are not established, so summing the three tiers was arithmetic on
 an unknown. That work is unnecessary for a single-model test and is not attempted.
 
-**Proven dry** (`_tempt_outcome_extractor_replay_dry_proof.mjs`, **18/18**, zero provider requests):
+**Proven dry** (`_tempt_outcome_extractor_replay_dry_proof.mjs`, **23/23**, zero provider requests):
 - route decisions in order: `reserved`, `blocked-over-request-cap`, `blocked-unpinned-model`,
   `blocked-unpinned-model` — the first pinned request passes, a second is refused, and both other tiers
   are refused as unpinned;
 - exactly ONE request was ever reserved, and every block carries a reason;
 - the original **context** and the original **failed response** are both retained, and the response
   (5,802 bytes, `completion_tokens` 1400 exactly) must not be overwritten;
-- the prompt **rebuilds from the retained context** and matches the original size within 4.3%
-  (2,092 approx vs 2,005 actual) — same builder, same input, so the only change is the output limit;
+- **PROMPT EQUIVALENCE PROVEN EXACTLY, not approximated.** An earlier version compared ~2,092
+  *estimated* tokens against 2,005 *actual* and called that equivalence; that comparison established
+  nothing in either direction. The gate log retained the FULL original request, so the real check ran:
+  | field | original | current | result |
+  |---|---|---|---|
+  | system message | 7,535 chars | 7,535 chars | **byte-identical** |
+  | user message | 834 chars | 834 chars | **byte-identical** |
+  | model | ministral-8b-2512 | ministral-8b-2512 | identical |
+  | temperature | 0.1 | 0.1 | identical |
+  | max_tokens | **1400** | **3200** | the single intended change |
+  So "only the output limit changed" is now a measured fact. No textual differences exist, so the
+  retained-original-messages fallback is unnecessary;
 - the citation requirement is still in the rebuilt prompt;
 - the production dispatch carries `max_tokens: 3200`.
 

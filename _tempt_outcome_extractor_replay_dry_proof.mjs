@@ -75,12 +75,39 @@ const note = (t) => console.log('    ' + t);
                approxTokens: Math.round((p.sys.length + p.usr.length) / 4) }; }
     catch (e) { return { error: String(e && e.message) }; }
   }, ctx);
-  note('rebuilt prompt: ' + JSON.stringify(built) + '   original prompt_tokens=' + origPrompt);
   ok('the prompt REBUILDS from the retained context without error', !built.error, JSON.stringify(built));
-  ok('...and its size matches the original within 15% — same builder, same input',
-    Math.abs(built.approxTokens - origPrompt) / origPrompt < 0.15,
-    'approx ' + built.approxTokens + ' vs original ' + origPrompt);
   ok('...and it still carries the citation requirement', built.hasCitation === true);
+
+  // EXACT COMPARISON, NOT AN APPROXIMATION. A previous version compared ~2,092 estimated tokens against
+  // 2,005 actual and called that equivalence — it is neither evidence of sameness nor of difference,
+  // since chars/4 is a poor estimator. The gate log retained the FULL original request body, so the
+  // real comparison is available: field by field, with byte equality on both messages.
+  let origReq = null;
+  for (const line of fs.readFileSync(path.join(ORIGINAL, 'gate.jsonl'), 'utf8').split('\n')) {
+    if (!line.trim()) continue;
+    const e = JSON.parse(line);
+    if (e.kind === 'dispatch' && e.requestBody) { origReq = e.requestBody; break; }
+  }
+  ok('the ORIGINAL OUTGOING REQUEST is retained in the gate log', !!(origReq && origReq.messages),
+    origReq ? Object.keys(origReq).join(',') : 'none');
+  const oSys = String((origReq.messages.find((m) => m.role === 'system') || {}).content || '');
+  const oUsr = String((origReq.messages.find((m) => m.role === 'user') || {}).content || '');
+  const cur = await page.evaluate((c) => { const x = window._tfoBuildExtractorPrompt(c); return { sys: x.sys, usr: x.usr }; }, ctx);
+  note('SYSTEM original=' + oSys.length + ' current=' + cur.sys.length + '  ' + (oSys === cur.sys ? 'IDENTICAL' : 'DIFFERENT'));
+  note('USER   original=' + oUsr.length + ' current=' + cur.usr.length + '  ' + (oUsr === cur.usr ? 'IDENTICAL' : 'DIFFERENT'));
+  ok('the SYSTEM message is BYTE-IDENTICAL to the original request', oSys === cur.sys,
+    'original ' + oSys.length + ' vs current ' + cur.sys.length);
+  ok('the USER message is BYTE-IDENTICAL to the original request', oUsr === cur.usr,
+    'original ' + oUsr.length + ' vs current ' + cur.usr.length);
+  ok('model and temperature are unchanged from the original request',
+    origReq.model === PIN_MODEL && origReq.temperature === 0.1,
+    JSON.stringify({ model: origReq.model, temperature: origReq.temperature }));
+  ok('the original request carried max_tokens 1400 — the value under test',
+    origReq.max_tokens === 1400, String(origReq.max_tokens));
+  ok('MAX_TOKENS IS THE ONLY INTENDED DIFFERENCE, and every other field matches',
+    oSys === cur.sys && oUsr === cur.usr && origReq.model === PIN_MODEL
+    && origReq.temperature === 0.1 && origReq.max_tokens === 1400,
+    'messages identical, model/temperature identical, 1400 -> 3200 is the single change');
 
   // ── C. ONLY ONE PROVIDER REQUEST MAY LEAVE ────────────────────────────────────────────────
   const routeLog = [];
