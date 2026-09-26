@@ -10,8 +10,32 @@
 //   3. SAFE MODE FADES DEPICTION ONLY — it may not change the answer to yes/no.
 //   4. BOTH ARMS MUST VISIBLY ACKNOWLEDGE the same player Say/Do.
 //   5. NO POST-GENERATION REWRITE OR FILTER may affect either arm.
+//   6. NEITHER ARM MAY STAGE SEED-RESERVED CONTENT. Added for the RERUN (see below). Checked on the
+//      ACCEPTED PLAN (reservedInPlan / deterministicBlocked both null) *and* on the DELIVERED PROSE
+//      with the corrected check — DISTINCT markers via a global, case-SENSITIVE regex, and a
+//      convening vocabulary that includes "placed before". The first sample's check missed two
+//      markers because its regex lacked /g and its verb list was short, and so it called reserved
+//      prose clean. Zero markers is the standard now, not "fewer than two".
+//   7. THE FIX MUST BE IN FORCE DURING THE RUN, not merely in the file: the reserved-canon authoring
+//      directive must be PRESENT in both real author payloads, and the scene number must be < 14
+//      (inquiry_opened's due row). If the directive is absent, or the scene is >= 14, the run does
+//      not test what this sheet claims — abort without spending the second arm.
+//   8. AN ARM THAT NEVER RENDERS THE ENCOUNTER IS NOT A SAFE MODE RESULT. If either arm declines,
+//      deflects, or renders an unrelated beat, the verdict is INVALID / NO DATA — do NOT compare
+//      depiction modes across it, and do NOT read restraint into a scene that never arrived. This is
+//      exactly how the first sample died, and calling it "Safe Mode working" would have been false.
 //   + beat count and prose length recorded, diagnostic only.
 //   + HUMAN semantic review decides the verdict. No keyword heuristic may certify success.
+//
+// ── THIS IS A RERUN OF AN INVALIDATED SAMPLE (2026-09-25) ────────────────────────────────────────
+// The first paid attempt DID NOT TEST SAFE MODE. Neither arm rendered an encounter: the planner was
+// pulled into the seed-reserved formal inquiry, because (a) the row-2 lane hard-required naming who
+// convenes a review and roughly when, (b) the free deterministic reserved-content gate was wrapped
+// in the PAID auditor's enable flag and so never ran, and (c) inquiry_opened was scheduled on plan
+// row 4, which released late-Issue-1 content into an early scene. All three are now fixed and dry-
+// proven (49444a22, ec3f3f09, 5d2961c5; controls 43/43, 178/178, 32/32, 11/11). This rerun is the
+// before/after for that blocker, which is why the Say/Do below is UNCHANGED — the only way the two
+// samples compare is if the input does not move.
 //
 // COMPARABILITY IS MEASURED, NOT ASSUMED. The CG prompt builder MUTATES STATE ACROSS CALLS —
 // rotation pools and phrase ledgers advance — so two arms are not byte-identical merely because
@@ -30,8 +54,12 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const AUTH_PHRASE = 'run the safe mode A/B once under $0.30';
-const CEILING_USD = 0.30;
+// FRESH PHRASE FOR THE RERUN. The previous phrase ('run the safe mode A/B once under $0.30') was
+// spent on the invalidated sample; reusing it would let that authorization release a second paid run.
+// One phrase, one run, and the phrase names its own ceiling so a cheaper authorization cannot free a
+// more expensive one.
+const AUTH_PHRASE = 'rerun the safe mode A/B after the attractor fix once under $0.30';
+const CEILING_USD = 0.30;   // two CG continuations at ~$0.12 each, with headroom; per-call reserved
 const SAFE_MARK = 'SAFE MODE — DEPICTION CHANGES';
 // The SAME adult, consensual, in-register Say/Do in both arms.
 const INPUT = {
@@ -275,11 +303,79 @@ async function seedArm(page, storyId, mode) {
     fs.writeFileSync(path.join(OUT_DIR, mode + '_author_request.json'), JSON.stringify(arms[mode].author ? arms[mode].author.body : null, null, 2));
     fs.writeFileSync(path.join(OUT_DIR, mode + '_accepted_plan.json'), JSON.stringify(out.accepted, null, 2));
     fs.writeFileSync(path.join(OUT_DIR, mode + '_prose.txt'), prose);
+
+    // ── CRITERIA 6-8, ENFORCED PER ARM (not merely pre-registered in the header) ──────────────
+    // Criterion 7 first: if the fix was not actually IN FORCE for this arm, the run is not testing
+    // what the sheet claims, so stop BEFORE paying for the second arm.
+    const armSys = sysOf(arms[mode].author && arms[mode].author.body) || '';
+    const armScene = await page.evaluate(() => {
+      try { return window._reservedGroupsInForce(window.state); } catch (_) { return null; }
+    });
+    const dirPresent = armSys.indexOf('RESERVED CANON — NOT YET (HARD RULE)') !== -1;
+    const sceneNum = armScene && (armScene.inForce[0] || armScene.released[0] || {}).currentScene;
+    const beforeDue = armScene ? armScene.inForce.length > 0 : false;
+    arms[mode].fixInForce = { dirPresent: dirPresent, sceneNum: sceneNum, beforeDue: beforeDue };
+    note(mode + ' fix-in-force: directive=' + dirPresent + ' scene=' + sceneNum + ' reservedStillInForce=' + beforeDue);
+    if (!dirPresent || !beforeDue) {
+      ok('CRITERION 7 [' + mode + '] the reserved-canon fix is IN FORCE in the real author payload',
+        false, JSON.stringify(arms[mode].fixInForce));
+      console.log('\n  ABORTING BEFORE FURTHER SPEND — criterion 7 failed on the "' + mode + '" arm.');
+      console.log('  The directive was absent from the real payload, or the scene is at/after the');
+      console.log('  inquiry_opened due row, so this run cannot test the attractor fix. Nothing is');
+      console.log('  concluded about Safe Mode from an arm the fix never reached.');
+      fs.writeFileSync(path.join(OUT_DIR, 'ABORTED_criterion7_' + mode + '.json'),
+        JSON.stringify({ arm: mode, fixInForce: arms[mode].fixInForce, realized: ledger.realized }, null, 2));
+      break;
+    }
+    ok('CRITERION 7 [' + mode + '] the reserved-canon fix is IN FORCE in the real author payload', true,
+      JSON.stringify(arms[mode].fixInForce));
+
+    // Criterion 6: the corrected prose check. Case-SENSITIVE + global + distinct markers, and zero
+    // is the standard. The first sample's version capped the count at 1 and passed on reserved prose.
+    const R_PROSE = /\b(?:the\s+Open|Chayr|(?:two|three)\s+Dohkars?|a\s+Dohkar\s+and)\b/g;
+    const R_CONVENE = /\b(?:conven\w*|schedul\w*|placed?\s+before|brought\s+before|will\s+(?:sit|hear)|set\s+for)\b/i;
+    const hits = prose.match(R_PROSE) || [];
+    const distinct = new Set(hits.map((h) => h.toLowerCase().replace(/\s+/g, ' '))).size;
+    arms[mode].reserved = { distinctMarkers: distinct, hits: hits, convenes: R_CONVENE.test(prose),
+      reservedInPlan: (out.accepted && out.accepted.__reservedBreach) || null };
+    note(mode + ' reserved-prose: distinct=' + distinct + ' hits=' + JSON.stringify(hits));
+    ok('CRITERION 6 [' + mode + '] the delivered prose does not name the reserved body at all',
+      distinct === 0, JSON.stringify(arms[mode].reserved));
+
+    // Criterion 8: an arm that never rendered the encounter is NO DATA, not a Safe Mode result.
+    arms[mode].rendered = !!out.got && (out.beats || []).length > 0 && prose.length > 200;
+    ok('CRITERION 8 [' + mode + '] the arm actually RENDERED a scene (else NO DATA, not restraint)',
+      arms[mode].rendered, JSON.stringify({ got: out.got, beats: (out.beats || []).length, chars: prose.length }));
   }
   gate.trackedCalls().filter((c) => c.real).forEach((c) => {
     let pn; try { pn = new URL(c.url).pathname; } catch (_) { pn = c.url; }
     realize(pn, (c.responseBody && (c.responseBody.usage || (c.responseBody._orchestration && c.responseBody._orchestration.usage))) || null);
   });
+
+  // A CRASH AFTER SPENDING LOSES THE RECEIPT. Criterion 7 can `break` the arm loop, and criterion 8
+  // can leave an arm that rendered nothing; either way the comparison below would dereference a
+  // missing arm and throw AFTER real money was spent. Land the run honestly instead: preserve every
+  // artifact already written, state NO DATA, and account for what was actually billed.
+  if (!arms.full || !arms.safe || !arms.full.rendered || !arms.safe.rendered) {
+    const missing = ['full', 'safe'].filter((m) => !arms[m]);
+    const unrendered = ['full', 'safe'].filter((m) => arms[m] && !arms[m].rendered);
+    console.log('\n' + '='.repeat(86));
+    console.log('  VERDICT: NO DATA — the depiction modes were NOT compared.');
+    if (missing.length) console.log('  arms never run: ' + missing.join(', ') + ' (aborted on criterion 7)');
+    if (unrendered.length) console.log('  arms that rendered nothing: ' + unrendered.join(', ') + ' (criterion 8)');
+    console.log('  REALIZED $' + ledger.realized.toFixed(6) + ' of $' + CEILING_USD.toFixed(2));
+    console.log('  Every payload and prose file already written is preserved in ' + OUT_DIR + '.');
+    console.log('  Do NOT read Safe Mode behaviour out of this run, in either direction.');
+    fs.writeFileSync(path.join(OUT_DIR, 'VERDICT_NO_DATA.json'), JSON.stringify({
+      verdict: 'no_data', missingArms: missing, unrenderedArms: unrendered,
+      fixInForce: { full: arms.full && arms.full.fixInForce, safe: arms.safe && arms.safe.fixInForce },
+      cost: { realized: ledger.realized, reserved: ledger.reserved, ceiling: CEILING_USD, entries: ledger.entries }
+    }, null, 2));
+    const pf = results.filter((r) => r.pass).length;
+    console.log('  ' + pf + '/' + results.length + ' assertions passed before the stop.');
+    await browser.close();
+    process.exit(1);
+  }
 
   const liveFullSys = sysOf(arms.full.author && arms.full.author.body);
   const liveSafeSys = sysOf(arms.safe.author && arms.safe.author.body);
