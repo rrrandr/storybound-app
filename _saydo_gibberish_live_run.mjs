@@ -87,7 +87,7 @@ const CEILING_USD = 0.22;   // reservation limit across all calls; NOT a guarant
 // tier ~$0.0016 (all from real receipts, cost_in_usd_ticks where the provider reports it).
 // Allowances: author covers its worst case within configured limits (~$0.110 -> 0.12); the small grok
 // calls get 3x their highest observed bill; the cheap tier gets ~5x.
-const PER_ROLE_USD = { continuity: 0.03, planner: 0.03, author: 0.12, unknown: 0.12 };
+const PER_ROLE_USD = { continuity: 0.03, planner: 0.03, author: 0.12, editorial: 0.03, unknown: 0.12 };
 const AUTHOR_CONFIG = { role: 'STRUCTURE_GENERATOR', preferredModel: 'grok-4-1-fast-reasoning',
                         resolvesTo: 'grok-4.3', maxTokens: 8000, temperature: 0.85,
                         outRatePerToken: GROK43.out, inRatePerToken: GROK43.in,
@@ -181,6 +181,7 @@ const usrOf = (b) => ((b && b.messages) || []).filter((m) => m.role === 'user').
 
   let live = false, dryFull = false, abortReason = null, noFallbackInjected = 0;
   const nonModelSeen = [];
+  let handlerRan = 0;
   // ── ENDPOINT FIRST. THIS IS THE BUG THAT BURNED A PAID RUN. ───────────────────────────────────
   // The first live call was the Mistral SCAFFOLD (~$0.0016) and a content-only classifier matched it
   // as 'author', reserving $0.09 against it. With the planner's $0.02 that left $0.04, so the REAL
@@ -196,6 +197,9 @@ const usrOf = (b) => ((b && b.messages) || []).filter((m) => m.role === 'user').
     if (/CONTINUITY ARCHITECT/i.test(sys)) return 'continuity';
     if (/SCENE-SPINE planner/i.test(sys)) return 'planner';
     if (/screenplay-native cinematic-romance writer/i.test(sys)) return 'author';
+    // FOURTH ROLE, found by the full-path proof refusing to pay for it: a POST-AUTHOR editorial pass.
+    // Enumerated from the real path rather than assumed, which is exactly what the guard is for.
+    if (/editorial auditor measuring EMOTIONAL GRAVITY/i.test(sys)) return 'editorial';
     // Secondary markers, in case a prompt header is reworded.
     if (/local_objective|chosenAftermathLane|aftermath_obligations/i.test(sys)) return 'planner';
     if (/is_consummate_scene|"beats"/i.test(sys)) return 'author';
@@ -265,6 +269,7 @@ const usrOf = (b) => ((b && b.messages) || []).filter((m) => m.role === 'user').
     const req = route.request();
     let pathname; try { pathname = new URL(req.url()).pathname; } catch (_) { pathname = req.url(); }
     let b = null; try { b = JSON.parse(req.postData() || '{}'); } catch (_) {}
+    handlerRan++;
     const kind = classifyBody(b);
     // dryFull must enter THE SAME branch as live — that is the entire point of the mode. A first
     // attempt gated this on `live` alone and put the dryFull substitution inside, so dryFull never
@@ -279,7 +284,11 @@ const usrOf = (b) => ((b && b.messages) || []).filter((m) => m.role === 'user').
       const isKnownNonModel = KNOWN_NONMODEL_ROUTES.some((r) => pathname.indexOf(r) !== -1);
       if (!isModelRoute && isKnownNonModel) {
         nonModelSeen.push(pathname);
-        await route.fallback(); return;                 // the gate decides; generation is untouched
+        // CONTAINED HERE, and generation is untouched. Aborting the REQUEST is what the gate would do
+        // anyway (every prior run shows "[NETWORK-GATE] ABORT (undeclared): /api/beta-events"), so this
+        // preserves containment — it never reaches the network — while making the classification
+        // observable instead of invisible behind route precedence.
+        await route.abort('failed'); return;
       }
       if (!isModelRoute) {
         abortReason = abortReason || ('unknown endpoint: ' + pathname
@@ -294,7 +303,7 @@ const usrOf = (b) => ((b && b.messages) || []).filter((m) => m.role === 'user').
         console.error('    system prompt head: ' + sysOf(b).slice(0, 120));
         await route.abort('failed'); return;
       }
-      if (['continuity', 'planner', 'author'].indexOf(kind) !== -1) {
+      if (['continuity', 'planner', 'author', 'editorial'].indexOf(kind) !== -1) {
         captured.push({ kind, url: req.url(), body: b, sys: sysOf(b), usr: usrOf(b) });
         if (!reserve(kind, pathname)) {
           abortReason = abortReason || ('reserving ' + kind + ' would pass the $' + CEILING_USD.toFixed(2) + ' ceiling');
@@ -329,10 +338,40 @@ const usrOf = (b) => ((b && b.messages) || []).filter((m) => m.role === 'user').
     await route.fallback(); return;
   });
 
-  // Provider substitute for dryFull. Starts from the shared schedule-aware stub builder that other
-  // controls use; the author shape is then adjusted from what production actually rejects, observed on
-  // the console, rather than from a schema I guessed at.
-  const stubFor = async (kind, b) => buildScheduleAwareStubResponse(sysOf(b), usrOf(b), false);
+  // DIAGNOSED, NOT GUESSED. buildScheduleAwareStubResponse returns a RAW PLAN OBJECT
+  // ({beats, visualState, is_consummate_scene, hardBeats}) — not a provider envelope. Returning it
+  // directly as the HTTP body meant _flattenProviderContent found no `content`, every tier reported
+  // "returned empty content", and the client walked all three providers for every role. The working
+  // controls wrap it: `{ content: JSON.stringify(plan) }` (see _saydo_cat4_cat5_trace_control ~630).
+  // Envelope and accepted fixture shapes are reused from there rather than reinvented.
+  const stubFor = async (kind, b) => {
+    const sys = sysOf(b), usr = usrOf(b);
+    if (kind === 'planner') {
+      const base = buildScheduleAwareStubResponse(sys, usr, false);
+      base.event_slots = Object.assign({}, base.event_slots, { mechanism_grounding: 'ordinary' });
+      return { content: JSON.stringify(base) };
+    }
+    if (kind === 'author') {
+      return { content: JSON.stringify({
+        beats: [
+          { idx: 0, kind: 'narration', text: 'The assembly does not disperse, and the spiralgrass keeps the shape of where everyone stood.', speaker: null, tension_state: 'composed' },
+          { idx: 1, kind: 'narration', text: 'A sound leaves her that does not become a word, and the band across her mouth takes the rest of it.', speaker: null, tension_state: 'composed' },
+          { idx: 2, kind: 'dialogue', text: 'Then we proceed without her answer.', speaker: 'the presiding Dohkar', tension_state: 'composed' }
+        ],
+        visualState: {}, decisionGateBeatIdx: 0, is_consummate_scene: false, hardBeats: [] }) };
+    }
+    if (kind === 'editorial') {
+      return { content: JSON.stringify({ gravity: 'procedural', readerPull: 'the assembly', score: 3,
+        notes: 'stubbed editorial audit' }) };
+    }
+    // CONTINUITY ARCHITECT — gravitational guidance, deliberately loose. If production rejects it the
+    // scene proceeds without a scaffold (observed: "[CG:SCAFFOLD] generation FAILED — scene proceeds
+    // without scaffold"), so this must not be the thing that blocks acceptance.
+    return { content: JSON.stringify({
+      gravitationalStructure: 'The assembly stays; procedure closes around Lirael without resolving.',
+      pressures: ['the Dohkar wants an answer', 'Julian says nothing'],
+      trajectory: 'escalating', doNot: ['do not convene a formal inquiry'] }) };
+  };
 
   // Dry stubs: classify each captured request so the payloads can be asserted without spending.
   const stub = async (req) => {
@@ -619,9 +658,16 @@ const usrOf = (b) => ((b && b.messages) || []).filter((m) => m.role === 'user').
   section('5b. AN UNPRICEABLE CALL STOPS THE RUN BEFORE DISPATCH');
   ok('an unrecognised role classifies as "unknown"',
     classifyBody({ messages: [{ role: 'system', content: 'You are some new helper role nobody enumerated.' }] }) === 'unknown');
-  ok('...and "unknown" is NOT given an author allowance — it aborts instead',
-    /if \(kind === 'unknown' \|\| ALLOWED_ROUTES\.indexOf\(pathname\) === -1\) \{/.test(selfSrc)
-    && /unpriceable call: role=/.test(selfSrc));
+  // Retuned for the THREE-WAY guard that replaced the single condition: an unknown ROLE on a model
+  // route aborts, an unknown ENDPOINT aborts, and known non-model traffic does NOT abort.
+  ok('...and an unknown ROLE aborts before dispatch rather than taking an allowance',
+    /if \(kind === 'unknown'\) \{/.test(selfSrc) && /unpriceable model call: role=/.test(selfSrc));
+  ok('...an unknown ENDPOINT aborts as well, so nothing escapes by being unnamed',
+    /unknown endpoint: /.test(selfSrc) && /neither a priced model route nor known non-model traffic/.test(selfSrc));
+  ok('...while KNOWN non-model traffic is contained WITHOUT terminating generation',
+    /KNOWN_NONMODEL_ROUTES = \[/.test(selfSrc)
+    && /nonModelSeen\.push\(pathname\);/.test(selfSrc)
+    && /preserves containment/.test(selfSrc));
   ok('...and a route outside the allowlist aborts too',
     /ALLOWED_ROUTES = \['\/api\/proxy', '\/api\/mistral-proxy', '\/api\/chatgpt-proxy'\]/.test(selfSrc));
   ok('THE UPSTREAM-EXPANSION HAZARD IS NAMED AND ENFORCED, not assumed away',
@@ -734,7 +780,7 @@ const usrOf = (b) => ((b && b.messages) || []).filter((m) => m.role === 'user').
     const sc = (window.state && window.state.scenes) || [];
     return { count: sc.length, lastText: String((sc[sc.length - 1] || {}).text || '') };
   });
-  captured.length = 0; consoleLines.length = 0; nonModelSeen.length = 0;
+  captured.length = 0; consoleLines.length = 0; nonModelSeen.length = 0; handlerRan = 0;
   ledger.reserved = 0; ledger.entries.length = 0; ledger.refusals.length = 0;
   noFallbackInjected = 0; abortReason = null;
   // ROUTE PRECEDENCE: Playwright gives the LAST registered route priority, and the gate's stubs are
@@ -742,7 +788,9 @@ const usrOf = (b) => ((b && b.messages) || []).filter((m) => m.role === 'user').
   // dryFull path never executes at all (first attempt: injected=0, no reservations, telemetry never
   // seen by the handler). allowRealPaths stands the gate's stubs down for the model routes; dryFull
   // then FULFILS them itself, so nothing reaches a real provider — asserted separately.
-  gate.allowRealPaths(ALLOWED_ROUTES);
+  // beta-events is included so the gate defers it to THIS handler, where the known-non-model branch
+  // can be observed; the handler then aborts the request itself, so it still never leaves the browser.
+  gate.allowRealPaths(ALLOWED_ROUTES.concat(['/api/beta-events']));
   gate.setPhase('dryfull', 40);
   dryFull = true;
   await page.fill('#gnActionInput', INPUT.action);
@@ -769,6 +817,8 @@ const usrOf = (b) => ((b && b.messages) || []).filter((m) => m.role === 'user').
     telemetry: nonModelSeen, roles: captured.map((c) => c.kind), acceptance: dfAcc, settled: dfSettled,
     reservations: ledger.entries, noFallbackInjected: noFallbackInjected, abortReason: abortReason,
     consoleRejections: rejects }, null, 2));
+  ok('THE INTERCEPTION HANDLER ACTUALLY RAN — not bypassed by route precedence',
+    handlerRan > 0, 'handler invocations=' + handlerRan);
   ok('TELEMETRY OCCURRED and did NOT terminate generation',
     nonModelSeen.length > 0 && !/beta-events/.test(String(abortReason)), JSON.stringify({ nonModelSeen, abortReason }));
   ok('...and the network gate still contained it — it never reached a real provider',
