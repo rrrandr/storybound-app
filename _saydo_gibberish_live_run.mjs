@@ -38,8 +38,14 @@ const INPUT = { action: 'asdkfjh sdkfj lkjwer', dialogue: 'qwerty zzzz aaaa' };
 const EXPECT_ACTION_FALLBACK = 'a beat of dazed, wordless hesitation';
 const EXPECT_DIALOGUE_FALLBACK = 'a confused, wordless sound that never resolves into words';
 
-const AUTH_PHRASE = 'run the gibberish continuation once under $0.15';
-const CEILING_USD = 0.15;                  // one scene measured at ~$0.0908, ~1.6x headroom
+// FRESH PHRASE: the previous one was consumed by a run that produced NO DATA (runner reservation
+// misclassification), and a spent authorization must never release a retry.
+// CEILING RAISED TO $0.20, justified by the reservation math rather than by preference: the measured
+// scene is ~$0.091, but the per-role RESERVATIONS are deliberately conservative (0.03 + 0.02 + 0.09 =
+// $0.14), which at $0.15 leaves no room for even one planner retry — $0.16 would abort a healthy run.
+// $0.20 covers one scene plus a retry without loosening the guard itself.
+const AUTH_PHRASE = 'run the gibberish continuation once under $0.20 with the fixed reservation math';
+const CEILING_USD = 0.20;
 const PER_ROLE_USD = { scaffold: 0.03, planner: 0.02, author: 0.09 };
 
 const argv = process.argv.slice(2);
@@ -67,6 +73,22 @@ function reserve(role) {
   return true;
 }
 
+const RATES = { '/api/proxy': { in: 3e-6, out: 15e-6 }, '/api/mistral-proxy': { in: 1.5e-7, out: 6e-7 },
+                '/api/chatgpt-proxy': { in: 2.5e-7, out: 1e-6 } };
+function realize(pathname, usage) {
+  try {
+    if (!usage) return 0;
+    // xAI reports true cost in ticks (1e-10 USD); prefer it over any rate table.
+    if (typeof usage.cost_in_usd_ticks === 'number') { const v = usage.cost_in_usd_ticks * 1e-10; ledger.realized += v; return v; }
+    const rate = RATES[pathname] || RATES['/api/chatgpt-proxy'];
+    const inTok = usage.prompt_tokens != null ? usage.prompt_tokens : (usage.input_tokens || 0);
+    const rt = (usage.completion_tokens_details && usage.completion_tokens_details.reasoning_tokens) || 0;
+    const outTok = (usage.completion_tokens != null ? usage.completion_tokens : (usage.output_tokens || 0)) + rt;
+    const v = rate.in * inTok + rate.out * outTok;
+    ledger.realized += v; return v;
+  } catch (_) { return 0; }
+}
+
 const sysOf = (b) => ((b && b.messages) || []).filter((m) => m.role === 'system').map((m) => String(m.content || '')).join('\n');
 const usrOf = (b) => ((b && b.messages) || []).filter((m) => m.role === 'user').map((m) => String(m.content || '')).join('\n');
 
@@ -83,19 +105,61 @@ const usrOf = (b) => ((b && b.messages) || []).filter((m) => m.role === 'user').
   const gate = await installFailClosedNetworkGate(page, {
     logFile: path.join(OUT_DIR, 'gate.jsonl'), blockImagePreparation: true });
 
+  let live = false, abortReason = null;
+  // ── ENDPOINT FIRST. THIS IS THE BUG THAT BURNED A PAID RUN. ───────────────────────────────────
+  // The first live call was the Mistral SCAFFOLD (~$0.0016) and a content-only classifier matched it
+  // as 'author', reserving $0.09 against it. With the planner's $0.02 that left $0.04, so the REAL
+  // author call was refused and the run aborted with no scene — $0.0067 spent, no data. Scaffold runs
+  // on /api/mistral-proxy and nothing else does, so the endpoint settles it with no guessing; only
+  // /api/proxy carries both planner and author, and there content (planner markers first) separates
+  // them. ONE definition, used by the dry stub and the live handler, so they cannot drift apart.
+  const classifyBody = (b, pathname) => {
+    if (String(pathname || '').indexOf('/api/mistral-proxy') !== -1) return 'scaffold';
+    const sys = sysOf(b), usr = usrOf(b), both = sys + '\n' + usr;
+    if (/local_objective|chosenAftermathLane|aftermath_obligations|event_slots/i.test(both)) return 'planner';
+    if (/is_consummate_scene|"beats"|SCREENPLAY|PANEL/i.test(both)) return 'author';
+    return 'other';
+  };
+  // Pure replay of the reservation math, for proving the corrected classifier dry.
+  const simulateReservations = (roles, ceiling) => {
+    let r = 0; const running = [];
+    for (const role of roles) {
+      const amt = PER_ROLE_USD[role] != null ? PER_ROLE_USD[role] : 0.09;
+      if (r + amt > ceiling + 1e-12) return { ok: false, refusedAt: role, total: r, running };
+      r += amt; running.push({ role, running: Number(r.toFixed(3)) });
+    }
+    return { ok: true, total: Number(r.toFixed(3)), running };
+  };
+  // ONE HANDLER, TWO MODES. In dry mode it fulfils from the stub builder; in live mode it RESERVES
+  // before letting the request through and aborts the run rather than exceed the ceiling. Reservation
+  // happens before dispatch, never after, so a refusal costs nothing.
+  await page.route('**/api/**', async (route) => {
+    const req = route.request();
+    let pathname; try { pathname = new URL(req.url()).pathname; } catch (_) { pathname = req.url(); }
+    let b = null; try { b = JSON.parse(req.postData() || '{}'); } catch (_) {}
+    const kind = classifyBody(b, pathname);
+    if (live) {
+      if (['scaffold', 'planner', 'author'].indexOf(kind) !== -1) {
+        captured.push({ kind, url: req.url(), body: b, sys: sysOf(b), usr: usrOf(b) });
+        if (!reserve(kind)) {
+          abortReason = abortReason || ('reserving ' + kind + ' would pass the $' + CEILING_USD.toFixed(2) + ' ceiling');
+          console.error('  ✗ ABORT — ' + abortReason);
+          await route.abort('failed'); return;
+        }
+        console.log('    [live] ' + kind + ' → ' + pathname + '  (running reserved $' + ledger.reserved.toFixed(3) + ')');
+      }
+      await route.fallback(); return;
+    }
+    await route.fallback(); return;
+  });
+
   // Dry stubs: classify each captured request so the payloads can be asserted without spending.
   const stub = async (req) => {
     let b = null; try { b = JSON.parse(req.postData() || '{}'); } catch (_) {}
     const sys = sysOf(b), usr = usrOf(b);
-    // CLASSIFY BY THE PLANNER'S OWN CONTRACT MARKERS FIRST. A first version tested the author regex
-    // first and labelled all twelve captured requests 'author', because author-ish words appear in
-    // several payloads — which then made the placeholder and reserved-canon checks read the wrong
-    // request. Planner is the specific case, so it is tested first.
-    let kind = 'other';
-    const both = sys + '\n' + usr;
-    if (/local_objective|chosenAftermathLane|aftermath_obligations|event_slots/i.test(both)) kind = 'planner';
-    else if (/is_consummate_scene|\"beats\"|SCREENPLAY|PANEL/i.test(both)) kind = 'author';
-    else if (/scaffold/i.test(both)) kind = 'scaffold';
+    // Same shared classifier as the live handler — no second copy to drift.
+    let pn; try { pn = new URL(req.url()).pathname; } catch (_) { pn = req.url(); }
+    const kind = classifyBody(b, pn);
     captured.push({ kind, url: req.url(), body: b, sys, usr });
     return buildScheduleAwareStubResponse(sys, usr, false);
   };
@@ -296,7 +360,45 @@ const usrOf = (b) => ((b && b.messages) || []).filter((m) => m.role === 'user').
   ok('the frame falls back to the institutional default',
     slot.laneId === 'dohkar_preliminary_review' && !slot.sourceSlot, JSON.stringify(slot));
 
-  section('5. CONTAINMENT AND COST DISCIPLINE');
+  section('5. RESERVATION MATH — THE BUG THAT COST A PAID RUN, PROVEN FIXED');
+  // The 2026-09-26 no-data run reserved AUTHOR rates against the Mistral SCAFFOLD call, exhausting the
+  // budget before the real author request. These assertions replay that exact observed sequence.
+  const clsProbe = [
+    { pathname: '/api/mistral-proxy', body: { messages: [{ role: 'system', content: 'beats SCREENPLAY is_consummate_scene' }] }, expect: 'scaffold',
+      why: 'the scaffold call, whose payload contains author-ish schema words — the exact misfire' },
+    { pathname: '/api/proxy', body: { messages: [{ role: 'system', content: 'produce local_objective and event_slots and chosenAftermathLane' }] }, expect: 'planner', why: 'planner contract markers' },
+    { pathname: '/api/proxy', body: { messages: [{ role: 'system', content: 'emit "beats" for the SCREENPLAY, is_consummate_scene false' }] }, expect: 'author', why: 'author schema on the proxy endpoint' }
+  ];
+  clsProbe.forEach((c) => {
+    const got = classifyBody(c.body, c.pathname);
+    note(c.pathname + ' → ' + got + '   (' + c.why + ')');
+    ok('CLASSIFY ' + c.pathname + ' as ' + c.expect + ' — ' + c.why, got === c.expect, 'got ' + got);
+  });
+  ok('...and each role therefore reserves its OWN rate, not the author rate',
+    PER_ROLE_USD.scaffold === 0.03 && PER_ROLE_USD.planner === 0.02 && PER_ROLE_USD.author === 0.09,
+    JSON.stringify(PER_ROLE_USD));
+  // The real observed sequence, corrected.
+  const OBSERVED = ['scaffold', 'planner', 'author'];
+  const simFixed = simulateReservations(OBSERVED, CEILING_USD);
+  const simOldBug = simulateReservations(['author', 'planner', 'author'], 0.15);   // what actually happened
+  note('corrected sequence at $' + CEILING_USD.toFixed(2) + ': ' + JSON.stringify(simFixed));
+  note('the bug replayed at $0.15: ' + JSON.stringify(simOldBug));
+  ok('RED — the OLD misclassification aborts, reproducing the no-data run',
+    simOldBug.ok === false && simOldBug.refusedAt === 'author', JSON.stringify(simOldBug));
+  ok('THE SAME SEQUENCE NO LONGER ABORTS under the corrected classifier',
+    simFixed.ok === true, JSON.stringify(simFixed));
+  ok('...and it would not even have aborted at the old $0.15 ceiling',
+    simulateReservations(OBSERVED, 0.15).ok === true, JSON.stringify(simulateReservations(OBSERVED, 0.15)));
+  // The ceiling raise is justified by arithmetic, not preference: one planner retry must fit.
+  const withRetry = ['scaffold', 'planner', 'planner', 'author'];
+  ok('THE $0.20 CEILING IS JUSTIFIED — one planner retry fits at $0.20 but NOT at $0.15',
+    simulateReservations(withRetry, 0.20).ok === true && simulateReservations(withRetry, 0.15).ok === false,
+    JSON.stringify([simulateReservations(withRetry, 0.20), simulateReservations(withRetry, 0.15)]));
+  ok('...and a SECOND author attempt is still refused, so the guard was not loosened',
+    simulateReservations(['scaffold', 'planner', 'author', 'author'], CEILING_USD).ok === false,
+    JSON.stringify(simulateReservations(['scaffold', 'planner', 'author', 'author'], CEILING_USD)));
+
+  section('6. CONTAINMENT AND COST DISCIPLINE');
   ok('images were blocked for the whole preflight', true, 'blockImagePreparation: true');
   ok('NO REAL DISPATCH during preflight', gate.trackedCalls().filter((c) => c.real).length === 0,
     String(gate.trackedCalls().filter((c) => c.real).length));
@@ -323,8 +425,101 @@ const usrOf = (b) => ((b && b.messages) || []).filter((m) => m.role === 'user').
     await browser.close(); process.exit(0);
   }
 
-  console.log('\n  LIVE PATH NOT IMPLEMENTED IN THIS PASS — dry preflight is the deliverable.');
-  console.log('  Authorization was supplied but no live dispatch will be made.');
+  // ── LIVE: ONE SCENE ─────────────────────────────────────────────────────────────────────────
+  section('LIVE — ONE SCENE, REAL PROVIDERS');
+  captured.length = 0; consoleLines.length = 0;
+  await page.evaluate(() => {
+    const s = window.state;
+    s.storyId = 'live-gibberish-' + Date.now();
+    s.turnCount = 1;
+    s.scenes = [{ title: '', synopsis: '', text: 'The assembly had not yet dispersed.', fateCard: null }];
+    delete s._gibberishStreak; delete s._gibberishTier; delete s._sayDoFallbackGenerated;
+    delete s._acceptedPlannerProposal; delete s._lastSayDoAction; delete s._lastSayDoDialogue;
+  });
+  gate.allowRealPaths(['/api/proxy', '/api/mistral-proxy', '/api/chatgpt-proxy']);
+  gate.setPhase('gibberish-live', 40);
+  live = true;
+  const t0 = Date.now();
+  await page.fill('#gnActionInput', INPUT.action);
+  await page.fill('#gnDialogueInput', INPUT.dialogue);
+  await page.click('#gnSubmitBtn');
+  // Settle on the author response, not a fixed sleep, but with a hard cap.
+  for (let i = 0; i < 90; i++) {
+    if (abortReason) break;
+    if (gate.trackedCalls().filter((c) => c.real).length >= 3
+        && captured.some((c) => c.kind === 'author')) break;
+    await page.waitForTimeout(2000);
+  }
+  await page.waitForTimeout(4000);
+  gate.closePhase(); live = false;
+
+  // Realize true cost from what the providers actually reported.
+  gate.trackedCalls().filter((c) => c.real).forEach((c) => {
+    let pn; try { pn = new URL(c.url).pathname; } catch (_) { pn = c.url; }
+    realize(pn, (c.responseBody && (c.responseBody.usage
+      || (c.responseBody._orchestration && c.responseBody._orchestration.usage))) || null);
+  });
+
+  // Extract the delivered prose from the real author response.
+  let prose = '', beatCount = 0;
+  try {
+    const authorCall = gate.trackedCalls().filter((c) => c.real).reverse()
+      .find((c) => c.responseBody && JSON.stringify(c.responseBody).indexOf('beats') !== -1);
+    const raw = authorCall && authorCall.responseBody;
+    let content = raw && (raw.content || (raw.choices && raw.choices[0] && raw.choices[0].message && raw.choices[0].message.content));
+    if (typeof content !== 'string') content = JSON.stringify(content || '');
+    const m = content.match(/\{[\s\S]*\}/);
+    const parsed = m ? JSON.parse(m[0]) : null;
+    const beats = (parsed && Array.isArray(parsed.beats)) ? parsed.beats : [];
+    beatCount = beats.length;
+    prose = beats.map((x) => (x.speaker ? String(x.speaker).toUpperCase() + ': ' : '') + String(x.text || '')).join('\n\n');
+  } catch (e) { prose = ''; }
+
+  const liveAuthor = captured.filter((c) => c.kind === 'author').pop();
+  const liveBlob = captured.map((c) => c.sys + '\n' + c.usr).join('\n');
+  fs.writeFileSync(path.join(OUT_DIR, 'live_prose.txt'), prose);
+  if (liveAuthor) fs.writeFileSync(path.join(OUT_DIR, 'live_author_request.json'), JSON.stringify(liveAuthor.body, null, 2));
+  const livePlanner = captured.filter((c) => c.kind === 'planner').pop();
+  if (livePlanner) fs.writeFileSync(path.join(OUT_DIR, 'live_planner_request.json'), JSON.stringify(livePlanner.body, null, 2));
+
+  note('captured live: ' + JSON.stringify(captured.map((c) => c.kind)) + '  beats=' + beatCount
+     + '  ' + (Date.now() - t0) + 'ms');
+  note('gibberish log: ' + (consoleLines.filter((l) => /tier=/.test(l))[0] || '(none)'));
+  ok('LIVE — no ceiling abort occurred', !abortReason, String(abortReason));
+  ok('LIVE — raw gibberish reached NO payload',
+    liveBlob.indexOf(INPUT.action) === -1 && liveBlob.indexOf(INPUT.dialogue) === -1);
+  ok('LIVE — raw gibberish is absent from the delivered PROSE',
+    prose.indexOf('asdkfjh') === -1 && prose.indexOf('qwerty') === -1 && prose.indexOf('zzzz') === -1, prose.slice(0, 200));
+  if (liveAuthor) {
+    const a = liveAuthor.sys + '\n' + liveAuthor.usr;
+    ok('LIVE — the substituted placeholders reached the real author payload',
+      a.indexOf(EXPECT_ACTION_FALLBACK) !== -1 || a.indexOf(EXPECT_DIALOGUE_FALLBACK) !== -1);
+    ok('LIVE — the strong-delivery rule did NOT fire', a.indexOf('PLAYER MOVE MUST EXIST ON THE PAGE') === -1);
+    ok('LIVE — the gibberish-handling directive WAS in force',
+      a.indexOf('UNCLEAR PLAYER INPUT — ACKNOWLEDGE LIGHTLY') !== -1);
+  }
+  ok('LIVE — a scene was actually delivered', beatCount > 0 && prose.length > 150,
+    'beats=' + beatCount + ' chars=' + prose.length);
+  ok('LIVE — spend stayed inside the ceiling', ledger.realized <= CEILING_USD + 1e-9, '$' + ledger.realized.toFixed(6));
+
+  fs.writeFileSync(path.join(OUT_DIR, 'live_report.json'), JSON.stringify({
+    input: INPUT, tierLog: consoleLines.filter((l) => /GIBBERISH/.test(l)),
+    beats: beatCount, proseChars: prose.length,
+    cost: { reserved: ledger.reserved, realized: ledger.realized, ceiling: CEILING_USD, entries: ledger.entries, refusals: ledger.refusals },
+    caveat: 'Routing and substitution were already dry-proven. This run measures only whether the'
+      + ' fallback placeholder yields usable PROSE. Human judgement decides that; no keyword may certify it.',
+    results: results }, null, 2));
+
+  const livePassed = results.filter((r) => r.pass).length;
+  console.log('\n' + '='.repeat(86));
+  console.log('  DELIVERED PROSE:\n');
+  console.log(prose.split('\n').map((l) => '    ' + l).join('\n'));
+  console.log('\n  REALIZED $' + ledger.realized.toFixed(6) + ' of $' + CEILING_USD.toFixed(2)
+    + ' (reserved $' + ledger.reserved.toFixed(3) + ')');
+  console.log('  ' + livePassed + '/' + results.length + ' mechanical assertions passed');
+  console.log('  HUMAN JUDGEMENT DECIDES THE VERDICT: does the prose move, acknowledge without'
+    + ' inflating, and leave the scene playable?');
+  console.log('  Evidence: ' + OUT_DIR);
   await browser.close();
-  process.exit(0);
+  process.exit(livePassed === results.length ? 0 : 1);
 })().catch((e) => { console.error('RUN ERROR:', e && e.stack || e); process.exit(2); });
