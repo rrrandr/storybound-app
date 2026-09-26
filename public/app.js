@@ -193017,7 +193017,74 @@ No text, no watermark, no UI elements, share-ready.`;
     } catch (_) {}
     return out;
   }
-  function _detectReservedContentBreach(proposal, s) {
+  // ── RELEASE CONDITION (Roman 2026-09-25) ────────────────────────────────────────────────────
+  // WITHOUT THIS, "NOT YET" MEANT "NEVER". The marker guard and the authoring directive both
+  // derive from `worldTruths`, which carry no scene number — so once the inquiry was reserved it
+  // was reserved for all twenty scenes, including the scene the seed wrote FOR it. A permanent ban
+  // is not a story rule.
+  //
+  // THE DUE SIGNAL IS ALREADY SEED-OWNED AND ALREADY LOAD-BEARING. A STARTER_PLANS row `n` carrying
+  // `reservedEvents` declares the event that BELONGS to that row, and production has read it this
+  // way since 2026-09-11: the planner's reserved set is `plan.scenes.filter(p => p.n > sceneNum)`.
+  // So reserved ⇔ currentScene < dueScene, and due at dueScene. `sealedEvents[].unsealsAtScene` is
+  // the same idea spelled out. NOTE the `<= sceneNum + 2` in that existing filter is a planner
+  // DISPLAY window (what to warn about soon), NOT the reservation — copying it here would have
+  // reserved an event only in the two scenes before it and freed it for everything earlier.
+  //
+  // Linking a worldTruth group to its scheduled event is LEXICAL (≥2 markers), matching the seed's
+  // own note that `markers` are "lexical, reject-only; a paraphrase can slip".
+  function _reservedReleaseFor(group, s) {
+    var best = null;
+    try {
+      s = s || window.state;
+      var plan = (typeof STARTER_PLANS !== 'undefined' && s && s._starterId) ? STARTER_PLANS[s._starterId] : null;
+      if (!plan) return null;
+      var marks = (group && group.markers) || [];
+      var consider = function (hay, dueScene, eventId, via) {
+        if (!(dueScene > 0)) return;
+        var h = String(hay || '').toLowerCase();
+        var hits = marks.filter(function (m) { return h.indexOf(m) !== -1; });
+        if (hits.length < 2) return;                       // same threshold the breach detector uses
+        if (!best || dueScene < best.dueScene) best = { dueScene: dueScene, eventId: eventId, via: via, matchedMarkers: hits };
+      };
+      (Array.isArray(plan.scenes) ? plan.scenes : []).forEach(function (row) {
+        if (!row || !Array.isArray(row.reservedEvents)) return;
+        row.reservedEvents.forEach(function (ev) {
+          if (!ev) return;
+          consider([ev.text, ev.id, (ev.markers || []).join(' ')].join(' '), Number(row.n), ev.id, 'reservedEvents row n=' + row.n);
+        });
+      });
+      (Array.isArray(plan.sealedEvents) ? plan.sealedEvents : []).forEach(function (ev) {
+        if (!ev) return;
+        consider([ev.label, ev.id].join(' '), Number(ev.unsealsAtScene), ev.id, 'sealedEvents unsealsAtScene=' + ev.unsealsAtScene);
+      });
+    } catch (_) {}
+    return best;
+  }
+  // Groups still withheld AT THIS SCENE. A group whose scheduled scene has arrived is released; a
+  // group nothing schedules stays withheld (reported as `unscheduled` rather than hidden, because
+  // that is a seed-data gap and should be visible, not silently permanent).
+  function _reservedGroupsInForce(s, sceneNum) {
+    var inForce = [], released = [];
+    try {
+      s = s || window.state;
+      var now = (typeof sceneNum === 'number' && sceneNum > 0)
+        ? sceneNum
+        : ((typeof _currentSceneNumber === 'function') ? _currentSceneNumber(s) : 1);
+      _seedReservedMarkers(s).forEach(function (g) {
+        var rel = _reservedReleaseFor(g, s);
+        var rec = Object.assign({}, g, { dueScene: rel ? rel.dueScene : null,
+          eventId: rel ? rel.eventId : null, via: rel ? rel.via : null,
+          unscheduled: !rel, currentScene: now });
+        if (rel && now >= rel.dueScene) released.push(rec); else inForce.push(rec);
+      });
+    } catch (_) {}
+    return { inForce: inForce, released: released };
+  }
+  window._reservedReleaseFor = _reservedReleaseFor;
+  window._reservedGroupsInForce = _reservedGroupsInForce;
+
+  function _detectReservedContentBreach(proposal, s, sceneNum) {
     try {
       var slots = (proposal && proposal.event_slots) || {};
       var text = [proposal && proposal.state_change, proposal && proposal.local_objective,
@@ -193025,7 +193092,9 @@ No text, no watermark, no UI elements, share-ready.`;
         .filter(function (x) { return typeof x === 'string'; }).join(' ');
       if (!text.trim()) return null;
       if (!_RESERVED_ACT_RX.test(text)) return null;      // nothing is being convened or scheduled
-      var groups = _seedReservedMarkers(s || window.state);
+      // ONLY GROUPS STILL WITHHELD AT THIS SCENE. At the scene the seed scheduled the event for,
+      // staging it is the scene's JOB, and this guard must not stand in the way of it.
+      var groups = _reservedGroupsInForce(s || window.state, sceneNum).inForce;
       var hay = text.toLowerCase();
       for (var i = 0; i < groups.length; i++) {
         var hits = groups[i].markers.filter(function (m) { return hay.indexOf(m) !== -1; });
@@ -193033,7 +193102,9 @@ No text, no watermark, no UI elements, share-ready.`;
         // convening verb is the reserved proceeding itself, whatever it is being called.
         if (hits.length >= 2) {
           return { markers: hits, truthIndex: groups[i].truthIndex, truth: groups[i].text,
-                   act: (text.match(_RESERVED_ACT_RX) || [''])[0] };
+                   act: (text.match(_RESERVED_ACT_RX) || [''])[0],
+                   dueScene: groups[i].dueScene, currentScene: groups[i].currentScene,
+                   eventId: groups[i].eventId, unscheduled: groups[i].unscheduled };
         }
       }
     } catch (_) {}
@@ -193054,11 +193125,15 @@ No text, no watermark, no UI elements, share-ready.`;
   // never to write "Sacrificiant" in a story about Sacrificiants would wreck every scene. So the
   // rule forbids the ACTS of constituting (naming the body, its composition, its venue, its
   // timing, its terms) and quotes the reserved canon so the author knows which proceeding is meant.
-  function _buildReservedContentAuthoringDirective() {
+  function _buildReservedContentAuthoringDirective(sceneNum) {
     try {
       var s = window.state || {};
-      var groups = _seedReservedMarkers(s);
-      if (!groups.length) return '';                  // no reserved content in this seed → nothing
+      // SAME RELEASE CONDITION AS THE DETERMINISTIC GATE, from the same function — so the two layers
+      // cannot drift into disagreeing about whether an event is due. At the scene the seed scheduled
+      // the event for, this returns '' for that group and the author is told nothing: staging it is
+      // the row's own goal, and forbidding it there would make "not yet" mean "never".
+      var groups = _reservedGroupsInForce(s, sceneNum).inForce;
+      if (!groups.length) return '';                  // nothing reserved, or everything now due
       // CITE BY HEADING, DO NOT RE-PRINT THE TRUTH. The author already receives every world truth
       // verbatim (the CG author opts carry `worldTruths`, and the literary builder prints them under
       // "WORLD (established …)"), so this directive does not need to reproduce one — and must not,
