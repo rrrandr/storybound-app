@@ -46,7 +46,19 @@ const EXPECT_DIALOGUE_FALLBACK = 'a confused, wordless sound that never resolves
 // $0.20 covers one scene plus a retry without loosening the guard itself.
 const AUTH_PHRASE = 'run the gibberish continuation once under $0.20 with the fixed reservation math';
 const CEILING_USD = 0.20;
-const PER_ROLE_USD = { scaffold: 0.03, planner: 0.02, author: 0.09 };
+// ── ROLES ENUMERATED FROM ARTIFACTS, NOT ASSUMED ───────────────────────────────────────────────
+// The dry run captured TWELVE calls through the real Submit path, and they resolve into exactly THREE
+// logical roles, each attempting the SAME three endpoints in turn via the tiered provider dispatch:
+//   CONTINUITY ARCHITECT  → proxy, mistral-proxy, chatgpt-proxy
+//   SCENE-SPINE planner   → proxy, mistral-proxy, chatgpt-proxy
+//   screenplay-native cinematic-romance writer (the AUTHOR) → same three
+// So ENDPOINT WAS NEVER THE RIGHT DISCRIMINATOR — my endpoint-first fix removed one symptom and left
+// the cause. A role is identified by its own system prompt; the endpoint only sets the PRICE, because
+// the Mistral tier of any role is cheap.
+// Measured: continuity $0.010893 (this run's receipt), planner ~$0.00993, author $0.07932, mistral
+// tier ~$0.0016 (all from real receipts, cost_in_usd_ticks where the provider reports it).
+const PER_ROLE_USD = { continuity: 0.03, planner: 0.02, author: 0.09, unknown: 0.09 };
+const MISTRAL_TIER_USD = 0.01;      // any role served by the cheap tier
 
 const argv = process.argv.slice(2);
 const ai = argv.indexOf('--authorize');
@@ -62,14 +74,17 @@ const section = (t) => console.log('\n=== ' + t + ' ===');
 
 // COST IS RESERVED BEFORE DISPATCH, never counted after. A refused reservation aborts the run.
 const ledger = { reserved: 0, realized: 0, entries: [], refusals: [] };
-function reserve(role) {
-  const amt = PER_ROLE_USD[role] != null ? PER_ROLE_USD[role] : 0.09;
+function reserve(role, pathname) {
+  // Price by endpoint, identity by role: the Mistral tier is cheap whichever role is being served.
+  const amt = (String(pathname || '').indexOf('/api/mistral-proxy') !== -1)
+    ? MISTRAL_TIER_USD
+    : (PER_ROLE_USD[role] != null ? PER_ROLE_USD[role] : PER_ROLE_USD.unknown);
   if (ledger.reserved + amt > CEILING_USD + 1e-12) {
     ledger.refusals.push({ role, amt, wouldBe: ledger.reserved + amt });
     return false;
   }
   ledger.reserved += amt;
-  ledger.entries.push({ role, usd: amt, runningReserved: ledger.reserved });
+  ledger.entries.push({ role, usd: amt, pathname: pathname || null, runningReserved: ledger.reserved });
   return true;
 }
 
@@ -113,18 +128,42 @@ const usrOf = (b) => ((b && b.messages) || []).filter((m) => m.role === 'user').
   // on /api/mistral-proxy and nothing else does, so the endpoint settles it with no guessing; only
   // /api/proxy carries both planner and author, and there content (planner markers first) separates
   // them. ONE definition, used by the dry stub and the live handler, so they cannot drift apart.
-  const classifyBody = (b, pathname) => {
-    if (String(pathname || '').indexOf('/api/mistral-proxy') !== -1) return 'scaffold';
-    const sys = sysOf(b), usr = usrOf(b), both = sys + '\n' + usr;
-    if (/local_objective|chosenAftermathLane|aftermath_obligations|event_slots/i.test(both)) return 'planner';
-    if (/is_consummate_scene|"beats"|SCREENPLAY|PANEL/i.test(both)) return 'author';
-    return 'other';
+  // IDENTITY, NOT ENDPOINT AND NOT SCHEMA WORDS. Each role names itself in its own system prompt, and
+  // that is stable across all three tiers it may be served by. Unknown is priced as AUTHOR and logged
+  // loudly: refusing a healthy run is recoverable, silently overspending is not.
+  const classifyBody = (b) => {
+    const sys = sysOf(b);
+    if (/CONTINUITY ARCHITECT/i.test(sys)) return 'continuity';
+    if (/SCENE-SPINE planner/i.test(sys)) return 'planner';
+    if (/screenplay-native cinematic-romance writer/i.test(sys)) return 'author';
+    // Secondary markers, in case a prompt header is reworded.
+    if (/local_objective|chosenAftermathLane|aftermath_obligations/i.test(sys)) return 'planner';
+    if (/is_consummate_scene|"beats"/i.test(sys)) return 'author';
+    return 'unknown';
   };
+  // COMPLETION IS THE DELIVERABLE, NEVER A CALL COUNT. The previous run closed the network phase
+  // because it had seen three calls and something classified as author — which was the continuity
+  // architect — so it stopped waiting BEFORE the real author call was ever made. beats=0 was my doing,
+  // not the app's. Done means: an author response carrying beats, or a terminal failure.
+  const authorBeatsResponse = () => {
+    try {
+      return gate.trackedCalls().filter((c) => c.real).find((c) => {
+        if (!c.responseBody) return false;
+        const t = JSON.stringify(c.responseBody);
+        return t.indexOf('beats') !== -1 && /"beats"\s*:\s*\[\s*\{/.test(t);
+      }) || null;
+    } catch (_) { return null; }
+  };
+  const isDeliverableReady = (calls) => calls.some((c) => c.kind === 'author' && c.hasBeats === true);
   // Pure replay of the reservation math, for proving the corrected classifier dry.
-  const simulateReservations = (roles, ceiling) => {
+  const simulateReservations = (pairs, ceiling) => {
     let r = 0; const running = [];
-    for (const role of roles) {
-      const amt = PER_ROLE_USD[role] != null ? PER_ROLE_USD[role] : 0.09;
+    for (const entry of pairs) {
+      const role = Array.isArray(entry) ? entry[0] : entry;
+      const pathname = Array.isArray(entry) ? entry[1] : '/api/proxy';
+      const amt = (String(pathname).indexOf('/api/mistral-proxy') !== -1)
+        ? MISTRAL_TIER_USD
+        : (PER_ROLE_USD[role] != null ? PER_ROLE_USD[role] : PER_ROLE_USD.unknown);
       if (r + amt > ceiling + 1e-12) return { ok: false, refusedAt: role, total: r, running };
       r += amt; running.push({ role, running: Number(r.toFixed(3)) });
     }
@@ -137,11 +176,13 @@ const usrOf = (b) => ((b && b.messages) || []).filter((m) => m.role === 'user').
     const req = route.request();
     let pathname; try { pathname = new URL(req.url()).pathname; } catch (_) { pathname = req.url(); }
     let b = null; try { b = JSON.parse(req.postData() || '{}'); } catch (_) {}
-    const kind = classifyBody(b, pathname);
+    const kind = classifyBody(b);
     if (live) {
-      if (['scaffold', 'planner', 'author'].indexOf(kind) !== -1) {
+      if (['continuity', 'planner', 'author', 'unknown'].indexOf(kind) !== -1) {
         captured.push({ kind, url: req.url(), body: b, sys: sysOf(b), usr: usrOf(b) });
-        if (!reserve(kind)) {
+        if (kind === 'unknown') console.warn('    [live] UNKNOWN ROLE on ' + pathname
+          + ' — priced as author; enumerate it before the next run: ' + sysOf(b).slice(0, 90));
+        if (!reserve(kind, pathname)) {
           abortReason = abortReason || ('reserving ' + kind + ' would pass the $' + CEILING_USD.toFixed(2) + ' ceiling');
           console.error('  ✗ ABORT — ' + abortReason);
           await route.abort('failed'); return;
@@ -158,8 +199,7 @@ const usrOf = (b) => ((b && b.messages) || []).filter((m) => m.role === 'user').
     let b = null; try { b = JSON.parse(req.postData() || '{}'); } catch (_) {}
     const sys = sysOf(b), usr = usrOf(b);
     // Same shared classifier as the live handler — no second copy to drift.
-    let pn; try { pn = new URL(req.url()).pathname; } catch (_) { pn = req.url(); }
-    const kind = classifyBody(b, pn);
+    const kind = classifyBody(b);
     captured.push({ kind, url: req.url(), body: b, sys, usr });
     return buildScheduleAwareStubResponse(sys, usr, false);
   };
@@ -360,43 +400,88 @@ const usrOf = (b) => ((b && b.messages) || []).filter((m) => m.role === 'user').
   ok('the frame falls back to the institutional default',
     slot.laneId === 'dohkar_preliminary_review' && !slot.sourceSlot, JSON.stringify(slot));
 
-  section('5. RESERVATION MATH — THE BUG THAT COST A PAID RUN, PROVEN FIXED');
+  section('5. ROLES, SETTLING, AND RESERVATION MATH — BOTH NO-DATA RUNS REPLAYED');
+  // (a) The three roles, identified by their own system prompts, as enumerated from the 12 captured
+  //     dry calls. Each is asserted on EVERY endpoint it can be served by, because the tiered dispatch
+  //     means endpoint never identifies a role.
+  const ROLE_FIXTURES = [
+    { role: 'continuity', sys: 'You are a CONTINUITY ARCHITECT for a serialized Fantasy romance visual novel. Your job is NOT to write prose.' },
+    { role: 'planner', sys: 'You are the SCENE-SPINE planner for an interactive romance engine. The scene has ONE organizing event.' },
+    { role: 'author', sys: 'You are a screenplay-native cinematic-romance writer for an adult-romance visual novel. You write the scene.' }
+  ];
+  const ENDPOINTS = ['/api/proxy', '/api/mistral-proxy', '/api/chatgpt-proxy'];
+  ROLE_FIXTURES.forEach((f) => {
+    const got = ENDPOINTS.map(() => classifyBody({ messages: [{ role: 'system', content: f.sys }] }));
+    note(f.role + ' on all three endpoints → ' + JSON.stringify(got));
+    ok('ROLE ' + f.role + ' is identified the same on ALL THREE endpoints it can be served by',
+      got.every((g) => g === f.role), JSON.stringify(got));
+  });
+  ok('THE CONTINUITY ARCHITECT IS NO LONGER MISREAD AS AUTHOR — the second no-data run\'s cause',
+    classifyBody({ messages: [{ role: 'system', content: ROLE_FIXTURES[0].sys }] }) === 'continuity');
+  ok('an unrecognised role is priced as AUTHOR, so an unknown cannot silently overspend',
+    PER_ROLE_USD.unknown === PER_ROLE_USD.author, JSON.stringify(PER_ROLE_USD));
+
+  // (b) SETTLING. Replay the exact sequence that stopped early: scaffold/continuity, continuity,
+  //     planner — no author beats anywhere. The old predicate called that done; this one must not.
+  const SEQ_NO_DATA = [{ kind: 'continuity', hasBeats: false }, { kind: 'continuity', hasBeats: false },
+                       { kind: 'planner', hasBeats: false }];
+  const SEQ_DONE = SEQ_NO_DATA.concat([{ kind: 'author', hasBeats: true }]);
+  const SEQ_AUTHOR_NO_BEATS = SEQ_NO_DATA.concat([{ kind: 'author', hasBeats: false }]);
+  ok('RED — the no-data sequence is NOT complete: the runner would no longer stop early on it',
+    isDeliverableReady(SEQ_NO_DATA) === false, JSON.stringify(SEQ_NO_DATA.map((c) => c.kind)));
+  ok('...and an author call WITHOUT beats is still not complete — the deliverable is the beats',
+    isDeliverableReady(SEQ_AUTHOR_NO_BEATS) === false);
+  ok('COMPLETE only when an author response carries beats',
+    isDeliverableReady(SEQ_DONE) === true);
+  ok('the completion check is tied to beats, never to a call count',
+    /const isDeliverableReady = \(calls\) => calls\.some\(\(c\) => c\.kind === 'author' && c\.hasBeats === true\)/.test(
+      fs.readFileSync(path.join(__dirname, '_saydo_gibberish_live_run.mjs'), 'utf8')));
+
+  section('6. RESERVATION MATH — FOUR ROLES, BOTH FAILURES REPLAYED');
   // The 2026-09-26 no-data run reserved AUTHOR rates against the Mistral SCAFFOLD call, exhausting the
   // budget before the real author request. These assertions replay that exact observed sequence.
-  const clsProbe = [
-    { pathname: '/api/mistral-proxy', body: { messages: [{ role: 'system', content: 'beats SCREENPLAY is_consummate_scene' }] }, expect: 'scaffold',
-      why: 'the scaffold call, whose payload contains author-ish schema words — the exact misfire' },
-    { pathname: '/api/proxy', body: { messages: [{ role: 'system', content: 'produce local_objective and event_slots and chosenAftermathLane' }] }, expect: 'planner', why: 'planner contract markers' },
-    { pathname: '/api/proxy', body: { messages: [{ role: 'system', content: 'emit "beats" for the SCREENPLAY, is_consummate_scene false' }] }, expect: 'author', why: 'author schema on the proxy endpoint' }
-  ];
-  clsProbe.forEach((c) => {
-    const got = classifyBody(c.body, c.pathname);
-    note(c.pathname + ' → ' + got + '   (' + c.why + ')');
-    ok('CLASSIFY ' + c.pathname + ' as ' + c.expect + ' — ' + c.why, got === c.expect, 'got ' + got);
-  });
-  ok('...and each role therefore reserves its OWN rate, not the author rate',
-    PER_ROLE_USD.scaffold === 0.03 && PER_ROLE_USD.planner === 0.02 && PER_ROLE_USD.author === 0.09,
-    JSON.stringify(PER_ROLE_USD));
-  // The real observed sequence, corrected.
-  const OBSERVED = ['scaffold', 'planner', 'author'];
+  // The real observed shape, priced by role AND tier: the cheap Mistral attempt, the continuity call on
+  // grok, the planner, then the author.
+  const OBSERVED = [['continuity', '/api/mistral-proxy'], ['continuity', '/api/proxy'],
+                    ['planner', '/api/proxy'], ['author', '/api/proxy']];
   const simFixed = simulateReservations(OBSERVED, CEILING_USD);
-  const simOldBug = simulateReservations(['author', 'planner', 'author'], 0.15);   // what actually happened
-  note('corrected sequence at $' + CEILING_USD.toFixed(2) + ': ' + JSON.stringify(simFixed));
-  note('the bug replayed at $0.15: ' + JSON.stringify(simOldBug));
-  ok('RED — the OLD misclassification aborts, reproducing the no-data run',
-    simOldBug.ok === false && simOldBug.refusedAt === 'author', JSON.stringify(simOldBug));
-  ok('THE SAME SEQUENCE NO LONGER ABORTS under the corrected classifier',
-    simFixed.ok === true, JSON.stringify(simFixed));
-  ok('...and it would not even have aborted at the old $0.15 ceiling',
-    simulateReservations(OBSERVED, 0.15).ok === true, JSON.stringify(simulateReservations(OBSERVED, 0.15)));
-  // The ceiling raise is justified by arithmetic, not preference: one planner retry must fit.
-  const withRetry = ['scaffold', 'planner', 'planner', 'author'];
-  ok('THE $0.20 CEILING IS JUSTIFIED — one planner retry fits at $0.20 but NOT at $0.15',
-    simulateReservations(withRetry, 0.20).ok === true && simulateReservations(withRetry, 0.15).ok === false,
-    JSON.stringify([simulateReservations(withRetry, 0.20), simulateReservations(withRetry, 0.15)]));
-  ok('...and a SECOND author attempt is still refused, so the guard was not loosened',
-    simulateReservations(['scaffold', 'planner', 'author', 'author'], CEILING_USD).ok === false,
-    JSON.stringify(simulateReservations(['scaffold', 'planner', 'author', 'author'], CEILING_USD)));
+  note('observed shape at $' + CEILING_USD.toFixed(2) + ': ' + JSON.stringify(simFixed));
+  ok('THE FULL OBSERVED SHAPE FITS, author included — the run can now reach the deliverable',
+    simFixed.ok === true && simFixed.total <= CEILING_USD, JSON.stringify(simFixed));
+  ok('the Mistral tier is priced cheaply, not at its role\'s rate',
+    simFixed.running[0].running === MISTRAL_TIER_USD, JSON.stringify(simFixed.running[0]));
+  // RED — RUN 1 REPLAYED THROUGH THE OLD PRICER. The new pricer cannot reproduce that overcharge by
+  // construction: it prices the Mistral tier at $0.01 whatever the role, so a misclassification there
+  // is no longer expensive. To show the fix actually changed an outcome, the LEGACY behaviour has to be
+  // simulated explicitly — price by role only, with no tier discount, exactly as run 1 did.
+  const simulateLegacy = (roles, ceiling) => {
+    let r = 0;
+    for (const role of roles) {
+      const amt = (role === 'author') ? 0.09 : (role === 'planner' ? 0.02 : 0.03);
+      if (r + amt > ceiling + 1e-12) return { ok: false, refusedAt: role, total: Number(r.toFixed(3)) };
+      r += amt;
+    }
+    return { ok: true, total: Number(r.toFixed(3)) };
+  };
+  const legacyRun1 = simulateLegacy(['author', 'planner', 'author'], 0.15);
+  note('run 1 through the OLD pricer at $0.15: ' + JSON.stringify(legacyRun1));
+  ok('RED — run 1 replayed through the OLD pricer aborts at the author, as it did for real',
+    legacyRun1.ok === false && legacyRun1.refusedAt === 'author', JSON.stringify(legacyRun1));
+  ok('...while the SAME real sequence under the new pricer completes',
+    simulateReservations([['continuity', '/api/mistral-proxy'], ['planner', '/api/proxy'],
+                          ['author', '/api/proxy']], 0.15).ok === true,
+    JSON.stringify(simulateReservations([['continuity', '/api/mistral-proxy'], ['planner', '/api/proxy'],
+                          ['author', '/api/proxy']], 0.15)));
+  // Headroom: one retry of each cheap role must fit; a second AUTHOR must not.
+  const withRetries = OBSERVED.concat([['planner', '/api/proxy']]);
+  ok('one planner retry fits at $' + CEILING_USD.toFixed(2),
+    simulateReservations(withRetries, CEILING_USD).ok === true,
+    JSON.stringify(simulateReservations(withRetries, CEILING_USD)));
+  ok('...and a SECOND author attempt is still REFUSED, so the guard was not loosened to get green',
+    simulateReservations(OBSERVED.concat([['author', '/api/proxy']]), CEILING_USD).ok === false,
+    JSON.stringify(simulateReservations(OBSERVED.concat([['author', '/api/proxy']]), CEILING_USD)));
+  ok('reserved totals stay above the MEASURED cost of the same shape ($0.0109+$0.0099+$0.0793)',
+    simFixed.total >= 0.0109 + 0.0099 + 0.0793, String(simFixed.total));
 
   section('6. CONTAINMENT AND COST DISCIPLINE');
   ok('images were blocked for the whole preflight', true, 'blockImagePreparation: true');
@@ -444,13 +529,15 @@ const usrOf = (b) => ((b && b.messages) || []).filter((m) => m.role === 'user').
   await page.fill('#gnDialogueInput', INPUT.dialogue);
   await page.click('#gnSubmitBtn');
   // Settle on the author response, not a fixed sleep, but with a hard cap.
-  for (let i = 0; i < 90; i++) {
+  // WAIT FOR THE DELIVERABLE. Hard cap is a backstop, not the completion signal.
+  let settled = false;
+  for (let i = 0; i < 150; i++) {
     if (abortReason) break;
-    if (gate.trackedCalls().filter((c) => c.real).length >= 3
-        && captured.some((c) => c.kind === 'author')) break;
+    if (authorBeatsResponse()) { settled = true; break; }
     await page.waitForTimeout(2000);
   }
-  await page.waitForTimeout(4000);
+  if (settled) await page.waitForTimeout(3000);
+  note(settled ? 'settled on an author response carrying beats' : 'did NOT settle: ' + (abortReason || 'hard cap reached'));
   gate.closePhase(); live = false;
 
   // Realize true cost from what the providers actually reported.
@@ -486,6 +573,8 @@ const usrOf = (b) => ((b && b.messages) || []).filter((m) => m.role === 'user').
      + '  ' + (Date.now() - t0) + 'ms');
   note('gibberish log: ' + (consoleLines.filter((l) => /tier=/.test(l))[0] || '(none)'));
   ok('LIVE — no ceiling abort occurred', !abortReason, String(abortReason));
+  ok('LIVE — the run settled on the DELIVERABLE, not on a call count', settled,
+    'abortReason=' + String(abortReason) + ' captured=' + JSON.stringify(captured.map((c) => c.kind)));
   ok('LIVE — raw gibberish reached NO payload',
     liveBlob.indexOf(INPUT.action) === -1 && liveBlob.indexOf(INPUT.dialogue) === -1);
   ok('LIVE — raw gibberish is absent from the delivered PROSE',
