@@ -70,7 +70,12 @@ const EXPECT_DIALOGUE_FALLBACK = 'a confused, wordless sound that never resolves
 //       that one call may exceed its allowance'
 //      RETIRED UNSPENT — prepared but never used; Roman issued different wording for the retry, and
 //      the phrase must be HIS words, not mine. Recorded so it cannot be revived later.
-const AUTH_PHRASE = 'Run the gibberish continuation once through the isolated two-process sequence, with server-side fallback disabled and a $0.22 reservation limit, accepting that an individual call may exceed its allowance';
+//   5. 'Run the gibberish continuation once through the isolated two-process sequence, with
+//       server-side fallback disabled and a $0.22 reservation limit, accepting that an individual call
+//       may exceed its allowance'
+//      CONSUMED 2026-09-26T17-0x — executed; the local function layer was dead, 20 real requests left
+//      the browser with UNRESOLVED BILLING STATUS, no scene. Consumed on execution, not on spend.
+const AUTH_PHRASE = 'Retry the gibberish continuation once after server recovery, using the isolated two-process runner, server-side fallback disabled, and a $0.22 reservation limit. I accept that an individual call may exceed its allowance';
 const GROK43 = { in: 1.25e-6, out: 2.5e-6, tierAt: 200000, inHi: 2.5e-6, outHi: 5e-6 };
 // Two real author receipts, kept as the arithmetic fixtures for the rate check.
 const AUTHOR_RECEIPTS = [
@@ -840,7 +845,7 @@ const usrOf = (b) => ((b && b.messages) || []).filter((m) => m.role === 'user').
   // no "under $X" promise, and an explicit acceptance that a single call can exceed its allowance.
   ok('the authorization phrase does not promise a spend figure it cannot hold',
     !/under \$0\.\d\d/.test(AUTH_PHRASE)
-    && /accepting that (?:one|an individual|a single) call may exceed its allowance/i.test(AUTH_PHRASE),
+    && /(?:accepting|I accept) that (?:one|an individual|a single) call may exceed its allowance/i.test(AUTH_PHRASE),
     AUTH_PHRASE);
   ok('/api/mistral-proxy containment is PROVEN, not assumed from its price',
     fs.existsSync(path.join(__dirname, '_mistral_proxy_containment_proof.mjs'))
@@ -912,6 +917,34 @@ const usrOf = (b) => ((b && b.messages) || []).filter((m) => m.role === 'user').
 
   // ── EXECUTION PHASE ─────────────────────────────────────────────────────────────────────────
   section('EXECUTE — ONE SCENE' + (STUB ? ' (STUBBED PROVIDERS)' : ' (REAL PROVIDERS)'));
+  // ── LOCAL ROUTE HEALTH, RECHECKED IMMEDIATELY BEFORE EXECUTION, WITHOUT CONTACTING PROVIDERS ──
+  // A malformed body cannot reach a provider: each route's own validator rejects it with 400. A 400
+  // proves the function executes; a 502 proves the layer is dead, and the last run learned that only
+  // after 20 requests had already left. Checked here so a dead layer costs nothing at all.
+  {
+    const routes = ['/api/proxy', '/api/mistral-proxy', '/api/chatgpt-proxy'];
+    const health = [];
+    for (const r of routes) {
+      let st = 0;
+      try {
+        const res = await fetch('http://localhost:3000' + r, { method: 'POST',
+          headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: 'not-an-array' }) });
+        st = res.status;
+      } catch (e) { st = -1; }
+      health.push({ route: r, status: st });
+    }
+    note('pre-execution route health: ' + JSON.stringify(health));
+    const allValidating = health.every((h) => h.status === 400);
+    ok('EXEC PRE-CHECK — every model route executes LOCAL VALIDATION (400), so the layer is alive',
+      allValidating, JSON.stringify(health));
+    if (!allValidating) {
+      console.error('\n  ✗ ABORTING BEFORE ANY GENERATION — the local function layer is not healthy.');
+      console.error('    A malformed request should be refused with 400 by the route itself; anything');
+      console.error('    else (502 NO_RESPONSE_FROM_FUNCTION) means the functions are not executing.');
+      fs.writeFileSync(path.join(OUT_DIR, 'ABORTED_unhealthy_routes.json'), JSON.stringify({ health }, null, 2));
+      await browser.close(); process.exit(1);
+    }
+  }
   await setupScenario();
   await page.waitForSelector('#gnActionInput', { timeout: 10000, state: 'visible' });
   captured.length = 0; consoleLines.length = 0;
@@ -940,6 +973,15 @@ const usrOf = (b) => ((b && b.messages) || []).filter((m) => m.role === 'user').
   await page.fill('#gnActionInput', INPUT.action);
   await page.fill('#gnDialogueInput', INPUT.dialogue);
   await page.click('#gnSubmitBtn');
+  // TELEMETRY AND AN IMAGE REQUEST, at the point the failed runs observed them. This injection used to
+  // live in the deleted in-process full-path section and stayed behind in preflight when that section
+  // went, so the execution phase was exercising neither — nonModelSeen came back empty and the
+  // containment it is supposed to demonstrate was untested here.
+  await page.waitForTimeout(1500);
+  await page.evaluate(() => {
+    try { fetch('/api/beta-events', { method: 'POST', body: '{}' }); } catch (_) {}
+    try { fetch('/api/image', { method: 'POST', body: '{}' }); } catch (_) {}
+  });
   // Settle on the author response, not a fixed sleep, but with a hard cap.
   // ── LOCAL FUNCTION-LAYER FAIL-FAST ──────────────────────────────────────────────────────────
   // 20 requests went out against a dead function layer before the ceiling happened to stop the run.
