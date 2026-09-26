@@ -47,8 +47,23 @@ const EXPECT_DIALOGUE_FALLBACK = 'a confused, wordless sound that never resolves
 // THE PREVIOUS PHRASE WAS CONSUMED. It released the 2026-09-26T07-10-13 attempt, which spent real
 // money ($0.010893 measured on one call, four more unmeasured). Failing to reach the author does not
 // make an authorization unspent — money left the account, so the phrase is burnt.
-const AUTH_PHRASE = 'run the gibberish continuation once under $0.20 with acceptance-based settling';
-const CEILING_USD = 0.20;
+// THE PHRASE NO LONGER PROMISES A SPEND FIGURE IT CANNOT HOLD. It names the reservation limit and
+// requires explicit acceptance that one call may exceed its allowance.
+const AUTH_PHRASE = 'run the gibberish continuation once with fallback disabled and a $0.25 reservation limit, accepting that one call may exceed its allowance';
+// ── RESERVATION LIMIT, NOT A COST CEILING. THE DIFFERENCE IS NOT COSMETIC. ────────────────────
+// Disabling fallback caps the NUMBER of upstream calls. It does nothing about how much ONE call can
+// bill, and the configured author call makes that concrete: role STRUCTURE_GENERATOR, preferredModel
+// grok-4-1-fast-reasoning (resolves to grok-4.3), max_tokens 8000, temperature 0.85. At grok-4.3's
+// $15/M output, 8000 output tokens is $0.12 BY ITSELF — already more than the $0.09 I previously
+// called a per-call bound. Add the prompt (~16k tokens ≈ $0.049 at $3/M, inferred from the measured
+// $0.0793 author call) and one author call could bill ≈$0.17 within its own configured limits.
+// AND REASONING TOKENS SIT ON TOP OF THAT, BILLED AS OUTPUT AND NOT BOUNDED BY max_tokens on xAI —
+// this workstream learned that when the grok-4.7 calibration overspent its ceiling.
+// THERE IS NO ENFORCEABLE TOTAL-COST LIMIT AT THIS PROVIDER. What this runner can enforce is the
+// number and class of calls, refusing before dispatch. What it cannot do is stop a single permitted
+// call from billing more than its allowance. Allowances below are therefore ALLOWANCES, sized from
+// measured costs and the configured max_tokens — not guarantees.
+const CEILING_USD = 0.25;   // reservation limit across all calls; NOT a guaranteed spend bound
 // ── ROLES ENUMERATED FROM ARTIFACTS, NOT ASSUMED ───────────────────────────────────────────────
 // The dry run captured TWELVE calls through the real Submit path, and they resolve into exactly THREE
 // logical roles, each attempting the SAME three endpoints in turn via the tiered provider dispatch:
@@ -60,7 +75,12 @@ const CEILING_USD = 0.20;
 // the Mistral tier of any role is cheap.
 // Measured: continuity $0.010893 (this run's receipt), planner ~$0.00993, author $0.07932, mistral
 // tier ~$0.0016 (all from real receipts, cost_in_usd_ticks where the provider reports it).
-const PER_ROLE_USD = { continuity: 0.03, planner: 0.02, author: 0.09, unknown: 0.09 };
+// Sized so an allowance is not knowably too small: author covers its own max_tokens-implied output
+// plus the inferred prompt, rather than the average case that happened to be measured.
+const PER_ROLE_USD = { continuity: 0.03, planner: 0.02, author: 0.17, unknown: 0.17 };
+const AUTHOR_CONFIG = { role: 'STRUCTURE_GENERATOR', preferredModel: 'grok-4-1-fast-reasoning',
+                        resolvesTo: 'grok-4.3', maxTokens: 8000, temperature: 0.85,
+                        outRatePerToken: 15e-6, inRatePerToken: 3e-6 };
 const MISTRAL_TIER_USD = 0.01;      // any role served by the cheap tier
 const ALLOWED_ROUTES = ['/api/proxy', '/api/mistral-proxy', '/api/chatgpt-proxy'];
 // WHY A PER-CLIENT-CALL RESERVATION IS ONLY A LOWER BOUND: api/proxy.js gives each role a
@@ -121,7 +141,8 @@ const usrOf = (b) => ((b && b.messages) || []).filter((m) => m.role === 'user').
 (async () => {
   console.log('=== SAY/DO GIBBERISH CONTINUATION — ' + (AUTHORIZED ? 'AUTHORIZED' : 'DRY PREFLIGHT ONLY') + ' ===');
   console.log('  input   : action="' + INPUT.action + '"  dialogue="' + INPUT.dialogue + '"');
-  console.log('  ceiling : $' + CEILING_USD.toFixed(2) + ', reserved per call BEFORE dispatch');
+  console.log('  reservation limit: $' + CEILING_USD.toFixed(2) + ' across all calls, reserved BEFORE dispatch');
+  console.log('  NOT a guaranteed spend bound — reasoning output is uncapped; see the header comment.');
 
   const browser = await chromium.launch({ headless: true, channel: 'chrome' });
   const page = await (await browser.newContext()).newPage();
@@ -579,11 +600,13 @@ const usrOf = (b) => ((b && b.messages) || []).filter((m) => m.role === 'user').
   note('run 1 through the OLD pricer at $0.15: ' + JSON.stringify(legacyRun1));
   ok('RED — run 1 replayed through the OLD pricer aborts at the author, as it did for real',
     legacyRun1.ok === false && legacyRun1.refusedAt === 'author', JSON.stringify(legacyRun1));
-  ok('...while the SAME real sequence under the new pricer completes',
+  // Compared at the CURRENT reservation limit, not the retired $0.15 — the author allowance has since
+  // been raised to $0.17 to cover its own configured max_tokens, so $0.15 could no longer hold a scene.
+  ok('...while the SAME real sequence completes under the corrected allowances and limit',
     simulateReservations([['continuity', '/api/mistral-proxy'], ['planner', '/api/proxy'],
-                          ['author', '/api/proxy']], 0.15).ok === true,
+                          ['author', '/api/proxy']], CEILING_USD).ok === true,
     JSON.stringify(simulateReservations([['continuity', '/api/mistral-proxy'], ['planner', '/api/proxy'],
-                          ['author', '/api/proxy']], 0.15)));
+                          ['author', '/api/proxy']], CEILING_USD)));
   // Headroom: one retry of each cheap role must fit; a second AUTHOR must not.
   const withRetries = OBSERVED.concat([['planner', '/api/proxy']]);
   ok('one planner retry fits at $' + CEILING_USD.toFixed(2),
@@ -592,8 +615,26 @@ const usrOf = (b) => ((b && b.messages) || []).filter((m) => m.role === 'user').
   ok('...and a SECOND author attempt is still REFUSED, so the guard was not loosened to get green',
     simulateReservations(OBSERVED.concat([['author', '/api/proxy']]), CEILING_USD).ok === false,
     JSON.stringify(simulateReservations(OBSERVED.concat([['author', '/api/proxy']]), CEILING_USD)));
-  ok('reserved totals stay above the MEASURED cost of the same shape ($0.0109+$0.0099+$0.0793)',
+  ok('allowances stay above the MEASURED cost of the same shape ($0.0109+$0.0099+$0.0793)',
     simFixed.total >= 0.0109 + 0.0099 + 0.0793, String(simFixed.total));
+  // THE AUTHOR ALLOWANCE MUST AT LEAST COVER ITS OWN CONFIGURED max_tokens. The previous $0.09 did
+  // not: 8000 output tokens at grok-4.3's $15/M is $0.12 before the prompt is counted.
+  const maxTokOut = AUTHOR_CONFIG.maxTokens * AUTHOR_CONFIG.outRatePerToken;
+  note('author max_tokens-implied output cost: $' + maxTokOut.toFixed(4)
+     + '  allowance: $' + PER_ROLE_USD.author.toFixed(2));
+  ok('the author ALLOWANCE covers its own configured max_tokens output',
+    PER_ROLE_USD.author >= maxTokOut, 'allowance ' + PER_ROLE_USD.author + ' vs maxTokens output ' + maxTokOut.toFixed(4));
+  ok('RED — the previous $0.09 allowance did NOT cover it, which is why it was never a bound',
+    0.09 < maxTokOut, '0.09 < ' + maxTokOut.toFixed(4));
+  ok('...and the limitation is stated in the file rather than implied',
+    /THERE IS NO ENFORCEABLE TOTAL-COST LIMIT AT THIS PROVIDER/.test(selfSrc)
+    && /REASONING TOKENS SIT ON TOP/i.test(selfSrc));
+  ok('the authorization phrase does not promise a spend figure it cannot hold',
+    !/under \$0\.\d\d/.test(AUTH_PHRASE) && /accepting that one call may exceed its allowance/.test(AUTH_PHRASE),
+    AUTH_PHRASE);
+  ok('/api/mistral-proxy containment is PROVEN, not assumed from its price',
+    fs.existsSync(path.join(__dirname, '_mistral_proxy_containment_proof.mjs'))
+    && /EXACTLY ONE upstream fetch/.test(fs.readFileSync(path.join(__dirname, '_mistral_proxy_containment_proof.mjs'), 'utf8')));
 
   section('6. CONTAINMENT AND COST DISCIPLINE');
   ok('images were blocked for the whole preflight', true, 'blockImagePreparation: true');
