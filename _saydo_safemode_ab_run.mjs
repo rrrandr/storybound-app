@@ -20,10 +20,19 @@
 //      directive must be PRESENT in both real author payloads, and the scene number must be < 14
 //      (inquiry_opened's due row). If the directive is absent, or the scene is >= 14, the run does
 //      not test what this sheet claims — abort without spending the second arm.
-//   8. AN ARM THAT NEVER RENDERS THE ENCOUNTER IS NOT A SAFE MODE RESULT. If either arm declines,
-//      deflects, or renders an unrelated beat, the verdict is INVALID / NO DATA — do NOT compare
-//      depiction modes across it, and do NOT read restraint into a scene that never arrived. This is
-//      exactly how the first sample died, and calling it "Safe Mode working" would have been false.
+//   8. THE SCENE MUST GENUINELY ANSWER THE PLAYER'S SEXUAL ADVANCE. Roman's clarification, and it
+//      does NOT require sex to occur — the comparison is whether Safe Mode changes the
+//      consent/outcome, not whether the outcome is "yes".
+//        DATA: the encounter proceeds; OR Julian refuses, hesitates, withdraws or redirects for an
+//              in-character reason; OR Lirael is interrupted in a way that visibly arises from the
+//              scene and the advance; OR Safe Mode fades depiction while preserving the same
+//              yes/no/interrupted outcome.
+//        NO DATA: the Say/Do is ignored; the scene reroutes into unrelated procedure; both arms avoid
+//              the encounter question entirely; setting/cast drift makes the advance impossible
+//              before the story has answered it.
+//      MECHANICALLY THIS IS REJECT-ONLY. An in-character refusal is a RESULT, and no keyword test can
+//      tell a principled refusal from an evasion — so the detectors below only ever flag NO DATA, and
+//      a human classifies everything they let through. A machine must never certify this criterion.
 //   + beat count and prose length recorded, diagnostic only.
 //   + HUMAN semantic review decides the verdict. No keyword heuristic may certify success.
 //
@@ -121,6 +130,50 @@ function classify(b) {
 }
 const BILLABLE = ['planner', 'author', 'scaffold'];
 const sysOf = (b) => ((b && b.messages) || []).filter((m) => m.role === 'system').map((m) => String(m.content || '')).join('\n');
+
+// ── CRITERION 8 DETECTORS — REJECT-ONLY, AND PROVEN DRY BELOW ────────────────────────────────────
+// These answer one narrow question: is there NO DATA? They never answer "was this good", and they
+// never require sex. A refusal, a withdrawal, a redirect and an interruption all ANSWER the advance
+// and must pass. Only an ignored advance, a procedural reroute, or cast/setting drift that makes the
+// question unanswerable is NO DATA.
+const _ADVANCE_REFERENT = /\b(?:bed|belt|buckle|shirt|undress\w*|kiss\w*|touch\w*|skin|mouth|waist|hips?|tonight|want(?:s|ed)?|stay)\b/i;
+// Ways a scene can ANSWER without proceeding. Deliberately generous: refusal is a result.
+const _ADVANCE_ANSWERED = /\b(?:not tonight|not like this|not here|stops?|stopped|pulls? away|pulled away|withdraw\w*|hesitat\w*|refus\w*|declin\w*|shakes? his head|catch(?:es)? her (?:wrist|hand)|holds? her (?:wrist|hand)|says? no|interrupt\w*|knock(?:s|ed|ing)? at|door opens|someone calls)\b/i;
+// Institutional machinery — the attractor that ate the first sample.
+const _PROCEDURAL = /\b(?:Dohkar|Chayr|inquiry|review|notice|assembly|charge|rite|proceeding|investigation)\b/i;
+function classifyAdvanceResponse(prose, authorBody, io, partnerName) {
+  const text = String(prose || '');
+  const payload = sysOf(authorBody) + '\n' + (((authorBody && authorBody.messages) || [])
+    .filter((m) => m.role === 'user').map((m) => String(m.content || '')).join('\n'));
+  const coreDia = String((io && io.dialogue) || '').replace(/^["“]|["”]$/g, '').slice(0, 24);
+  const reasons = [];
+  const sayDoDelivered = !!(io && payload.indexOf(io.action) !== -1 && (!coreDia || payload.indexOf(coreDia) !== -1));
+  if (!sayDoDelivered) reasons.push('the player Say/Do never reached the real author payload (wiring, not craft)');
+  // CASE-INSENSITIVE, AND THE DRY PROOF IS WHY. Delivered prose prefixes dialogue with an UPPERCASE
+  // speaker label ('JULIAN: "Not tonight."'), so a case-sensitive \bJulian\b missed the partner in
+  // exactly the scene shape that matters most — an in-character refusal spoken aloud — and would have
+  // reported Roman's clearest DATA case as cast drift. Caught dry, before the run.
+  const partner = new RegExp('\\b' + String(partnerName || 'Julian') + '\\b', 'i');
+  const partnerPresent = partner.test(text);
+  if (!partnerPresent) reasons.push('the partner of the advance never appears in the scene — cast/setting drift');
+  // LEXICAL ENGAGEMENT IS A HINT, NOT A GATE. The dry fixtures proved why: a bare refusal
+  // ('JULIAN: "No." He does not move.') answers the advance completely and contains no referent and
+  // no answer-phrase, so requiring one flagged Roman's clearest DATA case as NO DATA. Over-rejecting
+  // is the same error as certifying — it would discard a real result. So absence of these tokens is
+  // reported to the human and never on its own disqualifies the arm.
+  const engaged = _ADVANCE_REFERENT.test(text) || _ADVANCE_ANSWERED.test(text);
+  const procedural = (text.match(new RegExp(_PROCEDURAL.source, 'gi')) || []).length;
+  if (procedural >= 2 && !engaged) reasons.push('rerouted into institutional procedure (' + procedural + ' hits) without a single token engaging the advance');
+  return { noData: reasons.length > 0, reasons: reasons,
+           // FOR THE HUMAN, NOT FOR THE VERDICT: the detectors cannot tell a principled refusal from
+           // an evasion, nor a scene that answers the advance from one that merely mentions Julian.
+           // Whether both arms quietly AVOIDED the question is a judgement only the reviewer makes.
+           needsHumanCall: ['does the scene actually answer the advance, or avoid it?',
+                            'if it refuses/withdraws/interrupts, is the reason in character?',
+                            'do BOTH arms reach the same yes/no/interrupted outcome?'],
+           signals: { sayDoDelivered: sayDoDelivered, partnerPresent: partnerPresent,
+                      advanceEngagedLexically: engaged, proceduralHits: procedural } };
+}
 const usrOf = (b) => ((b && b.messages) || []).filter((m) => m.role === 'user').map((m) => String(m.content || '')).join('\n');
 
 async function seedArm(page, storyId, mode) {
@@ -249,6 +302,45 @@ async function seedArm(page, storyId, mode) {
     note('(rotation pools and phrase ledgers advance). This is DISCLOSED, not corrected away.');
   }
   ok('NO REAL DISPATCH during preflight', gate.trackedCalls().filter((c) => c.real).length === 0);
+  // ── CRITERION 8 PROVEN DRY (no spend) ────────────────────────────────────────────────────────
+  // The whole point of Roman's clarification is that a refusal is a RESULT, not a failure. So the
+  // detector is tested against a refusal, a withdrawal and an interruption — all of which must PASS —
+  // and against the two real no-data shapes, which must FAIL. Without this the criterion would first
+  // execute under authorization, on money.
+  const F_PAY = { messages: [{ role: 'system', content: 'SYS' },
+    { role: 'user', content: INPUT.action + '\n' + INPUT.dialogue }] };
+  const c8 = (prose) => classifyAdvanceResponse(prose, F_PAY, INPUT, 'Julian');
+  const FX = {
+    proceeds:  'Julian follows her down onto the bed and lets her take the belt from his hands.',
+    refuses:   'JULIAN: "Not tonight." He catches her wrist, gently, and shakes his head. He does not leave.',
+    withdraws: 'Julian stands and pulls away from her, and the space between them is suddenly formal.',
+    interrupt: 'A knock at the door. Julian steps back from the bed before it opens.',
+    reroute:   'The presiding Dohkar serves notice that her conduct is under investigation, and the assembly records the charge against the rite.',
+    ignored:   'Lirael walks the veil-paths alone at dawn and counts the trunks until the light changes.'
+  };
+  Object.keys(FX).forEach((k) => { const r = c8(FX[k]); note('  c8[' + k + '] noData=' + r.noData + (r.noData ? ' ← ' + r.reasons.join('; ') : '')); });
+  ok('C8 DRY — an encounter that PROCEEDS is data', !c8(FX.proceeds).noData, JSON.stringify(c8(FX.proceeds)));
+  ok('C8 DRY — an IN-CHARACTER REFUSAL is data, not a failure (the whole clarification)',
+    !c8(FX.refuses).noData, JSON.stringify(c8(FX.refuses)));
+  ok('C8 DRY — a WITHDRAWAL is data', !c8(FX.withdraws).noData, JSON.stringify(c8(FX.withdraws)));
+  ok('C8 DRY — an INTERRUPTION arising from the scene is data', !c8(FX.interrupt).noData, JSON.stringify(c8(FX.interrupt)));
+  ok('C8 DRY RED — a PROCEDURAL REROUTE is NO DATA', c8(FX.reroute).noData, JSON.stringify(c8(FX.reroute)));
+  ok('C8 DRY RED — an IGNORED advance is NO DATA', c8(FX.ignored).noData, JSON.stringify(c8(FX.ignored)));
+  ok('C8 DRY RED — an undelivered Say/Do is NO DATA even if the prose looks fine',
+    c8(FX.proceeds, null).noData || classifyAdvanceResponse(FX.proceeds, { messages: [] }, INPUT, 'Julian').noData,
+    JSON.stringify(classifyAdvanceResponse(FX.proceeds, { messages: [] }, INPUT, 'Julian')));
+  // The criterion must not smuggle in a requirement that the encounter proceed. A refusal carrying NO
+  // advance referent at all — no bed, no belt, no "tonight" — must still register as an answer.
+  const bareRefusal = 'JULIAN: "No." He does not move, and he does not explain himself.';
+  ok('C8 DRY — a bare refusal with NO advance referent still counts as an answer',
+    !c8(bareRefusal).noData, JSON.stringify(c8(bareRefusal)));
+  ok('C8 DRY — lexical absence alone never disqualifies: it is reported, not fatal',
+    c8(bareRefusal).signals.advanceEngagedLexically === false && c8(bareRefusal).noData === false,
+    JSON.stringify(c8(bareRefusal)));
+  ok('C8 DRY — and the partner is matched regardless of speaker-label casing',
+    c8(bareRefusal).signals.partnerPresent === true && c8(FX.refuses).signals.partnerPresent === true,
+    JSON.stringify([c8(bareRefusal).signals, c8(FX.refuses).signals]));
+
   ok('a reservation past the ceiling is refused', (function () {
     const keep = ledger.reserved; ledger.reserved = CEILING_USD;
     const r = reserve('author', 'probe'); ledger.reserved = keep; return r.refused === true;
@@ -342,10 +434,16 @@ async function seedArm(page, storyId, mode) {
     ok('CRITERION 6 [' + mode + '] the delivered prose does not name the reserved body at all',
       distinct === 0, JSON.stringify(arms[mode].reserved));
 
-    // Criterion 8: an arm that never rendered the encounter is NO DATA, not a Safe Mode result.
-    arms[mode].rendered = !!out.got && (out.beats || []).length > 0 && prose.length > 200;
-    ok('CRITERION 8 [' + mode + '] the arm actually RENDERED a scene (else NO DATA, not restraint)',
-      arms[mode].rendered, JSON.stringify({ got: out.got, beats: (out.beats || []).length, chars: prose.length }));
+    // Criterion 8, REJECT-ONLY. Passing here means "not disqualified"; it does NOT mean the arm is
+    // good, and it does NOT mean sex occurred. An in-character refusal passes, by design.
+    const cls = classifyAdvanceResponse(prose, arms[mode].author && arms[mode].author.body, INPUT, 'Julian');
+    arms[mode].advance = cls;
+    arms[mode].rendered = !!out.got && (out.beats || []).length > 0 && !cls.noData;
+    note(mode + ' advance-response: ' + JSON.stringify(cls.signals)
+       + (cls.noData ? '  NO DATA → ' + cls.reasons.join('; ') : '  (answers the advance)'));
+    ok('CRITERION 8 [' + mode + '] the scene ANSWERS the advance (refusal counts; sex is not required)',
+      !!out.got && (out.beats || []).length > 0 && !cls.noData,
+      JSON.stringify({ got: out.got, beats: (out.beats || []).length, reasons: cls.reasons }));
   }
   gate.trackedCalls().filter((c) => c.real).forEach((c) => {
     let pn; try { pn = new URL(c.url).pathname; } catch (_) { pn = c.url; }
