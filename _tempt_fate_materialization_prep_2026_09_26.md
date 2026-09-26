@@ -127,3 +127,50 @@ decision is Roman's.
 
 **Not built, not authorized.** No runner written; the proven two-process gibberish runner is the
 template. No paid calls produced this sheet.
+
+
+---
+
+# ADDENDUM — EXTRACTOR REPLAY AUTHORIZATION (single model, one request)
+
+The materialization test is NOT next. This replay comes first: it asks only whether the raised output
+limit lets ministral-8b-2512 produce a complete, cited report from the prose it truncated on.
+
+**SINGLE-MODEL, DELIBERATELY.** A cascade would answer a different question, so `--pin-primary`
+permits nothing but `ministral-8b-2512` on `/api/mistral-proxy`, and exactly **ONE** provider request
+may leave — which also contains the per-tier retry inside `_callTieredProvider`, not just the walk
+between tiers.
+- **transport failure → NO DATA**
+- **malformed or uncited reply → FAILED SAMPLE**
+
+**NO CASCADE CALCULATION APPEARS HERE.** It was removed: with one model pinned it describes nothing.
+And it could not have described a bound anyway — `grok-4-1-fast-reasoning` is an ALIAS whose resolved
+model and reasoning-token accounting are not established, so summing the three tiers was arithmetic on
+an unknown. That work is unnecessary for a single-model test and is not attempted.
+
+**Proven dry** (`_tempt_outcome_extractor_replay_dry_proof.mjs`, **18/18**, zero provider requests):
+- route decisions in order: `reserved`, `blocked-over-request-cap`, `blocked-unpinned-model`,
+  `blocked-unpinned-model` — the first pinned request passes, a second is refused, and both other tiers
+  are refused as unpinned;
+- exactly ONE request was ever reserved, and every block carries a reason;
+- the original **context** and the original **failed response** are both retained, and the response
+  (5,802 bytes, `completion_tokens` 1400 exactly) must not be overwritten;
+- the prompt **rebuilds from the retained context** and matches the original size within 4.3%
+  (2,092 approx vs 2,005 actual) — same builder, same input, so the only change is the output limit;
+- the citation requirement is still in the rebuilt prompt;
+- the production dispatch carries `max_tokens: 3200`.
+
+**SINGLE-CALL RESERVATION: $0.001020** — one tier at the censused 3600 in + 3200 out, ministral-8b-2512
+at $0.15/M both ways (sourced from `TEXT_PRICING`). **Replay ceiling $0.002**, its own, not the $0.02
+three-tier figure and not the Scene A budget. Expected ≈ measured price; the original run cost
+$0.00051 at 1400 out.
+
+**Reported separately, per Roman:** parsing · citation validity · semantic accuracy.
+
+**Fresh authorization phrase** (the $0.02 three-tier phrase is spent and would not release this):
+```
+replay the extractor once against the retained prose, pinned to ministral-8b-2512, one provider request only, $0.002 reservation
+```
+Command: `node _tempt_outcome_extractor_live_run.mjs --pin-primary --authorize "<phrase>"`
+
+**No paid call made. Nothing authorized by this sheet.**

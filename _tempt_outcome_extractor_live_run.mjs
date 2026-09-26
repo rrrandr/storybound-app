@@ -30,7 +30,20 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const AUTH_PHRASE = 'run the extractor-only live test once under $0.02';
+// ── PINNED REPLAY MODE (--pin-primary), Roman 2026-09-26 ────────────────────────────────────
+// The original phrase authorized a THREE-TIER extractor test under $0.02 and is spent. The replay asks
+// a narrower question — does the raised output limit help ministral-8b-2512 on the SAME prose it
+// truncated on — so a cascade would answer a different question. In this mode nothing but
+// ministral-8b-2512 on /api/mistral-proxy may proceed, exactly ONE provider request may leave (which
+// also contains the per-tier retry, not just the walk), and the reservation is ONE tier at the sourced
+// price. A transport failure is NO DATA; a malformed or uncited reply is a FAILED SAMPLE.
+const PIN_PRIMARY = process.argv.indexOf('--pin-primary') !== -1;
+const PIN_MODEL = 'ministral-8b-2512';
+const PIN_ENDPOINT = '/api/mistral-proxy';
+const REPLAY_CEILING_USD = 0.002;    // one tier at 3600 in + 3200 out, $0.15/M both ways = $0.00102
+const AUTH_PHRASE = PIN_PRIMARY
+  ? 'replay the extractor once against the retained prose, pinned to ministral-8b-2512, one provider request only, $0.002 reservation'
+  : 'run the extractor-only live test once under $0.02';
 
 const argv = process.argv.slice(2);
 const authIdx = argv.indexOf('--authorize');
@@ -40,12 +53,21 @@ if (given !== AUTH_PHRASE) {
   console.log('EXTRACTOR-ONLY LIVE RUN — NOT AUTHORIZED, NOTHING DISPATCHED.\n');
   console.log('  fixture      : _tempt_fate_fixtures/run_2026-09-24_02-11-02_scene_a (already paid for)');
   console.log('  role         : temptOutcomeExtractor, and only that role');
-  console.log('  endpoints    : ' + ALLOWED_ENDPOINTS.join(', ') + '  (everything else blocked)');
+  console.log('  endpoints    : ' + (PIN_PRIMARY ? PIN_ENDPOINT + '  (the other two tiers are blocked too)'
+    : ALLOWED_ENDPOINTS.join(', ') + '  (everything else blocked)'));
   console.log('  tiers        : ' + DECLARED_TIERS.map((t) => t.tier + '=' + t.model).join('  '));
-  console.log('  worst case   : $' + DECLARED_TIERS.reduce((n, t) => n + tierCost(t.model), 0).toFixed(6)
-    + '   expected: $' + tierCost(DECLARED_TIERS[0].model).toFixed(6));
-  console.log('  ceiling      : $' + CEILING_USD.toFixed(6) + '  (its own — NOT the $0.40 Scene A budget)');
-  console.log('  retry policy : tier cascade only, on transport/unusable replies. NO validation retry.');
+  if (PIN_PRIMARY) {
+    console.log('  PINNED REPLAY: ' + PIN_MODEL + ' on ' + PIN_ENDPOINT + ' only, ONE request max');
+    console.log('  single call  : $' + tierCost(PIN_MODEL).toFixed(6) + '   (no cascade — pinned)');
+  } else {
+    console.log('  worst case   : $' + DECLARED_TIERS.reduce((n, t) => n + tierCost(t.model), 0).toFixed(6)
+      + '   expected: $' + tierCost(DECLARED_TIERS[0].model).toFixed(6));
+  }
+  console.log('  ceiling      : $' + (PIN_PRIMARY ? REPLAY_CEILING_USD : CEILING_USD).toFixed(6)
+    + '  (its own — NOT the $0.40 Scene A budget)');
+  console.log('  retry policy : ' + (PIN_PRIMARY
+    ? 'NONE. No cascade, no retry — ONE request. Transport failure = NO DATA; malformed or uncited = FAILED SAMPLE.'
+    : 'tier cascade only, on transport/unusable replies. NO validation retry.'));
   console.log('  mutation     : none — no commit, no pending resolution, no story write.');
   console.log('\n  To run, pass exactly:  --authorize "' + AUTH_PHRASE + '"');
   process.exit(3);
@@ -80,9 +102,12 @@ fs.mkdirSync(OUT_DIR, { recursive: true });
   // three declared models and to the $0.02 ceiling, before anything is released.
   gate.allowRealPaths(ALLOWED_ENDPOINTS);
 
-  const ledger = makeLedger(CEILING_USD);
+  // The pinned replay carries its OWN ceiling: one tier, not a cascade sum.
+  const ledger = makeLedger(PIN_PRIMARY ? REPLAY_CEILING_USD : CEILING_USD);
   const routeLog = [];
-  await installReservationRoute(page, { ledger, log: routeLog });
+  await installReservationRoute(page, PIN_PRIMARY
+    ? { ledger, log: routeLog, pinModel: PIN_MODEL, pinEndpoint: PIN_ENDPOINT, maxRequests: 1 }
+    : { ledger, log: routeLog });
 
   await page.goto('http://localhost:3000/', { waitUntil: 'domcontentloaded', timeout: 25000 });
   await page.waitForFunction(() => window.state && window._tfoBuildExtractionContext && window._extractTemptOutcome

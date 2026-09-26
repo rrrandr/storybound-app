@@ -159,6 +159,33 @@ export async function installReservationRoute(page, holder) {
       await route.abort('failed');
       return;
     }
+    // ── SINGLE-MODEL PIN AND ONE-SHOT CAP (Roman 2026-09-26) ──────────────────────────────────
+    // For the output-limit replay the question is narrow: does the LARGER BUDGET help ministral-8b?
+    // A three-tier cascade would answer a different question and muddy the comparison, so when
+    // holder.pinModel is set nothing but that model on its own endpoint may proceed, and
+    // holder.maxRequests caps how many provider requests may leave IN TOTAL — which also contains the
+    // per-tier retry inside _callTieredProvider, not just the walk between tiers. A transport failure
+    // is then NO DATA rather than an accidental second sample.
+    if (holder.pinModel) {
+      if (model !== holder.pinModel) {
+        log.push({ kind: 'blocked-unpinned-model', pathname, model,
+          reason: 'pinned to ' + holder.pinModel + ' for this replay; a cascade would answer a different question' });
+        await route.abort('failed'); return;
+      }
+      if (holder.pinEndpoint && pathname.indexOf(holder.pinEndpoint) !== 0) {
+        log.push({ kind: 'blocked-unpinned-endpoint', pathname, model,
+          reason: 'pinned to ' + holder.pinEndpoint });
+        await route.abort('failed'); return;
+      }
+    }
+    if (typeof holder.maxRequests === 'number') {
+      holder.sent = (holder.sent || 0) + 1;
+      if (holder.sent > holder.maxRequests) {
+        log.push({ kind: 'blocked-over-request-cap', pathname, model, sent: holder.sent,
+          reason: 'only ' + holder.maxRequests + ' provider request(s) may leave in this replay' });
+        await route.abort('failed'); return;
+      }
+    }
     const r = ledger.reserve(pathname + ' :: ' + model, model);
     if (!r.ok) {
       log.push({ kind: 'blocked-ceiling', pathname, model, reason: r.reason });
