@@ -171,7 +171,7 @@ const note = (t) => console.log('    ' + t);
 const section = (t) => console.log('\n=== ' + t + ' ===');
 
 // COST IS RESERVED BEFORE DISPATCH, never counted after. A refused reservation aborts the run.
-const ledger = { reserved: 0, realized: 0, entries: [], refusals: [] };
+const ledger = { reserved: 0, realized: 0, measured: 0, estimated: 0, unreported: 0, entries: [], refusals: [] };
 function reserve(role, pathname) {
   // Price by endpoint, identity by role: the Mistral tier is cheap whichever role is being served.
   const amt = (String(pathname || '').indexOf('/api/mistral-proxy') !== -1)
@@ -197,17 +197,24 @@ function reserve(role, pathname) {
 // are 55-56k, so the standard tier applies, but a much larger prompt would change the arithmetic.
 const RATES = { '/api/proxy': { in: 1.25e-6, out: 2.5e-6 }, '/api/mistral-proxy': { in: 1.5e-7, out: 6e-7 },
                 '/api/chatgpt-proxy': { in: 2.5e-7, out: 1e-6 } };
+// MEASURED AND ESTIMATED ARE TRACKED SEPARATELY, because conflating them mislabelled a result: a
+// run was reported as "$0.091730 realized" when only $0.089807 came from provider receipts and the
+// rest was this rate table filling in two Mistral calls that report no usage. A rate-table figure is
+// an estimate; calling it realized overstates what is known.
 function realize(pathname, usage) {
   try {
-    if (!usage) return 0;
-    // xAI reports true cost in ticks (1e-10 USD); prefer it over any rate table.
-    if (typeof usage.cost_in_usd_ticks === 'number') { const v = usage.cost_in_usd_ticks * 1e-10; ledger.realized += v; return v; }
+    if (!usage) { ledger.unreported += 1; return 0; }
+    // xAI reports true cost in ticks (1e-10 USD); that is a RECEIPT and is the only measured source.
+    if (typeof usage.cost_in_usd_ticks === 'number') {
+      const v = usage.cost_in_usd_ticks * 1e-10;
+      ledger.measured += v; ledger.realized += v; return v;
+    }
     const rate = RATES[pathname] || RATES['/api/chatgpt-proxy'];
     const inTok = usage.prompt_tokens != null ? usage.prompt_tokens : (usage.input_tokens || 0);
     const rt = (usage.completion_tokens_details && usage.completion_tokens_details.reasoning_tokens) || 0;
     const outTok = (usage.completion_tokens != null ? usage.completion_tokens : (usage.output_tokens || 0)) + rt;
     const v = rate.in * inTok + rate.out * outTok;
-    ledger.realized += v; return v;
+    ledger.estimated += v; ledger.realized += v; ledger.unreported += 1; return v;
   } catch (_) { return 0; }
 }
 
@@ -1100,7 +1107,9 @@ const usrOf = (b) => ((b && b.messages) || []).filter((m) => m.role === 'user').
   fs.writeFileSync(path.join(OUT_DIR, 'live_report.json'), JSON.stringify({
     input: INPUT, tierLog: consoleLines.filter((l) => /GIBBERISH/.test(l)),
     beats: beatCount, proseChars: prose.length,
-    cost: { reserved: ledger.reserved, realized: ledger.realized, ceiling: CEILING_USD, entries: ledger.entries, refusals: ledger.refusals },
+    cost: { reserved: ledger.reserved, measured: ledger.measured, estimated: ledger.estimated,
+            unreportedCalls: ledger.unreported, totalIncludingEstimates: ledger.realized,
+            ceiling: CEILING_USD, entries: ledger.entries, refusals: ledger.refusals },
     caveat: 'Routing and substitution were already dry-proven. This run measures only whether the'
       + ' fallback placeholder yields usable PROSE. Human judgement decides that; no keyword may certify it.',
     results: results }, null, 2));
@@ -1109,8 +1118,13 @@ const usrOf = (b) => ((b && b.messages) || []).filter((m) => m.role === 'user').
   console.log('\n' + '='.repeat(86));
   console.log('  DELIVERED PROSE:\n');
   console.log(prose.split('\n').map((l) => '    ' + l).join('\n'));
-  console.log('\n  REALIZED $' + ledger.realized.toFixed(6) + ' of $' + CEILING_USD.toFixed(2)
-    + ' (reserved $' + ledger.reserved.toFixed(3) + ')');
+  console.log('\n  MEASURED  $' + ledger.measured.toFixed(6) + '  (from provider receipts)');
+  console.log('  ESTIMATED $' + ledger.estimated.toFixed(6) + '  (rate table; ' + ledger.unreported
+    + ' call(s) reported no usage — NOT measured)');
+  console.log('  TOTAL     $' + ledger.realized.toFixed(6) + ' of a $' + CEILING_USD.toFixed(2)
+    + ' reservation limit (reserved $' + ledger.reserved.toFixed(3) + ')');
+  if (ledger.unreported > 0) console.log('  NOTE: the total is NOT fully realized — '
+    + ledger.unreported + ' call(s) have unreported cost.');
   console.log('  ' + livePassed + '/' + results.length + ' mechanical assertions passed');
   console.log('  HUMAN JUDGEMENT DECIDES THE VERDICT: does the prose move, acknowledge without'
     + ' inflating, and leave the scene playable?');
