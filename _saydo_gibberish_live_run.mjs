@@ -94,6 +94,13 @@ const AUTHOR_CONFIG = { role: 'STRUCTURE_GENERATOR', preferredModel: 'grok-4-1-f
                         observedPromptTokens: 56151 };
 const MISTRAL_TIER_USD = 0.01;      // any role served by the cheap tier
 const ALLOWED_ROUTES = ['/api/proxy', '/api/mistral-proxy', '/api/chatgpt-proxy'];
+// KNOWN NON-MODEL TRAFFIC. /api/beta-events is telemetry — it appeared in every previous run, harmlessly
+// aborted by the network gate, and then my "unpriceable call" rule mistook it for a model call and
+// terminated a paid run that had already started generating. A non-billable route is not unpriceable;
+// it is simply not a model call. It still never reaches the network: it falls through to the gate, which
+// aborts undeclared endpoints. And this is an ALLOWLIST, not a bypass — an endpoint on NEITHER list is
+// still treated as unknown and stops the run, so nothing escapes scrutiny by being unnamed.
+const KNOWN_NONMODEL_ROUTES = ['/api/beta-events', '/api/config', '/api/geo', '/api/csp-report'];
 // WHY A PER-CLIENT-CALL RESERVATION IS ONLY A LOWER BOUND: api/proxy.js gives each role a
 // ROLE_MODEL_CHAIN of up to FOUR models and falls through it unless _noFallback is set, so ONE client
 // call can become several upstream billable calls. The ledger counts client calls, so it cannot see
@@ -172,7 +179,8 @@ const usrOf = (b) => ((b && b.messages) || []).filter((m) => m.role === 'user').
   const gate = await installFailClosedNetworkGate(page, {
     logFile: path.join(OUT_DIR, 'gate.jsonl'), blockImagePreparation: true });
 
-  let live = false, abortReason = null, noFallbackInjected = 0;
+  let live = false, dryFull = false, abortReason = null, noFallbackInjected = 0;
+  const nonModelSeen = [];
   // ── ENDPOINT FIRST. THIS IS THE BUG THAT BURNED A PAID RUN. ───────────────────────────────────
   // The first live call was the Mistral SCAFFOLD (~$0.0016) and a content-only classifier matched it
   // as 'author', reserving $0.09 against it. With the planner's $0.02 that left $0.04, so the REAL
@@ -258,12 +266,29 @@ const usrOf = (b) => ((b && b.messages) || []).filter((m) => m.role === 'user').
     let pathname; try { pathname = new URL(req.url()).pathname; } catch (_) { pathname = req.url(); }
     let b = null; try { b = JSON.parse(req.postData() || '{}'); } catch (_) {}
     const kind = classifyBody(b);
-    if (live) {
-      // AN UNKNOWN ROLE OR ROUTE STOPS THE RUN BEFORE DISPATCH. Pricing an unknown as 'author' was not
-      // a bound — it was a guess that happened to be expensive. If the runner cannot name what it is
-      // about to pay for, it must not pay for it.
-      if (kind === 'unknown' || ALLOWED_ROUTES.indexOf(pathname) === -1) {
-        abortReason = abortReason || ('unpriceable call: role=' + kind + ' route=' + pathname
+    // dryFull must enter THE SAME branch as live — that is the entire point of the mode. A first
+    // attempt gated this on `live` alone and put the dryFull substitution inside, so dryFull never
+    // reached any of it: no classification, no reservation, no injection, and the gate's pass-through
+    // sent requests at the real local function instead.
+    if (live || dryFull) {
+      // THREE-WAY ROUTE CLASSIFICATION. Known non-model traffic passes to the gate and generation
+      // continues; an unknown ENDPOINT still stops the run; an unknown ROLE on a model route still
+      // stops the run. If the runner cannot name what it is about to pay for, it must not pay for it —
+      // but telemetry was never something it was about to pay for.
+      const isModelRoute = ALLOWED_ROUTES.indexOf(pathname) !== -1;
+      const isKnownNonModel = KNOWN_NONMODEL_ROUTES.some((r) => pathname.indexOf(r) !== -1);
+      if (!isModelRoute && isKnownNonModel) {
+        nonModelSeen.push(pathname);
+        await route.fallback(); return;                 // the gate decides; generation is untouched
+      }
+      if (!isModelRoute) {
+        abortReason = abortReason || ('unknown endpoint: ' + pathname
+          + ' — neither a priced model route nor known non-model traffic; enumerate it first');
+        console.error('  ✗ ABORT — ' + abortReason);
+        await route.abort('failed'); return;
+      }
+      if (kind === 'unknown') {
+        abortReason = abortReason || ('unpriceable model call: role=' + kind + ' route=' + pathname
           + ' — enumerate it before authorizing another run');
         console.error('  ✗ ABORT — ' + abortReason);
         console.error('    system prompt head: ' + sysOf(b).slice(0, 120));
@@ -291,10 +316,23 @@ const usrOf = (b) => ((b && b.messages) || []).filter((m) => m.role === 'user').
         pd = JSON.stringify(o);
         noFallbackInjected++;
       } catch (_) { pd = req.postData(); }
+      // dryFull exercises this EXACT path — classification, reservation, injection, settling,
+      // artifacts, exit — and only substitutes the provider, so the proof covers the runner that
+      // spends rather than a parallel imitation of it.
+      if (dryFull) {
+        const body = await stubFor(kind, b);
+        await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(body) });
+        return;
+      }
       await route.fallback({ postData: pd }); return;
     }
     await route.fallback(); return;
   });
+
+  // Provider substitute for dryFull. Starts from the shared schedule-aware stub builder that other
+  // controls use; the author shape is then adjusted from what production actually rejects, observed on
+  // the console, rather than from a schema I guessed at.
+  const stubFor = async (kind, b) => buildScheduleAwareStubResponse(sysOf(b), usrOf(b), false);
 
   // Dry stubs: classify each captured request so the payloads can be asserted without spending.
   const stub = async (req) => {
@@ -678,6 +716,74 @@ const usrOf = (b) => ((b && b.messages) || []).filter((m) => m.role === 'user').
   ok('/api/mistral-proxy containment is PROVEN, not assumed from its price',
     fs.existsSync(path.join(__dirname, '_mistral_proxy_containment_proof.mjs'))
     && /EXACTLY ONE upstream fetch/.test(fs.readFileSync(path.join(__dirname, '_mistral_proxy_containment_proof.mjs'), 'utf8')));
+
+  section('5e. FULL PATH UNDER STUBS — THE PROOF THAT THE RUNNER CAN FINISH');
+  // ISOLATED CHECKS CANNOT ESTABLISH THIS. Three paid attempts died at three different layers, each
+  // after the previous layer was proven in isolation. So the SAME code path that spends is driven end
+  // to end here — real Submit click, classification, reservations, _noFallback injection, telemetry
+  // mid-flight, settling on acceptance, artifact writing — with only the provider substituted.
+  await page.evaluate(() => {
+    const s = window.state;
+    s.storyId = 'dryfull-' + Date.now();
+    s.turnCount = 1;
+    s.scenes = [{ title: '', synopsis: '', text: 'The assembly had not yet dispersed.', fateCard: null }];
+    delete s._gibberishStreak; delete s._gibberishTier; delete s._sayDoFallbackGenerated;
+    delete s._acceptedPlannerProposal; delete s._lastSayDoAction; delete s._lastSayDoDialogue;
+  });
+  const dfBase = await page.evaluate(() => {
+    const sc = (window.state && window.state.scenes) || [];
+    return { count: sc.length, lastText: String((sc[sc.length - 1] || {}).text || '') };
+  });
+  captured.length = 0; consoleLines.length = 0; nonModelSeen.length = 0;
+  ledger.reserved = 0; ledger.entries.length = 0; ledger.refusals.length = 0;
+  noFallbackInjected = 0; abortReason = null;
+  // ROUTE PRECEDENCE: Playwright gives the LAST registered route priority, and the gate's stubs are
+  // registered after this runner's handler — so without this the gate intercepts everything and the
+  // dryFull path never executes at all (first attempt: injected=0, no reservations, telemetry never
+  // seen by the handler). allowRealPaths stands the gate's stubs down for the model routes; dryFull
+  // then FULFILS them itself, so nothing reaches a real provider — asserted separately.
+  gate.allowRealPaths(ALLOWED_ROUTES);
+  gate.setPhase('dryfull', 40);
+  dryFull = true;
+  await page.fill('#gnActionInput', INPUT.action);
+  await page.fill('#gnDialogueInput', INPUT.dialogue);
+  await page.click('#gnSubmitBtn');
+  // THE TELEMETRY REQUEST, at the point this failed run observed it: right after generation begins.
+  await page.waitForTimeout(1500);
+  await page.evaluate(() => { try { fetch('/api/beta-events', { method: 'POST', body: '{}' }); } catch (_) {} });
+  let dfAcc = { scenesDelta: 0, lastTextLen: 0, lastTextChanged: false }, dfSettled = false;
+  for (let i = 0; i < 40; i++) {
+    if (abortReason) break;
+    dfAcc = await appAcceptance(dfBase);
+    if (isCompletionAccepted(dfAcc)) { dfSettled = true; break; }
+    await page.waitForTimeout(1000);
+  }
+  dryFull = false;
+  try { gate.closePhase(); } catch (_) {}
+  const rejects = consoleLines.filter((l) => /reject|invalid|fail|refus|VALIDAT/i.test(l)).slice(0, 6);
+  note('telemetry seen mid-flight: ' + JSON.stringify(nonModelSeen));
+  note('captured roles: ' + JSON.stringify(captured.map((c) => c.kind)));
+  note('acceptance: ' + JSON.stringify(dfAcc) + '  settled=' + dfSettled);
+  if (rejects.length) rejects.forEach((r) => note('app says: ' + r.slice(0, 150)));
+  fs.writeFileSync(path.join(OUT_DIR, 'dryfull_report.json'), JSON.stringify({
+    telemetry: nonModelSeen, roles: captured.map((c) => c.kind), acceptance: dfAcc, settled: dfSettled,
+    reservations: ledger.entries, noFallbackInjected: noFallbackInjected, abortReason: abortReason,
+    consoleRejections: rejects }, null, 2));
+  ok('TELEMETRY OCCURRED and did NOT terminate generation',
+    nonModelSeen.length > 0 && !/beta-events/.test(String(abortReason)), JSON.stringify({ nonModelSeen, abortReason }));
+  ok('...and the network gate still contained it — it never reached a real provider',
+    gate.trackedCalls().filter((c) => c.real).length === 0);
+  ok('GENERATION CONTINUED past the telemetry: an author request was reached',
+    captured.some((c) => c.kind === 'author'), JSON.stringify(captured.map((c) => c.kind)));
+  ok('_noFallback was injected on every billable dispatch in the full path',
+    noFallbackInjected === captured.length && noFallbackInjected > 0,
+    'injected=' + noFallbackInjected + ' billable=' + captured.length);
+  ok('reservations were taken per role, before dispatch',
+    ledger.entries.length === captured.length, JSON.stringify(ledger.entries));
+  ok('PRODUCTION ACCEPTED THE SCENE — a new scene with nonempty prose was persisted',
+    dfSettled === true, JSON.stringify({ acceptance: dfAcc, abortReason, rejects }));
+  ok('...and the artifact for the full path was written',
+    fs.existsSync(path.join(OUT_DIR, 'dryfull_report.json')));
 
   section('6. CONTAINMENT AND COST DISCIPLINE');
   ok('images were blocked for the whole preflight', true, 'blockImagePreparation: true');
