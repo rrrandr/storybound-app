@@ -47,9 +47,23 @@ const EXPECT_DIALOGUE_FALLBACK = 'a confused, wordless sound that never resolves
 // THE PREVIOUS PHRASE WAS CONSUMED. It released the 2026-09-26T07-10-13 attempt, which spent real
 // money ($0.010893 measured on one call, four more unmeasured). Failing to reach the author does not
 // make an authorization unspent — money left the account, so the phrase is burnt.
+// ── AUTHORIZATION LEDGER. A phrase is CONSUMED the moment a run it released dispatches anything,
+// whether or not that run produced data. Recorded here so it cannot be quietly reused:
+//   1. 'run the gibberish continuation once under $0.15'
+//      CONSUMED 2026-09-26T07-00-58 — reserved author rates against the scaffold call and aborted;
+//      4 real calls, $0.005043 measured + 3 unreported.
+//   2. 'run the gibberish continuation once under $0.20 with the fixed reservation math'
+//      CONSUMED 2026-09-26T07-10-13 — settled on a call count and stopped before the author ran;
+//      5 real calls, $0.010893 measured + 4 unreported.
+//   3. 'run the gibberish continuation once with fallback disabled and a $0.22 reservation limit,
+//       accepting that one call may exceed its allowance'
+//      CONSUMED 2026-09-26T08-13-36 — aborted because /api/beta-events telemetry was mistaken for an
+//      unpriceable model call; 1 real cheap-tier call dispatched, charge unreported but NONZERO.
+//      Failing to reach the author does not make an authorization unspent.
 // THE PHRASE NO LONGER PROMISES A SPEND FIGURE IT CANNOT HOLD. It names the reservation limit and
-// requires explicit acceptance that one call may exceed its allowance.
-const AUTH_PHRASE = 'run the gibberish continuation once with fallback disabled and a $0.22 reservation limit, accepting that one call may exceed its allowance';
+// requires explicit acceptance that one call may exceed its allowance. Same limit and same disclosed
+// uncertainty as #3; only the wording is fresh, so a spent phrase cannot release this retry.
+const AUTH_PHRASE = 'retry the gibberish continuation once, full path proven, $0.22 reservation limit, accepting that one call may exceed its allowance';
 const GROK43 = { in: 1.25e-6, out: 2.5e-6, tierAt: 200000, inHi: 2.5e-6, outHi: 5e-6 };
 // Two real author receipts, kept as the arithmetic fixtures for the rate check.
 const AUTHOR_RECEIPTS = [
