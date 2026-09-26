@@ -98,6 +98,26 @@ process.env.XAI_API_KEY = process.env.XAI_API_KEY || 'test-key-not-used-no-netwo
   console.log('    upstream attempts: ' + upstream.length + '   status: ' + res.statusCode);
   ok('exactly one upstream call on a transport error too', upstream.length === 1, 'attempts=' + upstream.length);
 
+  section('3b. WITH _noFallback under a TIMEOUT: same guarantee');
+  // The mock has carried a 'timeout' mode (AbortError, what the AbortController produces) since this
+  // control was written, but nothing ever asserted it. A timeout is the case most likely to retry
+  // silently — the request looks unfinished rather than refused — so it is proven explicitly here.
+  upstream = []; mode = 'timeout';
+  res = mockRes();
+  await handler(REQ(BODY({ _sbModelOverride: 'grok-4.3', _noFallback: true })), res);
+  console.log('    upstream attempts: ' + upstream.length + '   status: ' + res.statusCode);
+  ok('exactly one upstream call on a TIMEOUT (AbortError) as well',
+    upstream.length === 1, 'attempts=' + upstream.length);
+  ok('...and the timeout is RETURNED as an error, not converted into a retry',
+    res.statusCode >= 400, 'status=' + res.statusCode);
+  // RED for the same case: without the flag, a timeout walks the whole chain.
+  upstream = []; mode = 'timeout';
+  res = mockRes();
+  await handler(REQ(BODY({ _sbModelOverride: 'grok-4.3' })), res);
+  console.log('    RED (no flag, timeout) upstream attempts: ' + upstream.length);
+  ok('RED — WITHOUT the flag a timeout retries, so ONE client call bills several times',
+    upstream.length > 1, 'attempts=' + upstream.length);
+
   section('4. THE SUCCESS PATH REPORTS WHAT ACTUALLY ANSWERED');
   upstream = []; mode = 'ok';
   res = mockRes();

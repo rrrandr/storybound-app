@@ -131,7 +131,7 @@ const usrOf = (b) => ((b && b.messages) || []).filter((m) => m.role === 'user').
   const gate = await installFailClosedNetworkGate(page, {
     logFile: path.join(OUT_DIR, 'gate.jsonl'), blockImagePreparation: true });
 
-  let live = false, abortReason = null;
+  let live = false, abortReason = null, noFallbackInjected = 0;
   // ── ENDPOINT FIRST. THIS IS THE BUG THAT BURNED A PAID RUN. ───────────────────────────────────
   // The first live call was the Mistral SCAFFOLD (~$0.0016) and a content-only classifier matched it
   // as 'author', reserving $0.09 against it. With the planner's $0.02 that left $0.04, so the REAL
@@ -170,14 +170,22 @@ const usrOf = (b) => ((b && b.messages) || []).filter((m) => m.role === 'user').
   // screenplay — production's acceptance point is _completeStagedSceneFromScreenplay, which pushes to
   // state.scenes. So completion means THE APP KEPT THE SCENE: a new persisted scene with real prose.
   // Pure so it can be proven dry against a rejected-after-beats case.
-  const isCompletionAccepted = (st) => !!st && st.scenesDelta >= 1 && st.lastTextLen > 150;
-  const appAcceptance = async (baseline) => page.evaluate((base) => {
+  // NO ARBITRARY LENGTH GATE. A 40-character scene is a QUALITY judgement, not an incompleteness —
+  // conflating them would let the runner declare a delivered scene "no data" because it was terse.
+  // Completion means THIS attempt produced a NEWLY ACCEPTED scene with NONEMPTY prose, and a
+  // pre-existing scene can never satisfy it: the count must grow AND the new last scene must differ
+  // from the baseline one.
+  const isCompletionAccepted = (st) => !!st && st.scenesDelta >= 1
+    && st.lastTextLen > 0 && st.lastTextChanged === true;
+  const appAcceptance = async (base) => page.evaluate((b) => {
     try {
       const sc = (window.state && window.state.scenes) || [];
       const last = sc[sc.length - 1] || {};
-      return { scenesDelta: sc.length - base, lastTextLen: String(last.text || '').length };
-    } catch (_) { return { scenesDelta: 0, lastTextLen: 0 }; }
-  }, baseline);
+      const txt = String(last.text || '');
+      return { scenesDelta: sc.length - b.count, lastTextLen: txt.length,
+               lastTextChanged: txt !== b.lastText };
+    } catch (_) { return { scenesDelta: 0, lastTextLen: 0, lastTextChanged: false }; }
+  }, base);
   // Upstream expansion is the other thing a per-client-call reservation cannot see.
   const upstreamOveruse = () => {
     try {
@@ -229,7 +237,20 @@ const usrOf = (b) => ((b && b.messages) || []).filter((m) => m.role === 'user').
         }
         console.log('    [live] ' + kind + ' → ' + pathname + '  (running reserved $' + ledger.reserved.toFixed(3) + ')');
       }
-      await route.fallback(); return;
+      // ENFORCED BEFORE DISPATCH, NOT OBSERVED AFTER. Telemetry that reports upstreamAttempts=3 is
+      // useful, but it cannot un-spend the two extra calls. _noFallback gives the proxy a ONE-ENTRY
+      // chain, so a timeout or a transport error returns the error instead of retrying — proven at the
+      // handler itself in _canon_audit_proxy_nofallback_control.mjs (14/14), including the timeout case.
+      // This is an ISOLATED PROSE TEST: provider recovery is deliberately disabled because testing it
+      // adds nothing to the question of how the story handles gibberish.
+      let pd = req.postData();
+      try {
+        const o = JSON.parse(pd || '{}');
+        o._noFallback = true;
+        pd = JSON.stringify(o);
+        noFallbackInjected++;
+      } catch (_) { pd = req.postData(); }
+      await route.fallback({ postData: pd }); return;
     }
     await route.fallback(); return;
   });
@@ -473,16 +494,44 @@ const usrOf = (b) => ((b && b.messages) || []).filter((m) => m.role === 'user').
   // state.scenes, so that is what the runner waits for.
   const selfSrc = fs.readFileSync(path.join(__dirname, '_saydo_gibberish_live_run.mjs'), 'utf8');
   ok('RED — a BEATS-BEARING RESPONSE THAT PRODUCTION THEN REJECTED is NOT completion',
-    isCompletionAccepted({ scenesDelta: 0, lastTextLen: 0 }) === false,
+    isCompletionAccepted({ scenesDelta: 0, lastTextLen: 0, lastTextChanged: false }) === false,
     'beats arrived but no scene was persisted — the rejected-after-beats case');
-  ok('RED — a scene persisted with empty prose is NOT completion either',
-    isCompletionAccepted({ scenesDelta: 1, lastTextLen: 0 }) === false);
-  ok('RED — and a short stub of prose does not count',
-    isCompletionAccepted({ scenesDelta: 1, lastTextLen: 40 }) === false);
-  ok('COMPLETE only when the app PERSISTED a scene carrying real prose',
-    isCompletionAccepted({ scenesDelta: 1, lastTextLen: 900 }) === true);
-  ok('the completion check reads app acceptance (scenesDelta + prose), never a call count',
-    /scenesDelta >= 1 && st\.lastTextLen > 150/.test(selfSrc) && !/real calls\)\.length >= 3/.test(selfSrc));
+  ok('RED — a scene persisted with EMPTY prose is NOT completion either',
+    isCompletionAccepted({ scenesDelta: 1, lastTextLen: 0, lastTextChanged: true }) === false);
+  ok('RED — a PRE-EXISTING scene can never satisfy completion',
+    isCompletionAccepted({ scenesDelta: 0, lastTextLen: 4000, lastTextChanged: false }) === false,
+    'a long scene that was already there is not this attempt\'s output');
+  ok('...nor can an unchanged last scene even if the count somehow moved',
+    isCompletionAccepted({ scenesDelta: 1, lastTextLen: 900, lastTextChanged: false }) === false);
+  // LENGTH IS A QUALITY JUDGEMENT, NOT AN INCOMPLETENESS. An earlier version required >150 chars and
+  // would have called a terse but genuinely delivered scene "no data" — conflating two questions.
+  ok('A SHORT SCENE IS STILL COMPLETE — 40 characters of real prose counts',
+    isCompletionAccepted({ scenesDelta: 1, lastTextLen: 40, lastTextChanged: true }) === true,
+    'length belongs in the verdict, not the completion test');
+  ok('COMPLETE when the app persisted a NEW scene with nonempty prose',
+    isCompletionAccepted({ scenesDelta: 1, lastTextLen: 900, lastTextChanged: true }) === true);
+  ok('the completion check reads app acceptance, never a call count and never a length threshold',
+    /scenesDelta >= 1\s*\n?\s*&& st\.lastTextLen > 0 && st\.lastTextChanged === true/.test(selfSrc)
+    // The literal is assembled rather than written out: a source-scanning assertion that spells the
+    // forbidden pattern verbatim finds ITSELF and can never pass.
+    && !(new RegExp('lastTextLen > ' + '150')).test(selfSrc)
+    && !(new RegExp('real calls\\)\\.length >= ' + '3')).test(selfSrc));
+
+  section('5c. ONE UPSTREAM ATTEMPT IS ENFORCED BEFORE DISPATCH, NOT OBSERVED AFTER');
+  ok('_noFallback is injected into the outgoing body before it leaves the runner',
+    /o\._noFallback = true;/.test(selfSrc) && /route\.fallback\(\{ postData: pd \}\)/.test(selfSrc));
+  ok('...and the injection is counted, so a missed dispatch is visible',
+    /noFallbackInjected \+\+|noFallbackInjected\+\+/.test(selfSrc));
+  ok('the enforcement is proven AT THE PROXY HANDLER, including timeout and transport error',
+    fs.existsSync(path.join(__dirname, '_canon_audit_proxy_nofallback_control.mjs')));
+  const nfSrc = fs.readFileSync(path.join(__dirname, '_canon_audit_proxy_nofallback_control.mjs'), 'utf8');
+  ok('...the TIMEOUT case is asserted there (1 attempt with the flag, >1 without)',
+    /exactly one upstream call on a TIMEOUT \(AbortError\) as well/.test(nfSrc)
+    && /WITHOUT the flag a timeout retries/.test(nfSrc));
+  ok('...and the TRANSPORT-ERROR case too',
+    /exactly one upstream call on a transport error too/.test(nfSrc));
+  ok('telemetry is kept as a CHECK, not as the mechanism',
+    /cannot un-spend the two extra calls/.test(selfSrc));
   // The old predicate is kept only as the RED baseline for run 2's early stop.
   ok('RED — run 2\'s sequence would have satisfied the OLD call-count predicate',
     SEQ_NO_DATA.concat([{ kind: 'author', hasBeats: false }]).some((c) => c.kind === 'author') === true,
@@ -588,13 +637,16 @@ const usrOf = (b) => ((b && b.messages) || []).filter((m) => m.role === 'user').
   gate.setPhase('gibberish-live', 40);
   live = true;
   const t0 = Date.now();
-  const scenesBefore = await page.evaluate(() => ((window.state && window.state.scenes) || []).length);
+  const scenesBefore = await page.evaluate(() => {
+    const sc = (window.state && window.state.scenes) || [];
+    return { count: sc.length, lastText: String((sc[sc.length - 1] || {}).text || '') };
+  });
   await page.fill('#gnActionInput', INPUT.action);
   await page.fill('#gnDialogueInput', INPUT.dialogue);
   await page.click('#gnSubmitBtn');
   // Settle on the author response, not a fixed sleep, but with a hard cap.
   // WAIT FOR THE DELIVERABLE. Hard cap is a backstop, not the completion signal.
-  let settled = false, acceptance = { scenesDelta: 0, lastTextLen: 0 }, sawBeats = false;
+  let settled = false, acceptance = { scenesDelta: 0, lastTextLen: 0, lastTextChanged: false }, sawBeats = false;
   for (let i = 0; i < 150; i++) {
     if (abortReason) break;
     const over = upstreamOveruse();
@@ -642,6 +694,9 @@ const usrOf = (b) => ((b && b.messages) || []).filter((m) => m.role === 'user').
      + '  ' + (Date.now() - t0) + 'ms');
   note('gibberish log: ' + (consoleLines.filter((l) => /tier=/.test(l))[0] || '(none)'));
   ok('LIVE — no ceiling abort occurred', !abortReason, String(abortReason));
+  ok('LIVE — _noFallback was injected into EVERY billable dispatch, before it left',
+    noFallbackInjected === captured.length && noFallbackInjected > 0,
+    'injected=' + noFallbackInjected + ' billable=' + captured.length);
   ok('LIVE — every call reported upstreamAttempts<=1, so the reservation bound held',
     !/upstreamAttempts=/.test(String(abortReason)), String(abortReason));
   ok('LIVE — the run settled on APP ACCEPTANCE, not on a beats-bearing response', settled,
