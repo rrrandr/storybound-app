@@ -44,7 +44,10 @@ const EXPECT_DIALOGUE_FALLBACK = 'a confused, wordless sound that never resolves
 // scene is ~$0.091, but the per-role RESERVATIONS are deliberately conservative (0.03 + 0.02 + 0.09 =
 // $0.14), which at $0.15 leaves no room for even one planner retry — $0.16 would abort a healthy run.
 // $0.20 covers one scene plus a retry without loosening the guard itself.
-const AUTH_PHRASE = 'run the gibberish continuation once under $0.20 with the fixed reservation math';
+// THE PREVIOUS PHRASE WAS CONSUMED. It released the 2026-09-26T07-10-13 attempt, which spent real
+// money ($0.010893 measured on one call, four more unmeasured). Failing to reach the author does not
+// make an authorization unspent — money left the account, so the phrase is burnt.
+const AUTH_PHRASE = 'run the gibberish continuation once under $0.20 with acceptance-based settling';
 const CEILING_USD = 0.20;
 // ── ROLES ENUMERATED FROM ARTIFACTS, NOT ASSUMED ───────────────────────────────────────────────
 // The dry run captured TWELVE calls through the real Submit path, and they resolve into exactly THREE
@@ -59,6 +62,14 @@ const CEILING_USD = 0.20;
 // tier ~$0.0016 (all from real receipts, cost_in_usd_ticks where the provider reports it).
 const PER_ROLE_USD = { continuity: 0.03, planner: 0.02, author: 0.09, unknown: 0.09 };
 const MISTRAL_TIER_USD = 0.01;      // any role served by the cheap tier
+const ALLOWED_ROUTES = ['/api/proxy', '/api/mistral-proxy', '/api/chatgpt-proxy'];
+// WHY A PER-CLIENT-CALL RESERVATION IS ONLY A LOWER BOUND: api/proxy.js gives each role a
+// ROLE_MODEL_CHAIN of up to FOUR models and falls through it unless _noFallback is set, so ONE client
+// call can become several upstream billable calls. The ledger counts client calls, so it cannot see
+// that expansion in advance. The runner therefore VERIFIES _orchestration.upstreamAttempts on every
+// response and aborts the moment any call reports more than one — making the bound conditional and
+// enforced, instead of assumed.
+const MAX_UPSTREAM_ATTEMPTS = 1;
 
 const argv = process.argv.slice(2);
 const ai = argv.indexOf('--authorize');
@@ -154,7 +165,28 @@ const usrOf = (b) => ((b && b.messages) || []).filter((m) => m.role === 'user').
       }) || null;
     } catch (_) { return null; }
   };
-  const isDeliverableReady = (calls) => calls.some((c) => c.kind === 'author' && c.hasBeats === true);
+  // A BEATS-BEARING RESPONSE IS AN INTERMEDIATE MILESTONE, NOT THE DELIVERABLE. Parsing, speaker
+  // validation, calcification and persistence all run AFTER it, and any of them can reject the
+  // screenplay — production's acceptance point is _completeStagedSceneFromScreenplay, which pushes to
+  // state.scenes. So completion means THE APP KEPT THE SCENE: a new persisted scene with real prose.
+  // Pure so it can be proven dry against a rejected-after-beats case.
+  const isCompletionAccepted = (st) => !!st && st.scenesDelta >= 1 && st.lastTextLen > 150;
+  const appAcceptance = async (baseline) => page.evaluate((base) => {
+    try {
+      const sc = (window.state && window.state.scenes) || [];
+      const last = sc[sc.length - 1] || {};
+      return { scenesDelta: sc.length - base, lastTextLen: String(last.text || '').length };
+    } catch (_) { return { scenesDelta: 0, lastTextLen: 0 }; }
+  }, baseline);
+  // Upstream expansion is the other thing a per-client-call reservation cannot see.
+  const upstreamOveruse = () => {
+    try {
+      return gate.trackedCalls().filter((c) => c.real).map((c) => {
+        const o = c.responseBody && c.responseBody._orchestration;
+        return o && typeof o.upstreamAttempts === 'number' ? o.upstreamAttempts : null;
+      }).find((n) => n !== null && n > 1) || null;
+    } catch (_) { return null; }
+  };
   // Pure replay of the reservation math, for proving the corrected classifier dry.
   const simulateReservations = (pairs, ceiling) => {
     let r = 0; const running = [];
@@ -178,10 +210,18 @@ const usrOf = (b) => ((b && b.messages) || []).filter((m) => m.role === 'user').
     let b = null; try { b = JSON.parse(req.postData() || '{}'); } catch (_) {}
     const kind = classifyBody(b);
     if (live) {
-      if (['continuity', 'planner', 'author', 'unknown'].indexOf(kind) !== -1) {
+      // AN UNKNOWN ROLE OR ROUTE STOPS THE RUN BEFORE DISPATCH. Pricing an unknown as 'author' was not
+      // a bound — it was a guess that happened to be expensive. If the runner cannot name what it is
+      // about to pay for, it must not pay for it.
+      if (kind === 'unknown' || ALLOWED_ROUTES.indexOf(pathname) === -1) {
+        abortReason = abortReason || ('unpriceable call: role=' + kind + ' route=' + pathname
+          + ' — enumerate it before authorizing another run');
+        console.error('  ✗ ABORT — ' + abortReason);
+        console.error('    system prompt head: ' + sysOf(b).slice(0, 120));
+        await route.abort('failed'); return;
+      }
+      if (['continuity', 'planner', 'author'].indexOf(kind) !== -1) {
         captured.push({ kind, url: req.url(), body: b, sys: sysOf(b), usr: usrOf(b) });
-        if (kind === 'unknown') console.warn('    [live] UNKNOWN ROLE on ' + pathname
-          + ' — priced as author; enumerate it before the next run: ' + sysOf(b).slice(0, 90));
         if (!reserve(kind, pathname)) {
           abortReason = abortReason || ('reserving ' + kind + ' would pass the $' + CEILING_USD.toFixed(2) + ' ceiling');
           console.error('  ✗ ABORT — ' + abortReason);
@@ -427,15 +467,38 @@ const usrOf = (b) => ((b && b.messages) || []).filter((m) => m.role === 'user').
                        { kind: 'planner', hasBeats: false }];
   const SEQ_DONE = SEQ_NO_DATA.concat([{ kind: 'author', hasBeats: true }]);
   const SEQ_AUTHOR_NO_BEATS = SEQ_NO_DATA.concat([{ kind: 'author', hasBeats: false }]);
-  ok('RED — the no-data sequence is NOT complete: the runner would no longer stop early on it',
-    isDeliverableReady(SEQ_NO_DATA) === false, JSON.stringify(SEQ_NO_DATA.map((c) => c.kind)));
-  ok('...and an author call WITHOUT beats is still not complete — the deliverable is the beats',
-    isDeliverableReady(SEQ_AUTHOR_NO_BEATS) === false);
-  ok('COMPLETE only when an author response carries beats',
-    isDeliverableReady(SEQ_DONE) === true);
-  ok('the completion check is tied to beats, never to a call count',
-    /const isDeliverableReady = \(calls\) => calls\.some\(\(c\) => c\.kind === 'author' && c\.hasBeats === true\)/.test(
-      fs.readFileSync(path.join(__dirname, '_saydo_gibberish_live_run.mjs'), 'utf8')));
+  // COMPLETION IS APP ACCEPTANCE. A beats-bearing response is an intermediate milestone: parsing,
+  // speaker validation, calcification and persistence all run after it and any can reject the
+  // screenplay. Production's acceptance point is _completeStagedSceneFromScreenplay pushing to
+  // state.scenes, so that is what the runner waits for.
+  const selfSrc = fs.readFileSync(path.join(__dirname, '_saydo_gibberish_live_run.mjs'), 'utf8');
+  ok('RED — a BEATS-BEARING RESPONSE THAT PRODUCTION THEN REJECTED is NOT completion',
+    isCompletionAccepted({ scenesDelta: 0, lastTextLen: 0 }) === false,
+    'beats arrived but no scene was persisted — the rejected-after-beats case');
+  ok('RED — a scene persisted with empty prose is NOT completion either',
+    isCompletionAccepted({ scenesDelta: 1, lastTextLen: 0 }) === false);
+  ok('RED — and a short stub of prose does not count',
+    isCompletionAccepted({ scenesDelta: 1, lastTextLen: 40 }) === false);
+  ok('COMPLETE only when the app PERSISTED a scene carrying real prose',
+    isCompletionAccepted({ scenesDelta: 1, lastTextLen: 900 }) === true);
+  ok('the completion check reads app acceptance (scenesDelta + prose), never a call count',
+    /scenesDelta >= 1 && st\.lastTextLen > 150/.test(selfSrc) && !/real calls\)\.length >= 3/.test(selfSrc));
+  // The old predicate is kept only as the RED baseline for run 2's early stop.
+  ok('RED — run 2\'s sequence would have satisfied the OLD call-count predicate',
+    SEQ_NO_DATA.concat([{ kind: 'author', hasBeats: false }]).some((c) => c.kind === 'author') === true,
+    'which is exactly why it stopped before the author had delivered');
+
+  section('5b. AN UNPRICEABLE CALL STOPS THE RUN BEFORE DISPATCH');
+  ok('an unrecognised role classifies as "unknown"',
+    classifyBody({ messages: [{ role: 'system', content: 'You are some new helper role nobody enumerated.' }] }) === 'unknown');
+  ok('...and "unknown" is NOT given an author allowance — it aborts instead',
+    /if \(kind === 'unknown' \|\| ALLOWED_ROUTES\.indexOf\(pathname\) === -1\) \{/.test(selfSrc)
+    && /unpriceable call: role=/.test(selfSrc));
+  ok('...and a route outside the allowlist aborts too',
+    /ALLOWED_ROUTES = \['\/api\/proxy', '\/api\/mistral-proxy', '\/api\/chatgpt-proxy'\]/.test(selfSrc));
+  ok('THE UPSTREAM-EXPANSION HAZARD IS NAMED AND ENFORCED, not assumed away',
+    /MAX_UPSTREAM_ATTEMPTS = 1/.test(selfSrc) && /upstreamAttempts=/.test(selfSrc)
+    && /ROLE_MODEL_CHAIN of up to FOUR models/.test(selfSrc));
 
   section('6. RESERVATION MATH — FOUR ROLES, BOTH FAILURES REPLAYED');
   // The 2026-09-26 no-data run reserved AUTHOR rates against the Mistral SCAFFOLD call, exhausting the
@@ -525,19 +588,25 @@ const usrOf = (b) => ((b && b.messages) || []).filter((m) => m.role === 'user').
   gate.setPhase('gibberish-live', 40);
   live = true;
   const t0 = Date.now();
+  const scenesBefore = await page.evaluate(() => ((window.state && window.state.scenes) || []).length);
   await page.fill('#gnActionInput', INPUT.action);
   await page.fill('#gnDialogueInput', INPUT.dialogue);
   await page.click('#gnSubmitBtn');
   // Settle on the author response, not a fixed sleep, but with a hard cap.
   // WAIT FOR THE DELIVERABLE. Hard cap is a backstop, not the completion signal.
-  let settled = false;
+  let settled = false, acceptance = { scenesDelta: 0, lastTextLen: 0 }, sawBeats = false;
   for (let i = 0; i < 150; i++) {
     if (abortReason) break;
-    if (authorBeatsResponse()) { settled = true; break; }
+    const over = upstreamOveruse();
+    if (over) { abortReason = 'a call reported upstreamAttempts=' + over
+      + ' — one client call expanded upstream, so the reservation bound no longer holds'; break; }
+    if (authorBeatsResponse()) sawBeats = true;
+    acceptance = await appAcceptance(scenesBefore);
+    if (isCompletionAccepted(acceptance)) { settled = true; break; }
     await page.waitForTimeout(2000);
   }
-  if (settled) await page.waitForTimeout(3000);
-  note(settled ? 'settled on an author response carrying beats' : 'did NOT settle: ' + (abortReason || 'hard cap reached'));
+  note('acceptance: ' + JSON.stringify(acceptance) + '  sawBeatsResponse=' + sawBeats);
+  note(settled ? 'settled on APP ACCEPTANCE (scene persisted)' : 'did NOT settle: ' + (abortReason || 'hard cap reached'));
   gate.closePhase(); live = false;
 
   // Realize true cost from what the providers actually reported.
@@ -573,7 +642,9 @@ const usrOf = (b) => ((b && b.messages) || []).filter((m) => m.role === 'user').
      + '  ' + (Date.now() - t0) + 'ms');
   note('gibberish log: ' + (consoleLines.filter((l) => /tier=/.test(l))[0] || '(none)'));
   ok('LIVE — no ceiling abort occurred', !abortReason, String(abortReason));
-  ok('LIVE — the run settled on the DELIVERABLE, not on a call count', settled,
+  ok('LIVE — every call reported upstreamAttempts<=1, so the reservation bound held',
+    !/upstreamAttempts=/.test(String(abortReason)), String(abortReason));
+  ok('LIVE — the run settled on APP ACCEPTANCE, not on a beats-bearing response', settled,
     'abortReason=' + String(abortReason) + ' captured=' + JSON.stringify(captured.map((c) => c.kind)));
   ok('LIVE — raw gibberish reached NO payload',
     liveBlob.indexOf(INPUT.action) === -1 && liveBlob.indexOf(INPUT.dialogue) === -1);
