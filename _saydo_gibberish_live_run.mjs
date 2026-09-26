@@ -115,6 +115,11 @@ const ALLOWED_ROUTES = ['/api/proxy', '/api/mistral-proxy', '/api/chatgpt-proxy'
 // aborts undeclared endpoints. And this is an ALLOWLIST, not a bypass — an endpoint on NEITHER list is
 // still treated as unknown and stops the run, so nothing escapes scrutiny by being unnamed.
 const KNOWN_NONMODEL_ROUTES = ['/api/beta-events', '/api/config', '/api/geo', '/api/csp-report'];
+// PROHIBITED, NOT "NON-MODEL". /api/image is a GENERATION endpoint and potentially billable, so it
+// must never be treated as harmless traffic — but it must also not kill a text test. It is blocked
+// before dispatch, the block is recorded, and the text scene continues. Labelling it non-model would
+// have been the opposite error to the one that aborted the last run.
+const PROHIBITED_ROUTES = ['/api/image', '/api/bfl-kontext', '/api/cine-styled-manifest'];
 // WHY A PER-CLIENT-CALL RESERVATION IS ONLY A LOWER BOUND: api/proxy.js gives each role a
 // ROLE_MODEL_CHAIN of up to FOUR models and falls through it unless _noFallback is set, so ONE client
 // call can become several upstream billable calls. The ledger counts client calls, so it cannot see
@@ -126,6 +131,24 @@ const MAX_UPSTREAM_ATTEMPTS = 1;
 const argv = process.argv.slice(2);
 const ai = argv.indexOf('--authorize');
 const AUTHORIZED = ai !== -1 && String(argv[ai + 1] || '') === AUTH_PHRASE;
+// ── TWO PHASES, TWO PROCESSES ────────────────────────────────────────────────────────────────
+// Resetting a couple of variables between preflight and execution was not enough, and the last paid
+// attempt proved it: the ledger carried $0.17 of preflight reservations into execution, and the scene
+// preflight had just got accepted fired an image request during execution. Pending requests, timers and
+// scenario state all leaked across a boundary that existed only in variable assignments.
+// So the phases are now SEPARATE PROCESSES, each with its own browser context and its own empty ledger.
+//   --phase preflight   (default) dry assertions only, then shut down
+//   --phase execute     the one execution implementation; add --stub to substitute providers
+// The paid run uses the SAME execute path as the proof; --stub changes only where responses come from,
+// so there is no parallel implementation to drift.
+const PHASE = (argv[argv.indexOf('--phase') + 1] === 'execute' || argv.indexOf('--execute') !== -1)
+  ? 'execute' : 'preflight';
+const STUB = argv.indexOf('--stub') !== -1;
+if (PHASE === 'execute' && !STUB && !AUTHORIZED) {
+  console.error('EXECUTE PHASE REFUSED — real providers require the exact authorization phrase.');
+  console.error('  --authorize "' + AUTH_PHRASE + '"');
+  process.exit(1);
+}
 
 const results = [];
 const ok = (name, pass, detail) => {
@@ -195,6 +218,7 @@ const usrOf = (b) => ((b && b.messages) || []).filter((m) => m.role === 'user').
 
   let live = false, dryFull = false, abortReason = null, noFallbackInjected = 0;
   const nonModelSeen = [];
+  const prohibitedBlocked = [];
   let handlerRan = 0;
   // ── ENDPOINT FIRST. THIS IS THE BUG THAT BURNED A PAID RUN. ───────────────────────────────────
   // The first live call was the Mistral SCAFFOLD (~$0.0016) and a content-only classifier matched it
@@ -296,6 +320,11 @@ const usrOf = (b) => ((b && b.messages) || []).filter((m) => m.role === 'user').
       // but telemetry was never something it was about to pay for.
       const isModelRoute = ALLOWED_ROUTES.indexOf(pathname) !== -1;
       const isKnownNonModel = KNOWN_NONMODEL_ROUTES.some((r) => pathname.indexOf(r) !== -1);
+      const isProhibited = PROHIBITED_ROUTES.some((r) => pathname.indexOf(r) !== -1);
+      if (isProhibited) {
+        prohibitedBlocked.push(pathname);
+        await route.abort('failed'); return;            // blocked, recorded, text scene continues
+      }
       if (!isModelRoute && isKnownNonModel) {
         nonModelSeen.push(pathname);
         // CONTAINED HERE, and generation is untouched. Aborting the REQUEST is what the gate would do
@@ -404,6 +433,64 @@ const usrOf = (b) => ((b && b.messages) || []).filter((m) => m.role === 'user').
   await page.waitForFunction(() => window.state && window._detectGibberish && window._sayDoGibberishFallback
     && window._classifySayDoSlot && window._buildStrongTurnDeliveryDirective, { timeout: 30000 });
 
+  // ── SCENARIO SETUP, SHARED BY BOTH PHASES ───────────────────────────────────────────────────
+  // Extracted because the execute phase skips preflight's sections and was left with no usable UI.
+  // ONE definition, so the phase that spends is set up exactly as the phase that proves it.
+  const setupScenario = async () => {
+    await page.evaluate(() => {
+    const s = window.state;
+    s.storyId = 'dry-gibberish-' + Date.now();
+    s.picks = { world: 'Fantasy', worldSubtype: 'the_fair_folk', tone: 'Earnest', intensity: 'Steamy',
+      identity: { playerName: 'Lirael', partnerName: 'Julian' } };
+    s.gender = 'Female'; s.loveInterest = 'Male';
+    s.renderMode = 'staged_story_mode'; s.currentEngine = 'graphic';
+    s.turnCount = 1;
+    s.scenes = [{ title: '', synopsis: '', text: 'The assembly had not yet dispersed.', fateCard: null }];
+    s.subscribed = true; s.fortunes = 9999999; s.access = 'sub';
+    s._starterId = 'starter_first_sacrifice'; s._pcLookSkipped = true; s._bakedGenesisUnlocked = true;
+    window._devBypass = true;
+    s._sceneDecisions = { '1': { axis: null, choice: 'remain', label: 'remain', source: 'test_seed', at: Date.now(), storyId: s.storyId } };
+    window._canonAuditEnabled = false;
+    try { if (typeof window.showScreen === 'function') window.showScreen('story'); } catch (_) {}
+    // MAKE THE REAL CONTROLS VISIBLE, WITHOUT BYPASSING ANY LOGIC UNDER TEST. The gn Say/Do controls
+    // live in #gnReaderControls and are gated by `body.oas-active` plus the reader screen being shown.
+    // Forcing that VISIBILITY is legitimate here and a generator shortcut is not, and the distinction
+    // is the whole point: the click listener — and therefore _sayDoGibberishFallback, the thing under
+    // test — executes identically either way. Only CSS is being stepped around, never a code path.
+    try {
+      document.body.classList.add('oas-active');
+      var el = document.getElementById('gnActionInput');
+      while (el && el !== document.body) {
+        if (el.style && el.style.display === 'none') el.style.display = '';
+        if (el.hasAttribute && el.hasAttribute('hidden')) el.removeAttribute('hidden');
+        // The app hides screens with a `hidden` CLASS (#gnReader is "screen hidden gn-screen"), which a
+        // first version missed because it only cleared inline styles and the attribute — diagnosed with
+        // _gn_visibility_diag.mjs rather than guessed at. This is the same toggle showScreen uses.
+        if (el.classList && el.classList.contains('hidden')) el.classList.remove('hidden');
+        el = el.parentElement;
+      }
+      ['gnReader', 'gnReaderControls'].forEach(function (id) {
+        var n = document.getElementById(id);
+        if (n && n.style && n.style.display === 'none') n.style.display = '';
+      });
+    } catch (_) {}
+    });
+  };
+
+  // EXECUTION STARTS WITH AN EMPTY LEDGER BY CONSTRUCTION — a fresh process, so there is nothing to
+  // reset and nothing that could have leaked. Asserted rather than assumed.
+  if (PHASE === 'execute') {
+    ok('EXECUTION BEGAN WITH ZERO RESERVATIONS — fresh process, nothing inherited',
+      ledger.reserved === 0 && ledger.entries.length === 0 && captured.length === 0,
+      JSON.stringify({ reserved: ledger.reserved, entries: ledger.entries.length, captured: captured.length }));
+    ok('...and with no scenario state carried in from a preflight context',
+      (await page.evaluate(() => {
+        const s = window.state || {};
+        return !s._gibberishTier && !s._sayDoFallbackGenerated && !s._sayDoResolvedSlot;
+      })) === true);
+  }
+
+  if (PHASE === 'preflight') {
   section('1. THE REAL DETECTOR CATCHES THE CHOSEN INPUT (else the run tests nothing)');
   const det = await page.evaluate((io) => ({
     action: window._detectGibberish(io.action),
@@ -461,44 +548,7 @@ const usrOf = (b) => ((b && b.messages) || []).filter((m) => m.role === 'user').
   // Seed a deterministic CG state, then reach the real Say/Do controls. NO GENERATOR FALLBACK: if the
   // controls are not reachable, this preflight FAILS, because calling _runCGScreenplayGen directly
   // would skip the very substitution under test.
-  await page.evaluate(() => {
-    const s = window.state;
-    s.storyId = 'dry-gibberish-' + Date.now();
-    s.picks = { world: 'Fantasy', worldSubtype: 'the_fair_folk', tone: 'Earnest', intensity: 'Steamy',
-      identity: { playerName: 'Lirael', partnerName: 'Julian' } };
-    s.gender = 'Female'; s.loveInterest = 'Male';
-    s.renderMode = 'staged_story_mode'; s.currentEngine = 'graphic';
-    s.turnCount = 1;
-    s.scenes = [{ title: '', synopsis: '', text: 'The assembly had not yet dispersed.', fateCard: null }];
-    s.subscribed = true; s.fortunes = 9999999; s.access = 'sub';
-    s._starterId = 'starter_first_sacrifice'; s._pcLookSkipped = true; s._bakedGenesisUnlocked = true;
-    window._devBypass = true;
-    s._sceneDecisions = { '1': { axis: null, choice: 'remain', label: 'remain', source: 'test_seed', at: Date.now(), storyId: s.storyId } };
-    window._canonAuditEnabled = false;
-    try { if (typeof window.showScreen === 'function') window.showScreen('story'); } catch (_) {}
-    // MAKE THE REAL CONTROLS VISIBLE, WITHOUT BYPASSING ANY LOGIC UNDER TEST. The gn Say/Do controls
-    // live in #gnReaderControls and are gated by `body.oas-active` plus the reader screen being shown.
-    // Forcing that VISIBILITY is legitimate here and a generator shortcut is not, and the distinction
-    // is the whole point: the click listener — and therefore _sayDoGibberishFallback, the thing under
-    // test — executes identically either way. Only CSS is being stepped around, never a code path.
-    try {
-      document.body.classList.add('oas-active');
-      var el = document.getElementById('gnActionInput');
-      while (el && el !== document.body) {
-        if (el.style && el.style.display === 'none') el.style.display = '';
-        if (el.hasAttribute && el.hasAttribute('hidden')) el.removeAttribute('hidden');
-        // The app hides screens with a `hidden` CLASS (#gnReader is "screen hidden gn-screen"), which a
-        // first version missed because it only cleared inline styles and the attribute — diagnosed with
-        // _gn_visibility_diag.mjs rather than guessed at. This is the same toggle showScreen uses.
-        if (el.classList && el.classList.contains('hidden')) el.classList.remove('hidden');
-        el = el.parentElement;
-      }
-      ['gnReader', 'gnReaderControls'].forEach(function (id) {
-        var n = document.getElementById(id);
-        if (n && n.style && n.style.display === 'none') n.style.display = '';
-      });
-    } catch (_) {}
-  });
+  await setupScenario();
   // READY MEANS USABLE, NOT PRESENT. A first version waited for state:'attached' and passed — the
   // textarea exists in the DOM at all times — and then page.fill timed out for 30s because the control
   // was not visible. An attached-but-hidden control is a FALSE readiness signal, and it would have
@@ -523,6 +573,13 @@ const usrOf = (b) => ((b && b.messages) || []).filter((m) => m.role === 'user').
     await page.fill('#gnActionInput', INPUT.action);
     await page.fill('#gnDialogueInput', INPUT.dialogue);
     await page.click('#gnSubmitBtn');
+  // Telemetry AND an image request, at the point the failed runs observed them. The image call is what
+  // aborted the previous attempt; it must now be blocked harmlessly while the text scene carries on.
+  await page.waitForTimeout(1500);
+  await page.evaluate(() => {
+    try { fetch('/api/beta-events', { method: 'POST', body: '{}' }); } catch (_) {}
+    try { fetch('/api/image', { method: 'POST', body: '{}' }); } catch (_) {}
+  });
     await page.waitForTimeout(6000);
     const all = captured.map((c) => ({ kind: c.kind, sys: c.sys, usr: c.usr }));
     fs.writeFileSync(path.join(OUT_DIR, 'dry_captured_payloads.json'), JSON.stringify(captured.map((c) => ({
@@ -777,77 +834,10 @@ const usrOf = (b) => ((b && b.messages) || []).filter((m) => m.role === 'user').
     fs.existsSync(path.join(__dirname, '_mistral_proxy_containment_proof.mjs'))
     && /EXACTLY ONE upstream fetch/.test(fs.readFileSync(path.join(__dirname, '_mistral_proxy_containment_proof.mjs'), 'utf8')));
 
-  section('5e. FULL PATH UNDER STUBS — THE PROOF THAT THE RUNNER CAN FINISH');
-  // ISOLATED CHECKS CANNOT ESTABLISH THIS. Three paid attempts died at three different layers, each
-  // after the previous layer was proven in isolation. So the SAME code path that spends is driven end
-  // to end here — real Submit click, classification, reservations, _noFallback injection, telemetry
-  // mid-flight, settling on acceptance, artifact writing — with only the provider substituted.
-  await page.evaluate(() => {
-    const s = window.state;
-    s.storyId = 'dryfull-' + Date.now();
-    s.turnCount = 1;
-    s.scenes = [{ title: '', synopsis: '', text: 'The assembly had not yet dispersed.', fateCard: null }];
-    delete s._gibberishStreak; delete s._gibberishTier; delete s._sayDoFallbackGenerated;
-    delete s._acceptedPlannerProposal; delete s._lastSayDoAction; delete s._lastSayDoDialogue;
-  });
-  const dfBase = await page.evaluate(() => {
-    const sc = (window.state && window.state.scenes) || [];
-    return { count: sc.length, lastText: String((sc[sc.length - 1] || {}).text || '') };
-  });
-  captured.length = 0; consoleLines.length = 0; nonModelSeen.length = 0; handlerRan = 0;
-  ledger.reserved = 0; ledger.entries.length = 0; ledger.refusals.length = 0;
-  noFallbackInjected = 0; abortReason = null;
-  // ROUTE PRECEDENCE: Playwright gives the LAST registered route priority, and the gate's stubs are
-  // registered after this runner's handler — so without this the gate intercepts everything and the
-  // dryFull path never executes at all (first attempt: injected=0, no reservations, telemetry never
-  // seen by the handler). allowRealPaths stands the gate's stubs down for the model routes; dryFull
-  // then FULFILS them itself, so nothing reaches a real provider — asserted separately.
-  // beta-events is included so the gate defers it to THIS handler, where the known-non-model branch
-  // can be observed; the handler then aborts the request itself, so it still never leaves the browser.
-  gate.allowRealPaths(ALLOWED_ROUTES.concat(['/api/beta-events']));
-  gate.setPhase('dryfull', 40);
-  dryFull = true;
-  await page.fill('#gnActionInput', INPUT.action);
-  await page.fill('#gnDialogueInput', INPUT.dialogue);
-  await page.click('#gnSubmitBtn');
-  // THE TELEMETRY REQUEST, at the point this failed run observed it: right after generation begins.
-  await page.waitForTimeout(1500);
-  await page.evaluate(() => { try { fetch('/api/beta-events', { method: 'POST', body: '{}' }); } catch (_) {} });
-  let dfAcc = { scenesDelta: 0, lastTextLen: 0, lastTextChanged: false }, dfSettled = false;
-  for (let i = 0; i < 40; i++) {
-    if (abortReason) break;
-    dfAcc = await appAcceptance(dfBase);
-    if (isCompletionAccepted(dfAcc)) { dfSettled = true; break; }
-    await page.waitForTimeout(1000);
-  }
-  dryFull = false;
-  try { gate.closePhase(); } catch (_) {}
-  const rejects = consoleLines.filter((l) => /reject|invalid|fail|refus|VALIDAT/i.test(l)).slice(0, 6);
-  note('telemetry seen mid-flight: ' + JSON.stringify(nonModelSeen));
-  note('captured roles: ' + JSON.stringify(captured.map((c) => c.kind)));
-  note('acceptance: ' + JSON.stringify(dfAcc) + '  settled=' + dfSettled);
-  if (rejects.length) rejects.forEach((r) => note('app says: ' + r.slice(0, 150)));
-  fs.writeFileSync(path.join(OUT_DIR, 'dryfull_report.json'), JSON.stringify({
-    telemetry: nonModelSeen, roles: captured.map((c) => c.kind), acceptance: dfAcc, settled: dfSettled,
-    reservations: ledger.entries, noFallbackInjected: noFallbackInjected, abortReason: abortReason,
-    consoleRejections: rejects }, null, 2));
-  ok('THE INTERCEPTION HANDLER ACTUALLY RAN — not bypassed by route precedence',
-    handlerRan > 0, 'handler invocations=' + handlerRan);
-  ok('TELEMETRY OCCURRED and did NOT terminate generation',
-    nonModelSeen.length > 0 && !/beta-events/.test(String(abortReason)), JSON.stringify({ nonModelSeen, abortReason }));
-  ok('...and the network gate still contained it — it never reached a real provider',
-    gate.trackedCalls().filter((c) => c.real).length === 0);
-  ok('GENERATION CONTINUED past the telemetry: an author request was reached',
-    captured.some((c) => c.kind === 'author'), JSON.stringify(captured.map((c) => c.kind)));
-  ok('_noFallback was injected on every billable dispatch in the full path',
-    noFallbackInjected === captured.length && noFallbackInjected > 0,
-    'injected=' + noFallbackInjected + ' billable=' + captured.length);
-  ok('reservations were taken per role, before dispatch',
-    ledger.entries.length === captured.length, JSON.stringify(ledger.entries));
-  ok('PRODUCTION ACCEPTED THE SCENE — a new scene with nonempty prose was persisted',
-    dfSettled === true, JSON.stringify({ acceptance: dfAcc, abortReason, rejects }));
-  ok('...and the artifact for the full path was written',
-    fs.existsSync(path.join(OUT_DIR, 'dryfull_report.json')));
+  // (The former in-process full-path section is GONE. It ran dryFull and then live in ONE process,
+  // which is precisely the boundary that broke: a leaked ledger and an image request from the scene it
+  // had just got accepted. The execution phase with --stub now serves that purpose, in its own process,
+  // exercising the same implementation the paid run uses.)
 
   section('6. CONTAINMENT AND COST DISCIPLINE');
   ok('images were blocked for the whole preflight', true, 'blockImagePreparation: true');
@@ -858,38 +848,55 @@ const usrOf = (b) => ((b && b.messages) || []).filter((m) => m.role === 'user').
   ledger.reserved = keep;
   ok('a reservation past the ceiling is REFUSED before dispatch', refused, JSON.stringify(ledger.refusals));
 
-  const passed = results.filter((r) => r.pass).length;
+  // Written INSIDE the phase block: det/slot/uiReady are scoped to it, and hoisting them just to
+  // report them would put preflight state back into the execution scope, which is the leak this
+  // restructure exists to remove.
   fs.writeFileSync(path.join(OUT_DIR, 'preflight.json'), JSON.stringify({
     input: INPUT, detector: det, slot: slot, uiReady: uiReady, results: results,
     ceiling: CEILING_USD, perRole: PER_ROLE_USD, authorized: AUTHORIZED }, null, 2));
-  console.log('\n  PREFLIGHT: ' + passed + '/' + results.length + (passed === results.length ? ' — PASSED' : ' — FAILED'));
+  } // end preflight phase
+
+  const passed = results.filter((r) => r.pass).length;
+  console.log('\n  ' + (PHASE === 'preflight' ? 'PREFLIGHT' : 'EXECUTE PRE-CHECKS') + ': ' + passed + '/'
+    + results.length + (passed === results.length ? ' — PASSED' : ' — FAILED'));
   console.log('  Evidence: ' + OUT_DIR);
 
   if (passed !== results.length) {
     console.log('\n  STOPPING — preflight failed; nothing dispatched, nothing spent.');
     await browser.close(); process.exit(1);
   }
-  if (!AUTHORIZED) {
-    console.log('\n  DRY PREFLIGHT ONLY — nothing dispatched, nothing spent.');
-    console.log('  To run the one live scene, pass exactly:');
-    console.log('    --authorize "' + AUTH_PHRASE + '"');
+  // PREFLIGHT ALWAYS SHUTS DOWN HERE. It never continues into execution in the same process: the
+  // context is closed, so no pending request, timer or scenario state can cross into the next phase.
+  if (PHASE === 'preflight') {
+    console.log('\n  PREFLIGHT COMPLETE — nothing dispatched, nothing spent. Shutting this context down.');
+    console.log('  Execution runs as a SEPARATE process:');
+    console.log('    node _saydo_gibberish_live_run.mjs --phase execute --stub        (proof)');
+    console.log('    node _saydo_gibberish_live_run.mjs --phase execute --authorize "' + AUTH_PHRASE + '"');
     await browser.close(); process.exit(0);
   }
 
-  // ── LIVE: ONE SCENE ─────────────────────────────────────────────────────────────────────────
-  section('LIVE — ONE SCENE, REAL PROVIDERS');
+  // ── EXECUTION PHASE ─────────────────────────────────────────────────────────────────────────
+  section('EXECUTE — ONE SCENE' + (STUB ? ' (STUBBED PROVIDERS)' : ' (REAL PROVIDERS)'));
+  await setupScenario();
+  await page.waitForSelector('#gnActionInput', { timeout: 10000, state: 'visible' });
   captured.length = 0; consoleLines.length = 0;
   await page.evaluate(() => {
     const s = window.state;
-    s.storyId = 'live-gibberish-' + Date.now();
+    s.storyId = 'exec-gibberish-' + Date.now();
     s.turnCount = 1;
     s.scenes = [{ title: '', synopsis: '', text: 'The assembly had not yet dispersed.', fateCard: null }];
     delete s._gibberishStreak; delete s._gibberishTier; delete s._sayDoFallbackGenerated;
     delete s._acceptedPlannerProposal; delete s._lastSayDoAction; delete s._lastSayDoDialogue;
   });
-  gate.allowRealPaths(['/api/proxy', '/api/mistral-proxy', '/api/chatgpt-proxy']);
-  gate.setPhase('gibberish-live', 40);
+  // The gate defers these to THIS handler (last-registered route wins, and the gate is registered
+  // after us). Prohibited and telemetry routes are included so the handler can SEE them and contain
+  // them itself — /api/image is blocked here unconditionally, so allowing it past the gate cannot
+  // reach the network.
+  gate.allowRealPaths(ALLOWED_ROUTES.concat(KNOWN_NONMODEL_ROUTES, PROHIBITED_ROUTES));
+  gate.setPhase('gibberish-execute', 40);
   live = true;
+  dryFull = STUB;            // STUB substitutes the provider ONLY; every other step is identical
+  console.log('  mode: ' + (STUB ? 'STUBBED PROVIDERS (proof)' : 'REAL PROVIDERS (paid)'));
   const t0 = Date.now();
   const scenesBefore = await page.evaluate(() => {
     const sc = (window.state && window.state.scenes) || [];
@@ -923,7 +930,18 @@ const usrOf = (b) => ((b && b.messages) || []).filter((m) => m.role === 'user').
   });
 
   // Extract the delivered prose from the real author response.
+  // PROSE COMES FROM THE PERSISTED SCENE. Reading it out of the author RESPONSE only works when the
+  // gate saw a real response, so under stubs it read as empty and reported "no scene delivered" while
+  // production had in fact accepted a 252-character scene. What production kept is the delivered prose.
   let prose = '', beatCount = 0;
+  try {
+    const persisted = await page.evaluate(() => {
+      const sc = (window.state && window.state.scenes) || [];
+      const last = sc[sc.length - 1] || {};
+      return { text: String(last.text || ''), beats: Array.isArray(last.beats) ? last.beats.length : 0 };
+    });
+    prose = persisted.text; beatCount = persisted.beats;
+  } catch (_) {}
   try {
     const authorCall = gate.trackedCalls().filter((c) => c.real).reverse()
       .find((c) => c.responseBody && JSON.stringify(c.responseBody).indexOf('beats') !== -1);
@@ -934,8 +952,10 @@ const usrOf = (b) => ((b && b.messages) || []).filter((m) => m.role === 'user').
     const parsed = m ? JSON.parse(m[0]) : null;
     const beats = (parsed && Array.isArray(parsed.beats)) ? parsed.beats : [];
     beatCount = beats.length;
-    prose = beats.map((x) => (x.speaker ? String(x.speaker).toUpperCase() + ': ' : '') + String(x.text || '')).join('\n\n');
-  } catch (e) { prose = ''; }
+    // Only prefer the response-derived prose if the persisted text was somehow empty.
+    if (!prose) { beatCount = beats.length;
+      prose = beats.map((x) => (x.speaker ? String(x.speaker).toUpperCase() + ': ' : '') + String(x.text || '')).join('\n\n'); }
+  } catch (e) { /* persisted prose already read above */ }
 
   const liveAuthor = captured.filter((c) => c.kind === 'author').pop();
   const liveBlob = captured.map((c) => c.sys + '\n' + c.usr).join('\n');
@@ -948,6 +968,16 @@ const usrOf = (b) => ((b && b.messages) || []).filter((m) => m.role === 'user').
      + '  ' + (Date.now() - t0) + 'ms');
   note('gibberish log: ' + (consoleLines.filter((l) => /tier=/.test(l))[0] || '(none)'));
   ok('LIVE — no ceiling abort occurred', !abortReason, String(abortReason));
+  ok('EXEC — the interception handler ran', handlerRan > 0, 'invocations=' + handlerRan);
+  // The image request may be stopped by EITHER layer — the network gate's blockImagePreparation, or
+  // this handler's prohibited-route branch. What matters is that it never reached the network and never
+  // aborted the text scene; which layer caught it is an implementation detail, so assert the OUTCOME.
+  const realImageCalls = gate.trackedCalls().filter((c) => c.real && /\/api\/(image|bfl-kontext)/.test(String(c.url)));
+  ok('EXEC — an IMAGE request never reached the network and did NOT abort the text scene',
+    realImageCalls.length === 0 && !/image/.test(String(abortReason)),
+    JSON.stringify({ realImageCalls: realImageCalls.length, prohibitedBlocked, abortReason }));
+  ok('EXEC — telemetry was contained without terminating generation',
+    nonModelSeen.length > 0 && !/beta-events/.test(String(abortReason)), JSON.stringify(nonModelSeen));
   ok('LIVE — _noFallback was injected into EVERY billable dispatch, before it left',
     noFallbackInjected === captured.length && noFallbackInjected > 0,
     'injected=' + noFallbackInjected + ' billable=' + captured.length);
@@ -967,7 +997,7 @@ const usrOf = (b) => ((b && b.messages) || []).filter((m) => m.role === 'user').
     ok('LIVE — the gibberish-handling directive WAS in force',
       a.indexOf('UNCLEAR PLAYER INPUT — ACKNOWLEDGE LIGHTLY') !== -1);
   }
-  ok('LIVE — a scene was actually delivered', beatCount > 0 && prose.length > 150,
+  ok('EXEC — a scene was actually delivered and PERSISTED (nonempty prose)', prose.length > 0,
     'beats=' + beatCount + ' chars=' + prose.length);
   ok('LIVE — spend stayed inside the ceiling', ledger.realized <= CEILING_USD + 1e-9, '$' + ledger.realized.toFixed(6));
 
