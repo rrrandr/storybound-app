@@ -23,6 +23,9 @@
 import { chromium } from 'playwright-core';
 import { installFailClosedNetworkGate } from './_e2e_network_gate.mjs';
 import { buildScheduleAwareStubResponse } from './_tempt_fate_stub_plan_builder.mjs';
+// REUSED, NOT REINVENTED. The calibration workstream already established this exact fail-fast for this
+// exact error, after a run sent eight requests into a wall that refused the first one.
+import { isInfraFailure, INFRA_STOP_AFTER } from './_canon_audit_calibration_core.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -63,7 +66,11 @@ const EXPECT_DIALOGUE_FALLBACK = 'a confused, wordless sound that never resolves
 // THE PHRASE NO LONGER PROMISES A SPEND FIGURE IT CANNOT HOLD. It names the reservation limit and
 // requires explicit acceptance that one call may exceed its allowance. Same limit and same disclosed
 // uncertainty as #3; only the wording is fresh, so a spent phrase cannot release this retry.
-const AUTH_PHRASE = 'retry the gibberish continuation once, full path proven, $0.22 reservation limit, accepting that one call may exceed its allowance';
+//   4. 'retry the gibberish continuation once, full path proven, $0.22 reservation limit, accepting
+//       that one call may exceed its allowance'
+//      RETIRED UNSPENT — prepared but never used; Roman issued different wording for the retry, and
+//      the phrase must be HIS words, not mine. Recorded so it cannot be revived later.
+const AUTH_PHRASE = 'Run the gibberish continuation once through the isolated two-process sequence, with server-side fallback disabled and a $0.22 reservation limit, accepting that an individual call may exceed its allowance';
 const GROK43 = { in: 1.25e-6, out: 2.5e-6, tierAt: 200000, inHi: 2.5e-6, outHi: 5e-6 };
 // Two real author receipts, kept as the arithmetic fixtures for the rate check.
 const AUTHOR_RECEIPTS = [
@@ -827,8 +834,13 @@ const usrOf = (b) => ((b && b.messages) || []).filter((m) => m.role === 'user').
   ok('...and the limitation is stated in the file rather than implied',
     /THERE IS NO ENFORCEABLE TOTAL-COST LIMIT AT THIS PROVIDER/.test(selfSrc)
     && /REASONING TOKENS SIT ON TOP/i.test(selfSrc));
+  // Checks the PROPERTIES the phrase must have, not my particular wording. It previously required the
+  // literal 'one call may exceed its allowance' and so rejected Roman's own phrasing ("an individual
+  // call"), refusing an authorization that was in fact stricter than mine. Both properties still hold:
+  // no "under $X" promise, and an explicit acceptance that a single call can exceed its allowance.
   ok('the authorization phrase does not promise a spend figure it cannot hold',
-    !/under \$0\.\d\d/.test(AUTH_PHRASE) && /accepting that one call may exceed its allowance/.test(AUTH_PHRASE),
+    !/under \$0\.\d\d/.test(AUTH_PHRASE)
+    && /accepting that (?:one|an individual|a single) call may exceed its allowance/i.test(AUTH_PHRASE),
     AUTH_PHRASE);
   ok('/api/mistral-proxy containment is PROVEN, not assumed from its price',
     fs.existsSync(path.join(__dirname, '_mistral_proxy_containment_proof.mjs'))
@@ -838,6 +850,29 @@ const usrOf = (b) => ((b && b.messages) || []).filter((m) => m.role === 'user').
   // which is precisely the boundary that broke: a leaked ledger and an image request from the scene it
   // had just got accepted. The execution phase with --stub now serves that purpose, in its own process,
   // exercising the same implementation the paid run uses.)
+
+  section('5f. LOCAL FUNCTION-LAYER FAIL-FAST (reused from the calibration workstream)');
+  // The real 502 body this project emits when the function layer is dead, verbatim.
+  const REAL_502 = 'mistral HTTP 502 An error occurred with this application.\n\nNO_RESPONSE_FROM_FUNCTION';
+  ok('the REUSED detector matches this project\'s real function-layer failure',
+    isInfraFailure(REAL_502) === true, REAL_502.slice(0, 60));
+  ok('...and does NOT match a local VALIDATION rejection, which proves health rather than failure',
+    isInfraFailure('{"error":"Messages array is required"}') === false);
+  ok('...nor a provider rate limit, which is a different condition with its own rule',
+    isInfraFailure('grok HTTP 429 rate_limited code 1300') === false);
+  ok('the threshold is TWO consecutive, as the calibration workstream established',
+    INFRA_STOP_AFTER === 2, String(INFRA_STOP_AFTER));
+  // Simulated: two matching failures must stop even with the allowance nearly untouched.
+  const simLines = [REAL_502, REAL_502];
+  const simHit = simLines.filter((l) => isInfraFailure(l)).length >= INFRA_STOP_AFTER;
+  ok('TWO failures STOP THE RUN even with allowance remaining — the error is the brake, not the money',
+    simHit === true && simulateReservations([['continuity', '/api/mistral-proxy']], CEILING_USD).ok === true,
+    'infraHit=' + simHit + ' allowanceStillAvailable=true');
+  ok('ONE failure alone does not stop it — a single transient is not a dead layer',
+    [REAL_502].filter((l) => isInfraFailure(l)).length < INFRA_STOP_AFTER);
+  ok('the stop is wired into the execution settle loop, ahead of the deliverable check',
+    /const infra = infraStop\(\);/.test(selfSrc)
+    && /STOPPED ON INFRASTRUCTURE/.test(selfSrc));
 
   section('6. CONTAINMENT AND COST DISCIPLINE');
   ok('images were blocked for the whole preflight', true, 'blockImagePreparation: true');
@@ -906,10 +941,29 @@ const usrOf = (b) => ((b && b.messages) || []).filter((m) => m.role === 'user').
   await page.fill('#gnDialogueInput', INPUT.dialogue);
   await page.click('#gnSubmitBtn');
   // Settle on the author response, not a fixed sleep, but with a hard cap.
+  // ── LOCAL FUNCTION-LAYER FAIL-FAST ──────────────────────────────────────────────────────────
+  // 20 requests went out against a dead function layer before the ceiling happened to stop the run.
+  // The allowance is the wrong brake for this: a dead local layer will not fix itself, so the run must
+  // stop on the ERROR, not when the money runs out. Counted from the app's own tier-failure logs,
+  // matched with the calibration module's isInfraFailure (502 + NO_RESPONSE_FROM_FUNCTION).
+  const infraFailures = () => consoleLines.filter((l) => isInfraFailure(l));
+  const infraStop = () => {
+    const f = infraFailures();
+    return (f.length >= INFRA_STOP_AFTER) ? f.slice(0, INFRA_STOP_AFTER) : null;
+  };
+
   // WAIT FOR THE DELIVERABLE. Hard cap is a backstop, not the completion signal.
   let settled = false, acceptance = { scenesDelta: 0, lastTextLen: 0, lastTextChanged: false }, sawBeats = false;
   for (let i = 0; i < 150; i++) {
     if (abortReason) break;
+    const infra = infraStop();
+    if (infra) {
+      abortReason = 'STOPPED ON INFRASTRUCTURE: ' + INFRA_STOP_AFTER + ' consecutive local'
+        + ' function-layer failures (502 NO_RESPONSE_FROM_FUNCTION). The reservation allowance is NOT'
+        + ' the brake for this — a dead local layer does not recover, so the run stops on the error.';
+      console.error('  ✗ ' + abortReason);
+      break;
+    }
     const over = upstreamOveruse();
     if (over) { abortReason = 'a call reported upstreamAttempts=' + over
       + ' — one client call expanded upstream, so the reservation bound no longer holds'; break; }
