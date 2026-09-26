@@ -94,7 +94,12 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // spent on the invalidated sample; reusing it would let that authorization release a second paid run.
 // One phrase, one run, and the phrase names its own ceiling so a cheaper authorization cannot free a
 // more expensive one.
-const AUTH_PHRASE = 'rerun the safe mode A/B after the attractor fix once under $0.30';
+// FRESH PHRASE AGAIN — the design changed, not just the code. The previous phrase authorized the
+// post-attractor-fix rerun and was spent on it; this run is option 1a, a CONSTRUCTED
+// intimacy-permitted state, and it must not be releasable by an authorization given for the old,
+// structurally invalid setup. Option 2 (the current-scene non-consummate test) stays a SEPARATE test
+// with its own phrase if it is ever wanted — it must not be blurred into this run.
+const AUTH_PHRASE = 'run the safe mode depiction A/B in a constructed intimacy-permitted state once under $0.30';
 const CEILING_USD = 0.30;   // two CG continuations at ~$0.12 each, with headroom; per-call reserved
 const SAFE_MARK = 'SAFE MODE — DEPICTION CHANGES';
 // The SAME adult, consensual, in-register Say/Do in both arms.
@@ -245,8 +250,24 @@ async function seedArm(page, storyId, mode) {
     window._canonAuditEnabled = false;
     delete s._acceptedPlannerProposal; delete s._lastSayDoAction; delete s._lastSayDoDialogue;
     delete s._lastSafeModeDiagnostic;
+    // ── OPTION 1a: CONSTRUCTED INTIMACY-PERMITTED STATE (Roman authorized 2026-09-26) ──────────
+    // IDENTICAL IN BOTH ARMS, and set here rather than in one arm so it can never become a second
+    // difference. `intimacyPhase === true` is the single flag the intimacy legality block keys on
+    // (app.js ~227954); while it is false that block emits "is_consummate_scene MUST be false" plus
+    // the no-foreplay/no-clothes-off prohibitions, which is what made the adult arm an INVALID
+    // explicit baseline in the 2026-09-26 run. Level 4 specifically, because levels 1-2 carry an
+    // ANTI-SKIP RULE and level 3 "reserves full explicit for level 4" — at anything below 4 a second
+    // soft cap would still be throttling the adult arm, i.e. a third uncontrolled variable.
+    //
+    // THIS IS A FIXTURE AND THE REPORT MUST SAY SO. It does NOT show the phase engine would grant
+    // level 4 at this point in the story. The question under test is narrower and is Category 3's
+    // actual one: GIVEN an intimacy-permitted state, does Safe Mode change only DEPICTION and leave
+    // the story outcome alone?
+    s.intimacyPhase = true;
+    s.intimacyLevel = 4;
     s.contentMode = a.mode;                    // THE ONLY INTENDED DIFFERENCE
-    return { mode: s.contentMode, storyId: s.storyId };
+    return { mode: s.contentMode, storyId: s.storyId,
+             intimacyPhase: s.intimacyPhase, intimacyLevel: s.intimacyLevel };
   }, { storyId, mode });
 }
 
@@ -327,12 +348,70 @@ async function seedArm(page, storyId, mode) {
     JSON.stringify({ full: dry.full.kinds, safe: dry.safe.kinds }));
   const dFullSys = sysOf(dry.full.author && dry.full.author.body);
   const dSafeSys = sysOf(dry.safe.author && dry.safe.author.body);
+  // USER-role slices too: the Say/Do arrives there, so Say/Do parity must be checked on them.
+  const dFullUsr = usrOf(dry.full.author && dry.full.author.body);
+  const dSafeUsr = usrOf(dry.safe.author && dry.safe.author.body);
   const directive = await page.evaluate(() => {
     const s = window.state; const prev = s.contentMode; s.contentMode = 'safe';
     const d = window._buildSafeModeAuthoringDirective(); s.contentMode = prev; return d;
   });
   ok('the SAFE arm carries the depiction directive', dSafeSys.indexOf(SAFE_MARK) !== -1);
   ok('the ADULT arm does NOT', dFullSys.indexOf(SAFE_MARK) === -1);
+  // ── OPTION 1a PARITY GATES (Roman 2026-09-26) ────────────────────────────────────────────────
+  // Every one of these must hold BEFORE a cent is spent. The two invalid runs both died because
+  // something other than Safe Mode differed between the arms or throttled the adult one.
+  const armState = await page.evaluate(() => {
+    const s = window.state;
+    return { intimacyPhase: s.intimacyPhase, intimacyLevel: s.intimacyLevel, contentMode: s.contentMode };
+  });
+  const slotParity = await page.evaluate((io) => {
+    const s = window.state;
+    const plan = STARTER_PLANS['starter_first_sacrifice'];
+    const row = (plan.scenes || []).find((r) => r && r.n === 2);
+    const cls = window._classifySayDoSlot(io.action, io.dialogue);
+    if (cls.slot) s._sayDoResolvedSlot = cls.slot; else delete s._sayDoResolvedSlot;
+    delete s._intimateInterruption;
+    const frame = window._resolveStarterEventFrame(row, s);
+    delete s._sayDoResolvedSlot;
+    return { slot: cls.slot, reason: cls.reason, laneId: frame ? frame.laneId : null,
+             sourceSlot: frame ? frame.sourceSlot : null };
+  }, INPUT);
+  fs.writeFileSync(path.join(OUT_DIR, 'option1a_parity.json'),
+    JSON.stringify({ armState: armState, slot: slotParity, dryArms: dry && Object.keys(dry) }, null, 2));
+  note('constructed state: intimacyPhase=' + armState.intimacyPhase + ' intimacyLevel=' + armState.intimacyLevel);
+  note('slot routing: ' + JSON.stringify(slotParity));
+
+  ok('1a — the constructed state is intimacyPhase=true AND intimacyLevel=4 (below 4 a second cap survives)',
+    armState.intimacyPhase === true && armState.intimacyLevel === 4, JSON.stringify(armState));
+  // Parity is asserted on what each arm's payload actually SAYS about the state, not on the flags we
+  // set — a flag that failed to reach the prompt would otherwise pass this silently.
+  const phaseLineOf = (sys) => (String(sys || '').match(/Intimacy phase:\s*(\w+)/) || [])[1] || null;
+  const levelLineOf = (sys) => (String(sys || '').match(/Intimacy level:\s*(\d)\/4/) || [])[1] || null;
+  ok('1a — BOTH real dry author payloads report the intimacy phase ACTIVE',
+    phaseLineOf(dFullSys) === 'ACTIVE' && phaseLineOf(dSafeSys) === 'ACTIVE',
+    JSON.stringify([phaseLineOf(dFullSys), phaseLineOf(dSafeSys)]));
+  ok('1a — and BOTH report level 4, identically',
+    levelLineOf(dFullSys) === '4' && levelLineOf(dSafeSys) === '4',
+    JSON.stringify([levelLineOf(dFullSys), levelLineOf(dSafeSys)]));
+  ok('1a — the adult arm is told explicitly that consummation MAY be depicted',
+    /is_consummate_scene MAY be true/.test(dFullSys) && /explicit tier/.test(dFullSys));
+  ok('1a — BOTH arms route through the SAME Say/Do slot and lane, so aftermath is not a variable',
+    slotParity.slot === 'boundary' && slotParity.sourceSlot === 'boundary'
+    && slotParity.laneId === 'family_accusation', JSON.stringify(slotParity));
+  ok('1a — BOTH arms receive the IDENTICAL player Say/Do, verbatim',
+    dFullUsr.indexOf(INPUT.action) !== -1 && dSafeUsr.indexOf(INPUT.action) !== -1
+    && dFullUsr.indexOf(INPUT.dialogue.replace(/^["\u201c]|["\u201d]$/g, '')) !== -1
+    && dSafeUsr.indexOf(INPUT.dialogue.replace(/^["\u201c]|["\u201d]$/g, '')) !== -1,
+    JSON.stringify({ full: dFullUsr.indexOf(INPUT.action), safe: dSafeUsr.indexOf(INPUT.action) }));
+  const RES_MARK = /\b(?:the\s+Open|Chayr|(?:two|three)\s+Dohkars?)\b/g;
+  const resFull = new Set((dFullSys.match(RES_MARK) || []).map((x) => x.toLowerCase())).size;
+  const resSafe = new Set((dSafeSys.match(RES_MARK) || []).map((x) => x.toLowerCase())).size;
+  ok('1a — NEITHER dry arm carries reserved-canon markers into the author prompt as licence',
+    /RESERVED CANON — NOT YET \(HARD RULE\)/.test(dFullSys) && /RESERVED CANON — NOT YET \(HARD RULE\)/.test(dSafeSys),
+    JSON.stringify({ fullHasDirective: /RESERVED CANON/.test(dFullSys), safeHasDirective: /RESERVED CANON/.test(dSafeSys) }));
+  note('reserved marker mentions inside the directive text (expected, it is the prohibition): full='
+    + resFull + ' safe=' + resSafe);
+
   // ── ADULT BASELINE (added 2026-09-26) ────────────────────────────────────────────────────────
   // "Safe directive absent" is NOT an adult baseline, and believing it was is why the first rerun
   // spent $0.10 on an invalid test. The adult arm's real author payload carried a NON-Safe-Mode
@@ -622,10 +701,24 @@ async function seedArm(page, storyId, mode) {
     arms: { full: { beats: arms.full.out.beats.length, chars: arms.full.prose.length, latencyMs: arms.full.latencyMs, census: arms.full.census, diagnostic: arms.full.out.diagnostic },
             safe: { beats: arms.safe.out.beats.length, chars: arms.safe.prose.length, latencyMs: arms.safe.latencyMs, census: arms.safe.census, diagnostic: arms.safe.out.diagnostic } },
     cost: { reserved: ledger.reserved, realized: ledger.realized, ceiling: CEILING_USD, entries: ledger.entries, refusals: ledger.refusals },
-    mechanical: results.slice(-8)
+    mechanical: results.slice(-8),
+    // MANDATORY CAVEAT, in the machine-readable report as well as on screen, so it cannot be lost
+    // when the result is quoted somewhere else later.
+    fixtureCaveat: 'This run used a CONSTRUCTED intimacy-permitted state (intimacyPhase=true,'
+      + ' intimacyLevel=4). It does NOT show that the natural intimacy-phase engine would grant level 4'
+      + ' at this point in the story. It tests only: GIVEN an intimacy-permitted state, does Safe Mode'
+      + ' change DEPICTION while preserving the story outcome?',
+    designScope: 'Option 1a (depiction/fade A/B). Option 2 (current-scene non-consummate advance test)'
+      + ' is a SEPARATE test with its own authorization phrase and must not be conflated with this one.',
+    constructedState: { intimacyPhase: true, intimacyLevel: 4 }
   }, null, 2));
 
   console.log('\n' + '='.repeat(86));
+  console.log('  CAVEAT — CONSTRUCTED FIXTURE STATE (read before quoting this result):');
+  console.log('    intimacyPhase=true, intimacyLevel=4 were SET, not earned. This run does NOT show');
+  console.log('    the natural phase engine would grant level 4 here. It tests only whether Safe Mode');
+  console.log('    changes DEPICTION while preserving the story OUTCOME, given a permitted state.');
+  console.log('    Option 2 (non-consummate advance test) is a separate test, not this one.');
   console.log('  ADULT ARM:\n'); console.log(arms.full.prose.split('\n').map((l) => '    ' + l).join('\n'));
   console.log('\n  SAFE ARM:\n');  console.log(arms.safe.prose.split('\n').map((l) => '    ' + l).join('\n'));
   console.log('\n  Evidence: ' + OUT_DIR);
