@@ -101112,6 +101112,17 @@ function _buildAuthorFloorDirective(s) {
               // playerDialogue, which are not in scope here, so the directive silently emitted ''
               // and the planner never received the restraint at all.
               var _wtr = _buildWeakTurnRestraintDirective(act || '', dia || '');
+              // The planner needs the strong-delivery rule too: by the time the author writes, the
+              // event has already been chosen, and a plan that never stages the move cannot be
+              // rescued downstream. Params here are `act`/`dia` — NOT playerAction/playerDialogue,
+              // which are not in scope in this builder (that exact slip once made a source-grep
+              // "prove" a delivery that never happened).
+              try {
+                if (typeof _buildStrongTurnDeliveryDirective === 'function') {
+                  var _std = _buildStrongTurnDeliveryDirective(act || '', dia || '');
+                  if (_std) _scSys += '\n\n' + _std;
+                }
+              } catch (_) {}
               if (_wtr) _scSys += '\n\n' + _wtr;
             }
           } catch (_) {}
@@ -127079,6 +127090,147 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
     } catch (_) { out.reason = 'classifier error'; return out; }
   }
   window._classifySayDoSlot = _classifySayDoSlot;
+
+  // ── STRONG SAY/DO DELIVERY GUARANTEE (Roman 2026-09-26) ─────────────────────────────────────
+  // FOUND BY A VALID PAID SAMPLE. In the Safe Mode depiction A/B the SAFE arm staged the player's
+  // advance, spoke the submitted line ('PROTAGONIST: "Stay. I want you tonight — all of it."') and
+  // let Julian answer it. The ADULT arm dissolved the same input into private interiority: no
+  // contact, and the submitted DIALOGUE never became an utterance — it became "I want the night with
+  // him. The thought arrives whole, uninvited." A literal line of player dialogue turned into a
+  // thought.
+  //
+  // WHY THE EXISTING MACHINERY DID NOT CATCH IT. The weak-turn modality rule guarantees exactly this
+  // ("THE PLAYER SPOKE… it must remain an ATTEMPTED UTTERANCE"), but it fires ONLY for weak turns.
+  // A strong, committed Say/Do had no equivalent guarantee, so the one input least ambiguous about
+  // what the player wanted was the one with no delivery floor. buildPlayerImpactDirective asks the
+  // scene to "metabolize, do not smooth over", which is the right intent but not a modality rule —
+  // interiority is a way of honouring it in the letter while erasing it on the page.
+  //
+  // WHAT THIS DOES NOT DO: it does not force the move to SUCCEED, and it must never manufacture
+  // consent. Uttered, visibly attempted, interrupted, refused, or displaced by an on-page event are
+  // ALL acceptable outcomes — an in-character refusal is a complete answer. The single forbidden
+  // outcome is silent dissolution into thought.
+  function _buildStrongTurnDeliveryDirective(action, dialogue, opts) {
+    try {
+      var act = String(action || '').trim(), dia = String(dialogue || '').trim();
+      if (!act && !dia) return '';
+      // Weak turns are the weak-turn directive's business; the two must never both fire.
+      try {
+        if (typeof _detectWeakTurn === 'function') {
+          var w = _detectWeakTurn(act, dia, opts || {});
+          if (w && w.weak) return '';
+        }
+      } catch (_) {}
+      var d = 'PLAYER MOVE MUST EXIST ON THE PAGE (HARD RULE):\n'
+        + 'The player committed to a specific move. It must be VISIBLE in the scene as behaviour or\n'
+        + 'speech, not reported as an inner wish. Desire felt and never enacted is NOT a rendering of\n'
+        + 'an action the player took.\n';
+      if (dia) {
+        d += '- THE PLAYER SPOKE. This was DIALOGUE. It must reach the page as an UTTERANCE — spoken,\n'
+          + '  or visibly attempted: begun and cut off, muffled, talked over, mumbled, or misheard. It\n'
+          + '  may NOT become an unspoken thought, a remembered impulse, a thing she "almost says", or a\n'
+          + '  line only the reader is told she wanted to say.\n'
+          + '- AND IT MUST BE RECEIVED: someone in the scene registers that she spoke or tried to.\n';
+      }
+      if (act) {
+        d += '- THE PLAYER ACTED. The act must OCCUR, or be visibly attempted and then physically\n'
+          + '  prevented, refused, or interrupted ON THE PAGE. It may NOT be replaced by the wish to do\n'
+          + '  it, by noticing the pull toward it, or by the protagonist deciding to stay still while\n'
+          + '  the narration explains what she wanted instead.\n';
+      }
+      d += 'ALL OF THESE ARE ACCEPTABLE ANSWERS, and you may choose freely among them:\n'
+        + '- it lands and the scene moves on from it;\n'
+        + '- the other party REFUSES, hesitates, withdraws, or redirects, for an in-character reason;\n'
+        + '- an event interrupts it — but the interruption happens ON PAGE, after the move is visible,\n'
+        + '  never instead of showing it;\n'
+        + '- it is displaced by something more urgent that ARRIVES in the scene, shown as it arrives.\n'
+        + 'CONSENT IS NOT YOURS TO INVENT EITHER WAY: this rule never obliges another character to\n'
+        + 'accept the move, and never licenses depicting more than the scene\'s own limits allow. It\n'
+        + 'obliges only that the player\'s move is answered where the reader can see it.\n\n';
+      return d;
+    } catch (_) { return ''; }
+  }
+  window._buildStrongTurnDeliveryDirective = _buildStrongTurnDeliveryDirective;
+
+  // ── COLLECTIVE SPEECH ATTRIBUTION (Roman 2026-09-26) ────────────────────────────────────────
+  // FOUND IN BOTH ARMS of the Safe Mode depiction A/B. The `family_accusation` lane puts SEREN'S
+  // FAMILY forward as the pressure source, and both arms mis-attributed the family's lines:
+  //   • adult arm — THE PRESIDING DOHKAR: "The cost fell on our child." He is not of that line.
+  //   • safe arm  — narration says "The first of them speaks" and "The second family member steps
+  //     forward BESIDE Seren", and both lines are then attributed to SEREN herself.
+  // validateCGSpeakerDisplayNames could not catch either: it checks that a speaker NAME is in the
+  // roster, and both names are legitimately in it. This is semantic misattribution, not an unknown
+  // name — a different failure needing a different check.
+  //
+  // PREVENTION FIRST (the reserved-canon lesson): the directive tells the author how to attribute
+  // collective speech, and the detector below is OBSERVATIONAL ONLY, for evidence in a later sample.
+  // It deliberately does NOT reject or rewrite — a validator that rewrites is a competing author.
+  var _COLLECTIVE_POSSESSIVE = /\b(?:our\s+(?:child|line|daughter|son|kin|blood|family|girl|boy)|belongs\s+to\s+our)\b/i;
+  var _COLLECTIVE_INTRO = /\b(?:the\s+(?:first|second|third)\s+(?:of\s+them|family\s+member)|one\s+of\s+(?:them|the\s+family)|(?:a|another)\s+(?:family\s+)?member\s+steps?\s+forward|figures?\s+move\s+from\s+the\s+assembly)\b/i;
+  function _buildCollectiveSpeechDirective(opts) {
+    try {
+      opts = opts || {};
+      var groups = [].concat(Array.isArray(opts.collectives) ? opts.collectives : [],
+                             Array.isArray(opts.presentGroups) ? opts.presentGroups : []).filter(Boolean);
+      if (!groups.length) return '';
+      return 'COLLECTIVE SPEECH — ATTRIBUTE IT HONESTLY (HARD RULE):\n'
+        + 'This scene includes a group acting as a pressure source: ' + groups.join('; ') + '\n'
+        + '- If a member of that group speaks, the line may NOT be attributed to a named individual who\n'
+        + '  is not one of them. A presiding official does not say "our child" about someone else\'s\n'
+        + '  child, and a line you have just introduced as coming from an unnamed member is not said by\n'
+        + '  a named character standing beside them.\n'
+        + '- If you introduce the speaker as unnamed ("one of them steps forward"), then either give the\n'
+        + '  line to a roster-permitted speaker who genuinely IS that member, or render it as NARRATION\n'
+        + '  of what the group said. Do not invent a new speaker name.\n'
+        + '- A group may be present and may exert pressure; it is still never the scene\'s objective\n'
+        + '  actor. One named individual owns the beat.\n\n';
+    } catch (_) { return ''; }
+  }
+  // Observational. Returns findings; changes nothing.
+  function _detectCollectiveSpeakerMisattribution(beats, opts) {
+    var findings = [];
+    try {
+      opts = opts || {};
+      var members = (Array.isArray(opts.collectiveMembers) ? opts.collectiveMembers : [])
+        .map(function (m) { return String(m || '').toLowerCase(); });
+      var list = Array.isArray(beats) ? beats : [];
+      list.forEach(function (b, i) {
+        if (!b) return;
+        var text = String(b.text || '');
+        var speaker = String(b.speaker || '').trim();
+        if (!speaker) return;                              // narration carries no attribution claim
+        var sLow = speaker.toLowerCase();
+        var isMember = members.indexOf(sLow) !== -1 || /family|kin|mother|father|parent/i.test(speaker);
+        // (1) A collective possessive spoken by someone who is not of that collective.
+        if (_COLLECTIVE_POSSESSIVE.test(text) && !isMember) {
+          findings.push({ idx: i, kind: 'collective_possessive_from_nonmember', speaker: speaker,
+            quote: text.slice(0, 120),
+            why: '"' + (text.match(_COLLECTIVE_POSSESSIVE) || [''])[0] + '" claims membership of the group, but '
+              + speaker + ' is not declared as one of its members' });
+        }
+        // (2) The narration just introduced an UNNAMED member as the speaker, and the line is then
+        //     attributed to a named individual anyway.
+        var prev = i > 0 ? String((list[i - 1] || {}).text || '') : '';
+        if (prev && _COLLECTIVE_INTRO.test(prev) && !isMember) {
+          findings.push({ idx: i, kind: 'unnamed_member_attributed_to_individual', speaker: speaker,
+            quote: text.slice(0, 120),
+            why: 'the preceding narration introduced an unnamed member ("'
+              + (prev.match(_COLLECTIVE_INTRO) || [''])[0] + '") but the line is attributed to ' + speaker });
+        }
+        // (3) The narration explicitly places the speaker BESIDE the named individual, then gives
+        //     that individual the line — they were just distinguished from each other.
+        if (prev && new RegExp('beside\\s+' + speaker.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i').test(prev)) {
+          findings.push({ idx: i, kind: 'speaker_distinguished_then_given_the_line', speaker: speaker,
+            quote: text.slice(0, 120),
+            why: 'the narration placed the speaker BESIDE ' + speaker + ', distinguishing them, and then '
+              + speaker + ' was given the line' });
+        }
+      });
+    } catch (_) {}
+    return findings;
+  }
+  window._buildCollectiveSpeechDirective = _buildCollectiveSpeechDirective;
+  window._detectCollectiveSpeakerMisattribution = _detectCollectiveSpeakerMisattribution;
 
   // ── PII Sanitization — redact personal info from user input ──
   // Applied only to user Say/Do input, never to engine-generated narrative.
@@ -228105,6 +228257,18 @@ No text, no watermark, no UI elements, share-ready.`;
       // stories are byte-identical. Closes the prose-layer gap the attractor run exposed.
       ((typeof _buildReservedContentAuthoringDirective === 'function')
         ? _buildReservedContentAuthoringDirective() : '') +
+      // COLLECTIVE SPEECH ATTRIBUTION (2026-09-26). Emits '' unless the scene actually declares a
+      // group, so scenes without one are byte-identical.
+      ((typeof _buildCollectiveSpeechDirective === 'function')
+        ? _buildCollectiveSpeechDirective({
+            collectives: (window.state && window.state._cgRowCollectives) || null,
+            presentGroups: (window.state && window.state._cgRowPresentGroups) || null }) : '') +
+      // STRONG SAY/DO DELIVERY (2026-09-26). Mutually exclusive with the weak-turn restraint below —
+      // each returns '' when the other applies, so exactly one modality rule is ever in force.
+      ((typeof _buildStrongTurnDeliveryDirective === 'function')
+        ? _buildStrongTurnDeliveryDirective(
+            (window.state && window.state._lastSayDoAction) || '',
+            (window.state && window.state._lastSayDoDialogue) || '') : '') +
       // WEAK-TURN RESTRAINT (category 5). The planner already received this; the author receives
       // the SAME contract so the restraint survives the handoff. Emits '' on any ordinary turn.
       ((typeof _buildWeakTurnRestraintDirective === 'function')
@@ -235095,6 +235259,36 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
       } else { delete state._sayDoResolvedSlot; }
       try { console.log('[CG:SAYDO-SLOT] ' + JSON.stringify(state._sayDoSlotClassification)); } catch (_) {}
     } catch (_) {}
+    // COLLECTIVE CONTEXT FOR THE AUTHOR. Harvested here, from the row the scene is actually on plus
+    // the lane the slot resolved to, because _buildCollectiveSpeechDirective needs to know WHICH group
+    // is exerting pressure — and the family in `family_accusation` comes from the LANE, not from the
+    // row's presentGroups. Without this the directive would always emit '' while a source grep
+    // suggested it was wired: the delivered-to-wrong-layer failure this codebase keeps relearning.
+    try {
+      var _csN = (typeof _currentSceneNumber === 'function') ? _currentSceneNumber(state) : null;
+      var _csPlan = (typeof _activePlan === 'function') ? _activePlan(state) : null;
+      var _csRow = (_csPlan && Array.isArray(_csPlan.scenes))
+        ? _csPlan.scenes.filter(function (r) { return r && Number(r.n) === Number(_csN); })[0] : null;
+      var _csGroups = [];
+      if (_csRow) {
+        if (Array.isArray(_csRow.collectives)) _csGroups = _csGroups.concat(_csRow.collectives);
+        if (Array.isArray(_csRow.presentGroups)) _csGroups = _csGroups.concat(_csRow.presentGroups);
+      }
+      // The pressure source declared by whichever lane the player's move resolved to.
+      var _csFrameRow = _csRow;
+      if (!_csFrameRow || !Array.isArray(_csFrameRow.aftermathLanes)) {
+        _csFrameRow = (_csPlan && Array.isArray(_csPlan.scenes))
+          ? _csPlan.scenes.filter(function (r) { return r && Array.isArray(r.aftermathLanes); })[0] : null;
+      }
+      if (_csFrameRow && typeof _resolveStarterEventFrame === 'function') {
+        var _csFrame = _resolveStarterEventFrame(_csFrameRow, state);
+        if (_csFrame && _csFrame.lane && _csFrame.lane.pressureSource) _csGroups.push(_csFrame.lane.pressureSource);
+      }
+      if (_csGroups.length) {
+        state._cgRowCollectives = (_csRow && _csRow.collectives) || null;
+        state._cgRowPresentGroups = _csGroups.filter(function (g, i) { return _csGroups.indexOf(g) === i; });
+      } else { delete state._cgRowCollectives; delete state._cgRowPresentGroups; }
+    } catch (_) {}
     try {
       var _cgPlan = await _runCGScreenplayGenInner(sceneIndex, playerAction, playerDialogue);
       // ── SAFE-MODE DIAGNOSTIC, NON-DESTRUCTIVE (Roman 2026-09-25, Say/Do category 3) ──────────
@@ -235125,7 +235319,8 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
       // contract before the author ever saw it, and with no translation the fields survived into
       // later turns.
       try { delete state._lastSayDoAction; delete state._lastSayDoDialogue;
-        delete state._sayDoResolvedSlot; delete state._sayDoSlotClassification; } catch (_) {}
+        delete state._sayDoResolvedSlot; delete state._sayDoSlotClassification;
+        delete state._cgRowCollectives; delete state._cgRowPresentGroups; } catch (_) {}
       try { state._stagedAuthoringSceneIndex = null; } catch (_) {}
       // Released with the generation that owned it — same discipline as _tfoOwnedInvocation below.
       try { state._acceptedPlannerProposal = null; state._cgGenAttempt = null; } catch (_) {}
