@@ -9416,6 +9416,11 @@ window.config = window.config || {
       if (!row.eventFrameBySlot && !row.defaultEventFrame) return null;
       var slot = null;
       try { var ir = st && st._intimateInterruption; if (ir && ir.selectedSlot) slot = String(ir.selectedSlot); } catch (_) {}
+      // PRECEDENCE: an explicit reader fate-card choice ALWAYS outranks an inferred one. Only when no
+      // card was clicked does an ordinary Say/Do get to select a slot — see _classifySayDoSlot. This
+      // is what stops every non-institutional player move from falling through to the institutional
+      // default; it selects among slots the seed already authored and never invents a lane.
+      try { if (!slot && st && st._sayDoResolvedSlot) slot = String(st._sayDoResolvedSlot); } catch (_) {}
       var picked = (slot && row.eventFrameBySlot && row.eventFrameBySlot[slot]) ? row.eventFrameBySlot[slot] : (row.defaultEventFrame || null);
       if (!picked || !picked.laneId || !picked.eventFrame) return null;
       var lane = null;
@@ -127002,6 +127007,79 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
   }
   window._buildWeakTurnRestraintDirective = _buildWeakTurnRestraintDirective;
 
+  // ── ORDINARY SAY/DO → EXISTING _INTR_SLOTS SLOT (Roman 2026-09-26) ──────────────────────────
+  // THE DEFECT THIS CLOSES, stated correctly: it was never "no lane exists". The seed already
+  // authors the right lane shape in `eventFrameBySlot` — `boundary` is written for exactly this
+  // ("Lirael's open, unretreating want is what draws Seren's family forward"). The bug is that
+  // `_resolveStarterEventFrame` reads its slot ONLY from `_intimateInterruption.selectedSlot`, which
+  // is populated solely by the intimate-interruption fate-card lifecycle. A Say/Do submitted on the
+  // ORDINARY CG continuation path never enters that subsystem, so the slot stayed null,
+  // `defaultEventFrame` won, and `defaultEventFrame.laneId` is `dohkar_preliminary_review`. Every
+  // non-institutional player move was therefore answered with procedure.
+  //
+  // DESIGN, unchanged from what the seed already established: the player's move is the CAUSE and the
+  // institutional lane is the CONSEQUENCE. So this invents NO lane and adds no "anything intimate"
+  // bucket — it only selects among slots the seed already authored, and falls back to the default
+  // whenever the evidence is not strong enough. Deterministic, no model call, and it returns its
+  // evidence so a future misfire can be explained instead of guessed at.
+  //
+  // WEAK INPUT IS EXCLUDED FIRST, deliberately. An uncertain or disengaged turn must stay under the
+  // weak-turn restraint and must never be inflated into a claim of unretreating want — that would be
+  // the restraint's exact inverse. `_detectWeakTurn` is the single authority for that.
+  var _SLOT_WANT_STRONG = /\b(?:pull(?:s|ed|ing)?\s+(?:him|her|them)|unbuckl\w*|undress\w*|kiss\w*|straddl\w*|take\s+me|want\s+you|have\s+you|onto\s+the\s+bed|into\s+(?:my|the)\s+bed|clothes\s+off|bare\b)/i;
+  var _SLOT_CONFESSION = /\b(?:i\s+did\s+it|it\s+was\s+me|i\s+lied|i\s+confess|the\s+truth\s+is|i\s+shaped\s+the\s+wish|i\s+made\s+the\s+wish)\b/i;
+  var _SLOT_REVERSAL = /\b(?:you\s+have\s+no\s+right|who\s+are\s+you\s+to|by\s+whose\s+authority|not\s+your\s+ruling|you\s+cannot\s+judge|i\s+challenge)\b/i;
+  var _SLOT_TEMPT_DEFENSIVE = /\b(?:i\s+(?:hide|conceal|keep)\s|say\s+nothing\s+about|do\s+not\s+tell\s+them|fold(?:s|ed)?\s+(?:it|the)\b)/i;
+  // Institutional/procedural player moves must keep the institutional default — they are already
+  // what the aftermath lanes are for, so routing them anywhere else would be the same bug mirrored.
+  var _SLOT_PROCEDURAL = /\b(?:review|inquiry|ruling|jurisdiction|testimony|procedure|formally|petition|charge|the\s+assembly)\b/i;
+  function _classifySayDoSlot(action, dialogue, opts) {
+    var out = { slot: null, confidence: 'none', evidence: [], reason: '' };
+    try {
+      opts = opts || {};
+      var act = String(action || ''), dia = String(dialogue || '');
+      var both = (act + ' ' + dia).trim();
+      if (!both) { out.reason = 'no player input'; return out; }
+      // (1) WEAK FIRST. Never promote an uncertain turn into a slot.
+      var weak = null;
+      try { if (typeof _detectWeakTurn === 'function') weak = _detectWeakTurn(act, dia, opts); } catch (_) {}
+      if (weak && weak.weak) {
+        out.reason = 'weak turn (' + (weak.shape || 'weak') + ') — stays under the weak-turn restraint;'
+          + ' an uncertain move is not a claim of unretreating want';
+        out.evidence.push('weakShape:' + (weak.shape || '?'));
+        return out;
+      }
+      // (2) NARROW, POSTURE-BASED TESTS. First strong match wins; order is by specificity, not taste.
+      var tests = [
+        ['confession', _SLOT_CONFESSION, 'an admission has landed'],
+        ['reversal', _SLOT_REVERSAL, 'the player contests who has authority to rule'],
+        ['boundary', _SLOT_WANT_STRONG, 'open, unretreating want made visible — the seed\'s own boundary frame'],
+        ['temptation', _SLOT_TEMPT_DEFENSIVE, 'a landed defensive/concealing move']
+      ];
+      for (var i = 0; i < tests.length; i++) {
+        var m = both.match(tests[i][1]);
+        if (m) {
+          out.slot = tests[i][0]; out.confidence = 'strong';
+          out.evidence.push('matched:' + JSON.stringify(m[0]));
+          out.reason = tests[i][2];
+          return out;
+        }
+      }
+      // (3) EXPLAINED FALLBACK. Procedural input belongs in the institutional default; everything
+      // else simply has no slot the seed represents, and saying so is better than forcing one.
+      if (_SLOT_PROCEDURAL.test(both)) {
+        out.reason = 'procedural/institutional player move — the institutional default frame IS the'
+          + ' right answer for it, so no slot override';
+        out.evidence.push('procedural');
+      } else {
+        out.reason = 'no slot represented: the move is not an admission, an authority challenge, an'
+          + ' unretreating want-claim, or a landed concealment — falling back to defaultEventFrame';
+      }
+      return out;
+    } catch (_) { out.reason = 'classifier error'; return out; }
+  }
+  window._classifySayDoSlot = _classifySayDoSlot;
+
   // ── PII Sanitization — redact personal info from user input ──
   // Applied only to user Say/Do input, never to engine-generated narrative.
   // Does not block submission — redacts and continues.
@@ -235007,6 +235085,16 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
     // actually entered. Set per generation and cleared in the same finally that releases the
     // attempt, so it can never leak into a later turn.
     try { state._lastSayDoAction = playerAction || ''; state._lastSayDoDialogue = playerDialogue || ''; } catch (_) {}
+    // Classified HERE so it shares the Say/Do's exact lifecycle (stashed together, cleared together in
+    // the same finally) and is available before the planner resolves its event frame.
+    try {
+      state._sayDoSlotClassification = (typeof _classifySayDoSlot === 'function')
+        ? _classifySayDoSlot(playerAction || '', playerDialogue || '') : null;
+      if (state._sayDoSlotClassification && state._sayDoSlotClassification.slot) {
+        state._sayDoResolvedSlot = state._sayDoSlotClassification.slot;
+      } else { delete state._sayDoResolvedSlot; }
+      try { console.log('[CG:SAYDO-SLOT] ' + JSON.stringify(state._sayDoSlotClassification)); } catch (_) {}
+    } catch (_) {}
     try {
       var _cgPlan = await _runCGScreenplayGenInner(sceneIndex, playerAction, playerDialogue);
       // ── SAFE-MODE DIAGNOSTIC, NON-DESTRUCTIVE (Roman 2026-09-25, Say/Do category 3) ──────────
@@ -235036,7 +235124,8 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
       // was wrong in both directions: a translation firing mid-generation would erase the weak-turn
       // contract before the author ever saw it, and with no translation the fields survived into
       // later turns.
-      try { delete state._lastSayDoAction; delete state._lastSayDoDialogue; } catch (_) {}
+      try { delete state._lastSayDoAction; delete state._lastSayDoDialogue;
+        delete state._sayDoResolvedSlot; delete state._sayDoSlotClassification; } catch (_) {}
       try { state._stagedAuthoringSceneIndex = null; } catch (_) {}
       // Released with the generation that owned it — same discipline as _tfoOwnedInvocation below.
       try { state._acceptedPlannerProposal = null; state._cgGenAttempt = null; } catch (_) {}
