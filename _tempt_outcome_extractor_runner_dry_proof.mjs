@@ -21,7 +21,7 @@ import { chromium } from 'playwright-core';
 import { installFailClosedNetworkGate } from './_e2e_network_gate.mjs';
 import {
   readFixture, buildContextInPage, installReservationRoute, runExtractorOnly,
-  makeLedger, evaluateFindings, DECLARED_TIERS, CEILING_USD, tierCost
+  makeLedger, evaluateFindings, DECLARED_TIERS, CEILING_USD, tierCost, ROLE_TOKENS
 } from './_tempt_outcome_extractor_runner_core.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -218,13 +218,83 @@ function outcomeFor(quote, opts) {
   ok('no cost was reserved for any blocked request', bLedger.totalUsd === 0, 'total=$' + bLedger.totalUsd.toFixed(6));
 
   // The ceiling itself must bite.
-  const tight = makeLedger(0.001);   // deliberately below one primary tier ($0.000750) + fallback
+  // RETUNED for ROLE_TOKENS.out 1400 -> 3200: the primary tier now prices at $0.00102 (3600 in +
+  // 3200 out at ministral-8b's $0.15/M both ways), so the old $0.001 ceiling refused the FIRST tier
+  // and the assertion below — which needs the first to fit and the second to be refused — inverted.
+  // The fixture tracks the sourced price rather than a frozen number.
+  const tight = makeLedger(0.0015);  // above one primary tier ($0.00102), below primary + fallback
   const r1 = tight.reserve('t1', 'ministral-8b-2512');
   const r2 = tight.reserve('t2', 'grok-4-1-fast-reasoning');
   ok('the reservation ledger REFUSES a dispatch that would breach its ceiling',
     r1.ok === true && r2.ok === false && /past the ceiling/.test(r2.reason || ''), JSON.stringify([r1, r2]));
   ok('an unsourced model is refused rather than priced at zero',
     tight.reserve('t3', 'some-model-nobody-priced').ok === false, JSON.stringify(tight.entries.slice(-1)));
+
+  // ═══════════════════════════════════════════════════════════════════════════════════════════
+  section('F2. THE RAISED OUTPUT LIMIT CHANGES NOTHING ABOUT WHAT IS ACCEPTED');
+  // The limit went 1400 -> 3200 because the live run truncated at 1400 exactly. That is a capacity
+  // fix, NOT a relaxation: a truncated body, a missing citation and a fabricated citation must all
+  // still be refused, and only a complete CITED report may reach commitment.
+  ok('the production extractor now dispatches with the raised limit',
+    await page.evaluate(() => /max_tokens:\s*3200/.test(window._extractTemptOutcome.toString())));
+  ok('...and the reservation accounting tracks it, so the worst case is not under-reserved',
+    ROLE_TOKENS.out === 3200, JSON.stringify(ROLE_TOKENS));
+  ok('the citation requirement is still in the prompt', await page.evaluate(() => {
+    try { const p = window._tfoBuildExtractorPrompt
+      ? window._tfoBuildExtractorPrompt(window._tfoBuildExtractionContext()) : null;
+      return !!p && /evidenceQuote/.test(p.sys + p.usr); } catch (_) { return 'ERR'; }
+  }) === true);
+
+  // TRUNCATION, PROVEN ON THE EXACT PARSE CHAIN the extractor uses. _extractTemptOutcome does
+  // JSON.parse, then falls back to a /\{[\s\S]*\}/ match. daefe5aa showed both fail on a body cut at
+  // max_tokens, and that is WHY nothing committed. Proven here as pure arithmetic on the chain rather
+  // than by re-dispatching.
+  const completeReport = JSON.stringify({
+    delivered: true, ruptureClass: 'memory_perception', requestedScope: 'everyone forgets the ceremony',
+    deliveredScope: 'the assembly forgets; Julian retains residue', scopeMatch: 'narrower',
+    scopeNote: 'Julian suspects from residue', invalidatedPlans: [],
+    affectedKnowers: [
+      { who: 'the assembly', disposition: 'forgets', memoryAbsent: true, suspicionFromResidue: false, evidenceQuote: 'the assembly begins to drift' },
+      { who: 'Julian', disposition: 'suspects', memoryAbsent: false, suspicionFromResidue: true, evidenceQuote: 'Julian watches the thread, not the stone' }
+    ],
+    invokerExemption: { applied: true, note: 'the invoker retains the memory by default' },
+    unaccountedParties: []
+  });
+  const parseChain = (body) => {
+    try { JSON.parse(body); return { parsed: true, via: 'direct' }; } catch (_) {}
+    const m = String(body).match(/\{[\s\S]*\}/);
+    if (!m) return { parsed: false, via: 'no-object-match' };
+    try { JSON.parse(m[0]); return { parsed: true, via: 'regex-fallback' }; }
+    catch (e) { return { parsed: false, via: 'regex-fallback-invalid' }; }
+  };
+  const cut = completeReport.slice(0, Math.floor(completeReport.length * 0.6));
+  console.log('    complete report parses: ' + JSON.stringify(parseChain(completeReport))
+     + '   truncated parses: ' + JSON.stringify(parseChain(cut)));
+  ok('a COMPLETE report parses on the first attempt', parseChain(completeReport).parsed === true);
+  // TWO TRUNCATION SHAPES, both refused. A plain cut has no closing brace and dies at the regex match;
+  // daefe5aa's body was markdown-fenced and DID yield a match, which then failed to parse. Asserting a
+  // single branch was over-specific — what matters is that NEITHER route can produce a report.
+  const cutFenced = '```json\n' + cut + '\n}\n```';
+  console.log('    fenced+truncated parses: ' + JSON.stringify(parseChain(cutFenced)));
+  ok('RED — a plain TRUNCATED body cannot be parsed by either route, so nothing can commit',
+    parseChain(cut).parsed === false, JSON.stringify(parseChain(cut)));
+  ok('RED — a MARKDOWN-FENCED truncated body reaches the regex fallback and still fails to parse',
+    parseChain(cutFenced).parsed === false && parseChain(cutFenced).via === 'regex-fallback-invalid',
+    JSON.stringify(parseChain(cutFenced)));
+  ok('...which is exactly the daefe5aa chain: parse fail -> fallback invalid -> extractor throws',
+    /JSON\.parse\(content\)/.test(await page.evaluate(() => window._extractTemptOutcome.toString()))
+    && /\\{\[\\s\\S\]\*\\}/.test(await page.evaluate(() => window._extractTemptOutcome.toString())));
+  // The citation and semantic gates are already proven above, in this same file, against the REAL
+  // validator; pinned by name so this section cannot drift from them.
+  const selfSrc2 = fs.readFileSync(new URL(import.meta.url).pathname, 'utf8');
+  ok('MISSING/FABRICATED citations are proven refused earlier in this file, against the real validator',
+    /failing specifically on citations — the quote is not in the accepted prose/.test(selfSrc2)
+    && /\.\.\.and it is reported as a VALIDATION FAILURE, not a transport failure/.test(selfSrc2));
+  ok('...and a refused report mutates nothing', /\.\.\.and still mutating nothing/.test(selfSrc2));
+  ok('COMMITMENT of a complete cited report is proven by the outcome integration control',
+    fs.existsSync(path.join(__dirname, '_tempt_fate_outcome_integration_control.mjs'))
+    && /a durable consequence was actually committed via the REAL production path/.test(
+      fs.readFileSync(path.join(__dirname, '_tempt_fate_outcome_integration_control.mjs'), 'utf8')));
 
   // ═══════════════════════════════════════════════════════════════════════════════════════════
   section('G. THE CLI ITSELF FAILS CLOSED — no default that dispatches');

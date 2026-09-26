@@ -35,7 +35,11 @@ export const TEXT_PRICING = {
   'gpt-4o-mini':              { in: 0.00000015, out: 0.0000006 }
 };
 // The censused worst case for this role (see _tempt_fate_memory_erasure_cost_audit.mjs).
-export const ROLE_TOKENS = { in: 3600, out: 1400 };
+// OUT RAISED 1400 -> 3200 (2026-09-26), tracking the extractor's own max_tokens. The live run hit 1400
+// exactly and truncated mid-object; the limit was sized from that run's measured 4.11 chars/token
+// (5,758 chars at 1,400) to ~2x a complete cited report. RESERVATION ACCOUNTING MUST TRACK THE LIMIT —
+// leaving this at 1400 while the dispatch allows 3200 would under-reserve the worst case by design.
+export const ROLE_TOKENS = { in: 3600, out: 3200 };
 // The extractor's three declared tiers, in order. _callTieredProvider's default chain; the
 // extractor passes no opts.tiers override.
 export const DECLARED_TIERS = [

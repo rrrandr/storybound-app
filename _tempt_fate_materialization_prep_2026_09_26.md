@@ -102,7 +102,7 @@ and stubbing it would not prove live extraction.
 
 | # | Call | Route / model | Measured | Allowance |
 |---|---|---|---|---|
-| 1 | continuity | proxy or mistral tier | $0.0109 | $0.03 |
+| 1 | continuity | proxy or mistral tier | **NOT MEASURED** | $0.03 |
 | 2 | planner | /api/proxy grok-4.3 | ~$0.0099 | $0.03 |
 | 3 | author | /api/proxy grok-4.3 | $0.0793–0.0857 | $0.12 |
 | 4 | editorial | mistral tier | unreported | $0.03 |
@@ -110,8 +110,13 @@ and stubbing it would not prove live extraction.
 | 6 | **temptOutcomeExtractor** | **ministral-8b-2512** | **~$0.00051** | **$0.01** |
 | — | Mistral-tier attempt of any role | | ~$0.0016 | $0.01 |
 
+**BUDGET-TABLE CORRECTION.** I listed continuity's measured cost as $0.0109. That figure is the
+2026-09-26T07-10-13 receipt, which is **a small grok-4.3 call of UNDETERMINED ROLE** — the same
+attribution error I already withdrew once. Continuity has **no measured cost**; its $0.03 allowance is
+sized from the observed small-grok band ($0.005043–$0.010893), not from a continuity measurement.
+
 **Reservation limit: $0.26** (was $0.25 and omitted call 6). **Expected ~$0.116** — the comparable
-Scene A run measured $0.11454 and the extractor adds ~$0.0005.
+Scene A run measured $0.11454 in total and the extractor adds ~$0.0005 at 1400 out, ~$0.001 at 3200.
 
 Unchanged disclosure: an enforced limit on the NUMBER AND CLASS of calls, refused before dispatch —
 **not** a guaranteed maximum charge, because reasoning output is uncapped.

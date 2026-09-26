@@ -191882,7 +191882,22 @@ No text, no watermark, no UI elements, share-ready.`;
     var data = await _callTieredProvider('temptOutcomeExtractor', [
       { role: 'system', content: p.sys },
       { role: 'user', content: p.usr }
-    ], { max_tokens: 1400, temperature: 0.1 });
+      // ── OUTPUT LIMIT SIZED FROM THE OBSERVED TRUNCATION (Roman 2026-09-26) ──────────────────
+      // 1400 was set BEFORE the contract grew (targetPopulation, invokerExemption, unaccountedParties,
+      // per-knower memoryAbsent / suspicionFromResidue / evidenceQuote). The live extractor run
+      // (daefe5aa) hit 1400 EXACTLY and stopped mid-sentence inside invokerExemption.note, with
+      // unaccountedParties never emitted.
+      // SIZED, NOT GUESSED, from that run's own numbers: it produced 5,758 characters at 1,400
+      // completion tokens => 4.11 chars/token for this model on this output. A COMPLETE report needs
+      // that, plus the rest of the note (~100 chars), plus unaccountedParties (~300), plus the
+      // citations it omitted (~400, four knowers) => ~6,560 chars => ~1,600 tokens.
+      // 3200 is ~2x that complete report — documented headroom for more knowers or longer quotes.
+      // Cost impact is negligible: ministral-8b-2512 is $0.15/M BOTH ways (sourced from TEXT_PRICING via
+      // _tempt_outcome_extractor_runner_core.mjs), so the censused worst case 3600 in + 3200 out is
+      // ~$0.00102, against $0.00051 measured at 1400 out.
+      // Raising the ceiling does NOT relax anything: citations are still required
+      // and validation is still fail-closed, so an uncited-but-complete reply is still refused.
+    ], { max_tokens: 3200, temperature: 0.1 });
     try { if (typeof _recordProxyTextCost === 'function') _recordProxyTextCost(data, (data && data._orchestration && data._orchestration.model), 'tempt-extract'); } catch (_) {}
     var content = data && data.content;
     if (!content) throw new Error('extractor returned no content');
