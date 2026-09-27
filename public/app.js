@@ -192028,6 +192028,14 @@ No text, no watermark, no UI elements, share-ready.`;
   // alone could be the thing that failed:
   //   1. state._temptFateInvocationFailsafe — part of the state snapshot, so it survives reload.
   //   2. the accepted scene record itself — already being persisted at this exact moment.
+  //
+  // THE LIMIT, STATED PLAINLY (Roman 2026-09-27). Two carriers REDUCE the probability of loss; they
+  // do not eliminate it. If BOTH writes fail, Track B CANNOT guarantee downstream containment for
+  // that invocation — the scene is accepted, nothing is committed, and the invocation is genuinely
+  // lost to downstream canon. What the code does in that case is DETECT AND LOG a system-level
+  // persistence failure (the console.error at the capture site), because a state object that cannot
+  // accept a plain property is not a Tempt Fate problem. Do not describe Track B as covering every
+  // invocation under all failures: it covers every invocation whose scene state is still writable.
   function _tfoRecordInvocationFailsafe(ctx, err) {
     var out = { marked: false, carriers: [] };
     var s = window.state; if (!s) return out;
@@ -237161,10 +237169,13 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
       // invocation while automatic commitment is disabled, whatever the invoker resolution did.
       var _tfoPersistForScene = function (ctx) {
         var rec = _tfoWritePending(ctx);
-        // A record failure must never break an accepted scene's persistence path — AND must never
+        // A record failure must never break an accepted scene's persistence path — AND must not
         // silently lose the invocation. Both halves, or the guarantee is hollow: see
         // _tfoRecordInvocationFailsafe. A null return (a refusal) is treated as a loss too, because
         // downstream needs to know an invocation happened even when it could not be recorded properly.
+        // BOUNDED CLAIM: if the fail-safe ALSO fails, the invocation is lost to downstream and the
+        // error below is the only remaining signal — a detected system-level persistence failure, not
+        // a contained one.
         try {
           var _inv = (typeof _tfoRecordAcceptedInvocation === 'function')
             ? _tfoRecordAcceptedInvocation(ctx, { kind: 'persisted_at_capture', detail: {
@@ -237175,7 +237186,9 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
           if (!_inv) _tfoRecordInvocationFailsafe(ctx, null);
         } catch (_e) {
           try { _tfoRecordInvocationFailsafe(ctx, _e); } catch (_e2) {
-            try { console.error('[TEMPT-INVOCATION] BOTH the record and the fail-safe failed — the invocation is lost for this scene:', _e2 && _e2.message); } catch (_) {}
+            try { console.error('[TEMPT-INVOCATION] SYSTEM-LEVEL PERSISTENCE FAILURE — both the invocation record AND the fail-safe marker could not be written. '
+              + 'The scene stays accepted and nothing is committed, but this invocation is LOST to downstream canon: no directive will carry it. '
+              + 'This is detected, not contained. Underlying error:', _e2 && _e2.message); } catch (_) {}
           }
         }
         return rec;

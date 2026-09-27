@@ -285,7 +285,34 @@ restores that once a projection can back it.
 | 11. **No commitment** | nothing commits automatically while a record stands; a human resolution against `invocationId` commits with `human_review` provenance |
 | 12. **Conversion** | each existing pending record is invalidated **and** yields an invocation record — nothing is dropped in the migration |
 
-## B7. Estimate
+## B6b. The stated limit of the fail-safe
+
+A failed invocation-record write leaves a durable marker on two carriers
+(`state._temptFateInvocationFailsafe`, part of the state snapshot; and a field on the accepted scene
+record). **Two carriers reduce the probability of loss; they do not eliminate it.**
+
+**If both writes fail, Track B cannot guarantee downstream containment for that invocation.** The scene
+stays accepted and nothing is committed, but the invocation is genuinely lost to downstream canon — no
+directive will carry it. The system **detects and logs a system-level persistence failure** and nothing
+more. A state object that cannot accept a plain property is not a Tempt Fate problem.
+
+So the guarantee is bounded, and should be stated in those terms: **Track B covers every accepted
+invocation whose scene state is still writable** — not every invocation under all failures.
+
+Proven: `_tempt_fate_trackb_failsafe_proof.mjs` (41/41) covers the single-failure path end to end, with
+the fault injected at a dependency rather than through a test hook. The both-carriers-fail path is
+**implemented and logged but not proof-covered**; it is a detection path, not a containment one.
+
+## B7. Estimate — NOT to be built automatically
+
+**B7 (the review surface) is a separate product decision and is deliberately not built.** The interim
+system already has the safety behaviour: records are created, uncertainty propagates, continuation
+proceeds, nothing commits automatically, and resolution/dismissal work through the append-only API. A UI
+is how a person reaches that, not whether the guarantee holds.
+
+## B7-estimate (if it is ever commissioned)
+
+
 
 Smaller and lower-risk than Track A, and now smaller than the previous version of this plan: with
 `_sbSpeakerLabel` removed it makes **no render-visible change**, and with the record unconditional it has

@@ -371,6 +371,19 @@ observation as their basis** for doing so. What is forbidden is the machine infe
 two facts separable that a silent resolution would fuse: *"the assembly does not recall the ceremony"* and
 *"the wish is why."*
 
+## The fail-safe, and its limit
+
+If the invocation-record write itself fails, a durable marker is written to two carriers — the state
+snapshot and a field on the accepted scene record — and the uncertainty directive is driven from the
+marker, so downstream still receives the rule with no real record present. A reviewer promotes a marker
+into the ordinary append-only record without rewriting the scene.
+
+**The limit is real and must be stated rather than glossed.** Two carriers reduce the probability of loss;
+they do not eliminate it. **If both fail, containment is not guaranteed** for that invocation: the scene
+stays accepted, nothing commits, and the invocation is lost to downstream canon. The system detects and
+logs a system-level persistence failure. The guarantee is therefore bounded — every accepted invocation
+**whose scene state is still writable**.
+
 ## Human resolution, without rewriting the original scene
 
 Resolution is an **append**, never an edit:
