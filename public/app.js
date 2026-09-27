@@ -192014,6 +192014,96 @@ No text, no watermark, no UI elements, share-ready.`;
   }
   window._tfoRecordAcceptedInvocation = _tfoRecordAcceptedInvocation;
 
+  // ── FAIL-SAFE MARKER (Roman 2026-09-27) ──────────────────────────────────────────────────────
+  // THE HOLE THIS CLOSES. "Every accepted invocation creates a record" and "a record failure can
+  // never break scene persistence" are in tension: if the record write throws and the error is
+  // merely caught and logged, the accepted scene survives and DOWNSTREAM LOSES THE INVOCATION —
+  // precisely the failure Track B exists to prevent. A swallowed error is worse than a stall,
+  // because the next planner then invents an outcome.
+  //
+  // So a failed write must still leave something durable behind. This is deliberately PRIMITIVE:
+  // whatever broke the full record write may break again, so this touches nothing clever — no
+  // deep-freeze, no id minting, no store lookups, plain object literals on plain carriers, and each
+  // carrier in its own try so one failing cannot take the other down. Two carriers, because either
+  // alone could be the thing that failed:
+  //   1. state._temptFateInvocationFailsafe — part of the state snapshot, so it survives reload.
+  //   2. the accepted scene record itself — already being persisted at this exact moment.
+  function _tfoRecordInvocationFailsafe(ctx, err) {
+    var out = { marked: false, carriers: [] };
+    var s = window.state; if (!s) return out;
+    var marker = {
+      failsafe: true, v: _TFO_INVOCATION_V,
+      storyId: String((ctx && ctx.storyId) || s.storyId || ''),
+      proposalId: String((ctx && ctx.proposalId) || ''),
+      sceneIdx: (ctx && ctx.sceneIdx != null) ? ctx.sceneIdx : null,
+      sceneUid: (ctx && ctx.sceneUid != null) ? String(ctx.sceneUid) : null,
+      wishText: String((ctx && ctx.wishText) || ''),
+      reason: 'invocation_record_write_failed',
+      error: String((err && err.message) || err || 'record creation returned nothing'),
+      autoCommitDisabled: true,
+      outcome: 'unresolved',
+      at: Date.now()
+    };
+    try {
+      if (!Array.isArray(s._temptFateInvocationFailsafe)) s._temptFateInvocationFailsafe = [];
+      var dup = false;
+      for (var i = 0; i < s._temptFateInvocationFailsafe.length; i++) {
+        var m = s._temptFateInvocationFailsafe[i];
+        if (m && m.storyId === marker.storyId && m.proposalId === marker.proposalId
+            && String(m.sceneIdx) === String(marker.sceneIdx)) { dup = true; break; }
+      }
+      if (!dup) s._temptFateInvocationFailsafe.push(marker);
+      out.marked = true; out.carriers.push('state._temptFateInvocationFailsafe');
+    } catch (_) {}
+    try {
+      var list = s.scenes || [];
+      var sc = list[list.length - 1];
+      if (sc && typeof sc === 'object') {
+        sc.temptInvocationFailsafe = marker;      // a FIELD, not the text — the re-sync rewrites .text only
+        out.marked = true; out.carriers.push('accepted scene record');
+      }
+    } catch (_) {}
+    try {
+      console.warn('[TEMPT-INVOCATION] RECORD WRITE FAILED — durable fail-safe marker written to '
+        + (out.carriers.join(' + ') || 'NOTHING') + '. The invocation is NOT lost; downstream still gets '
+        + 'the unresolved-outcome rule. reason=' + marker.error);
+    } catch (_) {}
+    return out;
+  }
+  window._tfoRecordInvocationFailsafe = _tfoRecordInvocationFailsafe;
+
+  // A fail-safe marker is SUPERSEDED once a real record exists for the same (story, proposal, scene)
+  // — derived, never written back onto the marker, exactly as invocation status is derived.
+  function _tfoUnresolvedFailsafeMarkers(s) {
+    s = s || window.state || {};
+    var marks = Array.isArray(s._temptFateInvocationFailsafe) ? s._temptFateInvocationFailsafe : [];
+    var sid = String(s.storyId || '');
+    var recs = Array.isArray(s._temptFateInvocations) ? s._temptFateInvocations : [];
+    return marks.filter(function (m) {
+      if (!m || String(m.storyId) !== sid) return false;
+      for (var i = 0; i < recs.length; i++) {
+        var r = recs[i];
+        if (r && String(r.storyId) === sid && String(r.proposalId) === String(m.proposalId)
+            && String(r.sceneIdx) === String(m.sceneIdx)) return false;   // real record took over
+      }
+      return true;
+    });
+  }
+  window._tfoUnresolvedFailsafeMarkers = _tfoUnresolvedFailsafeMarkers;
+
+  // HUMAN RECOVERY. A reviewer promotes a marker into the ordinary append-only record, which then
+  // behaves exactly like any other: resolvable, dismissible, status derived. The accepted scene is
+  // NOT rewritten — the marker field stays where it is and simply stops firing, because
+  // _tfoUnresolvedFailsafeMarkers now finds a real record for that (story, proposal, scene).
+  function _tfoRecoverInvocationFromFailsafe(marker) {
+    if (!marker || !marker.failsafe) return null;
+    return _tfoRecordAcceptedInvocation({
+      storyId: marker.storyId, proposalId: marker.proposalId,
+      sceneIdx: marker.sceneIdx, sceneUid: marker.sceneUid, wishText: marker.wishText
+    }, { kind: 'failsafe_recovery', detail: { originalError: marker.error, markedAt: marker.at } });
+  }
+  window._tfoRecoverInvocationFromFailsafe = _tfoRecoverInvocationFromFailsafe;
+
   function _tfoInvocationsForStory(s) {
     s = s || window.state || {};
     var store = Array.isArray(s._temptFateInvocations) ? s._temptFateInvocations : [];
@@ -192121,13 +192211,20 @@ No text, no watermark, no UI elements, share-ready.`;
     try {
       var s = window.state || {};
       var open = _tfoUnresolvedInvocations(s);
-      if (!open.length) return '';
+      // FAIL-SAFE MARKERS COUNT. A marker exists precisely because the full record could not be
+      // written, so excluding it here would reintroduce the hole the marker was created to close.
+      var marks = _tfoUnresolvedFailsafeMarkers(s);
+      if (!open.length && !marks.length) return '';
       var lines = open.map(function (e) {
         return '  - scene ' + ((e.invokedAtScene != null) ? (e.invokedAtScene + 1) : '?')
           + ': the reader invoked Tempt Fate, asking: "' + String(e.evidence && e.evidence.wishText || '').trim() + '"'
           + (e.invokerUnresolved ? '  [invoker identity unresolved — under review]' : '');
-      }).join('\n');
-      return 'TEMPT FATE — INVOCATION ACCEPTED, OUTCOME UNRESOLVED (' + open.length + '):\n' + lines + '\n'
+      }).concat(marks.map(function (m) {
+        return '  - scene ' + ((m.sceneIdx != null) ? (m.sceneIdx + 1) : '?')
+          + ': the reader invoked Tempt Fate, asking: "' + String(m.wishText || '').trim() + '"'
+          + '  [FAIL-SAFE MARKER — the full record could not be written; under review]';
+      })).join('\n');
+      return 'TEMPT FATE — INVOCATION ACCEPTED, OUTCOME UNRESOLVED (' + (open.length + marks.length) + '):\n' + lines + '\n'
         + '  - NO durable outcome has been committed for these invocations. Automatic outcome extraction is disabled; a person resolves them.\n'
         + '  - DO NOT assume the requested effect landed. DO NOT assume it failed. Both readings are refused.\n'
         + '  - DO NOT derive memory, possession, history, relationship, exemption or scope FROM THIS WISH. Nothing follows from it yet.\n'
@@ -237064,16 +237161,22 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
       // invocation while automatic commitment is disabled, whatever the invoker resolution did.
       var _tfoPersistForScene = function (ctx) {
         var rec = _tfoWritePending(ctx);
+        // A record failure must never break an accepted scene's persistence path — AND must never
+        // silently lose the invocation. Both halves, or the guarantee is hollow: see
+        // _tfoRecordInvocationFailsafe. A null return (a refusal) is treated as a loss too, because
+        // downstream needs to know an invocation happened even when it could not be recorded properly.
         try {
-          if (typeof _tfoRecordAcceptedInvocation === 'function') {
-            _tfoRecordAcceptedInvocation(ctx, { kind: 'persisted_at_capture', detail: {
-              sceneCount: ((window.state && window.state.scenes) || []).length,
-              sceneIdx: (ctx && ctx.sceneIdx != null) ? ctx.sceneIdx : null
-            } });
-          }
+          var _inv = (typeof _tfoRecordAcceptedInvocation === 'function')
+            ? _tfoRecordAcceptedInvocation(ctx, { kind: 'persisted_at_capture', detail: {
+                sceneCount: ((window.state && window.state.scenes) || []).length,
+                sceneIdx: (ctx && ctx.sceneIdx != null) ? ctx.sceneIdx : null
+              } })
+            : null;
+          if (!_inv) _tfoRecordInvocationFailsafe(ctx, null);
         } catch (_e) {
-          // An invocation-record failure must never break an accepted scene's persistence path.
-          try { console.warn('[TEMPT-INVOCATION] record failed (scene stays accepted):', _e && _e.message); } catch (_) {}
+          try { _tfoRecordInvocationFailsafe(ctx, _e); } catch (_e2) {
+            try { console.error('[TEMPT-INVOCATION] BOTH the record and the fail-safe failed — the invocation is lost for this scene:', _e2 && _e2.message); } catch (_) {}
+          }
         }
         return rec;
       };
