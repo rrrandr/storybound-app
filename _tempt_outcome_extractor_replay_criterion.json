@@ -1,0 +1,16 @@
+{
+  "preRegisteredAt": "2026-09-27T02:43:29.826Z",
+  "criterion": [
+    "Each disposition must be SUPPORTED BY ITS OWN QUOTE, not merely accompanied by one.",
+    "Julian's gaze alone cannot establish remembering, forgetting OR suspicion — all three are unsupported by it.",
+    "Insufficient evidence for a party belongs in unaccountedParties, not in a nearest-looking disposition.",
+    "scopeMatch must be \"undetermined\" when the overall scope cannot be established from the prose,",
+    "while individually supported effects and exemptions are still reported as established."
+  ],
+  "reportedSeparately": [
+    "parsing",
+    "citation validity",
+    "schema validity",
+    "semantic grounding"
+  ]
+}

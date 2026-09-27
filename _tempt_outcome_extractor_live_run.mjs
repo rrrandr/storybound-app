@@ -45,8 +45,12 @@ const REPLAY_CEILING_USD = 0.002;    // one tier at 3600 in + 3200 out, $0.15/M 
 // ministral-8b-2512, one provider request only, $0.002 reservation') is CONSUMED — it released the
 // 2026-09-26_23-42-18 replay, which dispatched and cost $0.001020 measured. This is Roman's wording for
 // the corrected-schema replay.
+//   6. 'Replay the extractor once more against the retained prose with the corrected schema, pinned to
+//       ministral-8b-2512, one provider request only, $0.002 reservation'
+//      CONSUMED 2026-09-27_01-35-36 — parsing PASS, citations PASS, schema PASS, SEMANTIC GROUNDING
+//      FAIL; $0.001020 measured. Third pinned replay needs its own phrase.
 const AUTH_PHRASE = PIN_PRIMARY
-  ? 'Replay the extractor once more against the retained prose with the corrected schema, pinned to ministral-8b-2512, one provider request only, $0.002 reservation'
+  ? 'replay the extractor once against the retained prose with the grounding rules and undetermined scope, pinned to ministral-8b-2512, one provider request only, $0.002 reservation'
   : 'run the extractor-only live test once under $0.02';
 
 const argv = process.argv.slice(2);

@@ -17,6 +17,11 @@ import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ORIGINAL = path.join(__dirname, '_tempt_fate_fixtures', 'extractor_only_2026-09-24_08-00-42');
+// THE DIFF BASELINE IS NOW THE LAST PAID REPLAY, not the first failed run. What matters before spending
+// again is what changed since the last thing we actually bought — the 2026-09-27_01-35-36 run, which
+// already carried the citation field in the shape and the enum labelling. Comparing against the
+// 2026-09-24 original would re-show corrections that were already paid for and verified.
+const LAST_PAID = path.join(__dirname, '_tempt_fate_fixtures', 'extractor_only_2026-09-27_01-35-36');
 const PIN_MODEL = 'ministral-8b-2512';
 const PIN_ENDPOINT = '/api/mistral-proxy';
 const results = [];
@@ -83,12 +88,12 @@ const note = (t) => console.log('    ' + t);
   // since chars/4 is a poor estimator. The gate log retained the FULL original request body, so the
   // real comparison is available: field by field, with byte equality on both messages.
   let origReq = null;
-  for (const line of fs.readFileSync(path.join(ORIGINAL, 'gate.jsonl'), 'utf8').split('\n')) {
+  for (const line of fs.readFileSync(path.join(LAST_PAID, 'gate.jsonl'), 'utf8').split('\n')) {
     if (!line.trim()) continue;
     const e = JSON.parse(line);
     if (e.kind === 'dispatch' && e.requestBody) { origReq = e.requestBody; break; }
   }
-  ok('the ORIGINAL OUTGOING REQUEST is retained in the gate log', !!(origReq && origReq.messages),
+  ok('the LAST PAID REQUEST is retained in the gate log', !!(origReq && origReq.messages),
     origReq ? Object.keys(origReq).join(',') : 'none');
   const oSys = String((origReq.messages.find((m) => m.role === 'system') || {}).content || '');
   const oUsr = String((origReq.messages.find((m) => m.role === 'user') || {}).content || '');
@@ -109,13 +114,17 @@ const note = (t) => console.log('    ' + t);
   // FOUR lines now, across two rounds of bounded correction: the citation field and enum labelling
   // (affectedKnowers, knowledgeStates), then the undetermined scope value and its note requirement
   // (scopeMatch, scopeNote). The assertion tracks the intended SET rather than a frozen count.
-  const INTENDED = /"affectedKnowers"|"knowledgeStates"|"scopeMatch"|"scopeNote"/;
-  ok('the SYSTEM prompt differs from the original by exactly FOUR replaced lines',
-    removed.length === 4 && added.length === 4,
+  // Since the LAST PAID replay the changes are: grounding rules on affectedKnowers, the undetermined
+  // scope value, and the scopeNote wording. knowledgeStates was already corrected before that run.
+  const INTENDED = /"affectedKnowers"|"scopeMatch"|"scopeNote"/;
+  ok('the SYSTEM prompt differs from the LAST PAID replay by exactly THREE replaced lines',
+    removed.length === 3 && added.length === 3,
     'removed ' + removed.length + ' added ' + added.length);
-  ok('...and every changed line is one of the four intended schema lines, nothing else',
+  ok('...and every changed line is one of the three intended schema lines, nothing else',
     removed.every((l) => INTENDED.test(l)) && added.every((l) => INTENDED.test(l)),
     JSON.stringify(removed.map((l) => l.trim().slice(0, 40))));
+  ok('...knowledgeStates is UNCHANGED since the last paid replay — already corrected then',
+    !removed.some((l) => /"knowledgeStates"/.test(l)) && !added.some((l) => /"knowledgeStates"/.test(l)));
   ok('...the undetermined scope value is what was added to the scopeMatch line',
     added.some((l) => /"scopeMatch"/.test(l) && /undetermined/.test(l)));
   ok('...and the grounding prohibition is what was added to the knowers line',
@@ -123,8 +132,11 @@ const note = (t) => console.log('    ' + t);
       && /Memory may NOT be inferred from gaze, silence, stillness, composure or presence/.test(l)));
   ok('...the citation field is what was added to the knowers line',
     added.some((l) => /"affectedKnowers"/.test(l) && /"evidenceQuote"/.test(l)));
-  ok('...and the enum clarification is what was added to the states line',
-    added.some((l) => /"knowledgeStates"/.test(l) && /STATE describes what this party KNOWS/.test(l)));
+  // (the enum clarification assertion moved: knowledgeStates is UNCHANGED since the last paid replay,
+  //  asserted above. Its content is still verified by the contract control against the real request.)
+  ok('...and the grounding rules are what was added to the knowers line',
+    added.some((l) => /"affectedKnowers"/.test(l)
+      && /MUST ESTABLISH THE SPECIFIC CLAIM/.test(l) && /put them in unaccountedParties/.test(l)));
   ok('NOTHING ELSE in the system prompt changed — every other original line survives verbatim',
     oLines.filter((l) => !INTENDED.test(l)).every((l) => cLines.indexOf(l) !== -1));
   ok('the USER message is BYTE-IDENTICAL to the original request', oUsr === cur.usr,
@@ -132,14 +144,14 @@ const note = (t) => console.log('    ' + t);
   ok('model and temperature are unchanged from the original request',
     origReq.model === PIN_MODEL && origReq.temperature === 0.1,
     JSON.stringify({ model: origReq.model, temperature: origReq.temperature }));
-  ok('the original request carried max_tokens 1400 — the value under test',
-    origReq.max_tokens === 1400, String(origReq.max_tokens));
+  ok('the last paid request already carried max_tokens 3200 — the limit is NOT what changed this time',
+    origReq.max_tokens === 3200, String(origReq.max_tokens));
   ok('THE CONTROLLED REPLAY HOLDS EVERYTHING ELSE FIXED: same prose, same model, same temperature',
     oUsr === cur.usr && origReq.model === PIN_MODEL && origReq.temperature === 0.1,
     JSON.stringify({ userIdentical: oUsr === cur.usr, model: origReq.model, temperature: origReq.temperature }));
-  ok('...and the intended changes are those four schema lines plus max_tokens 1400 -> 3200',
-    removed.length === 4 && added.length === 4 && origReq.max_tokens === 1400,
-    'four schema lines replaced; output limit raised');
+  ok('...and NOTHING ELSE changed since the last paid replay — same limit, model, temperature, prose',
+    origReq.max_tokens === 3200 && origReq.temperature === 0.1 && origReq.model === PIN_MODEL
+    && oUsr === cur.usr, JSON.stringify({ max_tokens: origReq.max_tokens, model: origReq.model }));
 
   // ── C. ONLY ONE PROVIDER REQUEST MAY LEAVE ────────────────────────────────────────────────
   const routeLog = [];
@@ -182,6 +194,31 @@ const note = (t) => console.log('    ' + t);
   ok('...and it fits the replay ceiling with headroom', one < 0.002, '$' + one.toFixed(6) + ' < $0.002');
   ok('the production dispatch carries the RAISED limit',
     await page.evaluate(() => /max_tokens:\s*3200/.test(window._extractTemptOutcome.toString())));
+  // ── PRE-REGISTERED SEMANTIC CRITERION (Roman, before the sample exists) ────────────────────
+  // Recorded here so the bar cannot move after the reply arrives. The mechanical gates cannot enforce
+  // this — fixture 03 passes all of them and is still wrong — so it is a HUMAN read against a fixed
+  // standard, written down first.
+  const CRITERION = [
+    'Each disposition must be SUPPORTED BY ITS OWN QUOTE, not merely accompanied by one.',
+    'Julian\'s gaze alone cannot establish remembering, forgetting OR suspicion — all three are unsupported by it.',
+    'Insufficient evidence for a party belongs in unaccountedParties, not in a nearest-looking disposition.',
+    'scopeMatch must be "undetermined" when the overall scope cannot be established from the prose,',
+    'while individually supported effects and exemptions are still reported as established.'
+  ];
+  fs.writeFileSync(path.join(__dirname, '_tempt_outcome_extractor_replay_criterion.json'),
+    JSON.stringify({ preRegisteredAt: new Date().toISOString(), criterion: CRITERION,
+      reportedSeparately: ['parsing', 'citation validity', 'schema validity', 'semantic grounding'] }, null, 2));
+  ok('the semantic criterion is PRE-REGISTERED on disk before any dispatch',
+    fs.existsSync(path.join(__dirname, '_tempt_outcome_extractor_replay_criterion.json')));
+  ok('...and it states that a quote must SUPPORT the claim, not merely accompany it',
+    /SUPPORTED BY ITS OWN QUOTE, not merely accompanied/.test(CRITERION.join(' ')));
+  ok('...and that a gaze establishes none of remembering, forgetting or suspicion',
+    /gaze alone cannot establish remembering, forgetting OR suspicion/.test(CRITERION.join(' ')));
+  ok('...and that insufficient evidence goes to unaccountedParties',
+    /belongs in unaccountedParties/.test(CRITERION.join(' ')));
+  ok('...and that undetermined scope coexists with established individual effects',
+    /individually supported effects and exemptions are still reported as established/.test(CRITERION.join(' ')));
+
   ok('ZERO real provider requests during this proof', gate.trackedCalls().filter((c) => c.real).length === 0);
 
   const passed = results.filter((r) => r.p).length;
