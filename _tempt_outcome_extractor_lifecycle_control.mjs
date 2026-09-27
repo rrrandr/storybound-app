@@ -68,6 +68,11 @@ const GOOD = {
   const consoleLines = [];
   page.on('console', (m) => consoleLines.push(m.text()));
   const gate = await installFailClosedNetworkGate(page, { logFile: path.join(OUT_DIR, 'gate.jsonl'), blockImagePreparation: true });
+  // TRACK B (Roman 2026-09-27): this control exercises the extraction machinery, which is
+  // DISABLED by default in production (_tfoContinuationBlocked is a no-op then, so the story
+  // never stalls on an outcome a person owns). It opts the switch ON for its own duration; the
+  // blocking behaviour asserted below is still correct WHEN automation is on.
+  await page.addInitScript(() => { window._tfoAutoExtractionEnabled = true; });
   await page.goto('http://localhost:3000/', { waitUntil: 'domcontentloaded', timeout: 25000 });
   await page.waitForFunction(() => window.state && window._tfoBuildExtractionContext && window._tfoWritePending
     && window._tfoResolvePendingRecord && window._tfoContinuationBlocked && window._tfoVerifyCitations

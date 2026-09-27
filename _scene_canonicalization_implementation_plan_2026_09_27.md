@@ -1,4 +1,4 @@
-# Two tracks: scene canonicalization (core correctness) · interim Tempt Fate (human review)
+# Two tracks: `state.scenes` canonicalization (core correctness) · interim Tempt Fate (human review)
 
 Plan only. No code, no provider call, no push. Automatic Tempt Fate extraction and automatic
 commitment are **out of scope for both tracks** and stay blocked until Track A is live and the
@@ -6,11 +6,18 @@ sidecar's real yield can be measured.
 
 ---
 
-# TRACK A — Scene canonicalization
+# TRACK A — `state.scenes` canonicalization (+ the formatStory split)
+
+**The name matters and is deliberately narrow (Roman 2026-09-27).** This is **not** whole-app scene
+canonicalization. It covers the `state.scenes` substrate and the `formatStory` text/presentation split.
+**Literary continuations are OUT OF SCOPE and remain NON-CITABLE** until they have durable scene records
+of their own — a separate storage project. Calling this "scene canonicalization" would promise a guarantee
+the track does not deliver for every scene in the app.
 
 **Framing:** a core-correctness project, justified independently of Tempt Fate. Three competing text
-projections, asynchronous mutation after acceptance, and index-based identity already affect
-save/resume, the next scene's prior-scene context, and any feature that cites prose.
+projections, asynchronous mutation after acceptance, and index-based identity already affect save/resume,
+the next scene's prior-scene context, and any feature that cites prose — for the scenes that live in
+`state.scenes`. Scenes that do not live there are not made citable by this track.
 
 ## A0. The write surface, as it actually exists
 

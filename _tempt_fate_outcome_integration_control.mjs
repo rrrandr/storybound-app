@@ -101,6 +101,13 @@ const VALID_BEATS = [{ idx: 0, kind: 'narration', text: 'The ceremony hall stand
     await page.evaluate(() => {
       window.state = window.state || {};
       window.state.picks = window.state.picks || {};
+      // TRACK B (Roman 2026-09-27): automatic extraction is DISABLED in production, which makes
+      // _tfoContinuationBlocked a no-op — the story must not stall on an outcome a person owns.
+      // THIS control exercises the extraction machinery itself, so it opts the switch ON for its own
+      // duration. The blocking behaviour asserted below is still correct WHEN automation is on; what
+      // changed is the production default, not the contract. See
+      // _tempt_fate_trackb_invocation_control.mjs for the automation-off path.
+      window._tfoAutoExtractionEnabled = true;
       window.state.picks.world = 'Fantasy';
       window.state.storyId = 'harness-story-1';
       window.state.storyLength = 'fling';

@@ -82,6 +82,11 @@ const WISH = 'everyone forgets the ceremony happened';
     return { choices: [{ message: { content: JSON.stringify(planFor(b)) } }] };
   });
 
+  // TRACK B (Roman 2026-09-27): this control exercises the extraction machinery, which is
+  // DISABLED by default in production (_tfoContinuationBlocked is a no-op then, so the story
+  // never stalls on an outcome a person owns). It opts the switch ON for its own duration; the
+  // blocking behaviour asserted below is still correct WHEN automation is on.
+  await page.addInitScript(() => { window._tfoAutoExtractionEnabled = true; });
   await page.goto('http://localhost:3000/', { waitUntil: 'domcontentloaded', timeout: 25000 });
   await page.waitForFunction(() => window.state && window._renderTemptOutcomeSchema && window._validateTemptFateOutcomeReport
     && window._temptOutcomePreflight && window._temptOutcomeRequiredFieldNames && window._temptOutcomeSceneRoster

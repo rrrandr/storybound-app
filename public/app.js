@@ -191843,6 +191843,14 @@ No text, no watermark, no UI elements, share-ready.`;
   // extraction failed." A delivered Tempt scene whose consequence is unresolved blocks the next
   // continuation until it resolves or is explicitly resumed.
   function _tfoContinuationBlocked(s) {
+    // TRACK B (Roman 2026-09-27). While automatic extraction is disabled, an unresolved pending
+    // record is NOT something a continuation should wait for: nothing is going to resolve it
+    // automatically, so gating here would stall the story on a defect a person owns. The invocation
+    // is not lost — _tfoRecordAcceptedInvocation preserved it, and
+    // _buildTemptFateUnresolvedInvocationDirective carries it into every downstream prompt, so the
+    // next planner knows an invocation occurred and derives nothing from it. Letting continuation
+    // proceed WITHOUT that directive would be the unsafe half of this change; the two ship together.
+    if (!_tfoAutoExtractionEnabled()) return null;
     var pend = _tfoUnresolvedPending(s);
     if (!pend.length) return null;
     return {
@@ -191853,6 +191861,362 @@ No text, no watermark, no UI elements, share-ready.`;
     };
   }
   window._tfoContinuationBlocked = _tfoContinuationBlocked;
+
+  // ══════════════════════════════════════════════════════════════════════════════════════════
+  // TRACK B — ACCEPTED-INVOCATION RECORDS (Roman 2026-09-27)
+  //
+  // WHY THIS EXISTS. Automatic Tempt Fate extraction and commitment are DISABLED: the extractor
+  // cites against a text that is not any version of the scene record (see
+  // _tempt_outcome_evidence_provenance_design_note_2026_09_27.md), and its semantic grounding
+  // failed on every sample. Outcomes are resolved by a person instead.
+  //
+  // But a scene must still be allowed to continue, and continuation must NOT make the invocation
+  // vanish from downstream canon — a planner that sees nothing will confidently assume either that
+  // the wish landed or that it did not, and both are fabrications. So every ACCEPTED active
+  // invocation gets an immutable record whose only job is to say: this happened, nothing was
+  // committed, derive nothing from it.
+  //
+  // WHAT THIS RECORD IS NOT. Before Track A (state.scenes canonicalization + the formatStory
+  // split), scene text is still rewritten directly after acceptance and there is no projection
+  // revision to re-check, so this record CANNOT claim the wish text remains current reader-visible
+  // canon. Its evidence is labelled observedAtCapture, never currentCanon, and no downstream
+  // builder may present it as a citation. Track A later adds evidence re-anchoring and supersession.
+  var _TFO_INVOCATION_V = 1;
+
+  // THE SWITCH. Default OFF. Production runs with automatic extraction/commitment disabled; a
+  // control that deliberately exercises the extraction machinery sets window._tfoAutoExtractionEnabled
+  // = true for its own duration. One named switch so both behaviours stay testable and the
+  // production default is the safe one.
+  function _tfoAutoExtractionEnabled() {
+    try { return window._tfoAutoExtractionEnabled === true; } catch (_) { return false; }
+  }
+  // DEFAULT, NOT AN OVERRIDE. A harness that needs the extraction machinery sets this before app.js
+  // evaluates (page.addInitScript); an unconditional assignment here would silently clobber that and
+  // make the switch look broken from the outside. Production sets nothing, so it lands on false.
+  if (typeof window._tfoAutoExtractionEnabled === 'undefined') window._tfoAutoExtractionEnabled = false;
+  window._tfoAutoExtractionOn = _tfoAutoExtractionEnabled;
+
+  function _tfoInvocationStore(create) {
+    var s = window.state; if (!s) return null;
+    if (!Array.isArray(s._temptFateInvocations)) {
+      if (!create) return null;
+      s._temptFateInvocations = [];
+    }
+    return s._temptFateInvocations;
+  }
+  function _tfoInvocationResolutionStore(create) {
+    var s = window.state; if (!s) return null;
+    if (!Array.isArray(s._temptFateInvocationResolutions)) {
+      if (!create) return null;
+      s._temptFateInvocationResolutions = [];
+    }
+    return s._temptFateInvocationResolutions;
+  }
+
+  // THE HANDLE, not a hash. invocationId is opaque and stable for the life of the record: it is
+  // deliberately NOT derived from text offsets or a content hash, because those change when a scene
+  // is revised and a handle that changes is not a handle. sceneUid alone is not enough either — a
+  // scene can be revised and may eventually contain more than one invocation.
+  function _tfoMintInvocationId(ctx, existingCount) {
+    var base = 'tfi_' + String((ctx && ctx.proposalId) || 'noproposal').replace(/[^A-Za-z0-9_-]/g, '')
+      + '_' + String((ctx && (ctx.sceneUid || ctx.sceneIdx)) != null ? (ctx.sceneUid || ctx.sceneIdx) : 'noscene').toString().replace(/[^A-Za-z0-9_-]/g, '')
+      + '_' + String(existingCount || 0);
+    return base;
+  }
+
+  // PC IDENTITY ONLY, through the declared owner. _resolvePcIdentity is the authority for the PC and
+  // for nothing else: the LI has its own relationship/cast anchor and a named NPC is resolved by cast
+  // validation, so neither is routed through here. This resolves the RECORD's invoker field and
+  // touches no rendered label — _sbSpeakerLabel is deliberately left alone (Track A owns visible
+  // label normalization, where a label change belongs to a projection change).
+  function _tfoInvokerIdentity(s) {
+    s = s || window.state || {};
+    try {
+      var hit = (typeof window._resolvePcIdentity === 'function') ? window._resolvePcIdentity(s) : null;
+      if (hit && hit.v && String(hit.v).trim()) {
+        return { name: String(hit.v).trim(), resolved: true, authority: 'resolvePcIdentity',
+                 candidateSource: String(hit.src || '') };
+      }
+    } catch (_) {}
+    return { name: '', resolved: false, authority: 'resolvePcIdentity', candidateSource: null };
+  }
+  window._tfoInvokerIdentity = _tfoInvokerIdentity;
+
+  // Stable per-scene identity for dedup. Prefers the scene uid; falls back to the index, which is
+  // what production supplies today because plan.__sceneUid is minted AFTER this capture point
+  // (Track A moves the mint earlier).
+  function _tfoInvocationSceneKey(ctx) {
+    return String((ctx && ctx.sceneUid) || (ctx && ctx.sceneIdx != null ? 'idx:' + ctx.sceneIdx : 'noscene'));
+  }
+
+  // RECORD AN ACCEPTED INVOCATION. Created for EVERY accepted active invocation while automatic
+  // commitment is disabled — not only when something went wrong. An unresolved invoker is one
+  // ATTRIBUTE of a record that would exist anyway; it is never a reason to omit the record.
+  //
+  // acceptance: REQUIRED evidence that the invocation reached an ACCEPTED scene. On the live path
+  // this is by construction — the caller runs immediately after state.scenes.push — and is recorded
+  // as such. Migration must supply its own evidence and is refused without it.
+  function _tfoRecordAcceptedInvocation(ctx, acceptance) {
+    if (!ctx || !ctx.proposalId || !String(ctx.proposalId).trim()) {
+      try { console.warn('[TEMPT-INVOCATION] refused: no proposalId — an invocation record with no proposal identity could never be resolved'); } catch (_) {}
+      return null;
+    }
+    if (!acceptance || !acceptance.kind) {
+      try { console.warn('[TEMPT-INVOCATION] refused: no acceptance evidence supplied — a record must prove the invocation reached an accepted scene'); } catch (_) {}
+      return null;
+    }
+    var store = _tfoInvocationStore(true); if (!store) return null;
+    var sid = String(ctx.storyId || '');
+    var sceneKey = _tfoInvocationSceneKey(ctx);
+    // IDEMPOTENT by (story, proposal, scene). Reload, a repeated persistence callback, or a re-run
+    // migration must not create a second record for one invocation.
+    for (var i = 0; i < store.length; i++) {
+      var e = store[i];
+      if (e && String(e.storyId) === sid && String(e.proposalId) === String(ctx.proposalId)
+          && String(e.sceneKey) === sceneKey) {
+        return e;
+      }
+    }
+    var inv = _tfoInvokerIdentity(window.state);
+    var rec = _tfoDeepFreeze({
+      v: _TFO_INVOCATION_V,
+      invocationId: _tfoMintInvocationId(ctx, store.length),
+      storyId: sid,
+      proposalId: String(ctx.proposalId),
+      sceneKey: sceneKey,
+      sceneUid: (ctx.sceneUid != null) ? String(ctx.sceneUid) : null,
+      sceneIdx: (ctx.sceneIdx != null) ? ctx.sceneIdx : null,
+      invokedAtScene: (ctx.sealedAtScene != null) ? ctx.sealedAtScene : ((ctx.sceneIdx != null) ? ctx.sceneIdx : null),
+      // EVIDENCE AS OBSERVED, NOT AS CURRENT CANON. See the block comment above: nothing before
+      // Track A can establish that this text is still in the canonical scene, so the record says
+      // what it saw and when, and says explicitly that it is not a citation.
+      evidence: {
+        wishText: String(ctx.wishText || ''),
+        observedAtCapture: true,
+        currentCanon: false,
+        note: 'observed at capture; NOT a claim that this text is still present in the current canonical scene text. Track A adds re-anchoring.'
+      },
+      invoker: { name: inv.name, resolved: inv.resolved, authority: inv.authority, candidateSource: inv.candidateSource },
+      invokerUnresolved: !inv.resolved,
+      // An unresolved invoker is REVIEWABLE, never fatal and never a reason to stall.
+      reviewFlags: inv.resolved ? [] : ['invoker_unresolved'],
+      acceptance: { kind: String(acceptance.kind), detail: acceptance.detail || null, at: Date.now() },
+      autoCommitDisabled: true,
+      outcome: 'unresolved',
+      createdAt: Date.now()
+    });
+    store.push(rec);
+    try {
+      console.log('[TEMPT-INVOCATION] recorded ' + rec.invocationId + ' — accepted invocation, outcome UNRESOLVED, nothing committed'
+        + (rec.invokerUnresolved ? ' (invoker UNRESOLVED — flagged for review, story continues)' : ''));
+    } catch (_) {}
+    return rec;
+  }
+  window._tfoRecordAcceptedInvocation = _tfoRecordAcceptedInvocation;
+
+  function _tfoInvocationsForStory(s) {
+    s = s || window.state || {};
+    var store = Array.isArray(s._temptFateInvocations) ? s._temptFateInvocations : [];
+    var sid = String(s.storyId || '');
+    return store.filter(function (e) { return e && String(e.storyId) === sid; });
+  }
+  window._tfoInvocationsForStory = _tfoInvocationsForStory;
+
+  // STATUS IS DERIVED, NEVER WRITTEN BACK. A mutable status field on a record called immutable is a
+  // contradiction that erodes the first time someone needs to flip it, so the record is never
+  // touched after creation and the current state is read off the append-only resolution log.
+  function _tfoInvocationStatus(s, invocationId) {
+    s = s || window.state || {};
+    var res = Array.isArray(s._temptFateInvocationResolutions) ? s._temptFateInvocationResolutions : [];
+    var hits = res.filter(function (r) { return r && String(r.invocationId) === String(invocationId); });
+    if (!hits.length) return { status: 'unresolved', entries: [] };
+    // Last append wins for the label; every entry is retained so the history is readable.
+    var last = hits[hits.length - 1];
+    return { status: (last.kind === 'dismissal') ? 'dismissed' : 'resolved', entries: hits };
+  }
+  window._tfoInvocationStatus = _tfoInvocationStatus;
+
+  function _tfoUnresolvedInvocations(s) {
+    s = s || window.state || {};
+    return _tfoInvocationsForStory(s).filter(function (e) {
+      return _tfoInvocationStatus(s, e.invocationId).status === 'unresolved';
+    });
+  }
+  window._tfoUnresolvedInvocations = _tfoUnresolvedInvocations;
+
+  function _tfoInvocationById(s, invocationId) {
+    s = s || window.state || {};
+    var all = Array.isArray(s._temptFateInvocations) ? s._temptFateInvocations : [];
+    for (var i = 0; i < all.length; i++) if (all[i] && all[i].invocationId === invocationId) return all[i];
+    return null;
+  }
+
+  // HUMAN RESOLUTION — AN APPEND, NEVER AN EDIT. Creates a separate durable outcome record with
+  // human_review provenance, referencing invocationId (the ID, so it stays unambiguous when a scene
+  // holds two invocations). The original invocation record is not modified; the accepted scene is
+  // not touched at all.
+  function _tfoResolveInvocationByHuman(invocationId, decision) {
+    var s = window.state; if (!s) return null;
+    var rec = _tfoInvocationById(s, invocationId);
+    if (!rec) { try { console.warn('[TEMPT-INVOCATION] resolve refused: unknown invocationId ' + invocationId); } catch (_) {} return null; }
+    var d = decision || {};
+    if (typeof d.basis !== 'string' || !d.basis.trim()) {
+      try { console.warn('[TEMPT-INVOCATION] resolve refused: a human resolution must state its basis'); } catch (_) {}
+      return null;
+    }
+    var log = _tfoInvocationResolutionStore(true); if (!log) return null;
+    var entry = _tfoDeepFreeze({
+      v: _TFO_INVOCATION_V, kind: 'resolution', invocationId: String(invocationId),
+      storyId: String(rec.storyId), provenance: 'human_review',
+      basis: String(d.basis), reviewer: d.reviewer ? String(d.reviewer) : null,
+      claims: d.claims || null, at: Date.now()
+    });
+    log.push(entry);
+    // The durable consequence is a SEPARATE record, tagged to the invocation it resolves.
+    if (d.claims && typeof d.claims === 'object') {
+      if (!Array.isArray(s._temptFateDurableConsequences)) s._temptFateDurableConsequences = [];
+      s._temptFateDurableConsequences.push(Object.assign({}, d.claims, {
+        id: 'tfc_human_' + String(invocationId),
+        source: 'tempt', provenance: 'human_review',
+        resolves: { invocationId: String(invocationId) },
+        proposalId: String(rec.proposalId),
+        sceneIdx: rec.sceneIdx, committedAt: Date.now()
+      }));
+    }
+    try { console.log('[TEMPT-INVOCATION] ' + invocationId + ' RESOLVED by human review (appended; original record untouched)'); } catch (_) {}
+    return entry;
+  }
+  window._tfoResolveInvocationByHuman = _tfoResolveInvocationByHuman;
+
+  // DISMISSAL IS ALSO AN APPEND, so "nobody has looked at this" and "someone looked and found
+  // nothing" stay distinguishable forever.
+  function _tfoDismissInvocation(invocationId, decision) {
+    var s = window.state; if (!s) return null;
+    var rec = _tfoInvocationById(s, invocationId);
+    if (!rec) { try { console.warn('[TEMPT-INVOCATION] dismiss refused: unknown invocationId ' + invocationId); } catch (_) {} return null; }
+    var d = decision || {};
+    if (typeof d.basis !== 'string' || !d.basis.trim()) {
+      try { console.warn('[TEMPT-INVOCATION] dismiss refused: a dismissal must state its basis'); } catch (_) {}
+      return null;
+    }
+    var log = _tfoInvocationResolutionStore(true); if (!log) return null;
+    var entry = _tfoDeepFreeze({
+      v: _TFO_INVOCATION_V, kind: 'dismissal', invocationId: String(invocationId),
+      storyId: String(rec.storyId), provenance: 'human_review',
+      basis: String(d.basis), reviewer: d.reviewer ? String(d.reviewer) : null, at: Date.now()
+    });
+    log.push(entry);
+    try { console.log('[TEMPT-INVOCATION] ' + invocationId + ' DISMISSED — reviewed, no durable outcome'); } catch (_) {}
+    return entry;
+  }
+  window._tfoDismissInvocation = _tfoDismissInvocation;
+
+  // THE DOWNSTREAM UNCERTAINTY DIRECTIVE — the SAFE RULE ONLY.
+  // Reduced from the design note's four points to what Track B can actually support: no claim that
+  // the wish text remains current reader-visible canon, because nothing here can establish that.
+  // The prohibition is CAUSAL and WISH-SCOPED, not topical: it forbids deriving state AS A
+  // CONSEQUENCE OF THIS WISH and does NOT forbid independently motivated action or newly observed
+  // evidence, because a blanket ban would freeze every later scene.
+  function _buildTemptFateUnresolvedInvocationDirective() {
+    try {
+      var s = window.state || {};
+      var open = _tfoUnresolvedInvocations(s);
+      if (!open.length) return '';
+      var lines = open.map(function (e) {
+        return '  - scene ' + ((e.invokedAtScene != null) ? (e.invokedAtScene + 1) : '?')
+          + ': the reader invoked Tempt Fate, asking: "' + String(e.evidence && e.evidence.wishText || '').trim() + '"'
+          + (e.invokerUnresolved ? '  [invoker identity unresolved — under review]' : '');
+      }).join('\n');
+      return 'TEMPT FATE — INVOCATION ACCEPTED, OUTCOME UNRESOLVED (' + open.length + '):\n' + lines + '\n'
+        + '  - NO durable outcome has been committed for these invocations. Automatic outcome extraction is disabled; a person resolves them.\n'
+        + '  - DO NOT assume the requested effect landed. DO NOT assume it failed. Both readings are refused.\n'
+        + '  - DO NOT derive memory, possession, history, relationship, exemption or scope FROM THIS WISH. Nothing follows from it yet.\n'
+        + '  - The wish text above is what was recorded when the scene was accepted. It is NOT a citation and NOT proof of what the current scene text contains.\n'
+        + '  - This does NOT freeze the story. Independently motivated action, ordinary behaviour and newly observed evidence are all fine — write the present scene on its own terms. If this scene establishes something explicitly, it stands as its own new observation, not as this wish having worked.\n';
+    } catch (_) { return ''; }
+  }
+  window._buildTemptFateUnresolvedInvocationDirective = _buildTemptFateUnresolvedInvocationDirective;
+
+  // ── MIGRATION: prior pending records → invocation records ────────────────────────────────────
+  // CONVERT ONLY ON PROOF OF ACCEPTANCE (Roman 2026-09-27). A pending record is not itself evidence
+  // that a scene was accepted: it can be stale, pre-acceptance, cross-story, or point at a scene
+  // that no longer exists. Fabricating an invocation from one of those would invent canon. So each
+  // record is either CONVERTED with its acceptance evidence named, or INVALIDATED with its reason —
+  // never silently either way.
+  function _tfoPendingAcceptanceEvidence(s, rec) {
+    if (!rec || !rec.ctx) return { ok: false, reason: 'malformed_pending_no_ctx' };
+    var ctx = rec.ctx;
+    var sid = String(s.storyId || '');
+    if (!ctx.storyId || String(ctx.storyId) !== sid) return { ok: false, reason: 'cross_story' };
+    if (!ctx.proposalId || !String(ctx.proposalId).trim()) return { ok: false, reason: 'no_proposal_identity' };
+    var scenes = Array.isArray(s.scenes) ? s.scenes : [];
+    // 1. STRONGEST: the scene record carries the uid this pending record was built against.
+    if (ctx.sceneUid) {
+      for (var i = 0; i < scenes.length; i++) {
+        if (scenes[i] && scenes[i].uid && String(scenes[i].uid) === String(ctx.sceneUid)) {
+          return { ok: true, kind: 'scene_uid_match', detail: { sceneUid: String(ctx.sceneUid), index: i } };
+        }
+      }
+    }
+    // 2. An accepted scene exists at the recorded index AND carries prose. Pre-Track-A, scene
+    //    records carry no uid, so this is the only positive evidence available for most records.
+    if (typeof ctx.sceneIdx === 'number' && ctx.sceneIdx >= 0) {
+      var sc = scenes[ctx.sceneIdx];
+      if (sc && typeof sc.text === 'string' && sc.text.trim().length > 0) {
+        return { ok: true, kind: 'accepted_scene_at_index_with_prose',
+                 detail: { index: ctx.sceneIdx, textLen: sc.text.length } };
+      }
+      if (!sc) return { ok: false, reason: 'missing_scene_at_recorded_index' };
+      return { ok: false, reason: 'scene_at_index_has_no_prose' };
+    }
+    return { ok: false, reason: 'pre_acceptance_no_scene_reference' };
+  }
+
+  function _tfoMigratePendingToInvocations(opts) {
+    var s = window.state; if (!s) return null;
+    opts = opts || {};
+    var m = (s._temptOutcomePending && typeof s._temptOutcomePending === 'object') ? s._temptOutcomePending : {};
+    if (!Array.isArray(s._temptFateInvocationMigrationLog)) s._temptFateInvocationMigrationLog = [];
+    var log = s._temptFateInvocationMigrationLog;
+    var out = { converted: [], invalidated: [], skippedAlreadyDone: [] };
+    Object.keys(m).forEach(function (key) {
+      var rec = m[key];
+      if (!rec) return;
+      // IDEMPOTENT: a record already processed is never processed again, so a reload cannot
+      // duplicate an invocation or re-log an invalidation.
+      if (rec.migratedToInvocationId || rec.invalidated) { out.skippedAlreadyDone.push(key); return; }
+      var ev = _tfoPendingAcceptanceEvidence(s, rec);
+      if (!ev.ok) {
+        rec.invalidated = 'pre_canonicalization_provenance';
+        rec.invalidatedReason = ev.reason;
+        rec.invalidatedAt = Date.now();
+        log.push({ key: key, action: 'invalidated', reason: ev.reason, at: Date.now() });
+        out.invalidated.push({ key: key, reason: ev.reason });
+        try { console.warn('[TEMPT-MIGRATION] ' + key + ' INVALIDATED (' + ev.reason + ') — no invocation record created; nothing fabricated'); } catch (_) {}
+        return;
+      }
+      var inv = _tfoRecordAcceptedInvocation(rec.ctx, { kind: 'migrated:' + ev.kind, detail: ev.detail });
+      if (!inv) {
+        rec.invalidated = 'pre_canonicalization_provenance';
+        rec.invalidatedReason = 'record_creation_refused';
+        rec.invalidatedAt = Date.now();
+        log.push({ key: key, action: 'invalidated', reason: 'record_creation_refused', at: Date.now() });
+        out.invalidated.push({ key: key, reason: 'record_creation_refused' });
+        return;
+      }
+      rec.migratedToInvocationId = inv.invocationId;
+      // The pending record's own extraction provenance is dead either way: its prose came from a
+      // builder that produces a text matching no version of the scene record.
+      rec.invalidated = 'pre_canonicalization_provenance';
+      rec.invalidatedReason = 'converted_to_invocation_record';
+      rec.invalidatedAt = Date.now();
+      log.push({ key: key, action: 'converted', invocationId: inv.invocationId, evidence: ev.kind, at: Date.now() });
+      out.converted.push({ key: key, invocationId: inv.invocationId, evidence: ev.kind });
+      try { console.log('[TEMPT-MIGRATION] ' + key + ' → ' + inv.invocationId + ' (acceptance evidence: ' + ev.kind + ')'); } catch (_) {}
+    });
+    return out;
+  }
+  window._tfoMigratePendingToInvocations = _tfoMigratePendingToInvocations;
 
   // ── THE EXTRACTOR ───────────────────────────────────────────────────────────────────────────
   // Reads the ACCEPTED prose. No prose-writing authority: it cannot rewrite, extend or reorder a
@@ -192021,6 +192385,13 @@ No text, no watermark, no UI elements, share-ready.`;
 
   // BOUNDED RESUME — the path a reload, a failed attempt, or a blocked continuation takes.
   async function _tfoResumePending(opts) {
+    // TRACK B: no provider request may leave while automatic extraction is disabled. This is the
+    // enforcement point, not a caller-side convention — a caller that forgets the switch still
+    // dispatches nothing.
+    if (!_tfoAutoExtractionEnabled()) {
+      try { console.log('[TEMPT-PENDING] resume skipped — automatic extraction is DISABLED (Track B). Outcomes are resolved by human review; nothing dispatched.'); } catch (_) {}
+      return { skipped: 'auto_extraction_disabled', resolved: 0 };
+    }
     opts = opts || {};
     var pend = _tfoUnresolvedPending(window.state);
     var out = [];
@@ -192042,7 +192413,13 @@ No text, no watermark, no UI elements, share-ready.`;
     try {
       var s = window.state || {};
       var list = Array.isArray(s._temptFateDurableConsequences) ? s._temptFateDurableConsequences : [];
-      if (!list.length) return '';
+      // TRACK B: the unresolved-invocation block is emitted from HERE, by the same function, so it
+      // reaches all three consumers (planner, legacy, author) without a fourth wiring site to
+      // forget. The earlier durable-consequence work already taught this lesson the hard way — a
+      // caveat placed in a block that does not always render never fires.
+      var _openInv = (typeof _buildTemptFateUnresolvedInvocationDirective === 'function')
+        ? (_buildTemptFateUnresolvedInvocationDirective() || '') : '';
+      if (!list.length) return _openInv;   // no committed consequences is NOT a reason to drop it
       var parts = list.map(function (c) {
         var changedStr = (c.changed || []).map(function (x) { return x.subject + ': ' + x.whatChanged; }).join('; ') || '(no specific subject recorded)';
         var durStr = (c.durability || []).map(function (d) { return d.aspect + ' ' + d.status + (d.note ? ' (' + d.note + ')' : ''); }).join('; ');
@@ -192081,10 +192458,16 @@ No text, no watermark, no UI elements, share-ready.`;
             : '');
       });
       return '\n═══ TEMPT FATE — DURABLE CONSEQUENCES (verified from what the accepted scene actually established, not from the wish’s literal text or a template — a higher-order Storybound mechanic, NOT ordinary Fatelands wish doctrine) ═══\n'
-        + parts.join('');
+        + parts.join('')
+        + (_openInv ? '\n' + _openInv : '');
     } catch (e) {
       try { console.warn('[TEMPT-DURABLE] directive build failed:', e && e.message); } catch (_) {}
-      return '';
+      // A failure building the COMMITTED half must not swallow the UNRESOLVED half: losing the
+      // uncertainty warning is the one outcome that lets a planner invent a consequence.
+      try {
+        return (typeof _buildTemptFateUnresolvedInvocationDirective === 'function')
+          ? (_buildTemptFateUnresolvedInvocationDirective() || '') : '';
+      } catch (_) { return ''; }
     }
   }
   window._buildTemptFateDurableConsequenceDirective = _buildTemptFateDurableConsequenceDirective;
@@ -236674,6 +237057,26 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
     try {
       var _tfoOwn = plan && plan.__temptOwnership;
       if (!_tfoOwn || typeof _commitTemptFateOutcome !== 'function') return null;
+      // TRACK B (Roman 2026-09-27). ONE route for both branches below, so an accepted invocation
+      // cannot be recorded on one path and missed on the other. Reached only after
+      // state.scenes.push has run in the caller — acceptance is by construction here, which is the
+      // evidence the record carries. The invocation record is created for EVERY accepted active
+      // invocation while automatic commitment is disabled, whatever the invoker resolution did.
+      var _tfoPersistForScene = function (ctx) {
+        var rec = _tfoWritePending(ctx);
+        try {
+          if (typeof _tfoRecordAcceptedInvocation === 'function') {
+            _tfoRecordAcceptedInvocation(ctx, { kind: 'persisted_at_capture', detail: {
+              sceneCount: ((window.state && window.state.scenes) || []).length,
+              sceneIdx: (ctx && ctx.sceneIdx != null) ? ctx.sceneIdx : null
+            } });
+          }
+        } catch (_e) {
+          // An invocation-record failure must never break an accepted scene's persistence path.
+          try { console.warn('[TEMPT-INVOCATION] record failed (scene stays accepted):', _e && _e.message); } catch (_) {}
+        }
+        return rec;
+      };
       if (_tfoOwn.wasInvokedAtStart) {
         if (_tfoOwn.pendingOutcome) {
           if (_tfoOwn.proposalEntry) {
@@ -236695,7 +237098,7 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
             // The extractor must see exactly what the reader saw, or its citations cannot match.
             var _tfoProse = (typeof _extractCGSceneText === 'function') ? _extractCGSceneText(plan) : '';
             var _tfoCtx = _tfoBuildExtractionContext(plan, _tfoOwn, _tfoProse, (plan && plan.__sceneUid) || null);
-            var _tfoRec = _tfoWritePending(_tfoCtx);
+            var _tfoRec = _tfoPersistForScene(_tfoCtx);
             // A NEW GENERATION THAT RETURNS THE OBSOLETE FIELD IS IGNORED, NOT TRUSTED
             // (Roman 2026-09-24). The author is no longer asked for temptFateOutcome, so a
             // response carrying one is a hallucinated leftover — and field presence is NOT
@@ -236715,7 +237118,7 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
         // temptFateOutcome is the expected shape; the extractor supplies it from the accepted page.
         var _tfoProseB = (typeof _extractCGSceneText === 'function') ? _extractCGSceneText(plan) : '';
         if (_tfoOwn.proposalEntry) {
-          return _tfoWritePending(_tfoBuildExtractionContext(plan, _tfoOwn, _tfoProseB, (plan && plan.__sceneUid) || null));
+          return _tfoPersistForScene(_tfoBuildExtractionContext(plan, _tfoOwn, _tfoProseB, (plan && plan.__sceneUid) || null));
         }
         console.warn('[TEMPT-OUTCOME] scene ' + _tfoOwn.sceneIndex + ' — Tempt invoked but no proposal entry captured — nothing to extract against.');
         return null;
@@ -237090,8 +237493,14 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
         // the reader is not made to wait on it — but the next continuation IS blocked while a
         // pending record is unresolved (see _tfoContinuationBlocked), so a silent failure cannot
         // let Scene B proceed without its consequence.
+        // TRACK B (Roman 2026-09-27). The pre-re-sync microtask that used to start extraction here is
+        // REMOVED while automatic extraction is disabled. It queued at this point and ran at the
+        // first await below, i.e. BEFORE the post-acceptance re-sync rewrote the scene text — so it
+        // began against text that was still going to change. Track A restores an ordered trigger
+        // after a single canonical persist; until then nothing is dispatched at all.
         try {
-          if (typeof _tfoResumePending === 'function' && _tfoUnresolvedPending(window.state).length) {
+          if (_tfoAutoExtractionEnabled() && typeof _tfoResumePending === 'function'
+              && _tfoUnresolvedPending(window.state).length) {
             Promise.resolve().then(function () { return _tfoResumePending(); })
               .catch(function (_e) { /* stays pending, stays retryable */ });
           }
