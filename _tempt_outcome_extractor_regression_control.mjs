@@ -87,6 +87,32 @@ const ok = (n, p, d) => { results.push({ n, p: !!p }); console.log((p ? '  ✓ '
   ok('THE GAP IS OPEN AND THIS FIXTURE PINS IT: verbatim citation does NOT prove semantic support',
     v03.ok === true && julian.disposition === 'retained');
 
+  // ── 04 — THE DECISIVE PAIR. Same prose, same model, same quote, opposite conclusions. ────────
+  const f04 = JSON.parse(fs.readFileSync(path.join(F, '04_contradictory_julian_forgot.json'), 'utf8'));
+  const j04 = (f04.affectedKnowers || []).find((k) => String(k.who).indexOf('Julian') !== -1) || {};
+  const j03 = julian;
+  console.log('    Julian 03: ' + j03.disposition + '   Julian 04: ' + j04.disposition);
+  ok('04 claims Julian FORGOT where 03 claimed he RETAINED — contradictory verdicts',
+    j03.disposition === 'retained' && j04.disposition === 'forgot',
+    JSON.stringify({ '03': j03.disposition, '04': j04.disposition }));
+  ok('...from the IDENTICAL quote, so the evidence cannot have decided either',
+    String(j03.evidenceQuote) === String(j04.evidenceQuote), JSON.stringify(j04.evidenceQuote));
+  ok('...and 04 ran WITH the grounding rules in force and still used the gaze',
+    j04.memoryAbsent === true && /gaze finds mine/.test(String(j04.evidenceQuote)));
+  ok('...leaving unaccountedParties EMPTY despite the prompt directing unestablished parties there',
+    Array.isArray(f04.unaccountedParties) && f04.unaccountedParties.length === 0,
+    JSON.stringify(f04.unaccountedParties));
+  ok('...and choosing scopeMatch "narrower" while its own scopeNote names something unestablished',
+    f04.scopeMatch === 'narrower' && /does not establish/.test(String(f04.scopeNote)),
+    JSON.stringify({ scopeMatch: f04.scopeMatch, note: String(f04.scopeNote).slice(0, 90) }));
+  // It was refused only by the stitched quote — a different flaw entirely.
+  const c04 = await cites(f04);
+  ok('04 was refused ONLY because one quote was stitched from fragments, not for the Julian claim',
+    JSON.stringify(c04).indexOf('not present verbatim') !== -1
+    && JSON.stringify(c04).indexOf('Julian') === -1, JSON.stringify(c04).slice(0, 220));
+  ok('MINISTRAL TUNING IS CLOSED FOR THIS ROLE — three corrections, none moved this behaviour',
+    /Ministral prompt tuning for this role is CLOSED/.test(fs.readFileSync(path.join(F, 'README.md'), 'utf8')));
+
   ok('zero provider dispatches', gate.trackedCalls().filter((c) => c.real).length === 0);
   const passed = results.filter((r) => r.p).length;
   console.log('\n' + '='.repeat(86));

@@ -32,7 +32,11 @@ export const FIXTURE_DIR = path.join(__dirname, '_tempt_fate_fixtures', 'run_202
 export const TEXT_PRICING = {
   'ministral-8b-2512':        { in: 0.00000015, out: 0.00000015 },
   'grok-4-1-fast-reasoning':  { in: 0.00000125, out: 0.0000025 },
-  'gpt-4o-mini':              { in: 0.00000015, out: 0.0000006 }
+  'gpt-4o-mini':              { in: 0.00000015, out: 0.0000006 },
+  // grok-4.3 list price, verified 2026-09-01 and reconciled against two real receipts to within 0.3%
+  // (see _saydo_gibberish_live_run.mjs). Long-context tier doubles above 200k prompt tokens; the
+  // extractor's prompt is ~2.6k, so the standard tier applies.
+  'grok-4.3':                 { in: 0.00000125, out: 0.0000025 }
 };
 // The censused worst case for this role (see _tempt_fate_memory_erasure_cost_audit.mjs).
 // OUT RAISED 1400 -> 3200 (2026-09-26), tracking the extractor's own max_tokens. The live run hit 1400
@@ -177,6 +181,79 @@ export async function installReservationRoute(page, holder) {
           reason: 'pinned to ' + holder.pinEndpoint });
         await route.abort('failed'); return;
       }
+    }
+    // ── PROVIDER COMPARISON BY HARNESS REDIRECT, NOT BY ROUTING CHANGE (Roman 2026-09-27) ──────
+    // The extractor's production chain is Mistral-primary. Comparing a stronger model must NOT alter
+    // production routing, so the harness translates the outgoing request at the boundary: same byte-
+    // identical messages, same temperature, same max_tokens, same role — only the transport and the
+    // provider pin differ, and every difference is recorded in holder.translation for the report.
+    //   /api/mistral-proxy      -> /api/proxy        (required: grok is served there)
+    //   model: ministral-8b...  -> _sbModelOverride: 'grok-4.3'   (pins the RESOLVED model, not an alias)
+    //   + _noFallback: true     (required: otherwise the server walks STRUCTURE_GENERATOR's 3 models)
+    if (holder.translateToGrok && pathname.indexOf('/api/mistral-proxy') !== -1 && body && body.messages) {
+      const translated = {
+        role: body.role || 'STRUCTURE_GENERATOR',
+        messages: body.messages,
+        temperature: body.temperature,
+        max_tokens: body.max_tokens,
+        _sbModelOverride: 'grok-4.3',
+        _noFallback: true
+      };
+      holder.translation = {
+        from: { pathname: pathname, model: body.model || null },
+        to: { pathname: '/api/proxy', sbModelOverride: 'grok-4.3', noFallback: true },
+        unchanged: { role: translated.role, temperature: translated.temperature,
+                     max_tokens: translated.max_tokens, messageCount: body.messages.length,
+                     sysChars: String((body.messages.find((m) => m.role === 'system') || {}).content || '').length,
+                     usrChars: String((body.messages.find((m) => m.role === 'user') || {}).content || '').length }
+      };
+      holder.translatedBody = translated;          // the EXACT body that leaves, for dry inspection
+      holder.originalBody = body;                   // and the mistral body it was derived from
+      holder.sent = (holder.sent || 0) + 1;
+      if (typeof holder.maxRequests === 'number' && holder.sent > holder.maxRequests) {
+        log.push({ kind: 'blocked-over-request-cap', pathname, model: 'grok-4.3', sent: holder.sent,
+          reason: 'only ' + holder.maxRequests + ' provider request(s) may leave in this comparison' });
+        await route.abort('failed'); return;
+      }
+      const r = ledger.reserve('/api/proxy :: grok-4.3', 'grok-4.3');
+      if (!r.ok) {
+        log.push({ kind: 'blocked-ceiling', pathname: '/api/proxy', model: 'grok-4.3', reason: r.reason });
+        await route.abort('failed'); return;
+      }
+      log.push({ kind: 'reserved', pathname: '/api/proxy', model: 'grok-4.3', usd: r.usd, runningTotalUsd: r.runningTotalUsd, translated: true });
+      if (holder.stubGrokResponse) {          // dry verification of response handling
+        await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(holder.stubGrokResponse) });
+        return;
+      }
+      // route.fetch performs the translated request through Playwright's OWN network stack and
+      // hands back the real upstream response, which is then fulfilled to the page UNCHANGED. The
+      // page's fetch therefore parses the genuine /api/proxy envelope with production's own code —
+      // no harness-side JSON is substituted, so response handling is tested, not simulated.
+      let apiRes;
+      try {
+        apiRes = await route.fetch({ url: 'http://localhost:3000/api/proxy', method: 'POST',
+          headers: { 'content-type': 'application/json' }, postData: JSON.stringify(translated) });
+      } catch (e) {
+        log.push({ kind: 'translate-transport-error', reason: String(e && e.message) });
+        await route.abort('failed'); return;
+      }
+      const bodyTxt = await apiRes.text();
+      holder.upstreamStatus = apiRes.status();
+      holder.upstreamRaw = bodyTxt;                    // usage + _orchestration for the cost report
+      await route.fulfill({ response: apiRes, body: bodyTxt });
+      return;
+    }
+    // THE OTHER CLIENT TIERS ARE NOT IMPLICITLY BLOCKED (found by the dry proof, 2026-09-27).
+    // The extractor's own chain is mistral -> grok-4-1-fast-reasoning -> gpt-4o-mini, and only the
+    // FIRST hop goes to /api/mistral-proxy. Translating that hop therefore leaves tiers 2 and 3 to
+    // be handled by the generic branch below, which would happily reserve and dispatch
+    // grok-4-1-fast-reasoning against /api/proxy — a DIFFERENT model answering the comparison, and
+    // a second billable request the one-request cap never saw. In this mode the translated hop is
+    // the only lane that exists; everything else is refused before dispatch.
+    if (holder.translateToGrok) {
+      log.push({ kind: 'blocked-not-the-pinned-comparison', pathname, model,
+        reason: 'grok comparison mode: only the translated extractor request may leave; client tiers 2 and 3 are refused' });
+      await route.abort('failed'); return;
     }
     if (typeof holder.maxRequests === 'number') {
       holder.sent = (holder.sent || 0) + 1;

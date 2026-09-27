@@ -49,7 +49,51 @@ const REPLAY_CEILING_USD = 0.002;    // one tier at 3600 in + 3200 out, $0.15/M 
 //       ministral-8b-2512, one provider request only, $0.002 reservation'
 //      CONSUMED 2026-09-27_01-35-36 — parsing PASS, citations PASS, schema PASS, SEMANTIC GROUNDING
 //      FAIL; $0.001020 measured. Third pinned replay needs its own phrase.
-const AUTH_PHRASE = PIN_PRIMARY
+//      CONSUMED 2026-09-27_02-52-51 — parsing PASS, citations PASS (one refusal), schema PASS,
+//      SEMANTIC GROUNDING FAIL: the SAME gaze quote that supported Julian "retained" in replay 2
+//      supported "forgot" here. Roman: "This fails the pre-registered standard. I'd stop tuning
+//      Ministral for this role." MINISTRAL PROMPT TUNING FOR THIS ROLE IS CLOSED; both responses
+//      are retained as _tempt_fate_fixtures/extractor_regression/03 and /04.
+//
+// ── PROVIDER COMPARISON MODE (--pin-grok), Roman 2026-09-27 ─────────────────────────────────
+// The question is no longer "can this prompt be tuned" — it is "does a stronger model obey the
+// SAME prompt." So the prompt does not move: messages, temperature 0.1 and max_tokens 3200 are
+// byte-identical to replay 3, the prose is the retained 09-24 fixture, and the semantic criteria
+// are the ones pre-registered before replay 3.
+//
+// EXACTLY FOUR provider-required settings differ, each forced by the provider and none by choice:
+//   1. ENDPOINT  /api/mistral-proxy -> /api/proxy. grok is not served by the mistral proxy. Done as
+//      a HARNESS REDIRECT at the route boundary (route.fetch -> route.fulfill), NOT by editing
+//      production routing: _extractTemptOutcome keeps its Mistral-primary chain untouched.
+//   2. MODEL PIN  model:'ministral-8b-2512' -> _sbModelOverride:'grok-4.3'. /api/proxy's
+//      _resolveGrokModel rewrites chain names, so `preferredModel` would be served as whatever it
+//      resolves to; _sbModelOverride is the allowlisted pin that names the RESOLVED model, and
+//      _orchestration.resolvedModel echoes back what actually answered.
+//   3. _noFallback: true  ADDED. Without it the server walks STRUCTURE_GENERATOR's three-entry
+//      chain inside this one client request — three billable upstream attempts, invisible to any
+//      client-side pin. With it the chain is reduced to one entry. The mistral path needed no such
+//      field, so this is an addition rather than a translation.
+//   4. ROLE stays 'STRUCTURE_GENERATOR' — already what the mistral body sent, and already the
+//      chain that carries grok-4.3. NOT a change; recorded so the list is complete.
+// Nothing else is sent. reasoningEffort is deliberately NOT specified, so the proxy's own default
+// for this model applies ('high'); specifying it would be a fifth change and a weaker comparison.
+//
+// REASONING CHARGES ARE NOT BOUNDED BY max_tokens AT THIS PROVIDER. The reservation below is
+// therefore HEADROOM, not a limit — see GROK_CEILING_USD.
+const PIN_GROK = process.argv.indexOf('--pin-grok') !== -1;
+const GROK_MODEL = 'grok-4.3';
+// One upstream attempt, bounded portion: 3600 prompt tokens @ $1.25/M = $0.004500,
+// 3200 completion tokens @ $2.50/M = $0.008000  =>  $0.012500 bounded.
+// UNBOUNDED PORTION: xAI bills reasoning tokens as output and does NOT count them against
+// max_tokens, so no enforceable total-cost limit exists at this provider. $0.050000 leaves
+// $0.037500 of headroom = about 15,000 reasoning tokens at $2.50/M before the ceiling would be
+// reached — and the ceiling can only refuse a request BEFORE it is sent, never truncate one in
+// flight. If grok reasons past that, the overrun is real and will appear on the receipt.
+const GROK_CEILING_USD = 0.050;
+
+const AUTH_PHRASE = PIN_GROK
+  ? 'run the grok 4.3 extractor comparison once on the unchanged prompt and retained prose, pinned to grok-4.3, one upstream attempt, $0.05 reservation'
+  : PIN_PRIMARY
   ? 'replay the extractor once against the retained prose with the grounding rules and undetermined scope, pinned to ministral-8b-2512, one provider request only, $0.002 reservation'
   : 'run the extractor-only live test once under $0.02';
 
@@ -61,19 +105,27 @@ if (given !== AUTH_PHRASE) {
   console.log('EXTRACTOR-ONLY LIVE RUN — NOT AUTHORIZED, NOTHING DISPATCHED.\n');
   console.log('  fixture      : _tempt_fate_fixtures/run_2026-09-24_02-11-02_scene_a (already paid for)');
   console.log('  role         : temptOutcomeExtractor, and only that role');
-  console.log('  endpoints    : ' + (PIN_PRIMARY ? PIN_ENDPOINT + '  (the other two tiers are blocked too)'
+  console.log('  endpoints    : ' + (PIN_GROK ? '/api/mistral-proxy REDIRECTED to /api/proxy at the route boundary'
+    : PIN_PRIMARY ? PIN_ENDPOINT + '  (the other two tiers are blocked too)'
     : ALLOWED_ENDPOINTS.join(', ') + '  (everything else blocked)'));
   console.log('  tiers        : ' + DECLARED_TIERS.map((t) => t.tier + '=' + t.model).join('  '));
-  if (PIN_PRIMARY) {
+  if (PIN_GROK) {
+    console.log('  PROVIDER CMP : ' + GROK_MODEL + ' via _sbModelOverride on /api/proxy, ONE upstream attempt');
+    console.log('  bounded cost : $' + tierCost(GROK_MODEL).toFixed(6) + '   (3600 in + 3200 out at $1.25/$2.50 per M)');
+    console.log('  UNBOUNDED    : reasoning tokens are billed output and are NOT capped by max_tokens');
+    console.log('  prompt       : UNCHANGED — same messages, temperature 0.1, max_tokens 3200');
+  } else if (PIN_PRIMARY) {
     console.log('  PINNED REPLAY: ' + PIN_MODEL + ' on ' + PIN_ENDPOINT + ' only, ONE request max');
     console.log('  single call  : $' + tierCost(PIN_MODEL).toFixed(6) + '   (no cascade — pinned)');
   } else {
     console.log('  worst case   : $' + DECLARED_TIERS.reduce((n, t) => n + tierCost(t.model), 0).toFixed(6)
       + '   expected: $' + tierCost(DECLARED_TIERS[0].model).toFixed(6));
   }
-  console.log('  ceiling      : $' + (PIN_PRIMARY ? REPLAY_CEILING_USD : CEILING_USD).toFixed(6)
+  console.log('  ceiling      : $' + (PIN_GROK ? GROK_CEILING_USD : PIN_PRIMARY ? REPLAY_CEILING_USD : CEILING_USD).toFixed(6)
     + '  (its own — NOT the $0.40 Scene A budget)');
-  console.log('  retry policy : ' + (PIN_PRIMARY
+  console.log('  retry policy : ' + (PIN_GROK
+    ? 'NONE. _noFallback reduces the server chain to ONE entry and the route permits ONE request. Transport failure = NO DATA.'
+    : PIN_PRIMARY
     ? 'NONE. No cascade, no retry — ONE request. Transport failure = NO DATA; malformed or uncited = FAILED SAMPLE.'
     : 'tier cascade only, on transport/unusable replies. NO validation retry.'));
   console.log('  mutation     : none — no commit, no pending resolution, no story write.');
@@ -88,7 +140,8 @@ fs.mkdirSync(OUT_DIR, { recursive: true });
 
 (async () => {
   console.log('=== EXTRACTOR-ONLY LIVE RUN — AUTHORIZED ===');
-  console.log('    ceiling $' + CEILING_USD.toFixed(6) + ' · output ' + OUT_DIR);
+  console.log('    ceiling $' + (PIN_GROK ? GROK_CEILING_USD : PIN_PRIMARY ? REPLAY_CEILING_USD : CEILING_USD).toFixed(6)
+    + ' · output ' + OUT_DIR + (PIN_GROK ? '\n    PROVIDER COMPARISON: ' + GROK_MODEL + ', unchanged prompt' : ''));
 
   const fx = readFixture();
   fs.writeFileSync(path.join(OUT_DIR, 'fixture_source.json'), JSON.stringify({
@@ -111,11 +164,14 @@ fs.mkdirSync(OUT_DIR, { recursive: true });
   gate.allowRealPaths(ALLOWED_ENDPOINTS);
 
   // The pinned replay carries its OWN ceiling: one tier, not a cascade sum.
-  const ledger = makeLedger(PIN_PRIMARY ? REPLAY_CEILING_USD : CEILING_USD);
+  const ledger = makeLedger(PIN_GROK ? GROK_CEILING_USD : PIN_PRIMARY ? REPLAY_CEILING_USD : CEILING_USD);
   const routeLog = [];
-  await installReservationRoute(page, PIN_PRIMARY
+  const holder = PIN_GROK
+    ? { ledger, log: routeLog, translateToGrok: true, maxRequests: 1 }
+    : PIN_PRIMARY
     ? { ledger, log: routeLog, pinModel: PIN_MODEL, pinEndpoint: PIN_ENDPOINT, maxRequests: 1 }
-    : { ledger, log: routeLog });
+    : { ledger, log: routeLog };
+  await installReservationRoute(page, holder);
 
   await page.goto('http://localhost:3000/', { waitUntil: 'domcontentloaded', timeout: 25000 });
   await page.waitForFunction(() => window.state && window._tfoBuildExtractionContext && window._extractTemptOutcome
@@ -149,7 +205,37 @@ fs.mkdirSync(OUT_DIR, { recursive: true });
     structurallyValid: res.structurallyValid,
     stateUnchanged: res.stateUnchanged, stateBefore: res.stateBefore, stateAfter: res.stateAfter,
     findings,
-    priorPaidRunCommitted: fx.priorCommitted
+    priorPaidRunCommitted: fx.priorCommitted,
+    // PROVIDER COMPARISON PROVENANCE + the measured (not estimated) cost, including the reasoning
+    // tokens the reservation could not bound.
+    providerComparison: PIN_GROK ? (() => {
+      let up = null; try { up = JSON.parse(holder.upstreamRaw || 'null'); } catch (_) {}
+      const u = (up && up.usage) || {};
+      const reasoning = (u.completion_tokens_details && u.completion_tokens_details.reasoning_tokens) || 0;
+      const measuredUsd = (Number(u.prompt_tokens || 0) * 0.00000125) + (Number(u.completion_tokens || 0) * 0.0000025);
+      return {
+        translation: holder.translation || null,
+        translatedBody: holder.translatedBody
+          ? Object.assign({}, holder.translatedBody, { messages: '<' + holder.translatedBody.messages.length + ' messages, byte-identical — see extractor_*_prompt.txt>' })
+          : null,
+        upstreamStatus: holder.upstreamStatus || null,
+        resolvedModel: (up && up._orchestration && up._orchestration.resolvedModel) || null,
+        chainEntry: (up && up._orchestration && up._orchestration.chainEntry) || null,
+        // The number of upstream calls the SERVER made inside this one client request. _noFallback
+        // is supposed to hold it at 1; this is the field that proves it rather than assuming it.
+        upstreamAttempts: (up && up._orchestration && typeof up._orchestration.upstreamAttempts === 'number')
+          ? up._orchestration.upstreamAttempts : null,
+        reasoningEffort: (up && up._orchestration && up._orchestration.reasoningEffort) || null,
+        usage: u,
+        reasoningTokens: reasoning,
+        // completion_tokens ALREADY INCLUDES reasoning tokens at xAI, so measuredUsd is the whole
+        // charge; reasoningTokens is reported separately to show how much of it max_tokens did not
+        // bound. If reasoning pushed completion above 3200, that is the overrun made visible.
+        completionOverMaxTokens: Math.max(0, Number(u.completion_tokens || 0) - 3200),
+        measuredUsd: Number(measuredUsd.toFixed(6)),
+        reservedUsd: ledger.totalUsd
+      };
+    })() : null
   };
   fs.writeFileSync(path.join(OUT_DIR, 'report.json'), JSON.stringify(report, null, 2));
   fs.writeFileSync(path.join(OUT_DIR, 'extractor_system_prompt.txt'), res.prompt ? res.prompt.sys : '');
@@ -173,6 +259,16 @@ fs.mkdirSync(OUT_DIR, { recursive: true });
     console.log('    4 scope stated          : ' + findings.scopeStated);
     console.log('    5 Julian resolved       : ' + findings.julianResolved + '  disposition=' + findings.julianDisposition);
     if (findings.julianQuote) console.log('      cited: "' + String(findings.julianQuote).slice(0, 100) + '"');
+  }
+  if (report.providerComparison) {
+    const pc = report.providerComparison;
+    console.log('\n  PROVIDER COMPARISON:');
+    console.log('    served by       : ' + pc.resolvedModel + '   (chain entry ' + pc.chainEntry + ', effort ' + pc.reasoningEffort + ')');
+    console.log('    upstream attempts: ' + pc.upstreamAttempts + '   (must be 1 — _noFallback)');
+    console.log('    usage           : ' + JSON.stringify(pc.usage));
+    console.log('    reasoning tokens: ' + pc.reasoningTokens + '  (billed as output, NOT bounded by max_tokens)');
+    console.log('    over max_tokens : ' + pc.completionOverMaxTokens + ' completion tokens beyond the 3200 asked for');
+    console.log('    measured        : $' + pc.measuredUsd.toFixed(6) + '  against $' + pc.reservedUsd.toFixed(6) + ' reserved');
   }
   console.log('\n  NO semantic verdict is rendered here. Whether the reading is RIGHT is a human call.');
   console.log('  Evidence: ' + OUT_DIR);
