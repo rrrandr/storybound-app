@@ -32377,6 +32377,21 @@ window._reflowSceneDialogueLLM = _reflowSceneDialogueLLM;
   // them — a role placeholder needs an anchor, and _relAssert refuses endpoints it
   // cannot find. Both are created up front rather than on first mention, because
   // "your father" can be asserted before either has been named in prose.
+  // THE LI'S NAME CHAIN, AS A PURE FUNCTION (Roman 2026-09-27). Extracted so the anchor and any
+  // read-only consumer share ONE authority instead of a second private copy — the mistake
+  // _resolvePcIdentity exists to prevent, applied to the LI. Reads state; writes nothing; creates
+  // nothing. The 'the love interest' tail is a PLACEHOLDER: fine to show a reader, never an identity.
+  function _resolveLiIdentityLabel(s) {
+    s = s || window.state || {};
+    return String(s.loveInterestName || s.partnerName
+      || (s.picks && s.picks.identity && s.picks.identity.partnerName) || 'the love interest');
+  }
+  function _isPlaceholderLiName(n) { return /^(the\s+)?love\s+interest$/i.test(String(n || '').trim()); }
+  try { if (typeof window !== 'undefined') {
+    window._resolveLiIdentityLabel = _resolveLiIdentityLabel;
+    window._isPlaceholderLiName = _isPlaceholderLiName;
+  } } catch (_) {}
+
   function _relEnsureAnchors(L) {
     var s = window.state || {};
     // PC LABEL — READ THE CANONICAL RESOLVER, NEVER A PRIVATE CHAIN (Roman 2026-09-24).
@@ -32428,7 +32443,7 @@ window._reflowSceneDialogueLLM = _reflowSceneDialogueLLM;
       // already-established, generic fallback chain — not a First-Sacrifice-specific fix; any
       // starter using the nested field now resolves correctly here too.
       L.entities[liId] = { id: liId, kind: 'named', anchorRole: 'li',
-        label: String(s.loveInterestName || s.partnerName || (s.picks && s.picks.identity && s.picks.identity.partnerName) || 'the love interest'), aliases: [] };
+        label: _resolveLiIdentityLabel(s), aliases: [] };
     }
   }
   window._relLedger = function () { return _relLedger(false); };
@@ -323097,40 +323112,44 @@ CONSTRAINTS: No dialogue. No plot events. No character names. No storyturn advan
       return { name: '', authority: 'resolvePcIdentity', resolved: false };
     }
     if (raw === 'li') {
-      // The relationship ledger's anchorRole:'li' anchor is the canonical LI reference —
-      // _relResolveRef already maps loveInterestName/partnerName back to that same id.
-      //
-      // THE ANCHOR MUST BE ENSURED, NOT MERELY READ. window._relLedger is exported with create=false
-      // and returns null before _relEnsureAnchors ever runs, which is the same trap that left
-      // invokerName empty. Reading it that way would silently drop the LI's label for any scene
-      // projected before some other code path happened to create the ledger — a visible regression
-      // against the label _sbSpeakerLabel used to emit. _relEnsureAnchors already owns the reviewed
-      // LI fallback chain (loveInterestName -> partnerName -> picks.identity.partnerName), so
-      // ensuring the anchor uses that authority rather than duplicating a private chain here.
-      // Idempotent, and the same call twenty other sites already make.
+      // READ-ONLY, BY CONSTRUCTION (Roman 2026-09-27). An earlier cut called _relLedger(true) here so
+      // the anchor would exist — which made a PROJECTION BUILD create relationship state. That is
+      // unacceptable in a function persistence, DOM rendering, reload and context builders all call:
+      // merely rendering a scene would have mutated the story. Identity is now resolved WITHOUT
+      // creating anything: the anchor's label if a ledger already exists, otherwise the same pure
+      // chain the anchor itself uses (_resolveLiIdentityLabel), so there is still exactly one
+      // authority. Anchor CREATION belongs to an explicit acceptance/setup phase, not to a builder.
+      var _liLabel = '';
       try {
+        // READ THE STORED LEDGER DIRECTLY. window._relLedger() is create=false but is STILL not
+        // read-only: whenever a ledger exists it calls _relEnsureAnchors(L) before returning, which
+        // creates the pc/li anchor entities. The purity proof caught exactly that — a projection build
+        // added ent:julian and pc to the ledger. So this reads state._relationshipLedger itself, scoped
+        // to the current story, and touches nothing. A version/story mismatch simply falls through to
+        // the pure chain below, which is the correct answer for a ledger that does not belong here.
         var L = null;
-        try { if (typeof _relLedger === 'function') L = _relLedger(true); } catch (_) {}
-        if (!L && typeof window._relLedger === 'function') L = window._relLedger();
+        var _st = window.state || {};
+        var _stored = _st._relationshipLedger;
+        if (_stored && typeof _stored === 'object' && String(_stored.storyId || '') === String(_st.storyId || '')) L = _stored;
         var ents = (L && L.entities) || {};
         var keys = Object.keys(ents);
         for (var i = 0; i < keys.length; i++) {
           if (ents[keys[i]] && ents[keys[i]].anchorRole === 'li') {
-            var lbl = String(ents[keys[i]].label || '').trim();
-            if (lbl) {
-              // A LABEL IS NOT AN IDENTITY. _relEnsureAnchors falls back to the literal
-              // 'the love interest' when no name is configured. That is the right thing to SHOW the
-              // reader — and it must never count as a resolved identity, or a placeholder becomes
-              // citable evidence. The PC side already draws this line: _resolvePcIdentity filters
-              // placeholders out via _isPlaceholderPcName. So the label is emitted either way and the
-              // sidecar records resolved:false with placeholder:true.
-              var _ph = /^(the\s+)?love\s+interest$/i.test(lbl);
-              return { name: lbl, authority: 'relationshipAnchor:li', resolved: !_ph, placeholder: _ph };
-            }
+            _liLabel = String(ents[keys[i]].label || '').trim();
+            if (_liLabel) break;
           }
         }
       } catch (_) {}
-      return { name: '', authority: 'relationshipAnchor:li', resolved: false };
+      if (!_liLabel) {
+        try {
+          _liLabel = (typeof window._resolveLiIdentityLabel === 'function')
+            ? String(window._resolveLiIdentityLabel(s) || '').trim() : '';
+        } catch (_) {}
+      }
+      if (!_liLabel) return { name: '', authority: 'relationshipAnchor:li', resolved: false };
+      // A LABEL IS NOT AN IDENTITY: the placeholder tail is shown but never resolved.
+      var _ph = (typeof window._isPlaceholderLiName === 'function') ? window._isPlaceholderLiName(_liLabel) : false;
+      return { name: _liLabel, authority: 'relationshipAnchor:li', resolved: !_ph, placeholder: _ph };
     }
     return { name: raw, authority: 'beatSpeakerName', resolved: true };
   }
@@ -323187,26 +323206,34 @@ CONSTRAINTS: No dialogue. No plot events. No character names. No storyturn advan
       attributionSidecar: { v: _SB_PROJECTION_V, kind: 'beats', coverage: 'complete', entries: entries } };
   }
 
+  // STATEFUL TRANSFORMS RUN ONCE, BEFORE PROJECTION (Roman 2026-09-27). _sbSceneTextTransform advances
+  // real state machines — the lore ledger, scar / near-miss / grievance extraction, micro-expression
+  // capture. Calling it from inside the projection made a BUILD mutate the story, and worse, made a
+  // rebuild non-deterministic: a state machine that had already advanced could yield different text and
+  // so a spurious new revision. So the transform is an explicit ACCEPTANCE-PHASE step whose result is
+  // snapshotted once, and the projection is a pure function of that snapshot.
+  function _sbPrepareBodyText(raw) {
+    var input = String(raw == null ? '' : raw);
+    if (typeof _sbSceneTextTransform !== 'function') return { text: input, refused: false, refusalReason: null };
+    var tx = _sbSceneTextTransform(input);
+    if (tx && tx.refused) return { text: '', refused: true, refusalReason: tx.refusalReason || null };
+    return { text: String((tx && tx.text) == null ? '' : tx.text), refused: false, refusalReason: null };
+  }
+  window._sbPrepareBodyText = _sbPrepareBodyText;
+
+  // PURE. Takes text that acceptance already prepared and does nothing but shape it.
   function _sbProjectFromBody(body, opts) {
     opts = opts || {};
-    var raw = String(body == null ? '' : body);
-    // formatStory's TEXT transformations run HERE, once, so the record stores what the reader reads.
-    // opts.skipTextTransform exists for a caller whose input is already transformed (migration).
-    var refused = false, refusalReason = null, text = raw;
-    if (!opts.skipTextTransform && typeof _sbSceneTextTransform === 'function') {
-      var tx = _sbSceneTextTransform(raw);
-      if (tx && tx.refused) { refused = true; refusalReason = tx.refusalReason || null; text = ''; }
-      else if (tx) { text = String(tx.text == null ? '' : tx.text); }
-    }
+    var text = String(body == null ? '' : body);
     return { ok: true, v: _SB_PROJECTION_V, kind: 'body', text: text,
-      hash: _sbTextHash(text), refused: refused, refusalReason: refusalReason,
+      hash: _sbTextHash(text), refused: !!opts.refused, refusalReason: opts.refusalReason || null,
       attributionSidecar: { v: _SB_PROJECTION_V, kind: 'body', coverage: 'complete',
-        // No beats means no speaker structure to record. ONE whole-text narrator entry is the
-        // honest projection — not an empty sidecar, which would read as "no information", and not
+        // No beats means no speaker structure to record. ONE whole-text narrator entry is the honest
+        // projection — not an empty sidecar, which would read as "no information", and not
         // per-paragraph guesses, which would invent structure the source never had.
         entries: text.length ? [{ beatIdx: null, start: 0, end: text.length, sourceType: 'narrator',
           speakerRaw: null, speakerIdentity: null, speakerAuthority: null, speakerResolved: false,
-          labelSpan: null }] : [] } };
+          speakerPlaceholder: false, labelSpan: null }] : [] } };
   }
 
   // ── THE WRITE API ────────────────────────────────────────────────────────────────────────────

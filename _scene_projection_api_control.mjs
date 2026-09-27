@@ -154,16 +154,28 @@ const section = (t) => console.log('\n=== ' + t + ' ===');
   // ═══════════════════════════════════════════════════════════════════════════════════════════
   section('3. The BODY projection — one whole-text narrator entry, transformations applied');
   {
-    const p = await page.evaluate(() => window._sbBuildSceneProjection('body',
-      '[LORE: fold~concept~the seam~known~at dusk]\n\nShe stepped through the seam.'));
-    ok('the projection succeeded', p.ok === true && p.kind === 'body');
-    ok('formatStory\'s TEXT transformations ran INSIDE the projection — the tag is gone from the record text',
-      p.text.indexOf('[LORE:') === -1 && p.text.indexOf('She stepped through the seam.') !== -1, JSON.stringify(p.text));
-    ok('exactly ONE narrator entry spanning the whole text', p.attributionSidecar.entries.length === 1
-      && p.attributionSidecar.entries[0].sourceType === 'narrator'
-      && p.attributionSidecar.entries[0].start === 0
-      && p.attributionSidecar.entries[0].end === p.text.length);
-    ok('...carrying no invented speaker structure', p.attributionSidecar.entries[0].speakerIdentity === null && p.attributionSidecar.entries[0].labelSpan === null);
+    // SUPERSEDED BY THE PURITY FIX (Roman 2026-09-27). An earlier cut ran the text transformations
+    // INSIDE the projection, which made a build mutate story state and made a rebuild able to produce
+    // a different string — and so a spurious new revision — once a state machine had advanced. The
+    // transform is now an explicit acceptance-phase step (_sbPrepareBodyText) whose result the build
+    // takes as a pure input. This asserts that split rather than the old behaviour.
+    const p = await page.evaluate(() => {
+      const raw = '[LORE: fold~concept~the seam~known~at dusk]\n\nShe stepped through the seam.';
+      const prep = window._sbPrepareBodyText(raw);
+      return { raw: raw, prep: prep, built: window._sbBuildSceneProjection('body', prep.text),
+               builtRaw: window._sbBuildSceneProjection('body', raw) };
+    });
+    ok('the projection succeeded', p.built.ok === true && p.built.kind === 'body');
+    ok('the ACCEPTANCE step applies formatStory\'s text transformations — the tag is gone',
+      p.prep.text.indexOf('[LORE:') === -1 && p.prep.text.indexOf('She stepped through the seam.') !== -1, JSON.stringify(p.prep.text));
+    ok('...and the record text is exactly that prepared text', p.built.text === p.prep.text);
+    ok('the BUILD applies no transformations of its own — raw text passes through untouched',
+      p.builtRaw.text === p.raw, JSON.stringify(p.builtRaw.text.slice(0, 40)));
+    ok('exactly ONE narrator entry spanning the whole text', p.built.attributionSidecar.entries.length === 1
+      && p.built.attributionSidecar.entries[0].sourceType === 'narrator'
+      && p.built.attributionSidecar.entries[0].start === 0
+      && p.built.attributionSidecar.entries[0].end === p.built.text.length);
+    ok('...carrying no invented speaker structure', p.built.attributionSidecar.entries[0].speakerIdentity === null && p.built.attributionSidecar.entries[0].labelSpan === null);
     const empty = await page.evaluate(() => window._sbBuildSceneProjection('body', ''));
     ok('an empty body yields an empty sidecar rather than a zero-length entry', empty.attributionSidecar.entries.length === 0);
     const bad = await page.evaluate(() => window._sbBuildSceneProjection('nonsense', 'x'));
