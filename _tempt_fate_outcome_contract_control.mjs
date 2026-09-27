@@ -185,10 +185,58 @@ const WISH = 'everyone forgets the ceremony happened';
 
   // THE LIMITATION, ASSERTED SO IT CANNOT BE FORGOTTEN: scopeMatch cannot express "not established".
   const scopeLine = (extractorPrompt.match(/"scopeMatch":[^\n]*/) || [''])[0];
-  ok('scopeMatch offers only affirmative delivery claims — full | narrower | broader',
-    /"full \| narrower \| broader"/.test(scopeLine), scopeLine.slice(0, 120));
-  ok('...so there is NO value meaning "the prose does not establish full delivery" — a real limitation',
-    !/undetermined|unestablished|not established|indeterminate/i.test(scopeLine), scopeLine.slice(0, 200));
+  // THE LIMITATION IS NOW CLOSED, so these assertions invert: scopeMatch must be able to say "unknown".
+  // Adding the value fixes how uncertainty is REPRESENTED. It does not make unsupported interpretations
+  // detectable — fixture 03 in the regression control still passes every mechanical gate.
+  ok('scopeMatch can express an UNDETERMINED comparison',
+    /"full \| narrower \| broader \| undetermined"/.test(scopeLine), scopeLine.slice(0, 140));
+  ok('...defined as INSUFFICIENT EVIDENCE to compare delivered with requested scope',
+    /INSUFFICIENT EVIDENCE TO COMPARE delivered scope with requested scope/.test(scopeLine));
+  ok('...and explicitly NOT a weaker narrower, a hedge, or a partial grant',
+    /it is not a weaker "narrower" and not a hedge/.test(scopeLine)
+    && /NOT a partial grant/.test(scopeLine));
+  ok('narrower/broader remain for EVIDENCED differences and full for established coverage',
+    /narrower and broader are for differences you can EVIDENCE, full is for coverage you can establish/.test(scopeLine));
+  const noteLine = (extractorPrompt.match(/"scopeNote":[^\n]*/) || [''])[0];
+  ok('scopeNote must name WHAT REMAINS UNESTABLISHED under undetermined',
+    /name WHAT REMAINS UNESTABLISHED/.test(noteLine), noteLine.slice(0, 160));
+
+  // THE VALIDATOR: all four values accepted, nothing else.
+  const scopeVals = await page.evaluate(() => {
+    const base = { delivered: true, ruptureClass: 'other', requestedScope: 'r', deliveredScope: 'd',
+      scopeNote: 'n', invalidatedPlans: [], changed: [], durability: [], knowledgeStates: [],
+      establishedEvidence: [], openPossibilities: [] };
+    const out = {};
+    ['full', 'narrower', 'broader', 'undetermined', 'partial', 'unknown', ''].forEach((v) => {
+      const r = window._validateTemptFateOutcomeReport(Object.assign({}, base, { scopeMatch: v }), {});
+      const errs = (r && r.errors) || [];
+      out[v || '(empty)'] = !errs.some((e) => /scopeMatch/.test(String(e)));
+    });
+    return out;
+  });
+  console.log('    validator accepts scopeMatch: ' + JSON.stringify(scopeVals));
+  ok('the validator accepts all FOUR legitimate values',
+    scopeVals.full && scopeVals.narrower && scopeVals.broader && scopeVals.undetermined,
+    JSON.stringify(scopeVals));
+  ok('...and still refuses invented ones — the enum did not become open',
+    scopeVals.partial === false && scopeVals.unknown === false && scopeVals['(empty)'] === false,
+    JSON.stringify(scopeVals));
+
+  // DOWNSTREAM: unknown scope must not become established canon.
+  const appSrc = fs.readFileSync(path.join(__dirname, 'public', 'app.js'), 'utf8');
+  ok('the continuation prompt flags an undetermined scope as NOT ESTABLISHED',
+    /SCOPE NOT ESTABLISHED: the accepted record could NOT compare/.test(appSrc));
+  ok('...telling the next scene the effects are committed but the REACH is still open',
+    /Treat the effects listed below as committed and the OVERALL REACH/.test(appSrc)
+    && /do not settle it in either direction/.test(appSrc));
+  ok('...and refusing BOTH readings, not just the optimistic one',
+    /do not write as though\n?\s*.*it succeeded fully, and do not write as though it was confined/.test(appSrc.replace(/\s+/g, ' '))
+    || /it succeeded fully, and do not write as though it was confined/.test(appSrc));
+  ok('the canon packet marks an undetermined rupture as an OPEN QUESTION, not a settled grant',
+    /SCOPE NOT ESTABLISHED: the reach of this rupture is an OPEN QUESTION in canon/.test(appSrc)
+    && /a plan may not rely on it having covered, or spared, anyone/.test(appSrc));
+  ok('...and neither downstream line fires for full, narrower or broader',
+    /e\.scopeMatch === 'undetermined'/.test(appSrc) && /d\.scopeMatch === 'undetermined'/.test(appSrc));
   // Each enum beside its own field, with transfer between them prohibited. Overlap is preserved:
   // "suspects" is legitimately available to both, and that is not a contract defect.
   ok('knowledgeStates.state carries its OWN enum and says what it describes',

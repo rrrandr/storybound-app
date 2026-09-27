@@ -106,20 +106,27 @@ const note = (t) => console.log('    ' + t);
     + '  (' + oSys.length + ' -> ' + cur.sys.length + ' chars)');
   removed.forEach((l) => console.log('      - ' + l.trim().slice(0, 110)));
   added.forEach((l) => console.log('      + ' + l.trim().slice(0, 110)));
-  ok('the SYSTEM prompt differs from the original by exactly TWO replaced lines',
-    removed.length === 2 && added.length === 2,
+  // FOUR lines now, across two rounds of bounded correction: the citation field and enum labelling
+  // (affectedKnowers, knowledgeStates), then the undetermined scope value and its note requirement
+  // (scopeMatch, scopeNote). The assertion tracks the intended SET rather than a frozen count.
+  const INTENDED = /"affectedKnowers"|"knowledgeStates"|"scopeMatch"|"scopeNote"/;
+  ok('the SYSTEM prompt differs from the original by exactly FOUR replaced lines',
+    removed.length === 4 && added.length === 4,
     'removed ' + removed.length + ' added ' + added.length);
-  ok('...and those lines are the affectedKnowers and knowledgeStates schema lines, nothing else',
-    removed.every((l) => /"affectedKnowers"|"knowledgeStates"/.test(l))
-    && added.every((l) => /"affectedKnowers"|"knowledgeStates"/.test(l)),
+  ok('...and every changed line is one of the four intended schema lines, nothing else',
+    removed.every((l) => INTENDED.test(l)) && added.every((l) => INTENDED.test(l)),
     JSON.stringify(removed.map((l) => l.trim().slice(0, 40))));
+  ok('...the undetermined scope value is what was added to the scopeMatch line',
+    added.some((l) => /"scopeMatch"/.test(l) && /undetermined/.test(l)));
+  ok('...and the grounding prohibition is what was added to the knowers line',
+    added.some((l) => /"affectedKnowers"/.test(l)
+      && /Memory may NOT be inferred from gaze, silence, stillness, composure or presence/.test(l)));
   ok('...the citation field is what was added to the knowers line',
     added.some((l) => /"affectedKnowers"/.test(l) && /"evidenceQuote"/.test(l)));
   ok('...and the enum clarification is what was added to the states line',
     added.some((l) => /"knowledgeStates"/.test(l) && /STATE describes what this party KNOWS/.test(l)));
   ok('NOTHING ELSE in the system prompt changed — every other original line survives verbatim',
-    oLines.filter((l) => !/"affectedKnowers"|"knowledgeStates"/.test(l))
-      .every((l) => cLines.indexOf(l) !== -1));
+    oLines.filter((l) => !INTENDED.test(l)).every((l) => cLines.indexOf(l) !== -1));
   ok('the USER message is BYTE-IDENTICAL to the original request', oUsr === cur.usr,
     'original ' + oUsr.length + ' vs current ' + cur.usr.length);
   ok('model and temperature are unchanged from the original request',
@@ -130,9 +137,9 @@ const note = (t) => console.log('    ' + t);
   ok('THE CONTROLLED REPLAY HOLDS EVERYTHING ELSE FIXED: same prose, same model, same temperature',
     oUsr === cur.usr && origReq.model === PIN_MODEL && origReq.temperature === 0.1,
     JSON.stringify({ userIdentical: oUsr === cur.usr, model: origReq.model, temperature: origReq.temperature }));
-  ok('...and the two intended changes are the schema lines and max_tokens 1400 -> 3200',
-    removed.length === 2 && added.length === 2 && origReq.max_tokens === 1400,
-    'two schema lines replaced; output limit raised');
+  ok('...and the intended changes are those four schema lines plus max_tokens 1400 -> 3200',
+    removed.length === 4 && added.length === 4 && origReq.max_tokens === 1400,
+    'four schema lines replaced; output limit raised');
 
   // ── C. ONLY ONE PROVIDER REQUEST MAY LEAVE ────────────────────────────────────────────────
   const routeLog = [];

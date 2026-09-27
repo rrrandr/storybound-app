@@ -191126,11 +191126,11 @@ No text, no watermark, no UI elements, share-ready.`;
         check: function (v) { return typeof v === 'string' && !!v.trim(); }, err: 'delivered:true but requestedScope missing — the wish\'s literal scope must be stated' },
       { key: 'deliveredScope', line: '"deliveredScope": "<the scope the scene ACTUALLY delivered on the page>",',
         check: function (v) { return typeof v === 'string' && !!v.trim(); }, err: 'delivered:true but deliveredScope missing — what the scene actually granted must be stated' },
-      { key: 'scopeMatch', line: '"scopeMatch": "full | narrower | broader",  /* compare honestly. "full" ONLY if delivered covers requested. A subset of the people, the events, or the duration is "narrower" — say so; do NOT relabel a partial grant as a success. */',
-        check: function (v) { return v === 'full' || v === 'narrower' || v === 'broader'; }, err: 'delivered:true but scopeMatch must be full|narrower|broader' },
-      { key: 'scopeNote', line: '"scopeNote": "<required when scopeMatch is not \\"full\\": why the scene delivered a different scope, and what specifically was left untouched>",',
+      { key: 'scopeMatch', line: '"scopeMatch": "full | narrower | broader | undetermined",  /* compare honestly. "full" ONLY if delivered covers requested. A subset of the people, the events, or the duration is "narrower" — say so; do NOT relabel a partial grant as a success. "broader" if it reached past what was asked. USE "undetermined" WHEN THE PROSE GIVES YOU INSUFFICIENT EVIDENCE TO COMPARE delivered scope with requested scope at all — it is not a weaker "narrower" and not a hedge: narrower and broader are for differences you can EVIDENCE, full is for coverage you can establish, and undetermined is the honest answer when the scene does not let you tell. An undetermined assessment is NOT a failure to finish and NOT a partial grant. */',
+        check: function (v) { return v === 'full' || v === 'narrower' || v === 'broader' || v === 'undetermined'; }, err: 'delivered:true but scopeMatch must be full|narrower|broader|undetermined' },
+      { key: 'scopeNote', line: '"scopeNote": "<required when scopeMatch is not \\"full\\": why the scene delivered a different scope, and what specifically was left untouched. When scopeMatch is \\"undetermined\\", name WHAT REMAINS UNESTABLISHED — which parties, events or durations the prose does not settle — rather than describing a difference you cannot evidence>",',
         check: function (v, raw) { return (raw.scopeMatch === 'full') || (typeof v === 'string' && !!v.trim()); },
-        err: 'scopeMatch is not "full" — scopeNote must explain what was left untouched' },
+        err: 'scopeMatch is not "full" — scopeNote must explain what was left untouched (or, for "undetermined", what remains unestablished)' },
       { key: 'invalidatedPlans', line: '"invalidatedPlans": ["<a previously scheduled plan, proceeding or obligation this rupture made IMPOSSIBLE, SUSPENDED or UNEXPLAINED. A proceeding nobody can still justify IS a change. Empty array if every scheduled thing can genuinely still proceed.>"],',
         check: function (v) { return v === undefined || Array.isArray(v); }, err: 'invalidatedPlans must be an array when present' },
       { key: 'ruptureClass', line: '"ruptureClass": "memory_perception | history_rewrite | identity_reputation | materialization_possession | relationship_social | other",  /* what KIND of change the wish asked for and the scene delivered. Then add ONLY that class\'s fields below — do not populate fields of a class you did not deliver. */',
@@ -193114,6 +193114,17 @@ No text, no watermark, no UI elements, share-ready.`;
     lines.push('A Tempt Fate rupture has ALREADY been committed to canon, and its own accepted outcome record declares that it made specific scheduled things impossible, suspended, or unexplained. The scheduled objective you were given below is therefore NOT automatically still your objective.');
     idx.entries.forEach(function (e) {
       lines.push('  • COMMITTED RUPTURE (' + e.ruptureClass + ', scope ' + e.scopeMatch + '): "' + String(e.wish).slice(0, 200) + '"');
+      // UNKNOWN SCOPE MUST NOT READ AS ESTABLISHED CANON. Without this the line says "scope
+      // undetermined" and a later scene is free to treat the wish as settled in whichever direction
+      // suits it — which is the same failure as relabelling a partial grant a success, inverted.
+      // The EFFECTS below remain committed and usable; only the comparison is open.
+      if (e.scopeMatch === 'undetermined') {
+        lines.push('      SCOPE NOT ESTABLISHED: the accepted record could NOT compare what was asked'
+          + ' with what was delivered. Treat the effects listed below as committed and the OVERALL REACH'
+          + ' of the wish as STILL OPEN — do not settle it in either direction, do not write as though'
+          + ' it succeeded fully, and do not write as though it was confined.'
+          + (e.scopeNote ? ' What remains unestablished: ' + String(e.scopeNote).slice(0, 240) : ''));
+      }
       e.invalidatedPlans.forEach(function (p) { lines.push('      NO LONGER SUPPORTED: ' + String(p).slice(0, 220)); });
       if (e.changed.length) lines.push('      WHAT CHANGED: ' + e.changed.map(function (c) { return (c && c.subject ? c.subject + ' — ' : '') + (c && c.whatChanged ? c.whatChanged : ''); }).join(' | ').slice(0, 300));
       if (e.knowledgeStates.length) lines.push('      WHO KNOWS WHAT NOW: ' + e.knowledgeStates.map(function (k) { return (k && k.character ? k.character + ': ' + (k.state || '?') : ''); }).filter(Boolean).join(' | ').slice(0, 300));
@@ -193331,7 +193342,11 @@ No text, no watermark, no UI elements, share-ready.`;
       var idx = _tfoInvalidatedPlanIndex(s);
       (Array.isArray(s._temptFateDurableConsequences) ? s._temptFateDurableConsequences : []).slice(-4).forEach(function (d) {
         if (!d) return;
-        push('dc', '[' + (d.ruptureClass || 'other') + '] ' + (d.requestedRupture || '') + ' → ' + (d.deliveredScope || '') + ' (scope ' + (d.scopeMatch || '?') + ')');
+        push('dc', '[' + (d.ruptureClass || 'other') + '] ' + (d.requestedRupture || '') + ' → ' + (d.deliveredScope || '') + ' (scope ' + (d.scopeMatch || '?') + ')'
+          + (d.scopeMatch === 'undetermined'
+            ? ' — SCOPE NOT ESTABLISHED: the reach of this rupture is an OPEN QUESTION in canon, not a'
+              + ' settled full or partial grant; a plan may not rely on it having covered, or spared, anyone.'
+            : ''));
         (Array.isArray(d.knowledgeStates) ? d.knowledgeStates : []).forEach(function (k) {
           if (k && k.character) push('know', k.character + ' is now ' + (k.state || '?') + (k.note ? (' — ' + k.note) : ''));
         });
