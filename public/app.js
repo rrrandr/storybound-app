@@ -102044,12 +102044,24 @@ function _buildAuthorFloorDirective(s) {
       StoryPagination.init();
       StoryPagination.clear();
       body = sanitizeFatelandsUnits(body);
-      StoryPagination.addPage(formatStory(body), true);
+      // TRACK A (Roman 2026-09-27): uid first, then ONE stateful preparation, then a pure projection
+      // that both the DOM and the record come from. Before this, the DOM received formatStory(body)
+      // while the record stored body — so the reader never saw the [LORE:] tag the record kept.
+      var _sbUidLit = (typeof _sbMintSceneUid === 'function') ? _sbMintSceneUid('lit') : null;
+      var _sbPrep = (typeof _sbPrepareBodyText === 'function') ? _sbPrepareBodyText(body) : { text: body, refused: false, refusalReason: null };
+      StoryPagination.addPage(_sbRenderProjectedText(_sbPrep), true);
       state.turnCount = 0; // the issue's Scene 1 is mounted; completed continuation turns = 0 (first continuation = scene 2)
       state.scenes = state.scenes || [];
-      state.scenes.push({ title, synopsis, text: body, fateCard: null });
+      var _sbLitRec = (typeof _sbPersistSceneProjection === 'function')
+        ? _sbPersistSceneProjection({ uid: _sbUidLit, kind: 'body', input: _sbPrep.text, title: title, synopsis: synopsis,
+            fateCard: null, projectionOpts: { refused: _sbPrep.refused, refusalReason: _sbPrep.refusalReason } })
+        : null;
+      // NO FALLBACK PUSH. If the API is unavailable something is badly wrong, and quietly creating an
+      // un-projected record is the drift the route rule exists to prevent — it would be a scene with no
+      // uid, no hash and no sidecar that every consumer would then treat as canon.
+      if (!_sbLitRec) { try { console.error('[SCENE-PROJECTION] literary mount could not persist through the API — no scene record written'); } catch (_) {} }
       try { _sceneLedgerCommit(state, { kind: 'issue_open', sceneNumber: 1, event: null, pageUid: StoryPagination.getCurrentPageUid() }); } catch (_) {}
-      try { if (typeof window._sbBetaSceneDone === 'function') window._sbBetaSceneDone(body); } catch (_) {}
+      try { if (typeof window._sbBetaSceneDone === 'function') window._sbBetaSceneDone(_sbPrep.text); } catch (_) {}
 
       if (statusEl) statusEl.textContent = label + ' ready';
       if (continueBtn) {
@@ -140731,7 +140743,19 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
     if (!pending) return;
     state._bakedPendingCommit = null;
     state.scenes = state.scenes || [];
-    if (state.scenes.length === 0) state.scenes.push(pending);
+    // TRACK A (Roman 2026-09-27). A FOURTH writer, beyond the three paths A3 set out to migrate — the
+    // baked/seeded first page. It is an ordinary prose scene write with real text, so leaving it as a
+    // direct push would have left a known bypass and made the API-route invariant untrue rather than
+    // merely unproven. Its text was already prepared upstream when the page was displayed, so it is
+    // persisted with skipTextTransform: re-running the transformations here would advance the lore and
+    // marker state machines a second time on text they had already rewritten.
+    if (state.scenes.length === 0) {
+      var _sbBaked = (typeof _sbPersistSceneProjection === 'function')
+        ? _sbPersistSceneProjection({ kind: 'body', input: String(pending.text || ''),
+            title: pending.title, synopsis: pending.synopsis, fateCard: pending.fateCard || null })
+        : null;
+      if (!_sbBaked) { try { console.error('[SCENE-PROJECTION] baked scene could not persist through the API — no scene record written'); } catch (_) {} }
+    }
     // turnCount = completed continuation turns; committing the mounted Scene 1 completes none, so it
     // stays 0 and the first continuation is scene 2 (previously began at 1 → scene 3, plan row 2 skipped).
     try { if (typeof window._sbBetaSceneDone === 'function') window._sbBetaSceneDone(pending.text); } catch (_) {}
@@ -205290,22 +205314,30 @@ No text, no watermark, no UI elements, share-ready.`;
         state.scenes = state.scenes || [];
         // If a scene already exists at this index (rare race), splice in
         // before it so we don't clobber the trigger scene. Otherwise push.
-        if (state.scenes[_archiveSceneIdx] && !state.scenes[_archiveSceneIdx].oasArchive) {
-          state.scenes.splice(_archiveSceneIdx, 0, {
+        // TRACK A (Roman 2026-09-27): an ARCHIVE entry, not a prose scene — its text is '' by
+        // construction and it carries no projection, so it is an explicit, declared exception to the
+        // projection-write route rather than a bypass of it. It DOES get a uid and an
+        // attributionAvailable:false marker, because the splice below shifts every later index and
+        // identity must survive that: _sbSceneByUid has to resolve these too, or "never resolve by
+        // position" would be false for exactly the records that make position unreliable.
+        var _sbArchiveRecord = function () {
+          return {
+            uid: (typeof _sbMintSceneUid === 'function') ? _sbMintSceneUid('oas') : null,
             title: 'Intimate scene with ' + _liName,
             synopsis: '',
             text: '',
             fateCard: null,
-            oasArchive: _archiveEntry
-          });
-        } else {
-          state.scenes[_archiveSceneIdx] = {
-            title: 'Intimate scene with ' + _liName,
-            synopsis: '',
-            text: '',
-            fateCard: null,
-            oasArchive: _archiveEntry
+            oasArchive: _archiveEntry,
+            projection: { v: 1, kind: 'archive', hash: (typeof _sbTextHash === 'function') ? _sbTextHash('') : null,
+                          revision: 0, provenance: 'archive_entry', builtAt: Date.now() },
+            attributionSidecar: null,
+            attributionAvailable: false
           };
+        };
+        if (state.scenes[_archiveSceneIdx] && !state.scenes[_archiveSceneIdx].oasArchive) {
+          state.scenes.splice(_archiveSceneIdx, 0, _sbArchiveRecord());
+        } else {
+          state.scenes[_archiveSceneIdx] = _sbArchiveRecord();
         }
         // Fast-lookup mirror — keyed by scene index for Back-nav O(1) hit.
         state._oasSceneSnapshots = state._oasSceneSnapshots || {};
@@ -237346,6 +237378,15 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
   window._cgTemptFateAftermathCleanup = _cgTemptFateAftermathCleanup;
 
   async function _completeStagedSceneFromScreenplay(sceneIndex, playerAction, playerDialogue) {
+    // TRACK A: MINT THE SCENE UID BEFORE THE FIRST ASYNCHRONOUS BOUNDARY (Roman 2026-09-27).
+    // plan.__sceneUid used to be assigned late — after the push, after the Tempt capture and after two
+    // awaits — so the pending record was built with a NULL uid and everything downstream resolved by
+    // array index while the OAS archive spliced. Minting here means the identity exists before anything
+    // can be reordered around it, and the same uid reaches the scene record, the pending context and
+    // the archive entry.
+    var _sbSceneUid = null;
+    try { _sbSceneUid = (typeof _sbMintSceneUid === 'function') ? _sbMintSceneUid('cg') : null; } catch (_) {}
+
     if (!_isStagedMode()) return;
     state._stagedAwaitingProse = false;
 
@@ -237589,23 +237630,20 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
       // Persist the scene's prose so save/resume and other downstream
       // consumers (scene tail context, etc.) keep working.
       try {
-        // Screenplay-style speaker labels (Roman 2026-07-17 — they had vanished): a dialogue
-        // beat's parsed speaker is prepended as an ALL-CAPS label so the reader knows who is
-        // talking (KAELITH: "..."). 'protagonist'/'li' resolve to the actual names.
-        var _sbSpeakerLabel = function (b) {
-          if (!b || b.kind !== 'dialogue' || !b.speaker || typeof b.speaker !== 'string') return '';
-          var sp = b.speaker.trim(), name = sp;
-          if (sp === 'protagonist') name = (state.picks && state.picks.identity && state.picks.identity.playerName) || state.playerName || 'I';
-          else if (sp === 'li') name = (state.picks && state.picks.identity && state.picks.identity.partnerName) || state.loveInterestName || state.partnerName || 'LOVE INTEREST';
-          name = String(name).trim();
-          if (!name) return '';
-          // Avoid a double label if the beat text already opens with one.
-          if (new RegExp('^' + name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\s*:', 'i').test(String(b.text || '').trim())) return '';
-          return name.toUpperCase() + ': ';
-        };
-        var proseAssembled = plan.beats.map(function(b) { return _sbSpeakerLabel(b) + (b.text || ''); }).join('\n\n');
+        // TRACK A: THROUGH THE PROJECTION API (Roman 2026-09-27). The inline label closure and the
+        // beats.map(...).join('\n\n') that used to live here are gone: they were one of THREE
+        // competing projections of the same scene, and the one the re-sync below then overwrote.
+        // _sbBuildSceneProjection owns the same rendering — labels, the double-label guard, the
+        // blank-line join — plus the attribution sidecar and the hash, built in one pass so offsets
+        // are valid against the exact string stored. Speaker identity is typed by role there
+        // (_resolvePcIdentity for the PC, the relationship anchor for the LI, the beat's own cast name
+        // otherwise) instead of this closure's private chain.
         state.scenes = state.scenes || [];
-        state.scenes.push({ title: '', synopsis: '', text: proseAssembled, fateCard: null });
+        var _sbRec = (typeof _sbPersistSceneProjection === 'function')
+          ? _sbPersistSceneProjection({ uid: _sbSceneUid, kind: 'beats', input: plan.beats, title: '', synopsis: '', fateCard: null })
+          : null;
+        var proseAssembled = _sbRec ? _sbRec.text : plan.beats.map(function (b) { return (b && b.text) || ''; }).join('\n\n');
+        if (plan) plan.__sceneUid = (_sbRec && _sbRec.uid) || _sbSceneUid || plan.__sceneUid || null;
         try { _sceneLedgerCommit(state, { kind: 'cg', sceneNumber: (typeof sceneIndex === 'number' ? sceneIndex + 1 : undefined), act: playerAction, dia: playerDialogue }); } catch (_) {}
         try { if (typeof window._sbBetaSceneDone === 'function') window._sbBetaSceneDone(proseAssembled); } catch (_) {}
         // TEMPT FATE OUTCOME — commit HERE, immediately after real persistence (state.scenes.push/
@@ -237979,9 +238017,19 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
           // name into save/resume AND into the NEXT scene's "PRIOR SCENE TAIL" (which slices that
           // very text, ~line 190229) — teaching the next-scene author that marker syntax is house
           // style and surfacing plant markers as literal continuity text. Re-derive from cleaned beats.
+          // TRACK A: A REVISION THROUGH THE API, NOT A DIRECT .text OVERWRITE (Roman 2026-09-27).
+          // This line used to assign state.scenes[last].text from a DIFFERENT projection — beat text
+          // with no speaker labels — silently replacing the labelled text the reader had been shown and
+          // leaving three incompatible versions of one scene in the system. It now re-runs the SAME
+          // projection over the (now scrubbed) beats and revises the record: the uid is preserved, the
+          // revision bumps ONLY if the final text actually changed, hash and sidecar are replaced
+          // together, and any pending extraction bound to the superseded hash is invalidated rather
+          // than silently re-pointed at text it never verified against. Resolved BY UID, so the OAS
+          // archive splicing earlier in the array cannot make this hit the wrong scene.
           try {
-            if (state.scenes && state.scenes.length) {
-              state.scenes[state.scenes.length - 1].text = plan.beats.map(function (b) { return (b && b.text) || ''; }).join('\n\n');
+            if (typeof _sbReviseSceneProjection === 'function' && _sbSceneUid) {
+              _sbReviseSceneProjection(_sbSceneUid, { kind: 'beats', input: plan.beats,
+                reason: 'post_acceptance_marker_strip_and_placeholder_scrub' });
             }
           } catch (_) {}
 
@@ -268088,6 +268136,14 @@ Generate the synopsis now.` }
 
                 // Mount story text (sanitize Fatelands units before display/storage)
                 var _sanitizedBody = sanitizeFatelandsUnits(body);
+                // TRACK A (Roman 2026-09-27): uid before the branch, and ONE stateful preparation for
+                // both the staged-recovery and the ordinary literary mount below — so the
+                // transformations run exactly once no matter which branch is taken, and the DOM and the
+                // record come from the same projected text.
+                var _sbScene1Uid = (typeof _sbMintSceneUid === 'function') ? _sbMintSceneUid('lit') : null;
+                var _sbScene1Prep = (typeof _sbPrepareBodyText === 'function')
+                  ? _sbPrepareBodyText(_sanitizedBody)
+                  : { text: _sanitizedBody, refused: false, refusalReason: null };
                 StoryPagination.init();
                 StoryPagination.clear();
 
@@ -268120,7 +268176,9 @@ Generate the synopsis now.` }
                         window._recordInvocationProse(state, _pInv, _sanitizedBody);
                       }
                     } catch (_) {}
-                    StoryPagination.addPage(formatStory(_sanitizedBody), true);
+                    // TRACK A: the DOM renders FROM the projection (see _mountAndTransition for the
+                    // same pattern). _sbScene1Prep is prepared once above, before this branch.
+                    StoryPagination.addPage(_sbRenderProjectedText(_sbScene1Prep), true);
                     try { _sceneLedgerCommit(state, { kind: 'scene', sceneNumber: 1, pageUid: StoryPagination.getCurrentPageUid() }); } catch (_) {}
                   }
                 }
@@ -268133,8 +268191,13 @@ Generate the synopsis now.` }
                 // Update turn state
                 state.turnCount = 0; // Scene 1 mounted; completed continuation turns = 0 (first continuation = scene 2)
                 state.scenes = state.scenes || [];
-                state.scenes.push({ title, synopsis, text: _sanitizedBody, fateCard: null });
-                try { if (typeof window._sbBetaSceneDone === 'function') window._sbBetaSceneDone(_sanitizedBody); } catch (_) {}
+                var _sbS1Rec = (typeof _sbPersistSceneProjection === 'function')
+                  ? _sbPersistSceneProjection({ uid: _sbScene1Uid, kind: 'body', input: _sbScene1Prep.text,
+                      title: title, synopsis: synopsis, fateCard: null,
+                      projectionOpts: { refused: _sbScene1Prep.refused, refusalReason: _sbScene1Prep.refusalReason } })
+                  : null;
+                if (!_sbS1Rec) { try { console.error('[SCENE-PROJECTION] Scene 1 could not persist through the API — no scene record written'); } catch (_) {} }
+                try { if (typeof window._sbBetaSceneDone === 'function') window._sbBetaSceneDone(_sbScene1Prep.text); } catch (_) {}
 
                 // Set immutable title + evolution history for background path —
                 // skip if Fate working title was pre-generated for the GN cover
@@ -323235,6 +323298,22 @@ CONSTRAINTS: No dialogue. No plot events. No character names. No storyturn advan
           speakerRaw: null, speakerIdentity: null, speakerAuthority: null, speakerResolved: false,
           speakerPlaceholder: false, labelSpan: null }] : [] } };
   }
+
+  // ONE PLACE THAT TURNS A PROJECTION INTO DOM HTML (Roman 2026-09-27). The DOM renders FROM the
+  // persisted projection, so formatStory is handed already-projected text with
+  // textAlreadyProjected — otherwise its text transformations would run a second time on text they
+  // had already rewritten, re-advancing the lore/scar/micro-expression state machines. A refusal is
+  // rendered here rather than by re-detecting it, because re-running the guard means re-running the
+  // whole text half.
+  function _sbRenderProjectedText(prepared) {
+    var p = prepared || {};
+    if (p.refused) {
+      var msg = p.refusalReason || ((typeof _PROPHET_MUHAMMAD_REFUSAL === 'string') ? _PROPHET_MUHAMMAD_REFUSAL : 'This part of the story can\u2019t be shown.');
+      return '<p class="sb-content-refusal" style="opacity:0.85;font-style:italic;">' + escapeHTML(msg) + '</p>';
+    }
+    return formatStory(String(p.text == null ? '' : p.text), false, { textAlreadyProjected: true });
+  }
+  window._sbRenderProjectedText = _sbRenderProjectedText;
 
   // ── THE WRITE API ────────────────────────────────────────────────────────────────────────────
   // CREATE. The only ordinary route by which a scene record comes into existence with text.

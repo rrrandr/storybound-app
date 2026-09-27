@@ -633,12 +633,16 @@ const VALID_BEATS = [{ idx: 0, kind: 'narration', text: 'The ceremony hall stand
     // in prose assembly/push/ledger-commit prevents the commit line from ever being reached — the
     // same structural-proof style this file's own §4 already uses for the acceptance gate.
     const appJs = await (await fetch('http://localhost:3000/app.js')).text();
-    const pushIdx = appJs.indexOf("state.scenes.push({ title: '', synopsis: '', text: proseAssembled, fateCard: null });");
+    // ANCHOR UPDATED BY TRACK A (2026-09-27). Real prose persistence is no longer a direct
+    // state.scenes.push: the CG path now writes through the projection API, which is the whole point of
+    // `state.scenes` canonicalization. The ASSERTION'S INTENT is unchanged — persistence must still
+    // precede the Tempt-outcome commit in source order — so only the anchor string follows the code.
+    const pushIdx = appJs.indexOf("_sbPersistSceneProjection({ uid: _sbSceneUid, kind: 'beats'");
     const ledgerCommitIdx = appJs.indexOf("_sceneLedgerCommit(state, { kind: 'cg'");
     const commitAtPersistenceCallIdx = appJs.indexOf('_cgTemptFateCommitAtPersistence(plan);');
     const commitAtPersistenceDefIdx = appJs.indexOf('function _cgTemptFateCommitAtPersistence(plan)');
     ok('found all four source anchors in the real served app.js', pushIdx !== -1 && ledgerCommitIdx !== -1 && commitAtPersistenceCallIdx !== -1 && commitAtPersistenceDefIdx !== -1, JSON.stringify({ pushIdx, ledgerCommitIdx, commitAtPersistenceCallIdx, commitAtPersistenceDefIdx }));
-    ok('real prose persistence (state.scenes.push) happens BEFORE the Tempt-outcome commit call in source order', pushIdx < commitAtPersistenceCallIdx, JSON.stringify({ pushIdx, commitAtPersistenceCallIdx }));
+    ok('real prose persistence (the projection-API write) happens BEFORE the Tempt-outcome commit call in source order', pushIdx < commitAtPersistenceCallIdx, JSON.stringify({ pushIdx, commitAtPersistenceCallIdx }));
     ok('the scene ledger commit ALSO happens BEFORE the Tempt-outcome commit call in source order', ledgerCommitIdx < commitAtPersistenceCallIdx, JSON.stringify({ ledgerCommitIdx, commitAtPersistenceCallIdx }));
     // Both the push and the commit call sit inside the SAME try block if no unrelated `} catch` or
     // `function` boundary appears between the ledger-commit line and the commit call line other

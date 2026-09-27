@@ -111,8 +111,15 @@ const section = (t) => console.log('\n=== ' + t + ' ===');
     const resumed = await page.evaluate(async () => await window._tfoResumePending());
     ok('_tfoResumePending refuses to dispatch while disabled, and says why', resumed && resumed.skipped === 'auto_extraction_disabled', JSON.stringify(resumed));
     const src = await page.evaluate(async () => (await (await fetch('/app.js')).text()));
-    ok('_sbSpeakerLabel is UNTOUCHED — it still runs its own chain and Track B did not edit it (Track A owns visible label normalization)',
-      src.indexOf("if (sp === 'protagonist') name = (state.picks && state.picks.identity && state.picks.identity.playerName) || state.playerName || 'I';") !== -1);
+    // SUPERSEDED BY TRACK A (2026-09-27). This asserted that _sbSpeakerLabel's private PC chain was
+    // still in place, because Track B deliberately did not touch visible label normalization. Track A
+    // has now REPLACED that inline closure with the projection's typed speaker resolution, which is
+    // exactly where the plan said the change belonged. The assertion becomes the new truth: the private
+    // chain is gone, and Track B still does not own label rendering.
+    ok('_sbSpeakerLabel\'s private PC chain is GONE — Track A replaced it with the projection\'s typed resolution',
+      src.indexOf("if (sp === 'protagonist') name = (state.picks && state.picks.identity && state.picks.identity.playerName) || state.playerName || 'I';") === -1);
+    ok('...and labels now come from the projection, which resolves the PC and the LI through their own authorities',
+      /_sbResolveBeatSpeaker/.test(src) && /authority: 'resolvePcIdentity'/.test(src) && /authority: 'relationshipAnchor:li'/.test(src));
     ok('...and _resolvePcIdentity is used for the RECORD field only — _tfoInvokerIdentity calls it, _sbSpeakerLabel does not',
       src.indexOf('function _tfoInvokerIdentity') !== -1
       && /_tfoInvokerIdentity[\s\S]{0,400}_resolvePcIdentity/.test(src));
