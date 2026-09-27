@@ -1,0 +1,7 @@
+[MISTRAL-PROXY] quota reconcile op=mq_muj84ntq_thr9b1g6 released=10249 held=3897 exact=true
+[SPECIALIST-PROXY] _noFallback — chain reduced to ONE entry: grok-4.3
+[SPECIALIST-PROXY] Role: STRUCTURE_GENERATOR, Model chain: grok-4.3
+[SPECIALIST-PROXY] Trying model 1/1: grok-4.3
+[PROXY] SB model override -> grok-4.3 (effort high)
+[SPECIALIST-PROXY] latency=9979ms model=grok-4.3 effort=high (chain="grok-4.3") status=200
+[SPECIALIST-PROXY] ✓ Model grok-4.3 succeeded
