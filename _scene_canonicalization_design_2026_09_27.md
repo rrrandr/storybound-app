@@ -56,9 +56,9 @@ design exists to remove. The trace measured the projection as a sequential map-a
 the text is built*, and only there.
 
 **The sidecar must not depend on visible labels.** Each entry carries `[start, end)` into the final text,
-`sourceType` (`speaker` | `narrator`), the **validated beat speaker identity** taken from `beat.speaker`
-resolved through the identity authority (§6), and `labelSpan` recorded **as actually emitted** by the
-projection — not detected in the text afterwards. A renderer that stops printing `NAME:` prefixes must not
+`sourceType` (`speaker` | `narrator`), the **validated beat speaker identity** taken from `beat.speaker` and
+resolved through the **typed** authority for that speaker's role (§6) — recording which authority resolved
+it — and `labelSpan` recorded **as actually emitted** by the projection — not detected in the text afterwards. A renderer that stops printing `NAME:` prefixes must not
 change attribution by one byte. The trace confirmed why: label presence is conditional (the double-label
 guard suppresses it), and label *length* varies with the resolved name, so nothing about attribution can
 be recovered from the text.
@@ -87,11 +87,16 @@ no ordering guarantee in either direction.
 **Required:**
 - **Delete that queue point.** Extraction is triggered from **after** the single persist in §3, from the
   same place, in order. Not earlier and not speculatively.
-- **Any rewrite creates a new projection and a new hash, and invalidates an older pending extraction.** A
-  pending record whose hash no longer matches the record at its uid is **invalidated**, never silently
-  re-pointed at the new text: a citation verified against a superseded projection is not evidence about
-  current canon. Invalidation is recorded, so a scene can be re-extracted deliberately rather than having
-  its evidence quietly swapped.
+- **A rewrite creates a new projection REVISION and hash. It does NOT create a new scene identity.** The
+  uid is the scene; the revision is the text. So a rewrite bumps `projectionRevision` and replaces `hash`
+  while `uid` stays exactly as minted — reload, archival movement and every cross-reference keep resolving.
+  Conflating the two would make every scrub look like a new scene.
+- **A rewrite invalidates an older pending extraction.** A pending record carries the `uid` *and* the
+  `hash`/`revision` it was built against; when the record at that uid no longer matches, the pending
+  extraction is **invalidated** — never silently re-pointed at the new text, because a citation verified
+  against a superseded revision is not evidence about current canon. Invalidation is recorded against the
+  same uid, so the scene's history is one chain rather than a set of orphans, and re-extraction is a
+  deliberate act.
 - Fire-and-forget remains acceptable *after* the persist — the reader still must not wait on extraction,
   and the existing continuation block already prevents a silent failure from letting the next scene
   proceed. What changes is only *when* it may start.
@@ -107,9 +112,16 @@ persisted record .text  ===  DOM render input  ===  extraction context prose
 byte-for-byte, all resolved by the same uid, all hashing to the stored `hash`.
 
 **How to prove it without a live test** (dry controls, in the existing style):
-1. **Single-producer proof (AST/source):** exactly one function writes a scene record's `.text`, and it is
-   the projection. No other assignment to `.text` on a scene record exists — this is what forbids a second
-   projection from reappearing later, and it is the check that would have caught `:237444`.
+1. **Projection-write API proof (AST/source):** every ordinary scene write goes **through one
+   authoritative projection-write API**, and no ordinary code path assigns a scene record's `.text`
+   directly. "Exactly one function writes `.text`" was the earlier wording and it is too brittle — it
+   forbids legitimate second writers (a later revision, the migration pass) and breaks the moment anyone
+   adds one, which pressures the next author to bypass the rule rather than use it. The durable rule is
+   about the **route**, not the count: the API owns building the projection, hashing it, bumping the
+   revision, and invalidating dependent pending extractions, so a caller cannot write text without those
+   things happening. **Migration is an explicit, provenance-marked exception** (§7) that calls a distinct
+   entry point and is recognised as such by the proof rather than smuggled past it. This is still the check
+   that would have caught `:237444`, because that line assigns `.text` directly.
 2. **Three-way identity proof (real path, stubbed network):** run one accepted scene through the real
    completion path; assert the persisted `.text`, the string handed to the DOM renderer, and
    `ctx.prose` are byte-identical and all match `hash`.
@@ -128,40 +140,86 @@ byte-for-byte, all resolved by the same uid, all hashing to the stored `hash`.
 
 ---
 
-# 6. Identity consistency — a separate prerequisite
+# 6. Speaker identity resolution is TYPED, by role
 
-**`_resolvePcIdentity` is unambiguously the intended authority.** This is not an open question; the
-codebase already declares it twice:
+**Correction to the previous revision.** It said "every consumer of a PC display name reads
+`_resolvePcIdentity`… The same applies to the LI name." **The second half was wrong.**
+`_resolvePcIdentity` is the authority **for the PC only**. Routing every identity through it would make
+the PC resolver the owner of people it knows nothing about.
+
+Speaker resolution has **three typed routes and one refusal**, chosen by what `beat.speaker` names:
+
+| `beat.speaker` | authority | resolves to |
+|---|---|---|
+| `'protagonist'` | **`_resolvePcIdentity`** — the declared PC owner | the canonical PC display name |
+| `'li'` | **the relationship/cast LI authority** — the ledger's `anchorRole: 'li'` anchor entity, addressed by `_relLiId()`, whose label `_relEnsureAnchors` resolves. `_relResolveRef` already maps `loveInterestName`/`partnerName` back to that same id, so the anchor is the canonical LI reference, not a convenience copy | the canonical LI display name |
+| any other name (`'Seren'`, `'the presiding Dohkar'`, …) | **validated cast/beat identity** — the name must clear the existing cast validator (`validateCGSpeakerDisplayNames`, `:36961`, which already rejects a missing speaker on a dialogue-carrying beat and rejects internal underscored keys used as display names) against the story's known display names | the validated display name, plus the validator that cleared it |
+| anything unvalidated | **none** | **`unresolved`** — recorded, never inferred |
+
+The sidecar records **which authority resolved each entry**, so a later reader can see *how* a speaker was
+established. That is also what keeps the routes honest: a PC-resolved entry and a cast-validated entry are
+not interchangeable evidence.
+
+## The PC's own single-owner rule still applies, and is still violated
+
+`_resolvePcIdentity` is unambiguously the intended authority **for the PC**, declared twice in the code:
 
 - `:132273` — *"Identity selection has exactly one owner now: `_resolvePcIdentity`."*
 - `:32382` — *"PC LABEL — READ THE CANONICAL RESOLVER, NEVER A PRIVATE CHAIN … precisely the mistake
   `_resolvePcIdentity` exists to prevent (\"Every consumer reads this — never its own chain\")."*
 
-The relationship anchor was already brought into line for exactly this reason. **`_sbSpeakerLabel`
-(`:237064`) was not**, and still runs its own chain:
+The relationship anchor was brought into line for exactly this reason. **`_sbSpeakerLabel` (`:237064`) was
+not**, and still runs its own PC chain:
 
-| consumer | chain | fallback |
+| consumer | PC chain | fallback |
 |---|---|---|
 | relationship anchor (compliant) | `_resolvePcIdentity`: seed cast → `playerName` → `name` → `identity.playerName` → `picks.identity.playerName`, placeholder-filtered | `'the protagonist'` |
 | **speaker label (non-compliant)** | `picks.identity.playerName` → `playerName` | `'I'` |
 
 Different precedence, different fallbacks, no placeholder filter — so they can disagree, and when they do
-the invoker is not nameable in the terms the evidence uses.
+the PC is not nameable in the terms the evidence uses.
 
-**Required:** every consumer of a PC display name reads `_resolvePcIdentity` — **including the speaker
-label and the relationship anchor**. The same applies to the LI name, which `_sbSpeakerLabel` also resolves
-privately. A source-level control should assert that no private PC-name chain exists outside the resolver,
-in the same style as the single-producer proof above.
+**Required:** the projection resolves `'protagonist'` through `_resolvePcIdentity` and `'li'` through the
+LI anchor, rather than through `_sbSpeakerLabel`'s private chains. A source-level control asserts no
+private **PC**-name chain exists outside the resolver. It must **not** assert the same about the LI, whose
+authority is the anchor.
 
-**Still unproven, and not made proven by this design:** the empty `invokerName`. The mechanism is known —
-`_tfoBuildExtractionContext` reads `_relLedger(false)`, which returns `null` before reaching
-`_relEnsureAnchors` when no ledger exists for the `storyId`, so the field degrades silently to `''`. No
-retained artifact contains a live ledger. **This remains unproven until a live-shaped ledger path is
-observed.** Two requirements meanwhile:
-- the capture must **fail loudly** — either ensure the ledger at capture, or record
-  `invokerUnresolved: true` so "unresolved" is distinguishable from "unnamed";
-- `EXEMPT(invoker, invoker_anchor)` stays licensed by the **mechanic**, so an unresolved invoker degrades
-  naming only. It is a naming defect, not an evidentiary one.
+---
+
+# 6b. The unresolved invoker never touches the accepted scene
+
+**Correction.** The previous revision said the capture must "fail loudly", which is ambiguous enough to be
+read as aborting. **It must not be.** An empty or unresolvable invoker identity:
+
+- **must NOT reject, roll back, or interrupt the accepted scene.** The scene is already the reader's;
+  persistence has happened, and nothing about an extractor's naming problem may undo it. No throw that
+  escapes the capture, no revert of the record, no interruption of the completion path.
+- **must produce an explicit status** on the pending record — `extractor_blocked: 'invoker_unresolved'` —
+  distinguishable from both "resolved" and "no invoker exists".
+- **must prevent automatic outcome commitment.** Blocked means blocked: no claim is committed from a report
+  whose invoker could not be named.
+- **surfaces as pending review**, so a person can resolve the identity and release it deliberately.
+
+**One interaction to get right.** `_tfoContinuationBlocked` currently holds the next continuation while a
+pending record is unresolved. If `extractor_blocked` were treated as an ordinary unresolved pending, the
+story would stall on a naming defect — the opposite of "the story continues". So
+`extractor_blocked_pending_review` must be a **terminal-for-automation** state, not an in-flight one: it
+stops automatic commitment and does **not** gate the next scene. The continuation gate keeps its purpose —
+catching a *retryable* extraction that silently failed — and stops catching a decision that is waiting on a
+human.
+
+**Scope of the consequence, unchanged:** `EXEMPT(invoker, invoker_anchor)` is licensed by the **mechanic**,
+not by the prose, so an unresolved invoker degrades the system's ability to **name** the exempt party. It is
+a naming defect, not an evidentiary one — which is exactly why it must block automation without touching
+the story.
+
+## Still unproven
+
+The mechanism behind the empty field is known: `_tfoBuildExtractionContext` reads `_relLedger(false)`, which
+returns `null` before reaching `_relEnsureAnchors` when no ledger exists for the `storyId`, so the field
+degrades silently to `''`. No retained artifact contains a live ledger. **This remains unproven until a
+live-shaped ledger path is observed**, and this design does not make it proven — it only makes the failure
+explicit instead of silent.
 
 ---
 
@@ -171,10 +229,16 @@ Every accepted scene that exists today predates the uid, the projection and the 
 
 ## What migration does
 
+0. **Go through the projection-write API's explicit migration entry point**, not around it. Migration is the
+   one provenance-marked exception to the ordinary write route (§5-1): it writes a record whose text it did
+   **not** build, so it must say so rather than impersonate a normal projection write.
 1. **Assign a uid** to each historical scene record, derived from stable data already on it (story id +
-   position at migration time), recorded as `uidProvenance: 'migrated'`. This gives old records a stable
+   position at migration time), recorded as `uidProvenance: 'migrated'`. The uid is then **stable for the
+   life of the record**, exactly as for new scenes — a later revision of a migrated record bumps its
+   revision and hash, never its identity. This gives old records a stable
    identity going forward. It does **not** claim the uid was the one in force when the scene was written.
-2. **Freeze the existing `.text` as the canonical text for that record.** It is whatever the historical
+2. **Freeze the existing `.text` as canonical revision 0 for that record**, marked
+   `projectionProvenance: 'historical_unbuilt'` so it is never mistaken for API-built output. It is whatever the historical
    pipeline last left there — for CG scenes, the label-less re-sync output (B). Hash it and store the hash.
    This is canonical *for that record* by definition, because it is what the reader's save contains.
 3. **Mark the absence of attribution explicitly:** `attributionAvailable: false`. Absence must never read
@@ -218,10 +282,11 @@ of its scene record. These must be **invalidated, not migrated** — recorded as
 | 3 | single persist; DOM renders from it; ctx built from it | 4, 5 |
 | 4 | extraction sequenced after the persist; rewrite ⇒ new hash ⇒ invalidate | 5 |
 | 5 | byte-identity proofs (7 dry controls) | unblocking extraction |
-| 6 | one PC identity authority | independent; required before invoker naming is trusted |
-| 7 | historical migration | needs 1 and 2 defined, not deployed |
+| 6 | typed speaker authority: PC via `_resolvePcIdentity`, LI via the anchor, others via the cast validator | 2 (the projection resolves speakers) |
+| 6b | unresolved-invoker status: blocks automation, never the scene | independent |
+| 7 | historical migration, via the API's provenance-marked exception | needs 1, 2 and the write API defined, not deployed |
 
-**Extraction stays blocked until 1–5 are done and proven.** 6 is independent and does not gate them. 7 can
-be specified now and applied with the same release.
+**Extraction stays blocked until 1–5 are done and proven.** 6 feeds the projection and so travels with it;
+6b is independent and can land at any time. 7 can be specified now and applied with the same release.
 
 Nothing implemented. No replay authorized.
