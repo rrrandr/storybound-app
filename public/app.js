@@ -323002,100 +323002,477 @@ CONSTRAINTS: No dialogue. No plot events. No character names. No storyturn advan
   }
   window.buildIntimacyEntryProbeDirective = buildIntimacyEntryProbeDirective;
 
-  function formatStory(text, shouldEscape = false){
-      // 🔒 SACRED-FIGURE GUARD (story text) — the single pre-display chokepoint for ALL scene
-      // prose. If a scene depicts the Prophet Muhammad as a figure (e.g. an ordinary Mohammed
-      // character written INTO the Prophet mid-story), never render that prose — show a refusal
-      // notice instead. Figure/context based, so an ordinary character named Mohammed is fine.
+
+  // ══════════════════════════════════════════════════════════════════════════════════════════════
+  // TRACK A — `state.scenes` CANONICALIZATION: the authoritative projection-write API
+  //
+  // SCOPE, deliberately narrow: the `state.scenes` substrate plus formatStory's text/presentation
+  // split. Literary CONTINUATIONS are OUT OF SCOPE and remain NON-CITABLE — they never write
+  // state.scenes at all (their prose lives in the paginated DOM), and giving them durable records is
+  // its own storage project.
+  //
+  // WHAT THIS FIXES. One accepted CG scene had THREE different texts: the labelled string built at
+  // the push (867 bytes), the label-less re-sync rewrite that replaced it after two awaits (830),
+  // and _extractCGSceneText's reconstruction that the extractor was fed (813). No consumer could
+  // say which was canon, and the reader's own text was transient. Identity was worse: the scene
+  // record carried no uid, so everything resolved by array index while the OAS archive spliced.
+  //
+  // THE RULE. Every ordinary scene write goes THROUGH this API. It is the route, not a count of
+  // writers — a "exactly one function may assign .text" rule forbids legitimate later revisions and
+  // pressures the next author to bypass it. The API owns building the projection, hashing it,
+  // bumping the revision, and invalidating dependents, so a caller cannot write text without those
+  // happening. Migration of historical records is an explicit, provenance-marked exception.
+  var _SB_PROJECTION_V = 1;
+
+  // Change detection, not security. A 32-bit FNV-1a over the final text: cheap, stable across
+  // reloads, and sufficient to answer "is this still the text that was cited?".
+  function _sbTextHash(str) {
+    var s = String(str == null ? '' : str), h = 0x811c9dc5;
+    for (var i = 0; i < s.length; i++) {
+      h ^= s.charCodeAt(i);
+      h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0;
+    }
+    return 'h' + h.toString(16) + '-' + s.length;
+  }
+  window._sbTextHash = _sbTextHash;
+
+  // STABLE SCENE IDENTITY, minted before any asynchronous work. The uid IS the scene for the life of
+  // the record: a rewrite bumps the revision and replaces the hash, and NEVER changes this.
+  function _sbMintSceneUid(kind) {
+    var k = String(kind || 'scn');
+    try {
+      if (typeof crypto !== 'undefined' && crypto.randomUUID) return k + ':' + crypto.randomUUID();
+    } catch (_) {}
+    return k + ':' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);
+  }
+  window._sbMintSceneUid = _sbMintSceneUid;
+
+  // Resolution is BY UID, never by position — the OAS archive splices into state.scenes at
+  // state.turnCount, shifting every later index, so an index is not an identity.
+  function _sbSceneByUid(uid, s) {
+    s = s || window.state || {};
+    var list = Array.isArray(s.scenes) ? s.scenes : [];
+    if (!uid) return null;
+    for (var i = 0; i < list.length; i++) {
+      if (list[i] && String(list[i].uid) === String(uid)) return { record: list[i], index: i };
+    }
+    return null;
+  }
+  window._sbSceneByUid = _sbSceneByUid;
+
+  // ── THE PROJECTION ───────────────────────────────────────────────────────────────────────────
+  // Returns { text, attributionSidecar } TOGETHER, built in one sequential pass. Together because
+  // offsets are only valid against the exact string they were computed from; computing them in a
+  // second pass means re-deriving positions by searching, which is the string-guessing this design
+  // exists to remove. Offsets accumulate as the text is built, and only there.
+  //
+  // TWO KINDS, because the creating paths genuinely differ:
+  //   'beats' — the CG/staged path. Per-beat entries, speaker-typed.
+  //   'body'  — the literary Scene-1 mounts. A single pre-authored prose string, no beats, no
+  //             speaker concept: ONE whole-text narrator entry. Pretending one shape fits both is
+  //             how a second projection reappears.
+  function _sbBuildSceneProjection(kind, input, opts) {
+    opts = opts || {};
+    if (String(kind) === 'beats') return _sbProjectFromBeats(input, opts);
+    if (String(kind) === 'body') return _sbProjectFromBody(input, opts);
+    return { ok: false, reason: 'unknown_projection_kind:' + String(kind) };
+  }
+  window._sbBuildSceneProjection = _sbBuildSceneProjection;
+
+  // SPEAKER RESOLUTION IS TYPED BY ROLE. _resolvePcIdentity is the authority for the PC and for
+  // nothing else; the LI has its own relationship anchor; a named NPC is whatever the beat says,
+  // subject to cast validation by the caller that produced the beats. Anything unresolved stays
+  // unresolved and is NEVER inferred from neighbouring text.
+  function _sbResolveBeatSpeaker(sp) {
+    var raw = (typeof sp === 'string') ? sp.trim() : '';
+    if (!raw) return { name: '', authority: null, resolved: false };
+    var s = window.state || {};
+    if (raw === 'protagonist') {
       try {
-          if (typeof _detectProphetMuhammad === 'function' && text && _detectProphetMuhammad(String(text))) {
-              try { console.warn('[SACRED-FIGURE] scene text refused (Prophet-Muhammad depiction)'); } catch (_) {}
-              var _refuse = (typeof _PROPHET_MUHAMMAD_REFUSAL === 'string') ? _PROPHET_MUHAMMAD_REFUSAL : 'This part of the story can’t be shown.';
-              return '<p class="sb-content-refusal" style="opacity:0.85;font-style:italic;">' + escapeHTML(_refuse) + '</p>';
-          }
+        var hit = (typeof window._resolvePcIdentity === 'function') ? window._resolvePcIdentity(s) : null;
+        if (hit && hit.v && String(hit.v).trim()) {
+          return { name: String(hit.v).trim(), authority: 'resolvePcIdentity', resolved: true };
+        }
       } catch (_) {}
-      // LORE CAPTURE — UNIVERSAL CATCH-ALL (Roman 2026-07-11): all worlds + flavors incl. FF.
-      // Scene 1 (literary) is parsed early in parseScene1Response; this catches continuations AND
-      // any scene-1 path that bypasses that parser (e.g. FF). formatStory is the shared pre-display
-      // chokepoint. Extract the author's [LORE:] tag + strip it, then run the ledger (canon backstop
-      // self-gates to Fatelands). Idempotent — if the tag was already stripped upstream, this no-ops.
-      // The decorator below runs on every scene off the accumulated ledger.
+      return { name: '', authority: 'resolvePcIdentity', resolved: false };
+    }
+    if (raw === 'li') {
+      // The relationship ledger's anchorRole:'li' anchor is the canonical LI reference —
+      // _relResolveRef already maps loveInterestName/partnerName back to that same id.
+      //
+      // THE ANCHOR MUST BE ENSURED, NOT MERELY READ. window._relLedger is exported with create=false
+      // and returns null before _relEnsureAnchors ever runs, which is the same trap that left
+      // invokerName empty. Reading it that way would silently drop the LI's label for any scene
+      // projected before some other code path happened to create the ledger — a visible regression
+      // against the label _sbSpeakerLabel used to emit. _relEnsureAnchors already owns the reviewed
+      // LI fallback chain (loveInterestName -> partnerName -> picks.identity.partnerName), so
+      // ensuring the anchor uses that authority rather than duplicating a private chain here.
+      // Idempotent, and the same call twenty other sites already make.
       try {
-          if (window.state && typeof _loreProcessScene === 'function') {
-              var _lc = [], _lm = text.match(/\[LORE:\s*([^\]]*)\]/i);
-              if (_lm) {
-                  text = text.replace(/\[LORE:\s*[^\]]*\]/gi, '');
-                  _lc = _lm[1].split(';').map(function (rec) {
-                      var f = rec.split('~').map(function (x) { return x.trim(); });
-                      if (!f[0]) return null;
-                      return { term: f[0], kind: f[1] || 'concept', essential_meaning: f[2] || '', known_to_pc: /^known$/i.test(f[3] || ''), context: (f[4] || '').trim(), source: 'author' };
-                  }).filter(Boolean);
+        var L = null;
+        try { if (typeof _relLedger === 'function') L = _relLedger(true); } catch (_) {}
+        if (!L && typeof window._relLedger === 'function') L = window._relLedger();
+        var ents = (L && L.entities) || {};
+        var keys = Object.keys(ents);
+        for (var i = 0; i < keys.length; i++) {
+          if (ents[keys[i]] && ents[keys[i]].anchorRole === 'li') {
+            var lbl = String(ents[keys[i]].label || '').trim();
+            if (lbl) {
+              // A LABEL IS NOT AN IDENTITY. _relEnsureAnchors falls back to the literal
+              // 'the love interest' when no name is configured. That is the right thing to SHOW the
+              // reader — and it must never count as a resolved identity, or a placeholder becomes
+              // citable evidence. The PC side already draws this line: _resolvePcIdentity filters
+              // placeholders out via _isPlaceholderPcName. So the label is emitted either way and the
+              // sidecar records resolved:false with placeholder:true.
+              var _ph = /^(the\s+)?love\s+interest$/i.test(lbl);
+              return { name: lbl, authority: 'relationshipAnchor:li', resolved: !_ph, placeholder: _ph };
+            }
+          }
+        }
+      } catch (_) {}
+      return { name: '', authority: 'relationshipAnchor:li', resolved: false };
+    }
+    return { name: raw, authority: 'beatSpeakerName', resolved: true };
+  }
+  window._sbResolveBeatSpeaker = _sbResolveBeatSpeaker;
+
+  function _sbProjectFromBeats(beats, opts) {
+    var list = Array.isArray(beats) ? beats : [];
+    var parts = [], entries = [], cursor = 0;
+    for (var i = 0; i < list.length; i++) {
+      var b = list[i] || {};
+      var isDialogue = (b.kind === 'dialogue');
+      var resolved = isDialogue ? _sbResolveBeatSpeaker(b.speaker) : { name: '', authority: null, resolved: false };
+      var bodyText = (typeof b.text === 'string') ? b.text : '';
+      // The LABEL, emitted exactly as the pre-Track-A projection emitted it, including the
+      // double-label guard: a beat whose text already opens with the name and a colon gets none.
+      // The LABEL follows resolved.name (so the reader sees what they saw before Track A, including a
+      // placeholder), while the sidecar's IDENTITY follows resolved.resolved. Presentation and
+      // evidence are deliberately allowed to disagree here; conflating them is what would let a
+      // placeholder be cited as a person.
+      var label = '';
+      if (isDialogue && resolved.name) {
+        var esc = resolved.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        if (!(new RegExp('^' + esc + '\\s*:', 'i').test(String(bodyText).trim()))) {
+          label = resolved.name.toUpperCase() + ': ';
+        }
+      }
+      var seg = label + bodyText;
+      var sep = (i === 0) ? '' : '\n\n';
+      var start = cursor + sep.length;
+      var end = start + seg.length;
+      parts.push(sep + seg);
+      cursor = end;
+      // SOURCE TYPING READS kind + text + validated speaker — NEVER beat.dialogue, the field whose
+      // emptiness dropped 6 of 6 validated identities before Track A. A dialogue beat whose speaker
+      // does not resolve stays sourceType 'speaker' with an unresolved identity: reclassifying it as
+      // narration would let a quoted line become admissible narrator evidence by losing attribution.
+      entries.push({
+        beatIdx: (typeof b.idx === 'number') ? b.idx : i,
+        start: start, end: end,
+        sourceType: isDialogue ? 'speaker' : 'narrator',
+        speakerRaw: (typeof b.speaker === 'string') ? b.speaker : null,
+        speakerIdentity: resolved.resolved ? resolved.name : null,
+        speakerAuthority: resolved.authority,
+        speakerResolved: !!resolved.resolved,
+        speakerPlaceholder: !!resolved.placeholder,
+        // Recorded AS EMITTED, never detected in the text afterwards. A cited span overlapping a
+        // label must be refused, and that is only checkable if the label's own extent is a fact.
+        labelSpan: label ? { start: start, end: start + label.length } : null
+      });
+    }
+    var text = parts.join('');
+    return { ok: true, v: _SB_PROJECTION_V, kind: 'beats', text: text,
+      hash: _sbTextHash(text),
+      attributionSidecar: { v: _SB_PROJECTION_V, kind: 'beats', coverage: 'complete', entries: entries } };
+  }
+
+  function _sbProjectFromBody(body, opts) {
+    opts = opts || {};
+    var raw = String(body == null ? '' : body);
+    // formatStory's TEXT transformations run HERE, once, so the record stores what the reader reads.
+    // opts.skipTextTransform exists for a caller whose input is already transformed (migration).
+    var refused = false, refusalReason = null, text = raw;
+    if (!opts.skipTextTransform && typeof _sbSceneTextTransform === 'function') {
+      var tx = _sbSceneTextTransform(raw);
+      if (tx && tx.refused) { refused = true; refusalReason = tx.refusalReason || null; text = ''; }
+      else if (tx) { text = String(tx.text == null ? '' : tx.text); }
+    }
+    return { ok: true, v: _SB_PROJECTION_V, kind: 'body', text: text,
+      hash: _sbTextHash(text), refused: refused, refusalReason: refusalReason,
+      attributionSidecar: { v: _SB_PROJECTION_V, kind: 'body', coverage: 'complete',
+        // No beats means no speaker structure to record. ONE whole-text narrator entry is the
+        // honest projection — not an empty sidecar, which would read as "no information", and not
+        // per-paragraph guesses, which would invent structure the source never had.
+        entries: text.length ? [{ beatIdx: null, start: 0, end: text.length, sourceType: 'narrator',
+          speakerRaw: null, speakerIdentity: null, speakerAuthority: null, speakerResolved: false,
+          labelSpan: null }] : [] } };
+  }
+
+  // ── THE WRITE API ────────────────────────────────────────────────────────────────────────────
+  // CREATE. The only ordinary route by which a scene record comes into existence with text.
+  function _sbPersistSceneProjection(spec) {
+    var s = window.state; if (!s) return null;
+    spec = spec || {};
+    var proj = _sbBuildSceneProjection(spec.kind, spec.input, spec.projectionOpts);
+    if (!proj || !proj.ok) {
+      try { console.warn('[SCENE-PROJECTION] refused: ' + ((proj && proj.reason) || 'no projection')); } catch (_) {}
+      return null;
+    }
+    var uid = spec.uid || _sbMintSceneUid(spec.kind === 'beats' ? 'cg' : 'lit');
+    if (!Array.isArray(s.scenes)) s.scenes = [];
+    var existing = _sbSceneByUid(uid, s);
+    if (existing) return existing.record;      // idempotent: one record per uid
+    var rec = {
+      uid: uid,
+      title: (spec.title != null) ? spec.title : '',
+      synopsis: (spec.synopsis != null) ? spec.synopsis : '',
+      text: proj.text,
+      fateCard: (spec.fateCard != null) ? spec.fateCard : null,
+      projection: {
+        v: _SB_PROJECTION_V, kind: proj.kind, hash: proj.hash, revision: 0,
+        provenance: 'api_built', builtAt: Date.now(),
+        refused: !!proj.refused, refusalReason: proj.refusalReason || null
+      },
+      attributionSidecar: proj.attributionSidecar,
+      attributionAvailable: true
+    };
+    s.scenes.push(rec);
+    try {
+      console.log('[SCENE-PROJECTION] created ' + uid + ' kind=' + proj.kind + ' revision=0 hash=' + proj.hash
+        + ' chars=' + proj.text.length + ' sidecarEntries=' + proj.attributionSidecar.entries.length);
+    } catch (_) {}
+    return rec;
+  }
+  window._sbPersistSceneProjection = _sbPersistSceneProjection;
+
+  // REVISE. A rewrite is a NEW REVISION of the SAME SCENE: revision bumps, hash is replaced, and
+  // the uid is untouched — conflating the two would make every scrub look like a new scene. Any
+  // pending extraction bound to the old hash is invalidated here rather than being silently
+  // re-pointed at text it never verified against.
+  function _sbReviseSceneProjection(uid, spec) {
+    var s = window.state; if (!s) return null;
+    var found = _sbSceneByUid(uid, s);
+    if (!found) { try { console.warn('[SCENE-PROJECTION] revise refused: unknown uid ' + uid); } catch (_) {} return null; }
+    spec = spec || {};
+    var proj = _sbBuildSceneProjection(spec.kind || (found.record.projection && found.record.projection.kind), spec.input, spec.projectionOpts);
+    if (!proj || !proj.ok) { try { console.warn('[SCENE-PROJECTION] revise refused: no projection'); } catch (_) {} return null; }
+    var rec = found.record;
+    var prevHash = rec.projection && rec.projection.hash;
+    var prevRev = (rec.projection && typeof rec.projection.revision === 'number') ? rec.projection.revision : 0;
+    if (proj.hash === prevHash) {
+      try { console.log('[SCENE-PROJECTION] ' + uid + ' revise is a NO-OP (identical text) — revision stays ' + prevRev); } catch (_) {}
+      return rec;                              // no revision churn for an unchanged rebuild
+    }
+    rec.text = proj.text;
+    rec.attributionSidecar = proj.attributionSidecar;
+    rec.projection = {
+      v: _SB_PROJECTION_V, kind: proj.kind, hash: proj.hash, revision: prevRev + 1,
+      provenance: 'api_built', builtAt: Date.now(),
+      refused: !!proj.refused, refusalReason: proj.refusalReason || null,
+      previousHash: prevHash, reason: spec.reason ? String(spec.reason) : null
+    };
+    var invalidated = _sbInvalidateDependentsOfScene(uid, prevHash, rec.projection.revision);
+    try {
+      console.log('[SCENE-PROJECTION] ' + uid + ' revised to revision ' + rec.projection.revision
+        + ' hash ' + prevHash + ' -> ' + proj.hash + (spec.reason ? ' (' + spec.reason + ')' : '')
+        + ' — invalidated ' + invalidated.length + ' dependent record(s)');
+    } catch (_) {}
+    return rec;
+  }
+  window._sbReviseSceneProjection = _sbReviseSceneProjection;
+
+  // A pending extraction carries the uid AND the hash/revision it was built against. When the record
+  // at that uid no longer matches, its citations were verified against superseded text, so the
+  // extraction is INVALIDATED — recorded against the same uid so the scene's history stays one chain.
+  function _sbInvalidateDependentsOfScene(uid, prevHash, newRevision) {
+    var s = window.state; if (!s) return [];
+    var out = [];
+    try {
+      var m = (s._temptOutcomePending && typeof s._temptOutcomePending === 'object') ? s._temptOutcomePending : {};
+      Object.keys(m).forEach(function (k) {
+        var r = m[k];
+        if (!r || r.invalidated) return;
+        var cuid = r.ctx && (r.ctx.sceneUid || null);
+        if (!cuid || String(cuid) !== String(uid)) return;
+        r.invalidated = 'scene_projection_revised';
+        r.invalidatedReason = 'cited text superseded: hash ' + String(prevHash) + ' -> revision ' + newRevision;
+        r.invalidatedAt = Date.now();
+        out.push(k);
+      });
+    } catch (_) {}
+    return out;
+  }
+
+  // MIGRATION — the explicit, provenance-marked exception to the ordinary route. It writes a record
+  // whose text it did NOT build, so it says so rather than impersonating a projection write. The
+  // existing .text is frozen as revision 0 exactly as the reader's save contains it: NO re-render
+  // and NO rebuild, because a fresh projection over retained beats produces a different string
+  // (867 / 830 / 813 bytes measured for one scene) and nothing can establish which the reader saw.
+  function _sbMigrateHistoricalScenes() {
+    var s = window.state; if (!s) return null;
+    var list = Array.isArray(s.scenes) ? s.scenes : [];
+    var out = { migrated: [], alreadyDone: [], skipped: [] };
+    for (var i = 0; i < list.length; i++) {
+      var rec = list[i];
+      if (!rec || typeof rec !== 'object') { out.skipped.push({ index: i, reason: 'not_an_object' }); continue; }
+      if (rec.uid && rec.projection) { out.alreadyDone.push(rec.uid); continue; }
+      var text = (typeof rec.text === 'string') ? rec.text : '';
+      rec.uid = rec.uid || _sbMintSceneUid('mig');
+      rec.projection = {
+        v: _SB_PROJECTION_V,
+        kind: rec.oasArchive ? 'archive' : 'historical',
+        hash: _sbTextHash(text), revision: 0,
+        provenance: 'historical_unbuilt',        // never mistaken for API-built output
+        uidProvenance: 'migrated',
+        builtAt: null, migratedAt: Date.now()
+      };
+      // No sidecar exists and none can be manufactured. Marked EXPLICITLY, because absence must
+      // never read as "no speakers were present".
+      rec.attributionSidecar = null;
+      rec.attributionAvailable = false;
+      out.migrated.push(rec.uid);
+    }
+    try {
+      console.log('[SCENE-PROJECTION] migration: ' + out.migrated.length + ' historical record(s) given a uid and frozen at revision 0 (attributionAvailable=false), '
+        + out.alreadyDone.length + ' already done, ' + out.skipped.length + ' skipped');
+    } catch (_) {}
+    return out;
+  }
+  window._sbMigrateHistoricalScenes = _sbMigrateHistoricalScenes;
+
+  // ══════════════════════════════════════════════════════════════════════════════════════════
+  // TRACK A — THE TEXT HALF OF formatStory, EXTRACTED (Roman 2026-09-27)
+  //
+  // WHY. formatStory was described in its own comment as "the single pre-display chokepoint for ALL
+  // scene prose", and it is — but it is NOT presentational. It strips [LORE:…] tags, strips four
+  // marker families, rewrites micro-expression markers into placeholders, replaces explicit
+  // paragraphs under safe mode, and can refuse the whole text under the sacred-figure guard. So the
+  // string the READER saw was never the string the scene RECORD stored: the record kept a [LORE:]
+  // tag the reader never read.
+  //
+  // This function is that text half, lifted out VERBATIM and in the same order, so the canonical
+  // projection can own it and the DOM can render FROM the projection rather than transforming a
+  // second time. formatStory now delegates here, which keeps its output byte-identical today
+  // (proven in _scene_projection_api_control.mjs) while making the transformations reusable.
+  //
+  // SIDE EFFECTS ARE REAL AND DELIBERATE: the lore ledger, scar/near-miss/grievance state machines
+  // and micro-expression extraction all advance here. They must therefore run EXACTLY ONCE per
+  // scene. That is why formatStory takes an opts.textAlreadyProjected escape hatch — once a caller
+  // renders projected text, this must not run again on it.
+  //
+  // The sacred-figure guard returns { refused: true } rather than HTML: refusing is a text-level
+  // decision, rendering the refusal notice is presentation, and only the latter belongs in
+  // formatStory.
+  function _sbSceneTextTransform(text) {
+  // 🔒 SACRED-FIGURE GUARD (story text) — the single pre-display chokepoint for ALL scene
+  // prose. If a scene depicts the Prophet Muhammad as a figure (e.g. an ordinary Mohammed
+  // character written INTO the Prophet mid-story), never render that prose — show a refusal
+  // notice instead. Figure/context based, so an ordinary character named Mohammed is fine.
+  try {
+      if (typeof _detectProphetMuhammad === 'function' && text && _detectProphetMuhammad(String(text))) {
+          try { console.warn('[SACRED-FIGURE] scene text refused (Prophet-Muhammad depiction)'); } catch (_) {}
+          var _refuse = (typeof _PROPHET_MUHAMMAD_REFUSAL === 'string') ? _PROPHET_MUHAMMAD_REFUSAL : 'This part of the story can’t be shown.';
+          return { text: '', refused: true, refusalReason: _refuse };
+      }
+  } catch (_) {}
+  // LORE CAPTURE — UNIVERSAL CATCH-ALL (Roman 2026-07-11): all worlds + flavors incl. FF.
+  // Scene 1 (literary) is parsed early in parseScene1Response; this catches continuations AND
+  // any scene-1 path that bypasses that parser (e.g. FF). formatStory is the shared pre-display
+  // chokepoint. Extract the author's [LORE:] tag + strip it, then run the ledger (canon backstop
+  // self-gates to Fatelands). Idempotent — if the tag was already stripped upstream, this no-ops.
+  // The decorator below runs on every scene off the accumulated ledger.
+  try {
+      if (window.state && typeof _loreProcessScene === 'function') {
+          var _lc = [], _lm = text.match(/\[LORE:\s*([^\]]*)\]/i);
+          if (_lm) {
+              text = text.replace(/\[LORE:\s*[^\]]*\]/gi, '');
+              _lc = _lm[1].split(';').map(function (rec) {
+                  var f = rec.split('~').map(function (x) { return x.trim(); });
+                  if (!f[0]) return null;
+                  return { term: f[0], kind: f[1] || 'concept', essential_meaning: f[2] || '', known_to_pc: /^known$/i.test(f[3] || ''), context: (f[4] || '').trim(), source: 'author' };
+              }).filter(Boolean);
+          }
+          state._sceneLoreGlosses = _loreProcessScene(_lc, text);
+      }
+  } catch (_) {}
+
+  // Narrative scar markers — strip <!--scar:{...}--> declarations from
+  // prose before render. Parsing into state.narrativeScars happens
+  // upstream in the scene-finalize accumulator; this just keeps the
+  // marker out of the reader-facing output.
+  if (text && typeof _stripNarrativeScarMarkersFromText === 'function') {
+      text = _stripNarrativeScarMarkersFromText(text);
+  }
+  // Near-miss markers — same treatment.
+  if (text && typeof _stripNearMissMarkersFromText === 'function') {
+      text = _stripNearMissMarkersFromText(text);
+  }
+  // Grievance contract markers — same treatment.
+  if (text && typeof _stripGrievanceMarkersFromText === 'function') {
+      text = _stripGrievanceMarkersFromText(text);
+  }
+  // Grievance aftermath markers — same treatment.
+  if (text && typeof _stripGrievanceAftermathMarkersFromText === 'function') {
+      text = _stripGrievanceAftermathMarkersFromText(text);
+  }
+
+  // Micro-expression marker → placeholder. Runs idempotently on every
+  // scene render so Scene 1 (onboarding) AND Scene 2/3 (intensity
+  // calibration) both get their inline buttons. Malformed markers get
+  // stripped clean. Placed at the top of formatStory so the placeholder
+  // div survives paragraph wrapping downstream.
+  if (typeof _extractScene1MicroExpression === 'function') {
+      text = _extractScene1MicroExpression(text);
+  }
+
+  // TRANSITIONAL EXPRESSION marker — distinct class of micro-expression
+  // that appears at scene TAIL (not within first 200 words). Defines
+  // behavior of the NEXT scene (verbal vs silent intimacy). Bypasses
+  // the LATE_MICRO_EXPRESSION validator because <<TRANSITIONAL_EXPRESSION>>
+  // is a different marker name. Emits the same scene1-micro-expr
+  // placeholder with data-mode=scene_expression_mode so the existing
+  // hydrator + click handler write state._sceneExpressionMode correctly.
+  if (typeof _extractTransitionalExpressionEntry === 'function') {
+      text = _extractTransitionalExpressionEntry(text);
+  }
+
+  // SAFE MODE RENDER FILTER — sanitize stored explicit content at display time
+  // This catches scenes generated in full mode but displayed after switching to safe
+  if (window.state?.contentMode === 'safe' && text) {
+      // Replace paragraphs that contain explicit content with fade-to-black
+      const _explicitSignals = /\b(thrust|moan|orgasm|climax|naked|nude|undress|strip|penetrat|arouse|erect|nipple|genital|groin|straddl)\b/i;
+      const paras = text.split('\n');
+      let _replaced = false;
+      text = paras.map(p => {
+          if (_explicitSignals.test(p)) {
+              if (!_replaced) {
+                  _replaced = true;
+                  return 'The world narrowed to sensation — to warmth and closeness and the weight of what they chose not to name.';
               }
-              state._sceneLoreGlosses = _loreProcessScene(_lc, text);
+              return ''; // Subsequent explicit paragraphs silently removed
           }
-      } catch (_) {}
+          return p;
+      }).filter(Boolean).join('\n');
+  }
+    return { text: text, refused: false, refusalReason: null };
+  }
+  try { if (typeof window !== 'undefined') window._sbSceneTextTransform = _sbSceneTextTransform; } catch (_) {}
+
+  function formatStory(text, shouldEscape = false){
+      // TRACK A: the text half now lives in _sbSceneTextTransform (single source of truth). Passing
+      // opts.textAlreadyProjected skips it, for callers rendering text the projection already
+      // transformed — without that, the marker strips and state machines would run twice.
+      if (!(arguments.length > 2 && arguments[2] && arguments[2].textAlreadyProjected)) {
+          var _sbTx = _sbSceneTextTransform(text);
+          if (_sbTx.refused) {
+              return '<p class="sb-content-refusal" style="opacity:0.85;font-style:italic;">' + escapeHTML(_sbTx.refusalReason) + '</p>';
+          }
+          text = _sbTx.text;
+      }
       const process = shouldEscape ? escapeHTML : (s => s);
       const mode = window.state?.mode || 'solo';
       const sceneId = window.state?.turnCount || 0;
-
-      // Narrative scar markers — strip <!--scar:{...}--> declarations from
-      // prose before render. Parsing into state.narrativeScars happens
-      // upstream in the scene-finalize accumulator; this just keeps the
-      // marker out of the reader-facing output.
-      if (text && typeof _stripNarrativeScarMarkersFromText === 'function') {
-          text = _stripNarrativeScarMarkersFromText(text);
-      }
-      // Near-miss markers — same treatment.
-      if (text && typeof _stripNearMissMarkersFromText === 'function') {
-          text = _stripNearMissMarkersFromText(text);
-      }
-      // Grievance contract markers — same treatment.
-      if (text && typeof _stripGrievanceMarkersFromText === 'function') {
-          text = _stripGrievanceMarkersFromText(text);
-      }
-      // Grievance aftermath markers — same treatment.
-      if (text && typeof _stripGrievanceAftermathMarkersFromText === 'function') {
-          text = _stripGrievanceAftermathMarkersFromText(text);
-      }
-
-      // Micro-expression marker → placeholder. Runs idempotently on every
-      // scene render so Scene 1 (onboarding) AND Scene 2/3 (intensity
-      // calibration) both get their inline buttons. Malformed markers get
-      // stripped clean. Placed at the top of formatStory so the placeholder
-      // div survives paragraph wrapping downstream.
-      if (typeof _extractScene1MicroExpression === 'function') {
-          text = _extractScene1MicroExpression(text);
-      }
-
-      // TRANSITIONAL EXPRESSION marker — distinct class of micro-expression
-      // that appears at scene TAIL (not within first 200 words). Defines
-      // behavior of the NEXT scene (verbal vs silent intimacy). Bypasses
-      // the LATE_MICRO_EXPRESSION validator because <<TRANSITIONAL_EXPRESSION>>
-      // is a different marker name. Emits the same scene1-micro-expr
-      // placeholder with data-mode=scene_expression_mode so the existing
-      // hydrator + click handler write state._sceneExpressionMode correctly.
-      if (typeof _extractTransitionalExpressionEntry === 'function') {
-          text = _extractTransitionalExpressionEntry(text);
-      }
-
-      // SAFE MODE RENDER FILTER — sanitize stored explicit content at display time
-      // This catches scenes generated in full mode but displayed after switching to safe
-      if (window.state?.contentMode === 'safe' && text) {
-          // Replace paragraphs that contain explicit content with fade-to-black
-          const _explicitSignals = /\b(thrust|moan|orgasm|climax|naked|nude|undress|strip|penetrat|arouse|erect|nipple|genital|groin|straddl)\b/i;
-          const paras = text.split('\n');
-          let _replaced = false;
-          text = paras.map(p => {
-              if (_explicitSignals.test(p)) {
-                  if (!_replaced) {
-                      _replaced = true;
-                      return 'The world narrowed to sensation — to warmth and closeness and the weight of what they chose not to name.';
-                  }
-                  return ''; // Subsequent explicit paragraphs silently removed
-              }
-              return p;
-          }).filter(Boolean).join('\n');
-      }
 
       // ═══════════════════════════════════════════════════════════════════════════
       // DIALOGUE COLORIZATION — STRICT MODE GATE (AUTHORITATIVE)
