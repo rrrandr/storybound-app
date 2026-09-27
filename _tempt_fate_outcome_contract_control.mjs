@@ -224,17 +224,28 @@ const WISH = 'everyone forgets the ceremony happened';
 
   // DOWNSTREAM: unknown scope must not become established canon.
   const appSrc = fs.readFileSync(path.join(__dirname, 'public', 'app.js'), 'utf8');
+  // PROSE ASSERTIONS NEED A NORMALISED SOURCE. These directives are built by JS string concatenation
+  // ("…asked' + ' with what…") and their apostrophes are backslash-escaped, so a regex written against
+  // the emitted sentence never matches the file. Join the concatenations and unescape, then match.
+  const appNorm = appSrc.replace(/'\s*\+\s*'/g, '').replace(/\\'/g, "'");
   ok('the continuation prompt flags an undetermined scope as NOT ESTABLISHED',
     /SCOPE NOT ESTABLISHED: the accepted record could NOT compare/.test(appSrc));
-  ok('...telling the next scene the effects are committed but the REACH is still open',
-    /Treat the effects listed below as committed and the OVERALL REACH/.test(appSrc)
-    && /do not settle it in either direction/.test(appSrc));
+  // RELOCATED: the caveat now lives in the DURABLE-CONSEQUENCES renderer (~192052), which is the
+  // builder that actually reaches the CG system prompt. The earlier site was inside the
+  // invalidatedPlans block, which does not render when a report invalidates nothing — so a mixed-
+  // evidence report with an open reach got no caveat at all. Found by the round-trip proof.
+  ok('...telling the next scene the ESTABLISHED effects are binding while the REACH stays open',
+    /Everything on the ESTABLISHED line above IS binding canon and you may write from it freely/.test(appNorm)
+    && /do not settle it in either direction/.test(appNorm));
   ok('...and refusing BOTH readings, not just the optimistic one',
-    /do not write as though\n?\s*.*it succeeded fully, and do not write as though it was confined/.test(appSrc.replace(/\s+/g, ' '))
-    || /it succeeded fully, and do not write as though it was confined/.test(appSrc));
-  ok('the canon packet marks an undetermined rupture as an OPEN QUESTION, not a settled grant',
-    /SCOPE NOT ESTABLISHED: the reach of this rupture is an OPEN QUESTION in canon/.test(appSrc)
-    && /a plan may not rely on it having covered, or spared, anyone/.test(appSrc));
+    /succeeded fully, and do not write as though it was confined/.test(appNorm));
+  ok('...and naming unaccounted parties as genuinely unknown rather than banning reliance wholesale',
+    /UNACCOUNTED FOR — state genuinely unknown, do NOT assume an outcome either way/.test(appNorm)
+    && appNorm.indexOf('may not rely on it having covered, or spared, anyone') === -1);
+  ok('the canon packet marks an undetermined rupture open WITHOUT forbidding established effects',
+    /OVERALL SCOPE NOT ESTABLISHED: the rupture's TOTAL reach is an open question/.test(appNorm)
+    && /Individually established effects and exemptions above ARE canon and a plan may rely on them/.test(appNorm)
+    && /may NOT assume any outcome for a party listed as unaccounted for/.test(appNorm));
   ok('...and neither downstream line fires for full, narrower or broader',
     /e\.scopeMatch === 'undetermined'/.test(appSrc) && /d\.scopeMatch === 'undetermined'/.test(appSrc));
   // Each enum beside its own field, with transfer between them prohibited. Overlap is preserved:

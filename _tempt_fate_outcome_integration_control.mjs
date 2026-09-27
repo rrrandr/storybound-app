@@ -854,6 +854,98 @@ const VALID_BEATS = [{ idx: 0, kind: 'narration', text: 'The ceremony hall stand
     ok('no duplicate durable entry was created by the ordinary continuation', durableCountAfterB === 1, 'durableCountAfterB=' + durableCountAfterB);
   }
 
+
+  // ═══════════════════════════════════════════════════════════════════════════════════════════
+  section('9. MIXED EVIDENCE + UNDETERMINED SCOPE — the round trip preserves all three distinctions');
+  {
+    // Separate storage fields are necessary but not sufficient; the ROUND TRIP is the evidence. One
+    // report, three different epistemic statuses: the Dohkar's forgetting ESTABLISHED with a quote, the
+    // invoker's exemption ESTABLISHED, and Julian explicitly UNACCOUNTED FOR. Committed through the real
+    // resolver/validator/recorder, then read back out of the REAL next-scene prompt and canon packet.
+    await resetBaseline();
+    const PROSE = 'The presiding Dohkar looks around the clearing. "What gathering is this?" Julian has not moved.';
+    const rt = await page.evaluate(async (prose) => {
+      const s = window.state;
+      // storyId is REQUIRED: the resolver refuses a pending record from another story as "stale-story",
+      // which is correct and which a hand-built ctx omitting it will trip. Mirrors the real ctx builder.
+      const ctx = { storyId: s.storyId, proposalId: 'tfl_mixed', sceneIdx: 0,
+        wishText: 'everyone forgets the ceremony happened',
+        invokerName: 'Lirael', rosterNames: ['Lirael', 'Julian', 'the presiding Dohkar'], prose: prose };
+      const rec = window._tfoWritePending(ctx);
+      const raw = {
+        delivered: true, ruptureClass: 'memory_perception',
+        requestedScope: 'everyone present forgets the ceremony',
+        deliveredScope: 'the presiding Dohkar forgets; Julian unresolved',
+        scopeMatch: 'undetermined',
+        scopeNote: 'Julian\'s state is not established by this scene — he is present and silent, which settles nothing either way.',
+        invalidatedPlans: [],
+        changed: [{ subject: 'the presiding Dohkar', whatChanged: 'no longer knows why the gathering assembled' }],
+        durability: [{ aspect: 'the Dohkar\'s memory gap', status: 'persists', note: 'nothing in the scene restores it' }],
+        knowledgeStates: [{ character: 'the presiding Dohkar', state: 'unaware', note: 'asks what the gathering is' },
+                          { character: 'Lirael', state: 'remembers', note: 'invoker anchor' }],
+        establishedEvidence: ['"What gathering is this?"'],
+        openPossibilities: ['someone may notice the Dohkar cannot account for the gathering'],
+        targetPopulation: { kind: 'all_present_except_invoker' },
+        affectedKnowers: [
+          { who: 'the presiding Dohkar', disposition: 'forgot', memoryAbsent: true, suspicionFromResidue: false,
+            nowKnows: 'nothing about the gathering', evidenceQuote: 'What gathering is this?' },
+          { who: 'Lirael', disposition: 'exempt', memoryAbsent: false, suspicionFromResidue: false,
+            nowKnows: 'she retains the ceremony as the invoker', evidenceQuote: 'The presiding Dohkar looks around the clearing.' }
+        ],
+        invokerExemption: { who: 'Lirael', status: 'exempt', reason: 'invoker_anchor', note: 'retains by default' },
+        unaccountedParties: ['Julian']
+      };
+      const res = await window._tfoResolvePendingRecord(rec, { injectRaw: raw });
+      const ledger = s._temptFateDurableConsequences || [];
+      const entry = ledger[ledger.length - 1] || null;
+      const prompt = window._buildCGScreenplaySystemPrompt();
+      let packet = '';
+      try { packet = JSON.stringify(window._buildCanonPacket(s, {}) || {}); } catch (_) {}
+      return { ok: !!(res && res.ok), reason: (res && res.reason) || null, committed: ledger.length,
+        entryJson: JSON.stringify(entry || null), ledgerJson: JSON.stringify(ledger).slice(0, 1200),
+        prompt: prompt, packet: packet };
+    }, PROSE);
+    console.log('    resolve: ' + JSON.stringify({ ok: rt.ok, reason: rt.reason, committed: rt.committed }));
+    console.log('    LEDGER: ' + String(rt.ledgerJson).slice(0, 400));
+    const E = JSON.parse(rt.entryJson || 'null') || {};
+    const Ejson = JSON.stringify(E);
+    console.log('    PROMPT has SCOPE line: ' + /SCOPE NOT ESTABLISHED/.test(rt.prompt)
+      + '  has wish: ' + (rt.prompt.indexOf('everyone forgets the ceremony') !== -1));
+    ok('the mixed-evidence, UNDETERMINED report COMMITS through the real path', rt.ok === true && rt.committed >= 1,
+      JSON.stringify({ ok: rt.ok, reason: rt.reason }));
+    // (a) the assessment survives as itself
+    ok('the committed record keeps scopeMatch "undetermined" — not converted to narrower or full',
+      E.scopeMatch === 'undetermined', JSON.stringify(E.scopeMatch));
+    ok('...with a scopeNote naming what is unestablished', /not established by this scene/.test(String(E.scopeNote)));
+    // (b) the established effects survive as established
+    ok('the ESTABLISHED forgetting survives in the committed record',
+      JSON.stringify(E.changed || []).indexOf('no longer knows why the gathering assembled') !== -1);
+    ok('the ESTABLISHED invoker exemption survives in the committed record',
+      Ejson.indexOf('invoker_anchor') !== -1 || Ejson.indexOf('exempt') !== -1);
+    // (c) Julian acquires nothing
+    ok('JULIAN ACQUIRES NO KNOWLEDGE STATE — he is absent from knowledgeStates entirely',
+      JSON.stringify(E.knowledgeStates || []).indexOf('Julian') === -1,
+      JSON.stringify(E.knowledgeStates));
+    ok('...and no disposition was invented for him in affectedKnowers',
+      !/"who"\s*:\s*"Julian"/.test(JSON.stringify(E.classDetail || {})),
+      JSON.stringify(E.classDetail).slice(0, 200));
+    // (d) the DOWNSTREAM payload preserves all three
+    ok('the real next-scene prompt states the OVERALL scope is not established',
+      /OVERALL SCOPE NOT ESTABLISHED/.test(rt.prompt), rt.prompt.slice(0, 80));
+    ok('...and says the established effects ARE binding canon and may be written from freely',
+      /Everything on the ESTABLISHED line above IS binding canon and you may write from it freely/.test(rt.prompt));
+    ok('...and names Julian as UNACCOUNTED FOR, forbidding an assumed outcome either way',
+      /UNACCOUNTED FOR — state genuinely unknown, do NOT assume an outcome either way/.test(rt.prompt)
+      && /UNACCOUNTED FOR[\s\S]{0,200}Julian/.test(rt.prompt), (rt.prompt.match(/UNACCOUNTED FOR[^\n]{0,180}/) || [''])[0]);
+    ok('...and does NOT carry the old blanket ban on relying on any effect',
+      rt.prompt.indexOf('may not rely on it having covered, or spared, anyone') === -1);
+    ok('the next-scene prompt still carries the ESTABLISHED forgetting as usable canon',
+      rt.prompt.indexOf('no longer knows why the gathering assembled') !== -1);
+    ok('the canon packet marks the reach open while keeping the established effects',
+      /OVERALL SCOPE NOT ESTABLISHED/.test(rt.packet) || /open question/i.test(rt.packet),
+      rt.packet.slice(0, 200));
+  }
+
   await browser.close();
 
   console.log('\n' + '='.repeat(100));

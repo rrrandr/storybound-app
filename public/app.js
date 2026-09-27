@@ -192054,7 +192054,31 @@ No text, no watermark, no UI elements, share-ready.`;
           + (durStr ? '    DURATION PER EFFECT: ' + durStr + '.\n' : '')
           + (knowStr ? '    WHO KNOWS/BELIEVES/SUSPECTS WHAT: ' + knowStr + '.\n' : '')
           + (evidStr ? '    EVIDENCE ALREADY ON THE PAGE: ' + evidStr + '.\n' : '')
-          + (openStr ? '    NOT YET ESTABLISHED — future scenes MAY explore, must NOT be treated as already true: ' + openStr + '.\n' : '');
+          + (openStr ? '    NOT YET ESTABLISHED — future scenes MAY explore, must NOT be treated as already true: ' + openStr + '.\n' : '')
+          // OVERALL SCOPE UNDETERMINED (Roman 2026-09-27). This renderer is the one that actually
+          // reaches the CG system prompt, and it already separates ESTABLISHED from NOT YET
+          // ESTABLISHED — so the caveat belongs here, scoped to the TOTAL reach only. A blanket "do not
+          // rely on this rupture" would contradict the ESTABLISHED line directly above it, which is
+          // exactly the over-reach being corrected: the Dohkar's forgetting can be settled while
+          // Julian's state is not.
+          + (c.scopeMatch === 'undetermined'
+            ? '    OVERALL SCOPE NOT ESTABLISHED: the accepted record could not compare what was asked'
+              + ' with what was delivered. Everything on the ESTABLISHED line above IS binding canon and'
+              + ' you may write from it freely, exemptions included. What is open is only the wish\'s'
+              + ' TOTAL reach — do not settle it in either direction, do not write as though it'
+              + ' succeeded fully, and do not write as though it was confined.'
+              + ((function () {
+                  try {
+                    var ua = (c.classDetail && c.classDetail.unaccountedParties) || [];
+                    return ua.length
+                      ? ' UNACCOUNTED FOR — state genuinely unknown, do NOT assume an outcome either way,'
+                        + ' though a scene may show the uncertainty: ' + ua.join(', ') + '.'
+                      : '';
+                  } catch (_) { return ''; }
+                })())
+              + (c.scopeNote ? ' What remains unestablished: ' + String(c.scopeNote).slice(0, 240) : '')
+              + '\n'
+            : '');
       });
       return '\n═══ TEMPT FATE — DURABLE CONSEQUENCES (verified from what the accepted scene actually established, not from the wish’s literal text or a template — a higher-order Storybound mechanic, NOT ordinary Fatelands wish doctrine) ═══\n'
         + parts.join('');
@@ -193119,10 +193143,13 @@ No text, no watermark, no UI elements, share-ready.`;
       // suits it — which is the same failure as relabelling a partial grant a success, inverted.
       // The EFFECTS below remain committed and usable; only the comparison is open.
       if (e.scopeMatch === 'undetermined') {
-        lines.push('      SCOPE NOT ESTABLISHED: the accepted record could NOT compare what was asked'
-          + ' with what was delivered. Treat the effects listed below as committed and the OVERALL REACH'
-          + ' of the wish as STILL OPEN — do not settle it in either direction, do not write as though'
-          + ' it succeeded fully, and do not write as though it was confined.'
+        lines.push('      OVERALL SCOPE NOT ESTABLISHED: the accepted record could NOT compare what was'
+          + ' asked with what was delivered. The individually established effects and exemptions listed'
+          + ' here ARE committed canon and you may write from them freely. What is open is only the'
+          + ' TOTAL reach: do not settle it in either direction, do not write as though the wish'
+          + ' succeeded fully, and do not write as though it was confined. For any party recorded as'
+          + ' UNACCOUNTED FOR, you may not assume an outcome either way — their state is genuinely'
+          + ' unknown, and a scene may show that uncertainty but may not resolve it by assertion.'
           + (e.scopeNote ? ' What remains unestablished: ' + String(e.scopeNote).slice(0, 240) : ''));
       }
       e.invalidatedPlans.forEach(function (p) { lines.push('      NO LONGER SUPPORTED: ' + String(p).slice(0, 220)); });
@@ -193344,8 +193371,15 @@ No text, no watermark, no UI elements, share-ready.`;
         if (!d) return;
         push('dc', '[' + (d.ruptureClass || 'other') + '] ' + (d.requestedRupture || '') + ' → ' + (d.deliveredScope || '') + ' (scope ' + (d.scopeMatch || '?') + ')'
           + (d.scopeMatch === 'undetermined'
-            ? ' — SCOPE NOT ESTABLISHED: the reach of this rupture is an OPEN QUESTION in canon, not a'
-              + ' settled full or partial grant; a plan may not rely on it having covered, or spared, anyone.'
+            // NARROWED (Roman 2026-09-27). The previous wording — "a plan may not rely on it having
+            // covered, or spared, anyone" — was too broad: it forbade relying on effects that ARE
+            // established. Only the UNRESOLVED reach is open. An established forgetter and an
+            // established exemption remain usable; what a plan may not do is assume an outcome for a
+            // party the record left unaccounted for.
+            ? ' — OVERALL SCOPE NOT ESTABLISHED: the rupture\'s TOTAL reach is an open question, not a'
+              + ' settled full or partial grant. Individually established effects and exemptions above'
+              + ' ARE canon and a plan may rely on them; a plan may NOT assume any outcome for a party'
+              + ' listed as unaccounted for.'
             : ''));
         (Array.isArray(d.knowledgeStates) ? d.knowledgeStates : []).forEach(function (k) {
           if (k && k.character) push('know', k.character + ' is now ' + (k.state || '?') + (k.note ? (' — ' + k.note) : ''));
