@@ -55,10 +55,28 @@ design exists to remove. The trace measured the projection as a sequential map-a
 18/18 beats mapping to exactly one `[start, end)` with no ambiguity — so offsets accumulate naturally *as
 the text is built*, and only there.
 
+**Source typing reads the same beat fields the projection reads — `kind`, `text`, validated `speaker` —
+and never `beat.dialogue`.** This is not a detail; `beat.dialogue` is the field whose emptiness caused the
+present loss of labels (6/6 validated identities dropped), because `_extractCGSceneText` gated its label
+branch on it while the author populates `kind: 'dialogue'` with the speech in `text`. Deriving the sidecar
+from the same fields as the projection makes typing and text **incapable of disagreeing**:
+
+- `sourceType = 'speaker'` iff `kind === 'dialogue'` **and** the speaker resolves (§6); otherwise
+  `'narrator'`.
+- the span's content comes from `text`, the same string the projection concatenated.
+- a `kind === 'dialogue'` beat whose speaker does **not** resolve is `sourceType: 'speaker'` with
+  `speaker: unresolved` — **not** silently reclassified as narration. Its quoted line must not become
+  admissible narrator evidence by losing its attribution.
+
+Note that `validateCGSpeakerDisplayNames` deliberately accepts either shape (`b.dialogue || b.kind ===
+'dialogue'`) because it is called from several callers. That tolerance is right for a validator and wrong
+for the sidecar: the sidecar must read exactly what the projection read, or offsets and typing can drift
+apart.
+
 **The sidecar must not depend on visible labels.** Each entry carries `[start, end)` into the final text,
-`sourceType` (`speaker` | `narrator`), the **validated beat speaker identity** taken from `beat.speaker` and
-resolved through the **typed** authority for that speaker's role (§6) — recording which authority resolved
-it — and `labelSpan` recorded **as actually emitted** by the projection — not detected in the text afterwards. A renderer that stops printing `NAME:` prefixes must not
+`sourceType`, the **validated beat speaker identity** resolved through the **typed** authority for that
+speaker's role (§6) — recording which authority resolved it — and `labelSpan` recorded **as actually
+emitted** by the projection — not detected in the text afterwards. A renderer that stops printing `NAME:` prefixes must not
 change attribution by one byte. The trace confirmed why: label presence is conditional (the double-label
 guard suppresses it), and label *length* varies with the resolved name, so nothing about attribution can
 be recovered from the text.
@@ -223,6 +241,90 @@ explicit instead of silent.
 
 ---
 
+# 6c. Blocked-invocation propagation
+
+**The policy hole.** Letting continuation proceed after `extractor_blocked` must not make the Tempt Fate
+invocation **disappear from downstream canon**. If the next planner sees nothing, it will confidently assume
+one of two things — that the wish landed, or that it didn't — and either assumption is fabricated.
+
+The distinction that makes this tractable: **the invocation is reader-visible canon; only its outcome is
+unresolved.** The wish is on the page (*"If only everyone would forget the ceremony happened."*) and the
+reader remembers making it. What no one knows is what it did. So the record must carry the invocation
+forward while licensing nothing from it.
+
+## The unresolved-invocation record
+
+Persisted **immutably**, keyed by **scene UID + projection revision**:
+
+```
+{ sceneUid, projectionRevision,          // which scene, and which revision it was blocked against
+  proposalId, wishText, invokedAtScene,  // what was requested, and where
+  reason: 'invoker_unresolved',
+  blockedAt }
+```
+
+**Append-only, and genuinely immutable — no status field is ever written back.** Current status is
+**derived** by looking for a later resolution entry that references this `sceneUid`. A mutable `status` on a
+record called immutable is a contradiction that erodes the first time someone needs to flip it; deriving it
+keeps the guarantee real and keeps the scene's history a single readable chain.
+
+**Revision semantics differ from a pending extraction's, deliberately.** A pending extraction is
+invalidated when the projection revision changes, because its citations were verified against superseded
+text. An unresolved-invocation record is **not** invalidated by a later revision: the fact that an
+invocation occurred is a property of the scene, not of a text revision. The revision field is
+**provenance** — it says where the block happened — not a validity key. Two records, two rules; do not
+generalize either one onto the other.
+
+## It must not retry and must not stall
+
+- **Excluded from the retry set.** It is not a pending extraction. `_tfoResumePending` must not pick it up,
+  and it must not appear in `_tfoUnresolvedPending`.
+- **Excluded from the continuation gate.** `_tfoContinuationBlocked` must not hold the next scene on it —
+  that is the whole point of terminal-for-automation (§6b).
+- **The accepted scene is untouched.** No rewrite, no revert, no new revision. Creating this record changes
+  nothing about the scene's text, hash, or revision.
+
+## What it tells downstream planning
+
+The planner/author directive built from this record must state **exactly four things**, and nothing that
+could be read as a consequence:
+
+1. **An invocation occurred** at the named scene, with its wish text — the reader made this wish and
+   remembers it.
+2. **No durable outcome was automatically committed.**
+3. **Do not assume the requested effect landed, or that it failed.** Both readings are refused, not one.
+4. **Derive nothing from it** — no exemptions, no memory or knowledge states, no possession or material
+   effects, no history revision, no scope claim.
+
+This is a **third kind of canon entry**, and it must not be collapsed into either of the existing two. It
+resembles the `undetermined`-scope machinery already built — refuse both readings of the reach, keep
+established effects usable — but is strictly stronger: there **are** no established effects here, so nothing
+is usable. `undetermined` says *"this much happened, the reach is open."* This says *"a wish was made and we
+do not know what it did."*
+
+**What the author may still write:** the invocation as a remembered event — the character made a wish, and
+may think about having made it. **What the author may not write:** any world state that would only be true
+if it had worked, or only if it hadn't. A scene may not show the assembly remembering, nor forgetting.
+
+## Human resolution, without rewriting the original scene
+
+Resolution is an **append**, never an edit:
+
+- A reviewer reads the scene and the pending-review queue and decides the outcome.
+- That creates a **separate durable outcome record** with provenance `human_review`, carrying
+  `resolves: { sceneUid, projectionRevision }`, its own claims, and the reviewer's basis.
+- **The original scene is not rewritten** — not its text, not its hash, not its revision. It was always
+  intact; resolution does not make it otherwise. The scene's canonical projection is independent of whether
+  anyone ever resolved the invocation.
+- The unresolved-invocation record is likewise **not modified**. It stands as the permanent fact that
+  automation declined; the resolution stands beside it as the permanent fact that a person decided.
+- From that point the durable outcome propagates exactly like any other committed consequence, and the
+  blocked-invocation directive **stops firing** for that scene because a resolution now references it.
+- **Dismissal is also an append** — a resolution entry recording "reviewed, no durable outcome" — so
+  "nobody has looked at this" and "someone looked and found nothing" are distinguishable forever.
+
+---
+
 # 7. Migration plan — historical records only
 
 Every accepted scene that exists today predates the uid, the projection and the sidecar.
@@ -283,10 +385,13 @@ of its scene record. These must be **invalidated, not migrated** — recorded as
 | 4 | extraction sequenced after the persist; rewrite ⇒ new hash ⇒ invalidate | 5 |
 | 5 | byte-identity proofs (7 dry controls) | unblocking extraction |
 | 6 | typed speaker authority: PC via `_resolvePcIdentity`, LI via the anchor, others via the cast validator | 2 (the projection resolves speakers) |
-| 6b | unresolved-invoker status: blocks automation, never the scene | independent |
+| 6b | unresolved-invoker status: blocks automation, never the scene | 6c |
+| 6c | blocked-invocation propagation: immutable append-only record, four-point directive, append-only resolution | — (6b is incomplete without it) |
 | 7 | historical migration, via the API's provenance-marked exception | needs 1, 2 and the write API defined, not deployed |
 
 **Extraction stays blocked until 1–5 are done and proven.** 6 feeds the projection and so travels with it;
-6b is independent and can land at any time. 7 can be specified now and applied with the same release.
+6b and 6c are independent of 1-5 and can land at any time, but **6b must not ship without 6c**: allowing
+continuation while the invocation vanishes from downstream canon is worse than stalling, because a planner
+then invents an outcome instead of waiting for one. 7 can be specified now and applied with the same release.
 
 Nothing implemented. No replay authorized.
