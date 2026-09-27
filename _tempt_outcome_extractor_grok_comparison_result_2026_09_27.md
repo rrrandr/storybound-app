@@ -5,6 +5,9 @@ Evidence: `_tempt_fate_fixtures/extractor_only_2026-09-27_03-51-34/`
 
 ## Verdict on the four pre-registered criteria: NO DATA
 
+**One confirmed Grok 4.3 upstream attempt. Response unavailable after harness deadlock. All four
+evaluation criteria NO DATA. Cost unmeasured.**
+
 | criterion | result |
 |---|---|
 | 1. parsing | **NO DATA** |
@@ -53,12 +56,19 @@ pass-through lane never tracks it: `relevant.length === 0`, `allSettled` can nev
 the function — documented as "never gives up on its own… never decides it FOR them by timing out" —
 spun for 80 minutes.
 
-The hang sits **after** the work: `gate.jsonl` shows the phase opening at `…106287` and closing 15
-seconds later at `…121077`, so `runExtractorOnly` had already returned with the parsed result. But
+`gate.jsonl` shows the phase opening at `…106287` and closing 15 seconds later at `…121077`.
+
+**That timestamp pair does NOT prove parsing succeeded, and an earlier version of this document
+wrongly said it did.** `gate.closePhase()` runs immediately after `runExtractorOnly` returns, and
+`runExtractorOnly` catches its own errors — a parse failure is returned as `{ error }`, not thrown. So
+the 15-second window is consistent with a clean parse, a malformed reply, a truncated reply, or a
+throw inside the extractor. All it establishes is that **the proxy returned and the awaited page
+evaluation resolved.** Parsing is therefore **unverified**, exactly like the other three criteria.
+
 `report.json`, `extractor_raw_response.json` and the prompt dumps are all written *after* settlement,
-and the result lived only in the hung process's memory. Killing the process was the only way to end
-it, and that destroyed the response. It is not recoverable: the gate log holds only the two phase
-records, and the page state was deliberately never mutated.
+and whatever the extractor produced lived only in the hung process's memory. Killing the process was
+the only way to end it, and that destroyed the response. It is not recoverable: the gate log holds
+only the two phase records, and the page state was deliberately never mutated.
 
 This is the same class of self-inflicted harness failure as the earlier gibberish attempts — the
 result was never in danger from the provider, only from the instrument.

@@ -60,6 +60,73 @@ export function tierCost(model) {
   return r.in * ROLE_TOKENS.in + r.out * ROLE_TOKENS.out;
 }
 
+// ── THE REDIRECT ADAPTER'S OWN SETTLEMENT OBSERVABLE (Roman 2026-09-27) ──────────────────────
+// The grok comparison redirect TERMINATES the intercepted route itself (route.fetch -> route.fulfill),
+// so the network gate's real pass-through lane never tracks it. gate.waitForSettlement requires
+// `relevant.length > 0` gate-tracked calls and is documented as never timing out, so waiting on it
+// after a bypassed request is an unconditional deadlock — that is exactly what consumed the paid
+// 2026-09-27 grok run. Settlement for this lane is therefore owned BY THE ADAPTER: the thing that
+// actually performs the request is the thing that reports whether it finished, and a failure is
+// recorded as a settled OUTCOME rather than as silence.
+//
+// Every write happens here, synchronously with reading the wire, so a receipt exists on disk whether
+// or not anything downstream ever completes.
+function _recordUpstream(holder, out) {
+  if (holder.upstreamOutcome) return;                  // first outcome wins; one request only
+  const rec = Object.assign({ capturedAt: new Date().toISOString() }, out);
+  if (rec.ok && typeof rec.rawBody === 'string') {
+    let parsed = null;
+    try { parsed = JSON.parse(rec.rawBody); } catch (e) { rec.parseError = String(e && e.message); }
+    const u = (parsed && parsed.usage) || null;
+    rec.usage = u;
+    rec.orchestration = (parsed && parsed._orchestration) || null;
+    if (u) {
+      const reasoning = (u.completion_tokens_details && u.completion_tokens_details.reasoning_tokens) || 0;
+      rec.reasoningTokens = reasoning;
+      rec.completionOverMaxTokens = Math.max(0, Number(u.completion_tokens || 0) - (holder.maxTokensAsked || 3200));
+      const pr = TEXT_PRICING['grok-4.3'];
+      rec.measuredUsd = Number(((Number(u.prompt_tokens || 0) * pr.in) + (Number(u.completion_tokens || 0) * pr.out)).toFixed(6));
+    }
+  }
+  holder.upstreamOutcome = rec;
+  if (holder.artifactDir) {
+    try {
+      fs.mkdirSync(holder.artifactDir, { recursive: true });
+      if (rec.ok) fs.writeFileSync(path.join(holder.artifactDir, 'upstream_raw_response.json'), rec.rawBody);
+      const receipt = Object.assign({}, rec); delete receipt.rawBody;
+      fs.writeFileSync(path.join(holder.artifactDir, 'upstream_receipt.json'), JSON.stringify(receipt, null, 2));
+      holder.artifactsWritten = (rec.ok ? ['upstream_raw_response.json', 'upstream_receipt.json'] : ['upstream_receipt.json']);
+    } catch (e) { holder.artifactWriteError = String(e && e.message); }
+  }
+}
+
+// BOUNDED wait on that observable. Returns a settled result in every case — never waits forever, and
+// a timeout is itself an outcome ({ ok:false, reason:'timeout' }) so the caller can write an explicit
+// incomplete-result artifact instead of hanging or inventing a verdict.
+export async function awaitUpstreamSettled(holder, opts) {
+  const timeoutMs = (opts && opts.timeoutMs > 0) ? opts.timeoutMs : 120000;
+  const pollMs = (opts && opts.pollMs > 0) ? opts.pollMs : 100;
+  const start = Date.now();
+  for (;;) {
+    if (holder.upstreamOutcome) return holder.upstreamOutcome;
+    if (Date.now() - start >= timeoutMs) {
+      const rec = { ok: false, reason: 'timeout', waitedMs: Date.now() - start,
+        capturedAt: new Date().toISOString(),
+        note: 'no upstream response was ever captured by the redirect adapter; NO DATA, bounded' };
+      holder.upstreamOutcome = rec;
+      if (holder.artifactDir) {
+        try {
+          fs.mkdirSync(holder.artifactDir, { recursive: true });
+          fs.writeFileSync(path.join(holder.artifactDir, 'incomplete_result.json'), JSON.stringify(rec, null, 2));
+          holder.artifactsWritten = (holder.artifactsWritten || []).concat(['incomplete_result.json']);
+        } catch (e) { holder.artifactWriteError = String(e && e.message); }
+      }
+      return rec;
+    }
+    await new Promise((r) => setTimeout(r, pollMs));
+  }
+}
+
 // ── RESERVATION LEDGER — reserves BEFORE each dispatch, refuses past the ceiling ─────────────
 export function makeLedger(ceilingUsd = CEILING_USD) {
   const entries = [];
@@ -229,15 +296,28 @@ export async function installReservationRoute(page, holder) {
       // hands back the real upstream response, which is then fulfilled to the page UNCHANGED. The
       // page's fetch therefore parses the genuine /api/proxy envelope with production's own code —
       // no harness-side JSON is substituted, so response handling is tested, not simulated.
+      //
+      // upstreamUrl is overridable so a dry proof can exercise THIS EXACT PATH — route.fetch ->
+      // capture -> persist -> route.fulfill — against a local stub server instead of the paid proxy.
+      // The 2026-09-27 paid run proved the path cannot be trusted on the strength of a short-circuit
+      // stub that skips route.fetch entirely.
+      const upstreamUrl = holder.upstreamUrl || 'http://localhost:3000/api/proxy';
       let apiRes;
       try {
-        apiRes = await route.fetch({ url: 'http://localhost:3000/api/proxy', method: 'POST',
+        apiRes = await route.fetch({ url: upstreamUrl, method: 'POST',
           headers: { 'content-type': 'application/json' }, postData: JSON.stringify(translated) });
       } catch (e) {
         log.push({ kind: 'translate-transport-error', reason: String(e && e.message) });
+        _recordUpstream(holder, { ok: false, reason: 'transport-error: ' + String(e && e.message) });
         await route.abort('failed'); return;
       }
       const bodyTxt = await apiRes.text();
+      // ── PERSIST BEFORE ANYTHING CAN WAIT (Roman 2026-09-27) ────────────────────────────────
+      // The paid grok run returned a 200 and lost it: every artifact was written AFTER a settlement
+      // wait, and the wait never ended, so a successful, billed response existed only in process
+      // memory and died with the process. The receipt is now on disk the instant it is read off the
+      // wire — before the response is even handed back to the page, let alone before any wait.
+      _recordUpstream(holder, { ok: true, status: apiRes.status(), rawBody: bodyTxt, url: upstreamUrl });
       holder.upstreamStatus = apiRes.status();
       holder.upstreamRaw = bodyTxt;                    // usage + _orchestration for the cost report
       await route.fulfill({ response: apiRes, body: bodyTxt });

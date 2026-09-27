@@ -23,7 +23,8 @@ import { chromium } from 'playwright-core';
 import { installFailClosedNetworkGate } from './_e2e_network_gate.mjs';
 import {
   readFixture, buildContextInPage, installReservationRoute, runExtractorOnly,
-  makeLedger, evaluateFindings, DECLARED_TIERS, ALLOWED_ENDPOINTS, CEILING_USD, tierCost
+  makeLedger, evaluateFindings, DECLARED_TIERS, ALLOWED_ENDPOINTS, CEILING_USD, tierCost,
+  awaitUpstreamSettled
 } from './_tempt_outcome_extractor_runner_core.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -80,6 +81,30 @@ const REPLAY_CEILING_USD = 0.002;    // one tier at 3600 in + 3200 out, $0.15/M 
 //
 // REASONING CHARGES ARE NOT BOUNDED BY max_tokens AT THIS PROVIDER. The reservation below is
 // therefore HEADROOM, not a limit — see GROK_CEILING_USD.
+// ── --dry-upstream=<url> : DRIVE THIS EXACT RUNNER WITH NO PROVIDER (Roman 2026-09-27) ──────
+// The paid grok run was "proven" by a dry test that short-circuited the route BEFORE route.fetch,
+// so the capture / persist / settle / exit half of the path had never executed even once. This flag
+// points the redirect adapter's upstream at a LOCAL stub server, so the real runner performs the
+// real route.fetch -> capture -> persist -> route.fulfill -> evaluate -> exit sequence at zero cost.
+// It is NOT a way to reach the provider cheaply, and the guard below is what makes that true rather
+// than merely intended: the URL must be loopback AND must not be the app's own port, so
+// --dry-upstream can never address /api/proxy on :3000. No authorization phrase is required in this
+// lane precisely because no provider is reachable from it.
+const DRY_UPSTREAM = (() => {
+  const a = process.argv.find((x) => x.indexOf('--dry-upstream=') === 0);
+  if (!a) return null;
+  const raw = a.slice('--dry-upstream='.length);
+  let u; try { u = new URL(raw); } catch (_) {
+    console.error('REFUSING: --dry-upstream is not a URL: ' + raw); process.exit(6);
+  }
+  const loopback = (u.hostname === '127.0.0.1' || u.hostname === 'localhost' || u.hostname === '[::1]');
+  if (!loopback || u.port === '3000' || u.port === '') {
+    console.error('REFUSING: --dry-upstream must be loopback on a port other than 3000 (got '
+      + u.hostname + ':' + u.port + ') — this lane may never address the real proxy.');
+    process.exit(6);
+  }
+  return raw;
+})();
 const PIN_GROK = process.argv.indexOf('--pin-grok') !== -1;
 const GROK_MODEL = 'grok-4.3';
 // One upstream attempt, bounded portion: 3600 prompt tokens @ $1.25/M = $0.004500,
@@ -101,7 +126,11 @@ const argv = process.argv.slice(2);
 const authIdx = argv.indexOf('--authorize');
 const given = authIdx !== -1 ? String(argv[authIdx + 1] || '') : null;
 
-if (given !== AUTH_PHRASE) {
+if (DRY_UPSTREAM && !PIN_GROK) {
+  console.error('REFUSING: --dry-upstream only applies to --pin-grok, the lane that has a redirect adapter.');
+  process.exit(6);
+}
+if (given !== AUTH_PHRASE && !DRY_UPSTREAM) {
   console.log('EXTRACTOR-ONLY LIVE RUN — NOT AUTHORIZED, NOTHING DISPATCHED.\n');
   console.log('  fixture      : _tempt_fate_fixtures/run_2026-09-24_02-11-02_scene_a (already paid for)');
   console.log('  role         : temptOutcomeExtractor, and only that role');
@@ -134,12 +163,15 @@ if (given !== AUTH_PHRASE) {
 }
 
 const RUN_ID = new Date().toISOString().replace(/[:.]/g, '-').replace('T', '_').slice(0, 19);
-const OUT_DIR = path.join(__dirname, '_tempt_fate_fixtures', 'extractor_only_' + RUN_ID);
+const OUT_DIR = path.join(__dirname, '_tempt_fate_fixtures',
+  (DRY_UPSTREAM ? 'extractor_DRY_UPSTREAM_' : 'extractor_only_') + RUN_ID);
 if (fs.existsSync(OUT_DIR)) { console.error('REFUSING TO RUN — output directory already exists: ' + OUT_DIR); process.exit(4); }
 fs.mkdirSync(OUT_DIR, { recursive: true });
 
 (async () => {
-  console.log('=== EXTRACTOR-ONLY LIVE RUN — AUTHORIZED ===');
+  console.log(DRY_UPSTREAM
+    ? '=== EXTRACTOR-ONLY RUN — DRY UPSTREAM, NO PROVIDER REACHABLE (' + DRY_UPSTREAM + ') ==='
+    : '=== EXTRACTOR-ONLY LIVE RUN — AUTHORIZED ===');
   console.log('    ceiling $' + (PIN_GROK ? GROK_CEILING_USD : PIN_PRIMARY ? REPLAY_CEILING_USD : CEILING_USD).toFixed(6)
     + ' · output ' + OUT_DIR + (PIN_GROK ? '\n    PROVIDER COMPARISON: ' + GROK_MODEL + ', unchanged prompt' : ''));
 
@@ -167,7 +199,10 @@ fs.mkdirSync(OUT_DIR, { recursive: true });
   const ledger = makeLedger(PIN_GROK ? GROK_CEILING_USD : PIN_PRIMARY ? REPLAY_CEILING_USD : CEILING_USD);
   const routeLog = [];
   const holder = PIN_GROK
-    ? { ledger, log: routeLog, translateToGrok: true, maxRequests: 1 }
+    // artifactDir makes the adapter persist the receipt the instant it comes off the wire, BEFORE
+    // anything downstream can wait; maxTokensAsked lets it compute the reasoning overrun itself.
+    ? { ledger, log: routeLog, translateToGrok: true, maxRequests: 1, artifactDir: OUT_DIR,
+        maxTokensAsked: 3200, upstreamUrl: DRY_UPSTREAM || undefined }
     : PIN_PRIMARY
     ? { ledger, log: routeLog, pinModel: PIN_MODEL, pinEndpoint: PIN_ENDPOINT, maxRequests: 1 }
     : { ledger, log: routeLog };
@@ -186,12 +221,26 @@ fs.mkdirSync(OUT_DIR, { recursive: true });
   gate.setPhase('extractor-only', DECLARED_TIERS.length);
   const res = await runExtractorOnly(page, built.ctx);
   gate.closePhase();
+  // ── SETTLEMENT BELONGS TO WHOEVER PERFORMED THE REQUEST (Roman 2026-09-27) ──────────────────
+  // In grok-comparison mode the redirect adapter terminates the intercepted route itself, so the
+  // gate tracks ZERO calls under this phase — and gate.waitForSettlement requires
+  // `relevant.length > 0` and never times out by design. Waiting on it there is an unconditional
+  // deadlock, and it consumed a real, successful, billed grok-4.3 response on 2026-09-27. This lane
+  // waits on the ADAPTER's own observable instead, bounded, with a timeout that is itself a
+  // recorded outcome rather than silence.
+  let upstream = null;
+  if (PIN_GROK) {
+    upstream = await awaitUpstreamSettled(holder, { timeoutMs: 20000 });
+    console.log('    upstream settled: ' + (upstream.ok ? 'captured, ' + (holder.artifactsWritten || []).join(' + ')
+      : 'NOT CAPTURED (' + upstream.reason + ') — incomplete_result.json written'));
+  } else {
   // waitForSettlement(roleTag, opts) — the FIRST argument is the roleTag. Passing an options
   // object here made it wait on a roleTag that never existed, and the 2026-09-24 authorized run
   // hung after its (successful, single) dispatch until it was killed. The response had already
   // settled and was preserved in gate.jsonl, so nothing was lost and nothing was re-dispatched —
   // but the report had to be rebuilt from the log afterwards.
-  await gate.waitForSettlement('extractor-only', { quietMs: 8000 }).catch(() => {});
+    await gate.waitForSettlement('extractor-only', { quietMs: 8000 }).catch(() => {});
+  }
 
   const findings = evaluateFindings(res.raw, built.ctx.rosterNames);
   const tracked = gate.trackedCalls ? gate.trackedCalls() : [];
@@ -206,6 +255,10 @@ fs.mkdirSync(OUT_DIR, { recursive: true });
     stateUnchanged: res.stateUnchanged, stateBefore: res.stateBefore, stateAfter: res.stateAfter,
     findings,
     priorPaidRunCommitted: fx.priorCommitted,
+    upstreamOutcome: holder.upstreamOutcome || null,
+    // A run whose response was never captured reports NO DATA on every criterion. It does NOT
+    // report "parsing failed": an uncaptured response is unexamined, not examined and found wanting.
+    noDataReason: (PIN_GROK && upstream && !upstream.ok) ? upstream.reason : null,
     // PROVIDER COMPARISON PROVENANCE + the measured (not estimated) cost, including the reasoning
     // tokens the reservation could not bound.
     providerComparison: PIN_GROK ? (() => {
@@ -270,9 +323,15 @@ fs.mkdirSync(OUT_DIR, { recursive: true });
     console.log('    over max_tokens : ' + pc.completionOverMaxTokens + ' completion tokens beyond the 3200 asked for');
     console.log('    measured        : $' + pc.measuredUsd.toFixed(6) + '  against $' + pc.reservedUsd.toFixed(6) + ' reserved');
   }
+  if (PIN_GROK && upstream && !upstream.ok) {
+    console.log('\n  ALL FOUR CRITERIA: NO DATA — the response was never captured (' + upstream.reason + ').');
+    console.log('  Parsing is UNVERIFIED too: an uncaptured response is unexamined, not examined and failed.');
+  }
   console.log('\n  NO semantic verdict is rendered here. Whether the reading is RIGHT is a human call.');
   console.log('  Evidence: ' + OUT_DIR);
 
   await browser.close();
-  process.exitCode = 0;
+  // EXIT EXPLICITLY. process.exitCode alone leaves a lingering handle able to hold the process open
+  // after all work is done — the same failure shape as the settlement deadlock, one layer down.
+  process.exit((PIN_GROK && upstream && !upstream.ok) ? 5 : 0);
 })().catch((e) => { console.error('RUN ERROR:', e && e.stack || e); process.exit(2); });
