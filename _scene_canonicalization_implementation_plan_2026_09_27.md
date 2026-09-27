@@ -33,6 +33,63 @@ The literary and third paths do not build from beats at all, so the API needs a 
 `narrator` entry spanning the whole text). Pretending one shape fits both is how a second projection
 reappears.
 
+## A0b. Read-only trace of the other two creation paths (done 2026-09-27)
+
+**Both non-CG creating paths are literary Scene-1 mounts**, not general writers:
+`_mountAndTransition` (`:102028`, `text: body`) and the Scene-1 completion block at `:267596`
+(`text: _sanitizedBody`). Structurally they are siblings.
+
+**What makes them simpler than CG:**
+- A single pre-authored prose **string**. No beats, no `kind`, no `speaker` — so the `body` projection
+  with one whole-text `narrator` sidecar entry fits exactly, with no typed identity work at all.
+- **Neither rewrites the record after acceptance.** The only `.text` assignment on a scene record
+  anywhere in the file is `:237444` (CG). The literary record is written once.
+- No `await` between their push and any mutation of the record.
+
+**What makes them harder, and is new information:**
+
+1. **They have their own reader/record divergence, by a different mechanism.** The DOM receives
+   `formatStory(body)`; the record receives `body`. `formatStory` (`:322480`) is **not presentational** —
+   it **strips `[LORE:…]` tags** from the text and, under the sacred-figure guard, **replaces the entire
+   text** with a refusal notice. Its own comment calls it *"the single pre-display chokepoint for ALL
+   scene prose"* (14 call sites). So reader text ≠ record text here too: the record keeps a `[LORE:]` tag
+   the reader never saw.
+   **Consequence for A2/A4:** `formatStory`'s *text* transformations must move **into** the projection,
+   leaving `formatStory` purely presentational. Otherwise "the DOM renders from the persisted projection"
+   is satisfied in form and violated in content.
+
+2. **Literary CONTINUATIONS never write `state.scenes` at all.** The write surface is exhaustive — nine
+   sites — and none of them is a literary continuation. For a literary story, `state.scenes` holds
+   **Scene 1 only** (plus OAS archives). The de facto continuation prose record is the **paginated DOM**,
+   read back through `StoryPagination.getAllContent()` and **de-tagged by regex**
+   (`.replace(/<[^>]*>/g,' ')`) in at least four context builders (`:59865`, `:71167`, `:71460`,
+   `:71702`).
+
+**Therefore Track A has TWO storage substrates, not one:**
+
+| substrate | holds | citable today |
+|---|---|---|
+| `state.scenes` | CG scenes; literary **Scene 1**; OAS archives | after A1–A5 |
+| **paginated DOM** | **every literary continuation** | no — text is recovered by stripping HTML from a rendered accumulator |
+
+A citation system over the second substrate would need offsets into a regex-de-tagged reconstruction,
+which is the reconstruction problem again in a new place.
+
+**Revised A3 assessment.** A3 is **larger than the original plan assumed**, and the growth is not in the
+two Scene-1 mounts — those are cheap, and the `body` projection covers them. The growth is:
+- moving `formatStory`'s text transformations into the projection (touches all 14 call sites' assumptions,
+  including the CG path if its prose also passes through), and
+- deciding whether literary continuations get real scene records at all.
+
+**Recommendation: split the second item out.** Giving literary continuations durable, projected records is
+plausibly its own project, and bundling it would make Track A open-ended. Track A should scope to the
+`state.scenes` substrate plus the `formatStory` split, and **explicitly declare literary continuations
+out of scope and not citable** — the same honesty the migration plan applies to historical records.
+
+**A3 estimate, now grounded:** the two Scene-1 mounts are small; the `formatStory` split is the real
+work and needs its own consumer audit of 14 call sites; literary continuations are deferred as separate
+scope. A3 is no longer unmeasured, but it is no longer one change either.
+
 ## A1. Scope, in dependency order
 
 | # | change | depends on |
@@ -106,90 +163,130 @@ the second prevents the migration from silently changing what existing consumers
 - A7: 10 dry proofs, of which 2, 9 and 10 need the real path with a stubbed network.
 
 **Sequencing gate:** A3 should not land until proof 1 and proof 10 exist, because they are what make the
-change safe to make at all. Expect the literary/third-path work to need its own trace first — **the
-present traces covered only the CG path**, so A3's true cost is not yet measured. Treat any estimate for
-A3 as provisional until that trace is done.
+change safe to make at all. The literary/third-path trace is **now done** (A0b): the two Scene-1 mounts are
+cheap, but A3 absorbs the `formatStory` text/presentation split, and literary continuations are recommended
+as **separate scope** rather than part of this track.
 
 ---
 
 # TRACK B — Interim Tempt Fate, human review by default
 
-**Framing:** no automation of semantic judgment. Tempt outcomes are resolved by a person; the system's
-job is to preserve the invocation honestly and stop planners inventing consequences.
+**Framing:** no automation of semantic judgment. Tempt outcomes are resolved by a person; the system's job
+is to record the invocation honestly and stop planners inventing consequences.
 
-**Independent of Track A.** Nothing in Track B reads the sidecar or requires a canonical projection: the
-blocked-invocation record's evidence is the wish text, which already exists in whatever text the record
-has. Track B can ship first.
+**Independent of Track A. Track B ships first.**
+
+## B0. Four boundary corrections (Roman, 2026-09-27)
+
+1. **The record is created for EVERY accepted active invocation** while automatic outcome commitment is
+   disabled — **not only when invoker resolution fails.** The earlier plan made the record a consequence of
+   an invoker defect; that was wrong. Automation is off for *all* Tempt outcomes right now, so *every*
+   accepted invocation has an unresolved outcome and every one needs the record. An unresolved invoker is
+   one **attribute** of a record that would exist anyway.
+2. **Before Track A, the record cannot claim the wish text remains current reader-visible canon.** Current
+   code still rewrites scene text directly (`:237444`), and there is no projection revision to re-check
+   against. So the record describes **an accepted invocation attempt with an unresolved outcome** — a fact
+   about what the reader did, not a claim about what the canonical text still contains. Track A later adds
+   evidence re-anchoring and supersession; until then no such claim is made, and none is implied.
+3. **Downstream receives only the safe uncertainty rule.** Not the earlier four-point directive, whose first
+   point asserted current reader-visible canon that Track B cannot guarantee.
+4. **No `_sbSpeakerLabel` change in Track B.** `_resolvePcIdentity` is used **only** for the record's
+   invoker field. Visible render-label normalization (`I:` → resolved name) belongs with Track A's identity
+   and projection work, where a label change is part of a projection change rather than a stray visible
+   edit in a records-only release.
 
 ## B1. Scope, in dependency order
 
 | # | change | depends on |
 |---|---|---|
-| **B1** | **Typed invoker identity**: resolve the PC through `_resolvePcIdentity` at capture. Fix `_sbSpeakerLabel`'s private PC chain (picks-first, `'I'` fallback, no placeholder filter) to read the resolver. LI keeps its own anchor authority; do **not** route it through the PC resolver | — |
-| **B2** | **Non-blocking unresolved-invoker status**: `extractor_blocked: 'invoker_unresolved'`, terminal-for-automation. No throw escaping capture, no revert, no interruption | B1 |
-| **B3** | **Immutable blocked-invocation record**: `invocationId` + separable `evidence` block; append-only; no status field written back | B2 |
-| **B4** | **Lifecycle exclusions**: excluded from `_tfoResumePending`, `_tfoUnresolvedPending`, and `_tfoContinuationBlocked` | B3 |
-| **B5** | **Downstream uncertainty directive**: the four points, wish-scoped, firing only while the invocation is current | B3 |
-| **B6** | **Human resolution / dismissal**: append-only, referencing `invocationId`; original scene untouched | B3 |
-| **B7** | **Human review by default**: route Tempt outcomes to review rather than to extraction | B3–B6 |
+| **B1** | **Invoker field resolution only**: resolve the PC through `_resolvePcIdentity` for the record's invoker field. No render change; `_sbSpeakerLabel` untouched. LI keeps its own anchor authority and is not routed through the PC resolver | — |
+| **B2** | **Unconditional invocation record**: for every accepted active invocation, while automatic commitment is disabled. Immutable, append-only, identified by `invocationId`, with an `evidence` block recording the wish text **as observed at capture** and explicitly **not** asserted to be current canon | B1 |
+| **B3** | **Invoker-unresolved as an attribute**: `invokerUnresolved: true` plus a review flag on the record. Never a reason to omit the record, and never a reason to stall | B2 |
+| **B4** | **Lifecycle exclusions**: excluded from `_tfoResumePending`, `_tfoUnresolvedPending` and `_tfoContinuationBlocked`. No retry, no gate | B2 |
+| **B5** | **Downstream uncertainty directive** — the safe rule only (B6 below) | B2 |
+| **B6** | **Human resolution / dismissal**: append-only, referencing `invocationId`; original scene untouched | B2 |
+| **B7** | **Human review by default**: Tempt outcomes route to review, not to extraction | B2–B6 |
 | **B8** | Dry proofs | all |
 
-**Deferred to post-Track-A:** the evidence re-check on revision (needs `projectionRevision`, which Track
-A introduces). Until then a blocked-invocation record records the text it saw and is not re-checked —
-acceptable because nothing revises scene text through an API yet, and the record asserts only that an
-invocation occurred.
+**Deferred to Track A:** evidence re-anchoring, `superseded_or_inapplicable`, and any claim tied to
+`projectionRevision` — all three need a stable canonical projection that does not exist yet.
 
-## B2. Affected consumers
+## B2. What the record says, and what it must not say
+
+**Says:** an active Tempt Fate invocation was **accepted** at this scene; here is the wish text **as
+observed at capture**; automatic outcome commitment is disabled, so **no durable outcome was committed**;
+here is whether the invoker resolved.
+
+**Must not say:** that this wish text is still present in the current canonical scene text. Nothing in
+Track B can support that, because scene text is still rewritten directly and there is no revision or hash
+to re-check. The `evidence` block is therefore labelled **`observedAtCapture`**, not `currentCanon`, and
+downstream must not read it as a citation.
+
+## B3. The downstream directive — the safe rule only
+
+Reduced from four points to what Track B can actually support:
+
+1. **An invocation was accepted** at the named scene (with its wish text, marked as observed at capture).
+2. **No durable outcome was committed.**
+3. **Do not derive that the effect landed or that it failed.** Both readings refused.
+4. **Do not derive memory, possession, history, relationship, exemption or scope *from this wish*.**
+
+The wish-scoped narrowing from the design note is retained in full: the directive forbids derivation **from
+the wish**, and does **not** forbid independently motivated present action or newly observed evidence. A
+later scene may establish an effect on its own terms; that commits as a **new observation** with its own
+provenance and does **not** resolve the invocation.
+
+Dropped from the earlier version: any assertion that the invocation "remains reader-visible canon". Track A
+restores that once a projection can back it.
+
+## B4. Affected consumers
 
 1. **The pending lifecycle**: `_tfoWritePending`, `_tfoResumePending`, `_tfoUnresolvedPending`,
    `_tfoContinuationBlocked`, `_tfoPendingKey`.
-2. **`_tfoBuildExtractionContext`**: gains the typed invoker resolution and the blocked status; stops
-   silently recording `invokerName: ''`.
-3. **Planner and author payload builders**: one new directive block (B5). The existing durable-consequence
-   renderer is the precedent — including its lesson that a caveat placed in a block that does not always
-   render never fires.
-4. **`_sbSpeakerLabel`** (B1) — a **render-visible change**: a PC label could change from `I:` to the
-   resolved name, or from a placeholder to a real name. This is the one user-visible edit in Track B.
-5. **Review surface** (B7): wherever the queue is presented.
+2. **`_tfoBuildExtractionContext`**: gains typed invoker resolution for the record's field; stops silently
+   recording `invokerName: ''`. It no longer needs to supply prose for extraction, since extraction is off.
+3. **Planner and author payload builders**: one new directive block (B3). The durable-consequence renderer
+   is the precedent — including its lesson that a caveat placed in a block that does not always render never
+   fires.
+4. **Review surface** (B7).
+5. **No render-visible change.** With `_sbSpeakerLabel` out of scope, Track B changes no displayed text.
 
-## B3. Migration risk
+## B5. Migration risk
 
 | risk | mitigation |
 |---|---|
-| **Existing pending records** whose prose came from `_extractCGSceneText` cite a text that is no version of their scene record | **invalidate, not migrate** — `invalidated: 'pre_canonicalization_provenance'`; they become review items |
-| **A stalled story** if `extractor_blocked` is mistaken for an ordinary pending | proof that `_tfoContinuationBlocked` ignores it — this is the failure that would be worst in production |
-| **`_sbSpeakerLabel` change alters rendered text** for scenes generated after the fix, while earlier scenes in the same story keep the old label | accept and state it; it is a correctness fix, and labels are not canon claims. Do **not** retro-edit earlier scenes |
-| **Directive over-breadth** freezing ordinary scenes | proof that the directive forbids derivation *from the wish* and does not forbid independently motivated action — the specific over-broad wording already withdrawn twice in this workstream |
+| **Existing pending records** cite prose from `_extractCGSceneText`, which is no version of their scene record | **invalidate, not migrate** — `invalidated: 'pre_canonicalization_provenance'` — and create an invocation record for each, so no accepted invocation is lost in the conversion |
+| **A stalled story** if the record is mistaken for an ordinary pending | proof 4: `_tfoContinuationBlocked` ignores it. This is the worst production failure available here |
+| **Directive over-breadth** freezing ordinary scenes | proof 9: the directive forbids derivation *from the wish* only. The specific over-broad wording has already been withdrawn twice in this workstream |
+| **Over-claiming provenance** — a reader of the record treating `observedAtCapture` as a citation | label it in the data, not only in prose, and prove no downstream builder presents it as current canon |
+| **Record volume** — now one per invocation rather than per defect | expected and correct; they are small and append-only |
 
-## B4. Dry-proof plan
+## B6. Dry-proof plan
 
 | proof | asserts |
 |---|---|
-| 1. **Typed resolution** | `'protagonist'` → `_resolvePcIdentity`; `'li'` → the LI anchor; a named NPC → cast-validated; unvalidated → `unresolved`. Each route recorded |
-| 2. **No private PC chain** (source) | no PC-name chain outside the resolver. Explicitly does **not** assert this of the LI |
-| 3. **Scene survives** | an unresolved invoker leaves the accepted scene byte-identical, still persisted, with no throw escaping the capture and no revert |
-| 4. **Continuation proceeds** | with an `extractor_blocked` record present, the next continuation is **not** gated |
-| 5. **No retry** | `_tfoResumePending` does not pick it up; no provider request is attempted |
-| 6. **Immutability** | the record is never edited; status is derived from appended entries; two appends against one `invocationId` are distinguishable |
-| 7. **Two invocations, one scene** | two records in one scene get distinct `invocationId`s and are independently resolvable — the case `sceneUid` alone could not express |
-| 8. **Directive content** | the real planner and author requests carry all four points, wish-scoped, and fire only while current — not once resolved, dismissed or superseded |
-| 9. **Directive does not freeze** | a later scene establishing an effect on its own evidence commits as a **new observation** with its own provenance, and does **not** resolve the invocation |
-| 10. **No commitment** | no durable outcome commits automatically while a blocked record stands; a human resolution against `invocationId` does commit, with `human_review` provenance |
+| 1. **Unconditional creation** | an accepted invocation with a **fully resolved** invoker still produces a record while automatic commitment is disabled — the case the earlier plan would have missed |
+| 2. **Invoker attribute** | an unresolved invoker sets the flag and the review marker, and does **not** suppress the record or change its other fields |
+| 3. **Invoker resolution route** | the record's invoker comes from `_resolvePcIdentity`; the LI is **not** routed through it; `_sbSpeakerLabel` is **unmodified** (source assertion) |
+| 4. **Continuation proceeds** | with records present, the next continuation is not gated |
+| 5. **No retry** | `_tfoResumePending` does not pick them up; **zero provider requests** |
+| 6. **Scene untouched** | the accepted scene is byte-identical, still persisted, no throw escaping capture, no revert |
+| 7. **Immutability** | never edited; status derived from appended entries; two appends against one `invocationId` remain distinguishable |
+| 8. **Two invocations, one scene** | distinct `invocationId`s, independently resolvable |
+| 9. **Directive content and scope** | the real planner/author requests carry the four safe points, wish-scoped; **no** claim of current reader-visible canon; fires only while unresolved |
+| 10. **Directive does not freeze** | a later scene establishing an effect on its own evidence commits as a new observation and does **not** resolve the invocation |
+| 11. **No commitment** | nothing commits automatically while a record stands; a human resolution against `invocationId` commits with `human_review` provenance |
+| 12. **Conversion** | each existing pending record is invalidated **and** yields an invocation record — nothing is dropped in the migration |
 
-Proof 4 and proof 9 are the ones that protect the reader's experience; proof 10 is the one that keeps
-automation honest.
+## B7. Estimate
 
-## B5. Estimate
+Smaller and lower-risk than Track A, and now smaller than the previous version of this plan: with
+`_sbSpeakerLabel` removed it makes **no render-visible change**, and with the record unconditional it has
+**one** creation path instead of a conditional one. Roughly: B1 contained; B2–B6 one connected pass over the
+pending lifecycle plus one directive block; B7 a surface; B8 twelve dry proofs of a kind this workstream
+builds routinely.
 
-**Substantially smaller than Track A, and lower-risk.** It adds records and a directive rather than
-changing how text is produced; its only render-visible edit is B1's label fix. Roughly: B1 contained,
-B2–B6 one connected pass over the pending lifecycle plus one directive block, B7 a surface, B8 ten dry
-proofs of the kind this workstream already builds routinely.
-
-**Track B is the one to start.** It is cheaper, independent, ships the honesty guarantee immediately, and
-does not need Track A's traces to be finished.
-
----
+**Start here.**
 
 # What stays blocked
 
