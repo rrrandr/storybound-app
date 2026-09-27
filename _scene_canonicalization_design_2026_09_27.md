@@ -254,26 +254,65 @@ forward while licensing nothing from it.
 
 ## The unresolved-invocation record
 
-Persisted **immutably**, keyed by **scene UID + projection revision**:
+Persisted **immutably**, and identified by its own **`invocationId`** — not by `sceneUid`, which is not
+unique enough: **a scene can be revised, and may eventually contain more than one invocation.** Keying
+resolutions on the scene would make two wishes in one scene indistinguishable, and a second wish added by a
+revision unaddressable.
 
 ```
-{ sceneUid, projectionRevision,          // which scene, and which revision it was blocked against
-  proposalId, wishText, invokedAtScene,  // what was requested, and where
+{ invocationId,                        // opaque, immutable, minted at block time — THE handle
+  sceneUid, proposalId, invokedAtScene,
+  evidence: {                          // minted WITH the final projection, and re-checkable against it
+    wishText,                          // the exact invocation text as it appears in the canonical text
+    span: { start, end },              // its offsets in that revision
+    projectionRevision, textHash,      // the revision it was observed in
+    sourceType, speakerIdentity        // from the sidecar: who, if anyone, uttered it
+  },
   reason: 'invoker_unresolved',
   blockedAt }
 ```
+
+**The ID and the evidence are deliberately separate.** `invocationId` is an opaque, stable handle — it is
+**not** derived from offsets or hashes, because those change across revisions and a handle that changes is
+not a handle. `evidence` is the re-checkable part: it records what was seen, where, and in which revision,
+so a later revision can be tested against it rather than assumed compatible.
+
+**Every resolution and dismissal references `invocationId`** — never `sceneUid` alone, never
+`sceneUid + revision`.
 
 **Append-only, and genuinely immutable — no status field is ever written back.** Current status is
 **derived** by looking for a later resolution entry that references this `sceneUid`. A mutable `status` on a
 record called immutable is a contradiction that erodes the first time someone needs to flip it; deriving it
 keeps the guarantee real and keeps the scene's history a single readable chain.
 
-**Revision semantics differ from a pending extraction's, deliberately.** A pending extraction is
-invalidated when the projection revision changes, because its citations were verified against superseded
-text. An unresolved-invocation record is **not** invalidated by a later revision: the fact that an
-invocation occurred is a property of the scene, not of a text revision. The revision field is
-**provenance** — it says where the block happened — not a validity key. Two records, two rules; do not
-generalize either one onto the other.
+## Revision handling — an invocation is not immune to every revision
+
+**Correction.** The previous revision said an unresolved-invocation record "is **not** invalidated by a
+later revision." **That was too strong.** If a later canonical projection removes or materially changes the
+wish text, downstream canon cannot go on asserting that exact invocation occurred. The rule is neither "all
+revisions invalidate" (a pending extraction's rule) nor "no revision matters" — it is a **re-check of the
+evidence** against the new canonical text:
+
+| on a new projection revision | outcome |
+|---|---|
+| the exact `evidence.wishText` is still present **verbatim**, and its containing sidecar entry has the **same `sourceType` and speaker identity** | the record **survives** a formatting-only revision. Append an **evidence re-anchor** entry: same `invocationId`, new `projectionRevision`, new `span`, new `textHash`. The invocation stays current canon. |
+| the wish text is **absent**, or present but with a **changed `sourceType` or speaker** (e.g. it moved from the PC's interior exposition into someone else's dialogue) | append an explicit **`superseded_or_inapplicable`** record referencing `invocationId`, with the reason. **Stop presenting that invocation as current canon** — the blocked-invocation directive stops firing for it. |
+
+Re-anchoring is an **append**, like everything else here: the original record is never edited, and the
+chain reads as "observed at r3, re-anchored at r4, superseded at r7."
+
+**The material-change test is verbatim presence, deliberately.** This design refuses synonymy everywhere
+else and cannot adopt it here: "materially changed" is operationalised as "the exact substring is no longer
+there." **Known conservatism:** a purely cosmetic edit *to the wish line itself* — whitespace, a changed
+comma — fails the verbatim test and is treated as material, producing a `superseded_or_inapplicable` record
+for what a person would call a formatting change. That errs toward not asserting, which is the right
+direction. The only safe relaxation is an **explicitly declared normalization applied identically to both
+sides** of the comparison, never fuzzy or semantic matching.
+
+**Contrast with a pending extraction, which still differs.** A pending extraction is invalidated by *any*
+revision, because its citations span the whole scene and all of them were verified against superseded text.
+An unresolved invocation depends on **one** piece of evidence, so it can be re-checked and may survive.
+Two records, two rules — related by the same re-check discipline, not by a shared verdict.
 
 ## It must not retry and must not stall
 
@@ -281,6 +320,8 @@ generalize either one onto the other.
   and it must not appear in `_tfoUnresolvedPending`.
 - **Excluded from the continuation gate.** `_tfoContinuationBlocked` must not hold the next scene on it —
   that is the whole point of terminal-for-automation (§6b).
+- **Its directive fires only while it is current** — not once superseded, and not once resolved or
+  dismissed. All three are derived from appended entries referencing `invocationId`.
 - **The accepted scene is untouched.** No rewrite, no revert, no new revision. Creating this record changes
   nothing about the scene's text, hash, or revision.
 
@@ -293,8 +334,8 @@ could be read as a consequence:
    remembers it.
 2. **No durable outcome was automatically committed.**
 3. **Do not assume the requested effect landed, or that it failed.** Both readings are refused, not one.
-4. **Derive nothing from it** — no exemptions, no memory or knowledge states, no possession or material
-   effects, no history revision, no scope claim.
+4. **Derive nothing FROM THAT WISH** — the planner may not presuppose or derive memory, possession,
+   history, relationship, exemption, or scope **as a consequence of this invocation**.
 
 This is a **third kind of canon entry**, and it must not be collapsed into either of the existing two. It
 resembles the `undetermined`-scope machinery already built — refuse both readings of the reach, keep
@@ -302,9 +343,33 @@ established effects usable — but is strictly stronger: there **are** no establ
 is usable. `undetermined` says *"this much happened, the reach is open."* This says *"a wish was made and we
 do not know what it did."*
 
-**What the author may still write:** the invocation as a remembered event — the character made a wish, and
-may think about having made it. **What the author may not write:** any world state that would only be true
-if it had worked, or only if it hadn't. A scene may not show the assembly remembering, nor forgetting.
+## The prohibition is scoped to the wish, and must not freeze ordinary scenes
+
+**Correction.** The previous revision said "any world state that would only be true if it had worked, or
+only if it hadn't… A scene may not show the assembly remembering, nor forgetting." **Withdrawn — that
+freezes the story.** Almost any subsequent scene touches memory or relationship somehow, and a blanket ban
+would make an unresolved invocation more paralysing than a stall.
+
+The prohibition is **causal and wish-scoped**, not topical:
+
+- **Forbidden:** presupposing or deriving memory, possession, history, relationship, exemption or scope **as
+  a consequence of this wish**; writing a character's state *because* the wish did or did not land; treating
+  the requested effect as achieved or as refused.
+- **Not forbidden:** independently motivated present action; a character's ordinary behaviour; **newly
+  observed evidence** the scene establishes on its own terms. A later scene *may* show the assembly failing
+  to recall the ceremony — it simply may not do so *on the authority of the wish*, and the planner may not
+  be *told* to produce it.
+
+**If later prose explicitly establishes an effect, it is a NEW OBSERVATION with its own provenance** —
+committed under the ordinary evidence rules (§2–§3: a span in that scene's canonical projection, resolved
+through its own sidecar), tagged to the scene that established it, and standing on that evidence alone.
+
+**It does NOT silently retroactively resolve the invocation.** The unresolved invocation stays unresolved,
+because nothing in the later scene establishes *causation* — only that a state now obtains. Closing the
+invocation remains a human act referencing `invocationId`, and a reviewer may legitimately **cite that
+observation as their basis** for doing so. What is forbidden is the machine inferring the link. This keeps
+two facts separable that a silent resolution would fuse: *"the assembly does not recall the ceremony"* and
+*"the wish is why."*
 
 ## Human resolution, without rewriting the original scene
 
@@ -312,7 +377,8 @@ Resolution is an **append**, never an edit:
 
 - A reviewer reads the scene and the pending-review queue and decides the outcome.
 - That creates a **separate durable outcome record** with provenance `human_review`, carrying
-  `resolves: { sceneUid, projectionRevision }`, its own claims, and the reviewer's basis.
+  `resolves: { invocationId }` — the ID, so it stays unambiguous when a scene holds two invocations or is
+  revised — plus its own claims and the reviewer's basis, which may cite a later scene's observation.
 - **The original scene is not rewritten** — not its text, not its hash, not its revision. It was always
   intact; resolution does not make it otherwise. The scene's canonical projection is independent of whether
   anyone ever resolved the invocation.
@@ -320,8 +386,12 @@ Resolution is an **append**, never an edit:
   automation declined; the resolution stands beside it as the permanent fact that a person decided.
 - From that point the durable outcome propagates exactly like any other committed consequence, and the
   blocked-invocation directive **stops firing** for that scene because a resolution now references it.
-- **Dismissal is also an append** — a resolution entry recording "reviewed, no durable outcome" — so
-  "nobody has looked at this" and "someone looked and found nothing" are distinguishable forever.
+- **Dismissal is also an append** — a resolution entry against `invocationId` recording "reviewed, no
+  durable outcome" — so "nobody has looked at this" and "someone looked and found nothing" are
+  distinguishable forever.
+- **A superseded invocation needs no resolution.** If `superseded_or_inapplicable` was appended because the
+  wish text left the canonical text, the review item is closed by that record; asking a person to adjudicate
+  an invocation the canon no longer contains would be asking them to resolve nothing.
 
 ---
 
