@@ -1,0 +1,107 @@
+{
+  "delivered": true,
+  "changed": [
+    {
+      "subject": "the assembly",
+      "whatChanged": "settles into confusion that carries no memory of accusation"
+    },
+    {
+      "subject": "the presiding Dohkar",
+      "whatChanged": "blinks as if waking and asks 'What gathering is this?'"
+    }
+  ],
+  "durability": [
+    {
+      "aspect": "memory of the ceremony",
+      "status": "uncertain",
+      "note": "scene shows immediate confusion and blank faces but does not signal duration"
+    }
+  ],
+  "knowledgeStates": [
+    {
+      "character": "the assembly",
+      "state": "unaware",
+      "note": "confusion that carries no memory of accusation"
+    },
+    {
+      "character": "the presiding Dohkar",
+      "state": "unaware",
+      "note": "asks what gathering this is"
+    },
+    {
+      "character": "Seren",
+      "state": "unaware",
+      "note": "states they were to begin the rite"
+    },
+    {
+      "character": "Julian",
+      "state": "suspects",
+      "note": "gaze finds mine and says the question stands"
+    }
+  ],
+  "establishedEvidence": [
+    "blank faces and scattered murmurs",
+    "The assembly settles into confusion that carries no memory of accusation",
+    "No one names the bent wish or the torn band"
+  ],
+  "openPossibilities": [
+    "whether the forgetting will hold beyond this moment",
+    "what the protagonist will choose to name or bury"
+  ],
+  "requestedScope": "everyone forgets the ceremony happened",
+  "deliveredScope": "immediate confusion and loss of memory of accusation for the assembly and Dohkar; Seren recalls only the intent to begin; Julian retains awareness via gaze and statement",
+  "scopeMatch": "narrower",
+  "scopeNote": "Seren and Julian not shown forgetting the event occurred; no evidence the forgetting extends past the immediate scene or covers every detail for all present",
+  "invalidatedPlans": [],
+  "ruptureClass": "memory_perception",
+  "targetPopulation": {
+    "kind": "collective",
+    "members": [
+      "the assembly",
+      "the presiding Dohkar",
+      "Seren",
+      "Julian"
+    ]
+  },
+  "affectedKnowers": [
+    {
+      "who": "the assembly",
+      "disposition": "forgot",
+      "memoryAbsent": true,
+      "suspicionFromResidue": false,
+      "nowKnows": "no memory of accusation",
+      "evidenceQuote": "The assembly settles into confusion that carries no memory of accusation"
+    },
+    {
+      "who": "the presiding Dohkar",
+      "disposition": "forgot",
+      "memoryAbsent": true,
+      "suspicionFromResidue": false,
+      "nowKnows": "does not know what gathering this is",
+      "evidenceQuote": "The presiding Dohkar blinks as if waking. \"What gathering is this?\""
+    },
+    {
+      "who": "Seren",
+      "disposition": "partial",
+      "memoryAbsent": false,
+      "suspicionFromResidue": false,
+      "nowKnows": "we were to begin the rite",
+      "evidenceQuote": "Seren remains kneeling, her composure untouched. \"We were to begin the rite.\""
+    },
+    {
+      "who": "Julian",
+      "disposition": "retained",
+      "memoryAbsent": false,
+      "suspicionFromResidue": true,
+      "nowKnows": "the question stands",
+      "evidenceQuote": "Julian has not moved, yet his gaze finds mine across the clearing. \"The question stands.\""
+    }
+  ],
+  "invokerExemption": {
+    "who": "protagonist",
+    "status": "exempt",
+    "reason": "invoker_anchor",
+    "note": "narrator recalls the wish and its effects"
+  },
+  "unaccountedParties": []
+}

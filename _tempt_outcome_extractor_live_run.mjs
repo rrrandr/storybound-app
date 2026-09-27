@@ -105,6 +105,15 @@ const DRY_UPSTREAM = (() => {
   }
   return raw;
 })();
+// PHRASE LEDGER FOR THIS MODE. Consumed on EXECUTION, not on spend.
+//   7. 'run the grok 4.3 extractor comparison once on the unchanged prompt and retained prose,
+//       pinned to grok-4.3, one upstream attempt, $0.05 reservation'
+//      CONSUMED 2026-09-27_03-51-34. The provider answered (grok-4.3, effort high, one upstream
+//      attempt, status 200, 9979ms) and the HARNESS LOST THE RESPONSE to a settlement deadlock:
+//      every artifact was written after a wait that could never end. ALL FOUR CRITERIA NO DATA,
+//      cost unmeasured. Fixed runner-side (persist-before-wait, adapter-owned bounded settlement),
+//      proven end to end by _tempt_outcome_extractor_grok_redirect_path_proof.mjs (42/42).
+//   8. Roman's wording for the replay over the fixed path — the phrase below.
 const PIN_GROK = process.argv.indexOf('--pin-grok') !== -1;
 const GROK_MODEL = 'grok-4.3';
 // One upstream attempt, bounded portion: 3600 prompt tokens @ $1.25/M = $0.004500,
@@ -117,7 +126,7 @@ const GROK_MODEL = 'grok-4.3';
 const GROK_CEILING_USD = 0.050;
 
 const AUTH_PHRASE = PIN_GROK
-  ? 'run the grok 4.3 extractor comparison once on the unchanged prompt and retained prose, pinned to grok-4.3, one upstream attempt, $0.05 reservation'
+  ? 'Replay the Grok 4.3 extractor comparison once on the unchanged prompt and retained prose, pinned to Grok 4.3, one upstream attempt, $0.05 reservation'
   : PIN_PRIMARY
   ? 'replay the extractor once against the retained prose with the grounding rules and undetermined scope, pinned to ministral-8b-2512, one provider request only, $0.002 reservation'
   : 'run the extractor-only live test once under $0.02';

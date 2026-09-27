@@ -1,0 +1,77 @@
+{
+  "ctx": {
+    "v": 1,
+    "architectureV": 2,
+    "storyId": "extractor-only-1790488980489",
+    "proposalId": "tfl_1",
+    "wishText": "everyone forgets the ceremony happened",
+    "bargainId": null,
+    "invokerName": "",
+    "roster": [
+      {
+        "name": "the assembly",
+        "sources": [
+          "declared_collective"
+        ]
+      },
+      {
+        "name": "the presiding Dohkar",
+        "sources": [
+          "beat_speaker"
+        ]
+      },
+      {
+        "name": "Seren",
+        "sources": [
+          "beat_speaker"
+        ]
+      },
+      {
+        "name": "Julian",
+        "sources": [
+          "beat_speaker"
+        ]
+      }
+    ],
+    "rosterNames": [
+      "the assembly",
+      "the presiding Dohkar",
+      "Seren",
+      "Julian"
+    ],
+    "sceneIdx": 1,
+    "sceneUid": "fixture-2026-09-24",
+    "prose": "The deck shifts against my hip.\nIf only everyone would forget the ceremony happened.\nA card edges forward, the image of reversal clear for one breath.\nThe air stills. Voices falter mid-word.\nI open my eyes to blank faces and scattered murmurs.\nThe presiding Dohkar blinks as if waking.\n\"What gathering is this?\"\nSeren remains kneeling, her composure untouched.\n\"We were to begin the rite.\"\nJulian has not moved, yet his gaze finds mine across the clearing.\n\"The question stands.\"\nNo one names the bent wish or the torn band.\nI feel the weight of his gaze even when he looks away.\nThe assembly settles into confusion that carries no memory of accusation.\nI could speak now and claim what I did.\nOr I could let the forgetting stand and keep my place.\nJulian waits without moving.\nThe choice is mine to name or bury.",
+    "requestedScope": "everyone forgets the ceremony happened",
+    "sealedAtScene": null,
+    "capturedAt": 1790488980489
+  },
+  "rosterDetail": [
+    {
+      "name": "the assembly",
+      "sources": [
+        "declared_collective"
+      ]
+    },
+    {
+      "name": "the presiding Dohkar",
+      "sources": [
+        "beat_speaker"
+      ]
+    },
+    {
+      "name": "Seren",
+      "sources": [
+        "beat_speaker"
+      ]
+    },
+    {
+      "name": "Julian",
+      "sources": [
+        "beat_speaker"
+      ]
+    }
+  ],
+  "proseLen": 813,
+  "frozen": true
+}

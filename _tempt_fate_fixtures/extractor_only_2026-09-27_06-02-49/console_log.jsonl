@@ -1,0 +1,78 @@
+{"t":"Loading the stylesheet 'https://p.typekit.net/p.css?s=1&k=bzl3zth&ht=tk&f=720.721.722.22354.22355.30184.30186.45912&a=23276850&app=typekit&e=css' violates the following Content Security Policy directive: \"style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://use.typekit.net\". Note that 'style-src-elem' was not explicitly set, so 'style-src' is used as a fallback. The policy is report-only, so the violation has been logged but no further action has been taken."}
+{"t":"Failed to load resource: net::ERR_FAILED"}
+{"t":"[ORCHESTRATION] Storybound AI Orchestration Client initialized"}
+{"t":"[BAKED] starter-scenes.js loaded — 3 package(s), 2 still PLACEHOLDER: starter_the_first_taste, starter_glass_house"}
+{"t":"[GN DEV] Dev tools IIFE executing..."}
+{"t":"%c[Card Designer] Ready — Ctrl+Shift+D to toggle | _resetCardDesigner() to clear mods color: #d4a844"}
+{"t":"Executing inline script violates the following Content Security Policy directive 'script-src 'self' https://cdn.jsdelivr.net https://js.stripe.com https://use.typekit.net'. Either the 'unsafe-inline' keyword, a hash ('sha256-rh22l1VHiHeOFds7l3h60nicRfgju77rXlx3IPUVD+M='), or a nonce ('nonce-...') is required to enable inline execution. The policy is report-only, so the violation has been logged but no further action has been taken."}
+{"t":"Failed to load resource: net::ERR_FAILED"}
+{"t":"Config load failed (using defaults) TypeError: Failed to fetch\n    at http://localhost:3000/app.js?v=20260927c-scope-narrowed:96:25\n    at http://localhost:3000/app.js?v=20260927c-scope-narrowed:328922:3"}
+{"t":"Supabase not configured. Couple mode disabled."}
+{"t":"[BETA] beta_session_started {\"ua\":\"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/\",\"storyId\":null,\"fateMode\":null,\"turnCount\":0,\"userLanguage\":\"en\",\"storyLanguage\":\"en\",\"generationLanguage\":\"en\",\"storyPath\":\"normal"}
+{"t":"[CONTENT REGISTER] FULL_WEB (full) — platform: web"}
+{"t":"%c[LENS] perception-lens editorial pass ready — author-prompt-free, rotation+de-prime guarded color:#7ec77e;font-weight:bold"}
+{"t":"%c[CGLENS] CG signature-lens pass ready — caption-only, ≤1/scene, shared anti-calc/CDS color:#7ec77e;font-weight:bold"}
+{"t":"%c[GROK:HONEST] harness ready color:#7ec77e;font-weight:bold"}
+{"t":"%c[STORYBOUND TELEMETRY] Console helpers ready:\n  copyConsole()              → copy all captured logs (last 5000)\n  copyConsole({filter:\"NIL\"})→ copy filtered subset\n  copyConsole({limit:50})    → copy last N lines\n  dumpNILState()             → print + copy current NIL/ERA/OAS state\n  clearConsoleBuffer()       → wipe the ring buffer color: #c9a24e; background: #1a1612; padding: 6px; font-family: monospace;"}
+{"t":"%c[GROK:HONEST] harness ready ✓ — run: await window._scene1GrokHonestTest({pairs:3}) color:#7ec77e;font-weight:bold"}
+{"t":"[GEMMA_TURN] Turn-based collaborative system initialized."}
+{"t":"[GEMMA_READ_ORB] Read Orb + Stay-in-Character system initialized."}
+{"t":"[NMD] Seeded Volume 1 with Entry 1."}
+{"t":"%c[FF-SPECULATIVE] phase-2 harness ready — await window._ffSpeculativeAudit({source:\"The Winds of Winter\", embody:\"Arya\", baseContinuity:\"book\"}) color:#7ec77e;font-weight:bold"}
+{"t":"%c[FF-CROSSOVER] harness ready — await window._ffCrossoverModeAudit() · await window._ffCrossoverAudit({character:\"Miles Morales\", world:\"Old Man Logan\"}) color:#7ec77e;font-weight:bold"}
+{"t":"%c[ARC-AUDIT] harness ready — await window._ffCanonArcAudit({source:\"Old Man Logan (2008)\", embody:\"Logan\"}) color:#7ec77e;font-weight:bold"}
+{"t":"%c[PACING-AUDIT] harness ready — await window._pacingArcAudit() on a loaded ORIGINAL story (or pass {aplot,tier}) color:#7ec77e;font-weight:bold"}
+{"t":"%c[ORIG-DIVERGE] harness ready — window._origDivergenceAudit() · kill: window.__origDivergence=false color:#7ec77e;font-weight:bold"}
+{"t":"%c[SPINE:BAKEOFF] harness ready — window._spineModelBakeoff({recommend:true}) color:#7ec77e;font-weight:bold"}
+{"t":"%c[SPINE:ADV] harness ready — window._spineAdvancementBakeoff({rows,recommend:true}) color:#7ec77e;font-weight:bold"}
+{"t":"[CG:HELPERS] ready=true"}
+{"t":"[Corridor] Initializing 9-row corridor system with DOM mount/unmount..."}
+{"t":"[Corridor] Header height measurement returned 0 — keeping default (80px), will retry on next trigger"}
+{"t":"[Corridor] Stored 2 elements for stage: authorship"}
+{"t":"[Corridor] Stored 3 elements for stage: identity"}
+{"t":"[Corridor] Stored 3 elements for stage: playermask"}
+{"t":"[Corridor] Stored 3 elements for stage: storybeau"}
+{"t":"[Corridor] Stored 1 elements for stage: world"}
+{"t":"[Corridor] Stored 1 elements for stage: tone"}
+{"t":"[Corridor] Stored 1 elements for stage: pressure"}
+{"t":"[Corridor] Stored 3 elements for stage: pov"}
+{"t":"[Corridor] Stored 2 elements for stage: length"}
+{"t":"[Corridor] Stored 2 elements for stage: dynamic"}
+{"t":"[Corridor] Stored 1 elements for stage: beginstory"}
+{"t":"The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio"}
+{"t":"[Sparkle] Started emitter: guidedFateSparkles (profile: guidedFate, continuous)"}
+{"t":"[Authorship] Choice reset"}
+{"t":"[Corridor] Authorship mount: Reset authorship choice for re-selection"}
+{"t":"[Corridor] DOM updated. Mounted row 0: authorship"}
+{"t":"[Ghost Steps] Initialized 8 ghost step placeholders"}
+{"t":"[DSP] Hidden — stage authorship"}
+{"t":"[Corridor Nav] Navigation affordances initialized"}
+{"t":"[Corridor] Initialization complete. Active row: 0"}
+{"t":"[Corridor] Row store initialized with 11 stages"}
+{"t":"[ENTITLEMENT] syncTierFromAccess: {access: free, tier: free, subscriptionTier: null, subscribed: false, keyholeMarked: false}"}
+{"t":"[GOOD_REASONS] Mechanic + library variant system initialized."}
+{"t":"[REINCARNATION] System initialized"}
+{"t":"[FATE_EVENT] System initialized. Active: false"}
+{"t":"[PROMO] Seasonal promotions initialized. Active: none"}
+{"t":"[DevHUD] Dev HUD ready — press ` to toggle"}
+{"t":"[BOOT] Complete — flushed 0 deferred task(s)"}
+{"t":"[PACT:FLIP] routeToLegalAcceptance called — isReaccept: false"}
+{"t":"[PACT:FLIP] showScreen(legalGate) — cards found: 3 | already flipped: false"}
+{"t":"[FATE] DOMContentLoaded — initializing"}
+{"t":"[STORY:SHAPE] Button label updated: Enter Your Story | canContinue: false"}
+{"t":"[ModeCards] Initialized 4 mode cards"}
+{"t":"Failed to load resource: net::ERR_FAILED"}
+{"t":"[SUMMON:ALIGN] figure: left=-110, bottom=-159, w=217, h=516 | bell: bottom=0, left=0, viewport=900"}
+{"t":"Failed to load resource: net::ERR_FAILED"}
+{"t":"[BETA] geo_gate_unknown_country {\"signal\":\"unknown\",\"decision\":\"unknown_allow\",\"reason\":\"geo_fetch_failed\",\"storyId\":null,\"fateMode\":null,\"turnCount\":0,\"userLanguage\":\"en\",\"storyLanguage\":\"en\",\"generationLanguage\":\"en\",\"storyPath\":\""}
+{"t":"[TIERED:temptOutcomeExtractor] attempt 1 tier=primary provider=mistral model=ministral-8b-2512"}
+{"t":"[PACT:FLIP] flip-tick @400ms — cards live: 3"}
+{"t":"[PACT:FLIP] flipped card 0 pact=tos | classList now: pact-card pact-card-tos flipped"}
+{"t":"[PACT:FLIP] flipped card 1 pact=privacy | classList now: pact-card pact-card-privacy flipped"}
+{"t":"[PACT:FLIP] flipped card 2 pact=adult | classList now: pact-card pact-card-adult flipped"}
+{"t":"[TEMPT:CRACKLE] segmented into 2 discrete crackles"}
+{"t":"Failed to load resource: the server responded with a status of 404 (Not Found)"}
+{"t":"Failed to load resource: net::ERR_FAILED"}
+{"t":"[TEMPT:CRACKLE] segmented into 2 discrete crackles"}
+{"t":"[TEMPT:CRACKLE] segmented into 2 discrete crackles"}
+{"t":"[CACHE] grok-4.3 tempt-extract prompt=2619 cached=192 (7%) cost=$0.0064"}
