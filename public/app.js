@@ -14904,8 +14904,11 @@ Introduce the name naturally within the first few paragraphs — do not announce
       var sceneText = _stripHtmlForClassifier(rawContent);
       // Fallback to state.scenes[idx].text if rawContent is empty (e.g. on
       // back-nav with cache miss).
-      if (!sceneText && state.scenes && state.scenes[idx] && state.scenes[idx].text) {
-          sceneText = _stripHtmlForClassifier(state.scenes[idx].text);
+      // A4: index ADDRESSES, uid IDENTIFIES. _sbSceneTextAt resolves the record at this page index and
+      // reads its current projection by uid, so a later archive splice cannot hand back another scene.
+      var _sbAmbText = (typeof _sbSceneTextAt === 'function') ? _sbSceneTextAt(idx) : '';
+      if (!sceneText && _sbAmbText) {
+          sceneText = _stripHtmlForClassifier(_sbAmbText);
       }
       if (!sceneText) return;
 
@@ -54636,8 +54639,10 @@ AESTHETIC: Polished editorial illustration. The object's compromised state reads
       var sceneText = '';
       try {
         if (Array.isArray(s.scenes) && s.scenes.length) {
-          var last = s.scenes[s.scenes.length - 1];
-          if (last && last.text) sceneText = _stripHtmlForLockAudit(last.text);
+          // A4: the latest PROSE scene, by uid. A bare scenes[length-1] could be an OAS archive entry,
+          // whose text is '' by construction, and the audit would silently see no scene at all.
+          var _sbLockText = (typeof _sbLatestProseText === 'function') ? _sbLatestProseText(s) : '';
+          if (_sbLockText) sceneText = _stripHtmlForLockAudit(_sbLockText);
         }
       } catch (_) {}
       if (!sceneText) { try { console.log('[LOCK-AUDIT] skipped — no scene text available'); } catch (_) {} return; }
@@ -100330,7 +100335,8 @@ function _buildAuthorFloorDirective(s) {
           // prior scene text from the RENDER layer (both paths — state.scenes is not the headless capture array).
           var _prevText = '';
           try { if (typeof StoryPagination !== 'undefined' && StoryPagination.getAllContent) _prevText = StoryPagination.getAllContent().replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim(); } catch (_) {}
-          if ((!_prevText || _prevText.length < 40) && Array.isArray(s.scenes) && s.scenes.length) _prevText = String((s.scenes[s.scenes.length - 1] || {}).text || '');
+          // A4: prior-scene tail comes from the latest PROSE scene's current projection, by uid.
+          if ((!_prevText || _prevText.length < 40) && typeof _sbLatestProseText === 'function') _prevText = String(_sbLatestProseText(s) || '');
           var _prevNum = (typeof _prevProp.sceneProposed === 'number') ? _prevProp.sceneProposed : ((s.turnCount || 1) - 1);
           if (_prevText && _prevText.length >= 40) {
             await _commitScene(_prevText.slice(-5000), _prevProp, _prevNum); // last ~scene worth for the delivery verifier
@@ -116390,6 +116396,15 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     var _liveRealSubscribed = state._realSubscribed;
     var _liveTier = state.tier;
     if(data.stateSnapshot) Object.assign(state, data.stateSnapshot);
+    // TRACK A: HISTORICAL-RECORD MIGRATION AT LOAD (Roman 2026-09-27). Runs immediately after the
+    // snapshot lands and before anything reads a scene, so old and new records coexist under one
+    // addressing scheme for the rest of the session. It assigns a provenance-marked uid and revision 0,
+    // FREEZES the existing persisted .text byte-for-byte (no re-render, no rebuild — a fresh projection
+    // over retained beats produces a different string, and nothing can establish which the reader saw),
+    // adds NO sidecar, and marks attributionAvailable:false so absence can never read as "no speakers
+    // present". Idempotent: a record that already has a uid and a projection is skipped, so repeated
+    // reloads and archive splices cannot duplicate or re-stamp anything.
+    try { if (typeof _sbMigrateHistoricalScenes === 'function') _sbMigrateHistoricalScenes(); } catch (_) {}
     // HYDRATION MARKER (Roman, authorized 2026-09-14) — set explicitly AFTER the snapshot lands,
     // never trusting whatever value Object.assign may have just copied in from the snapshot
     // itself. See the marker's other write site (_resetStoryState) and its read site
@@ -143500,7 +143515,8 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       state.continuationPurchaseRequired = !!(typeof _issuePricingApplies === 'function' && _issuePricingApplies());
       state.nextIssueNumber = (typeof _currentIssueIndex === 'function' ? _currentIssueIndex() : (state.issueIndexInRun || 1)) + 1;
       try {
-        var _last = (state.scenes && state.scenes.length) ? String(state.scenes[state.scenes.length - 1].text || '') : '';
+        // A4: latest PROSE scene via the revision-aware accessor, not scenes[length-1].text.
+        var _last = (typeof _sbLatestProseText === 'function') ? String(_sbLatestProseText(state) || '') : '';
         if (_last) state.cliffhangerSummary = _last.split('\n').filter(function (l) { return l.trim(); }).slice(-2).join(' ').slice(0, 180);
       } catch (_) {}
       try { if (typeof saveStorySnapshot === 'function') saveStorySnapshot(); } catch (_) {}
@@ -232506,7 +232522,12 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
     }
 
     if (sceneIndex > 0 && Array.isArray(state.scenes) && state.scenes.length > 0) {
-      var lastScene = state.scenes[state.scenes.length - 1];
+      // A4: the CG user prompt's prior-scene tail comes from the latest PROSE scene's current
+      // projection, resolved by uid. Before this it read scenes[length-1].text directly, which could be
+      // an OAS archive's empty text, and — until A3 — could be either side of the re-sync's overwrite
+      // depending on timing.
+      var _sbTailText = (typeof _sbLatestProseText === 'function') ? String(_sbLatestProseText(state) || '') : '';
+      var lastScene = _sbTailText ? { text: _sbTailText } : null;
       if (lastScene && lastScene.text) {
         // Expanded from 1200 → 2000 chars so the model sees the FULL end-of-
         // scene wrap, not just the last 200 words. With anti-rerun directive
@@ -259357,7 +259378,8 @@ Generate the synopsis now.` }
   }
   function _ffSceneText(idx) {
     try {
-      if (Array.isArray(state.scenes) && state.scenes[idx]) return String(state.scenes[idx].text || '');
+      // A4: index ADDRESSES, uid IDENTIFIES — see _sbSceneTextAt.
+      if (typeof _sbSceneTextAt === 'function') { var _sbFf = _sbSceneTextAt(idx); if (_sbFf) return _sbFf; }
     } catch (_) {}
     return null;
   }
@@ -323298,6 +323320,83 @@ CONSTRAINTS: No dialogue. No plot events. No character names. No storyturn advan
           speakerRaw: null, speakerIdentity: null, speakerAuthority: null, speakerResolved: false,
           speakerPlaceholder: false, labelSpan: null }] : [] } };
   }
+
+
+  // ── A4: REVISION-AWARE READ ACCESSORS ────────────────────────────────────────────────────────
+  // Every text-semantic reader goes through these. They resolve BY UID and return the CURRENT
+  // projection — never a rebuild from beats, never a plan, never array position as identity.
+  // Position may still be the caller's addressing (a page index it already holds); it is converted to
+  // the record's uid before the text is read, so a splice cannot silently hand back a different scene.
+  var _sbDriftWarned = {};
+  function _sbSceneProjectionByUid(uid, s) {
+    s = s || window.state || {};
+    var found = _sbSceneByUid(uid, s);
+    if (!found) return null;
+    var rec = found.record;
+    var p = rec.projection || null;
+    var text = (typeof rec.text === 'string') ? rec.text : '';
+    // DRIFT DETECTION AT READ TIME. If .text no longer hashes to the recorded projection hash, some
+    // writer bypassed the API — the exact failure `state.scenes` canonicalization exists to prevent.
+    // Warned once per uid so a legitimate historical record cannot spam the console.
+    if (p && p.hash && typeof _sbTextHash === 'function' && _sbTextHash(text) !== p.hash && !_sbDriftWarned[uid]) {
+      _sbDriftWarned[uid] = true;
+      try { console.warn('[SCENE-PROJECTION] DRIFT at ' + uid + ': .text does not match projection.hash — something wrote outside the API'); } catch (_) {}
+    }
+    return {
+      uid: String(rec.uid), index: found.index, text: text,
+      revision: (p && typeof p.revision === 'number') ? p.revision : null,
+      hash: (p && p.hash) || null, kind: (p && p.kind) || null,
+      provenance: (p && p.provenance) || null,
+      attributionAvailable: rec.attributionAvailable === true,
+      isArchive: !!rec.oasArchive
+    };
+  }
+  window._sbSceneProjectionByUid = _sbSceneProjectionByUid;
+
+  function _sbSceneTextByUid(uid, s) {
+    var p = _sbSceneProjectionByUid(uid, s);
+    return p ? p.text : '';
+  }
+  window._sbSceneTextByUid = _sbSceneTextByUid;
+
+  // Index-ADDRESSED but identity-RESOLVED: the caller's index selects the record, then the text is
+  // fetched by that record's uid. An archive entry is not prose, so a prose reader gets '' rather than
+  // an archive's empty-string masquerading as a scene with no words.
+  function _sbSceneTextAt(idx, s) {
+    s = s || window.state || {};
+    var list = Array.isArray(s.scenes) ? s.scenes : [];
+    var rec = (typeof idx === 'number' && idx >= 0) ? list[idx] : null;
+    if (!rec) return '';
+    if (rec.oasArchive) return '';
+    if (rec.uid) return _sbSceneTextByUid(rec.uid, s);
+    // A record with no uid predates migration and has not been through load-time migration yet. Its
+    // frozen text is still the canonical text FOR THAT RECORD, so it is returned as-is — never
+    // re-rendered, never rebuilt.
+    return (typeof rec.text === 'string') ? rec.text : '';
+  }
+  window._sbSceneTextAt = _sbSceneTextAt;
+
+  // "The latest scene" means the latest PROSE scene. Archive entries carry text:'' by construction, so
+  // a plain scenes[length-1] read could hand a prompt builder an empty string whenever an intimate
+  // archive happened to be the most recent entry.
+  function _sbLatestProseScene(s) {
+    s = s || window.state || {};
+    var list = Array.isArray(s.scenes) ? s.scenes : [];
+    for (var i = list.length - 1; i >= 0; i--) {
+      var r = list[i];
+      if (!r || r.oasArchive) continue;
+      if (typeof r.text === 'string' && r.text.trim()) return { record: r, index: i };
+    }
+    return null;
+  }
+  window._sbLatestProseScene = _sbLatestProseScene;
+
+  function _sbLatestProseText(s) {
+    var f = _sbLatestProseScene(s);
+    if (!f) return '';
+    return f.record.uid ? _sbSceneTextByUid(f.record.uid, s) : String(f.record.text || '');
+  }
+  window._sbLatestProseText = _sbLatestProseText;
 
   // ONE PLACE THAT TURNS A PROJECTION INTO DOM HTML (Roman 2026-09-27). The DOM renders FROM the
   // persisted projection, so formatStory is handed already-projected text with
