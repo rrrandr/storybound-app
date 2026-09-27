@@ -95,8 +95,31 @@ const note = (t) => console.log('    ' + t);
   const cur = await page.evaluate((c) => { const x = window._tfoBuildExtractorPrompt(c); return { sys: x.sys, usr: x.usr }; }, ctx);
   note('SYSTEM original=' + oSys.length + ' current=' + cur.sys.length + '  ' + (oSys === cur.sys ? 'IDENTICAL' : 'DIFFERENT'));
   note('USER   original=' + oUsr.length + ' current=' + cur.usr.length + '  ' + (oUsr === cur.usr ? 'IDENTICAL' : 'DIFFERENT'));
-  ok('the SYSTEM message is BYTE-IDENTICAL to the original request', oSys === cur.sys,
-    'original ' + oSys.length + ' vs current ' + cur.sys.length);
+  // THE SYSTEM PROMPT NOW DIFFERS ON PURPOSE. The citation field was moved INTO the affectedKnowers
+  // output shape (it had been demanded in prose only) and each enum was labelled beside its own field
+  // with transfer between them prohibited. So byte-identity is no longer the claim; the claim is that
+  // the difference is EXACTLY those two schema lines and nothing else. Shown explicitly, line by line.
+  const oLines = oSys.split('\n'), cLines = cur.sys.split('\n');
+  const removed = oLines.filter((l) => cLines.indexOf(l) === -1);
+  const added = cLines.filter((l) => oLines.indexOf(l) === -1);
+  console.log('    SYSTEM diff: ' + removed.length + ' line(s) replaced by ' + added.length
+    + '  (' + oSys.length + ' -> ' + cur.sys.length + ' chars)');
+  removed.forEach((l) => console.log('      - ' + l.trim().slice(0, 110)));
+  added.forEach((l) => console.log('      + ' + l.trim().slice(0, 110)));
+  ok('the SYSTEM prompt differs from the original by exactly TWO replaced lines',
+    removed.length === 2 && added.length === 2,
+    'removed ' + removed.length + ' added ' + added.length);
+  ok('...and those lines are the affectedKnowers and knowledgeStates schema lines, nothing else',
+    removed.every((l) => /"affectedKnowers"|"knowledgeStates"/.test(l))
+    && added.every((l) => /"affectedKnowers"|"knowledgeStates"/.test(l)),
+    JSON.stringify(removed.map((l) => l.trim().slice(0, 40))));
+  ok('...the citation field is what was added to the knowers line',
+    added.some((l) => /"affectedKnowers"/.test(l) && /"evidenceQuote"/.test(l)));
+  ok('...and the enum clarification is what was added to the states line',
+    added.some((l) => /"knowledgeStates"/.test(l) && /STATE describes what this party KNOWS/.test(l)));
+  ok('NOTHING ELSE in the system prompt changed — every other original line survives verbatim',
+    oLines.filter((l) => !/"affectedKnowers"|"knowledgeStates"/.test(l))
+      .every((l) => cLines.indexOf(l) !== -1));
   ok('the USER message is BYTE-IDENTICAL to the original request', oUsr === cur.usr,
     'original ' + oUsr.length + ' vs current ' + cur.usr.length);
   ok('model and temperature are unchanged from the original request',
@@ -104,10 +127,12 @@ const note = (t) => console.log('    ' + t);
     JSON.stringify({ model: origReq.model, temperature: origReq.temperature }));
   ok('the original request carried max_tokens 1400 — the value under test',
     origReq.max_tokens === 1400, String(origReq.max_tokens));
-  ok('MAX_TOKENS IS THE ONLY INTENDED DIFFERENCE, and every other field matches',
-    oSys === cur.sys && oUsr === cur.usr && origReq.model === PIN_MODEL
-    && origReq.temperature === 0.1 && origReq.max_tokens === 1400,
-    'messages identical, model/temperature identical, 1400 -> 3200 is the single change');
+  ok('THE CONTROLLED REPLAY HOLDS EVERYTHING ELSE FIXED: same prose, same model, same temperature',
+    oUsr === cur.usr && origReq.model === PIN_MODEL && origReq.temperature === 0.1,
+    JSON.stringify({ userIdentical: oUsr === cur.usr, model: origReq.model, temperature: origReq.temperature }));
+  ok('...and the two intended changes are the schema lines and max_tokens 1400 -> 3200',
+    removed.length === 2 && added.length === 2 && origReq.max_tokens === 1400,
+    'two schema lines replaced; output limit raised');
 
   // ── C. ONLY ONE PROVIDER REQUEST MAY LEAVE ────────────────────────────────────────────────
   const routeLog = [];

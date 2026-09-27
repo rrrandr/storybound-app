@@ -153,6 +153,38 @@ const WISH = 'everyone forgets the ceremony happened';
   const missingFromExtractor = required.filter((n) => extractorPrompt.indexOf(n) === -1);
   ok('the EXTRACTOR prompt represents every field the validator can require — the contract moved layer, it did not weaken',
     missingFromExtractor.length === 0, 'missing from the extractor prompt: ' + JSON.stringify(missingFromExtractor));
+  // ── THE CITATION FIELD AND THE TWO FIELD-SPECIFIC ENUMS, INSPECTED IN THE REAL REQUEST ──────
+  // The replay's evidence: citation instructions and the output SCHEMA were inconsistent —
+  // evidenceQuote was demanded in a prose bullet but absent from the affectedKnowers shape, and the
+  // model returned exactly the five schema fields, zero missing and zero extra. Extending THIS control
+  // rather than adding another schema checker: the same `required` list and the same real prompt.
+  const knowersLine = (extractorPrompt.match(/"affectedKnowers":[^\n]*/) || [''])[0];
+  const statesLine = (extractorPrompt.match(/"knowledgeStates":[^\n]*/) || [''])[0];
+  ok('evidenceQuote is IN THE affectedKnowers OUTPUT SHAPE, not only in prose',
+    /"evidenceQuote"/.test(knowersLine), knowersLine.slice(0, 200));
+  ok('...carrying its conditional requirement (every entry except a disposition of "absent")',
+    /REQUIRED for every entry EXCEPT one whose disposition is/.test(knowersLine));
+  ok('...and its verbatim constraints (10-120 chars, copied exactly, checked against the text)',
+    /10-120 characters copied EXACTLY/.test(knowersLine) && /checked verbatim/.test(knowersLine));
+  ok('...and it directs an uncitable party to unaccountedParties rather than an invented quote',
+    /do not invent one: put them in unaccountedParties/.test(knowersLine));
+  // Each enum beside its own field, with transfer between them prohibited. Overlap is preserved:
+  // "suspects" is legitimately available to both, and that is not a contract defect.
+  ok('knowledgeStates.state carries its OWN enum and says what it describes',
+    /"knows \| remembers \| believes \| suspects \| unaware"/.test(statesLine)
+    && /STATE describes what this party KNOWS/.test(statesLine), statesLine.slice(0, 160));
+  ok('...and prohibits using a disposition value in it, by name',
+    /Do NOT use a value from affectedKnowers\.disposition here/.test(statesLine)
+    && /are DISPOSITIONS, not states/.test(statesLine));
+  ok('affectedKnowers.disposition carries its OWN enum and says what it describes',
+    /"forgot \| retained \| partial \| suspects \| resisted \| exempt \| absent"/.test(knowersLine)
+    && /DISPOSITION describes what the RUPTURE DID TO this party/.test(knowersLine));
+  ok('...and states the two enums are never interchangeable',
+    /a value from one is NEVER valid in the other/.test(knowersLine));
+  ok('BOTH ENUMS ARE PRESERVED INTACT — overlap on "suspects" is kept, not removed',
+    /suspects/.test(statesLine) && /suspects/.test(knowersLine)
+    && /does not make the lists interchangeable/.test(statesLine));
+
   ok('the preflight invariant is retired for the author path (it guarded a schema the author no longer receives)',
     !consoleLines.some((t) => /PREFLIGHT ABORT/.test(t)), consoleLines.filter((t) => /preflight/i.test(t)).slice(-2).join(' | '));
 

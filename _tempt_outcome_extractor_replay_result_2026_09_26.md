@@ -70,3 +70,73 @@ belongs in the schema, and the two enums need disambiguating — but neither is 
 
 Artifacts: `_tempt_fate_fixtures/extractor_only_2026-09-26_23-42-18/` (response, both prompts, context,
 gate log, report). The original `daefe5aa` response is untouched.
+
+---
+
+# BOUNDED PROMPT CORRECTION (dry) AND SECOND-REPLAY PROPOSAL
+
+## Evidence described accurately
+
+- **Citation instructions and the output schema were INCONSISTENT.** `evidenceQuote` was demanded in a
+  prose bullet and absent from the `affectedKnowers` shape. It was shown — in prose — not withheld
+  entirely; my "never actually shown" overstated it.
+- **Enum confusion occurred; its CAUSE is not established.** Both enums were supplied correctly, each
+  beside its own field. The model put a valid `disposition` value (`retained`) into `state`. Sharing
+  `suspects` does not make the lists contradictory, and I withdraw the suggestion that overlap caused
+  it. What is observed is the misplacement, not its reason.
+
+## The two changes, shown explicitly
+
+Exactly two schema lines replaced; the system prompt grew 7,535 → 8,550 chars. Everything else —
+including the entire user message carrying the retained prose — is byte-identical.
+
+**1. `affectedKnowers` — the citation field is now IN the output shape**, carrying the requirement it
+already had: required for every entry except one whose disposition is `"absent"`; 10–120 characters
+copied exactly and checked verbatim; and an uncitable party goes to `unaccountedParties` rather than
+receiving an invented quote. The line also now states that **disposition describes what the rupture
+DID to the party**, that it is a different field from `knowledgeStates.state`, and that a value from
+one is never valid in the other.
+
+**2. `knowledgeStates.state` — labelled beside its own field**: it describes what the party KNOWS, its
+only permitted values are the five on that line, and using an `affectedKnowers.disposition` value there
+is prohibited by name. **Both enums are preserved intact, overlap included** — `suspects` remains
+available to both, which the line says explicitly is not a licence to interchange them.
+
+**The validator is unchanged.**
+
+## Dry results
+
+| Control | Result |
+|---|---|
+| `_tempt_fate_outcome_contract_control` (extended, not duplicated) | **62/62** |
+| `_tempt_outcome_extractor_replay_dry_proof` | **28/28** |
+| `_tempt_outcome_extractor_runner_dry_proof` (rejection tests retained) | **51/51** |
+| `_tempt_fate_outcome_integration_control` | **73/73** |
+
+The contract control now inspects the **real extractor request** for the citation field with its
+conditional and verbatim constraints, and for both field-specific enums with the no-transfer rule — via
+the same `required` list and the same prompt builder it already used. No second schema checker was
+introduced. Rejection tests for missing quotes, fabricated quotes and invalid states are retained and
+still pass.
+
+## Second-replay proposal
+
+Same retained prose, same model, same temperature, same 3200 limit; only the two schema lines differ,
+and that difference is asserted line by line. Configuration otherwise unchanged: pinned to
+`ministral-8b-2512` on `/api/mistral-proxy`, **one provider request**, no cascade, no retry.
+
+- **Single-call reservation $0.001020**, replay ceiling **$0.002**
+- Transport failure → **NO DATA**; malformed or uncited → **FAILED SAMPLE**
+- Report parsing · citation validity · schema validity · semantic accuracy **separately**
+
+**Proposed phrase** (the previous replay phrase is spent):
+```
+replay the extractor once more against the retained prose with the corrected schema, pinned to ministral-8b-2512, one provider request only, $0.002 reservation
+```
+
+**What it can and cannot settle.** It can show whether this model supplies citations and a valid `state`
+when the schema asks for them in the shape. It cannot establish that semantic accuracy is right even if
+it does — the citations then make that a checkable human read, which is the point. One sample, one prose
+fixture, one model.
+
+**No paid call made. Nothing authorized by this section.**
