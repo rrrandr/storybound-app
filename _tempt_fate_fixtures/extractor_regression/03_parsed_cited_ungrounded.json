@@ -1,0 +1,133 @@
+{
+  "delivered": true,
+  "changed": [
+    {
+      "subject": "the assembly",
+      "whatChanged": "their collective memory of the ceremony is erased, leaving only confusion and no recollection of its purpose or the Dohkar’s role"
+    },
+    {
+      "subject": "the presiding Dohkar",
+      "whatChanged": "their memory of the ceremony is erased, leaving them unaware of its occurrence and questioning the gathering’s purpose"
+    },
+    {
+      "subject": "Seren",
+      "whatChanged": "their memory of the ceremony is retained, despite the rupture’s intent"
+    },
+    {
+      "subject": "Julian",
+      "whatChanged": "their memory of the ceremony is retained, though they do not explicitly acknowledge it"
+    }
+  ],
+  "durability": [
+    {
+      "aspect": "assembly’s memory loss",
+      "status": "persists",
+      "note": "No indication of a rupture window or reversal; the scene establishes the forgetting as permanent for the assembly"
+    },
+    {
+      "aspect": "Dohkar’s memory loss",
+      "status": "persists",
+      "note": "No indication of a rupture window or reversal; the Dohkar’s confusion implies permanent forgetting"
+    },
+    {
+      "aspect": "Seren’s retained memory",
+      "status": "persists",
+      "note": "No indication of a reversal or temporary retention; Seren’s composure and statement imply lasting knowledge"
+    },
+    {
+      "aspect": "Julian’s retained memory",
+      "status": "persists",
+      "note": "No indication of a reversal or temporary retention; Julian’s gaze and silence imply lasting knowledge"
+    }
+  ],
+  "knowledgeStates": [
+    {
+      "character": "the assembly",
+      "state": "unaware",
+      "note": "They are confused and lack memory of the ceremony, as shown by their scattered murmurs and Dohkar’s question"
+    },
+    {
+      "character": "the presiding Dohkar",
+      "state": "unaware",
+      "note": "They ask, *“What gathering is this?”*, indicating no memory of the ceremony"
+    },
+    {
+      "character": "Seren",
+      "state": "remembers",
+      "note": "They state, *“We were to begin the rite.”*, implying they recall the ceremony’s intent"
+    },
+    {
+      "character": "Julian",
+      "state": "remembers",
+      "note": "His gaze finds the protagonist, and he waits without moving, suggesting he retains knowledge of the event"
+    }
+  ],
+  "establishedEvidence": [
+    "The presiding Dohkar blinks as if waking. *What gathering is this?*",
+    "Seren remains kneeling, her composure untouched. *We were to begin the rite.*",
+    "Julian has not moved, yet his gaze finds mine across the clearing.",
+    "The assembly settles into confusion that carries no memory of accusation."
+  ],
+  "openPossibilities": [
+    "Whether the protagonist’s own memory of the ceremony is altered (though the scene does not address this directly)",
+    "If the rupture’s effects extend to those outside the immediate scene (e.g., witnesses or future participants)",
+    "Whether Seren’s retention of memory is intentional or a consequence of the rupture’s failure to target her"
+  ],
+  "requestedScope": "everyone forgets the ceremony happened",
+  "deliveredScope": "the assembly and the presiding Dohkar forget the ceremony happened; Seren and Julian retain memory of it",
+  "scopeMatch": "narrower",
+  "scopeNote": "The scene only erases the memory of the assembly and the Dohkar, while Seren and Julian explicitly retain knowledge of the ceremony. The wish’s intent to affect *everyone* was not fully delivered.",
+  "invalidatedPlans": [
+    "Any future plans or obligations tied to the assembly’s recollection of the ceremony (e.g., follow-up rituals, accusations, or consequences) are now impossible to justify or act upon",
+    "The Dohkar’s authority to recognize or act on the ceremony’s occurrence is nullified"
+  ],
+  "ruptureClass": "memory_perception",
+  "targetPopulation": {
+    "kind": "named_subset",
+    "members": [
+      "the assembly",
+      "the presiding Dohkar"
+    ]
+  },
+  "affectedKnowers": [
+    {
+      "who": "the assembly",
+      "disposition": "forgot",
+      "memoryAbsent": true,
+      "suspicionFromResidue": false,
+      "nowKnows": "nothing about the ceremony’s purpose or the Dohkar’s role",
+      "evidenceQuote": "The assembly settles into confusion that carries no memory of accusation."
+    },
+    {
+      "who": "the presiding Dohkar",
+      "disposition": "forgot",
+      "memoryAbsent": true,
+      "suspicionFromResidue": false,
+      "nowKnows": "nothing about the ceremony’s occurrence",
+      "evidenceQuote": "What gathering is this?"
+    },
+    {
+      "who": "Seren",
+      "disposition": "retained",
+      "memoryAbsent": false,
+      "suspicionFromResidue": false,
+      "nowKnows": "the ceremony was intended to begin",
+      "evidenceQuote": "We were to begin the rite."
+    },
+    {
+      "who": "Julian",
+      "disposition": "retained",
+      "memoryAbsent": false,
+      "suspicionFromResidue": false,
+      "nowKnows": "the ceremony occurred (implied by his gaze and silence)",
+      "evidenceQuote": "Julian has not moved, yet his gaze finds mine across the clearing."
+    }
+  ],
+  "invokerExemption": {
+    "who": "the protagonist",
+    "status": "exempt",
+    "reason": "invoker_anchor",
+    "note": "The protagonist’s own memory state is not addressed in the scene."
+  },
+  "unaccountedParties": []
+}

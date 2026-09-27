@@ -41,8 +41,12 @@ const PIN_PRIMARY = process.argv.indexOf('--pin-primary') !== -1;
 const PIN_MODEL = 'ministral-8b-2512';
 const PIN_ENDPOINT = '/api/mistral-proxy';
 const REPLAY_CEILING_USD = 0.002;    // one tier at 3600 in + 3200 out, $0.15/M both ways = $0.00102
+// LEDGER: the first pinned phrase ('replay the extractor once against the retained prose, pinned to
+// ministral-8b-2512, one provider request only, $0.002 reservation') is CONSUMED — it released the
+// 2026-09-26_23-42-18 replay, which dispatched and cost $0.001020 measured. This is Roman's wording for
+// the corrected-schema replay.
 const AUTH_PHRASE = PIN_PRIMARY
-  ? 'replay the extractor once against the retained prose, pinned to ministral-8b-2512, one provider request only, $0.002 reservation'
+  ? 'Replay the extractor once more against the retained prose with the corrected schema, pinned to ministral-8b-2512, one provider request only, $0.002 reservation'
   : 'run the extractor-only live test once under $0.02';
 
 const argv = process.argv.slice(2);

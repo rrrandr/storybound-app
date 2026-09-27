@@ -167,7 +167,28 @@ const WISH = 'everyone forgets the ceremony happened';
   ok('...and its verbatim constraints (10-120 chars, copied exactly, checked against the text)',
     /10-120 characters copied EXACTLY/.test(knowersLine) && /checked verbatim/.test(knowersLine));
   ok('...and it directs an uncitable party to unaccountedParties rather than an invented quote',
-    /do not invent one: put them in unaccountedParties/.test(knowersLine));
+    /put them in unaccountedParties/.test(knowersLine));
+  // ── SEMANTIC GROUNDING (2026-09-27) ────────────────────────────────────────────────────────
+  // The corrected-schema replay produced a VALID, CITED record the validator would accept while the
+  // quotes did not support the claims: Julian marked `retained` on "his gaze finds mine", Seren on a
+  // line about an INTENDED rite. Verbatim-quote validation does not test semantic support, so these
+  // assertions check only that the PROMPT now demands it — not that the model complies.
+  ok('the quote must establish the SPECIFIC claim, not merely mention the party',
+    /MUST ESTABLISH THE SPECIFIC CLAIM YOU ARE MAKING, not merely mention the party/.test(knowersLine));
+  ok('...and inferring memory from gaze, silence, stillness, composure or presence is PROHIBITED',
+    /Memory may NOT be inferred from gaze, silence, stillness, composure or presence/.test(knowersLine));
+  ok('...and an INTENDED or PLANNED event may not stand in for recollection of one that occurred',
+    /has not thereby recalled the rite that occurred/.test(knowersLine));
+  ok('...and an incomplete roster is stated to be HONEST rather than unfinished',
+    /AN INCOMPLETE ROSTER IS HONEST; AN UNSUPPORTED ONE IS NOT/.test(knowersLine)
+    && /leaving them there is the CORRECT answer/.test(knowersLine));
+
+  // THE LIMITATION, ASSERTED SO IT CANNOT BE FORGOTTEN: scopeMatch cannot express "not established".
+  const scopeLine = (extractorPrompt.match(/"scopeMatch":[^\n]*/) || [''])[0];
+  ok('scopeMatch offers only affirmative delivery claims — full | narrower | broader',
+    /"full \| narrower \| broader"/.test(scopeLine), scopeLine.slice(0, 120));
+  ok('...so there is NO value meaning "the prose does not establish full delivery" — a real limitation',
+    !/undetermined|unestablished|not established|indeterminate/i.test(scopeLine), scopeLine.slice(0, 200));
   // Each enum beside its own field, with transfer between them prohibited. Overlap is preserved:
   // "suspects" is legitimately available to both, and that is not a contract defect.
   ok('knowledgeStates.state carries its OWN enum and says what it describes',

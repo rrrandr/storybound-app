@@ -140,3 +140,81 @@ it does — the citations then make that a checkable human read, which is the po
 fixture, one model.
 
 **No paid call made. Nothing authorized by this section.**
+
+---
+
+# CORRECTED-SCHEMA REPLAY (2026-09-27_01-35-36) — RESULT AND THE REMAINING DEFECT
+
+**One dispatch.** `ministral-8b-2512`, HTTP 200, 20.3s, `prompt_tokens 2250`, `completion_tokens 1318`,
+**$0.001020 of $0.002**. `state unchanged: true`.
+
+| Dimension | Result |
+|---|---|
+| Parsing | **PASS** (via fence recovery — still markdown-fenced despite "No markdown") |
+| Citation validity | **PASS** — all four quotes present and verbatim |
+| Schema validity | **PASS** — every `knowledgeStates.state` from its own enum |
+| Semantic grounding | **FAIL** |
+
+**No production commitment occurred in this replay — but this output WOULD pass the current validator.**
+Both gates accept it: `_validateTemptFateOutcomeReport` returns no errors, and the separate
+`_tfoVerifyCitations` pass returns none either.
+
+## The remaining defect: unsupported certainty
+
+- **Julian** — `retained`, `memoryAbsent: false`, citing *"Julian has not moved, yet his gaze finds mine
+  across the clearing."* A gaze establishes **neither retained memory nor suspicion**. With
+  `suspicionFromResidue: false`, the record asserts memory on evidence supporting neither reading.
+- **Seren** — `retained`, citing *"We were to begin the rite."* An **intended** rite. Speaking of what
+  was about to happen is not recollection of an event that occurred.
+- **the assembly** — quote supports forgetting *the accusation*; the claim reaches further.
+
+**Therefore `scopeMatch: narrower` is NOT established.** It rests on exceptions the prose does not
+support. The evidence supports an *incomplete assessment* of the wish's scope, not a narrower delivery.
+
+**Verbatim-quote validation proves a quote EXISTS in the prose. It does not prove the quote SUPPORTS the
+claim.** I will not present the former as the latter.
+
+## Bounded prompt correction applied (dry)
+
+In the `affectedKnowers` schema line, so the model sees it in the shape:
+- the quote **must establish the specific claim**, not merely mention the party;
+- **memory may NOT be inferred from gaze, silence, stillness, composure or presence**;
+- an **intended or planned** event may not stand in for recollection of one that **occurred**;
+- if the prose does not establish a party's disposition, **use `unaccountedParties`** — and the line
+  states that **an incomplete roster is honest; an unsupported one is not**, so leaving a party there is
+  the correct answer rather than a failure to finish.
+
+Validator unchanged. `_tempt_fate_outcome_contract_control` **68/68** asserts each of these in the real
+extractor request.
+
+## THE LIMITATION, REPORTED BEFORE ANY CHANGE TO IT
+
+**The contract cannot express "the prose does not establish full delivery."**
+
+`scopeMatch` permits exactly `full | narrower | broader` — all three are **affirmative claims about what
+was delivered**. There is no value meaning *undetermined*. So an extractor that correctly routes
+unestablished parties to `unaccountedParties` must still assert one of the three, and "narrower" then
+carries a confidence the evidence does not support — the very defect above.
+
+Partial mitigation, and its limit: `scopeNote` is free text and required whenever `scopeMatch !== 'full'`,
+so it *can* describe the uncertainty — but any consumer reading the **structured** `scopeMatch` field
+alone sees an affirmative claim. The distinction survives only in prose a machine does not read.
+
+**Closing this needs a contract change** (a fourth value, or an explicit `scopeEstablished` boolean) **plus
+a matching validator change** — both beyond this bounded correction, and neither attempted. Asserted in
+the contract control so the gap cannot be mistaken for closed.
+
+## Regression fixtures
+
+`_tempt_fate_fixtures/extractor_regression/` — the three retained live responses, with
+`_tempt_outcome_extractor_regression_control.mjs` (**12/12**) running them through the real gates:
+
+| # | Shape | Outcome |
+|---|---|---|
+| 01 | truncated at 1400, fenced, uncited | unparseable → never reaches the validator |
+| 02 | parses, uncited, `state='retained'` | refused by **both** passes |
+| 03 | parses, cited verbatim, valid states | **ACCEPTED** — and semantically ungrounded |
+
+Fixture 03 is the one that matters: it pins the open gap rather than a fixed behaviour.
+
+**No paid replay, no new model, no second auditor, no materialization scene.**
