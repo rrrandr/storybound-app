@@ -9,6 +9,10 @@ the planner from assembling a rupture out of ordinary parts, or inventing canon 
 **The rule in one line: the planner SELECTS; it never AUTHORS.** Everything durable is an authored id. The
 planner's entire output is a set of references.
 
+**Revision 2 (2026-09-27).** Three changes from Roman. The absent-party boundary was too blunt and is replaced
+(§3); selection precedence is made explicit so "highest priority" cannot override what the player actually wrote
+(§4); and the fallback's author-facing consequence is stated (§5).
+
 ---
 
 ## 1. Fields that must come from closed authored vocabularies
@@ -48,27 +52,68 @@ id.
 
 ## 3. A composite ordinary consequence versus a rupture
 
-Not a count. Four **structural** tests, all of which an ordinary composite must pass:
+Not a count. Three **structural** tests, all of which an ordinary composite must pass:
 
 | test | ordinary composite | rupture |
 |---|---|---|
-| **who is changed** | only parties who **participated** — the actor, and those who responded in-scene | parties who did nothing, including absent ones |
-| **what is changed** | facts *about* those parties and the present situation | the truth of a declared proposition **for a population** |
+| **what may be asserted about non-participants** | local, observable facts only — see the boundary below | their private state and knowledge directly |
+| **what is changed** | facts about the participants and the present situation | the truth of a declared proposition **for a population** |
 | **where it is authored** | the story's delta/composite tables | a **card's** permutation set |
 | **scheduled plans** | may not invalidate a plan row, except an adjacent one a delta explicitly declares | invalidates plan rows by design |
 
-The first test is the sharpest and the easiest to check: **an ordinary consequence may not change a fact about a
-party who did not take part in the exchange.** A boundary stated, an obligation accepted and a stance hardening
-are one move because they all concern the two people in it. "And also the assembly forgets" is not a bigger
-ordinary consequence; it is a rupture, and it is card-gated.
+### The boundary, stated narrowly
 
-`magnitude: 'rupture'` is therefore unreachable from this policy — not discouraged, unreachable.
+An earlier draft said *"an ordinary consequence may not change a fact about a party who did not take part in the
+exchange."* **Withdrawn — too blunt.** It would have rejected ordinary indirect action that any story needs:
+leaving Julian a letter, taking an object he owns, locking a door he will find locked, setting up a later
+confrontation. Those are real moves with real consequences, and the player is entitled to make them.
+
+The real prohibition is narrower and is about **interiority and agency**, not about reach:
+
+> **An ordinary consequence may not assert a non-participant's private state, knowledge, intention, consent,
+> relationship stance, or later action unless a declared causal mechanism establishes it. It may establish a
+> local, observable fact — an object moved, a letter left, a door locked, a message sent — while leaving any
+> absent person's response in `open[]`.**
+
+So: *the letter is on his desk* is a permitted delta. *He will read it*, *he now knows*, *he softens toward her*
+are not — unless a **declared causal mechanism** says so.
+
+**A declared causal mechanism is itself authored**, with its own trigger and effect: `message_delivered`
+(a message reaching a party may then change that party's knowledge of a declared proposition),
+`witness_present` (a party staged as witnessing an act may then hold knowledge of it), and so on. The mechanism
+is the authored bridge between a local fact and someone's interior state. Without one, the bridge does not
+exist, and the absent person's response belongs in `open[]` where the next planner can see it standing.
+
+That preserves ordinary indirect action while keeping a bounded delta list from manufacturing off-screen
+mind-reading — which is the same error the extractor made from prose, arriving by a different route.
+
+`magnitude: 'rupture'` remains unreachable from this policy — not discouraged, unreachable.
 
 ## 4. Deterministic selection, and the three approved draws
 
 **Ordinary consequence selection is deterministic.** Given the same canonicalized turn, class, slot, roster and
-state, it selects the same consequence: the highest-priority declared reading whose constraints are satisfied,
-with priority authored alongside the reading. No hidden randomness, no scoring, no model.
+state, it selects the same consequence. No hidden randomness, no scoring, no model.
+
+### Selection precedence — specificity before priority
+
+"Highest authored priority" alone is wrong: a generic high-priority reading would quietly override what the
+player actually wrote. The order is:
+
+1. **Constraint satisfaction.** A reading is eligible only if it satisfies **every** anchored wording
+   constraint. An anchor the player supplied is never discarded to make a reading fit.
+2. **Anchor specificity.** Among eligible readings, **greater declared anchor specificity wins** — a reading
+   anchored on a named entity *and* a declared proposition beats one anchored on the proposition alone, which
+   beats a class/slot-generic reading. Specificity is a declared property of the reading, counted from its
+   declared anchors, not inferred from its text.
+3. **Authored priority** breaks a tie among readings of **equal** specificity.
+4. **Still tied?** That is an **authoring error**, raised at authoring/load time, or it takes the §5 fallback.
+   It is **never** resolved by an undisclosed draw. The only seeded draws in the system are the three below, and
+   none of them is a tie-break for ordinary readings.
+
+The practical effect: a player who writes *"I leave the letter on Julian's desk"* gets the reading anchored on
+Julian and on the letter, even if the story authored a higher-priority generic `leave_object` reading. Precision
+is rewarded here for the same reason it is rewarded under Tempt Fate — the wording is the player's only
+instrument, so it must outrank the table's convenience.
 
 **Exactly three seeded draws exist in the whole system**, all previously approved, none of them here:
 
@@ -93,7 +138,24 @@ The honest case, and it will be common early. The turn is **not** dropped and no
   it had no declared means to close;
 - `selection: { outcome: 'no_declared_consequence_fit', reason, classSlotKey }`.
 
-**The fallback is a coverage signal, and that is its second job.** Every `no_declared_consequence_fit` names the
+### What the author may render on a fallback
+
+The fallback is not a dead turn, and the author is not told to write around it. **It may render the attempted or
+enacted local move and its immediate observable result** — the hand on the table, the letter set down, the words
+said and the pause after them. That is what the record establishes, and it is enough to write a scene from.
+
+**It must not:**
+
+- imply a durable delta the record does not contain — no "and something between them shifted", which is
+  `relationship_state` smuggled in as atmosphere;
+- **close an item in `open[]`** — a question the record left standing must still be standing when the scene ends;
+- assert a non-participant's private state, per §3, since the fallback has no declared causal mechanism either.
+
+Stated positively: a fallback scene may be *complete and satisfying* while establishing nothing durable. Most
+turns in most stories are exactly that, and a fallback is only unusual in that the story had no authored reading
+for it yet.
+
+**The fallback is also a coverage signal, and that is its second job.** Every `no_declared_consequence_fit` names the
 class/slot combination that had no reading, so the authoring gap is a queryable list rather than a feeling that
 the story is going flat. Early on that list *is* the authoring backlog.
 
@@ -108,18 +170,25 @@ Dry controls, zero provider calls, in this repo's existing style. Each is stated
 | 3 | **proposition closure** | a `knowledge_state` delta naming an id absent from the declared ledger is rejected; a declared id is accepted, so the proof is not vacuous |
 | 4 | **delta closure** | a `deltaId` outside the story's delta table is rejected; a composite whose member list the planner altered is rejected as a whole |
 | 5 | **bound** | more deltas than the class cap is rejected, and the cap is read from the class, not hard-coded in the proof |
-| 6 | **no second-order consequence** | a delta may not take another delta in the same record as its input, and may not target a party absent from the exchange — the two shapes a mini-rupture would need |
+| 6 | **no off-screen interiority** | a delta asserting a non-participant's private state, knowledge, intention, consent, stance or later action **without** a declared causal mechanism is rejected — and the **same** delta **with** one is accepted, so the proof is not vacuous. Its pair: a local observable fact touching an absent party's property or space (a letter left on Julian's desk) **is** permitted, and that party's response lands in `open[]` |
+| 6b | **no chaining** | a delta may not take another delta in the same record as its input — the other shape a planner-assembled rupture would need |
 | 7 | **rupture unreachable** | no input to the ordinary policy yields `magnitude: 'rupture'`; the attempt is refused, not clamped |
 | 8 | **no free text** | source-level: the planner's output shape contains no free-text field, and every displayed label resolves from an authored table |
 | 9 | **determinism** | the same inputs selected twice give byte-identical selections, and **no draw occurred** — asserted by instrumenting the seeded-draw entry points and showing zero calls |
+| 9b | **specificity beats priority** | with a generic reading authored at higher priority than a precisely anchored one, the **anchored** reading is selected; flipping the priorities does not change the outcome, which is what proves specificity is ordered *before* priority rather than merely present |
+| 9c | **equal-specificity ties** | priority breaks a tie only among readings of equal specificity, and a remaining tie raises an **authoring error** or takes the fallback — never a draw |
 | 10 | **the three draws, and only three** | source-level: seeded draws exist at exactly the three approved sites; a fourth call site fails the proof |
 | 11 | **fallback** | with no matching reading, a record exists, `durableDeltas` is empty, prior `open[]` entries survive, and `no_declared_consequence_fit` carries its class/slot key |
 | 12 | **fallback does not invent** | the fallback path is driven to fire and asserted to add no delta, close no open question, and change no entity state |
+| 12b | **fallback renders something** | the fallback record still carries an acknowledgement, a stance and an immediate observable change, so the author has a scene to write — a fallback must not degenerate into an empty turn |
 | 13 | **apparatus boundary** | an apparatus-addressed submission produces **no record** and leaves story state byte-identical; a world-addressed impossible submission produces a record — the pair together, so neither half passes alone |
 | 14 | **validation is pre-prose** | every rejection above occurs before any generation request; asserted by source order and by a zero-dispatch network gate |
 
-Proofs 6 and 9 carry the most weight: 6 is the only thing standing between "a bounded list" and "a rupture the
-planner assembled", and 9 is what makes the whole policy auditable rather than merely plausible.
+Proofs 6, 6b and 9b carry the most weight. **6** is the only thing standing between indirect action and
+off-screen mind-reading, and it must be run as a **pair** — the mechanism-less assertion rejected *and* the
+mechanism-backed one accepted — or it proves only that something was refused. **6b** closes the chaining route to
+the same place. **9b** is what makes specificity real: if flipping the authored priorities changes which reading
+wins, then priority is still in charge and the player's wording is not.
 
 ---
 
