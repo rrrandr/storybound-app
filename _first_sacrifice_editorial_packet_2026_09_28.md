@@ -13,7 +13,13 @@ cast (`pc:lirael`, `named:seren`, `named:julian`, `role:first_sacrifice_presidin
 
 ---
 
-# 1. The opening coverage matrix, completed
+# 1. The Issue 1 **opening** coverage matrix, completed
+
+> ## Scope — DECLARED (Roman, 2026-09-28), closing Flag A
+> **This matrix governs the Issue 1 OPENING phase only.** The alternative — one permissive table across all
+> of Issue 1 — was rejected on the reasoning that it blurs distinct story phases together, and specifically
+> **not** retained for producing a larger coverage number. **Late Issue 1 needs its own declared phase matrix
+> and its own outcome set**, to be built separately; nothing in this packet models it.
 
 ## 1a. The seventh predicate
 
@@ -31,7 +37,21 @@ incomplete domain.
 | 6 | `assemblyStaged` | the assembly is staged in this scene |
 | **7** | **`jurisdictionChallengeMade`** | **`julian_jurisdiction_challenge` held** |
 
-2⁷ = **128 raw cells**.
+## 1a-bis. Two of the seven are opening-phase **invariants**, not variables
+
+The seed pins two predicates for every opening state (excerpts in §6.5):
+
+| predicate | pinned to | seed basis |
+|---|---|---|
+| `inquiryOpened` | **false** | *"Early scenes may carry accusation, preliminary review… **never the convened inquiry itself**"*; *"The inquiry is NOT yet opened (that is a later scene)."* |
+| `interrogationOccurred` | **true** | `interrogation_interrupted` is an `aftermathTruth` — *"has **ALREADY** questioned Lirael… Not re-staged."* |
+
+So the opening domain is **not** 2⁷ = 128. It is **2⁵ = 32 reachable states** over the five free predicates
+(`accusationMade`, `reviewPending`, `custodyRevealed`, `assemblyStaged`, `jurisdictionChallengeMade`); the
+other 96 of the 128 violate an invariant and cannot occur in this phase. Both invariants stay *declared
+predicates* rather than being deleted, because the late-Issue-1 matrix will need them as live variables.
+
+2⁷ = 128 raw cells over the full predicate set; **32 reachable** once the invariants apply.
 
 ## 1b. Declared invalid cells
 
@@ -60,10 +80,15 @@ applies depends on the matrix's scope, which the packet has never actually decla
 
 So the headline number is not 60 under either reading. 60 was arithmetic over two rules that do not hold.
 
-> **Flag A (open, and now the only one) — which scope does this matrix govern?** Reading 2 follows §1's own
-> title and the seed's explicit "early scenes … never the convened inquiry itself"; it also makes the four
-> late outcomes of §2 out-of-scope here, which is consistent with their being late. Reading 1 keeps one
-> matrix for all of Issue 1 and lets the late entries do real work in it. §1e reports coverage for both.
+> **Flag A — RESOLVED (Roman, 2026-09-28): opening-scoped.** The §6.5 pin therefore **applies**, and the
+> reading that produced 72 cells is discarded despite being the larger number.
+
+**One consequence to state plainly: I4 becomes vacuous in this phase.** With `inquiryOpened` invariantly
+false, `reviewPending ∧ inquiryOpened` can never hold, so I4 excludes **0** of the 32 reachable states. It
+is not withdrawn — its evidence (§6.4) is the strongest in the packet — but it does no work here and must be
+carried forward to the late-Issue-1 matrix, where both terms vary and it becomes load-bearing.
+
+**`I3` is the only live exclusion in the opening matrix**, removing 8 of 32. **Valid opening cells: 24.**
 
 ## 1c. What the six existing entries cover
 
@@ -101,69 +126,60 @@ reachable — so the uncovered region has **two shapes**, not one:
 > **Flag B — U2 needs a ruling.** Either author it as reachable (covered below) or add an ordering rule I5
 > making interrogation mandatory before accusation. I have covered it rather than assumed it away.
 
-## 1e. Coverage check — mechanical, and reported separately from approval
+## 1e. Coverage check — opening-scoped, mechanical, reported separately from approval
 
-Run: `node _fs_coverage_check.mjs` (pure enumeration; no page, no provider). **Coverage is not approval.**
-Every entry counted below is a draft awaiting your decision; a cell counts as covered when some drafted
-outcome is eligible in it, regardless of whether that draft is approved.
+Run: `node _fs_coverage_check.mjs` (pure enumeration; no page, no provider, no model).
+**Coverage is not approval.** Every entry counted is proposed editorial canon awaiting your decision; a cell
+counts as covered when some drafted outcome is eligible in it, approved or not.
 
-**Excluded from both runs:** `unm.adverse_event_deferred` (rank 4). Its eligibility — "some adverse row
-scheduled and unheld" — is not expressible in these seven predicates, which model only one adverse row
-(`reviewPending`). Including it could only *add* coverage, so both figures are floors.
+```
+scope       : Issue 1 OPENING only (Flag A resolved 2026-09-28)
+invariants  : inquiryOpened=false, interrogationOccurred=true  (seed-pinned, §6.5)
+free preds  : 5 → 32 reachable opening states
+  I3 LIVE    removes 8
+  I4 VACUOUS removes 0   (retained for the late matrix)
 
-### Reading 1 — one matrix across Issue 1 (I3 + I4) — **72 valid cells**
+VALID CELLS : 24
+COVERED     : 24 / 24
+UNCOVERED   : 0
+```
 
-| | |
-|---|---|
-| covered | **72 / 72** |
-| uncovered | **0** |
+| rank | outcome | cells | sole cover for | |
+|---|---|---|---|---|
+| 10 | `unm.band_unremarked` | 8 | — | |
+| 9 | `unm.witness_dispersal` | 12 | — | |
+| 8 | `unm.procedural_delay` | 12 | — | |
+| 8 | `unm.restriction_unnamed` | 4 | **1** | *phase extension* |
+| 7 | `unm.julian_standing_questioned` | 16 | **1** | |
+| 6 | `unm.custody_unraised` | 12 | **1** | |
 
-Per-outcome reach, and where an outcome is the *only* eligible one:
+**Excluded:** `unm.adverse_event_deferred` (rank 4) — its eligibility ("some adverse row scheduled and
+unheld") is not expressible in these predicates, which model one adverse row. It can only *add* coverage, so
+24/24 is a floor.
 
-| rank | outcome | cells | sole cover for |
-|---|---|---|---|
-| 10 | `unm.band_unremarked` | 24 | 3 |
-| 9 | `unm.witness_dispersal` | 24 | — |
-| 9 | `unm.record_order_unread` | 8 | — |
-| 8 | `unm.procedural_delay` | 24 | 1 |
-| 8 | `unm.restriction_unnamed` | 12 | — |
-| 7 | `unm.julian_standing_questioned` | 24 | — |
-| 6 | `unm.custody_unraised` | 36 | 4 |
-| 6 | `unm.hearer_unnamed` | 16 | 3 |
-| 5 | `unm.absent_accuser_noted` | 12 | — |
+### Reading the result honestly
 
-No entry is dead, and four carry cells nothing else reaches — including `unm.hearer_unnamed`, which
-confirms Flag B's resolution mechanically: U2 is not merely valid, it is **only** reachable through that
-entry.
-
-### Reading 2 — matrix scoped to the opening (I3 + I4 + the §6.5 pin) — **24 valid cells**
-
-Only the six opening-set entries are in scope; the four §2 entries are late by construction.
-
-| | |
-|---|---|
-| covered | **23 / 24** |
-| uncovered | **1** |
-
-The single gap, in predicate order `A I R I C A J`:
-
-| cell | reading |
-|---|---|
-| `A··IC·J` | accusation made · interrogation occurred · custody revealed · jurisdiction challenged · no assembly staged · no review pending |
-
-**This gap is real and closable without new authoring.** Both `unm.restriction_unnamed` (rank 8) and
-`unm.hearer_unnamed` (rank 6) are eligible in it; both are currently filed as late-Issue-1. Of the two,
-`unm.restriction_unnamed` is the one compatible with the opening's HARD LIMITS — its whole content is that
-the restriction is *not* named, which is exactly what §6.4's excerpt forbids naming early. **Proposed, not
-applied:** if you take Reading 2, reclassify `unm.restriction_unnamed` to the opening set and the opening
-matrix closes at 24/24.
+- **The opening matrix now closes: 24 of 24.** The gap `A··IC·J` found in the previous run is covered, and
+  `unm.restriction_unnamed` is its **sole** cover — the phase extension was load-bearing, not cosmetic.
+- **Three entries each hold exactly one cell alone.** The set has no redundancy at its edges: removing any of
+  `unm.restriction_unnamed`, `unm.julian_standing_questioned` or `unm.custody_unraised` reopens a hole.
+- **Two reach-numbers shrank for a structural reason, not an authoring one.** `unm.witness_dispersal`
+  (`assemblyStaged ∧ ¬inquiryOpened`) and `unm.julian_standing_questioned`
+  (`interrogationOccurred ∧ ¬jurisdictionChallengeMade`) each carry a conjunct that the invariants make
+  constantly true. Within this phase they reduce to `assemblyStaged` and `¬jurisdictionChallengeMade`. Their
+  eligibility text is **left as written**, because those conjuncts become live again in the late matrix.
+- **The domain shrank by 75%, from 128 nominal to 32 reachable.** That is the cost of the scope decision and
+  it was accepted knowingly: a smaller, phase-true domain over a larger permissive one.
 
 ### What this does *not* claim
 
-The gate does not pass, because passing is not mine to declare. Under either reading the drafted entries
-cover the domain (Reading 2 after one reclassification), but every entry, rank, stance and proposition id in
-this packet is still **proposed editorial canon** awaiting approval. Full coverage by unapproved drafts is
-coverage, not a gate.
+The coverage gate is **not** claimed to pass. Full coverage by unapproved drafts is coverage, not a gate.
+What is now established is narrower and worth stating exactly: *given* the declared opening scope, the
+declared invariants, and I3 as the single live exclusion, the six drafted opening entries leave no reachable
+opening state without an eligible outcome. Approval of those entries remains outstanding.
+
+**Still owed, and explicitly out of scope here:** the late-Issue-1 phase matrix and its outcome set,
+including the four §2 entries, which this packet drafts but does not place in a domain.
 
 # 2. Late-Issue-1 unmoored outcomes (proposed)
 
@@ -197,11 +213,32 @@ exact sets, whole-package ranks. Each is grounded in a real late-row event fact.
   still exist — they are simply unspoken here.
 - **Affected:** the public record (`world_fact`: the restrictions are not stated in this scene).
 - **Unchanged:** every party's knowledge; **the restrictions themselves remain in force** — stated explicitly
-  so no later scene reads this as their removal.
+  so no later scene reads this as their removal. This outcome does **not** imply the restrictions were
+  **lifted, named, accepted, or understood by any non-participant**. Nobody outside the exchange learns
+  anything; no party consents to anything; silence about a restriction is not agreement to it, and a
+  restriction that goes unspoken is neither softened nor negotiated.
 - **Durable:** `world_fact`, `bounded` to this scene.
 - **Open:** when the restrictions are named, and before whom.
 - **Intrinsic cost:** none.
 - **Stance:** `stance.dohkar.formal_hardening`.
+- **Phase:** **opening and late Issue 1** — extended to the opening 2026-09-28, see below.
+
+> #### Phase extension to the opening — what changed, and what did not
+> **Changed: nothing but the phase in which this entry may be selected.** Its eligibility *predicate* is
+> untouched — `accusationMade ∧ jurisdictionChallengeMade ∧ custodyRevealed` already holds in the gap cell
+> `A··IC·J`, so no term was added, widened, or relaxed to reach it. Its declared facts, affected parties,
+> durability, intrinsic cost (none), rank (**8**) and wording anchors are all unchanged.
+>
+> **Why "the restriction remains unspoken" is compatible with the opening's hard limits.** The limits in
+> `dohkar_preliminary_review` (§6.4) are prohibitions on *naming*: do not name who convenes the review, its
+> date, its terms, The Open, a Chayr, or "two Dohkars". This outcome's entire content is that the restriction
+> is **not named aloud in this scene**. It does not merely avoid tripping the limits — it is the same
+> restraint the limits impose, turned into the player's relief. The opening may carry procedural pressure
+> without constituting a proceeding; an unspoken restriction is pressure that has not yet been constituted.
+>
+> **What it must never become.** Because the relief is silence rather than removal, the authored prose may
+> not let that silence read as resolution. The restriction is in force, unaltered, and the scene ends with it
+> still owed.
 
 ### `unm.hearer_unnamed` — rank 6
 
@@ -412,9 +449,12 @@ Two excerpts already quoted pin two predicates to constants **for the opening**:
 **Forbidden transitions:** any opening state with `inquiryOpened:T`; any opening state with
 `interrogationOccurred:F`.
 
-This is the one rule with explicit, repeated, unambiguous seed backing — and I never proposed it. It is
-**not applied by default**, because applying it silently would answer Flag A by fiat: it is only correct if
-the matrix is opening-scoped. That is the decision now in front of you, and §1e prices both answers.
+This is the one rule with explicit, repeated, unambiguous seed backing — and I never proposed it.
+
+**Now applied.** Flag A was resolved opening-scoped on 2026-09-28, which is the condition under which this
+rule is correct. Both pins are declared in §1a-bis as opening-phase **invariants** rather than folded into
+the invalid-cell rules, so that the late-Issue-1 matrix can restore them as free variables without having to
+unpick an exclusion. Applying them cut the reachable domain from 128 nominal states to 32.
 
 ---
 
@@ -424,13 +464,14 @@ the matrix is opening-scoped. That is the decision now in front of you, and §1e
 |---|---|---|
 | propositions (id-keyed) | 6 existing **+ 4 proposed** = **10** | §3 |
 | matrix predicates | **7** | §1a |
-| declared invalid-cell rules | **2 upheld** (I1, I2 withdrawn) | §1b, §6 |
-| valid cells | **72** (Reading 1) or **24** (Reading 2) — 60 was wrong | §1b, §1e |
+| declared invalid-cell rules | **2 upheld** (I1, I2 withdrawn); **1 live** in this phase | §1b, §6 |
+| opening-phase invariants | **2** (`inquiryOpened`, `interrogationOccurred`) | §1a-bis |
+| valid cells — **Issue 1 opening** | **24** of 32 reachable (60 was wrong) | §1b, §1e |
 | Tempt exact readings | 6 | prior packet |
 | Tempt ambiguous, ranked | 5 | prior packet |
 | twists / refusals (exact only) | 2 | prior packet |
 | unmoored outcomes — opening | 6 | prior packet |
-| **unmoored outcomes — late Issue 1** | **4 proposed** | §2 |
+| **unmoored outcomes — late Issue 1** | **4 proposed**, 1 also opening-eligible | §2 |
 | eligibility rules | 10 (one per unmoored outcome) | §2 + prior |
 | **party-stance profiles** | **9 proposed** (+1 Chayr, Flag E) | §4 |
 | causal mechanisms | 1 (`witness_present`) | prior packet |
@@ -447,7 +488,7 @@ under Reading 1. The estimate did not merely firm up; it was wrong in both the c
 
 | flag | decision | status |
 |---|---|---|
-| **A** | I1–I4 audited against seed text in §6: **I1 and I2 withdrawn, I3 and I4 upheld.** The evidence produced a stronger, unproposed rule (§6.5) whose applicability turns on one question I cannot answer from the seed: **does this matrix govern the opening only, or all of Issue 1?** | **OPEN — the one remaining item** |
+| **A** | **Opening-scoped.** The §6.5 invariants apply; the 72-cell Issue-1 reading is discarded, explicitly not retained for its larger coverage number. I4 is vacuous in this phase and carried forward. `unm.restriction_unnamed` extended to the opening by **phase only** — predicate, facts, cost, rank and anchors unchanged. | resolved 2026-09-28 |
 | **B** | U2 valid and covered. `unm.hearer_unnamed` is mechanically confirmed as its sole cover (§1e). | resolved 2026-09-28 |
 | **C** | `antagonist_hardened` is a player cost; the package ranks low. Good drama ≠ favorable to Lirael. | resolved 2026-09-28 |
 | **D** | Authorship stays separate from manner. | resolved 2026-09-28 |
@@ -456,9 +497,11 @@ under Reading 1. The estimate did not merely firm up; it was wrong in both the c
 
 ## Not claimed
 
-- **The coverage gate is not claimed to pass**, though the mechanical check has now been run (§1e) and the
-  drafted entries do cover the domain: 72/72 under Reading 1, 23/24 under Reading 2 with a named single-entry
-  fix. That is **coverage by unapproved drafts**, which is not a gate. Approval of the entries, and an answer
-  to Flag A, are what would turn it into one.
+- **The coverage gate is not claimed to pass.** The mechanical check has been run opening-scoped (§1e) and
+  closes at **24/24**, but that is **coverage by unapproved drafts**, which is not a gate. Approval of the
+  entries is what would turn it into one. All six flags are now resolved; none of the content is.
+- **The late-Issue-1 phase matrix does not exist.** Its predicates, invariants, invalid-cell rules and
+  outcome domain are unwritten. The four §2 entries are drafted but sit in no declared domain, and I4 is
+  parked waiting for it. This is the next editorial unit, not a loose end in this one.
 - Nothing here is implemented, wired, or reachable by a player.
 - Stage 3 remains unbuilt, and whether to build it is still the decision this volume informs.
