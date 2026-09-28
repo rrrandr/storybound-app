@@ -15,6 +15,19 @@ So ordinary turns need a **small structured grammar** instead — a closed vocab
 purpose.** Its job is not to describe every nuance a scene might contain; the author still writes the scene.
 Its job is to make the *consequence* of a turn a recorded fact rather than an authoring instruction.
 
+**Revision 2 (2026-09-27).** Two corrections from Roman, both on this note's own errors:
+
+1. **The audit fact and the story fact were conflated.** "Acknowledgement is always present" was written as
+   though the world always notices. It does not. **The record's existence is the audit fact** — this submission
+   occurred and entered story logic. **`acknowledgement` is a story fact**, and `unheard` is a perfectly valid
+   in-world result: the protagonist acted and nobody registered it. The magnitude value is renamed accordingly:
+   `acknowledged_no_durable_change` → **`occurred_no_durable_change`**, because the old name asserted
+   acknowledgement as part of the scale.
+2. **"At most one `durableChange` per submission" is withdrawn.** Too restrictive: one coherent move can
+   establish several linked facts. Replaced by an **authored composite** or a **bounded list of atomic declared
+   deltas** — see *Durable deltas*. Selection ownership is specified in
+   `_selection_ownership_addendum_2026_09_27.md`, which exists to stop that becoming a loophole.
+
 ## Renaming `magnitude: none`
 
 **Withdrawn.** An accepted turn always changes the story at least by having occurred; `none` said otherwise and
@@ -22,8 +35,11 @@ invited a reading where some turns simply did not happen.
 
 The record now separates two different things that `none` conflated:
 
-- **`acknowledgement`** — always present, on every record. *The turn occurred and was acknowledged.* There is
-  no value meaning "nothing happened".
+- **The record's existence** — the audit fact. *This submission occurred and entered story logic.* Every
+  accepted in-world submission has a record; there is no way to express "this turn did not happen".
+- **`acknowledgement`** — a **story** fact: how, or whether, the world registered the move. `unheard` is valid
+  and means nobody noticed. **A turn can occur without being acknowledged**; what it cannot do is go
+  unrecorded.
 - **`durableChange`** — may be `null`, meaning *no additional durable fact was established*. That is a normal,
   common, correct outcome and is recorded explicitly as such.
 
@@ -31,7 +47,7 @@ The record now separates two different things that `none` conflated:
 
 | value | meaning |
 |---|---|
-| `acknowledged_no_durable_change` | the turn happened, was acknowledged, and established no additional durable fact |
+| `occurred_no_durable_change` | the turn occurred and established no additional durable fact — whether or not anyone in-world noticed |
 | `durable_change` | exactly one additional durable fact entered canon |
 | `rupture` | the world changed shape — **cards only**, never reachable by this policy |
 
@@ -62,11 +78,14 @@ Five recorded dimensions. Each is a closed vocabulary except `open[]`.
 
 `none_observable` is legal and sometimes correct — but see the `drastic` constraint below.
 
-### 4. `durableChange` — the additional durable state change, or `null`
+### 4. `durableDeltas[]` — the additional durable state changes, possibly none
 
-| value | carries |
+Either **one authored composite** (`compositeId`, whose member deltas the story declared together) or a
+**bounded list of atomic declared deltas**. An empty list means **no additional durable fact was established** —
+common, and correct.
+
+| delta kind | carries |
 |---|---|
-| `null` | **no additional durable fact was established** |
 | `relationship_state` | a declared axis and direction |
 | `knowledge_state` | a party gains or loses a **declared proposition id** |
 | `world_fact` | a declared fact enters canon |
@@ -74,8 +93,17 @@ Five recorded dimensions. Each is a closed vocabulary except `open[]`.
 | `reputation` | standing changes with a named audience |
 | `plan_invalidated` | a scheduled plan row becomes impossible |
 
-**At most one per submission.** An ordinary turn is not a rupture; if a planner wants two, the grammar is being
-used to smuggle one.
+**Bounded, not singular.** One coherent move can establish several linked facts — a boundary stated *and* an
+obligation accepted *and* the other party's stance hardening are one move, not three. What the bound prevents is
+a planner assembling a rupture out of ordinary parts. Two forms are permitted:
+
+- **an authored composite** — the story declared these deltas as a unit, under one id; or
+- **a bounded list of atomic declared deltas**, each independently declared and independently validated, each
+  traceable to this submission.
+
+Every delta is an **authored declared id**, never planner-composed. The cap is per input class, and what keeps a
+composite from becoming a covert rupture is structural rather than numeric — see
+`_selection_ownership_addendum_2026_09_27.md`.
 
 ### 5. `open[]` — what remains open
 
@@ -92,21 +120,21 @@ grammar**, not instructions to a model.
 
 | input class / condition | acknowledgement | stance | immediate | durable |
 |---|---|---|---|---|
-| **`normal`**, slot `confession` | `enacted`, `attempted_partial` | any except `indifferent` | `disclosure_made`, `position_stated`, `tone_shift` | `relationship_state`, `knowledge_state`, or `null` |
-| **`normal`**, slot `boundary` | `enacted`, `attempted_partial`, `deflected` | any | `position_stated`, `tone_shift`, `proximity_shift` | `relationship_state`, `obligation`, or `null` |
-| **`normal`**, slot `reversal` | `enacted`, `attempted_partial` | any | any | `relationship_state`, `world_fact`, or `null` |
-| **`normal`**, slot `temptation` | `enacted`, `attempted_partial`, `deflected` | any | `proximity_shift`, `tone_shift`, `attention_shift` | `relationship_state` or `null` |
-| **`normal`**, no slot (procedural) | `enacted`, `unheard` | any | any | **`null`** or `world_fact` (minor only) |
-| **`drastic`** (`divergenceScore ≥ 2` or `mustReact`) | any | **never `indifferent`** | **never `none_observable`** | any single value, or `null` |
-| **`hostile`** | `deflected`, `enacted` | `resistant`, `withdrawn`, `escalating` — **never `receptive`** | any | `relationship_state` (adverse), `reputation`, or `null` |
-| **`relationship-forcing`** | `deflected`, `attempted_partial` | **never `receptive`** | any | `relationship_state` in the **resisted** direction, or `null` |
-| **`impossible`** | `attempted_partial`, `substituted` | any | any | **`null`**, or `world_fact` only if a declared plausible kernel exists |
-| **`canon-breaking`** | `deflected` | any | any | **always `null`** — a turn may not rewrite canon |
+| **`normal`**, slot `confession` | `enacted`, `attempted_partial` | any except `indifferent` | `disclosure_made`, `position_stated`, `tone_shift` | `relationship_state`, `knowledge_state`, or none |
+| **`normal`**, slot `boundary` | `enacted`, `attempted_partial`, `deflected` | any | `position_stated`, `tone_shift`, `proximity_shift` | `relationship_state`, `obligation`, or none |
+| **`normal`**, slot `reversal` | `enacted`, `attempted_partial` | any | any | `relationship_state`, `world_fact`, or none |
+| **`normal`**, slot `temptation` | `enacted`, `attempted_partial`, `deflected` | any | `proximity_shift`, `tone_shift`, `attention_shift` | `relationship_state` or none |
+| **`normal`**, no slot (procedural) | `enacted`, `unheard` | any | any | **none** or `world_fact` (minor only) |
+| **`drastic`** (`divergenceScore ≥ 2` or `mustReact`) | any | **never `indifferent`** | **never `none_observable`** | any declared delta or composite, within the class cap |
+| **`hostile`** | `deflected`, `enacted` | `resistant`, `withdrawn`, `escalating` — **never `receptive`** | any | `relationship_state` (adverse), `reputation`, or none |
+| **`relationship-forcing`** | `deflected`, `attempted_partial` | **never `receptive`** | any | `relationship_state` in the **resisted** direction, or none |
+| **`impossible`** | `attempted_partial`, `substituted` | any | any | **none**, or `world_fact` only if a declared plausible kernel exists |
+| **`canon-breaking`** | `deflected` | any | any | **always none** — a turn may not rewrite canon |
 | **`explicit/fate-adjacent`** | — | — | — | routed to a **card policy module** if a card is in play; otherwise treated as an ordinary wish (below) |
-| **weak turn** (`_detectWeakTurn`) | `substituted`, `attempted_partial` | any | `none_observable`, `attention_shift`, `tone_shift` | **`null`** |
-| **gibberish `isolated`** | `substituted` | any | `none_observable`, `attention_shift` | **`null`** |
+| **weak turn** (`_detectWeakTurn`) | `substituted`, `attempted_partial`, `unheard` | any | `none_observable`, `attention_shift`, `tone_shift` | **none** |
+| **gibberish `isolated`** | `substituted`, `unheard` | any | `none_observable`, `attention_shift` | **none** |
 | **gibberish `mixed`** | governed by the intelligible fragment, as that fragment's own class | | | |
-| **gibberish `repeated`** | `enacted` (the substitute is now real in-world behaviour) | `guarded`, `resistant`, `withdrawn` | any | `relationship_state` or `null` |
+| **gibberish `repeated`** | `enacted` (the substitute is now real in-world behaviour) | `guarded`, `resistant`, `withdrawn` | any | `relationship_state` or none |
 | **`meta/ooc`** — apparatus-addressed | **no record; not an in-world submission** (see the boundary) | | | |
 
 ### Ordinary ambiguous wish
@@ -138,8 +166,9 @@ The planner may select from the grammar. It may **never** select:
 2. any change to the **PRESERVE ALWAYS** set the existing law already protects — canon, the body Bibles, names,
    faces, world facts;
 3. `responseStance: receptive` under `hostile` or `relationship-forcing`;
-4. a non-`null` `durableChange` under `canon-breaking`, a weak turn, or gibberish `isolated`;
-5. more than **one** `durableChange` per submission;
+4. any `durableDeltas` at all under `canon-breaking`, a weak turn, or gibberish `isolated`;
+5. more deltas than the class cap, or a delta outside the declared delta table, or a composite whose members the
+   planner altered;
 6. `magnitude: 'rupture'` — cards only, unreachable from this policy;
 7. an `open[]` entry naming a party absent from the scene roster;
 8. `indifferent` stance or `none_observable` immediate change under `drastic`;
@@ -166,11 +195,11 @@ registration:   { mechanism: 'say_do', surface: 'staged_submit',
                   policyModuleId: 'ordinary_consequence', slot: 'boundary' }
 interpretation: { mode: 'exact_reading', selected: { readingId: 'boundary.interpose.physical' },
                   selectedBy: 'class_and_slot', coinApplied: false, coinSkipReason: null }
-consequence:    { magnitude: 'acknowledged_no_durable_change',
+consequence:    { magnitude: 'occurred_no_durable_change',
                   acknowledgement: 'enacted',
                   responseStance: 'guarded',
                   immediateChange: 'position_stated',
-                  durableChange: null,
+                  durableDeltas: [],            // no additional durable fact established
                   open: [ { question: 'whether the interposition will be respected',
                             whoMayAnswer: ['the presiding Dohkar'], openedAtTurn: 14 } ] }
 ```
@@ -188,15 +217,15 @@ turn:           { canonical: { action: null, dialogue: 'ok.' },
 registration:   { mechanism: 'weak_turn', surface: 'staged_submit', policyModuleId: 'ordinary_consequence' }
 interpretation: { mode: 'exact_reading', selected: { readingId: 'weak.assent.minimal' },
                   selectedBy: 'weak_turn_policy' }
-consequence:    { magnitude: 'acknowledged_no_durable_change',
+consequence:    { magnitude: 'occurred_no_durable_change',
                   acknowledgement: 'attempted_partial',
                   responseStance: 'guarded',
                   immediateChange: 'tone_shift',
-                  durableChange: null,          // forbidden for a weak turn
+                  durableDeltas: [],            // forbidden for a weak turn
                   open: [] }
 ```
 
-`durableChange` is `null` **by constraint**, not by judgment — a weak turn cannot establish durable canon. The
+`durableDeltas` is empty **by constraint**, not by judgment — a weak turn cannot establish durable canon. The
 strong-delivery directive stays suppressed, exactly as `_detectWeakTurn` already decides today.
 
 ### 3. Ordinary ambiguous wish
@@ -220,9 +249,9 @@ interpretation: { mode: 'ambiguous_reading',
                   draw: { seed: { storyId, cardId: null, stateFingerprint, invocationOrdinal: null,
                                   turnOrdinal: 15, mode: 'ambiguous_reading', weightTableV: 'ord-1' },
                           weights: null, digest: '…' } }
-consequence:    { magnitude: 'acknowledged_no_durable_change',
+consequence:    { magnitude: 'occurred_no_durable_change',
                   acknowledgement: 'enacted', responseStance: 'withdrawn',
-                  immediateChange: 'tone_shift', durableChange: null,
+                  immediateChange: 'tone_shift', durableDeltas: [],
                   open: [ { question: 'whether Julian will speak about the band',
                             whoMayAnswer: ['Julian'], openedAtTurn: 15 } ] }
 ```
