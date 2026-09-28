@@ -2,6 +2,12 @@
 
 Design only. No implementation, no provider call, no scene generation, no push.
 
+**Revision 3 (2026-09-27).** Authoring scope settled as **three layers**, and the draw seed defined
+explicitly. One correction: revision 2 said the seed makes *"the same wish in the same story state"* compile
+identically. **Withdrawn — "same wish" is not the seed identity.** Repeated wishes may legitimately resolve
+differently, and must be able to: repeated Tempts deliberately move saturation and volatility, so a second
+identical wish is a *different occasion* and Fate is entitled to read it differently. See *The draw seed*.
+
 **Revision 2 (2026-09-27).** Two corrections from Roman, both of which the first draft got wrong in the
 same direction — it reached for a board-game affordance instead of letting the mechanic live in the wording:
 
@@ -181,13 +187,41 @@ peers — none is a default:
 | refusal | nobody loses anything; the card declares what occurs instead |
 | overreach inversion | the wish lands on the invoker as well as the asked-for population, where the card declares self-inclusion as a possible reading of an over-broad ask |
 
-**How Fate chooses, reproducibly.** A declared weighted draw over the set, with the weights authored
-alongside it, seeded so the same wish in the same story state always compiles to the same permutation.
-The seed and weights go in the ledger, so an outcome is explicable and a bug is reproducible.
+**How Fate chooses.** A declared weighted draw over the authored set. The weights are authored alongside the
+set and may be **modified by declared story physics** — saturation, volatility, consecutive Tempt count —
+which is how Fate becomes a character rather than a coin. Escalating strangeness under repeated tempting is
+already this engine's idiom; here it is a weighting input with a recorded value, not a vibe.
 
-The weights may be **influenced by declared story physics** — saturation, volatility, consecutive Tempt
-count — which is how Fate becomes a character rather than a coin. Escalating strangeness under repeated
-tempting is already this engine's idiom; here it is a weighting input with a recorded value, not a vibe.
+### The draw seed
+
+**"Same wish" is not the seed identity, and must not be.** Two identical wishes at different points in a
+story are different occasions: repeated Tempts *deliberately* move saturation and volatility, so a second
+"everyone forgets" arriving into a more saturated world should be free to read differently. Seeding on the
+wording would freeze that.
+
+The seed is composed of exactly these, and **every component is recorded in the ledger** — not only the
+resulting digest, because a digest alone cannot be debugged:
+
+| component | why it is in the seed |
+|---|---|
+| `storyId` | two stories must not share Fate's dice |
+| `cardId` | the same wording on a different card is a different mechanic |
+| `stateFingerprint` | the canonical state revision/fingerprint — the world this wish landed in |
+| `invocationOrdinal` | 1-based per story; distinguishes repeats of identical wording |
+| `mode` | an exact reading and a Fate-chosen reading are different draws |
+| `weightTableV` | a retuned table is a different distribution; an old ledger stays explicable against the version it used |
+
+**The wish text is deliberately NOT a component.** The wording has already done its work: it selected the
+mode and produced the anchors, and the anchors narrow the set being drawn from. The seed identifies the
+*occasion*, not the phrasing. The ordinal already makes each occasion unique, so including the text would add
+no distinguishing power and would quietly reintroduce "same wish, same outcome".
+
+**`stateFingerprint` comes free from Track A.** Canonical projections give every prose scene a stable `uid`
+with a `revision` and a content `hash`, so the fingerprint is a digest over the ordered
+`(uid, revision, hash)` triples for prose scenes plus the durable-consequence ledger's own length and last
+entry id. That is a real dividend of the canonicalization work: before it, there was no stable answer to
+"what state was the story in?" — three competing texts and index-based identity meant the question had no
+single answer to hash.
 
 ### Anchors are recorded either way
 
@@ -209,6 +243,78 @@ These are authored per card, with exact sets like any other permutation. They ar
 *"I wish things were different"*: something happens, it is declared in advance, and it is Fate's to pick.
 **The reader is never asked to clarify** — a clarifying prompt would break the fiction and hand the engine's
 vocabulary back to the player, which is the same mistake as the picker.
+
+---
+
+## Authoring scope — three layers
+
+Layered deliberately: not one global table (which cannot be specific to a story) and not a bespoke system
+per story (which cannot be tested). The engine stays testable **because** it owns no story content.
+
+### Global engine
+
+- the two **compilation modes** and the requirements for `exact_reading` (a matched proposition **and** a
+  matched scope form — one without the other is mode 2);
+- the **ledger schema**, including which fields are mandatory per mode;
+- the **deterministic draw mechanics**: seed composition, digest derivation, how weights and physics
+  modifiers combine into a distribution;
+- the **invariant checks** below.
+
+It owns no propositions, no anchors, no permutations, no weights. A story cannot break the engine by
+authoring badly; it can only fail the invariants, loudly, before prose.
+
+### Per card
+
+The **consequence grammar** — what this card is permitted to alter at all:
+
+- which rupture classes it may produce;
+- which populations it may reach (a Petition may not reach the story world);
+- which effect kinds it may declare (lose knowledge of a proposition, gain a material object, rewrite a
+  history fact…);
+- its **durability envelope** (a Petition decays or is bounded; a Tempt persists);
+- whether self-inclusion is a permissible reading of an over-broad ask;
+- its **unmoored-wish outcome categories** — the kinds of thing that may happen when the wording anchors
+  nothing. Categories here, concrete instances per story.
+
+The grammar is a **constraint, not content**. It says what shapes are legal; the story supplies the shapes.
+
+### Per story / seed
+
+Everything specific:
+
+- **target proposition ids** — drawn from the plan rows, `reservedEvents`, `sealedEvents` the seed already
+  declares;
+- **recognized wording anchors** — the lexicon mapping literal phrasings to propositions and scope forms;
+- **scope forms** — what "everyone here" means in *this* story's staging;
+- **concrete permutations**, each with exact affected and unchanged sets, and each **within its card's
+  grammar**;
+- **weights**, versioned (`weightTableV`);
+- **declared physics modifiers** — how saturation, volatility and consecutive Tempt count bend those weights
+  for this story;
+- concrete **unmoored-wish outcomes**, instantiating the card's categories.
+
+### Composition rule
+
+**Story content is validated against card grammar, and card grammar against the engine.** A story
+permutation that reaches a population its card forbids, declares an effect kind outside the grammar, or
+exceeds the durability envelope is **rejected at authoring/load time, not at compile time** — a wish should
+never fail because a table was wrong.
+
+### Invariants the engine checks on every compiled ledger
+
+Testable with no story content loaded, which is the point of the split:
+
+1. `population.closed === true` — no compiled population may be open-ended.
+2. **affected ∪ unchanged covers the whole compiled population**, and the two sets are disjoint. Nobody is
+   unaccounted for; "nothing happened to Julian" is always a recorded fact.
+3. No permutation references an entity outside the roster it was compiled against.
+4. `proposition.id` is a **declared** id, not a string the compiler invented.
+5. Invoker treatment is declared, with a rule id; self-targeting only from explicit matched language.
+6. `exact_reading` carries both anchors; `fate_chosen_reading` carries a full `selection` record.
+7. The seed carries **all six components**, and the digest is reproducible from them.
+8. The ledger is **immutable once bound to a scene uid**; a later scene revision does not rewrite it.
+9. Every field traces to a `ruleId` or a `permutationId`.
+10. The chosen permutation is inside its card's grammar.
 
 ---
 
@@ -283,10 +389,10 @@ ran.
 
 ## Open decisions
 
-1. **Who authors the permutation sets, the scope lexicon and the amplitude tables**, and per-card,
-   per-story, or global? These are canon artifacts, not code, and they grow by human decision. This is now
-   the largest open item: the compiler is only as good as the authored sets it draws from, and a card with a
-   thin set will feel arbitrary no matter how deterministic the draw is.
+1. **SETTLED (revision 3): authoring scope is the three layers above.** What remains is volume, not
+   structure — the compiler is only as good as the authored sets it draws from, and a card whose story has a
+   thin permutation set will feel arbitrary however deterministic the draw is. First Sacrifice is the natural
+   first story to author, since its plan rows and `reservedEvents` already supply proposition ids.
 2. **How visible is Fate's reading to the player?** Not a picker — but there is a real question about
    whether a player ever learns that a vague wish was read by Fate rather than followed literally. Wording
    inside the prose can carry that ("Fate took the question as its own"), which keeps it diegetic.
