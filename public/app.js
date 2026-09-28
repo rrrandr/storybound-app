@@ -109394,8 +109394,17 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
           }
 
           // Invoke Tempt Fate (handles cost, stance — skip confirm since zoom IS confirmation)
+          // GATED ON ACCEPTANCE (once-per-scene guard, 2026-09-28). invokeTemptFate now returns false
+          // when it declines — a duplicate in the same scene, a cancelled confirm, an insufficient
+          // balance or a failed deduction. Before this, the ledger record below ran UNCONDITIONALLY,
+          // so a declined attempt would still have created a Tempt proposal it never paid for.
+          var _tfAccepted = true;
           if (typeof invokeTemptFate === 'function') {
-              await invokeTemptFate(true);
+              _tfAccepted = (await invokeTemptFate(true)) === true;
+          }
+          if (!_tfAccepted) {
+              try { console.log('[TEMPT] invocation not accepted — no ledger entry, no OAS budget, no seal.'); } catch (_) {}
+              return;
           }
           // Fate-OAS distortion budget — when Tempt fires inside OAS, persist
           // across OAS exchanges (8-12 turn budget). _initFateOASBudget
@@ -109428,7 +109437,16 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
           // a repeat). Cleared on story reset.
           try {
             if (typeof _recordTemptFateEvent === 'function') {
-              _recordTemptFateEvent(wishText);
+              var _tfLedgerEntry = _recordTemptFateEvent(wishText);
+              // ONCE-PER-SCENE TEMPT GUARD: SEAL. The pending reservation becomes durable here — at the
+              // existing seal point, in seal order, synchronously — and appends one entry to the shared
+              // Fate-invocation sequence. Only an ACCEPTED invocation reaches this line.
+              try {
+                if (typeof _temptGuardSeal === 'function') {
+                  _temptGuardSeal(window.state && window.state._temptGuardActiveReservation,
+                    (_tfLedgerEntry && (_tfLedgerEntry.id || _tfLedgerEntry.seq)) || null);
+                }
+              } catch (_tgErr) { console.warn('[TEMPT-GUARD] seal threw:', _tgErr && _tgErr.message); }
             }
           } catch (_tlErr) { console.warn('[TEMPT-LEDGER] record threw:', _tlErr && _tlErr.message); }
 
@@ -145086,6 +145104,10 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       if (legacy) legacy.classList.add('hidden');
       const paywall = $('payModal');
       if (paywall) paywall.classList.add('hidden');
+      // ONCE-PER-SCENE TEMPT GUARD: the modal was a WAITING state for a held Tempt reservation.
+      // Its close — bought, cancelled or dismissed — ends the wait and frees the scene allowance, so a
+      // cancelled or failed payment never permanently consumes it. A no-op when nothing was armed.
+      try { if (typeof _temptGuardOnModalClosed === 'function') _temptGuardOnModalClosed(); } catch (_) {}
   }
 
   // Storypass is deprecated — what used to be a story-scoped "$3 pass"
@@ -256886,7 +256908,184 @@ Generate the synopsis now.` }
    * 4. Set invocation flag
    * 5. Activate stance
    */
+
+  // ══════════════════════════════════════════════════════════════════════════════════════════════
+  // ONCE-PER-SCENE TEMPT FATE GUARD (Roman, decided 2026-09-28)
+  //
+  // THE RULE. Tempt Fate may be used ONCE PER SCENE. Petition Fate remains independently available in
+  // the same scene. Tempt may be used again next scene, where the existing consecutive-SCENE
+  // escalation and cost continue to govern it — the rising cost belongs to consecutive Tempt scenes,
+  // not to repeated clicks inside one. A second attempt is rejected BEFORE payment: no Fortune
+  // consumed, no spend reserved, no second invocation created. It is a MECHANIC rule, not an
+  // ambiguity penalty: it says nothing about how a wish is worded.
+  //
+  // THIS IS A CONCURRENCY BOUNDARY, NOT A BOOLEAN. Two failures define it:
+  //   • two rapid attempts must not both pass before either reaches the ledger;
+  //   • a cancelled or failed payment must not permanently consume the scene's allowance.
+  //
+  // THE KEY IS THE LATEST ACCEPTED PROSE SCENE'S uid — and the obvious answer is wrong: a Tempt is
+  // invoked BEFORE the scene it affects is generated, so that scene's uid does not exist yet. Keying
+  // to the LAST ACCEPTED scene gives the right semantics ("since the last accepted scene, one Tempt
+  // may seal") and the allowance resets when the next scene is accepted and the latest uid changes.
+  // It also survives reload, is immune to the OAS splice (identity, not position), and RETAINS THE
+  // BLOCK ACROSS A SCENE REVISION, because a revision bumps projectionRevision and keeps the uid —
+  // which is exactly why the uid and not the projection hash is the key.
+  var _TEMPT_GUARD_V = 1;
+
+  // BOOTSTRAP KEY. Before any prose scene is accepted — a story's first turn, or a state where
+  // state.scenes holds only OAS archive entries (which _sbLatestProseScene correctly skips, an
+  // archive not being prose). Stable per story so two attempts before the first scene resolve to the
+  // same key; derived from storyId so it survives reload; distinct per story so one story's bootstrap
+  // Tempt never blocks another's. It is replaced by the first accepted scene's uid ONLY through the
+  // normal acceptance transition — because _sbLatestProseScene begins returning a real record — and
+  // NEVER by array position, a length check, or an "if (scenes.length > 0)".
+  function _temptGuardScopeKey(s) {
+    s = s || window.state || {};
+    try {
+      if (typeof _sbLatestProseScene === 'function') {
+        var f = _sbLatestProseScene(s);
+        if (f && f.record && f.record.uid) return String(f.record.uid);
+      }
+    } catch (_) {}
+    return 'scene:bootstrap:' + String(s.storyId || 'nostory');
+  }
+  window._temptGuardScopeKey = _temptGuardScopeKey;
+
+  function _temptGuardMap(create) {
+    var s = window.state; if (!s) return null;
+    if (!s._temptSceneGuard || typeof s._temptSceneGuard !== 'object') {
+      if (!create) return null;
+      s._temptSceneGuard = {};
+    }
+    return s._temptSceneGuard;
+  }
+
+  function _temptGuardStatus(s) {
+    s = s || window.state || {};
+    var m = (s._temptSceneGuard && typeof s._temptSceneGuard === 'object') ? s._temptSceneGuard : {};
+    var e = m[_temptGuardScopeKey(s)];
+    return (e && e.status) ? e.status : 'free';
+  }
+  window._temptGuardStatus = _temptGuardStatus;
+
+  // ACQUIRE — a SINGLE SYNCHRONOUS check-and-set. Synchronous is what makes it atomic: JS runs this
+  // to completion before any other handler, so two rapid clicks cannot interleave between the read
+  // and the write. NO `await` MAY EVER BE INTRODUCED BETWEEN THEM — that is the entire guard.
+  function _temptGuardAcquire() {
+    var s = window.state; if (!s) return { ok: false, reason: 'no_state' };
+    var m = _temptGuardMap(true); if (!m) return { ok: false, reason: 'no_state' };
+    var key = _temptGuardScopeKey(s);
+    var e = m[key];
+    if (e && e.status === 'sealed') return { ok: false, reason: 'already_sealed', key: key };
+    if (e && e.status === 'pending') return { ok: false, reason: 'already_pending', key: key, waitingOn: e.waitingOn || null };
+    var rid = 'tgr_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8);
+    m[key] = { v: _TEMPT_GUARD_V, status: 'pending', reservationId: rid, at: Date.now(), waitingOn: null };
+    return { ok: true, reservationId: rid, key: key };
+  }
+  window._temptGuardAcquire = _temptGuardAcquire;
+
+  // A WAITING STATE IS NOT A RELEASE STATE. While a confirmation or purchase modal is open the first
+  // invocation is NOT finished — it is awaiting the player's decision — and releasing there would
+  // reopen the race for the entire time the modal is up, which is the longest window in the flow.
+  function _temptGuardMarkWaiting(reservationId, what) {
+    var m = _temptGuardMap(false); if (!m) return false;
+    var key = _temptGuardScopeKey(window.state);
+    var e = m[key];
+    if (!e || e.status !== 'pending' || e.reservationId !== reservationId) return false;
+    e.waitingOn = String(what || 'decision');
+    return true;
+  }
+  window._temptGuardMarkWaiting = _temptGuardMarkWaiting;
+
+  // RELEASE — only when the invocation TERMINATES before seal: explicit cancel, dismissal without
+  // authorization, payment failure, insufficient balance once the modal resolves, or a throw.
+  // Idempotent, and MATCHED ON reservationId so a late release cannot clear a newer reservation.
+  function _temptGuardRelease(reservationId, reason) {
+    var m = _temptGuardMap(false); if (!m) return false;
+    var key = _temptGuardScopeKey(window.state);
+    var e = m[key];
+    if (!e || e.status !== 'pending') return false;
+    if (e.reservationId !== reservationId) return false;      // stale release cannot clear a newer one
+    delete m[key];
+    try { console.log('[TEMPT-GUARD] released ' + key + ' (' + String(reason || 'terminated') + ') — the scene allowance is free again'); } catch (_) {}
+    return true;
+  }
+  window._temptGuardRelease = _temptGuardRelease;
+
+  // SEAL — pending becomes sealed, and ONE entry joins the shared, monotonic Fate-invocation sequence.
+  // Shared because Tempt and Petition act on the same story state: whichever seals second selects
+  // against the first's COMMITTED consequence. Appended in SEAL order, synchronously — never
+  // completion order, which would let latency decide canon.
+  function _temptGuardSeal(reservationId, invocationId) {
+    var s = window.state; if (!s) return null;
+    var m = _temptGuardMap(true); if (!m) return null;
+    var key = _temptGuardScopeKey(s);
+    var e = m[key];
+    if (!e || e.status !== 'pending' || e.reservationId !== reservationId) return null;
+    e.status = 'sealed';
+    e.waitingOn = null;
+    e.invocationId = invocationId ? String(invocationId) : null;
+    e.sealedAt = Date.now();
+    return _fateSequenceAppend('tempt', key, e.invocationId);
+  }
+  window._temptGuardSeal = _temptGuardSeal;
+
+  // ARMING THE MODAL RELEASE. The reservation is held while the purchase modal is up and released by
+  // its OUTCOME. Arming records which reservation the next modal close should free; closing it —
+  // whether the player bought, cancelled or dismissed — ends the wait, and the player's retry click is
+  // a fresh attempt that will acquire cleanly. A purchase does not seal anything by itself: the player
+  // still has to invoke Tempt, which is the same flow as before this guard existed.
+  function _temptGuardArmModalRelease(reservationId) {
+    var s = window.state; if (!s) return false;
+    s._temptGuardModalArmed = reservationId || null;
+    return true;
+  }
+  window._temptGuardArmModalRelease = _temptGuardArmModalRelease;
+
+  function _temptGuardOnModalClosed() {
+    var s = window.state; if (!s) return false;
+    var rid = s._temptGuardModalArmed;
+    if (!rid) return false;
+    s._temptGuardModalArmed = null;
+    return _temptGuardRelease(rid, 'purchase_modal_closed');
+  }
+  window._temptGuardOnModalClosed = _temptGuardOnModalClosed;
+
+  // THE SHARED FATE-INVOCATION SEQUENCE. Petition appends here too; a consumer reads only SEALED
+  // entries, so a pending Tempt is not yet a fact and a cancelled one never becomes one.
+  function _fateSequenceAppend(mechanic, sceneKey, invocationId) {
+    var s = window.state; if (!s) return null;
+    if (!Array.isArray(s._fateInvocationSeq)) s._fateInvocationSeq = [];
+    var entry = { seq: s._fateInvocationSeq.length + 1, mechanic: String(mechanic),
+      sceneUid: String(sceneKey), invocationId: invocationId || null, sealedAt: Date.now() };
+    s._fateInvocationSeq.push(entry);
+    try { console.log('[FATE-SEQ] #' + entry.seq + ' ' + entry.mechanic + ' sealed at ' + entry.sceneUid); } catch (_) {}
+    return entry;
+  }
+  window._fateSequenceAppend = _fateSequenceAppend;
+
   async function invokeTemptFate(skipConfirm = false) {
+      // ── ONCE-PER-SCENE GUARD: ACQUIRE FIRST, BEFORE ANY COST PATH ──────────────────────────────
+      // Synchronous check-and-set, ahead of the free-credit consumption, consumeFortuneFavorCharge(),
+      // the balance check, the purchase modal and the confirm dialog — so two rapid clicks cannot both
+      // pass, and a rejected duplicate never touches a Fortune.
+      var _tgAcq = (typeof _temptGuardAcquire === 'function') ? _temptGuardAcquire() : { ok: true, reservationId: null };
+      if (!_tgAcq.ok) {
+          try {
+              console.log('[TEMPT-GUARD] declined (' + _tgAcq.reason + ') at ' + _tgAcq.key
+                + (_tgAcq.waitingOn ? ' — the first attempt is waiting on ' + _tgAcq.waitingOn : '')
+                + ' — no cost path entered, no Fortune consumed');
+          } catch (_) {}
+          if (typeof showToast === 'function') {
+              showToast(_tgAcq.reason === 'already_sealed'
+                ? 'Fate has already turned for this scene.'
+                : 'Fate is already listening.');
+          }
+          return false;
+      }
+      var _tgRid = _tgAcq.reservationId;
+      // Published so the seal point (_recordTemptFateEvent's call site) can convert THIS reservation.
+      try { state._temptGuardActiveReservation = _tgRid; } catch (_) {}
       // Fortune's Favor — check for free bonus charges before paid path
       let usedFreeCharge = false;
       // ONBOARDING FREE CREDIT: Scene 3 emergence grants a one-time free
@@ -256907,24 +257106,38 @@ Generate the synopsis now.` }
       } else {
           const cost = getTemptFateCost();
 
-          // Check balance — open purchase modal if insufficient
+          // Check balance — open purchase modal if insufficient.
+          // THE MODAL IS A WAITING STATE, NOT A RELEASE STATE. The invocation is not finished; it is
+          // awaiting the player's payment decision. Releasing here would reopen the race for as long
+          // as the modal is up — the longest window in this flow — so the reservation is HELD and is
+          // released by the modal's OUTCOME (closeFortunePurchaseModal), not by its opening.
           if ((state.fortunes || 0) < cost) {
+              if (typeof _temptGuardMarkWaiting === 'function') _temptGuardMarkWaiting(_tgRid, 'purchase_modal');
+              if (typeof _temptGuardArmModalRelease === 'function') _temptGuardArmModalRelease(_tgRid);
               if (typeof openFortunePurchaseModal === 'function') openFortunePurchaseModal();
-              return;
+              return false;
           }
 
-          // Cost confirmation (skip when invoked from zoom card — zoom IS the confirmation)
+          // Cost confirmation (skip when invoked from zoom card — zoom IS the confirmation).
+          // Also a waiting state: held across the decision, released only if the player declines.
           if (!skipConfirm) {
+              if (typeof _temptGuardMarkWaiting === 'function') _temptGuardMarkWaiting(_tgRid, 'confirm_dialog');
               const confirmed = confirm(`Tempt Fate costs ${cost} Fortune${cost !== 1 ? 's' : ''}. Proceed?`);
-              if (!confirmed) return;
+              if (!confirmed) {
+                  if (typeof _temptGuardRelease === 'function') _temptGuardRelease(_tgRid, 'confirm_declined');
+                  return false;
+              }
+              if (typeof _temptGuardMarkWaiting === 'function') _temptGuardMarkWaiting(_tgRid, null);
           }
 
           // Atomic deduction
           const burned = await consumeFortune(cost, 'tempt_fate');
           if (!burned) {
               console.error('[TEMPT] Fortune deduction failed');
+              if (typeof _temptGuardMarkWaiting === 'function') _temptGuardMarkWaiting(_tgRid, 'purchase_modal');
+              if (typeof _temptGuardArmModalRelease === 'function') _temptGuardArmModalRelease(_tgRid);
               if (typeof openFortunePurchaseModal === 'function') openFortunePurchaseModal();
-              return;
+              return false;
           }
           if (window.updateFortuneDisplay) window.updateFortuneDisplay();
       }
@@ -257037,7 +257250,14 @@ Generate the synopsis now.` }
       }
 
       console.log(`[TEMPT_FATE] Invoked. ${usedFreeCharge ? 'Cost: FREE (bonus charge)' : 'Cost: ' + getTemptFateCost()}, Heat: ${state.tempt_fate_heat}, Consecutive: ${state.consecutive_tempt_fate_count}, Remaining Fortunes: ${state.fortunes}, Resonance: ${state.fate_resonance_intensity} (${getFateResonanceState()})`);
+      // ACCEPTED. The caller gates the ledger record on this result, so a declined, cancelled or
+      // failed attempt cannot seal — see the zoom flow's `_tfAccepted` check.
+      return true;
   }
+  // Exported because it is the real invocation entry point and now returns a meaningful
+  // accepted/declined result. The served UI still reaches it exactly as before, through the Tempt Fate
+  // button's window.setMetaStance('seduce') (public/index.html:2274).
+  try { if (typeof window !== 'undefined') window.invokeTemptFate = invokeTemptFate; } catch (_) {}
 
   // --- BEGIN STORY VALIDATION GUARDRAIL ---
   function validateBeginStory() {
