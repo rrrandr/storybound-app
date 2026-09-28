@@ -14,6 +14,15 @@ Its only purpose: decide whether Stage 3 deserves implementation, and what a min
 3. **One new boundary** (§7c): an unmoored outcome may not act on an unrelated proposition merely because it is
    favorable.
 
+**Revision 3 (2026-09-27).** Two more corrections, and the second one changes a conclusion:
+
+4. **`playerFavorRank` ranks the COMPLETE authored package**, not the headline grant — §7e. My own ranking is
+   re-examined against that rule.
+5. **`unm.no_opening` is withdrawn as an always-eligible floor.** Tested against Roman's criterion it is a
+   **refusal in gentler language**, which Tempt ambiguity forbids. Replacing it honestly means **the unmoored set
+   no longer has a genuinely favorable always-eligible outcome**, and per instruction I have not invented one:
+   §7f enumerates the states where the eligible set can be empty and records it as an **authoring gap**.
+
 ---
 
 ## 0. Two inventory findings that change the shape of the question
@@ -313,11 +322,21 @@ All are `twist: false`, no refusals, durability `persists` unless noted — per 
 | 8 | `unm.procedural_delay` | `dohkar_preliminary_review` is **deferred**, not cancelled (`world_fact`) | every party's knowledge and stance | whether the delay reads as favor or as suspicion | none | while `dohkar_preliminary_review` is scheduled and unheld; **consumed once** |
 | 7 | `unm.julian_standing_questioned` | Julian's **procedural standing** to question her is put in doubt (`world_fact`) — *not* his feelings, *not* his intent | Julian's knowledge, stance and future action — all untouched | whether he recuses, and who questions her instead | `escalation_invited` — a jurisdiction fight is now likelier | **after** `interrogation_interrupted`, **before** `julian_jurisdiction_challenge`; **consumed once** |
 | 6 | `unm.custody_unraised` | the Answer's custody is **not raised this scene** (`world_fact`) | all knowledge, including `the_answer_institutional` itself | when it will be raised, and by whom | none | while `the_answer_institutional` is unrevealed to the assembly; **consumed once** |
-| **1** | `unm.no_opening` | **nothing materially changes** — the moment passes without the worst of it landing | every party, every fact, explicitly | every prior `open[]` entry, carried forward untouched | none | **always eligible** |
+| 4 | `unm.adverse_event_deferred` | the **next scheduled adverse plan row** does not occur in this scene (`world_fact`, naming the row by id) | every party's knowledge and stance | when it occurs instead, and whether the delay is noticed | none | **requires a scheduled, unheld adverse row to exist**; consumed per row |
 
 `unm.julian_standing_questioned` is deliberately the sharpest test of the interiority boundary: it moves a
 **procedural** fact and leaves Julian's mind entirely alone, with his response in `open[]`. It would be trivial
 and wrong to author "Julian softens" here.
+
+**`unm.no_opening` is withdrawn.** It read *"nothing materially changes — the moment passes without the worst of
+it landing"*, and against the test it fails: the avoided harm was **not a declared, imminent story condition**, and
+the record established **no concrete favorable delta**. Affected was empty. That is a **refusal wearing gentler
+language**, and Tempt ambiguity forbids refusals — so it was the policy violation it was invented to prevent.
+
+`unm.adverse_event_deferred` (rank 4) is what survives of the idea *done properly*: the avoided harm is a **named
+scheduled plan row**, the delta is concrete (`world_fact`: that row does not occur here), and it is favorable in a
+way a reader could notice. But it is **not always eligible** — it requires such a row to exist and be unheld. See
+§7f.
 
 ### 7c. The boundary this set needs
 
@@ -329,6 +348,34 @@ custody is not at issue, purely because the outcome ranks well. Every entry abov
 eligibility condition **tied to the scene's actual state** — not a global availability. Favorability selects
 *among eligible* outcomes; it never establishes eligibility.
 
+### 7e. `playerFavorRank` ranks the COMPLETE package
+
+**The rule, stated for every Tempt set in this packet:**
+
+> `playerFavorRank` ranks the **whole authored package**: the granted and affected facts, the unchanged and open
+> facts, the intrinsic cost, and any lost opportunity or consumed availability. **A larger headline grant with a
+> worse intrinsic cost must not silently outrank a smaller, safer result** — it may only outrank it where the
+> author has deliberately judged the *total* more favorable, and that judgement is the authoring act.
+
+Re-examining my own ranks against it:
+
+| entry | headline | cost / consumption | judged total | verdict |
+|---|---|---|---|---|
+| `unm.band_unremarked` (10) | the breach never enters the record | none; consumes the one chance to keep it out | strongest, and the cost is only the opportunity | correct |
+| `unm.witness_dispersal` (9) | no collective testimony | none; consumes it | strong, slightly narrower than 10 | correct |
+| `unm.procedural_delay` (8) | the review is deferred | none | time, no harm | correct |
+| `unm.julian_standing_questioned` (7) | her most dangerous questioner may be removed | **`escalation_invited`** — a jurisdiction fight becomes likelier | **the one entry where cost moves the ranking.** A bigger headline than 8 or 6, deliberately ranked below 8 because inviting a jurisdiction fight in Issue 1 is worse for her than gaining a scene of time | correct, and stated |
+| `unm.custody_unraised` (6) | custody not raised this scene | none | small, safe | correct |
+| `unm.adverse_event_deferred` (4) | one named adverse row deferred | none; consumed per row | smallest concrete good | correct |
+
+And in §1b, `mem.amb.dohkar_forgets_authority` (6) sits below `mem.amb.assembly_forgets_twist` (7) **because of
+`authority_vacuum`**, not because its reach is smaller — a rite with nobody holding it is a worse world for her
+than a collective that has forgotten one fact. Under headline-only ranking those two would have inverted.
+
+**A note on §1a.** Exact readings are selected by anchors and specificity, never by rank, so their `rank` column
+matters only if two exact readings ever tie on specificity. It is not a selection input there, and I should not
+have implied it was.
+
 ### 7d. How eligibility produces variety without touching the policy
 
 The exhaustion problem stated plainly: Tempt ambiguity always takes the **most player-favorable** outcome, so
@@ -338,19 +385,52 @@ without eligibility a player who tempts vaguely three times gets rank 10 three t
 
 | tempt | eligible set | selected |
 |---|---|---|
-| 1st, before the accusation | 10, 9, 8, 7?, 6, 1 | **`unm.band_unremarked`** (10) |
-| 2nd, band already spent | 9, 8, 6, 1 | **`unm.witness_dispersal`** (9) |
-| 3rd, assembly dispersed, inquiry now open | 8, 6, 1 | **`unm.procedural_delay`** (8) |
-| 4th, after the inquiry opens and the review is held | 1 | **`unm.no_opening`** |
+| 1st, before the accusation | 10, 9, 8, 6, 4 | **`unm.band_unremarked`** (10) |
+| 2nd, band already spent | 9, 8, 6, 4 | **`unm.witness_dispersal`** (9) |
+| 3rd, assembly dispersed, inquiry now open | 8, 6, 4 | **`unm.procedural_delay`** (8) |
+| 4th, review held, custody raised, another adverse row still pending | 4 | **`unm.adverse_event_deferred`** |
+| 5th, no adverse row pending, everything else spent | **∅** | **nothing — see §7f** |
 
 Still always the most favorable **eligible** outcome. **No hidden weights, no less-favorable draw, no
 narrowing as a penalty for imprecision.** What changed is what remains available, which is a fact about the
 story, not a tax on the player.
 
-**`unm.no_opening` is the floor, and it is not optional.** With it, the eligible set can never be empty, so the
-compiler never faces a vague wish with nothing to select — which is exactly the state that would force either an
-invented consequence or a refusal, and refusals are excluded from Tempt ambiguity. It is a real if minimal grant:
-the moment passes without the worst of it landing.
+**There is no longer a guaranteed floor, and that is the honest position.** Revision 2 claimed one; it was a
+refusal in disguise. The fifth row above is a real state with an **empty eligible set**, and §7f treats it as what
+it is.
+
+### 7f. Where the eligible set can be empty — an authoring gap, not a runtime problem
+
+Every concrete favorable delta needs *something in the story to act on*. Once the conditions are gone, Fate has
+nothing declared and favorable left — so an always-eligible outcome is not merely unauthored here, it may be
+**unauthorable in principle** without either a refusal or an invented consequence.
+
+**Four reachable empty-set states**, from the real eligibility conditions:
+
+| # | state | why every entry is ineligible |
+|---|---|---|
+| 1 | **All five consumed and no adverse row pending** | consumption closes 10, 9, 8, 7, 6; 4 has no row to defer |
+| 2 | **Late Issue 1** — after `family_accusation`, `inquiry_opened`, the review held, `julian_jurisdiction_challenge` made and custody revealed | all five gates closed **by story progress alone**, regardless of consumption |
+| 3 | **A private two-party scene early on** | the assembly is not staged, no review is pending, `interrogation_interrupted` has not occurred — several gates fail at once |
+| 4 | **Issue 2 and beyond** | **every eligibility condition in this set references Issue 1 events.** There are currently *zero* unmoored outcomes authored for any later issue |
+
+**State 4 is the one that matters most and I under-stated it before.** I presented this set as covering "First
+Sacrifice"; it covers **First Sacrifice's opening**. Unmoored coverage is needed **per story phase**, not per
+story, and that multiplies the unmoored authoring by the number of phases.
+
+**The resolution, per instruction: additional declared outcomes — not a runtime refusal and not a hidden
+downgrade.** Concretely:
+
+- **Non-empty eligibility becomes a ship gate**, not a runtime concern: enumerate the reachable story states for
+  an issue and assert that at least one unmoored outcome is eligible in each. That is a dry, static check over the
+  authored tables and the plan rows — no model, no play-through.
+- **An empty set in a shipped story is an authoring error**, caught by that gate before release, exactly as an
+  undeclared proposition is caught at load.
+- **Phase-scoped unmoored sets**: roughly one small set per arc phase (opening / inquiry / consequence), each with
+  eligibility tied to that phase's own pending conditions.
+
+I am not inventing a universal floor to paper over this. A floor that is always eligible and always favorable
+would have to act on something that is always present, and nothing in a story is.
 
 ---
 
@@ -362,20 +442,23 @@ the moment passes without the worst of it landing.
 | **Tempt exact readings** (`memory_perception`) | 6 | drafted, §1a |
 | **Tempt ambiguous outcomes**, ranked | 5 | drafted, §1b |
 | **Tempt twists / refusals** (exact-reading only) | 2 | drafted, §1c |
-| **Unmoored Tempt outcomes** | **6**, including the always-eligible floor | **drafted, §7b — the revision-1 blocker is closed** |
-| **Eligibility rules** | **6** — one per unmoored outcome; 5 scene-state gates + 5 consumption flags + 1 always-eligible | drafted, §7b |
+| **Unmoored Tempt outcomes**, opening phase | **6** (the disguised floor replaced by `unm.adverse_event_deferred`) | drafted, §7b |
+| **Unmoored outcomes, later phases** | **~2 phases × ~4 = ~8, UNAUTHORED** | **the revised gap — §7f state 4** |
+| **Eligibility rules** | **6 for the opening**, plus one per later-phase outcome | drafted for the opening |
+| **Non-empty-eligibility ship gate** | 1 static check | specified, §7f |
 | **Party-stance profiles** | **8** — two each for four parties | drafted, §6a |
 | **Causal mechanisms** | **1** (`witness_present`) | drafted; reusable across stories |
 | **Ordinary readings**, `boundary` slot | 5 | drafted, §3a |
 | **Ordinary fallback** | 1 | drafted, §3c |
 | **Scope lexicon anchors** | ~12 phrasings | grows by observation, not guessed up front |
-| **Total authored entries** | **~52** | of which ~9 are reusable engine-wide |
+| **Total authored entries** | **~60** | of which ~9 are reusable engine-wide |
 
 Ordered for a first story:
 
 1. **Ids on the ~4 additional facts** a memory wish could target. Smallest task, unblocks §1.
-2. **The unmoored set and its eligibility rules** — now drafted rather than pending, and they must land
-   together, because the set without eligibility repeats and eligibility without the floor can empty.
+2. **The unmoored sets and their eligibility rules** — the opening phase is drafted; **later phases are not**, and
+   the set without eligibility repeats while eligibility without phase coverage goes empty (§7f). They must land
+   together with the ship gate that proves non-emptiness.
 3. **The eight stance profiles**, which are the variety answer now that deriving stance is forbidden.
 4. **`boundary` only**, with the other three slots on the fallback and the coverage signal naming them.
 5. **The lexicon**, extended by watching what players actually type.
@@ -384,10 +467,11 @@ Ordered for a first story:
 eligibility (the **state**-based eligibility above already supplies variety, and physics can wait); the other
 three ordinary slots.
 
-**Revised volume verdict: ~52 authored entries, of which ~9 are reusable.** That is a week of editorial work,
-not a content project — and it is bounded, because the fallback makes partial coverage shippable. The estimate
-went **up** from revision 1 (which counted neither the unmoored set nor stance profiles, and wrongly treated
-stance variety as free), and it is now honest.
+**Revised volume verdict: ~60 authored entries, of which ~9 are reusable.** That is a week of editorial work,
+not a content project — and it is bounded, because the fallback makes partial coverage shippable. The estimate has gone **up twice** — revision 1 counted neither the unmoored set nor the stance profiles and
+treated stance variety as free; revision 2 scoped the unmoored set to one phase without noticing. Each correction
+made it larger and more honest, which is the expected direction for an estimate that started from a design rather
+than from material.
 
 ## Recommendation
 
@@ -395,9 +479,12 @@ stance variety as free), and it is now honest.
 rather than bulk, the fallback makes partial coverage shippable, and the one real blocker
 (`unmoored_wish`) is a bounded authoring task rather than a design unknown.
 
-**The revision-1 blocker is closed.** `unmoored_wish` is authored (§7), with state-based eligibility and an
-always-eligible floor, so the most common vague wish in the game has a declared answer and the compiler can never
-face an empty eligible set.
+**The revision-1 blocker is closed for the opening phase.** `unmoored_wish` is authored (§7) with state-based
+eligibility, so the most common vague wish has a declared answer where the story starts.
+
+**A narrower blocker replaces it:** there is **no always-eligible favorable outcome**, and there cannot be one
+without a refusal or an invention (§7f). Coverage is therefore a **per-phase authoring obligation** enforced by a
+static ship gate, and **Issue 2 onward has none authored**.
 
 **What I would now hold before building:** the ~4 additional proposition ids and the eight stance profiles. Both
 are small, both are prerequisites rather than nice-to-haves — the first because §1's exact readings reference
