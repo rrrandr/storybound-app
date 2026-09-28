@@ -1,4 +1,23 @@
-# B7 — review surface for unresolved Tempt Fate invocations (design note only)
+# B7 — review surface for unresolved Tempt Fate invocations
+
+> ## ✗ REJECTED 2026-09-27 — WRONG PRODUCT. DO NOT BUILD.
+>
+> **The reader must never be asked to adjudicate what happened in their own story.** This note made the
+> player a continuity editor of their own fiction and put them behind the curtain of a mechanic that should
+> feel like the world responding. Roman: *"I was treating this as a continuity-editor problem and put the
+> reader behind the curtain. That is the wrong product."*
+>
+> The error was upstream of the UI: treating *"what did the wish do?"* as a post-hoc editorial question at
+> all. B7 was a faithful implementation of that error, which is why it is kept — as the record of a
+> direction that was tried and rejected, not as a backlog item.
+>
+> **Superseded by `_consequence_compiler_design_note_2026_09_27.md`:** the consequence is compiled from the
+> card mechanics and the player's entry BEFORE the author writes, so there is nothing left to adjudicate.
+>
+> Everything below is retained unchanged for the record.
+
+---
+
 
 Design only. No UI, no scene generation, no extraction re-enable, no push. **Automatic extraction and
 automatic outcome commitment stay disabled.**
