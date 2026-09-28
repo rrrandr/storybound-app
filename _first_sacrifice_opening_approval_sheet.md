@@ -318,3 +318,18 @@ forgets the twist, Lirael exempt. Rank 10.
   eligible outcome. It says nothing about whether these are good consequences.
 - **The late-Issue-1 phase matrix is not started**, and will not be until this content is reviewed.
 - No code, no model calls, no new mechanics, no push.
+
+---
+
+# ⛔ PARTS 1 AND 2 ARE WITHDRAWN (2026-09-28, after review)
+
+The unmoored outcome set above was authored at **Petition amplitude**, not Tempt amplitude. The rule it was
+built on (`public/app.js:75596`) is gated `!isTempt && vw.guaranteedFirst` and exists, by its own comment, to
+"hold PETITION amplitude so it never becomes a backdoor Tempt". Tempt's declared amplitude is the opposite:
+"MAY bend this world's own laws — mythic, uncanny, impossible".
+
+Everything above at ranks 10 through 4 is therefore the wrong size, and the ladder derived from it with it.
+Part 1's precise example also narrowed "the assembly" to exclude four people who were standing in it.
+
+**Do not review Parts 1 and 2 as proposals.** See `_tempt_amplitude_correction.md`.
+Parts 2a, 3 and 4 stand only as far as the tie-resolution method and the precision policy go.
