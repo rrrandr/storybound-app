@@ -9,6 +9,9 @@ the planner from assembling a rupture out of ordinary parts, or inventing canon 
 **The rule in one line: the planner SELECTS; it never AUTHORS.** Everything durable is an authored id. The
 planner's entire output is a set of references.
 
+**Revision 3 (2026-09-27).** Two final corrections: a fallback may validly have **no** observable result (§5),
+and a causal mechanism licenses **only its own authored delta** (§3).
+
 **Revision 2 (2026-09-27).** Three changes from Roman. The absent-party boundary was too blunt and is replaced
 (§3); selection precedence is made explicit so "highest priority" cannot override what the player actually wrote
 (§4); and the fallback's author-facing consequence is stated (§5).
@@ -78,11 +81,25 @@ The real prohibition is narrower and is about **interiority and agency**, not ab
 So: *the letter is on his desk* is a permitted delta. *He will read it*, *he now knows*, *he softens toward her*
 are not — unless a **declared causal mechanism** says so.
 
-**A declared causal mechanism is itself authored**, with its own trigger and effect: `message_delivered`
-(a message reaching a party may then change that party's knowledge of a declared proposition),
-`witness_present` (a party staged as witnessing an act may then hold knowledge of it), and so on. The mechanism
-is the authored bridge between a local fact and someone's interior state. Without one, the bridge does not
-exist, and the absent person's response belongs in `open[]` where the next planner can see it standing.
+**A declared causal mechanism is itself authored**, with its own conditions and its own single effect. And it is
+deliberately **narrow**:
+
+> **A causal mechanism licenses only the exact authored atomic delta it declares, once its own conditions hold.
+> It is not a general inference rule.**
+
+Worked, because this is the place a mechanism would otherwise become a licence to infer anything:
+
+| mechanism | may establish | does **not** establish |
+|---|---|---|
+| `message_delivered` | `message_receipt`, **if** the story declared that delivery condition | that the recipient **read** it, **understood** it, **believed** it, **consented**, **softened**, or **will act** |
+| `witness_present` | that a party staged as witnessing holds knowledge of the **declared** act | what they think of it, what they will do, or what they will tell anyone |
+
+Each of those withheld effects needs its **own** separately declared mechanism with its **own** conditions. A
+chain of four inferences requires four declared mechanisms, each of whose conditions actually hold — which is
+exactly the friction that keeps a story from quietly acquiring a theory of mind it never authored.
+
+The mechanism is the authored bridge between a local fact and one specific consequence. Without one, the bridge
+does not exist, and the absent person's response belongs in `open[]` where the next planner can see it standing.
 
 That preserves ordinary indirect action while keeping a bounded delta list from manufacturing off-screen
 mind-reading — which is the same error the extractor made from prose, arriving by a different route.
@@ -141,8 +158,19 @@ The honest case, and it will be common early. The turn is **not** dropped and no
 ### What the author may render on a fallback
 
 The fallback is not a dead turn, and the author is not told to write around it. **It may render the attempted or
-enacted local move and its immediate observable result** — the hand on the table, the letter set down, the words
-said and the pause after them. That is what the record establishes, and it is enough to write a scene from.
+enacted local move and whatever observable result the record carries** — the hand on the table, the letter set
+down, the words said and the pause after them. That is what the record establishes, and it is enough to write a
+scene from.
+
+**`immediateChange: none_observable` is valid on a fallback**, and an earlier draft of proof 12b wrongly required
+otherwise. Requiring a visible result would have contradicted `unheard`, weak turns, hesitation, and a failed
+attempt — all cases where *nothing visible happened* is the truthful reading. **A satisfying scene can establish
+only that the protagonist attempted something, or withheld it, while leaving the world's response open.** That is
+a real scene: the move was made, nobody reacted yet, and the question of whether anyone will is standing in
+`open[]`.
+
+What a fallback must carry is a **story outcome** — an `acknowledgement` and a `responseStance` — not a visible
+change.
 
 **It must not:**
 
@@ -171,6 +199,7 @@ Dry controls, zero provider calls, in this repo's existing style. Each is stated
 | 4 | **delta closure** | a `deltaId` outside the story's delta table is rejected; a composite whose member list the planner altered is rejected as a whole |
 | 5 | **bound** | more deltas than the class cap is rejected, and the cap is read from the class, not hard-coded in the proof |
 | 6 | **no off-screen interiority** | a delta asserting a non-participant's private state, knowledge, intention, consent, stance or later action **without** a declared causal mechanism is rejected — and the **same** delta **with** one is accepted, so the proof is not vacuous. Its pair: a local observable fact touching an absent party's property or space (a letter left on Julian's desk) **is** permitted, and that party's response lands in `open[]` |
+| 6c | **mechanisms are narrow** | a declared mechanism licenses **only** its own authored delta: `message_delivered` yields `message_receipt` and is **refused** for read / understood / believed / consented / softened / will-act. A four-step inference requires four declared mechanisms whose conditions each hold, asserted by accepting the chain only when all four are declared |
 | 6b | **no chaining** | a delta may not take another delta in the same record as its input — the other shape a planner-assembled rupture would need |
 | 7 | **rupture unreachable** | no input to the ordinary policy yields `magnitude: 'rupture'`; the attempt is refused, not clamped |
 | 8 | **no free text** | source-level: the planner's output shape contains no free-text field, and every displayed label resolves from an authored table |
@@ -180,14 +209,16 @@ Dry controls, zero provider calls, in this repo's existing style. Each is stated
 | 10 | **the three draws, and only three** | source-level: seeded draws exist at exactly the three approved sites; a fourth call site fails the proof |
 | 11 | **fallback** | with no matching reading, a record exists, `durableDeltas` is empty, prior `open[]` entries survive, and `no_declared_consequence_fit` carries its class/slot key |
 | 12 | **fallback does not invent** | the fallback path is driven to fire and asserted to add no delta, close no open question, and change no entity state |
-| 12b | **fallback renders something** | the fallback record still carries an acknowledgement, a stance and an immediate observable change, so the author has a scene to write — a fallback must not degenerate into an empty turn |
+| 12b | **fallback carries a story outcome** | the fallback record carries a non-empty `acknowledgement` and `responseStance`, and adds **no** durable fact — so the author has a scene to write without anything being invented. It does **not** assert anything about `immediateChange` |
+| 12c | **`none_observable` is valid and does not erase the turn** | a fallback with `immediateChange: 'none_observable'` is **accepted**, its record exists, the turn remains registered, and the author still has the attempt-or-withholding to render. Run for the cases where it is the truthful reading — `unheard`, a weak turn, hesitation, a failed attempt — so the proof covers why the requirement was wrong, not merely that it was dropped |
 | 13 | **apparatus boundary** | an apparatus-addressed submission produces **no record** and leaves story state byte-identical; a world-addressed impossible submission produces a record — the pair together, so neither half passes alone |
 | 14 | **validation is pre-prose** | every rejection above occurs before any generation request; asserted by source order and by a zero-dispatch network gate |
 
-Proofs 6, 6b and 9b carry the most weight. **6** is the only thing standing between indirect action and
+Proofs 6, 6b, 6c and 9b carry the most weight. **6** is the only thing standing between indirect action and
 off-screen mind-reading, and it must be run as a **pair** — the mechanism-less assertion rejected *and* the
-mechanism-backed one accepted — or it proves only that something was refused. **6b** closes the chaining route to
-the same place. **9b** is what makes specificity real: if flipping the authored priorities changes which reading
+mechanism-backed one accepted — or it proves only that something was refused. **6b** closes the chaining route to the same place, and **6c** stops a single
+declared mechanism becoming a general inference licence — the failure that would make mechanisms a loophole
+rather than a bridge. **9b** is what makes specificity real: if flipping the authored priorities changes which reading
 wins, then priority is still in charge and the player's wording is not.
 
 ---
