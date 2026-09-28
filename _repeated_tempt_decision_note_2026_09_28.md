@@ -1,11 +1,73 @@
 # Decision note — repeated paid Tempt Fate use
 
-Decision framing only. No code, no calls, no push, no recommendation. **The editorial build is stopped until this
-is decided:** until then the claimed coverage gate is not sufficient.
+> ## ✔ DECIDED 2026-09-28 — OPTION 1, with an exception
+>
+> **Tempt Fate may be used ONCE PER SCENE. Petition Fate remains independently available in that same scene.**
+> Tempt may be used again in the next scene, and its **existing consecutive-scene escalation and cost continue to
+> govern that use** — the rising cost belongs to consecutive Tempt *scenes*, not to repeated clicks inside one.
+>
+> A second Tempt attempt in the same scene is **rejected before payment**: no Fortune consumed, no spend reserved,
+> no second invocation created. **This is a mechanic rule, not an ambiguity penalty** — it says nothing about how a
+> wish is worded and changes nothing about the player-favorable ambiguity policy.
+>
+> **Consequences for the design, recorded below:** the repeatable-grammar requirement is dropped entirely (§D1),
+> the guard is keyed to `sceneUid` (§D2), and cross-mechanic ordering is specified (§D3). No finite pool, no new
+> counter, no repeatable outcome grammar.
+
+Decision framing only for the options; the decision itself is recorded above. No code, no calls, no push.
 
 **Revision 2 (2026-09-28).** Two corrections. Ordering is **seal order**, not commit-completion order — revision 1
 said "commit order", which would let latency decide canon (Requirement A). And **Option 3 needs a terminal rule**:
 an axis with a ceiling exhausts, so it cannot honestly promise "never not here" (3t).
+
+## D1. What the decision removes
+
+Option 1 was the only option under which **Requirement B disappears**, and it does:
+
+- **No repeatable consequence grammar.** No axes, no ceilings, no per-step effects, no step ranking, no instance
+  identity for repeat steps. Every unmoored outcome stays `exclusive`.
+- **No finite scene-local pool**, and therefore **no fourth counter** beside resonance, saturation and volatility.
+- **The corrected reusability rule from packet revision 5 is withdrawn.** "Every valid cell must retain a
+  per-invocation reusable outcome" existed only because a second Tempt could occur in the same cell. It cannot now.
+  **Coverage reverts to: every valid cell must have at least one eligible outcome.**
+- **Empty-set state 5 ("a second Tempt in the same scene") is no longer reachable.** States 1–4 remain.
+
+What the decision does **not** remove: Requirement A. Seal-order serialization is still needed, because **Petition
+can still be sealed in the same scene as Tempt** — see §D3.
+
+## D2. The guard must be keyed to `sceneUid`
+
+**Not `tempt_fate_invoked_this_turn`, and not array position.**
+
+| candidate | why it fails |
+|---|---|
+| `tempt_fate_invoked_this_turn` | a per-**turn** boolean cleared at several boundaries (`:236571`, `:237368`, `:242293`, `:258318`, `:258585`, `:319055`). "Turn" and "accepted scene" are not the same unit, and a clear at the wrong boundary silently re-opens the window |
+| `state.scenes.length` or an index | **position is not identity** — the OAS archive splices into `state.scenes`, which is the defect Track A removed. A guard keyed to position would mis-fire exactly when an archive lands |
+| **`sceneUid`** | **stable for the life of the scene record**, minted before the first await, survives reload, archival movement and revision. Track A built it and this is a direct consumer |
+
+**The rule:** an accepted Tempt invocation records the `sceneUid` it was sealed against. A second attempt whose
+current `sceneUid` matches a recorded one is **declined at the invocation entry, before any cost path runs**.
+
+A scene revision does **not** re-open the window: a revision bumps `projectionRevision` and keeps the `uid`, which
+is precisely why the uid rather than the hash is the key.
+
+## D3. Cross-mechanic ordering — Tempt and Petition in one scene
+
+Both may be sealed in the same scene, so ordering still matters.
+
+- **Each keeps its own interpretation policy, unchanged.** Tempt ambiguity resolves in the player's favor by
+  max `playerFavorRank`; Petition ambiguity draws from its authored set with player-favorable weight and may carry
+  a twist that exploits only unanchored dimensions. **Neither policy leaks into the other**, and being second in a
+  scene does not change which policy applies.
+- **Their selected consequences enter ONE shared, monotonic Fate-invocation sequence at seal time.** Not two
+  per-mechanic sequences — one order, because they act on the same story state.
+- **Whichever is sealed second selects against the first's COMMITTED consequence**, never stale scene state. If
+  Petition seals first and defers the review, a Tempt sealed afterwards must see that deferral as already true
+  when it evaluates eligibility.
+- **Seal order, not completion order** (Requirement A), so a Petition whose generation is still in flight does not
+  let a later-sealed Tempt resolve ahead of it.
+
+The practical shape: one sequence, two policies, and eligibility always read after the previous seal has persisted.
 
 ## What the trace established
 

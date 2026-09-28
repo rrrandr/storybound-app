@@ -18,12 +18,13 @@ Its only purpose: decide whether Stage 3 deserves implementation, and what a min
 
 4. **`playerFavorRank` ranks the COMPLETE authored package**, not the headline grant — §7e. My own ranking is
    re-examined against that rule.
-> **EDITORIAL BUILD STOPPED (2026-09-28).** Revision 5's trace turned up a feasibility blocker, not one more
-> authored entry: repeated Tempt use has **no defined repeat semantics**, and "reusable" cannot mean re-establishing
-> the same durable fact. The product choice is framed in
-> **`_repeated_tempt_decision_note_2026_09_28.md`** and must be made before the phase matrices and outcome sets are
-> authored — Option 3 there changes what every reusable entry must declare, and Option 1 removes the requirement
-> entirely. **Until it is decided, the coverage gate in §7f is not sufficient.**
+> **EDITORIAL BUILD RESUMED (2026-09-28) — the product decision is made.** **Tempt Fate is once per scene**, with
+> Petition independently available in the same scene; consecutive-scene escalation continues to govern the next
+> use; a second attempt is declined **before payment**. See `_repeated_tempt_decision_note_2026_09_28.md`.
+>
+> **What that removes from this packet:** the per-invocation reusability requirement (revision 5) is **withdrawn**;
+> coverage reverts to **"every valid cell has at least one eligible outcome"**; empty-set **state 5 is no longer
+> reachable**; and there is no repeatable grammar, no finite pool and no new counter. States 1–4 remain.
 
 **Revision 5 (2026-09-28).** A read-only production trace of the **Tempt Fate usage horizon**, because the
 coverage guarantee depended on an untested recurrence assumption. **The assumption was wrong** — see §7i. The
@@ -495,7 +496,7 @@ nothing declared and favorable left — so an always-eligible outcome is not mer
 | 2 | **Late Issue 1** — after `family_accusation`, `inquiry_opened`, the review held, `julian_jurisdiction_challenge` made and custody revealed | all five gates closed **by story progress alone**, regardless of consumption |
 | 3 | **A private two-party scene early on** | the assembly is not staged, no review is pending, `interrogation_interrupted` has not occurred — several gates fail at once |
 | 4 | **Issue 2 and beyond** | **every eligibility condition in this set references Issue 1 events.** There are currently *zero* unmoored outcomes authored for any later issue |
-| **5** | **A SECOND TEMPT IN THE SAME SCENE** | every drafted entry is consumed once per story or per adverse row, and no predicate changes between invocations (§7i). The second invocation finds the same cell with one fewer eligible outcome, and the fifth finds none |
+| ~~5~~ | ~~A second Tempt in the same scene~~ | **NO LONGER REACHABLE** — Tempt is once per scene and a second attempt is declined before payment (decision, 2026-09-28) |
 
 **State 4 is the one that matters most and I under-stated it before.** I presented this set as covering "First
 Sacrifice"; it covers **First Sacrifice's opening**. Unmoored coverage is needed **per story phase**, not per
@@ -517,6 +518,7 @@ For `issue1.opening`, authored:
 | dimension | values | source |
 |---|---|---|
 | `phase` | `issue1.opening` | the arc's declared phases |
+| `jurisdictionChallengeMade` | true / false | `julian_jurisdiction_challenge` held? **(added in §7j — it gates rank 7 and was missing)** |
 | `accusationMade` | true / false | `family_accusation` held? |
 | `inquiryOpened` | true / false | `inquiry_opened` held? |
 | `reviewPending` | true / false | `dohkar_preliminary_review` scheduled and unheld? |
@@ -524,8 +526,8 @@ For `issue1.opening`, authored:
 | `custodyRevealed` | true / false | `the_answer_institutional` revealed to the assembly? |
 | `assemblyStaged` | true / false | declared scene-context predicate |
 
-**2⁶ = 64 cells**, of which some are **invalid by the plan's own ordering** (an inquiry cannot be open before the
-accusation in this arc), so the authored matrix is smaller — on inspection roughly 20–30 valid cells. **Invalid
+**2⁷ = 128 cells**, of which many are **invalid by the plan's own ordering** (an inquiry cannot be open before the
+accusation in this arc), so the authored matrix is much smaller — on inspection roughly 20–35 valid cells. **Invalid
 cells are declared invalid**, not silently skipped, so the gate cannot pass by shrinking its own domain.
 
 ### The requirement, and how consumption is handled
@@ -536,21 +538,15 @@ Consumption is deliberately **not a dimension** — making it one would multiply
 and turn a reviewable artifact into a combinatorial table nobody reads. It is handled by a **rule on consumption
 scope** instead — and §7i's trace forces that rule to be stricter than revision 4 stated:
 
-> **Every valid cell must retain at least one eligible outcome that is GENUINELY REUSABLE — available on every
-> invocation within the same scene and state — or the cell must declare its own such outcome.**
+> **Every valid cell must have at least one eligible unmoored outcome.**
 
-**`once_per_scene` does NOT satisfy this, and revision 4 was wrong to say it might.** Production permits repeated
-Tempt invocation inside one accepted scene (§7i), and a `once_per_scene` outcome does not replenish until the *next*
-scene — so the second invocation in a scene finds it already spent, in an unchanged cell. **`once_per_adverse_row`
-fails for the same reason**: no new adverse row appears mid-scene.
+**Revision 5's stricter rule — "at least one GENUINELY REUSABLE outcome per cell" — is withdrawn.** It existed
+solely because a second Tempt could land in the same cell within one scene. **Under the once-per-scene decision it
+cannot**, so `once_per_story` and `once_per_adverse_row` scopes are sufficient and the drafted entries stand as
+authored.
 
-**Do not call a once-consumed outcome replenishing.** The only scope that discharges the obligation is one available
-**per invocation** — repeatable within a scene, bounded by its own conditions rather than by consumption.
-
-**Measured against that rule, the drafted opening set does NOT yet satisfy it.** All six entries are consumed once
-per story or per adverse row, so a **second vague Tempt in the same scene already reaches an empty eligible set** in
-§7b as drafted. That is an authoring gap of exactly the kind §7f exists to name — not a runtime problem, and not one
-to solve with a floor.
+Consumption still is not a dimension: it now simply **advances with the story**, one Tempt per scene, which is the
+sequence §7d already walks.
 
 ### What the gate does and does not prove
 
@@ -568,6 +564,40 @@ would have to act on something that is always present, and nothing in a story is
 
 ---
 
+## 7j. Resumed editorial pass — coverage re-derived under one Tempt per scene
+
+With repeats gone, the question is simply whether **every valid cell of the opening matrix has an eligible
+outcome**. Working the six drafted entries against the declared predicates:
+
+| outcome | eligible when |
+|---|---|
+| `unm.band_unremarked` (10) | `!accusationMade` |
+| `unm.witness_dispersal` (9) | `assemblyStaged && !inquiryOpened` |
+| `unm.procedural_delay` (8) | `reviewPending` |
+| `unm.julian_standing_questioned` (7) | `interrogationOccurred && !jurisdictionChallengeMade` |
+| `unm.custody_unraised` (6) | `!custodyRevealed` |
+| `unm.adverse_event_deferred` (4) | some adverse row scheduled and unheld |
+
+**A cell is uncovered only when all six fail at once**, which requires: the accusation made, the inquiry open or
+the assembly not staged, no review pending, the jurisdiction challenge already made, custody revealed, and no
+adverse row outstanding. That is **late Issue 1** — the same empty-set state 2 already recorded, now with its
+boundary drawn exactly.
+
+### Two findings from the pass
+
+1. **The matrix is missing a predicate.** `unm.julian_standing_questioned` is gated on
+   `julian_jurisdiction_challenge` not yet being made, and that is **not one of the six declared dimensions**. The
+   opening matrix needs **seven**: the six plus `jurisdictionChallengeMade`. 2⁷ = 128 raw cells, still ~20–35 valid
+   after the plan's ordering invalidations. Cheap to fix, and it would have made the gate pass on an incomplete
+   domain — the exact failure mode the "declare invalid cells explicitly" rule exists to catch.
+2. **Early-phase coverage is good; late-phase coverage is the gap.** Before the accusation, rank 10 always covers.
+   Through the middle, 9, 8 and 7 cover. **After the jurisdiction challenge, with custody revealed and nothing
+   scheduled, the set empties** — and that is precisely where a second phase's outcome set belongs, which the
+   phase-scoping requirement already called for.
+
+**No new mechanism is needed for either.** One added predicate, and the late-phase outcome set that was already on
+the list.
+
 ## 5. The revised minimum viable set, in actual authoring units
 
 | unit | count | status |
@@ -578,7 +608,8 @@ would have to act on something that is always present, and nothing in a story is
 | **Tempt twists / refusals** (exact-reading only) | 2 | drafted, §1c |
 | **Unmoored Tempt outcomes**, opening phase | **6** (the disguised floor replaced by `unm.adverse_event_deferred`) | drafted, §7b |
 | **Unmoored outcomes, later phases** | **~2 phases × ~4 = ~8, UNAUTHORED** | **gap — §7f state 4** |
-| **Per-invocation reusable outcomes** | **≥1 per valid cell, currently 0** | **gap — §7f state 5, forced by the §7i trace** |
+| ~~Per-invocation reusable outcomes~~ | ~~≥1 per valid cell~~ | **requirement withdrawn — Tempt is once per scene** |
+| **Opening-matrix predicates** | **7** (the sixth was missing: `jurisdictionChallengeMade`) | §7j |
 | **Eligibility rules** | **6 for the opening**, plus one per later-phase outcome | drafted for the opening |
 | **Coverage matrices** | **1 per phase** — ~7 declared dimensions, ~20–30 valid cells for the opening | specified, §7f |
 | **Non-empty-eligibility ship gate** | 1 static check, exhaustive **over the declared matrix only** | specified, §7f |
@@ -587,7 +618,7 @@ would have to act on something that is always present, and nothing in a story is
 | **Ordinary readings**, `boundary` slot | 5 | drafted, §3a |
 | **Ordinary fallback** | 1 | drafted, §3c |
 | **Scope lexicon anchors** | ~12 phrasings | grows by observation, not guessed up front |
-| **Total authored entries** | **~65** | of which ~9 are reusable engine-wide |
+| **Total authored entries** | **~60** | of which ~9 are reusable engine-wide |
 
 Ordered for a first story:
 
