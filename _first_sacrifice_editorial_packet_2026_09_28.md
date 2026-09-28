@@ -149,7 +149,7 @@ UNCOVERED   : 0
 | 10 | `unm.band_unremarked` | 8 | — | |
 | 9 | `unm.witness_dispersal` | 12 | — | |
 | 8 | `unm.procedural_delay` | 12 | — | |
-| 8 | `unm.restriction_unnamed` | 4 | **1** | *phase extension* |
+| 5 | `unm.restriction_unnamed` | 4 | **1** | *phase extension* |
 | 7 | `unm.julian_standing_questioned` | 16 | **1** | |
 | 6 | `unm.custody_unraised` | 12 | **1** | |
 
@@ -203,7 +203,14 @@ exact sets, whole-package ranks. Each is grounded in a real late-row event fact.
 - **Stance:** `stance.chayr.procedural` on the inquiry Chayr.
 - **Mechanism:** none required — no non-participant's interior state is asserted.
 
-### `unm.restriction_unnamed` — rank 8
+### `unm.restriction_unnamed` — rank 5
+
+> **Re-ranked from 8 (2026-09-28).** It was drafted tied with `unm.procedural_delay`; the tie was rejected,
+> because two eligible outcomes at one rank means favor stops deciding and a seeded tie-break decides instead.
+> Compared as complete packages the two differ on two declared fields — durability (`bounded` vs `persists`)
+> and how much adverse material reaches the world — with no compensating advantage, so they take distinct
+> ranks. Full comparison in `_first_sacrifice_opening_approval_sheet.md` §2a. **Eligibility, facts, affected
+> and unchanged sets, cost and wording anchors are all unchanged by the re-rank.**
 
 - **Serves:** *"I wish they'd leave me alone"*, *"let me out of this"*. Unanchored.
 - **Eligibility:** U1 with the restrictions live — `accusationMade ∧ jurisdictionChallengeMade ∧

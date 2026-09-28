@@ -55,6 +55,13 @@ wish gets to say who is affected.
 refused, and never quietly downgraded. It is granted at the top of what Fate has on offer. What it loses is
 **authorship**, not favor.
 
+> **And the guarantee's other half, stated deliberately rather than left to emerge:** precise Tempt wording
+> grants the player **control over the target and the scope — it does not guarantee a safer total package.**
+> Any cost attached to a precise wish must be **intrinsic to that exact authored outcome**, arising from what
+> was actually asked for, and never a penalty for having been precise. `unmourned_loss` is not a charge for
+> clarity; it is what it means for Seren to forget what she paid. A player who asks precisely is buying
+> control, and control includes the power to choose something that costs her.
+
 ---
 
 # Part 2 — Fate-chosen outcomes, opening phase
@@ -118,30 +125,6 @@ of escapes.
 
 ---
 
-### Rank 8 — `unm.restriction_unnamed`  *(extended to the opening 2026-09-28)*
-
-**Reaches it:** *"I wish they'd leave me alone."* · *"Let me out of this."*
-
-**Reading:** Fate-chosen (unmoored).
-
-**Therefore:** the Dohkar names the investigation but **does not name the restrictions aloud in this scene.**
-She is not publicly bound in front of witnesses. The restrictions exist and are in force — they are simply not
-spoken here.
-
-**Cost:** none. **Open:** when the restrictions are named, and before whom.
-
-**Explicitly NOT implied:** that the restrictions were lifted, softened, accepted, negotiated, or understood
-by anyone who was not in the exchange. Silence about a restriction is not agreement to it. **The scene must
-end with it still owed** — if the prose lets the silence read as resolution, the outcome has been authored
-wrong.
-
-**Why rank 8 is fair:** identical in weight to `unm.procedural_delay` and for the same reason — real relief,
-no cost, no permanence. It is not ranked with 9 or 10 because **nothing is denied to the record**; the
-restriction is fully intact, only unvoiced. A tie at 8 is correct here: the two are genuinely
-player-equivalent, differing in flavor rather than in favor.
-
----
-
 ### Rank 7 — `unm.julian_standing_questioned`
 
 **Reaches it:** *"He shouldn't be the one asking me this."* · *"Who is he to question me?"*
@@ -185,6 +168,34 @@ structural. Correctly the second-lowest.
 
 ---
 
+### Rank 5 — `unm.restriction_unnamed`  *(extended to the opening 2026-09-28; re-ranked from 8, see Part 2a)*
+
+**Reaches it:** *"I wish they'd leave me alone."* · *"Let me out of this."*
+
+**Reading:** Fate-chosen (unmoored).
+
+**Therefore:** the Dohkar names the investigation but **does not name the restrictions aloud in this scene.**
+She is not publicly bound in front of witnesses. The restrictions exist and are in force — they are simply not
+spoken here.
+
+**Cost:** none. **Open:** when the restrictions are named, and before whom.
+
+**Explicitly NOT implied:** that the restrictions were lifted, softened, accepted, negotiated, or understood
+by anyone who was not in the exchange. Silence about a restriction is not agreement to it. **The scene must
+end with it still owed** — if the prose lets the silence read as resolution, the outcome has been authored
+wrong.
+
+**Why rank 5 is fair:** this is the entry that lets the most adverse material through. The investigation
+**is** named aloud; the restrictions **are** fully in force; the relief is bounded to this scene and expires
+with it. Compare rank 6, where a fact never reaches the assembly at all. Here the fact reaches them — only
+its terms are withheld. It sits above the floor because not being publicly bound in front of witnesses is
+genuine protection, and below everything else because it is the least of the protections on offer.
+
+*(This entry was drafted at rank 8, tied with `unm.procedural_delay`. The tie was wrong and is resolved in
+Part 2a.)*
+
+---
+
 ### Rank 4 — `unm.adverse_event_deferred`
 
 **Reaches it:** a vague wish in a state where every other outcome above has already been spent.
@@ -202,6 +213,69 @@ disguised refusal. This replaces it: the player who spent Fortune always gets a 
 not happen to her, never a shrug.
 
 ---
+
+---
+
+## Part 2a — The rank-8 tie, resolved
+
+**The tie was not acceptable and has been removed.** Two eligible outcomes sharing a rank means that when
+both are available and nothing higher is, *favor stops deciding* and a seeded tie-break decides instead. For
+Tempt that is already ruled out: Fate's danger lives in what was asked, never in how it was phrased, and a
+coin-flip between two different consequences is exactly the hidden re-phrasing the policy forbids.
+
+### The two packages, compared as wholes
+
+| | `unm.procedural_delay` | `unm.restriction_unnamed` |
+|---|---|---|
+| **granted fact** | the preliminary review is **deferred** | the restrictions are **not named aloud** this scene |
+| **the adverse thing itself** | **removed from this scene** and rescheduled | **fully in force, and its subject is named** — only its terms are withheld |
+| **durability** | **`persists`** — the deferral is a real change to when it happens | **`bounded`** to this scene — it expires with the scene |
+| **affected** | the review's timing | the public record for this scene only |
+| **unchanged** | every party's knowledge and stance | every party's knowledge; **the restrictions themselves** |
+| **open** | whether the delay reads as favor or as suspicion | when the restrictions are named, and before whom |
+| **intrinsic cost** | none | none |
+| **consumed** | once, while a review is scheduled and unheld | once, and the relief lapses at scene end |
+
+**They are not equivalent, and not merely different in flavour.** They differ on two declared fields:
+
+1. **Durability — `persists` vs `bounded`.** One moves an adverse event in the story's actual schedule. The
+   other withholds a sentence for the length of one scene, after which nothing has changed.
+2. **How much adverse material reaches the world.** `procedural_delay` keeps the proceeding out of the scene
+   entirely. `restriction_unnamed` lets the investigation be named and withholds only its terms.
+
+On both axes `procedural_delay` is strictly more favorable, with no compensating advantage on the other
+side — same cost (none), same consumption shape. **So they take distinct ranks: `procedural_delay` stays 8;
+`restriction_unnamed` moves to 5.**
+
+### Where 5 comes from, rather than 7
+
+Placed by the same comparison against every entry between, which is what puts it at the bottom rather than
+just one step down:
+
+- **vs rank 7 (`julian_standing_questioned`):** rank 7's good is structural and persists (his standing to
+  question her is unsettled) even after paying a real cost. `restriction_unnamed`'s good is bounded and
+  costless. Persisting-with-cost beats bounded-without, because the bounded one leaves nothing behind.
+- **vs rank 6 (`custody_unraised`):** the close call, and the decisive one. Both withhold something for one
+  scene at no cost. But rank 6 keeps a **fact out of the assembly's hands entirely** — custody is never
+  raised. `restriction_unnamed` lets the fact in: the investigation is named in front of everyone, and only
+  its terms stay unspoken. **Keeping a fact out beats softening how a fact lands.**
+- **vs rank 4 (`adverse_event_deferred`):** rank 4 defers a named beat out of the scene; this one lets the
+  adverse beat happen and mutes part of it. It ranks above 4 only because not being publicly bound in front
+  of witnesses is real protection, where the floor's good is the smallest concrete thing available.
+
+### The resulting ladder, and the standing rule
+
+**10 · 9 · 8 · 7 · 6 · 5 · 4 — seven entries, seven distinct ranks, a total order with no ties.** The
+ordering principle, now explicit: **how much of the adverse thing is kept out of the world, and for how long.**
+Permanent denial to the record (10, 9) beats moving an event (8) beats unsettling authority at a cost (7)
+beats keeping a fact out for a scene (6) beats muting a fact's terms for a scene (5) beats deferring one
+named beat (4).
+
+> **Standing rule for every Tempt set, opening and later: ties are resolved at authoring time, never at
+> runtime.** If two proposed outcomes would share a rank, they are compared as complete packages before
+> shipping and either given distinct ranks or shown to be genuinely interchangeable. A seeded tie-break is
+> permitted only for outcomes that are player-equivalent in every declared field; it is never a way to ship
+> an unmade decision. **The opening set never reaches one, because it has no ties.**
 
 # Part 3 — Player-authored outcomes, for contrast
 
@@ -232,7 +306,7 @@ forgets the twist, Lirael exempt. Rank 10.
 | # | question | why it needs you |
 |---|---|---|
 | **1** | **Is rank 7 below rank 8 correct?** Removing her worst questioner ranks below buying a scene of time, because it invites a jurisdiction fight. | The single ranking judgement that is not mechanical. If you reverse it, the "rank the whole package" principle weakens. |
-| **2** | **Is the tie at 8 acceptable?** `procedural_delay` and `restriction_unnamed` are equal-ranked. | Ties matter: when both are eligible, something other than favor picks. If they are not player-equivalent, one must move. |
+| **2** | **Is `unm.restriction_unnamed` at rank 5 right?** The tie at 8 was wrong and is resolved in Part 2a: it differs from `procedural_delay` on durability (`bounded` vs `persists`) and on how much adverse material reaches the world, so it drops below `custody_unraised` to 5. | The re-rank is mine, from a package comparison. If you read "not publicly bound before witnesses" as worth more than "custody never raised", 5 and 6 swap. |
 | **3** | **Is rank 4 a real floor or still a shrug?** | The previous floor was withdrawn as a disguised refusal. This one names a specific beat that does not happen. Judge whether that reads as worth the Fortune. |
 | **4** | **Does the agency trade read right?** Vague wishes get circumstance at full favor; precise wishes get reach and can do real damage. | This is the product decision underneath all thirteen entries. |
 | **5** | **Is `unm.julian_standing_questioned` on the right side of the interiority line?** It moves Julian's standing, not his mind. | The boundary case the design was built around. |

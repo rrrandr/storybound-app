@@ -20,7 +20,7 @@ const OUTCOMES = [
   { id:'unm.band_unremarked',            rank:10, test: c => !c.accusationMade },
   { id:'unm.witness_dispersal',          rank:9,  test: c => c.assemblyStaged && !c.inquiryOpened },
   { id:'unm.procedural_delay',           rank:8,  test: c => c.reviewPending },
-  { id:'unm.restriction_unnamed',        rank:8,  test: c => c.accusationMade && c.jurisdictionChallengeMade && c.custodyRevealed, ext:true },
+  { id:'unm.restriction_unnamed',        rank:5,  test: c => c.accusationMade && c.jurisdictionChallengeMade && c.custodyRevealed, ext:true },
   { id:'unm.julian_standing_questioned', rank:7,  test: c => c.interrogationOccurred && !c.jurisdictionChallengeMade },
   { id:'unm.custody_unraised',           rank:6,  test: c => !c.custodyRevealed },
 ];
