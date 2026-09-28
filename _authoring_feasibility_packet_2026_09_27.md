@@ -18,7 +18,11 @@ Its only purpose: decide whether Stage 3 deserves implementation, and what a min
 
 4. **`playerFavorRank` ranks the COMPLETE authored package**, not the headline grant — §7e. My own ranking is
    re-examined against that rule.
-**Revision 4 (2026-09-28), final.** Three precision fixes; architecture revision stops here.
+**Revision 5 (2026-09-28).** A read-only production trace of the **Tempt Fate usage horizon**, because the
+coverage guarantee depended on an untested recurrence assumption. **The assumption was wrong** — see §7i. The
+coverage rule is corrected mechanically; no design was expanded.
+
+**Revision 4 (2026-09-28), final on architecture.** Three precision fixes.
 
 6. **`playerFavorRank` may never select among exact readings** — §7g.
 7. **"Enumerate reachable states" is replaced by a bounded authored coverage universe** — §7f is rewritten. The
@@ -437,6 +441,39 @@ story, not a tax on the player.
 refusal in disguise. The fifth row above is a real state with an **empty eligible set**, and §7f treats it as what
 it is.
 
+### 7i. Trace — the real Tempt Fate usage horizon (read-only, production code)
+
+**Question:** can `once_per_scene` discharge the per-cell coverage obligation? That requires at most one Tempt per
+accepted scene.
+
+**Answer: NO. Repeated invocation within one accepted scene is possible, and the codebase already knows it.**
+
+| question | finding | evidence |
+|---|---|---|
+| Can it be invoked more than once in one accepted scene? | **Yes.** `invokeTemptFate(skipConfirm)` (`:256889`) has **no guard on prior invocation** | its entry checks only cost: free credit → `consumeFortuneFavorCharge()` → fortunes balance → purchase modal |
+| What gates repeated use? | **Cost only** — Fortune's Favor charges, `_temptGrantsFreeCredit`, or the fortunes balance. No per-turn, per-scene or per-phase cap exists | grep for a tempt cap/max/limit returns nothing relevant |
+| Do the flag-reading sites gate it? | **No.** The three sites that read `tempt_fate_invoked_this_turn` are a resonance **decay** check (`:11806`), a prose **amplification** directive (`:11915`), and a vulnerability-pulse condition (`:79678`) | none is an invocation guard |
+| Is the flag itself a guard? | **No.** It is a boolean set to `true` (`:256933`) and never tested for already-true before setting | cleared at scene/generation boundaries (`:236571`, `:237368`, …) |
+| Does a second invocation lose data? | **`state.temptFateWish` is a scalar and is OVERWRITTEN** (`:109393`). The **ledger appends** | `_temptFateLedger` is append-only with a monotonic `_temptFateLedgerSeq` and a stable per-proposal id |
+| Does an invocation advance state that changes eligibility before the next scene? | **It advances state, but not any predicate in the matrix.** `consecutive_tempt_fate_count` increments, fate resonance/heat rises, saturation and volatility move — none of which is `accusationMade`, `inquiryOpened`, `reviewPending`, `interrogationOccurred`, `custodyRevealed` or `assemblyStaged` | `:256944` and the resonance block |
+
+**The decisive evidence is a comment already in the code.** `_recordTemptFateEvent` (`:193401`) explains its stable
+id this way:
+
+> *"a caller mid-generation can carry a reference to THIS exact proposal forward and never accidentally resolve to a
+> DIFFERENT wish sealed later while that generation was in flight."*
+
+Multiple wishes sealed per scene — including *mid-generation* — is not hypothetical. It is a race the earlier
+ownership work already fixed, with four dedicated sections in the integration control.
+
+**Two consequences for the coverage rule:**
+
+1. **Repeated Tempts in one scene land in the SAME matrix cell.** No predicate changes between them, so the cell
+   cannot supply variety across repeats.
+2. **The repeat count is bounded only by the player's fortunes** — an economic limit, not a mechanical one. There is
+   no finite repeat index to enumerate, so **a bounded repeat dimension cannot honestly be added** without
+   introducing a hard cap, which would be a design change and is out of scope here.
+
 ### 7f. Where the eligible set can be empty — an authoring gap, not a runtime problem
 
 Every concrete favorable delta needs *something in the story to act on*. Once the conditions are gone, Fate has
@@ -451,6 +488,7 @@ nothing declared and favorable left — so an always-eligible outcome is not mer
 | 2 | **Late Issue 1** — after `family_accusation`, `inquiry_opened`, the review held, `julian_jurisdiction_challenge` made and custody revealed | all five gates closed **by story progress alone**, regardless of consumption |
 | 3 | **A private two-party scene early on** | the assembly is not staged, no review is pending, `interrogation_interrupted` has not occurred — several gates fail at once |
 | 4 | **Issue 2 and beyond** | **every eligibility condition in this set references Issue 1 events.** There are currently *zero* unmoored outcomes authored for any later issue |
+| **5** | **A SECOND TEMPT IN THE SAME SCENE** | every drafted entry is consumed once per story or per adverse row, and no predicate changes between invocations (§7i). The second invocation finds the same cell with one fewer eligible outcome, and the fifth finds none |
 
 **State 4 is the one that matters most and I under-stated it before.** I presented this set as covering "First
 Sacrifice"; it covers **First Sacrifice's opening**. Unmoored coverage is needed **per story phase**, not per
@@ -489,15 +527,23 @@ cells are declared invalid**, not silently skipped, so the gate cannot pass by s
 
 Consumption is deliberately **not a dimension** — making it one would multiply 30 cells by 32 consumption subsets
 and turn a reviewable artifact into a combinatorial table nobody reads. It is handled by a **rule on consumption
-scope** instead:
+scope** instead — and §7i's trace forces that rule to be stricter than revision 4 stated:
 
-> Every valid cell must have at least one eligible outcome whose consumption scope is **not `once_per_story`** —
-> i.e. one that replenishes (`once_per_scene`, or `once_per_adverse_row` like `unm.adverse_event_deferred`) — **or**
-> the cell must declare its own outcome.
+> **Every valid cell must retain at least one eligible outcome that is GENUINELY REUSABLE — available on every
+> invocation within the same scene and state — or the cell must declare its own such outcome.**
 
-That is what makes the guarantee real without an invented floor: the always-available thing is not one universal
-outcome but a **per-cell obligation** the author discharges, and `unm.adverse_event_deferred`'s per-row scope is
-the existing example of the shape.
+**`once_per_scene` does NOT satisfy this, and revision 4 was wrong to say it might.** Production permits repeated
+Tempt invocation inside one accepted scene (§7i), and a `once_per_scene` outcome does not replenish until the *next*
+scene — so the second invocation in a scene finds it already spent, in an unchanged cell. **`once_per_adverse_row`
+fails for the same reason**: no new adverse row appears mid-scene.
+
+**Do not call a once-consumed outcome replenishing.** The only scope that discharges the obligation is one available
+**per invocation** — repeatable within a scene, bounded by its own conditions rather than by consumption.
+
+**Measured against that rule, the drafted opening set does NOT yet satisfy it.** All six entries are consumed once
+per story or per adverse row, so a **second vague Tempt in the same scene already reaches an empty eligible set** in
+§7b as drafted. That is an authoring gap of exactly the kind §7f exists to name — not a runtime problem, and not one
+to solve with a floor.
 
 ### What the gate does and does not prove
 
@@ -524,7 +570,8 @@ would have to act on something that is always present, and nothing in a story is
 | **Tempt ambiguous outcomes**, ranked | 5 | drafted, §1b |
 | **Tempt twists / refusals** (exact-reading only) | 2 | drafted, §1c |
 | **Unmoored Tempt outcomes**, opening phase | **6** (the disguised floor replaced by `unm.adverse_event_deferred`) | drafted, §7b |
-| **Unmoored outcomes, later phases** | **~2 phases × ~4 = ~8, UNAUTHORED** | **the revised gap — §7f state 4** |
+| **Unmoored outcomes, later phases** | **~2 phases × ~4 = ~8, UNAUTHORED** | **gap — §7f state 4** |
+| **Per-invocation reusable outcomes** | **≥1 per valid cell, currently 0** | **gap — §7f state 5, forced by the §7i trace** |
 | **Eligibility rules** | **6 for the opening**, plus one per later-phase outcome | drafted for the opening |
 | **Coverage matrices** | **1 per phase** — ~7 declared dimensions, ~20–30 valid cells for the opening | specified, §7f |
 | **Non-empty-eligibility ship gate** | 1 static check, exhaustive **over the declared matrix only** | specified, §7f |
@@ -533,7 +580,7 @@ would have to act on something that is always present, and nothing in a story is
 | **Ordinary readings**, `boundary` slot | 5 | drafted, §3a |
 | **Ordinary fallback** | 1 | drafted, §3c |
 | **Scope lexicon anchors** | ~12 phrasings | grows by observation, not guessed up front |
-| **Total authored entries** | **~60** | of which ~9 are reusable engine-wide |
+| **Total authored entries** | **~65** | of which ~9 are reusable engine-wide |
 
 Ordered for a first story:
 
@@ -567,6 +614,12 @@ eligibility, so the most common vague wish has a declared answer where the story
 **A narrower blocker replaces it:** there is **no always-eligible favorable outcome**, and there cannot be one
 without a refusal or an invention (§7f). Coverage is therefore a **per-phase authoring obligation** enforced by a
 static ship gate, and **Issue 2 onward has none authored**.
+
+**And the §7i trace adds a second, sharper one:** production allows **repeated Tempt invocation within one accepted
+scene**, gated only by cost, so every valid cell needs at least one **per-invocation reusable** outcome — and the
+drafted set has none. A `once_per_scene` outcome does not help, because the repeat happens *inside* the scene. This
+is the single most consequential correction the trace produced, and it was an assumption the ship gate was silently
+resting on.
 
 **What I would now hold before building:** the ~4 additional proposition ids and the eight stance profiles. Both
 are small, both are prerequisites rather than nice-to-haves — the first because §1's exact readings reference
