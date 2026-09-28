@@ -2,6 +2,17 @@
 
 Design only. No implementation, provider call, scene generation, or push.
 
+**Revision 2 (2026-09-27).** Two corrections from Roman:
+
+1. **What the existing systems do and don't do.** Revision 1 said *"the engine already knew what the turn
+   was, threw it away, wrote prose, then asked a model to read the answer back out."* Too strong, and
+   withdrawn. The existing systems classify and constrain player input before authoring — **input class, risk,
+   and authoring constraints** — but they do **not** consistently establish a durable **consequence**. The
+   compiler formalizes those existing inputs and **adds the missing pre-author consequence-selection stage**,
+   which for ordinary actions does not exist at all today.
+2. **One record per accepted player submission**, not per line of dialogue. A submission may contain an
+   action, speech, weak uncertainty, or a gibberish substitute; they belong in **one coherent record**.
+
 **Supersedes `_consequence_compiler_design_note_2026_09_27.md` as the top-level model.** That note designed a
 *wish-only* therefore ledger. Wishes are not a separate kind of thing — they are the loudest case of a general
 rule. The wish-only note is retained for its Tempt/Petition policy detail, which survives intact here as two
@@ -48,26 +59,55 @@ a story that consistently remembers what their choices changed.
 | `_applyGibberishPolicy` | a three-tier substitution and its author directive |
 | Fate's verdict block (`:75601`) | kernel substitution, partial leads, the first-petition guarantee |
 
-### The finding that shapes the whole design
+### What exists, and precisely what is missing
 
-**This system already exists — as instructions.** `_llClassifyPlayerInput` already sorts every turn into a
-class, `state._playerImpactRead` already computes divergence and must-react *before* the author runs, and
-`_llPlayerInputLaw` already hands the author a policy per class. Fate's verdict logic does the same at
-`:75601`. All of it is *"here is how to read this turn"* passed to a model, and none of it is recorded as a
-fact anyone can later consume.
+**A pre-author layer already classifies and constrains — it does not select a consequence.**
 
-So the compiler is a **relocation, twice over**: it moves an existing classification-and-policy layer from
-**instructions the author interprets** to **a record the author renders and later planners read**. The
-classifiers largely stay; what changes is that their output becomes durable canon instead of prompt text.
+| the engine already establishes, before authoring | the engine does NOT establish |
+|---|---|
+| **input class** — eight of them, from `_llClassifyPlayerInput` | **what the turn did to the world** |
+| **risk and mode** — `literal_safe`, `fate_redirect`, `consequence_without_obedience`, … | which parties changed, and how |
+| **impact signals** — `divergenceScore`, `mustReact`, `fate`, computed before the author runs | what remains open afterwards |
+| **authoring constraints** — what the author may not overwrite (canon, Bibles, names, faces) | what is explicitly unchanged |
+| **slot and handling** — `_classifySayDoSlot`, `_detectWeakTurn`, `_applyGibberishPolicy` | a durable record any later planner can read |
 
-That also explains the extractor's failure in one line: the engine already knew what the turn was, then threw
-that away, wrote prose, and asked a model to read the answer back out of it.
+So the compiler is **two things, not one**:
+
+- a **formalization** of inputs that already exist — the classifiers largely stay, and their output stops being
+  prompt text and becomes recorded fact;
+- **a new stage that does not exist today: pre-author consequence selection.** For card wishes this stage has
+  at least a prose analogue in the verdict block at `:75601`. **For ordinary actions it does not exist at
+  all** — nothing decides, before prose, what an ordinary turn changed. That gap is the substance of this
+  design, not the classification layer.
+
+The extractor's failure reads correctly in that light: the engine knew the turn's *class* and *constraints* and
+never its *consequence*, so the consequence had to be invented somewhere — and it was invented after the fact,
+by a model reading prose, which is the one place it cannot be established.
 
 ---
+
+## The five stages
+
+Explicit, ordered, and all of it before any generation request:
+
+| # | stage | what it produces | exists today? |
+|---|---|---|---|
+| 1 | **Canonicalize** the accepted player submission | `turn.canonical` — one action-plus-speech unit, with any substitution named | partly: gibberish substitution exists; nothing records the canonical form |
+| 2 | **Classify** its mode, risk and applicable mechanic | `inputClass`, `mode`, `risk`, `impactRead`, the mechanic and its policy module | **yes** — `_llClassifyPlayerInput`, `_playerImpactRead`, `_classifySayDoSlot`, `_detectWeakTurn` |
+| 3 | **Select a consequence** under the applicable policy | the chosen reading and its declared consequence | **no — this is the new stage.** A prose analogue exists for cards (`:75601`); for ordinary actions, nothing |
+| 4 | **Record one `therefore` entry** for the whole submission | the append-only record below | **no** |
+| 5 | **Author renders** that entry | prose | the author exists; it currently receives instructions, not an established record |
+
+Stage 3 is the design. Stages 1, 2 and 5 are mostly rewiring; stage 4 is bookkeeping in service of stage 3.
 
 ## The shared `therefore` record
 
 One schema for every mechanism. A wish is not special; it selects a different **policy module**.
+
+**One record per accepted player submission.** Not per line, not per sentence, not one for the action and
+another for the speech. A submission is a single coherent move — the player typed an action and a line, or a
+line alone, or something unparseable that became an in-world substitute — and the record holds those
+**together**, because they were one decision and their consequence is one consequence.
 
 ```
 therefore: {
@@ -95,6 +135,8 @@ therefore: {
     selected:  { readingId, label },
     selectedBy,                                   // see policy modules
     eligibleSet, excluded: [ { id, reason } ],
+    coinApplied: true | false,                    // say_do only; false carries its reason
+    coinSkipReason: null | 'readings_authored:1' | 'readings_authored:3+',
     draw:      { seed: {...}, weights, digest } | null
   },
 
@@ -157,8 +199,8 @@ The mechanism selects the module; the module selects the reading. The schema abo
 |---|---|---|
 | **`tempt_fate`** | its exact declared reading | **resolves in the player's favor**: max `playerFavorRank` in the eligible set, deterministically, not a draw. Ambiguity may not reduce scope, induce refusal, or add a twist — the eligible set excludes every `twist: true`. Only `intrinsicCost` survives. |
 | **`petition_fate`** | its exact declared reading | a draw **weighted toward the player**. If a twist is selected, every dimension in its authored `exploits` must be **absent from `anchors`** — a twist may act only on what the player left open, which makes "never punish a precise wish" checkable rather than aspirational. |
-| **`say_do`** (ordinary wish) | its exact declared reading | **exactly two authored readings, a seeded 50/50** — see the edge case below. No `playerFavorRank`, no twist rules, no refusal semantics. There is no card, so there is no card grammar. |
-| **`say_do`** (ordinary action / dialogue) | the declared reading for its slot (`_classifySayDoSlot`) | the class policy from `_llClassifyPlayerInput`, expressed as a selected reading rather than a directive |
+| **`say_do`** (ordinary wish) | its exact declared reading | **exactly two authored readings, a seeded 50/50** — see the edge case below. With one or three-plus readings the coin does not apply and the turn goes to the **generic ordinary-consequence policy**, which still produces a record. No `playerFavorRank`, no twist rules, no refusal semantics: there is no card, so there is no card grammar. |
+| **`say_do`** (ordinary action / dialogue) | the declared reading for its slot (`_classifySayDoSlot`) | the **generic ordinary-consequence policy**: the class and slot select a declared reading from a small per-story set, defaulting to `modest` or `opens_question` magnitude. This is the stage that does not exist today, and it is where most turns will be decided |
 | **`silence`** | — | a declared reading for "the protagonist did not act", typically `none` or `opens_question` |
 | **`weak_turn`** | — | a declared reading for a low-content turn: `modest` at most, and the strong-delivery rule stays suppressed |
 | **`gibberish_substitute`** | — | the substituted in-world behaviour is the canonical turn; the tier (isolated / mixed / repeated) selects the reading |
@@ -187,13 +229,17 @@ mechanic while appearing to preserve it.
 **The Say/Do ambiguity coin requires exactly two authored plausible readings.** If authoring produces fewer or
 more:
 
-- **do not generalise the probability**;
-- fall through to the story's **ordinary non-wish planning path** for that turn;
-- and **record that no ambiguity coin applied**, with the reason (`readings_authored: 1` or `3`). The record
-  still exists — the turn still has a consequence — it simply was not selected by a coin.
+- **do not generalise the probability** — a uniform draw over three is not a coin, and pretending otherwise
+  changes the mechanic while appearing to preserve it;
+- keep the **"no coin" result** explicitly: `coinApplied: false`, with the reason (`readings_authored: 1` or
+  `3`);
+- and route the turn through the **generic ordinary-consequence policy** — the same defined path an ordinary
+  action takes, which selects a declared reading from the class and slot rather than by chance;
+- **a `therefore` record is still produced.** The turn still has a consequence; it simply was not selected by
+  a coin. "No coin applied" is never "no record".
 
 That turns a thin or over-rich authoring table into a visible, diagnosable condition instead of a silent
-probability change.
+probability change — and it has a defined destination rather than a fall-through.
 
 ---
 
@@ -255,8 +301,11 @@ different mechanism: it commits facts it computed itself, before any model ran.
    unchanged, but this model needs authored readings for *ordinary* turns too, not just cards. The honest
    first cut is probably: rich authored sets for cards, and a small set of generic slot readings for ordinary
    Say/Do, extended per story only where a story needs it.
-2. **Where `none` and `modest` records are allowed to be terse.** A full record per line of dialogue is a lot
-   of ledger. A compact form for low-magnitude records is likely necessary, and its shape is a real decision.
+2. **How terse a low-magnitude record may be.** One record per submission keeps the volume proportionate to
+   play — a long story is hundreds of records, not thousands — but a full-schema entry for a `none` or `modest`
+   turn is still more structure than most turns need. A compact form for low-magnitude records is probably
+   necessary, and deciding what it may omit (`anchors`? `eligibleSet`?) without losing auditability is a real
+   decision.
 3. **Whether `open[]` entries expire.** A question that nobody answers for twenty scenes is either a dangling
    thread or a forgotten one, and the engine should probably have an opinion.
 4. **Rupture classes beyond memory.** Unchanged from the wish-only note: `materialization_possession` is
