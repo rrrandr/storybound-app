@@ -98,7 +98,9 @@ Proposed, for judgement of the **register** before the rest of the set is redone
 went wrong. Julian does not know what he interrogated her about. The presiding Dohkar does not know there is
 anything to rule on. The ceremony, in the memory of every person present, simply *worked*.
 
-Lirael is the open question, and it is a real one — see §4.
+**Lirael is included** — decided in §6 (D1). She was in the assembly, the wording exempted no one, and named
+membership outranks protagonist privilege. So she forgets too: **Lirael does not know the wish twisted, and
+therefore does not know what she is about to be accused of.** The reader is the only one still holding it.
 
 **Why this is the right size:** the accusation has no origin, the review has no subject, and Lirael is the
 only one carrying a fact that indicts her. That is a *story*. The old version was a bookkeeping note.
