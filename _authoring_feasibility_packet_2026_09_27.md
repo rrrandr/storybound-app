@@ -18,6 +18,13 @@ Its only purpose: decide whether Stage 3 deserves implementation, and what a min
 
 4. **`playerFavorRank` ranks the COMPLETE authored package**, not the headline grant — §7e. My own ranking is
    re-examined against that rule.
+**Revision 4 (2026-09-28), final.** Three precision fixes; architecture revision stops here.
+
+6. **`playerFavorRank` may never select among exact readings** — §7g.
+7. **"Enumerate reachable states" is replaced by a bounded authored coverage universe** — §7f is rewritten. The
+   earlier wording promised exhaustiveness over arbitrary story state, which is not a claim a static check can make.
+8. **The equal-top-rank rule is restated in this packet** rather than only in the addendum — §7g.
+
 5. **`unm.no_opening` is withdrawn as an always-eligible floor.** Tested against Roman's criterion it is a
    **refusal in gentler language**, which Tempt ambiguity forbids. Replacing it honestly means **the unmoored set
    no longer has a genuinely favorable always-eligible outcome**, and per instruction I have not invented one:
@@ -372,9 +379,40 @@ And in §1b, `mem.amb.dohkar_forgets_authority` (6) sits below `mem.amb.assembly
 `authority_vacuum`**, not because its reach is smaller — a rite with nobody holding it is a worse world for her
 than a collective that has forgotten one fact. Under headline-only ranking those two would have inverted.
 
-**A note on §1a.** Exact readings are selected by anchors and specificity, never by rank, so their `rank` column
-matters only if two exact readings ever tie on specificity. It is not a selection input there, and I should not
-have implied it was.
+### 7g. `playerFavorRank` is for ambiguous selection ONLY
+
+**Stronger than revision 3's note, which said rank "matters only if two exact readings tie". It must not matter
+even then.**
+
+> **`playerFavorRank` is an input to ambiguous Tempt selection and nothing else. It may never choose among exact
+> readings.** Precise wording is the player's instrument; letting favorability arbitrate it would mean the table
+> quietly overruling what they wrote — the same failure as priority overruling specificity, arriving by a
+> different door.
+
+So when two exact readings satisfy the same anchors at equal specificity:
+
+- **authored priority may resolve it ONLY if the two are equivalent in granted facts, intrinsic costs, and
+  player-facing meaning.** Flavour may differ; consequence may not.
+- **otherwise the table is rejected as an AUTHORING AMBIGUITY** — at authoring/load time, named. Two
+  materially different consequences answering the same precise wording means the author has not yet decided
+  what that wording means, and no runtime rule should decide it for them.
+
+The `rank` column is therefore **removed from §1a's selection semantics entirely**. It is retained in the table
+only as editorial annotation — a note of how the author judged the package — and is never read by selection.
+
+### 7h. Equal top-ranked ambiguous outcomes — the rule, restated here
+
+Carried from the selection-ownership addendum so this packet is self-contained:
+
+> Two ambiguous Tempt outcomes sharing the top `playerFavorRank` may be **seed-tied only if their COMPLETE
+> PACKAGES are equivalent** — affected set, granted proposition, unchanged set, intrinsic cost, and consumed
+> availability. Flavour may differ freely.
+>
+> Otherwise the author must **rank them differently**, or write a **deterministic player-favorable tiebreak** on a
+> named dimension. A non-equivalent seed-tie is an authoring error raised at load, never resolved at compile time.
+
+**In this packet no ambiguous set has a top-rank tie**, and §1b's ranks 10 and 9 are deliberately distinct because
+they grant *different propositions* — which is exactly the non-equivalence the rule catches.
 
 ### 7d. How eligibility produces variety without touching the policy
 
@@ -418,16 +456,59 @@ nothing declared and favorable left — so an always-eligible outcome is not mer
 Sacrifice"; it covers **First Sacrifice's opening**. Unmoored coverage is needed **per story phase**, not per
 story, and that multiplies the unmoored authoring by the number of phases.
 
-**The resolution, per instruction: additional declared outcomes — not a runtime refusal and not a hidden
-downgrade.** Concretely:
+**The resolution: additional declared outcomes, checked against a BOUNDED AUTHORED COVERAGE UNIVERSE.**
 
-- **Non-empty eligibility becomes a ship gate**, not a runtime concern: enumerate the reachable story states for
-  an issue and assert that at least one unmoored outcome is eligible in each. That is a dry, static check over the
-  authored tables and the plan rows — no model, no play-through.
-- **An empty set in a shipped story is an authoring error**, caught by that gate before release, exactly as an
-  undeclared proposition is caught at load.
-- **Phase-scoped unmoored sets**: roughly one small set per arc phase (opening / inquiry / consequence), each with
-  eligibility tied to that phase's own pending conditions.
+Revision 3 said "enumerate the reachable story states". **Withdrawn — that is not a claim a static check can
+make.** Arbitrary runtime story state is not finite and not fully knowable in advance; promising exhaustiveness
+over it would be exactly the kind of guarantee this workstream has spent its time retracting.
+
+Instead: **each phase authors a finite coverage matrix**, and the check is exhaustive **over that declared
+matrix** and says so.
+
+### The coverage universe — declared dimensions
+
+For `issue1.opening`, authored:
+
+| dimension | values | source |
+|---|---|---|
+| `phase` | `issue1.opening` | the arc's declared phases |
+| `accusationMade` | true / false | `family_accusation` held? |
+| `inquiryOpened` | true / false | `inquiry_opened` held? |
+| `reviewPending` | true / false | `dohkar_preliminary_review` scheduled and unheld? |
+| `interrogationOccurred` | true / false | `interrogation_interrupted` established? |
+| `custodyRevealed` | true / false | `the_answer_institutional` revealed to the assembly? |
+| `assemblyStaged` | true / false | declared scene-context predicate |
+
+**2⁶ = 64 cells**, of which some are **invalid by the plan's own ordering** (an inquiry cannot be open before the
+accusation in this arc), so the authored matrix is smaller — on inspection roughly 20–30 valid cells. **Invalid
+cells are declared invalid**, not silently skipped, so the gate cannot pass by shrinking its own domain.
+
+### The requirement, and how consumption is handled
+
+> **For every valid cell, at least one unmoored outcome must be eligible.**
+
+Consumption is deliberately **not a dimension** — making it one would multiply 30 cells by 32 consumption subsets
+and turn a reviewable artifact into a combinatorial table nobody reads. It is handled by a **rule on consumption
+scope** instead:
+
+> Every valid cell must have at least one eligible outcome whose consumption scope is **not `once_per_story`** —
+> i.e. one that replenishes (`once_per_scene`, or `once_per_adverse_row` like `unm.adverse_event_deferred`) — **or**
+> the cell must declare its own outcome.
+
+That is what makes the guarantee real without an invented floor: the always-available thing is not one universal
+outcome but a **per-cell obligation** the author discharges, and `unm.adverse_event_deferred`'s per-row scope is
+the existing example of the shape.
+
+### What the gate does and does not prove
+
+- **Does:** every valid cell of the declared matrix has an eligible outcome; every cell is either valid with
+  coverage or explicitly marked invalid; no outcome references an undeclared predicate.
+- **Does NOT:** prove anything about story states outside the declared dimensions. If play reaches a configuration
+  the matrix does not model, that is a **matrix gap**, surfaced by the same `no_declared_consequence_fit` coverage
+  signal the ordinary policy already emits — and fixed by authoring, not by a runtime rule.
+
+**Phase-scoped sets remain the shape**: roughly one small matrix and one small outcome set per arc phase (opening /
+inquiry / consequence), each with its own predicates.
 
 I am not inventing a universal floor to paper over this. A floor that is always eligible and always favorable
 would have to act on something that is always present, and nothing in a story is.
@@ -445,7 +526,8 @@ would have to act on something that is always present, and nothing in a story is
 | **Unmoored Tempt outcomes**, opening phase | **6** (the disguised floor replaced by `unm.adverse_event_deferred`) | drafted, §7b |
 | **Unmoored outcomes, later phases** | **~2 phases × ~4 = ~8, UNAUTHORED** | **the revised gap — §7f state 4** |
 | **Eligibility rules** | **6 for the opening**, plus one per later-phase outcome | drafted for the opening |
-| **Non-empty-eligibility ship gate** | 1 static check | specified, §7f |
+| **Coverage matrices** | **1 per phase** — ~7 declared dimensions, ~20–30 valid cells for the opening | specified, §7f |
+| **Non-empty-eligibility ship gate** | 1 static check, exhaustive **over the declared matrix only** | specified, §7f |
 | **Party-stance profiles** | **8** — two each for four parties | drafted, §6a |
 | **Causal mechanisms** | **1** (`witness_present`) | drafted; reusable across stories |
 | **Ordinary readings**, `boundary` slot | 5 | drafted, §3a |
