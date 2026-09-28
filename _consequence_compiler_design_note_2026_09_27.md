@@ -2,6 +2,12 @@
 
 Design only. No implementation, no provider call, no scene generation, no push.
 
+**Revision 4 (2026-09-27).** Ambiguity policy is **mechanic-specific**, not one generic Fate draw. Revision 3
+treated every ambiguous wording the same way — a weighted draw over an authored set — which silently applied
+Fate-card twist logic to an ordinary Say/Do wish and let ambiguity itself cost a Tempt Fate player reach.
+Both withdrawn. Three policies now, and **"player-favorable" is an authored rank, never a model's judgment**.
+See *Ambiguity policy by mechanic*.
+
 **Revision 3 (2026-09-27).** Authoring scope settled as **three layers**, and the draw seed defined
 explicitly. One correction: revision 2 said the seed makes *"the same wish in the same story state"* compile
 identically. **Withdrawn — "same wish" is not the seed identity.** Repeated wishes may legitimately resolve
@@ -104,7 +110,17 @@ therefore: {
                      namedTargets: [<entity ids>],
                      unmatchedSpans: [<the wording that anchored nothing>]
                    },
-  selection:       {                                  // present only in fate_chosen_reading
+  ambiguity:       {                                  // present only in fate_chosen_reading
+                     policy: 'tempt_player_favorable' | 'petition_weighted_favorable' | 'saydo_uniform',
+                     unanchoredDimensions: [<'scope'|'proposition'|'invoker'|'durability'>],
+                     eligibleSet: [<permutationId>],   // AFTER the policy's exclusions
+                     excluded: [ { permutationId, reason } ],   // e.g. twist_excluded_on_tempt_ambiguity
+                     selectedInterpretation: { propositionId, scopeFormId, invokerTreatment },
+                     selectedBy: 'max_player_favor_rank' | 'weighted_draw' | 'uniform_draw' | 'rank_tie_break',
+                     intrinsicCost: { permutationId, cost } | null
+                   } | null,
+
+  selection:       {                                  // present when a DRAW occurred
                      permutationSetId,                // which authored set Fate drew from
                      permutationId,                   // what it chose
                      weights,                         // the declared weights in force
@@ -174,8 +190,21 @@ options include full reach — the reading most generous to the player is as ava
 
 **What Fate may choose from is AUTHORED, not derived.** Each card (and a story may extend or override) ships
 a **permutation set**: a list of complete, pre-authored consequence permutations, each carrying its own
-**exact affected and unchanged sets** resolved against the current roster. Illustrative shapes, all of them
-peers — none is a default:
+**exact affected and unchanged sets** resolved against the current roster.
+
+Every permutation carries three pieces of **authored metadata**, because the engine must never form an
+opinion about any of them:
+
+| field | meaning |
+|---|---|
+| `playerFavorRank` | integer, higher = more favorable to the player. **Authored, never computed.** No model, heuristic or scoring function may produce or override it — the whole point is that "good for the player" is a story-design judgment already made by a person. |
+| `twist` | boolean. A twist is an outcome that turns on the player. Marked so policy can include or exclude it by rule rather than by tone-reading. |
+| `exploits` | for a twist only: which interpretation **dimensions** it may act on (`scope`, `proposition`, `invoker`, `durability`). Load-bearing — see the Petition policy. |
+
+Plus `intrinsicCost`: a cost the outcome carries **because it is that outcome**, not because the wording was
+vague. A card's heavy permutations may cost the player something; ambiguity must never be the reason.
+
+Illustrative shapes, all of them peers — none is a default:
 
 | permutation | what it declares |
 |---|---|
@@ -187,41 +216,75 @@ peers — none is a default:
 | refusal | nobody loses anything; the card declares what occurs instead |
 | overreach inversion | the wish lands on the invoker as well as the asked-for population, where the card declares self-inclusion as a possible reading of an over-broad ask |
 
-**How Fate chooses.** A declared weighted draw over the authored set. The weights are authored alongside the
-set and may be **modified by declared story physics** — saturation, volatility, consecutive Tempt count —
-which is how Fate becomes a character rather than a coin. Escalating strangeness under repeated tempting is
-already this engine's idiom; here it is a weighting input with a recorded value, not a vibe.
+## Ambiguity policy by mechanic
 
-### The draw seed
+**Ambiguity is not one thing.** What it means to leave a wish vague depends entirely on what you were
+holding when you said it, and the compiler states that explicitly rather than running one draw for all three.
 
-**"Same wish" is not the seed identity, and must not be.** Two identical wishes at different points in a
-story are different occasions: repeated Tempts *deliberately* move saturation and volatility, so a second
-"everyone forgets" arriving into a more saturated world should be free to read differently. Seeding on the
-wording would freeze that.
+### Tempt Fate — ambiguity resolves in the player's favor
 
-The seed is composed of exactly these, and **every component is recorded in the ledger** — not only the
-resulting digest, because a digest alone cannot be debugged:
+**Not a draw.** Ambiguous wording resolves **deterministically to the most player-favorable permitted
+interpretation and permutation**: the maximum `playerFavorRank` in the eligible set.
 
-| component | why it is in the seed |
-|---|---|
-| `storyId` | two stories must not share Fate's dice |
-| `cardId` | the same wording on a different card is a different mechanic |
-| `stateFingerprint` | the canonical state revision/fingerprint — the world this wish landed in |
-| `invocationOrdinal` | 1-based per story; distinguishes repeats of identical wording |
-| `mode` | an exact reading and a Fate-chosen reading are different draws |
-| `weightTableV` | a retuned table is a different distribution; an old ledger stays explicable against the version it used |
+Three hard rules follow, and they are checkable:
 
-**The wish text is deliberately NOT a component.** The wording has already done its work: it selected the
-mode and produced the anchors, and the anchors narrow the set being drawn from. The seed identifies the
-*occasion*, not the phrasing. The ordinal already makes each occasion unique, so including the text would add
-no distinguishing power and would quietly reintroduce "same wish, same outcome".
+- **Ambiguity may not reduce scope.** A vague "everyone" cannot compile to a narrower population than a
+  precise one would have.
+- **Ambiguity may not induce refusal.** `REFUSAL` is not eligible on an ambiguity path.
+- **Ambiguity may not add a twist.** The eligible set **excludes every `twist: true` permutation**, by rule,
+  not by tone-reading.
 
-**`stateFingerprint` comes free from Track A.** Canonical projections give every prose scene a stable `uid`
-with a `revision` and a content `hash`, so the fingerprint is a digest over the ordered
-`(uid, revision, hash)` triples for prose scenes plus the durable-consequence ledger's own length and last
-entry id. That is a real dividend of the canonicalization work: before it, there was no stable answer to
-"what state was the story in?" — three competing texts and index-based identity meant the question had no
-single answer to hash.
+**What survives is `intrinsicCost` only** — a cost the selected outcome carries because it is that outcome.
+Tempt Fate is a dangerous card and may still take something; what it may not do is take it *because the
+player was imprecise*.
+
+**Rank ties** are the only place a seed enters a Tempt ambiguity: the tie is broken by the seeded draw
+restricted to the tied top rank, so authoring two equally-favorable outcomes stays legal.
+
+Why this is right rather than merely generous: Tempt Fate's danger is supposed to come from **what the player
+dared to ask**, not from how carefully they phrased it. Punishing phrasing converts a wish mechanic into a
+parser game.
+
+### Petition Fate — ambiguity is weighted toward the player
+
+**A draw, but tilted.** Ambiguity draws from the authored interpretations with **player-favorable weight**,
+so the generous readings are likelier without being guaranteed. Petition is the gentler card; a twist is
+still possible, which is what keeps it from being a vending machine.
+
+**If a twist is selected, it may exploit the ambiguity — and only the ambiguity.** This is where `exploits`
+earns its place:
+
+> **A twist may act only on dimensions the wording left unanchored.** Every dimension in the selected
+> permutation's `exploits` must be absent from the recorded `anchors`. If the player anchored scope
+> precisely, no twist may touch scope; it must exploit something they actually left open, or it is not
+> eligible.
+
+That makes **"never punish a precise wish" a mechanical invariant rather than an intention** — checked
+against the anchors already recorded, before prose. A precise Petition can still meet a twist, but only one
+that turns on something the player genuinely left to Fate.
+
+### Ordinary Say/Do wishes — a seeded coin, and nothing else
+
+A wish spoken in ordinary play, holding no card, gets **neither player-favor nor Fate-card logic**:
+
+- a **reproducible uniform draw** over the authored plausible readings — 50/50 in the two-reading case,
+  uniform for more;
+- **no weights** — weighting would smuggle favorability back in;
+- **no twist rules, no `playerFavorRank` consultation, no refusal semantics**. There is no card, so there is
+  no card grammar to apply.
+
+Its readings are authored per story like everything else, but there is no card layer above them, and its
+result is recorded in the **ordinary scene-plan record** rather than a therefore ledger — because no durable
+Fate consequence was invoked.
+
+This keeps the three mechanics distinguishable to a player who is paying attention: a card's wish bends
+toward you (Tempt) or mostly toward you (Petition); an ordinary wish is just the world deciding.
+
+### The draw seed still applies, where a draw happens
+
+Unchanged from revision 3, and used by: Petition's weighted draw, Say/Do's uniform draw, and Tempt's
+rank-tie break only. A deterministic Tempt ambiguity needs no seed, though the seed is still recorded so
+every compilation is reproducible by the same route.
 
 ### Anchors are recorded either way
 
@@ -315,6 +378,16 @@ Testable with no story content loaded, which is the point of the split:
 8. The ledger is **immutable once bound to a scene uid**; a later scene revision does not rewrite it.
 9. Every field traces to a `ruleId` or a `permutationId`.
 10. The chosen permutation is inside its card's grammar.
+11. **`playerFavorRank` and `twist` are authored on every permutation** — validated at authoring/load, never
+    derived at compile time, and never produced or adjusted by a model.
+12. **Tempt ambiguity selected the maximum `playerFavorRank`** in its eligible set, and that set contains no
+    `twist: true` permutation and no refusal. Directly checkable against the recorded `eligibleSet`.
+13. **A twist's every `exploits` dimension is absent from `anchors`** — the mechanical form of "never punish a
+    precise wish".
+14. **A Say/Do draw is uniform**: no weights present, no `playerFavorRank` consulted, no twist rule applied,
+    and the result recorded in the scene-plan record rather than a therefore ledger.
+15. Ambiguity contributed **no** cost of its own: every cost in the ledger traces to a selected permutation's
+    `intrinsicCost`.
 
 ---
 
