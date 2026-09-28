@@ -191,3 +191,16 @@ outcome amplitude. The **outcome set that fills it** does not survive.
   on your read of these four.
 - No code changed. No provider calls. Nothing pushed. Automatic extraction and outcome commitment remain
   disabled.
+
+---
+
+# 6. The three open items, DECIDED (Roman, 2026-09-28)
+
+| § | question | decision |
+|---|---|---|
+| 4.1 | Is Lirael exempt as invoker? | **No default exemption.** If she belongs to the named population she receives the literal effect. Exact named membership outranks protagonist privilege; the reader may retain the prior timeline, Lirael may not. |
+| 4.3 | Does the interiority boundary govern rupture outcomes? | **No.** It constrains ordinary consequences only. A rupture may alter memory, attachment and reputation when that is the literal authored grant naming target, proposition and effect — and may not widen any of the three by implication. `evidence_of_innocence` is a **world-fact** outcome: it asserts nobody believes, forgives, or acts on it. |
+| 4.2 | What does a rewind do to committed canon? | **Specified separately** in `_reality_revision_design_note.md`, which is the prerequisite for re-drafting. Records immutable; a revision is appended; canon derived; memory explicit; the seal is not reopened. |
+
+**Re-draft status:** the remaining nine outcomes and the rewind outcome are **not** re-authored. They wait on
+approval of the reality-revision boundary.
