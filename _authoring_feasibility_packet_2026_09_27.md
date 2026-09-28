@@ -18,6 +18,13 @@ Its only purpose: decide whether Stage 3 deserves implementation, and what a min
 
 4. **`playerFavorRank` ranks the COMPLETE authored package**, not the headline grant — §7e. My own ranking is
    re-examined against that rule.
+> **EDITORIAL BUILD STOPPED (2026-09-28).** Revision 5's trace turned up a feasibility blocker, not one more
+> authored entry: repeated Tempt use has **no defined repeat semantics**, and "reusable" cannot mean re-establishing
+> the same durable fact. The product choice is framed in
+> **`_repeated_tempt_decision_note_2026_09_28.md`** and must be made before the phase matrices and outcome sets are
+> authored — Option 3 there changes what every reusable entry must declare, and Option 1 removes the requirement
+> entirely. **Until it is decided, the coverage gate in §7f is not sufficient.**
+
 **Revision 5 (2026-09-28).** A read-only production trace of the **Tempt Fate usage horizon**, because the
 coverage guarantee depended on an untested recurrence assumption. **The assumption was wrong** — see §7i. The
 coverage rule is corrected mechanically; no design was expanded.
