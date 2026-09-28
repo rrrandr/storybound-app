@@ -1,5 +1,19 @@
 # Pre-author consequence compiler — Petition and Tempt Fate
 
+> ## ⤴ SUPERSEDED AS THE TOP-LEVEL MODEL — 2026-09-27
+>
+> This note designed a **wish-only** therefore ledger. Wishes are not a separate kind of thing; they are the
+> loudest case of a general rule. **Every accepted in-world player turn** produces a therefore record before
+> prose — ordinary actions, dialogue, silence, weak input and gibberish substitutes included.
+>
+> **Top-level model: `_choice_consequence_compiler_design_note_2026_09_27.md`.**
+>
+> **This note is still live for its detail, not its framing.** The Tempt Fate and Petition Fate ambiguity
+> policies, the permutation metadata (`playerFavorRank`, `twist`, `exploits`, `intrinsicCost`), the
+> three-layer authoring scope and the six-component draw seed all survive intact — as **policy modules**
+> inside the universal system rather than as the system itself. Read this for how Tempt and Petition decide;
+> read the universal note for what happens to every other turn.
+
 Design only. No implementation, no provider call, no scene generation, no push.
 
 **Revision 4 (2026-09-27).** Ambiguity policy is **mechanic-specific**, not one generic Fate draw. Revision 3
