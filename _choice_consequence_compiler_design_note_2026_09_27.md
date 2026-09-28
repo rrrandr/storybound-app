@@ -2,6 +2,9 @@
 
 Design only. No implementation, provider call, scene generation, or push.
 
+**Revision 3 (2026-09-27).** `magnitude: 'none'` withdrawn and the scale collapsed to three values; stage 3 for
+ordinary submissions specified in its own note. See *Recorded ≠ irreversible*.
+
 **Revision 2 (2026-09-27).** Two corrections from Roman:
 
 1. **What the existing systems do and don't do.** Revision 1 said *"the engine already knew what the turn
@@ -141,7 +144,8 @@ therefore: {
   },
 
   consequence: {
-    magnitude:  'none' | 'modest' | 'opens_question' | 'durable_effect' | 'rupture',
+    magnitude:  'acknowledged_no_durable_change' | 'durable_change' | 'rupture',
+    acknowledgement,                              // ALWAYS present — the turn occurred and was acknowledged
     changed:    [ { subject, whatChanged, propositionId? } ],
     open:       [ { question, whoMayAnswer } ],   // WHAT REMAINS OPEN — a first-class outcome
     unchanged:  [ { subject, reason } ],          // EXPLICIT, never implied
@@ -177,17 +181,28 @@ exhausting.
 
 `magnitude` is the axis that keeps this sane, and the distribution is deliberately lopsided:
 
+**`magnitude: 'none'` is withdrawn (revision 3).** An accepted turn always changes the story at least by having
+occurred, and `none` invited a reading where some turns simply did not happen. The record separates the two
+things it conflated: **`acknowledgement` is always present** — the turn occurred and was acknowledged — while
+**`durableChange` may be `null`**, meaning no *additional* durable fact was established.
+
 | magnitude | what it means | expected frequency |
 |---|---|---|
-| `none` | the turn was registered and changed nothing; recorded so the silence is deliberate | common |
-| `modest` | a small, local, real change — someone's attention, posture, a door opened | **the overwhelming majority** |
-| `opens_question` | a question now stands that someone may answer later; nothing settled | common |
-| `durable_effect` | a lasting fact enters canon | uncommon |
-| `rupture` | the world changes shape; Tempt Fate's territory | rare, and card-gated |
+| `acknowledged_no_durable_change` | the turn happened and was acknowledged; no additional durable fact entered canon. `open[]` may still carry real questions | **the overwhelming majority** |
+| `durable_change` | exactly one additional durable fact entered canon | uncommon |
+| `rupture` | the world changes shape; cards only | rare, and card-gated |
 
-A `none` record is not a failure of the system; it is the system **declining to invent significance**, on the
-record. That is strictly better than today, where nothing is recorded and a later planner is free to imagine
-either that the turn mattered or that it did not.
+`opens_question` is gone as a magnitude because `open[]` already carries it — a turn can open a question whether
+or not it changed durable state, so it was never a point on the same scale.
+
+An `acknowledged_no_durable_change` record is not a failure of the system; it is the system **declining to
+invent significance**, on the record. That is strictly better than today, where nothing is recorded and a later
+planner is free to imagine either that the turn mattered or that it did not.
+
+**Stage 3 for ordinary submissions is specified separately** in
+`_ordinary_consequence_grammar_design_note_2026_09_27.md`: a small closed grammar (acknowledgement, response
+stance, immediate change, durable change, what remains open) constrained by the input class and slot the engine
+already computes.
 
 ---
 
