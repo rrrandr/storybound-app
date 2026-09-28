@@ -3,6 +3,17 @@
 Dry content audit. No provider calls, no product code, no push. **Not a prototype and not a model test.**
 Its only purpose: decide whether Stage 3 deserves implementation, and what a minimum viable first story needs.
 
+**Revision 2 (2026-09-27).** Two corrections and one addition from Roman:
+
+1. **"Vary `responseStance` by responding party at zero authoring cost" is WITHDRAWN.** It reintroduced an
+   undeclared inference channel: a Dohkar hardening and Julian withdrawing are **different story facts**, not one
+   reading rendered twice. They may be compact — **authored, party-specific stance profiles referenced by
+   outcomes** — but the planner may **never derive a stance from cast identity**. §6a.
+2. **The unmoored Tempt set is authored here** (§7), with **state-based eligibility**, because without it every
+   vague wish selects the same top-ranked outcome forever.
+3. **One new boundary** (§7c): an unmoored outcome may not act on an unrelated proposition merely because it is
+   favorable.
+
 ---
 
 ## 0. Two inventory findings that change the shape of the question
@@ -196,9 +207,11 @@ The author may render her trying, and his not yielding. It may not render him un
 - **`boundary` has five readings and four distinct `immediateChange` values.** A player who makes six boundary
   moves in an issue will see the same shapes. The *prose* differs because the author writes it, but the
   **consequence** repeats, and a reader tracking cause and effect may notice the world responds identically.
-  **Mitigation that costs nothing: make `responseStance` sensitive to the responding party.** The Dohkar
-  hardening formally and Julian withdrawing are different stances from the same reading — which multiplies
-  perceived variety by the cast size without authoring more readings.
+  **The mitigation I first proposed — "make `responseStance` sensitive to the responding party at zero authoring
+  cost" — is withdrawn.** It was an undeclared inference channel wearing a cost saving: deriving a stance from
+  *who is present* means the planner deciding that the Dohkar hardens and Julian withdraws, which are **two
+  different story facts** about two different people. Nobody authored either. Variety is available, and it is
+  cheap, but it is **not free** — see §6a.
 - **The Tempt ambiguous set collapses to rank 10 every time.** That is correct by policy and it means *every*
   vague memory wish in this story produces the same outcome. Deliberate, but a player who tempts twice vaguely
   gets the same rupture twice. **The physics modifiers exist precisely for this** and are unexercised in this
@@ -247,21 +260,134 @@ them.
 
 ---
 
-## 5. What a minimum viable first story actually needs
+## 6a. Party-specific stance profiles — compact, but authored
 
-Ordered, and shorter than expected:
+A stance is a **story fact about a person**. The Dohkar retreating into procedure and Julian going quiet are not
+one reading rendered twice; they are two facts, and each needs declaring.
 
-1. **`unmoored_wish` outcomes for Tempt Fate.** The one genuine blocker. *"I wish this had never happened"* is a
-   first-hour input and there is no answer for it.
-2. **Ids on the ~4 additional facts** a memory wish could plausibly target.
-3. **One ordinary slot authored** — `boundary` is drafted here and is enough to ship, with the other three
-   slots on the fallback and the coverage signal watching them.
-4. **The scope lexicon**, ~12 phrasings, extended by observation rather than guessed up front.
-5. **`responseStance` varying by responding party**, because it is the cheapest available variety and this
-   audit showed the readings will otherwise feel identical.
+The compact form: **authored stance profiles, referenced by id**, so an outcome names which one applies rather
+than the planner inferring it.
 
-**Not needed for a first story:** sub-propositions, additional rupture classes, physics modifiers changing
-eligibility, or the remaining three ordinary slots.
+| profile id | party | stance | what it declares |
+|---|---|---|---|
+| `stance.dohkar.formal_hardening` | `role:…presiding_dohkar` | `resistant` | he retreats into the rite's order; procedure tightens |
+| `stance.dohkar.authority_asserted` | same | `escalating` | he claims the ruling explicitly |
+| `stance.julian.watchful_withdrawal` | `named:julian` | `withdrawn` | he stops speaking and keeps watching |
+| `stance.julian.institutional_correction` | same | `resistant` | he answers as the Provast, not as himself |
+| `stance.seren.appeal` | `named:seren` | `receptive` | she pleads, still holding her own loss |
+| `stance.seren.shame_silence` | same | `withdrawn` | she will not look up |
+| `stance.assembly.murmur` | `the_assembly` | `guarded` | a collective unease with no single speaker |
+| `stance.assembly.turning` | same | `escalating` | the collective begins to move against her |
+
+**Eight profiles for four parties.** A reading or outcome references the profile ids legal for it; the planner
+selects among those references and **may not construct a stance from cast identity**. The proof that matters:
+given a cast, the planner must be unable to produce a stance whose profile no outcome referenced.
+
+This is genuinely cheap — eight compact entries — and it buys the variety §4 wanted **without** an inference
+channel. It also makes the variety *legible*: "the Dohkar hardened" becomes a recorded fact a later scene can
+read, which it never would have been as a derived flourish.
+
+---
+
+## 7. The unmoored Tempt Fate set — First Sacrifice, opening
+
+The blocker from revision 1, authored. Selected when the wording anchors **no** declared proposition:
+*"I wish this had never happened to me."*
+
+### 7a. The design principle these follow
+
+Fate cannot un-happen canon, and the seed's own doctrine already says so — **"Circumstances, Not Minds"**, plus
+the kernel-substitution rule already written into the verdict block at `:75601`: an impossible ask is granted as
+its *plausible kernel*, never literally. So an unmoored Tempt wish gets a **circumstantial** grant, not a memory
+edit. That is why this set looks different from §1's: nothing here rewrites what anyone knows, because the player
+named nothing to rewrite.
+
+All are `twist: false`, no refusals, durability `persists` unless noted — per the Tempt ambiguity policy.
+
+### 7b. The set
+
+| rank | id | affected (exact) | unchanged (exact) | open | intrinsicCost | eligibility |
+|---|---|---|---|---|---|---|
+| **10** | `unm.band_unremarked` | the record: the torn gossamer band is **not entered** as a protocol breach (`world_fact`) | Lirael, Seren, Julian, Dohkar, the_assembly — all knowledge intact | whether anyone raises it unprompted | none | **before** `family_accusation`; **consumed once** |
+| 9 | `unm.witness_dispersal` | the_assembly disperses before a collective account is taken — **no collective testimony exists** (`world_fact`) | all named parties, all knowledge intact | whether individual accounts surface instead | none | while `the_assembly` is staged **and** `inquiry_opened` has **not** occurred; **consumed once** |
+| 8 | `unm.procedural_delay` | `dohkar_preliminary_review` is **deferred**, not cancelled (`world_fact`) | every party's knowledge and stance | whether the delay reads as favor or as suspicion | none | while `dohkar_preliminary_review` is scheduled and unheld; **consumed once** |
+| 7 | `unm.julian_standing_questioned` | Julian's **procedural standing** to question her is put in doubt (`world_fact`) — *not* his feelings, *not* his intent | Julian's knowledge, stance and future action — all untouched | whether he recuses, and who questions her instead | `escalation_invited` — a jurisdiction fight is now likelier | **after** `interrogation_interrupted`, **before** `julian_jurisdiction_challenge`; **consumed once** |
+| 6 | `unm.custody_unraised` | the Answer's custody is **not raised this scene** (`world_fact`) | all knowledge, including `the_answer_institutional` itself | when it will be raised, and by whom | none | while `the_answer_institutional` is unrevealed to the assembly; **consumed once** |
+| **1** | `unm.no_opening` | **nothing materially changes** — the moment passes without the worst of it landing | every party, every fact, explicitly | every prior `open[]` entry, carried forward untouched | none | **always eligible** |
+
+`unm.julian_standing_questioned` is deliberately the sharpest test of the interiority boundary: it moves a
+**procedural** fact and leaves Julian's mind entirely alone, with his response in `open[]`. It would be trivial
+and wrong to author "Julian softens" here.
+
+### 7c. The boundary this set needs
+
+> **An unmoored outcome may not act on an unrelated proposition merely because it is favorable. It must be
+> declared as an available Fate response for the current story state and scene context.**
+
+Without this, "I wish this had never happened" could reach for `the_answer_institutional` in a scene where
+custody is not at issue, purely because the outcome ranks well. Every entry above therefore carries an
+eligibility condition **tied to the scene's actual state** — not a global availability. Favorability selects
+*among eligible* outcomes; it never establishes eligibility.
+
+### 7d. How eligibility produces variety without touching the policy
+
+The exhaustion problem stated plainly: Tempt ambiguity always takes the **most player-favorable** outcome, so
+without eligibility a player who tempts vaguely three times gets rank 10 three times.
+
+**Eligibility solves it inside the policy**, not around it:
+
+| tempt | eligible set | selected |
+|---|---|---|
+| 1st, before the accusation | 10, 9, 8, 7?, 6, 1 | **`unm.band_unremarked`** (10) |
+| 2nd, band already spent | 9, 8, 6, 1 | **`unm.witness_dispersal`** (9) |
+| 3rd, assembly dispersed, inquiry now open | 8, 6, 1 | **`unm.procedural_delay`** (8) |
+| 4th, after the inquiry opens and the review is held | 1 | **`unm.no_opening`** |
+
+Still always the most favorable **eligible** outcome. **No hidden weights, no less-favorable draw, no
+narrowing as a penalty for imprecision.** What changed is what remains available, which is a fact about the
+story, not a tax on the player.
+
+**`unm.no_opening` is the floor, and it is not optional.** With it, the eligible set can never be empty, so the
+compiler never faces a vague wish with nothing to select — which is exactly the state that would force either an
+invented consequence or a refusal, and refusals are excluded from Tempt ambiguity. It is a real if minimal grant:
+the moment passes without the worst of it landing.
+
+---
+
+## 5. The revised minimum viable set, in actual authoring units
+
+| unit | count | status |
+|---|---|---|
+| **propositions** (id-keyed facts a wish may target) | **6 existing + ~4 to add** | 6 real ids already in the seed |
+| **Tempt exact readings** (`memory_perception`) | 6 | drafted, §1a |
+| **Tempt ambiguous outcomes**, ranked | 5 | drafted, §1b |
+| **Tempt twists / refusals** (exact-reading only) | 2 | drafted, §1c |
+| **Unmoored Tempt outcomes** | **6**, including the always-eligible floor | **drafted, §7b — the revision-1 blocker is closed** |
+| **Eligibility rules** | **6** — one per unmoored outcome; 5 scene-state gates + 5 consumption flags + 1 always-eligible | drafted, §7b |
+| **Party-stance profiles** | **8** — two each for four parties | drafted, §6a |
+| **Causal mechanisms** | **1** (`witness_present`) | drafted; reusable across stories |
+| **Ordinary readings**, `boundary` slot | 5 | drafted, §3a |
+| **Ordinary fallback** | 1 | drafted, §3c |
+| **Scope lexicon anchors** | ~12 phrasings | grows by observation, not guessed up front |
+| **Total authored entries** | **~52** | of which ~9 are reusable engine-wide |
+
+Ordered for a first story:
+
+1. **Ids on the ~4 additional facts** a memory wish could target. Smallest task, unblocks §1.
+2. **The unmoored set and its eligibility rules** — now drafted rather than pending, and they must land
+   together, because the set without eligibility repeats and eligibility without the floor can empty.
+3. **The eight stance profiles**, which are the variety answer now that deriving stance is forbidden.
+4. **`boundary` only**, with the other three slots on the fallback and the coverage signal naming them.
+5. **The lexicon**, extended by watching what players actually type.
+
+**Not needed for a first story:** sub-propositions; additional rupture classes; physics modifiers that shift
+eligibility (the **state**-based eligibility above already supplies variety, and physics can wait); the other
+three ordinary slots.
+
+**Revised volume verdict: ~52 authored entries, of which ~9 are reusable.** That is a week of editorial work,
+not a content project — and it is bounded, because the fallback makes partial coverage shippable. The estimate
+went **up** from revision 1 (which counted neither the unmoored set nor stance profiles, and wrongly treated
+stance variety as free), and it is now honest.
 
 ## Recommendation
 
@@ -269,6 +395,11 @@ eligibility, or the remaining three ordinary slots.
 rather than bulk, the fallback makes partial coverage shippable, and the one real blocker
 (`unmoored_wish`) is a bounded authoring task rather than a design unknown.
 
-**The one thing I would not do** is implement before `unmoored_wish` is authored. Without it, the most common
-vague wish in the game has no declared answer — and a system whose whole premise is *"never invent a
-consequence"* would meet its most frequent input with nothing to select.
+**The revision-1 blocker is closed.** `unmoored_wish` is authored (§7), with state-based eligibility and an
+always-eligible floor, so the most common vague wish in the game has a declared answer and the compiler can never
+face an empty eligible set.
+
+**What I would now hold before building:** the ~4 additional proposition ids and the eight stance profiles. Both
+are small, both are prerequisites rather than nice-to-haves — the first because §1's exact readings reference
+facts that need ids, the second because forbidding derived stance (correctly) leaves the readings feeling
+identical until the profiles exist.
