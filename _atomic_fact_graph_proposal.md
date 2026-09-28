@@ -115,10 +115,17 @@ taken, with a result** is a current world state the seed **requires** to be visi
 |---|---|---|---|
 | `lirael.scene1_disposition` | **state** | `decision_consequence` (131310) | `interr.choice_arose` |
 
-**Its value is player-set, not seed-set** — which makes it a different kind of fact from every other atom
-here, all of which carry fixed seed values. **Flagged rather than smoothed over:** approving this means
-approving a declared fact whose value is bound at runtime. If you would rather not introduce that class of
-fact yet, the alternative is that `unm.time_gives_way` may not reach the disposition at all, and must say so.
+**Its value is player-set, not seed-set** — a different kind of fact from every other atom here.
+
+> **APPROVED 2026-09-28 as a SEALED PLAYER-CHOICE FACT — not a general mutable state field.** Closed values
+> (the authored Scene-1 choices only); created only when that choice is accepted and sealed; **absent and
+> unresolved before then, never defaulted**; bound to its originating `sceneUid` and choice record; and a
+> later revision must list it explicitly as **unchanged, ceased, or replaced**.
+>
+> **Its value may never be guessed** from current UI, from later prose, or from an author's assumption — the
+> sealed choice record is the only source. **And never inferred from ceasing `interr.choice_arose`**: the
+> event that produced the choice and the disposition that resulted are separate atoms, and a cascade between
+> them would silently rewrite what the player actually chose.
 
 ---
 
@@ -182,7 +189,8 @@ its `ceases[]` contradicted.
 
 | atom | kind | source | depends on | opening availability |
 |---|---|---|---|---|
-| `review.demanded` | **event** | lane label (131354) — a demand made and registered by `population.assembly` | `auth.dohkar_claims_rite_and_ruling` (the standing to demand) | **permitted** |
+| `review.demanded_by_dohkar` | **event** | lane label (131354), `objectiveActor: 'the presiding Dohkar'` — pressure applied **on stage**, registered by `population.assembly` | `auth.dohkar_claims_rite_and_ruling` | **permitted** |
+| `review.demanded_by_julian` | **event** | row 4 (131556) — *"Julian is named aloud as having demanded a review; he is NOT in the room"* — made **offstage** | — | **permitted** |
 | `review.convened` | **event** | *"may not be CONVENED, SCHEDULED, or CONSTITUTED"* | `review.demanded` | **LOCKED in the opening** |
 
 **`review.demanded` is not an opening-state fact.** It is false at scene start and becomes true only if the
@@ -190,7 +198,13 @@ its `ceases[]` contradicted.
 `ceases: ['dohkar_preliminary_review']` was a category error: it named the **lane that can produce the fact**,
 not the fact.
 
-The matrix predicate `reviewPending` reads `review.demanded ∧ ¬review.convened ∧ ¬superseded`.
+> **Corrected 2026-09-28.** `review.demanded` as first proposed **conflated two acts by two parties**:
+> the presiding Dohkar's on-stage pressure in scene 2, and Julian's offstage demand revealed at row 4. They
+> are separate events with separate actors and must be separate atoms — the Issue's whole route to its late
+> spine runs through Julian's, and the editorial packet's `demand_authorship` proposition already made that
+> authorship canon. Found by tracing `unm.proceeding_unmade`; see `_proceeding_unmade_trace.md` §4a.
+
+The matrix predicate `reviewPending` reads `review.demanded_by_dohkar ∧ ¬review.convened ∧ ¬superseded`.
 
 **Declaring `review.convened` as locked rather than omitting it** keeps the prohibition expressible. An
 omitted fact cannot be checked against; a locked one can.

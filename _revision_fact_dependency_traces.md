@@ -102,7 +102,14 @@ materially different scene and **must be chosen deliberately, not defaulted into
 | **causal companions** | `inquiry_authority_claimed` clause ① survives — the Dohkar's assertion that the ruling is his is **not** the same act as demanding a review, and must be stated as surviving. |
 | **must remain OPEN** | whether the matter reaches procedure by another route · what the Dohkar makes of a demand he no longer made |
 
-### BLOCKER — this may orphan the Issue's own arc gate
+### ~~BLOCKER — this may orphan the Issue's own arc gate~~ — **WITHDRAWN 2026-09-28**
+
+> **This finding was overstated and is withdrawn.** `deferral_reason_key` is not part of the gate:
+> `_checkArcConstraint` (app.js:206425–206430) turns solely on
+> `_isStoryEventCommitted('inquiry_opened')`, and returns `reason_key` only on the failure path as
+> explanatory copy. **No Issue-1 gate depends on the scene-2 review demand.** The route to the late spine
+> runs through Julian's offstage demand and row 4, and survives this outcome intact. Full trace:
+> `_proceeding_unmade_trace.md`. The original wording is kept below for the record.
 
 The `the_open` arcConstraint is `locked`, unlocked by `inquiry_opened`, with
 `deferral_reason_key: 'preliminary_process_before_formal_inquiry'`. The declared reason the inquiry is
