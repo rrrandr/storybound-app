@@ -2,6 +2,19 @@
 
 Design only. No implementation, no provider call, no scene generation, no push.
 
+**Revision 2 (2026-09-27).** Two corrections from Roman, both of which the first draft got wrong in the
+same direction — it reached for a board-game affordance instead of letting the mechanic live in the wording:
+
+1. **Free text is the player's sole choice mechanism.** The first draft proposed a scope/proposition picker
+   as an open question. Withdrawn. *"The player chooses by stating the wish well."* A picker would replace a
+   wish with a form and hand the player the engine's vocabulary instead of their own.
+2. **Ambiguity does NOT automatically mean a narrower or partial grant.** The first draft made
+   `PARTIAL_GRANT` the default for anything unmatched and made love-interest withholding a *rule*. Both
+   withdrawn. Ambiguity is a **valid choice**: it hands the interpretation to Fate, and Fate may choose full
+   reach. Partial grant, refusal, full reach and any withholding are each **explicit permutations authored
+   by the story/card**, with exact affected and unchanged sets — not a conservative fallback the compiler
+   applies on its own.
+
 ---
 
 ## B7 is REJECTED — wrong product
@@ -61,9 +74,9 @@ The compiler is a pure function of four things, evaluated at **seal time** — b
 
 1. **The card** — identity and amplitude class (Petition vs Tempt Fate; first-petition-guaranteed vs
    ordinary; any per-card declared rupture class).
-2. **The structured player entry** — see *Ambiguity* below. Today this is free text (`state.temptFateWish`,
-   `_petitionText`); the compiler requires it to arrive as, or be deterministically reduced to, a structured
-   triple.
+2. **The player's wish, as free text** (`state.temptFateWish`, `_petitionText`) — and nothing else. There is
+   no scope picker, no proposition menu, no clarifying prompt. The wording IS the choice, including the
+   choice to be imprecise.
 3. **Current scene and roster scope** — the composite roster for this scene, the staged collectives, and the
    plan row's declared events.
 4. **Explicit self-targeting language** — matched against a declared pattern list, never inferred.
@@ -76,9 +89,25 @@ One durable record, emitted before prose exists, carrying **only** compiled fact
 therefore: {
   compilerV, compiledAt,
   card:            { id, amplitude, ruptureClass },
-  request:         { rawEntry, structured: { verb, proposition, scopeAsked, selfTargeted } },
+  request:         { rawEntry, selfTargeted },
+
+  mode:            'exact_reading' | 'fate_chosen_reading',
+  anchors:         {                                  // what the WORDING actually matched, if anything
+                     proposition: <event id> | null,
+                     scopeForm:   <lexicon form id> | null,
+                     namedTargets: [<entity ids>],
+                     unmatchedSpans: [<the wording that anchored nothing>]
+                   },
+  selection:       {                                  // present only in fate_chosen_reading
+                     permutationSetId,                // which authored set Fate drew from
+                     permutationId,                   // what it chose
+                     weights,                         // the declared weights in force
+                     seed,                            // so the same wish in the same state recompiles identically
+                     influencedBy                     // e.g. saturation, volatility, consecutive tempts
+                   } | null,
+
   verdict:         'granted' | 'partial' | 'kernel_substituted' | 'refused',
-  verdictReason:   <declared rule id that produced it>,
+  verdictReason:   <declared rule id or permutation id that produced it>,
 
   population:      { permutation, members: [<entity ids>], closed: true, boundsSource },
   proposition:     { id: <declared event/fact id>, label, granularity },
@@ -97,7 +126,8 @@ therefore: {
 
 Three properties make this different from everything the extractor produced:
 
-- **Every field traces to a `ruleId`**, so any outcome can be explained without reading prose.
+- **Every field traces to a `ruleId` or a `permutationId`**, so any outcome can be explained without reading
+  prose — including *why Fate read the wish the way it did*.
 - **`population.closed` is true by construction** — the compiler cannot emit an open population, because it
   selects from an enumerable roster. That alone retires the `full`-vs-`undetermined` problem: scope is a
   fact about the compiled set, not a comparison inferred from text.
@@ -106,39 +136,79 @@ Three properties make this different from everything the extractor produced:
 
 ---
 
-## Ambiguity: "everyone" is resolved at compile time
+## Two compilation modes
 
-**The declared scope permutations.** Finite, named, and the only values `population.permutation` may take:
+The wording decides which mode applies. Both resolve fully before prose exists; neither asks the player
+anything.
 
-| permutation | members | closed by |
-|---|---|---|
-| `NAMED_ATTENDEES` | the scene's resolved named roster, invoker excluded unless self-targeted | the composite roster |
-| `DECLARED_COLLECTIVE` | one staged collective as a single entity, with declared membership bounds | the plan row's staging |
-| `SCENE_PRESENT` | every named attendee **and** every staged collective | the roster + staging |
-| `STORY_WORLD` | every entity in the story's cast ledger | the cast ledger; gated by amplitude, unavailable to Petition |
-| `PARTIAL_GRANT` | a deterministically withheld subset — Fate grants less than asked | the withholding rule (below) |
-| `REFUSAL` | nobody; the world does not tilt | the refusal rule |
+### Mode 1 — `exact_reading`
 
-**How free text reaches a permutation.** Not by a classifier's judgment, and not by an LLM:
+The wording matches a declared target/proposition **and** a declared scope form closely enough for the
+mechanic to select **one** exact, pre-authored consequence permutation. Fate follows the reading the player
+wrote.
 
-1. A **declared scope lexicon**, human-maintained, maps literal phrasings to permutations: *"everyone here",
-   "all of them", "this room"* → `SCENE_PRESENT`; *"the assembly", "the panel"* → `DECLARED_COLLECTIVE`
-   when that collective is staged; a named character → `NAMED_ATTENDEES` restricted to them.
-2. **The proposition comes from the declared event ledger, never from parsing the ask.** The player's words
-   select among the events the plan already declares for this scene and its recent past; the compiler emits
-   that event's **id**. This is the move that kills the synonymy problem outright: "the ceremony" versus
-   "this gathering" stops being a matching question because the proposition *is* the plan's event id, and
-   every downstream consumer already knows how to talk about it.
-3. **Nothing matches, or the ask is broader than the lexicon covers → `PARTIAL_GRANT`, never the broadest
-   reading.** Fate granting less than asked is already this game's idiom (`:75601`'s kernel and partial-lead
-   rules), so the safe default is also the in-world one. Ambiguity costs the player reach, not coherence.
-4. **Impossible or plot-resolving asks → `kernel_substituted` or `REFUSAL`**, by the amplitude rules already
-   written in prose at `:75601`, now expressed as rule ids.
+- The **proposition** is matched to an id in the story's declared event ledger — the plan rows,
+  `reservedEvents`, `sealedEvents`. The compiler emits that id, never a paraphrase. This is what kills the
+  synonymy problem outright: "the ceremony" versus "this gathering" stops being a matching question because
+  the proposition *is* the event id, and every downstream consumer already knows how to talk about it.
+- The **scope form** is matched against a human-maintained lexicon of literal phrasings → declared scope
+  forms (*"everyone here"*, *"the assembly"*, a named character, *"just him"*).
+- Both must match for `exact_reading`. One without the other is ambiguity, and ambiguity is mode 2.
 
-**The withholding rule must itself be declared**, or `PARTIAL_GRANT` just relocates the arbitrariness. The
-natural mechanical answer is also the dramatically right one: **the love interest is withheld first** — the
-relationship anchor is the one party whose knowledge state carries the most story weight, so Fate's partial
-grant is the one that keeps the LI dangerous. Stated as a rule, deterministic, and explicable to a player.
+**Precision is the reward.** A player who says exactly what they mean gets exactly that, and can learn to.
+That is the whole skill the mechanic is teaching, and it is taught by consequence rather than by a tooltip.
+
+### Mode 2 — `fate_chosen_reading`
+
+The wording is ambiguous, over-broad, or does not resolve to one declared interpretation. **Fate chooses**,
+from the card's and story's declared permutations, before prose generation.
+
+This is not a penalty and not a fallback. A vague wish is a real move: *you left it to Fate.* Fate's
+options include full reach — the reading most generous to the player is as available as any other.
+
+**What Fate may choose from is AUTHORED, not derived.** Each card (and a story may extend or override) ships
+a **permutation set**: a list of complete, pre-authored consequence permutations, each carrying its own
+**exact affected and unchanged sets** resolved against the current roster. Illustrative shapes, all of them
+peers — none is a default:
+
+| permutation | what it declares |
+|---|---|
+| full reach | every named attendee and every staged collective loses the proposition; invoker exempt |
+| declared collective only | the staged collective loses it; named attendees unchanged, listed |
+| named attendees only | the named roster loses it; collectives unchanged, listed |
+| withholding | everyone loses it **except** a named party the card declares — the love interest being the obvious authored choice, because it keeps them dangerous, but it is an **authored permutation, not a rule the compiler applies** |
+| partial by nature | the proposition is lost in part: a declared sub-proposition goes, a declared one stays |
+| refusal | nobody loses anything; the card declares what occurs instead |
+| overreach inversion | the wish lands on the invoker as well as the asked-for population, where the card declares self-inclusion as a possible reading of an over-broad ask |
+
+**How Fate chooses, reproducibly.** A declared weighted draw over the set, with the weights authored
+alongside it, seeded so the same wish in the same story state always compiles to the same permutation.
+The seed and weights go in the ledger, so an outcome is explicable and a bug is reproducible.
+
+The weights may be **influenced by declared story physics** — saturation, volatility, consecutive Tempt
+count — which is how Fate becomes a character rather than a coin. Escalating strangeness under repeated
+tempting is already this engine's idiom; here it is a weighting input with a recorded value, not a vibe.
+
+### Anchors are recorded either way
+
+Even in `fate_chosen_reading`, whatever the wording *did* anchor is recorded: a matched proposition with no
+scope form, a scope form with no proposition, named targets, and the spans that anchored nothing. Two
+reasons this matters more than it looks:
+
+- Fate's choice can legitimately be **narrowed by a partial anchor** — a wish that clearly names the
+  ceremony but not who forgets is drawn from a permutation set already restricted to that proposition.
+- The anchors are the evidence for *why* this compilation went the way it did, available to a designer
+  tuning the lexicon without re-running anything.
+
+### Wording that names no targetable proposition at all
+
+A wish that anchors nothing — no declared event, no declared fact, nothing the story has staged — is not an
+error and does not stop the turn. **Fate chooses among the card's declared `unmoored_wish` outcomes.**
+
+These are authored per card, with exact sets like any other permutation. They are the mechanic's answer to
+*"I wish things were different"*: something happens, it is declared in advance, and it is Fate's to pick.
+**The reader is never asked to clarify** — a clarifying prompt would break the fiction and hand the engine's
+vocabulary back to the player, which is the same mistake as the picker.
 
 ---
 
@@ -178,7 +248,7 @@ Same compiler, different amplitude tables — the difference is declared, not em
 | | Petition | Tempt Fate |
 |---|---|---|
 | typical verdict | `granted` at low amplitude, `kernel_substituted` for impossibilities, `partial` for plot-resolving asks | `granted` or `partial` at rupture amplitude |
-| permutations available | `NAMED_ATTENDEES`, `DECLARED_COLLECTIVE`, `PARTIAL_GRANT`, `REFUSAL` | adds `SCENE_PRESENT`, `STORY_WORLD` |
+| authored permutation sets | narrower reach; refusal and partial shapes prominent | wider reach available, including whole-scene and story-world permutations |
 | durability | `decays` or `bounded` by default | `persists` by default |
 | may invalidate scheduled plans | rarely, and only adjacent rows | yes, by design |
 
@@ -213,12 +283,13 @@ ran.
 
 ## Open decisions
 
-1. **Does the player's entry become structured at the UI?** The compiler is deterministic either way, but a
-   free-text entry means ambiguity is resolved *for* the player by the lexicon and the partial-grant
-   default. Letting them choose a scope explicitly ("everyone here" / "the assembly" / "just him") is more
-   honest and probably better play — and it is a product decision about how much mechanism to show.
-2. **Who authors the scope lexicon and the amplitude tables**, and per-story or global? These are canon
-   artifacts, not code, and they grow by human decision.
+1. **Who authors the permutation sets, the scope lexicon and the amplitude tables**, and per-card,
+   per-story, or global? These are canon artifacts, not code, and they grow by human decision. This is now
+   the largest open item: the compiler is only as good as the authored sets it draws from, and a card with a
+   thin set will feel arbitrary no matter how deterministic the draw is.
+2. **How visible is Fate's reading to the player?** Not a picker — but there is a real question about
+   whether a player ever learns that a vague wish was read by Fate rather than followed literally. Wording
+   inside the prose can carry that ("Fate took the question as its own"), which keeps it diegetic.
 3. **Which propositions are selectable.** The plan's declared events are the safe set; whether a player may
    target a fact the plan never declared (and what happens if they do — `REFUSAL`?) is a design question
    with real reach.
