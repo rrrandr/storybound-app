@@ -100195,7 +100195,7 @@ function _buildAuthorFloorDirective(s) {
                  + '    – ACTOR: ' + _sc.slots.actor + ' — this character performs it.\n'
                  + '    – ACTION: ' + _sc.slots.action + '\n'
                  + '    – TARGET: ' + _sc.slots.target + ' — done TO / BEFORE / WITH this; if a character, that character MUST be physically present in THIS scene for it to count.\n'
-                 + '    – EXIT STATE (THE invariant — this MUST be TRUE by the end of THIS scene): ' + _sc.slots.exitState + '\n'
+                 + '    – EXIT STATE (THE invariant — this MUST be TRUE by the end of THIS scene): ' + (typeof _fscSeedProse === 'function' ? _fscSeedProse(_sc.slots.exitState, 'exitState') : _sc.slots.exitState) + '\n'
                  + '    Rerouting the event (e.g. confessing to a different person), changing who acts, or leaving the exit state un-true is a CONTRACT BREACH — the scene FAILS even if the prose is beautiful. If the named target cannot plausibly be present, that is the PLANNER\'s error to surface, NOT yours to fix by rerouting — stage it as written.\n')
               : '')
           + '  DIALOGUE RULE (HARD): every significant line must ADVANCE TOWARD the event or RESPOND TO it — never keep pursuing an objective the event has already made obsolete.\n'
@@ -100610,10 +100610,10 @@ function _buildAuthorFloorDirective(s) {
                  + JSON.stringify(_curMs.event).slice(0, 300)
                  + (_curMs.requiredTruth ? ((_opContingent
                      ? '\nWAS TO REMAIN TRUE after this scene (verify it still can — a rupture may have changed what is true): '
-                     : '\nMUST STILL BE TRUE for the reader after this scene: ') + JSON.stringify(_curMs.requiredTruth).slice(0, 160)) : '')
+                     : '\nMUST STILL BE TRUE for the reader after this scene: ') + JSON.stringify(typeof _fscSeedProse === 'function' ? _fscSeedProse(_curMs.requiredTruth, 'requiredTruth') : _curMs.requiredTruth).slice(0, 160)) : '')
                  + (_curMs.exitState ? ((_opContingent
                      ? '\nSCHEDULED SCENE EXIT STATE (only if the objective above survives review): '
-                     : '\nSCENE EXIT STATE (where this scene should leave the story): ') + JSON.stringify(_curMs.exitState).slice(0, 160)) : '')
+                     : '\nSCENE EXIT STATE (where this scene should leave the story): ') + JSON.stringify(typeof _fscSeedProse === 'function' ? _fscSeedProse(_curMs.exitState, 'exitState') : _curMs.exitState).slice(0, 160)) : '')
                  // AVAILABLE SCENE CAST — the planner previously had NO roster at all (usr was ~900 chars,
                  // no PC name, no LI name), so it could only invent anonymous agents ("a guest").
                  + ((_curMs.participants && _curMs.participants.length)
@@ -100852,8 +100852,8 @@ function _buildAuthorFloorDirective(s) {
             if (_oe.collectives && _oe.collectives.length) _ob.push('ALSO PRESENT — declared collective presence(s) (if genuinely present, add EXACTLY this label to "present": ' + _oe.collectives.map(function (c) { return '"' + c.label + '"'; }).join(', ') + '. A collective may witness, react, and supply pressure — it is NEVER "local_objective_actor", never speaks, never gets its own name or identity.)');
             else if (_oe.presentGroups && _oe.presentGroups.length) _ob.push('ALSO PRESENT (unnamed): ' + _oe.presentGroups.join(' · '));
             try { var _dc = Array.isArray(s._durableFateConsequences) ? s._durableFateConsequences : []; if (_dc.length) _ob.push('DURABLE CONSEQUENCES ALREADY IN FORCE: ' + _dc.map(function (d) { return String(d && (d.text || d.summary || d.kind) || ''); }).filter(Boolean).join(' | ').slice(0, 500)); } catch (_) {}
-            if (_oe.requiredTruth) _ob.push('MUST STILL BE TRUE after this scene: ' + _oe.requiredTruth);
-            if (_oe.exitState) _ob.push('TARGET STATE this scene leaves the story in: ' + _oe.exitState);
+            if (_oe.requiredTruth) _ob.push('MUST STILL BE TRUE after this scene: ' + (typeof _fscSeedProse === 'function' ? _fscSeedProse(_oe.requiredTruth, 'requiredTruth') : _oe.requiredTruth));
+            if (_oe.exitState) _ob.push('TARGET STATE this scene leaves the story in: ' + (typeof _fscSeedProse === 'function' ? _fscSeedProse(_oe.exitState, 'exitState') : _oe.exitState));
             if (_oe.aftermathTruths && _oe.aftermathTruths.length) _ob.push('AFTERMATH TRUTHS (seed-owned ids — ALREADY TRUE; your objective builds from them and may not reverse or re-stage them; you MUST return "kept" for EACH id):\n' + _oe.aftermathTruths.map(function (t) { return '  • ' + t.id + ': ' + t.text; }).join('\n'));
             if (_oe.reserved && _oe.reserved.length) _ob.push('RESERVED FOR LATER SCENES (seed-owned ids — your objective must NOT deliver, name or pre-empt any of them; you MUST return a status for EACH id):\n' + _oe.reserved.map(function (r) { return '  • ' + r.id + (r.sealed ? ': ' + r.label + ' [sealed]' : ' (scene ' + r.fromScene + '): ' + r.text); }).join('\n'));
             if (_oe.vectors && _oe.vectors.length) _ob.push('AFFORDANCES (any, none, or the reader\'s own — NOT a menu, NOT exhaustive, none required):\n' + _oe.vectors.map(function (v) { return '  • ' + v; }).join('\n'));
@@ -228850,13 +228850,13 @@ No text, no watermark, no UI elements, share-ready.`;
               var _sdRowLines = [];
               if (_sdDec && _sdDec.choice) _sdRowLines.push('  • THE READER\'S RECORDED CHOICE at the end of the opening: ' + _sdDec.label);
               if (_sdEff.goal) _sdRowLines.push('  • goal: ' + _sdRender(_sdEff.goal).slice(0, 600));
-              else _sdRowLines.push('  • this scene\'s job (the authored goal branches on the opening\'s choice and no per-branch goal is approved for "' + (_sdEff.branch || '') + '"; what stands is the exit state): ' + _sdRender(_sdEff.effectiveEvent).slice(0, 400));
-              if (_sdEff.requiredTruth) _sdRowLines.push('  • requiredTruth: ' + _sdRender(_sdEff.requiredTruth).slice(0, 600));
+              else _sdRowLines.push('  • this scene\'s job (the authored goal branches on the opening\'s choice and no per-branch goal is approved for "' + (_sdEff.branch || '') + '"; what stands is the exit state): ' + _sdRender(typeof _fscSeedProse === 'function' ? _fscSeedProse(_sdEff.effectiveEvent, 'sceneJob') : _sdEff.effectiveEvent).slice(0, 400));
+              if (_sdEff.requiredTruth) _sdRowLines.push('  • requiredTruth: ' + _sdRender(typeof _fscSeedProse === 'function' ? _fscSeedProse(_sdEff.requiredTruth, 'requiredTruth') : _sdEff.requiredTruth).slice(0, 600));
               if (_sdEff.stage) _sdRowLines.push('  • stage: ' + _sdRender(_sdEff.stage).slice(0, 600));
               if (!_sdEff.offBranch) { if (_sdEff.participants) _sdRowLines.push('  • participants: ' + _sdRender(_sdEff.participants).slice(0, 300)); if (_sdEff.presentGroups) _sdRowLines.push('  • presentGroups: ' + _sdRender(_sdEff.presentGroups).slice(0, 300)); if (_sdEff.eventFacts) _sdRowLines.push('  • eventFacts: ' + _sdRender(_sdEff.eventFacts).slice(0, 600)); }
               if (_sdEff.decision_axis) _sdRowLines.push('  • decision_axis: ' + _sdRender(_sdEff.decision_axis).slice(0, 300));
               if (_sdEff.decision_consequence) _sdRowLines.push('  • decision_consequence: ' + _sdRender(_sdEff.decision_consequence).slice(0, 400));
-              if (_sdEff.exitState) _sdRowLines.push('  • exitState: ' + _sdRender(_sdEff.exitState).slice(0, 400));
+              if (_sdEff.exitState) _sdRowLines.push('  • exitState: ' + _sdRender(typeof _fscSeedProse === 'function' ? _fscSeedProse(_sdEff.exitState, 'exitState') : _sdEff.exitState).slice(0, 400));
               try { window.state._sceneIntent = { scene: _sdRowIdx + 1, branch: _sdEff.branch, withheld: _sdEff._reconciliation.withheld.slice(), effectiveEvent: _sdEff.effectiveEvent }; } catch (_) {}
               if (_sdRowLines.length) _sdLines.push('PLAN ROW FOR THIS SCENE (scene ' + (_sdRowIdx + 1) + ' of the Book\'s fixed arc — realise it, never replace it):\n' + _sdRowLines.join('\n'));
             }
@@ -340911,6 +340911,110 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
   //    plus a licence to invent. ─────────────────────────────────────────────────────────────
   // ── SHARED EFFECT-BOUNDARY RENDERER. Tempt and Petition both render through this one
   //    function, so the two cards cannot drift apart and a fix to one reaches the other.
+  // ══════════════════════════════════════════════════════════════════════════════════════════
+  // BASELINE-PLAN PROSE RECONCILIATION (Roman 2026-09-29)
+  //
+  // A baseline plan's prose is NOT a canonical fact merely because it reaches the author. The seed's
+  // scene row carries "the cost is still uncounted" and "The price has not yet been named" — an
+  // unresolved POSSIBILITY, not permission to say Lirael is paying for this Tempt. Five paid runs
+  // produced a cost line and I misread it as model variance; the model was rendering its scene spec.
+  //
+  // THE SEED TEXT IS UNCHANGED and stays stored in full. This filters what reaches the WRITER:
+  // a clause passes only if it maps to a still-active canonical atom with its own precise meaning,
+  // or is declared an authored open question. Anything else is suppressed from the author payload.
+  //
+  // Provenance is per clause, not per field, because one exitState mixes both: "Lirael's standing
+  // is at risk" rests on twist.assembly_turned; "the cost is still uncounted" rests on nothing.
+  var FSC_SEED_CLAUSE_PROVENANCE = [
+    // ── SUPPRESSED: no atom, no authored open question. Not a Tempt price. ──
+    { rx: /\bthe cost is still uncounted\b/i, atoms: null,
+      why: 'no atom: an unresolved seed possibility, not a sealed cost' },
+    { rx: /\bthe price has not yet been named\b/i, atoms: null,
+      why: 'no atom: an unresolved seed possibility, not a sealed cost' },
+    // "the words came true" alone maps to twist.words_honoured, but "everyone can see how" asserts
+    // public understanding of the MECHANISM, which no atom establishes. The clause claims more than
+    // its support, so it does not pass.
+    { rx: /\bthe words came true and everyone can see how\b/i, atoms: null,
+      why: 'twist.words_honoured covers the words; no atom establishes that the mechanism is legible' },
+    // ── PASSED: each maps to an atom that must still be ACTIVE ──
+    { rx: /\bLirael[’']?s standing is at risk\b/i, atoms: ['twist.assembly_turned'],
+      why: 'rests on twist.assembly_turned' },
+    { rx: /\bthe loose note\b/i, atoms: ['twist.loose_note_heard'], why: 'rests on twist.loose_note_heard' }
+  ];
+  // Clause shapes that may NEVER pass unmapped — a hard fact about price or causation.
+  var FSC_UNSUPPORTED_SHAPE_RX =
+    /\b(cost|price|debt|toll|payment|reckoning)\b|\beveryone can see how\b|\bpay(?:s|ing)? for\b/i;
+
+  // Splits on sentence ends AND on the seed's own "RESOLVED:/NEW PROBLEM:" segmenting.
+  function _fscSeedClauses(text) {
+    return String(text || '')
+      .split(/(?<=[.?!])\s+|(?=\bNEW PROBLEM:)|(?=\bRESOLVED:)/)
+      .map(function (s) { return s.trim(); }).filter(Boolean);
+  }
+  // SECOND LEVEL. One seed segment can carry MIXED provenance: "NEW PROBLEM: Lirael's standing is
+  // at risk and the cost is still uncounted" rests on twist.assembly_turned in its first half and on
+  // nothing in its second. Suppressing the segment whole dropped a supported fact, so a segment that
+  // matches both a keep rule and a suppress rule is split at its conjunctions and judged part by
+  // part. Segments with a single provenance are never split.
+  function _fscSplitMixed(clause) {
+    var keeps = 0, drops = 0;
+    FSC_SEED_CLAUSE_PROVENANCE.forEach(function (r) {
+      if (r.rx.test(clause)) { if (r.atoms) keeps++; else drops++; }
+    });
+    var mixedShape = keeps > 0 && (drops > 0 || FSC_UNSUPPORTED_SHAPE_RX.test(clause));
+    if (!mixedShape) return [clause];
+    return clause.split(/\s+and\s+|;\s+/).map(function (s) { return s.trim(); }).filter(Boolean);
+  }
+
+  // THE PASS. Returns { text, suppressed[], kept[] }. Applied to baseline-plan prose fields before
+  // they are rendered into the author payload.
+  function _fscReconcileSeedProse(text, opts) {
+    var o = opts || {};
+    var raw = String(text || '');
+    if (!raw.trim()) return { text: raw, suppressed: [], kept: [] };
+    var active = {};
+    try { active = (typeof _fscCanonAfter === 'function')
+      ? _fscCanonAfter((typeof window !== 'undefined' && window.state && window.state._fscActiveCompiled) || null)
+      : (typeof _fscActiveCanon === 'function' ? _fscActiveCanon() : {}); } catch (_) { active = {}; }
+    var suppressed = [], kept = [];
+    var clauses = [];
+    _fscSeedClauses(raw).forEach(function (c) {
+      _fscSplitMixed(c).forEach(function (p) { clauses.push(p); });
+    });
+    var out = clauses.filter(function (c) {
+      var rule = null;
+      for (var i = 0; i < FSC_SEED_CLAUSE_PROVENANCE.length; i++) {
+        if (FSC_SEED_CLAUSE_PROVENANCE[i].rx.test(c)) { rule = FSC_SEED_CLAUSE_PROVENANCE[i]; break; }
+      }
+      if (rule) {
+        if (!rule.atoms) { suppressed.push({ clause: c, why: rule.why }); return false; }
+        var missing = rule.atoms.filter(function (a) { return !active[a]; });
+        if (missing.length) {
+          suppressed.push({ clause: c, why: 'atom no longer active: ' + missing.join(', ') });
+          return false;
+        }
+        kept.push({ clause: c, why: rule.why }); return true;
+      }
+      // Unmapped: only a hard price/causation shape is suppressed. Ordinary scene direction that
+      // asserts no such fact is left alone — this pass is a provenance filter, not a rewriter.
+      if (FSC_UNSUPPORTED_SHAPE_RX.test(c)) {
+        suppressed.push({ clause: c, why: 'unmapped clause asserting a cost or a visible cause' });
+        return false;
+      }
+      kept.push({ clause: c, why: 'no cost/causation claim; passed unchanged' }); return true;
+    }).join(' ').replace(/\s+/g, ' ').trim();
+    if (suppressed.length) {
+      try { console.log('[FSC-RECONCILE] ' + (o.field || 'seed prose') + ' — suppressed '
+        + suppressed.length + ': ' + suppressed.map(function (s) {
+          return '"' + s.clause.slice(0, 44) + '" (' + s.why + ')'; }).join('; ')); } catch (_) {}
+    }
+    return { text: out, suppressed: suppressed, kept: kept };
+  }
+  // Convenience for call sites that just want the filtered string.
+  function _fscSeedProse(text, field) {
+    try { return _fscReconcileSeedProse(text, { field: field }).text; } catch (_) { return String(text || ''); }
+  }
+
   // ── ATOM GLOSSES + POST-REPLACEMENT CANON (Roman 2026-09-29) ────────────────────────────────
   // The renewed choice must be derivable from ACTIVE canon only. The C4 run's choice — "let the
   // assumption stand" / "the truth the Dohkar never heard" — rested entirely on a questioning and
@@ -341435,6 +341539,9 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
   window._fscCompileAndPersist = _fscCompileAndPersist;
   window._fscActiveCanon = _fscActiveCanon;
   window._fscCanonAfter = _fscCanonAfter;
+  window._fscReconcileSeedProse = _fscReconcileSeedProse;
+  window._fscSeedProse = _fscSeedProse;
+  window._FSC_SEED_CLAUSE_PROVENANCE = FSC_SEED_CLAUSE_PROVENANCE;
   window._fscExternalTimelineHits = _fscExternalTimelineHits;
   window._FSC_EXTERNAL_TIMELINE_PHRASES = FSC_EXTERNAL_TIMELINE_PHRASES;
   window._FSC_AMBIGUOUS_TEMPORAL = FSC_AMBIGUOUS_TEMPORAL;

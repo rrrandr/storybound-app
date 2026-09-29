@@ -249,11 +249,39 @@ export const MAGICAL_RESIDUE_RX =
 export const SEED_GOSSAMER_RX =
   /\bgossamer\b[^.]{0,120}\b(luminous|blooms?|blooming)\b|\b(luminous|blooms?|blooming)\b[^.]{0,80}\b(torso|hips|seat|tunic)\b/i;
 
-export function scoreC3(prose, { costless = true } = {}) {
-  const explicit = [], deferred = [], emission = [], residue = [], wardrobeAllowed = [];
+// ── C3'S PROVENANCE RULE ──────────────────────────────────────────────────────────────────────
+// Not a weakening — a sharpening. The prose may render ONLY a cost sealed for this outcome, or a
+// separately established active story fact whose provenance is NAMED. It may not convert an
+// unresolved seed question into a cost of the Tempt or of the pending choice.
+//
+// This is what the seed audit forced: "the price has not yet been named" is a possibility in the
+// baseline plan, and a possibility is not a price. A cost line now needs a citable source, and
+// "the plan mentioned it" is not one.
+export const C3_PROVENANCE_RULE =
+  'A cost may be rendered only if (a) it is the cost sealed for THIS outcome, or (b) it is a '
++ 'separately established active story fact whose provenance is named. An unresolved question in a '
++ 'baseline plan is neither, and may not become a cost of the Tempt or of the pending choice.';
+
+export function scoreC3(prose, { costless = true, sealedCost = null, costProvenance = [] } = {}) {
+  const explicit = [], deferred = [], emission = [], residue = [], wardrobeAllowed = [], allowedCost = [];
+  // A cost line is admissible only against a named source.
+  const admissible = s => {
+    if (sealedCost) {
+      const rx = new RegExp(esc(String(sealedCost).replace(/_/g, ' ')).replace(/\s+/g, '\\s+'), 'i');
+      if (rx.test(s)) return { ok: true, via: 'sealed cost: ' + sealedCost };
+    }
+    for (const p of costProvenance) if (p.rx.test(s)) return { ok: true, via: p.provenance };
+    return { ok: false };
+  };
   for (const s of SENTENCES(prose)) {
-    if (EXPLICIT_COST_RX.some(rx => rx.test(s))) explicit.push(s.trim().slice(0, 150));
-    else if (costless && DEFERRED_COST_RX.some(rx => rx.test(s))) deferred.push(s.trim().slice(0, 150));
+    const costShaped = EXPLICIT_COST_RX.some(rx => rx.test(s))
+      || (costless && DEFERRED_COST_RX.some(rx => rx.test(s)));
+    if (costShaped) {
+      const a = admissible(s);
+      if (a.ok) { allowedCost.push({ line: s.trim().slice(0, 150), via: a.via }); }
+      else if (EXPLICIT_COST_RX.some(rx => rx.test(s))) explicit.push(s.trim().slice(0, 150));
+      else deferred.push(s.trim().slice(0, 150));
+    }
     if (emissionHits(s).length) emission.push(s.trim().slice(0, 150));
     if (MAGICAL_RESIDUE_RX.test(s)) {
       if (SEED_GOSSAMER_RX.test(s)) wardrobeAllowed.push(s.trim().slice(0, 110));
@@ -262,7 +290,8 @@ export function scoreC3(prose, { costless = true } = {}) {
   }
   return { pass: explicit.length === 0 && deferred.length === 0
              && emission.length === 0 && residue.length === 0,
-           explicit, deferred, emission, residue, wardrobeAllowed };
+           explicit, deferred, emission, residue, wardrobeAllowed,
+           allowedCost, provenanceRule: C3_PROVENANCE_RULE };
 }
 
 // ── C4 — DERIVE THE GATE EXACTLY AS PRODUCTION DOES ───────────────────────────────────────────
@@ -571,6 +600,29 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     'Here and there in the crowd someone shifts their weight or half-turns to go and then stays.'
   ].forEach(s => t('permitted: "' + s.slice(0, 46) + '"', scoreC3(s).pass === true,
     JSON.stringify(scoreC3(s).emission)));
+
+  console.log('\nH1c2. C3 PROVENANCE — a cost needs a named source, not a plan that mentioned one');
+  const UNCOUNTED = 'The cost of either path remains uncounted.';
+  t('an unsourced cost line FAILS', scoreC3(UNCOUNTED).pass === false);
+  t('  it is NOT rescued by the seed having raised the possibility',
+    scoreC3(UNCOUNTED, { costProvenance: [] }).pass === false);
+  const SEALED_LINE = 'The price is that she forgets whose it is.';
+  t('the sealed-cost line IS cost-shaped, so it reaches the provenance check',
+    scoreC3(SEALED_LINE).pass === false);
+  t('  and with the sealed cost declared it becomes admissible',
+    scoreC3(SEALED_LINE, { sealedCost: 'she_forgets_whose_it_is' }).pass === true);
+  t('  recorded with its source',
+    (scoreC3(SEALED_LINE, { sealedCost: 'she_forgets_whose_it_is' }).allowedCost[0] || {}).via
+      === 'sealed cost: she_forgets_whose_it_is');
+  t('  a DIFFERENT sealed cost does NOT admit it',
+    scoreC3(SEALED_LINE, { sealedCost: 'escalation_invited' }).pass === false);
+  const HOUSE = 'A debt to her house predates all of this.';
+  t('a NAMED active-fact provenance is admissible',
+    scoreC3(HOUSE, { costProvenance: [{ rx: /\bdebt to her house\b/i,
+      provenance: 'house.debt_standing (active)' }] }).pass === true);
+  t('  the same line without provenance FAILS', scoreC3(HOUSE).pass === false);
+  t('the rule is carried in the result for the verdict to cite',
+    /may not become a cost of the Tempt/i.test(scoreC3('x').provenanceRule));
 
   console.log('\nH1a2. THE WARDROBE ALLOWANCE IS SOURCE-AWARE, NOT A WHITELIST');
   const WARDROBE = "gossamer child's tunic blooming luminous white over torso hips and seat, aqua skin, pale coral hair";

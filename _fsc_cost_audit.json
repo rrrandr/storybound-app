@@ -1,32 +1,6 @@
 {
-  "bytes": 251385,
+  "bytes": 251148,
   "nonIntrinsic": [
-    {
-      "line": "• this scene's job (the authored goal branches on the opening's choice and no per-branch goal is approved for \"\"; what stands is the exit state): Lirael's standing is at risk and the cost is still uncounted.",
-      "terms": [
-        "cost",
-        "uncounted"
-      ],
-      "intrinsic": false,
-      "src": null
-    },
-    {
-      "line": "• exitState: RESOLVED: the words came true and everyone can see how. NEW PROBLEM: Lirael's standing is at risk and the cost is still uncounted.",
-      "terms": [
-        "cost",
-        "uncounted"
-      ],
-      "intrinsic": false,
-      "src": null
-    },
-    {
-      "line": "• requiredTruth: The twist is an EVENT, not a recognition of one. Julian is not an antagonist. The price has not yet been named.",
-      "terms": [
-        "price"
-      ],
-      "intrinsic": false,
-      "src": null
-    },
     {
       "line": "Julian LIVES IN A FANTASY WORLD. Their dialogue and described actions MUST inhabit that world's register. Speaking in plain modern English when the world is Shakespearean / Veilwood / Fatelands / Dogma / etc. BREAKS THE FICTION. Players are PAYING for the world fantasy; modern-default voice is the failure mode.",
       "terms": [
