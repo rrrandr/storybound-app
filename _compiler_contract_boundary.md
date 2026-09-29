@@ -134,11 +134,16 @@ retain everything) do the work a cost was reaching for.
 > `131356`: *"Julian **challenges jurisdiction**, **reframes the accusation politically**, or **contests who
 > has authority to rule**."* **Three disjuncts, one lane** — the same defect the family lane had.
 >
-> **So the companion cannot be named precisely yet.** Only the *"reframes the accusation"* disjunct plainly
-> depends on the accusation; the other two contest authority over a matter, and the reversal frame (131489)
-> ties that matter to the accusation, which is why I3 holds for the lane as framed — **but a per-disjunct
-> answer needs the same split the family lane received.** Flagged; **not split in this pass**, which was
-> scoped to the family lane.
+> **RESOLVED 2026-09-28** in `_jurisdiction_lane_atomization.md`. The lane atomizes into **two** atoms, not
+> three: `challenge.jurisdiction_contested` (the frame fuses "challenges jurisdiction" and "contests who has
+> authority" into *"a real jurisdictional contest over authority"*) and
+> `challenge.answerability_shifted_to_julian`. *"Politically"* has no authored meaning anywhere and is not
+> atomized.
+>
+> **Neither depends on `accusation.family_accused`**, so **no conditional companion is required.** The
+> challenge contests the **Dohkar's** jurisdiction, and the answerability shift rests on **Julian's**
+> accusation — an opening invariant. **My guess that I3 held for the lane as framed was wrong; see §6 of that
+> note.**
 
 ## 4b. `establishes[]`
 
