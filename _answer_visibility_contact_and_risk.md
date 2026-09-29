@@ -29,6 +29,10 @@ The relic does not address the room, does not declare anything, and does not bin
 | **active contact declared as materially affecting the manifestation** | **do NOT infer that the apparent holder is the alignment subject** |
 | **the effect of contact is not authored** | **the form is non-probative for consequence selection** |
 
+> **Trigger corrected 2026-09-29:** non-probative follows from **the contact condition being unestablished** —
+> **not** from the possibility of interference, and **not** from a wish having been aimed at the relic. An
+> attempted wish that fails leaves the reading exactly as sound as it was.
+
 > **Why the split is required.** Saying *"the Answer responds to the current holder"* and then admitting
 > Julian can influence it through concealed contact makes the base rule and its exception contradict each
 > other. **Separating the roles keeps the normal handoff rule intact while making Julian's interference
@@ -70,6 +74,16 @@ Answer; the entrustment is bound to that office.
 ---
 
 # 3. New layer — apparent possession is not control
+
+> ### ⚠ REVISED 2026-09-29 — see `_answer_contact_rule_revised.md`
+> **Surreptitious physical contact is the ONLY control channel. Julian has no remote channel.** If another
+> person is physically holding the Answer and he is not in contact, **its enchantment obeys that holder's
+> alignment**. He may attempt a wish, but **a normal wish cannot overcome the Answer's far more intricate
+> enchantment or redirect its response away from the physical holder** — and **a wish aimed at the relic is
+> neither an interference path nor a reason to treat the manifestation as non-probative.**
+>
+> **Consequence:** in a court or hearing setting, where he cannot secretly maintain contact, **the physical
+> holder is the alignment subject.** The section below stands, read under this narrowing.
 
 **Recorded as a limited Julian tactic, not a universal remote-control rule.**
 

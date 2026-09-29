@@ -138,5 +138,6 @@ question from custody, and worth asking before anything is drafted.
 | ask-class `silence` | **UNCOVERED, recommended** — no supported favorable effect found |
 | Julian's office | **Chayr**, canon. "Provast" in source is **terminology for editorial alignment.** |
 | new layer | **active contact/control** — apparent possession is not control; see `_answer_visibility_contact_and_risk.md` |
+| control channel | **surreptitious physical contact ONLY**; no remote channel, and a wish is not a second path. In a court or hearing setting **the physical holder is the alignment subject.** See `_answer_contact_rule_revised.md`. |
 
 **No new outcome. No ranking. No coverage run. No implementation.**
