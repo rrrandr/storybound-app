@@ -27,6 +27,7 @@ export async function preflight(opts = {}) {
   const wish = opts.wish || WISH;
   const expect = opts.expect || EXPECT;
   const expectChoicePending = !!opts.expectChoicePending;
+  const expectInsideReplacementPOV = !!opts.expectInsideReplacementPOV;
   const say = (...a) => { if (verbose) console.log(...a); };
   const checks = [];
   const ok = (n, c, d) => { checks.push({ name: n, ok: !!c, detail: d }); return !!c; };
@@ -109,6 +110,9 @@ export async function preflight(opts = {}) {
 
   // ── 4. BOTH identity AND the sealed boundary must be in that payload. ──────────────────
   const b = terminal ? terminal.body : '';
+  // The harvested body is JSON, so a double quote inside the prompt arrives as \". Assertions that
+  // quote the prompt's own text match against this decoded copy.
+  const bDec = b.replace(/\\"/g, '"').replace(/\\n/g, '\n');
   // Story identity in the payload, asserted on First Sacrifice's own structural markers.
   const FS_MARKERS = ['Veilwood', 'Sacrificiant', 'First Favored'];
   const idHits = FS_MARKERS.filter(m => b.indexOf(m) >= 0);
@@ -131,6 +135,47 @@ export async function preflight(opts = {}) {
     ok('payload carries END ON THE CHOICE', b.indexOf('END ON THE CHOICE') >= 0);
     ok('payload forbids authoring past the choice',
       b.indexOf('Author nothing past it') >= 0 && b.indexOf('imply nothing about which way she goes') >= 0);
+    // The renewed choice must be derivable from post-replacement canon only. The C4 run ended on
+    // "let the assumption stand", resting on a questioning the same delta erased.
+    ok('payload derives the choice from ACTIVE CANON',
+      b.indexOf('THE CHOICE RESTS ON ACTIVE CANON ONLY') >= 0);
+    ok('payload names what the choice MAY NOT rest on', b.indexOf('IT MAY NOT REST ON') >= 0);
+    ok('payload forbids an erased questioning/interruption/accusation/assumption',
+      b.indexOf('No option may turn on an erased questioning, interruption, accusation or') >= 0);
+    ok('payload says there is no standing assumption to let stand',
+      b.indexOf('There is no standing assumption to let stand') >= 0);
+  }
+  // ── THE HISTORY-REWRITE POV RULE MUST BE IN THE REAL PAYLOAD ────────────────────────────────
+  // Asserted here because the C4 failure was an instruction gap, and an instruction that does not
+  // reach the author is not a fix. These check the FINAL assembled request, not the renderer.
+  if (expectInsideReplacementPOV) {
+    ok('payload carries WRITE FROM INSIDE THE REPLACEMENT',
+      b.indexOf('WRITE FROM INSIDE THE REPLACEMENT') >= 0);
+    ok('payload states the affected have NO memory of the replaced timeline',
+      b.indexOf('have NO memory, NO knowledge and NO narration of the') >= 0);
+    ok('payload states it is not something they forgot',
+      b.indexOf('It is not a thing they forgot. For them it never occurred.') >= 0);
+    ok('payload requires the replay be their ONLY experienced version',
+      b.indexOf('their ONLY experienced version of events') >= 0);
+    // Scoped to the FORBIDDEN list itself, with whitespace collapsed — the list wraps across
+    // prompt lines, so a raw substring match on a quoted phrase can straddle a newline.
+    const flat = bDec.replace(/\s+/g, ' ');
+    const fStart = flat.indexOf('FORBIDDEN, in narration and dialogue alike:');
+    const fEnd = flat.indexOf('If a line only makes sense', fStart);
+    const forbiddenList = (fStart >= 0 && fEnd > fStart) ? flat.slice(fStart, fEnd) : '';
+    ok('the payload contains the forbidden-vocabulary list', !!forbiddenList);
+    ok('payload forbids the external-timeline vocabulary',
+      ['"again"', '"a second time"', '"the first time"', '"what they lost"',
+       'remember nothing of', '"never happened"'].every(p => forbiddenList.indexOf(p) >= 0),
+      forbiddenList.slice(0, 120));
+    ok('payload states the record is the READER’S, not character knowledge',
+      b.indexOf('are the READER’S record') >= 0
+      && b.indexOf('NOT character knowledge') >= 0);
+    ok('payload forbids an unestablished shared understanding',
+      bDec.indexOf('no "he knows I know"') >= 0
+      && bDec.indexOf('NOW TRUE lines above establish that relationship outright') >= 0);
+    ok('payload names the aftermath beat as the ONLY permitted trace',
+      b.indexOf('the ONLY permitted trace') >= 0 && b.indexOf('Feeling, never fact') >= 0);
   }
 
   const allOk = checks.every(c => c.ok);

@@ -340837,6 +340837,64 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
   //    plus a licence to invent. ─────────────────────────────────────────────────────────────
   // ── SHARED EFFECT-BOUNDARY RENDERER. Tempt and Petition both render through this one
   //    function, so the two cards cannot drift apart and a fix to one reaches the other.
+  // ── ATOM GLOSSES + POST-REPLACEMENT CANON (Roman 2026-09-29) ────────────────────────────────
+  // The renewed choice must be derivable from ACTIVE canon only. The C4 run's choice — "let the
+  // assumption stand" / "the truth the Dohkar never heard" — rested entirely on a questioning and
+  // an interruption the same delta had just erased. Ids alone did not prevent that; the prompt
+  // needs to say, in English, what still governs and what no longer does.
+  var FSC_ATOM_GLOSS = {
+    'twist.wish_misaligned':            'the wish was misaligned with the intent behind it',
+    'twist.words_honoured':             'Fate honoured the words exactly as they were spoken',
+    'twist.assembly_turned':            'the assembly’s attention has turned to Lirael',
+    'twist.intent_failed':              'the intent behind the wish did not land',
+    'twist.loose_note_heard':           'the loose note was heard',
+    'auth.dohkar_claims_rite_and_ruling': 'the presiding Dohkar claims authority over the rite and its ruling',
+    'auth.venue_named_formal_inquiry':  'the venue has been named a formal inquiry',
+    'auth.julian_claimed_convene_preside': 'Julian has claimed the right to convene and preside',
+    'auth.julian_standing_to_convene':  'Julian has the standing to convene',
+    'auth.inquiry_not_yet_opened':      'the inquiry has NOT yet opened',
+    'answer.entrusted_to_julian':       'the Answer is entrusted to Julian by his office',
+    'answer.owned_by_institution':      'the Answer is owned by the institution, not by a person',
+    'review.demanded_by_julian':        'Julian has demanded a review',
+    'review.demanded_by_dohkar':        'the presiding Dohkar has demanded a review'
+  };
+  // Atoms that can actually bear a choice. Identity/bookkeeping atoms are excluded so the prompt
+  // lists what the decision rests on, not the whole ledger.
+  var FSC_CHOICE_BEARING = ['auth.inquiry_not_yet_opened', 'auth.venue_named_formal_inquiry',
+    'auth.julian_standing_to_convene', 'auth.julian_claimed_convene_preside',
+    'auth.dohkar_claims_rite_and_ruling', 'review.demanded_by_julian', 'review.demanded_by_dohkar',
+    'answer.entrusted_to_julian', 'twist.assembly_turned', 'twist.loose_note_heard',
+    'twist.words_honoured', 'twist.wish_misaligned', 'twist.intent_failed'];
+
+  // ── EXTERNAL-TIMELINE VOCABULARY — ONE SOURCE OF TRUTH ──────────────────────────────────────
+  // The phrases that can only be written by someone who saw BOTH timelines. Used three ways: the
+  // static choice refuses to present text containing them, the boundary's forbidden list is built
+  // from them, and the run scorers read this exact list out of the page so the prompt and the
+  // check can never drift apart.
+  var FSC_EXTERNAL_TIMELINE_PHRASES = [
+    'again', 'a second time', 'the second', 'second rite', 'earlier', 'the first time',
+    'once more', 'what they lost', 'what she lost', 'remember nothing of', 'never happened',
+    'as it did before', 'where she stood before', 'where she knelt', 'moments ago',
+    'the previous', 'last time', 'had happened already', 'replayed', 'repeating', 'repeated'
+  ];
+  function _fscExternalTimelineHits(text) {
+    var t = String(text || '');
+    return FSC_EXTERNAL_TIMELINE_PHRASES.filter(function (p) {
+      return new RegExp('\\b' + p.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b', 'i').test(t);
+    });
+  }
+
+  // Active canon WITH this record's delta applied, whether or not it has reached the log yet.
+  function _fscCanonAfter(rec) {
+    var active = {};
+    try { active = _fscActiveCanon() || {}; } catch (_) { active = {}; }
+    if (rec && rec.delta) {
+      (rec.delta.ceases || []).forEach(function (a) { delete active[a]; });
+      (rec.delta.establishes || []).forEach(function (e) { active[e.id || e] = true; });
+    }
+    return active;
+  }
+
   function _fscRenderBoundary(rec, opts) {
     if (!rec || rec.error) return '';
     var o = opts || {};
@@ -340883,6 +340941,41 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
       if (rec.delta.priorHistoryReplaced) L.push('    HISTORY: ' + rec.delta.priorHistoryReplaced);
     }
 
+    // ── INSIDE-THE-REPLACEMENT POV (Roman 2026-09-29) ─────────────────────────────────────────
+    // Added after the C4 run on unm.time_gives_way FAILED C1 and C2 while the SAME stack and the
+    // SAME boundary passed on a memory_perception outcome. The failure was specific: the author
+    // narrated the replacement FROM OUTSIDE IT, giving the POV character and her ally knowledge of
+    // the edit — "Seren kneels where she knelt the first time", "He knows the second rite never
+    // happened. He knows I know." The generic "do not explain that anything was altered" line was
+    // not enough, because the HISTORY line directly above hands the author the replaced timeline
+    // as prose-ready material. This states, at the point of that temptation, that the record is
+    // the READER'S and never the characters'.
+    // Fires ONLY for historical_replacement with the invoker inside the sealed population — the
+    // exact shape that failed. A memory_perception outcome is untouched.
+    var _povNames = roster.length ? roster.map(_fscLabel).join(', ') : 'everyone affected';
+    if (rec.delta && rec.delta.temporalOperation === 'historical_replacement'
+        && rec.invokerScope === 'in_population') {
+      L.push('- WRITE FROM INSIDE THE REPLACEMENT (HARD — this overrides narrative instinct):');
+      L.push('    • ' + _povNames + ' have NO memory, NO knowledge and NO narration of the');
+      L.push('      replaced timeline. It is not a thing they forgot. For them it never occurred.');
+      L.push('    • Write what happens as their ONLY experienced version of events. The narrator');
+      L.push('      is inside it too — she is not a witness to an edit.');
+      L.push('    • FORBIDDEN, in narration and dialogue alike: "again", "a second time", "the');
+      L.push('      second", "earlier", "the first time", "before" used of the replaced events,');
+      L.push('      "still", "once more", "as if it had happened already", "what they lost", "they');
+      L.push('      remember nothing of", "never happened" — and any equivalent that compares this');
+      L.push('      version to another. If a line only makes sense to someone who saw both');
+      L.push('      timelines, cut it.');
+      L.push('    • The CANON CHANGE and HISTORY lines above are the READER’S record and the');
+      L.push('      specification you are writing to. They are NOT character knowledge and must');
+      L.push('      never surface in narration, dialogue, or interiority.');
+      L.push('    • Do NOT give any two characters a shared understanding of what happened — no');
+      L.push('      knowing looks, no "he knows I know", no silent complicity — unless the');
+      L.push('      NOW TRUE lines above establish that relationship outright.');
+      L.push('    • The AFTERMATH BEAT below is the ONLY permitted trace: a felt, unplaceable');
+      L.push('      sense with no object and no cause the character can name. Feeling, never fact.');
+    }
+
     L.push('- MUST REMAIN TRUE: ' + (rec.unchangedNote
       || 'every fact and every party not listed above is UNCHANGED.'));
     if (!rec.unchangedNote && (rec.mode !== 'exact_reading' || (rec.memoryEffects || []).length)) {
@@ -340909,6 +341002,26 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
     if (rec.opensChoicePending) {
       L.push('- END ON THE CHOICE. The scene reaches Lirael\u2019s renewed decision and STOPS there.');
       L.push('  Author nothing past it and imply nothing about which way she goes.');
+      // DERIVE THE CHOICE FROM ACTIVE CANON ONLY. The C4 run ended on "let the assumption stand" \u2014
+      // an assumption produced by a questioning this same delta erased. The choice must rest on
+      // what still governs after the replacement, never on what it removed.
+      var _after = _fscCanonAfter(rec);
+      var _governing = FSC_CHOICE_BEARING.filter(function (a) { return _after[a]; });
+      var _erased = (rec.delta && rec.delta.ceases) ? rec.delta.ceases.slice() : [];
+      L.push('  THE CHOICE RESTS ON ACTIVE CANON ONLY. What still governs, and all it may rest on:');
+      _governing.forEach(function (a) { L.push('    \u2022 ' + (FSC_ATOM_GLOSS[a] || a)); });
+      (rec.delta && rec.delta.establishes ? rec.delta.establishes : []).forEach(function (e) {
+        L.push('    \u2022 ' + e.text);
+      });
+      if (_erased.length) {
+        L.push('  IT MAY NOT REST ON \u2014 these no longer govern and no character can refer to them,');
+        L.push('  weigh them, or be moved by them:');
+        _erased.forEach(function (a) { L.push('    \u2022 ' + (FSC_ATOM_GLOSS[a] || a)); });
+        L.push('    No option may turn on an erased questioning, interruption, accusation or');
+        L.push('    assumption. There is no standing assumption to let stand, no truth someone');
+        L.push('    "never heard", and nothing to confess or conceal about an event that did not');
+        L.push('    occur. If an option only makes sense under the replaced history, it is wrong.');
+      }
     }
     return L.join('\n') + '\n';
   }
@@ -341081,6 +341194,10 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
   window._fscCompile = _fscCompile;
   window._fscCompileAndPersist = _fscCompileAndPersist;
   window._fscActiveCanon = _fscActiveCanon;
+  window._fscCanonAfter = _fscCanonAfter;
+  window._fscExternalTimelineHits = _fscExternalTimelineHits;
+  window._FSC_EXTERNAL_TIMELINE_PHRASES = FSC_EXTERNAL_TIMELINE_PHRASES;
+  window._FSC_ATOM_GLOSS = FSC_ATOM_GLOSS;
   window._fscIsActive = _fscIsActive;
   window._fscExpandPopulation = _fscExpandPopulation;
   window._fscSelectExact = _fscSelectExact;
@@ -341148,20 +341265,48 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
   //    fail for provider reasons. It presents the choice and nothing else — no prose, no recap,
   //    no continuation, no implied aftermath. The reader is told nothing about a model, a
   //    failure, a retry, or a recovery. ───────────────────────────────────────────────────────
+  // REWRITTEN ON ACTIVE CANON (Roman 2026-09-29). The previous text was authored against the
+  // PRE-replacement history and leaked both ways: "Lirael stands where she stood before" is
+  // external-timeline narration, and "Run, in shame" rested on a questioning that
+  // unm.time_gives_way erases. Every line here now rests on atoms that still govern AFTER the
+  // replacement — auth.inquiry_not_yet_opened and review.demanded_by_julian — and each option
+  // declares that basis so it can be checked rather than trusted. The option VALUES are unchanged
+  // ('run' / 'remain' are canon-neutral verbs the disposition ledger already keys on); only the
+  // text they present is derived.
   var FSC_STATIC_CHOICE = {
     id: 'lirael.scene1_disposition',
-    prompt: 'The words are said. The assembly is seated. Lirael stands where she stood before.',
+    prompt: 'The rite is concluded. A review has been demanded, and the inquiry has not opened. '
+          + 'Lirael has not spoken.',
+    promptRequiresActive: ['auth.inquiry_not_yet_opened'],
     options: [
-      { value: 'run',    label: 'Run, in shame.' },
-      { value: 'remain', label: 'Remain.' }
+      { value: 'run',    label: 'Withdraw, and let the inquiry open without her.',
+        requiresActive: ['auth.inquiry_not_yet_opened'] },
+      { value: 'remain', label: 'Remain, and answer when it opens.',
+        requiresActive: ['auth.inquiry_not_yet_opened'] }
     ]
   };
+  // FAIL CLOSED. An option whose basis no longer governs, or whose text carries external-timeline
+  // vocabulary, is not presented. If that leaves fewer than two options the presentation is
+  // refused outright rather than offering the player a choice built on erased history.
   function _fscStaticChoicePresentation() {
     var cp = _cp(); if (!cp) return null;
+    var active = {};
+    try { active = (window._fscActiveCanon && window._fscActiveCanon()) || {}; } catch (_) { active = {}; }
+    var hits = (window._fscExternalTimelineHits) || function () { return []; };
+    var basisOk = function (o) { return (o.requiresActive || []).every(function (a) { return active[a]; }); };
+    var kept = FSC_STATIC_CHOICE.options.filter(function (o) {
+      return basisOk(o) && hits(o.label).length === 0;
+    }).map(function (o) { return { value: o.value, label: o.label }; });
+    var promptOk = (FSC_STATIC_CHOICE.promptRequiresActive || []).every(function (a) { return active[a]; })
+                   && hits(FSC_STATIC_CHOICE.prompt).length === 0;
+    if (!promptOk || kept.length < 2) {
+      try { console.error('[FSC-CHOICE] static presentation REFUSED — the authored choice does not '
+        + 'rest on active canon (promptOk=' + promptOk + ', options=' + kept.length + ').'); } catch (_) {}
+      return null;
+    }
     cp.presentedStatically = true; cp.presentedAt = Date.now();
     return { mode: 'static_authored', createsDelta: false, chargesFortune: false,
-             id: FSC_STATIC_CHOICE.id, prompt: FSC_STATIC_CHOICE.prompt,
-             options: FSC_STATIC_CHOICE.options.slice() };
+             id: FSC_STATIC_CHOICE.id, prompt: FSC_STATIC_CHOICE.prompt, options: kept };
   }
   // The renewed choice is ALWAYS reachable: Tier 1 while retries remain, Tier 2 unconditionally.
   // Available after a reload as well as immediately after a failure.

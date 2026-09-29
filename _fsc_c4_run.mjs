@@ -9,6 +9,13 @@ import fs from 'fs';
 import path from 'path';
 import { preflight } from './_fsc_preflight_control.mjs';
 import { guardDispatch, CHARS_PER_TOKEN, REASONING_MULT, SAFETY_MARGIN } from './_fsc_cost_guard.mjs';
+import { scoreC1, scoreC2, aftermathLanded, loadExternalTimelinePhrases, ROSTER_TOKENS }
+  from './_fsc_scoring.mjs';
+
+const PHRASES = loadExternalTimelinePhrases();
+// Facts unm.time_gives_way erases. No option or line may rest on them.
+const ERASED_TERMS = ['the assumption', 'never heard', 'without interference', 'the interruption',
+  'questioned me', 'the questioning', 'the accusation', 'interrupted'];
 
 const WISH = 'I want this to have never happened.';
 const EXPECT = 'unm.time_gives_way';
@@ -35,7 +42,7 @@ fs.mkdirSync(OUT, { recursive: true });
 
 // ── PREFLIGHT (zero cost, every network call aborted) ─────────────────────────────────────────
 log('PREFLIGHT (zero cost, all network aborted)');
-const pre = await preflight({ verbose: false, wish: WISH, expect: EXPECT, expectChoicePending: true });
+const pre = await preflight({ verbose: false, wish: WISH, expect: EXPECT, expectChoicePending: true, expectInsideReplacementPOV: true });
 pre.checks.filter(c => !c.ok).forEach(c => log('  FAIL ' + c.name + (c.detail ? ' — ' + c.detail : '')));
 log('  ' + pre.checks.filter(c => c.ok).length + '/' + pre.checks.length + ' checks, payload '
   + pre.bytes + ' bytes, digest ' + pre.compiled.digest);
@@ -105,18 +112,22 @@ if (plan) { const bits = []; JSON.stringify(plan, (k, v) => {
 fs.writeFileSync(path.join(OUT, 'prose.txt'), prose);
 log('  prose    : ' + prose.split(/\s+/).filter(Boolean).length + ' words\n');
 
-// ── C2 MECHANICALLY FIRST ─────────────────────────────────────────────────────────────────────
+// ── C2 MECHANICALLY FIRST — PRESENCE **AND** DISPOSITION ──────────────────────────────────────
+// The earlier scorer tested presence only and reported a clean C2 on a scene that failed it.
 const roster = pre.compiled.roster || [];
-const TOK = { 'pc:lirael': /\bLirael\b/i, 'named:seren': /\bSeren\b/i, 'named:julian': /\bJulian\b/i,
-  'role:first_sacrifice_presiding_dohkar': /\bDohkar\b/i,
-  'the_assembly': /\b(assembly|crowd|gathering|First Favored)\b/i };
-const mentioned = Object.keys(TOK).filter(k => TOK[k].test(prose));
-const outside = mentioned.filter(m => roster.indexOf(m) < 0);
-log('C2 — MECHANICAL ROSTER CHECK');
+const c2 = scoreC2(prose, { roster, tokens: ROSTER_TOKENS, phrases: PHRASES });
+log('C2 — ROSTER **AND** DISPOSITION');
 log('  declared roster : ' + roster.join(', '));
-log('  mentioned       : ' + (mentioned.join(', ') || '(none)'));
-log('  OUTSIDE roster  : ' + (outside.length ? outside.join(', ') : '(none)'));
-log('  all present in prose : ' + roster.every(r => mentioned.indexOf(r) >= 0));
+log('  mentioned       : ' + (c2.presence.mentioned.join(', ') || '(none)'));
+log('  OUTSIDE roster  : ' + (c2.presence.outside.length ? c2.presence.outside.join(', ') : '(none)'));
+log('  MISSING         : ' + (c2.presence.missing.length ? c2.presence.missing.join(', ') : '(none)'));
+log('  presence        : ' + (c2.presence.ok ? 'PASS' : 'FAIL'));
+log('  disposition     : ' + (c2.disposition.ok ? 'PASS' : 'FAIL — ' + c2.disposition.leaks.length
+  + ' replaced-timeline leak(s)'));
+c2.disposition.leaks.forEach(l => log('     ✗ [' + l.phrases.join(', ') + '] '
+  + (l.parties.length ? '(' + l.parties.join(', ') + ') ' : '') + '"' + l.sentence + '"'));
+if (c2.retainingParties.length) log('  RETAINING       : ' + c2.retainingParties.join(', '));
+log('  C2              : ' + (c2.pass ? 'PASS' : 'FAIL'));
 
 // ── C4 MECHANICALLY — the point of this run ───────────────────────────────────────────────────
 log('\nC4 — DOES THE SCENE STOP AT THE CHOICE?');
@@ -142,14 +153,25 @@ const costWords = prose.match(/\b(the price|it cost(?: her)?|in exchange|paid fo
 log('  invented cost         : ' + (costWords.length ? 'HIT — ' + [...new Set(costWords)].join(', ') : 'clean')
   + '   (record says COST: none)');
 
+// ── C1 — external-timeline narration, shared understanding, erased basis ──────────────────────
+log('\nC1 — ONLY THE SEALED CONSEQUENCE (mechanical part)');
+const c1 = scoreC1(prose, { phrases: PHRASES, erasedTerms: ERASED_TERMS });
+log('  external-timeline narration : ' + (c1.externalTimeline.length ? 'FAIL — ' + c1.externalTimeline.length : 'clean'));
+c1.externalTimeline.forEach(e => log('     ✗ [' + e.phrases.join(', ') + '] "' + e.sentence + '"'));
+log('  shared understanding        : ' + (c1.sharedUnderstanding.length ? 'FAIL' : 'clean'));
+log('  choice on erased basis      : ' + (c1.erasedBasis.length ? 'FAIL' : 'clean'));
+c1.erasedBasis.forEach(e => log('     ✗ "' + e.term + '" in "' + e.sentence + '"'));
+log('  C1 (mechanical)             : ' + (c1.pass ? 'PASS' : 'FAIL')
+  + '   (reading still owns the final call)');
+
 log('\nAFTERMATH BEAT — reaction that outlives its reason?');
 ['Seren', 'Julian', 'Dohkar', 'Lirael'].forEach(n => {
-  const near = new RegExp(n + '[^.]{0,160}\\b(again|before|already|cannot|could not|can[’\']t|couldn[’\']t|unable|no reason|without knowing|loses? his place|why)\\b', 'i');
-  log('  ' + n.padEnd(7) + ' : ' + near.test(prose));
+  const r = aftermathLanded(prose, n);
+  log('  ' + n.padEnd(7) + ' : ' + (r.landed ? 'yes — "' + r.sentence.slice(0, 92) + '"' : 'no'));
 });
 
 fs.writeFileSync(path.join(OUT, 'verdict_input.json'), JSON.stringify(
-  { outcomeId: pre.compiled.outcomeId, roster, mentioned, outside,
+  { outcomeId: pre.compiled.outcomeId, roster, c2, c1,
     c4: { beats: beats.length, gate, lastIdx, beatsPastGate: past.length, gateAtEnd },
     magic: [...new Set(magic)], verdictWords: [...new Set(verdictWords)],
     costWords: [...new Set(costWords)], estimate: guard.estimate, measured,
