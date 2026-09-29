@@ -1,0 +1,29 @@
+=== ROSTER-COMPLIANCE RUN — cap $0.06, one call, no retry ===
+
+PREFLIGHT (zero cost, all network aborted)
+  21/21 checks, payload 252045 bytes, digest fsb1ro0yrp:2105
+  PREFLIGHT PASSED — dispatch permitted.
+
+DISPATCH — one upstream attempt, _noFallback, no retry
+  status=200  36837ms
+  measured : $0.082655   cap $0.06   ⚠ OVER CAP
+  prose    : 565 words
+
+C2 — MECHANICAL ROSTER CHECK
+  declared roster : the_assembly, named:seren, named:julian, role:first_sacrifice_presiding_dohkar, pc:lirael
+  mentioned       : pc:lirael, named:seren, named:julian, role:first_sacrifice_presiding_dohkar, the_assembly
+  OUTSIDE roster  : (none)
+  all five present in prose : true
+
+C3 — FORBIDDEN-INVENTION SCAN
+  visible wish-energy / magical residue : HIT — luminous
+  Answer-as-verdict                     : clean
+
+AFTERMATH BEAT — did the reaction land?
+  Seren   reaction-without-a-reason nearby : true
+  Julian  reaction-without-a-reason nearby : false
+  Dohkar  reaction-without-a-reason nearby : false
+  Lirael  reaction-without-a-reason nearby : true
+
+  measured $0.082655   evidence: _tempt_fate_fixtures/fsc_roster_2026-09-29T15-59-11
+  NO VERDICT RENDERED HERE. C1/C3 are human calls against the sealed record.

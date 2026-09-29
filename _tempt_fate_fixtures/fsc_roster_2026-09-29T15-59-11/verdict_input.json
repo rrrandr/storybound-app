@@ -1,0 +1,24 @@
+{
+  "outcomeId": "unm.the_turning_forgotten",
+  "roster": [
+    "the_assembly",
+    "named:seren",
+    "named:julian",
+    "role:first_sacrifice_presiding_dohkar",
+    "pc:lirael"
+  ],
+  "mentioned": [
+    "pc:lirael",
+    "named:seren",
+    "named:julian",
+    "role:first_sacrifice_presiding_dohkar",
+    "the_assembly"
+  ],
+  "outside": [],
+  "magic": [
+    "luminous"
+  ],
+  "verdictWords": [],
+  "measured": 0.08265465,
+  "words": 565
+}

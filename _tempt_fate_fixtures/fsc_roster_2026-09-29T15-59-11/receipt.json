@@ -1,0 +1,8 @@
+{
+  "status": 200,
+  "ms": 36837,
+  "err": null,
+  "model": "grok-4-1-fast-reasoning",
+  "cap": 0.06,
+  "at": "2026-09-29T16:00:02.473Z"
+}
