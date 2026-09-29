@@ -1,0 +1,47 @@
+
+PRESELECTED CONSEQUENCE — EFFECT BOUNDARY (TEMPT FATE) (compiled at acceptance; render it, do not infer or extend):
+- READING: FATE-CHOSEN — the wording anchored nothing; Fate selected this interpretation.
+- OUTCOME: unm.time_gives_way
+- AFFECTED — exactly these people receive the effect, all of them:
+    • the assembled First Favored — family, guests and onlookers
+    • Seren
+    • Julian
+    • the presiding Dohkar
+    • Lirael
+    LIRAEL IS AFFECTED. She is inside the named population and receives the same effect as
+    everyone else. Do NOT spare her, and do NOT have her notice what the others lost.
+- NOT AFFECTED: no one present is outside this effect.
+- EFFECT LIMITED TO:
+    • not_retained: interr.julian_questioned_lirael
+    • not_retained: lirael.scene1_disposition
+- CANON CHANGE (historical_replacement):
+    CEASES: interr.julian_questioned_lirael
+    CEASES: interr.dohkar_interrupted
+    CEASES: interr.choice_arose
+    CEASES: lirael.scene1_disposition
+    CEASES: answer.handed_to_lirael
+    CEASES: answer.lirael_authorized_to_hold
+    NOW TRUE: Julian did not question Lirael before the assembly. No such questioning took place in active canon.
+    NOW TRUE: The presiding Dohkar interrupted nothing.
+    NOW TRUE: The rite played through a second time, and no questioning of the Sacrificiant’s guide occurred in it.
+    NOW TRUE: The Answer was not placed in Lirael’s hands. It remained with Julian throughout.
+    NOW TRUE: A choice is required of Lirael and has not been made.
+    HISTORY: History was — Julian questioned Lirael before the assembly, the Dohkar interrupted it, a choice arose from it, and the Answer was in her hands for it. History now is — the rite concluded with no questioning of the guide, the Answer never left Julian’s keeping, and the choice before Lirael is open and unmade.
+- MUST REMAIN TRUE: every fact and every party not listed above is UNCHANGED.
+    The twist and the loose note remain known exactly as sealed unless listed above.
+- COST: none — do not invent one
+- AFTERMATH BEAT — REQUIRED. The consequence must LAND IN THE ROOM. Show the affected
+  people reacting in-fiction. They feel the new reality; they cannot explain it.
+    Everyone present carries the faint, unplaceable sense of having stood here before. Seren looks at her own hands as if checking them. The Dohkar loses his place in a rite he has performed a hundred times. Julian's gaze finds Lirael a moment before there is any reason for it, and neither of them can say why.
+  Scope it to the AFFECTED list only. Never spare an affected named person; never give
+  the reaction to someone on the NOT AFFECTED list.
+- FORBIDDEN INVENTIONS:
+    • no cost or penalty beyond the one named above
+    • no new canon fact, standing, rule or relationship
+    • NO aura, glow, luminous cloth, shimmer, visible wish-energy or magical residue —
+      this world has none and a rite leaves nothing to see
+    • the Answer never delivers a verdict about what is factually true, who is guilty,
+      or what caused the twist; it responds only to its holder’s present alignment
+    • do not explain the mechanism, the wish, or that anything was altered
+- END ON THE CHOICE. The scene reaches Lirael’s renewed decision and STOPS there.
+  Author nothing past it and imply nothing about which way she goes.

@@ -1,0 +1,37 @@
+=== FULL-STACK PAID RUN — ceiling $0.25 for the whole exercise ===
+
+── time_gives_way ──
+  compiled : unm.time_gives_way  roster=5  invokerScope=in_population
+  harvest  : 25 provider calls attempted, all aborted ($0)
+  terminal : 207354 bytes, carries the sealed consequence: true
+  upstream : status=200 43513ms
+  measured : $0.071062   running total $0.071062 of $0.25
+  scene    : 1489 words
+── turning_forgotten ──
+  compiled : unm.the_turning_forgotten  roster=5  invokerScope=in_population
+  harvest  : 25 provider calls attempted, all aborted ($0)
+  terminal : 206124 bytes, carries the sealed consequence: true
+  upstream : status=200 46370ms
+  measured : $0.054898   running total $0.125960 of $0.25
+  scene    : 1337 words
+
+======================================================================
+C2 — MECHANICAL ROSTER CHECK (scored first)
+======================================================================
+
+  time_gives_way  (unm.time_gives_way)
+    declared roster : the_assembly, named:seren, named:julian, role:first_sacrifice_presiding_dohkar, pc:lirael
+    mentioned       : 
+    OUTSIDE roster  : (none)
+    magical-visual  : clean
+
+  turning_forgotten  (unm.the_turning_forgotten)
+    declared roster : the_assembly, named:seren, named:julian, role:first_sacrifice_presiding_dohkar, pc:lirael
+    mentioned       : pc:lirael, named:julian, the_assembly
+    OUTSIDE roster  : (none)
+    magical-visual  : clean
+
+  TOTAL MEASURED : $0.125960 of $0.25
+  evidence       : _tempt_fate_fixtures/fsc_paid_2026-09-29T07-47-34
+
+  NO VERDICT RENDERED HERE. C1/C3/C4 are human calls against the sealed record.
