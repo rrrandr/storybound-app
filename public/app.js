@@ -75584,6 +75584,14 @@ One sentence maximum. Atmospheric only. If reality bends, the deck should stir.\
     lines.push('   • A small, momentary wish (a glance, a touch, a door that opens, a single line said) → a brief, plausible tilt within the current scene. Do not inflate it.');
     lines.push('   • A SCENARIO / situation / scene-type request (e.g. a heist, a survival ordeal, a chase, a masquerade, a reunion, a confrontation) → WEAVE that scenario into the ongoing story as REAL scene events across the next ' + remaining + ' ' + sceneWord + ', using the SAME protagonist, love interest, setting, and tone already established. When you judge the request scenario-scale, any “personal-scale coincidence / minor tilt” ceiling from a Petition omen above is RELAXED for the scenario’s duration — you may stage actual events.');
     lines.push('- ' + amplitude);
+    // STAGE 3: a compiled consequence REPLACES the author's latitude to interpret the wish.
+    // When one exists, the directive carries preselected facts and the scene renders them.
+    try {
+      if (isTempt && typeof _fscPromptBlock === 'function') {
+        var _fscBlock = _fscPromptBlock();
+        if (_fscBlock) lines.push(_fscBlock);
+      }
+    } catch (_fscPErr) { console.warn('[FSC] prompt block threw:', _fscPErr && _fscPErr.message); }
     // Petition only: Fortunes offered set the audacity + duration BUDGET for the
     // manifestation (Bend → Lamborghini caper; Whisper → pickpocket chase).
     if (!isTempt) {
@@ -109435,6 +109443,13 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
           // Record this Tempt event in the ledger so future scenes can
           // call back to it (LI remembers / debates / wonders / requests
           // a repeat). Cleared on story reset.
+          // ── STAGE 3 OPENING COMPILER: compile the consequence HERE, at acceptance, before any
+          // prose is generated. The author must read preselected facts, never a raw wish it could
+          // interpret for itself. Persisted synchronously; a throw is contained and logged, and
+          // leaves no compiled consequence rather than a half-written one.
+          try {
+            if (typeof _fscCompileAndPersist === 'function') _fscCompileAndPersist(wishText, { source: 'tempt_seal' });
+          } catch (_fscErr) { console.warn('[FSC] compile-at-seal threw:', _fscErr && _fscErr.message); }
           try {
             if (typeof _recordTemptFateEvent === 'function') {
               var _tfLedgerEntry = _recordTemptFateEvent(wishText);
@@ -340230,4 +340245,462 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
       e.preventDefault();
     }
   });
+})();
+
+// ══════════════════════════════════════════════════════════════════════════════════════════════
+// STAGE 3 — ISSUE 1 OPENING CONSEQUENCE COMPILER (Roman 2026-09-29, approved editorial canon)
+//
+// NATIVE COMPILER DATA. This is NOT extractor-report data. The extractor's report schema
+// (app.js ~191194) describes what a model read out of delivered prose; this describes what an
+// accepted submission COMMITS the scene to. Primitive reuse is deliberate and justified per
+// _compiler_contract_boundary.md §2; report-only fields (scopeMatch, unaccountedParties,
+// evidenceQuote, memoryAbsent, suspicionFromResidue, invokerExemption) are NOT reused.
+//
+// Post-prose extraction and automatic post-prose commitment stay DISABLED. The author writes
+// from preselected facts only.
+// ══════════════════════════════════════════════════════════════════════════════════════════════
+(function () {
+  'use strict';
+  var FSC_V = 1;
+
+  // ── Populations. Declared rule; expanded and FROZEN at seal. ────────────────────────────────
+  var FSC_POPULATIONS = {
+    'population.assembly': {
+      label: 'the assembly',
+      members: ['the_assembly']            // the crowd of First Favored family and guests
+      // excludes pc:lirael, named:seren, named:julian, role:first_sacrifice_presiding_dohkar
+    },
+    'population.scene_present': {
+      label: 'everyone present',
+      members: ['the_assembly', 'named:seren', 'named:julian',
+                'role:first_sacrifice_presiding_dohkar', 'pc:lirael']
+    },
+    // the_shunning's ACTING roster: scene_present minus the object of the withdrawal.
+    // Structural role logic, not an invoker exemption — no one withdraws from themselves.
+    'population.withdrawing_from_lirael': {
+      label: 'those who withdraw from Lirael',
+      members: ['the_assembly', 'named:seren', 'named:julian',
+                'role:first_sacrifice_presiding_dohkar']
+    }
+  };
+  var FSC_INVOKER = 'pc:lirael';
+
+  // ── Opening-phase invariant atoms (always active). ──────────────────────────────────────────
+  var FSC_INVARIANT_ATOMS = {
+    'interr.julian_questioned_lirael': 1, 'interr.dohkar_interrupted': 1, 'interr.choice_arose': 1,
+    'twist.wish_misaligned': 1, 'twist.words_honoured': 1, 'twist.assembly_turned': 1,
+    'twist.intent_failed': 1, 'twist.loose_note_heard': 1,
+    'auth.dohkar_claims_rite_and_ruling': 1, 'auth.venue_named_formal_inquiry': 1,
+    'auth.julian_claimed_convene_preside': 1, 'auth.julian_standing_to_convene': 1,
+    'auth.inquiry_not_yet_opened': 1,
+    'answer.instance_identity': 1, 'answer.owned_by_institution': 1,
+    'answer.entrusted_to_julian': 1, 'answer.handed_to_lirael': 1,
+    'answer.lirael_authorized_to_hold': 1,
+    'review.demanded_by_julian': 1
+  };
+  // Atoms whose activity is read from live story state.
+  var FSC_STATE_ATOMS = {
+    'review.demanded_by_dohkar': function (s) { return !!(s && s.reviewPending); },
+    'accusation.family_accused':  function (s) { return !!(s && s.accusationMade); },
+    'accusation.family_demanded_remedy': function (s) { return !!(s && s.remedyDemanded); }
+  };
+
+  // ── Ask-class grammar. Selection is ask-class FIRST (T4), never favor-first. ────────────────
+  var FSC_ASK_GRAMMAR = [
+    { ask: 'undo',      rx: /\b(never happened|had never|undo|take it back|unhappen|un-happen)\b/i },
+    { ask: 'escape',    rx: /\b(let me out|out of this|get me out|i didn['\u2019]?t do|didn['\u2019]?t do anything)\b/i },
+    { ask: 'unseen',    rx: /\b(disappear|vanish|not be seen|don['\u2019]?t (?:let them )?look at me|invisible)\b/i },
+    { ask: 'silence',   rx: /\b(don['\u2019]?t bring|not bring (?:it|that) up|don['\u2019]?t ask about|isn['\u2019]?t mine|not mine)\b/i },
+    { ask: 'authority', rx: /\b(who is he|what right|shouldn['\u2019]?t be the one|no right to (?:ask|question|judge))\b/i },
+    { ask: 'solitude',  rx: /\b(leave me alone|go away|all go away|left alone)\b/i },
+    { ask: 'stop',      rx: /\b(make it stop|stop this|not now|no more|can['\u2019]?t do this)\b/i }
+  ];
+  var FSC_FALLBACK = { stop: 'undo', unseen: 'solitude' };
+
+  // ── APPROVED FATE-CHOSEN OPENING OUTCOMES ───────────────────────────────────────────────────
+  var FSC_OUTCOMES = [
+    { id: 'unm.dohkar_demand_unmade', ask: 'stop',
+      cls: 'history_rewrite', temporalOperation: 'historical_replacement',
+      requiresActive: ['review.demanded_by_dohkar'], requiresInactive: [],
+      ceases: ['review.demanded_by_dohkar'],
+      establishes: [
+        { id: 'review.dohkar_demand_never_made', text: 'No demand for a review of the Sacrificiant’s conduct was made before the assembly by the presiding Dohkar.' },
+        { id: 'review.julian_demand_undisturbed', text: 'Julian’s demand for a review stands, unaffected by this revision.' }
+      ],
+      priorHistoryReplaced: 'History was — the presiding Dohkar demanded a review of the Sacrificiant’s conduct before the assembly. History now is — no such demand was made; Julian’s demand, made offstage, stands.',
+      survivingContradictions: [], memoryEffects: [], population: null,
+      cost: null, durability: 'persists' },
+
+    { id: 'unm.time_gives_way', ask: 'undo',
+      cls: 'history_rewrite', temporalOperation: 'historical_replacement',
+      requiresActive: ['interr.julian_questioned_lirael'], requiresInactive: [],
+      ceases: ['interr.julian_questioned_lirael', 'interr.dohkar_interrupted', 'interr.choice_arose',
+               'lirael.scene1_disposition', 'answer.handed_to_lirael', 'answer.lirael_authorized_to_hold'],
+      establishes: [
+        { id: 'interr.no_questioning_occurred', text: 'Julian did not question Lirael before the assembly. No such questioning took place in active canon.' },
+        { id: 'interr.no_interruption_occurred', text: 'The presiding Dohkar interrupted nothing.' },
+        { id: 'ceremony.replayed_unquestioned', text: 'The rite played through a second time, and no questioning of the Sacrificiant’s guide occurred in it.' },
+        { id: 'answer.never_handed_to_lirael', text: 'The Answer was not placed in Lirael’s hands. It remained with Julian throughout.' },
+        { id: 'lirael.choice_pending', text: 'A choice is required of Lirael and has not been made.' }
+      ],
+      priorHistoryReplaced: 'History was — Julian questioned Lirael before the assembly, the Dohkar interrupted it, a choice arose from it, and the Answer was in her hands for it. History now is — the rite concluded with no questioning of the guide, the Answer never left Julian’s keeping, and the choice before Lirael is open and unmade.',
+      survivingContradictions: [],
+      population: 'population.scene_present',
+      memoryEffects: [{ atom: 'interr.julian_questioned_lirael', disposition: 'not_retained' },
+                      { atom: 'lirael.scene1_disposition', disposition: 'not_retained' }],
+      opensChoicePending: true,
+      cost: null, durability: 'persists' },
+
+    { id: 'unm.the_accusation_unmade', ask: 'escape',
+      cls: 'history_rewrite', temporalOperation: 'historical_replacement',
+      requiresActive: ['accusation.family_accused'], requiresInactive: [],
+      ceases: ['accusation.family_accused'],
+      establishes: [
+        { id: 'accusation.family_never_accused', text: 'At that event, no public accusation of responsibility for the twisted wish was made against Lirael by Seren’s family or by any party with standing.' }
+      ],
+      priorHistoryReplaced: 'History was — Seren’s family publicly accused Lirael of responsibility for the twisted wish. History now is — no such accusation was made.',
+      survivingContradictions: [], memoryEffects: [], population: null,
+      cost: null, durability: 'persists' },
+
+    { id: 'unm.the_claim_unmade', ask: 'escape',
+      cls: 'history_rewrite', temporalOperation: 'historical_replacement',
+      requiresActive: ['auth.dohkar_claims_rite_and_ruling'],
+      requiresInactive: ['accusation.family_accused'],
+      ceases: ['auth.dohkar_claims_rite_and_ruling', 'auth.venue_named_formal_inquiry',
+               'auth.julian_claimed_convene_preside'],
+      establishes: [
+        { id: 'auth.no_claim_to_rule', text: 'No authority has asserted a claim to rule on the Sacrificiant’s conduct.' },
+        { id: 'auth.no_venue_named', text: 'No venue has been named for any such proceeding.' }
+      ],
+      priorHistoryReplaced: 'History was — the presiding Dohkar asserted the rite and the ruling were his, named a formal inquiry as the venue, and Julian agreed and claimed authority to convene it. History now is — no claim to rule on her conduct was made, and no venue was named.',
+      survivingContradictions: [], memoryEffects: [], population: null,
+      cost: null, durability: 'persists' },
+
+    { id: 'unm.the_turning_forgotten', ask: 'unseen',
+      cls: 'memory_perception', temporalOperation: null,
+      requiresActive: ['twist.assembly_turned'], requiresInactive: [],
+      ceases: [], establishes: [],
+      population: 'population.assembly',
+      memoryEffects: [{ atom: 'twist.assembly_turned', disposition: 'forgot' }],
+      cost: null, durability: 'persists' },
+
+    { id: 'unm.the_custody_unremembered', ask: 'silence',
+      cls: 'memory_perception', temporalOperation: null,
+      requiresActive: ['answer.owned_by_institution', 'answer.entrusted_to_julian'],
+      requiresInactive: [],
+      ceases: [], establishes: [],
+      population: 'population.scene_present',
+      memoryEffects: [{ atom: 'answer.owned_by_institution', disposition: 'forgot' },
+                      { atom: 'answer.entrusted_to_julian', disposition: 'forgot' }],
+      cost: 'she_forgets_whose_it_is', durability: 'persists' },
+
+    { id: 'unm.standing_dissolved', ask: 'authority',
+      cls: 'identity_reputation', temporalOperation: 'current_state_transition',
+      requiresActive: ['auth.julian_standing_to_convene'], requiresInactive: [],
+      ceases: ['auth.julian_standing_to_convene'],
+      establishes: [
+        { id: 'auth.julian_standing_void', text: 'Julian’s claim to convene or preside over a ruling on Lirael’s conduct carries no authority.' }
+      ],
+      recognitionChanges: [{ who: 'named:julian',
+        howRecognized: 'no longer recognised as competent to convene or preside over a ruling on Lirael’s conduct',
+        recordsChanged: 'the order’s record of his standing for this matter' }],
+      memoryEffects: [], population: null,
+      cost: 'escalation_invited', durability: 'persists' },
+
+    { id: 'unm.the_shunning', ask: 'solitude',
+      cls: 'relationship_social', temporalOperation: 'additive_canon_change',
+      requiresActive: [], requiresInactive: [],
+      ceases: [],
+      establishes: [
+        { id: 'lirael.shunned_by_all_present', text: 'The assembly, Seren, Julian and the presiding Dohkar withdraw from Lirael: none stands near her, addresses her, or meets her eye.' }
+      ],
+      affectedParties: [{ who: 'pc:lirael',
+        whatChanged: 'everyone present withdraws from her',
+        witnesses: 'all present' }],
+      actingPopulation: 'population.withdrawing_from_lirael',
+      memoryEffects: [], population: null,
+      cost: 'undefended', durability: 'persists' }
+  ];
+
+  // ── APPROVED EXACT READINGS. Reached only by wording that anchors BOTH a proposition
+  //    and a scope. No ranking applies — the player chose. ─────────────────────────────────────
+  var FSC_EXACT = [
+    { id: 'mem.exact.assembly_forgets_twist',
+      propRx: /\b(wish twisted|twisted|the twist|went wrong)\b/i,
+      scopeRx: /\bthe assembly\b/i,
+      population: 'population.assembly',
+      memoryEffects: [{ atom: 'twist.wish_misaligned', disposition: 'forgot' },
+                      { atom: 'twist.intent_failed', disposition: 'forgot' }],
+      cost: null },
+    { id: 'mem.exact.all_present_forget_twist',
+      propRx: /\b(wish twisted|twisted|the twist|went wrong|the ceremony|what happened)\b/i,
+      scopeRx: /\b(everyone here|everyone present|everybody here|all of them here)\b/i,
+      population: 'population.scene_present',
+      memoryEffects: [{ atom: 'twist.wish_misaligned', disposition: 'forgot' },
+                      { atom: 'twist.intent_failed', disposition: 'forgot' }],
+      cost: null },
+    { id: 'mem.exact.institution_forgets_custody',
+      propRx: /\b(the answer (?:was|is) (?:ever )?the institution|belongs to the institution|institution['\u2019]?s)\b/i,
+      scopeRx: /\b(them all|everyone|the assembly|all of them)\b/i,
+      population: 'population.scene_present',
+      memoryEffects: [{ atom: 'answer.owned_by_institution', disposition: 'forgot' }],
+      cost: 'custody_unclaimed' },
+    { id: 'mem.exact.julian_forgets_interrogation',
+      propRx: /\b(question(?:ing|ed)?|asked me|interrogat)\b/i,
+      scopeRx: /\bjulian\b/i,
+      population: null, namedSubset: ['named:julian'],
+      memoryEffects: [{ atom: 'interr.julian_questioned_lirael', disposition: 'forgot' }],
+      cost: 'intimacy_unwitnessed' },
+    { id: 'mem.exact.dohkar_forgets_authority',
+      propRx: /\b(ruling|claimed|authority|his to (?:make|rule))\b/i,
+      scopeRx: /\bdohkar\b/i,
+      population: null, namedSubset: ['role:first_sacrifice_presiding_dohkar'],
+      memoryEffects: [{ atom: 'auth.dohkar_claims_rite_and_ruling', disposition: 'forgot' }],
+      cost: 'authority_vacuum' }
+  ];
+
+  // ── ACTIVE CANON: base facts folded with the append-only delta log, in seq order. ───────────
+  function _fscDeltaLog(create) {
+    var s = window.state; if (!s) return null;
+    if (!s._fscDeltas && create) s._fscDeltas = [];
+    return s._fscDeltas || null;
+  }
+  function _fscStateFlags() {
+    var s = window.state || {};
+    return { reviewPending: !!s._fsReviewPending, accusationMade: !!s._fsAccusationMade,
+             remedyDemanded: !!s._fsRemedyDemanded };
+  }
+  // activeCanon() = invariants + state-derived atoms, folded through every delta in seq order.
+  function _fscActiveCanon() {
+    var active = {};
+    Object.keys(FSC_INVARIANT_ATOMS).forEach(function (a) { active[a] = true; });
+    var flags = _fscStateFlags();
+    Object.keys(FSC_STATE_ATOMS).forEach(function (a) {
+      if (FSC_STATE_ATOMS[a](flags)) active[a] = true;
+    });
+    var log = _fscDeltaLog(false) || [];
+    log.slice().sort(function (x, y) { return (x.seq || 0) - (y.seq || 0); })
+      .forEach(function (d) {
+        (d.ceases || []).forEach(function (a) { delete active[a]; });
+        (d.establishes || []).forEach(function (e) { active[e.id || e] = true; });
+      });
+    return active;
+  }
+  function _fscIsActive(atom) { return !!_fscActiveCanon()[atom]; }
+
+  // ── Population expansion. Declared rule in; frozen explicit roster out. ─────────────────────
+  // NO INVOKER FILTER ANYWHERE. Membership is the only basis a party is affected.
+  function _fscExpandPopulation(popId) {
+    var p = FSC_POPULATIONS[popId];
+    if (!p) return null;
+    return { populationId: popId, label: p.label, roster: p.members.slice(),
+             sealedAt: Date.now() };
+  }
+  function _fscInvokerScope(sealed, namedSubset) {
+    var roster = sealed ? sealed.roster : (namedSubset || []);
+    return roster.indexOf(FSC_INVOKER) >= 0 ? 'in_population' : 'not_in_population';
+  }
+
+  // ── Selection. Exact reading first; otherwise ask-class, then eligibility. ──────────────────
+  function _fscSelectExact(wishText) {
+    var t = String(wishText || '');
+    for (var i = 0; i < FSC_EXACT.length; i++) {
+      var e = FSC_EXACT[i];
+      if (e.propRx.test(t) && e.scopeRx.test(t)) return e;
+    }
+    return null;
+  }
+  function _fscClassifyAsk(wishText) {
+    var t = String(wishText || '');
+    for (var i = 0; i < FSC_ASK_GRAMMAR.length; i++) {
+      if (FSC_ASK_GRAMMAR[i].rx.test(t)) return FSC_ASK_GRAMMAR[i].ask;
+    }
+    return null;
+  }
+  function _fscEligible(o, active) {
+    return (o.requiresActive || []).every(function (a) { return !!active[a]; }) &&
+           (o.requiresInactive || []).every(function (a) { return !active[a]; });
+  }
+  function _fscSelectFateChosen(ask, active, hops) {
+    hops = hops || 0;
+    var hits = FSC_OUTCOMES.filter(function (o) { return o.ask === ask && _fscEligible(o, active); });
+    if (hits.length > 1) {
+      // DETERMINACY: more than one eligible outcome in an ask-class is an authoring defect,
+      // never a runtime tie-break. Refuse rather than pick.
+      try { console.error('[FSC] SELECTION AMBIGUITY for ask=' + ask + ' — ' +
+        hits.map(function (o) { return o.id; }).join(' | ') + '. Refusing to choose at runtime.'); } catch (_) {}
+      return { error: 'ambiguous', ask: ask, candidates: hits.map(function (o) { return o.id; }) };
+    }
+    if (hits.length === 1) return { outcome: hits[0], viaFallback: hops > 0 };
+    var next = FSC_FALLBACK[ask];
+    if (next && hops < 2) return _fscSelectFateChosen(next, active, hops + 1);
+    return { error: 'uncovered', ask: ask };
+  }
+
+  // ── COMPILE. Runs at Tempt acceptance, synchronously, BEFORE prose generation. ──────────────
+  function _fscCompile(wishText, opts) {
+    var active = _fscActiveCanon();
+    var rec = { v: FSC_V, compiledAt: Date.now(), wishText: String(wishText || ''),
+                mode: null, outcomeId: null, askClass: null, viaFallback: false,
+                population: null, invokerScope: null, memoryEffects: [],
+                delta: null, cost: null, durability: null, error: null };
+
+    var ex = _fscSelectExact(wishText);
+    if (ex) {
+      rec.mode = 'exact_reading';
+      rec.outcomeId = ex.id;
+      rec.population = ex.population ? _fscExpandPopulation(ex.population) : null;
+      var roster = rec.population ? rec.population.roster : (ex.namedSubset || []);
+      rec.invokerScope = _fscInvokerScope(rec.population, ex.namedSubset);
+      rec.memoryEffects = ex.memoryEffects.map(function (m) {
+        return { parties: roster.slice(), atom: m.atom, disposition: m.disposition };
+      });
+      rec.cost = ex.cost || null;
+      rec.durability = 'persists';
+      return rec;
+    }
+
+    var ask = _fscClassifyAsk(wishText);
+    rec.askClass = ask;
+    if (!ask) { rec.error = 'no_ask_class'; return rec; }
+
+    var sel = _fscSelectFateChosen(ask, active, 0);
+    if (sel.error) { rec.error = sel.error; rec.errorDetail = sel; return rec; }
+
+    var o = sel.outcome;
+    rec.mode = 'fate_chosen';
+    rec.outcomeId = o.id;
+    rec.viaFallback = !!sel.viaFallback;
+    rec.cost = o.cost || null;
+    rec.durability = o.durability || 'persists';
+
+    var popId = o.population || o.actingPopulation || null;
+    rec.population = popId ? _fscExpandPopulation(popId) : null;
+    // invokerScope is a memory_perception concern only; relationship_social has no population
+    // to be in or out of.
+    rec.invokerScope = (o.cls === 'memory_perception' && rec.population)
+      ? _fscInvokerScope(rec.population, null) : null;
+
+    if (o.memoryEffects && o.memoryEffects.length && rec.population) {
+      rec.memoryEffects = o.memoryEffects.map(function (m) {
+        return { parties: rec.population.roster.slice(), atom: m.atom, disposition: m.disposition };
+      });
+    }
+
+    if (o.temporalOperation) {
+      rec.delta = { deltaId: 'fsd:' + Date.now() + ':' + Math.random().toString(36).slice(2, 8),
+        seq: ((_fscDeltaLog(false) || []).length + 1),
+        temporalOperation: o.temporalOperation,
+        sourceOutcomeId: o.id,
+        ceases: (o.ceases || []).slice(),
+        establishes: (o.establishes || []).map(function (e) { return { id: e.id, text: e.text }; }),
+        priorHistoryReplaced: o.priorHistoryReplaced || null,
+        survivingContradictions: (o.survivingContradictions || []).slice(),
+        recognitionChanges: (o.recognitionChanges || []).slice(),
+        affectedParties: (o.affectedParties || []).slice() };
+      // MALFORMED GUARD: a cease without a replacement is malformed, not minimal.
+      if (rec.delta.ceases.length && !rec.delta.establishes.length) {
+        rec.error = 'malformed_delta_no_replacement'; rec.delta = null; return rec;
+      }
+      if (rec.delta.temporalOperation === 'historical_replacement' && !rec.delta.priorHistoryReplaced) {
+        rec.error = 'malformed_delta_no_prior_history'; rec.delta = null; return rec;
+      }
+    }
+    if (o.opensChoicePending) rec.opensChoicePending = true;
+    return rec;
+  }
+
+  // ── PERSIST BEFORE PROSE. The compiled consequence and any delta are written into state
+  //    synchronously at acceptance, so the author can only ever read preselected facts. ────────
+  function _fscPersistCompiled(rec) {
+    var s = window.state; if (!s || !rec) return null;
+    if (!s._fscCompiled) s._fscCompiled = [];
+    s._fscCompiled.push(rec);
+    s._fscActiveCompiled = rec;
+    if (rec.delta) { var log = _fscDeltaLog(true); if (log) log.push(rec.delta); }
+    if (rec.opensChoicePending) {
+      s._fscChoicePending = { openedBy: rec.outcomeId, openedAt: Date.now(),
+        sceneUid: (s._temptGuardScopeKeyAtSeal || null), resolved: false, value: null };
+    }
+    try {
+      console.log('[FSC] compiled ' + (rec.mode || 'ERROR') + ' — ' + (rec.outcomeId || rec.error)
+        + (rec.population ? ' pop=' + rec.population.populationId + '[' + rec.population.roster.length + ']' : '')
+        + (rec.invokerScope ? ' invokerScope=' + rec.invokerScope : '')
+        + (rec.delta ? ' delta=' + rec.delta.temporalOperation : ' delta=none'));
+    } catch (_) {}
+    return rec;
+  }
+
+  function _fscCompileAndPersist(wishText, opts) {
+    try { return _fscPersistCompiled(_fscCompile(wishText, opts)); }
+    catch (e) {
+      try { console.error('[FSC] compile threw — no consequence preselected:', e && e.message); } catch (_) {}
+      return null;
+    }
+  }
+
+  // ── PROMPT CONSUMPTION. The author receives the compiled consequence, never the raw wish
+  //    plus a licence to invent. ─────────────────────────────────────────────────────────────
+  function _fscPromptBlock() {
+    var s = window.state; var rec = s && s._fscActiveCompiled;
+    if (!rec || rec.error) return '';
+    var L = [];
+    L.push('\nPRESELECTED CONSEQUENCE (compiled at acceptance — render it; do not infer, extend or substitute):');
+    L.push('- READING: ' + (rec.mode === 'exact_reading'
+      ? 'EXACT — the player anchored both a fact and a scope. Deliver exactly this.'
+      : 'FATE-CHOSEN — the wording anchored nothing; Fate selected this interpretation.'));
+    L.push('- OUTCOME: ' + rec.outcomeId);
+    if (rec.population) {
+      L.push('- AFFECTED (sealed roster, exhaustive — no one else is touched): '
+        + rec.population.roster.join(', '));
+      if (rec.invokerScope) L.push('- INVOKER: ' + rec.invokerScope
+        + (rec.invokerScope === 'in_population'
+          ? ' — Lirael is a member of the named population and receives the same effect as every other member.'
+          : ' — Lirael is not a member of the named population; she is untouched by this effect.'));
+    }
+    rec.memoryEffects.forEach(function (m) {
+      L.push('- MEMORY: ' + m.parties.join(', ') + ' — ' + m.disposition + ' — ' + m.atom);
+    });
+    if (rec.delta) {
+      L.push('- CANON CHANGE (' + rec.delta.temporalOperation + '):');
+      rec.delta.ceases.forEach(function (a) { L.push('    CEASES: ' + a); });
+      rec.delta.establishes.forEach(function (e) { L.push('    NOW TRUE: ' + e.text); });
+      if (rec.delta.priorHistoryReplaced) L.push('    HISTORY: ' + rec.delta.priorHistoryReplaced);
+    }
+    L.push('- COST: ' + (rec.cost ? rec.cost : 'none — do not invent one'));
+    if (rec.opensChoicePending) {
+      L.push('- END ON THE CHOICE. The scene reaches Lirael’s renewed decision and STOPS there.');
+      L.push('  Do NOT author any consequence past it, and do NOT imply which way she goes.');
+    }
+    L.push('- Everything not listed above is UNCHANGED. Do not assert an effect that is not here.');
+    return L.join('\n') + '\n';
+  }
+
+  // ── choice_pending gate ────────────────────────────────────────────────────────────────────
+  function _fscChoicePending() { var s = window.state; return (s && s._fscChoicePending && !s._fscChoicePending.resolved) ? s._fscChoicePending : null; }
+  function _fscMayGenerateContinuation() { return !_fscChoicePending(); }
+  function _fscResolveChoice(value) {
+    var s = window.state; var cp = _fscChoicePending();
+    if (!cp) return null;
+    if (!value) return null;                       // never auto-select, never default
+    cp.resolved = true; cp.value = value; cp.resolvedAt = Date.now();
+    s._fsLiraelSceneOneDisposition = { value: value, sealedTo: cp.sceneUid || null, sealedAt: Date.now() };
+    try { console.log('[FSC] choice_pending resolved — ' + value + ' sealed to ' + (cp.sceneUid || 'replayed scene')); } catch (_) {}
+    return s._fsLiraelSceneOneDisposition;
+  }
+
+  window._fscCompile = _fscCompile;
+  window._fscCompileAndPersist = _fscCompileAndPersist;
+  window._fscActiveCanon = _fscActiveCanon;
+  window._fscIsActive = _fscIsActive;
+  window._fscExpandPopulation = _fscExpandPopulation;
+  window._fscSelectExact = _fscSelectExact;
+  window._fscClassifyAsk = _fscClassifyAsk;
+  window._fscPromptBlock = _fscPromptBlock;
+  window._fscChoicePending = _fscChoicePending;
+  window._fscMayGenerateContinuation = _fscMayGenerateContinuation;
+  window._fscResolveChoice = _fscResolveChoice;
+  window._FSC_OUTCOMES = FSC_OUTCOMES;
+  window._FSC_EXACT = FSC_EXACT;
+  window._FSC_POPULATIONS = FSC_POPULATIONS;
 })();
