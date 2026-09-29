@@ -1,0 +1,127 @@
+[
+  {
+    "url": "http://localhost:3000/api/csp-report",
+    "method": "POST",
+    "bytes": 1006
+  },
+  {
+    "url": "http://localhost:3000/api/config",
+    "method": "GET",
+    "bytes": 0
+  },
+  {
+    "url": "http://localhost:3000/api/csp-report",
+    "method": "POST",
+    "bytes": 952
+  },
+  {
+    "url": "http://localhost:3000/api/geo",
+    "method": "GET",
+    "bytes": 0
+  },
+  {
+    "url": "http://localhost:3000/api/mistral-proxy",
+    "method": "POST",
+    "bytes": 29482
+  },
+  {
+    "url": "http://localhost:3000/api/proxy",
+    "method": "POST",
+    "bytes": 29497
+  },
+  {
+    "url": "http://localhost:3000/api/chatgpt-proxy",
+    "method": "POST",
+    "bytes": 29471
+  },
+  {
+    "url": "http://localhost:3000/api/mistral-proxy",
+    "method": "POST",
+    "bytes": 55675
+  },
+  {
+    "url": "http://localhost:3000/api/proxy",
+    "method": "POST",
+    "bytes": 55690
+  },
+  {
+    "url": "http://localhost:3000/api/chatgpt-proxy",
+    "method": "POST",
+    "bytes": 55664
+  },
+  {
+    "url": "http://localhost:3000/api/mistral-proxy",
+    "method": "POST",
+    "bytes": 29458
+  },
+  {
+    "url": "http://localhost:3000/api/proxy",
+    "method": "POST",
+    "bytes": 29473
+  },
+  {
+    "url": "http://localhost:3000/api/chatgpt-proxy",
+    "method": "POST",
+    "bytes": 29447
+  },
+  {
+    "url": "http://localhost:3000/api/mistral-proxy",
+    "method": "POST",
+    "bytes": 55675
+  },
+  {
+    "url": "http://localhost:3000/api/proxy",
+    "method": "POST",
+    "bytes": 55690
+  },
+  {
+    "url": "http://localhost:3000/api/chatgpt-proxy",
+    "method": "POST",
+    "bytes": 55664
+  },
+  {
+    "url": "http://localhost:3000/api/mistral-proxy",
+    "method": "POST",
+    "bytes": 21603
+  },
+  {
+    "url": "http://localhost:3000/api/proxy",
+    "method": "POST",
+    "bytes": 21618
+  },
+  {
+    "url": "http://localhost:3000/api/chatgpt-proxy",
+    "method": "POST",
+    "bytes": 21592
+  },
+  {
+    "url": "http://localhost:3000/api/proxy",
+    "method": "POST",
+    "bytes": 7048
+  },
+  {
+    "url": "http://localhost:3000/api/mistral-proxy",
+    "method": "POST",
+    "bytes": 7029
+  },
+  {
+    "url": "http://localhost:3000/api/chatgpt-proxy",
+    "method": "POST",
+    "bytes": 7013
+  },
+  {
+    "url": "http://localhost:3000/api/proxy",
+    "method": "POST",
+    "bytes": 195589
+  },
+  {
+    "url": "http://localhost:3000/api/mistral-proxy",
+    "method": "POST",
+    "bytes": 195545
+  },
+  {
+    "url": "http://localhost:3000/api/chatgpt-proxy",
+    "method": "POST",
+    "bytes": 195527
+  }
+]
