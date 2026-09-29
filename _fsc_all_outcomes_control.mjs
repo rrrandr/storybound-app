@@ -48,7 +48,7 @@ const EXPECT = [
 
   { wish: 'I want to disappear.', flags: {},
     id: 'unm.the_turning_forgotten', ask: 'unseen', op: null,
-    roster: ASSEMBLY, mem: ['twist.assembly_turned'], cost: null, ceases: [], estab: [] },
+    roster: PRESENT, mem: ['twist.assembly_turned'], cost: null, ceases: [], estab: [] },
 
   { wish: 'Don’t bring that up.', flags: {},
     id: 'unm.the_custody_unremembered', ask: 'silence', op: null,
@@ -105,7 +105,28 @@ EXPECT.forEach(e => {
   // Prompt payload fidelity
   const p = win._fscPromptBlock();
   t('  prompt names the outcome', p.indexOf(e.id) >= 0);
-  if (e.roster) t('  prompt lists the frozen roster', e.roster.every(m => p.indexOf(m) >= 0));
+  const LBL = { 'pc:lirael':'Lirael', 'named:seren':'Seren', 'named:julian':'Julian',
+    'role:first_sacrifice_presiding_dohkar':'the presiding Dohkar',
+    'the_assembly':'the assembled First Favored' };
+  if (e.roster) t('  prompt lists every affected party by story label',
+    e.roster.every(m => p.indexOf(LBL[m]) >= 0));
+  // INCLUSION + EXCLUSION, both asserted, collectives included.
+  if (e.roster) {
+    const outside = ['pc:lirael','named:seren','named:julian','role:first_sacrifice_presiding_dohkar']
+      .filter(x => e.roster.indexOf(x) < 0);
+    if (outside.length) t('  prompt names every NOT AFFECTED party individually',
+      /NOT AFFECTED/.test(p) && outside.every(m => p.indexOf(LBL[m]) >= 0));
+    else t('  prompt states no one present is outside the effect', /NOT AFFECTED: no one present/.test(p));
+    if (e.roster.indexOf('pc:lirael') >= 0 && e.mem.length)
+      t('  prompt states LIRAEL IS AFFECTED', /LIRAEL IS AFFECTED/.test(p));
+  }
+  t('  prompt carries a REQUIRED aftermath beat', /AFTERMATH BEAT \u2014 REQUIRED/.test(p));
+  t('  aftermath beat is non-empty authored text',
+    !!(win.state._fscActiveCompiled.aftermathBeat && win.state._fscActiveCompiled.aftermathBeat.text.length > 40));
+  t('  prompt forbids visible wish-energy', /visible wish-energy/.test(p));
+  t('  prompt forbids an Answer verdict', /never delivers a verdict/.test(p));
+  t('  prompt forbids extra cost and new canon',
+    /no cost or penalty beyond/.test(p) && /no new canon fact/.test(p));
   e.mem.forEach(a => t('  prompt carries memory effect ' + a, p.indexOf(a) >= 0));
   e.ceases.forEach(a => t('  prompt carries CEASES ' + a, p.indexOf('CEASES: ' + a) >= 0));
   t('  prompt states the cost honestly',
@@ -116,10 +137,13 @@ EXPECT.forEach(e => {
 console.log('\n=== EVERY APPROVED EXACT READING ===\n');
 const EXACT = [
   { wish: 'I wish the assembly would forget the wish twisted.',
-    id: 'mem.exact.assembly_forgets_twist', roster: ASSEMBLY, scope: 'not_in_population',
+    id: 'mem.exact.assembly_forgets_twist', roster: PRESENT, scope: 'in_population',
     mem: ['twist.wish_misaligned','twist.intent_failed'], cost: null },
   { wish: 'I wish everyone here would forget the wish twisted.',
-    id: 'mem.exact.all_present_forget_twist', roster: PRESENT, scope: 'in_population',
+    id: 'mem.exact.assembly_forgets_twist', roster: PRESENT, scope: 'in_population',
+    mem: ['twist.wish_misaligned','twist.intent_failed'], cost: null },
+  { wish: 'I wish the guests would forget the wish twisted.',
+    id: 'mem.exact.guests_forget_twist', roster: ASSEMBLY, scope: 'not_in_population',
     mem: ['twist.wish_misaligned','twist.intent_failed'], cost: null },
   { wish: 'Let them all forget the Answer was ever the Institution’s.',
     id: 'mem.exact.institution_forgets_custody', roster: PRESENT, scope: 'in_population',
@@ -149,6 +173,11 @@ EXACT.forEach(e => {
   t('  cost ' + (e.cost || 'none'), (r.cost || null) === e.cost, String(r.cost));
   const p = win._fscPromptBlock();
   t('  prompt says EXACT', /READING: EXACT/.test(p));
+  t('  prompt carries a REQUIRED aftermath beat', /AFTERMATH BEAT \u2014 REQUIRED/.test(p));
+  t('  prompt forbids visible wish-energy', /visible wish-energy/.test(p));
+  const outsideX = ['pc:lirael','named:seren','named:julian','role:first_sacrifice_presiding_dohkar']
+    .filter(x => e.roster.indexOf(x) < 0);
+  if (outsideX.length) t('  prompt names the NOT AFFECTED individually', /NOT AFFECTED/.test(p));
   t('  prompt names the outcome', p.indexOf(e.id) >= 0);
 });
 

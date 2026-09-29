@@ -33,8 +33,8 @@ console.log('A. module surface');
   t('exports ' + fn, typeof win[fn] === 'function'));
 t('outcome table has 8 approved Fate-chosen entries', win._FSC_OUTCOMES.length === 8,
   'got ' + win._FSC_OUTCOMES.length);
-t('exact-reading table has 5 approved entries', win._FSC_EXACT.length === 5,
-  'got ' + win._FSC_EXACT.length);
+t('exact-reading table has 5 entries (all_present merged into assembly; guests added)',
+  win._FSC_EXACT.length === 5, 'got ' + win._FSC_EXACT.length);
 
 // ── B. Population expansion is a frozen explicit roster, with no invoker filter ─────────────
 console.log('\nB. population expansion');
@@ -42,11 +42,15 @@ resetState();
 const asm = win._fscExpandPopulation('population.assembly');
 const sp  = win._fscExpandPopulation('population.scene_present');
 const wd  = win._fscExpandPopulation('population.withdrawing_from_lirael');
-t('assembly is the crowd alone', asm.roster.length === 1 && asm.roster[0] === 'the_assembly');
-t('assembly EXCLUDES pc:lirael', asm.roster.indexOf('pc:lirael') < 0);
-t('assembly EXCLUDES the three other named',
+// CORRECTED 2026-09-29: "the assembly" means EVERY PERSON IN IT. The crowd-only reading was
+// ours, not the player's, and is withdrawn. No named person is spared; no invoker exemption.
+t('assembly INCLUDES every person in it', asm.roster.length === 5);
+t('assembly INCLUDES pc:lirael', asm.roster.indexOf('pc:lirael') >= 0);
+t('assembly INCLUDES the three other named',
   ['named:seren','named:julian','role:first_sacrifice_presiding_dohkar']
-    .every(r => asm.roster.indexOf(r) < 0));
+    .every(r => asm.roster.indexOf(r) >= 0));
+const gst = win._fscExpandPopulation('population.guests');
+t('crowd-only survives ONLY behind its own wording', gst.roster.length === 1 && gst.roster[0] === 'the_assembly');
 t('scene_present INCLUDES pc:lirael (no invoker filter)', sp.roster.indexOf('pc:lirael') >= 0);
 t('scene_present has all five refs', sp.roster.length === 5);
 t('withdrawing roster excludes pc:lirael as the OBJECT', wd.roster.indexOf('pc:lirael') < 0);
@@ -58,16 +62,19 @@ resetState();
 const exA = win._fscCompile('I wish the assembly would forget the wish twisted.');
 t('exact: anchored fact + scope selects an exact reading', exA.mode === 'exact_reading', exA.mode);
 t('exact: selects assembly_forgets_twist', exA.outcomeId === 'mem.exact.assembly_forgets_twist', exA.outcomeId);
-t('exact: population is the crowd only', exA.population.populationId === 'population.assembly');
-t('exact: invokerScope not_in_population', exA.invokerScope === 'not_in_population', exA.invokerScope);
-t('exact: Lirael NOT in the affected parties',
-  exA.memoryEffects.every(m => m.parties.indexOf('pc:lirael') < 0));
+t('exact: population is the assembly', exA.population.populationId === 'population.assembly');
+t('exact: invokerScope IS in_population', exA.invokerScope === 'in_population', exA.invokerScope);
+t('exact: Lirael IS among the affected parties \u2014 no named person spared',
+  exA.memoryEffects.every(m => m.parties.indexOf('pc:lirael') >= 0));
 
 const exB = win._fscCompile('I wish everyone here would forget the wish twisted.');
-t('exact: "everyone here" selects all_present', exB.outcomeId === 'mem.exact.all_present_forget_twist', exB.outcomeId);
-t('exact: all_present INCLUDES Lirael', exB.invokerScope === 'in_population', exB.invokerScope);
-t('exact: the two readings are NOT co-extensive',
-  exA.memoryEffects[0].parties.length !== exB.memoryEffects[0].parties.length);
+t('DEDUPLICATED: "everyone here" reaches the SAME outcome as "the assembly"',
+  exB.outcomeId === exA.outcomeId, exB.outcomeId);
+t('two wordings, one thing that happens',
+  exB.memoryEffects[0].parties.length === exA.memoryEffects[0].parties.length);
+const exG = win._fscCompile('I wish the guests would forget the wish twisted.');
+t('"the guests" reaches the crowd-only reading', exG.outcomeId === 'mem.exact.guests_forget_twist', exG.outcomeId);
+t('guests reading spares the four named', exG.memoryEffects[0].parties.length === 1);
 
 const fcA = win._fscCompile('I wish this had never happened to me.');
 t('fate-chosen: unanchored wording is not an exact reading', fcA.mode === 'fate_chosen', fcA.mode);
@@ -106,6 +113,8 @@ t('shunning delta is additive_canon_change',
 t('shunning ceases nothing', shun.delta.ceases.length === 0);
 const turn = win._fscCompile('I want to disappear.');
 t('unseen -> the_turning_forgotten', turn.outcomeId === 'unm.the_turning_forgotten', turn.outcomeId);
+t('turning_forgotten now reaches everyone in the assembly', turn.population.roster.length === 5);
+t('turning_forgotten does NOT spare Lirael', turn.invokerScope === 'in_population', turn.invokerScope);
 t('memory outcome produces NO canonical delta', turn.delta === null);
 t('memory outcome has a memory effect', turn.memoryEffects.length === 1);
 t('turning_forgotten targets twist.assembly_turned only',
@@ -146,18 +155,21 @@ t('prompt block is non-empty', block.length > 0);
 t('prompt names the outcome', block.indexOf('unm.dohkar_demand_unmade') >= 0);
 t('prompt states the reading kind', /FATE-CHOSEN/.test(block));
 t('prompt carries the canon change', /CANON CHANGE \(historical_replacement\)/.test(block));
+t('prompt carries an AFTERMATH BEAT', /AFTERMATH BEAT \u2014 REQUIRED/.test(block));
+t('prompt forbids visible wish-energy', /NO aura, glow, luminous cloth, shimmer, visible wish-energy/.test(block));
+t('prompt forbids a verdict from the Answer', /never delivers a verdict/.test(block));
+t('prompt states MUST REMAIN TRUE', /MUST REMAIN TRUE/.test(block));
 t('prompt carries the replacement fact', /NOW TRUE:/.test(block));
 t('prompt states cost none and forbids inventing one', /COST: none — do not invent one/.test(block));
-t('prompt closes the door on unlisted effects', /Everything not listed above is UNCHANGED/.test(block));
+t('prompt closes the door on unlisted effects', /every fact and every party not listed above is UNCHANGED/.test(block));
 
 resetState();
 win._fscCompileAndPersist('I wish everyone here would forget the wish twisted.');
 const block2 = win._fscPromptBlock();
 t('exact reading prompt says EXACT', /EXACT/.test(block2));
-t('exact prompt lists the sealed roster', /AFFECTED \(sealed roster/.test(block2));
-t('exact prompt names Lirael as in_population', /in_population/.test(block2));
-t('exact prompt spells out that she receives the same effect',
-  /receives the same effect as every other member/.test(block2));
+t('exact prompt lists the sealed roster', /AFFECTED \u2014 exactly these people/.test(block2));
+t('exact prompt states LIRAEL IS AFFECTED', /LIRAEL IS AFFECTED/.test(block2));
+t('exact prompt forbids sparing her', /Do NOT spare her/.test(block2));
 
 // ── H. choice_pending opens on the rewind and blocks continuation ───────────────────────────
 console.log('\nH. choice_pending gate');

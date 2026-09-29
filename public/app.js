@@ -75592,6 +75592,19 @@ One sentence maximum. Atmospheric only. If reality bends, the deck should stir.\
         if (_fscBlock) lines.push(_fscBlock);
       }
     } catch (_fscPErr) { console.warn('[FSC] prompt block threw:', _fscPErr && _fscPErr.message); }
+    // AFTERMATH BEAT — required for BOTH cards. A Fate consequence must land in the room, not
+    // only in hidden state. Tempt gets an authored beat from its compiled outcome (above);
+    // Petition has no compiled outcome table, so the obligation is stated generically here.
+    // It is a RENDERING obligation: no new canon, no cost, no mechanism talk.
+    lines.push('- AFTERMATH BEAT (REQUIRED): the people actually affected must VISIBLY react in-fiction. '
+      + 'Show a specific observable response from each affected named party present, and a collective '
+      + 'response from an affected group — confusion, a broken-off thought, déjà vu, an emotion detached '
+      + 'from its lost reason, a changed social reflex, an interrupted accusation. Someone may keep the '
+      + 'anger or the urge to accuse while being unable to name why. '
+      + 'They FEEL the new reality; they never explain it. '
+      + 'Do NOT give the reaction to anyone the change did not reach. '
+      + 'Do NOT add a cost, a new durable fact, or any aura, glow, shimmer or visible wish-energy — '
+      + 'this world has none.');
     // Petition only: Fortunes offered set the audacity + duration BUDGET for the
     // manifestation (Bend → Lamborghini caper; Whisper → pickpocket chase).
     if (!isTempt) {
@@ -340293,10 +340306,21 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
 
   // ── Populations. Declared rule; expanded and FROZEN at seal. ────────────────────────────────
   var FSC_POPULATIONS = {
+    // CORRECTED 2026-09-29. "The assembly" means EVERY PERSON IN IT. The prior mapping to an
+    // unnamed crowd — excluding Lirael, Seren, Julian and the Dohkar — was OUR distinction, not
+    // the player's. A player who says "the assembly should forget" has named a body that those
+    // four stand inside; nothing in the wording exempts them, and no invoker exemption exists.
+    // WITHDRAWN: the crowd-only reading of this word.
     'population.assembly': {
       label: 'the assembly',
-      members: ['the_assembly']            // the crowd of First Favored family and guests
-      // excludes pc:lirael, named:seren, named:julian, role:first_sacrifice_presiding_dohkar
+      members: ['the_assembly', 'named:seren', 'named:julian',
+                'role:first_sacrifice_presiding_dohkar', 'pc:lirael']
+    },
+    // "Crowd only" survives ONLY behind its own unambiguous wording. It may never again hide
+    // behind the ordinary word "assembly".
+    'population.guests': {
+      label: 'the guests and onlookers',
+      members: ['the_assembly']
     },
     'population.scene_present': {
       label: 'everyone present',
@@ -340348,6 +340372,7 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
   // ── APPROVED FATE-CHOSEN OPENING OUTCOMES ───────────────────────────────────────────────────
   var FSC_OUTCOMES = [
     { id: 'unm.dohkar_demand_unmade', ask: 'stop',
+      aftermathBeat: { id: 'aftermath.demand_unspoken', text: 'The presiding Dohkar draws breath as though to say something formal, and finds nothing there to say. He closes his mouth. The assembly waits for a pronouncement that does not come, and the pause goes on a beat too long before anyone moves.' },
       cls: 'history_rewrite', temporalOperation: 'historical_replacement',
       requiresActive: ['review.demanded_by_dohkar'], requiresInactive: [],
       ceases: ['review.demanded_by_dohkar'],
@@ -340360,6 +340385,7 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
       cost: null, durability: 'persists' },
 
     { id: 'unm.time_gives_way', ask: 'undo',
+      aftermathBeat: { id: 'aftermath.second_telling', text: 'Everyone present carries the faint, unplaceable sense of having stood here before. Seren looks at her own hands as if checking them. The Dohkar loses his place in a rite he has performed a hundred times. Julian\'s gaze finds Lirael a moment before there is any reason for it, and neither of them can say why.' },
       cls: 'history_rewrite', temporalOperation: 'historical_replacement',
       requiresActive: ['interr.julian_questioned_lirael'], requiresInactive: [],
       ceases: ['interr.julian_questioned_lirael', 'interr.dohkar_interrupted', 'interr.choice_arose',
@@ -340380,6 +340406,7 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
       cost: null, durability: 'persists' },
 
     { id: 'unm.the_accusation_unmade', ask: 'escape',
+      aftermathBeat: { id: 'aftermath.grievance_without_words', text: 'Seren\'s family stand where they stood, still holding the shape of a thing they meant to do. One of them steps half a pace forward and stops, mouth open, the accusation gone from behind their teeth while the anger behind it stays exactly where it was.' },
       cls: 'history_rewrite', temporalOperation: 'historical_replacement',
       requiresActive: ['accusation.family_accused'], requiresInactive: [],
       ceases: ['accusation.family_accused'],
@@ -340391,6 +340418,7 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
       cost: null, durability: 'persists' },
 
     { id: 'unm.the_claim_unmade', ask: 'escape',
+      aftermathBeat: { id: 'aftermath.no_one_presides', text: 'The Dohkar reaches for an authority he is certain he holds and closes on nothing. Julian, who agreed to something, cannot locate what. The clearing has the particular silence of a room where everyone is waiting for whoever is in charge to speak, and no one is.' },
       cls: 'history_rewrite', temporalOperation: 'historical_replacement',
       requiresActive: ['auth.dohkar_claims_rite_and_ruling'],
       requiresInactive: ['accusation.family_accused'],
@@ -340405,14 +340433,18 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
       cost: null, durability: 'persists' },
 
     { id: 'unm.the_turning_forgotten', ask: 'unseen',
+      aftermathBeat: { id: 'aftermath.a_look_without_cause', text: 'Nobody can say what drew every eye to Lirael, only that something did. Seren frowns at her own certainty that she has wronged her guide. Julian keeps watching her with an attention he can no longer justify. The Dohkar\'s suspicion survives its reason. They are all still angry, or wary, or sorry, and not one of them can name the moment it began.' },
       cls: 'memory_perception', temporalOperation: null,
       requiresActive: ['twist.assembly_turned'], requiresInactive: [],
       ceases: [], establishes: [],
+      // population.assembly is now everyone in it — Lirael, Seren, Julian and the Dohkar
+      // included. invokerScope resolves to in_population; no named person is spared.
       population: 'population.assembly',
       memoryEffects: [{ atom: 'twist.assembly_turned', disposition: 'forgot' }],
       cost: null, durability: 'persists' },
 
     { id: 'unm.the_custody_unremembered', ask: 'silence',
+      aftermathBeat: { id: 'aftermath.a_thing_in_her_hands', text: 'The Answer sits in Lirael\'s hands and no one thinks to ask why. Julian\'s glance passes over it the way it passes over the trees. She looks down at it herself with the mild puzzlement of someone holding an object they have no memory of picking up, and does not put it down.' },
       cls: 'memory_perception', temporalOperation: null,
       requiresActive: ['answer.owned_by_institution', 'answer.entrusted_to_julian'],
       requiresInactive: [],
@@ -340423,6 +340455,7 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
       cost: 'she_forgets_whose_it_is', durability: 'persists' },
 
     { id: 'unm.standing_dissolved', ask: 'authority',
+      aftermathBeat: { id: 'aftermath.emptied_claim', text: 'Julian says the words that made him the one to convene this and they land flat, in a clearing that does not receive them. Somebody near the back makes a small involuntary sound. He hears it. He does not look for who.' },
       cls: 'identity_reputation', temporalOperation: 'current_state_transition',
       requiresActive: ['auth.julian_standing_to_convene'], requiresInactive: [],
       ceases: ['auth.julian_standing_to_convene'],
@@ -340436,6 +340469,7 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
       cost: 'escalation_invited', durability: 'persists' },
 
     { id: 'unm.the_shunning', ask: 'solitude',
+      aftermathBeat: { id: 'aftermath.a_space_that_opens', text: 'The withdrawal is not announced. The gathering simply rearranges itself around an absence where Lirael is standing. Seren turns her face away and keeps it turned. The Dohkar addresses his next words to a point slightly past her shoulder. The space around her stays open, and no one steps into it.' },
       cls: 'relationship_social', temporalOperation: 'additive_canon_change',
       requiresActive: [], requiresInactive: [],
       ceases: [],
@@ -340453,33 +340487,44 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
   // ── APPROVED EXACT READINGS. Reached only by wording that anchors BOTH a proposition
   //    and a scope. No ranking applies — the player chose. ─────────────────────────────────────
   var FSC_EXACT = [
+    // DEDUPLICATED 2026-09-29. With "the assembly" corrected to mean everyone in it,
+    // population.assembly and population.scene_present are COEXTENSIVE — so
+    // mem.exact.assembly_forgets_twist and mem.exact.all_present_forget_twist became the same
+    // outcome reached by two wordings. Merged into one identity; the second id is retired.
+    // Two ways to say it, one thing that happens.
     { id: 'mem.exact.assembly_forgets_twist',
-      propRx: /\b(wish twisted|twisted|the twist|went wrong)\b/i,
-      scopeRx: /\bthe assembly\b/i,
+      aftermathBeat: { id: 'aftermath.a_wrong_they_cannot_place', text: 'Every person in that clearing keeps the feeling and loses the cause. Seren is ashamed without knowing of what. Julian\'s regard has an edge he cannot account for. The Dohkar\'s hand stays near the rite\'s order as though something in it needs guarding. Lirael feels it too, and has no more idea than they do.' },
+      propRx: /\b(wish twisted|twisted|the twist|went wrong|the ceremony|what happened)\b/i,
+      scopeRx: /\b(the assembly|everyone here|everyone present|everybody here|all of them here)\b/i,
       population: 'population.assembly',
       memoryEffects: [{ atom: 'twist.wish_misaligned', disposition: 'forgot' },
                       { atom: 'twist.intent_failed', disposition: 'forgot' }],
       cost: null },
-    { id: 'mem.exact.all_present_forget_twist',
+    // "Crowd only" now requires its OWN wording and reaches only the unnamed onlookers.
+    { id: 'mem.exact.guests_forget_twist',
+      aftermathBeat: { id: 'aftermath.the_crowd_goes_mild', text: 'The onlookers\' faces smooth over into ordinary ceremony interest while the four at the centre stay rigid with what they still remember. Someone in the crowd murmurs approval at exactly the wrong moment.' },
       propRx: /\b(wish twisted|twisted|the twist|went wrong|the ceremony|what happened)\b/i,
-      scopeRx: /\b(everyone here|everyone present|everybody here|all of them here)\b/i,
-      population: 'population.scene_present',
+      scopeRx: /\b(the guests|the onlookers|the watchers)\b/i,
+      population: 'population.guests',
       memoryEffects: [{ atom: 'twist.wish_misaligned', disposition: 'forgot' },
                       { atom: 'twist.intent_failed', disposition: 'forgot' }],
       cost: null },
     { id: 'mem.exact.institution_forgets_custody',
+      aftermathBeat: { id: 'aftermath.unclaimed_in_plain_sight', text: 'The Answer changes hands and no one marks it. Julian reaches for it once, mid-gesture, and lets the motion die without knowing what he was reaching for.' },
       propRx: /\b(the answer (?:was|is) (?:ever )?the institution|belongs to the institution|institution['\u2019]?s)\b/i,
       scopeRx: /\b(them all|everyone|the assembly|all of them)\b/i,
       population: 'population.scene_present',
       memoryEffects: [{ atom: 'answer.owned_by_institution', disposition: 'forgot' }],
       cost: 'custody_unclaimed' },
     { id: 'mem.exact.julian_forgets_interrogation',
+      aftermathBeat: { id: 'aftermath.he_cannot_place_her', text: 'Julian looks at Lirael with the composure of a man who has never spoken to her intimately in his life, and cannot account for why the sight of her tightens something in his chest.' },
       propRx: /\b(question(?:ing|ed)?|asked me|interrogat)\b/i,
       scopeRx: /\bjulian\b/i,
       population: null, namedSubset: ['named:julian'],
       memoryEffects: [{ atom: 'interr.julian_questioned_lirael', disposition: 'forgot' }],
       cost: 'intimacy_unwitnessed' },
     { id: 'mem.exact.dohkar_forgets_authority',
+      aftermathBeat: { id: 'aftermath.the_rite_without_a_holder', text: 'The Dohkar waits for someone to take charge of the ruling, and slowly realises the room is waiting for him. He cannot remember claiming it. He does not claim it again.' },
       propRx: /\b(ruling|claimed|authority|his to (?:make|rule))\b/i,
       scopeRx: /\bdohkar\b/i,
       population: null, namedSubset: ['role:first_sacrifice_presiding_dohkar'],
@@ -340523,6 +340568,22 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
     if (!p) return null;
     return { populationId: popId, label: p.label, roster: p.members.slice(),
              sealedAt: Date.now() };
+  }
+  // Every named scene-present party OUTSIDE the frozen roster, named individually. Derived from
+  // the sealed data — never hand-written per outcome, so it cannot drift from the roster.
+  // The live run failed because the payload named only the roster and left the author to infer
+  // who was outside it. It no longer has to infer.
+  var FSC_SCENE_PRESENT_NAMED = ['pc:lirael', 'named:seren', 'named:julian',
+                                 'role:first_sacrifice_presiding_dohkar'];
+  var FSC_STORY_LABEL = {
+    'pc:lirael': 'Lirael', 'named:seren': 'Seren', 'named:julian': 'Julian',
+    'role:first_sacrifice_presiding_dohkar': 'the presiding Dohkar',
+    'the_assembly': 'the assembled First Favored \u2014 family, guests and onlookers'
+  };
+  function _fscLabel(ref) { return FSC_STORY_LABEL[ref] || ref; }
+  function _fscNotAffected(roster) {
+    var r = roster || [];
+    return FSC_SCENE_PRESENT_NAMED.filter(function (p) { return r.indexOf(p) < 0; });
   }
   function _fscInvokerScope(sealed, namedSubset) {
     var roster = sealed ? sealed.roster : (namedSubset || []);
@@ -340585,6 +340646,8 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
       });
       rec.cost = ex.cost || null;
       rec.durability = 'persists';
+      rec.aftermathBeat = ex.aftermathBeat || null;
+      rec.notAffected = _fscNotAffected(roster);
       return rec;
     }
 
@@ -340639,6 +340702,8 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
       }
     }
     if (o.opensChoicePending) rec.opensChoicePending = true;
+    rec.aftermathBeat = o.aftermathBeat || null;
+    rec.notAffected = _fscNotAffected(rec.population ? rec.population.roster : []);
     return rec;
   }
 
@@ -340690,37 +340755,71 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
   // ── PROMPT CONSUMPTION. The author receives the compiled consequence, never the raw wish
   //    plus a licence to invent. ─────────────────────────────────────────────────────────────
   function _fscPromptBlock() {
-    var s = window.state; var rec = s && s._fscActiveCompiled;
+    var st = window.state; var rec = st && st._fscActiveCompiled;
     if (!rec || rec.error) return '';
     var L = [];
-    L.push('\nPRESELECTED CONSEQUENCE (compiled at acceptance — render it; do not infer, extend or substitute):');
+    var roster = rec.population ? rec.population.roster : [];
+    L.push('\nPRESELECTED CONSEQUENCE \u2014 EFFECT BOUNDARY (compiled at acceptance; render it, do not infer or extend):');
     L.push('- READING: ' + (rec.mode === 'exact_reading'
-      ? 'EXACT — the player anchored both a fact and a scope. Deliver exactly this.'
-      : 'FATE-CHOSEN — the wording anchored nothing; Fate selected this interpretation.'));
+      ? 'EXACT \u2014 the player anchored both a fact and a scope. Deliver exactly this.'
+      : 'FATE-CHOSEN \u2014 the wording anchored nothing; Fate selected this interpretation.'));
     L.push('- OUTCOME: ' + rec.outcomeId);
-    if (rec.population) {
-      L.push('- AFFECTED (sealed roster, exhaustive — no one else is touched): '
-        + rec.population.roster.join(', '));
-      if (rec.invokerScope) L.push('- INVOKER: ' + rec.invokerScope
-        + (rec.invokerScope === 'in_population'
-          ? ' — Lirael is a member of the named population and receives the same effect as every other member.'
-          : ' — Lirael is not a member of the named population; she is untouched by this effect.'));
+
+    if (roster.length) {
+      L.push('- AFFECTED \u2014 exactly these people receive the effect, all of them:');
+      roster.forEach(function (p) { L.push('    \u2022 ' + _fscLabel(p)); });
+      if (rec.invokerScope === 'in_population') {
+        L.push('    LIRAEL IS AFFECTED. She is inside the named population and receives the same effect as');
+        L.push('    everyone else. Do NOT spare her, and do NOT have her notice what the others lost.');
+      }
     }
-    rec.memoryEffects.forEach(function (m) {
-      L.push('- MEMORY: ' + m.parties.join(', ') + ' — ' + m.disposition + ' — ' + m.atom);
-    });
+    var na = rec.notAffected || [];
+    if (na.length) {
+      L.push('- NOT AFFECTED \u2014 these present people are OUTSIDE the effect and keep everything:');
+      na.forEach(function (p) { L.push('    \u2022 ' + _fscLabel(p)); });
+    } else if (roster.length) {
+      L.push('- NOT AFFECTED: no one present is outside this effect.');
+    }
+
+    if (rec.memoryEffects && rec.memoryEffects.length) {
+      L.push('- EFFECT LIMITED TO:');
+      rec.memoryEffects.forEach(function (m) {
+        L.push('    \u2022 ' + m.disposition + ': ' + m.atom);
+      });
+    }
     if (rec.delta) {
       L.push('- CANON CHANGE (' + rec.delta.temporalOperation + '):');
       rec.delta.ceases.forEach(function (a) { L.push('    CEASES: ' + a); });
       rec.delta.establishes.forEach(function (e) { L.push('    NOW TRUE: ' + e.text); });
       if (rec.delta.priorHistoryReplaced) L.push('    HISTORY: ' + rec.delta.priorHistoryReplaced);
     }
-    L.push('- COST: ' + (rec.cost ? rec.cost : 'none — do not invent one'));
-    if (rec.opensChoicePending) {
-      L.push('- END ON THE CHOICE. The scene reaches Lirael’s renewed decision and STOPS there.');
-      L.push('  Do NOT author any consequence past it, and do NOT imply which way she goes.');
+
+    L.push('- MUST REMAIN TRUE: every fact and every party not listed above is UNCHANGED.');
+    if (rec.mode !== 'exact_reading' || rec.memoryEffects.length) {
+      L.push('    The twist and the loose note remain known exactly as sealed unless listed above.');
     }
-    L.push('- Everything not listed above is UNCHANGED. Do not assert an effect that is not here.');
+    L.push('- COST: ' + (rec.cost ? rec.cost : 'none \u2014 do not invent one'));
+
+    if (rec.aftermathBeat) {
+      L.push('- AFTERMATH BEAT \u2014 REQUIRED. The consequence must LAND IN THE ROOM. Show the affected');
+      L.push('  people reacting in-fiction. They feel the new reality; they cannot explain it.');
+      L.push('    ' + rec.aftermathBeat.text);
+      L.push('  Scope it to the AFFECTED list only. Never spare an affected named person; never give');
+      L.push('  the reaction to someone on the NOT AFFECTED list.');
+    }
+
+    L.push('- FORBIDDEN INVENTIONS:');
+    L.push('    \u2022 no cost or penalty beyond the one named above');
+    L.push('    \u2022 no new canon fact, standing, rule or relationship');
+    L.push('    \u2022 NO aura, glow, luminous cloth, shimmer, visible wish-energy or magical residue \u2014');
+    L.push('      this world has none and a rite leaves nothing to see');
+    L.push('    \u2022 the Answer never delivers a verdict about what is factually true, who is guilty,');
+    L.push('      or what caused the twist; it responds only to its holder\u2019s present alignment');
+    L.push('    \u2022 do not explain the mechanism, the wish, or that anything was altered');
+    if (rec.opensChoicePending) {
+      L.push('- END ON THE CHOICE. The scene reaches Lirael\u2019s renewed decision and STOPS there.');
+      L.push('  Author nothing past it and imply nothing about which way she goes.');
+    }
     return L.join('\n') + '\n';
   }
 
