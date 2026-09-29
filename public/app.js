@@ -228419,6 +228419,37 @@ No text, no watermark, no UI elements, share-ready.`;
       '  "kinks_used": [<array of kink labels from the KINK MEMORY > LIKED list that the LI actively USED in THIS scene — feeds frequency-fatigue. Empty array if none used.>],\n' +
       '  "primaryEngine": "<hunger | devotion | control | vulnerability — the scene-level emotional engine when is_consummate_scene=true; null otherwise. See PRIMARY ENGINE block. Subordinate systems bend toward this engine rather than firing as a checklist.>",\n' +
       '  "interruption": null,\n' +
+      // ── sceneCharge IS ARCHIVAL + SCENE-LOCAL. IT IS NOT A CANON CHANNEL. (Roman 2026-09-29) ──
+      // Traced end to end after the roster-compliance run, where the author emitted
+      // stake = "Lirael's standing is at risk after the assembly turned to her" for a scene whose
+      // SEALED consequence had made that very turning unremembered. The question was whether that
+      // metadata can reach a FUTURE writer as a present, remembered fact. It cannot:
+      //
+      //   • ORIGIN — the author emits sceneCharge in the SAME response as the beats. It is never
+      //     planner input and never carried in from a prior scene.
+      //   • EVERY consumer reads the CURRENT scene's own plan object, and all but one use the stake
+      //     as a BOOLEAN ONLY — the stake TEXT is never copied into any prompt:
+      //       _buildRestrainedChargeDirective / _buildPhaseChargeDirective — regex test; the
+      //         directive it returns is fixed text and quotes nothing from the stake
+      //       _phaseFingerprint — contributes a single 0/1 trigger bit to an image cache key
+      //       the intensity-cap escalator and the sceneCharge validator — boolean / console only
+      //       the closeup-density pass — tries to lift a tangible OBJECT NAME, not the sentence
+      //       scene-mount telemetry — console.log
+      //   • CROSS-SCENE CHANNELS CHECKED AND CLEAR: state._lastScenePlan is the LITERARY planner's
+      //     plan (early_decision_hook) and holds no sceneCharge; state._stagedActive.plan is only
+      //     the currently mounted scene and its readers take visualState; the prior-scene carry
+      //     forward reads _gnPanelPlans[i-1]'s last panel (visual/emotion/camera); "STORY SO FAR"
+      //     is built from RENDERED PROSE. No sceneCharge reader is indexed by a prior scene.
+      //   • IT NEVER REACHES THE READER — not a beat, not a caption, not panel text.
+      //
+      // THE ONE PATH WHERE THE TEXT REACHES A MODEL is _repairLIPresenceBeats, which passes it as
+      // "SCENE STAKE (context only, do not rewrite this)". That is the SAME scene and is never
+      // invoked automatically — but it is the place to watch if that ever changes.
+      //
+      // CANONICAL HISTORY IS LEFT INTACT. Nothing here is rewritten to match a sealed memory
+      // effect, because nothing here is read as memory. Do NOT promote sceneCharge into a
+      // cross-scene context builder without reconciling it against the sealed-consequence record
+      // first — the moment its text is carried forward, it becomes a competing canon source.
       '  "sceneCharge": {\n' +
       '    "stake": "<≤20 words — concrete thing the protagonist is HIDING / WANTING / AVOIDING in this scene. NOT a vague mood. Examples: \\"she got fired Friday and hasn\'t told anyone\\" / \\"she\'s avoiding the email from her ex\\" / \\"she\'s about to walk into the meeting that could end her job\\". REQUIRED for every scene.>",\n' +
       '    "concrete_specific_beat_idx": <int — the beat index where you place a CONCRETE OBJECT/DETAIL that hints at the stake. NOT a mood word; a thing: a returned ring, an unopened envelope, a phone she keeps not picking up, a name unsaid. REQUIRED.>,\n' +

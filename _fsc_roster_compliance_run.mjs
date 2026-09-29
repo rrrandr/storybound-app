@@ -3,7 +3,12 @@
 import fs from 'fs';
 import path from 'path';
 import { preflight } from './_fsc_preflight_control.mjs';
+import { guardDispatch, CHARS_PER_TOKEN, REASONING_MULT, SAFETY_MARGIN } from './_fsc_cost_guard.mjs';
 
+// NO AUTHORIZATION IS OUTSTANDING. The $0.25 ceiling is exhausted to $0.041385 and the user has
+// explicitly withheld that remainder. REMAINING = 0 makes this runner refuse every dispatch until
+// a fresh figure is written here under a new authorization.
+const REMAINING = 0;
 const CAP = 0.06;
 const MODEL = 'grok-4-1-fast-reasoning';
 const PROXY = 'http://localhost:3000/api/proxy';
@@ -25,6 +30,27 @@ fs.writeFileSync(path.join(OUT, 'preflight.json'), JSON.stringify(
 
 const body = JSON.parse(pre.body);
 body.model = MODEL; body._sbModelOverride = MODEL; body._noFallback = true;
+
+// ── PRE-DISPATCH COST GUARD ───────────────────────────────────────────────────────────────────
+// The $0.06 cap was breached once because this runner checked cost AFTER dispatch, when the
+// money was already spent. The cap is now a gate, evaluated from prompt size + completion
+// budget + published rates, before any socket is opened.
+const guard = guardDispatch(body, { model: MODEL, cap: CAP, remainingAuthorization: REMAINING });
+log('COST GUARD (pre-dispatch, no network)');
+log('  prompt ' + guard.detail.promptChars.toLocaleString() + ' chars → '
+  + guard.detail.promptTokens.toLocaleString() + ' est. tokens @ ' + CHARS_PER_TOKEN + ' chars/token');
+log('  completion budget ' + (body.max_tokens || '(unset→floor)') + ' × ' + REASONING_MULT
+  + ' (reasoning is unbounded by max_tokens) = ' + guard.detail.outTokens.toLocaleString() + ' est. tokens');
+log('  raw $' + guard.detail.raw.toFixed(6) + '  × ' + SAFETY_MARGIN + ' margin = ESTIMATE $'
+  + guard.estimate.toFixed(6));
+log('  cap $' + CAP.toFixed(6) + '   remaining authorization $' + REMAINING.toFixed(6));
+if (!guard.allowed) {
+  log('\n  REFUSED BEFORE DISPATCH — ' + guard.reason);
+  log('  ZERO dispatch. ZERO spend. Nothing was sent upstream.');
+  fs.writeFileSync(path.join(OUT, 'cost_guard_refusal.json'), JSON.stringify(guard, null, 2));
+  process.exit(3);
+}
+log('  PERMITTED — estimate is within both the cap and the remaining authorization.\n');
 
 log('DISPATCH — one upstream attempt, _noFallback, no retry');
 let raw = null, status = null, err = null;
