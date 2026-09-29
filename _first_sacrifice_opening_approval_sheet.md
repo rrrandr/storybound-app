@@ -29,9 +29,9 @@ chooses among.
 
 | ask-class | status | detail |
 |---|---|---|
-| **`unseen`** | ✅ **COVERED** | by **approved `unm.the_turning_forgotten`**, subject to the native compiler contract and its declared population and contact conditions. **Awaiting implementation, not authoring.** |
-| **`escape`** | ◐ **PARTIALLY COVERED** | by **approved `unm.the_accusation_unmade`**, **only when a family accusation is active**. **Pre-accusation `escape` remains uncovered** — it lacks an outcome in *some active-canon states*, not everywhere. |
-| **`silence`** | ⛔ **UNCOVERED** | **no outcome at all.** `unm.custody_severed` is withdrawn, and no supported, genuinely favorable effect has been found. |
+| `unseen` | ✓ **covered** | Approved `unm.the_turning_forgotten`; **no further outcome authoring is owed**, only native-contract implementation and its declared population/contact conditions. |
+| `escape` | ◐ **partially covered** | Approved `unm.the_accusation_unmade`, **only when a family accusation is active**. Pre-accusation `escape` is uncovered — missing in *some* active-canon states, not all. |
+| `silence` | ⛔ **uncovered** | **No outcome at all.** `unm.custody_severed` withdrawn; no supported, genuinely favorable effect found. |
 
 **What each state needs next — they are not the same job:**
 
@@ -130,7 +130,7 @@ only among outcomes that fit both the sentence and the state. **Favor never over
 | ⛔ | `escape` | `unm.the_answer_speaks` | **BLOCKED — grant unauthorable.** The seed's own prevents-clause: *"the assumption that the alignment-sense or The Answer can expose a manufactured desire — neither can."* A reading placing the misalignment in Seren's intent is consistent with Lirael's innocence **and** her guilt. | — |
 | ✅ | `escape` | **APPROVED `unm.the_accusation_unmade`** *(only when the family accusation is active)* | the family's public **accusation** was never made. Not innocence — the twist stands, anyone with standing may accuse her tomorrow, Julian's demand still brings row 4, **and if they demanded remedy that demand survives: no one says she did it, and they still want paying.** | **none supported**, and none invented |
 | ✅ | `unseen` | **APPROVED `unm.the_turning_forgotten`** | the crowd forgets **that the assembly turned to look at her** — and nothing else. She is still standing there; the twist is still known; Seren, Julian, the Dohkar and Lirael all still remember the turning. **Not invisibility.** | **none** — the residue cost was removed as schema-legal but unlicensed |
-| ⛔ | `silence` | ~~`unm.custody_severed`~~ | **WITHDRAWN** — Julian's entrustment is office-bound and cannot be ceased by a scene-local grant. **ASK-CLASS UNCOVERED**, recommended; no supported favorable effect found. | — |
+| ⛔ | `silence` | ~~`unm.custody_severed`~~ | **WITHDRAWN** — Julian's entrustment is office-bound and cannot be ceased by a scene-local grant. **ASK-CLASS UNCOVERED** (decided 2026-09-29); no supported favorable effect found. | — |
 | *tbd* | `authority` | `unm.standing_dissolved` | **the room remembers him claiming it, and the claim is worth nothing.** The claim stands in history; the standing behind it is void. | a jurisdictional war she started |
 | *tbd* | `solitude` | `unm.the_shunning` | **they leave her alone.** Everyone present withdraws — a shunning, not a courtesy | every defender she had |
 
