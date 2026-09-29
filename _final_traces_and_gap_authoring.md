@@ -238,13 +238,25 @@ is** — she is visibly holding a relic that is not hers.
 | `role:first_sacrifice_presiding_dohkar` | — |
 | **`pc:lirael`** | **`invokerScope: in_population`** |
 
-**Why Lirael is included — two independent reasons, both stated:**
+**Why Lirael is affected — one basis, and only one:**
 
-1. **D1.** She is a member of the population the outcome names, and **the expansion path carries no invoker
-   filter.** Excluding her would be protagonist privilege, which is withdrawn.
-2. **The ask fails without her.** If she alone still knows whose it is, **she can raise the subject herself**
-   — and a subject she can raise is not silenced. **Her inclusion is what makes the grant work**, not an
-   incidental consequence of a rule.
+> **The sealed population includes Lirael; therefore she receives the same memory effect as every other
+> member. No invoker exemption applies.**
+
+**That is the whole justification.** Membership in the declared population is the basis. D1 **removes an
+automatic exemption** — it does **not** create a second rule that adds a party whenever an ask would
+otherwise be ineffective.
+
+> ### ⚠ Corrected 2026-09-29 — this was written as "two independent reasons"
+> The second was that the ask fails to silence the subject if she retains the knowledge. **Recording that as
+> an independent targeting basis was wrong.** It would make effectiveness a route by which a party can be
+> added to an outcome's reach — a general exception this design has no rule for, and a way for any future
+> outcome to self-target by arguing it would not otherwise work.
+
+**Effectiveness remains editorial rationale for the population choice, not a targeting basis.** It is why
+`population.scene_present` was chosen over `population.assembly` when the outcome was authored: the narrower
+crowd leaves parties who could still raise the subject. **The choice of population is an authoring decision.
+Who is inside the chosen population is not.**
 
 ### 5b-iii. What remains known, and what remains governing
 

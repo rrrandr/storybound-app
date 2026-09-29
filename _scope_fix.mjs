@@ -1,0 +1,10 @@
+import fs from 'fs';
+const F = '_final_traces_and_gap_authoring.md';
+const SEC = '/private/tmp/claude-501/-Users-romantsukerman-storybound-app/79822a26-4953-4e0a-b337-9520e623604d/scratchpad/lirael_scope.md';
+let s = fs.readFileSync(F, 'utf8');
+const a = s.indexOf('**Why Lirael is included — two independent reasons, both stated:**');
+const b = s.indexOf('### 5b-iii. What remains known, and what remains governing');
+if (a < 0 || b < 0) throw new Error('ANCHOR MISSING');
+s = s.slice(0, a) + fs.readFileSync(SEC, 'utf8') + s.slice(b);
+fs.writeFileSync(F, s);
+console.log('Lirael scope basis corrected to membership alone');
