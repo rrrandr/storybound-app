@@ -1,56 +1,42 @@
 # Approval sheet — First Sacrifice, Issue 1 opening
 
-> **Editorial work complete. Nothing implemented. No provider calls.**
+> **Editorial work complete and approved. Nothing implemented. No provider calls.**
 
 ---
 
-# 1. Approved outcomes
+# 1. Approved outcomes — all eight
 
 | outcome | ask | class | temporal operation | cost |
 |---|---|---|---|---|
-| `unm.the_turning_forgotten` | `unseen` | `memory_perception` | — *(memory channel)* | none |
-| `unm.the_accusation_unmade` | `escape`, accusation active | `history_rewrite` | `historical_replacement` | none |
-| `unm.time_gives_way` | `undo` | `history_rewrite` | `historical_replacement` | **none — approved costless** |
 | `unm.dohkar_demand_unmade` | `stop` | `history_rewrite` | `historical_replacement` | none |
+| `unm.time_gives_way` | `undo` | `history_rewrite` | `historical_replacement` | **none — costless by decision** |
+| `unm.the_accusation_unmade` | `escape`, accusation active | `history_rewrite` | `historical_replacement` | none |
+| `unm.the_claim_unmade` | `escape`, **pre-accusation** | `history_rewrite` | `historical_replacement` | **none — costless by decision** |
+| `unm.the_turning_forgotten` | `unseen` | `memory_perception` | — *(memory channel)* | none |
+| `unm.the_custody_unremembered` | `silence` | `memory_perception` | — *(memory channel)* | `she_forgets_whose_it_is` |
+| `unm.standing_dissolved` | `authority` | `identity_reputation` | `current_state_transition` | `escalation_invited` |
+| `unm.the_shunning` | `solitude` | `relationship_social` | `additive_canon_change` | `undefended` |
 
 **Plus five exact readings** — `assembly_forgets_twist`, `all_present_forget_twist`,
 `institution_forgets_custody`, `julian_forgets_interrogation`, `dohkar_forgets_authority`.
 *(`seren_forgets_price` is not an exact reading in this phase — the price has not been named.)*
 
+> **On costless grants.** `unm.the_claim_unmade` erases three atoms for nothing, and that is **approved as
+> correct**: Tempt Fate does not need an artificial price merely because the grant is large. **Its surviving
+> pressure is explicit** — Julian's independent demand still brings row 4's notice and investigation, and the
+> panel still constitutes itself at row 14.
+
 ---
 
-# 2. Awaiting approval — four traces, final and ready
+# 2. Precision repairs applied at approval
 
-| outcome | ask | class | temporal operation | cost |
-|---|---|---|---|---|
-| `unm.standing_dissolved` | `authority` | `identity_reputation` | `current_state_transition` | `escalation_invited` |
-| `unm.the_shunning` | `solitude` | `relationship_social` | `additive_canon_change` | `undefended` |
-| `unm.the_claim_unmade` | `escape`, **pre-accusation** | `history_rewrite` | `historical_replacement` | none |
-| `unm.the_custody_unremembered` | `silence` | `memory_perception` | — *(memory channel)* | `she_forgets_whose_it_is` |
+**None changed eligibility, rank, temporal operation, target atoms, cost, duration, or coverage.**
 
-**Each carrier was audited before drafting. Neither new outcome uses the Answer to establish past guilt,
-truth, or causation, and neither invents a capability.**
-
-### Scope basis for `unm.the_custody_unremembered`
-
-> **The sealed population includes Lirael; therefore she receives the same memory effect as every other
-> member. No invoker exemption applies.**
-
-**Membership is the only basis.** D1 removes an automatic exemption; **it does not create a second rule that
-adds a party whenever an ask would otherwise be ineffective.** That the subject would remain raisable if she
-retained the knowledge is **editorial rationale for choosing `population.scene_present`** over the narrower
-crowd — **never an independent targeting basis.**
-
-### The two `escape` branches have distinct jobs and never compete
-
-| | `unm.the_accusation_unmade` | `unm.the_claim_unmade` |
+| # | outcome | repair |
 |---|---|---|
-| eligible when | a family accusation **is** active | a family accusation is **not** active |
-| ceases | the family's public accusation | the Dohkar's claim to rule on her conduct, the venue he named, and Julian's agreement |
-| leaves standing | **the remedy demand** — *no one says she did it, and they still want paying* | **nothing accusing her yet** — *and now no one has claimed the right to judge* |
-
-**`requiresInactive: accusation.family_accused` is declared on `unm.the_claim_unmade`.** They are never both
-eligible, so **they are never ranked or tie-broken against each other.**
+| 1 | `unm.the_shunning` | The established fact named "everyone present". It now names an **explicit sealed withdrawing roster** — `the_assembly`, `named:seren`, `named:julian`, `role:first_sacrifice_presiding_dohkar` — with **`pc:lirael` excluded as the OBJECT of the withdrawal.** No one withdraws from themselves. **Structural role logic, not an invoker exemption**, and no precedent for removing a party from a population they belong to. |
+| 2 | `unm.the_claim_unmade` | The stale `unchanged[]` row generically implied the family accusation could coexist with this outcome. It now names **`accusation.family_demanded_remedy`** — a separate atom that can be active without an accusation — and records that **`accusation.family_accused` cannot arise here**, since `requiresInactive` makes the outcome ineligible whenever it is active. The `open[]` item *"what Julian makes of an agreement he never gave"* is replaced by the forward-looking **"whether Julian later makes a claim or an agreement of his own."** |
+| 3 | `unm.the_custody_unremembered` | Its *Therefore* said *"the question of why simply does not arise"*, which §5b-iii contradicts. Corrected: the outcome makes **whose the Answer is** unrememberable; **the question *why did he hand it over* is untouched and remains askable.** The silence covers ownership and entrustment, and nothing else. *(The line had also been lost in an earlier splice; it is restored in its corrected form.)* |
 
 ---
 
@@ -58,7 +44,7 @@ eligible, so **they are never ranked or tie-broken against each other.**
 
 **None. No ask is unserved, and no product gap is recorded.**
 
-Three entries are blocked or withdrawn; **their ask-classes are covered by the outcomes above**:
+Three entries are blocked or withdrawn; **their ask-classes are covered by the approved outcomes**:
 
 | entry | state |
 |---|---|
@@ -88,25 +74,21 @@ SELECTION DETERMINACY
 | **partial** | three outcomes are eligible in **16/32** states each — `dohkar_demand_unmade` (live Dohkar demand), `the_accusation_unmade` (live family accusation), `the_claim_unmade` (**no** family accusation). **None leaves a pair uncovered**: `stop` falls through to `undo`, and the two `escape` branches partition the domain exactly. |
 | **intentionally unsupported** | **0 cells, 0 ask-classes** |
 
-> **This result is final, not provisional.** The run asserts selection determinacy: **no pair has more than
-> one eligible outcome**, so no selection falls to array order. The earlier 224/224 figure was produced with
-> an array-order winner in 16 cells and was **not** a valid coverage result; this one is.
+> **Final, not provisional.** The run asserts determinacy — no pair has more than one eligible outcome, so no
+> selection falls to array order. Re-run after the three repairs: unchanged.
 
 ---
 
-# 5. Decisions still required from you
+# 5. Decisions required
 
-**One, and it is an approval rather than a design question:** approve or amend the four traces in §2.
-
-**No other user-facing decision is outstanding.** The `escape` tie is gone by construction, both gaps are
-authored, and coverage is determinate.
+**None.** All eight outcomes are approved editorial canon. Both gaps are authored, the `escape` branches
+partition by construction, and coverage is determinate.
 
 ---
 
 # 6. Not done, deliberately
 
-- **Ranking.** No rank is assigned to any outcome. The set has never been ranked as a whole at its corrected
-  amplitudes, and ranking it piecemeal is how the last ladder went wrong. **It does not block approval** —
-  rank is used only to choose among simultaneously eligible outcomes, and there are none.
+- **Ranking.** No rank is assigned. **It does not block anything** — rank is used only to choose among
+  simultaneously eligible outcomes, and there are none.
 - **Implementation.** Nothing is wired. Automatic extraction and outcome commitment remain disabled.
 - **The late-Issue-1 phase matrix** — its own unit, unstarted.

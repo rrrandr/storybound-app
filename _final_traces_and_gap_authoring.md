@@ -105,8 +105,17 @@ The retired mixed atom `auth.julian_claims_convene_preside` and the `history_rew
 **none**
 
 ### `establishes[]`
-`lirael.shunned_by_all_present` — *Everyone present withdraws from Lirael: none stands near her, addresses
-her, or meets her eye.*
+`lirael.shunned_by_all_present` — *The assembly, Seren, Julian and the presiding Dohkar withdraw from
+Lirael: none stands near her, addresses her, or meets her eye.*
+
+**Withdrawing roster — sealed, and explicitly not `population.scene_present`:**
+`the_assembly` · `named:seren` · `named:julian` · `role:first_sacrifice_presiding_dohkar`
+
+> **`pc:lirael` is excluded as the OBJECT of the withdrawal, not as an exempted party.** She is the person
+> withdrawn *from*; **no one withdraws from themselves.** This is **structural role logic** — the outcome
+> has two roles, and she occupies the other one. **It is not an invoker exemption**, and it creates no
+> precedent for removing a party from a population they belong to. `invokerScope` does not apply to
+> `relationship_social` at all.
 
 ### `affectedParties[0]`
 `who`: `pc:lirael` · `whatChanged`: everyone present withdraws from her · `witnesses`: **all present** — the
@@ -179,14 +188,15 @@ no claim to rule on her conduct was made, and no venue was named.*
 | **`review.demanded_by_julian`** | **untouched — so row 4's notice and investigation still arrive.** |
 | `auth.inquiry_not_yet_opened` | — |
 | every `twist.*`, `interr.*`, `answer.*` atom | including **`answer.entrusted_to_julian`** |
-| `accusation.*` atoms | if the family has accused her, that accusation stands |
+| **`accusation.family_demanded_remedy`** | **if a remedy was demanded, that demand stands.** It is a separate atom and can be active without an accusation. |
+| ~~`accusation.family_accused`~~ | **cannot arise here** — `requiresInactive` makes this outcome ineligible whenever it is active |
 
 **Row 14 is unaffected:** *"The panel is constituted **HERE for the first time**; nothing earlier may have
 convened it"* — it needs no earlier naming, and explicitly forbids one.
 
 ### Open
 Who claims the ruling instead, and when · whether the Dohkar reaches for an authority he never asserted ·
-what Julian makes of an agreement he never gave.
+**whether Julian later makes a claim or an agreement of his own.**
 
 ---
 
@@ -216,6 +226,16 @@ is** — she is visibly holding a relic that is not hers.
 | `requiresActive[]` | `answer.owned_by_institution` · `answer.entrusted_to_julian` — both opening invariants |
 | duration | `persists` |
 | cost | **`she_forgets_whose_it_is`** — a **knowledge loss**, not a predicted action. See §5d. |
+
+**Therefore:** no one in that clearing can remember **whose the Answer is**. It is in Lirael's hands, and
+**the question *whose is this* cannot be asked** — not because anyone decided to let it go, but because the
+fact that would prompt it is gone from them.
+
+**The question *why did he hand it over* is untouched and remains askable**, since they still remember the
+handoff. **The silence covers ownership and entrustment, and nothing else.**
+
+> *(This line was lost in an earlier section splice and is restored here in its corrected form — the
+> version it replaces wrongly said "the question of why simply does not arise", which §5b-iii contradicts.)*
 
 ### 5b-i. The exact atomic facts forgotten — **two, named**
 
