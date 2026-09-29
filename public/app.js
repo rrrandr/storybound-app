@@ -75592,19 +75592,25 @@ One sentence maximum. Atmospheric only. If reality bends, the deck should stir.\
         if (_fscBlock) lines.push(_fscBlock);
       }
     } catch (_fscPErr) { console.warn('[FSC] prompt block threw:', _fscPErr && _fscPErr.message); }
-    // AFTERMATH BEAT — required for BOTH cards. A Fate consequence must land in the room, not
-    // only in hidden state. Tempt gets an authored beat from its compiled outcome (above);
-    // Petition has no compiled outcome table, so the obligation is stated generically here.
-    // It is a RENDERING obligation: no new canon, no cost, no mechanism talk.
-    lines.push('- AFTERMATH BEAT (REQUIRED): the people actually affected must VISIBLY react in-fiction. '
-      + 'Show a specific observable response from each affected named party present, and a collective '
-      + 'response from an affected group — confusion, a broken-off thought, déjà vu, an emotion detached '
-      + 'from its lost reason, a changed social reflex, an interrupted accusation. Someone may keep the '
-      + 'anger or the urge to accuse while being unable to name why. '
-      + 'They FEEL the new reality; they never explain it. '
-      + 'Do NOT give the reaction to anyone the change did not reach. '
-      + 'Do NOT add a cost, a new durable fact, or any aura, glow, shimmer or visible wish-energy — '
-      + 'this world has none.');
+    // PETITION: the compiled consequence carrier, NOT a generic instruction.
+    // WITHDRAWN 2026-09-29: a generic "show the affected reacting" line cannot satisfy the
+    // aftermath requirement, because with no sealed roster and no authored reaction it hands the
+    // model the decision about WHO CHANGED — the exact defect the Tempt boundary removed. The
+    // carrier compiles the verdict into structured facts first; the author renders them.
+    try {
+      if (!isTempt && typeof _fpcPromptBlock === 'function') {
+        var _fpcBlock = _fpcPromptBlock();
+        if (_fpcBlock) {
+          lines.push(_fpcBlock);
+        } else {
+          // No compiled petition consequence. Say so rather than substituting a generic
+          // obligation that would look satisfied while leaving the author in charge.
+          lines.push('- AFTERMATH: no compiled consequence is available for this petition. Do NOT '
+            + 'invent who was affected, what changed, or how anyone reacts. Deliver the verdict above '
+            + 'and assert no consequence beyond it.');
+        }
+      }
+    } catch (_fpcErr) { console.warn('[FPC] petition prompt block threw:', _fpcErr && _fpcErr.message); }
     // Petition only: Fortunes offered set the audacity + duration BUDGET for the
     // manifestation (Bend → Lamborghini caper; Whisper → pickpocket chase).
     if (!isTempt) {
@@ -340754,15 +340760,19 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
 
   // ── PROMPT CONSUMPTION. The author receives the compiled consequence, never the raw wish
   //    plus a licence to invent. ─────────────────────────────────────────────────────────────
-  function _fscPromptBlock() {
-    var st = window.state; var rec = st && st._fscActiveCompiled;
+  // ── SHARED EFFECT-BOUNDARY RENDERER. Tempt and Petition both render through this one
+  //    function, so the two cards cannot drift apart and a fix to one reaches the other.
+  function _fscRenderBoundary(rec, opts) {
     if (!rec || rec.error) return '';
+    var o = opts || {};
     var L = [];
     var roster = rec.population ? rec.population.roster : [];
-    L.push('\nPRESELECTED CONSEQUENCE \u2014 EFFECT BOUNDARY (compiled at acceptance; render it, do not infer or extend):');
-    L.push('- READING: ' + (rec.mode === 'exact_reading'
-      ? 'EXACT \u2014 the player anchored both a fact and a scope. Deliver exactly this.'
-      : 'FATE-CHOSEN \u2014 the wording anchored nothing; Fate selected this interpretation.'));
+    L.push('\nPRESELECTED CONSEQUENCE \u2014 EFFECT BOUNDARY'
+      + (o.cardLabel ? ' (' + o.cardLabel + ')' : '')
+      + ' (compiled at acceptance; render it, do not infer or extend):');
+    L.push('- ' + (o.readingLine || (rec.mode === 'exact_reading'
+      ? 'READING: EXACT \u2014 the player anchored both a fact and a scope. Deliver exactly this.'
+      : 'READING: FATE-CHOSEN \u2014 the wording anchored nothing; Fate selected this interpretation.')));
     L.push('- OUTCOME: ' + rec.outcomeId);
 
     if (roster.length) {
@@ -340783,9 +340793,13 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
 
     if (rec.memoryEffects && rec.memoryEffects.length) {
       L.push('- EFFECT LIMITED TO:');
-      rec.memoryEffects.forEach(function (m) {
-        L.push('    \u2022 ' + m.disposition + ': ' + m.atom);
-      });
+      rec.memoryEffects.forEach(function (m) { L.push('    \u2022 ' + m.disposition + ': ' + m.atom); });
+    }
+    if (rec.changed && rec.changed.length) {
+      L.push('- EFFECT LIMITED TO:');
+      rec.changed.forEach(function (c) { L.push('    \u2022 ' + c.text); });
+    } else if (rec.changed && rec.changed.length === 0 && !rec.delta && !(rec.memoryEffects || []).length) {
+      L.push('- EFFECT LIMITED TO: nothing changes. The ask does not land.');
     }
     if (rec.delta) {
       L.push('- CANON CHANGE (' + rec.delta.temporalOperation + '):');
@@ -340794,8 +340808,9 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
       if (rec.delta.priorHistoryReplaced) L.push('    HISTORY: ' + rec.delta.priorHistoryReplaced);
     }
 
-    L.push('- MUST REMAIN TRUE: every fact and every party not listed above is UNCHANGED.');
-    if (rec.mode !== 'exact_reading' || rec.memoryEffects.length) {
+    L.push('- MUST REMAIN TRUE: ' + (rec.unchangedNote
+      || 'every fact and every party not listed above is UNCHANGED.'));
+    if (!rec.unchangedNote && (rec.mode !== 'exact_reading' || (rec.memoryEffects || []).length)) {
       L.push('    The twist and the loose note remain known exactly as sealed unless listed above.');
     }
     L.push('- COST: ' + (rec.cost ? rec.cost : 'none \u2014 do not invent one'));
@@ -340821,6 +340836,13 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
       L.push('  Author nothing past it and imply nothing about which way she goes.');
     }
     return L.join('\n') + '\n';
+  }
+  window._fscRenderBoundary = _fscRenderBoundary;
+
+  function _fscPromptBlock() {
+    var st = window.state; var rec = st && st._fscActiveCompiled;
+    if (!rec || rec.error) return '';
+    return _fscRenderBoundary(rec, { cardLabel: 'TEMPT FATE' });
   }
 
   // ── choice_pending gate ────────────────────────────────────────────────────────────────────
@@ -340937,4 +340959,165 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
   window._fscChoiceReachable = _fscChoiceReachable;
   window._FSC_REPLAY_RETRY_LIMIT = FSC_REPLAY_RETRY_LIMIT;
   window._FSC_STATIC_CHOICE = FSC_STATIC_CHOICE;
+})();
+
+// ══════════════════════════════════════════════════════════════════════════════════════════════
+// STAGE 3 — PETITION PRE-AUTHOR CONSEQUENCE CARRIER (Roman 2026-09-29).
+//
+// WHY THIS EXISTS. A generic shared Fate-weave instruction cannot satisfy the aftermath
+// requirement for Petition: with no sealed roster and no authored reaction, "show the affected
+// people reacting" hands the model the decision about WHO CHANGED. That is precisely the failure
+// the Tempt effect boundary was built to remove, and it was wrong to claim the generic text
+// covered it.
+//
+// This carrier compiles every reachable Petition verdict path into explicit structured facts
+// BEFORE the author sees anything: a sealed affected roster, exact changed and unchanged facts,
+// and an authored roster-scoped aftermathBeat. It reuses the existing verdict logic as its INPUT
+// and turns the result into declared data as its OUTPUT.
+//
+// The LATITUDE PATH is resolved at compile time. "Honor, twist or ignore — your choice" is the
+// model deciding the consequence; the carrier picks one and seals it.
+// ══════════════════════════════════════════════════════════════════════════════════════════════
+(function () {
+  'use strict';
+  var FPC_V = 1;
+
+  // Default scene-present cast for the First Sacrifice opening. A caller may pass its own.
+  var FPC_DEFAULT_PRESENT = ['the_assembly', 'named:seren', 'named:julian',
+                             'role:first_sacrifice_presiding_dohkar', 'pc:lirael'];
+  var FPC_INVOKER = 'pc:lirael';
+
+  // ── The three reachable Petition verdict paths, each an AUTHORED template. ─────────────────
+  var FPC_VERDICTS = {
+    // app.js:75596 — onboarding guaranteed first petition. Honoured, but at PETITION amplitude:
+    // an impossible ask is granted as its plausible kernel, never literally.
+    granted_kernel: {
+      id: 'pet.granted_kernel',
+      label: 'granted as its plausible kernel',
+      // Only the invoker registers the tilt. The world does not announce itself: a Petition
+      // grants an ORDINARY occurrence, so bystanders have nothing to react to.
+      roster: [FPC_INVOKER],
+      changed: [{ id: 'pet.kernel_occurrence', text: 'One ordinary, plausible occurrence has gone Lirael’s way. It is the kind of thing that happens; it is not visibly caused.' }],
+      unchanged: 'Every declared fact and every other party. No one else’s knowledge, standing or intent changes.',
+      cost: null,
+      aftermathBeat: { id: 'aftermath.pet.a_small_mercy',
+        text: 'Lirael notices the turn in her favour a half-second before she can account for it — the held breath, the small unearned relief, the suspicion that she has just been handed something. No one else remarks on it, because to everyone else nothing unusual has occurred.' } },
+
+    // app.js:75602 — verdict NOT GRANTED. Nothing materialises.
+    not_granted: {
+      id: 'pet.not_granted',
+      label: 'not granted — the world almost moves, then does not',
+      roster: [FPC_INVOKER],
+      changed: [],
+      unchanged: 'EVERYTHING. No fact changes, no party is affected, nothing is established.',
+      cost: null,
+      aftermathBeat: { id: 'aftermath.pet.the_near_miss',
+        text: 'The moment leans towards Lirael and does not arrive. She feels the shape of what almost happened and is left holding the ordinary version of the room. Nobody else registers anything, because nothing happened to register.' } },
+
+    // app.js:75605 — the HONOR / TWIST / IGNORE latitude. RESOLVED HERE, not in the prompt:
+    // handing the author three options is handing it the consequence.
+    honored: {
+      id: 'pet.honored',
+      label: 'honoured — delivered as asked, at Petition amplitude',
+      roster: [FPC_INVOKER],
+      changed: [{ id: 'pet.request_delivered', text: 'The petitioned circumstance arrives, plausibly and without spectacle.' }],
+      unchanged: 'Every declared fact and every other party.',
+      cost: null,
+      aftermathBeat: { id: 'aftermath.pet.it_simply_arrives',
+        text: 'It lands the way ordinary luck lands — unhurried, unremarkable to anyone but her. Lirael’s relief is a fraction too large for the size of the thing, and she keeps it off her face.' } },
+    subverted: {
+      id: 'pet.subverted',
+      label: 'delivered, but subverted — the request is recognisably engaged and turns',
+      roster: [FPC_INVOKER],
+      changed: [{ id: 'pet.request_subverted', text: 'The petitioned circumstance arrives in a form that answers the words and not the want.' }],
+      unchanged: 'Every declared fact and every other party.',
+      cost: null,
+      aftermathBeat: { id: 'aftermath.pet.answered_wrongly',
+        text: 'What she asked for arrives, and it is not what she meant. Lirael recognises her own words in the shape of it. She does not get to object; the thing has already happened and it is, technically, what she said.' } },
+    resisted: {
+      id: 'pet.resisted',
+      label: 'the world resists — the ask is acknowledged and does not land',
+      roster: [FPC_INVOKER],
+      changed: [],
+      unchanged: 'EVERYTHING. The ask is acknowledged in the telling and changes nothing.',
+      cost: null,
+      aftermathBeat: { id: 'aftermath.pet.acknowledged_and_denied',
+        text: 'The room declines to move. Lirael feels the request register somewhere and go unanswered, and has to carry on as though she had not asked.' } }
+  };
+
+  // ── Resolve the latitude BEFORE the author sees it. Deterministic, seeded by the sealed
+  //    invocation, so the same accepted petition always resolves the same way. ───────────────
+  function _fpcResolveLatitude(wishText, seed) {
+    var s = String(seed || wishText || '');
+    var h = 0;
+    for (var i = 0; i < s.length; i++) { h = ((h << 5) - h + s.charCodeAt(i)) | 0; }
+    var pick = Math.abs(h) % 100;
+    if (pick < 60) return 'honored';
+    if (pick < 85) return 'subverted';
+    return 'resisted';
+  }
+
+  // ── COMPILE. Runs at Petition acceptance, before prose. ───────────────────────────────────
+  // verdictInput reuses the EXISTING verdict logic's result: { guaranteedFirst, accepted }.
+  function _fpcCompile(wishText, verdictInput, opts) {
+    var vi = verdictInput || {};
+    var o = opts || {};
+    var present = (o.present && o.present.length) ? o.present.slice() : FPC_DEFAULT_PRESENT.slice();
+    var key;
+    if (vi.guaranteedFirst) key = 'granted_kernel';
+    else if (vi.accepted === false) key = 'not_granted';
+    else key = _fpcResolveLatitude(wishText, o.seed);
+
+    var v = FPC_VERDICTS[key];
+    var roster = v.roster.slice();
+    var rec = { v: FPC_V, card: 'petition', compiledAt: Date.now(),
+      wishText: String(wishText || ''), verdictPath: key, outcomeId: v.id, label: v.label,
+      population: { populationId: 'petition.affected', label: 'those the petition reached',
+                    roster: roster, sealedAt: Date.now() },
+      notAffected: present.filter(function (p) { return roster.indexOf(p) < 0; }),
+      invokerScope: roster.indexOf(FPC_INVOKER) >= 0 ? 'in_population' : 'not_in_population',
+      memoryEffects: [],
+      changed: v.changed.slice(), unchangedNote: v.unchanged,
+      cost: v.cost, durability: 'persists',
+      aftermathBeat: v.aftermathBeat,
+      delta: null };
+    return rec;
+  }
+
+  function _fpcCompileAndPersist(wishText, verdictInput, opts) {
+    try {
+      var s = window.state; if (!s) return null;
+      var rec = _fpcCompile(wishText, verdictInput, opts);
+      if (!s._fpcCompiled) s._fpcCompiled = [];
+      s._fpcCompiled.push(rec);
+      s._fpcActiveCompiled = rec;
+      try { console.log('[FPC] petition compiled — ' + rec.outcomeId
+        + ' roster=[' + rec.population.roster.join(',') + '] changed=' + rec.changed.length); } catch (_) {}
+      return rec;
+    } catch (e) {
+      try { console.error('[FPC] compile threw — no petition consequence preselected:', e && e.message); } catch (_) {}
+      return null;
+    }
+  }
+
+  // ── PROMPT. Uses the SAME boundary renderer as Tempt, so the two cards cannot drift. ──────
+  function _fpcPromptBlock() {
+    var s = window.state; var rec = s && s._fpcActiveCompiled;
+    if (!rec) return '';
+    // Cross-IIFE: the shared renderer is published on window, not in this closure's scope.
+    // Referencing it bare threw ReferenceError and would have killed the petition payload in the
+    // browser exactly as it did in the control.
+    var render = (typeof window !== 'undefined') && window._fscRenderBoundary;
+    if (typeof render !== 'function') {
+      try { console.error('[FPC] shared boundary renderer unavailable \u2014 no petition payload emitted'); } catch (_) {}
+      return '';
+    }
+    return render(rec, { cardLabel: 'PETITION FATE', readingLine: 'VERDICT: ' + rec.label });
+  }
+
+  window._fpcCompile = _fpcCompile;
+  window._fpcCompileAndPersist = _fpcCompileAndPersist;
+  window._fpcPromptBlock = _fpcPromptBlock;
+  window._fpcResolveLatitude = _fpcResolveLatitude;
+  window._FPC_VERDICTS = FPC_VERDICTS;
 })();
