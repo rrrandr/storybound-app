@@ -236066,6 +236066,29 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
   // Scene-number seam for staged generation: the index being generated (0-based) is authoritative for
   // _currentSceneNumber while this runs; cleared on every exit so a literary turn never inherits it.
   async function _runCGScreenplayGen(sceneIndex, playerAction, playerDialogue) {
+    // ── choice_pending LIVE GATE (Roman 2026-09-29) ────────────────────────────────────────
+    // A renewed choice owed by a Tempt reality revision blocks EVERY continuation past it.
+    // This is the single funnel for scene-0 bootstrap, the main advance and the retry path, so
+    // the refusal cannot be routed around. The replay scene itself is permitted once — it is
+    // the scene that reaches the choice — and is marked generated on success below.
+    try {
+      if (typeof _fscGateGeneration === 'function') {
+        var _fscGate = _fscGateGeneration({ sceneIndex: sceneIndex });
+        if (!_fscGate.allowed) {
+          try { console.warn('[FSC-GATE] continuation refused \u2014 ' + _fscGate.reason + ': ' + (_fscGate.detail || '')); } catch (_) {}
+          return null;
+        }
+        if (_fscGate.mode === 'replay' && typeof _fscReplayAttempt === 'function') {
+          var _fscAtt = _fscReplayAttempt();
+          if (!_fscAtt.allowed) {
+            // Tier 1 exhausted. Tier 2 is the authored static presentation; it needs no model
+            // call, costs no Fortune, and creates no delta. The reader is told nothing about it.
+            try { console.warn('[FSC-GATE] replay retries exhausted \u2014 falling through to the authored static choice'); } catch (_) {}
+            return null;
+          }
+        }
+      }
+    } catch (_fscGErr) { console.warn('[FSC-GATE] threw:', _fscGErr && _fscGErr.message); }
     try { state._stagedAuthoringSceneIndex = (typeof sceneIndex === 'number' && sceneIndex >= 0) ? sceneIndex : null; } catch (_) {}
     // ── ACCEPTED-PROPOSAL OWNERSHIP (Roman 2026-09-24) ──────────────────────────────────────
     // The canon audit reads state._acceptedPlannerProposal. Stored with only a sceneNum and never
@@ -236132,6 +236155,11 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
     } catch (_) {}
     try {
       var _cgPlan = await _runCGScreenplayGenInner(sceneIndex, playerAction, playerDialogue);
+      // The replay reached prose. Every later continuation is now refused until the player
+      // resolves the renewed choice.
+      try {
+        if (_cgPlan && typeof _fscMarkReplayGenerated === 'function') _fscMarkReplayGenerated();
+      } catch (_fscMErr) { console.warn('[FSC-GATE] mark-replay threw:', _fscMErr && _fscMErr.message); }
       // ── SAFE-MODE DIAGNOSTIC, NON-DESTRUCTIVE (Roman 2026-09-25, Say/Do category 3) ──────────
       // Placed at the ACCEPTANCE point — the plan has been generated, parsed and validated, and
       // has not yet been persisted or rendered. It was first put at the persistence site inside
@@ -340576,9 +340604,13 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
 
     var popId = o.population || o.actingPopulation || null;
     rec.population = popId ? _fscExpandPopulation(popId) : null;
-    // invokerScope is a memory_perception concern only; relationship_social has no population
-    // to be in or out of.
-    rec.invokerScope = (o.cls === 'memory_perception' && rec.population)
+    // invokerScope is recorded wherever a POPULATION determines who is affected — which is
+    // wherever the outcome carries memory effects, NOT wherever the class happens to be
+    // memory_perception. unm.time_gives_way is history_rewrite and still targets
+    // population.scene_present, so keying on class left its record silent about whether Lirael
+    // is inside the population. D1 requires the record to say. A class with no targeted
+    // population (relationship_social's affectedParties) correctly gets null.
+    rec.invokerScope = (rec.population && (o.memoryEffects || []).length)
       ? _fscInvokerScope(rec.population, null) : null;
 
     if (o.memoryEffects && o.memoryEffects.length && rec.population) {
@@ -340615,6 +340647,7 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
   function _fscPersistCompiled(rec) {
     var s = window.state; if (!s || !rec) return null;
     if (!s._fscCompiled) s._fscCompiled = [];
+    rec.reservationKey = s._temptGuardActiveReservation || null;
     s._fscCompiled.push(rec);
     s._fscActiveCompiled = rec;
     if (rec.delta) { var log = _fscDeltaLog(true); if (log) log.push(rec.delta); }
@@ -340632,6 +340665,21 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
   }
 
   function _fscCompileAndPersist(wishText, opts) {
+    // IDEMPOTENT PER SEALED INVOCATION. A retried generation re-enters nothing here, but a
+    // re-entered seal path would otherwise append a second consequence and a second delta —
+    // revising the world twice for one paid wish.
+    try {
+      var s0 = window.state;
+      var key = (s0 && s0._temptGuardActiveReservation) || null;
+      if (key && s0._fscCompiled) {
+        for (var i = 0; i < s0._fscCompiled.length; i++) {
+          if (s0._fscCompiled[i] && s0._fscCompiled[i].reservationKey === key) {
+            try { console.log('[FSC] compile suppressed \u2014 this invocation already has a compiled consequence (' + s0._fscCompiled[i].outcomeId + ')'); } catch (_) {}
+            return s0._fscCompiled[i];
+          }
+        }
+      }
+    } catch (_) {}
     try { return _fscPersistCompiled(_fscCompile(wishText, opts)); }
     catch (e) {
       try { console.error('[FSC] compile threw — no consequence preselected:', e && e.message); } catch (_) {}
@@ -340703,4 +340751,91 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
   window._FSC_OUTCOMES = FSC_OUTCOMES;
   window._FSC_EXACT = FSC_EXACT;
   window._FSC_POPULATIONS = FSC_POPULATIONS;
+})();
+
+// ══════════════════════════════════════════════════════════════════════════════════════════════
+// STAGE 3 — choice_pending LIVE GATE, bounded retry, and static in-fiction fallback.
+// The replay scene itself is permitted to generate ONCE — it is the scene that reaches the
+// renewed choice. Every continuation PAST that choice is refused until the player resolves it.
+// ══════════════════════════════════════════════════════════════════════════════════════════════
+(function () {
+  'use strict';
+  var FSC_REPLAY_RETRY_LIMIT = 3;   // bounded by the app's ordinary retry allowance, not a new one
+
+  function _cp() {
+    var s = window.state;
+    return (s && s._fscChoicePending && !s._fscChoicePending.resolved) ? s._fscChoicePending : null;
+  }
+
+  // THE LIVE GATE. Called at the top of the single generation funnel, so every continuation
+  // route passes through it — not a helper a caller may forget to consult.
+  // Returns { allowed: bool, reason, mode }.
+  function _fscGateGeneration(ctx) {
+    var cp = _cp();
+    if (!cp) return { allowed: true, reason: 'no_pending_choice' };
+    if (!cp.replayGenerated) {
+      // The replay scene may be generated. It ends ON the choice; the prompt block says so.
+      return { allowed: true, reason: 'replay_scene', mode: 'replay' };
+    }
+    return { allowed: false, reason: 'choice_pending',
+             detail: 'A renewed choice is owed and unresolved. No continuation may be generated past it.' };
+  }
+
+  // Marks the replay as generated. Called once the replay generation SUCCEEDS.
+  function _fscMarkReplayGenerated() {
+    var cp = _cp(); if (!cp) return null;
+    cp.replayGenerated = true; cp.replayGeneratedAt = Date.now();
+    return cp;
+  }
+
+  // ── BOUNDED RETRY. Re-generation runs against the SAME sealed delta: it appends nothing,
+  //    charges nothing, and consumes no second Tempt. ──────────────────────────────────────────
+  function _fscReplayAttempt() {
+    var cp = _cp();
+    if (!cp) return { allowed: false, reason: 'no_pending_choice' };
+    cp.attempts = (cp.attempts || 0) + 1;
+    if (cp.attempts > FSC_REPLAY_RETRY_LIMIT) {
+      cp.retriesExhausted = true;
+      return { allowed: false, attempts: cp.attempts, exhausted: true, reason: 'retry_limit' };
+    }
+    return { allowed: true, attempts: cp.attempts, exhausted: false,
+             limit: FSC_REPLAY_RETRY_LIMIT };
+  }
+  function _fscReplayExhausted() { var cp = _cp(); return !!(cp && cp.retriesExhausted); }
+
+  // ── TIER 2: static, in-fiction choice presentation. Requires NO model call, so it cannot
+  //    fail for provider reasons. It presents the choice and nothing else — no prose, no recap,
+  //    no continuation, no implied aftermath. The reader is told nothing about a model, a
+  //    failure, a retry, or a recovery. ───────────────────────────────────────────────────────
+  var FSC_STATIC_CHOICE = {
+    id: 'lirael.scene1_disposition',
+    prompt: 'The words are said. The assembly is seated. Lirael stands where she stood before.',
+    options: [
+      { value: 'run',    label: 'Run, in shame.' },
+      { value: 'remain', label: 'Remain.' }
+    ]
+  };
+  function _fscStaticChoicePresentation() {
+    var cp = _cp(); if (!cp) return null;
+    cp.presentedStatically = true; cp.presentedAt = Date.now();
+    return { mode: 'static_authored', createsDelta: false, chargesFortune: false,
+             id: FSC_STATIC_CHOICE.id, prompt: FSC_STATIC_CHOICE.prompt,
+             options: FSC_STATIC_CHOICE.options.slice() };
+  }
+  // The renewed choice is ALWAYS reachable: Tier 1 while retries remain, Tier 2 unconditionally.
+  // Available after a reload as well as immediately after a failure.
+  function _fscChoiceReachable() {
+    var cp = _cp(); if (!cp) return { reachable: false, reason: 'no_pending_choice' };
+    return { reachable: true, tier: _fscReplayExhausted() ? 2 : 1,
+             viaStatic: _fscReplayExhausted() };
+  }
+
+  window._fscGateGeneration = _fscGateGeneration;
+  window._fscMarkReplayGenerated = _fscMarkReplayGenerated;
+  window._fscReplayAttempt = _fscReplayAttempt;
+  window._fscReplayExhausted = _fscReplayExhausted;
+  window._fscStaticChoicePresentation = _fscStaticChoicePresentation;
+  window._fscChoiceReachable = _fscChoiceReachable;
+  window._FSC_REPLAY_RETRY_LIMIT = FSC_REPLAY_RETRY_LIMIT;
+  window._FSC_STATIC_CHOICE = FSC_STATIC_CHOICE;
 })();
