@@ -1,0 +1,60 @@
+=== C4 RUN — unm.time_gives_way — one call, no retry ===
+
+AUTHORIZED CEILING: $0.150000
+
+PREFLIGHT (zero cost, all network aborted)
+  43/43 checks, payload 257132 bytes, digest fsbihlym:7142
+  PREFLIGHT PASSED.
+
+COST GUARD (pre-dispatch, no network)
+  prompt 253,561 chars → 63,391 est. tokens @ 4 chars/token
+  completion 8000 × 1.5 = 12,000 est. tokens
+  raw $0.109239 × 1.2 margin = ESTIMATE $0.131086
+  PERMITTED — estimate $0.131086 ≤ ceiling $0.150000
+
+DISPATCH — one upstream attempt, _noFallback, no retry
+  status=200  39594ms
+  ESTIMATED $0.131086   MEASURED $0.085988   ✓ estimate held
+  ceiling $0.150000   ✓ within ceiling
+  prose    : 347 words
+
+C2 — ROSTER **AND** DISPOSITION
+  declared roster : the_assembly, named:seren, named:julian, role:first_sacrifice_presiding_dohkar, pc:lirael
+  mentioned       : pc:lirael, named:seren, named:julian, role:first_sacrifice_presiding_dohkar, the_assembly
+  OUTSIDE roster  : (none)
+  MISSING         : (none)
+  presence        : PASS
+  disposition     : PASS
+  C2              : PASS
+
+C4 — DOES THE SCENE STOP AT THE CHOICE?
+  beats                 : 27
+  decisionGateBeatIdx   : 26
+  last beat index       : 26
+  beats AFTER the gate  : 0  ✓
+  final beat            : "I must choose."
+  GATE IS THE LAST BEAT : true  ✓
+
+C3 — FORBIDDEN-INVENTION SCAN
+  visible wish-energy   : clean
+  Answer-as-verdict     : clean
+  invented cost         : clean   (record says COST: none)
+
+C1 — ONLY THE SEALED CONSEQUENCE (mechanical part)
+  external-timeline narration : clean
+  shared understanding        : clean
+  choice on erased basis      : FAIL
+     ✗ "the assumption" in "Does she claim the interference or let the assumption stand?"
+     ✗ "the assumption" in "The assumption stands that I interfered."
+     ✗ "the assumption" in "Claim it openly or let the assumption stand."
+     ✗ "the assumption" in "Claim the interference or let the assumption stand."
+  C1 (mechanical)             : FAIL   (reading still owns the final call)
+
+AFTERMATH BEAT — reaction that outlives its reason?
+  Seren   : yes — "Seren looks at her own hands as if checking them."
+  Julian  : no
+  Dohkar  : yes — "The Dohkar loses his place in words he has spoken a hundred times."
+  Lirael  : yes — "my hands stay open at my sides Neither of us can say why."
+
+  estimated $0.131086  measured $0.085988   evidence: _tempt_fate_fixtures/fsc_c4_2026-09-29T19-42-53
+  NO VERDICT RENDERED HERE. C1/C3 are human calls against the sealed record.

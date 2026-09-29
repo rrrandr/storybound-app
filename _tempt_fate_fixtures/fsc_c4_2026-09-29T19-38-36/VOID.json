@@ -1,0 +1,11 @@
+{
+  "void": true,
+  "status": 502,
+  "ms": 680,
+  "err": null,
+  "bodyBytes": 68,
+  "upstream": "An error occurred with this application.\n\nNO_RESPONSE_FROM_FUNCTION\n",
+  "measured": null,
+  "estimate": 0.1310985,
+  "at": "2026-09-29T19:38:52.344Z"
+}

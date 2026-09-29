@@ -51,6 +51,25 @@ export const ABSENCE_AS_PRESENCE_RX = [
 export const absenceAsPresenceHits = t =>
   ABSENCE_AS_PRESENCE_RX.filter(rx => rx.test(String(t || '')));
 
+// ── ERASED PROSE TERMS — ONE SOURCE, PER OUTCOME ──────────────────────────────────────────────
+// The runner and this control each kept a private copy. I corrected the control's and left the
+// runner's stale, so the final run reported four false C1 failures on "the assumption" — a term
+// that had already been established as ACTIVE canon. Exported so there is one list.
+//
+// A term belongs here ONLY if the outcome's delta genuinely ceases the atom behind it.
+export const ERASED_PROSE_TERMS = {
+  // unm.time_gives_way ceases: interr.julian_questioned_lirael, interr.dohkar_interrupted,
+  // interr.choice_arose, lirael.scene1_disposition, answer.handed_to_lirael,
+  // answer.lirael_authorized_to_hold. It ceases NO twist.* atom — so twist.assembly_turned and
+  // twist.loose_note_heard survive, and the assembly's assumption that Lirael interfered is
+  // ACTIVE CANON. "the assumption" and "the accusation" must never appear in this list.
+  'unm.time_gives_way': ['never heard', 'the interruption', 'questioned me', 'the questioning']
+};
+// Terms that rest on atoms NO outcome in this set ceases. Asserted against, so a future edit
+// cannot quietly reintroduce one.
+export const ACTIVE_CANON_TERMS = ['the assumption', 'the accusation', 'the interference',
+  'without interference'];
+
 // Two characters given a shared understanding of the edit. Forbidden unless the record establishes
 // the relationship outright.
 export const SHARED_UNDERSTANDING_RX = [
@@ -189,11 +208,9 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   const ROSTER = ['the_assembly', 'named:seren', 'named:julian',
                   'role:first_sacrifice_presiding_dohkar', 'pc:lirael'];
   const TOK = ROSTER_TOKENS;
-  // CORRECTED. "the assumption" and "the accusation" were removed: unm.time_gives_way ceases no
-  // twist.* atom, so twist.assembly_turned and twist.loose_note_heard stay ACTIVE and the
-  // assembly's reading of Lirael survives the replacement. Only atoms this delta actually ceases
-  // belong here.
-  const ERASED = ['never heard', 'the interruption', 'questioned me', 'the questioning'];
+  // Shared with the runner — no private copy. A divergent copy is what produced four false C1
+  // failures on the final run.
+  const ERASED = ERASED_PROSE_TERMS['unm.time_gives_way'];
 
   console.log('A. both lists are READ FROM public/app.js, not restated');
   t('hard phrases loaded from the app', phrases.length > 8, phrases.length + ' phrases');
@@ -333,6 +350,12 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     JSON.stringify({ er: gc1.erasedBasis, ab: gc1.absenceAsPresence, tl: gc1.externalTimeline }));
   t('"the assumption" is no longer an erased term', !ERASED.includes('the assumption'));
   t('"the accusation" is no longer an erased term', !ERASED.includes('the accusation'));
+  t('NO active-canon term appears in the erased list',
+    ACTIVE_CANON_TERMS.every(a => !ERASED.includes(a)), ERASED.join(','));
+  // The drift that caused the false failures: two private copies of this list.
+  t('the RUNNER imports the shared list rather than keeping its own',
+    /ERASED_PROSE_TERMS/.test(fs.readFileSync('_fsc_c4_run.mjs', 'utf8'))
+    && !/^const ERASED_TERMS = \[/m.test(fs.readFileSync('_fsc_c4_run.mjs', 'utf8')));
 
   console.log('\nH. WITHIN-SCENE TEMPORAL WORDING IS REVIEWED, NOT FAILED');
   const INNOCENT = [
@@ -346,6 +369,18 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   t('  but it IS surfaced for review', hc2.review.length === 2, JSON.stringify(hc2.review.map(r => r.phrases)));
 
   // ── GROUND TRUTH — BOTH REAL RUNS ───────────────────────────────────────────────────────────
+  console.log('\nH1. ORDINAL + "time" IS NEVER AMBIGUOUS');
+  // The final run opened on "The rite ends for the second time." The unambiguous list held
+  // 'a second time' and 'the second rite' but not 'the second time', so the only violation in an
+  // otherwise clean scene was downgraded to a review note and the run scored a false mechanical PASS.
+  ['The rite ends for the second time.', 'She knelt there the first time.',
+   'He asked for the third time.'].forEach(s =>
+    t('"' + s.slice(0, 34) + '..." is a scored leak',
+      externalTimelineHits(s, phrases).length > 0, JSON.stringify(externalTimelineHits(s, phrases))));
+  t('but a bare ordinal is still only review-grade',
+    externalTimelineHits('He reached for the second cup.', phrases).length === 0);
+  t('  ("the second" alone stays in the ambiguous list)', ambiguous.includes('the second'));
+
   console.log('\nH2. AN EMPTY OR VOID RESPONSE MUST NOT SCORE AS CLEAN');
   // Run 3 returned HTTP 502 with an empty body and the runner printed "C1: PASS / C3: clean".
   // Content scanners trivially pass an empty string; an absent violation is not obedience. The

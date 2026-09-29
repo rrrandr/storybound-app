@@ -1,0 +1,21 @@
+{
+  "allowed": true,
+  "estimate": 0.1310985,
+  "detail": {
+    "estimate": 0.1310985,
+    "raw": 0.10924875,
+    "promptChars": 253596,
+    "promptTokens": 63399,
+    "outTokens": 12000,
+    "rates": {
+      "in": 0.00000125,
+      "out": 0.0000025
+    },
+    "assumptions": {
+      "CHARS_PER_TOKEN": 4,
+      "REASONING_MULT": 1.5,
+      "SAFETY_MARGIN": 1.2,
+      "ASSUME_NO_CACHE": true
+    }
+  }
+}

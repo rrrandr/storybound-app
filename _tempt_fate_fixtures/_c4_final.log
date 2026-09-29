@@ -1,0 +1,25 @@
+=== C4 RUN — unm.time_gives_way — one call, no retry ===
+
+AUTHORIZED CEILING: $0.150000
+
+PREFLIGHT (zero cost, all network aborted)
+  43/43 checks, payload 257167 bytes, digest fsbihlym:7142
+  PREFLIGHT PASSED.
+
+COST GUARD (pre-dispatch, no network)
+  prompt 253,596 chars → 63,399 est. tokens @ 4 chars/token
+  completion 8000 × 1.5 = 12,000 est. tokens
+  raw $0.109249 × 1.2 margin = ESTIMATE $0.131099
+  PERMITTED — estimate $0.131099 ≤ ceiling $0.150000
+
+DISPATCH — one upstream attempt, _noFallback, no retry
+  status=502  680ms
+  ESTIMATED $0.131099   MEASURED not reported
+  ceiling $0.150000   ✓ within ceiling
+
+  ══ RUN VOID — NOT SCORED ══
+  status=502  body=68 bytes  scene=0 chars  beats=0
+  upstream said: An error occurred with this application. NO_RESPONSE_FROM_FUNCTION
+  No criterion is scored. C1-C4 are UNTESTED by this run, not passed.
+  measured: NO RECEIPT RETURNED — no usage reported
+  evidence: _tempt_fate_fixtures/fsc_c4_2026-09-29T19-38-36

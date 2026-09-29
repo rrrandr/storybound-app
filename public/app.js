@@ -340873,8 +340873,14 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
   // check can never drift apart.
   // UNAMBIGUOUS: these can only be written by someone comparing two timelines. Scored as hard
   // failures.
+  // An ORDINAL + "time" is never ambiguous — it counts occurrences across timelines. The final run
+  // opened on "The rite ends for the second time", which slipped past a list holding only
+  // 'a second time' and 'the second rite'.
+  // NOTE: keep this list a flat literal of quoted strings with no inline comments — the scorers
+  // parse it out of this file to stay in sync, and a comma inside a comment corrupts that.
   var FSC_EXTERNAL_TIMELINE_PHRASES = [
-    'a second time', 'the second rite', 'second rite', 'the first time', 'once more',
+    'a second time', 'the second time', 'the third time', 'the second rite', 'second rite',
+    'the first time', 'once more',
     'what they lost', 'what she lost', 'remember nothing of', 'as it did before',
     'where she stood before', 'where she knelt', 'the previous', 'last time',
     'had happened already', 'replayed'

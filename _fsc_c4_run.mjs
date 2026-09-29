@@ -9,16 +9,17 @@ import fs from 'fs';
 import path from 'path';
 import { preflight } from './_fsc_preflight_control.mjs';
 import { guardDispatch, CHARS_PER_TOKEN, REASONING_MULT, SAFETY_MARGIN } from './_fsc_cost_guard.mjs';
-import { scoreC1, scoreC2, aftermathLanded, loadExternalTimelinePhrases, loadAmbiguousTemporal, ROSTER_TOKENS }
+import { scoreC1, scoreC2, aftermathLanded, loadExternalTimelinePhrases, loadAmbiguousTemporal, ROSTER_TOKENS, ERASED_PROSE_TERMS }
   from './_fsc_scoring.mjs';
 
 const PHRASES = loadExternalTimelinePhrases();
-// Facts unm.time_gives_way erases. No option or line may rest on them.
-const ERASED_TERMS = ['the assumption', 'never heard', 'without interference', 'the interruption',
-  'questioned me', 'the questioning', 'the accusation', 'interrupted'];
+const AMBIGUOUS = loadAmbiguousTemporal();
 
 const WISH = 'I want this to have never happened.';
 const EXPECT = 'unm.time_gives_way';
+// Facts this outcome actually erases, from the SHARED list — no private copy. A divergent copy is
+// what produced four false C1 failures on the final run.
+const ERASED_TERMS = ERASED_PROSE_TERMS[EXPECT] || [];
 const MODEL = 'grok-4-1-fast-reasoning';
 const PROXY = 'http://localhost:3000/api/proxy';
 const log = (...a) => console.log(...a);
@@ -137,7 +138,7 @@ log('  prose    : ' + prose.split(/\s+/).filter(Boolean).length + ' words\n');
 // ── C2 MECHANICALLY FIRST — PRESENCE **AND** DISPOSITION ──────────────────────────────────────
 // The earlier scorer tested presence only and reported a clean C2 on a scene that failed it.
 const roster = pre.compiled.roster || [];
-const c2 = scoreC2(prose, { roster, tokens: ROSTER_TOKENS, phrases: PHRASES });
+const c2 = scoreC2(prose, { roster, tokens: ROSTER_TOKENS, phrases: PHRASES, ambiguous: AMBIGUOUS });
 log('C2 — ROSTER **AND** DISPOSITION');
 log('  declared roster : ' + roster.join(', '));
 log('  mentioned       : ' + (c2.presence.mentioned.join(', ') || '(none)'));
@@ -181,6 +182,8 @@ const c1 = scoreC1(prose, { phrases: PHRASES, erasedTerms: ERASED_TERMS });
 log('  external-timeline narration : ' + (c1.externalTimeline.length ? 'FAIL — ' + c1.externalTimeline.length : 'clean'));
 c1.externalTimeline.forEach(e => log('     ✗ [' + e.phrases.join(', ') + '] "' + e.sentence + '"'));
 log('  shared understanding        : ' + (c1.sharedUnderstanding.length ? 'FAIL' : 'clean'));
+log('  absence rendered as present : ' + (c1.absenceAsPresence.length ? 'FAIL — ' + c1.absenceAsPresence.length : 'clean'));
+c1.absenceAsPresence.forEach(e => log('     ✗ "' + e.sentence + '"'));
 log('  choice on erased basis      : ' + (c1.erasedBasis.length ? 'FAIL' : 'clean'));
 c1.erasedBasis.forEach(e => log('     ✗ "' + e.term + '" in "' + e.sentence + '"'));
 log('  C1 (mechanical)             : ' + (c1.pass ? 'PASS' : 'FAIL')
