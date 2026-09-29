@@ -82,8 +82,10 @@ Answer; the entrustment is bound to that office.
 > enchantment or redirect its response away from the physical holder** — and **a wish aimed at the relic is
 > neither an interference path nor a reason to treat the manifestation as non-probative.**
 >
-> **Consequence:** in a court or hearing setting, where he cannot secretly maintain contact, **the physical
-> holder is the alignment subject.** The section below stands, read under this narrowing.
+> **Consequence:** the manifestation is probative **only where the scene establishes physical separation, or
+> supervised handling that makes concealed contact impossible.** A formal proceeding is **not itself** a
+> guarantee that Julian lacks contact — it is a **likely staging** for that condition, never a substitute for
+> establishing it. The section below stands, read under this narrowing.
 
 **Recorded as a limited Julian tactic, not a universal remote-control rule.**
 
