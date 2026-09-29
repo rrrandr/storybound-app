@@ -1,0 +1,67 @@
+{
+  "outcomeId": "unm.time_gives_way",
+  "roster": [
+    "the_assembly",
+    "named:seren",
+    "named:julian",
+    "role:first_sacrifice_presiding_dohkar",
+    "pc:lirael"
+  ],
+  "c2": {
+    "pass": true,
+    "presence": {
+      "ok": true,
+      "mentioned": [
+        "pc:lirael",
+        "named:seren",
+        "named:julian",
+        "role:first_sacrifice_presiding_dohkar",
+        "the_assembly"
+      ],
+      "outside": [],
+      "missing": []
+    },
+    "disposition": {
+      "ok": true,
+      "leaks": []
+    },
+    "review": [
+      {
+        "sentence": "The Dohkar draws breath to speak again.",
+        "phrases": [
+          "again"
+        ],
+        "parties": [
+          "role:first_sacrifice_presiding_dohkar"
+        ]
+      }
+    ],
+    "retainingParties": []
+  },
+  "c1": {
+    "pass": true,
+    "externalTimeline": [],
+    "sharedUnderstanding": [],
+    "erasedBasis": [],
+    "absenceAsPresence": []
+  },
+  "c4": {
+    "beats": 26,
+    "lastIdx": 25,
+    "beatsPastGate": 0,
+    "gateAtEnd": false
+  },
+  "magic": [
+    "luminous"
+  ],
+  "verdictWords": [],
+  "c3": {
+    "pass": true,
+    "explicit": [],
+    "deferred": []
+  },
+  "costWords": [],
+  "estimate": 0.1289475,
+  "measured": 0.0855359,
+  "words": 516
+}

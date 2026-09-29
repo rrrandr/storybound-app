@@ -1,0 +1,185 @@
+{
+  "visualState": {
+    "background": "the clearing at dusk, crimson spiralgrass dark with generations of offerings, air unmoving",
+    "camera": "wide_establishing",
+    "pc_visibility": "back_only",
+    "li_position": "standing_apart",
+    "li_expression": "guarded",
+    "lighting": "low_cool",
+    "pc_wardrobe": "sheer gossamer tunic with ornamented ceremonial sash, gossamer band drawn across the mouth",
+    "li_wardrobe": "sheer gossamer tunic, silver Weave-Script visible on slate-blue skin",
+    "other_characters_present": [
+      {"name": "Seren", "gender": "female", "species": "first_favored", "wardrobe": "sheer gossamer child's tunic blooming luminous white over torso hips and seat, aqua skin, pale coral hair", "position": "kneeling composed in the center of the spiralgrass"},
+      {"name": "the presiding Dohkar", "gender": "male", "species": "first_favored", "wardrobe": "sheer gossamer tunic with ornamented ceremonial sash", "position": "standing before the assembly"}
+    ],
+    "key_props": ["The Answer"],
+    "social_staging_mode": "professional",
+    "sceneDuty": "external_pressure",
+    "attractionPresence": "latent",
+    "expression_arc": {
+      "baseline_family": "suppression",
+      "micro_drift": "guarded-then-tightening",
+      "peak_a_beat": 8,
+      "peak_b_beat": 19,
+      "decay_window": 3
+    }
+  },
+  "phases": [
+    {
+      "phaseIdx": 0,
+      "startBeat": 0,
+      "label": "The words settle over the clearing",
+      "li_visibility_phase": "revealed",
+      "characters_present": ["protagonist", "Seren", "the presiding Dohkar"],
+      "props_present": ["The Answer"],
+      "camera_override": "wide_establishing",
+      "li_position_override": null,
+      "li_expression_override": null,
+      "camera_move": "hold",
+      "shot_style": "default",
+      "focus_target": null,
+      "pc_posture": "shoulders forward, hands clasped at the sash",
+      "pc_emotional_state": "braced",
+      "other_postures": {"Seren": "kneeling composed, hands open on her knees", "the presiding Dohkar": "standing rigid before the assembly"},
+      "proximity": "public"
+    },
+    {
+      "phaseIdx": 1,
+      "startBeat": 7,
+      "label": "The Answer pulses once in Julian's hands",
+      "li_visibility_phase": "revealed",
+      "characters_present": ["protagonist", "Seren", "Julian", "the presiding Dohkar"],
+      "props_present": ["The Answer"],
+      "camera_override": "medium_two_shot",
+      "li_position_override": "standing_apart",
+      "li_expression_override": "intense_focused",
+      "camera_move": "push_in",
+      "shot_style": "default",
+      "focus_target": null,
+      "pc_posture": "weight back, one hand rising toward the band at my mouth",
+      "pc_emotional_state": "quiet dread",
+      "other_postures": {"Seren": "head lifting, gaze on her own palms", "Julian": "standing too still, silver script flaring faintly", "the presiding Dohkar": "losing his place mid-formula"},
+      "proximity": "social"
+    },
+    {
+      "phaseIdx": 2,
+      "startBeat": 14,
+      "label": "The assembly's eyes turn fully to me",
+      "li_visibility_phase": "revealed",
+      "characters_present": ["protagonist", "Seren", "Julian", "the presiding Dohkar"],
+      "props_present": ["The Answer"],
+      "camera_override": "over_shoulder_pc",
+      "li_position_override": null,
+      "li_expression_override": null,
+      "camera_move": "hold",
+      "shot_style": "default",
+      "focus_target": null,
+      "pc_posture": "one hand gripping the sash edge",
+      "pc_emotional_state": "suppressed",
+      "other_postures": {"Seren": "still kneeling, expression composed", "Julian": "gaze fixed on me before any call is made", "the presiding Dohkar": "voice faltering then resuming"},
+      "proximity": "public"
+    },
+    {
+      "phaseIdx": 3,
+      "startBeat": 22,
+      "label": "The Dohkar's final words hang unfinished",
+      "li_visibility_phase": "revealed",
+      "characters_present": ["protagonist", "Seren", "Julian", "the presiding Dohkar"],
+      "props_present": ["The Answer"],
+      "camera_override": "profile_pc",
+      "li_position_override": null,
+      "li_expression_override": null,
+      "camera_move": "none",
+      "shot_style": "default",
+      "focus_target": null,
+      "pc_posture": "shoulders tight, eyes on Julian across the grass",
+      "pc_emotional_state": "held_breath",
+      "other_postures": {"Seren": "hands lowering slowly", "Julian": "standing too still, The Answer steady between his palms", "the presiding Dohkar": "mouth open on an unfinished charge"},
+      "proximity": "public"
+    }
+  ],
+  "panels": [
+    {
+      "panelIdx": 0,
+      "dramaticQuestion": "What just shifted when the wish landed?",
+      "shotType": "discovery",
+      "subjects": {"primary": "protagonist", "secondary": "Seren", "background": ["Julian", "the presiding Dohkar"]},
+      "cast": [
+        {"name": "protagonist", "performance": {"pose": "shoulders forward, hands at the sash", "expression": "braced", "looking_at": "Seren", "action_tags": ["holding"]}},
+        {"name": "Seren", "performance": {"pose": "kneeling composed", "expression": "composed", "looking_at": "her own hands", "action_tags": ["still"]}}
+      ],
+      "wish": true,
+      "sacrifice": false,
+      "fateAnswer": false
+    },
+    {
+      "panelIdx": 1,
+      "dramaticQuestion": "Why does The Answer pulse only now?",
+      "shotType": "cooperation",
+      "subjects": {"primary": "Julian", "secondary": "protagonist", "background": ["Seren", "the presiding Dohkar"]},
+      "cast": [
+        {"name": "Julian", "performance": {"pose": "standing too still, The Answer held forward", "expression": "intense_focused", "looking_at": "protagonist", "action_tags": ["holding"]}},
+        {"name": "protagonist", "performance": {"pose": "weight back, one hand rising", "expression": "quiet dread", "looking_at": "Julian", "action_tags": ["reaching"]}}
+      ],
+      "wish": false,
+      "sacrifice": false,
+      "fateAnswer": true
+    },
+    {
+      "panelIdx": 2,
+      "dramaticQuestion": "Will she claim the interference before the assembly decides for her?",
+      "shotType": "conversation",
+      "subjects": {"primary": "protagonist", "secondary": "the presiding Dohkar", "background": ["Julian", "Seren"]},
+      "cast": [
+        {"name": "protagonist", "performance": {"pose": "one hand gripping the sash", "expression": "suppressed", "looking_at": "the presiding Dohkar", "action_tags": ["holding"]}},
+        {"name": "the presiding Dohkar", "performance": {"pose": "standing rigid, mouth open on an unfinished charge", "expression": "cold_formal", "looking_at": "protagonist", "action_tags": ["speaking"]}}
+      ],
+      "wish": false,
+      "sacrifice": false,
+      "fateAnswer": false
+    }
+  ],
+  "beats": [
+    {"idx": 0, "kind": "narration", "text": "The final formula leaves the Dohkar's mouth and hangs.", "speaker": null, "tension_state": "composed", "echo_profile": null, "expression_target": "neutral", "expression_intensity": null, "cut_to_closeup": false, "closeup_target": null, "shot_type": null, "impact_burst": false, "metaphor_hint": null, "metaphor_peak": false, "pc_proxy_action": null, "hand_gesture": null, "posture_change": null},
+    {"idx": 1, "kind": "narration", "text": "Seren remains kneeling, palms open on her knees.", "speaker": null, "tension_state": "composed", "echo_profile": null, "expression_target": "neutral", "expression_intensity": null, "cut_to_closeup": false, "closeup_target": null, "shot_type": null, "impact_burst": false, "metaphor_hint": null, "metaphor_peak": false, "pc_proxy_action": null, "hand_gesture": null, "posture_change": null},
+    {"idx": 2, "kind": "narration", "text": "The Answer rests in Julian's hands, silver script moving slowly across his slate-blue skin.", "speaker": null, "tension_state": "composed", "echo_profile": null, "expression_target": "neutral", "expression_intensity": null, "cut_to_closeup": false, "closeup_target": null, "shot_type": null, "impact_burst": false, "metaphor_hint": null, "metaphor_peak": false, "pc_proxy_action": null, "hand_gesture": null, "posture_change": null},
+    {"idx": 3, "kind": "narration", "text": "A low pulse travels through the clearing.", "speaker": null, "tension_state": "tightening", "echo_profile": null, "expression_target": "neutral", "expression_intensity": null, "cut_to_closeup": false, "closeup_target": null, "shot_type": null, "impact_burst": false, "metaphor_hint": null, "metaphor_peak": false, "pc_proxy_action": null, "hand_gesture": null, "posture_change": null},
+    {"idx": 4, "kind": "narration", "text": "Seren looks down at her own hands as though checking them for something new.", "speaker": null, "tension_state": "composed", "echo_profile": null, "expression_target": "neutral", "expression_intensity": null, "cut_to_closeup": false, "closeup_target": null, "shot_type": null, "impact_burst": false, "metaphor_hint": null, "metaphor_peak": false, "pc_proxy_action": null, "hand_gesture": null, "posture_change": null},
+    {"idx": 5, "kind": "narration", "text": "The Dohkar's next word stalls on his tongue.", "speaker": null, "tension_state": "tightening", "echo_profile": null, "expression_target": "neutral", "expression_intensity": null, "cut_to_closeup": false, "closeup_target": null, "shot_type": null, "impact_burst": false, "metaphor_hint": null, "metaphor_peak": false, "pc_proxy_action": null, "hand_gesture": null, "posture_change": null},
+    {"idx": 6, "kind": "narration", "text": "Julian's gaze finds me before any voice calls for it.", "speaker": null, "tension_state": "suppressed", "echo_profile": null, "expression_target": "neutral", "expression_intensity": null, "cut_to_closeup": false, "closeup_target": null, "shot_type": null, "impact_burst": false, "metaphor_hint": null, "metaphor_peak": false, "pc_proxy_action": "her hand rises toward the band across my mouth", "hand_gesture": null, "posture_change": null},
+    {"idx": 7, "kind": "narration", "text": "The Answer pulses once between his palms.", "speaker": null, "tension_state": "tightening", "echo_profile": "impact", "expression_target": "neutral", "expression_intensity": null, "cut_to_closeup": false, "closeup_target": null, "shot_type": null, "impact_burst": true, "metaphor_hint": null, "metaphor_peak": false, "pc_proxy_action": null, "hand_gesture": null, "posture_change": null},
+    {"idx": 8, "kind": "narration", "text": "Every eye in the clearing turns to me.", "speaker": null, "tension_state": "suppressed", "echo_profile": null, "expression_target": "lips_tighten", "expression_intensity": 0.35, "cut_to_closeup": false, "closeup_target": null, "shot_type": null, "impact_burst": false, "metaphor_hint": null, "metaphor_peak": false, "pc_proxy_action": null, "hand_gesture": null, "posture_change": null},
+    {"idx": 9, "kind": "narration", "text": "The Dohkar recovers his place and continues the formula.", "speaker": null, "tension_state": "composed", "echo_profile": null, "expression_target": "neutral", "expression_intensity": null, "cut_to_closeup": false, "closeup_target": null, "shot_type": null, "impact_burst": false, "metaphor_hint": null, "metaphor_peak": false, "pc_proxy_action": null, "hand_gesture": null, "posture_change": null},
+    {"idx": 10, "kind": "narration", "text": "Seren's hands remain open, empty of any sign.", "speaker": null, "tension_state": "composed", "echo_profile": null, "expression_target": "neutral", "expression_intensity": null, "cut_to_closeup": false, "closeup_target": null, "shot_type": null, "impact_burst": false, "metaphor_hint": null, "metaphor_peak": false, "pc_proxy_action": null, "hand_gesture": null, "posture_change": null},
+    {"idx": 11, "kind": "narration", "text": "The pulse has already passed through every person present.", "speaker": null, "tension_state": "composed", "echo_profile": null, "expression_target": "neutral", "expression_intensity": null, "cut_to_closeup": false, "closeup_target": null, "shot_type": null, "impact_burst": false, "metaphor_hint": null, "metaphor_peak": false, "pc_proxy_action": null, "hand_gesture": null, "posture_change": null},
+    {"idx": 12, "kind": "narration", "text": "No one names what they felt.", "speaker": null, "tension_state": "composed", "echo_profile": null, "expression_target": "neutral", "expression_intensity": null, "cut_to_closeup": false, "closeup_target": null, "shot_type": null, "impact_burst": false, "metaphor_hint": null, "metaphor_peak": false, "pc_proxy_action": null, "hand_gesture": null, "posture_change": null},
+    {"idx": 13, "kind": "narration", "text": "The Dohkar finishes the rite.", "speaker": null, "tension_state": "composed", "echo_profile": null, "expression_target": "neutral", "expression_intensity": null, "cut_to_closeup": false, "closeup_target": null, "shot_type": null, "impact_burst": false, "metaphor_hint": null, "metaphor_peak": false, "pc_proxy_action": null, "hand_gesture": null, "posture_change": null},
+    {"idx": 14, "kind": "narration", "text": "He does not step forward.", "speaker": null, "tension_state": "composed", "echo_profile": null, "expression_target": "neutral", "expression_intensity": null, "cut_to_closeup": false, "closeup_target": null, "shot_type": null, "impact_burst": false, "metaphor_hint": null, "metaphor_peak": false, "pc_proxy_action": null, "hand_gesture": null, "posture_change": null},
+    {"idx": 15, "kind": "narration", "text": "His eyes remain on me.", "speaker": null, "tension_state": "tightening", "echo_profile": null, "expression_target": "neutral", "expression_intensity": null, "cut_to_closeup": false, "closeup_target": null, "shot_type": null, "impact_burst": false, "metaphor_hint": null, "metaphor_peak": false, "pc_proxy_action": null, "hand_gesture": null, "posture_change": null},
+    {"idx": 16, "kind": "narration", "text": "Julian has not moved The Answer from his hands.", "speaker": null, "tension_state": "composed", "echo_profile": null, "expression_target": "neutral", "expression_intensity": null, "cut_to_closeup": false, "closeup_target": null, "shot_type": null, "impact_burst": false, "metaphor_hint": null, "metaphor_peak": false, "pc_proxy_action": null, "hand_gesture": null, "posture_change": null},
+    {"idx": 17, "kind": "narration", "text": "The assembly's silence presses forward.", "speaker": null, "tension_state": "suppressed", "echo_profile": null, "expression_target": "neutral", "expression_intensity": null, "cut_to_closeup": false, "closeup_target": null, "shot_type": null, "impact_burst": false, "metaphor_hint": null, "metaphor_peak": false, "pc_proxy_action": "her hand grips the sash edge tighter", "hand_gesture": null, "posture_change": null},
+    {"idx": 18, "kind": "narration", "text": "The Dohkar draws breath to speak again.", "speaker": null, "tension_state": "tightening", "echo_profile": null, "expression_target": "neutral", "expression_intensity": null, "cut_to_closeup": false, "closeup_target": null, "shot_type": null, "impact_burst": false, "metaphor_hint": null, "metaphor_peak": false, "pc_proxy_action": null, "hand_gesture": null, "posture_change": null},
+    {"idx": 19, "kind": "narration", "text": "His voice carries the weight of an unfinished charge.", "speaker": null, "tension_state": "suppressed", "echo_profile": "simmer", "expression_target": "jaw_clench", "expression_intensity": 0.4, "cut_to_closeup": false, "closeup_target": null, "shot_type": null, "impact_burst": false, "metaphor_hint": null, "metaphor_peak": false, "pc_proxy_action": null, "hand_gesture": null, "posture_change": null},
+    {"idx": 20, "kind": "narration", "text": "Everyone present has seen the wish land differently than it was spoken.", "speaker": null, "tension_state": "composed", "echo_profile": null, "expression_target": "neutral", "expression_intensity": null, "cut_to_closeup": false, "closeup_target": null, "shot_type": null, "impact_burst": false, "metaphor_hint": null, "metaphor_peak": false, "pc_proxy_action": null, "hand_gesture": null, "posture_change": null},
+    {"idx": 21, "kind": "narration", "text": "No one has named the interference aloud.", "speaker": null, "tension_state": "composed", "echo_profile": null, "expression_target": "neutral", "expression_intensity": null, "cut_to_closeup": false, "closeup_target": null, "shot_type": null, "impact_burst": false, "metaphor_hint": null, "metaphor_peak": false, "pc_proxy_action": null, "hand_gesture": null, "posture_change": null},
+    {"idx": 22, "kind": "narration", "text": "The Dohkar waits for me to speak first.", "speaker": null, "tension_state": "held_breath", "echo_profile": null, "expression_target": "neutral", "expression_intensity": null, "cut_to_closeup": false, "closeup_target": null, "shot_type": null, "impact_burst": false, "metaphor_hint": null, "metaphor_peak": false, "pc_proxy_action": null, "hand_gesture": null, "posture_change": null},
+    {"idx": 23, "kind": "narration", "text": "Julian's stillness holds the Answer between us like a question.", "speaker": null, "tension_state": "composed", "echo_profile": null, "expression_target": "neutral", "expression_intensity": null, "cut_to_closeup": false, "closeup_target": null, "shot_type": null, "impact_burst": false, "metaphor_hint": null, "metaphor_peak": false, "pc_proxy_action": null, "hand_gesture": null, "posture_change": null},
+    {"idx": 24, "kind": "narration", "text": "The choice sits in the grass between the Dohkar's next word and my silence.", "speaker": null, "tension_state": "suppressed", "echo_profile": null, "expression_target": "neutral", "expression_intensity": null, "cut_to_closeup": false, "closeup_target": null, "shot_type": null, "impact_burst": false, "metaphor_hint": null, "metaphor_peak": false, "pc_proxy_action": null, "hand_gesture": null, "posture_change": null},
+    {"idx": 25, "kind": "narration", "text": "I can claim the interference now or let the assembly keep its assumption.", "speaker": null, "tension_state": "held_breath", "echo_profile": null, "expression_target": "neutral", "expression_intensity": null, "cut_to_closeup": false, "closeup_target": null, "shot_type": null, "impact_burst": false, "metaphor_hint": null, "metaphor_peak": false, "pc_proxy_action": null, "hand_gesture": null, "posture_change": null}
+  ],
+  "microDecision": null,
+  "is_consummate_scene": false,
+  "kink_introduced": null,
+  "pc_kink_response": null,
+  "kink_affinity": null,
+  "kinks_used": [],
+  "primaryEngine": null,
+  "interruption": null,
+  "sceneCharge": {
+    "stake": "the assembly assumes I interfered with Seren's wish and the Dohkar will charge me",
+    "concrete_specific_beat_idx": 7,
+    "subtext_beat_idx": 19,
+    "almost_said_beat_idx": 24,
+    "escalation_rhythm": "pulse lands by beat 7 → eyes turn by beat 8 → Dohkar's charge forms by beat 19 → choice named at 24"
+  }
+}
