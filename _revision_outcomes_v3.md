@@ -90,8 +90,14 @@ its declared adjacency fallback to `undo`. **No outcome ever fabricates a cease 
 | **ask-class** | `stop` |
 | **player wording** | *"Make it stop."* · *"Not now — please, not now."* · *"I can't answer for this now."* |
 
+### `requiresActive[]`
+`review.demanded_by_dohkar` — see §2; eligibility already guarantees it.
+
 ### `ceases[]`
 `review.demanded_by_dohkar`
+
+### Invalidated while this revision governs
+**None.** No exact reading targets the demand.
 
 ### `establishes[]`
 | fact | text |
@@ -146,69 +152,85 @@ front of everyone who watched the wish twist.
 
 ---
 
-# 4. Trace — `unm.time_gives_way` · ask-class `undo`
+# 4. RESOLVED — `unm.time_gives_way` · ask-class `undo`
+
+> **Sealed-choice decision: OPTION 2 (Roman, 2026-09-28).** A genuine new player choice, **with permission to
+> choose differently.** That is what makes *"time gives way"* a real Fate power rather than bookkeeping or an
+> unexplained alteration of Lirael's character. The old choice stays in RECORD as witnessed history; it no
+> longer governs active canon. Option 1's authored replacement cause is **withdrawn.**
+
+### `requiresActive[]`
+`interr.julian_questioned_lirael` — there is no questioning to unmake if none governs.
 
 ### `ceases[]`
-`interr.julian_questioned_lirael` · `interr.dohkar_interrupted`
-
-**The interruption is named, not inferred.** An interruption of a questioning that never happened is
-incoherent, so it is ceased explicitly — the dependency prompted it; it did not perform it.
+| atom | why it is named |
+|---|---|
+| `interr.julian_questioned_lirael` | the grant itself |
+| `interr.dohkar_interrupted` | an interruption of a questioning that never happened is incoherent |
+| `interr.choice_arose` | the juncture is reopened, so the prior arising no longer governs |
+| **`lirael.scene1_disposition`** | **the active disposition ceases.** Named explicitly per the sealed-fact rule — never inferred from ceasing its cause. |
 
 ### `establishes[]`
 | fact | text |
 |---|---|
 | `interr.no_questioning_occurred` | *Julian did not question Lirael before the assembly. No such questioning took place in active canon.* |
 | `interr.no_interruption_occurred` | *The presiding Dohkar interrupted nothing.* |
-| `interr.choice_arose_from_twist` | *Lirael's choice to run in shame or remain arose from the twist and its public turning, not from any questioning.* |
+| `ceremony.replayed_unquestioned` | *The rite played through a second time, and no questioning of the Sacrificiant's guide occurred in it.* |
+| **`lirael.choice_pending`** | *A choice is required of Lirael and has not been made.* |
 
-### The crux — `interr.choice_arose` and the sealed disposition
+### `lirael.choice_pending` — the rules that make it safe
 
-`interr.choice_arose` depends on **both** ceased atoms. Ceasing it in turn would orphan
-`lirael.scene1_disposition` — and **erasing the player's sealed Scene-1 choice from active canon is precisely
-what the sealed-fact constraints exist to prevent happening by accident.**
+> **No prior value is copied, constrained, or silently inherited. The player may choose differently.**
 
-> ### ⛔ UNRESOLVED — the proposed resolution below is withdrawn as framed (2026-09-28)
->
-> I proposed establishing `interr.choice_arose_from_twist` as the replacement cause and called it canon
-> staying coherent while the player's choice survived. **Supplying a new cause for a sealed player choice is a
-> new authored claim about why the protagonist acted.** It is not bookkeeping and does not become neutral by
-> preserving the action — it preserves the *action* and rewrites the *reason*, and the reason is the part
-> that says who she is.
->
-> It is **option 1** of three, in `_sealed_choice_under_rewind_note.md`, and awaits a product decision.
-> **`unm.time_gives_way` is not resolved.** Original text kept below for the record.
+- **Until the player chooses, active canon holds `choice_pending` and nothing else.** No author may infer
+  **run, remain, shame, resolve, or motive** — not from the prior scene, not from tone, not from what the
+  reader saw.
+- **On choosing**, `lirael.scene1_disposition` is sealed anew, bound to the **replayed** scene's uid and its
+  own choice record. The prior instance is historical only.
+- **Future canon reads only the new choice**, once made.
 
-~~**Resolution, proposed:**~~ `interr.choice_arose` is **not ceased**. Its cause is **replaced** by
-`interr.choice_arose_from_twist`, and `lirael.scene1_disposition` is listed **UNCHANGED**. She still ran or
-still remained, and the reason is now the twist itself rather than a questioning that no longer happened.
+### `memoryEffects[]` — stated, never defaulted
+`{ pc:lirael, interr.julian_questioned_lirael, not_retained }` ·
+`{ pc:lirael, lirael.scene1_disposition, not_retained }` ·
+and the questioning `not_retained` across **`population.scene_present`**, expanded with **no invoker
+filter** per D1.
+
+**Lirael has no memory of the ceased interrogation or of the old choice.** Stated here because the rule is
+that such memory exists only when an authored outcome **grants** it — silence means absence, and absence is
+not a grant.
+
+### RECORD and the Tempt scope key
+**The reader keeps the old scene**, readable in the archive, marked as revised. Per the active-canon rule,
+their memory of it never makes a ceased fact eligible.
+
+**The replayed scene inherits the original Tempt scope key**, so the new choice **does not reopen Tempt Fate
+for that causal moment.** A rewind buys a second decision, never a second Fate intervention.
+
+### Invalidated while this revision governs
+**`mem.exact.julian_forgets_interrogation`** — its target no longer governs, so it is ineligible and its
+wording routes through the Fate-chosen path. Not deleted; unselectable.
 
 ### Explicitly unchanged
-every `twist.*` · every `auth.*` · every `answer.*` · every `review.*` · `interr.choice_arose` ·
-**`lirael.scene1_disposition`**
+every `twist.*` · every `auth.*` · every `answer.*` · every `review.*`
 
-### `memoryEffects[]`
-Per D1, expanded through `population.scene_present` — **Lirael included, no invoker filter** —
-`{ each party, interr.julian_questioned_lirael, not_retained }`.
-
-### Open
+### Open — not to be guessed
+- **The new choice's value.** Pending is a state, not a placeholder for the old answer.
 - Whether any First Favored's alignment sense registers the bend.
 - What Julian does in a world where he never asked.
-- **Whether what passed between them exists at all now.** The exact reading
-  `mem.exact.julian_forgets_interrogation` costs `intimacy_unwitnessed` — *"the most exposed exchange of her
-  life is now hers alone."* If the exchange never occurred, that cost has no referent.
+- Whether what passed between them exists at all now — the exact reading's `intimacy_unwitnessed` cost has
+  no referent in the revised canon.
 
-### Set-level interaction — **RESOLVED by the active-canon invalidation rule (2026-09-28)**
-`mem.exact.julian_forgets_interrogation` becomes **ineligible** after this revision — it names a fact that no
-longer governs active canon — and routes through the no-exact-target / Fate-chosen path. It is not deleted
-from the design; it is unselectable for as long as the revision governs.
-
-**One rule covers both cases.** `seren_forgets_price` is ineligible because its target is **not yet** active;
-this is ineligible because its target is **no longer** active. Same condition, read at different times.
-Full rule: `_sealed_choice_under_rewind_note.md` §0.
+### New engine state, flagged not solved
+`choice_pending` is **a state the engine has never had**: active canon asserting that a decision is owed and
+refusing to supply one. Two questions follow and are **not** answered here — what happens if the player never
+resolves it, and whether any scene may be authored at all while it stands. Owed with implementation.
 
 ---
 
 # 5. Trace — `unm.custody_severed` · ask-class `silence`
+
+### `requiresActive[]`
+`answer.owned_by_institution` — a claim that does not govern cannot be severed.
 
 ### `ceases[]`
 `answer.owned_by_institution` · `answer.julian_is_caretaker`
@@ -235,6 +257,19 @@ Also unchanged: every `twist.*` · `interr.*` · `auth.*` · `review.*` · `lira
 **None.** Nobody forgets the Answer; there is no longer an ownership to recall. The matched pair with
 `mem.exact.institution_forgets_custody` still holds: **same subject, opposite channel.**
 
+### Invalidated while this revision governs
+**`mem.exact.institution_forgets_custody`** — it makes every party present forget *that the Answer was ever
+the Institution's*. Once ownership no longer governs, **there is no active fact to forget**, so the reading is
+ineligible and its wording routes through the Fate-chosen path.
+
+**The same pattern for the third time**, now with a rule that covers it: `seren_forgets_price` (not yet
+active), `julian_forgets_interrogation` (no longer active), and this one. **Three of the six exact readings
+are conditional on active canon** — which means the exact set was never as static as it was drafted, and the
+remaining-nine pass must declare `requiresActive[]` for each.
+
+### Sealed fact
+**`lirael.scene1_disposition` — UNCHANGED.** Listed explicitly; this outcome touches no timeline.
+
 ### Open
 - Who reaches for it first.
 - Whether the Institution disputes a vacancy it cannot remember conceding.
@@ -244,6 +279,9 @@ Also unchanged: every `twist.*` · `interr.*` · `auth.*` · `review.*` · `lira
 ---
 
 # 6. Trace — `unm.standing_dissolved` · ask-class `authority`
+
+### `requiresActive[]`
+`auth.julian_claims_convene_preside` — a claim he has not made cannot be voided.
 
 ### `ceases[]`
 `auth.julian_claims_convene_preside` — **alone**
@@ -273,6 +311,19 @@ reached, by the same method, on a different outcome.
 **The panel opens the inquiry — not Julian**, who is its target. Voiding his claim to preside contradicts
 nothing at row 14 and arguably sets it up.
 
+### Invalidated while this revision governs
+**None** — and the near miss is worth recording. `mem.exact.dohkar_forgets_authority` looks like a casualty,
+because it was drafted against the **compound** `inquiry_authority_claimed`. Under the atomic graph its real
+target is `auth.dohkar_claims_rite_and_ruling`, which this outcome leaves standing, so it **remains
+eligible**.
+
+**That only holds because the exact readings get re-targeted to atoms.** Any exact reading still pointing at a
+bundle would be invalidated by any revision touching any clause of it — a bundle-shaped blast radius. **Add to
+the remaining-nine pass: every exact reading must name atoms, never bundles.**
+
+### Sealed fact
+**`lirael.scene1_disposition` — UNCHANGED.** Listed explicitly.
+
 ### `memoryEffects[]`
 **None.** Per D2 the grant names a role and a proposition and does not reach his mind — his feelings,
 intentions, knowledge and next actions are untouched.
@@ -292,13 +343,15 @@ intentions, knowledge and next actions are untouched.
 atom, every cease has a replacement, and every consequential dependant is listed as unchanged, ceased or
 replaced rather than inferred.
 
-**Except `unm.time_gives_way`**, whose closed set is valid but whose treatment of the sealed Scene-1 choice
-is an open product decision — see `_sealed_choice_under_rewind_note.md`.
+**All four are now traced**, each with `requiresActive[]`, a closed `ceases[]`, a non-empty
+`establishes[]`, an explicit sealed-fact listing, and a declared invalidation set.
 
 ### Owed before any ranking
 
-1. **The sealed-choice decision** for `unm.time_gives_way`. **Blocking.**
-2. **The remaining nine outcomes** are still in their v2 form and need the same discipline.
+1. ~~The sealed-choice decision~~ — **resolved 2026-09-28 as Option 2.**
+2. **The remaining nine outcomes** are still in their v2 form and need the same discipline — including two
+   requirements the traces produced: every outcome declares `requiresActive[]`, and **every exact reading
+   must name atoms rather than bundles** (§6).
 3. ~~A set-level rule for outcome-invalidates-outcome~~ — **done**: the active-canon invalidation rule.
 4. ~~The two new demand atoms need approval~~ — **approved 2026-09-28.**
 5. **Coverage's third dimension** — states × ask-classes × active-canon configuration, since a revision

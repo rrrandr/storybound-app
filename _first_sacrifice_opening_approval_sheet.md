@@ -10,7 +10,14 @@
 chooses among.
 
 **Full mechanical detail** — rosters, memory triples, fact refs, revision payloads — is in
-`_first_sacrifice_tempt_outcomes_v2.md`. This sheet is the story view.
+`_first_sacrifice_tempt_outcomes_v2.md`, with the four revision outcomes superseded by
+`_revision_outcomes_v3.md`. This sheet is the story view.
+
+> ### ⚠ THE RANKS BELOW ARE STALE
+> Every rank is the v2 number. The four revision outcomes have since been re-authored against the atomic fact
+> graph and are materially different packages — **`unm.proceeding_unmade` is renamed
+> `unm.dohkar_demand_unmade` and no longer unmakes the proceeding at all.** Ranks are re-derived only once
+> all thirteen are in corrected form. **Do not read the ordering below as proposed.**
 
 ---
 
@@ -40,8 +47,15 @@ holding it.
 **Therefore:** **time gives way.** The assembly is seated again, Seren kneels again, the words are said
 again — and in the second telling Julian never rises to question her.
 
+**And the moment she chose at the end of Scene 1 comes back, live.** Run in shame, or remain — **she may
+choose differently this time.** No prior answer is copied or constrained. Until she chooses, the world holds
+*a decision is owed* and nothing more: no author may assume run, remain, shame, resolve, or motive.
+
+**Lirael remembers none of it** — not the questioning, not the choice she made the first time. **The reader
+remembers both, and is the only one who does.** That is the whole power of the card in one image.
+
 **Cost:** `world_bent_in_public` — she is now the woman reality visibly moved around, in front of the exact
-body deciding whether she interfered with a rite. **Rank:** 9.
+body deciding whether she interfered with a rite. **Rank:** *pending re-derivation.*
 
 > **What changed from v1.** The old draft granted *"the torn gossamer band is not entered in the record."*
 > Wrong twice. Wrong in scale — that is the world *tilting*, which is a Petition. And wrong in grammar: the
@@ -68,8 +82,8 @@ only among outcomes that fit both the sentence and the state. **Favor never over
 
 | rank | ask | outcome | therefore | its price |
 |---|---|---|---|---|
-| **10** | `stop` | `unm.proceeding_unmade` | the review is not deferred — **it is unmade.** The demand ceases to have been made. | **none** |
-| **9** | `undo` | `unm.time_gives_way` | **time gives way**; the ceremony plays again without the interrogation | she is publicly the woman reality bends around |
+| *tbd* | `stop` | `unm.dohkar_demand_unmade` | the Dohkar's demand ceases to have been made — but **Julian's, made offstage, still arrives at row 4** | none declared |
+| *tbd* | `undo` | `unm.time_gives_way` | **time gives way**; the ceremony plays again without the interrogation, and **Lirael's Scene-1 choice returns, live and free to go the other way** | she is publicly the woman reality bends around |
 | **8** | `escape` | `unm.the_answer_speaks` | the Answer renders a reading that **exculpates her**, permanently on the record | it names **her own ward** as the source |
 | **7** | `unseen` | `unm.witness_scattered` | the moment **does not cohere** — no two people present keep a reconcilable version | **neither does she** |
 | **6** | `silence` | `unm.custody_severed` | the Institution's claim on the Answer **ceases**; it belongs to no one | nobody is watching it |
