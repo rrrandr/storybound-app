@@ -340543,7 +340543,7 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
       aftermathBeat: { id: 'aftermath.no_one_presides', text: 'The Dohkar reaches for an authority he is certain he holds and closes on nothing. Julian, who agreed to something, cannot locate what. The clearing has the particular silence of a room where everyone is waiting for whoever is in charge to speak, and no one is.' },
       authorBrief:
         "No one has claimed the right to rule on Lirael’s conduct, and no venue has been named for any proceeding against her.\n"
-        + "The presiding Dohkar carries himself like a man accustomed to being deferred to, and the clearing does not defer. Julian stands apart and says nothing. The clearing has the particular silence of a room waiting for whoever is in charge to speak, when no one in it is. Let them carry it; neither explains it, and neither tries.\n"
+        + "The presiding Dohkar carries himself like a man accustomed to being deferred to, and the clearing does not defer. Julian stands apart and says nothing. The clearing holds the silence of people waiting for someone to speak, before anyone does. Let them carry it; neither explains it, and neither tries.\n"
         + "Lirael is neither cleared nor charged. She is standing in a clearing where no one present has established themselves as the person who will decide anything about her.",
       cls: 'history_rewrite', temporalOperation: 'historical_replacement',
       requiresActive: ['auth.dohkar_claims_rite_and_ruling'],
