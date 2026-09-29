@@ -1,0 +1,70 @@
+{
+  "outcomeId": "unm.time_gives_way",
+  "roster": [
+    "the_assembly",
+    "named:seren",
+    "named:julian",
+    "role:first_sacrifice_presiding_dohkar",
+    "pc:lirael"
+  ],
+  "c1": {
+    "pass": true,
+    "externalTimeline": [],
+    "sharedUnderstanding": [],
+    "erasedBasis": [],
+    "absenceAsPresence": []
+  },
+  "c2": {
+    "pass": true,
+    "presence": {
+      "ok": true,
+      "mentioned": [
+        "pc:lirael",
+        "named:seren",
+        "named:julian",
+        "role:first_sacrifice_presiding_dohkar",
+        "the_assembly"
+      ],
+      "outside": [],
+      "missing": []
+    },
+    "disposition": {
+      "ok": true,
+      "leaks": []
+    },
+    "review": [
+      {
+        "sentence": "He finds it again without comment.",
+        "phrases": [
+          "again"
+        ],
+        "parties": [
+          "role:first_sacrifice_presiding_dohkar"
+        ]
+      }
+    ],
+    "retainingParties": []
+  },
+  "c3": {
+    "pass": false,
+    "explicit": [],
+    "deferred": [],
+    "emission": [
+      "The Dohkar's voice steadies, but the moment has already passed through the clearing."
+    ],
+    "residue": [],
+    "wardrobeAllowed": [],
+    "allowedCost": [],
+    "provenanceRule": "A cost may be rendered only if (a) it is the cost sealed for THIS outcome, or (b) it is a separately established active story fact whose provenance is named. An unresolved question in a baseline plan is neither, and may not become a cost of the Tempt or of the pending choice."
+  },
+  "c4": {
+    "pass": false,
+    "reason": "choice_never_presented",
+    "beats": 27
+  },
+  "verdictWords": [],
+  "costWords": [],
+  "estimate": 0.12890849999999998,
+  "measured": 0.08364715,
+  "words": 360
+}
