@@ -78,6 +78,10 @@ export async function preflight(opts = {}) {
       invokerScope: rec && rec.invokerScope,
       beat: rec && rec.aftermathBeat && rec.aftermathBeat.text,
       opensChoicePending: !!(rec && rec.opensChoicePending),
+      // TWO ARTIFACTS, harvested separately: the SPEC (never sent) and the BRIEF (the only Fate
+      // material the author sees).
+      spec: window._fscPromptBlock(),
+      brief: window._fscAuthorBriefBlock(),
       block: window._fscPromptBlock(),
       digest: window._fscBoundaryDigest(window._fscPromptBlock()) };
     // First Sacrifice ships a BAKED Scene 1 — no author call is made for it. Walk forward to
@@ -119,128 +123,138 @@ export async function preflight(opts = {}) {
   ok('payload carries First Sacrifice story identity', idHits.length >= 2, 'hits=' + idHits.join(','));
   ok('payload does NOT carry the default corporate story',
     !/Veyne Tower|skyscraper|floor-to-ceiling glass/i.test(b));
-  // The sealed boundary, exactly.
-  ok('payload carries OUTCOME: ' + expect, b.indexOf('OUTCOME: ' + expect) >= 0);
-  ok('payload carries EFFECT BOUNDARY', b.indexOf('EFFECT BOUNDARY') >= 0);
-  ok('payload carries AFFECTED scope', b.indexOf('AFFECTED — exactly these people') >= 0);
-  ok('payload carries LIRAEL IS AFFECTED', b.indexOf('LIRAEL IS AFFECTED') >= 0);
-  ok('payload carries the AFTERMATH BEAT', b.indexOf('AFTERMATH BEAT') >= 0);
-  ok('payload carries the authored beat text', !!(run.beat && b.indexOf(run.beat.slice(0, 48)) >= 0));
-  ok('payload carries FORBIDDEN INVENTIONS', b.indexOf('FORBIDDEN INVENTIONS') >= 0);
-  // ── COSTLESS MEANS COSTLESS, DEFERRED INCLUDED ──────────────────────────────────────────────
-  // Four runs closed on "the cost is still uncounted" against a sealed COST: none, and my C3 scan
-  // passed every one of them. The payload now rules out a price held in reserve, and draws the
-  // line the prose kept crossing: active stakes may be rendered, never framed as payment.
-  ok('payload states COST: none', b.indexOf('COST: none') >= 0);
-  ok('payload rules out DEFERRED cost, not just stated cost',
-    b.indexOf('This covers DEFERRED cost as fully as stated cost') >= 0);
-  ok('payload says there is no price now or later',
-    b.indexOf('There is no price, now or') >= 0
-    && b.indexOf('later, named or unnamed') >= 0);
-  ok('payload forbids holding a price in reserve',
-    b.indexOf('or any phrasing that holds a price in reserve') >= 0);
-  ok('payload names the uncounted/unnamed phrasing specifically',
-    b.indexOf('the cost is uncounted / unnamed / not yet named / still to be') >= 0);
-  ok('payload PERMITS active stakes that already govern',
-    b.indexOf('YOU MAY still render stakes that ALREADY govern') >= 0
-    && b.indexOf('her standing is at risk') >= 0);
-  ok('payload forbids framing those stakes as the wish’s price',
-    b.indexOf('NEVER frame any of them as what the wish cost her') >= 0);
-  ok('payload forbids visible wish-energy', b.indexOf('visible wish-energy') >= 0);
-  // C4 is only reachable if the STOP instruction is actually in the request. Without these the
-  // run could "fail C4" on an instruction the author was never given — an untestable run.
+
+  // ══════════════════════════════════════════════════════════════════════════════════════════
+  // TWO ARTIFACTS. The author request must carry the BRIEF and must NOT carry the SPEC.
+  //
+  // Five paid runs established that adding prohibitions to a 258KB writer prompt stopped working:
+  // every remaining failure had its rule present in the request, and the author began transcribing
+  // the instruction stack into the prose. The strict rules did not go away — they moved into the
+  // machine specification, which is persisted and scored against, and is never sent.
+  // ══════════════════════════════════════════════════════════════════════════════════════════
+
+  // ── 4a. THE BRIEF IS PRESENT, WHOLE ─────────────────────────────────────────────────────
+  const briefLines = String(run.brief || '').split('\n').map(s => s.trim()).filter(s => s.length > 20);
+  ok('an author brief was rendered', briefLines.length >= 3, briefLines.length + ' lines');
+  ok('every line of the brief is in the author request',
+    briefLines.length > 0 && briefLines.every(l => b.indexOf(l.slice(0, 60)) >= 0));
+  // Generic, for every outcome: the brief must read as scene direction, not specification.
+  ok('the brief names the permitted visible reactions',
+    b.indexOf('none of them can name it') >= 0 || b.indexOf('cannot say why') >= 0
+    || b.indexOf('can name the moment') >= 0);
+  ok('the brief carries no price, debt or cost language',
+    !/\b(cost|price|debt|toll|payment|uncounted)\b/i.test(run.brief || ''));
+  ok('the brief carries no glow or wish-energy',
+    !/\b(glow\w*|shimmer\w*|luminous|aura|wish-energy)\b/i.test(run.brief || ''));
+  ok('the brief carries no replay, erasure or count',
+    !/\b(replay\w*|erased|a second time|the first time|again\b)/i.test(run.brief || ''));
+
+  // Outcome-specific, for the outcome actually under test.
+  if (expect === 'unm.time_gives_way') {
+    ok('the brief opens on present reality, not a count',
+      b.indexOf('The rite concludes uninterrupted') >= 0);
+    ok('the brief gives the ground its colour, not a glow',
+      b.indexOf('dark with the colour of old offerings') >= 0);
+    ok('the brief states Julian kept the Answer throughout',
+      b.indexOf('Julian has kept the Answer in his hands throughout') >= 0);
+    ok('the brief states no question was put, and the suspicion remains',
+      b.indexOf('No one has put a question to Lirael') >= 0
+      && b.indexOf('suspicion rests on her all the same') >= 0);
+    ok('the brief names the live stakes without calling them a price',
+      b.indexOf('standing is what is at stake in front of her now') >= 0);
+    ok('the brief names the owed choice and where to end',
+      b.indexOf('owes a choice she has not yet made') >= 0
+      && b.indexOf('Bring the scene to that choice and end there') >= 0);
+  }
+  if (expect === 'unm.the_turning_forgotten') {
+    ok('the brief opens on the present look, with no cause named',
+      b.indexOf('Every eye in the clearing rests on Lirael') >= 0);
+    ok('Lirael is not spared in the brief',
+      b.indexOf('and Lirael cannot say either') >= 0);
+    ok('the brief names the surviving twist facts',
+      b.indexOf('came true where everyone could see how') >= 0
+      && b.indexOf('the loose note was heard') >= 0);
+  }
+
+  // ── 4b. THE MACHINE SPECIFICATION IS ABSENT FROM THE AUTHOR REQUEST ─────────────────────
+  // Every heading, field name, gate name, atom id, audit phrase and forbidden-token list that
+  // used to be shipped. Each of these is a string the writer must never see.
+  const SPEC_TERMS = [
+    'EFFECT BOUNDARY', 'PRESELECTED CONSEQUENCE', 'OUTCOME: ', 'READING: EXACT', 'READING: FATE-CHOSEN',
+    'AFFECTED — exactly these people', 'NOT AFFECTED', 'LIRAEL IS AFFECTED', 'EFFECT LIMITED TO',
+    'CANON CHANGE', 'CEASES:', 'NOW TRUE:', 'HISTORY:', 'MUST REMAIN TRUE', 'COST: ',
+    'AFTERMATH BEAT', 'FORBIDDEN INVENTIONS', 'END ON THE CHOICE',
+    'THE CHOICE RESTS ON ACTIVE CANON ONLY', 'IT MAY NOT REST ON',
+    'WRITE FROM INSIDE THE REPLACEMENT', 'OPENING ORIENTATION',
+    'active canon', 'invokerScope', 'temporalOperation',
+    'historical_replacement', 'memory_perception', 'population.scene_present', 'aftermathBeat',
+    'unm.time_gives_way', 'interr.julian_questioned_lirael', 'twist.assembly_turned',
+    'played through a second time', 'audit language', 'the ledger',
+    'the ONLY permitted trace', 'Feeling, never fact',
+    'holds a price in reserve', 'DEFERRED cost'
+  ];
+  const leaked = SPEC_TERMS.filter(t => b.indexOf(t) >= 0);
+  ok('NO machine-specification term reaches the author request',
+    leaked.length === 0, 'leaked: ' + leaked.join(' | '));
+
+  // TWO TERMS ARE PRE-EXISTING AND OUT OF SCOPE FOR THIS SPLIT. Recorded, not asserted, so their
+  // presence is a known fact rather than a silent one:
+  //   "visible wish-energy"  — the SEED's own world rule ("THE RITE HAS NO MAGICAL MACHINERY…"),
+  //                            shipped to every First Sacrifice scene long before this work.
+  //   "decisionGateBeatIdx"  — the BASE screenplay schema, used by every story in the app.
+  // The final run's "The decision gate stands before me." came from the second of these, NOT from
+  // the Fate boundary. Changing either is an app-wide decision, not part of this refactor.
+  const preexisting = ['visible wish-energy', 'decisionGateBeatIdx'].filter(t => b.indexOf(t) >= 0);
+  say('  pre-existing, out of scope: ' + (preexisting.join(', ') || 'none'));
+
+  // The forbidden-token lists must be gone as lists, not merely reworded.
+  const FORBIDDEN_LIST_MARKERS = ['FORBIDDEN, in narration and dialogue alike',
+    'the cost is uncounted / unnamed', '"a second time"', '"the first time"', '"what they lost"',
+    '"he knows I know"'];
+  const listLeaks = FORBIDDEN_LIST_MARKERS.filter(t => bDec.indexOf(t) >= 0);
+  ok('NO forbidden-token list reaches the author request',
+    listLeaks.length === 0, 'leaked: ' + listLeaks.join(' | '));
+
+  // The scanner's own vocabulary must not be quoted at the writer either.
+  const SCANNER_WORDS = ['remember nothing of', 'never happened"', 'the reckoning', 'a toll',
+    'the bill', 'Fate will take something'];
+  const scannerLeaks = SCANNER_WORDS.filter(t => b.indexOf(t) >= 0);
+  ok('NO scanner vocabulary reaches the author request',
+    scannerLeaks.length === 0, 'leaked: ' + scannerLeaks.join(' | '));
+
+  // ── 4c. THE SPEC STILL EXISTS, INTACT, FOR THE ENGINE ───────────────────────────────────
+  // Moving it out of the payload must not weaken it. It is still rendered and still complete.
+  const spec = String(run.spec || '');
+  ok('the machine specification is still rendered', spec.length > 400, spec.length + ' chars');
+  ok('  it carries the outcome id', spec.indexOf('OUTCOME: ' + expect) >= 0);
+  ok('  it carries the full roster scope', spec.indexOf('AFFECTED — exactly these people') >= 0);
+  // Only a delta-bearing outcome has a canon change; memory_perception outcomes carry memory
+  // effects instead, and the spec must show those.
+  if (expectInsideReplacementPOV) {
+    ok('  it carries the canon change and its atoms',
+      spec.indexOf('CANON CHANGE') >= 0 && spec.indexOf('CEASES:') >= 0 && spec.indexOf('NOW TRUE:') >= 0);
+  } else {
+    ok('  it carries the sealed effect limits', spec.indexOf('EFFECT LIMITED TO') >= 0);
+  }
+  ok('  it carries the cost rule', spec.indexOf('COST: none') >= 0);
+  ok('  it carries the aftermath beat', spec.indexOf('AFTERMATH BEAT') >= 0);
+  ok('  it carries the forbidden inventions', spec.indexOf('FORBIDDEN INVENTIONS') >= 0);
   if (expectChoicePending) {
     ok('the compiled record opens a pending choice', run.opensChoicePending === true);
-    ok('payload carries END ON THE CHOICE', b.indexOf('END ON THE CHOICE') >= 0);
-    ok('payload forbids authoring past the choice',
-      b.indexOf('Author nothing past it') >= 0 && b.indexOf('imply nothing about which way she goes') >= 0);
-    // The renewed choice must be derivable from post-replacement canon only. The C4 run ended on
-    // "let the assumption stand", resting on a questioning the same delta erased.
-    ok('payload derives the choice from ACTIVE CANON',
-      b.indexOf('THE CHOICE RESTS ON ACTIVE CANON ONLY') >= 0);
-    ok('payload names what the choice MAY NOT rest on', b.indexOf('IT MAY NOT REST ON') >= 0);
-    ok('payload rejects an option that ONLY makes sense under the replaced history',
-      b.indexOf('An option is wrong if it ONLY makes sense under the replaced history') >= 0);
-    // CORRECTED: the payload previously asserted "There is no standing assumption to let stand".
-    // That was false — twist.assembly_turned and twist.loose_note_heard survive the replacement.
-    ok('payload does NOT carry the withdrawn false claim about the assumption',
-      b.indexOf('There is no standing assumption to let stand') < 0);
-    ok('payload states unlisted facts remain available to the choice',
-      b.indexOf('is untouched and remains fully available to the') >= 0);
-    ok('payload permits a standing assumption resting on active facts',
-      b.indexOf('A standing assumption that') >= 0
-      && b.indexOf('rests on the ACTIVE facts above may remain, and she may address it') >= 0);
+    ok('  the spec carries the choice-stop rule', spec.indexOf('END ON THE CHOICE') >= 0);
   }
-  // ── THE HISTORY-REWRITE POV RULE MUST BE IN THE REAL PAYLOAD ────────────────────────────────
-  // Asserted here because the C4 failure was an instruction gap, and an instruction that does not
-  // reach the author is not a fix. These check the FINAL assembled request, not the renderer.
   if (expectInsideReplacementPOV) {
-    ok('payload carries WRITE FROM INSIDE THE REPLACEMENT',
-      b.indexOf('WRITE FROM INSIDE THE REPLACEMENT') >= 0);
-    ok('payload states the affected have NO memory of the replaced timeline',
-      b.indexOf('have NO memory, NO knowledge and NO narration of the') >= 0);
-    ok('payload states it is not something they forgot',
-      b.indexOf('It is not a thing they forgot. For them it never occurred.') >= 0);
-    ok('payload requires the replay be their ONLY experienced version',
-      b.indexOf('their ONLY experienced version of events') >= 0);
-    // Scoped to the FORBIDDEN list itself, with whitespace collapsed — the list wraps across
-    // prompt lines, so a raw substring match on a quoted phrase can straddle a newline.
-    const flat = bDec.replace(/\s+/g, ' ');
-    const fStart = flat.indexOf('FORBIDDEN, in narration and dialogue alike:');
-    const fEnd = flat.indexOf('If a line only makes sense', fStart);
-    const forbiddenList = (fStart >= 0 && fEnd > fStart) ? flat.slice(fStart, fEnd) : '';
-    ok('the payload contains the forbidden-vocabulary list', !!forbiddenList);
-    ok('payload forbids the external-timeline vocabulary',
-      ['"again"', '"a second time"', '"the first time"', '"what they lost"',
-       'remember nothing of', '"never happened"'].every(p => forbiddenList.indexOf(p) >= 0),
-      forbiddenList.slice(0, 120));
-    ok('payload states the record is the READER’S, not character knowledge',
-      b.indexOf('are the READER’S record') >= 0
-      && b.indexOf('NOT character knowledge') >= 0);
-    ok('payload forbids an unestablished shared understanding',
-      bDec.indexOf('no "he knows I know"') >= 0
-      && bDec.indexOf('NOW TRUE lines above establish that relationship outright') >= 0);
-    ok('payload names the aftermath beat as the ONLY permitted trace',
-      b.indexOf('the ONLY permitted trace') >= 0 && b.indexOf('Feeling, never fact') >= 0);
-    // THE ABSENCE CLAUSE — the rerun's only genuine violation.
-    ok('payload forbids narrating an erased event’s absence or echo',
-      b.indexOf('Do NOT narrate an erased event, its absence, its non-occurrence, or an') >= 0);
-    ok('payload denies the non-event any perceptible trace',
-      b.indexOf('There is no silence where it was') >= 0
-      && b.indexOf('no echo of it in the air') >= 0);
-    ok('payload states a non-event leaves nothing to perceive',
-      b.indexOf('It did not happen, so it leaves NOTHING to perceive, miss or mark') >= 0);
-    ok('payload limits rendering to active canon + the sealed beat',
-      b.indexOf('Render ONLY (a) active canon and (b) the sealed aftermath beat') >= 0);
-    // ── AUDIT LANGUAGE MUST NOT REACH THE WRITER ────────────────────────────────────────────
-    // The final run's one violation was the model echoing its own NOW TRUE line, which read
-    // "The rite played through a second time".
-    ok('NOW TRUE uses writer language, not the ledger’s counting frame',
-      b.indexOf('The rite proceeds uninterrupted') >= 0);
-    ok('the audit phrase "played through a second time" is ABSENT from the payload',
-      b.indexOf('played through a second time') < 0);
-    // ── THE OPENING RULE, AND ITS POSITION ──────────────────────────────────────────────────
-    const iOpen = b.indexOf('OPENING ORIENTATION — HISTORICAL REPLACEMENT');
-    const iBeats = b.indexOf('\\"beats\\": [ {') >= 0
-      ? b.indexOf('\\"beats\\": [ {') : b.indexOf('"beats": [ {');
-    ok('payload carries the OPENING ORIENTATION rule', iOpen >= 0);
-    ok('it sits BEFORE the beats schema, not only in the later boundary block',
-      iOpen >= 0 && iBeats > 0 && iOpen < iBeats, 'open@' + iOpen + ' beats@' + iBeats);
-    ok('it says to begin inside the only timeline the characters know',
-      b.indexOf('Begin inside the ONLY timeline the characters know') >= 0);
-    ok('it names the permitted orientation: place, body, stakes, present action',
-      b.indexOf('immediate place, body,') >= 0 && b.indexOf('active stakes and present action') >= 0);
-    ok('it forbids numbering / repetition / replacement / comparison',
-      b.indexOf('NOT by numbering, repetition, replacement, or') >= 0);
-    ok('it separates ledger language from writer language',
-      b.indexOf('That is audit') >= 0 && b.indexOf('language and it is never writer language') >= 0);
+    ok('  the spec carries the inside-the-replacement POV rule',
+      spec.indexOf('WRITE FROM INSIDE THE REPLACEMENT') >= 0);
+    ok('  the spec carries the absence clause',
+      spec.indexOf('Do NOT narrate an erased event, its absence, its non-occurrence, or an') >= 0);
   }
 
   const allOk = checks.every(c => c.ok);
   return { ok: allOk, checks, body: b, bytes: terminal ? terminal.bytes : 0,
     compiled: { outcomeId: run.outcomeId, roster: run.roster, invokerScope: run.invokerScope,
                 beat: run.beat, digest: run.digest },
-    identity: launched };
+    brief: run.brief, spec: run.spec, identity: launched };
 }
 
 // Run standalone as a control.

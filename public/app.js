@@ -340467,12 +340467,35 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
 
     { id: 'unm.time_gives_way', ask: 'undo',
       aftermathBeat: { id: 'aftermath.second_telling', text: 'Everyone present carries the faint, unplaceable sense of having stood here before. Seren looks at her own hands as if checking them. The Dohkar loses his place in a rite he has performed a hundred times. Julian\'s gaze finds Lirael a moment before there is any reason for it, and neither of them can say why.' },
+      // ── AUTHOR BRIEF — the ONLY Fate material the writer sees ───────────────────────────────
+      // Everything strict stays in the machine specification and is validated against the prose
+      // afterwards. Placing the validator's vocabulary in the generator's mouth is what produced
+      // "The choice rests on active canon only." and "The decision gate stands before me." as
+      // BEATS. This is plain scene direction: present reality, permitted visible reactions, the
+      // live stakes, and where to stop. No headings, no field names, no forbidden-token lists, no
+      // mention of replay, erasure, glow, prices or debts.
+      authorBrief:
+        'The rite concludes uninterrupted. The crimson spiralgrass is dark with the colour of old '
+      + 'offerings, and the air over the clearing is still.\n'
+      + 'Julian has kept the Answer in his hands throughout. No one has put a question to Lirael '
+      + 'before the assembly, and the assembly’s suspicion rests on her all the same — the '
+      + 'words of her wish came true where everyone could see how.\n'
+      + 'Lirael, Seren, Julian, the presiding Dohkar and the assembly all carry a faint sense they '
+      + 'cannot place. Seren looks at her own hands as if checking them. The Dohkar loses his place '
+      + 'in words he has spoken a hundred times. Julian’s gaze finds Lirael a moment before '
+      + 'there is any reason for it. Let each of them feel it; none of them can name it, and none '
+      + 'of them tries to explain it.\n'
+      + 'The inquiry has not opened. Lirael’s standing is what is at stake in front of her now, '
+      + 'and she owes a choice she has not yet made: claim the interference openly, or let the '
+      + 'assembly keep its assumption. Bring the scene to that choice and end there.',
       cls: 'history_rewrite', temporalOperation: 'historical_replacement',
       requiresActive: ['interr.julian_questioned_lirael'], requiresInactive: [],
       ceases: ['interr.julian_questioned_lirael', 'interr.dohkar_interrupted', 'interr.choice_arose',
                'lirael.scene1_disposition', 'answer.handed_to_lirael', 'answer.lirael_authorized_to_hold'],
       establishes: [
-        { id: 'interr.no_questioning_occurred', text: 'Julian did not question Lirael before the assembly. No such questioning took place in active canon.' },
+        { id: 'interr.no_questioning_occurred',
+          text: 'Julian did not question Lirael before the assembly. No such questioning took place in active canon.',
+          authorText: 'Julian has put no question to Lirael before the assembly.' },
         { id: 'interr.no_interruption_occurred', text: 'The presiding Dohkar interrupted nothing.' },
         // AUDIT vs WRITER LANGUAGE (Roman 2026-09-29). `text` is the RECORD — it may keep the
         // counting frame, because the ledger is written from outside the timeline. `authorText` is
@@ -340522,6 +340545,20 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
 
     { id: 'unm.the_turning_forgotten', ask: 'unseen',
       aftermathBeat: { id: 'aftermath.a_look_without_cause', text: 'Nobody can say what drew every eye to Lirael, only that something did. Seren frowns at her own certainty that she has wronged her guide. Julian keeps watching her with an attention he can no longer justify. The Dohkar\'s suspicion survives its reason. They are all still angry, or wary, or sorry, and not one of them can name the moment it began.' },
+      // Authored brief. The composed fallback gave this outcome ONE line — the aftermath beat
+      // alone — because it is memory_perception and carries no delta to draw sentences from. That
+      // is far too thin for the only Fate material the writer sees.
+      authorBrief:
+        'Every eye in the clearing rests on Lirael. No one can say what drew it there, only that it '
+      + 'did — and Lirael cannot say either.\n'
+      + 'Seren kneels where she finished her wish, frowning at her own certainty that she wronged '
+      + 'her guide. Julian watches Lirael with an attention he can no longer justify. The presiding '
+      + 'Dohkar’s suspicion is still alive though its cause has slipped from him. The assembly’s '
+      + 'eyes shift without explanation. They are all still angry, or wary, or sorry, and not one of '
+      + 'them can name the moment it began. Let each of them feel it; none of them can name it, and '
+      + 'none of them tries to explain it.\n'
+      + 'The words of Lirael’s wish came true where everyone could see how, and the loose note was '
+      + 'heard. Her standing in front of the assembly is what is in front of her now.',
       cls: 'memory_perception', temporalOperation: null,
       requiresActive: ['twist.assembly_turned'], requiresInactive: [],
       ceases: [], establishes: [],
@@ -340796,6 +340833,10 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
     }
     if (o.opensChoicePending) rec.opensChoicePending = true;
     rec.aftermathBeat = o.aftermathBeat || null;
+    // The authored brief must survive compilation — it is the ONLY Fate material the writer sees.
+    // Dropping it here silently falls back to a composed brief, exactly as dropping authorText
+    // silently restored the ledger's counting frame.
+    rec.authorBrief = o.authorBrief || null;
     rec.notAffected = _fscNotAffected(rec.population ? rec.population.roster : []);
     return rec;
   }
@@ -341134,13 +341175,19 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
   window._fscBoundaryDigest = _fscBoundaryDigest;
 
   // The parts that MUST survive into the final payload for the consequence to be authoritative.
+  // What must be present in the author request. These are now sentences from the BRIEF, because
+  // the brief is what is delivered; the machine spec is never sent. Asserting machine-spec
+  // headings here would require shipping them, which is the defect this split removes.
   function _fscRequiredParts(rec, block) {
-    var need = ['OUTCOME: ' + rec.outcomeId, 'FORBIDDEN INVENTIONS', 'MUST REMAIN TRUE'];
-    if (rec.population && rec.population.roster && rec.population.roster.length) need.push('AFFECTED');
-    if (rec.notAffected && rec.notAffected.length) need.push('NOT AFFECTED');
-    if (rec.aftermathBeat) need.push('AFTERMATH BEAT');
-    if (rec.aftermathBeat && rec.aftermathBeat.text) need.push(rec.aftermathBeat.text.slice(0, 48));
-    if (rec.invokerScope === 'in_population') need.push('LIRAEL IS AFFECTED');
+    var brief = String(block || '').trim();
+    if (!brief) return [];
+    // First and last sentence-ish fragments, plus a mid anchor: enough to prove the brief arrived
+    // whole and unaltered without embedding machine vocabulary in the check.
+    var lines = brief.split('\n').filter(function (l) { return l.trim().length > 20; });
+    var need = [];
+    if (lines.length) need.push(lines[0].trim().slice(0, 60));
+    if (lines.length > 1) need.push(lines[lines.length - 1].trim().slice(-60));
+    if (lines.length > 2) need.push(lines[Math.floor(lines.length / 2)].trim().slice(0, 48));
     return need;
   }
 
@@ -341150,7 +341197,10 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
     var text = String(payloadText || '');
     var problems = [];
     var render = (typeof window !== 'undefined') && window._fscRenderBoundary;
-    [{ key: '_fscActiveCompiled', card: 'tempt', fn: '_fscPromptBlock' },
+    // Tempt is asserted through the BRIEF, which is what reaches the author. The machine spec is
+    // still required to render (below) — a sealed record that cannot be specified is still a
+    // fail-closed condition — but its text is never expected in the payload.
+    [{ key: '_fscActiveCompiled', card: 'tempt', fn: '_fscAuthorBriefBlock' },
      { key: '_fpcActiveCompiled', card: 'petition', fn: '_fpcPromptBlock' }].forEach(function (c) {
       var rec = st[c.key];
       if (!rec || rec.error) return;                       // nothing sealed for this card
@@ -341164,10 +341214,11 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
       if (!block || !String(block).trim()) {
         problems.push({ card: c.card, outcomeId: rec.outcomeId, reason: 'empty_payload' }); return;
       }
-      var missing = _fscRequiredParts(rec, block).filter(function (p) { return text.indexOf(p) < 0; });
+      var parts = _fscRequiredParts(rec, block);
+      var missing = parts.filter(function (p) { return text.indexOf(p) < 0; });
       if (missing.length) {
         problems.push({ card: c.card, outcomeId: rec.outcomeId,
-          reason: text.indexOf('OUTCOME: ' + rec.outcomeId) < 0 ? 'absent_from_payload' : 'partial_in_payload',
+          reason: missing.length === parts.length ? 'absent_from_payload' : 'partial_in_payload',
           missing: missing.slice(0, 6), digest: _fscBoundaryDigest(block) });
       }
     });
@@ -341218,25 +341269,24 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
     var render = (typeof window !== 'undefined') && window._fscRenderBoundary;
     if (typeof render !== 'function') return out;
 
-    // Insert the opening rule BEFORE the beats schema — appending it with the boundary would put
-    // it after the instruction it exists to govern.
-    try {
-      var opening = _fscOpeningOrientationRule();
-      if (opening && out.indexOf(FSC_OPENING_MARKER) < 0) {
-        var anchor = '\n  "beats": [ {';
-        var at = out.indexOf(anchor);
-        if (at >= 0) { out = out.slice(0, at) + '\n' + opening + out.slice(at); }
-        else { out = opening + '\n' + out; }
-      }
-    } catch (_fscOErr) { try { console.warn('[FSC-DELIVERY] opening rule: ' + _fscOErr.message); } catch (_) {} }
-    [{ key: '_fscActiveCompiled', fn: '_fscPromptBlock' },
+    // The OPENING ORIENTATION RULE is WITHDRAWN from the author payload (Roman 2026-09-29). It was
+    // instruction-shaped scaffolding — a heading, a prohibition list and the phrase "active canon"
+    // — inserted next to the beat schema, and it is the clearest candidate for how validator
+    // vocabulary reached the prose. Its intent now lives in the brief's positive phrasing: the
+    // brief opens on present reality ("The rite concludes uninterrupted…"), which gives the author
+    // an orientation to use instead of a count to avoid. _fscOpeningOrientationRule is retained
+    // below for the machine specification and for scoring, and is no longer attached.
+    // TEMPT DELIVERS THE BRIEF, NOT THE SPEC. The machine specification stays in state for
+    // persistence, integrity and scoring; only plain scene direction reaches the writer.
+    [{ key: '_fscActiveCompiled', fn: '_fscAuthorBriefBlock' },
      { key: '_fpcActiveCompiled', fn: '_fpcPromptBlock' }].forEach(function (c) {
       var rec = st[c.key];
       if (!rec || rec.error) return;
       var block = '';
       try { var f = window[c.fn]; block = (typeof f === 'function') ? f() : ''; } catch (_) { return; }
       if (!block) return;
-      if (out.indexOf('OUTCOME: ' + rec.outcomeId) >= 0) return;   // already delivered; do not duplicate
+      var dupKey = String(block).trim().slice(0, 48);
+      if (dupKey && out.indexOf(dupKey) >= 0) return;   // already delivered; do not duplicate
       out += '\n' + block;
       try { console.log('[FSC-DELIVERY] attached ' + rec.outcomeId + ' to the final author payload ('
         + _fscBoundaryDigest(block) + ')'); } catch (_) {}
@@ -341280,6 +341330,54 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
     return { ok: problems.length === 0, problems: problems };
   }
   window._fscPayloadIntegrity = _fscPayloadIntegrity;
+
+  // ══════════════════════════════════════════════════════════════════════════════════════════
+  // ARTIFACT 2 — THE AUTHOR BRIEF. The ONLY Fate-specific material the writer ever sees.
+  //
+  // _fscRenderBoundary above is ARTIFACT 1, the MACHINE SPECIFICATION: the full sealed record,
+  // atoms, roster, temporal operation, scanner vocabulary, gate names and validation rules. It is
+  // persisted, used for payload integrity and used for scoring — and it is NEVER sent to the
+  // author. Five paid runs established why: every remaining failure had its rule present in the
+  // request, and the author had begun transcribing the instruction stack into the prose ("The
+  // choice rests on active canon only." arrived as a BEAT).
+  //
+  // The brief states only what the characters can experience now, in plain scene direction. Strict
+  // rules are not weakened — they are enforced by the validator against the finished prose instead
+  // of being recited to the generator.
+  function _fscAuthorBrief(rec) {
+    if (!rec || rec.error) return '';
+    if (rec.authorBrief) return String(rec.authorBrief).trim() + '\n';
+    // Fallback for outcomes with no authored brief: compose plain sentences from the writer-facing
+    // establishes and the aftermath beat. Never ids, never headings, never the ledger's wording.
+    var parts = [];
+    var est = (rec.delta && rec.delta.establishes) || [];
+    est.forEach(function (e) {
+      var t = String(e.authorText || e.text || '').trim();
+      if (t) parts.push(t);
+    });
+    if (rec.aftermathBeat && rec.aftermathBeat.text) {
+      parts.push(String(rec.aftermathBeat.text).trim()
+        + ' Let each of them feel it; none of them can name it, and none of them tries to explain it.');
+    }
+    if (rec.opensChoicePending) {
+      parts.push('Lirael owes a choice she has not yet made. Bring the scene to that choice and end there.');
+    }
+    return parts.length ? parts.join('\n') + '\n' : '';
+  }
+  // Window-resolved, exactly as the machine spec is, so integrity and the render path can never
+  // disagree about which renderer is in play.
+  function _fscAuthorBriefBlock() {
+    var st = window.state; var rec = st && st._fscActiveCompiled;
+    if (!rec || rec.error) return '';
+    var f = (typeof window !== 'undefined') && window._fscAuthorBrief;
+    if (typeof f !== 'function') {
+      try { console.error('[FSC] author-brief renderer unavailable — sealed tempt consequence cannot be delivered'); } catch (_) {}
+      return '';
+    }
+    return f(rec);
+  }
+  window._fscAuthorBrief = _fscAuthorBrief;
+  window._fscAuthorBriefBlock = _fscAuthorBriefBlock;
 
   function _fscPromptBlock() {
     var st = window.state; var rec = st && st._fscActiveCompiled;
