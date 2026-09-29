@@ -139,9 +139,11 @@ export async function preflight(opts = {}) {
   ok('every line of the brief is in the author request',
     briefLines.length > 0 && briefLines.every(l => b.indexOf(l.slice(0, 60)) >= 0));
   // Generic, for every outcome: the brief must read as scene direction, not specification.
-  ok('the brief names the permitted visible reactions',
-    b.indexOf('none of them can name it') >= 0 || b.indexOf('cannot say why') >= 0
-    || b.indexOf('can name the moment') >= 0);
+  // The brief must signal that the affected react WITHOUT explaining themselves — whatever wording
+  // the individual brief uses for it.
+  ok('the brief names reactions the characters do not explain',
+    /none of them (?:can name it|explains|tries)|cannot say why|could not say what prompted it|can name the moment|does not account for it|no better account/i
+      .test(run.brief || ''));
   ok('the brief carries no price, debt or cost language',
     !/\b(cost|price|debt|toll|payment|uncounted)\b/i.test(run.brief || ''));
   ok('the brief carries no glow or wish-energy',
@@ -162,6 +164,23 @@ export async function preflight(opts = {}) {
       && b.indexOf('suspicion rests on her all the same') >= 0);
     ok('the brief names the live stakes without calling them a price',
       b.indexOf('standing is what is at stake in front of her now') >= 0);
+    // ── THE AFTERMATH IS INDIVIDUAL, NOT A SHARED SENSATION ──────────────────────────────────
+    // The umbrella phrasing ("all carry a faint sense they cannot place") gave the model a single
+    // shared thing to explain, and it explained it as a pulse travelling through the clearing.
+    ok('the brief gives Seren an individual, ordinary reaction',
+      b.indexOf('Seren looks down at her own hands as if checking them, and could not say what prompted it') >= 0);
+    ok('the brief gives the Dohkar his own lapse',
+      b.indexOf('loses his place in words he has spoken a hundred times, then recovers without remarking on it') >= 0);
+    ok('the brief gives Julian his own unexplained attention',
+      b.indexOf('gaze finds Lirael a moment before anything gives him a reason to look') >= 0);
+    ok('the brief gives the crowd a hesitation, not a sensation',
+      b.indexOf('Here and there in the crowd someone shifts their weight or half-turns to go and then stays') >= 0);
+    ok('Lirael is still not spared', b.indexOf('Lirael watches all of it and has no better account of it than they do') >= 0);
+    ok('NO umbrella phrasing gives the reactions a common force',
+      b.indexOf('carry a faint sense they cannot place') < 0
+      && b.indexOf('Let each of them feel it') < 0);
+    ok('the brief names no shared timing, transmission or source',
+      !/at the same (?:moment|time)|passe[sd] through|travel\w* through|spread\w* through/i.test(run.brief || ''));
     ok('the brief names the owed choice and where to end',
       b.indexOf('owes a choice she has not yet made') >= 0
       && b.indexOf('Bring the scene to that choice and end there') >= 0);

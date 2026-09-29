@@ -9,7 +9,7 @@ import fs from 'fs';
 import path from 'path';
 import { preflight } from './_fsc_preflight_control.mjs';
 import { guardDispatch, CHARS_PER_TOKEN, REASONING_MULT, SAFETY_MARGIN } from './_fsc_cost_guard.mjs';
-import { scoreC1, scoreC2, aftermathLanded, loadExternalTimelinePhrases, loadAmbiguousTemporal, ROSTER_TOKENS, ERASED_PROSE_TERMS, scoreC3 }
+import { scoreC1, scoreC2, scoreC3, effectiveGate, aftermathLanded, loadExternalTimelinePhrases, loadAmbiguousTemporal, ROSTER_TOKENS, ERASED_PROSE_TERMS }
   from './_fsc_scoring.mjs';
 
 const PHRASES = loadExternalTimelinePhrases();
@@ -154,12 +154,15 @@ log('  C2              : ' + (c2.pass ? 'PASS' : 'FAIL'));
 
 // ── C4 MECHANICALLY — the point of this run ───────────────────────────────────────────────────
 log('\nC4 — DOES THE SCENE STOP AT THE CHOICE?');
+// The gate is DERIVED exactly as production derives it. decisionGateBeatIdx was withdrawn from the
+// author schema, so reading the field reported a false failure on a scene that ended correctly.
 const beats = (plan && Array.isArray(plan.beats)) ? plan.beats : [];
-const gate = plan ? plan.decisionGateBeatIdx : null;
-const lastIdx = beats.length ? beats.length - 1 : null;
+const eg = effectiveGate(plan);
+const gate = eg.gate, lastIdx = eg.last;
 const past = (gate != null && lastIdx != null) ? beats.slice(gate + 1) : [];
 log('  beats                 : ' + beats.length);
-log('  decisionGateBeatIdx   : ' + (gate == null ? '(absent)' : gate));
+log('  gate (effective)      : ' + (gate == null ? '(none)' : gate)
+  + (eg.derived ? '   [derived — author emits no index]' : '   [emitted ' + eg.emitted + ']'));
 log('  last beat index       : ' + (lastIdx == null ? '(none)' : lastIdx));
 log('  beats AFTER the gate  : ' + past.length + (past.length ? ' ⚠' : '  ✓'));
 past.forEach(b => log('     ✗ idx ' + b.idx + ': "' + String(b.text || '').slice(0, 110) + '"'));
@@ -168,8 +171,11 @@ const gateAtEnd = gate != null && gate === lastIdx;
 log('  GATE IS THE LAST BEAT : ' + gateAtEnd + (gateAtEnd ? '  ✓' : '  ⚠'));
 
 log('\nC3 — FORBIDDEN-INVENTION SCAN');
-const magic = prose.match(/\b(glow\w*|luminous|shimmer\w*|aura|radian\w*|shone with|pulsed with light)\b/gi) || [];
-log('  visible wish-energy   : ' + (magic.length ? 'HIT — ' + [...new Set(magic)].join(', ') : 'clean'));
+c3.residue.forEach(s => log('     ✗ magical residue:  "' + s + '"'));
+c3.emission.forEach(s => log('     ✗ intervention as emission: "' + s + '"'));
+c3.wardrobeAllowed.forEach(s => log('     ~ seed wardrobe (allowed): "' + s + '"'));
+log('  magical residue       : ' + (c3.residue.length ? 'FAIL — ' + c3.residue.length : 'clean'));
+log('  intervention emission : ' + (c3.emission.length ? 'FAIL — ' + c3.emission.length : 'clean'));
 const verdictWords = prose.match(/\b(proved|proof of|confirmed (?:her )?guilt|the Answer (?:showed|revealed|declared))\b/gi) || [];
 log('  Answer-as-verdict     : ' + (verdictWords.length ? 'HIT — ' + [...new Set(verdictWords)].join(', ') : 'clean'));
 // Costless means costless, DEFERRED included. The old regex looked only for a stated price and

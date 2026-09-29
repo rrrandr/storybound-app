@@ -214,13 +214,69 @@ export const DEFERRED_COST_RX = [
   /\bsomething (?:will|would) be (?:taken|collected|owed)\b/i,
   /\bwhat (?:it|this) (?:will|would) cost\b/i
 ];
+// ── THE INTERVENTION AS AN EMISSION ───────────────────────────────────────────────────────────
+// The sealed beat asks for a faint, unplaceable sense that no one can explain. A run turned it into
+// a propagating physical event — "A low pulse travels through the clearing", "The Answer pulses
+// once between his palms", "The pulse has already passed through every person present". That is a
+// new perceptible trace of the intervention, and the world truth forbids it. Machine-only: this
+// vocabulary is never shown to the author.
+export const EMISSION_RX = [
+  // something moving through the room or through the people in it
+  /\b(pulse|ripple|wave|current|tremor|vibration|thrum|hum|surge|shockwave|shiver|shudder)\b[^.]{0,60}\b(travel\w*|pass\w*|spread\w*|mov\w*|ran|run\w*|roll\w*|sweep\w*|sweeps?|went|goes)\b[^.]{0,40}\b(through|across|over|outward)\b/i,
+  /\b(travel\w*|pass\w*|spread\w*|roll\w*|sweep\w*)\b[^.]{0,40}\b(through|across)\s+(?:the\s+)?(clearing|assembly|crowd|gathering|room|air|grass|ground|everyone|them all)\b/i,
+  // an object emitting rather than simply having a form
+  /\b(pulses?|pulsed|pulsing|throbs?|throbbed|thrums?|thrummed|radiates?|radiated|emits?|emitted)\b[^.]{0,30}\b(once|twice|outward|between|from|into)\b/i,
+  // the felt thing reaching every person
+  /\b(passed|passes|travelled|traveled|travels|moved|moves|went|goes|reached|reaches)\s+through\s+(?:every|each|all|everyone)\b/i,
+  // a named ambient physical presence
+  /\ba\s+(?:low|faint|slow|deep|soft)\s+(pulse|hum|thrum|vibration|pressure|current)\b/i
+];
+// Ordinary bodily uses are out of scope: a heartbeat, a pulse at the wrist or throat.
+export const BODILY_PULSE_RX =
+  /\b(?:her|his|my|their|its)\s+(?:own\s+)?(?:pulse|heartbeat|heart)\b|\bpulse\s+(?:at|in)\s+(?:her|his|my|their)\b|\bheartbeat\b|\bpulse\s+(?:at|in)\s+the\s+(?:wrist|throat|neck)\b/i;
+export const emissionHits = t => {
+  const s = String(t || '');
+  if (BODILY_PULSE_RX.test(s) && !/\b(clearing|assembly|crowd|gathering|room|everyone)\b/i.test(s)) return [];
+  return EMISSION_RX.filter(rx => rx.test(s));
+};
+
+// ── MAGICAL RESIDUE, WITH A SOURCE-AWARE WARDROBE ALLOWANCE ───────────────────────────────────
+// "luminous" was reported for five consecutive runs on the SEED's own gossamer garment, which
+// buried a real violation. The allowance is scoped to that specific description — gossamer blooming
+// over torso/hips/seat — NOT a blanket whitelist of the word.
+export const MAGICAL_RESIDUE_RX =
+  /\b(glow\w*|luminous|shimmer\w*|aura|radian\w*|shone with|blaz\w*|incandescen\w*)\b/i;
+export const SEED_GOSSAMER_RX =
+  /\bgossamer\b[^.]{0,120}\b(luminous|blooms?|blooming)\b|\b(luminous|blooms?|blooming)\b[^.]{0,80}\b(torso|hips|seat|tunic)\b/i;
+
 export function scoreC3(prose, { costless = true } = {}) {
-  const explicit = [], deferred = [];
+  const explicit = [], deferred = [], emission = [], residue = [], wardrobeAllowed = [];
   for (const s of SENTENCES(prose)) {
     if (EXPLICIT_COST_RX.some(rx => rx.test(s))) explicit.push(s.trim().slice(0, 150));
     else if (costless && DEFERRED_COST_RX.some(rx => rx.test(s))) deferred.push(s.trim().slice(0, 150));
+    if (emissionHits(s).length) emission.push(s.trim().slice(0, 150));
+    if (MAGICAL_RESIDUE_RX.test(s)) {
+      if (SEED_GOSSAMER_RX.test(s)) wardrobeAllowed.push(s.trim().slice(0, 110));
+      else residue.push(s.trim().slice(0, 150));
+    }
   }
-  return { pass: explicit.length === 0 && deferred.length === 0, explicit, deferred };
+  return { pass: explicit.length === 0 && deferred.length === 0
+             && emission.length === 0 && residue.length === 0,
+           explicit, deferred, emission, residue, wardrobeAllowed };
+}
+
+// ── C4 — DERIVE THE GATE EXACTLY AS PRODUCTION DOES ───────────────────────────────────────────
+// decisionGateBeatIdx was withdrawn from the author schema, so the model no longer emits it and a
+// check that reads the field reports a false failure. Production defaults an absent or out-of-range
+// index to the last beat, then clamps it to the true last index unconditionally.
+export function effectiveGate(plan) {
+  const beats = (plan && Array.isArray(plan.beats)) ? plan.beats : [];
+  if (!beats.length) return { gate: null, last: null, emitted: null, derived: false };
+  const emitted = (plan && typeof plan.decisionGateBeatIdx === 'number') ? plan.decisionGateBeatIdx : null;
+  const last = beats.length - 1;
+  let gate = (emitted != null && emitted >= 0 && emitted < beats.length) ? emitted : last;
+  if (gate !== last) gate = last;                       // production clamps unconditionally
+  return { gate, last, emitted, derived: emitted === null };
 }
 
 // ── AFTERMATH BEAT MATCHER (repaired) ─────────────────────────────────────────────────────────
@@ -437,6 +493,46 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     externalTimelineHits('He reached for the second cup.', phrases).length === 0);
   t('  ("the second" alone stays in the ambiguous list)', ambiguous.includes('the second'));
 
+  console.log('\nH1a. THE INTERVENTION MAY NOT BE AN EMISSION');
+  [ 'A low pulse travels through the clearing.',
+    'The Answer pulses once between his palms.',
+    'The pulse has already passed through every person present.',
+    'A ripple moved through the assembly.',
+    'A slow current spread across the gathering.',
+    'Something passed through everyone at the same moment.'
+  ].forEach(s => t('forbidden: "' + s.slice(0, 46) + '"', scoreC3(s).pass === false));
+  console.log('  ordinary bodily and ordinary-world uses stay OUT of scope:');
+  [ 'Her pulse beat hard at her throat.',
+    'He felt his own heartbeat in his ears.',
+    'She pressed two fingers to the pulse at her wrist.',
+    'The Answer rests in Julian’s hands, silver script moving slowly across his slate-blue skin.',
+    'Here and there in the crowd someone shifts their weight or half-turns to go and then stays.'
+  ].forEach(s => t('permitted: "' + s.slice(0, 46) + '"', scoreC3(s).pass === true,
+    JSON.stringify(scoreC3(s).emission)));
+
+  console.log('\nH1a2. THE WARDROBE ALLOWANCE IS SOURCE-AWARE, NOT A WHITELIST');
+  const WARDROBE = "gossamer child's tunic blooming luminous white over torso hips and seat, aqua skin, pale coral hair";
+  t('the seed gossamer garment is ALLOWED', scoreC3(WARDROBE).pass === true,
+    JSON.stringify(scoreC3(WARDROBE).residue));
+  t('  and is recorded as an allowance, not silently dropped',
+    scoreC3(WARDROBE).wardrobeAllowed.length === 1);
+  [ 'The grass was glowing faintly from generations of offerings.',
+    'Her robes were still luminous from the rite.',
+    'A faint aura clung to the spiralgrass.',
+    'The clearing shimmered where the wish had landed.'
+  ].forEach(s => t('still caught: "' + s.slice(0, 44) + '"', scoreC3(s).pass === false));
+
+  console.log('\nH1a3. C4 DERIVES THE GATE AS PRODUCTION DOES');
+  const mkPlan = (n, idx) => ({ beats: Array.from({ length: n }, (_, i) => ({ idx: i, text: 'b' + i })),
+    ...(idx === undefined ? {} : { decisionGateBeatIdx: idx }) });
+  t('an ABSENT index defaults to the last beat', effectiveGate(mkPlan(26)).gate === 25);
+  t('  and is reported as derived', effectiveGate(mkPlan(26)).derived === true);
+  t('an out-of-range index falls back to the last beat', effectiveGate(mkPlan(26, 99)).gate === 25);
+  t('a mid-scene index is CLAMPED to the last beat, as production does',
+    effectiveGate(mkPlan(26, 10)).gate === 25);
+  t('a correct index is kept', effectiveGate(mkPlan(26, 25)).gate === 25);
+  t('an empty plan yields no gate', effectiveGate({ beats: [] }).gate === null);
+
   console.log('\nH1b. NARRATOR ORIENTATION — all four named frames must FAIL C1 AND C2');
   // Each used as the scene's opening orientation, the position the final run actually failed in.
   [['for the second time', 'The rite ends for the second time.'],
@@ -520,6 +616,27 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     /RUN VOID — NOT SCORED/.test(fs.readFileSync('_fsc_c4_run.mjs', 'utf8')));
   t('  and exits non-zero on a void run',
     /process\.exit\(5\)/.test(fs.readFileSync('_fsc_c4_run.mjs', 'utf8')));
+
+  console.log('\nH3. GROUND TRUTH: the compact-brief run that my scanner passed on C3');
+  const R5 = '_tempt_fate_fixtures/fsc_c4_2026-09-29T21-45-14/prose.txt';
+  if (fs.existsSync(R5)) {
+    const p5 = fs.readFileSync(R5, 'utf8');
+    const g = scoreC3(p5);
+    t('it now FAILS C3 (the old scanner reported only the wardrobe)', g.pass === false);
+    t('  the failure is the EMISSION, not the wardrobe', g.emission.length > 0);
+    t('  "A low pulse travels through the clearing" is caught',
+      g.emission.some(s => /low pulse travels/i.test(s)));
+    t('  "The pulse has already passed through every person" is caught',
+      g.emission.some(s => /passed through every person/i.test(s)));
+    t('  the gossamer wardrobe is NOT reported as residue', g.residue.length === 0,
+      JSON.stringify(g.residue));
+    t('  it is recorded as an allowance instead', g.wardrobeAllowed.length > 0);
+    t('  and no invented cost is present', g.explicit.length === 0 && g.deferred.length === 0);
+    const plan5 = JSON.parse(fs.readFileSync('_tempt_fate_fixtures/fsc_c4_2026-09-29T21-45-14/scene.json', 'utf8'));
+    const eg = effectiveGate(plan5);
+    t('  C4 derives a gate even though the author emitted none',
+      eg.derived === true && eg.gate === eg.last && eg.gate === 25);
+  } else { t('run-5 evidence present', false, R5); }
 
   console.log('\nI. GROUND TRUTH: re-score both real runs with the corrected scorer');
   const RUN1 = '_tempt_fate_fixtures/fsc_c4_2026-09-29T16-29-43/prose.txt';

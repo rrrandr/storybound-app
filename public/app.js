@@ -340493,7 +340493,7 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
       authorBrief:
         "The rite concludes uninterrupted. The crimson spiralgrass is dark with the colour of old offerings, and the air over the clearing is still.\n"
         + "Julian has kept the Answer in his hands throughout. No one has put a question to Lirael before the assembly, and the assembly’s suspicion rests on her all the same.\n"
-        + "Lirael, Seren, Julian, and the presiding Dohkar—along with the assembled crowd—carry a faint sense they cannot place. Seren looks at her own hands as if checking them. The Dohkar loses his place in words he has spoken a hundred times. Julian’s gaze finds Lirael a moment before there is any reason for it. Let each of them feel it; none of them can name it, and none of them tries to explain it.\n"
+        + "Seren looks down at her own hands as if checking them, and could not say what prompted it. The presiding Dohkar loses his place in words he has spoken a hundred times, then recovers without remarking on it. Julian’s gaze finds Lirael a moment before anything gives him a reason to look. Here and there in the crowd someone shifts their weight or half-turns to go and then stays. Lirael watches all of it and has no better account of it than they do. None of them explains any of it, and none of them tries.\n"
         + "The inquiry has not opened. Lirael’s standing is what is at stake in front of her now, and she owes a choice she has not yet made: claim the interference openly, or let the assembly keep its assumption. Bring the scene to that choice and end there.",
       cls: 'history_rewrite', temporalOperation: 'historical_replacement',
       requiresActive: ['interr.julian_questioned_lirael'], requiresInactive: [],
