@@ -340544,7 +340544,7 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
       authorBrief:
         "No one has claimed the right to rule on Lirael’s conduct, and no venue has been named for any proceeding against her.\n"
         + "The presiding Dohkar carries himself like a man accustomed to being deferred to, and the clearing does not defer. Julian stands apart and says nothing. The clearing has the particular silence of a room waiting for whoever is in charge to speak, when no one in it is. Let them carry it; neither explains it, and neither tries.\n"
-        + "Lirael is neither cleared nor charged. She is standing in a clearing where no one present has the standing to decide anything about her.",
+        + "Lirael is neither cleared nor charged. She is standing in a clearing where no one present has established themselves as the person who will decide anything about her.",
       cls: 'history_rewrite', temporalOperation: 'historical_replacement',
       requiresActive: ['auth.dohkar_claims_rite_and_ruling'],
       requiresInactive: ['accusation.family_accused'],
@@ -340581,7 +340581,7 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
       authorBrief:
         "The Answer is in Lirael’s hands. Julian placed it there before the assembly for the questioning, and everyone here remembers him doing it. Everyone here also knows her holding of it ends when that questioning ends.\n"
         + "What no one in this clearing can say — Lirael included — is that the Answer belongs to the Institution, or that Julian is the one entrusted with this instance by virtue of his office.\n"
-        + "She looks down at it with the mild puzzlement of someone who knows exactly how a thing came into her hands and not at all what it is. Julian’s glance passes over it without settling. Let each of them feel it; none of them can name what is wrong, and none of them tries to explain it.\n"
+        + "She looks down at it with the mild puzzlement of someone holding a thing she can only half account for: she knows it is the Answer, and knows Julian placed it in her hands for the questioning, but cannot say whose Answer it is or why Julian is entitled to it. Julian’s glance passes over it without settling. Let each of them feel it; none of them can name what is wrong, and none of them tries to explain it.\n"
         + "Why Julian handed it to her is a live question in this clearing, and anyone present may ask it.",
       cls: 'memory_perception', temporalOperation: null,
       requiresActive: ['answer.owned_by_institution', 'answer.entrusted_to_julian'],
