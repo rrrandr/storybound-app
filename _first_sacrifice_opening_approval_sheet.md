@@ -102,8 +102,8 @@ only among outcomes that fit both the sentence and the state. **Favor never over
 |---|---|---|---|---|
 | *tbd* | `stop` | `unm.dohkar_demand_unmade` | the Dohkar's demand ceases to have been made — but **Julian's, made offstage, still arrives at row 4** | none declared |
 | *tbd* | `undo` | `unm.time_gives_way` | **time gives way**; the ceremony plays again without the interrogation, and **Lirael's Scene-1 choice returns, live and free to go the other way** | she is publicly the woman reality bends around |
-| **8** | `escape` | `unm.the_answer_speaks` | the Answer renders a reading that **exculpates her**, permanently on the record | it names **her own ward** as the source |
-| *tbd* | `unseen` | `unm.witness_scattered` → **proposed replacement `unm.testimony_closed`** | everyone saw it and everyone remembers — and **the proceeding forming against her cannot take a word from any of them** about the ceremony, until the formal inquiry convenes. They may talk anywhere else. | no witness may speak **for** her either |
+| ⚠ | `escape` | `unm.the_answer_speaks` | **needs a source audit** — its grant assumes the Answer can attest retrospectively to a completed wish; the seed describes it only as a **live examination** instrument | it names **her own ward** as the source |
+| *tbd* | `unseen` | `unm.witness_scattered` → **proposed replacement `unm.testimony_closed`** | everyone saw it and everyone remembers — and **the proceeding forming against her cannot take a statement from any of them**, Lirael included, for as long as the closure stands. They may talk anywhere else. | no witness may speak for her — **and she cannot explain herself into it either** |
 | **6** | `silence` | `unm.custody_severed` | the Institution's claim on the Answer **ceases**; it belongs to no one | nobody is watching it |
 | **5** | `authority` | `unm.standing_dissolved` | Julian's standing over this rite is not doubted — **void** | a jurisdictional war she started |
 | *tbd* | `solitude` | `unm.the_shunning` | **they leave her alone.** Everyone present withdraws — a shunning, not a courtesy | every defender she had |

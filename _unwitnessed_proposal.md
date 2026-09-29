@@ -1,131 +1,184 @@
-# PROPOSED replacement for `unm.witness_scattered` — `unm.testimony_closed` (rev. 2)
+# PROPOSED replacement for `unm.witness_scattered` — `unm.testimony_closed` (rev. 3, final)
 
-> **PROPOSED and BLOCKED** until approved. No ranking, no coverage computation, no implementation.
-> **Renamed from `unm.unwitnessed`** — that name asserted erased observation, which is exactly what this
-> outcome does not do.
+> **PROPOSED.** No ranking, no coverage computation, no implementation. Rev. 3 pins the three open details and
+> **withdraws the favorability basis rev. 2 asserted**, which did not survive a source audit.
 
 ---
 
-# 1. What rev. 1 got wrong
+# 1. The source audit — both halves failed
 
-| claim in rev. 1 | why it was unsafe |
-|---|---|
-| *"she becomes unwitnessable"* · *"unseen by people"* | **Inaccurate.** Everyone saw her and everyone still remembers. Nothing about observation changed. The consequence is **procedural unrecordability**, and the prose said something stronger and untrue. |
-| *"no account of the ceremony may be entered, heard, or taken"* | **Unbounded.** It named no channel, no source scope, and no end — a rule that broad is not a fact, it is a mood. |
-| *"I want to disappear"* presented as reaching this literally | **Ambiguous wording dressed as a guaranteed reading.** Those words do not name a proposition or a scope. This is a **Fate-chosen** interpretation, and must be labelled as one. |
+Rev. 2 justified player favor with: *"the evidence against her is overwhelmingly witness-borne; what would
+clear her is the Answer's reading."* **Neither half is supported by the seed.**
+
+### Half A — "evidence against her is overwhelmingly witness-borne" — **FALSE**
+
+There is **physical evidence, and the story already has a beat about hiding it.** The mouth-band is a real
+object with tracked state (`app.js:9132`, `id: 'mouth_band'`, `priorState: 'removed'`) that **Lirael tore off
+mid-Scene-1**, and an authored landed action exists for concealing it:
+
+> `app.js:9307` — *"Lirael folds the torn mouth-band into her sash"* · exit state: *"Lirael has concealed her
+> reason…"*
+
+The `lirael_defensive_path` lane likewise offers *"conceals a specific fact, **object**, or admission."* So the
+evidentiary picture includes at least one physical item **in her own possession**, and the design treats
+concealing it as a live player move. **Witness testimony is not the whole case against her, and the seed never
+says it is.**
+
+### Half B — "what would clear her is the Answer's reading" — **UNSUPPORTED**
+
+The Answer's only described capability is **live examination**, not retrospective attestation:
+
+> `app.js:231366` — *"acuity is measured in a **controlled examination**… a Dohkar or Chayr holds the Answer
+> and speaks a sequence of **INCOMPLETE wish formulations** — no sacrifice is ever named or offered, so nothing
+> completes… the Answer makes each real misalignment **visible to the examiners**."*
+
+It makes misalignment visible **as it is being spoken, in an examination**. **Nothing in the seed says it can
+attest to who caused a completed wish to twist hours ago.** Rev. 2 asserted a forensic capability the world
+has not been given.
+
+> ### ⚠ This finding reaches past this outcome
+> **`unm.the_answer_speaks` (ask-class `escape`) rests on the same unsupported capability.** Its whole grant is
+> *"the Answer renders a reading that places the misalignment in Seren's own intent."* If the Answer cannot
+> attest retrospectively, that outcome is inventing a world capability, not using one. **Flagged as a separate
+> item; not revised here.**
+
+### What replaces the claim
+
+**Nothing asserts a balance of evidence.** The favorability case is rebuilt in §6 on what the closure
+*actually does*, and the balance of evidence is moved into `open[]` where it belongs.
 
 ---
 
 # 2. The ask, correctly classified
 
-**`unm.testimony_closed` is an unmoored, Fate-chosen outcome.**
-
-> *"I want to disappear"* anchors **nothing** — no declared fact, no scope. It is read as ask-class `unseen`,
-> and **Fate selects a procedural closure as its interpretation.** These words do not always produce this
-> outcome, and they guarantee nothing. A different eligible state, or a later change to the set, may answer
-> the same sentence differently.
-
-**What the player is owed is the ask-class, not the outcome.** Precision buys a named target; this wording
-buys Fate's reading of a direction.
+**Unmoored, Fate-chosen.** *"I want to disappear"* anchors no declared fact and no scope. It reads as
+ask-class `unseen`, and **Fate selects this procedural closure as its interpretation.** These words never
+guarantee this outcome. The player is owed the ask-class, not the result.
 
 ---
 
-# 3. The single additive procedural fact
+# 3. The additive procedural fact — `rite.witness_testimony_closed`
 
-### `rite.witness_testimony_closed`
+### 3a. Channel
+The **review and investigation of the Sacrificiant's conduct at the rite** — the proceeding demanded in this
+scene and formalised at row 4 as notice that *"her conduct at the rite is under investigation."* The seed
+names no institutional archive, so no archive is invented.
 
-> **Channel:** the **review and investigation of the Sacrificiant's conduct at the rite** — the proceeding the
-> presiding Dohkar demands in this scene and which row 4 formalises as notice that *"her conduct at the rite
-> is under investigation."*
->
-> **Source scope:** **testimony concerning the ceremony, given by its witnesses.** Nothing else. Not physical
-> evidence, not documents, not the Answer's own reading, not testimony about anything other than the
-> ceremony, and not testimony from anyone who was not there.
->
-> **Ends when:** `inquiry_opened` is committed. The closure holds across the preliminary process and **does
-> not bind the formal inquiry** — a Chayr and two Dohkars constitute a different body with its own authority,
-> and Fate's reach into an intake does not follow the matter into The Open.
->
-> **Witnesses keep everything.** Memory is untouched and complete. **They remain free to speak of the ceremony
-> anywhere outside that proceeding** — to each other, to family, to Julian, in the city, in rumour.
->
-> **The closure does not take sides.** It bars testimony that would **accuse** her and testimony that would
-> **exculpate** her, equally and by the same mechanism.
+### 3b. Witness scope — an **exact roster sealed at seal time**
 
-**Delta kind:** **additive / revelatory canon change** — `establishes[]` only, **no `ceases[]`, not a
-revision.**
-**`requiresActive[]`:** `twist.loose_note_heard` — there must be something witnessed for testimony about it to
-close.
+> **Not "its witnesses."** The roster is **expanded from `population.scene_present` through its declared rule
+> at seal, and frozen into the delta as an explicit list of party refs.** It is never re-derived, never
+> re-interpreted later, and never widened by a reading of the word *witness*.
+
+Which, per the approved definitions, is `population.assembly` **plus** `named:seren`, `named:julian`,
+`role:first_sacrifice_presiding_dohkar`, **and `pc:lirael`.**
+
+> **Lirael is in the roster, and this is not an oversight.** `population.scene_present` contains her, there is
+> no invoker filter anywhere, and D1 governs. **So she cannot put her own account into the proceeding either.**
+>
+> **The spine already wanted this.** Row 4's authored end state is: *"END with Lirael formally under
+> investigation, supervised, and **still unable to explain herself**."* The closure supplies a mechanism for
+> the exact condition the plan already specifies. That is consonance with the spine, not a collision with it.
+
+### 3c. `endsWhen: inquiry_opened` — **a condition, not an expiry**
+
+**There is no guaranteed end.** The closure ends **if and when** `inquiry_opened` is committed. **If no inquiry
+ever opens, the closure remains active in canon indefinitely.** It does not lapse, time out, or decay.
+
+It does not bind the formal inquiry itself: a Chayr and two Dohkars are a different body with its own
+authority, and Fate's reach into one intake does not follow the matter into The Open.
+
+### 3d. Interaction with a later delta touching the inquiry — **declared, never inferred**
+
+**A later reality revision that ceases or prevents `inquiry_opened` does not thereby end, extend, or make
+permanent this closure.** Nothing about `rite.witness_testimony_closed` follows from what happens to its end
+condition. Per the no-inference-from-absence rule, **such a revision must name this fact explicitly** in its
+own closed set as **unchanged, ceased, or replaced.**
+
+- Names it **unchanged** → the closure is now permanent in practice, and **that permanence is an authored
+  choice with a visible author.**
+- Names it **ceased** → the closure ends, and the delta says so.
+- Says nothing → **the delta is malformed** and may not be sealed.
+
+### 3e. Everything else about the fact
+
+**Source scope:** testimony concerning **the ceremony**, from the sealed roster. Not physical evidence — **the
+mouth-band is untouched and remains in her possession and concealable.** Not documents. Not the Answer. Not
+testimony about anything else. Not anyone outside the roster.
+
+**Witnesses keep everything.** Memory untouched and complete; they remain free to speak of the ceremony
+**anywhere outside that proceeding.**
+
+**No sides.** It bars testimony that would **accuse** and testimony that would **exculpate**, equally.
+
+**Delta kind:** additive / revelatory — `establishes[]` only, **no `ceases[]`, not a revision.**
+**`requiresActive[]`:** `twist.loose_note_heard`.
+**`memoryEffects[]`:** **empty.** No mind is altered. *(This is what closes F3.)*
 
 ---
 
 # 4. The player-facing *therefore*
 
-**Everyone saw it. Everyone remembers it. And none of them can be asked about it.**
+**Everyone saw it. Everyone remembers it. And the thing deciding about her cannot ask any of them.**
 
-The proceeding that is forming around Lirael cannot take a single word from anyone who stood in that clearing.
-Not the family who watched, not the guests, not Seren, not Julian, not the Dohkar who presided. **They may
-talk about it all they like — to each other, at home, across the city.** What they cannot do is say it *into
-the thing that is deciding about her.*
+Not the family who watched, not the guests, not Seren, not Julian, not the Dohkar who presided — **and not
+Lirael.** They can talk about it anywhere else, to anyone, all they like. What none of them can do is say it
+*into the proceeding.*
 
-**She has not vanished. She has become a matter no witness can be asked about.**
+**She has not vanished, and nobody has forgotten her. She has become a matter that proceeding cannot take
+statements about** — including from her.
 
 ---
 
 # 5. Affected · unchanged · open
 
-### Affected
-The review and investigation of her conduct at the rite — its intake of witness testimony about the ceremony,
-until the formal inquiry convenes.
+**Affected:** the review and investigation's intake of witness testimony about the ceremony, from the sealed
+roster, for as long as the closure stands.
 
-### Unchanged — stated, not assumed
-- **Every party's memory, in full.** `memoryEffects[]` is **empty.** No mind is altered, nothing is forgotten,
-  nobody believes anything false. **This is what closes F3**: rev. 1's `incoherent` asserted content it never
-  authored; this asserts no mental content at all.
-- Every `twist.*` atom — the wish still twisted and every First Favored present still heard the loose note.
-- Every `interr.*`, `answer.*`, `auth.*`, `review.*` atom. **The demand still stands and the investigation
-  still runs** — it simply cannot call the people who were there.
-- `lirael.scene1_disposition`.
-- **Rumour is untouched**, which the spine already needs: row 7 is *"Rumors spread through the city; the PC's
-  reputation collapses."* Talk was never the closed channel, and this outcome does not quiet it. **What she
-  bought is procedural silence, not social silence** — and the story still takes her reputation.
+**Unchanged — stated, not assumed:** every party's memory in full · every `twist.*`, `interr.*`, `answer.*`,
+`auth.*`, `review.*` atom — **the demand stands and the investigation runs**, it simply cannot call the people
+who were there · `lirael.scene1_disposition` · **the mouth-band, its concealment, and every physical or
+documentary channel** · **rumour**, which the spine needs at row 7 (*"Rumors spread through the city; the PC's
+reputation collapses"*) — **what she bought is procedural silence, not social silence.**
 
-### Open
-- Whether the proceeding advances on evidence that is not testimony — the Answer's reading, the band, the
-  record of the rite's order.
+**Open:**
+- **Whether the case against her can be made without witnesses at all** — the seed does not settle the balance
+  of evidence, and §1 withdrew the claim that it does. This is genuinely open, and it is the largest thing the
+  player cannot know when they spend.
+- **Whether the closure ever ends.** If no inquiry opens, it does not. Persistence is a live possibility, not
+  an edge case.
+- Whether the proceeding advances on the band, the rite's order, or something else.
 - What the Dohkar does with an investigation he cannot take statements into.
-- Whether anyone tries to give testimony and finds they cannot, and what that looks like.
-- What Julian makes of his own account being closed alongside everyone else's.
-- **Whether the closure's expiry is felt as relief or as a countdown.**
+- What Julian makes of his own account being closed with everyone else's.
+- **Flagged interaction:** row 5 is *"Julian quietly prevents the investigation from uncovering the truth."*
+  This narrows what that investigation could have drawn from witnesses, so his obstruction has less to do on
+  that channel. The row does not break — other surfaces remain — but the interaction is real and the player
+  bought it.
 
-### Flagged interaction, not hidden
-Row 5 is *"Julian quietly prevents the investigation from uncovering the truth."* This outcome narrows what
-that investigation could have uncovered from witnesses, so **Julian has less to suppress on that particular
-channel.** It does not break the row — the investigation still runs on other evidence, and his obstruction has
-other surfaces — but it is a real interaction and the player bought it. **Recorded rather than discovered
-later.**
+**Intrinsic cost:** **`undefendable_by_witness`** — no witness may speak **for** her, **and she may not speak
+for herself into the proceeding.** The closure is total and takes no side.
 
 ---
 
-# 6. Why this is still favorable as a complete package
+# 6. The favorability case, rebuilt on what is actually supported
 
-**The good, precisely:** the single proceeding forming against her is cut off from the only evidence that
-currently exists about the ceremony — **two dozen eyewitnesses and three named participants** — for the whole
-preliminary phase, twelve rows of story. That is not a scene of relief; it is the spine of Issue 1 running
-with its principal channel shut.
+**Not asserted:** that the case against her is witness-borne, or that some other evidence would clear her.
+Both were withdrawn in §1, and the balance of evidence now sits in `open[]`.
 
-**The cost, `undefendable_by_witness`:** the closure does not take sides, so **nobody can speak for her
-either.** Her ward cannot say she never touched the wish. The Dohkar cannot say her hands were where they
-should be. The exculpating account — the very thing `unm.the_answer_speaks` exists to supply — **cannot come
-from a witness while this stands.**
+**What is supported, and sufficient:** a proceeding aimed at her **cannot take a statement from any of the
+roughly two dozen people who watched it happen, nor from the three named participants**, for a duration that
+may never end. That is a large, concrete, durable impediment to the one process forming against her, and it
+holds regardless of what the rest of the evidentiary picture turns out to contain.
 
-**It remains favorable on balance** because the evidentiary weight against her is overwhelmingly witness-borne
-and the weight for her is not: what would clear her is the Answer's own reading, a procedural artefact this
-closure does not touch. **Fate shut the channel that was full and left open the one that was empty.**
+**What it costs is equally concrete**, and includes something rev. 2 never said: **she cannot explain herself
+into that proceeding either.** Her ward cannot say she never touched the wish; the Dohkar cannot say her hands
+were where they should be; and Lirael cannot give her own account. **The seed's own row 4 ends with her
+"still unable to explain herself"** — this outcome is the mechanism for that condition, and the player is the
+one who chose it.
 
-**And the expiry is honest rather than decorative.** It ends exactly when the formal inquiry convenes — the
-moment the story's pressure escalates. She does not escape the proceeding; she reaches it with the record
-thinner than it would have been, and **with a Chayr who may ask the questions no one was allowed to answer.**
+**So the package is a real trade with a real unknown at its centre**, not a calculated advantage: she has
+silenced every mouth that could have accused her, including the one that could have defended her, and **she
+cannot know whether the case needed those mouths at all.**
 
 **Rank: not assigned.**
 
@@ -134,7 +187,7 @@ thinner than it would have been, and **with a Chayr who may ask the questions no
 # 7. If approved
 
 - Replace `unm.witness_scattered` with `unm.testimony_closed` in the outcome set and the approval sheet.
-- The `unseen` ask-class keeps its own answer; no fallback is engaged, no class stranded.
-- **F3 closes**, and with it the last editorial blocker.
-
-**Not done here:** ranking, coverage computation, implementation.
+- The `unseen` ask-class keeps its own answer; no fallback engaged, no class stranded.
+- **F3 closes.**
+- **Separately owed, raised by §1:** `unm.the_answer_speaks` rests on an unsupported Answer capability and
+  needs its own source audit.
