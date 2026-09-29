@@ -21,6 +21,31 @@ chooses among.
 
 ---
 
+# Ask-class coverage status — **three distinct states, not one**
+
+> **Corrected 2026-09-29.** A prior handoff called all three ask-classes "uncovered". **That was wrong and
+> self-contradictory** — two of the three have approved outcomes. Coverage work needs to know *which* of three
+> situations it is in, because they require different work.
+
+| ask-class | status | detail |
+|---|---|---|
+| **`unseen`** | ✅ **COVERED** | by **approved `unm.the_turning_forgotten`**, subject to the native compiler contract and its declared population and contact conditions. **Awaiting implementation, not authoring.** |
+| **`escape`** | ◐ **PARTIALLY COVERED** | by **approved `unm.the_accusation_unmade`**, **only when a family accusation is active**. **Pre-accusation `escape` remains uncovered** — it lacks an outcome in *some active-canon states*, not everywhere. |
+| **`silence`** | ⛔ **UNCOVERED** | **no outcome at all.** `unm.custody_severed` is withdrawn, and no supported, genuinely favorable effect has been found. |
+
+**What each state needs next — they are not the same job:**
+
+| state | what is missing | next step |
+|---|---|---|
+| **covered** | nothing editorial | implementation |
+| **partially covered** | an outcome **in some active-canon states** | decide whether those states get their own outcome or a declared fallback |
+| **uncovered** | an outcome **entirely** | re-read the ask, then mechanism-first authoring — or accept the gap |
+
+**Do not collapse these into a single "uncovered" count.** The distinction is the information a later coverage
+pass depends on.
+
+---
+
 # Part 1 — The agency difference, in two wishes
 
 ### Precise: *"I wish **everyone here** would forget the wish twisted."*
