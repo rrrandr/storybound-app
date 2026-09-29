@@ -66,7 +66,22 @@ cloaks.
 
 ---
 
-# 2. Re-authored — `unm.custody_severed` · ask-class `silence`
+# 2. ⛔ `unm.custody_severed` — **WITHDRAWN IN FULL, 2026-09-29**
+
+> **Everything in this section is void.** The grant ceased Julian's entrustment, and **that entrustment is
+> office-bound** — it runs with his office, is a right of use rather than ownership, and **is not a revocable
+> scene-local custody arrangement.** The outcome was built on a false premise about what kind of thing it was
+> reaching.
+>
+> **Retired with it:** `answer.entrustment_vacant`, `custody_unclaimed`, and **every claim that Julian's
+> charge ends, lapses, or becomes open** — including §2d's custody crisis, which **does not exist**: the
+> handoff was always *within* a continuing entrustment, so when Lirael's authorization lapses the Answer is
+> **Julian's to have back**.
+>
+> **No replacement outcome is drafted.** See `_answer_lore_and_silence_reopened.md`. Section retained for the
+> record only.
+
+# 2. ~~Re-authored — `unm.custody_severed` · ask-class `silence`~~ *(void)*
 
 ## 2a. What the grant reaches, chosen deliberately
 

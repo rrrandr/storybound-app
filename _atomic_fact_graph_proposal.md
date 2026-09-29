@@ -143,6 +143,12 @@ taken, with a result** is a current world state the seed **requires** to be visi
 | **`answer.entrusted_to_julian`** | **state** | *"Julian is its caretaker"*, read under the 2026-09-29 canon: **ceremonial entrustment of this instance by virtue of office — not personal ownership** | `answer.instance_identity` |
 | **`answer.handed_to_lirael_for_questioning`** | **event** | *"Lirael holds it only for the questioning"* — the **separately declared temporary act** | — |
 
+> **Answer lore, 2026-09-29.** The Answer is **not a lie detector** and **may not establish historical
+> causation, factual guilt, or who caused the twist.** It **shape-responds to the present holder's alignment**:
+> clear belief or purpose → a straight sharp blade; uncertainty → a scythe at one end and a mace at the other;
+> evasiveness → a cat-o'-nine-tails or whip. **Julian's entrustment is office-bound** — a right of use, not
+> ownership, not scene-local — and `unm.custody_severed` is **withdrawn** for trying to cease it.
+>
 > **Custody canon, 2026-09-29.** Four layers stay separate: **instance · title · entrustment · physical
 > holding**, with **rite authority conferring none of them**. The Answer is entrusted to the highest-ranking
 > First Favored for ceremonial and judgement rites; **a Dohkar presiding at a First Sacrifice is too junior**,
