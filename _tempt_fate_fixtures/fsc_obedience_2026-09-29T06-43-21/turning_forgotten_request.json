@@ -1,0 +1,54 @@
+{
+  "proxy": "http://localhost:3000/api/proxy",
+  "body": {
+    "messages": [
+      {
+        "role": "system",
+        "content": "You are the prose author for an interactive romantasy novel set in the Fatelands.\nWrite ONE scene in third-person past tense, 220-320 words.\nA player has spent Fortune on Tempt Fate. The consequence has ALREADY been decided and is\ngiven to you below. Your job is to RENDER it. You are not choosing what happens."
+      },
+      {
+        "role": "user",
+        "content": "SCENE: a ceremony clearing in the Veilwood at dawn. Lirael, a Sacrificiant’s guide, stands\nbefore an assembly of First Favored after her ward Seren’s First Sacrifice wish twisted.\nPresent: Lirael, Seren, Julian (the Chayr), the presiding Dohkar, and the assembled crowd.\n\n\nPRESELECTED CONSEQUENCE (compiled at acceptance — render it; do not infer, extend or substitute):\n- READING: FATE-CHOSEN — the wording anchored nothing; Fate selected this interpretation.\n- OUTCOME: unm.the_turning_forgotten\n- AFFECTED (sealed roster, exhaustive — no one else is touched): the_assembly\n- INVOKER: not_in_population — Lirael is not a member of the named population; she is untouched by this effect.\n- MEMORY: the_assembly — forgot — twist.assembly_turned\n- COST: none — do not invent one\n- Everything not listed above is UNCHANGED. Do not assert an effect that is not here.\n\n\nWrite the scene now."
+      }
+    ],
+    "model": "grok-4-1-fast-reasoning",
+    "temperature": 0.8,
+    "max_tokens": 1400,
+    "role": "SPECIALIST_RENDERER",
+    "_sbModelOverride": "grok-4-1-fast-reasoning",
+    "_noFallback": true
+  },
+  "compiled": {
+    "v": 1,
+    "compiledAt": 1790664209113,
+    "wishText": "I want to disappear.",
+    "mode": "fate_chosen",
+    "outcomeId": "unm.the_turning_forgotten",
+    "askClass": "unseen",
+    "viaFallback": false,
+    "population": {
+      "populationId": "population.assembly",
+      "label": "the assembly",
+      "roster": [
+        "the_assembly"
+      ],
+      "sealedAt": 1790664209113
+    },
+    "invokerScope": "not_in_population",
+    "memoryEffects": [
+      {
+        "parties": [
+          "the_assembly"
+        ],
+        "atom": "twist.assembly_turned",
+        "disposition": "forgot"
+      }
+    ],
+    "delta": null,
+    "cost": null,
+    "durability": "persists",
+    "error": null,
+    "reservationKey": null
+  },
+  "promptBlock": "\nPRESELECTED CONSEQUENCE (compiled at acceptance — render it; do not infer, extend or substitute):\n- READING: FATE-CHOSEN — the wording anchored nothing; Fate selected this interpretation.\n- OUTCOME: unm.the_turning_forgotten\n- AFFECTED (sealed roster, exhaustive — no one else is touched): the_assembly\n- INVOKER: not_in_population — Lirael is not a member of the named population; she is untouched by this effect.\n- MEMORY: the_assembly — forgot — twist.assembly_turned\n- COST: none — do not invent one\n- Everything not listed above is UNCHANGED. Do not assert an effect that is not here.\n"
+}

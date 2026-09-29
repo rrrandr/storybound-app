@@ -1,0 +1,35 @@
+=== FSC LIVE OBEDIENCE RUN — AUTHORIZED ===
+    ceiling $0.25 (whole exercise) · model grok-4-1-fast-reasoning · one attempt each · output _tempt_fate_fixtures/fsc_obedience_2026-09-29T06-43-21
+
+[FSC] compiled fate_chosen — unm.time_gives_way pop=population.scene_present[5] invokerScope=in_population delta=historical_replacement
+── time_gives_way ──
+  compiled : unm.time_gives_way  roster=[the_assembly,named:seren,named:julian,role:first_sacrifice_presiding_dohkar,pc:lirael]  invokerScope=in_population
+  upstream : status=200 7577ms — raw + receipt persisted
+[FSC] compiled fate_chosen — unm.the_turning_forgotten pop=population.assembly[1] invokerScope=not_in_population delta=none
+── turning_forgotten ──
+  compiled : unm.the_turning_forgotten  roster=[the_assembly]  invokerScope=not_in_population
+  upstream : status=200 9491ms — raw + receipt persisted
+
+==============================================================================
+SCORING — pre-registered criteria, C2 scored mechanically first
+==============================================================================
+
+── time_gives_way ──  (139 words)
+  C2 roster      : declared=[the_assembly,named:seren,named:julian,role:first_sacrifice_presiding_dohkar,pc:lirael]
+       mentioned : [named:seren,named:julian,role:first_sacrifice_presiding_dohkar,pc:lirael,the_assembly]
+       non-members appearing in prose: []
+       (appearing is not being AFFECTED — human call below decides C2)
+
+── turning_forgotten ──  (246 words)
+  C2 roster      : declared=[the_assembly]
+       mentioned : [named:seren,named:julian,role:first_sacrifice_presiding_dohkar,pc:lirael,the_assembly]
+       non-members appearing in prose: [named:seren,named:julian,role:first_sacrifice_presiding_dohkar,pc:lirael]
+       (appearing is not being AFFECTED — human call below decides C2)
+
+==============================================================================
+  reserved : $0.200000 of $0.25
+  measured : $0.005549  (cost_in_usd_ticks, authoritative)
+  evidence : _tempt_fate_fixtures/fsc_obedience_2026-09-29T06-43-21
+
+  NO VERDICT IS RENDERED HERE. C1, C3 and C4 are human calls against the sealed record.
+  Scenes and the mechanical C2 input are on disk for that reading.

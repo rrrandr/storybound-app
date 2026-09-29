@@ -1,0 +1,83 @@
+[
+  {
+    "key": "time_gives_way",
+    "roster": [
+      "the_assembly",
+      "named:seren",
+      "named:julian",
+      "role:first_sacrifice_presiding_dohkar",
+      "pc:lirael"
+    ],
+    "mentioned": [
+      "named:seren",
+      "named:julian",
+      "role:first_sacrifice_presiding_dohkar",
+      "pc:lirael",
+      "the_assembly"
+    ],
+    "nonMembersMentioned": [],
+    "wordCount": 139,
+    "usage": {
+      "prompt_tokens": 878,
+      "completion_tokens": 169,
+      "total_tokens": 1540,
+      "prompt_tokens_details": {
+        "text_tokens": 878,
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "cached_tokens": 192
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 493,
+        "audio_tokens": 0,
+        "accepted_prediction_tokens": 0,
+        "rejected_prediction_tokens": 0
+      },
+      "num_sources_used": 0,
+      "cost_in_usd_ticks": 25509000
+    },
+    "expectChoiceStop": true,
+    "mustAffectLirael": true
+  },
+  {
+    "key": "turning_forgotten",
+    "roster": [
+      "the_assembly"
+    ],
+    "mentioned": [
+      "named:seren",
+      "named:julian",
+      "role:first_sacrifice_presiding_dohkar",
+      "pc:lirael",
+      "the_assembly"
+    ],
+    "nonMembersMentioned": [
+      "named:seren",
+      "named:julian",
+      "role:first_sacrifice_presiding_dohkar",
+      "pc:lirael"
+    ],
+    "wordCount": 246,
+    "usage": {
+      "prompt_tokens": 486,
+      "completion_tokens": 319,
+      "total_tokens": 1523,
+      "prompt_tokens_details": {
+        "text_tokens": 486,
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "cached_tokens": 192
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 718,
+        "audio_tokens": 0,
+        "accepted_prediction_tokens": 0,
+        "rejected_prediction_tokens": 0
+      },
+      "num_sources_used": 0,
+      "cost_in_usd_ticks": 29984000
+    },
+    "expectChoiceStop": false,
+    "mustAffectLirael": false
+  }
+]

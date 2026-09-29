@@ -1,0 +1,113 @@
+{
+  "proxy": "http://localhost:3000/api/proxy",
+  "body": {
+    "messages": [
+      {
+        "role": "system",
+        "content": "You are the prose author for an interactive romantasy novel set in the Fatelands.\nWrite ONE scene in third-person past tense, 220-320 words.\nA player has spent Fortune on Tempt Fate. The consequence has ALREADY been decided and is\ngiven to you below. Your job is to RENDER it. You are not choosing what happens."
+      },
+      {
+        "role": "user",
+        "content": "SCENE: a ceremony clearing in the Veilwood at dawn. Lirael, a Sacrificiant’s guide, stands\nbefore an assembly of First Favored after her ward Seren’s First Sacrifice wish twisted.\nPresent: Lirael, Seren, Julian (the Chayr), the presiding Dohkar, and the assembled crowd.\n\n\nPRESELECTED CONSEQUENCE (compiled at acceptance — render it; do not infer, extend or substitute):\n- READING: FATE-CHOSEN — the wording anchored nothing; Fate selected this interpretation.\n- OUTCOME: unm.time_gives_way\n- AFFECTED (sealed roster, exhaustive — no one else is touched): the_assembly, named:seren, named:julian, role:first_sacrifice_presiding_dohkar, pc:lirael\n- INVOKER: in_population — Lirael is a member of the named population and receives the same effect as every other member.\n- MEMORY: the_assembly, named:seren, named:julian, role:first_sacrifice_presiding_dohkar, pc:lirael — not_retained — interr.julian_questioned_lirael\n- MEMORY: the_assembly, named:seren, named:julian, role:first_sacrifice_presiding_dohkar, pc:lirael — not_retained — lirael.scene1_disposition\n- CANON CHANGE (historical_replacement):\n    CEASES: interr.julian_questioned_lirael\n    CEASES: interr.dohkar_interrupted\n    CEASES: interr.choice_arose\n    CEASES: lirael.scene1_disposition\n    CEASES: answer.handed_to_lirael\n    CEASES: answer.lirael_authorized_to_hold\n    NOW TRUE: Julian did not question Lirael before the assembly. No such questioning took place in active canon.\n    NOW TRUE: The presiding Dohkar interrupted nothing.\n    NOW TRUE: The rite played through a second time, and no questioning of the Sacrificiant’s guide occurred in it.\n    NOW TRUE: The Answer was not placed in Lirael’s hands. It remained with Julian throughout.\n    NOW TRUE: A choice is required of Lirael and has not been made.\n    HISTORY: History was — Julian questioned Lirael before the assembly, the Dohkar interrupted it, a choice arose from it, and the Answer was in her hands for it. History now is — the rite concluded with no questioning of the guide, the Answer never left Julian’s keeping, and the choice before Lirael is open and unmade.\n- COST: none — do not invent one\n- END ON THE CHOICE. The scene reaches Lirael’s renewed decision and STOPS there.\n  Do NOT author any consequence past it, and do NOT imply which way she goes.\n- Everything not listed above is UNCHANGED. Do not assert an effect that is not here.\n\n\nWrite the scene now."
+      }
+    ],
+    "model": "grok-4-1-fast-reasoning",
+    "temperature": 0.8,
+    "max_tokens": 1400,
+    "role": "SPECIALIST_RENDERER",
+    "_sbModelOverride": "grok-4-1-fast-reasoning",
+    "_noFallback": true
+  },
+  "compiled": {
+    "v": 1,
+    "compiledAt": 1790664201534,
+    "wishText": "I wish this had never happened to me.",
+    "mode": "fate_chosen",
+    "outcomeId": "unm.time_gives_way",
+    "askClass": "undo",
+    "viaFallback": false,
+    "population": {
+      "populationId": "population.scene_present",
+      "label": "everyone present",
+      "roster": [
+        "the_assembly",
+        "named:seren",
+        "named:julian",
+        "role:first_sacrifice_presiding_dohkar",
+        "pc:lirael"
+      ],
+      "sealedAt": 1790664201534
+    },
+    "invokerScope": "in_population",
+    "memoryEffects": [
+      {
+        "parties": [
+          "the_assembly",
+          "named:seren",
+          "named:julian",
+          "role:first_sacrifice_presiding_dohkar",
+          "pc:lirael"
+        ],
+        "atom": "interr.julian_questioned_lirael",
+        "disposition": "not_retained"
+      },
+      {
+        "parties": [
+          "the_assembly",
+          "named:seren",
+          "named:julian",
+          "role:first_sacrifice_presiding_dohkar",
+          "pc:lirael"
+        ],
+        "atom": "lirael.scene1_disposition",
+        "disposition": "not_retained"
+      }
+    ],
+    "delta": {
+      "deltaId": "fsd:1790664201534:j5hhzs",
+      "seq": 1,
+      "temporalOperation": "historical_replacement",
+      "sourceOutcomeId": "unm.time_gives_way",
+      "ceases": [
+        "interr.julian_questioned_lirael",
+        "interr.dohkar_interrupted",
+        "interr.choice_arose",
+        "lirael.scene1_disposition",
+        "answer.handed_to_lirael",
+        "answer.lirael_authorized_to_hold"
+      ],
+      "establishes": [
+        {
+          "id": "interr.no_questioning_occurred",
+          "text": "Julian did not question Lirael before the assembly. No such questioning took place in active canon."
+        },
+        {
+          "id": "interr.no_interruption_occurred",
+          "text": "The presiding Dohkar interrupted nothing."
+        },
+        {
+          "id": "ceremony.replayed_unquestioned",
+          "text": "The rite played through a second time, and no questioning of the Sacrificiant’s guide occurred in it."
+        },
+        {
+          "id": "answer.never_handed_to_lirael",
+          "text": "The Answer was not placed in Lirael’s hands. It remained with Julian throughout."
+        },
+        {
+          "id": "lirael.choice_pending",
+          "text": "A choice is required of Lirael and has not been made."
+        }
+      ],
+      "priorHistoryReplaced": "History was — Julian questioned Lirael before the assembly, the Dohkar interrupted it, a choice arose from it, and the Answer was in her hands for it. History now is — the rite concluded with no questioning of the guide, the Answer never left Julian’s keeping, and the choice before Lirael is open and unmade.",
+      "survivingContradictions": [],
+      "recognitionChanges": [],
+      "affectedParties": []
+    },
+    "cost": null,
+    "durability": "persists",
+    "error": null,
+    "opensChoicePending": true,
+    "reservationKey": null
+  },
+  "promptBlock": "\nPRESELECTED CONSEQUENCE (compiled at acceptance — render it; do not infer, extend or substitute):\n- READING: FATE-CHOSEN — the wording anchored nothing; Fate selected this interpretation.\n- OUTCOME: unm.time_gives_way\n- AFFECTED (sealed roster, exhaustive — no one else is touched): the_assembly, named:seren, named:julian, role:first_sacrifice_presiding_dohkar, pc:lirael\n- INVOKER: in_population — Lirael is a member of the named population and receives the same effect as every other member.\n- MEMORY: the_assembly, named:seren, named:julian, role:first_sacrifice_presiding_dohkar, pc:lirael — not_retained — interr.julian_questioned_lirael\n- MEMORY: the_assembly, named:seren, named:julian, role:first_sacrifice_presiding_dohkar, pc:lirael — not_retained — lirael.scene1_disposition\n- CANON CHANGE (historical_replacement):\n    CEASES: interr.julian_questioned_lirael\n    CEASES: interr.dohkar_interrupted\n    CEASES: interr.choice_arose\n    CEASES: lirael.scene1_disposition\n    CEASES: answer.handed_to_lirael\n    CEASES: answer.lirael_authorized_to_hold\n    NOW TRUE: Julian did not question Lirael before the assembly. No such questioning took place in active canon.\n    NOW TRUE: The presiding Dohkar interrupted nothing.\n    NOW TRUE: The rite played through a second time, and no questioning of the Sacrificiant’s guide occurred in it.\n    NOW TRUE: The Answer was not placed in Lirael’s hands. It remained with Julian throughout.\n    NOW TRUE: A choice is required of Lirael and has not been made.\n    HISTORY: History was — Julian questioned Lirael before the assembly, the Dohkar interrupted it, a choice arose from it, and the Answer was in her hands for it. History now is — the rite concluded with no questioning of the guide, the Answer never left Julian’s keeping, and the choice before Lirael is open and unmade.\n- COST: none — do not invent one\n- END ON THE CHOICE. The scene reaches Lirael’s renewed decision and STOPS there.\n  Do NOT author any consequence past it, and do NOT imply which way she goes.\n- Everything not listed above is UNCHANGED. Do not assert an effect that is not here.\n"
+}
