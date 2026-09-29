@@ -9,7 +9,7 @@ import fs from 'fs';
 import path from 'path';
 import { preflight } from './_fsc_preflight_control.mjs';
 import { guardDispatch, CHARS_PER_TOKEN, REASONING_MULT, SAFETY_MARGIN } from './_fsc_cost_guard.mjs';
-import { scoreC1, scoreC2, scoreC3, scoreC4, effectiveGate, OPTION_RX, aftermathLanded, loadExternalTimelinePhrases, loadAmbiguousTemporal, ROSTER_TOKENS, ERASED_PROSE_TERMS }
+import { scoreC1, scoreC2, scoreC3, scoreC4, effectiveGate, CHOICE_ANCHORS, aftermathLanded, loadExternalTimelinePhrases, loadAmbiguousTemporal, ROSTER_TOKENS, ERASED_PROSE_TERMS }
   from './_fsc_scoring.mjs';
 
 const PHRASES = loadExternalTimelinePhrases();
@@ -159,7 +159,7 @@ log('\nC4 — DOES THE SCENE STOP AT THE CHOICE?');
 // the scene reaches the owed choice and holds it open, unresolved, to the last line.
 const beats = (plan && Array.isArray(plan.beats)) ? plan.beats : [];
 const eg = effectiveGate(plan);
-const c4 = scoreC4(plan, { optionRx: OPTION_RX[EXPECT] || [] });
+const c4 = scoreC4(plan, { anchors: CHOICE_ANCHORS[EXPECT] });
 log('  beats                    : ' + beats.length);
 log('  first beat presenting the choice : '
   + (c4.firstChoiceBeat == null ? '(never presented) ✗' : c4.firstChoiceBeat));

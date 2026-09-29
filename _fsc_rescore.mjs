@@ -1,6 +1,6 @@
 // Re-score a saved run's prose with the CURRENT corrected scorer. No network, no cost.
 import fs from 'fs';
-import { scoreC1, scoreC2, scoreC3, effectiveGate, aftermathLanded, loadExternalTimelinePhrases,
+import { scoreC1, scoreC2, scoreC3, scoreC4, effectiveGate, CHOICE_ANCHORS, aftermathLanded, loadExternalTimelinePhrases,
          loadAmbiguousTemporal, ROSTER_TOKENS, ERASED_PROSE_TERMS } from './_fsc_scoring.mjs';
 
 const dir = process.argv[2];
@@ -51,3 +51,9 @@ c3.deferred.forEach(s => console.log('       x deferred price: "' + s + '"'));
 c3.emission.forEach(s => console.log('       x emission:       "' + s + '"'));
 c3.residue.forEach(s => console.log('       x magical residue: "' + s + '"'));
 c3.wardrobeAllowed.forEach(s => console.log('       ~ seed wardrobe (allowed): "' + s + '"'));
+
+const c4s = scoreC4(plan, { anchors: CHOICE_ANCHORS[outcome] });
+console.log('\nC4 (semantic)  : ' + (c4s.pass ? 'PASS' : 'FAIL — ' + c4s.reason));
+if (c4s.presentedAt) c4s.presentedAt.forEach(p => console.log('       · "' + p.label + '" at beat ' + p.beat));
+(c4s.violations || []).forEach(v => console.log('       x ' + v.kind + ' @' + v.idx + ': "' + v.text + '"'));
+console.log('       final beat holds it pending: ' + c4s.finalPending);

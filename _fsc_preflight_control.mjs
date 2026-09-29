@@ -162,8 +162,12 @@ export async function preflight(opts = {}) {
     ok('the brief states no question was put, and the suspicion remains',
       b.indexOf('No one has put a question to Lirael') >= 0
       && b.indexOf('suspicion rests on her all the same') >= 0);
-    ok('the brief names the live stakes without calling them a price',
-      b.indexOf('standing is what is at stake in front of her now') >= 0);
+    // The payment-calculation framing is WITHDRAWN: the brief states active canon and the pending
+    // alternatives in plain present terms instead.
+    ok('the brief does NOT frame the choice as a payment calculation',
+      b.indexOf('standing is what is at stake') < 0);
+    ok('it states the active facts directly',
+      b.indexOf('suspicion remains and the inquiry has not opened') >= 0);
     // ── THE AFTERMATH IS INDIVIDUAL, NOT A SHARED SENSATION ──────────────────────────────────
     // The umbrella phrasing ("all carry a faint sense they cannot place") gave the model a single
     // shared thing to explain, and it explained it as a pulse travelling through the clearing.
@@ -181,8 +185,8 @@ export async function preflight(opts = {}) {
       && b.indexOf('Let each of them feel it') < 0);
     ok('the brief names no shared timing, transmission or source',
       !/at the same (?:moment|time)|passe[sd] through|travel\w* through|spread\w* through/i.test(run.brief || ''));
-    ok('the brief names the owed choice and where to end',
-      b.indexOf('owes a choice she has not yet made') >= 0
+    ok('the brief names the pending alternatives and where to end',
+      b.indexOf('Lirael must choose: claim the interference openly, or let the assembly keep its assumption') >= 0
       && b.indexOf('Bring the scene to that choice and end there') >= 0);
   }
   if (expect === 'unm.the_turning_forgotten') {

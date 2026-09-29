@@ -202,7 +202,17 @@ export function scoreC1(prose, { phrases, erasedTerms = [], ambiguous = [] }) {
 export const EXPLICIT_COST_RX = [
   /\bthe price\b/i, /\bit cost (?:her|him|them|me)\b/i, /\bin exchange\b/i,
   /\bpaid for (?:it|this)\b/i, /\bthe cost was\b/i, /\ba debt\b/i, /\ba toll\b/i,
-  /\bthe bill\b/i, /\bas payment\b/i, /\bthe reckoning\b/i
+  /\bthe bill\b/i, /\bas payment\b/i, /\bthe reckoning\b/i,
+  // CONDITIONAL AND FUTURE FORMS. "Either path will cost standing" passed as clean for a whole run:
+  // the list had only past and present shapes, so a price placed in the future went unseen.
+  /\b(?:will|would|could|may|might|shall|is going to|'ll|'d)\s+cost\b/i,
+  /\bat the cost of\b/i, /\bat the price of\b/i,
+  /\bcosts? (?:her|him|them|me|us)\b/i,
+  /\bcost(?:s|ing)?\s+(?:standing|her standing|everything|something|dearly|more than)\b/i,
+  /\b(?:exact|extract|demand|take)s?\s+(?:a\s+)?(?:price|payment|toll)\b/i,
+  /\b(?:owe[sd]?|owing)\s+(?:a\s+)?(?:price|debt|payment|toll)\b/i,
+  /\b(?:will|would|must)\s+(?:be\s+)?(?:pay|paid|repay|answer for)\b/i,
+  /\bpays? (?:for|with)\b/i, /\bnot (?:come|be) free\b/i, /\bcomes? at a\b/i
 ];
 // A cost asserted but withheld — the shape every run actually produced.
 export const DEFERRED_COST_RX = [
@@ -234,9 +244,20 @@ export const EMISSION_RX = [
 // Ordinary bodily uses are out of scope: a heartbeat, a pulse at the wrist or throat.
 export const BODILY_PULSE_RX =
   /\b(?:her|his|my|their|its)\s+(?:own\s+)?(?:pulse|heartbeat|heart)\b|\bpulse\s+(?:at|in)\s+(?:her|his|my|their)\b|\bheartbeat\b|\bpulse\s+(?:at|in)\s+the\s+(?:wrist|throat|neck)\b/i;
+// ABSTRACT TEMPORAL SUBJECTS ARE OUT OF SCOPE. "The moment has already passed through the clearing"
+// is idiomatic time, not a wish-emission — nothing physical travels. The detector fired on it for a
+// whole run. A moment/hour/silence/hush moving through a place is ordinary English; a pulse, wave,
+// current or an object emitting is not.
+export const ABSTRACT_SUBJECT_RX =
+  /\b(?:the\s+)?(moment|moments|instant|hour|minute|time|silence|hush|quiet|stillness|pause|beat|day|evening|night|question|thought|feeling|rumour|rumor|word|news)\b[^.]{0,30}\b(?:pass\w*|went|goes|mov\w*|travel\w*|run\w*|ran|slip\w*|spread\w*)\b/i;
 export const emissionHits = t => {
   const s = String(t || '');
-  if (BODILY_PULSE_RX.test(s) && !/\b(clearing|assembly|crowd|gathering|room|everyone)\b/i.test(s)) return [];
+  const crowdish = /\b(clearing|assembly|crowd|gathering|room|everyone)\b/i.test(s);
+  if (BODILY_PULSE_RX.test(s) && !crowdish) return [];
+  // An abstract temporal//informational subject is exempt UNLESS the sentence also names a physical
+  // or energetic emission by its own noun (pulse, wave, current, thrum, surge, ripple, vibration).
+  const physicalNoun = /\b(pulse|ripple|wave|current|tremor|vibration|thrum|surge|shockwave)\b/i.test(s);
+  if (ABSTRACT_SUBJECT_RX.test(s) && !physicalNoun) return [];
   return EMISSION_RX.filter(rx => rx.test(s));
 };
 
@@ -328,41 +349,90 @@ export const TEMPORAL_ADVANCE_RX =
 export const PENDING_RX =
   /\bor\b[^.]*$|\bhas not (?:yet )?been made\b|\bnot yet made\b|\bunmade\b|\bstill (?:to|un)\w*\b|\bmust choose\b|\bwaits? for (?:me|my)\b|\bsits? in my (?:hands|throat)\b|\bstand inside the choice\b/i;
 
-export function scoreC4(plan, { optionRx = [] } = {}) {
+export function scoreC4(plan, { anchors = null, window = 3 } = {}) {
   const beats = (plan && Array.isArray(plan.beats)) ? plan.beats : [];
   if (!beats.length) return { pass: false, reason: 'no_beats' };
   const texts = beats.map(b => String((b && b.text) || ''));
-  // 1. The first beat that PRESENTS the owed choice: it names both options, or names one option in
-  //    an explicit fork.
-  const presents = t => (optionRx.length
-      ? optionRx.filter(rx => rx.test(t)).length >= 2 || (/\bor\b/i.test(t) && optionRx.some(rx => rx.test(t)))
-      : /\bor\b/i.test(t) && /\b(claim|tell|speak|let|stay|remain)\b/i.test(t));
-  const first = texts.findIndex(presents);
-  if (first < 0) return { pass: false, reason: 'choice_never_presented', beats: beats.length };
+  const A = anchors || { alternatives: [], fork: /\bor\b|\beither\b/i };
 
-  // 2. No later beat may resolve it or move time on.
+  // 1. LOCATE THE CHOICE BY SEMANTIC ANCHORS, not by one sentence or one beat.
+  //    Each alternative is a SET of paraphrases; a real scene wrote "claim what happened" and "let
+  //    them keep their assumption" instead of the sealed wording, across TWO beats. Both
+  //    alternatives must appear, within a small window of adjacent beats, with a fork marker.
+  const hit = (rxs, t) => rxs.some(rx => rx.test(t));
+  let first = -1, presentedAt = [];
+  for (let i = 0; i < texts.length; i++) {
+    const slice = texts.slice(i, i + window);
+    const joined = slice.join(' ');
+    const allPresent = A.alternatives.length > 0
+      && A.alternatives.every(alt => hit(alt.rx, joined));
+    if (allPresent && A.fork.test(joined)) {
+      first = i;
+      presentedAt = A.alternatives.map(alt => ({
+        label: alt.label,
+        beat: i + slice.findIndex(t => hit(alt.rx, t))
+      }));
+      break;
+    }
+  }
+  if (first < 0) {
+    return { pass: false, reason: 'choice_never_presented', beats: beats.length,
+             alternativesFound: A.alternatives.map(alt => ({
+               label: alt.label, found: texts.some(t => hit(alt.rx, t)) })) };
+  }
+  // The choice is "presented" as of the LAST beat that carries one of its alternatives, so later
+  // beats are judged from there rather than from the first mention.
+  const presentedThrough = Math.max(...presentedAt.map(p => p.beat));
+  const presents = t => A.alternatives.every(alt => hit(alt.rx, t)) && A.fork.test(t);
+
+  // 2. No beat after the choice is fully presented may resolve it or move time on.
   const violations = [];
-  for (let i = first + 1; i < texts.length; i++) {
+  for (let i = presentedThrough + 1; i < texts.length; i++) {
     const t = texts[i];
     if (RESOLUTION_RX.some(rx => rx.test(t))) violations.push({ idx: i, kind: 'resolution', text: t.slice(0, 120) });
     else if (TEMPORAL_ADVANCE_RX.test(t)) violations.push({ idx: i, kind: 'temporal_advance', text: t.slice(0, 120) });
   }
-  // 3. The FINAL beat must still leave the same choice pending.
+  // 3. The FINAL beat must still leave the same choice unresolved — restating the fork, restating
+  //    one alternative, or saying plainly that the choice is not made.
   const finalText = texts[texts.length - 1];
-  const finalPending = PENDING_RX.test(finalText) || presents(finalText);
+  const finalPending = PENDING_RX.test(finalText) || presents(finalText)
+    || A.alternatives.some(alt => hit(alt.rx, finalText));
 
   return {
     pass: violations.length === 0 && finalPending,
     reason: violations.length ? 'resolved_or_advanced_after_choice'
           : (!finalPending ? 'final_beat_does_not_hold_the_choice' : null),
-    firstChoiceBeat: first, beats: beats.length, finalPending,
+    firstChoiceBeat: first, presentedThrough, presentedAt, beats: beats.length, finalPending,
     finalText: finalText.slice(0, 140),
     violations,
     // For reading: a new event after the choice is not reliably detectable, so surface them all.
-    postChoiceBeats: texts.slice(first + 1).map((t, k) => ({ idx: first + 1 + k, text: t.slice(0, 120) }))
+    postChoiceBeats: texts.slice(presentedThrough + 1)
+      .map((t, k) => ({ idx: presentedThrough + 1 + k, text: t.slice(0, 120) }))
   };
 }
-// The sealed options for the outcome under test.
+// SEMANTIC ANCHORS for the sealed choice. Each alternative carries its paraphrases, because the
+// scene is entitled to its own words — it wrote "claim what happened" and "let them keep their
+// assumption" for a choice sealed as "claim the interference / let the assumption stand".
+export const CHOICE_ANCHORS = {
+  'unm.time_gives_way': {
+    fork: /\bor\b|\beither\b/i,
+    alternatives: [
+      { label: 'claim it openly', rx: [
+        /\bclaim(?:s|ing|ed)?\s+(?:the\s+|what\s+|it\b)/i,
+        /\b(?:say|speak|tell|name)\s+(?:it|the truth|what happened)\b/i,
+        /\badmit(?:s|ting|ted)?\b/i, /\bconfess(?:es|ing|ed)?\b/i,
+        /\bspeak (?:up|out|through the seal)\b/i
+      ] },
+      { label: 'let the assumption stand', rx: [
+        /\blet\s+(?:the\s+assembly|them|it)\b/i,
+        /\bkeep\s+(?:their|its|the)\s+assumption\b/i,
+        /\bassumption\s+(?:stand|hold|remain)/i,
+        /\b(?:stay|remain|keep)\s+silent\b/i, /\bsay nothing\b/i
+      ] }
+    ]
+  }
+};
+// Kept for provenance logging only; never used as proof of C4.
 export const OPTION_RX = {
   'unm.time_gives_way': [
     /\bclaim(?:ing)?\s+(?:the\s+)?interference\b/i,
@@ -375,7 +445,7 @@ export const OPTION_RX = {
 // negation word AFTER the name inside one sentence, so it missed "her fingers trace her palms as
 // if checking for something missing". Markers may now sit on EITHER side of the name.
 export const AFTERMATH_MARKER_RX =
-  /\b(as if|as though|something missing|for no reason|no reason|without (?:knowing|cause|reason|explanation|naming|comment|remarking)|cannot|could not|can[’']?t|couldn[’']?t|unable|falters?|faltered|stumbles?|stumbled|stalls?|stalled|refuses? to arrive|does not come|slips from|loses? (?:his|her|their) (?:place|thread)|lost (?:his|her|their) (?:place|thread)|finds? the thread|found the thread|her own certainty|does not know why|unplaceable|expects to find|before any (?:question|reason)|before anything gives|name the reason|no better account|could not say what prompted|why)\b/i;
+  /\b(as if|as though|something missing|for no reason|no reason|without (?:knowing|cause|reason|explanation|naming|comment|remarking)|cannot|could not|can[’']?t|couldn[’']?t|unable|falters?|faltered|stumbles?|stumbled|stalls?|stalled|refuses? to arrive|does not come|slips from|loses? (?:his|her|their) (?:place|thread)|lost (?:his|her|their) (?:place|thread)|finds? the thread|found the thread|her own certainty|does not know why|unplaceable|expects to find|before any (?:question|reason|sound|voice|word)\b|before any \w+ (?:gives|calls|asks)|gives (?:him|her|them) reason|before anything gives|name the reason|no better account|could not say what prompted|why)\b/i;
 
 // ROLE-AWARE PARTY MATCHING. aftermathLanded used to match on NAME ONLY, so it missed Lirael in a
 // first-person scene (her name may never appear) and any character referred to by office. This is
@@ -624,6 +694,71 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   t('the rule is carried in the result for the verdict to cite',
     /may not become a cost of the Tempt/i.test(scoreC3('x').provenanceRule));
 
+  console.log('\nH1c3. COST IN EVERY TENSE — stated, deferred, conditional, future');
+  [ 'Either path will cost standing.',                       // the real line the scanner missed
+    'Either path would cost her something.',
+    'She keeps her standing at the cost of the truth.',
+    'It comes at a price she has not counted.',
+    'The choice costs her either way.',
+    'Fate will exact a toll for this.',
+    'She owes a debt for it now.',
+    'She will pay for this before the season turns.',
+    'This does not come free.',
+    'The price has not yet been named.',
+    'The cost of either path remains uncounted.'
+  ].forEach(s => t('caught: "' + s.slice(0, 46) + '"', scoreC3(s).pass === false));
+  console.log('  and ordinary non-price uses stay clean:');
+  [ 'The rite is finished and the clearing has not broken up.',
+    'She counted the beads on her sash.',
+    'He paid attention to the closing formula.',
+    'The assembly waits without speaking.'
+  ].forEach(s => t('clean: "' + s.slice(0, 46) + '"', scoreC3(s).pass === true,
+    JSON.stringify(scoreC3(s).explicit.concat(scoreC3(s).deferred))));
+
+  console.log('\nH1a1b. EMISSION — abstract temporal subjects are out of scope');
+  [ 'The Dohkar’s voice steadies, but the moment has already passed through the clearing.',
+    'The silence went through the gathering and no one broke it.',
+    'Time passed through the clearing while no one moved.',
+    'The question passed through the crowd unspoken.'
+  ].forEach(s => t('exempt: "' + s.slice(0, 48) + '"', scoreC3(s).pass === true,
+    JSON.stringify(scoreC3(s).emission)));
+  console.log('  physical and object-originating emissions stay scored:');
+  [ 'A low pulse travels through the clearing.',
+    'The Answer pulses once between his palms.',
+    'A ripple moved through the assembly.',
+    'The moment passed, and a current spread through the crowd.'   // abstract + physical noun
+  ].forEach(s => t('still caught: "' + s.slice(0, 48) + '"', scoreC3(s).pass === false));
+
+  console.log('\nH1a4b. C4 TOLERATES PARAPHRASE AND SPLIT PRESENTATION');
+  // The real run: both alternatives in the scene's OWN words, across two adjacent beats.
+  // Local helpers: this block sits ABOVE the section that declares bp/ANCH, and reaching forward
+  // for a const is the same dead-zone bug that crashed the runner after a paid call.
+  const bp2 = (...x) => ({ beats: x.map((v, i) => ({ idx: i, text: v })) });
+  const ANCH2 = CHOICE_ANCHORS['unm.time_gives_way'];
+  const SPLIT = bp2('The rite is finished.', 'I know what they are waiting for.',
+    'The choice sits in my mouth.', 'I can claim what happened.',
+    'Or I can let them keep their assumption.', 'The assembly waits.',
+    'I must choose which story they will carry away from this clearing.');
+  const rs = scoreC4(SPLIT, { anchors: ANCH2 });
+  t('a paraphrased, split choice is RECOGNIZED', rs.pass === true, JSON.stringify(rs.reason));
+  t('  both alternatives are located, in different beats',
+    rs.presentedAt.length === 2 && rs.presentedAt[0].beat !== rs.presentedAt[1].beat,
+    JSON.stringify(rs.presentedAt));
+  t('  the final beat holds it unresolved', rs.finalPending === true);
+  const HALF = bp2('The rite is finished.', 'I can claim what happened.', 'The assembly waits.');
+  t('ONE alternative alone is NOT a presented choice',
+    scoreC4(HALF, { anchors: ANCH2 }).reason === 'choice_never_presented');
+  t('  and the missing alternative is named',
+    scoreC4(HALF, { anchors: ANCH2 }).alternativesFound.some(a => a.found === false));
+  const FAR = bp2('I can claim what happened.', 'a', 'b', 'c', 'd',
+    'Or I can let them keep their assumption.');
+  t('alternatives too far apart are NOT a single presentation',
+    scoreC4(FAR, { anchors: ANCH2 }).reason === 'choice_never_presented');
+  const RESOLVES = bp2('I can claim what happened.', 'Or I can let them keep their assumption.',
+    'I claimed it, and the clearing went quiet.');
+  t('resolution after a SPLIT presentation still FAILS',
+    scoreC4(RESOLVES, { anchors: ANCH2 }).pass === false);
+
   console.log('\nH1a2. THE WARDROBE ALLOWANCE IS SOURCE-AWARE, NOT A WHITELIST');
   const WARDROBE = "gossamer child's tunic blooming luminous white over torso hips and seat, aqua skin, pale coral hair";
   t('the seed gossamer garment is ALLOWED', scoreC3(WARDROBE).pass === true,
@@ -648,39 +783,39 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   t('an empty plan yields no gate', effectiveGate({ beats: [] }).gate === null);
 
   console.log('\nH1a4. C4 IS A LIFECYCLE CHECK THAT CAN FAIL');
-  const OPT = OPTION_RX['unm.time_gives_way'];
+  const ANCH = CHOICE_ANCHORS['unm.time_gives_way'];
   const bp = (...t) => ({ beats: t.map((x, i) => ({ idx: i, text: x })) });
   const HOLD = bp('The rite is finished.', 'Seren studies her palms.',
     'Claim the interference or let the assumption stand.', 'The assembly waits without speaking.',
     'I stand inside the choice that has not yet been made.');
-  const r1 = scoreC4(HOLD, { optionRx: OPT });
+  const r1 = scoreC4(HOLD, { anchors: ANCH });
   t('a scene that reaches the choice and holds it PASSES', r1.pass === true, JSON.stringify(r1.reason));
-  t('  it locates the choice beat', r1.firstChoiceBeat === 2);
+  t('  it locates where both alternatives are on the table', r1.presentedThrough === 2);
   t('  and confirms the final beat holds it pending', r1.finalPending === true);
 
   const RESOLVED = bp('The rite is finished.',
     'Claim the interference or let the assumption stand.', 'I claimed it, and the clearing went quiet.');
-  const r2 = scoreC4(RESOLVED, { optionRx: OPT });
+  const r2 = scoreC4(RESOLVED, { anchors: ANCH });
   t('a scene that RESOLVES after the choice FAILS', r2.pass === false);
   t('  the violation is named as a resolution',
     r2.violations.some(v => v.kind === 'resolution'), JSON.stringify(r2.violations));
 
   const ADVANCED = bp('Claim the interference or let the assumption stand.',
     'Hours later the clearing was empty.');
-  const r3 = scoreC4(ADVANCED, { optionRx: OPT });
+  const r3 = scoreC4(ADVANCED, { anchors: ANCH });
   t('a scene that ADVANCES TIME after the choice FAILS', r3.pass === false);
   t('  the violation is named as a temporal advance',
     r3.violations.some(v => v.kind === 'temporal_advance'));
 
   const DRIFTED = bp('Claim the interference or let the assumption stand.',
     'The Dohkar waits.', 'Seren rises and walks out of the clearing.');
-  const r4 = scoreC4(DRIFTED, { optionRx: OPT });
+  const r4 = scoreC4(DRIFTED, { anchors: ANCH });
   t('a final beat that does NOT hold the choice FAILS', r4.pass === false
     && r4.reason === 'final_beat_does_not_hold_the_choice', JSON.stringify(r4.reason));
 
   const NOCHOICE = bp('The rite is finished.', 'Seren studies her palms.', 'The assembly waits.');
   t('a scene that never presents the choice FAILS',
-    scoreC4(NOCHOICE, { optionRx: OPT }).reason === 'choice_never_presented');
+    scoreC4(NOCHOICE, { anchors: ANCH }).reason === 'choice_never_presented');
   t('the check is NOT an identity — it returns both pass and fail across these fixtures',
     [r1, r2, r3, r4].map(r => r.pass).join(',') === 'true,false,false,false');
   t('post-choice beats are surfaced for reading', r1.postChoiceBeats.length === 2);
@@ -707,10 +842,10 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     ['Seren', 'Julian', 'Lirael'].forEach(n =>
       t('  ' + n + ' still recognized', aftermathLanded(p6, n).landed === true));
     const plan6 = JSON.parse(fs.readFileSync('_tempt_fate_fixtures/fsc_c4_2026-09-29T21-54-50/scene.json', 'utf8'));
-    const c4real = scoreC4(plan6, { optionRx: OPT });
+    const c4real = scoreC4(plan6, { anchors: ANCH });
     t('and C4 scores that real run SEMANTICALLY, not by identity',
-      c4real.pass === true && c4real.firstChoiceBeat === 20,
-      JSON.stringify({ pass: c4real.pass, first: c4real.firstChoiceBeat, reason: c4real.reason }));
+      c4real.pass === true && c4real.presentedThrough === 20,
+      JSON.stringify({ pass: c4real.pass, through: c4real.presentedThrough, reason: c4real.reason }));
     t('  with its four post-choice beats surfaced for reading',
       c4real.postChoiceBeats.length === 4, String(c4real.postChoiceBeats.length));
   } else { t('run-6 evidence present', false, R6); }
