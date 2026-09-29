@@ -1,0 +1,11 @@
+{
+  "void": true,
+  "status": 504,
+  "ms": 91541,
+  "err": null,
+  "bodyBytes": 202,
+  "upstream": "{\"error\":\"All Grok models in fallback chain failed\",\"details\":{\"error\":{\"message\":\"xAI call for grok-4-1-fast-reasoning exceeded 90000ms (hang guard tripped)\"}},\"chainTried\":[\"grok-4-1-fast-reasoning\"]}",
+  "measured": null,
+  "estimate": 0.128895,
+  "at": "2026-09-29T23:35:29.076Z"
+}

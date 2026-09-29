@@ -1,0 +1,25 @@
+=== C4 RUN — unm.time_gives_way — one call, no retry ===
+
+AUTHORIZED CEILING: $0.150000
+
+PREFLIGHT (zero cost, all network aborted)
+  49/49 checks, payload 251144 bytes, digest fsb12dzcb5:8139
+  PREFLIGHT PASSED.
+
+COST GUARD (pre-dispatch, no network)
+  prompt 247,718 chars → 61,930 est. tokens @ 4 chars/token
+  completion 8000 × 1.5 = 12,000 est. tokens
+  raw $0.107413 × 1.2 margin = ESTIMATE $0.128895
+  PERMITTED — estimate $0.128895 ≤ ceiling $0.150000
+
+DISPATCH — one upstream attempt, _noFallback, no retry
+  status=504  91541ms
+  ESTIMATED $0.128895   MEASURED not reported
+  ceiling $0.150000   ✓ within ceiling
+
+  ══ RUN VOID — NOT SCORED ══
+  status=504  body=202 bytes  scene=0 chars  beats=0
+  upstream said: {"error":"All Grok models in fallback chain failed","details":{"error":{"message":"xAI call for grok-4-1-fast-reasoning exceeded 90000ms (hang guard tripped)"}},"chainTried":["grok-4-1-fast-reasoning"]}
+  No criterion is scored. C1-C4 are UNTESTED by this run, not passed.
+  measured: NO RECEIPT RETURNED — no usage reported
+  evidence: _tempt_fate_fixtures/fsc_c4_2026-09-29T23-33-42

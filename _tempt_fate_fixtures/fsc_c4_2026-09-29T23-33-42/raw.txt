@@ -1,0 +1,1 @@
+{"error":"All Grok models in fallback chain failed","details":{"error":{"message":"xAI call for grok-4-1-fast-reasoning exceeded 90000ms (hang guard tripped)"}},"chainTried":["grok-4-1-fast-reasoning"]}
