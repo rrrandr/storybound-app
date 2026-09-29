@@ -9,6 +9,11 @@
 
 One defect produces every symptom in the review. `_authoring_feasibility_packet_2026_09_27.md` §7a opens:
 
+> **Note added 2026-09-28:** the quotation below contains **two** faults, not one. The Petition-guard
+> misapplication is diagnosed in this document. The phrase **"Circumstances, Not Minds" is an invented
+> doctrine** that exists nowhere in `public/` — I attributed it to the seed. **This document did not catch
+> that**, because it audited the rule I cited rather than the doctrine I quoted.
+
 > *"Fate cannot un-happen canon, and the seed's own doctrine already says so — **"Circumstances, Not Minds"**,
 > plus the kernel-substitution rule already written into the verdict block at `:75601`: an impossible ask is
 > granted as its plausible kernel, never literally."*

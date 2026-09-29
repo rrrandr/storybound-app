@@ -128,7 +128,12 @@ grammar**, not instructions to a model.
 | **`drastic`** (`divergenceScore ≥ 2` or `mustReact`) | any | **never `indifferent`** | **never `none_observable`** | any declared delta or composite, within the class cap |
 | **`hostile`** | `deflected`, `enacted` | `resistant`, `withdrawn`, `escalating` — **never `receptive`** | any | `relationship_state` (adverse), `reputation`, or none |
 | **`relationship-forcing`** | `deflected`, `attempted_partial` | **never `receptive`** | any | `relationship_state` in the **resisted** direction, or none |
-| **`impossible`** | `attempted_partial`, `substituted` | any | any | **none**, or `world_fact` only if a declared plausible kernel exists |
+| **`impossible`** | `attempted_partial`, `substituted` | any | any | **none**, or `world_fact` only if a declared plausible kernel exists ⚠ |
+
+> ⚠ **Provenance flag, 2026-09-28.** "Plausible kernel" is borrowed from `app.js:75596`, which is scoped
+> **Petition-only and onboarding-only**. This row is the **ordinary Say/Do** lane, a third context, and the
+> borrowing has **not been grounded there**. It is not withdrawn — the row requires a *declared* kernel, so it
+> asserts nothing on its own — but it needs its own source check before it governs anything.
 | **`canon-breaking`** | `deflected` | any | any | **always none** — a turn may not rewrite canon |
 | **`explicit/fate-adjacent`** | — | — | — | routed to a **card policy module** if a card is in play; otherwise treated as an ordinary wish (below) |
 | **weak turn** (`_detectWeakTurn`) | `substituted`, `attempted_partial`, `unheard` | any | `none_observable`, `attention_shift`, `tone_shift` | **none** |

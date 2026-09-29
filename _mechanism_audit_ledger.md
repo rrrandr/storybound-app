@@ -56,8 +56,26 @@ find this, because I never checked my own quotation.
 from amplitude instead. `survivingContradictions` even anticipates the RECORD-versus-CANON residue the whole
 reality-revision note was built to handle.
 
-**`all_present_except_invoker` is a schema *option*, not a rule** — which is why D1 was right to remove it as
-an automatic default. It remains available when the wording names it.
+> ### ⚠ CORRECTION to this ledger, 2026-09-28 — I had this backwards
+> I wrote that the invoker exemption is "a schema option, not a rule". **Source says the opposite.**
+> `app.js:191251`: *"The wisher normally keeps an anchor to what they changed — without it they could not
+> experience or navigate the consequence. **That exemption is the DEFAULT and the prose does NOT have to earn
+> it.** It is removed only when the submitted wording targets the invoker, and **ambiguity that Fate exploits
+> must be declared as a wording consequence rather than done silently.**"*
+>
+> The schema enforces it: `invokerExemption {who, status: exempt|targeted, reason}`, **default
+> `exempt`/`invoker_anchor`**; `targeted` is valid only with `wish_explicitly_includes_self` or
+> `ambiguous_wording_consequence`, **plus a mandatory note**.
+>
+> **D1 remains compatible with source — but only as a declared targeting, never a silent one.** *"I wish
+> everyone here would forget"* may target Lirael under `ambiguous_wording_consequence`, and the schema
+> **requires that be recorded with a note**. What source forbids is dropping the exemption quietly, which is
+> what "no invoker filter anywhere" would produce if implemented literally.
+>
+> **And the rationale is a live editorial tension, not a formality:** the anchor exists so the invoker *"could
+> not experience or navigate the consequence"* without it. Under D1 plus Option 2, `unm.time_gives_way` has
+> Lirael forget the interrogation **and** make a fresh choice — navigating a consequence she cannot perceive.
+> **Flagged for your decision; not resolved here.**
 
 ---
 

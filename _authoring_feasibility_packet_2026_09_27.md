@@ -324,7 +324,14 @@ The blocker from revision 1, authored. Selected when the wording anchors **no** 
 
 ### 7a. The design principle these follow
 
-Fate cannot un-happen canon, and the seed's own doctrine already says so — **"Circumstances, Not Minds"**, plus
+> ### ⛔ UNGROUNDED — FALSE ATTRIBUTION, withdrawn 2026-09-28
+> **"Circumstances, Not Minds" is not a seed doctrine. It does not exist in `public/`. I invented it.** The
+> kernel-substitution rule is real but Petition-only and onboarding-only (`app.js:75596`). **Every conclusion
+> in §7 that rests on this premise is ungrounded**, including the design of the entire unmoored set as
+> circumstantial rather than rupture-scale. **No replacement doctrine is supplied by paraphrase** — the cited
+> capabilities are in `_mechanism_catalog.md`. Original text kept below for the record.
+
+~~Fate cannot un-happen canon, and the seed's own doctrine already says so — **"Circumstances, Not Minds"**, plus
 the kernel-substitution rule already written into the verdict block at `:75601`: an impossible ask is granted as
 its *plausible kernel*, never literally. So an unmoored Tempt wish gets a **circumstantial** grant, not a memory
 edit. That is why this set looks different from §1's: nothing here rewrites what anyone knows, because the player
