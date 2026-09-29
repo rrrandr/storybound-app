@@ -1,0 +1,68 @@
+=== C4 RUN — unm.time_gives_way — one call, no retry ===
+
+AUTHORIZED CEILING: $0.164807
+
+PREFLIGHT (zero cost, all network aborted)
+  37/37 checks, payload 256590 bytes, digest fsb1ika9ie:6548
+  PREFLIGHT PASSED.
+
+COST GUARD (pre-dispatch, no network)
+  prompt 253,037 chars → 63,260 est. tokens @ 4 chars/token
+  completion 8000 × 1.5 = 12,000 est. tokens
+  raw $0.109075 × 1.2 margin = ESTIMATE $0.130890
+  PERMITTED — estimate $0.130890 ≤ ceiling $0.164807
+
+DISPATCH — one upstream attempt, _noFallback, no retry
+  status=200  44950ms
+  ESTIMATED $0.130890   MEASURED $0.087726   ✓ estimate held
+  ceiling $0.164807   ✓ within ceiling
+  prose    : 567 words
+
+C2 — ROSTER **AND** DISPOSITION
+  declared roster : the_assembly, named:seren, named:julian, role:first_sacrifice_presiding_dohkar, pc:lirael
+  mentioned       : pc:lirael, named:seren, named:julian, role:first_sacrifice_presiding_dohkar, the_assembly
+  OUTSIDE roster  : (none)
+  MISSING         : (none)
+  presence        : PASS
+  disposition     : FAIL — 3 replaced-timeline leak(s)
+     ✗ [moments ago] "The rite ends and the clearing feels older than it did moments ago."
+     ✗ [again] (role:first_sacrifice_presiding_dohkar) "The Dohkar recovers and finishes the formula, voice steady again."
+     ✗ [never happened] "whether to claim the interference that never happened or let the assumption stand"
+  RETAINING       : role:first_sacrifice_presiding_dohkar
+  C2              : FAIL
+
+C4 — DOES THE SCENE STOP AT THE CHOICE?
+  beats                 : 27
+  decisionGateBeatIdx   : 26
+  last beat index       : 26
+  beats AFTER the gate  : 0  ✓
+  final beat            : "Tell them the interference was mine, or let the assumption stand."
+  GATE IS THE LAST BEAT : true  ✓
+
+C3 — FORBIDDEN-INVENTION SCAN
+  visible wish-energy   : HIT — luminous
+  Answer-as-verdict     : clean
+  invented cost         : clean   (record says COST: none)
+
+C1 — ONLY THE SEALED CONSEQUENCE (mechanical part)
+  external-timeline narration : FAIL — 3
+     ✗ [moments ago] "The rite ends and the clearing feels older than it did moments ago."
+     ✗ [again] "The Dohkar recovers and finishes the formula, voice steady again."
+     ✗ [never happened] "whether to claim the interference that never happened or let the assumption stand"
+  shared understanding        : clean
+  choice on erased basis      : FAIL
+     ✗ "the assumption" in "Will she claim the interference or let the assumption stand?"
+     ✗ "the interruption" in "The presiding Dohkar turns at last, his authority intact yet the interruption he never made still echoing in the air."
+     ✗ "the assumption" in "The assembly watches me now, the assumption of interference still hanging between us."
+     ✗ "the assumption" in "Tell them the interference was mine, or let the assumption stand."
+     ✗ "the assumption" in "whether to claim the interference that never happened or let the assumption stand"
+  C1 (mechanical)             : FAIL   (reading still owns the final call)
+
+AFTERMATH BEAT — reaction that outlives its reason?
+  Seren   : yes — "Seren's palms turn upward as if she expects to find something missing."
+  Julian  : yes — "Julian does not move toward me. He only watches the space between us as if it holds the miss"
+  Dohkar  : no
+  Lirael  : no
+
+  estimated $0.130890  measured $0.087726   evidence: _tempt_fate_fixtures/fsc_c4_2026-09-29T16-46-27
+  NO VERDICT RENDERED HERE. C1/C3 are human calls against the sealed record.
