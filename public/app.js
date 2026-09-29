@@ -130950,7 +130950,7 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
         'Everyone present is First Favored.',
         // Positive description, for the same reason as the rite-machinery truth below: the writer
         // is told what the world LOOKS like, not handed a list of effects to avoid.
-        'Fate works unseen. A wish changes what happens — what surfaces, who turns, what a person finds they meant — and never changes how anything looks. Light, air and ground stay ordinary throughout a rite and after it; a wish leaves the clearing looking exactly as any ordinary evening would.',
+        'Fate works unseen: an intervention leaves NO NEW VISIBLE MAGICAL TRACE. A wish changes what happens — what surfaces, who turns, what a person finds they meant — and adds nothing to the look of the place. Light, air and ground stay ordinary throughout a rite and after it. This is not a rule against the world’s own objects behaving normally: the Answer still takes whatever physical form its alignment subject and contact condition call for, and that form is the artifact being itself — not Fate glow, and not residue left behind by a wish.',
         'Misalignment is SENSED directly by First Favored (their alignment-sense — like a sour note), and by non-First-Favored ONLY through trained observation of BODY-LANGUAGE signs — changed breathing, a faltering or discordant voice, collapsing posture, ritual cues. It is NEVER visible on the Weave-Script: the Weave-Script glows/shifts with EMOTION only (each FF their own colours), and does NOT indicate alignment or a twisting wish. Reading misalignment is a perception / trained expertise, NOT a psychic mind-read and NOT a light show.',
         'During a First Sacrifice, NO ONE may interfere.',
         'Wishing on another person’s First Sacrifice is among the gravest taboos: the sacrifice and its consequences must belong ENTIRELY to the wisher.',
@@ -341126,7 +341126,10 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
     L.push('    \u2022 no cost or penalty beyond the one named above');
     L.push('    \u2022 no new canon fact, standing, rule or relationship');
     L.push('    \u2022 NO aura, glow, luminous cloth, shimmer, visible wish-energy or magical residue \u2014');
-    L.push('      this world has none and a rite leaves nothing to see');
+    L.push('      this world has none and a rite leaves nothing to see. This bars a NEW VISIBLE');
+    L.push('      TRACE of the intervention; it does NOT bar the world\u2019s own objects behaving');
+    L.push('      normally \u2014 the Answer takes whatever physical form its alignment subject and');
+    L.push('      contact condition call for, and that form is the artifact, not Fate residue.');
     L.push('    \u2022 the Answer never delivers a verdict about what is factually true, who is guilty,');
     L.push('      or what caused the twist; it responds only to its holder\u2019s present alignment');
     L.push('    \u2022 do not explain the mechanism, the wish, or that anything was altered');
