@@ -54,9 +54,10 @@ being in his charge.** The custody crisis I authored yesterday **does not exist.
 > **The Answer is not a lie detector.** It **may not** be used to establish **historical causation, factual
 > guilt, or who caused the twist.**
 
-**It responds to the present holder's inner alignment**, and it responds by **changing shape**:
+**It responds to the alignment subject's inner alignment** — normally the **apparent physical holder**, but
+see the contact layer — and it responds by **changing shape**:
 
-| the holder | the shape |
+| the alignment subject | the shape |
 |---|---|
 | **clear belief / clear purpose** | a **straight, sharp blade** |
 | **uncertainty** | a **scythe at one end and a mace at the other** |
@@ -132,7 +133,7 @@ question from custody, and worth asking before anything is drafted.
 | `unm.custody_severed` | **WITHDRAWN IN FULL** |
 | retired | `answer.entrustment_vacant` · `custody_unclaimed` · every claim Julian's charge ends |
 | entrustment | **office-bound**, survives `standing_dissolved`, survives the handoff's expiry |
-| the Answer | **not a lie detector**; shape-responds to the **present holder's** alignment |
+| the Answer | **not a lie detector**; shape-responds to the **alignment subject's** alignment — normally, but not always, the **apparent physical holder** |
 | `unm.the_answer_speaks` | **blocked on explicit canon now**, not only on a prevents-clause |
 | ask-class `silence` | **UNCOVERED, recommended** — no supported favorable effect found |
 | Julian's office | **Chayr**, canon. "Provast" in source is **terminology for editorial alignment.** |
