@@ -340466,10 +340466,10 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
     { id: 'unm.dohkar_demand_unmade', ask: 'stop',
       aftermathBeat: { id: 'aftermath.demand_unspoken', text: 'The presiding Dohkar draws breath as though to say something formal, and finds nothing there to say. He closes his mouth. The assembly waits for a pronouncement that does not come, and the pause goes on a beat too long before anyone moves.' },
       authorBrief:
-        'The rite is over and the clearing is waiting. The presiding Dohkar has asked for nothing; no demand for a review of the Sacrificiant’s conduct has been spoken here.\n'
-        + 'Julian’s own demand for a review stands, made away from this clearing and untouched.\n'
-        + 'The Dohkar draws breath as though to say something formal and finds nothing there to say. He closes his mouth. The assembly waits for a pronouncement that does not come, and the pause goes on a beat too long before anyone moves. Let him feel it; he cannot account for it, and he does not try to explain it.\n'
-        + 'Lirael stands in front of an assembly that expected a ruling and did not get one.',
+        "The rite is over and the clearing has not yet broken up. The presiding Dohkar has asked for nothing here; the conduct of the Sacrificiant’s guide is not under review by him.\n"
+        + "Julian has asked for a review of her conduct. He asked for it away from this clearing, and that request stands.\n"
+        + "The Dohkar draws breath, holds it, and lets it go without speaking. He closes his mouth and stays where he is. The clearing keeps its quiet a beat longer than the moment needs before anyone moves. Let him carry it; he does not account for it and does not try to explain it.\n"
+        + "Lirael is standing in front of the assembly with Julian’s request already made and no word from the Dohkar.",
       cls: 'history_rewrite', temporalOperation: 'historical_replacement',
       requiresActive: ['review.demanded_by_dohkar'], requiresInactive: [],
       ceases: ['review.demanded_by_dohkar'],
@@ -340491,19 +340491,10 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
       // live stakes, and where to stop. No headings, no field names, no forbidden-token lists, no
       // mention of replay, erasure, glow, prices or debts.
       authorBrief:
-        'The rite concludes uninterrupted. The crimson spiralgrass is dark with the colour of old '
-      + 'offerings, and the air over the clearing is still.\n'
-      + 'Julian has kept the Answer in his hands throughout. No one has put a question to Lirael '
-      + 'before the assembly, and the assembly’s suspicion rests on her all the same — the '
-      + 'words of her wish came true where everyone could see how.\n'
-      + 'Lirael, Seren, Julian, and the presiding Dohkar—along with the assembled crowd—carry '
-      + 'a faint sense they cannot place. Seren looks at her own hands as if checking them. The Dohkar loses his place '
-      + 'in words he has spoken a hundred times. Julian’s gaze finds Lirael a moment before '
-      + 'there is any reason for it. Let each of them feel it; none of them can name it, and none '
-      + 'of them tries to explain it.\n'
-      + 'The inquiry has not opened. Lirael’s standing is what is at stake in front of her now, '
-      + 'and she owes a choice she has not yet made: claim the interference openly, or let the '
-      + 'assembly keep its assumption. Bring the scene to that choice and end there.',
+        "The rite concludes uninterrupted. The crimson spiralgrass is dark with the colour of old offerings, and the air over the clearing is still.\n"
+        + "Julian has kept the Answer in his hands throughout. No one has put a question to Lirael before the assembly, and the assembly’s suspicion rests on her all the same.\n"
+        + "Lirael, Seren, Julian, and the presiding Dohkar—along with the assembled crowd—carry a faint sense they cannot place. Seren looks at her own hands as if checking them. The Dohkar loses his place in words he has spoken a hundred times. Julian’s gaze finds Lirael a moment before there is any reason for it. Let each of them feel it; none of them can name it, and none of them tries to explain it.\n"
+        + "The inquiry has not opened. Lirael’s standing is what is at stake in front of her now, and she owes a choice she has not yet made: claim the interference openly, or let the assembly keep its assumption. Bring the scene to that choice and end there.",
       cls: 'history_rewrite', temporalOperation: 'historical_replacement',
       requiresActive: ['interr.julian_questioned_lirael'], requiresInactive: [],
       ceases: ['interr.julian_questioned_lirael', 'interr.dohkar_interrupted', 'interr.choice_arose',
@@ -340535,9 +340526,9 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
     { id: 'unm.the_accusation_unmade', ask: 'escape',
       aftermathBeat: { id: 'aftermath.grievance_without_words', text: 'Seren\'s family stand where they stood, still holding the shape of a thing they meant to do. One of them steps half a pace forward and stops, mouth open, the accusation gone from behind their teeth while the anger behind it stays exactly where it was.' },
       authorBrief:
-        'Seren’s family have made no public accusation against Lirael. No one with standing has said aloud that the twisted wish was her doing.\n'
-        + 'They stand where they stood, still holding the shape of a thing they meant to do. One of them steps half a pace forward and stops, mouth open, the accusation gone from behind their teeth while the anger behind it stays exactly where it was. Let them feel it; none of them can name what is missing, and none of them tries to explain it.\n'
-        + 'The anger in the clearing is undiminished and unspoken, and Lirael is standing in front of it.',
+        "No public accusation stands against Lirael. No one with standing has said aloud that the twisted wish was her doing.\n"
+        + "Seren’s family stand close together at the edge of the clearing, facing her, and say nothing to her. One of them steps half a pace forward, stops with their mouth open, then closes it. The anger in them stays exactly where it is. Let them carry it; none of them explains it, and none of them tries.\n"
+        + "The anger is undiminished and unspoken, and Lirael is standing in front of it.",
       cls: 'history_rewrite', temporalOperation: 'historical_replacement',
       requiresActive: ['accusation.family_accused'], requiresInactive: [],
       ceases: ['accusation.family_accused'],
@@ -340551,9 +340542,9 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
     { id: 'unm.the_claim_unmade', ask: 'escape',
       aftermathBeat: { id: 'aftermath.no_one_presides', text: 'The Dohkar reaches for an authority he is certain he holds and closes on nothing. Julian, who agreed to something, cannot locate what. The clearing has the particular silence of a room where everyone is waiting for whoever is in charge to speak, and no one is.' },
       authorBrief:
-        'No one has claimed the right to rule on Lirael’s conduct, and no venue has been named for any proceeding against her.\n'
-        + 'The Dohkar reaches for an authority he is certain he holds and closes on nothing. Julian, who agreed to something, cannot locate what. The clearing has the particular silence of a room where everyone is waiting for whoever is in charge to speak, and no one is. Let them feel it; neither can say what has gone, and neither tries to explain it.\n'
-        + 'Lirael is not cleared and not charged. She is simply standing in a clearing with no one in it who can decide anything about her.',
+        "No one has claimed the right to rule on Lirael’s conduct, and no venue has been named for any proceeding against her.\n"
+        + "The presiding Dohkar carries himself like a man accustomed to being deferred to, and the clearing does not defer. Julian stands apart and says nothing. The clearing has the particular silence of a room waiting for whoever is in charge to speak, when no one in it is. Let them carry it; neither explains it, and neither tries.\n"
+        + "Lirael is neither cleared nor charged. She is standing in a clearing where no one present has the standing to decide anything about her.",
       cls: 'history_rewrite', temporalOperation: 'historical_replacement',
       requiresActive: ['auth.dohkar_claims_rite_and_ruling'],
       requiresInactive: ['accusation.family_accused'],
@@ -340573,16 +340564,9 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
       // alone — because it is memory_perception and carries no delta to draw sentences from. That
       // is far too thin for the only Fate material the writer sees.
       authorBrief:
-        'Every eye in the clearing rests on Lirael. No one can say what drew it there, only that it '
-      + 'did — and Lirael cannot say either.\n'
-      + 'Seren kneels where she finished her wish, frowning at her own certainty that she wronged '
-      + 'her guide. Julian watches Lirael with an attention he can no longer justify. The presiding '
-      + 'Dohkar’s suspicion is still alive though its cause has slipped from him. The assembly’s '
-      + 'eyes shift without explanation. They are all still angry, or wary, or sorry, and not one of '
-      + 'them can name the moment it began. Let each of them feel it; none of them can name it, and '
-      + 'none of them tries to explain it.\n'
-      + 'The words of Lirael’s wish came true where everyone could see how, and the loose note was '
-      + 'heard. Her standing in front of the assembly is what is in front of her now.',
+        "Every eye in the clearing rests on Lirael. No one can say what drew it there, only that it did — and Lirael cannot say either.\n"
+        + "Seren kneels where she finished her wish, frowning at her own certainty that she wronged her guide. Julian watches Lirael with an attention he can no longer justify. The presiding Dohkar’s suspicion is still alive though its cause has slipped from him. The assembly’s eyes shift without explanation. They are all still angry, or wary, or sorry, and not one of them can name the moment it began. Let each of them feel it; none of them can name it, and none of them tries to explain it.\n"
+        + "The loose note was heard, and it has not been taken back. Lirael’s standing in front of this assembly is what is in front of her now.",
       cls: 'memory_perception', temporalOperation: null,
       requiresActive: ['twist.assembly_turned'], requiresInactive: [],
       ceases: [], establishes: [],
@@ -340595,9 +340579,10 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
     { id: 'unm.the_custody_unremembered', ask: 'silence',
       aftermathBeat: { id: 'aftermath.a_thing_in_her_hands', text: 'The Answer sits in Lirael\'s hands and no one thinks to ask why. Julian\'s glance passes over it the way it passes over the trees. She looks down at it herself with the mild puzzlement of someone holding an object they have no memory of picking up, and does not put it down.' },
       authorBrief:
-        'The Answer is in Lirael’s hands, and no one in the clearing can say whose it is or how it came to be hers — Lirael least of all.\n'
-        + 'It sits in her hands and no one thinks to ask why. Julian’s glance passes over it the way it passes over the trees. She looks down at it herself with the mild puzzlement of someone holding an object they have no memory of picking up, and does not put it down. Let each of them feel it; none of them can name what is wrong, and none of them tries to explain it.\n'
-        + 'She is holding something she cannot account for in front of people who have stopped wondering about it, and her standing in front of them is what is in front of her now.',
+        "The Answer is in Lirael’s hands. Julian placed it there before the assembly for the questioning, and everyone here remembers him doing it. Everyone here also knows her holding of it ends when that questioning ends.\n"
+        + "What no one in this clearing can say — Lirael included — is that the Answer belongs to the Institution, or that Julian is the one entrusted with this instance by virtue of his office.\n"
+        + "She looks down at it with the mild puzzlement of someone who knows exactly how a thing came into her hands and not at all what it is. Julian’s glance passes over it without settling. Let each of them feel it; none of them can name what is wrong, and none of them tries to explain it.\n"
+        + "Why Julian handed it to her is a live question in this clearing, and anyone present may ask it.",
       cls: 'memory_perception', temporalOperation: null,
       requiresActive: ['answer.owned_by_institution', 'answer.entrusted_to_julian'],
       requiresInactive: [],
@@ -340610,9 +340595,9 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
     { id: 'unm.standing_dissolved', ask: 'authority',
       aftermathBeat: { id: 'aftermath.emptied_claim', text: 'Julian says the words that made him the one to convene this and they land flat, in a clearing that does not receive them. Somebody near the back makes a small involuntary sound. He hears it. He does not look for who.' },
       authorBrief:
-        'Julian has no authority to convene or preside over any ruling on Lirael’s conduct, and the clearing knows it.\n'
-        + 'He says the words that made him the one to convene this and they land flat, in a clearing that does not receive them. Somebody near the back makes a small involuntary sound. He hears it. He does not look for who.\n'
-        + 'What he has lost is real and it does not settle the matter. The question of Lirael’s conduct is still open and now there is no one steady enough to hold it, which leaves the room hotter than it was, not cooler.',
+        "Julian has no authority to convene or preside over any ruling on Lirael’s conduct. That is true in this clearing, and the clearing registers it.\n"
+        + "He says the words that made him the one to convene this and they land flat, in a clearing that does not receive them. Somebody near the back makes a small involuntary sound. He hears it. He does not look for who.\n"
+        + "What he has lost is real and it is his alone. The question of Lirael’s conduct is still open, and losing him as its arbiter does not close it.",
       cls: 'identity_reputation', temporalOperation: 'current_state_transition',
       requiresActive: ['auth.julian_standing_to_convene'], requiresInactive: [],
       ceases: ['auth.julian_standing_to_convene'],
@@ -340628,9 +340613,9 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
     { id: 'unm.the_shunning', ask: 'solitude',
       aftermathBeat: { id: 'aftermath.a_space_that_opens', text: 'The withdrawal is not announced. The gathering simply rearranges itself around an absence where Lirael is standing. Seren turns her face away and keeps it turned. The Dohkar addresses his next words to a point slightly past her shoulder. The space around her stays open, and no one steps into it.' },
       authorBrief:
-        'Everyone present has withdrawn from Lirael. No one stands near her, addresses her, or meets her eye.\n'
-        + 'The withdrawal is not announced. The gathering simply rearranges itself around an absence where Lirael is standing. Seren turns her face away and keeps it turned. The Dohkar addresses his next words to a point slightly past her shoulder. The space around her stays open, and no one steps into it.\n'
-        + 'She has the quiet she asked for. It also means there is no one beside her to speak for her if anything is said about her conduct, and she is standing in that clearing alone.',
+        "Everyone present has withdrawn from Lirael. No one stands near her, addresses her, or meets her eye.\n"
+        + "The withdrawal is not announced. The gathering simply rearranges itself around an absence where Lirael is standing. Seren turns her face away and keeps it turned. The Dohkar addresses his next words to a point slightly past her shoulder. The space around her stays open, and no one steps into it.\n"
+        + "No one is beside her. If anything is said about her conduct there is no one standing close enough to answer it, and she is in that clearing alone.",
       cls: 'relationship_social', temporalOperation: 'additive_canon_change',
       requiresActive: [], requiresInactive: [],
       ceases: [],

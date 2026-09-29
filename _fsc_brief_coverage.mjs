@@ -60,6 +60,24 @@ t('no brief mentions a price, debt or cost',
 t('no brief mentions glow, shimmer or wish-energy',
   !rows.some(r => /\b(glow\w*|shimmer\w*|luminous|aura|wish-energy)\b/i.test(r.text)),
   rows.filter(r => /\b(glow\w*|shimmer\w*|luminous|aura|wish-energy)\b/i.test(r.text)).map(r => r.id).join(','));
+// ── HISTORY-RESIDUE RULE ──────────────────────────────────────────────────────────────────────
+// A brief may state current governing facts and show the sealed aftermath reaction. It may NOT
+// describe an erased event as missing, absent, forgotten, expected, repeated, or felt as a hole in
+// the world. These are the exact phrasings the first eight briefs shipped with.
+const RESIDUE_RX = [
+  /\bgone from behind\b/i, /\bcannot locate\b/i, /\bwhat is missing\b/i, /\bwhat has gone\b/i,
+  /\bmeant to do\b/i, /\bfinds nothing there\b/i, /\bcloses on nothing\b/i,
+  /\bexpected a ruling\b/i, /\bdoes not come\b/i, /\bwaits for a pronouncement\b/i,
+  /\bno memory of\b/i, /\bwho agreed to something\b/i
+];
+const residue = rows.map(r => ({ id: r.id, hits: RESIDUE_RX.filter(rx => rx.test(r.text)).map(String) }))
+  .filter(r => r.hits.length);
+t('no brief describes an erased event as missing, absent or expected',
+  residue.length === 0, residue.map(r => r.id + ':' + r.hits.join('|')).join('  '));
+// The characters need not narrate the intervention; the reader may understand it.
+t('no brief tells the author the characters recognise the wish as the cause',
+  !rows.some(r => /\bthe words of (?:her|his|the) wish came true\b|\bbecause of (?:her|the) wish\b/i.test(r.text)),
+  rows.filter(r => /\bwords of (?:her|his|the) wish came true\b/i.test(r.text)).map(r => r.id).join(','));
 t('no brief mentions replay, erasure or a count',
   !rows.some(r => /\b(replay\w*|erased|a second time|the first time|again\b)/i.test(r.text)),
   rows.filter(r => /\b(replay\w*|erased|a second time|the first time|again\b)/i.test(r.text)).map(r => r.id).join(','));

@@ -171,9 +171,12 @@ export async function preflight(opts = {}) {
       b.indexOf('Every eye in the clearing rests on Lirael') >= 0);
     ok('Lirael is not spared in the brief',
       b.indexOf('and Lirael cannot say either') >= 0);
-    ok('the brief names the surviving twist facts',
-      b.indexOf('came true where everyone could see how') >= 0
-      && b.indexOf('the loose note was heard') >= 0);
+    // The wish-causation clause was WITHDRAWN: the reader may understand the intervention, the
+    // characters need not narrate it. The surviving twist fact is the loose note, which the
+    // assembly actually heard.
+    ok('the brief names the surviving twist fact without naming the wish as its cause',
+      b.indexOf('The loose note was heard') >= 0
+      && b.indexOf('came true where everyone could see how') < 0);
   }
 
   // ── 4b. THE MACHINE SPECIFICATION IS ABSENT FROM THE AUTHOR REQUEST ─────────────────────
