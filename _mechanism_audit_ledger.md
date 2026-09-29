@@ -103,7 +103,7 @@ Every row: ask-class · mechanism · target/scope · duration · cost · citatio
 | **mechanism** | `history_rewrite` (191271) — **explicit licence** |
 | **target/scope** | `interr.julian_questioned_lirael`, `interr.dohkar_interrupted`, `interr.choice_arose`, `lirael.scene1_disposition`; memory across `population.scene_present` |
 | **duration** | permanent |
-| **cost** | `world_bent_in_public` — *"the assembly watched Fate move around her"* |
+| **cost** | ⛔ **`world_bent_in_public` is BLOCKED (2026-09-28)** — it asserted *"the assembly watched Fate move around her"*, i.e. **public perception of a history rewrite.** `history_rewrite` licenses `priorHistoryReplaced` and `survivingContradictions`; **neither is witnessing**, and `relationship_social` is the only class carrying a `witnesses` field. **This outcome currently has no supported intrinsic cost.** |
 | **prevents checked** | aftermathTruths planner rule (131285–131288) — ruled a planner rule, not Fate immunity. `survivingContradictions` (191274) positively anticipates residue. |
 | **verdict** | ⚠ **NEEDS NARROWER RE-AUTHORING — the cost, not the grant.** Mechanism, target and duration are supported. **The cost asserts that the assembly perceives a Fate intervention, and nothing cited supports that.** Alignment-sense reads *wish misalignment* (16620), not ruptures. Either cite public perceptibility or re-author the cost to something the world grants. |
 

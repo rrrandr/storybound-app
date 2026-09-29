@@ -215,7 +215,9 @@ every `twist.*` · every `auth.*` · every `answer.*` · every `review.*`
 
 ### Open — not to be guessed
 - **The new choice's value.** Pending is a state, not a placeholder for the old answer.
-- Whether any First Favored's alignment sense registers the bend.
+- ~~Whether any First Favored's alignment sense registers the bend.~~ **REMOVED 2026-09-28** — an open fact
+  that invites an author to assert an unlicensed capability is that capability with a question mark.
+  Alignment-sense reads **wish misalignment** (16620), not ruptures.
 - What Julian does in a world where he never asked.
 - Whether what passed between them exists at all now — the exact reading's `intimacy_unwitnessed` cost has
   no referent in the revised canon.

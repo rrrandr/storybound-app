@@ -72,8 +72,8 @@ choose differently this time.** No prior answer is copied or constrained. Until 
 **Lirael remembers none of it** — not the questioning, not the choice she made the first time. **The reader
 remembers both, and is the only one who does.** That is the whole power of the card in one image.
 
-**Cost:** `world_bent_in_public` — she is now the woman reality visibly moved around, in front of the exact
-body deciding whether she interfered with a rite. **Rank:** *pending re-derivation.*
+**Cost:** ⛔ **none supported.** `world_bent_in_public` is blocked — it assumed the assembly *perceives* a
+history rewrite, and no rupture class licenses that. **Rank:** *pending re-derivation.*
 
 > **What changed from v1.** The old draft granted *"the torn gossamer band is not entered in the record."*
 > Wrong twice. Wrong in scale — that is the world *tilting*, which is a Petition. And wrong in grammar: the
@@ -101,10 +101,10 @@ only among outcomes that fit both the sentence and the state. **Favor never over
 | rank | ask | outcome | therefore | its price |
 |---|---|---|---|---|
 | *tbd* | `stop` | `unm.dohkar_demand_unmade` | the Dohkar's demand ceases to have been made — but **Julian's, made offstage, still arrives at row 4** | none declared |
-| *tbd* | `undo` | `unm.time_gives_way` | **time gives way**; the ceremony plays again without the interrogation, and **Lirael's Scene-1 choice returns, live and free to go the other way** | she is publicly the woman reality bends around |
+| *tbd* | `undo` | `unm.time_gives_way` | **time gives way**; the ceremony plays again without the interrogation, and **Lirael's Scene-1 choice returns, live and free to go the other way** | ⛔ **none supported** — `world_bent_in_public` blocked |
 | ⛔ | `escape` | `unm.the_answer_speaks` | **BLOCKED — grant unauthorable.** The seed's own prevents-clause: *"the assumption that the alignment-sense or The Answer can expose a manufactured desire — neither can."* A reading placing the misalignment in Seren's intent is consistent with Lirael's innocence **and** her guilt. | — |
-| ⛔ | `escape` | — | **ASK-CLASS UNCOVERED.** No floor invented. | |
-| ⛔ | `unseen` | — | **ASK-CLASS UNCOVERED.** `unm.witness_scattered` is blocked (F3) and `unm.testimony_closed` moved to precise-risk. No floor invented. | |
+| ⛔ | `escape` | — | **UNCOVERED**, now **mapped to `history_rewrite`** (primary) / `identity_reputation` (secondary). No outcome drafted. | |
+| ⛔ | `unseen` | — | **UNCOVERED**, now **mapped to `memory_perception`** — the atom `twist.assembly_turned` already exists. No outcome drafted. | |
 | **6** | `silence` | `unm.custody_severed` | the Institution's claim on the Answer **ceases**; it belongs to no one | nobody is watching it |
 | **5** | `authority` | `unm.standing_dissolved` | Julian's standing over this rite is not doubted — **void** | a jurisdictional war she started |
 | *tbd* | `solitude` | `unm.the_shunning` | **they leave her alone.** Everyone present withdraws — a shunning, not a courtesy | every defender she had |
@@ -127,16 +127,14 @@ Provast in public hands Issue 1 a jurisdictional war, and she is the reason it s
 
 ---
 
-## Precise-risk — opt-in only, never Fate's choice
+## ⛔ `unm.testimony_closed` — WITHDRAWN as a candidate (2026-09-28)
 
-| wording that reaches it | outcome | therefore | its legible cost |
-|---|---|---|---|
-| *"Let no one be able to testify about the rite."* · *"Bar the proceeding from taking statements."* | `unm.testimony_closed` | no statement about the ceremony may be taken from anyone who was there — a sealed roster including Lirael — into the review of her conduct, until the inquiry convenes **if it ever does** | **it silences her defense as well as the accusation, potentially for good** |
+**Not blocked — withdrawn.** There is **no procedural/institutional rupture carrier** in the six-class
+vocabulary. `identity_reputation.recordsChanged` governs *what records say*, not what a proceeding may
+receive; `other` is a justification requirement, not a licence.
 
-**This is the precision policy at its sharpest.** The outcome is a real and powerful bargain, but its benefit
-depends on an evidence balance the seed never states — so it cannot be what Fate hands someone who only said
-*"I want to disappear."* **A player may walk into it deliberately, having been told what it costs. They may
-not be walked into it.**
+**It requires a new product mechanism and therefore leaves the current design.** Nothing in the opening set
+waits on it.
 
 ---
 

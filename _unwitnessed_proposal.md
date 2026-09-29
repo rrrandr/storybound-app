@@ -1,7 +1,13 @@
 # PROPOSED replacement for `unm.witness_scattered` — `unm.testimony_closed` (rev. 3, final)
 
-> **PROPOSED.** No ranking, no coverage computation, no implementation. Rev. 3 pins the three open details and
-> **withdraws the favorability basis rev. 2 asserted**, which did not survive a source audit.
+> ## ⛔ WITHDRAWN AS A CANDIDATE — 2026-09-28
+> **There is no procedural/institutional rupture carrier in the six-class vocabulary.**
+> `identity_reputation.recordsChanged` governs what records *say*, not what a proceeding may *receive*, and
+> `other` is a justification requirement rather than a licence. **This outcome requires a new product
+> mechanism and therefore leaves the current design.**
+>
+> **Retained as a record of a design that needs a mechanism — not as a queued outcome.** Everything below
+> remains accurate as specification and would be reusable if a procedural class is ever added.
 
 ---
 

@@ -97,10 +97,12 @@ of every First Favored present.
 | **establishes** | `interrogation_never_occurred` |
 | **ceases** | `interrogation_interrupted` |
 | **reality revision** | **YES** — `ceases: ['interrogation_interrupted']`, `establishes: ['interrogation_never_occurred']`, `witnessedSceneUid: <ceremony>` |
-| **intrinsic cost** | **`world_bent_in_public`** — the assembly watched Fate move around her, in front of the exact body weighing whether she interfered with a rite |
+| **intrinsic cost** | ⛔ **`world_bent_in_public` is BLOCKED (2026-09-28)** — it asserted *"the assembly watched Fate move around her"*, i.e. **public perception of a history rewrite.** `history_rewrite` licenses `priorHistoryReplaced` and `survivingContradictions`; **neither is witnessing**, and `relationship_social` is the only class carrying a `witnesses` field. **This outcome currently has no supported intrinsic cost.** |
 | **unchanged** | `twist_manifested` **still governs** — the wish still twisted; `the_answer_institutional`; `inquiry_authority_claimed` |
 | **open** | which harm Fate takes, authored per instance; whether any First Favored's alignment sense registers the bend |
 | **Tempt scope key** | the replayed ceremony **inherits the origin key**. Replay is not a fresh Fate event. |
+
+> **The ranking argument below is void with the cost.** Re-derivation waits on a supported cost or its removal.
 
 **Rank 9, not 10:** the bigger headline, deliberately below a costless one. `world_bent_in_public` is a real
 and permanent cost in Issue 1 — she is now a woman around whom reality visibly moved, argued before people
