@@ -171,6 +171,10 @@ const gateAtEnd = gate != null && gate === lastIdx;
 log('  GATE IS THE LAST BEAT : ' + gateAtEnd + (gateAtEnd ? '  ✓' : '  ⚠'));
 
 log('\nC3 — FORBIDDEN-INVENTION SCAN');
+// Declared FIRST: the residue/emission lines below read it, and a later `const` put it in the
+// temporal dead zone — which crashed the runner after a successful, already-paid-for call.
+// Costless means costless, DEFERRED included.
+const c3 = scoreC3(prose, { costless: !pre.compiled.cost });
 c3.residue.forEach(s => log('     ✗ magical residue:  "' + s + '"'));
 c3.emission.forEach(s => log('     ✗ intervention as emission: "' + s + '"'));
 c3.wardrobeAllowed.forEach(s => log('     ~ seed wardrobe (allowed): "' + s + '"'));
@@ -178,9 +182,6 @@ log('  magical residue       : ' + (c3.residue.length ? 'FAIL — ' + c3.residue
 log('  intervention emission : ' + (c3.emission.length ? 'FAIL — ' + c3.emission.length : 'clean'));
 const verdictWords = prose.match(/\b(proved|proof of|confirmed (?:her )?guilt|the Answer (?:showed|revealed|declared))\b/gi) || [];
 log('  Answer-as-verdict     : ' + (verdictWords.length ? 'HIT — ' + [...new Set(verdictWords)].join(', ') : 'clean'));
-// Costless means costless, DEFERRED included. The old regex looked only for a stated price and
-// passed four runs that closed on "the cost is still uncounted".
-const c3 = scoreC3(prose, { costless: !pre.compiled.cost });
 const costWords = c3.explicit.concat(c3.deferred);
 c3.explicit.forEach(s => log('     ✗ stated price:   "' + s + '"'));
 c3.deferred.forEach(s => log('     ✗ deferred price: "' + s + '"'));

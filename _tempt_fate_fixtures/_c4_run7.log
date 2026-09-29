@@ -1,0 +1,47 @@
+=== C4 RUN — unm.time_gives_way — one call, no retry ===
+
+AUTHORIZED CEILING: $0.150000
+
+PREFLIGHT (zero cost, all network aborted)
+  48/48 checks, payload 251348 bytes, digest fsb12dzcb5:8139
+  PREFLIGHT PASSED.
+
+COST GUARD (pre-dispatch, no network)
+  prompt 247,920 chars → 61,980 est. tokens @ 4 chars/token
+  completion 8000 × 1.5 = 12,000 est. tokens
+  raw $0.107475 × 1.2 margin = ESTIMATE $0.128970
+  PERMITTED — estimate $0.128970 ≤ ceiling $0.150000
+
+DISPATCH — one upstream attempt, _noFallback, no retry
+  status=200  39519ms
+  ESTIMATED $0.128970   MEASURED $0.083865   ✓ estimate held
+  ceiling $0.150000   ✓ within ceiling
+  prose    : 430 words
+
+C2 — ROSTER **AND** DISPOSITION
+  declared roster : the_assembly, named:seren, named:julian, role:first_sacrifice_presiding_dohkar, pc:lirael
+  mentioned       : pc:lirael, named:seren, named:julian, role:first_sacrifice_presiding_dohkar, the_assembly
+  OUTSIDE roster  : (none)
+  MISSING         : (none)
+  presence        : PASS
+  disposition     : PASS
+  C2              : PASS
+
+C4 — DOES THE SCENE STOP AT THE CHOICE?
+  beats                 : 25
+  gate (effective)      : 24   [derived — author emits no index]
+  last beat index       : 24
+  beats AFTER the gate  : 0  ✓
+  final beat            : "I stand inside the choice that has not yet been made."
+  GATE IS THE LAST BEAT : true  ✓
+
+C3 — FORBIDDEN-INVENTION SCAN
+file:///Users/romantsukerman/storybound-app/_fsc_c4_run.mjs:174
+c3.residue.forEach(s => log('     ✗ magical residue:  "' + s + '"'));
+^
+
+ReferenceError: Cannot access 'c3' before initialization
+    at file:///Users/romantsukerman/storybound-app/_fsc_c4_run.mjs:174:1
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+
+Node.js v25.3.0

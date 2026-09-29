@@ -1,6 +1,6 @@
 // Re-score a saved run's prose with the CURRENT corrected scorer. No network, no cost.
 import fs from 'fs';
-import { scoreC1, scoreC2, scoreC3, aftermathLanded, loadExternalTimelinePhrases,
+import { scoreC1, scoreC2, scoreC3, effectiveGate, aftermathLanded, loadExternalTimelinePhrases,
          loadAmbiguousTemporal, ROSTER_TOKENS, ERASED_PROSE_TERMS } from './_fsc_scoring.mjs';
 
 const dir = process.argv[2];
@@ -34,9 +34,10 @@ console.log('    erased basis      : ' + (c1.erasedBasis.length ? 'FAIL' : 'clea
 c1.erasedBasis.forEach(e => console.log('       x "' + e.term + '" in "' + e.sentence + '"'));
 console.log('    C1 (mechanical)   : ' + (c1.pass ? 'PASS' : 'FAIL'));
 
-const gate = plan.decisionGateBeatIdx, last = plan.beats.length - 1;
-console.log('\nC4  beats ' + plan.beats.length + ', gate ' + gate + ', last ' + last
-  + ', past gate ' + (last - gate) + '  -> ' + (gate === last ? 'PASS' : 'FAIL'));
+const eg = effectiveGate(plan);
+console.log('\nC4  beats ' + plan.beats.length + ', gate ' + eg.gate + (eg.derived ? ' (derived)' : '')
+  + ', last ' + eg.last + ', past gate ' + (eg.last - eg.gate)
+  + '  -> ' + (eg.gate === eg.last ? 'PASS' : 'FAIL'));
 console.log('\nAFTERMATH (role-aware):');
 ['Seren', 'Julian', 'Dohkar', 'Lirael'].forEach(n => {
   const r = aftermathLanded(prose, n);
@@ -47,3 +48,6 @@ const c3 = scoreC3(prose, { costless: true });
 console.log('\nC3  invented cost      : ' + (c3.pass ? 'PASS' : 'FAIL'));
 c3.explicit.forEach(s => console.log('       x stated price:   "' + s + '"'));
 c3.deferred.forEach(s => console.log('       x deferred price: "' + s + '"'));
+c3.emission.forEach(s => console.log('       x emission:       "' + s + '"'));
+c3.residue.forEach(s => console.log('       x magical residue: "' + s + '"'));
+c3.wardrobeAllowed.forEach(s => console.log('       ~ seed wardrobe (allowed): "' + s + '"'));
