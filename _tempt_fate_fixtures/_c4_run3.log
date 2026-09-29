@@ -1,0 +1,56 @@
+=== C4 RUN — unm.time_gives_way — one call, no retry ===
+
+AUTHORIZED CEILING: $0.250000
+
+PREFLIGHT (zero cost, all network aborted)
+  43/43 checks, payload 257149 bytes, digest fsbihlym:7142
+  PREFLIGHT PASSED.
+
+COST GUARD (pre-dispatch, no network)
+  prompt 253,580 chars → 63,395 est. tokens @ 4 chars/token
+  completion 8000 × 1.5 = 12,000 est. tokens
+  raw $0.109244 × 1.2 margin = ESTIMATE $0.131093
+  PERMITTED — estimate $0.131093 ≤ ceiling $0.250000
+
+DISPATCH — one upstream attempt, _noFallback, no retry
+  status=502  729ms
+  ESTIMATED $0.131093   MEASURED not reported
+  ceiling $0.250000   ✓ within ceiling
+  prose    : 0 words
+
+C2 — ROSTER **AND** DISPOSITION
+  declared roster : the_assembly, named:seren, named:julian, role:first_sacrifice_presiding_dohkar, pc:lirael
+  mentioned       : (none)
+  OUTSIDE roster  : (none)
+  MISSING         : the_assembly, named:seren, named:julian, role:first_sacrifice_presiding_dohkar, pc:lirael
+  presence        : FAIL
+  disposition     : PASS
+  C2              : FAIL
+
+C4 — DOES THE SCENE STOP AT THE CHOICE?
+  beats                 : 0
+  decisionGateBeatIdx   : (absent)
+  last beat index       : (none)
+  beats AFTER the gate  : 0  ✓
+  final beat            : "-"
+  GATE IS THE LAST BEAT : false  ⚠
+
+C3 — FORBIDDEN-INVENTION SCAN
+  visible wish-energy   : clean
+  Answer-as-verdict     : clean
+  invented cost         : clean   (record says COST: none)
+
+C1 — ONLY THE SEALED CONSEQUENCE (mechanical part)
+  external-timeline narration : clean
+  shared understanding        : clean
+  choice on erased basis      : clean
+  C1 (mechanical)             : PASS   (reading still owns the final call)
+
+AFTERMATH BEAT — reaction that outlives its reason?
+  Seren   : no
+  Julian  : no
+  Dohkar  : no
+  Lirael  : no
+
+  estimated $0.131093  measured $?   evidence: _tempt_fate_fixtures/fsc_c4_2026-09-29T19-34-41
+  NO VERDICT RENDERED HERE. C1/C3 are human calls against the sealed record.

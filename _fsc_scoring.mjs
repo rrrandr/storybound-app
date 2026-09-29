@@ -346,6 +346,23 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   t('  but it IS surfaced for review', hc2.review.length === 2, JSON.stringify(hc2.review.map(r => r.phrases)));
 
   // ── GROUND TRUTH — BOTH REAL RUNS ───────────────────────────────────────────────────────────
+  console.log('\nH2. AN EMPTY OR VOID RESPONSE MUST NOT SCORE AS CLEAN');
+  // Run 3 returned HTTP 502 with an empty body and the runner printed "C1: PASS / C3: clean".
+  // Content scanners trivially pass an empty string; an absent violation is not obedience. The
+  // runner now refuses to score a void response at all — these assertions pin WHY it must.
+  const EMPTY = '';
+  t('an empty scene "passes" C1 — which is exactly the trap', scoreC1(EMPTY, { phrases, erasedTerms: ERASED }).pass === true);
+  t('an empty scene FAILS C2 presence — the only check that catches it',
+    scoreC2(EMPTY, { roster: ROSTER, tokens: TOK, phrases, ambiguous }).presence.ok === false);
+  t('  every roster member reported missing',
+    scoreC2(EMPTY, { roster: ROSTER, tokens: TOK, phrases, ambiguous }).presence.missing.length === 5);
+  t('no aftermath beat is found in nothing',
+    ['Seren', 'Julian', 'Dohkar', 'Lirael'].every(n => aftermathLanded(EMPTY, n).landed === false));
+  t('the runner gates on beats BEFORE scoring',
+    /RUN VOID — NOT SCORED/.test(fs.readFileSync('_fsc_c4_run.mjs', 'utf8')));
+  t('  and exits non-zero on a void run',
+    /process\.exit\(5\)/.test(fs.readFileSync('_fsc_c4_run.mjs', 'utf8')));
+
   console.log('\nI. GROUND TRUTH: re-score both real runs with the corrected scorer');
   const RUN1 = '_tempt_fate_fixtures/fsc_c4_2026-09-29T16-29-43/prose.txt';
   const RUN2 = '_tempt_fate_fixtures/fsc_c4_2026-09-29T16-46-27/prose.txt';

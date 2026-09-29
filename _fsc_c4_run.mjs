@@ -106,6 +106,28 @@ log('  ceiling $' + AUTHORIZED.toFixed(6)
   + (measured != null && measured > AUTHORIZED ? '   ⚠ OVER CEILING' : '   ✓ within ceiling'));
 
 let plan = null; try { plan = JSON.parse(text); } catch (_) {}
+
+// ── VOID-RESPONSE GATE — FAIL CLOSED BEFORE SCORING ───────────────────────────────────────────
+// Run 3 returned HTTP 502 (NO_RESPONSE_FROM_FUNCTION) with an empty body, and this harness went on
+// to print "C1 (mechanical): PASS" and "C3: clean" — green checks on nothing at all. Scanners that
+// look for forbidden content trivially pass an empty string. A run with no scene is VOID and must
+// never be scored: an absent violation is not an obeyed instruction.
+const beatsOk = plan && Array.isArray(plan.beats) && plan.beats.length > 0;
+if (status !== 200 || !text || !beatsOk) {
+  log('\n  ══ RUN VOID — NOT SCORED ══');
+  log('  status=' + status + '  body=' + (raw ? raw.length : 0) + ' bytes  scene='
+    + (text ? text.length : 0) + ' chars  beats=' + (plan && plan.beats ? plan.beats.length : 0));
+  if (raw && raw.length < 300) log('  upstream said: ' + raw.trim().replace(/\s+/g, ' '));
+  log('  No criterion is scored. C1-C4 are UNTESTED by this run, not passed.');
+  log('  measured: ' + (measured != null ? '$' + measured.toFixed(6)
+    : 'NO RECEIPT RETURNED — no usage reported'));
+  fs.writeFileSync(path.join(OUT, 'VOID.json'), JSON.stringify(
+    { void: true, status, ms, err, bodyBytes: raw ? raw.length : 0, upstream: raw,
+      measured, estimate: guard.estimate, at: new Date().toISOString() }, null, 2));
+  log('  evidence: ' + OUT);
+  process.exit(5);
+}
+
 let prose = text;
 if (plan) { const bits = []; JSON.stringify(plan, (k, v) => {
   if (typeof v === 'string' && v.length > 25) bits.push(v); return v; }); prose = bits.join('\n'); }

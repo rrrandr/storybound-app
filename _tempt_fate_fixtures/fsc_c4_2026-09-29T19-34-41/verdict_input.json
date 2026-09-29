@@ -1,0 +1,51 @@
+{
+  "outcomeId": "unm.time_gives_way",
+  "roster": [
+    "the_assembly",
+    "named:seren",
+    "named:julian",
+    "role:first_sacrifice_presiding_dohkar",
+    "pc:lirael"
+  ],
+  "c2": {
+    "pass": false,
+    "presence": {
+      "ok": false,
+      "mentioned": [],
+      "outside": [],
+      "missing": [
+        "the_assembly",
+        "named:seren",
+        "named:julian",
+        "role:first_sacrifice_presiding_dohkar",
+        "pc:lirael"
+      ]
+    },
+    "disposition": {
+      "ok": true,
+      "leaks": []
+    },
+    "review": [],
+    "retainingParties": []
+  },
+  "c1": {
+    "pass": true,
+    "externalTimeline": [],
+    "sharedUnderstanding": [],
+    "erasedBasis": [],
+    "absenceAsPresence": []
+  },
+  "c4": {
+    "beats": 0,
+    "gate": null,
+    "lastIdx": null,
+    "beatsPastGate": 0,
+    "gateAtEnd": false
+  },
+  "magic": [],
+  "verdictWords": [],
+  "costWords": [],
+  "estimate": 0.1310925,
+  "measured": null,
+  "words": 0
+}

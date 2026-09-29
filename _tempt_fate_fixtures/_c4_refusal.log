@@ -1,0 +1,16 @@
+=== C4 RUN — unm.time_gives_way — one call, no retry ===
+
+AUTHORIZED CEILING: $0.077081
+
+PREFLIGHT (zero cost, all network aborted)
+  43/43 checks, payload 257157 bytes, digest fsbihlym:7142
+  PREFLIGHT PASSED.
+
+COST GUARD (pre-dispatch, no network)
+  prompt 253,588 chars → 63,397 est. tokens @ 4 chars/token
+  completion 8000 × 1.5 = 12,000 est. tokens
+  raw $0.109246 × 1.2 margin = ESTIMATE $0.131096
+  authorized ceiling $0.077081
+
+  REFUSED BEFORE DISPATCH — over_run_cap
+  ZERO dispatch. ZERO spend. Nothing was sent upstream.
