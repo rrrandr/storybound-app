@@ -171,13 +171,19 @@ the thirteen change no world fact at all.
 
 **Coverage is not approval.** Every entry counted is a draft awaiting your decision.
 
-```
-VALID STATE CELLS : 24
-ASK-CLASSES       : 7
-SELECTION DOMAIN  : 168 (state, ask) pairs
+> ### ⛔ ALL FIGURES BELOW ARE STALE (2026-09-28)
+> **I3 is withdrawn** — it excluded no valid state once Julian's interrogation-as-accusation is accounted
+> for. The opening domain is **32 valid cells, zero live exclusions**, and the selection domain is
+> **32 × 7 = 224 pairs**. Nothing has been recomputed, and three outcomes are blocked or withdrawn besides.
+> **Do not quote these numbers.** See `_i3_withdrawal.md`.
 
-COVERED   : 168 / 168
-UNCOVERED : 0
+```
+VALID STATE CELLS : 24        ← STALE, now 32
+ASK-CLASSES       : 7
+SELECTION DOMAIN  : 168       ← STALE, now 224
+
+COVERED   : 168 / 168         ← STALE, not recomputed
+UNCOVERED : 0                 ← STALE
 DEAD ENTRIES: none
 resolved via an authored fallback: 24
 ```

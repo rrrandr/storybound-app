@@ -62,7 +62,7 @@ ordering rules from the plan's own sequence:
 |---|---|---|---|
 | **I1** | `inquiryOpened ∧ ¬accusationMade` | none for *this* ordering | **WITHDRAWN** — §6.1 |
 | **I2** | `jurisdictionChallengeMade ∧ ¬interrogationOccurred` | the seed says the opposite | **WITHDRAWN** — §6.2 |
-| **I3** | `jurisdictionChallengeMade ∧ ¬accusationMade` | `julian_jurisdiction_challenge` label + reversal frame | **UPHELD** — §6.3 |
+| **I3** | `jurisdictionChallengeMade ∧ ¬accusationMade` | ~~label + reversal frame~~ — the charge is **Julian's interrogation**, an opening invariant | ⛔ **WITHDRAWN 2026-09-28** — `_i3_withdrawal.md` |
 | **I4** | `reviewPending ∧ inquiryOpened` | `dohkar_preliminary_review` HARD LIMITS + `deferral_reason_key` | **UPHELD** — §6.4 |
 
 **I asked for evidence and two of my four rules did not survive it.** §6 gives the exact excerpt for each.
@@ -88,7 +88,17 @@ false, `reviewPending ∧ inquiryOpened` can never hold, so I4 excludes **0** of
 is not withdrawn — its evidence (§6.4) is the strongest in the packet — but it does no work here and must be
 carried forward to the late-Issue-1 matrix, where both terms vary and it becomes load-bearing.
 
-**`I3` is the only live exclusion in the opening matrix**, removing 8 of 32. **Valid opening cells: 24.**
+> ### ⛔ SUPERSEDED 2026-09-28 — I3 withdrawn
+> I3 was upheld on the reading that a jurisdiction challenge presupposes **the family's** charge. It does
+> not: the seed calls Julian's interrogation *"an accusation through desirability"* (131286) and the family
+> lane speaks of redirecting the confrontation *"from **Julian's** accusation"* (131490). That charge is an
+> opening invariant, so **I3 excluded no valid state** — it would have made the matrix "covered" by excluding
+> a real scene.
+>
+> **There are now ZERO live exclusions. Valid opening cells: 32.** The domain is defined entirely by its two
+> invariants. **All prior coverage figures are stale.** Original claim below, superseded.
+
+~~**`I3` is the only live exclusion in the opening matrix**, removing 8 of 32. **Valid opening cells: 24.**~~
 
 ## 1c. What the six existing entries cover
 
