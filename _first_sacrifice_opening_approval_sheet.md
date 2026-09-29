@@ -102,8 +102,9 @@ only among outcomes that fit both the sentence and the state. **Favor never over
 |---|---|---|---|---|
 | *tbd* | `stop` | `unm.dohkar_demand_unmade` | the Dohkar's demand ceases to have been made — but **Julian's, made offstage, still arrives at row 4** | none declared |
 | *tbd* | `undo` | `unm.time_gives_way` | **time gives way**; the ceremony plays again without the interrogation, and **Lirael's Scene-1 choice returns, live and free to go the other way** | she is publicly the woman reality bends around |
-| ⚠ | `escape` | `unm.the_answer_speaks` | **needs a source audit** — its grant assumes the Answer can attest retrospectively to a completed wish; the seed describes it only as a **live examination** instrument | it names **her own ward** as the source |
-| *tbd* | `unseen` | `unm.witness_scattered` → **proposed replacement `unm.testimony_closed`** | everyone saw it and everyone remembers — and **the proceeding forming against her cannot take a statement from any of them**, Lirael included, for as long as the closure stands. They may talk anywhere else. | no witness may speak for her — **and she cannot explain herself into it either** |
+| ⛔ | `escape` | `unm.the_answer_speaks` | **BLOCKED — grant unauthorable.** The seed's own prevents-clause: *"the assumption that the alignment-sense or The Answer can expose a manufactured desire — neither can."* A reading placing the misalignment in Seren's intent is consistent with Lirael's innocence **and** her guilt. | — |
+| ⛔ | `escape` | — | **ASK-CLASS UNCOVERED.** No floor invented. | |
+| ⛔ | `unseen` | — | **ASK-CLASS UNCOVERED.** `unm.witness_scattered` is blocked (F3) and `unm.testimony_closed` moved to precise-risk. No floor invented. | |
 | **6** | `silence` | `unm.custody_severed` | the Institution's claim on the Answer **ceases**; it belongs to no one | nobody is watching it |
 | **5** | `authority` | `unm.standing_dissolved` | Julian's standing over this rite is not doubted — **void** | a jurisdictional war she started |
 | *tbd* | `solitude` | `unm.the_shunning` | **they leave her alone.** Everyone present withdraws — a shunning, not a courtesy | every defender she had |
@@ -123,6 +124,19 @@ is not a twist and not a refusal.
 **Rank 5, `unm.standing_dissolved`, has the biggest single headline and sits second-lowest.** Voiding the
 Provast in public hands Issue 1 a jurisdictional war, and she is the reason it started. That is the same
 "rank the whole package" principle you upheld at 7-below-8 in v1, now applied to a far larger grant.
+
+---
+
+## Precise-risk — opt-in only, never Fate's choice
+
+| wording that reaches it | outcome | therefore | its legible cost |
+|---|---|---|---|
+| *"Let no one be able to testify about the rite."* · *"Bar the proceeding from taking statements."* | `unm.testimony_closed` | no statement about the ceremony may be taken from anyone who was there — a sealed roster including Lirael — into the review of her conduct, until the inquiry convenes **if it ever does** | **it silences her defense as well as the accusation, potentially for good** |
+
+**This is the precision policy at its sharpest.** The outcome is a real and powerful bargain, but its benefit
+depends on an evidence balance the seed never states — so it cannot be what Fate hands someone who only said
+*"I want to disappear."* **A player may walk into it deliberately, having been told what it costs. They may
+not be walked into it.**
 
 ---
 
