@@ -140,7 +140,7 @@ uses it only when the stakes justify risking the office and the relic.
 
 ## 4a. Three things kept distinct — permanently
 
-| | |
+| field | detail |
 |---|---|
 | **actual concealed contact** | **a fact.** It must be **explicitly established**; it is never inferred from behaviour, from the shape, or from an allegation. |
 | **an accusation of interference** | **a procedural/social claim.** It may be made **whether or not contact occurred.** |
@@ -174,7 +174,7 @@ ordinary authoring the moment the contact mechanics are written.
 
 # 6. Status
 
-| | |
+| field | detail |
 |---|---|
 | "testimony" / "mirror" framing | **withdrawn** — visible behavior, never a verdict |
 | social consequence | authored through **what witnesses make of the shape**, never as an objective verdict |

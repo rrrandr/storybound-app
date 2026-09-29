@@ -89,7 +89,7 @@ With the layers separated, the `silence` ask must pick **one**. **Ending title a
 operative relationship in this room is Julian's entrustment and Lirael's temporary holding, and neither
 depends on who owns the thing. **The grant therefore reaches the entrustment.**
 
-| | |
+| field | detail |
 |---|---|
 | **class** | `materialization_possession` (`191281`) |
 | **`temporalOperation`** | **`current_state_transition`** — the entrustment **ends now.** Julian **was** entrusted, and that stands in history. |
@@ -172,7 +172,7 @@ over the relic in order to explain why she is holding it.
 
 # 4. Status
 
-| | |
+| field | detail |
 |---|---|
 | canon | four custody layers recorded and **kept separate** |
 | Veilweave | recorded, **non-operative**, flagged for its own mechanism pass |

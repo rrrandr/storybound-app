@@ -66,7 +66,7 @@ cease the same atom and are different acts on the world.
 
 ## 1b. The trace
 
-| | |
+| field | detail |
 |---|---|
 | **class** | `identity_reputation` (`191277`) |
 | **`requiresActive[]`** | `auth.julian_standing_to_convene` |
@@ -94,7 +94,7 @@ what lets the trace say it without marking a mixed fact unchanged.
 > Lirael's holding is founded on **`answer.handed_to_lirael_for_questioning`**, a completed act, **not on any
 > live authority**. The presiding Dohkar **gains nothing**. Original table retained for the record.
 
-| | |
+| field | detail |
 |---|---|
 | **class** | `materialization_possession` (`191281`) |
 | **`requiresActive[]`** | `answer.owned_by_institution` |
@@ -114,7 +114,7 @@ what lets the trace say it without marking a mixed fact unchanged.
 
 # 3. `unm.the_shunning`
 
-| | |
+| field | detail |
 |---|---|
 | **class** | `relationship_social` (`191285`) |
 | **`requiresActive[]`** | none |

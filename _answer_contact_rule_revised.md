@@ -18,7 +18,7 @@ obeys that holder's alignment.**
 **Julian may try to influence it with a wish.** A normal wish **cannot** overcome the Answer's far more
 intricate enchantment, and **cannot redirect its response away from the person physically holding it.**
 
-| | |
+| field | detail |
 |---|---|
 | **a wish aimed at the Answer is NOT an alternative interference path** | it does not become a way to control the manifestation |
 | **and it does NOT make the manifestation non-probative** | an attempted wish is not doubt cast on the reading |
@@ -77,7 +77,7 @@ things. **An accusation alone proves neither contact nor manipulation.**
 
 **"May any outcome rely on the Answer's manifestation at all?"** — **Yes, conditionally.**
 
-| | |
+| field | detail |
 |---|---|
 | **an outcome may rely on the manifestation** | **only when the scene explicitly establishes physical separation, or supervision making concealed contact impossible.** The venue never substitutes for that. |
 | **it may then rely on** | **the holder's present alignment** |
@@ -93,7 +93,7 @@ supervised handling is most naturally arranged and shown — rather than a near-
 
 # 4. Status
 
-| | |
+| field | detail |
 |---|---|
 | control channel | **surreptitious physical contact only.** No remote channel. |
 | a wish at the Answer | **not an interference path**, and **does not** render the form non-probative |

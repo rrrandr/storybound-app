@@ -24,7 +24,7 @@ false premise about what kind of thing it was reaching.
 
 # 2. Canon — entrustment (Roman, 2026-09-29)
 
-| | |
+| field | detail |
 |---|---|
 | **Julian is entrusted with this Answer for as long as he holds his office.** | The entrustment tracks the office, not the scene. |
 | **It is an office-bound right of use** | **not ownership**, and **not a revocable scene-local custody arrangement.** |
@@ -128,7 +128,7 @@ question from custody, and worth asking before anything is drafted.
 
 # 5. Status
 
-| | |
+| field | detail |
 |---|---|
 | `unm.custody_severed` | **WITHDRAWN IN FULL** |
 | retired | `answer.entrustment_vacant` · `custody_unclaimed` · every claim Julian's charge ends |
