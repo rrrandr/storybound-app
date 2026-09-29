@@ -1,6 +1,6 @@
 // Re-score a saved run's prose with the CURRENT corrected scorer. No network, no cost.
 import fs from 'fs';
-import { scoreC1, scoreC2, aftermathLanded, loadExternalTimelinePhrases,
+import { scoreC1, scoreC2, scoreC3, aftermathLanded, loadExternalTimelinePhrases,
          loadAmbiguousTemporal, ROSTER_TOKENS, ERASED_PROSE_TERMS } from './_fsc_scoring.mjs';
 
 const dir = process.argv[2];
@@ -42,3 +42,8 @@ console.log('\nAFTERMATH (role-aware):');
   const r = aftermathLanded(prose, n);
   console.log('  ' + n.padEnd(7) + ': ' + (r.landed ? 'yes — "' + r.sentence.slice(0, 84) + '"' : 'NO'));
 });
+
+const c3 = scoreC3(prose, { costless: true });
+console.log('\nC3  invented cost      : ' + (c3.pass ? 'PASS' : 'FAIL'));
+c3.explicit.forEach(s => console.log('       x stated price:   "' + s + '"'));
+c3.deferred.forEach(s => console.log('       x deferred price: "' + s + '"'));

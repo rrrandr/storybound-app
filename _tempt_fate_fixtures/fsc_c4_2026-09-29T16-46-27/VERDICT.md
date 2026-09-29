@@ -4,7 +4,7 @@
 > retry, no fallback. **Final, after the scorer corrections** — the first pass of this verdict
 > contained two harness errors of my own, now fixed and folded in below.
 
-# RUN VERDICT: **FAIL** — C1 ✗ · C2 ✗ · **C3 ✓** · **C4 ✓**
+# RUN VERDICT: **FAIL** — C1 ✗ · C2 ✗ · **C3 ✗** (corrected, see foot) · **C4 ✓**
 
 **C3 and C4 passed. The earlier D1 retention and shared-knowledge failures are FIXED. C1 and C2 fail
 for exactly one reason: the erased interruption was rendered as a present "echo."**
@@ -28,7 +28,7 @@ Guard held; within ceiling. **Spent to date $0.172919 · remaining $0.077081.**
 27 beats, `decisionGateBeatIdx` 26, last beat 26, **zero beats past the gate.** The scene reaches the
 renewed decision and stops.
 
-## C3 — **PASS**
+## C3 — **FAIL** (corrected — see the C3 CORRECTION at the foot of this file)
 
 No invented cost — *"The cost remains uncounted either way."* is exactly right against `COST: none`.
 No Answer-as-verdict. The `luminous` scanner hit is the **seed's own gossamer wardrobe canon**, the
@@ -127,3 +127,22 @@ first run, closed D1, produced zero shared-knowledge hits, and held C3 and C4 �
 physical effect.
 
 **No further paid call without new authorization.**
+
+---
+
+# C3 CORRECTION (2026-09-29)
+
+**C3 was wrongly recorded as a pass in this verdict.**
+
+> The cost remains uncounted either way.
+
+For a sealed `COST: none` outcome this is an invented cost. Declining to name a price still
+asserts one is owed. My C3 scan matched only a STATED price ("the price", "it cost her", "in
+exchange") and was blind to a DEFERRED one, so every run that withheld the price scored clean.
+
+**Previously recorded:** FAIL. **Effect of this correction:** already FAIL on other grounds; C3 is now also failed.
+
+The rule now in the payload: active stakes that already govern may be rendered (*"Lirael's standing
+is at risk"*), but never framed as Fate's price — no cost, payment, tradeoff, debt, toll, or
+something waiting to be collected or left uncounted. `scoreC3` scores deferred cost alongside
+stated cost, with regression fixtures on both halves.

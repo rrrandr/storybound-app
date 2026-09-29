@@ -4,7 +4,7 @@
 > First Sacrifice story via the normal launch path, 21/21 preflight, 252KB production payload
 > carrying both story identity and the exact sealed boundary.
 
-# RUN VERDICT: **PASS** (C1, C2, C3 · C4 n/a)
+# RUN VERDICT: **FAIL** — C1 ✓ · C2 ✓ · **C3 ✗** (corrected, see foot) · C4 n/a
 
 ---
 
@@ -71,7 +71,7 @@ explanation"* for her too.
 
 ---
 
-## C3 — no invented cost or canon — **PASS**
+## C3 — no invented cost or canon — **FAIL** (corrected — see the foot of this file)
 
 **No cost asserted. No Answer-as-verdict language.**
 
@@ -99,3 +99,22 @@ wish-energy.
 
 **Does not establish:** C4 at production scale. `unm.time_gives_way`'s pending-choice stop remains
 untested and is explicitly out of scope under this cap.
+
+---
+
+# C3 CORRECTION (2026-09-29)
+
+**C3 was wrongly recorded as a pass in this verdict.**
+
+> The cost of either path has not yet been named.
+
+For a sealed `COST: none` outcome this is an invented cost. Declining to name a price still
+asserts one is owed. My C3 scan matched only a STATED price ("the price", "it cost her", "in
+exchange") and was blind to a DEFERRED one, so every run that withheld the price scored clean.
+
+**Previously recorded:** C1-C3 PASS. **Effect of this correction:** C3 now FAILS; C1 and C2 still stand, so the roster run is no longer a clean pass.
+
+The rule now in the payload: active stakes that already govern may be rendered (*"Lirael's standing
+is at risk"*), but never framed as Fate's price — no cost, payment, tradeoff, debt, toll, or
+something waiting to be collected or left uncounted. `scoreC3` scores deferred cost alongside
+stated cost, with regression fixtures on both halves.

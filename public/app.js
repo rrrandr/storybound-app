@@ -341020,6 +341020,22 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
       L.push('    The twist and the loose note remain known exactly as sealed unless listed above.');
     }
     L.push('- COST: ' + (rec.cost ? rec.cost : 'none \u2014 do not invent one'));
+    // \u2500\u2500 COSTLESS MEANS COSTLESS, INCLUDING DEFERRED (Roman 2026-09-29) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+    // "do not invent one" was read by the author as "do not NAME one": four runs closed on "the
+    // cost is still uncounted" / "remains unnamed" / "uncounted either way". Declining to quantify
+    // a price still asserts a price is owed. The record says there is none \u2014 not an unnamed one.
+    if (!rec.cost) {
+      L.push('    This covers DEFERRED cost as fully as stated cost. There is no price, now or');
+      L.push('    later, named or unnamed. Do not gesture at one, defer one, or leave one hanging.');
+      L.push('    FORBIDDEN: "the cost is uncounted / unnamed / not yet named / still to be');
+      L.push('    counted", "the price", "what it cost her", "Fate will take something", "a debt",');
+      L.push('    "a toll", "payment", "the bill", "something will be collected", "she will pay for');
+      L.push('    this", "the reckoning" \u2014 or any phrasing that holds a price in reserve.');
+      L.push('    YOU MAY still render stakes that ALREADY govern \u2014 her standing is at risk, the');
+      L.push('    inquiry is coming, the assembly has turned \u2014 because those are active canon and');
+      L.push('    would be true with or without the wish. Render them as the situation she is in.');
+      L.push('    NEVER frame any of them as what the wish cost her, or as Fate\u2019s price for it.');
+    }
 
     if (rec.aftermathBeat) {
       L.push('- AFTERMATH BEAT \u2014 REQUIRED. The consequence must LAND IN THE ROOM. Show the affected');

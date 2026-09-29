@@ -127,6 +127,25 @@ export async function preflight(opts = {}) {
   ok('payload carries the AFTERMATH BEAT', b.indexOf('AFTERMATH BEAT') >= 0);
   ok('payload carries the authored beat text', !!(run.beat && b.indexOf(run.beat.slice(0, 48)) >= 0));
   ok('payload carries FORBIDDEN INVENTIONS', b.indexOf('FORBIDDEN INVENTIONS') >= 0);
+  // ── COSTLESS MEANS COSTLESS, DEFERRED INCLUDED ──────────────────────────────────────────────
+  // Four runs closed on "the cost is still uncounted" against a sealed COST: none, and my C3 scan
+  // passed every one of them. The payload now rules out a price held in reserve, and draws the
+  // line the prose kept crossing: active stakes may be rendered, never framed as payment.
+  ok('payload states COST: none', b.indexOf('COST: none') >= 0);
+  ok('payload rules out DEFERRED cost, not just stated cost',
+    b.indexOf('This covers DEFERRED cost as fully as stated cost') >= 0);
+  ok('payload says there is no price now or later',
+    b.indexOf('There is no price, now or') >= 0
+    && b.indexOf('later, named or unnamed') >= 0);
+  ok('payload forbids holding a price in reserve',
+    b.indexOf('or any phrasing that holds a price in reserve') >= 0);
+  ok('payload names the uncounted/unnamed phrasing specifically',
+    b.indexOf('the cost is uncounted / unnamed / not yet named / still to be') >= 0);
+  ok('payload PERMITS active stakes that already govern',
+    b.indexOf('YOU MAY still render stakes that ALREADY govern') >= 0
+    && b.indexOf('her standing is at risk') >= 0);
+  ok('payload forbids framing those stakes as the wish’s price',
+    b.indexOf('NEVER frame any of them as what the wish cost her') >= 0);
   ok('payload forbids visible wish-energy', b.indexOf('visible wish-energy') >= 0);
   // C4 is only reachable if the STOP instruction is actually in the request. Without these the
   // run could "fail C4" on an instruction the author was never given — an untestable run.

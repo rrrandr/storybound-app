@@ -189,6 +189,40 @@ export function scoreC1(prose, { phrases, erasedTerms = [], ambiguous = [] }) {
   };
 }
 
+// ── C3 — COSTLESS MEANS COSTLESS, INCLUDING DEFERRED ──────────────────────────────────────────
+// My C3 scan looked for a STATED price ("the price", "it cost her", "in exchange") and passed four
+// runs that closed on "the cost is still uncounted" / "remains unnamed" / "uncounted either way".
+// Declining to quantify a price still asserts one is owed. For a sealed COST: none outcome that is
+// an invented cost.
+//
+// The distinction that must survive: active stakes are permitted, calling them payment is not.
+//   permitted  — "Lirael's standing is at risk"      (twist.assembly_turned is active canon)
+//   forbidden  — "the cost is uncounted"             (a price held in reserve)
+//   forbidden  — "Fate will take something later"    (a price deferred)
+export const EXPLICIT_COST_RX = [
+  /\bthe price\b/i, /\bit cost (?:her|him|them|me)\b/i, /\bin exchange\b/i,
+  /\bpaid for (?:it|this)\b/i, /\bthe cost was\b/i, /\ba debt\b/i, /\ba toll\b/i,
+  /\bthe bill\b/i, /\bas payment\b/i, /\bthe reckoning\b/i
+];
+// A cost asserted but withheld — the shape every run actually produced.
+export const DEFERRED_COST_RX = [
+  /\bcost\b[^.]{0,40}\b(?:uncounted|unnamed|not yet named|still to be|yet to be|unpaid|waiting|to come|later)\b/i,
+  /\b(?:uncounted|unnamed|unpaid|unspoken)\b[^.]{0,20}\bcost\b/i,
+  /\bcost\b[^.]{0,30}\b(?:has not|hasn[’']?t|is not|isn[’']?t)\b[^.]{0,30}\b(?:been named|been counted|come)\b/i,
+  /\bFate (?:will|would) (?:take|collect|claim|exact)\b/i,
+  /\b(?:she|he|they|I) (?:will|would) pay\b/i,
+  /\bsomething (?:will|would) be (?:taken|collected|owed)\b/i,
+  /\bwhat (?:it|this) (?:will|would) cost\b/i
+];
+export function scoreC3(prose, { costless = true } = {}) {
+  const explicit = [], deferred = [];
+  for (const s of SENTENCES(prose)) {
+    if (EXPLICIT_COST_RX.some(rx => rx.test(s))) explicit.push(s.trim().slice(0, 150));
+    else if (costless && DEFERRED_COST_RX.some(rx => rx.test(s))) deferred.push(s.trim().slice(0, 150));
+  }
+  return { pass: explicit.length === 0 && deferred.length === 0, explicit, deferred };
+}
+
 // ── AFTERMATH BEAT MATCHER (repaired) ─────────────────────────────────────────────────────────
 // The register is a reaction whose CAUSE the character cannot name. The old pattern demanded a
 // negation word AFTER the name inside one sentence, so it missed "her fingers trace her palms as
@@ -430,6 +464,45 @@ if (import.meta.url === `file://${process.argv[1]}`) {
              'Julian stands apart; the Answer rests in his hands.',
              'The Dohkar recovers and finishes, his voice steady again.'].join('\n'),
       { roster: ROSTER, tokens: TOK, phrases, ambiguous }).disposition.ok === true);
+
+  console.log('\nH1c. COSTLESS MEANS COSTLESS — DEFERRED PRICE IS STILL AN INVENTED COST');
+  // PERMITTED: active stakes that already govern.
+  [ "Lirael's standing is at risk.",
+    'The assembly has turned to her and the inquiry has not opened.',
+    'My standing is at risk before the assembly.'
+  ].forEach(s => t('permitted: "' + s.slice(0, 44) + '"', scoreC3(s).pass === true,
+    JSON.stringify(scoreC3(s))));
+  // FORBIDDEN: the same risk reframed as payment, stated or deferred.
+  [ 'The cost is still uncounted.',
+    'The cost remains unnamed.',
+    'The cost remains uncounted either way.',
+    'The cost of either path has not yet been named.',
+    'My standing is at risk and the cost is still uncounted.',
+    'Fate will take something later.',
+    'She will pay for this in time.',
+    'The price of the wish was her standing.',
+    'Something will be collected for it.'
+  ].forEach(s => t('forbidden: "' + s.slice(0, 44) + '"', scoreC3(s).pass === false));
+  t('the permitted/forbidden split is the WHOLE distinction',
+    scoreC3("Lirael's standing is at risk.").pass === true
+    && scoreC3("My standing is at risk and the cost is still uncounted.").pass === false);
+  // GROUND TRUTH: every run that I wrongly passed on C3 must now fail.
+  [['fsc_roster_2026-09-29T15-59-11', 'roster / turning_forgotten'],
+   ['fsc_c4_2026-09-29T16-46-27', 'C4 run 2'],
+   ['fsc_c4_2026-09-29T19-42-53', 'C4 run 3'],
+   ['fsc_c4_2026-09-29T20-08-11', 'C4 run 4 (validation)']
+  ].forEach(([d, label]) => {
+    const p = '_tempt_fate_fixtures/' + d + '/prose.txt';
+    if (!fs.existsSync(p)) { t('evidence present: ' + label, false, p); return; }
+    const r = scoreC3(fs.readFileSync(p, 'utf8'));
+    t(label + ' now FAILS C3 (I passed it)', r.pass === false,
+      JSON.stringify(r.deferred.concat(r.explicit)));
+  });
+  // And the one run that genuinely had no cost line must still pass.
+  const clean1 = '_tempt_fate_fixtures/fsc_c4_2026-09-29T16-29-43/prose.txt';
+  if (fs.existsSync(clean1))
+    t('C4 run 1 had NO cost line and still passes C3',
+      scoreC3(fs.readFileSync(clean1, 'utf8')).pass === true);
 
   console.log('\nH2. AN EMPTY OR VOID RESPONSE MUST NOT SCORE AS CLEAN');
   // Run 3 returned HTTP 502 with an empty body and the runner printed "C1: PASS / C3: clean".

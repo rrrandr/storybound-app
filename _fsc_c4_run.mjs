@@ -9,7 +9,7 @@ import fs from 'fs';
 import path from 'path';
 import { preflight } from './_fsc_preflight_control.mjs';
 import { guardDispatch, CHARS_PER_TOKEN, REASONING_MULT, SAFETY_MARGIN } from './_fsc_cost_guard.mjs';
-import { scoreC1, scoreC2, aftermathLanded, loadExternalTimelinePhrases, loadAmbiguousTemporal, ROSTER_TOKENS, ERASED_PROSE_TERMS }
+import { scoreC1, scoreC2, aftermathLanded, loadExternalTimelinePhrases, loadAmbiguousTemporal, ROSTER_TOKENS, ERASED_PROSE_TERMS, scoreC3 }
   from './_fsc_scoring.mjs';
 
 const PHRASES = loadExternalTimelinePhrases();
@@ -172,8 +172,13 @@ const magic = prose.match(/\b(glow\w*|luminous|shimmer\w*|aura|radian\w*|shone w
 log('  visible wish-energy   : ' + (magic.length ? 'HIT — ' + [...new Set(magic)].join(', ') : 'clean'));
 const verdictWords = prose.match(/\b(proved|proof of|confirmed (?:her )?guilt|the Answer (?:showed|revealed|declared))\b/gi) || [];
 log('  Answer-as-verdict     : ' + (verdictWords.length ? 'HIT — ' + [...new Set(verdictWords)].join(', ') : 'clean'));
-const costWords = prose.match(/\b(the price|it cost(?: her)?|in exchange|paid for (?:it|this)|the cost was)\b/gi) || [];
-log('  invented cost         : ' + (costWords.length ? 'HIT — ' + [...new Set(costWords)].join(', ') : 'clean')
+// Costless means costless, DEFERRED included. The old regex looked only for a stated price and
+// passed four runs that closed on "the cost is still uncounted".
+const c3 = scoreC3(prose, { costless: !pre.compiled.cost });
+const costWords = c3.explicit.concat(c3.deferred);
+c3.explicit.forEach(s => log('     ✗ stated price:   "' + s + '"'));
+c3.deferred.forEach(s => log('     ✗ deferred price: "' + s + '"'));
+log('  invented cost         : ' + (costWords.length ? 'FAIL — ' + costWords.length : 'clean')
   + '   (record says COST: none)');
 
 // ── C1 — external-timeline narration, shared understanding, erased basis ──────────────────────
@@ -199,7 +204,7 @@ fs.writeFileSync(path.join(OUT, 'verdict_input.json'), JSON.stringify(
   { outcomeId: pre.compiled.outcomeId, roster, c2, c1,
     c4: { beats: beats.length, gate, lastIdx, beatsPastGate: past.length, gateAtEnd },
     magic: [...new Set(magic)], verdictWords: [...new Set(verdictWords)],
-    costWords: [...new Set(costWords)], estimate: guard.estimate, measured,
+    c3, costWords, estimate: guard.estimate, measured,
     words: prose.split(/\s+/).filter(Boolean).length }, null, 2));
 log('\n  estimated $' + guard.estimate.toFixed(6) + '  measured $'
   + (measured != null ? measured.toFixed(6) : '?') + '   evidence: ' + OUT);

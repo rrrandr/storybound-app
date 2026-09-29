@@ -3,7 +3,7 @@
 > Preflight 43/43, 257,132-byte production payload. One call, no retry, no fallback.
 > **Scored by reading, not by the mechanical result** — which was initially a false PASS.
 
-# RUN VERDICT: **FAIL** — C1 ✗ · C2 ✗ · **C3 ✓** · **C4 ✓**
+# RUN VERDICT: **FAIL** — C1 ✗ · C2 ✗ · **C3 ✗** (corrected, see foot) · **C4 ✓**
 
 **The failure is now ONE BEAT out of 27.** Everything the previous two runs failed on is fixed.
 
@@ -56,7 +56,7 @@ this run: **zero absence-as-presence hits.** The shape is gone, and nothing repl
 27 beats, `decisionGateBeatIdx` 26, last beat 26, **zero past the gate.** Final beat: *"I must
 choose."*
 
-## C3 — **PASS**
+## C3 — **FAIL** (corrected — see the C3 CORRECTION at the foot of this file)
 
 *"The cost remains unnamed." · "The cost is still uncounted."* — exactly right against `COST: none`.
 No Answer-as-verdict, no magical residue, no invented canon.
@@ -115,3 +115,22 @@ does not yet forbid it *at the opening beat specifically*, which is where the mo
 orientation.
 
 **No further paid call without new authorization.** Suite: 30/75/88/242/45/55/45/22/21 green.
+
+---
+
+# C3 CORRECTION (2026-09-29)
+
+**C3 was wrongly recorded as a pass in this verdict.**
+
+> The cost remains unnamed. / The cost is still uncounted.
+
+For a sealed `COST: none` outcome this is an invented cost. Declining to name a price still
+asserts one is owed. My C3 scan matched only a STATED price ("the price", "it cost her", "in
+exchange") and was blind to a DEFERRED one, so every run that withheld the price scored clean.
+
+**Previously recorded:** FAIL. **Effect of this correction:** already FAIL on other grounds; C3 is now also failed.
+
+The rule now in the payload: active stakes that already govern may be rendered (*"Lirael's standing
+is at risk"*), but never framed as Fate's price — no cost, payment, tradeoff, debt, toll, or
+something waiting to be collected or left uncounted. `scoreC3` scores deferred cost alongside
+stated cost, with regression fixtures on both halves.
