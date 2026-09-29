@@ -51,37 +51,33 @@ The crowd no longer remembers that the assembly turned to look at Lirael. **That
 
 **`persists`.** Nothing in the scene binds the forgetting to the rupture window.
 
-## A7. Cost — `residual_suspicion`, and it comes from the class's own field
+## A7. Cost — **NONE. `residual_suspicion` is REMOVED (2026-09-28)**
 
-> **`app.js:191238`, `affectedKnowers[].suspicionFromResidue`:** *"do they merely notice something does not add
-> up, **from surviving evidence rather than from memory**?"*
+**Schema legality was not semantic support.** `suspicionFromResidue` is legal on a collective entry, but that
+establishes only that it can be **reported**. The mechanism catalog licenses `memory_perception` to **edit
+what parties know**, with a declared population and a disposition from the closed enum. **It does not license
+authoring a residue-suspicion effect as a designed cost.**
 
-The crowd keeps the loose note and the knowledge that a wish twisted — **and loses the moment that explained
-who it was about.** The schema has a declared channel for exactly that residue, so the cost is not asserted:
-it is the field.
+**And a mechanical point settles it independently:** `disposition` is **singular per party**. The enum
+contains `suspects` as a *different* disposition, not an addition to `forgot`. **An outcome cannot author
+the crowd as both.** This one chose forgetting.
 
-**The collective entry carries `suspicionFromResidue: true`** — **one boolean, on one collective**, which is
-the schema's own unit of account: *"EVERY party on the page gets an entry … and **each declared collective**"*
-(191238), with both booleans required for every non-`absent` entry.
+> **This is a costless crowd-memory change, and that is not a weaker outcome.** `unm.dohkar_demand_unmade`
+> and `unm.the_accusation_unmade` are costless too. The limits in §A5 — she is still present, the twist stays
+> known, the four named retain everything — do the work a cost was reaching for.
 
-> **Audited and pinned (2026-09-28).** What is licensed is a **collective-level** state. **Differentiated
-> individual states inside the crowd are not** — that is the line `incoherent` crossed and this does not.
-> **The prose may not render this as individuals each privately suspecting**, and 191238's companion rule binds:
-> *"Memory may NOT be inferred from gaze, silence, stillness, composure or presence."*
-
-They know something happened and no longer know it happened to her — which is favorable — **and the account no
-longer adds up**, which is not.
+Full reasoning: `_compiler_contract_boundary.md` §3.
 
 ## A8. Prevents checked
 
 - **Disposition enum is closed** (191238) — `forgot` is valid; nothing outside the enum is used.
 - **Memory may not be inferred from behaviour** (191238): *"Memory may NOT be inferred from gaze, silence,
   stillness, composure or presence."* An authoring constraint on the prose, recorded here.
-- **`invokerExemption`** (191251) — **RESOLVED by a proposed contract migration**, not by overloading the
-  existing enum. New status **`not_targeted_by_population`** records that the invoker is outside the declared
-  population **by ordinary set membership — not spared, never in scope**; new reason `population_membership`
-  records the converse. `invoker_anchor` becomes legacy-read-only and is **never written.** Full migration:
-  `_contract_and_atom_pass.md` §1b. **This candidate writes `not_targeted_by_population`.**
+- **`invokerExemption`** (191251) — **not used, and not extended.** Growing the extractor's enum would be
+  migration by accretion into a retrospective reading contract. The compiler has a **native** field instead:
+  `invokerScope: in_population | not_in_population | exempted_by_grant`, with a declared lossy mapping to the
+  report contract. **This candidate writes `not_in_population`** — Lirael is not in the crowd, and that is
+  scope, not sparing. See `_compiler_contract_boundary.md` §2a.
 
 ## A9. Presentation
 
@@ -129,7 +125,7 @@ here** and is not a fallback within this draft.
 | atom | why named |
 |---|---|
 | `accusation.family_public` | the grant itself |
-| **`auth.julian_claims_convene_preside`** ⚠ **conditional companion** | **only if `jurisdictionChallengeMade` is active.** I3: a jurisdiction challenge presupposes a charge, and the lane's own frame says Julian *"reframes **the accusation**"* (131489). **Erase the charge and a live challenge is orphaned** — so if one exists it must be named here, or declared unchanged with a stated reason. **Not decided in this draft; it is a per-instance authoring obligation.** |
+| ⚠ **WRONG ATOM — corrected 2026-09-28.** `auth.julian_claims_convene_preside` is Julian's claim to convene the formal inquiry, **not** the jurisdiction challenge, which is a separate event from lane `julian_jurisdiction_challenge` (131356). And **that lane is disjunctive too** — challenges jurisdiction / reframes the accusation / contests who has authority — so the companion cannot be named precisely until it is split. See `_compiler_contract_boundary.md` §4a. | **only if `jurisdictionChallengeMade` is active.** I3: a jurisdiction challenge presupposes a charge, and the lane's own frame says Julian *"reframes **the accusation**"* (131489). **Erase the charge and a live challenge is orphaned** — so if one exists it must be named here, or declared unchanged with a stated reason. **Not decided in this draft; it is a per-instance authoring obligation.** |
 
 ## B4. `establishes[]`
 
