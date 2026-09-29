@@ -1,0 +1,31 @@
+{
+  "outcomeId": "unm.time_gives_way",
+  "roster": [
+    "the_assembly",
+    "named:seren",
+    "named:julian",
+    "role:first_sacrifice_presiding_dohkar",
+    "pc:lirael"
+  ],
+  "mentioned": [
+    "pc:lirael",
+    "named:seren",
+    "named:julian",
+    "role:first_sacrifice_presiding_dohkar",
+    "the_assembly"
+  ],
+  "outside": [],
+  "c4": {
+    "beats": 24,
+    "gate": 23,
+    "lastIdx": 23,
+    "beatsPastGate": 0,
+    "gateAtEnd": true
+  },
+  "magic": [],
+  "verdictWords": [],
+  "costWords": [],
+  "estimate": 0.129654,
+  "measured": 0.0851934,
+  "words": 464
+}

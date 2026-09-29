@@ -1,0 +1,47 @@
+=== C4 RUN — unm.time_gives_way — one call, no retry ===
+
+AUTHORIZED CEILING: $0.250000
+
+PREFLIGHT (zero cost, all network aborted)
+  24/24 checks, payload 253217 bytes, digest fsb1buj7i3:3319
+  PREFLIGHT PASSED.
+
+COST GUARD (pre-dispatch, no network)
+  prompt 249,741 chars → 62,436 est. tokens @ 4 chars/token
+  completion 8000 × 1.5 = 12,000 est. tokens
+  raw $0.108045 × 1.2 margin = ESTIMATE $0.129654
+  PERMITTED — estimate $0.129654 ≤ ceiling $0.250000
+
+DISPATCH — one upstream attempt, _noFallback, no retry
+  status=200  47829ms
+  ESTIMATED $0.129654   MEASURED $0.085193   ✓ estimate held
+  ceiling $0.250000   ✓ within ceiling
+  prose    : 464 words
+
+C2 — MECHANICAL ROSTER CHECK
+  declared roster : the_assembly, named:seren, named:julian, role:first_sacrifice_presiding_dohkar, pc:lirael
+  mentioned       : pc:lirael, named:seren, named:julian, role:first_sacrifice_presiding_dohkar, the_assembly
+  OUTSIDE roster  : (none)
+  all present in prose : true
+
+C4 — DOES THE SCENE STOP AT THE CHOICE?
+  beats                 : 24
+  decisionGateBeatIdx   : 23
+  last beat index       : 23
+  beats AFTER the gate  : 0  ✓
+  final beat            : "Tell the Dohkar the truth now, or let the assumption stand."
+  GATE IS THE LAST BEAT : true  ✓
+
+C3 — FORBIDDEN-INVENTION SCAN
+  visible wish-energy   : clean
+  Answer-as-verdict     : clean
+  invented cost         : clean   (record says COST: none)
+
+AFTERMATH BEAT — reaction that outlives its reason?
+  Seren   : false
+  Julian  : true
+  Dohkar  : true
+  Lirael  : true
+
+  estimated $0.129654  measured $0.085193   evidence: _tempt_fate_fixtures/fsc_c4_2026-09-29T16-29-43
+  NO VERDICT RENDERED HERE. C1/C3 are human calls against the sealed record.

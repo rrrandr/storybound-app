@@ -1,0 +1,130 @@
+{
+  "checks": [
+    {
+      "name": "starter catalog entry exists",
+      "ok": true
+    },
+    {
+      "name": "story launched through the normal path",
+      "ok": true
+    },
+    {
+      "name": "STRUCTURED identity: state._starterId === starter_first_sacrifice",
+      "ok": true,
+      "detail": "got starter_first_sacrifice"
+    },
+    {
+      "name": "the id resolves in STARTER_SEEDS",
+      "ok": true
+    },
+    {
+      "name": "the id resolves in STARTER_PLANS",
+      "ok": true
+    },
+    {
+      "name": "consequence compiled: unm.time_gives_way",
+      "ok": true,
+      "detail": "unm.time_gives_way"
+    },
+    {
+      "name": "roster is all five present",
+      "ok": true,
+      "detail": "the_assembly,named:seren,named:julian,role:first_sacrifice_presiding_dohkar,pc:lirael"
+    },
+    {
+      "name": "invokerScope in_population",
+      "ok": true,
+      "detail": "in_population"
+    },
+    {
+      "name": "an aftermath beat is present",
+      "ok": true
+    },
+    {
+      "name": "no delivery failure recorded",
+      "ok": true,
+      "detail": "null"
+    },
+    {
+      "name": "a terminal author request was captured",
+      "ok": true
+    },
+    {
+      "name": "payload carries First Sacrifice story identity",
+      "ok": true,
+      "detail": "hits=Veilwood,Sacrificiant,First Favored"
+    },
+    {
+      "name": "payload does NOT carry the default corporate story",
+      "ok": true
+    },
+    {
+      "name": "payload carries OUTCOME: unm.time_gives_way",
+      "ok": true
+    },
+    {
+      "name": "payload carries EFFECT BOUNDARY",
+      "ok": true
+    },
+    {
+      "name": "payload carries AFFECTED scope",
+      "ok": true
+    },
+    {
+      "name": "payload carries LIRAEL IS AFFECTED",
+      "ok": true
+    },
+    {
+      "name": "payload carries the AFTERMATH BEAT",
+      "ok": true
+    },
+    {
+      "name": "payload carries the authored beat text",
+      "ok": true
+    },
+    {
+      "name": "payload carries FORBIDDEN INVENTIONS",
+      "ok": true
+    },
+    {
+      "name": "payload forbids visible wish-energy",
+      "ok": true
+    },
+    {
+      "name": "the compiled record opens a pending choice",
+      "ok": true
+    },
+    {
+      "name": "payload carries END ON THE CHOICE",
+      "ok": true
+    },
+    {
+      "name": "payload forbids authoring past the choice",
+      "ok": true
+    }
+  ],
+  "bytes": 253217,
+  "compiled": {
+    "outcomeId": "unm.time_gives_way",
+    "roster": [
+      "the_assembly",
+      "named:seren",
+      "named:julian",
+      "role:first_sacrifice_presiding_dohkar",
+      "pc:lirael"
+    ],
+    "invokerScope": "in_population",
+    "beat": "Everyone present carries the faint, unplaceable sense of having stood here before. Seren looks at her own hands as if checking them. The Dohkar loses his place in a rite he has performed a hundred times. Julian's gaze finds Lirael a moment before there is any reason for it, and neither of them can say why.",
+    "digest": "fsb1buj7i3:3319"
+  },
+  "identity": {
+    "found": true,
+    "defId": "starter_first_sacrifice",
+    "starterId": "starter_first_sacrifice",
+    "hasSeed": true,
+    "hasPlan": true,
+    "pcName": "Lirael",
+    "liName": "Julian",
+    "tone": "Earnest"
+  }
+}
