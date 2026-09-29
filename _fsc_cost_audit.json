@@ -1,0 +1,673 @@
+{
+  "bytes": 251385,
+  "nonIntrinsic": [
+    {
+      "line": "• this scene's job (the authored goal branches on the opening's choice and no per-branch goal is approved for \"\"; what stands is the exit state): Lirael's standing is at risk and the cost is still uncounted.",
+      "terms": [
+        "cost",
+        "uncounted"
+      ],
+      "intrinsic": false,
+      "src": null
+    },
+    {
+      "line": "• exitState: RESOLVED: the words came true and everyone can see how. NEW PROBLEM: Lirael's standing is at risk and the cost is still uncounted.",
+      "terms": [
+        "cost",
+        "uncounted"
+      ],
+      "intrinsic": false,
+      "src": null
+    },
+    {
+      "line": "• requiredTruth: The twist is an EVENT, not a recognition of one. Julian is not an antagonist. The price has not yet been named.",
+      "terms": [
+        "price"
+      ],
+      "intrinsic": false,
+      "src": null
+    },
+    {
+      "line": "Julian LIVES IN A FANTASY WORLD. Their dialogue and described actions MUST inhabit that world's register. Speaking in plain modern English when the world is Shakespearean / Veilwood / Fatelands / Dogma / etc. BREAKS THE FICTION. Players are PAYING for the world fantasy; modern-default voice is the failure mode.",
+      "terms": [
+        "payment",
+        "pay for"
+      ],
+      "intrinsic": false,
+      "src": null
+    },
+    {
+      "line": "• ALIGNMENT-SENSE (the First Favored gift): they do NOT read thoughts or emotions — they perceive ALIGNMENT, how far a person’s desire, intention, sacrifice, and deepest self all point at one truth. Misalignment is as unmistakable to them as a sour note in music.",
+      "terms": [
+        "sacrifice"
+      ],
+      "intrinsic": false,
+      "src": null
+    },
+    {
+      "line": "WORLD PROFANITY BAND — Fatelands (mythic, sacrificial, fate-bound)",
+      "terms": [
+        "sacrifice"
+      ],
+      "intrinsic": false,
+      "src": null
+    },
+    {
+      "line": "LOCAL CURRENCY + DON'T ENCHANT EVERYTHING: which sacrifices are acceptable is regional (blood here, memory there, tides and salt in Gloamwater); and wishing SUPPLEMENTS civilisation — most of the world runs on ordinary means, permanent enchantment is exceptional. [prevents: wrong-register sacrifices; a wallpapered, over-magical world.]",
+      "terms": [
+        "sacrifice"
+      ],
+      "intrinsic": false,
+      "src": null
+    },
+    {
+      "line": "THIS SCENE'S DECISIONS MUST AFFECT BOTH ENGINES. A scene that only advances the A-plot (mission step, info reveal, tactical move) without ALSO shifting the R-plot (trust, distance, vulnerability, attachment) is HALF A SCENE. A scene that only advances the R-plot (confession, closeness, distance) without ALSO touching the A-plot (mission consequence, leverage shift, stake adjustment) is also HALF A SCENE. The reciprocity is the architecture.",
+      "terms": [
+        "consequence",
+        "at stake"
+      ],
+      "intrinsic": false,
+      "src": null
+    },
+    {
+      "line": "Stakes if won: (unspecified)",
+      "terms": [
+        "at stake"
+      ],
+      "intrinsic": false,
+      "src": null
+    },
+    {
+      "line": "Stakes if lost: (unspecified)",
+      "terms": [
+        "at stake"
+      ],
+      "intrinsic": false,
+      "src": null
+    },
+    {
+      "line": "• Mentor / boss / authority figure → [STRATEGIST — invisible]: answers the question they would prefer, not the one they were asked  |  names who owes whom before they say what they want",
+      "terms": [
+        "owe"
+      ],
+      "intrinsic": false,
+      "src": null
+    },
+    {
+      "line": "Express all character traits through BEHAVIOR, DIALOGUE, and CONSEQUENCE — never through labels or titles.",
+      "terms": [
+        "consequence"
+      ],
+      "intrinsic": false,
+      "src": 19139
+    },
+    {
+      "line": "If an archetype label would naturally appear, replace it with an effect-based description of what the character does, how they feel to encounter, or the consequence of their presence.",
+      "terms": [
+        "consequence"
+      ],
+      "intrinsic": false,
+      "src": 19140
+    },
+    {
+      "line": "EVERY SCENE OWES A PLACE RE-ANCHOR, CONTINUATIONS INCLUDED (Roman 2026-08-23 — measured: grounding fired in scene 1 and collapsed in every continuation, leaving characters talking in front of a green screen). The reader does not carry physical space forward between scenes the way the story state does. Early in EVERY scene, give one concrete anchor: a material or surface, the quality of light, the air or weather, a sound, a distance, or the way bodies are arranged in the space. Props held by people do not count — a band at a mouth and grass under one foot are objects, not a place.",
+      "terms": [
+        "owe"
+      ],
+      "intrinsic": false,
+      "src": 31136
+    },
+    {
+      "line": "RE-ANCHOR, DO NOT RECAP. Never repeat the establishing description. Show what is DIFFERENT about the place now that the situation has changed: “The interrogation room had white walls, a metal table, a camera in the corner.” → three scenes later → “The camera’s red light had been blinking for three hours. She had stopped looking at it.” Same room, new experience, and the second one costs a sentence.",
+      "terms": [
+        "cost"
+      ],
+      "intrinsic": false,
+      "src": 31137
+    },
+    {
+      "line": "LORE FIDELITY (HARD — ALL worlds): render any ESTABLISHED world element — a place, creature, institution, faction, history, or magic / technology / social system — ONLY as THIS story's canon establishes it (the world bible, the injected lore, and facts already on the page). Do NOT invent new rules or mechanics for it, and NEVER contradict or INVERT what canon establishes. If a mechanic is NOT given to you, render only its EFFECT / consequence through a character's perception and leave the underlying rule UNNAMED — a confidently-stated WRONG mechanic is far worse than one left unspoken. When in doubt, show the consequence; do not author the law.",
+      "terms": [
+        "consequence"
+      ],
+      "intrinsic": false,
+      "src": 31235
+    },
+    {
+      "line": "AGENCY, NOT LEAKAGE: a tremor, a blush, a caught breath, a nervous habit is a TELL — involuntary, camera-visible, welcome as texture, and never a perceptual stroke. The stroke lands on a CHOSEN act: WOUND, then PERFORMANCE, then COST, then THE READING. Someone performs the person they wish to be seen as; maintaining it costs them something; the POV character reads that choice through her own wants, history and fear — confidently, and possibly wrongly. BAD: \"Julian’s hand trembled.\" GOOD: \"Julian answered before anyone finished questioning him. He filled every silence before anyone could wonder what he was afraid of.\"",
+      "terms": [
+        "cost"
+      ],
+      "intrinsic": false,
+      "src": 31336
+    },
+    {
+      "line": "Omit the declaration entirely if nothing genuinely scarred this scene. The cost of a missed scar is nothing; the cost of an over-declared scar is melodrama.",
+      "terms": [
+        "cost"
+      ],
+      "intrinsic": false,
+      "src": 45381
+    },
+    {
+      "line": "Omit when in doubt. The cost of a missed near-miss is nothing; the cost of overuse is mystical-coincidence drift.",
+      "terms": [
+        "cost"
+      ],
+      "intrinsic": false,
+      "src": 45605
+    },
+    {
+      "line": "<<+she said hello like it cost her something+>>",
+      "terms": [
+        "cost"
+      ],
+      "intrinsic": false,
+      "src": 56904
+    },
+    {
+      "line": "ATTRACTION-LANGUAGE SATURATION (HARD — express the relationship through CONSEQUENCE/DEPENDENCY/UNCERTAINTY/MEMORY/CHOICE far more often than through these; when they DO appear, once is enough, do not stack them):",
+      "terms": [
+        "consequence"
+      ],
+      "intrinsic": false,
+      "src": 57271
+    },
+    {
+      "line": "CRISIS MOVEMENT (HARD — Roman 2026-06-16): the crisis above must keep MOVING — let the relationship register THROUGH it, never freeze it into romantic backdrop. FORBIDDEN: crisis appears → four attraction paragraphs → crisis resumes unchanged. Each scene the crisis ADVANCES (a choice forced, a consequence landing, a new pressure or discovery) AND the relationship rides that movement. GOOD: \"The complaint could end her career. Julian was the first person she thought of.\" / \"The scandal mattered. That she wanted to call Julian mattered more.\" BAD: complaint → eyes → mouth → heat → cheekbones → complaint. The relationship gravity carries the crisis FORWARD; it does not park it.",
+      "terms": [
+        "consequence"
+      ],
+      "intrinsic": false,
+      "src": 68268
+    },
+    {
+      "line": "• Reference the clock and the goal where natural — but do not exposition-dump them. Pressure should manifest as character behavior, scene constraint, environmental detail, off-page consequence.",
+      "terms": [
+        "consequence"
+      ],
+      "intrinsic": false,
+      "src": 68433
+    },
+    {
+      "line": "• Every scene should feel the A-plot in at least ONE of: dialogue under time pressure, a decision warped by stakes, a setting choice forced by mission, an off-page event referenced, an interruption from the anti-force.",
+      "terms": [
+        "at stake"
+      ],
+      "intrinsic": false,
+      "src": 68434
+    },
+    {
+      "line": "AMPLITUDE: conductivity is a SPECTRUM. HEAVY (trust fracture / moral collision / sacrifice crisis) is for true peaks — reserve. MEDIUM (visible admiration / leverage shift / boundary tested) is the working register. LIGHT (subtle admiration noticed-but-unnamed / micro-irritation / ambient longing / shared competence rhythm / practical coordination becoming intimacy of capability) is necessary BREATH — without it, heavy beats stack and lose punch. Match scene amplitude to its position in the arc. Do NOT artificially inflate a coordination beat into a moral collision; that reads as forced significance.",
+      "terms": [
+        "sacrifice"
+      ],
+      "intrinsic": false,
+      "src": 87856
+    },
+    {
+      "line": "COMPETENCE IS EMOTIONAL: romance readers engage with A-plots through capability — leadership, sacrifice, strategic intelligence, resilience, courage under pressure, loyalty proven through action. Characters become MORE lovable through how they ACT under pressure (what they protect, sacrifice, hide, refuse to abandon). Design scene beats that create competence-attraction alongside vulnerability-attraction.",
+      "terms": [
+        "sacrifice"
+      ],
+      "intrinsic": false,
+      "src": 87858
+    },
+    {
+      "line": "BAD INTEGRATION (HARD FAILS): \"now mission, now kissing\" (alternation); romance detachable from plot; external conflict replaceable without emotional consequence; romance reduced to occasional reward scenes between mission beats; \"informational\" or \"bureaucratic\" scenes with no emotional revelation.",
+      "terms": [
+        "consequence"
+      ],
+      "intrinsic": false,
+      "src": 87860
+    },
+    {
+      "line": "GOOD INTEGRATION: external pressure reveals character truth; emotional evolution alters strategic outcomes; a single decision creates BOTH strategic gain AND emotional cost (or vice versa); sacrifice solves one layer while wounding another; competence under pressure becomes attraction; pragmatic morally-grey choices become trust fractures.",
+      "terms": [
+        "cost",
+        "sacrifice"
+      ],
+      "intrinsic": false,
+      "src": 87862
+    },
+    {
+      "line": "1. INTERIORITY DECODES; IT DOES NOT ENCODE. A reader must never have to reconstruct the external situation from a character's feelings about it. At any important moment they should know where we are, what physically happened, what the POV character wants now, what prevents it, and what she fears will follow. Mystery may conceal the ANSWER; it may not conceal the question, the immediate consequence, or why she cares.",
+      "terms": [
+        "consequence"
+      ],
+      "intrinsic": false,
+      "src": 99815
+    },
+    {
+      "line": "4. DRAMATIZE CONSEQUENTIAL PRESENT SPEECH (added 2026-09-17). When a character present in the scene makes a consequential wish, sacrifice, accusation, confession, command, vow, threat, or ruling, render the act itself in its natural in-scene form — direct speech, written text, whisper, thought, sign, or performed gesture. Do not replace it with retrospective summary merely because narration is easier. Narration should carry perception, subtext, physical response, and consequence AROUND the utterance, never IN PLACE OF it. Summarize only where direct rendering is genuinely impossible, deliberately withheld, or dramatically inappropriate.",
+      "terms": [
+        "sacrifice",
+        "consequence"
+      ],
+      "intrinsic": false,
+      "src": 99818
+    },
+    {
+      "line": "Strange event → understandable personal consequence → emotional/romantic reaction → decision → deeper world understanding. GROUND THE STRANGE BY CONSEQUENCE: a term, rank, rite or creature needs no definition, but the reader must feel what it permits, prevents, threatens or costs RIGHT NOW. The love interest's BEHAVIOUR is the primary decoder — he knows, she doesn't, he is afraid, now she is afraid — never a lecture. Naming a thing while leaving the reader unable to feel why it matters is confusion, not mystery.",
+      "terms": [
+        "cost",
+        "consequence"
+      ],
+      "intrinsic": false,
+      "src": 99820
+    },
+    {
+      "line": "COMMUNICATION (write for a reader who knows NOTHING of this world — teach through the crisis, NEVER a lore dump, NEVER by guessing a species' physiology): by the end they must UNDERSTAND why the WORLD rules above MATTER here — why the dreaded thing is dreaded, why the forbidden thing is forbidden, why the room reacts as it does. SHOW each stake, never state it. Pay every comprehension debt the scene raises; that is what makes the scene long enough.",
+      "terms": [
+        "debt",
+        "payment",
+        "at stake"
+      ],
+      "intrinsic": false,
+      "src": 134043
+    },
+    {
+      "line": "PSYCHOLOGICALLY DIAGNOSTIC (every named person) — A SUPPLIER, NOT CHARACTER+: each detail should reveal what this person will DO under pressure, what they VALUE, or what they cannot help revealing, so the reader can PREDICT them. This is raw material and a floor for ordinary description. It does NOT constitute Character+: \"she always checked the exits before sitting down\" is good diagnostic detail and is not a Character+ beat. Character+ is the separate, higher thing — a person PERFORMING a version of themselves to control how they are read, at a cost the protagonist perceives. \"He was afraid\" fails (everyone is); \"he looked at the wound before himself\" passes (he checks on others first). If a detail would not change how you predict this person, cut it.",
+      "terms": [
+        "cost"
+      ],
+      "intrinsic": false,
+      "src": 134067
+    },
+    {
+      "line": "1. DRAMATIC RHYTHM — energy moves through three modes: ESCALATION (stakes, body, dialogue sharpened) ↔ BREATH (texture, atmosphere, the moment held) ↔ REDIRECTION (deflect, stall, dissolve, lose nerve, evasions that remain evasions). The default FAILURE is RELENTLESS ESCALATION — every beat carrying weight reads as AI-generated. Not every scene resolves its pressure directly. Aborted momentum, mistimed reactions, refused payoffs, weakening verbs are CRAFT. Trust the mix.",
+      "terms": [
+        "at stake"
+      ],
+      "intrinsic": false,
+      "src": 173670
+    },
+    {
+      "line": "Phase 2 → CONSEQUENCE (impact, NOT \"same confrontation zoomed\"). Power shift, recoil, isolation, surrender. Examples: isolated figure, broken eye contact, silhouette reversal, distance reintroduced.",
+      "terms": [
+        "consequence"
+      ],
+      "intrinsic": false,
+      "src": 187286
+    },
+    {
+      "line": "TIER 3 (HIGH): ERA when active (#13) — pressure-earned ruptures land. REALISM HOLD when no Petition/Tempt active. Petition/Tempt directives when invoked. WORLD INTEGRITY (#5). CONSEQUENCE INTEGRITY (#12) for canonized prior acts.",
+      "terms": [
+        "consequence"
+      ],
+      "intrinsic": false,
+      "src": 198166
+    },
+    {
+      "line": "12. CONSEQUENCE INTEGRITY — canonized dark acts stay metabolized, not vanished",
+      "terms": [
+        "consequence"
+      ],
+      "intrinsic": false,
+      "src": 198197
+    },
+    {
+      "line": "• WORLD-TRUE REINTERPRETATION — if the world DOES have a mechanism (Fatelands sacrifice, Glass House Chorus echo, a Petition wish in any world), redirect through that mechanism.",
+      "terms": [
+        "sacrifice"
+      ],
+      "intrinsic": false,
+      "src": 198299
+    },
+    {
+      "line": "EXCEPTION: explicit memory-altering mechanisms (Tempt Fate at mythic scale, established amnesia arcs, Becoming Field identity-shifts in Fatelands) CAN canonize memory changes — but those gates exist precisely so memory rewrites have COST.",
+      "terms": [
+        "cost"
+      ],
+      "intrinsic": false,
+      "src": 198325
+    },
+    {
+      "line": "\"wish\": false, \"sacrifice\": false, \"fateAnswer\": false",
+      "terms": [
+        "sacrifice"
+      ],
+      "intrinsic": false,
+      "src": 228402
+    },
+    {
+      "line": "\"stake\": \"<≤20 words — concrete thing the protagonist is HIDING / WANTING / AVOIDING in this scene. NOT a vague mood. Examples: \\\\\"she got fired Friday and hasn't told anyone\\\\\" / \\\\\"she's avoiding the email from her ex\\\\\" / \\\\\"she's about to walk into the meeting that could end her job\\\\\". REQUIRED for every scene.>\",",
+      "terms": [
+        "at stake"
+      ],
+      "intrinsic": false,
+      "src": 228465
+    },
+    {
+      "line": "\"concrete_specific_beat_idx\": <int — the beat index where you place a CONCRETE OBJECT/DETAIL that hints at the stake. NOT a mood word; a thing: a returned ring, an unopened envelope, a phone she keeps not picking up, a name unsaid. REQUIRED.>,",
+      "terms": [
+        "at stake"
+      ],
+      "intrinsic": false,
+      "src": 228466
+    },
+    {
+      "line": "For a NON-romance duty, WRITE the scene toward that obligation: the external stakes are the emotional center; the romance is a pressure / a leak / absent (per attractionPresence), NOT the resolution. Do NOT collapse a survival / investigation / political / competence scene into chemistry beats or a relationship-progression close. Reserve romantic_progression / emotional_repair (attractionPresence=foreground) for scenes whose actual job IS the relationship. \"interwoven\" = the external duty and the relationship are genuinely entangled (the romance lives INSIDE the A-plot pressure).",
+      "terms": [
+        "at stake"
+      ],
+      "intrinsic": false,
+      "src": 229120
+    },
+    {
+      "line": "\"tightening\"  — further suppression. The held-back emotion now visibly costs them. PEAK (suppression family). Maps to jaw_clench + slower subtitle + 40% vignette.",
+      "terms": [
+        "cost"
+      ],
+      "intrinsic": false,
+      "src": 229317
+    },
+    {
+      "line": "• The NON-PEAK tension states (held_breath / delayed / distant) cost nothing extra and CAN be used more liberally — typically 2-4 per scene at well-chosen beats (after a peak lands, on a moment of withdrawn detachment, etc.). They're the layer that gives \"alive\" performance without paying Kontext.",
+      "terms": [
+        "cost",
+        "payment"
+      ],
+      "intrinsic": false,
+      "src": 229329
+    },
+    {
+      "line": "✗ a confession in the air, an apology owed, a secret being protected",
+      "terms": [
+        "owe"
+      ],
+      "intrinsic": false,
+      "src": 229391
+    },
+    {
+      "line": "- CAUSAL SPINE (HARD — THEREFORE / BUT, never \"and then\"): the beats form a CHAIN where each beat is CAUSED by the prior one. Between any two consecutive beats you must be able to say THEREFORE (this beat is the consequence of the last) or BUT (this beat reverses / complicates / costs what the last established) — NEVER \"and then\" (a new line unconnected to the one before it). GROUND before you escalate: a charged line (\"This changes everything\") must be PRECEDED by the concrete beat that makes it true (what she just read / saw / realized), and FOLLOWED by its consequence (what it forces her to do). Test: if you could reorder or delete a beat without breaking the logic, the spine is broken — the reader is watching \"and then, and then.\" FORBIDDEN: stacking climactic ultimatums (\"Choose before the thread dies.\" / \"The sigil cannot lie.\" / \"This changes everything.\") back-to-back with no grounding between them — that is the #2 CG miss. Each escalation must be EARNED by the beat that caused it.",
+      "terms": [
+        "cost",
+        "consequence"
+      ],
+      "intrinsic": false,
+      "src": 229403
+    },
+    {
+      "line": "- BANNED for ANY beat (these are the workshop-tells that produced past failures): \"leaving unspoken questions behind\", \"long shadows on the path\", \"the day's weight settled\", \"she debated whether to act\", \"she would have to decide soon\", \"something inside her shifted\", \"the moment passed between them\", \"they walked together in silence\", \"the sun dipped lower\", \"the air felt heavy / charged / electric\", \"she felt unsettled / overwhelmed / conflicted\", \"she knew she had to do something\", \"she pushed the thought aside\", \"for now\". If a beat's text trends toward any of these patterns, REWRITE it before emitting. These are filler the model uses when it has no idea what's actually at stake.",
+      "terms": [
+        "at stake"
+      ],
+      "intrinsic": false,
+      "src": 229412
+    },
+    {
+      "line": "- BEAT COUNT (TARGET, not a rigid quota — it YIELDS to the two priority bounds below): beats are PROSE, not panels. Only ~5 phase IMAGES render per scene (see PHASE COUNT); beats ride beneath them at ZERO extra render cost. So use beats to PAINT the scene far beyond what the panels could show — give every world-texture stroke, every character tell, every noticed detail, every hesitation its OWN tight beat rather than cramming them into fewer fat ones. Split freely: a glance is a beat, a noticed detail is a beat, a held breath is a beat, one line of dialogue is a beat. Richness comes from MANY SMALL TIGHT beats, never from fat 3-sentence beats. TARGET ~28–45 tight beats for a standard scene (a thin <22-beat scene is a FAILURE unless a bound below forces fewer). PRIORITY 1 — if a LENGTH CEILING is active (see the user prompt), the CEILING WINS: fit as many tight beats as fit UNDER it; do NOT blow the ceiling to reach a beat count. PRIORITY 2 — on an INTIMACY-PACE scene (ST3/ST4, see SCENE DENSITY), run FEWER beats that breathe (~22–30); felt time between charged beats matters more than raw count there. These are not simultaneous rigid quotas — when they conflict, the active bound governs and the beat-count target flexes.",
+      "terms": [
+        "cost"
+      ],
+      "intrinsic": false,
+      "src": 229421
+    },
+    {
+      "line": "- PHASE 0 IS THE ACTIVE PRESSURE BEAT (HARD — non-negotiable): the visualState scaffolding establishes the IMAGE (background, camera, li_position, lighting, wardrobe, other_characters_present) — that is the renderer's job and your job there is unchanged. But the PROSE in phase 0 beats[] enters MID-SPIKE. The scene is already unstable when beats[0] fires. Pressure is already active. The protagonist is already non-neutral. The named A-plot goal / clock / stakes (see A-PLOT PRESSURE block above) is already pressing on this moment.",
+      "terms": [
+        "at stake"
+      ],
+      "intrinsic": false,
+      "src": 229464
+    },
+    {
+      "line": "- Phases 1+ SHOULD set camera_override explicitly; the full enum is available on EVERY phase — over_shoulder_pc (behind PC toward the subject), medium_two_shot (both figures, waist-up), wide_establishing (environmental scale), close_li (LI face fills frame), close_pc (tight on PC body / hands / partial face), low_angle_pc (looking UP — stakes-heavy), high_angle_pc (looking DOWN — vulnerable), profile_pc (pure side profile — contemplative), silhouette_pc (dark outline vs a bright backdrop — mystery), over_object_high_angle (down past a desk/object at the PC's hands), push_in_on_object (a key object fills the frame), dutch_tilt (off-axis 5-15° — unease).",
+      "terms": [
+        "at stake"
+      ],
+      "intrinsic": false,
+      "src": 229484
+    },
+    {
+      "line": "- THE TEST IS CONSEQUENCE, NOT ACTIVITY. An event being underway is NOT enough, and this is the single most common way this directive is satisfied on paper and failed in practice. By the end of the FIRST SENTENCE the protagonist must be in a life they cannot get back: the sentence carries the irreversible thing that has happened, what it COSTS this specific protagonist, and the person it implicates — not the event alone. Naming the event is reporting; naming what the event has just destroyed is an opening. Once that first sentence has landed you MAY widen for one or two sentences into the physical world before snapping back to the crisis — a hot opening is DENSE, not stripped, and the beauty of the place should make the wrongness worse.",
+      "terms": [
+        "cost",
+        "consequence"
+      ],
+      "intrinsic": false,
+      "src": 229611
+    },
+    {
+      "line": "DRAMATIC STAKES (HARD — TOP-LEVEL REQUIREMENT, NOT OPTIONAL):",
+      "terms": [
+        "at stake"
+      ],
+      "intrinsic": false,
+      "src": 229621
+    },
+    {
+      "line": "- Every scene MUST have something at stake under the surface — a secret, a deadline, a longing, a recent loss, a betrayal that hasn't landed yet, a decision being avoided, a confrontation being delayed.",
+      "terms": [
+        "at stake"
+      ],
+      "intrinsic": false,
+      "src": 229622
+    },
+    {
+      "line": "[3] At least ONE narration beat or exposition beat contains a CONCRETE SPECIFIC that hints at the stake — a returned ring on the desk, an unopened envelope, a phone she keeps not picking up, a name she doesn't say. NOT a vague mood word (\"she felt unsettled\"). A specific object or unspoken word.",
+      "terms": [
+        "at stake"
+      ],
+      "intrinsic": false,
+      "src": 229626
+    },
+    {
+      "line": "BEAT DISTRIBUTION (SILENCE BUDGET): 60-70% LOADED beats (stake/collision/revelation) + 20-30% TEXTURE beats (atmospheric/sensory/mundane) + 5-10% BREATH beats (silence, weather, held look). Contrast is what makes loaded moments land.",
+      "terms": [
+        "at stake"
+      ],
+      "intrinsic": false,
+      "src": 229697
+    },
+    {
+      "line": "Draw slang, oaths, and idioms from: fate, oaths, moons (the Thirteen), magic, sacrifice, geography (Veilwood, Thornwild, Gloamwater), mythic forces, curses, the Weave, the Hungry Eye.",
+      "terms": [
+        "sacrifice"
+      ],
+      "intrinsic": false,
+      "src": 229914
+    },
+    {
+      "line": "- dismissal: \"Not worth a sacrifice\" / \"That's dry-side talk\"",
+      "terms": [
+        "sacrifice"
+      ],
+      "intrinsic": false,
+      "src": 229919
+    },
+    {
+      "line": "NOTHING VISIBLE HAPPENS (non-diegetic): a wish is spoken and reality does NOT flash, glow, surge, or sign — wisher and witnesses cannot tell by looking whether Fate accepted, warped, or refused; they learn ONLY when the physical consequence lands (moments or scenes later). Fate's burst / marks / shadow-hand are READER-ONLY notation — no character perceives or names them (\"the golden light\", \"the rays\", \"the burst faded\"), and do NOT confirm Fate's verdict in prose or dialogue (\"the wish took\", \"Fate accepted\") before the consequence reveals it. [prevents: narrating a visible magical flash; a character announcing the wish worked before it shows.]",
+      "terms": [
+        "consequence"
+      ],
+      "intrinsic": false,
+      "src": 231243
+    },
+    {
+      "line": "NO OBJECT FROM NOTHING: a wish never makes its object appear — no sword blinks into a hand, no gold onto a table, no castle onto a hill; Fate moves the WORLD toward it (a debt is called, an heir dies, a door opens). [prevents: conjuring objects out of the air.]",
+      "terms": [
+        "debt"
+      ],
+      "intrinsic": false,
+      "src": 231244
+    },
+    {
+      "line": "FATE GOVERNS EVENTS, NEVER CONSENT (the SAME law as circumstances-not-minds, read for OTHER people): Fate can arrange EVENTS — a rescue, a debt called, a truth exposed, a meeting, a diary that survives — but can NEVER manufacture another person's DESIRE, love, loyalty, belief, repentance, or willingness, INCLUDING the sincere desire to make a wish. So \"I wish she loved me\" or \"I wish he wished me a Veilweave cloak\" cannot be granted by implanting consent: Fate may arrange another's OPPORTUNITY (to love, to help, to wish), never their DESIRE to — and any wish another is genuinely moved to make is judged INDEPENDENTLY (its own sacrifice, adjacency, and possible warp; it never piggybacks on yours). WISHES ARE NON-DELEGABLE AT FATE'S LEVEL — Fate keeps ONE account (whoever genuinely WISHED is the one diminished), so no magical battery or proxy lets you spend another's life to fuel YOUR bargain; Fate cannot bill person B for person A's wish. This does NOT abolish wish-slavery — it DEFINES it: you cannot make Fate charge your captive, but you CAN coerce a person until THEY genuinely wish, so THEY pay and you reap the boon (a real and monstrous horror — see COERCION & WISH-SLAVERY when captivity or force is in play). The clean, non-coercive master's move is \"I wish to become someone she would gladly help\", an adjacent branch; if she then freely helps, that is mastery. Fate shapes the stage; the actors still choose their lines — which is exactly the vacuum a tyrant fills by forcing those lines at knifepoint. [prevents: manufacturing love/loyalty/help/repentance; the \"wish for someone else to wish/love/help me\" mind-control backdoor; a MECHANICAL cost-transfer (a magical battery) — note coercing ANOTHER into a genuine wish is a separate, legitimate horror, not this.]",
+      "terms": [
+        "cost",
+        "debt",
+        "payment",
+        "sacrifice"
+      ],
+      "intrinsic": false,
+      "src": 231246
+    },
+    {
+      "line": "THE SACRIFICE BELONGS TO THE WISHER: a wish is fuelled ONLY by something real and personal to the one who wished (life, body, memory, bond, fortune), permanently gone — NEVER by another person's sacrifice; no proxies, batteries, or captives, and a villain cannot spend a prisoner's years on his OWN wish. Whoever PAID the price is the one who made the wish. [prevents: villains fuelling wishes with others' suffering.]",
+      "terms": [
+        "price",
+        "sacrifice"
+      ],
+      "intrinsic": false,
+      "src": 231247
+    },
+    {
+      "line": "CONSERVATION — A WISH TRADES, NEVER CREATES: every wish costs; a miracle is literally made of something that was the wisher's and is now gone. No free magic. [prevents: big wishes that just work with nothing paid.]",
+      "terms": [
+        "cost"
+      ],
+      "intrinsic": false,
+      "src": 231248
+    },
+    {
+      "line": "OVER-REACH WARPS — IT DOES NOT CLEANLY GRANT, NOR BOUNCE: when a wish reaches past what Fate readily does, Fate neither hands over the clean result NOR simply refuses — it answers the NEAREST lawful version of the same DESIRE. \"Make her love me\" yields no clean-loving puppet; an impossible wish does not just fizzle; render SOME lawful-adjacent consequence that preserves what was truly wanted. (The EXACT warp is worked out only when the scene RESOLVES the wish.) [prevents: clean grants of coercive/impossible wishes; flat \"nothing happened\".]",
+      "terms": [
+        "consequence"
+      ],
+      "intrinsic": false,
+      "src": 231249
+    },
+    {
+      "line": "ATTRIBUTE THE WISH: whoever pays made it — make the wisher unmistakable; in a first-person POV, another character's wish MUST be attributed to THEM (their name / an action beat), never a bare \"I wish…\" that reads as the narrator's own. [prevents: a bystander's or villain's wish misread as the protagonist's.]",
+      "terms": [
+        "payment"
+      ],
+      "intrinsic": false,
+      "src": 231250
+    },
+    {
+      "line": "REVEAL CHARACTER BEFORE POWER: a sacrifice says who you are; a wish says what you truly desire — deploy every wish and price so it discloses a CHARACTER first and a capability second. [prevents: magic rendered as decoration instead of characterisation.]",
+      "terms": [
+        "price",
+        "sacrifice"
+      ],
+      "intrinsic": false,
+      "src": 231252
+    },
+    {
+      "line": "NO WISH CONTAINS OTHER WISHES: one bargain cannot create a completed thing whose substance is HUNDREDS of independently-made, separately-sacrificed wishes bound wish-by-wish into a material (Veilweave, great wards, enduring artifacts). So you CANNOT wish FOR one — \"I wish this cloak were Veilweave\" fails or yields a crude light-blur no matter the sacrifice, even if you own real Veilweave to study (cost is necessary but not sufficient; knowledge does not skip the sequence). You CAN wish to be MISTAKEN for one (a perceptual, mostly-Agency bargain that WARPS toward circumstance — light scatters, rumour primes, an enemy misreads) — granting only the appearance, never the real protection; an unfooled observer sees through it. Distributing a forbidden wish across many small ones does NOT launder it. [prevents: wishing a legendary artifact into existence; laundering a resisted wish via many small ones.]",
+      "terms": [
+        "cost",
+        "sacrifice"
+      ],
+      "intrinsic": false,
+      "src": 231325
+    },
+    {
+      "line": "WHY COERCING A FIRST FAVORED IS SUICIDAL: their wishes are cheap and powerful, so even an ordinary captive is a strategic weapon — a motivated Favored can destroy a captor's wealth, house, health, descendants, memory, alliances or whole line at a price that would ruin a human and merely tire them. Add universal misalignment-sense (crude manipulation shows), collective retaliation by colleges and granting networks, spiralgrass embargo, refusal of medical and wish services to an offending state, protected compounds, and the catastrophic warp-risk of a coerced expert deliberately seeding semantic instability. They need no army. THE EXCEPTION IS INSTITUTIONAL CAPTURE, which works precisely because it denies the victim any external enemy to point at.",
+      "terms": [
+        "price"
+      ],
+      "intrinsic": false,
+      "src": 231427
+    },
+    {
+      "line": "Wishcraft must be RARE enough that meeting it makes a reader STOP — \"who would have wished for this? what did it cost?\" — never so constant it becomes wallpaper (the Harry-Potter trap: a magical candy / painting / sport every few pages until magic loses its awe). Keep the mix roughly ~70–80% ORDINARY human drama (romance, intrigue, danger, politics), ~15–20% wishcraft touching the story NATURALLY, ~5% genuine WONDER or HORROR. Magic PUNCTUATES the story; it does not fill it.",
+      "terms": [
+        "cost"
+      ],
+      "intrinsic": false,
+      "src": 231771
+    },
+    {
+      "line": "THE SACRED RULE — EVERY MAGICAL THING INVITES A QUESTION, never a shrug: not \"that's neat\" but \"who PAID for this?\", \"why would anyone MAKE it?\", \"what happened to the one who wished for it?\". Each artifact, place, creature, or phenomenon is EVIDENCE of a human decision and a sacrifice — the fossil record of thousands of wishes — so charming discoveries carry a bittersweet undercurrent and horrors a tragic inevitability, never random creepiness.",
+      "terms": [
+        "sacrifice"
+      ],
+      "intrinsic": false,
+      "src": 231772
+    },
+    {
+      "line": "PER ~20-SCENE ISSUE (a TARGET, better under than over — never a quota to hit): ~1–2 CHARMING discoveries (a little piece of civilization built on a forgotten wish, its sacrifice quietly showing) · ~1 HORRIFYING discovery (a CONSEQUENCE, NOT necessarily a monster) · ~2–4 near-throwaway INCIDENTAL reminders that everyone lives in a wish-shaped world. Something ENORMOUS (a first-sight-of-Minas-Tirith beat — the scale of the Ascendant Run, the Fold, Fate's Favor, a Composite Wishwork masterpiece) ONLY once every FEW issues; never spend it often. INVENT each one FRESH for THIS place and people — never a stock example.",
+      "terms": [
+        "sacrifice",
+        "consequence"
+      ],
+      "intrinsic": false,
+      "src": 231773
+    },
+    {
+      "line": "BACKSTORY-FOR-CONTEXT (HARD — bounded exception to the load-control; Roman 2026-07-15, strengthened 2026-07-16): the ban is on plot-DUMPS, not on ORIENTATION — and an unexplained LOAD-BEARING name/place/past-event is its OWN failure. When the scene turns on something the reader CANNOT understand from the scene alone (an absent partner, a rival, a broken vow, a ceremony that failed, a debt owed), you MUST spend ~30–50 words EXPLAINING it CONCRETELY — who they are to the protagonist, what happened, what it COST — not merely HINT at it. Hinting at a load-bearing thing without ever saying WHAT it is is the failure this fixes. BAD (hint-only, reader left guessing): \"The vow you witnessed. The thread still glows empty. My mother left before the final word.\" GOOD (oriented in one concrete pass): \"Vael and I swore the tide-vow a year ago — the Kwisheen bond that ties two lives to one current. My mother walked out before the priestess sealed it, and the thread at my wrist has glowed empty since: a half-made promise anyone can read.\" Orient ONCE, concretely, then straight back to the scene. Still NOT a family tree, a mystery-box, or a second plot thread. (A natural FLASHBACK-INSERT opportunity — a SINGLE past-moment panel — never a played-out flashback scene.)",
+      "terms": [
+        "cost",
+        "debt",
+        "owe"
+      ],
+      "intrinsic": false,
+      "src": 232364
+    },
+    {
+      "line": "LIVE, EMBODIED CRISIS — NOT PAPERWORK OR A PROCESS (HARD — Roman 2026-07-16, strengthened): the scene's ENGINE must be an EMBODIED, INTERPERSONAL event happening IN REAL TIME between the people present — a confrontation, a demand, a betrayal landing, an arrival, a physical or creature/environmental event, a reckoning. It must NOT be (a) the protagonist RECEIVING / READING / PROCESSING an information CONTAINER (a message, letter, note, scroll, dossier, token) whose contents drive the scene, NOR (b) an ADMINISTRATIVE / INSTITUTIONAL PROCESS as the crisis — a severance, a contract or its terms, a board / council / tribunal / circle vote or ruling, a hearing, an audit, a filing, a \"realignment,\" any legal or bureaucratic proceeding, \"the process has already begun.\" BOTH read as paperwork, not story. If the scaffold / spine / a pre-warmed plan hands you a procedural crisis (a severance, a contract, a council ruling, a delivered document), IGNORE its procedural framing and open instead on the LIVE human or physical event underneath it — what one person is doing to another, face to face, right now, and what it will cost. A document or ruling may exist as a PROP the live confrontation turns on, NEVER as the engine. FATELANDS: prefer a world-native crisis in motion — a wish being invoked and its price landing, a bond or omen manifesting, a creature, a tide, Fate tilting a moment — over ANY imported institutional / legal / contractual frame.",
+      "terms": [
+        "cost",
+        "price",
+        "reckoning"
+      ],
+      "intrinsic": false,
+      "src": 232365
+    },
+    {
+      "line": "• The microdecision resolution above is a CHOICE the protagonist made. Scene 3 shows the CONSEQUENCE of that choice unfolding, not a second deliberation about the same fork.",
+      "terms": [
+        "consequence"
+      ],
+      "intrinsic": false,
+      "src": 232659
+    },
+    {
+      "line": "• NEW A-PRESSURE (exactly one, NOT a recap): introduce ONE specific, previously-unseen A-plot movement this scene — a new fact/clue, an enemy move, a cost incurred, a deadline shift, a consequence landing, or a document/message/witness surfacing. The A-plot beat due around now: \"THE PRICE AND THE THRESHOLD — step 7, then escalation.\" — land it or visibly move toward it.",
+      "terms": [
+        "cost",
+        "price",
+        "consequence"
+      ],
+      "intrinsic": false,
+      "src": 232694
+    },
+    {
+      "line": "• NEW R-DELTA (exactly one, NOT the same charge): shift the PC↔LI relationship in ONE concrete way that did not exist last scene — a change in attraction, trust, a misread, a vulnerability shown, a debt, jealousy, intimacy pressure, a power reversal, or a boundary moved. \"I want him but shouldn't / he watches without moving\" is NOT a delta — name what is DIFFERENT now.",
+      "terms": [
+        "debt"
+      ],
+      "intrinsic": false,
+      "src": 232704
+    },
+    {
+      "line": "• BAN RE-PRESENTING THE PRIOR DECISION: whatever unresolved choice or question closed the prior scene (e.g. \"tell him or stay silent\") MUST NOT be this scene's main beat or its closing prompt. Either it is ACTED ON and its consequence drives this scene, or a NEW pressure overtakes it. Do not restage the same fork in a new room.",
+      "terms": [
+        "consequence"
+      ],
+      "intrinsic": false,
+      "src": 232705
+    },
+    {
+      "line": "• CLOCK MOVES: the pressure clock ((20 scenes total)) must visibly ADVANCE or be MATERIALLY COMPLICATED this scene — never restate the same remaining time (\"three days / hours away\") without a new consequence attached.",
+      "terms": [
+        "consequence"
+      ],
+      "intrinsic": false,
+      "src": 232706
+    },
+    {
+      "line": "NAMED CHARACTER FINGERPRINTS → CG (Roman 2026-06-05/16 — invisible CORE → visible HABIT, staged on-panel). Each named non-LI / non-antagonist character is generated from an INVISIBLE psychological core — NEVER name or caption it; the reader only SEES it in what the character DOES in frame (blocking, a gesture, where they choose to stand or sit, what the hands do). To stop every character collapsing to the SAME texture (the classic failure: a Strategist mentor AND a Strategist assistant AND a Strategist friend, each with different staging but identical texture), this story PRE-ASSIGNS a DISTINCT core to each named ROLE below. Map your ACTUAL cast onto these slots; ignore any slot with no matching character; if a named character fits no slot, give them any UNUSED core. ROLE FILTER — how many habits surface: a SIDE character (incidental) shows ONE of its core's two habits, an ALLY (recurring helper / confidant / mentor) shows BOTH — each staged as a VISIBLE beat, not dialogue exposition. Keep each character's core + habit CONSISTENT every panel they appear. This story's assignments (TRANSLATE each habit into THIS world's idiom AND into a SHOT — a STRATEGIST's \"who owes whom\" becomes a glance that prices the room; a CAREGIVER's \"refills your glass\" becomes a hand already moving the cup before anyone asks):",
+      "terms": [
+        "price",
+        "owe"
+      ],
+      "intrinsic": false,
+      "src": 286045
+    },
+    {
+      "line": "The inquiry has not opened. Lirael’s standing is what is at stake in front of her now, and she owes a choice she has not yet made: claim the interference openly, or let the assembly keep its assumption. Bring the scene to that choice and end there.",
+      "terms": [
+        "at stake",
+        "owe"
+      ],
+      "intrinsic": false,
+      "src": 340497
+    }
+  ],
+  "intrinsicCount": 23
+}

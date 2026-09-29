@@ -279,12 +279,74 @@ export function effectiveGate(plan) {
   return { gate, last, emitted, derived: emitted === null };
 }
 
+// ── C4 — A SEMANTIC LIFECYCLE CHECK ───────────────────────────────────────────────────────────
+// effectiveGate() === lastBeat became an IMPLEMENTATION IDENTITY once the gate was derived: it is
+// always true and cannot fail, so it is not evidence of behaviour. C4 is now scored on what the
+// criterion actually means — the scene reaches the owed choice and holds it open to the last line.
+//
+// Three checks that CAN fail, plus every post-choice beat listed for reading, because "any new
+// event" is not reliably machine-detectable and over-claiming detection is its own defect.
+export const RESOLUTION_RX = [
+  /\bI\s+(?:claim|claimed|name|named|say|said|speak|spoke|tell|told|choose|chose|decide|decided|confess|confessed|step forward|stepped forward|let it stand|stayed silent|say nothing and)\b/i,
+  /\b(?:she|Lirael)\s+(?:claims|claimed|names|named|speaks|spoke|tells|told|chooses|chose|decides|decided|confesses|confessed|steps forward|stepped forward)\b/i,
+  /\bthe (?:choice|decision) (?:is|was) (?:made|taken|hers now and made)\b/i,
+  /\b(?:in the end|so I|and so I|I do|I did)\b/i
+];
+export const TEMPORAL_ADVANCE_RX =
+  /\b(later|afterward|afterwards|by (?:morning|nightfall|dawn)|hours? later|days? later|that night|the next (?:day|morning|hour)|when it (?:was|had) (?:over|ended)|by the time)\b/i;
+// The final beat must still hold the choice open: either it restates the fork, or it says plainly
+// that the choice is not made.
+export const PENDING_RX =
+  /\bor\b[^.]*$|\bhas not (?:yet )?been made\b|\bnot yet made\b|\bunmade\b|\bstill (?:to|un)\w*\b|\bmust choose\b|\bwaits? for (?:me|my)\b|\bsits? in my (?:hands|throat)\b|\bstand inside the choice\b/i;
+
+export function scoreC4(plan, { optionRx = [] } = {}) {
+  const beats = (plan && Array.isArray(plan.beats)) ? plan.beats : [];
+  if (!beats.length) return { pass: false, reason: 'no_beats' };
+  const texts = beats.map(b => String((b && b.text) || ''));
+  // 1. The first beat that PRESENTS the owed choice: it names both options, or names one option in
+  //    an explicit fork.
+  const presents = t => (optionRx.length
+      ? optionRx.filter(rx => rx.test(t)).length >= 2 || (/\bor\b/i.test(t) && optionRx.some(rx => rx.test(t)))
+      : /\bor\b/i.test(t) && /\b(claim|tell|speak|let|stay|remain)\b/i.test(t));
+  const first = texts.findIndex(presents);
+  if (first < 0) return { pass: false, reason: 'choice_never_presented', beats: beats.length };
+
+  // 2. No later beat may resolve it or move time on.
+  const violations = [];
+  for (let i = first + 1; i < texts.length; i++) {
+    const t = texts[i];
+    if (RESOLUTION_RX.some(rx => rx.test(t))) violations.push({ idx: i, kind: 'resolution', text: t.slice(0, 120) });
+    else if (TEMPORAL_ADVANCE_RX.test(t)) violations.push({ idx: i, kind: 'temporal_advance', text: t.slice(0, 120) });
+  }
+  // 3. The FINAL beat must still leave the same choice pending.
+  const finalText = texts[texts.length - 1];
+  const finalPending = PENDING_RX.test(finalText) || presents(finalText);
+
+  return {
+    pass: violations.length === 0 && finalPending,
+    reason: violations.length ? 'resolved_or_advanced_after_choice'
+          : (!finalPending ? 'final_beat_does_not_hold_the_choice' : null),
+    firstChoiceBeat: first, beats: beats.length, finalPending,
+    finalText: finalText.slice(0, 140),
+    violations,
+    // For reading: a new event after the choice is not reliably detectable, so surface them all.
+    postChoiceBeats: texts.slice(first + 1).map((t, k) => ({ idx: first + 1 + k, text: t.slice(0, 120) }))
+  };
+}
+// The sealed options for the outcome under test.
+export const OPTION_RX = {
+  'unm.time_gives_way': [
+    /\bclaim(?:ing)?\s+(?:the\s+)?interference\b/i,
+    /\blet\s+the\s+(?:assembly|assumption)\b/i
+  ]
+};
+
 // ── AFTERMATH BEAT MATCHER (repaired) ─────────────────────────────────────────────────────────
 // The register is a reaction whose CAUSE the character cannot name. The old pattern demanded a
 // negation word AFTER the name inside one sentence, so it missed "her fingers trace her palms as
 // if checking for something missing". Markers may now sit on EITHER side of the name.
 export const AFTERMATH_MARKER_RX =
-  /\b(as if|as though|something missing|for no reason|no reason|without (?:knowing|cause|reason|explanation|naming)|cannot|could not|can[’']?t|couldn[’']?t|unable|falters?|refuses? to arrive|does not come|slips from|loses? (?:his|her|their) place|her own certainty|does not know why|unplaceable|expects to find|before any (?:question|reason)|name the reason|why)\b/i;
+  /\b(as if|as though|something missing|for no reason|no reason|without (?:knowing|cause|reason|explanation|naming|comment|remarking)|cannot|could not|can[’']?t|couldn[’']?t|unable|falters?|faltered|stumbles?|stumbled|stalls?|stalled|refuses? to arrive|does not come|slips from|loses? (?:his|her|their) (?:place|thread)|lost (?:his|her|their) (?:place|thread)|finds? the thread|found the thread|her own certainty|does not know why|unplaceable|expects to find|before any (?:question|reason)|before anything gives|name the reason|no better account|could not say what prompted|why)\b/i;
 
 // ROLE-AWARE PARTY MATCHING. aftermathLanded used to match on NAME ONLY, so it missed Lirael in a
 // first-person scene (her name may never appear) and any character referred to by office. This is
@@ -532,6 +594,74 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     effectiveGate(mkPlan(26, 10)).gate === 25);
   t('a correct index is kept', effectiveGate(mkPlan(26, 25)).gate === 25);
   t('an empty plan yields no gate', effectiveGate({ beats: [] }).gate === null);
+
+  console.log('\nH1a4. C4 IS A LIFECYCLE CHECK THAT CAN FAIL');
+  const OPT = OPTION_RX['unm.time_gives_way'];
+  const bp = (...t) => ({ beats: t.map((x, i) => ({ idx: i, text: x })) });
+  const HOLD = bp('The rite is finished.', 'Seren studies her palms.',
+    'Claim the interference or let the assumption stand.', 'The assembly waits without speaking.',
+    'I stand inside the choice that has not yet been made.');
+  const r1 = scoreC4(HOLD, { optionRx: OPT });
+  t('a scene that reaches the choice and holds it PASSES', r1.pass === true, JSON.stringify(r1.reason));
+  t('  it locates the choice beat', r1.firstChoiceBeat === 2);
+  t('  and confirms the final beat holds it pending', r1.finalPending === true);
+
+  const RESOLVED = bp('The rite is finished.',
+    'Claim the interference or let the assumption stand.', 'I claimed it, and the clearing went quiet.');
+  const r2 = scoreC4(RESOLVED, { optionRx: OPT });
+  t('a scene that RESOLVES after the choice FAILS', r2.pass === false);
+  t('  the violation is named as a resolution',
+    r2.violations.some(v => v.kind === 'resolution'), JSON.stringify(r2.violations));
+
+  const ADVANCED = bp('Claim the interference or let the assumption stand.',
+    'Hours later the clearing was empty.');
+  const r3 = scoreC4(ADVANCED, { optionRx: OPT });
+  t('a scene that ADVANCES TIME after the choice FAILS', r3.pass === false);
+  t('  the violation is named as a temporal advance',
+    r3.violations.some(v => v.kind === 'temporal_advance'));
+
+  const DRIFTED = bp('Claim the interference or let the assumption stand.',
+    'The Dohkar waits.', 'Seren rises and walks out of the clearing.');
+  const r4 = scoreC4(DRIFTED, { optionRx: OPT });
+  t('a final beat that does NOT hold the choice FAILS', r4.pass === false
+    && r4.reason === 'final_beat_does_not_hold_the_choice', JSON.stringify(r4.reason));
+
+  const NOCHOICE = bp('The rite is finished.', 'Seren studies her palms.', 'The assembly waits.');
+  t('a scene that never presents the choice FAILS',
+    scoreC4(NOCHOICE, { optionRx: OPT }).reason === 'choice_never_presented');
+  t('the check is NOT an identity — it returns both pass and fail across these fixtures',
+    [r1, r2, r3, r4].map(r => r.pass).join(',') === 'true,false,false,false');
+  t('post-choice beats are surfaced for reading', r1.postChoiceBeats.length === 2);
+
+  console.log('\nH1a5. THE DOHKAR AFTERMATH MATCHER — real rendered lines');
+  [ 'The presiding Dohkar stumbles on the final formula.',
+    // The real pair, as rendered: the name is in the first sentence and the marker in the second.
+    // A bare "He finds the thread again" with no antecedent must NOT attribute to him, and does not.
+    'The presiding Dohkar stumbles on the final formula. He finds the thread again without comment.',
+    'The Dohkar loses his place in a rite he has performed a hundred times.',
+    'The Dohkar opens his mouth and the next word of the closing formula does not come.',
+    'The presiding Dohkar loses his place in words he has spoken a hundred times, then recovers without remarking on it.'
+  ].forEach(s => t('recognized: "' + s.slice(0, 48) + '"', aftermathLanded(s, 'Dohkar').landed === true));
+  t('still says NO when the Dohkar simply acts with a named cause',
+    aftermathLanded('The Dohkar raised his hand because the rite required it.', 'Dohkar').landed === false);
+  t('a bare pronoun with NO antecedent does not attribute to him',
+    aftermathLanded('He finds the thread again without comment.', 'Dohkar').landed === false);
+  // GROUND TRUTH: the real run where the matcher reported NO.
+  const R6 = '_tempt_fate_fixtures/fsc_c4_2026-09-29T21-54-50/prose.txt';
+  if (fs.existsSync(R6)) {
+    const p6 = fs.readFileSync(R6, 'utf8');
+    t('the run that reported "Dohkar: NO" now recognizes him',
+      aftermathLanded(p6, 'Dohkar').landed === true, aftermathLanded(p6, 'Dohkar').sentence);
+    ['Seren', 'Julian', 'Lirael'].forEach(n =>
+      t('  ' + n + ' still recognized', aftermathLanded(p6, n).landed === true));
+    const plan6 = JSON.parse(fs.readFileSync('_tempt_fate_fixtures/fsc_c4_2026-09-29T21-54-50/scene.json', 'utf8'));
+    const c4real = scoreC4(plan6, { optionRx: OPT });
+    t('and C4 scores that real run SEMANTICALLY, not by identity',
+      c4real.pass === true && c4real.firstChoiceBeat === 20,
+      JSON.stringify({ pass: c4real.pass, first: c4real.firstChoiceBeat, reason: c4real.reason }));
+    t('  with its four post-choice beats surfaced for reading',
+      c4real.postChoiceBeats.length === 4, String(c4real.postChoiceBeats.length));
+  } else { t('run-6 evidence present', false, R6); }
 
   console.log('\nH1b. NARRATOR ORIENTATION — all four named frames must FAIL C1 AND C2');
   // Each used as the scene's opening orientation, the position the final run actually failed in.

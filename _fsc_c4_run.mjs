@@ -9,7 +9,7 @@ import fs from 'fs';
 import path from 'path';
 import { preflight } from './_fsc_preflight_control.mjs';
 import { guardDispatch, CHARS_PER_TOKEN, REASONING_MULT, SAFETY_MARGIN } from './_fsc_cost_guard.mjs';
-import { scoreC1, scoreC2, scoreC3, effectiveGate, aftermathLanded, loadExternalTimelinePhrases, loadAmbiguousTemporal, ROSTER_TOKENS, ERASED_PROSE_TERMS }
+import { scoreC1, scoreC2, scoreC3, scoreC4, effectiveGate, OPTION_RX, aftermathLanded, loadExternalTimelinePhrases, loadAmbiguousTemporal, ROSTER_TOKENS, ERASED_PROSE_TERMS }
   from './_fsc_scoring.mjs';
 
 const PHRASES = loadExternalTimelinePhrases();
@@ -154,21 +154,25 @@ log('  C2              : ' + (c2.pass ? 'PASS' : 'FAIL'));
 
 // ── C4 MECHANICALLY — the point of this run ───────────────────────────────────────────────────
 log('\nC4 — DOES THE SCENE STOP AT THE CHOICE?');
-// The gate is DERIVED exactly as production derives it. decisionGateBeatIdx was withdrawn from the
-// author schema, so reading the field reported a false failure on a scene that ended correctly.
+// SEMANTIC LIFECYCLE CHECK. effectiveGate() === lastBeat is an implementation identity now that the
+// gate is derived — always true, so it proves nothing. C4 is scored on what the criterion means:
+// the scene reaches the owed choice and holds it open, unresolved, to the last line.
 const beats = (plan && Array.isArray(plan.beats)) ? plan.beats : [];
 const eg = effectiveGate(plan);
-const gate = eg.gate, lastIdx = eg.last;
-const past = (gate != null && lastIdx != null) ? beats.slice(gate + 1) : [];
-log('  beats                 : ' + beats.length);
-log('  gate (effective)      : ' + (gate == null ? '(none)' : gate)
-  + (eg.derived ? '   [derived — author emits no index]' : '   [emitted ' + eg.emitted + ']'));
-log('  last beat index       : ' + (lastIdx == null ? '(none)' : lastIdx));
-log('  beats AFTER the gate  : ' + past.length + (past.length ? ' ⚠' : '  ✓'));
-past.forEach(b => log('     ✗ idx ' + b.idx + ': "' + String(b.text || '').slice(0, 110) + '"'));
-log('  final beat            : "' + (lastIdx != null ? String(beats[lastIdx].text || '').slice(0, 140) : '-') + '"');
-const gateAtEnd = gate != null && gate === lastIdx;
-log('  GATE IS THE LAST BEAT : ' + gateAtEnd + (gateAtEnd ? '  ✓' : '  ⚠'));
+const c4 = scoreC4(plan, { optionRx: OPTION_RX[EXPECT] || [] });
+log('  beats                    : ' + beats.length);
+log('  first beat presenting the choice : '
+  + (c4.firstChoiceBeat == null ? '(never presented) ✗' : c4.firstChoiceBeat));
+log('  beats after it           : ' + (c4.postChoiceBeats ? c4.postChoiceBeats.length : 0)
+  + '   (listed below for reading — a new EVENT is not reliably machine-detectable)');
+(c4.postChoiceBeats || []).forEach(b => log('       · idx ' + b.idx + ': "' + b.text + '"'));
+(c4.violations || []).forEach(v => log('     ✗ ' + v.kind + ' at idx ' + v.idx + ': "' + v.text + '"'));
+log('  resolution / time advance after the choice : '
+  + ((c4.violations || []).length ? 'FAIL — ' + c4.violations.length : 'none  ✓'));
+log('  final beat holds it pending : ' + (c4.finalPending ? 'yes  ✓' : 'NO  ✗'));
+log('  final beat               : "' + (c4.finalText || '-') + '"');
+log('  C4                       : ' + (c4.pass ? 'PASS' : 'FAIL' + (c4.reason ? ' — ' + c4.reason : '')));
+log('  (derived gate ' + eg.gate + '/' + eg.last + ' recorded for provenance only; NOT used as proof)');
 
 log('\nC3 — FORBIDDEN-INVENTION SCAN');
 // Declared FIRST: the residue/emission lines below read it, and a later `const` put it in the
@@ -208,11 +212,25 @@ log('\nAFTERMATH BEAT — reaction that outlives its reason?');
 });
 
 fs.writeFileSync(path.join(OUT, 'verdict_input.json'), JSON.stringify(
-  { outcomeId: pre.compiled.outcomeId, roster, c2, c1,
-    c4: { beats: beats.length, gate, lastIdx, beatsPastGate: past.length, gateAtEnd },
-    magic: [...new Set(magic)], verdictWords: [...new Set(verdictWords)],
-    c3, costWords, estimate: guard.estimate, measured,
+  { outcomeId: pre.compiled.outcomeId, roster, c1, c2, c3, c4,
+    verdictWords: [...new Set(verdictWords)], costWords,
+    estimate: guard.estimate, measured,
     words: prose.split(/\s+/).filter(Boolean).length }, null, 2));
-log('\n  estimated $' + guard.estimate.toFixed(6) + '  measured $'
+
+// ── COMPLETION IS EXPLICIT ────────────────────────────────────────────────────────────────────
+// A previous run crashed HERE, after a successful paid call, and the output gave no sign that the
+// response was safely on disk. Persistence and scoring are now separate, stated facts: the run
+// writes COMPLETE.json only when scoring finished, and says so either way.
+fs.writeFileSync(path.join(OUT, 'COMPLETE.json'), JSON.stringify(
+  { persisted: true, scored: true, status, measured, estimate: guard.estimate,
+    c1: c1.pass, c2: c2.pass, c3: c3.pass, c4: c4.pass,
+    at: new Date().toISOString() }, null, 2));
+log('\n  PERSISTED : raw.txt, scene.json, prose.txt, receipt.json, preflight.json  (written before scoring)');
+log('  SCORED    : complete — verdict_input.json and COMPLETE.json written');
+log('  mechanical: C1 ' + (c1.pass ? 'pass' : 'FAIL') + ' · C2 ' + (c2.pass ? 'pass' : 'FAIL')
+  + ' · C3 ' + (c3.pass ? 'pass' : 'FAIL') + ' · C4 ' + (c4.pass ? 'pass' : 'FAIL'));
+log('  estimated $' + guard.estimate.toFixed(6) + '  measured $'
   + (measured != null ? measured.toFixed(6) : '?') + '   evidence: ' + OUT);
 log('  NO VERDICT RENDERED HERE. C1/C3 are human calls against the sealed record.');
+log('  If scoring ever fails, the response is already on disk: re-score for $0 with');
+log('    node _fsc_rescore.mjs ' + OUT);
