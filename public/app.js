@@ -340474,7 +340474,14 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
       establishes: [
         { id: 'interr.no_questioning_occurred', text: 'Julian did not question Lirael before the assembly. No such questioning took place in active canon.' },
         { id: 'interr.no_interruption_occurred', text: 'The presiding Dohkar interrupted nothing.' },
-        { id: 'ceremony.replayed_unquestioned', text: 'The rite played through a second time, and no questioning of the Sacrificiant’s guide occurred in it.' },
+        // AUDIT vs WRITER LANGUAGE (Roman 2026-09-29). `text` is the RECORD — it may keep the
+        // counting frame, because the ledger is written from outside the timeline. `authorText` is
+        // what reaches the AUTHOR, and it must never contain an ordinal or a repetition frame.
+        // The final C4 run opened on "The rite ends for the second time" — the model was echoing
+        // this very line, which then said "The rite played through a second time".
+        { id: 'ceremony.replayed_unquestioned',
+          text: 'The rite played through a second time, and no questioning of the Sacrificiant’s guide occurred in it.',
+          authorText: 'The rite proceeds uninterrupted, and no questioning of the Sacrificiant’s guide occurs in it.' },
         { id: 'answer.never_handed_to_lirael', text: 'The Answer was not placed in Lirael’s hands. It remained with Julian throughout.' },
         { id: 'lirael.choice_pending', text: 'A choice is required of Lirael and has not been made.' }
       ],
@@ -340769,7 +340776,12 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
         temporalOperation: o.temporalOperation,
         sourceOutcomeId: o.id,
         ceases: (o.ceases || []).slice(),
-        establishes: (o.establishes || []).map(function (e) { return { id: e.id, text: e.text }; }),
+        // authorText must survive compilation — it is what the WRITER sees, while text stays the
+        // ledger's. Dropping it here silently restored the counting frame in the NOW TRUE line.
+        establishes: (o.establishes || []).map(function (e) {
+          return e.authorText ? { id: e.id, text: e.text, authorText: e.authorText }
+                              : { id: e.id, text: e.text };
+        }),
         priorHistoryReplaced: o.priorHistoryReplaced || null,
         survivingContradictions: (o.survivingContradictions || []).slice(),
         recognitionChanges: (o.recognitionChanges || []).slice(),
@@ -340952,7 +340964,8 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
     if (rec.delta) {
       L.push('- CANON CHANGE (' + rec.delta.temporalOperation + '):');
       rec.delta.ceases.forEach(function (a) { L.push('    CEASES: ' + a); });
-      rec.delta.establishes.forEach(function (e) { L.push('    NOW TRUE: ' + e.text); });
+      // WRITER language, never audit language — see the authorText note on the atoms themselves.
+      rec.delta.establishes.forEach(function (e) { L.push('    NOW TRUE: ' + (e.authorText || e.text)); });
       if (rec.delta.priorHistoryReplaced) L.push('    HISTORY: ' + rec.delta.priorHistoryReplaced);
     }
 
@@ -341036,7 +341049,7 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
       L.push('  THE CHOICE RESTS ON ACTIVE CANON ONLY. What still governs, and all it may rest on:');
       _governing.forEach(function (a) { L.push('    \u2022 ' + (FSC_ATOM_GLOSS[a] || a)); });
       (rec.delta && rec.delta.establishes ? rec.delta.establishes : []).forEach(function (e) {
-        L.push('    \u2022 ' + e.text);
+        L.push('    \u2022 ' + (e.authorText || e.text));
       });
       if (_erased.length) {
         L.push('  IT MAY NOT REST ON \u2014 these no longer govern. No character may refer to them,');
@@ -341055,7 +341068,25 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
         L.push('    rests on the ACTIVE facts above may remain, and she may address it.');
       }
     }
-    return L.join('\n') + '\n';
+    var _out = L.join('\n') + '\n';
+
+    // ── SELF-CHECK: THE INSTRUCTION MUST NOT CONTAIN WHAT IT FORBIDS ────────────────────────────
+    // The final C4 run's one violation was the model echoing its own NOW TRUE line, which read
+    // "The rite played through a second time". A boundary that forbids counting frames while
+    // demonstrating one is worse than no rule. Everything below the FORBIDDEN list is exempt —
+    // that block quotes the banned vocabulary on purpose.
+    if (rec.delta && rec.delta.temporalOperation === 'historical_replacement') {
+      var _fIdx = _out.indexOf('FORBIDDEN, in narration and dialogue alike:');
+      var _scan = _fIdx >= 0 ? _out.slice(0, _fIdx) : _out;
+      // The HISTORY line is the reader's record and is explicitly labelled as such.
+      _scan = _scan.split('\n').filter(function (ln) { return ln.indexOf('    HISTORY: ') !== 0; }).join('\n');
+      var _bad = _fscExternalTimelineHits(_scan);
+      if (_bad.length) {
+        try { console.error('[FSC-BOUNDARY] audit language leaked into the AUTHOR payload: '
+          + _bad.join(', ') + ' — give the atom an authorText.'); } catch (_) {}
+      }
+    }
+    return _out;
   }
   window._fscRenderBoundary = _fscRenderBoundary;
 
@@ -341138,11 +341169,50 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
   // FIRST-CLASS DELIVERY. Appends every sealed boundary block to the final author payload,
   // unconditionally \u2014 outside any legacy Fate-weave, OAS-budget or scenario-active branch.
   // Returns the payload unchanged when nothing is sealed.
+  // ── OPENING ORIENTATION RULE (Roman 2026-09-29) ─────────────────────────────────────────────
+  // The final C4 run was obedient in 26 of 27 beats and failed on beat 0 — "The rite ends for the
+  // second time." Orientation is where a writer reaches for a frame, and the effect boundary
+  // arrives AFTER the beat schema, too late to shape the first line. This rule is inserted BEFORE
+  // the beats schema so it is in hand when the opening is written, not only recalled afterwards.
+  var FSC_OPENING_MARKER = 'OPENING ORIENTATION — HISTORICAL REPLACEMENT';
+  function _fscOpeningOrientationRule() {
+    var st = (typeof window !== 'undefined' && window.state) || {};
+    var rec = st._fscActiveCompiled;
+    if (!rec || rec.error) return '';
+    if (!(rec.delta && rec.delta.temporalOperation === 'historical_replacement')) return '';
+    return [
+      '',
+      FSC_OPENING_MARKER + ' (HARD — governs the FIRST beat above all else):',
+      '- Begin inside the ONLY timeline the characters know. Orient through immediate place, body,',
+      '  active stakes and present action — NOT by numbering, repetition, replacement, or',
+      '  comparison to an erased occurrence.',
+      '- The opening beat must NOT contain: "for the second time", "again", "once more", "the first',
+      '  time", "replay", "replayed", "repeats", "the rite ends for the Nth time", or any ordinal or',
+      '  counting frame applied to the scene’s events. There is no count. For the people in this',
+      '  room this is simply what is happening.',
+      '- A sealed record may describe the change in counting terms for the LEDGER. That is audit',
+      '  language and it is never writer language. Never carry it into a beat.',
+      ''
+    ].join('\n');
+  }
+
   function _fscAttachToAuthorPayload(sys) {
     var st = (typeof window !== 'undefined' && window.state) || {};
     var out = String(sys || '');
     var render = (typeof window !== 'undefined') && window._fscRenderBoundary;
     if (typeof render !== 'function') return out;
+
+    // Insert the opening rule BEFORE the beats schema — appending it with the boundary would put
+    // it after the instruction it exists to govern.
+    try {
+      var opening = _fscOpeningOrientationRule();
+      if (opening && out.indexOf(FSC_OPENING_MARKER) < 0) {
+        var anchor = '\n  "beats": [ {';
+        var at = out.indexOf(anchor);
+        if (at >= 0) { out = out.slice(0, at) + '\n' + opening + out.slice(at); }
+        else { out = opening + '\n' + out; }
+      }
+    } catch (_fscOErr) { try { console.warn('[FSC-DELIVERY] opening rule: ' + _fscOErr.message); } catch (_) {} }
     [{ key: '_fscActiveCompiled', fn: '_fscPromptBlock' },
      { key: '_fpcActiveCompiled', fn: '_fpcPromptBlock' }].forEach(function (c) {
       var rec = st[c.key];

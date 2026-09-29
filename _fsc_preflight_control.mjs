@@ -193,6 +193,28 @@ export async function preflight(opts = {}) {
       b.indexOf('It did not happen, so it leaves NOTHING to perceive, miss or mark') >= 0);
     ok('payload limits rendering to active canon + the sealed beat',
       b.indexOf('Render ONLY (a) active canon and (b) the sealed aftermath beat') >= 0);
+    // ── AUDIT LANGUAGE MUST NOT REACH THE WRITER ────────────────────────────────────────────
+    // The final run's one violation was the model echoing its own NOW TRUE line, which read
+    // "The rite played through a second time".
+    ok('NOW TRUE uses writer language, not the ledger’s counting frame',
+      b.indexOf('The rite proceeds uninterrupted') >= 0);
+    ok('the audit phrase "played through a second time" is ABSENT from the payload',
+      b.indexOf('played through a second time') < 0);
+    // ── THE OPENING RULE, AND ITS POSITION ──────────────────────────────────────────────────
+    const iOpen = b.indexOf('OPENING ORIENTATION — HISTORICAL REPLACEMENT');
+    const iBeats = b.indexOf('\\"beats\\": [ {') >= 0
+      ? b.indexOf('\\"beats\\": [ {') : b.indexOf('"beats": [ {');
+    ok('payload carries the OPENING ORIENTATION rule', iOpen >= 0);
+    ok('it sits BEFORE the beats schema, not only in the later boundary block',
+      iOpen >= 0 && iBeats > 0 && iOpen < iBeats, 'open@' + iOpen + ' beats@' + iBeats);
+    ok('it says to begin inside the only timeline the characters know',
+      b.indexOf('Begin inside the ONLY timeline the characters know') >= 0);
+    ok('it names the permitted orientation: place, body, stakes, present action',
+      b.indexOf('immediate place, body,') >= 0 && b.indexOf('active stakes and present action') >= 0);
+    ok('it forbids numbering / repetition / replacement / comparison',
+      b.indexOf('NOT by numbering, repetition, replacement, or') >= 0);
+    ok('it separates ledger language from writer language',
+      b.indexOf('That is audit') >= 0 && b.indexOf('language and it is never writer language') >= 0);
   }
 
   const allOk = checks.every(c => c.ok);

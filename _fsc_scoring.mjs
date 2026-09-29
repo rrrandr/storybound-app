@@ -51,6 +51,20 @@ export const ABSENCE_AS_PRESENCE_RX = [
 export const absenceAsPresenceHits = t =>
   ABSENCE_AS_PRESENCE_RX.filter(rx => rx.test(String(t || '')));
 
+// ── ORIENTATION BY RECURRENCE ─────────────────────────────────────────────────────────────────
+// "again" has an ordinary within-scene reading ("voice steady again") and stays review-grade in
+// general. It is NOT ambiguous when the RITE ITSELF is said to recur — that is a counting frame and
+// a hard failure. The final run's beat 0, "The rite ends for the second time.", is the case this
+// exists for.
+// Precision matters more than reach: a positional "first two sentences" window and a broad subject
+// list both over-fired, flagging "The assembly watches me again" and "voice steady again". So
+// require the ceremony noun and a recurrence word BOUND TOGETHER, not merely co-present.
+export const REPLAY_RECURRENCE_RX = [
+  /\b(rite|ceremony|ritual)\b[^.]{0,50}\b(again|once more|anew|repeats?|repeating|repeated|replay\w*)\b/i,
+  /\b(again|once more|anew|replay\w*)\b[^.]{0,30}\b(rite|ceremony|ritual)\b/i
+];
+export const orientsByRecurrence = s => REPLAY_RECURRENCE_RX.some(rx => rx.test(String(s || '')));
+
 // ── ERASED PROSE TERMS — ONE SOURCE, PER OUTCOME ──────────────────────────────────────────────
 // The runner and this control each kept a private copy. I corrected the control's and left the
 // runner's stale, so the final run reported four false C1 failures on "the assumption" — a term
@@ -116,12 +130,15 @@ export function scoreC2(prose, { roster, tokens, phrases, ambiguous = [], dispos
       const who = () => Object.keys(tokens).filter(k => tokens[k].test(window));
       const hard = externalTimelineHits(s, phrases);
       const absence = absenceAsPresenceHits(s);
-      if (hard.length || absence.length) {
-        leaks.push({ sentence: s.trim().slice(0, 150), phrases: hard,
-          absenceAsPresence: absence.length > 0, parties: who() });
-      } else if (ambiguous.length) {
-        const amb = externalTimelineHits(s, ambiguous);
-        if (amb.length) review.push({ sentence: s.trim().slice(0, 150), phrases: amb, parties: who() });
+      // An ambiguous word becomes a hard failure when it ORIENTS: in the opening sentences, or
+      // applied to the scene's own events. Elsewhere it stays review-grade.
+      const amb = ambiguous.length ? externalTimelineHits(s, ambiguous) : [];
+      const orienting = amb.length > 0 && orientsByRecurrence(s);
+      if (hard.length || absence.length || orienting) {
+        leaks.push({ sentence: s.trim().slice(0, 150), phrases: hard.concat(orienting ? amb : []),
+          absenceAsPresence: absence.length > 0, orientation: orienting, parties: who() });
+      } else if (amb.length) {
+        review.push({ sentence: s.trim().slice(0, 150), phrases: amb, parties: who() });
       }
     });
   }
@@ -145,13 +162,18 @@ export function scoreC2(prose, { roster, tokens, phrases, ambiguous = [], dispos
 // ── C1 — ONLY THE SEALED CONSEQUENCE ──────────────────────────────────────────────────────────
 // Mechanically detectable violations for a historical_replacement. Reading still owns the final
 // call; this catches the three the C4 run actually committed.
-export function scoreC1(prose, { phrases, erasedTerms = [] }) {
+export function scoreC1(prose, { phrases, erasedTerms = [], ambiguous = [] }) {
   const timeline = [], absence = [];
-  for (const s of SENTENCES(prose)) {
+  SENTENCES(prose).forEach((s, i) => {
     const hits = externalTimelineHits(s, phrases);
-    if (hits.length) timeline.push({ sentence: s.trim().slice(0, 150), phrases: hits });
+    const amb = ambiguous.length ? externalTimelineHits(s, ambiguous) : [];
+    const orienting = amb.length > 0 && orientsByRecurrence(s);
+    if (hits.length || orienting) {
+      timeline.push({ sentence: s.trim().slice(0, 150),
+        phrases: hits.concat(orienting ? amb : []), orientation: orienting });
+    }
     if (absenceAsPresenceHits(s).length) absence.push({ sentence: s.trim().slice(0, 150) });
-  }
+  });
   const shared = sharedUnderstandingHits(prose);
   // A choice or line resting on a fact this delta erased.
   const erased = [];
@@ -380,6 +402,34 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   t('but a bare ordinal is still only review-grade',
     externalTimelineHits('He reached for the second cup.', phrases).length === 0);
   t('  ("the second" alone stays in the ambiguous list)', ambiguous.includes('the second'));
+
+  console.log('\nH1b. NARRATOR ORIENTATION — all four named frames must FAIL C1 AND C2');
+  // Each used as the scene's opening orientation, the position the final run actually failed in.
+  [['for the second time', 'The rite ends for the second time.'],
+   ['the second rite',     'The second rite closes without a word against her.'],
+   ['again',              'The rite begins again in the crimson spiralgrass.'],
+   ['replayed',           'The rite is replayed from its first word.']
+  ].forEach(([label, opener]) => {
+    const scene = [opener,
+      'Seren kneels at the centre, her palms turned upward as if checking for something missing.',
+      'The Dohkar falters; the word he needs does not come.',
+      'Julian stands apart. The Answer rests in his hands.',
+      'Claim the interference, or let the assumption stand.'].join('\n');
+    const o1 = scoreC1(scene, { phrases, erasedTerms: ERASED, ambiguous });
+    const o2 = scoreC2(scene, { roster: ROSTER, tokens: TOK, phrases, ambiguous });
+    t('"' + label + '" as orientation FAILS C1', o1.pass === false,
+      JSON.stringify(o1.externalTimeline));
+    t('  and FAILS C2 disposition', o2.disposition.ok === false,
+      JSON.stringify(o2.disposition.leaks.map(l => l.phrases)));
+    t('  and is NOT quietly downgraded to review', o2.review.length === 0,
+      JSON.stringify(o2.review.map(r => r.phrases)));
+  });
+  t('but "voice steady again" mid-scene is still only review-grade',
+    scoreC2(['The rite concludes in the crimson spiralgrass.',
+             'Seren kneels, her palms turned upward.',
+             'Julian stands apart; the Answer rests in his hands.',
+             'The Dohkar recovers and finishes, his voice steady again.'].join('\n'),
+      { roster: ROSTER, tokens: TOK, phrases, ambiguous }).disposition.ok === true);
 
   console.log('\nH2. AN EMPTY OR VOID RESPONSE MUST NOT SCORE AS CLEAN');
   // Run 3 returned HTTP 502 with an empty body and the runner printed "C1: PASS / C3: clean".
