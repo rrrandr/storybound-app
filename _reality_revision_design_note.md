@@ -173,6 +173,21 @@ Full traces: `_revision_fact_dependency_traces.md`.
 > `activeCanon()` = base declared facts, with every **canonical delta** applied in ascending `seq` order,
 > each removing its `ceases` and adding its `establishes`.
 
+## 4a-bis. Three temporal operations (amended 2026-09-28, superseding the two-kind split below)
+
+**Every delta declares `temporalOperation` explicitly. It is never inferred from atom kind, class, or the
+shape of `ceases[]`.**
+
+| operation | the authored claim |
+|---|---|
+| **`historical_replacement`** | a prior event or state **never occurred or never governed**. Requires `history_rewrite` semantics **and** `priorHistoryReplaced`. |
+| **`current_state_transition`** | an active state **ends or changes from this moment onward**. **Historical records remain true.** |
+| **`additive_canon_change`** | a new fact begins governing **without ending a prior fact**. |
+
+**Why kind alone failed:** a state can be **ended now** or **rewritten as never having governed** — the same
+ceased atom, two different acts on the world. Full taxonomy and classifications:
+`_delta_temporal_taxonomy.md`.
+
 ## 4a. Two kinds of delta (amended 2026-09-28)
 
 The append-only log holds **canonical deltas**. They are not all revisions:
