@@ -13,6 +13,21 @@ cast (`pc:lirael`, `named:seren`, `named:julian`, `role:first_sacrifice_presidin
 
 ---
 
+# 0. Editorial approvals recorded (Roman, 2026-09-28)
+
+| # | approved |
+|---|---|
+| **A1** | the **native compiler contract**, including `invokerScope`. The extractor report contract stays **separate and legacy-read-only** for this design. |
+| **A2** | the **source-backed atom set** — populations, `twist.*`, `interr.*`, `answer.*`, `auth.*`, `lirael.scene1_disposition`, the two demand atoms, the split accusation pair, the two challenge atoms. Bundles remain **unceaseable views**. |
+| **A3** | **`unm.the_turning_forgotten`** — Fate-chosen `unseen`. **Costless.** Sealed `population.assembly`; the crowd forgets **`twist.assembly_turned` only**; **no residue suspicion, no physical invisibility, no named-non-member effect.** |
+| **A4** | **`unm.the_accusation_unmade`** — Fate-chosen `escape`, **only when `accusation.family_accused` is active.** **Costless.** No conditional companion. **The remedy demand, the grievance, Julian's demand and all named minds are unchanged.** **No coverage is claimed for pre-accusation `escape`.** |
+| **A5** | **`unm.time_gives_way` ships with no intrinsic cost**, unless a later source-backed class mechanism supplies one. **No substitute is to be invented**, and `world_bent_in_public` is not to be reinstated by paraphrase. Its complete authored package is the history revision and the genuinely renewed, unconstrained player choice. |
+
+**Class/duration drafts for `custody_severed`, `standing_dissolved` and `the_shunning`:**
+`_approvals_and_three_class_drafts.md`.
+
+---
+
 # 1. The Issue 1 **opening** coverage matrix, completed
 
 > ## Scope — DECLARED (Roman, 2026-09-28), closing Flag A
