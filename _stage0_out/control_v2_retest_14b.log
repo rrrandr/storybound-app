@@ -1,0 +1,246 @@
+
+══════════════════════════════════════════════════════════════════════════════════════════════
+BOUNDED PLANNER PROBE — First Sacrifice Scene 1 · 6 sequential samples
+══════════════════════════════════════════════════════════════════════════════════════════════
+ one real call per sample (the planner) · Grok hard-blocked · upstream mocked
+
+ ── SAMPLE 1 · SEEDED ──────────────────────────────────────────────────────────────────
+  network      : planner=1 real · mocked=14 · GROK attempts=3 · escaped=0
+  attempts     : 1 (no retry)
+  settle       : assignments · in-page /api fetches=22 · threw=no
+  usage        : 18119 in / 1369 out · finish=stop
+  cost         : $0.00354
+  SUPPLIED WHERE (seed-owned): Dawn in a Veilwood ceremony clearing: the long white weeping-willow veil-canopy drapes down from the
+  SUPPLIED PRESENT       : SEREN, kneeling — the youth making her First Sacrifice. Lirael's ward: they have trained together for months and she can (presenceOwner=seed)
+  eligible C+ recipients : ["Lirael","Julian","Seren","the presiding Dohkar"]
+  offstage (ineligible)  : []
+  RETURNED opening_setting: "Veilwood ceremony clearing"
+  RETURNED staged cast    : ["Lirael:IN_PERSON","Julian:IN_PERSON","Seren:IN_PERSON","the presiding Dohkar:IN_PERSON"]
+  C+ (2):
+      • Seren                    first_mention=true  angle="undefined"
+      • the presiding Dohkar     first_mention=true  angle="undefined"
+  E+           : {"target":"the deep-crimson carpet of braided mated-pair spiralgrass","axis":"damage","beat":"The carpet’s braided strands are frayed where Seren’s bare foot has pressed down, the crimson threads unraveling like a wound left too long unspoken"}
+  fusion       : undefined
+  pc_opening_fusion (raw): {"character":"Lirael","placement":"PC_FIRST_EMBODIED_BEAT","character_angle":"Her silence is not submission; it is a weapon, honed by years of watching others speak for her","environment_target":"the pale mated-pair trees’ leaf-curtains","environment_axis":"ritual","beat":"Lirael’s fingers brush the trembling leaf-curtains, the gossamer touch grounding her as Seren’s voice falters mid-invocation"}
+  ── one-assignment coherence (PC = "Lirael") ──
+     recipient is the PC        : NO
+     E+ target/axis match       : NO
+     E+ evidence beat           : MISSING
+     PC C+ angle IS the beat    : NO
+     PC anchor_beat IS the beat : NO
+        C+ angle : null
+        anchor   : null
+     non-PC C+ (0):
+  alias resolves: none needed
+  envelope     : top-level as sent
+  STORED C+    : []
+  VALIDATION   : ASSIGNMENTS DROPPED (valve) — environment_elements were sent as free text — on a seed-owned stage elements are chosen by object_id ("environment_element_ids"); the old shape is not accepted; environment_plus.target was sent as free text — on a seed-owned stage E+ cites "target_object_id"; the old shape is not accepted; pc_opening_fusion carries an environment_target of its own ("the pale mated-pair trees’ leaf-curtains") — the fusion has no target; it is the E+ target by definition; pc_opening_fusion carries an environment_axis of its own — the fusion has no axis; it is the E+ axis by definition; opening_actor_id missing — name the person_id the opening beat stages, or null; character_plus "Seren" names no "enacts_evidence_id" — the act is this person's part of one of the facts that establish the condition (E3 | E4); character_plus "Seren" visible_action never engages the condition it was chosen under ("someone's pain becomes nameable in public") — the act itself must put that condition on the page — a bridge sentence cannot do it for it; character_plus "the presiding Dohkar" names no "enacts_evidence_id" — the act is this person's part of one of the facts that establish the condition (E5); character_plus "the presiding Dohkar" visible_action never engages the condition it was chosen under ("a cost he judges too small for what is being asked") — the act itself must put that condition on the page — a bridge sentence cannot do it for it; environment element "the pale mated-pair trees’ leaf-curtains trembling in the dawn breeze" introduces an environmental fact the seed rules out ("breeze") — describe what the seed names and add no weather, light, marks or fluids it does not contain; pc_opening_fusion.beat never reaches the assigned environment target
+
+ … 25s gap (sequential, never a burst)
+
+ ── SAMPLE 2 · SEEDED ──────────────────────────────────────────────────────────────────
+  network      : planner=1 real · mocked=14 · GROK attempts=3 · escaped=0
+  attempts     : 1 (no retry)
+  settle       : assignments · in-page /api fetches=22 · threw=no
+  usage        : 18116 in / 1399 out · finish=stop
+  cost         : $0.00356
+  SUPPLIED WHERE (seed-owned): Dawn in a Veilwood ceremony clearing: the long white weeping-willow veil-canopy drapes down from the
+  SUPPLIED PRESENT       : SEREN, kneeling — the youth making her First Sacrifice. Lirael's ward: they have trained together for months and she can (presenceOwner=seed)
+  eligible C+ recipients : ["Lirael","Julian","Seren","the presiding Dohkar"]
+  offstage (ineligible)  : []
+  RETURNED opening_setting: "Veilwood ceremony clearing"
+  RETURNED staged cast    : ["Lirael:IN_PERSON","Julian:IN_PERSON","Seren:IN_PERSON","the presiding Dohkar:IN_PERSON"]
+  C+ (2):
+      • Seren                    first_mention=true  angle="undefined"
+      • the presiding Dohkar     first_mention=true  angle="undefined"
+  E+           : {"target":"the deep-crimson carpet of braided mated-pair spiralgrass","axis":"use","beat":"The grass’s braids are worn smooth where Seren’s bare feet have pressed, but the frayed edges near Lirael’s position remain untouched—no one else has stood there."}
+  fusion       : undefined
+  pc_opening_fusion (raw): {"character":"Lirael","placement":"PC_FIRST_EMBODIED_BEAT","character_angle":"Her first instinct is to fix this, but the cloth across her mouth muffles even the thought—she’s trapped between protocol and the rite’s breaking alignment.","environment_target":"the deep-crimson carpet of braided mated-pair spiralgrass","environment_axis":"use","beat":"Lirael’s bare toes sink into the spiralgrass’s frayed edges, her weight shifting as she watches Seren’s hands hover over the braids."}
+  ── one-assignment coherence (PC = "Lirael") ──
+     recipient is the PC        : NO
+     E+ target/axis match       : NO
+     E+ evidence beat           : MISSING
+     PC C+ angle IS the beat    : NO
+     PC anchor_beat IS the beat : NO
+        C+ angle : null
+        anchor   : null
+     non-PC C+ (0):
+  alias resolves: none needed
+  envelope     : top-level as sent
+  STORED C+    : []
+  VALIDATION   : ASSIGNMENTS DROPPED (valve) — environment_elements were sent as free text — on a seed-owned stage elements are chosen by object_id ("environment_element_ids"); the old shape is not accepted; environment_plus.target was sent as free text — on a seed-owned stage E+ cites "target_object_id"; the old shape is not accepted; opening_actor_id missing — name the person_id the opening beat stages, or null; character_plus "Seren" names no "enacts_evidence_id" — the act is this person's part of one of the facts that establish the condition (E3 | E4); character_plus "the presiding Dohkar" names no "enacts_evidence_id" — the act is this person's part of one of the facts that establish the condition (E5); character_plus "the presiding Dohkar" visible_action never engages the condition it was chosen under ("an offering being named aloud") — the act itself must put that condition on the page — a bridge sentence cannot do it for it; environment element "the pale mated-pair trees’ leaf-curtains trembling in the dawn breeze" introduces an environmental fact the seed rules out ("breeze") — describe what the seed names and add no weather, light, marks or fluids it does not contain; environment_plus.beat "The grass’s braids are worn smooth where Seren’s bare feet have pressed, but the frayed ed" introduces an environmental fact the seed rules out ("untouched") — describe what the seed names and add no weather, light, marks or fluids it does not contain; environment_plus.beat does not name its own target — the beat must show what happened to "the deep-crimson carpet of braided mated-pair spiralgrass", not to something else: "The grass’s braids are worn smooth where Seren’s bare feet have pressed, but the frayed edges near Lirael’s po"; pc_opening_fusion.beat never reaches the assigned environment target; "Seren" is given an action in the opening beat AND a different first-mention beat in character_plus — the opening says "Seren’s voice falters mid-invocation, her hands trembling as she glances at Lira" and the C+ says "Seren’s hands hover over the spiralgrass, fingers twitching as if reaching for s". A character cannot have two first appearances; if the opening stages them, the opening IS their C+ beat
+
+ … 25s gap (sequential, never a burst)
+
+ ── SAMPLE 3 · SEEDED ──────────────────────────────────────────────────────────────────
+  network      : planner=1 real · mocked=14 · GROK attempts=3 · escaped=0
+  attempts     : 1 (no retry)
+  settle       : assignments · in-page /api fetches=22 · threw=no
+  usage        : 19986 in / 1399 out · finish=stop
+  cost         : $0.00384
+  SUPPLIED WHERE (seed-owned): Dawn in a Veilwood ceremony clearing: the long white weeping-willow veil-canopy drapes down from the
+  SUPPLIED PRESENT       : SEREN, kneeling — the youth making her First Sacrifice. Lirael's ward: they have trained together for months and she can (presenceOwner=seed)
+  eligible C+ recipients : ["Lirael","Julian","Seren","the presiding Dohkar"]
+  offstage (ineligible)  : []
+  RETURNED opening_setting: "Veilwood ceremony clearing"
+  RETURNED staged cast    : ["Lirael:IN_PERSON","Julian:IN_PERSON","Seren:IN_PERSON","the presiding Dohkar:IN_PERSON"]
+  C+ (2):
+      • Seren                    first_mention=true  angle="undefined"
+      • the presiding Dohkar     first_mention=true  angle="undefined"
+  E+           : {"target":"the deep-crimson carpet of braided mated-pair spiralgrass","axis":"use","beat":"The carpet’s edges fray where feet have pressed repeatedly, the braids loosening where Seren knelt during rehearsals."}
+  fusion       : undefined
+  pc_opening_fusion (raw): {"character":"Lirael","placement":"PC_FIRST_EMBODIED_BEAT","character_angle":"Her body tenses at the first sign of misalignment, her breath shallow behind the band across her mouth.","environment_target":"the deep-crimson carpet of braided mated-pair spiralgrass","environment_axis":"use","beat":"Lirael’s bare foot presses into the frayed edge of the carpet, her toes curling as she prepares to halt the rite."}
+  ── one-assignment coherence (PC = "Lirael") ──
+     recipient is the PC        : NO
+     E+ target/axis match       : NO
+     E+ evidence beat           : MISSING
+     PC C+ angle IS the beat    : NO
+     PC anchor_beat IS the beat : NO
+        C+ angle : null
+        anchor   : null
+     non-PC C+ (0):
+  alias resolves: none needed
+  envelope     : top-level as sent
+  STORED C+    : []
+  VALIDATION   : ASSIGNMENTS DROPPED (valve) — environment_elements were sent as free text — on a seed-owned stage elements are chosen by object_id ("environment_element_ids"); the old shape is not accepted; environment_plus.target was sent as free text — on a seed-owned stage E+ cites "target_object_id"; the old shape is not accepted; opening_actor_id missing — name the person_id the opening beat stages, or null; character_plus "Seren" names no "enacts_evidence_id" — the act is this person's part of one of the facts that establish the condition (E3 | E4); character_plus "the presiding Dohkar" names no "enacts_evidence_id" — the act is this person's part of one of the facts that establish the condition (E5); environment element "the pale mated-pair trees’ hanging leaf-curtains, trembling slightly in the dawn breeze" introduces an environmental fact the seed rules out ("breeze") — describe what the seed names and add no weather, light, marks or fluids it does not contain; "Seren" is given an action in the opening beat AND a different first-mention beat in character_plus — the opening says "Seren’s voice cracks mid-invocation, her hands trembling as she shifts the wish " and the C+ says "Seren’s hands smooth the ceremonial sash, her fingers lingering on the embroider". A character cannot have two first appearances; if the opening stages them, the opening IS their C+ beat; "the presiding Dohkar" is given an action in the opening beat AND a different first-mention beat in character_plus — the opening says "Seren’s voice cracks mid-invocation, her hands trembling as she shifts the wish " and the C+ says "The Dohkar’s fingers tighten around his ceremonial sash, his gaze locking onto S". A character cannot have two first appearances; if the opening stages them, the opening IS their C+ beat
+
+ … 25s gap (sequential, never a burst)
+
+ ── SAMPLE 4 · SEEDED ──────────────────────────────────────────────────────────────────
+  network      : planner=1 real · mocked=14 · GROK attempts=3 · escaped=0
+  attempts     : 1 (no retry)
+  settle       : assignments · in-page /api fetches=22 · threw=no
+  usage        : 19966 in / 1404 out · finish=stop
+  cost         : $0.00384
+  SUPPLIED WHERE (seed-owned): Dawn in a Veilwood ceremony clearing: the long white weeping-willow veil-canopy drapes down from the
+  SUPPLIED PRESENT       : SEREN, kneeling — the youth making her First Sacrifice. Lirael's ward: they have trained together for months and she can (presenceOwner=seed)
+  eligible C+ recipients : ["Lirael","Julian","Seren","the presiding Dohkar"]
+  offstage (ineligible)  : []
+  RETURNED opening_setting: "Veilwood ceremony clearing"
+  RETURNED staged cast    : ["Lirael:IN_PERSON","Julian:IN_PERSON","Seren:IN_PERSON","the presiding Dohkar:IN_PERSON"]
+  C+ (2):
+      • Seren                    first_mention=true  angle="undefined"
+      • the presiding Dohkar     first_mention=true  angle="undefined"
+  E+           : {"target":"the deep-crimson carpet of braided mated-pair spiralgrass","axis":"use","beat":"the carpet’s braids are worn thin where Seren’s knees have pressed into it, the red threads frayed like the edges of a torn wish"}
+  fusion       : undefined
+  pc_opening_fusion (raw): {"character":"Lirael","placement":"PC_FIRST_EMBODIED_BEAT","character_angle":"Her body tenses at the first sign of misalignment, her fingers already reaching for the band across her mouth before she’s consciously decided to stop it","environment_target":"the pale mated-pair trees’ leaf-curtains","environment_axis":"damage","beat":"Lirael’s breath catches as the leaf-curtains tremble, her fingers brushing the frayed edge of the band—just enough to remind herself it’s still there, muffling her"}
+  ── one-assignment coherence (PC = "Lirael") ──
+     recipient is the PC        : NO
+     E+ target/axis match       : NO
+     E+ evidence beat           : MISSING
+     PC C+ angle IS the beat    : NO
+     PC anchor_beat IS the beat : NO
+        C+ angle : null
+        anchor   : null
+     non-PC C+ (0):
+  alias resolves: none needed
+  envelope     : top-level as sent
+  STORED C+    : []
+  VALIDATION   : ASSIGNMENTS DROPPED (valve) — environment_elements were sent as free text — on a seed-owned stage elements are chosen by object_id ("environment_element_ids"); the old shape is not accepted; environment_plus.target was sent as free text — on a seed-owned stage E+ cites "target_object_id"; the old shape is not accepted; pc_opening_fusion carries an environment_target of its own ("the pale mated-pair trees’ leaf-curtains") — the fusion has no target; it is the E+ target by definition; pc_opening_fusion carries an environment_axis of its own — the fusion has no axis; it is the E+ axis by definition; opening_actor_id missing — name the person_id the opening beat stages, or null; character_plus "Seren" names no "enacts_evidence_id" — the act is this person's part of one of the facts that establish the condition (E3 | E4); character_plus "the presiding Dohkar" names no "enacts_evidence_id" — the act is this person's part of one of the facts that establish the condition (E5); character_plus "the presiding Dohkar" visible_action never engages the condition it was chosen under ("an offering being named aloud") — the act itself must put that condition on the page — a bridge sentence cannot do it for it; environment element "the pale mated-pair trees’ leaf-curtains trembling in the dawn breeze" introduces an environmental fact the seed rules out ("breeze") — describe what the seed names and add no weather, light, marks or fluids it does not contain; pc_opening_fusion.beat never reaches the assigned environment target; "Seren" is given an action in the opening beat AND a different first-mention beat in character_plus — the opening says "Seren’s voice falters mid-invocation, her fingers tightening around the ceremoni" and the C+ says "Seren blurs the wording of her wish, her voice dropping to a murmur as she avoid". A character cannot have two first appearances; if the opening stages them, the opening IS their C+ beat
+
+ … 25s gap (sequential, never a burst)
+
+ ── SAMPLE 5 · SEEDED ──────────────────────────────────────────────────────────────────
+  network      : planner=1 real · mocked=14 · GROK attempts=3 · escaped=0
+  attempts     : 1 (no retry)
+  settle       : assignments · in-page /api fetches=22 · threw=no
+  usage        : 19981 in / 1468 out · finish=stop
+  cost         : $0.00388
+  SUPPLIED WHERE (seed-owned): Dawn in a Veilwood ceremony clearing: the long white weeping-willow veil-canopy drapes down from the
+  SUPPLIED PRESENT       : SEREN, kneeling — the youth making her First Sacrifice. Lirael's ward: they have trained together for months and she can (presenceOwner=seed)
+  eligible C+ recipients : ["Lirael","Julian","Seren","the presiding Dohkar"]
+  offstage (ineligible)  : []
+  RETURNED opening_setting: "Veilwood ceremony clearing"
+  RETURNED staged cast    : ["Lirael:IN_PERSON","Julian:IN_PERSON","Seren:IN_PERSON","the presiding Dohkar:IN_PERSON"]
+  C+ (2):
+      • Seren                    first_mention=true  angle="undefined"
+      • the presiding Dohkar     first_mention=true  angle="undefined"
+  E+           : {"target":"the deep-crimson braided spiralgrass carpet","axis":"use","beat":"The carpet’s frayed edges bear the marks of bare feet trodden in haste, the braids loosening where Seren knelt too long, her hesitation pressing into the grass like a wound."}
+  fusion       : undefined
+  pc_opening_fusion (raw): {"character":"Lirael","placement":"PC_FIRST_EMBODIED_BEAT","character_angle":"Her grip on the ceremonial sash is the only thing keeping her from tearing it off—she knows the Dohkar will see it as hesitation, not fear.","environment_target":"the ceremonial sash","environment_axis":"ownership","beat":"She adjusts the embroidered thread, the fabric biting into her palms as the Dohkar’s voice cuts through the clearing, sharp as a blade."}
+  ── one-assignment coherence (PC = "Lirael") ──
+     recipient is the PC        : NO
+     E+ target/axis match       : NO
+     E+ evidence beat           : MISSING
+     PC C+ angle IS the beat    : NO
+     PC anchor_beat IS the beat : NO
+        C+ angle : null
+        anchor   : null
+     non-PC C+ (0):
+  alias resolves: none needed
+  envelope     : top-level as sent
+  STORED C+    : []
+  VALIDATION   : ASSIGNMENTS DROPPED (valve) — environment_elements were sent as free text — on a seed-owned stage elements are chosen by object_id ("environment_element_ids"); the old shape is not accepted; environment_plus.target was sent as free text — on a seed-owned stage E+ cites "target_object_id"; the old shape is not accepted; pc_opening_fusion carries an environment_target of its own ("the ceremonial sash") — the fusion has no target; it is the E+ target by definition; pc_opening_fusion carries an environment_axis of its own — the fusion has no axis; it is the E+ axis by definition; opening_actor_id missing — name the person_id the opening beat stages, or null; character_plus "Seren" names no "enacts_evidence_id" — the act is this person's part of one of the facts that establish the condition (E3 | E4); character_plus "Seren" behavior cites person pc, who is not in this scene; character_plus "the presiding Dohkar" names no "enacts_evidence_id" — the act is this person's part of one of the facts that establish the condition (E5); environment element "the pale mated-pair trees, their weeping-willow veils trembling in the dawn breeze" introduces an environmental fact the seed rules out ("breeze") — describe what the seed names and add no weather, light, marks or fluids it does not contain; pc_opening_fusion.beat never reaches the assigned environment target; "Seren" is given an action in the opening beat AND a different first-mention beat in character_plus — the opening says "Seren’s voice falters mid-invocation, her hands trembling as she glances at Lira" and the C+ says "She blurs the words of the invocation, her voice trailing off as she glances at ". A character cannot have two first appearances; if the opening stages them, the opening IS their C+ beat
+
+ … 25s gap (sequential, never a burst)
+
+ ── SAMPLE 6 · SEEDED ──────────────────────────────────────────────────────────────────
+  network      : planner=1 real · mocked=14 · GROK attempts=3 · escaped=0
+  attempts     : 1 (no retry)
+  settle       : assignments · in-page /api fetches=22 · threw=no
+  usage        : 19979 in / 1412 out · finish=stop
+  cost         : $0.00384
+  SUPPLIED WHERE (seed-owned): Dawn in a Veilwood ceremony clearing: the long white weeping-willow veil-canopy drapes down from the
+  SUPPLIED PRESENT       : SEREN, kneeling — the youth making her First Sacrifice. Lirael's ward: they have trained together for months and she can (presenceOwner=seed)
+  eligible C+ recipients : ["Lirael","Julian","Seren","the presiding Dohkar"]
+  offstage (ineligible)  : []
+  RETURNED opening_setting: "Veilwood ceremony clearing"
+  RETURNED staged cast    : ["Lirael:IN_PERSON","Julian:IN_PERSON","Seren:IN_PERSON","the presiding Dohkar:IN_PERSON"]
+  C+ (2):
+      • Seren                    first_mention=true  angle="undefined"
+      • the presiding Dohkar     first_mention=true  angle="undefined"
+  E+           : {"target":"the Dohkar’s ceremonial sash","axis":"damage","beat":"the frayed edge where his fingers have pulled it too tight, the embroidered threadwork snagged and splitting"}
+  fusion       : undefined
+  pc_opening_fusion (raw): {"character":"Lirael","placement":"PC_FIRST_EMBODIED_BEAT","character_angle":"She’s already calculating how to stop Seren without breaking protocol—her body moves before her mind does.","environment_target":"the Dohkar’s ceremonial sash","environment_axis":"damage","beat":"My fingers brush the frayed edge of the Dohkar’s sash as I adjust my own band, the threadwork catching on my nail—the same way it always does when I’m about to make a choice I shouldn’t."}
+  ── one-assignment coherence (PC = "Lirael") ──
+     recipient is the PC        : NO
+     E+ target/axis match       : NO
+     E+ evidence beat           : MISSING
+     PC C+ angle IS the beat    : NO
+     PC anchor_beat IS the beat : NO
+        C+ angle : null
+        anchor   : null
+     non-PC C+ (0):
+  alias resolves: none needed
+  envelope     : top-level as sent
+  STORED C+    : []
+  VALIDATION   : ASSIGNMENTS DROPPED (valve) — environment_elements were sent as free text — on a seed-owned stage elements are chosen by object_id ("environment_element_ids"); the old shape is not accepted; environment_plus.target was sent as free text — on a seed-owned stage E+ cites "target_object_id"; the old shape is not accepted; opening_actor_id missing — name the person_id the opening beat stages, or null; character_plus "Seren" names no "enacts_evidence_id" — the act is this person's part of one of the facts that establish the condition (E3 | E4); character_plus "Seren" gives a pc_interpretation that never names them — a sensation in her own body is not a conclusion about anybody; character_plus "the presiding Dohkar" names no "enacts_evidence_id" — the act is this person's part of one of the facts that establish the condition (E5); environment_plus target "the Dohkar’s ceremonial sash" is not in the resolved scene (WHERE: Dawn in a Veilwood ceremony clearing: the long white weeping-willow veil-canopy drapes dow…); environment element "the frayed edge of the Dohkar’s ceremonial sash, pulled taut by his grip" names something the authoritative scene material does not contain (head: "the frayed edge of the Dohkar’s ceremonial sash"); environment_plus.beat does not name its own target — the beat must show what happened to "the Dohkar’s ceremonial sash", not to something else: "the frayed edge where his fingers have pulled it too tight, the embroidered threadwork snagged and splitting"; "Seren" is given an action in the opening beat AND a different first-mention beat in character_plus — the opening says "Seren kneels in the spiralgrass, her hands trembling as she begins the invocatio" and the C+ says "Seren’s fingers dig into the spiralgrass as she forces the words out, her voice ". A character cannot have two first appearances; if the opening stages them, the opening IS their C+ beat
+
+══════════════════════════════════════════════════════════════════════════════════════════════
+SCORECARD (post-resolution · product functions)
+══════════════════════════════════════════════════════════════════════════════════════════════
+
+ # | mode     | setting | no offstage | one C+ each | first_ment | angles | E+ grounded | fusion | INLINE | PRODUCT
+ 1 | seeded   |  ✓  |  ✓        |  ✗        |  ✗       |  ✗  |  ✗        |  ✗  | FAIL   | ACCEPTED
+   ⚠ DISAGREEMENT — inline=false product=true; failing criteria: oneEach, firstMention, anglesOk, epGrounded, fusionOk
+ 2 | seeded   |  ✓  |  ✓        |  ✗        |  ✗       |  ✗  |  ✗        |  ✗  | FAIL   | ACCEPTED
+   ⚠ DISAGREEMENT — inline=false product=true; failing criteria: oneEach, firstMention, anglesOk, epGrounded, fusionOk
+ 3 | seeded   |  ✓  |  ✓        |  ✗        |  ✗       |  ✗  |  ✗        |  ✗  | FAIL   | ACCEPTED
+   ⚠ DISAGREEMENT — inline=false product=true; failing criteria: oneEach, firstMention, anglesOk, epGrounded, fusionOk
+ 4 | seeded   |  ✓  |  ✓        |  ✗        |  ✗       |  ✗  |  ✗        |  ✗  | FAIL   | ACCEPTED
+   ⚠ DISAGREEMENT — inline=false product=true; failing criteria: oneEach, firstMention, anglesOk, epGrounded, fusionOk
+ 5 | seeded   |  ✓  |  ✓        |  ✗        |  ✗       |  ✗  |  ✗        |  ✗  | FAIL   | ACCEPTED
+   ⚠ DISAGREEMENT — inline=false product=true; failing criteria: oneEach, firstMention, anglesOk, epGrounded, fusionOk
+ 6 | seeded   |  ✓  |  ✓        |  ✗        |  ✗       |  ✗  |  ✗        |  ✗  | FAIL   | ACCEPTED
+   ⚠ DISAGREEMENT — inline=false product=true; failing criteria: oneEach, firstMention, anglesOk, epGrounded, fusionOk
+
+ STAGE 0 · route=14b · CAP=0 · real dispatches=0 · capped (aborted at route)=0
+   sample 1: model=mistral-small-latest bytes=73510 reserve=0 max_tokens=2921 reasoning_effort="none" response_format={"type":"json_object"} http=200 ms=0
+   sample 2: model=mistral-small-latest bytes=80795 reserve=0 max_tokens=2921 reasoning_effort="none" response_format={"type":"json_object"} http=200 ms=0
+   sample 3: model=mistral-small-latest bytes=73370 reserve=0 max_tokens=2921 reasoning_effort="none" response_format={"type":"json_object"} http=200 ms=0
+   sample 4: model=mistral-small-latest bytes=80775 reserve=0 max_tokens=2921 reasoning_effort="none" response_format={"type":"json_object"} http=200 ms=0
+   sample 5: model=mistral-small-latest bytes=80805 reserve=0 max_tokens=2921 reasoning_effort="none" response_format={"type":"json_object"} http=200 ms=0
+   sample 6: model=mistral-small-latest bytes=80959 reserve=0 max_tokens=2921 reasoning_effort="none" response_format={"type":"json_object"} http=200 ms=0
+
+ total real planner calls: 6
+ planner attempts        : 1, 1, 1, 1, 1, 1
+ GROK requests dispatched: 0  (attempts blocked at the route layer: 18)
+ escaped requests        : 0 (must be 0)
+ total spend             : $0.02249
+ inline/product agreement: 6 DISAGREEMENT(S)
+
+ artifacts: _stage0_out/control_v2_retest_14b/sample{1..6}_{request,response,verdict}.json
+
+
+  HARNESS FAILURE: the scorecard disagreed with the product verdict.
+

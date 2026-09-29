@@ -1,0 +1,24 @@
+{
+  "model-complaint": {
+    "category": "model-name-complaint",
+    "route": "concierge-ooc",
+    "advancesStory": false
+  },
+  "boring": {
+    "category": "subjective-frustration",
+    "route": "concierge-ooc",
+    "advancesStory": false
+  },
+  "continuity": {
+    "category": "plot-memory-complaint",
+    "route": "concierge-verify",
+    "advancesStory": false
+  },
+  "button-broken": {
+    "category": "interface",
+    "route": "bug-report",
+    "advancesStory": false
+  },
+  "NEG-ceremony": null,
+  "NEG-oath": null
+}

@@ -1,0 +1,34 @@
+[CHARACTERS: Lirael:F, Seren:F, Julian:M]
+[TITLE: "The Wish That Twisted"]
+[SYNOPSIS: "In the Veilwood clearing, Lirael guides her ward through the First Sacrifice, but Seren's offering turns the rite into a public exposure. As Fate answers the imprecise words with an immediate consequence, Lirael must decide whether to intervene and risk her own standing."]
+
+The Dohkar's gaze found mine across the crimson spiralgrass. "Sacrificiant, confirm the alignment."
+
+I nodded once, the gossamer band across my mouth muffling any reply. The clearing held two dozen First Favored in sheer Veilweave, their Weave-Script pulsing faint colors against the dawn light. Seren knelt at the center, aqua skin and pale coral hair stark against the braided grass, her small frame composed as she had practiced for months. Julian stood at the edge, slate-blue skin and long black hair motionless, silver script tracing his arms.
+
+Seren began the invocation, her voice clear. The Dohkar watched her, as did the assembled. I felt the familiar weight of my first supervision settle on my shoulders. Everything aligned. The memory she would offer waited ready on her tongue.
+
+She reached the moment of the sacrifice and looked at me. Her eyes held a brightness that did not belong to the rehearsed words.
+
+"I offer my memory of the day I chose this path," she said, "so that Lirael may find the one she lost."
+
+The clearing went still. Several Weave-Script patterns stuttered. An old woman near the front raised both hands as if to push the words back. Someone whispered, "Never hand Fate a blank page."
+
+The spiralgrass at the edges of the clearing darkened, the color leaching into the soil without wind or foot to explain it. Julian rose. He turned and walked from the clearing without looking back, his long hair swinging once before the trees took him. The Dohkar's head snapped toward me, eyes wide.
+
+Seren blinked, confusion flickering across her face. She reached for the next word and found nothing. Her mouth stayed open, but the memory she had named no longer lived behind her eyes. The Dohkar stepped forward, one hand half-raised, then stopped.
+
+The assembled watched me now. I felt the heat rise under my own skin, the Weave-Script on my throat flaring once before I forced it down. The band across my mouth felt suddenly tighter. Seren had used her First Sacrifice on me, and the words had landed exactly as spoken. Julian was gone. The Dohkar's stare carried the weight of every witness present.
+
+I could name what Seren had done. I could stay silent and let the Dohkar decide what the assembly had seen.
+
+<<MICRO_EXPRESSION>>
+Say it plainly — or let it show without words?
+<<CONTINUE>>
+
+Seren's hands trembled once, then stilled. The Dohkar waited. The grass stayed dark where Julian had stood.
+
+Will I confront the truth they see, or will I retreat into silence?
+
+My hand tightened around my great-grandmother's old tarot deck. I didn't remember bringing it. I toyed with the idea of letting the cards decide.
+<!--sceneDuty: world_revelation | attraction: latent-->

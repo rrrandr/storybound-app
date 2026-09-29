@@ -1,0 +1,19 @@
+  author attempts: 1 (winner = last)   post-author links: 1
+
+════ CONSERVATION INVARIANT (byte-exact) ════
+  RAW cross-check (author == first.before) : FAIL
+  changed authoritative mutations          : 1
+  every transition reconciles              : PASS
+  last.after == FINAL_PROSE                : FAIL
+  delivery FINAL_PROSE->formatStory->DELIVERED : PASS
+  events observed: 33  (rawSnap 33 / textSnap 0)
+
+  ❌ HARNESS FAILURE
+  mutation labels: _famousFateContractCheck(model)
+
+════ LANE-2 SNAPSHOT CHAIN (V2, author stubbed) ════
+  RAW    290ba4fe90   2450 chars
+  C1     29c7adbdff   2450 chars   ← _mistralRepairPass [Mistral-small repair]
+  FINAL  29c7adbdff   2450 chars
+
+  total snapshot events: 4  (retained/changed: 1, rejected: 0, no-change: 3)

@@ -1,0 +1,9 @@
+[fresh] story B init…
+    conservation: {"ok":false,"reason":"HARNESS FAILURE: ambiguous author source"}
+  ⚠ CONSERVATION FAILED for B/t1 — ABORTING ENTIRE RUN
+    evidence: _validate_out/evidence/1d56c4c8-1787010366939__B_t1__99c2e8.json
+
+════ LANE-2 FRESH CAPTURE ════
+  B/t1  retained=undefined rejected=undefined noChange=undefined  raw=? final=2511
+  scenes captured: 1/4   total spend: $0.269 (cap $1.20)
+  blind pack → _validate_out/lane2_blind_pack.json   key sealed separately

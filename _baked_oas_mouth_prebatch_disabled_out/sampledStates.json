@@ -1,0 +1,13 @@
+{
+  "available": true,
+  "urls": {
+    "soft": "/assets/test-mouths/MM-mouth-closed-smile.png",
+    "parted": "/assets/test-mouths/MM-mouth-ohno.png",
+    "gasping": "/assets/test-mouths/MM-mouth-ahh.png",
+    "still": "/assets/test-mouths/MM-mouth-lip-bite2.png",
+    "closed_smile": "/assets/test-mouths/MM-mouth-closed-smile.png",
+    "lip_bite": "/assets/test-mouths/MM-mouth-lip-bite.png",
+    "ahh": "/assets/test-mouths/MM-mouth-ahh.png",
+    "big_o": "/assets/test-mouths/MM-mouth-big-O.png"
+  }
+}

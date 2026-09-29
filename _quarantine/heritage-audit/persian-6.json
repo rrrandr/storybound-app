@@ -1,0 +1,24 @@
+{
+  "age": 28,
+  "ancestry": "Persian",
+  "first_name": "Nasrin",
+  "last_name": "Tehrani",
+  "height": "5'6\", lean and graceful",
+  "build": "slender with defined shoulders from years of studio work",
+  "hair": "dark brown, almost black, thick and wavy, worn long past her shoulders or twisted into a loose knot when she's concentrating",
+  "complexion": "warm olive undertone with a small beauty mark high on her left cheekbone",
+  "face": "a face that broadcasts feeling—wide-set dark eyes that go soft when she's listening, a full mouth quick to curve or tighten, high cheekbones that catch light and shadow in ways that make her expressions flicker across her features like weather",
+  "signature_feature": "her hands—long-fingered, always slightly paint-stained or marked from her work, moving expressively when she talks, capable and restless",
+  "second_celebrated_feature": "the small scar along her right collarbone from a childhood accident, which she never hides and which somehow makes her look more real, more lived-in",
+  "signature_habits": "she hums while working—old Persian lullabies her grandmother taught her, half-remembered; she touches her collarbone scar unconsciously when she's anxious; she keeps a worn leather notebook filled with design sketches and half-formed thoughts; she makes tea the traditional way, insisting on loose leaves and patience",
+  "occupation": "textile and interior designer, owner of a small independent studio in the city where she takes on bespoke commissions for high-net-worth clients",
+  "current_crisis": {
+    "event": "a major client—a billionaire investor—has commissioned a complete redesign of his penthouse and is now threatening to pull the contract and publicly claim her work is derivative after she refused his advances at a private meeting",
+    "hottest_emotion": "panic mixed with a hot, sick shame that she somehow invited this",
+    "immediate_want": "to prove her work is original and to make him retract the accusation before it destroys her reputation and her studio"
+  },
+  "wound": {
+    "core": "she believes that if she is not useful, if she cannot create something beautiful and valuable, she is invisible—unworthy of taking up space",
+    "surfacing_hint": "when criticized or rejected, she goes very quiet and still, her hands stopping mid-gesture, her eyes going distant as if she's already erasing herself"
+  }
+}

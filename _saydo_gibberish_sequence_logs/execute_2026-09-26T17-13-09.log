@@ -1,0 +1,61 @@
+=== SAY/DO GIBBERISH CONTINUATION — AUTHORIZED ===
+  input   : action="asdkfjh sdkfj lkjwer"  dialogue="qwerty zzzz aaaa"
+  reservation limit: $0.22 across all calls, reserved BEFORE dispatch
+  NOT a guaranteed spend bound — reasoning output is uncapped; see the header comment.
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/csp-report
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/config
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/csp-report
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/geo
+  ✓ EXECUTION BEGAN WITH ZERO RESERVATIONS — fresh process, nothing inherited
+  ✓ ...and with no scenario state carried in from a preflight context
+
+  EXECUTE PRE-CHECKS: 2/2 — PASSED
+  Evidence: /Users/romantsukerman/storybound-app/_saydo_gibberish_out/2026-09-26T17-13-34
+
+=== EXECUTE — ONE SCENE (REAL PROVIDERS) ===
+  mode: REAL PROVIDERS (paid)
+    [live] continuity → /api/mistral-proxy  (running reserved $0.010)
+    [live] continuity → /api/proxy  (running reserved $0.040)
+    [live] continuity → /api/chatgpt-proxy  (running reserved $0.070)
+    [live] continuity → /api/mistral-proxy  (running reserved $0.080)
+    [live] continuity → /api/proxy  (running reserved $0.110)
+    [live] continuity → /api/chatgpt-proxy  (running reserved $0.140)
+    [live] planner → /api/proxy  (running reserved $0.170)
+    [live] planner → /api/mistral-proxy  (running reserved $0.180)
+    [live] planner → /api/chatgpt-proxy  (running reserved $0.210)
+  ✗ ABORT — reserving author would pass the $0.22 ceiling
+    [live] author → /api/mistral-proxy  (running reserved $0.220)
+  ✗ ABORT — reserving author would pass the $0.22 ceiling
+    acceptance: {"scenesDelta":0,"lastTextLen":35,"lastTextChanged":false}  sawBeatsResponse=false
+    did NOT settle: reserving author would pass the $0.22 ceiling
+    captured live: ["continuity","continuity","continuity","continuity","continuity","continuity","planner","planner","planner","author","author","author"]  beats=0  42318ms
+    gibberish log: [SAYDO:GIBBERISH] tier=isolated streak=1 fields={"action":"pure","dialogue":"pure"}
+  ✗ LIVE — no ceiling abort occurred
+        → reserving author would pass the $0.22 ceiling
+  ✓ EXEC — the interception handler ran
+  ✓ EXEC — an IMAGE request never reached the network and did NOT abort the text scene
+  ✓ EXEC — telemetry was contained without terminating generation
+  ✗ LIVE — _noFallback was injected into EVERY billable dispatch, before it left
+        → injected=10 billable=12
+  ✓ LIVE — every call reported upstreamAttempts<=1, so the reservation bound held
+  ✗ LIVE — the run settled on APP ACCEPTANCE, not on a beats-bearing response
+        → abortReason=reserving author would pass the $0.22 ceiling captured=["continuity","continuity","continuity","continuity","continuity","continuity","planner","planner","planner","author","author","author"]
+  ✓ LIVE — raw gibberish reached NO payload
+  ✓ LIVE — raw gibberish is absent from the delivered PROSE
+  ✓ LIVE — the substituted placeholders reached the real author payload
+  ✓ LIVE — the strong-delivery rule did NOT fire
+  ✓ LIVE — the gibberish-handling directive WAS in force
+  ✓ EXEC — a scene was actually delivered and PERSISTED (nonempty prose)
+  ✓ LIVE — spend stayed inside the ceiling
+
+======================================================================================
+  DELIVERED PROSE:
+
+    The assembly had not yet dispersed.
+
+  REALIZED $0.000000 of $0.22 (reserved $0.220)
+  13/16 mechanical assertions passed
+  HUMAN JUDGEMENT DECIDES THE VERDICT: does the prose move, acknowledge without inflating, and leave the scene playable?
+  Evidence: /Users/romantsukerman/storybound-app/_saydo_gibberish_out/2026-09-26T17-13-34
+
+# EXIT: 1

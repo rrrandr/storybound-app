@@ -1,0 +1,18 @@
+{
+ "violations": [],
+ "preflight": [],
+ "reports": [
+  {
+   "validator": "hot_opening",
+   "type": "OPENING_TEMPERATURE",
+   "ok": false,
+   "failures": [
+    "no_li_250"
+   ],
+   "renderedTemp": "COLD_DISRUPTION",
+   "inMotionHits": 0,
+   "containerOpener": false,
+   "evidence": "The youth's voice rose clear across the crimson spiralgrass. \"I offer the discipline to finish my studies and train as a Sacrificiant.\"\n\nHer words matched the months of rehearsal exactly. I felt my shoulders ease under the gossamer sash. The Dohkar beside her nodded once, the mot"
+  }
+ ]
+}

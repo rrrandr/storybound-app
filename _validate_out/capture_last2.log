@@ -1,0 +1,13 @@
+[fresh] story E init…
+    conservation: {"ok":true,"authorBoundary":"window._authorChatCapture","authorAttempts":2,"links":33,"changed":3,"grokRaw":4255,"authorReturn":4217,"final":4439}
+    evidence: _validate_out/evidence/0d00d390-1787010759867__E_t1__84f1dd.json
+  story E turn 1: retained=4  authorRaw=4255 firstHookIn=- preHookGap=null final=4426  spend=$0.316
+    conservation: {"ok":true,"authorBoundary":"window._authorChatCapture","authorAttempts":3,"links":37,"changed":7,"grokRaw":4304,"authorReturn":3644,"final":3932}
+    evidence: _validate_out/evidence/0d00d390-1787010759867__E_t2__172955.json
+  story E turn 2: retained=8  authorRaw=4304 firstHookIn=- preHookGap=null final=3909  spend=$0.371
+
+════ LANE-2 FRESH CAPTURE ════
+  E/t1  retained=4 rejected=0 noChange=35  raw=? final=4439
+  E/t2  retained=8 rejected=0 noChange=36  raw=? final=3932
+  scenes captured: 2/4   total spend: $0.371 (cap $0.93)
+  blind pack → _validate_out/lane2_blind_pack.json   key sealed separately

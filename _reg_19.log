@@ -1,0 +1,49 @@
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/csp-report
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/config
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/csp-report
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/geo
+✓ real app reached, all required functions exposed on window
+
+
+=== 1. "Make the LI a different gender and change his name to Elon" — the user's own compound example ===
+  ✓ classified as structural_override (both "gender" and "name" attributes present)
+  ✓ rejected (bare "Elon" caught — fires before the gender check, either reason is a correct block)
+  ✓ would NOT reach a future author prompt as accepted canon
+
+=== 2. "Rename Julian to Elon" — the concrete, previously-unblocked gap ===
+  ✓ classified as structural_override
+  ✓ rejected with reason ip_breach_bare_name (the specific fix)
+  ✓ would NOT reach a future author prompt as accepted canon
+
+=== 3. "Make Julian Elon Musk" — proves the PRE-EXISTING upstream scrub already handles the full-name case ===
+  ✓ sanitizeWishInput already anonymizes "Elon Musk" to "a public figure" BEFORE classification — the literal identity never survives regardless of classification outcome
+  ✓ would NOT reach a future author prompt with the real name intact
+
+=== 4. Safe fictional rename — must still be ALLOWED (no over-blocking) ===
+  ✓ classified as structural_override
+  ✓ correctly ALLOWED — an ordinary, non-celebrity name is not blocked by either the full-name or the narrow bare-name check
+  ✓ would legitimately reach the normal petition flow (not blocked)
+
+=== 5. Gender change — explicitly rejected, not silently mishandled ===
+  ✓ "change his gender" classifies as structural_override (the routing fix)
+  ✓ rejected with reason unsupported_gender_change, not silently routed into the appearance-only flow
+  ✓ a differently-phrased gender request also routes to structural_override now
+
+=== 6. Non-identity sentence mentioning "Elon" — must NOT false-positive ===
+  ✓ does NOT classify as structural_override (no rename-operation phrasing present)
+  ✓ the bare "Elon" mention is left untouched — sanitizeWishInput's own real-person scrub correctly requires the full "Elon Musk" phrase, and this sentence never reaches validateStructuralOverride at all since it is not classified as a rewrite operation
+  ✓ would legitimately reach the normal petition flow (not falsely blocked)
+
+=== 7. ANTI-OVER-REACH — "taylor" and "harry" are deliberately NOT bare-banned (common ordinary first names) ===
+  ✓ "Taylor" as a rename target is ALLOWED — common, ordinary English first name, not exclusively a celebrity identifier
+  ✓ "Harry" as a rename target is ALLOWED — same reasoning (Prince Harry/Harry Styles exist, but so does every ordinary Harry)
+  ✓ "Taylor Swift" (full name) never reaches the future author prompt with the real identity intact — pre-existing upstream scrub, unaffected by this pass
+
+=== 8. STRUCTURAL PROOF — the reject-and-return happens before volatility_window is ever set ===
+  ✓ harness reached a live page (sanity check for this section's framing)
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/beta-events
+  ✓ found both known Petition submit call sites (soCheck occurrences)
+  ✓ EVERY call site: the structural-override reject-and-return sits BEFORE its own volatility_window assignment in source order
+
+====================================================================================================
+PETITION FATE IDENTITY-REWRITE GATE CONTROL: 23/23 passed

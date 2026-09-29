@@ -1,0 +1,1429 @@
+{
+  "results": [
+    {
+      "n": "G1 the opening planner request was BUILT and dispatched for an unseeded story (no pre-planner abort)",
+      "p": true,
+      "d": "planner requests=1 threw=null"
+    },
+    {
+      "n": "G2 the request carries the STAGE_CONTRACT block, ISSUED REFS (pc:self first) and the mission requirement",
+      "p": true,
+      "d": "{\"issued\":[\"pc:self\",\"plot:aplot_x3a_3ab639be_x2d_f8f4_x2d_4570_x2d_a858_x2d_79da59a30ec8:primary_antagonist\"],\"max\":2400}"
+    },
+    {
+      "n": "G3 with a valid reply the stage re-resolved from the planner stage and the author was dispatched",
+      "p": true,
+      "d": "{\"contract\":{\"ok\":true,\"source\":\"generated:planner_stage\",\"onStage\":[\"Testa\"]},\"author\":1,\"fatal\":null}"
+    },
+    {
+      "n": "G4 Scene 1 mounted: one page, ledger p1, no fatal, no refund, no dialog",
+      "p": true,
+      "d": "{\"pages\":1,\"ledger\":1,\"refunds\":[],\"dialogs\":[]}"
+    },
+    {
+      "n": "G5 the mission the planner returned became the corridor mission",
+      "p": true,
+      "d": "she understands the wish has already begun to cost her something she cannot name"
+    },
+    {
+      "n": "R1 no stage_contract → fail-closed: fatal names the rejected stage, NO author dispatch, NO page",
+      "p": true,
+      "d": "{\"fatal\":\"planner stage_contract rejected (absent) — the stage is not established\",\"author\":0}"
+    },
+    {
+      "n": "R1b …and the reader path: issue refund requested + honest \"Fate stumbled\" dialog",
+      "p": true,
+      "d": "{\"refunds\":[{\"context\":\"refund_issue_purchase_literary\",\"amount\":60}],\"dialogs\":[\"Fate stumbled — your story didn't start, so your Fortunes have been refunded. Please try again.\"]}"
+    },
+    {
+      "n": "R2 unissued ref → rejected, fail-closed, refund",
+      "p": true,
+      "d": "{\"fatal\":\"planner stage_contract rejected (whole_contract_rejected; named:invented_person:ref_not_issued_this_scene, named:invented_person:fact_ref_not_issued_this_scene) — the stage is not established\",\"refunds\":1}"
+    },
+    {
+      "n": "R3 empty scene_mission → fail-closed before the author, refund",
+      "p": true,
+      "d": "{\"fatal\":\"planner returned no scene_mission for an unseeded opening — nothing authored the event\"}"
+    },
+    {
+      "n": "R4 roster mismatch → rejected by the existing staged_characters rule, fail-closed",
+      "p": true,
+      "d": "required on-stage person \"Marcus Vale\" is missing from staged_characters"
+    },
+    {
+      "n": "S1 seeded: planner-owned mode NOT entered (no STAGE_CONTRACT block, no mission rule)",
+      "p": true,
+      "d": "{\"asked\":false,\"bytes\":102433}"
+    },
+    {
+      "n": "S2 seeded: the generic reply still fails at the envelope (behavior identical to before the repair)",
+      "p": true,
+      "d": "no opening_spine and no recognised spine fields at top level"
+    },
+    {
+      "n": "S3 static: baked starter path untouched (no new writes in _renderBakedScene1/_commitBakedScene); contract keeps plan-scene precedence",
+      "p": true,
+      "d": ""
+    },
+    {
+      "n": "T0 the planner request goes to /api/proxy as OPENING_PLANNER · grok-4.3 (pinned via preferredModel) · effort none · JSON mode — never to the governed Mistral route",
+      "p": true,
+      "d": "{\"url\":\"/api/proxy\",\"role\":\"OPENING_PLANNER\",\"model\":\"grok-4.3\",\"effort\":\"none\",\"rf\":\"json_object\",\"seededUrl\":\"/api/proxy\"}"
+    },
+    {
+      "n": "T1 one 503 → retried ONCE (transport-only), Scene 1 mounts, no refund, no dialog",
+      "p": true,
+      "d": "{\"planner\":2,\"pages\":1,\"fatal\":null,\"refunds\":0}"
+    },
+    {
+      "n": "T2 two 503s → EXACTLY two planner requests (bounded), terminal fatal, NO author, NO OpenAI planner request, issue refund + honest dialog",
+      "p": true,
+      "d": "{\"planner\":2,\"fatal\":\"scaffold transport failed twice: scaffold proxy HTTP 503\",\"refunds\":[{\"context\":\"refund_issue_purchase_literary\",\"amount\":60}],\"dialogs\":[\"Fate stumbled — your story didn't start, so your Fortunes have been refunded. Please try again.\"],\"rows\":[\"/api/proxy\",\"/api/proxy\"]}"
+    },
+    {
+      "n": "T3 a 400 is NOT retried → one request, terminal fatal, refund, no author",
+      "p": true,
+      "d": "{\"planner\":1,\"fatal\":\"scaffold transport failed, not retryable: scaffold proxy HTTP 400\",\"refunds\":1}"
+    },
+    {
+      "n": "T4 static: proxy role OPENING_PLANNER is a SINGLE-model chain (no hidden proxy attempts); response_format forwarded only as json_object; the planner block names no Mistral or OpenAI route",
+      "p": true,
+      "d": "{\"singleChain\":true,\"blockLen\":5723}"
+    },
+    {
+      "n": "N1 contract nested in opening_spine → lifted intact, stage resolves, Scene 1 mounts",
+      "p": true,
+      "d": "{\"pages\":1,\"fatal\":null,\"lifted\":[\"[SCENE1:ENVELOPE:NORMALISED] stage_contract (opening_spine -> top level) — value moved intact\"]}"
+    },
+    {
+      "n": "N2 contract nested in scene_skeleton → lifted intact, Scene 1 mounts",
+      "p": true,
+      "d": "{\"pages\":1,\"fatal\":null}"
+    },
+    {
+      "n": "N3 two DIFFERENT copies → fault (never a choice), no author, refund",
+      "p": true,
+      "d": "{\"fatal\":\"planner returned stage_contract in more than one place with DIFFERENT values — refusing to choose between two stages\",\"refunds\":1}"
+    },
+    {
+      "n": "Z-flow-G exactly ONE begin-story flow (past-guard=1, duplicates=0)",
+      "p": true,
+      "d": "{\"past\":1,\"dup\":0,\"auto\":1}"
+    },
+    {
+      "n": "Z-flow-N exactly ONE begin-story flow (past-guard=1, duplicates=0)",
+      "p": true,
+      "d": "{\"past\":1,\"dup\":0,\"auto\":1}"
+    },
+    {
+      "n": "Z-flow-U exactly ONE begin-story flow (past-guard=1, duplicates=0)",
+      "p": true,
+      "d": "{\"past\":1,\"dup\":0,\"auto\":1}"
+    },
+    {
+      "n": "Z-flow-E exactly ONE begin-story flow (past-guard=1, duplicates=0)",
+      "p": true,
+      "d": "{\"past\":1,\"dup\":0,\"auto\":1}"
+    },
+    {
+      "n": "Z-flow-M exactly ONE begin-story flow (past-guard=1, duplicates=0)",
+      "p": true,
+      "d": "{\"past\":1,\"dup\":0,\"auto\":1}"
+    },
+    {
+      "n": "Z-flow-S exactly ONE begin-story flow (past-guard=1, duplicates=0)",
+      "p": true,
+      "d": "{\"past\":1,\"dup\":0,\"auto\":1}"
+    },
+    {
+      "n": "Z-flow-T1 exactly ONE begin-story flow (past-guard=1, duplicates=0)",
+      "p": true,
+      "d": "{\"past\":1,\"dup\":0,\"auto\":1}"
+    },
+    {
+      "n": "Z-flow-T2 exactly ONE begin-story flow (past-guard=1, duplicates=0)",
+      "p": true,
+      "d": "{\"past\":1,\"dup\":0,\"auto\":1}"
+    },
+    {
+      "n": "Z-flow-T3 exactly ONE begin-story flow (past-guard=1, duplicates=0)",
+      "p": true,
+      "d": "{\"past\":1,\"dup\":0,\"auto\":1}"
+    },
+    {
+      "n": "Z-R1 not silent: named fault (state or handler log) + dialog + refund; race=resolved",
+      "p": true,
+      "d": "{\"fatal\":\"planner stage_contract rejected (absent) — the stage is not established\",\"dialogs\":1,\"refunds\":1,\"race\":\"resolved\",\"ms\":160,\"lastLogs\":[\"[BeginStory] Error: Error: Scene 1 aborted: planner stage_contract rejected (absent) — the stage is not established at h\",\"[ISSUE-REFUND] refunded 60F. New balance: 9999\",\"[CHECKOUT_RETURN] Late profile re-sync (12000ms) — fortunes: undefined | subscribed: undefined\"]}"
+    },
+    {
+      "n": "Z-R2 not silent: named fault (state or handler log) + dialog + refund; race=resolved",
+      "p": true,
+      "d": "{\"fatal\":\"planner stage_contract rejected (whole_contract_rejected; named:invented_person:ref_not_issued_this_scene, named:invented_person:fact_ref_not_issued_this_scene) — the stage is not established\",\"dialogs\":1,\"refunds\":1,\"race\":\"resolved\",\"ms\":172,\"lastLogs\":[\"[BeginStory] Error: Error: Scene 1 aborted: planner stage_contract rejected (whole_contract_rejected; named:invented_per\",\"[ISSUE-REFUND] refunded 60F. New balance: 9999\",\"[CHECKOUT_RETURN] Late profile re-sync (12000ms) — fortunes: undefined | subscribed: undefined\"]}"
+    },
+    {
+      "n": "Z-R3 not silent: named fault (state or handler log) + dialog + refund; race=resolved",
+      "p": true,
+      "d": "{\"fatal\":\"planner returned no scene_mission for an unseeded opening — nothing authored the event\",\"dialogs\":1,\"refunds\":1,\"race\":\"resolved\",\"ms\":158,\"lastLogs\":[\"[BeginStory] Error: Error: Scene 1 aborted: planner returned no scene_mission for an unseeded opening — nothing authored\",\"[ISSUE-REFUND] refunded 60F. New balance: 9999\",\"[CHECKOUT_RETURN] Late profile re-sync (12000ms) — fortunes: undefined | subscribed: undefined\"]}"
+    },
+    {
+      "n": "Z-R4 not silent: named fault (state or handler log) + dialog + refund; race=resolved",
+      "p": true,
+      "d": "{\"fatal\":\"required on-stage person \\\"Marcus Vale\\\" is missing from staged_characters\",\"dialogs\":1,\"refunds\":1,\"race\":\"resolved\",\"ms\":155,\"lastLogs\":[\"[BeginStory] Error: Error: Scene 1 aborted: required on-stage person \\\"Marcus Vale\\\" is missing from staged_characters at \",\"[ISSUE-REFUND] refunded 60F. New balance: 9999\",\"[CHECKOUT_RETURN] Late profile re-sync (12000ms) — fortunes: undefined | subscribed: undefined\"]}"
+    },
+    {
+      "n": "Z-T2 not silent: named fault (state or handler log) + dialog + refund; race=resolved",
+      "p": true,
+      "d": "{\"fatal\":\"scaffold transport failed twice: scaffold proxy HTTP 503\",\"dialogs\":1,\"refunds\":1,\"race\":\"resolved\",\"ms\":2153,\"lastLogs\":[\"[BeginStory] Error: Error: Scene 1 aborted: scaffold transport failed twice: scaffold proxy HTTP 503 at handleBeginStory\",\"[ISSUE-REFUND] refunded 60F. New balance: 9999\",\"[CHECKOUT_RETURN] Late profile re-sync (12000ms) — fortunes: undefined | subscribed: undefined\"]}"
+    },
+    {
+      "n": "Z-T3 not silent: named fault (state or handler log) + dialog + refund; race=resolved",
+      "p": true,
+      "d": "{\"fatal\":\"scaffold transport failed, not retryable: scaffold proxy HTTP 400\",\"dialogs\":1,\"refunds\":1,\"race\":\"resolved\",\"ms\":152,\"lastLogs\":[\"[BeginStory] Error: Error: Scene 1 aborted: scaffold transport failed, not retryable: scaffold proxy HTTP 400 at handleB\",\"[ISSUE-REFUND] refunded 60F. New balance: 9999\",\"[CHECKOUT_RETURN] Late profile re-sync (12000ms) — fortunes: undefined | subscribed: undefined\"]}"
+    },
+    {
+      "n": "Z-N3 not silent: named fault (state or handler log) + dialog + refund; race=resolved",
+      "p": true,
+      "d": "{\"fatal\":\"planner returned stage_contract in more than one place with DIFFERENT values — refusing to choose between two stages\",\"dialogs\":1,\"refunds\":1,\"race\":\"resolved\",\"ms\":156,\"lastLogs\":[\"[BeginStory] Error: Error: Scene 1 aborted: planner returned stage_contract in more than one place with DIFFERENT values\",\"[ISSUE-REFUND] refunded 60F. New balance: 9999\",\"[CHECKOUT_RETURN] Late profile re-sync (12000ms) — fortunes: undefined | subscribed: undefined\"]}"
+    },
+    {
+      "n": "A1 a contract deeper than the three recognised containers is NOT consulted → rejected as absent, no author, no page, refund",
+      "p": true,
+      "d": "{\"fatal\":\"planner stage_contract rejected (absent) — the stage is not established\",\"lifted\":0}"
+    },
+    {
+      "n": "A2 a wrong-shape contract in a recognised container is lifted then REJECTED by the same schema validator (named code, not \"absent\"), no author, no page",
+      "p": true,
+      "d": "{\"fatal\":\"planner stage_contract rejected (malformed:participants) — the stage is not established\"}"
+    },
+    {
+      "n": "A3 a non-object under the key is treated as absent (no crash, no acceptance), no author, no page",
+      "p": true,
+      "d": "{\"fatal\":\"planner stage_contract rejected (absent) — the stage is not established\",\"threw\":null,\"pages\":0,\"genStage\":false,\"planner\":1,\"author\":0,\"refunds\":1,\"lastLogs\":[\"[SCENE1:STAGE:PLANNER-OWNED:FAULT] planner stage_contract rejected (absent) — the stage is not established\",\"[BeginStory] Error: Error: Scene 1 aborted: planner stage_contract rejected (absent) — the stage is not established at handleBeginStory (htt\",\"[ISSUE-REFUND] refunded 60F. New balance: 9999\",\"[CHECKOUT_RETURN] Late profile re-sync (12000ms) — fortunes: undefined | subscribed: undefined\"]}"
+    },
+    {
+      "n": "A4 identical copies → accepted once (no false conflict), Scene 1 mounts",
+      "p": true,
+      "d": "{\"pages\":1,\"fatal\":null}"
+    },
+    {
+      "n": "W1 planner on /api/proxy (no Mistral planner attempt) AND stage valid from the planner stage",
+      "p": true,
+      "d": "{\"plannerUrl\":\"/api/proxy\",\"contract\":{\"ok\":true,\"source\":\"generated:planner_stage\",\"onStage\":[\"Testa\"]}}"
+    },
+    {
+      "n": "W2 EXACTLY ONE author request, on /api/proxy as NARRATIVE_AUTHOR_GROK_ONLY with preferredModel grok-4.3 — no Mistral/OpenAI/DeepSeek author request",
+      "p": true,
+      "d": "{\"authors\":[{\"url\":\"/api/proxy\",\"role\":\"NARRATIVE_AUTHOR_GROK_ONLY\",\"pm\":\"grok-4.3\"}],\"rows\":[\"/api/proxy\"]}"
+    },
+    {
+      "n": "W3 one page committed (ledger p1), no refund, no dialog, one flow",
+      "p": true,
+      "d": "{\"pages\":1,\"ledger\":1,\"fatal\":null,\"refunds\":0,\"dialogs\":0,\"flows\":{\"past\":1,\"dup\":0,\"auto\":1}}"
+    },
+    {
+      "n": "W3b no request of ANY kind went to /api/chatgpt-proxy or /api/mistral-proxy for an author-class payload (kind author) in the whole Scene-1 chain",
+      "p": true,
+      "d": "[\"canonicalizer@/api/chatgpt-proxy\",\"canonicalizer@/api/chatgpt-proxy\",\"pcBodyBible@/api/chatgpt-proxy\",\"liBodyBible@/api/chatgpt-proxy\",\"unclassified@/api/mistral-proxy\",\"unclassified@/api/mistral-proxy\",\"unclassified@/api/chatgpt-proxy\",\"rplot@/api/chatgpt-proxy\",\"aplotCompression@/api/chatgpt-proxy\",\"antagonistBodyBible@/api/chatgpt-proxy\",\"woundSwapTest@/api/chatgpt-proxy\",\"scaffold@/api/chatgpt-proxy\"]"
+    },
+    {
+      "n": "W4 author 503 once → ONE bounded Grok retry, page mounts, no Mistral/OpenAI author, no refund",
+      "p": true,
+      "d": "{\"authors\":[\"/api/proxy\",\"/api/proxy\"],\"pages\":1,\"fatal\":null,\"logs\":[\"[GROK-LIT] author = Grok 4.3 (premium/tentpole)\",\"[GROK-LIT] grok-only: Grok author failed (Grok narrative author error: 503 - {\\\"error\\\":\\\"xAI API request failed\\\",\\\"details\\\":{\\\"error\\\":{\\\"message\\\"\",\"[AUTHOR-FALLBACK] served=Grok (grok-only retry)\",\"[GROK-LIT] Grok de-calc editor: 0/0 surgical fixes applied (~0 tok rewritten, not whole-scene)\"]}"
+    },
+    {
+      "n": "W5 author 503 twice → EXACTLY two Grok attempts, NAMED terminal failure, no page, no Mistral/OpenAI author, issue refund + honest dialog",
+      "p": true,
+      "d": "{\"authors\":[\"/api/proxy\",\"/api/proxy\"],\"pages\":0,\"refunds\":[{\"context\":\"refund_issue_purchase_literary\",\"amount\":60}],\"dialogs\":[\"Fate stumbled — your story didn't start, so your Fortunes have been refunded. Please try again.\"],\"logs\":[\"[GROK-LIT] author = Grok 4.3 (premium/tentpole)\",\"[GROK-LIT] grok-only: Grok author failed (Grok narrative author error: 503 - {\\\"error\\\":\\\"xAI API request failed\\\",\\\"details\\\":{\\\"error\\\":{\\\"message\\\":\\\"unit 503 (author)\\\"\",\"[GROK-LIT] grok-only: scene author unavailable (grok-only policy: Grok failed twice — Grok narrative author error: 503 - {\\\"error\\\":\\\"xAI API request failed\\\",\\\"deta\"]}"
+    },
+    {
+      "n": "W0 WIRE CENSUS (happy path): exactly ONE Grok planner request + exactly ONE Grok literary author request, and NOTHING ELSE of those kinds; zero Mistral planner/author; zero OpenAI/DeepSeek scene-author; one page commit",
+      "p": true,
+      "d": "{\"census\":{\"planner | /api/proxy | role=OPENING_PLANNER | model=grok-4.3 | preferredModel=grok-4.3 | effort=none\":1,\"author | /api/proxy | role=NARRATIVE_AUTHOR_GROK_ONLY | model=null | preferredModel=grok-4.3\":1},\"mistralPlannerOrAuthor\":0,\"openaiAuthor\":0,\"deepseekAuthor\":0,\"pages\":1,\"ledger\":1}"
+    },
+    {
+      "n": "W5w WIRE CENSUS under real provider error class \"503 twice\": exactly TWO Grok author attempts, ONE Grok planner, zero Mistral/OpenAI/DeepSeek requests of those kinds, NO page, refund + honest dialog, named terminal reason",
+      "p": true,
+      "d": "{\"census\":{\"planner | /api/proxy | role=OPENING_PLANNER | model=grok-4.3 | preferredModel=grok-4.3 | effort=none\":1,\"author | /api/proxy | role=NARRATIVE_AUTHOR_GROK_ONLY | model=null | preferredModel=grok-4.3\":2},\"pages\":0,\"refunds\":1,\"dialogs\":1,\"terminal\":[\"[GROK-LIT] grok-only: scene author unavailable (grok-only policy: Grok failed twice — Grok narrative author error: 503 - {\\\"error\\\":\\\"xAI API request failed\\\",\\\"details\\\":{\\\"error\\\":{\\\"message\\\":\\\"unit 503 (auth\"]}"
+    },
+    {
+      "n": "W7 WIRE CENSUS under real provider error class \"empty content twice\": exactly TWO Grok author attempts, ONE Grok planner, zero Mistral/OpenAI/DeepSeek requests of those kinds, NO page, refund + honest dialog, named terminal reason",
+      "p": true,
+      "d": "{\"census\":{\"planner | /api/proxy | role=OPENING_PLANNER | model=grok-4.3 | preferredModel=grok-4.3 | effort=none\":1,\"author | /api/proxy | role=NARRATIVE_AUTHOR_GROK_ONLY | model=null | preferredModel=grok-4.3\":2},\"pages\":0,\"refunds\":1,\"dialogs\":1,\"terminal\":[\"[GROK-LIT] grok-only: scene author unavailable (grok-only policy: Grok failed twice — Grok narrative author returned empty content / Grok narrative author returned empty content)\"]}"
+    },
+    {
+      "n": "W8 WIRE CENSUS under real provider error class \"connection failure twice\": exactly TWO Grok author attempts, ONE Grok planner, zero Mistral/OpenAI/DeepSeek requests of those kinds, NO page, refund + honest dialog, named terminal reason",
+      "p": true,
+      "d": "{\"census\":{\"planner | /api/proxy | role=OPENING_PLANNER | model=grok-4.3 | preferredModel=grok-4.3 | effort=none\":1,\"author | /api/proxy | role=NARRATIVE_AUTHOR_GROK_ONLY | model=null | preferredModel=grok-4.3\":2},\"pages\":0,\"refunds\":1,\"dialogs\":1,\"terminal\":[\"[GROK-LIT] grok-only: scene author unavailable (grok-only policy: Grok failed twice — Failed to fetch / Failed to fetch)\"]}"
+    },
+    {
+      "n": "V3-d GENUINE fusion (the valid arm G): accepted, one stubbed author, one page, no refund",
+      "p": true,
+      "d": "{\"pages\":1,\"author\":1,\"v3\":[\"[SCENE1:FUSION:V3] offered · lens ops 4 · grounds [pick:world, pick:worldSubtype, pick:flavor, pick:dynamic, pick:tone, pick:intensity, pick:pov, pick:pcName, p\",\"[SCENE1:FUSION:V3] element affordances accepted: the weighhouse ledger=GRASPABLE, a bolt of undyed cloth=GRASPABLE\",\"[SCENE1:FUSION:V3] accepted — contact PRESS → target · lens EMOTIONAL_CONCLUSION_BEFORE_EVIDENCE · grounds [env:axis, pick:flavor]\"]}"
+    },
+    {
+      "n": "V3-render within the v3 PROTAGONIST OPENING BEAT block the CONTACT line renders the canonical target once, the optional wording adds at most one more, lens + axis labels present, and no literal {ENV_TARGET} anywhere in the author request (the separate ENVIRONMENT+ line keeps its own occurrence)",
+      "p": true,
+      "d": "{\"target\":\"the weighhouse ledger\",\"occurrences\":2,\"wordingNames\":true,\"block\":\"PROTAGONIST OPENING BEAT (HARD — Character+ × Environment+ in ONE beat, at Testa's FIRST embodied action or sensory response; no second, separate opening action):\\n  · CONTACT: PRESS — the weighhouse ledger\\n  · ACTION WORDING (support for that contact): I set my palm flat on the weighhouse ledger and let the cold of it climb my wrist.\\n  · WHAT IT SHOWS ABOUT Testa (lens: EMOTIONAL_CONCLUSION_BEFORE_EVIDENCE): Testa takes hold of it as if it were already Testa's to answer for.\\n\"}"
+    },
+    {
+      "n": "V3-a contact only → named reject (missing character_revelation / environment_pressure), no author, refund",
+      "p": true,
+      "d": "{\"fatal\":\"pc_opening_fusion is missing v3 fields (character_revelation, environment_pressure)\"}"
+    },
+    {
+      "n": "V3-b revelation only (no structured contact) → named reject (contact_object missing), no author, refund",
+      "p": true,
+      "d": "{\"fatal\":\"contact_object missing: fusion has no structured contact (contact.verb + contact.object) — wording alone does not establish contact with the environment target\"}"
+    },
+    {
+      "n": "V3-c SOFT a revelation that describes the environment thing → mounts; revelation withheld (revelation_describes_thing)",
+      "p": true,
+      "d": "{\"pages\":1,\"fatal\":\"null\",\"author\":1,\"soft\":[\"revelation_describes_thing\",\"revelation_not_about_pc\",\"fusion_legacy_member_ignored\"],\"want\":\"revelation_describes_thing\"}"
+    },
+    {
+      "n": "V3-dup SOFT wording carries the identity twice → mounts; wording withheld (wording_identity_twice)",
+      "p": true,
+      "d": "{\"pages\":1,\"fatal\":\"null\",\"author\":1,\"soft\":[\"wording_identity_twice\",\"fusion_legacy_member_ignored\"],\"want\":\"wording_identity_twice\"}"
+    },
+    {
+      "n": "V3-owned SOFT planner-supplied fusion target/axis → mounts; canonical values win (fusion_env_fields_ignored)",
+      "p": true,
+      "d": "{\"pages\":1,\"fatal\":\"null\",\"author\":1,\"soft\":[\"fusion_env_fields_ignored\",\"fusion_env_fields_ignored\",\"fusion_legacy_member_ignored\"],\"want\":\"fusion_env_fields_ignored\"}"
+    },
+    {
+      "n": "V3-prov-reject a free spine assertion cited as a ground → named reject (unissued id; free spine prose is not a fact)",
+      "p": true,
+      "d": "environment_pressure.grounds cites unissued ids (spine:pc_career) — free spine prose is not a fact"
+    },
+    {
+      "n": "V3-prov-allow an accepted stage-contract fact (planner_stage provenance) is an admissible ground → accepted, mounts",
+      "p": true,
+      "d": "{\"pages\":1,\"fatal\":null}"
+    },
+    {
+      "n": "V3-id-reject SOFT a revelation that concerns nobody → mounts; revelation withheld (revelation_not_about_pc)",
+      "p": true,
+      "d": "{\"pages\":1,\"fatal\":\"null\",\"author\":1,\"soft\":[\"revelation_not_about_pc\",\"fusion_legacy_member_ignored\"],\"want\":\"revelation_not_about_pc\"}"
+    },
+    {
+      "n": "V3-id-name a revelation by resolved name with no pronoun → accepted, mounts (no pronoun is assumed)",
+      "p": true,
+      "d": "{\"pages\":1,\"fatal\":null}"
+    },
+    {
+      "n": "V3-id-wrong SOFT pronouns outside the resolved set → mounts; revelation withheld (revelation_not_about_pc)",
+      "p": true,
+      "d": "{\"pages\":1,\"fatal\":\"null\",\"author\":1,\"soft\":[\"revelation_not_about_pc\",\"fusion_legacy_member_ignored\"],\"want\":\"revelation_not_about_pc\"}"
+    },
+    {
+      "n": "V3-contact an invalid contact verb (NOTICE) → named reject (not one of the issued contact types)",
+      "p": true,
+      "d": "contact.verb \"NOTICE\" is not one of the issued contact types; contact.verb NOTICE is not permitted by the affordance GRASPABLE of \"the weighhouse ledger\""
+    },
+    {
+      "n": "V3-legacy the retired shape → named \"missing v3 fields … retired shape\"",
+      "p": true,
+      "d": "pc_opening_fusion is missing v3 fields (pc_lens_operation, character_revelation, environment_pressure) — a free \"beat\"/\"character_angle\" is the retired shape"
+    },
+    {
+      "n": "V3-canon contact_object = exact canonical target string → accepted (normalised to the backend value), mounts",
+      "p": true,
+      "d": "{\"pages\":1,\"fatal\":null}"
+    },
+    {
+      "n": "V3-apron a valid contact verb aimed at the apron → named contact_object reject (not an issued stage element)",
+      "p": true,
+      "d": "contact_object \"the apron\" is not an issued stage element — contact with an unlisted object is not fusion"
+    },
+    {
+      "n": "V3-drag contact DRAG on {ENV_TARGET} with wording → accepted, mounts, contact line rendered",
+      "p": true,
+      "d": "{\"pages\":1,\"fatal\":null}"
+    },
+    {
+      "n": "V3-paraphrase a paraphrased contact_object → named reject (not an issued stage element)",
+      "p": true,
+      "d": "contact_object \"the old weighing book\" is not an issued stage element — contact with an unlisted object is not fusion"
+    },
+    {
+      "n": "V3-dup-canon SOFT token AND canonical string → mounts; wording withheld (wording_identity_twice)",
+      "p": true,
+      "d": "{\"pages\":1,\"fatal\":\"null\",\"author\":1,\"soft\":[\"wording_identity_twice\",\"fusion_legacy_member_ignored\"],\"want\":\"wording_identity_twice\"}"
+    },
+    {
+      "n": "V3-other SOFT contact on another issued element while the planner wrote a different E+ target → mounts; the contact-derived target is canonical in the directive (ep_target_overridden)",
+      "p": true,
+      "d": "{\"pages\":1,\"fatal\":\"null\",\"author\":1,\"soft\":[\"ep_target_overridden\",\"ep_beat_other_target\",\"wording_identity_twice\",\"fusion_legacy_member_ignored\"],\"want\":\"ep_target_overridden\"} [\"ENVIRONMENT+ ASSIGNED THIS SCENE (required): a bolt of undyed cloth — through the axis of ritual. Wha\",\"CONTACT: PRESS — a bolt of undyed cloth\"]"
+    },
+    {
+      "n": "V3-press-env SOFT environment-only pressure → mounts; pressure sentence withheld (pressure_not_about_pc)",
+      "p": true,
+      "d": "{\"pages\":1,\"fatal\":\"null\",\"author\":1,\"soft\":[\"pressure_not_about_pc\",\"fusion_legacy_member_ignored\"],\"want\":\"pressure_not_about_pc\"}"
+    },
+    {
+      "n": "V3-press-rel pressure with the PC relation (first-person pronoun) → accepted, mounts",
+      "p": true,
+      "d": "{\"pages\":1,\"fatal\":null}"
+    },
+    {
+      "n": "V3-alias-axis env:<validated axis value> → normalised to env:axis, accepted, mounts (log names the alias)",
+      "p": true,
+      "d": "{\"pages\":1,\"fatal\":null,\"log\":[\"[SCENE1:FUSION:V3] grounds normalised (issued-fact aliases): env:ritual→env:axis\"]}"
+    },
+    {
+      "n": "V3-alias-ref bare issued participant ref → normalised to stage:participant:pc:self (unique in the accepted stage), accepted, mounts",
+      "p": true,
+      "d": "{\"pages\":1,\"fatal\":null}"
+    },
+    {
+      "n": "V3-alias-wrong env:<different axis> → NOT aliased → named reject (unissued id)",
+      "p": true,
+      "d": "environment_pressure.grounds cites unissued ids (env:damage) — free spine prose is not a fact; environment_pressure.grounds does not link to env:axis"
+    },
+    {
+      "n": "V3-alias-unknown unknown bare ref → NOT aliased → named reject (unissued id)",
+      "p": true,
+      "d": "environment_pressure.grounds cites unissued ids (pc:nobody) — free spine prose is not a fact"
+    },
+    {
+      "n": "V3-near-gloss SOFT a revelation that restates the gloss → mounts; revelation withheld (revelation_restates_gloss)",
+      "p": true,
+      "d": "{\"pages\":1,\"fatal\":\"null\",\"author\":1,\"soft\":[\"revelation_restates_gloss\",\"fusion_legacy_member_ignored\"],\"want\":\"revelation_restates_gloss\"}"
+    },
+    {
+      "n": "FR1 first-person tarot frame on the MOUNTED page: \"My hand tightened around my great-grandmother's old tarot deck\" + \"I toyed with the idea of letting the cards decide.\" — no kernel placeholder, no third-person \"'s hand\"",
+      "p": true,
+      "d": "{\"closer\":\"My hand tightened around my great-grandmother's old tarot deck. I didn't remember bringing it. I toyed with the idea of letting the cards decide.\",\"tail\":\"el chose. She set the letter down on the table and said, \\\"I will carry it.\\\"My hand tightened around my great-grandmother's old tarot deck. I didn't remember bringing it. I toyed with the idea of letting the cards decide.\"}"
+    },
+    {
+      "n": "FR2 third-person frame uses the RESOLVED name (Testa) and her pronoun; the kernel placeholder in playerName never reaches the page",
+      "p": true,
+      "d": "{\"pages\":1,\"fatal\":null,\"closer\":\"Testa's hand tightened around her great-grandmother's old tarot deck. She didn't remember bringing it. She toyed with the idea of letting the cards decide.\",\"tail\":\"own on the table and said, \\\"I will carry it.\\\"Testa's hand tightened around her great-grandmother's old tarot deck. She didn't remember bringing it. She toyed with the idea of letting the cards decide.\"}"
+    },
+    {
+      "n": "HS1 the mounted page carries no header artefacts and keeps the story prose (\"The oven vent rattled\")",
+      "p": true,
+      "d": "{\"pages\":1,\"head\":\"The oven vent rattled against the storm wind already hammering the harbor. I wiped flour from my knuckles onto the apron\"}"
+    },
+    {
+      "n": "CO1 wording absent → accepted (contact alone carries the identity), mounts",
+      "p": true,
+      "d": "{\"pages\":1,\"fatal\":null}"
+    },
+    {
+      "n": "CO2 SOFT wording that names another element → mounts; wording withheld (wording_other_element)",
+      "p": true,
+      "d": "{\"pages\":1,\"fatal\":\"null\",\"author\":1,\"soft\":[\"wording_other_element\",\"fusion_legacy_member_ignored\"],\"want\":\"wording_other_element\"}"
+    },
+    {
+      "n": "CO3 (repaired) wording that names nothing resolvable is WITHHELD, not fatal: scene mounts on the structured contact; log names the withholding; the author prompt carries no ACTION WORDING line",
+      "p": true,
+      "d": "{\"fatal\":\"null\",\"pages\":1,\"withheld\":[\"[SCENE1:FUSION:V3] action wording withheld from the author — nothing in it resolves to the contact object (token, exact name, or a head noun\"],\"hasWording\":false}"
+    },
+    {
+      "n": "WD1 GREEN a part-of-target wording is withheld and the scene mounts; contact line delivered, no wording line",
+      "p": true,
+      "d": "{\"fatal\":\"null\",\"pages\":1}"
+    },
+    {
+      "n": "AF1 the E+ target DERIVES from contact.object (log names it) → accepted, mounts",
+      "p": true,
+      "d": "{\"pages\":1,\"fatal\":null,\"log\":[\"[SCENE1:FUSION:V3] environment_plus.target derived from contact.object: \\\"the weighhouse ledger\\\" (GRASPABLE)\"]}"
+    },
+    {
+      "n": "AF2 incompatible verb/object (CLIMB × GRASPABLE) → named reject (not permitted by the affordance)",
+      "p": true,
+      "d": "contact.verb CLIMB is not permitted by the affordance GRASPABLE of \"the weighhouse ledger\""
+    },
+    {
+      "n": "AF3 AMBIENT element as contact object → named reject (perceived, never contacted)",
+      "p": true,
+      "d": "contact_object \"a bolt of undyed cloth\" is AMBIENT (perceived, never contacted) — choose an element a body can act on"
+    },
+    {
+      "n": "AF4 SOFT independent E+ target that differs from the contact → mounts; the contact element is the target in the directive (ep_target_overridden)",
+      "p": true,
+      "d": "{\"pages\":1,\"fatal\":\"null\",\"author\":1,\"soft\":[\"ep_target_overridden\",\"fusion_legacy_member_ignored\"],\"want\":\"ep_target_overridden\"}"
+    },
+    {
+      "n": "AF5 valid drag/issued-object fusion with C+ revelation and pressure → accepted, mounts, one stubbed author",
+      "p": true,
+      "d": "{\"pages\":1,\"fatal\":null}"
+    },
+    {
+      "n": "AF6 (repaired) wording about an OFF-STAGE object (the bench is not an issued element) is withheld — not delivered, not fatal; a wording about an ISSUED other element still rejects (CO2)",
+      "p": true,
+      "d": "{\"fatal\":\"null\",\"pages\":1,\"benchDelivered\":false}"
+    },
+    {
+      "n": "AF7 no affordance list → named reject (stage_contract.elements missing)",
+      "p": true,
+      "d": "stage_contract.elements missing — every environment element needs one issued affordance (GRASPABLE|SURFACE|PORTAL|FIXTURE|AMBIENT)"
+    },
+    {
+      "n": "AF8 the placeholder as contact object → named reject (must be an issued element name)",
+      "p": true,
+      "d": "contact_object is the placeholder — contact.object must be the EXACT name of one issued stage element (the E+ target derives from it)"
+    },
+    {
+      "n": "RR-replay0035 as retained → rejected before the author by its real first fault under the new contract (elements missing)",
+      "p": true,
+      "d": "stage_contract.elements missing — every environment element needs one issued affordance (GRASPABLE|SURFACE|PORTAL|FIXTURE|AMBIENT)"
+    },
+    {
+      "n": "RR-replay0035-els with elements injected → rejected by its contact-level reason (missing structured contact / placeholder object / bench wording), never accepted",
+      "p": true,
+      "d": "contact_object missing: fusion has no structured contact (contact.verb + contact.object) — wording alone does not establish contact with the environment target"
+    },
+    {
+      "n": "RR-replay2032 as retained → rejected before the author by its real first fault under the new contract (elements missing)",
+      "p": true,
+      "d": "stage_contract.elements missing — every environment element needs one issued affordance (GRASPABLE|SURFACE|PORTAL|FIXTURE|AMBIENT)"
+    },
+    {
+      "n": "RR-replay2032-els with elements injected → rejected by its contact-level reason (missing structured contact / placeholder object / bench wording), never accepted",
+      "p": true,
+      "d": "contact_object is the placeholder — contact.object must be the EXACT name of one issued stage element (the E+ target derives from it)"
+    },
+    {
+      "n": "RR-replay2212 as retained → rejected before the author by its real first fault under the new contract (elements missing)",
+      "p": true,
+      "d": "stage_contract.elements missing — every environment element needs one issued affordance (GRASPABLE|SURFACE|PORTAL|FIXTURE|AMBIENT)"
+    },
+    {
+      "n": "RR-replay2212-els with elements injected → rejected by its contact-level reason (missing structured contact / placeholder object / bench wording), never accepted",
+      "p": true,
+      "d": "contact_object is the placeholder — contact.object must be the EXACT name of one issued stage element (the E+ target derives from it)"
+    },
+    {
+      "n": "V3-nolens the request offers NO fusion member and says why; the reply without one is accepted and Scene 1 mounts with one stubbed author",
+      "p": true,
+      "d": "{\"offered\":false,\"whyLine\":\"NO pc_opening_fusion THIS SCENE — no validated lens operation is issued for this mask. Do NOT return the member\",\"pages\":1,\"fatal\":null,\"author\":1}"
+    },
+    {
+      "n": "TPL1 planner-owned request: the JSON member \"stage_contract\": { appears EXACTLY once, INSIDE the response template (after \"Return ONLY this JSON\", before the rules), declared REQUIRED top-level; the old appended \"Return a stage_contract object\" demand is GONE; rules + ISSUED REFS present once",
+      "p": true,
+      "d": "{\"keyCount\":1,\"iJson\":35706,\"iKey\":72594,\"iRules\":83947,\"iRefs\":84624,\"appendedDemand\":false}"
+    },
+    {
+      "n": "TPL1b the stage_contract member carries the three subfields the validator reads; and the v3 fusion member declares contact{verb, object = an issued element} + optional wording + pc_lens_operation + character_revelation + environment_pressure.grounds, with no environment_target/axis/beat",
+      "p": true,
+      "d": "\"stage_contract\": {\n    \"v\": 1,\n    \"participants\": [ { \"ref\": \"<COPIED VERBATIM from ISSUED REFS below>\", \"presence\": \"IN_PERSON|ANTICIPATED|RECALLED|REPORTED\" } ],\n    \"event_facts\": [ { \"text\": \"<one clause: what OCCURS in this scene>\", \"participants\": [ { \"ref\": \"<issued ref>\", \"role\": \"actor|subject|speaker|target\" } ] } ],\n    \"elements\": [ { \"name\": \"<EXACT string of one of your environment_elements>\", \"afford"
+    },
+    {
+      "n": "OR1 planner-owned v3 request: pc_opening_fusion (with contact) is asked for BEFORE environment_plus",
+      "p": true,
+      "d": "{\"fusionAt\":75853,\"epAt\":80099}"
+    },
+    {
+      "n": "OR2 planner-owned v3 request: environment_plus exposes NO independent target field (no \"target\", no <DECLARED ENVIRONMENT TARGET>, no target_object_id); axis + beat only",
+      "p": true,
+      "d": "\"environment_plus\": { \"axis\": \"<ALLOWED AXIS: history | use | damage | ownership | repair | ritual | absence>\", \"beat\": \"<the element you named in contact.object ABOVE + the PHYSICAL CHANGE CAUSED BY "
+    },
+    {
+      "n": "OR3 planner-owned request WITHOUT a fusion offer (no lens): legacy order and the declared-target placeholder are unchanged",
+      "p": true,
+      "d": "\"environment_plus\": { \"target\": \"<DECLARED ENVIRONMENT TARGET>\", \"axis\": \"<ALLOWED AXIS: history | use | damage | owners"
+    },
+    {
+      "n": "OR4 the JSON stays well-formed after the swap: the fusion member closes with \"},\" and environment_plus is the last skeleton member before \"}\"",
+      "p": true,
+      "d": "\"pc_opening_fusion\": {\n      \"character\": \"Testa\",\n      \"placement\": \"PC_FIRST_"
+    },
+    {
+      "n": "OR5 the FACT BASE and DEPENDENCY lines describe the derived target (contact.object), not a planner-written one",
+      "p": true,
+      "d": ""
+    },
+    {
+      "n": "TPL2 seeded (authored-stage) request: NO stage_contract member, no rules — the template member is planner-owned mode only",
+      "p": true,
+      "d": "{\"keyCount\":0}"
+    },
+    {
+      "n": "RL3 (repaired) the 04:20 reply as retained is no longer rejected on its simile: it mounts with one stubbed author",
+      "p": true,
+      "d": "{\"fatal\":\"null\",\"author\":1,\"pages\":1}"
+    },
+    {
+      "n": "RL4 (repaired) the 04:20 reply minus the simile: PUSH on FIXTURE permitted, \"the door\" resolves to \"oven door\" → mounts",
+      "p": true,
+      "d": "{\"fatal\":\"null\",\"author\":1,\"pages\":1}"
+    },
+    {
+      "n": "SB1 GREEN a simile is not a second person → no SOLO_BODY; Scene 1 mounts with one stubbed author",
+      "p": true,
+      "d": "{\"fatal\":\"null\",\"pages\":1}"
+    },
+    {
+      "n": "SB2 GREEN \"as if somebody were…\" is comparison → mounts",
+      "p": true,
+      "d": "{\"fatal\":\"null\"}"
+    },
+    {
+      "n": "SB3 SOFT \"Someone steps into the doorway\" → mounts; solo heuristic is telemetry (solo_second_person)",
+      "p": true,
+      "d": "{\"pages\":1,\"fatal\":\"null\",\"author\":1,\"soft\":[\"solo_second_person\",\"fusion_legacy_member_ignored\"],\"want\":\"solo_second_person\"}"
+    },
+    {
+      "n": "SB4 SOFT \"as the guard steps closer\" → mounts; telemetry (solo_second_person)",
+      "p": true,
+      "d": "{\"pages\":1,\"fatal\":\"null\",\"author\":1,\"soft\":[\"solo_second_person\",\"fusion_legacy_member_ignored\"],\"want\":\"solo_second_person\"}"
+    },
+    {
+      "n": "SB5 SOFT sentence-initial \"A clerk stands…\" → mounts; telemetry (solo_second_person) — the heuristic still DETECTS it (unit U-SB9)",
+      "p": true,
+      "d": "{\"pages\":1,\"fatal\":\"null\",\"author\":1,\"soft\":[\"solo_second_person\",\"fusion_legacy_member_ignored\"],\"want\":\"solo_second_person\"}"
+    },
+    {
+      "n": "SB6 GREEN innocuous capitalized sentences do not trigger the solo rule → mounts",
+      "p": true,
+      "d": "null"
+    },
+    {
+      "n": "CS1 GREEN a capability SET (array) permits PUSH when any member permits it → mounts",
+      "p": true,
+      "d": "null"
+    },
+    {
+      "n": "CS2 GREEN a string set \"PORTAL|FIXTURE\" is accepted and permits PUSH → mounts",
+      "p": true,
+      "d": "null"
+    },
+    {
+      "n": "CS3 GREEN FIXTURE now permits PUSH/PULL (bear against, push or pull on — not carry) → mounts",
+      "p": true,
+      "d": "null"
+    },
+    {
+      "n": "CS4 RED LIFT on a FIXTURE still rejects by name (carrying is what FIXTURE excludes)",
+      "p": true,
+      "d": "contact.verb LIFT is not permitted by the affordance FIXTURE of \"the weighhouse ledger\""
+    },
+    {
+      "n": "CS5 RED LIFT rejects by name when NO member of the set permits it (PORTAL+FIXTURE)",
+      "p": true,
+      "d": "contact.verb LIFT is not permitted by the affordance PORTAL+FIXTURE of \"the weighhouse ledger\""
+    },
+    {
+      "n": "CS6 RED AMBIENT is exclusive: \"AMBIENT|SURFACE\" rejects by name (element_affordance_ambient_exclusive)",
+      "p": true,
+      "d": "planner stage_contract rejected (whole_contract_rejected; the weighhouse ledger:element_affordance_ambient_exclusive) — the stage is not established"
+    },
+    {
+      "n": "CS7 RED a free-text capability claim is never accepted (element_affordance_unknown)",
+      "p": true,
+      "d": "planner stage_contract rejected (whole_contract_rejected; the weighhouse ledger:element_affordance_unknown:HINGED) — the stage is not established"
+    },
+    {
+      "n": "CR1 GREEN a unique head noun resolves to the accepted element → wording co-refers → mounts",
+      "p": true,
+      "d": "null"
+    },
+    {
+      "n": "CR2 GREEN a possessive determiner + unique head noun resolves → mounts",
+      "p": true,
+      "d": "null"
+    },
+    {
+      "n": "CR3 SOFT ambiguous head noun → mounts; wording withheld (wording_ambiguous)",
+      "p": true,
+      "d": "{\"pages\":1,\"fatal\":\"null\",\"author\":1,\"soft\":[\"wording_ambiguous\",\"wording_other_element\",\"fusion_legacy_member_ignored\"],\"want\":\"wording_ambiguous\"}"
+    },
+    {
+      "n": "CR4 SOFT wording resolves to the OTHER element → mounts; wording withheld (wording_other_element)",
+      "p": true,
+      "d": "{\"pages\":1,\"fatal\":\"null\",\"author\":1,\"soft\":[\"wording_other_element\",\"fusion_legacy_member_ignored\"],\"want\":\"wording_other_element\"}"
+    },
+    {
+      "n": "CR5 GREEN with two same-head elements, the token/exact name still resolves unambiguously → mounts",
+      "p": true,
+      "d": "null"
+    },
+    {
+      "n": "CR6 SOFT head noun twice → mounts; wording withheld (wording_identity_twice)",
+      "p": true,
+      "d": "{\"pages\":1,\"fatal\":\"null\",\"author\":1,\"soft\":[\"wording_identity_twice\",\"fusion_legacy_member_ignored\"],\"want\":\"wording_identity_twice\"}"
+    },
+    {
+      "n": "CR7 RED (retained) a paraphrase as the CONTACT OBJECT (\"the old weighing book\") still rejects: not an issued stage element",
+      "p": true,
+      "d": "contact_object \"the old weighing book\" is not an issued stage element — contact with an unlisted object is not fusion"
+    },
+    {
+      "n": "WD2 GREEN wording that DOES resolve (CR1, \"the ledger\") is delivered to the author as the ACTION WORDING line",
+      "p": true,
+      "d": "\"ACTION WORDING (support for that contact): I set my palm flat on the ledger and let the cold of it climb my wrist.\\\\n  · WHAT IT SHOWS \""
+    },
+    {
+      "n": "GATE the 04:20 reply — structurally valid and coherent under the current template — now REACHES the stubbed author and mounts one page",
+      "p": true,
+      "d": "{\"label\":\"04:20\",\"fatal\":\"\",\"author\":1,\"pages\":1}"
+    },
+    {
+      "n": "GATE-4 the 17:39 reply (first reply to the CONTACT-FIRST template: fusion→environment_plus, no target, pressure names the oven door) REACHES the stubbed author and mounts",
+      "p": true,
+      "d": "{\"label\":\"17:39\",\"fatal\":\"\",\"author\":1,\"pages\":1}"
+    },
+    {
+      "n": "PN1 GREEN a pressure sentence that names the thing bearing on the protagonist is accepted → mounts",
+      "p": true,
+      "d": "null"
+    },
+    {
+      "n": "PN2 SOFT placeholder token in the pressure text → mounts; pressure sentence withheld (pressure_placeholder)",
+      "p": true,
+      "d": "{\"pages\":1,\"fatal\":\"null\",\"author\":1,\"soft\":[\"pressure_placeholder\",\"fusion_legacy_member_ignored\"],\"want\":\"pressure_placeholder\"}"
+    },
+    {
+      "n": "PN3 SOFT pressure restates the E+ beat → mounts; pressure sentence withheld (pressure_restates_beat)",
+      "p": true,
+      "d": "{\"pages\":1,\"fatal\":\"null\",\"author\":1,\"soft\":[\"pressure_restates_beat\",\"fusion_legacy_member_ignored\"],\"want\":\"pressure_restates_beat\"}"
+    },
+    {
+      "n": "GATE-3 the 11:31 reply as retained MOUNTS: planner target overridden by the contact (ep_target_overridden), its counter beat withheld (ep_beat_other_target); one stubbed author",
+      "p": true,
+      "d": "{\"label\":\"11:31\",\"fatal\":\"\",\"author\":1,\"pages\":1}"
+    },
+    {
+      "n": "GATE-3b the 11:31 reply minus its target MOUNTS: target derives to the skylight; the counter beat is withheld (ep_beat_other_target); directive carries no EVIDENCE line",
+      "p": true,
+      "d": "{\"pages\":1,\"fatal\":\"null\",\"author\":1,\"soft\":[\"ep_beat_other_target\"],\"want\":\"ep_beat_other_target\"}"
+    },
+    {
+      "n": "ACCEPTANCE every parseable retained reply with a valid stage contract + valid issued structured contact (04:20, 06:56, 11:31, 17:39) gets EXACTLY one stubbed author and one page",
+      "p": true,
+      "d": "[{\"label\":\"04:20\",\"fatal\":\"\",\"author\":1,\"pages\":1},{\"label\":\"06:56\",\"fatal\":\"\",\"author\":1,\"pages\":1},{\"label\":\"11:31\",\"fatal\":\"\",\"author\":1,\"pages\":1},{\"label\":\"17:39\",\"fatal\":\"\",\"author\":1,\"pages\":1}]"
+    },
+    {
+      "n": "GATE-2 the 06:56 reply (\"thumb jamming the button\") — the second template-compliant live reply — now REACHES the stubbed author and mounts",
+      "p": true,
+      "d": "{\"label\":\"06:56\",\"fatal\":\"\",\"author\":1,\"pages\":1}"
+    },
+    {
+      "n": "MATRIX every pre-elements retained reply (they answered older templates) still rejects BY NAME with 0 author (missing-data: elements/stage_contract) — none mounts silently",
+      "p": true,
+      "d": "[[\"21:01 (un-stamped)\",\"planner stage_contract rejected (absent) — the stage is not established\"],[\"22:10\",\"stage_contract.elements missing — every environment element needs one issued aff\"],[\"00:35\",\"stage_contract.elements missing — every environment element needs one issued aff\"],[\"17:16\",\"stage_contract.elements missing — every environment element needs one issued aff\"],[\"20:32\",\"stage_contract.elements missing — every environment element needs one issued aff\"],[\"22:12\",\"stage_contract.elements missing — every environment element needs one issued aff\"],[\"04:20\",\"\"],[\"06:56\",\"\"],[\"11:31\",\"\"],[\"17:39\",\"\"]]"
+    },
+    {
+      "n": "RL1 replayLive (the LATEST timestamped retained reply, whichever it is: 2026-09-10T01-14) is judged exactly as its MATRIX row — same mount/reject outcome and the same named reason; never a crash, never a silent page",
+      "p": false,
+      "d": "{\"latest\":\"2026-09-10T01-14\",\"live\":{\"pages\":1,\"author\":1,\"fatal\":\"null\"}}"
+    },
+    {
+      "n": "RL2 (record) the 18:55 reply — the one that inherited and mounted (§16) — cannot be replayed verbatim: its raw text was overwritten before timestamped naming; its fields stand in §14/§16",
+      "p": true,
+      "d": ""
+    },
+    {
+      "n": "W6 static (SUPPORTING evidence only, not the proof): the grok-only branch names no Mistral or OpenAI author call; the flag defaults OFF (no assignment to true in served code); CG chain has a Grok-only variant selected under the flag",
+      "p": true,
+      "d": "{\"blockLen\":981}"
+    },
+    {
+      "n": "FR3 NO mounted page in this run carries the kernel placeholder or an omniscient \"story's hand\" line",
+      "p": true,
+      "d": "[]"
+    }
+  ],
+  "valid": [
+    "[Corridor] Initializing 9-row corridor system with DOM mount/unmount...",
+    "[Corridor] Header height measurement returned 0 — keeping default (80px), will retry on next trigger",
+    "[Corridor] Stored 2 elements for stage: authorship",
+    "[Corridor] Stored 3 elements for stage: identity",
+    "[Corridor] Stored 3 elements for stage: playermask",
+    "[Corridor] Stored 3 elements for stage: storybeau",
+    "[Corridor] Stored 1 elements for stage: world",
+    "[Corridor] Stored 1 elements for stage: tone",
+    "[Corridor] Stored 1 elements for stage: pressure",
+    "[Corridor] Stored 3 elements for stage: pov",
+    "[Corridor] Stored 2 elements for stage: length",
+    "[Corridor] Stored 2 elements for stage: dynamic",
+    "[Corridor] Stored 1 elements for stage: beginstory",
+    "[Corridor] Authorship mount: Reset authorship choice for re-selection",
+    "[Corridor] DOM updated. Mounted row 0: authorship",
+    "[Corridor] Initialization complete. Active row: 0",
+    "[Corridor] Row store initialized with 11 stages",
+    "[CHECKOUT_RETURN] Success return (localStorage fallback) — tier: null | story: null | has pending state: false",
+    "[CHECKOUT_RETURN] Corridor complete (no saved story) — auto-beginning literary story",
+    "[BeginStory] handleBeginStory() called",
+    "[ISSUE-PURCHASE] insufficient fortunes (have 0, need 60)",
+    "[PAYWALL] StoryPass excluded by story metadata — Subscribe-only",
+    "[ISSUE-PURCHASE] charge declined for issue 1 (literary) — aborted (subscribed=false, balance=0)",
+    "[CHECKOUT_RETURN] Late profile re-sync (4000ms) — fortunes: undefined | subscribed: undefined",
+    "[BeginStory] handleBeginStory() called",
+    "[ISSUE-PURCHASE] charged 60F (issue_purchase_literary, issue=1, opid=d8e9be21-d388-4a58-866f-565750d12e43)",
+    "[BeginStory] DEBUG state.picks: {\"world\":\"Modern\",\"tone\":\"Earnest\",\"genre\":\"Billionaire\",\"pressure\":\"PowerControl\",\"flavor\":\"Billionaire\",\"dynamic\":\"Enemies\",\"era\":null,\"pov\":\"first_person\",\"worldSubtype\":\"small_town\",\"l",
+    "[BeginStory] DEBUG state.archetype: {\"primary\":\"BEAUTIFUL_RUIN\",\"modifier\":null,\"canonicalLIId\":\"fb_li_stageorder-12r0nh\",\"bound\":true,\"boundAtScene\":0}",
+    "[BeginStory] DEBUG state.mode: solo state.storyLength: fling",
+    "[BeginStory] Past _beginStoryInProgress guard, entering main flow",
+    "[BeginStory] GATE DEBUG: {isNewStory: true, hasActiveStorypass: false, storypassFortunes: 0, totalFortunes: 9999, subscribed: true}",
+    "[BeginStory] All validation passed — proceeding to story generation",
+    "[BeginStory] Story mode: participatory",
+    "[BeginStory] Fate working title (from pool): Fate Tips Its Hand",
+    "[BeginStory] Phase 2 complete — starting loader and API calls",
+    "[SCENE1:STAGE:PLANNER-OWNED] unseeded Scene 1 — the opening planner must return scene_mission + stage_contract over 3 issued ref(s): [pc:self, ent:the one who draws them forward, plot:aplot_x3a_3ab639be_x2d_f8f4_x2d_4570",
+    "[SCENE1:FUSION:V3] offered · lens ops 4 · grounds [pick:world, pick:worldSubtype, pick:flavor, pick:dynamic, pick:tone, pick:intensity, pick:pov, pick:pcName, pick:liName, pick:mask, pick:archetype, stage:participant:pc:",
+    "[SCENE1:STAGE] source=planner-owned:pending settingOwner=planner presenceOwner=planner (PENDING — planner owns part of the stage) settingSource=planner-pending onStage=[Testa] offStage=[]",
+    "[SCENE1:PLANNER] eligible cast (1): [Testa] · chars=4340 → max_tokens=2400 (N_staged_max = N_eligible; staged_characters is an OUTPUT and never sizes the request)",
+    "[SCENE1:PLANNER:USAGE] {\"route\":\"/api/proxy\",\"requested\":\"grok-4.3\",\"effort\":\"none\",\"served\":\"grok-4.3\",\"usage\":{\"prompt_tokens\":0,\"completion_tokens\":0,\"completion_tokens_details\":{\"reasoning_tokens\":0}},\"attempt\":1,\"at",
+    "[SCENE1:PLANNER:ATTEMPTS] 1 (no retry)",
+    "[SCENE1:ENVELOPE] spine contract declares 19 field(s)",
+    "[SCENE1:FUSION:V3] element affordances accepted: the weighhouse ledger=GRASPABLE, a bolt of undyed cloth=GRASPABLE",
+    "[SCENE1:STAGE:PLANNER-OWNED] resolved — source=generated:planner_stage · on stage [Testa] · mission=\"she understands the wish has already begun to cost her something she cannot name\"",
+    "[SCENE1:STAGE:RESOLVED] settingSource=planner.opening_setting WHERE=\"customs house\" onStage=[Testa]",
+    "[SCENE1:FUSION:V3] accepted — contact PRESS → target · lens EMOTIONAL_CONCLUSION_BEFORE_EVIDENCE · grounds [env:axis, pick:flavor]",
+    "[SCENE1:SOFT] fusion_legacy_member_ignored · scene_skeleton.fusion · omitted — a legacy fusion member was returned on the v3 path; pc_opening_fusion (contact) is the fusion",
+    "[SCENE1:SKELETON] C+ 1/1 assigned [Testa] · E+ the weighhouse ledger/ritual · fusion null",
+    "[SCENE1:STAGE] physical=[Testa] · phone=[] · total=1",
+    "[SCENE1:SKELETON:DELIVERED] 4716 chars appended to the heavy SYSTEM prompt (pre-freeze, pre-observer)",
+    "[GROK-LIT] author = Grok 4.3 (premium/tentpole)",
+    "[GROK-LIT] Grok de-calc editor: 0/0 surgical fixes applied (~0 tok rewritten, not whole-scene)",
+    "[SCENE-LEDGER] +p1 kind=scene issue=1 uid=pg:57cd3985-b0b8-4027-a5ab-bec8d70888d9 planned=\"she understands the wish has already begun to cost her somet\"",
+    "[CHECKOUT_RETURN] Late profile re-sync (12000ms) — fortunes: undefined | subscribed: undefined"
+  ],
+  "noContract": [
+    "[Corridor] Initializing 9-row corridor system with DOM mount/unmount...",
+    "[Corridor] Header height measurement returned 0 — keeping default (80px), will retry on next trigger",
+    "[Corridor] Stored 2 elements for stage: authorship",
+    "[Corridor] Stored 3 elements for stage: identity",
+    "[Corridor] Stored 3 elements for stage: playermask",
+    "[Corridor] Stored 3 elements for stage: storybeau",
+    "[Corridor] Stored 1 elements for stage: world",
+    "[Corridor] Stored 1 elements for stage: tone",
+    "[Corridor] Stored 1 elements for stage: pressure",
+    "[Corridor] Stored 3 elements for stage: pov",
+    "[Corridor] Stored 2 elements for stage: length",
+    "[Corridor] Stored 2 elements for stage: dynamic",
+    "[Corridor] Stored 1 elements for stage: beginstory",
+    "[Corridor] Authorship mount: Reset authorship choice for re-selection",
+    "[Corridor] DOM updated. Mounted row 0: authorship",
+    "[Corridor] Initialization complete. Active row: 0",
+    "[Corridor] Row store initialized with 11 stages",
+    "[CHECKOUT_RETURN] Success return (localStorage fallback) — tier: null | story: null | has pending state: false",
+    "[CHECKOUT_RETURN] Corridor complete (no saved story) — auto-beginning literary story",
+    "[BeginStory] handleBeginStory() called",
+    "[ISSUE-PURCHASE] insufficient fortunes (have 0, need 60)",
+    "[PAYWALL] StoryPass excluded by story metadata — Subscribe-only",
+    "[ISSUE-PURCHASE] charge declined for issue 1 (literary) — aborted (subscribed=false, balance=0)",
+    "[CHECKOUT_RETURN] Late profile re-sync (4000ms) — fortunes: undefined | subscribed: undefined",
+    "[BeginStory] handleBeginStory() called",
+    "[ISSUE-PURCHASE] charged 60F (issue_purchase_literary, issue=1, opid=b8b8d127-230c-4fd9-ae50-6fb7acc36ec0)",
+    "[BeginStory] DEBUG state.picks: {\"world\":\"Modern\",\"tone\":\"Earnest\",\"genre\":\"Billionaire\",\"pressure\":\"PowerControl\",\"flavor\":\"Billionaire\",\"dynamic\":\"Enemies\",\"era\":null,\"pov\":\"first_person\",\"worldSubtype\":\"small_town\",\"l",
+    "[BeginStory] DEBUG state.archetype: {\"primary\":\"BEAUTIFUL_RUIN\",\"modifier\":null,\"canonicalLIId\":\"fb_li_stageorder-mgg3t3\",\"bound\":true,\"boundAtScene\":0}",
+    "[BeginStory] DEBUG state.mode: solo state.storyLength: fling",
+    "[BeginStory] Past _beginStoryInProgress guard, entering main flow",
+    "[BeginStory] GATE DEBUG: {isNewStory: true, hasActiveStorypass: false, storypassFortunes: 0, totalFortunes: 9999, subscribed: true}",
+    "[BeginStory] All validation passed — proceeding to story generation",
+    "[BeginStory] Story mode: participatory",
+    "[BeginStory] Fate working title (from pool): Fate Raises the Curtain",
+    "[BeginStory] Phase 2 complete — starting loader and API calls",
+    "[SCENE1:STAGE:PLANNER-OWNED] unseeded Scene 1 — the opening planner must return scene_mission + stage_contract over 3 issued ref(s): [pc:self, ent:the one who draws them forward, plot:aplot_x3a_ce3946d4_x2d_8118_x2d_4df0",
+    "[SCENE1:FUSION:V3] offered · lens ops 4 · grounds [pick:world, pick:worldSubtype, pick:flavor, pick:dynamic, pick:tone, pick:intensity, pick:pov, pick:pcName, pick:liName, pick:mask, pick:archetype, stage:participant:pc:",
+    "[SCENE1:STAGE] source=planner-owned:pending settingOwner=planner presenceOwner=planner (PENDING — planner owns part of the stage) settingSource=planner-pending onStage=[Testa] offStage=[]",
+    "[SCENE1:PLANNER] eligible cast (1): [Testa] · chars=4340 → max_tokens=2400 (N_staged_max = N_eligible; staged_characters is an OUTPUT and never sizes the request)",
+    "[SCENE1:PLANNER:USAGE] {\"route\":\"/api/proxy\",\"requested\":\"grok-4.3\",\"effort\":\"none\",\"served\":\"grok-4.3\",\"usage\":{\"prompt_tokens\":0,\"completion_tokens\":0,\"completion_tokens_details\":{\"reasoning_tokens\":0}},\"attempt\":1,\"at",
+    "[SCENE1:PLANNER:ATTEMPTS] 1 (no retry)",
+    "[SCENE1:ENVELOPE] spine contract declares 19 field(s)",
+    "[SCENE1:STAGE:PLANNER-OWNED:FAULT] planner stage_contract rejected (absent) — the stage is not established",
+    "[BeginStory] Error: Error: Scene 1 aborted: planner stage_contract rejected (absent) — the stage is not established at handleBeginStory (http://localhost:3000/app.js?v=20260910c-page-preservation:268511:20) at async <ano",
+    "[ISSUE-REFUND] refunded 60F. New balance: 9999",
+    "[CHECKOUT_RETURN] Late profile re-sync (12000ms) — fortunes: undefined | subscribed: undefined"
+  ],
+  "unissued": [
+    "[Corridor] Initializing 9-row corridor system with DOM mount/unmount...",
+    "[Corridor] Header height measurement returned 0 — keeping default (80px), will retry on next trigger",
+    "[Corridor] Stored 2 elements for stage: authorship",
+    "[Corridor] Stored 3 elements for stage: identity",
+    "[Corridor] Stored 3 elements for stage: playermask",
+    "[Corridor] Stored 3 elements for stage: storybeau",
+    "[Corridor] Stored 1 elements for stage: world",
+    "[Corridor] Stored 1 elements for stage: tone",
+    "[Corridor] Stored 1 elements for stage: pressure",
+    "[Corridor] Stored 3 elements for stage: pov",
+    "[Corridor] Stored 2 elements for stage: length",
+    "[Corridor] Stored 2 elements for stage: dynamic",
+    "[Corridor] Stored 1 elements for stage: beginstory",
+    "[Corridor] Authorship mount: Reset authorship choice for re-selection",
+    "[Corridor] DOM updated. Mounted row 0: authorship",
+    "[Corridor] Initialization complete. Active row: 0",
+    "[Corridor] Row store initialized with 11 stages",
+    "[CHECKOUT_RETURN] Success return (localStorage fallback) — tier: null | story: null | has pending state: false",
+    "[CHECKOUT_RETURN] Corridor complete (no saved story) — auto-beginning literary story",
+    "[BeginStory] handleBeginStory() called",
+    "[ISSUE-PURCHASE] insufficient fortunes (have 0, need 60)",
+    "[PAYWALL] StoryPass excluded by story metadata — Subscribe-only",
+    "[ISSUE-PURCHASE] charge declined for issue 1 (literary) — aborted (subscribed=false, balance=0)",
+    "[CHECKOUT_RETURN] Late profile re-sync (4000ms) — fortunes: undefined | subscribed: undefined",
+    "[BeginStory] handleBeginStory() called",
+    "[ISSUE-PURCHASE] charged 60F (issue_purchase_literary, issue=1, opid=e6cf3c29-3ed2-432b-8d64-4fedb377ff0c)",
+    "[BeginStory] DEBUG state.picks: {\"world\":\"Modern\",\"tone\":\"Earnest\",\"genre\":\"Billionaire\",\"pressure\":\"PowerControl\",\"flavor\":\"Billionaire\",\"dynamic\":\"Enemies\",\"era\":null,\"pov\":\"first_person\",\"worldSubtype\":\"small_town\",\"l",
+    "[BeginStory] DEBUG state.archetype: {\"primary\":\"BEAUTIFUL_RUIN\",\"modifier\":null,\"canonicalLIId\":\"fb_li_stageorder-yvj5c6\",\"bound\":true,\"boundAtScene\":0}",
+    "[BeginStory] DEBUG state.mode: solo state.storyLength: fling",
+    "[BeginStory] Past _beginStoryInProgress guard, entering main flow",
+    "[BeginStory] GATE DEBUG: {isNewStory: true, hasActiveStorypass: false, storypassFortunes: 0, totalFortunes: 9999, subscribed: true}",
+    "[BeginStory] All validation passed — proceeding to story generation",
+    "[BeginStory] Story mode: participatory",
+    "[BeginStory] Fate working title (from pool): Fate Raises the Curtain",
+    "[BeginStory] Phase 2 complete — starting loader and API calls",
+    "[SCENE1:STAGE:PLANNER-OWNED] unseeded Scene 1 — the opening planner must return scene_mission + stage_contract over 3 issued ref(s): [pc:self, ent:the one who draws them forward, plot:aplot_x3a_93be270e_x2d_d78b_x2d_4023",
+    "[SCENE1:FUSION:V3] offered · lens ops 4 · grounds [pick:world, pick:worldSubtype, pick:flavor, pick:dynamic, pick:tone, pick:intensity, pick:pov, pick:pcName, pick:liName, pick:mask, pick:archetype, stage:participant:pc:",
+    "[SCENE1:STAGE] source=planner-owned:pending settingOwner=planner presenceOwner=planner (PENDING — planner owns part of the stage) settingSource=planner-pending onStage=[Testa] offStage=[]",
+    "[SCENE1:PLANNER] eligible cast (1): [Testa] · chars=4340 → max_tokens=2400 (N_staged_max = N_eligible; staged_characters is an OUTPUT and never sizes the request)",
+    "[SCENE1:PLANNER:USAGE] {\"route\":\"/api/proxy\",\"requested\":\"grok-4.3\",\"effort\":\"none\",\"served\":\"grok-4.3\",\"usage\":{\"prompt_tokens\":0,\"completion_tokens\":0,\"completion_tokens_details\":{\"reasoning_tokens\":0}},\"attempt\":1,\"at",
+    "[SCENE1:PLANNER:ATTEMPTS] 1 (no retry)",
+    "[SCENE1:ENVELOPE] spine contract declares 19 field(s)",
+    "[SCENE1:STAGE:PLANNER-OWNED:FAULT] planner stage_contract rejected (whole_contract_rejected; named:invented_person:ref_not_issued_this_scene, named:invented_person:fact_ref_not_issued_this_scene) — the stage is not estab",
+    "[BeginStory] Error: Error: Scene 1 aborted: planner stage_contract rejected (whole_contract_rejected; named:invented_person:ref_not_issued_this_scene, named:invented_person:fact_ref_not_issued_this_scene) — the stage is ",
+    "[ISSUE-REFUND] refunded 60F. New balance: 9999",
+    "[CHECKOUT_RETURN] Late profile re-sync (12000ms) — fortunes: undefined | subscribed: undefined"
+  ],
+  "empty": [
+    "[Corridor] Initializing 9-row corridor system with DOM mount/unmount...",
+    "[Corridor] Header height measurement returned 0 — keeping default (80px), will retry on next trigger",
+    "[Corridor] Stored 2 elements for stage: authorship",
+    "[Corridor] Stored 3 elements for stage: identity",
+    "[Corridor] Stored 3 elements for stage: playermask",
+    "[Corridor] Stored 3 elements for stage: storybeau",
+    "[Corridor] Stored 1 elements for stage: world",
+    "[Corridor] Stored 1 elements for stage: tone",
+    "[Corridor] Stored 1 elements for stage: pressure",
+    "[Corridor] Stored 3 elements for stage: pov",
+    "[Corridor] Stored 2 elements for stage: length",
+    "[Corridor] Stored 2 elements for stage: dynamic",
+    "[Corridor] Stored 1 elements for stage: beginstory",
+    "[Corridor] Authorship mount: Reset authorship choice for re-selection",
+    "[Corridor] DOM updated. Mounted row 0: authorship",
+    "[Corridor] Initialization complete. Active row: 0",
+    "[Corridor] Row store initialized with 11 stages",
+    "[CHECKOUT_RETURN] Success return (localStorage fallback) — tier: null | story: null | has pending state: false",
+    "[CHECKOUT_RETURN] Corridor complete (no saved story) — auto-beginning literary story",
+    "[BeginStory] handleBeginStory() called",
+    "[ISSUE-PURCHASE] insufficient fortunes (have 0, need 60)",
+    "[PAYWALL] StoryPass excluded by story metadata — Subscribe-only",
+    "[ISSUE-PURCHASE] charge declined for issue 1 (literary) — aborted (subscribed=false, balance=0)",
+    "[CHECKOUT_RETURN] Late profile re-sync (4000ms) — fortunes: undefined | subscribed: undefined",
+    "[BeginStory] handleBeginStory() called",
+    "[ISSUE-PURCHASE] charged 60F (issue_purchase_literary, issue=1, opid=5b0653b4-5861-476d-87aa-446cab0bca56)",
+    "[BeginStory] DEBUG state.picks: {\"world\":\"Modern\",\"tone\":\"Earnest\",\"genre\":\"Billionaire\",\"pressure\":\"PowerControl\",\"flavor\":\"Billionaire\",\"dynamic\":\"Enemies\",\"era\":null,\"pov\":\"first_person\",\"worldSubtype\":\"small_town\",\"l",
+    "[BeginStory] DEBUG state.archetype: {\"primary\":\"BEAUTIFUL_RUIN\",\"modifier\":null,\"canonicalLIId\":\"fb_li_stageorder-0i7r62\",\"bound\":true,\"boundAtScene\":0}",
+    "[BeginStory] DEBUG state.mode: solo state.storyLength: fling",
+    "[BeginStory] Past _beginStoryInProgress guard, entering main flow",
+    "[BeginStory] GATE DEBUG: {isNewStory: true, hasActiveStorypass: false, storypassFortunes: 0, totalFortunes: 9999, subscribed: true}",
+    "[BeginStory] All validation passed — proceeding to story generation",
+    "[BeginStory] Story mode: participatory",
+    "[BeginStory] Fate working title (from pool): Fate Picks the Lock",
+    "[BeginStory] Phase 2 complete — starting loader and API calls",
+    "[SCENE1:STAGE:PLANNER-OWNED] unseeded Scene 1 — the opening planner must return scene_mission + stage_contract over 3 issued ref(s): [pc:self, ent:the one who draws them forward, plot:aplot_x3a_69bdea4e_x2d_6b99_x2d_42ec",
+    "[SCENE1:FUSION:V3] offered · lens ops 4 · grounds [pick:world, pick:worldSubtype, pick:flavor, pick:dynamic, pick:tone, pick:intensity, pick:pov, pick:pcName, pick:liName, pick:mask, pick:archetype, stage:participant:pc:",
+    "[SCENE1:STAGE] source=planner-owned:pending settingOwner=planner presenceOwner=planner (PENDING — planner owns part of the stage) settingSource=planner-pending onStage=[Testa] offStage=[]",
+    "[SCENE1:PLANNER] eligible cast (1): [Testa] · chars=4340 → max_tokens=2400 (N_staged_max = N_eligible; staged_characters is an OUTPUT and never sizes the request)",
+    "[SCENE1:PLANNER:USAGE] {\"route\":\"/api/proxy\",\"requested\":\"grok-4.3\",\"effort\":\"none\",\"served\":\"grok-4.3\",\"usage\":{\"prompt_tokens\":0,\"completion_tokens\":0,\"completion_tokens_details\":{\"reasoning_tokens\":0}},\"attempt\":1,\"at",
+    "[SCENE1:PLANNER:ATTEMPTS] 1 (no retry)",
+    "[SCENE1:ENVELOPE] spine contract declares 19 field(s)",
+    "[SCENE1:STAGE:PLANNER-OWNED:FAULT] planner returned no scene_mission for an unseeded opening — nothing authored the event",
+    "[BeginStory] Error: Error: Scene 1 aborted: planner returned no scene_mission for an unseeded opening — nothing authored the event at handleBeginStory (http://localhost:3000/app.js?v=20260910c-page-preservation:268511:20",
+    "[ISSUE-REFUND] refunded 60F. New balance: 9999",
+    "[CHECKOUT_RETURN] Late profile re-sync (12000ms) — fortunes: undefined | subscribed: undefined"
+  ],
+  "seeded": [
+    "[Corridor] Initializing 9-row corridor system with DOM mount/unmount...",
+    "[Corridor] Header height measurement returned 0 — keeping default (80px), will retry on next trigger",
+    "[Corridor] Stored 2 elements for stage: authorship",
+    "[Corridor] Stored 3 elements for stage: identity",
+    "[Corridor] Stored 3 elements for stage: playermask",
+    "[Corridor] Stored 3 elements for stage: storybeau",
+    "[Corridor] Stored 1 elements for stage: world",
+    "[Corridor] Stored 1 elements for stage: tone",
+    "[Corridor] Stored 1 elements for stage: pressure",
+    "[Corridor] Stored 3 elements for stage: pov",
+    "[Corridor] Stored 2 elements for stage: length",
+    "[Corridor] Stored 2 elements for stage: dynamic",
+    "[Corridor] Stored 1 elements for stage: beginstory",
+    "[Corridor] Authorship mount: Reset authorship choice for re-selection",
+    "[Corridor] DOM updated. Mounted row 0: authorship",
+    "[Corridor] Initialization complete. Active row: 0",
+    "[Corridor] Row store initialized with 11 stages",
+    "[CHECKOUT_RETURN] Success return (localStorage fallback) — tier: null | story: null | has pending state: false",
+    "[CHECKOUT_RETURN] Corridor complete (no saved story) — auto-beginning literary story",
+    "[BeginStory] handleBeginStory() called",
+    "[ISSUE-PURCHASE] insufficient fortunes (have 0, need 60)",
+    "[PAYWALL] StoryPass excluded by story metadata — Subscribe-only",
+    "[ISSUE-PURCHASE] charge declined for issue 1 (literary) — aborted (subscribed=false, balance=0)",
+    "[CHECKOUT_RETURN] Late profile re-sync (4000ms) — fortunes: undefined | subscribed: undefined",
+    "[BeginStory] handleBeginStory() called",
+    "[ISSUE-PURCHASE] charged 60F (issue_purchase_literary, issue=1, opid=400d9630-99c2-4754-82c0-bdc99b7be24e)",
+    "[BeginStory] DEBUG state.picks: {\"world\":\"Fantasy\",\"tone\":\"Earnest\",\"genre\":\"Billionaire\",\"pressure\":\"PowerControl\",\"flavor\":\"Arcane Binding\",\"dynamic\":\"Enemies\",\"era\":null,\"pov\":\"First\",\"worldSubtype\":\"arcane_binding\",\"",
+    "[BeginStory] DEBUG state.archetype: {\"primary\":\"BEAUTIFUL_RUIN\",\"modifier\":null}",
+    "[BeginStory] DEBUG state.mode: solo state.storyLength: fling",
+    "[BeginStory] Past _beginStoryInProgress guard, entering main flow",
+    "[BeginStory] GATE DEBUG: {isNewStory: true, hasActiveStorypass: false, storypassFortunes: 0, totalFortunes: 9999, subscribed: true}",
+    "[BeginStory] All validation passed — proceeding to story generation",
+    "[BeginStory] Story mode: participatory",
+    "[BeginStory] Phase 2 complete — starting loader and API calls",
+    "[SCENE1:STAGE] source=seed.sceneOne settingOwner=seed presenceOwner=seed settingSource=seed onStage=[Lirael, Julian, Seren, the presiding Dohkar] offStage=[]",
+    "[SCENE1:PLANNER] eligible cast (4): [Lirael, Julian, Seren, the presiding Dohkar] · chars=7010 → max_tokens=2921 (N_staged_max = N_eligible; staged_characters is an OUTPUT and never sizes the request)",
+    "[SCENE1:PLANNER:USAGE] {\"route\":\"/api/proxy\",\"requested\":\"grok-4.3\",\"effort\":\"none\",\"served\":\"grok-4.3\",\"usage\":{\"prompt_tokens\":0,\"completion_tokens\":0,\"completion_tokens_details\":{\"reasoning_tokens\":0}},\"attempt\":1,\"at",
+    "[SCENE1:PLANNER:ATTEMPTS] 1 (no retry)",
+    "[SCENE1:ENVELOPE] spine contract declares 20 field(s)",
+    "[SCENE1:ENVELOPE:FAULT] no opening_spine and no recognised spine fields at top level",
+    "[BeginStory] Error: Error: Scene 1 aborted: no opening_spine and no recognised spine fields at top level at handleBeginStory (http://localhost:3000/app.js?v=20260910c-page-preservation:268511:20) at async <anonymous>:337",
+    "[ISSUE-REFUND] refunded 60F. New balance: 9999",
+    "[CHECKOUT_RETURN] Late profile re-sync (12000ms) — fortunes: undefined | subscribed: undefined"
+  ],
+  "t1": [
+    "[Corridor] Initializing 9-row corridor system with DOM mount/unmount...",
+    "[Corridor] Header height measurement returned 0 — keeping default (80px), will retry on next trigger",
+    "[Corridor] Stored 2 elements for stage: authorship",
+    "[Corridor] Stored 3 elements for stage: identity",
+    "[Corridor] Stored 3 elements for stage: playermask",
+    "[Corridor] Stored 3 elements for stage: storybeau",
+    "[Corridor] Stored 1 elements for stage: world",
+    "[Corridor] Stored 1 elements for stage: tone",
+    "[Corridor] Stored 1 elements for stage: pressure",
+    "[Corridor] Stored 3 elements for stage: pov",
+    "[Corridor] Stored 2 elements for stage: length",
+    "[Corridor] Stored 2 elements for stage: dynamic",
+    "[Corridor] Stored 1 elements for stage: beginstory",
+    "[Corridor] Authorship mount: Reset authorship choice for re-selection",
+    "[Corridor] DOM updated. Mounted row 0: authorship",
+    "[Corridor] Initialization complete. Active row: 0",
+    "[Corridor] Row store initialized with 11 stages",
+    "[CHECKOUT_RETURN] Success return (localStorage fallback) — tier: null | story: null | has pending state: false",
+    "[CHECKOUT_RETURN] Corridor complete (no saved story) — auto-beginning literary story",
+    "[BeginStory] handleBeginStory() called",
+    "[ISSUE-PURCHASE] insufficient fortunes (have 0, need 60)",
+    "[PAYWALL] StoryPass excluded by story metadata — Subscribe-only",
+    "[ISSUE-PURCHASE] charge declined for issue 1 (literary) — aborted (subscribed=false, balance=0)",
+    "[CHECKOUT_RETURN] Late profile re-sync (4000ms) — fortunes: undefined | subscribed: undefined",
+    "[BeginStory] handleBeginStory() called",
+    "[ISSUE-PURCHASE] charged 60F (issue_purchase_literary, issue=1, opid=9745f0fe-b8a0-456f-a304-6ac355b937cb)",
+    "[BeginStory] DEBUG state.picks: {\"world\":\"Modern\",\"tone\":\"Earnest\",\"genre\":\"Billionaire\",\"pressure\":\"PowerControl\",\"flavor\":\"Billionaire\",\"dynamic\":\"Enemies\",\"era\":null,\"pov\":\"first_person\",\"worldSubtype\":\"small_town\",\"l",
+    "[BeginStory] DEBUG state.archetype: {\"primary\":\"BEAUTIFUL_RUIN\",\"modifier\":null,\"canonicalLIId\":\"fb_li_stageorder-t22buy\",\"bound\":true,\"boundAtScene\":0}",
+    "[BeginStory] DEBUG state.mode: solo state.storyLength: fling",
+    "[BeginStory] Past _beginStoryInProgress guard, entering main flow",
+    "[BeginStory] GATE DEBUG: {isNewStory: true, hasActiveStorypass: false, storypassFortunes: 0, totalFortunes: 9999, subscribed: true}",
+    "[BeginStory] All validation passed — proceeding to story generation",
+    "[BeginStory] Story mode: participatory",
+    "[BeginStory] Fate working title (from pool): Where Fate Was Waiting",
+    "[BeginStory] Phase 2 complete — starting loader and API calls",
+    "[SCENE1:STAGE:PLANNER-OWNED] unseeded Scene 1 — the opening planner must return scene_mission + stage_contract over 3 issued ref(s): [pc:self, ent:the one who draws them forward, plot:aplot_x3a_b2c57652_x2d_3d6e_x2d_413d",
+    "[SCENE1:FUSION:V3] offered · lens ops 4 · grounds [pick:world, pick:worldSubtype, pick:flavor, pick:dynamic, pick:tone, pick:intensity, pick:pov, pick:pcName, pick:liName, pick:mask, pick:archetype, stage:participant:pc:",
+    "[SCENE1:STAGE] source=planner-owned:pending settingOwner=planner presenceOwner=planner (PENDING — planner owns part of the stage) settingSource=planner-pending onStage=[Testa] offStage=[]",
+    "[SCENE1:PLANNER] eligible cast (1): [Testa] · chars=4340 → max_tokens=2400 (N_staged_max = N_eligible; staged_characters is an OUTPUT and never sizes the request)",
+    "[SCENE1:PLANNER:RETRY] attempt 1 failed (http-503) — retrying ONCE after 2000ms",
+    "[SCENE1:PLANNER:USAGE] {\"route\":\"/api/proxy\",\"requested\":\"grok-4.3\",\"effort\":\"none\",\"served\":\"grok-4.3\",\"usage\":{\"prompt_tokens\":0,\"completion_tokens\":0,\"completion_tokens_details\":{\"reasoning_tokens\":0}},\"attempt\":2,\"at",
+    "[SCENE1:PLANNER:ATTEMPTS] 2 (retried after http-503)",
+    "[SCENE1:ENVELOPE] spine contract declares 19 field(s)",
+    "[SCENE1:FUSION:V3] element affordances accepted: the weighhouse ledger=GRASPABLE, a bolt of undyed cloth=GRASPABLE",
+    "[SCENE1:STAGE:PLANNER-OWNED] resolved — source=generated:planner_stage · on stage [Testa] · mission=\"she understands the wish has already begun to cost her something she cannot name\"",
+    "[SCENE1:STAGE:RESOLVED] settingSource=planner.opening_setting WHERE=\"customs house\" onStage=[Testa]",
+    "[SCENE1:FUSION:V3] accepted — contact PRESS → target · lens EMOTIONAL_CONCLUSION_BEFORE_EVIDENCE · grounds [env:axis, pick:flavor]",
+    "[SCENE1:SOFT] fusion_legacy_member_ignored · scene_skeleton.fusion · omitted — a legacy fusion member was returned on the v3 path; pc_opening_fusion (contact) is the fusion",
+    "[SCENE1:SKELETON] C+ 1/1 assigned [Testa] · E+ the weighhouse ledger/ritual · fusion null",
+    "[SCENE1:STAGE] physical=[Testa] · phone=[] · total=1",
+    "[SCENE1:SKELETON:DELIVERED] 4716 chars appended to the heavy SYSTEM prompt (pre-freeze, pre-observer)",
+    "[GROK-LIT] author = Grok 4.3 (premium/tentpole)",
+    "[GROK-LIT] Grok de-calc editor: 0/0 surgical fixes applied (~0 tok rewritten, not whole-scene)",
+    "[SCENE-LEDGER] +p1 kind=scene issue=1 uid=pg:42f01a2f-89f2-4bdb-99ce-e056943ef527 planned=\"she understands the wish has already begun to cost her somet\"",
+    "[CHECKOUT_RETURN] Late profile re-sync (12000ms) — fortunes: undefined | subscribed: undefined"
+  ],
+  "t2": [
+    "[Corridor] Initializing 9-row corridor system with DOM mount/unmount...",
+    "[Corridor] Header height measurement returned 0 — keeping default (80px), will retry on next trigger",
+    "[Corridor] Stored 2 elements for stage: authorship",
+    "[Corridor] Stored 3 elements for stage: identity",
+    "[Corridor] Stored 3 elements for stage: playermask",
+    "[Corridor] Stored 3 elements for stage: storybeau",
+    "[Corridor] Stored 1 elements for stage: world",
+    "[Corridor] Stored 1 elements for stage: tone",
+    "[Corridor] Stored 1 elements for stage: pressure",
+    "[Corridor] Stored 3 elements for stage: pov",
+    "[Corridor] Stored 2 elements for stage: length",
+    "[Corridor] Stored 2 elements for stage: dynamic",
+    "[Corridor] Stored 1 elements for stage: beginstory",
+    "[Corridor] Authorship mount: Reset authorship choice for re-selection",
+    "[Corridor] DOM updated. Mounted row 0: authorship",
+    "[Corridor] Initialization complete. Active row: 0",
+    "[Corridor] Row store initialized with 11 stages",
+    "[CHECKOUT_RETURN] Success return (localStorage fallback) — tier: null | story: null | has pending state: false",
+    "[CHECKOUT_RETURN] Corridor complete (no saved story) — auto-beginning literary story",
+    "[BeginStory] handleBeginStory() called",
+    "[ISSUE-PURCHASE] insufficient fortunes (have 0, need 60)",
+    "[PAYWALL] StoryPass excluded by story metadata — Subscribe-only",
+    "[ISSUE-PURCHASE] charge declined for issue 1 (literary) — aborted (subscribed=false, balance=0)",
+    "[CHECKOUT_RETURN] Late profile re-sync (4000ms) — fortunes: undefined | subscribed: undefined",
+    "[BeginStory] handleBeginStory() called",
+    "[ISSUE-PURCHASE] charged 60F (issue_purchase_literary, issue=1, opid=275eef03-f1d5-4676-ab71-858d67dfb272)",
+    "[BeginStory] DEBUG state.picks: {\"world\":\"Modern\",\"tone\":\"Earnest\",\"genre\":\"Billionaire\",\"pressure\":\"PowerControl\",\"flavor\":\"Billionaire\",\"dynamic\":\"Enemies\",\"era\":null,\"pov\":\"first_person\",\"worldSubtype\":\"small_town\",\"l",
+    "[BeginStory] DEBUG state.archetype: {\"primary\":\"BEAUTIFUL_RUIN\",\"modifier\":null,\"canonicalLIId\":\"fb_li_stageorder-38ja14\",\"bound\":true,\"boundAtScene\":0}",
+    "[BeginStory] DEBUG state.mode: solo state.storyLength: fling",
+    "[BeginStory] Past _beginStoryInProgress guard, entering main flow",
+    "[BeginStory] GATE DEBUG: {isNewStory: true, hasActiveStorypass: false, storypassFortunes: 0, totalFortunes: 9999, subscribed: true}",
+    "[BeginStory] All validation passed — proceeding to story generation",
+    "[BeginStory] Story mode: participatory",
+    "[BeginStory] Fate working title (from pool): Fate Raises the Curtain",
+    "[BeginStory] Phase 2 complete — starting loader and API calls",
+    "[SCENE1:STAGE:PLANNER-OWNED] unseeded Scene 1 — the opening planner must return scene_mission + stage_contract over 3 issued ref(s): [pc:self, ent:the one who draws them forward, plot:aplot_x3a_f07a5c44_x2d_e4f0_x2d_41bc",
+    "[SCENE1:FUSION:V3] offered · lens ops 4 · grounds [pick:world, pick:worldSubtype, pick:flavor, pick:dynamic, pick:tone, pick:intensity, pick:pov, pick:pcName, pick:liName, pick:mask, pick:archetype, stage:participant:pc:",
+    "[SCENE1:STAGE] source=planner-owned:pending settingOwner=planner presenceOwner=planner (PENDING — planner owns part of the stage) settingSource=planner-pending onStage=[Testa] offStage=[]",
+    "[SCENE1:PLANNER] eligible cast (1): [Testa] · chars=4340 → max_tokens=2400 (N_staged_max = N_eligible; staged_characters is an OUTPUT and never sizes the request)",
+    "[SCENE1:PLANNER:RETRY] attempt 1 failed (http-503) — retrying ONCE after 2000ms",
+    "[SCENE1:PLANNER:TRANSPORT] scaffold transport failed twice: scaffold proxy HTTP 503 — retry exhausted",
+    "[BeginStory] Error: Error: Scene 1 aborted: scaffold transport failed twice: scaffold proxy HTTP 503 at handleBeginStory (http://localhost:3000/app.js?v=20260910c-page-preservation:268511:20) at async <anonymous>:337:30",
+    "[ISSUE-REFUND] refunded 60F. New balance: 9999",
+    "[CHECKOUT_RETURN] Late profile re-sync (12000ms) — fortunes: undefined | subscribed: undefined"
+  ],
+  "t3": [
+    "[Corridor] Initializing 9-row corridor system with DOM mount/unmount...",
+    "[Corridor] Header height measurement returned 0 — keeping default (80px), will retry on next trigger",
+    "[Corridor] Stored 2 elements for stage: authorship",
+    "[Corridor] Stored 3 elements for stage: identity",
+    "[Corridor] Stored 3 elements for stage: playermask",
+    "[Corridor] Stored 3 elements for stage: storybeau",
+    "[Corridor] Stored 1 elements for stage: world",
+    "[Corridor] Stored 1 elements for stage: tone",
+    "[Corridor] Stored 1 elements for stage: pressure",
+    "[Corridor] Stored 3 elements for stage: pov",
+    "[Corridor] Stored 2 elements for stage: length",
+    "[Corridor] Stored 2 elements for stage: dynamic",
+    "[Corridor] Stored 1 elements for stage: beginstory",
+    "[Corridor] Authorship mount: Reset authorship choice for re-selection",
+    "[Corridor] DOM updated. Mounted row 0: authorship",
+    "[Corridor] Initialization complete. Active row: 0",
+    "[Corridor] Row store initialized with 11 stages",
+    "[CHECKOUT_RETURN] Success return (localStorage fallback) — tier: null | story: null | has pending state: false",
+    "[CHECKOUT_RETURN] Corridor complete (no saved story) — auto-beginning literary story",
+    "[BeginStory] handleBeginStory() called",
+    "[ISSUE-PURCHASE] insufficient fortunes (have 0, need 60)",
+    "[PAYWALL] StoryPass excluded by story metadata — Subscribe-only",
+    "[ISSUE-PURCHASE] charge declined for issue 1 (literary) — aborted (subscribed=false, balance=0)",
+    "[CHECKOUT_RETURN] Late profile re-sync (4000ms) — fortunes: undefined | subscribed: undefined",
+    "[BeginStory] handleBeginStory() called",
+    "[ISSUE-PURCHASE] charged 60F (issue_purchase_literary, issue=1, opid=f8828012-438e-476b-ac1f-1c595ede1dfc)",
+    "[BeginStory] DEBUG state.picks: {\"world\":\"Modern\",\"tone\":\"Earnest\",\"genre\":\"Billionaire\",\"pressure\":\"PowerControl\",\"flavor\":\"Billionaire\",\"dynamic\":\"Enemies\",\"era\":null,\"pov\":\"first_person\",\"worldSubtype\":\"small_town\",\"l",
+    "[BeginStory] DEBUG state.archetype: {\"primary\":\"BEAUTIFUL_RUIN\",\"modifier\":null,\"canonicalLIId\":\"fb_li_stageorder-mxuynr\",\"bound\":true,\"boundAtScene\":0}",
+    "[BeginStory] DEBUG state.mode: solo state.storyLength: fling",
+    "[BeginStory] Past _beginStoryInProgress guard, entering main flow",
+    "[BeginStory] GATE DEBUG: {isNewStory: true, hasActiveStorypass: false, storypassFortunes: 0, totalFortunes: 9999, subscribed: true}",
+    "[BeginStory] All validation passed — proceeding to story generation",
+    "[BeginStory] Story mode: participatory",
+    "[BeginStory] Fate working title (from pool): Fate Sets the Hook",
+    "[BeginStory] Phase 2 complete — starting loader and API calls",
+    "[SCENE1:STAGE:PLANNER-OWNED] unseeded Scene 1 — the opening planner must return scene_mission + stage_contract over 3 issued ref(s): [pc:self, ent:the one who draws them forward, plot:aplot_x3a_0bf6163d_x2d_d5e6_x2d_470d",
+    "[SCENE1:FUSION:V3] offered · lens ops 4 · grounds [pick:world, pick:worldSubtype, pick:flavor, pick:dynamic, pick:tone, pick:intensity, pick:pov, pick:pcName, pick:liName, pick:mask, pick:archetype, stage:participant:pc:",
+    "[SCENE1:STAGE] source=planner-owned:pending settingOwner=planner presenceOwner=planner (PENDING — planner owns part of the stage) settingSource=planner-pending onStage=[Testa] offStage=[]",
+    "[SCENE1:PLANNER] eligible cast (1): [Testa] · chars=4340 → max_tokens=2400 (N_staged_max = N_eligible; staged_characters is an OUTPUT and never sizes the request)",
+    "[SCENE1:PLANNER:TRANSPORT] scaffold transport failed, not retryable: scaffold proxy HTTP 400 — no retry",
+    "[BeginStory] Error: Error: Scene 1 aborted: scaffold transport failed, not retryable: scaffold proxy HTTP 400 at handleBeginStory (http://localhost:3000/app.js?v=20260910c-page-preservation:268511:20) at async <anonymous",
+    "[ISSUE-REFUND] refunded 60F. New balance: 9999",
+    "[CHECKOUT_RETURN] Late profile re-sync (12000ms) — fortunes: undefined | subscribed: undefined"
+  ],
+  "n1": [
+    "[Corridor] Initializing 9-row corridor system with DOM mount/unmount...",
+    "[Corridor] Header height measurement returned 0 — keeping default (80px), will retry on next trigger",
+    "[Corridor] Stored 2 elements for stage: authorship",
+    "[Corridor] Stored 3 elements for stage: identity",
+    "[Corridor] Stored 3 elements for stage: playermask",
+    "[Corridor] Stored 3 elements for stage: storybeau",
+    "[Corridor] Stored 1 elements for stage: world",
+    "[Corridor] Stored 1 elements for stage: tone",
+    "[Corridor] Stored 1 elements for stage: pressure",
+    "[Corridor] Stored 3 elements for stage: pov",
+    "[Corridor] Stored 2 elements for stage: length",
+    "[Corridor] Stored 2 elements for stage: dynamic",
+    "[Corridor] Stored 1 elements for stage: beginstory",
+    "[Corridor] Authorship mount: Reset authorship choice for re-selection",
+    "[Corridor] DOM updated. Mounted row 0: authorship",
+    "[Corridor] Initialization complete. Active row: 0",
+    "[Corridor] Row store initialized with 11 stages",
+    "[CHECKOUT_RETURN] Success return (localStorage fallback) — tier: null | story: null | has pending state: false",
+    "[CHECKOUT_RETURN] Corridor complete (no saved story) — auto-beginning literary story",
+    "[BeginStory] handleBeginStory() called",
+    "[ISSUE-PURCHASE] insufficient fortunes (have 0, need 60)",
+    "[PAYWALL] StoryPass excluded by story metadata — Subscribe-only",
+    "[ISSUE-PURCHASE] charge declined for issue 1 (literary) — aborted (subscribed=false, balance=0)",
+    "[CHECKOUT_RETURN] Late profile re-sync (4000ms) — fortunes: undefined | subscribed: undefined",
+    "[BeginStory] handleBeginStory() called",
+    "[ISSUE-PURCHASE] charged 60F (issue_purchase_literary, issue=1, opid=496d4ca4-4de1-4cdf-927f-cd954a3af786)",
+    "[BeginStory] DEBUG state.picks: {\"world\":\"Modern\",\"tone\":\"Earnest\",\"genre\":\"Billionaire\",\"pressure\":\"PowerControl\",\"flavor\":\"Billionaire\",\"dynamic\":\"Enemies\",\"era\":null,\"pov\":\"first_person\",\"worldSubtype\":\"small_town\",\"l",
+    "[BeginStory] DEBUG state.archetype: {\"primary\":\"BEAUTIFUL_RUIN\",\"modifier\":null,\"canonicalLIId\":\"fb_li_stageorder-lx6502\",\"bound\":true,\"boundAtScene\":0}",
+    "[BeginStory] DEBUG state.mode: solo state.storyLength: fling",
+    "[BeginStory] Past _beginStoryInProgress guard, entering main flow",
+    "[BeginStory] GATE DEBUG: {isNewStory: true, hasActiveStorypass: false, storypassFortunes: 0, totalFortunes: 9999, subscribed: true}",
+    "[BeginStory] All validation passed — proceeding to story generation",
+    "[BeginStory] Story mode: participatory",
+    "[BeginStory] Fate working title (from pool): What Fate Left at the Door",
+    "[BeginStory] Phase 2 complete — starting loader and API calls",
+    "[SCENE1:STAGE:PLANNER-OWNED] unseeded Scene 1 — the opening planner must return scene_mission + stage_contract over 3 issued ref(s): [pc:self, ent:the one who draws them forward, plot:aplot_x3a_e76edb85_x2d_5c00_x2d_404e",
+    "[SCENE1:FUSION:V3] offered · lens ops 4 · grounds [pick:world, pick:worldSubtype, pick:flavor, pick:dynamic, pick:tone, pick:intensity, pick:pov, pick:pcName, pick:liName, pick:mask, pick:archetype, stage:participant:pc:",
+    "[SCENE1:STAGE] source=planner-owned:pending settingOwner=planner presenceOwner=planner (PENDING — planner owns part of the stage) settingSource=planner-pending onStage=[Testa] offStage=[]",
+    "[SCENE1:PLANNER] eligible cast (1): [Testa] · chars=4340 → max_tokens=2400 (N_staged_max = N_eligible; staged_characters is an OUTPUT and never sizes the request)",
+    "[SCENE1:PLANNER:USAGE] {\"route\":\"/api/proxy\",\"requested\":\"grok-4.3\",\"effort\":\"none\",\"served\":\"grok-4.3\",\"usage\":{\"prompt_tokens\":0,\"completion_tokens\":0,\"completion_tokens_details\":{\"reasoning_tokens\":0}},\"attempt\":1,\"at",
+    "[SCENE1:PLANNER:ATTEMPTS] 1 (no retry)",
+    "[SCENE1:ENVELOPE] spine contract declares 19 field(s)",
+    "[SCENE1:ENVELOPE:NORMALISED] stage_contract (opening_spine -> top level) — value moved intact",
+    "[SCENE1:FUSION:V3] element affordances accepted: the weighhouse ledger=GRASPABLE, a bolt of undyed cloth=GRASPABLE",
+    "[SCENE1:STAGE:PLANNER-OWNED] resolved — source=generated:planner_stage · on stage [Testa] · mission=\"she understands the wish has already begun to cost her something she cannot name\"",
+    "[SCENE1:STAGE:RESOLVED] settingSource=planner.opening_setting WHERE=\"customs house\" onStage=[Testa]",
+    "[SCENE1:FUSION:V3] accepted — contact PRESS → target · lens EMOTIONAL_CONCLUSION_BEFORE_EVIDENCE · grounds [env:axis, pick:flavor]",
+    "[SCENE1:SOFT] fusion_legacy_member_ignored · scene_skeleton.fusion · omitted — a legacy fusion member was returned on the v3 path; pc_opening_fusion (contact) is the fusion",
+    "[SCENE1:SKELETON] C+ 1/1 assigned [Testa] · E+ the weighhouse ledger/ritual · fusion null",
+    "[SCENE1:STAGE] physical=[Testa] · phone=[] · total=1",
+    "[SCENE1:SKELETON:DELIVERED] 4716 chars appended to the heavy SYSTEM prompt (pre-freeze, pre-observer)",
+    "[GROK-LIT] author = Grok 4.3 (premium/tentpole)",
+    "[GROK-LIT] Grok de-calc editor: 0/0 surgical fixes applied (~0 tok rewritten, not whole-scene)",
+    "[SCENE-LEDGER] +p1 kind=scene issue=1 uid=pg:e3ca8c91-4408-4f52-85b3-9a6ca133deea planned=\"she understands the wish has already begun to cost her somet\"",
+    "[CHECKOUT_RETURN] Late profile re-sync (12000ms) — fortunes: undefined | subscribed: undefined"
+  ],
+  "n3": [
+    "[Corridor] Initializing 9-row corridor system with DOM mount/unmount...",
+    "[Corridor] Header height measurement returned 0 — keeping default (80px), will retry on next trigger",
+    "[Corridor] Stored 2 elements for stage: authorship",
+    "[Corridor] Stored 3 elements for stage: identity",
+    "[Corridor] Stored 3 elements for stage: playermask",
+    "[Corridor] Stored 3 elements for stage: storybeau",
+    "[Corridor] Stored 1 elements for stage: world",
+    "[Corridor] Stored 1 elements for stage: tone",
+    "[Corridor] Stored 1 elements for stage: pressure",
+    "[Corridor] Stored 3 elements for stage: pov",
+    "[Corridor] Stored 2 elements for stage: length",
+    "[Corridor] Stored 2 elements for stage: dynamic",
+    "[Corridor] Stored 1 elements for stage: beginstory",
+    "[Corridor] Authorship mount: Reset authorship choice for re-selection",
+    "[Corridor] DOM updated. Mounted row 0: authorship",
+    "[Corridor] Initialization complete. Active row: 0",
+    "[Corridor] Row store initialized with 11 stages",
+    "[CHECKOUT_RETURN] Success return (localStorage fallback) — tier: null | story: null | has pending state: false",
+    "[CHECKOUT_RETURN] Corridor complete (no saved story) — auto-beginning literary story",
+    "[BeginStory] handleBeginStory() called",
+    "[ISSUE-PURCHASE] insufficient fortunes (have 0, need 60)",
+    "[PAYWALL] StoryPass excluded by story metadata — Subscribe-only",
+    "[ISSUE-PURCHASE] charge declined for issue 1 (literary) — aborted (subscribed=false, balance=0)",
+    "[CHECKOUT_RETURN] Late profile re-sync (4000ms) — fortunes: undefined | subscribed: undefined",
+    "[BeginStory] handleBeginStory() called",
+    "[ISSUE-PURCHASE] charged 60F (issue_purchase_literary, issue=1, opid=6c6cc6e3-0f5e-4323-a697-c6e80f8641e5)",
+    "[BeginStory] DEBUG state.picks: {\"world\":\"Modern\",\"tone\":\"Earnest\",\"genre\":\"Billionaire\",\"pressure\":\"PowerControl\",\"flavor\":\"Billionaire\",\"dynamic\":\"Enemies\",\"era\":null,\"pov\":\"first_person\",\"worldSubtype\":\"small_town\",\"l",
+    "[BeginStory] DEBUG state.archetype: {\"primary\":\"BEAUTIFUL_RUIN\",\"modifier\":null,\"canonicalLIId\":\"fb_li_stageorder-grylfb\",\"bound\":true,\"boundAtScene\":0}",
+    "[BeginStory] DEBUG state.mode: solo state.storyLength: fling",
+    "[BeginStory] Past _beginStoryInProgress guard, entering main flow",
+    "[BeginStory] GATE DEBUG: {isNewStory: true, hasActiveStorypass: false, storypassFortunes: 0, totalFortunes: 9999, subscribed: true}",
+    "[BeginStory] All validation passed — proceeding to story generation",
+    "[BeginStory] Story mode: participatory",
+    "[BeginStory] Fate working title (from pool): Fate Marks the Stranger",
+    "[BeginStory] Phase 2 complete — starting loader and API calls",
+    "[SCENE1:STAGE:PLANNER-OWNED] unseeded Scene 1 — the opening planner must return scene_mission + stage_contract over 3 issued ref(s): [pc:self, ent:the one who draws them forward, plot:aplot_x3a_0155649d_x2d_6687_x2d_4f3e",
+    "[SCENE1:FUSION:V3] offered · lens ops 4 · grounds [pick:world, pick:worldSubtype, pick:flavor, pick:dynamic, pick:tone, pick:intensity, pick:pov, pick:pcName, pick:liName, pick:mask, pick:archetype, stage:participant:pc:",
+    "[SCENE1:STAGE] source=planner-owned:pending settingOwner=planner presenceOwner=planner (PENDING — planner owns part of the stage) settingSource=planner-pending onStage=[Testa] offStage=[]",
+    "[SCENE1:PLANNER] eligible cast (1): [Testa] · chars=4340 → max_tokens=2400 (N_staged_max = N_eligible; staged_characters is an OUTPUT and never sizes the request)",
+    "[SCENE1:PLANNER:USAGE] {\"route\":\"/api/proxy\",\"requested\":\"grok-4.3\",\"effort\":\"none\",\"served\":\"grok-4.3\",\"usage\":{\"prompt_tokens\":0,\"completion_tokens\":0,\"completion_tokens_details\":{\"reasoning_tokens\":0}},\"attempt\":1,\"at",
+    "[SCENE1:PLANNER:ATTEMPTS] 1 (no retry)",
+    "[SCENE1:ENVELOPE] spine contract declares 19 field(s)",
+    "[SCENE1:STAGE:PLANNER-OWNED:FAULT] planner returned stage_contract in more than one place with DIFFERENT values — refusing to choose between two stages",
+    "[BeginStory] Error: Error: Scene 1 aborted: planner returned stage_contract in more than one place with DIFFERENT values — refusing to choose between two stages at handleBeginStory (http://localhost:3000/app.js?v=2026091",
+    "[ISSUE-REFUND] refunded 60F. New balance: 9999",
+    "[CHECKOUT_RETURN] Late profile re-sync (12000ms) — fortunes: undefined | subscribed: undefined"
+  ],
+  "a1": [
+    "[Corridor] Initializing 9-row corridor system with DOM mount/unmount...",
+    "[Corridor] Header height measurement returned 0 — keeping default (80px), will retry on next trigger",
+    "[Corridor] Stored 2 elements for stage: authorship",
+    "[Corridor] Stored 3 elements for stage: identity",
+    "[Corridor] Stored 3 elements for stage: playermask",
+    "[Corridor] Stored 3 elements for stage: storybeau",
+    "[Corridor] Stored 1 elements for stage: world",
+    "[Corridor] Stored 1 elements for stage: tone",
+    "[Corridor] Stored 1 elements for stage: pressure",
+    "[Corridor] Stored 3 elements for stage: pov",
+    "[Corridor] Stored 2 elements for stage: length",
+    "[Corridor] Stored 2 elements for stage: dynamic",
+    "[Corridor] Stored 1 elements for stage: beginstory",
+    "[Corridor] Authorship mount: Reset authorship choice for re-selection",
+    "[Corridor] DOM updated. Mounted row 0: authorship",
+    "[Corridor] Initialization complete. Active row: 0",
+    "[Corridor] Row store initialized with 11 stages",
+    "[CHECKOUT_RETURN] Success return (localStorage fallback) — tier: null | story: null | has pending state: false",
+    "[CHECKOUT_RETURN] Corridor complete (no saved story) — auto-beginning literary story",
+    "[BeginStory] handleBeginStory() called",
+    "[ISSUE-PURCHASE] insufficient fortunes (have 0, need 60)",
+    "[PAYWALL] StoryPass excluded by story metadata — Subscribe-only",
+    "[ISSUE-PURCHASE] charge declined for issue 1 (literary) — aborted (subscribed=false, balance=0)",
+    "[CHECKOUT_RETURN] Late profile re-sync (4000ms) — fortunes: undefined | subscribed: undefined",
+    "[BeginStory] handleBeginStory() called",
+    "[ISSUE-PURCHASE] charged 60F (issue_purchase_literary, issue=1, opid=0ee60687-b259-48e4-af9e-c600d7b6706c)",
+    "[BeginStory] DEBUG state.picks: {\"world\":\"Modern\",\"tone\":\"Earnest\",\"genre\":\"Billionaire\",\"pressure\":\"PowerControl\",\"flavor\":\"Billionaire\",\"dynamic\":\"Enemies\",\"era\":null,\"pov\":\"first_person\",\"worldSubtype\":\"small_town\",\"l",
+    "[BeginStory] DEBUG state.archetype: {\"primary\":\"BEAUTIFUL_RUIN\",\"modifier\":null,\"canonicalLIId\":\"fb_li_stageorder-u681fz\",\"bound\":true,\"boundAtScene\":0}",
+    "[BeginStory] DEBUG state.mode: solo state.storyLength: fling",
+    "[BeginStory] Past _beginStoryInProgress guard, entering main flow",
+    "[BeginStory] GATE DEBUG: {isNewStory: true, hasActiveStorypass: false, storypassFortunes: 0, totalFortunes: 9999, subscribed: true}",
+    "[BeginStory] All validation passed — proceeding to story generation",
+    "[BeginStory] Story mode: participatory",
+    "[BeginStory] Fate working title (from pool): When Fate Came Knocking",
+    "[BeginStory] Phase 2 complete — starting loader and API calls",
+    "[SCENE1:STAGE:PLANNER-OWNED] unseeded Scene 1 — the opening planner must return scene_mission + stage_contract over 3 issued ref(s): [pc:self, ent:the one who draws them forward, plot:aplot_x3a_2c732709_x2d_2222_x2d_468b",
+    "[SCENE1:FUSION:V3] offered · lens ops 4 · grounds [pick:world, pick:worldSubtype, pick:flavor, pick:dynamic, pick:tone, pick:intensity, pick:pov, pick:pcName, pick:liName, pick:mask, pick:archetype, stage:participant:pc:",
+    "[SCENE1:STAGE] source=planner-owned:pending settingOwner=planner presenceOwner=planner (PENDING — planner owns part of the stage) settingSource=planner-pending onStage=[Testa] offStage=[]",
+    "[SCENE1:PLANNER] eligible cast (1): [Testa] · chars=4340 → max_tokens=2400 (N_staged_max = N_eligible; staged_characters is an OUTPUT and never sizes the request)",
+    "[SCENE1:PLANNER:USAGE] {\"route\":\"/api/proxy\",\"requested\":\"grok-4.3\",\"effort\":\"none\",\"served\":\"grok-4.3\",\"usage\":{\"prompt_tokens\":0,\"completion_tokens\":0,\"completion_tokens_details\":{\"reasoning_tokens\":0}},\"attempt\":1,\"at",
+    "[SCENE1:PLANNER:ATTEMPTS] 1 (no retry)",
+    "[SCENE1:ENVELOPE] spine contract declares 19 field(s)",
+    "[SCENE1:STAGE:PLANNER-OWNED:FAULT] planner stage_contract rejected (absent) — the stage is not established",
+    "[BeginStory] Error: Error: Scene 1 aborted: planner stage_contract rejected (absent) — the stage is not established at handleBeginStory (http://localhost:3000/app.js?v=20260910c-page-preservation:268511:20) at async <ano",
+    "[ISSUE-REFUND] refunded 60F. New balance: 9999",
+    "[CHECKOUT_RETURN] Late profile re-sync (12000ms) — fortunes: undefined | subscribed: undefined"
+  ],
+  "a2": [
+    "[Corridor] Initializing 9-row corridor system with DOM mount/unmount...",
+    "[Corridor] Header height measurement returned 0 — keeping default (80px), will retry on next trigger",
+    "[Corridor] Stored 2 elements for stage: authorship",
+    "[Corridor] Stored 3 elements for stage: identity",
+    "[Corridor] Stored 3 elements for stage: playermask",
+    "[Corridor] Stored 3 elements for stage: storybeau",
+    "[Corridor] Stored 1 elements for stage: world",
+    "[Corridor] Stored 1 elements for stage: tone",
+    "[Corridor] Stored 1 elements for stage: pressure",
+    "[Corridor] Stored 3 elements for stage: pov",
+    "[Corridor] Stored 2 elements for stage: length",
+    "[Corridor] Stored 2 elements for stage: dynamic",
+    "[Corridor] Stored 1 elements for stage: beginstory",
+    "[Corridor] Authorship mount: Reset authorship choice for re-selection",
+    "[Corridor] DOM updated. Mounted row 0: authorship",
+    "[Corridor] Initialization complete. Active row: 0",
+    "[Corridor] Row store initialized with 11 stages",
+    "[CHECKOUT_RETURN] Success return (localStorage fallback) — tier: null | story: null | has pending state: false",
+    "[CHECKOUT_RETURN] Corridor complete (no saved story) — auto-beginning literary story",
+    "[BeginStory] handleBeginStory() called",
+    "[ISSUE-PURCHASE] insufficient fortunes (have 0, need 60)",
+    "[PAYWALL] StoryPass excluded by story metadata — Subscribe-only",
+    "[ISSUE-PURCHASE] charge declined for issue 1 (literary) — aborted (subscribed=false, balance=0)",
+    "[CHECKOUT_RETURN] Late profile re-sync (4000ms) — fortunes: undefined | subscribed: undefined",
+    "[BeginStory] handleBeginStory() called",
+    "[ISSUE-PURCHASE] charged 60F (issue_purchase_literary, issue=1, opid=235b6b50-2231-4b56-a35b-13697cc89bf8)",
+    "[BeginStory] DEBUG state.picks: {\"world\":\"Modern\",\"tone\":\"Earnest\",\"genre\":\"Billionaire\",\"pressure\":\"PowerControl\",\"flavor\":\"Billionaire\",\"dynamic\":\"Enemies\",\"era\":null,\"pov\":\"first_person\",\"worldSubtype\":\"small_town\",\"l",
+    "[BeginStory] DEBUG state.archetype: {\"primary\":\"BEAUTIFUL_RUIN\",\"modifier\":null,\"canonicalLIId\":\"fb_li_stageorder-mqp4fd\",\"bound\":true,\"boundAtScene\":0}",
+    "[BeginStory] DEBUG state.mode: solo state.storyLength: fling",
+    "[BeginStory] Past _beginStoryInProgress guard, entering main flow",
+    "[BeginStory] GATE DEBUG: {isNewStory: true, hasActiveStorypass: false, storypassFortunes: 0, totalFortunes: 9999, subscribed: true}",
+    "[BeginStory] All validation passed — proceeding to story generation",
+    "[BeginStory] Story mode: participatory",
+    "[BeginStory] Fate working title (from pool): Fate Calls the First Hand",
+    "[BeginStory] Phase 2 complete — starting loader and API calls",
+    "[SCENE1:STAGE:PLANNER-OWNED] unseeded Scene 1 — the opening planner must return scene_mission + stage_contract over 3 issued ref(s): [pc:self, ent:the one who draws them forward, plot:aplot_x3a_34630b3c_x2d_8965_x2d_4064",
+    "[SCENE1:FUSION:V3] offered · lens ops 4 · grounds [pick:world, pick:worldSubtype, pick:flavor, pick:dynamic, pick:tone, pick:intensity, pick:pov, pick:pcName, pick:liName, pick:mask, pick:archetype, stage:participant:pc:",
+    "[SCENE1:STAGE] source=planner-owned:pending settingOwner=planner presenceOwner=planner (PENDING — planner owns part of the stage) settingSource=planner-pending onStage=[Testa] offStage=[]",
+    "[SCENE1:PLANNER] eligible cast (1): [Testa] · chars=4340 → max_tokens=2400 (N_staged_max = N_eligible; staged_characters is an OUTPUT and never sizes the request)",
+    "[SCENE1:PLANNER:USAGE] {\"route\":\"/api/proxy\",\"requested\":\"grok-4.3\",\"effort\":\"none\",\"served\":\"grok-4.3\",\"usage\":{\"prompt_tokens\":0,\"completion_tokens\":0,\"completion_tokens_details\":{\"reasoning_tokens\":0}},\"attempt\":1,\"at",
+    "[SCENE1:PLANNER:ATTEMPTS] 1 (no retry)",
+    "[SCENE1:ENVELOPE] spine contract declares 19 field(s)",
+    "[SCENE1:ENVELOPE:NORMALISED] stage_contract (opening_spine -> top level) — value moved intact",
+    "[SCENE1:STAGE:PLANNER-OWNED:FAULT] planner stage_contract rejected (malformed:participants) — the stage is not established",
+    "[BeginStory] Error: Error: Scene 1 aborted: planner stage_contract rejected (malformed:participants) — the stage is not established at handleBeginStory (http://localhost:3000/app.js?v=20260910c-page-preservation:268511:2",
+    "[ISSUE-REFUND] refunded 60F. New balance: 9999",
+    "[CHECKOUT_RETURN] Late profile re-sync (12000ms) — fortunes: undefined | subscribed: undefined"
+  ],
+  "a3": [
+    "[Corridor] Initializing 9-row corridor system with DOM mount/unmount...",
+    "[Corridor] Header height measurement returned 0 — keeping default (80px), will retry on next trigger",
+    "[Corridor] Stored 2 elements for stage: authorship",
+    "[Corridor] Stored 3 elements for stage: identity",
+    "[Corridor] Stored 3 elements for stage: playermask",
+    "[Corridor] Stored 3 elements for stage: storybeau",
+    "[Corridor] Stored 1 elements for stage: world",
+    "[Corridor] Stored 1 elements for stage: tone",
+    "[Corridor] Stored 1 elements for stage: pressure",
+    "[Corridor] Stored 3 elements for stage: pov",
+    "[Corridor] Stored 2 elements for stage: length",
+    "[Corridor] Stored 2 elements for stage: dynamic",
+    "[Corridor] Stored 1 elements for stage: beginstory",
+    "[Corridor] Authorship mount: Reset authorship choice for re-selection",
+    "[Corridor] DOM updated. Mounted row 0: authorship",
+    "[Corridor] Initialization complete. Active row: 0",
+    "[Corridor] Row store initialized with 11 stages",
+    "[CHECKOUT_RETURN] Success return (localStorage fallback) — tier: null | story: null | has pending state: false",
+    "[CHECKOUT_RETURN] Corridor complete (no saved story) — auto-beginning literary story",
+    "[BeginStory] handleBeginStory() called",
+    "[ISSUE-PURCHASE] insufficient fortunes (have 0, need 60)",
+    "[PAYWALL] StoryPass excluded by story metadata — Subscribe-only",
+    "[ISSUE-PURCHASE] charge declined for issue 1 (literary) — aborted (subscribed=false, balance=0)",
+    "[CHECKOUT_RETURN] Late profile re-sync (4000ms) — fortunes: undefined | subscribed: undefined",
+    "[BeginStory] handleBeginStory() called",
+    "[ISSUE-PURCHASE] charged 60F (issue_purchase_literary, issue=1, opid=1266b1ab-6406-48ac-8a0a-5bfe58fac9ed)",
+    "[BeginStory] DEBUG state.picks: {\"world\":\"Modern\",\"tone\":\"Earnest\",\"genre\":\"Billionaire\",\"pressure\":\"PowerControl\",\"flavor\":\"Billionaire\",\"dynamic\":\"Enemies\",\"era\":null,\"pov\":\"first_person\",\"worldSubtype\":\"small_town\",\"l",
+    "[BeginStory] DEBUG state.archetype: {\"primary\":\"BEAUTIFUL_RUIN\",\"modifier\":null,\"canonicalLIId\":\"fb_li_stageorder-49upcc\",\"bound\":true,\"boundAtScene\":0}",
+    "[BeginStory] DEBUG state.mode: solo state.storyLength: fling",
+    "[BeginStory] Past _beginStoryInProgress guard, entering main flow",
+    "[BeginStory] GATE DEBUG: {isNewStory: true, hasActiveStorypass: false, storypassFortunes: 0, totalFortunes: 9999, subscribed: true}",
+    "[BeginStory] All validation passed — proceeding to story generation",
+    "[BeginStory] Story mode: participatory",
+    "[BeginStory] Fate working title (from pool): Fate Tightens the Thread",
+    "[BeginStory] Phase 2 complete — starting loader and API calls",
+    "[SCENE1:STAGE:PLANNER-OWNED] unseeded Scene 1 — the opening planner must return scene_mission + stage_contract over 3 issued ref(s): [pc:self, ent:the one who draws them forward, plot:aplot_x3a_874e2560_x2d_a07c_x2d_40c9",
+    "[SCENE1:FUSION:V3] offered · lens ops 4 · grounds [pick:world, pick:worldSubtype, pick:flavor, pick:dynamic, pick:tone, pick:intensity, pick:pov, pick:pcName, pick:liName, pick:mask, pick:archetype, stage:participant:pc:",
+    "[SCENE1:STAGE] source=planner-owned:pending settingOwner=planner presenceOwner=planner (PENDING — planner owns part of the stage) settingSource=planner-pending onStage=[Testa] offStage=[]",
+    "[SCENE1:PLANNER] eligible cast (1): [Testa] · chars=4340 → max_tokens=2400 (N_staged_max = N_eligible; staged_characters is an OUTPUT and never sizes the request)",
+    "[SCENE1:PLANNER:USAGE] {\"route\":\"/api/proxy\",\"requested\":\"grok-4.3\",\"effort\":\"none\",\"served\":\"grok-4.3\",\"usage\":{\"prompt_tokens\":0,\"completion_tokens\":0,\"completion_tokens_details\":{\"reasoning_tokens\":0}},\"attempt\":1,\"at",
+    "[SCENE1:PLANNER:ATTEMPTS] 1 (no retry)",
+    "[SCENE1:ENVELOPE] spine contract declares 19 field(s)",
+    "[SCENE1:ENVELOPE:NORMALISED] stage_contract (scene_skeleton -> top level) — value moved intact",
+    "[SCENE1:STAGE:PLANNER-OWNED:FAULT] planner stage_contract rejected (absent) — the stage is not established",
+    "[BeginStory] Error: Error: Scene 1 aborted: planner stage_contract rejected (absent) — the stage is not established at handleBeginStory (http://localhost:3000/app.js?v=20260910c-page-preservation:268511:20) at async <ano",
+    "[ISSUE-REFUND] refunded 60F. New balance: 9999",
+    "[CHECKOUT_RETURN] Late profile re-sync (12000ms) — fortunes: undefined | subscribed: undefined"
+  ],
+  "a4": [
+    "[Corridor] Initializing 9-row corridor system with DOM mount/unmount...",
+    "[Corridor] Header height measurement returned 0 — keeping default (80px), will retry on next trigger",
+    "[Corridor] Stored 2 elements for stage: authorship",
+    "[Corridor] Stored 3 elements for stage: identity",
+    "[Corridor] Stored 3 elements for stage: playermask",
+    "[Corridor] Stored 3 elements for stage: storybeau",
+    "[Corridor] Stored 1 elements for stage: world",
+    "[Corridor] Stored 1 elements for stage: tone",
+    "[Corridor] Stored 1 elements for stage: pressure",
+    "[Corridor] Stored 3 elements for stage: pov",
+    "[Corridor] Stored 2 elements for stage: length",
+    "[Corridor] Stored 2 elements for stage: dynamic",
+    "[Corridor] Stored 1 elements for stage: beginstory",
+    "[Corridor] Authorship mount: Reset authorship choice for re-selection",
+    "[Corridor] DOM updated. Mounted row 0: authorship",
+    "[Corridor] Initialization complete. Active row: 0",
+    "[Corridor] Row store initialized with 11 stages",
+    "[CHECKOUT_RETURN] Success return (localStorage fallback) — tier: null | story: null | has pending state: false",
+    "[CHECKOUT_RETURN] Corridor complete (no saved story) — auto-beginning literary story",
+    "[BeginStory] handleBeginStory() called",
+    "[ISSUE-PURCHASE] insufficient fortunes (have 0, need 60)",
+    "[PAYWALL] StoryPass excluded by story metadata — Subscribe-only",
+    "[ISSUE-PURCHASE] charge declined for issue 1 (literary) — aborted (subscribed=false, balance=0)",
+    "[CHECKOUT_RETURN] Late profile re-sync (4000ms) — fortunes: undefined | subscribed: undefined",
+    "[BeginStory] handleBeginStory() called",
+    "[ISSUE-PURCHASE] charged 60F (issue_purchase_literary, issue=1, opid=59779080-ab55-4f21-94c5-25e8ea9de672)",
+    "[BeginStory] DEBUG state.picks: {\"world\":\"Modern\",\"tone\":\"Earnest\",\"genre\":\"Billionaire\",\"pressure\":\"PowerControl\",\"flavor\":\"Billionaire\",\"dynamic\":\"Enemies\",\"era\":null,\"pov\":\"first_person\",\"worldSubtype\":\"small_town\",\"l",
+    "[BeginStory] DEBUG state.archetype: {\"primary\":\"BEAUTIFUL_RUIN\",\"modifier\":null,\"canonicalLIId\":\"fb_li_stageorder-s2v7sk\",\"bound\":true,\"boundAtScene\":0}",
+    "[BeginStory] DEBUG state.mode: solo state.storyLength: fling",
+    "[BeginStory] Past _beginStoryInProgress guard, entering main flow",
+    "[BeginStory] GATE DEBUG: {isNewStory: true, hasActiveStorypass: false, storypassFortunes: 0, totalFortunes: 9999, subscribed: true}",
+    "[BeginStory] All validation passed — proceeding to story generation",
+    "[BeginStory] Story mode: participatory",
+    "[BeginStory] Fate working title (from pool): Fate's First Move",
+    "[BeginStory] Phase 2 complete — starting loader and API calls",
+    "[SCENE1:STAGE:PLANNER-OWNED] unseeded Scene 1 — the opening planner must return scene_mission + stage_contract over 3 issued ref(s): [pc:self, ent:the one who draws them forward, plot:aplot_x3a_e9c84353_x2d_b803_x2d_4d13",
+    "[SCENE1:FUSION:V3] offered · lens ops 4 · grounds [pick:world, pick:worldSubtype, pick:flavor, pick:dynamic, pick:tone, pick:intensity, pick:pov, pick:pcName, pick:liName, pick:mask, pick:archetype, stage:participant:pc:",
+    "[SCENE1:STAGE] source=planner-owned:pending settingOwner=planner presenceOwner=planner (PENDING — planner owns part of the stage) settingSource=planner-pending onStage=[Testa] offStage=[]",
+    "[SCENE1:PLANNER] eligible cast (1): [Testa] · chars=4340 → max_tokens=2400 (N_staged_max = N_eligible; staged_characters is an OUTPUT and never sizes the request)",
+    "[SCENE1:PLANNER:USAGE] {\"route\":\"/api/proxy\",\"requested\":\"grok-4.3\",\"effort\":\"none\",\"served\":\"grok-4.3\",\"usage\":{\"prompt_tokens\":0,\"completion_tokens\":0,\"completion_tokens_details\":{\"reasoning_tokens\":0}},\"attempt\":1,\"at",
+    "[SCENE1:PLANNER:ATTEMPTS] 1 (no retry)",
+    "[SCENE1:ENVELOPE] spine contract declares 19 field(s)",
+    "[SCENE1:FUSION:V3] element affordances accepted: the weighhouse ledger=GRASPABLE, a bolt of undyed cloth=GRASPABLE",
+    "[SCENE1:STAGE:PLANNER-OWNED] resolved — source=generated:planner_stage · on stage [Testa] · mission=\"she understands the wish has already begun to cost her something she cannot name\"",
+    "[SCENE1:STAGE:RESOLVED] settingSource=planner.opening_setting WHERE=\"customs house\" onStage=[Testa]",
+    "[SCENE1:FUSION:V3] accepted — contact PRESS → target · lens EMOTIONAL_CONCLUSION_BEFORE_EVIDENCE · grounds [env:axis, pick:flavor]",
+    "[SCENE1:SOFT] fusion_legacy_member_ignored · scene_skeleton.fusion · omitted — a legacy fusion member was returned on the v3 path; pc_opening_fusion (contact) is the fusion",
+    "[SCENE1:SKELETON] C+ 1/1 assigned [Testa] · E+ the weighhouse ledger/ritual · fusion null",
+    "[SCENE1:STAGE] physical=[Testa] · phone=[] · total=1",
+    "[SCENE1:SKELETON:DELIVERED] 4716 chars appended to the heavy SYSTEM prompt (pre-freeze, pre-observer)",
+    "[GROK-LIT] author = Grok 4.3 (premium/tentpole)",
+    "[GROK-LIT] Grok de-calc editor: 0/0 surgical fixes applied (~0 tok rewritten, not whole-scene)",
+    "[SCENE-LEDGER] +p1 kind=scene issue=1 uid=pg:a36b702c-9d48-4896-b08a-d4e68cd50270 planned=\"she understands the wish has already begun to cost her somet\"",
+    "[CHECKOUT_RETURN] Late profile re-sync (12000ms) — fortunes: undefined | subscribed: undefined"
+  ]
+}

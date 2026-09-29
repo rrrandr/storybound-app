@@ -133,7 +133,17 @@ ranked below 9 and 10 because it is **not a clearing**, and because buying it co
 
 ---
 
-### `unm.witness_scattered` — rank 7 · ask-class `unseen`
+### `unm.witness_scattered` — ask-class `unseen` — ⛔ **BLOCKED 2026-09-28**
+
+> **`incoherent` is not an effect until its content is authored.** Every other memory effect in the design
+> means a party no longer holds a fact; this one means they hold it **wrongly, and differently from each
+> other** — a claim about content, and content is exactly what D2 requires an authored grant to name.
+> **A vague label cannot alter minds.**
+>
+> Two routes, both editorial: author **each affected party's exact mistaken or fragmented proposition**
+> (noting that `population.assembly` is a collective and cannot hold individual beliefs, so the outcome may
+> not be expressible at that reach), or **re-author it as a defined forgetting effect**. Blocked meanwhile —
+> not rankable, not countable in coverage, not presentable for approval.
 
 **Literal wording:** *"I want to disappear."* · *"Don't let them look at me."* **Named population:** none.
 
@@ -231,7 +241,7 @@ asked for, in the middle of a clearing, with a charge forming around her.
 |---|---|
 | **roster** ✦ | `the_assembly`, `named:seren`, `named:julian`, `role:…presiding_dohkar` |
 | **memory effects** | **none** — nobody forgets anything. Per D2 this is an authored change to **conduct and standing**, naming target, proposition and effect, and widening none of them. |
-| **establishes** | `shunned_by_assembly` |
+| **establishes** | **`lirael.shunned_by_all_present`** *(renamed from `shunned_by_assembly`, 2026-09-28 — the assembly is narrower than this outcome's reach)* |
 | **ceases** | — |
 | **reality revision** | **no** |
 | **intrinsic cost** | **`undefended`** — no one will speak *for* her either; the silence is total |

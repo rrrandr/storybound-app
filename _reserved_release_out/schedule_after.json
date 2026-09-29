@@ -1,0 +1,32 @@
+{
+  "rows": [
+    {
+      "n": 3,
+      "ids": [
+        "price_identified"
+      ]
+    },
+    {
+      "n": 14,
+      "ids": [
+        "inquiry_opened"
+      ]
+    }
+  ],
+  "sealed": [
+    {
+      "id": "julian_counter_wish",
+      "unsealsAtScene": 16
+    },
+    {
+      "id": "julian_obscuring_wishes",
+      "unsealsAtScene": 16
+    }
+  ],
+  "row4goal": "NOTICE AND RESTRICTION — procedural pressure closes on Lirael and NOTHING is convened. The presiding Dohkar serves her formal notice that her conduct at the rite is under investigation, and states the restrictions she must keep while it runs. Julian is named aloud as having demanded a review; he is NOT in the room. Do NOT name who will hear the matter, do NOT name a venue, do NOT give a date or a timeframe, and do NOT constitute a panel — the formal inquiry is LATE-Issue-1 content and belongs to row 14. END with Lirael formally under investigation, supervised, and still unable to explain herself.",
+  "row14goal": "THE INQUIRY CONVENES, AND CLOSES IN ON JULIAN — a Chayr and two Dohkars formally open the inquiry into Lirael, held at The Open; under it the investigation turns toward Julian. The panel is constituted HERE for the first time; nothing earlier may have convened it.",
+  "row19goal": "She must decide whether to expose the truth or let history condemn her.",
+  "chayrInPerson": [
+    14
+  ]
+}

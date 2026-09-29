@@ -1,0 +1,91 @@
+{
+ "violations": [],
+ "preflight": [],
+ "reports": [
+  {
+   "validator": "li_social_proof",
+   "ok": false,
+   "type": "LI_SOCIAL_PROOF_GAP",
+   "detail": "LI named, no social signal in the window following first mention",
+   "liName": "Julian",
+   "firstMentionPosition": 447,
+   "evidence": "my nape pulling a single strand of hair taut. The clearing held two dozen First Favored in sheer Veilweave, their Weave-Script pulsing faint colors against the dawn light. Seren knelt at the center, aqua skin and pale coral hair stark against the braided grass, her small frame co…"
+  },
+  {
+   "validator": "hot_opening",
+   "type": "OPENING_TEMPERATURE",
+   "ok": false,
+   "failures": [],
+   "renderedTemp": "COLD_DISRUPTION",
+   "inMotionHits": 0,
+   "containerOpener": false,
+   "evidence": "The Dohkar's sandal creaked once against the braided grass. \"Sacrificiant, confirm the alignment.\"\n\nI nodded once, the silk at my nape pulling a single strand of hair taut. The clearing held two dozen First Favored in sheer Veilweave, their Weave-Script pulsing faint colors again"
+  },
+  {
+   "validator": "semantic_rewrite",
+   "type": "SEMANTIC_EDIT_REQUESTED",
+   "label": "body-dump-decluster",
+   "instruction": "A passage in this scene PAUSES the action to stack 4 physical appearance traits into one cluster — a paused character sheet (e.g. height + build + shoulders + frame + hair + eyes + mouth listed togeth"
+  },
+  {
+   "validator": "li_social_proof",
+   "ok": false,
+   "type": "LI_SOCIAL_PROOF_GAP",
+   "detail": "LI named, no social signal in the window following first mention",
+   "liName": "Julian",
+   "firstMentionPosition": 1026,
+   "evidence": "”\n\nThe air felt thinner. I moved before I could weigh the cost. My hand trembled once at my side, then steadied as I stepped forward into the center of the clearing. The mark of my involvement was no longer hidden behind silence. The assembled watched the motion, and his thumb tr…"
+  },
+  {
+   "validator": "pc_picturability",
+   "type": "PC_PICTURABILITY_GAP",
+   "ok": false,
+   "evidence": "The braided grass creaked once beneath the Dohkar’s sandal as he faced me, the weight of every First Favored eye in the clearing pressing harder than the silk across my mouth. I could not let them name this wrong. My voice came muffled but steady enough. “Seren did not twist the "
+  },
+  {
+   "validator": "semantic_rewrite",
+   "type": "SEMANTIC_EDIT_REQUESTED",
+   "label": "flavor-physics",
+   "instruction": "CRITICAL: This scene MUST express the world's defining mechanic.\nWorld flavor: Arcane Binding\nScene does not express flavor physics for \"arcane_binding\". Expected keywords: binding, spell, contract, g"
+  },
+  {
+   "validator": "semantic_rewrite",
+   "type": "SEMANTIC_EDIT_REQUESTED",
+   "label": "fate-consequence",
+   "instruction": "\n5TH-PERSON FATE VOICE ENFORCEMENT (CRITICAL — PREVIOUS OUTPUT FAILED):\n\nThe Story / Fate voice must be rewritten. Regenerate with these constraints:\n\n\nFATE MAY ONLY:\n- Observe (\"The story watched...\""
+  },
+  {
+   "validator": "li_social_proof",
+   "ok": false,
+   "type": "LI_SOCIAL_PROOF_GAP",
+   "detail": "LI named, no social signal in the window following first mention",
+   "liName": "Julian",
+   "firstMentionPosition": 261,
+   "evidence": "The threshold of the clearing pressed against my bare feet, the line already crossed. I looked for someone in the crowd—anyone whose Weave-Script might flare with recognition, anyone who might stand between the Dohkar’s stare and the silence that had swallowed Julian—but every ga…"
+  },
+  {
+   "validator": "pc_picturability",
+   "type": "PC_PICTURABILITY_GAP",
+   "ok": false,
+   "evidence": "The threshold of the clearing pressed against my bare feet, the line already crossed. I looked for someone in the crowd—anyone whose Weave-Script might flare with recognition, anyone who might stand between the Dohkar’s stare and the silence that had swallowed Julian—but every ga"
+  },
+  {
+   "validator": "semantic_rewrite",
+   "type": "SEMANTIC_EDIT_REQUESTED",
+   "label": "engine-vocab",
+   "instruction": "The previous response referenced internal mechanics that must never appear in prose.\n\nHARD RULES:\n- Characters do NOT know about game mechanics — translate wishes into narrative desire, petitions into"
+  },
+  {
+   "validator": "semantic_rewrite",
+   "type": "SEMANTIC_EDIT_REQUESTED",
+   "label": "fate-consequence",
+   "instruction": "\n5TH-PERSON FATE VOICE ENFORCEMENT (CRITICAL — PREVIOUS OUTPUT FAILED):\n\nThe Story / Fate voice must be rewritten. Regenerate with these constraints:\n\n\nFATE MAY ONLY:\n- Observe (\"The story watched...\""
+  },
+  {
+   "validator": "semantic_rewrite",
+   "type": "SEMANTIC_EDIT_REQUESTED",
+   "label": "checklist",
+   "instruction": "The previous response contained structural violations. Regenerate with strict compliance.\n\nABSOLUTE RULES:\n- Zero engine vocabulary or meta-mechanical phrasing in prose\n- Zero developer/editorial tone"
+  }
+ ]
+}

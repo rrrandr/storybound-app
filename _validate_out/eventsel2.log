@@ -1,0 +1,30 @@
+[preflight] output dir writable: _validate_out/eventsel
+[probe] begin story…
+  [planner call 1] captured  sys=3949 usr=934 out=521
+[probe] planner calls captured: 1
+
+════ EVENT SELECTION TRACE ════
+model: gpt-4o-mini   sys=3949   usr=934
+
+──── CHOSEN OUTPUT ────
+  tactical_move = "introduce conflict during the ceremony"
+  state_change_precondition = "the guests believe the ceremony is proceeding smoothly and without issue."
+  state_change = "a guest stands up, accusing the couple of betrayal and deceit."
+  forces_choice = "forces the PC to choose between defending herself or confronting the accuser."
+  branch_a = "defend herself by revealing her confusion about the situation."
+  branch_b = "confront the accuser, demanding to know their source of information."
+
+──── INPUT CONTEXT (labelled sections found in the user message) ────
+
+──── DOES THE INPUT CONSTRAIN *HOW* THE EVENT HAPPENS? ────
+  ✅ present   milestone supplied
+  ✅ present   precondition / before-state
+  ✅ present   target after-state
+  ✅ present   setting / location available
+  ❌ ABSENT    participants / cast available
+  ✅ present   canon / world constraints
+  ❌ ABSENT    DRAMATIC CAUSATION required
+  ❌ ABSENT    bans cheap exposition mechanisms
+  ❌ ABSENT    requires a HUMAN AGENT for the change
+
+full records → _validate_out/eventsel/planner_*.json

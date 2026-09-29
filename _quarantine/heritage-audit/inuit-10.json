@@ -1,0 +1,24 @@
+{
+  "age": 28,
+  "ancestry": "Inuit",
+  "first_name": "Kiviuq",
+  "last_name": "Atanarjuat",
+  "height": "5'4\", compact and grounded",
+  "build": "lean-muscled, the kind that comes from movement rather than gym discipline",
+  "hair": "black, straight, thick — falls to mid-back; she wears it in a single braid most days, or loose when she's alone",
+  "complexion": "warm golden undertone with a faint freckling across the bridge of her nose and shoulders; skin that reads as alive, not polished",
+  "face": "a wide, open face with high cheekbones and a strong jaw — the kind that shows everything: shock reads as shock, want as want, fear as a flood across the whole surface",
+  "signature_feature": "her eyes — dark brown, almost black, with an unusual brightness in them, a kind of unselfconscious luminosity that makes her look perpetually on the edge of laughter or tears",
+  "second_celebrated_feature": "her hands — long-fingered, capable, with calluses from actual work; she moves them when she talks, and there's an unconscious grace in how she holds things",
+  "signature_habits": "she braids her hair when she's thinking through a problem; she says 'sila willing' (a phrase her grandmother used, meaning 'if the weather permits' — now just 'if luck holds') when she's uncertain; she keeps a thermos of strong tea nearby at all times; she touches her collarbone absently when she's anxious; she cooks seal broth once a month, the smell grounding her to something older than this city",
+  "occupation": "textile designer and small-studio owner — she hand-dyes fabrics and creates limited-run pieces for high-end boutiques; the work is tactile, seasonal, and entirely hers",
+  "current_crisis": {
+    "event": "her studio's primary investor — a silent partner who funded her expansion two years ago — has just demanded his money back in 30 days, citing 'portfolio restructuring'; she has no liquid capital and the studio is three months from breaking even",
+    "hottest_emotion": "panic mixed with a strange shame, as if she's failed at something she was supposed to know how to do",
+    "immediate_want": "to find a way to keep the studio alive without selling it, without calling her family, without admitting she's drowning"
+  },
+  "wound": {
+    "core": "she believes that needing help is a kind of smallness — that self-sufficiency is the only thing that makes her worthy of the space she takes up",
+    "surfacing_hint": "when someone offers assistance, her first instinct is to refuse sharply, then apologize too much; her eyes fill, and she looks away"
+  }
+}

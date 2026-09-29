@@ -1,0 +1,19 @@
+{
+  "case": "EMPTY — prose is a stub with no content",
+  "raw": "{\"delivery\":\"MISSED\",\"slots_check\":{\"precondition_evidence\":\"\",\"actor_evidence\":\"\",\"action_evidence\":\"\",\"target_evidence\":\"\",\"exit_state_evidence\":\"\",\"occurred_this_scene\":false}}",
+  "verdict": {
+    "id": "EMPTY — prose is a stub with no content",
+    "expectCommit": false,
+    "commits": false,
+    "llmSaid": "MISSED",
+    "slotFail": true,
+    "sk": {
+      "precondition_evidence": "",
+      "actor_evidence": "",
+      "action_evidence": "",
+      "target_evidence": "",
+      "exit_state_evidence": "",
+      "occurred_this_scene": false
+    }
+  }
+}

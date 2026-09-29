@@ -1,0 +1,524 @@
+  ⚙ preflight ok — http://localhost:3000/ responded 200 in 270ms
+
+
+══════════════════════════════════════════════════════════════════════════════════════════
+COMMIT B PART 2 — MERGED OPENING PLANNER + SKELETON DELIVERY
+══════════════════════════════════════════════════════════════════════════════════════════
+
+ HEAVY
+   eligible cast     : ["Lirael","Julian","Seren","the presiding Dohkar"]
+   planner           : 1 req · model=grok-4.3 · re=undefined · max_tokens=2921
+   C+ delivered      : ["Lirael","Seren","the presiding Dohkar"]
+   E+ / fusion       : {"target":"the deep-crimson carpet of braided mated-pair spiralgrass underfoot","axis":"ritual","beat":"the deep-crimson carpet of braided mated-pair spiralgrass underfoot is worn smooth along one edge where the rite has been performed the same way for generations","target_object_id":"O3"} / {"character":"Lirael","target":"the carpet","beat":"she sets her palm flat on the carpet to keep it still"}
+  ✓ HEAVY 1: exactly one opening-planner request
+  ✓ HEAVY 2: direct Grok — /api/proxy, OPENING_PLANNER, grok-4.3, effort none, JSON mode, calculated budget
+  ✓ HEAVY 2b: planner reply read from the RAW provider envelope (no top-level content)
+  ✓ HEAVY 3: every OFFERED candidate survives delivery, none truncated
+  ✓ HEAVY 4: E+ and fusion survive normalization
+  ✓ HEAVY 5: outgoing HEAVY system carries exactly ONE skeleton block
+  ✓ HEAVY 5: outgoing HEAVY system carries exactly ONE CHARACTER+ block
+  ✓ HEAVY 5: outgoing HEAVY user carries exactly ONE opening spine
+  ✓ HEAVY 7: A/50 + Storybound architecture/voice intact
+  ✓ HEAVY 7b: author ceiling preserved (heavy)
+  ✓ HEAVY 8: observer snapshot === dispatched system prompt
+  ✓ HEAVY 10: zero escaped / unknown requests
+
+ HOTFAST
+   eligible cast     : ["Lirael","Julian","Seren","the presiding Dohkar"]
+   planner           : 1 req · model=grok-4.3 · re=undefined · max_tokens=2921
+   C+ delivered      : ["Lirael","Seren","the presiding Dohkar"]
+   E+ / fusion       : {"target":"the deep-crimson carpet of braided mated-pair spiralgrass underfoot","axis":"ritual","beat":"the deep-crimson carpet of braided mated-pair spiralgrass underfoot is worn smooth along one edge where the rite has been performed the same way for generations","target_object_id":"O3"} / {"character":"Lirael","target":"the carpet","beat":"she sets her palm flat on the carpet to keep it still"}
+  ✓ HOTFAST 1: exactly one opening-planner request
+  ✓ HOTFAST 2: direct Grok — /api/proxy, OPENING_PLANNER, grok-4.3, effort none, JSON mode, calculated budget
+  ✓ HOTFAST 2b: planner reply read from the RAW provider envelope (no top-level content)
+  ✓ HOTFAST 3: every OFFERED candidate survives delivery, none truncated
+  ✓ HOTFAST 4: E+ and fusion survive normalization
+  ✓ HOTFAST 6: outgoing HOTFAST system carries exactly ONE skeleton block
+  ✓ HOTFAST 6: outgoing HOTFAST system carries exactly ONE CHARACTER+ block
+  ✓ HOTFAST 6: outgoing HOTFAST user carries exactly ONE opening spine
+  ✓ HOTFAST 7: A/50 + Storybound architecture/voice intact
+  ✓ HOTFAST 7b: author ceiling preserved (700)
+  ✓ HOTFAST 8: observer snapshot === dispatched system prompt
+  ✓ HOTFAST 10: zero escaped / unknown requests
+
+ 11 · SCALAR INVARIANTS + VERBATIM RENDER (fusion present)
+  ✓ HEAVY 11a: delivered — every C+ entry has first_mention === true
+  ✓ HEAVY 11b: delivered — every non-PC C+ carries BOTH a behavior and a read
+  ✓ HEAVY 11b3: no two characters were handed the same reading
+  ✓ HEAVY 11b2: the PC's entry is an ACCOUNTING row — present, first_mention, no angle
+  ✓ HEAVY 11c: delivered — E+ target nonempty, axis in the allowlist
+  ✓ HEAVY 11d: delivered — fusion character eligible, target nonempty, target === E+ target
+  ✓ HEAVY 11e: EVERY behavior AND read renders verbatim in the outgoing system prompt
+  ✓ HEAVY 11e2: SOURCE TRUTH / VISIBLE ACTION / PC INTERPRETATION are separate, once each
+  ✓ HEAVY 11e3: the SOURCE TRUTH is the backend record, and is marked never-to-state
+  ✓ HEAVY 11e4: the RECONSTRUCTION instruction reaches this author path
+  ✓ HEAVY 11e5: …offering several realisation shapes, not one template
+  ✓ HEAVY 11e6: the facet PORTFOLIO and condition list never reach the author
+  ✓ HEAVY 11f: every C+ recipient renders on a first-mention-tagged line
+  ✓ HEAVY 11g: E+ target AND axis render verbatim on the ENVIRONMENT+ line
+  ✓ HEAVY 11h: the PC opening beat renders verbatim in the outgoing system prompt
+  ✓ HEAVY 11h2: it carries its placement, its angle and the E+ axis
+  ✓ HEAVY 11h3: the SUPERSEDED standalone FUSION line is not also sent
+  ✓ HEAVY 11h4: the E+ evidence beat renders, not just target + axis
+  ✓ HEAVY 11i: still exactly ONE skeleton block, with ONE opening-beat BLOCK in it
+  ✓ HEAVY 11j: observer snapshot === dispatched prompt, zero escaped
+
+  ✓ HOTFAST 11a: delivered — every C+ entry has first_mention === true
+  ✓ HOTFAST 11b: delivered — every non-PC C+ carries BOTH a behavior and a read
+  ✓ HOTFAST 11b3: no two characters were handed the same reading
+  ✓ HOTFAST 11b2: the PC's entry is an ACCOUNTING row — present, first_mention, no angle
+  ✓ HOTFAST 11c: delivered — E+ target nonempty, axis in the allowlist
+  ✓ HOTFAST 11d: delivered — fusion character eligible, target nonempty, target === E+ target
+  ✓ HOTFAST 11e: EVERY behavior AND read renders verbatim in the outgoing system prompt
+  ✓ HOTFAST 11e2: SOURCE TRUTH / VISIBLE ACTION / PC INTERPRETATION are separate, once each
+  ✓ HOTFAST 11e3: the SOURCE TRUTH is the backend record, and is marked never-to-state
+  ✓ HOTFAST 11e4: the RECONSTRUCTION instruction reaches this author path
+  ✓ HOTFAST 11e5: …offering several realisation shapes, not one template
+  ✓ HOTFAST 11e6: the facet PORTFOLIO and condition list never reach the author
+  ✓ HOTFAST 11f: every C+ recipient renders on a first-mention-tagged line
+  ✓ HOTFAST 11g: E+ target AND axis render verbatim on the ENVIRONMENT+ line
+  ✓ HOTFAST 11h: the PC opening beat renders verbatim in the outgoing system prompt
+  ✓ HOTFAST 11h2: it carries its placement, its angle and the E+ axis
+  ✓ HOTFAST 11h3: the SUPERSEDED standalone FUSION line is not also sent
+  ✓ HOTFAST 11h4: the E+ evidence beat renders, not just target + axis
+  ✓ HOTFAST 11i: still exactly ONE skeleton block, with ONE opening-beat BLOCK in it
+  ✓ HOTFAST 11j: observer snapshot === dispatched prompt, zero escaped
+
+ 12 · PLANNING CONTRACT: stage authority, on-stage eligibility, first-person landing
+  ✓ 12a: the stage contract resolves from the SEED, not the heuristic
+  ✓ 12b: eligibility is the ON-STAGE roster (PC + named present + role figures)
+  ✓ 12c: a character absent from the PRESENT text is NOT eligible
+  ✓ 12d: the planner request carries the immutable WHERE
+  ✓ 12e: the planner request carries WHO IS PHYSICALLY PRESENT
+  ✓ 12f: the planner request forbids relocation and materialising the absent
+  ✓ 12g: the planner request demands a RENDERABLE behavior and bans diagnoses
+  ✓ 12h: the planner request requires ONE opening beat carrying C+, E+ and the fusion
+  ✓ 12h2: the planner request requires environment_plus to carry physical evidence
+  ✓ 12h3: the retired E+ worked example appears NOWHERE in the planner request
+  ✓ 12h4: the retired opening-fusion worked example appears NOWHERE either
+  ✓ 12h5: E+ is stated as a SHAPE, with placeholders to replace rather than prose to copy
+  ✓ 12i: FIRST-PERSON landing point is defined for the PC
+  ✓ 12j: the author directive carries the negative constraints
+  ✓ 12k: the author directive states the first-person landing point
+  ✓ 12l: the opening BEAT reaches the author, not just the pair
+  ✓ 12m: zero escaped / unknown requests
+
+ 13 · ACCEPTED AFTER RESOLUTION (alias · grounding · envelope)
+  ✓    "aliasDohkar" — C+ recipient "Dohkar" resolves to the role figure
+  ✓    "aliasDohkar" — canonical label stored, alias logged
+  ✓    "clothEp" — E+ grounded through seed.sceneOne.narrator
+  ✓    "nested" — nested scene_skeleton lifted intact
+  ✓    "nested" — normalization telemetry emitted
+  ✓    "stagedTop" — lone top-level staged_characters moved into the spine
+  ✓    "stagedTop" — normalization telemetry emitted
+  ✓    "stagedTop" — moved intact, into its declared position
+  ✓    "spread" — WHOLE spine distributed at top level is reconciled
+  ✓    "spread" — normalization telemetry emitted
+  ✓    "stagedReordered" — a REORDERED fixed cast is canonicalised, not rejected
+  ✓    "stagedAliased" — an ALIASED staged name resolves to the canonical person
+  ✓    "fusionNullPof" — a null standalone fusion is SUPERSEDED by the opening fusion
+  ✓    "longTargetHeadNoun" — a long noun-phrase target NAMED by its head noun
+  ✓    "sentinelSpelling" — the pointer sentinel returned without its FROM_ prefix
+  ✓    "angleIsAReading" — an interpretive PC angle that stages no body is untouched
+  ✓    "missing" — a candidate left WITHOUT a C+ assignment is accepted, not faulted
+  ✓    "v2OpeningActor" — a fully valid ID-based plan with a declared opening actor is ACCEPTED (delivery asserted in PART V)
+  ✓    "v2ActorFreeAct" — correction 1: the declared actor typed a free act — derived from the opening beat, logged, ACCEPTED
+  ✓    "v2ActorSentinelRoster" — correction 2: the opening sentinel on the ACTOR's roster row is accepted and derived
+  ✓    "v2SashById" — correction 3: a seed object absent from the scene text (the sash) is grounded BY ID
+  ✓    "v2EvidenceDerived" — tightening: a typed enacts_evidence_id for a single-fact option is derived, not faulted
+
+  ✓    dispatched JSON TEMPLATE declares opening_spine.environment_elements (or _ids on a seeded stage)
+  ✓    the template states the two-element requirement, not just the prose
+  ✓    template ENUMERATES the exact permitted labels
+  ✓    template's staged_characters is PREFILLED with each required name, with no free-text slot
+  ✓    template contains NO "appears or is named" wording
+  ✓    template says the fixed cast is the whole room and excludes the merely referenced
+  ✓    template no longer points at an ELIGIBLE CAST block from inside the JSON
+  ✓    template no longer derives C+ from staging, or taxes one entry per body
+  ✓    template states cardinality by PRESSURE, with the five qualifying moves
+  ✓    a scene where nobody earns one is stated to be a correct plan
+  ✓    the assignment must cite an opportunity and ONE grounded option — not a facet, a pressure and an evidence id it could recombine
+  ✓    the ROSTER block is the physical roster, and says what it governs
+  ✓    the C+ CANDIDATE block is a separate list carrying modes and that person's grounded options
+  ✓    the four delivery modes are spelled out, ANTICIPATED marked as expectation
+  ✓    "absent" no longer means "ineligible for character_plus"
+  ✓    template binds the opening fusion to the PROTAGONIST and to environment_plus
+  ✓    reconciler allowlist is PARSED from the dispatched template
+  ✓    every field the template declares is reconcilable
+  ✓    the allowlist does NOT leak nested or sibling keys
+  ✓    template shows NO invented example identity
+
+  ✓ 8x: the polluting case actually polluted (the control is not vacuous)
+  ✓ 8x: …and the NEXT case sees none of it — globals, storage or state
+
+ 9 · PLANNER FAULTS SURFACE (no silent skeleton-less continuation)
+   --- diagnostic (mutate=unknown) ---
+   threw: null
+     [SCENE1:SKELETON:INVALID] 1 fault(s) — character_plus recipient "Nobody Here" is not a Character+ candidate for this scene (offered: 2)
+     [SCENE1:ABORT] opening planner produced an unusable skeleton — refusing to author Scene 1 without it: character_plus recipient "Nobody Here" is not a Character+ candidate
+  ✓    "unknown" is rejected visibly and no author call is made
+  ✓    "duplicate" is rejected visibly and no author call is made
+  ✓    "badaxis" is rejected visibly and no author call is made
+  ✓    "badfusion" is rejected visibly and no author call is made
+  ✓    "cpNoMode" is rejected visibly and no author call is made
+  ✓    "cpBadMode" is rejected visibly and no author call is made
+  ✓    "cpNoFacet" is rejected visibly and no author call is made
+  ✓    "cpBadFacet" is rejected visibly and no author call is made
+  ✓    "cpBadEvidence" is rejected visibly and no author call is made
+  ✓    "cpBadPressureId" is rejected visibly and no author call is made
+  ✓    "cpProp" is rejected visibly and no author call is made
+  ✓    "cpNoLensOp" is rejected visibly and no author call is made
+  ✓    "cpBadObject" is rejected visibly and no author call is made
+  ✓    "fmfalse" is rejected visibly and no author call is made
+  ✓    "fmmissing" is rejected visibly and no author call is made
+  ✓    "fmstring" is rejected visibly and no author call is made
+  ✓    "emptyangle" is rejected visibly and no author call is made
+  ✓    "placeholderang" is rejected visibly and no author call is made
+  ✓    "thinangle" is rejected visibly and no author call is made
+  ✓    "noep" is rejected visibly and no author call is made
+  ✓    "emptyeptarget" is rejected visibly and no author call is made
+  ✓    "fusionmismatch" is rejected visibly and no author call is made
+  ✓    "fusionempty" is rejected visibly and no author call is made
+  ✓    "unparseable" is rejected visibly and no author call is made
+  ✓    "diagnosisangle" is rejected visibly and no author call is made
+  ✓    "diagnosisangle2" is rejected visibly and no author call is made
+  ✓    "offsceneEp" is rejected visibly and no author call is made
+  ✓    "relocate" is rejected visibly and no author call is made
+  ✓    "fusionnull" is rejected visibly and no author call is made
+  ✓    "fusionbadcode" is rejected visibly and no author call is made
+  ✓    "fusionfalsecode" is rejected visibly and no author call is made
+  ✓    "fusionnobeat" is rejected visibly and no author call is made
+  ✓    "fusionthinbeat" is rejected visibly and no author call is made
+  ✓    "aliasOffstage" is rejected visibly and no author call is made
+  ✓    "nestedThin" is rejected visibly and no author call is made
+  ✓    "stagedThin" is rejected visibly and no author call is made
+  ✓    "pofOffTarget" is rejected visibly and no author call is made
+  ✓    "noFusionNoEpBeat" is rejected visibly and no author call is made
+  ✓    "anchorPlaceholder" is rejected visibly and no author call is made
+  ✓    "anchorEmpty" is rejected visibly and no author call is made
+  ✓    "pcInCp" is rejected visibly and no author call is made
+  ✓    "pcAnchorOwn" is rejected visibly and no author call is made
+  ✓    "nonPcAnchorOwn" is rejected visibly and no author call is made
+  ✓    "aliasNarrator" is rejected visibly and no author call is made
+  ✓    "aliasProtag" is rejected visibly and no author call is made
+  ✓    "epSchemaEcho" is rejected visibly and no author call is made
+  ✓    "epCategoryEcho" is rejected visibly and no author call is made
+  ✓    "pofSchemaEcho" is rejected visibly and no author call is made
+  ✓    "angleSecondAction" is rejected visibly and no author call is made
+  ✓    "readMissing" is rejected visibly and no author call is made
+  ✓    "contemptOverJealousyEvidence" is rejected visibly and no author call is made
+  ✓    "caringOnContemptFacet" is rejected visibly and no author call is made
+  ✓    "dupSkeletonDiff" is rejected visibly and no author call is made
+  ✓    "stagedBothDiff" is rejected visibly and no author call is made
+  ✓    "spreadBadCast" is rejected visibly and no author call is made
+  ✓    "unknownKey" is rejected visibly and no author call is made
+  ✓    "stagedAdded" is rejected visibly and no author call is made
+  ✓    "stagedOmitted" is rejected visibly and no author call is made
+  ✓    "stagedRenamed" is rejected visibly and no author call is made
+  ✓    "stagedPresence" is rejected visibly and no author call is made
+
+══════════════════════════════════════════════════════════════════════════════════════════
+PART S — SOLO STAGE CONTRACT
+══════════════════════════════════════════════════════════════════════════════════════════
+
+   eligible cast     : ["Lirael"]
+   planner reqs      : 1 · author reqs: 1
+   C+ delivered      : ["Lirael"]
+  ✓ S1 the solo stage really is narrator-only
+  ✓ S1 a narrator-only plan is ACCEPTED and reaches the author
+  ✓ S2 narrator-only template contains NO interlocutor_placement field
+  ✓ S2 nor any request for a name / relationship / tell / caller / remembered face
+  ✓ S3 narrator-only scene_want drops the human-interaction requirement
+  ✓ S3 the solo want names solo affordances and forbids a second body
+  ✓ S4 narrator-only scene_mission offers only no-second-person shapes
+  ✓ S4 narrator-only scene_mission forbids the interlocutor shapes
+  ✓ S5 narrator-only reader_state is barred from introducing a person
+  ✓ S6 the planner receives the authoritative solo-stage directive
+  ✓ S6 the GROK request carries the same solo-stage directive
+  ✓ S6 NO hard interlocutor directive reaches Grok on a solo stage
+  ✓ S6 the directive still PERMITS referring to established offstage people
+  ✓ S7 established offstage Julian may be REFERENCED without rejection
+  ✓ S7 …but Julian may NOT be staged into the room
+
+──────────────────────────────────────────────────────────────────────────────────────────
+  invented identity, field by field (the round-6 failure)
+──────────────────────────────────────────────────────────────────────────────────────────
+  ✓    "Quinn" in scene_want is rejected before Grok
+  ✓    "Quinn" in scene_mission is rejected before Grok
+  ✓    "Quinn" in reader_state.must_not_confuse is rejected before Grok
+  ✓    "Quinn" in reader_state.wondering is rejected before Grok
+  ✓    "Quinn" in interlocutor_placement (undeclared on a solo stage) is rejected before Grok
+  ✓    "Quinn" in staged_characters[].anchor_beat is rejected before Grok
+  ✓    "Quinn" in scene_skeleton.fusion.beat is rejected before Grok
+
+──────────────────────────────────────────────────────────────────────────────────────────
+  solo stage — a second BODY or VOICE (no name invented)
+──────────────────────────────────────────────────────────────────────────────────────────
+  ✓ S10 the template forbids a contemporaneous second voice in the WANT
+  ✓ S10 the template forbids a person-shaped deadline in the MISSION
+  ✓ S10 the template forbids reader_state depicting anyone else acting
+  ✓ S10 the solo directive enumerates the forbidden acts
+  ✓ S10 the solo directive makes the alternative pressure sources explicit
+  ✓ S10 solo pressure_source may not be another person
+  ✓ S10 the rival worked-example is GONE from the solo template
+  ✓ S10 solo opening_beat drops the two-person shapes
+  ✓ S10 GROK receives the enumerated forbidden acts too
+  ✓    solo: "the rival finishes speaking" (round 8's leak) is rejected before Grok
+  ✓    solo: "a clerk calls from outside" is rejected before Grok
+  ✓    solo: an unnamed voice outside the door (round 7's leak) is rejected before Grok
+  ✓    solo: a live message arriving mid-scene is rejected before Grok
+  ✓    solo: "wait for the messenger" is rejected before Grok
+  ✓    solo: "convince the guard" is rejected before Grok
+  ✓    solo: a MEMORY of Julian is ALLOWED
+  ✓    solo: THINKING about Julian is ALLOWED
+  ✓    solo: PREPARING to meet Julian later is ALLOWED
+  ✓    solo: an OLD LETTER from Julian is ALLOWED
+  ✓    solo: wind and environmental sound is ALLOWED
+
+──────────────────────────────────────────────────────────────────────────────────────────
+  multi-person scenes keep the interlocutor contract
+──────────────────────────────────────────────────────────────────────────────────────────
+  ✓ S8 a multi-person stage STILL declares interlocutor_placement
+  ✓ S8 a multi-person stage keeps the human-interaction want and the full mission shapes
+  ✓ S8 a multi-person HOT template KEEPS the original person-in-motion phrasing
+  ✓ S8 a multi-person stage gets NO solo directive
+  ✓ S8 the multi-person interlocutor directive still reaches Grok
+  ✓ S8 the solo-interaction validator does NOT run on a multi-person stage
+  ✓ S8 multi-person plan is still ACCEPTED end to end, every OFFERED candidate delivered
+  ✓ S9 a two-person ASSIGNMENT stage keeps interlocutor_placement
+  ✓ S9 the offstage love interest is not staged by the assignment
+
+══════════════════════════════════════════════════════════════════════════════════════════
+PART T — IDENTICAL DUPLICATE COLLAPSE
+══════════════════════════════════════════════════════════════════════════════════════════
+
+  ✓    an IDENTICAL duplicate scene_skeleton (the round-10 shape) COLLAPSES and the plan proceeds
+  ✓    …and the collapse log names scene_skeleton
+  ✓    an IDENTICAL duplicate staged_characters COLLAPSES and the plan proceeds
+  ✓    …and the collapse log names staged_characters
+  ✓    a collapse does NOT rescue semantics — invented cast inside the duplicate still aborts
+
+══════════════════════════════════════════════════════════════════════════════════════════
+PART V — COHERENCE WITHOUT A STANDALONE FUSION
+══════════════════════════════════════════════════════════════════════════════════════════
+
+  ✓    "pofOffTarget" — the opening beat never reaches its declared target
+  ✓    "noFusionNoEpBeat" — E+ with no evidence beat
+  ✓    "anchorPlaceholder" — a staged anchor that echoes the field name
+  ✓    "anchorEmpty" — a staged anchor left blank
+  ✓    "pcInCp" — a character_plus entry for the protagonist
+  ✓    "aliasNarrator" — …and under the alias "the narrator" too
+  ✓    "pcAnchorOwn" — a PC anchor the planner wrote itself
+  ✓    "nonPcAnchorOwn" — a non-PC anchor that is a second first appearance
+  ✓    "epSchemaEcho" — E+ beat returned as the bracket text
+  ✓    "epCategoryEcho" — E+ beat built out of the category words
+  ✓    "pofSchemaEcho" — the opening beat returned as the bracket text
+  ✓    "angleSecondAction" — the angle staging a second action elsewhere
+  ✓    "readMissing" — a behavior removed entirely
+  ✓    "caringOnContemptFacet" — a "cares deeply" read attached to the CONTEMPT facet it inverts
+  ✓    "contemptOverJealousyEvidence" — an option cited for a condition the enacted fact does not establish
+  ✓    "v2WrongActorLiteral" — correction 1 hostile: a NON-actor claims FROM_OPENING_BEAT
+  ✓    "v2SentinelWrongRow" — correction 2 hostile: the opening sentinel on somebody else's row
+  ✓    "v2UnknownObjectId" — correction 3 hostile: an object id this scene does not contain
+  ✓    "v2TargetNotChosen" — correction 3 hostile: E+ cites a valid id that was not chosen
+  ✓    "v2BeatOtherObject" — tightening hostile: the E+ beat names ANOTHER object
+  ✓    "v2NoPlaceholder" — tightening hostile: the planner named the thing itself, no {TARGET}
+  ✓    "v2RealizationsSent" — tightening hostile: the retired realization channel
+
+  ✓    a scoped guardrail stays SILENT on the facet it does not police (same words, kindness facet)
+
+ READS THE MODEL WRITES ANYWAY — DISCARDED, NOT OBEYED
+  ✓    "readVoiceDrops" — "his voice drops" read as "he speaks more quietly": the plan still ships
+  ✓    "readVoiceDrops" — …and the model's words reach NOBODY
+  ✓    "readVoiceDrops" — …because the RECORD's truth is what travels
+  ✓    "readVoiceDrops" — …and the ACT and the LENS still reach Grok, once each, beside that truth
+  ✓    "readBreathHitch" — "her breath hitches" read as "she is nervous": the plan still ships
+  ✓    "readBreathHitch" — …and the model's words reach NOBODY
+  ✓    "readBreathHitch" — …because the RECORD's truth is what travels
+  ✓    "readBreathHitch" — …and the ACT and the LENS still reach Grok, once each, beside that truth
+  ✓    "readFingersFlex" — "his fingers flex" read as "a quiet tension": the plan still ships
+  ✓    "readFingersFlex" — …and the model's words reach NOBODY
+  ✓    "readFingersFlex" — …because the RECORD's truth is what travels
+  ✓    "readFingersFlex" — …and the ACT and the LENS still reach Grok, once each, beside that truth
+  ✓    "readIsAction" — a read that stages another action: the plan still ships
+  ✓    "readIsAction" — …and the model's words reach NOBODY
+  ✓    "readIsAction" — …because the RECORD's truth is what travels
+  ✓    "readIsAction" — …and the ACT and the LENS still reach Grok, once each, beside that truth
+  ✓    "readShared" — one reading handed to every character: the plan still ships
+  ✓    "readShared" — …and the model's words reach NOBODY
+  ✓    "readShared" — …because the RECORD's truth is what travels
+  ✓    "readShared" — …and the ACT and the LENS still reach Grok, once each, beside that truth
+  ✓    UNSEEDED: the candidate is now SOURCED by the batch, so the model's restating read is DISCARDED rather than judged — the record's truth is what travels
+
+
+══════════════════════════════════════════════════════════════════════════════════════════
+PART U — EXACT-COUNT AUDIT OF THE DISPATCHED SCENE-1 PROMPT
+══════════════════════════════════════════════════════════════════════════════════════════
+
+ HEAVY — PC="Lirael" others=["Julian","Seren","the presiding Dohkar"]
+  ✓ HEAVY U1: exactly ONE "PROTAGONIST OPENING BEAT" block
+  ✓ HEAVY U2: pc_opening_fusion.beat appears EXACTLY ONCE in the whole request
+  ✓ HEAVY U3: the PC angle appears exactly once, as an actionable assignment
+  ✓ HEAVY U4: the PC gets NO independent CHARACTER+ assignment line
+  ✓ HEAVY U4b: …but she is NOT silently dropped from the roster or the data
+  ✓ HEAVY U5: the superseded standalone fusion line appears ZERO times
+  ✓ HEAVY U6: the E+ evidence beat appears exactly once
+  ✓ HEAVY U7: E+ may keep developing the object but may not schedule a rival realisation
+  ✓ HEAVY U8: staged anchor_beat, C+ angle, E+ target and the opening fusion all resolve to ONE assignment
+  ✓ HEAVY U8b: every NON-PC staged anchor is DERIVED from that person's C+ angle
+  ✓ HEAVY U8d: the persisted manifest marks the on-stage cast IN_PERSON
+  ✓ HEAVY U8c: no prefilled SENTINEL survives into state
+  ✓ HEAVY U9: every OFFERED non-PC character gets exactly one independent C+ line, and a withdrawn one gets none
+  ✓ HEAVY U9b: …and no non-PC angle is a duplicate of the opening beat
+  ✓ HEAVY U10 seam 1-2 · the planner was ASKED for the field and the reply survived reconciliation
+  ✓ HEAVY U11 seam 3 · normalised assignment carries every subfield
+  ✓ HEAVY U12 seam 4 · state.sceneSkeleton (the hand-copied field list) carries it
+  ✓ HEAVY U13 seam 5 · buildSkeletonDirective rendered it into the skeleton block
+  ✓ HEAVY U14 seam 6-7 · the frozen descriptor === the bytes handed to callChat
+  ✓ HEAVY U15 seam 8 · it is in the UPSTREAM system message, and nothing escaped
+
+ HOTFAST — PC="Lirael" others=["Julian","Seren","the presiding Dohkar"]
+  ✓ HOTFAST U1: exactly ONE "PROTAGONIST OPENING BEAT" block
+  ✓ HOTFAST U2: pc_opening_fusion.beat appears EXACTLY ONCE in the whole request
+  ✓ HOTFAST U3: the PC angle appears exactly once, as an actionable assignment
+  ✓ HOTFAST U4: the PC gets NO independent CHARACTER+ assignment line
+  ✓ HOTFAST U4b: …but she is NOT silently dropped from the roster or the data
+  ✓ HOTFAST U5: the superseded standalone fusion line appears ZERO times
+  ✓ HOTFAST U6: the E+ evidence beat appears exactly once
+  ✓ HOTFAST U7: E+ may keep developing the object but may not schedule a rival realisation
+  ✓ HOTFAST U8: staged anchor_beat, C+ angle, E+ target and the opening fusion all resolve to ONE assignment
+  ✓ HOTFAST U8b: every NON-PC staged anchor is DERIVED from that person's C+ angle
+  ✓ HOTFAST U8d: the persisted manifest marks the on-stage cast IN_PERSON
+  ✓ HOTFAST U8c: no prefilled SENTINEL survives into state
+  ✓ HOTFAST U9: every OFFERED non-PC character gets exactly one independent C+ line, and a withdrawn one gets none
+  ✓ HOTFAST U9b: …and no non-PC angle is a duplicate of the opening beat
+  ✓ HOTFAST U10 seam 1-2 · the planner was ASKED for the field and the reply survived reconciliation
+  ✓ HOTFAST U11 seam 3 · normalised assignment carries every subfield
+  ✓ HOTFAST U12 seam 4 · state.sceneSkeleton (the hand-copied field list) carries it
+  ✓ HOTFAST U13 seam 5 · buildSkeletonDirective rendered it into the skeleton block
+  ✓ HOTFAST U14 seam 6-7 · the frozen descriptor === the bytes handed to callChat
+  ✓ HOTFAST U15 seam 8 · it is in the UPSTREAM system message, and nothing escaped
+
+
+══════════════════════════════════════════════════════════════════════════════════════════
+PART X — THE GENERATED PORTFOLIO, END TO END
+══════════════════════════════════════════════════════════════════════════════════════════
+
+   provider facets   : ["value","insecurity","habit","relationship_pattern","contradiction"]
+   C+ delivered      : ["Lirael","Marcus Vale"]
+  ✓ X0a: exactly one scaffold, one Scene-1 planner and one author request
+  ✓ X0b: the dispatched scaffold request carried a backend-owned subject_ref for a person production minted itself
+  ✓ X0c: the portfolio was parsed, validated and ATTACHED from that response — status ready, five facets, origin generated_cast
+  ✓ X0d: the SAME canonical ref travels request → attached entity → every derived facet id
+  ✓ X0e: the PERSISTED scaffold keeps its own fields and NO raw characterPortfolios — the payload is consumed and scrubbed, never left on state for a later reader
+  ✓ X1: the generated portfolio is SELECTABLE — five facets on the canonical entity, five categories
+  ✓ X2: the PLANNER request offers backend-composed OPTIONS, and no separable evidence field
+  ✓ X3: …and every OFFERED canonical truth is legible as a choice
+  ✓ X4: the planner selects exactly ONE of his facets, by id
+   author block      : "  • Marcus Vale (first mention — the beat lands here) — IN_PERSON\n      SOURCE TRUTH — DO NOT STATE: Paperwork repeated daily rarely earns his full attention, and he barely hides it.\n      (it applies"
+  ✓ X5: the AUTHOR receives the backend-resolved SOURCE TRUTH — the selected one, exactly once
+  ✓ X6: …and beside it the selected VISIBLE ACTION and PC INTERPRETATION — the VALUES, non-empty and once each
+  ✓ X7: the applicability condition is PRESENT and travels as OUR wording, once, as the reason the truth applies here
+  ✓ X8: the OTHER FOUR canonical truths reach Grok nowhere
+  ✓ X9: no facet id reaches Grok
+  ✓ X10: no evidence machinery, guardrail bookkeeping or raw portfolio JSON reaches Grok
+  ✓ X11a: the guardrail arm targets an option this scene actually offers — otherwise the two assertions below would pass by never running
+  ✓ X11: a guardrail scoped to the SELECTED facet reaches validation and fires
+  ✓ X12: …while a guardrail scoped to a facet nobody selected does not fire
+   accounting main    : {"scaffold":1,"planner":1,"author":1,"canonicalizer":2,"characterSheet":6,"rplot":1,"aplotGenerator":1,"aplotCompression":1,"antagonistBodyBible":1,"woundSwapTest":1,"pa_lineEditor":1,"pa_mechanicalFix":2,"pa_continuation":2,"pa_gravity":1,"pa_bannedPhrase":2,"pa_archetype":1,"pa_liBibleField":1,"pa_reparagraph":2,"subplots":1,"pa_perception":1,"pa_calcification":1,"pa_voiceAnchor":1,"pa_preciseEditor":1,"pa_memory":1,"unknownApi":0,"unknownModel":0,"ambiguous":0,"escaped":0}
+   accounting guard   : {"scaffold":1,"planner":1,"author":0,"canonicalizer":2,"characterSheet":6,"rplot":1,"aplotGenerator":1,"aplotCompression":1,"antagonistBodyBible":1,"woundSwapTest":1,"unknownApi":0,"unknownModel":0,"ambiguous":0,"escaped":0}
+  ✓ X13: the main arm matches its exact request census — one A-plot generator, ZERO corrections, one compression, and every other kind pinned
+  ✓ X13b: the guard arm matches its own exact census — same chain and setup, no author call, no post-author lane, no subplot pass
+  ✓ X13b-refund: the guard arm's Scene-1 abort refunds the issue purchase EXACTLY once; the main arm never does
+  ✓ X13w-0: the seven replacements each match once AND the mutated source still PARSES
+  ✓ X13w-1: all SEVEN trace points matched exactly once each in the served source
+  ✓ X13w-2: ★ the builder took EXACTLY ONE terminal path, and the trace names it
+  ✓ X13w-3: the caller reached the builder, and the block was not already populated
+   scaffold execution witness : [{"at":"caller:before","seq":1,"blockAlreadySet":false},{"at":"entry","seq":1},{"at":"final-return","seq":1},{"at":"caller:after","seq":1,"blockAlreadySet":true}]
+   terminal path              : ["final-return"]
+  ✓ X13d-1: the throwing arm pre-flights clean — every replacement once, source still parses
+  ✓ X13d-1b: the injection switch is ARMED inside the page — the check that would have caught three dead attempts
+  ✓ X13d-2: ★ the injected failure ACTUALLY FIRED — an execution witness, not a source match
+  ✓ X13d-3: ★ the gate had NOT yet committed when that post-validation failure fired
+  ✓ X13d-4: ★ the real subplot pass never dispatched — zero paid spend on the dead run
+   D trace   : [{"at":"caller:before","seq":1,"blockAlreadySet":false},{"at":"entry","seq":1},{"at":"final-return","seq":1},{"at":"inject:throw","seq":1},{"at":"catch","seq":1},{"at":"caller:after","seq":1,"blockAlreadySet":false}]
+   D gate    : {"settled":false,"ok":null,"waiters":0}  subplots=0
+  ✓ X13e-1: the inverse arm pre-flights clean — all EIGHT replacements once, source still parses
+  ✓ X13e-1b: the inverse arm is armed too, and its injected failure fired
+  ✓ X13e-2: ★ at the IDENTICAL instant the inverse arm has already committed — the proof reads the gate PLACEMENT, not merely its existence
+  ✓ X13e-3: ★ across 3 trials the commit at the AUTHOR BOUNDARY never released a subplot dispatch
+   E released a dispatch in 0/3 trials this run (racy; observed 1× across earlier arms)
+   D subplots/trial : [0,0,0]
+   E subplots/trial : [0,0,0]
+  ✓ X14-1: the witness pre-flights clean — six points, each matching once, source still parses
+  ✓ X14-2: ★ the sequence EXECUTED in a real Scene 1 — an observation, not a source scan
+  ✓ X14-3: ★ …in the required ORDER: FINAL_PROSE → sequence → addPage
+  ✓ X14-4: ★ it ran EXACTLY ONCE
+  ✓ X14-5: ★ the prose that mounts is BYTE-IDENTICAL to the prose the sequence received — the pen never moved
+  ✓ X14-6: ★ dormant mode made ZERO auditor and ZERO repair calls, and nothing escaped
+  ✓ X14-7: ★ and the scene still MOUNTED — enforcement off never blocks the reader
+  ✓ X14-8: ★ the real disclosure commit ran and was HANDED the sequence verdict
+   X14 trace  : ["final-prose","seq:before","seq:after","mount","commit"]
+   X14 result : null
+   X14 commit : {"at":"commit","handed":"unresolved","published":true,"delivered":[]}
+  ✓ X14-9: ★ removing the served call site kills the EXECUTION witness — the trace stops, and no result is produced
+  ✓ X14-10: ★ a verdict raised INSIDE the sequence reaches the real disclosure commit
+  ✓ X14-11: ★ removing the verdict handoff makes that SAME contradiction stop arriving at the commit
+   X14 killcall : ["final-prose","seq:after","mount","commit"]
+   X14 verdict  : {"at":"commit","handed":"contradiction","published":true,"delivered":[]}
+   X14 nohandoff: {"at":"commit","handed":"(absent)","published":true,"delivered":[]}
+   E trace   : [{"at":"caller:before","seq":1,"blockAlreadySet":false},{"at":"entry","seq":1},{"at":"final-return","seq":1},{"at":"inject:throw","seq":1},{"at":"catch","seq":1},{"at":"caller:after","seq":1,"blockAlreadySet":false}]
+   E gate    : {"settled":true,"ok":true,"waiters":0}  subplots=0
+  ✓ X13c: every model request matched EXACTLY ONE signature — none unnamed, none ambiguous, and nothing answered generically
+  ✓ X14: the mutation target occurs EXACTLY ONCE in the served source and was replaced
+  ✓ X15: with the production handler invocation REMOVED, the scaffold still runs but NOTHING attaches, no truth reaches Grok, and the planner has nothing to select
+  ✓ X15b: …and the PLANNER was offered nothing — no facet id reaches the request, and he receives NO assignment at all rather than an empty one
+   accounting invalid : {"scaffold":1,"planner":1,"author":1,"canonicalizer":2,"characterSheet":6,"rplot":1,"aplotGenerator":1,"aplotCorrection":1,"aplotCompression":1,"antagonistBodyBible":1,"woundSwapTest":1,"pa_lineEditor":1,"pa_mechanicalFix":2,"pa_continuation":2,"pa_gravity":1,"pa_bannedPhrase":2,"pa_archetype":1,"pa_reparagraph":2,"subplots":1,"pa_perception":1,"pa_calcification":1,"pa_voiceAnchor":1,"pa_preciseEditor":1,"pa_soundscape":1,"pa_memory":1,"unknownApi":0,"unknownModel":0,"ambiguous":0,"escaped":0}
+  ✓ X17: given an INVALID A-plot, production runs its self-correction pass — and it is counted as a correction, not as a second generator call
+   body-bible requests : 5
+   body-bible probe    : {"dedupe":{"resolved":2,"same":true,"stored":true},"retry":{"failedReturned":null,"retriedOk":true,"stored":true},"ownership":{"returned":null,"stored":false}}
+  ✓ X18: on the Scene-1 path the body bible is requested ONCE even with the response held in flight — the call sites are reached sequentially, and the earlier count of three was the harness answering with an object production discards
+  ✓ X18b: TWO CONCURRENT CALLERS with nothing on state and the response held open issue ONE paid request between them, and both receive the SAME bible
+  ✓ X18c: a FAILED attempt is retryable — the in-flight entry clears when it settles, so the next caller issues a real request instead of joining a promise that already resolved to null
+  ✓ X18d: a bible that arrives AFTER the story changed is discarded, not written onto the new story — ownership is verified before storage
+  ✓ X18e: with the in-flight JOIN removed, the two concurrent callers issue a SECOND paid request — so X18b is evidence about that guard, not about the response being fast
+  ✓ X18f: with the OWNERSHIP check removed, the late bible IS written onto the story that replaced it — so X18d is evidence about that guard
+   accounting mutant  : {"scaffold":1,"planner":1,"author":1,"canonicalizer":2,"characterSheet":6,"rplot":1,"aplotGenerator":1,"aplotCompression":1,"antagonistBodyBible":1,"woundSwapTest":1,"pa_lineEditor":1,"pa_mechanicalFix":2,"pa_continuation":2,"pa_gravity":1,"pa_bannedPhrase":2,"pa_archetype":1,"pa_reparagraph":2,"subplots":1,"pa_perception":1,"pa_calcification":1,"pa_voiceAnchor":1,"pa_preciseEditor":1,"pa_soundscape":1,"pa_memory":1,"unknownApi":0,"unknownModel":0,"ambiguous":0,"escaped":0}
+  ✓ X16: the mutant arm matches the SAME exact census — the difference is the deleted call site, not the traffic that reaches it
+
+
+══════════════════════════════════════════════════════════════════════════════════════════
+PART V — CONTRACT v2 POSITIVE DELIVERY (valid ID-based plan, declared opening actor)
+══════════════════════════════════════════════════════════════════════════════════════════
+
+  ✓ V1: the plan is ACCEPTED — author called once, nothing dropped, no abort
+  ✓ V2: Seren's COMMITTED C+ act IS the opening beat, marked as derived (one source)
+  ✓ V3: the AUTHOR DIRECTIVE renders that derived act as her VISIBLE ACTION, exactly once
+  ✓ V4: her staged anchor is the same beat
+  ✓ V5: E+ is COMMITTED as the SEED's name for the selected object, with its axis, and the beat carries that name (placeholder substituted)
+  ✓ V6: the AUTHOR DIRECTIVE renders E+ under the seed name exactly once, and the substituted beat with it
+  ✓ V5b: the fusion beat carries the seed name too, and no literal placeholder survives anywhere in the author payload
+  ✓ V7: the fusion carries E+'s target and axis BY DERIVATION and reaches the author through them
+  ✓ V8: the committed assignment carries the enacted fact and the RESOLVED facet, with the planner internals stripped
+  ✓ V9: the planner's bridge is logged as diagnostic evidence, not gated
+  ✓ V10: correction 1 — the planner's free act for the declared actor is DISCARDED and logged; the committed act is the opening beat
+  ✓ V11: correction 2 — the sentinel on the actor's row is replaced by the DERIVED anchor (= opening beat), and no sentinel survives
+  ✓ V13: tightening — an option resting on ONE fact derives its enacted fact; the planner's typed E6 is replaced by E5 and logged
+  ✓ V12: correction 3 — the sash, absent from the scene text, is committed by id with its SEED name and rendered to the author
+
+══════════════════════════════════════════════════════════════════════════════════════════
+PART W — AVAILABILITY VALVE (opt-in): invalid plan continues from the seed stage, nothing leaks
+══════════════════════════════════════════════════════════════════════════════════════════
+
+  ✓ W1: valve ON — an old-shape plan is NOT fatal: the author is called once, no abort
+  ✓ W2: the drop is LOGGED with the faults, by name
+  ✓ W3: nothing leaks into the AUTHOR DIRECTIVE — no C+, E+, opening-fusion or standalone fusion block
+  ✓ W4: nothing leaks into the COMMIT — empty C+, null E+/fusion/pof, dropped flag carrying the reasons
+  ✓ W5: no staged-anchor sentinel reaches the author
+  ✓ W6: the planner's invented environment text does not reach the author either
+  ✓ W7: a ROSTER fault still ABORTS with the valve ON — the valve covers assignments only
+  ✓ W8: at the SHIPPED default (valve OFF) the same plan ABORTS before the author, named
+
+──────────────────────────────────────────────────────────────────────────────────────────
+  404 passed · 0 failed
+

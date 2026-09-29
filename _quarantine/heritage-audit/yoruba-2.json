@@ -1,0 +1,24 @@
+{
+  "age": 28,
+  "ancestry": "Yoruba",
+  "first_name": "Adeola",
+  "last_name": "Okonkwo",
+  "height": "5'7\", lean and long-limbed",
+  "build": "dancer's body — defined shoulders, narrow hips, the kind of frame that moves before it thinks",
+  "hair": "natural coils worn in a high, voluminous crown; deep black with a subtle auburn undertone in sunlight; she oils it with shea butter every Sunday morning",
+  "complexion": "deep warm brown with golden undertones; a small, distinctive scar along her left collarbone — a childhood accident with her grandmother's cooking pot that she never bothers to hide",
+  "face": "a face that announces everything — wide-set eyes that flood with tears or laughter without warning, a mouth quick to curve or tremble, cheekbones that catch light and shadow in equal measure; she reads as younger than she is because her expressions haven't learned to lie",
+  "signature_feature": "her hands — long-fingered, precise, constantly moving; they sketch in the air when she talks, and the LI becomes obsessed with watching them because they betray every feeling she's trying not to say aloud",
+  "second_celebrated_feature": "the exact amber-brown of her eyes in morning light — they shift from nearly black in shadow to a luminous honey-gold when she's in direct sun, and they hold a particular vulnerability that makes the LI want to shield her",
+  "signature_habits": "she hums while working — fragments of Fela Kuti or her grandmother's Yoruba lullabies, unconsciously; she keeps a small leather journal where she sketches fabric patterns and writes one-line observations about people she meets; she says 'ẹ kú ìrìn' (thank you for the journey) when someone arrives safely after travel, a phrase her mother taught her; she bites the inside of her cheek when she's anxious, leaving small marks; she takes her tea with honey and a pinch of salt, the way her grandmother taught her",
+  "occupation": "textile designer and owner of a small independent studio in Brooklyn called 'Adire House' — she creates hand-dyed, hand-printed fabrics using traditional Yoruba indigo techniques, sells to high-end boutiques and takes custom commissions; the studio is her sanctuary and her financial knife's edge",
+  "current_crisis": {
+    "event": "her studio's landlord — a property developer with billionaire backing — has given her 90 days to vacate; the building is being demolished for luxury condos; she has no capital for a new space, her savings are depleted from a failed supplier relationship, and her biggest client just cancelled their standing order",
+    "hottest_emotion": "panic threaded with a deep, nauseating shame — the feeling that she's failed, that she's not good enough to survive in this world",
+    "immediate_want": "to find a way to keep the studio alive without admitting to anyone how close she is to drowning"
+  },
+  "wound": {
+    "core": "she believes that needing help is a kind of smallness — that real strength means never letting anyone see the crack in the foundation",
+    "surfacing_hint": "when overwhelmed, she becomes almost mute, her hands still, her eyes fixed on something distant; she withdraws into a performance of competence that fools no one who's paying attention, and the effort of maintaining it makes her shake"
+  }
+}

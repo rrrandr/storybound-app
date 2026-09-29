@@ -1,0 +1,47 @@
+[TITLE: "Veilwood's First Fracture"]
+[SYNOPSIS: Lirael stands as Sacrificiant for a youth's coming-of-age rite under council scrutiny that already questions her family's hidden past. One altered wish threatens to expose everything she has worked to contain. The cost will reach beyond the clearing.]
+
+[CHARACTERS: Lirael:F, Julian:M, the youth:F]
+
+The youth kneels on the crimson spiralgrass, her aqua skin catching the filtered dawn through the veil-canopy. Her coral hair trembles as she draws breath to speak the offering we rehearsed for months.
+
+"I give the discipline to finish my studies and train as Sacrificiant," she says, voice steady.
+
+Relief loosens my shoulders beneath the gossamer sash. The mouth-band across my lips muffles any sound I might make, as protocol requires. Two dozen First Favored watch from the edges of the mated-pair trees, their Weave-Script shifting in quiet colors that speak of anticipation rather than alarm. Julian stands among them, slate-blue skin still, long black hair curtaining his face so only the silver script along his jaw shows. He observes without moving, the way he always does when a rite carries weight beyond the moment.
+
+The youth lifts her head. Her eyes find mine.
+
+"I give that discipline so Lirael finds the father who left her."
+
+The words land wrong. The sacrifice she named belongs to one desire; the wish she speaks belongs to another. Misalignment rings through the clearing like a struck bell. Every First Favored present feels it. The presiding Dohkar's hands rise. The assembled guests shift, their Weave-Script stuttering from calm to unease.
+
+I cannot speak cleanly. The band holds my tongue. Protocol forbids interference, yet the wish now centers on me. If I act, the council will say I bent the rite for my own gain.
+
+<<MICRO_EXPRESSION>>
+Say it plainly — or let it show without words?
+<<CONTINUE>>
+
+The youth's face is open, hopeful. She thinks she has given me a gift. My fingers find the edge of the gossamer band. One pull will break decorum. One pull will make every witness see me reach for what the wish named.
+
+Julian's gaze meets mine across the clearing. He does not nod. He does not shake his head. He simply watches, as if testing whether I will choose the rule or the girl.
+
+I tear the band free. The cloth falls. My voice cracks the silence.
+
+"Stop—"
+
+Fate answers before the word finishes. A guest near the veil-canopy turns, an older First Favored whose silver Weave-Script had been calm. His mouth opens without his choosing.
+
+"The man she seeks crossed the Ascendant Run three turnings past," he says, the words pulled from him like thread from cloth. "He asked after a daughter with a chapped lip and a habit of tucking her hair when afraid."
+
+The clearing stills. Every eye turns to me. The wish has been honored in the only way left to it: someone present now carries the knowledge I never asked for, delivered in public, naming the very trait I hide when I feel exposed. The youth's prepared sacrifice paid for a stranger's revelation, not the clean answer she meant to give.
+
+The Dohkar's voice cuts through the hush. "The Sacrificiant moved. The wish touched her directly."
+
+Accusation settles like ash. My qualification as Dohkar hangs on what the council will decide about this moment. Julian has not looked away. His stillness reads as judgment I cannot yet name.
+
+The youth stares at me, stricken. "I only wanted—"
+
+I step toward her, the torn band still in my hand. The council's eyes are on both of us now. One choice remains before the next turning: claim the interference as mine alone, or let the youth bear the cost of a wish that was never meant to be spoken.
+
+My hand tightened around my great-grandmother's old tarot deck. I didn't remember bringing it. I toyed with the idea of letting the cards decide.
+<!--sceneDuty: external_pressure | attraction: latent-->

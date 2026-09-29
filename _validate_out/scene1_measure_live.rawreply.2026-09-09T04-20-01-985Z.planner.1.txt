@@ -1,0 +1,62 @@
+{
+  "opening_spine": {
+    "pressure_source_type": "survival",
+    "pressure_source": "the oven timer failed and the croissants are already blackening inside",
+    "hook_object": null,
+    "opening_actor_id": null,
+    "opening_beat": "Smoke curls from the oven vents while the dough inside burns",
+    "rising_beats": [
+      "I yank the door open and heat slams my face",
+      "Flour dust on my forearms turns to paste from sweat"
+    ],
+    "decision_beat": "Dump the tray now or try to salvage the rest?",
+    "pc_career": "pastry chef",
+    "opening_setting": "bakery kitchen",
+    "environment_elements": ["steel prep table", "oven door"],
+    "li_texture_beat": null,
+    "pc_wound_anchor": "opening: my hands freeze on the handle longer than they should",
+    "pc_self_presentation_beat": "opening: I shove my sleeves higher with one forearm, the motion too quick, like someone who already knows she will lose this round",
+    "scene_want": "get the tray out before the smoke alarm starts",
+    "scene_mission": "rescue the batch before the entire morning's work is lost",
+    "reader_state": {
+      "knows": "Testa is alone in her bakery kitchen fighting a burning oven",
+      "believes": "her shop's opening day is at immediate risk",
+      "wondering": "how much of her work can still be saved",
+      "must_not_confuse": "only Testa is present and acting on the oven"
+    },
+    "pc_body_callback": "opening: signature_feature (the crooked front tooth)",
+    "antagonist_body_callback": null,
+    "staged_characters": [
+      {"name": "Testa", "presence": "IN_PERSON", "anchor_beat": "FROM_PC_OPENING_FUSION"}
+    ]
+  },
+  "scene_skeleton": {
+    "character_plus": [],
+    "environment_plus": {
+      "target": "oven door",
+      "axis": "damage",
+      "beat": "oven door handle is hot enough to raise a blister on contact"
+    },
+    "pc_opening_fusion": {
+      "character": "Testa",
+      "placement": "PC_FIRST_EMBODIED_BEAT",
+      "contact": {"verb": "PUSH", "object": "oven door"},
+      "action": "shove the door wider with my elbow",
+      "pc_lens_operation": "INWARD_TRANSLATION_OF_ANOTHER_PERSONS_COST",
+      "character_revelation": "Testa moves before she can think the loss through",
+      "environment_pressure": {
+        "grounds": ["env:axis", "pick:world"],
+        "text": "the heat forces me back a step and I feel the morning slip further away"
+      }
+    }
+  },
+  "stage_contract": {
+    "v": 1,
+    "participants": [{"ref": "pc:self", "presence": "IN_PERSON"}],
+    "event_facts": [{"text": "oven timer fails and pastries burn", "participants": [{"ref": "pc:self", "role": "actor"}]}],
+    "elements": [
+      {"name": "steel prep table", "affordance": "SURFACE"},
+      {"name": "oven door", "affordance": "FIXTURE"}
+    ]
+  }
+}

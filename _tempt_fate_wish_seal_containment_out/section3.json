@@ -1,0 +1,53 @@
+{
+  "unstubbed": [
+    {
+      "url": "http://localhost:3000/api/csp-report",
+      "method": "POST",
+      "at": 1790277767261,
+      "reason": "no registered stub or real-lane for this path"
+    },
+    {
+      "url": "http://localhost:3000/api/config",
+      "method": "GET",
+      "at": 1790277775939,
+      "reason": "no registered stub or real-lane for this path"
+    },
+    {
+      "url": "http://localhost:3000/api/csp-report",
+      "method": "POST",
+      "at": 1790277775949,
+      "reason": "no registered stub or real-lane for this path"
+    },
+    {
+      "url": "http://localhost:3000/api/geo",
+      "method": "GET",
+      "at": 1790277775992,
+      "reason": "no registered stub or real-lane for this path"
+    },
+    {
+      "url": "http://localhost:3000/api/image",
+      "method": "POST",
+      "at": 1790277776012,
+      "reason": "no registered stub or real-lane for this path"
+    },
+    {
+      "url": "http://localhost:3000/api/bfl-kontext",
+      "method": "POST",
+      "at": 1790277776015,
+      "reason": "no registered stub or real-lane for this path"
+    },
+    {
+      "url": "http://localhost:3000/api/dashscope-image",
+      "method": "POST",
+      "at": 1790277776016,
+      "reason": "no registered stub or real-lane for this path"
+    },
+    {
+      "url": "http://localhost:3000/api/chatgpt-proxy",
+      "method": "POST",
+      "at": 1790277777520,
+      "reason": "blocked: image-preparation request body, blockImagePreparation active"
+    }
+  ],
+  "realCalls": 0
+}

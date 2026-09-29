@@ -1,0 +1,23 @@
+=== banned-literal scan: target pools ===
+=== banned-literal scan: ALL window._*_POOL arrays ===
+  scanned 64 pools
+=== rotation: windows differ across storyIds ===
+  ✓ pic_pc_gestalt — 4/4 distinct windows
+  ✓ pic_li_gestalt — 4/4 distinct windows
+  ✓ pic_li_desire — 4/4 distinct windows
+  ✓ connector_desc — 4/4 distinct windows
+  ✓ heroine_career — 4/4 distinct windows
+=== over-exposure: any exemplar in ≥3/4 windows ===
+=== restless_hands: PC body-tell pools clean ===
+  ✓ _PC_STRESS_TIC_POOL — 0/17 restless_hands
+  ✓ _PC_SIGFEAT_POOL — 0/22 restless_hands
+  ✓ _SHAPE_PC_GESTURE_POOL — 0/12 restless_hands
+  ✓ _PC_DESIRE_LEAK — 0/25 restless_hands
+  ✓ _PC_BODY_TELL_POOL_FEMALE — 0/18 restless_hands
+  ✓ _PC_BODY_TELL_POOL_MALE — 0/18 restless_hands
+  ✓ _LI_DESIRE_FEATURE_POOL — 0/9 restless_hands
+=== CG body-language proxy: hand-monoculture guard ===
+  ✓ hand-based 1/14 (7%) ≤ 40%
+  ✓ 0/14 restless_hands matches
+
+RESULT: ✓ PASS — pools clean, windows rotate, no over-exposure, body-tells clean, CG proxy diverse.

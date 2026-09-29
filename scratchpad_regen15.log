@@ -1,0 +1,149 @@
+  > [CG:SCAFFOLD] generation start (the_inhuman, gpt-4o-mini)
+  > [CG:SCAFFOLD] awaiting 1 Bible(s) before spine (P2 sequencing — latency over cost)
+  > [CG:SCAFFOLD] Bibles ready (0ms) — pc=y li=y antag=n
+  > [CG:SCAFFOLD:GEN] 13923ms, model=gpt-4o-mini
+  > [CG:SCAFFOLD] thesis="Can Mira trust the enigmatic raider to help her survive the ambush without losing herself in the process?"
+  > [CG:SCAFFOLD] issues=4, motifs=5, forbidden=3
+  > [CG:SCAFFOLD] FULL OBJECT: {runThesis: Can Mira trust the enigmatic raider to help her su…the ambush without losing herself in the process?, thematicDirection: The strugg
+  > [CG:SCAFFOLD] active — scene_index=0, source=gpt-4o-mini, issues=4
+  > [CG:SCREENPLAY] gen start (scene 0)
+  > [CG:SCREENPLAY:USER-PROMPT]
+SCENE INDEX: 0 (Scene 1 — establishing)
+STORY LENGTH: affair
+SCENE DENSITY (ST1 — SETUP PACE): establishing register. The scene's job is chara
+  > [CG:SCREENPLAY] flavor "the_inhuman" → chain leads with Grok-4.1-reasoning (scene 1 / tentpole — Grok primary)
+  > [CG:SCREENPLAY] generated via Grok-4.1-reasoning in 57229ms
+  > [CG:SCREENPLAY] gen returned in 57242ms
+  > [STAGED:DIST] scene 0 beats=24 bands: micro=17 subtle=2 readable=4 strong=1 extreme=0 | avg raw=0.12 clamped=0.12 | llm-emitted=7/24 clamps=0
+  > [CG:SCREENPLAY] Expression peak enforcement: kept 3 (family=suppression), demoted 4 to neutral [reasons: cross-family(suppression→sharpness), spacing<3, cross-family(supp
+  > [STAGED:VARIATION] Scene 0 OK — beats=24 peaks=3 phases=4 hands=1 closeups=2
+  > [STORYBOARD-REPAIR] dropped duplicate visual beat Revelation@10 (same understanding+eye-magnet as an earlier panel)
+  > [STORYBOARD] establishing shot reserved for "Korrin" @ panel 0
+  > [STORYBOARD] Orientation → Revelation* → Transformation → Consequence → Threat → Decision
+  > [CG:SCREENPLAY] region=Gloamwater Bay | species=[kwisheen]
+  > [STAGED:HERO] Generating 6 phase images for scene 0 (serial: phase 0 first, then 1+ as Kontext edits)
+  > [STAGED:TIER] phase 0 → simple → cheap
+  > [STAGED:STAGING-MODE] adversarial (liAbsent=true, sideChars=1)
+  > [STAGED:HERO:PHASE] Cache MISS — generating phase 0 (Orientation) for scene 0 at tier=cheap
+  > [STAGED:STYLE] artist="ender_bond" → 2 style anchor(s): ender_golden_master_v3.jpg, ender_golden_master_v3_bottom.jpg
+  > [STAGED:STYLE] phase 0 — SUBSTITUTED li_absent master ender_golden_master_v3_bottom.jpg for stripped golden_master (full artist signature, no couple bleed)
+  > [STAGED:STYLE] phase 0 — passing 3 style anchors to Gemini (filtered 1 LI-implying refs, liAbsent=true)
+  > [STAGED:STYLE] artist=ender_bond styleAnchors=2 regionAnchors=2 contractInjected=true phaseIdx=0
+  > [GEMINI:SCENE-CASE] SPECIAL_SPECIES — species: true, trait: false, fantasy: true, worldAnchor: true
+  > [IMAGE-GEN] {"provider":"Gemini","context":"visualize","reached":true,"blockedBy":"None","status":"SUCCESS","promptLength":50356,"promptPreview":"PRIMARY DIRECTIVE: Depic
+  > [CASTING] skip harvest "Korrin" (not a clean identity source: not NPC-primary/close/solo)
+  > [STAGED:KONTEXT] Phase 0 stashed as scene 0 edit source
+  > [STAGED:STAGE_CACHE] Cached stage for future revisits (key=fantasy|the_inhuman|drowned ruins of gloamwater bay at dusk, murky water thick w…)
+  > [STAGED:HERO:PHASE] Phase 0 generated in 12487ms (tier=cheap)
+  > [STAGED:TIER] phase 1 → medium → mid
+  > [STAGED:STAGING-MODE] adversarial (liAbsent=true, sideChars=1)
+  > [STAGED:HERO:PHASE] Cache MISS — generating phase 1 (Revelation (page-turn)) for scene 0 at tier=mid
+  > [STAGED:STYLE] artist="ender_bond" → 2 style anchor(s): ender_golden_master_v3.jpg, ender_golden_master_v3_bottom.jpg
+  > [STAGED:STYLE] phase 1 LI-absent — SUBSTITUTED li_absent master ender_golden_master_v3_bottom.jpg
+  > [STAGED:STYLE] phase 1 LI-absent — passing 3 refs (filtered 1 LI/romance masters)
+  > [STAGED:STYLE] artist=ender_bond styleAnchors=2 regionAnchors=2 contractInjected=true phaseIdx=1
+  > [GEMINI:SCENE-CASE] SPECIAL_SPECIES — species: true, trait: false, fantasy: true, worldAnchor: true
+  > [STAGED:IMG] Phase 0 first-ready after 17338ms — scene mounting with image cached
+  > ═══ [STAGED:SCENE 0 MOUNT] 24 beats, 6 phase(s), gate@23 ═══
+  > [STAGED:HERO:SWAP] No image yet for phase:0 — staying on current
+  > [STAGED:ECHO-PROFILE] peak@0 tension=tightening → profile="simmer"
+  > [STAGED:ECHO] beat 0 inEcho=true age=0 intensity=1.00 peakHere=true
+  > [STAGED:BEAT 0/23] | narration | tens=tightening | profile=simmer | mouth=jaw_clench✓PEAK@0.35 | echoZone=age0@1.00 | decay=— | pacing=696ms(×1.20) | tint=dark(0.40) | cr
+  > [STAGED:RENDER] Mounted — 24 beats, gate at beat 23, micro after beat 7
+  > [STAGED:RENDER] Hero image mounted (phase 0)
+  > [IMAGE-GEN] {"provider":"Gemini","context":"visualize","reached":true,"blockedBy":"None","status":"SUCCESS","promptLength":50787,"promptPreview":"PRIMARY DIRECTIVE: Depic
+  > [CASTING] skip harvest "Korrin" (not a clean identity source: not NPC-primary/close/solo)
+  > [STAGED:HERO:PHASE] Phase 1 generated in 10641ms (tier=mid)
+  > [STAGED:TIER] phase 2 → medium → mid
+  > [STAGED:STAGING-MODE] adversarial (liAbsent=true, sideChars=1)
+  > [STAGED:HERO:PHASE] Cache MISS — generating phase 2 (Transformation) for scene 0 at tier=mid
+  > [STAGED:STYLE] artist="ender_bond" → 2 style anchor(s): ender_golden_master_v3.jpg, ender_golden_master_v3_bottom.jpg
+  > [STAGED:STYLE] canonical asset "wish_burst" (tier 1) attached (phase 2)
+  > [STAGED:STYLE] phase 2 LI-absent — SUBSTITUTED li_absent master ender_golden_master_v3_bottom.jpg
+  > [STAGED:STYLE] phase 2 LI-absent — passing 4 refs (filtered 1 LI/romance masters)
+  > [STAGED:STYLE] artist=ender_bond styleAnchors=2 regionAnchors=2 contractInjected=true phaseIdx=2
+  > [GEMINI:SCENE-CASE] SPECIAL_SPECIES — species: true, trait: false, fantasy: true, worldAnchor: true
+  > [IMAGE-GEN] {"provider":"Gemini","context":"visualize","reached":true,"blockedBy":"None","status":"SUCCESS","promptLength":53572,"promptPreview":"PRIMARY DIRECTIVE: Depic
+  > [STAGED:HERO:PHASE] Phase 2 generated in 11552ms (tier=mid)
+  > [STAGED:TIER] phase 3 → medium → mid
+  > [STAGED:STAGING-MODE] adversarial (liAbsent=true, sideChars=1)
+  > [STAGED:HERO:PHASE] Cache MISS — generating phase 3 (Consequence) for scene 0 at tier=mid
+  > [STAGED:STYLE] artist="ender_bond" → 2 style anchor(s): ender_golden_master_v3.jpg, ender_golden_master_v3_bottom.jpg
+  > [STAGED:STYLE] canonical asset "wish_burst" (tier 1) attached (phase 3)
+  > [STAGED:STYLE] phase 3 LI-absent — SUBSTITUTED li_absent master ender_golden_master_v3_bottom.jpg
+  > [STAGED:STYLE] phase 3 LI-absent — passing 4 refs (filtered 1 LI/romance masters)
+  > [STAGED:STYLE] artist=ender_bond styleAnchors=2 regionAnchors=2 contractInjected=true phaseIdx=3
+  > [GEMINI:SCENE-CASE] SPECIAL_SPECIES — species: true, trait: false, fantasy: true, worldAnchor: true
+  > [CASTING] cast "Korrin" from scene0_phase2 @ confidence 59
+  > [IMAGE-GEN] {"provider":"Gemini","context":"visualize","reached":true,"blockedBy":"None","status":"SUCCESS","promptLength":53832,"promptPreview":"PRIMARY DIRECTIVE: Depic
+  > [CASTING] skip harvest "Korrin" (not a clean identity source: not NPC-primary/close/solo)
+  > [STAGED:HERO:PHASE] Phase 3 generated in 11106ms (tier=mid)
+  > [STAGED:TIER] phase 4 → medium → mid
+  > [STAGED:STAGING-MODE] adversarial (liAbsent=true, sideChars=1)
+  > [STAGED:HERO:PHASE] Cache MISS — generating phase 4 (Threat) for scene 0 at tier=mid
+  > [STAGED:STYLE] artist="ender_bond" → 2 style anchor(s): ender_golden_master_v3.jpg, ender_golden_master_v3_bottom.jpg
+  > [CASTING] reinject identity anchor for "Korrin" (phase 4)
+  > [STAGED:STYLE] phase 4 LI-absent — SUBSTITUTED li_absent master ender_golden_master_v3_bottom.jpg
+  > [STAGED:STYLE] phase 4 LI-absent — passing 4 refs (filtered 1 LI/romance masters)
+  > [STAGED:STYLE] artist=ender_bond styleAnchors=2 regionAnchors=2 contractInjected=true phaseIdx=4
+  > [GEMINI:SCENE-CASE] SPECIAL_SPECIES — species: true, trait: false, fantasy: true, worldAnchor: true
+  > [IMAGE-GEN] {"provider":"Gemini","context":"visualize","reached":true,"blockedBy":"None","status":"SUCCESS","promptLength":50658,"promptPreview":"PRIMARY DIRECTIVE: Depic
+  > [CASTING] skip harvest "Korrin" (not a clean identity source: not NPC-primary/close/solo)
+  > [STAGED:HERO:PHASE] Phase 4 generated in 9831ms (tier=mid)
+  > [STAGED:TIER] phase 5 → medium → mid
+  > [STAGED:STAGING-MODE] adversarial (liAbsent=true, sideChars=1)
+  > [STAGED:HERO:PHASE] Cache MISS — generating phase 5 (Decision) for scene 0 at tier=mid
+  > [STAGED:STYLE] artist="ender_bond" → 2 style anchor(s): ender_golden_master_v3.jpg, ender_golden_master_v3_bottom.jpg
+  > [CASTING] reinject identity anchor for "Korrin" (phase 5)
+  > [STAGED:STYLE] phase 5 LI-absent — SUBSTITUTED li_absent master ender_golden_master_v3_bottom.jpg
+  > [STAGED:STYLE] phase 5 LI-absent — passing 4 refs (filtered 1 LI/romance masters)
+  > [STAGED:STYLE] artist=ender_bond styleAnchors=2 regionAnchors=2 contractInjected=true phaseIdx=5
+  > [GEMINI:SCENE-CASE] SPECIAL_SPECIES — species: true, trait: false, fantasy: true, worldAnchor: true
+  > [IMAGE-GEN] {"provider":"Gemini","context":"visualize","reached":true,"blockedBy":"None","status":"SUCCESS","promptLength":50724,"promptPreview":"PRIMARY DIRECTIVE: Depic
+  > [STAGED:HERO:PHASE] Phase 5 generated in 13777ms (tier=mid)
+  > [STAGED:CUT] Cache MISS — generating closeup closeup|other_character|face|lips_tighten|cool at tier=hero
+  > [STAGED:CUT:GEN] beat closeup fresh gen | cacheKey=closeup|other_character|face|lips_tighten|cool | shot=face | target=Korrin | tier=Clean costTier=hero shape=square inte
+  > [STAGED:CUT:GEN:PROMPT] ILLUSTRATED INSERT — a drawn cut-in from the surrounding scene, rendered in the SAME artistic style as every other panel in this story (manga / in
+  > [STAGED:CUT] Cache MISS — generating closeup closeup|pc|face|drowned_human|lips_pressed|cool at tier=hero
+  > [STAGED:CUT:GEN] beat closeup fresh gen | cacheKey=closeup|pc|face|drowned_human|lips_pressed|cool | shot=face | target=protagonist | tier=Clean costTier=hero shape=squar
+  > [STAGED:CUT:GEN:PROMPT] ILLUSTRATED INSERT — a drawn cut-in from the surrounding scene, rendered in the SAME artistic style as every other panel in this story (manga / in
+  > [STAGED:RENDER] Phase images full-resolve — 6/6 cached
+  > [CASTING] promote "Korrin" from scene0_phase5 @ confidence 96 (was 59)
+  > [GEMINI:SCENE-CASE] FANTASY — species: false, trait: false, fantasy: true, worldAnchor: true
+  > [GEMINI:SCENE-CASE] FANTASY — species: false, trait: false, fantasy: true, worldAnchor: true
+  > [IMAGE-GEN] {"provider":"Gemini","context":"visualize","reached":true,"blockedBy":"None","status":"SUCCESS","promptLength":5005,"promptPreview":"PRIMARY DIRECTIVE: Depict
+  > [IMAGE-GEN] {"provider":"Gemini","context":"visualize","reached":true,"blockedBy":"None","status":"SUCCESS","promptLength":5005,"promptPreview":"PRIMARY DIRECTIVE: Depict
+  > [STAGED:CUT] closeup|pc|face|drowned_human|lips_pressed|cool generated in 19083ms
+  > [STAGED:CUT:SOURCE] beat closeup just-generated | cacheKey=closeup|pc|face|drowned_human|lips_pressed|cool | url=data:image/png;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/6xn4SlA
+  > [STAGED:CUT] closeup|other_character|face|lips_tighten|cool generated in 18206ms
+  > [STAGED:CUT:SOURCE] beat closeup just-generated | cacheKey=closeup|other_character|face|lips_tighten|cool | url=data:image/png;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/6xn4SlAA
+
+  E2E SCENE 1 — Fatelands / Kwisheen
+  ────────────────────────────────────────────────────────────
+  error: none
+  prose length: 1644 chars | author: Grok-4.1-reasoning
+  stagedActive: true | heroCache keys: 6
+  hero phase images: 6 | closeup inserts: 2/2 queued | total: 8
+  kwisheen appearance lock: {"vael":{"skin":"royal violet","pattern":"iridescent speckle","iris":"silver-grey"},"korrin":{"skin":"burnished gold","pattern":"pale rosette blooms","iris":"deep amber"}}
+  images captured (hero): 6
+  ── phase plan ──
+    phase 0: li=absent | chars=[protagonist,Korrin] | Orientation
+    phase 1: li=absent | chars=[protagonist,Korrin] | Revelation (page-turn)
+    phase 2: li=absent | chars=[protagonist,Korrin] | Transformation
+    phase 3: li=absent | chars=[protagonist,Korrin] | Consequence
+    phase 4: li=absent | chars=[protagonist,Korrin] | Threat
+    phase 5: li=absent | chars=[protagonist,Korrin] | Decision
+  ── hero renders (anchor decision) ──
+  ── beat count: 24 (target 20–30, floor 18) ──
+  ── scene-1 axis ──
+    bespokeAxis: (none)
+    microDecision.prompt: Confront him with words, or stay silent and watch?
+      • "Speak plainly" signal=direct+
+      • "Let silence hold" signal=subtle+
+  ── wardrobe grounding ──
+    pc_wardrobe: surface linen tunic and trousers billowing in current, water-breathing talisman glowing at throat
+    li_wardrobe: (blank/absent)
+    Korrin [kwisheen]: scaled shell-plate armor over loincloth studded with gems, tentacles shifting color
+  saved: 6 images + prose → /private/tmp/claude-501/-Users-romantsukerman-storybound-app/5b50dbf4-5fe5-4c80-ae8b-5a341feb3c62/scratchpad/e2e
+  ────────────────────────────────────────────────────────────
+

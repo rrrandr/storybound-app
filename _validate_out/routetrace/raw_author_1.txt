@@ -1,0 +1,33 @@
+[TITLE: "The Wish That Named Her"]
+[SYNOPSIS: In the Veilwood clearing where First Favored youths offer their first memories to Fate, Lirael stands sealed as Sacrificiant over her ward’s rite. When Seren turns the sacrifice outward and names Lirael’s hidden loss, the words twist through the only mouth that can answer them.]
+
+[CHARACTERS: Lirael:F, Seren:F, Julian:M]
+
+The Dohkar’s hand rose, palm open toward the mated veil-trees.  
+“Begin.”
+
+Seren knelt on the crimson spiralgrass, aqua skin luminous under her child’s gossamer. Her pale coral hair fell forward as she drew breath. She spoke the invocation we had rehearsed for months, each word aligned, each sacrifice named. I felt the room settle. My first supervision was holding.
+
+Then she lifted her head and looked straight at me.
+
+“I wish that Lirael find the one she lost,” she said. “Take what you will.”
+
+The Weave-Script across her throat stuttered once, then steadied. An old woman in the front rank drew both hands up as if to push the words back. Someone whispered, “Never hand Fate a blank page.”
+
+The spiralgrass at Seren’s knees darkened at the edges, the color draining upward into the stems. She blinked, once, and her mouth stayed open on the last syllable as though the sound had been taken from her.
+
+Julian did not move from the clearing’s edge, but his silver Weave-Script flared once along the line of his jaw.
+
+I felt the band across my mouth pull tight against my teeth. The Dohkar’s eyes found mine. The assembly drew the only conclusion the moment allowed: the wish had been about me, and I had let it stand.
+
+My fingers found the knot at the back of my head. The cloth tore free with a soft rip that sounded louder than any invocation. I stepped toward Seren before the Dohkar could speak.
+
+Confess my truth or bury it deeper, risking everything I hold dear?
+
+My hand tightened around my great-grandmother’s old tarot deck. I didn't remember bringing it. I toyed with the idea of letting the cards decide.
+
+<<EXPANSION_A>>
+I met the Dohkar’s stare and said the name of the person I had lost aloud, the one truth the wish had forced into the open.
+<<EXPANSION_B>>
+I lowered my eyes and let the silence stretch, letting every witness read my stillness as the only answer I would give.
+<<END_EXPANSION>>

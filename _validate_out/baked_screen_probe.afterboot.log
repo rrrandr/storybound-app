@@ -1,0 +1,92 @@
+[BAKED] starter-scenes.js loaded — 3 package(s), 2 still PLACEHOLDER: starter_the_first_taste, starter_glass_house
+%c[STORYBOUND TELEMETRY] Console helpers ready:
+  copyConsole()              → copy all captured logs (last 5000)
+  copyConsole({filter:"NIL"})→ copy filtered subset
+  copyConsole({limit:50})    → copy last N lines
+  dum
+[STARTER] Launching "The First Sacrifice"
+[PHRASE-LEDGER] seeded 9 starter cooldown item(s).
+[STARTER] fixed-cast names from STARTER_SEEDS: playerName=Lirael loveInterestName=Julian
+[STARTER] Locked pre-written title: The First Sacrifice
+[BAKED] mounting Scene 1 — starter_first_sacrifice v1.8.0-editorial
+[SCENE-AMB] baked Scene 1 → neutral_quiet (packaged; classifier suppressed)
+[LEDGER:ADMIT] baked opening — character-memory extractor deferred (no OpenAI request for a fixed opening; authored ledgerSeeds are the record)
+[SCENE-LEDGER] +p1 kind=baked issue=1 uid=pg:0e60fa28-fe41-492a-8521-0edb22917e2b planned="Seren’s misaligned wish for Lirael — “so that Lirael may fin"
+[BAKED:EMITTED] parked on state._bakedEmitted (no verified consumer yet): sceneSummary, openState, obligations, ledgerSeeds, calcification, axes, expansions
+[BAKED:IDENTITY] ledger entities for the seed cast: +3
+[FATE-CARDS:PLOT-CTX] archetype=SPELLBINDER · ST=ST1 · intimacy=false · aplot=– · truth=– · grievances=0 · callbacks=0 · scars=0 · gravity=orbit · axis-lead=– · fateOAS=–
+[BAKED:OAS] handoff affordance mounted — this is the CG Book's gate
+[BAKED:OAS] handoff tapped — entering the one-on-one
+[BAKED:GATE] signed in — The one-on-one at 15F (starter=starter_first_sacrifice)
+[BAKED] Scene 1 committed to story state (turnCount=0, scenes=1)
+[BAKED:OAS] handoff tapped — entering the one-on-one
+[INTIMACY-INIT:PLAN-SHAPE] {"hasBeats":true,"beatCount":0,"hasVisualState":false,"hasInterruption":true,"is_consummate_scene":true,"engine":"literary","renderMode":"staged_story_mode","storyturn":"ST1"}
+[INTIMACY-INIT:AUTHORED-FRAME] frame=1153ch cue=118ch
+[INTIMACY-DIALOGUE:WOUND] not eligible (encounter #1, cooldown_clear=true)
+[INTIMACY-DIALOGUE:TELEMETRY] started {type: started, timestamp: 1789344524440, storyId: 00f6dc54-9ae8-4930-bf06-f02067413794, sceneIdx: 0, storyturn: ST1}
+[OAS-AUDIO] started @ curious — breath silent until mouth opens
+[INTIMACY-DIALOGUE] Mouth DB miss — checking cross-user Supabase bank + starting background prebatch. UI proceeds with placeholders.
+[INTIMACY-DIALOGUE:TELEMETRY] mouth_db_miss_nonblocking {type: mouth_db_miss_nonblocking, timestamp: 1789344524440, storyId: 00f6dc54-9ae8-4930-bf06-f02067413794, sceneIdx: 0, storyturn: ST1}
+[INTIMACY-MOUNT] staged Book → gnReader (single reader screen)
+[INTIMACY-MOUNT] gnPanelDisplay exists: true visible: true
+[OAS-LLM] Mode: FAST (speed chain)
+[OAS-LLM] mistral-small@180 ok
+[INTIMACY-OPENER] Delivered: "You called to me. Say it plainly, here, where they can hear." | face: closed_smile
+[INTIMACY-DIALOGUE] Rehydrating OAS UI (beat 0, temp curious)
+[OAS:HEARTBEAT-PULSE] temperature=curious period=920ms amp=0.4 (wrap=true, log=true)
+[INTIMACY-DIALOGUE] Crossfade → closed_smile (peak=false, whitePeek=false, 2ndConsec=false, streak=0)
+[STAGED:GUARD] literary Submit refused on a staged Book — the story continues through its own Submit
+[FATE:ENGAGEMENT] submit#1 mode=cg | reliance=0.00 (0clicks/1submits) | distinctThisTurn=0 | pauseAfterClick=- | hedging=no
+[INTIMACY-DIALOGUE] Sniffer → reasoning (pattern 0: "mother")
+[OAS:TRANSMUTE:AMP] level=medium score=32 factors=[world_high_register(+15), pov_first(-8), temp_curious(-5), world_floor_raised_low_to_medium] budget={"embellishments":1,"metaphors":0,"callback":false,"max_chars_added":
+[OAS:PC-EXPLICIT] turn=0 mode=default detected=false recent=0
+[OAS:SPECULATIVE:GATE] INCLUDE alternates (only 0 prior card-clicks — defaulting to include)
+[INTIMACY-DIALOGUE] Routing: beat=1, opening=true, sniffer=true, noise=false, plotDeflect=false → REASONING
+[OAS-LLM] Mode: REASONING (depth chain)
+[STAGED:SUBMIT] Routed to intimacy dialogue turn handler
+[A-PLOT:SEEDED] derived from STARTER_PLANS.starter_first_sacrifice (20 scenes; force="the presiding Dohkar") — generator NOT called
+[OAS-LLM] Grok (grok-4-1-fast-reasoning) ok
+[INTIMACY-DIALOGUE] LLM raw response (first 400 chars): {"goal":"she understands the wish has already begun to cost her something she cannot name","antagonistOrAntiForce":"the assembly","milestones":[],"scenes":[],"timel
+[INTIMACY-DIALOGUE] li_dialogue sanitized to empty — falling back. Raw response (first 500 chars): {"goal":"she understands the wish has already begun to cost her something she cannot name","antagonistOrAntiForce":"the a
+[INTIMACY-DIALOGUE] using soft-deflect fallback (unparseable response)
+[INTIMACY-STATE] v2 turn 1 | charge 3 esc 14 edge 0 emo 0 | release (not-declared)(regex_fallback) relConf 0 rel# 0 | → open  [normal]
+[OAS:HEARTBEAT-PULSE] temperature=curious period=920ms amp=0.4 (wrap=true, log=true)
+[INTIMACY-DIALOGUE:TELEMETRY] turn {type: turn, timestamp: 1789344534053, storyId: 00f6dc54-9ae8-4930-bf06-f02067413794, sceneIdx: 0, storyturn: ST1}
+[INTIMACY-DEV] fate-card cache reset for next turn (seed=391)
+[INTIMACY-DIALOGUE] Crossfade → closed_smile (peak=false, whitePeek=false, 2ndConsec=true, streak=0)
+[FATE:ENGAGEMENT] submit#2 mode=cg | reliance=0.00 (0clicks/2submits) | distinctThisTurn=0 | pauseAfterClick=- | hedging=no
+[INTIMACY-DIALOGUE] Sniffer → reasoning (pattern 12: "tonight")
+[OAS:LI-AGENCY] trigger=distract fire#1 (beat 2)
+[OAS:TRANSMUTE:AMP] level=medium score=32 factors=[world_high_register(+15), pov_first(-8), temp_curious(-5), world_floor_raised_low_to_medium] budget={"embellishments":1,"metaphors":0,"callback":false,"max_chars_added":
+[OAS:PC-EXPLICIT] turn=0 mode=default detected=false recent=0
+[OAS:SPECULATIVE:GATE] INCLUDE alternates (only 0 prior card-clicks — defaulting to include)
+[INTIMACY-DIALOGUE] Routing: beat=2, opening=false, sniffer=true, noise=false, plotDeflect=true → FAST+PLOT-DEFLECT
+[OAS-LLM] Mode: FAST (speed chain)
+[STAGED:SUBMIT] Routed to intimacy dialogue turn handler
+[OAS-LLM] mistral-small@180 ok
+[INTIMACY-DIALOGUE] LLM raw response (first 400 chars): {"goal":"she understands the wish has already begun to cost her something she cannot name","antagonistOrAntiForce":"the assembly","milestones":[],"scenes":[],"timel
+[INTIMACY-DIALOGUE] li_dialogue sanitized to empty — falling back. Raw response (first 500 chars): {"goal":"she understands the wish has already begun to cost her something she cannot name","antagonistOrAntiForce":"the a
+[INTIMACY-DIALOGUE] using soft-deflect fallback (unparseable response)
+[INTIMACY-STATE] v2 turn 2 | charge 7 esc 19 edge 8 emo 0 | release (not-declared)(regex_fallback) relConf 0 rel# 0 | → open  [normal]
+[OAS:HEARTBEAT-PULSE] temperature=curious period=920ms amp=0.4 (wrap=true, log=true)
+[INTIMACY-DIALOGUE] Repetition guard: closed_smile (same as prev) → resting
+[INTIMACY-DIALOGUE:TELEMETRY] turn {type: turn, timestamp: 1789344537110, storyId: 00f6dc54-9ae8-4930-bf06-f02067413794, sceneIdx: 0, storyturn: ST1}
+[INTIMACY-DEV] fate-card cache reset for next turn (seed=6305)
+[INTIMACY-DIALOGUE] Crossfade → resting (peak=false, whitePeek=false, 2ndConsec=false, streak=0)
+[FATE:ENGAGEMENT] submit#3 mode=cg | reliance=0.00 (0clicks/3submits) | distinctThisTurn=0 | pauseAfterClick=- | hedging=no
+[INTIMACY-EXIT] Modal opened (trigger=text)
+[STAGED:SUBMIT] Routed to intimacy dialogue turn handler
+[INTIMACY-DIALOGUE:TELEMETRY] resolved {type: resolved, timestamp: 1789344541691, storyId: 00f6dc54-9ae8-4930-bf06-f02067413794, sceneIdx: 0, storyturn: ST1}
+[OAS-AUDIO] stopped
+[OAS:ARCHIVE] Snapshot saved at scene index 0 — 2 beats, reason=cap
+[INTIMATE-INTERRUPT] mounted host=cg image=d3 lines=3
+[INTIMATE-INTERRUPT] five heightened options landed
+[INTIMATE-INTERRUPT] card confession → Say/Do filled (editable)
+[FATE:ENGAGEMENT] submit#4 mode=cg | reliance=0.00 (0clicks/4submits) | distinctThisTurn=0 | pauseAfterClick=- | hedging=no
+[SCENE-DECISION] scene 1 → posture (interruption_submit)
+[SCENE-LEDGER] +p1 kind=oas_interrupt issue=1 uid=none planned="The presiding Dohkar cut the interrogation off — a Provast q"
+[INTIMATE-INTERRUPT] submitted card=confession action="CONF-OPT-ACTION: I look at Julian and not at the Dohkar" dialogue="CONF-OPT-LINE: I did call to you."
+[STAGED:SUBMIT] _cgScreenplayMode is ON — using screenplay-native generator (skipping literary submit)
+[CG:SCREENPLAY:USER-PROMPT]
+
+LORE FIDELITY (HARD — ALL worlds): render any ESTABLISHED world element — a place, creature, institution, faction, history, or magic / technology / social system — ONLY as THIS story's canon 

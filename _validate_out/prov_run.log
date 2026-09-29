@@ -1,0 +1,16 @@
+[preflight] output dir writable: _validate_out/provenance_run
+[baseline] SCENE 1 — real generation…
+  [author response 1] 366 chars captured
+  [author response 2] 366 chars captured
+  scene 1 final: 806 chars   spend=$0.059
+[baseline] SCENE 2 — real generation…
+  [author response 3] 366 chars captured
+  [author response 4] 366 chars captured
+  settled: page text stable at 1335
+  scene 2 final: 528 chars
+
+════ BASELINE CAPTURE ════
+  scene 1: 806 chars   scene 2: 528 chars
+  raw author responses captured: 4
+  total spend: $0.065
+  → _validate_out/provenance_run/scene1_final.txt · scene2_final.txt · raw_author_*.txt

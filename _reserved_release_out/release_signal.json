@@ -1,0 +1,24 @@
+{
+  "count": 1,
+  "first": {
+    "truthIndex": 15,
+    "markers": [
+      "dohkar",
+      "sacrificiant",
+      "chayr",
+      "open",
+      "fateland"
+    ],
+    "text": "LIRAEL’S FORMAL INQUIRY — WHERE AND WHEN: the presiding Dohkar has asserted the rite and the ruling on the Sacrificiant’s conduct are his, and Julian has publicly claimed authority"
+  },
+  "release": {
+    "dueScene": 14,
+    "eventId": "inquiry_opened",
+    "via": "reservedEvents row n=14",
+    "matchedMarkers": [
+      "dohkar",
+      "chayr",
+      "open"
+    ]
+  }
+}

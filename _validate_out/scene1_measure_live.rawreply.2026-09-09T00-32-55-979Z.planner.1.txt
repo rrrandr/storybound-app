@@ -1,0 +1,62 @@
+{
+  "opening_spine": {
+    "pressure_source_type": "survival",
+    "pressure_source": "the oven vent is rattling and the last ferry horn is already sounding across the water",
+    "hook_object": null,
+    "opening_actor_id": null,
+    "opening_beat": "The oven vent is rattling and the ferry horn is sounding across the water.",
+    "rising_beats": [
+      "I reach for the phone with flour still on my knuckles.",
+      "Rook's office number sits on the screen from the last time he made the clerk deliver notice."
+    ],
+    "decision_beat": "Call the office or let the line stay dead?",
+    "pc_career": "pastry chef",
+    "opening_setting": "cafe kitchen",
+    "environment_elements": ["steel prep table", "oven vent"],
+    "li_texture_beat": "beat 1: the way he had the clerk deliver the notice with his own pen still in the margin — my stomach tightened",
+    "pc_wound_anchor": "beat 1: the silence after the horn bothered her more than it should have",
+    "pc_self_presentation_beat": "opening: I wiped my hands on the apron twice, the way I always did when the room felt too empty — let the mirror call it nerves if it wanted to",
+    "scene_want": "wants the phone to stay dark one minute longer",
+    "scene_mission": "Get through the call without saying her sister's name out loud.",
+    "reader_state": {
+      "knows": "Testa is alone in the cafe kitchen as the ferry horn sounds",
+      "believes": "Rook's move has already landed and the ferry is leaving",
+      "wondering": "why she is still thinking about calling him",
+      "must_not_confuse": "Testa is the only person in the room and the horn is outside"
+    },
+    "pc_body_callback": "opening: stress_tic (flour on knuckles)",
+    "antagonist_body_callback": null,
+    "staged_characters": [
+      { "name": "Testa", "presence": "IN_PERSON", "anchor_beat": "FROM_PC_OPENING_FUSION" }
+    ]
+  },
+  "scene_skeleton": {
+    "character_plus": [],
+    "environment_plus": {
+      "target": "oven vent",
+      "axis": "damage",
+      "beat": "oven vent is rattling from the storm wind that has already reached the harbor"
+    },
+    "pc_opening_fusion": {
+      "character": "Testa",
+      "placement": "PC_FIRST_EMBODIED_BEAT",
+      "contact": { "verb": "WIPE", "object": "{ENV_TARGET}" },
+      "action": "wiped flour from the steel prep table",
+      "pc_lens_operation": "INWARD_TRANSLATION_OF_ANOTHER_PERSONS_COST",
+      "character_revelation": "Testa feels the cost of the ferry leaving before she has decided what to do about it",
+      "environment_pressure": {
+        "grounds": ["env:damage", "pc:self"],
+        "text": "the rattling forces me to decide whether to reach for the phone before the sound stops"
+      }
+    }
+  },
+  "stage_contract": {
+    "v": 1,
+    "participants": [
+      { "ref": "pc:self", "presence": "IN_PERSON" }
+    ],
+    "event_facts": [
+      { "text": "the oven vent rattles as the ferry horn sounds", "participants": [ { "ref": "pc:self", "role": "actor" } ] }
+    ]
+  }
+}

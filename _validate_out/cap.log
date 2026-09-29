@@ -1,0 +1,19 @@
+[preflight] output dir writable: _validate_out/capture_proof
+[baseline] SCENE 1 — real generation…
+  [author response 1] 323 chars captured
+  [author response 2] 323 chars captured
+  [scene1] lastWriter=grokLiteraryAuthor len=323
+  scene 1 final: 832 chars   spend=$0.064
+[baseline] SCENE 2 — real generation…
+  [author response 3] 318 chars captured
+  [author response 4] 318 chars captured
+  settled: page text stable at 1325
+  rawSnap records: 42
+  [scene2] lastWriter=pageContent len=678
+  scene 2 final: 492 chars
+
+════ BASELINE CAPTURE ════
+  scene 1: 832 chars   scene 2: 492 chars
+  raw author responses captured: 4
+  total spend: $0.069
+  → _validate_out/capture_proof/scene1_final.txt · scene2_final.txt · raw_author_*.txt

@@ -1,0 +1,233 @@
+{
+  "dump": {
+    "sceneNumber": 2,
+    "planScenes": [
+      {
+        "n": 1,
+        "goal": "The First Sacrifice begins (hot crisis). The youth suddenly falls into catastrophic misalignment; every experienced First Favored recognizes the signs. The impossible happens instead — the wish succeeds cleanly. The crowd turns on the PC."
+      },
+      {
+        "n": 2,
+        "goal": "The ceremony collapses into accusations; the PC tries to explain something she does not understand herself."
+      },
+      {
+        "n": 3,
+        "goal": "Evidence begins to point toward deliberate interference."
+      },
+      {
+        "n": 4,
+        "goal": "The elders formally begin investigating the PC."
+      },
+      {
+        "n": 5,
+        "goal": "Julian quietly prevents the investigation from uncovering the truth."
+      },
+      {
+        "n": 6,
+        "goal": "The PC discovers the wish succeeded in a way that should have been impossible."
+      }
+    ],
+    "planKeys": [
+      "issue",
+      "scenes"
+    ],
+    "assignmentLive": {
+      "event": "The ceremony collapses into accusations; the PC tries to explain something she does not understand herself.",
+      "setting": null,
+      "participants": null,
+      "props": null,
+      "stateChange": null,
+      "source": "plan-scene",
+      "sceneNumber": 2
+    },
+    "assignmentStored": null,
+    "spineEventVerbatim": null,
+    "spineStaging": null,
+    "sceneSkeleton": null,
+    "sceneIntent": null,
+    "sceneMissionCurrent": "Survive the gathering without revealing her shame.",
+    "seedKeys": [
+      "issue",
+      "cast",
+      "worldTruths",
+      "sceneOne",
+      "visualCanon",
+      "truths",
+      "dramaticTruth",
+      "constraints"
+    ],
+    "seedWorldTruths": [
+      "A First Sacrifice is a COMING-OF-AGE RITE — closest analogue a Bar Mitzvah / quinceañera / confirmation / graduation, NOT a death ritual. At 16 (younger minds are too unformed to wish safely) a youth, after long study and practice, publicly makes their first wish and offers its price to Fate. It can be stern and formal, but when it goes well it ENDS IN CELEBRATION; catastrophe is UNUSUAL — everyone understands the safeguards the way we understand fire drills. Do NOT default to disaster, apocalypse, curses, or world-ending stakes.",
+      "First Favored are hired to GUIDE and SUPERVISE the rite — their alignment-sense and powerful wish-strength make them the preferred (and pricier) choice over human or Kwisheen wishcraft scholars. The supervisor reads the alignment of EVERYONE present, above all the wishing youth, ready to HALT and re-align the wish before it can twist.",
+      "The supervisor is a SACRIFICIANT (the role): one whose misalignment-sense is honed enough to supervise (the PC is an apprentice Sacrificiant). THE SACRIFICIANT SEAL — worn by whoever supervises, during ANY official First Sacrifice rite: because a supervisor bolstering the youth’s sacrifice with a wish of their OWN would be a ruinous breach, every Sacrificiant is ceremonially SEALED for the rite — a gossamer BAND drawn across the mouth and tied behind the head (just cloth, part of their ceremonial sash; NO orb, NO bead, NO gag), so they cannot cleanly voice a wish while officiating. Vestments are otherwise the same sheer gossamer as everyone, with ONE ornamented ceremonial SASH (never robes). LITERARY: a sealed Sacrificiant’s cries and speech are MUFFLED behind the cloth — emotion reads through the eyes and body. CG: the mouth-band is drawn IN on the supervising Sacrificiant for the duration of the rite.",
+      "ALIGNMENT-SENSE (the First Favored gift): they do NOT read thoughts or emotions — they perceive ALIGNMENT, how far a person’s desire, intention, sacrifice, and deepest self all point at one truth. Misalignment is as unmistakable to them as a sour note in music."
+    ],
+    "aPlotKeys": [
+      "tier",
+      "pattern",
+      "goal",
+      "namedClock",
+      "clockUnit",
+      "totalClockUnits",
+      "timelineLength",
+      "currentTurn",
+      "milestones",
+      "stakesIfFail",
+      "stakesIfWin",
+      "resolutionShape",
+      "cliffhangerHook",
+      "antagonistOrAntiForce",
+      "antagonistPersonalTie",
+      "antagonistShape",
+      "personalStakePC",
+      "personalStakeLI",
+      "plotShape",
+      "pcWound",
+      "liWound",
+      "woundSurfacingMechanism",
+      "woundLoadBearingProof",
+      "pcWoundCategory",
+      "liWoundCategory",
+      "liEmotionalNeedFromPC",
+      "pcUnknowinglySatisfies",
+      "naturalSeparationBeats",
+      "naturalProximityBeats",
+      "sourceWorld",
+      "sourceFlavor",
+      "sourceWorldSubtype",
+      "generatedAt",
+      "continuationOf",
+      "storyShape",
+      "storyShapeLabel",
+      "readerQuestion",
+      "romanceEngine",
+      "desireQuestion",
+      "scene1Compressed",
+      "_woundLIIntegration"
+    ],
+    "aPlot": {
+      "tier": "fling",
+      "pattern": "B",
+      "goal": "Repair the fractured vow-bond exposed at the gathering before its misalignment triggers a cascade of failed alignments across the First Favored, while navigating the mining claim that now binds their fates to the same contested arcane vein.",
+      "namedClock": "the next full Alignment Reading cycle",
+      "clockUnit": "cycles",
+      "totalClockUnits": 5,
+      "timelineLength": 40,
+      "currentTurn": 0,
+      "milestones": [
+        {
+          "atScene": 5,
+          "atPercent": 12,
+          "kind": "setup",
+          "event": "The alignment reading at the gathering names Lirael's buried betrayal and tags Julian's presence as the only stable thread; they are magically bound to the same vein claim.",
+          "emotional_conductivity": "PC feels the old shame flare while Julian's steady gaze offers the first unjudged witness she has known in years.",
+          "triggered": false
+        },
+        {
+          "atScene": 18,
+          "atPercent": 45,
+          "kind": "midpoint_reversal",
+          "event": "Julian's ex arrives at the vein site claiming prior bond rights and demands they both submit to a joint reading that will expose more of their private alignments.",
+          "emotional_conductivity": "Julian's charm cracks for the first time in front of Lirael; she glimpses the doubt he hides and feels the pull to answer it with her own visibility.",
+          "triggered": false
+        },
+        {
+          "atScene": 30,
+          "atPercent": 75,
+          "kind": "dark_night",
+          "event": "A successful partial realignment of their bond causes the mining extraction to destabilize, threatening to swallow the site and forcing them to choose between saving the claim or protecting the fragile thread between them.",
+          "emotional_conductivity": "The correct strategic choice wounds their new closeness; she must risk being seen as the one who might abandon him again.",
+          "triggered": false
+        },
+        {
+          "atScene": 35,
+          "atPercent": 88,
+          "kind": "crisis",
+          "event": "The ex's final reading attempt twists the bond further; Lirael and Julian must decide whether to let the alignment fail publicly or sacrifice the vein to keep the thread intact.",
+          "emotional_conductivity": "The value flip lands: winning the claim would sever the bond they have just begun to trust; losing it together forces the visibility neither expected.",
+          "triggered": false
+        },
+        {
+          "atScene": 38,
+          "atPercent": 95,
+          "kind": "resolution",
+          "event": "They choose the bond over the claim; the ex departs with the mining rights while the fractured thread between Lirael and Julian stabilizes into something new and visible only to them.",
+          "emotional_conductivity": "The resolution costs the external victory but grants the intimacy they both feared; a quiet coordination rhythm emerges as they walk away from the site together.",
+          "triggered": false
+        },
+        {
+          "atScene": 40,
+          "atPercent": 100,
+          "kind": "resolution",
+          "event": "The stabilized bond reveals a faint new sigil neither recognizes, hinting the ex's departure was only the first layer of the misalignment.",
+          "emotional_conductivity": "Post-completion consequence: their hard-won visibility now carries an unknown future weight that neither can ignore.",
+          "triggered": false
+        }
+      ],
+      "stakesIfFail": "The bond fractures permanently, the vein's mining claim collapses into chaos, and both are left more isolated than before with their wounds on public display.",
+      "stakesIfWin": "The bond realigns but only after they have each chosen to be seen, leaving the mining rights intact yet their old certainties about love and trust permanently altered.",
+      "resolutionShape": "complete-plus-cliffhanger",
+      "cliffhangerHook": "The new sigil on their bond points toward a deeper wish neither remembers making, promising the alignment failure was never about the ex alone.",
+      "antagonistOrAntiForce": "Julian's former partner who left him for stability and now claims the vein as her new bond's anchor",
+      "antagonistPersonalTie": "she is the ex who abandoned Julian for someone more stable [Shape B — agent surfacing his wound while exploiting Lirael's public exposure]",
+      "antagonistShape": "B",
+      "personalStakePC": "her five-year-old public betrayal resurfaces for the entire circle, threatening the fragile visibility she craves with Julian",
+      "personalStakeLI": "his lingering doubt about worthiness for love is forced into the open when his ex's return reframes every alignment reading of their bond",
+      "plotShape": "FORCED_ARRANGEMENT",
+      "pcWound": "the betrayal of her closest friend, who exposed her vulnerabilities to their social circle; she has carried this pain for five years.",
+      "liWound": "his partner left him for someone more stable, leaving him with a lingering doubt about his worthiness for love, a pain he carries quietly.",
+      "woundSurfacingMechanism": "The gathering's alignment reading detonates Lirael's buried betrayal into public view while a casual mention of stable partnerships drags Julian's old doubt into the same moment, forcing them into a magically binding arrangement over the contested vein.",
+      "woundLoadBearingProof": "WOUND: the betrayal of her closest friend who exposed her vulnerabilities to their social circle. CIRCUMSTANCE: the alignment reading at the gathering reveals the secret and implicates the bond with Julian. DEPENDENCY: Without this wound, Julian would not be the one whose hidden doubt mirrors her exposure and forces her to test visibility with him rather than retreat alone.",
+      "pcWoundCategory": "PUBLIC",
+      "liWoundCategory": "PARTNER",
+      "liEmotionalNeedFromPC": "Her visible hopefulness even when hope is unwarranted fascinates him because it embodies the courage he lost, letting him witness someone embrace complexity without fear of judgment.",
+      "pcUnknowinglySatisfies": "Her meaning-hungry way of treating every coincidence as a sign unknowingly answers his hunger by showing her embrace her own contradictions openly, the exact authenticity his wound craves.",
+      "naturalSeparationBeats": [
+        "Julian must oversee the ex's departure from the vein while Lirael reports the alignment shift to the First Favored",
+        "Lirael is summoned to a private reading that bars outside witnesses for one full cycle"
+      ],
+      "naturalProximityBeats": [
+        "The binding oath forces them to share a single extraction tent while the vein is stabilized",
+        "A sudden alignment surge traps them together in the reading chamber until the thread calms"
+      ],
+      "sourceWorld": "Fantasy",
+      "sourceFlavor": "Arcane Binding",
+      "sourceWorldSubtype": "arcane_binding",
+      "generatedAt": 1787035167623,
+      "continuationOf": null,
+      "storyShape": "FAMILY_INTRUSION",
+      "storyShapeLabel": "Family Intrusion",
+      "readerQuestion": "Who is this person and what do they want?",
+      "romanceEngine": "COLLISION",
+      "desireQuestion": "What present-tense force is already pressing on her — and (if known adversaries) how is HE behind it?",
+      "scene1Compressed": {
+        "pressure_sentence": "She stands in the gathering, the weight of betrayal heavy in her chest as eyes turn toward her.",
+        "emotional_consequence": "The humiliation of her past wounds resurfaces, leaving her feeling exposed and vulnerable in front of everyone.",
+        "li_entanglement_one_line": "He is the only one who knows the truth of her pain, and his silence cuts deeper than any words.",
+        "state_change_precondition": "No one yet knows the true nature of her betrayal — she fears it will remain hidden.",
+        "state_change": "The name of her betrayer is spoken aloud, sending a ripple of shock through the crowd.",
+        "forces_choice": "This event forces her to choose between confronting her betrayer directly or retreating into silence and shame.",
+        "branch_a_delete_test": "Confronting her betrayer becomes impossible if the name is never revealed to the crowd.",
+        "branch_b_delete_test": "Retreating into silence is no longer an option once the truth is laid bare in front of everyone.",
+        "generated_at": 1787035172399
+      },
+      "_woundLIIntegration": {
+        "verdict": "INTEGRATED",
+        "mode": "INTERACTION",
+        "interactionType": "mirrors",
+        "causeBasin": false,
+        "swapTest": "Replacing Julian with a different BEAUTIFUL_RUIN would break the wound's role, as his unique blend of grace and caution directly reflects her vulnerability and forces her to confront her pain in a way that another character could not.",
+        "link": "Julian embodies the hidden doubt that mirrors her exposure, making him the only one who can help her navigate her fear of vulnerability.",
+        "fix": "",
+        "ms": 3134
+      }
+    },
+    "narrativeState": null
+  },
+  "delivered": {
+    "SPINE_EVENT": null,
+    "SCENE_INTENT": null,
+    "SCENE_SPINE": null
+  },
+  "contSys": null
+}

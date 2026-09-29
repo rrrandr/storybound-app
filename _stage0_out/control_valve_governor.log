@@ -1,0 +1,46 @@
+
+══════════════════════════════════════════════════════════════════════════════════════════════
+BOUNDED PLANNER PROBE — First Sacrifice Scene 1 · 1 sequential samples
+══════════════════════════════════════════════════════════════════════════════════════════════
+ one real call per sample (the planner) · Grok hard-blocked · upstream mocked
+
+ ── SAMPLE 1 · SEEDED ──────────────────────────────────────────────────────────────────
+  network      : planner=1 real · mocked=13 · GROK attempts=0 · escaped=0
+  attempts     : undefined (no retry)
+  settle       : fatal · in-page /api fetches=18 · threw=no
+  usage        : n/a
+  cost         : n/a
+  SUPPLIED WHERE (seed-owned): Dawn in a Veilwood ceremony clearing: the long white weeping-willow veil-canopy drapes down from the
+  SUPPLIED PRESENT       : SEREN, kneeling — the youth making her First Sacrifice. Lirael's ward: they have trained together for months and she can (presenceOwner=seed)
+  eligible C+ recipients : ["Lirael","Julian","Seren","the presiding Dohkar"]
+  offstage (ineligible)  : []
+  RETURNED opening_setting: n/a
+  RETURNED staged cast    : n/a
+  C+ : n/a
+  E+           : n/a
+  fusion       : n/a
+  pc_opening_fusion (raw): n/a
+  alias resolves: none needed
+  envelope     : top-level as sent
+  STORED C+    : []
+  VALIDATION   : REJECTED — scaffold transport failed, not retryable: scaffold refused by quota governor: reservation_exceeds_model_allowance
+
+══════════════════════════════════════════════════════════════════════════════════════════════
+SCORECARD (post-resolution · product functions)
+══════════════════════════════════════════════════════════════════════════════════════════════
+
+ # | mode     | setting | no offstage | one C+ each | first_ment | angles | E+ grounded | fusion | INLINE | PRODUCT
+ 1 | seeded   |        (not computable: no resolved stage (aborted before resolution))
+
+ STAGE 0 · route=small · CAP=1 · real dispatches=1 · capped (aborted at route)=0
+   sample 1: model=mistral-small-latest bytes=73501 reserve=76422 max_tokens=2921 reasoning_effort="none" response_format={"type":"json_object"} http=507 GOVERNOR-REFUSED reservation_exceeds_model_allowance ms=2896
+
+ total real planner calls: 1
+ planner attempts        : undefined
+ GROK requests dispatched: 0  (attempts blocked at the route layer: 0)
+ escaped requests        : 0 (must be 0)
+ total spend             : $0.00000
+ inline/product agreement: CONSISTENT
+
+ artifacts: _stage0_out/control_valve_governor/sample{1..1}_{request,response,verdict}.json
+

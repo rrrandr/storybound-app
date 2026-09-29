@@ -1,0 +1,16 @@
+{
+  "placeholder": {
+    "slot": null,
+    "confidence": "none",
+    "evidence": [],
+    "reason": "no slot represented: the move is not an admission, an authority challenge, an unretreating want-claim, or a landed concealment — falling back to defaultEventFrame"
+  },
+  "raw": {
+    "slot": null,
+    "confidence": "none",
+    "evidence": [],
+    "reason": "no slot represented: the move is not an admission, an authority challenge, an unretreating want-claim, or a landed concealment — falling back to defaultEventFrame"
+  },
+  "laneId": "dohkar_preliminary_review",
+  "sourceSlot": null
+}

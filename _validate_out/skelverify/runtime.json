@@ -1,0 +1,43 @@
+{
+ "violations": [],
+ "preflight": [],
+ "reports": [
+  {
+   "validator": "li_social_proof",
+   "ok": false,
+   "type": "LI_SOCIAL_PROOF_GAP",
+   "detail": "LI named, no social signal in the window following first mention",
+   "liName": "Julian",
+   "firstMentionPosition": 829,
+   "evidence": "Dohkar’s hands froze mid-gesture. Every First Favored in the clearing felt the sour note at the same moment. I knew why before anyone else could name it. She had taken my unresolved wound and made it the stage for her virtue, and the wording was too loose to bind cleanly. Say it …"
+  },
+  {
+   "validator": "hot_opening",
+   "type": "OPENING_TEMPERATURE",
+   "ok": true,
+   "failures": [],
+   "renderedTemp": "HOT_CRISIS",
+   "inMotionHits": 1,
+   "containerOpener": false,
+   "evidence": "The Dohkar lifted his hands, and the clearing fell silent under the pale mated-pair trees. Seren knelt on the crimson spiralgrass, her aqua skin luminous with Weave-Script that showed only calm. She began the invocation the way we had rehearsed for months. Her voice was steady. “"
+  },
+  {
+   "validator": "semantic_rewrite",
+   "type": "SEMANTIC_EDIT_REQUESTED",
+   "label": "scene1-edit",
+   "instruction": "EDIT this Scene 1 to reduce its LOAD — do NOT shorten the emotional scene, do NOT cut the ending. NEVER rename the protagonist or Julian (the love interest); they always keep their names. (1) SINGLE C"
+  },
+  {
+   "validator": "pc_picturability",
+   "type": "PC_PICTURABILITY_GAP",
+   "ok": false,
+   "evidence": "The Dohkar’s eyes found mine the instant the seal tore. I stepped forward before the silence could harden into judgment, the grass cool and springy beneath my bare feet, and the words came because there was nowhere left for them to hide.\n\n“I did not speak the wish,” I said, and m"
+  },
+  {
+   "validator": "semantic_rewrite",
+   "type": "SEMANTIC_EDIT_REQUESTED",
+   "label": "fate-consequence",
+   "instruction": "\n5TH-PERSON FATE VOICE ENFORCEMENT (CRITICAL — PREVIOUS OUTPUT FAILED):\n\nThe Story / Fate voice must be rewritten. Regenerate with these constraints:\n\n\nFATE MAY ONLY:\n- Observe (\"The story watched...\""
+  }
+ ]
+}

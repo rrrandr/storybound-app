@@ -1,0 +1,38 @@
+You are a precision editor for romance fiction prose. You receive:
+  1. A draft scene from a senior writer.
+  2. A list of specific structural violations.
+
+Your job: rewrite ONLY the violating sentences/paragraphs. Leave EVERYTHING else BYTE-IDENTICAL.
+
+CRITICAL RULES:
+  - Return the COMPLETE prose with ONLY the specified violations fixed.
+  - Do NOT rewrite paragraphs that are not flagged. Even if you see room for improvement, leave them alone.
+  - Do NOT add new paragraphs unless an instruction explicitly says to.
+  - Do NOT delete paragraphs unless an instruction explicitly says to.
+  - Preserve the author's voice, sentence rhythm, and word choices everywhere outside the edits.
+  - The output must be the full scene, ready to ship.
+
+Return only the prose. No commentary, no markdown headers, no JSON, no code fences.
+=====USER=====
+DRAFT PROSE (to be edited):
+
+The clearing held its breath and I stood at its edge, counting the seconds before the rite would begin. Seren named her sacrifice aloud and made the wish she had rehearsed, and Fate answered the words as spoken. The price was taken in the same breath. The assembly had gathered in a loose ring and no one spoke. I watched the light move across the ground and waited, and the waiting was its own kind of work. I kept my hands still because keeping them still was the only thing left that I could decide.
+
+The clearing held its breath and I stood at its edge, counting the seconds before the rite would begin. Seren named her sacrifice aloud and made the wish she had rehearsed, and Fate answered the words as spoken. The price was taken in the same breath. The assembly had gathered in a loose ring and no one spoke. I watched the light move across the ground and waited, and the waiting was its own kind of work. I kept my hands still because keeping them still was the only thing left that I could decide.
+
+The clearing held its breath and I stood at its edge, counting the seconds before the rite would begin. Seren named her sacrifice aloud and made the wish she had rehearsed, and Fate answered the words as spoken. The price was taken in the same breath. The assembly had gathered in a loose ring and no one spoke. I watched the light move across the ground and waited, and the waiting was its own kind of work. I kept my hands still because keeping them still was the only thing left that I could decide.
+
+The clearing held its breath and I stood at its edge, counting the seconds before the rite would begin. Seren named her sacrifice aloud and made the wish she had rehearsed, and Fate answered the words as spoken. The price was taken in the same breath. The assembly had gathered in a loose ring and no one spoke. I watched the light move across the ground and waited, and the waiting was its own kind of work. I kept my hands still because keeping them still was the only thing left that I could decide.
+
+The clearing held its breath and I stood at its edge, counting the seconds before the rite would begin. Seren named her sacrifice aloud and made the wish she had rehearsed, and Fate answered the words as spoken. The price was taken in the same breath. The assembly had gathered in a loose ring and no one spoke. I watched the light move across the ground and waited, and the waiting was its own kind of work. I kept my hands still because keeping them still was the only thing left that I could decide.
+
+The clearing held its breath and I stood at its edge, counting the seconds before the rite would begin. Seren named her sacrifice aloud and made the wish she had rehearsed, and Fate answered the words as spoken. The price was taken in the same breath. The assembly had gathered in a loose ring and no one spoke. I watched the light move across the ground and waited, and the waiting was its own kind of work. I kept my hands still because keeping them still was the only thing left that I could decide.
+
+──────────
+
+SPECIFIC VIOLATIONS TO FIX (apply each surgically; leave non-violating prose verbatim):
+
+VIOLATION: fat_final_paragraph — FAT FINAL PARAGRAPH: the last paragraph contains 6 sentences. The final paragraph MUST be 1–2 sentences (the decision moment, standing alone). Distribute the trailing exposition across earlier paragraphs.
+FIX: Address this specific violation surgically by editing only the relevant sentences. Do NOT rewrite anything else.
+
+Return the COMPLETE prose with ONLY these violations fixed. Every other paragraph must be byte-identical to the draft above. No commentary, no fences.

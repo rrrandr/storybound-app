@@ -1,0 +1,21 @@
+{
+ "test": "Acceptance Test 0.5 \u2014 one scene, no unauthorized meaning creator",
+ "commit": "2a6150aba15ea5b6ee22a59a1f0112c7ba7289dc",
+ "app_js_sha256": "527334a7b7274883",
+ "contracts_sha256": "0385bf8e3b0dcb94",
+ "pens_removed": [
+  "clr",
+  "_repairLISocialProof",
+  "_repairHotOpening",
+  "_repairPCPicturability",
+  "_reauthored"
+ ],
+ "pens_active": [
+  "_cheapLineEdit",
+  "_repairLIPicturability",
+  "_repairLIRelationalValue",
+  "_repairCalcifiedMoves",
+  "_reflowSceneDialogueLLM"
+ ],
+ "success_condition": "no JUDGE wrote prose; every mutation inside its declared contract"
+}

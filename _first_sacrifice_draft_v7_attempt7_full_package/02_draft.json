@@ -1,0 +1,306 @@
+{
+  "packet_id": "first_sacrifice_source_packet",
+  "packet_version": "9.6.0-source-packet",
+  "draft_version": "draft-v7-full-package",
+  "generated_by": {
+    "tier": "primary",
+    "model": "grok-4-1-fast-reasoning",
+    "usage": {
+      "prompt_tokens": 11814,
+      "completion_tokens": 2536,
+      "total_tokens": 14689,
+      "prompt_tokens_details": {
+        "text_tokens": 11814,
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "cached_tokens": 192
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 339,
+        "audio_tokens": 0,
+        "accepted_prediction_tokens": 0,
+        "rejected_prediction_tokens": 0
+      },
+      "num_sources_used": 0,
+      "cost_in_usd_ticks": 217534000
+    }
+  },
+  "generated_at": "2026-09-18T23:04:45.741Z",
+  "draft": {
+    "scene1Candidate": {
+      "beats": [
+        {
+          "kind": "narration",
+          "speaker": null,
+          "image": "intro_lirael",
+          "text": "The dawn light bled across the clearing in thin gold threads, catching on the spiralgrass that ringed the ritual stone. I stood at its center in the embroidered sash my father once wore, the linen still stiff from storage, and the narrow mouth-band tied across my lower face so only my eyes could answer the assembly. This was my first time conducting the rite as Sacrificiant rather than observer, the first time the weight of the office path—Dohkar, then Chayr, then Provast—rested on my hands instead of his memory.",
+          "provenance": {
+            "kind": "generated_expression"
+          },
+          "objectClaims": []
+        },
+        {
+          "kind": "narration",
+          "speaker": null,
+          "image": "intro_lirael",
+          "text": "The band pressed cool against my lips and the sash sat heavy at my hips, its fringe brushing my thighs with every small shift. Cold air slipped under the linen where it met skin; the watching faces beyond the grass blurred into pale ovals, each one a witness I could not afford to disappoint. My pulse thudded once against the fabric, then steadied as I forced my shoulders level.",
+          "provenance": {
+            "kind": "generated_expression"
+          },
+          "objectClaims": []
+        },
+        {
+          "kind": "narration",
+          "speaker": null,
+          "image": "intro_seren",
+          "text": "Seren knelt on the stone in the precise posture drilled into her over months of rehearsal, spine straight, palms upturned, the pale silk of her shift arranged so no wrinkle betrayed uncertainty. Her face held the same composed stillness she had practiced before every mirror in the preparation chamber, a performance so flawless it almost hid the tremor I knew lived beneath it.",
+          "provenance": {
+            "kind": "generated_expression"
+          },
+          "objectClaims": []
+        },
+        {
+          "kind": "narration",
+          "speaker": null,
+          "image": "intro_seren",
+          "text": "Our eyes met for the briefest span. I lifted two fingers in the smallest gesture we had agreed on weeks ago, a signal that the rite would hold and that I stood ready beside her. She answered with the barest dip of her chin, the movement so slight only I would read the reassurance it carried back to me.",
+          "provenance": {
+            "kind": "generated_expression"
+          },
+          "objectClaims": []
+        },
+        {
+          "kind": "dialogue",
+          "speaker": "the_presiding_Dohkar",
+          "image": "intro_dohkar",
+          "text": "“Name the cost you offer,” the presiding Dohkar said. Seren answered at once: “I give the memory of my mother’s voice the night she sang me to sleep before the fever took her, the last time I heard it clearly.”",
+          "provenance": {
+            "kind": "generated_expression"
+          },
+          "objectClaims": []
+        },
+        {
+          "kind": "narration",
+          "speaker": null,
+          "image": "intro_dohkar",
+          "text": "The specific loss she spoke aloud struck deeper than any abstract vow could have. She had carried that single clear recollection like a private lantern through every year since her mother’s death; handing it over meant stepping into a darker corridor with no promise of light returned. I felt the cost settle between us like a shared breath neither of us could reclaim.",
+          "provenance": {
+            "kind": "grounded_inference",
+            "cites": "seren_goodness_needs_witness"
+          },
+          "objectClaims": []
+        },
+        {
+          "kind": "narration",
+          "speaker": null,
+          "image": "intro_julian",
+          "text": "At the outer ring of the gathering Julian stood motionless, the silver Provast pin catching the first light exactly as it had when my father wore the same office. He watched without shifting weight or drawing attention, the quiet posture of someone accustomed to respect arriving unasked.",
+          "provenance": {
+            "kind": "generated_expression"
+          },
+          "objectClaims": []
+        },
+        {
+          "kind": "narration",
+          "speaker": null,
+          "image": "intro_julian",
+          "text": "I noticed the line of his jaw and the way his attention rested on the stone without pressing, and I looked away before the awareness could settle into anything I would have to name later. The thought still slipped through anyway, warm and uninvited.",
+          "provenance": {
+            "kind": "generated_expression"
+          },
+          "objectClaims": []
+        },
+        {
+          "kind": "narration",
+          "speaker": null,
+          "image": "d1",
+          "text": "Seren began the invocation in the measured cadence we had rehearsed, each syllable placed exactly where the rite required. For those first clear lines the familiar rhythm steadied me; the fear that usually lived in the gap between knowing and doing stayed quiet.",
+          "provenance": {
+            "kind": "generated_expression"
+          },
+          "objectClaims": []
+        },
+        {
+          "kind": "narration",
+          "speaker": null,
+          "image": "d1",
+          "text": "I let the words pass through me, feeling only the cool weight of the sash and the faint scent of crushed spiralgrass rising from the stone. The assembly’s silence felt almost protective in that narrow window before anything could still go wrong.",
+          "provenance": {
+            "kind": "generated_expression"
+          },
+          "objectClaims": []
+        },
+        {
+          "kind": "dialogue",
+          "speaker": "Seren",
+          "image": "d2",
+          "text": "Seren spoke the wish aloud, her voice soft but carrying: “I spend this sacrifice so that Lirael may find the one she lost, and so that my family may see how deeply I honor the rite.” I heard the performed kindness in the phrasing and saw her glance toward the watching faces even as the words left her mouth; the true desire beneath was the approval those faces would give her, not the gift itself.",
+          "provenance": {
+            "kind": "generated_expression"
+          },
+          "objectClaims": []
+        },
+        {
+          "kind": "narration",
+          "speaker": null,
+          "image": "d2",
+          "text": "The misalignment pulled taut between us like a cord drawn too quickly. I felt the rite respond to the bent intention, the air around the stone thickening as the misspent offering began to seek its true target.",
+          "provenance": {
+            "kind": "generated_expression"
+          },
+          "objectClaims": []
+        },
+        {
+          "kind": "narration",
+          "speaker": null,
+          "image": "d2",
+          "text": "The force that answered was no gentle glow. A raw, twisting pressure gathered above the stone, cold and sharp as winter iron, and drove straight toward my chest with the clear intent to unmake something vital. It smelled of scorched linen and tasted metallic on the air I pulled in too fast.",
+          "provenance": {
+            "kind": "generated_expression"
+          },
+          "objectClaims": []
+        },
+        {
+          "kind": "narration",
+          "speaker": null,
+          "image": "d2",
+          "text": "The pressure struck the space directly before me, then halted with no visible cause, leaving only a faint ripple across the spiralgrass and the sudden absence of the threat. No hand, no counter-spell, no sound explained why the force had stopped short; the residue hung in the air, a question with no answer yet.",
+          "provenance": {
+            "kind": "generated_expression"
+          },
+          "objectClaims": []
+        },
+        {
+          "kind": "dialogue",
+          "speaker": "the_presiding_Dohkar",
+          "image": "d3",
+          "text": "“You shaped the wish for your own benefit and interfered in the rite,” the presiding Dohkar said, voice carrying across the clearing. “The misfire reached for you and halted only when you chose; the assembly saw it.”",
+          "provenance": {
+            "kind": "generated_expression"
+          },
+          "objectClaims": []
+        },
+        {
+          "kind": "narration",
+          "speaker": null,
+          "image": "d3",
+          "text": "Seren’s mother’s sister took one deliberate step backward, her hand closing around her daughter’s wrist and pulling the girl closer as if shielding her from me. The gesture landed like a verdict spoken without words.",
+          "provenance": {
+            "kind": "generated_expression"
+          },
+          "objectClaims": []
+        },
+        {
+          "kind": "narration",
+          "speaker": null,
+          "image": "d3",
+          "text": "The path I had carried since childhood—Dohkar, Chayr, Provast—tilted beneath me, yet even as the ground shifted some part of my attention still tracked the figure at the edge of the gathering, waiting for what Julian would do.",
+          "provenance": {
+            "kind": "grounded_inference",
+            "cites": "pc_fears_public_failure"
+          },
+          "objectClaims": []
+        },
+        {
+          "kind": "dialogue",
+          "speaker": "Julian",
+          "image": "d4",
+          "text": "Julian’s voice reached us from the margin. “I can hear she is aligned with her own innocence. I will question her before you all so any misalignment will be plain.”",
+          "provenance": {
+            "kind": "generated_expression"
+          },
+          "objectClaims": []
+        },
+        {
+          "kind": "narration",
+          "speaker": null,
+          "image": "d4",
+          "text": "He stepped forward and drew The Answer from its sheath, the double-ended staff with its hooked question-mark heads at both ends catching the dawn light. He closed my hands around the cool shaft, his fingers steady over mine for the space of one breath.",
+          "provenance": {
+            "kind": "generated_expression"
+          },
+          "objectClaims": [
+            {
+              "object_ref": "the_answer",
+              "physical_form_claim": "staff_double_ended_question_mark_hooks",
+              "claim_kind": "locked_canon_fact",
+              "cites": "scene1_answer_manifestation.current_manifestation"
+            }
+          ]
+        },
+        {
+          "kind": "narration",
+          "speaker": null,
+          "image": "d4",
+          "text": "The weight settled into my palms, heavier than memory yet familiar in the way a tool becomes when the hand finally closes around it. I felt the assembly’s eyes on the staff and on me, and the open space between Julian’s claim and whatever came next.",
+          "provenance": {
+            "kind": "generated_expression"
+          },
+          "objectClaims": [
+            {
+              "object_ref": "the_answer",
+              "physical_form_claim": "neutral_reference",
+              "claim_kind": "locked_canon_fact",
+              "cites": "scene1_answer_manifestation.current_manifestation"
+            }
+          ]
+        }
+      ]
+    },
+    "scene1Coverage": {
+      "ceremony_setting": [
+        0
+      ],
+      "seren_kneeling_rehearsed": [
+        2
+      ],
+      "cost_offering_statement": [
+        4
+      ],
+      "julian_introduced": [
+        6
+      ],
+      "invocation_begins": [
+        8
+      ],
+      "wish_and_sacrifice": [
+        10
+      ],
+      "wish_visibly_twists": [
+        12
+      ],
+      "twist_unnaturally_arrested": [
+        13
+      ],
+      "public_charge": [
+        14
+      ],
+      "social_fallout_family_reaction": [
+        15
+      ],
+      "julian_claims_the_answer": [
+        17
+      ]
+    },
+    "first_person_lirael": true,
+    "oasOpening": {
+      "speaker": "Julian",
+      "text": "You kept glancing toward the eastern edge every time the invocation paused, and your fingers tightened on the sash fringe each time Seren’s voice faltered. Did you shape her words through that attention, hoping the rite itself would call me forward to shield you?",
+      "objectClaims": []
+    },
+    "postInterruptionBeat": {
+      "speaker": null,
+      "image": "d4",
+      "kind": "narration",
+      "text": "The Answer rested in my hands, its double hooks catching the light that had not yet reached the rest of the clearing. The presiding Dohkar’s voice still hung in the air, and Julian’s claim of a formal inquiry stood beside it like two blades crossed but not yet swung. I felt the weight of every gaze and the single unanswered question of what I would do with the staff I now held.",
+      "objectClaims": [
+        {
+          "object_ref": "the_answer",
+          "physical_form_claim": "neutral_reference",
+          "claim_kind": "locked_canon_fact",
+          "cites": "scene1_answer_manifestation.current_manifestation"
+        }
+      ]
+    }
+  }
+}

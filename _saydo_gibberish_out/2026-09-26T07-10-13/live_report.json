@@ -1,0 +1,221 @@
+{
+  "input": {
+    "action": "asdkfjh sdkfj lkjwer",
+    "dialogue": "qwerty zzzz aaaa"
+  },
+  "tierLog": [
+    "[SAYDO:GIBBERISH] action replaced with a graceful fallback — reason: Long consonant run (likely keyboard mash).",
+    "[SAYDO:GIBBERISH] dialogue replaced with a graceful fallback — reason: Too many repeated characters.",
+    "[SAYDO:GIBBERISH] tier=isolated streak=1 fields={\"action\":\"pure\",\"dialogue\":\"pure\"}"
+  ],
+  "beats": 0,
+  "proseChars": 0,
+  "cost": {
+    "reserved": 0.13999999999999999,
+    "realized": 0.010893400000000001,
+    "ceiling": 0.2,
+    "entries": [
+      {
+        "role": "scaffold",
+        "usd": 0.03,
+        "runningReserved": 0.03
+      },
+      {
+        "role": "author",
+        "usd": 0.09,
+        "runningReserved": 0.12
+      },
+      {
+        "role": "planner",
+        "usd": 0.02,
+        "runningReserved": 0.13999999999999999
+      }
+    ],
+    "refusals": [
+      {
+        "role": "author",
+        "amt": 0.09,
+        "wouldBe": 0.29000000000000004
+      }
+    ]
+  },
+  "caveat": "Routing and substitution were already dry-proven. This run measures only whether the fallback placeholder yields usable PROSE. Human judgement decides that; no keyword may certify it.",
+  "results": [
+    {
+      "name": "the REAL _detectGibberish classifies the chosen ACTION as gibberish",
+      "pass": true
+    },
+    {
+      "name": "...and the chosen DIALOGUE",
+      "pass": true
+    },
+    {
+      "name": "...and each verdict carries the detector's own reason",
+      "pass": true
+    },
+    {
+      "name": "_sayDoGibberishFallback returns the documented ACTION placeholder",
+      "pass": true
+    },
+    {
+      "name": "...and the documented DIALOGUE placeholder",
+      "pass": true
+    },
+    {
+      "name": "NEGATIVE — an ordinary sentence is NOT detected and NOT substituted",
+      "pass": true
+    },
+    {
+      "name": "the handler reads the gn* inputs and sanitizes them first",
+      "pass": true
+    },
+    {
+      "name": "...then reassigns BOTH fields through the fallback",
+      "pass": true
+    },
+    {
+      "name": "...inside the real Submit click listener",
+      "pass": true
+    },
+    {
+      "name": "the Submit handler invokes the tiered policy exactly ONCE",
+      "pass": true
+    },
+    {
+      "name": "...and placeholder application is confined to the policy plus one guarded legacy fallback",
+      "pass": true
+    },
+    {
+      "name": "THE REAL SAY/DO CONTROLS ARE REACHABLE — required, because the substitution lives only in the Submit handler and no generator shortcut may stand in for it",
+      "pass": true
+    },
+    {
+      "name": "the real Submit produced at least a planner request",
+      "pass": true
+    },
+    {
+      "name": "RAW GIBBERISH APPEARS IN NO PAYLOAD — neither field, anywhere",
+      "pass": true
+    },
+    {
+      "name": "the SUBSTITUTED placeholders reach the real AUTHOR payload",
+      "pass": true
+    },
+    {
+      "name": "the STRONG-DELIVERY directive is ABSENT — a placeholder is not a committed player move",
+      "pass": true
+    },
+    {
+      "name": "the reserved-canon guard is still active in the author payload",
+      "pass": true
+    },
+    {
+      "name": "GIBBERISH HANDLING IS PRESENT — the input is acknowledged lightly, not elevated",
+      "pass": true
+    },
+    {
+      "name": "...and the production log records tier=isolated for a first offence",
+      "pass": true
+    },
+    {
+      "name": "...and the streak was persisted for the next turn",
+      "pass": true
+    },
+    {
+      "name": "the placeholder claims NO slot",
+      "pass": true
+    },
+    {
+      "name": "...and says WHY, so a later misfire is explainable",
+      "pass": true
+    },
+    {
+      "name": "raw gibberish would also claim no slot",
+      "pass": true
+    },
+    {
+      "name": "the frame falls back to the institutional default",
+      "pass": true
+    },
+    {
+      "name": "CLASSIFY /api/mistral-proxy as scaffold — the scaffold call, whose payload contains author-ish schema words — the exact misfire",
+      "pass": true
+    },
+    {
+      "name": "CLASSIFY /api/proxy as planner — planner contract markers",
+      "pass": true
+    },
+    {
+      "name": "CLASSIFY /api/proxy as author — author schema on the proxy endpoint",
+      "pass": true
+    },
+    {
+      "name": "...and each role therefore reserves its OWN rate, not the author rate",
+      "pass": true
+    },
+    {
+      "name": "RED — the OLD misclassification aborts, reproducing the no-data run",
+      "pass": true
+    },
+    {
+      "name": "THE SAME SEQUENCE NO LONGER ABORTS under the corrected classifier",
+      "pass": true
+    },
+    {
+      "name": "...and it would not even have aborted at the old $0.15 ceiling",
+      "pass": true
+    },
+    {
+      "name": "THE $0.20 CEILING IS JUSTIFIED — one planner retry fits at $0.20 but NOT at $0.15",
+      "pass": true
+    },
+    {
+      "name": "...and a SECOND author attempt is still refused, so the guard was not loosened",
+      "pass": true
+    },
+    {
+      "name": "images were blocked for the whole preflight",
+      "pass": true
+    },
+    {
+      "name": "NO REAL DISPATCH during preflight",
+      "pass": true
+    },
+    {
+      "name": "a reservation past the ceiling is REFUSED before dispatch",
+      "pass": true
+    },
+    {
+      "name": "LIVE — no ceiling abort occurred",
+      "pass": true
+    },
+    {
+      "name": "LIVE — raw gibberish reached NO payload",
+      "pass": true
+    },
+    {
+      "name": "LIVE — raw gibberish is absent from the delivered PROSE",
+      "pass": true
+    },
+    {
+      "name": "LIVE — the substituted placeholders reached the real author payload",
+      "pass": false
+    },
+    {
+      "name": "LIVE — the strong-delivery rule did NOT fire",
+      "pass": true
+    },
+    {
+      "name": "LIVE — the gibberish-handling directive WAS in force",
+      "pass": false
+    },
+    {
+      "name": "LIVE — a scene was actually delivered",
+      "pass": false
+    },
+    {
+      "name": "LIVE — spend stayed inside the ceiling",
+      "pass": true
+    }
+  ]
+}

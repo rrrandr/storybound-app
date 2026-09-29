@@ -92,7 +92,19 @@ for (const [id, p] of Object.entries(STARTER_SCENE1)) {
   ok(AMBIENT_TAGS.size === 0 || AMBIENT_TAGS.has(p.ambient),
     `${id}: ambient "${p.ambient}" is a real tag`, `known tags: ${[...AMBIENT_TAGS].join(', ')}`);
   ok(app.includes(`id: '${id}',`), `${id}: matches a STARTER_STORIES entry`);
-  if (p.format === 'cg') {
+  if (p.format === 'cg' && Array.isArray(p.beats)) {
+    // REAL CG SHAPE (Roman 2026-09-10): ~20 beats over 4 dramatic images + 1–4 character-intro images.
+    const ims = Array.isArray(p.images) ? p.images : [];
+    const dramatic = ims.filter(im => im && im.kind === 'dramatic').length, intro = ims.filter(im => im && im.kind === 'intro').length;
+    ok(p.beats.length >= 16 && p.beats.length <= 24, `${id}: ~20 beats (${p.beats.length})`);
+    ok(dramatic === 4, `${id}: exactly 4 dramatic images (${dramatic})`);
+    ok(intro >= 1 && intro <= 4, `${id}: 1–4 character intro images (${intro})`);
+    const ids = new Set(ims.map(im => im && im.id));
+    ok(p.beats.every(b => b && typeof b.text === 'string' && b.text.length > 40 && ids.has(b.image)), `${id}: every beat has text and points at a declared image`);
+    ok(p.beats.every(b => /^(narration|exposition|dialogue)$/.test(b.kind) && (b.kind !== 'dialogue' || b.speaker)), `${id}: beat kinds are narration|exposition|dialogue and dialogue beats name a speaker`);
+    ok(p.endsAt === 'oas_interrupt', `${id}: declares its OAS ending`);
+    ok(!!(p.oasHandoff && p.oasHandoff.openingFrame), `${id}: has an authored OAS opening frame`);
+  } else if (p.format === 'cg') {
     ok(Array.isArray(p.panels) && p.panels.length === 5, `${id}: 5 panels (gnPanelsPerScene is locked at 5)`);
     ok(p.endsAt === 'oas_interrupt', `${id}: declares its OAS ending`);
     ok(!!(p.oasHandoff && p.oasHandoff.openingFrame), `${id}: has an authored OAS opening frame`);

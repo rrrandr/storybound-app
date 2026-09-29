@@ -1,0 +1,11 @@
+page text retained → _validate_out/dry_rehearsal/scene1_measure_live.page.2026-09-10T03-32-36-431Z.txt (1065 chars)
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+page.evaluate: Target page, context or browser has been closed
+    at /Users/romantsukerman/storybound-app/_page_preservation.mjs:222:24 {
+  log: []
+}
+
+Node.js v25.3.0

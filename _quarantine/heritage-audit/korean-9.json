@@ -1,0 +1,24 @@
+{
+  "age": 28,
+  "ancestry": "Korean",
+  "first_name": "Mina",
+  "last_name": "Park",
+  "height": "5'4\", compact and grounded",
+  "build": "lean and muscled from studio work, collarbones sharp",
+  "hair": "black, straight, falls to mid-back; she clips it back with vintage silver pins when focused",
+  "complexion": "warm ivory with golden undertone; a small scar on her left temple from a childhood accident with her father's woodworking tools",
+  "face": "heart-shaped with a wide, mobile mouth—the kind of face that broadcasts every thought before she can stop it, dark eyes that go soft then fierce in the same breath",
+  "signature_feature": "her hands—long-fingered, calloused from years of leatherwork, capable of both brutal precision and surprising gentleness; he notices the way she moves them when she talks",
+  "second_celebrated_feature": "the hollow at the base of her throat, visible when she pulls her hair up—something he finds himself staring at when she's unguarded",
+  "signature_habits": "she bites her lower lip when concentrating; she says 'eomma-ga' (mom always says) under her breath when nervous; she keeps a worn leather journal in her bag where she sketches designs at 3 AM when she can't sleep; she makes barley tea the way her grandmother taught her, letting it cool until it's almost bitter",
+  "occupation": "leather goods designer and studio owner—a small independent label (6 employees) in a converted warehouse, bespoke and made-to-order; her pieces sell to high-end boutiques and directly to clients who know her work",
+  "current_crisis": {
+    "event": "a major investor pulled funding two weeks before her flagship collection was set to launch at a luxury pop-up; her studio rent is due in 10 days and she doesn't have the capital to cover both production and overhead",
+    "hottest_emotion": "panic mixed with shame—she's convinced she's failed, that she's not good enough to survive in this world",
+    "immediate_want": "to find $40K without losing creative control or admitting to anyone how close to collapse she is"
+  },
+  "wound": {
+    "core": "she believes her worth is tied entirely to her productivity and output; if she's not creating something, she's invisible",
+    "surfacing_hint": "when stressed, she becomes compulsively busy, unable to sit still or accept help; she deflects vulnerability with humor or work; she assumes people will leave if she stops being useful"
+  }
+}

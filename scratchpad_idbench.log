@@ -1,0 +1,53 @@
+
+  IDENTITY-PERSISTENCE BENCHMARK (A/B) — recurring Mira + Kwisheen raider
+  ──────────────────────────────────────────────────────────────────────
+  > [CG:SCREENPLAY:USER-PROMPT]
+SCENE INDEX: 0 (Scene 1 — establishing)
+STORY LENGTH: affair
+SCENE DENSITY (ST1 — SETUP PACE): establishing register. The scene's jo
+  > [CG:SCREENPLAY:USER-PROMPT]
+SCENE INDEX: 0 (Scene 1 — establishing)
+STORY LENGTH: affair
+SCENE DENSITY (ST1 — SETUP PACE): establishing register. The scene's jo
+
+  ══ RUN A — identity card OFF ══ (panels=0)
+    identity-card opportunities:   0
+    reference available:           0/0 repair sites
+    repairs USING identity card:   0
+    identity-related defects seen: 0  (face/eyes/palette/identity/wardrobe/weapon)
+    repair categories:             none
+    Klein repairs (total):         0
+    clean-through (no repair):     0/0
+    structural entropy:            measured-0 0 | unknown 0/0
+    avg image-calls/panel:         0.00 render + 0.00 verify
+    avg total ms/panel:            0.00
+
+  ══ RUN B — identity card ON ══ (panels=1)
+    identity-card opportunities:   0
+    reference available:           0/1 repair sites
+    repairs USING identity card:   0
+    identity-related defects seen: 1  (face/eyes/palette/identity/wardrobe/weapon)
+    repair categories:             face:1
+    Klein repairs (total):         1
+    clean-through (no repair):     0/1
+    structural entropy:            measured-0 0 | unknown 1/1
+    avg image-calls/panel:         4.00 render + 4.00 verify
+    avg total ms/panel:            76761.00
+
+  ══ IDENTITY CARD IMPACT (OFF → ON, Δ) ══
+    card usage (repairs):     OFF 0  → ON 0   0%   (must be 0→N or the card is not firing)
+    identity defects seen:    OFF 0  → ON 1   +1 (new)
+    face repairs:            OFF 0  → ON 1   +1 (new)
+    repair avoidance:         OFF 0%  → ON 0%   +0 pts
+    latency (ms/panel):       OFF 0  → ON 76761   +76761 (new)
+    render calls/panel:       OFF 0  → ON 4   +4 (new)
+    NOTE: OFF/ON are DIFFERENT generations (non-deterministic) — treat count deltas as DIRECTIONAL; the real verdict is VISUAL (below).
+
+  ══ OVER-CONSTRAIN CHECK (the downside of stronger conditioning — inspect visually) ══
+    In the B_on_* panels, did the card-conditioned repairs COPY the reference's pose / expression / framing / lighting?
+    The prompt says "preserve identity, not pose" — verify it held. [ pose reused? expression reused? camera reused? ]  → PASS/FAIL by eye.
+
+  ── VISUAL VERDICT (lead with this, not the numbers) ──
+    Panel by panel: "would a reader recognize this as the SAME Mira / same Kwisheen?"  A_off_*.png  vs  B_on_*.png  in /private/tmp/claude-501/-Users-romantsukerman-storybound-app/80c638ef-dc45-46dc-ad83-43ad5d0e1a40/scratchpad/idbench
+  ──────────────────────────────────────────────────────────────────────
+

@@ -1,0 +1,13 @@
+[CACHE] gpt-4o-mini setup prompt=7406 cached=0 (0%) cost=$0.0016
+[CACHE] gpt-4o-mini setup prompt=14944 cached=0 (0%) cost=$0.0029
+[CACHE] gpt-4o-mini setup prompt=2937 cached=0 (0%) cost=$0.0005
+[CACHE] grok-4-1-fast-reasoning setup prompt=19692 cached=192 (1%) cost=$0.0281
+[CACHE] gpt-4o-mini main prompt=7737 cached=0 (0%) cost=$0.0018
+[CACHE] gpt-4o-mini setup prompt=17436 cached=0 (0%) cost=$0.0029
+[CACHE] grok-4.3 main prompt=77614 cached=128 (0%) cost=$0.0990
+[CACHE] gpt-4o-mini audit prompt=3592 cached=0 (0%) cost=$0.0010
+[CACHE] gpt-4o-mini audit prompt=2892 cached=1024 (35%) cost=$0.0009
+[CACHE] gpt-4o-mini audit prompt=2870 cached=1024 (36%) cost=$0.0009
+[CACHE] gpt-4o-mini main prompt=4332 cached=0 (0%) cost=$0.0007
+[CACHE] grok-4.3 main prompt=97164 cached=16512 (17%) cost=$0.1231
+[CACHE] gpt-4o-mini audit prompt=3453 cached=1024 (30%) cost=$0.0010

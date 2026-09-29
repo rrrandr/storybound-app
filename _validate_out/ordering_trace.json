@@ -1,0 +1,104 @@
+[
+  {
+    "t": 7719,
+    "label": "── BEFORE Scene 1 ──",
+    "detail": "turnCount=0 committedPages=0 verbatim=false staging=false anchor=null",
+    "turn": 0
+  },
+  {
+    "t": 85267,
+    "label": "AUTHOR payload assembled →sent",
+    "detail": "",
+    "turn": 0
+  },
+  {
+    "t": 85290,
+    "label": "AUTHOR payload assembled →sent",
+    "detail": "",
+    "turn": 0
+  },
+  {
+    "t": 544126,
+    "label": "── AFTER Scene 1 ──",
+    "detail": "turnCount=0 committedPages=0 verbatim=false staging=false anchor=null",
+    "turn": 0
+  },
+  {
+    "t": 544136,
+    "label": "── BEFORE continuation 1 ──",
+    "detail": "turnCount=0 committedPages=0 verbatim=false staging=false anchor=null",
+    "turn": 0
+  },
+  {
+    "t": 549251,
+    "label": "PLAN-SPINE selected",
+    "detail": "planIndex=2",
+    "turn": null
+  },
+  {
+    "t": 551373,
+    "label": "AUTHOR payload assembled →sent",
+    "detail": "",
+    "turn": 0
+  },
+  {
+    "t": 551398,
+    "label": "AUTHOR payload assembled →sent",
+    "detail": "",
+    "turn": 0
+  },
+  {
+    "t": 613368,
+    "label": "── AFTER continuation 1 ──",
+    "detail": "turnCount=1 committedPages=0 verbatim=true staging=false anchor=null",
+    "turn": 1
+  },
+  {
+    "t": 613369,
+    "label": "── BEFORE continuation 2 ──",
+    "detail": "turnCount=1 committedPages=0 verbatim=true staging=false anchor=null",
+    "turn": 1
+  },
+  {
+    "t": 623429,
+    "label": "PLAN-SPINE selected",
+    "detail": "planIndex=3",
+    "turn": null
+  },
+  {
+    "t": 625794,
+    "label": "SKELETON start",
+    "detail": "",
+    "turn": 1
+  },
+  {
+    "t": 630022,
+    "label": "SKELETON returned",
+    "detail": "",
+    "turn": 1
+  },
+  {
+    "t": 630023,
+    "label": "SKELETON end",
+    "detail": "loggedScene=1",
+    "turn": null
+  },
+  {
+    "t": 632502,
+    "label": "AUTHOR payload assembled →sent",
+    "detail": "",
+    "turn": 1
+  },
+  {
+    "t": 648743,
+    "label": "AUTHOR payload assembled →sent",
+    "detail": "",
+    "turn": 1
+  },
+  {
+    "t": 682742,
+    "label": "── AFTER continuation 2 ──",
+    "detail": "turnCount=2 committedPages=0 verbatim=true staging=false anchor=\"the flickering lantern light in the tavern\"",
+    "turn": 2
+  }
+]

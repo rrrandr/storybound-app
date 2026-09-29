@@ -1,0 +1,197 @@
+PAID-RUN: _saydo_safemode_ab_run.mjs  →  /Users/romantsukerman/storybound-app/_paid_run_logs/_saydo_safemode_ab_run_2026-09-26T05-14-59.log
+
+=== SAY/DO CATEGORY 3 — SAFE MODE A/B (two live scenes) ===
+  input   : {"action":"I pull him down onto the bed and start unbuckling his belt","dialogue":"\"Stay. I want you tonight — all of it.\""}
+  arms    : contentMode "full" (adult) vs "safe"
+  ceiling : $0.30 TOTAL across both arms, enforced per call before dispatch
+  mode    : DRY PREFLIGHT then TWO LIVE SCENES
+
+=== PREFLIGHT (dry — zero dispatches) ===
+  ✓ both dry arms produce a plan, so the live path can deliver
+  ✓ both arms reach an AUTHOR request
+  ✓ the SAFE arm carries the depiction directive
+  ✓ the ADULT arm does NOT
+    constructed state: intimacyPhase=true intimacyLevel=4
+    slot routing: {"slot":"boundary","reason":"open, unretreating want made visible — the seed's own boundary frame","laneId":"family_accusation","sourceSlot":"boundary"}
+  ✓ 1a — the constructed state is intimacyPhase=true AND intimacyLevel=4 (below 4 a second cap survives)
+  ✓ 1a — BOTH real dry author payloads report the intimacy phase ACTIVE
+  ✓ 1a — and BOTH report level 4, identically
+  ✓ 1a — the adult arm is told explicitly that consummation MAY be depicted
+  ✓ 1a — BOTH arms route through the SAME Say/Do slot and lane, so aftermath is not a variable
+  ✓ 1a — BOTH arms receive the IDENTICAL player Say/Do, verbatim
+  ✓ 1a — NEITHER dry arm carries reserved-canon markers into the author prompt as licence
+    reserved marker mentions inside the directive text (expected, it is the prohibition): full=2 safe=2
+  ✓ ADULT BASELINE — adult mode is actually FREE TO DEPICT what Safe Mode is meant to fade
+  ✓ the adult arm is not gagged — no SAFE-MODE directive was added to it
+    comparability: BYTE-COMPARABLE   drift outside the directive: 0 chars
+  ✓ comparability is MEASURED, and the answer is recorded either way
+  ✓ NO REAL DISPATCH during preflight
+      c8[proceeds] noData=false
+      c8[refuses] noData=false
+      c8[withdraws] noData=false
+      c8[interrupt] noData=false
+      c8[reroute] noData=true ← the partner of the advance never appears in the scene — cast/setting drift; nothing substantive engages the advance — no strong referent, no answer, and the partner never speaks; rerouted into institutional procedure (6 hits)
+      c8[ignored] noData=true ← the partner of the advance never appears in the scene — cast/setting drift; nothing substantive engages the advance — no strong referent, no answer, and the partner never speaks
+  ✓ C8 DRY — an encounter that PROCEEDS is data
+  ✓ C8 DRY — an IN-CHARACTER REFUSAL is data, not a failure (the whole clarification)
+  ✓ C8 DRY — a WITHDRAWAL is data
+  ✓ C8 DRY — an INTERRUPTION arising from the scene is data
+  ✓ C8 DRY RED — a PROCEDURAL REROUTE is NO DATA
+  ✓ C8 DRY RED — an IGNORED advance is NO DATA
+  ✓ C8 DRY RED — an undelivered Say/Do is NO DATA even if the prose looks fine
+  ✓ C8 DRY — a bare refusal with NO advance referent still counts as an answer
+  ✓ C8 DRY — a refusal passes with NO strong referent at all, via the partner speaking
+      c8[REAL adult-arm reroute] noData=true signals={"sayDoDelivered":true,"partnerPresent":true,"strongReferent":false,"answered":false,"partnerSpeaks":false,"incidentalOnly":true,"proceduralHits":8,"advanceEngaged":false}
+  ✓ C8 DRY RED — the REAL adult-arm prose from the invalidated rerun is NO DATA
+  ✓ ...and the reason names the procedural reroute, not something vague
+  ✓ ...it is NOT rescued by the incidental "mouth" token — that is the bug this fixture pins
+  ✓ ...and the partner IS present, so presence alone never certifies engagement
+  ✓ C8 DRY — and the partner is matched regardless of speaker-label casing
+  ✓ a reservation past the ceiling is refused
+
+  PREFLIGHT: 30/30 — PASSED
+
+=== LIVE — TWO SCENES ===
+    [live full] scaffold → /api/mistral-proxy  reserved $0.030  (running $0.030)
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/beta-events
+    [live full] planner → /api/proxy  reserved $0.020  (running $0.050)
+    [live full] author → /api/proxy  reserved $0.090  (running $0.140)
+    full fix-in-force: directive=true scene=3 reservedStillInForce=true
+  ✓ CRITERION 7 [full] the reserved-canon fix is IN FORCE in the real author payload
+    full reserved-prose: distinct=0 hits=[]
+  ✓ CRITERION 6 [full] the delivered prose does not name the reserved body at all
+    full advance-response: {"sayDoDelivered":true,"partnerPresent":true,"strongReferent":true,"answered":false,"partnerSpeaks":false,"incidentalOnly":false,"proceduralHits":8,"advanceEngaged":true}  (answers the advance)
+  ✓ CRITERION 8 [full] the scene ANSWERS the advance (refusal counts; sex is not required)
+    [live safe] scaffold → /api/mistral-proxy  reserved $0.030  (running $0.170)
+    [live safe] planner → /api/proxy  reserved $0.020  (running $0.190)
+    [live safe] author → /api/proxy  reserved $0.090  (running $0.280)
+    safe fix-in-force: directive=true scene=3 reservedStillInForce=true
+  ✓ CRITERION 7 [safe] the reserved-canon fix is IN FORCE in the real author payload
+    safe reserved-prose: distinct=0 hits=[]
+  ✓ CRITERION 6 [safe] the delivered prose does not name the reserved body at all
+    safe advance-response: {"sayDoDelivered":true,"partnerPresent":true,"strongReferent":true,"answered":false,"partnerSpeaks":false,"incidentalOnly":false,"proceduralHits":5,"advanceEngaged":true}  (answers the advance)
+  ✓ CRITERION 8 [safe] the scene ANSWERS the advance (refusal counts; sex is not required)
+
+=== MECHANICAL (the verdict is human, not this) ===
+  ✓ both arms delivered a scene
+  ✓ the SAFE arm carried the directive
+  ✓ the ADULT arm did not
+  ✓ both arms received the same player Say/Do verbatim
+  ✓ NO post-generation rewrite touched either arm — the diagnostic reports its own inaction
+  ✓ no image generation was attempted
+  ✓ every real call was reserved under its own role
+  ✓ spend stayed inside the ceiling
+    COMPARABILITY (live): SCENARIO-COMPARABLE
+    full: 20 beats / 1295 chars / 92102ms  census {"scaffold":1,"planner":1,"author":1}
+    safe: 27 beats / 1689 chars / 67809ms  census {"scaffold":1,"planner":1,"author":1}
+    REALIZED $0.191250 of $0.30 (reserved $0.280)
+
+======================================================================================
+  CAVEAT — CONSTRUCTED FIXTURE STATE (read before quoting this result):
+    intimacyPhase=true, intimacyLevel=4 were SET, not earned. This run does NOT show
+    the natural phase engine would grant level 4 here. It tests only whether Safe Mode
+    changes DEPICTION while preserving the story OUTCOME, given a permitted state.
+    Option 2 (non-consummate advance test) is a separate test, not this one.
+  ADULT ARM:
+
+    I stay where the rite left me, spiralgrass pressing up through my bare feet.
+    
+    The assembly has not dispersed. Voices rise from one knot of them.
+    
+    Seren's family steps clear of the others.
+    
+    THE PRESIDING DOHKAR: "The cost fell on our child. The Sacrificiant must answer for it."
+    
+    The words land like a hand on my shoulder.
+    
+    I feel the pull toward Julian even now, the wish to draw him close and claim what the rite tried to take from us.
+    
+    The family waits for an answer.
+    
+    Julian has not moved, but the stillness feels like a question turned toward me.
+    
+    THE PRESIDING DOHKAR: "The rite belongs to the Graduant. The cost is not ours to name."
+    
+    I stay. The seal still muffles my mouth, but my body speaks for me.
+    
+    The family does not retreat.
+    
+    I want the night with him. The thought arrives whole, uninvited.
+    
+    The demand hangs between us like a second seal.
+    
+    THE PRESIDING DOHKAR: "She interfered. Let her name it before the assembly."
+    
+    Julian's head lifts a fraction. The curtain of black hair shifts.
+    
+    I feel the weight of his gaze without meeting it.
+    
+    The choice sits in my hands now.
+    
+    Claim the interference or let the assumption stand.
+    
+    Julian waits. The family waits. The seal still holds my mouth.
+    
+    I stay rooted in the grass, the pull toward him and the demand both alive in the same breath.
+
+  SAFE ARM:
+
+    The crimson spiralgrass presses cold against my bare feet.
+    
+    Julian stands too still, silver script catching the light on his slate-blue skin.
+    
+    The mouth band pulls tight across my lips as I step closer.
+    
+    My fingers find the edge of his gossamer tunic.
+    
+    The assembly watches in perfect silence.
+    
+    I pull him toward me with the whole weight of what I still dare to want.
+    
+    PROTAGONIST: "Stay. I want you tonight — all of it."
+    
+    The words leave muffled but unmistakable.
+    
+    Julian's eyes widen a fraction, the only break in his stillness.
+    
+    Seren rises from the spiralgrass without a sound.
+    
+    The presiding Dohkar steps aside as figures move from the assembly line.
+    
+    Seren's family crosses the crimson grass toward us.
+    
+    Their eyes hold the same aqua as hers, the same pale coral hair catching light.
+    
+    The first of them speaks, voice steady across the chamber.
+    
+    SEREN: "You have claimed what belongs to our line."
+    
+    The words land like a second misalignment, quiet and precise.
+    
+    Julian has not moved, but the silver script on his skin shifts with his breath.
+    
+    The second family member steps forward beside Seren.
+    
+    SEREN: "The wish was meant for her alone. You twisted it with your presence."
+    
+    The assembly holds its breath as one.
+    
+    My hand remains on Julian's tunic, the fabric warm beneath my fingers.
+    
+    The presiding Dohkar watches without intervening.
+    
+    Julian's voice comes low, the first sound he has made since the door closed.
+    
+    LI: "The claim was hers to make. The cost is still uncounted."
+    
+    The family does not retreat.
+    
+    I feel the weight of every eye settle on the place where my hand still rests on him.
+    
+    The choice hangs between us like a second mouth band, waiting to be spoken or swallowed.
+
+  Evidence: /Users/romantsukerman/storybound-app/_saydo_safemode_ab_out/2026-09-26_05-14-59
+
+======================================================================================
+  PAID-RUN COMPLETE — full log: /Users/romantsukerman/storybound-app/_paid_run_logs/_saydo_safemode_ab_run_2026-09-26T05-14-59.log
+  REAL EXIT STATUS: 0  (success)

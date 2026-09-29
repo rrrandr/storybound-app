@@ -1,0 +1,95 @@
+=== TEMPT OUTCOME CONTRACT CONTROL (dry; zero provider dispatches) ===
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/csp-report
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/config
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/csp-report
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/geo
+
+=== 1. ONE SOURCE OF TRUTH — the schema is rendered from the same descriptor the validator uses ===
+    validator can require 21 fields: delivered, changed, durability, knowledgeStates, establishedEvidence, openPossibilities, requestedScope, deliveredScope, scopeMatch, scopeNote, invalidatedPlans, ruptureClass, targetPopulation, affectedKnowers, invokerExemption, unaccountedParties, priorHistoryReplaced, survivingContradictions, recognitionChanges, materialEffects, affectedParties
+  ✓ every field the validator can require is emitted by the renderer — drift is structurally impossible, not merely asserted
+  ✓ there is no second, unused schema builder left to drift
+
+=== 2. THE REAL UI-SHAPED PATH — capture the ACTUAL author request ===
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/beta-events
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/beta-events
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/bfl-kontext
+  ✓ a REAL author request was captured through the full UI-shaped path
+  ✓ the author is NO LONGER asked to self-certify the outcome — the schema is absent from the real author request
+  ✓ the EXTRACTOR prompt represents every field the validator can require — the contract moved layer, it did not weaken
+  ✓ evidenceQuote is IN THE affectedKnowers OUTPUT SHAPE, not only in prose
+  ✓ ...carrying its conditional requirement (every entry except a disposition of "absent")
+  ✓ ...and its verbatim constraints (10-120 chars, copied exactly, checked against the text)
+  ✓ ...and it directs an uncitable party to unaccountedParties rather than an invented quote
+  ✓ knowledgeStates.state carries its OWN enum and says what it describes
+  ✓ ...and prohibits using a disposition value in it, by name
+  ✓ affectedKnowers.disposition carries its OWN enum and says what it describes
+  ✓ ...and states the two enums are never interchangeable
+  ✓ BOTH ENUMS ARE PRESERVED INTACT — overlap on "suspects" is kept, not removed
+  ✓ the preflight invariant is retired for the author path (it guarded a schema the author no longer receives)
+
+=== 3. A MINIMAL VALID MEMORY OUTCOME COMMITS ===
+  ✓ scene persistence writes a PENDING outcome record rather than committing
+  ✓ ...and the next continuation is blocked until it resolves
+  ✓ the EXTRACTED, citation-checked outcome commits through the production resolver
+  ✓ the committed canon record carries the invoker exemption — a later scene can read WHY Lirael still remembers
+  ✓ the committed canon record resolves the speaking witness BY NAME, not absorbed into a collective
+
+=== 3b. THE COMPOSITE ROSTER — built from resolved identities, wider than the speakers, and it BITES ===
+    composite roster: [{"name":"Lirael","sources":["invoker","accepted_stage","accepted_objective"]},{"name":"Julian","sources":["love_interest","beat_speaker"]},{"name":"the assembly","sources":["declared_collective"]}]
+  ✓ the PRODUCTION commit path computed a non-empty composite roster (otherwise every check below is vacuous)
+  ✓ roster source "invoker" actually fired on the real path
+  ✓ roster source "love_interest" actually fired on the real path
+  ✓ roster source "accepted_stage" actually fired on the real path
+  ✓ roster source "declared_collective" actually fired on the real path
+  ✓ roster source "beat_speaker" actually fired on the real path
+  ✓ the composite is strictly WIDER than the speakers — it carries parties who never spoke a line
+  ✓ ...including a DECLARED COLLECTIVE, which by construction never speaks and so is invisible to any speaker-based roster
+  ✓ the paid run's actual record — "the assembly" only — is REJECTED against the composite roster, naming EVERY omitted party
+  ✓ that same record is accepted with NO roster — proving the rejection comes from the roster, not from some unrelated field
+
+=== 7. INVOKER ANCHOR IS THE DEFAULT — and self-targeting must be DECLARED, never silent ===
+  ✓ the DEFAULT invoker anchor validates with no justification anywhere in the report — the prose does not have to earn it
+  ✓ an invoker who is neither forgetting nor named as exempt is REJECTED — silence about the protagonist is not an account
+  ✓ an explicitly self-including wish MAY take the invoker, declared as wish_explicitly_includes_self
+  ✓ targeting the invoker while still claiming reason "invoker_anchor" is REJECTED — self-targeting cannot be silent
+  ✓ ambiguous wording may take the invoker when declared as a wording consequence WITH a note
+  ✓ scopeMatch "full" with a party openly listed as unaccounted is REJECTED
+  ✓ the same honest admission is ACCEPTED at scopeMatch "narrower" with a scopeNote — the rule forces the downgrade, not the omission
+  ✓ a knower listed WITHOUT a disposition is REJECTED — naming someone is not resolving them
+
+=== 8. ACCOUNTED FOR ≠ AFFECTED — the seven cases that separate coverage from delivery ===
+  ✓ 1. a silent NAMED bystander omitted from the record is REJECTED — a speaker-only roster could never have caught this
+  ✓ 2. a silent declared COLLECTIVE omitted from the record is REJECTED — collectives never speak by construction
+  ✓ 3. Julian RETAINED but fully accounted for is REJECTED at "full" — the exact gap: structurally complete, semantically narrower
+  ✓ 3b. the SAME record declared "narrower" is VALID — the rule forces an honest downgrade, never an omission
+  ✓ 4. Julian SUSPECTS from residue with the memory genuinely absent may remain "full" — the wish did reach him
+  ✓ 4b. "suspects" while still REMEMBERING is REJECTED at "full" — a retained memory cannot pass as delivery
+  ✓ 5. the standard invoker anchor is ALLOWED under "full"
+  ✓ 6. explicit self-targeting with the invoker RETAINED is REJECTED at "full" as inconsistent
+  ✓ 6b. ...and is VALID once declared "narrower" — the second half of Roman's "narrower or rejected as inconsistent"
+  ✓ 7. a NAMED-SUBSET wish does NOT require unrelated bystanders to forget — they need accounting, not amnesia
+  ✓ 7b. ...but a declared target the report never resolves is still REJECTED
+
+=== 4. REMOVE EACH REQUIRED FIELD IN TURN — every one must cause rejection ===
+  ✓ the minimal report is valid as a baseline (otherwise the removals below prove nothing)
+  ✓ removing "requestedScope" is REJECTED
+  ✓ removing "deliveredScope" is REJECTED
+  ✓ removing "scopeMatch" is REJECTED
+  ✓ removing "ruptureClass" is REJECTED
+  ✓ removing "targetPopulation" is REJECTED
+  ✓ removing "affectedKnowers" is REJECTED
+  ✓ removing "invokerExemption" is REJECTED
+  ✓ removing "unaccountedParties" is REJECTED
+
+=== 5. A NON-MEMORY CLASS VALIDATES WITHOUT ANY MEMORY-ONLY FIELDS ===
+  ✓ a materialization_possession outcome validates with NO affectedKnowers and no other memory-only field
+
+=== 6. THE PREFLIGHT ITSELF MUST FAIL when the emitted schema is deliberately incomplete ===
+  ✓ preflight passes on the complete schema
+  ✓ preflight FAILS on a deliberately incomplete schema and NAMES the missing field — before any network release
+
+=== CONTAINMENT ===
+  ✓ ZERO real provider dispatches across the whole control
+
+====================================================================================================
+OUTCOME CONTRACT CONTROL: 62/62 passed

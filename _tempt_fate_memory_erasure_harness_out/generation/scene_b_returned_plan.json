@@ -1,0 +1,285 @@
+{
+  "beats": [
+    {
+      "idx": 0,
+      "kind": "narration",
+      "text": "Lirael steps back, and the clearing does not explain itself.",
+      "speaker": null,
+      "tension_state": "composed",
+      "echo_profile": null,
+      "expression_intensity": 0,
+      "_intentRawEmitted": 0,
+      "_intentSource": "default",
+      "expression_target": "neutral",
+      "cut_to_closeup": false,
+      "closeup_target": null,
+      "shot_type": null,
+      "impact_burst": false,
+      "metaphor_hint": null,
+      "metaphor_peak": false,
+      "pc_proxy_action": null
+    }
+  ],
+  "visualState": {},
+  "is_consummate_scene": false,
+  "hardBeats": [],
+  "phases": [
+    {
+      "phaseIdx": 0,
+      "startBeat": 0,
+      "label": "establishing",
+      "li_visibility_phase": "partial",
+      "characters_present": [
+        "protagonist"
+      ],
+      "props_present": [],
+      "camera_override": "over_shoulder_pc",
+      "li_position_override": null,
+      "li_expression_override": null,
+      "camera_move": "none",
+      "shot_style": "default",
+      "focus_target": null,
+      "_state": {
+        "protagonist": {
+          "status": "active",
+          "injuries": [],
+          "position": "",
+          "holding": "",
+          "attitudeToward": {},
+          "looking_at": "",
+          "speaking": false
+        }
+      },
+      "_panel": {
+        "type": "establishing",
+        "narrativePanelType": "scene",
+        "panelIdx": 0,
+        "dramaticQuestion": "What happens as establishing?",
+        "shotType": "conversation",
+        "shotExpansion": "CONVERSATION SHOT: medium, eye-level or a gentle over-shoulder; a balanced two-shot with a clear physical gap; still, faces reading clearly on the rule-of-thirds.",
+        "hierarchy": {
+          "primary": "Lirael",
+          "secondary": "Lirael",
+          "background": []
+        },
+        "grammarCues": [],
+        "perspectiveContract": null,
+        "wishAnchor": null,
+        "eventLed": false,
+        "establishing": false,
+        "castingEligible": false,
+        "wishOutcome": null,
+        "sacrifice": false,
+        "livingWorld": [],
+        "cast": [
+          {
+            "key": "protagonist",
+            "name": "Lirael",
+            "performance": {
+              "pose": "",
+              "expression": "",
+              "looking_at": "",
+              "action_tags": []
+            }
+          }
+        ],
+        "authored": false,
+        "invalidFields": [],
+        "shot": {
+          "distance": "wide",
+          "angle": "high",
+          "blocking": "environment_led",
+          "movement": "a slow establishing drift over the place",
+          "subject": "Lirael"
+        }
+      },
+      "_shot": {
+        "distance": "wide",
+        "angle": "high",
+        "blocking": "environment_led",
+        "movement": "a slow establishing drift over the place",
+        "subject": "Lirael"
+      }
+    }
+  ],
+  "decisionGateBeatIdx": 0,
+  "interruption": null,
+  "_canon": {
+    "protagonist": {
+      "key": "protagonist",
+      "displayName": "Lirael",
+      "role": "protagonist",
+      "species": "human",
+      "humanNoTentacles": true,
+      "look": {
+        "heritage": "Thai",
+        "heritageSource": "default",
+        "hairColor": "warm brown",
+        "hairLength": "waist-length",
+        "hairStyle": "twisted up off the neck",
+        "skinTone": "fair"
+      },
+      "garment": "",
+      "weapon": "",
+      "morphology": {
+        "genderPresentation": "female",
+        "build": "tall and rangy",
+        "facialTopology": "a gaunt hollow-cheeked face with a jutting brow",
+        "speciesTopology": "fully human — NO tentacles, scales, or non-human features",
+        "ears": "ordinary human ears"
+      },
+      "recognitionTraits": [
+        "Thai features",
+        "waist-length warm brown hair, twisted up off the neck"
+      ]
+    },
+    "julian": {
+      "key": "julian",
+      "displayName": "Julian",
+      "role": "love_interest",
+      "species": "human",
+      "humanNoTentacles": true,
+      "look": {
+        "faceShape": "a narrow",
+        "eyeColor": "hazel",
+        "build": "slight",
+        "hairColor": "chestnut brown",
+        "hairLength": "shoulder-length",
+        "hairStyle": "pulled back in a low bun",
+        "heritage": "Maori"
+      },
+      "garment": "",
+      "weapon": "",
+      "morphology": {
+        "genderPresentation": "male",
+        "build": "lean and wiry",
+        "facialTopology": "a narrow angular face with high, sharp cheekbones",
+        "speciesTopology": "fully human — NO tentacles, scales, or non-human features",
+        "ears": "ordinary human ears"
+      },
+      "recognitionTraits": [
+        "Maori features",
+        "shoulder-length chestnut brown hair, pulled back in a low bun"
+      ]
+    }
+  },
+  "_panels": [
+    {
+      "type": "establishing",
+      "narrativePanelType": "scene",
+      "panelIdx": 0,
+      "dramaticQuestion": "What happens as establishing?",
+      "shotType": "conversation",
+      "shotExpansion": "CONVERSATION SHOT: medium, eye-level or a gentle over-shoulder; a balanced two-shot with a clear physical gap; still, faces reading clearly on the rule-of-thirds.",
+      "hierarchy": {
+        "primary": "Lirael",
+        "secondary": "Lirael",
+        "background": []
+      },
+      "grammarCues": [],
+      "perspectiveContract": null,
+      "wishAnchor": null,
+      "eventLed": false,
+      "establishing": false,
+      "castingEligible": false,
+      "wishOutcome": null,
+      "sacrifice": false,
+      "livingWorld": [],
+      "cast": [
+        {
+          "key": "protagonist",
+          "name": "Lirael",
+          "performance": {
+            "pose": "",
+            "expression": "",
+            "looking_at": "",
+            "action_tags": []
+          }
+        }
+      ],
+      "authored": false,
+      "invalidFields": [],
+      "shot": {
+        "distance": "wide",
+        "angle": "high",
+        "blocking": "environment_led",
+        "movement": "a slow establishing drift over the place",
+        "subject": "Lirael"
+      }
+    }
+  ],
+  "_shotSequence": [
+    {
+      "distance": "wide",
+      "angle": "high",
+      "blocking": "environment_led",
+      "movement": "a slow establishing drift over the place",
+      "subject": "Lirael"
+    }
+  ],
+  "_shotSequenceLint": {
+    "warnings": []
+  },
+  "_shotDiversity": null,
+  "_continuityLint": {
+    "errors": [],
+    "warnings": []
+  },
+  "_qualityScorecard": {
+    "dimensions": {
+      "storyboard": 100,
+      "emotion": null,
+      "graphicLanguage": 100,
+      "visualPolish": 100,
+      "continuity": 100,
+      "coverage": null,
+      "narrativeProgression": null,
+      "shotRhythm": null,
+      "identityDirective": 100
+    },
+    "overall": 100,
+    "postRender": {
+      "identity": null,
+      "speciesFidelity": null,
+      "characterFidelity": null,
+      "emotionLanding": null,
+      "typographyQuality": null,
+      "narrativeProgression": null,
+      "visualProseAlignment": null
+    },
+    "note": "PRE-RENDER directive quality (deterministic). The postRender rubric (character fidelity / narrative progression / visual-prose alignment / identity / emotion-landing / typography) grades the COMIC and requires the blind eval — never faked from a lint."
+  },
+  "_storyDirectorVer": 1,
+  "scene_assignments": {
+    "sceneKey": 2,
+    "source": "cg_delivered",
+    "character_plus": [],
+    "environment_plus": null,
+    "fusion": null,
+    "status": "issued"
+  },
+  "_deliveredAttemptId": "cpa:bf9793a3-597d-40e9-ad3f-5b522fc5a656",
+  "_deliveredBranch": null,
+  "__temptOwnership": {
+    "proposalEntry": {
+      "id": "tfl_1",
+      "sceneIdx": 0,
+      "wishText": "everyone forgets the ceremony happened",
+      "anatomyKeywords": [],
+      "quantityKeywords": [],
+      "claimedByPlayer": false,
+      "scale": "mass",
+      "affectedTargets": [],
+      "landmarks": [],
+      "publicAttribution": "debated",
+      "witnessScope": "public",
+      "liName": "Julian",
+      "sealedAt": 1790277802656,
+      "callbackCount": 0,
+      "lastCallbackScene": null
+    },
+    "wasInvokedAtStart": false,
+    "pendingOutcome": null,
+    "sceneIndex": 2
+  }
+}

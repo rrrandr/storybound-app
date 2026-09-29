@@ -1,0 +1,80 @@
+[preflight] output dir writable: _validate_out/provenance
+[probe] scene 1…
+  [s1] payload captured 268506 chars
+  [s2] payload captured 354071 chars
+
+════ PROVENANCE ════
+  scene1 payload: 268506   scene2 payload: 354071
+
+   S1 |  S2   term (counts in the DELIVERED payload)
+     9 |    7   "elder" (any case)
+     5 |   12   Dohkar
+     3 |   15   Profer / Chayr / Fellor / Provast
+     0 |    1   "Never use \"Elder\"" prohibition
+     3 |    4   father
+     2 |    4   abandon*
+     1 |    0   "left once" / left her
+     5 |    6   lineage
+     0 |    0   LI must exist as PHYSICAL SENSORY PERSON
+     0 |    0   DESIRE-ORIENTED PERCEPTION
+     0 |    6   attraction_manifestation
+     0 |    1   WANTING vs APPRECIATING
+     0 |    1   NOTICE FILTER
+     0 |    3   LI TEXTURE BEAT
+     0 |    0   ISSUE 1 OWNERSHIP (Julian strongest charge)
+     0 |    0   RELATIONSHIP PRESENCE (narrowed rule)
+     7 |    6   alignment-sense
+     4 |    3   mouth-band / seal
+     0 |    0   remove/tear the band instruction
+     1 |    1   no visible magical effect (canon)
+     0 |    1   PETITION FATE frozen closer
+     0 |    1   CONTEXTUAL WISH TURN
+
+──── BLOCKS PRESENT IN SCENE 2 BUT NOT SCENE 1 (headers) ────
+  + PURSUIT STYLE
+  + ARCHETYPE GOVERNS THE FEEL
+  + NON-OBVIOUS COMBINATIONS
+  + PROTAGONIST BODY BIBLE
+  + ATTRACTION + SIGNATURE DOCTRINE (HARD
+  + EMOTIONAL WEATHER
+  + CORE CONTRADICTION
+  + PRIVATE HOPE
+  + CURRENT CRISIS
+  + TIME SINCE IMPACT
+  + HOTTEST EMOTION
+  + IMMEDIATE WANT
+  + IMMEDIATE FEAR
+  + LI COMPLICATION
+  + FEATURE AGENCY (HARD
+  + THE ONE PHYSICAL ANCHOR
+  + DEFINING ANECDOTE
+  + FAILURE TEST
+  + STRUCTURAL MANDATE (HARD)
+  + OFFSTAGE-BUT-KNOWN LI — RENDER IN HD (HARD)
+  + UNIVERSAL BAN
+  + REGISTER FIREWALL
+  + NON-LI CONTAMINATION (HARD
+  + ATTRACTION ESTABLISHES, RELATIONSHIP EVOLVES (HARD
+  + RELATIONSHIP-GRAVITY CHANNELS
+  + RUMINATION CAP (HARD)
+  + RELATIONSHIP-IMPORTANCE TEST
+  + SHAPE BANKS
+  + SUPERVISOR/INTERLOCUTOR PHYSICAL PLACEMENT
+  + PC SELF-PRESENTATION GESTURE
+  + ON-PHONE INTERLOCUTOR REMEMBERED-TELL
+  + NAMED CHARACTER FINGERPRINTS — EXPLICIT CORE ASSIGNMENT
+  + WORLD IDIOM
+  + SOCIAL ECOSYSTEM — THE RECURRING CAST AROUND THE PROTAGONIST
+  + HARD INVARIANT
+  + THE LIVING WORLD — INCIDENTAL CHARACTER AGENCY
+  + SPARINGLY (HARD)
+  + LI TEXTURE BEAT (OFFSTAGE
+  + INTEGRATION
+  + LI-TEXTURE DOCTRINE
+  + ANTI-ENUMERATION / NO QUOTE-MASHING (HARD
+  + PC-BODY-CALLBACK DOCTRINE
+  + LI-BODY-CALLBACK DOCTRINE
+  + ANTAGONIST-BODY-CALLBACK DOCTRINE
+  + NARRATIVE INTEGRITY LAYER (NIL — HARD)
+
+  (45 shown; S1 headers 303, S2 headers 459)

@@ -1,0 +1,24 @@
+{
+  "age": 28,
+  "ancestry": "Persian",
+  "first_name": "Nasrin",
+  "last_name": "Tehrani",
+  "height": "5'6\", lean-limbed",
+  "build": "dancer's frame — narrow shoulders, defined collarbone, small breasts, long legs",
+  "hair": "black, thick and slightly wavy, worn long past her shoulders with a natural wave she doesn't fight; she tucks it behind one ear when concentrating",
+  "complexion": "warm olive undertone with a faint golden cast; a small beauty mark just below her left cheekbone",
+  "face": "Heart-shaped with a sharp jawline and wide-set dark eyes that register every emotion before her mouth catches up — a face that cannot lie, that opens like a door the moment she feels something.",
+  "signature_feature": "Her eyes — dark brown, almost black, with a particular intensity when she's listening; the LI notices she doesn't blink much when she's afraid, just stares, pupils dilating.",
+  "second_celebrated_feature": "The curve of her neck and the hollow at the base of her throat — visible when she pulls her hair back, a vulnerable geography he becomes aware of.",
+  "signature_habits": "She hums while working — half-remembered Persian lullabies her grandmother taught her, the melody surfacing without thought. She touches her own wrists when anxious, pressing the pulse point as if checking she's still here. She speaks with her hands, gestures spilling ahead of words. When she's overwhelmed, she repeats the last thing someone said to her, a verbal stutter.",
+  "occupation": "Textile designer and small-studio owner — she designs and produces hand-dyed silk scarves and home textiles, working from a converted warehouse studio in the city; her pieces sell to high-end boutiques and directly to clients who commission custom work.",
+  "current_crisis": {
+    "event": "Her studio's landlord — a development company owned by the LI's rival — has given her 60 days to vacate so the building can be demolished for luxury condos; she has no capital to relocate, no savings cushion, and the studio IS her entire livelihood and identity.",
+    "hottest_emotion": "Panic threaded with a deeper, older shame — the feeling of being erased, of not mattering enough to be worth keeping.",
+    "immediate_want": "To find another studio space she can afford, or to convince the landlord to let her stay — but she's terrified of asking for help because asking means admitting she's failing."
+  },
+  "wound": {
+    "core": "She believes that if she is not useful, if she is not producing something beautiful or valuable, she is invisible — and invisibility is the same as not existing.",
+    "surfacing_hint": "Under pressure, she works harder, sleeps less, and becomes almost frantic about her output; she apologizes for taking up space; she assumes people will leave if she stops being interesting or productive."
+  }
+}

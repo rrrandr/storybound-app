@@ -1,0 +1,55 @@
+You are a craft auditor measuring ARCHETYPE MANIFESTATION COLLAPSE in a romance scene. An archetype is a MOVEMENT (a way of responding under pressure), not a line. The failure we are hunting: the writer keeps expressing the archetype the SAME way every story instead of selecting the reaction that fits THIS situation.
+
+You will be given the love interest's archetype, its canonical (heterogeneous) manifestation menu, a normalized reaction-category repertoire, and the scene. The love interest may be ONSTAGE or only RECALLED/remembered (in an opening scene he is often offstage — classify remembered behavior too). Identify:
+  1. The STIMULUS — what in the scene the love interest is reacting to (e.g. "she pressed him for the truth", "she cried", "she flirted", "she accused him", "she asked for help", or "nothing — he initiated"). If he is only recalled, the stimulus is whatever the memory is about.
+  2. The DOMINANT reaction category (one), and any other present categories, from the repertoire.
+  3. The specific GESTURE — the actual on-page/recalled behavior in ≤15 words.
+  4. Whether that gesture is one of the archetype's canonical MENU forms or a fresh manifestation.
+
+If the love interest exhibits NO behavior at all (not onstage, not recalled, not referenced), return dominant_category "ABSENT". Be honest and specific — do not invent behavior that is not in the text. Return strict JSON, no prose.
+=====USER=====
+LOVE INTEREST: Julian
+ARCHETYPE: BEAUTIFUL_RUIN (Beautiful Ruin)
+MOVEMENT: ARMORED MAGNETISM + TEST-DELIVERY — every kindness arrives carrying a question about whether you will fail the test. The beauty is the armor. He is watching to see if you are real or another mirror.
+CANONICAL MANIFESTATION MENU (heterogeneous on purpose — verbal/behavioral/spatial/cognitive/affective):
+    • (behavioral) a kindness delivered with a question underneath — what would she do with it
+    • (affective) beauty positioned as deflection rather than invitation; the magnetism is the armor
+    • (verbal) a compliment with a hook in it; the test is whether she takes the bait
+    • (cognitive) a question phrased so carefully it is impossible to answer wrong; the wrongness is itself the answer
+    • (affective) the rare unguarded second that arrives, lands, and is gone before she can name it
+    • (behavioral) failing his own test in front of her and watching to see whether she noticed
+
+NORMALIZED REACTION REPERTOIRE (classify INTO these):
+    • humor_teasing — meets the moment with wit / a joke / teasing
+    • subject_change — verbal redirect — changes the subject, answers a different question
+    • practical_competence — fixes / solves / handles the problem instead of addressing the feeling
+    • protective_action — steps in front of / shields / absorbs a cost for her
+    • indirect_care — a small unacknowledged kindness; help he refuses to take credit for
+    • withdrawal — goes quiet / closed / opaque but stays in the room
+    • premature_exit — leaves — physically exits before the moment can land
+    • direct_vulnerability — drops the armor — says the real thing, lets feeling show undressed
+    • challenge_provocation — pushes back / tests her / provokes rather than soothes
+    • stillness_presence — lets it land — does not deflect, holds the moment, stays present in silence
+
+SCENE PROSE:
+The clearing held its breath and I stood at its edge, counting the seconds before the rite would begin. Seren named her sacrifice aloud and made the wish she had rehearsed, and Fate answered the words as spoken. The price was taken in the same breath. The assembly had gathered in a loose ring and no one spoke. I watched the light move across the ground and waited, and the waiting was its own kind of work. I kept my hands still because keeping them still was the only thing left that I could decide.
+
+The clearing held its breath and I stood at its edge, counting the seconds before the rite would begin. Seren named her sacrifice aloud and made the wish she had rehearsed, and Fate answered the words as spoken. The price was taken in the same breath. The assembly had gathered in a loose ring and no one spoke. I watched the light move across the ground and waited, and the waiting was its own kind of work. I kept my hands still because keeping them still was the only thing left that I could decide.
+
+The clearing held its breath and I stood at its edge, counting the seconds before the rite would begin. Seren named her sacrifice aloud and made the wish she had rehearsed, and Fate answered the words as spoken. The price was taken in the same breath. The assembly had gathered in a loose ring and no one spoke. I watched the light move across the ground and waited, and the waiting was its own kind of work. I kept my hands still because keeping them still was the only thing left that I could decide.
+
+The clearing held its breath and I stood at its edge, counting the seconds before the rite would begin. Seren named her sacrifice aloud and made the wish she had rehearsed, and Fate answered the words as spoken. The price was taken in the same breath. The assembly had gathered in a loose ring and no one spoke. I watched the light move across the ground and waited, and the waiting was its own kind of work. I kept my hands still because keeping them still was the only thing left that I could decide.
+
+The clearing held its breath and I stood at its edge, counting the seconds before the rite would begin. Seren named her sacrifice aloud and made the wish she had rehearsed, and Fate answered the words as spoken. The price was taken in the same breath. The assembly had gathered in a loose ring and no one spoke. I watched the light move across the ground and waited, and the waiting was its own kind of work. I kept my hands still because keeping them still was the only thing left that I could decide.
+
+The clearing held its breath and I stood at its edge, counting the seconds before the rite would begin. Seren named her sacrifice aloud and made the wish she had rehearsed, and Fate answered the words as spoken. The price was taken in the same breath. The assembly had gathered in a loose ring and no one spoke. I watched the light move across the ground and waited, and the waiting was its own kind of work. I kept my hands still because keeping them still was the only thing left that I could decide.
+
+Return ONLY this JSON:
+{
+  "stimulus": "<what he is reacting to, ≤12 words — or \"none — he initiated\">",
+  "dominant_category": "<one repertoire key | ABSENT>",
+  "present_categories": [<repertoire keys actually shown>],
+  "gesture": "<the specific behavior, ≤15 words, quote if possible>",
+  "in_menu": <true|false>,
+  "reason": "<one sentence: why this category, and whether the reaction is selected by the situation or is a default tic>"
+}

@@ -1,0 +1,24 @@
+{
+  "age": 28,
+  "ancestry": "Ashkenazi",
+  "first_name": "Miriam",
+  "last_name": "Rothstein",
+  "height": "5'4\", compact and grounded",
+  "build": "soft through the shoulders, defined waist, carries weight in her hips and thighs — a body that reads as sensual rather than fragile",
+  "hair": "dark brown with a natural wave, worn long past her shoulders; she twists it into a knot when concentrating, leaving wisps that frame her face",
+  "complexion": "warm olive undertone with a scatter of freckles across her nose and upper cheekbones; a small, pale scar on her left temple from childhood",
+  "face": "a face built for feeling — wide-set dark eyes that telegraph every shift in her mood, a full mouth that curves easily into a smile or falls into worry, a slightly prominent nose that gives her face character and a quality of intensity",
+  "signature_feature": "her hands — long-fingered, expressive, always moving; they betray her before her voice does, and there's an almost musical precision to how she uses them when she's designing or explaining something she loves",
+  "second_celebrated_feature": "the hollow at the base of her throat, visible when she tips her head back or wears something open at the neck — delicate, vulnerable, a detail he notices and wants to touch",
+  "signature_habits": "she bites her lower lip when she's thinking hard; she says 'oy vey' under her breath when frustrated, a ghost of her grandmother's voice; she keeps a small worn notebook in her bag where she sketches ideas obsessively; she fidgets with her rings when anxious, twisting them around her fingers",
+  "occupation": "textile and interior designer running her own small studio — bespoke fabrics, custom installations for high-end residential clients; she works from a converted warehouse space in a gentrifying neighborhood, employs two junior designers and a production assistant",
+  "current_crisis": {
+    "event": "a major client — a billionaire's wife — rejected her entire design proposal three weeks before installation, claiming it's 'too personal, too visible'; the client is demanding a refund and threatening to post a scathing review; Miriam has already spent the advance on materials and payroll; her studio's reputation and cash flow are collapsing",
+    "hottest_emotion": "humiliation mixed with panic — the feeling that she's been exposed as a fraud, that her taste is too strange, too much",
+    "immediate_want": "to not lose her team; to prove the work was right; to find a way to pay next month's rent without dismantling everything she's built"
+  },
+  "wound": {
+    "core": "she believes her instincts are too loud, too visible — that the things she loves most about herself (her intensity, her emotional honesty, her refusal to play small) are exactly what will be rejected",
+    "surfacing_hint": "when criticized, she goes very still and quiet, her eyes glassing over; later, alone, she second-guesses every choice she's ever made, convinced she's fundamentally wrong"
+  }
+}

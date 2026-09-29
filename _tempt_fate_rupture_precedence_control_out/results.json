@@ -1,0 +1,106 @@
+[
+  {
+    "name": "the retained planner request carries the ACTIVE INVOCATION directive",
+    "pass": true
+  },
+  {
+    "name": "the SAME request also hard-requires the pre-resolved lane — the contradiction that produced the partial grant",
+    "pass": true
+  },
+  {
+    "name": "the REAL outcome report is now REJECTED — a delivered grant that never declares its scope cannot be committed",
+    "pass": true
+  },
+  {
+    "name": "the SAME outcome, honestly declared as a NARROWER grant, validates — narrowing is allowed, but only when it is visible",
+    "pass": true
+  },
+  {
+    "name": "a narrower grant with NO explanation is still rejected — the gap has to be accounted for, not just labelled",
+    "pass": true
+  },
+  {
+    "name": "WITHOUT a rupture the frame is still HARD and the lane still forced — the ordinary path is unchanged",
+    "pass": true
+  },
+  {
+    "name": "WITH an active rupture the frame is SUPERSEDED, not required",
+    "pass": true
+  },
+  {
+    "name": "the hard lane mandate is GONE under a rupture — the wish can no longer be forced through dohkar_preliminary_review",
+    "pass": true
+  },
+  {
+    "name": "the superseded directive names the exact failure mode it exists to prevent (narrowing the wish to save the frame)",
+    "pass": true
+  },
+  {
+    "name": "it permits the scheduled proceeding to be suspended/impossible/unexplained/redirected rather than automatically surviving",
+    "pass": true
+  },
+  {
+    "name": "the lane may be set to null when the rupture breaks it",
+    "pass": true
+  },
+  {
+    "name": "non-Fatelands, no rupture: the frame is HARD and its own lane is forced",
+    "pass": true
+  },
+  {
+    "name": "non-Fatelands, active rupture: the frame is SUPERSEDED and its lane mandate is gone",
+    "pass": true
+  },
+  {
+    "name": "the superseded text carries THAT frame's own content, not any hardcoded Fatelands wording",
+    "pass": true
+  },
+  {
+    "name": "no frame at all → no directive and no requirement (the rule adds nothing where nothing was scheduled)",
+    "pass": true
+  },
+  {
+    "name": "\"everyone forgets the ceremony\" validates as a MEMORY rupture (occurrence preserved, memory changed)",
+    "pass": true
+  },
+  {
+    "name": "…and is NOT required to claim a history rewrite it did not perform",
+    "pass": true
+  },
+  {
+    "name": "\"the ceremony never happened\" is ALLOWED to rewrite history when delivered — no universal immutability rule blocks it",
+    "pass": true
+  },
+  {
+    "name": "…and is NOT forced to populate memory fields (no whoForgot/exemption demanded of a history rewrite)",
+    "pass": true
+  },
+  {
+    "name": "\"make us infamous lovers everyone recognises\" validates as durable public recognition, with NO memory fields required",
+    "pass": true
+  },
+  {
+    "name": "\"put The Answer in my hand\" validates as possession/material with a duration, institutional history untouched, NO memory fields required",
+    "pass": true
+  },
+  {
+    "name": "a declared memory rupture with no affectedKnowers is still REJECTED — the class carries its own burden of evidence",
+    "pass": true
+  },
+  {
+    "name": "a declared possession rupture with no materialEffects is still REJECTED",
+    "pass": true
+  },
+  {
+    "name": "the precedence directive no longer asserts universal history-immutability",
+    "pass": true
+  },
+  {
+    "name": "it explicitly names every rupture class the wish may fall into, and forbids imposing a memory reading",
+    "pass": true
+  },
+  {
+    "name": "ZERO real provider dispatches — this control only calls pure builders and validators",
+    "pass": true
+  }
+]

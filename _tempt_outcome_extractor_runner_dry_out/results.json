@@ -1,0 +1,206 @@
+[
+  {
+    "name": "the fixture's own proposal id and wish are used, not re-invented",
+    "pass": true
+  },
+  {
+    "name": "the prose is built by the PRODUCTION reader-facing builder over the fixture's raw output",
+    "pass": true
+  },
+  {
+    "name": "the context is frozen",
+    "pass": true
+  },
+  {
+    "name": "the roster resolves Julian and the assembly from the fixture itself",
+    "pass": true
+  },
+  {
+    "name": "exactly ONE dispatch — it stopped at the primary tier",
+    "pass": true
+  },
+  {
+    "name": "the dispatch really was the extractor prompt (not some other role riding the same endpoint)",
+    "pass": true
+  },
+  {
+    "name": "the result is structurally valid, citations included",
+    "pass": true
+  },
+  {
+    "name": "NOTHING was mutated — no pending resolved, no consequence committed, no story touched",
+    "pass": true
+  },
+  {
+    "name": "cost reserved BEFORE the dispatch, and it is the primary tier's sourced price",
+    "pass": true
+  },
+  {
+    "name": "the five sheet questions are answerable from the result",
+    "pass": true
+  },
+  {
+    "name": "exactly ONE dispatch — a semantic rejection does NOT fall through to another model",
+    "pass": true
+  },
+  {
+    "name": "...and it is reported as a VALIDATION FAILURE, not a transport failure",
+    "pass": true
+  },
+  {
+    "name": "...failing specifically on citations — the quote is not in the accepted prose",
+    "pass": true
+  },
+  {
+    "name": "...spending only ONE tier's cost, not the whole cascade",
+    "pass": true
+  },
+  {
+    "name": "...and still mutating nothing",
+    "pass": true
+  },
+  {
+    "name": "STRUCTURAL REASON — the production extractor passes NO opts.validateContent, so _callTieredProvider cannot cascade on a semantic rejection",
+    "pass": true
+  },
+  {
+    "name": "two dispatches — primary then fallback",
+    "pass": true
+  },
+  {
+    "name": "the fallback result is structurally valid",
+    "pass": true
+  },
+  {
+    "name": "BOTH tiers were reserved before dispatch, in order",
+    "pass": true
+  },
+  {
+    "name": "...and the running total is the sum of the two sourced tier prices",
+    "pass": true
+  },
+  {
+    "name": "three dispatches — empty content is \"unusable\" and advances the tier",
+    "pass": true
+  },
+  {
+    "name": "the terminal tier produced a structurally valid result",
+    "pass": true
+  },
+  {
+    "name": "the full cascade stays under the $0.02 ceiling",
+    "pass": true
+  },
+  {
+    "name": "an UNPARSABLE primary reply stops at one dispatch — it is a parse failure in the extractor, not a tier signal",
+    "pass": true
+  },
+  {
+    "name": "...and is reported as an error rather than silently retried on another model",
+    "pass": true
+  },
+  {
+    "name": "the cascade is bounded at exactly THREE dispatches",
+    "pass": true
+  },
+  {
+    "name": "exhaustion is reported as an error, not a silent empty success",
+    "pass": true
+  },
+  {
+    "name": "...carrying the tier attempt log, so which tier failed and why is preserved",
+    "pass": true
+  },
+  {
+    "name": "nothing was mutated even on total failure",
+    "pass": true
+  },
+  {
+    "name": "the worst case stays under the ceiling",
+    "pass": true
+  },
+  {
+    "name": "an IMAGE endpoint is blocked before dispatch",
+    "pass": true
+  },
+  {
+    "name": "a non-declared TEXT endpoint is blocked before dispatch",
+    "pass": true
+  },
+  {
+    "name": "a declared endpoint carrying a NON-declared model is blocked",
+    "pass": true
+  },
+  {
+    "name": "each block is recorded with its reason",
+    "pass": true
+  },
+  {
+    "name": "no cost was reserved for any blocked request",
+    "pass": true
+  },
+  {
+    "name": "the reservation ledger REFUSES a dispatch that would breach its ceiling",
+    "pass": true
+  },
+  {
+    "name": "an unsourced model is refused rather than priced at zero",
+    "pass": true
+  },
+  {
+    "name": "the production extractor now dispatches with the raised limit",
+    "pass": true
+  },
+  {
+    "name": "...and the reservation accounting tracks it, so the worst case is not under-reserved",
+    "pass": true
+  },
+  {
+    "name": "the citation requirement is still in the prompt",
+    "pass": true
+  },
+  {
+    "name": "a COMPLETE report parses on the first attempt",
+    "pass": true
+  },
+  {
+    "name": "RED — a plain TRUNCATED body cannot be parsed by either route, so nothing can commit",
+    "pass": true
+  },
+  {
+    "name": "RED — a MARKDOWN-FENCED truncated body reaches the regex fallback and still fails to parse",
+    "pass": true
+  },
+  {
+    "name": "...which is exactly the daefe5aa chain: parse fail -> fallback invalid -> extractor throws",
+    "pass": true
+  },
+  {
+    "name": "MISSING/FABRICATED citations are proven refused earlier in this file, against the real validator",
+    "pass": true
+  },
+  {
+    "name": "...and a refused report mutates nothing",
+    "pass": true
+  },
+  {
+    "name": "COMMITMENT of a complete cited report is proven by the outcome integration control",
+    "pass": true
+  },
+  {
+    "name": "invoked with no arguments the live runner REFUSES and exits non-zero",
+    "pass": true
+  },
+  {
+    "name": "...printing the plan it would have run, so the refusal is informative rather than silent",
+    "pass": true
+  },
+  {
+    "name": "...and an APPROXIMATE authorization phrase is refused too — only the exact phrase runs",
+    "pass": true
+  },
+  {
+    "name": "ZERO real provider dispatches across the entire dry proof",
+    "pass": true
+  }
+]

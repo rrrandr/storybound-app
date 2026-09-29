@@ -1,0 +1,584 @@
+[
+ {
+  "id": "8b-S1",
+  "elements": [
+   {
+    "e": "the deep-crimson carpet of braided spiralgrass underfoot, still and untrampled except where Seren’s bare feet have pressed it",
+    "g": {
+     "ok": false,
+     "tol": false,
+     "matched": 8,
+     "total": 15,
+     "missing": [
+      "underfoot",
+      "untrampled",
+      "except",
+      "where",
+      "bare",
+      "feet",
+      "pressed"
+     ]
+    }
+   },
+   {
+    "e": "the white weeping-willow veil-canopy swaying slightly in the dawn breeze, its edges brushing the gathered First Favored",
+    "g": {
+     "ok": false,
+     "tol": false,
+     "matched": 10,
+     "total": 14,
+     "missing": [
+      "swaying",
+      "slightly",
+      "breeze",
+      "brushing"
+     ]
+    }
+   }
+  ],
+  "epTarget": {
+   "t": "the deep-crimson carpet of braided spiralgrass",
+   "g": {
+    "ok": true,
+    "tol": false,
+    "matched": 5,
+    "total": 5,
+    "missing": []
+   }
+  },
+  "epBeat": {
+   "ok": false,
+   "head": "spiralgrass",
+   "headHit": false,
+   "hits": [
+    "carpet"
+   ],
+   "total": 5,
+   "ratio": 0.2
+  },
+  "fusion": {
+   "targetMatch": true,
+   "axisMatch": true,
+   "contact": "pressing",
+   "namesTarget": {
+    "ok": false,
+    "head": "spiralgrass",
+    "headHit": false,
+    "hits": [
+     "carpet"
+    ],
+    "total": 5,
+    "ratio": 0.2
+   }
+  },
+  "cplus": [
+   {
+    "who": "Seren",
+    "opt": "OPT-4",
+    "first_mention": true,
+    "hasBridge": false,
+    "truthHit": null,
+    "condHit": null,
+    "openingNamesThem": true,
+    "coveredByOpening": 0.24
+   },
+   {
+    "who": "the presiding Dohkar",
+    "opt": "OPT-6",
+    "first_mention": true,
+    "hasBridge": false,
+    "truthHit": null,
+    "condHit": null,
+    "openingNamesThem": false,
+    "coveredByOpening": 0.05
+   }
+  ]
+ },
+ {
+  "id": "8b-S2",
+  "elements": [
+   {
+    "e": "the deep-crimson carpet of braided spiralgrass underfoot, still and unmarked except for the faint indent where Seren knelt",
+    "g": {
+     "ok": false,
+     "tol": false,
+     "matched": 8,
+     "total": 15,
+     "missing": [
+      "underfoot",
+      "unmarked",
+      "except",
+      "faint",
+      "indent",
+      "where",
+      "knelt"
+     ]
+    }
+   },
+   {
+    "e": "the white weeping-willow veil-canopy swaying slightly in the dawn breeze, its edges brushing the ground like a half-remembered sigh",
+    "g": {
+     "ok": false,
+     "tol": false,
+     "matched": 7,
+     "total": 16,
+     "missing": [
+      "swaying",
+      "slightly",
+      "breeze",
+      "brushing",
+      "ground",
+      "like",
+      "half",
+      "remembered",
+      "sigh"
+     ]
+    }
+   }
+  ],
+  "epTarget": {
+   "t": "the deep-crimson carpet of braided spiralgrass",
+   "g": {
+    "ok": true,
+    "tol": false,
+    "matched": 5,
+    "total": 5,
+    "missing": []
+   }
+  },
+  "epBeat": {
+   "ok": false,
+   "head": "spiralgrass",
+   "headHit": false,
+   "hits": [
+    "carpet"
+   ],
+   "total": 5,
+   "ratio": 0.2
+  },
+  "fusion": {
+   "targetMatch": true,
+   "axisMatch": true,
+   "contact": "trace",
+   "namesTarget": {
+    "ok": false,
+    "head": "spiralgrass",
+    "headHit": false,
+    "hits": [],
+    "total": 5,
+    "ratio": 0
+   }
+  },
+  "cplus": [
+   {
+    "who": "Seren",
+    "opt": "OPT-4",
+    "first_mention": true,
+    "hasBridge": false,
+    "truthHit": null,
+    "condHit": null,
+    "openingNamesThem": true,
+    "coveredByOpening": 1
+   },
+   {
+    "who": "the presiding Dohkar",
+    "opt": "OPT-9",
+    "first_mention": true,
+    "hasBridge": false,
+    "truthHit": null,
+    "condHit": null,
+    "openingNamesThem": false,
+    "coveredByOpening": 0.09
+   }
+  ]
+ },
+ {
+  "id": "8b-S3",
+  "elements": [
+   {
+    "e": "the deep-crimson carpet of braided spiralgrass beneath Seren’s knees, stilling her trembling hands",
+    "g": {
+     "ok": false,
+     "tol": false,
+     "matched": 6,
+     "total": 11,
+     "missing": [
+      "beneath",
+      "knees",
+      "stilling",
+      "trembling",
+      "hands"
+     ]
+    }
+   },
+   {
+    "e": "the pale mated-pair trees’ leaf-curtains swaying above, catching the dawn light like a veil of whispered secrets",
+    "g": {
+     "ok": false,
+     "tol": false,
+     "matched": 9,
+     "total": 15,
+     "missing": [
+      "swaying",
+      "catching",
+      "light",
+      "like",
+      "whispered",
+      "secrets"
+     ]
+    }
+   }
+  ],
+  "epTarget": {
+   "t": "the deep-crimson carpet of braided spiralgrass",
+   "g": {
+    "ok": true,
+    "tol": false,
+    "matched": 5,
+    "total": 5,
+    "missing": []
+   }
+  },
+  "epBeat": {
+   "ok": false,
+   "head": "spiralgrass",
+   "headHit": false,
+   "hits": [
+    "carpet"
+   ],
+   "total": 5,
+   "ratio": 0.2
+  },
+  "fusion": {
+   "targetMatch": true,
+   "axisMatch": false,
+   "contact": "presses",
+   "namesTarget": {
+    "ok": true,
+    "head": "spiralgrass",
+    "headHit": true,
+    "hits": [
+     "carpet",
+     "spiralgrass"
+    ],
+    "total": 5,
+    "ratio": 0.4
+   }
+  },
+  "cplus": [
+   {
+    "who": "Seren",
+    "opt": "OPT-4",
+    "hasBridge": false,
+    "truthHit": null,
+    "condHit": null,
+    "openingNamesThem": true,
+    "coveredByOpening": 0.53
+   },
+   {
+    "who": "the presiding Dohkar",
+    "opt": "OPT-8",
+    "hasBridge": false,
+    "truthHit": null,
+    "condHit": null,
+    "openingNamesThem": false,
+    "coveredByOpening": 0.22
+   }
+  ]
+ },
+ {
+  "id": "14b-S1",
+  "elements": [
+   {
+    "e": "the deep-crimson braided spiralgrass carpet underfoot, crushed where Seren knelt",
+    "g": {
+     "ok": false,
+     "tol": false,
+     "matched": 6,
+     "total": 10,
+     "missing": [
+      "underfoot",
+      "crushed",
+      "where",
+      "knelt"
+     ]
+    }
+   },
+   {
+    "e": "the pale mated-pair trees’ weeping-willow veil-canopy, trembling in the sudden stillness",
+    "g": {
+     "ok": false,
+     "tol": false,
+     "matched": 8,
+     "total": 11,
+     "missing": [
+      "trembling",
+      "sudden",
+      "stillness"
+     ]
+    }
+   }
+  ],
+  "epTarget": {
+   "t": "the deep-crimson braided spiralgrass carpet",
+   "g": {
+    "ok": true,
+    "tol": false,
+    "matched": 5,
+    "total": 5,
+    "missing": []
+   }
+  },
+  "epBeat": {
+   "ok": false,
+   "head": "carpet",
+   "headHit": false,
+   "hits": [],
+   "total": 5,
+   "ratio": 0
+  },
+  "fusion": {
+   "targetMatch": false,
+   "axisMatch": false,
+   "contact": "reaches",
+   "namesTarget": {
+    "ok": false,
+    "head": "carpet",
+    "headHit": false,
+    "hits": [],
+    "total": 5,
+    "ratio": 0
+   }
+  },
+  "cplus": [
+   {
+    "who": "Seren",
+    "opt": "OPT-4",
+    "first_mention": true,
+    "hasBridge": true,
+    "truthHit": [
+     "direct",
+     "naming",
+     "believes",
+     "softening",
+     "wound",
+     "kinder",
+     "than",
+     "making"
+    ],
+    "condHit": [],
+    "openingNamesThem": true,
+    "coveredByOpening": 0.36
+   },
+   {
+    "who": "the presiding Dohkar",
+    "opt": "OPT-8",
+    "first_mention": true,
+    "hasBridge": true,
+    "truthHit": [
+     "assumes",
+     "carries",
+     "authority"
+    ],
+    "condHit": [],
+    "openingNamesThem": false,
+    "coveredByOpening": 0.08
+   }
+  ]
+ },
+ {
+  "id": "14b-S2",
+  "elements": [
+   {
+    "e": "the deep-crimson braided spiralgrass carpet",
+    "g": {
+     "ok": true,
+     "tol": false,
+     "matched": 5,
+     "total": 5,
+     "missing": []
+    }
+   },
+   {
+    "e": "the pale mated-pair trees’ hanging leaf-curtains",
+    "g": {
+     "ok": true,
+     "tol": false,
+     "matched": 7,
+     "total": 7,
+     "missing": []
+    }
+   }
+  ],
+  "epTarget": {
+   "t": "the deep-crimson braided spiralgrass carpet",
+   "g": {
+    "ok": true,
+    "tol": false,
+    "matched": 5,
+    "total": 5,
+    "missing": []
+   }
+  },
+  "epBeat": {
+   "ok": true,
+   "head": "carpet",
+   "headHit": true,
+   "hits": [
+    "braided",
+    "carpet"
+   ],
+   "total": 5,
+   "ratio": 0.4
+  },
+  "fusion": {
+   "targetMatch": true,
+   "axisMatch": true,
+   "contact": null,
+   "namesTarget": {
+    "ok": true,
+    "head": "carpet",
+    "headHit": true,
+    "hits": [
+     "carpet"
+    ],
+    "total": 5,
+    "ratio": 0.2
+   }
+  },
+  "cplus": [
+   {
+    "who": "Seren",
+    "opt": "OPT-4",
+    "first_mention": true,
+    "hasBridge": true,
+    "truthHit": [
+     "naming",
+     "wound",
+     "plainly",
+     "softening",
+     "kinder",
+     "than",
+     "making",
+     "endure",
+     "direct",
+     "recognition"
+    ],
+    "condHit": [],
+    "openingNamesThem": true,
+    "coveredByOpening": 0.93
+   },
+   {
+    "who": "the presiding Dohkar",
+    "opt": "OPT-8",
+    "first_mention": true,
+    "hasBridge": true,
+    "truthHit": [
+     "authority",
+     "sacrifice"
+    ],
+    "condHit": [],
+    "openingNamesThem": false,
+    "coveredByOpening": 0.27
+   }
+  ]
+ },
+ {
+  "id": "14b-S3",
+  "elements": [
+   {
+    "e": "the deep-crimson carpet of braided mated-pair spiralgrass",
+    "g": {
+     "ok": true,
+     "tol": false,
+     "matched": 7,
+     "total": 7,
+     "missing": []
+    }
+   },
+   {
+    "e": "the pale mated-pair trees’ hanging leaf-curtains",
+    "g": {
+     "ok": true,
+     "tol": false,
+     "matched": 7,
+     "total": 7,
+     "missing": []
+    }
+   }
+  ],
+  "epTarget": {
+   "t": "the deep-crimson carpet of braided mated-pair spiralgrass",
+   "g": {
+    "ok": true,
+    "tol": false,
+    "matched": 7,
+    "total": 7,
+    "missing": []
+   }
+  },
+  "epBeat": {
+   "ok": false,
+   "head": "spiralgrass",
+   "headHit": false,
+   "hits": [
+    "carpet",
+    "braided"
+   ],
+   "total": 7,
+   "ratio": 0.29
+  },
+  "fusion": {
+   "targetMatch": false,
+   "axisMatch": false,
+   "contact": "brush",
+   "namesTarget": {
+    "ok": false,
+    "head": "spiralgrass",
+    "headHit": false,
+    "hits": [],
+    "total": 7,
+    "ratio": 0
+   }
+  },
+  "cplus": [
+   {
+    "who": "Seren",
+    "opt": "OPT-4",
+    "first_mention": true,
+    "hasBridge": true,
+    "truthHit": [
+     "avoids",
+     "naming",
+     "wound",
+     "plainly",
+     "softening",
+     "kinder",
+     "than",
+     "endure"
+    ],
+    "condHit": [
+     "someone"
+    ],
+    "openingNamesThem": true,
+    "coveredByOpening": 0.33
+   },
+   {
+    "who": "the presiding Dohkar",
+    "opt": "OPT-8",
+    "first_mention": true,
+    "hasBridge": true,
+    "truthHit": [
+     "that",
+     "carries",
+     "authority"
+    ],
+    "condHit": [
+     "being"
+    ],
+    "openingNamesThem": false,
+    "coveredByOpening": 0.38
+   }
+  ]
+ }
+]

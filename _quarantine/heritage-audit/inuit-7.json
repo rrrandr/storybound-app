@@ -1,0 +1,24 @@
+{
+  "age": 28,
+  "ancestry": "Inuit",
+  "first_name": "Kiviuq",
+  "last_name": "Ataata",
+  "height": "5'4\", compact and grounded",
+  "build": "lean-muscled, strong through the shoulders and back from years of studio work",
+  "hair": "black, thick and straight, usually in a low braid or twisted knot at the nape; a few silver threads near her temples she doesn't hide",
+  "complexion": "warm medium brown with golden undertones; a small scar along her left jawline from a childhood fall on ice",
+  "face": "a wide, open face with a slightly flattened bridge and high cheekbones that catch light; her expressions move across it like weather—shock, longing, anger all visible before she can stop them",
+  "signature_feature": "her hands—long-fingered, capable, always slightly stained with pigment or clay; the LI notices how deliberately she uses them, how they betray what her voice won't",
+  "second_celebrated_feature": "her eyes—dark brown, almost black, with a particular intensity when she's focused on something she cares about; they widen fractionally when she's afraid",
+  "signature_habits": "she keeps a small smooth stone in her jacket pocket (her grandmother's, from home); she hums while working, often in Inuktitut without noticing; she makes strong coffee at 5 a.m. even on days she doesn't have to; she touches her own collarbone when anxious, a self-soothing gesture",
+  "occupation": "textile artist and small-studio owner in Brooklyn—she designs and hand-dyes fabrics, takes commissions for high-end interior designers and fashion houses; the studio is her life's work and barely breaking even",
+  "current_crisis": {
+    "event": "her studio's landlord has sold the building to a development company; she has 60 days to vacate before demolition; she cannot afford market rent anywhere in the city; a major client's commission is half-finished and contractually due in 45 days",
+    "hottest_emotion": "suffocating panic—the feeling that the ground is opening",
+    "immediate_want": "to find a way to keep the studio alive and finish the commission without losing her mind or asking for help"
+  },
+  "wound": {
+    "core": "she believes that needing someone means disappearing—that love or dependence erases the self she's fought to build",
+    "surfacing_hint": "when frightened or cornered, she becomes rigidly self-reliant, refuses offers of help, and speaks in clipped sentences; her hands shake but she won't let anyone see"
+  }
+}

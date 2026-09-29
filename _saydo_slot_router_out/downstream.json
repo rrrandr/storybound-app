@@ -1,0 +1,20 @@
+{
+  "impactType": "string",
+  "impactLen": 833,
+  "reserved": {
+    "markers": [
+      "dohkar",
+      "chayr",
+      "open"
+    ],
+    "truthIndex": 15,
+    "truth": "LIRAEL’S FORMAL INQUIRY — WHERE AND WHEN: the presiding Dohkar has asserted the rite and the ruling on the Sacrificiant’s conduct are his, and Julian has publicly claimed authority",
+    "act": "convene",
+    "dueScene": 14,
+    "currentScene": 2,
+    "eventId": "inquiry_opened",
+    "unscheduled": false
+  },
+  "impactCarriesSayDo": true,
+  "weakLen": 1679
+}

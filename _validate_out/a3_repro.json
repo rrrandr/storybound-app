@@ -1,0 +1,52 @@
+[
+  {
+    "mode": "stringNested",
+    "i": 1,
+    "raceOutcome": "resolved",
+    "threw": null,
+    "durationMs": 187,
+    "pastGuard": 1,
+    "dupIgnored": 0,
+    "checkoutAuto": 3,
+    "fatal": "planner stage_contract rejected (absent) — the stage is not established",
+    "named": true,
+    "pages": 0,
+    "genStage": false,
+    "planner": 1,
+    "author": 0,
+    "refunds": 1,
+    "dialogs": 1,
+    "lastLogs": [
+      "[SCENE1:ENVELOPE] spine contract declares 19 field(s)",
+      "[SCENE1:ENVELOPE:NORMALISED] stage_contract (scene_skeleton -> top level) — value moved intact",
+      "[SCENE1:STAGE:PLANNER-OWNED:FAULT] planner stage_contract rejected (absent) — the stage is not established",
+      "[BeginStory] Error: Error: Scene 1 aborted: planner stage_contract rejected (absent) — the stage is not established at handleBeginStory (http://localhost:3000/a",
+      "[ISSUE-REFUND] refunded 60F. New balance: 9999"
+    ]
+  },
+  {
+    "mode": "malformedNested",
+    "i": 1,
+    "raceOutcome": "resolved",
+    "threw": null,
+    "durationMs": 201,
+    "pastGuard": 1,
+    "dupIgnored": 0,
+    "checkoutAuto": 3,
+    "fatal": "planner stage_contract rejected (malformed:participants) — the stage is not established",
+    "named": true,
+    "pages": 0,
+    "genStage": false,
+    "planner": 1,
+    "author": 0,
+    "refunds": 1,
+    "dialogs": 1,
+    "lastLogs": [
+      "[SCENE1:ENVELOPE] spine contract declares 19 field(s)",
+      "[SCENE1:ENVELOPE:NORMALISED] stage_contract (opening_spine -> top level) — value moved intact",
+      "[SCENE1:STAGE:PLANNER-OWNED:FAULT] planner stage_contract rejected (malformed:participants) — the stage is not established",
+      "[BeginStory] Error: Error: Scene 1 aborted: planner stage_contract rejected (malformed:participants) — the stage is not established at handleBeginStory (http://",
+      "[ISSUE-REFUND] refunded 60F. New balance: 9999"
+    ]
+  }
+]

@@ -1,0 +1,10 @@
+{
+  "label": "v1-repair",
+  "sys": "2508954bf9818343289e6251ab7eaffc250820514f60b18869016871541d20f7",
+  "usr": "3174ddb13a4b7cb5a4efbf86df714c8639cb843222c0797f9f17965af93ceb05",
+  "sysLen": 4239,
+  "usrLen": 64578,
+  "stable": true,
+  "model": "mistral-small-latest",
+  "max_tokens": 2921
+}

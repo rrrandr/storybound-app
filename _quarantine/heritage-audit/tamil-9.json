@@ -1,0 +1,24 @@
+{
+  "age": 28,
+  "ancestry": "Tamil",
+  "first_name": "Priya",
+  "last_name": "Krishnan",
+  "height": "5'4\", compact and proportional",
+  "build": "lean, muscled through shoulders and forearms from years of hand-work, no softness",
+  "hair": "black, thick and wavy, worn in a long braid down her back during work, loose and dark as spilled ink when she lets it down",
+  "complexion": "warm golden-brown with a faint freckling across the bridge of her nose, a small crescent scar on her left collarbone from a kiln accident at nineteen",
+  "face": "a face that broadcasts every feeling—high cheekbones, wide-set dark eyes that go liquid when she's moved, a mouth quick to smile or tremble, the overall impression of someone perpetually surprised by her own intensity",
+  "signature_feature": "her hands—long-fingered, clay-stained at the cuticles even after washing, capable and restless, the kind of hands that betray her the moment she tries to hide fear or longing",
+  "second_celebrated_feature": "the hollow at the base of her throat, visible when she pulls her hair back, which deepens when she swallows hard or breathes shallow",
+  "signature_habits": "she touches clay or textured surfaces when she's anxious—the edge of a table, a rough wall, her own sleeve cuff; she hums half-remembered Tamil film songs under her breath when concentrating; she takes her coffee black and scalding, always the same ceramic cup her grandmother gave her; she apologizes reflexively, even when nothing is her fault",
+  "occupation": "ceramicist and studio owner—she runs a small independent pottery studio in a converted warehouse, teaching classes and selling her own sculptural pieces through galleries and a modest online shop",
+  "current_crisis": {
+    "event": "her studio's landlord—a property developer with ties to a major real-estate firm—has given her six weeks' notice; the building is being demolished for a luxury mixed-use development, and she has no capital to relocate or buy her own space",
+    "hottest_emotion": "panic threaded through with a deeper shame—the feeling of being erased, of having built something beautiful only to watch it scheduled for destruction",
+    "immediate_want": "to find a way to save the studio, or at minimum to salvage her kiln and her work before the wrecking ball arrives"
+  },
+  "wound": {
+    "core": "she believes that anything she builds with her own hands will eventually be taken from her, that she is not allowed to have permanence",
+    "surfacing_hint": "when someone offers her help or stability, she flinches first and then over-explains why she doesn't deserve it; she sabotages good things by pulling away before they can be taken"
+  }
+}

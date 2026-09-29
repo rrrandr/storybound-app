@@ -1,0 +1,54 @@
+[
+ [
+  "1-healthy: Genesis charge completes (handleBeginStory pipeline ran to completion) — \"[BAKED:GATE] Genesis unlocked\"",
+  true
+ ],
+ [
+  "HEALTHY: every role that fired did so via exactly ONE Mistral attempt (5/7 fired: pcBodyBible,liBodyBible,rplot,pairBond,rplotAudit; self-gated/not-fired this run: scaffold,antagonistBodyBible), ZERO Grok, ZERO Claude/OpenAI — per window._providerTierLog",
+  true
+ ],
+ [
+  "HEALTHY: independent request census agrees — every role that fired hit /api/mistral-proxy exactly once",
+  true
+ ],
+ [
+  "2-mistral-fail: Genesis charge completes (handleBeginStory pipeline ran to completion) — \"[BAKED:GATE] Genesis unlocked\"",
+  true
+ ],
+ [
+  "MISTRAL-FAIL: exactly ONE Grok attempt per role fires next (attempt=2), fallbackReason names the Mistral failure (not null/generic), Claude/OpenAI NEVER reached",
+  true
+ ],
+ [
+  "MISTRAL-FAIL: the two induced failure SHAPES are both evidenced in fallbackReason text — empty content (pairBond) vs HTTP 500 (rplot)",
+  true
+ ],
+ [
+  "3-mistral-and-grok-fail: Genesis charge completes (handleBeginStory pipeline ran to completion) — \"[BAKED:GATE] Genesis unlocked\"",
+  true
+ ],
+ [
+  "MISTRAL+GROK-FAIL: the terminal Claude/OpenAI tier is reached, with its own fallbackReason, ONLY after both prior tiers were genuinely attempted — attempts 1,2,3 in order, timestamps monotonic (not raced, not skipped)",
+  true
+ ],
+ [
+  "MISTRAL+GROK-FAIL: independent request census agrees — arrival order per role is mistral-proxy, then /api/proxy (grok), then chatgpt-proxy",
+  true
+ ],
+ [
+  "NO-UNKNOWN-GENERATIVE-PROVIDER-CALLS: every LLM-endpoint request across all three scenarios resolves to a named, real classification — none unclassified on a generative-provider endpoint",
+  true
+ ],
+ [
+  "COALESCING (pcBodyBible): two concurrent callers of window._generatePCBodyBible() produce exactly ONE real network attempt at the outbound boundary (per window._providerTierLog), and both callers resolve to the same object",
+  true
+ ],
+ [
+  "COALESCING (liBodyBible): two concurrent callers of window._generateLIBodyBible() produce exactly ONE real network attempt at the outbound boundary, and both callers resolve to the same object",
+  true
+ ],
+ [
+  "COALESCING: independent request census agrees — exactly one /api/mistral-proxy request per bible reached the route handler",
+  true
+ ]
+]

@@ -1,0 +1,291 @@
+<title>Dhokar Raes Dialogue Preview</title>
+<meta name="description" content="The real, naming-corrected First Sacrifice Scene 1 candidate rendered through the shipped Option C on-art collapsible text drawer — real CSS and JS, not a mockup.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=Archivo:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ground: #f7f3ea;
+    --ground-raised: #fffdf8;
+    --ink: #241f17;
+    --ink-soft: #5c5342;
+    --rule: #ddd3bd;
+    --gold: #a9832f;
+    --gold-ink: #6b4f16;
+    --gold-tint: #f1e6c9;
+    --flag: #a3402b;
+    --flag-tint: #f7e6df;
+    --ok: #2f6b46;
+    --ok-tint: #e6f0e8;
+    --shadow: 0 1px 2px rgba(36,31,23,0.06), 0 8px 24px -12px rgba(36,31,23,0.18);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #16130e; --ground-raised: #1d1912; --ink: #ece4d4; --ink-soft: #b3a68c;
+      --rule: #3a3327; --gold: #d3ae5c; --gold-ink: #e8cd8f; --gold-tint: #2c2617;
+      --flag: #d97e64; --flag-tint: #2e1c17; --ok: #7fb894; --ok-tint: #16261c;
+      --shadow: 0 1px 2px rgba(0,0,0,0.4), 0 8px 24px -12px rgba(0,0,0,0.6);
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #16130e; --ground-raised: #1d1912; --ink: #ece4d4; --ink-soft: #b3a68c;
+    --rule: #3a3327; --gold: #d3ae5c; --gold-ink: #e8cd8f; --gold-tint: #2c2617;
+    --flag: #d97e64; --flag-tint: #2e1c17; --ok: #7fb894; --ok-tint: #16261c;
+    --shadow: 0 1px 2px rgba(0,0,0,0.4), 0 8px 24px -12px rgba(0,0,0,0.6);
+  }
+
+  * { box-sizing: border-box; }
+  body { background: var(--ground); color: var(--ink); font-family: 'Lora', Georgia, serif; padding: 0 20px; padding-block: 48px 96px; }
+  .wrap { max-width: 720px; margin: 0 auto; }
+  h1, h2, .label, .eyebrow, button, .btnish, .beat-index { font-family: 'Archivo', 'Helvetica Neue', Arial, sans-serif; }
+  h1 { text-wrap: balance; }
+
+  header.masthead { border-bottom: 2px solid var(--ink); padding-bottom: 22px; margin-bottom: 26px; }
+  .eyebrow { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gold-ink); margin: 0 0 10px; }
+  h1 { font-size: 1.9rem; font-weight: 600; line-height: 1.15; margin: 0 0 10px; }
+  .dek { font-size: 1rem; line-height: 1.55; color: var(--ink-soft); max-width: 62ch; margin: 0; }
+
+  .callout { background: var(--ground-raised); border: 1px solid var(--rule); border-left: 3px solid var(--gold); border-radius: 3px; padding: 15px 17px; font-size: 0.9rem; line-height: 1.55; margin: 16px 0; }
+  .callout.ok { border-left-color: var(--ok); background: var(--ok-tint); }
+  .callout.flag { border-left-color: var(--flag); background: var(--flag-tint); }
+  .callout strong { color: var(--gold-ink); }
+  .callout.ok strong { color: var(--ok); }
+  .callout.flag strong { color: var(--flag); }
+  .callout code, section p code, .provenance code { font-family: 'Archivo', sans-serif; font-size: 0.8rem; background: var(--gold-tint); color: var(--gold-ink); padding: 1px 6px; border-radius: 3px; }
+
+  section.intro { margin-bottom: 34px; }
+  section.intro p { line-height: 1.6; font-size: 0.97rem; }
+  .changed-table { width: 100%; border-collapse: collapse; font-size: 0.86rem; margin: 14px 0 4px; }
+  .changed-table th, .changed-table td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+  .changed-table th { font-family: 'Archivo', sans-serif; font-size: 0.66rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-soft); font-weight: 700; }
+
+  /* ── stream chrome (page scaffolding, NOT part of the real panel markup) ── */
+  .stream-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin: 44px 0 16px; padding-bottom: 8px; border-bottom: 1px solid var(--rule); }
+  .stream-head h2 { font-size: 1.15rem; font-weight: 600; margin: 0; font-family: 'Archivo', sans-serif; }
+  .stream-note { font-size: 0.78rem; color: var(--ink-soft); }
+  .beat { margin-bottom: 22px; }
+  .beat-index {
+    font-size: 0.66rem; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase;
+    color: var(--ink-soft); margin-bottom: 6px; display: flex; gap: 8px; align-items: center;
+  }
+  .beat-index .kind-pill { padding: 1px 7px; border-radius: 100px; border: 1px solid var(--rule); }
+  .beat-index .kind-pill.dialogue { border-color: var(--gold); color: var(--gold-ink); }
+  .beat-frame { border-radius: 6px; box-shadow: var(--shadow); overflow: hidden; }
+
+  /* ═══════════════════════════════════════════════════════════════════════
+     EVERYTHING BELOW THIS LINE is copied verbatim from the shipped
+     public/styles.css (the "Unified panel text drawer" block) and the panel
+     shell it lives inside — same selectors, same values, same transition.
+     Nothing here is a mockup approximation of the real component. ═════════ */
+
+  .gn-panel-shell { position: relative; aspect-ratio: 4 / 3; overflow: hidden; background:
+      radial-gradient(120% 90% at 30% 15%, rgba(255,255,255,0.05), transparent 60%),
+      linear-gradient(155deg, #443a2c 0%, #2c2620 55%, #1b170f 100%); }
+  .gn-panel-art-note {
+    position: absolute; top: 8px; left: 10px; z-index: 2;
+    font-family: 'Archivo', sans-serif; font-size: 0.62rem; letter-spacing: 0.06em; text-transform: uppercase;
+    color: rgba(236,226,200,0.4);
+  }
+
+  .gn-panel-textbox { position: absolute; left: 0; right: 0; z-index: 3; overflow: hidden; pointer-events: none; }
+  .gn-panel-textbox.gn-dialogue-bottom { bottom: 0; }
+  .gn-panel-textbox.gn-dialogue-top { top: 0; }
+  .gn-panel-textbox .gn-panel-textbox-inner {
+    padding: 34px 40px 12px 14px;
+    pointer-events: auto;
+    transform: translateY(46px);
+    transition: transform 320ms cubic-bezier(0.22, 0.68, 0.32, 1);
+  }
+  .gn-panel-textbox.gn-dialogue-bottom .gn-panel-textbox-inner {
+    background: linear-gradient(to top, rgba(12,10,7,0.88) 0%, rgba(12,10,7,0.6) 68%, transparent 100%);
+  }
+  .gn-panel-textbox.gn-dialogue-top .gn-panel-textbox-inner {
+    padding: 12px 40px 20px 14px;
+    background: linear-gradient(to bottom, rgba(12,10,7,0.88) 0%, rgba(12,10,7,0.6) 68%, transparent 100%);
+    transform: translateY(-46px);
+  }
+  .gn-panel-textbox.is-revealed .gn-panel-textbox-inner { transform: translateY(0); }
+
+  .gn-panel-text-caption { font-family: 'Lora', serif; font-size: 0.85em; line-height: 1.45; color: rgba(236,226,204,0.94); margin: 0 0 8px; }
+  .gn-panel-text-caption:last-child { margin-bottom: 0; }
+  .gn-panel-text-dialogue { border-left: 2px solid rgba(212,175,94,0.65); padding-left: 10px; }
+  .gn-panel-text-speaker { display: block; font-family: 'Lora', serif; font-size: 0.7em; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: rgba(216,182,106,0.92); margin-bottom: 2px; }
+  .gn-panel-text-dialogue-line { font-family: 'Lora', serif; font-size: 0.88em; line-height: 1.45; color: rgba(255,251,240,0.97); margin: 0; }
+
+  .gn-panel-text-handle {
+    position: absolute; right: 8px; bottom: 8px; z-index: 5; width: 26px; height: 26px; border-radius: 50%;
+    background: rgba(12,10,7,0.74); border: 1px solid rgba(212,175,94,0.5); color: rgba(236,226,204,0.96);
+    font-family: 'Lora', serif; font-size: 15px; line-height: 24px; text-align: center; padding: 0;
+    cursor: pointer; pointer-events: auto; user-select: none;
+  }
+  .gn-panel-text-handle:hover { background: rgba(26,19,12,0.9); }
+  .gn-panel-text-handle:focus-visible { outline: 2px solid rgba(212,175,94,0.8); outline-offset: 2px; }
+  /* ═══════════════════════════════════════════════════════════════════════ */
+
+  .provenance { font-size: 0.78rem; color: var(--ink-soft); line-height: 1.6; margin-top: 60px; padding-top: 18px; border-top: 1px solid var(--rule); font-family: 'Archivo', sans-serif; }
+
+  @media (max-width: 600px) {
+    h1 { font-size: 1.5rem; }
+    .gn-panel-textbox .gn-panel-textbox-inner { padding: 28px 22px 12px 12px; }
+    .gn-panel-textbox.gn-dialogue-top .gn-panel-textbox-inner { padding: 12px 22px 16px 12px; }
+  }
+</style>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <p class="eyebrow">First Sacrifice · Scene 1 · CG panel preview — updated</p>
+    <h1>The real candidate, the shipped drawer</h1>
+    <p class="dek">Every panel below is the actual, naming-corrected Scene 1 candidate, rendered through the CSS and drawer logic that's now committed to <code>public/styles.css</code> / <code>public/app.js</code> — not a fixture, not a synthetic mockup. Click any panel's handle (⊕/⊖) to try the real toggle; each one auto-reveals ~650ms after it mounts, exactly like production.</p>
+  </header>
+
+  <section class="intro">
+    <p>This replaces the earlier three-variant comparison at this same link. That page compared abstract lead-in / label-line / card treatments before a design decision existed. Roman chose <strong>Option C, kept on the art</strong>, inside a collapsible drawer that starts minimized on every beat and slides open — so this page now shows what actually got built, against the actual story data, instead of hypothetical treatments.</p>
+    <table class="changed-table">
+      <tr><th>Then</th><th>Now</th></tr>
+      <tr><td>3 CSS-only variants, text moved <em>off</em> the art, synthetic mock beats</td><td>1 shipped treatment, text <em>on</em> the art in a collapsible drawer, the real <code>16_naming_corrected_candidate.json</code> — all 20 Scene 1 beats</td></tr>
+      <tr><td><code>the_presiding_Dohkar</code> shown as a "before" bug reference</td><td>Fixed at the data layer + a runtime fail-safe that omits (never prints) an unsafe speaker key — see callout below</td></tr>
+      <tr><td>No interactivity</td><td>Real <code>_gnWireTextDrawerToggle</code> / <code>_gnScheduleTextDrawerReveal</code> logic, copied verbatim, actually running on this page</td></tr>
+    </table>
+    <div class="callout ok"><strong>Naming — fixed at the data layer.</strong> The presiding Dohkar is now canonized as <strong>Dhokar Raes</strong> in <code>_first_sacrifice_source_packet.json</code>'s <code>cast_roles</code>; the packet validator rejects any future beat whose speaker is an internal key or an unresolved cast reference. A generic <code>validateCGSpeakerDisplayNames</code> guard exists for any future CG story, not just this one.</div>
+    <div class="callout"><strong>Runtime fail-safe, in addition.</strong> Even if a raw key like <code>the_presiding_Dohkar</code> somehow reached the renderer, it would never print to a reader — the panel shell omits the speaker label entirely and logs a console warning, rather than showing an internal id. Verified by <code>_gn_panel_speaker_label_control.mjs</code> (21/21) against this exact candidate.</div>
+  </section>
+
+  <div class="stream-head">
+    <h2>Scene 1 — all 20 beats, in order</h2>
+    <span class="stream-note">source: <code style="background:none;">16_naming_corrected_candidate.json</code></span>
+  </div>
+
+  <div id="stream"></div>
+
+  <p class="provenance">
+    No provider or image call was made anywhere on this page — the dark panels are placeholders standing in for a rendered image, labeled with the real <code style="background:none;">image</code> key from the candidate (e.g. <code style="background:none;">intro_dohkar</code>, <code style="background:none;">d3</code>). Every line of narration and dialogue is verbatim from <code style="background:none;">_first_sacrifice_draft_v7_attempt8_full_package/16_naming_corrected_candidate.json</code>. The drawer CSS and the two wiring functions on this page are copied unmodified from the commit that shipped them (<code style="background:none;">5a2ba609</code> and its parent <code style="background:none;">3599349b</code>); nothing about the component's real behavior has been adapted for this preview.
+  </p>
+
+</div>
+
+<script>
+(function () {
+  // ── Real candidate data — verbatim from 16_naming_corrected_candidate.json, draft.scene1Candidate.beats ──
+  var BEATS = [
+    { kind:'narration', speaker:null, image:'intro_lirael', text:"Dawn light cut across the clearing in thin blades, catching on the spiralgrass and turning every edge silver. I stood at the center in the Sacrificiant's sash, its linen stiff against my ribs, the mouth-band tied so tightly my jaw ached. This was the first time the rite belonged to me instead of my father, and the weight of that fact settled behind my breastbone like a second pulse. One wrong step here and the offices I had trained for—Dohkar, Chayr, Provast—would close to me before I ever touched them. The assembly watched without sound, their eyes already measuring how much of my father they could still see in the way I held myself." },
+    { kind:'narration', speaker:null, image:'intro_lirael', text:"The band smelled of old salt and the hemp it had been boiled in. Cold air slipped beneath the sash and found the skin at my waist where the fabric lifted when I breathed. Every witness stood in a ring that felt too close; I could name each face and knew which ones would carry the story of my failure longest. My fingers found the edge of the sash and smoothed it once, a private check that the cloth still lay straight. The fear lived in the space between knowing every word of the rite and having to speak them aloud while they watched." },
+    { kind:'narration', speaker:null, image:'intro_seren', text:"Seren knelt on the marked stone with her spine straight and her hands folded exactly as the months of rehearsal had taught her. The blue of her shift matched the dawn shadows, and not a single fold looked out of place. She held her composure like a shield she had practiced lifting until the motion became thoughtless. From where I stood I could see the small muscle at her temple that never quite relaxed even when she smiled for an audience. Her stillness made the clearing feel quieter than it was." },
+    { kind:'narration', speaker:null, image:'intro_seren', text:"Her gaze found mine for half a heartbeat. I gave her the smallest nod I could manage without moving the band, and her shoulders eased by a fraction. The gesture was ours alone, the same one we had used in the practice clearing when the words still felt new. She did not smile; she simply let her breath lengthen once, then returned her eyes to the stone between us. The reassurance passed between us without sound and left the air between our bodies slightly warmer." },
+    { kind:'dialogue', speaker:'Dhokar Raes', image:'intro_dohkar', text:"In the name of the offices that govern this rite I call upon you to name the cost you bring to this First Sacrifice. Speak the irrevocable loss that will serve as its true anchor before the weave and every witness gathered here." },
+    { kind:'narration', speaker:null, image:'intro_dohkar', text:"Seren answered without looking up. “I give the memory of the night my mother sang me to sleep before the fever took her voice.” The words left her mouth clean and practiced, yet the loss they named was particular: the exact timbre of a lullaby that had belonged only to the two of them, now surrendered so the rite could move forward. I felt the shape of that memory leave her as she spoke it; her hands tightened once against her knees and did not loosen again. The cost was real enough that the clearing seemed to hold its breath around the absence she had just declared." },
+    { kind:'narration', speaker:null, image:'intro_julian', text:"At the outer edge of the gathering Julian stood with his weight balanced on both feet, the way a man does when he has no need to claim space because the space already knows him. The office of Provast sat on him without ornament, the same rank my father had once held and the one I still reached for. He did not shift or speak; he simply watched, and the stillness around him made every other movement in the clearing feel slightly louder by comparison. I registered the line of his shoulders and the fact that he had chosen the place where no one would have to turn to see him." },
+    { kind:'narration', speaker:null, image:'intro_julian', text:"I looked away before the look could lengthen into something the assembly might notice. The pull to keep watching him was the same one I had felt since the first time he stood in the same room as the rite I was learning; it arrived without invitation and left a small heat at the base of my throat. I forced my attention back to the stone and the girl kneeling on it. The awareness of him remained anyway, a second thread running beneath the words I would have to speak next." },
+    { kind:'narration', speaker:null, image:'d1', text:"Seren began the invocation in the measured cadence we had rehearsed. The first phrases left her mouth steady, each syllable placed where the rite expected it. For those opening lines the fear that had lived under my ribs receded; the words were still the right ones, and the clearing remained ordinary dawn light and grass. I breathed behind the band and let myself believe the moment might hold its shape." },
+    { kind:'narration', speaker:null, image:'d1', text:"Then the rhythm of her voice changed by a single beat. The sentence she was meant to finish curved instead toward me, and I felt the misalignment arrive the way a rider feels a horse decide to leave the path. Her gaze lifted to mine and held it with the same careful softness she had practiced, yet the words that followed carried the shape of an audience she needed to witness her goodness rather than the private desire she had rehearsed for herself alone. I recognized the gap between the two in the same instant the rite felt it." },
+    { kind:'dialogue', speaker:'Seren', image:'d2', text:"Seren lifted her gaze to mine and said clearly, “So that Lirael may find the one she lost, I give the memory of my mother singing me to sleep before the fever took her voice.” I felt the practiced softness in her eyes and recognized at once that the words had been shaped to display her virtue to the assembly rather than to serve the private need of the rite." },
+    { kind:'narration', speaker:null, image:'d2', text:"The wish left her mouth and the air between us thickened. I felt the rite reach for the shape she had offered and then bend under the weight of the witness she had added at the end. My own Weave-Script stirred against my ribs, ready to answer whatever came next. The clearing seemed to lean inward as the misaligned current began to move." },
+    { kind:'narration', speaker:null, image:'d2', text:"Seren had named the finding of the one I had lost as the thing the rite must deliver, yet the softness she gave those words was shaped for the witnesses who watched her offer them. The current that answered pulled toward that same finding, but the shape it took carried the dread that it would arrive twisted by her need to be seen as the one who had given enough. I felt the direction of it settle under my ribs, the wrongness already naming itself in how the assembly leaned closer." },
+    { kind:'narration', speaker:null, image:'d2', text:"The pull vanished without transition or cause. One moment the wrong current had been moving; the next it was simply not there. The clearing remained ordinary dawn light and grass, the air between us unchanged, and no one moved or spoke to account for the sudden absence. The question of what had checked it stayed open in the silence that followed." },
+    { kind:'dialogue', speaker:'Dhokar Raes', image:'d3', text:"You shaped the wish for your own benefit and the rite answered by turning its weight toward the one who must conduct it. That turning has not gone unseen." },
+    { kind:'narration', speaker:null, image:'d3', text:"Seren’s mother took one deliberate step backward, her hand rising to rest on her daughter’s shoulder as though the girl needed shielding from me. The movement was small and precise; it told the rest of the assembly exactly where they were meant to stand. A guest near the edge tightened his grip on the staff he carried until the wood creaked. I felt the circle of bodies draw inward and become a ring that now excluded me." },
+    { kind:'narration', speaker:null, image:'d3', text:"The charge settled across my shoulders like a second sash, heavier than the first. My father’s offices receded one measured step further with every face that turned away. Even while the ground shifted beneath me I felt the thread of my attention still reach toward the edge where Julian stood, as though the next word might come from there instead of from the Dohkar who had spoken." },
+    { kind:'dialogue', speaker:'Julian', image:'d4', text:"Julian’s voice carried across the clearing without force. “I can hear that she is aligned with her own innocence rather than the rite itself. Before you all I will question her so that any misalignment between her heart and the sacrifice becomes plain to every witness present.”" },
+    { kind:'narration', speaker:null, image:'d4', text:"He stepped forward and drew The Answer from its resting place. The double-ended staff settled across his palms, both hooked heads catching the dawn light. He placed the lower end into my waiting hands, then closed his own hands over mine, warm and certain, pressing my fingers firmly around the polished wood until the grip was sure. His touch lingered only a breath before he released the weight entirely to me and stepped back, leaving the balanced staff steady in my hold." },
+    { kind:'narration', speaker:null, image:'d4', text:"The staff was heavier than memory had prepared me for, the twin hooks balanced so perfectly that any shift in my grip changed the angle of both ends at once. I felt the eyes of the assembly on the object in my hands and on the place where the rite had turned. The question of what would happen next sat open in the air between us, and I could not yet see which direction the next voice would come from." }
+  ];
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  // ── Real textboxHtml-building logic — copied verbatim from the displayPanels.map(...) shell
+  // builder in public/app.js (start anchor "var textboxHtml = '';"), including the same runtime
+  // fail-safe that omits (never prints) an unsafe speaker key. p.captionText/p.dialogue/p.speaker/
+  // p.dialoguePosition map 1:1 onto each beat below. ──
+  function buildTextboxHtml(p) {
+    var textboxHtml = '';
+    if (p.captionText || (p.dialogue && p.dialoguePosition !== 'none')) {
+        var _twInner = '';
+        if (p.captionText) {
+            _twInner += '<div class="gn-panel-text-caption">' + esc(p.captionText) + '</div>';
+        }
+        if (p.dialogue && p.dialoguePosition !== 'none') {
+            var _twSpeakerSafe = (p.speaker && !/_/.test(p.speaker)) ? p.speaker : null;
+            if (p.speaker && !_twSpeakerSafe) {
+                try { console.warn('[GN:PANEL] speaker "' + p.speaker + '" looks like an internal key/underscored id, not a reader-visible display name — omitting the label rather than printing it to the reader.'); } catch (_) {}
+            }
+            var _twSpeaker = _twSpeakerSafe ? '<span class="gn-panel-text-speaker">' + esc(_twSpeakerSafe) + ':</span>' : '';
+            _twInner += '<div class="gn-panel-text-dialogue">' + _twSpeaker + '<p class="gn-panel-text-dialogue-line">' + esc(p.dialogue) + '</p></div>';
+        }
+        textboxHtml = '<div class="gn-panel-textbox gn-dialogue-' + (p.dialoguePosition || 'bottom') + '">' +
+            '<div class="gn-panel-textbox-inner">' + _twInner + '</div>' +
+            '</div>' +
+            '<button type="button" class="gn-panel-text-handle" aria-label="Show/hide panel text" title="Show/hide panel text" aria-expanded="false">&plus;</button>';
+    }
+    return textboxHtml;
+  }
+
+  var stream = document.getElementById('stream');
+  BEATS.forEach(function (beat, i) {
+    var p = {
+      captionText: beat.kind === 'narration' ? beat.text : null,
+      dialogue: beat.kind === 'dialogue' ? beat.text : null,
+      dialoguePosition: 'bottom',
+      speaker: beat.speaker,
+    };
+    var el = document.createElement('div');
+    el.className = 'beat';
+    el.innerHTML =
+      '<div class="beat-index">Beat ' + (i + 1) + ' of ' + BEATS.length +
+        ' <span class="kind-pill' + (beat.kind === 'dialogue' ? ' dialogue' : '') + '">' + beat.kind + (beat.speaker ? ' · ' + esc(beat.speaker) : '') + '</span>' +
+      '</div>' +
+      '<div class="beat-frame"><div class="gn-panel-shell">' +
+        '<span class="gn-panel-art-note">' + esc(beat.image) + ' — no image generated, placeholder</span>' +
+        buildTextboxHtml(p) +
+      '</div></div>';
+    stream.appendChild(el);
+  });
+
+  // ── Real wiring — copied verbatim from public/app.js (_gnWireTextDrawerToggle /
+  // _gnScheduleTextDrawerReveal), unmodified. Both are delegated/idempotent exactly as shipped. ──
+  function _gnWireTextDrawerToggle() {
+    if (window._gnTextDrawerToggleWired) return;
+    window._gnTextDrawerToggleWired = true;
+    document.addEventListener('click', function (e) {
+      var handle = e.target && e.target.closest && e.target.closest('.gn-panel-text-handle');
+      if (!handle) return;
+      var box = handle.previousElementSibling;
+      if (!box || !box.classList || !box.classList.contains('gn-panel-textbox')) return;
+      var revealed = box.classList.toggle('is-revealed');
+      handle.innerHTML = revealed ? '&minus;' : '&plus;';
+      handle.setAttribute('aria-expanded', revealed ? 'true' : 'false');
+    });
+  }
+  function _gnScheduleTextDrawerReveal() {
+    if (window._gnTextDrawerRevealWired) return;
+    window._gnTextDrawerRevealWired = true;
+    var REVEAL_DELAY_MS = 650;
+    function scheduleOne(box) {
+      if (box.dataset.gnRevealScheduled) return;
+      box.dataset.gnRevealScheduled = '1';
+      setTimeout(function () {
+        box.classList.add('is-revealed');
+        var handle = box.nextElementSibling;
+        if (handle && handle.classList && handle.classList.contains('gn-panel-text-handle')) {
+          handle.innerHTML = '&minus;';
+          handle.setAttribute('aria-expanded', 'true');
+        }
+      }, REVEAL_DELAY_MS);
+    }
+    var observer = new MutationObserver(function (mutations) {
+      mutations.forEach(function (m) {
+        m.addedNodes && m.addedNodes.forEach(function (node) {
+          if (node.nodeType !== 1) return;
+          if (node.classList && node.classList.contains('gn-panel-textbox')) scheduleOne(node);
+          if (node.querySelectorAll) node.querySelectorAll('.gn-panel-textbox').forEach(scheduleOne);
+        });
+      });
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+  }
+
+  _gnWireTextDrawerToggle();
+  _gnScheduleTextDrawerReveal();
+})();
+</script>

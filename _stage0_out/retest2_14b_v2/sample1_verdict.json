@@ -1,0 +1,55 @@
+{
+  "stage": {
+    "ok": true,
+    "fault": null,
+    "source": "seed.sceneOne",
+    "settingOwner": "seed",
+    "presenceOwner": "seed",
+    "setting": "Dawn in a Veilwood ceremony clearing: the long white weeping-willow veil-canopy drapes down from the pale mated-pair trees (the \"veil\" is the trees’ hanging leaf-curtains — NOT fabric), the floor a deep-crimson carpet of braided mated-pair spiralgrass; roughly two dozen First Favored assembled — Seren’s family and guests, a many-hued people — barefoot in gossamer Veilweave. A solemn-but-festive coming-of-age mood: everyone expects the rite to end in celebration.",
+    "presentText": "SEREN, kneeling — the youth making her First Sacrifice. Lirael's ward: they have trained together for months and she can recite the rule she is about to break. Name her early and use the name; she is a character, not a role. A senior DOHKAR (never \"elder\" — First Favored are a professional order: Dohkar / Profer / Chayr) presiding over the rite. JULIAN at the edge of the gathering, perfectly still, here only as an observer. The assembled First Favored family and guests.",
+    "onStage": [
+      "Lirael",
+      "Julian",
+      "Seren",
+      "the presiding Dohkar"
+    ],
+    "offStage": []
+  },
+  "assignments": null,
+  "newSchema": {
+    "pcLabel": "Lirael",
+    "epBeat": null,
+    "epBeatGrounded": false,
+    "pof": null,
+    "pofTargetMatches": false,
+    "pofIsPc": false,
+    "pcCpAngle": null,
+    "pcCpIsTheBeat": false,
+    "pcAnchor": null,
+    "pcAnchorIsTheBeat": false,
+    "nonPcCp": []
+  },
+  "fatal": "character_plus \"Seren\" is the opening_actor and must carry visible_action FROM_OPENING_BEAT — a second, different act is a second first appearance; character_plus \"the presiding Dohkar\" cites enacts_evidence_id \"E6\", which does not establish this option (E5); character_plus \"the presiding Dohkar\" visible_action never engages the condition it was chosen under (\"an offering being named aloud\") — the act itself must put that condition on the page — a bridge sentence cannot do it for it; character_plus \"the presiding Dohkar\" gives a pc_interpretation that never names them — a sensation in her own body is not a conclusion about anybody; environment element \"the officiating Sacrificiant’s one ornamented ceremonial sash — the ornamented sash glints faintly in the dawn light, its embroidery slightly askew from the last hasty adjustment\" names something the authoritative scene material does not contain (head: \"the officiating Sacrificiant’s one ornamented ceremonial sash\"); environment_plus.beat does not name its own target — the beat must show what happened to \"the gossamer band tied across the Sacrificiant’s mouth\", not to something else: \"the frayed edges of the cloth catch on her fingers as she adjusts it, the threads snagging like a warning\"; pc_opening_fusion.beat never reaches the assigned environment target; \"Seren\" is staged with anchor_beat \"FROM_OPENING_BEAT\" — the roster ships prefilled with FROM_CHARACTER_PLUS and there was nothing to fill in; their beat is defined once, in character_plus",
+  "attempts": 1,
+  "retryReason": null,
+  "usage": {
+    "prompt_tokens": 20138,
+    "total_tokens": 21628,
+    "completion_tokens": 1490,
+    "prompt_tokens_details": {
+      "cached_tokens": 0
+    },
+    "service_tier": "standard"
+  },
+  "finish": "stop",
+  "cost": 0.0043256,
+  "angleRejections": [],
+  "logs": [
+    "[SCENE1:LI-PRESENCE] the STAGE CONTRACT places the love interest on stage — forcing _scene1LIOnStage=true (authoritative over the engine pick; prevents the payload telling the author both that he is present and that he must not be)",
+    "[SCENE1:STAGE] source=seed.sceneOne settingOwner=seed presenceOwner=seed settingSource=seed onStage=[Lirael, Julian, Seren, the presiding Dohkar] offStage=[]",
+    "[SCENE1:PLANNER] eligible cast (4): [Lirael, Julian, Seren, the presiding Dohkar] · chars=7010 → max_tokens=2921 (N_staged_max = N_eligible; staged_characters is an OUTPUT and never sizes the request)",
+    "[SCENE1:PLANNER:ATTEMPTS] 1 (no retry)",
+    "[SCENE1:SKELETON:INVALID] 8 fault(s) — character_plus \"Seren\" is the opening_actor and must carry visible_action FROM_OPENING_BEAT — a second, different act is a second first appearance · character_plus \"the presiding Dohkar\" cites enacts_evidence_id \"E6\", which does not establish this option (E5) ·",
+    "[SCENE1:ABORT] opening planner produced an unusable skeleton — refusing to author Scene 1 without it: character_plus \"Seren\" is the opening_actor and must carry visible_action FROM_OPENING_BEAT — a second, different act is a second first appearance; character_plus \"the presiding Dohkar\" cites enacts"
+  ]
+}

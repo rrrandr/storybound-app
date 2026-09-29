@@ -1,0 +1,10 @@
+{
+  "label": "v2-corr",
+  "sys": "2508954bf9818343289e6251ab7eaffc250820514f60b18869016871541d20f7",
+  "usr": "9425306c374a2e66d787ccd88ff3480ac7ed90061237179444ed2580d1ecac11",
+  "sysLen": 4239,
+  "usrLen": 65265,
+  "stable": true,
+  "model": "mistral-small-latest",
+  "max_tokens": 2921
+}

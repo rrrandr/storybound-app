@@ -1,0 +1,3 @@
+=== v3a_stage_order · stage_order_dry.mjs · 23:15:06 ===
+v3a_stage_order: exit=1 ·  · invalid_markers=0 · samples=1 suite_rss_max=62MB free_min=1743MB server_rss_max=85MB
+v3a_stage_order: FAILURE — stopping. First failing lines:

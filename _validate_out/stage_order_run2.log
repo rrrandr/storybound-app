@@ -1,0 +1,17 @@
+  ⚙ preflight ok — http://localhost:3000/ responded 200 in 280ms
+
+PASS G1 the opening planner request was BUILT and dispatched for an unseeded story (no pre-planner abort)  — planner requests=1 threw=null
+PASS G2 the request carries the STAGE_CONTRACT block, ISSUED REFS (pc:self first) and the mission requirement  — {"issued":["pc:self","plot:aplot_x3a_127b8b3a_x2d_9be7_x2d_4219_x2d_a01c_x2d_5b22b14a4ab9:primary_antagonist"],"max":2400}
+PASS G3 with a valid reply the stage re-resolved from the planner stage and the author was dispatched  — {"contract":{"ok":true,"source":"generated:planner_stage","onStage":["Testa"]},"author":1,"fatal":null}
+PASS G4 Scene 1 mounted: one page, ledger p1, no fatal, no refund, no dialog  — {"pages":1,"ledger":1,"refunds":[],"dialogs":[]}
+PASS G5 the mission the planner returned became the corridor mission  — she understands the wish has already begun to cost her something she cannot name
+PASS R1 no stage_contract → fail-closed: fatal names the rejected stage, NO author dispatch, NO page  — {"fatal":"planner stage_contract rejected (absent) — the stage is not established","author":0}
+PASS R1b …and the reader path: issue refund requested + honest "Fate stumbled" dialog  — {"refunds":[{"context":"refund_issue_purchase_literary","amount":60}],"dialogs":["Fate stumbled — your story didn't start, so your Fortunes have been refunded. Please try again."]}
+PASS R2 unissued ref → rejected, fail-closed, refund  — {"fatal":"planner stage_contract rejected (whole_contract_rejected; named:invented_person:ref_not_issued_this_scene, named:invented_person:fact_ref_not_issued_this_scene) — the stage is not established","refunds":1}
+PASS R3 empty scene_mission → fail-closed before the author, refund  — {"fatal":"planner returned no scene_mission for an unseeded opening — nothing authored the event"}
+PASS R4 roster mismatch → rejected by the existing staged_characters rule, fail-closed  — required on-stage person "Marcus Vale" is missing from staged_characters
+PASS S1 seeded: planner-owned mode NOT entered (no STAGE_CONTRACT block, no mission rule)  — {"asked":false,"bytes":88875}
+PASS S2 seeded: the generic reply still fails at the envelope (behavior identical to before the repair)  — no opening_spine and no recognised spine fields at top level
+PASS S3 static: baked starter path untouched (no new writes in _renderBakedScene1/_commitBakedScene); contract keeps plan-scene precedence
+
+13 checks · 13 passed · 0 failed

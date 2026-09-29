@@ -1,0 +1,11 @@
+{
+ "turn": 0,
+ "petArmed": false,
+ "petFired": false,
+ "activePetition": null,
+ "temptWish": null,
+ "temptArmed": false,
+ "temptFired": false,
+ "frameAwaitingArm": false,
+ "deckExamined": false
+}

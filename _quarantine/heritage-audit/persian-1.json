@@ -1,0 +1,24 @@
+{
+  "age": 28,
+  "ancestry": "Persian",
+  "first_name": "Nasrin",
+  "last_name": "Tehrani",
+  "height": "5'6\", lean and long-limbed",
+  "build": "lithe, small-breasted, collarbones prominent",
+  "hair": "black with a deep natural wave, worn long past her shoulders or twisted into a messy knot; always escaping",
+  "complexion": "warm golden-olive undertone with a small dark beauty mark just above her left jaw",
+  "face": "a heart-shaped face with a strong nose and a wide mouth that moves constantly—expressive, unguarded, the kind of face that broadcasts every thought before she speaks",
+  "signature_feature": "her eyes—large, dark brown, with an almost liquid quality when she's feeling something; they fill with tears instantly, widen with wonder, narrow with anger; he will become obsessed with reading them",
+  "second_celebrated_feature": "her hands—long-fingered, paint-stained, always moving; she gestures when she talks, touches things to understand them, and her hands shake when she's afraid",
+  "signature_habits": "she hums without realizing it—half-remembered Persian lullabies her grandmother taught her; she bites her lower lip when concentrating; she makes strong black tea in a small glass cup every morning and drinks it while standing at her studio window; she says 'Khoda' under her breath when startled",
+  "occupation": "textile artist and designer—runs a small independent studio in a converted warehouse space where she creates hand-dyed silk scarves and custom fabric commissions for high-end interior designers",
+  "current_crisis": {
+    "event": "her studio's landlord—a shell company she didn't know was connected to a major developer—has served her with a 60-day eviction notice; the building is being demolished for a luxury tower; she has no backup location, no savings cushion, and three major client commissions due in eight weeks",
+    "hottest_emotion": "panic mixed with a sick, spiraling sense of powerlessness",
+    "immediate_want": "to find a way to keep working, to not lose the studio, to not have to call her family and admit she's failing"
+  },
+  "wound": {
+    "core": "she believes she is fundamentally not enough—not ambitious enough, not ruthless enough, not built for the world that rewards people who are; she is terrified that her softness is a liability that will eventually cost her everything",
+    "surfacing_hint": "when pressured or challenged, she goes very quiet and still, her eyes glassy; she apologizes for things that aren't her fault; she assumes she's being judged and found wanting"
+  }
+}

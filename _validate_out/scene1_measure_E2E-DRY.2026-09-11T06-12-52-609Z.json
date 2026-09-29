@@ -1,0 +1,210 @@
+{
+  "at": "2026-09-11T06:12:52.606Z",
+  "mode": "E2E-DRY",
+  "requestLimits": {
+    "planner": 2,
+    "author": 2
+  },
+  "plannerCalls": 1,
+  "authorCalls": 1,
+  "aborted": [],
+  "planner": [
+    {
+      "at": 1789107168367,
+      "url": "/api/proxy",
+      "role": "OPENING_PLANNER",
+      "model": "grok-4.3",
+      "effort": "none",
+      "openingState": "FROM_START",
+      "pinned": "FROM_START",
+      "shapeSeen": "CARETAKING",
+      "pinnedShape": "CARETAKING",
+      "rf": "json_object",
+      "max_tokens": 2400,
+      "sysBytes": 6239,
+      "usrBytes": 95961,
+      "status": 200,
+      "latencyMs": 7,
+      "served": "grok-4.3",
+      "usage": {
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        }
+      },
+      "orch": {
+        "role": "OPENING_PLANNER",
+        "model": "grok-4.3"
+      },
+      "rawReplyBytes": 2821,
+      "rawReplyFile": "_validate_out/dry_rehearsal/scene1_measure_live.rawreply.2026-09-11T06-12-30-681Z.planner.1.txt",
+      "replyTopKeys": [
+        "opening_spine",
+        "scene_skeleton",
+        "stage_contract"
+      ],
+      "replySpineKeys": [
+        "pressure_source_type",
+        "pressure_source",
+        "hook_object",
+        "opening_beat",
+        "rising_beats",
+        "decision_beat",
+        "pc_career",
+        "opening_setting",
+        "li_texture_beat",
+        "pc_wound_anchor",
+        "pc_self_presentation_beat",
+        "scene_want",
+        "scene_mission",
+        "reader_state",
+        "pc_body_callback",
+        "li_body_callback",
+        "antagonist_body_callback",
+        "perceptual_signature_beat",
+        "staged_characters",
+        "opening_actor_id",
+        "environment_elements"
+      ],
+      "replySkeletonKeys": [
+        "character_plus",
+        "fusion",
+        "pc_opening_fusion",
+        "environment_plus"
+      ],
+      "stageContractAt": [
+        "top"
+      ]
+    }
+  ],
+  "author": [
+    {
+      "at": 1789107168409,
+      "url": "/api/proxy",
+      "role": "NARRATIVE_AUTHOR_GROK_ONLY",
+      "model": null,
+      "preferredModel": "grok-4.3",
+      "max_tokens": 2400,
+      "sysBytes": 126444,
+      "usrBytes": 122821,
+      "status": 200,
+      "latencyMs": 4,
+      "served": null,
+      "usage": {},
+      "orch": {},
+      "rawReplyBytes": 2666,
+      "rawReplyFile": "_validate_out/dry_rehearsal/scene1_measure_live.rawreply.2026-09-11T06-12-30-681Z.author.1.txt",
+      "replyParse": "not JSON"
+    }
+  ],
+  "cost": [
+    {
+      "role": "OPENING_PLANNER",
+      "status": 200,
+      "latencyMs": 7,
+      "served": "grok-4.3",
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "reasoning_tokens": 0,
+      "cached_tokens": 0,
+      "usd_list": 0,
+      "xai_usd": null,
+      "replyBytes": 2821,
+      "stageContractAt": [
+        "top"
+      ]
+    },
+    {
+      "role": "NARRATIVE_AUTHOR_GROK_ONLY",
+      "status": 200,
+      "latencyMs": 4,
+      "served": null,
+      "reasoning_tokens": 0,
+      "cached_tokens": 0,
+      "usd_list": 0,
+      "xai_usd": null,
+      "replyBytes": 2666,
+      "stageContractAt": null
+    }
+  ],
+  "totalUsdList": 0,
+  "totalXaiUsd": 0,
+  "gate": {
+    "softFindings": [
+      {
+        "code": "fusion_legacy_member_ignored",
+        "field": "scene_skeleton.fusion",
+        "action": "omitted"
+      }
+    ],
+    "pinned": "FROM_START",
+    "openingState": "FROM_START",
+    "pinnedShape": "CARETAKING",
+    "shapeSeen": "CARETAKING",
+    "stateLogs": [
+      "[LI-ARRIVAL] FROM_START (engine=?, deferIntent=false, recent=)",
+      "[A-PLOT:SHAPE] using INVERTED pre-pick: Caretaking",
+      "[A-PLOT:READER-Q] Can this man actually love somebody?",
+      "[A-PLOT:SHAPE] persisted: Caretaking (CARETAKING) — readerQuestion: \"Can this man actually love somebody?\""
+    ],
+    "authorAttempts": 1,
+    "pages": 1,
+    "pageFile": "_validate_out/dry_rehearsal/scene1_measure_live.page.2026-09-11T06-12-30-681Z.txt",
+    "pageChars": 2801,
+    "fatal": null,
+    "verdict": "PASS: one author attempt, one page"
+  },
+  "st": {
+    "soft": [
+      {
+        "code": "fusion_legacy_member_ignored",
+        "field": "scene_skeleton.fusion",
+        "action": "omitted"
+      }
+    ],
+    "fatal": null,
+    "pages": 1,
+    "genStage": true,
+    "mission": "she understands the wish has already begun to cost her something she cannot name",
+    "usage": {
+      "route": "/api/proxy",
+      "requested": "grok-4.3",
+      "effort": "none",
+      "served": "grok-4.3",
+      "usage": {
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        }
+      },
+      "attempt": 1,
+      "at": 1789107168373
+    },
+    "attempts": 1,
+    "retryReason": null
+  },
+  "threw": null,
+  "refunds": [],
+  "dialogs": [],
+  "logs": [
+    "[LI-ARRIVAL] FROM_START (engine=?, deferIntent=false, recent=)",
+    "[A-PLOT:SHAPE] using INVERTED pre-pick: Caretaking",
+    "[A-PLOT:READER-Q] Can this man actually love somebody?",
+    "[A-PLOT:SHAPE] persisted: Caretaking (CARETAKING) — readerQuestion: \"Can this man actually love somebody?\"",
+    "[SCENE1:STAGE:PLANNER-OWNED] unseeded Scene 1 — the opening planner must return scene_mission + stage_contract over 3 issued ref(s): [pc:self, ent:the one who draws them forward, plot:aplot_x3a_47613066_x2d_d6fd_x2d_459b_x2d_af53_x2d_103541c7d638:primary_antagonist]",
+    "[SCENE1:FUSION:V3] offered · lens ops 4 · grounds [pick:world, pick:worldSubtype, pick:flavor, pick:dynamic, pick:tone, pick:intensity, pick:pov, pick:pcName, pick:liName, pick:mask, pick:archetype, stage:participant:pc:self, stage:participant:ent:the one who draws them forward, stage:participant:plot:aplot_x3a_47613066_x2d_d6fd_x2d_459b_x2d_af53_x2d_103541c7d638:primary_antagonist]",
+    "[SCENE1:STAGE] source=planner-owned:pending settingOwner=planner presenceOwner=planner (PENDING — planner owns part of the stage) settingSource=planner-pending onStage=[Testa] offStage=[]",
+    "[SCENE1:PLANNER] eligible cast (1): [Testa] · chars=4340 → max_tokens=2400 (N_staged_max = N_eligible; staged_characters is an OUTPUT and never sizes the request)",
+    "[SCENE1:PLANNER:USAGE] {\"route\":\"/api/proxy\",\"requested\":\"grok-4.3\",\"effort\":\"none\",\"served\":\"grok-4.3\",\"usage\":{\"prompt_tokens\":0,\"completion_tokens\":0,\"completion_tokens_details\":{\"reasoning_tokens\":0}},\"attempt\":1,\"at\":1789107168373}",
+    "[SCENE1:PLANNER:ATTEMPTS] 1 (no retry)",
+    "[SCENE1:ENVELOPE] spine contract declares 19 field(s)",
+    "[SCENE1:FUSION:V3] element affordances accepted: the weighhouse ledger=GRASPABLE, a bolt of undyed cloth=GRASPABLE",
+    "[SCENE1:FUSION:V3] environment_plus.target derived from contact.object: \"the weighhouse ledger\" (GRASPABLE)",
+    "[SCENE1:STAGE:PLANNER-OWNED] resolved — source=generated:planner_stage · on stage [Testa] · mission=\"she understands the wish has already begun to cost her something she cannot name\"",
+    "[SCENE1:STAGE:RESOLVED] settingSource=planner.opening_setting WHERE=\"customs house\" onStage=[Testa]",
+    "[SCENE1:FUSION:V3] accepted — contact PRESS → target · lens EMOTIONAL_CONCLUSION_BEFORE_EVIDENCE · grounds [env:axis, pick:flavor]",
+    "[SCENE1:STAGE] physical=[Testa] · phone=[] · total=1"
+  ]
+}

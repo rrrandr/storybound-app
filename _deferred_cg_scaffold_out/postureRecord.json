@@ -1,0 +1,13 @@
+{
+  "interruptionSubmitted": true,
+  "interruptionAction": "I step back from the mark and do not answer him yet.",
+  "interruptionDialogue": "“You already know I did not shape it. Ask the Dohkar why he needed someone to blame before the wound even cooled.”",
+  "sceneDecision": {
+    "axis": "run in shame vs remain and see where Julian was taking it",
+    "choice": "posture",
+    "label": "I step back from the mark and do not answer him yet.",
+    "source": "interruption_submit",
+    "at": 1789712495288,
+    "storyId": "0a9451cd-3538-478f-9350-93cd0e9378ad"
+  }
+}

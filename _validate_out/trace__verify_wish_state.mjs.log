@@ -1,0 +1,10 @@
+[FATE-BARGAIN] NEW desireKey="reunionwiththedead" order=HISTORY rail=ordinary scene 3
+[FATE-BARGAIN] CONTINUATION desireKey="reunionwiththedead" attempt#2 escalation=1 rail=ordinary
+[FATE-BARGAIN] CONTINUATION desireKey="reunionwiththedead" attempt#3 escalation=2 rail=ordinary
+[FATE-BARGAIN] NEW desireKey="wealth" order=HISTORY rail=ordinary scene 8
+[FATE-CONSEQUENCE] +voice_lost @ scene 3: her singing voice
+[FATE-CONSEQUENCE] +other @ scene 4: x
+[FATE-CONSEQUENCE] +open_debt @ scene 4: a debt Fate names later
+[FATE-BARGAIN] NEW desireKey="" order=RESTORATION rail=ordinary scene 3
+[FATE-CONSEQUENCE] +other @ scene 3: 
+PASS: active bargains continue-not-reroll (monotonic per-desire escalation), durable consequences render + reuse _obligationLedger for debts, ledger separate — 3 layers, fail-soft.

@@ -1,0 +1,12 @@
+  ✓ stringNested #1: race=resolved 187ms pastGuard=1 dupIgnored=0 checkoutAuto=3 fatal=planner stage_contract rejected (absent) — the stage is not established pages=0 author=0 refunds=1
+      · [CHECKOUT_RETURN] Success return (localStorage fallback) — tier: null | story: null | has pending state: false
+      · [CHECKOUT_RETURN] Corridor complete (no saved story) — auto-beginning literary story
+      · [CHECKOUT_RETURN] Late profile re-sync (4000ms) — fortunes: undefined | subscribed: undefined
+      · [BeginStory] Past _beginStoryInProgress guard, entering main flow
+  ✓ malformedNested #1: race=resolved 201ms pastGuard=1 dupIgnored=0 checkoutAuto=3 fatal=planner stage_contract rejected (malformed:participants) — the stage is not established pages=0 author=0 refunds=1
+      · [CHECKOUT_RETURN] Success return (localStorage fallback) — tier: null | story: null | has pending state: false
+      · [CHECKOUT_RETURN] Corridor complete (no saved story) — auto-beginning literary story
+      · [CHECKOUT_RETURN] Late profile re-sync (4000ms) — fortunes: undefined | subscribed: undefined
+      · [BeginStory] Past _beginStoryInProgress guard, entering main flow
+
+2 runs · 2 held the invariant · 0 did not

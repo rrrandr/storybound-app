@@ -1,0 +1,16 @@
+[arm A] a50=false stg=false — init…
+   captured 1965 chars   spend=$0.174
+[arm B] a50=false stg=true — init…
+   captured 3108 chars   spend=$0.350
+[arm C] a50=true stg=false — init…
+   captured 2337 chars   spend=$0.525
+[arm D] a50=true stg=true — init…
+   captured 2142 chars   spend=$0.701
+
+════ 4-ARM DISCRIMINATOR ════
+  arm A  a50=false stg=false  prompt=349439  prose=1965
+  arm B  a50=false stg=true  prompt=328571  prose=3108
+  arm C  a50=true stg=false  prompt=347906  prose=2337
+  arm D  a50=true stg=true  prompt=334201  prose=2142
+  total spend: $0.701
+  blind pack → _validate_out/ARMS4_PACK.json  (key sealed)

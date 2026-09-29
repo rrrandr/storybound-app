@@ -1,0 +1,24 @@
+{
+  "age": 28,
+  "ancestry": "Yoruba",
+  "first_name": "Adeola",
+  "last_name": "Okafor",
+  "height": "5'7\", long-limbed",
+  "build": "lean, defined shoulders from years of studio work, small waist",
+  "hair": "dark brown locs, shoulder-length, often wrapped in silk at night or pinned up with a carved wooden comb",
+  "complexion": "deep warm brown with golden undertones; a small dark mole on her left collarbone",
+  "face": "heart-shaped with a sharp jawline and wide-set eyes that telegraph every feeling before her mouth catches up—the face of someone who has never learned to lie",
+  "signature_feature": "her eyes—large, dark, and ringed with a natural deeper brown that makes them look perpetually lit from within; when she's afraid or wanting something, they go almost black",
+  "second_celebrated_feature": "her hands—long-fingered, calloused from textile work, with nails she keeps short and unpolished; there's a grace to how she moves them that makes watching her work feel like watching someone think out loud",
+  "signature_habits": "she hums while concentrating—usually fragments of songs her grandmother taught her, Yoruba praise-songs under her breath; she touches her collarbone when nervous, fingers finding that small mole; she takes her tea with honey and a pinch of ginger, the way her mother taught her; she keeps a small leather journal where she sketches fabric patterns and writes single-sentence observations about people",
+  "occupation": "textile designer and owner of a small independent studio in Brooklyn called Adire & Co., specializing in contemporary takes on traditional Yoruba indigo-dye techniques; she works directly with clients on bespoke pieces and teaches weekend workshops",
+  "current_crisis": {
+    "event": "her studio's landlord has sold the building to a development firm; she has ninety days to vacate, and the new rent in the neighborhood is triple what she pays now—she cannot afford to stay, and moving means losing her client base and the apprentices she's trained",
+    "hottest_emotion": "panic threaded through with a deeper helplessness, the feeling of watching something she built get swallowed",
+    "immediate_want": "to find a way to keep the studio alive, or at minimum to not lose the apprentices and the community she's built there"
+  },
+  "wound": {
+    "core": "she believes that anything she builds will eventually be taken from her—that she is not allowed to have permanence",
+    "surfacing_hint": "when stressed, she becomes almost preternaturally accommodating, saying yes to things she doesn't want, giving away pieces of her work, making herself smaller—as if by being useful enough she can earn the right to stay"
+  }
+}

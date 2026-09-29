@@ -1,0 +1,5 @@
+{"id":1,"scene":1,"t":1787526070297,"inHash":"340242:737221274","sysChars":94335,"pass":"pass2","outHash":"3062:1000098303","outLen":3062,"consumed":true}
+{"id":2,"scene":2,"t":1787526206036,"inHash":"333024:737221274","sysChars":332982,"pass":"pass2","outHash":"2139:1982489424","outLen":2139,"consumed":true}
+{"id":3,"scene":3,"t":1787526295092,"inHash":"350949:264587539","sysChars":350840,"pass":"pass1-or-legacy","outHash":"2368:1126601763","outLen":2368,"consumed":false}
+{"id":4,"scene":3,"t":1787526310409,"inHash":"348982:264587539","sysChars":348873,"pass":"pass2","outHash":"1807:-1585528016","outLen":1807,"consumed":true}
+{"id":5,"scene":3,"t":1787526445148,"inHash":"3410:-1908370480","sysChars":2075,"pass":"pass1-or-legacy","outHash":"485:-602069743","outLen":485,"consumed":true}

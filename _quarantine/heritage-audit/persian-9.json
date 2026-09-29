@@ -1,0 +1,24 @@
+{
+  "age": 28,
+  "ancestry": "Persian",
+  "first_name": "Nasrin",
+  "last_name": "Kaviani",
+  "height": "5'6\", lean and long-limbed",
+  "build": "willowy, collarbones prominent, minimal curve — the body of someone who moves a lot and forgets to eat",
+  "hair": "black, thick, naturally wavy, worn long and often half-pinned with whatever's at hand — a pencil, a silk scarf, her own fingers",
+  "complexion": "warm olive with golden undertones; a small beauty mark just below her left cheekbone",
+  "face": "Heart-shaped with a sharp jaw and wide-set dark eyes that telegraph every feeling — the face of someone who has never learned to lie, all vulnerability and immediate response",
+  "signature_feature": "her eyes — large, dark brown, rimmed with long black lashes, and they *move* constantly, reading the room, tracking emotion, unable to hide what she's feeling",
+  "second_celebrated_feature": "her hands — long-fingered, expressive, always in motion when she talks, stained with ink or paint or thread, beautiful in their competence and restlessness",
+  "signature_habits": "bites her lower lip when concentrating; hums in Persian (Googoosh songs, mostly) while working; makes tea in the afternoon and forgets to drink it; tucks her hair behind her ear obsessively when nervous; speaks with her whole body, rarely still",
+  "occupation": "textile designer and small-run fabric printer — she runs a studio called *Rang* (color) in a converted warehouse, takes custom commissions, teaches workshops, sells at high-end boutiques",
+  "current_crisis": {
+    "event": "her business partner and closest friend embezzled $180K from their operating account and vanished; the landlord is demanding back rent; a major client's order is due in 10 days and she cannot fulfill it alone; she has 6 weeks before she loses the studio",
+    "hottest_emotion": "panic threaded with betrayal — the kind that makes her stomach clench and her thoughts spiral",
+    "immediate_want": "to find a way to keep the studio alive without admitting to anyone that she's drowning"
+  },
+  "wound": {
+    "core": "she believes that needing help is a failure, that she should be self-sufficient and strong — that asking for anything is a burden on others",
+    "surfacing_hint": "under pressure, she becomes smaller, quieter, her eyes go wet but she refuses to cry in front of anyone; she works until 3 AM alone; she deflects questions with humor; she takes on impossible tasks rather than delegate"
+  }
+}

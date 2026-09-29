@@ -1,0 +1,5 @@
+=== af3_stage_order · stage_order_dry.mjs · 22:40:38 ===
+af3_stage_order: exit=1 · 106 checks · 104 passed · 2 failed · invalid_markers=0 · samples=66 suite_rss_max=340MB free_min=80MB server_rss_max=86MB
+af3_stage_order: FAILURE — stopping. First failing lines:
+87:FAIL AF1 the E+ target DERIVES from contact.object (log names it) → accepted, mounts  — {"pages":0,"fatal":"environment_plus present but malformed (target missing or empty)","log":["[SCENE1:FUSION:V3] environment_plus.target derived from contact.object: \"the weighhouse ledger\" (GRASPABLE)"]}
+89:FAIL AF3 AMBIENT element as contact object → named reject (perceived, never contacted)  — environment_plus.beat does not name its own target — the beat must show what happened to "a bolt of undyed cloth", not to something else: "the weighhouse ledger is worn smooth along one edge where the rite has been perfo

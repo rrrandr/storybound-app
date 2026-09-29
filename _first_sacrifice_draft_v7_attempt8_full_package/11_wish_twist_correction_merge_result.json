@@ -1,0 +1,42 @@
+{
+  "merged": true,
+  "errors": [],
+  "validation": {
+    "ok": true,
+    "violations": [],
+    "diagnostics": [
+      {
+        "rule": "narration_beat_pacing_long",
+        "detail": "scene1Candidate.beats[0] is 114 words (over the 90-word pacing guideline) — non-blocking; long, information-dense prose is not itself a defect and this never triggers repair or rejection"
+      },
+      {
+        "rule": "narration_beat_pacing_long",
+        "detail": "scene1Candidate.beats[1] is 104 words (over the 90-word pacing guideline) — non-blocking; long, information-dense prose is not itself a defect and this never triggers repair or rejection"
+      },
+      {
+        "rule": "narration_beat_pacing_long",
+        "detail": "scene1Candidate.beats[2] is 91 words (over the 90-word pacing guideline) — non-blocking; long, information-dense prose is not itself a defect and this never triggers repair or rejection"
+      },
+      {
+        "rule": "narration_beat_pacing_long",
+        "detail": "scene1Candidate.beats[5] is 107 words (over the 90-word pacing guideline) — non-blocking; long, information-dense prose is not itself a defect and this never triggers repair or rejection"
+      },
+      {
+        "rule": "narration_beat_pacing_long",
+        "detail": "scene1Candidate.beats[6] is 111 words (over the 90-word pacing guideline) — non-blocking; long, information-dense prose is not itself a defect and this never triggers repair or rejection"
+      },
+      {
+        "rule": "narration_beat_pacing_long",
+        "detail": "scene1Candidate.beats[7] is 91 words (over the 90-word pacing guideline) — non-blocking; long, information-dense prose is not itself a defect and this never triggers repair or rejection"
+      },
+      {
+        "rule": "narration_beat_pacing_long",
+        "detail": "scene1Candidate.beats[9] is 99 words (over the 90-word pacing guideline) — non-blocking; long, information-dense prose is not itself a defect and this never triggers repair or rejection"
+      },
+      {
+        "rule": "exemplar_similarity",
+        "detail": "oasOpening contains a 6+ word verbatim match against the withheld, non-rendered julian_opening_turn exemplar — non-blocking similarity report, not evidence of copying (the exemplar was never supplied to the model; the matched framing is independently required by the rendered opening_frame_brief / oas_opening_requirement.content_requirement)"
+      }
+    ]
+  }
+}

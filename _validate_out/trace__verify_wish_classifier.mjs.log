@@ -1,0 +1,1 @@
+PASS: classifyWishDisposition is compound (HISTORY+IDENTITY+AGENCY), false-friend-safe, deterministic, safe-defaulting; normalizeGoverningDesire collapses rephrasings, drops the offer, stays stable.

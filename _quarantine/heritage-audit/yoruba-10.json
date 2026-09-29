@@ -1,0 +1,24 @@
+{
+  "age": 28,
+  "ancestry": "Yoruba",
+  "first_name": "Adeola",
+  "last_name": "Okonkwo",
+  "height": "5'7\", long-limbed",
+  "build": "lean, muscled through the shoulders from years of hand-work",
+  "hair": "dark brown locs, shoulder-length, usually gathered at the nape with a brass cuff or left loose; she touches them when thinking",
+  "complexion": "deep warm brown with reddish undertones; a small crescent scar on her left collarbone from a kiln accident at nineteen",
+  "face": "a face that announces feeling before thought — wide-set eyes that telegraph every shift, a mouth quick to curve or flatten, high cheekbones that catch light and shadow in equal measure; she has her grandmother's forehead, broad and open, impossible to hide behind",
+  "signature_feature": "her hands — long-fingered, strong, with permanent clay stains under the nails and a particular way of holding things (a coffee cup, a doorframe, a person's gaze) that suggests she's always half-sculpting the world around her",
+  "second_celebrated_feature": "the precise line of her collarbones, visible when she pulls her locs back; the LI notices it first in harsh gallery lighting and thinks of marble",
+  "signature_habits": "she hums while working — Yoruba lullabies her grandmother taught her, wordless and unconscious; she keeps a small leather journal where she sketches commission ideas in pen, never pencil; she makes strong black tea every morning in a chipped enamel pot her mother gave her; when nervous or overwhelmed, she presses her thumb and forefinger together in a small circle, a grounding gesture she learned from her therapist",
+  "occupation": "ceramic artist and studio owner — she runs a small independent studio in a converted warehouse, takes commissions for functional and sculptural work, teaches weekend workshops, sells through a handful of boutique galleries",
+  "current_crisis": {
+    "event": "her studio's landlord — a property developer with connections to the city's wealthiest circles — has given her 90 days' notice; the space is slated for demolition and luxury conversion; she has no capital to relocate, her work is tied to the kiln installations, and she's discovered the developer is connected to the man she's just met at a gallery opening",
+    "hottest_emotion": "panic threaded with betrayal — the sense that the ground has opened",
+    "immediate_want": "to find out if he knew, if this was deliberate, if anything between them is real or just cover for a business move"
+  },
+  "wound": {
+    "core": "she believes that wanting something — a space, a person, a future — is the fastest way to lose it, so she has learned to keep her hands open and her heart behind glass",
+    "surfacing_hint": "when someone gets close, she pulls back with a joke or a deflection; under real pressure, she goes very still and quiet, her face shuttering; she says things like 'it was never mine anyway' or 'I should have known better' in a flat voice that contradicts the tears in her eyes"
+  }
+}

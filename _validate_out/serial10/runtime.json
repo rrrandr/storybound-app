@@ -1,0 +1,225 @@
+{
+ "violations": [],
+ "preflight": [],
+ "reports": [
+  {
+   "validator": "hot_opening",
+   "type": "OPENING_TEMPERATURE",
+   "ok": false,
+   "failures": [
+    "no_li_250"
+   ],
+   "renderedTemp": "HOT_CRISIS",
+   "inMotionHits": 0,
+   "containerOpener": false,
+   "evidence": "The ship struck the chains with a sound like bone breaking. Salt spray burst over the dock as the hull folded around the links, timbers shrieking. I stood in the village square above the harbour, the crowd pressing close, their eyes already sliding toward me. Quinn reached my sid"
+  },
+  {
+   "validator": "li_social_proof",
+   "ok": false,
+   "type": "LI_SOCIAL_PROOF_GAP",
+   "detail": "LI named, no social signal in the window following first mention",
+   "liName": "Julian",
+   "firstMentionPosition": 641,
+   "evidence": " her own price. I only tried to steady the rite when the current turned.”\n\nQuinn’s gaze flicked to me, then away. The crowd’s attention shifted with it, a dry cough from somewhere in the back ranks. My heel pressed harder against the plank. The old woman beside me muttered someth…"
+  },
+  {
+   "validator": "pc_picturability",
+   "type": "PC_PICTURABILITY_GAP",
+   "ok": false,
+   "evidence": "The Dohkar’s voice cut across the square like a blade through sailcloth. “The blood answers what was sworn. The chains remember the line that bound them.”\n\nI stepped forward before the silence could settle into accusation. “It was not meant to summon them,” I said, the words comi"
+  },
+  {
+   "validator": "semantic_rewrite",
+   "type": "SEMANTIC_EDIT_REQUESTED",
+   "label": "flavor-physics",
+   "instruction": "CRITICAL: This scene MUST express the world's defining mechanic.\nWorld flavor: Arcane Binding\nScene does not express flavor physics for \"arcane_binding\". Expected keywords: binding, spell, contract, g"
+  },
+  {
+   "validator": "semantic_rewrite",
+   "type": "SEMANTIC_EDIT_REQUESTED",
+   "label": "tension-gate",
+   "instruction": "TENSION REPAIR DIRECTIVE (CRITICAL — scene failed tension gate):\n1. Introduce immediate conflict in the first 1-2 lines — a demand, disruption, reveal, or emotional push directed at the player.\n2. Con"
+  },
+  {
+   "validator": "li_social_proof",
+   "ok": false,
+   "type": "LI_SOCIAL_PROOF_GAP",
+   "detail": "LI named, no social signal in the window following first mention",
+   "liName": "Julian",
+   "firstMentionPosition": 85,
+   "evidence": "The threshold's edge pressed against my boot as I searched the crowd for any sign of Julian's broad shoulders cutting through the press of bodies. Tension gathered in my shoulders, a familiar weight that made the gossamer of my sleeve pull taut against my skin. The Dohkar stood a…"
+  },
+  {
+   "validator": "pc_picturability",
+   "type": "PC_PICTURABILITY_GAP",
+   "ok": false,
+   "evidence": "The threshold's edge pressed against my boot as I searched the crowd for any sign of Julian's broad shoulders cutting through the press of bodies. Tension gathered in my shoulders, a familiar weight that made the gossamer of my sleeve pull taut against my skin. The Dohkar stood a"
+  },
+  {
+   "validator": "semantic_rewrite",
+   "type": "SEMANTIC_EDIT_REQUESTED",
+   "label": "engine-vocab",
+   "instruction": "The previous response referenced internal mechanics that must never appear in prose.\n\nHARD RULES:\n- Characters do NOT know about game mechanics — translate wishes into narrative desire, petitions into"
+  },
+  {
+   "validator": "semantic_rewrite",
+   "type": "SEMANTIC_EDIT_REQUESTED",
+   "label": "fate-consequence",
+   "instruction": "\n5TH-PERSON FATE VOICE ENFORCEMENT (CRITICAL — PREVIOUS OUTPUT FAILED):\n\nThe Story / Fate voice must be rewritten. Regenerate with these constraints:\n\n\nFATE MAY ONLY:\n- Observe (\"The story watched...\""
+  },
+  {
+   "validator": "semantic_rewrite",
+   "type": "SEMANTIC_EDIT_REQUESTED",
+   "label": "checklist",
+   "instruction": "The previous response contained structural violations. Regenerate with strict compliance.\n\nABSOLUTE RULES:\n- Zero engine vocabulary or meta-mechanical phrasing in prose\n- Zero developer/editorial tone"
+  },
+  {
+   "validator": "tension_gate",
+   "type": "LOW_TENSION",
+   "ok": false,
+   "evidence": "The threshold's edge pressed against my boot as I searched the crowd for any sign of Julian's broad shoulders cutting through the press of bodies. Tension gathered in my shoulders, a familiar weight that made the gossamer of my sleeve pull taut against my skin. The Dohkar stood a"
+  },
+  {
+   "validator": "pc_picturability",
+   "type": "PC_PICTURABILITY_GAP",
+   "ok": false,
+   "evidence": "The ship's deck under a pale moonlight creaked with each careful step I took toward the Dohkar, my fingers already worrying the hem of my cloak in that old habit I could never quite break. The salt air stung my eyes, and the deck pressed lightly against my side as I moved, a stea"
+  },
+  {
+   "validator": "tension_gate",
+   "type": "LOW_TENSION",
+   "ok": false,
+   "evidence": "The ship's deck under a pale moonlight creaked with each careful step I took toward the Dohkar, my fingers already worrying the hem of my cloak in that old habit I could never quite break. The salt air stung my eyes, and the deck pressed lightly against my side as I moved, a stea"
+  },
+  {
+   "validator": "li_social_proof",
+   "ok": false,
+   "type": "LI_SOCIAL_PROOF_GAP",
+   "detail": "LI named, no social signal in the window following first mention",
+   "liName": "Julian",
+   "firstMentionPosition": 606,
+   "evidence": "ges. I had no clear path, only the need to reach Seren before another word could bind us all tighter to the Dohkar's inquiry. The deck pressed lightly against my side as I moved, a steady reminder of the weight I carried even now.\n\nA figure shifted in the murk ahead, and my pulse…"
+  },
+  {
+   "validator": "pc_picturability",
+   "type": "PC_PICTURABILITY_GAP",
+   "ok": false,
+   "evidence": "The ship's deck, under a blanket of fog, lay slick and yielding beneath my boots, each step a muffled protest against the wood as I edged away from the Chayr's suspended hand. The salt in the air settled on my tongue with every breath. The fog thickened until the railings lost th"
+  },
+  {
+   "validator": "tension_gate",
+   "type": "LOW_TENSION",
+   "ok": false,
+   "evidence": "The ship's deck, under a blanket of fog, lay slick and yielding beneath my boots, each step a muffled protest against the wood as I edged away from the Chayr's suspended hand. The salt in the air settled on my tongue with every breath. The fog thickened until the railings lost th"
+  },
+  {
+   "validator": "li_social_proof",
+   "ok": false,
+   "type": "LI_SOCIAL_PROOF_GAP",
+   "detail": "LI named, no social signal in the window following first mention",
+   "liName": "Julian",
+   "firstMentionPosition": 283,
+   "evidence": "The oil had already reached the mast's base when I stepped back toward the Dohkar's circle, the deck yielding beneath my boots with each deliberate move. The fog pressed close, thick with salt, and the Chayr's raised hand kept the night suspended, the fog refusing to close over i…"
+  },
+  {
+   "validator": "pc_picturability",
+   "type": "PC_PICTURABILITY_GAP",
+   "ok": false,
+   "evidence": "The oil had already reached the mast's base when I stepped back toward the Dohkar's circle, the deck yielding beneath my boots with each deliberate move. The fog pressed close, thick with salt, and the Chayr's raised hand kept the night suspended, the fog refusing to close over i"
+  },
+  {
+   "validator": "tension_gate",
+   "type": "LOW_TENSION",
+   "ok": false,
+   "evidence": "The oil had already reached the mast's base when I stepped back toward the Dohkar's circle, the deck yielding beneath my boots with each deliberate move. The fog pressed close, thick with salt, and the Chayr's raised hand kept the night suspended, the fog refusing to close over i"
+  },
+  {
+   "validator": "li_social_proof",
+   "ok": false,
+   "type": "LI_SOCIAL_PROOF_GAP",
+   "detail": "LI named, no social signal in the window following first mention",
+   "liName": "Julian",
+   "firstMentionPosition": 496,
+   "evidence": "ifact's edges scraped the deck boards as it rocked in place, drawing every eye. The revelation hung in the air, my hidden lineage laid bare for all to hear, and the weight of it pressed against my ribs as murmurs rippled outward.\n\nI stepped forward, the sun catching the edge of m…"
+  },
+  {
+   "validator": "pc_picturability",
+   "type": "PC_PICTURABILITY_GAP",
+   "ok": false,
+   "evidence": "The ship's deck lay bright under the sun, the wood warm and slick beneath my boots as the Chayr's voice pulled every head forward, the air tightening around the circle. The artifact's edges scraped the deck boards as it rocked in place, drawing every eye. The revelation hung in t"
+  },
+  {
+   "validator": "semantic_rewrite",
+   "type": "SEMANTIC_EDIT_REQUESTED",
+   "label": "hook-gate",
+   "instruction": "\nCORRECTION MODE: You are revising the scene to correct structural weaknesses. Preserve characters, setting, and continuity. Strengthen tension, pressure, and hook. Do NOT rewrite from scratch — impro"
+  },
+  {
+   "validator": "semantic_rewrite",
+   "type": "SEMANTIC_EDIT_REQUESTED",
+   "label": "hook-gate",
+   "instruction": "\nCORRECTION MODE: You are revising the scene to correct structural weaknesses. Preserve characters, setting, and continuity. Strengthen tension, pressure, and hook. Do NOT rewrite from scratch — impro"
+  },
+  {
+   "validator": "li_social_proof",
+   "ok": false,
+   "type": "LI_SOCIAL_PROOF_GAP",
+   "detail": "LI named, no social signal in the window following first mention",
+   "liName": "Julian",
+   "firstMentionPosition": 1107,
+   "evidence": " uneven, yet the Chayr continued without pause, naming the distant lineage and the unseen hand that had once shaped my path through the rites. The Arcane Binding rested between us on the planks, its patterns still faintly luminous, the artifact's presence a quiet demand that the …"
+  },
+  {
+   "validator": "pc_picturability",
+   "type": "PC_PICTURABILITY_GAP",
+   "ok": false,
+   "evidence": "The ship's deck lay shrouded in twilight shadows, the boards still warm from the day's sun as the Dohkar drew nearer in a slow, deliberate line. I stood rigid near the railing, my fingers trembling against the salt-worn wood, and I did not speak. The weight of their approach pres"
+  },
+  {
+   "validator": "semantic_rewrite",
+   "type": "SEMANTIC_EDIT_REQUESTED",
+   "label": "hook-gate",
+   "instruction": "\nCORRECTION MODE: You are revising the scene to correct structural weaknesses. Preserve characters, setting, and continuity. Strengthen tension, pressure, and hook. Do NOT rewrite from scratch — impro"
+  },
+  {
+   "validator": "semantic_rewrite",
+   "type": "SEMANTIC_EDIT_REQUESTED",
+   "label": "hook-gate",
+   "instruction": "\nCORRECTION MODE: You are revising the scene to correct structural weaknesses. Preserve characters, setting, and continuity. Strengthen tension, pressure, and hook. Do NOT rewrite from scratch — impro"
+  },
+  {
+   "validator": "pc_picturability",
+   "type": "PC_PICTURABILITY_GAP",
+   "ok": false,
+   "evidence": "The ship's deck stretched silver under the moonlight, the planks slick with salt and the faint residue of the rite's lingering charge. I moved along the railing, my fingers worrying the hem of my cloak in a restless pattern, salt gritting under my heel with each step. My ribs tig"
+  },
+  {
+   "validator": "tension_gate",
+   "type": "LOW_TENSION",
+   "ok": false,
+   "evidence": "The ship's deck stretched silver under the moonlight, the planks slick with salt and the faint residue of the rite's lingering charge. I moved along the railing, my fingers worrying the hem of my cloak in a restless pattern, salt gritting under my heel with each step. My ribs tig"
+  },
+  {
+   "validator": "li_social_proof",
+   "ok": false,
+   "type": "LI_SOCIAL_PROOF_GAP",
+   "detail": "LI named, no social signal in the window following first mention",
+   "liName": "Julian",
+   "firstMentionPosition": 877,
+   "evidence": "the benefactor's hidden hand in my path. The rain thickened for a moment, a gust carrying salt and the distant roll of thunder that made every Favored on deck pause, heads turning toward the horizon before the moment passed. I held my ground, pressing for clarity on what the clai…"
+  },
+  {
+   "validator": "pc_picturability",
+   "type": "PC_PICTURABILITY_GAP",
+   "ok": false,
+   "evidence": "The ship's deck, slick with rain, caught the moonlight in fractured glints as I stepped forward to meet the Dohkar's claim head-on. My fingers worked the hem of my cloak in a restless rhythm, the fabric damp against my skin, while the Dohkar's raised hand held the circle open and"
+  },
+  {
+   "validator": "tension_gate",
+   "type": "LOW_TENSION",
+   "ok": false,
+   "evidence": "The ship's deck, slick with rain, caught the moonlight in fractured glints as I stepped forward to meet the Dohkar's claim head-on. My fingers worked the hem of my cloak in a restless rhythm, the fabric damp against my skin, while the Dohkar's raised hand held the circle open and"
+  }
+ ]
+}

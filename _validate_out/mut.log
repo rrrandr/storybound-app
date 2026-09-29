@@ -1,0 +1,119 @@
+[trace] init…
+[trace] firing turn (author stubbed with saved V2 raw)…
+
+════ MUTATION TIMELINE (V2 replay, author stubbed) ════
+  RAW  290ba4fe90  2450 chars   (author stubs served: 1)
+  [1] REPAIR-CALL  (no label)  → grok-4.3
+        in df37259199 (1080)  → cand 91725ae546 (145)  changed=true
+        sys: You are the same narrator continuing THIS exact scene. Write ONE or TWO short sentences (~
+  [2] REPAIR-CALL  (no label)  → gpt-4o-mini
+        in 032390eee1 (6332)  → cand 1f34399971 (63)  changed=true
+        sys: You are a canonicalization and normalization engine for Storybound. You do NOT write pros
+  [3] REPAIR-CALL  (no label)  → gpt-4o
+        in 9dfcb2cbad (4873)  → cand e2e52e1687 (2012)  changed=true
+        sys: 
+  [4] REPAIR-CALL  (no label)  → gpt-4o-mini
+        in 4d7440475c (1691)  → cand 1a3bd00dc6 (291)  changed=true
+        sys: Write a "Previously…" recap as EXACTLY four bullet points, each 13 words or fewer, address
+  [5] REPAIR-CALL  (no label)  → grok-4.3
+        in 4d2df9052f (1075)  → cand 08eb323f6b (154)  changed=true
+        sys: You are the same narrator continuing THIS exact scene. Write ONE or TWO short sentences (~
+  [6] REPAIR-CALL  (no label)  → gpt-4o-mini
+        in 6d701f18d7 (2870)  → cand fe2a987fa5 (191)  changed=true
+        sys: ROLE: You are the Strategy Engine for an interactive romance story generator. You make STR
+  [7] REPAIR-CALL  (no label)  → gpt-4o-mini
+        in 4bc6e4c2b7 (1142)  → cand 5f05c6f657 (514)  changed=true
+        sys: You are the SCENE-SPINE planner for an interactive romance engine. The scene has ONE organ
+      log: [COMMITTED-TRUTH:DEV-FORCE] gate bypassed (localhost/dev or __forceCommittedTruth=true)
+  [8] REPAIR-CALL  (no label)  → gpt-4o-mini
+        in a39337a98e (5713)  → cand f56a0c5f7c (2280)  changed=true
+        sys: You are an editorial auditor measuring EMOTIONAL GRAVITY in a romance scene. The ONE quest
+      log: [HONEY-POT] Trigger conditions not met or random gate failed — no agenda this story
+      log: [CONTINUATION-REGIME] scene=0 raw_storyturn=ST1 gated_storyturn=(unset) li_presence=PROXY li_connected=false relationship_phase=? intensity=
+      log: [MODEL] Literary prose → requested=grok-4-1-fast-reasoning (Grok author [served model logged as MODEL:SERVED] + Grok de-calc editor + Haiku 
+      log: [SCENE1:DESIRE-TARGET] ROMAN — Roman 15% · plot-truth 0% · wound-repair 5% · self-understanding 0% · She wants to understand Julian and his 
+  [9] REPAIR-CALL  (no label)  → grok-4.3
+        in 290ba4fe90 (2450)  → cand 4f53cda18c (2)  changed=true
+        sys: You are a ruthless line-editor for romance prose. Find the up-to-FIVE worst spans, by prio
+  [10] REPAIR-CALL  (no label)  → mistral-small-latest
+        in 290ba4fe90 (2450)  → cand 0833d610a8 (2441)  changed=true
+        sys: Fix ONLY mechanical defects in this scene: broken or incomplete sentences (including fragm
+      log: [PROMPT-PROFILE] repair · mistral-small-latest · prompt=746 reasoning=0 visible=553 · turn 0
+      log: [GEN-FAIL:LI-DESCRIPTION:DRAFT] (pre-gate draft — :FINAL below is authoritative for what the reader got) LI "Julian" mentioned 3× but NO ima
+      log: [PROSE:CANONICAL] collarbone_throat_line 0/4 (0%) — collarbone / throat-line self-presentation (calcified PC delta — Roman 2026-06-04)
+      log: [PROSE:CANONICAL] hair_loose 0/4 (0%) — hair coming loose / strand falling / tucking hair behind ear (calcified hair tell — was an untracked
+      log: [PROSE:CANONICAL] ringed_iris 0/4 (0%) — eyes "ringed (darker) at the iris/rim" OR "perpetual/faint squint" (calcified LI eye-detail — Roman
+      log: [PROSE:CANONICAL] cliche_piercing_gaze 0/4 (0%) — stock "piercing" eyes/gaze/stare (calcified romance-hero look — Roman 2026-06-17)
+      log: [PROSE:CANONICAL] taking_up_space 0/4 (0%) — taking up space / sidewalk (calcified — Roman 2026-06-08)
+      log: [UNAVAILABILITY:MANIFESTATION] 3 run(s) scanned, 1 carry avoidance. Aggregate: 1 absence vs 0 deflection → absence share = 100% ⛔ COLLAPSE
+      log: [LI-PROOF:REPAIR] firing — li=Julian allowed=[status,competence,myth,scarcity,sexual] locked=none
+  [11] REPAIR-CALL  (no label)  → gpt-4o-mini
+        in 53c80afcb9 (3531)  → cand 3fd6b6215d (550)  changed=true
+        sys: You are an editorial auditor. Read the SCENE PROSE and return TWO orthogonal judgments abo
+  [12] REPAIR-CALL  (no label)  → gpt-4o-mini
+        in 2a4854f850 (4789)  → cand 047122e1cf (313)  changed=true
+        sys: You are a craft auditor measuring ARCHETYPE MANIFESTATION COLLAPSE in a romance scene. An 
+  [13] REPAIR-CALL  (no label)  → grok-4.3
+        in 6400049719 (2670)  → cand 2d0941e7bc (12)  changed=true
+        sys: You audit prose for BANNED-phrase reuse. The user sends a BANNED LIST and a SCENE. Report 
+  [14] REPAIR-CALL  (no label)  → grok-4.3
+        in a28b96f9e1 (1463)  → cand 07ffb96e01 (91)  changed=true
+        sys: You are the same narrator continuing THIS exact scene. Write ONE or TWO short sentences (~
+  [15] REPAIR-CALL  (no label)  → grok-4.3
+        in 35f4845f7b (1463)  → cand 7284047e5a (145)  changed=true
+        sys: You are the same narrator continuing THIS exact scene. Write ONE or TWO short sentences (~
+  [16] REPAIR-CALL  (no label)  → grok-4.3
+        in 7c28340465 (5135)  → cand fdb53d7aad (2505)  changed=true
+        sys: You are a precise line-editor, NOT a writer. Fix ONLY what the instruction names. Do NOT c
+      log: [LI-PROOF:REPAIR] edit applied but detector still finds no signal in the window — leaving as-is for inspection.
+  [17] REPAIR-CALL  (no label)  → gpt-4o-mini
+        in a7520c01bd (7766)  → cand 71a0ebed64 (2263)  changed=true
+        sys: You are an editorial auditor measuring EMOTIONAL GRAVITY in a romance scene. The ONE quest
+      log: [SCENE1:DESIRE-TARGET] WOUND_REPAIR — Roman 10% · plot-truth 0% · wound-repair 20% · self-understanding 0% · Lirael is focused on her own fe
+  [18] REPAIR-CALL  (no label)  → grok-4.3
+        in fb6ea06afe (4875)  → cand 0ed6151023 (2778)  changed=true
+        sys: You are a precise line-editor, NOT a writer. Fix ONLY what the instruction names. Do NOT c
+  [19] REPAIR-CALL  (no label)  → grok-4.3
+        in 27c2d9bd14 (5370)  → cand c97dbef46c (2820)  changed=true
+        sys: You are a precise line-editor, NOT a writer. Fix ONLY what the instruction names. Do NOT c
+      log: [PC-DESC:PROSE-REPAIR turn 1] applied in 2 pass(es), STILL thin: no-gestalt/flat
+      log: [EDITORIAL:TIER] scene 0 tier=premium lensBudget=1
+  [20] REPAIR-CALL  (no label)  → grok-4.3
+        in 1c972e43e8 (6174)  → cand c97dbef46c (2820)  changed=true
+        sys: You are S. Tory Bound's PERCEPTION EDITOR. The scene below is already written and already 
+      log: [LENS:NONE] scene 0 — budget 1 but no sentence genuinely flat (need-gated to 0)
+      log: [EDITORIAL:REPAIR] premium → extra de-calc sweep
+      log: [TENSION GATE] Attempt 1/1 (FORCE INJECT) — reasons: [NO_RESISTANCE: nothing blocks the desire]
+  [21] REPAIR-CALL  (no label)  → grok-4.3
+        in b8af8ea92e (3049)  → cand 2d0941e7bc (12)  changed=true
+        sys: You audit prose for BANNED-phrase reuse. The user sends a BANNED LIST and a SCENE. Report 
+  [22] REPAIR-CALL  (no label)  → grok-4.3
+        in 7dd1cfd60b (4821)  → cand 53e05d0a5b (2798)  changed=true
+        sys: You are a precise line-editor, not a writer. You will be given a FINISHED scene and a spec
+      log: [MODEL-ROUTE:PROSE] provider=mistral-small task=line_edit callsite=cheap-edit:tension-gate
+  [23] REPAIR-CALL  (no label)  → mistral-small-latest
+        in 7dd1cfd60b (4821)  → cand dbde1d9840 (2850)  changed=true
+        sys: You are a precise line-editor, not a writer. You will be given a FINISHED scene and a spec
+      log: [CHEAP-EDIT] tension-gate DRIFTED (len 2820→2850 or opening changed) — keeping the ORIGINAL draft rather than re-rolling.
+      log: [TENSION GATE] HARD_FAIL after 1 attempts — accepting scene: [NO_RESISTANCE: nothing blocks the desire]
+      log: [PACING GATE] FAILED — accepting without LLM regen (cost cut 2026-05-29); deterministic marker relocation only: [WEAK_PRE_CHOICE_SPIKE: no d
+      log: [PACING GATE] Still failing (no regen — cost cut) — accepting + relocating late marker if present: [WEAK_PRE_CHOICE_SPIKE: no direct address
+  [24] REPAIR-CALL  (no label)  → gpt-4o-mini
+        in 0e4f7d02be (7556)  → cand e99991542b (1891)  changed=true
+        sys: You extract structured narrative memory from fiction scenes. Respond ONLY with valid JSON,
+  [25] REPAIR-CALL  (no label)  → grok-4.3
+        in 3c117f7489 (2834)  → cand ed62251693 (2836)  changed=true
+        sys: You are a copy editor. Re-paragraph the SCENE the user sends for standard novel dialogue f
+      log: [SCENE-BUDGET:COUNT] scene=d7237e1e-ceef-422d-808f-5e3b977a5955:1 repair=0 polish=0 fallback=0 regen=0 cosmetic=0/2 (conditional spent=0/4) 
+      log: [LITE-COST] HEAVY scene 2 · classifier→HEAVY/HEAVY · provider=gpt · prose+spine $0.0123 · audits $0.0034 (DEV instrumentation — PROD gates t
+      log: [LITE-COST] → PROD marginal (audits gated, no dual shadow): $0.0125 vs 10¢ SAFETY CEILING → ✓ under ceiling (9¢ headroom) [heavy is primary 
+      log: [SCENE-AUDIT] {"sc":0,"ms":105285,"ttft":0,"ttftProse":0,"spend":{"initial":0.00879,"regens":0,"setup":0,"audits":0.00241,"wasted":0,"total"
+      log: [FATE:AUTHORITY] LI offstage — romantic card retargeted to present interlocutor (non-romantic) {cardId: temptation, interlocutor: Quinn, pre
+      log: [FATE:AUTHORITY] LI offstage — romantic card retargeted to present interlocutor (non-romantic) {cardId: confession, interlocutor: Quinn, pre
+      log: [FATE:AUTHORITY] LI offstage — romantic card retargeted to present interlocutor (non-romantic) {cardId: boundary, interlocutor: Quinn, prese
+      log: [FATE:AUTHORITY] LI offstage — romantic card retargeted to present interlocutor (non-romantic) {cardId: reversal, interlocutor: Quinn, prese
+  [26] REPAIR-CALL  (no label)  → gpt-4o-mini
+        in e53608087b (854)  → cand bd0842bb55 (489)  changed=true
+        sys: You generate JSON continuity components for fiction scenes. Respond ONLY with valid JSON, 
+  FINAL 1076336aaa  2820 chars
+  RAW→FINAL changed: true

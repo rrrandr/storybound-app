@@ -1,0 +1,72 @@
+{
+ "violations": [],
+ "preflight": [],
+ "reports": [
+  {
+   "validator": "hot_opening",
+   "type": "OPENING_TEMPERATURE",
+   "ok": true,
+   "failures": [
+    "no_li_250"
+   ],
+   "renderedTemp": "HOT_CRISIS",
+   "inMotionHits": 1,
+   "containerOpener": false,
+   "evidence": "Seren’s eyes found mine across the crimson spiralgrass. She stopped mid-invocation, the rehearsed words dying on her tongue. “I offer the memory of my first flight through the canopy,” she said, her voice steady. “I wish that Lirael finds the one she lost.”\n\nThe Dohkar’s hands fr"
+  },
+  {
+   "validator": "pc_picturability",
+   "type": "PC_PICTURABILITY_GAP",
+   "ok": false,
+   "evidence": "The Dohkar’s fingers drummed once against the carved armrest. “Speak, if you can speak at all,” he said, voice low enough that the veil-curtains barely stirred. “You were sealed to keep the rite clean. Tell me why the name that surfaced belongs to your blood.”\n\nI opened my mouth "
+  },
+  {
+   "validator": "semantic_rewrite",
+   "type": "SEMANTIC_EDIT_REQUESTED",
+   "label": "flavor-physics",
+   "instruction": "CRITICAL: This scene MUST express the world's defining mechanic.\nWorld flavor: Arcane Binding\nScene does not express flavor physics for \"arcane_binding\". Expected keywords: binding, spell, contract, g"
+  },
+  {
+   "validator": "semantic_rewrite",
+   "type": "SEMANTIC_EDIT_REQUESTED",
+   "label": "hook-gate",
+   "instruction": "\nCORRECTION MODE: You are revising the scene to correct structural weaknesses. Preserve characters, setting, and continuity. Strengthen tension, pressure, and hook. Do NOT rewrite from scratch — impro"
+  },
+  {
+   "validator": "semantic_rewrite",
+   "type": "SEMANTIC_EDIT_REQUESTED",
+   "label": "hook-gate",
+   "instruction": "\nCORRECTION MODE: You are revising the scene to correct structural weaknesses. Preserve characters, setting, and continuity. Strengthen tension, pressure, and hook. Do NOT rewrite from scratch — impro"
+  },
+  {
+   "validator": "pc_picturability",
+   "type": "PC_PICTURABILITY_GAP",
+   "ok": false,
+   "evidence": "The threshold of the clearing, where the mated trunks twisted into one another, bark sealed where they met, bore my weight as I searched the gathered faces for Julian. His tall frame stood out even among the First Favored, deep copper hair catching the filtered light through the "
+  },
+  {
+   "validator": "semantic_rewrite",
+   "type": "SEMANTIC_EDIT_REQUESTED",
+   "label": "engine-vocab",
+   "instruction": "The previous response referenced internal mechanics that must never appear in prose.\n\nHARD RULES:\n- Characters do NOT know about game mechanics — translate wishes into narrative desire, petitions into"
+  },
+  {
+   "validator": "semantic_rewrite",
+   "type": "SEMANTIC_EDIT_REQUESTED",
+   "label": "fate-consequence",
+   "instruction": "\n5TH-PERSON FATE VOICE ENFORCEMENT (CRITICAL — PREVIOUS OUTPUT FAILED):\n\nThe Story / Fate voice must be rewritten. Regenerate with these constraints:\n\n\nFATE MAY ONLY:\n- Observe (\"The story watched...\""
+  },
+  {
+   "validator": "semantic_rewrite",
+   "type": "SEMANTIC_EDIT_REQUESTED",
+   "label": "checklist",
+   "instruction": "The previous response contained structural violations. Regenerate with strict compliance.\n\nABSOLUTE RULES:\n- Zero engine vocabulary or meta-mechanical phrasing in prose\n- Zero developer/editorial tone"
+  },
+  {
+   "validator": "tension_gate",
+   "type": "LOW_TENSION",
+   "ok": false,
+   "evidence": "The threshold of the clearing, where the mated trunks twisted into one another, bark sealed where they met, bore my weight as I searched the gathered faces for Julian. His tall frame stood out even among the First Favored, deep copper hair catching the filtered light through the "
+  }
+ ]
+}

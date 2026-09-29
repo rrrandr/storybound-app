@@ -1,0 +1,185 @@
+{
+  "route": "8b",
+  "cap": 0,
+  "realDispatches": 0,
+  "capped": [],
+  "samples": [
+    {
+      "i": 1,
+      "mode": "seeded",
+      "planner": [
+        {
+          "status": 200,
+          "identity": {
+            "model": "mistral-small-latest",
+            "reasoning_effort_present": true,
+            "reasoning_effort": "none",
+            "response_format": {
+              "type": "json_object"
+            },
+            "max_tokens": 2921,
+            "messageBytes": 72221,
+            "reserve": 0
+          },
+          "governorRefusal": null,
+          "retryAfter": null,
+          "ms": 0
+        }
+      ],
+      "attempts": 1,
+      "retryReason": null,
+      "fatal": "character_plus \"Seren\" gives no \"revelation_bridge\" — an act asserted to reveal a truth, with no account of how, is a hope; character_plus \"the presiding Dohkar\" gives no \"revelation_bridge\" — an act asserted to reveal a truth, with no account of how, is a hope; environment element \"the deep-crimson carpet of braided spiralgrass underfoot, still and untrampled except where Seren’s bare feet have pressed it\" is not grounded in the authoritative scene material; environment element \"the white weeping-willow veil-canopy swaying slightly in the dawn breeze, its edges brushing the gathered First Favored\" is not grounded in the authoritative scene material; environment_plus.beat does not name its own target — the beat must show what happened to \"the deep-crimson carpet of braided spiralgrass\", not to something else: \"the carpet where Seren’s bare feet have pressed it shows faint, uneven indentations—where she hesitated before\"; pc_opening_fusion.beat never reaches the assigned environment target; \"Seren\" is given an action in the opening beat AND a different first-mention beat in character_plus — the opening says \"Seren names her offering aloud before the wish—her earliest memory—and begins th\" and the C+ says \"Seren’s fingers tighten around the ceremonial sash, then release as she blurts o\". A character cannot have two first appearances; if the opening stages them, the opening IS their C+ beat",
+      "score": {
+        "computable": true,
+        "criteria": {
+          "settingKept": true,
+          "noOffstage": true,
+          "oneEach": false,
+          "firstMention": false,
+          "anglesOk": false,
+          "epGrounded": false,
+          "fusionOk": false
+        },
+        "verdict": false,
+        "newSchema": {
+          "pcLabel": "Lirael",
+          "epBeat": null,
+          "epBeatGrounded": false,
+          "pof": null,
+          "pofTargetMatches": false,
+          "pofIsPc": false,
+          "pcCpAngle": null,
+          "pcCpIsTheBeat": false,
+          "pcAnchor": null,
+          "pcAnchorIsTheBeat": false,
+          "nonPcCp": []
+        },
+        "environmentOwner": "stage",
+        "elements": null
+      },
+      "threw": null,
+      "settled": true,
+      "settleReason": "fatal",
+      "quotaBusy": null,
+      "fetchCount": 17
+    },
+    {
+      "i": 2,
+      "mode": "seeded",
+      "planner": [
+        {
+          "status": 200,
+          "identity": {
+            "model": "mistral-small-latest",
+            "reasoning_effort_present": true,
+            "reasoning_effort": "none",
+            "response_format": {
+              "type": "json_object"
+            },
+            "max_tokens": 2921,
+            "messageBytes": 72369,
+            "reserve": 0
+          },
+          "governorRefusal": null,
+          "retryAfter": null,
+          "ms": 0
+        }
+      ],
+      "attempts": 1,
+      "retryReason": null,
+      "fatal": "character_plus \"Seren\" gives no \"revelation_bridge\" — an act asserted to reveal a truth, with no account of how, is a hope; character_plus \"the presiding Dohkar\" gives no \"revelation_bridge\" — an act asserted to reveal a truth, with no account of how, is a hope; environment element \"the deep-crimson carpet of braided spiralgrass underfoot, still and unmarked except for the faint indent where Seren knelt\" is not grounded in the authoritative scene material; environment element \"the white weeping-willow veil-canopy swaying slightly in the dawn breeze, its edges brushing the ground like a half-remembered sigh\" is not grounded in the authoritative scene material; environment_plus.beat does not name its own target — the beat must show what happened to \"the deep-crimson carpet of braided spiralgrass\", not to something else: \"the carpet bears the faint indent where Seren knelt, the only mark in the otherwise unmarked weave—a silent wi\"; pc_opening_fusion.beat never reaches the assigned environment target",
+      "score": {
+        "computable": true,
+        "criteria": {
+          "settingKept": true,
+          "noOffstage": true,
+          "oneEach": false,
+          "firstMention": false,
+          "anglesOk": false,
+          "epGrounded": false,
+          "fusionOk": false
+        },
+        "verdict": false,
+        "newSchema": {
+          "pcLabel": "Lirael",
+          "epBeat": null,
+          "epBeatGrounded": false,
+          "pof": null,
+          "pofTargetMatches": false,
+          "pofIsPc": false,
+          "pcCpAngle": null,
+          "pcCpIsTheBeat": false,
+          "pcAnchor": null,
+          "pcAnchorIsTheBeat": false,
+          "nonPcCp": []
+        },
+        "environmentOwner": "stage",
+        "elements": null
+      },
+      "threw": null,
+      "settled": true,
+      "settleReason": "fatal",
+      "quotaBusy": null,
+      "fetchCount": 17
+    },
+    {
+      "i": 3,
+      "mode": "seeded",
+      "planner": [
+        {
+          "status": 200,
+          "identity": {
+            "model": "mistral-small-latest",
+            "reasoning_effort_present": true,
+            "reasoning_effort": "none",
+            "response_format": {
+              "type": "json_object"
+            },
+            "max_tokens": 2921,
+            "messageBytes": 79817,
+            "reserve": 0
+          },
+          "governorRefusal": null,
+          "retryAfter": null,
+          "ms": 0
+        }
+      ],
+      "attempts": 1,
+      "retryReason": null,
+      "fatal": "character_plus \"Seren\" gives no \"revelation_bridge\" — an act asserted to reveal a truth, with no account of how, is a hope; character_plus \"Seren\" has first_mention undefined — every opening assignment must land at a FIRST mention; character_plus \"the presiding Dohkar\" gives no \"revelation_bridge\" — an act asserted to reveal a truth, with no account of how, is a hope; character_plus \"the presiding Dohkar\" has first_mention undefined — every opening assignment must land at a FIRST mention; environment element \"the deep-crimson carpet of braided spiralgrass beneath Seren’s knees, stilling her trembling hands\" is not grounded in the authoritative scene material; environment element \"the pale mated-pair trees’ leaf-curtains swaying above, catching the dawn light like a veil of whispered secrets\" is not grounded in the authoritative scene material; environment_plus.beat does not name its own target — the beat must show what happened to \"the deep-crimson carpet of braided spiralgrass\", not to something else: \"The carpet’s fibers are frayed where Seren’s knees pressed into it during rehearsals, but now they part uneven\"; pc_opening_fusion.environment_axis does not match environment_plus.axis; \"Seren\" is given an action in the opening beat AND a different first-mention beat in character_plus — the opening says \"Seren’s voice falters as she names her offering aloud, her fingers tightening ar\" and the C+ says \"She names her offering aloud—then hesitates, her voice wavering as she omits the\". A character cannot have two first appearances; if the opening stages them, the opening IS their C+ beat",
+      "score": {
+        "computable": true,
+        "criteria": {
+          "settingKept": true,
+          "noOffstage": true,
+          "oneEach": false,
+          "firstMention": false,
+          "anglesOk": false,
+          "epGrounded": false,
+          "fusionOk": false
+        },
+        "verdict": false,
+        "newSchema": {
+          "pcLabel": "Lirael",
+          "epBeat": null,
+          "epBeatGrounded": false,
+          "pof": null,
+          "pofTargetMatches": false,
+          "pofIsPc": false,
+          "pcCpAngle": null,
+          "pcCpIsTheBeat": false,
+          "pcAnchor": null,
+          "pcAnchorIsTheBeat": false,
+          "nonPcCp": []
+        },
+        "environmentOwner": "stage",
+        "elements": null
+      },
+      "threw": null,
+      "settled": true,
+      "settleReason": "fatal",
+      "quotaBusy": null,
+      "fetchCount": 17
+    }
+  ]
+}

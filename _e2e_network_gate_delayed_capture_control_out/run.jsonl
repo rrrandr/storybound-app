@@ -1,0 +1,7 @@
+{"kind":"phase-open","roleTag":"delayed-author-call","ceiling":1,"at":1789978202242,"loggedAt":1789978202242}
+{"kind":"dispatch","roleTag":"delayed-author-call","real":false,"url":"http://203.0.113.1/api/proxy","requestBody":{"model":"grok-4-1-fast-reasoning","messages":[{"role":"system","content":"x"}]},"at":1789978202246,"atMono":737.666417,"loggedAt":1789978202246}
+{"kind":"response","roleTag":"delayed-author-call","real":false,"url":"http://203.0.113.1/api/proxy","status":200,"responseBody":{"choices":[{"message":{"content":"delayed author prose, arrived late on purpose"}}],"usage":{"prompt_tokens":90000,"completion_tokens":1200,"cache_read_input_tokens":0}},"at":1789978205247,"settledAtMono":3738.481458,"elapsedMs":3000.8150410000003,"loggedAt":1789978205247}
+{"kind":"phase-close","roleTag":"delayed-author-call","at":1789978205258,"loggedAt":1789978205258}
+{"kind":"phase-open","roleTag":"network-error-test","ceiling":1,"at":1789978205259,"loggedAt":1789978205259}
+{"kind":"dispatch","roleTag":"network-error-test","real":true,"url":"http://127.0.0.1:1/api/timing-probe","requestBody":{"model":"grok-4-1-fast-reasoning","messages":[{"role":"system","content":"x"}]},"at":1789978205262,"atMono":3753.393042,"loggedAt":1789978205262}
+{"kind":"network-error","roleTag":"network-error-test","real":true,"url":"http://127.0.0.1:1/api/timing-probe","networkError":"net::ERR_UNSAFE_PORT","at":1789978205265,"settledAtMono":3756.198167,"elapsedMs":2.8051249999998618,"loggedAt":1789978205265}

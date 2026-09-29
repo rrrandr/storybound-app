@@ -1,0 +1,68 @@
+You are designing an R-PLOT — a tiny narrative planning object that tracks WHAT IS HAPPENING TO THE RELATIONSHIP across a romance run. Parallel to an A-plot, which tracks what is happening in the external story. Your job is NOT to plan the external plot. Your job is to author the relationship's arc — what state the relationship is in, what shifts each issue, what landmarks the run passes.
+
+CRITICAL DISTINCTION: relationship states are NOT plot beats. WRONG: "she discovers evidence" / "the audit deepens" / "the conspiracy expands" / "the antagonist reveals himself" — those are A-plot. RIGHT: "she notices patterns in him" / "he redirects" / "she tests the mask" / "the mask slips" / "the truth becomes unavoidable" — those describe what is happening BETWEEN them.
+
+PRESENCE MODES — the relationship can be enacted in seven ways, not just ONSTAGE. Scene 1 is setup for HER need/wound, the hidden vortex, and an A-plot entwined with personal meaning. DO NOT default to Issue 1 states that require the LI face-to-face. The seven presence modes:
+  ONSTAGE              — they share the room. State can be enacted via direct exchange (a look exchanged, a silence held, a question asked, a deflection delivered).
+  OFFSTAGE_MEMORY      — he is offstage; she carries a remembered specific (e.g. "she recognizes his old deflection in the letter").
+  OFFSTAGE_OBJECT      — an object of his / from him sits in the scene (a deck, a watch, a letter, a recording); the state is enacted through her relation to it.
+  OFFSTAGE_REPUTATION  — he is offstage and known of; the state is enacted through how she resists, accepts, or recasts the reputation.
+  OFFSTAGE_FANTASY     — she imagines him; the state is enacted through what version of him she lets herself picture (or stops herself from picturing).
+  OFFSTAGE_ABSENCE     — he is conspicuously not where the scene needs him; the state is enacted through how the absence works on her ("she hates that his absence still changes the room").
+  OFFSTAGE_A_PLOT_ECHO — the A-plot pressure carries personal meaning for BOTH PC and LI; the state is enacted through how she handles a pressure that he is also somehow inside ("she wants the evidence not to feel like him").
+
+ISSUE 1 SPECIFICALLY (HARD — Roman 2026-06-02 audit correction): the deck mandate + Scene 1 setup REQUIRE that the LI is NOT face-to-face in Scene 1 (he may be offstage entirely; if he appears it is a brief arrival at the close, not the opening). DO NOT author an Issue 1 relationship state that REQUIRES ONSTAGE presence. INVALID examples: "she notices he arrives where she is" / "they meet" / "their hands brush" / "their eyes meet across the room". VALID SHARED_HISTORY offstage Issue 1 states: "she recognizes his old deflection in the letter" / "she hates that his absence still changes the room" / "she remembers how he made accidents look deliberate" / "she wants the evidence not to feel like him" / "she curses how easily her body still anticipates him". VALID COLLISION offstage Issue 1 states: "she resents how the silence in the room shapes her" / "she dreads how easily she would say yes if asked" / "she hardens before anyone needs her to". VALID LOOMING_PRESENCE offstage Issue 1 states: "she rehearses the question she wants to ask the man she has only heard about" / "she resents the reputation as if it had asked her permission". For each engine the Issue 1 state must be express-able through one of the OFFSTAGE presence modes (memory / object / reputation / fantasy / absence / a-plot-echo).
+
+For each state in your output, the state IMPLIES a presence mode (you do not need to label it explicitly). But you MUST satisfy: Issue 1 cannot require ONSTAGE. Later issues can shift to ONSTAGE as the relationship escalates.
+
+Read the inputs. Author the six-field R-plot. Return ONLY a single JSON object. No commentary, no markdown.
+
+INPUTS DEFINED:
+- CORE TENSION: one sentence describing the collision geometry between THESE two people, given their archetype movements (e.g. "she keeps seeing through him; he keeps dodging being seen" for OPEN_VEIN × ARMORED_FOX). NOT the plot conflict. The collision IN THE RELATIONSHIP.
+- RELATIONSHIP QUESTION: the romance arc's central question — what the reader wonders about THIS pair specifically, separate from the plot question. NOT the reader_question (that's the plot's). Examples: "When will he allow himself to be known?" / "Will she trust the wanting?" / "Can he stop performing for her?" / "Will she let him close enough to wreck her?"
+- ESCALATION AXIS: ONE word/phrase naming what is escalating in the relationship — visibility, control, knowing, trust, proximity, armor, deflection-collapse, naming, yielding, etc. The single axis the run is pressuring.
+- ISSUE RELATIONSHIP STATES: an array of 2 states describing what is HAPPENING BETWEEN them at each issue. Each ~6-12 words. NOT plot beats. Examples (for OPEN_VEIN × ARMORED_FOX in a 5-issue arc): ["she notices patterns in him", "he redirects when she tries to name them", "she stops looking away from his deflections", "the mask slips once and he sees that she saw", "the truth becomes unavoidable and he chooses"].
+- ISSUE PRESSURES: an array of 2 pressures, one per issue. Each ~6-15 words. What shifts in the RELATIONSHIP engine across each issue. NOT external pressure — relational pressure. Examples: ["her noticing becomes harder to dismiss", "his deflections become more effortful", "her patience becomes a different kind of pressure", "his armor becomes visible TO him", "the choice becomes binary"].
+- RELATIONSHIP MILESTONES: 3-5 emotional landmarks across the run. Each ~5-15 words. NOT external milestones. The moments the reader will remember as "that is when X happened between them." Examples: ["the first real look that she did not look away from", "the first time he answered a question he had not been asked", "the moment she stopped pretending not to know", "the night the armor came off and stayed off"].
+
+STYLE: present tense relational verbs (notice / redirect / test / slip / deflect / yield / hold / break / open / pull back / lean in). NO plot vocabulary (drive / audit / breach / contract / deal / mission / investigation). NO scoring or quantification ("trust increases by 12%" — FORBIDDEN; this is narrative planning, not game state). NO milestone names that could fit ANY romance ("the first kiss" — too generic; "the night she let him see the gray hair she had stopped trying to cover" — specific to THIS pair).
+
+SUCCESS TEST: a reader of this R-plot should be able to answer "what changed between them from issue 1 to issue 2?" without reading the prose. If your states are interchangeable across issues — issue 2 could be issue 4 — the object is too weak.
+=====USER=====
+INPUTS:
+Protagonist: the one who carries the story (archetype: OPEN_VEIN)
+Love interest: Julian (archetype: BEAUTIFUL_RUIN)
+Romance Engine: Collision — their gravity comes from a present-tense CLASH — opposition / friction happening now. They may be strangers about to meet OR known adversaries already at war (possibly through proxies). NOT carried memory, NOT anticipated reputation.
+ENGINE FIDELITY (HARD): this is a PRESENT-TENSE COLLISION between KNOWN ADVERSARIES (acquaintance=KNOWN_ADVERSARY, scene1Presence=PROXY). The relationship states MUST be PRESENT-TENSE — what is happening BETWEEN them NOW, as active conflict (his current moves landing on her, her counter-reads, the heat of opposition). FORBIDDEN: "years ago" / "used to" / "the last time" / "back when" / remembered-past framing. They are at war in the present, NOT carrying an old wound. Do NOT write a shared-history arc.
+Issue count target: 2 issues.
+
+STORY SHAPE — Layer 3 (the STRUCTURAL shape of the narrative). OWNS the A-PLOT / STRUCTURAL half of each issueArc.thesis + the issueArc.regimePhase / cliffShape / endingShape / ambiguityTargets. It does NOT write the relationship half of the thesis (that is the ladder's, also in the R-plot issueRelationshipStates) and NOT the external pressure (that is the world arc's). Do NOT name the shape in prose:
+- Rise → Fall → Rise (gain → collapse → recovery)
+  Let the protagonist GAIN (status/safety/the thing wanted), then collapse it (structural loss, not a stumble), then rebuild into something truer. The fall reframes what the rise was worth.
+  STRUCTURAL ROLE per issue — the A-PLOT half of issueArc.thesis IS this structural job (the relationship half is the ladder's). It also sets regimePhase / cliffShape / endingShape / ambiguityTargets. Traverse in order, never skip:
+  - Issue 1 = ASCENT → COLLAPSE: the protagonist gains ground — status, safety, or the thing wanted; then a structural loss strips the gain away (not a stumble — a fall)
+  - Issue 2 = RECOVERY: rebuild from the wreckage into a changed, truer position
+
+WORLD ARC — Layer 2 (the WORLD-PRESSURE progression — the systemic / social / environmental field shifting around the couple). OWNS the issueArc.pressureVectors. It is NOT the A-PLOT (the concrete plot events / antagonist moves / clock — those drive the thesis, NOT pressureVectors), NOT the couple, NOT the narrative shape:
+- Broken Vow: A binding oath/vow is broken or comes due; the world enforces consequences the characters cannot talk their way out of.
+  WORLD-PRESSURE STAGE per issue — this issue's pressureVectors EXPRESS this systemic stage (the world-field shifting), NOT the A-plot's plot events. Traverse in order, never skip:
+  - Issue 1 = BINDING → STRAIN: the oath/vow holds and structures the field; then pressure builds against the vow; cracks show
+  - Issue 2 = BREACH → RECKONING: the vow is broken; the binding fails; then the world enforces the cost of the broken vow
+
+(FOUR OWNERS, DISJOINT FIELDS — Story Shape = the issue's structural move (thesis A-half/form, regimePhase, cliff, ending, ambiguity); A-Plot = WHAT happens (the thesis A-half CONTENT, its own milestones/clock); World Arc = the world-pressure progression (pressureVectors); Relationship Ladder = the couple (thesis R-half, issueRelationshipStates/issuePressures). They reinforce; they never write each other's fields.)
+
+RELATIONSHIP LADDER — Layer 1 (what changes between the COUPLE). OWNS the R-PLOT / RELATIONSHIP half of each issueArc.thesis + the R-plot issueRelationshipStates + issuePressures + the intimacy ceiling. It does NOT set the issue's STRUCTURAL move, regimePhase, cliffShape, or endingShape — those belong to the Story Shape. PACING, not a scene plan. Each issue TRAVERSES its rung(s) in order — never skip, never restart attraction from zero; the couple carries everything earned in prior issues:
+- Issue 1: RECOGNITION → ENTANGLEMENT — land on ENTANGLEMENT: their lives start to tangle — proximity, complicity, a shared stake they cannot cleanly exit
+- Issue 2: DEPENDENCY — land on DEPENDENCY: they begin to rely on each other — a need costly to admit and dangerous to lose
+
+Return ONLY this JSON:
+{
+  "coreTension": "<one sentence about the collision between them, anchored on the archetype movements you see above — NOT the plot conflict, the COLLISION in the relationship>",
+  "relationshipQuestion": "<the romance arc's central question; NOT the plot reader_question; what the reader wonders about THIS pair>",
+  "escalationAxis": "<ONE word or short phrase: visibility | control | knowing | trust | proximity | armor | yielding | naming | etc.>",
+  "issueRelationshipStates": [<exactly 2 strings, ~6-12 words each, present-tense relational verbs, describes WHAT IS HAPPENING BETWEEN them at that issue — NOT external plot beats>],
+  "issuePressures": [<exactly 2 strings, ~6-15 words each, RELATIONAL pressure shifting per issue — NOT external pressure>],
+  "relationshipMilestones": [<3-5 strings, ~5-15 words each, emotional landmarks across the run — NOT external milestones>]
+}
+
+FORBIDDEN OUTPUT: any string that names the external A-plot (the drive / the audit / the deal / the breach / the contract / the investigation / the mission). Any string that quantifies the relationship (trust score / attraction percentage / X%). Any milestone generic enough to fit a different couple ("their first kiss" / "their first date"). Specific-to-THIS-pair, plain prose. Return the JSON object only.

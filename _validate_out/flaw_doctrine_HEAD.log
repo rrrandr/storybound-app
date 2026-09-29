@@ -1,0 +1,58 @@
+
+════════════════════════════════════════════════════════════════════════════════════════
+C+ PROMPT DOCTRINE — presence governs staging, not eligibility
+════════════════════════════════════════════════════════════════════════════════════════
+
+  ⚠ no planner request — threw: null
+ 1 · THE DISPATCHED PLANNER BYTES — WHO IS OFFERED
+  ✗ 1a: the planner request carries a CHARACTER+ CANDIDATES block
+      (missing)
+  ✗ 1b: an ABSENT person is offered as a candidate — presence is not the qualification
+      (missing)
+  ✗ 1c: …offered in ANTICIPATED mode, the opportunity the scene actually gives him
+      (missing)
+  ✗ 1d: …with the evidence that makes the opportunity honest, quoted whole
+      (missing)
+  ✓ 1e: he is NOT in the prefilled staged_characters array
+  ✗ 1f: the unmentioned roster member is listed as NOT a candidate
+      (missing)
+  ✓ 1g: …and he is not among the permitted labels
+  ✓ 1h: Klaus carries a facet and is STILL not a candidate — the mention is what he lacks
+
+ 2 · THE AUTHORED PSYCHOLOGY REACHES THE PLANNER
+  ✗ 2a: the CANONICAL TRUTH is in the dispatched request, not just the id
+      (no canonical truth in the request)
+  ✗ 2b: …for the ABSENT candidate too — his psychology travels with his opportunity
+      (missing)
+  ✗ 2c: each facet carries its CATEGORY
+      (missing)
+  ✗ 2d: possible_pressures are labelled APPLICABILITY CONDITIONS, never prose
+      (missing)
+  ✗ 2e: the model is told to return the ID ONLY, never a copy of the truth
+  ✗ 2f: …and the behaviour must be an act the truth could be inferred from
+  ✗ 2f2: the one case where the model DOES write psychology is named and bounded
+  ✗ 2g: the planner is asked which condition THIS scene meets, with the facts that establish it
+
+ 3 · THE PC READING LENS
+  ✗ 3a: the planner is given a C+ reading lens
+      (missing)
+  ✗ 3b: it names the PC MASK (Open Vein), not the LI archetype (Beautiful Ruin)
+      (missing)
+  ✗ 3b2: …and the test is not vacuous — the LI archetype really is the other one
+      null
+  ✗ 3c: it states her archetype decides HOW her attention moves onto the beat
+  ✗ 3d: …and gives the archetype's attention movement, so the bias is nameable
+      (missing)
+  ✗ 3e: the operation set offered is exactly this archetype's, and each carries its gloss
+      []
+
+ 4 · THE CANDIDATE CONTRACT
+  ✓ 4a: NOTHING persists on state — the contract is local to the invocation that built it
+file:///private/tmp/claude-501/-Users-romantsukerman-storybound-app/8eb93a55-2faf-469d-a707-3e1cfa7271cf/scratchpad/doctrine_head.mjs:445
+  !!B.candidates.populations && typeof B.candidates.populations.sourced === 'number'
+                 ^
+
+TypeError: Cannot read properties of null (reading 'populations')
+    at file:///private/tmp/claude-501/-Users-romantsukerman-storybound-app/8eb93a55-2faf-469d-a707-3e1cfa7271cf/scratchpad/doctrine_head.mjs:445:18
+
+Node.js v25.3.0

@@ -1,0 +1,52 @@
+[
+ {
+  "name": "scene 1 rendered",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "no fake flags set",
+  "ok": true,
+  "detail": "{\"turn\":0,\"petArmed\":false,\"petFired\":false,\"activePetition\":null,\"temptWish\":null,\"temptArmed\":false,\"temptFired\":false,\"frameAwaitingArm\":false,\"deckExamined\":false}"
+ },
+ {
+  "name": "deck examined via the real path",
+  "ok": true,
+  "detail": "fired=true"
+ },
+ {
+  "name": "say/do submitted",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "turn advanced to scene 2",
+  "ok": true,
+  "detail": "turnCount=1"
+ },
+ {
+  "name": "petition frame landed OR emergence armed",
+  "ok": true,
+  "detail": "{\"turn\":1,\"petArmed\":true,\"petFired\":false,\"activePetition\":null,\"temptWish\":null,\"temptArmed\":false,\"temptFired\":false,\"frameAwaitingArm\":false,\"deckExamined\":true}"
+ },
+ {
+  "name": "petition sequence fired",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "petition sealed through the UI",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "state._activePetition exists",
+  "ok": false,
+  "detail": "{\"turn\":1,\"petArmed\":false,\"petFired\":true,\"activePetition\":null,\"temptWish\":null,\"temptArmed\":false,\"temptFired\":false,\"frameAwaitingArm\":false,\"deckExamined\":true}"
+ },
+ {
+  "name": "scene 3 payload carries the petition",
+  "ok": true,
+  "detail": "matched 3/3 key words: julian,believe,manipulated"
+ }
+]

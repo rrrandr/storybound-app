@@ -1,0 +1,20 @@
+
+════ CONSERVATION INVARIANT (byte-exact) ════
+  RAW cross-check (author == first.before) : FAIL
+  changed authoritative mutations          : 0
+  every transition reconciles              : PASS
+  last.after == FINAL_PROSE                : FAIL
+  delivery FINAL_PROSE->formatStory->DELIVERED : PASS
+  events observed: 15  (rawSnap 15 / textSnap 0)
+
+  ❌ HARNESS FAILURE
+  mutation labels: 
+
+════ LANE-2 SNAPSHOT CHAIN (V2, author stubbed) ════
+  RAW    290ba4fe90   2450 chars
+  C1     0833d610a8   2441 chars   ← _mistralRepairPass [Mistral-small repair]
+  C2     4520b9dc18   2627 chars   ← _mistralRepairPass [calcified-line-edit]
+  C3     4520b9dc18   2627 chars   ← _grokLineEdit [pc-desc]
+  FINAL  4520b9dc18   2627 chars
+
+  total snapshot events: 6  (retained/changed: 3, rejected: 0, no-change: 3)

@@ -1,0 +1,23 @@
+  GROK_RAW 2450 -> AUTHOR_RETURN 2450 chars (in-author cleanup)
+  author attempts: 0 (winner = last)   post-author links: 3
+
+════ CONSERVATION INVARIANT (byte-exact) ════
+  RAW cross-check (author == first.before) : FAIL
+  changed authoritative mutations          : 3
+  every transition reconciles              : PASS
+  last.after == FINAL_PROSE                : FAIL
+  delivery FINAL_PROSE->formatStory->DELIVERED : PASS
+  events observed: 33  (rawSnap 33 / textSnap 0)
+
+  ❌ HARNESS FAILURE
+  mutation labels: undefined(model) → undefined(model) → undefined(model)
+
+════ LANE-2 SNAPSHOT CHAIN (V2, author stubbed) ════
+  RAW    290ba4fe90   2450 chars
+  C1     d8c2670de3   2531 chars   ← _mistralRepairPass [calcified-line-edit]
+  C2     d8c2670de3   2531 chars   ← _grokLineEdit
+  C3     746facc3c7   2812 chars   ← _mistralRepairPass [calcified-line-edit]
+  C4     746facc3c7   2812 chars   ← _grokLineEdit [pc-desc]
+  FINAL  746facc3c7   2812 chars
+
+  total snapshot events: 8  (retained/changed: 4, rejected: 0, no-change: 4)

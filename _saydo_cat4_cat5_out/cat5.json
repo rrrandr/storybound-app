@@ -1,0 +1,38 @@
+[
+  {
+    "text": "I don't know",
+    "detected": null,
+    "sanitized": "I don't know",
+    "afterFallbackAction": "I don't know",
+    "afterFallbackDialogue": "I don't know",
+    "sanitizedToEmpty": false,
+    "changedByFallback": false
+  },
+  {
+    "text": "whatever",
+    "detected": null,
+    "sanitized": "whatever",
+    "afterFallbackAction": "whatever",
+    "afterFallbackDialogue": "whatever",
+    "sanitizedToEmpty": false,
+    "changedByFallback": false
+  },
+  {
+    "text": "...",
+    "detected": null,
+    "sanitized": "...",
+    "afterFallbackAction": "...",
+    "afterFallbackDialogue": "...",
+    "sanitizedToEmpty": false,
+    "changedByFallback": false
+  },
+  {
+    "text": "sure",
+    "detected": null,
+    "sanitized": "sure",
+    "afterFallbackAction": "sure",
+    "afterFallbackDialogue": "sure",
+    "sanitizedToEmpty": false,
+    "changedByFallback": false
+  }
+]

@@ -1,0 +1,145 @@
+
+── packages ──
+  ok   three baked packages
+  ok   Famous Fate has NO package (its world is named by the player — nothing to bake)
+  ok   starter_the_first_taste: version / title / synopsis
+  ok   starter_the_first_taste: ships an ambient tag (or the mount fires a Grok classifier)
+  ok   starter_the_first_taste: ambient "crowd_formal" is a real tag
+  ok   starter_the_first_taste: matches a STARTER_STORIES entry
+  ok   starter_the_first_taste: prose present
+  ok   starter_the_first_taste: emitted.sceneSummary
+  ok   starter_the_first_taste: emitted.openState
+  ok   starter_the_first_taste: emitted.obligations
+  ok   starter_the_first_taste: emitted.ledgerSeeds
+  ok   starter_the_first_taste: emitted.calcification
+  ok   starter_the_first_taste: emitted.axes
+  ok   starter_the_first_taste: emitted.expansions
+  ok   starter_glass_house: version / title / synopsis
+  ok   starter_glass_house: ships an ambient tag (or the mount fires a Grok classifier)
+  ok   starter_glass_house: ambient "urban_room" is a real tag
+  ok   starter_glass_house: matches a STARTER_STORIES entry
+  ok   starter_glass_house: prose present
+  ok   starter_glass_house: emitted.sceneSummary
+  ok   starter_glass_house: emitted.openState
+  ok   starter_glass_house: emitted.obligations
+  ok   starter_glass_house: emitted.ledgerSeeds
+  ok   starter_glass_house: emitted.calcification
+  ok   starter_glass_house: emitted.axes
+  ok   starter_glass_house: emitted.expansions
+  ok   starter_first_sacrifice: version / title / synopsis
+  ok   starter_first_sacrifice: ships an ambient tag (or the mount fires a Grok classifier)
+  ok   starter_first_sacrifice: ambient "crowd_uneasy" is a real tag
+  ok   starter_first_sacrifice: matches a STARTER_STORIES entry
+  ok   starter_first_sacrifice: 5 panels (gnPanelsPerScene is locked at 5)
+  ok   starter_first_sacrifice: declares its OAS ending
+  ok   starter_first_sacrifice: has an authored OAS opening frame
+  ok   starter_first_sacrifice: emitted.sceneSummary
+  ok   starter_first_sacrifice: emitted.openState
+  ok   starter_first_sacrifice: emitted.obligations
+  ok   starter_first_sacrifice: emitted.ledgerSeeds
+  ok   starter_first_sacrifice: emitted.calcification
+  ok   starter_first_sacrifice: emitted.axes
+  ok   starter_first_sacrifice: emitted.expansions
+
+── zero-API guarantee ──
+  ok   _sceneAmbientClassifyPage found
+  ok   ambient: baked override precedes the Grok classifier call
+  ok   showReaderPage found
+  ok   cover: baked suppression precedes cover-stage generation
+  ok   callChat carries the zero-API assertion, at the top
+  ok   the assertion stands down while paid setup is legitimately running
+
+── gate reachability ──
+  ok   famousFateBegin handler found
+  ok   Famous Fate: gate precedes the classifier call (the first API call)
+  ok   Famous Fate: world AND character validated before the gate shows
+  ok   Famous Fate: the character field is required, not just the world
+  ok   _renderBakedScene1 found
+  ok   CG: the baked mount installs the OAS handoff (the gate would be unreachable without it)
+  ok   commit deferred: the mount does not set turnCount
+  ok   commit deferred: the mount does not push into scenes[]
+  ok   commit deferred: the scene is held in _bakedPendingCommit
+  ok   no snapshot of an uncommitted story
+
+── Scene 2 initialization ──
+  ok   handleBeginStory has a setup-only exit
+  ok   setup-only exit precedes the Scene-1 author dispatch
+  ok   _unlockBakedGenesis found
+  ok   unlock: initialization runs BEFORE the scene is committed
+  ok   unlock: the scene is committed before the gates release
+
+── wiring ──
+  ok   index.html loads starter-scenes.js
+  ok   starter-scenes.js loads before app.js
+
+── behavior: setup failure must abort ──
+  ok   the sign-in stash key is discoverable in app.js
+  ok   setup throws → returns false
+  ok   setup throws → does NOT unlock
+  ok   setup throws → does NOT commit the scene
+  ok   setup throws → turnCount stays 0
+  ok   setup throws → the scene is still pending, not lost
+  ok   setup throws → no snapshot of a broken story
+  ok   setup throws → reader is told they can retry without paying twice
+  ok   setup bails early → returns false
+  ok   setup bails early → does NOT unlock
+  ok   setup bails early → does NOT commit
+  ok   setup bails early → failure is recorded
+  ok   setup succeeds → returns true
+  ok   setup succeeds → unlocks
+  ok   setup succeeds → commits exactly one scene
+  ok   setup succeeds → commits the BAKED scene
+  ok   setup succeeds → scene committed, turnCount stays at zero completed continuation turns
+  ok   setup succeeds → the baked scene is scenes[0]
+  ok   setup succeeds → pending commit is consumed
+  ok   setup succeeds → the story is snapshotted
+  ok   commit twice → still one scene (idempotent)
+
+── behavior: a second Book must not inherit the first ──
+  ok   A: unlocks
+  ok   A: runs initialization once
+  ok   A: commits its own scene
+  ok   B: the setup latch was cleared by the reset
+  ok   B: starts locked again
+  ok   B: unlocks
+  ok   B: runs its OWN initialization (did not inherit A's)
+  ok   B: initialization ran for B, not A
+  ok   B: commits exactly one scene
+  ok   B: commits ITS OWN baked scene, not A's
+  ok   reset clears every _baked* transient
+
+── behavior: sign-in continuity ──
+  ok   stash records which Book the reader was in
+  ok   stash records what the reader typed
+  ok   still logged out → does not restore
+  ok   still logged out → marker survives for the next attempt
+  ok   still logged out → no Book opened
+  ok   signed in → restores
+  ok   signed in → reopens the SAME Book
+  ok   signed in → marker is one-shot
+  ok   signed in → the attempted action is NOT auto-submitted (the reader decides when to spend)
+  ok   launch fails → restore reports failure
+  ok   launch fails → the one-shot marker is NOT consumed
+  ok   a day-old marker does not hijack a later visit
+
+── lifecycle wiring ──
+  ok   Layer-3 reset clears the baked lifecycle (resetForNewStory + performAuthReset both run it)
+  ok   the baked launch resets the lifecycle before mounting
+  ok   the recovery marker is cleared only AFTER a confirmed mount
+
+── the modal promise is kept ──
+  ok   the logged-out gate stashes before sending the reader to sign in
+  ok   no in-memory resume handle left behind (it could never survive location.reload)
+  ok   the post-boot path consults the stash before landing on the shelf
+  ok   restore is attempted BEFORE navigating to the shelf
+
+── seed contract v2 (2026-09-05) ──
+  ok   seed pressures found (21)
+  ok   every authored pressure carries evidence_requires
+  ok   owned grounded objects declared (3)
+  ok   every owned object with a person owner has a head noun
+  ok   First Sacrifice sceneOne authors forbiddenEnvironmentFacts
+  ok   forbiddenEnvironmentFacts compiles as a regex
+
+✓ all 120 checks passed
+

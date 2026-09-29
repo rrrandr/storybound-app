@@ -1,0 +1,130 @@
+[
+  {
+    "i": 0,
+    "negative": true,
+    "token": "NOT",
+    "at": 118,
+    "context": "h / quinceañera / confirmation / graduation, NOT a death ritual. At 16 (younger minds are too unform",
+    "head": "A First Sacrifice is a COMING-OF-AGE RITE — closest analogue a Bar Mitzvah / quinceañera /"
+  },
+  {
+    "i": 1,
+    "negative": false,
+    "token": null,
+    "at": -1,
+    "context": null,
+    "head": "First Favored are hired to GUIDE and SUPERVISE the rite — their alignment-sense and powerf"
+  },
+  {
+    "i": 2,
+    "negative": false,
+    "token": null,
+    "at": -1,
+    "context": null,
+    "head": "The GRADUANT (the role) is the person making the wish at their own First Sacrifice — the o"
+  },
+  {
+    "i": 3,
+    "negative": true,
+    "token": "NO",
+    "at": 508,
+    "context": " (just cloth, part of their ceremonial sash; NO orb, NO bead, NO gag), so they cannot cleanly voice ",
+    "head": "The supervisor is a SACRIFICIANT (the role): one whose misalignment-sense is honed enough "
+  },
+  {
+    "i": 4,
+    "negative": true,
+    "token": "do NOT",
+    "at": 47,
+    "context": "IGNMENT-SENSE (the First Favored gift): they do NOT read thoughts or emotions — they perceive ALIGNM",
+    "head": "ALIGNMENT-SENSE (the First Favored gift): they do NOT read thoughts or emotions — they per"
+  },
+  {
+    "i": 5,
+    "negative": false,
+    "token": null,
+    "at": -1,
+    "context": null,
+    "head": "The rite is PUBLIC partly because anyone present who wishes the youth ILL can twist the ou"
+  },
+  {
+    "i": 6,
+    "negative": true,
+    "token": "barred",
+    "at": 10,
+    "context": "Youth are barred from wishcraft until 16 — but kids sneak little ",
+    "head": "Youth are barred from wishcraft until 16 — but kids sneak little illegal wishes all the ti"
+  },
+  {
+    "i": 7,
+    "negative": false,
+    "token": null,
+    "at": -1,
+    "context": null,
+    "head": "Everyone present is First Favored."
+  },
+  {
+    "i": 8,
+    "negative": true,
+    "token": "NO",
+    "at": 44,
+    "context": "Fate is never visibly seen; a wish produces NO visible magical effect — no light, glow, surge, or s",
+    "head": "Fate is never visibly seen; a wish produces NO visible magical effect — no light, glow, su"
+  },
+  {
+    "i": 9,
+    "negative": true,
+    "token": "NEVER",
+    "at": 267,
+    "context": "oice, collapsing posture, ritual cues. It is NEVER visible on the Weave-Script: the Weave-Script glo",
+    "head": "Misalignment is SENSED directly by First Favored (their alignment-sense — like a sour note"
+  },
+  {
+    "i": 10,
+    "negative": true,
+    "token": "NO",
+    "at": 26,
+    "context": "During a First Sacrifice, NO ONE may interfere.",
+    "head": "During a First Sacrifice, NO ONE may interfere."
+  },
+  {
+    "i": 11,
+    "negative": false,
+    "token": null,
+    "at": -1,
+    "context": null,
+    "head": "Wishing on another person’s First Sacrifice is among the gravest taboos: the sacrifice and"
+  },
+  {
+    "i": 12,
+    "negative": false,
+    "token": null,
+    "at": -1,
+    "context": null,
+    "head": "A First Sacrifice is ALSO the supervising Sacrificiant’s professional threshold. Successfu"
+  },
+  {
+    "i": 13,
+    "negative": true,
+    "token": "NO",
+    "at": 13,
+    "context": "THE RITE HAS NO MAGICAL MACHINERY. There is NO \"sealing of the rite\"",
+    "head": "THE RITE HAS NO MAGICAL MACHINERY. There is NO \"sealing of the rite\" - no seal to finish, "
+  },
+  {
+    "i": 14,
+    "negative": true,
+    "token": "NOT",
+    "at": 161,
+    "context": " a rare talent. TRAINING CHANGES RESOLUTION, NOT POSSESSION: Sacrificiants, Dohkars and unusual sava",
+    "head": "WHO SENSES MISALIGNMENT: EVERY First Favored senses meaningful misalignment - it is part o"
+  },
+  {
+    "i": 15,
+    "negative": true,
+    "token": "NOT",
+    "at": 446,
+    "context": " of comparable institutional gravity). It is NOT yet convened, and its convening is LATE-ISSUE-1 con",
+    "head": "LIRAEL’S FORMAL INQUIRY — WHERE AND WHEN: the presiding Dohkar has asserted the rite and t"
+  }
+]

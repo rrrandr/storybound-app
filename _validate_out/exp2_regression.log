@@ -1,0 +1,13 @@
+=== directive excerpt ===
+  • Seren — read: BEHAVIOR-SENTINEL: she answers before the question ends
+      PC INTERPRETATION — MUST GOVERN THE NARRATION: INTERP-SENTINEL: her compassion needs a witness before it can begin
+      HOW HER ATTENTION MOVES ONTO IT (lens operation): OPERATION_SENTINEL
+  RECONSTRUCT each of these into ONE OR TWO natural sentences of finished prose: the VISIBLE ACTION happens, and the PC INTERPRETATION governs how it is narrated. The SOURCE TRUTH governs accuracy and must remain UNSTATED — never write it, never paraphrase it, never let a character say it.
+  DO NOT write the action and then append an explanatory diagnosis of it. Let the wording, the sequence, the consequence, or what she focus
+
+PASS R1 normalization keeps pc_interpretation and pc_lens_operation
+PASS R2 the rendered author directive carries the specific interpretation EXACTLY ONCE
+PASS R3 the rendered author directive carries the lens operation EXACTLY ONCE, alongside (not instead of) the interpretation
+PASS R4 the visible action is rendered once
+
+C+ RENDER REGRESSION: 4 rows · 4 passed · 0 failed

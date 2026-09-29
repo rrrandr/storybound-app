@@ -1,0 +1,41 @@
+[CHARACTERS: Lirael:F, Julian:M, the youth:F]
+[TITLE: "The Gift That Twisted"]
+[SYNOPSIS: In the Fatelands, where every First Sacrifice binds desire to cost, Lirael supervises her first rite under the veil-canopy of mated-pair trees. When the youth redirects the wish toward Lirael’s hidden past, the bargain fractures and forces an intervention that places her qualification at risk. What will the assembly believe she sacrificed to claim?]
+
+The girl met my eyes across the crimson spiralgrass and spoke the words that broke the rite.
+
+“I wish for Lirael to find the father who abandoned her.”
+
+The alignment-sense hit me first, a sour note that ran through every First Favored present. The prepared sacrifice no longer matched the desire. The girl’s aqua skin flushed darker, her coral hair catching the light under the long white veil-canopy, and the Weave-Script on her arms stuttered into frantic loops. Around us the assembled family and guests went still, their own luminous patterns flaring in alarm.
+
+I could not speak. The gossamer band sealed my mouth, part of the ceremonial sash that marked me Sacrificiant. My first supervision, and the wish had already turned.
+
+Julian stood at the edge of the clearing, perfectly still, his slate-blue skin and long black hair making him two distinct colours against the pale mated-pair trees. His silver Weave-Script drifted in slow tides, unreadable from this distance. I remembered the way he had leaned in once when I confided the same secret, his hand half-raised as if to touch my wrist before he let it fall. The scar across his left wrist had caught the light then, a small silver line that never quite healed flat.
+
+The Dohkar presiding raised one hand, the motion fluid and unconscious, the way all trained First Favored moved when reading the room. Too late. The girl had already offered the sacrifice she rehearsed with me for months—the discipline to finish her studies and train as Sacrificiant herself. She had changed the desire and left the price unmatched.
+
+I tore the gossamer band away. The cloth clung for a heartbeat before it gave, and my voice came out hoarse.
+
+“Stop.”
+
+The word was too small. The assembly drew the obvious inference: the wish concerned me, and I had broken the seal to claim it. Whispers rose, bare feet shifting on the braided spiralgrass. No one spoke the taboo aloud, but every gaze said the same thing. I had manipulated my own ward’s rite.
+
+The girl’s hands flew to her throat. The warmth left them in a single breath, fingers paling as the heat drained into the air and did not return. She stared at her palms, then at me, eyes wide with the understanding that Fate had taken something she had never meant to offer. The twisted fulfilment arrived at the same instant: a faint image of a man’s face flickered at the edge of the clearing, gone before anyone could name it, the words honoured and the meaning warped into something colder than a simple answer.
+
+Julian had not moved. His stillness drew every eye that was not already on me.
+
+<<MICRO_EXPRESSION>>
+Say it plainly — or let it show without words?
+<<CONTINUE>>
+
+The Weave-Script across my own skin burned with the urge to laugh, the sound that always rose at the worst possible moment, as if joy could still force its way through even when everything else collapsed. I swallowed it down. The girl’s pale hands trembled. The Dohkar’s expression had already shifted from concern to calculation. The assembly waited for me to explain or to stay silent and let the inference stand.
+
+Will I confront the truth, or will I bury it deeper?
+
+My hand tightened around my great-grandmother’s old tarot deck. I didn't remember bringing it. I toyed with the idea of letting the cards decide.
+
+<<EXPANSION_A>>
+I named the mismatch aloud, the words scraping my throat, and watched the Dohkar’s gaze sharpen with sudden clarity.
+<<EXPANSION_B>>
+I held the girl’s eyes instead, letting the tremor in her hands speak for both of us while the assembly drew its own conclusions.
+<<END_EXPANSION>>

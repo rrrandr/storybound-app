@@ -1,0 +1,97 @@
+{
+ "violations": [],
+ "preflight": [],
+ "reports": [
+  {
+   "validator": "li_social_proof",
+   "ok": false,
+   "type": "LI_SOCIAL_PROOF_GAP",
+   "detail": "LI named, no social signal in the window following first mention",
+   "liName": "Julian",
+   "firstMentionPosition": 549,
+   "evidence": "studies,\" she said, her voice steady. \"I give the right to train as Sacrificiant.\"\n\nThe words left her cleanly. I felt the alignment hold, a clean line through the clearing. My mouth stayed sealed beneath the gossamer band. Two dozen First Favored watched in silence, their Weave-…"
+  },
+  {
+   "validator": "hot_opening",
+   "type": "OPENING_TEMPERATURE",
+   "ok": false,
+   "failures": [],
+   "renderedTemp": "HOT_CRISIS",
+   "inMotionHits": 0,
+   "containerOpener": false,
+   "evidence": "The youth knelt on the crimson spiralgrass, her aqua skin luminous beneath the pale canopy. Her coral hair spilled forward as she drew breath to speak the offering we had rehearsed for months. \"I give the discipline to finish my studies,\" she said, her voice steady. \"I give the r"
+  },
+  {
+   "validator": "li_social_proof",
+   "ok": false,
+   "type": "LI_SOCIAL_PROOF_GAP",
+   "detail": "LI named, no social signal in the window following first mention",
+   "liName": "Julian",
+   "firstMentionPosition": 905,
+   "evidence": "ather’s name—stepped forward. “You broke the seal. You heard what you wanted and let the rite twist to serve yourself.”\n\n“I broke the seal to stop the twist,” I said. My voice carried farther than I meant. “The sacrifice no longer matched the desire. If I had stayed silent the co…"
+  },
+  {
+   "validator": "pc_picturability",
+   "type": "PC_PICTURABILITY_GAP",
+   "ok": false,
+   "evidence": "The Dohkar’s accusation still rang when I found my voice. “It was not my doing. The girl took something I once told her in confidence and offered it to Fate on my behalf.”\n\nThe words left me thin. Every eye in the clearing pressed closer. The families who had come to witness thei"
+  },
+  {
+   "validator": "semantic_rewrite",
+   "type": "SEMANTIC_EDIT_REQUESTED",
+   "label": "flavor-physics",
+   "instruction": "CRITICAL: This scene MUST express the world's defining mechanic.\nWorld flavor: Arcane Binding\nScene does not express flavor physics for \"arcane_binding\". Expected keywords: binding, spell, contract, g"
+  },
+  {
+   "validator": "semantic_rewrite",
+   "type": "SEMANTIC_EDIT_REQUESTED",
+   "label": "fate-consequence",
+   "instruction": "\n5TH-PERSON FATE VOICE ENFORCEMENT (CRITICAL — PREVIOUS OUTPUT FAILED):\n\nThe Story / Fate voice must be rewritten. Regenerate with these constraints:\n\n\nFATE MAY ONLY:\n- Observe (\"The story watched...\""
+  },
+  {
+   "validator": "semantic_rewrite",
+   "type": "SEMANTIC_EDIT_REQUESTED",
+   "label": "tension-gate",
+   "instruction": "TENSION REPAIR DIRECTIVE (CRITICAL — scene failed tension gate):\n1. Introduce immediate conflict in the first 1-2 lines — a demand, disruption, reveal, or emotional push directed at the player.\n2. Con"
+  },
+  {
+   "validator": "li_social_proof",
+   "ok": false,
+   "type": "LI_SOCIAL_PROOF_GAP",
+   "detail": "LI named, no social signal in the window following first mention",
+   "liName": "Julian",
+   "firstMentionPosition": 793,
+   "evidence": "ipt a pale thread against her aqua skin. The Dohkar's fingers were white-knuckled around the hilt of his ceremonial sash, his voice cutting through the quiet. \"You broke the seal. You heard what you wanted and let the rite twist to serve yourself.\" His words cut deeper than the a…"
+  },
+  {
+   "validator": "pc_picturability",
+   "type": "PC_PICTURABILITY_GAP",
+   "ok": false,
+   "evidence": "The moss underfoot clung damp and alive, the stones beneath my bare soles slick with resurrection ivy. I hadn't meant to stop here—hadn't meant to breathe at all—but the families' bare feet scraped closer across the moss, hemming me in. The air pressed against my ribs with every "
+  },
+  {
+   "validator": "semantic_rewrite",
+   "type": "SEMANTIC_EDIT_REQUESTED",
+   "label": "engine-vocab",
+   "instruction": "The previous response referenced internal mechanics that must never appear in prose.\n\nHARD RULES:\n- Characters do NOT know about game mechanics — translate wishes into narrative desire, petitions into"
+  },
+  {
+   "validator": "semantic_rewrite",
+   "type": "SEMANTIC_EDIT_REQUESTED",
+   "label": "fate-consequence",
+   "instruction": "\n5TH-PERSON FATE VOICE ENFORCEMENT (CRITICAL — PREVIOUS OUTPUT FAILED):\n\nThe Story / Fate voice must be rewritten. Regenerate with these constraints:\n\n\nFATE MAY ONLY:\n- Observe (\"The story watched...\""
+  },
+  {
+   "validator": "semantic_rewrite",
+   "type": "SEMANTIC_EDIT_REQUESTED",
+   "label": "checklist",
+   "instruction": "The previous response contained structural violations. Regenerate with strict compliance.\n\nABSOLUTE RULES:\n- Zero engine vocabulary or meta-mechanical phrasing in prose\n- Zero developer/editorial tone"
+  },
+  {
+   "validator": "tension_gate",
+   "type": "LOW_TENSION",
+   "ok": false,
+   "evidence": "The moss underfoot clung damp and alive, the stones beneath my bare soles slick with resurrection ivy. I hadn't meant to stop here—hadn't meant to breathe at all—but the families' bare feet scraped closer across the moss, hemming me in. The air pressed against my ribs with every "
+  }
+ ]
+}

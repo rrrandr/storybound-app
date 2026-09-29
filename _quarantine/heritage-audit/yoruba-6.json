@@ -1,0 +1,24 @@
+{
+  "age": 28,
+  "ancestry": "Yoruba",
+  "first_name": "Adeola",
+  "last_name": "Okonkwo",
+  "height": "5'7\", long-limbed",
+  "build": "lean, muscled in the shoulders and forearms from years of hand work",
+  "hair": "dark brown locs, shoulder-length, usually gathered in a silk wrap or loose at her nape",
+  "complexion": "deep warm brown with red undertones; a small scar on her left collarbone from a kiln accident at twenty-two",
+  "face": "a face that moves — wide-set eyes that telegraph every shift in feeling, a broad nose, a mouth quick to curve or flatten; she reads as unguarded, almost startlingly open to anyone watching",
+  "signature_feature": "her hands — long-fingered, stained permanently at the cuticles with clay dust and glaze, capable and restless; the way she touches things (a fabric, a shoulder, a cup) is intimate and unconscious",
+  "second_celebrated_feature": "the hollow at the base of her throat, visible when she's bareheaded and thinking hard, that catches light and makes her look suddenly vulnerable",
+  "signature_habits": "she hums while working — Yoruba lullabies her grandmother taught her, wordless and low; she touches her own collarbone scar when anxious (a grounding gesture); she keeps a small ceramic dish of shea butter on her studio shelf and rubs it into her hands between pieces; she says 'Ìwà' (character) when someone disappoints her, half-prayer, half-rebuke; she photographs finished work obsessively before it ships, as if to keep it",
+  "occupation": "ceramic artist and studio owner — she runs a small independent pottery studio in a converted warehouse, taking commissions for functional ware and sculptural pieces, teaching weekend classes to pay overhead",
+  "current_crisis": {
+    "event": "a major gallery exhibition she's been contracted to fill fell through when the curator was fired for misconduct; the work is finished, non-returnable deposits are spent, and she has six weeks to find another venue or face financial collapse of the studio",
+    "hottest_emotion": "panic threaded with shame — a feeling that she's failed, that her work isn't good enough to land anywhere else",
+    "immediate_want": "to find ONE person with enough reach and belief in her to take the show, or to know how to save the studio without begging"
+  },
+  "wound": {
+    "core": "she believes her worth is only visible when someone else — a gatekeeper, a buyer, a man with power — chooses to see it",
+    "surfacing_hint": "when rejected or overlooked, she goes very still and quiet, and her hands stop moving; she second-guesses the quality of her own work; she becomes almost apologetic for taking up space"
+  }
+}

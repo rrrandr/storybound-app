@@ -1,0 +1,24 @@
+{
+  "age": 28,
+  "ancestry": "Persian",
+  "first_name": "Nasrin",
+  "last_name": "Tehrani",
+  "height": "5'6\", lean and long-limbed",
+  "build": "dancer's body — defined shoulders, small waist, the kind of frame that moves before it thinks",
+  "hair": "black, thick and wavy, worn long past her shoulders; she loops it into a messy knot when she's concentrating, leaving tendrils loose around her face",
+  "complexion": "warm olive undertone with a faint scar along her left jawline — a childhood accident her grandmother always said made her look 'like someone who'd survived something'",
+  "face": "expressive, almost angular — high cheekbones, a sharp chin, dark eyes that telegraph every feeling before her mouth catches up; the face of someone who cannot hide.",
+  "signature_feature": "her hands — long-fingered, always moving, stained with whatever she's been making (charcoal, ink, clay); the LI notices how she uses them to speak, to soothe, to reach.",
+  "second_celebrated_feature": "the hollow at the base of her throat, visible when she pulls her hair back; the LI finds himself watching it when she swallows, when she's afraid, when she's trying not to cry.",
+  "signature_habits": "bites her lower lip when she's thinking; hums fragments of old Persian lullabies her mother taught her without realizing she's doing it; keeps a worn leather journal where she sketches obsessively; touches her grandmother's gold coin (worn on a chain under her shirt) when she's anxious; makes strong black tea in the afternoons and forgets to drink it while it cools.",
+  "occupation": "textile designer and owner of a small independent studio in the city — she sources vintage fabrics, creates custom patterns, sells to boutiques and high-end clients; it's precarious, beautiful, entirely hers.",
+  "current_crisis": {
+    "event": "her studio's landlord has been bought out by a development firm; she has 90 days to vacate before the building is demolished for luxury condos — her entire inventory, her equipment, her client relationships are about to become homeless.",
+    "hottest_emotion": "panic threaded with a deeper, older despair — the feeling of losing ground she fought to claim",
+    "immediate_want": "to find a way to save the studio, or at minimum to save her work — she's been making calls, checking her dwindling savings, unable to sleep"
+  },
+  "wound": {
+    "core": "she believes that anything she builds will eventually be taken from her — that she is not allowed to have something that lasts.",
+    "surfacing_hint": "when she's under pressure, she becomes hypervigilant about loss; she apologizes for taking up space; she moves toward self-sabotage before anyone else can abandon her; she assumes the worst outcome and braces for it."
+  }
+}

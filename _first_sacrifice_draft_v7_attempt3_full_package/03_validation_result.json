@@ -1,0 +1,9 @@
+{
+  "ok": false,
+  "violations": [
+    {
+      "rule": "scene1_too_thin",
+      "detail": "scene1Candidate totals 381 words across 16 beats — accepted range 1,100-1,700, target 1,350-1,550 (baked scene ~1,444); beats satisfying the COUNT target with flat one-line prose is a hard failure, not just a quality preference"
+    }
+  ]
+}

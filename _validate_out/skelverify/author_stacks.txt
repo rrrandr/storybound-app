@@ -1,0 +1,3 @@
+#1  t=1787555582901 turn=0 ring=0 state=0/0/149531/0/0 prevScene=0:7 len=149531 | handleBeginStory@253488 < async <anonymous>:337:30
+#2      at window._authorChatCapture (eval at evaluate (:311:30), <anonymous>:33:49) |     at HTMLButtonElement.<anonymous> (http://localhost:3000/app.js?v=20260824l-skeleton:286416:61)
+#3  t=1787555695042 turn=0 ring=1 state=0/1/149531/1/0 prevScene=2343:530407971 len=389226 | _authorChatCaptureInner@94242 < window._authorChatCapture@94234 < window._authorChatCapture (eval at evaluate (:311:30), <anonymous>:34:22) < HTMLButtonElement.<anonymous>@286416

@@ -1,0 +1,22 @@
+PASS U-SB1 simile "like someone who already knows…" → no violation
+PASS U-SB2 "as if somebody were standing…" → no violation
+PASS U-SB3 "as though someone was counting…" → no violation
+PASS U-SB4 "the way a stranger folds…" → no violation
+PASS U-SB5 RED "Someone steps into the doorway" → SOLO_BODY
+PASS U-SB6 RED "as the guard steps closer" → SOLO_BODY (bare "as" is not comparative)
+FAIL U-SB7 RED "A clerk stands at the far counter" → SOLO_BODY  — {"ok":true,"violations":[]}
+PASS U-SB8 RED "I like the quiet. Someone steps in" → SOLO_BODY ("like" is a verb here, sentence away)
+PASS U-CR1 "the door" with one door element → resolves to "oven door"
+PASS U-CR2 "the door" with two door elements → AMBIGUOUS, both candidates listed
+PASS U-CR3 "the back door" → resolves to "back door" (distinguishing word)
+PASS U-CR4 "the heavy oven door" → resolves to "oven door" through an intervening adjective
+PASS U-CR5 a paraphrase whose head noun no element carries → resolves to NOTHING
+PASS U-CR6 two mentions: "the table" → prep table, "its door" → oven door (possessive determiner)
+PASS U-CR7 plural "the doors" resolves to the door element
+PASS U-CR8 indefinite "a door" is not a co-reference (no determiner of identity) → no mention
+PASS U-CS1 FIXTURE permits PUSH and PULL, not LIFT
+PASS U-CS2 [PORTAL, FIXTURE] = union (OPEN from PORTAL, TURN from FIXTURE, no LIFT)
+PASS U-CS3 AMBIENT permits nothing
+PASS U-CS4 an unknown label permits nothing (closed values only)
+
+20 checks · 19 passed · 1 failed

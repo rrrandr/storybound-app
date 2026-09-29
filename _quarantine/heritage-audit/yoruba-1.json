@@ -1,0 +1,24 @@
+{
+  "age": 28,
+  "ancestry": "Yoruba",
+  "first_name": "Adeola",
+  "last_name": "Okonkwo",
+  "height": "5'7\", lean and long-limbed",
+  "build": "dancer's frame — narrow shoulders, defined collarbone, small waist that flares to rounded hips",
+  "hair": "dark brown locs, shoulder-length, often wrapped in silk or pinned high; the ends catch light with a warm undertone",
+  "complexion": "deep warm brown with golden undertones; a small crescent scar on her left temple from childhood",
+  "face": "heart-shaped with a wide, mobile mouth and eyes that telegraph every feeling — she cannot hide; her expressions move through her face like weather",
+  "signature_feature": "her hands — long-fingered, expressive, constantly moving when she talks; he notices the way her fingers trace the rim of a glass, the deliberate care in how she touches fabric or a person's arm",
+  "second_celebrated_feature": "the curve of her neck and collarbone when she turns her head — vulnerable, elegant, impossible to look away from",
+  "signature_habits": "she hums while working — Yoruba folk melodies her grandmother taught her, unconscious and soothing; she keeps a small leather journal where she sketches design ideas in pen, never digital; she says 'Ẹ kú ìrìn' (safe travels) to people leaving, even casually; she touches her own sternum when she's nervous or thinking hard, a self-soothing gesture",
+  "occupation": "textile designer and owner of a small sustainable fabric studio in Brooklyn — she sources organic cotton and natural dyes, works with artisans, creates limited-run collections; the space is her sanctuary and her financial lifeline",
+  "current_crisis": {
+    "event": "her studio's primary supplier just went bankrupt without warning; her spring collection — already promised to three boutiques and a small fashion house — cannot be produced; she has forty-eight hours to either find replacement sourcing or lose the contracts and face a cash-flow collapse that will shutter the business she built over four years",
+    "hottest_emotion": "panic layered with a suffocating sense of powerlessness — she is watching something she loves die and cannot stop it",
+    "immediate_want": "to find someone — anyone — with capital and connections in textiles who will take her seriously instead of patting her hand like she's a child with a craft hobby"
+  },
+  "wound": {
+    "core": "she believes that wanting something badly enough means she will eventually lose it — that her hunger for stability and creative autonomy is a curse that invites collapse",
+    "surfacing_hint": "when things start going well, she sabotages quietly or waits for the other shoe to drop; she over-apologizes; she flinches when praised; under pressure, she spirals into catastrophizing and becomes almost paralyzed by the certainty that she is about to fail"
+  }
+}

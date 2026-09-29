@@ -1,0 +1,56 @@
+[DECK_MANDATE] ON (dev) — default. Use window._forceMandateOff() or set window._forceDeckMandate=false for palate-cleanser testing.
+[DECK_MANDATE] ON (dev) — default. Use window._forceMandateOff() or set window._forceDeckMandate=false for palate-cleanser testing.
+[DECK_MANDATE] ON (dev) — default. Use window._forceMandateOff() or set window._forceDeckMandate=false for palate-cleanser testing.
+[DECK_MANDATE] ON (dev) — default. Use window._forceMandateOff() or set window._forceDeckMandate=false for palate-cleanser testing.
+[DECK_MANDATE] ON (dev) — default. Use window._forceMandateOff() or set window._forceDeckMandate=false for palate-cleanser testing.
+[CONTRACT:COND] completion condition front-loaded (7 must-satisfy obligations)
+[CONTRACT:START] first draft satisfies 1/4 CRITICAL
+[CONTRACT] validate-only (default; set window._contractRepairOff=false to restore the pen) unmet=5
+[CONTRACT:LOOP 1] +0w · satisfied [] · CRITICAL remaining 3 · efficiency n/a
+[CONTRACT:LOOP] no improvement (3→3) — aborting
+[CONTRACT:DONE] CRITICAL 1/4 satisfied · +0c across 1 continuation(s)
+[SCENE1-GATE] Mandated closer already in final paragraph — bypassing gate (contract honored).
+[LI-PROOF] scene=1 type=status primary=status locked_scene=1 mentions_this_story=1
+[SCENE1-GATE] Only SOFT/cosmetic fails (calcification) — KEEPING the Sonnet draft (preserves physical/character description); the scrub handles the phrase. No Haiku regen fired (Roman 2026-06-02: a lo
+[SCENE1-GATE] All checks passed on first attempt.
+[SCENE1-FRAME] Dropped fuzzy mandated-closer echo (overlap 100%): "My hand tightened around my great-grandmother's old tarot deck."
+[SCENE1-FRAME] Dropped fuzzy mandated-closer echo (overlap 100%): "I toyed with the idea of letting the cards decide."
+[SCENE1-FRAME] Appended mandated closer (model omitted it / replaced a junk ending).
+[SCENE1-FRAME] Dropped fuzzy mandated-closer echo (overlap 100%): "My hand tightened around my great-grandmother's old tarot deck."
+[SCENE1-FRAME] Dropped fuzzy mandated-closer echo (overlap 100%): "I toyed with the idea of letting the cards decide."
+[SCENE1-FRAME] Appended mandated closer (model omitted it / replaced a junk ending).
+[SCENE1-GATE:FINAL] Re-asserted mandated frame (opener and/or closer lost during a late regen pass).
+[PC-PICTURABILITY:SKIP] HOT_CRISIS Scene-1 — deferring PC establishment to avoid mid-crisis inventory dump
+[HOT-RENDER:GATE] functional fails=[] (n=0) · rendered=COLD_DISRUPTION · in-motion=0 · container-opener=false ⟹ REPAIR FIRES
+[HOT-RENDER] VALIDATE-ONLY (default) — fails=[] rendered=COLD_DISRUPTION in-motion=0. Reporting, not rewriting. Restore with window._hotPenOff = false.
+[SCENE1-FRAME] Dropped fuzzy mandated-closer echo (overlap 100%): "My hand tightened around my great-grandmother's old tarot deck."
+[SCENE1-FRAME] Dropped fuzzy mandated-closer echo (overlap 100%): "I toyed with the idea of letting the cards decide."
+[SCENE1-FRAME] Appended mandated closer (model omitted it / replaced a junk ending).
+[SCENE1-FRAME:POST-PASS] Re-asserted verbatim mandated closer after post-gate mutators.
+[DECK_MANDATE] ON (dev) — default. Use window._forceMandateOff() or set window._forceDeckMandate=false for palate-cleanser testing.
+[SCENE-BUDGET:COUNT] scene=ba70dd12-e0dd-400f-86c3-1673c6de0dd6:0 repair=0 polish=0 fallback=0 regen=0 cosmetic=0/2 (conditional spent=0/4) skipped=[] provenance=fallback
+[PLOT-CONTRACT:ENABLED] true
+[DECK_MANDATE] ON (dev) — default. Use window._forceMandateOff() or set window._forceDeckMandate=false for palate-cleanser testing.
+[SCENE-FRAME] Stashing Scene 2 (Petition) mandate frame
+[PLOT-CONTRACT:DIRECTIVE] scene=0 mode=state_change
+[STATE-CONTRACT-BIND] scene=0 boundBeats=1
+[PC-PICT] VALIDATE-ONLY (default) — reporting, not writing.
+[FlavorPhysics] Scene lacks world mechanic evidence, regenerating once: Scene does not express flavor physics for "arcane_binding". Expected keywords: binding, spell, contract, geas, magical...
+[FOREGROUND:STORY] Scene 2 validator: FAIL [ENDING STRUCTURE: final paragraph contains resolut…The decision must remain UNRESOLVED at scene end., POV CONTRACT BREAK (self-description drift): parag…She
+[SCENE-FRAME] petition closer: no <<WISH:>> emitted, neutral fallback used.
+[SCENE-FRAME] Appended mandated closer (turn path).
+[WISH] no fragment captured — neutral fallback composed
+[SCENE-BUDGET:COUNT] scene=ba70dd12-e0dd-400f-86c3-1673c6de0dd6:1 repair=0 polish=0 fallback=0 regen=0 cosmetic=0/2 (conditional spent=0/4) skipped=[] provenance=original
+[DECK_MANDATE] ON (dev) — default. Use window._forceMandateOff() or set window._forceDeckMandate=false for palate-cleanser testing.
+[PLOT-CONTRACT:ENABLED] true
+[DECK_MANDATE] ON (dev) — default. Use window._forceMandateOff() or set window._forceDeckMandate=false for palate-cleanser testing.
+[SCENE-FRAME] Stashing Scene 3 (Tempt) mandate frame
+[PLOT-CONTRACT:DIRECTIVE] scene=1 mode=state_change
+[STATE-CONTRACT-BIND] scene=1 boundBeats=1
+[PC-PICT] VALIDATE-ONLY (default) — reporting, not writing.
+[FOREGROUND:STORY] Scene 3 validator: FAIL [ENDING STRUCTURE: final paragraph lacks a physical…/ brush / hover / etc.) — ending is not embodied., ENDING STRUCTURE: missing the ALMOST beat — the te…bet
+[SCENE-FRAME] petition closer: no <<WISH:>> emitted, neutral fallback used.
+[SCENE-FRAME] Appended mandated closer (turn path).
+[WISH] no fragment captured — neutral fallback composed
+[SCENE-BUDGET:COUNT] scene=ba70dd12-e0dd-400f-86c3-1673c6de0dd6:2 repair=0 polish=0 fallback=0 regen=0 cosmetic=0/2 (conditional spent=0/4) skipped=[] provenance=original
+[DECK_MANDATE] ON (dev) — default. Use window._forceMandateOff() or set window._forceDeckMandate=false for palate-cleanser testing.

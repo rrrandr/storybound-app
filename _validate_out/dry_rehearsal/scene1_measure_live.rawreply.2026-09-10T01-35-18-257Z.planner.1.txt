@@ -1,0 +1,56 @@
+{
+  "opening_spine": {
+    "pressure_source_type": "procedural",
+    "pressure_source": "the kiln temperature is already dropping and the largest vase will crack before the cycle finishes",
+    "hook_object": null,
+    "opening_actor_id": null,
+    "opening_beat": "the gauge needle is sliding left while the glaze on the vase is still wet",
+    "rising_beats": ["I press both palms to the workbench to stop the shake", "Rook's clause lands again and the heat in my chest has nothing to do with the kiln"],
+    "decision_beat": "Open the door to adjust or seal it now and lose the piece?",
+    "pc_career": "ceramicist",
+    "opening_setting": "kiln room",
+    "environment_elements": ["kiln gauge", "clay workbench"],
+    "li_texture_beat": "rising_beats.1 — the way he set the document down without lifting his eyes from the page, a slow ache starts low in my belly",
+    "pc_wound_anchor": "opening — the dropping needle bothers me more than it should",
+    "pc_self_presentation_beat": "rising_beats.0 — I wipe clay across the apron in one hard stroke and hate how the streak makes me look unfinished",
+    "scene_want": "wants the temperature to hold long enough for the glaze to set",
+    "scene_mission": "Finish the firing before the pieces crack",
+    "reader_state": {
+      "knows": "Testa is alone trying to complete a kiln firing that is already failing",
+      "believes": "Rook's recent move is the reason the work is at risk",
+      "wondering": "Why is Rook making this choice now",
+      "must_not_confuse": "Only Testa is present and the kiln failure is the immediate physical problem"
+    },
+    "pc_body_callback": "opening — stress_tic (clay on hands)",
+    "antagonist_body_callback": null,
+    "staged_characters": [
+      { "name": "Testa", "presence": "IN_PERSON", "anchor_beat": "FROM_PC_OPENING_FUSION" }
+    ]
+  },
+  "scene_skeleton": {
+    "character_plus": [],
+    "pc_opening_fusion": {
+      "character": "Testa",
+      "placement": "PC_FIRST_EMBODIED_BEAT",
+      "contact": { "verb": "PRESS", "object": "clay workbench" },
+      "action": "press both palms flat",
+      "pc_lens_operation": "INWARD_TRANSLATION_OF_ANOTHER_PERSONS_COST",
+      "character_revelation": "Testa absorbs the cost of Rook's move as heat in her own body before she names it",
+      "environment_pressure": { "grounds": ["env:axis", "pick:world"], "text": "the dropping temperature costs Testa the entire batch if she cannot steady herself" }
+    },
+    "environment_plus": { "axis": "damage", "beat": "kiln gauge needle sliding left from the cooling cycle" }
+  },
+  "stage_contract": {
+    "v": 1,
+    "participants": [
+      { "ref": "pc:self", "presence": "IN_PERSON" }
+    ],
+    "event_facts": [
+      { "text": "the kiln temperature drops while the glaze remains wet", "participants": [{ "ref": "pc:self", "role": "actor" }] }
+    ],
+    "elements": [
+      { "name": "kiln gauge", "affordance": "FIXTURE" },
+      { "name": "clay workbench", "affordance": "SURFACE" }
+    ]
+  }
+}

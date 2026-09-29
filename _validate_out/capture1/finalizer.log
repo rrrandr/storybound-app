@@ -1,0 +1,56 @@
+[DECK_MANDATE] ON (dev) — default. Use window._forceMandateOff() or set window._forceDeckMandate=false for palate-cleanser testing.
+[DECK_MANDATE] ON (dev) — default. Use window._forceMandateOff() or set window._forceDeckMandate=false for palate-cleanser testing.
+[DECK_MANDATE] ON (dev) — default. Use window._forceMandateOff() or set window._forceDeckMandate=false for palate-cleanser testing.
+[DECK_MANDATE] ON (dev) — default. Use window._forceMandateOff() or set window._forceDeckMandate=false for palate-cleanser testing.
+[DECK_MANDATE] ON (dev) — default. Use window._forceMandateOff() or set window._forceDeckMandate=false for palate-cleanser testing.
+[CONTRACT:COND] completion condition front-loaded (7 must-satisfy obligations)
+[CONTRACT:START] first draft satisfies 0/4 CRITICAL
+[CONTRACT] validate-only (default; set window._contractRepairOff=false to restore the pen) unmet=6
+[CONTRACT:LOOP 1] +0w · satisfied [] · CRITICAL remaining 4 · efficiency n/a
+[CONTRACT:LOOP] no improvement (4→4) — aborting
+[CONTRACT:DONE] CRITICAL 0/4 satisfied · +0c across 1 continuation(s)
+[SCENE1-GATE] Mandated closer already in final paragraph — bypassing gate (contract honored).
+[SCENE1-GATE] Initial HARD failures: li_on_stage(li_physical_presence_2)
+  [li_on_stage] Julian is bodily present (2 presence cues) despite the off-stage contract — references are fine, but the LI must not speak/act/be touched on-page
+[SCENE1-GATE] Hard failures detected (li_on_stage) — attempting 2 Haiku surgical pass(es), then ship the whole draft if unresolved (no mechanical fallback).
+[SCENE1-GATE] Surgical edit attempt 1 → mistral-small (targeted rewrite, preserves voice/length/architecture; Haiku BANNED for prose, Roman 2026-06-26)
+[MODEL-ROUTE:PROSE] provider=mistral-small task=line_edit callsite=scene1-gate-surgical
+[SCENE1-GATE] Surgical edit 1 drift-OK (paras 17→17, word-ratio 0.93) — validating against gate
+[SCENE1-GATE:LI-PRESENCE] exempted 1 memory-framed, 0 media-framed, 0 hypothetical/desire-projection (possibility of / imagined / wanted him / would / if he / longing), 0 phone/contact; 0 remaining co
+[SCENE1-GATE] Regen attempt 1 accepted — all (non-decision) checks pass, soft fails cleared.
+[SCENE1-GATE] Sonnet polish SKIPPED (cost-cut 2026-05-30 — polish drifted structure on most live runs; Haiku regen ships as canonical).
+[SCENE1-GATE:RESCUE] this scene=pass1 · n=1 gated scenes — pass1 cleared 100% · pass2 cleared +0% · still-failed 0%  [PASS-2 RESCUE VALUE = +0% of gated scenes — if this stays low, set window._scene1R
+[SCENE1-FRAME] Dropped fuzzy mandated-closer echo (overlap 100%): "My hand tightened around my great-grandmother's old tarot deck."
+[SCENE1-FRAME] Dropped fuzzy mandated-closer echo (overlap 100%): "I toyed with the idea of letting the cards decide."
+[SCENE1-FRAME] Appended mandated closer (model omitted it / replaced a junk ending).
+[SCENE1-FRAME] Dropped fuzzy mandated-closer echo (overlap 100%): "My hand tightened around my great-grandmother's old tarot deck."
+[SCENE1-FRAME] Dropped fuzzy mandated-closer echo (overlap 100%): "I toyed with the idea of letting the cards decide."
+[SCENE1-FRAME] Appended mandated closer (model omitted it / replaced a junk ending).
+[SCENE1-GATE:FINAL] Re-asserted mandated frame (opener and/or closer lost during a late regen pass).
+[LI-PROOF] VALIDATE-ONLY (default) — gap detected for Julian; reporting, not writing. Restore the pen with window._liProofPenOff = false.
+[PC-PICTURABILITY:SKIP] HOT_CRISIS Scene-1 — deferring PC establishment to avoid mid-crisis inventory dump
+[HOT-RENDER:GATE] functional fails=[] (n=0) · rendered=COLD_DISRUPTION · in-motion=0 · container-opener=false ⟹ REPAIR FIRES
+[HOT-RENDER:REPAIR] applied (segment 2420→2065 chars) — functional fails 0→0 · rendered COLD_DISRUPTION→HOT_CRISIS ✓ HOT · remaining=[]
+[AUTHORITY-VIOLATION] _repairHotOpening — create_dialogue:"but let it bring Lirael the father who left her instead." | budget_exceeded_chars:1812>320 | budget_exceeded_sentences:23>3 | create_descript
+[SCENE1-FRAME] Stripped premature deck mention from body (deck-at-end constraint): "My fingers tightened around the tarot deck I had not meant to bring, its edges biting my p"
+[SCENE1-FRAME] Appended mandated closer (model omitted it / replaced a junk ending).
+[SCENE1-FRAME:POST-PASS] Re-asserted verbatim mandated closer after post-gate mutators.
+[DECK_MANDATE] ON (dev) — default. Use window._forceMandateOff() or set window._forceDeckMandate=false for palate-cleanser testing.
+[SCENE-BUDGET:COUNT] scene=24b44ad2-33f1-43f6-986f-01b59a786e6e:0 repair=0 polish=0 fallback=0 regen=0 cosmetic=0/2 (conditional spent=0/4) skipped=[] provenance=original
+[PLOT-CONTRACT:ENABLED] true
+[DECK_MANDATE] ON (dev) — default. Use window._forceMandateOff() or set window._forceDeckMandate=false for palate-cleanser testing.
+[SCENE-FRAME] Stashing Scene 2 (Petition) mandate frame
+[PLOT-CONTRACT:DIRECTIVE] scene=0 mode=state_change
+[STATE-CONTRACT-BIND] scene=0 boundBeats=1
+[LI-PROOF] VALIDATE-ONLY (default) — gap detected for Julian; reporting, not writing. Restore the pen with window._liProofPenOff = false.
+[FlavorPhysics] Scene lacks world mechanic evidence, regenerating once: Scene does not express flavor physics for "arcane_binding". Expected keywords: binding, spell, contract, geas, magical...
+[FOREGROUND:STORY] Scene 2 validator: FAIL [ENDING STRUCTURE: final paragraph contains resolut…The decision must remain UNRESOLVED at scene end., ENDING STRUCTURE: missing the ALMOST beat — the te…bet
+[SCENE-FRAME] Dropped fuzzy mandated-closer echo (turn path, overlap 100%): "I realize that old tarot deck is still in my hand."
+[SCENE-FRAME] Dropped fuzzy mandated-closer echo (turn path, overlap 100%): "One of the heavy gold cards slips out — "Petition Fate" is inscribed on it."
+[SCENE-FRAME] Stripped 1 echoed closer fragment-type(s) from body (turn path — anti triple-closer).
+[SCENE-FRAME] petition closer: no <<WISH:>> emitted, neutral fallback used.
+[SCENE-FRAME] Appended mandated closer (turn path).
+[WISH] composing captured fragment into the Petition tail
+[SCENE-BUDGET:COUNT] scene=24b44ad2-33f1-43f6-986f-01b59a786e6e:1 repair=0 polish=0 fallback=0 regen=0 cosmetic=0/2 (conditional spent=0/4) skipped=[] provenance=original
+WORLD LAYER          PASS     Influence: WEAK    binding, spell, contract
+[DECK_MANDATE] ON (dev) — default. Use window._forceMandateOff() or set window._forceDeckMandate=false for palate-cleanser testing.

@@ -1,0 +1,4 @@
+=== d3a_stage_order · stage_order_dry.mjs · 20:47:39 ===
+d3a_stage_order: exit=1 · 85 checks · 84 passed · 1 failed · invalid_markers=0 · samples=47 suite_rss_max=334MB free_min=109MB server_rss_max=85MB
+d3a_stage_order: FAILURE — stopping. First failing lines:
+88:FAIL RL1 the LATEST retained real reply (17:16: structured contact WIPE→target, grounds [env:use, pc:self], near-gloss revelation): its ground-format faults CLEAR by aliasing (log names both) and the ONLY remaining fault is the named revelation restatement; 0 author, 0 pages, refund + honest dialog  — {"fatal":"fusion action wording does not co-refer to the contact object — it never names the e

@@ -1,0 +1,24 @@
+{
+ "violations": [],
+ "preflight": [],
+ "reports": [
+  {
+   "validator": "hot_opening",
+   "type": "OPENING_TEMPERATURE",
+   "ok": false,
+   "failures": [
+    "no_li_250"
+   ],
+   "renderedTemp": "COLD_DISRUPTION",
+   "inMotionHits": 0,
+   "containerOpener": false,
+   "evidence": "The youth knelt on the braided spiralgrass, her aqua skin catching the filtered dawn light through the weeping-willow veil-canopy. She spoke the rehearsed offering in a clear, steady voice that carried across the two dozen assembled First Favored. \"I give the discipline to finish"
+  },
+  {
+   "validator": "semantic_rewrite",
+   "type": "SEMANTIC_EDIT_REQUESTED",
+   "label": "scene1-edit",
+   "instruction": "EDIT this Scene 1 to reduce its LOAD — do NOT shorten the emotional scene, do NOT cut the ending. NEVER rename the protagonist or Julian (the love interest); they always keep their names. (1) SINGLE C"
+  }
+ ]
+}

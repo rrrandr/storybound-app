@@ -1,0 +1,54 @@
+{
+  "scene1Candidate": {
+    "beats": [
+      {"kind": "narration", "speaker": null, "image": "intro_lirael", "text": "Dawn light cut across the clearing and caught on the sash knotted at my hip. The mouth-band tasted of old linen and my own breath. This was my first time carrying the full weight of the rite; if I failed here the path my father once walked would close before I reached its first true step.", "provenance": {"kind": "generated_expression"}},
+      {"kind": "narration", "speaker": null, "image": "intro_lirael", "text": "I felt every eye on the embroidered edge of the sash, on the way my hands stayed still at my sides. The gap between knowing every word of the rite and having performed it even once sat cold behind my ribs.", "provenance": {"kind": "generated_expression"}},
+      {"kind": "narration", "speaker": null, "image": "intro_seren", "text": "Seren knelt on the flat stone in front of me, back straight from months of rehearsal. Her composure looked perfect. I met her eyes for the space of a breath and gave the smallest nod we had practiced.", "provenance": {"kind": "generated_expression"}},
+      {"kind": "narration", "speaker": null, "image": "intro_seren", "text": "She answered with the same small nod, the one that said she remembered every correction and would deliver them cleanly.", "provenance": {"kind": "generated_expression"}},
+      {"kind": "narration", "speaker": null, "image": "intro_dohkar", "text": "The presiding Dohkar stood at the head of the stone, voice already heavy with authority. “Name the cost,” he said. Seren lifted her chin and spoke without hesitation.", "provenance": {"kind": "generated_expression"}},
+      {"kind": "dialogue", "speaker": "Seren", "image": "intro_dohkar", "text": "My earliest memory of the river at dusk, when the light still felt safe.", "provenance": {"kind": "generated_expression"}},
+      {"kind": "narration", "speaker": null, "image": "intro_julian", "text": "At the edge of the gathering Julian watched, still as always. The Provast’s mantle sat on him without display; the office he held was the one my father had left open. My attention found him before I could stop it.", "provenance": {"kind": "generated_expression"}},
+      {"kind": "narration", "speaker": null, "image": "intro_julian", "text": "He did not move or speak. The room remained his without effort.", "provenance": {"kind": "generated_expression"}},
+      {"kind": "narration", "speaker": null, "image": "d1", "text": "Seren began the invocation. The first words left her mouth clean and measured. For those few syllables the fear that lived in the gap between knowing and doing stayed quiet.", "provenance": {"kind": "generated_expression"}},
+      {"kind": "narration", "speaker": null, "image": "d1", "text": "Then her voice shifted. The rehearsed phrase bent. She named me instead of herself.", "provenance": {"kind": "generated_expression"}},
+      {"kind": "narration", "speaker": null, "image": "d2", "text": "I heard the self-aggrandizing shape beneath the offered compassion; she wanted her goodness seen and praised more than she wanted the wish itself. The recognition landed cold and exact.", "provenance": {"kind": "grounded_inference", "cites": "seren_goodness_needs_witness"}},
+      {"kind": "narration", "speaker": null, "image": "d2", "text": "The air above the stone cracked open in a narrow seam of wrong light aimed straight at my chest. The seam widened fast enough that I felt the heat of it on my skin.", "provenance": {"kind": "generated_expression"}},
+      {"kind": "narration", "speaker": null, "image": "d2", "text": "The seam stopped. It did not close or fade; it simply ceased moving, leaving the wrong light suspended and unfinished. No one explained why.", "provenance": {"kind": "generated_expression"}},
+      {"kind": "narration", "speaker": null, "image": "d3", "text": "The assembly had already seen the seam reach for me. The presiding Dohkar pointed at the arrested light and spoke loud enough for every witness.", "provenance": {"kind": "generated_expression"}},
+      {"kind": "dialogue", "speaker": "the presiding Dohkar", "image": "d3", "text": "You shaped the wish and interfered in the rite. Both charges stand.", "provenance": {"kind": "generated_expression"}},
+      {"kind": "narration", "speaker": null, "image": "d3", "text": "The words struck the exact future I had carried since childhood. Even as they landed I felt my attention slide once more toward the edge of the clearing where Julian stood.", "provenance": {"kind": "generated_expression"}},
+      {"kind": "narration", "speaker": null, "image": "d4", "text": "Julian crossed the clearing in three unhurried strides. He stopped in front of me and spoke so the whole assembly could hear.", "provenance": {"kind": "generated_expression"}},
+      {"kind": "dialogue", "speaker": "Julian", "image": "d4", "text": "I can hear she is aligned with her own innocence.", "provenance": {"kind": "generated_expression"}},
+      {"kind": "narration", "speaker": null, "image": "d4", "text": "He drew The Answer from its sheath and placed it between my palms, closing my fingers around the cool metal.", "provenance": {"kind": "generated_expression"}},
+      {"kind": "dialogue", "speaker": "Julian", "image": "d4", "text": "I will question her before you all.", "provenance": {"kind": "generated_expression"}}
+    ]
+  },
+  "scene1Coverage": {
+    "intro_lirael": [0, 1],
+    "intro_seren": [2, 3],
+    "intro_dohkar": [4, 5],
+    "intro_julian": [6, 7],
+    "d1": [8, 9],
+    "d2": [10, 11, 12],
+    "d3": [13, 14, 15],
+    "d4": [16, 17, 18, 19]
+  },
+  "first_person_lirael": true,
+  "oasOpening": {
+    "speaker": "Julian",
+    "text": "You shaped her wish through your own unspoken desire."
+  },
+  "postInterruptionBeat": {
+    "speaker": null,
+    "image": "d4",
+    "kind": "narration",
+    "text": "The Answer remained heavy in my hands while the clearing waited to learn what the formal inquiry would cost me."
+  },
+  "fateCards": {
+    "temptation": {"action": "Lean closer and meet his eyes", "dialogue": "Ask what you truly want to know.", "variant": "amplify"},
+    "silence": {"action": "Stand perfectly still, gaze steady", "dialogue": "", "variant": "amplify"},
+    "reversal": {"action": "Turn the question back on him", "dialogue": "Why do you need the room to watch?", "variant": "redirect"},
+    "boundary": {"action": "Step back one clear pace", "dialogue": "This stays between the rite and the record.", "variant": "amplify"},
+    "confession": {"action": "Lower my voice so only he hears", "dialogue": "I did want you to see me.", "variant": "ruin"}
+  }
+}

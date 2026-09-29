@@ -1,0 +1,656 @@
+[
+  {
+    "label": "MODERN CORRIDOR (pilot config)",
+    "planner": {
+      "url": "/api/mistral-proxy",
+      "model": "mistral-small-latest",
+      "max_tokens": 2400,
+      "reasoning_effort": "none",
+      "response_format": {
+        "type": "json_object"
+      },
+      "sysBytes": 6239,
+      "usrBytes": 83751,
+      "bytes": 89990,
+      "reserve": 92390,
+      "sysHead": "You are a scene-structure planner for the OPENING scene of an interactive romanc",
+      "plannerOwned": true,
+      "missionRule": true
+    },
+    "rows": [
+      {
+        "url": "/api/chatgpt-proxy",
+        "role": "NORMALIZATION",
+        "model": "gpt-4o-mini",
+        "kind": "canonicalizer",
+        "bytes": 6499,
+        "max_tokens": 500,
+        "reserve": 6999
+      },
+      {
+        "url": "/api/chatgpt-proxy",
+        "role": "NORMALIZATION",
+        "model": "gpt-4o-mini",
+        "kind": "canonicalizer",
+        "bytes": 6498,
+        "max_tokens": 500,
+        "reserve": 6998
+      },
+      {
+        "url": "/api/chatgpt-proxy",
+        "role": "PRIMARY_AUTHOR",
+        "model": "gpt-4o-mini",
+        "kind": "characterSheet",
+        "bytes": 30758,
+        "max_tokens": 2500,
+        "reserve": 33258
+      },
+      {
+        "url": "/api/chatgpt-proxy",
+        "role": "PRIMARY_AUTHOR",
+        "model": "gpt-4o-mini",
+        "kind": "characterSheet",
+        "bytes": 63557,
+        "max_tokens": 3000,
+        "reserve": 66557
+      },
+      {
+        "url": "/api/chatgpt-proxy",
+        "role": "PRIMARY_AUTHOR",
+        "model": "gpt-4o-mini",
+        "kind": "rplot",
+        "bytes": 12262,
+        "max_tokens": 1200,
+        "reserve": 13462
+      },
+      {
+        "url": "/api/proxy",
+        "role": "STRUCTURE_GENERATOR",
+        "model": "grok-4-1-fast-reasoning",
+        "kind": "aplotGenerator",
+        "bytes": 65542,
+        "max_tokens": 3000,
+        "reserve": 68542
+      },
+      {
+        "url": "/api/chatgpt-proxy",
+        "role": "PRIMARY_AUTHOR",
+        "model": "gpt-4o-mini",
+        "kind": "aplotCompression",
+        "bytes": 9627,
+        "max_tokens": 400,
+        "reserve": 10027
+      },
+      {
+        "url": "/api/chatgpt-proxy",
+        "role": "PRIMARY_AUTHOR",
+        "model": "gpt-4o-mini",
+        "kind": "antagonistBodyBible",
+        "bytes": 18453,
+        "max_tokens": 1100,
+        "reserve": 19553
+      },
+      {
+        "url": "/api/chatgpt-proxy",
+        "role": "PRIMARY_AUTHOR",
+        "model": "gpt-4o-mini",
+        "kind": "woundSwapTest",
+        "bytes": 5396,
+        "max_tokens": 500,
+        "reserve": 5896
+      },
+      {
+        "url": "/api/chatgpt-proxy",
+        "role": "PRIMARY_AUTHOR",
+        "model": "gpt-4o-mini",
+        "kind": "characterSheet",
+        "bytes": 30842,
+        "max_tokens": 2500,
+        "reserve": 33342
+      },
+      {
+        "url": "/api/chatgpt-proxy",
+        "role": "PRIMARY_AUTHOR",
+        "model": "gpt-4o-mini",
+        "kind": "characterSheet",
+        "bytes": 63662,
+        "max_tokens": 3000,
+        "reserve": 66662
+      },
+      {
+        "url": "/api/chatgpt-proxy",
+        "role": "PRIMARY_AUTHOR",
+        "model": "gpt-4o-mini",
+        "kind": "scaffold",
+        "bytes": 30007,
+        "max_tokens": 5900,
+        "reserve": 35907
+      },
+      {
+        "url": "/api/chatgpt-proxy",
+        "role": "PRIMARY_AUTHOR",
+        "model": "gpt-4o-mini",
+        "kind": "scaffold",
+        "bytes": 30007,
+        "max_tokens": 5900,
+        "reserve": 35907
+      },
+      {
+        "url": "/api/proxy",
+        "role": "STRUCTURE_GENERATOR",
+        "model": "grok-4-1-fast-reasoning",
+        "kind": "scaffold",
+        "bytes": 30007,
+        "max_tokens": 5900,
+        "reserve": 35907
+      },
+      {
+        "url": "/api/chatgpt-proxy",
+        "role": "PRIMARY_AUTHOR",
+        "model": "gpt-4o-mini",
+        "kind": "characterSheet",
+        "bytes": 33492,
+        "max_tokens": 2500,
+        "reserve": 35992
+      },
+      {
+        "url": "/api/chatgpt-proxy",
+        "role": "PRIMARY_AUTHOR",
+        "model": "gpt-4o-mini",
+        "kind": "characterSheet",
+        "bytes": 68223,
+        "max_tokens": 3000,
+        "reserve": 71223
+      },
+      {
+        "url": "/api/mistral-proxy",
+        "role": "PROMPT_PREPROCESSOR",
+        "model": "mistral-small-latest",
+        "kind": "planner",
+        "bytes": 89990,
+        "max_tokens": 2400,
+        "reserve": 92390
+      }
+    ],
+    "st": {
+      "fatal": "no opening_spine and no recognised spine fields at top level",
+      "quotaBusy": null,
+      "pages": 0,
+      "world": "Modern",
+      "starter": null
+    },
+    "threw": null,
+    "logs": [
+      "[BAKED] starter-scenes.js loaded — 3 package(s), 3 still PLACEHOLDER: starter_the_first_taste, starter_glass_house, starter_first_sacrifice",
+      "[BeginStory] handleBeginStory() called",
+      "[ISSUE-PURCHASE] charge declined for issue 1 (literary) — aborted (subscribed=false, balance=0)",
+      "[BeginStory] handleBeginStory() called",
+      "[BeginStory] DEBUG state.picks: {\"world\":\"Modern\",\"tone\":\"Earnest\",\"genre\":\"Billionaire\",\"pressure\":\"PowerControl\",\"flavor\":\"Billionaire\",\"dynamic\":\"Enemies\",\"era\":null,\"pov\":\"first_person\",\"worldSubt",
+      "[BeginStory] DEBUG state.archetype: {\"primary\":\"BEAUTIFUL_RUIN\",\"modifier\":null,\"canonicalLIId\":\"fb_li_plannerreserve-modern\",\"bound\":true,\"boundAtScene\":0}",
+      "[BeginStory] DEBUG state.mode: solo state.storyLength: fling",
+      "[BeginStory] Past _beginStoryInProgress guard, entering main flow",
+      "[BeginStory] GATE DEBUG: {isNewStory: true, hasActiveStorypass: false, storypassFortunes: 0, totalFortunes: 9999, subscribed: true}",
+      "[BeginStory] All validation passed — proceeding to story generation",
+      "[BeginStory] Story mode: participatory",
+      "[BeginStory] Fate working title (from pool): Fate's Opening Gambit",
+      "[BeginStory] Phase 2 complete — starting loader and API calls",
+      "[A-PLOT:ROMANCE-ENGINE] classified as: COLLISION (Collision) — Scene 1 question: What present-tense force is already pressing on her — and (if known adversaries) how is HE behind it?",
+      "[A-PLOT:SCENE1-COMPRESS] returned empty (2ms) — Scene 1 will fall through to full A-plot block",
+      "[ANT-BODY-BIBLE] generated for Marcus Vale (shape A): archetype: BUREAUCRATIC_COLD archetype_signature: he makes the rule do the cruelty so his own hands stay clean height/build: tall · spare hair: ir",
+      "[RUN-LEDGER] recorded — dynamic=Enemies · engine=COLLISION · li_presence=OFFSTAGE · li_gravity=? (?) · ledger size 1",
+      "[SCENE1:PATTERN-GATE] HOT_CRISIS → inMotion subset: hostile_li_ultimatum/gala_social_collision/workplace_intrusion/public_scrutiny/witnessed_event/live_confrontation/sabotage_discovered/rival_takes_cr",
+      "[SCENE1:FP] saved opening fingerprint: sabotage_discovered — recent: [sabotage_discovered]",
+      "[TITLE:PRE] Title already exists, skipping: Fate's Opening Gambit",
+      "[SCENE1:STAGE:PLANNER-OWNED] unseeded Scene 1 — the opening planner must return scene_mission + stage_contract over 3 issued ref(s): [pc:self, ent:the one who draws them forward, plot:aplot_x3a_c64b16",
+      "[SCENE1:FACT-MANIFEST] fm:d5040cb4-45 · 1 fact(s) · story=plannerreserve-modern",
+      "[SCENE1:CPLUS:OPTIONS] 0 grounded option(s) across 0 candidate(s)",
+      "[SCENE1:CPLUS:CANON] C+ continuity coverage — canon-bearing=0 creatively-protected=0 auditor-only=0 unrenderable-latent-facets=0",
+      "[SCENE1:STAGE] source=planner-owned:pending settingOwner=planner presenceOwner=planner (PENDING — planner owns part of the stage) settingSource=planner-pending onStage=[Testa] offStage=[]",
+      "[SCENE1:PLANNER] eligible cast (1): [Testa] · chars=4340 → max_tokens=2400 (N_staged_max = N_eligible; staged_characters is an OUTPUT and never sizes the request)",
+      "[SCENE1:PLANNER:ATTEMPTS] 1 (no retry)",
+      "[SCENE1:ENVELOPE] spine contract declares 19 field(s)",
+      "[SCENE1:ENVELOPE:FAULT] no opening_spine and no recognised spine fields at top level",
+      "[SCENE1:SCAFFOLD] skipped (no opening_spine and no recognised spine fields at top level) — prose path unchanged",
+      "[SCENE1:ABORT] opening planner produced an unusable skeleton — refusing to author Scene 1 without it: no opening_spine and no recognised spine fields at top level",
+      "[BeginStory] Error: Error: Scene 1 aborted: no opening_spine and no recognised spine fields at top level at handleBeginStory (http://localhost:3000/app.js?v=20260906b-scene-numbering:267902:20) at asy"
+    ]
+  },
+  {
+    "label": "SEEDED FIRST SACRIFICE (consistency check; prior measurement 92,980)",
+    "planner": {
+      "url": "/api/mistral-proxy",
+      "model": "mistral-small-latest",
+      "max_tokens": 2921,
+      "reasoning_effort": "none",
+      "response_format": {
+        "type": "json_object"
+      },
+      "sysBytes": 6239,
+      "usrBytes": 82652,
+      "bytes": 88891,
+      "reserve": 91812,
+      "sysHead": "You are a scene-structure planner for the OPENING scene of an interactive romanc",
+      "plannerOwned": false,
+      "missionRule": false
+    },
+    "rows": [
+      {
+        "url": "/api/chatgpt-proxy",
+        "role": "NORMALIZATION",
+        "model": "gpt-4o-mini",
+        "kind": "canonicalizer",
+        "bytes": 6501,
+        "max_tokens": 500,
+        "reserve": 7001
+      },
+      {
+        "url": "/api/chatgpt-proxy",
+        "role": "NORMALIZATION",
+        "model": "gpt-4o-mini",
+        "kind": "canonicalizer",
+        "bytes": 6501,
+        "max_tokens": 500,
+        "reserve": 7001
+      },
+      {
+        "url": "/api/chatgpt-proxy",
+        "role": "PRIMARY_AUTHOR",
+        "model": "gpt-4o-mini",
+        "kind": "characterSheet",
+        "bytes": 31978,
+        "max_tokens": 2500,
+        "reserve": 34478
+      },
+      {
+        "url": "/api/chatgpt-proxy",
+        "role": "PRIMARY_AUTHOR",
+        "model": "gpt-4o-mini",
+        "kind": "characterSheet",
+        "bytes": 63982,
+        "max_tokens": 3000,
+        "reserve": 66982
+      },
+      {
+        "url": "/api/chatgpt-proxy",
+        "role": "PRIMARY_AUTHOR",
+        "model": "gpt-4o-mini",
+        "kind": "rplot",
+        "bytes": 13347,
+        "max_tokens": 1200,
+        "reserve": 14547
+      },
+      {
+        "url": "/api/proxy",
+        "role": "STRUCTURE_GENERATOR",
+        "model": "grok-4-1-fast-reasoning",
+        "kind": "aplotGenerator",
+        "bytes": 77429,
+        "max_tokens": 3000,
+        "reserve": 80429
+      },
+      {
+        "url": "/api/chatgpt-proxy",
+        "role": "PRIMARY_AUTHOR",
+        "model": "gpt-4o-mini",
+        "kind": "aplotCompression",
+        "bytes": 9627,
+        "max_tokens": 400,
+        "reserve": 10027
+      },
+      {
+        "url": "/api/chatgpt-proxy",
+        "role": "PRIMARY_AUTHOR",
+        "model": "gpt-4o-mini",
+        "kind": "antagonistBodyBible",
+        "bytes": 18458,
+        "max_tokens": 1100,
+        "reserve": 19558
+      },
+      {
+        "url": "/api/chatgpt-proxy",
+        "role": "PRIMARY_AUTHOR",
+        "model": "gpt-4o-mini",
+        "kind": "woundSwapTest",
+        "bytes": 5348,
+        "max_tokens": 500,
+        "reserve": 5848
+      },
+      {
+        "url": "/api/chatgpt-proxy",
+        "role": "PRIMARY_AUTHOR",
+        "model": "gpt-4o-mini",
+        "kind": "characterSheet",
+        "bytes": 32062,
+        "max_tokens": 2500,
+        "reserve": 34562
+      },
+      {
+        "url": "/api/chatgpt-proxy",
+        "role": "PRIMARY_AUTHOR",
+        "model": "gpt-4o-mini",
+        "kind": "characterSheet",
+        "bytes": 64087,
+        "max_tokens": 3000,
+        "reserve": 67087
+      },
+      {
+        "url": "/api/chatgpt-proxy",
+        "role": "PRIMARY_AUTHOR",
+        "model": "gpt-4o-mini",
+        "kind": "scaffold",
+        "bytes": 31106,
+        "max_tokens": 5900,
+        "reserve": 37006
+      },
+      {
+        "url": "/api/chatgpt-proxy",
+        "role": "PRIMARY_AUTHOR",
+        "model": "gpt-4o-mini",
+        "kind": "scaffold",
+        "bytes": 31106,
+        "max_tokens": 5900,
+        "reserve": 37006
+      },
+      {
+        "url": "/api/proxy",
+        "role": "STRUCTURE_GENERATOR",
+        "model": "grok-4-1-fast-reasoning",
+        "kind": "scaffold",
+        "bytes": 31106,
+        "max_tokens": 5900,
+        "reserve": 37006
+      },
+      {
+        "url": "/api/chatgpt-proxy",
+        "role": "PRIMARY_AUTHOR",
+        "model": "gpt-4o-mini",
+        "kind": "characterSheet",
+        "bytes": 34991,
+        "max_tokens": 2500,
+        "reserve": 37491
+      },
+      {
+        "url": "/api/chatgpt-proxy",
+        "role": "PRIMARY_AUTHOR",
+        "model": "gpt-4o-mini",
+        "kind": "characterSheet",
+        "bytes": 68934,
+        "max_tokens": 3000,
+        "reserve": 71934
+      },
+      {
+        "url": "/api/mistral-proxy",
+        "role": "PROMPT_PREPROCESSOR",
+        "model": "mistral-small-latest",
+        "kind": "planner",
+        "bytes": 88891,
+        "max_tokens": 2921,
+        "reserve": 91812
+      }
+    ],
+    "st": {
+      "fatal": "no opening_spine and no recognised spine fields at top level",
+      "quotaBusy": null,
+      "pages": 0,
+      "world": "Fantasy",
+      "starter": "starter_first_sacrifice"
+    },
+    "threw": null,
+    "logs": [
+      "[BAKED] starter-scenes.js loaded — 3 package(s), 3 still PLACEHOLDER: starter_the_first_taste, starter_glass_house, starter_first_sacrifice",
+      "[BeginStory] handleBeginStory() called",
+      "[ISSUE-PURCHASE] charge declined for issue 1 (literary) — aborted (subscribed=false, balance=0)",
+      "[BeginStory] handleBeginStory() called",
+      "[BeginStory] DEBUG state.picks: {\"world\":\"Fantasy\",\"tone\":\"Earnest\",\"genre\":\"Billionaire\",\"pressure\":\"PowerControl\",\"flavor\":\"Arcane Binding\",\"dynamic\":\"Enemies\",\"era\":null,\"pov\":\"First\",\"worldSubtype",
+      "[BeginStory] DEBUG state.archetype: {\"primary\":\"BEAUTIFUL_RUIN\",\"modifier\":null}",
+      "[BeginStory] DEBUG state.mode: solo state.storyLength: fling",
+      "[BeginStory] Past _beginStoryInProgress guard, entering main flow",
+      "[BeginStory] GATE DEBUG: {isNewStory: true, hasActiveStorypass: false, storypassFortunes: 0, totalFortunes: 9999, subscribed: true}",
+      "[BeginStory] All validation passed — proceeding to story generation",
+      "[BeginStory] Story mode: participatory",
+      "[BeginStory] Phase 2 complete — starting loader and API calls",
+      "[A-PLOT:ROMANCE-ENGINE] classified as: COLLISION (Collision) — Scene 1 question: What present-tense force is already pressing on her — and (if known adversaries) how is HE behind it?",
+      "[A-PLOT:SCENE1-COMPRESS] returned empty (1ms) — Scene 1 will fall through to full A-plot block",
+      "[ANT-BODY-BIBLE] generated for Marcus Vale (shape A): archetype: BUREAUCRATIC_COLD archetype_signature: he makes the rule do the cruelty so his own hands stay clean height/build: tall · spare hair: ir",
+      "[RUN-LEDGER] recorded — dynamic=Enemies · engine=COLLISION · li_presence=OFFSTAGE · li_gravity=? (?) · ledger size 1",
+      "[EMIT] WISH_AUTHORING_CORE gate=OPEN spineLoadBearing=no openWithoutSpine=true gateTextChars=865 scene=1 via=_buildFatelandsWishCoreDirective <- http://localhost:3000/app.js?v=20260906b-scene-numberin",
+      "[EMIT] WISH_ADJUDICATION gate=closed spineLoadBearing=no openWithoutSpine=true gateTextChars=865 scene=1 via=_buildFatelandsWishAdjudicationDirective <- http://localhost:3000/app.js?v=20260906b-scene-",
+      "[SCENE1:PATTERN-GATE] region-particular opener → lytharyn",
+      "[SCENE1:PATTERN-GATE] FATELANDS-WISH-DEMO → region-particular catastrophe (shape=region_lytharyn; summons/social/reckoning shapes suppressed)",
+      "[SCENE1:FP] saved opening fingerprint: region_lytharyn — recent: [region_lytharyn]",
+      "[SCENE-ASSIGNMENT] scene=1 source=plan-scene setting=null event=\"THE WISH — steps 1-4 of the twist sequence ONLY. Scene 1 does three things and then STOPS:\"",
+      "[SCENE1:LI-PRESENCE] the STAGE CONTRACT places the love interest on stage — forcing _scene1LIOnStage=true (authoritative over the engine pick; prevents the payload telling the author both that he is p",
+      "[TITLE:PRE] Title already exists, skipping: The First Sacrifice",
+      "[SCENE-ASSIGNMENT] scene=1 source=plan-scene setting=null event=\"THE WISH — steps 1-4 of the twist sequence ONLY. Scene 1 does three things and then STOPS:\"",
+      "[SCENE1:FACT-MANIFEST] fm:4bfd2988-229 · 7 fact(s) · story=plannerreserve-seeded",
+      "[SCENE1:CPLUS:NO-OWNED-EVIDENCE] 1 candidate(s) have no owned pressure evidence in this scene (Julian) — manifest fm:4bfd2988-229. They are not offered; the scene plans without them. This is a C+ cove",
+      "[SCENE1:CPLUS:OPTIONS] 10 grounded option(s) across 2 candidate(s) · starved: 1",
+      "[SCENE1:CPLUS:CANON] C+ continuity coverage — canon-bearing=4 creatively-protected=1 auditor-only=3 unrenderable-latent-facets=9 — 3 subject(s) have latent C+ facets with no author-safe protection FRO",
+      "[SCENE1:STAGE] source=seed.sceneOne settingOwner=seed presenceOwner=seed settingSource=seed onStage=[Lirael, Julian, Seren, the presiding Dohkar] offStage=[]",
+      "[SCENE1:PLANNER] eligible cast (4): [Lirael, Julian, Seren, the presiding Dohkar] · chars=7010 → max_tokens=2921 (N_staged_max = N_eligible; staged_characters is an OUTPUT and never sizes the request)",
+      "[SCENE1:PLANNER:ATTEMPTS] 1 (no retry)",
+      "[SCENE1:ENVELOPE] spine contract declares 20 field(s)",
+      "[SCENE1:ENVELOPE:FAULT] no opening_spine and no recognised spine fields at top level",
+      "[SCENE1:SCAFFOLD] skipped (no opening_spine and no recognised spine fields at top level) — prose path unchanged",
+      "[SCENE1:ABORT] opening planner produced an unusable skeleton — refusing to author Scene 1 without it: no opening_spine and no recognised spine fields at top level",
+      "[BeginStory] Error: Error: Scene 1 aborted: no opening_spine and no recognised spine fields at top level at handleBeginStory (http://localhost:3000/app.js?v=20260906b-scene-numbering:267902:20) at asy"
+    ]
+  },
+  {
+    "label": "MODERN CORRIDOR + seeded scene mission (stage resolves via scene-mission source)",
+    "planner": {
+      "url": "/api/mistral-proxy",
+      "model": "mistral-small-latest",
+      "max_tokens": 2400,
+      "reasoning_effort": "none",
+      "response_format": {
+        "type": "json_object"
+      },
+      "sysBytes": 6239,
+      "usrBytes": 83361,
+      "bytes": 89600,
+      "reserve": 92000,
+      "sysHead": "You are a scene-structure planner for the OPENING scene of an interactive romanc",
+      "plannerOwned": false,
+      "missionRule": false
+    },
+    "rows": [
+      {
+        "url": "/api/chatgpt-proxy",
+        "role": "NORMALIZATION",
+        "model": "gpt-4o-mini",
+        "kind": "canonicalizer",
+        "bytes": 6499,
+        "max_tokens": 500,
+        "reserve": 6999
+      },
+      {
+        "url": "/api/chatgpt-proxy",
+        "role": "NORMALIZATION",
+        "model": "gpt-4o-mini",
+        "kind": "canonicalizer",
+        "bytes": 6498,
+        "max_tokens": 500,
+        "reserve": 6998
+      },
+      {
+        "url": "/api/chatgpt-proxy",
+        "role": "PRIMARY_AUTHOR",
+        "model": "gpt-4o-mini",
+        "kind": "characterSheet",
+        "bytes": 30668,
+        "max_tokens": 2500,
+        "reserve": 33168
+      },
+      {
+        "url": "/api/chatgpt-proxy",
+        "role": "PRIMARY_AUTHOR",
+        "model": "gpt-4o-mini",
+        "kind": "characterSheet",
+        "bytes": 63558,
+        "max_tokens": 3000,
+        "reserve": 66558
+      },
+      {
+        "url": "/api/chatgpt-proxy",
+        "role": "PRIMARY_AUTHOR",
+        "model": "gpt-4o-mini",
+        "kind": "rplot",
+        "bytes": 12448,
+        "max_tokens": 1200,
+        "reserve": 13648
+      },
+      {
+        "url": "/api/proxy",
+        "role": "STRUCTURE_GENERATOR",
+        "model": "grok-4-1-fast-reasoning",
+        "kind": "aplotGenerator",
+        "bytes": 65653,
+        "max_tokens": 3000,
+        "reserve": 68653
+      },
+      {
+        "url": "/api/chatgpt-proxy",
+        "role": "PRIMARY_AUTHOR",
+        "model": "gpt-4o-mini",
+        "kind": "aplotCompression",
+        "bytes": 9627,
+        "max_tokens": 400,
+        "reserve": 10027
+      },
+      {
+        "url": "/api/chatgpt-proxy",
+        "role": "PRIMARY_AUTHOR",
+        "model": "gpt-4o-mini",
+        "kind": "antagonistBodyBible",
+        "bytes": 18453,
+        "max_tokens": 1100,
+        "reserve": 19553
+      },
+      {
+        "url": "/api/chatgpt-proxy",
+        "role": "PRIMARY_AUTHOR",
+        "model": "gpt-4o-mini",
+        "kind": "woundSwapTest",
+        "bytes": 5396,
+        "max_tokens": 500,
+        "reserve": 5896
+      },
+      {
+        "url": "/api/chatgpt-proxy",
+        "role": "PRIMARY_AUTHOR",
+        "model": "gpt-4o-mini",
+        "kind": "characterSheet",
+        "bytes": 30752,
+        "max_tokens": 2500,
+        "reserve": 33252
+      },
+      {
+        "url": "/api/chatgpt-proxy",
+        "role": "PRIMARY_AUTHOR",
+        "model": "gpt-4o-mini",
+        "kind": "characterSheet",
+        "bytes": 63663,
+        "max_tokens": 3000,
+        "reserve": 66663
+      },
+      {
+        "url": "/api/chatgpt-proxy",
+        "role": "PRIMARY_AUTHOR",
+        "model": "gpt-4o-mini",
+        "kind": "scaffold",
+        "bytes": 30209,
+        "max_tokens": 5900,
+        "reserve": 36109
+      },
+      {
+        "url": "/api/chatgpt-proxy",
+        "role": "PRIMARY_AUTHOR",
+        "model": "gpt-4o-mini",
+        "kind": "scaffold",
+        "bytes": 30209,
+        "max_tokens": 5900,
+        "reserve": 36109
+      },
+      {
+        "url": "/api/proxy",
+        "role": "STRUCTURE_GENERATOR",
+        "model": "grok-4-1-fast-reasoning",
+        "kind": "scaffold",
+        "bytes": 30209,
+        "max_tokens": 5900,
+        "reserve": 36109
+      },
+      {
+        "url": "/api/chatgpt-proxy",
+        "role": "PRIMARY_AUTHOR",
+        "model": "gpt-4o-mini",
+        "kind": "characterSheet",
+        "bytes": 33402,
+        "max_tokens": 2500,
+        "reserve": 35902
+      },
+      {
+        "url": "/api/chatgpt-proxy",
+        "role": "PRIMARY_AUTHOR",
+        "model": "gpt-4o-mini",
+        "kind": "characterSheet",
+        "bytes": 68224,
+        "max_tokens": 3000,
+        "reserve": 71224
+      },
+      {
+        "url": "/api/mistral-proxy",
+        "role": "PROMPT_PREPROCESSOR",
+        "model": "mistral-small-latest",
+        "kind": "planner",
+        "bytes": 89600,
+        "max_tokens": 2400,
+        "reserve": 92000
+      }
+    ],
+    "st": {
+      "fatal": "no opening_spine and no recognised spine fields at top level",
+      "quotaBusy": null,
+      "pages": 0,
+      "world": "Modern",
+      "starter": null
+    },
+    "threw": null,
+    "logs": [
+      "[BAKED] starter-scenes.js loaded — 3 package(s), 3 still PLACEHOLDER: starter_the_first_taste, starter_glass_house, starter_first_sacrifice",
+      "[BeginStory] handleBeginStory() called",
+      "[ISSUE-PURCHASE] charge declined for issue 1 (literary) — aborted (subscribed=false, balance=0)",
+      "[BeginStory] handleBeginStory() called",
+      "[BeginStory] DEBUG state.picks: {\"world\":\"Modern\",\"tone\":\"Earnest\",\"genre\":\"Billionaire\",\"pressure\":\"PowerControl\",\"flavor\":\"Billionaire\",\"dynamic\":\"Enemies\",\"era\":null,\"pov\":\"first_person\",\"worldSubt",
+      "[BeginStory] DEBUG state.archetype: {\"primary\":\"BEAUTIFUL_RUIN\",\"modifier\":null,\"canonicalLIId\":\"fb_li_plannerreserve-modern-mission\",\"bound\":true,\"boundAtScene\":0}",
+      "[BeginStory] DEBUG state.mode: solo state.storyLength: fling",
+      "[BeginStory] Past _beginStoryInProgress guard, entering main flow",
+      "[BeginStory] GATE DEBUG: {isNewStory: true, hasActiveStorypass: false, storypassFortunes: 0, totalFortunes: 9999, subscribed: true}",
+      "[BeginStory] All validation passed — proceeding to story generation",
+      "[BeginStory] Story mode: participatory",
+      "[BeginStory] Fate working title (from pool): Where Fate Was Waiting",
+      "[BeginStory] Phase 2 complete — starting loader and API calls",
+      "[A-PLOT:ROMANCE-ENGINE] classified as: COLLISION (Collision) — Scene 1 question: What present-tense force is already pressing on her — and (if known adversaries) how is HE behind it?",
+      "[A-PLOT:SCENE1-COMPRESS] returned empty (2ms) — Scene 1 will fall through to full A-plot block",
+      "[ANT-BODY-BIBLE] generated for Marcus Vale (shape A): archetype: BUREAUCRATIC_COLD archetype_signature: he makes the rule do the cruelty so his own hands stay clean height/build: tall · spare hair: ir",
+      "[RUN-LEDGER] recorded — dynamic=Enemies · engine=COLLISION · li_presence=OFFSTAGE · li_gravity=? (?) · ledger size 1",
+      "[SCENE1:PATTERN-GATE] HOT_CRISIS → inMotion subset (exposure capped): hostile_li_ultimatum/workplace_intrusion/witnessed_event/live_confrontation/sabotage_discovered/rival_takes_credit/patron_betrayal",
+      "[SCENE1:FP] saved opening fingerprint: patron_betrayal — recent: [patron_betrayal]",
+      "[SCENE-ASSIGNMENT] scene=1 source=scene-mission setting=null event=\"She waits alone at the gala bar before the stranger arrives, counting what the invitation \"",
+      "[TITLE:PRE] Title already exists, skipping: Where Fate Was Waiting",
+      "[SCENE-ASSIGNMENT] scene=1 source=scene-mission setting=null event=\"She waits alone at the gala bar before the stranger arrives, counting what the invitation \"",
+      "[SCENE1:FACT-MANIFEST] fm:6c3446e1-181 · 2 fact(s) · story=plannerreserve-modern-mission",
+      "[SCENE1:CPLUS:OPTIONS] 0 grounded option(s) across 0 candidate(s)",
+      "[SCENE1:CPLUS:CANON] C+ continuity coverage — canon-bearing=0 creatively-protected=0 auditor-only=0 unrenderable-latent-facets=0",
+      "[SCENE1:STAGE] source=assignment:scene-mission settingOwner=planner presenceOwner=narrator-only (PENDING — planner owns part of the stage) settingSource=planner-pending onStage=[Testa] offStage=[Rook]",
+      "[SCENE1:PLANNER] eligible cast (1): [Testa] · chars=4340 → max_tokens=2400 (N_staged_max = N_eligible; staged_characters is an OUTPUT and never sizes the request)",
+      "[SCENE1:PLANNER:ATTEMPTS] 1 (no retry)",
+      "[SCENE1:ENVELOPE] spine contract declares 19 field(s)",
+      "[SCENE1:ENVELOPE:FAULT] no opening_spine and no recognised spine fields at top level",
+      "[SCENE1:SCAFFOLD] skipped (no opening_spine and no recognised spine fields at top level) — prose path unchanged",
+      "[SCENE1:ABORT] opening planner produced an unusable skeleton — refusing to author Scene 1 without it: no opening_spine and no recognised spine fields at top level",
+      "[BeginStory] Error: Error: Scene 1 aborted: no opening_spine and no recognised spine fields at top level at handleBeginStory (http://localhost:3000/app.js?v=20260906b-scene-numbering:267902:20) at asy"
+    ]
+  }
+]

@@ -1,0 +1,40 @@
+{
+  "scene1Candidate": {
+    "beats": [
+      {"kind": "narration", "speaker": null, "image": "intro_lirael", "text": "Dawn light touched the clearing where Lirael stood, the weight of first rites settling across her shoulders.", "provenance": {"kind": "generated_expression"}},
+      {"kind": "exposition", "speaker": null, "image": "intro_lirael", "text": "She knew every step of the ceremony yet felt the gap between knowledge and performance like a held breath.", "provenance": {"kind": "grounded_inference", "cites": "pc_untested_brilliance"}},
+      {"kind": "narration", "speaker": null, "image": "intro_seren", "text": "Seren knelt before her, the young Graduant's posture perfect from rehearsal.", "provenance": {"kind": "generated_expression"}},
+      {"kind": "dialogue", "speaker": "Seren", "image": "intro_seren", "text": "I wish that Lirael may find the one she lost.", "provenance": {"kind": "locked_canon_fact", "cites": "scene1_causal_sequence step 1"}},
+      {"kind": "narration", "speaker": null, "image": "intro_dohkar", "text": "The assembly turned as one, eyes searching Lirael for the loss Seren had named.", "provenance": {"kind": "locked_canon_fact", "cites": "scene1_causal_sequence step 2"}},
+      {"kind": "dialogue", "speaker": "the_presiding_Dohkar", "image": "intro_dohkar", "text": "You have shaped the wish for your own benefit and interfered in the rite.", "provenance": {"kind": "locked_canon_fact", "cites": "scene1_causal_sequence step 3"}},
+      {"kind": "narration", "speaker": null, "image": "intro_julian", "text": "Julian stepped from the edge, voice calm amid the sudden stillness.", "provenance": {"kind": "generated_expression"}},
+      {"kind": "dialogue", "speaker": "Julian", "image": "intro_julian", "text": "I can hear she is aligned with her own innocence.", "provenance": {"kind": "locked_canon_fact", "cites": "scene1_causal_sequence step 4"}},
+      {"kind": "narration", "speaker": null, "image": "d1", "text": "Seren remained kneeling as the rite held its fragile center.", "provenance": {"kind": "generated_expression"}},
+      {"kind": "narration", "speaker": null, "image": "d1", "text": "Lirael felt the assembly's gaze press against her like a second skin.", "provenance": {"kind": "grounded_inference", "cites": "pc_fears_public_failure"}},
+      {"kind": "narration", "speaker": null, "image": "d2", "text": "She tore the band and the wish bent, no visible light, only turning heads.", "provenance": {"kind": "locked_canon_fact", "cites": "scene1_causal_sequence step 2"}},
+      {"kind": "narration", "speaker": null, "image": "d2", "text": "Her pulse hammered; failure here would follow her name for years.", "provenance": {"kind": "grounded_inference", "cites": "pc_fears_public_failure"}},
+      {"kind": "dialogue", "speaker": "the_presiding_Dohkar", "image": "d3", "text": "Lirael stands accused of interference. Her path to Dohkar, Chayr, Provast is in question.", "provenance": {"kind": "locked_canon_fact", "cites": "scene1_causal_sequence step 3"}},
+      {"kind": "narration", "speaker": null, "image": "d3", "text": "The charge landed like iron; her father's office suddenly farther than the clearing's edge.", "provenance": {"kind": "generated_expression"}},
+      {"kind": "narration", "speaker": null, "image": "d4", "text": "Julian placed The Answer into her palms, closing her fingers around the cool weight.", "provenance": {"kind": "locked_canon_fact", "cites": "scene1_causal_sequence step 4"}},
+      {"kind": "dialogue", "speaker": "Julian", "image": "d4", "text": "Any misalignment will be plain to everyone present.", "provenance": {"kind": "locked_canon_fact", "cites": "scene1_causal_sequence step 4"}},
+      {"kind": "narration", "speaker": null, "image": "d4", "text": "Lirael met his eyes and felt the public claim of her desire settle between them.", "provenance": {"kind": "generated_expression"}},
+      {"kind": "narration", "speaker": null, "image": "d4", "text": "The path she had trained for now hinged on the next words she chose.", "provenance": {"kind": "grounded_inference", "cites": "pc_untested_brilliance"}}
+    ]
+  },
+  "interrogationExchange": [
+    {"speaker": "Julian", "text": "You manipulated her without knowing it, the way you manipulate everyone through desirability."},
+    {"speaker": "Julian", "text": "Your hand lingered on the band; your attention kept finding me at the edge."},
+    {"speaker": "Julian", "text": "Did you call to me hoping I would rescue you?"},
+    {"speaker": null, "text": "Lirael felt heat rise under the assembly's stare."},
+    {"speaker": "Lirael", "text": "Yes. I wanted you to step forward."},
+    {"speaker": "Julian", "text": "Then own it plainly. The attraction is not hidden from me."},
+    {"speaker": "Lirael", "text": "It is true. I called to you."}
+  ],
+  "fateCards": {
+    "temptation": {"action": "Lean closer and hold his gaze", "dialogue": "Ask what else he noticed.", "variant": "amplify"},
+    "silence": {"action": "Lower eyes and wait without speaking", "dialogue": "(soft breath)", "variant": "amplify"},
+    "reversal": {"action": "Turn the question back on his intent", "dialogue": "Why frame rescue as my manipulation?", "variant": "redirect"},
+    "boundary": {"action": "State the limit on public questioning", "dialogue": "This goes no further here.", "variant": "amplify"},
+    "confession": {"action": "Admit the precise moment of wanting rescue", "dialogue": "When the wish bent, I hoped you would answer.", "variant": "ruin"}
+  }
+}

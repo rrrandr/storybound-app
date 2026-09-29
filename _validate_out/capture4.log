@@ -1,0 +1,8 @@
+[fresh] story D init…
+    conservation: {"ok":false,"reason":"HARNESS FAILURE: no author output feeds observed chain","entranceBeforeLen":2368,"candidates":[2522]}
+  ⚠ CONSERVATION FAILED for D/t1 — ABORTING ENTIRE RUN
+
+════ LANE-2 FRESH CAPTURE ════
+  D/t1  retained=undefined rejected=undefined noChange=undefined  raw=? final=2896
+  scenes captured: 1/4   total spend: $0.256 (cap $0.89)
+  blind pack → _validate_out/lane2_blind_pack.json   key sealed separately

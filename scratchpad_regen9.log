@@ -1,0 +1,125 @@
+  > [CG:SCAFFOLD] generation start (the_inhuman, gpt-4o-mini)
+  > [CG:SCAFFOLD] awaiting 1 Bible(s) before spine (P2 sequencing — latency over cost)
+  > [CG:SCAFFOLD] Bibles ready (0ms) — pc=y li=y antag=n
+  > [CG:SCAFFOLD:GEN] 15999ms, model=gpt-4o-mini
+  > [CG:SCAFFOLD] thesis="Can two souls entangled in chaos find understanding amidst the ruins of their pasts?"
+  > [CG:SCAFFOLD] issues=4, motifs=3, forbidden=3
+  > [CG:SCAFFOLD] FULL OBJECT: {runThesis: Can two souls entangled in chaos find understanding amidst the ruins of their pasts?, thematicDirection: The pursuit of connection 
+  > [CG:SCAFFOLD] active — scene_index=0, source=gpt-4o-mini, issues=4
+  > [CG:SCREENPLAY] gen start (scene 0)
+  > [CG:SCREENPLAY:USER-PROMPT]
+SCENE INDEX: 0 (Scene 1 — establishing)
+STORY LENGTH: affair
+SCENE DENSITY (ST1 — SETUP PACE): establishing register. The scene's job is chara
+  > [CG:SCREENPLAY] flavor "the_inhuman" → chain leads with Grok-4.1-reasoning (scene 1 / tentpole — Grok primary)
+  > [CG:SCREENPLAY] generated via Grok-4.1-reasoning in 34755ms
+  > [CG:SCREENPLAY] gen returned in 34758ms
+  > [STAGED:DIST] scene 0 beats=20 bands: micro=16 subtle=2 readable=2 strong=0 extreme=0 | avg raw=0.06 clamped=0.06 | llm-emitted=4/20 clamps=0
+  > [STAGED:VARIATION] Promoted beat 4 to the wounded raider face cut-in (face, expr=jaw_clench)
+  > [STAGED:VARIATION] Promoted beat 2 to the wounded raider face cut-in (other-face, expr=lips_pressed)
+  > [STAGED:VARIATION] Scene 0 recovered: promoted 2 beat(s) to closeup (4,2) — closeup density floor. Final state — peaks=4 phases=3 hands=0 closeups=2
+  > [STAGED:VARIATION] Scene 0 OK — beats=20 peaks=4 phases=3 hands=0 closeups=2
+  > [STORYBOARD-REPAIR] dropped duplicate visual beat Revelation@17 (same understanding+eye-magnet as an earlier panel)
+  > [STORYBOARD] Orientation → Transformation → Revelation* → Decision
+  > [CG:SCREENPLAY] region=Gloamwater Bay | species=[kwisheen]
+  > [STAGED:HERO] Generating 4 phase images for scene 0 (serial: phase 0 first, then 1+ as Kontext edits)
+  > [STAGED:TIER] phase 0 → simple → cheap
+  > [STAGED:STAGING-MODE] adversarial (liAbsent=true, sideChars=1)
+  > [STAGED:HERO:PHASE] Cache MISS — generating phase 0 (Orientation) for scene 0 at tier=cheap
+  > [STAGED:STYLE] artist="ender_bond" → 2 style anchor(s): ender_golden_master_v3.jpg, ender_golden_master_v3_bottom.jpg
+  > [STAGED:STYLE] phase 0 — SUBSTITUTED li_absent master ender_golden_master_v3_bottom.jpg for stripped golden_master (full artist signature, no couple bleed)
+  > [STAGED:STYLE] phase 0 — passing 3 style anchors to Gemini (filtered 1 LI-implying refs, liAbsent=true)
+  > [STAGED:STYLE] artist=ender_bond styleAnchors=2 regionAnchors=2 contractInjected=true phaseIdx=0
+  > [GEMINI:SCENE-CASE] SPECIAL_SPECIES — species: true, trait: false, fantasy: true, worldAnchor: true
+  > [IMAGE-GEN] {"provider":"Gemini","context":"visualize","reached":true,"blockedBy":"None","status":"SUCCESS","promptLength":49294,"promptPreview":"PRIMARY DIRECTIVE: Depic
+  > [STAGED:KONTEXT] Phase 0 stashed as scene 0 edit source
+  > [STAGED:STAGE_CACHE] Cached stage for future revisits (key=fantasy|the_inhuman|the drowned ruins of gloamwater bay at dusk, chaotic current…)
+  > [STAGED:HERO:PHASE] Phase 0 generated in 12211ms (tier=cheap)
+  > [STAGED:TIER] phase 1 → medium → mid
+  > [STAGED:STAGING-MODE] adversarial (liAbsent=true, sideChars=1)
+  > [STAGED:HERO:PHASE] Cache MISS — generating phase 1 (Transformation) for scene 0 at tier=mid
+  > [STAGED:STYLE] artist="ender_bond" → 2 style anchor(s): ender_golden_master_v3.jpg, ender_golden_master_v3_bottom.jpg
+  > [STAGED:STYLE] phase 1 LI-absent — SUBSTITUTED li_absent master ender_golden_master_v3_bottom.jpg
+  > [STAGED:STYLE] phase 1 LI-absent — passing 3 refs (filtered 1 LI/romance masters)
+  > [STAGED:STYLE] artist=ender_bond styleAnchors=2 regionAnchors=2 contractInjected=true phaseIdx=1
+  > [GEMINI:SCENE-CASE] SPECIAL_SPECIES — species: true, trait: false, fantasy: true, worldAnchor: true
+  > [STAGED:IMG] Phase 0 first-ready after 16690ms — scene mounting with image cached
+  > ═══ [STAGED:SCENE 0 MOUNT] 20 beats, 4 phase(s), gate@19 ═══
+  > [STAGED:HERO:SWAP] No image yet for phase:0 — staying on current
+  > [STAGED:ECHO] beat 0 inEcho=false age=-1 intensity=0.00 peakHere=false
+  > [STAGED:BEAT 0/19] | narration | tens=composed | profile=- | mouth=neutral | echoZone=- | decay=— | pacing=280ms | tint=- | crop=baseline | duck=- | silence=- | closeup=-
+  > [STAGED:RENDER] Mounted — 20 beats, gate at beat 19, micro after beat 7
+  > [STAGED:RENDER] Hero image mounted (phase 0)
+  > [CASTING] cast "the wounded raider" from scene0_phase0 @ confidence 68
+  > [IMAGE-GEN] {"provider":"Gemini","context":"visualize","reached":true,"blockedBy":"None","status":"SUCCESS","promptLength":50756,"promptPreview":"PRIMARY DIRECTIVE: Depic
+  > [STAGED:HERO:PHASE] Phase 1 generated in 11495ms (tier=mid)
+  > [STAGED:TIER] phase 2 → medium → mid
+  > [STAGED:STAGING-MODE] adversarial (liAbsent=true, sideChars=1)
+  > [STAGED:HERO:PHASE] Cache MISS — generating phase 2 (Revelation (page-turn)) for scene 0 at tier=mid
+  > [STAGED:STYLE] artist="ender_bond" → 2 style anchor(s): ender_golden_master_v3.jpg, ender_golden_master_v3_bottom.jpg
+  > [CASTING] reinject identity anchor for "the wounded raider" (phase 2)
+  > [CASTING] authoritative — dropping generic kwisheen species anchor (cast actor owns identity in phase 2)
+  > [CASTING] authoritative — dropping generic kwisheen species anchor (cast actor owns identity in phase 2)
+  > [STAGED:STYLE] phase 2 LI-absent — SUBSTITUTED li_absent master ender_golden_master_v3_bottom.jpg
+  > [STAGED:STYLE] phase 2 LI-absent — passing 3 refs (filtered 1 LI/romance masters)
+  > [STAGED:STYLE] artist=ender_bond styleAnchors=2 regionAnchors=2 contractInjected=true phaseIdx=2
+  > [GEMINI:SCENE-CASE] SPECIAL_SPECIES — species: true, trait: false, fantasy: true, worldAnchor: true
+  > [IMAGE-GEN] {"provider":"Gemini","context":"visualize","reached":true,"blockedBy":"None","status":"SUCCESS","promptLength":50003,"promptPreview":"PRIMARY DIRECTIVE: Depic
+  > [STAGED:HERO:PHASE] Phase 2 generated in 15313ms (tier=mid)
+  > [STAGED:TIER] phase 3 → medium → mid
+  > [STAGED:STAGING-MODE] adversarial (liAbsent=true, sideChars=1)
+  > [STAGED:HERO:PHASE] Cache MISS — generating phase 3 (Decision) for scene 0 at tier=mid
+  > [STAGED:STYLE] artist="ender_bond" → 2 style anchor(s): ender_golden_master_v3.jpg, ender_golden_master_v3_bottom.jpg
+  > [CASTING] reinject identity anchor for "the wounded raider" (phase 3)
+  > [CASTING] authoritative — dropping generic kwisheen species anchor (cast actor owns identity in phase 3)
+  > [CASTING] authoritative — dropping generic kwisheen species anchor (cast actor owns identity in phase 3)
+  > [STAGED:STYLE] phase 3 LI-absent — SUBSTITUTED li_absent master ender_golden_master_v3_bottom.jpg
+  > [STAGED:STYLE] phase 3 LI-absent — passing 3 refs (filtered 1 LI/romance masters)
+  > [STAGED:STYLE] artist=ender_bond styleAnchors=2 regionAnchors=2 contractInjected=true phaseIdx=3
+  > [GEMINI:SCENE-CASE] SPECIAL_SPECIES — species: true, trait: false, fantasy: true, worldAnchor: true
+  > [IMAGE-GEN] {"provider":"Gemini","context":"visualize","reached":true,"blockedBy":"None","status":"SUCCESS","promptLength":50182,"promptPreview":"PRIMARY DIRECTIVE: Depic
+  > [STAGED:HERO:PHASE] Phase 3 generated in 17104ms (tier=mid)
+  > [STAGED:CUT] Cache MISS — generating closeup closeup|other_character|face|lips_pressed|cool at tier=hero
+  > [STAGED:CUT:GEN] beat closeup fresh gen | cacheKey=closeup|other_character|face|lips_pressed|cool | shot=face | target=the wounded raider | tier=Clean costTier=hero shape
+  > [STAGED:CUT:GEN:PROMPT] ILLUSTRATED INSERT — a drawn cut-in from the surrounding scene, rendered in the SAME artistic style as every other panel in this story (manga / in
+  > [STAGED:CUT] Cache MISS — generating closeup closeup|other_character|face|jaw_clench|cool at tier=hero
+  > [STAGED:CUT:GEN] beat closeup fresh gen | cacheKey=closeup|other_character|face|jaw_clench|cool | shot=face | target=the wounded raider | tier=Clean costTier=hero shape=s
+  > [STAGED:CUT:GEN:PROMPT] ILLUSTRATED INSERT — a drawn cut-in from the surrounding scene, rendered in the SAME artistic style as every other panel in this story (manga / in
+  > [STAGED:RENDER] Phase images full-resolve — 4/4 cached
+  > [CASTING] promote "the wounded raider" from scene0_phase3 @ confidence 96 (was 68)
+  > [GEMINI:SCENE-CASE] SPECIAL_SPECIES — species: true, trait: false, fantasy: true, worldAnchor: true
+  > [GEMINI:SCENE-CASE] SPECIAL_SPECIES — species: true, trait: false, fantasy: true, worldAnchor: true
+  > [IMAGE-GEN] {"provider":"Gemini","context":"visualize","reached":true,"blockedBy":"None","status":"SUCCESS","promptLength":6949,"promptPreview":"PRIMARY DIRECTIVE: Depict
+  > [IMAGE-GEN] {"provider":"Gemini","context":"visualize","reached":true,"blockedBy":"None","status":"SUCCESS","promptLength":6980,"promptPreview":"PRIMARY DIRECTIVE: Depict
+  > [STAGED:CUT] closeup|other_character|face|lips_pressed|cool generated in 19996ms
+  > [STAGED:CUT:SOURCE] beat closeup just-generated | cacheKey=closeup|other_character|face|lips_pressed|cool | url=data:image/png;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/6xn5SlAA
+  > [STAGED:CUT] closeup|other_character|face|jaw_clench|cool generated in 20739ms
+  > [STAGED:CUT:SOURCE] beat closeup just-generated | cacheKey=closeup|other_character|face|jaw_clench|cool | url=data:image/png;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/6xn5SlAAAQ
+
+  E2E SCENE 1 — Fatelands / Kwisheen
+  ────────────────────────────────────────────────────────────
+  error: none
+  prose length: 1820 chars | author: Grok-4.1-reasoning
+  stagedActive: true | heroCache keys: 4
+  hero phase images: 4 | closeup inserts: 2/2 queued | total: 6
+  kwisheen appearance lock: {"vael":{"skin":"royal violet","pattern":"iridescent speckle","iris":"silver-grey"},"the wounded raider":{"skin":"deep crimson red","pattern":"a fine reticulated lattice","iris":"copper"}}
+  images captured (hero): 4
+  ── phase plan ──
+    phase 0: li=absent | chars=[protagonist,the wounded raider] | Orientation
+    phase 1: li=absent | chars=[protagonist,the wounded raider] | Transformation
+    phase 2: li=absent | chars=[protagonist,the wounded raider] | Revelation (page-turn)
+    phase 3: li=absent | chars=[protagonist,the wounded raider] | Decision
+  ── hero renders (anchor decision) ──
+  ── beat count: 20 (target 20–30, floor 18) ──
+  ── scene-1 axis ──
+    bespokeAxis: (none)
+    microDecision.prompt: Do I name what I see, or let the look carry it?
+      • "I name it" signal=direct+
+      • "I let it show" signal=subtle+
+  ── wardrobe grounding ──
+    pc_wardrobe: surface clothing billowing in the current, water-breathing talisman at throat
+    li_wardrobe: (blank/absent)
+    the wounded raider [kwisheen]: scaled armor cracked and bleeding, shell pendants drifting loose
+  saved: 4 images + prose → /private/tmp/claude-501/-Users-romantsukerman-storybound-app/5b50dbf4-5fe5-4c80-ae8b-5a341feb3c62/scratchpad/e2e
+  ────────────────────────────────────────────────────────────
+

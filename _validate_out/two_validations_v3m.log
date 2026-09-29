@@ -1,0 +1,6 @@
+=== v3y_stage_order · stage_order_dry.mjs · 18:30:38 ===
+v3y_stage_order: exit=0 · 85 checks · 85 passed · 0 failed · invalid_markers=0 · samples=47 suite_rss_max=338MB free_min=61MB server_rss_max=85MB
+=== v3z_skeleton · skeleton_delivery.mjs · 18:46:27 ===
+v3z_skeleton: exit=0 ·   404 passed · 0 failed · invalid_markers=0 · samples=33 suite_rss_max=2745MB free_min=88MB server_rss_max=85MB
+BOTH GREEN · 18:57:40
+leftover:        0

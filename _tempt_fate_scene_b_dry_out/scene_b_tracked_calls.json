@@ -1,0 +1,26 @@
+[
+  {
+    "url": "http://localhost:3000/api/mistral-proxy",
+    "model": "ministral-8b-2512",
+    "status": 200,
+    "elapsedMs": 0.34566699999777484
+  },
+  {
+    "url": "http://localhost:3000/api/proxy",
+    "model": "grok-4-1-fast-reasoning",
+    "status": 200,
+    "elapsedMs": 0.22029200000179117
+  },
+  {
+    "url": "http://localhost:3000/api/proxy",
+    "model": "grok-4-1-fast-non-reasoning",
+    "status": 200,
+    "elapsedMs": 0.22675000000162981
+  },
+  {
+    "url": "http://localhost:3000/api/proxy",
+    "model": "grok-4-1-fast-reasoning",
+    "status": 200,
+    "elapsedMs": 1.2108750000006694
+  }
+]

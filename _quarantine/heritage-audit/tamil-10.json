@@ -1,0 +1,24 @@
+{
+  "age": 28,
+  "ancestry": "Tamil",
+  "first_name": "Priya",
+  "last_name": "Krishnan",
+  "height": "5'4\", compact and present",
+  "build": "lean, muscled through shoulders and forearms from hand-work, no softness",
+  "hair": "black, thick, naturally wavy—she wears it in a low braid most days, loose strands escaping by evening",
+  "complexion": "warm medium brown with golden undertones; a small dark mole on her left collarbone",
+  "face": "open and mobile—a face that cannot hide what it feels, with wide-set dark eyes that track every shift in the room and a mouth quick to smile or fracture into worry",
+  "signature_feature": "her hands—long-fingered, precise, stained permanently at the cuticles with indigo dye from her textile work; when she's thinking, she moves them like she's still weaving",
+  "second_celebrated_feature": "the sharp angle of her collarbones, visible when she leans forward in conversation—delicate but architectural",
+  "signature_habits": "she touches her grandmother's gold bangles (worn on her right wrist) when she's anxious—a habit so automatic she doesn't notice; she hums while working, always something in Tamil her amma taught her; she keeps a small notebook in her back pocket and sketches pattern ideas compulsively; she says 'correct' instead of 'right' when she agrees, a linguistic ghost from her mother's English",
+  "occupation": "textile designer and owner of a small independent studio (Priya Weaves) in the city—custom fabrics, heritage-inspired patterns, bespoke commissions for high-end clients and boutique interiors",
+  "current_crisis": {
+    "event": "her studio's primary investor—a venture capitalist who funded her expansion two years ago—has just demanded she either sell him controlling interest or repay the full outstanding loan within 60 days; she does not have the capital; he is using the threat to leverage her into a merger that will strip her creative control",
+    "hottest_emotion": "betrayal mixed with drowning panic—she trusted him, showed him her sketches, her vision, and now he is weaponizing it",
+    "immediate_want": "to find a way to save the studio without losing herself in the process; to not have to choose between her art and her survival"
+  },
+  "wound": {
+    "core": "she believes that if she is not useful—if her hands are not producing, creating, solving—she has no right to take up space",
+    "surfacing_hint": "under pressure, she stops speaking and becomes very still; her eyes go distant; she apologizes for things that aren't her fault; she works through the night without noticing hunger or exhaustion"
+  }
+}

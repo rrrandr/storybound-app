@@ -1,0 +1,24 @@
+{
+  "age": 28,
+  "ancestry": "Tamil",
+  "first_name": "Kavya",
+  "last_name": "Iyer",
+  "height": "five foot four, compact and grounded",
+  "build": "lean and muscled from studio work, small-breasted, narrow-hipped",
+  "hair": "black, thick and wavy, worn in a long braid down her back or twisted into a knot at the nape; she pulls it loose when she's thinking",
+  "complexion": "warm medium brown with golden undertones, a small dark mole on her left collarbone",
+  "face": "a mobile, expressive face with a sharp jawline and high cheekbones that make her look simultaneously severe and young—dark eyes that telegraph every feeling before her mouth catches up, eyebrows that arch skeptically even when she's being kind",
+  "signature_feature": "her hands—long-fingered, scarred from glass work and metalwork, stained with permanent marks from dyes and patinas; the LI notices how she moves them when she talks, how precisely they move when she's working",
+  "second_celebrated_feature": "the hollow at the base of her throat, visible when she wears anything loose or open; he becomes aware of it as a marker of her pulse, her breath, her presence",
+  "signature_habits": "she bites the inside of her left cheek when she's concentrating; she says 'seri' (okay) under her breath when she's made a decision and committed to it; she keeps her workspace obsessively organized but her personal spaces chaotic; she makes strong coffee in the morning and forgets to drink it; she touches the small gold pendant her grandmother gave her when she's anxious",
+  "occupation": "glass artist and jewelry designer—owns a small studio in a converted warehouse, takes custom commissions, teaches weekend workshops to fund experimental pieces",
+  "current_crisis": {
+    "event": "a major collector and investor who was supposed to fund her studio expansion just pulled out via email, citing 'market concerns,' and she has a non-refundable deposit on the new kiln equipment due in two weeks; simultaneously, her landlord has hinted the warehouse space is being sold to a development firm",
+    "hottest_emotion": "panic—a cold, sickening panic that she's built something beautiful and fragile that's about to collapse",
+    "immediate_want": "to find someone—anyone—who believes in her work enough to back it, before the dream evaporates entirely"
+  },
+  "wound": {
+    "core": "she believes her own talent is never quite enough to survive on its own; that beautiful things made by people like her are luxuries, not necessities, and can be withdrawn at any moment",
+    "surfacing_hint": "when she's under pressure, she stops defending her work and starts apologizing for it—shrinking it, diminishing it, making it smaller so it's harder to take away"
+  }
+}

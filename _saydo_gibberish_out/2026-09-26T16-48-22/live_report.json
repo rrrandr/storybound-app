@@ -1,0 +1,112 @@
+{
+  "input": {
+    "action": "asdkfjh sdkfj lkjwer",
+    "dialogue": "qwerty zzzz aaaa"
+  },
+  "tierLog": [
+    "[SAYDO:GIBBERISH] action replaced with a graceful fallback — reason: Long consonant run (likely keyboard mash).",
+    "[SAYDO:GIBBERISH] dialogue replaced with a graceful fallback — reason: Too many repeated characters.",
+    "[SAYDO:GIBBERISH] tier=isolated streak=1 fields={\"action\":\"pure\",\"dialogue\":\"pure\"}"
+  ],
+  "beats": 0,
+  "proseChars": 0,
+  "cost": {
+    "reserved": 0.17,
+    "realized": 0,
+    "ceiling": 0.22,
+    "entries": [
+      {
+        "role": "continuity",
+        "usd": 0.01,
+        "pathname": "/api/mistral-proxy",
+        "runningReserved": 0.01
+      },
+      {
+        "role": "planner",
+        "usd": 0.03,
+        "pathname": "/api/proxy",
+        "runningReserved": 0.04
+      },
+      {
+        "role": "author",
+        "usd": 0.12,
+        "pathname": "/api/proxy",
+        "runningReserved": 0.16
+      },
+      {
+        "role": "editorial",
+        "usd": 0.01,
+        "pathname": "/api/mistral-proxy",
+        "runningReserved": 0.17
+      }
+    ],
+    "refusals": []
+  },
+  "caveat": "Routing and substitution were already dry-proven. This run measures only whether the fallback placeholder yields usable PROSE. Human judgement decides that; no keyword may certify it.",
+  "results": [
+    {
+      "name": "EXECUTION BEGAN WITH ZERO RESERVATIONS — fresh process, nothing inherited",
+      "pass": true
+    },
+    {
+      "name": "...and with no scenario state carried in from a preflight context",
+      "pass": true
+    },
+    {
+      "name": "LIVE — no ceiling abort occurred",
+      "pass": true
+    },
+    {
+      "name": "EXEC — the interception handler ran",
+      "pass": true
+    },
+    {
+      "name": "EXEC — an IMAGE request was BLOCKED before dispatch, and did not abort the text scene",
+      "pass": false
+    },
+    {
+      "name": "EXEC — telemetry was contained without terminating generation",
+      "pass": true
+    },
+    {
+      "name": "LIVE — _noFallback was injected into EVERY billable dispatch, before it left",
+      "pass": true
+    },
+    {
+      "name": "LIVE — every call reported upstreamAttempts<=1, so the reservation bound held",
+      "pass": true
+    },
+    {
+      "name": "LIVE — the run settled on APP ACCEPTANCE, not on a beats-bearing response",
+      "pass": true
+    },
+    {
+      "name": "LIVE — raw gibberish reached NO payload",
+      "pass": true
+    },
+    {
+      "name": "LIVE — raw gibberish is absent from the delivered PROSE",
+      "pass": true
+    },
+    {
+      "name": "LIVE — the substituted placeholders reached the real author payload",
+      "pass": true
+    },
+    {
+      "name": "LIVE — the strong-delivery rule did NOT fire",
+      "pass": true
+    },
+    {
+      "name": "LIVE — the gibberish-handling directive WAS in force",
+      "pass": true
+    },
+    {
+      "name": "LIVE — a scene was actually delivered",
+      "pass": false
+    },
+    {
+      "name": "LIVE — spend stayed inside the ceiling",
+      "pass": true
+    }
+  ]
+}

@@ -91,6 +91,31 @@
       "text": "the assembly is now unaware — no recollection of the rite's events"
     },
     {
+      "id": "dc_1",
+      "kind": "dc",
+      "text": "the assembly — ?: nothing of the bent wish or interrogation"
+    },
+    {
+      "id": "dc_2",
+      "kind": "dc",
+      "text": "changed — the assembly: memories of the ceremony and accusation dissolved into blank confusion"
+    },
+    {
+      "id": "ev_0",
+      "kind": "ev",
+      "text": "OBSERVED at the moment that rupture landed (a record of that moment, NOT a standing rule — it does not by itself establish that this still holds later): voices falter, faces blank, no one names the accusation"
+    },
+    {
+      "id": "ev_1",
+      "kind": "ev",
+      "text": "left OPEN by that rupture (a plan may legitimately use it): Lirael may still speak or remain silent"
+    },
+    {
+      "id": "dur_0",
+      "kind": "dur",
+      "text": "memory loss — persists (an explicit DURABILITY statement: this is what persists)"
+    },
+    {
       "id": "inv_0",
       "kind": "inv",
       "text": "the formal inquiry cannot be justified without memory of the events"
@@ -115,6 +140,11 @@
     "wt_5",
     "dc_0",
     "know_0",
+    "dc_1",
+    "dc_2",
+    "ev_0",
+    "ev_1",
+    "dur_0",
     "inv_0"
   ],
   "invalidated": [
@@ -171,5 +201,14 @@
       "kind": "neg",
       "text": "LIRAEL’S FORMAL INQUIRY — WHERE AND WHEN: the presiding Dohkar has asserted the rite and the ruling on the Sacrificiant’s conduct are his, and Julian has publicly claimed authority to convene and preside over a formal inquiry (a Chayr and two Dohkars) into Lirael. When that inquiry is formally convened, it would be held at The Open (the Fatelands’ site for trials, treaties, coronations, and matters of comparable institutional gravity). It is NOT yet convened, and its convening is LATE-ISSUE-1 content, not an early scene’s. Early scenes may carry accusation, preliminary review, political pressure, investigation, concealment, or flight — never the convened inquiry itself, and never a scene staged at The Open before that point."
     }
-  ]
+  ],
+  "truncated": false,
+  "omitted": {
+    "neg": 0,
+    "wt": 0,
+    "aff": 0,
+    "cap": 0
+  },
+  "omittedTotal": 0,
+  "proposalAware": false
 }

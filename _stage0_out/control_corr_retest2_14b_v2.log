@@ -1,0 +1,238 @@
+
+══════════════════════════════════════════════════════════════════════════════════════════════
+BOUNDED PLANNER PROBE — First Sacrifice Scene 1 · 6 sequential samples
+══════════════════════════════════════════════════════════════════════════════════════════════
+ one real call per sample (the planner) · Grok hard-blocked · upstream mocked
+
+ ── SAMPLE 1 · SEEDED ──────────────────────────────────────────────────────────────────
+  network      : planner=1 real · mocked=13 · GROK attempts=0 · escaped=0
+  attempts     : 1 (no retry)
+  settle       : fatal · in-page /api fetches=17 · threw=no
+  usage        : 20138 in / 1490 out · finish=stop
+  cost         : $0.00391
+  SUPPLIED WHERE (seed-owned): Dawn in a Veilwood ceremony clearing: the long white weeping-willow veil-canopy drapes down from the
+  SUPPLIED PRESENT       : SEREN, kneeling — the youth making her First Sacrifice. Lirael's ward: they have trained together for months and she can (presenceOwner=seed)
+  eligible C+ recipients : ["Lirael","Julian","Seren","the presiding Dohkar"]
+  offstage (ineligible)  : []
+  RETURNED opening_setting: "Veilwood ceremony clearing"
+  RETURNED staged cast    : ["Lirael:IN_PERSON","Julian:IN_PERSON","Seren:IN_PERSON","the presiding Dohkar:IN_PERSON"]
+  C+ (2):
+      • Seren                    first_mention=true  angle="undefined"
+      • the presiding Dohkar     first_mention=true  angle="undefined"
+  E+           : {"target_object_id":"O4","axis":"damage","beat":"the frayed edges of the cloth catch on her fingers as she adjusts it, the threads snagging like a warning"}
+  fusion       : undefined
+  pc_opening_fusion (raw): {"character":"Lirael","placement":"PC_FIRST_EMBODIED_BEAT","character_angle":"her first embodied act reveals a woman who is both trained to read alignment and visibly unnerved by the weight of the moment","beat":"she straightens her sash with deliberate slowness, the embroidered thread catching on her fingers, her breath shallow behind the cloth as Seren’s voice falters"}
+  ── one-assignment coherence (PC = "Lirael") ──
+     recipient is the PC        : NO
+     E+ target/axis match       : NO
+     E+ evidence beat           : MISSING
+     PC C+ angle IS the beat    : NO
+     PC anchor_beat IS the beat : NO
+        C+ angle : null
+        anchor   : null
+     non-PC C+ (0):
+  alias resolves: none needed
+  envelope     : top-level as sent
+  STORED C+    : []
+  VALIDATION   : REJECTED — character_plus "the presiding Dohkar" cites enacts_evidence_id "E6", which does not establish this option (E5); character_plus "the presiding Dohkar" visible_action never engages the condition it was chosen under ("an offering being named aloud") — the act itself must put that condition on the page — a bridge sentence cannot do it for it; character_plus "the presiding Dohkar" gives a pc_interpretation that never names them — a sensation in her own body is not a conclusion about anybody; environment_plus.beat does not name its own target — the beat must show what happened to "the gossamer band tied across the Sacrificiant’s mouth", not to something else: "the frayed edges of the cloth catch on her fingers as she adjusts it, the threads snagging like a warning"; pc_opening_fusion.beat never reaches the assigned environment target
+
+ … 25s gap (sequential, never a burst)
+
+ ── SAMPLE 2 · SEEDED ──────────────────────────────────────────────────────────────────
+  network      : planner=1 real · mocked=13 · GROK attempts=0 · escaped=0
+  attempts     : 1 (no retry)
+  settle       : fatal · in-page /api fetches=17 · threw=no
+  usage        : 18328 in / 1457 out · finish=stop
+  cost         : $0.00362
+  SUPPLIED WHERE (seed-owned): Dawn in a Veilwood ceremony clearing: the long white weeping-willow veil-canopy drapes down from the
+  SUPPLIED PRESENT       : SEREN, kneeling — the youth making her First Sacrifice. Lirael's ward: they have trained together for months and she can (presenceOwner=seed)
+  eligible C+ recipients : ["Lirael","Julian","Seren","the presiding Dohkar"]
+  offstage (ineligible)  : []
+  RETURNED opening_setting: "Veilwood ceremony clearing"
+  RETURNED staged cast    : ["Lirael:IN_PERSON","Julian:IN_PERSON","Seren:IN_PERSON","the presiding Dohkar:IN_PERSON"]
+  C+ (2):
+      • Seren                    first_mention=true  angle="undefined"
+      • the presiding Dohkar     first_mention=true  angle="undefined"
+  E+           : {"target_object_id":"O4","axis":"damage","beat":"The mouthband’s silk is frayed where Lirael’s teeth have caught it, the edges damp with her breath."}
+  fusion       : undefined
+  pc_opening_fusion (raw): {"character":"Lirael","placement":"PC_FIRST_EMBODIED_BEAT","character_angle":"Her hesitation to tear off the mouthband reveals she’s already calculating the cost of breaking protocol.","beat":"Lirael’s fingers hover over the mouthband, then still—she’s always torn it off when the pressure got too much, but this time, she lets it stay, her breath muffled against the silk."}
+  ── one-assignment coherence (PC = "Lirael") ──
+     recipient is the PC        : NO
+     E+ target/axis match       : NO
+     E+ evidence beat           : MISSING
+     PC C+ angle IS the beat    : NO
+     PC anchor_beat IS the beat : NO
+        C+ angle : null
+        anchor   : null
+     non-PC C+ (0):
+  alias resolves: none needed
+  envelope     : top-level as sent
+  STORED C+    : []
+  VALIDATION   : REJECTED — character_plus "the presiding Dohkar" cites enacts_evidence_id "E6", which does not establish this option (E5); character_plus "the presiding Dohkar" visible_action never engages the condition it was chosen under ("an offering being named aloud") — the act itself must put that condition on the page — a bridge sentence cannot do it for it; environment_plus.beat does not name its own target — the beat must show what happened to "the gossamer band tied across the Sacrificiant’s mouth", not to something else: "The mouthband’s silk is frayed where Lirael’s teeth have caught it, the edges damp with her breath."; pc_opening_fusion.beat never reaches the assigned environment target
+
+ … 25s gap (sequential, never a burst)
+
+ ── SAMPLE 3 · SEEDED ──────────────────────────────────────────────────────────────────
+  network      : planner=1 real · mocked=13 · GROK attempts=0 · escaped=0
+  attempts     : 1 (no retry)
+  settle       : fatal · in-page /api fetches=17 · threw=no
+  usage        : 20153 in / 1633 out · finish=stop
+  cost         : $0.00400
+  SUPPLIED WHERE (seed-owned): Dawn in a Veilwood ceremony clearing: the long white weeping-willow veil-canopy drapes down from the
+  SUPPLIED PRESENT       : SEREN, kneeling — the youth making her First Sacrifice. Lirael's ward: they have trained together for months and she can (presenceOwner=seed)
+  eligible C+ recipients : ["Lirael","Julian","Seren","the presiding Dohkar"]
+  offstage (ineligible)  : []
+  RETURNED opening_setting: "Veilwood ceremony clearing"
+  RETURNED staged cast    : ["Lirael:IN_PERSON","Julian:IN_PERSON","Seren:IN_PERSON","the presiding Dohkar:IN_PERSON"]
+  C+ (3):
+      • Seren                    first_mention=true  angle="undefined"
+      • the presiding Dohkar     first_mention=false  angle="undefined"
+      • Julian                   first_mention=false  angle="undefined"
+  E+           : {"target_object_id":"O1","axis":"history","beat":"the weeping-willow veil-canopy trembles slightly, as if reacting to the shift in the air caused by Seren’s redirected sacrifice"}
+  fusion       : undefined
+  pc_opening_fusion (raw): {"character":"Lirael","placement":"PC_FIRST_EMBODIED_BEAT","character_angle":"Her grip on the ceremonial sash reveals her struggle to stay composed while the band muffles her voice","beat":"Her fingers tighten around the embroidered sash, the only thing she can grip with the band still muffling her, as Seren’s voice cracks mid-invocation"}
+  ── one-assignment coherence (PC = "Lirael") ──
+     recipient is the PC        : NO
+     E+ target/axis match       : NO
+     E+ evidence beat           : MISSING
+     PC C+ angle IS the beat    : NO
+     PC anchor_beat IS the beat : NO
+        C+ angle : null
+        anchor   : null
+     non-PC C+ (0):
+  alias resolves: none needed
+  envelope     : top-level as sent
+  STORED C+    : []
+  VALIDATION   : REJECTED — character_plus "the presiding Dohkar" has first_mention false — every opening assignment must land at a FIRST mention; character_plus recipient "Julian" was NOT offered as a candidate; character_plus "Julian" has first_mention false — every opening assignment must land at a FIRST mention; character_plus "Julian" psychological_read would fit anyone on this stage — it names no expectation, defense, learned habit, strategy, self-image or contradiction that belongs to THIS person: "Julian’s presence here is deliberate, and his attention is fixed on Lirael’s str"; pc_opening_fusion.beat never reaches the assigned environment target
+
+ … 25s gap (sequential, never a burst)
+
+ ── SAMPLE 4 · SEEDED ──────────────────────────────────────────────────────────────────
+  network      : planner=1 real · mocked=13 · GROK attempts=0 · escaped=0
+  attempts     : 1 (no retry)
+  settle       : fatal · in-page /api fetches=17 · threw=no
+  usage        : 18279 in / 1391 out · finish=stop
+  cost         : $0.00358
+  SUPPLIED WHERE (seed-owned): Dawn in a Veilwood ceremony clearing: the long white weeping-willow veil-canopy drapes down from the
+  SUPPLIED PRESENT       : SEREN, kneeling — the youth making her First Sacrifice. Lirael's ward: they have trained together for months and she can (presenceOwner=seed)
+  eligible C+ recipients : ["Lirael","Julian","Seren","the presiding Dohkar"]
+  offstage (ineligible)  : []
+  RETURNED opening_setting: "Veilwood ceremony clearing"
+  RETURNED staged cast    : ["Lirael:IN_PERSON","Julian:IN_PERSON","Seren:IN_PERSON","the presiding Dohkar:IN_PERSON"]
+  C+ (2):
+      • Seren                    first_mention=true  angle="undefined"
+      • the presiding Dohkar     first_mention=true  angle="undefined"
+  E+           : {"target_object_id":"O1","axis":"damage","beat":"the weeping-willow veil-canopy sways as if caught in an unseen wind, its leaves trembling with the weight of unspoken words"}
+  fusion       : undefined
+  pc_opening_fusion (raw): {"character":"Lirael","placement":"PC_FIRST_EMBODIED_BEAT","character_angle":"Her silence is a weapon, but it’s also a cage—she can’t even warn Seren without breaking protocol.","beat":"Lirael’s fingers tighten on the ceremonial sash as Seren’s voice cracks, the embroidered vines biting into her shoulders like a reminder of her own silence."}
+  ── one-assignment coherence (PC = "Lirael") ──
+     recipient is the PC        : NO
+     E+ target/axis match       : NO
+     E+ evidence beat           : MISSING
+     PC C+ angle IS the beat    : NO
+     PC anchor_beat IS the beat : NO
+        C+ angle : null
+        anchor   : null
+     non-PC C+ (0):
+  alias resolves: none needed
+  envelope     : top-level as sent
+  STORED C+    : []
+  VALIDATION   : REJECTED — environment element "the white weeping-willow veil-canopy (the trees’ hanging leaf-curtains) — the weeping-will" introduces an environmental fact the seed rules out ("wind") — describe what the seed names and add no weather, light, marks or fluids it does not contain; environment_plus.beat "the weeping-willow veil-canopy sways as if caught in an unseen wind, its leaves trembling " introduces an environmental fact the seed rules out ("wind") — describe what the seed names and add no weather, light, marks or fluids it does not contain; environment_realizations[O1] "the weeping-willow veil-canopy trembles as if caught in an unseen wind" introduces an environmental fact the seed rules out ("wind") — describe what the seed names and add no weather, light, marks or fluids it does not contain; pc_opening_fusion.beat never reaches the assigned environment target
+
+ … 25s gap (sequential, never a burst)
+
+ ── SAMPLE 5 · SEEDED ──────────────────────────────────────────────────────────────────
+  network      : planner=1 real · mocked=13 · GROK attempts=0 · escaped=0
+  attempts     : 1 (no retry)
+  settle       : fatal · in-page /api fetches=17 · threw=no
+  usage        : 18319 in / 1546 out · finish=stop
+  cost         : $0.00368
+  SUPPLIED WHERE (seed-owned): Dawn in a Veilwood ceremony clearing: the long white weeping-willow veil-canopy drapes down from the
+  SUPPLIED PRESENT       : SEREN, kneeling — the youth making her First Sacrifice. Lirael's ward: they have trained together for months and she can (presenceOwner=seed)
+  eligible C+ recipients : ["Lirael","Julian","Seren","the presiding Dohkar"]
+  offstage (ineligible)  : []
+  RETURNED opening_setting: "Veilwood ceremony clearing"
+  RETURNED staged cast    : ["Lirael:IN_PERSON","Julian:IN_PERSON","Seren:IN_PERSON","the presiding Dohkar:IN_PERSON"]
+  C+ (2):
+      • Seren                    first_mention=true  angle="undefined"
+      • the presiding Dohkar     first_mention=true  angle="undefined"
+  E+           : {"target_object_id":"O4","axis":"damage","beat":"the mouthband is frayed at the knots where Lirael’s fingers have tugged at it twice already, the silk catching on her front tooth every time she adjusts it"}
+  fusion       : undefined
+  pc_opening_fusion (raw): {"character":"Lirael","placement":"PC_FIRST_EMBODIED_BEAT","character_angle":"her body reacts to Seren’s stumble before her mind catches up—her fingers twitch toward the mouthband, already deciding whether to rip it off or let the lie stand","beat":"Lirael’s muffled cry behind the mouthband goes unheard as the Dohkar’s gaze sharpens on Seren’s stumbling words, her own breath hitching in her throat like a warning"}
+  ── one-assignment coherence (PC = "Lirael") ──
+     recipient is the PC        : NO
+     E+ target/axis match       : NO
+     E+ evidence beat           : MISSING
+     PC C+ angle IS the beat    : NO
+     PC anchor_beat IS the beat : NO
+        C+ angle : null
+        anchor   : null
+     non-PC C+ (0):
+  alias resolves: none needed
+  envelope     : top-level as sent
+  STORED C+    : []
+  VALIDATION   : REJECTED — character_plus "the presiding Dohkar" cites enacts_evidence_id "E6", which does not establish this option (E5); character_plus "the presiding Dohkar" visible_action never engages the condition it was chosen under ("an offering being named aloud") — the act itself must put that condition on the page — a bridge sentence cannot do it for it; environment_plus.beat does not name its own target — the beat must show what happened to "the gossamer band tied across the Sacrificiant’s mouth", not to something else: "the mouthband is frayed at the knots where Lirael’s fingers have tugged at it twice already, the silk catching"; pc_opening_fusion.beat never reaches the assigned environment target
+
+ … 25s gap (sequential, never a burst)
+
+ ── SAMPLE 6 · SEEDED ──────────────────────────────────────────────────────────────────
+  network      : planner=1 real · mocked=13 · GROK attempts=0 · escaped=0
+  attempts     : 1 (no retry)
+  settle       : fatal · in-page /api fetches=17 · threw=no
+  usage        : 18320 in / 1411 out · finish=stop
+  cost         : $0.00359
+  SUPPLIED WHERE (seed-owned): Dawn in a Veilwood ceremony clearing: the long white weeping-willow veil-canopy drapes down from the
+  SUPPLIED PRESENT       : SEREN, kneeling — the youth making her First Sacrifice. Lirael's ward: they have trained together for months and she can (presenceOwner=seed)
+  eligible C+ recipients : ["Lirael","Julian","Seren","the presiding Dohkar"]
+  offstage (ineligible)  : []
+  RETURNED opening_setting: "Veilwood ceremony clearing"
+  RETURNED staged cast    : ["Lirael:IN_PERSON","Julian:IN_PERSON","Seren:IN_PERSON","the presiding Dohkar:IN_PERSON"]
+  C+ (2):
+      • Seren                    first_mention=true  angle="undefined"
+      • the presiding Dohkar     first_mention=true  angle="undefined"
+  E+           : {"target_object_id":"O5","axis":"ownership","beat":"the silver thread in Lirael’s sash glints, unmistakable—Seren’s mark, woven into the fabric without permission"}
+  fusion       : undefined
+  pc_opening_fusion (raw): {"character":"Lirael","placement":"PC_FIRST_EMBODIED_BEAT","character_angle":"She is the only one who notices the silver thread in her sash—Seren’s signature, a violation of the rite’s rules","beat":"Lirael’s fingers twitch toward the silver thread in her sash, but she freezes—touching it would break the silence, and the Dohkar is already watching"}
+  ── one-assignment coherence (PC = "Lirael") ──
+     recipient is the PC        : NO
+     E+ target/axis match       : NO
+     E+ evidence beat           : MISSING
+     PC C+ angle IS the beat    : NO
+     PC anchor_beat IS the beat : NO
+        C+ angle : null
+        anchor   : null
+     non-PC C+ (0):
+  alias resolves: none needed
+  envelope     : top-level as sent
+  STORED C+    : []
+  VALIDATION   : REJECTED — character_plus "the presiding Dohkar" cites enacts_evidence_id "E6", which does not establish this option (E5); environment element "the white weeping-willow veil-canopy (the trees’ hanging leaf-curtains) — the weeping-will" introduces an environmental fact the seed rules out ("wind") — describe what the seed names and add no weather, light, marks or fluids it does not contain; environment_realizations[O1] "the weeping-willow veil-canopy trembles as if stirred by an unseen wind, though the air is" introduces an environmental fact the seed rules out ("wind") — describe what the seed names and add no weather, light, marks or fluids it does not contain
+
+══════════════════════════════════════════════════════════════════════════════════════════════
+SCORECARD (post-resolution · product functions)
+══════════════════════════════════════════════════════════════════════════════════════════════
+
+ # | mode     | setting | no offstage | one C+ each | first_ment | angles | E+ grounded | fusion | INLINE | PRODUCT
+ 1 | seeded   |  ✓  |  ✓        |  ✗        |  ✗       |  ✗  |  ✗        |  ✗  | FAIL   | REJECTED
+ 2 | seeded   |  ✓  |  ✓        |  ✗        |  ✗       |  ✗  |  ✗        |  ✗  | FAIL   | REJECTED
+ 3 | seeded   |  ✓  |  ✓        |  ✗        |  ✗       |  ✗  |  ✗        |  ✗  | FAIL   | REJECTED
+ 4 | seeded   |  ✓  |  ✓        |  ✗        |  ✗       |  ✗  |  ✗        |  ✗  | FAIL   | REJECTED
+ 5 | seeded   |  ✓  |  ✓        |  ✗        |  ✗       |  ✗  |  ✗        |  ✗  | FAIL   | REJECTED
+ 6 | seeded   |  ✓  |  ✓        |  ✗        |  ✗       |  ✗  |  ✗        |  ✗  | FAIL   | REJECTED
+
+ STAGE 0 · route=14b · CAP=0 · real dispatches=0 · capped (aborted at route)=0
+   sample 1: model=mistral-small-latest bytes=80956 reserve=0 max_tokens=2921 reasoning_effort="none" response_format={"type":"json_object"} http=200 ms=0
+   sample 2: model=mistral-small-latest bytes=80951 reserve=0 max_tokens=2921 reasoning_effort="none" response_format={"type":"json_object"} http=200 ms=0
+   sample 3: model=mistral-small-latest bytes=80982 reserve=0 max_tokens=2921 reasoning_effort="none" response_format={"type":"json_object"} http=200 ms=0
+   sample 4: model=mistral-small-latest bytes=73483 reserve=0 max_tokens=2921 reasoning_effort="none" response_format={"type":"json_object"} http=200 ms=0
+   sample 5: model=mistral-small-latest bytes=73395 reserve=0 max_tokens=2921 reasoning_effort="none" response_format={"type":"json_object"} http=200 ms=0
+   sample 6: model=mistral-small-latest bytes=73393 reserve=0 max_tokens=2921 reasoning_effort="none" response_format={"type":"json_object"} http=200 ms=0
+
+ total real planner calls: 6
+ planner attempts        : 1, 1, 1, 1, 1, 1
+ GROK requests dispatched: 0  (attempts blocked at the route layer: 0)
+ escaped requests        : 0 (must be 0)
+ total spend             : $0.02239
+ inline/product agreement: CONSISTENT
+
+ artifacts: _stage0_out/control_corr_retest2_14b_v2/sample{1..6}_{request,response,verdict}.json
+

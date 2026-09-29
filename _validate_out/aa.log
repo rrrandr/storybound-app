@@ -1,0 +1,17 @@
+[preflight] output dir writable: _validate_out/authority_audit
+[baseline] SCENE 1 — real generation…
+  [author response 1] 2374 chars captured
+  [scene1] lastWriter=grokLiteraryAuthor len=2377
+  scene 1 final: 1984 chars   spend=$0.170
+[baseline] SCENE 2 — real generation…
+  [author response 2] 2560 chars captured
+  settled: page text stable at 4846
+  rawSnap records: 41
+  [scene2] lastWriter=pageContent len=3647
+  scene 2 final: 2861 chars
+
+════ BASELINE CAPTURE ════
+  scene 1: 1984 chars   scene 2: 2861 chars
+  raw author responses captured: 2
+  total spend: $0.304
+  → _validate_out/authority_audit/scene1_final.txt · scene2_final.txt · raw_author_*.txt

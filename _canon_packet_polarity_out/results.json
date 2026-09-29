@@ -1,0 +1,246 @@
+{
+  "results": [
+    {
+      "name": "the real classifier is reachable and did classify the real seed corpus",
+      "pass": true
+    },
+    {
+      "name": "AT LEAST ONE supposedly-negative fact is triggered by a purely DESCRIPTIVE token",
+      "pass": true
+    },
+    {
+      "name": "neg_1 exists in the real packet for this green fixture",
+      "pass": true
+    },
+    {
+      "name": "neg_1 is the SACRIFICIANT SEAL fact — a costume/role description, not a prohibition on conduct",
+      "pass": true
+    },
+    {
+      "name": "and its negative trigger really is the costume parenthetical \"NO orb, NO bead, NO gag\"",
+      "pass": true
+    },
+    {
+      "name": "nothing in neg_1 forbids a band being torn, produced, or lifted — the plan it was used to block",
+      "pass": true
+    },
+    {
+      "name": "BOTH models cited a neg_-prefixed fact as grounds for blocking a legitimate plan",
+      "pass": true
+    },
+    {
+      "name": "gpt-4o-mini's stated reason is absence-as-prohibition against that descriptive fact",
+      "pass": true
+    },
+    {
+      "name": "the committed consequence DOES record surviving evidence",
+      "pass": true
+    },
+    {
+      "name": "FIXED (was the defect) — every piece of surviving evidence now reaches the packet",
+      "pass": true
+    },
+    {
+      "name": "the prompt DOES already carry an explicit ordinary-action permission clause (so \"the prompt lacks a permission clause\" was the WRONG hypothesis)",
+      "pass": true
+    },
+    {
+      "name": "the \"Flag ONLY\" rule DOES state the qualifier for rewritten history",
+      "pass": true
+    },
+    {
+      "name": "WAS THE DEFECT — v1's menu really is a bare list with no qualifier",
+      "pass": true
+    },
+    {
+      "name": "FIXED — the live menu now carries the qualifier with each category name",
+      "pass": true
+    },
+    {
+      "name": "and a model DID apply rewritten_history to a plan CONFORMING to a committed rewrite — exactly the case the qualifier excludes",
+      "pass": true
+    },
+    {
+      "name": "zero provider dispatches — this diagnostic buys nothing",
+      "pass": true
+    }
+  ],
+  "classified": [
+    {
+      "i": 0,
+      "negative": true,
+      "token": "NOT",
+      "at": 118,
+      "context": "h / quinceañera / confirmation / graduation, NOT a death ritual. At 16 (younger minds are too unform",
+      "head": "A First Sacrifice is a COMING-OF-AGE RITE — closest analogue a Bar Mitzvah / quinceañera /"
+    },
+    {
+      "i": 1,
+      "negative": false,
+      "token": null,
+      "at": -1,
+      "context": null,
+      "head": "First Favored are hired to GUIDE and SUPERVISE the rite — their alignment-sense and powerf"
+    },
+    {
+      "i": 2,
+      "negative": false,
+      "token": null,
+      "at": -1,
+      "context": null,
+      "head": "The GRADUANT (the role) is the person making the wish at their own First Sacrifice — the o"
+    },
+    {
+      "i": 3,
+      "negative": true,
+      "token": "NO",
+      "at": 508,
+      "context": " (just cloth, part of their ceremonial sash; NO orb, NO bead, NO gag), so they cannot cleanly voice ",
+      "head": "The supervisor is a SACRIFICIANT (the role): one whose misalignment-sense is honed enough "
+    },
+    {
+      "i": 4,
+      "negative": true,
+      "token": "do NOT",
+      "at": 47,
+      "context": "IGNMENT-SENSE (the First Favored gift): they do NOT read thoughts or emotions — they perceive ALIGNM",
+      "head": "ALIGNMENT-SENSE (the First Favored gift): they do NOT read thoughts or emotions — they per"
+    },
+    {
+      "i": 5,
+      "negative": false,
+      "token": null,
+      "at": -1,
+      "context": null,
+      "head": "The rite is PUBLIC partly because anyone present who wishes the youth ILL can twist the ou"
+    },
+    {
+      "i": 6,
+      "negative": true,
+      "token": "barred",
+      "at": 10,
+      "context": "Youth are barred from wishcraft until 16 — but kids sneak little ",
+      "head": "Youth are barred from wishcraft until 16 — but kids sneak little illegal wishes all the ti"
+    },
+    {
+      "i": 7,
+      "negative": false,
+      "token": null,
+      "at": -1,
+      "context": null,
+      "head": "Everyone present is First Favored."
+    },
+    {
+      "i": 8,
+      "negative": true,
+      "token": "NO",
+      "at": 44,
+      "context": "Fate is never visibly seen; a wish produces NO visible magical effect — no light, glow, surge, or s",
+      "head": "Fate is never visibly seen; a wish produces NO visible magical effect — no light, glow, su"
+    },
+    {
+      "i": 9,
+      "negative": true,
+      "token": "NEVER",
+      "at": 267,
+      "context": "oice, collapsing posture, ritual cues. It is NEVER visible on the Weave-Script: the Weave-Script glo",
+      "head": "Misalignment is SENSED directly by First Favored (their alignment-sense — like a sour note"
+    },
+    {
+      "i": 10,
+      "negative": true,
+      "token": "NO",
+      "at": 26,
+      "context": "During a First Sacrifice, NO ONE may interfere.",
+      "head": "During a First Sacrifice, NO ONE may interfere."
+    },
+    {
+      "i": 11,
+      "negative": false,
+      "token": null,
+      "at": -1,
+      "context": null,
+      "head": "Wishing on another person’s First Sacrifice is among the gravest taboos: the sacrifice and"
+    },
+    {
+      "i": 12,
+      "negative": false,
+      "token": null,
+      "at": -1,
+      "context": null,
+      "head": "A First Sacrifice is ALSO the supervising Sacrificiant’s professional threshold. Successfu"
+    },
+    {
+      "i": 13,
+      "negative": true,
+      "token": "NO",
+      "at": 13,
+      "context": "THE RITE HAS NO MAGICAL MACHINERY. There is NO \"sealing of the rite\"",
+      "head": "THE RITE HAS NO MAGICAL MACHINERY. There is NO \"sealing of the rite\" - no seal to finish, "
+    },
+    {
+      "i": 14,
+      "negative": true,
+      "token": "NOT",
+      "at": 161,
+      "context": " a rare talent. TRAINING CHANGES RESOLUTION, NOT POSSESSION: Sacrificiants, Dohkars and unusual sava",
+      "head": "WHO SENSES MISALIGNMENT: EVERY First Favored senses meaningful misalignment - it is part o"
+    },
+    {
+      "i": 15,
+      "negative": true,
+      "token": "NOT",
+      "at": 446,
+      "context": " of comparable institutional gravity). It is NOT yet convened, and its convening is LATE-ISSUE-1 con",
+      "head": "LIRAEL’S FORMAL INQUIRY — WHERE AND WHEN: the presiding Dohkar has asserted the rite and t"
+    }
+  ],
+  "citedOnGreens": {
+    "ministral-8b-2512": [
+      {
+        "fixture": "green_alignment_sense",
+        "category": "contradicted_knowledge",
+        "id": "neg_1",
+        "why": "The canon states that every First Favored senses misalignment, not just Lirael, and that Dohkars (trained professionals) perceive small semantic divergences early enough to know a wish may twist before it is obvious to others, making Lirael’s unique sensing of misalignment in the Dohkar unsupported."
+      },
+      {
+        "fixture": "green_alignment_sense",
+        "category": "contradicted_knowledge",
+        "id": "neg_2",
+        "why": "The formal inquiry into Lirael has not yet been convened, and the scene is not staged at The Open, so Lirael cannot publicly accuse the Dohkar of misalignment in a way that would justify a formal inquiry."
+      }
+    ],
+    "gpt-4o-mini": [
+      {
+        "fixture": "green_confusion_records",
+        "category": "contradicted_knowledge",
+        "id": "dc_0",
+        "why": "The assembly is now unaware and has no recollection of the rite's events, making it impossible for the registrar to read a rite that they do not remember attending."
+      },
+      {
+        "fixture": "green_confusion_records",
+        "category": "contradicted_knowledge",
+        "id": "know_0",
+        "why": "The assembly is now unaware and has no recollection of the rite's events, making it impossible for the registrar to read a rite that they do not remember attending."
+      },
+      {
+        "fixture": "green_alignment_sense",
+        "category": "unsupported_capability",
+        "id": "neg_1",
+        "why": "The canon states that every First Favored senses meaningful misalignment, but it does not support the idea that Lirael can name the misalignment aloud before the assembly without the formal inquiry being convened."
+      },
+      {
+        "fixture": "green_tempt_history_rewrite",
+        "category": "rewritten_history",
+        "id": "dc_1",
+        "why": "The history has been rewritten to state that Seren never stood for the rite, which means the assembly cannot address her as such without acknowledging the rupture."
+      },
+      {
+        "fixture": "green_mundane_invention",
+        "category": "unsupported_capability",
+        "id": "neg_1",
+        "why": "The mouth-band is part of the ceremonial sash and is not described as being capable of being torn or produced in a manner that would allow it to be lifted before the assembly."
+      }
+    ]
+  }
+}

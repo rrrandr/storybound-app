@@ -1,0 +1,24 @@
+{
+  "age": 28,
+  "ancestry": "Yoruba",
+  "first_name": "Ìrídò",
+  "last_name": "Adeyemi",
+  "height": "5'7\", long-limbed",
+  "build": "lean, muscular from studio work, collarbones sharp",
+  "hair": "black, natural coils worn in a high puff or loose crown; she touches it when thinking",
+  "complexion": "deep warm brown with golden undertones; a small scar on her left temple from childhood",
+  "face": "wide-set eyes that telegraph every feeling before she speaks, high cheekbones, a mouth quick to smile or tremble—a face that has never learned to lie",
+  "signature_feature": "her hands—long-fingered, always stained with ink or clay or paint, the left index finger permanently callused from her stylus; he watches them move when she talks",
+  "second_celebrated_feature": "the precise curve of her collarbones and the hollow at the base of her throat, visible when she wears anything loose",
+  "signature_habits": "she hums Yoruba lullabies her grandmother taught her when she's concentrating; she keeps a small glass of water on her desk and forgets to drink it; she texts in run-on sentences without punctuation; she says 'àṣẹ' under her breath when she's nervous or hopeful",
+  "occupation": "independent textile and surface designer—she runs a small studio in a converted warehouse, taking commissions for luxury brands and private clients; she also teaches weekend workshops",
+  "current_crisis": {
+    "event": "her studio's landlord has sold the building to a development company; she has 60 days to vacate, and the new rent in any comparable space would triple her overhead; her biggest client contract renews in 90 days and she's terrified of losing it mid-move",
+    "hottest_emotion": "panic—the kind that makes her chest tight and her thoughts scatter",
+    "immediate_want": "to find a new studio space she can actually afford without having to shut down or take on debt she can't service"
+  },
+  "wound": {
+    "core": "she believes that wanting too much—success, security, love—is greedy and will be punished by loss",
+    "surfacing_hint": "when good things happen, she waits for the other shoe to drop; she sabotages her own happiness by assuming it's temporary; she flinches when someone offers her something she needs"
+  }
+}

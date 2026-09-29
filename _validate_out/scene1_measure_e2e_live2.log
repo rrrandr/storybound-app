@@ -1,0 +1,68 @@
+written _validate_out/scene1_measure_E2E-LIVE.2026-09-08T01-01-25-913Z.json
+{
+  "mode": "E2E-LIVE",
+  "plannerCalls": 1,
+  "authorCalls": 0,
+  "aborted": [],
+  "cost": [
+    {
+      "role": "OPENING_PLANNER",
+      "status": 200,
+      "latencyMs": 18028,
+      "served": "grok-4.3",
+      "prompt_tokens": 20870,
+      "completion_tokens": 636,
+      "reasoning_tokens": 1220,
+      "cached_tokens": 192,
+      "usd_list": 0.030727500000000005,
+      "xai_usd": 0.0305259,
+      "replyBytes": 2565,
+      "stageContractAt": []
+    }
+  ],
+  "totalList": 0.030727500000000005,
+  "totalXaiUsd": 0.0305259,
+  "gate": {
+    "authorAttempts": 0,
+    "pages": 0,
+    "fatal": "planner stage_contract rejected (absent) — the stage is not established",
+    "verdict": "FAIL-CLOSED (named): planner stage_contract rejected (absent) — the stage is not established"
+  },
+  "envelope": [
+    {
+      "top": [
+        "opening_spine"
+      ],
+      "spine": [
+        "pressure_source_type",
+        "pressure_source",
+        "hook_object",
+        "opening_actor_id",
+        "opening_beat",
+        "rising_beats",
+        "decision_beat",
+        "pc_career",
+        "opening_setting",
+        "environment_elements",
+        "li_texture_beat",
+        "pc_wound_anchor",
+        "pc_self_presentation_beat",
+        "scene_want",
+        "scene_mission",
+        "reader_state",
+        "pc_body_callback",
+        "antagonist_body_callback",
+        "staged_characters",
+        "scene_skeleton"
+      ],
+      "skeleton": [
+        "character_plus",
+        "environment_plus",
+        "pc_opening_fusion"
+      ],
+      "stageContractAt": []
+    }
+  ],
+  "attempts": 1,
+  "retryReason": null
+}

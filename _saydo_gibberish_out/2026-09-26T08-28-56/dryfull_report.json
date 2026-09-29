@@ -1,0 +1,95 @@
+{
+  "telemetry": [],
+  "roles": [
+    "continuity",
+    "continuity",
+    "continuity",
+    "continuity",
+    "continuity",
+    "continuity",
+    "planner",
+    "planner",
+    "planner",
+    "author",
+    "author",
+    "author"
+  ],
+  "acceptance": {
+    "scenesDelta": 0,
+    "lastTextLen": 0,
+    "lastTextChanged": false
+  },
+  "settled": false,
+  "reservations": [
+    {
+      "role": "continuity",
+      "usd": 0.01,
+      "pathname": "/api/mistral-proxy",
+      "runningReserved": 0.01
+    },
+    {
+      "role": "continuity",
+      "usd": 0.03,
+      "pathname": "/api/proxy",
+      "runningReserved": 0.04
+    },
+    {
+      "role": "continuity",
+      "usd": 0.03,
+      "pathname": "/api/chatgpt-proxy",
+      "runningReserved": 0.07
+    },
+    {
+      "role": "continuity",
+      "usd": 0.01,
+      "pathname": "/api/mistral-proxy",
+      "runningReserved": 0.08
+    },
+    {
+      "role": "continuity",
+      "usd": 0.03,
+      "pathname": "/api/proxy",
+      "runningReserved": 0.11
+    },
+    {
+      "role": "continuity",
+      "usd": 0.03,
+      "pathname": "/api/chatgpt-proxy",
+      "runningReserved": 0.14
+    },
+    {
+      "role": "planner",
+      "usd": 0.03,
+      "pathname": "/api/proxy",
+      "runningReserved": 0.17
+    },
+    {
+      "role": "planner",
+      "usd": 0.01,
+      "pathname": "/api/mistral-proxy",
+      "runningReserved": 0.18000000000000002
+    },
+    {
+      "role": "planner",
+      "usd": 0.03,
+      "pathname": "/api/chatgpt-proxy",
+      "runningReserved": 0.21000000000000002
+    },
+    {
+      "role": "author",
+      "usd": 0.01,
+      "pathname": "/api/mistral-proxy",
+      "runningReserved": 0.22000000000000003
+    }
+  ],
+  "noFallbackInjected": 10,
+  "abortReason": "reserving author would pass the $0.22 ceiling",
+  "consoleRejections": [
+    "[TIERED:scaffold] primary/mistral/ministral-8b-2512 failed: mistral returned empty content",
+    "[TIERED:scaffold] fallback/grok/grok-4-1-fast-reasoning failed: grok returned empty content",
+    "[TIERED:scaffold] terminal/openai/gpt-4o-mini failed: openai returned empty content",
+    "[CG:SCAFFOLD] all provider tiers failed: [TIERED:scaffold] all tiers exhausted — last error: openai returned empty content",
+    "[CG:SCAFFOLD] generation FAILED — scene proceeds without scaffold: scaffold generation failed — all tiers exhausted ([TIERED:scaffold] all tiers exhausted — last error: openai returned empty content)",
+    "[TIERED:scaffold] primary/mistral/ministral-8b-2512 failed: mistral returned empty content"
+  ]
+}

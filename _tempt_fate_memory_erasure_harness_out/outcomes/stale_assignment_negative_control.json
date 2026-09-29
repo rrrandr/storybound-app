@@ -1,0 +1,8 @@
+{
+  "firstAttemptId": "cpa:7c30c701-77c5-4317-ae51-2a3513883731",
+  "secondAttemptId": "cpa:9b8b2aad-f8ce-4c63-a80c-8b135051c3e9",
+  "acc": {
+    "ok": false,
+    "reason": "stale attempt: a newer request replaced this one (cpa:9b8b2aad-f8ce-4c63-a80c-8b135051c3e9 ≠ cpa:7c30c701-77c5-4317-ae51-2a3513883731)"
+  }
+}

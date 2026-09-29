@@ -1,0 +1,128 @@
+{
+  "results": [
+    {
+      "name": "v3 is now the default arm, and v2 is no longer selected by an unset flag",
+      "pass": true
+    },
+    {
+      "name": "v1 is still reachable verbatim, so the A/B has a control arm",
+      "pass": true
+    },
+    {
+      "name": "the two arms genuinely differ",
+      "pass": true
+    },
+    {
+      "name": "v1 is UNCHANGED — it still carries the exact framing the two models were measured against",
+      "pass": true
+    },
+    {
+      "name": "v2 keeps the absence-as-prohibition correction",
+      "pass": true
+    },
+    {
+      "name": "but does NOT extend silence to a new category of effect",
+      "pass": true
+    },
+    {
+      "name": "v2 names the exact wording the models used, so the rule is not abstract",
+      "pass": true
+    },
+    {
+      "name": "v2 makes \"pass\" the stated DEFAULT verdict, not merely an available one",
+      "pass": true
+    },
+    {
+      "name": "v2 replaces the blanket self-check with the kind-of-effect test that discriminates",
+      "pass": true
+    },
+    {
+      "name": "RED PROOF — v1 contains NONE of that, which is why the clause is the change",
+      "pass": true
+    },
+    {
+      "name": "the ordinary-action clause v1 ALREADY had is still present in v2 — it was never the missing piece",
+      "pass": true
+    },
+    {
+      "name": "v2 tells the model that a plan BUILDING ON a committed rewrite is correct behaviour",
+      "pass": true
+    },
+    {
+      "name": "v2 states contradicted_knowledge directionally — knowing LESS is never a violation",
+      "pass": true
+    },
+    {
+      "name": "v2 tells invalidated_objective to cite the invalidation, not a general world truth",
+      "pass": true
+    },
+    {
+      "name": "RED PROOF — v1's menu is a bare list of names with no qualifier at all",
+      "pass": true
+    },
+    {
+      "name": "the committed rupture's evidence still reaches the packet as its own fact",
+      "pass": true
+    },
+    {
+      "name": "v2's false \"still true\" wording is GONE from the live packet",
+      "pass": true
+    },
+    {
+      "name": "...and the retained v2 run preserves it, so the v2 arm stays reproducible",
+      "pass": true
+    },
+    {
+      "name": "the v2 ARM still says what it said — it is preserved verbatim, mistake included",
+      "pass": true
+    },
+    {
+      "name": "RED PROOF — the same packet under the OLD builder carried no surviving evidence at all",
+      "pass": true
+    },
+    {
+      "name": "RED PROOF — the prompt ACTUALLY SENT to gpt-4o-mini carried no ev_ fact at all",
+      "pass": true
+    },
+    {
+      "name": "...and it is the same fixture whose green failure that omission explains — the plan turns on\n     a written ledger, and the fact that the ledger survived was never supplied",
+      "pass": true
+    },
+    {
+      "name": "fact ids are UNCHANGED, so the retained runs' citations stay comparable",
+      "pass": true
+    },
+    {
+      "name": "v2 tells the auditor a neg_ fact is not automatically a prohibition",
+      "pass": true
+    },
+    {
+      "name": "v2 tells it to judge by what a fact SAYS, not by its id",
+      "pass": true
+    },
+    {
+      "name": "RED PROOF — v1 said nothing about what the ids mean",
+      "pass": true
+    },
+    {
+      "name": "the auditor still may not rewrite the plan",
+      "pass": true
+    },
+    {
+      "name": "every violation must still cite a supplied fact id",
+      "pass": true
+    },
+    {
+      "name": "the output schema is unchanged, so the production validator still applies",
+      "pass": true
+    },
+    {
+      "name": "the red fixtures' genuine prohibitions are still in the packet",
+      "pass": true
+    },
+    {
+      "name": "zero provider dispatches — this control buys nothing",
+      "pass": true
+    }
+  ]
+}

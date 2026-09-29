@@ -1,0 +1,25 @@
+[DECK_MANDATE] ON (dev) — default. Use window._forceMandateOff() or set window._forceDeckMandate=false for palate-cleanser testing.
+[DECK_MANDATE] ON (dev) — default. Use window._forceMandateOff() or set window._forceDeckMandate=false for palate-cleanser testing.
+[DECK_MANDATE] ON (dev) — default. Use window._forceMandateOff() or set window._forceDeckMandate=false for palate-cleanser testing.
+[DECK_MANDATE] ON (dev) — default. Use window._forceMandateOff() or set window._forceDeckMandate=false for palate-cleanser testing.
+[DECK_MANDATE] ON (dev) — default. Use window._forceMandateOff() or set window._forceDeckMandate=false for palate-cleanser testing.
+[SCENE1-FRAME] Dropped fuzzy mandated-closer echo (overlap 100%): "My hand tightened around my great-grandmother's old tarot deck."
+[SCENE1-FRAME] Dropped fuzzy mandated-closer echo (overlap 100%): "I toyed with the idea of letting the cards decide."
+[SCENE1-FRAME] Stripped premature deck mention from body (deck-at-end constraint): "I always carried my great-grandmother's tarot when I needed to stall."
+[SCENE1-FRAME] Appended mandated closer (model omitted it / replaced a junk ending).
+[SCENE1-FRAME] Dropped fuzzy mandated-closer echo (overlap 100%): "My hand tightened around my great-grandmother's old tarot deck."
+[SCENE1-FRAME] Dropped fuzzy mandated-closer echo (overlap 100%): "I toyed with the idea of letting the cards decide."
+[SCENE1-FRAME] Appended mandated closer (model omitted it / replaced a junk ending).
+[SCENE1-FRAME] Stripped premature deck mention from body (deck-at-end constraint): "My great-grandmother's tarot deck sat heavy in the pouch at my hip, edges biting into my p"
+[SCENE1-FRAME] Appended mandated closer (model omitted it / replaced a junk ending).
+[SCENE1-FRAME:POST-PASS] Re-asserted verbatim mandated closer after post-gate mutators.
+[DECK_MANDATE] ON (dev) — default. Use window._forceMandateOff() or set window._forceDeckMandate=false for palate-cleanser testing.
+[DECK_MANDATE] ON (dev) — default. Use window._forceMandateOff() or set window._forceDeckMandate=false for palate-cleanser testing.
+[SCENE-FRAME] Stashing Scene 2 (Petition) mandate frame
+[SCENE-FRAME] Dropped fuzzy mandated-closer echo (turn path, overlap 100%): "I realize that old tarot deck is still in my hand."
+[SCENE-FRAME] Dropped fuzzy mandated-closer echo (turn path, overlap 100%): "One of the heavy gold cards slips out — "Petition Fate" is inscribed on it."
+[SCENE-FRAME] Stripped 1 echoed closer fragment-type(s) from body (turn path — anti triple-closer).
+[SCENE-FRAME] petition closer: no <<WISH:>> emitted, neutral fallback used.
+[SCENE-FRAME] Appended mandated closer (turn path).
+[WISH] composing captured fragment into the Petition tail
+[DECK_MANDATE] ON (dev) — default. Use window._forceMandateOff() or set window._forceDeckMandate=false for palate-cleanser testing.

@@ -1,0 +1,24 @@
+{
+  "age": 28,
+  "ancestry": "Tamil",
+  "first_name": "Priya",
+  "last_name": "Krishnan",
+  "height": "five foot four, compact and grounded",
+  "build": "lean-muscled, the kind that comes from standing at a loom or kiln all day—not gym-sculpted",
+  "hair": "black, thick and wavy, usually in a single braid down her back or twisted into a knot; she has a habit of pulling it loose when she's thinking",
+  "complexion": "warm medium brown with golden undertones; a small beauty mark on her left collarbone that catches the light when she moves",
+  "face": "an open, expressive face with a sharp jawline and wide-set dark eyes that telegraph every shift in her mood—the kind of face that has never learned to lie, where shock reads as shock and longing as longing",
+  "signature_feature": "her hands—long-fingered, stained with indigo and clay, scarred across the knuckles from years of textile work; they move when she talks, and the LI is acutely aware of them",
+  "second_celebrated_feature": "the hollow of her throat, visible when she tilts her head back—delicate, vulnerable, and utterly unguarded",
+  "signature_habits": "she hums while working—half-remembered Tamil film songs her mother used to sing; she touches her earlobe when she's nervous or lying (a tell she's never mastered); she makes strong coffee in the mornings and forgets to drink it; she says 'amma' under her breath when frustrated, a ghost of her grandmother's voice",
+  "occupation": "textile designer and small-studio owner—she hand-dyes and weaves contemporary pieces in a converted warehouse in the city; her work is gaining gallery attention but the business is still precarious",
+  "current_crisis": {
+    "event": "her studio's main investor—a venture capitalist who bankrolled her expansion—has just pulled funding via a cold email, citing 'portfolio realignment'; her rent is due in three weeks and she has no backup capital",
+    "hottest_emotion": "panic threaded with shame—a feeling that she's failed, that she was naive to trust someone with her work",
+    "immediate_want": "to find a way to save the studio without losing creative control, without having to sell her pieces to someone who will strip them of meaning"
+  },
+  "wound": {
+    "core": "she believes that wanting things—success, security, love—is dangerous; that reaching for them invites loss",
+    "surfacing_hint": "when someone offers help or attention, she flinches first, then over-explains why she doesn't need it, then quietly falls apart when they leave"
+  }
+}

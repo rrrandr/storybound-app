@@ -1,0 +1,70 @@
+{
+  "plannerCalls": 1,
+  "aborted": [],
+  "cost": [
+    {
+      "status": 200,
+      "latencyMs": 4,
+      "served": "grok-4.3",
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "reasoning_tokens": 0,
+      "cached_tokens": 0,
+      "usd_list": 0,
+      "note": "xAI reports reasoning_tokens separately from completion_tokens and bills them as output; usd_list = list arithmetic, xaiCostUsd = the exact figure"
+    }
+  ],
+  "total": 0,
+  "xaiCostUsd": [
+    null
+  ],
+  "gate": {
+    "authorAttempts": 1,
+    "pages": 1,
+    "fatal": null,
+    "verdict": "PASS: one author attempt, one page"
+  },
+  "envelope": [
+    {
+      "top": [
+        "opening_spine",
+        "scene_skeleton",
+        "stage_contract"
+      ],
+      "spine": [
+        "pressure_source_type",
+        "pressure_source",
+        "hook_object",
+        "opening_beat",
+        "rising_beats",
+        "decision_beat",
+        "pc_career",
+        "opening_setting",
+        "li_texture_beat",
+        "pc_wound_anchor",
+        "pc_self_presentation_beat",
+        "scene_want",
+        "scene_mission",
+        "reader_state",
+        "pc_body_callback",
+        "li_body_callback",
+        "antagonist_body_callback",
+        "perceptual_signature_beat",
+        "staged_characters",
+        "opening_actor_id",
+        "environment_elements"
+      ],
+      "skeleton": [
+        "character_plus",
+        "fusion",
+        "pc_opening_fusion",
+        "environment_plus"
+      ],
+      "stageContractAt": [
+        "top"
+      ]
+    }
+  ],
+  "attempts": 1,
+  "retryReason": null
+}

@@ -1,0 +1,20 @@
+{
+  "repairs": [
+    {
+      "n": 5,
+      "text": "In the name of the offices that govern this rite I call upon you to name the cost you bring to this First Sacrifice. Speak the irrevocable loss that will serve as its true anchor before the weave and every witness gathered here."
+    },
+    {
+      "n": 11,
+      "text": "Seren lifted her gaze to mine and said clearly, “So that Lirael may find the one she lost, I give the memory of my mother singing me to sleep before the fever took her voice.” I felt the practiced softness in her eyes and recognized at once that the words had been shaped to display her virtue to the assembly rather than to serve the private need of the rite."
+    },
+    {
+      "n": 18,
+      "text": "Julian’s voice carried across the clearing without force. “I can hear that she is aligned with her own innocence rather than the rite itself. Before you all I will question her so that any misalignment between her heart and the sacrifice becomes plain to every witness present.”"
+    },
+    {
+      "n": 19,
+      "text": "He stepped forward and drew The Answer from its resting place. The double-ended staff settled across his palms, both hooked heads catching the dawn light. He placed the lower end into my waiting hands, then closed his own hands over mine, warm and certain, pressing my fingers firmly around the polished wood until the grip was sure. His touch lingered only a breath before he released the weight entirely to me and stepped back, leaving the balanced staff steady in my hold."
+    }
+  ]
+}

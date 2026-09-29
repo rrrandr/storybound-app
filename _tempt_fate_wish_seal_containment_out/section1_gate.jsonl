@@ -1,0 +1,7 @@
+{"kind":"abort-undeclared","url":"http://localhost:3000/api/csp-report","method":"POST","reason":"no registered stub or real-lane for this path","at":1790277720392,"loggedAt":1790277720392}
+{"kind":"abort-undeclared","url":"http://localhost:3000/api/config","method":"GET","reason":"no registered stub or real-lane for this path","at":1790277730054,"loggedAt":1790277730054}
+{"kind":"abort-undeclared","url":"http://localhost:3000/api/csp-report","method":"POST","reason":"no registered stub or real-lane for this path","at":1790277730064,"loggedAt":1790277730064}
+{"kind":"abort-undeclared","url":"http://localhost:3000/api/geo","method":"GET","reason":"no registered stub or real-lane for this path","at":1790277730227,"loggedAt":1790277730227}
+{"kind":"abort-undeclared","url":"http://localhost:3000/api/proxy","method":"POST","reason":"no registered stub or real-lane for this path","at":1790277730255,"loggedAt":1790277730255}
+{"kind":"abort-undeclared","url":"http://localhost:3000/api/chatgpt-proxy","method":"POST","reason":"no registered stub or real-lane for this path","at":1790277737718,"loggedAt":1790277737718}
+{"kind":"abort-undeclared","url":"http://localhost:3000/api/beta-events","method":"POST","reason":"no registered stub or real-lane for this path","at":1790277738067,"loggedAt":1790277738067}

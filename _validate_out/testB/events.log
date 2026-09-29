@@ -1,0 +1,224 @@
+[DECK_MANDATE] ON (dev) — default. Use window._forceMandateOff() or set window._forceDeckMandate=false for palate-cleanser testing.
+[TEMPT:CRACKLE] segmented into 2 discrete crackles
+[TEMPT:CRACKLE] segmented into 2 discrete crackles
+[TEMPT:CRACKLE] segmented into 2 discrete crackles
+[TEMPT:CRACKLE] segmented into 2 discrete crackles
+[TEMPT:CRACKLE] segmented into 2 discrete crackles
+[TEMPT:CRACKLE] segmented into 2 discrete crackles
+[TEMPT:CRACKLE] segmented into 2 discrete crackles
+[PC-BODY-BIBLE] generated for Lirael: 
+  height/build:        taller than human, athletic · perfectly proportioned 
+  hair:                dark auburn, wavy, usually worn loose and cascading down her 
+[FATE ANCHOR] Resolved: {present: true, type: deck, lossEligible: true, world: Fantasy}
+[DECK_MANDATE] ON (dev) — default. Use window._forceMandateOff() or set window._forceDeckMandate=false for palate-cleanser testing.
+[DECK_MANDATE] ON (dev) — default. Use window._forceMandateOff() or set window._forceDeckMandate=false for palate-cleanser testing.
+[DECK_MANDATE] ON (dev) — default. Use window._forceMandateOff() or set window._forceDeckMandate=false for palate-cleanser testing.
+[DECK_MANDATE] ON (dev) — default. Use window._forceMandateOff() or set window._forceDeckMandate=false for palate-cleanser testing.
+[MISSION-CHAIN] fam=EVASIVE · action="she attempts to blend into the background, hoping to avoid confrontation." · result="The crowd's attention shifts momentarily, giving her a brief chance to escape
+[SCENE1:SCAFFOLD] built in 8892ms | hook="" pc=ceramicist setting=gallery exhibition shape=magical_or_physical_anomaly echo=false micro=@1 "Say it plainly — or let it show without words?" variety=guar
+[PROSE:CANONICAL]   repetition_tic 0/1 (0%) — count-escalated nervous tic ("three times, then three more… always three")
+[SCENE1-GATE] Hard failures detected (fat_final_paragraph) — attempting 2 Haiku surgical pass(es), then ship the whole draft if unresolved (no mechanical fallback).
+[SCENE1-GATE] Surgical edit attempt 1 → mistral-small (targeted rewrite, preserves voice/length/architecture; Haiku BANNED for prose, Roman 2026-06-26)
+[SCENE1-GATE:TAROT] body-content check skipped — mandated closer carries the deck anchor (cost-cut 2026-05-30).
+[SCENE1-GATE] Regen attempt 1 still failing: scene_want_absent(scene_want_not_detectable_in_opening_250), fat_final_paragraph(data_dump)
+[SCENE1-GATE] Surgical edit attempt 2 → mistral-small (targeted rewrite, preserves voice/length/architecture; Haiku BANNED for prose, Roman 2026-06-26)
+[SCENE1-GATE:TAROT] body-content check skipped — mandated closer carries the deck anchor (cost-cut 2026-05-30).
+[SCENE1-GATE] Regen attempt 2 still failing: scene_want_absent(scene_want_not_detectable_in_opening_250), fat_final_paragraph(data_dump)
+[SCENE1-GATE] Shipping WHOLE draft with unresolved HARD fail(s) after 2 Haiku surgical edit(s) — mechanical tail-truncation DISABLED (Haiku-only policy). Unresolved: fat_final_paragraph. (For more Hai
+[SCENE1-GATE:RESCUE] this scene=still_failed · n=1 gated scenes — pass1 cleared 0% · pass2 cleared +0% · still-failed 100%  [PASS-2 RESCUE VALUE = +0% of gated scenes — if this stays low, set window._
+[SCENE1-FRAME] Dropped fuzzy mandated-closer echo (overlap 100%): "My hand tightened around my great-grandmother's old tarot deck."
+[SCENE1-FRAME] Dropped fuzzy mandated-closer echo (overlap 100%): "My hand tightened around my great-grandmother's old tarot deck."
+[SCENE1-FRAME] Dropped fuzzy mandated-closer echo (overlap 100%): "My hand tightened around my great-grandmother's old tarot deck."
+[PROSE:CANONICAL]   repetition_tic 0/3 (0%) — count-escalated nervous tic ("three times, then three more… always three")
+[PROSE:CANONICAL]   repetition_tic 0/4 (0%) — count-escalated nervous tic ("three times, then three more… always three")
+[PROSE:CANONICAL]   repetition_tic 0/5 (0%) — count-escalated nervous tic ("three times, then three more… always three")
+[PROSE:CANONICAL]   repetition_tic 0/6 (0%) — count-escalated nervous tic ("three times, then three more… always three")
+[DECK_MANDATE] ON (dev) — default. Use window._forceMandateOff() or set window._forceDeckMandate=false for palate-cleanser testing.
+[DECK:EXAMINE] literary — scroll trigger + MANDATORY Submit gate armed (story 1)
+[SCENE1:GRAVITY] LI=Julian → PRESENT (30%, kind: curiosity, register: MIXED) · dominant: Julian, her estranged mother · dist: ★Julian 30% · Lirael 25% · her estranged mother 20% · the ritual 10% · the
+[R-PLOT:SCENE] PARTIAL (presence: OFFSTAGE_OBJECT) — state: "she tests his defenses with her honesty" · reason: The presence of the tarot deck suggests a connection to her hidden truths, but the scene
+[SCENE1:GRAVITY] LI=Julian → PRESENT (40%, kind: longing, register: ROMANTIC) · dominant: Julian, her estranged mother · dist: ★Julian 40% · Lirael 20% · her estranged mother 15% · the tarot deck 10% 
+[EMERGENCE:LOCK] UI locked for ~3000ms
+[DECK:EXAMINE] revealed 5 fate cards (flip-open, no zoom) — UI unlocked
+[EMERGENCE:LOCK] UI unlocked
+[DECK_MANDATE] ON (dev) — default. Use window._forceMandateOff() or set window._forceDeckMandate=false for palate-cleanser testing.
+[SCENE-FRAME] Stashing Scene 2 (Petition) mandate frame
+[ONE-BREATH:NAMES] 3 person(s) [Seren, Script, Fate] · source=scraper(evidence+≥2) · rejected 10: [Dohkar×3, Weave×2, Mated×1, Spiralgrass×1, Judge×1, Was×1, Every×1, Reassuringly×1, Present×1, Petiti
+[PROSE:CANONICAL]   repetition_tic 0/7 (0%) — count-escalated nervous tic ("three times, then three more… always three")
+[PARAGRAPH OWNERSHIP] scene1 full 12 paragraphs (heuristic)
+  ¶ 1  HIM  · Desire        "The words left me before I could weigh them. Seren’s…"
+  ¶ 2  NEUTR· —             "“She spoke alone,” I said a
+[TENSION GATE] Attempt 1/1 (FORCE INJECT) — reasons: [NO_ACTIVE_DESIRE: no character wants something NOW, NO_EARLY_ANCHOR: no character reacts to or addresses the player within first 180 words, NO_FOR
+[TENSION GATE] HARD_FAIL after 1 attempts — accepting scene: [NO_ACTIVE_DESIRE: no character wants something NOW, NO_EARLY_ANCHOR: no character reacts to or addresses the player within first 180 words
+[SCENE-FRAME] Dropped fuzzy mandated-closer echo (turn path, overlap 100%): "I realize that old tarot deck is still in my hand."
+[SCENE-FRAME] Dropped fuzzy mandated-closer echo (turn path, overlap 100%): "One of the heavy gold cards slips out — "Petition Fate" is inscribed on it."
+[SCENE-FRAME] petition closer: no <<WISH:>> emitted, neutral fallback used.
+[WISH] composing captured fragment into the Petition tail
+[FATE:AUTHORITY] LI offstage — romantic card retargeted to present interlocutor (non-romantic) {cardId: temptation, interlocutor: Quinn, presentCharacters: Array(1)}
+[FATE:AUTHORITY] Card target resolved {cardId: temptation, resolvedTarget: Quinn, isStorybeau: false, sceneCharacters: Array(1)}
+[DECK_MANDATE] ON (dev) — default. Use window._forceMandateOff() or set window._forceDeckMandate=false for palate-cleanser testing.
+[PETITION:EMERGENCE] literary — scroll trigger + Submit gate armed
+[EMERGENCE:LOCK] UI locked for ~2700ms
+[Sparkle] Started emitter: anchored-sparkle-petition-emergence-pulse-burst (profile: fateFirefly, continuous)
+[PETITION:SUGGESTIONS] variant=default
+[PETITION:EMERGENCE] auto-zoomed into modal
+[Sparkle] Stopped emitter: anchored-sparkle-petition-emergence-pulse-burst
+[EMERGENCE:LOCK] UI unlocked
+[Sparkle] Started emitter: petitionZoomSparkles (profile: zoomCard, continuous)
+[TAROT_ONBOARD] Onboarding complete at scene 1 — deck loss blocked for 13 scenes
+[PETITION] Guaranteed first petition → forced accepted=true (amplitude stays Petition-bounded).
+[FATE-TOLL] no toll — petition @ scene 2 (featherweight/exempt) | wish "Does Julian believe I manipulated the wish?"
+[FATE-BARGAIN] NEW desireKey="believe|julian|manipulat" order=RESTORATION rail=petition scene 2
+[FATE-LEDGER] receipt @ scene 2 rail=petition outcome=landed — entries on the books: 1
+[PETITION] First-Whisper free credit consumed — no fortune deduction.
+[NIL:ERA] +2 (petition_resolved, vector=obsession). Pressure: 2 / 12
+[TEMPT_FATE] Scene importance elevated to: high
+[DECK_MANDATE] ON (dev) — default. Use window._forceMandateOff() or set window._forceDeckMandate=false for palate-cleanser testing.
+[SCENE-FRAME] Stashing Scene 3 (Tempt) mandate frame
+[DIRECTIVE-SIZES] fullSys=407176c(~101794t) sysPrompt=93371c sceneDirectives=29626c unmeasured(turn-literal+picturability+act/dia)=131003c | top: fatelandsCognitive=55050  intentTransmutation=17486  i
+[PROMPT-TIER] scene 2 → HEAVY (route=HEAVY) · reasons=tempt_fate · actual=101794t projected=101794t savings=0t (0.0%)
+  15. petition avg=633t max=1.3k total=1.3k
+[DECK_MANDATE] ON (dev) — default. Use window._forceMandateOff() or set window._forceDeckMandate=false for palate-cleanser testing.
+[TEMPT:CRACKLE] segmented into 2 discrete crackles
+[TEMPT:CRACKLE] segmented into 2 discrete crackles
+[TEMPT:CRACKLE] segmented into 2 discrete crackles
+[TEMPT:CRACKLE] segmented into 2 discrete crackles
+[TEMPT:CRACKLE] segmented into 2 discrete crackles
+[TEMPT:CRACKLE] segmented into 2 discrete crackles
+[TEMPT:CRACKLE] segmented into 2 discrete crackles
+[A-PLOT] First-attempt validation failed: [specificity_missing_functional_place]
+[A-PLOT:DUMP] first-attempt parsed output (validation rejected): 
+  goal:                      Undergo the Alignment Reading to prove her ritual wish was misheard and correct its consequence before th
+[FATE ANCHOR] Resolved: {present: true, type: deck, lossEligible: true, world: Fantasy}
+[DECK_MANDATE] ON (dev) — default. Use window._forceMandateOff() or set window._forceDeckMandate=false for palate-cleanser testing.
+[DECK_MANDATE] ON (dev) — default. Use window._forceMandateOff() or set window._forceDeckMandate=false for palate-cleanser testing.
+[DECK_MANDATE] ON (dev) — default. Use window._forceMandateOff() or set window._forceDeckMandate=false for palate-cleanser testing.
+[DECK_MANDATE] ON (dev) — default. Use window._forceMandateOff() or set window._forceDeckMandate=false for palate-cleanser testing.
+[MISSION-CHAIN] fam=EVASIVE · action="she attempts to deflect the crowd's attention away from her failure." · result="The crowd's murmurs shift slightly, but their eyes remain fixed on her, their judg
+[SCENE1:SCAFFOLD] built in 9508ms | hook="" pc=ceramicist setting=community hall shape=magical_or_physical_anomaly echo=false micro=@1 "Say it plainly — or let it show without words?" variety=guarded 
+[PROSE:CANONICAL]   repetition_tic 0/1 (0%) — count-escalated nervous tic ("three times, then three more… always three")
+  [decision] My hand tightened around my great-grandmother’s old tarot deck. I didn't remember bringing it. I toyed with the idea of letting the cards decide.
+[SCENE1-GATE] All checks passed on first attempt.
+[SCENE1-FRAME] Dropped fuzzy mandated-closer echo (overlap 86%): "My hand tightened around my great-grandmother’s old tarot deck."
+[SCENE1-FRAME] Dropped fuzzy mandated-closer echo (overlap 100%): "My hand tightened around my great-grandmother's old tarot deck."
+[SCENE1-FRAME] Dropped fuzzy mandated-closer echo (overlap 100%): "My hand tightened around my great-grandmother's old tarot deck."
+[SCENE1-FRAME] Dropped fuzzy mandated-closer echo (overlap 100%): "My hand tightened around my great-grandmother's old tarot deck."
+[PROSE:CANONICAL]   repetition_tic 0/3 (0%) — count-escalated nervous tic ("three times, then three more… always three")
+[PROSE:CANONICAL]   repetition_tic 0/4 (0%) — count-escalated nervous tic ("three times, then three more… always three")
+[DECK_MANDATE] ON (dev) — default. Use window._forceMandateOff() or set window._forceDeckMandate=false for palate-cleanser testing.
+[DECK:EXAMINE] literary — scroll trigger + MANDATORY Submit gate armed (story 1)
+[EMERGENCE:LOCK] UI locked for ~3000ms
+[DECK:EXAMINE] revealed 5 fate cards (flip-open, no zoom) — UI unlocked
+[EMERGENCE:LOCK] UI unlocked
+[SCENE1:GRAVITY] LI=Julian → PRESENT (40%, kind: anticipation, register: MIXED) · dominant: Julian, Lirael · dist: ★Julian 40% · Lirael 20% · the sacred clearing 10% · the tarot deck 10% · Seren's sac
+[DECK_MANDATE] ON (dev) — default. Use window._forceMandateOff() or set window._forceDeckMandate=false for palate-cleanser testing.
+[SCENE-FRAME] Stashing Scene 2 (Petition) mandate frame
+[ONE-BREATH:NAMES] 2 person(s) [Seren, Fate] · source=scraper(evidence+≥2) · rejected 9: [Dohkar×4, Weave×2, Script×2, Favored×2, Judge×1, Explain×1, Reassuringly×1, Present×1, Petition×1]
+[PROSE:CANONICAL]   repetition_tic 0/5 (0%) — count-escalated nervous tic ("three times, then three more… always three")
+[R-PLOT:SCENE] PRESENT (presence: OFFSTAGE_OBJECT) — state: "she feels the tension between needing him and resisting it" · reason: The presence of the torn band and the tarot deck in her hand effectiv
+[PARAGRAPH OWNERSHIP] scene1 full 9 paragraphs (heuristic)
+  ¶ 1  PLOT · Setting       "The Dohkar’s eyes narrowed on the torn band still cl…"
+  ¶ 2  NEUTR· —             "“She spoke alone,” I said, v
+[FOREGROUND:STORY] Scene 2 validator: FAIL [ENDING STRUCTURE: final paragraph lacks a physical…/ brush / hover / etc.) — ending is not embodied., ENDING STRUCTURE: missing the ALMOST beat — the te…bet
+[SCENE-FRAME] Dropped fuzzy mandated-closer echo (turn path, overlap 100%): "I realize that old tarot deck is still in my hand."
+[SCENE-FRAME] Dropped fuzzy mandated-closer echo (turn path, overlap 100%): "One of the heavy gold cards slips out — "Petition Fate" is inscribed on it."
+[SCENE-FRAME] petition closer: no <<WISH:>> emitted, neutral fallback used.
+[WISH] composing captured fragment into the Petition tail
+[FATE:AUTHORITY] LI offstage — romantic card retargeted to present interlocutor (non-romantic) {cardId: temptation, interlocutor: Quinn, presentCharacters: Array(1)}
+[FATE:AUTHORITY] Card target resolved {cardId: temptation, resolvedTarget: Quinn, isStorybeau: false, sceneCharacters: Array(1)}
+[DECK_MANDATE] ON (dev) — default. Use window._forceMandateOff() or set window._forceDeckMandate=false for palate-cleanser testing.
+[PETITION:EMERGENCE] literary — scroll trigger + Submit gate armed
+[EMERGENCE:LOCK] UI locked for ~2700ms
+[Sparkle] Started emitter: anchored-sparkle-petition-emergence-pulse-burst (profile: fateFirefly, continuous)
+[PETITION:SUGGESTIONS] variant=default
+[PETITION:EMERGENCE] auto-zoomed into modal
+[Sparkle] Stopped emitter: anchored-sparkle-petition-emergence-pulse-burst
+[EMERGENCE:LOCK] UI unlocked
+[Sparkle] Started emitter: petitionZoomSparkles (profile: zoomCard, continuous)
+[TAROT_ONBOARD] Onboarding complete at scene 1 — deck loss blocked for 13 scenes
+[PETITION] Guaranteed first petition → forced accepted=true (amplitude stays Petition-bounded).
+[FATE-TOLL] no toll — petition @ scene 2 (featherweight/exempt) | wish "Does Julian believe I manipulated the wish?"
+[FATE-BARGAIN] NEW desireKey="believe|julian|manipulat" order=RESTORATION rail=petition scene 2
+[FATE-LEDGER] receipt @ scene 2 rail=petition outcome=landed — entries on the books: 1
+[PETITION] First-Whisper free credit consumed — no fortune deduction.
+[NIL:ERA] +2 (petition_resolved, vector=obsession). Pressure: 2 / 12
+[TEMPT_FATE] Scene importance elevated to: high
+[DECK_MANDATE] ON (dev) — default. Use window._forceMandateOff() or set window._forceDeckMandate=false for palate-cleanser testing.
+[SCENE-FRAME] Stashing Scene 3 (Tempt) mandate frame
+[DIRECTIVE-SIZES] fullSys=387923c(~96981t) sysPrompt=88758c sceneDirectives=29778c unmeasured(turn-literal+picturability+act/dia)=133988c | top: fatelandsCognitive=36720  intentTransmutation=17486  in
+[PROMPT-TIER] scene 2 → HEAVY (route=HEAVY) · reasons=tempt_fate · actual=96981t projected=96981t savings=0t (0.0%)
+  14. petition avg=650t max=1.3k total=1.3k
+[DECK_MANDATE] ON (dev) — default. Use window._forceMandateOff() or set window._forceDeckMandate=false for palate-cleanser testing.
+[TEMPT:CRACKLE] segmented into 2 discrete crackles
+[TEMPT:CRACKLE] segmented into 2 discrete crackles
+[TEMPT:CRACKLE] segmented into 2 discrete crackles
+[TEMPT:CRACKLE] segmented into 2 discrete crackles
+[TEMPT:CRACKLE] segmented into 2 discrete crackles
+[TEMPT:CRACKLE] segmented into 2 discrete crackles
+[TEMPT:CRACKLE] segmented into 2 discrete crackles
+[R-PLOT] generated:
+  coreTension:           "she craves connection while he guards his vulnerability"
+  relationshipQuestion: "Can he let her see the tenderness beneath his defenses?"
+  escalationAxi
+[R-PLOT:SEQUENCE] PASS — The progression from her feeling his presence to his deflection of her attempts shows a clear escalation in vulnerability.
+[A-PLOT] First-attempt validation failed: [specificity_missing_measurable_variable, specificity_missing_functional_place]
+[A-PLOT:DUMP] first-attempt parsed output (validation rejected): 
+  goal:                      Prevent the Alignment Circle from collecting the wish-debt triggered by the ritual revelation before the 
+[FATE ANCHOR] Resolved: {present: true, type: deck, lossEligible: false, world: Fantasy}
+[DECK_MANDATE] ON (dev) — default. Use window._forceMandateOff() or set window._forceDeckMandate=false for palate-cleanser testing.
+[DECK_MANDATE] ON (dev) — default. Use window._forceMandateOff() or set window._forceDeckMandate=false for palate-cleanser testing.
+[DECK_MANDATE] ON (dev) — default. Use window._forceMandateOff() or set window._forceDeckMandate=false for palate-cleanser testing.
+[DECK_MANDATE] ON (dev) — default. Use window._forceMandateOff() or set window._forceDeckMandate=false for palate-cleanser testing.
+[SCENE1:SCAFFOLD] built in 8087ms | hook="" pc=vintage-clothing dealer setting=town square shape=magical_or_physical_anomaly echo=false micro=@1 "Say it plainly — or let it show without words?" variet
+[PROSE:CANONICAL]   repetition_tic 0/1 (0%) — count-escalated nervous tic ("three times, then three more… always three")
+[SCENE1-GATE] Hard failures detected (li_on_stage) — attempting 2 Haiku surgical pass(es), then ship the whole draft if unresolved (no mechanical fallback).
+[SCENE1-GATE] Surgical edit attempt 1 → mistral-small (targeted rewrite, preserves voice/length/architecture; Haiku BANNED for prose, Roman 2026-06-26)
+[SCENE1-GATE] Regen attempt 1 accepted — all (non-decision) checks pass, soft fails cleared.
+[SCENE1-GATE:RESCUE] this scene=pass1 · n=1 gated scenes — pass1 cleared 100% · pass2 cleared +0% · still-failed 0%  [PASS-2 RESCUE VALUE = +0% of gated scenes — if this stays low, set window._scene1R
+[SCENE1-FRAME] Dropped fuzzy mandated-closer echo (overlap 86%): "My hand tightened around my great-grandmother’s old tarot deck."
+[SCENE1-FRAME] Dropped fuzzy mandated-closer echo (overlap 100%): "My hand tightened around my great-grandmother's old tarot deck."
+[SCENE1-FRAME] Dropped fuzzy mandated-closer echo (overlap 100%): "My hand tightened around my great-grandmother's old tarot deck."
+[SCENE1-FRAME] Dropped fuzzy mandated-closer echo (overlap 100%): "My hand tightened around my great-grandmother's old tarot deck."
+[PROSE:CANONICAL]   repetition_tic 0/3 (0%) — count-escalated nervous tic ("three times, then three more… always three")
+[PROSE:CANONICAL]   repetition_tic 0/4 (0%) — count-escalated nervous tic ("three times, then three more… always three")
+[R-PLOT:EMBODIMENT] MIXED — state: "she feels his presence shaping her thoughts" · reason: While the prose includes moments of concrete detail, such as 'tarot deck gripped tightly in hand,' it also re
+[PROSE:CANONICAL]   repetition_tic 0/5 (0%) — count-escalated nervous tic ("three times, then three more… always three")
+[PROSE:CANONICAL]   repetition_tic 0/6 (0%) — count-escalated nervous tic ("three times, then three more… always three")
+[DECK_MANDATE] ON (dev) — default. Use window._forceMandateOff() or set window._forceDeckMandate=false for palate-cleanser testing.
+[DECK:EXAMINE] literary — scroll trigger + MANDATORY Submit gate armed (story 1)
+[SCENE1:GRAVITY] LI=Julian → LEAD (40%, kind: longing, register: ROMANTIC) · dominant: Julian, the past · dist: ★Julian 40% · Lirael 20% · the past 15% · the ritual 10% · the tarot deck 5% · the estra
+[EMERGENCE:LOCK] UI locked for ~3000ms
+[DECK:EXAMINE] revealed 5 fate cards (flip-open, no zoom) — UI unlocked
+[EMERGENCE:LOCK] UI unlocked
+[DECK_MANDATE] ON (dev) — default. Use window._forceMandateOff() or set window._forceDeckMandate=false for palate-cleanser testing.
+[SCENE-FRAME] Stashing Scene 2 (Petition) mandate frame
+[PROSE:CANONICAL]   repetition_tic 0/7 (0%) — count-escalated nervous tic ("three times, then three more… always three")
+[TENSION GATE] Attempt 1/1 (FORCE INJECT) — reasons: [NO_EARLY_ANCHOR: no character reacts to or addresses the player within first 180 words, NO_FORCING_FUNCTION: no character directly demands, challe
+[TENSION GATE] HARD_FAIL after 1 attempts — accepting scene: [NO_EARLY_ANCHOR: no character reacts to or addresses the player within first 180 words, NO_FORCING_FUNCTION: no character directly demands
+[FOREGROUND:STORY] Scene 2 validator: FAIL [ENDING STRUCTURE: missing the ALMOST beat — the te…between temptation and the unresolved final beat., STAKES CLARITY: the stakes of the final action are…ngu
+[SCENE-FRAME] petition closer: no <<WISH:>> emitted, neutral fallback used.
+[PETITION:EMERGENCE] literary — scroll trigger + Submit gate armed
+[EMERGENCE:LOCK] UI locked for ~2700ms
+[Sparkle] Started emitter: anchored-sparkle-petition-emergence-pulse-burst (profile: fateFirefly, continuous)
+[FATE:AUTHORITY] LI offstage — romantic card retargeted to present interlocutor (non-romantic) {cardId: temptation, interlocutor: Soraya, presentCharacters: Array(1)}
+[FATE:AUTHORITY] Card target resolved {cardId: temptation, resolvedTarget: Soraya, isStorybeau: false, sceneCharacters: Array(1)}
+[PETITION:SUGGESTIONS] variant=default
+[FATE:PAUSE] constraint_as_gift → You are held here for a reason you have not yet seen. (modal: petition )
+[PETITION:EMERGENCE] auto-zoomed into modal
+[DECK_MANDATE] ON (dev) — default. Use window._forceMandateOff() or set window._forceDeckMandate=false for palate-cleanser testing.
+[Sparkle] Stopped emitter: anchored-sparkle-petition-emergence-pulse-burst
+[EMERGENCE:LOCK] UI unlocked
+[Sparkle] Started emitter: petitionZoomSparkles (profile: zoomCard, continuous)
+[TAROT_ONBOARD] Onboarding complete at scene 1 — deck loss blocked for 13 scenes
+[PETITION] Guaranteed first petition → forced accepted=true (amplitude stays Petition-bounded).
+[FATE-TOLL] no toll — petition @ scene 2 (featherweight/exempt) | wish "Does Julian believe I manipulated the wish?"
+[FATE-BARGAIN] NEW desireKey="believe|julian|manipulat" order=RESTORATION rail=petition scene 2
+[FATE-LEDGER] receipt @ scene 2 rail=petition outcome=landed — entries on the books: 1
+[PETITION] First-Whisper free credit consumed — no fortune deduction.
+[NIL:ERA] +2 (petition_resolved, vector=obsession). Pressure: 2 / 12
+[TEMPT_FATE] Scene importance elevated to: high
+[VERIFIER-INPUT] scene=0 prose_len=4999 head="stilled again. I remembered the way his fingers had brushed mine the l" tail="s out — “Petition Fate” is inscribed in it. If only it were that easy."
+[DECK_MANDATE] ON (dev) — default. Use window._forceMandateOff() or set window._forceDeckMandate=false for palate-cleanser testing.
+[SCENE-FRAME] Stashing Scene 3 (Tempt) mandate frame
+[DIRECTIVE-SIZES] fullSys=421137c(~105284t) sysPrompt=86518c sceneDirectives=35349c unmeasured(turn-literal+picturability+act/dia)=138529c | top: fatelandsCognitive=65418  intentTransmutation=17486  i
+[PROMPT-TIER] scene 2 → HEAVY (route=HEAVY) · reasons=tempt_fate · actual=105284t projected=105284t savings=0t (0.0%)

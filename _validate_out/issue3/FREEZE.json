@@ -1,0 +1,25 @@
+{
+ "test": "Acceptance Test 2 \u2014 re-author against corrected canon",
+ "commit": "a57eba0baba0ec0ac0fb8f09c20a570635442b7d",
+ "app_js_sha256": "dfa51ba9693ece15",
+ "contracts_sha256": "d4910a764cec6a38",
+ "canon_added_since_issue2": [
+  "\u2464f invocation \u2192 SACRIFICE \u2192 desire (cost spoken first)",
+  "\u2464g First Favored offer MEMORIES; abstraction is a resolution, not a sacrifice",
+  "\u2464h twist is IMMEDIATE, in the room, attributable to one bent word",
+  "\u2464i FATE TAKES ONLY WHAT WAS OFFERED \u2014 price stays inside the offering",
+  "\u2464j Tempt Fate is player-only; the PC never chooses it",
+  "LI attraction = Lirael\u2019s JUDGEMENT through her archetype lens, never asserted",
+  "environment has CAUSAL identity; decoration must be cut or given a job",
+  "the youth is named SEREN and can recite the rule she breaks"
+ ],
+ "pens_removed": [
+  "clr",
+  "_repairLISocialProof",
+  "_repairHotOpening",
+  "_repairPCPicturability",
+  "_reauthored",
+  "scene1-gate accept",
+  "all semantic line edits"
+ ]
+}

@@ -1,0 +1,36 @@
+{
+ "originHash": "641532939d25",
+ "reached": true,
+ "proseDiffers": true,
+ "payloadDiffers": true,
+ "scDiffers": false,
+ "spend": 0.677,
+ "noiseFields": 8,
+ "abFields": 9,
+ "populated": 25,
+ "comparable": true,
+ "directiveSets": [
+  "5f,5g,5h,5i,5j,5k,5l,5m,5n,5o,charbudget,charplus,charscope,contract,envcause,forbidden,liattract,spine",
+  "5f,5g,5h,5i,5j,5k,5l,5m,5n,5o,charbudget,charplus,charscope,contract,envcause,forbidden,liattract,spine",
+  "5f,5g,5h,5i,5j,5k,5l,5m,5n,5o,charbudget,charplus,charscope,contract,envcause,forbidden,liattract,spine"
+ ],
+ "signalFields": [
+  "world.characterStrategy",
+  "affordance._playerImpactRead"
+ ],
+ "byCategory": {
+  "relationship": 2,
+  "knowledge": 2,
+  "world": 4,
+  "affordance": 1
+ },
+ "gateTrace": null,
+ "A": {
+  "hash": "c3ca1b4ee259",
+  "causal": "45e56f42dbfa"
+ },
+ "B": {
+  "hash": "b96dd797fde5",
+  "causal": "c2588d75fa58"
+ }
+}

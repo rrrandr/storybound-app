@@ -1,0 +1,30 @@
+{
+  "age": 28,
+  "ancestry": "Tamil",
+  "first_name": "Priya",
+  "last_name": "Krishnan",
+  "height": "5'6\", lean and proportioned",
+  "build": "dancer's build — defined shoulders, long legs, no excess",
+  "hair": "black, thick and wavy, usually worn in a single long braid down her back or twisted into a knot at the nape; she pulls it loose when she's thinking",
+  "complexion": "warm golden-brown with a slight olive undertone; a small dark mole on her left collarbone",
+  "face": "a mobile, expressive face — wide-set dark eyes that telegraph every emotion before her mouth catches up, high cheekbones, a full lower lip; the kind of face that makes lying impossible",
+  "signature_feature": "her hands — long-fingered, precise, with a slight tremor when she's overwhelmed; the left ring finger bears a thin silver band from her grandmother",
+  "second_celebrated_feature": "the hollow at the base of her throat, visible when she's stressed or breathing hard; the LI notices it before he should",
+  "signature_habits": [
+    "touches the silver ring on her left hand when anxious — a repetitive, unconscious gesture",
+    "hums fragments of Tamil film songs (paadal) while working, especially when concentrating",
+    "takes her tea with too much milk and no sugar, always in the same chipped ceramic cup",
+    "bites the inside of her cheek when she's lying or hiding something — a tell she cannot suppress",
+    "reorganizes her workspace when emotionally turbulent, moving things by millimeters until they feel 'right'"
+  ],
+  "occupation": "textile designer and owner of a small independent studio (Sutram Textiles) in the city; she sources traditional weaving techniques and creates contemporary fabrics for high-end interior designers and boutique fashion houses",
+  "current_crisis": {
+    "event": "her studio's primary investor — a venture capitalist she trusted — has abruptly pulled funding after discovering she rejected his business partner's aggressive acquisition offer; the studio has six weeks of operating capital left, her two employees' salaries are at risk, and she's being quietly blacklisted in her network",
+    "hottest_emotion": "panic threaded with shame — she feels she's failed the people who depend on her",
+    "immediate_want": "to find emergency funding without surrendering creative control or admitting publicly that she's drowning"
+  },
+  "wound": {
+    "core": "she believes that needing help is a failure of character — that self-sufficiency is the only proof of worth",
+    "surfacing_hint": "when cornered or vulnerable, she becomes hypercontrolling and refuses direct assistance; she'll spiral into catastrophizing before she'll ask for a hand"
+  }
+}

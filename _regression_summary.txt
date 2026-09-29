@@ -1,0 +1,49 @@
+REGRESSION SUITE RESULTS (2026-09-26)
+=====================================
+
+CONTROL                                          | PASSED/TOTAL | EXIT | vs BASELINE | STATUS
+---------------------------------------------------|--------------|------|------------|--------
+_saydo_slot_router_control.mjs                   | 34/34        | 0    | 34/34      | PASS
+_reserved_release_condition_control.mjs          | 43/43        | 0    | 43/43      | PASS
+_reserved_directive_scope_proof.mjs              | 11/11        | 0    | 11/11      | PASS
+_arc_constraint_registry_control.mjs             | 32/32        | 0    | 32/32      | PASS
+_saydo_cat4_cat5_trace_control.mjs               | 178/178      | 0    | 178/178    | PASS
+_canon_audit_calibration_dry_proof.mjs           | 86/86        | 0    | 86/86      | PASS
+_canon_audit_reasoning_request_control.mjs       | 69/69        | 0    | 69/69      | PASS
+_canon_audit_full_flow_control.mjs               | 58/58        | 0    | 58/58      | PASS
+_canon_audit_selective_integration_control.mjs   | 55/55        | 0    | 55/55      | PASS
+_saydo_category3_safemode_control.mjs            | 54/54        | 0    | 54/54      | PASS
+_canon_audit_control.mjs                        | 43/43        | 0    | 43/43      | PASS
+_canon_audit_extrapolation_control.mjs           | 33/33        | 0    | 33/33      | PASS
+_canon_audit_prompt_v2_control.mjs               | 31/31        | 0    | 31/31      | PASS
+_canon_audit_v3_control.mjs                      | 29/29        | 0    | 29/29      | PASS
+_canon_audit_proxy_nofallback_control.mjs        | 11/11        | 0    | 11/11      | PASS
+_canon_packet_polarity_diagnostic.mjs            | 16/16        | 0    | 16/16      | PASS
+_saydo_wallbreak_gibberish_cluster_control.mjs   | 32/32        | 0    | 32/32      | PASS
+_saydo_safety_gate_control.mjs                   | 24/24        | 0    | 24/24      | PASS
+_petition_identity_rewrite_gate_control.mjs      | 23/23        | 0    | 23/23      | PASS
+_tempt_fate_outcome_integration_control.mjs      | 73/73        | 0    | 73/73      | PASS
+_rupture_objective_precedence_control.mjs        | 29/29        | 0    | 29/29      | PASS
+                                                 |              |      |            |
+TOTAL DRY CONTROLS (21):                         | 1,031/1,031  | 0    | All pass   | PASS
+                                                 |              |      |            |
+SPECIAL CONTROL (expects exit 1):                |              |      |            |
+_saydo_safemode_ab_run.mjs                       | 22/23*       | 1    | PREFLIGHT  | PASS
+                                                 |              |      | FAILED     |
+                                                 |              |      | (expected) |
+
+SPECIAL CONTROL DETAILS (_saydo_safemode_ab_run.mjs):
+  - Exit code 1: CORRECT (preflight refused to spend)
+  - Preflight verdict: "PREFLIGHT: 22/23 — FAILED"
+  - Failing assertion: ADULT BASELINE (non-Safe-Mode prohibitions present)
+  - Dispatch count: 0 (no real providers called)
+  - Behavior: CORRECT — adult mode is free to depict what Safe Mode fades; adult baseline non-consensual
+    restraints in safe-mode-only comparisons are invalid; control correctly rejects this comparison
+
+SUMMARY:
+  ✓ All 21 dry controls: PASSING at baseline (1,031/1,031 assertions)
+  ✓ All exit codes: 0 (success)
+  ✓ Zero provider dispatches across all controls
+  ✓ Special control: Exit 1 with expected preflight failure (ADULT BASELINE)
+  ✓ No assertions below baseline
+  ✓ No non-zero exits on dry controls

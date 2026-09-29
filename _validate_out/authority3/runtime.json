@@ -1,0 +1,78 @@
+{
+ "violations": [],
+ "preflight": [],
+ "reports": [
+  {
+   "validator": "hot_opening",
+   "type": "OPENING_TEMPERATURE",
+   "ok": false,
+   "failures": [
+    "no_li_250"
+   ],
+   "renderedTemp": "COLD_DISRUPTION",
+   "inMotionHits": 0,
+   "containerOpener": false,
+   "evidence": "The fire had already reached the outer veil-curtains when Seren looked up from her kneeling place. The white foliage caught fast, and the heat pressed every First Favored forward even as their human wards and children stumbled behind them. I could not speak through the gossamer b"
+  },
+  {
+   "validator": "semantic_rewrite",
+   "type": "SEMANTIC_EDIT_REQUESTED",
+   "label": "scene1-edit",
+   "instruction": "EDIT this Scene 1 to reduce its LOAD — do NOT shorten the emotional scene, do NOT cut the ending. NEVER rename the protagonist or Julian (the love interest); they always keep their names. (1) SINGLE C"
+  },
+  {
+   "validator": "pc_picturability",
+   "type": "PC_PICTURABILITY_GAP",
+   "ok": false,
+   "evidence": "The Dohkar’s left thumb pressed once against the seam of his robe. Every First Favored in the clearing waited for the words that would either clear my name or seal the accusation already forming in their eyes. I opened my mouth to explain that the wish had never been mine to shap"
+  },
+  {
+   "validator": "semantic_rewrite",
+   "type": "SEMANTIC_EDIT_REQUESTED",
+   "label": "flavor-physics",
+   "instruction": "CRITICAL: This scene MUST express the world's defining mechanic.\nWorld flavor: Arcane Binding\nScene does not express flavor physics for \"arcane_binding\". Expected keywords: binding, spell, contract, g"
+  },
+  {
+   "validator": "semantic_rewrite",
+   "type": "SEMANTIC_EDIT_REQUESTED",
+   "label": "fate-consequence",
+   "instruction": "\n5TH-PERSON FATE VOICE ENFORCEMENT (CRITICAL — PREVIOUS OUTPUT FAILED):\n\nThe Story / Fate voice must be rewritten. Regenerate with these constraints:\n\n\nFATE MAY ONLY:\n- Observe (\"The story watched...\""
+  },
+  {
+   "validator": "semantic_rewrite",
+   "type": "SEMANTIC_EDIT_REQUESTED",
+   "label": "tension-gate",
+   "instruction": "TENSION REPAIR DIRECTIVE (CRITICAL — scene failed tension gate):\n1. Introduce immediate conflict in the first 1-2 lines — a demand, disruption, reveal, or emotional push directed at the player.\n2. Con"
+  },
+  {
+   "validator": "pc_picturability",
+   "type": "PC_PICTURABILITY_GAP",
+   "ok": false,
+   "evidence": "The threshold of the ritual ground held the weight of every footstep that had crossed it. The protective weave had torn, and cold air from beyond the clearing pressed against my skin while the question waited in the gap. I searched the crowd for Julian, needing the steadiness of "
+  },
+  {
+   "validator": "semantic_rewrite",
+   "type": "SEMANTIC_EDIT_REQUESTED",
+   "label": "engine-vocab",
+   "instruction": "The previous response referenced internal mechanics that must never appear in prose.\n\nHARD RULES:\n- Characters do NOT know about game mechanics — translate wishes into narrative desire, petitions into"
+  },
+  {
+   "validator": "semantic_rewrite",
+   "type": "SEMANTIC_EDIT_REQUESTED",
+   "label": "fate-consequence",
+   "instruction": "\n5TH-PERSON FATE VOICE ENFORCEMENT (CRITICAL — PREVIOUS OUTPUT FAILED):\n\nThe Story / Fate voice must be rewritten. Regenerate with these constraints:\n\n\nFATE MAY ONLY:\n- Observe (\"The story watched...\""
+  },
+  {
+   "validator": "semantic_rewrite",
+   "type": "SEMANTIC_EDIT_REQUESTED",
+   "label": "checklist",
+   "instruction": "The previous response contained structural violations. Regenerate with strict compliance.\n\nABSOLUTE RULES:\n- Zero engine vocabulary or meta-mechanical phrasing in prose\n- Zero developer/editorial tone"
+  },
+  {
+   "validator": "tension_gate",
+   "type": "LOW_TENSION",
+   "ok": false,
+   "evidence": "The threshold of the ritual ground held the weight of every footstep that had crossed it. The protective weave had torn, and cold air from beyond the clearing pressed against my skin while the question waited in the gap. I searched the crowd for Julian, needing the steadiness of "
+  }
+ ]
+}

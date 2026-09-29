@@ -1,0 +1,43 @@
+You are a precise line-editor, not a writer. You will be given a FINISHED scene and a specific problem to fix. Fix ONLY what the instruction names. Change NOTHING else — keep every other sentence VERBATIM, keep the paragraph structure, the opening line, the emotional intensity, and the FINAL line (including any closing decision/question/deck line). Do not add, cut, reorder, soften, or rewrite anything beyond the minimal change the instruction requires. Return the COMPLETE edited scene and nothing else.
+=====USER=====
+TENSION REPAIR DIRECTIVE (CRITICAL — scene failed tension gate):
+1. Introduce immediate conflict in the first 1-2 lines — a demand, disruption, reveal, or emotional push directed at the player.
+2. Convert passive observation into active interaction — the player must be doing or affected, not watching.
+3. Force another character or force to WANT something from the player RIGHT NOW (not abstract, not future).
+4. Introduce friction: social, emotional, physical, or power-based resistance that blocks easy resolution.
+5. Ensure outcome is uncertain — the reader cannot predict what happens next.
+EXPLICITLY FORBIDDEN: slow environmental openings, neutral narration, passive observation, abstract mood-setting, reported feelings without enacted tension.
+The scene must be un-skippable — removing it would break the story.
+
+FORCE INJECTION DIRECTIVE (FINAL ATTEMPT — scene has failed tension gate twice):
+The scene STILL lacks direct pressure on the player. This is the final regeneration.
+INJECT a line in the first 1-2 lines where a character directly demands something from the player or forces a response.
+Examples of forcing lines:
+- "Don't look away. I asked you something."
+- "You don't get to stay silent this time."
+- "Tell me where you stand — now."
+- "If you walk away, this ends here."
+This line MUST create immediate interpersonal pressure. The player cannot passively receive the scene.
+A character must be IN THE PLAYER'S SPACE demanding engagement within the first two sentences.
+
+SCENE 1 REWRITE: Begin with immediate confrontation or demand directed at the player. Eliminate ALL passive setup. The player must be involved from the first line. Another character must address, challenge, or physically engage the player in the first two sentences. No atmosphere. No description. No reflection. Action is already in progress.
+
+FAILURE REASONS:
+NO_ACTIVE_DESIRE: no character wants something NOW
+NO_RESISTANCE: nothing blocks the desire
+WEAK_OPENING: opening lacks both structural tension markers (speech / address / disruption verb) AND meaningful pressure (stakes / asymmetry / emotion / demand) — fully inert
+NO_EARLY_ANCHOR: no character reacts to or addresses the player within first 180 words
+
+=== THE FINISHED SCENE (apply ONLY the minimal fix above; return the whole scene, ending intact) ===
+
+The clearing and I stood at its edge, before the rite would begin.Seren named her sacrifice aloud and made the wish she had rehearsed, and Fate answered the words as spoken. The price was taken in the same breath. The assembly had gathered in a loose ring and no one spoke. I watched the light move across the ground and waited, and the waiting was its own kind of work. I kept my hands still because keeping them still was the only thing left that I could decide.
+
+The clearing and I stood at its edge, before the rite would begin.Seren named her sacrifice aloud and made the wish she had rehearsed, and Fate answered the words as spoken. The price was taken in the same breath. The assembly had gathered in a loose ring and no one spoke. I watched the light move across the ground and waited, and the waiting was its own kind of work. I kept my hands still because keeping them still was the only thing left that I could decide.
+
+The clearing and I stood at its edge, before the rite would begin.Seren named her sacrifice aloud and made the wish she had rehearsed, and Fate answered the words as spoken. The price was taken in the same breath. The assembly had gathered in a loose ring and no one spoke. I watched the light move across the ground and waited, and the waiting was its own kind of work. I kept my hands still because keeping them still was the only thing left that I could decide.
+
+The clearing and I stood at its edge, before the rite would begin.Seren named her sacrifice aloud and made the wish she had rehearsed, and Fate answered the words as spoken. The price was taken in the same breath. The assembly had gathered in a loose ring and no one spoke. I watched the light move across the ground and waited, and the waiting was its own kind of work. I kept my hands still because keeping them still was the only thing left that I could decide.
+
+The clearing and I stood at its edge, before the rite would begin.Seren named her sacrifice aloud and made the wish she had rehearsed, and Fate answered the words as spoken. The price was taken in the same breath. The assembly had gathered in a loose ring and no one spoke. I watched the light move across the ground and waited, and the waiting was its own kind of work. I kept my hands still because keeping them still was the only thing left that I could decide.
+
+The clearing and I stood at its edge, before the rite would begin.Seren named her sacrifice aloud and made the wish she had rehearsed, and Fate answered the words as spoken. The price was taken in the same breath. The assembly had gathered in a loose ring and no one spoke. I watched the light move across the ground and waited, and the waiting was its own kind of work. I kept my hands still because keeping them still was the only thing left that I could decide.

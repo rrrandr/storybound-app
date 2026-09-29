@@ -1,0 +1,17 @@
+{
+  "armState": {
+    "intimacyPhase": true,
+    "intimacyLevel": 4,
+    "contentMode": "safe"
+  },
+  "slot": {
+    "slot": "boundary",
+    "reason": "open, unretreating want made visible — the seed's own boundary frame",
+    "laneId": "family_accusation",
+    "sourceSlot": "boundary"
+  },
+  "dryArms": [
+    "full",
+    "safe"
+  ]
+}

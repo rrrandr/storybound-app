@@ -15,7 +15,7 @@
   },
   "st": {
     "blocked": {
-      "at": 1790270743338,
+      "at": 1790404755039,
       "sceneIndex": 1,
       "proposal": {
         "tactical_move": "Lirael steps back from the center of the clearing. — the presiding Dohkar sets a preliminary review date.",
@@ -32,11 +32,11 @@
           "target": "Seren's offered memory of the accusation"
         },
         "mechanism_grounding": "ordinary",
-        "acceptedAt": 1790270743009,
+        "acceptedAt": 1790404755032,
         "sceneNum": 1,
         "owner": {
-          "id": "cpa:36a1527d-e1e4-4b8a-b973-adbcadaef6b6",
-          "storyId": "flow-1790270742657",
+          "id": "cpa:4148ce5e-62bb-48ff-b487-3c0fcb823718",
+          "storyId": "flow-1790404754682",
           "sceneIndex": 1,
           "branch": null
         }
@@ -60,6 +60,11 @@
         "wt_5",
         "dc_0",
         "know_0",
+        "dc_1",
+        "dc_2",
+        "ev_0",
+        "ev_1",
+        "dur_0",
         "inv_0"
       ],
       "verdict": {
@@ -76,14 +81,32 @@
           }
         ],
         "paid": true,
+        "telemetry": {
+          "realizedUsd": 0.0053,
+          "costSource": "provider",
+          "upstreamAttempts": 1,
+          "resolvedModel": "grok-4.3",
+          "promptTokens": 3200,
+          "reasoningTokens": 0
+        },
         "reason": "unsupported_capability [neg_0]: the cited truth forecloses a visible or extractive operation on a mind"
       }
     },
     "lastAudit": {
-      "at": 1790270743338,
+      "at": 1790404755039,
       "sceneIndex": 1,
       "allow": false,
       "source": "audit",
+      "triggered": true,
+      "triggerReasons": [
+        "declared \"ordinary\" but the event text asserts a produced effect the deterministic check cannot see"
+      ],
+      "model": "grok-4.3",
+      "latencyMs": 4,
+      "realizedUsd": 0.0053,
+      "costSource": "provider",
+      "upstreamAttempts": 1,
+      "resolvedModel": "grok-4.3",
       "paid": true,
       "reason": "unsupported_capability [neg_0]: the cited truth forecloses a visible or extractive operation on a mind",
       "violations": [
@@ -95,6 +118,9 @@
           ],
           "why": "the cited truth forecloses a visible or extractive operation on a mind"
         }
+      ],
+      "citedFactIds": [
+        "neg_0"
       ],
       "auditErrors": null,
       "uncertainty": null

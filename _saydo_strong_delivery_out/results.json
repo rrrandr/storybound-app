@@ -1,0 +1,192 @@
+{
+  "results": [
+    {
+      "name": "a committed Say/Do gets the delivery rule",
+      "pass": true
+    },
+    {
+      "name": "action-only and dialogue-only both get it",
+      "pass": true
+    },
+    {
+      "name": "empty input gets nothing",
+      "pass": true
+    },
+    {
+      "name": "MUTUAL EXCLUSIVITY — a weak turn gets NOTHING from the strong rule",
+      "pass": true
+    },
+    {
+      "name": "...and the weak turn still gets the WEAK restraint, so weak input is not left unguarded",
+      "pass": true
+    },
+    {
+      "name": "...and the weak restraint stays silent on a strong move — exactly one rule is ever in force",
+      "pass": true
+    },
+    {
+      "name": "dialogue must reach the page as an UTTERANCE",
+      "pass": true
+    },
+    {
+      "name": "...and may NOT become an unspoken thought or an \"almost says\"",
+      "pass": true
+    },
+    {
+      "name": "...and must be RECEIVED by someone in the scene",
+      "pass": true
+    },
+    {
+      "name": "the act must occur, be attempted, prevented, refused, or interrupted ON THE PAGE",
+      "pass": true
+    },
+    {
+      "name": "...and may NOT be replaced by the WISH to do it — the adult arm's exact failure",
+      "pass": true
+    },
+    {
+      "name": "...nor by NOTICING THE PULL toward it — the adult arm's other exact phrase",
+      "pass": true
+    },
+    {
+      "name": "...nor by staying still while narration explains what she wanted instead",
+      "pass": true
+    },
+    {
+      "name": "A REFUSAL IS AN ACCEPTABLE ANSWER — the rule never forces the move to succeed",
+      "pass": true
+    },
+    {
+      "name": "an on-page interruption is acceptable, but never INSTEAD of showing the move",
+      "pass": true
+    },
+    {
+      "name": "IT DOES NOT MANUFACTURE CONSENT in either direction",
+      "pass": true
+    },
+    {
+      "name": "...and it does not license exceeding the scene's own depiction limits",
+      "pass": true
+    },
+    {
+      "name": "the retained adult prose contains NO uttered player line (the defect)",
+      "pass": true
+    },
+    {
+      "name": "...and renders the move as interiority instead",
+      "pass": true
+    },
+    {
+      "name": "...while the SAFE arm did utter it — proving the failure was not inevitable",
+      "pass": true
+    },
+    {
+      "name": "THE VALUE REACHES THE AUTHOR PAYLOAD for a strong move",
+      "pass": true
+    },
+    {
+      "name": "...and the whole directive is embedded verbatim, not paraphrased",
+      "pass": true
+    },
+    {
+      "name": "...and it is ABSENT from the author payload on a weak turn",
+      "pass": true
+    },
+    {
+      "name": "...while the weak turn still carries the WEAK restraint in the real payload",
+      "pass": true
+    },
+    {
+      "name": "NEVER BOTH AT ONCE in a real payload",
+      "pass": true
+    },
+    {
+      "name": "the PLANNER also receives it, appended to the same _scSys the weak rule uses",
+      "pass": true
+    },
+    {
+      "name": "...using the builder's own in-scope act/dia params, not playerAction/playerDialogue",
+      "pass": true
+    },
+    {
+      "name": "...and it is appended BEFORE the planner messages are assembled",
+      "pass": true
+    },
+    {
+      "name": "exactly ONE definition of the directive",
+      "pass": true
+    },
+    {
+      "name": "the slot router still routes the same input to boundary",
+      "pass": true
+    },
+    {
+      "name": "the reserved-canon guard still fires",
+      "pass": true
+    },
+    {
+      "name": "RED ADULT ARM — \"our child\" from THE PRESIDING DOHKAR is flagged",
+      "pass": true
+    },
+    {
+      "name": "RED SAFE ARM — an unnamed member introduced, then the line given to SEREN, is flagged",
+      "pass": true
+    },
+    {
+      "name": "RED SAFE ARM — a member placed BESIDE Seren, then Seren given the line, is flagged",
+      "pass": true
+    },
+    {
+      "name": "NEGATIVE — the family speaking its OWN possessive is clean",
+      "pass": true
+    },
+    {
+      "name": "NEGATIVE — Seren speaking her own line after her own narration is clean",
+      "pass": true
+    },
+    {
+      "name": "NEGATIVE — the Dohkar speaking his OWN procedural line is clean",
+      "pass": true
+    },
+    {
+      "name": "the detector is OBSERVATIONAL — it returns findings and rewrites nothing",
+      "pass": true
+    },
+    {
+      "name": "PREVENTION EXISTS TOO — the directive states how to attribute collective speech",
+      "pass": true
+    },
+    {
+      "name": "...it offers the two legitimate routes: a real member, or narration",
+      "pass": true
+    },
+    {
+      "name": "...and it does not invite inventing speaker names the roster would reject",
+      "pass": true
+    },
+    {
+      "name": "NEGATIVE — no declared group means NO directive, so other scenes are byte-identical",
+      "pass": true
+    },
+    {
+      "name": "THE VALUE REACHES THE AUTHOR PAYLOAD when a group is declared",
+      "pass": true
+    },
+    {
+      "name": "...and is absent when none is",
+      "pass": true
+    },
+    {
+      "name": "the collective context is HARVESTED from the row and the resolved lane, not left unset",
+      "pass": true
+    },
+    {
+      "name": "...and cleared in the same finally as the Say/Do stash",
+      "pass": true
+    },
+    {
+      "name": "zero provider dispatches",
+      "pass": true
+    }
+  ]
+}

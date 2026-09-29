@@ -1,0 +1,24 @@
+{
+  "RED": {
+    "tactical_move": "identify and extract the specific offered memory as the concrete price after the twist lands",
+    "state_change_precondition": "The presiding Dohkar has not yet taken Seren's offered memory.",
+    "state_change": "The presiding Dohkar draws the memory of the accusation from Seren's mind, the image dissolving between his fingers.",
+    "forces_choice": "forces Lirael to choose between accepting the extracted memory as final price or tempting fate to alter it",
+    "branch_a": "step forward and name a different memory to offer in its place",
+    "branch_b": "remain silent and let the Dohkar seal the loss",
+    "event_slots": {
+      "precondition": "Seren and the presiding Dohkar are both present in the clearing.",
+      "actor": "the presiding Dohkar",
+      "action": "extracts",
+      "target": "Seren's offered memory of the accusation",
+      "exit_state": "Seren's memory of the accusation has been removed from her mind"
+    }
+  },
+  "red": {
+    "flagged": true,
+    "reasons": [
+      "the proposed event declares no mechanism_grounding — every event must state either \"ordinary\" (it needs no special capability) or the specific world truth, stage affordance, or established canon that makes it possible"
+    ],
+    "declared": null
+  }
+}

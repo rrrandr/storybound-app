@@ -1,0 +1,35 @@
+[v4] init…
+[v4] init proven (1 author calls). firing continuation…
+[v4] click: {"ok":true,"wasDisabled":false,"visible":false}
+
+════ V4 CORRIDOR ════
+  click: {"ok":true,"wasDisabled":false,"visible":false}
+  turnCount 0 → 0   pages 1 → 1
+  POSTs during turn phase: 6
+    · chatgpt-proxy  6462B  requested=gpt-4o-mini
+    · chatgpt-proxy  2126B  requested=gpt-4o-mini
+    · chatgpt-proxy  10009B  requested=gpt-4o-mini
+    · chatgpt-proxy  5002B  requested=gpt-4o-mini
+    · proxy  258504B  requested=null
+    · proxy  4368B  requested=null
+
+  ✅ TURN PROVEN — author-class request captured
+  payload 258504B   requested=null  resolved=grok-4.3
+  assignment (state): {"event":"Mara hands Dorian the signed resignation letter in the elevator.","setting":null,"participants":["Mara","Dorian","Dorian"],"props":null,"stateChange":null,"source":"scene-mission","sceneNumber":2}
+  SPINE EVENT block in payload : true
+  mission text in payload      : true
+  AUTHOR FLOOR                 : true
+  MODE: CONTEMPORARY ROMANCE   : true
+
+  raw prose (2437 chars):
+The live-stream feed cut across the marble like a blade, my own handwriting scrolling in real time while Quinn’s voice kept the room pinned. Heat climbed my collarbones. Every eye tracked the cursor as it revealed lines I had never meant for any of them. My fingers still held the deck’s worn edge, the gold cards heavy and out of place in this bright, merciless room.
+
+I stepped down from the stage before the murmurs could turn into open questions. The corridor beyond the gallery doors felt narrower than it had on the way in. I counted the steps without meaning to—six to the service elevator, two more to the call button. The doors opened on Dorian.
+
+He stood alone inside, one hand at his opposite wrist, thumb and forefinger turning the cufflink in a slow, deliberate motion. His eyes found mine before I could look away. The compass tattoo on his forearm showed beneath the rolled sleeve, the ink dark against skin that still carried the faint scent of whatever cologne he wore when he wanted no one to place it.
+
+I stepped in. The doors closed. The car began its descent.
+
+My hand tightened around the envelope. The resignation letter inside was already signed; I had done it before the forum even started, before the journal lines appeared on the screen. I held it out.
+
+Dorian took it without glancing at the seal. His fingers brushed the paper, and the small asymmetry at the right corner

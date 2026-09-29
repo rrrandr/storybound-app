@@ -1,0 +1,415 @@
+[
+ {
+  "step": "1-boot",
+  "kind": "passthrough-continue",
+  "method": "POST",
+  "url": "/api/csp-report"
+ },
+ {
+  "step": "1-boot",
+  "kind": "config",
+  "method": "GET",
+  "url": "/api/config"
+ },
+ {
+  "step": "1-boot",
+  "kind": "passthrough-continue",
+  "method": "POST",
+  "url": "/api/csp-report"
+ },
+ {
+  "step": "1-boot",
+  "kind": "passthrough-continue",
+  "method": "GET",
+  "url": "/api/geo"
+ },
+ {
+  "step": "1-boot",
+  "kind": "passthrough-continue",
+  "method": "POST",
+  "url": "/api/csp-report"
+ },
+ {
+  "step": "1-boot",
+  "kind": "passthrough-continue",
+  "method": "POST",
+  "url": "/api/csp-report"
+ },
+ {
+  "step": "1-boot",
+  "kind": "supabase-generic",
+  "method": "GET",
+  "url": "http://sb-test.localhost/rest/v1/purchase_intents?select=*&user_id=eq.00000000-0000-0000-0000-000000000001&status=eq.completed&resumed_at=is.null&order=created_at.desc&limit=1"
+ },
+ {
+  "step": "1-boot",
+  "kind": "passthrough-continue",
+  "method": "POST",
+  "url": "/api/csp-report"
+ },
+ {
+  "step": "1-boot",
+  "kind": "supabase-generic",
+  "method": "GET",
+  "url": "http://sb-test.localhost/rest/v1/story_snapshots?select=story_id%2Cupdated_at%2Ctitle%2Crender_mode%3Asnapshot-%3E%3Erender_mode%2Cgraphic_style%3Asnapshot-%3E%3Egraphic_style%2Cback_cover_synopsis%3Asnapshot-%3E%3EbackCoverSynopsis%2Cgn_cover_url%3Asnapshot-%3EstateSnapshot-%3E%3EgnCoverUrl%2Ccover_image%3Asnapshot-%3EstateSnapshot-%3E%3EcoverImage%2Ccasting_player%3Asnapshot-%3EstateSnapshot-%3E%3EplayerName%2Ccasting_credit%3Asnapshot-%3EstateSnapshot-%3E%3EplaythroughCredit%2Cissue_number%3Asnapshot-%3EstateSnapshot-%3E%3EissueNumber%2Cissue_index%3Asnapshot-%3EstateSnapshot-%3E%3EissueIndexInRun%2Cissue_genesis%3Asnapshot-%3EstateSnapshot-%3E%3EissueIsGenesis%2Cissue_flavor%3Asnapshot-%3EstateSnapshot-%3E%3EissueFlavor%2Cworld_subtype%3Asnapshot-%3EstateSnapshot-%3E%3EworldSubtype%2Cpicks_world%3Asnapshot-%3EstateSnapshot-%3Epicks-%3E%3Eworld%2Ccliffhanger_pending%3Asnapshot-%3EstateSnapshot-%3E%3EcliffhangerPending%2Cnext_issue_number%3Asnapshot-%3EstateSnapshot-%3E%3EnextIssueNumber&profile_id=eq.00000000-0000-0000-0000-000000000001&order=updated_at.desc&limit=50"
+ },
+ {
+  "step": "1-boot",
+  "kind": "supabase-generic",
+  "method": "GET",
+  "url": "http://sb-test.localhost/rest/v1/story_snapshots?select=story_id%2Cupdated_at%2Ctitle%2Crender_mode%3Asnapshot-%3E%3Erender_mode%2Cgraphic_style%3Asnapshot-%3E%3Egraphic_style%2Cback_cover_synopsis%3Asnapshot-%3E%3EbackCoverSynopsis%2Cgn_cover_url%3Asnapshot-%3EstateSnapshot-%3E%3EgnCoverUrl%2Ccover_image%3Asnapshot-%3EstateSnapshot-%3E%3EcoverImage%2Ccasting_player%3Asnapshot-%3EstateSnapshot-%3E%3EplayerName%2Ccasting_credit%3Asnapshot-%3EstateSnapshot-%3E%3EplaythroughCredit%2Cissue_number%3Asnapshot-%3EstateSnapshot-%3E%3EissueNumber%2Cissue_index%3Asnapshot-%3EstateSnapshot-%3E%3EissueIndexInRun%2Cissue_genesis%3Asnapshot-%3EstateSnapshot-%3E%3EissueIsGenesis%2Cissue_flavor%3Asnapshot-%3EstateSnapshot-%3E%3EissueFlavor%2Cworld_subtype%3Asnapshot-%3EstateSnapshot-%3E%3EworldSubtype%2Cpicks_world%3Asnapshot-%3EstateSnapshot-%3Epicks-%3E%3Eworld%2Ccliffhanger_pending%3Asnapshot-%3EstateSnapshot-%3E%3EcliffhangerPending%2Cnext_issue_number%3Asnapshot-%3EstateSnapshot-%3E%3EnextIssueNumber&profile_id=eq.00000000-0000-0000-0000-000000000001&order=updated_at.desc&limit=50"
+ },
+ {
+  "step": "1-boot",
+  "kind": "passthrough-continue",
+  "method": "POST",
+  "url": "/api/csp-report"
+ },
+ {
+  "step": "1-boot",
+  "kind": "supabase-generic",
+  "method": "GET",
+  "url": "http://sb-test.localhost/rest/v1/library_bookmarks?select=story_id&user_id=eq.00000000-0000-0000-0000-000000000001"
+ },
+ {
+  "step": "1-boot",
+  "kind": "supabase-generic",
+  "method": "GET",
+  "url": "http://sb-test.localhost/rest/v1/library_bookmarks?select=story_id&user_id=eq.00000000-0000-0000-0000-000000000001"
+ },
+ {
+  "step": "1-boot",
+  "kind": "passthrough-continue",
+  "method": "POST",
+  "url": "/api/csp-report"
+ },
+ {
+  "step": "1-boot",
+  "kind": "supabase-generic",
+  "method": "GET",
+  "url": "http://sb-test.localhost/rest/v1/profile_achievements?select=achievement_key%2Cunlocked_at%2Cmetadata&profile_id=eq.00000000-0000-0000-0000-000000000001&order=unlocked_at.desc&limit=10"
+ },
+ {
+  "step": "1-boot",
+  "kind": "supabase-generic",
+  "method": "GET",
+  "url": "http://sb-test.localhost/rest/v1/profile_achievements?select=achievement_key%2Cunlocked_at%2Cmetadata&profile_id=eq.00000000-0000-0000-0000-000000000001&order=unlocked_at.desc&limit=10"
+ },
+ {
+  "step": "1-boot",
+  "kind": "passthrough-continue",
+  "method": "POST",
+  "url": "/api/csp-report"
+ },
+ {
+  "step": "1-boot",
+  "kind": "supabase-generic",
+  "method": "GET",
+  "url": "http://sb-test.localhost/rest/v1/story_alt_pov?select=original_story_id&user_id=eq.00000000-0000-0000-0000-000000000001&edition_type=eq.dual_secret_edition"
+ },
+ {
+  "step": "1-boot",
+  "kind": "supabase-generic",
+  "method": "GET",
+  "url": "http://sb-test.localhost/rest/v1/story_alt_pov?select=original_story_id&user_id=eq.00000000-0000-0000-0000-000000000001&edition_type=eq.dual_secret_edition"
+ },
+ {
+  "step": "2-library-entry",
+  "kind": "unmodeled-fallback",
+  "method": "GET",
+  "url": "/api/bug-report-awards"
+ },
+ {
+  "step": "2-library-entry",
+  "kind": "supabase-generic",
+  "method": "GET",
+  "url": "http://sb-test.localhost/rest/v1/story_snapshots?select=story_id%2Cupdated_at%2Ctitle%2Crender_mode%3Asnapshot-%3E%3Erender_mode%2Cgraphic_style%3Asnapshot-%3E%3Egraphic_style%2Cback_cover_synopsis%3Asnapshot-%3E%3EbackCoverSynopsis%2Cgn_cover_url%3Asnapshot-%3EstateSnapshot-%3E%3EgnCoverUrl%2Ccover_image%3Asnapshot-%3EstateSnapshot-%3E%3EcoverImage%2Ccasting_player%3Asnapshot-%3EstateSnapshot-%3E%3EplayerName%2Ccasting_credit%3Asnapshot-%3EstateSnapshot-%3E%3EplaythroughCredit%2Cissue_number%3Asnapshot-%3EstateSnapshot-%3E%3EissueNumber%2Cissue_index%3Asnapshot-%3EstateSnapshot-%3E%3EissueIndexInRun%2Cissue_genesis%3Asnapshot-%3EstateSnapshot-%3E%3EissueIsGenesis%2Cissue_flavor%3Asnapshot-%3EstateSnapshot-%3E%3EissueFlavor%2Cworld_subtype%3Asnapshot-%3EstateSnapshot-%3E%3EworldSubtype%2Cpicks_world%3Asnapshot-%3EstateSnapshot-%3Epicks-%3E%3Eworld%2Ccliffhanger_pending%3Asnapshot-%3EstateSnapshot-%3E%3EcliffhangerPending%2Cnext_issue_number%3Asnapshot-%3EstateSnapshot-%3E%3EnextIssueNumber&profile_id=eq.00000000-0000-0000-0000-000000000001&order=updated_at.desc&limit=50"
+ },
+ {
+  "step": "2-library-entry",
+  "kind": "supabase-generic",
+  "method": "GET",
+  "url": "http://sb-test.localhost/rest/v1/library_bookmarks?select=story_id&user_id=eq.00000000-0000-0000-0000-000000000001"
+ },
+ {
+  "step": "2-library-entry",
+  "kind": "supabase-generic",
+  "method": "GET",
+  "url": "http://sb-test.localhost/rest/v1/profile_achievements?select=achievement_key%2Cunlocked_at%2Cmetadata&profile_id=eq.00000000-0000-0000-0000-000000000001&order=unlocked_at.desc&limit=10"
+ },
+ {
+  "step": "2-library-entry",
+  "kind": "supabase-generic",
+  "method": "GET",
+  "url": "http://sb-test.localhost/rest/v1/story_alt_pov?select=original_story_id&user_id=eq.00000000-0000-0000-0000-000000000001&edition_type=eq.dual_secret_edition"
+ },
+ {
+  "step": "2-library-entry",
+  "kind": "passthrough-continue",
+  "method": "POST",
+  "url": "/api/beta-events"
+ },
+ {
+  "step": "2-library-entry",
+  "kind": "passthrough-continue",
+  "method": "POST",
+  "url": "/api/csp-report"
+ },
+ {
+  "step": "2-library-entry",
+  "kind": "supabase-generic",
+  "method": "POST",
+  "url": "http://sb-test.localhost/rest/v1/user_events"
+ },
+ {
+  "step": "2-library-entry",
+  "kind": "passthrough-continue",
+  "method": "POST",
+  "url": "/api/csp-report"
+ },
+ {
+  "step": "3-genesis-gate",
+  "kind": "local:/api/consume-fortune",
+  "method": "POST",
+  "url": "/api/consume-fortune"
+ },
+ {
+  "step": "3-genesis-gate",
+  "kind": "supabase-generic",
+  "method": "POST",
+  "url": "http://sb-test.localhost/rest/v1/user_events"
+ },
+ {
+  "step": "3-genesis-gate",
+  "kind": "supabase-generic",
+  "method": "POST",
+  "url": "http://sb-test.localhost/rest/v1/user_events"
+ },
+ {
+  "step": "3-genesis-gate",
+  "kind": "supabase-generic",
+  "method": "POST",
+  "url": "http://sb-test.localhost/rest/v1/user_events"
+ },
+ {
+  "step": "3-genesis-gate",
+  "kind": "passthrough-continue",
+  "method": "POST",
+  "url": "/api/csp-report"
+ },
+ {
+  "step": "3-genesis-gate",
+  "kind": "supabase-generic",
+  "method": "POST",
+  "url": "http://sb-test.localhost/rest/v1/story_snapshots?on_conflict=profile_id%2Cstory_id"
+ },
+ {
+  "step": "3-genesis-gate",
+  "kind": "passthrough-continue",
+  "method": "POST",
+  "url": "/api/csp-report"
+ },
+ {
+  "step": "3-genesis-gate",
+  "kind": "supabase-generic",
+  "method": "POST",
+  "url": "http://sb-test.localhost/rest/v1/user_events"
+ },
+ {
+  "step": "3-genesis-gate",
+  "kind": "supabase-generic",
+  "method": "GET",
+  "url": "http://sb-test.localhost/rest/v1/mouth_bank?select=urls&feature_key=eq.generic_male"
+ },
+ {
+  "step": "3-genesis-gate",
+  "kind": "passthrough-continue",
+  "method": "POST",
+  "url": "/api/beta-events"
+ },
+ {
+  "step": "4-checkpoint1-opener",
+  "kind": "passthrough-continue",
+  "method": "POST",
+  "url": "/api/csp-report"
+ },
+ {
+  "step": "4-checkpoint1-opener",
+  "kind": "supabase-generic",
+  "method": "POST",
+  "url": "http://sb-test.localhost/rest/v1/story_snapshots?on_conflict=profile_id%2Cstory_id"
+ },
+ {
+  "step": "4-checkpoint1-opener",
+  "kind": "supabase-generic",
+  "method": "GET",
+  "url": "http://sb-test.localhost/rest/v1/story_snapshots?select=story_id%2Cupdated_at%2Ctitle%2Crender_mode%3Asnapshot-%3E%3Erender_mode%2Cgraphic_style%3Asnapshot-%3E%3Egraphic_style%2Cback_cover_synopsis%3Asnapshot-%3E%3EbackCoverSynopsis%2Cgn_cover_url%3Asnapshot-%3EstateSnapshot-%3E%3EgnCoverUrl%2Ccover_image%3Asnapshot-%3EstateSnapshot-%3E%3EcoverImage%2Ccasting_player%3Asnapshot-%3EstateSnapshot-%3E%3EplayerName%2Ccasting_credit%3Asnapshot-%3EstateSnapshot-%3E%3EplaythroughCredit%2Cissue_number%3Asnapshot-%3EstateSnapshot-%3E%3EissueNumber%2Cissue_index%3Asnapshot-%3EstateSnapshot-%3E%3EissueIndexInRun%2Cissue_genesis%3Asnapshot-%3EstateSnapshot-%3E%3EissueIsGenesis%2Cissue_flavor%3Asnapshot-%3EstateSnapshot-%3E%3EissueFlavor%2Cworld_subtype%3Asnapshot-%3EstateSnapshot-%3E%3EworldSubtype%2Cpicks_world%3Asnapshot-%3EstateSnapshot-%3Epicks-%3E%3Eworld%2Ccliffhanger_pending%3Asnapshot-%3EstateSnapshot-%3E%3EcliffhangerPending%2Cnext_issue_number%3Asnapshot-%3EstateSnapshot-%3E%3EnextIssueNumber&profile_id=eq.00000000-0000-0000-0000-000000000001&order=updated_at.desc&limit=50"
+ },
+ {
+  "step": "4-checkpoint1-opener",
+  "kind": "supabase-generic",
+  "method": "GET",
+  "url": "http://sb-test.localhost/rest/v1/library_bookmarks?select=story_id&user_id=eq.00000000-0000-0000-0000-000000000001"
+ },
+ {
+  "step": "4-checkpoint1-opener",
+  "kind": "supabase-generic",
+  "method": "GET",
+  "url": "http://sb-test.localhost/rest/v1/profile_achievements?select=achievement_key%2Cunlocked_at%2Cmetadata&profile_id=eq.00000000-0000-0000-0000-000000000001&order=unlocked_at.desc&limit=10"
+ },
+ {
+  "step": "4-checkpoint1-opener",
+  "kind": "supabase-generic",
+  "method": "GET",
+  "url": "http://sb-test.localhost/rest/v1/story_alt_pov?select=original_story_id&user_id=eq.00000000-0000-0000-0000-000000000001&edition_type=eq.dual_secret_edition"
+ },
+ {
+  "step": "4-checkpoint1-opener",
+  "kind": "passthrough-continue",
+  "method": "POST",
+  "url": "/api/csp-report"
+ },
+ {
+  "step": "4-checkpoint1-opener",
+  "kind": "supabase-generic",
+  "method": "GET",
+  "url": "http://sb-test.localhost/rest/v1/story_snapshots?select=snapshot%2Cupdated_at&profile_id=eq.00000000-0000-0000-0000-000000000001&story_id=eq.116060a1-95f7-4971-ada7-d0ec18f1200a"
+ },
+ {
+  "step": "5-checkpoint23-normal-first-turn",
+  "kind": "oasDialogue",
+  "method": "POST",
+  "url": "/api/proxy",
+  "isChatgptProxy": false
+ },
+ {
+  "step": "5-checkpoint23-normal-first-turn",
+  "kind": "passthrough-continue",
+  "method": "POST",
+  "url": "/api/beta-events"
+ },
+ {
+  "step": "5-checkpoint23-normal-first-turn",
+  "kind": "supabase-generic",
+  "method": "POST",
+  "url": "http://sb-test.localhost/rest/v1/story_snapshots?on_conflict=profile_id%2Cstory_id"
+ },
+ {
+  "step": "5-checkpoint23-normal-first-turn",
+  "kind": "supabase-generic",
+  "method": "GET",
+  "url": "http://sb-test.localhost/rest/v1/story_snapshots?select=story_id%2Cupdated_at%2Ctitle%2Crender_mode%3Asnapshot-%3E%3Erender_mode%2Cgraphic_style%3Asnapshot-%3E%3Egraphic_style%2Cback_cover_synopsis%3Asnapshot-%3E%3EbackCoverSynopsis%2Cgn_cover_url%3Asnapshot-%3EstateSnapshot-%3E%3EgnCoverUrl%2Ccover_image%3Asnapshot-%3EstateSnapshot-%3E%3EcoverImage%2Ccasting_player%3Asnapshot-%3EstateSnapshot-%3E%3EplayerName%2Ccasting_credit%3Asnapshot-%3EstateSnapshot-%3E%3EplaythroughCredit%2Cissue_number%3Asnapshot-%3EstateSnapshot-%3E%3EissueNumber%2Cissue_index%3Asnapshot-%3EstateSnapshot-%3E%3EissueIndexInRun%2Cissue_genesis%3Asnapshot-%3EstateSnapshot-%3E%3EissueIsGenesis%2Cissue_flavor%3Asnapshot-%3EstateSnapshot-%3E%3EissueFlavor%2Cworld_subtype%3Asnapshot-%3EstateSnapshot-%3E%3EworldSubtype%2Cpicks_world%3Asnapshot-%3EstateSnapshot-%3Epicks-%3E%3Eworld%2Ccliffhanger_pending%3Asnapshot-%3EstateSnapshot-%3E%3EcliffhangerPending%2Cnext_issue_number%3Asnapshot-%3EstateSnapshot-%3E%3EnextIssueNumber&profile_id=eq.00000000-0000-0000-0000-000000000001&order=updated_at.desc&limit=50"
+ },
+ {
+  "step": "5-checkpoint23-normal-first-turn",
+  "kind": "supabase-generic",
+  "method": "GET",
+  "url": "http://sb-test.localhost/rest/v1/library_bookmarks?select=story_id&user_id=eq.00000000-0000-0000-0000-000000000001"
+ },
+ {
+  "step": "5-checkpoint23-normal-first-turn",
+  "kind": "supabase-generic",
+  "method": "GET",
+  "url": "http://sb-test.localhost/rest/v1/profile_achievements?select=achievement_key%2Cunlocked_at%2Cmetadata&profile_id=eq.00000000-0000-0000-0000-000000000001&order=unlocked_at.desc&limit=10"
+ },
+ {
+  "step": "5-checkpoint23-normal-first-turn",
+  "kind": "supabase-generic",
+  "method": "GET",
+  "url": "http://sb-test.localhost/rest/v1/story_alt_pov?select=original_story_id&user_id=eq.00000000-0000-0000-0000-000000000001&edition_type=eq.dual_secret_edition"
+ },
+ {
+  "step": "6-checkpoint5-normal-interruption",
+  "kind": "supabase-generic",
+  "method": "POST",
+  "url": "http://sb-test.localhost/rest/v1/story_snapshots?on_conflict=profile_id%2Cstory_id"
+ },
+ {
+  "step": "6-checkpoint5-normal-interruption",
+  "kind": "fatePreviews",
+  "method": "POST",
+  "url": "/api/mistral-proxy",
+  "isChatgptProxy": false
+ },
+ {
+  "step": "6-checkpoint5-normal-interruption",
+  "kind": "supabase-generic",
+  "method": "POST",
+  "url": "http://sb-test.localhost/rest/v1/story_snapshots?on_conflict=profile_id%2Cstory_id"
+ },
+ {
+  "step": "7-checkpoint6-post-interruption",
+  "kind": "supabase-generic",
+  "method": "POST",
+  "url": "http://sb-test.localhost/rest/v1/story_snapshots?on_conflict=profile_id%2Cstory_id"
+ },
+ {
+  "step": "7-checkpoint6-post-interruption",
+  "kind": "supabase-generic",
+  "method": "POST",
+  "url": "http://sb-test.localhost/rest/v1/story_snapshots?on_conflict=profile_id%2Cstory_id"
+ },
+ {
+  "step": "7-checkpoint6-post-interruption",
+  "kind": "supabase-generic",
+  "method": "GET",
+  "url": "http://sb-test.localhost/rest/v1/story_snapshots?select=story_id%2Cupdated_at%2Ctitle%2Crender_mode%3Asnapshot-%3E%3Erender_mode%2Cgraphic_style%3Asnapshot-%3E%3Egraphic_style%2Cback_cover_synopsis%3Asnapshot-%3E%3EbackCoverSynopsis%2Cgn_cover_url%3Asnapshot-%3EstateSnapshot-%3E%3EgnCoverUrl%2Ccover_image%3Asnapshot-%3EstateSnapshot-%3E%3EcoverImage%2Ccasting_player%3Asnapshot-%3EstateSnapshot-%3E%3EplayerName%2Ccasting_credit%3Asnapshot-%3EstateSnapshot-%3E%3EplaythroughCredit%2Cissue_number%3Asnapshot-%3EstateSnapshot-%3E%3EissueNumber%2Cissue_index%3Asnapshot-%3EstateSnapshot-%3E%3EissueIndexInRun%2Cissue_genesis%3Asnapshot-%3EstateSnapshot-%3E%3EissueIsGenesis%2Cissue_flavor%3Asnapshot-%3EstateSnapshot-%3E%3EissueFlavor%2Cworld_subtype%3Asnapshot-%3EstateSnapshot-%3E%3EworldSubtype%2Cpicks_world%3Asnapshot-%3EstateSnapshot-%3Epicks-%3E%3Eworld%2Ccliffhanger_pending%3Asnapshot-%3EstateSnapshot-%3E%3EcliffhangerPending%2Cnext_issue_number%3Asnapshot-%3EstateSnapshot-%3E%3EnextIssueNumber&profile_id=eq.00000000-0000-0000-0000-000000000001&order=updated_at.desc&limit=50"
+ },
+ {
+  "step": "7-checkpoint6-post-interruption",
+  "kind": "supabase-generic",
+  "method": "GET",
+  "url": "http://sb-test.localhost/rest/v1/library_bookmarks?select=story_id&user_id=eq.00000000-0000-0000-0000-000000000001"
+ },
+ {
+  "step": "7-checkpoint6-post-interruption",
+  "kind": "supabase-generic",
+  "method": "GET",
+  "url": "http://sb-test.localhost/rest/v1/profile_achievements?select=achievement_key%2Cunlocked_at%2Cmetadata&profile_id=eq.00000000-0000-0000-0000-000000000001&order=unlocked_at.desc&limit=10"
+ },
+ {
+  "step": "7-checkpoint6-post-interruption",
+  "kind": "supabase-generic",
+  "method": "GET",
+  "url": "http://sb-test.localhost/rest/v1/story_alt_pov?select=original_story_id&user_id=eq.00000000-0000-0000-0000-000000000001&edition_type=eq.dual_secret_edition"
+ },
+ {
+  "step": "8-checkpoint6-real-submit",
+  "kind": "supabase-generic",
+  "method": "POST",
+  "url": "http://sb-test.localhost/rest/v1/story_snapshots?on_conflict=profile_id%2Cstory_id"
+ },
+ {
+  "step": "8-checkpoint6-real-submit",
+  "kind": "supabase-generic",
+  "method": "POST",
+  "url": "http://sb-test.localhost/rest/v1/story_snapshots?on_conflict=profile_id%2Cstory_id"
+ },
+ {
+  "step": "8-checkpoint6-real-submit",
+  "kind": "scaffold",
+  "method": "POST",
+  "url": "/api/mistral-proxy",
+  "isChatgptProxy": false
+ },
+ {
+  "step": "8-checkpoint6-real-submit",
+  "kind": "sceneSpine",
+  "method": "POST",
+  "url": "/api/mistral-proxy",
+  "isChatgptProxy": false
+ },
+ {
+  "step": "8-checkpoint6-real-submit",
+  "kind": "cgScreenplay",
+  "method": "POST",
+  "url": "/api/mistral-proxy",
+  "isChatgptProxy": false
+ },
+ {
+  "step": "8-checkpoint6-real-submit",
+  "kind": "passthrough-continue",
+  "method": "POST",
+  "url": "/api/beta-events"
+ }
+]

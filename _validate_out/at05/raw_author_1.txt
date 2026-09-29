@@ -1,0 +1,52 @@
+[TITLE: "The First Fracture"]
+[SYNOPSIS: In the Veilwood's living cathedral, Lirael stands sealed as Sacrificiant over a girl's coming-of-age rite. When the prepared wish twists toward her own buried need, the assembly senses the misalignment and the cost begins to gather. The question is no longer whether the rite will hold, but what the witnesses will believe she sacrificed to make it break.]
+
+[CHARACTERS: Lirael:F, Julian:M, the youth:F]
+
+The youth lifted her head from the crimson spiralgrass. Her aqua skin caught the filtered light through the white veil-curtains, and her pale coral hair trembled against the mated trunks behind her. She spoke the rehearsed offering first, the one we had practiced until the words felt like breath.
+
+"I give the discipline to finish my studies and earn the right to train as a Sacrificiant."
+
+Her voice carried steady across the clearing. Two dozen First Favored stood barefoot in gossamer, Weave-Script drifting in soft tides across their many-hued skin. The presiding Dohkar watched with calm, four-pointed pupils. I felt the alignment hold, clean and expected, and my shoulders eased beneath the ceremonial sash.
+
+Then the youth looked at me.
+
+Her eyes found mine above the gossamer band sealing my mouth. The prepared words died. In their place she offered something new, something private I had once let slip during a late-night walk between the Spiralbound trees.
+
+"I give the discipline to finish my studies," she said, "so that Lirael may find the father who abandoned her."
+
+The clearing went still. The Dohkar's hands rose an inch from his sides. Every First Favored present felt the sour note at once—the sacrifice no longer matched the desire. I knew why before anyone else could name it. She had turned a training price into a personal gift, and the two things had never been meant to stand together.
+
+<<MICRO_EXPRESSION>>
+Say it plainly — or let it show without words?
+<<CONTINUE>>
+
+I could tear the band away and call the misalignment by name, or I could let my eyes carry the warning while the rite finished its course. The Weave-Script on my own skin flickered once, a brief harmonic loop of alarm I could not hide. The youth's face shone with the certainty that she had done something generous. She did not see the fracture she had just driven through the ceremony.
+
+Fate answered without spectacle. One of the assembled guests, a tall First Favored with silver script across his throat, turned toward me as if pulled by a thread he had not noticed until that moment.
+
+"Your father crossed the Ascendant Run three turnings ago," he said, voice low but clear enough for the nearest witnesses to hear. "He asked after a daughter named Lirael at the last river market."
+
+The words landed like ordinary conversation. They were not. The guest looked startled at his own mouth, as though the sentence had formed without his choosing. The youth's prepared sacrifice had bought an answer that belonged to no one present. The Dohkar's gaze moved from the youth to me and stayed there.
+
+The youth's hands went cold where they rested on her knees. Color drained from the lower curve of her irises, leaving the aqua paler, stranger, as if the hue itself had been drawn out and set aside. She blinked, confused, and the Weave-Script across her collarbone stuttered into staccato flickers. The room understood before she did. Someone had handed Fate a blank page.
+
+Whispers began at the edges of the clearing, soft but insistent. The inference was already forming: the Sacrificiant had been sealed, yet the wish had served her. I had moved toward the youth the instant the guest spoke, the band half-loose in my hand. To the witnesses it looked like interference. To them it looked like I had reached for the answer Fate delivered.
+
+Julian would have known what the movement cost me. He always went still before he spoke my name, the long black hair curtaining his slate-blue face as if he needed the moment to decide whether the word was safe to release. I could almost feel the weight of that stillness now, the way he would have measured the room and chosen silence over any defense that might draw more eyes.
+
+The Dohkar stepped forward. His voice remained level, but the Weave-Script on his wrists had already begun to dim.
+
+"The rite is concluded," he said. "The assembly will remain until the alignment is examined."
+
+The whispers thickened. I could feel the weight of their attention settling on my sealed mouth, on the single step I had taken, on the way the answer had arrived the moment I moved. The girl still knelt, her eyes paler, her hands colder, watching me as though waiting for the thanks she believed she had earned.
+
+Do I confront the whispers or retreat into silence and let them judge me?
+
+My hand tightened around my great-grandmother's old tarot deck. I didn't remember bringing it. I toyed with the idea of letting the cards decide.
+
+<<EXPANSION_A>>
+I met the Dohkar's eyes and named the misalignment before the whispers could harden into certainty.
+<<EXPANSION_B>>
+I held the Dohkar's gaze and let the flicker of my Weave-Script speak the truth I would not voice.
+<<END_EXPANSION>>

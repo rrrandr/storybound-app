@@ -1,0 +1,36 @@
+{
+  "repairs": [
+    {
+      "n": 1,
+      "text": "Dawn light sliced across the clearing, silvering the spiralgrass edges. I stood centered in the Sacrificiant's stiff linen sash, mouth-band biting into my jaw. This rite was mine alone for the first time, the offices of Dohkar, Chayr, and Provast hanging on every step. One misstep and those paths would seal shut before I reached them. The silent assembly watched, already weighing how much of my father remained in my stance."
+    },
+    {
+      "n": 2,
+      "text": "The band carried the scent of boiled hemp and salt. Cold air slid under the sash, touching bare skin at my waist with each breath. Witnesses ringed too close; I knew every face and which would remember any failure longest. My fingers traced the sash edge once, confirming its straight lay. Fear coiled in the gap between memorized words and the need to speak them under all those eyes."
+    },
+    {
+      "n": 3,
+      "text": "Seren knelt on the marked stone with spine straight and hands folded precisely as rehearsal had ingrained. The blue shift echoed the dawn shadows, folds impeccable. She held composure like a shield lifted so often it required no thought. From my vantage the small muscle at her temple remained tight despite her audience smile. That stillness made the clearing feel quieter still."
+    },
+    {
+      "n": 6,
+      "text": "Seren named the memory of her mother singing her to sleep before fever claimed the voice. The loss was intimate, the exact timbre of a lullaby shared solely between them. Her hands tightened on her knees as the words left, refusing to loosen. The cost struck true enough that the air around us held its breath over the absence."
+    },
+    {
+      "n": 7,
+      "text": "Julian stood at the gathering's outer edge, weight balanced evenly, space already his without claim. The Provast office rested on him plainly, the same rank my father once held and I still sought. He remained motionless, his quiet making every other motion in the clearing seem louder. I marked the line of his shoulders and how he chose a spot visible without turning heads."
+    },
+    {
+      "n": 8,
+      "text": "I turned my eyes away before the look extended into something the assembly might catch. That urge to watch him echoed from the first time he entered the rite's space; it arrived without call, leaving heat low in my throat. Attention returned to stone and girl, yet the sense of him stayed, running beneath the coming words."
+    },
+    {
+      "n": 10,
+      "text": "The invocation left Seren's mouth in measured cadence, each opening phrase placed as rehearsed. Fear under my ribs eased through those lines; the words held true and the clearing remained simple dawn light on grass. Behind the band I breathed and allowed the belief that the moment might stay intact."
+    },
+    {
+      "n": 13,
+      "text": "A dark seam tore open above Seren’s head and stretched straight toward my chest. It brought the odor of scorched linen and the low rip of threads; grass pressed flat where it passed. The seam aimed at the sash across my ribs. Its bright edge advanced, closing the distance before any witness could intervene."
+    }
+  ]
+}

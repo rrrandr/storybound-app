@@ -1,0 +1,24 @@
+{
+  "tactical_move": "shift confrontation from Julian's accusation to family demand for remedy, forcing Lirael to own her role publicly",
+  "local_objective": "Lirael remains in the rite space facing the assembly so that Seren's family can step forward and redirect the accusation onto her",
+  "state_change": "Seren's family steps out of the assembly and publicly demands remedy for what the wish cost Seren",
+  "state_change_precondition": "Seren's family has not yet stepped forward to demand remedy from Lirael",
+  "forces_choice": "forces Lirael to choose between claiming the interference openly and letting the assembly keep its assumption",
+  "event_slots": {
+    "precondition": "Lirael, Julian, Seren, the presiding Dohkar and the assembly are all present",
+    "actor": "Seren's family",
+    "action": "step out and publicly demand remedy",
+    "target": "Lirael",
+    "exit_state": "Seren's family has publicly accused Lirael of interference before the assembly",
+    "mechanism_grounding": "ordinary"
+  },
+  "mechanism_grounding": "ordinary",
+  "acceptedAt": 1790399768506,
+  "sceneNum": 1,
+  "owner": {
+    "id": "cpa:b028c6d9-eaef-4dff-bfb3-0c8a01dfb2d6",
+    "storyId": "live-safemode-full-1790399710620",
+    "sceneIndex": 1,
+    "branch": "remain"
+  }
+}

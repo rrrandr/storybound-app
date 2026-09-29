@@ -1,0 +1,130 @@
+STATE SET: {"world":"Modern","storyId":"litcascade-hrfeiw","renderMode":"literary","pacingMode":"RAPID","storyturn":"ST3","turnCount":6,"contentMode":"full","intimacyTurnsInWindow":2,"isIntimacyAllowedAtCurrentStoryturn":null}
+DECLARATION: {"declared":false,"killSwitch":false}
+
+CONSOLE:
+log: [CACHE:ROUTE] story=litcascade-hrfeiw turn=6 route=HEAVY builtHeavyFullSys=197592c sentSystem=197592c (HEAVY fullSys)
+log: [CASCADE] Anchor beat detected — cascade context stored, anchor words: 0 — bundle has plot grounding: true
+log: [DESC:LEDGER] issue=litcascade-hrfeiw:1 scene=1 · eyeColor=0/1 greySilver=0/1 widowsPeak=0/1 pcHair=0/1 chandelier/ballroom=0/2 galaEntrance=0/2 events=[] · this scene +{"liEyeColor":0,"liGreySilver":0,"widowsPeak":0,"pcHair":0,"chandeliersBallroom":0,"galaEntrance":0}
+log: [Supabase] Snapshot saved for story: litcascade-hrfeiw
+log: [CACHE:ROUTE] story=litcascade-hrfeiw turn=7 route=HEAVY builtHeavyFullSys=203351c sentSystem=203351c (HEAVY fullSys)
+log: [CASCADE] Fast path beat #1
+log: [CASCADE] Invitation type detected: pause | recent: [pause] | phase: build
+log: [DESC:LEDGER] issue=litcascade-hrfeiw:1 scene=2 · eyeColor=0/1 greySilver=0/1 widowsPeak=0/1 pcHair=0/1 chandelier/ballroom=0/2 galaEntrance=0/2 events=[] · this scene +{"liEyeColor":0,"liGreySilver":0,"widowsPeak":0,"pcHair":0,"chandeliersBallroom":0,"galaEntrance":0}
+log: [Supabase] Snapshot saved for story: litcascade-hrfeiw
+log: [CACHE:ROUTE] story=litcascade-hrfeiw turn=8 route=HEAVY builtHeavyFullSys=210283c sentSystem=210283c (HEAVY fullSys)
+log: [CASCADE] Fast path beat #2
+log: [CASCADE] Invitation type detected: pause | recent: [pause, pause] | phase: build
+log: [DESC:LEDGER] issue=litcascade-hrfeiw:1 scene=3 · eyeColor=0/1 greySilver=0/1 widowsPeak=0/1 pcHair=0/1 chandelier/ballroom=0/2 galaEntrance=0/2 events=[] · this scene +{"liEyeColor":0,"liGreySilver":0,"widowsPeak":0,"pcHair":0,"chandeliersBallroom":0,"galaEntrance":0}
+log: [Supabase] Snapshot saved for story: litcascade-hrfeiw
+log: [CACHE:ROUTE] story=litcascade-hrfeiw turn=9 route=HEAVY builtHeavyFullSys=208833c sentSystem=208833c (HEAVY fullSys)
+log: [CASCADE] Fast path beat #3
+log: [CASCADE] Invitation type detected: pause | recent: [pause, pause, pause] | phase: peak
+log: [DESC:LEDGER] issue=litcascade-hrfeiw:1 scene=4 · eyeColor=0/1 greySilver=0/1 widowsPeak=0/1 pcHair=0/1 chandelier/ballroom=0/2 galaEntrance=0/2 events=[] · this scene +{"liEyeColor":0,"liGreySilver":0,"widowsPeak":0,"pcHair":0,"chandeliersBallroom":0,"galaEntrance":0}
+log: [Supabase] Snapshot saved for story: litcascade-hrfeiw
+log: [CACHE:ROUTE] story=litcascade-hrfeiw turn=10 route=HEAVY builtHeavyFullSys=155418c sentSystem=155418c (HEAVY fullSys)
+log: [CASCADE] Fast path beat #4
+log: [CASCADE] Checkpoint at beat 4, 244w, phase=peak — standard continuation question
+log: [CASCADE] Invitation type detected: pause | recent: [pause, pause, pause, pause] | phase: peak
+log: [DESC:LEDGER] issue=litcascade-hrfeiw:1 scene=5 · eyeColor=0/1 greySilver=0/1 widowsPeak=0/1 pcHair=0/1 chandelier/ballroom=0/2 galaEntrance=0/2 events=[] · this scene +{"liEyeColor":0,"liGreySilver":0,"widowsPeak":0,"pcHair":0,"chandeliersBallroom":0,"galaEntrance":0}
+log: [Supabase] Snapshot saved for story: litcascade-hrfeiw
+log: [SHAPE:ONBOARD] literary scroll-gate armed (cascadeCount=4)
+log: [CACHE:ROUTE] story=litcascade-hrfeiw turn=11 route=HEAVY builtHeavyFullSys=154292c sentSystem=154292c (HEAVY fullSys)
+log: [CASCADE] User said TERMINATE — wrapping arc.
+log: [CASCADE] Termination triggered — returning to full orchestration
+log: [CASCADE] Anchor beat detected — cascade context stored, anchor words: 0 — bundle has plot grounding: true
+log: [DESC:LEDGER] issue=litcascade-hrfeiw:1 scene=6 · eyeColor=0/1 greySilver=0/1 widowsPeak=0/1 pcHair=0/1 chandelier/ballroom=0/2 galaEntrance=0/2 events=[] · this scene +{"liEyeColor":0,"liGreySilver":0,"widowsPeak":0,"pcHair":0,"chandeliersBallroom":0,"galaEntrance":0}
+log: [Supabase] Snapshot saved for story: litcascade-hrfeiw
+
+REQUEST ROWS:
+{"kind":"unclassified","url":"/api/proxy","role":"INTIMACY_SPECIALIST","model":null}
+{"kind":"authorMisc","url":"/api/chatgpt-proxy","role":"PRIMARY_AUTHOR","model":"gpt-4o-mini"}
+{"kind":"unclassified","url":"/api/chatgpt-proxy","role":"NORMALIZATION","model":"gpt-4o-mini"}
+{"kind":"unclassified","url":"/api/chatgpt-proxy","role":"BACK_COVER_SYNOPSIS","model":"gpt-4o-mini"}
+{"kind":"unclassified","url":"/api/chatgpt-proxy","role":"STRATEGY_PASS","model":"gpt-4o-mini"}
+{"kind":"sceneSpine","url":"/api/mistral-proxy","role":"STRUCTURE_GENERATOR","model":"mistral-small-latest"}
+{"kind":"authorControl","url":"/api/chatgpt-proxy","role":"PRIMARY_AUTHOR","model":"gpt-4o-mini"}
+{"kind":"sceneSpine","url":"/api/proxy","role":"STRUCTURE_GENERATOR","model":"grok-4-1-fast-reasoning"}
+{"kind":"author","url":"/api/proxy","role":"NARRATIVE_AUTHOR","model":"grok-4.3"}
+{"kind":"sceneSpine","url":"/api/proxy","role":"STRUCTURE_GENERATOR","model":"grok-4-1-fast-reasoning"}
+{"kind":"sd","url":"/api/proxy","role":"SD_AUTHOR","model":"grok-4-1-fast-reasoning"}
+{"kind":"renderer","url":"/api/proxy","role":"SCENE_RENDERER","model":"grok-4-1-fast-reasoning"}
+{"kind":"sceneSpine","url":"/api/proxy","role":"STRUCTURE_GENERATOR","model":"grok-4-1-fast-reasoning"}
+{"kind":"author","url":"/api/chatgpt-proxy","role":"PRIMARY_AUTHOR","model":"gpt-4o-mini"}
+{"kind":"sceneSpine","url":"/api/proxy","role":"STRUCTURE_GENERATOR","model":"grok-4-1-fast-reasoning"}
+{"kind":"unclassified","url":"/api/mistral-proxy","role":null,"model":"mistral-small-latest"}
+{"kind":"authorMisc","url":"/api/chatgpt-proxy","role":"PRIMARY_AUTHOR","model":"gpt-4o-mini"}
+{"kind":"unclassified","url":"/api/proxy","role":"SPECIALIST_RENDERER","model":"grok-4-1-fast-non-reasoning"}
+{"kind":"unclassified","url":"/api/mistral-proxy","role":"LINE_EDITOR","model":"mistral-small-latest"}
+{"kind":"authorMisc","url":"/api/chatgpt-proxy","role":"PRIMARY_AUTHOR","model":"gpt-4o-mini"}
+{"kind":"unclassified","url":"/api/proxy","role":"INTIMACY_SPECIALIST","model":null}
+{"kind":"unclassified","url":"/api/chatgpt-proxy","role":"BACK_COVER_SYNOPSIS","model":"gpt-4o-mini"}
+{"kind":"authorMisc","url":"/api/chatgpt-proxy","role":"PRIMARY_AUTHOR","model":"gpt-4o-mini"}
+{"kind":"unclassified","url":"/api/chatgpt-proxy","role":"NORMALIZATION","model":"gpt-4o-mini"}
+{"kind":"unclassified","url":"/api/chatgpt-proxy","role":"STRATEGY_PASS","model":"gpt-4o-mini"}
+{"kind":"sceneSpine","url":"/api/mistral-proxy","role":"STRUCTURE_GENERATOR","model":"mistral-small-latest"}
+{"kind":"renderer","url":"/api/proxy","role":"SCENE_RENDERER","model":"grok-4-1-fast-reasoning"}
+{"kind":"sceneSpine","url":"/api/proxy","role":"STRUCTURE_GENERATOR","model":"grok-4-1-fast-reasoning"}
+{"kind":"unclassified","url":"/api/proxy","role":"SPECIALIST_RENDERER","model":"grok-4-1-fast-non-reasoning"}
+{"kind":"authorMisc","url":"/api/chatgpt-proxy","role":"PRIMARY_AUTHOR","model":"gpt-4o-mini"}
+{"kind":"unclassified","url":"/api/proxy","role":"INTIMACY_SPECIALIST","model":null}
+{"kind":"unclassified","url":"/api/chatgpt-proxy","role":"BACK_COVER_SYNOPSIS","model":"gpt-4o-mini"}
+{"kind":"sceneSpine","url":"/api/proxy","role":"STRUCTURE_GENERATOR","model":"grok-4-1-fast-reasoning"}
+{"kind":"authorMisc","url":"/api/chatgpt-proxy","role":"PRIMARY_AUTHOR","model":"gpt-4o-mini"}
+{"kind":"unclassified","url":"/api/chatgpt-proxy","role":"NORMALIZATION","model":"gpt-4o-mini"}
+{"kind":"unclassified","url":"/api/chatgpt-proxy","role":"STRATEGY_PASS","model":"gpt-4o-mini"}
+{"kind":"sceneSpine","url":"/api/mistral-proxy","role":"STRUCTURE_GENERATOR","model":"mistral-small-latest"}
+{"kind":"renderer","url":"/api/proxy","role":"SCENE_RENDERER","model":"grok-4-1-fast-reasoning"}
+{"kind":"sceneSpine","url":"/api/proxy","role":"STRUCTURE_GENERATOR","model":"grok-4-1-fast-reasoning"}
+{"kind":"unclassified","url":"/api/proxy","role":"SPECIALIST_RENDERER","model":"grok-4-1-fast-non-reasoning"}
+{"kind":"authorMisc","url":"/api/chatgpt-proxy","role":"PRIMARY_AUTHOR","model":"gpt-4o-mini"}
+{"kind":"unclassified","url":"/api/proxy","role":"INTIMACY_SPECIALIST","model":null}
+{"kind":"unclassified","url":"/api/chatgpt-proxy","role":"BACK_COVER_SYNOPSIS","model":"gpt-4o-mini"}
+{"kind":"sceneSpine","url":"/api/proxy","role":"STRUCTURE_GENERATOR","model":"grok-4-1-fast-reasoning"}
+{"kind":"authorMisc","url":"/api/chatgpt-proxy","role":"PRIMARY_AUTHOR","model":"gpt-4o-mini"}
+{"kind":"unclassified","url":"/api/chatgpt-proxy","role":"NORMALIZATION","model":"gpt-4o-mini"}
+{"kind":"unclassified","url":"/api/chatgpt-proxy","role":"STRATEGY_PASS","model":"gpt-4o-mini"}
+{"kind":"sceneSpine","url":"/api/mistral-proxy","role":"STRUCTURE_GENERATOR","model":"mistral-small-latest"}
+{"kind":"renderer","url":"/api/proxy","role":"SCENE_RENDERER","model":"grok-4-1-fast-reasoning"}
+{"kind":"sceneSpine","url":"/api/proxy","role":"STRUCTURE_GENERATOR","model":"grok-4-1-fast-reasoning"}
+{"kind":"unclassified","url":"/api/proxy","role":"SPECIALIST_RENDERER","model":"grok-4-1-fast-non-reasoning"}
+{"kind":"authorMisc","url":"/api/chatgpt-proxy","role":"PRIMARY_AUTHOR","model":"gpt-4o-mini"}
+{"kind":"unclassified","url":"/api/proxy","role":"INTIMACY_SPECIALIST","model":null}
+{"kind":"unclassified","url":"/api/chatgpt-proxy","role":"BACK_COVER_SYNOPSIS","model":"gpt-4o-mini"}
+{"kind":"sceneSpine","url":"/api/proxy","role":"STRUCTURE_GENERATOR","model":"grok-4-1-fast-reasoning"}
+{"kind":"authorMisc","url":"/api/chatgpt-proxy","role":"PRIMARY_AUTHOR","model":"gpt-4o-mini"}
+{"kind":"unclassified","url":"/api/chatgpt-proxy","role":"NORMALIZATION","model":"gpt-4o-mini"}
+{"kind":"unclassified","url":"/api/chatgpt-proxy","role":"STRATEGY_PASS","model":"gpt-4o-mini"}
+{"kind":"sceneSpine","url":"/api/mistral-proxy","role":"STRUCTURE_GENERATOR","model":"mistral-small-latest"}
+{"kind":"authorMisc","url":"/api/chatgpt-proxy","role":"PRIMARY_AUTHOR","model":"gpt-4o-mini"}
+{"kind":"authorMisc","url":"/api/chatgpt-proxy","role":"PRIMARY_AUTHOR","model":"gpt-4o-mini"}
+{"kind":"sceneSpine","url":"/api/proxy","role":"STRUCTURE_GENERATOR","model":"grok-4-1-fast-reasoning"}
+{"kind":"unclassified","url":"/api/mistral-proxy","role":"PROMPT_PREPROCESSOR","model":"mistral-small-latest"}
+{"kind":"sceneSpine","url":"/api/proxy","role":"STRUCTURE_GENERATOR","model":"grok-4-1-fast-reasoning"}
+{"kind":"renderer","url":"/api/proxy","role":"SCENE_RENDERER","model":"grok-4-1-fast-reasoning"}
+{"kind":"unclassified","url":"/api/proxy","role":"SPECIALIST_RENDERER","model":"grok-4-1-fast-non-reasoning"}
+{"kind":"authorMisc","url":"/api/chatgpt-proxy","role":"PRIMARY_AUTHOR","model":"gpt-4o-mini"}
+{"kind":"unclassified","url":"/api/proxy","role":"INTIMACY_SPECIALIST","model":null}
+{"kind":"unclassified","url":"/api/chatgpt-proxy","role":"BACK_COVER_SYNOPSIS","model":"gpt-4o-mini"}
+{"kind":"authorMisc","url":"/api/chatgpt-proxy","role":"PRIMARY_AUTHOR","model":"gpt-4o-mini"}
+{"kind":"unclassified","url":"/api/chatgpt-proxy","role":"NORMALIZATION","model":"gpt-4o-mini"}
+{"kind":"unclassified","url":"/api/chatgpt-proxy","role":"STRATEGY_PASS","model":"gpt-4o-mini"}
+{"kind":"sceneSpine","url":"/api/mistral-proxy","role":"STRUCTURE_GENERATOR","model":"mistral-small-latest"}
+{"kind":"authorMisc","url":"/api/chatgpt-proxy","role":"PRIMARY_AUTHOR","model":"gpt-4o-mini"}
+{"kind":"authorMisc","url":"/api/chatgpt-proxy","role":"PRIMARY_AUTHOR","model":"gpt-4o-mini"}
+{"kind":"sceneSpine","url":"/api/proxy","role":"STRUCTURE_GENERATOR","model":"grok-4-1-fast-reasoning"}
+{"kind":"unclassified","url":"/api/mistral-proxy","role":"PROMPT_PREPROCESSOR","model":"mistral-small-latest"}
+{"kind":"sceneSpine","url":"/api/proxy","role":"STRUCTURE_GENERATOR","model":"grok-4-1-fast-reasoning"}
+{"kind":"authorControl","url":"/api/chatgpt-proxy","role":"PRIMARY_AUTHOR","model":"gpt-4o-mini"}
+{"kind":"author","url":"/api/proxy","role":"NARRATIVE_AUTHOR","model":"grok-4.3"}
+{"kind":"sd","url":"/api/proxy","role":"SD_AUTHOR","model":"grok-4-1-fast-reasoning"}
+{"kind":"renderer","url":"/api/proxy","role":"SCENE_RENDERER","model":"grok-4-1-fast-reasoning"}
+{"kind":"sceneSpine","url":"/api/proxy","role":"STRUCTURE_GENERATOR","model":"grok-4-1-fast-reasoning"}
+{"kind":"author","url":"/api/chatgpt-proxy","role":"PRIMARY_AUTHOR","model":"gpt-4o-mini"}
+{"kind":"sceneSpine","url":"/api/proxy","role":"STRUCTURE_GENERATOR","model":"grok-4-1-fast-reasoning"}
+{"kind":"unclassified","url":"/api/mistral-proxy","role":null,"model":"mistral-small-latest"}
+{"kind":"authorMisc","url":"/api/chatgpt-proxy","role":"PRIMARY_AUTHOR","model":"gpt-4o-mini"}
+{"kind":"unclassified","url":"/api/proxy","role":"SPECIALIST_RENDERER","model":"grok-4-1-fast-non-reasoning"}
+{"kind":"authorMisc","url":"/api/chatgpt-proxy","role":"PRIMARY_AUTHOR","model":"gpt-4o-mini"}
+{"kind":"unclassified","url":"/api/proxy","role":"INTIMACY_SPECIALIST","model":null}
+{"kind":"unclassified","url":"/api/chatgpt-proxy","role":"BACK_COVER_SYNOPSIS","model":"gpt-4o-mini"}
+{"kind":"authorMisc","url":"/api/chatgpt-proxy","role":"PRIMARY_AUTHOR","model":"gpt-4o-mini"}

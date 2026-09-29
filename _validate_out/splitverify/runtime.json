@@ -1,0 +1,36 @@
+{
+ "violations": [],
+ "preflight": [],
+ "reports": [
+  {
+   "validator": "hot_opening",
+   "type": "OPENING_TEMPERATURE",
+   "ok": false,
+   "failures": [
+    "no_li_250"
+   ],
+   "renderedTemp": "COLD_DISRUPTION",
+   "inMotionHits": 0,
+   "containerOpener": false,
+   "evidence": "The Dohkar’s voice cut across the clearing, low and steady. “Alignment holds?”\n\nI could not answer. The gossamer band across my mouth turned every breath into a muffled drag. My fingers twitched against the ceremonial sash, the only motion the rite allowed. Seren knelt on the cri"
+  },
+  {
+   "validator": "pc_picturability",
+   "type": "PC_PICTURABILITY_GAP",
+   "ok": false,
+   "evidence": "The Dohkar’s left foot shifted half an inch on the grass. I tasted the air without the band, raw and unfiltered, and heard the faint drag of a sandal across stone. The Weave-Script along my own throat flared once, a brief pulse of shame I could not hide.\n\n“I moved because the wis"
+  },
+  {
+   "validator": "semantic_rewrite",
+   "type": "SEMANTIC_EDIT_REQUESTED",
+   "label": "fate-consequence",
+   "instruction": "\n5TH-PERSON FATE VOICE ENFORCEMENT (CRITICAL — PREVIOUS OUTPUT FAILED):\n\nThe Story / Fate voice must be rewritten. Regenerate with these constraints:\n\n\nFATE MAY ONLY:\n- Observe (\"The story watched...\""
+  },
+  {
+   "validator": "semantic_rewrite",
+   "type": "SEMANTIC_EDIT_REQUESTED",
+   "label": "tension-gate",
+   "instruction": "TENSION REPAIR DIRECTIVE (CRITICAL — scene failed tension gate):\n1. Introduce immediate conflict in the first 1-2 lines — a demand, disruption, reveal, or emotional push directed at the player.\n2. Con"
+  }
+ ]
+}

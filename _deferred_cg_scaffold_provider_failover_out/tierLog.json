@@ -1,0 +1,22 @@
+[
+  {
+    "role": "scaffold",
+    "tier": "primary",
+    "provider": "mistral",
+    "model": "ministral-8b-2512",
+    "fallbackReason": null,
+    "attempt": 1,
+    "at": 1789712530189,
+    "storyId": "ba7bc703-e90a-48ae-ba54-49c38641d112"
+  },
+  {
+    "role": "scaffold",
+    "tier": "fallback",
+    "provider": "grok",
+    "model": "grok-4-1-fast-reasoning",
+    "fallbackReason": "mistral HTTP 500 {\"error\":\"stub_induced_mistral_failure_scaffold_only\",\"kind\":\"scaffold\"}",
+    "attempt": 2,
+    "at": 1789712530514,
+    "storyId": "ba7bc703-e90a-48ae-ba54-49c38641d112"
+  }
+]

@@ -1,0 +1,24 @@
+{
+  "age": 28,
+  "ancestry": "Tamil",
+  "first_name": "Priya",
+  "last_name": "Krishnan",
+  "height": "five foot four, compact and grounded",
+  "build": "lean and muscled from years of standing at a potter's wheel, collarbones sharp",
+  "hair": "black, thick and wavy, usually twisted into a loose knot at the nape with a few pieces always escaping",
+  "complexion": "warm medium brown with golden undertones, a small dark mole on her left temple she's never hidden",
+  "face": "a face that broadcasts everything—wide-set dark eyes that go liquid when she's moved, a mouth quick to curve or tremble, cheekbones high and prominent, the overall impression of someone still learning to live inside her own skin",
+  "signature_feature": "her hands—long-fingered, clay-stained at the cuticles even after washing, with a particular grace when she's thinking or reaching for something she wants",
+  "second_celebrated_feature": "the exact shade of her eyes in certain light—not black but deep warm brown with a rim of darker ink, capable of holding an entire conversation without her mouth moving",
+  "signature_habits": "she touches her own collarbone when nervous, a self-soothing gesture learned young; she speaks in half-finished sentences when excited, words tumbling ahead of thought; she hums while working—old Tamil film songs her grandmother taught her, the melodies surfacing without permission; she takes her coffee with too much cardamom and refuses to apologize for it",
+  "occupation": "owner of a small ceramics studio in the city—she throws and glazes her own pieces, teaches weekend classes, sells to high-end boutiques and restaurants, operates on thin margins and genuine love",
+  "current_crisis": {
+    "event": "her studio's landlord—a development company with billionaire backing—has served notice: the building is being demolished in ninety days for a luxury residential tower, and she has no capital to relocate or buy her way out",
+    "hottest_emotion": "panic threaded with a deeper, older shame—the feeling of being unmade, of watching something she built with her own hands get erased by forces she can't touch",
+    "immediate_want": "to find a way to save the studio, or barring that, to not fall apart in front of anyone who matters"
+  },
+  "wound": {
+    "core": "she believes she is too small, too soft, too particular to survive in a world built for people who can harden themselves and make brutal choices",
+    "surfacing_hint": "when cornered or afraid, she goes very still and quiet, her voice dropping to almost nothing, her hands curling inward—a retreat into herself that reads as fragility but is actually a kind of self-abandonment"
+  }
+}

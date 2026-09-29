@@ -1,0 +1,49 @@
+{
+  "route": "small",
+  "cap": 1,
+  "realDispatches": 1,
+  "capped": [],
+  "samples": [
+    {
+      "i": 1,
+      "mode": "seeded",
+      "planner": [
+        {
+          "status": 507,
+          "identity": {
+            "model": "mistral-small-latest",
+            "reasoning_effort_present": true,
+            "reasoning_effort": "none",
+            "response_format": {
+              "type": "json_object"
+            },
+            "max_tokens": 2921,
+            "messageBytes": 73501,
+            "reserve": 76422
+          },
+          "governorRefusal": {
+            "governor": true,
+            "error": "reservation_exceeds_model_allowance",
+            "terminal": true,
+            "retry_after_ms": null
+          },
+          "retryAfter": null,
+          "ms": 2896
+        }
+      ],
+      "retryReason": null,
+      "fatal": "scaffold transport failed, not retryable: scaffold refused by quota governor: reservation_exceeds_model_allowance",
+      "score": {
+        "computable": false,
+        "reason": "no resolved stage (aborted before resolution)"
+      },
+      "threw": null,
+      "settled": true,
+      "settleReason": "fatal",
+      "quotaBusy": null,
+      "fetchCount": 18,
+      "assignmentsDropped": null,
+      "grokAttemptsBlocked": 0
+    }
+  ]
+}

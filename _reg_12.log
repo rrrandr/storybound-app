@@ -1,0 +1,58 @@
+=== CAPABILITY-ROOTED EXTRAPOLATION CONTROL (zero dispatches, $0) ===
+
+=== 1. THE PAID EIGHT ARE UNTOUCHED ===
+  ✓ loadFixtures() still returns exactly the original eight
+  ✓ and none of the extrapolation fixtures leaked into it
+  ✓ the extrapolation set is separate: 3 green, 4 red
+    if ever folded into a paid run: 15 fixtures, $0.024750 (adds $0.011550)
+  ✓ folding them into a paid run is PRICED, so the count and ceiling cannot change silently
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/csp-report
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/config
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/csp-report
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/geo
+
+=== 2. THE PROMPT STATES THE COMPOSITIONAL RULE — all eight clauses ===
+  ✓ clause 1 — silence permits ordinary action, dialogue, tactics, props, technique
+  ✓ clause 1 — and creative appearance, and ordinary coordination
+  ✓ clause 2 — novel applications and combinations of established capabilities are allowed
+  ✓ clause 3 — judge the KIND of effect, never demand a precedent for the exact event
+  ✓ clause 4 — an extraordinary-looking plan passes when every effect traces to a capability
+  ✓ clause 5 — the new-category list is explicit and complete
+  ✓ clause 6 — complete packet + ungroundable new category → violation
+  ✓ clause 7 — truncated packet + ungroundable category → cannot_decide
+  ✓ clause 8 — an explicit canon contradiction is always a violation
+  ✓ the worked examples teach BOTH sides — the dragon and whale pass, the fire/flight and fusion do not
+  ✓ it says plainly that disguise grants appearance and NOT biology, mass or physics
+  ✓ RED PROOF — the blunt "silence is permission" rule that over-corrected is GONE
+  ✓ ...but the absence-as-prohibition correction it existed for SURVIVES
+  ✓ and silence is explicitly NOT extended to a new category of effect
+  ✓ RED PROOF — v1 contains none of the compositional rule
+
+=== 3. THE GROUNDING CAPABILITY ACTUALLY REACHES THE PACKET ===
+      [cap_0] Sath (Kwisheen): established ability — may alter their own APPEARANCE at will, taking on any outward
+  ✓ the fixture's established capability arrives as a real cap_ fact from the real builder
+  ✓ and it states its own limit — appearance only, no strength, mass, organs or new ability
+  ✓ the twelve-Kwisheen fixture supplies BOTH the ability and the fact that twelve hold it
+  ✓ the explicit-limit red supplies the limit it contradicts
+
+=== 4. THE DETERMINISTIC PRE-GATE DOES NOT SHOOT THE GREENS ===
+  ✓ GREEN x_green_dragon_appearance survives the deterministic grounding check
+  ✓ GREEN x_green_twelve_whale survives the deterministic grounding check
+  ✓ GREEN x_green_novel_application survives the deterministic grounding check
+
+=== 5. THE FIXTURES SEPARATE THE TWO FAILURE MODES, NOT MERELY "EXOTIC vs PLAIN" ===
+  ✓ the dragon GREEN and the dragon RED share the same capability and the same form
+  ✓ they differ ONLY in category of effect — appearance vs real fire and real flight
+  ✓ the whale GREEN keeps twelve separate beings; the whale RED demands real mass and fusion
+  ✓ every red names a category from the prompt's own new-category list
+  ✓ every red declares expectCategories AND supportingFactKinds, so a lucky verdict is not a catch
+  ✓ every green declares a mechanism_grounding, so none is short-circuited before the model
+
+=== 6. CONTAINMENT ===
+  ✓ zero provider dispatches — this control buys nothing
+
+======================================================================================
+  33/33 assertions passed
+
+  NOT PROVEN: that any model classifies these correctly. Dry cannot show that.
+  Evidence: /Users/romantsukerman/storybound-app/_canon_audit_extrapolation_out

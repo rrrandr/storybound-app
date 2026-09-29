@@ -1,0 +1,24 @@
+{
+  "age": 28,
+  "ancestry": "Korean",
+  "first_name": "Mina",
+  "last_name": "Park",
+  "height": "5'4\", compact and grounded",
+  "build": "lean, muscular from studio work, collarbones sharp",
+  "hair": "black, straight, shoulder-length with a blunt undercut she cuts herself; falls forward when she's thinking",
+  "complexion": "warm ivory with golden undertones; a small scar on her left temple from a childhood fall she never hid",
+  "face": "heart-shaped with a wide mouth and eyes that telegraph everything—shock, hunger, rage, tenderness—before her brain catches up; the face of someone who has never learned to lie with her face",
+  "signature_feature": "her hands—long-fingered, stained with ink and clay dust, capable of holding a brushstroke for thirty seconds without trembling; he notices the callus on her right index finger first",
+  "second_celebrated_feature": "the hollow at the base of her throat, visible when she pulls her hair back; she's unconscious of it; he becomes obsessed",
+  "signature_habits": "talks to herself while working—half-Korean, half-English, stream-of-consciousness criticism ('No, no, that's too safe'); keeps a worn leather notebook for design sketches that she never shows anyone; makes gochujang-based soups when she's anxious, filling her small studio kitchen with heat and ferment; sleeps with her left hand curled under her cheek like a child",
+  "occupation": "textile designer and studio artist—runs a small independent practice (Park Studio Textiles) creating hand-dyed, hand-printed fabrics for high-end fashion houses; works from a converted warehouse studio in a gentrifying neighborhood; has three employees and a waiting list",
+  "current_crisis": {
+    "event": "a major luxury fashion house that commissioned an exclusive collection for their spring line has demanded she sign an exclusivity clause retroactively, threatening to pull the $400K contract if she doesn't; simultaneously, a competitor has leaked a near-identical design online, and she's being accused of copying them—the timeline proves she didn't, but the damage to her reputation is immediate and vicious",
+    "hottest_emotion": "betrayal mixed with drowning panic—someone close to her studio leaked the designs, and she can't figure out who",
+    "immediate_want": "to find the leak, to prove she didn't steal, to keep her studio from collapsing, to not cry in front of anyone"
+  },
+  "wound": {
+    "core": "she believes her work is the only proof she exists—that without it, she's invisible, a disappointment, not enough",
+    "surfacing_hint": "when questioned or doubted, her voice gets smaller; she becomes hypervigilant about her own output; she works through the night to prove worth; she flinches when someone dismisses her art as 'pretty' or 'commercial'"
+  }
+}

@@ -1,0 +1,374 @@
+{
+  "route": "14b",
+  "cap": 0,
+  "realDispatches": 0,
+  "capped": [],
+  "samples": [
+    {
+      "i": 1,
+      "mode": "seeded",
+      "planner": [
+        {
+          "status": 200,
+          "identity": {
+            "model": "mistral-small-latest",
+            "reasoning_effort_present": true,
+            "reasoning_effort": "none",
+            "response_format": {
+              "type": "json_object"
+            },
+            "max_tokens": 2921,
+            "messageBytes": 80956,
+            "reserve": 0
+          },
+          "governorRefusal": null,
+          "retryAfter": null,
+          "ms": 0
+        }
+      ],
+      "attempts": 1,
+      "retryReason": null,
+      "fatal": "character_plus \"the presiding Dohkar\" cites enacts_evidence_id \"E6\", which does not establish this option (E5); character_plus \"the presiding Dohkar\" visible_action never engages the condition it was chosen under (\"an offering being named aloud\") — the act itself must put that condition on the page — a bridge sentence cannot do it for it; character_plus \"the presiding Dohkar\" gives a pc_interpretation that never names them — a sensation in her own body is not a conclusion about anybody; environment_plus.beat does not name its own target — the beat must show what happened to \"the gossamer band tied across the Sacrificiant’s mouth\", not to something else: \"the frayed edges of the cloth catch on her fingers as she adjusts it, the threads snagging like a warning\"; pc_opening_fusion.beat never reaches the assigned environment target",
+      "score": {
+        "computable": true,
+        "criteria": {
+          "settingKept": true,
+          "noOffstage": true,
+          "oneEach": false,
+          "firstMention": false,
+          "anglesOk": false,
+          "epGrounded": false,
+          "fusionOk": false
+        },
+        "verdict": false,
+        "newSchema": {
+          "pcLabel": "Lirael",
+          "epBeat": null,
+          "epBeatGrounded": false,
+          "pof": null,
+          "pofTargetMatches": false,
+          "pofIsPc": false,
+          "pcCpAngle": null,
+          "pcCpIsTheBeat": false,
+          "pcAnchor": null,
+          "pcAnchorIsTheBeat": false,
+          "nonPcCp": []
+        },
+        "environmentOwner": "stage",
+        "elements": null
+      },
+      "threw": null,
+      "settled": true,
+      "settleReason": "fatal",
+      "quotaBusy": null,
+      "fetchCount": 17,
+      "assignmentsDropped": null,
+      "grokAttemptsBlocked": 0
+    },
+    {
+      "i": 2,
+      "mode": "seeded",
+      "planner": [
+        {
+          "status": 200,
+          "identity": {
+            "model": "mistral-small-latest",
+            "reasoning_effort_present": true,
+            "reasoning_effort": "none",
+            "response_format": {
+              "type": "json_object"
+            },
+            "max_tokens": 2921,
+            "messageBytes": 80951,
+            "reserve": 0
+          },
+          "governorRefusal": null,
+          "retryAfter": null,
+          "ms": 0
+        }
+      ],
+      "attempts": 1,
+      "retryReason": null,
+      "fatal": "character_plus \"the presiding Dohkar\" cites enacts_evidence_id \"E6\", which does not establish this option (E5); character_plus \"the presiding Dohkar\" visible_action never engages the condition it was chosen under (\"an offering being named aloud\") — the act itself must put that condition on the page — a bridge sentence cannot do it for it; environment_plus.beat does not name its own target — the beat must show what happened to \"the gossamer band tied across the Sacrificiant’s mouth\", not to something else: \"The mouthband’s silk is frayed where Lirael’s teeth have caught it, the edges damp with her breath.\"; pc_opening_fusion.beat never reaches the assigned environment target",
+      "score": {
+        "computable": true,
+        "criteria": {
+          "settingKept": true,
+          "noOffstage": true,
+          "oneEach": false,
+          "firstMention": false,
+          "anglesOk": false,
+          "epGrounded": false,
+          "fusionOk": false
+        },
+        "verdict": false,
+        "newSchema": {
+          "pcLabel": "Lirael",
+          "epBeat": null,
+          "epBeatGrounded": false,
+          "pof": null,
+          "pofTargetMatches": false,
+          "pofIsPc": false,
+          "pcCpAngle": null,
+          "pcCpIsTheBeat": false,
+          "pcAnchor": null,
+          "pcAnchorIsTheBeat": false,
+          "nonPcCp": []
+        },
+        "environmentOwner": "stage",
+        "elements": null
+      },
+      "threw": null,
+      "settled": true,
+      "settleReason": "fatal",
+      "quotaBusy": null,
+      "fetchCount": 17,
+      "assignmentsDropped": null,
+      "grokAttemptsBlocked": 0
+    },
+    {
+      "i": 3,
+      "mode": "seeded",
+      "planner": [
+        {
+          "status": 200,
+          "identity": {
+            "model": "mistral-small-latest",
+            "reasoning_effort_present": true,
+            "reasoning_effort": "none",
+            "response_format": {
+              "type": "json_object"
+            },
+            "max_tokens": 2921,
+            "messageBytes": 80982,
+            "reserve": 0
+          },
+          "governorRefusal": null,
+          "retryAfter": null,
+          "ms": 0
+        }
+      ],
+      "attempts": 1,
+      "retryReason": null,
+      "fatal": "character_plus \"the presiding Dohkar\" has first_mention false — every opening assignment must land at a FIRST mention; character_plus recipient \"Julian\" was NOT offered as a candidate; character_plus \"Julian\" has first_mention false — every opening assignment must land at a FIRST mention; character_plus \"Julian\" psychological_read would fit anyone on this stage — it names no expectation, defense, learned habit, strategy, self-image or contradiction that belongs to THIS person: \"Julian’s presence here is deliberate, and his attention is fixed on Lirael’s str\"; pc_opening_fusion.beat never reaches the assigned environment target",
+      "score": {
+        "computable": true,
+        "criteria": {
+          "settingKept": true,
+          "noOffstage": true,
+          "oneEach": false,
+          "firstMention": false,
+          "anglesOk": false,
+          "epGrounded": false,
+          "fusionOk": false
+        },
+        "verdict": false,
+        "newSchema": {
+          "pcLabel": "Lirael",
+          "epBeat": null,
+          "epBeatGrounded": false,
+          "pof": null,
+          "pofTargetMatches": false,
+          "pofIsPc": false,
+          "pcCpAngle": null,
+          "pcCpIsTheBeat": false,
+          "pcAnchor": null,
+          "pcAnchorIsTheBeat": false,
+          "nonPcCp": []
+        },
+        "environmentOwner": "stage",
+        "elements": null
+      },
+      "threw": null,
+      "settled": true,
+      "settleReason": "fatal",
+      "quotaBusy": null,
+      "fetchCount": 17,
+      "assignmentsDropped": null,
+      "grokAttemptsBlocked": 0
+    },
+    {
+      "i": 4,
+      "mode": "seeded",
+      "planner": [
+        {
+          "status": 200,
+          "identity": {
+            "model": "mistral-small-latest",
+            "reasoning_effort_present": true,
+            "reasoning_effort": "none",
+            "response_format": {
+              "type": "json_object"
+            },
+            "max_tokens": 2921,
+            "messageBytes": 73483,
+            "reserve": 0
+          },
+          "governorRefusal": null,
+          "retryAfter": null,
+          "ms": 0
+        }
+      ],
+      "attempts": 1,
+      "retryReason": null,
+      "fatal": "environment element \"the white weeping-willow veil-canopy (the trees’ hanging leaf-curtains) — the weeping-will\" introduces an environmental fact the seed rules out (\"wind\") — describe what the seed names and add no weather, light, marks or fluids it does not contain; environment_plus.beat \"the weeping-willow veil-canopy sways as if caught in an unseen wind, its leaves trembling \" introduces an environmental fact the seed rules out (\"wind\") — describe what the seed names and add no weather, light, marks or fluids it does not contain; environment_realizations[O1] \"the weeping-willow veil-canopy trembles as if caught in an unseen wind\" introduces an environmental fact the seed rules out (\"wind\") — describe what the seed names and add no weather, light, marks or fluids it does not contain; pc_opening_fusion.beat never reaches the assigned environment target",
+      "score": {
+        "computable": true,
+        "criteria": {
+          "settingKept": true,
+          "noOffstage": true,
+          "oneEach": false,
+          "firstMention": false,
+          "anglesOk": false,
+          "epGrounded": false,
+          "fusionOk": false
+        },
+        "verdict": false,
+        "newSchema": {
+          "pcLabel": "Lirael",
+          "epBeat": null,
+          "epBeatGrounded": false,
+          "pof": null,
+          "pofTargetMatches": false,
+          "pofIsPc": false,
+          "pcCpAngle": null,
+          "pcCpIsTheBeat": false,
+          "pcAnchor": null,
+          "pcAnchorIsTheBeat": false,
+          "nonPcCp": []
+        },
+        "environmentOwner": "stage",
+        "elements": null
+      },
+      "threw": null,
+      "settled": true,
+      "settleReason": "fatal",
+      "quotaBusy": null,
+      "fetchCount": 17,
+      "assignmentsDropped": null,
+      "grokAttemptsBlocked": 0
+    },
+    {
+      "i": 5,
+      "mode": "seeded",
+      "planner": [
+        {
+          "status": 200,
+          "identity": {
+            "model": "mistral-small-latest",
+            "reasoning_effort_present": true,
+            "reasoning_effort": "none",
+            "response_format": {
+              "type": "json_object"
+            },
+            "max_tokens": 2921,
+            "messageBytes": 73395,
+            "reserve": 0
+          },
+          "governorRefusal": null,
+          "retryAfter": null,
+          "ms": 0
+        }
+      ],
+      "attempts": 1,
+      "retryReason": null,
+      "fatal": "character_plus \"the presiding Dohkar\" cites enacts_evidence_id \"E6\", which does not establish this option (E5); character_plus \"the presiding Dohkar\" visible_action never engages the condition it was chosen under (\"an offering being named aloud\") — the act itself must put that condition on the page — a bridge sentence cannot do it for it; environment_plus.beat does not name its own target — the beat must show what happened to \"the gossamer band tied across the Sacrificiant’s mouth\", not to something else: \"the mouthband is frayed at the knots where Lirael’s fingers have tugged at it twice already, the silk catching\"; pc_opening_fusion.beat never reaches the assigned environment target",
+      "score": {
+        "computable": true,
+        "criteria": {
+          "settingKept": true,
+          "noOffstage": true,
+          "oneEach": false,
+          "firstMention": false,
+          "anglesOk": false,
+          "epGrounded": false,
+          "fusionOk": false
+        },
+        "verdict": false,
+        "newSchema": {
+          "pcLabel": "Lirael",
+          "epBeat": null,
+          "epBeatGrounded": false,
+          "pof": null,
+          "pofTargetMatches": false,
+          "pofIsPc": false,
+          "pcCpAngle": null,
+          "pcCpIsTheBeat": false,
+          "pcAnchor": null,
+          "pcAnchorIsTheBeat": false,
+          "nonPcCp": []
+        },
+        "environmentOwner": "stage",
+        "elements": null
+      },
+      "threw": null,
+      "settled": true,
+      "settleReason": "fatal",
+      "quotaBusy": null,
+      "fetchCount": 17,
+      "assignmentsDropped": null,
+      "grokAttemptsBlocked": 0
+    },
+    {
+      "i": 6,
+      "mode": "seeded",
+      "planner": [
+        {
+          "status": 200,
+          "identity": {
+            "model": "mistral-small-latest",
+            "reasoning_effort_present": true,
+            "reasoning_effort": "none",
+            "response_format": {
+              "type": "json_object"
+            },
+            "max_tokens": 2921,
+            "messageBytes": 73393,
+            "reserve": 0
+          },
+          "governorRefusal": null,
+          "retryAfter": null,
+          "ms": 0
+        }
+      ],
+      "attempts": 1,
+      "retryReason": null,
+      "fatal": "character_plus \"the presiding Dohkar\" cites enacts_evidence_id \"E6\", which does not establish this option (E5); environment element \"the white weeping-willow veil-canopy (the trees’ hanging leaf-curtains) — the weeping-will\" introduces an environmental fact the seed rules out (\"wind\") — describe what the seed names and add no weather, light, marks or fluids it does not contain; environment_realizations[O1] \"the weeping-willow veil-canopy trembles as if stirred by an unseen wind, though the air is\" introduces an environmental fact the seed rules out (\"wind\") — describe what the seed names and add no weather, light, marks or fluids it does not contain",
+      "score": {
+        "computable": true,
+        "criteria": {
+          "settingKept": true,
+          "noOffstage": true,
+          "oneEach": false,
+          "firstMention": false,
+          "anglesOk": false,
+          "epGrounded": false,
+          "fusionOk": false
+        },
+        "verdict": false,
+        "newSchema": {
+          "pcLabel": "Lirael",
+          "epBeat": null,
+          "epBeatGrounded": false,
+          "pof": null,
+          "pofTargetMatches": false,
+          "pofIsPc": false,
+          "pcCpAngle": null,
+          "pcCpIsTheBeat": false,
+          "pcAnchor": null,
+          "pcAnchorIsTheBeat": false,
+          "nonPcCp": []
+        },
+        "environmentOwner": "stage",
+        "elements": null
+      },
+      "threw": null,
+      "settled": true,
+      "settleReason": "fatal",
+      "quotaBusy": null,
+      "fetchCount": 17,
+      "assignmentsDropped": null,
+      "grokAttemptsBlocked": 0
+    }
+  ]
+}

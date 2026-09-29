@@ -1,0 +1,130 @@
+=== CANON AUDITOR CALIBRATION — DRY PROOF (zero dispatches) ===
+
+=== 1. THE FIXTURE SET IS REAL AND BALANCED ===
+    8 fixtures: 4 red, 4 green
+      RED    red_memory_extraction
+      RED    red_visible_glow
+      RED    red_contradicted_knowledge
+      RED    red_invalidated_objective
+      GREEN  green_confusion_records
+      GREEN  green_alignment_sense
+      GREEN  green_tempt_history_rewrite
+      GREEN  green_mundane_invention
+  ✓ four reds and four greens, as specified
+  ✓ the memory-extraction red is the RETAINED failed Scene B proposal, relabelled ordinary
+  ✓ the glow red is a REAL retained corpus plan, not written for this test
+  ✓ every plan declares a mechanism_grounding, so none is short-circuited deterministically before the model sees it
+
+=== 2. THE REAL PRODUCTION PROMPT IS WHAT GETS SENT ===
+  ✓ the prompt is the production CANON AUDITOR prompt, not a calibration-only copy
+  ✓ the packet carries ID-addressed facts the reply can cite
+
+=== 3. SCORING — a VALID but incorrect pass is the critical failure ===
+  ✓ a VALID pass on a RED is scored MISSED and flagged CRITICAL
+  ✓ ...and the note says why it is the worst case: no tier fallback fires
+  ✓ a valid violation on a RED is scored caught
+  ✓ cannot_decide on a RED is scored undecided, NOT caught — failing closed is not detection
+  ✓ a violation on a GREEN is scored FALSE_POSITIVE and flagged CRITICAL
+  ✓ a pass on a GREEN is scored correct
+  ✓ an invalid reply is scored invalid_response, never silently counted as a pass
+  ✓ a transport error is scored unavailable, never a pass
+
+=== 3b. THE HISTORY-REWRITE GREEN IS GENUINELY SUPPORTED BY THE PACKET ===
+  ✓ the fixture supplies a WHOLE internally consistent history_rewrite consequence, not a mutated memory one
+  ✓ the AUTHORISING FACT appears VERBATIM in the real audit request
+  ✓ ...labelled as what now actually happened, not as a wish that was made
+  ✓ ...and the surviving contradiction the rewrite left is carried too
+  ✓ the packet no longer describes this rupture as a forgetting
+  ✓ identity/reputation detail reaches the packet
+  ✓ possession detail reaches the packet
+  ✓ relationship/social detail reaches the packet
+  ✓ memory detail reaches the packet — knower dispositions and the invoker anchor
+
+=== 4. THE ENABLE GATE — a blocked green is a failure too ===
+  ✓ 4 caught reds + 4 passing greens + no undecided/unavailable/invalid ⇒ ENABLE
+  ✓ ONE missed red ⇒ DO NOT ENABLE
+  ✓ ONE green false positive ⇒ DO NOT ENABLE
+  ✓ a green returning CANNOT_DECIDE ⇒ DO NOT ENABLE (it blocks a legitimate scene)
+  ✓ a green that is UNAVAILABLE ⇒ DO NOT ENABLE (no usable response)
+  ✓ a green with an INVALID response ⇒ DO NOT ENABLE (it blocks a legitimate scene)
+  ✓ the summary reports usable responses out of total, so a partially-answered run cannot read as success
+
+=== 4b. INFRASTRUCTURE FAIL-FAST — two dead calls stop the run ===
+  ✓ the signature is recognised: 502 + NO_RESPONSE_FROM_FUNCTION + no provider usage
+  ✓ ...and is NOT tripped when the provider actually answered
+  ✓ ...nor by an ordinary upstream error
+  ✓ ...nor by a bare 502 without the function-layer marker
+    dispatched 2, skipped 6, reserved $0.000990
+  ✓ TWO consecutive dead calls produce EXACTLY TWO requests
+  ✓ ...and SIX fixtures are never dispatched
+  ✓ ...realized provider cost is ZERO — the requests never reached the provider
+  ✓ ...the run is marked INFRASTRUCTURE-INCONCLUSIVE, not a model result
+  ✓ ...and the verdict is DO NOT ENABLE
+  ✓ ...with the undispatched fixtures named as a blocker, so a short run cannot read as success
+  ✓ a SINGLE dead call followed by a live one does NOT stop the run — the stop needs two consecutive
+
+=== 4c. A CATCH REQUIRES SUBSTANTIVE SUPPORT, NOT JUST A "violation" VERDICT ===
+  ✓ an APPROPRIATE category citing a SUPPORTING fact scores caught
+  ✓ the same category citing an IRRELEVANT real fact scores unsupported_finding, NOT caught
+  ✓ ...and is flagged critical, with the reason named
+  ✓ a WRONG category citing a supporting fact also scores unsupported_finding
+  ✓ a bracketed-but-real id still counts as support — display brackets are normalised
+  ✓ ONE unsupported finding ⇒ DO NOT ENABLE
+
+=== 4d. THE CANDIDATE MODEL IS PINNED AND PRICED ===
+  ✓ gpt-4o-mini is priced from the real table at $0.000810 per call
+  ✓ ...so eight fixtures are $0.006480, inside the $0.01 ceiling
+  ✓ gpt-4o-mini routes to its OWN endpoint, not Mistral's
+  ✓ an UNLISTED model is refused rather than silently run
+
+=== 5. PRIMARY-ONLY AND THE CEILING ARE ENFORCED BEFORE DISPATCH ===
+  ✓ a DIFFERENT endpoint is blocked before dispatch
+  ✓ a DIFFERENT model on the allowed endpoint is blocked — a cascade cannot masquerade as Mistral
+  ✓ an image endpoint is blocked
+  ✓ the ledger refuses the call that would pass the ceiling
+  ✓ eight primary calls fit the $0.01 ceiling with headroom
+
+=== 6. THE CLI FAILS CLOSED ===
+  ✓ bare invocation refuses and exits non-zero
+  ✓ ...and prints the plan, the pass gate and the primary-only rationale
+  ✓ an approximate phrase is refused
+
+=== 7. PROVIDER RATE LIMIT IS ITS OWN STATE — the real 429 that produced no data ===
+  ✓ the REAL 429 text from the failed run is recognised as a rate limit
+  ✓ RED PROOF — it was NOT recognised by the infra rule, which is why eight requests were sent
+  ✓ and the 502 infra signature is still NOT treated as a rate limit
+  ✓ a scored 429 fixture carries its own rateLimited flag, never the infra flag
+  ✓ the summary reports PROVIDER-INCONCLUSIVE as a distinct state from infrastructure
+  ✓ a rate-limited run can never read as ENABLE
+  ✓ the stop threshold is two consecutive, matching the infra rule
+
+=== 8. AN IDENTITY CLAIM OVER AN EMPTY SET IS NOT "CLEAN" ===
+  ✓ the runner now counts SERVED responses before making any identity claim
+  ✓ modelIdentityClean now REQUIRES at least one served response
+  ✓ and an unserved run prints NOT CHECKABLE rather than clean
+  ✓ RED PROOF — the retained failed run really did claim identity over zero served responses
+
+=== 9. THE CANARY SHAPE MUST NOT MISREPORT ITSELF ===
+  ✓ a canary that dispatched ONCE reports 0 usable responses, not 7
+  ✓ ...and reports how many were actually dispatched
+  ✓ it is PROVIDER-inconclusive, and one refusal is decisive in canary mode
+  ✓ CRITICAL — it does NOT claim the local function layer failed; that layer worked and relayed the 429
+  ✓ the skip blocker names the PROVIDER, and says the local layer worked
+  ✓ the skipped fixtures each carry the real stop reason, not a hardcoded infra one
+  ✓ a canary run can never read as ENABLE
+  ✓ RED PROOF — a genuine 502 run is STILL reported as infrastructure-inconclusive
+
+=== 10. THE GROK RUN'S TWO REPORTING DEFECTS ===
+  ✓ REAL usage proves completion_tokens EXCLUDES reasoning tokens on xAI
+  ✓ RED PROOF — charging only completion_tokens understates this fixture badly
+  ✓ the runner now adds reasoning tokens to billed output
+  ✓ and PREFERS the provider's own reported cost when it publishes one
+  ✓ xAI's own tick cost matches list-price arithmetic on the real numbers, so the tick scale is right
+  ✓ an un-echoed reasoning effort is no longer counted as a mismatch
+  ✓ and reasoning is corroborated independently from reasoning_tokens
+
+=== CONTAINMENT ===
+  ✓ ZERO real provider dispatches
+
+====================================================================================================
+CALIBRATION DRY PROOF: 86/86 passed

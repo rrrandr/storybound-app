@@ -1,0 +1,73 @@
+=== CANON AUDIT CONTROL (dry; zero provider dispatches; NO live auditor call) ===
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/csp-report
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/config
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/csp-report
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/geo
+    packet: 24 facts (10 negative), invalidated plans: 1
+
+=== 1. THE PACKET IS BUILT FROM THE STORY'S OWN CANON (req 2) ===
+  ✓ the packet carries NEGATIVE world truths — the ones a proposal can violate
+  ✓ ...including the one the failed Scene B walked through: a wish produces no visible effect
+  ✓ ...and the alignment-sense truth that forecloses mind-reading
+  ✓ the packet carries the committed consequence and its invalidatedPlans
+  ✓ every fact is ID-addressed so a finding can be resolved back to it (req 3, 5)
+
+=== 2. DETERMINISTIC FIRST — never pay for what is locally decidable (req 8) ===
+  ✓ the REAL Scene B proposal is rejected DETERMINISTICALLY — no auditor call needed at all
+  ✓ ...classified as unsupported_capability, with the local reason stated
+  ✓ a grounding citing NONEXISTENT canon ids is rejected locally, free
+  ✓ an ORDINARY event is NOT decided locally — it passes through to the semantic layer, unpaid so far
+  ✓ THE GATE refuses the real Scene B proposal WITHOUT paying (paid=false)
+  ✓ THE AUTHOR IS NEVER DISPATCHED for the retained Scene B red fixture
+
+=== 3. THE AUDIT PROMPT ASKS FOR CLASSIFICATION ONLY (reqs 3, 4) ===
+  ✓ it forbids rewriting, proposing prose, or saying what should happen instead (req 4)
+  ✓ it forbids inventing canon or using outside knowledge
+  ✓ it requires every violation to cite a supplied fact id (req 5)
+  ✓ it enumerates exactly the defined categories (req 3)
+  ✓ it protects ordinary creative invention explicitly — dialogue, movement, tactics, consequence
+  ✓ the packet declares completeness ONLY because nothing was actually omitted
+  ✓ ...and the packet reports its own truncation state rather than leaving it implicit
+
+=== 4. RESPONSE VALIDATION — fabricated citations and rewrite attempts (req 5, 4) ===
+  ✓ a well-formed, properly cited finding VALIDATES
+  ✓ a FABRICATED fact id fails validation (req 5)
+  ✓ a finding citing NOTHING fails validation
+  ✓ a finding quoting text that is NOT in the plan fails validation
+  ✓ an auditor that tries to REWRITE the plan fails validation (req 4)
+  ✓ an undefined category fails validation
+  ✓ KNOWN LIMIT — a REAL but logically IRRELEVANT citation still validates: the check proves the fact exists, not that it supports the finding
+      (cited [wt_0] "First Favored are hired to GUIDE and SUPERVISE the rite — their alignm…" to support a mind-extraction finding — accepted, because resolvable is not the same as grounded)
+
+=== 5. FAIL CLOSED — uncertainty never becomes approval (req 7) ===
+  ✓ verdict "cannot_decide" BLOCKS and preserves the plan for review
+  ✓ an INVALID audit response blocks too — a broken auditor is not an approval
+  ✓ a clean PASS allows the author
+
+=== 6. GREEN — ordinary invention stays possible (the narrow guarantee) ===
+  ✓ GREEN — dialogue: ordinary invention is allowed
+  ✓ GREEN — evidence: ordinary invention is allowed
+  ✓ GREEN — records: ordinary invention is allowed
+  ✓ GREEN — confusion: ordinary invention is allowed
+  ✓ GREEN — suspended: ordinary invention is allowed
+  ✓ GREEN — an EXPLICITLY ESTABLISHED supernatural capability (alignment-sense) passes
+
+=== 7. CROSS-STORY LEAKAGE AND HISTORY (reqs 8, 10) ===
+  ✓ a capability established in ANOTHER story does not ground an event in this one
+  ✓ a committed Tempt change is carried into the packet as canon, able to override an earlier present-world fact
+  ✓ ...and the packet records the declared rupture CLASS, so history is only reopened when a history_rewrite actually occurred
+
+=== 8. SEMANTIC REJECTION DOES NOT FALL THROUGH TO A MORE PERMISSIVE MODEL ===
+  ✓ the auditor passes NO opts.validateContent, so _callTieredProvider cannot cascade on a semantic rejection
+  ✓ a violation verdict RETURNS — it is never retried against the next tier
+
+=== 9. THE ROLE IS CENSUSED BEFORE IT CAN DISPATCH (req 9) ===
+  ✓ canonAudit is in the token census, the role ceiling, and the tier-model allowlist
+  ✓ ...and reserved on both scenes
+  ✓ no broad endpoint allowance — it uses the same default tier chain, declaring no opts.tiers override
+
+=== CONTAINMENT ===
+  ✓ ZERO provider dispatches — no live auditor call was made in this pass
+
+====================================================================================================
+CANON AUDIT CONTROL: 43/43 passed

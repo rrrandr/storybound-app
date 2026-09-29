@@ -1,0 +1,24 @@
+{
+  "age": 28,
+  "ancestry": "Persian",
+  "first_name": "Nasrin",
+  "last_name": "Kaviani",
+  "height": "5'6\", lean and graceful",
+  "build": "slender, defined shoulders from years of studio work, small-boned wrists",
+  "hair": "dark brown, almost black, thick and wavy, worn long past her shoulders; she twists it into a knot when concentrating, leaving loose tendrils around her face",
+  "complexion": "warm olive with golden undertones; a small crescent-shaped scar on her left collarbone from a childhood fall",
+  "face": "a face that lives in her expressions—high cheekbones, a full mouth that curves easily, dark eyes that telegraph every feeling before her brain catches up; she has the kind of face that makes strangers trust her immediately and then regret it when she cries in front of them",
+  "signature_feature": "her hands—long-fingered, stained perpetually with ink or clay dust, capable and restless; the way she moves them when she speaks is hypnotic",
+  "second_celebrated_feature": "the hollow at the base of her throat, visible when she pulls her hair back; it deepens when she swallows hard or when she's afraid",
+  "signature_habits": "she bites the inside of her cheek when thinking through a design problem; she hums fragments of Persian classical music (tar melodies her grandmother taught her) without realizing it; she keeps a small ceramic dish of dried rose petals on her studio desk and touches it for luck before client presentations; she always removes her shoes when entering someone's home, a gesture so automatic it reads as vulnerability",
+  "occupation": "textile and surface designer—owns a small independent studio in a converted warehouse, takes custom commissions for luxury interiors and fashion houses, sells limited-edition hand-dyed fabrics through a modest online presence",
+  "current_crisis": {
+    "event": "her studio's landlord has sold the building to a development firm; she has sixty days to vacate before demolition, and she cannot afford the commercial rent in any neighborhood where she can still operate; simultaneously, a major client (a billionaire's interior designer) has rejected her work mid-project, threatening to publicly critique her on a platform that matters",
+    "hottest_emotion": "panic—the kind that makes her stomach hollow and her thoughts scatter like startled birds",
+    "immediate_want": "to find a way to keep her studio alive and prove to herself (and the world) that her work is not disposable"
+  },
+  "wound": {
+    "core": "she believes that anything she builds will eventually be taken from her, that her creations are only ever borrowed, never truly hers",
+    "surfacing_hint": "when someone dismisses her work or when circumstances spiral beyond her control, she becomes very still and quiet, her eyes glassy; she begins mentally cataloging what she would save first if she had to abandon everything"
+  }
+}

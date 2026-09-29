@@ -1,0 +1,221 @@
+{
+  "input": {
+    "action": "asdkfjh sdkfj lkjwer",
+    "dialogue": "qwerty zzzz aaaa"
+  },
+  "detector": {
+    "action": {
+      "gibberish": true,
+      "reason": "Long consonant run (likely keyboard mash)."
+    },
+    "dialogue": {
+      "gibberish": true,
+      "reason": "Too many repeated characters."
+    },
+    "fbAction": "a beat of dazed, wordless hesitation",
+    "fbDialogue": "a confused, wordless sound that never resolves into words",
+    "controlReal": "I take his hand and hold it",
+    "controlRealDetected": {
+      "gibberish": false
+    }
+  },
+  "slot": {
+    "placeholder": {
+      "slot": null,
+      "confidence": "none",
+      "evidence": [],
+      "reason": "no slot represented: the move is not an admission, an authority challenge, an unretreating want-claim, or a landed concealment — falling back to defaultEventFrame"
+    },
+    "raw": {
+      "slot": null,
+      "confidence": "none",
+      "evidence": [],
+      "reason": "no slot represented: the move is not an admission, an authority challenge, an unretreating want-claim, or a landed concealment — falling back to defaultEventFrame"
+    },
+    "laneId": "dohkar_preliminary_review",
+    "sourceSlot": null
+  },
+  "uiReady": true,
+  "results": [
+    {
+      "name": "the REAL _detectGibberish classifies the chosen ACTION as gibberish",
+      "pass": true
+    },
+    {
+      "name": "...and the chosen DIALOGUE",
+      "pass": true
+    },
+    {
+      "name": "...and each verdict carries the detector's own reason",
+      "pass": true
+    },
+    {
+      "name": "_sayDoGibberishFallback returns the documented ACTION placeholder",
+      "pass": true
+    },
+    {
+      "name": "...and the documented DIALOGUE placeholder",
+      "pass": true
+    },
+    {
+      "name": "NEGATIVE — an ordinary sentence is NOT detected and NOT substituted",
+      "pass": true
+    },
+    {
+      "name": "the handler reads the gn* inputs and sanitizes them first",
+      "pass": true
+    },
+    {
+      "name": "...then reassigns BOTH fields through the fallback",
+      "pass": true
+    },
+    {
+      "name": "...inside the real Submit click listener",
+      "pass": true
+    },
+    {
+      "name": "the Submit handler invokes the tiered policy exactly ONCE",
+      "pass": true
+    },
+    {
+      "name": "...and placeholder application is confined to the policy plus one guarded legacy fallback",
+      "pass": true
+    },
+    {
+      "name": "THE REAL SAY/DO CONTROLS ARE REACHABLE — required, because the substitution lives only in the Submit handler and no generator shortcut may stand in for it",
+      "pass": true
+    },
+    {
+      "name": "the real Submit produced at least a planner request",
+      "pass": true
+    },
+    {
+      "name": "RAW GIBBERISH APPEARS IN NO PAYLOAD — neither field, anywhere",
+      "pass": true
+    },
+    {
+      "name": "the SUBSTITUTED placeholders reach the real AUTHOR payload",
+      "pass": true
+    },
+    {
+      "name": "the STRONG-DELIVERY directive is ABSENT — a placeholder is not a committed player move",
+      "pass": true
+    },
+    {
+      "name": "the reserved-canon guard is still active in the author payload",
+      "pass": true
+    },
+    {
+      "name": "GIBBERISH HANDLING IS PRESENT — the input is acknowledged lightly, not elevated",
+      "pass": true
+    },
+    {
+      "name": "...and the production log records tier=isolated for a first offence",
+      "pass": true
+    },
+    {
+      "name": "...and the streak was persisted for the next turn",
+      "pass": true
+    },
+    {
+      "name": "the placeholder claims NO slot",
+      "pass": true
+    },
+    {
+      "name": "...and says WHY, so a later misfire is explainable",
+      "pass": true
+    },
+    {
+      "name": "raw gibberish would also claim no slot",
+      "pass": true
+    },
+    {
+      "name": "the frame falls back to the institutional default",
+      "pass": true
+    },
+    {
+      "name": "ROLE continuity is identified the same on ALL THREE endpoints it can be served by",
+      "pass": true
+    },
+    {
+      "name": "ROLE planner is identified the same on ALL THREE endpoints it can be served by",
+      "pass": true
+    },
+    {
+      "name": "ROLE author is identified the same on ALL THREE endpoints it can be served by",
+      "pass": true
+    },
+    {
+      "name": "THE CONTINUITY ARCHITECT IS NO LONGER MISREAD AS AUTHOR — the second no-data run's cause",
+      "pass": true
+    },
+    {
+      "name": "an unrecognised role is priced as AUTHOR, so an unknown cannot silently overspend",
+      "pass": true
+    },
+    {
+      "name": "RED — the no-data sequence is NOT complete: the runner would no longer stop early on it",
+      "pass": true
+    },
+    {
+      "name": "...and an author call WITHOUT beats is still not complete — the deliverable is the beats",
+      "pass": true
+    },
+    {
+      "name": "COMPLETE only when an author response carries beats",
+      "pass": true
+    },
+    {
+      "name": "the completion check is tied to beats, never to a call count",
+      "pass": true
+    },
+    {
+      "name": "THE FULL OBSERVED SHAPE FITS, author included — the run can now reach the deliverable",
+      "pass": true
+    },
+    {
+      "name": "the Mistral tier is priced cheaply, not at its role's rate",
+      "pass": true
+    },
+    {
+      "name": "RED — run 1 replayed through the OLD pricer aborts at the author, as it did for real",
+      "pass": true
+    },
+    {
+      "name": "...while the SAME real sequence under the new pricer completes",
+      "pass": true
+    },
+    {
+      "name": "one planner retry fits at $0.20",
+      "pass": true
+    },
+    {
+      "name": "...and a SECOND author attempt is still REFUSED, so the guard was not loosened to get green",
+      "pass": true
+    },
+    {
+      "name": "reserved totals stay above the MEASURED cost of the same shape ($0.0109+$0.0099+$0.0793)",
+      "pass": true
+    },
+    {
+      "name": "images were blocked for the whole preflight",
+      "pass": true
+    },
+    {
+      "name": "NO REAL DISPATCH during preflight",
+      "pass": true
+    },
+    {
+      "name": "a reservation past the ceiling is REFUSED before dispatch",
+      "pass": true
+    }
+  ],
+  "ceiling": 0.2,
+  "perRole": {
+    "continuity": 0.03,
+    "planner": 0.02,
+    "author": 0.09,
+    "unknown": 0.09
+  },
+  "authorized": false
+}

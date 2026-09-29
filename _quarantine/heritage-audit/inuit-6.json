@@ -1,0 +1,24 @@
+{
+  "age": 28,
+  "ancestry": "Inuit",
+  "first_name": "Kiviuq",
+  "last_name": "Atanarjuat",
+  "height": "5'4\", compact and grounded",
+  "build": "lean-muscled, the kind that comes from movement rather than gyms",
+  "hair": "black, thick and straight, usually worn in a low braid or twisted knot at the nape",
+  "complexion": "warm golden-brown undertone, a small keloid scar on her left collarbone from a childhood accident",
+  "face": "a round face with high cheekbones and a wide mouth that moves constantly—smiling, frowning, speaking—incapable of hiding what she feels; her eyes are dark and direct, the kind that lock onto people and don't look away first",
+  "signature_feature": "the scar on her collarbone—thin, raised, silver-pale against her skin; the LI notices it first when her shirt shifts, and it becomes a geography he wants to map",
+  "second_celebrated_feature": "her hands—broad-palmed, strong-fingered, always slightly paint-stained or clay-dusted from her work; they move when she talks, and they're genuinely beautiful in motion",
+  "signature_habits": "she hums while concentrating, a low melodic thing her grandmother taught her; she drinks her coffee black and scalding, no matter the season; she touches her collarbone scar absently when anxious—a self-soothing gesture; she says 'Ajunngílaq' (it cannot be helped) when facing small frustrations, a phrase that slips out unselfconsciously",
+  "occupation": "ceramic artist and studio owner—she runs a small independent pottery studio in the city where she teaches classes, takes commissions, and sells her own work; the studio is her anchor",
+  "current_crisis": {
+    "event": "her landlord—a development company owned by a billionaire investor—has given her 90 days' notice; the building is being demolished for a luxury residential tower; she has no savings buffer, no backup location, and her studio equipment cannot be easily moved",
+    "hottest_emotion": "panic mixed with a raw, humiliating sense of powerlessness",
+    "immediate_want": "to find a way to save the studio, or at minimum to keep her hands working—the thought of not making ceramics feels like drowning"
+  },
+  "wound": {
+    "core": "she was raised to believe that stability and home are things you build with your own hands, and that loss means you failed to hold tight enough",
+    "surfacing_hint": "when threatened with displacement, she becomes frantically productive, working until her hands bleed, as if she can will permanence into existence through sheer effort; she also becomes defensive and refuses help, interpreting any offer of assistance as confirmation that she's not enough"
+  }
+}

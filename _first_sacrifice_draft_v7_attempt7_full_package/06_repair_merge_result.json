@@ -1,0 +1,13 @@
+{
+  "merged": true,
+  "errors": [],
+  "mergedValidation": {
+    "ok": false,
+    "violations": [
+      {
+        "rule": "scene1_insufficient_narration_density",
+        "detail": "only 9 of 16 narration/exposition beats are 60-90 words each (need at least 12) — a few long beats cannot cover for many thin ones; this is checked PER-BEAT, independent of the total-word floor"
+      }
+    ]
+  }
+}

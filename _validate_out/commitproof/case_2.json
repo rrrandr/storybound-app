@@ -1,0 +1,19 @@
+{
+  "case": "NEGATIVE — event omitted, scene otherwise plausible",
+  "raw": "{\n  \"delivery\": \"MISSED\",\n  \"slots_check\": {\n    \"precondition_evidence\": \"\",\n    \"actor_evidence\": \"\",\n    \"action_evidence\": \"\",\n    \"target_evidence\": \"\",\n    \"exit_state_evidence\": \"\",\n    \"occurred_this_scene\": false\n  }\n}",
+  "verdict": {
+    "id": "NEGATIVE — event omitted, scene otherwise plausible",
+    "expectCommit": false,
+    "commits": false,
+    "llmSaid": "MISSED",
+    "slotFail": true,
+    "sk": {
+      "precondition_evidence": "",
+      "actor_evidence": "",
+      "action_evidence": "",
+      "target_evidence": "",
+      "exit_state_evidence": "",
+      "occurred_this_scene": false
+    }
+  }
+}

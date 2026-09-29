@@ -1,0 +1,173 @@
+{
+  "at": "2026-09-09T04:20:42.250Z",
+  "mode": "E2E-LIVE",
+  "requestLimits": {
+    "planner": 2,
+    "author": 2
+  },
+  "plannerCalls": 1,
+  "authorCalls": 0,
+  "aborted": [],
+  "planner": [
+    {
+      "at": 1788927620247,
+      "url": "/api/proxy",
+      "role": "OPENING_PLANNER",
+      "model": "grok-4.3",
+      "effort": "none",
+      "rf": "json_object",
+      "max_tokens": 2400,
+      "sysBytes": 4283,
+      "usrBytes": 77874,
+      "status": 200,
+      "latencyMs": 17930,
+      "served": "grok-4.3",
+      "usage": {
+        "prompt_tokens": 19291,
+        "completion_tokens": 719,
+        "total_tokens": 20735,
+        "prompt_tokens_details": {
+          "text_tokens": 19291,
+          "audio_tokens": 0,
+          "image_tokens": 0,
+          "cached_tokens": 192
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 725,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        },
+        "num_sources_used": 0,
+        "cost_in_usd_ticks": 275221500
+      },
+      "orch": {
+        "role": "OPENING_PLANNER",
+        "model": "grok-4.3",
+        "isSpecialistRenderer": true,
+        "timestamp": "2026-09-09T04:20:38.171Z"
+      },
+      "rawReplyBytes": 2771,
+      "rawReplyFile": "_validate_out/scene1_measure_live.rawreply.2026-09-09T04-20-01-985Z.planner.1.txt",
+      "replyTopKeys": [
+        "opening_spine",
+        "scene_skeleton",
+        "stage_contract"
+      ],
+      "replySpineKeys": [
+        "pressure_source_type",
+        "pressure_source",
+        "hook_object",
+        "opening_actor_id",
+        "opening_beat",
+        "rising_beats",
+        "decision_beat",
+        "pc_career",
+        "opening_setting",
+        "environment_elements",
+        "li_texture_beat",
+        "pc_wound_anchor",
+        "pc_self_presentation_beat",
+        "scene_want",
+        "scene_mission",
+        "reader_state",
+        "pc_body_callback",
+        "antagonist_body_callback",
+        "staged_characters"
+      ],
+      "replySkeletonKeys": [
+        "character_plus",
+        "environment_plus",
+        "pc_opening_fusion"
+      ],
+      "stageContractAt": [
+        "top"
+      ]
+    }
+  ],
+  "author": [],
+  "cost": [
+    {
+      "role": "OPENING_PLANNER",
+      "status": 200,
+      "latencyMs": 17930,
+      "served": "grok-4.3",
+      "prompt_tokens": 19291,
+      "completion_tokens": 719,
+      "reasoning_tokens": 725,
+      "cached_tokens": 192,
+      "usd_list": 0.027723750000000005,
+      "xai_usd": 0.02752215,
+      "replyBytes": 2771,
+      "stageContractAt": [
+        "top"
+      ]
+    }
+  ],
+  "totalUsdList": 0.027723750000000005,
+  "totalXaiUsd": 0.02752215,
+  "gate": {
+    "authorAttempts": 0,
+    "pages": 0,
+    "fatal": "the opening is a one-person scene but 1 passage(s) put a second person in it: [SOLO_BODY] opening_spine.pc_self_presentation_beat — an unspecified person acting in the scene: \"someone who already knows\" — only the narrator is present. A second person may be remembered, anticipated, written to or feared; they may not speak, act, arrive or be waited on in this scene",
+    "verdict": "FAIL-CLOSED (named): the opening is a one-person scene but 1 passage(s) put a second person in it: [SOLO_BODY] opening_spine.pc_self_presentation_beat — an unspecified person acting in the scene: \"someone who already knows\" — only the narrator is present. A second person may be remembered, anticipated, written to or feared; they may not speak, act, arrive or be waited on in this scene"
+  },
+  "st": {
+    "fatal": "the opening is a one-person scene but 1 passage(s) put a second person in it: [SOLO_BODY] opening_spine.pc_self_presentation_beat — an unspecified person acting in the scene: \"someone who already knows\" — only the narrator is present. A second person may be remembered, anticipated, written to or feared; they may not speak, act, arrive or be waited on in this scene",
+    "pages": 0,
+    "genStage": true,
+    "mission": null,
+    "usage": {
+      "route": "/api/proxy",
+      "requested": "grok-4.3",
+      "effort": "none",
+      "served": "grok-4.3",
+      "usage": {
+        "prompt_tokens": 19291,
+        "completion_tokens": 719,
+        "total_tokens": 20735,
+        "prompt_tokens_details": {
+          "text_tokens": 19291,
+          "audio_tokens": 0,
+          "image_tokens": 0,
+          "cached_tokens": 192
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 725,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        },
+        "num_sources_used": 0,
+        "cost_in_usd_ticks": 275221500
+      },
+      "attempt": 1,
+      "at": 1788927638177
+    },
+    "attempts": 1,
+    "retryReason": null
+  },
+  "threw": null,
+  "refunds": [
+    {
+      "context": "refund_issue_purchase_literary",
+      "amount": 60
+    }
+  ],
+  "dialogs": [
+    "Fate stumbled — your story didn't start, so your Fortunes have been refunded. Please try again."
+  ],
+  "logs": [
+    "[SCENE1:STAGE:PLANNER-OWNED] unseeded Scene 1 — the opening planner must return scene_mission + stage_contract over 3 issued ref(s): [pc:self, ent:the one who draws them forward, plot:aplot_x3a_9039abd3_x2d_9030_x2d_432a_x2d_91e6_x2d_b11942139232:primary_antagonist]",
+    "[SCENE1:STAGE] source=planner-owned:pending settingOwner=planner presenceOwner=planner (PENDING — planner owns part of the stage) settingSource=planner-pending onStage=[Testa] offStage=[]",
+    "[SCENE1:PLANNER] eligible cast (1): [Testa] · chars=4340 → max_tokens=2400 (N_staged_max = N_eligible; staged_characters is an OUTPUT and never sizes the request)",
+    "[SCENE1:PLANNER:USAGE] {\"route\":\"/api/proxy\",\"requested\":\"grok-4.3\",\"effort\":\"none\",\"served\":\"grok-4.3\",\"usage\":{\"prompt_tokens\":19291,\"completion_tokens\":719,\"total_tokens\":20735,\"prompt_tokens_details\":{\"text_tokens\":19291,\"audio_tokens\":0,\"image_tokens\":0,\"cached_tokens\":192},\"completion_tokens_details\":{\"reasoning_tokens\":725,\"audio_tokens\":0,\"accepted_prediction_tokens\":0,\"rejected_prediction",
+    "[SCENE1:PLANNER:ATTEMPTS] 1 (no retry)",
+    "[SCENE1:ENVELOPE] spine contract declares 19 field(s)",
+    "[SCENE1:STAGE:PLANNER-OWNED] resolved — source=generated:planner_stage · on stage [Testa] · mission=\"rescue the batch before the entire morning's work is lost\"",
+    "[SCENE1:STAGE:RESOLVED] settingSource=planner.opening_setting WHERE=\"bakery kitchen\" onStage=[Testa]",
+    "[BeginStory] Error: Error: Scene 1 aborted: the opening is a one-person scene but 1 passage(s) put a second person in it: [SOLO_BODY] opening_spine.pc_self_presentation_beat — an unspecified person acting in the scene: \"someone who already knows\" — only the narrator is present. A second person may be remembered, anticipated, written to or feared; they may not speak, act, arrive or be waited on in ",
+    "[SPEND] +0.0275 USD (OPENING_PLANNER) cumulative 0.0275",
+    "[ISSUE-REFUND] refunded 60F. New balance: 9999"
+  ]
+}

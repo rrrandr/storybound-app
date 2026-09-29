@@ -1,0 +1,25 @@
+The ship's deck slick with rain caught the moonlight in fractured glints, turning each plank into a mirror of the rite's unresolved charge as I stepped forward to meet the Dohkar's claim head-on. My fingers worked the hem of my cloak in a restless rhythm, the fabric damp against my skin, while the Dohkar's raised hand held the circle open and the crowd's murmurs pressed closer. The artifact rested between us, its faint luminescence steady on the wet boards, and I spoke without hesitation, challenging the lineage they had named as if it settled every debt.
+
+The Dohkar regarded me with eyes that had seen too many first sacrifices, their voice even as they repeated the benefactor's hidden hand in my path. The rain thickened for a moment, a gust carrying salt and the distant roll of thunder that made every Favored on deck pause, heads turning toward the horizon before the moment passed. I held my ground, pressing for clarity on what the claim truly meant for the rite and for me.
+
+Julian stood to my left, his slate-blue skin marked by silver weave-script that shifted with each breath. His hand turned the ring on his finger, the metal catching light as he watched the exchange. His gaze flickered away from mine for half a heartbeat, a small betrayal of uncertainty that tightened something in my chest before he looked back.
+
+"This whole thing's holed, a massive prick of a situation."
+
+<<MICRO_EXPRESSION>>
+Is this something to lean into or something to move past?
+<<CONTINUE>>
+
+The words landed with that familiar skeptical warmth, testing the air between us without offering ground. I felt the low, rough laugh I could never quite suppress rise in my throat before I swallowed it down. The Dohkar's gaze flicked between us, the crowd edging nearer without crossing the circle.
+
+Julian's hand turned the ring again, slower this time. "Do you trust what they say about that benefactor, or are you hunting your own thread?"
+
+The Dohkar remained silent, their raised hand steady, while the rain drummed harder on the boards. I shifted my weight, heel lifting half an inch before settling flat again. The note from earlier lay between us, its edge caught on a splinter, the script still fresh from the moonlight. Julian's hand trembled once, the ring slipping from his finger's turn, and a small chain-warden seal tumbled free from his pocket to land beside the note, its etched links glinting wetly on the deck.
+
+The crowd stilled. The Dohkar's eyes moved to the seal without comment, the rite still held open. Julian's gaze returned to mine, the weave-script on his forearm catching the light where the gossamer had slipped, the long scar pale against slate-blue skin.
+
+"Will you face what fell, or look to them for what it means?"
+
+The question hung there, the Dohkar waiting, the seal and note between us on the rain-slick boards, the choice already pressing against the next breath I took.
+
+<!--sceneDuty: investigation | attraction: leaking-->

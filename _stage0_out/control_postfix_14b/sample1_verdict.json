@@ -1,0 +1,55 @@
+{
+  "stage": {
+    "ok": true,
+    "fault": null,
+    "source": "seed.sceneOne",
+    "settingOwner": "seed",
+    "presenceOwner": "seed",
+    "setting": "Dawn in a Veilwood ceremony clearing: the long white weeping-willow veil-canopy drapes down from the pale mated-pair trees (the \"veil\" is the trees’ hanging leaf-curtains — NOT fabric), the floor a deep-crimson carpet of braided mated-pair spiralgrass; roughly two dozen First Favored assembled — Seren’s family and guests, a many-hued people — barefoot in gossamer Veilweave. A solemn-but-festive coming-of-age mood: everyone expects the rite to end in celebration.",
+    "presentText": "SEREN, kneeling — the youth making her First Sacrifice. Lirael's ward: they have trained together for months and she can recite the rule she is about to break. Name her early and use the name; she is a character, not a role. A senior DOHKAR (never \"elder\" — First Favored are a professional order: Dohkar / Profer / Chayr) presiding over the rite. JULIAN at the edge of the gathering, perfectly still, here only as an observer. The assembled First Favored family and guests.",
+    "onStage": [
+      "Lirael",
+      "Julian",
+      "Seren",
+      "the presiding Dohkar"
+    ],
+    "offStage": []
+  },
+  "assignments": null,
+  "newSchema": {
+    "pcLabel": "Lirael",
+    "epBeat": null,
+    "epBeatGrounded": false,
+    "pof": null,
+    "pofTargetMatches": false,
+    "pofIsPc": false,
+    "pcCpAngle": null,
+    "pcCpIsTheBeat": false,
+    "pcAnchor": null,
+    "pcAnchorIsTheBeat": false,
+    "nonPcCp": []
+  },
+  "fatal": "environment_plus.beat \"The crushed grass where Seren knelt is stained with the faintest trace of her blood, where\" introduces an environmental fact the seed rules out (\"blood\") — describe what the seed names and add no weather, light, marks or fluids it does not contain; pc_opening_fusion.beat \"Lirael reaches for the veil-canopy’s trembling leaves, her fingers brushing the cold bark \" introduces an environmental fact the seed rules out (\"gust\") — describe what the seed names and add no weather, light, marks or fluids it does not contain; environment_plus.beat does not name its own target — the beat must show what happened to \"the deep-crimson braided spiralgrass carpet\", not to something else: \"The crushed grass where Seren knelt is stained with the faintest trace of her blood, where her hands clenched \"; pc_opening_fusion.environment_target does not match environment_plus.target — the opening may not point at two different things; pc_opening_fusion.environment_axis does not match environment_plus.axis; pc_opening_fusion.beat never reaches the assigned environment target; \"Seren\" is given an action in the opening beat AND a different first-mention beat in character_plus — the opening says \"Seren’s voice falters mid-invocation, her hands trembling as she glances at Lira\" and the C+ says \"Seren blurs the words of the sacrifice, her fingers trembling as she avoids nami\". A character cannot have two first appearances; if the opening stages them, the opening IS their C+ beat",
+  "attempts": 1,
+  "retryReason": null,
+  "usage": {
+    "prompt_tokens": 18022,
+    "total_tokens": 19448,
+    "completion_tokens": 1426,
+    "prompt_tokens_details": {
+      "cached_tokens": 0
+    },
+    "service_tier": "standard"
+  },
+  "finish": "stop",
+  "cost": 0.0035589000000000003,
+  "angleRejections": [],
+  "logs": [
+    "[SCENE1:LI-PRESENCE] the STAGE CONTRACT places the love interest on stage — forcing _scene1LIOnStage=true (authoritative over the engine pick; prevents the payload telling the author both that he is present and that he must not be)",
+    "[SCENE1:STAGE] source=seed.sceneOne settingOwner=seed presenceOwner=seed settingSource=seed onStage=[Lirael, Julian, Seren, the presiding Dohkar] offStage=[]",
+    "[SCENE1:PLANNER] eligible cast (4): [Lirael, Julian, Seren, the presiding Dohkar] · chars=7010 → max_tokens=2921 (N_staged_max = N_eligible; staged_characters is an OUTPUT and never sizes the request)",
+    "[SCENE1:PLANNER:ATTEMPTS] 1 (no retry)",
+    "[SCENE1:SKELETON:INVALID] 7 fault(s) — environment_plus.beat \"The crushed grass where Seren knelt is stained with the faintest trace of her blood, where\" introduces an environmental fact the seed rules out (\"blood\") — describe what the seed names and add no weather, light, marks or fluids it does no",
+    "[SCENE1:ABORT] opening planner produced an unusable skeleton — refusing to author Scene 1 without it: environment_plus.beat \"The crushed grass where Seren knelt is stained with the faintest trace of her blood, where\" introduces an environmental fact the seed rules out (\"blood\") — describe what the s"
+  ]
+}

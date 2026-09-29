@@ -1,0 +1,13 @@
+[preflight] output dir writable: _validate_out/baseline
+[baseline] SCENE 1 — real generation…
+  [author response 1] 2859 chars captured
+  scene 1 final: 2385 chars   spend=$0.171
+[baseline] SCENE 2 — real generation…
+  [author response 2] 4144 chars captured
+  scene 2 final: 2385 chars
+
+════ BASELINE CAPTURE ════
+  scene 1: 2385 chars   scene 2: 2385 chars
+  raw author responses captured: 2
+  total spend: $0.171
+  → _validate_out/baseline/scene1_final.txt · scene2_final.txt · raw_author_*.txt

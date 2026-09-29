@@ -1,0 +1,565 @@
+{
+  "points": [
+    {
+      "point": "0-after-mount",
+      "turnCount": 0,
+      "liveInvoked": false,
+      "liveWish": null,
+      "ledger": [],
+      "durable": 0,
+      "scenes": 0,
+      "callbackAge": null
+    },
+    {
+      "point": "1-after-decision",
+      "turnCount": 0,
+      "liveInvoked": false,
+      "liveWish": null,
+      "ledger": [],
+      "durable": 0,
+      "scenes": 0,
+      "callbackAge": null
+    },
+    {
+      "point": "2-after-wish-seal",
+      "turnCount": 0,
+      "liveInvoked": true,
+      "liveWish": "everyone forgets the ceremony happened",
+      "ledger": [
+        {
+          "id": "tfl_1",
+          "sceneIdx": 0,
+          "callbackCount": 0,
+          "lastCallbackScene": null
+        }
+      ],
+      "durable": 0,
+      "scenes": 0,
+      "callbackAge": 0
+    },
+    {
+      "point": "6-after-scene-persistence",
+      "turnCount": 1,
+      "liveInvoked": false,
+      "liveWish": null,
+      "ledger": [
+        {
+          "id": "tfl_1",
+          "sceneIdx": 0,
+          "callbackCount": 0,
+          "lastCallbackScene": null
+        }
+      ],
+      "durable": 1,
+      "scenes": 1,
+      "callbackAge": 1
+    }
+  ],
+  "trace": [
+    {
+      "at": 1790277638108,
+      "url": "/api/config",
+      "role": null,
+      "model": null,
+      "isClassifier": false,
+      "isAuthor": false,
+      "isPlanner": false,
+      "hasActive": false,
+      "hasCallback": false,
+      "activeWish": null,
+      "schemaAsksScope": false,
+      "schemaAsksClass": false,
+      "schemaClassConditional": false,
+      "schemaAsksInvalidatedPlans": false,
+      "hasDurable": false,
+      "mentionsWish": false,
+      "requiresOutcome": false,
+      "liveInvoked": false,
+      "liveWish": null,
+      "ledgerIds": [],
+      "ownedLedgerLast": null
+    },
+    {
+      "at": 1790277638291,
+      "url": "/api/geo",
+      "role": null,
+      "model": null,
+      "isClassifier": false,
+      "isAuthor": false,
+      "isPlanner": false,
+      "hasActive": false,
+      "hasCallback": false,
+      "activeWish": null,
+      "schemaAsksScope": false,
+      "schemaAsksClass": false,
+      "schemaClassConditional": false,
+      "schemaAsksInvalidatedPlans": false,
+      "hasDurable": false,
+      "mentionsWish": false,
+      "requiresOutcome": false,
+      "turnCount": 0,
+      "liveInvoked": false,
+      "liveWish": null,
+      "ledgerIds": [],
+      "ownedLedgerLast": null
+    },
+    {
+      "at": 1790277638319,
+      "url": "/api/proxy",
+      "role": "INTIMACY_SPECIALIST",
+      "model": null,
+      "isClassifier": false,
+      "isAuthor": false,
+      "isPlanner": false,
+      "hasActive": false,
+      "hasCallback": false,
+      "activeWish": null,
+      "schemaAsksScope": false,
+      "schemaAsksClass": false,
+      "schemaClassConditional": false,
+      "schemaAsksInvalidatedPlans": false,
+      "hasDurable": false,
+      "mentionsWish": false,
+      "requiresOutcome": false,
+      "turnCount": 0,
+      "liveInvoked": false,
+      "liveWish": null,
+      "ledgerIds": [],
+      "ownedLedgerLast": null
+    },
+    {
+      "at": 1790277645836,
+      "url": "/api/chatgpt-proxy",
+      "role": "PRIMARY_AUTHOR",
+      "model": "gpt-4o-mini",
+      "isClassifier": true,
+      "isAuthor": false,
+      "isPlanner": false,
+      "hasActive": false,
+      "hasCallback": false,
+      "activeWish": null,
+      "schemaAsksScope": false,
+      "schemaAsksClass": false,
+      "schemaClassConditional": false,
+      "schemaAsksInvalidatedPlans": false,
+      "hasDurable": false,
+      "mentionsWish": true,
+      "requiresOutcome": false,
+      "turnCount": 0,
+      "liveInvoked": true,
+      "liveWish": "everyone forgets the ceremony happened",
+      "ledgerIds": [
+        "tfl_1"
+      ],
+      "ownedLedgerLast": {
+        "id": "tfl_1",
+        "sceneIdx": 0,
+        "callbackCount": 0,
+        "lastCallbackScene": null
+      }
+    },
+    {
+      "at": 1790277646138,
+      "url": "/api/beta-events",
+      "role": null,
+      "model": null,
+      "isClassifier": false,
+      "isAuthor": false,
+      "isPlanner": false,
+      "hasActive": false,
+      "hasCallback": false,
+      "activeWish": null,
+      "schemaAsksScope": false,
+      "schemaAsksClass": false,
+      "schemaClassConditional": false,
+      "schemaAsksInvalidatedPlans": false,
+      "hasDurable": false,
+      "mentionsWish": false,
+      "requiresOutcome": false,
+      "turnCount": 0,
+      "liveInvoked": true,
+      "liveWish": "everyone forgets the ceremony happened",
+      "ledgerIds": [
+        "tfl_1"
+      ],
+      "ownedLedgerLast": {
+        "id": "tfl_1",
+        "sceneIdx": 0,
+        "callbackCount": 0,
+        "lastCallbackScene": null
+      }
+    },
+    {
+      "at": 1790277649219,
+      "url": "/api/mistral-proxy",
+      "role": "STRUCTURE_GENERATOR",
+      "model": "ministral-8b-2512",
+      "isClassifier": false,
+      "isAuthor": false,
+      "isPlanner": false,
+      "hasActive": false,
+      "hasCallback": false,
+      "activeWish": null,
+      "schemaAsksScope": false,
+      "schemaAsksClass": false,
+      "schemaClassConditional": false,
+      "schemaAsksInvalidatedPlans": false,
+      "hasDurable": false,
+      "mentionsWish": false,
+      "requiresOutcome": false,
+      "turnCount": 0,
+      "liveInvoked": true,
+      "liveWish": "everyone forgets the ceremony happened",
+      "ledgerIds": [
+        "tfl_1"
+      ],
+      "ownedLedgerLast": {
+        "id": "tfl_1",
+        "sceneIdx": 0,
+        "callbackCount": 0,
+        "lastCallbackScene": null
+      }
+    },
+    {
+      "at": 1790277649223,
+      "url": "/api/proxy",
+      "role": "STRUCTURE_GENERATOR",
+      "model": "grok-4-1-fast-reasoning",
+      "isClassifier": false,
+      "isAuthor": false,
+      "isPlanner": false,
+      "hasActive": false,
+      "hasCallback": false,
+      "activeWish": null,
+      "schemaAsksScope": false,
+      "schemaAsksClass": false,
+      "schemaClassConditional": false,
+      "schemaAsksInvalidatedPlans": false,
+      "hasDurable": false,
+      "mentionsWish": false,
+      "requiresOutcome": false,
+      "turnCount": 0,
+      "liveInvoked": true,
+      "liveWish": "everyone forgets the ceremony happened",
+      "ledgerIds": [
+        "tfl_1"
+      ],
+      "ownedLedgerLast": {
+        "id": "tfl_1",
+        "sceneIdx": 0,
+        "callbackCount": 0,
+        "lastCallbackScene": null
+      }
+    },
+    {
+      "at": 1790277649230,
+      "url": "/api/proxy",
+      "role": "STRUCTURE_GENERATOR",
+      "model": "grok-4-1-fast-non-reasoning",
+      "isClassifier": false,
+      "isAuthor": false,
+      "isPlanner": true,
+      "hasActive": true,
+      "hasCallback": false,
+      "activeWish": "everyone forgets the ceremony happened",
+      "schemaAsksScope": false,
+      "schemaAsksClass": false,
+      "schemaClassConditional": false,
+      "schemaAsksInvalidatedPlans": false,
+      "hasDurable": false,
+      "mentionsWish": true,
+      "requiresOutcome": false,
+      "turnCount": 1,
+      "liveInvoked": true,
+      "liveWish": "everyone forgets the ceremony happened",
+      "ledgerIds": [
+        "tfl_1"
+      ],
+      "ownedLedgerLast": {
+        "id": "tfl_1",
+        "sceneIdx": 0,
+        "callbackCount": 0,
+        "lastCallbackScene": null
+      }
+    },
+    {
+      "at": 1790277649258,
+      "url": "/api/proxy",
+      "role": "STRUCTURE_GENERATOR",
+      "model": "grok-4-1-fast-reasoning",
+      "isClassifier": false,
+      "isAuthor": true,
+      "isPlanner": false,
+      "hasActive": true,
+      "hasCallback": false,
+      "activeWish": "everyone forgets the ceremony happened",
+      "schemaAsksScope": false,
+      "schemaAsksClass": false,
+      "schemaClassConditional": false,
+      "schemaAsksInvalidatedPlans": false,
+      "hasDurable": false,
+      "mentionsWish": true,
+      "requiresOutcome": false,
+      "turnCount": 1,
+      "liveInvoked": true,
+      "liveWish": "everyone forgets the ceremony happened",
+      "ledgerIds": [
+        "tfl_1"
+      ],
+      "ownedLedgerLast": {
+        "id": "tfl_1",
+        "sceneIdx": 0,
+        "callbackCount": 0,
+        "lastCallbackScene": null
+      }
+    },
+    {
+      "at": 1790277649616,
+      "url": "/api/mistral-proxy",
+      "role": "STRUCTURE_GENERATOR",
+      "model": "ministral-8b-2512",
+      "isClassifier": false,
+      "isAuthor": false,
+      "isPlanner": false,
+      "hasActive": false,
+      "hasCallback": false,
+      "activeWish": null,
+      "schemaAsksScope": true,
+      "schemaAsksClass": true,
+      "schemaClassConditional": true,
+      "schemaAsksInvalidatedPlans": true,
+      "hasDurable": false,
+      "mentionsWish": true,
+      "requiresOutcome": true,
+      "turnCount": 1,
+      "liveInvoked": true,
+      "liveWish": "everyone forgets the ceremony happened",
+      "ledgerIds": [
+        "tfl_1"
+      ],
+      "ownedLedgerLast": {
+        "id": "tfl_1",
+        "sceneIdx": 0,
+        "callbackCount": 0,
+        "lastCallbackScene": null
+      }
+    },
+    {
+      "at": 1790277654139,
+      "url": "/api/beta-events",
+      "role": null,
+      "model": null,
+      "isClassifier": false,
+      "isAuthor": false,
+      "isPlanner": false,
+      "hasActive": false,
+      "hasCallback": false,
+      "activeWish": null,
+      "schemaAsksScope": false,
+      "schemaAsksClass": false,
+      "schemaClassConditional": false,
+      "schemaAsksInvalidatedPlans": false,
+      "hasDurable": false,
+      "mentionsWish": false,
+      "requiresOutcome": false,
+      "turnCount": 1,
+      "liveInvoked": true,
+      "liveWish": "everyone forgets the ceremony happened",
+      "ledgerIds": [
+        "tfl_1"
+      ],
+      "ownedLedgerLast": {
+        "id": "tfl_1",
+        "sceneIdx": 0,
+        "callbackCount": 0,
+        "lastCallbackScene": null
+      }
+    },
+    {
+      "at": 1790277674291,
+      "url": "/api/proxy",
+      "role": "INTIMACY_SPECIALIST",
+      "model": null,
+      "isClassifier": false,
+      "isAuthor": false,
+      "isPlanner": false,
+      "hasActive": false,
+      "hasCallback": false,
+      "activeWish": null,
+      "schemaAsksScope": false,
+      "schemaAsksClass": false,
+      "schemaClassConditional": false,
+      "schemaAsksInvalidatedPlans": false,
+      "hasDurable": false,
+      "mentionsWish": false,
+      "requiresOutcome": false,
+      "turnCount": 1,
+      "liveInvoked": true,
+      "liveWish": "everyone forgets the ceremony happened",
+      "ledgerIds": [
+        "tfl_1"
+      ],
+      "ownedLedgerLast": {
+        "id": "tfl_1",
+        "sceneIdx": 0,
+        "callbackCount": 0,
+        "lastCallbackScene": null
+      }
+    },
+    {
+      "at": 1790277674310,
+      "url": "/api/bfl-kontext",
+      "role": null,
+      "model": "flux-2-pro-preview",
+      "isClassifier": false,
+      "isAuthor": false,
+      "isPlanner": false,
+      "hasActive": false,
+      "hasCallback": false,
+      "activeWish": null,
+      "schemaAsksScope": false,
+      "schemaAsksClass": false,
+      "schemaClassConditional": false,
+      "schemaAsksInvalidatedPlans": false,
+      "hasDurable": false,
+      "mentionsWish": true,
+      "requiresOutcome": false,
+      "turnCount": 1,
+      "liveInvoked": false,
+      "liveWish": null,
+      "ledgerIds": [
+        "tfl_1"
+      ],
+      "ownedLedgerLast": {
+        "id": "tfl_1",
+        "sceneIdx": 0,
+        "callbackCount": 0,
+        "lastCallbackScene": null
+      }
+    },
+    {
+      "at": 1790277674614,
+      "url": "/api/bfl-kontext",
+      "role": null,
+      "model": "flux-2-pro-preview",
+      "isClassifier": false,
+      "isAuthor": false,
+      "isPlanner": false,
+      "hasActive": false,
+      "hasCallback": false,
+      "activeWish": null,
+      "schemaAsksScope": false,
+      "schemaAsksClass": false,
+      "schemaClassConditional": false,
+      "schemaAsksInvalidatedPlans": false,
+      "hasDurable": false,
+      "mentionsWish": true,
+      "requiresOutcome": false,
+      "turnCount": 1,
+      "liveInvoked": false,
+      "liveWish": null,
+      "ledgerIds": [
+        "tfl_1"
+      ],
+      "ownedLedgerLast": {
+        "id": "tfl_1",
+        "sceneIdx": 0,
+        "callbackCount": 0,
+        "lastCallbackScene": null
+      }
+    },
+    {
+      "at": 1790277674616,
+      "url": "/api/bfl-kontext",
+      "role": null,
+      "model": "flux-2-klein-9b-preview",
+      "isClassifier": false,
+      "isAuthor": false,
+      "isPlanner": false,
+      "hasActive": false,
+      "hasCallback": false,
+      "activeWish": null,
+      "schemaAsksScope": false,
+      "schemaAsksClass": false,
+      "schemaClassConditional": false,
+      "schemaAsksInvalidatedPlans": false,
+      "hasDurable": false,
+      "mentionsWish": true,
+      "requiresOutcome": false,
+      "turnCount": 1,
+      "liveInvoked": false,
+      "liveWish": null,
+      "ledgerIds": [
+        "tfl_1"
+      ],
+      "ownedLedgerLast": {
+        "id": "tfl_1",
+        "sceneIdx": 0,
+        "callbackCount": 0,
+        "lastCallbackScene": null
+      }
+    },
+    {
+      "at": 1790277674632,
+      "url": "/api/mistral-proxy",
+      "role": "STRUCTURE_GENERATOR",
+      "model": "ministral-8b-2512",
+      "isClassifier": false,
+      "isAuthor": false,
+      "isPlanner": false,
+      "hasActive": false,
+      "hasCallback": false,
+      "activeWish": null,
+      "schemaAsksScope": false,
+      "schemaAsksClass": false,
+      "schemaClassConditional": false,
+      "schemaAsksInvalidatedPlans": false,
+      "hasDurable": false,
+      "mentionsWish": false,
+      "requiresOutcome": false,
+      "turnCount": 1,
+      "liveInvoked": false,
+      "liveWish": null,
+      "ledgerIds": [
+        "tfl_1"
+      ],
+      "ownedLedgerLast": {
+        "id": "tfl_1",
+        "sceneIdx": 0,
+        "callbackCount": 0,
+        "lastCallbackScene": null
+      }
+    },
+    {
+      "at": 1790277674634,
+      "url": "/api/proxy",
+      "role": "STRUCTURE_GENERATOR",
+      "model": "grok-4-1-fast-reasoning",
+      "isClassifier": false,
+      "isAuthor": false,
+      "isPlanner": false,
+      "hasActive": false,
+      "hasCallback": false,
+      "activeWish": null,
+      "schemaAsksScope": false,
+      "schemaAsksClass": false,
+      "schemaClassConditional": false,
+      "schemaAsksInvalidatedPlans": false,
+      "hasDurable": false,
+      "mentionsWish": false,
+      "requiresOutcome": false,
+      "turnCount": 1,
+      "liveInvoked": false,
+      "liveWish": null,
+      "ledgerIds": [
+        "tfl_1"
+      ],
+      "ownedLedgerLast": {
+        "id": "tfl_1",
+        "sceneIdx": 0,
+        "callbackCount": 0,
+        "lastCallbackScene": null
+      }
+    }
+  ]
+}

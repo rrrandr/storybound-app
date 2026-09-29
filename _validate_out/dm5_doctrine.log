@@ -1,0 +1,173 @@
+
+════════════════════════════════════════════════════════════════════════════════════════
+C+ PROMPT DOCTRINE — presence governs staging, not eligibility
+════════════════════════════════════════════════════════════════════════════════════════
+
+ 1 · THE DISPATCHED PLANNER BYTES — WHO IS OFFERED
+  ✓ 1a: the planner request carries a CHARACTER+ CANDIDATES block
+  ✓ 1b: an ABSENT person is offered as a candidate — presence is not the qualification
+  ✗ 1c: …offered in ANTICIPATED mode, the opportunity the scene actually gives him
+      • Halvern — no owned pressure evidence in this scene: none of their conditions is established by a fact this scene owns
+  • Wren — no owned pressure evidence in this scene: none of their conditions is establis
+  ✗ 1d: …with the evidence that makes the opportunity honest, quoted whole
+      • Halvern — no owned pressure evidence in this scene: none of their conditions is established by a fact this scene owns
+  • Wren — no owned pressure evidence in this scene: none of their conditions is established by a fact this scene owns
+WHERE A PERSON HAS AUTHORED PSYCHOLOGY, an entry for them MUST cite one of THEIR facet_ids
+  ✓ 1i [D1]: the permitted-labels enum equals the OFFERED candidates — nobody the block never offered is a permitted label
+  ✓ 1j [D2]: the STARVED people (no owned pressure evidence — Julian, Halvern, Wren in this fixture) are listed under NOT CANDIDATES with that reason, once each, and are neither offered nor permitted
+  ✓ 1k [D2]: the DECLINED person (Klaus — no opportunity) is listed with the no-opportunity reason, once
+  ✓ 1e: he is NOT in the prefilled staged_characters array
+  ✓ 1f: the unmentioned roster member is listed as NOT a candidate
+  ✓ 1g: …and he is not among the permitted labels
+  ✓ 1h: Klaus carries a facet and is STILL not a candidate — the mention is what he lacks
+
+ 2 · THE AUTHORED PSYCHOLOGY REACHES THE PLANNER
+  ✗ 2a: the CANONICAL TRUTH is in the dispatched request, not just the id
+      (no canonical truth in the request)
+  ✗ 2b: …for the ABSENT candidate too — his psychology travels with his opportunity
+      • Halvern — no owned pressure evidence in this scene: none of their conditions is established by a fact this scene owns
+  • Wren — no owned pressure evidence in this scene: none of their conditions is established by a fact this scene owns
+WHERE A PERSON HAS AUTHORED PSYCHOLOGY, an entry for them MUST cite one of THEIR facet_ids. Where the list says none is on record, omit "facet_id" — do not borrow someone else's and do not invent one. "mode" is required for everyone.
+RETURN THE facet_id ONLY. Do not cop
+  ✗ 2c: each facet carries its CATEGORY
+      (missing)
+  ✗ 2d: possible_pressures are labelled APPLICABILITY CONDITIONS, never prose
+      (missing)
+  ✓ 2e: the model is told to return the ID ONLY, never a copy of the truth
+  ✓ 2f: …and the behaviour must be an act the truth could be inferred from
+  ✓ 2f2: the one case where the model DOES write psychology is named and bounded
+  ✗ 2g: the planner is asked which condition THIS scene meets, with the facts that establish it
+
+ 3 · THE PC READING LENS
+  ✓ 3a: the planner is given a C+ reading lens
+  ✓ 3b: it names the PC MASK (Open Vein), not the LI archetype (Beautiful Ruin)
+  ✓ 3b2: …and the test is not vacuous — the LI archetype really is the other one
+  ✓ 3c: it states her archetype decides HOW her attention moves onto the beat
+  ✓ 3d: …and gives the archetype's attention movement, so the bias is nameable
+  ✓ 3e: the operation set offered is exactly this archetype's, and each carries its gloss
+
+ 4 · THE CANDIDATE CONTRACT
+  ✓ 4a: NOTHING persists on state — the contract is local to the invocation that built it
+  ✓ 4b: the mirror reports three populations, not a single flag
+  ✓ 4c: this fixture is MIXED — one candidate has no authored psychology
+  ✗ 4d: the unsourced candidate was NOT deleted for someone else's coverage
+      ["seren","the presiding dohkar"]
+  ✗ 4e: …and the prompt says so, per person, instead of story-wide
+      • Wren — no owned pressure evidence in this scene: none of their conditions is established by a fact this scene owns
+WHERE A PERSON HAS AUTHORED PSYCHOLOGY, an entry for them MUST cite one of THEIR facet_ids. Where the list says none is on record, omit "facet_id" — do not borrow someone else's and do not 
+  ✓ 4f: the contract carries the FULL records, not id lists
+  ✗ 4g: baseline plan is accepted and reaches the author
+      author=0 [SCENE1:SKELETON:INVALID] 9 fault(s) — environment_element_ids missing — choose 2–3 object_ids from THE OBJECTS THIS SCENE CONTAINS · environment_plus.target was sent as free text — on a seed-owned stage E+ cites "target_object_id"; the old
+  ✓ 4h: with every candidate sourced the regime is FULLY-COVERED and citations are universal
+
+ 5 · AN ABSENT CANDIDATE MAY RECEIVE C+ AND STAY ABSENT
+  ✗ 5a: the plan is ACCEPTED with a C+ assigned to someone who is not in the room
+      author=0 [SCENE1:SKELETON:INVALID] 11 fault(s) — environment_element_ids missing — choose 2–3 object_ids from THE OBJECTS THIS SCENE CONTAINS · environment_plus.target was sent as free text — on a seed-owned stage E+ cites "target_object_id"; the ol | [SCENE1:ABORT] opening planner produced an unusable skeleton — refusing to author Scene 1 without it: environment_element_ids missing — choose 2–3 object_ids from THE OBJECTS THIS SCENE CONTAINS; environment_plus.target was sent as free tex
+  ✗ 5b: …the assignment survives delivery with its mode and facet citations intact
+      []
+  ✓ 5c: …and he is STILL not staged — a C+ is a reading, never an entrance
+  ✗ 5d: THE TRUSTED TRUTH IS REATTACHED after normalisation, from the local record
+  ✗ 5d2: …and the TRUSTED PRESSURE is reattached from the record, not the reply
+      []
+  ✗ 5e: …and absence is recorded on the assignment, not only in the contract
+      []
+  ✗ 5f: a MODEL-SUPPLIED canonical truth is discarded and replaced by the trusted record
+      []
+
+ 6 · WHAT REACHES GROK
+  ✗ 6a: the author is told the MODE of the assignment
+      (missing)
+  ✗ 6b: …that the person is NOT PHYSICALLY PRESENT
+      (missing)
+  ✗ 6b2: …and an ABSENT recipient gets the SAME three-component construction
+      (missing)
+  ✗ 6c: …the applicable pressure travels as OUR wording, marked as why it applies
+      (missing)
+  ✗ 6c3: …and the first-mention tag survives beside the new fields
+      (missing)
+  ✗ 6c4: the PLANNER receives the Dohkar's WHOLE portfolio — five facets to choose between
+      the planner cannot choose between truths it was never shown
+  ✓ 6c5: …and the AUTHOR receives no facet ID at all, and exactly one truth per recipient
+  ✓ 6c6: …and no UNSELECTED truth of his reaches the author as prose either
+  ✓ 6c2: …and the author gets ONE facet, not the person's whole micro-bible
+  ✗ 6d: a PRESENT recipient carries a mode and NO absence marker
+      (missing)
+  ✗ 6e: the NON-MATERIALISATION LAW reaches the component that would otherwise break it
+      (missing)
+  ✓ 6f0: the author gets ONE pressure, not the facet's whole condition list or portfolio
+  ✗ 6f1: the SOURCE TRUTH is the record's wording, never a model paraphrase
+      (missing)
+  ✓ 6f2: NO model-authored psychology reaches the author at all
+  ✗ 6f: the trusted facet is marked SOURCE, never a line to reproduce
+  ✗ 6g: each arrives EXACTLY ONCE — no double-delivery through a second builder
+      {"mode":0,"law":0,"truth":0}
+
+ 7 · THE MIXED REGIME, END TO END
+  ✗ 7a: a candidate with NO authored psychology may still receive a C+, citing no facet
+      author=0 []
+  ✗ 7b: …and carries no trusted truth, because there is none to attach
+
+ 8 · THE THINGS THAT MUST STILL BE REFUSED
+  ✓ 8 "unmentionedAssign" — a roster member this scene never mentions is ineligible however well-formed the beat
+  ✓ 8 "absentInPerson" — an absent candidate given IN_PERSON mode would materialise them
+  ✓ 8 "absentMaterialised" — an absent recipient added to staged_characters is a fixed-cast edit
+  ✓ 8 "unsourcedBorrows" — an unsourced candidate may not borrow a real facet belonging to someone else
+  ✓ 8 "inventedPressure" — a condition the cited facet does not list is an invented applicability
+  ✓ 8 "noPressure" — a cited facet with conditions must name the one this scene meets
+  ✓ 8 "badEvidenceId" — an evidence id this scene does not contain
+  ✓ 8 "noEvidenceId" — a condition asserted with no evidence cited at all
+  ✓ 8 "badObjectId" — an object id this scene does not contain
+  ✓ 8 "badPersonId" — a person id who is not in this scene
+  ✓ 8 "noLensOp" — no pc_lens_operation — how her attention moves is a choice she must make
+  ✓ 8 "foreignLensOp" — another archetype's operation, offered for this protagonist
+  ✓ 8 "somaticOnly" — a hammering pulse offered in place of a way of paying attention
+  ✓ 8e: with Halvern gone from the seed, a Halvern assignment is refused
+
+ 8b · THE CAUSAL CHAIN IN THE DISPATCHED BYTES
+  ✗ 8b1: pressures are cited by STABLE ID, not by reproducing their text
+      (missing)
+  ✗ 8b1b: the scene is a NUMBERED FACT CORPUS — evidence is cited, never quoted
+      THE SCENE, AS NUMBERED FACTS. Everything you may cite as evidence is here, and nothing else is:
+  E1: Dawn in a Veilwood ceremony clearing: the long white weeping-willow veil-canopy drapes
+  ✓ 8b1c: objects and people are addressable too
+  ✗ 8b2: the entry cites evidence, objects and people by id
+  ✓ 8b3: the model is told it does NOT write the psychology
+  ✓ 8b3b: …and the retired paraphrase fields are gone from the schema entirely
+  ✓ 8b4: the PC lens is an ENUMERATED OPERATION, and a pulse is explicitly not one
+  ✓ 8b4b: the operations offered are the PC MASK's, not another archetype's
+  ✗ 8b5: each candidate is a CONTIGUOUS packet that closes on itself
+      ⟂ Everything in this packet belongs to Seren ALONE. Do not use another candidate's trut
+  ✗ 8b6: guardrails travel INSIDE the packet they guard
+      READS THIS CHARACTER'S CANON FORBIDS — an entry that implies any of these is rejected:
+        ✗ the poise is the point — a frightened child cannot make the choice this scene turns on
+      ⟂ Everything in this packet belongs to Seren ALONE. Do not use ano
+  ✓ 8b7: the behaviour may not bring its own prop
+
+ 8c · PROBE REGRESSIONS — the exact strings that got through before
+  ✓ 8c "probeJulianContempt" — Julian cited, Dohkar's psychology written: contempt + challenge to her authority
+  ✓ 8c "probeJulianContemptOnly" — …the contempt clause alone, with the adversarial half removed
+  ✓ 8c "probeJulianSuspicion" — …and secret-knowledge, which his pre-Scene-8 guardrail already forbade
+  ✓ 8c "probeSerenParaphrase" — Seren's revelation restates "to perfect, not to survive" with the nouns swapped
+  ✓ 8c "probeSerenNoEvidence" — …and asserts "public correction" with a span this scene does not contain
+  ✓ 8c "probeDohkarBlade" — the Dohkar's beat brings a ceremonial blade into a rite with no machinery
+  ✓ 8c "probeSerenBowl" — the second probe's offering bowl, in a rite whose only offering is a memory
+
+ 8d · THE INTENDED TRANSFORMATION
+  ✗ 8d1: Seren — truth backstage, action grounded, interpretation carried by the operation
+      (missing)
+  ✗ 8d2: the Dohkar — the same construction, a different truth
+      (missing)
+  ✓ 8d3: the ACTION carries no psychological explanation of itself
+  ✓ 8d4: no planner-authored finished C+ line is anywhere in the payload
+
+ 9 · WHAT THIS CANNOT PROVE
+  ✗ 9a: a VALID facet id paired with an unrelated read is NOT caught mechanically
+      if this ever fails, a semantic check was added and this test should become the assertion that it works
+      ⚠ RECORDED LIMIT: "cites a facet that is hers" is a MECHANICAL check. That the
+        psychological_read actually reads THAT truth is not mechanically verified — the
+        prompt asks for it and nothing enforces it. Whether the model complies is a
+        question for the paid planner probe, not for this suite.
+
+────────────────────────────────────────────────────────────────────────────────────────
+  58 passed · 37 failed
+

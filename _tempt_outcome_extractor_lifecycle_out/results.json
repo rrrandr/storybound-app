@@ -1,0 +1,162 @@
+[
+  {
+    "name": "the extraction context is deep-FROZEN at capture — nothing downstream can mutate what will be committed",
+    "pass": true
+  },
+  {
+    "name": "it carries every field extraction and commit need — storyId, proposalId, wish, invoker, roster, scene identity, prose, requested scope",
+    "pass": true
+  },
+  {
+    "name": "a write to the captured wish does not take on the REAL frozen object",
+    "pass": true
+  },
+  {
+    "name": "...and the nested roster array is frozen too — deep, not one level",
+    "pass": true
+  },
+  {
+    "name": "a valid, citation-backed extraction COMMITS the durable consequence",
+    "pass": true
+  },
+  {
+    "name": "...and clears the pending record in the same step (commit and clear are not separable)",
+    "pass": true
+  },
+  {
+    "name": "...leaving the next continuation UNBLOCKED",
+    "pass": true
+  },
+  {
+    "name": "a fabricated citation is REJECTED — the quote is not in the accepted prose",
+    "pass": true
+  },
+  {
+    "name": "a rejected extraction commits NOTHING — no consequence is manufactured",
+    "pass": true
+  },
+  {
+    "name": "...the pending record survives intact and retryable",
+    "pass": true
+  },
+  {
+    "name": "...and the continuation is BLOCKED while it is unresolved",
+    "pass": true
+  },
+  {
+    "name": "the RETRY succeeds and commits, on the same record",
+    "pass": true
+  },
+  {
+    "name": "the pending record survives a serialise/restore round trip",
+    "pass": true
+  },
+  {
+    "name": "...and resolves correctly afterwards, committing from the RESTORED context",
+    "pass": true
+  },
+  {
+    "name": "a response arriving after a STORY SWITCH is refused — the captured storyId decides, not live state",
+    "pass": true
+  },
+  {
+    "name": "...nothing is written into the story the reader switched TO",
+    "pass": true
+  },
+  {
+    "name": "...and the OTHER story is not blocked by a record that does not belong to it",
+    "pass": true
+  },
+  {
+    "name": "returning to the original story finds the record still pending, and it resolves there",
+    "pass": true
+  },
+  {
+    "name": "writing the same pending key twice yields ONE record, not two",
+    "pass": true
+  },
+  {
+    "name": "a DUPLICATE completion does not create a second durable consequence",
+    "pass": true
+  },
+  {
+    "name": "...and the duplicate reports itself as a duplicate rather than a fresh success",
+    "pass": true
+  },
+  {
+    "name": "a newer wish sealed mid-flight does NOT retarget the commit — it lands under the CAPTURED proposal",
+    "pass": true
+  },
+  {
+    "name": "...and carries the CAPTURED wish text, not the newer live one",
+    "pass": true
+  },
+  {
+    "name": "Scene B is BLOCKED while a delivered Tempt scene has an unresolved outcome",
+    "pass": true
+  },
+  {
+    "name": "...the block names the reason, so it cannot be mistaken for an unrelated failure",
+    "pass": true
+  },
+  {
+    "name": "Scene B is ALLOWED once the outcome commits",
+    "pass": true
+  },
+  {
+    "name": "...and the durable consequence Scene B will receive is the extracted one",
+    "pass": true
+  },
+  {
+    "name": "the bounded resume path resolves everything outstanding for THIS story",
+    "pass": true
+  },
+  {
+    "name": "a delivered:false extraction manufactures NO consequence and does not silently proceed — it stays pending",
+    "pass": true
+  },
+  {
+    "name": "the aftermath-cleanup and commit-at-persistence entry points are both still exported",
+    "pass": true
+  },
+  {
+    "name": "the resolve path NEVER reads live owned-invocation state — the whole point of the immutable context",
+    "pass": true
+  },
+  {
+    "name": "(a) a GENUINELY MARKED legacy scene migrates — uncited, because it was never asked for citations",
+    "pass": true
+  },
+  {
+    "name": "(b) UNMARKED old-shaped data is REFUSED — no provenance at all",
+    "pass": true
+  },
+  {
+    "name": "...refused when provenance names a source but records NO architecture version",
+    "pass": true
+  },
+  {
+    "name": "...and refused when the recorded version claims to be CURRENT (only a version BELOW the migration counts)",
+    "pass": true
+  },
+  {
+    "name": "(c) a NEW response carrying a hallucinated self-certified outcome gets NO legacy privilege",
+    "pass": true
+  },
+  {
+    "name": "...it is REJECTED on the citation check it cannot satisfy, commits nothing, and still requires extraction",
+    "pass": true
+  },
+  {
+    "name": "(d) legacy adoption is IDEMPOTENT across a reload — one record, not re-armed on re-adoption",
+    "pass": true
+  },
+  {
+    "name": "...and resolving twice commits exactly once",
+    "pass": true
+  },
+  {
+    "name": "ZERO real provider dispatches across the whole control",
+    "pass": true
+  }
+]

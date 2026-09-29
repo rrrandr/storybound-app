@@ -1,0 +1,62 @@
+=== CANON AUDIT PROMPT v2 CONTROL (zero dispatches, $0) ===
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/csp-report
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/config
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/csp-report
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/geo
+
+=== 1. BOTH ARMS ARE REAL AND SELECTABLE — v1 was not deleted ===
+  ✓ v3 is now the default arm, and v2 is no longer selected by an unset flag
+  ✓ v1 is still reachable verbatim, so the A/B has a control arm
+  ✓ the two arms genuinely differ
+  ✓ v1 is UNCHANGED — it still carries the exact framing the two models were measured against
+
+=== 2. FIX C — SILENCE IS PERMISSION (the proven false-positive reason) ===
+  ✓ v2 keeps the absence-as-prohibition correction
+  ✓ but does NOT extend silence to a new category of effect
+  ✓ v2 names the exact wording the models used, so the rule is not abstract
+  ✓ v2 makes "pass" the stated DEFAULT verdict, not merely an available one
+  ✓ v2 replaces the blanket self-check with the kind-of-effect test that discriminates
+  ✓ RED PROOF — v1 contains NONE of that, which is why the clause is the change
+  ✓ the ordinary-action clause v1 ALREADY had is still present in v2 — it was never the missing piece
+
+=== 3. FIX B — THE CATEGORY MENU CARRIES ITS QUALIFIERS ===
+  ✓ v2 tells the model that a plan BUILDING ON a committed rewrite is correct behaviour
+  ✓ v2 states contradicted_knowledge directionally — knowing LESS is never a violation
+  ✓ v2 tells invalidated_objective to cite the invalidation, not a general world truth
+  ✓ RED PROOF — v1's menu is a bare list of names with no qualifier at all
+
+=== 4. FIX A — SURVIVING EVIDENCE NOW REACHES THE PACKET ===
+    ev_ facts now in the packet:
+      [ev_0] OBSERVED at the moment that rupture landed (a record of that moment, NOT a standing rule — it does not by itse
+      [ev_1] left OPEN by that rupture (a plan may legitimately use it): Lirael may still speak or remain silent
+  ✓ the committed rupture's evidence still reaches the packet as its own fact
+  ✓ v2's false "still true" wording is GONE from the live packet
+  ✓ ...and the retained v2 run preserves it, so the v2 arm stays reproducible
+  ✓ the v2 ARM still says what it said — it is preserved verbatim, mistake included
+  ✓ RED PROOF — the same packet under the OLD builder carried no surviving evidence at all
+  ✓ RED PROOF — the prompt ACTUALLY SENT to gpt-4o-mini carried no ev_ fact at all
+  ✓ ...and it is the same fixture whose green failure that omission explains — the plan turns on
+     a written ledger, and the fact that the ledger survived was never supplied
+
+=== 5. FIX D IS DOCUMENTED, NOT SILENTLY APPLIED ===
+  ✓ fact ids are UNCHANGED, so the retained runs' citations stay comparable
+  ✓ v2 tells the auditor a neg_ fact is not automatically a prohibition
+  ✓ v2 tells it to judge by what a fact SAYS, not by its id
+  ✓ RED PROOF — v1 said nothing about what the ids mean
+
+=== 6. NOTHING ELSE MOVED ===
+  ✓ the auditor still may not rewrite the plan
+  ✓ every violation must still cite a supplied fact id
+  ✓ the output schema is unchanged, so the production validator still applies
+  ✓ the red fixtures' genuine prohibitions are still in the packet
+
+=== 7. CONTAINMENT ===
+  ✓ zero provider dispatches — this control buys nothing
+
+======================================================================================
+  31/31 assertions passed
+
+  WHAT THIS DOES NOT PROVE: that any model now returns "pass" on the greens.
+  Only a paid re-run of an ALREADY-REJECTED model can show that, with the prompt
+  version as the single changed variable. v1 is retained for exactly that arm.
+  Evidence: /Users/romantsukerman/storybound-app/_canon_audit_prompt_v2_out

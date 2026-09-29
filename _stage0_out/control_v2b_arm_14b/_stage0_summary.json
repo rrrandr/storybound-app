@@ -1,0 +1,191 @@
+{
+  "route": "14b",
+  "cap": 0,
+  "realDispatches": 0,
+  "capped": [],
+  "samples": [
+    {
+      "i": 1,
+      "mode": "seeded",
+      "planner": [
+        {
+          "status": 200,
+          "identity": {
+            "model": "mistral-small-latest",
+            "reasoning_effort_present": true,
+            "reasoning_effort": "none",
+            "response_format": {
+              "type": "json_object"
+            },
+            "max_tokens": 2921,
+            "messageBytes": 80960,
+            "reserve": 0
+          },
+          "governorRefusal": null,
+          "retryAfter": null,
+          "ms": 0
+        }
+      ],
+      "attempts": 1,
+      "retryReason": null,
+      "fatal": null,
+      "score": {
+        "computable": true,
+        "criteria": {
+          "settingKept": true,
+          "noOffstage": true,
+          "oneEach": false,
+          "firstMention": false,
+          "anglesOk": false,
+          "epGrounded": false,
+          "fusionOk": false
+        },
+        "verdict": false,
+        "newSchema": {
+          "pcLabel": "Lirael",
+          "epBeat": null,
+          "epBeatGrounded": false,
+          "pof": null,
+          "pofTargetMatches": false,
+          "pofIsPc": false,
+          "pcCpAngle": null,
+          "pcCpIsTheBeat": false,
+          "pcAnchor": null,
+          "pcAnchorIsTheBeat": false,
+          "nonPcCp": []
+        },
+        "environmentOwner": "stage",
+        "elements": null
+      },
+      "threw": null,
+      "settled": true,
+      "settleReason": "assignments",
+      "quotaBusy": null,
+      "fetchCount": 22,
+      "assignmentsDropped": "environment_elements were sent as free text — on a seed-owned stage elements are chosen by object_id (\"environment_element_ids\"); the old shape is not accepted; environment_plus.target was sent as free text — on a seed-owned stage E+ cites \"target_object_id\"; the old shape is not accepted; pc_opening_fusion carries an environment_axis of its own — the fusion has no axis; it is the E+ axis by definition; opening_actor_id missing — name the person_id the opening beat stages, or null; character_plus \"Seren\" names no \"enacts_evidence_id\" — the act is this person's part of one of the facts that establish the condition (E3 | E4); character_plus \"the presiding Dohkar\" names no \"enacts_evidence_id\" — the act is this person's part of one of the facts that establish the condition (E5); environment_plus.beat \"The crushed grass where Seren knelt is stained with the faintest trace of her blood, where\" introduces an environmental fact the seed rules out (\"blood\") — describe what the seed names and add no weather, light, marks or fluids it does not contain; pc_opening_fusion.beat \"Lirael reaches for the veil-canopy’s trembling leaves, her fingers brushing the cold bark \" introduces an environmental fact the seed rules out (\"gust\") — describe what the seed names and add no weather, light, marks or fluids it does not contain; environment_plus.beat does not name its own target — the beat must show what happened to \"the deep-crimson braided spiralgrass carpet\", not to something else: \"The crushed grass where Seren knelt is stained with the faintest trace of her blood, where her hands clenched \"; pc_opening_fusion.environment_target does not match environment_plus.target — the opening may not point at two different things; pc_opening_fusion.environment_axis does not match environment_plus.axis; pc_opening_fusion.beat never reaches the assigned environment target; \"Seren\" is given an action in the opening beat AND a different first-mention beat in character_plus — the opening says \"Seren’s voice falters mid-invocation, her hands trembling as she glances at Lira\" and the C+ says \"Seren blurs the words of the sacrifice, her fingers trembling as she avoids nami\". A character cannot have two first appearances; if the opening stages them, the opening IS their C+ beat",
+      "grokAttemptsBlocked": 3
+    },
+    {
+      "i": 2,
+      "mode": "seeded",
+      "planner": [
+        {
+          "status": 200,
+          "identity": {
+            "model": "mistral-small-latest",
+            "reasoning_effort_present": true,
+            "reasoning_effort": "none",
+            "response_format": {
+              "type": "json_object"
+            },
+            "max_tokens": 2921,
+            "messageBytes": 80770,
+            "reserve": 0
+          },
+          "governorRefusal": null,
+          "retryAfter": null,
+          "ms": 0
+        }
+      ],
+      "attempts": 1,
+      "retryReason": null,
+      "fatal": null,
+      "score": {
+        "computable": true,
+        "criteria": {
+          "settingKept": true,
+          "noOffstage": true,
+          "oneEach": false,
+          "firstMention": false,
+          "anglesOk": false,
+          "epGrounded": false,
+          "fusionOk": false
+        },
+        "verdict": false,
+        "newSchema": {
+          "pcLabel": "Lirael",
+          "epBeat": null,
+          "epBeatGrounded": false,
+          "pof": null,
+          "pofTargetMatches": false,
+          "pofIsPc": false,
+          "pcCpAngle": null,
+          "pcCpIsTheBeat": false,
+          "pcAnchor": null,
+          "pcAnchorIsTheBeat": false,
+          "nonPcCp": []
+        },
+        "environmentOwner": "stage",
+        "elements": null
+      },
+      "threw": null,
+      "settled": true,
+      "settleReason": "assignments",
+      "quotaBusy": null,
+      "fetchCount": 22,
+      "assignmentsDropped": "environment_elements were sent as free text — on a seed-owned stage elements are chosen by object_id (\"environment_element_ids\"); the old shape is not accepted; environment_plus.target was sent as free text — on a seed-owned stage E+ cites \"target_object_id\"; the old shape is not accepted; opening_actor_id missing — name the person_id the opening beat stages, or null; character_plus \"Seren\" names no \"enacts_evidence_id\" — the act is this person's part of one of the facts that establish the condition (E3 | E4); character_plus \"Seren\" visible_action never engages the condition it was chosen under (\"someone's pain becomes nameable in public\") — the act itself must put that condition on the page — a bridge sentence cannot do it for it; character_plus \"the presiding Dohkar\" names no \"enacts_evidence_id\" — the act is this person's part of one of the facts that establish the condition (E5); character_plus \"the presiding Dohkar\" visible_action never engages the condition it was chosen under (\"an offering being named aloud\") — the act itself must put that condition on the page — a bridge sentence cannot do it for it",
+      "grokAttemptsBlocked": 3
+    },
+    {
+      "i": 3,
+      "mode": "seeded",
+      "planner": [
+        {
+          "status": 200,
+          "identity": {
+            "model": "mistral-small-latest",
+            "reasoning_effort_present": true,
+            "reasoning_effort": "none",
+            "response_format": {
+              "type": "json_object"
+            },
+            "max_tokens": 2921,
+            "messageBytes": 73535,
+            "reserve": 0
+          },
+          "governorRefusal": null,
+          "retryAfter": null,
+          "ms": 0
+        }
+      ],
+      "attempts": 1,
+      "retryReason": null,
+      "fatal": null,
+      "score": {
+        "computable": true,
+        "criteria": {
+          "settingKept": true,
+          "noOffstage": true,
+          "oneEach": false,
+          "firstMention": false,
+          "anglesOk": false,
+          "epGrounded": false,
+          "fusionOk": false
+        },
+        "verdict": false,
+        "newSchema": {
+          "pcLabel": "Lirael",
+          "epBeat": null,
+          "epBeatGrounded": false,
+          "pof": null,
+          "pofTargetMatches": false,
+          "pofIsPc": false,
+          "pcCpAngle": null,
+          "pcCpIsTheBeat": false,
+          "pcAnchor": null,
+          "pcAnchorIsTheBeat": false,
+          "nonPcCp": []
+        },
+        "environmentOwner": "stage",
+        "elements": null
+      },
+      "threw": null,
+      "settled": true,
+      "settleReason": "assignments",
+      "quotaBusy": null,
+      "fetchCount": 22,
+      "assignmentsDropped": "environment_elements were sent as free text — on a seed-owned stage elements are chosen by object_id (\"environment_element_ids\"); the old shape is not accepted; environment_plus.target was sent as free text — on a seed-owned stage E+ cites \"target_object_id\"; the old shape is not accepted; pc_opening_fusion carries an environment_axis of its own — the fusion has no axis; it is the E+ axis by definition; opening_actor_id missing — name the person_id the opening beat stages, or null; character_plus \"Seren\" names no \"enacts_evidence_id\" — the act is this person's part of one of the facts that establish the condition (E3 | E4); character_plus \"the presiding Dohkar\" names no \"enacts_evidence_id\" — the act is this person's part of one of the facts that establish the condition (E5); character_plus \"the presiding Dohkar\" visible_action never engages the condition it was chosen under (\"an offering being named aloud\") — the act itself must put that condition on the page — a bridge sentence cannot do it for it; pc_opening_fusion.environment_target does not match environment_plus.target — the opening may not point at two different things; pc_opening_fusion.environment_axis does not match environment_plus.axis; pc_opening_fusion.beat never reaches the assigned environment target; \"Seren\" is given an action in the opening beat AND a different first-mention beat in character_plus — the opening says \"Seren’s voice falters mid-invocation, the practiced words dissolving into a plea\" and the C+ says \"Seren’s fingers stumble over the sash, her voice softening as she blurs the word\". A character cannot have two first appearances; if the opening stages them, the opening IS their C+ beat",
+      "grokAttemptsBlocked": 3
+    }
+  ]
+}

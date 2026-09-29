@@ -1,0 +1,17 @@
+{
+  "tracked": 1,
+  "refused": [
+    {
+      "url": "http://localhost:3000/api/chatgpt-proxy",
+      "method": "POST",
+      "at": 1790277764976,
+      "reason": "ceiling 1 exceeded for phase \"wish-classifier\" (stub lane)"
+    }
+  ],
+  "seal": {
+    "wish": "everyone forgets the ceremony happened",
+    "invoked": true,
+    "pendingWish": true
+  },
+  "realCalls": 0
+}

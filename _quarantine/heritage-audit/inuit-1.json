@@ -1,0 +1,30 @@
+{
+  "age": 28,
+  "ancestry": "Inuit",
+  "first_name": "Kiviuq",
+  "last_name": "Atanarjuat",
+  "height": "5'4\", compact and grounded",
+  "build": "lean-muscled, swimmer's shoulders, narrow-hipped",
+  "hair": "black, thick and straight, worn in a long braid down her back or loose to mid-shoulder; she winds it up absently when thinking",
+  "complexion": "warm golden-brown undertone, a faint scar along her left jawline from a childhood fall on ice",
+  "face": "broad-cheeked, wide-set dark eyes that catch light like water, a face built for expression—shock, joy, hurt all live there unfiltered, high forehead, mouth quick to curve or tremble",
+  "signature_feature": "her hands—long-fingered, capable, with a precise tremor when she's overwhelmed; the LI notices how she moves them when she talks, how she steadies herself by gripping things",
+  "second_celebrated_feature": "the hollow at the base of her throat, visible when she breathes hard or pulls her hair back; it deepens when she's afraid",
+  "signature_habits": [
+    "hums Inuit throat-singing fragments when concentrating—a habit from her grandmother Tupilak, who taught her the old songs",
+    "keeps her phone on silent and checks it compulsively, then forgets it exists entirely when engaged",
+    "braids and unbraids a single strand of her hair when anxious, over and over",
+    "makes strong black tea in the mornings and drinks it while standing at the window, watching the street",
+    "touches the scar on her jaw when she's lying or about to lie"
+  ],
+  "occupation": "textile designer and small-batch maker—she runs a studio called Sila (named for the Inuit concept of weather-spirit and unpredictability) where she designs and produces hand-dyed, hand-woven fabrics and scarves; sells to boutiques and direct clients; works from a converted warehouse studio in the city",
+  "current_crisis": {
+    "event": "her studio's landlord—a property developer connected to the LI's business rival—has given her 60 days to vacate; she has no capital to relocate, her lease was verbal, and she's just learned the building is being razed for a mixed-use tower; her entire inventory and equipment are in that space",
+    "hottest_emotion": "panic threaded with a sharp, animal sense of being trapped",
+    "immediate_want": "to find a way to save her work and her business before it all disappears; to not have to ask for help"
+  },
+  "wound": {
+    "core": "she believes that needing anyone means she will be abandoned or erased—that vulnerability is a countdown timer to loss",
+    "surfacing_hint": "when frightened or touched, she goes very still and quiet, her eyes glassy; she pulls inward so completely it reads as coldness, though it's the opposite—she's bracing for impact"
+  }
+}

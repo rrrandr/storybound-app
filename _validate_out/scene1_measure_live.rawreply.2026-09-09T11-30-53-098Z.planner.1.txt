@@ -1,0 +1,72 @@
+{
+  "opening_spine": {
+    "pressure_source_type": "survival",
+    "pressure_source": "the storm is already flooding the back room and the last bouquets are sliding into the water",
+    "hook_object": null,
+    "opening_actor_id": null,
+    "opening_beat": "water is already over the sill and the stems are floating free",
+    "rising_beats": [
+      "I brace the door with my shoulder and feel the current push back",
+      "Rook's last order still sits on the counter, ink running"
+    ],
+    "decision_beat": "stay and lose the stock or run and lose the only leverage I have left?",
+    "pc_career": "florist",
+    "opening_setting": "shop back room",
+    "environment_elements": [
+      "leaking skylight",
+      "wet wooden counter"
+    ],
+    "li_texture_beat": "beat 1: I remembered the way his hands had squared the invoice exactly before he walked out — my pulse went uneven low in my belly",
+    "pc_wound_anchor": "opening: I cannot make myself step into the water the way I should",
+    "pc_self_presentation_beat": "opening: I shoved my sleeves higher and hated how the motion made me look like I still believed I could fix this",
+    "scene_want": "wants the water to stop rising long enough for one clear choice",
+    "scene_mission": "save the remaining orders before the floor takes them",
+    "reader_state": {
+      "knows": "Testa is alone in a flooding shop with her work already ruined",
+      "believes": "Rook's recent move is the reason the water is here now",
+      "wondering": "why she cannot stop thinking about the shape of his hands while everything is lost",
+      "must_not_confuse": "only Testa is present; the crisis is the water and the ruined flowers"
+    },
+    "pc_body_callback": "opening: signature_feature (the crooked front tooth)",
+    "antagonist_body_callback": null,
+    "staged_characters": [
+      { "name": "Testa", "presence": "IN_PERSON", "anchor_beat": "FROM_PC_OPENING_FUSION" }
+    ]
+  },
+  "scene_skeleton": {
+    "character_plus": [],
+    "environment_plus": {
+      "target": "wet wooden counter",
+      "axis": "damage",
+      "beat": "the counter's grain is already dark and swollen where the water reached it first"
+    },
+    "pc_opening_fusion": {
+      "character": "Testa",
+      "placement": "PC_FIRST_EMBODIED_BEAT",
+      "contact": {
+        "verb": "BRACE_AGAINST",
+        "object": "leaking skylight"
+      },
+      "action": "pressing both palms flat against the frame",
+      "pc_lens_operation": "INWARD_TRANSLATION_OF_ANOTHER_PERSONS_COST",
+      "character_revelation": "Testa feels every ruined stem as a personal failure she cannot name yet",
+      "environment_pressure": {
+        "grounds": ["env:axis", "pc:self"],
+        "text": "the water keeps rising and I have no one left to call"
+      }
+    }
+  },
+  "stage_contract": {
+    "v": 1,
+    "participants": [
+      { "ref": "pc:self", "presence": "IN_PERSON" }
+    ],
+    "event_facts": [
+      { "text": "the back room is flooding and the bouquets are already lost", "participants": [ { "ref": "pc:self", "role": "actor" } ] }
+    ],
+    "elements": [
+      { "name": "leaking skylight", "affordance": "FIXTURE" },
+      { "name": "wet wooden counter", "affordance": "SURFACE" }
+    ]
+  }
+}

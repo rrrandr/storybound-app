@@ -1,0 +1,6 @@
+=== af5_stage_order · stage_order_dry.mjs · 23:04:00 ===
+af5_stage_order: exit=0 · 106 checks · 106 passed · 0 failed · invalid_markers=0 · samples=67 suite_rss_max=336MB free_min=65MB server_rss_max=87MB
+=== af6_skeleton · skeleton_delivery.mjs · 23:26:43 ===
+af6_skeleton: exit=0 ·   404 passed · 0 failed · invalid_markers=0 · samples=32 suite_rss_max=2405MB free_min=63MB server_rss_max=85MB
+BOTH GREEN · 23:37:23
+leftover:        0

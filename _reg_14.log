@@ -1,0 +1,56 @@
+=== CANON AUDIT v3 CONTROL (zero dispatches, $0) ===
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/csp-report
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/config
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/csp-report
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/geo
+
+=== 1. THE PACKET NO LONGER PROMOTES A MOMENT INTO A RULE ===
+      [ev_0] OBSERVED at the moment that rupture landed (a record of that moment, NOT a standing rule — it does not by itself establi
+      [ev_1] left OPEN by that rupture (a plan may legitimately use it): Lirael may still speak or remain silent
+  ✓ an establishedEvidence fact is labelled as an OBSERVATION AT A MOMENT
+  ✓ ...and says explicitly that it does NOT establish the thing still holds later
+  ✓ RED PROOF — the false v2 wording "SURVIVED that rupture and is still true" is GONE
+  ✓ RED PROOF — the retained v2 packet the models were actually shown DID carry it
+
+=== 2. DURABILITY IS NOW STATED, HAVING BEEN OMITTED ENTIRELY ===
+  ✓ the packet emits explicit durability statements from the commit record
+  ✓ RED PROOF — no dur_ fact appears in the retained v2 packet at all
+
+=== 3. THE PROMPT TELLS THE AUDITOR WHAT AN ev_ FACT IS — AND IS NOT ===
+  ✓ v3 is the default arm
+  ✓ v3 states that a moment is not a rule
+  ✓ ...in the model's own failing words — "no one named it at that moment" is not "may never"
+  ✓ ...and directs durability claims to facts that actually assert durability
+  ✓ RED PROOF — v2 told the auditor the OPPOSITE, and is preserved unchanged as that arm
+  ✓ v3 does NOT carry that false sentence
+  ✓ v1 is still reachable and untouched
+
+=== 4. THE RUBRIC JUDGES WHAT A FACT ASSERTS, NOT ITS PREFIX ===
+  ✓ no red fixture uses a blanket id-prefix whitelist any more
+  ✓ every red declares in words what a citation must assert
+  ✓ CORRECTION 1 — "other" + neg_0 now COUNTS on red_invalidated_objective
+  ✓ ...because that fact affirmatively forbids convening the inquiry this early
+  ✓ the recorded invalidation still counts too
+  ✓ RED PROOF — an unrelated world truth still does NOT count
+  ✓ CORRECTION 2 — "other" + ev_0 is STILL NOT support on red_contradicted_knowledge
+  ✓ ...and the rejection explains WHY, naming the durable alternative
+  ✓ there is NO general ev_ whitelist — the ev_ kind is rejected on its assertion, not its prefix
+
+=== 5. red_contradicted_knowledge IS SOUND — a genuinely durable fact forecloses it ===
+      supports: [dc_0] [memory_perception] everyone forgets the ceremony happened → the assembly forgets the ceremony and i
+      supports: [know_0] the assembly is now unaware — no recollection of the rite's events
+      supports: [dc_2] changed — the assembly: memories of the ceremony and accusation dissolved into blank confusion
+  ✓ at least one genuinely DURABLE fact forecloses this plan, so the fixture stands unrewritten
+  ✓ it is a knowledge state or recorded change, not an observation
+  ✓ citing that durable fact DOES score as caught
+  ✓ and "other" + that same durable fact also counts, since the prompt permits the category
+
+=== 6. THE GREENS ARE UNCHANGED — this correction must not loosen them ===
+  ✓ all four greens still expect a pass and none gained a supporting predicate
+  ✓ a green that returns violation is still a FALSE POSITIVE
+
+=== 7. CONTAINMENT ===
+  ✓ zero provider dispatches
+
+======================================================================================
+  29/29 assertions passed

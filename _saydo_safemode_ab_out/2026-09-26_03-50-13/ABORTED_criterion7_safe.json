@@ -1,0 +1,9 @@
+{
+  "arm": "safe",
+  "fixInForce": {
+    "dirPresent": false,
+    "sceneNum": 3,
+    "beforeDue": true
+  },
+  "realized": 0
+}

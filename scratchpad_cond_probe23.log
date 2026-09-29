@@ -1,0 +1,35 @@
+  > [VERIFY] FAIL: The Kwisheen warrior's eyes have round human pupils instead of capsule_pupil (horizontal rounded rectangle + central vertical slit).; The net Kwisheen's ey
+  > [VERIFY] FAIL: The Kwisheen warrior's eyes have round human pupils instead of capsule_pupil.; The net Kwisheen's eyes have round human pupils instead of capsule_pupil.; T
+
+  ══ test2_crowd ══  (measure: character count / identity / occlusion / camera / composition)
+  line-art: OK | colorize: OK
+  SKETCH: FAIL [conf high] people=5 legs=false tentacles=6 defect=kwisheen_face/P1 p1=4
+        violations:
+          • The Kwisheen warrior's eyes have round human pupils instead of capsule_pupil (horizontal rounded rectangle + central vertical slit).
+          • The net Kwisheen's eyes have round human pupils instead of capsule_pupil (horizontal rounded rectangle + central vertical slit).
+          • The human woman's clothing/armor is a plain cloak, not a manta-hide cloak.
+          • The human guard's clothing/armor is scaled armor, not a manta-hide cloak.
+  FINAL:  FAIL [conf high] people=5 legs=false tentacles=14 defect=kwisheen_face/P1 p1=2
+        violations:
+          • The Kwisheen warrior's eyes have round human pupils instead of capsule_pupil.
+          • The net Kwisheen's eyes have round human pupils instead of capsule_pupil.
+          • The Kwisheen warrior's hair is not cranial_tentacles (sensory, NOT decorative hair).
+          • The net Kwisheen's hair is not cranial_tentacles (sensory, NOT decorative hair).
+          • The human woman's weapon is a staff, not a spear.
+          • The human guard's weapon is a staff, not a spear.
+  saved: cond_test2_crowd_{sketch,final}.png
+  > [VERIFY] PASS (confidence: high)
+  > [VERIFY] FAIL: The transforming woman's LEFT hand is not a dark shadow-stump at the wrist; it is a glowing hand with a red glove/sleeve.; The wish-burst is not attached t
+
+  ══ test3_transform ══  (measure: anchor / burst position / sacrifice position / body topology / framing)
+  line-art: OK | colorize: OK
+  SKETCH: PASS [conf high] people=1 legs=false tentacles=10 defect=none p1=0
+        violations: none
+  FINAL:  FAIL [conf high] people=1 legs=false tentacles=12 defect=sacrifice_mark/P2 p1=0
+        violations:
+          • The transforming woman's LEFT hand is not a dark shadow-stump at the wrist; it is a glowing hand with a red glove/sleeve.
+          • The wish-burst is not attached to the woman's outstretched RIGHT hand; it is attached to her left hand.
+  saved: cond_test3_transform_{sketch,final}.png
+
+  → INFO LOSS = defects in FINAL not in SKETCH. Both PNGs saved for visual invariant scoring.
+

@@ -1,0 +1,222 @@
+{
+  "at": "2026-09-09T00:33:58.352Z",
+  "mode": "E2E-LIVE",
+  "requestLimits": {
+    "planner": 2,
+    "author": 2
+  },
+  "plannerCalls": 1,
+  "authorCalls": 1,
+  "aborted": [],
+  "planner": [
+    {
+      "at": 1788913995857,
+      "url": "/api/proxy",
+      "role": "OPENING_PLANNER",
+      "model": "grok-4.3",
+      "effort": "none",
+      "rf": "json_object",
+      "max_tokens": 2400,
+      "sysBytes": 6239,
+      "usrBytes": 86128,
+      "status": 200,
+      "latencyMs": 20511,
+      "served": "grok-4.3",
+      "usage": {
+        "prompt_tokens": 21571,
+        "completion_tokens": 766,
+        "total_tokens": 23460,
+        "prompt_tokens_details": {
+          "text_tokens": 21571,
+          "audio_tokens": 0,
+          "image_tokens": 0,
+          "cached_tokens": 192
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 1123,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        },
+        "num_sources_used": 0,
+        "cost_in_usd_ticks": 314846500
+      },
+      "orch": {
+        "role": "OPENING_PLANNER",
+        "model": "grok-4.3",
+        "isSpecialistRenderer": true,
+        "timestamp": "2026-09-09T00:33:36.360Z"
+      },
+      "rawReplyBytes": 2989,
+      "rawReplyFile": "_validate_out/scene1_measure_live.rawreply.2026-09-09T00-32-55-979Z.planner.1.txt",
+      "replyTopKeys": [
+        "opening_spine",
+        "scene_skeleton",
+        "stage_contract"
+      ],
+      "replySpineKeys": [
+        "pressure_source_type",
+        "pressure_source",
+        "hook_object",
+        "opening_actor_id",
+        "opening_beat",
+        "rising_beats",
+        "decision_beat",
+        "pc_career",
+        "opening_setting",
+        "environment_elements",
+        "li_texture_beat",
+        "pc_wound_anchor",
+        "pc_self_presentation_beat",
+        "scene_want",
+        "scene_mission",
+        "reader_state",
+        "pc_body_callback",
+        "antagonist_body_callback",
+        "staged_characters"
+      ],
+      "replySkeletonKeys": [
+        "character_plus",
+        "environment_plus",
+        "pc_opening_fusion"
+      ],
+      "stageContractAt": [
+        "top"
+      ]
+    }
+  ],
+  "author": [
+    {
+      "at": 1788914016405,
+      "url": "/api/proxy",
+      "role": "NARRATIVE_AUTHOR_GROK_ONLY",
+      "model": null,
+      "preferredModel": "grok-4.3",
+      "max_tokens": 2400,
+      "sysBytes": 121057,
+      "usrBytes": 109602,
+      "status": 200,
+      "latencyMs": 17760,
+      "served": "grok-4.3",
+      "usage": {
+        "prompt_tokens": 50068,
+        "completion_tokens": 536,
+        "total_tokens": 51968,
+        "prompt_tokens_details": {
+          "text_tokens": 50068,
+          "audio_tokens": 0,
+          "image_tokens": 0,
+          "cached_tokens": 128
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 1364,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        },
+        "num_sources_used": 0,
+        "cost_in_usd_ticks": 672006000
+      },
+      "orch": {
+        "role": "NARRATIVE_AUTHOR_GROK_ONLY",
+        "model": "grok-4.3",
+        "isSpecialistRenderer": true,
+        "timestamp": "2026-09-09T00:33:54.156Z"
+      },
+      "rawReplyBytes": 2518,
+      "rawReplyFile": "_validate_out/scene1_measure_live.rawreply.2026-09-09T00-32-55-979Z.author.1.txt",
+      "replyParse": "not JSON"
+    }
+  ],
+  "cost": [
+    {
+      "role": "OPENING_PLANNER",
+      "status": 200,
+      "latencyMs": 20511,
+      "served": "grok-4.3",
+      "prompt_tokens": 21571,
+      "completion_tokens": 766,
+      "reasoning_tokens": 1123,
+      "cached_tokens": 192,
+      "usd_list": 0.03168625,
+      "xai_usd": 0.03148465,
+      "replyBytes": 2989,
+      "stageContractAt": [
+        "top"
+      ]
+    },
+    {
+      "role": "NARRATIVE_AUTHOR_GROK_ONLY",
+      "status": 200,
+      "latencyMs": 17760,
+      "served": "grok-4.3",
+      "prompt_tokens": 50068,
+      "completion_tokens": 536,
+      "reasoning_tokens": 1364,
+      "cached_tokens": 128,
+      "usd_list": 0.067335,
+      "xai_usd": 0.0672006,
+      "replyBytes": 2518,
+      "stageContractAt": null
+    }
+  ],
+  "totalUsdList": 0.09902125,
+  "totalXaiUsd": 0.09868525,
+  "gate": {
+    "authorAttempts": 1,
+    "pages": 1,
+    "fatal": null,
+    "verdict": "PASS: one author attempt, one page"
+  },
+  "st": {
+    "fatal": null,
+    "pages": 1,
+    "genStage": true,
+    "mission": "Get through the call without saying her sister's name out loud.",
+    "usage": {
+      "route": "/api/proxy",
+      "requested": "grok-4.3",
+      "effort": "none",
+      "served": "grok-4.3",
+      "usage": {
+        "prompt_tokens": 21571,
+        "completion_tokens": 766,
+        "total_tokens": 23460,
+        "prompt_tokens_details": {
+          "text_tokens": 21571,
+          "audio_tokens": 0,
+          "image_tokens": 0,
+          "cached_tokens": 192
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 1123,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        },
+        "num_sources_used": 0,
+        "cost_in_usd_ticks": 314846500
+      },
+      "attempt": 1,
+      "at": 1788914016367
+    },
+    "attempts": 1,
+    "retryReason": null
+  },
+  "threw": null,
+  "refunds": [],
+  "dialogs": [],
+  "logs": [
+    "[SCENE1:STAGE:PLANNER-OWNED] unseeded Scene 1 — the opening planner must return scene_mission + stage_contract over 3 issued ref(s): [pc:self, ent:the one who draws them forward, plot:aplot_x3a_dadb3d83_x2d_d1c9_x2d_4dfd_x2d_be1e_x2d_441e1dc72fd8:primary_antagonist]",
+    "[SCENE1:STAGE] source=planner-owned:pending settingOwner=planner presenceOwner=planner (PENDING — planner owns part of the stage) settingSource=planner-pending onStage=[Testa] offStage=[]",
+    "[SCENE1:PLANNER] eligible cast (1): [Testa] · chars=4340 → max_tokens=2400 (N_staged_max = N_eligible; staged_characters is an OUTPUT and never sizes the request)",
+    "[SCENE1:PLANNER:USAGE] {\"route\":\"/api/proxy\",\"requested\":\"grok-4.3\",\"effort\":\"none\",\"served\":\"grok-4.3\",\"usage\":{\"prompt_tokens\":21571,\"completion_tokens\":766,\"total_tokens\":23460,\"prompt_tokens_details\":{\"text_tokens\":21571,\"audio_tokens\":0,\"image_tokens\":0,\"cached_tokens\":192},\"completion_tokens_details\":{\"reasoning_tokens\":1123,\"audio_tokens\":0,\"accepted_prediction_tokens\":0,\"rejected_predictio",
+    "[SCENE1:PLANNER:ATTEMPTS] 1 (no retry)",
+    "[SCENE1:ENVELOPE] spine contract declares 19 field(s)",
+    "[SCENE1:STAGE:PLANNER-OWNED] resolved — source=generated:planner_stage · on stage [Testa] · mission=\"Get through the call without saying her sister's name out loud.\"",
+    "[SCENE1:STAGE:RESOLVED] settingSource=planner.opening_setting WHERE=\"cafe kitchen\" onStage=[Testa]",
+    "[SCENE1:STAGE] physical=[Testa] · phone=[] · total=1",
+    "[SPEND] +0.0315 USD (OPENING_PLANNER) cumulative 0.0315",
+    "[SPEND] +0.0672 USD (NARRATIVE_AUTHOR_GROK_ONLY) cumulative 0.0987"
+  ]
+}

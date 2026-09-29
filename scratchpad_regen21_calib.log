@@ -1,0 +1,164 @@
+  > [CG:SCAFFOLD] generation start (the_inhuman, gpt-4o-mini)
+  > [CG:SCAFFOLD] awaiting 1 Bible(s) before spine (P2 sequencing — latency over cost)
+  > [CG:SCAFFOLD] Bibles ready (1ms) — pc=y li=y antag=n
+  > [CG:SCAFFOLD:GEN] 20190ms, model=gpt-4o-mini
+  > [CG:SCAFFOLD] thesis="Can she allow herself to be vulnerable in front of him while surviving the chaos around them?"
+  > [CG:SCAFFOLD] issues=4, motifs=3, forbidden=3
+  > [CG:SCAFFOLD] FULL OBJECT: {runThesis: Can she allow herself to be vulnerable in front of him while surviving the chaos around them?, thematicDirection: The tension between fear and connection shapes 
+  > [CG:SCAFFOLD] active — scene_index=0, source=gpt-4o-mini, issues=4
+  > [CG:SCREENPLAY] gen start (scene 0)
+  > [CG:SCREENPLAY:USER-PROMPT]
+SCENE INDEX: 0 (Scene 1 — establishing)
+STORY LENGTH: affair
+SCENE DENSITY (ST1 — SETUP PACE): establishing register. The scene's job is character-in-context, not plot velo
+  > [CG:SCREENPLAY] flavor "the_inhuman" → chain leads with Grok-4.1-reasoning (scene 1 / tentpole — Grok primary)
+  > [CG:SCREENPLAY] generated via Grok-4.1-reasoning in 35282ms
+  > [CG:SCREENPLAY] gen returned in 35286ms
+  > [STAGED:DIST] scene 0 beats=20 bands: micro=13 subtle=3 readable=3 strong=1 extreme=0 | avg raw=0.13 clamped=0.13 | llm-emitted=7/20 clamps=0
+  > [CG:SCREENPLAY] Expression peak enforcement: kept 4 (family=suppression), demoted 3 to neutral [reasons: spacing<3, cross-family(suppression→warmth), cross-family(suppression→warmth)] (~ saved $0.06 o
+  > [STAGED:VARIATION] Scene 0 OK — beats=20 peaks=4 phases=3 hands=0 closeups=3
+  > [STORYBOARD-REPAIR] dropped duplicate visual beat Revelation@13 (same understanding+eye-magnet as an earlier panel)
+  > [STORYBOARD-LINT] post-repair STILL has 1 error(s): PANEL 5: duplicate visual beat — same understanding as PANEL 4 ("what is hunting / threatening them").
+  > [STORYBOARD] establishing shot reserved for "Kresh" @ panel 0
+  > [STORYBOARD-CONVERGENCE] 1 — PANEL 6: REPETITIVE CONFRONTATION — 3 consecutive character-led panels; shift the primary subject to an EVENT or the environment.
+  > [STORYBOARD] Orientation → Revelation* → Threat → Transformation → Threat → Threat → Decision
+  > [CG:SCREENPLAY] region=Gloamwater Bay | species=[kwisheen]
+  > [STAGED:HERO] Generating 7 phase images for scene 0 (serial: phase 0 first, then 1+ as Kontext edits)
+  > [STAGED:TIER] phase 0 → simple → cheap
+  > [STAGED:STAGING-MODE] adversarial (liAbsent=true, sideChars=1)
+  > [STAGED:HERO:PHASE] Cache MISS — generating phase 0 (Orientation) for scene 0 at tier=cheap
+  > [STAGED:STYLE] artist="ender_bond" → 2 style anchor(s): ender_golden_master_v3.jpg, ender_golden_master_v3_bottom.jpg
+  > [STAGED:STYLE] canonical asset "manta_cloak" (tier 1) attached (phase 0)
+  > [STAGED:STYLE] canonical asset "composition:establishing_solo" (tier 2) attached (phase 0)
+  > [STAGED:STYLE] phase 0 — SUBSTITUTED li_absent master ender_golden_master_v3_bottom.jpg for stripped golden_master (full artist signature, no couple bleed)
+  > [STAGED:STYLE] phase 0 — passing 5 style anchors to Gemini (filtered 1 LI-implying refs, liAbsent=true)
+  > [STAGED:STYLE] artist=ender_bond styleAnchors=2 regionAnchors=2 contractInjected=true phaseIdx=0
+  > [VERIFY] PASS (confidence: high)
+  > [STAGED:IMG] Phase 0 image NOT ready within 25s — mounting scene anyway (image will swap in when it lands). User sees text + dark frame until then.
+  > ═══ [STAGED:SCENE 0 MOUNT] 20 beats, 7 phase(s), gate@19 ═══
+  > [STAGED:HERO:SWAP] No image yet for phase:0 — staying on current
+  > [STAGED:ECHO-PROFILE] peak@0 tension=tightening → profile="simmer"
+  > [STAGED:ECHO] beat 0 inEcho=true age=0 intensity=1.00 peakHere=true
+  > [STAGED:BEAT 0/19] | narration | tens=tightening | profile=simmer | mouth=jaw_clench✓PEAK@0.35 | echoZone=age0@1.00 | decay=— | pacing=696ms(×1.20) | tint=dark(0.40) | crop=translate(0px,0px)scale(1.0
+  > [STAGED:RENDER] Mounted — 20 beats, gate at beat 19, micro after beat 7
+  > [VERIFY] PASS (confidence: high)
+  > [VERIFY] FAIL: Kresh's eyes are amber-gold, but the image shows yellow eyes.; Kresh's skin pattern should be iridescent speckle, but the image shows a plain skin. | regions: eye, skin
+  > [ANATOMY-REPAIR] fail but not Klein-repairable (type=eye_color, bbox=y) — keeping original
+  > [CASTING] harvest "Kresh" clean-source OK but confidence 38 < 40 — waiting for a better frame
+  > [STAGED:KONTEXT] Phase 0 stashed as scene 0 edit source
+  > [STAGED:STAGE_CACHE] Cached stage for future revisits (key=fantasy|the_inhuman|the drowned ruins of gloamwater bay at dusk, submerged stone…)
+  > [STAGED:HERO:PHASE] Phase 0 generated in 52500ms (tier=cheap)
+  > [STAGED:TIER] phase 1 → medium → mid
+  > [STAGED:STAGING-MODE] adversarial (liAbsent=true, sideChars=1)
+  > [STAGED:HERO:PHASE] Cache MISS — generating phase 1 (Revelation (page-turn)) for scene 0 at tier=mid
+  > [STAGED:STYLE] artist="ender_bond" → 2 style anchor(s): ender_golden_master_v3.jpg, ender_golden_master_v3_bottom.jpg
+  > [STAGED:STYLE] canonical asset "wish_burst" (tier 1) attached (phase 1)
+  > [STAGED:STYLE] canonical asset "manta_cloak" (tier 1) attached (phase 1)
+  > [STAGED:STYLE] canonical asset "composition:underwater_float" (tier 2) attached (phase 1)
+  > [STAGED:STYLE] phase 1 LI-absent — SUBSTITUTED li_absent master ender_golden_master_v3_bottom.jpg
+  > [STAGED:STYLE] phase 1 LI-absent — passing 6 refs (filtered 1 LI/romance masters)
+  > [STAGED:STYLE] artist=ender_bond styleAnchors=2 regionAnchors=2 contractInjected=true phaseIdx=1
+  > [STAGED:RENDER] Hero image mounted (phase 0)
+  > [VERIFY] FAIL: The Kwisheen's face is drawn incorrectly: the pupils are round human dots instead of horizontal capsule pupils.; The Kwisheen's hands do not match the species description; they have dis
+  > [VERIFY] FAIL: Kresh has too many manipulator arms. Canon requires two, but four are drawn.; Mira's clothing/armor does not match canon. Canon requires a smooth manta-hide cloak, but she is drawn in a
+  > [VERIFY] FAIL: Kresh's body_plan is incorrect: a Kwisheen should have a humanoid torso with two manipulator arms and a cephalopod tentacle-mantle for locomotion, but Kresh is drawn with multiple manip
+  > [VERIFY] FAIL: Kresh's gender presentation is female, but canon requires male.; Kresh's face is a broad flat-cheeked face with a heavy brow, but the drawn face is more feminine and lacks the heavy bro
+  > [VERIFY] PASS (confidence: high)
+  > [STAGED:HERO:PHASE] Phase 1 generated in 89563ms (tier=mid)
+  > [STAGED:TIER] phase 2 → medium → mid
+  > [STAGED:STAGING-MODE] adversarial (liAbsent=true, sideChars=1)
+  > [STAGED:HERO:PHASE] Cache MISS — generating phase 2 (Threat) for scene 0 at tier=mid
+  > [STAGED:STYLE] artist="ender_bond" → 2 style anchor(s): ender_golden_master_v3.jpg, ender_golden_master_v3_bottom.jpg
+  > [STAGED:STYLE] canonical asset "wish_burst" (tier 1) attached (phase 2)
+  > [STAGED:STYLE] canonical asset "sacrifice_hand" (tier 1) attached (phase 2)
+  > [STAGED:STYLE] canonical asset "manta_cloak" (tier 1) attached (phase 2)
+  > [STAGED:STYLE] canonical asset "composition:underwater_float" (tier 2) attached (phase 2)
+  > [STAGED:STYLE] phase 2 LI-absent — SUBSTITUTED li_absent master ender_golden_master_v3_bottom.jpg
+  > [STAGED:STYLE] phase 2 LI-absent — passing 7 refs (filtered 1 LI/romance masters)
+  > [STAGED:STYLE] artist=ender_bond styleAnchors=2 regionAnchors=2 contractInjected=true phaseIdx=2
+  > [CASTING] cast "Kresh" from scene0_phase1 @ confidence 96
+  > [VERIFY] FAIL: The Kwisheen's pupils are round human dots instead of horizontal capsule pupils.; The Kwisheen's lower body does not show six-point ground contact, and appears to have more than six ten
+  > [FAVORED-SHIFT] #1 feature="The Kwisheen's lower body does not show six-point ground contact, and appears to have more than six tentacles for locomotion." species=Kwisheen → caption=true
+  > [FAVORED-SHIFT] caption shown: "For a moment he forgot to be a man and remembered to be …"
+  > [VERIFY] PASS (confidence: high)
+  > [VERIFY] PASS (confidence: high)
+  > [VERIFY] PASS (confidence: high)
+  > [CASTING] skip harvest "Kresh" (not a clean identity source: not NPC-primary/close/solo)
+  > [STAGED:HERO:PHASE] Phase 2 generated in 56958ms (tier=mid)
+  > [STAGED:TIER] phase 3 → medium → mid
+  > [STAGED:STAGING-MODE] adversarial (liAbsent=true, sideChars=1)
+  > [STAGED:HERO:PHASE] Cache MISS — generating phase 3 (Transformation) for scene 0 at tier=mid
+  > [STAGED:STYLE] artist="ender_bond" → 2 style anchor(s): ender_golden_master_v3.jpg, ender_golden_master_v3_bottom.jpg
+  > [STAGED:STYLE] canonical asset "wish_burst" (tier 1) attached (phase 3)
+  > [STAGED:STYLE] canonical asset "sacrifice_hand" (tier 1) attached (phase 3)
+  > [STAGED:STYLE] canonical asset "manta_cloak" (tier 1) attached (phase 3)
+  > [STAGED:STYLE] canonical asset "composition:object_dominant" (tier 2) attached (phase 3)
+  > [CASTING] reinject identity anchor for "Kresh" (phase 3)
+  > [STAGED:STYLE] phase 3 LI-absent — SUBSTITUTED li_absent master ender_golden_master_v3_bottom.jpg
+  > [STAGED:STYLE] phase 3 LI-absent — passing 8 refs (filtered 1 LI/romance masters)
+  > [STAGED:STYLE] artist=ender_bond styleAnchors=2 regionAnchors=2 contractInjected=true phaseIdx=3
+  > [VERIFY] FAIL: The Kwisheen's pupils are round human dots instead of horizontal capsule pupils.; The Kwisheen's lower body has too many tentacles for the specified six-point ground contact. | regions:
+  > [FAVORED-SHIFT] #2 feature="The Kwisheen's lower body has too many tentacles for the specified six-point ground contact." species=Kwisheen → caption=false
+
+  E2E SCENE 1 — Fatelands / Kwisheen
+  ────────────────────────────────────────────────────────────
+  error: none
+  prose length: 1745 chars | author: Grok-4.1-reasoning
+  stagedActive: true | heroCache keys: 3
+  hero phase images: 3 | closeup inserts: 0/3 queued | total: 3
+  kwisheen appearance lock: {"vael":{"skin":"royal violet","pattern":"iridescent speckle","iris":"silver-grey","body_plan":"a humanoid torso with two manipulator arms above the waist, and a lower body that is a cephalopod TENTACLE-MANTLE for locomotion (about six boneless tentacles — the exact number is not important) — NO human legs, NO knees or feet; a mane of living tentacle-dreadlocks from the scalp"},"kresh":{"skin":"ember red-orange","pattern":"iridescent speckle","iris":"amber-gold","body_plan":"a humanoid torso with two manipulator arms above the waist, and a lower body that is a cephalopod TENTACLE-MANTLE for locomotion (about six boneless tentacles — the exact number is not important) — NO human legs, NO knees or feet; a mane of living tentacle-dreadlocks from the scalp"}}
+  images captured (hero): 3
+  ── phase plan ──
+    phase 0: li=absent | chars=[protagonist,Kresh] | Orientation
+    phase 1: li=absent | chars=[protagonist,Kresh] | Revelation (page-turn)
+    phase 2: li=absent | chars=[protagonist,Kresh] | Threat
+    phase 3: li=absent | chars=[protagonist,Kresh] | Transformation
+    phase 4: li=absent | chars=[protagonist,Kresh] | Threat
+    phase 5: li=absent | chars=[protagonist,Kresh] | Threat
+    phase 6: li=absent | chars=[protagonist,Kresh] | Decision
+  ── hero renders (anchor decision) ──
+  ── beat count: 20 (target 20–30, floor 18) ──
+  ── scene-1 axis ──
+    bespokeAxis: (none)
+    microDecision.prompt: Say the fear plainly, or let the silence carry it?
+      • "say it plainly" signal=direct+
+      • "let it show" signal=subtle+
+  ── wardrobe grounding ──
+    pc_wardrobe: smooth manta-hide cloak clasped at shoulders and hooked to wrists and ankles, billowing in the current
+    li_wardrobe: (blank/absent)
+    Kresh [kwisheen]: scaled armor with shell plates, loincloth studded with gems, one tentacle bleeding
+  saved: 3 images + prose → /private/tmp/claude-501/-Users-romantsukerman-storybound-app/5b50dbf4-5fe5-4c80-ae8b-5a341feb3c62/scratchpad/e2e
+  ── canon-repair scorecard ──
+    panel 0: no repairs | reported-only [eye_color(detected)]
+    ── totals ── repairs=0 across 3 panels = 0.00 repairs/panel (goal: → 0 as upstream conditioning improves)
+    ✓ no oscillation — no single defect recurred across panels
+  ── structural-pass integration trace ──
+    panel 0:
+      sketch accepted: attempt 1 | final structurally clean: yes ✓
+      colorize: 1 (recolorize 0) | contract: pass
+      cosmetic: defects [eye_color] → Klein repaired [none]
+      calls: lineart 1 / structVerify 2 / colorize 1 | ms total 52500
+    panel 1:
+      sketch accepted: NEVER (best-of-3) | final structurally clean: yes ✓
+      REAL structural (bad generation): Kresh has four manipulator arms; canon requires two. / Kwisheen should have two manipulator arms; the figure has more than two. / Kresh's gender presentation is female; canon requires male.
+      colorize: 1 (recolorize 0) | contract: pass
+      cosmetic: defects [none] → Klein repaired [none]
+      calls: lineart 3 / structVerify 3 / colorize 1 | ms total 89562
+    panel 2:
+      sketch accepted: attempt 1 | final structurally clean: yes ✓
+      colorize: 1 (recolorize 0) | contract: pass
+      cosmetic: defects [none] → Klein repaired [none]
+      calls: lineart 1 / structVerify 2 / colorize 1 | ms total 56958
+  ── DASHBOARD (baseline, n=3 panels) ──
+    sketch accepted 1st try:       2/3
+    sketch accepted (ever):        2/3
+    final structurally clean:      3/3 (structural entropy)
+    avg structural retries/panel:  0.67
+    avg REAL-structural flags/pnl: 1.00  ← bad generation
+    avg VERIFIER-DISAGREE flags/pnl: 0.00  ← calibration (target → 0)
+    avg recolorize/panel:          0.00
+    avg Klein repairs/panel:       0.00
+    avg image-calls/panel (cost):  2.67 render + 2.33 verify
+    avg total ms/panel:            66340.00
+  ────────────────────────────────────────────────────────────
+

@@ -1,0 +1,42 @@
+[
+  {
+    "name": "the retained scene really is an OBJECT, not a string — the exact shape that crashed the paid run",
+    "pass": true
+  },
+  {
+    "name": "it carries the real keys observed in the paid run ({title, synopsis, text, fateCard})",
+    "pass": true
+  },
+  {
+    "name": "the ORIGINAL code path (passing the object straight to fs.writeFileSync) reproduces the exact crash: ERR_INVALID_ARG_TYPE",
+    "pass": true
+  },
+  {
+    "name": "the FIXED writer produces a string and writes without throwing",
+    "pass": true
+  },
+  {
+    "name": "the written text is the real scene prose, not a JSON dump of the wrapper object",
+    "pass": true
+  },
+  {
+    "name": "a plain string passes through unchanged",
+    "pass": true
+  },
+  {
+    "name": "null/undefined become an empty string rather than throwing",
+    "pass": true
+  },
+  {
+    "name": "a beats-array plan is joined into readable prose",
+    "pass": true
+  },
+  {
+    "name": "an unrecognised object degrades to JSON rather than throwing",
+    "pass": true
+  },
+  {
+    "name": "the writer cannot throw for any of the shapes above — so an artifact write can no longer preempt safeExit",
+    "pass": true
+  }
+]

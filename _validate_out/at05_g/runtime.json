@@ -1,0 +1,33 @@
+{
+ "violations": [],
+ "preflight": [],
+ "reports": [
+  {
+   "validator": "li_social_proof",
+   "ok": false,
+   "type": "LI_SOCIAL_PROOF_GAP",
+   "detail": "LI named, no social signal in the window following first mention",
+   "liName": "Julian",
+   "firstMentionPosition": 977,
+   "evidence": "ght at me. \"I offer it instead so Lirael finds the father who abandoned her.\"\n\nThe prepared sacrifice and the new desire sat wrong together. Everyone felt it. The Weave-Script on the youth's skin flickered from steady gold to a jagged pulse. My alignment-sense registered the sour…"
+  },
+  {
+   "validator": "hot_opening",
+   "type": "OPENING_TEMPERATURE",
+   "ok": false,
+   "failures": [
+    "no_crisis_250"
+   ],
+   "renderedTemp": "COLD_DISRUPTION",
+   "inMotionHits": 0,
+   "containerOpener": false,
+   "evidence": "The youth knelt on the braided spiralgrass, her aqua skin catching the dawn light that filtered through the mated-pair trees. A gossamer tunic bloomed white across her small frame. She spoke the rehearsed offering in a clear voice that carried to every First Favored present. \"I o"
+  },
+  {
+   "validator": "semantic_rewrite",
+   "type": "SEMANTIC_EDIT_REQUESTED",
+   "label": "body-dump-decluster",
+   "instruction": "A passage in this scene PAUSES the action to stack 4 physical appearance traits into one cluster — a paused character sheet (e.g. height + build + shoulders + frame + hair + eyes + mouth listed togeth"
+  }
+ ]
+}

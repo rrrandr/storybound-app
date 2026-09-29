@@ -1,0 +1,24 @@
+{
+  "age": 28,
+  "ancestry": "Ashkenazi",
+  "first_name": "Miriam",
+  "last_name": "Kessler",
+  "height": "5'6\", lean and long-limbed",
+  "build": "narrow-shouldered, small-breasted, all collarbone and wrist",
+  "hair": "dark brown, thick and slightly wavy, usually pinned half-up with whatever is closest — a pencil, a paintbrush, a clip",
+  "complexion": "warm olive undertone with a light freckling across the bridge of her nose and cheekbones",
+  "face": "an expressive, almost too-open face — high cheekbones, a slightly prominent nose, dark eyes that telegraph every thought before her mouth catches up; she reads as younger than she is because she hasn't learned to smooth the shock from her features",
+  "signature_feature": "her hands — long-fingered, stained with permanent traces of indigo and cadmium from her textile work, always moving even when she's still, the kind of hands that make people watch her",
+  "second_celebrated_feature": "the sharp angle of her collarbones, which shows when she wears anything loose or sleeveless — something about the architecture of her shoulders reads as both fragile and defiant",
+  "signature_habits": "she bites the inside of her cheek when concentrating, leaving small marks; she says 'oy vey' when frustrated (a ghost of her grandmother's voice); she works with her phone on silent but checks it obsessively, a nervous tic; she threads her fingers through her own hair when listening, pulling it tighter and tighter until her scalp hurts",
+  "occupation": "textile designer and dyer — she runs a small independent studio in Brooklyn where she creates hand-dyed fabrics and custom commissions for high-end designers and boutique clients; the work is precarious, beautiful, and financially fragile",
+  "current_crisis": {
+    "event": "her studio's landlord has given her 60 days' notice; the rent is doubling, and she cannot afford to relocate or stay; a major client has also just cancelled a six-figure commission citing budget cuts",
+    "hottest_emotion": "panic — the kind that makes her thoughts skip and repeat, that floods her chest and makes her fingers shake",
+    "immediate_want": "to find a way to save the studio, or at least to not lose everything she's built; to not have to call her mother and admit failure"
+  },
+  "wound": {
+    "core": "she believes that if she is not producing, creating, or making something real with her hands, she is invisible and worthless",
+    "surfacing_hint": "when her work is threatened or criticized, she becomes very still and very quiet, her eyes going dark; she apologizes for things that aren't her fault; she works until her hands bleed"
+  }
+}

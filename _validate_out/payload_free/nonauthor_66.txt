@@ -1,0 +1,26 @@
+You generate JSON continuity components for fiction scenes. Respond ONLY with valid JSON, no markdown.
+=====USER=====
+Given this scene context, generate 3 continuity threads for the NEXT scene beat.
+
+World: Fantasy | Tone: Earnest | POV: First
+Storyturn: ST1 | Intensity: Steamy
+Relationship: unknown
+Tension: unknown
+Last scene ending: "d begin.
+
+
+
+
+
+
+
+
+
+I realize that old tarot deck is still in my hand. Reassuringly solid. Present. One of the heavy gold cards slips out — “Petition Fate” is inscribed in it. If only it were that easy."
+
+Return JSON with exactly these 3 fields (15-25 words each):
+- "continuity_bridge": environment/sensory/emotional carry-forward from this scene
+- "tension_vector": unresolved pressure or desire acting on next beat
+- "character_motion": physical positioning, movement energy, body state
+
+CONSTRAINTS: No dialogue. No plot events. No character names. No storyturn advancement. Pure atmospheric/sensory/emotional threads.

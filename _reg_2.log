@@ -1,0 +1,68 @@
+=== RESERVED CANON — RELEASE CONDITION (zero dispatches, $0) ===
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/csp-report
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/config
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/csp-report
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/geo
+
+=== 1. THE DUE SIGNAL IS READ FROM REAL SEED DATA, NOT HARDCODED ===
+    release: {"dueScene":14,"eventId":"inquiry_opened","via":"reservedEvents row n=14","matchedMarkers":["dohkar","chayr","open"]}
+  ✓ First Sacrifice has exactly one reserved world-truth group
+  ✓ its release is resolved to the REAL reservedEvents id "inquiry_opened"
+  ✓ ...scheduled at scene 14 — LATE Issue 1, taken from the plan ROW that carries it
+  ✓ ...and it says WHICH structure supplied the number
+  ✓ the link was made lexically on >=2 of the seed's own markers
+
+=== 2. THE FOUR STATES — DETERMINISTIC PLANNER/OBJECTIVE GATE ===
+  ✓ STATE 1 — early scene (2) + reserved markers => REJECTED
+  ✓ ...and the rejection reports the schedule it judged against (due 14, at 2)
+  ✓ STATE 2 — early scene (2) + demand/pressure only => ALLOWED
+  ✓ STATE 3 — DUE scene (14) + the reserved event => ALLOWED, the ban lifts
+  ✓ ...including the exact plan text that was rejected at scene 2 — same words, now permitted
+  ✓ SCENE 4 NO LONGER RELEASES inquiry_opened — the old calendar is gone
+  ✓ ...so the OLD scene-4 formal-inquiry plan is now REJECTED at scene 4
+  ✓ ...and the REVISED scene-4 beat (notice + restriction, nothing convened) is ALLOWED at scene 4
+  ✓ still reserved at 13, the scene before it is due — the boundary is exact
+  ✓ released at 14
+  ✓ STATE 4 — at scene 3 (the DUE scene of a different real reservation, price_identified) the inquiry is STILL reserved
+    in force @2: 1  @3: 1  @4: 1 (released @4: 0)
+  ✓ release is scene-ordered: withheld at 2, 3, 4 and 13; released at 14
+
+=== 3. THE FOUR STATES — AUTHORING DIRECTIVE (SAME SIGNAL) ===
+  ✓ STATE 1 — at scene 2 the author IS forbidden the reserved composition
+  ✓ STATE 4 — at scene 3 it is STILL forbidden
+  ✓ at scene 4 it is STILL forbidden — the author follows the corrected calendar too
+  ✓ at scene 13 it is still forbidden
+  ✓ STATE 3 — at the DUE scene (14) the directive is EMPTY: the author is not forbidden its own scene
+  ✓ and that reaches the REAL CG author payload — block present at scene 2
+  ✓ ...still present at scene 4, where it used to vanish
+  ✓ ...and ABSENT from the real payload at scene 14, via the production scene accessor
+
+=== 4. LITERARY AND CG SHARE THE RELEASE BEHAVIOUR BY CONSTRUCTION ===
+  ✓ there is ONE definition of the directive — no literary-only variant
+  ✓ both call sites call it with no scene override, so both inherit _currentSceneNumber
+  ✓ one definition of the release helper too — the gate and the directive cannot disagree
+  ✓ the directive resolves its scene through the shared accessor, not its own arithmetic
+  ✓ ...and the helper falls back to _currentSceneNumber when no override is passed
+    literary: opening scene=1 dirLen=1274 | continuation scene=14 inForce=0 dirLen=0
+  ✓ a literary OPENING is scene 1 by the shared accessor, so the rule applies there
+  ✓ a literary CONTINUATION at turnCount=12 resolves to scene 14 and RELEASES the event
+
+=== 5. NOTHING ELSE MOVED ===
+    reserved rows: [{"n":3,"ids":["price_identified"]},{"n":14,"ids":["inquiry_opened"]}]
+  ✓ price_identified is UNMOVED on row 3
+  ✓ inquiry_opened is on row 14 and NOWHERE else
+  ✓ row 4 carries NO reservedEvents at all now
+  ✓ exactly TWO rows carry reservedEvents — nothing was added or dropped
+  ✓ both sealedEvents still unseal at 16 — untouched
+  ✓ row 4 no longer names the panel, the venue, or a convening
+  ✓ ...and it is still an early pressure beat with notice and restriction
+  ✓ row 14 now authors the convening it owns
+  ✓ row 19 is back to its original goal — the wrong date left no residue
+    Chayr seated IN_PERSON on rows: [14]
+  ✓ the due row IS the first row that seats the panel in person — no row stages it earlier
+
+=== 6. CONTAINMENT ===
+  ✓ zero provider dispatches
+
+======================================================================================
+  43/43 assertions passed

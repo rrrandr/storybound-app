@@ -1,0 +1,66 @@
+[
+  {
+    "name": "the decision gate is genuinely ACTIVE before the click — this proof is exercising the real prerequisite, not a no-op",
+    "pass": true
+  },
+  {
+    "name": "the real decision prompt mounted with both authored branches from the baked package",
+    "pass": true
+  },
+  {
+    "name": "the chosen branch \"remain\" matches one of the offered keys (not a guess that would silently pick the wrong scene)",
+    "pass": true
+  },
+  {
+    "name": "the click CLEARED the gate — _sceneDecisionNeeded() is now false",
+    "pass": true
+  },
+  {
+    "name": "the recorded decision is the chosen branch, stored as structured state",
+    "pass": true
+  },
+  {
+    "name": "the wish sealed through the real UI",
+    "pass": true
+  },
+  {
+    "name": "the classifier request was CAPTURED by the stub, not escaped — and it is genuinely the classifier",
+    "pass": true
+  },
+  {
+    "name": "THE DECISION PERSISTS through the Tempt seal — _sceneDecisionNeeded() is still false",
+    "pass": true
+  },
+  {
+    "name": "Scene A is NOT prompt-mounted — the \"[SCENE-DECISION] requested before the reader's choice was recorded\" refusal that ended the paid run did NOT fire",
+    "pass": true
+  },
+  {
+    "name": "generation actually proceeded past the gate — real scene-role requests were dispatched to the stubs after Submit",
+    "pass": true
+  },
+  {
+    "name": "Scene A rendered into state.scenes (the full dry pipeline completed, not merely passed the gate)",
+    "pass": true
+  },
+  {
+    "name": "the decision STILL persists after generation",
+    "pass": true
+  },
+  {
+    "name": "image endpoint /api/image is closed under this run's gate — a deliberate probe was attempted and ABORTED before dispatch",
+    "pass": true
+  },
+  {
+    "name": "image endpoint /api/bfl-kontext is closed under this run's gate — a deliberate probe was attempted and ABORTED before dispatch",
+    "pass": true
+  },
+  {
+    "name": "image endpoint /api/dashscope-image is closed under this run's gate — a deliberate probe was attempted and ABORTED before dispatch",
+    "pass": true
+  },
+  {
+    "name": "ZERO real provider dispatches anywhere in this run — the empirical claim that does not rest on any reasoning above",
+    "pass": true
+  }
+]

@@ -1,0 +1,41 @@
+written _validate_out/scene1_measure_E2E-DRY.2026-09-09T15-30-49-592Z.json
+{
+  "mode": "E2E-DRY",
+  "plannerCalls": 0,
+  "authorCalls": 0,
+  "aborted": [
+    {
+      "why": "PIN VIOLATION: planner user prompt carries story shape LEGACY but the run is pinned to CARETAKING — request aborted before leaving the page",
+      "kind": "planner"
+    },
+    {
+      "why": "PIN VIOLATION: planner user prompt carries story shape LEGACY but the run is pinned to CARETAKING — request aborted before leaving the page",
+      "kind": "planner"
+    }
+  ],
+  "cost": [],
+  "totalList": 0,
+  "totalXaiUsd": 0,
+  "gate": {
+    "pinned": "FROM_START",
+    "openingState": null,
+    "pinnedShape": "CARETAKING",
+    "shapeSeen": null,
+    "stateLogs": [
+      "[LI-ARRIVAL] FROM_START (engine=?, deferIntent=false, recent=)",
+      "[A-PLOT:SHAPE] using INVERTED pre-pick: Legacy",
+      "[A-PLOT:READER-Q] Is he protecting it or himself?",
+      "[A-PLOT:SHAPE] persisted: Legacy (LEGACY) — readerQuestion: \"Is he protecting it or himself?\""
+    ],
+    "authorAttempts": 0,
+    "pages": 0,
+    "pageFile": null,
+    "pageChars": 0,
+    "fatal": "scaffold transport failed twice: Failed to fetch",
+    "verdict": "FAIL-CLOSED (named): scaffold transport failed twice: Failed to fetch"
+  },
+  "envelope": [],
+  "attempts": null,
+  "retryReason": null
+}
+DRY REHEARSAL FAILED: pages=0 fatal=scaffold transport failed twice: Failed to fetch

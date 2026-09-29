@@ -64,7 +64,11 @@
     "pass": true
   },
   {
-    "name": "the packet is declared the COMPLETE and ONLY canon",
+    "name": "the packet declares completeness ONLY because nothing was actually omitted",
+    "pass": true
+  },
+  {
+    "name": "...and the packet reports its own truncation state rather than leaving it implicit",
     "pass": true
   },
   {
@@ -89,6 +93,10 @@
   },
   {
     "name": "an undefined category fails validation",
+    "pass": true
+  },
+  {
+    "name": "KNOWN LIMIT — a REAL but logically IRRELEVANT citation still validates: the check proves the fact exists, not that it supports the finding",
     "pass": true
   },
   {

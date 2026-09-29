@@ -1,0 +1,132 @@
+[
+  {
+    "url": "/api/csp-report",
+    "method": "POST",
+    "t": 1789668436046
+  },
+  {
+    "url": "/api/config",
+    "method": "GET",
+    "t": 1789668444028
+  },
+  {
+    "url": "/api/csp-report",
+    "method": "POST",
+    "t": 1789668444038
+  },
+  {
+    "url": "/api/geo",
+    "method": "GET",
+    "t": 1789668444049
+  },
+  {
+    "url": "/api/csp-report",
+    "method": "POST",
+    "t": 1789668444174
+  },
+  {
+    "url": "/api/csp-report",
+    "method": "POST",
+    "t": 1789668444185
+  },
+  {
+    "url": "/api/csp-report",
+    "method": "POST",
+    "t": 1789668444190
+  },
+  {
+    "url": "/api/csp-report",
+    "method": "POST",
+    "t": 1789668444195
+  },
+  {
+    "url": "/api/csp-report",
+    "method": "POST",
+    "t": 1789668444197
+  },
+  {
+    "url": "/api/csp-report",
+    "method": "POST",
+    "t": 1789668444203
+  },
+  {
+    "url": "/api/bug-report-awards?userId=00000000-0000-0000-0000-000000000001",
+    "method": "GET",
+    "t": 1789668447056
+  },
+  {
+    "url": "/api/csp-report",
+    "method": "POST",
+    "t": 1789668450647
+  },
+  {
+    "url": "/api/beta-events",
+    "method": "POST",
+    "t": 1789668452050
+  },
+  {
+    "url": "/api/csp-report",
+    "method": "POST",
+    "t": 1789668453851
+  },
+  {
+    "url": "/api/csp-report",
+    "method": "POST",
+    "t": 1789668453891
+  },
+  {
+    "url": "/api/mistral-proxy",
+    "method": "POST",
+    "t": 1789668456003
+  },
+  {
+    "url": "/api/proxy",
+    "method": "POST",
+    "t": 1789668456006
+  },
+  {
+    "url": "/api/chatgpt-proxy",
+    "method": "POST",
+    "t": 1789668456008
+  },
+  {
+    "url": "/api/mistral-proxy",
+    "method": "POST",
+    "t": 1789668456334
+  },
+  {
+    "url": "/api/proxy",
+    "method": "POST",
+    "t": 1789668456336
+  },
+  {
+    "url": "/api/chatgpt-proxy",
+    "method": "POST",
+    "t": 1789668456339
+  },
+  {
+    "url": "/api/mistral-proxy",
+    "method": "POST",
+    "t": 1789668456343
+  },
+  {
+    "url": "/api/mistral-proxy",
+    "method": "POST",
+    "t": 1789668456666
+  },
+  {
+    "url": "/api/proxy",
+    "method": "POST",
+    "t": 1789668456669
+  },
+  {
+    "url": "/api/chatgpt-proxy",
+    "method": "POST",
+    "t": 1789668456671
+  },
+  {
+    "url": "/api/mistral-proxy",
+    "method": "POST",
+    "t": 1789668456675
+  }
+]

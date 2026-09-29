@@ -1,0 +1,17 @@
+{
+  "ok": false,
+  "violations": [
+    {
+      "rule": "scene1_too_thin",
+      "detail": "scene1Candidate totals 751 words across 20 beats — accepted range 1,100-1,700, target 1,350-1,550 (baked scene ~1,444); beats satisfying the COUNT target with flat one-line prose is a hard failure, not just a quality preference"
+    },
+    {
+      "rule": "scene1_insufficient_narration_density",
+      "detail": "only 1 of 16 narration/exposition beats are 60-90 words each (need at least 12) — a few long beats cannot cover for many thin ones; this is checked PER-BEAT, independent of the total-word floor"
+    },
+    {
+      "rule": "exemplar_verbatim_copy",
+      "detail": "oasOpening contains a 6+ word verbatim match against the non-canonical julian_opening_turn exemplar — craft reference only, never to be quoted or closely copied"
+    }
+  ]
+}

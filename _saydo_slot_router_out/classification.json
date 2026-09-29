@@ -1,0 +1,72 @@
+{
+  "RED-safemode": {
+    "slot": "boundary",
+    "confidence": "strong",
+    "evidence": [
+      "matched:\"pull him\""
+    ],
+    "reason": "open, unretreating want made visible — the seed's own boundary frame"
+  },
+  "advance": {
+    "slot": "boundary",
+    "confidence": "strong",
+    "evidence": [
+      "matched:\"kiss\""
+    ],
+    "reason": "open, unretreating want made visible — the seed's own boundary frame"
+  },
+  "weak": {
+    "slot": null,
+    "confidence": "none",
+    "evidence": [
+      "weakShape:?"
+    ],
+    "reason": "weak turn (weak) — stays under the weak-turn restraint; an uncertain move is not a claim of unretreating want"
+  },
+  "weak-2": {
+    "slot": null,
+    "confidence": "none",
+    "evidence": [
+      "weakShape:?"
+    ],
+    "reason": "weak turn (weak) — stays under the weak-turn restraint; an uncertain move is not a claim of unretreating want"
+  },
+  "relational": {
+    "slot": null,
+    "confidence": "none",
+    "evidence": [],
+    "reason": "no slot represented: the move is not an admission, an authority challenge, an unretreating want-claim, or a landed concealment — falling back to defaultEventFrame"
+  },
+  "procedural": {
+    "slot": null,
+    "confidence": "none",
+    "evidence": [
+      "procedural"
+    ],
+    "reason": "procedural/institutional player move — the institutional default frame IS the right answer for it, so no slot override"
+  },
+  "confession": {
+    "slot": "confession",
+    "confidence": "strong",
+    "evidence": [
+      "matched:\"It was me\""
+    ],
+    "reason": "an admission has landed"
+  },
+  "reversal": {
+    "slot": "reversal",
+    "confidence": "strong",
+    "evidence": [
+      "matched:\"You have no right\""
+    ],
+    "reason": "the player contests who has authority to rule"
+  },
+  "__repeat": {
+    "slot": "boundary",
+    "confidence": "strong",
+    "evidence": [
+      "matched:\"pull him\""
+    ],
+    "reason": "open, unretreating want made visible — the seed's own boundary frame"
+  }
+}

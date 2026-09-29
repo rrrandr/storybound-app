@@ -1,0 +1,380 @@
+{
+  "generatedAt": "2026-09-24T05:47:13.284Z",
+  "preFixVsPostFix": {
+    "preChars": 265687,
+    "postChars": 268592,
+    "lostByFix": [],
+    "addedByFix": []
+  },
+  "sizes": {
+    "paidRuptureChars": 268592,
+    "dryRuptureAuthorChars": 263702,
+    "dryOrdinaryAuthorChars": 237863,
+    "dryRupturePlannerChars": 30402,
+    "dryOrdinaryPlannerChars": 28125
+  },
+  "fidelityToPaid": 0.9661538461538461,
+  "authorBlocksLostUnderRupture": [],
+  "authorBlocksGainedUnderRupture": [
+    {
+      "header": "3. EFFECT",
+      "chars": 1745,
+      "lineCount": 10,
+      "occurrences": 1
+    },
+    {
+      "header": "SINGLE-USE SCALE",
+      "chars": 1447,
+      "lineCount": 2,
+      "occurrences": 1
+    },
+    {
+      "header": "TEMPT FATE OVERRIDES ORDINARY WISH LIMITS (NON-NEGOTIABLE)",
+      "chars": 1141,
+      "lineCount": 5,
+      "occurrences": 1
+    },
+    {
+      "header": "OVER-ESCALATION PROHIBITION (Severity 2)",
+      "chars": 1128,
+      "lineCount": 17,
+      "occurrences": 1
+    },
+    {
+      "header": "TEMPT FATE — CG OUTPUT MAPPING (read alongside the directive below)",
+      "chars": 1061,
+      "lineCount": 10,
+      "occurrences": 1
+    },
+    {
+      "header": "ONE MIRACLE PER WISH",
+      "chars": 943,
+      "lineCount": 16,
+      "occurrences": 1
+    },
+    {
+      "header": "NARRATIVE TRUTH RULE (NON-NEGOTIABLE)",
+      "chars": 927,
+      "lineCount": 10,
+      "occurrences": 1
+    },
+    {
+      "header": "↳ HIGH-IMPACT / OFF-SCRIPT INPUT",
+      "chars": 856,
+      "lineCount": 5,
+      "occurrences": 1
+    },
+    {
+      "header": "HARD RULES — FULFILLMENT + COMPLICATION (the player's wish always lands)",
+      "chars": 843,
+      "lineCount": 8,
+      "occurrences": 1
+    },
+    {
+      "header": "TYPE 2 — STRUCTURAL BREAKS (translate, never deny)",
+      "chars": 822,
+      "lineCount": 10,
+      "occurrences": 1
+    },
+    {
+      "header": "DECK TRACE (FOREGROUND)",
+      "chars": 802,
+      "lineCount": 10,
+      "occurrences": 1
+    },
+    {
+      "header": "WISH UTTERANCE (HARD — added 2026-05-29)",
+      "chars": 754,
+      "lineCount": 1,
+      "occurrences": 1
+    },
+    {
+      "header": "VISIBILITY AND PRECISION",
+      "chars": 672,
+      "lineCount": 6,
+      "occurrences": 1
+    },
+    {
+      "header": "PLAYER WISH (Tempt Fate)",
+      "chars": 671,
+      "lineCount": 5,
+      "occurrences": 1
+    },
+    {
+      "header": "TYPE 1 — POWER MOVES (grant directly)",
+      "chars": 501,
+      "lineCount": 8,
+      "occurrences": 1
+    },
+    {
+      "header": "• REACTION",
+      "chars": 476,
+      "lineCount": 5,
+      "occurrences": 1
+    },
+    {
+      "header": "1. INVOCATION (1-2 sentences)",
+      "chars": 389,
+      "lineCount": 3,
+      "occurrences": 1
+    },
+    {
+      "header": "SACRIFICE PHYSICS (Tempt Fate — amplified)",
+      "chars": 343,
+      "lineCount": 3,
+      "occurrences": 1
+    },
+    {
+      "header": "TEMPT SEVERITY",
+      "chars": 333,
+      "lineCount": 6,
+      "occurrences": 1
+    },
+    {
+      "header": "DIMINISHING SPECIFICITY",
+      "chars": 332,
+      "lineCount": 4,
+      "occurrences": 1
+    },
+    {
+      "header": "MAGNITUDE",
+      "chars": 291,
+      "lineCount": 1,
+      "occurrences": 1
+    },
+    {
+      "header": "COLLATERAL REQUIREMENT",
+      "chars": 286,
+      "lineCount": 1,
+      "occurrences": 1
+    },
+    {
+      "header": "ESCALATION RULE",
+      "chars": 275,
+      "lineCount": 5,
+      "occurrences": 1
+    },
+    {
+      "header": "HARD LIMITS",
+      "chars": 269,
+      "lineCount": 2,
+      "occurrences": 1
+    },
+    {
+      "header": "CERTAINTY",
+      "chars": 267,
+      "lineCount": 1,
+      "occurrences": 1
+    },
+    {
+      "header": "TEMPT FATE EMPOWERMENT CONTRACT (NON-NEGOTIABLE)",
+      "chars": 231,
+      "lineCount": 4,
+      "occurrences": 1
+    },
+    {
+      "header": "APPROACH THE LINE",
+      "chars": 199,
+      "lineCount": 1,
+      "occurrences": 1
+    },
+    {
+      "header": "ECHO MANDATE",
+      "chars": 197,
+      "lineCount": 1,
+      "occurrences": 1
+    },
+    {
+      "header": "2. OMEN (1-2 sentences)",
+      "chars": 195,
+      "lineCount": 3,
+      "occurrences": 1
+    },
+    {
+      "header": "THE FILTER",
+      "chars": 180,
+      "lineCount": 4,
+      "occurrences": 1
+    },
+    {
+      "header": "• FATE INTERVENTION (tempt_fate)",
+      "chars": 171,
+      "lineCount": 1,
+      "occurrences": 1
+    },
+    {
+      "header": "- TARGET",
+      "chars": 160,
+      "lineCount": 1,
+      "occurrences": 1
+    },
+    {
+      "header": "• EFFECT",
+      "chars": 103,
+      "lineCount": 1,
+      "occurrences": 1
+    },
+    {
+      "header": "• INVOCATION",
+      "chars": 101,
+      "lineCount": 1,
+      "occurrences": 1
+    },
+    {
+      "header": "• OMEN",
+      "chars": 89,
+      "lineCount": 1,
+      "occurrences": 1
+    },
+    {
+      "header": "TEMPT FATE NARRATIVE STRUCTURE (MANDATORY — this scene must open with all three beats)",
+      "chars": 88,
+      "lineCount": 2,
+      "occurrences": 1
+    },
+    {
+      "header": "BEAT BUDGET (HARD — overrides the default 25-35 range for this scene)",
+      "chars": 70,
+      "lineCount": 1,
+      "occurrences": 1
+    },
+    {
+      "header": "- SLOT RESERVATION (~6 beats for the Fate arc)",
+      "chars": 47,
+      "lineCount": 1,
+      "occurrences": 1
+    },
+    {
+      "header": "TEMPT FATE WORLD LAW (FANTASY — divine mode)",
+      "chars": 45,
+      "lineCount": 1,
+      "occurrences": 1
+    },
+    {
+      "header": "CLASSIFY EVERY WISH INTO ONE OF TWO TYPES",
+      "chars": 43,
+      "lineCount": 2,
+      "occurrences": 1
+    }
+  ],
+  "authorBlocksShrunkUnderRupture": [
+    {
+      "header": "HARD ANTI-PATTERNS",
+      "ordinary": 1341,
+      "rupture": 382
+    },
+    {
+      "header": "• PLAYER DID",
+      "ordinary": 583,
+      "rupture": 82
+    },
+    {
+      "header": "WHEN",
+      "ordinary": 376,
+      "rupture": 337
+    }
+  ],
+  "plannerBlocksLostUnderRupture": [],
+  "probes": [
+    {
+      "label": "relational pressure (li_pressure_actor)",
+      "needle": "li_pressure_actor",
+      "authorOrdinary": 0,
+      "authorRupture": 0,
+      "authorPaid": 0,
+      "plannerOrdinary": 1,
+      "plannerRupture": 1,
+      "plannerPaid": 1
+    },
+    {
+      "label": "dialogue requirement",
+      "needle": "DIALOGUE",
+      "authorOrdinary": 7,
+      "authorRupture": 7,
+      "authorPaid": 7,
+      "plannerOrdinary": 0,
+      "plannerRupture": 0,
+      "plannerPaid": 0
+    },
+    {
+      "label": "interiority requirement",
+      "needle": "INTERIORITY",
+      "authorOrdinary": 2,
+      "authorRupture": 2,
+      "authorPaid": 2,
+      "plannerOrdinary": 0,
+      "plannerRupture": 0,
+      "plannerPaid": 0
+    },
+    {
+      "label": "consequence / stakes requirement",
+      "needle": "DRAMATIC STAKES",
+      "authorOrdinary": 1,
+      "authorRupture": 1,
+      "authorPaid": 1,
+      "plannerOrdinary": 0,
+      "plannerRupture": 0,
+      "plannerPaid": 0
+    },
+    {
+      "label": "beat distribution (silence budget)",
+      "needle": "BEAT DISTRIBUTION",
+      "authorOrdinary": 1,
+      "authorRupture": 1,
+      "authorPaid": 1,
+      "plannerOrdinary": 0,
+      "plannerRupture": 0,
+      "plannerPaid": 0
+    },
+    {
+      "label": "scene charge contract",
+      "needle": "SCENE CHARGE",
+      "authorOrdinary": 3,
+      "authorRupture": 3,
+      "authorPaid": 3,
+      "plannerOrdinary": 0,
+      "plannerRupture": 0,
+      "plannerPaid": 0
+    },
+    {
+      "label": "expression arc peaks",
+      "needle": "EXPRESSION ARC",
+      "authorOrdinary": 2,
+      "authorRupture": 2,
+      "authorPaid": 2,
+      "plannerOrdinary": 0,
+      "plannerRupture": 0,
+      "plannerPaid": 0
+    },
+    {
+      "label": "romance / intimacy phase directive",
+      "needle": "INTIMACY",
+      "authorOrdinary": 3,
+      "authorRupture": 3,
+      "authorPaid": 3,
+      "plannerOrdinary": 0,
+      "plannerRupture": 0,
+      "plannerPaid": 0
+    },
+    {
+      "label": "aftermath lane menu",
+      "needle": "AFTERMATH LANE",
+      "authorOrdinary": 0,
+      "authorRupture": 0,
+      "authorPaid": 0,
+      "plannerOrdinary": 1,
+      "plannerRupture": 1,
+      "plannerPaid": 1
+    },
+    {
+      "label": "plot contract",
+      "needle": "PLOT CONTRACT",
+      "authorOrdinary": 0,
+      "authorRupture": 0,
+      "authorPaid": 0,
+      "plannerOrdinary": 0,
+      "plannerRupture": 0,
+      "plannerPaid": 0
+    }
+  ]
+}

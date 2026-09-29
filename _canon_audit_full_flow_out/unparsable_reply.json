@@ -15,24 +15,26 @@
   },
   "st": {
     "blocked": {
-      "at": 1790270747082,
+      "at": 1790404757156,
       "sceneIndex": 1,
       "proposal": {
         "tactical_move": "Lirael steps back from the center of the clearing. — the presiding Dohkar sets a preliminary review date.",
         "local_objective": "The assembly's confusion continues to play out without resolution.",
-        "state_change": "The assembly mills, unable to say why they gathered. — the presiding Dohkar sets a preliminary review date.",
+        "state_change": "Julian draws the memory of the accusation out of Seren and it dissolves",
         "state_change_precondition": "The assembly is still gathered, confused.",
         "forces_choice": "Lirael must decide whether to speak into the confusion or let it stand.",
         "event_slots": {
           "exit_state": "The assembly disperses, still not agreeing on what just happened.",
-          "mechanism_grounding": "ordinary"
+          "mechanism_grounding": "ordinary",
+          "action": "draws the memory out",
+          "target": "Seren"
         },
         "mechanism_grounding": "ordinary",
-        "acceptedAt": 1790270746756,
+        "acceptedAt": 1790404757152,
         "sceneNum": 1,
         "owner": {
-          "id": "cpa:0ccf1707-0a8c-41b2-b57f-7e3e2595e247",
-          "storyId": "flow-1790270746417",
+          "id": "cpa:98150be5-5edf-4c68-bb4e-60d5b222b3b6",
+          "storyId": "flow-1790404756817",
           "sceneIndex": 1,
           "branch": null
         }
@@ -56,6 +58,11 @@
         "wt_5",
         "dc_0",
         "know_0",
+        "dc_1",
+        "dc_2",
+        "ev_0",
+        "ev_1",
+        "dur_0",
         "inv_0"
       ],
       "verdict": {
@@ -63,18 +70,37 @@
         "source": "audit-unavailable",
         "violations": [],
         "paid": true,
+        "telemetry": {
+          "realizedUsd": 0.0053,
+          "costSource": "provider",
+          "upstreamAttempts": 1,
+          "resolvedModel": "grok-4.3",
+          "promptTokens": 3200,
+          "reasoningTokens": 0
+        },
         "reason": "canon audit could not complete (canon audit reply was not JSON) — failing closed before author spend",
         "preserveForReview": true
       }
     },
     "lastAudit": {
-      "at": 1790270747082,
+      "at": 1790404757156,
       "sceneIndex": 1,
       "allow": false,
       "source": "audit-unavailable",
+      "triggered": true,
+      "triggerReasons": [
+        "declared \"ordinary\" but the event text asserts a produced effect the deterministic check cannot see"
+      ],
+      "model": "grok-4.3",
+      "latencyMs": 3,
+      "realizedUsd": 0.0053,
+      "costSource": "provider",
+      "upstreamAttempts": 1,
+      "resolvedModel": "grok-4.3",
       "paid": true,
       "reason": "canon audit could not complete (canon audit reply was not JSON) — failing closed before author spend",
       "violations": [],
+      "citedFactIds": [],
       "auditErrors": null,
       "uncertainty": null
     },

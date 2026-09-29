@@ -1,0 +1,44 @@
+{
+  "opening_spine": {
+    "pressure_source_type": "survival",
+    "pressure_source": "the oven is overheating and the pastries are collapsing while the ferry horn sounds outside",
+    "hook_object": null,
+    "opening_actor_id": null,
+    "opening_beat": "Smoke curls from the oven vents as the timer shrieks and the ferry horn blares once",
+    "rising_beats": ["I yank the door open, flour exploding across my forearms", "Rook's proxy delay lands again in my head, precise and unhurried, and heat pools low in my belly at the memory of his ink-stained finger tapping the clause"],
+    "decision_beat": "Pull the trays now or let the whole batch burn and miss the ferry?",
+    "pc_career": "pastry chef",
+    "opening_setting": "bakery kitchen",
+    "environment_elements": ["overheated oven", "ferry horn echo", "flour-dusted counter"],
+    "li_texture_beat": "rising_beats[1]: Rook's proxy delay lands again in my head, precise and unhurried, and heat pools low in my belly at the memory of his ink-stained finger tapping the clause",
+    "pc_wound_anchor": "opening_beat: the ferry horn bothers me more than the smoke does",
+    "pc_self_presentation_beat": "rising_beats[0]: I yank the door open, flour exploding across my forearms, the way I always do when I refuse to look small",
+    "scene_want": "wants the oven to stop shrieking before the ferry pulls away",
+    "scene_mission": "Salvage the trays before the ferry departs without the order",
+    "reader_state": {
+      "knows": "Testa is alone in a failing bakery kitchen as the ferry horn sounds",
+      "believes": "the batch and the deadline are both about to be lost",
+      "wondering": "why Rook's latest move keeps pulling her attention even now",
+      "must_not_confuse": "only Testa is present and the oven is actively failing"
+    },
+    "pc_body_callback": "opening: stress_tic (forearms flinching from heat)",
+    "antagonist_body_callback": null,
+    "staged_characters": [
+      { "name": "Testa", "presence": "IN_PERSON", "anchor_beat": "FROM_PC_OPENING_FUSION" }
+    ],
+    "scene_skeleton": {
+      "character_plus": [],
+      "environment_plus": {
+        "target": "overheated oven",
+        "axis": "damage",
+        "beat": "overheated oven now releasing smoke through warped vents"
+      },
+      "pc_opening_fusion": {
+        "character": "Testa",
+        "placement": "PC_FIRST_EMBODIED_BEAT",
+        "character_angle": "she moves toward the damage before she can stop herself",
+        "beat": "I yank the door open, flour exploding across my forearms"
+      }
+    }
+  }
+}

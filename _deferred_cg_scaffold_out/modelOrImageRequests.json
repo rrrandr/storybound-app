@@ -1,0 +1,42 @@
+[
+  {
+    "url": "/api/mistral-proxy",
+    "role": "OAS_DIALOGUE",
+    "kind": "model",
+    "t": 1789712489095,
+    "beforeSubmit": true,
+    "stack": "    at window.fetch (<anonymous>:10:24) |     at _callMistral (http://localhost:3000/orchestration-client.js?v=20260917a-authored-oas-context-fatecards:5867:28) |     at callOASTurnLLM (http://localhost:3000/orchestration-client.js?v=20260917a-authored-oas-context-fatecards:5945:20) |     at _fireIn"
+  },
+  {
+    "url": "/api/mistral-proxy",
+    "role": "fatePreviews",
+    "kind": "model",
+    "t": 1789712493505,
+    "beforeSubmit": true,
+    "stack": "    at window.fetch (<anonymous>:10:24) |     at http://localhost:3000/app.js?v=20260918a-oneshot-sheet-default-tier2-fix:5889:23 |     at async _callTieredProvider (http://localhost:3000/app.js?v=20260918a-oneshot-sheet-default-tier2-fix:5951:22) |     at async Object.generateIntimateFatePreviewsBa"
+  },
+  {
+    "url": "/api/mistral-proxy",
+    "role": "CG_SCAFFOLD",
+    "kind": "model",
+    "t": 1789712495633,
+    "beforeSubmit": false,
+    "stack": "    at window.fetch (<anonymous>:10:24) |     at http://localhost:3000/app.js?v=20260918a-oneshot-sheet-default-tier2-fix:5889:23 |     at async _callTieredProvider (http://localhost:3000/app.js?v=20260918a-oneshot-sheet-default-tier2-fix:5951:22) |     at async _buildCGScaffold (http://localhost:30"
+  },
+  {
+    "url": "/api/mistral-proxy",
+    "role": "sceneSpine",
+    "kind": "model",
+    "t": 1789712495640,
+    "beforeSubmit": false,
+    "stack": "    at window.fetch (<anonymous>:10:24) |     at _generateLiteraryPlotContract (http://localhost:3000/app.js?v=20260918a-oneshot-sheet-default-tier2-fix:98720:21) |     at _runCGScreenplayGenInner (http://localhost:3000/app.js?v=20260918a-oneshot-sheet-default-tier2-fix:227881:74) |     at async _ru"
+  },
+  {
+    "url": "/api/mistral-proxy",
+    "role": "CG_SCREENPLAY",
+    "kind": "model",
+    "t": 1789712495684,
+    "beforeSubmit": false,
+    "stack": "    at window.fetch (<anonymous>:10:24) |     at _callScreenplayProvider (http://localhost:3000/app.js?v=20260918a-oneshot-sheet-default-tier2-fix:228144:29) |     at _runCGScreenplayGenInner (http://localhost:3000/app.js?v=20260918a-oneshot-sheet-default-tier2-fix:228195:25) |     at async _runCGSc"
+  }
+]

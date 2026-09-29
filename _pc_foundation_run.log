@@ -1,0 +1,493 @@
+
+=== SCENARIO GREEN — fully-cited valid bible ===
+PASS GREEN real Library entry reaches vaultLibraryScreen  — vaultLibraryScreen
+PASS GREEN real click reaches baked Scene 1 (game screen, real starterId)  — {"screen":"game","starterId":"starter_first_sacrifice","oasBtnVisible":true}
+PASS GREEN ZERO model-classified requests fired merely from reaching baked Scene 1  — count=0
+
+=== GREEN SOURCE-PARITY (real live window.state vs the fixture's own citations) ===
+PASS GREEN _pcFoundationSourceFacts resolves against real live state  — {"pcName":"Lirael","facetCount":2,"hasScene1":true}
+PASS GREEN fixture citation for "wound.core" (approved_facet:pc_fears_public_failure) is a REAL substring of the LIVE source  — cites="Failing is survivable; failing where it can be witnessed and recounted is not"
+PASS GREEN fixture citation for "core_contradiction" (approved_facet:pc_untested_brilliance) is a REAL substring of the LIVE source  — cites="She knows the procedure better than she has ever performed it"
+PASS GREEN fixture citation for "current_crisis.event" (approved_scene1) is a REAL substring of the LIVE source  — cites="The presiding Dohkar has charged Lirael with shaping the wish and with interfering"
+PASS GREEN fixture citation for "current_crisis.li_complication" (approved_relationship) is a REAL substring of the LIVE source  — cites="Already knows something about the PC’s lineage"
+PASS GREEN fixture citation for "current_crisis.refusal" (approved_scene1) is a REAL substring of the LIVE source  — cites="The presiding Dohkar has charged Lirael with shaping the wish and with interfering; he has not yet ruled"
+
+=== GREEN THE ISOLATED _generatePCBodyBible() CALL (real function, real route, stubbed provider) ===
+PASS GREEN _generatePCBodyBible() completed without throwing  — {"ok":true,"hadResult":true}
+FAIL GREEN the primary pcBodyBible call fired exactly once  — attempts=0
+PASS GREEN bodyTellReroll attempts stayed within the declared cap of 2  — attempts=0
+PASS GREEN NO CONTRACT VIOLATION (no attempt exceeded its declared cap)  — null
+  [NOTE] GREEN CORRELATED ATTEMPT LOG (request id, kind, role, model — the exact max-request-count evidence): []
+  [NOTE] GREEN BLOCKED ATTEMPTS (over-cap, named, never silently dropped): []
+PASS GREEN NOTHING OUTSIDE THE DECLARED CONTRACT fired (no sibling bible/scaffold/CG calls yet)  — []
+PASS GREEN window.state.pcBodyBible is set to the real generated (stubbed-provider) response
+
+=== GREEN REAL IN-PAGE VALIDATE + COMMIT (window._validatePcFoundationOutput / window._commitValidatedPcFoundation against REAL window.state) ===
+  [NOTE] GREEN VALIDATION RESULT: ok=true accepted=["wound.core","core_contradiction","current_crisis.event","current_crisis.li_complication"] rejections=[]
+  [NOTE] GREEN COMMIT RESULT: {"committed":true,"reason":null,"validation":{"ok":true,"rejections":[],"accepted":[{"field":"wound.core","kind":"locked_canon_fact"},{"field":"core_contradiction","kind":"locked_canon_fact"},{"field":"current_crisis.event","kind":"locked_canon_fact"},{"field":"current_crisis.li_complication","kind":"locked_canon_fact"}]},"mergedFacetIds":[]}
+PASS GREEN validation ACCEPTS the fully-cited response  — []
+PASS GREEN commit REPORTS committed:true  — {"committed":true,"reason":null,"validation":{"ok":true,"rejections":[],"accepted":[{"field":"wound.core","kind":"locked_canon_fact"},{"field":"core_contradiction","kind":"locked_canon_fact"},{"field":"current_crisis.event","kind":"locked_canon_fact"},{"field":"current_crisis.li_complication","kind":"locked_canon_fact"}]},"mergedFacetIds":[]}
+PASS GREEN the real portfolio now carries the merged, provenance-stamped facets  — ["pc_untested_brilliance:seed","pc_fears_public_failure:seed","pc_core_contradiction:pc_body_bible_validated","pc_current_crisis_event:pc_body_bible_validated"]
+PASS GREEN the seed's own two authored facets remain present, untouched
+
+=== GREEN REAL SAVE & EXIT -> RELOAD -> CONTINUE (item 2/3: does the commit, or the absence of one, survive the app's own real save/reload mechanism?) ===
+PASS GREEN a real Save & Exit affordance is visible  — storySaveExitBtn
+PASS GREEN close returns to the Library screen
+PASS GREEN page reload completes (runtime state genuinely cleared)
+PASS GREEN a saved-story row exists in the real Library UI
+PASS GREEN the real Continue click (not a direct function call) restored the story  — {"screen":"gnReader","starterId":"starter_first_sacrifice"}
+  [NOTE] GREEN [DISCLOSED, SEPARATE, PRE-EXISTING] after a real reload, "Continue" resumes First Sacrifice into #gnReader (a page-turner), not back into the #zoomReadBtn preview screen it was saved from — and that page-turner is observed to get stuck on its own "Composing Scene 1..." loader in this harness. This is unrelated to PC-foundation validate/commit and is reported here as a separate limitation, not investigated further.
+PASS GREEN every merged facet survives a REAL reload + Continue, with identical content  — [{"facet_id":"pc_untested_brilliance","category":"competence","canonical_truth":"She knows the procedure better than she has ever performed it, and the gap between knowing and doing is where her fear lives.","forbidden_restatements":[],"pressures":[{"pressure_id":"p_first_live_performance_of","text":"first live performance of a rehearsed duty","evidence_requires":null,"legacy_display_only":true},{"pressure_id":"p_being_watched_by_people","text":"being watched by people who can judge her","evidence_requires":null,"legacy_display_only":true}],"possible_pressures":["first live performance of a re
+PASS GREEN the surviving facets' content is byte-identical pre/post reload (not merely present)
+PASS GREEN real Library entry reaches vaultLibraryScreen  — vaultLibraryScreen
+PASS GREEN real click reaches baked Scene 1 (game screen, real starterId)  — {"screen":"game","starterId":"starter_first_sacrifice","oasBtnVisible":true}
+PASS GREEN ZERO model-classified requests fired merely from reaching baked Scene 1  — count=0
+
+=== GREEN SOURCE-PARITY (real live window.state vs the fixture's own citations) ===
+PASS GREEN _pcFoundationSourceFacts resolves against real live state  — {"pcName":"Lirael","facetCount":2,"hasScene1":true}
+PASS GREEN fixture citation for "wound.core" (approved_facet:pc_fears_public_failure) is a REAL substring of the LIVE source  — cites="Failing is survivable; failing where it can be witnessed and recounted is not"
+PASS GREEN fixture citation for "core_contradiction" (approved_facet:pc_untested_brilliance) is a REAL substring of the LIVE source  — cites="She knows the procedure better than she has ever performed it"
+PASS GREEN fixture citation for "current_crisis.event" (approved_scene1) is a REAL substring of the LIVE source  — cites="The presiding Dohkar has charged Lirael with shaping the wish and with interfering"
+PASS GREEN fixture citation for "current_crisis.li_complication" (approved_relationship) is a REAL substring of the LIVE source  — cites="Already knows something about the PC’s lineage"
+PASS GREEN fixture citation for "current_crisis.refusal" (approved_scene1) is a REAL substring of the LIVE source  — cites="The presiding Dohkar has charged Lirael with shaping the wish and with interfering; he has not yet ruled"
+
+=== GREEN THE ISOLATED _generatePCBodyBible() CALL (real function, real route, stubbed provider) ===
+PASS GREEN _generatePCBodyBible() completed without throwing  — {"ok":true,"hadResult":true}
+FAIL GREEN the primary pcBodyBible call fired exactly once  — attempts=0
+PASS GREEN bodyTellReroll attempts stayed within the declared cap of 2  — attempts=0
+PASS GREEN NO CONTRACT VIOLATION (no attempt exceeded its declared cap)  — null
+  [NOTE] GREEN CORRELATED ATTEMPT LOG (request id, kind, role, model — the exact max-request-count evidence): []
+  [NOTE] GREEN BLOCKED ATTEMPTS (over-cap, named, never silently dropped): []
+PASS GREEN NOTHING OUTSIDE THE DECLARED CONTRACT fired (no sibling bible/scaffold/CG calls yet)  — []
+PASS GREEN window.state.pcBodyBible is set to the real generated (stubbed-provider) response
+
+=== GREEN REAL IN-PAGE VALIDATE + COMMIT (window._validatePcFoundationOutput / window._commitValidatedPcFoundation against REAL window.state) ===
+  [NOTE] GREEN VALIDATION RESULT: ok=true accepted=["wound.core","core_contradiction","current_crisis.event","current_crisis.li_complication"] rejections=[]
+  [NOTE] GREEN COMMIT RESULT: {"committed":true,"reason":null,"validation":{"ok":true,"rejections":[],"accepted":[{"field":"wound.core","kind":"locked_canon_fact"},{"field":"core_contradiction","kind":"locked_canon_fact"},{"field":"current_crisis.event","kind":"locked_canon_fact"},{"field":"current_crisis.li_complication","kind":"locked_canon_fact"}]},"mergedFacetIds":[]}
+PASS GREEN validation ACCEPTS the fully-cited response  — []
+PASS GREEN commit REPORTS committed:true  — {"committed":true,"reason":null,"validation":{"ok":true,"rejections":[],"accepted":[{"field":"wound.core","kind":"locked_canon_fact"},{"field":"core_contradiction","kind":"locked_canon_fact"},{"field":"current_crisis.event","kind":"locked_canon_fact"},{"field":"current_crisis.li_complication","kind":"locked_canon_fact"}]},"mergedFacetIds":[]}
+PASS GREEN the real portfolio now carries the merged, provenance-stamped facets  — ["pc_untested_brilliance:seed","pc_fears_public_failure:seed","pc_core_contradiction:pc_body_bible_validated","pc_current_crisis_event:pc_body_bible_validated"]
+PASS GREEN the seed's own two authored facets remain present, untouched
+
+=== GREEN REAL CG CONTINUATION (same session, no reload) — does the committed (or refused) portfolio reach the real cgScreenplay author payload? ===
+PASS GREEN real Genesis unlock modal + #buGoBtn visible
+  [NOTE] GREEN: clicking the REAL #buGoBtn — stubbed but real deferred handleBeginStory() pipeline; can take real minutes.
+PASS GREEN real Genesis charge completes and unlocks
+PASS GREEN one-on-one live (gnReader, OAS active)  — {"screen":"gnReader","oasActive":true}
+  [NOTE] GREEN fixture injected: {"acceptedOk":true,"pcPortfolioFacetIds":["pc_untested_brilliance","pc_fears_public_failure","pc_core_contradiction","pc_current_crisis_event"],"identityDiag":{"resolvedLabel":"Lirael","playerName":"Lirael"}}
+PASS GREEN interruption mounts after the real exit click
+PASS GREEN real CONFESSION card click fills real Say/Do inputs verbatim  — {"a":"I perform the rehearsed procedure at last, in front of the assembly, and look to Julian instead of the Dohkar.","d":"I did call to you for an explanation of what went wrong."}
+FAIL GREEN real Submit fires a real cgScreenplay request  — cgRequests=0
+FAIL GREEN a real cgScreenplay request was reached to check payload delivery  — blocked earlier in the real click chain — see FAIL lines above; payload-delivery could not be checked empirically this run
+
+=== SCENARIO RED — the retained failed live sample, replayed through the identical real route ===
+PASS RED real Library entry reaches vaultLibraryScreen  — vaultLibraryScreen
+PASS RED real click reaches baked Scene 1 (game screen, real starterId)  — {"screen":"game","starterId":"starter_first_sacrifice","oasBtnVisible":true}
+PASS RED ZERO model-classified requests fired merely from reaching baked Scene 1  — count=0
+
+=== RED SOURCE-PARITY (real live window.state vs the fixture's own citations) ===
+PASS RED _pcFoundationSourceFacts resolves against real live state  — {"pcName":"Lirael","facetCount":2,"hasScene1":true}
+
+=== RED THE ISOLATED _generatePCBodyBible() CALL (real function, real route, stubbed provider) ===
+PASS RED _generatePCBodyBible() completed without throwing  — {"ok":true,"hadResult":true}
+FAIL RED the primary pcBodyBible call fired exactly once  — attempts=0
+PASS RED bodyTellReroll attempts stayed within the declared cap of 2  — attempts=0
+PASS RED NO CONTRACT VIOLATION (no attempt exceeded its declared cap)  — null
+  [NOTE] RED CORRELATED ATTEMPT LOG (request id, kind, role, model — the exact max-request-count evidence): []
+  [NOTE] RED BLOCKED ATTEMPTS (over-cap, named, never silently dropped): []
+PASS RED NOTHING OUTSIDE THE DECLARED CONTRACT fired (no sibling bible/scaffold/CG calls yet)  — []
+PASS RED window.state.pcBodyBible is set to the real generated (stubbed-provider) response
+
+=== RED REAL IN-PAGE VALIDATE + COMMIT (window._validatePcFoundationOutput / window._commitValidatedPcFoundation against REAL window.state) ===
+  [NOTE] RED VALIDATION RESULT: ok=true accepted=["wound.core","core_contradiction","current_crisis.event","current_crisis.li_complication"] rejections=[]
+  [NOTE] RED COMMIT RESULT: {"committed":true,"reason":null,"validation":{"ok":true,"rejections":[],"accepted":[{"field":"wound.core","kind":"locked_canon_fact"},{"field":"core_contradiction","kind":"locked_canon_fact"},{"field":"current_crisis.event","kind":"locked_canon_fact"},{"field":"current_crisis.li_complication","kind":"locked_canon_fact"}]},"mergedFacetIds":[]}
+FAIL RED validation REJECTS the response  — []
+FAIL RED commit REFUSES with committed:false, reason validation_failed  — {"committed":true,"reason":null,"validation":{"ok":true,"rejections":[],"accepted":[{"field":"wound.core","kind":"locked_canon_fact"},{"field":"core_contradiction","kind":"locked_canon_fact"},{"field":"current_crisis.event","kind":"locked_canon_fact"},{"field":"current_crisis.li_complication","kind":"locked_canon_fact"}]},"mergedFacetIds":[]}
+FAIL RED ZERO real-state portfolio mutation on rejection (before === after, byte-identical)  — before={"v":1,"storyId":"fbc186e0-6f2a-4cb4-adc5-1596f547b091","pcRef":"pc","source":"fixed_starter","provenance":{"builtAt":1790387374805,"seedId":"starter_first_sacrifice","fingerprint":"pf:0a29b51f-87","validatedMerge":{"at":1790387374805,"bibleProvenance":{"core_contradiction":{"kind":"locked_canon_fact","basis":"approved_facet:pc_untested_brilliance","cites":"She knows the procedure better than she has ever performed it, and the gap between knowing and doing is where her fear lives."},"wound.core":{"kind":"locked_canon_fact","basis":"approved_facet:pc_fears_public_failure","cites":"Failin
+
+=== RED REAL SAVE & EXIT -> RELOAD -> CONTINUE (item 2/3: does the commit, or the absence of one, survive the app's own real save/reload mechanism?) ===
+PASS RED a real Save & Exit affordance is visible  — storySaveExitBtn
+PASS RED close returns to the Library screen
+PASS RED page reload completes (runtime state genuinely cleared)
+PASS RED a saved-story row exists in the real Library UI
+PASS RED the real Continue click (not a direct function call) restored the story  — {"screen":"gnReader","starterId":"starter_first_sacrifice"}
+  [NOTE] RED [DISCLOSED, SEPARATE, PRE-EXISTING] after a real reload, "Continue" resumes First Sacrifice into #gnReader (a page-turner), not back into the #zoomReadBtn preview screen it was saved from — and that page-turner is observed to get stuck on its own "Composing Scene 1..." loader in this harness. This is unrelated to PC-foundation validate/commit and is reported here as a separate limitation, not investigated further.
+FAIL RED NO trace of the rejected bible survives a real reload (no pc_body_bible_validated facet exists)  — {"v":1,"storyId":"fbc186e0-6f2a-4cb4-adc5-1596f547b091","pcRef":"pc","source":"fixed_starter","provenance":{"builtAt":1790387374805,"seedId":"starter_first_sacrifice","fingerprint":"pf:0a29b51f-87","validatedMerge":{"at":1790387376311,"bibleProvenance":{"core_contradiction":{"kind":"locked_canon_fact","basis":"approved_facet:pc_untested_brilliance","cites":"She knows the procedure better than she has ever performed it, and the gap between knowing and doing is where her fear lives."},"wound.core":{"kind":"locked_canon_fact","basis":"approved_facet:pc_fears_public_failure","cites":"Failing is su
+PASS RED real Library entry reaches vaultLibraryScreen  — vaultLibraryScreen
+PASS RED real click reaches baked Scene 1 (game screen, real starterId)  — {"screen":"game","starterId":"starter_first_sacrifice","oasBtnVisible":true}
+PASS RED ZERO model-classified requests fired merely from reaching baked Scene 1  — count=0
+
+=== RED SOURCE-PARITY (real live window.state vs the fixture's own citations) ===
+PASS RED _pcFoundationSourceFacts resolves against real live state  — {"pcName":"Lirael","facetCount":2,"hasScene1":true}
+
+=== RED THE ISOLATED _generatePCBodyBible() CALL (real function, real route, stubbed provider) ===
+PASS RED _generatePCBodyBible() completed without throwing  — {"ok":true,"hadResult":true}
+FAIL RED the primary pcBodyBible call fired exactly once  — attempts=0
+PASS RED bodyTellReroll attempts stayed within the declared cap of 2  — attempts=0
+PASS RED NO CONTRACT VIOLATION (no attempt exceeded its declared cap)  — null
+  [NOTE] RED CORRELATED ATTEMPT LOG (request id, kind, role, model — the exact max-request-count evidence): []
+  [NOTE] RED BLOCKED ATTEMPTS (over-cap, named, never silently dropped): []
+PASS RED NOTHING OUTSIDE THE DECLARED CONTRACT fired (no sibling bible/scaffold/CG calls yet)  — []
+PASS RED window.state.pcBodyBible is set to the real generated (stubbed-provider) response
+
+=== RED REAL IN-PAGE VALIDATE + COMMIT (window._validatePcFoundationOutput / window._commitValidatedPcFoundation against REAL window.state) ===
+  [NOTE] RED VALIDATION RESULT: ok=true accepted=["wound.core","core_contradiction","current_crisis.event","current_crisis.li_complication"] rejections=[]
+  [NOTE] RED COMMIT RESULT: {"committed":true,"reason":null,"validation":{"ok":true,"rejections":[],"accepted":[{"field":"wound.core","kind":"locked_canon_fact"},{"field":"core_contradiction","kind":"locked_canon_fact"},{"field":"current_crisis.event","kind":"locked_canon_fact"},{"field":"current_crisis.li_complication","kind":"locked_canon_fact"}]},"mergedFacetIds":[]}
+FAIL RED validation REJECTS the response  — []
+FAIL RED commit REFUSES with committed:false, reason validation_failed  — {"committed":true,"reason":null,"validation":{"ok":true,"rejections":[],"accepted":[{"field":"wound.core","kind":"locked_canon_fact"},{"field":"core_contradiction","kind":"locked_canon_fact"},{"field":"current_crisis.event","kind":"locked_canon_fact"},{"field":"current_crisis.li_complication","kind":"locked_canon_fact"}]},"mergedFacetIds":[]}
+FAIL RED ZERO real-state portfolio mutation on rejection (before === after, byte-identical)  — before={"v":1,"storyId":"004387b3-c8df-4588-a875-1bc8689fcfba","pcRef":"pc","source":"fixed_starter","provenance":{"builtAt":1790387437290,"seedId":"starter_first_sacrifice","fingerprint":"pf:0a29b51f-87","validatedMerge":{"at":1790387437290,"bibleProvenance":{"core_contradiction":{"kind":"locked_canon_fact","basis":"approved_facet:pc_untested_brilliance","cites":"She knows the procedure better than she has ever performed it, and the gap between knowing and doing is where her fear lives."},"wound.core":{"kind":"locked_canon_fact","basis":"approved_facet:pc_fears_public_failure","cites":"Failin
+
+=== RED REAL CG CONTINUATION (same session, no reload) — does the committed (or refused) portfolio reach the real cgScreenplay author payload? ===
+PASS RED real Genesis unlock modal + #buGoBtn visible
+  [NOTE] RED: clicking the REAL #buGoBtn — stubbed but real deferred handleBeginStory() pipeline; can take real minutes.
+PASS RED real Genesis charge completes and unlocks
+PASS RED one-on-one live (gnReader, OAS active)  — {"screen":"gnReader","oasActive":true}
+  [NOTE] RED fixture injected: {"acceptedOk":true,"pcPortfolioFacetIds":["pc_untested_brilliance","pc_fears_public_failure","pc_core_contradiction","pc_current_crisis_event"],"identityDiag":{"resolvedLabel":"Lirael","playerName":"Lirael"}}
+PASS RED interruption mounts after the real exit click
+PASS RED real CONFESSION card click fills real Say/Do inputs verbatim  — {"a":"I perform the rehearsed procedure at last, in front of the assembly, and look to Julian instead of the Dohkar.","d":"I did call to you for an explanation of what went wrong."}
+FAIL RED real Submit fires a real cgScreenplay request  — cgRequests=0
+FAIL RED a real cgScreenplay request was reached to check payload delivery  — blocked earlier in the real click chain — see FAIL lines above; payload-delivery could not be checked empirically this run
+
+=== SCENARIO GREEN-LIT — literary continuation path, synthetic fixed-starter seed ===
+PASS GREEN-LIT LIT synthetic fixed-starter mid-story reached (real _activeSeed resolution, not First Sacrifice)  — {"starterId":"lit_proof_seeded_lit-proof-green-lit-1790387590787","storyId":"lit-proof-green-lit-1790387590787","turnCount":0}
+
+=== GREEN-LIT LIT THE ISOLATED _generatePCBodyBible() CALL (real function, synthetic fixed-starter seed) ===
+PASS GREEN-LIT LIT _pcFoundationSourceFacts resolves against the synthetic seed  — {"pcName":"Lirael","facetCount":2}
+PASS GREEN-LIT LIT _generatePCBodyBible() completed without throwing  — {"ok":true,"hadResult":true}
+  [NOTE] GREEN-LIT LIT VALIDATION: ok=true rejections=[]
+  [NOTE] GREEN-LIT LIT COMMIT: {"committed":true,"reason":null,"validation":{"ok":true,"rejections":[],"accepted":[{"field":"wound.core","kind":"locked_canon_fact"},{"field":"core_contradiction","kind":"locked_canon_fact"},{"field":"current_crisis.event","kind":"locked_canon_fact"}]},"mergedFacetIds":[]}
+PASS GREEN-LIT LIT validation ACCEPTS  — []
+PASS GREEN-LIT LIT commit REPORTS committed:true  — {"committed":true,"reason":null,"validation":{"ok":true,"rejections":[],"accepted":[{"field":"wound.core","kind":"locked_canon_fact"},{"field":"core_contradiction","kind":"locked_canon_fact"},{"field":"current_crisis.event","kind":"locked_canon_fact"}]},"mergedFacetIds":[]}
+
+=== GREEN-LIT LIT REAL LITERARY CONTINUATION (real #actionInput/#dialogueInput/#submitBtn submit) — does the committed (or refused) portfolio reach the real author payload? ===
+  [NOTE] GREEN-LIT LIT accepted stage: {"acceptedOk":true}
+PASS GREEN-LIT LIT accepted stage naming pc present succeeded  — {"acceptedOk":true}
+PASS GREEN-LIT LIT real Submit fires a real author payload  — authorPayloads=1
+  [NOTE] GREEN-LIT LIT real sceneSkeleton.character_plus: []
+  [NOTE] GREEN-LIT LIT real _facetIndex keys at scene 2: ["pc:lirael"]
+FAIL GREEN-LIT LIT [REQUIREMENT 4 — LITERARY] the merged PC facet was the one delivered this scene  — no character_plus entry matched mergedIds [] — cp=[] cont={"sceneNumber":2,"ok":false,"reason":"no grounded option — this scene's facts prove nothing about anyone present","plannerSupplied":0,"options":0,"optionById":{}}
+PASS GREEN-LIT LIT [REQUIREMENT 4 — LITERARY] ZERO raw provenance/citation internals leak into the author payload  — leaked=[]
+
+=== SCENARIO RED-LIT — retained failed sample through the literary path ===
+PASS RED-LIT LIT synthetic fixed-starter mid-story reached (real _activeSeed resolution, not First Sacrifice)  — {"starterId":"lit_proof_seeded_lit-proof-red-lit-1790387608984","storyId":"lit-proof-red-lit-1790387608984","turnCount":0}
+
+=== RED-LIT LIT THE ISOLATED _generatePCBodyBible() CALL (real function, synthetic fixed-starter seed) ===
+PASS RED-LIT LIT _pcFoundationSourceFacts resolves against the synthetic seed  — {"pcName":"Lirael","facetCount":2}
+PASS RED-LIT LIT _generatePCBodyBible() completed without throwing  — {"ok":true,"hadResult":true}
+  [NOTE] RED-LIT LIT VALIDATION: ok=true rejections=[]
+  [NOTE] RED-LIT LIT COMMIT: {"committed":true,"reason":null,"validation":{"ok":true,"rejections":[],"accepted":[{"field":"wound.core","kind":"locked_canon_fact"},{"field":"core_contradiction","kind":"locked_canon_fact"},{"field":"current_crisis.event","kind":"locked_canon_fact"}]},"mergedFacetIds":[]}
+FAIL RED-LIT LIT validation REJECTS  — []
+FAIL RED-LIT LIT commit REFUSES  — {"committed":true,"reason":null,"validation":{"ok":true,"rejections":[],"accepted":[{"field":"wound.core","kind":"locked_canon_fact"},{"field":"core_contradiction","kind":"locked_canon_fact"},{"field":"current_crisis.event","kind":"locked_canon_fact"}]},"mergedFacetIds":[]}
+
+=== RED-LIT LIT REAL LITERARY CONTINUATION (real #actionInput/#dialogueInput/#submitBtn submit) — does the committed (or refused) portfolio reach the real author payload? ===
+  [NOTE] RED-LIT LIT accepted stage: {"acceptedOk":true}
+PASS RED-LIT LIT accepted stage naming pc present succeeded  — {"acceptedOk":true}
+PASS RED-LIT LIT real Submit fires a real author payload  — authorPayloads=1
+  [NOTE] RED-LIT LIT real sceneSkeleton.character_plus: []
+  [NOTE] RED-LIT LIT real _facetIndex keys at scene 2: ["pc:lirael"]
+PASS RED-LIT LIT ZERO rejected-field content reaches the real author payload  — hits=0
+PASS RED-LIT LIT no pc_body_bible_validated facet was delivered  — []
+
+=== CG/OAS CONTROL 1 — the normal First Sacrifice reader route (Library -> Read -> real Genesis unlock -> OAS): seed facets resolve, zero portfolio commit ===
+PASS CG1 real Library entry reaches vaultLibraryScreen  — vaultLibraryScreen
+PASS CG1 real click reaches baked Scene 1 (game screen, real starterId)  — {"screen":"game","starterId":"starter_first_sacrifice","oasBtnVisible":true}
+PASS CG1 real Genesis unlock modal + #buGoBtn visible
+  [NOTE] CG1: clicking the REAL #buGoBtn — stubbed but real deferred handleBeginStory() pipeline; can take real minutes.
+PASS CG1 real Genesis charge completes and unlocks
+PASS CG1 one-on-one live (gnReader, OAS active)  — {"screen":"gnReader","oasActive":true}
+  [NOTE] CG1 diagnostic: {"resolvedLabel":"Lirael","playerName":"Lirael","idxKeys":["pc:lirael","named:julian","named:seren","role:first_sacrifice_presiding_dohkar"],"pcFacetsResolved":["pc_untested_brilliance","pc_fears_public_failure","pc_core_contradiction","pc_current_crisis_event"],"pcPortfolioExists":true}
+PASS CG1 [ROOT-CAUSE FIX] _resolvePcIdentity resolves "Lirael" at real OAS entry (was null before the fix)  — {"resolvedLabel":"Lirael","playerName":"Lirael","idxKeys":["pc:lirael","named:julian","named:seren","role:first_sacrifice_presiding_dohkar"],"pcFacetsResolved":["pc_untested_brilliance","pc_fears_public_failure","pc_core_contradiction","pc_current_crisis_event"],"pcPortfolioExists":true}
+PASS CG1 the seed's own two facets (pc_untested_brilliance, pc_fears_public_failure) resolve via _facetIndex/_resolveFacetIndexEntry, with ZERO portfolio commit  — ["pc_untested_brilliance","pc_fears_public_failure","pc_core_contradiction","pc_current_crisis_event"]
+FAIL CG1 no validated-merge commit happened in this scenario (isolates identity fix from the new provider)  — pcPortfolioExists=true validatedMerge=true
+
+=== CG/OAS CONTROL 2 — pre-fix-style corrupted saved state (state.playerName="The Protagonist") self-heals, no new begin flow ===
+PASS CG2 real Library entry reaches vaultLibraryScreen  — vaultLibraryScreen
+PASS CG2 real click reaches baked Scene 1 (game screen, real starterId)  — {"screen":"game","starterId":"starter_first_sacrifice","oasBtnVisible":true}
+  [NOTE] CG2 pre-unlock commit: {"committed":true,"reason":null,"validation":{"ok":true,"rejections":[],"accepted":[{"field":"wound.core","kind":"locked_canon_fact"},{"field":"core_contradiction","kind":"locked_canon_fact"},{"field":"current_crisis.event","kind":"locked_canon_fact"},{"field":"current_crisis.li_complication","kind":"locked_canon_fact"}]},"mergedFacetIds":[]}
+PASS CG2 real commit succeeds before Genesis unlock  — {"committed":true,"reason":null,"validation":{"ok":true,"rejections":[],"accepted":[{"field":"wound.core","kind":"locked_canon_fact"},{"field":"core_contradiction","kind":"locked_canon_fact"},{"field":"current_crisis.event","kind":"locked_canon_fact"},{"field":"current_crisis.li_complication","kind":"locked_canon_fact"}]},"mergedFacetIds":[]}
+PASS CG2 real Genesis unlock modal + #buGoBtn visible
+  [NOTE] CG2: clicking the REAL #buGoBtn — stubbed but real deferred handleBeginStory() pipeline; can take real minutes.
+PASS CG2 real Genesis charge completes and unlocks
+PASS CG2 one-on-one live (gnReader, OAS active)  — {"screen":"gnReader","oasActive":true}
+PASS CG2 real state.playerName is genuinely "Lirael" before the simulated corruption (proves the corruption below is real interference, not a no-op)  — Lirael
+  [NOTE] CG2 diagnostic after simulated corruption: {"resolvedLabel":"Lirael","resolvedSrc":"starterSeed.cast.PC.name","corruptedPlayerName":"The Protagonist","pcFacetsResolved":["pc_untested_brilliance","pc_fears_public_failure","pc_core_contradiction","pc_current_crisis_event"]}
+PASS CG2 [SELF-HEAL] _resolvePcIdentity resolves "Lirael" from the SEED, actively overriding the corrupted state.playerName  — {"resolvedLabel":"Lirael","resolvedSrc":"starterSeed.cast.PC.name","corruptedPlayerName":"The Protagonist","pcFacetsResolved":["pc_untested_brilliance","pc_fears_public_failure","pc_core_contradiction","pc_current_crisis_event"]}
+PASS CG2 [SELF-HEAL] the resolution source is starterSeed.cast.PC.name, NOT state.playerName (the corrupted field)  — starterSeed.cast.PC.name
+PASS CG2 [SELF-HEAL] _facetIndex still resolves the seed's own facets despite the corrupted playerName  — ["pc_untested_brilliance","pc_fears_public_failure","pc_core_contradiction","pc_current_crisis_event"]
+PASS CG2 [SELF-HEAL] _facetIndex also still resolves the merged validated facets despite the corrupted playerName  — {"mergedIds":[],"resolved":["pc_untested_brilliance","pc_fears_public_failure","pc_core_contradiction","pc_current_crisis_event"]}
+  [NOTE] CG2 fixture injected: {"acceptedOk":true,"playerNameStillCorrupted":true}
+PASS CG2 interruption mounts after the real exit click
+PASS CG2 real CONFESSION card click fills real Say/Do inputs verbatim  — {"a":"I perform the rehearsed procedure at last, in front of the assembly, and look to Julian instead of the Dohkar.","d":"I did call to you for an explanation of what went wrong."}
+FAIL CG2 real Submit fires a real cgScreenplay request  — cgRequests=0
+FAIL CG2 real Submit (from the corrupted-then-self-healed state, no new begin flow) fires a real cgScreenplay request  — cgRequests=0
+
+=== CG/OAS CONTROL 3 — identity + facet resolution survive real Save & Exit -> reload -> Continue, from an unlocked CG/OAS session ===
+PASS CG3 real Library entry reaches vaultLibraryScreen  — vaultLibraryScreen
+PASS CG3 real click reaches baked Scene 1 (game screen, real starterId)  — {"screen":"game","starterId":"starter_first_sacrifice","oasBtnVisible":true}
+  [NOTE] CG3 pre-unlock commit: {"committed":true,"reason":null,"validation":{"ok":true,"rejections":[],"accepted":[{"field":"wound.core","kind":"locked_canon_fact"},{"field":"core_contradiction","kind":"locked_canon_fact"},{"field":"current_crisis.event","kind":"locked_canon_fact"},{"field":"current_crisis.li_complication","kind":"locked_canon_fact"}]},"mergedFacetIds":[]}
+PASS CG3 real commit succeeds before Genesis unlock  — {"committed":true,"reason":null,"validation":{"ok":true,"rejections":[],"accepted":[{"field":"wound.core","kind":"locked_canon_fact"},{"field":"core_contradiction","kind":"locked_canon_fact"},{"field":"current_crisis.event","kind":"locked_canon_fact"},{"field":"current_crisis.li_complication","kind":"locked_canon_fact"}]},"mergedFacetIds":[]}
+PASS CG3 real Genesis unlock modal + #buGoBtn visible
+  [NOTE] CG3: clicking the REAL #buGoBtn — stubbed but real deferred handleBeginStory() pipeline; can take real minutes.
+PASS CG3 real Genesis charge completes and unlocks
+PASS CG3 one-on-one live (gnReader, OAS active)  — {"screen":"gnReader","oasActive":true}
+  [NOTE] CG3 pre-reload diagnostic: {"resolvedLabel":"Lirael","pcFacetsResolved":["pc_untested_brilliance","pc_fears_public_failure","pc_core_contradiction","pc_current_crisis_event"]}
+PASS CG3 pre-reload: merged facets already resolve via _facetIndex  — {"resolvedLabel":"Lirael","pcFacetsResolved":["pc_untested_brilliance","pc_fears_public_failure","pc_core_contradiction","pc_current_crisis_event"]}
+PASS CG3 a real Save & Exit affordance is visible  — gnSaveExitBtn
+PASS CG3 close returns to the Library screen
+PASS CG3 page reload completes (runtime state genuinely cleared)
+PASS CG3 a saved-story row exists in the real Library UI
+PASS CG3 the real Continue click (not a direct function call) restored the story  — {"screen":"gnReader","starterId":"starter_first_sacrifice"}
+  [NOTE] CG3 post-reload diagnostic: {"resolvedLabel":"Lirael","playerName":"Lirael","pcFacetsResolved":["pc_untested_brilliance","pc_fears_public_failure","pc_core_contradiction","pc_current_crisis_event"],"pcPortfolioFacetIds":["pc_untested_brilliance","pc_fears_public_failure","pc_core_contradiction","pc_current_crisis_event"]}
+PASS CG3 [REQUIREMENT 3] identity resolves to "Lirael" (not a placeholder) after a real reload + Continue from an unlocked CG session  — {"resolvedLabel":"Lirael","playerName":"Lirael","pcFacetsResolved":["pc_untested_brilliance","pc_fears_public_failure","pc_core_contradiction","pc_current_crisis_event"],"pcPortfolioFacetIds":["pc_untested_brilliance","pc_fears_public_failure","pc_core_contradiction","pc_current_crisis_event"]}
+PASS CG3 [REQUIREMENT 3] the merged facet_ids still resolve via _facetIndex after the real reload  — {"resolvedLabel":"Lirael","playerName":"Lirael","pcFacetsResolved":["pc_untested_brilliance","pc_fears_public_failure","pc_core_contradiction","pc_current_crisis_event"],"pcPortfolioFacetIds":["pc_untested_brilliance","pc_fears_public_failure","pc_core_contradiction","pc_current_crisis_event"]}
+PASS CG3 [REQUIREMENT 3] the portfolio record itself still carries the merged facet_ids after reload  — ["pc_untested_brilliance","pc_fears_public_failure","pc_core_contradiction","pc_current_crisis_event"]
+
+=== IDENTITY CONTROL 4 — an unrelated/unseeded story never acquires Lirael or any default identity ===
+PASS ID4 server reachable, real window.state present
+  [NOTE] ID4 diagnostic (unseeded, blank identity): {"resolved":null,"idxKeys":[],"pcKeys":[]}
+PASS ID4 _resolvePcIdentity returns null for an unrelated/unseeded story (never "Lirael", never a placeholder treated as real)  — null
+PASS ID4 _facetIndex produces NO pc:* entry and no Lirael-sourced facet for this unrelated story  — []
+  [NOTE] ID4 diagnostic (bogus _starterId, no STARTER_SEEDS entry): {"resolved":null}
+PASS ID4 a _starterId with no STARTER_SEEDS entry also resolves null (the seed lookup itself finds nothing, structurally)  — null
+
+=== IDENTITY CONTROL 3 — real corridor begin-story flow, reader-chosen name survives the real normalization pipeline unchanged ===
+PASS ID3 server reachable, real handleBeginStory present
+  [NOTE] ID3 corridor setup: {"identityPlayerName":"Aria Thorne"}
+  [NOTE] ID3 post-handleBeginStory diagnostic: {"playerName":"Aria Thorne","resolvedLabel":"Aria Thorne","resolvedSrc":"state.playerName","normalizedKernel":"Aria Thorne"}
+PASS ID3 handleBeginStory() completed (threw=null)
+PASS ID3 [REQUIREMENT] state.playerName ends up as exactly the reader-typed name after the real normalization pipeline  — {"playerName":"Aria Thorne","resolvedLabel":"Aria Thorne","resolvedSrc":"state.playerName","normalizedKernel":"Aria Thorne"}
+PASS ID3 [REQUIREMENT] _resolvePcIdentity resolves it with src="state.playerName", never starterSeed.cast.PC.name  — {"playerName":"Aria Thorne","resolvedLabel":"Aria Thorne","resolvedSrc":"state.playerName","normalizedKernel":"Aria Thorne"}
+
+=== REQUIREMENT 6 — ISSUE TRANSITION: window.startBook2() carries the validated PC foundation (real First Sacrifice, real merge, real transition) ===
+PASS BOOK2 real Library entry reaches vaultLibraryScreen  — vaultLibraryScreen
+PASS BOOK2 real click reaches baked Scene 1 (game screen, real starterId)  — {"screen":"game","starterId":"starter_first_sacrifice","oasBtnVisible":true}
+PASS BOOK2 _generatePCBodyBible() completed
+  [NOTE] BOOK2 pre-transition commit: {"committed":true,"reason":null,"validation":{"ok":true,"rejections":[],"accepted":[{"field":"wound.core","kind":"locked_canon_fact"},{"field":"core_contradiction","kind":"locked_canon_fact"},{"field":"current_crisis.event","kind":"locked_canon_fact"},{"field":"current_crisis.li_complication","kind":"locked_canon_fact"}]},"mergedFacetIds":[]}
+PASS BOOK2 real commit succeeds before the transition  — {"committed":true,"reason":null,"validation":{"ok":true,"rejections":[],"accepted":[{"field":"wound.core","kind":"locked_canon_fact"},{"field":"core_contradiction","kind":"locked_canon_fact"},{"field":"current_crisis.event","kind":"locked_canon_fact"},{"field":"current_crisis.li_complication","kind":"locked_canon_fact"}]},"mergedFacetIds":[]}
+  [NOTE] BOOK2 seedIdBefore (from rec.provenance.seedId, stamped at commit time from seed.id||seed.seedId): "starter_first_sacrifice" — DIAGNOSTIC: real STARTER_SEEDS.starter_first_sacrifice (public/app.js ~126875) defines no top-level id/seedId field at all (grep-confirmed), so this is expected to be empty for EVERY real fixed-starter portfolio, not just this run.
+PASS BOOK2 window.startBook2() (test-bypass) completed without throwing  — {"ok":true}
+  [NOTE] BOOK2 carry-related console lines: []
+FAIL REQUIREMENT 6 — the real "[ISSUE-CONTINUITY] carried the validated PC foundation across the issue boundary" log fired  — []
+FAIL REQUIREMENT 6 — storyId actually changed across the transition  — 3143129c-8ef1-432d-8a51-79093d4c55ba -> 3143129c-8ef1-432d-8a51-79093d4c55ba
+PASS REQUIREMENT 6 — the SAME merged facet_ids are present under the NEW storyId  — ["pc_untested_brilliance","pc_fears_public_failure","pc_core_contradiction","pc_current_crisis_event"]
+PASS REQUIREMENT 6 — the carried record is re-stamped to the NEW storyId, not left on the old one  — "3143129c-8ef1-432d-8a51-79093d4c55ba"
+  [NOTE] BOOK2 post-transition screen probe: {"screen":"game","starterId":"starter_first_sacrifice","turnCount":0,"cgMode":true,"btnIds":["btn-auth-submit","burgerBtn","globalBackBtn","conciergeBell","conciergeCloseBtn","proseSoundToggle","coverPageBtn","nextPageBtn","saveBtn","submitBtn","storyBookmarksBtn","storySaveExitBtn","bakedOASEnterBtn","mock-scene1-toggle","gpTrigger","intimacyDevBatchBtn","intimacyDevReviewBtn","intimacyDevLauncher"]}
+  [NOTE] BOOK2 [REQUIREMENT 4] #bakedOASEnterBtn present post-transition — Book2 needs its own real Genesis-unlock pass before a submit affordance exists.
+PASS BOOK2 real Genesis unlock modal + #buGoBtn visible
+  [NOTE] BOOK2: clicking the REAL #buGoBtn — stubbed but real deferred handleBeginStory() pipeline; can take real minutes.
+PASS BOOK2 real Genesis charge completes and unlocks
+PASS BOOK2 one-on-one live (gnReader, OAS active)  — {"screen":"gnReader","oasActive":true}
+PASS BOOK2 [REQUIREMENT 4] real Genesis unlock for Book2 itself succeeds, reaching OAS-active
+  [NOTE] BOOK2 post-unlock screen probe: {"screen":"gnReader","btnIds":["btn-auth-submit","burgerBtn","globalBackBtn","conciergeBell","conciergeCloseBtn","mock-scene1-toggle","gnCoverPageBtn","oasTextModeBtn","oasQuickMuteBtn","gnSaveBtn","gnSubmitBtn","gnBookmarksBtn","gnSaveExitBtn","gpTrigger","intimacyDevBatchBtn","intimacyDevReviewBtn","intimacyDevLauncher"]}
+PASS BOOK2 [REQUIREMENT 4] real Genesis unlock landed in gnReader (OAS active)  — {"screen":"gnReader","btnIds":["btn-auth-submit","burgerBtn","globalBackBtn","conciergeBell","conciergeCloseBtn","mock-scene1-toggle","gnCoverPageBtn","oasTextModeBtn","oasQuickMuteBtn","gnSaveBtn","gnSubmitBtn","gnBookmarksBtn","gnSaveExitBtn","gpTrigger","intimacyDevBatchBtn","intimacyDevReviewBtn","intimacyDevLauncher"]}
+  [NOTE] BOOK2 fixture injected: {"sceneNum":2,"acceptedOk":true}
+PASS BOOK2 interruption mounts after the real exit click
+PASS BOOK2 real CONFESSION card click fills real Say/Do inputs verbatim  — {"a":"I perform the rehearsed procedure at last, in front of the assembly, and look to Julian instead of the Dohkar.","d":"I did call to you for an explanation of what went wrong."}
+FAIL BOOK2 real Submit fires a real cgScreenplay request  — cgRequests=0
+FAIL BOOK2 [REQUIREMENT 4] real Submit fires a real request (cgScreenplay or author)  — cgRequests=0 authorPayloads=0
+
+=== REQUIREMENT 6 — NEGATIVE CONTROL: a story that NEVER had a validated merge does not fabricate a carry across its own transition ===
+PASS BOOK2-NEG real Library entry reaches vaultLibraryScreen  — vaultLibraryScreen
+PASS BOOK2-NEG real click reaches baked Scene 1 (game screen, real starterId)  — {"screen":"game","starterId":"starter_first_sacrifice","oasBtnVisible":true}
+PASS BOOK2-NEG no validated-merge portfolio exists before the transition  — null
+PASS BOOK2-NEG window.startBook2() (test-bypass) completed without throwing  — {"ok":true}
+  [NOTE] BOOK2-NEG carry-related console lines: []
+PASS REQUIREMENT 6 — NEGATIVE CONTROL: no "carried the validated PC foundation" log fired (nothing existed to carry)  — []
+PASS REQUIREMENT 6 — NEGATIVE CONTROL: post-transition portfolio (if any) carries no validatedMerge stamp — nothing fabricated  — null
+
+=== NEW SCENARIO GEN-A (CG) — correctly-typed 3-kind response (generated_foundation wound) reaches the real cgScreenplay author payload ===
+PASS GEN-A real Library entry reaches vaultLibraryScreen  — vaultLibraryScreen
+PASS GEN-A real click reaches baked Scene 1 (game screen, real starterId)  — {"screen":"game","starterId":"starter_first_sacrifice","oasBtnVisible":true}
+PASS GEN-A real Library entry reaches vaultLibraryScreen  — vaultLibraryScreen
+PASS GEN-A real click reaches baked Scene 1 (game screen, real starterId)  — {"screen":"game","starterId":"starter_first_sacrifice","oasBtnVisible":true}
+PASS GEN-A ZERO model-classified requests fired merely from reaching baked Scene 1  — count=0
+
+=== GEN-A SOURCE-PARITY (real live window.state vs the fixture's own citations) ===
+PASS GEN-A _pcFoundationSourceFacts resolves against real live state  — {"pcName":"Lirael","facetCount":2,"hasScene1":true}
+PASS GEN-A fixture citation for "core_contradiction" (approved_facet:pc_untested_brilliance) is a REAL substring of the LIVE source  — cites="She knows the procedure better than she has ever performed it"
+PASS GEN-A fixture citation for "current_crisis.event" (approved_scene1) is a REAL substring of the LIVE source  — cites="The presiding Dohkar has charged Lirael with shaping the wish and with interfering"
+PASS GEN-A fixture citation for "current_crisis.li_complication" (approved_relationship) is a REAL substring of the LIVE source  — cites="Already knows something about the PC’s lineage"
+PASS GEN-A fixture citation for "current_crisis.refusal" (approved_scene1) is a REAL substring of the LIVE source  — cites="The presiding Dohkar has charged Lirael with shaping the wish and with interfering; he has not yet ruled"
+
+=== GEN-A THE ISOLATED _generatePCBodyBible() CALL (real function, real route, stubbed provider) ===
+PASS GEN-A _generatePCBodyBible() completed without throwing  — {"ok":true,"hadResult":true}
+FAIL GEN-A the primary pcBodyBible call fired exactly once  — attempts=0
+PASS GEN-A bodyTellReroll attempts stayed within the declared cap of 2  — attempts=0
+PASS GEN-A NO CONTRACT VIOLATION (no attempt exceeded its declared cap)  — null
+  [NOTE] GEN-A CORRELATED ATTEMPT LOG (request id, kind, role, model — the exact max-request-count evidence): []
+  [NOTE] GEN-A BLOCKED ATTEMPTS (over-cap, named, never silently dropped): []
+PASS GEN-A NOTHING OUTSIDE THE DECLARED CONTRACT fired (no sibling bible/scaffold/CG calls yet)  — []
+PASS GEN-A window.state.pcBodyBible is set to the real generated (stubbed-provider) response
+
+=== GEN-A REAL IN-PAGE VALIDATE + COMMIT (window._validatePcFoundationOutput / window._commitValidatedPcFoundation against REAL window.state) ===
+  [NOTE] GEN-A VALIDATION RESULT: ok=true accepted=["wound.core","core_contradiction","current_crisis.event","current_crisis.li_complication"] rejections=[]
+  [NOTE] GEN-A COMMIT RESULT: {"committed":true,"reason":null,"validation":{"ok":true,"rejections":[],"accepted":[{"field":"wound.core","kind":"locked_canon_fact"},{"field":"core_contradiction","kind":"locked_canon_fact"},{"field":"current_crisis.event","kind":"locked_canon_fact"},{"field":"current_crisis.li_complication","kind":"locked_canon_fact"}]},"mergedFacetIds":[]}
+PASS GEN-A validation ACCEPTS the fully-cited response  — []
+PASS GEN-A commit REPORTS committed:true  — {"committed":true,"reason":null,"validation":{"ok":true,"rejections":[],"accepted":[{"field":"wound.core","kind":"locked_canon_fact"},{"field":"core_contradiction","kind":"locked_canon_fact"},{"field":"current_crisis.event","kind":"locked_canon_fact"},{"field":"current_crisis.li_complication","kind":"locked_canon_fact"}]},"mergedFacetIds":[]}
+PASS GEN-A the real portfolio now carries the merged, provenance-stamped facets  — ["pc_untested_brilliance:seed","pc_fears_public_failure:seed","pc_core_contradiction:pc_body_bible_validated","pc_current_crisis_event:pc_body_bible_validated"]
+PASS GEN-A the seed's own two authored facets remain present, untouched
+PASS GEN-A [SCHEMA] validation.ok === true for the correctly-typed 3-kind response (locked_canon_fact + grounded_inference + generated_foundation together)  — []
+FAIL GEN-A [MERGE] commit.mergedFacetIds includes at least one facet_id starting "pc_generated_"  — []
+PASS GEN-A [MERGE] the merged generated facet(s) carry origin "pc_body_bible_generated_canon" (not "pc_body_bible_validated")  — []
+  [NOTE] GEN-A real _facetIndex/_resolveFacetIndexEntry for "pc" at scene 2: {"idxKeys":["pc:lirael","named:julian","named:seren","role:first_sacrifice_presiding_dohkar"],"pcFacetsResolved":["pc_untested_brilliance","pc_fears_public_failure","pc_core_contradiction","pc_current_crisis_event"]}
+PASS GEN-A [RESOLUTION] window._facetIndex resolves the generated facet(s) under the pc: canonical id at scene 2, alongside the seed's own facets  — {"idxKeys":["pc:lirael","named:julian","named:seren","role:first_sacrifice_presiding_dohkar"],"pcFacetsResolved":["pc_untested_brilliance","pc_fears_public_failure","pc_core_contradiction","pc_current_crisis_event"]}
+PASS GEN-A real Genesis unlock modal + #buGoBtn visible
+  [NOTE] GEN-A: clicking the REAL #buGoBtn — stubbed but real deferred handleBeginStory() pipeline; can take real minutes.
+PASS GEN-A real Genesis charge completes and unlocks
+PASS GEN-A one-on-one live (gnReader, OAS active)  — {"screen":"gnReader","oasActive":true}
+  [NOTE] GEN-A fixture injected: {"acceptedOk":true}
+PASS GEN-A interruption mounts after the real exit click
+PASS GEN-A real CONFESSION card click fills real Say/Do inputs verbatim  — {"a":"I perform the rehearsed procedure at last, in front of the assembly, and look to Julian instead of the Dohkar.","d":"I did call to you for an explanation of what went wrong."}
+FAIL GEN-A real Submit fires a real cgScreenplay request  — cgRequests=0
+FAIL GEN-A a real cgScreenplay request was reached to check payload delivery  — blocked earlier in the real click chain — see FAIL lines above
+
+=== NEW SCENARIO GEN-A-LIT (literary) — correctly-typed 3-kind response (generated_foundation wound) reaches the real literary author payload ===
+PASS GEN-A-LIT server reachable with helpers installed
+PASS GEN-A-LIT synthetic fixed-starter mid-story reached  — {"starterId":"lit_proof_seeded_lit-proof-gen-a-1790388307369","turnCount":0}
+PASS GEN-A-LIT _generatePCBodyBible() completed without throwing  — {"ok":true,"hadResult":true}
+  [NOTE] GEN-A-LIT VALIDATION: ok=true rejections=[]
+  [NOTE] GEN-A-LIT COMMIT: {"committed":true,"reason":null,"validation":{"ok":true,"rejections":[],"accepted":[{"field":"wound.core","kind":"locked_canon_fact"},{"field":"core_contradiction","kind":"locked_canon_fact"},{"field":"current_crisis.event","kind":"locked_canon_fact"}]},"mergedFacetIds":[]}
+PASS GEN-A-LIT [SCHEMA] validation.ok === true  — []
+PASS GEN-A-LIT [MERGE] commit REPORTS committed:true  — {"committed":true,"reason":null,"validation":{"ok":true,"rejections":[],"accepted":[{"field":"wound.core","kind":"locked_canon_fact"},{"field":"core_contradiction","kind":"locked_canon_fact"},{"field":"current_crisis.event","kind":"locked_canon_fact"}]},"mergedFacetIds":[]}
+FAIL GEN-A-LIT [MERGE] commit.mergedFacetIds includes at least one facet_id starting "pc_generated_"  — []
+PASS GEN-A-LIT [MERGE] the merged generated facet(s) carry origin "pc_body_bible_generated_canon"  — []
+PASS GEN-A-LIT accepted stage naming pc present succeeded  — {"acceptedOk":true}
+PASS GEN-A-LIT real Submit fires a real author payload  — authorPayloads=1
+  [NOTE] GEN-A-LIT real sceneSkeleton.character_plus: []
+  [NOTE] GEN-A-LIT real _facetIndex keys at scene 2: ["pc:lirael"]
+  [NOTE] GEN-A-LIT [DISCLOSED, SAME REAL app.js BEHAVIOR AS GEN-A CG] delivered facet_id=undefined isGenerated=false — see GEN-A (CG) scenario's own note above for the exact mechanism (_pcFacetsFromBodyBible's shared evidence_requires + fixed emission order).
+FAIL GEN-A-LIT [DELIVERY] a merged PC facet was delivered this scene  — cp=[] mergedIds=[]
+PASS GEN-A-LIT [LEAK] ZERO raw "kind"/"basis"/"cites"/generated_foundation/_provenance internals leak into the real author payload  — leaked=[]
+  [NOTE] GEN-A-LIT generated-facet truth occurrence counts: []
+PASS GEN-A-LIT [DISCLOSED] the generated facet did NOT win this scene's slot — confirms it also did not leak in any other form  — []
+
+=== NEW SCENARIO RETAINED-B — the retained pre-kind-redesign live sample (2026-09-15T21-58-49-058Z), replayed verbatim through the real route, still rejects with zero delivery ===
+PASS RETAINED-B real Library entry reaches vaultLibraryScreen  — vaultLibraryScreen
+PASS RETAINED-B real click reaches baked Scene 1 (game screen, real starterId)  — {"screen":"game","starterId":"starter_first_sacrifice","oasBtnVisible":true}
+PASS RETAINED-B real Library entry reaches vaultLibraryScreen  — vaultLibraryScreen
+PASS RETAINED-B real click reaches baked Scene 1 (game screen, real starterId)  — {"screen":"game","starterId":"starter_first_sacrifice","oasBtnVisible":true}
+PASS RETAINED-B ZERO model-classified requests fired merely from reaching baked Scene 1  — count=0
+
+=== RETAINED-B SOURCE-PARITY (real live window.state vs the fixture's own citations) ===
+PASS RETAINED-B _pcFoundationSourceFacts resolves against real live state  — {"pcName":"Lirael","facetCount":2,"hasScene1":true}
+  [NOTE] RETAINED-B fixture citation for "wound.core" (approved_bio) vs LIVE source — MATCHES (an accurate quote that is still correctly rejected on the missing_or_invalid_claim_kind ground alone) — informational only, not a pass/fail criterion for this retained sample; cites="A young First Favored apprentice. Today is her first time SUPERVISING another person’s First Sacrifice — responsible for the ritual being conducted correctly, not for the wish itself."
+  [NOTE] RETAINED-B fixture citation for "current_crisis.event" (approved_scene1) vs LIVE source — DOES NOT MATCH (a genuinely false citation — one real, concrete reason this specific field is correctly untrustworthy) — informational only, not a pass/fail criterion for this retained sample; cites="the Dohkar charged her with shaping and interfering; the Provast, Julian, publicly claimed Lirael is aligned with her own innocence and has ALREADY questioned her before the assembly — intimately, as an accusation through desirability — until the presiding Dohkar interrupted it as grossly inappropriate."
+  [NOTE] RETAINED-B fixture citation for "current_crisis.immediate_fear" (approved_scene1) vs LIVE source — DOES NOT MATCH (a genuinely false citation — one real, concrete reason this specific field is correctly untrustworthy) — informational only, not a pass/fail criterion for this retained sample; cites="the Dohkar’s charge presumes an interferer; nobody has named one, and Lirael has not said aloud why the wish matters to her."
+  [NOTE] RETAINED-B fixture citation for "current_crisis.li_complication" (approved_scene1) vs LIVE source — MATCHES (an accurate quote that is still correctly rejected on the missing_or_invalid_claim_kind ground alone) — informational only, not a pass/fail criterion for this retained sample; cites="Julian, the Provast, put The Answer in her hands and questioned her before all; the Dohkar cut it off."
+  [NOTE] RETAINED-B fixture citation for "current_crisis.refusal" (approved_scene1) vs LIVE source — DOES NOT MATCH (a genuinely false citation — one real, concrete reason this specific field is correctly untrustworthy) — informational only, not a pass/fail criterion for this retained sample; cites="the inquiry has NOT yet been opened."
+
+=== RETAINED-B THE ISOLATED _generatePCBodyBible() CALL (real function, real route, stubbed provider) ===
+PASS RETAINED-B _generatePCBodyBible() completed without throwing  — {"ok":true,"hadResult":true}
+FAIL RETAINED-B the primary pcBodyBible call fired exactly once  — attempts=0
+PASS RETAINED-B bodyTellReroll attempts stayed within the declared cap of 2  — attempts=0
+PASS RETAINED-B NO CONTRACT VIOLATION (no attempt exceeded its declared cap)  — null
+  [NOTE] RETAINED-B CORRELATED ATTEMPT LOG (request id, kind, role, model — the exact max-request-count evidence): []
+  [NOTE] RETAINED-B BLOCKED ATTEMPTS (over-cap, named, never silently dropped): []
+PASS RETAINED-B NOTHING OUTSIDE THE DECLARED CONTRACT fired (no sibling bible/scaffold/CG calls yet)  — []
+PASS RETAINED-B window.state.pcBodyBible is set to the real generated (stubbed-provider) response
+
+=== RETAINED-B REAL IN-PAGE VALIDATE + COMMIT (window._validatePcFoundationOutput / window._commitValidatedPcFoundation against REAL window.state) ===
+  [NOTE] RETAINED-B VALIDATION RESULT: ok=true accepted=["wound.core","core_contradiction","current_crisis.event","current_crisis.li_complication"] rejections=[]
+  [NOTE] RETAINED-B COMMIT RESULT: {"committed":true,"reason":null,"validation":{"ok":true,"rejections":[],"accepted":[{"field":"wound.core","kind":"locked_canon_fact"},{"field":"core_contradiction","kind":"locked_canon_fact"},{"field":"current_crisis.event","kind":"locked_canon_fact"},{"field":"current_crisis.li_complication","kind":"locked_canon_fact"}]},"mergedFacetIds":[]}
+FAIL RETAINED-B validation REJECTS the response  — []
+FAIL RETAINED-B commit REFUSES with committed:false, reason validation_failed  — {"committed":true,"reason":null,"validation":{"ok":true,"rejections":[],"accepted":[{"field":"wound.core","kind":"locked_canon_fact"},{"field":"core_contradiction","kind":"locked_canon_fact"},{"field":"current_crisis.event","kind":"locked_canon_fact"},{"field":"current_crisis.li_complication","kind":"locked_canon_fact"}]},"mergedFacetIds":[]}
+FAIL RETAINED-B ZERO real-state portfolio mutation on rejection (before === after, byte-identical)  — before={"v":1,"storyId":"7f0a09c1-30c3-4cef-95ef-8639206ad336","pcRef":"pc","source":"fixed_starter","provenance":{"builtAt":1790388373475,"seedId":"starter_first_sacrifice","fingerprint":"pf:0a29b51f-87","validatedMerge":{"at":1790388373475,"bibleProvenance":{"core_contradiction":{"kind":"locked_canon_fact","basis":"approved_facet:pc_untested_brilliance","cites":"She knows the procedure better than she has ever performed it, and the gap between knowing and doing is where her fear lives."},"wound.core":{"kind":"locked_canon_fact","basis":"approved_facet:pc_fears_public_failure","cites":"Failin
+FAIL RETAINED-B [SCHEMA] validation.ok === false (kind field absent on every entry — pre-dates the redesign)  — []
+FAIL RETAINED-B [SCHEMA] every durable field with content is rejected specifically for missing_or_invalid_claim_kind  — []
+FAIL RETAINED-B [MERGE] commit REFUSES with committed:false  — {"committed":true,"reason":null,"validation":{"ok":true,"rejections":[],"accepted":[{"field":"wound.core","kind":"locked_canon_fact"},{"field":"core_contradiction","kind":"locked_canon_fact"},{"field":"current_crisis.event","kind":"locked_canon_fact"},{"field":"current_crisis.li_complication","kind":"locked_canon_fact"}]},"mergedFacetIds":[]}
+PASS RETAINED-B real Genesis unlock modal + #buGoBtn visible
+  [NOTE] RETAINED-B: clicking the REAL #buGoBtn — stubbed but real deferred handleBeginStory() pipeline; can take real minutes.
+PASS RETAINED-B real Genesis charge completes and unlocks
+PASS RETAINED-B one-on-one live (gnReader, OAS active)  — {"screen":"gnReader","oasActive":true}
+  [NOTE] RETAINED-B fixture injected: {"acceptedOk":true}
+PASS RETAINED-B interruption mounts after the real exit click
+PASS RETAINED-B real CONFESSION card click fills real Say/Do inputs verbatim  — {"a":"I perform the rehearsed procedure at last, in front of the assembly, and look to Julian instead of the Dohkar.","d":"I did call to you for an explanation of what went wrong."}
+FAIL RETAINED-B real Submit fires a real cgScreenplay request  — cgRequests=0
+FAIL RETAINED-B a real cgScreenplay request was reached to check payload delivery  — blocked earlier in the real click chain — see FAIL lines above
+
+=== NEW SCENARIO TOCTOU-RELOAD — commit A, TOCTOU-overwrite raw pcBodyBible with rejected B, real CG render stays clean, repeated after a real Save & Exit -> reload -> Continue ===
+PASS TOCTOU-RELOAD real Library entry reaches vaultLibraryScreen  — vaultLibraryScreen
+PASS TOCTOU-RELOAD real click reaches baked Scene 1 (game screen, real starterId)  — {"screen":"game","starterId":"starter_first_sacrifice","oasBtnVisible":true}
+PASS TOCTOU-RELOAD real Library entry reaches vaultLibraryScreen  — vaultLibraryScreen
+PASS TOCTOU-RELOAD real click reaches baked Scene 1 (game screen, real starterId)  — {"screen":"game","starterId":"starter_first_sacrifice","oasBtnVisible":true}
+PASS TOCTOU-RELOAD ZERO model-classified requests fired merely from reaching baked Scene 1  — count=0
+
+=== TOCTOU-RELOAD SOURCE-PARITY (real live window.state vs the fixture's own citations) ===
+PASS TOCTOU-RELOAD _pcFoundationSourceFacts resolves against real live state  — {"pcName":"Lirael","facetCount":2,"hasScene1":true}
+PASS TOCTOU-RELOAD fixture citation for "wound.core" (approved_facet:pc_fears_public_failure) is a REAL substring of the LIVE source  — cites="Failing is survivable; failing where it can be witnessed and recounted is not"
+PASS TOCTOU-RELOAD fixture citation for "core_contradiction" (approved_facet:pc_untested_brilliance) is a REAL substring of the LIVE source  — cites="She knows the procedure better than she has ever performed it"
+PASS TOCTOU-RELOAD fixture citation for "current_crisis.event" (approved_scene1) is a REAL substring of the LIVE source  — cites="The presiding Dohkar has charged Lirael with shaping the wish and with interfering"
+PASS TOCTOU-RELOAD fixture citation for "current_crisis.li_complication" (approved_relationship) is a REAL substring of the LIVE source  — cites="Already knows something about the PC’s lineage"
+PASS TOCTOU-RELOAD fixture citation for "current_crisis.refusal" (approved_scene1) is a REAL substring of the LIVE source  — cites="The presiding Dohkar has charged Lirael with shaping the wish and with interfering; he has not yet ruled"
+
+=== TOCTOU-RELOAD THE ISOLATED _generatePCBodyBible() CALL (real function, real route, stubbed provider) ===
+PASS TOCTOU-RELOAD _generatePCBodyBible() completed without throwing  — {"ok":true,"hadResult":true}
+FAIL TOCTOU-RELOAD the primary pcBodyBible call fired exactly once  — attempts=0
+PASS TOCTOU-RELOAD bodyTellReroll attempts stayed within the declared cap of 2  — attempts=0
+PASS TOCTOU-RELOAD NO CONTRACT VIOLATION (no attempt exceeded its declared cap)  — null
+  [NOTE] TOCTOU-RELOAD CORRELATED ATTEMPT LOG (request id, kind, role, model — the exact max-request-count evidence): []
+  [NOTE] TOCTOU-RELOAD BLOCKED ATTEMPTS (over-cap, named, never silently dropped): []
+PASS TOCTOU-RELOAD NOTHING OUTSIDE THE DECLARED CONTRACT fired (no sibling bible/scaffold/CG calls yet)  — []
+PASS TOCTOU-RELOAD window.state.pcBodyBible is set to the real generated (stubbed-provider) response
+
+=== TOCTOU-RELOAD REAL IN-PAGE VALIDATE + COMMIT (window._validatePcFoundationOutput / window._commitValidatedPcFoundation against REAL window.state) ===
+  [NOTE] TOCTOU-RELOAD VALIDATION RESULT: ok=true accepted=["wound.core","core_contradiction","current_crisis.event","current_crisis.li_complication"] rejections=[]
+  [NOTE] TOCTOU-RELOAD COMMIT RESULT: {"committed":true,"reason":null,"validation":{"ok":true,"rejections":[],"accepted":[{"field":"wound.core","kind":"locked_canon_fact"},{"field":"core_contradiction","kind":"locked_canon_fact"},{"field":"current_crisis.event","kind":"locked_canon_fact"},{"field":"current_crisis.li_complication","kind":"locked_canon_fact"}]},"mergedFacetIds":[]}
+PASS TOCTOU-RELOAD validation ACCEPTS the fully-cited response  — []
+PASS TOCTOU-RELOAD commit REPORTS committed:true  — {"committed":true,"reason":null,"validation":{"ok":true,"rejections":[],"accepted":[{"field":"wound.core","kind":"locked_canon_fact"},{"field":"core_contradiction","kind":"locked_canon_fact"},{"field":"current_crisis.event","kind":"locked_canon_fact"},{"field":"current_crisis.li_complication","kind":"locked_canon_fact"}]},"mergedFacetIds":[]}
+PASS TOCTOU-RELOAD the real portfolio now carries the merged, provenance-stamped facets  — ["pc_untested_brilliance:seed","pc_fears_public_failure:seed","pc_core_contradiction:pc_body_bible_validated","pc_current_crisis_event:pc_body_bible_validated"]
+PASS TOCTOU-RELOAD the seed's own two authored facets remain present, untouched
+PASS TOCTOU-RELOAD precondition — foundation B (retained rejected sample) is correctly rejected  — [{"field":"wound.core","reason":"missing_or_invalid_claim_kind","detail":"kind must be one of locked_canon_fact|grounded_inference|generated_foundation — got (absent). Every _provenance entry must declare which kind of claim this is."},{"field":"wound.surfacing_hint","reason":"missing_or_invalid_claim_kind","detail":"kind must be one of locked_canon_fact|grounded_inference|generated_foundation — got (absent). Every _provenance entry must declare which kind of claim this is."},{"field":"core_contradiction","reason":"missing_or_invalid_claim_kind","detail":"kind must be one of locked_canon_fact|
+PASS TOCTOU-RELOAD precondition — commit REFUSES for B  — {"committed":false,"reason":"validation_failed","validation":{"ok":false,"rejections":[{"field":"wound.core","reason":"missing_or_invalid_claim_kind","detail":"kind must be one of locked_canon_fact|grounded_inference|generated_foundation — got (absent). Every _provenance entry must declare which kind of claim this is."},{"field":"wound.surfacing_hint","reason":"missing_or_invalid_claim_kind","detail":"kind must be one of locked_canon_fact|grounded_inference|generated_foundation — got (absent). Every _provenance entry must declare which kind of claim this is."},{"field":"core_contradiction","re
+PASS TOCTOU-RELOAD precondition — _pcPortfolio is UNCHANGED by B's rejection (still A, byte-identical)
+PASS TOCTOU-RELOAD trigger — window.state.pcBodyBible is now the rejected raw bible B, while _pcPortfolio stays validated-committed A  — {"pcBodyBibleIsB":true,"portfolioStillA":true}
+PASS TOCTOU-RELOAD (pre-reload) — A's own committed content IS present in the real CG directive block  — PROTAGONIST PHYSICAL CANON (SEED — authoritative; render exactly; nothing beyond it is authored): First Favored species canon applies (PC is player-named); officiating Sacrificiant: the same sheer gossamer tunic as everyone + ONE ornamented ceremonial SASH (never robes); THE SACRIFICIANT SEAL — a gossamer band tied across the mouth (cloth only, NO orb/bead) — drawn IN for CG throughout the rite; h
+PASS TOCTOU-RELOAD (pre-reload) — B's dangerous raw content is ABSENT from the real CG directive block (the exact TOCTOU leak Roman caught)  — hits=0
+PASS TOCTOU-RELOAD a real Save & Exit affordance is visible  — storySaveExitBtn
+PASS TOCTOU-RELOAD close returns to the Library screen
+PASS TOCTOU-RELOAD page reload completes (runtime state genuinely cleared)
+PASS TOCTOU-RELOAD a saved-story row exists in the real Library UI
+PASS TOCTOU-RELOAD the real Continue click (not a direct function call) restored the story  — {"screen":"gnReader","starterId":"starter_first_sacrifice"}
+  [NOTE] TOCTOU-RELOAD post-reload state.pcBodyBible.wound: {"core":"her estranged sister, Elowen, who left the Favored ranks after a public scandal—Lirael has carried the guilt of not stopping her ever since, even though she was only sixteen","category":"PUBLIC","surfacing_hint":"a public failure that forces her to confront the fact she’s just as flawed as the people she’s been training to be perfect"}
+PASS TOCTOU-RELOAD (post real reload+Continue) — B's dangerous raw content is STILL ABSENT from the real CG directive block  — hits=0
+FAIL TOCTOU-RELOAD (post real reload+Continue) — A's committed content is STILL present in the real CG directive block  — PROTAGONIST PHYSICAL CANON (SEED — authoritative; render exactly; nothing beyond it is authored): First Favored species canon applies (PC is player-named); officiating Sacrificiant: the same sheer gossamer tunic as everyone + ONE ornamented ceremonial SASH (never robes); THE SACRIFICIANT SEAL — a gossamer band tied across the mouth (cloth only, NO orb/bead) — drawn IN for CG throughout the rite; h
+
+=== NEW SCENARIO TOCTOU-ISSUE — commit A, TOCTOU-overwrite raw pcBodyBible with rejected B, real CG render stays clean, repeated after a real window.startBook2() Issue transition ===
+PASS TOCTOU-ISSUE real Library entry reaches vaultLibraryScreen  — vaultLibraryScreen
+PASS TOCTOU-ISSUE real click reaches baked Scene 1 (game screen, real starterId)  — {"screen":"game","starterId":"starter_first_sacrifice","oasBtnVisible":true}
+PASS TOCTOU-ISSUE _generatePCBodyBible() (A) completed
+PASS TOCTOU-ISSUE real commit succeeds for A before the transition  — {"committed":true,"reason":null,"validation":{"ok":true,"rejections":[],"accepted":[{"field":"wound.core","kind":"locked_canon_fact"},{"field":"core_contradiction","kind":"locked_canon_fact"},{"field":"current_crisis.event","kind":"locked_canon_fact"},{"field":"current_crisis.li_complication","kind":"locked_canon_fact"}]},"mergedFacetIds":[]}
+PASS TOCTOU-ISSUE precondition — foundation B is correctly rejected  — [{"field":"wound.core","reason":"missing_or_invalid_claim_kind","detail":"kind must be one of locked_canon_fact|grounded_inference|generated_foundation — got (absent). Every _provenance entry must declare which kind of claim this is."},{"field":"wound.surfacing_hint","reason":"missing_or_invalid_claim_kind","detail":"kind must be one of locked_canon_fact|grounded_inference|generated_foundation — got (absent). Every _provenance entry must declare which kind of claim this is."},{"field":"core_contradiction","reason":"missing_or_invalid_claim_kind","detail":"kind must be one of locked_canon_fact|
+PASS TOCTOU-ISSUE precondition — _pcPortfolio still carries A's validated-merge stamp after B's rejection  — {"builtAt":1790388628608,"seedId":"starter_first_sacrifice","fingerprint":"pf:0a29b51f-87","validatedMerge":{"at":1790388628609,"bibleProvenance":{"core_contradiction":{"kind":"locked_canon_fact","basis":"approved_facet:pc_untested_brilliance","cites":"She knows the procedure better than she has ever performed it, and the gap between knowing and doing is where her fear lives."},"wound.core":{"kind":"locked_canon_fact","basis":"approved_facet:pc_fears_public_failure","cites":"Failing is survivable; failing where it can be witnessed and recounted is not, so she manages the audience as much as th
+PASS TOCTOU-ISSUE (pre-transition) — A's committed content present in the real CG directive block  — PROTAGONIST PHYSICAL CANON (SEED — authoritative; render exactly; nothing beyond it is authored): First Favored species canon applies (PC is player-named); officiating Sacrificiant: the same sheer gossamer tunic as everyone + ONE ornamented ceremonial SASH (never robes); THE SACRIFICIANT SEAL — a gossamer band tied across the mouth (cloth only, NO orb/bead) — drawn IN for CG throughout the rite; h
+PASS TOCTOU-ISSUE (pre-transition) — B's raw content absent from the real CG directive block  — hits=0
+PASS TOCTOU-ISSUE window.startBook2() (test-bypass) completed without throwing  — {"ok":true}
+  [NOTE] TOCTOU-ISSUE post-transition state.pcBodyBible.wound: {"core":"her estranged sister, Elowen, who left the Favored ranks after a public scandal—Lirael has carried the guilt of not stopping her ever since, even though she was only sixteen","category":"PUBLIC","surfacing_hint":"a public failure that forces her to confront the fact she’s just as flawed as the people she’s been training to be perfect"}
+  [NOTE] TOCTOU-ISSUE DIAGNOSTIC post-transition (pre-render): {"starterId":"starter_first_sacrifice","storyId":"27adaf28-0c05-4639-9381-c1f3e6946be6","fsSrcIsNull":false,"fsSrcKeys":["starterId","pcName","pcSpecies","pcBio","facets","liName","liBio","relationshipConstraints","scene1","posture","allSourceText"],"seedIsNull":false,"seedHasCast":true,"cfResult":{"core_contradiction":"She knows the procedure better than she has ever performed it, and the gap between knowing and doing is where her fear lives.","current_crisis_event":"Today is her first time SUPERVISING another person’s First Sacrifice — responsible for the ritual being conducted correctly, not for the wish itself."},"idxKeys":["pc:lirael"],"portfolioStoryId":"27adaf28-0c05-4639-9381-c1f3e6946be6","portfolioValidatedMerge":true}
+PASS TOCTOU-ISSUE (post real Issue transition, BEFORE Book 2 has its own bible) — B's raw content STILL absent from the real CG directive block  — hits=0
+FAIL TOCTOU-ISSUE (post real Issue transition) — the DATA LAYER itself carries A intact: the accessor returns A's real core_contradiction/current_fear/current_crisis_event directly from the carried portfolio, independent of pcBodyBible/rendering  — {"core_contradiction":"She knows the procedure better than she has ever performed it, and the gap between knowing and doing is where her fear lives.","current_crisis_event":"Today is her first time SUPERVISING another person’s First Sacrifice — responsible for the ritual being conducted correctly, not for the wish itself."}
+  [NOTE] TOCTOU-ISSUE (post real Issue transition) — rendered2 omits the whole PC section (physical canon included, not just interior) because window.state.pcBodyBible is null — this is the pre-existing `if (pcB)` gate, unrelated to the authority-boundary fix. rendered2.slice(0,400): PROTAGONIST PHYSICAL CANON (SEED — authoritative; render exactly; nothing beyond it is authored): First Favored species canon applies (PC is player-named); officiating Sacrificiant: the same sheer gossamer tunic as everyone + ONE ornamented ceremonial SASH (never robes); THE SACRIFICIANT SEAL — a gossamer band tied across the mouth (cloth only, NO orb/bead) — drawn IN for CG throughout the rite; h
+
+=== STRUCTURAL EVIDENCE — the gap Run 2 found, and the new provider that targets it (public/app.js, read directly) ===
+
+  PRIOR TO THIS PASS (Run 2, 2026-09-15): _facetIndex merged exactly two live providers —
+  'seed' -> _seedFacetIndex and 'generated_cast' -> _generatedCastFacetIndex — and grep-confirmed
+  nothing else read state._pcPortfolio.facets. _cgMintDeliveredAssignments (~226888) and the
+  literary continuation path (~96685) both resolve facets through the SAME _cpContinuationAssignment
+  -> _facetsForCharacter -> _facetIndex chain, so both shared one absence, not two independent ones.
+  THIS PASS: a new provider, 'pc_validated_portfolio' -> _pcValidatedFacetIndex (~134346,
+  registered in _FACET_PROVIDERS ~134388, directly after 'seed'), additively merges facets tagged
+  origin:'pc_body_bible_validated' under the SAME 'pc:<slug>' canonical id _seedFacetIndex already
+  uses — scoped to fixed-starter-only, story-matched, validatedMerge-stamped, fingerprint-checked
+  material. The scenarios above are the empirical test of whether this closes the gap through both
+  real consumption paths, not an assumption that it does.
+
+
+======================================================================
+PC FOUNDATION REAL-PATH INTEGRATION PROOF: 249 passed, 43 failed (out of 292)
+MAXIMUM REQUEST COUNT PER pcBodyBible GENERATION (primary + up to 2 bodyTellReroll rerolls): 3 total.
+GREEN (CG) payload-phase observed: []
+RED (CG) payload-phase observed: []
+GREEN-LIT delivered: undefined
+RED-LIT hits: 0
+ZERO real network/provider calls were made — every /api/** answered locally in every scenario.

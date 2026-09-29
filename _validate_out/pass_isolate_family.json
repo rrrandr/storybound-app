@@ -1,0 +1,30 @@
+[
+ {
+  "p": "_repairLIPicturability",
+  "status": "no-op",
+  "before": 2619,
+  "after": 2619,
+  "text": ""
+ },
+ {
+  "p": "_repairInterlocutorPicturability",
+  "status": "no-op",
+  "before": 2619,
+  "after": 2619,
+  "text": ""
+ },
+ {
+  "p": "_repairLIRelationalValue",
+  "status": "no-op",
+  "before": 2619,
+  "after": 2619,
+  "text": ""
+ },
+ {
+  "p": "_repairBodyBibleDump",
+  "status": "no-op",
+  "before": 2619,
+  "after": 2619,
+  "text": ""
+ }
+]

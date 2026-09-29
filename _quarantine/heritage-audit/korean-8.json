@@ -1,0 +1,24 @@
+{
+  "age": 28,
+  "ancestry": "Korean",
+  "first_name": "Mina",
+  "last_name": "Park",
+  "height": "5'4\", compact and grounded",
+  "build": "lean, defined shoulders from years of studio work, small-boned wrists",
+  "hair": "dark brown, almost black, shoulder-length with a slight wave, usually half-pinned back with whatever's at hand—a pencil, a silk scarf, sometimes nothing",
+  "complexion": "warm ivory undertone with a faint freckling across her nose and upper cheeks; a small, pale scar on her left collarbone from a childhood accident",
+  "face": "a mobile, expressive face that telegraphs every feeling—wide-set eyes that crease at the corners when she's thinking hard, a full mouth that quirks asymmetrically when she's nervous, high cheekbones that flush easily and visibly",
+  "signature_feature": "her hands—long-fingered, stained with ink and clay dust, constantly moving; the way she touches things (fabric, a client's arm, her own neck) with an almost involuntary tenderness that reads as hunger",
+  "second_celebrated_feature": "the precise, almost defiant line of her collarbone when she pulls her hair back; the LI notices it first when she's stressed and unconsciously bares her neck",
+  "signature_habits": "bites her thumbnail when concentrating; keeps a worn leather notebook in her bag filled with fabric swatches, sketches, and half-finished thoughts in Korean and English mixed together; makes strong tea in the afternoons and forgets to drink it; says 'ah, shit' under her breath when she makes a mistake, a small verbal tic; touches her scar absently when she's remembering something painful",
+  "occupation": "textile designer and owner of a small independent studio (Mina Park Textiles) in a converted warehouse—she designs custom fabrics for high-end fashion houses and takes private commissions; the work is precarious, beautiful, and entirely dependent on her reputation and vision",
+  "current_crisis": {
+    "event": "her biggest client—a luxury fashion house that accounts for 60% of her studio's revenue—has just terminated their contract via email, citing a 'strategic pivot to in-house production'; she has three weeks of operating capital left and a studio lease she cannot break",
+    "hottest_emotion": "panic threaded with a sharp, humiliating shame—the feeling that she's failed, that her work wasn't good enough, that she should have seen this coming",
+    "immediate_want": "to find out WHY, to fix it, to prove the decision wrong—and failing that, to find a way to keep the studio alive without begging"
+  },
+  "wound": {
+    "core": "she believes her worth is measured by what she produces, and that if she stops being useful, she becomes invisible",
+    "surfacing_hint": "when stressed, she over-explains her value, talks faster, becomes almost frantic about proving her competence; she cannot rest without feeling she's 'earned' it; she flinches when praised because she's already cataloging what's imperfect about the work"
+  }
+}

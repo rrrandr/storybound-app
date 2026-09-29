@@ -1,0 +1,27 @@
+[
+  {
+    "kind": "other",
+    "sysLen": 15428,
+    "usrLen": 6720
+  },
+  {
+    "kind": "other",
+    "sysLen": 15428,
+    "usrLen": 6720
+  },
+  {
+    "kind": "other",
+    "sysLen": 15428,
+    "usrLen": 6720
+  },
+  {
+    "kind": "planner",
+    "sysLen": 11501,
+    "usrLen": 16262
+  },
+  {
+    "kind": "author",
+    "sysLen": 165442,
+    "usrLen": 68416
+  }
+]

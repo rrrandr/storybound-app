@@ -1,0 +1,18 @@
+{
+  "r": {
+    "action": "I pull him down onto the bed and start unbuckling his belt",
+    "dialogue": "\"Stay. I want you tonight.\"",
+    "tier": "none",
+    "streak": 0,
+    "fields": {
+      "action": "clean",
+      "dialogue": "clean"
+    },
+    "fallbackGenerated": false
+  },
+  "dir": "",
+  "strong": 1653,
+  "complaintRoutes": true,
+  "gibberishRoutes": false,
+  "placeholderRoutes": false
+}

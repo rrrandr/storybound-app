@@ -1,0 +1,24 @@
+{
+  "age": 28,
+  "ancestry": "Yoruba",
+  "first_name": "Adeola",
+  "last_name": "Okonkwo",
+  "height": "5'7\", long-limbed and unhurried in her carriage",
+  "build": "lean with substance — not fragile, but not built for armor",
+  "hair": "dark brown, natural texture worn in a thick, shoulder-length crown of twists that she winds up when she's concentrating; a few always escape",
+  "complexion": "deep warm brown with golden undertones; a small raised scar on her left collarbone from a childhood fall",
+  "face": "open and angular — high cheekbones, a wide mouth that telegraphs everything she feels, eyes that widen when she's surprised or moved; the kind of face that makes strangers trust her before they should",
+  "signature_feature": "her hands — long-fingered, precise, always moving; she gestures when she speaks, traces the rim of a coffee cup, touches fabric and skin like she's reading braille",
+  "second_celebrated_feature": "the small gap between her front teeth, which she used to hide and now lets show when she laughs — it catches light and makes her look younger than she is",
+  "signature_habits": "she hums while working — half-remembered Yoruba lullabies her grandmother taught her; she keeps a small notebook in her bag and sketches people when she's anxious; she says 'ẹ kú' (respect, acknowledgment) under her breath when someone does something kind; she braids her hair at night while thinking through problems, fingers working while her mind spirals",
+  "occupation": "textile designer and owner of a small independent studio in the city — she sources fabrics, designs custom pieces for high-end clients, and teaches weekend workshops on natural dyeing; the studio is her anchor",
+  "current_crisis": {
+    "event": "her studio's primary investor — a family friend she trusted — has pulled funding without warning, citing 'market repositioning'; she has six weeks of operating costs left and a contract with a major retailer that requires capital she no longer has; the investor won't return her calls",
+    "hottest_emotion": "betrayal mixed with a drowning panic that keeps circling back to 'how did I not see this coming'",
+    "immediate_want": "to find another investor, or to find a way to keep the studio alive without surrendering creative control or admitting to anyone how close she is to collapse"
+  },
+  "wound": {
+    "core": "she learned early that being open — letting people see her need, her fear, her hunger — makes her exploitable; she built the studio as proof she could stand alone, and now its fragility feels like proof she never could",
+    "surfacing_hint": "when she's under pressure, she stops speaking and starts over-explaining instead, words tumbling faster; her hands shake slightly; she becomes hyperaware of being a burden and pulls away from anyone trying to help"
+  }
+}

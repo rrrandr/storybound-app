@@ -1,0 +1,57 @@
+[
+ {
+  "step": "5-oas-to-interruption",
+  "type": "warning",
+  "text": "[FIELD-FORWARD:WARN] mode=literary_compact side=pc missing=age,height,build,hair,signature_feature — required field(s) missing from bible at forwarding time. Bible generation likely incomplete."
+ },
+ {
+  "step": "5-oas-to-interruption",
+  "type": "warning",
+  "text": "[FIELD-FORWARD:WARN] mode=literary_compact side=li missing=age,height,build,hair,eye_color,signature_feature — required field(s) missing from bible at forwarding time. Bible generation likely incomplete."
+ },
+ {
+  "step": "5-oas-to-interruption",
+  "type": "warning",
+  "text": "[INTIMACY-DIALOGUE] li_dialogue sanitized to empty — falling back. Raw response (first 500 chars): {\"goal\":\"she understands the wish has already begun to cost her something she cannot name\",\"antagonistOrAntiForce\":\"the assembly\",\"milestones\":[],\"scenes\":[],\"timelineLength\":20,\"characters\":[],\"name\":\"Julian\",\"distinguishing_feature\":\"a burn scar\",\"private_hope\":\"she understands the wish has already begun to cost her something she cannot name\",\"defining_anecdote\":\"she understands the wish has already begun to cost her something she cannot name\",\"attraction_manifestation\":\"she understands the wi"
+ },
+ {
+  "step": "5-oas-to-interruption",
+  "type": "warning",
+  "text": "[INTIMACY-DIALOGUE] using soft-deflect fallback (unparseable response)"
+ },
+ {
+  "step": "6-interruption-card-submit",
+  "type": "warning",
+  "text": "[STAGE-ISSUER] scene 2 — entity resolution failed: present name \"Julian\" is ambiguous among existing entities — never guessed"
+ },
+ {
+  "step": "6-interruption-card-submit",
+  "type": "warning",
+  "text": "[FIELD-FORWARD:WARN] mode=cg side=pc missing=age,height,build,hair,signature_feature — required field(s) missing from bible at forwarding time. Bible generation likely incomplete."
+ },
+ {
+  "step": "6-interruption-card-submit",
+  "type": "warning",
+  "text": "[FIELD-FORWARD:WARN] mode=cg side=li missing=age,height,build,hair,eye_color,signature_feature — required field(s) missing from bible at forwarding time. Bible generation likely incomplete."
+ },
+ {
+  "step": "6-interruption-card-submit",
+  "type": "warning",
+  "text": "[CG:SCREENPLAY] gen failed for scene 1 — falling back to literary path for THIS scene only. _cgScreenplayMode left enabled; next scene will try CG again."
+ },
+ {
+  "step": "12-resubmit",
+  "type": "warning",
+  "text": "[FIELD-FORWARD:WARN] mode=cg side=pc missing=age,height,build,hair,signature_feature — required field(s) missing from bible at forwarding time. Bible generation likely incomplete."
+ },
+ {
+  "step": "12-resubmit",
+  "type": "warning",
+  "text": "[FIELD-FORWARD:WARN] mode=cg side=li missing=age,height,build,hair,eye_color,signature_feature — required field(s) missing from bible at forwarding time. Bible generation likely incomplete."
+ },
+ {
+  "step": "12-resubmit",
+  "type": "warning",
+  "text": "[CG:SCREENPLAY] gen failed for scene 2 — falling back to literary path for THIS scene only. _cgScreenplayMode left enabled; next scene will try CG again."
+ }
+]

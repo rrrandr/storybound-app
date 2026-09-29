@@ -1,0 +1,300 @@
+{
+  "dump": {
+    "sceneNumber": 2,
+    "planScenes": [
+      {
+        "n": 1,
+        "goal": "The First Sacrifice begins (hot crisis). The youth suddenly falls into catastrophic misalignment; every experienced First Favored recognizes the signs. The impossible happens instead — the wish succeeds cleanly. The crowd turns on the PC."
+      },
+      {
+        "n": 2,
+        "goal": "The ceremony collapses into accusations; the PC tries to explain something she does not understand herself."
+      },
+      {
+        "n": 3,
+        "goal": "Evidence begins to point toward deliberate interference."
+      },
+      {
+        "n": 4,
+        "goal": "The elders formally begin investigating the PC."
+      },
+      {
+        "n": 5,
+        "goal": "Julian quietly prevents the investigation from uncovering the truth."
+      },
+      {
+        "n": 6,
+        "goal": "The PC discovers the wish succeeded in a way that should have been impossible."
+      }
+    ],
+    "planKeys": [
+      "issue",
+      "scenes"
+    ],
+    "assignmentLive": {
+      "event": "The ceremony collapses into accusations; the PC tries to explain something she does not understand herself.",
+      "setting": null,
+      "participants": null,
+      "props": null,
+      "stateChange": null,
+      "source": "plan-scene",
+      "sceneNumber": 2
+    },
+    "assignmentStored": {
+      "event": "The ceremony collapses into accusations; the PC tries to explain something she does not understand herself.",
+      "setting": null,
+      "participants": null,
+      "props": null,
+      "stateChange": null,
+      "source": "plan-scene",
+      "sceneNumber": 2
+    },
+    "spineEventVerbatim": null,
+    "spineStaging": null,
+    "sceneSkeleton": null,
+    "sceneIntent": null,
+    "sceneMissionCurrent": "Navigate the accusations before they spiral out of control.",
+    "seedKeys": [
+      "issue",
+      "cast",
+      "worldTruths",
+      "sceneOne",
+      "visualCanon",
+      "truths",
+      "dramaticTruth",
+      "constraints"
+    ],
+    "seedWorldTruths": [
+      "A First Sacrifice is a COMING-OF-AGE RITE — closest analogue a Bar Mitzvah / quinceañera / confirmation / graduation, NOT a death ritual. At 16 (younger minds are too unformed to wish safely) a youth, after long study and practice, publicly makes their first wish and offers its price to Fate. It can be stern and formal, but when it goes well it ENDS IN CELEBRATION; catastrophe is UNUSUAL — everyone understands the safeguards the way we understand fire drills. Do NOT default to disaster, apocalypse, curses, or world-ending stakes.",
+      "First Favored are hired to GUIDE and SUPERVISE the rite — their alignment-sense and powerful wish-strength make them the preferred (and pricier) choice over human or Kwisheen wishcraft scholars. The supervisor reads the alignment of EVERYONE present, above all the wishing youth, ready to HALT and re-align the wish before it can twist.",
+      "The supervisor is a SACRIFICIANT (the role): one whose misalignment-sense is honed enough to supervise (the PC is an apprentice Sacrificiant). THE SACRIFICIANT SEAL — worn by whoever supervises, during ANY official First Sacrifice rite: because a supervisor bolstering the youth’s sacrifice with a wish of their OWN would be a ruinous breach, every Sacrificiant is ceremonially SEALED for the rite — a gossamer BAND drawn across the mouth and tied behind the head (just cloth, part of their ceremonial sash; NO orb, NO bead, NO gag), so they cannot cleanly voice a wish while officiating. Vestments are otherwise the same sheer gossamer as everyone, with ONE ornamented ceremonial SASH (never robes). LITERARY: a sealed Sacrificiant’s cries and speech are MUFFLED behind the cloth — emotion reads through the eyes and body. CG: the mouth-band is drawn IN on the supervising Sacrificiant for the duration of the rite.",
+      "ALIGNMENT-SENSE (the First Favored gift): they do NOT read thoughts or emotions — they perceive ALIGNMENT, how far a person’s desire, intention, sacrifice, and deepest self all point at one truth. Misalignment is as unmistakable to them as a sour note in music."
+    ],
+    "aPlotKeys": [
+      "tier",
+      "pattern",
+      "goal",
+      "namedClock",
+      "clockUnit",
+      "totalClockUnits",
+      "timelineLength",
+      "currentTurn",
+      "milestones",
+      "stakesIfFail",
+      "stakesIfWin",
+      "resolutionShape",
+      "cliffhangerHook",
+      "antagonistOrAntiForce",
+      "antagonistPersonalTie",
+      "antagonistShape",
+      "personalStakePC",
+      "personalStakeLI",
+      "plotShape",
+      "pcWound",
+      "liWound",
+      "woundSurfacingMechanism",
+      "woundLoadBearingProof",
+      "pcWoundCategory",
+      "liWoundCategory",
+      "liEmotionalNeedFromPC",
+      "pcUnknowinglySatisfies",
+      "naturalSeparationBeats",
+      "naturalProximityBeats",
+      "sourceWorld",
+      "sourceFlavor",
+      "sourceWorldSubtype",
+      "generatedAt",
+      "continuationOf",
+      "storyShape",
+      "storyShapeLabel",
+      "readerQuestion",
+      "romanceEngine",
+      "storyShapeSubtype",
+      "desireQuestion",
+      "scene1Compressed",
+      "_woundLIIntegration"
+    ],
+    "aPlot": {
+      "tier": "fling",
+      "pattern": "B",
+      "goal": "Prove or disprove the accusation that Lirael's years-old wish for Julian's freedom from his prior bond was misheard by the world as a death-wish on his partner, before the revelation spreads from her friends into public alignment readings that brand her a vow-breaker.",
+      "namedClock": "the next full moon alignment reading",
+      "clockUnit": "days",
+      "totalClockUnits": 28,
+      "timelineLength": 40,
+      "currentTurn": 0,
+      "milestones": [
+        {
+          "atScene": 4,
+          "atPercent": 10,
+          "kind": "setup",
+          "event": "Lirael's friends confront her with the glowing wish-sigil that names Julian's lost partner; Julian arrives as the only witness who can speak to the original bond.",
+          "emotional_conductivity": "Lirael senses the unspoken challenge in his compliment that she has always been honest about her needs, forcing her first visible crack in composure.",
+          "triggered": false
+        },
+        {
+          "atScene": 16,
+          "atPercent": 40,
+          "kind": "midpoint_reversal",
+          "event": "Mirael publicly reads the wish-sigil at the festival, turning the crowd's gaze on Lirael while Julian steps forward to claim partial responsibility for the bond's wording.",
+          "emotional_conductivity": "Julian's public defense shifts power toward Lirael, revealing his willingness to be seen as complicit and sparking her first unguarded gratitude.",
+          "triggered": false
+        },
+        {
+          "atScene": 28,
+          "atPercent": 70,
+          "kind": "dark_night",
+          "event": "A second reading reveals the wish was for Julian's freedom, not death, yet the world still interprets Lirael's desire as the cause; she must decide whether to hide or name her hunger aloud.",
+          "emotional_conductivity": "The reversal forces Lirael to choose visibility with Julian, testing whether his guarded heart can meet her exposed need without retreat.",
+          "triggered": false
+        },
+        {
+          "atScene": 35,
+          "atPercent": 88,
+          "kind": "crisis",
+          "event": "At the final alignment, Lirael publicly claims the wish as hers while Julian stands beside her, accepting that the bond between them may be both chosen and fated.",
+          "emotional_conductivity": "The highest-stakes beat pins the romance climax: she risks abandonment to be seen, and he risks reopening his wound to stand visibly with her.",
+          "triggered": false
+        },
+        {
+          "atScene": 38,
+          "atPercent": 95,
+          "kind": "resolution",
+          "event": "The reading clears the death accusation but leaves the wish's true intent ambiguous; Mirael withdraws, yet the sigil continues to glow faintly between Lirael and Julian.",
+          "emotional_conductivity": "Resolution of the immediate accusation produces a quiet rhythm of shared competence as they leave together, carrying unresolved visibility forward.",
+          "triggered": false
+        },
+        {
+          "atScene": 40,
+          "atPercent": 100,
+          "kind": "resolution",
+          "event": "The wish-sigil fades only when Julian speaks Lirael's name without pretense; the crowd disperses, but a single thread of consequence remains visible between them.",
+          "emotional_conductivity": "Post-completion consequence: their bond is now legible to others, turning every future choice into a public test of whether vulnerability can survive visibility.",
+          "triggered": false
+        }
+      ],
+      "stakesIfFail": "The alignment readings brand Lirael a vow-breaker, confirming her fear that every connection will abandon her once her desires are known, and Julian loses the only person whose need feels real rather than performed.",
+      "stakesIfWin": "The accusation is disproven, but the truth that her wish reached for Julian still forces both to decide whether their bond is chosen or fated, leaving the larger question of desire's cost unresolved.",
+      "resolutionShape": "complete-plus-cliffhanger",
+      "cliffhangerHook": "The faded sigil reappears on Julian's wrist the moment Lirael admits she still wants him without the wish's help, promising the world will test that admission next.",
+      "antagonistOrAntiForce": "Mirael Voss, the dead partner's sister and a respected Alignment Reader who witnessed the original bond",
+      "antagonistPersonalTie": "Mirael is the agent surfacing the buried wish-consequence (Shape B) by reading the misalignment aloud at every public gathering Lirael attends",
+      "antagonistShape": "B",
+      "personalStakePC": "If the accusation holds, Lirael loses the fragile connections she has built since her father's abandonment, confirming her deepest fear that anyone who learns her true desires will leave",
+      "personalStakeLI": "The revelation forces Julian to confront whether his current bond with Lirael is real or the residue of her wish, reopening the guilt that he failed to protect his lost partner from fate's cost",
+      "plotShape": "DISASTER_OR_RESCUE",
+      "pcWound": "Her estranged father abandoned her as a child, leaving a constant ache for connection and terror that anyone who sees her true needs will disappear again",
+      "liWound": "After losing his partner to a tragic accident three years ago, Julian carries the ache of unfulfilled promises and the weight of guilt for failing to safeguard what he loved",
+      "woundSurfacingMechanism": "The public revelation of Lirael's wish detonates among her closest friends two hours before Scene 1, stripping her anonymity and dragging both wounds into every interaction with Julian, who alone can corroborate or refute the accusation before the next alignment reading",
+      "woundLoadBearingProof": "WOUND: estranged father who abandoned Lirael as a child, creating her ache for connection and fear of being left. CIRCUMSTANCE: the wish-consequence accusation now being read aloud in public. DEPENDENCY: Without this wound, Julian would not be the one whose presence forces her to choose visibility over retreat; his guarded vulnerability is the exact mirror that makes her decide whether to claim or deny the wish in front of him before the world decides for her.",
+      "pcWoundCategory": "PUBLIC",
+      "liWoundCategory": "PARTNER",
+      "liEmotionalNeedFromPC": "Her capacity to need comfort without disguising it fascinates him because it lets him witness unguarded desire without the protective layers he has worn since his loss.",
+      "pcUnknowinglySatisfies": "Her meaning-hungry habit of reaching for connection even when it risks exposure is exactly the unguarded vulnerability he craves; she does not know her openness is what keeps drawing his gaze.",
+      "naturalSeparationBeats": [
+        "Julian must attend a private reading with Mirael to confirm the original bond wording",
+        "Lirael is summoned alone to the Alignment Circle to give testimony without his presence",
+        "A festival duty forces Julian to escort another witness while Lirael waits outside the circle"
+      ],
+      "naturalProximityBeats": [
+        "They must hide together in the festival archives to examine the original wish-sigil before Mirael arrives",
+        "Julian pulls Lirael into a side chamber during the public reading so she can steady her voice before speaking",
+        "They travel the same path back from the alignment site after the crowd turns, forced into step by the watching eyes"
+      ],
+      "sourceWorld": "Fantasy",
+      "sourceFlavor": "Arcane Binding",
+      "sourceWorldSubtype": "arcane_binding",
+      "generatedAt": 1787037571470,
+      "continuationOf": null,
+      "storyShape": "REPUTATION_COLLAPSE",
+      "storyShapeLabel": "Reputation Collapse",
+      "readerQuestion": "Is the accusation true?",
+      "romanceEngine": "COLLISION",
+      "storyShapeSubtype": "social_humiliation",
+      "desireQuestion": "What present-tense force is already pressing on her — and (if known adversaries) how is HE behind it?",
+      "scene1Compressed": {
+        "pressure_sentence": "Lirael wakes to the whispers of betrayal and the weight of accusation hanging over her.",
+        "emotional_consequence": "She feels the crushing fear that her deepest desires will lead to her isolation and shame.",
+        "li_entanglement_one_line": "Julian's silence now feels like a chasm, amplifying her dread of being abandoned again.",
+        "state_change_precondition": "No one yet knows the truth of her wish for Julian's freedom.",
+        "state_change": "A friend reveals Lirael's wish in a loud voice, drawing everyone's attention.",
+        "forces_choice": "This event forces Lirael to choose between defending her intentions or letting the accusation stand unchallenged.",
+        "branch_a_delete_test": "Defending her intentions becomes meaningless if no one knows about her wish to begin with.",
+        "branch_b_delete_test": "Letting the accusation stand unchallenged becomes impossible if she hasn't been publicly accused yet.",
+        "generated_at": 1787037575630
+      },
+      "_woundLIIntegration": {
+        "verdict": "INTEGRATED",
+        "mode": "INTERACTION",
+        "interactionType": "mirrors",
+        "causeBasin": false,
+        "swapTest": "Replacing Julian with a different BEAUTIFUL_RUIN would break the wound's role, as only he embodies the guarded vulnerability that forces Lirael to confront her fear of connection.",
+        "link": "Julian's own wound of loss and guilt mirrors Lirael's fear of abandonment, making him the only one who can help her navigate her desire for connection amidst her terror of being left again.",
+        "fix": "",
+        "ms": 3487
+      }
+    },
+    "narrativeState": null,
+    "scenePlotContract": {
+      "sceneIndex": 0,
+      "stateChange": {
+        "precondition": "Lirael's friends are present with the glowing wish-sigil",
+        "event": "Lirael confronts her friends and explains her wish's true intent",
+        "forces_choice": "Lirael must choose how to respond to her friends' accusations",
+        "tactical_move": "Lirael now MUST defend herself against the accusation",
+        "branch_a": "Lirael passionately defends her wish and its meaning",
+        "branch_b": "Lirael admits to her past feelings and seeks forgiveness",
+        "sceneProposed": 0,
+        "dominantSituation": "",
+        "but": "",
+        "therefore": "",
+        "slots": {
+          "precondition": "Lirael's friends are present with the glowing wish-sigil",
+          "actor": "Lirael",
+          "action": "confronts her friends and explains her wish's true intent",
+          "target": "her friends",
+          "exitState": "Lirael's friends now understand her wish was misunderstood"
+        }
+      },
+      "hardBeats": [
+        {
+          "id": "scene0_statechange",
+          "description": "Lirael confronts her friends and explains her wish's true intent",
+          "whyItMatters": "Lirael must choose how to respond to her friends' accusations",
+          "type": "plot",
+          "importance": "hard",
+          "bornScene": 0,
+          "locationBound": null,
+          "carryStrategy": "pay_if_plausible_else_adapt",
+          "dropAllowed": false,
+          "_derivedFromStateChange": true
+        }
+      ]
+    },
+    "priorSceneStateChange": {
+      "precondition": "Lirael's friends are present with the glowing wish-sigil",
+      "event": "Lirael confronts her friends and explains her wish's true intent",
+      "forces_choice": "Lirael must choose how to respond to her friends' accusations",
+      "tactical_move": "Lirael now MUST defend herself against the accusation",
+      "branch_a": "Lirael passionately defends her wish and its meaning",
+      "branch_b": "Lirael admits to her past feelings and seeks forgiveness",
+      "sceneProposed": 0,
+      "dominantSituation": "",
+      "but": "",
+      "therefore": "",
+      "slots": {
+        "precondition": "Lirael's friends are present with the glowing wish-sigil",
+        "actor": "Lirael",
+        "action": "confronts her friends and explains her wish's true intent",
+        "target": "her friends",
+        "exitState": "Lirael's friends now understand her wish was misunderstood"
+      }
+    }
+  },
+  "delivered": {
+    "SPINE_EVENT": "SPINE EVENT — MUST STAGE (HIGHEST AUTHORITY on WHAT HAPPENS AND WHERE; quoted verbatim from the story spine, NOT a summary): «The ceremony collapses into accusations; the PC tries to explain something she does not understand herself.» This owns the scene's SETTING, named PROPS, ARRIVALS and DEPARTURES, and the specific ACTION. If it names a place, the scene HAPPENS IN THAT PLACE. If it names an object, that objec",
+    "SCENE_INTENT": null,
+    "SCENE_SPINE": "SCENE SPINE — THE STATE CHANGE (HARD; what must BECOME TRUE by the end — the causal delta of the event above, not a competing event): • BEFORE (still FALSE at the first line — OPEN with this unresolved and establish it as not-yet-true): Lirael's friends are present with the glowing wish-sigil • THE EVENT — stage THIS EXACT event as a concrete on-page MOMENT, witnessed, in motion (a sound, a movement, a body react"
+  },
+  "contSys": 380391
+}

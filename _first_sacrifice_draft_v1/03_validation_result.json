@@ -1,0 +1,33 @@
+{
+  "ok": false,
+  "violations": [
+    {
+      "rule": "wrong_field_type",
+      "detail": "oas.interrogation must be an array of {speaker,text} lines, got string (\"Julian publicly accuses Lirael of manipulating Seren through...\")"
+    },
+    {
+      "rule": "wrong_field_type",
+      "detail": "oas.interruption must be an array of {speaker,text} lines, got string (\"The presiding Dohkar halts the questioning as inappropriate,...\")"
+    },
+    {
+      "rule": "wrong_field_type",
+      "detail": "oas.claimOverInquiry must be an array of {speaker,text} lines, got string (\"Julian immediately agrees and claims the inquiry for himself...\")"
+    },
+    {
+      "rule": "unsupported_historical_claim",
+      "detail": "beat[0] declares locked_canon_fact with no citation"
+    },
+    {
+      "rule": "unsupported_historical_claim",
+      "detail": "beat[2] declares locked_canon_fact with no citation"
+    },
+    {
+      "rule": "unsupported_historical_claim",
+      "detail": "beat[3] declares locked_canon_fact with no citation"
+    },
+    {
+      "rule": "card_auto_advances",
+      "detail": "oas.cardBehavior=\"A card click fills the draft only; it never advances the scene.\" — cards must only fill the draft, never advance"
+    }
+  ]
+}

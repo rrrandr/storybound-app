@@ -1,0 +1,52 @@
+{
+  "scene1Candidate": {
+    "beats": [
+      {"kind": "narration", "speaker": null, "image": "intro_lirael", "text": "I stood at the center of the dawn clearing with the woven sash heavy across my shoulders and the linen band damp against my lips. This was my first time as the responsible Sacrificiant, the one who must hold the rite steady while another offers her cost. My father had walked this path to Dohkar, then Chayr, then Provast; I aspired to the same offices, and the weight of that inheritance pressed colder than the morning air.", "provenance": {"kind": "grounded_inference", "cites": "pc_fears_public_failure"}, "objectClaims": []},
+      {"kind": "narration", "speaker": null, "image": "intro_lirael", "text": "The band smelled of old starch and the crowd’s collective breath. My fingers found the edge of the sash and traced the knot my mother had tied years ago. Every eye on me felt like a second mouth-band, tighter than the first. I breathed behind the cloth and told myself the procedure was only knowledge I already possessed.", "provenance": {"kind": "generated_expression"}, "objectClaims": []},
+      {"kind": "narration", "speaker": null, "image": "intro_seren", "text": "Seren knelt on the spiralgrass in the rehearsed posture, spine straight, hands folded, the months of correction visible in every still line of her. She looked exactly as she had been trained to look: composed, ready, the picture of a girl who understood what she was about to lose.", "provenance": {"kind": "grounded_inference", "cites": "seren_trained_composure"}, "objectClaims": []},
+      {"kind": "narration", "speaker": null, "image": "intro_seren", "text": "I met her eyes for the length of a breath and gave the smallest nod the band allowed. She returned it with the same private, practiced calm we had used in every rehearsal. The reassurance passed between us without words.", "provenance": {"kind": "generated_expression"}, "objectClaims": []},
+      {"kind": "dialogue", "speaker": "the_presiding_Dohkar", "image": "intro_dohkar", "text": "Name the cost you offer.", "provenance": {"kind": "locked_canon_fact", "cites": "scene1_causal_sequence"}, "objectClaims": []},
+      {"kind": "narration", "speaker": null, "image": "intro_dohkar", "text": "Seren answered at once, her voice clear. “I give the memory of my mother’s voice at bedtime, the one I have kept since she died.” The words landed like a stone dropped into still water. I felt the specific shape of what she was surrendering and understood why it cost her.", "provenance": {"kind": "grounded_inference", "cites": "seren_goodness_needs_witness"}, "objectClaims": []},
+      {"kind": "narration", "speaker": null, "image": "intro_julian", "text": "At the edge of the gathering Julian stood unmoving, the Provast’s mantle draped without display. He held no rank above the moment yet the air around him stayed quiet, as if the clearing itself had already granted him the respect he never asked for aloud.", "provenance": {"kind": "locked_canon_fact", "cites": "julian_status_without_display"}, "objectClaims": []},
+      {"kind": "narration", "speaker": null, "image": "intro_julian", "text": "I noticed the way his attention rested on the rite without claiming it. I tried not to track the line of his shoulders or the fact that he had not looked away from me once since the sun cleared the trees.", "provenance": {"kind": "generated_expression"}, "objectClaims": []},
+      {"kind": "narration", "speaker": null, "image": "d1", "text": "Seren began the invocation. The first words left her mouth steady and exact. For those few syllables the fear that lived between knowing the rite and performing it went quiet inside me.", "provenance": {"kind": "grounded_inference", "cites": "pc_untested_brilliance"}, "objectClaims": []},
+      {"kind": "narration", "speaker": null, "image": "d1", "text": "I felt the familiar shape of the Weave-Script waiting beneath my tongue and believed, for that instant, that nothing would go wrong.", "provenance": {"kind": "generated_expression"}, "objectClaims": []},
+      {"kind": "dialogue", "speaker": "Seren", "image": "d2", "text": "I spend this wish so that Lirael may find the one she lost, and I offer the memory of my mother’s voice in return.", "provenance": {"kind": "locked_canon_fact", "cites": "scene1_causal_sequence"}, "objectClaims": []},
+      {"kind": "narration", "speaker": null, "image": "d2", "text": "The words were wrong. She had meant to name something for herself; I saw it in the way her gaze flicked toward the nearest witnesses before she finished. The performed kindness was real, yet it needed their approval to feel true to her.", "provenance": {"kind": "grounded_inference", "cites": "seren_goodness_needs_witness"}, "objectClaims": []},
+      {"kind": "narration", "speaker": null, "image": "d2", "text": "The misaligned wish tore toward me like a rope of cold light, pulling the air itself into a tightening spiral that pressed against my ribs and threatened to drag every unspoken thought out of my mouth for the assembly to hear.", "provenance": {"kind": "generated_expression"}, "objectClaims": []},
+      {"kind": "narration", "speaker": null, "image": "d2", "text": "The spiral stopped mid-reach. No sound, no flare, only the sudden absence of the force that had already begun to claim me. The Weave-Script under my tongue went silent. The residue of the almost-misfire hung visible in the air between us, and no one could say what had arrested it.", "provenance": {"kind": "generated_expression"}, "objectClaims": []},
+      {"kind": "dialogue", "speaker": "the_presiding_Dohkar", "image": "d3", "text": "You shaped the wish for your own benefit and interfered in the rite. Both charges stand.", "provenance": {"kind": "locked_canon_fact", "cites": "scene1_causal_sequence"}, "objectClaims": []},
+      {"kind": "narration", "speaker": null, "image": "d3", "text": "Seren’s father stepped back from the circle’s edge, one hand closing around his daughter’s shoulder as though I might reach for her next. The movement was small and deliberate; every guest saw it.", "provenance": {"kind": "generated_expression"}, "objectClaims": []},
+      {"kind": "narration", "speaker": null, "image": "d3", "text": "My father’s offices felt suddenly farther away. Even as the charge settled on me I felt the pull of Julian’s attention at the clearing’s edge and could not stop myself from measuring how much of it still remained on me.", "provenance": {"kind": "grounded_inference", "cites": "pc_fears_public_failure"}, "objectClaims": []},
+      {"kind": "dialogue", "speaker": "Julian", "image": "d4", "text": "I can hear she is aligned with her own innocence. I will question her before you all so any misalignment will be plain.", "provenance": {"kind": "locked_canon_fact", "cites": "scene1_causal_sequence"}, "objectClaims": []},
+      {"kind": "narration", "speaker": null, "image": "d4", "text": "He drew The Answer from its sheath and placed the double-ended staff in my hands, closing my fingers around the cool shaft until both hooked heads rested against my palms.", "provenance": {"kind": "generated_expression"}, "objectClaims": [{"object_ref": "the_answer", "physical_form_claim": "staff_double_ended_question_mark_hooks", "claim_kind": "locked_canon_fact", "cites": "scene1_answer_manifestation.current_manifestation"}]},
+      {"kind": "narration", "speaker": null, "image": "d4", "text": "The weight settled into my grip. I felt the assembly’s eyes on the staff and on me, and the open space between the presiding Dohkar’s charge and whatever Julian intended next.", "provenance": {"kind": "generated_expression"}, "objectClaims": [{"object_ref": "the_answer", "physical_form_claim": "neutral_reference", "claim_kind": "generated_expression"}]}
+    ]
+  },
+  "scene1Coverage": {
+    "ceremony_setting": [0],
+    "seren_kneeling_rehearsed": [2],
+    "cost_offering_statement": [4, 5],
+    "julian_introduced": [6],
+    "invocation_begins": [8],
+    "wish_and_sacrifice": [10],
+    "wish_visibly_twists": [12],
+    "twist_unnaturally_arrested": [13],
+    "public_charge": [14],
+    "social_fallout_family_reaction": [15],
+    "julian_claims_the_answer": [17]
+  },
+  "first_person_lirael": true,
+  "oasOpening": {
+    "speaker": "Julian",
+    "text": "I watched your fingers tighten on the sash the instant Seren spoke your name, and how your eyes found mine before the wish finished leaving her mouth. Did you shape her words without knowing it, the way you shape every gaze that lands on you, hoping I would step forward and rescue you?",
+    "objectClaims": [{"object_ref": "the_answer", "physical_form_claim": "neutral_reference", "claim_kind": "generated_expression"}]
+  },
+  "postInterruptionBeat": {
+    "speaker": null,
+    "image": "d4",
+    "kind": "narration",
+    "text": "The Answer rested in my hands, heavier than its length suggested. The presiding Dohkar’s voice still echoed, Julian’s claim still hung in the air, and Seren’s family watched me as though the next word I spoke might reach for one of them next. Nothing was settled.",
+    "objectClaims": [{"object_ref": "the_answer", "physical_form_claim": "neutral_reference", "claim_kind": "generated_expression"}]
+  }
+}

@@ -1,0 +1,31 @@
+  > [STYLE-REF:compressed] Loaded: data:image/png;base64,/9j/4AAQSkZJRgABAQEBLAEsAAD/6xeISlAAAQAAAAEAABd+anVtYgAAAB5qdW1kYzJwYQARABCAAACqADibcQNjMnBhAAAAF1hqdW1iAAAAR2p1bWRjMm1hABEAEIA
+  > [STYLE-REF:CROP] /assets/GN-Artists/ender_golden_master_v3.jpg → TL panel for world=Modern
+  > [STYLE-REF:compressed] Loaded: /assets/GN-Artists/ender_golden_master_v3.jpg|q=TL (468KB)
+  > [VERIFY] FAIL: The Kwisheen's pupils are round human dots instead of horizontal capsule pupils.; The Kwisheen's hands do not match the species description of 5_finger_tentacles eac
+  > [VERIFY] FAIL: The Kwisheen's pupils are round human dots instead of horizontal capsule pupils.; The Kwisheen's scalp is not bald, but the cranial tentacles are decorative hair (dr
+
+  SKETCH-CONDITIONING EXPERIMENT (stress scene: Human+Kwisheen / spear / wish-burst / portal / underwater)
+  ──────────────────────────────────────────────────────────────────────
+  line-art gen: OK
+  colorize (real _styleTransferRevealPanel): OK
+
+  SKETCH verify:  FAIL [conf high] people=2 legs=false tentacles=8 defect=kwisheen_face/P1 p1=4
+        violations: 
+          • The Kwisheen's pupils are round human dots instead of horizontal capsule pupils.
+          • The Kwisheen's hands do not match the species description of 5_finger_tentacles each (no joints, no knuckles, smooth taper). They appear to be human-like hands with distinct fingers and joints.
+          • The Kwisheen's lower body silhouette does not match the required six_point_ground_contact. It appears to have more than six tentacles making ground contact or is not clearly defined as six points.
+          • The Kwisheen's scalp is bald/bare with no tentacle-dreadlock hair (the mane is missing). The cranial tentacles are present but are not depicted as a mane of thick tentacle-dreadlocks from the scalp.
+          • The Kwisheen's clothing/armor differs from canon (scaled wraps). It appears to be bare-skinned with scales, but no distinct 'scaled wraps' as clothing/armor.
+
+  FINAL  verify:  FAIL [conf high] people=2 legs=false tentacles=8 defect=kwisheen_face/P1 p1=3
+        violations: 
+          • The Kwisheen's pupils are round human dots instead of horizontal capsule pupils.
+          • The Kwisheen's scalp is not bald, but the cranial tentacles are decorative hair (dreadlocks) rather than sensory tentacles as described in the identity tokens.
+          • The Kwisheen's hands do not match the species description of 5_finger_tentacles each (no joints, no knuckles, smooth taper). They appear to be human-like hands with distinct fingers and joints.
+          • The Kwisheen's lower body silhouette is a tentacle mass below the waist, but the identity tokens specify six_point_ground_contact, which is not clearly depicted as the primary mode of locomotion.
+          • The Kwisheen's clothing/armor is described as 'scaled wraps' in canon, but is depicted as a dress-like garment with scales, which is a deviation.
+
+  → INFORMATION LOSS = defects present in FINAL but NOT in SKETCH (introduced by colorization).
+  → saved: cond_sketch.png + cond_final.png → /private/tmp/claude-501/-Users-romantsukerman-storybound-app/80c638ef-dc45-46dc-ad83-43ad5d0e1a40/scratchpad  (visual invariant scorecard next)
+  ──────────────────────────────────────────────────────────────────────
+

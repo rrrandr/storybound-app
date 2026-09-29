@@ -1,0 +1,5 @@
+=== fus1_stage_order · stage_order_dry.mjs · 19:03:29 ===
+fus1_stage_order: exit=1 · 62 checks · 60 passed · 2 failed · invalid_markers=0 · samples=27 suite_rss_max=345MB free_min=83MB server_rss_max=84MB
+fus1_stage_order: FAILURE — stopping. First failing lines:
+54:FAIL F1 absent fusion fields + valid E+ → derived canonical values (log names both), Scene 1 mounts  — {"pages":1,"fatal":null,"log":[]}
+61:FAIL RL1 the live reply passes the absent-fields check by inheritance (log present) and does not fail on the old mismatch  — {"fatal":null,"inherited":[]}

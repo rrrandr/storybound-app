@@ -1,0 +1,24 @@
+{
+  "age": 28,
+  "ancestry": "Ashkenazi",
+  "first_name": "Miriam",
+  "last_name": "Rothstein",
+  "height": "5'6\", slight curve to her spine",
+  "build": "lean but soft at the hips and chest, the kind of body that reads as delicate until she moves",
+  "hair": "dark brown, almost black, thick and prone to frizz, usually twisted into a low knot or left loose past her shoulders; she doesn't fight it",
+  "complexion": "warm olive undertone with a scatter of freckles across her nose and the tops of her shoulders; a small dark mole on her left collarbone",
+  "face": "an open, expressive face with a slightly prominent nose and full mouth—the kind that telegraphs every feeling before she speaks, eyes widening or narrowing with genuine shock, amusement, hurt",
+  "signature_feature": "her hands—long-fingered, always slightly stained with ink or paint, with an unconscious grace when she gestures; the left hand bears a thin scar across the knuckles from a kiln accident",
+  "second_celebrated_feature": "the particular tilt of her head when she's listening intently, chin slightly forward, a gesture that reads as both vulnerable and utterly present",
+  "signature_habits": "she bites the inside of her left cheek when concentrating; she hums fragments of songs without noticing—often Yiddish melodies her grandmother taught her; she takes off her shoes the moment she enters a space, padding barefoot; she apologizes reflexively, even for things that aren't her fault; she makes tea in the same chipped ceramic mug every morning, the one her bubbe sent from Tel Aviv",
+  "occupation": "ceramic artist and studio owner—she runs a small independent pottery studio in a converted warehouse, teaching classes and creating custom pieces for restaurants and private collectors",
+  "current_crisis": {
+    "event": "her studio's landlord has given her 60 days' notice; the building is being sold to a development firm, and the new owners want market-rate commercial rent she cannot afford; she has no savings buffer and no backup plan",
+    "hottest_emotion": "panic—a low, persistent panic that wakes her at 3 a.m.",
+    "immediate_want": "to find a way to keep the studio alive, or at minimum to save the kilns and her students' work before the eviction"
+  },
+  "wound": {
+    "core": "she believes she is fundamentally not enough—not talented enough to 'make it,' not ambitious enough, not the kind of person who builds empires or survives setbacks with grace",
+    "surfacing_hint": "under pressure, she becomes self-flagellating, apologizing for her own existence, assuming she has failed before trying, offering solutions that require her to shrink rather than take up space"
+  }
+}

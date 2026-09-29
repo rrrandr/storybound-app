@@ -2153,7 +2153,7 @@ for (const [mutate, label, junk] of [
   const blockOf = n => {
     const L = sys.split('\n');
     const i = L.findIndex(l => /^\s*•\s/.test(l) && l.includes(n));
-    return i < 0 ? '' : L.slice(i, i + 6).join('\n');
+    return i < 0 ? '' : L.slice(i, i + 7).join('\n');   // 7: the lens operation now has its own line (2026-09-10)
   };
   const once = (hay, needle) => !!needle && (hay.split(needle).length - 1) === 1;
   t(`   "${mutate}" — …and the ACT and the LENS still reach Grok, once each, beside that truth`,
@@ -2162,7 +2162,10 @@ for (const [mutate, label, junk] of [
       const act = 'VISIBLE ACTION — MUST OCCUR: ' + String(c.behavior || c.angle || '');
       return once(b, 'SOURCE TRUTH — DO NOT STATE: ' + String(c.facet_truth || c.psychological_read || ''))
           && once(b, act) && once(sys, act)
-          && once(b, 'PC INTERPRETATION — MUST GOVERN THE NARRATION: ' + String(c.pc_lens_operation || ''));
+          // 2026-09-10 (Codex finding): the lens OPERATION no longer replaces the planner's interpretation. The
+          // PC INTERPRETATION line carries pc_interpretation (or the fallback phrase) and the operation has its own line.
+          && once(b, 'PC INTERPRETATION — MUST GOVERN THE NARRATION: ' + String(c.pc_interpretation || 'as her attention moves onto it (below)'))
+          && once(b, 'HOW HER ATTENTION MOVES ONTO IT (lens operation): ' + String(c.pc_lens_operation || ''));
     }),
     JSON.stringify(recips.map(c => [c.character, (blockOf(c.character).match(/(SOURCE TRUTH|VISIBLE ACTION|PC INTERPRETATION)/g) || [])])));
 }
@@ -2444,7 +2447,8 @@ console.log(`\n${'═'.repeat(90)}\nPART X — THE GENERATED PORTFOLIO, END TO E
   t('X6: …and beside it the selected VISIBLE ACTION and PC INTERPRETATION — the VALUES, ' +
     'non-empty and once each',
     !!chosen && once(blk, 'VISIBLE ACTION — MUST OCCUR: ' + _act)
-      && once(blk, 'PC INTERPRETATION — MUST GOVERN THE NARRATION: ' + _op)
+      && once(blk, 'HOW HER ATTENTION MOVES ONTO IT (lens operation): ' + _op)   // 2026-09-10: the operation has its own line; the interpretation line is the planner's sentence
+      && once(blk, 'PC INTERPRETATION — MUST GOVERN THE NARRATION: ' + (chosen && String(chosen.pc_interpretation || 'as her attention moves onto it (below)').trim()))
       && once(blk, '; here: ' + _eff),
     JSON.stringify({ act: _act, op: _op, eff: _eff && _eff.slice(0, 50) }));
   const _pr = chosen && String(chosen.facet_pressure || '').trim();

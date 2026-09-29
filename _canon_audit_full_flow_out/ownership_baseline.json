@@ -14,13 +14,24 @@
   "st": {
     "blocked": null,
     "lastAudit": {
-      "at": 1790270747772,
+      "at": 1790404757514,
       "sceneIndex": 1,
       "allow": true,
       "source": "audit",
+      "triggered": true,
+      "triggerReasons": [
+        "declared \"ordinary\" but the event text asserts a produced effect the deterministic check cannot see"
+      ],
+      "model": "grok-4.3",
+      "latencyMs": 4,
+      "realizedUsd": 0.0053,
+      "costSource": "provider",
+      "upstreamAttempts": 1,
+      "resolvedModel": "grok-4.3",
       "paid": true,
       "reason": null,
       "violations": [],
+      "citedFactIds": [],
       "auditErrors": null,
       "uncertainty": null
     },

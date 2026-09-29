@@ -1,0 +1,142 @@
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/csp-report
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/config
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/csp-report
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/geo
+✓ real app reached, all required functions exposed on window
+
+
+=== 1. Which real generation request asks for the structured outcome report, and does its parser retain it? ===
+  ✓ the REAL CG system prompt NO LONGER asks the author to self-certify "temptFateOutcome"
+  ✓ ...nor for any of the outcome contract's own fields (affectedKnowers, scopeMatch)
+  ✓ ...and the output schema block still closes cleanly — no dangling comma where the outcome key used to be
+
+=== 2. Real dispatch, real parse, real acceptance check, real commit — network stubbed ===
+  ✓ the real dispatch returned a plan (not a stale-rejected/null result)
+  ✓ a self-certified outcome returned by a post-migration author is NOT adopted as legacy — no provenance is attached
+  ✓ ...and the production path SURFACES it rather than silently swallowing it
+  ✓ the parser RETAINED temptFateOutcome on the returned plan (not stripped by normalization)
+  ✓ generation ALONE commits nothing — the returned plan carries the pending outcome, not yet a durable entry
+  ✓ a durable consequence was actually committed via the REAL production path once persistence is simulated (not by calling the recorder directly)
+  ✓ the committed entry content matches what the (stubbed) model reported
+  ✓ zero undeclared/paid GENERATION calls occurred (only the stubbed /api/proxy and /api/mistral-proxy paths were used for generation-shaped requests; ambient page-load calls excluded)
+
+=== 3. A subsequent REAL planner/author request receives the committed effects, with distinctions intact ===
+  ✓ the real, full next-scene system prompt contains the committed wish
+  ✓ it distinguishes ESTABLISHED fact from openPossibilities
+  ✓ it carries the per-effect DURATION line
+  ✓ it carries the per-character belief/knowledge state (Lirael suspects), not a blanket claim
+
+=== 4. The app's OWN acceptance gate — not the model's self-report alone — governs the commit ===
+  ✓ minting twice produces two DIFFERENT attempt ids (a real, distinguishable stale-vs-current pair)
+  ✓ the REAL _cgAcceptDelivered rejects the stale (first) request once a second request has superseded it
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/beta-events
+  ✓ found all three source anchors in the real served app.js
+  ✓ the acceptance-rejection early-return sits BEFORE both the kink-memory block and the new Tempt-outcome commit block in source order — a rejected generation cannot reach either
+
+=== 5. Rejected/undelivered scenes commit nothing, through the REAL production path ===
+  ✓ a model-reported delivered:false produces NO commit through the real dispatch + commit-at-persistence path
+
+=== 6. Missing report is EXPLICITLY SURFACED (console warning), never silently treated as success ===
+  ✓ no commit happens when no extracted outcome is available
+  ✓ ...the scene is instead recorded as an OUTSTANDING pending outcome, not silently dropped
+  ✓ ...and the next continuation is blocked while it stays unresolved
+
+=== 7. Duplicate/retried commits through the REAL production path cannot duplicate effects ===
+  ✓ exactly ONE entry exists after two real generation+persistence-commit calls for the same scene (idempotent through the real path, deduplicated by proposal identity, not just the pure function)
+  NOTE: the exhaustive enumeration of malformed report SHAPES (6 variants) is already covered by
+  _tempt_fate_model_driven_outcome_control.mjs §4 (calls the same real _commitTemptFateOutcome this
+  pipeline calls) — not re-run here per "reuse existing controls where practical".
+
+=== 8. OWNERSHIP RACE — a second wish sealed WHILE the first generation is in flight must not be misattributed ===
+  ✓ the second wish really was sealed mid-flight (ledger now has 2 entries, proving the race actually happened, not a no-op test)
+  ✓ the committed entry is attributed to the FIRST wish (the one THIS generation was actually for) — not the second, later one
+  ✓ the evidence content is the FIRST generation's own reported evidence, not contaminated by the second wish
+
+=== 9. Ordinary continuation after a Tempt invocation must not accidentally recommit the earlier wish ===
+  ✓ the ordinary continuation (Tempt not invoked) does NOT create a second durable entry despite the model echoing a stray temptFateOutcome
+  ✓ the stray report is explicitly surfaced as ignored, not silently dropped
+
+=== 10. PLANNER WIRING — the real planner request carries Tempt Fate context, Scene A (active invocation) and Scene B (durable-only) ===
+  ✓ at least one real request this generation carried the planner's ACTIVE INVOCATION marker (Scene A)
+  ✓ that request carried the actual wish text, not a placeholder (Scene A)
+  ✓ the ordinary continuation's real request carries the prior committed durable consequence (Scene B)
+  ✓ the ordinary continuation's real request does NOT carry the active-invocation marker (Scene B — nothing is being invoked this turn)
+
+=== 11. AUTHOR-PROMPT OWNERSHIP — a wish sealed mid-flight (during the planner's own await) must not leak into the author's actual request ===
+  ✓ the second wish really was sealed mid-flight (ledger now has 2 entries — the race actually happened)
+  ✓ NO real request this generation made carries the second wish's text
+  ✓ the author's own request (the last one this generation makes) carries the FIRST wish's text
+
+=== 12. CLEANUP OWNERSHIP — a newer invocation sealed mid-flight must survive this generation's cleanup, not be destroyed by it ===
+  ✓ the live wish still reads as the SECOND (newer) invocation — NOT destroyed by the first generation's cleanup
+  ✓ the live invoked-this-turn flag was NOT cleared — the second invocation remains live for its own future generation
+  ✓ the preservation is explicitly logged, not silent
+  ✓ REGRESSION: the ordinary (unraced) case still clears the live wish/flag normally, exactly as before this fix
+
+=== 13. DEDUPLICATION BY PROPOSAL IDENTITY — a distinct later wish at the SAME local scene number must NOT be rejected as a duplicate; a genuine duplicate callback must still be rejected ===
+  ✓ the first proposal (Issue 1, local scene 5) commits successfully
+  ✓ a genuine duplicate callback for the SAME proposal is rejected (returns null, no new entry)
+  ✓ a DISTINCT proposal at the SAME local sceneIdx (simulating an Issue-boundary reset) commits successfully — not rejected as a duplicate
+  ✓ exactly TWO durable entries exist — one per genuine proposal, the duplicate callback added nothing
+  ✓ a proposal with no stable id is refused rather than committed unsafely
+
+=== 14. COMMIT-AT-PERSISTENCE — structural proof that a failure before real scene persistence leaves no durable outcome ===
+  ✓ found all four source anchors in the real served app.js
+  ✓ real prose persistence (state.scenes.push) happens BEFORE the Tempt-outcome commit call in source order
+  ✓ the scene ledger commit ALSO happens BEFORE the Tempt-outcome commit call in source order
+  ✓ no function boundary sits between real persistence and the commit call (both remain in the same try scope)
+  ✓ _cgTemptFateCommitAtPersistence is defined as its own extracted function (mirrors _cgTemptFateAftermathCleanup extraction) — directly callable from a dry control, as sections 2/5/6/7/8/9 above already do
+
+=== 15. VOLATILITY/SATURATION RACE — reproduced through the real production path (Codex's second-pass finding) ===
+  ✓ the race really happened (2 ledger entries — not a no-op test)
+  ✓ Scene A's volatility window carries wish A's text, not wish B's
+  ✓ saturation incremented for A's invocation (exactly once so far)
+  ✓ the committed durable outcome is attributed to wish A
+  ✓ wish B survives Scene A's cleanup intact — NOT destroyed by it
+  ✓ B's own generation creates its OWN separate volatility window carrying B's text (not still A's, not blended)
+  ✓ B's own generation increments saturation exactly once more (a genuinely separate activation, not skipped or doubled)
+  ✓ B's outcome commits separately, attributed to wish B, as a second distinct durable entry
+
+=== 16. MYTHIC COUPLE — a successful "let the world know" wish creates lasting, bounded public recognition, gated on the accepted commit (not seal-time keyword detection) ===
+  ✓ the wish is correctly detected as mythic-shaped by the classifier
+  ✓ mythic status is NOT active before any scene has been generated or accepted (no seal-time activation)
+  ✓ mythic status activates ONLY once the scene's outcome actually commits — not at seal
+  ✓ the activated status carries the real wish text
+  ✓ the real mythic-couple author directive now fires for future prompts
+
+=== 17. MYTHIC COUPLE — an infamous/hostile recognition outcome carries different consequences than the celebratory case ===
+  ✓ the infamous outcome still commits as a durable consequence (fame and infamy are both valid lasting Tempt outcomes)
+  ✓ the committed content reflects the HOSTILE register, not a celebratory one (a warning/cautionary-tale framing, distinct from section 16's celebratory one)
+  ✓ mythic status also activates for this shape (recognition is recognition — the classifier does not distinguish tone, the outcome record itself carries that)
+
+=== 18. MYTHIC COUPLE — a wish that invokes fame but the scene does not deliver it must NOT commit mythic status ===
+  ✓ an undelivered scene commits NO durable outcome
+  ✓ a mythic-shaped wish that was NOT delivered does NOT activate mythic status — a failed scene cannot make anyone famous
+  ✓ a malformed report (fails structural validation) also does NOT activate mythic status
+
+=== 19. MYTHIC COUPLE — an ordinary continuation carries the resulting social fact without reactivating or duplicating it ===
+  ✓ setup: mythic status is active after the real commit (section 16 pattern, re-verified here as this section's own baseline)
+  ✓ the ordinary continuation does NOT re-seal/reactivate mythic status (same sealedAtScene, not bumped to a later scene)
+  ✓ the real author directive still carries the recognition fact on the ordinary continuation (the social fact persists into future prompts without needing to be re-triggered)
+  ✓ no duplicate durable entry was created by the ordinary continuation
+
+=== 9. MIXED EVIDENCE + UNDETERMINED SCOPE — the round trip preserves all three distinctions ===
+    resolve: {"ok":true,"reason":null,"committed":1}
+    LEDGER: [{"id":"tfc_tfl_mixed","source":"tempt","requestedRupture":"everyone forgets the ceremony happened","proposalId":"tfl_mixed","sceneIdx":0,"bargainId":null,"changed":[{"subject":"the presiding Dohkar","whatChanged":"no longer knows why the gathering assembled"}],"durability":[{"aspect":"the Dohkar's memory gap","status":"persists","note":"nothing in the scene restores it"}],"knowledgeStates":[{"cha
+    PROMPT has SCOPE line: true  has wish: true
+  ✓ the mixed-evidence, UNDETERMINED report COMMITS through the real path
+  ✓ the committed record keeps scopeMatch "undetermined" — not converted to narrower or full
+  ✓ ...with a scopeNote naming what is unestablished
+  ✓ the ESTABLISHED forgetting survives in the committed record
+  ✓ the ESTABLISHED invoker exemption survives in the committed record
+  ✓ JULIAN ACQUIRES NO KNOWLEDGE STATE — he is absent from knowledgeStates entirely
+  ✓ ...and no disposition was invented for him in affectedKnowers
+  ✓ the real next-scene prompt states the OVERALL scope is not established
+  ✓ ...and says the established effects ARE binding canon and may be written from freely
+  ✓ ...and names Julian as UNACCOUNTED FOR, forbidding an assumed outcome either way
+  ✓ ...and does NOT carry the old blanket ban on relying on any effect
+  ✓ the next-scene prompt still carries the ESTABLISHED forgetting as usable canon
+  ✓ the canon packet marks the reach open while keeping the established effects
+
+====================================================================================================
+TEMPT FATE OUTCOME PRODUCTION INTEGRATION CONTROL: 86/86 passed

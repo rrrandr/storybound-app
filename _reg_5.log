@@ -1,0 +1,280 @@
+=== SAY/DO CATEGORIES 4 & 5 — TEST-FIRST TRACE (zero dispatches, $0) ===
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/csp-report
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/config
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/csp-report
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/geo
+
+=== 1. CATEGORY 4 — WHAT THE EXISTING DETECTOR ALREADY COVERS ===
+    model-complaint:  "Claude messed this up."           → CAUGHT [model-name-complaint]  +fallback substituted
+    boring:           "This game is boring."             → CAUGHT [subjective-frustration]  +fallback substituted
+    continuity:       "You forgot what happened."        → CAUGHT [plot-memory-complaint]  +fallback substituted
+    button-broken:    "The Continue button is broken."   → CAUGHT [interface]  +fallback substituted
+    NEG-ceremony:     "This ceremony is boring."         → not caught
+    NEG-oath:         "You forgot your oath."            → not caught
+  ✓ a detector ALREADY EXISTS and is reachable — nothing here needs a second one
+  ✓ "Claude messed this up." is caught as a MODEL complaint
+  ✓ "You forgot what happened." is caught as a CONTINUITY complaint
+
+=== 2. CATEGORY 4 — THE NEGATIVE CONTROLS MUST SURVIVE ===
+  ✓ in-character "This ceremony is boring." is NOT caught
+  ✓ ...and reaches the story unchanged
+  ✓ in-character "You forgot your oath." is NOT caught — the pattern requires the/what/that
+  ✓ ...and reaches the story unchanged
+
+=== 3. CATEGORY 4 — THE TWO MEASURED GAPS ARE NOW CLOSED ===
+  ✓ WAS A GAP, NOW COVERED — "This game is boring." is caught
+  ✓ WAS A GAP, NOW COVERED — "The Continue button is broken." is caught
+  ✓ ...and each is caught as its OWN kind, not lumped together
+
+=== 4. CATEGORY 4 — THE OLD COLLAPSING FALLBACK, AND WHY IT IS OFF THE PATH ===
+    categories detected: ["model-name-complaint","subjective-frustration","plot-memory-complaint","interface"]
+    distinct outputs:    ["a brief, unplaceable pause, as if she lost her train of thought"]
+  ✓ the detector DOES distinguish complaint kinds — the taxonomy already exists
+  ✓ MEASURED: but every caught complaint collapses to ONE identical fallback, so the taxonomy
+     is computed and then discarded
+  ✓ ...and that fallback is a neutral placeholder, not authored prose — so nothing a complaint
+     said enters canon
+
+=== 5. CATEGORY 5 — WEAK INPUT MUST NOT BE BLOCKED OR REWRITTEN ===
+    "I don't know"   → sanitized="I don't know"  passes through
+    "whatever"       → sanitized="whatever"  passes through
+    "..."            → sanitized="..."  passes through
+    "sure"           → sanitized="sure"  passes through
+  ✓ no weak response is caught by any detector
+  ✓ none is substituted or rewritten
+  ✓ none is blanked by sanitize — "..." and "sure" survive intact
+
+=== 6. CATEGORY 5 — WHAT THE AUTHOR IS TOLD ABOUT A WEAK MOVE ===
+  ✓ a weak move still reaches the author as the player's literal input
+  ✓ MEASURED: the directive tells the author the input is CANON and the scene must react
+     "proportionally" — which for a shrug is exactly where inflation could happen
+  ✓ MEASURED: it contains NO instruction to preserve uncertainty, hesitation or weak assent
+  ✓ MEASURED: and nothing forbids converting a weak move into a decision the player never made
+  ✓ the high-impact variant escalates harder still — "the moment escalates or breaks from the plan"
+
+=== 7. CATEGORY 4 FIX — COMPLAINTS ROUTE BY KIND AND NEVER TOUCH CANON ===
+    model-complaint:  model-name-complaint → concierge-ooc
+    boring:           subjective-frustration → concierge-ooc
+    continuity:       plot-memory-complaint → concierge-verify
+    button-broken:    interface → bug-report
+    NEG-ceremony:     not routed (reaches the story)
+    NEG-oath:         not routed (reaches the story)
+  ✓ the NEW coverage catches "This game is boring." as subjective frustration
+  ✓ the NEW coverage catches "The Continue button is broken." as interface
+  ✓ THE NEGATIVE CONTROLS STILL SURVIVE — "This ceremony is boring." is not routed
+  ✓ ...and "You forgot your oath." is not routed
+  ✓ ...and "My coat button is broken." is NOT routed — the pattern needs a UI noun nearby
+  ✓ THE CATEGORY IS PRESERVED THROUGH ROUTING, not discarded
+  ✓ a bug report opens the BUG-REPORT panel
+  ✓ a continuity claim goes to VERIFICATION, not to an apology or a retcon
+  ✓ model complaints and frustration go to the OOC concierge
+  ✓ NO routed complaint advances the story
+  ✓ the handler reports the turn was CONSUMED BY ROUTING, so the caller stops
+  ✓ THE TURN COUNT DID NOT ADVANCE
+  ✓ NOTHING WAS WRITTEN TO THE SCENE LEDGER
+  ✓ ...and the route was recorded for review, with its category
+  ✓ RED PROOF — the old in-world fallback no longer runs on the Submit path, so no fake
+     canonical action is manufactured
+
+=== 8. CATEGORY 5 FIX — RESTRAINT REACHES THE PLANNER *AND* THE AUTHOR ===
+    "I don't know"   → weak=true  posture=["uncertainty"]
+    "whatever"       → weak=true  posture=["disengagement"]
+    "..."            → weak=true  posture=["silence"]
+    "sure"           → weak=true  posture=["weak assent"]
+  ✓ every whole-response weak shape is recognised
+  ✓ the posture is identified, not just the weakness
+  ✓ A SUBSTANTIVE ACTION PLUS "sure" IS NOT A WEAK TURN — the substance is the move
+  ✓ ...nor is a weak action beside a substantive line
+  ✓ a Fate action beside weak text disables it — that turn is not weak
+  ✓ an empty turn is not a weak turn
+  ✓ the contract preserves the posture exactly
+  ✓ it forbids upgrading to enthusiasm, confession, refusal, commitment or decisive action
+  ✓ ...and names the exact inflation it prevents
+  ✓ the scene may still move — from OUTSIDE the protagonist
+  ✓ a new pressure or consequence is allowed; pretending the player chose is not
+  ✓ an ORDINARY turn emits nothing, so every normal scene is byte-identical
+  ✓ DELIVERED TO THE PLANNER — before the event is chosen
+  ✓ ...and that happens BEFORE the planner messages are assembled
+  ✓ DELIVERED TO THE AUTHOR — the same contract survives the handoff
+  ✓ THE VALUE REACHES THE AUTHOR PAYLOAD — present in the real CG system prompt
+
+=== 8b. MIXED SAY/DO MUST ROUTE THE FIELD THAT ACTUALLY COMPLAINED ===
+    interface:              field=dialogue  text="The Continue button is broken."
+  ✓ mixed interface: the DIALOGUE field is identified as the source
+  ✓ ...and the routed text is the COMPLAINT, not the innocent action
+  ✓ ...routed to bug-report
+    plot-memory-complaint:  field=dialogue  text="You forgot what happened."
+  ✓ mixed plot-memory-complaint: the DIALOGUE field is identified as the source
+  ✓ ...and the routed text is the COMPLAINT, not the innocent action
+  ✓ ...routed to concierge-verify
+    model-name-complaint:   field=dialogue  text="Claude messed this up."
+  ✓ mixed model-name-complaint: the DIALOGUE field is identified as the source
+  ✓ ...and the routed text is the COMPLAINT, not the innocent action
+  ✓ ...routed to concierge-ooc
+  ✓ a complaint in the ACTION field routes the action text
+
+=== 8c. CONTINUITY — A BOUNDED PROPOSITION GRAMMAR, NOT TOKEN COUNTING ===
+    wrong actor: {"v":"unresolved","p":{"actor":"julian","relation":"steal","surface":"stole","object":"the answer","polarity":"positive","negated":false}}
+  ✓ RED — a claim about the WRONG ACTOR is not supported by the right words
+  ✓ ...and a pronoun object in the record is UNRESOLVED, not guessed at
+  ✓ ...while a record naming the object explicitly DOES support the right actor
+    two actors: {"v":"unresolved","ev":[{"where":"scene[0]","authority":"delivered","tier":"prior","recorded":"admitted","polarity":"positive"}]}
+  ✓ RED — a TRUE claim is not contradicted by the other actor's opposite predicate
+  ✓ ...while the genuinely opposed claim about the SAME actor IS contradicted
+    negation: {"v":"unresolved","c":{"where":"scene[0]","authority":"delivered","tier":"prior","recorded":"admit","polarity":"negative"}}
+  ✓ RED — "did not admit" CONTRADICTS "admitted" instead of supporting it
+  ✓ ...and the negated claim itself is supported by the negated record
+  ✓ the parser binds polarity to the relation, so "denied" is the negative pole of the same axis
+  ✓ ...and "did not deny" is positive on that axis
+    planned only: {"v":"unresolved","ev":[{"where":"plannedEvent[0]","authority":"context","tier":"prior","recorded":"admitted","polarity":"positive"}]}
+  ✓ RED — a PLANNED event that never reached prose cannot prove it happened
+  ✓ ...the planned entry is visible as CONTEXT, and is labelled as such
+  ✓ ...and the reason names the authority problem, not a matching problem
+  ✓ DELIVERED prose in the same story DOES support it
+  ✓ a claim OUTSIDE the bounded grammar returns unresolved, never a confident verdict
+
+=== 8c-1b. OBJECT EQUALITY, NOT SHARED FILLER WORDS ===
+    wrong object: {"v":"unresolved","ev":0}
+  ✓ RED — a DIFFERENT object sharing only filler words is not supported
+  ✓ ...and no evidence was accepted at all
+  ✓ the SAME object still matches across a differing adjunct — the object is the direct object,
+     not the phrase that follows it
+
+=== 8c-1c. RAW PLAYER INPUT PROVES THE UTTERANCE, NOT ITS CONTENTS ===
+    from player input: {"v":"unresolved","checked":["playerInput[0]:context"]}
+  ✓ RED — a proposition embedded in the player's own dialogue cannot prove itself
+  ✓ ...the player input is visible but labelled CONTEXT, not delivered fact
+  ✓ ...and delivered prose asserting the same thing DOES support it
+
+=== 8c-1d. A RECORD THAT DISAGREES WITH ITSELF IS UNRESOLVED ===
+    self-conflicting record: {"v":"unresolved","c":true}
+  ✓ RED — matching AND opposing authoritative evidence yields UNRESOLVED, not contradicted
+  ✓ ...and both sides of the conflict are preserved for the conversation
+  ✓ ...with a reason that names the disagreement
+
+=== 8c-1e. THE COMPLAINT IS NOT THE FACT — THE DECISIVE FIXTURE ===
+    reader right: {"complaint":"reader-supported","fact":"supported","latest":"contradicted"}
+  ✓ THE READER IS RIGHT — prior canon supports it and the LATEST scene contradicts it
+  ✓ ...factStatus and complaintStatus are reported SEPARATELY
+  ✓ ...the message AGREES with the reader instead of dismissing them
+  ✓ ...and it is HANDED OFF to the conversation, not answered with a whisper
+  ✓ RED PROOF — this is no longer filed as a self-conflicting record
+    reader wrong: {"complaint":"reader-contradicted","fact":"supported","latest":"supported"}
+  ✓ CONVERSE — the latest scene remembered it, so the complaint is contradicted
+  ✓ ...and ONLY here is "Nothing was lost" said
+  ✓ ...and only here is no conversation needed
+  ✓ SILENCE in the latest scene is UNRESOLVED — absence alone is not forgetting
+  ✓ ...and it still reaches the conversation rather than being dismissed
+  ✓ with NO latest scene the complaint cannot be judged, and is handed off
+  ✓ the parser keeps auxiliary negation intact — "has never admitted" is negative
+
+=== 8c-2. STORY ISOLATION, THROUGH THE PRODUCTION ACCESSOR ===
+  ✓ STALE-LEDGER NEGATIVE — a ledger stamped for another story is not read
+  ✓ ...so it cannot support the claim
+
+=== 8c-3. THE HANDOFF REPORTS WHAT IT ACTUALLY DELIVERED ===
+  ✓ ALREADY-OPEN WITH HISTORY — the handoff still delivers
+  ✓ ...appending BOTH the claim and the finding to the visible dialogue
+  ✓ ...and the player's exact words are on screen, not just the finding
+  ✓ SUPPRESSED — it reports delivered=FALSE rather than claiming success
+  ✓ ...and queues the message instead of dropping it
+  ✓ ...and an ORDINARY panel open drains it — no second complaint required
+  ✓ a dispute queued under ANOTHER story is discarded, not surfaced in this one
+
+=== 8c-4. THE OOC BRANCH IS NAMED HONESTLY ===
+  ✓ it answers out-of-character and states the story is untouched
+  ✓ NO STORY FACT CHANGED
+  ✓ and the code documents it as a TRANSIENT acknowledgement, not Concierge routing
+
+=== 8d. WEAK-TURN STATE — REAL GENERATION PATH, AND NO LEAK INTO THE NEXT TURN ===
+  ✓ the cleanup is NOT in the translation block any more
+  ✓ ...and there is exactly ONE cleanup site
+  ✓ ...and it sits in the generation's own finally, right after the plan is returned
+    weak turn requests: ["other","other","other","planner","author"]
+  ✓ the weak turn reached a real PLANNER request
+  ✓ THE RESTRAINT REACHED THE PLANNER PAYLOAD
+  ✓ the weak turn reached a real AUTHOR request
+  ✓ THE RESTRAINT REACHED THE AUTHOR PAYLOAD
+  ✓ ...and it is the SAME contract in both, not two drifting copies
+  ✓ THE STATE WAS CLEARED after generation — nothing is left behind
+  ✓ the NEXT ordinary turn still reached planner and author
+  ✓ NO LEAK — the ordinary turn carries NO weak-turn restraint in the planner
+  ✓ ...nor in the author
+  ✓ ...and nothing was left on state
+
+=== 10. WEAK DIALOGUE MUST STAY AN ATTEMPTED UTTERANCE ===
+  ✓ a spoken weak turn requires the line to remain an ATTEMPTED UTTERANCE
+  ✓ ...and explicitly forbids turning it into silence or unspoken thought
+  ✓ ...names the softenings that ARE allowed, so it is not a demand for volume
+  ✓ ...and requires it to be VISIBLY RECEIVED on the page
+  ✓ an ACTION-only weak turn gets the action rule, not the speech rule
+  ✓ an ordinary turn still emits nothing
+
+=== 11. SEED-RESERVED CONTENT CANNOT BE LAUNDERED BY A LABEL ===
+    markers hit: ["dohkar","sacrificiant","chayr","open"]
+  ✓ RED — the ACTUAL failing plan is detected as seed-reserved content
+  ✓ ...and the DETERMINISTIC gate rejects it, despite grounding being "ordinary"
+  ✓ ...with a reason that says a label does not launder the content
+  ✓ NEGATIVE — an accusation (explicitly permitted early) is NOT flagged
+  ✓ NEGATIVE — DEMANDING a preliminary review is not CONVENING one
+  ✓ NEGATIVE — one marker plus a convening verb is a mention, not the proceeding
+  ✓ NEGATIVE — ordinary business is untouched
+  ✓ cast names are excluded from markers, or every scene naming a character would trip it
+
+=== 12. DETERMINISTIC CHECKS ARE INDEPENDENT OF THE PAID AUDITOR ===
+  ✓ ownership is checked unconditionally, not behind the paid flag
+  ✓ the deterministic block runs on _caProposal alone — no _canonAuditIsEnabled() in its guard
+  ✓ ...and it rejects before author dispatch with its own source label
+  ✓ only the PAID audit remains gated by the flag and the risk trigger
+  ✓ with the paid auditor DISABLED, deterministic rejection still fires
+
+=== 13. THE PRELIMINARY-REVIEW ATTRACTOR, FIXED AT THE SOURCE ===
+  ✓ the lane no longer instructs naming conveners or a date
+  ✓ ...it now states the HARD LIMITS explicitly
+  ✓ ...and draws the line in one sentence a planner can act on
+  ✓ the signal regex no longer advertises the reserved markers (date/convene/terms)
+  ✓ RETAINED WEAK-TURN PLAN is rejected before author dispatch
+  ✓ RETAINED SAFE-MODE PLAN is rejected before author dispatch
+  ✓ ...both with a reason naming the reserved markers
+  ✓ A MERE DEMAND for review still passes — demanding is not convening
+  ✓ ORDINARY EARLY PRESSURE still passes — stating conduct will be reviewed is allowed
+  ✓ ...and ordinary business is untouched
+
+=== 14. THE PROSE LAYER — AUTHOR-SIDE PREVENTION, AND MY OWN CHECK'S /g BUG ===
+  ✓ the retained run-4 prose is on disk and still contains the offending line
+    old logic: markers=1 convenes=false  |  corrected: markers=2 convenes=true
+  ✓ RED — the ORIGINAL check reported ONE marker and no convening verb on that line
+  ✓ RED — so the ORIGINAL assertion (!(markers>=2 && convenes)) PASSED on reserved prose
+  ✓ CORRECTED — /g plus distinct counting finds BOTH markers
+  ✓ CORRECTED — "placed before" now counts as constituting the proceeding
+  ✓ the live runner's own regex carries the global flag, and is case-SENSITIVE
+  ✓ ...so ordinary English "the open air" is NOT a reserved marker
+  ✓ ...while the capitalised venue still is
+  ✓ ...counts DISTINCT markers through a Set, not match-array length
+  ✓ ...includes "placed before" in the convening vocabulary
+  ✓ ...and now asserts the reserved body is not named AT ALL, not merely under-counted
+  ✓ the author-side directive is exposed and emits for a seed that reserves content
+  ✓ THE VALUE REACHES THE AUTHOR PAYLOAD — present in the real CG system prompt
+  ✓ ...and the whole directive is embedded verbatim, not a paraphrase of it
+  ✓ it forbids naming the body and its composition
+  ✓ it forbids the venue, a date, and terms
+  ✓ IT COVERS DIALOGUE — the exact channel run 4 used to smuggle it in
+  ✓ it names the permitted pressure, so the scene is redirected and not merely blocked
+    harvested markers: ["dohkar","sacrificiant","chayr","open","fateland"]
+  ✓ the harvester really does return an ordinary role word among its markers
+  ✓ ...and the directive does NOT ban it — it forbids CATEGORIES, never a word list
+  ✓ ...nor does it re-print the reserved composition or venue back to the author
+  ✓ it cites the reserved canon by HEADING so the author knows which proceeding is meant
+  ✓ NEGATIVE — a seed with no reserved world truths gets NOTHING
+  ✓ ...so its author payload carries no reserved-canon block at all
+
+=== 9. CONTAINMENT ===
+  ✓ still only ONE wall-break detector — nothing was duplicated
+  ✓ weak input is still never BLOCKED — the contract restrains the scene, not the player
+  ✓ zero provider dispatches
+
+======================================================================================
+  178/178 assertions passed
+
+  This is a TRACE. It changes nothing and proposes nothing on its own —
+  the measured gaps are in the report for a decision.

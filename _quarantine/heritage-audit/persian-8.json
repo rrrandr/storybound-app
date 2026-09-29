@@ -1,0 +1,24 @@
+{
+  "age": 28,
+  "ancestry": "Persian",
+  "first_name": "Nasrin",
+  "last_name": "Tehrani",
+  "height": "5'6\", lean and long-limbed",
+  "build": "slight, dancer's posture — collarbones sharp, wrists delicate",
+  "hair": "black, thick and wavy, worn long past her shoulders with a natural wave she doesn't fight; she tucks it behind one ear when concentrating",
+  "complexion": "warm olive undertone with a faint golden cast; a small, dark beauty mark just below her left cheekbone",
+  "face": "a face built for transparency — wide-set dark eyes that telegraph every shift in mood, high cheekbones that hollow when she's anxious, a mouth quick to tremble or curve; the overall impression is of someone still learning to live in her own skin",
+  "signature_feature": "her hands — long-fingered, expressive, always moving; the way she uses them when she talks, how they shake slightly when she's afraid, the particular elegance of her wrists",
+  "second_celebrated_feature": "the direct, almost startling intensity of her gaze when she's listening — she doesn't look away, doesn't perform; she absorbs",
+  "signature_habits": "she hums while working, usually fragments of classical Persian music her grandmother taught her; she keeps a small notebook for design sketches and writes in it compulsively when nervous; she touches her collarbone when she's thinking hard; she says 'Khoda' under her breath when frustrated — a ghost of her grandmother's voice",
+  "occupation": "textile designer and owner of a small independent studio in Brooklyn specializing in hand-dyed, limited-run fabrics; she works with local artisans and sells primarily to high-end boutiques and independent fashion designers",
+  "current_crisis": {
+    "event": "her studio's main supplier — a family-run dye house in Yazd she's worked with for five years — has been caught in a financial collapse; the owner is threatening to liquidate her inventory of custom dyes and raw materials to cover debts, which would destroy Nasrin's current collection and leave her unable to fulfill orders for three major clients",
+    "hottest_emotion": "panic threaded with betrayal — she trusted them, sent money, and now she's about to lose everything she's built",
+    "immediate_want": "to find a way to buy out the inventory before the liquidation, or to find another supplier fast enough to salvage her reputation"
+  },
+  "wound": {
+    "core": "she believes that if she loves something enough — works hard enough, cares deeply enough — she can keep it safe; loss feels like proof of her own failure",
+    "surfacing_hint": "under pressure, she catastrophizes quietly, blaming herself first, spiraling into 'I should have known, I should have protected this'; her hands shake and she goes very still"
+  }
+}

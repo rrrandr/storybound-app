@@ -1,0 +1,3 @@
+{"runId":"1d56c4c8-1787010366939","story":"B","turn":1,"conserves":false,"reason":"HARNESS FAILURE: ambiguous author source","events":41,"spend":0.2687,"file":"_validate_out/evidence/1d56c4c8-1787010366939__B_t1__99c2e8.json"}
+{"runId":"0d00d390-1787010759867","story":"E","turn":1,"conserves":true,"reason":null,"events":39,"spend":0.3159,"file":"_validate_out/evidence/0d00d390-1787010759867__E_t1__84f1dd.json"}
+{"runId":"0d00d390-1787010759867","story":"E","turn":2,"conserves":true,"reason":null,"events":44,"spend":0.371,"file":"_validate_out/evidence/0d00d390-1787010759867__E_t2__172955.json"}

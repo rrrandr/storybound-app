@@ -1,0 +1,14 @@
+{
+  "test": "Acceptance Test 3 \u2014 prescriptive spine + Mistral reasoning (TWO VARIABLES, deliberately)",
+  "commit": "6c351c6c901520721a3067cb85537d3c60eb5a2f",
+  "app_js_sha256": "88f5690714cbe7be",
+  "changed_since_issue3": [
+    "SPINE: scenes 1-3 prescriptive \u2014 ordered must-happens, participants, presentGroups, requiredTruth, exitState (RESOLVED/NEW PROBLEM)",
+    "SPINE: scene 1 goal was STALE (open unspecified price) and contradicted the seed; rewritten",
+    "FORBIDDEN INVENTIONS delivered with participants: no new named chars/factions/mechanics/bodies/locations/stakes",
+    "\u2464k never recite the rules \u00b7 \u2464l use the world\u2019s own nouns (elder banned)",
+    "wish taxonomy corrected \u2014 wishing outward is honourable; the violation is using another\u2019s wound as a stage",
+    "PROXY: author-class Mistral calls default to reasoning_effort=high"
+  ],
+  "confound_accepted": "spine and reasoning move together this run, by instruction. A bad result cannot be attributed to one without a follow-up."
+}

@@ -1,0 +1,44 @@
+You are a precise line-editor, not a writer. You will be given a FINISHED scene and a specific problem to fix. Fix ONLY what the instruction names. Change NOTHING else — keep every other sentence VERBATIM, keep the paragraph structure, the opening line, the emotional intensity, and the FINAL line (including any closing decision/question/deck line). Do not add, cut, reorder, soften, or rewrite anything beyond the minimal change the instruction requires. Return the COMPLETE edited scene and nothing else.
+=====USER=====
+
+5TH-PERSON FATE VOICE ENFORCEMENT (CRITICAL — PREVIOUS OUTPUT FAILED):
+
+The Story / Fate voice must be rewritten. Regenerate with these constraints:
+
+
+FATE MAY ONLY:
+- Observe ("The story watched...")
+- Anticipate ("The story knew what came next...")
+- Regret ("The story held its breath, regretting...")
+- Frame inevitability ("...as the story always knew it would")
+- Momentarily hesitate ("The story paused...")
+
+FATE MUST NEVER:
+- Instruct characters ("must", "should", "will now")
+- Tilt outcomes ("decides to make", "ensures", "guarantees")
+- Direct actions ("pushes toward", "guides", "steers")
+- Manipulate events ("forces", "compels")
+- Address the reader directly
+- Appear more than ONCE per scene
+- Mention scaffolding, architecture, narrative structure, or probability systems
+- Reference future scene plans ("next three scenes", "over the coming scenes")
+- Use "thread" metaphor more than once per scene
+- Speak in editorial/developer tone (pacing, beats, arc progression, character development)
+
+Fate's awareness must feel mythic, not editorial. Reduce metaphor repetition.
+Regenerate the scene with Fate appearing AT MOST ONCE, and ONLY in observational mode.
+
+
+=== THE FINISHED SCENE (apply ONLY the minimal fix above; return the whole scene, ending intact) ===
+
+The clearing and I stood at its edge, before the rite would begin.Seren named her sacrifice aloud and made the wish she had rehearsed, and Fate answered the words as spoken. The price was taken in the same breath. The assembly had gathered in a loose ring and no one spoke. I watched the light move across the ground and waited, and the waiting was its own kind of work. I kept my hands still because keeping them still was the only thing left that I could decide.
+
+The clearing and I stood at its edge, before the rite would begin.Seren named her sacrifice aloud and made the wish she had rehearsed, and Fate answered the words as spoken. The price was taken in the same breath. The assembly had gathered in a loose ring and no one spoke. I watched the light move across the ground and waited, and the waiting was its own kind of work. I kept my hands still because keeping them still was the only thing left that I could decide.
+
+The clearing and I stood at its edge, before the rite would begin.Seren named her sacrifice aloud and made the wish she had rehearsed, and Fate answered the words as spoken. The price was taken in the same breath. The assembly had gathered in a loose ring and no one spoke. I watched the light move across the ground and waited, and the waiting was its own kind of work. I kept my hands still because keeping them still was the only thing left that I could decide.
+
+The clearing and I stood at its edge, before the rite would begin.Seren named her sacrifice aloud and made the wish she had rehearsed, and Fate answered the words as spoken. The price was taken in the same breath. The assembly had gathered in a loose ring and no one spoke. I watched the light move across the ground and waited, and the waiting was its own kind of work. I kept my hands still because keeping them still was the only thing left that I could decide.
+
+The clearing and I stood at its edge, before the rite would begin.Seren named her sacrifice aloud and made the wish she had rehearsed, and Fate answered the words as spoken. The price was taken in the same breath. The assembly had gathered in a loose ring and no one spoke. I watched the light move across the ground and waited, and the waiting was its own kind of work. I kept my hands still because keeping them still was the only thing left that I could decide.
+
+The clearing and I stood at its edge, before the rite would begin.Seren named her sacrifice aloud and made the wish she had rehearsed, and Fate answered the words as spoken. The price was taken in the same breath. The assembly had gathered in a loose ring and no one spoke. I watched the light move across the ground and waited, and the waiting was its own kind of work. I kept my hands still because keeping them still was the only thing left that I could decide.

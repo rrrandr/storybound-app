@@ -1,0 +1,16 @@
+{
+ "violations": [],
+ "preflight": [],
+ "reports": [
+  {
+   "validator": "hot_opening",
+   "type": "OPENING_TEMPERATURE",
+   "ok": false,
+   "failures": [],
+   "renderedTemp": "HOT_CRISIS",
+   "inMotionHits": 0,
+   "containerOpener": false,
+   "evidence": "The youth’s voice rose steady over the crimson spiralgrass. “I offer the discipline to finish my studies and train as Sacrificiant.”\n\nI stood sealed at the edge of the mated-pair trees, the gossamer band across my mouth muffling every breath. Two dozen First Favored watched in th"
+  }
+ ]
+}

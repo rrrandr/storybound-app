@@ -1,0 +1,75 @@
+{
+  "at": "2026-09-09T11:25:41.343Z",
+  "mode": "E2E-DRY",
+  "requestLimits": {
+    "planner": 2,
+    "author": 2
+  },
+  "plannerCalls": 0,
+  "authorCalls": 0,
+  "aborted": [
+    {
+      "why": "PIN VIOLATION: planner system prompt is in state FROM_START but the run is pinned to DEFERRED — request aborted before leaving the page",
+      "kind": "planner",
+      "sysBytes": 6239
+    },
+    {
+      "why": "PIN VIOLATION: planner system prompt is in state FROM_START but the run is pinned to DEFERRED — request aborted before leaving the page",
+      "kind": "planner",
+      "sysBytes": 6239
+    }
+  ],
+  "planner": [],
+  "author": [],
+  "cost": [],
+  "totalUsdList": 0,
+  "totalXaiUsd": 0,
+  "gate": {
+    "pinned": "DEFERRED",
+    "openingState": null,
+    "stateLogs": [
+      "[LI-ARRIVAL] FROM_START (engine=?, deferIntent=false, recent=)",
+      "[A-PLOT:SHAPE] selected: Caretaking (OPEN_VEIN × BEAUTIFUL_RUIN) — legacy pressure-first pick",
+      "[A-PLOT:READER-Q] Can this man actually love somebody?",
+      "[A-PLOT:SHAPE] persisted: Caretaking (CARETAKING) — readerQuestion: \"Can this man actually love somebody?\""
+    ],
+    "authorAttempts": 0,
+    "pages": 0,
+    "pageFile": null,
+    "pageChars": 0,
+    "fatal": "scaffold transport failed twice: Failed to fetch",
+    "verdict": "FAIL-CLOSED (named): scaffold transport failed twice: Failed to fetch"
+  },
+  "st": {
+    "fatal": "scaffold transport failed twice: Failed to fetch",
+    "pages": 0,
+    "genStage": false,
+    "mission": null,
+    "usage": null,
+    "attempts": null,
+    "retryReason": null
+  },
+  "threw": null,
+  "refunds": [
+    {
+      "context": "refund_issue_purchase_literary",
+      "amount": 60
+    }
+  ],
+  "dialogs": [
+    "Fate stumbled — your story didn't start, so your Fortunes have been refunded. Please try again."
+  ],
+  "logs": [
+    "[LI-ARRIVAL] FROM_START (engine=?, deferIntent=false, recent=)",
+    "[A-PLOT:SHAPE] selected: Caretaking (OPEN_VEIN × BEAUTIFUL_RUIN) — legacy pressure-first pick",
+    "[A-PLOT:READER-Q] Can this man actually love somebody?",
+    "[A-PLOT:SHAPE] persisted: Caretaking (CARETAKING) — readerQuestion: \"Can this man actually love somebody?\"",
+    "[SCENE1:STAGE:PLANNER-OWNED] unseeded Scene 1 — the opening planner must return scene_mission + stage_contract over 3 issued ref(s): [pc:self, ent:the one who draws them forward, plot:aplot_x3a_cb8d763e_x2d_cf20_x2d_4d3a_x2d_a4e6_x2d_f55ad68ceee8:primary_antagonist]",
+    "[SCENE1:STAGE] source=planner-owned:pending settingOwner=planner presenceOwner=planner (PENDING — planner owns part of the stage) settingSource=planner-pending onStage=[Testa] offStage=[]",
+    "[SCENE1:PLANNER] eligible cast (1): [Testa] · chars=4340 → max_tokens=2400 (N_staged_max = N_eligible; staged_characters is an OUTPUT and never sizes the request)",
+    "[SCENE1:PLANNER:RETRY] attempt 1 failed (connection) — retrying ONCE after 2000ms",
+    "[SCENE1:PLANNER:TRANSPORT] scaffold transport failed twice: Failed to fetch — retry exhausted",
+    "[BeginStory] Error: Error: Scene 1 aborted: scaffold transport failed twice: Failed to fetch\n    at handleBeginStory (http://localhost:3000/app.js?v=20260909c-wording-withheld:268404:20)\n    at async <anonymous>:337:30",
+    "[ISSUE-REFUND] refunded 60F. New balance: 9999"
+  ]
+}

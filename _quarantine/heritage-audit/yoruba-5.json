@@ -1,0 +1,24 @@
+{
+  "age": 28,
+  "ancestry": "Yoruba",
+  "first_name": "Adeola",
+  "last_name": "Okonkwo",
+  "height": "5'7\", long-limbed",
+  "build": "lean, muscular from studio work, collarbones sharp",
+  "hair": "dark brown, natural texture worn in a high puff or loose coils, often threaded with gold wire or small brass rings",
+  "complexion": "deep warm brown with red undertones, a small crescent scar on her left temple from childhood",
+  "face": "a face that BROADCASTS — wide-set eyes that telegraph every feeling before her mouth catches up, high cheekbones that catch light, a mouth quick to curve or tremble, the overall impression of someone still learning to armor herself",
+  "signature_feature": "her hands — long-fingered, stained with indigo and clay, the left ring finger permanently bent from a kiln accident; he notices how they move when she speaks, how they betray her before she can lie",
+  "second_celebrated_feature": "the hollow at the base of her throat, visible when she wears the loose linen she favors; it deepens when she swallows hard or breathes fast",
+  "signature_habits": "she touches her grandmother's coral beads (worn as a bracelet) when she's nervous — a small unconscious gesture; she hums Yoruba folk melodies while working at her potter's wheel; she takes her tea with honey and a pinch of ginger, the way her Iya taught her; she speaks in run-on sentences when excited or frightened, words tumbling over each other; she leaves her studio door unlocked because she forgets, then panics about it at 3 a.m.",
+  "occupation": "ceramic artist and studio owner — a small independent practice in a converted warehouse, selling handthrown vessels and teaching weekend workshops; she's just begun getting gallery interest",
+  "current_crisis": {
+    "event": "her studio's landlord has sold the building to a development firm; she has 90 days to vacate, and she cannot afford the rent in any other neighborhood; her upcoming gallery show — the one that could change everything — is in 120 days and requires pieces she hasn't finished",
+    "hottest_emotion": "PANIC layered with a creeping sense of erasure — the feeling that she's about to be erased from the city she's built a life in",
+    "immediate_want": "to find a new studio space she can afford, or to find someone who believes enough in her work to help her stay"
+  },
+  "wound": {
+    "core": "she believes that good work should speak for itself, and that needing help is a sign she isn't good enough — that wanting security or support is greed",
+    "surfacing_hint": "under pressure, she becomes defensive about her 'independence,' refuses offers of help, and spirals into self-doubt about whether her art matters at all"
+  }
+}

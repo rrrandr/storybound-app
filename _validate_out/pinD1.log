@@ -1,0 +1,41 @@
+written _validate_out/scene1_measure_E2E-DRY.2026-09-09T11-25-41-343Z.json
+{
+  "mode": "E2E-DRY",
+  "plannerCalls": 0,
+  "authorCalls": 0,
+  "aborted": [
+    {
+      "why": "PIN VIOLATION: planner system prompt is in state FROM_START but the run is pinned to DEFERRED — request aborted before leaving the page",
+      "kind": "planner",
+      "sysBytes": 6239
+    },
+    {
+      "why": "PIN VIOLATION: planner system prompt is in state FROM_START but the run is pinned to DEFERRED — request aborted before leaving the page",
+      "kind": "planner",
+      "sysBytes": 6239
+    }
+  ],
+  "cost": [],
+  "totalList": 0,
+  "totalXaiUsd": 0,
+  "gate": {
+    "pinned": "DEFERRED",
+    "openingState": null,
+    "stateLogs": [
+      "[LI-ARRIVAL] FROM_START (engine=?, deferIntent=false, recent=)",
+      "[A-PLOT:SHAPE] selected: Caretaking (OPEN_VEIN × BEAUTIFUL_RUIN) — legacy pressure-first pick",
+      "[A-PLOT:READER-Q] Can this man actually love somebody?",
+      "[A-PLOT:SHAPE] persisted: Caretaking (CARETAKING) — readerQuestion: \"Can this man actually love somebody?\""
+    ],
+    "authorAttempts": 0,
+    "pages": 0,
+    "pageFile": null,
+    "pageChars": 0,
+    "fatal": "scaffold transport failed twice: Failed to fetch",
+    "verdict": "FAIL-CLOSED (named): scaffold transport failed twice: Failed to fetch"
+  },
+  "envelope": [],
+  "attempts": null,
+  "retryReason": null
+}
+DRY REHEARSAL FAILED: pages=0 fatal=scaffold transport failed twice: Failed to fetch

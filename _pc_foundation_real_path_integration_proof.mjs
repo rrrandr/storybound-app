@@ -797,6 +797,29 @@ async function generateValidateCommit(label, page, ctx, bibleForStub, opts) {
   const source = await page.evaluate(() => window._pcFoundationSourceFacts(window.state));
   ok(label + ' _pcFoundationSourceFacts resolves against real live state', !!source, JSON.stringify(source && { pcName: source.pcName, facetCount: source.facets.length, hasScene1: !!source.scene1 }));
   if (bibleForStub._provenance) {
+    // expectSourceParity (Roman, corrective follow-up #16, 2026-09-16): defaults to true for
+    // every real fixture (GREEN/RED/GEN-A/etc — their citations ARE meant to be real substrings
+    // of live state, and this check must keep catching a fixture that drifts).
+    //
+    // RETAINED-B is the one exception, and a first attempt at this fix got it WRONG: assuming
+    // (from Roman's own framing, "rejected for its false citations") that EVERY field's citation
+    // must be false, and asserting the blanket mismatch as a pass. Running it surfaced the real
+    // ground truth: RETAINED-B is rejected for a STRUCTURAL reason, uniformly — every field lacks
+    // a "kind" declaration (missing_or_invalid_claim_kind; the sample predates the three-kind
+    // schema) — NOT because every citation happens to be textually false. Per-field citation
+    // accuracy turns out to be MIXED: of its 5 cited fields, 3 (current_crisis.event/
+    // immediate_fear/refusal) have citations that are genuinely NOT real substrings of live
+    // source, while 2 (wound.core, current_crisis.li_complication) have citations that ARE real
+    // substrings — accurate quotes that still get correctly rejected on the schema ground alone.
+    // Asserting a blanket "NOT a substring" expectation was therefore FALSE for 2 of 5 fields —
+    // exactly the kind of incorrect-in-the-other-direction assertion this whole pass exists to
+    // avoid. The honest fix: this check is not a meaningful pass/fail criterion for RETAINED-B at
+    // all (rejection here does not depend on per-field citation truth), so it is reported as
+    // DATA (a note), never as an assertion with a fabricated expected direction. What DOES
+    // certify the rejection is already asserted elsewhere in this scenario: rejected specifically
+    // for missing_or_invalid_claim_kind, zero leak into the real cgScreenplay payload, zero
+    // portfolio mutation.
+    const expectParity = opts.expectSourceParity !== false;
     Object.keys(bibleForStub._provenance).forEach((k) => {
       const pr = bibleForStub._provenance[k];
       if (!pr || pr.basis === 'inferred' || !pr.cites) return;
@@ -805,7 +828,12 @@ async function generateValidateCommit(label, page, ctx, bibleForStub, opts) {
       else if (pr.basis === 'approved_relationship') srcText = [source.liBio].concat(source.relationshipConstraints || []).filter(Boolean).join(' • ');
       else if (pr.basis === 'approved_scene1') srcText = source.scene1 ? [source.scene1.ledgerLine, source.scene1.pcCondition].concat(source.scene1.obligations || []).filter(Boolean).join(' • ') : '';
       else if (/^approved_facet:/.test(pr.basis)) { const fid = pr.basis.slice('approved_facet:'.length); const f = (source.facets || []).find(x => x.facet_id === fid); srcText = f ? f.canonical_truth : ''; }
-      ok(label + ' fixture citation for "' + k + '" (' + pr.basis + ') is a REAL substring of the LIVE source', srcText.indexOf(pr.cites) !== -1, 'cites="' + pr.cites + '"');
+      const isSubstring = srcText.indexOf(pr.cites) !== -1;
+      if (expectParity) {
+        ok(label + ' fixture citation for "' + k + '" (' + pr.basis + ') is a REAL substring of the LIVE source', isSubstring, 'cites="' + pr.cites + '"');
+      } else {
+        note(label + ' fixture citation for "' + k + '" (' + pr.basis + ') vs LIVE source — ' + (isSubstring ? 'MATCHES (an accurate quote that is still correctly rejected on the missing_or_invalid_claim_kind ground alone)' : 'DOES NOT MATCH (a genuinely false citation — one real, concrete reason this specific field is correctly untrustworthy)') + ' — informational only, not a pass/fail criterion for this retained sample; cites="' + pr.cites + '"');
+      }
     });
   }
 
@@ -1736,7 +1764,7 @@ section('NEW SCENARIO RETAINED-B — the retained pre-kind-redesign live sample 
   const page = await newStubbedPage(browser, ctx, bible);
   const reached = await reachBakedScene1('RETAINED-B', page);
   if (reached) {
-    const gvc = await generateValidateCommit('RETAINED-B', page, ctx, bible, { expectAccept: false });
+    const gvc = await generateValidateCommit('RETAINED-B', page, ctx, bible, { expectAccept: false, expectSourceParity: false });
     if (gvc) {
       const { validation, commit } = gvc;
       ok('RETAINED-B [SCHEMA] validation.ok === false (kind field absent on every entry — pre-dates the redesign)', validation.ok === false, JSON.stringify(validation.rejections));

@@ -7,87 +7,85 @@
   "envelope": {
     "opening_spine": {
       "pressure_source_type": "moral",
-      "pressure_source": "Seren’s First Sacrifice is already twisting the wish mid-ritual, and the presiding Dohkar’s voice is rising to call the breach before Lirael can stop it",
+      "pressure_source": "Seren is abandoning the rehearsed wish and redirecting her First Sacrifice toward Lirael, blurring the wording before the assembly.",
       "hook_object": null,
-      "opening_beat": "Seren’s hands tremble as the wish curls into something unrecognizable, the Dohkar’s voice cutting through the murmurs",
+      "opening_actor_id": "named:seren",
+      "opening_beat": "Seren names her offering aloud then falters, spending the sacrifice on me instead.",
       "rising_beats": [
-        "Lirael’s muffled cry behind the cloth goes unheard over the ritual chant",
-        "Julian’s stillness at the edge of the circle feels like a judgment she cannot face"
+        "The presiding Dohkar demands the cost spoken before the miracle.",
+        "Julian stands perfectly still at the edge, eyes half elsewhere."
       ],
-      "decision_beat": "Tear the cloth away and speak the truth, or let the rite burn itself out in silence?",
-      "pc_career": "wish-alignment technician",
+      "decision_beat": "Tear the gossamer band to halt the wish, or stay silent and bound?",
+      "pc_career": "veil weaver",
       "opening_setting": "Veilwood ceremony clearing",
-      "environment_elements": [
-        "the long white weeping-willow veil-canopy draping down from the pale mated-pair trees",
-        "the deep-crimson carpet of braided mated-pair spiralgrass"
+      "environment_element_ids": [
+        "O4",
+        "O5"
       ],
-      "li_texture_beat": "opening: the way his fingers still over the edge of his own sleeve, as if measuring the distance between them and the center of the circle — I feel the pulse in my throat where the cloth bites",
-      "interlocutor_placement": "Seren — the youth making her First Sacrifice, her Veilweave gown catching the light, her throat bare and vulnerable",
-      "pc_wound_anchor": "opening: the cloth across her mouth presses too hard, the pressure echoes the silence she once couldn’t break",
-      "pc_self_presentation_beat": "opening: she adjusts the ceremonial cloth with deliberate slowness, the motion a quiet claim that her voice is not the only thing worth hearing",
-      "scene_want": "wants the ritual to hold long enough for her to decide without Seren seeing the panic she cannot voice",
-      "scene_mission": "stop the wish from twisting before the Dohkar calls the breach",
+      "interlocutor_placement": null,
+      "pc_self_presentation_beat": "decision — I reach for the band, my willowy frame unfolding as the sash shifts across narrow shoulders, knowing my askew nose gives my profile a sharpness that still draws eyes.",
+      "scene_want": "wants the rite to realign without having to break protocol aloud.",
+      "scene_mission": "Halt the wish from twisting toward me before it lands without breaking decorum.",
       "reader_state": {
-        "knows": "Seren’s First Sacrifice is twisting the wish mid-ritual, and the Dohkar’s voice is rising to call the breach",
-        "believes": "Lirael’s muffled cry and the cloth across her mouth mean she cannot stop the rite in time",
-        "wondering": "why Julian is watching from the edge of the circle",
-        "must_not_confuse": "who is making the wish, who is supervising it, and why the cloth is only protocol"
+        "knows": "Seren has redirected her First Sacrifice onto Lirael mid-rite in the clearing.",
+        "believes": "Lirael must choose to intervene or remain bound by protocol.",
+        "wondering": "Why is Julian here watching this exact moment?",
+        "must_not_confuse": "Lirael is the officiating Sacrificiant with mouth covered; Seren is the one redirecting the wish."
       },
-      "pc_body_callback": "opening — stress_tic (the grandmother's ring)",
+      "pc_body_callback": "opening — signature_feature (the once-broken nose)",
+      "li_body_callback": "rising 1 — eyes (half a thought elsewhere)",
       "staged_characters": [
         {
           "name": "Lirael",
           "presence": "IN_PERSON",
-          "anchor_beat": "opening"
+          "anchor_beat": "FROM_PC_OPENING_FUSION"
         },
         {
           "name": "Julian",
           "presence": "IN_PERSON",
-          "anchor_beat": "opening"
+          "anchor_beat": "FROM_CHARACTER_PLUS"
         },
         {
           "name": "Seren",
           "presence": "IN_PERSON",
-          "anchor_beat": "opening"
+          "anchor_beat": "FROM_CHARACTER_PLUS"
         },
         {
           "name": "the presiding Dohkar",
           "presence": "IN_PERSON",
-          "anchor_beat": "opening"
+          "anchor_beat": "FROM_CHARACTER_PLUS"
         }
       ]
     },
     "scene_skeleton": {
       "character_plus": [
         {
-          "character": "Lirael",
-          "first_mention": true,
-          "angle": "adjusts the ceremonial cloth with deliberate slowness, the motion a quiet claim that her voice is not the only thing worth hearing"
-        },
-        {
-          "character": "Julian",
-          "first_mention": true,
-          "angle": "still over the edge of his sleeve, measuring the distance between them and the center of the circle"
-        },
-        {
           "character": "Seren",
+          "mode": "IN_PERSON",
+          "option_id": "OPT-4",
+          "expression_mode": "LEAK",
           "first_mention": true,
-          "angle": "kneels with Veilweave gown catching the light, her throat bare and vulnerable"
-        },
-        {
-          "character": "the presiding Dohkar",
-          "first_mention": true,
-          "angle": "voice rising to call the breach before Lirael can stop it"
+          "visible_action": "Seren names her offering aloud then falters and redirects it toward Lirael.",
+          "enacts_evidence_id": "E4",
+          "behavior_object_ids": [],
+          "behavior_person_ids": [
+            "pc:lirael"
+          ],
+          "revelation_bridge": "The blur shows her need to be seen as good without naming the wound.",
+          "pc_lens_operation": "INWARD_TRANSLATION_OF_ANOTHER_PERSONS_COST",
+          "pc_interpretation": "Seren softens the truth to protect her own image more than Lirael."
         }
       ],
       "environment_plus": {
-        "target": "the long white weeping-willow veil-canopy draping down from the pale mated-pair trees",
-        "axis": "ritual"
+        "target_object_id": "O4",
+        "axis": "ritual",
+        "beat": "{TARGET} sits loose across her mouth, a decorum she can break with one pull."
       },
-      "fusion": {
+      "pc_opening_fusion": {
         "character": "Lirael",
-        "target": "the long white weeping-willow veil-canopy draping down from the pale mated-pair trees",
-        "beat": "lets her fingers trail along the veil’s edge, feeling the weight of the ritual she is supposed to uphold"
+        "placement": "PC_FIRST_EMBODIED_BEAT",
+        "character_angle": "Her attention moves through her body as feeling before it becomes legible.",
+        "beat": "The {TARGET} muffles my first startled breath as Seren's words land."
       }
     }
   },

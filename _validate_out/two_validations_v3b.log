@@ -1,0 +1,5 @@
+=== v3c_stage_order · stage_order_dry.mjs · 23:16:17 ===
+v3c_stage_order: exit=1 · 72 checks · 70 passed · 2 failed · invalid_markers=0 · samples=34 suite_rss_max=382MB free_min=64MB server_rss_max=85MB
+v3c_stage_order: FAILURE — stopping. First failing lines:
+55:FAIL V3-render the author directive's PROTAGONIST OPENING BEAT block renders the ACTUAL target EXACTLY once (in the action line), carries lens + axis labels, and no literal {ENV_TARGET} anywhere in the author request  — {"target":null,"occurrences":null,"block":""}
+75:FAIL RL1 the retained 22:10 real reply (contract present; fusion in the retired free-beat shape about the extinguisher) fails NAMED — missing v3 fields — and cannot reach the author: 0 author requests, 0 pages, refund + honest dialog; not reinterpreted  — {"fatal":"planner stage_contract rejected (absent) — the stage is not established","author":0,"pages":0,"refunds":1}

@@ -1,0 +1,41 @@
+{
+  "results": [
+    {
+      "name": "both dry arms produce a plan, so the live path can deliver",
+      "pass": true
+    },
+    {
+      "name": "both arms reach an AUTHOR request",
+      "pass": true
+    },
+    {
+      "name": "the SAFE arm carries the depiction directive",
+      "pass": true
+    },
+    {
+      "name": "the ADULT arm does NOT",
+      "pass": true
+    },
+    {
+      "name": "the adult arm is not gagged — nothing was added that forbids explicit content",
+      "pass": true
+    },
+    {
+      "name": "comparability is MEASURED, and the answer is recorded either way",
+      "pass": true
+    },
+    {
+      "name": "NO REAL DISPATCH during preflight",
+      "pass": true
+    },
+    {
+      "name": "a reservation past the ceiling is refused",
+      "pass": true
+    }
+  ],
+  "comparability": {
+    "byteComparable": true,
+    "driftChars": 0,
+    "directiveChars": 2205
+  }
+}

@@ -1,0 +1,98 @@
+=== REASONING-MISTRAL REQUEST CONTROL (zero dispatches) ===
+
+=== 1. THE CANDIDATE IS THE DOCUMENTED PINNED SNAPSHOT, NOT AN ALIAS ===
+  ✓ the calibration candidate is the pinned snapshot mistral-small-2603
+  ✓ it is NOT a drifting alias — "latest" would let the measured model change underneath the run
+  ✓ reasoning effort is pinned to "high", one of the two values Mistral actually documents
+  ✓ it routes to the mistral proxy, not OpenAI or Grok
+  ✓ output is priced at Mistral Small 4's published $0.60/M, NOT Ministral 8B's $0.15/M
+  ✓ the $0.02 ceiling covers the WORST case (max_tokens fully spent on all eight), not an expected case
+  ✓ max_tokens is raised above the 700 used for non-reasoning candidates, so thinking cannot eat the whole answer
+
+=== 2. THE REAL OUTGOING REQUEST NAMES THE MODEL AND THE REASONING EFFORT ===
+  ✓ a request actually reached the wire
+  ✓ THE WIRE NAMES mistral-small-2603
+  ✓ THE WIRE CARRIES reasoning_effort="high", explicitly — not inferred, not defaulted
+  ✓ the wire carries max_tokens 2000, the bound the cost estimate rests on
+  ✓ the full assertion passes on a correct request
+  ✓ the calibration route logged the SAME body independently of the stub
+
+=== 3. THE REASONING RESPONSE SHAPE IS HANDLED — a block array is not a string ===
+  ✓ the dispatch succeeded rather than erroring on the block array
+  ✓ content is a STRING, flattened from the block array
+  ✓ content is the model's actual JSON answer, not "[object Object]"
+  ✓ the thinking trace is preserved SEPARATELY, not pasted into the answer
+  ✓ the PROXY's reported reasoning_effort is surfaced — evidence of what was served, not what we asked
+  ✓ usage survives for the realized-cost calculation
+  ✓ RED PROOF — the UNFLATTENED array really does stringify to garbage, so the flattener is load-bearing
+
+=== 4. A MISSING OR STRIPPED REASONING PARAMETER FAILS — the assertion goes red ===
+  ✓ RED PROOF — the assertion REJECTS a body whose reasoning_effort was stripped
+  ✓ RED PROOF — the assertion REJECTS reasoning_effort="none" (a value the proxy would happily accept)
+  ✓ RED PROOF — the assertion REJECTS the wrong model even with reasoning set correctly
+  ✓ RED PROOF — the assertion REJECTS the right body sent to the wrong endpoint
+  ✓ RED PROOF — a dispatch that omits reasoning_effort is ABORTED, not served
+  ✓ RED PROOF — and it never reached the wire at all (zero further stub hits)
+  ✓ the block explains the SILENT failure it prevents, not just "invalid"
+  ✓ no budget was reserved for the aborted request
+
+=== 5. NO OTHER MODEL OR ENDPOINT IS PERMITTED ===
+  ✓ a different Mistral model is aborted before dispatch
+  ✓ a different ENDPOINT is aborted before dispatch, even carrying the right model name
+  ✓ the openai stub was never reached, so nothing could have been served from the wrong provider
+  ✓ Grok is aborted too — the run is pinned to reasoning Mistral only, with no fallback
+
+=== 6. EXISTING CALLERS ARE UNCHANGED — the parameter is additive ===
+  ✓ a caller that asks for no reasoning is SERVED, not blocked
+  ✓ and its request carries NO reasoning_effort key at all — the field is added only on request
+  ✓ a plain string reply passes through the flattener byte-identical
+
+=== 6b. GROK 4.3 — THE SAME PIN, A DIFFERENT FIELD NAME AND A DIFFERENT ENDPOINT ===
+  ✓ the grok request goes to /api/proxy, not the mistral or openai endpoint
+  ✓ it names grok-4.3 via preferredModel, which is how api/proxy.js reads it
+  ✓ THE WIRE CARRIES reasoningEffort:"high" in xAI's camelCase spelling
+  ✓ RED PROOF — it does NOT use Mistral's snake_case spelling, which api/proxy.js would ignore
+  ✓ the candidate declares the field name it enforces, rather than assuming one spelling
+  ✓ the dispatch succeeded and returned the model's answer
+  ✓ usage survives for realized cost
+  ✓ RED PROOF — a grok dispatch missing reasoningEffort is ABORTED before the wire
+  ✓ grok-4.3 is priced at the REAL 4.3 rate, not the retired cheap-4.1 SKU
+    grok worst case: $0.074000 for eight, ceiling $0.080000
+  ✓ eight fixtures genuinely do NOT fit a $0.05 ceiling — the number was checked, not assumed
+  ✓ the ceiling is set above the worst case so the run cannot be refused mid-way
+
+=== 6c. CLAUDE HAIKU 4.5 — ISOLATED ROUTE, EXTENDED THINKING EXPLICIT ===
+  ✓ the Haiku request goes to the ISOLATED /api/anthropic-proxy, not the Mistral route
+  ✓ it names the pinned snapshot claude-haiku-4-5-20251001, not a floating alias
+  ✓ EXTENDED THINKING IS EXPLICIT ON THE WIRE, with a real budget
+  ✓ max_tokens exceeds the thinking budget, so the answer has room after thinking
+  ✓ the dispatch returned the answer with the thinking kept SEPARATE from it
+  ✓ Anthropic usage (input_tokens/output_tokens) survives for realized cost
+  ✓ RED PROOF — a Haiku dispatch with no thinking budget is ABORTED before the wire
+  ✓ and the block says what the silent failure would have been
+  ✓ Haiku priced $1/M in, $5/M out; worst case fits the $0.11 ceiling
+
+=== 6d. GROK 4.7 — THE RESOLVER MUST NOT SILENTLY SERVE 4.3 ===
+  ✓ the wire names grok-4.7 exactly, not a legacy grok-* alias
+  ✓ THE RESOLVER BYPASS IS ON THE WIRE — _sbModelOverride="grok-4.7"
+  ✓ reasoning high is sent explicitly rather than relying on 4.7's default
+  ✓ RED PROOF — without the bypass the dispatch is ABORTED, not silently served as 4.3
+  ✓ and the block names the exact substitution it prevents
+  ✓ api/proxy.js allowlists grok-4.7 for the _sbModelOverride bypass
+  ✓ ...and the production auditor's own pin, grok-4.3, is honoured by the same bypass
+  ✓ ...and grok-4.7 is an allowed model, so validation cannot refuse it
+  ✓ grok-4.7 priced from xAI docs at $2/M in, $6/M out; worst case fits $0.16
+    combined worst case: $0.257600  vs hard ceiling $0.27
+  ✓ the two runs together stay inside the $0.27 combined hard ceiling
+
+=== 7. THE RUN IS STILL LOCKED ===
+  ✓ mistral-small-2603 is a registered, priced candidate
+  ✓ its authorization phrase names its OWN $0.02 ceiling, so a $0.01 authorization cannot release it
+  ✓ grok-4.3 has its own phrase naming its own $0.08 ceiling — no cheaper authorization releases it
+
+=== 8. ZERO PROVIDER DISPATCHES ===
+  ✓ no request was allowed through to a real provider
+
+======================================================================================
+  69/69 assertions passed
+  Evidence: /Users/romantsukerman/storybound-app/_canon_audit_reasoning_request_out

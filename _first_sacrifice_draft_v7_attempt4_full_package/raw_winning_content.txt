@@ -1,0 +1,50 @@
+{
+  "scene1Candidate": {
+    "beats": [
+      {"kind": "narration", "speaker": null, "image": "intro_lirael", "text": "Dawn light filtered through the spiralgrass, turning every blade into a thin gold wire. I stood on the woven mat in the sash my father once wore, the mouth-band already damp against my lips from nerves I refused to name. This was my first time as the responsible Sacrificiant, the one who must keep the rite whole while another spent her wish. My path to Dohkar, then Chayr, then the Provast office he had held depended on nothing going wrong in front of witnesses who would remember every stumble. The clearing smelled of crushed stems and cold dew; I could feel the assembly’s eyes already measuring whether I would prove worthy or merely adequate.", "provenance": {"kind": "grounded_inference", "cites": "pc_fears_public_failure"}},
+      {"kind": "narration", "speaker": null, "image": "intro_lirael", "text": "I breathed behind the cloth and told myself the gap between knowing the procedure and performing it was only fear, not incompetence. I had studied every step until the words lived in my bones, yet bones could still shake.", "provenance": {"kind": "generated_expression"}},
+      {"kind": "narration", "speaker": null, "image": "intro_seren", "text": "Seren knelt before me, back straight from months of rehearsal, the ceremonial robe settling in perfect folds around her knees. Her face was composed, the same mask she had practiced until correction felt like breathing. I met her eyes for a brief private exchange, a small nod meant to reassure us both that the rite would hold. She returned it with the precise degree of calm we had drilled, her hands folded so tightly the knuckles shone.", "provenance": {"kind": "grounded_inference", "cites": "seren_trained_composure"}},
+      {"kind": "narration", "speaker": null, "image": "intro_dohkar", "text": "The presiding Dohkar stood at the edge of the circle, his rank-marked cloak heavy with embroidered wards. He watched without hurry, the way a man who has ruled on a hundred such mornings watches the next. When he spoke, his voice carried the weight of the office rather than any single man’s temper. “Name the cost,” he said, and the clearing seemed to lean closer to hear what Seren would offer.", "provenance": {"kind": "locked_canon_fact", "cites": "scene1_causal_sequence step 3"}},
+      {"kind": "dialogue", "speaker": "Seren", "image": "intro_dohkar", "text": "My earliest memory of the river at dusk.", "provenance": {"kind": "generated_expression"}},
+      {"kind": "narration", "speaker": null, "image": "intro_julian", "text": "At the outer edge of the gathering, Julian stood perfectly still. He held the office of Provast already, the one my father had once occupied, and everyone said he was next for First Dohkar. I felt the familiar, involuntary awareness of him settle between my shoulder blades; his presence did not demand attention yet somehow claimed it anyway. He watched without shifting weight or crossing arms, the same quiet posture he always kept when the room grew loud.", "provenance": {"kind": "grounded_inference", "cites": "julian_status_without_display"}},
+      {"kind": "narration", "speaker": null, "image": "d1", "text": "Seren began the invocation, her voice steady on the first measured phrases. For those few opening words I felt no fear, only the clean alignment of knowing exactly what came next and trusting that it would arrive. The Weave-Script around her wrists glowed softly, a pale confirmation that the rite recognized her.", "provenance": {"kind": "generated_expression"}},
+      {"kind": "narration", "speaker": null, "image": "d2", "text": "Then she deviated. The rehearsed wish dissolved mid-sentence and she named me instead, spending her First Sacrifice so that I might find the one I had lost. The words blurred at the edges the way kindness sometimes does when it needs to be witnessed, and I recognized in that moment the self-aggrandizing desire beneath the performed empathy. She wanted the assembly to see her goodness more than she wanted the wish itself to serve me. The realization arrived with a small, cold drop in my stomach.", "provenance": {"kind": "grounded_inference", "cites": "seren_goodness_needs_witness"}},
+      {"kind": "narration", "speaker": null, "image": "d2", "text": "The misaligned wish took hold. A sharp, visible distortion ripped outward from Seren’s kneeling form, a twisting rope of light aimed directly at my chest, promising to unmake the sash and the path it represented in front of everyone. The spiralgrass flattened in a widening circle as the power surged, and I saw faces in the assembly already turning with sudden fear and accusation. It should have reached me; I had already begun bracing for whatever a wrongly-spent First Sacrifice does to the person it lands on.", "provenance": {"kind": "generated_expression"}},
+      {"kind": "narration", "speaker": null, "image": "d2", "text": "Between one heartbeat and the next the distortion simply vanished. No flare, no sound, no hand I could point to. The spiralgrass stilled again. My own Weave-Script, which had been about to scream the truth of what I felt, went quiet instead, and I had no idea why or who had just decided that for me. The unanswered question hung in the air with the residue of the arrested power.", "provenance": {"kind": "generated_expression"}},
+      {"kind": "narration", "speaker": null, "image": "d3", "text": "The presiding Dohkar stepped forward, his voice cutting through the stunned silence. He named the bent word and laid the charges plainly: I had shaped the wish for my own benefit and interfered in the rite. The visible residue of the arrested misfire—Seren’s sudden collapse forward, the scorched ring in the grass, the way every eye had swung to me—gave the accusation weight that felt impossible to refute in the moment. My path to Dohkar, Chayr, and Provast trembled under that public charge. Even as the ground shifted beneath me, some part of my attention still tracked Julian at the edge.", "provenance": {"kind": "locked_canon_fact", "cites": "scene1_causal_sequence step 3"}},
+      {"kind": "narration", "speaker": null, "image": "d3", "text": "The assembly’s murmurs pressed against my skin. I could feel the story already forming in their minds, the version in which I had manipulated a young woman’s wish and been caught. My cheeks burned beneath the mouth-band.", "provenance": {"kind": "generated_expression"}},
+      {"kind": "narration", "speaker": null, "image": "d4", "text": "Julian moved in from the edge with the unhurried certainty of his office. He stopped close enough that I could see the faint weave-pattern on the cuff of his sleeve. “I can hear that you are aligned with your own innocence,” he said, voice low enough to reach only those nearest. He drew The Answer from its case and closed my hands around the cool stone, the weight of it settling into my palms as he held them there for the assembly to see. “I will question you before them all.”", "provenance": {"kind": "locked_canon_fact", "cites": "scene1_causal_sequence step 4"}},
+      {"kind": "narration", "speaker": null, "image": "d4", "text": "The stone warmed slowly against my skin. I felt every eye in the clearing shift to the object now resting in my hands and knew the rite had changed shape around me.", "provenance": {"kind": "generated_expression"}}
+    ]
+  },
+  "scene1Coverage": {
+    "ceremony_setting": [0, 1],
+    "seren_kneeling_rehearsed": [2],
+    "cost_offering_statement": [3, 4],
+    "julian_introduced": [5],
+    "invocation_begins": [6],
+    "wish_and_sacrifice": [7],
+    "wish_visibly_twists": [8],
+    "twist_unnaturally_arrested": [9],
+    "public_charge": [10, 11],
+    "julian_claims_the_answer": [12, 13]
+  },
+  "first_person_lirael": true,
+  "oasOpening": {
+    "speaker": "Julian",
+    "text": "You glanced toward me three times during the invocation, fingers tightening on the sash each time Seren faltered. Did you shape her wish without knowing it, the way you shape everyone’s attention, hoping I would step forward and rescue you?"
+  },
+  "postInterruptionBeat": {
+    "speaker": "Lirael",
+    "image": "d4",
+    "kind": "narration",
+    "text": "The Answer rested in my hands, still warm from Julian’s grip, while the presiding Dohkar’s voice cut the air and the clearing fell silent around the two of us. The formal inquiry he had just invoked loomed, and I had no idea whether answering or staying silent would protect what remained of my path."
+  },
+  "fateCards": {
+    "temptation": {"action": "Lean closer and meet Julian’s eyes directly", "dialogue": "Then ask me what you truly want to know.", "variant": "amplify"},
+    "silence": {"action": "Lower my gaze and hold The Answer without speaking", "dialogue": "(soft exhale)", "variant": "amplify"},
+    "reversal": {"action": "Turn the stone slightly toward the Dohkar", "dialogue": "Perhaps the inquiry should examine who benefits from these charges.", "variant": "redirect"},
+    "boundary": {"action": "Step back one pace while keeping the stone raised", "dialogue": "I will answer only in the formal setting you have claimed.", "variant": "amplify"},
+    "confession": {"action": "Lift my chin and speak the next words plainly", "dialogue": "I did watch you. That part is true.", "variant": "ruin"}
+  }
+}

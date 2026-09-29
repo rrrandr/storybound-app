@@ -1,0 +1,135 @@
+  > [CG:SCAFFOLD] generation start (the_inhuman, gpt-4o-mini)
+  > [CG:SCAFFOLD] awaiting 1 Bible(s) before spine (P2 sequencing — latency over cost)
+  > [CG:SCAFFOLD] Bibles ready (0ms) — pc=y li=y antag=n
+  > [CG:SCAFFOLD:GEN] 14606ms, model=gpt-4o-mini
+  > [CG:SCAFFOLD] thesis="Can Mira find someone who sees the beauty in her scars while surviving the Many-Tide ambush?"
+  > [CG:SCAFFOLD] issues=4, motifs=3, forbidden=5
+  > [CG:SCAFFOLD] FULL OBJECT: {runThesis: Can Mira find someone who sees the beauty in her scars while surviving the Many-Tide ambush?, thematicDirection: The interplay of vulnerability and armor, where 
+  > [CG:SCAFFOLD] active — scene_index=0, source=gpt-4o-mini, issues=4
+  > [CG:SCREENPLAY] gen start (scene 0)
+  > [CG:SCREENPLAY:USER-PROMPT]
+SCENE INDEX: 0 (Scene 1 — establishing)
+STORY LENGTH: affair
+SCENE DENSITY (ST1 — SETUP PACE): establishing register. The scene's job is character-in-context, not plot velo
+  > [CG:SCREENPLAY] flavor "the_inhuman" → chain leads with Grok-4.1-reasoning (scene 1 / tentpole — Grok primary)
+  > [CG:SCREENPLAY] generated via Grok-4.1-reasoning in 33354ms
+  > [CG:SCREENPLAY] gen returned in 33358ms
+  > [STAGED:DIST] scene 0 beats=20 bands: micro=13 subtle=4 readable=2 strong=1 extreme=0 | avg raw=0.12 clamped=0.12 | llm-emitted=7/20 clamps=0
+  > [CG:SCREENPLAY] Expression peak enforcement: kept 3 (family=suppression), demoted 4 to neutral [reasons: spacing<3, cross-family(suppression→sharpness), cross-family(suppression→warmth), cross-family(
+  > [CG:SCREENPLAY:MANDATE] Scene 1 closer missing/different — replacing. Was: "Tell Kesh the truth about the escape, or let my silence carry it?..."
+  > [STAGED:VARIATION] Promoted beat 14 to PC face cut-in (face, expr=jaw_clench)
+  > [STAGED:VARIATION] Promoted beat 3 to Kesh face cut-in (other-face, expr=lips_pressed)
+  > [STAGED:VARIATION] Scene 0 recovered: promoted 2 beat(s) to closeup (14,3) — closeup density floor. Final state — peaks=3 phases=3 hands=0 closeups=2
+  > [STAGED:VARIATION] Scene 0 OK — beats=20 peaks=3 phases=3 hands=0 closeups=2
+  > [STORYBOARD-LINT] pre-repair: 0 error(s), 2 warning(s)
+  > [STORYBOARD] establishing shot reserved for "Kesh" @ panel 0
+  > [STORYBOARD] Orientation → Threat → Transformation → Consequence
+  > [CG:SCREENPLAY] region=Gloamwater Bay | species=[kwisheen]
+  > [STAGED:HERO] Generating 4 phase images for scene 0 (serial: phase 0 first, then 1+ as Kontext edits)
+  > [STAGED:TIER] phase 0 → simple → cheap
+  > [STAGED:STAGING-MODE] adversarial (liAbsent=true, sideChars=1)
+  > [STAGED:HERO:PHASE] Cache MISS — generating phase 0 (Orientation) for scene 0 at tier=cheap
+  > [STAGED:STYLE] artist="ender_bond" → 2 style anchor(s): ender_golden_master_v3.jpg, ender_golden_master_v3_bottom.jpg
+  > [STAGED:STYLE] canonical asset "composition:establishing_solo" (tier 2) attached (phase 0)
+  > [STAGED:STYLE] phase 0 — SUBSTITUTED li_absent master ender_golden_master_v3_bottom.jpg for stripped golden_master (full artist signature, no couple bleed)
+  > [STAGED:STYLE] phase 0 — passing 4 style anchors to Gemini (filtered 1 LI-implying refs, liAbsent=true)
+  > [STAGED:STYLE] artist=ender_bond styleAnchors=2 regionAnchors=2 contractInjected=true phaseIdx=0
+  > [VERIFY] FAIL: The character Mira is drawn with a non-human, tentacle-like lower body, but canon requires her to be fully human with no non-human features.; The character Kesh is drawn with a mermaid-
+  > [STAGED:IMG] Phase 0 image NOT ready within 25s — mounting scene anyway (image will swap in when it lands). User sees text + dark frame until then.
+  > ═══ [STAGED:SCENE 0 MOUNT] 20 beats, 4 phase(s), gate@19 ═══
+  > [STAGED:HERO:SWAP] No image yet for phase:0 — staying on current
+  > [STAGED:ECHO] beat 0 inEcho=false age=-1 intensity=0.00 peakHere=false
+  > [STAGED:BEAT 0/19] | narration | tens=composed | profile=- | mouth=neutral | echoZone=- | decay=— | pacing=280ms | tint=- | crop=baseline | duck=- | silence=- | closeup=- | rack=- | proxy="my fingers 
+  > [STAGED:RENDER] Mounted — 20 beats, gate at beat 19, micro after beat 7
+  > [VERIFY] FAIL: The Kwisheen character Kesh has a mermaid-like lower body with a tail and tentacles, but canon requires a cephalopod tentacle-mantle for locomotion with no human legs or mermaid tail.; 
+  > [VERIFY] FAIL: Mira's body plan is incorrect; canon requires a fully human body plan, but she is drawn with human legs and feet, which is a violation of the 'no human legs' rule for Kwisheen, and she 
+  > [VERIFY] PASS (confidence: high)
+  > [STAGED:KONTEXT] Phase 0 stashed as scene 0 edit source
+  > [STAGED:STAGE_CACHE] Cached stage for future revisits (key=fantasy|the_inhuman|the drowned ruins of gloamwater bay at dusk, water murky wit…)
+  > [STAGED:HERO:PHASE] Phase 0 generated in 90235ms (tier=cheap)
+  > [STAGED:TIER] phase 1 → medium → mid
+  > [STAGED:STAGING-MODE] adversarial (liAbsent=true, sideChars=1)
+  > [STAGED:HERO:PHASE] Cache MISS — generating phase 1 (Threat) for scene 0 at tier=mid
+  > [STAGED:STYLE] artist="ender_bond" → 2 style anchor(s): ender_golden_master_v3.jpg, ender_golden_master_v3_bottom.jpg
+  > [STAGED:STYLE] canonical asset "sacrifice_hand" (tier 1) attached (phase 1)
+  > [STAGED:STYLE] canonical asset "composition:underwater_float" (tier 2) attached (phase 1)
+  > [STAGED:STYLE] phase 1 LI-absent — SUBSTITUTED li_absent master ender_golden_master_v3_bottom.jpg
+  > [STAGED:STYLE] phase 1 LI-absent — passing 5 refs (filtered 1 LI/romance masters)
+  > [STAGED:STYLE] artist=ender_bond styleAnchors=2 regionAnchors=2 contractInjected=true phaseIdx=1
+  > [STAGED:RENDER] Hero image mounted (phase 0)
+  > [CASTING] cast "Kesh" from scene0_phase0 @ confidence 68
+  > [VERIFY] FAIL: The Kwisheen figures have mermaid-like tails instead of a tentacle mass below the waist for locomotion.; The Kwisheen figures have round human pupils instead of capsule pupils (horizont
+  > [FAVORED-SHIFT] #1 feature="The Kwisheen figures do not have the required six-point ground contact for locomotion." species=Kwisheen → caption=true
+  > [FAVORED-SHIFT] caption shown: "Her true skin showed through for half a heartbeat, iride…"
+  > [VERIFY] FAIL: Kwisheen's lower body is drawn with 8 tentacles; canon requires about six boneless tentacles.; Kwisheen's face is drawn with round human pupils; canon requires capsule_pupil (horizontal
+  > [VERIFY] FAIL: Kwisheen's lower body is drawn with 8 tentacles; canon requires a tentacle-mantle with about six boneless tentacles.; Kwisheen's arms are drawn as human-like arms with suckers; canon re
+  > [VERIFY] FAIL: Kwisheen (Kesh) has too many manipulator arms. Canon requires two manipulator arms, but four are drawn.; Kwisheen (Kesh) has an incorrect face/head. The pupils are round human dots inst
+  > [VERIFY] FAIL: Kesh's eyes have round human pupils; canon requires capsule pupils (horizontal rounded rectangle + central vertical slit).; Kesh's skin is ember red-orange, but the skin pattern is a me
+  > [ANATOMY-REPAIR] fail but not Klein-repairable (type=eye_color, bbox=y) — keeping original
+  > [CASTING] skip harvest "Kesh" (not a clean identity source: not NPC-primary/close/solo)
+  > [STAGED:HERO:PHASE] Phase 1 generated in 92694ms (tier=mid)
+  > [STAGED:TIER] phase 2 → medium → mid
+  > [STAGED:STAGING-MODE] adversarial (liAbsent=true, sideChars=1)
+  > [STAGED:HERO:PHASE] Cache MISS — generating phase 2 (Transformation) for scene 0 at tier=mid
+  > [STAGED:STYLE] artist="ender_bond" → 2 style anchor(s): ender_golden_master_v3.jpg, ender_golden_master_v3_bottom.jpg
+  > [STAGED:STYLE] canonical asset "wish_burst" (tier 1) attached (phase 2)
+  > [STAGED:STYLE] canonical asset "sacrifice_hand" (tier 1) attached (phase 2)
+  > [STAGED:STYLE] canonical asset "composition:object_dominant" (tier 2) attached (phase 2)
+  > [CASTING] reinject identity anchor for "Kesh" (phase 2)
+  > [STAGED:STYLE] phase 2 LI-absent — SUBSTITUTED li_absent master ender_golden_master_v3_bottom.jpg
+  > [STAGED:STYLE] phase 2 LI-absent — passing 7 refs (filtered 1 LI/romance masters)
+  > [STAGED:STYLE] artist=ender_bond styleAnchors=2 regionAnchors=2 contractInjected=true phaseIdx=2
+  > [VERIFY] FAIL: The Kwisheen's eyes have round human pupils instead of capsule pupils.; The Kwisheen's hands have distinct fingers and knuckles, not smooth tapering tentacle-fingers.; The Kwisheen's fa
+  > [VERIFY] FAIL: Kesh's body plan is incorrect. Canon requires a humanoid torso with two manipulator arms and a lower body that is a cephalopod tentacle-mantle for locomotion, with no human legs. The im
+  > [VERIFY] PASS (confidence: high)
+
+  E2E SCENE 1 — Fatelands / Kwisheen
+  ────────────────────────────────────────────────────────────
+  error: none
+  prose length: 1400 chars | author: Grok-4.1-reasoning
+  stagedActive: true | heroCache keys: 2
+  hero phase images: 2 | closeup inserts: 0/2 queued | total: 2
+  kwisheen appearance lock: {"vael":{"skin":"royal violet","pattern":"iridescent speckle","iris":"silver-grey","body_plan":"a humanoid torso with two manipulator arms above the waist, and a lower body that is a cephalopod TENTACLE-MANTLE for locomotion (about six boneless tentacles — the exact number is not important) — NO human legs, NO knees or feet; a mane of living tentacle-dreadlocks from the scalp"},"kesh":{"skin":"ember red-orange","pattern":"a fine reticulated lattice","iris":"deep amber","body_plan":"a humanoid torso with two manipulator arms above the waist, and a lower body that is a cephalopod TENTACLE-MANTLE for locomotion (about six boneless tentacles — the exact number is not important) — NO human legs, NO knees or feet; a mane of living tentacle-dreadlocks from the scalp"}}
+  images captured (hero): 2
+  ── phase plan ──
+    phase 0: li=absent | chars=[protagonist,Kesh] | Orientation
+    phase 1: li=absent | chars=[protagonist,Kesh] | Threat
+    phase 2: li=absent | chars=[protagonist,Kesh] | Transformation
+    phase 3: li=absent | chars=[protagonist,Kesh] | Consequence
+  ── hero renders (anchor decision) ──
+  ── beat count: 20 (target 20–30, floor 18) ──
+  ── scene-1 axis ──
+    bespokeAxis: (none)
+    microDecision.prompt: Say it plainly, or let my silence carry it?
+      • "say it plainly" signal=direct+
+      • "let it show" signal=subtle+
+  ── wardrobe grounding ──
+    pc_wardrobe: linen tunic and wool leggings billowing in the current, water-breathing talisman at throat
+    li_wardrobe: (blank/absent)
+    Kesh [kwisheen]: shell-studded loincloth and layered beaded jewelry
+  saved: 2 images + prose → /private/tmp/claude-501/-Users-romantsukerman-storybound-app/5b50dbf4-5fe5-4c80-ae8b-5a341feb3c62/scratchpad/e2e
+  ── canon-repair scorecard ──
+    panel 1: no repairs | reported-only [eye_color(detected)]
+    ── totals ── repairs=0 across 2 panels = 0.00 repairs/panel (goal: → 0 as upstream conditioning improves)
+    ✓ no oscillation — no single defect recurred across panels
+  ── structural-pass integration trace ──
+    panel 0:
+      structural: 3 attempt(s) → UNRESOLVED | fixed: Mira is drawn with a mermaid-like tail; canon requires her to be fully human with no non-human features. / The Kwisheen character Kesh has a mermaid-like lower body with a tail and tentacles; canon requires a cephalopod tentacle-mantle for locomotion with no human legs or mermaid tail. / Kesh's lower body is drawn with human legs and feet; canon requires a cephalopod tentacle-mantle for locomotion.
+      colorize: 1 (recolorize 0) | contract: pass | structural entropy: 0 ✓
+      cosmetic: defects [none] → Klein repaired [none]
+      calls: lineart 3 / structVerify 3 / colorize 1 | ms: sketch 54030 colorize 36204 total 90234
+    panel 1:
+      structural: 3 attempt(s) → UNRESOLVED | fixed: Kwisheen's lower body was drawn with 8 tentacles; canon requires about six boneless tentacles. / Kwisheen's lower body is drawn with 8 tentacles; canon requires a tentacle-mantle with about six boneless tentacles. / Kwisheen (Kesh) has too many manipulator arms. Canon requires two manipulator arms, but four are drawn.
+      colorize: 1 (recolorize 0) | contract: pass | structural entropy: 0 ✓
+      cosmetic: defects [eye_color] → Klein repaired [none]
+      calls: lineart 3 / structVerify 3 / colorize 1 | ms: sketch 40544 colorize 52150 total 92694
+  ── DASHBOARD (baseline, n=2 panels) ──
+    avg structural retries/panel:  2.00 (0 = sketch right first try)
+    avg recolorize/panel:          0.00
+    avg Klein repairs/panel:       0.00
+    avg structural entropy:        0.00 (target 0 — colorize introduces no structural defects)
+    avg image-calls/panel (cost):  4.00 render + 3.00 verify
+    avg total ms/panel:            91464.00
+    structure resolved:            0/2 | entropy-clean: 2/2
+  ────────────────────────────────────────────────────────────
+

@@ -1,0 +1,18 @@
+{
+ "violations": [],
+ "preflight": [],
+ "reports": [
+  {
+   "validator": "hot_opening",
+   "type": "OPENING_TEMPERATURE",
+   "ok": true,
+   "failures": [
+    "no_li_250"
+   ],
+   "renderedTemp": "HOT_CRISIS",
+   "inMotionHits": 1,
+   "containerOpener": false,
+   "evidence": "The youth spoke the rehearsed words, her voice steady across the crimson spiralgrass. I felt the alignment hold, the sacrifice matched to her training. Then a tremor ran through her shoulders. She changed the offering mid-sentence. The discipline she had prepared became something"
+  }
+ ]
+}

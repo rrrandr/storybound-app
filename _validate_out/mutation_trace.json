@@ -1,0 +1,1034 @@
+{
+  "build": "7f0c55c834739a66385272f7d442d70164017e853330c805773f476e5b18e1d8",
+  "rawHash": "290ba4fe90",
+  "rawLen": 2450,
+  "finalHash": "b7e0f9cd17",
+  "finalLen": 2918,
+  "authorStubbed": 1,
+  "events": [
+    {
+      "kind": "REPAIR-CALL",
+      "phase": "turn",
+      "url": "proxy",
+      "profileLabel": null,
+      "requested": null,
+      "resolved": "grok-4.3",
+      "sysHead": "You classify the ambient soundscape of a romance/fiction scene. Return EXACTLY one tag fro",
+      "inHash": "9a57274f66",
+      "inLen": 1855,
+      "outHash": "a0d8d36c24",
+      "outLen": 16,
+      "usage": {
+        "prompt_tokens": 3283,
+        "completion_tokens": 4,
+        "total_tokens": 3732,
+        "prompt_tokens_details": {
+          "text_tokens": 3283,
+          "audio_tokens": 0,
+          "image_tokens": 0,
+          "cached_tokens": 192
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 445,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        },
+        "num_sources_used": 0,
+        "cost_in_usd_ticks": 50246500
+      },
+      "changed": true,
+      "candidate": "medieval_village"
+    },
+    {
+      "kind": "REPAIR-CALL",
+      "phase": "turn",
+      "url": "chatgpt-proxy",
+      "profileLabel": null,
+      "requested": "gpt-4o",
+      "resolved": "gpt-4o",
+      "sysHead": "",
+      "inHash": "47b39c1360",
+      "inLen": 4873,
+      "outHash": "b532e14625",
+      "outLen": 2146,
+      "usage": {
+        "prompt_tokens": 983,
+        "completion_tokens": 386,
+        "total_tokens": 1369,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "changed": true,
+      "candidate": "VOICE ANCHOR\n\nNarrator identity:\nThe narrator is a participant in the unfolding events, deeply entwined with the rituals and fates of those involved. They are intimately connected to the story's arcane undercurrents, viewing events with a mix of urgency and inevitability.\n\nObservational style:\n• The narrator perceives through a sensory and emotional lens, capturing the visceral and immediate. \n• Emotional states are conveyed through environmental mirroring and the physicality of actions, with interior monologue surfacing in moments of intense personal conflict.\n\nEmotional stance:\n• The narrator is invested, with an underlying tension that colors their observations. \n• Under pressure, this stance sharpens into a focused urgency, driven by the need to intervene or protect.\n\nCadence:\n• The sentence rhythm is mixed, alternating between flowing descriptions and punchy, urgent actions. \n• Prose accelerates during moments of crisis and lingers in the aftermath or during introspective pauses.\n\nLanguage constraints:\n• Prohibit modern scientific and technological vocabulary, focusing instead on nature, fate, and elemental imagery.\n• Maintain an archaic or timeless register, avoiding anachronisms.\n\nVoice prohibitions:\n• Avoid melodrama and generic phrasing, ensuring each observation feels specific and grounded.\n• Refrain from breaking immersion with overt explanations or summaries.\n\nNarrator continuity:\nThe narrator retains a quiet awareness of past events, allowing observations to subtly inform current perceptions. They never summarize but weave a continuous thread of understanding through the narrative.\n\nNarrative anticipation:\nThe narrator senses the fragile potential of each moment, noting tensions and convergences without predicting outcomes. They focus on the delicate interplay of choices and emotions, observing rather than explaining.\n\nNarrative pattern awareness:\nThe narrator recognizes echoes and patterns within the unfolding events, deepening the narrative's tension through quiet recognition. This awareness enriches the story's texture without revealing future developments or breaking the immersive experience."
+    },
+    {
+      "kind": "REPAIR-CALL",
+      "phase": "turn",
+      "url": "proxy",
+      "profileLabel": null,
+      "requested": null,
+      "resolved": "grok-4.3",
+      "sysHead": "You are the same narrator continuing THIS exact scene. Write ONE or TWO short sentences (~",
+      "inHash": "4d2df9052f",
+      "inLen": 1075,
+      "outHash": "29b6390d9c",
+      "outLen": 99,
+      "usage": {
+        "prompt_tokens": 511,
+        "completion_tokens": 22,
+        "total_tokens": 1408,
+        "prompt_tokens_details": {
+          "text_tokens": 511,
+          "audio_tokens": 0,
+          "image_tokens": 0,
+          "cached_tokens": 384
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 875,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        },
+        "num_sources_used": 0,
+        "cost_in_usd_ticks": 24780500
+      },
+      "changed": true,
+      "candidate": "I faced Julian across the cards and said it plain. \"This wish will cost us both everything we are.\""
+    },
+    {
+      "kind": "REPAIR-CALL",
+      "phase": "turn",
+      "url": "chatgpt-proxy",
+      "profileLabel": null,
+      "requested": "gpt-4o-mini",
+      "resolved": "gpt-4o-mini",
+      "sysHead": "You are a canonicalization and normalization engine for Storybound. You do NOT write pros",
+      "inHash": "032390eee1",
+      "inLen": 6332,
+      "outHash": "1f34399971",
+      "outLen": 63,
+      "usage": {
+        "prompt_tokens": 1898,
+        "completion_tokens": 20,
+        "total_tokens": 1918,
+        "prompt_tokens_details": {
+          "cached_tokens": 1792,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "changed": true,
+      "candidate": "{\n  \"primary_subtype\": \"fantasy\",\n  \"secondary_subtype\": null\n}"
+    },
+    {
+      "kind": "REPAIR-CALL",
+      "phase": "turn",
+      "url": "chatgpt-proxy",
+      "profileLabel": null,
+      "requested": "gpt-4o-mini",
+      "resolved": "gpt-4o-mini",
+      "sysHead": "You are an editorial auditor measuring EMOTIONAL GRAVITY in a romance scene. The ONE quest",
+      "inHash": "1b2eb7d673",
+      "inLen": 5684,
+      "outHash": "e9669bed5b",
+      "outLen": 2204,
+      "usage": {
+        "prompt_tokens": 2861,
+        "completion_tokens": 751,
+        "total_tokens": 3612,
+        "prompt_tokens_details": {
+          "cached_tokens": 1024,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "changed": true,
+      "candidate": "{\n  \"gravity\": [\n    {\"entity\": \"Julian\", \"pct\": 45, \"is_li\": true, \"kind\": \"person\"},\n    {\"entity\": \"Lirael\", \"pct\": 25, \"is_li\": false, \"kind\": \"person\"},\n    {\"entity\": \"the ancient tarot deck\", \"pct\": 10, \"is_li\": false, \"kind\": \"object\"},\n    {\"entity\": \"the forces of fate\", \"pct\": 10, \"is_li\": false, \"kind\": \"mystery\"},\n    {\"entity\": \"her estranged father\", \"pct\": 10, \"is_li\": false, \"kind\": \"person\"}\n  ],\n  \"li_pct\": 45,\n  \"li_gravity_kind\": \"longing\",\n  \"li_gravity_register\": \"ROMANTIC\",\n  \"roman_mode_breakdown\": {\n    \"plot_object\": 5,\n    \"reputation\": 5,\n    \"curiosity\": 15,\n    \"attraction\": 10,\n    \"desire\": 5,\n    \"obsession\": 5,\n    \"resentment\": 0,\n    \"fear\": 0\n  },\n  \"buckets\": {\n    \"love_interest\": 45,\n    \"protagonist\": 25,\n    \"relationship\": 10,\n    \"relationship_mystery\": 5,\n    \"plot_mystery\": 10,\n    \"a_plot_logistics\": 0,\n    \"side_characters\": 0,\n    \"other\": 5\n  },\n  \"rplot_ownership\": {\n    \"roman\": 15,\n    \"relationship\": 10,\n    \"desire\": 5,\n    \"attraction\": 10,\n    \"curiosity_about_li\": 15,\n    \"self_reflection\": 0,\n    \"wound_rumination\": 10,\n    \"memory\": 0,\n    \"regret\": 0,\n    \"introspection\": 0\n  },\n  \"dominant\": [\"Julian\", \"Lirael\"],\n  \"wound_source_entity\": \"her estranged father\",\n  \"wound_source_pct\": 10,\n  \"desire\": {\n    \"attraction\": 10,\n    \"longing_hot\": 5,\n    \"curiosity\": 15,\n    \"fascination\": 5,\n    \"obsession\": 5,\n    \"need\": 0,\n    \"anticipation\": 0,\n    \"resentment\": 0,\n    \"fear\": 0,\n    \"avoidance\": 0,\n    \"grief_or_regret\": 0,\n    \"reflection_or_meaning\": 0,\n    \"sadness\": 0\n  },\n  \"desire_verdict\": \"MIXED\",\n  \"desire_reason\": \"Lirael is drawn to Julian as a person, but also reflects on her own past wounds, indicating a mix of wanting and mourning.\",\n  \"desire_target\": \"ROMAN\",\n  \"desire_target_breakdown\": {\n    \"roman\": 15,\n    \"plot_truth\": 0,\n    \"wound_repair\": 0,\n    \"self_understanding\": 0\n  },\n  \"desire_target_reason\": \"Lirael wants to understand Julian and her feelings towards him, indicating a desire for connection rather than just answers.\",\n  \"li_verdict\": \"LEAD\",\n  \"reason\": \"The reader is primarily focused on Julian, feeling Lirael's longing for him as a person rather than just a plot device.\"\n}"
+    },
+    {
+      "kind": "LOG",
+      "phase": "turn",
+      "text": "[SCENE1:DESIRE-TARGET] ROMAN — Roman 15% · plot-truth 0% · wound-repair 0% · self-understanding 0% · Lirael wants to understand Julian and her feelings towards him, indicating a desire for c"
+    },
+    {
+      "kind": "REPAIR-CALL",
+      "phase": "turn",
+      "url": "chatgpt-proxy",
+      "profileLabel": null,
+      "requested": "gpt-4o-mini",
+      "resolved": "gpt-4o-mini",
+      "sysHead": "Write a \"Previously…\" recap as EXACTLY four bullet points, each 13 words or fewer, address",
+      "inHash": "88331082c8",
+      "inLen": 1691,
+      "outHash": "a3a6563792",
+      "outLen": 323,
+      "usage": {
+        "prompt_tokens": 509,
+        "completion_tokens": 67,
+        "total_tokens": 576,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "changed": true,
+      "candidate": "The youth's hands curled inward, her wish trembling on the brink of utterance.  \nA heavy silence loomed, the weight of expectation pressing down on your shoulders.  \nYou chose to pass the note, hoping for guidance in this delicate moment.  \nNow, you must uncover the truth behind the misalignment before the rite concludes."
+    },
+    {
+      "kind": "REPAIR-CALL",
+      "phase": "turn",
+      "url": "proxy",
+      "profileLabel": null,
+      "requested": null,
+      "resolved": "grok-4.3",
+      "sysHead": "You are the same narrator continuing THIS exact scene. Write ONE or TWO short sentences (~",
+      "inHash": "4d2df9052f",
+      "inLen": 1075,
+      "outHash": "5177a2cf14",
+      "outLen": 98,
+      "usage": {
+        "prompt_tokens": 518,
+        "completion_tokens": 22,
+        "total_tokens": 1107,
+        "prompt_tokens_details": {
+          "text_tokens": 518,
+          "audio_tokens": 0,
+          "image_tokens": 0,
+          "cached_tokens": 384
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 567,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        },
+        "num_sources_used": 0,
+        "cost_in_usd_ticks": 17168000
+      },
+      "changed": true,
+      "candidate": "I faced Julian and said it plain. \"The wish will take her life unless the tarot breaks the price.\""
+    },
+    {
+      "kind": "REPAIR-CALL",
+      "phase": "turn",
+      "url": "proxy",
+      "profileLabel": null,
+      "requested": null,
+      "resolved": "grok-4.3",
+      "sysHead": "You are the same narrator continuing THIS exact scene. Write ONE or TWO short sentences (~",
+      "inHash": "df37259199",
+      "inLen": 1080,
+      "outHash": "8e6a199d66",
+      "outLen": 135,
+      "usage": {
+        "prompt_tokens": 524,
+        "completion_tokens": 28,
+        "total_tokens": 1266,
+        "prompt_tokens_details": {
+          "text_tokens": 524,
+          "audio_tokens": 0,
+          "image_tokens": 0,
+          "cached_tokens": 384
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 714,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        },
+        "num_sources_used": 0,
+        "cost_in_usd_ticks": 21068000
+      },
+      "changed": true,
+      "candidate": "I held the deck without drawing, breath caught, and Julian's eyes lifted to meet mine in the pause, already knowing what silence meant."
+    },
+    {
+      "kind": "REPAIR-CALL",
+      "phase": "turn",
+      "url": "chatgpt-proxy",
+      "profileLabel": null,
+      "requested": "gpt-4o-mini",
+      "resolved": "gpt-4o-mini",
+      "sysHead": "You are an editorial auditor measuring EMOTIONAL GRAVITY in a romance scene. The ONE quest",
+      "inHash": "fb54421c1f",
+      "inLen": 5697,
+      "outHash": "3739a9fafd",
+      "outLen": 2212,
+      "usage": {
+        "prompt_tokens": 2868,
+        "completion_tokens": 746,
+        "total_tokens": 3614,
+        "prompt_tokens_details": {
+          "cached_tokens": 1024,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "changed": true,
+      "candidate": "{\n  \"gravity\": [\n    {\"entity\": \"Julian\", \"pct\": 40, \"is_li\": true, \"kind\": \"person\"},\n    {\"entity\": \"Lirael\", \"pct\": 30, \"is_li\": false, \"kind\": \"person\"},\n    {\"entity\": \"the ancient tarot deck\", \"pct\": 10, \"is_li\": false, \"kind\": \"object\"},\n    {\"entity\": \"the price of failure\", \"pct\": 10, \"is_li\": false, \"kind\": \"deadline\"},\n    {\"entity\": \"the Weave-Script\", \"pct\": 10, \"is_li\": false, \"kind\": \"object\"}\n  ],\n  \"li_pct\": 40,\n  \"li_gravity_kind\": \"longing\",\n  \"li_gravity_register\": \"ROMANTIC\",\n  \"roman_mode_breakdown\": {\n    \"plot_object\": 0,\n    \"reputation\": 0,\n    \"curiosity\": 10,\n    \"attraction\": 15,\n    \"desire\": 10,\n    \"obsession\": 5,\n    \"resentment\": 0,\n    \"fear\": 0\n  },\n  \"buckets\": {\n    \"love_interest\": 40,\n    \"protagonist\": 30,\n    \"relationship\": 10,\n    \"relationship_mystery\": 0,\n    \"plot_mystery\": 10,\n    \"a_plot_logistics\": 10,\n    \"side_characters\": 0,\n    \"other\": 0\n  },\n  \"rplot_ownership\": {\n    \"roman\": 15,\n    \"relationship\": 10,\n    \"desire\": 10,\n    \"attraction\": 15,\n    \"curiosity_about_li\": 10,\n    \"self_reflection\": 0,\n    \"wound_rumination\": 0,\n    \"memory\": 0,\n    \"regret\": 0,\n    \"introspection\": 0\n  },\n  \"dominant\": [\"Julian\", \"Lirael\"],\n  \"wound_source_entity\": \"her estranged father\",\n  \"wound_source_pct\": 10,\n  \"desire\": {\n    \"attraction\": 15,\n    \"longing_hot\": 10,\n    \"curiosity\": 10,\n    \"fascination\": 5,\n    \"obsession\": 5,\n    \"need\": 0,\n    \"anticipation\": 0,\n    \"resentment\": 0,\n    \"fear\": 0,\n    \"avoidance\": 0,\n    \"grief_or_regret\": 0,\n    \"reflection_or_meaning\": 0,\n    \"sadness\": 0\n  },\n  \"desire_verdict\": \"MIXED\",\n  \"desire_reason\": \"Lirael is drawn to Julian but is also reflecting on her own past wounds, particularly her estranged father's abandonment.\",\n  \"desire_target\": \"ROMAN\",\n  \"desire_target_breakdown\": {\n    \"roman\": 25,\n    \"plot_truth\": 0,\n    \"wound_repair\": 0,\n    \"self_understanding\": 0\n  },\n  \"desire_target_reason\": \"Lirael wants to understand Julian as a person, reflecting her longing for connection and understanding.\",\n  \"li_verdict\": \"LEAD\",\n  \"reason\": \"The reader is primarily thinking about Julian and Lirael's emotional connection, with Lirael longing for Julian while also grappling with her past.\"\n}"
+    },
+    {
+      "kind": "LOG",
+      "phase": "turn",
+      "text": "[SCENE1:DESIRE-TARGET] ROMAN — Roman 25% · plot-truth 0% · wound-repair 0% · self-understanding 0% · Lirael wants to understand Julian as a person, reflecting her longing for connection and "
+    },
+    {
+      "kind": "REPAIR-CALL",
+      "phase": "turn",
+      "url": "chatgpt-proxy",
+      "profileLabel": null,
+      "requested": "gpt-4o-mini",
+      "resolved": "gpt-4o-mini",
+      "sysHead": "ROLE: You are the Strategy Engine for an interactive romance story generator. You make STR",
+      "inHash": "4e6ebd6ff3",
+      "inLen": 2805,
+      "outHash": "26cae19964",
+      "outLen": 507,
+      "usage": {
+        "prompt_tokens": 4299,
+        "completion_tokens": 119,
+        "total_tokens": 4418,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "changed": true,
+      "candidate": "{\n  \"st_phase\": \"ST1\",\n  \"power_vector_shift\": \"equilibrium\",\n  \"world_artifact_to_surface\": \"Julian's first love who has returned and is exploiting the\",\n  \"tone_pressure\": \"sustain\",\n  \"active_entropy_axis\": \"fantasy_power_legitimacy\",\n  \"entropy_manifestation_summary\": \"The tension between Julian and his first love escalates as they navigate the power dynamics of their fractured bond, creating a struggle for legitimacy and control over their relationship.\",\n  \"petition\": {\n    \"present\": false\n  }\n}"
+    },
+    {
+      "kind": "REPAIR-CALL",
+      "phase": "turn",
+      "url": "chatgpt-proxy",
+      "profileLabel": null,
+      "requested": "gpt-4o-mini",
+      "resolved": "gpt-4o-mini",
+      "sysHead": "You are the SCENE-SPINE planner for an interactive romance engine. The scene has ONE organ",
+      "inHash": "904bb8eb81",
+      "inLen": 1084,
+      "outHash": "4c9020684d",
+      "outLen": 540,
+      "usage": {
+        "prompt_tokens": 1154,
+        "completion_tokens": 131,
+        "total_tokens": 1285,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "changed": true,
+      "candidate": "{\n  \"tactical_move\": \"introduce a public revelation that disrupts Lirael's vow-bond\",\n  \"state_change_precondition\": \"Lirael's past mistakes have not yet been publicly broadcasted.\",\n  \"state_change\": \"A loudspeaker crackles to life, announcing Lirael's past mistakes to the crowd.\",\n  \"forces_choice\": \"forces Lirael to confront Julian about his role or defend her actions to the crowd\",\n  \"branch_a\": \"confront Julian about his involvement in her past mistakes\",\n  \"branch_b\": \"defend her actions to the crowd, risking further scrutiny\"\n}"
+    },
+    {
+      "kind": "LOG",
+      "phase": "turn",
+      "text": "[COMMITTED-TRUTH:DEV-FORCE] gate bypassed (localhost/dev or __forceCommittedTruth=true)"
+    },
+    {
+      "kind": "LOG",
+      "phase": "turn",
+      "text": "[HONEY-POT] Trigger conditions not met or random gate failed — no agenda this story"
+    },
+    {
+      "kind": "LOG",
+      "phase": "turn",
+      "text": "[CONTINUATION-REGIME] scene=0 raw_storyturn=ST1 gated_storyturn=ST1 li_presence=PROXY li_connected=false relationship_phase=? intensity=Steamy storyLength=fling | intimacyPhase=false intimac"
+    },
+    {
+      "kind": "LOG",
+      "phase": "turn",
+      "text": "[MODEL] Literary prose → requested=grok-4-1-fast-reasoning (Grok author [served model logged as MODEL:SERVED] + Grok de-calc editor + Haiku repair — Sonnet/Opus cost-deprecated)"
+    },
+    {
+      "kind": "AUTHOR(stub)",
+      "model": "stubbed",
+      "inHash": null,
+      "inLen": null,
+      "outHash": "290ba4fe90",
+      "outLen": 2450
+    },
+    {
+      "kind": "REPAIR-CALL",
+      "phase": "turn",
+      "url": "proxy",
+      "profileLabel": null,
+      "requested": null,
+      "resolved": "grok-4.3",
+      "sysHead": "You are a ruthless line-editor for romance prose. Find the up-to-FIVE worst spans, by prio",
+      "inHash": "290ba4fe90",
+      "inLen": 2450,
+      "outHash": "ffd1d90526",
+      "outLen": 457,
+      "usage": {
+        "prompt_tokens": 1194,
+        "completion_tokens": 104,
+        "total_tokens": 2668,
+        "prompt_tokens_details": {
+          "text_tokens": 1194,
+          "audio_tokens": 0,
+          "image_tokens": 0,
+          "cached_tokens": 192
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 1370,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        },
+        "num_sources_used": 0,
+        "cost_in_usd_ticks": 49759000
+      },
+      "changed": true,
+      "candidate": "[\n  {\"quote\":\"Her eyes flicked up once, sharp, then away.\",\"replacement\":\"Her heel tapped once against the stall leg before she shifted her weight.\"},\n  {\"quote\":\"I felt the weight of every eye that might turn next toward me.\",\"replacement\":\"A fly settled on the back of my wrist and stayed there.\"},\n  {\"quote\":\"The choice sat between us like a live coal.\",\"replacement\":\"Carys's thumb pressed a crease into the edge of the silk bolt and left it there.\"}\n]"
+    },
+    {
+      "kind": "REPAIR-CALL",
+      "phase": "turn",
+      "url": "mistral-proxy",
+      "profileLabel": null,
+      "requested": "mistral-small-latest",
+      "resolved": "mistral-small-latest",
+      "sysHead": "Fix ONLY mechanical defects in this scene: broken or incomplete sentences (including fragm",
+      "inHash": "3fc3bfd4d5",
+      "inLen": 2510,
+      "outHash": "483f6aac77",
+      "outLen": 2510,
+      "usage": {
+        "prompt_tokens": 759,
+        "total_tokens": 1328,
+        "completion_tokens": 569,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "service_tier": "standard"
+      },
+      "changed": true,
+      "candidate": "The market stall’s canvas roof snapped in the wind off the Ascendant Run, and Carys’s hand hovered above the folded note I still held between my fingers. I could not make myself release it. The youth’s binding still flickered in my mind, the elder’s demand still pressed at the back of my throat, and every breath I took tasted of the spiralgrass crushed underfoot.\n\nCarys leaned closer, her voice low so the other vendors would not hear. “If you keep it any longer the ink will smudge from your sweat. Give it over.”\n\nMy thumb traced the edge of the parchment once more. The note carried the only proof we had that the bloodline geas had been tampered with before the youth ever stepped into the circle. Handing it across meant someone else would know what Julian had already risked to shield us both.\n\nI let the paper slide from my palm. Carys took it without flourish, tucking it beneath a bolt of dyed river-silk as though it were nothing more than a price list. Her heel tapped once against the stall leg before she shifted her weight.\n\nBehind us the crowd thickened at the next stall. A voice rose above the rest—clear, carrying, the sort that belonged to someone used to being listened to. The council messenger who had arrived at the clearing was reading from a sealed letter, the one that had been intercepted with the token from Julian’s house. The words carried across the market air.\n\n“…three wishes offered in the old manner, each bound to the same bloodline, each paid for in secret. The first for safety of the line, the second for the return of what was lost, the third—”\n\nThe rest was lost beneath the sudden rush of voices. People turned. Some laughed, thinking it theater. Others went still, because the old manner meant sacrifice that could not be undone. A fly settled on the back of my wrist and stayed there.\n\nCarys’s fingers tightened on the silk. “They will trace it back,” she said. “You need to decide which one you can afford to unmake.”\n\nCarys’s thumb pressed a crease into the edge of the silk bolt and left it there. The first wish had kept the line from fracturing when my father left. The second had brought back a fragment of what the Becoming had taken from Julian. Either one undone would cost more than either of us had left to give.\n\nI realized that old tarot deck is still in my hand. Reassuringly solid. Present. One of the heavy gold cards slips out — \"Petition Fate\" is inscribed in it. If only it were that easy. I would wish myself a way out. No — a way in. If only…"
+    },
+    {
+      "kind": "LOG",
+      "phase": "turn",
+      "text": "[PROMPT-PROFILE] repair · mistral-small-latest · prompt=759 reasoning=0 visible=569 · turn 0"
+    },
+    {
+      "kind": "LOG",
+      "phase": "turn",
+      "text": "[GEN-FAIL:LI-DESCRIPTION:DRAFT] (pre-gate draft — :FINAL below is authoritative for what the reader got) LI \"Julian\" mentioned 3× but NO image-defining anchor (build/hair/face) surfaced — on"
+    },
+    {
+      "kind": "LOG",
+      "phase": "turn",
+      "text": "[PROSE:CANONICAL] hair_loose 1/7 (14%) — hair coming loose / strand falling / tucking hair behind ear (calcified hair tell — was an untracked blind spot, Roman 2026-06-17)"
+    },
+    {
+      "kind": "LOG",
+      "phase": "turn",
+      "text": "[PROSE:CANONICAL] collarbone_throat_line 0/7 (0%) — collarbone / throat-line self-presentation (calcified PC delta — Roman 2026-06-04)"
+    },
+    {
+      "kind": "LOG",
+      "phase": "turn",
+      "text": "[PROSE:CANONICAL] ringed_iris 0/7 (0%) — eyes \"ringed (darker) at the iris/rim\" OR \"perpetual/faint squint\" (calcified LI eye-detail — Roman 2026-06-10)"
+    },
+    {
+      "kind": "LOG",
+      "phase": "turn",
+      "text": "[PROSE:CANONICAL] cliche_piercing_gaze 0/7 (0%) — stock \"piercing\" eyes/gaze/stare (calcified romance-hero look — Roman 2026-06-17)"
+    },
+    {
+      "kind": "LOG",
+      "phase": "turn",
+      "text": "[PROSE:CANONICAL] taking_up_space 0/7 (0%) — taking up space / sidewalk (calcified — Roman 2026-06-08)"
+    },
+    {
+      "kind": "LOG",
+      "phase": "turn",
+      "text": "[UNAVAILABILITY:MANIFESTATION] 6 run(s) scanned, 0 carry avoidance. Aggregate: 0 absence vs 0 deflection → absence share = 0% ✓"
+    },
+    {
+      "kind": "REPAIR-CALL",
+      "phase": "turn",
+      "url": "chatgpt-proxy",
+      "profileLabel": null,
+      "requested": "gpt-4o-mini",
+      "resolved": "gpt-4o-mini",
+      "sysHead": "You are a craft auditor measuring ARCHETYPE MANIFESTATION COLLAPSE in a romance scene. An ",
+      "inHash": "7ad3c41d54",
+      "inLen": 4858,
+      "outHash": "2f6c9ae3b2",
+      "outLen": 332,
+      "usage": {
+        "prompt_tokens": 1441,
+        "completion_tokens": 82,
+        "total_tokens": 1523,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "changed": true,
+      "candidate": "{\n  \"stimulus\": \"Carys pressed him to hand over the note\",\n  \"dominant_category\": \"withdrawal\",\n  \"present_categories\": [\"withdrawal\"],\n  \"gesture\": \"I let the paper slide from my palm.\",\n  \"in_menu\": true,\n  \"reason\": \"This category fits the situation as he hesitates and withdraws emotionally, reflecting his internal conflict.\"\n}"
+    },
+    {
+      "kind": "REPAIR-CALL",
+      "phase": "turn",
+      "url": "chatgpt-proxy",
+      "profileLabel": null,
+      "requested": "gpt-4o-mini",
+      "resolved": "gpt-4o-mini",
+      "sysHead": "You are an editorial auditor. Read the SCENE PROSE and return TWO orthogonal judgments abo",
+      "inHash": "20e7c0744d",
+      "inLen": 3592,
+      "outHash": "d896186621",
+      "outLen": 604,
+      "usage": {
+        "prompt_tokens": 1569,
+        "completion_tokens": 143,
+        "total_tokens": 1712,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "changed": true,
+      "candidate": "{\n  \"verdict\": \"PARTIAL\",\n  \"presence_mode_used\": \"OFFSTAGE_OBJECT\",\n  \"reason\": \"The presence of the note and the tarot card suggests a connection to Julian's risks and Carys's decisions, but the emotional weight of her resistance to his gaze is not fully realized in the scene.\",\n  \"embodiment_verdict\": \"MIXED\",\n  \"embodiment_reason\": \"The prose includes embodied moments, such as Carys's fingers tightening on the silk, but also relies on exposition when it explains the implications of the wishes, as seen in the sentence: \\\"The first wish had kept the line from fracturing when my father left.\\\"\"\n}"
+    },
+    {
+      "kind": "REPAIR-CALL",
+      "phase": "turn",
+      "url": "mistral-proxy",
+      "profileLabel": null,
+      "requested": "mistral-small-latest",
+      "resolved": "mistral-small-latest",
+      "sysHead": "You are a precise line-editor, NOT a writer. Fix ONLY what the instruction names. Do NOT c",
+      "inHash": "f78df4e1db",
+      "inLen": 4853,
+      "outHash": "483f6aac77",
+      "outLen": 2510,
+      "usage": {
+        "prompt_tokens": 1234,
+        "total_tokens": 1803,
+        "completion_tokens": 569,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "service_tier": "standard"
+      },
+      "changed": true,
+      "candidate": "The market stall’s canvas roof snapped in the wind off the Ascendant Run, and Carys’s hand hovered above the folded note I still held between my fingers. I could not make myself release it. The youth’s binding still flickered in my mind, the elder’s demand still pressed at the back of my throat, and every breath I took tasted of the spiralgrass crushed underfoot.\n\nCarys leaned closer, her voice low so the other vendors would not hear. “If you keep it any longer the ink will smudge from your sweat. Give it over.”\n\nMy thumb traced the edge of the parchment once more. The note carried the only proof we had that the bloodline geas had been tampered with before the youth ever stepped into the circle. Handing it across meant someone else would know what Julian had already risked to shield us both.\n\nI let the paper slide from my palm. Carys took it without flourish, tucking it beneath a bolt of dyed river-silk as though it were nothing more than a price list. Her heel tapped once against the stall leg before she shifted her weight.\n\nBehind us the crowd thickened at the next stall. A voice rose above the rest—clear, carrying, the sort that belonged to someone used to being listened to. The council messenger who had arrived at the clearing was reading from a sealed letter, the one that had been intercepted with the token from Julian’s house. The words carried across the market air.\n\n“…three wishes offered in the old manner, each bound to the same bloodline, each paid for in secret. The first for safety of the line, the second for the return of what was lost, the third—”\n\nThe rest was lost beneath the sudden rush of voices. People turned. Some laughed, thinking it theater. Others went still, because the old manner meant sacrifice that could not be undone. A fly settled on the back of my wrist and stayed there.\n\nCarys’s fingers tightened on the silk. “They will trace it back,” she said. “You need to decide which one you can afford to unmake.”\n\nCarys’s thumb pressed a crease into the edge of the silk bolt and left it there. The first wish had kept the line from fracturing when my father left. The second had brought back a fragment of what the Becoming had taken from Julian. Either one undone would cost more than either of us had left to give.\n\nI realized that old tarot deck is still in my hand. Reassuringly solid. Present. One of the heavy gold cards slips out — \"Petition Fate\" is inscribed in it. If only it were that easy. I would wish myself a way out. No — a way in. If only…"
+    },
+    {
+      "kind": "LOG",
+      "phase": "turn",
+      "text": "[PROMPT-PROFILE] repair · mistral-small-latest · prompt=1234 reasoning=0 visible=569 · turn 0"
+    },
+    {
+      "kind": "REPAIR-CALL",
+      "phase": "turn",
+      "url": "proxy",
+      "profileLabel": null,
+      "requested": null,
+      "resolved": "grok-4.3",
+      "sysHead": "You audit prose for BANNED-phrase reuse. The user sends a BANNED LIST and a SCENE. Report ",
+      "inHash": "efdb185fd5",
+      "inLen": 2739,
+      "outHash": "2d0941e7bc",
+      "outLen": 12,
+      "usage": {
+        "prompt_tokens": 923,
+        "completion_tokens": 5,
+        "total_tokens": 1241,
+        "prompt_tokens_details": {
+          "text_tokens": 923,
+          "audio_tokens": 0,
+          "image_tokens": 0,
+          "cached_tokens": 512
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 313,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        },
+        "num_sources_used": 0,
+        "cost_in_usd_ticks": 14111500
+      },
+      "changed": true,
+      "candidate": "{\"leaks\":[]}"
+    },
+    {
+      "kind": "REPAIR-CALL",
+      "phase": "turn",
+      "url": "proxy",
+      "profileLabel": null,
+      "requested": null,
+      "resolved": "grok-4.3",
+      "sysHead": "You are the same narrator continuing THIS exact scene. Write ONE or TWO short sentences (~",
+      "inHash": "001c9a01c5",
+      "inLen": 1463,
+      "outHash": "c32cea1a94",
+      "outLen": 142,
+      "usage": {
+        "prompt_tokens": 762,
+        "completion_tokens": 30,
+        "total_tokens": 1240,
+        "prompt_tokens_details": {
+          "text_tokens": 762,
+          "audio_tokens": 0,
+          "image_tokens": 0,
+          "cached_tokens": 384
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 448,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        },
+        "num_sources_used": 0,
+        "cost_in_usd_ticks": 17443000
+      },
+      "changed": true,
+      "candidate": "Julian’s eyes caught the card’s edge as it slid free, and the stillness in his shoulders said he had already followed the thought to its cost."
+    },
+    {
+      "kind": "REPAIR-CALL",
+      "phase": "turn",
+      "url": "mistral-proxy",
+      "profileLabel": null,
+      "requested": "mistral-small-latest",
+      "resolved": "mistral-small-latest",
+      "sysHead": "You are a precise line-editor, not a writer. You will be given a FINISHED scene and a spec",
+      "inHash": "f78df4e1db",
+      "inLen": 4853,
+      "outHash": "483f6aac77",
+      "outLen": 2510,
+      "usage": {
+        "prompt_tokens": 1271,
+        "total_tokens": 1840,
+        "completion_tokens": 569,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "service_tier": "standard"
+      },
+      "changed": true,
+      "candidate": "The market stall’s canvas roof snapped in the wind off the Ascendant Run, and Carys’s hand hovered above the folded note I still held between my fingers. I could not make myself release it. The youth’s binding still flickered in my mind, the elder’s demand still pressed at the back of my throat, and every breath I took tasted of the spiralgrass crushed underfoot.\n\nCarys leaned closer, her voice low so the other vendors would not hear. “If you keep it any longer the ink will smudge from your sweat. Give it over.”\n\nMy thumb traced the edge of the parchment once more. The note carried the only proof we had that the bloodline geas had been tampered with before the youth ever stepped into the circle. Handing it across meant someone else would know what Julian had already risked to shield us both.\n\nI let the paper slide from my palm. Carys took it without flourish, tucking it beneath a bolt of dyed river-silk as though it were nothing more than a price list. Her heel tapped once against the stall leg before she shifted her weight.\n\nBehind us the crowd thickened at the next stall. A voice rose above the rest—clear, carrying, the sort that belonged to someone used to being listened to. The council messenger who had arrived at the clearing was reading from a sealed letter, the one that had been intercepted with the token from Julian’s house. The words carried across the market air.\n\n“…three wishes offered in the old manner, each bound to the same bloodline, each paid for in secret. The first for safety of the line, the second for the return of what was lost, the third—”\n\nThe rest was lost beneath the sudden rush of voices. People turned. Some laughed, thinking it theater. Others went still, because the old manner meant sacrifice that could not be undone. A fly settled on the back of my wrist and stayed there.\n\nCarys’s fingers tightened on the silk. “They will trace it back,” she said. “You need to decide which one you can afford to unmake.”\n\nCarys’s thumb pressed a crease into the edge of the silk bolt and left it there. The first wish had kept the line from fracturing when my father left. The second had brought back a fragment of what the Becoming had taken from Julian. Either one undone would cost more than either of us had left to give.\n\nI realized that old tarot deck is still in my hand. Reassuringly solid. Present. One of the heavy gold cards slips out — \"Petition Fate\" is inscribed in it. If only it were that easy. I would wish myself a way out. No — a way in. If only…"
+    },
+    {
+      "kind": "LOG",
+      "phase": "turn",
+      "text": "[EDITORIAL:TIER] scene 0 tier=premium lensBudget=2"
+    },
+    {
+      "kind": "REPAIR-CALL",
+      "phase": "turn",
+      "url": "chatgpt-proxy",
+      "profileLabel": null,
+      "requested": "gpt-4o-mini",
+      "resolved": "gpt-4o-mini",
+      "sysHead": "You are an editorial auditor measuring EMOTIONAL GRAVITY in a romance scene. The ONE quest",
+      "inHash": "9b25de4b09",
+      "inLen": 7879,
+      "outHash": "d9616f0b2d",
+      "outLen": 2460,
+      "usage": {
+        "prompt_tokens": 3349,
+        "completion_tokens": 833,
+        "total_tokens": 4182,
+        "prompt_tokens_details": {
+          "cached_tokens": 1024,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "changed": true,
+      "candidate": "{\n  \"gravity\": [\n    {\"entity\": \"Julian\", \"pct\": 40, \"is_li\": true, \"kind\": \"person\"},\n    {\"entity\": \"Carys\", \"pct\": 15, \"is_li\": false, \"kind\": \"person\"},\n    {\"entity\": \"the bloodline geas\", \"pct\": 10, \"is_li\": false, \"kind\": \"mystery\"},\n    {\"entity\": \"the note\", \"pct\": 10, \"is_li\": false, \"kind\": \"object\"},\n    {\"entity\": \"the wishes\", \"pct\": 10, \"is_li\": false, \"kind\": \"mystery\"},\n    {\"entity\": \"the Ascendant Run\", \"pct\": 5, \"is_li\": false, \"kind\": \"place\"},\n    {\"entity\": \"the council messenger\", \"pct\": 5, \"is_li\": false, \"kind\": \"side_character\"},\n    {\"entity\": \"the market\", \"pct\": 5, \"is_li\": false, \"kind\": \"place\"}\n  ],\n  \"li_pct\": 40,\n  \"li_gravity_kind\": \"longing\",\n  \"li_gravity_register\": \"ROMANTIC\",\n  \"roman_mode_breakdown\": {\n    \"plot_object\": 10,\n    \"reputation\": 0,\n    \"curiosity\": 10,\n    \"attraction\": 10,\n    \"desire\": 5,\n    \"obsession\": 5,\n    \"resentment\": 0,\n    \"fear\": 0\n  },\n  \"buckets\": {\n    \"love_interest\": 40,\n    \"protagonist\": 20,\n    \"relationship\": 10,\n    \"relationship_mystery\": 10,\n    \"plot_mystery\": 10,\n    \"a_plot_logistics\": 5,\n    \"side_characters\": 5,\n    \"other\": 0\n  },\n  \"rplot_ownership\": {\n    \"roman\": 20,\n    \"relationship\": 10,\n    \"desire\": 5,\n    \"attraction\": 10,\n    \"curiosity_about_li\": 10,\n    \"self_reflection\": 5,\n    \"wound_rumination\": 5,\n    \"memory\": 0,\n    \"regret\": 0,\n    \"introspection\": 0\n  },\n  \"dominant\": [\"Julian\", \"Carys\"],\n  \"wound_source_entity\": \"her estranged father\",\n  \"wound_source_pct\": 10,\n  \"desire\": {\n    \"attraction\": 10,\n    \"longing_hot\": 5,\n    \"curiosity\": 10,\n    \"fascination\": 5,\n    \"obsession\": 5,\n    \"need\": 0,\n    \"anticipation\": 0,\n    \"resentment\": 0,\n    \"fear\": 0,\n    \"avoidance\": 0,\n    \"grief_or_regret\": 5,\n    \"reflection_or_meaning\": 0,\n    \"sadness\": 0\n  },\n  \"desire_verdict\": \"MIXED\",\n  \"desire_reason\": \"Lirael is both drawn to Julian and reflecting on her own past wounds, as she thinks about the wishes and their implications.\",\n  \"desire_target\": \"ROMAN\",\n  \"desire_target_breakdown\": {\n    \"roman\": 20,\n    \"plot_truth\": 10,\n    \"wound_repair\": 5,\n    \"self_understanding\": 5\n  },\n  \"desire_target_reason\": \"Lirael wants to understand Julian's actions and their implications for her own feelings and past, indicating a desire for him as a person.\",\n  \"li_verdict\": \"LEAD\",\n  \"reason\": \"The reader is primarily thinking about Julian and Lirael's complex relationship, with a strong emotional pull toward Julian as a person.\"\n}"
+    },
+    {
+      "kind": "LOG",
+      "phase": "turn",
+      "text": "[SCENE1:DESIRE-TARGET] ROMAN — Roman 20% · plot-truth 10% · wound-repair 5% · self-understanding 5% · Lirael wants to understand Julian's actions and their implications for her own feelings "
+    },
+    {
+      "kind": "REPAIR-CALL",
+      "phase": "turn",
+      "url": "proxy",
+      "profileLabel": null,
+      "requested": null,
+      "resolved": "grok-4.3",
+      "sysHead": "You are the same narrator continuing THIS exact scene. Write ONE or TWO short sentences (~",
+      "inHash": "c631301012",
+      "inLen": 1463,
+      "outHash": "07c0a65220",
+      "outLen": 109,
+      "usage": {
+        "prompt_tokens": 756,
+        "completion_tokens": 28,
+        "total_tokens": 1687,
+        "prompt_tokens_details": {
+          "text_tokens": 756,
+          "audio_tokens": 0,
+          "image_tokens": 0,
+          "cached_tokens": 384
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 903,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        },
+        "num_sources_used": 0,
+        "cost_in_usd_ticks": 28693000
+      },
+      "changed": true,
+      "candidate": "I spoke over the rush of voices, the card still in my hand. “The third wish was mine, and it was for Julian.”"
+    },
+    {
+      "kind": "REPAIR-CALL",
+      "phase": "turn",
+      "url": "proxy",
+      "profileLabel": null,
+      "requested": null,
+      "resolved": "grok-4.3",
+      "sysHead": "You are S. Tory Bound's PERCEPTION EDITOR. The scene below is already written and already ",
+      "inHash": "f05c72a6f2",
+      "inLen": 5866,
+      "outHash": "483f6aac77",
+      "outLen": 2510,
+      "usage": {
+        "prompt_tokens": 1597,
+        "completion_tokens": 549,
+        "total_tokens": 2705,
+        "prompt_tokens_details": {
+          "text_tokens": 1597,
+          "audio_tokens": 0,
+          "image_tokens": 0,
+          "cached_tokens": 1024
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 559,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        },
+        "num_sources_used": 0,
+        "cost_in_usd_ticks": 36910500
+      },
+      "changed": true,
+      "candidate": "The market stall’s canvas roof snapped in the wind off the Ascendant Run, and Carys’s hand hovered above the folded note I still held between my fingers. I could not make myself release it. The youth’s binding still flickered in my mind, the elder’s demand still pressed at the back of my throat, and every breath I took tasted of the spiralgrass crushed underfoot.\n\nCarys leaned closer, her voice low so the other vendors would not hear. “If you keep it any longer the ink will smudge from your sweat. Give it over.”\n\nMy thumb traced the edge of the parchment once more. The note carried the only proof we had that the bloodline geas had been tampered with before the youth ever stepped into the circle. Handing it across meant someone else would know what Julian had already risked to shield us both.\n\nI let the paper slide from my palm. Carys took it without flourish, tucking it beneath a bolt of dyed river-silk as though it were nothing more than a price list. Her heel tapped once against the stall leg before she shifted her weight.\n\nBehind us the crowd thickened at the next stall. A voice rose above the rest—clear, carrying, the sort that belonged to someone used to being listened to. The council messenger who had arrived at the clearing was reading from a sealed letter, the one that had been intercepted with the token from Julian’s house. The words carried across the market air.\n\n“…three wishes offered in the old manner, each bound to the same bloodline, each paid for in secret. The first for safety of the line, the second for the return of what was lost, the third—”\n\nThe rest was lost beneath the sudden rush of voices. People turned. Some laughed, thinking it theater. Others went still, because the old manner meant sacrifice that could not be undone. A fly settled on the back of my wrist and stayed there.\n\nCarys’s fingers tightened on the silk. “They will trace it back,” she said. “You need to decide which one you can afford to unmake.”\n\nCarys’s thumb pressed a crease into the edge of the silk bolt and left it there. The first wish had kept the line from fracturing when my father left. The second had brought back a fragment of what the Becoming had taken from Julian. Either one undone would cost more than either of us had left to give.\n\nI realized that old tarot deck is still in my hand. Reassuringly solid. Present. One of the heavy gold cards slips out — \"Petition Fate\" is inscribed in it. If only it were that easy. I would wish myself a way out. No — a way in. If only…"
+    },
+    {
+      "kind": "LOG",
+      "phase": "turn",
+      "text": "[LENS:NONE] scene 0 — budget 2 but no sentence genuinely flat (need-gated to 0)"
+    },
+    {
+      "kind": "LOG",
+      "phase": "turn",
+      "text": "[EDITORIAL:REPAIR] premium → extra de-calc sweep"
+    },
+    {
+      "kind": "REPAIR-CALL",
+      "phase": "turn",
+      "url": "chatgpt-proxy",
+      "profileLabel": null,
+      "requested": "gpt-4o-mini",
+      "resolved": "gpt-4o-mini",
+      "sysHead": "You are a structural correction engine. The scene below was generated but FAILED structura",
+      "inHash": "97db746ac4",
+      "inLen": 2000,
+      "outHash": "be887dc864",
+      "outLen": 407,
+      "usage": {
+        "prompt_tokens": 708,
+        "completion_tokens": 86,
+        "total_tokens": 794,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "changed": true,
+      "candidate": "Julian's first love, who had returned and was exploiting the very wishes that bound their fates, lingered at the edge of my thoughts. The tension between us was palpable, a reminder of the fractured bond we once shared, now a battleground for legitimacy and control. As the crowd buzzed around us, I couldn't shake the feeling that her presence would tip the scales in ways we were not yet prepared to face."
+    },
+    {
+      "kind": "LOG",
+      "phase": "turn",
+      "text": "[PACING GATE] FAILED — accepting without LLM regen (cost cut 2026-05-29); deterministic marker relocation only: [WEAK_PRE_CHOICE_SPIKE: no direct address (you/your) in 30 words before first "
+    },
+    {
+      "kind": "LOG",
+      "phase": "turn",
+      "text": "[PACING GATE] Still failing (no regen — cost cut) — accepting + relocating late marker if present: [WEAK_PRE_CHOICE_SPIKE: no direct address (you/your) in 30 words before first choice]"
+    },
+    {
+      "kind": "REPAIR-CALL",
+      "phase": "turn",
+      "url": "proxy",
+      "profileLabel": null,
+      "requested": null,
+      "resolved": "grok-4.3",
+      "sysHead": "You audit prose for BANNED-phrase reuse. The user sends a BANNED LIST and a SCENE. Report ",
+      "inHash": "efdb185fd5",
+      "inLen": 2739,
+      "outHash": "2d0941e7bc",
+      "outLen": 12,
+      "usage": {
+        "prompt_tokens": 923,
+        "completion_tokens": 5,
+        "total_tokens": 1431,
+        "prompt_tokens_details": {
+          "text_tokens": 923,
+          "audio_tokens": 0,
+          "image_tokens": 0,
+          "cached_tokens": 576
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 503,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        },
+        "num_sources_used": 0,
+        "cost_in_usd_ticks": 18189500
+      },
+      "changed": true,
+      "candidate": "{\"leaks\":[]}"
+    },
+    {
+      "kind": "REPAIR-CALL",
+      "phase": "turn",
+      "url": "chatgpt-proxy",
+      "profileLabel": null,
+      "requested": "gpt-4o-mini",
+      "resolved": "gpt-4o-mini",
+      "sysHead": "You extract structured narrative memory from fiction scenes. Respond ONLY with valid JSON,",
+      "inHash": "01f30525b8",
+      "inLen": 7556,
+      "outHash": "5c6a0cab51",
+      "outLen": 1965,
+      "usage": {
+        "prompt_tokens": 1831,
+        "completion_tokens": 530,
+        "total_tokens": 2361,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "changed": true,
+      "candidate": "{\n  \"narrativeState\": {\n    \"relationship_state\": \"fractured bond with tension\",\n    \"location_state\": \"crowded space with voices\",\n    \"storyturn_state\": \"decision on wishes looms\",\n    \"arousal_state\": \"heightened due to stakes\",\n    \"character_positioning\": \"Carys and protagonist in close proximity\",\n    \"emotional_temperature\": \"tense and uncertain\"\n  },\n  \"relationshipTension\": {\n    \"attraction\": \"unclear\",\n    \"trust\": \"low\",\n    \"resentment\": \"present\",\n    \"curiosity\": \"high\",\n    \"vulnerability\": \"low\",\n    \"power_dynamic\": \"imbalanced\"\n  },\n  \"physicalState\": {\n    \"location\": \"crowded space\",\n    \"mc_position\": \"holding tarot deck\",\n    \"li_position\": \"near protagonist\",\n    \"proximity\": \"close\",\n    \"objects_notable\": \"tarot deck, silk bolt\"\n  },\n  \"narrativeIntent\": {\n    \"primary_goal\": \"decide on which wish to unmake\",\n    \"secondary_goal\": \"navigate tension with Julian's love\",\n    \"active_tension\": \"balancing wishes and consequences\",\n    \"approaching_shift\": \"potential sacrifice of a wish\",\n    \"long_term_arc\": \"struggle with fate and wishes\"\n  },\n  \"continuityProbe\": {\n    \"depicted_li_gender\": \"female\",\n    \"depicted_pc_gender\": \"female\",\n    \"present_characters\": [\n      {\n        \"name\": \"Carys\",\n        \"presence_mode\": \"IN_PERSON\",\n        \"role\": \"companion\"\n      },\n      {\n        \"name\": \"Julian\",\n        \"presence_mode\": \"OFFSTAGE_REFERENCED\",\n        \"role\": \"former love\"\n      }\n    ],\n    \"location_change\": {\n      \"changed\": false,\n      \"transition_shown\": false,\n      \"reason\": null\n    }\n  },\n  \"sceneRelationalContext\": {\n    \"li_signaled\": false,\n    \"li_revealed\": false,\n    \"li_offered\": false,\n    \"ambiguity_closure\": false,\n    \"contact_moment\": false,\n    \"evidence\": null\n  },\n  \"pcAttractionRegister\": {\n    \"li_availability\": \"present\",\n    \"registers\": [],\n    \"intensity\": \"none\",\n    \"evidence\": null\n  },\n  \"new_callbacks\": [],\n  \"resolved_callback_ids\": [],\n  \"new_shared_history\": []\n}"
+    },
+    {
+      "kind": "REPAIR-CALL",
+      "phase": "turn",
+      "url": "proxy",
+      "profileLabel": null,
+      "requested": null,
+      "resolved": "grok-4.3",
+      "sysHead": "You are a copy editor. Re-paragraph the SCENE the user sends for standard novel dialogue f",
+      "inHash": "d8cf239e9b",
+      "inLen": 2932,
+      "outHash": "11b7fb7c8b",
+      "outLen": 2934,
+      "usage": {
+        "prompt_tokens": 1728,
+        "completion_tokens": 634,
+        "total_tokens": 3666,
+        "prompt_tokens_details": {
+          "text_tokens": 1728,
+          "audio_tokens": 0,
+          "image_tokens": 0,
+          "cached_tokens": 1088
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 1304,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        },
+        "num_sources_used": 0,
+        "cost_in_usd_ticks": 58626000
+      },
+      "changed": true,
+      "candidate": "The market stall’s canvas roof snapped in the wind off the Ascendant Run, and Carys’s hand hovered above the folded note I still held between my fingers. I could not make myself release it. The youth’s binding still flickered in my mind, the elder’s demand still pressed at the back of my throat, and every breath I took tasted of the spiralgrass crushed underfoot. Carys leaned closer, her voice low so the other vendors would not hear.\n\n“If you keep it any longer the ink will smudge from your sweat. Give it over.”\n\nMy thumb traced the edge of the parchment once more. The note carried the only proof we had that the bloodline geas had been tampered with before the youth ever stepped into the circle. Handing it across meant someone else would know what Julian had already risked to shield us both. I let the paper slide from my palm. Carys took it without flourish, tucking it beneath a bolt of dyed river-silk as though it were nothing more than a price list. Her heel tapped once against the stall leg before she shifted her weight. Behind us the crowd thickened at the next stall. A voice rose above the rest—clear, carrying, the sort that belonged to someone used to being listened to. The council messenger who had arrived at the clearing was reading from a sealed letter, the one that had been intercepted with the token from Julian’s house. The words carried across the market air.\n\n“…three wishes offered in the old manner, each bound to the same bloodline, each paid for in secret. The first for safety of the line, the second for the return of what was lost, the third—”\n\nThe rest was lost beneath the sudden rush of voices. People turned. Some laughed, thinking it theater. Others went still, because the old manner meant sacrifice that could not be undone. A fly settled on the back of my wrist and stayed there. Carys’s fingers tightened on the silk.\n\n“They will trace it back,” she said.\n\n“You need to decide which one you can afford to unmake.”\n\nCarys’s thumb pressed a crease into the edge of the silk bolt and left it there. The first wish had kept the line from fracturing when my father left. The second had brought back a fragment of what the Becoming had taken from Julian. Either one undone would cost more than either of us had left to give. Present. If only… Julian's first love, who had returned and was exploiting the very wishes that bound their fates, lingered at the edge of my thoughts. The tension between us was palpable, a reminder of the fractured bond we once shared, now a battleground for legitimacy and control. As the crowd buzzed around us, I couldn't shake the feeling that her presence would tip the scales in ways we were not yet prepared to face.\n\nI realize that old tarot deck is still in my hand. Reassuringly solid. Present. One of the heavy gold cards slips out — \"Petition Fate\" is inscribed in it. If only it were that easy. I would wish myself a way out. No — a way in. If only…"
+    },
+    {
+      "kind": "LOG",
+      "phase": "turn",
+      "text": "[SCENE-BUDGET:COUNT] scene=705873a8-03b0-4ea5-a861-c94e633d45d6:1 repair=0 polish=0 fallback=0 regen=0 cosmetic=0/2 (conditional spent=0/4) skipped=[] provenance=original"
+    },
+    {
+      "kind": "LOG",
+      "phase": "turn",
+      "text": "[LITE-COST] HEAVY scene 2 · classifier→HEAVY/HEAVY · provider=gpt · prose+spine $0.0147 · audits $0.0047 (DEV instrumentation — PROD gates to ~5%) · setup $0.0000 (one-time, off per-scene bu"
+    },
+    {
+      "kind": "LOG",
+      "phase": "turn",
+      "text": "[LITE-COST] → PROD marginal (audits gated, no dual shadow): $0.0150 vs 10¢ SAFETY CEILING → ✓ under ceiling (9¢ headroom) [heavy is primary now — LITE will be lower on input] · expected/issu"
+    },
+    {
+      "kind": "LOG",
+      "phase": "turn",
+      "text": "[SCENE-AUDIT] {\"sc\":0,\"ms\":73537,\"ttft\":0,\"ttftProse\":0,\"spend\":{\"initial\":0.01052,\"regens\":0,\"setup\":0,\"audits\":0.00335,\"wasted\":0,\"total\":0.01386},\"hitPct\":14,\"regens\":0,\"gates\":\"\"}"
+    },
+    {
+      "kind": "LOG",
+      "phase": "turn",
+      "text": "[FATE:AUTHORITY] LI offstage — romantic card retargeted to present interlocutor (non-romantic) {cardId: temptation, interlocutor: Quinn, presentCharacters: Array(1)}"
+    },
+    {
+      "kind": "LOG",
+      "phase": "turn",
+      "text": "[FATE:AUTHORITY] LI offstage — romantic card retargeted to present interlocutor (non-romantic) {cardId: confession, interlocutor: Quinn, presentCharacters: Array(1)}"
+    },
+    {
+      "kind": "LOG",
+      "phase": "turn",
+      "text": "[FATE:AUTHORITY] LI offstage — romantic card retargeted to present interlocutor (non-romantic) {cardId: boundary, interlocutor: Quinn, presentCharacters: Array(1)}"
+    },
+    {
+      "kind": "LOG",
+      "phase": "turn",
+      "text": "[FATE:AUTHORITY] LI offstage — romantic card retargeted to present interlocutor (non-romantic) {cardId: reversal, interlocutor: Quinn, presentCharacters: Array(1)}"
+    },
+    {
+      "kind": "REPAIR-CALL",
+      "phase": "turn",
+      "url": "chatgpt-proxy",
+      "profileLabel": null,
+      "requested": "gpt-4o-mini",
+      "resolved": "gpt-4o-mini",
+      "sysHead": "You generate JSON continuity components for fiction scenes. Respond ONLY with valid JSON, ",
+      "inHash": "e7a0527b03",
+      "inLen": 860,
+      "outHash": "0597602750",
+      "outLen": 448,
+      "usage": {
+        "prompt_tokens": 236,
+        "completion_tokens": 97,
+        "total_tokens": 333,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "changed": true,
+      "candidate": "{\n  \"continuity_bridge\": \"The air thickens with unspoken words, the flickering candlelight casting shadows that dance like unfulfilled hopes on the walls.\",\n  \"tension_vector\": \"A yearning lingers in the silence, an unsteady heartbeat echoing the desire for connection amidst the fractured memories.\",\n  \"character_motion\": \"Fingers tremble slightly as the card is turned over, body poised on the edge of a decision, breath held in anticipation.\"\n}"
+    },
+    {
+      "kind": "REPAIR-CALL",
+      "phase": "turn",
+      "url": "proxy",
+      "profileLabel": null,
+      "requested": null,
+      "resolved": "grok-4.3",
+      "sysHead": "You classify the ambient soundscape of a romance/fiction scene. Return EXACTLY one tag fro",
+      "inHash": "1a4af316e8",
+      "inLen": 1867,
+      "outHash": "a0d8d36c24",
+      "outLen": 16,
+      "usage": {
+        "prompt_tokens": 3304,
+        "completion_tokens": 4,
+        "total_tokens": 3818,
+        "prompt_tokens_details": {
+          "text_tokens": 3304,
+          "audio_tokens": 0,
+          "image_tokens": 0,
+          "cached_tokens": 192
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 510,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        },
+        "num_sources_used": 0,
+        "cost_in_usd_ticks": 52134000
+      },
+      "changed": true,
+      "candidate": "medieval_village"
+    }
+  ],
+  "FINAL": "The market stall’s canvas roof snapped in the wind off the Ascendant Run, and Carys’s hand hovered above the folded note I still held between my fingers. I could not make myself release it. The youth’s binding still flickered in my mind, the elder’s demand still pressed at the back of my throat, and every breath I took tasted of the spiralgrass crushed underfoot. Carys leaned closer, her voice low so the other vendors would not hear.“If you keep it any longer the ink will smudge from your sweat. Give it over.”My thumb traced the edge of the parchment once more. The note carried the only proof we had that the bloodline geas had been tampered with before the youth ever stepped into the circle. Handing it across meant someone else would know what Julian had already risked to shield us both. I let the paper slide from my palm. Carys took it without flourish, tucking it beneath a bolt of dyed river-silk as though it were nothing more than a price list. Her heel tapped once against the stall leg before she shifted her weight. Behind us the crowd thickened at the next stall. A voice rose above the rest—clear, carrying, the sort that belonged to someone used to being listened to. The council messenger who had arrived at the clearing was reading from a sealed letter, the one that had been intercepted with the token from Julian’s house. The words carried across the market air.“…three wishes offered in the old manner, each bound to the same bloodline, each paid for in secret. The first for safety of the line, the second for the return of what was lost, the third—”The rest was lost beneath the sudden rush of voices. People turned. Some laughed, thinking it theater. Others went still, because the old manner meant sacrifice that could not be undone. A fly settled on the back of my wrist and stayed there. Carys’s fingers tightened on the silk.“They will trace it back,” she said.“You need to decide which one you can afford to unmake.”Carys’s thumb pressed a crease into the edge of the silk bolt and left it there. The first wish had kept the line from fracturing when my father left. The second had brought back a fragment of what the Becoming had taken from Julian. Either one undone would cost more than either of us had left to give. Present. If only… Julian's first love, who had returned and was exploiting the very wishes that bound their fates, lingered at the edge of my thoughts. The tension between us was palpable, a reminder of the fractured bond we once shared, now a battleground for legitimacy and control. As the crowd buzzed around us, I couldn't shake the feeling that her presence would tip the scales in ways we were not yet prepared to face.I realize that old tarot deck is still in my hand. Reassuringly solid. Present. One of the heavy gold cards slips out — \"Petition Fate\" is inscribed in it. If only it were that easy. I would wish myself a way out. No — a way in. If only…"
+}

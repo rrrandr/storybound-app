@@ -1,0 +1,8 @@
+=== tpl1_stage_order · stage_order_dry.mjs · 21:14:16 ===
+tpl1_stage_order: exit=1 · 64 checks · 36 passed · 28 failed · invalid_markers=0 · samples=28 suite_rss_max=324MB free_min=127MB server_rss_max=85MB
+tpl1_stage_order: FAILURE — stopping. First failing lines:
+4:FAIL G2 the request carries the STAGE_CONTRACT block, ISSUED REFS (pc:self first) and the mission requirement  — {"issued":["pc:self","plot:aplot_x3a_4cca4d28_x2d_f965_x2d_4c1f_x2d_89ec_x2d_f34e3c141a68:primary_antagonist"],"max":2400}
+5:FAIL G3 with a valid reply the stage re-resolved from the planner stage and the author was dispatched  — {"contract":{"ok":false,"source":"none","onStage":[]},"author":0,"fatal":"planner stage_contract rejected (absent) — the stage is not established"}
+6:FAIL G4 Scene 1 mounted: one page, ledger p1, no fatal, no refund, no dialog  — {"pages":0,"ledger":0,"refunds":[{"context":"refund_issue_purchase_literary","amount":60}],"dialogs":["Fate stumbled — your story didn't start, so your Fortunes have been refunded. Please try again."]}
+7:FAIL G5 the mission the planner returned became the corridor mission  — null
+12:FAIL R4 roster mismatch → rejected by the existing staged_characters rule, fail-closed  — planner stage_contract rejected (absent) — the stage is not established

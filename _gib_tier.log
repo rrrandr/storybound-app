@@ -1,0 +1,60 @@
+=== GIBBERISH POLICY — THREE TIERS (dry, $0) ===
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/csp-report
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/config
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/csp-report
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/geo
+
+=== 1. TIER 1 — ISOLATED PURE GIBBERISH IS A STUMBLE, NOT AGENCY ===
+    tier=isolated streak=1 fields={"action":"pure","dialogue":"pure"}
+  ✓ an isolated pure-gibberish turn is tier "isolated"
+  ✓ both fields are substituted with the documented placeholders
+  ✓ RAW KEYSTROKES ARE GONE from both fields
+  ✓ THE STRONG-DELIVERY RULE DOES NOT FIRE — a placeholder is not a committed move
+  ✓ a light-acknowledgement directive is present instead
+  ✓ ...and it forbids treating it as meaningful or building the scene on it
+  ✓ ...and forbids quoting the literal keystrokes
+  ✓ ...and forbids breaking frame to comment on the player or the interface
+
+=== 2. TIER 2 — MIXED INPUT KEEPS THE PLAYER'S INTENT ===
+    mixed dialogue → "You have no right to judge me a syllable that comes apart before it is a word"
+    mixed action   → "I step toward the Dohkar and a syllable that comes apart before it is a word"
+  ✓ a mixed input is tier "mixed"
+  ✓ THE INTELLIGIBLE SENTENCE SURVIVES — the whole input is not discarded
+  ✓ ...and the action's intelligible half survives too
+  ✓ ONLY the corrupt fragment is rendered, as a broken sound
+  ✓ RAW FRAGMENT IS GONE from the action too
+  ✓ a mixed turn RESETS the pure-gibberish streak — the player is communicating
+
+=== 3. TIER 3 — REPEATED GIBBERISH BECOMES THE CHARACTER'S BEHAVIOUR ===
+    streaks: [1,2,3] tiers: ["isolated","repeated","repeated"]
+  ✓ the SECOND consecutive pure-gibberish turn escalates to tier "repeated"
+  ✓ ...and it stays escalated on the third
+  ✓ THE STORY IS NOT HALTED AND THE RAW TEXT IS STILL NOT CANON
+  ✓ the strong-delivery rule still does not fire
+  ✓ an IN-WORLD INCOHERENCE directive is present
+  ✓ ...it states the canon fact is repeated failure to be understood, NEVER the typed text
+  ✓ ...it licenses CONSEQUENTIAL in-world reactions
+  ✓ ...it forbids halting, stalling, or breaking frame to address the player
+  ✓ ...and it preserves her AGENCY rather than reading as a malfunction
+  ✓ a CLEAN turn afterwards resets the streak and emits no gibberish directive
+
+=== 4. ORDINARY PLAY IS UNTOUCHED, AND CONCIERGE IS NOT SUMMONED ===
+  ✓ an ordinary committed move is tier "none" and is passed through verbatim
+  ✓ ...it emits NO gibberish directive, so ordinary play is byte-identical
+  ✓ ...and it DOES get the strong-delivery rule — the fix did not disarm the real case
+  ✓ CONCIERGE IS NOT SUMMONED BY GIBBERISH — raw or substituted
+  ✓ ...but a genuine app complaint STILL routes
+
+=== 5. THE POLICY IS WIRED AT THE REAL SUBMIT SITE ===
+  ✓ the Submit handler calls the tiered policy, not the two flat fallbacks
+  ✓ ...it persists the streak across turns
+  ✓ ...and marks the values as fallback-generated
+  ✓ the strong rule honours that mark and returns early
+  ✓ the tier directive reaches the author prompt
+  ✓ the tier flags are cleared with the rest of the Say/Do turn state
+
+=== 6. CONTAINMENT ===
+  ✓ zero provider dispatches
+
+======================================================================================
+  36/36 assertions passed

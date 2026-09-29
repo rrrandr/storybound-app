@@ -1,0 +1,50 @@
+=== RUPTURE OBJECTIVE PRECEDENCE CONTROL (dry; zero provider dispatches) ===
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/csp-report
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/config
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/csp-report
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/geo
+
+=== 1. invalidatedPlans NOW PARTICIPATES IN OBJECTIVE SELECTION (req 7) ===
+  ✓ the REAL committed consequence is indexed as carrying invalidated plans
+  ✓ ...and it carries the exact plan the rupture invalidated, verbatim from canon
+  ✓ ...along with the replanning inputs — what changed, who knows what, surviving evidence, open possibilities
+  ✓ objective precedence is DERIVED from the invalidatedPlans index, not from prompt text
+
+=== 2. A SCHEDULED OBJECTIVE IS DEMOTED, NOT DELETED (req 1, 2, 4) ===
+  ✓ with a committed invalidating rupture the scheduled objective is CONTINGENT, not mandatory
+  ✓ the directive names the scheduled objective under review rather than silently dropping it
+  ✓ ...quotes what the rupture actually invalidated, from the committed record
+  ✓ ...forbids restoring an erased fact so the scheduled beat can happen anyway — the exact Scene B failure
+  ✓ ...keeps history historical and reopens only future plans (req 2)
+  ✓ ...supplies the generic replanning inputs instead of a hand-authored replacement (req 3)
+  ✓ ...PRESCRIBES NOTHING — confusion, contradictory records, a suspended proceeding and a noticed inconsistency are offered as available, never required (req 6)
+  ✓ NEGATIVE CONTROL — with no committed rupture the objective stays MANDATORY and the directive is empty
+  ✓ ...and a committed rupture that invalidated NOTHING also leaves the objective mandatory
+
+=== 3. GENERIC ACROSS RUPTURE CLASSES AND PLAN KINDS (req 8) ===
+  ✓ a materialization_possession rupture can strand a different kind of future plan
+  ✓ a identity_reputation rupture can strand a different kind of future plan
+  ✓ a relationship_social rupture can strand a different kind of future plan
+  ✓ a history_rewrite rupture can strand a different kind of future plan
+
+=== 4. THE REAL RED FIXTURE — the planner response that produced the failed Scene B (req 5, 6) ===
+    state_change: "The presiding Dohkar draws the memory of the accusation from Seren's mind, the image dissolving between his fingers."
+  ✓ RED — the real planner proposal is REJECTED before any author dispatch
+  ✓ ...because it declared no mechanism_grounding for a supernatural capability
+  ✓ ...and an INVENTED grounding citing nothing in the world truths is rejected too
+  ✓ GREEN — a scene of unexplained confusion passes (ordinary capability)
+  ✓ GREEN — a contradictory physical record passes
+  ✓ GREEN — a suspended proceeding passes, grounded in the Dohkar's REAL authority
+  ✓ GREEN — Julian noticing an inconsistency and speaking passes
+
+=== 5. THE PLANNER IS ACTUALLY ASKED FOR THE FIELD, AND THE GATE IS WIRED ===
+  ✓ mechanism_grounding is a REQUIRED key in the real planner event_slots schema
+  ✓ the schema forbids inventing a capability to make an event possible
+  ✓ the grounding gate is wired to REJECT before the author dispatch
+  ✓ the precedence directive is wired into the real planner prompt build
+
+=== CONTAINMENT ===
+  ✓ ZERO real provider dispatches
+
+====================================================================================================
+RUPTURE OBJECTIVE PRECEDENCE CONTROL: 29/29 passed

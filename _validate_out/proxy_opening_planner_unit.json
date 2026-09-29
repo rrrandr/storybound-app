@@ -1,0 +1,42 @@
+[
+  {
+    "name": "P1 OPENING_PLANNER → exactly ONE upstream call to api.x.ai with model grok-4.3, reasoning.effort none, response_format json_object, max_tokens 2400",
+    "pass": true
+  },
+  {
+    "name": "P1b usage block passes through verbatim (reasoning_tokens visible to the client) and _orchestration names the role",
+    "pass": true
+  },
+  {
+    "name": "P2 upstream 503 → ONE upstream call, 503 returned to the client (the client owns the single retry)",
+    "pass": true
+  },
+  {
+    "name": "P3 upstream 429 → ONE upstream call, 429 returned",
+    "pass": true
+  },
+  {
+    "name": "P4 upstream 400 → chain exhausted after ONE call (single-entry chain), 400 with chainTried [grok-4.3]",
+    "pass": true
+  },
+  {
+    "name": "P5 upstream hang → hang guard trips, ONE call, 504 (no second hidden attempt)",
+    "pass": true
+  },
+  {
+    "name": "P6 response_format other than json_object → 400 before any upstream call",
+    "pass": true
+  },
+  {
+    "name": "P7 a caller that omits response_format gets an upstream body WITHOUT it (other routes unchanged)",
+    "pass": true
+  },
+  {
+    "name": "P8 without the client effort the same role would resolve to effort high — proving the \"none\" is an explicit client decision, not a default",
+    "pass": true
+  },
+  {
+    "name": "P9 the tested copy differs from api/proxy.js by exactly one line (the sanitizer import path)",
+    "pass": true
+  }
+]

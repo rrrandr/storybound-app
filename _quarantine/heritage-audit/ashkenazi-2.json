@@ -1,0 +1,24 @@
+{
+  "age": 28,
+  "ancestry": "Ashkenazi",
+  "first_name": "Miriam",
+  "last_name": "Rothstein",
+  "height": "five-foot-four, compact",
+  "build": "slight, narrow-shouldered, all lean muscle from studio work",
+  "hair": "dark brown with a natural wave, worn long and often pulled into a messy knot at the nape of her neck; a few pieces always escape",
+  "complexion": "warm olive undertone with a scatter of freckles across her nose and cheekbones",
+  "face": "a face that broadcasts everything—sharp cheekbones, dark eyes set wide apart that widen when she's afraid or wanting, a mouth that trembles before she speaks when she's overwhelmed; the overall impression is of someone still becoming, still permeable to the world",
+  "signature_feature": "her hands—long-fingered, calloused from glassblowing, with a slight tremor when she's nervous that makes them hypnotic to watch",
+  "second_celebrated_feature": "the hollow at the base of her throat, visible when she pulls her hair back, that deepens when she swallows hard",
+  "signature_habits": "she bites the inside of her cheek when thinking through a design problem; she says 'oy vey' under her breath when frustrated, a leftover from her grandmother's kitchen; she touches glass or textured surfaces absently when anxious, as if grounding herself; she hums Yiddish folk melodies while working, especially when she's trying not to cry",
+  "occupation": "glass artist and studio owner—a small independent glassblowing studio in a converted warehouse, where she creates custom vessels and teaches; her work is gaining attention in high-end design circles",
+  "current_crisis": {
+    "event": "her studio's landlord—a shell company—has been bought by a development firm, and she has sixty days to vacate before demolition; she has no capital to relocate, no backup plan, and the space is irreplaceable for her kiln setup",
+    "hottest_emotion": "panic, sharp and electric, with an undertow of betrayal",
+    "immediate_want": "to find a way to keep the studio alive, or at minimum to save her equipment and her students' work before the walls come down"
+  },
+  "wound": {
+    "core": "she believes that good things she builds will be taken from her because she is not enough to hold them—that she is temporary, replaceable, not worth fighting for",
+    "surfacing_hint": "when someone shows her genuine attention or investment, she flinches slightly and pulls back; she apologizes for taking up space; she assumes abandonment before it happens"
+  }
+}

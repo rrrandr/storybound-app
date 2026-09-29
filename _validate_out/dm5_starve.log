@@ -1,0 +1,45 @@
+
+=== PHASE 1 · OFFER PARTITION (unseeded corridor Scene 1) ===
+mirror: {"ordinary":[],"offered":[],"starved":[],"declined":["Rook"],"pcLabel":"the one who carries the story","byLabelKeys":[],"populations":{"ordinary":0,"sourced":0,"unsourced":0}}
+offered=[] enum=[] not=[{"label":"Rook","reason":"no opportunity in this scene (no mention opportunity in this scene — roster or roster-adjacent membership only, and membership is not an opportunity)"}]
+PASS P0 the Scene-1 planner request was dispatched and an author request followed (delivery path alive)
+PASS P1 [D1] the permitted-labels enum equals the OFFERED candidate bullets (set equality, normalized; an empty offer ⇒ the "(nobody)" placeholder and no labels)
+SKIP P1 note  — this invocation offered NOBODY — D1 is proven only in the degenerate case here; the STARVE mode (a candidate exists, then is starved) is the non-degenerate proof
+PASS P2 the offered bullets equal the mirror's offered set and the block count matches
+PASS P3 POPULATION PARTITION: every ORDINARY label is offered XOR starved (once); declined ∩ ordinary = ∅ — cast membership is NOT an offer requirement
+PASS P4 the PC is outside the ordinary population and appears in no list; her Scene-1 beat is pc_opening_fusion (requested of the planner)
+SKIP P5 [D2] starved rendering  — no starved person in this invocation (set STARVE=<label> to force one through the harness seam)
+PASS P6 every DECLINED label is listed under NOT CANDIDATES with the no-opportunity reason, exactly once (or there are none)
+PASS P7 nobody appears twice across offered ∪ NOT CANDIDATES
+
+=== PHASE 2 · CONTINUATION DELIVERY (real Scene-2 request through the submit path) ===
+after Scene 1: {"turnCount":0,"scenes":0,"pages":1}
+before submit: {"turnCount":0,"scenes":0,"adv":false,"submitDisabled":false,"storyStage":"pre-intimacy","cliff":false}
+after submit: {"turnCount":0,"scenes":0,"adv":false} skeletonReqs=0 spineReqs=0 authorReqs=1
+scene-2 state: {"turnCount":0,"cp":[{"character":"Testa","pc_lens_operation":null,"not_physically_present":false}],"ep":{"target":"the weighhouse ledger","axis":"ritual","beat":"the weighhouse ledger is worn smooth along one edge where the rite has been performed the same way for generations"},"fu":null,"genStage2":null}
+FAIL C0 the submit path assembled a Scene-2 author request; the continuation skeleton planner was called ONCE and the scene-spine planner ran  — {"clicked":true,"author2":false,"skeleton":0,"spine":0,"turnCount":0}
+FAIL C1 PRESENCE SOURCE: the generated stage for scene 2 was ingested from the skeleton reply (provenance planner_stage) with Marcus Vale IN_PERSON  — null
+FAIL C2 BACKEND-MINTED C+: exactly one entry for Marcus Vale with facet_id + option_id from his portfolio (the planner's own character_plus was discarded)  — {}
+FAIL C3 the author receives Marcus Vale's block with MODE IN_PERSON and no absence marker  — (no block)
+FAIL C4 SOURCE TRUTH (backend-supplied, from the record) reaches the author exactly once and is the minted entry's truth  — {"n":0}
+FAIL C5 PC INTERPRETATION line is present once in his block (what the author must GOVERN the narration by)  — 
+FAIL C6 [DEFECT EXPECTED] the interpretation is a specific reading, NOT the source truth restated (the author is told never to state the truth)  — {}
+FAIL C7 [DEFECT EXPECTED] a lens operation (from the PC's archetype) is supplied and rendered for the continuation beat  — {}
+PASS C8 the planner's model-authored angle reaches nobody
+FAIL C9 E+ DELIVERY (ownership: skeleton planner FREE TEXT, not backend-issued ids): the assigned target and axis reach the author once  — {"ep":{"target":"the weighhouse ledger","axis":"ritual","beat":"the weighhouse ledger is worn smooth along one edge where the rite has been performed the same way for generations"},"line":""}
+FAIL C10 FUSION DELIVERY (ownership: skeleton planner free text): the person and target reach the author once  — (no fusion line)
+PASS C11 the E+ target is NOT validated against issued ids on this path (recorded, not celebrated): no environment_element_ids / target_object_id on the continuation skeleton
+
+request census: {"canonicalizer":2,"pcBodyBible":1,"liBodyBible":1,"UNCLASSIFIED:You rewrite 5 body-tell fields for a romance heroi":2,"UNCLASSIFIED:You are the architect of WHY THIS PAIR. Read the t":1,"rplot":1,"aplotGenerator":1,"aplotCompression":1,"antagonistBodyBible":1,"woundSwapTest":1,"scaffold":1,"planner":1,"author":1,"pa_lineEditor":1,"pa_continuation":2,"pa_gravity":1,"pa_bannedPhrase":2,"pa_archetype":1,"pa_liBibleField":1,"pa_reparagraph":2,"subplots":1,"pa_perception":1,"pa_calcification":1,"pa_voiceAnchor":1,"pa_preciseEditor":1,"pa_soundscape":1,"pa_memory":1}
+logs: log: [RUN-LEDGER] recorded — dynamic=Enemies · engine=COLLISION · li_presence=OFFSTAGE · li_gravity=? (?) · ledger size 1
+      log: [SCENE1:STAGE:PLANNER-OWNED] unseeded Scene 1 — the opening planner must return scene_mission + stage_contract over 3 issued ref(s): [pc:self, ent:the one who draws them forward, plot:aplot_x3a_d31bbf56_x2d_ee58_x2d_4492_x2d_aa69_x2d_387e9ebd9240:primary_antag
+      log: [SCENE1:CPLUS:OPTIONS] 0 grounded option(s) across 0 candidate(s)
+      log: [SCENE1:STAGE] source=planner-owned:pending settingOwner=planner presenceOwner=planner (PENDING — planner owns part of the stage) settingSource=planner-pending onStage=[Testa] offStage=[]
+      log: [SCENE1:STAGE:PLANNER-OWNED] resolved — source=generated:planner_stage · on stage [Testa] · mission="she understands the wish has already begun to cost her something she cannot name"
+      log: [SCENE1:STAGE:RESOLVED] settingSource=planner.opening_setting WHERE="customs house" onStage=[Testa]
+      log: [SCENE1:STAGE] physical=[Testa] · phone=[] · total=1
+      log: [RUN-LEDGER] recorded — dynamic=Enemies · engine=COLLISION · li_presence=OFFSTAGE · li_gravity=? (0%) · ledger size 1
+      log: [STAGED:INTERCEPT-CHECK] standard mount — _isStagedMode(): false | renderMode: literary | _stagedAwaitingProse: undefined | _stagedScene1Initiated: undefined
+      log: [FATE:STAGE-DIAG] turnCount=0 · scenes.length=n/a · _scene1OnStagePhysical=[Testa] (1) · _scene1OnPhone=[] · _lastProbeOnStagePhysical=null/undefined · _scene1Active=true
+
+DELIVERY MATRIX (STARVE=Marcus Vale): 19 rows · 9 passed · 10 failed → C0 C1 C2 C3 C4 C5 C6 C7 C9 C10

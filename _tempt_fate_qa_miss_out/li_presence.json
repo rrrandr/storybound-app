@@ -1,0 +1,17 @@
+{
+  "floor": {
+    "flagged": false,
+    "liPresent": true,
+    "hasDialogue": true,
+    "hasAnchoredBeat": false,
+    "reason": null
+  },
+  "dominance": {
+    "flagged": false,
+    "liBeatCount": 2,
+    "flatCount": 0,
+    "ratio": 0,
+    "flatBeats": [],
+    "reason": null
+  }
+}

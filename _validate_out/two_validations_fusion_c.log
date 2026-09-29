@@ -1,0 +1,6 @@
+=== fus5_stage_order · stage_order_dry.mjs · 19:39:07 ===
+fus5_stage_order: exit=0 · 62 checks · 62 passed · 0 failed · invalid_markers=0 · samples=27 suite_rss_max=332MB free_min=138MB server_rss_max=85MB
+=== fus6_skeleton · skeleton_delivery.mjs · 19:48:13 ===
+fus6_skeleton: exit=0 ·   404 passed · 0 failed · invalid_markers=0 · samples=29 suite_rss_max=2569MB free_min=77MB server_rss_max=85MB
+BOTH GREEN · 19:57:52
+leftover:        0

@@ -1,0 +1,24 @@
+{
+  "age": 28,
+  "ancestry": "Inuit",
+  "first_name": "Kiviuq",
+  "last_name": "Atanarjuat",
+  "height": "5'4\", compact and grounded",
+  "build": "lean-muscled, swimmer's shoulders, strong through the core",
+  "hair": "black, thick and straight, worn in a long braid down her back or twisted into a crown when she works",
+  "complexion": "warm golden-brown undertone, a faint scar along her left jawline from a childhood fall on ice",
+  "face": "a wide, open face with high cheekbones and deep-set dark eyes that telegraph every feeling before her mouth catches up—the kind of face that makes strangers trust her too quickly",
+  "signature_feature": "her hands—long-fingered, capable, with permanent calluses from printmaking and a habit of moving them when she speaks, as if sculpting the air into sense",
+  "second_celebrated_feature": "the hollow at the base of her throat, visible when she pulls her hair back, which the LI notices catches light when she breathes",
+  "signature_habits": "she hums while working—old Inuktitut lullabies her grandmother taught her, half-remembered; she keeps a thermos of strong black tea within arm's reach at all times; she touches her own collarbone when she's anxious, a self-soothing gesture; she speaks with her whole body, rarely still",
+  "occupation": "independent printmaker and small-press book designer; she runs a studio in a converted warehouse, takes commissions, teaches workshops, and is mid-project on a limited-edition artist's book when the story opens",
+  "current_crisis": {
+    "event": "her studio's landlord—a shell company owned by the LI's rival—has served a 30-day eviction notice; she has no capital to relocate, her equipment is bespoke and immobile, and the book project is 60% complete with a gallery opening in eight weeks",
+    "hottest_emotion": "panic threaded with a sharp, clarifying rage",
+    "immediate_want": "to find $80,000 in the next two weeks without losing control of her own work or owing anyone her soul"
+  },
+  "wound": {
+    "core": "she believes that wanting things—safety, stability, love—is a luxury that will be taken from her, so she has learned to want only what she can make with her own hands",
+    "surfacing_hint": "when someone offers help, her first instinct is to refuse; when she's cornered, she becomes very still and very quiet, as if bracing for impact"
+  }
+}

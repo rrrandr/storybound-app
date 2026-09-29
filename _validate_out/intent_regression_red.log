@@ -1,0 +1,28 @@
+=== directive excerpt ===
+  • Seren — IN_PERSON
+      SOURCE TRUTH — DO NOT STATE: FACET-TRUTH-A (source, never stated)
+      VISIBLE ACTION — MUST OCCUR: BEHAVIOR-A: she answers before the question ends
+      PC INTERPRETATION — MUST GOVERN THE NARRATION: as her attention moves onto it (below)
+      HOW HER ATTENTION MOVES ONTO IT (lens operation): OPERATION_A
+  • the presiding Dohkar — read: BEHAVIOR-B: he names the bent word before anyone asks
+      HOW HER ATTENTION MOVES ONTO IT (lens operation): OPERATION_B
+  • Halvern (first mention — the beat lands here) — ANTICIPATED; NOT PHYSICALLY PRESENT
+      SOURCE TRUTH — DO NOT STATE: FACET-TRUTH-C (source, never stated)
+      VISIBLE ACTION — MUST OCCUR: BEHAVIOR-C: he is spoken of as already on his way
+      PC INTERPRETATION — MUST GOVERN THE NARRATION: as her attention moves onto it (below)
+      HOW HER ATTENTION MOVES ONTO IT (lens operation): OPERATION_C
+  RECONSTRUCT each of these into ONE OR TWO natural sentences of finished prose: the VISIBLE ACTION happens, and the PC INTERPRETATION governs how it is narrated. The SOURCE TRUTH governs accuracy and must remain UNSTATED — never write it, never paraphrase it, never let a character say it.
+  DO NOT write the action and then append an explanatory diagnosis of it. Let the wording, the sequence, the consequence, or what she focuses on carry the interpretation. In every case a reader must be able to s
+
+PASS R1 normalization keeps pc_interpretation and pc_lens_operation on every entry
+FAIL R2 RICH branch (cited facet): the specific interpretation and the lens operation each render EXACTLY ONCE, alongside each other  — interpA=0 opA=1 dirLen=3183
+FAIL R3 FALLBACK branch (no cited facet): the specific interpretation and the lens operation each render EXACTLY ONCE too  — interpB=0 opB=1
+PASS R4 each visible action renders once
+PASS R5 [6a 6b 6c3] the absent recipient's head line carries first-mention tag, MODE and NOT PHYSICALLY PRESENT, once
+FAIL R6 [6b2] …and the same construction: SOURCE TRUTH once, interpretation once, lens operation once  — {"truthC":1,"interpC":0,"opC":1}
+PASS R7 [6e 6g] the NON-MATERIALISATION LAW reaches the author exactly once when an absent recipient exists
+PASS R8 [6f] the trusted-facet note is present once
+PASS R9 [6d] a PRESENT recipient carries a mode and NO absence marker
+PASS R10 CONTINUATION SHAPE: an entry with neither interpretation nor operation asks the author to COMPOSE through her ESTABLISHED lens (OPEN VEIN), names no operation, and does not restate the truth as the reading
+
+C+ RENDER REGRESSION (RED=interp): 10 rows · 7 passed · 3 failed

@@ -1,0 +1,85 @@
+written _validate_out/scene1_measure_E2E-LIVE.2026-09-09T17-39-05-252Z.json
+{
+  "mode": "E2E-LIVE",
+  "plannerCalls": 1,
+  "authorCalls": 0,
+  "aborted": [],
+  "cost": [
+    {
+      "role": "OPENING_PLANNER",
+      "status": 200,
+      "latencyMs": 17860,
+      "served": "grok-4.3",
+      "prompt_tokens": 22002,
+      "completion_tokens": 806,
+      "reasoning_tokens": 855,
+      "cached_tokens": 192,
+      "usd_list": 0.031655,
+      "xai_usd": 0.0314534,
+      "replyBytes": 3125,
+      "stageContractAt": [
+        "top"
+      ]
+    }
+  ],
+  "totalList": 0.031655,
+  "totalXaiUsd": 0.0314534,
+  "gate": {
+    "pinned": "FROM_START",
+    "openingState": "FROM_START",
+    "pinnedShape": "CARETAKING",
+    "shapeSeen": "CARETAKING",
+    "stateLogs": [
+      "[LI-ARRIVAL] FROM_START (engine=?, deferIntent=false, recent=)",
+      "[A-PLOT:SHAPE] using INVERTED pre-pick: Caretaking",
+      "[A-PLOT:READER-Q] Can this man actually love somebody?",
+      "[A-PLOT:SHAPE] persisted: Caretaking (CARETAKING) — readerQuestion: \"Can this man actually love somebody?\""
+    ],
+    "authorAttempts": 0,
+    "pages": 0,
+    "pageFile": null,
+    "pageChars": 0,
+    "fatal": "environment_pressure.text repeats the target's name — link by grounds, not by repetition",
+    "verdict": "FAIL-CLOSED (named): environment_pressure.text repeats the target's name — link by grounds, not by repetition"
+  },
+  "envelope": [
+    {
+      "top": [
+        "opening_spine",
+        "scene_skeleton",
+        "stage_contract"
+      ],
+      "spine": [
+        "pressure_source_type",
+        "pressure_source",
+        "hook_object",
+        "opening_actor_id",
+        "opening_beat",
+        "rising_beats",
+        "decision_beat",
+        "pc_career",
+        "opening_setting",
+        "environment_elements",
+        "li_texture_beat",
+        "pc_wound_anchor",
+        "pc_self_presentation_beat",
+        "scene_want",
+        "scene_mission",
+        "reader_state",
+        "pc_body_callback",
+        "antagonist_body_callback",
+        "staged_characters"
+      ],
+      "skeleton": [
+        "character_plus",
+        "pc_opening_fusion",
+        "environment_plus"
+      ],
+      "stageContractAt": [
+        "top"
+      ]
+    }
+  ],
+  "attempts": 1,
+  "retryReason": null
+}

@@ -1,0 +1,72 @@
+written _validate_out/scene1_measure_E2E-DRY.2026-09-09T04-09-57-487Z.json
+{
+  "mode": "E2E-DRY",
+  "plannerCalls": 1,
+  "authorCalls": 0,
+  "aborted": [],
+  "cost": [
+    {
+      "role": "OPENING_PLANNER",
+      "status": 200,
+      "latencyMs": 5,
+      "served": "grok-4.3",
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "reasoning_tokens": 0,
+      "cached_tokens": 0,
+      "usd_list": 0,
+      "xai_usd": null,
+      "replyBytes": 2197,
+      "stageContractAt": []
+    }
+  ],
+  "totalList": 0,
+  "totalXaiUsd": 0,
+  "gate": {
+    "authorAttempts": 0,
+    "pages": 0,
+    "fatal": "planner stage_contract rejected (absent) — the stage is not established",
+    "verdict": "FAIL-CLOSED (named): planner stage_contract rejected (absent) — the stage is not established"
+  },
+  "envelope": [
+    {
+      "top": [
+        "opening_spine",
+        "scene_skeleton"
+      ],
+      "spine": [
+        "pressure_source_type",
+        "pressure_source",
+        "hook_object",
+        "opening_beat",
+        "rising_beats",
+        "decision_beat",
+        "pc_career",
+        "opening_setting",
+        "li_texture_beat",
+        "pc_wound_anchor",
+        "pc_self_presentation_beat",
+        "scene_want",
+        "scene_mission",
+        "reader_state",
+        "pc_body_callback",
+        "li_body_callback",
+        "antagonist_body_callback",
+        "perceptual_signature_beat",
+        "staged_characters",
+        "opening_actor_id",
+        "environment_elements"
+      ],
+      "skeleton": [
+        "character_plus",
+        "fusion",
+        "pc_opening_fusion",
+        "environment_plus"
+      ],
+      "stageContractAt": []
+    }
+  ],
+  "attempts": 1,
+  "retryReason": null
+}
+DRY REHEARSAL FAILED: pages=0 fatal=planner stage_contract rejected (absent) — the stage is not established

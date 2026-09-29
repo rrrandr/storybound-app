@@ -1,0 +1,74 @@
+{
+  "afterB": {
+    "durable": [
+      {
+        "proposalId": "tfl_1"
+      }
+    ],
+    "invoked": false,
+    "scenes": 2
+  },
+  "dupSkipped": false,
+  "authorB": {
+    "at": 1790277686163,
+    "url": "/api/proxy",
+    "role": "STRUCTURE_GENERATOR",
+    "model": "grok-4-1-fast-reasoning",
+    "isClassifier": false,
+    "isAuthor": true,
+    "isPlanner": false,
+    "hasActive": false,
+    "hasCallback": true,
+    "activeWish": null,
+    "schemaAsksScope": false,
+    "schemaAsksClass": false,
+    "schemaClassConditional": false,
+    "schemaAsksInvalidatedPlans": false,
+    "hasDurable": false,
+    "mentionsWish": true,
+    "requiresOutcome": false,
+    "turnCount": 2,
+    "liveInvoked": false,
+    "liveWish": null,
+    "ledgerIds": [
+      "tfl_1"
+    ],
+    "ownedLedgerLast": {
+      "id": "tfl_1",
+      "sceneIdx": 0,
+      "callbackCount": 1,
+      "lastCallbackScene": 2
+    }
+  },
+  "plannerB": {
+    "at": 1790277686152,
+    "url": "/api/proxy",
+    "role": "STRUCTURE_GENERATOR",
+    "model": "grok-4-1-fast-non-reasoning",
+    "isClassifier": false,
+    "isAuthor": false,
+    "isPlanner": true,
+    "hasActive": false,
+    "hasCallback": false,
+    "activeWish": null,
+    "schemaAsksScope": false,
+    "schemaAsksClass": false,
+    "schemaClassConditional": false,
+    "schemaAsksInvalidatedPlans": false,
+    "hasDurable": true,
+    "mentionsWish": true,
+    "requiresOutcome": false,
+    "turnCount": 2,
+    "liveInvoked": false,
+    "liveWish": null,
+    "ledgerIds": [
+      "tfl_1"
+    ],
+    "ownedLedgerLast": {
+      "id": "tfl_1",
+      "sceneIdx": 0,
+      "callbackCount": 0,
+      "lastCallbackScene": null
+    }
+  }
+}

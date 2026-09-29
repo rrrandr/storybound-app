@@ -1,0 +1,35 @@
+{
+ "violations": [
+  {
+   "owner": "_repairHotOpening",
+   "violations": [
+    "create_dialogue:\"but let it bring Lirael the father who left her instead.\"",
+    "budget_exceeded_chars:1812>320",
+    "budget_exceeded_sentences:23>3",
+    "create_description:She lifted her voice and twisted the practiced words into a ",
+    "change_pov:15->6"
+   ]
+  }
+ ],
+ "preflight": [],
+ "reports": [
+  {
+   "validator": "li_social_proof",
+   "ok": false,
+   "type": "LI_SOCIAL_PROOF_GAP",
+   "detail": "LI named, no social signal in the window following first mention",
+   "liName": "Julian",
+   "firstMentionPosition": 1131,
+   "evidence": "through every First Favored present. Several Weave-Script patterns stuttered. A low murmur cut off. I knew the wording had come from a private confidence I had once given her in trust. She meant it as a gift. The crowd only knew the rite had twisted. Say it plainly — or let it sh…"
+  },
+  {
+   "validator": "li_social_proof",
+   "ok": false,
+   "type": "LI_SOCIAL_PROOF_GAP",
+   "detail": "LI named, no social signal in the window following first mention",
+   "liName": "Julian",
+   "firstMentionPosition": 832,
+   "evidence": "he words came out thin, scraped raw by the eyes on me. “I did nothing. The wish was hers. I only stepped forward when the misalignment hit. That is what any Sacrificiant would do.”\n\nA murmur ran through the crowd like wind through dry grass. Someone near the back muttered that th…"
+  }
+ ]
+}

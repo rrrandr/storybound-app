@@ -1,0 +1,39 @@
+### I don't know
+
+
+PLAYER MOVE — METABOLIZE, DO NOT SMOOTH OVER (HARD):
+The player just acted. Their literal input is CANON; the scene MUST react to it proportionally — characters respond in-character, the situation changes shape, consequences begin. Never ignore it, quietly normalize it into something tamer, or write as if it did not happen.
+  • PLAYER DID: "I don't know"
+
+
+### whatever
+
+
+PLAYER MOVE — METABOLIZE, DO NOT SMOOTH OVER (HARD):
+The player just acted. Their literal input is CANON; the scene MUST react to it proportionally — characters respond in-character, the situation changes shape, consequences begin. Never ignore it, quietly normalize it into something tamer, or write as if it did not happen.
+  • PLAYER DID: "whatever"
+
+
+### ...
+
+
+PLAYER MOVE — METABOLIZE, DO NOT SMOOTH OVER (HARD):
+The player just acted. Their literal input is CANON; the scene MUST react to it proportionally — characters respond in-character, the situation changes shape, consequences begin. Never ignore it, quietly normalize it into something tamer, or write as if it did not happen.
+  • PLAYER DID: "..."
+
+
+### sure
+
+
+PLAYER MOVE — METABOLIZE, DO NOT SMOOTH OVER (HARD):
+The player just acted. Their literal input is CANON; the scene MUST react to it proportionally — characters respond in-character, the situation changes shape, consequences begin. Never ignore it, quietly normalize it into something tamer, or write as if it did not happen.
+  • PLAYER DID: "sure"
+
+
+### __mustReact
+
+
+PLAYER MOVE — METABOLIZE, DO NOT SMOOTH OVER (HARD):
+The player just acted. Their literal input is CANON; the scene MUST react to it proportionally — characters respond in-character, the situation changes shape, consequences begin. Never ignore it, quietly normalize it into something tamer, or write as if it did not happen.
+  • PLAYER DID: "I don't know"
+  ↳ HIGH-IMPACT / OFF-SCRIPT INPUT (divergent): this DEVIATES from the expected beat. Do NOT steer back to the planned conversation as if nothing happened — the other character(s) react to THIS, the moment escalates or breaks from the plan, and the scene ends somewhere the plan did not predict. The story bends around the player; the player is not quietly overruled.

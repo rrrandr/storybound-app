@@ -1,0 +1,22 @@
+{
+  "weakTurn": {
+    "decided": true,
+    "why": "stages seed-RESERVED content early — markers [dohkar, sacrificiant, chayr, open] with \"convene\". A permitted label does not make it permitted content: LIRAEL’S FORMAL INQUIRY — WHERE AND WHEN: the presiding Dohkar has asserted the rite and the ruling on the Sacrificiant’s conduct are his, and Julian has publicly claimed authority"
+  },
+  "safeMode": {
+    "decided": true,
+    "why": "stages seed-RESERVED content early — markers [dohkar, sacrificiant] with \"convene\". A permitted label does not make it permitted content: LIRAEL’S FORMAL INQUIRY — WHERE AND WHEN: the presiding Dohkar has asserted the rite and the ruling on the Sacrificiant’s conduct are his, and Julian has publicly claimed authority"
+  },
+  "demand": {
+    "decided": false,
+    "why": null
+  },
+  "pressure": {
+    "decided": false,
+    "why": null
+  },
+  "ordinary": {
+    "decided": false,
+    "why": null
+  }
+}

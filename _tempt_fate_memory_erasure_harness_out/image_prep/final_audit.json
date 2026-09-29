@@ -1,0 +1,17 @@
+{
+  "imagePrepAbortsFromSection3": [
+    {
+      "url": "http://localhost:3000/api/chatgpt-proxy",
+      "method": "POST",
+      "at": 1790277802635,
+      "reason": "blocked: image-preparation request body, blockImagePreparation active"
+    },
+    {
+      "url": "http://localhost:3000/api/chatgpt-proxy",
+      "method": "POST",
+      "at": 1790277802652,
+      "reason": "blocked: image-preparation request body, blockImagePreparation active"
+    }
+  ],
+  "note": "section 3 above intentionally sent 2 image-prep-shaped requests to PROVE they are blocked — this section confirms no OTHER, incidental image-prep dispatch occurred anywhere else in the run"
+}

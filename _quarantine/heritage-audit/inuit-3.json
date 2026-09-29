@@ -1,0 +1,24 @@
+{
+  "age": 28,
+  "ancestry": "Inuit",
+  "first_name": "Kiviuq",
+  "last_name": "Atanarjuat",
+  "height": "5'4\", compact and grounded",
+  "build": "lean-muscled, the kind that comes from movement rather than gyms",
+  "hair": "black, straight, thick enough to hold a braid; she wears it down mostly, sometimes pulled back with a single carved bone clip",
+  "complexion": "warm golden-brown undertone; a small scar on her left cheekbone from a childhood fall on ice that she never bothers to hide",
+  "face": "a face that broadcasts feeling — wide-set dark eyes that go soft when she's thinking, a mouth quick to smile or frown, the kind of face that makes strangers trust her too fast",
+  "signature_feature": "her hands — long-fingered, capable, with a jeweler's precision; the way she touches things (fabric, a client's face, a sketch) with absolute attention",
+  "second_celebrated_feature": "the hollow at the base of her throat, visible when she's flushed or breathing hard — a place that catches light and draws the eye",
+  "signature_habits": "she talks with her hands, always; she keeps a small carved seal figurine on her workbench and touches it when she's uncertain; she hums old songs her grandmother taught her — Inuktitut phrases woven in without translation; she takes her coffee black and scalding; she locks the studio door at night by habit even in safe neighborhoods",
+  "occupation": "jewelry designer and metalsmith — owns a small independent studio in the city where she takes commissions and teaches workshops; her work is known for intricate traditional-inspired designs with modern materials",
+  "current_crisis": {
+    "event": "a major client — a prominent billionaire's wife — has accused her of copying a design and threatened a lawsuit that could destroy her studio's reputation and finances; the accusation is false, but the woman has resources and connections Kiviuq cannot match",
+    "hottest_emotion": "panicked betrayal — she trusted this client, showed her sketches early, and now feels gutted and exposed",
+    "immediate_want": "to prove her innocence without losing everything, and to understand how this happened"
+  },
+  "wound": {
+    "core": "she believes that if she is not useful, if she cannot create something of value, she has no right to take up space",
+    "surfacing_hint": "under pressure, she stops speaking; her hands go still; she becomes almost invisible, apologizing for existing"
+  }
+}

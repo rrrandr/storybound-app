@@ -1,0 +1,22 @@
+=== EXTRACTOR-ONLY LIVE RUN — AUTHORIZED ===
+    ceiling $0.020000 · output /Users/romantsukerman/storybound-app/_tempt_fate_fixtures/extractor_only_2026-09-26_23-42-18
+    roster: ["the assembly","the presiding Dohkar","Seren","Julian"]
+    prose : 813 chars
+
+==========================================================================================
+  dispatches      : 1 of 3 permitted
+  reserved        : $0.001020 of $0.020000
+  structurally OK : false
+  state unchanged : true
+  validation      : ["knowledgeStates[2].state invalid"]
+  citations       : ["the assembly: no evidenceQuote — every disposition must cite the line that establishes it","the presiding Dohkar: no evidenceQuote — every disposition must cite the line that establishes it","Seren: no evidenceQuote — every disposition must cite the line that establishes it","Julian: no evidenceQuote — every disposition must cite the line that establishes it"]
+
+  THE FIVE QUESTIONS:
+    1 citations present     : false
+    2 roster covered        : true
+    3 invoker anchor default: true
+    4 scope stated          : true
+    5 Julian resolved       : true  disposition=suspects
+
+  NO semantic verdict is rendered here. Whether the reading is RIGHT is a human call.
+  Evidence: /Users/romantsukerman/storybound-app/_tempt_fate_fixtures/extractor_only_2026-09-26_23-42-18

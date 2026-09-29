@@ -1,0 +1,24 @@
+{
+  "age": 28,
+  "ancestry": "Ashkenazi",
+  "first_name": "Miriam",
+  "last_name": "Feldman",
+  "height": "5'6\", lean and slightly long-limbed",
+  "build": "narrow through the shoulders, small-breasted, hip-forward carriage",
+  "hair": "dark brown, thick and wavy, worn long past her shoulders with a slight natural curl she doesn't fight — often escapes its braid or clip",
+  "complexion": "warm olive undertone with a scatter of freckles across her nose and upper cheekbones; one small dark mole on her left collarbone",
+  "face": "a face that broadcasts every feeling before her mouth catches up — wide-set dark eyes that widen with shock or narrow with concentration, a full mouth that trembles slightly when she's overwhelmed, high cheekbones that flush pink when she's embarrassed or angry, the overall impression is OPEN and UNGUARDED, a face that has not learned to lie",
+  "signature_feature": "her hands — long-fingered, expressive, ink-stained from work, constantly moving when she talks; the LI notices how they shake slightly when she's afraid, how deliberately she steadies them",
+  "second_celebrated_feature": "the small dark mole on her collarbone — he becomes aware of it when she's flustered and pulls her neckline aside without thinking, and it becomes a detail he cannot unsee",
+  "signature_habits": "she bites the inside of her left cheek when thinking hard, leaving small marks; she says 'oy vey' under her breath when frustrated (inherited from her grandmother Chana); she arranges objects on her desk in careful small clusters — pens, samples, sketches — as if creating order there might contain the chaos elsewhere; she touches her collarbone absently when nervous, fingers finding that mole",
+  "occupation": "textile designer and owner of a small independent studio in Brooklyn producing custom fabric commissions for high-end interior designers and boutique hotels — she works with hand-dyed silks, bespoke weaving, limited-run pattern development",
+  "current_crisis": {
+    "event": "her studio's primary fabric supplier — a family-owned mill in North Carolina she's relied on for four years — just announced a sudden closure in six weeks due to acquisition by a conglomerate; she has three major commissions due in eight weeks with no backup production capacity, and the financial hit will force her to close the studio or take on a predatory loan",
+    "hottest_emotion": "PANIC mixed with a sick sense of betrayal — she thought the relationship was solid, that she mattered to them",
+    "immediate_want": "to find an alternative supplier who can match the quality and timeline, or to find capital fast enough to bridge the gap without losing creative control"
+  },
+  "wound": {
+    "core": "she believes that if she works hard enough and cares deeply enough, people will not abandon her — but evidence keeps proving otherwise",
+    "surfacing_hint": "when someone she trusts lets her down, she goes very still and quiet, her eyes glassy, and then overcompensates by becoming frantically helpful to whoever disappointed her, as if she can fix the relationship through sheer effort"
+  }
+}

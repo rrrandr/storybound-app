@@ -1,0 +1,75 @@
+log: [BAKED] starter-scenes.js loaded — 3 package(s), 2 still PLACEHOLDER: starter_the_first_taste, starter_glass_house
+log: %c[LENS] perception-lens editorial pass ready — author-prompt-free, rotation+de-prime guarded color:#7ec77e;font-weight:bold
+log: %c[GROK:HONEST] harness ready ✓ — run: await window._scene1GrokHonestTest({pairs:3}) color:#7ec77e;font-weight:bold
+log: [CG:HELPERS] ready=true
+log: [Corridor] Stored 2 elements for stage: authorship
+log: [Authorship] Choice reset
+log: [Corridor] Authorship mount: Reset authorship choice for re-selection
+log: [Corridor] DOM updated. Mounted row 0: authorship
+log: [DSP] Hidden — stage authorship
+info: Connecting to 'http://sb-test.localhost/rest/v1/profiles?select=tier%2Cfortunes%2Cis_subscriber%2Csubscription_tier%2Cage_confirmed%2Ctos_version%2Cprivacy_version%2Cadult_ack_version%2Cromance_preferences%2Cavoidances%2Cfirst_tempt_fate_vision_triggered%2Cattraction_profile%2Cbilling_status%2Cbilli
+info: Connecting to 'http://sb-test.localhost/rest/v1/profiles?select=tier%2Cfortunes%2Cis_subscriber%2Csubscription_tier%2Cage_confirmed%2Ctos_version%2Cprivacy_version%2Cadult_ack_version%2Cromance_preferences%2Cavoidances%2Cfirst_tempt_fate_vision_triggered%2Cattraction_profile%2Cbilling_status%2Cbilli
+log: Profile hydrated. Subscribed: false | Tier: free | Keyhole: false | Fortunes: 0 | Resonance: Quiet
+info: Connecting to 'http://sb-test.localhost/rest/v1/purchase_intents?select=*&user_id=eq.00000000-0000-0000-0000-000000000001&status=eq.completed&resumed_at=is.null&order=created_at.desc&limit=1' violates the following Content Security Policy directive: "connect-src 'self' https://*.supabase.co wss://*.
+info: Connecting to 'http://sb-test.localhost/rest/v1/purchase_intents?select=*&user_id=eq.00000000-0000-0000-0000-000000000001&status=eq.completed&resumed_at=is.null&order=created_at.desc&limit=1' violates the following Content Security Policy directive: "connect-src 'self' https://*.supabase.co wss://*.
+log: [PHRASE-LEDGER] seeded 9 starter cooldown item(s).
+log: [PHRASE-LEDGER] story #1 — 9 entries kept (strong=9, mild=0). Cooldown decay: rarity × 3 stories, clamped [5, 30].
+log: [BAKED] mounting Scene 1 — starter_first_sacrifice v9.9.9-synthetic-test
+log: [LORE-LEDGER] scene 1 · candidates=0 glossed=0 ledger=0
+log: [SCENE-AMB] baked Scene 1 → neutral_quiet (packaged; classifier suppressed)
+log: [SCENE-LEDGER] +p1 kind=baked issue=1 uid=pg:03a69920-abc7-42b0-b5d7-0da9cda38dca planned="Seren spent her First Sacrifice on Lirael — “so that Lirael "
+log: [BAKED:EMITTED] parked on state._bakedEmitted (no verified consumer yet): sceneSummary, openState, obligations, ledgerSeeds, calcification, axes, expansions
+log: [FATE:STAGE-DIAG] turnCount=0 · scenes.length=n/a · _scene1OnStagePhysical=null/undefined · _scene1OnPhone=null/undefined · _lastProbeOnStagePhysical=null/undefined · _scene1Active=false
+warning: [FATE:AUTHORITY] Romantic card invoked without Storybeau — using fallback {cardId: temptation, presentCharacters: Array(5)}
+log: [FATE:AUTHORITY] Card target resolved {cardId: temptation, resolvedTarget: , isStorybeau: false, sceneCharacters: Array(5)}
+warning: [FATE:AUTHORITY] Romantic card invoked without Storybeau — using fallback {cardId: confession, presentCharacters: Array(5)}
+log: [FATE:AUTHORITY] Card target resolved {cardId: confession, resolvedTarget: , isStorybeau: false, sceneCharacters: Array(5)}
+warning: [FATE:AUTHORITY] Romantic card invoked without Storybeau — using fallback {cardId: boundary, presentCharacters: Array(5)}
+log: [FATE:AUTHORITY] Card target resolved {cardId: boundary, resolvedTarget: , isStorybeau: false, sceneCharacters: Array(5)}
+warning: [FATE:AUTHORITY] Romantic card invoked without Storybeau — using fallback {cardId: reversal, presentCharacters: Array(5)}
+log: [FATE:AUTHORITY] Card target resolved {cardId: reversal, resolvedTarget: , isStorybeau: false, sceneCharacters: Array(5)}
+log: [BAKED:OAS] handoff affordance mounted — this is the CG Book's gate
+log: [BOOT] Found unresumed purchase intent: undefined | type: undefined
+info: Connecting to 'http://sb-test.localhost/rest/v1/purchase_intents?id=eq.undefined' violates the following Content Security Policy directive: "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.stripe.com https://*.googleapis.com". The policy is report-only, so the violation has 
+info: Connecting to 'http://sb-test.localhost/rest/v1/purchase_intents?id=eq.undefined' violates the following Content Security Policy directive: "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.stripe.com https://*.googleapis.com". The policy is report-only, so the violation has 
+log: [CHAR-LEDGER] @scene 1 — tracking: 
+log: [CPLUS:LEDGER] committed pg:03a69920-abc7-42b0-b5d7-0da9cda38dca — spent=0 unverified=0 appearances=0
+info: Connecting to 'http://sb-test.localhost/rest/v1/profiles?select=tier%2Cfortunes%2Cis_subscriber%2Csubscription_tier%2Cage_confirmed%2Ctos_version%2Cprivacy_version%2Cadult_ack_version%2Cromance_preferences%2Cavoidances%2Cfirst_tempt_fate_vision_triggered%2Cattraction_profile%2Cbilling_status%2Cbilli
+info: Connecting to 'http://sb-test.localhost/rest/v1/profiles?select=tier%2Cfortunes%2Cis_subscriber%2Csubscription_tier%2Cage_confirmed%2Ctos_version%2Cprivacy_version%2Cadult_ack_version%2Cromance_preferences%2Cavoidances%2Cfirst_tempt_fate_vision_triggered%2Cattraction_profile%2Cbilling_status%2Cbilli
+log: Profile hydrated. Subscribed: false | Tier: free | Keyhole: false | Fortunes: 0 | Resonance: Quiet
+info: Connecting to 'http://sb-test.localhost/rest/v1/purchase_intents?select=*&user_id=eq.00000000-0000-0000-0000-000000000001&status=in.%28completed%2Cpending%29&order=created_at.desc&limit=1' violates the following Content Security Policy directive: "connect-src 'self' https://*.supabase.co wss://*.sup
+info: Connecting to 'http://sb-test.localhost/rest/v1/purchase_intents?select=*&user_id=eq.00000000-0000-0000-0000-000000000001&status=in.%28completed%2Cpending%29&order=created_at.desc&limit=1' violates the following Content Security Policy directive: "connect-src 'self' https://*.supabase.co wss://*.sup
+info: Connecting to 'http://sb-test.localhost/rest/v1/profiles?select=tier%2Cfortunes%2Cis_subscriber%2Csubscription_tier%2Cage_confirmed%2Ctos_version%2Cprivacy_version%2Cadult_ack_version%2Cromance_preferences%2Cavoidances%2Cfirst_tempt_fate_vision_triggered%2Cattraction_profile%2Cbilling_status%2Cbilli
+info: Connecting to 'http://sb-test.localhost/rest/v1/profiles?select=tier%2Cfortunes%2Cis_subscriber%2Csubscription_tier%2Cage_confirmed%2Ctos_version%2Cprivacy_version%2Cadult_ack_version%2Cromance_preferences%2Cavoidances%2Cfirst_tempt_fate_vision_triggered%2Cattraction_profile%2Cbilling_status%2Cbilli
+log: Profile hydrated. Subscribed: false | Tier: free | Keyhole: false | Fortunes: 0 | Resonance: Quiet
+log: [CHECKOUT_RETURN] Late profile re-sync (4000ms) — fortunes: undefined | subscribed: undefined
+log: [BAKED] Scene 1 committed to story state (turnCount=0, scenes=1)
+log: [STAGED:SUBMIT] _cgScreenplayMode is ON — using screenplay-native generator (skipping literary submit)
+log: [CG:SCAFFOLD] generation start (arcane_binding, gpt-4o-mini)
+log: [CG:SCAFFOLD] awaiting 3 Bible(s) before spine (P2 sequencing — latency over cost)
+log: [CG:SCAFFOLD] Bibles ready (3ms) — pc=n li=n antag=n
+log: [PROMPT-PROFILE] PRIMARY_AUTHOR · gpt-4o-mini · prompt=0 reasoning=0 visible=0 · turn 1
+log: [CG:SCAFFOLD:GEN] 21ms, model=gpt-4o-mini
+log: [CG:SCAFFOLD] thesis="undefined"
+log: [CG:SCAFFOLD] issues=1, motifs=0, forbidden=0
+log: [CG:SCAFFOLD] FULL OBJECT: {issueArcs: Array(1), characterIcebergs: Object, _version: 1, _generatedAt: 2026-09-10T20:26:35.326Z, storyId: 3fed2aa2-e46e-480a-9d59-bfec9ea1dec3}
+log: [CG:SCAFFOLD] active — scene_index=1, source=gpt-4o-mini, issues=1
+log: [PLAN-SPINE] scene=3 OBJECTIVE from authored spine: "THE PRICE AND THE THRESHOLD — step 7, then escalation. IN THIS ORDER: (A) The sacrifice is taken or identified"
+log: [SCENE1:PAYLOAD-REDUCE] before={crises:0, names:2, plotThreads:0} after={crises:1, names:≤1, plotThreads:minimal} (directive injected; mount-stage enforce backstops)
+log: [EMIT] WISH_AUTHORING_CORE gate=OPEN spineLoadBearing=YES openWithoutSpine=false gateTextChars=2241 scene=2 via=_buildFatelandsWishCoreDirective <- _buildCGScreenplayUserPrompt <- _runCGScreenplayGenInner text=" the presiding Dohkar Lirael must choose — break protocol for her ward"
+log: [EMIT] WISH_ADJUDICATION gate=closed spineLoadBearing=no openWithoutSpine=false gateTextChars=2241 scene=2 via=_buildFatelandsWishAdjudicationDirective <- _buildCGScreenplayUserPrompt <- _runCGScreenplayGenInner text=" the presiding Dohkar Lirael must choose — break protocol for her ward"
+log: [CG:PROMPT-SIZES] scene 1 · total=241577c(~60394t) | system=158706c(~39677t) · user=82871c(~20718t)
+log: [CG:SCREENPLAY] gen start (scene 1)
+log: [CG:SCREENPLAY:USER-PROMPT]
+
+LORE FIDELITY (HARD — ALL worlds): render any ESTABLISHED world element — a place, creature, institution, faction, history, or magic / technology / social system — ONLY as THIS story's canon establishes it (the world bible, the injected lore, and facts already on the pag
+log: [CG:SCREENPLAY] flavor "arcane_binding" → chain leads with Mistral-Small (connecting scene — Mistral Small primary)
+log: [CG:SCREENPLAY] generated via Mistral-Small in 17ms
+log: [CG:SCREENPLAY] gen returned in 19ms
+warning: [CG:SCREENPLAY] gen failed for scene 1 — falling back to literary path for THIS scene only. _cgScreenplayMode left enabled; next scene will try CG again.
+info: Connecting to 'http://sb-test.localhost/rest/v1/profiles?select=tier%2Cfortunes%2Cis_subscriber%2Csubscription_tier%2Cage_confirmed%2Ctos_version%2Cprivacy_version%2Cadult_ack_version%2Cromance_preferences%2Cavoidances%2Cfirst_tempt_fate_vision_triggered%2Cattraction_profile%2Cbilling_status%2Cbilli
+info: Connecting to 'http://sb-test.localhost/rest/v1/profiles?select=tier%2Cfortunes%2Cis_subscriber%2Csubscription_tier%2Cage_confirmed%2Ctos_version%2Cprivacy_version%2Cadult_ack_version%2Cromance_preferences%2Cavoidances%2Cfirst_tempt_fate_vision_triggered%2Cattraction_profile%2Cbilling_status%2Cbilli
+log: Profile hydrated. Subscribed: false | Tier: free | Keyhole: false | Fortunes: 0 | Resonance: Quiet
+log: [CHECKOUT_RETURN] Late profile re-sync (12000ms) — fortunes: undefined | subscribed: undefined
+info: Connecting to 'http://sb-test.localhost/rest/v1/profiles?select=tier%2Cfortunes%2Cis_subscriber%2Csubscription_tier%2Cage_confirmed%2Ctos_version%2Cprivacy_version%2Cadult_ack_version%2Cromance_preferences%2Cavoidances%2Cfirst_tempt_fate_vision_triggered%2Cattraction_profile%2Cbilling_status%2Cbilli
+info: Connecting to 'http://sb-test.localhost/rest/v1/profiles?select=tier%2Cfortunes%2Cis_subscriber%2Csubscription_tier%2Cage_confirmed%2Ctos_version%2Cprivacy_version%2Cadult_ack_version%2Cromance_preferences%2Cavoidances%2Cfirst_tempt_fate_vision_triggered%2Cattraction_profile%2Cbilling_status%2Cbilli

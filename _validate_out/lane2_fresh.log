@@ -1,0 +1,14 @@
+[fresh] story A init…
+  story A turn 1: retained=2  raw=3745 final=3952  spend=$0.322
+  story A turn 2: retained=1  raw=3951 final=2310  spend=$0.490
+[fresh] story B init…
+  story B turn 1: retained=7  raw=3879 final=4433  spend=$0.749
+  story B turn 2: retained=0  raw=4927 final=4917  spend=$0.897
+
+════ LANE-2 FRESH CAPTURE ════
+  A/t1  retained=2 rejected=0 noChange=3  raw=3745 final=3952
+  A/t2  retained=1 rejected=0 noChange=3  raw=3951 final=2310
+  B/t1  retained=7 rejected=0 noChange=2  raw=3879 final=4433
+  B/t2  retained=0 rejected=0 noChange=1  raw=4927 final=4917
+  scenes captured: 4/4   total spend: $0.897 (cap $1.00)
+  blind pack → _validate_out/lane2_blind_pack.json   key sealed separately

@@ -1,0 +1,33 @@
+[ACCESS:RESOLVER] Decision: {"decisionId":"NEW_STARTER_FREE","allowed":true,"costType":"free","reason":"starter_story_free","uiAction":"none","meta":{"requiresPremiumWorld":true,"hasUsableFortunesForNewStory":true,"globa
+[BETA] geo_gate_decision {"country":null,"signal":"ip","decision":"dev_allow","mode":"log","blocked":false,"storyId":null,"fateMode":null,"turnCount":0,"userLanguage":"en","storyLanguage":"en","generationLanguage":"en","
+[BODY-TELL:REROLL] pass=1
+   before: stress_tic="she twists a ring on her f" · desire_tell="a gentle tilt of her head " · impatience_tell="she taps her foot rhythmic" · confidence_tell="she speaks in full sentenc" · vuln
+[BODY-TELL:FAMILY] field=desire_tell family=THROAT_BREATH text="her throat contracts when she tastes something unexpectedly sweet, a f"
+[BEHAV-CANON:FAMILY] role=PC field=desire_tell bucket=TELL_BREATH varied text="her throat contracts when she tastes somethi"
+[PC-BODY-BIBLE] generated for Lirael: 
+  height/build:        five feet six inches · slender and agile 
+  hair:                dark auburn, wavy, usually worn loose around her shoulders 
+  complexion:          fair, a no
+[DEMAND-HINT] axis="Say it plainly — or let it show without words?" source=scene1_micro_decision universal=1 pressure=?
+[DEMAND-HINT] axis="Say it plainly — or let it show without words?" source=scene1_micro_decision universal=1 pressure=emotional
+[SCENE1:SCAFFOLD] micro_decision: library-only (Haiku no longer generates this field): "Say it plainly — or let it show without words?"
+[CONTRACT:COND] completion condition front-loaded (7 must-satisfy obligations)
+[CONTRACT:START] first draft satisfies 1/4 CRITICAL
+[CONTRACT] validate-only (default; set window._contractRepairOff=false to restore the pen) unmet=5
+[CONTRACT:LOOP 1] +0w · satisfied [] · CRITICAL remaining 3 · efficiency n/a
+[CONTRACT:LOOP] no improvement (3→3) — aborting
+[CONTRACT:DONE] CRITICAL 1/4 satisfied · +0c across 1 continuation(s)
+[SCENE1-GATE] Mandated closer already in final paragraph — bypassing gate (contract honored).
+  [li_on_stage] Julian is bodily present (1 presence cue) despite the off-stage contract — references are fine, but the LI must not speak/act/be touched on-page
+[SCENE1-GATE] Surgical edit attempt 1 → mistral-small (targeted rewrite, preserves voice/length/architecture; Haiku BANNED for prose, Roman 2026-06-26)
+[SCENE1-GATE] Regen attempt 1 accepted — all (non-decision) checks pass, soft fails cleared.
+[SCENE1:VAL] {outcome: regen_accepted, hookPass: true, decisionPass: true, decisionBasePass: true, decisionShapePass: true}
+[DECISION] _repairLIRelationalValue ENTERED
+[PC-PICTURABILITY:SKIP] HOT_CRISIS Scene-1 — deferring PC establishment to avoid mid-crisis inventory dump
+[DECISION] _repairInterlocutorPicturability ENTERED
+[DECISION] _repairCalcifiedMoves ENTERED
+[SCENE-DYNAMICS] turn=0 body=8 reused=0 dialogue=2 action=1 decision=0 interrupt=1 reloc=0 env=5 once=2
+[HOT-RENDER:GATE] functional fails=[no_li_250] (n=1) · rendered=COLD_DISRUPTION · in-motion=0 · container-opener=false ⟹ REPAIR FIRES
+[HOT-RENDER] VALIDATE-ONLY (default) — fails=[no_li_250] rendered=COLD_DISRUPTION in-motion=0. Reporting, not rewriting. Restore with window._hotPenOff = false.
+[DECISION] _repairCalcifiedMoves ENTERED
+[SCENE-BUDGET:COUNT] scene=adc24847-acce-4136-b465-7e49b117406c:0 repair=0 polish=0 fallback=0 regen=0 cosmetic=0/2 (conditional spent=0/4) skipped=[] provenance=original

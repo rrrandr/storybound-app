@@ -1,0 +1,85 @@
+=== PROXY NO-FALLBACK CONTROL (zero network, $0) ===
+  global.fetch is stubbed — no request leaves this process.
+
+
+=== 1. WITHOUT _noFallback: ONE client request becomes THREE upstream calls ===
+[SPECIALIST-PROXY] Client preferredModel: grok-4.3 → chain reordered.
+[SPECIALIST-PROXY] Role: STRUCTURE_GENERATOR, Model chain: grok-4.3 → grok-4-1-fast-reasoning → grok-4-1-fast-non-reasoning
+[SPECIALIST-PROXY] Trying model 1/3: grok-4.3
+[PROXY] SB model override -> grok-4.3 (effort high)
+[SPECIALIST-PROXY] Model grok-4.3 TIMED OUT after 0ms (>90000ms hang guard) — advancing chain
+[SPECIALIST-PROXY] Trying model 2/3: grok-4-1-fast-reasoning
+[PROXY] SB model override -> grok-4.3 (effort high)
+[SPECIALIST-PROXY] Model grok-4-1-fast-reasoning TIMED OUT after 0ms (>90000ms hang guard) — advancing chain
+[SPECIALIST-PROXY] Trying model 3/3: grok-4-1-fast-non-reasoning
+[PROXY] SB model override -> grok-4.3 (effort high)
+[SPECIALIST-PROXY] Model grok-4-1-fast-non-reasoning TIMED OUT after 0ms (>90000ms hang guard) — advancing chain
+[SPECIALIST-PROXY] Entire model chain exhausted. Last error: {
+  error: {
+    message: 'xAI call for grok-4-1-fast-non-reasoning exceeded 90000ms (hang guard tripped)'
+  }
+}
+    upstream attempts: 3  models: ["grok-4.3","grok-4.3","grok-4.3"]
+  ✓ RED PROOF — the chain retries, so a single audit can cost multiple billable calls
+  ✓ ...and every retry calls grok-4.3 again, so _sbModelOverride pins the MODEL but not the COUNT
+
+=== 2. WITH _noFallback under a FORCED TIMEOUT: exactly one upstream call ===
+[SPECIALIST-PROXY] _noFallback — chain reduced to ONE entry: grok-4.3
+[SPECIALIST-PROXY] Client preferredModel: grok-4.3 → chain reordered.
+[SPECIALIST-PROXY] Role: STRUCTURE_GENERATOR, Model chain: grok-4.3
+[SPECIALIST-PROXY] Trying model 1/1: grok-4.3
+[PROXY] SB model override -> grok-4.3 (effort high)
+[SPECIALIST-PROXY] Model grok-4.3 TIMED OUT after 0ms (>90000ms hang guard) — advancing chain
+[SPECIALIST-PROXY] Entire model chain exhausted. Last error: {
+  error: {
+    message: 'xAI call for grok-4.3 exceeded 90000ms (hang guard tripped)'
+  }
+}
+    upstream attempts: 1   status: 504
+  ✓ EXACTLY ONE upstream xAI call, proven where it is countable
+  ✓ ...and the failure is RETURNED, not silently retried
+
+=== 3. WITH _noFallback under a FETCH ERROR: same guarantee ===
+[SPECIALIST-PROXY] _noFallback — chain reduced to ONE entry: grok-4.3
+[SPECIALIST-PROXY] Client preferredModel: grok-4.3 → chain reordered.
+[SPECIALIST-PROXY] Role: STRUCTURE_GENERATOR, Model chain: grok-4.3
+[SPECIALIST-PROXY] Trying model 1/1: grok-4.3
+[PROXY] SB model override -> grok-4.3 (effort high)
+[SPECIALIST-PROXY] Model grok-4.3 FETCH ERROR after 0ms: socket hang up — advancing chain
+[SPECIALIST-PROXY] Entire model chain exhausted. Last error: { error: { message: 'xAI fetch failed for grok-4.3: socket hang up' } }
+    upstream attempts: 1   status: 502
+  ✓ exactly one upstream call on a transport error too
+
+=== 4. THE SUCCESS PATH REPORTS WHAT ACTUALLY ANSWERED ===
+[SPECIALIST-PROXY] _noFallback — chain reduced to ONE entry: grok-4.3
+[SPECIALIST-PROXY] Client preferredModel: grok-4.3 → chain reordered.
+[SPECIALIST-PROXY] Role: STRUCTURE_GENERATOR, Model chain: grok-4.3
+[SPECIALIST-PROXY] Trying model 1/1: grok-4.3
+[PROXY] SB model override -> grok-4.3 (effort high)
+[SPECIALIST-PROXY] latency=0ms model=grok-4.3 effort=high (chain="grok-4.3") status=200
+[SPECIALIST-PROXY] ✓ Model grok-4.3 succeeded
+    _orchestration: {"role":"STRUCTURE_GENERATOR","model":"grok-4.3","chainEntry":"grok-4.3","resolvedModel":"grok-4.3","reasoningEffort":"high","upstreamAttempts":1,"isSpecialistRenderer":true,"timestamp":"2026-09-26T04:41:25.158Z"}
+  ✓ one upstream call on success
+  ✓ upstreamAttempts === 1 is REPORTED, so a caller can verify containment
+  ✓ resolvedModel names the model actually called, not the chain label
+  ✓ the upstream request really did name grok-4.3 at reasoning high
+  ✓ the provider's own cost ticks survive for per-audit telemetry
+
+=== 5. _noFallback DOES NOT LEAK INTO OTHER CALLERS ===
+[SPECIALIST-PROXY] Client preferredModel: grok-4.3 → chain reordered.
+[SPECIALIST-PROXY] Role: STRUCTURE_GENERATOR, Model chain: grok-4.3 → grok-4-1-fast-reasoning → grok-4-1-fast-non-reasoning
+[SPECIALIST-PROXY] Trying model 1/3: grok-4.3
+[SPECIALIST-PROXY] Model grok-4.3 TIMED OUT after 0ms (>90000ms hang guard) — advancing chain
+[SPECIALIST-PROXY] Trying model 2/3: grok-4-1-fast-reasoning
+[SPECIALIST-PROXY] Model grok-4-1-fast-reasoning TIMED OUT after 0ms (>90000ms hang guard) — advancing chain
+[SPECIALIST-PROXY] Trying model 3/3: grok-4-1-fast-non-reasoning
+[SPECIALIST-PROXY] Model grok-4-1-fast-non-reasoning TIMED OUT after 0ms (>90000ms hang guard) — advancing chain
+[SPECIALIST-PROXY] Entire model chain exhausted. Last error: {
+  error: {
+    message: 'xAI call for grok-4-1-fast-non-reasoning exceeded 90000ms (hang guard tripped)'
+  }
+}
+  ✓ a caller that omits the flag keeps its full fallback chain, unchanged
+
+======================================================================================
+  11/11 assertions passed

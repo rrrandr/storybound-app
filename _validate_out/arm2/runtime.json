@@ -1,0 +1,79 @@
+{
+ "violations": [],
+ "preflight": [],
+ "reports": [
+  {
+   "validator": "li_social_proof",
+   "ok": false,
+   "type": "LI_SOCIAL_PROOF_GAP",
+   "detail": "LI named, no social signal in the window following first mention",
+   "liName": "Julian",
+   "firstMentionPosition": 1189,
+   "evidence": "The Dohkar’s Weave-Script stuttered violet. A guest near the edge drew a sharp breath. Say it plainly — or let it show without words? I could not speak. The gossamer band across my mouth muffled everything to a thick sound. My hands stayed at my sides, but the weight of every gaz…"
+  },
+  {
+   "validator": "hot_opening",
+   "type": "OPENING_TEMPERATURE",
+   "ok": false,
+   "failures": [],
+   "renderedTemp": "COLD_DISRUPTION",
+   "inMotionHits": 0,
+   "containerOpener": false,
+   "evidence": "The Dohkar’s hand lifted, palm out, and the clearing fell silent except for the soft rustle of veilwood leaves. Seren knelt in the center, aqua skin luminous under the gossamer tunic, pale coral hair falling forward as she bowed her head. Her Weave-Script glowed steady gold along"
+  },
+  {
+   "validator": "li_social_proof",
+   "ok": false,
+   "type": "LI_SOCIAL_PROOF_GAP",
+   "detail": "LI named, no social signal in the window following first mention",
+   "liName": "Julian",
+   "firstMentionPosition": 510,
+   "evidence": "ds began to form behind the band across my mouth. The tremble started at my wrist, a small thing, but it was enough. The ceremonial vase at the edge of the spiralgrass tipped, the sound of it shattering cutting through everything else. Shards scattered across the crimson blades l…"
+  },
+  {
+   "validator": "pc_picturability",
+   "type": "PC_PICTURABILITY_GAP",
+   "ok": false,
+   "evidence": "The Dohkar’s gaze found me across the broken circle. “If you have words for what just happened, now is the time.”\n\nMy hand rose without permission, the deck still clutched tight, and the words began to form behind the band across my mouth. The tremble started at my wrist, a small"
+  },
+  {
+   "validator": "semantic_rewrite",
+   "type": "SEMANTIC_EDIT_REQUESTED",
+   "label": "flavor-physics",
+   "instruction": "CRITICAL: This scene MUST express the world's defining mechanic.\nWorld flavor: Arcane Binding\nScene does not express flavor physics for \"arcane_binding\". Expected keywords: binding, spell, contract, g"
+  },
+  {
+   "validator": "semantic_rewrite",
+   "type": "SEMANTIC_EDIT_REQUESTED",
+   "label": "tension-gate",
+   "instruction": "TENSION REPAIR DIRECTIVE (CRITICAL — scene failed tension gate):\n1. Introduce immediate conflict in the first 1-2 lines — a demand, disruption, reveal, or emotional push directed at the player.\n2. Con"
+  },
+  {
+   "validator": "li_social_proof",
+   "ok": false,
+   "type": "LI_SOCIAL_PROOF_GAP",
+   "detail": "LI named, no social signal in the window following first mention",
+   "liName": "Julian",
+   "firstMentionPosition": 756,
+   "evidence": " spiralgrass beneath my feet seemed to pulse with a life of its own, reminding me of the weight of the expectations pressing down on my shoulders. A sudden noise from the threshold—a sharp crack, like a branch snapping underfoot—drew my attention and heightened the crack's echo s…"
+  },
+  {
+   "validator": "pc_picturability",
+   "type": "PC_PICTURABILITY_GAP",
+   "ok": false,
+   "evidence": "The clearing felt like it was holding its breath, anticipation thickening the air. I turned my gaze to the crowd, hoping to find some reassurance among the sea of familiar faces. Yet, each face seemed to blend into another, the comforting familiarity I sought slipping just out of"
+  },
+  {
+   "validator": "semantic_rewrite",
+   "type": "SEMANTIC_EDIT_REQUESTED",
+   "label": "fate-consequence",
+   "instruction": "\n5TH-PERSON FATE VOICE ENFORCEMENT (CRITICAL — PREVIOUS OUTPUT FAILED):\n\nThe Story / Fate voice must be rewritten. Regenerate with these constraints:\n\n\nFATE MAY ONLY:\n- Observe (\"The story watched...\""
+  },
+  {
+   "validator": "tension_gate",
+   "type": "LOW_TENSION",
+   "ok": false,
+   "evidence": "The clearing felt like it was holding its breath, anticipation thickening the air. I turned my gaze to the crowd, hoping to find some reassurance among the sea of familiar faces. Yet, each face seemed to blend into another, the comforting familiarity I sought slipping just out of"
+  }
+ ]
+}

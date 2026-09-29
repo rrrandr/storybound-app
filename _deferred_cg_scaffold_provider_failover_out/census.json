@@ -1,0 +1,38 @@
+[
+  {
+    "kind": "oasDialogue",
+    "url": "/api/mistral-proxy",
+    "beforeSubmit": true,
+    "t": 1789712525497
+  },
+  {
+    "kind": "fatePreviews",
+    "url": "/api/mistral-proxy",
+    "beforeSubmit": true,
+    "t": 1789712529950
+  },
+  {
+    "kind": "scaffold",
+    "url": "/api/mistral-proxy",
+    "beforeSubmit": false,
+    "t": 1789712530513
+  },
+  {
+    "kind": "scaffold",
+    "url": "/api/proxy",
+    "beforeSubmit": false,
+    "t": 1789712530516
+  },
+  {
+    "kind": "sceneSpine",
+    "url": "/api/mistral-proxy",
+    "beforeSubmit": false,
+    "t": 1789712530523
+  },
+  {
+    "kind": "sceneSpine",
+    "url": "/api/mistral-proxy",
+    "beforeSubmit": false,
+    "t": 1789712530526
+  }
+]

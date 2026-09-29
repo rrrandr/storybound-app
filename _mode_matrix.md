@@ -1,0 +1,25 @@
+# Mode Matrix — permanent harness invariant (Roman, 2026-09-16 corrective pass)
+
+**Invariant: no harness may silently force `renderMode`/`currentEngine` (or launch by calling
+`window.handleBeginStory()`/`window.handleBeginGraphicNovel()` directly instead of the real UI
+click path) unless it explicitly labels itself, in its own header comment and console banner, as
+a deliberate ISOLATED-MODE test.** A harness that violates this must say so in its own name or
+header (e.g. "FORCES LITERARY — isolated-mode test, not a production-route proof").
+
+Verified this pass, live from the running app, not from memory or assumption:
+
+| Starter / population | Real `render_mode` (from `window.STARTER_STORIES`) | Real engine that fires | Evidence |
+|---|---|---|---|
+| **First Sacrifice** (`starter_first_sacrifice`) | `'staged_story_mode'` | `handleBeginStory()` (NOT `handleBeginGraphicNovel()`) — `state.currentEngine` stays `'literary'` (legacy flag, doesn't flip on this path), `state.renderMode` correctly shows `'staged_story_mode'`. The CG/OAS behavior is driven by `_isStagedMode()` checks *inside* `handleBeginStory()` and by a separate OAS dialogue subsystem, not by a different top-level entry function. | `_cg_ground_truth_census.mjs` run, real click path (Library → shelf → zoom → `#bakedOASEnterBtn` → `#buGoBtn`), zero mode override, hard runtime assertion PASSED (`expected.render_mode === actual.renderMode`). |
+| **Glass House** (`starter_glass_house`) | *(no `render_mode` field at all)* | `handleBeginStory()`, literary by absence-of-override | `grep` of its `STARTER_STORIES` entry (`public/app.js` ~126770): no `render_mode` key present, confirming the code comment "No render_mode → literary shelf template + literary begin flow." Not independently re-driven through a real click census this pass — confirmed by static read only. |
+| **Corridor** (reader-generated) | N/A — no `STARTER_STORIES` entry; not a fixed starter | `handleBeginStory()`, literary by the app's own hard default (`state.currentEngine = 'literary'` set unconditionally at init, `public/app.js` ~162686) unless the reader explicitly picks a "Cinematic" modality via its own UI toggle (comment: "the CTA stays disabled until the user explicitly picks a modality — defensive UX so the choice is conscious"). | Static read only, not independently re-driven through a real click census this pass. |
+
+## Known this-session violations of the invariant (flagged, NOT fixed in this pass)
+
+- **`_scene1_call_census.mjs`** — hardcodes `renderMode:'literary', currentEngine:'literary'` AND calls `window.handleBeginStory()` directly via `page.evaluate`, bypassing the real click path and the real `_bakedSetupOnly` state-machine entirely. Its "2 calls, planner+author" result does not reflect First Sacrifice's real route AND (separately, found this pass) does not reflect the real `_bakedSetupOnly` invocation mode either — see finding below.
+- **`_tier0_seeded_first_page_live_wiring_proof.mjs`** and **`_tier0_li_cg_editor_defer_live_wiring_proof.mjs`** — both directly `page.evaluate`-inject `window.state` with `_starterId: 'starter_first_sacrifice'` and call the generator functions (`window._generatePCBodyBible()` etc.) directly, without going through the real click path or setting the real render mode context. Their PC/LI-adapter-specific findings likely still hold (those adapters gate only on Scene-1 + seed facets, not render mode — confirmed independently this pass by the ground-truth census, where the bible calls correctly stayed silent under the REAL staged_story_mode too), but the files should be relabeled as isolated-mode tests per the invariant, not left implying they prove production behavior.
+- **`_tiered_provider_policy_control.mjs`** — does NOT force render mode (uses the real click path, correctly reaches `staged_story_mode` implicitly) — **compliant with the invariant on mode**, but it separately neutralizes `cPlusFacets` to disable Tier 0 eligibility, which is a *different*, disclosed, labeled mutation (already commented in the file) for a different testing purpose. Not a mode violation.
+
+## A second, independent finding this pass exposed (beyond the render-mode issue)
+
+`_unlockBakedGenesis()` (`public/app.js` ~136381) calls `handleBeginStory()` with `state._bakedSetupOnly = true`, and its own header comment states this mode "builds the Bibles / R-plot / A-plot / spine / sysPrompt, and returns **before authoring anything**." The ground-truth census (which lets this real flag get set naturally, since it never bypasses `_unlockBakedGenesis`) shows ZERO `OPENING_PLANNER` and ZERO `AUTHOR` calls fire for First Sacrifice's real launch — consistent with that comment. `_scene1_call_census.mjs`, by calling `window.handleBeginStory()` directly without going through `_unlockBakedGenesis`, never sets `_bakedSetupOnly` and so exercises a DIFFERENT invocation mode of `handleBeginStory()` than the real baked-starter flow ever uses — a second, independent reason its historical "OPENING_PLANNER + AUTHOR" observations do not describe First Sacrifice's real behavior, separate from the render-mode issue.

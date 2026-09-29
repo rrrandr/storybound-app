@@ -1,0 +1,32 @@
+=== EXTRACTOR-ONLY LIVE RUN — AUTHORIZED ===
+    ceiling $0.050000 · output /Users/romantsukerman/storybound-app/_tempt_fate_fixtures/extractor_only_2026-09-27_06-02-49
+    PROVIDER COMPARISON: grok-4.3, unchanged prompt
+    roster: ["the assembly","the presiding Dohkar","Seren","Julian"]
+    prose : 813 chars
+    upstream settled: captured, upstream_raw_response.json + upstream_receipt.json
+
+==========================================================================================
+  dispatches      : 0 of 3 permitted
+  reserved        : $0.012500 of $0.020000
+  structurally OK : false
+  state unchanged : true
+  validation      : ["Julian: suspicionFromResidue is true but disposition is \"retained\" — residue-driven suspicion belongs to \"suspects\" or \"partial\""]
+
+  THE FIVE QUESTIONS:
+    1 citations present     : true
+    2 roster covered        : true
+    3 invoker anchor default: true
+    4 scope stated          : true
+    5 Julian resolved       : true  disposition=retained
+      cited: "Julian has not moved, yet his gaze finds mine across the clearing. "The question stands.""
+
+  PROVIDER COMPARISON:
+    served by       : grok-4.3   (chain entry grok-4.3, effort high)
+    upstream attempts: 1   (must be 1 — _noFallback)
+    usage           : {"prompt_tokens":2619,"completion_tokens":859,"total_tokens":3970,"prompt_tokens_details":{"text_tokens":2619,"audio_tokens":0,"image_tokens":0,"cached_tokens":192},"completion_tokens_details":{"reasoning_tokens":492,"audio_tokens":0,"accepted_prediction_tokens":0,"rejected_prediction_tokens":0},"num_sources_used":0,"cost_in_usd_ticks":64496500}
+    reasoning tokens: 492  (billed as output, NOT bounded by max_tokens)
+    over max_tokens : 0 completion tokens beyond the 3200 asked for
+    measured        : $0.005421  against $0.012500 reserved
+
+  NO semantic verdict is rendered here. Whether the reading is RIGHT is a human call.
+  Evidence: /Users/romantsukerman/storybound-app/_tempt_fate_fixtures/extractor_only_2026-09-27_06-02-49

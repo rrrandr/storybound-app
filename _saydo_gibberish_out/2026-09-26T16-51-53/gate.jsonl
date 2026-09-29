@@ -1,0 +1,7 @@
+{"kind":"abort-undeclared","url":"http://localhost:3000/api/csp-report","method":"POST","reason":"no registered stub or real-lane for this path","at":1790441514362,"loggedAt":1790441514362}
+{"kind":"abort-undeclared","url":"http://localhost:3000/api/config","method":"GET","reason":"no registered stub or real-lane for this path","at":1790441524469,"loggedAt":1790441524469}
+{"kind":"abort-undeclared","url":"http://localhost:3000/api/csp-report","method":"POST","reason":"no registered stub or real-lane for this path","at":1790441524478,"loggedAt":1790441524478}
+{"kind":"abort-undeclared","url":"http://localhost:3000/api/geo","method":"GET","reason":"no registered stub or real-lane for this path","at":1790441524638,"loggedAt":1790441524638}
+{"kind":"abort-undeclared","url":"http://localhost:3000/api/beta-events","method":"POST","reason":"no registered stub or real-lane for this path","at":1790441532481,"loggedAt":1790441532481}
+{"kind":"abort-undeclared","url":"http://localhost:3000/api/beta-events","method":"POST","reason":"no registered stub or real-lane for this path","at":1790441532521,"loggedAt":1790441532521}
+{"kind":"abort-undeclared","url":"http://localhost:3000/api/image","method":"POST","reason":"no registered stub or real-lane for this path","at":1790441532521,"loggedAt":1790441532521}

@@ -1,0 +1,50 @@
+{
+ "stub": "The kiln room was cold for the first time in a year, and the gauge needle had already begun to slide. I set both palms on the workbench and counted the seconds between ticks.\n\nFlour and slip had dried in the lines of my knuckles. I wiped them on the apron and hated how the streak made me look unfinished.\n\n<<MICRO_EXPRESSION>>\nSay it plainly — or let it show without words?\n<<CONTINUE>>\n\nThe way he set the document down without lifting his eyes from the page came back to me, and the ache started low in my belly again.\n\nThe vent fan ticked once, then twice. I kept my hands on the bench because moving them would mean checking the gauge again. I could still see Rook's long hands lying still on the table, the grey eyes not lifting.\n\nI kept my hands on the bench because moving them would mean checking the gauge again. The refrain was the only steady thing in the room.\n\nThe needle dropped another two degrees while I watched it, and the glaze on the tall vase was still wet enough to run.\n\nIf I opened the door now the piece would cool too fast and crawl. If I left it sealed the vase would crack from the inside out.\n\nMy hand tightened around my great-grandmother's old tarot deck. I didn't remember bringing it. I toyed with the idea of letting the cards decide.",
+ "dom": [
+  {
+   "tag": "P",
+   "cls": "",
+   "text": "The kiln room was cold for the first time in a year, and the gauge needle had already begun to slide. I set both palms on the workbench and counted the seconds between ticks."
+  },
+  {
+   "tag": "P",
+   "cls": "",
+   "text": "Flour and slip had dried in the lines of my knuckles. I wiped them on the apron and hated how the streak made me look unfinished."
+  },
+  {
+   "tag": "P",
+   "cls": "",
+   "text": "The way he set the document down without lifting his eyes from the page came back to me, and the ache started low in my belly again."
+  },
+  {
+   "tag": "P",
+   "cls": "",
+   "text": "The vent fan ticked once, then twice. I kept my hands on the bench because moving them would mean checking the gauge again. I could still see Rook's long hands lying still on the table, the grey eyes not lifting."
+  },
+  {
+   "tag": "DIV",
+   "cls": "scene1-micro-expr sme-hydrated",
+   "text": "Say it plainly — or let it show without words?"
+  },
+  {
+   "tag": "P",
+   "cls": "",
+   "text": "I kept my hands on the bench because moving them would mean checking the gauge again. The refrain was the only steady thing in the room."
+  },
+  {
+   "tag": "P",
+   "cls": "",
+   "text": "The needle dropped another two degrees while I watched it, and the glaze on the tall vase was still wet enough to run."
+  },
+  {
+   "tag": "P",
+   "cls": "",
+   "text": "If I opened the door now the piece would cool too fast and crawl. If I left it sealed the vase would crack from the inside out."
+  },
+  {
+   "tag": "P",
+   "cls": "",
+   "text": "My hand tightened around my great-grandmother's old tarot deck. I didn't remember bringing it. I toyed with the idea of letting the cards decide."
+  }
+ ]
+}

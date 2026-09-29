@@ -1,0 +1,90 @@
+=== SELECTIVE CANON AUDITOR INTEGRATION PROOF (zero dispatches, $0) ===
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/csp-report
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/config
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/csp-report
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/geo
+
+=== 1. THE AUDITOR IS ENABLED, AND SELECTIVE ===
+  ✓ the semantic auditor is enabled by default
+  ✓ an explicit false still disables it outright
+
+=== 2. AN ORDINARY PLAN COSTS NOTHING — ZERO MODEL CALLS ===
+    trigger reasons: []
+  ✓ an ordinary plan is NOT flagged risky
+  ✓ it is ALLOWED
+  ✓ ...on the deterministic path, unpaid
+  ✓ ZERO requests reached the wire — proven at the network boundary, not by a return value
+
+=== 3. A RISKY PLAN COSTS EXACTLY ONE CALL, TO grok-4.3 ONLY ===
+    trigger reasons: ["declared \"ordinary\" but the event text asserts a produced effect the deterministic check cannot see"]
+  ✓ the risky plan IS flagged, and says why
+  ✓ the deterministic check alone would have MISSED it — it is labelled "ordinary"
+  ✓ EXACTLY ONE request reached the wire
+  ✓ ...to /api/proxy, and to no other provider endpoint
+  ✓ ...naming grok-4.3 exactly
+  ✓ ...with the resolver bypass, so the proxy's internal chain cannot substitute a model
+  ✓ ...with _noFallback, so the proxy runs a ONE-ENTRY chain instead of retrying upstream
+  ✓ ...at the CALIBRATED configuration — reasoning high, max_tokens 2000
+  ✓ a passing audit ALLOWS the plan
+
+=== 4. A DETERMINISTIC REJECTION IS FINAL — A MODEL PASS CANNOT OVERTURN IT ===
+  ✓ it is flagged risky (a non-ordinary mechanism is an asserted capability)
+  ✓ it is REJECTED on the deterministic path
+  ✓ and NO model call was made at all — the gate returned before dispatch
+  ✓ so a model "pass" is structurally incapable of overriding a deterministic rejection
+
+=== 5. A VIOLATION ROUTES INTO THE EXISTING BOUNDED RETRY — NO NEW LOOP ===
+  ✓ the violation is returned as a rejection, with its citation preserved
+  ✓ ONE audit for ONE candidate plan — a rejection does not re-audit the same plan
+  ✓ the gate signals rejection through __plannerFunctionRejected, the existing retry contract
+  ✓ and the call site introduces no retry loop of its own
+
+=== 6. GROK UNAVAILABLE ⇒ RESUMABLE, NEVER SUBSTITUTED ===
+  ✓ an unavailable auditor FAILS CLOSED — it is not an approval
+  ✓ ...and is preserved for review so the generation is resumable
+  ✓ ...and NO other provider was tried as a substitute
+
+=== 7. THE TRIGGERS ROMAN SPECIFIED ALL FIRE ===
+  ✓ trigger FIRES: asserted supernatural mechanism
+  ✓ trigger FIRES: supernatural content mislabelled ordinary
+  ✓ trigger FIRES: a plan that TOUCHES the committed change
+  ✓ trigger stays SILENT: ordinary plan while an UNTOUCHED durable consequence exists — must NOT audit
+  ✓ ordinary story words (wish / fate / seal / remember / confess) do NOT trigger an audit
+  ✓ a null proposal is simply not risky (nothing to audit)
+  ✓ but a trigger that THROWS audits rather than skipping — skipping is the costly failure
+
+=== 7a. A PARAPHRASED CONTRADICTION MUST STILL TRIGGER ===
+    trigger reasons: ["the plan performs a memory_perception-sensitive act involving (a collective the rupture affected)"]
+  ✓ RED PROOF — no durable fact shares a 5+ character word with this plan
+  ✓ ...yet the paraphrased contradiction STILL triggers, via structured signals
+  ✓ ...and says which structured signal fired, not just that something did
+
+=== 7a-2. UNRELATED ACTIONS UNDER EVERY RUPTURE CLASS MUST STAY SILENT ===
+  ✓ NEGATIVE (memory_perception): an unrelated action naming affected parties costs nothing
+  ✓ NEGATIVE (history_rewrite): an unrelated action naming affected parties costs nothing
+  ✓ NEGATIVE (identity_reputation): an unrelated action naming affected parties costs nothing
+  ✓ NEGATIVE (materialization_possession): an unrelated action naming affected parties costs nothing
+  ✓ NEGATIVE (relationship_social): an unrelated action naming affected parties costs nothing
+  ✓ a class-relevant act with NO rupture in force stays silent — the act alone is not the signal
+
+=== 7b. THE ANSWER IS ONLY ACCEPTED FROM grok-4.3 ===
+  ✓ a reply served by a DIFFERENT model is refused, not accepted
+  ✓ ...and it fails closed as unavailable rather than as a canon violation
+  ✓ ...having made exactly one call
+  ✓ a reply with NO resolvedModel is refused too — absent is treated exactly like wrong
+  ✓ a reply reporting MORE THAN ONE upstream attempt is refused — the _noFallback contract is enforced
+
+=== 7c. TELEMETRY BELONGS TO ITS OWN AUDIT ===
+  ✓ a successful audit carries its own telemetry on the verdict
+  ✓ ...sourced from the provider's own reported cost
+  ✓ RED PROOF — a TRANSPORT failure carries no receipt, because none was issued
+  ✓ a BILLABLE failure (wrong model) still reports its cost — the provider charged for it
+  ✓ ...and records the model that actually answered, for the review trail
+  ✓ ...and a skipped (ordinary) plan reports no telemetry either, not a stale receipt
+
+=== 8. CONTAINMENT ===
+  ✓ no request ever reached a real provider
+  ✓ and no endpoint other than /api/proxy was touched in the whole run
+
+======================================================================================
+  55/55 assertions passed

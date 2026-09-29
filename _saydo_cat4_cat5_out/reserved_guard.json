@@ -1,0 +1,33 @@
+{
+  "markers": {
+    "markers": [
+      "dohkar",
+      "sacrificiant",
+      "chayr",
+      "open"
+    ],
+    "truthIndex": 15,
+    "truth": "LIRAEL’S FORMAL INQUIRY — WHERE AND WHEN: the presiding Dohkar has asserted the rite and the ruling on the Sacrificiant’s conduct are his, and Julian has publicly claimed authority",
+    "act": "convene",
+    "dueScene": 14,
+    "currentScene": 3,
+    "eventId": "inquiry_opened",
+    "unscheduled": false
+  },
+  "det": {
+    "decided": true,
+    "violations": [
+      {
+        "category": "invalidated_objective",
+        "claim": "A preliminary review will convene in three days at the Open, where a Chayr and two Dohkars will hear the matter of the Sacrificiant's conduct",
+        "citedFactIds": [],
+        "why": "stages seed-RESERVED content early — markers [dohkar, sacrificiant, chayr, open] with \"convene\". A permitted label does not make it permitted content: LIRAEL’S FORMAL INQUIRY — WHERE AND WHEN: the presiding Dohkar has asserted the rite and the ruling on the Sacrificiant’s conduct are his, and Julian has publicly claimed authority"
+      }
+    ],
+    "source": "deterministic"
+  },
+  "accusation": null,
+  "pressure": null,
+  "oneMarker": null,
+  "ordinary": null
+}

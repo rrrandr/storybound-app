@@ -1,0 +1,40 @@
+[CHARACTERS: Lirael:F, Julian:M, Seren:F]
+
+[TITLE: "The Veiled Offering"]
+[SYNOPSIS: In the Veilwood, Lirael guides her ward through the First Sacrifice, but Seren's impulsive turn of the rite exposes Lirael's hidden lineage to the assembled First Favored and forces a choice between silence and the truth that could sever her from the Favor itself.]
+
+The Dohkar's hand rose, palm open toward the kneeling girl. "Speak the cost first, Seren."
+
+Seren's aqua skin caught the filtered light through the hanging veil-curtains. Her coral hair trembled against the braided crimson spiralgrass. She named her earliest memory aloud, the one she had rehearsed with me for months—the morning her mother first taught her the names of the moons. The assembly listened in the expected hush.
+
+Then her gaze found mine.
+
+"I offer that memory," she said, voice steady, "so that Lirael finds the one she lost."
+
+The words landed wrong. The beneficiary was not the wisher. The outcome depended on another's unresolved desire. The target had no name. The sacrifice was meant for her own becoming. Every trained mind in the clearing counted the fractures at once.
+
+My sealed mouth could only shape a muffled sound. I tore the gossamer band free anyway. Protocol cracked under the weight of what she had just risked for me.
+
+The room recoiled as the open price left her lips. An elder's hands lifted in warning. "Never sign Fate's blank page," someone breathed.
+
+I remembered Julian standing at the edge of another clearing once, watching me the way he watched every declaration—like he needed to test whether it would hold before he let himself answer. His emerald eyes had stayed fixed on my hands, not my face, as if the truth lived in what I reached for rather than what I said. My pulse answered the memory before I could stop it.
+
+<<MICRO_EXPRESSION>>
+Say it plainly — or let it show without words?
+<<CONTINUE>>
+
+The omen came first: the veil-curtains stirred though no wind moved, and a single lumenweave mote drifted down to rest against Seren's shoulder. Then the wish answered. The air around me thinned in a way that felt like recognition, as if something already present had been given permission to surface.
+
+The price struck in the same breath. Seren's hand flew to her throat. The color drained from her right eye, leaving it pale and strange while the left stayed vivid. She had offered a memory; Fate had taken the first thing she would need to make new ones.
+
+The assembly drew the obvious conclusion from my movement and her altered wish. Whispers began. My qualification as Dohkar trembled on the edge of denial.
+
+Do I name the lineage they suspect and risk their judgment, or do I stay silent and let the worst stand?
+
+My hand tightened around my great-grandmother's old tarot deck. I didn't remember bringing it. I toyed with the idea of letting the cards decide.
+
+<<EXPANSION_A>>
+I met Seren's pale eye and said the lineage name aloud before the Dohkar could speak.
+<<EXPANSION_B>>
+I held Seren's gaze without speaking, letting the altered eye and the silence say what the room already feared.
+<<END_EXPANSION>>

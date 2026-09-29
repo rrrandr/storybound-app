@@ -1,0 +1,30 @@
+{
+  "age": 28,
+  "ancestry": "Inuit",
+  "first_name": "Kiviuq",
+  "last_name": "Atanarjuat",
+  "height": "5'4\", compact and grounded",
+  "build": "lean-muscled, swimmer's shoulders, narrow hips",
+  "hair": "black, thick and straight, worn in a long braid down her spine or loose past her shoulders; she winds it up when concentrating",
+  "complexion": "warm golden-bronze undertone, a faint scar along her left collarbone from a childhood fall on ice",
+  "face": "a wide, open face with high cheekbones and a broad mouth—the kind of face that broadcasts feeling before thought catches up, dark eyes that go soft when she's uncertain and flash when she's angry",
+  "signature_feature": "her hands—long-fingered, deft, with a tremor of life in them; the LI notices how they move when she talks, how they shake when she's afraid, how steady they become when she's making something",
+  "second_celebrated_feature": "the small hollow at the base of her throat, visible when her neck is exposed; the LI finds himself watching it rise and fall when she breathes, when she's nervous, when she's trying not to cry",
+  "signature_habits": [
+    "she braids her hair when anxious—methodical, repetitive, grounding",
+    "she speaks to herself in Inuktitut when concentrating on detail work, half-aware she's doing it",
+    "she eats seal oil on her bread without thinking, the taste a wordless anchor to her grandmother's kitchen",
+    "she touches the scar on her collarbone when lying or hearing a lie—a tell she doesn't know she has",
+    "she goes very still before asking for something she needs, holding her breath like she's bracing for no"
+  ],
+  "occupation": "textile artist and small-studio owner in the city; she designs and hand-dyes traditional-inspired fabrics and sells them to high-end boutiques; her studio is her sanctuary and her livelihood",
+  "current_crisis": {
+    "event": "her studio's landlord—a property developer with billionaire backing—has given her 60 days to vacate; the building is being demolished for luxury condos; she has no savings buffer, no backup location, and the LI is somehow entangled in the developer's world",
+    "hottest_emotion": "panic masked as numbness; a creeping sense of erasure",
+    "immediate_want": "to find a new space she can afford and save her work before the deadline; to NOT have to ask for help"
+  },
+  "wound": {
+    "core": "she believes that needing someone is the same as being disposable—that the moment she admits dependence, she becomes a burden and will be left",
+    "surfacing_hint": "when afraid or cornered, she becomes hyperindependent and refuses help even when drowning; she'll sabotage a relationship rather than risk being abandoned first; she flinches when someone notices her struggling"
+  }
+}

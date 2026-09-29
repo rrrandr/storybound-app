@@ -1,0 +1,24 @@
+  ⚙ preflight ok — http://localhost:3000/ responded 200 in 1585ms
+
+{
+  "plannerCalls": 1,
+  "aborted": [],
+  "cost": [
+    {
+      "status": 200,
+      "latencyMs": 241,
+      "served": null,
+      "reasoning_tokens": 0,
+      "cached_tokens": 0,
+      "usd_list": 0,
+      "note": "reasoning tokens are included in completion_tokens by xAI; listed separately for the record"
+    }
+  ],
+  "total": 0,
+  "fatal": null,
+  "pages": 1,
+  "genStage": true,
+  "attempts": 1,
+  "retryReason": null
+}
+exit=0

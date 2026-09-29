@@ -1,0 +1,19 @@
+  ⚙ preflight ok — http://localhost:3000/ responded 200 in 249ms
+
+file:///Users/romantsukerman/storybound-app/_scene1_stage_order_dry.mjs:1001
+            const v3 = { character: PCN, placement: 'PC_FIRST_EMBODIED_BEAT',
+                                    ^
+
+ReferenceError: PCN is not defined
+    at file:///Users/romantsukerman/storybound-app/_scene1_stage_order_dry.mjs:1001:37
+    at RouteHandler._handleInternal (/Users/romantsukerman/storybound-app/node_modules/playwright-core/lib/coreBundle.js:59786:11)
+    at RouteHandler._handleImpl (/Users/romantsukerman/storybound-app/node_modules/playwright-core/lib/coreBundle.js:59753:29)
+    at /Users/romantsukerman/storybound-app/node_modules/playwright-core/lib/coreBundle.js:59747:59
+    at AsyncLocalStorage.run (node:internal/async_local_storage/async_context_frame:63:14)
+    at _Zone.run (/Users/romantsukerman/storybound-app/node_modules/playwright-core/lib/coreBundle.js:10149:40)
+    at RouteHandler.handle (/Users/romantsukerman/storybound-app/node_modules/playwright-core/lib/coreBundle.js:59747:38)
+    at _Page._onRoute (/Users/romantsukerman/storybound-app/node_modules/playwright-core/lib/coreBundle.js:61037:46)
+    at Proxy.<anonymous> (/Users/romantsukerman/storybound-app/node_modules/playwright-core/lib/coreBundle.js:60984:63)
+    at Proxy._callHandler (/Users/romantsukerman/storybound-app/node_modules/playwright-core/lib/coreBundle.js:10746:33)
+
+Node.js v25.3.0

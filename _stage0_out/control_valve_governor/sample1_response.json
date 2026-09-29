@@ -1,0 +1,1 @@
+{"error":"reservation_exceeds_model_allowance","governor":true,"terminal":true,"model":"mistral-small-latest","detail":"conservative reservation 76422 exceeds the model allowance of 20000 tokens/min","reserved_tokens":76422,"used_tokens":null,"limit_tpm":20000,"retry_after_ms":null,"retry_tpm_ms":null,"retry_rps_ms":null}

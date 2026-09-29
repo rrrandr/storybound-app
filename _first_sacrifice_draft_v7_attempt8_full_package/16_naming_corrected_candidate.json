@@ -1,0 +1,334 @@
+{
+  "packet_id": "first_sacrifice_source_packet",
+  "packet_version": "9.6.0-source-packet",
+  "draft_version": "draft-v7-full-package-naming-corrected",
+  "derived_from": "13_final_field_correction.json + mechanical naming correction (beats[4]/[14].speaker: \"the_presiding_Dohkar\" -> \"Dhokar Raes\") — NOT a provider call, a deterministic field rename only",
+  "corrected_fields": [
+    "scene1Candidate.beats[4].speaker",
+    "scene1Candidate.beats[14].speaker"
+  ],
+  "generated_at": "2026-09-19T06:11:12.495Z",
+  "validation": {
+    "ok": true,
+    "violations": [],
+    "diagnostics": [
+      {
+        "rule": "narration_beat_pacing_long",
+        "detail": "scene1Candidate.beats[0] is 114 words (over the 90-word pacing guideline) — non-blocking; long, information-dense prose is not itself a defect and this never triggers repair or rejection"
+      },
+      {
+        "rule": "narration_beat_pacing_long",
+        "detail": "scene1Candidate.beats[1] is 104 words (over the 90-word pacing guideline) — non-blocking; long, information-dense prose is not itself a defect and this never triggers repair or rejection"
+      },
+      {
+        "rule": "narration_beat_pacing_long",
+        "detail": "scene1Candidate.beats[2] is 91 words (over the 90-word pacing guideline) — non-blocking; long, information-dense prose is not itself a defect and this never triggers repair or rejection"
+      },
+      {
+        "rule": "narration_beat_pacing_long",
+        "detail": "scene1Candidate.beats[5] is 107 words (over the 90-word pacing guideline) — non-blocking; long, information-dense prose is not itself a defect and this never triggers repair or rejection"
+      },
+      {
+        "rule": "narration_beat_pacing_long",
+        "detail": "scene1Candidate.beats[6] is 111 words (over the 90-word pacing guideline) — non-blocking; long, information-dense prose is not itself a defect and this never triggers repair or rejection"
+      },
+      {
+        "rule": "narration_beat_pacing_long",
+        "detail": "scene1Candidate.beats[7] is 91 words (over the 90-word pacing guideline) — non-blocking; long, information-dense prose is not itself a defect and this never triggers repair or rejection"
+      },
+      {
+        "rule": "narration_beat_pacing_long",
+        "detail": "scene1Candidate.beats[9] is 99 words (over the 90-word pacing guideline) — non-blocking; long, information-dense prose is not itself a defect and this never triggers repair or rejection"
+      },
+      {
+        "rule": "narration_beat_pacing_long",
+        "detail": "scene1Candidate.beats[12] is 91 words (over the 90-word pacing guideline) — non-blocking; long, information-dense prose is not itself a defect and this never triggers repair or rejection"
+      },
+      {
+        "rule": "exemplar_similarity",
+        "detail": "oasOpening contains a 6+ word verbatim match against the withheld, non-rendered julian_opening_turn exemplar — non-blocking similarity report, not evidence of copying (the exemplar was never supplied to the model; the matched framing is independently required by the rendered opening_frame_brief / oas_opening_requirement.content_requirement)"
+      }
+    ]
+  },
+  "draft": {
+    "scene1Candidate": {
+      "beats": [
+        {
+          "kind": "narration",
+          "speaker": null,
+          "image": "intro_lirael",
+          "text": "Dawn light cut across the clearing in thin blades, catching on the spiralgrass and turning every edge silver. I stood at the center in the Sacrificiant's sash, its linen stiff against my ribs, the mouth-band tied so tightly my jaw ached. This was the first time the rite belonged to me instead of my father, and the weight of that fact settled behind my breastbone like a second pulse. One wrong step here and the offices I had trained for—Dohkar, Chayr, Provast—would close to me before I ever touched them. The assembly watched without sound, their eyes already measuring how much of my father they could still see in the way I held myself.",
+          "provenance": {
+            "kind": "generated_expression"
+          },
+          "objectClaims": []
+        },
+        {
+          "kind": "narration",
+          "speaker": null,
+          "image": "intro_lirael",
+          "text": "The band smelled of old salt and the hemp it had been boiled in. Cold air slipped beneath the sash and found the skin at my waist where the fabric lifted when I breathed. Every witness stood in a ring that felt too close; I could name each face and knew which ones would carry the story of my failure longest. My fingers found the edge of the sash and smoothed it once, a private check that the cloth still lay straight. The fear lived in the space between knowing every word of the rite and having to speak them aloud while they watched.",
+          "provenance": {
+            "kind": "generated_expression"
+          },
+          "objectClaims": []
+        },
+        {
+          "kind": "narration",
+          "speaker": null,
+          "image": "intro_seren",
+          "text": "Seren knelt on the marked stone with her spine straight and her hands folded exactly as the months of rehearsal had taught her. The blue of her shift matched the dawn shadows, and not a single fold looked out of place. She held her composure like a shield she had practiced lifting until the motion became thoughtless. From where I stood I could see the small muscle at her temple that never quite relaxed even when she smiled for an audience. Her stillness made the clearing feel quieter than it was.",
+          "provenance": {
+            "kind": "generated_expression"
+          },
+          "objectClaims": []
+        },
+        {
+          "kind": "narration",
+          "speaker": null,
+          "image": "intro_seren",
+          "text": "Her gaze found mine for half a heartbeat. I gave her the smallest nod I could manage without moving the band, and her shoulders eased by a fraction. The gesture was ours alone, the same one we had used in the practice clearing when the words still felt new. She did not smile; she simply let her breath lengthen once, then returned her eyes to the stone between us. The reassurance passed between us without sound and left the air between our bodies slightly warmer.",
+          "provenance": {
+            "kind": "generated_expression"
+          },
+          "objectClaims": []
+        },
+        {
+          "kind": "dialogue",
+          "speaker": "Dhokar Raes",
+          "image": "intro_dohkar",
+          "text": "In the name of the offices that govern this rite I call upon you to name the cost you bring to this First Sacrifice. Speak the irrevocable loss that will serve as its true anchor before the weave and every witness gathered here.",
+          "provenance": {
+            "kind": "generated_expression"
+          },
+          "objectClaims": []
+        },
+        {
+          "kind": "narration",
+          "speaker": null,
+          "image": "intro_dohkar",
+          "text": "Seren answered without looking up. “I give the memory of the night my mother sang me to sleep before the fever took her voice.” The words left her mouth clean and practiced, yet the loss they named was particular: the exact timbre of a lullaby that had belonged only to the two of them, now surrendered so the rite could move forward. I felt the shape of that memory leave her as she spoke it; her hands tightened once against her knees and did not loosen again. The cost was real enough that the clearing seemed to hold its breath around the absence she had just declared.",
+          "provenance": {
+            "kind": "generated_expression"
+          },
+          "objectClaims": []
+        },
+        {
+          "kind": "narration",
+          "speaker": null,
+          "image": "intro_julian",
+          "text": "At the outer edge of the gathering Julian stood with his weight balanced on both feet, the way a man does when he has no need to claim space because the space already knows him. The office of Provast sat on him without ornament, the same rank my father had once held and the one I still reached for. He did not shift or speak; he simply watched, and the stillness around him made every other movement in the clearing feel slightly louder by comparison. I registered the line of his shoulders and the fact that he had chosen the place where no one would have to turn to see him.",
+          "provenance": {
+            "kind": "generated_expression"
+          },
+          "objectClaims": []
+        },
+        {
+          "kind": "narration",
+          "speaker": null,
+          "image": "intro_julian",
+          "text": "I looked away before the look could lengthen into something the assembly might notice. The pull to keep watching him was the same one I had felt since the first time he stood in the same room as the rite I was learning; it arrived without invitation and left a small heat at the base of my throat. I forced my attention back to the stone and the girl kneeling on it. The awareness of him remained anyway, a second thread running beneath the words I would have to speak next.",
+          "provenance": {
+            "kind": "generated_expression"
+          },
+          "objectClaims": []
+        },
+        {
+          "kind": "narration",
+          "speaker": null,
+          "image": "d1",
+          "text": "Seren began the invocation in the measured cadence we had rehearsed. The first phrases left her mouth steady, each syllable placed where the rite expected it. For those opening lines the fear that had lived under my ribs receded; the words were still the right ones, and the clearing remained ordinary dawn light and grass. I breathed behind the band and let myself believe the moment might hold its shape.",
+          "provenance": {
+            "kind": "generated_expression"
+          },
+          "objectClaims": []
+        },
+        {
+          "kind": "narration",
+          "speaker": null,
+          "image": "d1",
+          "text": "Then the rhythm of her voice changed by a single beat. The sentence she was meant to finish curved instead toward me, and I felt the misalignment arrive the way a rider feels a horse decide to leave the path. Her gaze lifted to mine and held it with the same careful softness she had practiced, yet the words that followed carried the shape of an audience she needed to witness her goodness rather than the private desire she had rehearsed for herself alone. I recognized the gap between the two in the same instant the rite felt it.",
+          "provenance": {
+            "kind": "generated_expression"
+          },
+          "objectClaims": []
+        },
+        {
+          "kind": "dialogue",
+          "speaker": "Seren",
+          "image": "d2",
+          "text": "Seren lifted her gaze to mine and said clearly, “So that Lirael may find the one she lost, I give the memory of my mother singing me to sleep before the fever took her voice.” I felt the practiced softness in her eyes and recognized at once that the words had been shaped to display her virtue to the assembly rather than to serve the private need of the rite.",
+          "provenance": {
+            "kind": "generated_expression"
+          },
+          "objectClaims": []
+        },
+        {
+          "kind": "narration",
+          "speaker": null,
+          "image": "d2",
+          "text": "The wish left her mouth and the air between us thickened. I felt the rite reach for the shape she had offered and then bend under the weight of the witness she had added at the end. My own Weave-Script stirred against my ribs, ready to answer whatever came next. The clearing seemed to lean inward as the misaligned current began to move.",
+          "provenance": {
+            "kind": "generated_expression"
+          },
+          "objectClaims": []
+        },
+        {
+          "kind": "narration",
+          "speaker": null,
+          "image": "d2",
+          "text": "Seren had named the finding of the one I had lost as the thing the rite must deliver, yet the softness she gave those words was shaped for the witnesses who watched her offer them. The current that answered pulled toward that same finding, but the shape it took carried the dread that it would arrive twisted by her need to be seen as the one who had given enough. I felt the direction of it settle under my ribs, the wrongness already naming itself in how the assembly leaned closer.",
+          "provenance": {
+            "kind": "generated_expression"
+          },
+          "objectClaims": []
+        },
+        {
+          "kind": "narration",
+          "speaker": null,
+          "image": "d2",
+          "text": "The pull vanished without transition or cause. One moment the wrong current had been moving; the next it was simply not there. The clearing remained ordinary dawn light and grass, the air between us unchanged, and no one moved or spoke to account for the sudden absence. The question of what had checked it stayed open in the silence that followed.",
+          "provenance": {
+            "kind": "generated_expression"
+          },
+          "objectClaims": []
+        },
+        {
+          "kind": "dialogue",
+          "speaker": "Dhokar Raes",
+          "image": "d3",
+          "text": "You shaped the wish for your own benefit and the rite answered by turning its weight toward the one who must conduct it. That turning has not gone unseen.",
+          "provenance": {
+            "kind": "generated_expression"
+          },
+          "objectClaims": []
+        },
+        {
+          "kind": "narration",
+          "speaker": null,
+          "image": "d3",
+          "text": "Seren’s mother took one deliberate step backward, her hand rising to rest on her daughter’s shoulder as though the girl needed shielding from me. The movement was small and precise; it told the rest of the assembly exactly where they were meant to stand. A guest near the edge tightened his grip on the staff he carried until the wood creaked. I felt the circle of bodies draw inward and become a ring that now excluded me.",
+          "provenance": {
+            "kind": "generated_expression"
+          },
+          "objectClaims": []
+        },
+        {
+          "kind": "narration",
+          "speaker": null,
+          "image": "d3",
+          "text": "The charge settled across my shoulders like a second sash, heavier than the first. My father’s offices receded one measured step further with every face that turned away. Even while the ground shifted beneath me I felt the thread of my attention still reach toward the edge where Julian stood, as though the next word might come from there instead of from the Dohkar who had spoken.",
+          "provenance": {
+            "kind": "generated_expression"
+          },
+          "objectClaims": []
+        },
+        {
+          "kind": "dialogue",
+          "speaker": "Julian",
+          "image": "d4",
+          "text": "Julian’s voice carried across the clearing without force. “I can hear that she is aligned with her own innocence rather than the rite itself. Before you all I will question her so that any misalignment between her heart and the sacrifice becomes plain to every witness present.”",
+          "provenance": {
+            "kind": "generated_expression"
+          },
+          "objectClaims": []
+        },
+        {
+          "kind": "narration",
+          "speaker": null,
+          "image": "d4",
+          "text": "He stepped forward and drew The Answer from its resting place. The double-ended staff settled across his palms, both hooked heads catching the dawn light. He placed the lower end into my waiting hands, then closed his own hands over mine, warm and certain, pressing my fingers firmly around the polished wood until the grip was sure. His touch lingered only a breath before he released the weight entirely to me and stepped back, leaving the balanced staff steady in my hold.",
+          "provenance": {
+            "kind": "locked_canon_fact",
+            "cites": "scene1_answer_manifestation.current_manifestation"
+          },
+          "objectClaims": [
+            {
+              "object_ref": "the_answer",
+              "physical_form_claim": "staff_double_ended_question_mark_hooks",
+              "claim_kind": "locked_canon_fact",
+              "cites": "scene1_answer_manifestation.current_manifestation"
+            }
+          ]
+        },
+        {
+          "kind": "narration",
+          "speaker": null,
+          "image": "d4",
+          "text": "The staff was heavier than memory had prepared me for, the twin hooks balanced so perfectly that any shift in my grip changed the angle of both ends at once. I felt the eyes of the assembly on the object in my hands and on the place where the rite had turned. The question of what would happen next sat open in the air between us, and I could not yet see which direction the next voice would come from.",
+          "provenance": {
+            "kind": "generated_expression"
+          },
+          "objectClaims": [
+            {
+              "object_ref": "the_answer",
+              "physical_form_claim": "neutral_reference",
+              "claim_kind": "generated_expression"
+            }
+          ]
+        }
+      ]
+    },
+    "scene1Coverage": {
+      "ceremony_setting": [
+        0
+      ],
+      "seren_kneeling_rehearsed": [
+        2
+      ],
+      "cost_offering_statement": [
+        4,
+        5
+      ],
+      "julian_introduced": [
+        6
+      ],
+      "invocation_begins": [
+        8
+      ],
+      "wish_and_sacrifice": [
+        10
+      ],
+      "wish_visibly_twists": [
+        12
+      ],
+      "twist_unnaturally_arrested": [
+        13
+      ],
+      "public_charge": [
+        14
+      ],
+      "social_fallout_family_reaction": [
+        15
+      ],
+      "julian_claims_the_answer": [
+        17
+      ]
+    },
+    "first_person_lirael": true,
+    "oasOpening": {
+      "speaker": "Julian",
+      "text": "You touched her shoulder exactly when the invocation began and your eyes found mine before the first word left her mouth. Did you call to me through the rite hoping I would step forward and claim you as the one who needed rescue?",
+      "objectClaims": [
+        {
+          "object_ref": "the_answer",
+          "physical_form_claim": "neutral_reference",
+          "claim_kind": "generated_expression"
+        }
+      ]
+    },
+    "postInterruptionBeat": {
+      "speaker": null,
+      "image": "d4",
+      "kind": "narration",
+      "text": "The Answer rested in my hands, its twin hooks balanced and waiting. The Dohkar’s ruling and Julian’s claim both hung in the air at once, and the assembly’s attention had returned to the staff I now held. I could feel every possible direction the next moment might take, each one carrying its own cost, and none of them yet spoken aloud.",
+      "objectClaims": [
+        {
+          "object_ref": "the_answer",
+          "physical_form_claim": "neutral_reference",
+          "claim_kind": "generated_expression"
+        }
+      ]
+    }
+  }
+}

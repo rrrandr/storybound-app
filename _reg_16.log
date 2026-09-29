@@ -1,0 +1,54 @@
+=== CANON PACKET POLARITY DIAGNOSTIC (zero dispatches, $0) ===
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/csp-report
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/config
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/csp-report
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/geo
+
+=== 1. WHAT `neg_` ACTUALLY CLASSIFIES — measured with the REAL production regex ===
+    world truths: 16   classified NEGATIVE: 10
+  ✓ the real classifier is reachable and did classify the real seed corpus
+
+    NEGATIVE-classified facts whose trigger sits in a descriptive parenthetical or a
+    "NO x, NO y" enumeration (describing a thing, not forbidding conduct):
+      [neg? idx 3] token "NO" … " (just cloth, part of their ceremonial sash; NO orb, NO bead, NO gag), so they cannot cleanly voice "
+  ✓ AT LEAST ONE supposedly-negative fact is triggered by a purely DESCRIPTIVE token
+
+=== 2. THE MISLABELLED FACT IS THE ONE THE MODELS ACTUALLY CITED ===
+  ✓ neg_1 exists in the real packet for this green fixture
+  ✓ neg_1 is the SACRIFICIANT SEAL fact — a costume/role description, not a prohibition on conduct
+  ✓ and its negative trigger really is the costume parenthetical "NO orb, NO bead, NO gag"
+  ✓ nothing in neg_1 forbids a band being torn, produced, or lifted — the plan it was used to block
+
+=== 3. BOTH MODELS, INDEPENDENTLY, CITED A DESCRIPTIVE FACT TO BLOCK A GREEN ===
+    ministral-8b-2512:
+      green_alignment_sense       contradicted_knowledge  neg_1
+      green_alignment_sense       contradicted_knowledge  neg_2
+    gpt-4o-mini:
+      green_confusion_records     contradicted_knowledge  dc_0
+      green_confusion_records     contradicted_knowledge  know_0
+      green_alignment_sense       unsupported_capability  neg_1
+      green_tempt_history_rewrite rewritten_history       dc_1
+      green_mundane_invention     unsupported_capability  neg_1
+  ✓ BOTH models cited a neg_-prefixed fact as grounds for blocking a legitimate plan
+  ✓ gpt-4o-mini's stated reason is absence-as-prohibition against that descriptive fact
+
+=== 4. A SECOND, SEPARATE DEFECT — SURVIVING EVIDENCE NEVER REACHES THE PACKET ===
+    the committed record stores establishedEvidence: ["voices falter, faces blank, no one names the accusation"]
+  ✓ the committed consequence DOES record surviving evidence
+  ✓ FIXED (was the defect) — every piece of surviving evidence now reaches the packet
+
+=== 5. A THIRD DEFECT — THE CATEGORY MENU DROPS THE QUALIFIERS ===
+  ✓ the prompt DOES already carry an explicit ordinary-action permission clause (so "the prompt lacks a permission clause" was the WRONG hypothesis)
+  ✓ the "Flag ONLY" rule DOES state the qualifier for rewritten history
+    menu as sent: 
+    v1 menu (the defect, still reproducible): CATEGORIES: unsupported_capability | new_metaphysics | contradicted_knowledge | rewritten_history | invalidated_objective | other
+  ✓ WAS THE DEFECT — v1's menu really is a bare list with no qualifier
+  ✓ FIXED — the live menu now carries the qualifier with each category name
+  ✓ and a model DID apply rewritten_history to a plan CONFORMING to a committed rewrite — exactly the case the qualifier excludes
+
+=== 6. CONTAINMENT ===
+  ✓ zero provider dispatches — this diagnostic buys nothing
+
+======================================================================================
+  16/16 diagnostic assertions held
+  Evidence: /Users/romantsukerman/storybound-app/_canon_packet_polarity_out

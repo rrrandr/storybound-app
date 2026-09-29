@@ -1,0 +1,63 @@
+{
+  "opening_spine": {
+    "pressure_source_type": "survival",
+    "pressure_source": "the oven timer is counting down and the croissants are still pale in the center while the front door rattles with the first customers",
+    "hook_object": null,
+    "opening_actor_id": null,
+    "opening_beat": "the oven timer is counting down and the croissants are still pale in the center",
+    "rising_beats": ["I yank the tray anyway, flour streaking my wrists", "Rook's latest proxy move makes the whole kitchen feel two sizes smaller"],
+    "decision_beat": "stay and fight the timer or walk out before the rush swallows me?",
+    "pc_career": "pastry chef",
+    "opening_setting": "bakery kitchen",
+    "environment_elements": ["steel worktable", "oven timer"],
+    "li_texture_beat": "rising_beats[1]: the way he squared the papers before sliding them across the table, and my pulse jumped uneven in my throat despite everything",
+    "pc_wound_anchor": "rising_beats[0]: the beep bothers me more than it should, a silence I cannot fill",
+    "pc_self_presentation_beat": "opening: I wiped my hands on my apron, the flour streaking like a flag I could not hide",
+    "scene_want": "wants the oven to stop beeping before the whole batch is lost",
+    "scene_mission": "finish the morning bake before the front door opens",
+    "reader_state": {
+      "knows": "Testa is alone in her bakery kitchen fighting a timer on an underbaked batch",
+      "believes": "her shop is already on the edge and one more delay will finish it",
+      "wondering": "why Rook's move is the thing she cannot stop thinking about",
+      "must_not_confuse": "only Testa is in the room; the crisis is the oven and the timer"
+    },
+    "pc_body_callback": "opening: stress_tic (flour on hands)",
+    "antagonist_body_callback": null,
+    "staged_characters": [
+      { "name": "Testa", "presence": "IN_PERSON", "anchor_beat": "FROM_PC_OPENING_FUSION" }
+    ]
+  },
+  "scene_skeleton": {
+    "character_plus": [],
+    "environment_plus": {
+      "target": "oven timer",
+      "axis": "use",
+      "beat": "oven timer has been reset three times already this morning and the red digits are still climbing"
+    },
+    "pc_opening_fusion": {
+      "character": "Testa",
+      "placement": "PC_FIRST_EMBODIED_BEAT",
+      "contact": { "verb": "PRESS", "object": "oven timer" },
+      "action": "thumb jamming the button",
+      "pc_lens_operation": "INWARD_TRANSLATION_OF_ANOTHER_PERSONS_COST",
+      "character_revelation": "Testa absorbs every setback as a personal verdict on her worth",
+      "environment_pressure": {
+        "grounds": ["env:axis", "pc:self"],
+        "text": "the timer keeps climbing and I feel the morning slipping out from under me"
+      }
+    }
+  },
+  "stage_contract": {
+    "v": 1,
+    "participants": [
+      { "ref": "pc:self", "presence": "IN_PERSON" }
+    ],
+    "event_facts": [
+      { "text": "the oven timer counts down on an underbaked batch", "participants": [ { "ref": "pc:self", "role": "actor" } ] }
+    ],
+    "elements": [
+      { "name": "steel worktable", "affordance": "SURFACE" },
+      { "name": "oven timer", "affordance": "FIXTURE" }
+    ]
+  }
+}

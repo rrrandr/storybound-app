@@ -1,0 +1,24 @@
+{
+  "age": 28,
+  "ancestry": "Korean",
+  "first_name": "Mina",
+  "last_name": "Park",
+  "height": "5'4\", compact and grounded",
+  "build": "lean muscled, the kind that comes from standing all day at a worktable",
+  "hair": "dark brown, almost black, shoulder-length with a slight wave she doesn't fight; often pinned back with whatever's near—a pencil, a silk scarf, a wooden stick",
+  "complexion": "warm ivory with a golden undertone; a small scar along her left jawline from a kiln accident at nineteen that she stopped covering up",
+  "face": "a face that broadcasts feeling—wide-set eyes that go soft when she's concentrating, a mouth quick to smile or tremble, the kind of face that makes strangers trust her too fast",
+  "signature_feature": "her hands—long-fingered, calloused at the knuckles and fingertips, stained permanently with clay dust in the creases; he watches them move when she talks",
+  "second_celebrated_feature": "the slope of her neck into her shoulder, exposed when she pulls her hair up; a vulnerability he can't stop noticing",
+  "signature_habits": "she tastes everything she makes—clay dust on her fingers, the salt of her own sweat, the mineral smell of slip; she hums while working, mostly old Korean lullabies her grandmother taught her (오빠생각, oppa saenggak); she sleeps with her hands clenched into fists; she apologizes reflexively, even when it's not her fault",
+  "occupation": "ceramic artist and studio owner—a small independent pottery studio in a converted warehouse, three employees, custom commissions and teaching classes; financially precarious but hers",
+  "current_crisis": {
+    "event": "her landlord—a development company owned by a billionaire's holding firm—has given her ninety days' notice; the warehouse is being demolished for luxury condos; she has no capital to relocate, no backup studio, and three employees depending on her",
+    "hottest_emotion": "panic threaded with a deeper shame—that she's failed, that she's not enough, that wanting something this badly makes her pathetic",
+    "immediate_want": "to find a way to save the studio without losing her dignity or admitting she's drowning"
+  },
+  "wound": {
+    "core": "she believes that needing people is weakness; that if she loves something too openly, it will be taken",
+    "surfacing_hint": "when she's frightened, she goes very still and quiet, her eyes going distant; she stops asking for help and starts planning how to do everything alone, even the impossible"
+  }
+}

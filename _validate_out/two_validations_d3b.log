@@ -1,0 +1,4 @@
+=== d3c_stage_order · stage_order_dry.mjs · 21:04:23 ===
+d3c_stage_order: exit=1 · 92 checks · 91 passed · 1 failed · invalid_markers=0 · samples=53 suite_rss_max=335MB free_min=116MB server_rss_max=86MB
+d3c_stage_order: FAILURE — stopping. First failing lines:
+82:FAIL FR2 third-person frame uses the RESOLVED name (Testa) and her pronoun; the kernel placeholder in playerName never reaches the page  — {"pages":0,"fatal":"character_revelation does not concern the protagonist (no resolved name, alias or pronoun); environment_pressure.text does not bear on the protagonist (no resolved name, alias or pronoun)","closer":"Testa's hand tightened around her great

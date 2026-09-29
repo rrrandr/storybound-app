@@ -1,0 +1,33 @@
+=== EXTRACTOR REGRESSION — three retained responses, real validator ($0) ===
+
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/csp-report
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/config
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/csp-report
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/geo
+  ✓ 01 TRUNCATED — unparseable on the extractor's parse chain, so it can never reach the validator
+    02 errors: ["knowledgeStates[2].state invalid"]
+  ✓ 02 UNCITED + INVALID STATE — refused by the real validator
+  ✓ ...and the refusal names the invalid state
+    02 citation errors: ["the assembly: no evidenceQuote — every disposition must cite the line that establishes it","the presiding Dohkar: no evidenceQuote — every disposition must cite the line that establishes it","Seren:
+  ✓ ...and the SEPARATE citation pass refuses it for missing quotes
+    03 errors: []
+  ✓ 03 CITED AND SCHEMA-VALID — ACCEPTED by the real validator
+    03 citation errors: []
+  ✓ ...and the citation pass ACCEPTS it too — both gates satisfied
+  ✓ ...every citation is genuinely verbatim in the prose
+  ✓ ...yet JULIAN is claimed `retained` on a quote about a GAZE — memory not established
+  ✓ ...and SEREN is claimed `retained` on a quote about an INTENDED rite, not one recalled
+  ✓ ...so scopeMatch "narrower" rests on exceptions the prose does not establish
+  ✓ THE GAP IS OPEN AND THIS FIXTURE PINS IT: verbatim citation does NOT prove semantic support
+    Julian 03: retained   Julian 04: forgot
+  ✓ 04 claims Julian FORGOT where 03 claimed he RETAINED — contradictory verdicts
+  ✓ ...from the IDENTICAL quote, so the evidence cannot have decided either
+  ✓ ...and 04 ran WITH the grounding rules in force and still used the gaze
+  ✓ ...leaving unaccountedParties EMPTY despite the prompt directing unestablished parties there
+  ✓ ...and choosing scopeMatch "narrower" while its own scopeNote names something unestablished
+  ✓ 04 was refused ONLY because one quote was stitched from fragments, not for the Julian claim
+  ✓ MINISTRAL TUNING IS CLOSED FOR THIS ROLE — three corrections, none moved this behaviour
+  ✓ zero provider dispatches
+
+======================================================================================
+  19/19 assertions passed

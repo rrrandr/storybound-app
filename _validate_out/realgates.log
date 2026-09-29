@@ -1,0 +1,66 @@
+[preflight] output dir writable: _validate_out/realgates
+[probe] begin story (production planning path, author stubbed)…
+[probe] scene-1 author payloads captured: 2
+[probe] pre-turn state: {"turnCount":0,"pages":630}
+[probe] continuation author payloads captured: 0  ⚠ TURN DID NOT RUN
+
+════ PRODUCTION CAUSAL CAPTURE ════
+scene number: 2   assignment source: plan-scene
+
+── authored plan scene for this scene number ──
+{
+  "n": 2,
+  "goal": "The ceremony collapses into accusations; the PC tries to explain something she does not understand herself.",
+  "participants": [
+    "Lirael",
+    "the youth",
+    "Julian"
+  ],
+  "presentGroups": [
+    "the watching families and public of the rite"
+  ],
+  "requiredTruths": [
+    "first_sacrifice_definition",
+    "sacrificiant_role",
+    "first_sacrifice_no_interference",
+    "sacrificiant_mouth_band",
+    "rite_is_public",
+    "guide_threshold_dohkar"
+  ]
+}
+
+── sceneAssignment after _selectSceneAssignment ──
+{
+  "event": "The ceremony collapses into accusations; the PC tries to explain something she does not understand herself.",
+  "setting": null,
+  "participants": [
+    "Lirael",
+    "the youth",
+    "Julian"
+  ],
+  "props": null,
+  "stateChange": null,
+  "source": "plan-scene",
+  "sceneNumber": 2
+}
+
+── delivered to Author ──
+  SPINE_EVENT: ❌ ABSENT
+  SCENE_INTENT: ❌ ABSENT
+  SCENE_SPINE: ❌ ABSENT
+
+── skeleton / intent ──
+  environment_anchor: null
+  sceneIntent: null
+
+════ THE SEVEN QUESTIONS ════
+1. spine event stageable external action?   ❌ NO — internal/thematic   «The ceremony collapses into accusations; the PC tries to explain something she does not un»
+2. stateChange populated upstream?          plan.exitState=null  plan.state_change=null  →  assignment.stateChange=null
+3. concrete WANT upstream?                  plan keys matching /want|goal|purpose|motiv/: ["goal"]
+4. concrete OBSTACLE upstream?              plan keys matching /obstacle|block|oppos|resist|conflict/: []
+5. concrete CONSEQUENCE upstream?           plan keys matching /stake|conseq|cost|fail|risk/: []
+6. prior facts available upstream?          seed keys: ["issue","cast","worldTruths","sceneOne","visualCanon","truths","dramaticTruth","constraints"]
+   plan scene keys (ALL): ["n","goal","participants","presentGroups","requiredTruths"]
+7. conflicting location from skeleton?      assignment.setting=null  vs  environment_anchor=null
+
+full dump → _validate_out/realgates/probe.json

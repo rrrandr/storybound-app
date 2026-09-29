@@ -1,0 +1,24 @@
+
+════ SCENE ASSIGNMENT — STATIC ACCEPTANCE ════
+— canonical scene number —
+  ✅  Scene 1 build → 1  (got 1)
+  ✅  turnCount 0 → scene 2  (got 2)
+  ✅  turnCount 1 → scene 3  (got 3)
+— A: structured plan scene —
+  ✅  source=plan-scene  (got plan-scene)
+  ✅  setting supplied verbatim  (got "market stall")
+  ✅  setting NOT inferred (explicit wins)
+  ✅  participants passed through
+  ✅  props passed through
+  ✅  stateChange passed through
+— B: goal names no place —
+  ✅  B source=plan-scene
+  ✅  B setting stays NULL, not invented  (got null)
+  ✅  B2 (authored 0/20 shape) setting NULL  (got null)
+  ✅  B2 still carries the event to the author
+— D: Corridor —
+  ✅  source=scene-mission  (got scene-mission)
+  ✅  corridor event carried
+  ✅  no source → null (legacy fallback preserved)
+— participants dedupe —
+  ✅  no case-insensitive duplicates  (got ["Mara","Dorian"])

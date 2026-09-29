@@ -1,0 +1,26 @@
+{
+  "planner": [
+    {
+      "url": "/api/proxy",
+      "role": "OPENING_PLANNER",
+      "model": "grok-4.3",
+      "preferredModel": "grok-4.3",
+      "reasoningEffort": "none",
+      "response_format": {
+        "type": "json_object"
+      },
+      "max_tokens": 2400,
+      "sysBytes": 4283,
+      "usrBytes": 74769
+    }
+  ],
+  "author": [
+    {
+      "url": "/api/proxy",
+      "role": "NARRATIVE_AUTHOR_GROK_ONLY",
+      "preferredModel": "grok-4.3",
+      "max_tokens": 2400,
+      "convId": "boundary-7lqzfc"
+    }
+  ]
+}

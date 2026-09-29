@@ -1,0 +1,171 @@
+{
+  "s1_early_reserved": {
+    "breach": {
+      "markers": [
+        "dohkar",
+        "sacrificiant",
+        "chayr",
+        "open"
+      ],
+      "dueScene": 14,
+      "currentScene": 2,
+      "eventId": "inquiry_opened"
+    }
+  },
+  "s2_early_pressure": {
+    "breach": null
+  },
+  "s3_due_reserved": {
+    "breach": null
+  },
+  "s3_due_oldplan": {
+    "breach": null
+  },
+  "s4_other_due_scene": {
+    "breach": {
+      "markers": [
+        "dohkar",
+        "sacrificiant",
+        "chayr",
+        "open"
+      ],
+      "dueScene": 14,
+      "currentScene": 3,
+      "eventId": "inquiry_opened"
+    }
+  },
+  "at4_reserved": {
+    "breach": {
+      "markers": [
+        "dohkar",
+        "sacrificiant",
+        "chayr",
+        "open"
+      ],
+      "dueScene": 14,
+      "currentScene": 4,
+      "eventId": "inquiry_opened"
+    }
+  },
+  "at4_revised": {
+    "breach": null
+  },
+  "at13_reserved": {
+    "breach": {
+      "markers": [
+        "dohkar",
+        "sacrificiant",
+        "chayr",
+        "open"
+      ],
+      "dueScene": 14,
+      "currentScene": 13,
+      "eventId": "inquiry_opened"
+    }
+  },
+  "inForceAt2": {
+    "inForce": [
+      {
+        "truthIndex": 15,
+        "markers": [
+          "dohkar",
+          "sacrificiant",
+          "chayr",
+          "open",
+          "fateland"
+        ],
+        "text": "LIRAEL’S FORMAL INQUIRY — WHERE AND WHEN: the presiding Dohkar has asserted the rite and the ruling on the Sacrificiant’s conduct are his, and Julian has publicly claimed authority",
+        "dueScene": 14,
+        "eventId": "inquiry_opened",
+        "via": "reservedEvents row n=14",
+        "unscheduled": false,
+        "currentScene": 2
+      }
+    ],
+    "released": []
+  },
+  "inForceAt3": {
+    "inForce": [
+      {
+        "truthIndex": 15,
+        "markers": [
+          "dohkar",
+          "sacrificiant",
+          "chayr",
+          "open",
+          "fateland"
+        ],
+        "text": "LIRAEL’S FORMAL INQUIRY — WHERE AND WHEN: the presiding Dohkar has asserted the rite and the ruling on the Sacrificiant’s conduct are his, and Julian has publicly claimed authority",
+        "dueScene": 14,
+        "eventId": "inquiry_opened",
+        "via": "reservedEvents row n=14",
+        "unscheduled": false,
+        "currentScene": 3
+      }
+    ],
+    "released": []
+  },
+  "inForceAt4": {
+    "inForce": [
+      {
+        "truthIndex": 15,
+        "markers": [
+          "dohkar",
+          "sacrificiant",
+          "chayr",
+          "open",
+          "fateland"
+        ],
+        "text": "LIRAEL’S FORMAL INQUIRY — WHERE AND WHEN: the presiding Dohkar has asserted the rite and the ruling on the Sacrificiant’s conduct are his, and Julian has publicly claimed authority",
+        "dueScene": 14,
+        "eventId": "inquiry_opened",
+        "via": "reservedEvents row n=14",
+        "unscheduled": false,
+        "currentScene": 4
+      }
+    ],
+    "released": []
+  },
+  "inForceAt13": {
+    "inForce": [
+      {
+        "truthIndex": 15,
+        "markers": [
+          "dohkar",
+          "sacrificiant",
+          "chayr",
+          "open",
+          "fateland"
+        ],
+        "text": "LIRAEL’S FORMAL INQUIRY — WHERE AND WHEN: the presiding Dohkar has asserted the rite and the ruling on the Sacrificiant’s conduct are his, and Julian has publicly claimed authority",
+        "dueScene": 14,
+        "eventId": "inquiry_opened",
+        "via": "reservedEvents row n=14",
+        "unscheduled": false,
+        "currentScene": 13
+      }
+    ],
+    "released": []
+  },
+  "inForceAt14": {
+    "inForce": [],
+    "released": [
+      {
+        "truthIndex": 15,
+        "markers": [
+          "dohkar",
+          "sacrificiant",
+          "chayr",
+          "open",
+          "fateland"
+        ],
+        "text": "LIRAEL’S FORMAL INQUIRY — WHERE AND WHEN: the presiding Dohkar has asserted the rite and the ruling on the Sacrificiant’s conduct are his, and Julian has publicly claimed authority",
+        "dueScene": 14,
+        "eventId": "inquiry_opened",
+        "via": "reservedEvents row n=14",
+        "unscheduled": false,
+        "currentScene": 14
+      }
+    ]
+  }
+}

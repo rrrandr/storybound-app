@@ -1,0 +1,77 @@
+{
+  "at": "2026-09-24T03:56:04.135Z",
+  "base": "http://localhost:3000",
+  "providerResults": [
+    {
+      "route": "/api/chatgpt-proxy",
+      "status": 405,
+      "elapsedMs": 1083,
+      "body": "{\"error\":\"Method not allowed\"}",
+      "networkError": null
+    },
+    {
+      "route": "/api/proxy",
+      "status": 405,
+      "elapsedMs": 1088,
+      "body": "{\"error\":\"Method not allowed\"}",
+      "networkError": null
+    },
+    {
+      "route": "/api/mistral-proxy",
+      "status": 405,
+      "elapsedMs": 1047,
+      "body": "{\"error\":\"Method not allowed\"}",
+      "networkError": null
+    }
+  ],
+  "controlResults": [
+    {
+      "route": "/api/config",
+      "status": 200,
+      "elapsedMs": 1062,
+      "body": "{\"supabaseUrl\":\"https://riutipkrnfyvvghzlrwe.supabase.co\",\"supabaseAnonKey\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJpdXRpcGtybmZ5dnZnaHpscndlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc0NzEyMjQsImV4cCI6MjA4MzA0NzIyNH0.-YCYDxM8OUybL75B0S4JE9HBgXV-K8Bhog6A-nPxUKQ\",\"proxyUrl\":\"https://storybound-proxy.vercel.app/api/proxy\",\"imageProxyUrl\":\"https://storybound-proxy.vercel.app/a",
+      "networkError": null
+    },
+    {
+      "route": "/api/geo",
+      "status": 200,
+      "elapsedMs": 1054,
+      "body": "{\"country\":null,\"decision\":\"dev_allow\",\"blocked\":false,\"mode\":\"log\",\"source\":\"x-vercel-ip-country\"}",
+      "networkError": null
+    }
+  ],
+  "results": [
+    {
+      "name": "/api/chatgpt-proxy reached the function layer and got the function's OWN response (405 Method Not Allowed), not a platform failure",
+      "pass": true
+    },
+    {
+      "name": "/api/chatgpt-proxy response carries NO NO_RESPONSE_FROM_FUNCTION signature (the exact failure seen during the incident)",
+      "pass": true
+    },
+    {
+      "name": "/api/proxy reached the function layer and got the function's OWN response (405 Method Not Allowed), not a platform failure",
+      "pass": true
+    },
+    {
+      "name": "/api/proxy response carries NO NO_RESPONSE_FROM_FUNCTION signature (the exact failure seen during the incident)",
+      "pass": true
+    },
+    {
+      "name": "/api/mistral-proxy reached the function layer and got the function's OWN response (405 Method Not Allowed), not a platform failure",
+      "pass": true
+    },
+    {
+      "name": "/api/mistral-proxy response carries NO NO_RESPONSE_FROM_FUNCTION signature (the exact failure seen during the incident)",
+      "pass": true
+    },
+    {
+      "name": "/api/config returns a real, non-5xx response from its own code",
+      "pass": true
+    },
+    {
+      "name": "/api/geo returns a real, non-5xx response from its own code",
+      "pass": true
+    }
+  ]
+}

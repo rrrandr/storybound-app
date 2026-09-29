@@ -1,0 +1,40 @@
+{
+ "violations": [],
+ "preflight": [],
+ "reports": [
+  {
+   "validator": "hot_opening",
+   "type": "OPENING_TEMPERATURE",
+   "ok": false,
+   "failures": [],
+   "renderedTemp": "COLD_DISRUPTION",
+   "inMotionHits": 0,
+   "containerOpener": false,
+   "evidence": "The Dohkar's hand rose, palm open toward the kneeling girl. \"Speak the cost first, Seren.\"\n\nSeren's aqua skin caught the filtered light through the hanging veil-curtains. Her coral hair trembled against the braided crimson spiralgrass. She named her earliest memory aloud, the one"
+  },
+  {
+   "validator": "pc_picturability",
+   "type": "PC_PICTURABILITY_GAP",
+   "ok": false,
+   "evidence": "The whispers had already begun when Julian’s hand rose. The signet ring on his finger caught the filtered light through the veil-curtains, and his arm extended straight toward me.\n\n“You bent her wish toward your own loss.”\n\nThe words landed with the weight of an iron vow. His eme"
+  },
+  {
+   "validator": "semantic_rewrite",
+   "type": "SEMANTIC_EDIT_REQUESTED",
+   "label": "flavor-physics",
+   "instruction": "CRITICAL: This scene MUST express the world's defining mechanic.\nWorld flavor: Arcane Binding\nScene does not express flavor physics for \"arcane_binding\". Expected keywords: binding, spell, contract, g"
+  },
+  {
+   "validator": "pc_picturability",
+   "type": "PC_PICTURABILITY_GAP",
+   "ok": false,
+   "evidence": "The clearing hadn’t settled. The spiralgrass still trembled where Seren’s wish had struck her, the crimson blades braided and unraveling at the root. I stood at the edge of the crowd, the seal torn from my mouth, the cloth damp against my palm. The lumenweave motes had thinned to"
+  },
+  {
+   "validator": "tension_gate",
+   "type": "LOW_TENSION",
+   "ok": false,
+   "evidence": "The clearing hadn’t settled. The spiralgrass still trembled where Seren’s wish had struck her, the crimson blades braided and unraveling at the root. I stood at the edge of the crowd, the seal torn from my mouth, the cloth damp against my palm. The lumenweave motes had thinned to"
+  }
+ ]
+}

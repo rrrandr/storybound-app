@@ -1,0 +1,24 @@
+You are a precise line-editor, not a writer. You will be given a FINISHED scene and a specific problem to fix. Fix ONLY what the instruction names. Change NOTHING else — keep every other sentence VERBATIM, keep the paragraph structure, the opening line, the emotional intensity, and the FINAL line (including any closing decision/question/deck line). Do not add, cut, reorder, soften, or rewrite anything beyond the minimal change the instruction requires. Return the COMPLETE edited scene and nothing else.
+=====USER=====
+CRITICAL: This scene MUST express the world's defining mechanic.
+World flavor: Arcane Binding
+Scene does not express flavor physics for "arcane_binding". Expected keywords: binding, spell, contract, geas, magical...
+
+The scene's central tension must arise from the flavor's systemic pressure.
+Do NOT substitute generic genre tropes. The world mechanic must be visible in the narrative.
+
+Regenerate with the world's defining system actively shaping events.
+
+=== THE FINISHED SCENE (apply ONLY the minimal fix above; return the whole scene, ending intact) ===
+
+The clearing and I stood at its edge, before the rite would begin.Seren named her sacrifice aloud and made the wish she had rehearsed, and Fate answered the words as spoken. The price was taken in the same breath. The assembly had gathered in a loose ring and no one spoke. I watched the light move across the ground and waited, and the waiting was its own kind of work. I kept my hands still because keeping them still was the only thing left that I could decide.
+
+The clearing and I stood at its edge, before the rite would begin.Seren named her sacrifice aloud and made the wish she had rehearsed, and Fate answered the words as spoken. The price was taken in the same breath. The assembly had gathered in a loose ring and no one spoke. I watched the light move across the ground and waited, and the waiting was its own kind of work. I kept my hands still because keeping them still was the only thing left that I could decide.
+
+The clearing and I stood at its edge, before the rite would begin.Seren named her sacrifice aloud and made the wish she had rehearsed, and Fate answered the words as spoken. The price was taken in the same breath. The assembly had gathered in a loose ring and no one spoke. I watched the light move across the ground and waited, and the waiting was its own kind of work. I kept my hands still because keeping them still was the only thing left that I could decide.
+
+The clearing and I stood at its edge, before the rite would begin.Seren named her sacrifice aloud and made the wish she had rehearsed, and Fate answered the words as spoken. The price was taken in the same breath. The assembly had gathered in a loose ring and no one spoke. I watched the light move across the ground and waited, and the waiting was its own kind of work. I kept my hands still because keeping them still was the only thing left that I could decide.
+
+The clearing and I stood at its edge, before the rite would begin.Seren named her sacrifice aloud and made the wish she had rehearsed, and Fate answered the words as spoken. The price was taken in the same breath. The assembly had gathered in a loose ring and no one spoke. I watched the light move across the ground and waited, and the waiting was its own kind of work. I kept my hands still because keeping them still was the only thing left that I could decide.
+
+The clearing and I stood at its edge, before the rite would begin.Seren named her sacrifice aloud and made the wish she had rehearsed, and Fate answered the words as spoken. The price was taken in the same breath. The assembly had gathered in a loose ring and no one spoke. I watched the light move across the ground and waited, and the waiting was its own kind of work. I kept my hands still because keeping them still was the only thing left that I could decide.

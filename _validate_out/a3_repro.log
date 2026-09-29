@@ -1,0 +1,11 @@
+  ✓ stringNested #1: race=resolved 255ms fatal=planner stage_contract rejected (absent) — the stage is not established pages=0 author=0 refunds=1
+  ✓ stringNested #2: race=resolved 220ms fatal=planner stage_contract rejected (absent) — the stage is not established pages=0 author=0 refunds=1
+  ✓ stringNested #3: race=resolved 192ms fatal=planner stage_contract rejected (absent) — the stage is not established pages=0 author=0 refunds=1
+  ✓ stringNested #4: race=resolved 217ms fatal=planner stage_contract rejected (absent) — the stage is not established pages=0 author=0 refunds=1
+  ✓ stringNested #5: race=resolved 225ms fatal=planner stage_contract rejected (absent) — the stage is not established pages=0 author=0 refunds=1
+  ✓ stringNested #6: race=resolved 224ms fatal=planner stage_contract rejected (absent) — the stage is not established pages=0 author=0 refunds=1
+  ✓ malformedNested #1: race=resolved 212ms fatal=planner stage_contract rejected (malformed:participants) — the stage is not established pages=0 author=0 refunds=1
+  ✓ malformedNested #2: race=resolved 217ms fatal=planner stage_contract rejected (malformed:participants) — the stage is not established pages=0 author=0 refunds=1
+  ✓ malformedNested #3: race=resolved 190ms fatal=planner stage_contract rejected (malformed:participants) — the stage is not established pages=0 author=0 refunds=1
+
+9 runs · 9 held the invariant · 0 did not

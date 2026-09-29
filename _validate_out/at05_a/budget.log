@@ -1,0 +1,27 @@
+[ACCESS:RESOLVER] Decision: {"decisionId":"NEW_STARTER_FREE","allowed":true,"costType":"free","reason":"starter_story_free","uiAction":"none","meta":{"requiresPremiumWorld":true,"hasUsableFortunesForNewStory":true,"globa
+[BETA] geo_gate_decision {"country":null,"signal":"ip","decision":"dev_allow","mode":"log","blocked":false,"storyId":null,"fateMode":null,"turnCount":0,"userLanguage":"en","storyLanguage":"en","generationLanguage":"en","
+[DEMAND-HINT] axis="Say it plainly — or let it show without words?" source=scene1_micro_decision universal=1 pressure=?
+[DEMAND-HINT] axis="Say it plainly — or let it show without words?" source=scene1_micro_decision universal=1 pressure=survival
+[SCENE1:SCAFFOLD] micro_decision: library-only (Haiku no longer generates this field): "Say it plainly — or let it show without words?"
+[CONTRACT:COND] completion condition front-loaded (7 must-satisfy obligations)
+[CONTRACT:START] first draft satisfies 0/4 CRITICAL
+[CONTRACT] validate-only (default; set window._contractRepairOff=false to restore the pen) unmet=6
+[CONTRACT:LOOP 1] +0w · satisfied [] · CRITICAL remaining 4 · efficiency n/a
+[CONTRACT:LOOP] no improvement (4→4) — aborting
+[CONTRACT:DONE] CRITICAL 0/4 satisfied · +0c across 1 continuation(s)
+[SCENE1-GATE] Mandated closer already in final paragraph — bypassing gate (contract honored).
+[SCENE1:VAL] {outcome: pass, hookPass: true, decisionPass: true, decisionBasePass: true, decisionShapePass: true}
+[NarrativeAuthority] Validation failed: [Object]
+[NarrativeAuthority] Scene 1 validation failed (validate-only, no regen): [NARR_ABSTRACT_WITHOUT_CONSEQUENCE]
+[LI-PROOF] VALIDATE-ONLY (default) — gap detected for Julian; reporting, not writing. Restore the pen with window._liProofPenOff = false.
+[PC-PICTURABILITY:SKIP] HOT_CRISIS Scene-1 — deferring PC establishment to avoid mid-crisis inventory dump
+[DECISION] _repairInterlocutorPicturability ENTERED
+[DECISION] _repairCalcifiedMoves ENTERED
+[SCENE-DYNAMICS] turn=0 body=6 reused=0 dialogue=4 action=1 decision=0 interrupt=0 reloc=0 env=2 once=4
+[HOT-RENDER:GATE] functional fails=[] (n=0) · rendered=HOT_CRISIS · in-motion=0 · container-opener=false ⟹ REPAIR FIRES
+[HOT-RENDER] VALIDATE-ONLY (default) — fails=[] rendered=HOT_CRISIS in-motion=0. Reporting, not rewriting. Restore with window._hotPenOff = false.
+[DECISION] _repairCalcifiedMoves ENTERED
+[MODEL-ROUTE:PROSE] provider=mistral-small task=line_edit callsite=cheap-edit:scene1-edit
+[CHEAP-EDIT] scene1-edit DRIFTED (len 2651→1777 or opening changed) — keeping the ORIGINAL draft rather than re-rolling.
+[LINE-EDIT] SEMANTIC label "scene1-edit" — pen off by default; reporting, not rewriting. Restore with window._semanticRewritePenOff = false.
+[SCENE-BUDGET:COUNT] scene=0449b6d1-6b80-40a9-91fa-c2a02427490f:0 repair=1 polish=0 fallback=0 regen=0 cosmetic=0/2 (conditional spent=1/4) skipped=[] provenance=repair

@@ -1,0 +1,1 @@
+{"beats":[{"idx":0,"kind":"narration","text":"The clearing holds its silence.","speaker":null,"tension_state":"composed"}],"visualState":{},"is_consummate_scene":false,"hardBeats":[],"decisionGateBeatIdx":0}

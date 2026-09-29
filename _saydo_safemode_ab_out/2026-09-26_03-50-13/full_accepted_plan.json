@@ -1,0 +1,24 @@
+{
+  "tactical_move": "initiate dohkar preliminary review by having the presiding Dohkar formally question Lirael's conduct before the assembly",
+  "local_objective": "The presiding Dohkar formally questions Lirael's conduct before the assembly, initiating the preliminary review.",
+  "state_change": "The presiding Dohkar declares that Lirael's conduct during the rite will be reviewed.",
+  "state_change_precondition": "The presiding Dohkar has not yet placed Lirael's conduct under formal review before the assembly.",
+  "forces_choice": "forces Lirael to choose between claiming the interference openly or letting the assembly keep its assumption",
+  "event_slots": {
+    "precondition": "The presiding Dohkar is present in the scene with the assembly.",
+    "actor": "the presiding Dohkar",
+    "action": "declares that Lirael's conduct during the rite will be reviewed",
+    "target": "Lirael",
+    "exit_state": "Lirael's conduct is now formally under preliminary review before the assembly",
+    "mechanism_grounding": "ordinary"
+  },
+  "mechanism_grounding": "ordinary",
+  "acceptedAt": 1790394675908,
+  "sceneNum": 1,
+  "owner": {
+    "id": "cpa:9539a63b-d878-41cc-9a91-fe6ae143228b",
+    "storyId": "live-safemode-full-1790394624729",
+    "sceneIndex": 1,
+    "branch": "remain"
+  }
+}

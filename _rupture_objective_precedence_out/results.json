@@ -1,0 +1,118 @@
+[
+  {
+    "name": "the REAL committed consequence is indexed as carrying invalidated plans",
+    "pass": true
+  },
+  {
+    "name": "...and it carries the exact plan the rupture invalidated, verbatim from canon",
+    "pass": true
+  },
+  {
+    "name": "...along with the replanning inputs — what changed, who knows what, surviving evidence, open possibilities",
+    "pass": true
+  },
+  {
+    "name": "objective precedence is DERIVED from the invalidatedPlans index, not from prompt text",
+    "pass": true
+  },
+  {
+    "name": "with a committed invalidating rupture the scheduled objective is CONTINGENT, not mandatory",
+    "pass": true
+  },
+  {
+    "name": "the directive names the scheduled objective under review rather than silently dropping it",
+    "pass": true
+  },
+  {
+    "name": "...quotes what the rupture actually invalidated, from the committed record",
+    "pass": true
+  },
+  {
+    "name": "...forbids restoring an erased fact so the scheduled beat can happen anyway — the exact Scene B failure",
+    "pass": true
+  },
+  {
+    "name": "...keeps history historical and reopens only future plans (req 2)",
+    "pass": true
+  },
+  {
+    "name": "...supplies the generic replanning inputs instead of a hand-authored replacement (req 3)",
+    "pass": true
+  },
+  {
+    "name": "...PRESCRIBES NOTHING — confusion, contradictory records, a suspended proceeding and a noticed inconsistency are offered as available, never required (req 6)",
+    "pass": true
+  },
+  {
+    "name": "NEGATIVE CONTROL — with no committed rupture the objective stays MANDATORY and the directive is empty",
+    "pass": true
+  },
+  {
+    "name": "...and a committed rupture that invalidated NOTHING also leaves the objective mandatory",
+    "pass": true
+  },
+  {
+    "name": "a materialization_possession rupture can strand a different kind of future plan",
+    "pass": true
+  },
+  {
+    "name": "a identity_reputation rupture can strand a different kind of future plan",
+    "pass": true
+  },
+  {
+    "name": "a relationship_social rupture can strand a different kind of future plan",
+    "pass": true
+  },
+  {
+    "name": "a history_rewrite rupture can strand a different kind of future plan",
+    "pass": true
+  },
+  {
+    "name": "RED — the real planner proposal is REJECTED before any author dispatch",
+    "pass": true
+  },
+  {
+    "name": "...because it declared no mechanism_grounding for a supernatural capability",
+    "pass": true
+  },
+  {
+    "name": "...and an INVENTED grounding citing nothing in the world truths is rejected too",
+    "pass": true
+  },
+  {
+    "name": "GREEN — a scene of unexplained confusion passes (ordinary capability)",
+    "pass": true
+  },
+  {
+    "name": "GREEN — a contradictory physical record passes",
+    "pass": true
+  },
+  {
+    "name": "GREEN — a suspended proceeding passes, grounded in the Dohkar's REAL authority",
+    "pass": true
+  },
+  {
+    "name": "GREEN — Julian noticing an inconsistency and speaking passes",
+    "pass": true
+  },
+  {
+    "name": "mechanism_grounding is a REQUIRED key in the real planner event_slots schema",
+    "pass": true
+  },
+  {
+    "name": "the schema forbids inventing a capability to make an event possible",
+    "pass": true
+  },
+  {
+    "name": "the grounding gate is wired to REJECT before the author dispatch",
+    "pass": true
+  },
+  {
+    "name": "the precedence directive is wired into the real planner prompt build",
+    "pass": true
+  },
+  {
+    "name": "ZERO real provider dispatches",
+    "pass": true
+  }
+]

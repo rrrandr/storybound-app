@@ -1,0 +1,90 @@
+# 2026-09-26T07:00:58.387Z
+# node _saydo_gibberish_live_run.mjs --authorize run the gibberish continuation once under $0.15
+
+=== SAY/DO GIBBERISH CONTINUATION — AUTHORIZED ===
+  input   : action="asdkfjh sdkfj lkjwer"  dialogue="qwerty zzzz aaaa"
+  ceiling : $0.15, reserved per call BEFORE dispatch
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/csp-report
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/config
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/csp-report
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/geo
+
+=== 1. THE REAL DETECTOR CATCHES THE CHOSEN INPUT (else the run tests nothing) ===
+    detector: action={"gibberish":true,"reason":"Long consonant run (likely keyboard mash)."} dialogue={"gibberish":true,"reason":"Too many repeated characters."}
+    fallback action  : "a beat of dazed, wordless hesitation"
+    fallback dialogue: "a confused, wordless sound that never resolves into words"
+  ✓ the REAL _detectGibberish classifies the chosen ACTION as gibberish
+  ✓ ...and the chosen DIALOGUE
+  ✓ ...and each verdict carries the detector's own reason
+  ✓ _sayDoGibberishFallback returns the documented ACTION placeholder
+  ✓ ...and the documented DIALOGUE placeholder
+  ✓ NEGATIVE — an ordinary sentence is NOT detected and NOT substituted
+
+=== 2. THE SUBSTITUTION IS ON THE REAL SUBMIT PATH, BEFORE ANY GENERATION ===
+  ✓ the handler reads the gn* inputs and sanitizes them first
+  ✓ ...then reassigns BOTH fields through the fallback
+  ✓ ...inside the real Submit click listener
+  ✓ the Submit handler invokes the tiered policy exactly ONCE
+  ✓ ...and placeholder application is confined to the policy plus one guarded legacy fallback
+
+=== 3. RAW GIBBERISH MUST NOT REACH ANY PAYLOAD — DRIVEN THROUGH THE REAL UI ===
+    Say/Do controls present (DOM): {"gnActionInput":true,"gnDialogueInput":true,"gnSubmitBtn":true,"actionInput":true,"dialogueInput":true,"submitBtn":true}
+  ✓ THE REAL SAY/DO CONTROLS ARE REACHABLE — required, because the substitution lives only in the Submit handler and no generator shortcut may stand in for it
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/beta-events
+    captured: ["author","author","author","author","author","author","planner","planner","planner","author","author","author"]
+  ✓ the real Submit produced at least a planner request
+  ✓ RAW GIBBERISH APPEARS IN NO PAYLOAD — neither field, anywhere
+  ✓ the SUBSTITUTED placeholders reach the real AUTHOR payload
+  ✓ the STRONG-DELIVERY directive is ABSENT — a placeholder is not a committed player move
+  ✓ the reserved-canon guard is still active in the author payload
+  ✓ GIBBERISH HANDLING IS PRESENT — the input is acknowledged lightly, not elevated
+    production log: [SAYDO:GIBBERISH] action replaced with a graceful fallback — reason: Long consonant run (likely keyboard mash).
+  ✓ ...and the production log records tier=isolated for a first offence
+  ✓ ...and the streak was persisted for the next turn
+
+=== 4. THE SLOT ROUTER FALLS BACK, WITH ITS REASON LOGGED ===
+    placeholder → slot null :: no slot represented: the move is not an admission, an authority challenge, an unretreating
+  ✓ the placeholder claims NO slot
+  ✓ ...and says WHY, so a later misfire is explainable
+  ✓ raw gibberish would also claim no slot
+  ✓ the frame falls back to the institutional default
+
+=== 5. CONTAINMENT AND COST DISCIPLINE ===
+  ✓ images were blocked for the whole preflight
+  ✓ NO REAL DISPATCH during preflight
+  ✓ a reservation past the ceiling is REFUSED before dispatch
+
+  PREFLIGHT: 27/27 — PASSED
+  Evidence: /Users/romantsukerman/storybound-app/_saydo_gibberish_out/2026-09-26T07-00-58
+
+=== LIVE — ONE SCENE, REAL PROVIDERS ===
+    [live] author → /api/mistral-proxy  (running reserved $0.090)
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/beta-events
+    [live] planner → /api/proxy  (running reserved $0.110)
+  ✗ ABORT — reserving author would pass the $0.15 ceiling
+  ✗ ABORT — reserving author would pass the $0.15 ceiling
+  ✗ ABORT — reserving author would pass the $0.15 ceiling
+    captured live: ["author","planner","author","author","author"]  beats=0  58077ms
+    gibberish log: [SAYDO:GIBBERISH] tier=isolated streak=1 fields={"action":"pure","dialogue":"pure"}
+  ✗ LIVE — no ceiling abort occurred
+        → reserving author would pass the $0.15 ceiling
+  ✓ LIVE — raw gibberish reached NO payload
+  ✓ LIVE — raw gibberish is absent from the delivered PROSE
+  ✓ LIVE — the substituted placeholders reached the real author payload
+  ✓ LIVE — the strong-delivery rule did NOT fire
+  ✓ LIVE — the gibberish-handling directive WAS in force
+  ✗ LIVE — a scene was actually delivered
+        → beats=0 chars=0
+  ✓ LIVE — spend stayed inside the ceiling
+
+======================================================================================
+  DELIVERED PROSE:
+
+    
+
+  REALIZED $0.006710 of $0.15 (reserved $0.110)
+  33/35 mechanical assertions passed
+  HUMAN JUDGEMENT DECIDES THE VERDICT: does the prose move, acknowledge without inflating, and leave the scene playable?
+  Evidence: /Users/romantsukerman/storybound-app/_saydo_gibberish_out/2026-09-26T07-00-58
+
+# EXIT: 1

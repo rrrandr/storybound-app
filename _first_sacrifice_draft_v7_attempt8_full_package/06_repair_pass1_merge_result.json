@@ -1,0 +1,19 @@
+{
+  "merged": true,
+  "errors": [],
+  "mergedValidation": {
+    "ok": false,
+    "violations": [
+      {
+        "rule": "scene1_insufficient_narration_density",
+        "detail": "only 8 of 16 narration/exposition beats are 60-90 words each (need at least 12) — a few long beats cannot cover for many thin ones; this is checked PER-BEAT, independent of the total-word floor"
+      }
+    ],
+    "diagnostics": [
+      {
+        "rule": "exemplar_similarity",
+        "detail": "oasOpening contains a 6+ word verbatim match against the withheld, non-rendered julian_opening_turn exemplar — non-blocking similarity report, not evidence of copying (the exemplar was never supplied to the model; the matched framing is independently required by the rendered opening_frame_brief / oas_opening_requirement.content_requirement)"
+      }
+    ]
+  }
+}

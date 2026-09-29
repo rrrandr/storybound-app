@@ -1,0 +1,7 @@
+
+════ LANE-2 SNAPSHOT CHAIN (V2, author stubbed) ════
+  RAW    290ba4fe90   2450 chars
+  C1     0833d610a8   2441 chars   ← _mistralRepairPass [Mistral-small repair]
+  FINAL  9c1c59e56a   2441 chars
+
+  total snapshot events: 4  (retained/changed: 1, rejected: 0, no-change: 3)

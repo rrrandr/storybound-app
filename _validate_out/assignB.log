@@ -1,0 +1,12 @@
+[gen] B init…
+[gen] V4…
+   → skeleton=false anchor=null
+
+════ V4 ════
+  scene#=2  source=null  skeleton=false
+  assignment: null
+  anchor: null  staged: null
+  event block delivered: false  models: 
+  raw 0 chars → final 1828 chars
+
+→ _validate_out/assign_sessionB.json

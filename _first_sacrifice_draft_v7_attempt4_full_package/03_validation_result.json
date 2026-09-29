@@ -1,0 +1,17 @@
+{
+  "ok": false,
+  "violations": [
+    {
+      "rule": "scene1_too_short",
+      "detail": "scene1Candidate.beats has 14 beat(s); target ~20, tolerance 18-22 — this is a full scene, not a summary"
+    },
+    {
+      "rule": "scene1_too_thin",
+      "detail": "scene1Candidate totals 943 words across 14 beats — accepted range 1,100-1,700, target 1,350-1,550 (baked scene ~1,444); beats satisfying the COUNT target with flat one-line prose is a hard failure, not just a quality preference"
+    },
+    {
+      "rule": "scene1_insufficient_narration_density",
+      "detail": "only 8 of 13 narration/exposition beats are 55-110 words each (need at least 12) — a few long beats cannot cover for many thin ones; this is checked PER-BEAT, independent of the total-word floor"
+    }
+  ]
+}

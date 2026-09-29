@@ -28,7 +28,7 @@
     "pass": true
   },
   {
-    "name": "the auditor ran on the ordinary plan",
+    "name": "the auditor ran on the auditable plan",
     "pass": true
   },
   {
@@ -181,6 +181,50 @@
   },
   {
     "name": "when NOTHING was omitted the packet may still claim completeness — First Sacrifice fits under both caps",
+    "pass": true
+  },
+  {
+    "name": "UNSET means ENABLED — selective auditing is the production default",
+    "pass": true
+  },
+  {
+    "name": "an explicit true enables it (the test-only opt-in)",
+    "pass": true
+  },
+  {
+    "name": "an explicit false disables it",
+    "pass": true
+  },
+  {
+    "name": "with the auditor EXPLICITLY disabled a normal scene makes ZERO auditor calls",
+    "pass": true
+  },
+  {
+    "name": "...and the AUTHOR is dispatched exactly once — the scene is not blocked",
+    "pass": true
+  },
+  {
+    "name": "SHIP STATE (unset = enabled + selective): the author still dispatches once, unblocked",
+    "pass": true
+  },
+  {
+    "name": "...and at most ONE auditor call was made for the one candidate plan",
+    "pass": true
+  },
+  {
+    "name": "DETERMINISTIC grounding still rejects an ungrounded plan while the semantic audit is OFF",
+    "pass": true
+  },
+  {
+    "name": "...still making zero auditor calls and zero author calls",
+    "pass": true
+  },
+  {
+    "name": "production carries NO implicit-enable expression — the default is a named constant",
+    "pass": true
+  },
+  {
+    "name": "...and both gate sites route through the explicit opt-in helper",
     "pass": true
   },
   {

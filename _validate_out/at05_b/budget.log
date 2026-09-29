@@ -1,0 +1,41 @@
+[ACCESS:RESOLVER] Decision: {"decisionId":"NEW_STARTER_FREE","allowed":true,"costType":"free","reason":"starter_story_free","uiAction":"none","meta":{"requiresPremiumWorld":true,"hasUsableFortunesForNewStory":true,"globa
+[BETA] geo_gate_decision {"country":null,"signal":"ip","decision":"dev_allow","mode":"log","blocked":false,"storyId":null,"fateMode":null,"turnCount":0,"userLanguage":"en","storyLanguage":"en","generationLanguage":"en","
+[A-PLOT:DUMP] first-attempt parsed output (validation rejected): 
+  goal:                      Absorb the responsibility of the wish Lirael made years ago that bound Julian to her by deciding whether to revoke it before 
+[A-PLOT:WOUND] 
+  pcWound:                  the estrangement from her mother, who cut ties after discovering Lirael's secret life. This loss has haunted her for years. 
+  liWound:                  His first love left him
+[ANT-BODY-BIBLE] generated for Elara, his first love (shape B): 
+  archetype:           BUREAUCRATIC_COLD 
+  archetype_signature: Elara's presence feels like a well-crafted policy — she steps into the room with a calcula
+[DEMAND-HINT] axis="Say it plainly — or let it show without words?" source=scene1_micro_decision universal=1 pressure=?
+[SCENE-WANT:MODE] SELF — "wants someone to take responsibility for the decision in front of her."
+[DEMAND-HINT] axis="Say it plainly — or let it show without words?" source=scene1_micro_decision universal=1 pressure=emotional
+[SCENE1:SCAFFOLD] micro_decision: library-only (Haiku no longer generates this field): "Say it plainly — or let it show without words?"
+[SCENE1:SCAFFOLD:TEXTURE]
+  scene_want:                 "wants someone to take responsibility for the decision in front of her."
+  interlocutor_placement:     "Quinn — my mentor, her auburn hair cascading over her should
+[CONTRACT:COND] completion condition front-loaded (7 must-satisfy obligations)
+[SCENE-WANT] present — inferred want: "wants someone to take responsibility for the decision in front of her." · matched tokens: [someone, take]
+[CONTRACT:START] first draft satisfies 0/4 CRITICAL
+[CONTRACT] validate-only (default; set window._contractRepairOff=false to restore the pen) unmet=5
+[CONTRACT:LOOP 1] +0w · satisfied [] · CRITICAL remaining 4 · efficiency n/a
+[CONTRACT:LOOP] no improvement (4→4) — aborting
+[CONTRACT:DONE] CRITICAL 0/4 satisfied · +0c across 1 continuation(s)
+[SCENE1-GATE] Mandated closer already in final paragraph — bypassing gate (contract honored).
+  [li_on_stage] Julian is bodily present (1 presence cue) despite the off-stage contract — references are fine, but the LI must not speak/act/be touched on-page
+[SCENE1-GATE] Surgical edit attempt 1 → mistral-small (targeted rewrite, preserves voice/length/architecture; Haiku BANNED for prose, Roman 2026-06-26)
+[SCENE1-GATE] Regen attempt 1 accepted — all (non-decision) checks pass, soft fails cleared.
+[SCENE1:VAL] {outcome: regen_accepted, hookPass: true, decisionPass: true, decisionBasePass: true, decisionShapePass: true}
+[NarrativeAuthority] Validation failed: [Object]
+[NarrativeAuthority] Scene 1 validation failed (validate-only, no regen): [NARR_ABSTRACT_WITHOUT_CONSEQUENCE]
+[PC-PICTURABILITY:SKIP] HOT_CRISIS Scene-1 — deferring PC establishment to avoid mid-crisis inventory dump
+[DECISION] _repairInterlocutorPicturability ENTERED
+[DECISION] _repairCalcifiedMoves ENTERED
+[SCENE-DYNAMICS] turn=0 body=3 reused=0 dialogue=3 action=1 decision=0 interrupt=1 reloc=0 env=4 once=6
+[HOT-RENDER:GATE] functional fails=[no_li_250] (n=1) · rendered=HOT_CRISIS · in-motion=1 · container-opener=false ⟹ skip
+[HOT-RENDER] VALIDATE-ONLY (default) — fails=[no_li_250] rendered=HOT_CRISIS in-motion=1. Reporting, not rewriting. Restore with window._hotPenOff = false.
+[DECISION] _repairCalcifiedMoves ENTERED
+[SCENE-WANT] absent — inferred want: "wants someone to take responsibility for the decision in front of her." · no content tokens found in first 250 words. Tokens checked: [someone, take, responsibility, decision, front]
+[SCENE-WANT] absent — inferred want: "wants someone to take responsibility for the decision in front of her." · no content tokens found in first 250 words. Tokens checked: [someone, take, responsibility, decision, front]
+[SCENE-BUDGET:COUNT] scene=edbc6eef-809e-4bec-9ea2-2500ba154d3d:0 repair=1 polish=0 fallback=0 regen=0 cosmetic=1/2 (conditional spent=1/4) skipped=[] provenance=repair

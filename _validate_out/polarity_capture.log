@@ -1,0 +1,47 @@
+[audit] fatelands-cont — initializing (author stubbed; only cheap pre-passes run)…
+  [SCENE-COST] by category: prose+spine $0.0045 ×7 · STORY-SETUP (one-time, amortized) $0.0529 ×10 · audits (instrumentati
+[census] 11 large calls; author-class: 3
+   init tot=62206 author=false m=gpt-4o-mini | DISTINGUISHING FEATURE (anti-calcification ROTATION — HARD): this love
+   init tot=89314 author=false m=grok-4-1-fast-reasoning | You are the A-PLOT GENERATOR for Storybound, an interactive romance fi
+   init tot=77830 author=false m=gpt-4o-mini | You are a scene-structure planner for the OPENING scene of an interact
+   init tot=268327 author=true m=grok-4.3 |  ═══ STORYBOUND ARCHITECTURE LAWS — PHASE 1 ═══ (These three laws are 
+   init tot=269696 author=true m=mistral-small-2603 |  ═══ STORYBOUND ARCHITECTURE LAWS — PHASE 1 ═══ (These three laws are 
+   cont tot=382141 author=true m=mistral-small-2603 |  ═══ STORYBOUND ARCHITECTURE LAWS ═══ LAW 3 — MEMORY-CONTENT PRIORITY 
+
+════ DELIVERY AUDIT — fatelands-scene1 ════
+  payload: sys=96100  usr=172227  model=grok-4.3
+  reasoning fields in body: {}  | body keys: messages,role,preferredModel,temperature,max_tokens,convId
+   ✅  present  AUTHOR FLOOR
+   ✅  present  MODE: ROMANTASY
+   ✅  absent   MODE: CONTEMPORARY
+   ✅  present  by the END OF THE FIRST PARAGRAPH
+   ✅  present  AND IN WHAT IT DOES TO HER NOW
+   ✅  present  LOAD-BEARING contract for Scene 1
+   ✅  present  exists ONLY as PRESSURE
+   ✅  present  (A + B) ≥ 75%
+   ✅  present  LAW 3 — MEMORY-CONTENT PRIORITY
+
+════ DELIVERY AUDIT — fatelands-cont ════
+  payload: sys=382099  usr=42  model=mistral-small-2603
+  reasoning fields in body: {}  | body keys: model,messages,temperature,max_tokens
+   ✅  present  AUTHOR FLOOR
+   ✅  present  MODE: ROMANTASY
+   ✅  absent   MODE: CONTEMPORARY
+   ✅  absent   LOAD-BEARING contract for Scene 1
+   ✅  absent   the architecture law wins
+   ✅  absent   exists ONLY as PRESSURE
+   ✅  absent   INVERSION TEST
+   ✅  absent   SUBORDINATION TEST
+   ✅  absent   (A + B) ≥ 75%
+   ✅  present  LAW 3 — MEMORY-CONTENT PRIORITY
+   ✅  present  Default: roughly 60% of the reader
+   ❌  present  A/50 COMMERCIAL MODE
+   ❌  present  COLD-READER SCENE FLOOR
+   ❌  present  THE READER SHOULD NEVER HAVE TO EXCAVATE
+   ❌  present  MYSTERY MAY HIDE THE ANSWER
+   ✅  present  ASSIGNED EVENT IS ACTION
+   ✅  present  INTERIORITY DECODES
+   ✅  present  THE SCENE ENDS SOMEWHERE ELSE
+   ✅  absent   DOMAIN REGISTER (HARD
+
+  ❌ DELIVERY FAILED

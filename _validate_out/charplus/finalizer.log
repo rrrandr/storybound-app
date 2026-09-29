@@ -1,0 +1,28 @@
+[DECK_MANDATE] ON (dev) — default. Use window._forceMandateOff() or set window._forceDeckMandate=false for palate-cleanser testing.
+[DECK_MANDATE] ON (dev) — default. Use window._forceMandateOff() or set window._forceDeckMandate=false for palate-cleanser testing.
+[DECK_MANDATE] ON (dev) — default. Use window._forceMandateOff() or set window._forceDeckMandate=false for palate-cleanser testing.
+[DECK_MANDATE] ON (dev) — default. Use window._forceMandateOff() or set window._forceDeckMandate=false for palate-cleanser testing.
+[DECK_MANDATE] ON (dev) — default. Use window._forceMandateOff() or set window._forceDeckMandate=false for palate-cleanser testing.
+[SCENE1-FRAME] Dropped fuzzy mandated-closer echo (overlap 86%): "My hand tightened around my great-grandmother’s old tarot deck."
+[SCENE1-FRAME] Dropped fuzzy mandated-closer echo (overlap 100%): "I toyed with the idea of letting the cards decide."
+[SCENE1-FRAME] Dropped fuzzy mandated-closer echo (overlap 100%): "My hand tightened around my great-grandmother's old tarot deck."
+[SCENE1-FRAME] Dropped fuzzy mandated-closer echo (overlap 100%): "I toyed with the idea of letting the cards decide."
+[SCENE1-FRAME] Appended mandated closer (model omitted it / replaced a junk ending).
+[SCENE1-FRAME] Dropped fuzzy mandated-closer echo (overlap 100%): "My hand tightened around my great-grandmother's old tarot deck."
+[SCENE1-FRAME] Dropped fuzzy mandated-closer echo (overlap 100%): "I toyed with the idea of letting the cards decide."
+[SCENE1-FRAME] Appended mandated closer (model omitted it / replaced a junk ending).
+[PC-PICTURABILITY:SKIP] HOT_CRISIS Scene-1 — deferring PC establishment to avoid mid-crisis inventory dump
+[HOT-RENDER:GATE] functional fails=[no_li_250,no_crisis_250] (n=2) · rendered=COLD_DISRUPTION · in-motion=0 · container-opener=false ⟹ REPAIR FIRES
+[HOT-RENDER:REPAIR] applied (segment 1858→1697 chars) — functional fails 1→0 · rendered COLD_DISRUPTION→HOT_CRISIS ✓ HOT · remaining=[]
+[SCENE1-FRAME] Stripped premature deck mention from body (deck-at-end constraint): "Julian’s name surfaced in the sudden hush, spoken by someone at the edge of the circle, an"
+[SCENE1-FRAME] Stripped premature deck mention from body (deck-at-end constraint): "The presiding Dohkar recovered enough to lower his palms, yet the demand in his eyes locke"
+[SCENE1-FRAME] Appended mandated closer (model omitted it / replaced a junk ending).
+[SCENE1-FRAME:POST-PASS] Re-asserted verbatim mandated closer after post-gate mutators.
+[DECK_MANDATE] ON (dev) — default. Use window._forceMandateOff() or set window._forceDeckMandate=false for palate-cleanser testing.
+[DECK_MANDATE] ON (dev) — default. Use window._forceMandateOff() or set window._forceDeckMandate=false for palate-cleanser testing.
+[SCENE-FRAME] Stashing Scene 2 (Petition) mandate frame
+[LI-PROOF] scene=2 type=status primary=status locked_scene=2 mentions_this_story=1
+[SCENE-FRAME] petition closer: no <<WISH:>> emitted, neutral fallback used.
+[SCENE-FRAME] Appended mandated closer (turn path).
+[WISH] no fragment captured — neutral fallback composed
+[DECK_MANDATE] ON (dev) — default. Use window._forceMandateOff() or set window._forceDeckMandate=false for palate-cleanser testing.

@@ -1,0 +1,36 @@
+[TITLE: "The Changed Wish"]
+[SYNOPSIS: In the Veilwood ceremony clearing Lirael supervises a young First Favored's First Sacrifice, her mouth sealed by protocol. When the youth alters her prepared wish to one about Lirael's past, the rite twists and the crowd turns. What will the price be, and who will pay it?]
+
+[CHARACTERS: Lirael:F, Julian:M, the youth:F]
+
+The youth's voice rose clear across the crimson spiralgrass. "I offer the discipline to finish my studies and train as a Sacrificiant."
+
+She looked straight at me. The words shifted mid-breath. "I offer it instead so she finds the father who left her."
+
+The alignment-sense struck like a sour chord. Every First Favored in the clearing felt it at once. The prepared sacrifice belonged to one desire; the new words belonged to another. The mismatch hung in the air like a wrong note that would not resolve.
+
+My left hand tapped once against my thigh before I could stop it. I smoothed the front of my cashmere blazer, the familiar gesture doing nothing to steady the dread rising under my skin. The gossamer band across my mouth muffled any cry I might have made. Protocol held me sealed. The youth's Weave-Script flared with earnest hope across her aqua skin, pale coral hair falling forward as she knelt.
+
+Julian stood at the edge of the gathering, perfectly still. His deep slate-blue skin caught the filtered light through the weeping-willow veil-canopy, silver patterns drifting across his arms. He did not move toward the youth. He only watched.
+
+I tore the gossamer band away. The cloth fluttered to the spiralgrass. I stepped forward, one hand already reaching.
+
+<<MICRO_EXPRESSION>>
+Say it plainly — or let it show without words?
+<<CONTINUE>>
+
+The wish took. A guest near the back turned, startled, and spoke the name of a man I had never asked aloud to hear. The words landed like an answer no one had requested. The youth's hands went cold in the same breath, fingers paling as warmth left them. She stared at her palms, the Weave-Script stuttering.
+
+The crowd's murmurs cut off. Eyes turned to me. The youth had wished on my past in front of witnesses. My intervention made it look deliberate. A Dohkar qualification hung on whether the guide interfered; the assembly saw only that the wish had been about me and I had broken protocol to reach her.
+
+Julian's stillness drew more than one glance. He had come only to observe. Now the weight of that observation settled across the clearing like a second judgment.
+
+Do I explain that the wish was not my doing, or stay silent and let them judge me?
+
+My hand tightened around my great-grandmother's old tarot deck. I didn't remember bringing it. I toyed with the idea of letting the cards decide.
+
+<<EXPANSION_A>>
+I named the misalignment aloud, voice steady, and the room shifted toward listening instead of accusation.
+<<EXPANSION_B>>
+I met the nearest gaze without speaking, and the understanding passed between us without needing the words.
+<<END_EXPANSION>>

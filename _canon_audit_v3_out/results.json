@@ -1,0 +1,120 @@
+{
+  "results": [
+    {
+      "name": "an establishedEvidence fact is labelled as an OBSERVATION AT A MOMENT",
+      "pass": true
+    },
+    {
+      "name": "...and says explicitly that it does NOT establish the thing still holds later",
+      "pass": true
+    },
+    {
+      "name": "RED PROOF — the false v2 wording \"SURVIVED that rupture and is still true\" is GONE",
+      "pass": true
+    },
+    {
+      "name": "RED PROOF — the retained v2 packet the models were actually shown DID carry it",
+      "pass": true
+    },
+    {
+      "name": "the packet emits explicit durability statements from the commit record",
+      "pass": true
+    },
+    {
+      "name": "RED PROOF — no dur_ fact appears in the retained v2 packet at all",
+      "pass": true
+    },
+    {
+      "name": "v3 is the default arm",
+      "pass": true
+    },
+    {
+      "name": "v3 states that a moment is not a rule",
+      "pass": true
+    },
+    {
+      "name": "...in the model's own failing words — \"no one named it at that moment\" is not \"may never\"",
+      "pass": true
+    },
+    {
+      "name": "...and directs durability claims to facts that actually assert durability",
+      "pass": true
+    },
+    {
+      "name": "RED PROOF — v2 told the auditor the OPPOSITE, and is preserved unchanged as that arm",
+      "pass": true
+    },
+    {
+      "name": "v3 does NOT carry that false sentence",
+      "pass": true
+    },
+    {
+      "name": "v1 is still reachable and untouched",
+      "pass": true
+    },
+    {
+      "name": "no red fixture uses a blanket id-prefix whitelist any more",
+      "pass": true
+    },
+    {
+      "name": "every red declares in words what a citation must assert",
+      "pass": true
+    },
+    {
+      "name": "CORRECTION 1 — \"other\" + neg_0 now COUNTS on red_invalidated_objective",
+      "pass": true
+    },
+    {
+      "name": "...because that fact affirmatively forbids convening the inquiry this early",
+      "pass": true
+    },
+    {
+      "name": "the recorded invalidation still counts too",
+      "pass": true
+    },
+    {
+      "name": "RED PROOF — an unrelated world truth still does NOT count",
+      "pass": true
+    },
+    {
+      "name": "CORRECTION 2 — \"other\" + ev_0 is STILL NOT support on red_contradicted_knowledge",
+      "pass": true
+    },
+    {
+      "name": "...and the rejection explains WHY, naming the durable alternative",
+      "pass": true
+    },
+    {
+      "name": "there is NO general ev_ whitelist — the ev_ kind is rejected on its assertion, not its prefix",
+      "pass": true
+    },
+    {
+      "name": "at least one genuinely DURABLE fact forecloses this plan, so the fixture stands unrewritten",
+      "pass": true
+    },
+    {
+      "name": "it is a knowledge state or recorded change, not an observation",
+      "pass": true
+    },
+    {
+      "name": "citing that durable fact DOES score as caught",
+      "pass": true
+    },
+    {
+      "name": "and \"other\" + that same durable fact also counts, since the prompt permits the category",
+      "pass": true
+    },
+    {
+      "name": "all four greens still expect a pass and none gained a supporting predicate",
+      "pass": true
+    },
+    {
+      "name": "a green that returns violation is still a FALSE POSITIVE",
+      "pass": true
+    },
+    {
+      "name": "zero provider dispatches",
+      "pass": true
+    }
+  ]
+}

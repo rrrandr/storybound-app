@@ -1,0 +1,29 @@
+[
+  {
+    "endpoint": "proxy"
+  },
+  {
+    "endpoint": "mistral-proxy",
+    "model": "ministral-8b-2512"
+  },
+  {
+    "endpoint": "proxy",
+    "model": "grok-4-1-fast-reasoning"
+  },
+  {
+    "endpoint": "proxy",
+    "model": "grok-4-1-fast-non-reasoning"
+  },
+  {
+    "endpoint": "proxy",
+    "model": "grok-4-1-fast-reasoning"
+  },
+  {
+    "endpoint": "mistral-proxy",
+    "model": "ministral-8b-2512"
+  },
+  {
+    "endpoint": "proxy",
+    "model": "grok-4-1-fast-reasoning"
+  }
+]

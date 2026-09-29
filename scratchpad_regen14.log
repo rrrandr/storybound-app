@@ -1,0 +1,37 @@
+  > [CG:SCAFFOLD] generation start (the_inhuman, gpt-4o-mini)
+  > [CG:SCAFFOLD] awaiting 1 Bible(s) before spine (P2 sequencing — latency over cost)
+  > [CG:SCAFFOLD] Bibles ready (0ms) — pc=y li=y antag=n
+  > [CG:SCAFFOLD:GEN] 14019ms, model=gpt-4o-mini
+  > [CG:SCAFFOLD] thesis="Can Mira find genuine connection in a world where survival demands masks?"
+  > [CG:SCAFFOLD] issues=4, motifs=5, forbidden=5
+  > [CG:SCAFFOLD] FULL OBJECT: {runThesis: Can Mira find genuine connection in a world where survival demands masks?, thematicDirection: The struggle between vulnerability an
+  > [CG:SCAFFOLD] active — scene_index=0, source=gpt-4o-mini, issues=4
+  > [CG:SCREENPLAY] gen start (scene 0)
+  > [CG:SCREENPLAY:USER-PROMPT]
+SCENE INDEX: 0 (Scene 1 — establishing)
+STORY LENGTH: affair
+SCENE DENSITY (ST1 — SETUP PACE): establishing register. The scene's job is chara
+  > [CG:SCREENPLAY] flavor "the_inhuman" → chain leads with Grok-4.1-reasoning (scene 1 / tentpole — Grok primary)
+  > [CG:SCREENPLAY] generated via Grok-4.1-reasoning in 44846ms
+  > [CG:SCREENPLAY] gen returned in 44856ms
+  > [CG:SCREENPLAY] JSON parse failed even after slice: Expected ',' or ']' after array element in JSON at position 12360 (line 420 column 6)
+  > [CG:SCREENPLAY] gen failed for paid first-scene-of-issue 1 — opening Try Again / Take Refund popup
+
+  E2E SCENE 1 — Fatelands / Kwisheen
+  ────────────────────────────────────────────────────────────
+  error: none
+  prose length: 0 chars | author: Grok-4.1-reasoning
+  stagedActive: false | heroCache keys: 0
+  hero phase images: 0 | closeup inserts: 0/0 queued | total: 0
+  kwisheen appearance lock: {}
+  images captured (hero): 0
+  ── phase plan ──
+  ── hero renders (anchor decision) ──
+  ── beat count: 0 (target 20–30, floor 18) ──
+  ── scene-1 axis ──
+    bespokeAxis: (none)
+    microDecision: (none emitted)
+  ── wardrobe grounding ──
+  saved: 0 images + prose → /private/tmp/claude-501/-Users-romantsukerman-storybound-app/5b50dbf4-5fe5-4c80-ae8b-5a341feb3c62/scratchpad/e2e
+  ────────────────────────────────────────────────────────────
+

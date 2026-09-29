@@ -1,0 +1,24 @@
+{
+  "age": 28,
+  "ancestry": "Inuit",
+  "first_name": "Kiviuq",
+  "last_name": "Atanarjuat",
+  "height": "5'4\", compact and grounded",
+  "build": "lean-muscled, the kind of strength that comes from making things by hand",
+  "hair": "black, thick and straight, usually in a long braid down her back or twisted into a knot; she pulls it loose when she's thinking hard",
+  "complexion": "warm bronze undertone with a faint scar along her left collarbone — old, from a childhood fall on ice",
+  "face": "a face that broadcasts everything: wide-set dark eyes that go soft or sharp depending on her mood, high cheekbones, a mouth quick to smile or tremble, the kind of openness that makes people either trust her immediately or sense they can wound her",
+  "signature_feature": "her hands — long-fingered, capable, always slightly marked with indigo dye or pencil smudges; the LI notices how she moves them when she talks, how deliberately she touches things she cares about",
+  "second_celebrated_feature": "the precise, almost musical quality of her voice — low and clear, with a slight rasp when she's tired or emotional",
+  "signature_habits": "she hums while working, usually old songs her grandmother taught her in Inuktitut; she keeps a worn leather notebook for sketches and observations; she touches her collarbone scar absently when she's anxious or remembering something; she makes tea in the evenings, the ritual of heating water and waiting seeming to calm her; she speaks her thoughts aloud to herself, unfiltered",
+  "occupation": "textile and fiber artist — she owns a small independent studio where she hand-dyes fabrics, creates custom weaving commissions, and teaches workshops; the studio is her sanctuary and her livelihood, housed in a converted warehouse space she can barely afford",
+  "current_crisis": {
+    "event": "her landlord — a property developer backed by venture capital — has given her 60 days' notice; the building is being sold and demolished for luxury condos; she has no savings buffer, no backup location, and three major client commissions due in eight weeks",
+    "hottest_emotion": "panic mixed with a crushing sense of erasure — this space, this work, feels like the only solid thing she owns",
+    "immediate_want": "to find a way to keep her studio alive, or at minimum to finish her commissions before everything collapses"
+  },
+  "wound": {
+    "core": "she believes that anything she builds will eventually be taken from her, that her work and her presence don't matter enough to be protected",
+    "surfacing_hint": "when stressed, she becomes almost apologetic about existing — she takes up less space, speaks quieter, assumes she's in the way; she also catastrophizes silently, her mind jumping to worst-case scenarios she doesn't voice until forced"
+  }
+}

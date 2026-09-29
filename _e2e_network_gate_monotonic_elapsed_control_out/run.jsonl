@@ -1,0 +1,7 @@
+{"kind":"phase-open","roleTag":"monotonic-test","ceiling":1,"at":1789872734237,"loggedAt":1789872734237}
+{"kind":"dispatch","roleTag":"monotonic-test","real":false,"url":"http://203.0.113.1/api/proxy","requestBody":{"model":"grok-4-1-fast-reasoning","messages":[{"role":"system","content":"x"}]},"at":1789872734242,"atMono":672.509292,"loggedAt":1789872734242}
+{"kind":"response","roleTag":"monotonic-test","real":false,"url":"http://203.0.113.1/api/proxy","status":200,"responseBody":{"choices":[{"message":{"content":"monotonic-timed reply"}}],"usage":{"prompt_tokens":1000,"completion_tokens":50}},"at":1789872736743,"settledAtMono":3174.024417,"elapsedMs":2501.515125,"loggedAt":1789872736743}
+{"kind":"phase-close","roleTag":"monotonic-test","at":1789872737148,"loggedAt":1789872737148}
+{"kind":"phase-open","roleTag":"monotonic-network-error-test","ceiling":1,"at":1789872737148,"loggedAt":1789872737148}
+{"kind":"dispatch","roleTag":"monotonic-network-error-test","real":true,"url":"http://127.0.0.1:1/api/timing-probe","requestBody":{"model":"grok-4-1-fast-reasoning","messages":[{"role":"system","content":"x"}]},"at":1789872737156,"atMono":3586.371625,"loggedAt":1789872737156}
+{"kind":"network-error","roleTag":"monotonic-network-error-test","real":true,"url":"http://127.0.0.1:1/api/timing-probe","networkError":"net::ERR_UNSAFE_PORT","at":1789872737160,"settledAtMono":3591.029958,"elapsedMs":4.658332999999857,"loggedAt":1789872737160}

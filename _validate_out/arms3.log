@@ -1,0 +1,13 @@
+[arm A] sub=false ex=false — init…
+   captured 2778 chars   spend=$0.179
+[arm B] sub=true ex=false — init…
+   captured 2151 chars   spend=$0.352
+[arm C] sub=true ex=true — init…
+   captured 2000 chars   spend=$0.530
+
+════ 3-ARM SUBTRACTION DISCRIMINATOR ════
+  arm A  sub=false ex=false  prompt=328831  prose=2778
+  arm B  sub=true ex=false  prompt=335798  prose=2151
+  arm C  sub=true ex=true  prompt=312258  prose=2000
+  total spend: $0.530
+  blind pack → _validate_out/ARMS3_PACK.json  (key sealed)

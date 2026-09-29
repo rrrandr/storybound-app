@@ -1,0 +1,24 @@
+{
+  "age": 28,
+  "ancestry": "Korean",
+  "first_name": "Mina",
+  "last_name": "Park",
+  "height": "5'4\", compact and proportional",
+  "build": "lean, muscled through shoulders and forearms from studio work, no softness",
+  "hair": "black, straight with a slight natural wave, worn in a low ponytail most days or loose past her shoulders; she cuts it herself sometimes when anxious",
+  "complexion": "warm honey undertone with a single distinctive beauty mark high on her left cheekbone",
+  "face": "a fox-narrow face with high, sharp cheekbones and a small pointed chin that makes her look perpetually alert—the kind of face that reads every emotion in real time, shock widening her eyes, hurt dropping her mouth open before she can catch it",
+  "signature_feature": "her hands—long-fingered, paint-stained at the cuticles no matter how many times she scrubs, with a particular way of moving them when she speaks that betrays what she's feeling before her voice does",
+  "second_celebrated_feature": "the precise line of her collarbones, visible when she wears anything loose; the LI notices it first in morning light",
+  "signature_habits": "she hums while working—old Korean lullabies her grandmother taught her, unconsciously, especially when stressed; she keeps a small ceramic cup her mother gave her on her studio shelf and drinks coffee from it every morning; she bites the inside of her cheek when listening to someone she doesn't trust; she texts in full sentences, never abbreviations, a small formality that reads as earnest",
+  "occupation": "independent ceramic artist and studio owner—hand-thrown vessels, sculptural pieces, custom commissions for high-end interiors; her studio is in a converted warehouse in the arts district",
+  "current_crisis": {
+    "event": "a major gallery show she's been contracted to deliver 40 pieces for in eight weeks has just been cancelled by the curator due to a funding collapse; she's already spent her savings on materials and studio rent; the gallery owner is unreachable; she has no backup income and no safety net",
+    "hottest_emotion": "panic—sharp, ice-cold, the kind that makes her hands shake",
+    "immediate_want": "to find the gallery owner and get a straight answer about whether she's getting paid for the work she's already completed, or if she's about to lose everything"
+  },
+  "wound": {
+    "core": "she believes that if she works hard enough, makes beautiful enough things, she can earn security and belonging—but every time she's close, the ground shifts and she discovers that effort alone was never the guarantee she needed",
+    "surfacing_hint": "when someone she cares about is indifferent to her work or dismissive of her effort, she goes very quiet and still, her eyes going flat; she stops humming; she becomes almost unreachable for hours"
+  }
+}

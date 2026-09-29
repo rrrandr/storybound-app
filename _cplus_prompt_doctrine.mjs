@@ -16,9 +16,17 @@
 import { chromium } from 'playwright-core';
 import fs from 'fs';
 import { instrument } from './_scene1_instrument.mjs';
+import { installSession, configBody, isAuthOrigin } from './_test_session_env.mjs';
 import { buildScene1Prose, NONTOKEN_A, SCENE_WANT } from './_hook_fixture_prose.mjs';
 
 const SRC = fs.readFileSync('public/app.js', 'utf8');
+// 2026-09-10 HARNESS REPAIR: every non-planner setup request used to be answered with GENERIC (an A-plot shape),
+// so the PC/LI bibles were "generated but missing core fields — discarding" and the run never reached the
+// planner. Answer setup requests with the dry suite's shape-faithful fixtures (one real shape per kind), as
+// the seed-contract harness does. Planner and author replies stay this file's own.
+const _dry = fs.readFileSync('_scene1_stage_order_dry.mjs', 'utf8'); const _sliceEnd = _dry.indexOf('async function run(');
+fs.writeFileSync('_doctrine_fixtures.generated.mjs', _dry.slice(0, _sliceEnd).replace(/^const results = \[\];[\s\S]*?\n(?=const)/m, '').replace(/^await preflight\(\);\s*$/m, '') + '\nexport { REQUEST_KINDS, scaffoldReply, APLOT_VALID, ANTAGONIST_BIBLE, PC_BIBLE, LI_BIBLE, GENERIC as DRY_GENERIC };\n');
+const FX = await import('./_doctrine_fixtures.generated.mjs');
 function force(src, fn, v) {
   const needle = `function ${fn}() {`;
   if (src.split(needle).length - 1 !== 1) throw new Error(`${fn}: not exactly one definition`);
@@ -259,14 +267,18 @@ async function run(mutate, opts) {
   const page = await (await browser.newContext()).newPage();
   page.setDefaultTimeout(180000); page.setDefaultNavigationTimeout(180000);
   const planner = [], author = [], logs = [];
+  await installSession(page);   // 2026-09-10 harness repair: a starter Book's access decision needs the test session
+  await page.route('**/sb-test.localhost/**', r => r.fulfill({ status:200, contentType:'application/json', body:'{}' }));
   await page.route('**/app.js*', r => r.fulfill({ status:200, contentType:'application/javascript; charset=utf-8', body: APP }));
   await page.route('**/api/**', async route => {
     const url = route.request().url().replace(/^https?:\/\/[^/]+/, '');
+    if (/\/api\/config\b/.test(url)) return route.fulfill({ status:200, contentType:'application/json', body: configBody() });
+    if (isAuthOrigin(route.request().url())) return route.fulfill({ status:200, contentType:'application/json', body:'{}' });
     if (PASSTHROUGH.test(url)) return /* FULFILLED, NOT FORWARDED: a forwarded static endpoint spawns a @vercel/node runtime that is never reaped — they accumulate into gigabytes and wedge the dev server mid-suite. */ route.fulfill({ status:200, contentType:'application/json', body:'{}' });
     const k = Object.keys(LOCAL).find(x => url.startsWith(x));
     if (k) return route.fulfill({ status:200, contentType:'application/json', body: JSON.stringify(LOCAL[k]) });
     let b=null; try { b = JSON.parse(route.request().postData()||'{}'); } catch(_){}
-    if (!MODEL.test(url)) return route.abort();
+    if (!MODEL.test(url)) return route.fulfill({ status:200, contentType:'application/json', body:'{}' });   // fulfil, never abort — an aborted fetch throws inside the flow
     const msgs=(b&&b.messages)||[];
     const sys=String((msgs.find(x=>x.role==='system')||{}).content||'');
     const usr=String((msgs.find(x=>x.role==='user')||{}).content||'');
@@ -274,7 +286,17 @@ async function run(mutate, opts) {
     if (/ARCHITECTURE LAWS/.test(sys)) { author.push({ system:sys, user:usr }); out = PROSE; }
     else if (/scene-structure planner for the OPENING scene/.test(sys)) {
       planner.push({ user: usr }); out = plannerReply(usr, mutate);
-    } else out = JSON.stringify(GENERIC);
+    } else {
+      const _txt = sys + '\n' + usr;
+      const _hits = FX.REQUEST_KINDS.filter(([, tf]) => { try { return tf(_txt, sys, usr); } catch (_) { return false; } }).map(([k]) => k);
+      const _kind = _hits.length === 1 ? _hits[0] : null;
+      if (_kind === 'pcBodyBible') out = JSON.stringify(FX.PC_BIBLE);
+      else if (_kind === 'liBodyBible') out = JSON.stringify(FX.LI_BIBLE);
+      else if (_kind === 'antagonistBodyBible') out = JSON.stringify(FX.ANTAGONIST_BIBLE);
+      else if (_kind === 'scaffold') { const ref = _txt.match(/subject_ref:\s*(\S+)/); out = JSON.stringify(FX.scaffoldReply(ref ? ref[1] : null, true)); }
+      else if (_kind === 'aplotGenerator' || _kind === 'aplotCorrection') out = JSON.stringify(FX.APLOT_VALID);
+      else out = JSON.stringify(GENERIC);
+    }
     const envelope = /mistral-proxy/.test(url)
       ? { id:'mock', object:'chat.completion', model:b.model, usage:{}, _orchestration:{},
           choices:[{ index:0, finish_reason:'stop', message:{ role:'assistant', content: out } }] }
@@ -353,13 +375,19 @@ console.log(`\n${'═'.repeat(88)}\nC+ PROMPT DOCTRINE — presence governs stag
 const B = await run(null);
 const pu = (B.planner[0] || {}).user || '';
 // If the prompt never went out, the reason is worth more than 30 failed assertions.
-if (!pu) { console.log('  ⚠ no planner request — threw:', B.threw); (B.logs||[]).slice(0,8).forEach(l=>console.log('     ',l)); }
+if (!pu) {
+  // A missing planner capture is a HARNESS FAILURE, never a set of vacuous rows (Roman 2026-09-10).
+  console.log('  ✗ 0: the planner request was captured — NOT CAPTURED; threw:', B.threw); (B.logs||[]).slice(0,12).forEach(l=>console.log('     ',l));
+  console.log('\nC+ PROMPT DOCTRINE: HARNESS FAILURE — no planner request; 0 assertions evaluated.'); process.exit(2);
+}
 
 console.log(' 1 · THE DISPATCHED PLANNER BYTES — WHO IS OFFERED');
 t('1a: the planner request carries a CHARACTER+ CANDIDATES block',
   /CHARACTER\+ CANDIDATES \(\d+\)/.test(pu), (pu.match(/CHARACTER\+ CANDIDATES.{0,80}/) || ['(missing)'])[0]);
 t('1b: an ABSENT person is offered as a candidate — presence is not the qualification',
-  /•\s*Halvern/.test(pu) && /CHARACTER\+ CANDIDATES[\s\S]*?•\s*Halvern/.test(pu),
+  // 2026-09-11: tightened — the old regex matched a "• Halvern" bullet ANYWHERE after the CANDIDATES header, so the new
+  // NOT CANDIDATES listing (D2) made it pass while Halvern is starved, not offered. "Offered" means inside the block.
+  /•\s*Halvern/.test((pu.match(/CHARACTER\+ CANDIDATES \(\d+\)[\s\S]*?(?=\nNOT CANDIDATES|\nWHERE A PERSON HAS|\nRETURN THE facet_id|\nTHE SCENE, AS NUMBERED FACTS)/) || [''])[0]),
   (pu.match(/CHARACTER\+ CANDIDATES[\s\S]{0,400}/) || ['(missing)'])[0]);
 t('1c: …offered in ANTICIPATED mode, the opportunity the scene actually gives him',
   /•\s*Halvern\n\s+modes permitted: ANTICIPATED/.test(pu),
@@ -367,6 +395,18 @@ t('1c: …offered in ANTICIPATED mode, the opportunity the scene actually gives 
 t('1d: …with the evidence that makes the opportunity honest, quoted whole',
   /Halvern will be sent for if the rite is/.test(pu) && !/\brite is dispute\b/.test(pu),
   (pu.match(/•\s*Halvern[\s\S]{0,320}/) || ['(missing)'])[0]);
+// ── D1 / D2 (2026-09-11, §52 live defects) — NEW rows on the one fixture with a starved population; not a re-baseline ──
+{ const _cand = (pu.match(/CHARACTER\+ CANDIDATES \((\d+)\)[\s\S]*?(?=\nNOT CANDIDATES|\nWHERE A PERSON HAS|\nRETURN THE facet_id|\nTHE SCENE, AS NUMBERED FACTS|$)/) || [''])[0];
+  const _offered = [...(_cand.matchAll(/^\s*•\s*(.+?)\s*$/gm))].map(m => m[1]);
+  const _enumM = pu.match(/EXACTLY one of: ([^>]*?) — from the CHARACTER\+ CANDIDATES list/); const _enum = _enumM ? _enumM[1].split('|').map(x => x.trim()).filter(x => x && !/^\(nobody/.test(x)) : [];
+  const _not = (pu.match(/NOT CANDIDATES[\s\S]*?(?=\nWHERE A PERSON HAS|\nEVERY character_plus|\nRETURN THE facet_id|\nTHE SCENE, AS NUMBERED FACTS|$)/) || [''])[0];
+  const _notRows = [...(_not.matchAll(/^\s*•\s*(.+?)\s*—\s*(.+?)\s*$/gm))].map(m => ({ label: m[1], reason: m[2] }));
+  const _nz = x => String(x || '').trim().toLowerCase();
+  t('1i [D1]: the permitted-labels enum equals the OFFERED candidates — nobody the block never offered is a permitted label',
+    _offered.length > 0 && _enum.length === _offered.length && _enum.every(l => _offered.map(_nz).includes(_nz(l))), JSON.stringify({ enum: _enum, offered: _offered }));
+  t('1j [D2]: the STARVED people (no owned pressure evidence — Julian, Halvern, Wren in this fixture) are listed under NOT CANDIDATES with that reason, once each, and are neither offered nor permitted',
+    ['Julian', 'Halvern', 'Wren'].every(nm => _notRows.filter(r => _nz(r.label) === _nz(nm) && /no owned pressure evidence/.test(r.reason)).length === 1 && !_offered.map(_nz).includes(_nz(nm)) && !_enum.map(_nz).includes(_nz(nm))), JSON.stringify(_notRows));
+  t('1k [D2]: the DECLINED person (Klaus — no opportunity) is listed with the no-opportunity reason, once', _notRows.filter(r => _nz(r.label) === 'klaus' && /no opportunity/.test(r.reason)).length === 1, JSON.stringify(_notRows)); }
 t('1e: he is NOT in the prefilled staged_characters array',
   !/\{ "name": "Halvern"/.test(pu), (pu.match(/.{0,60}"name": "Halvern".{0,60}/) || ['(absent, correct)'])[0]);
 t('1f: the unmentioned roster member is listed as NOT a candidate',

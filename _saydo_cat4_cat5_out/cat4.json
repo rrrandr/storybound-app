@@ -1,0 +1,86 @@
+[
+  {
+    "id": "model-complaint",
+    "text": "Claude messed this up.",
+    "expectCaught": true,
+    "kind": "subjective/model",
+    "detected": {
+      "category": "model-name-complaint",
+      "matched": "Claude messed this up"
+    },
+    "sanitized": "Claude messed this up.",
+    "afterFallbackAction": "a brief, unplaceable pause, as if she lost her train of thought",
+    "afterFallbackDialogue": "a half-formed thought that trails off, unfinished",
+    "sanitizedToEmpty": false,
+    "changedByFallback": true
+  },
+  {
+    "id": "boring",
+    "text": "This game is boring.",
+    "expectCaught": null,
+    "kind": "subjective frustration",
+    "detected": {
+      "category": "subjective-frustration",
+      "matched": "This game is boring"
+    },
+    "sanitized": "This game is boring.",
+    "afterFallbackAction": "a brief, unplaceable pause, as if she lost her train of thought",
+    "afterFallbackDialogue": "a half-formed thought that trails off, unfinished",
+    "sanitizedToEmpty": false,
+    "changedByFallback": true
+  },
+  {
+    "id": "continuity",
+    "text": "You forgot what happened.",
+    "expectCaught": true,
+    "kind": "continuity claim",
+    "detected": {
+      "category": "plot-memory-complaint",
+      "matched": "You forgot what"
+    },
+    "sanitized": "You forgot what happened.",
+    "afterFallbackAction": "a brief, unplaceable pause, as if she lost her train of thought",
+    "afterFallbackDialogue": "a half-formed thought that trails off, unfinished",
+    "sanitizedToEmpty": false,
+    "changedByFallback": true
+  },
+  {
+    "id": "button-broken",
+    "text": "The Continue button is broken.",
+    "expectCaught": null,
+    "kind": "bug report",
+    "detected": {
+      "category": "interface",
+      "matched": "The Continue button is"
+    },
+    "sanitized": "The Continue button is broken.",
+    "afterFallbackAction": "a brief, unplaceable pause, as if she lost her train of thought",
+    "afterFallbackDialogue": "a half-formed thought that trails off, unfinished",
+    "sanitizedToEmpty": false,
+    "changedByFallback": true
+  },
+  {
+    "id": "NEG-ceremony",
+    "text": "This ceremony is boring.",
+    "expectCaught": false,
+    "kind": "in-character",
+    "detected": null,
+    "sanitized": "This ceremony is boring.",
+    "afterFallbackAction": "This ceremony is boring.",
+    "afterFallbackDialogue": "This ceremony is boring.",
+    "sanitizedToEmpty": false,
+    "changedByFallback": false
+  },
+  {
+    "id": "NEG-oath",
+    "text": "You forgot your oath.",
+    "expectCaught": false,
+    "kind": "in-character",
+    "detected": null,
+    "sanitized": "You forgot your oath.",
+    "afterFallbackAction": "You forgot your oath.",
+    "afterFallbackDialogue": "You forgot your oath.",
+    "sanitizedToEmpty": false,
+    "changedByFallback": false
+  }
+]

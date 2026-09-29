@@ -1,0 +1,56 @@
+[
+ {
+  "p": "_targetedSceneEdit",
+  "status": "NOT EXPORTED"
+ },
+ {
+  "p": "_completeStagedSceneFromLiterary",
+  "status": "no-op",
+  "before": 2554,
+  "after": 2554,
+  "text": ""
+ },
+ {
+  "p": "_scrubForeignArtifacts",
+  "status": "no-op",
+  "before": 2554,
+  "after": 2554,
+  "text": ""
+ },
+ {
+  "p": "_normalizeScene1Paragraphs",
+  "status": "NOT EXPORTED"
+ },
+ {
+  "p": "_dedupRepeatedSentences",
+  "status": "NOT EXPORTED"
+ },
+ {
+  "p": "_repairBodyBibleDump",
+  "status": "no-op",
+  "before": 2554,
+  "after": 2554,
+  "text": ""
+ },
+ {
+  "p": "_repairCalcifiedMoves",
+  "status": "no-op",
+  "before": 2554,
+  "after": 2554,
+  "text": ""
+ },
+ {
+  "p": "_repairInterlocutorPicturability",
+  "status": "no-op",
+  "before": 2554,
+  "after": 2554,
+  "text": ""
+ },
+ {
+  "p": "_cheapLineEdit",
+  "status": "no-op",
+  "before": 2554,
+  "after": 2554,
+  "text": ""
+ }
+]

@@ -1,0 +1,24 @@
+{
+  "age": 28,
+  "ancestry": "Persian",
+  "first_name": "Nasrin",
+  "last_name": "Tehrani",
+  "height": "5'6\", lean and long-limbed",
+  "build": "dancer's frame — narrow shoulders, defined collarbone, minimal softness",
+  "hair": "black, thick and slightly wavy, worn long past her shoulders with a natural shine; she braids it when stressed",
+  "complexion": "warm golden-olive undertone; a small beauty mark just above her left jawline",
+  "face": "heart-shaped with high, prominent cheekbones and a pointed chin — a face that reads as watchful first, then luminous when she smiles; dark eyes set wide apart with a slight downward tilt at the outer corners",
+  "signature_feature": "her hands — long-fingered, expressive, constantly moving; the LI notices how she holds things, how she gestures mid-sentence, the precise way her fingers curl when she's thinking",
+  "second_celebrated_feature": "the small scar on her left temple (a childhood accident) that catches light and makes her look less polished, more real",
+  "signature_habits": "she hums while working — usually classical Persian music her grandmother taught her; she touches her collarbone when nervous or overwhelmed; she drinks black tea from the same chipped ceramic cup every morning; she speaks in rapid, overlapping thoughts when excited, mixing in Farsi words without noticing ('Khob, so I was thinking...')",
+  "occupation": "textile designer and owner of a small independent studio in the city — she creates custom fabrics and bespoke commissions for high-end interior designers and boutique clients",
+  "current_crisis": {
+    "event": "her studio's main supplier — a family-run mill she's trusted for three years — just went bankrupt overnight; she has two major client deadlines in four weeks and no way to source the specialty fabrics she promised",
+    "hottest_emotion": "panic threaded with shame — she feels she's failed the clients who trusted her, failed her small team",
+    "immediate_want": "to find a new supplier fast enough to save the commissions, or to confess to her clients before they find out from someone else"
+  },
+  "wound": {
+    "core": "she believes that if she's not indispensable — if she can't solve every problem alone — she becomes disposable",
+    "surfacing_hint": "when overwhelmed, she stops asking for help and spirals into solving-mode, working until 3 a.m., convinced that admitting difficulty means admitting failure; she flinches when someone offers assistance without being asked"
+  }
+}

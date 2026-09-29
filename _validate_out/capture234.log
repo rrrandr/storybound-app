@@ -1,0 +1,9 @@
+[fresh] story B init…
+  story B turn 1: retained=10  authorRaw=4790 firstHookIn=- preHookGap=null final=4936  spend=$0.166
+  ⚠ CONSERVATION FAILED for B/t2 — ABORTING ENTIRE RUN
+
+════ LANE-2 FRESH CAPTURE ════
+  B/t1  retained=10 rejected=0 noChange=46  raw=? final=4934
+  B/t2  retained=undefined rejected=undefined noChange=undefined  raw=? final=1824
+  scenes captured: 2/4   total spend: $0.310 (cap $1.20)
+  blind pack → _validate_out/lane2_blind_pack.json   key sealed separately

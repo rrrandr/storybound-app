@@ -1,0 +1,17 @@
+The ship's deck stretched silver under the moonlight, the planks slick with salt and the faint residue of the rite's lingering charge. I moved along the railing, my fingers worrying the hem of my cloak in a restless pattern, eyes scanning for what the Dohkar's words had left unsaid. The weight of my lineage pressed close, but I searched anyway, looking for the overlooked thread that might explain why the Chayr had named it now, why the air still felt knotted around the suspended rite.
+
+Julian stood a short distance away, his slate-blue skin catching the light in slow, shifting patterns of silver weave-script. His hand turned the ring on his finger once, the metal glinting as he watched the Dohkar without speaking. The crowd had thinned to a few witnesses, their murmurs low, but the Chayr's raised hand held everything in place. I stepped nearer to the artifact, its edges still faintly luminous on the boards, and let my gaze drift across the deck for any sign the Dohkar had missed.
+
+A note slipped from Julian's pocket as he shifted his weight, the paper pale against the dark planks. It landed face-up, the script visible in the moonlight: a short message naming a meeting with the chain-wardens, the ink still fresh. My breath caught at the sight. The Dohkar had spoken of my lineage as if it were a debt owed, but this scrap suggested Julian carried his own obligations, ones that might twist the rite's outcome if left unexamined.
+
+Julian's voice cut through the quiet, low and edged with that familiar skeptical warmth. "This whole thing's holed, a massive prick of a situation." 
+
+<<MICRO_EXPRESSION>>
+Is this something to lean into or something to move past?
+<<CONTINUE>>
+
+The words hung between us, the deflection clear in how they offered no ground. I felt the low, rough laugh I could never quite hold back rise in my throat before I swallowed it down. The Dohkar's gaze flicked between us, the revelation still echoing, and the deck creaked under the weight of the crowd's attention. A muscle jumped once beneath Julian's left eye, his eyes sharpening as they locked onto me.
+
+The note lay between us on the planks, its patterns still faintly luminous in the moonlight, the artifact's presence a quiet demand that the truth be met rather than turned aside. I shifted my weight slightly, heart racing, hands clenched, body poised as if ready to leap into the unknown. The Chayr's hand remained raised, the rite held open, and the weight of the named lineage refused to lift.
+
+<!--sceneDuty: investigation | attraction: latent-->

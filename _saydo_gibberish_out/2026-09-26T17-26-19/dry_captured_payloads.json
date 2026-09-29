@@ -1,0 +1,98 @@
+[
+  {
+    "kind": "continuity",
+    "url": "http://localhost:3000/api/mistral-proxy",
+    "sysLen": 15428,
+    "usrLen": 6269,
+    "sysHead": "You are a CONTINUITY ARCHITECT for a serialized Fantasy romance visual novel.\nYour job is NOT to write prose. Your job is to define the GRAVITATIONAL STRUCTURE that downstream scene-writers operate in",
+    "usrHead": "STORY CONTEXT:\n- Protagonist: the protagonist\n- Love Interest: the LI\n- LI archetype: BEAUTIFUL_RUIN\n- Story length: fling\n- POV mode: normal\n- Tone: Earnest\n\nPAIR DYNAMIC (HARD — Roman 2026-06-01 P1B"
+  },
+  {
+    "kind": "continuity",
+    "url": "http://localhost:3000/api/proxy",
+    "sysLen": 15428,
+    "usrLen": 6269,
+    "sysHead": "You are a CONTINUITY ARCHITECT for a serialized Fantasy romance visual novel.\nYour job is NOT to write prose. Your job is to define the GRAVITATIONAL STRUCTURE that downstream scene-writers operate in",
+    "usrHead": "STORY CONTEXT:\n- Protagonist: the protagonist\n- Love Interest: the LI\n- LI archetype: BEAUTIFUL_RUIN\n- Story length: fling\n- POV mode: normal\n- Tone: Earnest\n\nPAIR DYNAMIC (HARD — Roman 2026-06-01 P1B"
+  },
+  {
+    "kind": "continuity",
+    "url": "http://localhost:3000/api/chatgpt-proxy",
+    "sysLen": 15428,
+    "usrLen": 6269,
+    "sysHead": "You are a CONTINUITY ARCHITECT for a serialized Fantasy romance visual novel.\nYour job is NOT to write prose. Your job is to define the GRAVITATIONAL STRUCTURE that downstream scene-writers operate in",
+    "usrHead": "STORY CONTEXT:\n- Protagonist: the protagonist\n- Love Interest: the LI\n- LI archetype: BEAUTIFUL_RUIN\n- Story length: fling\n- POV mode: normal\n- Tone: Earnest\n\nPAIR DYNAMIC (HARD — Roman 2026-06-01 P1B"
+  },
+  {
+    "kind": "continuity",
+    "url": "http://localhost:3000/api/mistral-proxy",
+    "sysLen": 15428,
+    "usrLen": 6269,
+    "sysHead": "You are a CONTINUITY ARCHITECT for a serialized Fantasy romance visual novel.\nYour job is NOT to write prose. Your job is to define the GRAVITATIONAL STRUCTURE that downstream scene-writers operate in",
+    "usrHead": "STORY CONTEXT:\n- Protagonist: the protagonist\n- Love Interest: the LI\n- LI archetype: BEAUTIFUL_RUIN\n- Story length: fling\n- POV mode: normal\n- Tone: Earnest\n\nPAIR DYNAMIC (HARD — Roman 2026-06-01 P1B"
+  },
+  {
+    "kind": "continuity",
+    "url": "http://localhost:3000/api/proxy",
+    "sysLen": 15428,
+    "usrLen": 6269,
+    "sysHead": "You are a CONTINUITY ARCHITECT for a serialized Fantasy romance visual novel.\nYour job is NOT to write prose. Your job is to define the GRAVITATIONAL STRUCTURE that downstream scene-writers operate in",
+    "usrHead": "STORY CONTEXT:\n- Protagonist: the protagonist\n- Love Interest: the LI\n- LI archetype: BEAUTIFUL_RUIN\n- Story length: fling\n- POV mode: normal\n- Tone: Earnest\n\nPAIR DYNAMIC (HARD — Roman 2026-06-01 P1B"
+  },
+  {
+    "kind": "continuity",
+    "url": "http://localhost:3000/api/chatgpt-proxy",
+    "sysLen": 15428,
+    "usrLen": 6269,
+    "sysHead": "You are a CONTINUITY ARCHITECT for a serialized Fantasy romance visual novel.\nYour job is NOT to write prose. Your job is to define the GRAVITATIONAL STRUCTURE that downstream scene-writers operate in",
+    "usrHead": "STORY CONTEXT:\n- Protagonist: the protagonist\n- Love Interest: the LI\n- LI archetype: BEAUTIFUL_RUIN\n- Story length: fling\n- POV mode: normal\n- Tone: Earnest\n\nPAIR DYNAMIC (HARD — Roman 2026-06-01 P1B"
+  },
+  {
+    "kind": "planner",
+    "url": "http://localhost:3000/api/proxy",
+    "sysLen": 6080,
+    "usrLen": 2275,
+    "sysHead": "You are the SCENE-SPINE planner for an interactive romance engine. The scene has ONE organizing event: a STATE CHANGE — an irreversible, externally observable event that flips a specific fact from FAL",
+    "usrHead": "THIS SCENE'S OBJECTIVE (authored story spine — the scene's central development to realize NOW as this scene's state_change, NOT a distant target): \"THE PRICE AND THE THRESHOLD — step 7, then escalatio"
+  },
+  {
+    "kind": "planner",
+    "url": "http://localhost:3000/api/mistral-proxy",
+    "sysLen": 6080,
+    "usrLen": 2275,
+    "sysHead": "You are the SCENE-SPINE planner for an interactive romance engine. The scene has ONE organizing event: a STATE CHANGE — an irreversible, externally observable event that flips a specific fact from FAL",
+    "usrHead": "THIS SCENE'S OBJECTIVE (authored story spine — the scene's central development to realize NOW as this scene's state_change, NOT a distant target): \"THE PRICE AND THE THRESHOLD — step 7, then escalatio"
+  },
+  {
+    "kind": "planner",
+    "url": "http://localhost:3000/api/chatgpt-proxy",
+    "sysLen": 6080,
+    "usrLen": 2275,
+    "sysHead": "You are the SCENE-SPINE planner for an interactive romance engine. The scene has ONE organizing event: a STATE CHANGE — an irreversible, externally observable event that flips a specific fact from FAL",
+    "usrHead": "THIS SCENE'S OBJECTIVE (authored story spine — the scene's central development to realize NOW as this scene's state_change, NOT a distant target): \"THE PRICE AND THE THRESHOLD — step 7, then escalatio"
+  },
+  {
+    "kind": "author",
+    "url": "http://localhost:3000/api/proxy",
+    "sysLen": 154244,
+    "usrLen": 81142,
+    "sysHead": "You are a screenplay-native cinematic-romance writer for an adult-romance visual novel.\nYou write the scene DIRECTLY in structured screenplay-beat form. No novel prose. No prose-to-beats analysis step",
+    "usrHead": "\n═══ AUTHOR FLOOR (HARD — outranks style, ornament and mystery) ═══\n1. INTERIORITY DECODES; IT DOES NOT ENCODE. A reader must never have to reconstruct the external situation from a character's feelin"
+  },
+  {
+    "kind": "author",
+    "url": "http://localhost:3000/api/mistral-proxy",
+    "sysLen": 154244,
+    "usrLen": 81142,
+    "sysHead": "You are a screenplay-native cinematic-romance writer for an adult-romance visual novel.\nYou write the scene DIRECTLY in structured screenplay-beat form. No novel prose. No prose-to-beats analysis step",
+    "usrHead": "\n═══ AUTHOR FLOOR (HARD — outranks style, ornament and mystery) ═══\n1. INTERIORITY DECODES; IT DOES NOT ENCODE. A reader must never have to reconstruct the external situation from a character's feelin"
+  },
+  {
+    "kind": "author",
+    "url": "http://localhost:3000/api/chatgpt-proxy",
+    "sysLen": 154213,
+    "usrLen": 81142,
+    "sysHead": "You are a screenplay-native cinematic-romance writer for an adult-romance visual novel.\nYou write the scene DIRECTLY in structured screenplay-beat form. No novel prose. No prose-to-beats analysis step",
+    "usrHead": "\n═══ AUTHOR FLOOR (HARD — outranks style, ornament and mystery) ═══\n1. INTERIORITY DECODES; IT DOES NOT ENCODE. A reader must never have to reconstruct the external situation from a character's feelin"
+  }
+]

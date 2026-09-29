@@ -1,0 +1,36 @@
+[preflight] output dir writable: _validate_out/scene1deck
+[probe] begin story (Scene 1, deck one-shots UNFIRED)…
+
+════ SCENE-1 DECK OWNERSHIP PROBE ════
+  gate BEFORE begin: {"frame":true,"fateMode":null,"storyId":null,"fateAnchorPresent":false,"sceneOneDeckAtEnd":false,"deckExamineFired":false,"petitionFired":false}
+  state AFTER begin: {"sceneOneDeckAtEnd":true,"fateAnchorPresent":true}
+  payload sys=86801  usr=172293
+
+──── WHICH PATH OWNS IT ────
+  ✅ present   _shouldMandateSceneOneDeckFrame() → frame path
+  ❌ absent    TAROT INTEGRATION REQUIREMENT (normal path)
+  ❌ absent    ENDING PARAGRAPH STRUCTURE (MANDATORY)
+  ✅ present   PENULTIMATE = specific named dilemma
+  ❌ absent    ordering rule "Decision FIRST"
+  ❌ absent    PLACEHOLDER PROHIBITION
+  ❌ absent    NO COOLDOWN BEFORE THE FATE CLOSER
+  ❌ absent    _FATE_ANCHOR_INTRO seed-line present
+
+──── FROZEN vs GENERATED ────
+  ⚠ IN PAYLOAD   frozen discovery "hand tightened around…deck"
+  ✅ not present   "I didn't remember bringing it"
+  ⚠ IN PAYLOAD   "let the cards decide" phrasing supplied
+  ✅ not present   generic motivation "find a way out" hard-coded
+  ⚠ IN PAYLOAD   generic "if only"
+
+──── console (deck decisions) ────
+  [DECK_MANDATE] ON (dev) — default. Use window._forceMandateOff() or set window._forceDeckMandate=false for palate-cleanser testing.
+  [DECK_MANDATE] ON (dev) — default. Use window._forceMandateOff() or set window._forceDeckMandate=false for palate-cleanser testing.
+  [DECK_MANDATE] ON (dev) — default. Use window._forceMandateOff() or set window._forceDeckMandate=false for palate-cleanser testing.
+  [DECK_MANDATE] ON (dev) — default. Use window._forceMandateOff() or set window._forceDeckMandate=false for palate-cleanser testing.
+  [DECK_MANDATE] ON (dev) — default. Use window._forceMandateOff() or set window._forceDeckMandate=false for palate-cleanser testing.
+  [DECK_MANDATE] ON (dev) — default. Use window._forceMandateOff() or set window._forceDeckMandate=false for palate-cleanser testing.
+  [DECK_MANDATE] ON (dev) — default. Use window._forceMandateOff() or set window._forceDeckMandate=false for palate-cleanser testing.
+  [DECK:EXAMINE] literary — scroll trigger + MANDATORY Submit gate armed (story 1)
+
+full payload → _validate_out/scene1deck/payload_scene1.txt

@@ -1,0 +1,48 @@
+{
+ "violations": [],
+ "preflight": [],
+ "reports": [
+  {
+   "validator": "li_social_proof",
+   "ok": false,
+   "type": "LI_SOCIAL_PROOF_GAP",
+   "detail": "LI named, no social signal in the window following first mention",
+   "liName": "Julian",
+   "firstMentionPosition": 1570,
+   "evidence": "e offering, froze. Every First Favored present felt the misalignment the same instant I did—Seren had spent her First Sacrifice on me, and she had named the wound too loosely for Fate to bind cleanly. My blood oath, the one I had carried since childhood, sat exposed in the gap be…"
+  },
+  {
+   "validator": "hot_opening",
+   "type": "OPENING_TEMPERATURE",
+   "ok": false,
+   "failures": [
+    "no_li_250"
+   ],
+   "renderedTemp": "HOT_CRISIS",
+   "inMotionHits": 0,
+   "containerOpener": false,
+   "evidence": "The Dohkar’s voice cut through the clearing like a blade drawn across silk. “Seren of the aqua line, speak your offering and your desire.”\n\nSeren knelt on the crimson spiralgrass, her coral hair catching the first light that filtered through the veilwood canopy. The gossamer tuni"
+  },
+  {
+   "validator": "li_social_proof",
+   "ok": false,
+   "type": "LI_SOCIAL_PROOF_GAP",
+   "detail": "LI named, no social signal in the window following first mention",
+   "liName": "Julian",
+   "firstMentionPosition": 1021,
+   "evidence": "n her knees, coral hair trembling against aqua skin. Her Weave-Script had dimmed to a faint pulse, the earlier poise cracked open by what she had just done. I felt the weight of every eye shift between us. The blood oath I had carried since childhood now sat naked in the silence,…"
+  },
+  {
+   "validator": "pc_picturability",
+   "type": "PC_PICTURABILITY_GAP",
+   "ok": false,
+   "evidence": "The Dohkar’s gaze locked on me the instant the band left my mouth. My voice came out raw from disuse, the words scraping past lips that still carried the faint taste of the cloth. “Seren meant to give me back something I lost. She didn’t understand the cost of naming it in the op"
+  },
+  {
+   "validator": "semantic_rewrite",
+   "type": "SEMANTIC_EDIT_REQUESTED",
+   "label": "intimacy-consent",
+   "instruction": "\n═══════════════════════════════════════════════════════════════════════════════\nINTIMACY & CONSENT FAILSAFE — SILENT REGENERATION REQUIRED\n════════════════════════════════════════════════════════════"
+  }
+ ]
+}

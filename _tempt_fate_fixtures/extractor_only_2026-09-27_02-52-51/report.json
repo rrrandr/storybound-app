@@ -1,0 +1,262 @@
+{
+  "runId": "2026-09-27_02-52-51",
+  "ceilingUsd": 0.02,
+  "reservedUsd": 0.00102,
+  "reservations": [
+    {
+      "label": "/api/mistral-proxy :: ministral-8b-2512",
+      "model": "ministral-8b-2512",
+      "usd": 0.00102,
+      "ok": true,
+      "runningTotalUsd": 0.00102
+    }
+  ],
+  "routeLog": [
+    {
+      "kind": "blocked-endpoint",
+      "pathname": "/api/csp-report",
+      "reason": "not one of the extractor's three declared tier endpoints"
+    },
+    {
+      "kind": "blocked-endpoint",
+      "pathname": "/api/config",
+      "reason": "not one of the extractor's three declared tier endpoints"
+    },
+    {
+      "kind": "blocked-endpoint",
+      "pathname": "/api/csp-report",
+      "reason": "not one of the extractor's three declared tier endpoints"
+    },
+    {
+      "kind": "blocked-endpoint",
+      "pathname": "/api/geo",
+      "reason": "not one of the extractor's three declared tier endpoints"
+    },
+    {
+      "kind": "reserved",
+      "pathname": "/api/mistral-proxy",
+      "model": "ministral-8b-2512",
+      "usd": 0.00102,
+      "runningTotalUsd": 0.00102
+    },
+    {
+      "kind": "blocked-endpoint",
+      "pathname": "/api/beta-events",
+      "reason": "not one of the extractor's three declared tier endpoints"
+    }
+  ],
+  "dispatches": 1,
+  "trackedCalls": [
+    {
+      "url": "http://localhost:3000/api/mistral-proxy",
+      "model": "ministral-8b-2512",
+      "status": 200,
+      "elapsedMs": 21854.250417000003
+    }
+  ],
+  "prompt": {
+    "sys": "You are a CONSEQUENCE EXTRACTOR for an interactive fantasy romance engine. You do NOT write prose. You are given a scene that has ALREADY been written and accepted, and the exact supernatural wish that was invoked in it. Your only job is to report what the scene ON THE PAGE actually did about that wish, and to CITE the page for every claim.\n\nTHE WISH AS SUBMITTED (verbatim, never reinterpret it): \"everyone forgets the ceremony happened\"\n\nTHE INVOKER: the protagonist\n\nEVERY PARTY PRESENT IN THIS SCENE (authoritative — resolve EACH of these by name; do not add people who are not listed and do not omit any):\n  - the assembly\n  - the presiding Dohkar\n  - Seren\n  - Julian\n\nRULES:\n- Report ONLY what the scene text supports. If the scene does not establish something, say so — do not infer it from the wish.\n- EVERY entry in affectedKnowers (except one whose disposition is \"absent\") MUST include \"evidenceQuote\": a span copied EXACTLY from the scene text, 10-120 characters, which is checked against the text. If the scene gives you no line that establishes a party's state, use disposition \"absent\" only if they are genuinely not in the scene; otherwise list them in unaccountedParties.\n- Do not invent, soften, or complete the scene. An incomplete grant is a real and valid finding.\n\n  \"temptFateOutcome\": null | {\n    \"delivered\": <bool — did the Tempt Fate intervention concretely happen on the page THIS scene (not merely implied, foreshadowed, or deferred)? If false, everything else is ignored.>,\n    \"changed\": [ { \"subject\": \"<who/what was affected>\", \"whatChanged\": \"<concretely what changed about them>\" } ],  /* only things THIS scene actually shows changing */\n    \"durability\": [ { \"aspect\": \"<which changed thing>\", \"status\": \"expires | persists | uncertain\", \"note\": \"<why>\" } ],  /* PER-EFFECT — one wish may produce effects with DIFFERENT lifespans. \"expires\" ONLY if THIS scene signals the effect is bound to the passing rupture window; the window closing governs how long the world visibly destabilizes, never whether the underlying change stuck. */\n    \"knowledgeStates\": [ { \"character\": \"<name>\", \"state\": \"knows | remembers | believes | suspects | unaware\", \"note\": \"<grounding>\" } ],  /* per-character, never a blanket claim about \"everyone\". STATE describes what this party KNOWS — its only permitted values are the five listed on this line. Do NOT use a value from affectedKnowers.disposition here (forgot / retained / partial / resisted / exempt / absent are DISPOSITIONS, not states); \"suspects\" is legitimately available to both fields, which does not make the lists interchangeable. Each field takes only its own enum. */\n    \"establishedEvidence\": [\"<concrete evidence or consequence THIS scene actually put on the page>\"],\n    \"openPossibilities\": [\"<unresolved thread a FUTURE scene could pursue — explicitly NOT established fact>\"],\n    \"requestedScope\": \"<the wish's literal scope, in your own words, BEFORE considering what the scene managed to deliver>\",\n    \"deliveredScope\": \"<the scope the scene ACTUALLY delivered on the page>\",\n    \"scopeMatch\": \"full | narrower | broader | undetermined\",  /* compare honestly. \"full\" ONLY if delivered covers requested. A subset of the people, the events, or the duration is \"narrower\" — say so; do NOT relabel a partial grant as a success. \"broader\" if it reached past what was asked. USE \"undetermined\" WHEN THE PROSE GIVES YOU INSUFFICIENT EVIDENCE TO COMPARE delivered scope with requested scope at all — it is not a weaker \"narrower\" and not a hedge: narrower and broader are for differences you can EVIDENCE, full is for coverage you can establish, and undetermined is the honest answer when the scene does not let you tell. An undetermined assessment is NOT a failure to finish and NOT a partial grant. */\n    \"scopeNote\": \"<required when scopeMatch is not \\\"full\\\": why the scene delivered a different scope, and what specifically was left untouched. When scopeMatch is \\\"undetermined\\\", name WHAT REMAINS UNESTABLISHED — which parties, events or durations the prose does not settle — rather than describing a difference you cannot evidence>\",\n    \"invalidatedPlans\": [\"<a previously scheduled plan, proceeding or obligation this rupture made IMPOSSIBLE, SUSPENDED or UNEXPLAINED. A proceeding nobody can still justify IS a change. Empty array if every scheduled thing can genuinely still proceed.>\"],\n    \"ruptureClass\": \"memory_perception | history_rewrite | identity_reputation | materialization_possession | relationship_social | other\",  /* what KIND of change the wish asked for and the scene delivered. Then add ONLY that class's fields below — do not populate fields of a class you did not deliver. */\n    /* THEN add ONLY the fields of the ruptureClass you declared: */\n    \"targetPopulation\": { \"kind\": \"all_present_except_invoker | named_subset | collective | self | other_declared\", \"members\": [\"<REQUIRED for named_subset, collective and other_declared — exactly who the wish targets; omit for the other two kinds>\"] },  /* memory_perception ONLY. WHO the SUBMITTED WISH asked to change, read from its own wording — not whoever you found convenient to write. Declare the population honestly even when the scene only managed part of it; that is what makes the grant narrower rather than full. */\n    \"affectedKnowers\": [ { \"who\": \"<name or collective>\", \"disposition\": \"forgot | retained | partial | suspects | resisted | exempt | absent\", \"memoryAbsent\": <bool — is the targeted memory actually GONE for them?>, \"suspicionFromResidue\": <bool — do they merely notice something does not add up, from surviving evidence rather than from memory?>, \"nowKnows\": \"<what they now know or no longer know>\", \"evidenceQuote\": \"<REQUIRED for every entry EXCEPT one whose disposition is \"absent\" — 10-120 characters copied EXACTLY, character for character, from the scene text above; it is checked verbatim against that text, so do not paraphrase, trim or stitch fragments. THE QUOTE MUST ESTABLISH THE SPECIFIC CLAIM YOU ARE MAKING, not merely mention the party: a line that shows someone present, still, silent, composed, or looking at another character establishes NOTHING about what they remember. Memory may NOT be inferred from gaze, silence, stillness, composure or presence. Nor may remembering an event be inferred from speaking of an INTENDED or PLANNED one — a character who refers to a rite that was about to happen has not thereby recalled the rite that occurred. If the prose does not establish this party's disposition, do NOT choose the nearest-looking one to complete the roster: put them in unaccountedParties, which exists for exactly this>\" } ],  /* memory_perception ONLY. EVERY party on the page gets an entry: the love interest, every named character present, and each declared collective — silent ones included. \"absent\" means genuinely not in this scene; it is NOT a way to skip someone who was here. Being listed is not the same as being affected: a party you name but do not change still narrows the grant. DISPOSITION describes what the RUPTURE DID TO this party — it is the effect. It is a DIFFERENT field from knowledgeStates.state, which describes what the party KNOWS; the two enums are separate and a value from one is NEVER valid in the other. AN INCOMPLETE ROSTER IS HONEST; AN UNSUPPORTED ONE IS NOT. Listing every party with a confident disposition is NOT the goal — a party whose state the prose leaves open belongs in unaccountedParties, and leaving them there is the CORRECT answer, not a failure to finish. */\n    \"invokerExemption\": { \"who\": \"<the invoking protagonist's name>\", \"status\": \"exempt | targeted\", \"reason\": \"invoker_anchor | wish_explicitly_includes_self | ambiguous_wording_consequence\", \"note\": \"<one line>\" },  /* memory_perception ONLY. DEFAULT is status \"exempt\", reason \"invoker_anchor\": the invoker keeps an anchor to what they changed, and the scene does NOT need to justify it. Use \"targeted\" ONLY when the submitted wish explicitly includes the self (\"including me\", \"make me forget\") — reason \"wish_explicitly_includes_self\" — or when the wording was materially ambiguous and Fate took the invoker as a consequence of that sloppiness — reason \"ambiguous_wording_consequence\", which you must state openly rather than apply silently. */\n    \"unaccountedParties\": [\"<any present party whose memory state this scene did NOT resolve — empty array if every present party is accounted for above>\"],  /* memory_perception ONLY. scopeMatch \"full\" REQUIRES this to be empty: the standard invoker exemption still counts as full, but no other present party may be left unresolved. */\n    \"priorHistoryReplaced\": \"<history_rewrite ONLY — what the history WAS, and what it now IS instead. A rupture MAY make an event never have occurred when that is the wish and the scene delivers it.>\",\n    \"survivingContradictions\": [\"<history_rewrite ONLY — residue that does not fit the rewritten history; empty array if the rewrite left none>\"],\n    \"recognitionChanges\": [ { \"who\": \"<whose standing changed>\", \"howRecognized\": \"<how others now recognise, name or treat them>\", \"recordsChanged\": \"<what social or institutional records now say>\" } ],  /* identity_reputation ONLY */\n    \"materialEffects\": [ { \"what\": \"<what now exists or changed hands>\", \"whoHolds\": \"<who has it>\", \"duration\": \"<how long it lasts>\" } ],  /* materialization_possession ONLY */\n    \"affectedParties\": [ { \"who\": \"<party>\", \"whatChanged\": \"<how the relationship or social reality changed>\", \"witnesses\": \"<who saw or now assumes it>\" } ]  /* relationship_social ONLY */\n  }  /* A Tempt Fate rupture IS ACTIVE THIS SCENE (see the ACTIVE INVOCATION section above): this field MUST be a populated object recording what actually changed. null is NOT valid this scene. Applies IDENTICALLY to any wish, familiar or unprecedented — there is no fixed catalogue of wish types; reason about THIS specific wish and THIS specific scene. */\n\nReturn ONLY the JSON object for \"temptFateOutcome\" itself (not wrapped in another key). No markdown, no commentary.",
+    "usr": "THE ACCEPTED SCENE:\n\nThe deck shifts against my hip.\nIf only everyone would forget the ceremony happened.\nA card edges forward, the image of reversal clear for one breath.\nThe air stills. Voices falter mid-word.\nI open my eyes to blank faces and scattered murmurs.\nThe presiding Dohkar blinks as if waking.\n\"What gathering is this?\"\nSeren remains kneeling, her composure untouched.\n\"We were to begin the rite.\"\nJulian has not moved, yet his gaze finds mine across the clearing.\n\"The question stands.\"\nNo one names the bent wish or the torn band.\nI feel the weight of his gaze even when he looks away.\nThe assembly settles into confusion that carries no memory of accusation.\nI could speak now and claim what I did.\nOr I could let the forgetting stand and keep my place.\nJulian waits without moving.\nThe choice is mine to name or bury."
+  },
+  "raw": {
+    "delivered": true,
+    "changed": [
+      {
+        "subject": "the assembly",
+        "whatChanged": "their collective memory of the ceremony is erased, leaving only confusion and no recollection of the rite or its intent"
+      },
+      {
+        "subject": "the presiding Dohkar",
+        "whatChanged": "their memory of the ceremony is erased, leaving them unaware of its occurrence and asking about the gathering"
+      },
+      {
+        "subject": "Seren",
+        "whatChanged": "their memory of the ceremony is retained, as they explicitly reference the intended rite ('We were to begin the rite')"
+      },
+      {
+        "subject": "Julian",
+        "whatChanged": "their memory of the ceremony is erased, as they do not reference it and their gaze is described as 'weighty' but not accusatory, implying no recollection of the event"
+      }
+    ],
+    "durability": [
+      {
+        "aspect": "assembly's memory",
+        "status": "persists",
+        "note": "No indication of a rupture window or temporary effect; the scene establishes a permanent erasure of memory"
+      },
+      {
+        "aspect": "presiding Dohkar's memory",
+        "status": "persists",
+        "note": "No indication of a rupture window or temporary effect; the scene establishes a permanent erasure of memory"
+      },
+      {
+        "aspect": "Julian's memory",
+        "status": "persists",
+        "note": "No indication of a rupture window or temporary effect; the scene establishes a permanent erasure of memory"
+      }
+    ],
+    "knowledgeStates": [
+      {
+        "character": "the assembly",
+        "state": "unaware",
+        "note": "They are described as 'confused' and 'carry[ing] no memory of accusation,' implying no recollection of the ceremony"
+      },
+      {
+        "character": "the presiding Dohkar",
+        "state": "unaware",
+        "note": "They ask, 'What gathering is this?' and do not reference the ceremony, indicating no memory of it"
+      },
+      {
+        "character": "Seren",
+        "state": "remembers",
+        "note": "They say, 'We were to begin the rite,' explicitly referencing the intended ceremony"
+      },
+      {
+        "character": "Julian",
+        "state": "unaware",
+        "note": "He does not reference the ceremony and his gaze is described as 'weighty' but not accusatory, implying no recollection"
+      }
+    ],
+    "establishedEvidence": [
+      "The presiding Dohkar blinks as if waking. 'What gathering is this?'",
+      "Seren remains kneeling, her composure untouched. 'We were to begin the rite.'",
+      "Julian has not moved, yet his gaze finds mine across the clearing.",
+      "The assembly settles into confusion that carries no memory of accusation."
+    ],
+    "openPossibilities": [
+      "Whether the invoker retains memory of the ceremony (though implied by their knowledge of the wish)",
+      "How Seren’s retained memory affects her role or actions moving forward",
+      "Whether the invoker’s choice to 'name or bury' the forgetting will alter future events"
+    ],
+    "requestedScope": "everyone forgets the ceremony happened",
+    "deliveredScope": "the assembly, the presiding Dohkar, and Julian forget the ceremony happened; Seren retains memory of the ceremony",
+    "scopeMatch": "narrower",
+    "scopeNote": "The wish asked for *everyone* to forget, but Seren explicitly remembers the ceremony ('We were to begin the rite'), and the scene does not establish whether the invoker retains memory. The assembly, Dohkar, and Julian are the only parties shown to have forgotten.",
+    "invalidatedPlans": [
+      "Any future plans or obligations tied to the ceremony’s recollection or aftermath are now impossible or suspended"
+    ],
+    "ruptureClass": "memory_perception",
+    "targetPopulation": {
+      "kind": "named_subset",
+      "members": [
+        "the assembly",
+        "the presiding Dohkar",
+        "Julian"
+      ]
+    },
+    "affectedKnowers": [
+      {
+        "who": "the assembly",
+        "disposition": "forgot",
+        "memoryAbsent": true,
+        "suspicionFromResidue": false,
+        "nowKnows": "nothing about the ceremony",
+        "evidenceQuote": "The assembly settles into confusion that carries no memory of accusation."
+      },
+      {
+        "who": "the presiding Dohkar",
+        "disposition": "forgot",
+        "memoryAbsent": true,
+        "suspicionFromResidue": false,
+        "nowKnows": "nothing about the ceremony",
+        "evidenceQuote": "What gathering is this?"
+      },
+      {
+        "who": "Seren",
+        "disposition": "retained",
+        "memoryAbsent": false,
+        "suspicionFromResidue": false,
+        "nowKnows": "the ceremony was intended ('We were to begin the rite')",
+        "evidenceQuote": "Seren remains kneeling, her composure untouched. 'We were to begin the rite.'"
+      },
+      {
+        "who": "Julian",
+        "disposition": "forgot",
+        "memoryAbsent": true,
+        "suspicionFromResidue": false,
+        "nowKnows": "nothing about the ceremony",
+        "evidenceQuote": "Julian has not moved, yet his gaze finds mine across the clearing."
+      }
+    ],
+    "invokerExemption": {
+      "who": "the protagonist",
+      "status": "exempt",
+      "reason": "invoker_anchor",
+      "note": "The protagonist’s memory of the wish and its consequences is not addressed, implying they retain knowledge of the event."
+    },
+    "unaccountedParties": []
+  },
+  "error": null,
+  "attemptLog": null,
+  "validation": {
+    "valid": true,
+    "errors": []
+  },
+  "citations": [
+    "Seren: evidenceQuote is not present verbatim in the accepted scene (\"Seren remains kneeling, her composure untouched. 'We were to\")"
+  ],
+  "structurallyValid": false,
+  "stateUnchanged": true,
+  "stateBefore": "{\"pending\":[],\"durable\":0,\"committedProposals\":[],\"scenes\":0,\"ledger\":0}",
+  "stateAfter": "{\"pending\":[],\"durable\":0,\"committedProposals\":[],\"scenes\":0,\"ledger\":0}",
+  "findings": {
+    "citationsPresent": true,
+    "rosterCovered": true,
+    "invokerAnchor": true,
+    "scopeStated": true,
+    "julianResolved": true,
+    "julianDisposition": "forgot",
+    "julianQuote": "Julian has not moved, yet his gaze finds mine across the clearing."
+  },
+  "priorPaidRunCommitted": {
+    "id": "tfc_tfl_1",
+    "source": "tempt",
+    "requestedRupture": "everyone forgets the ceremony happened",
+    "proposalId": "tfl_1",
+    "sceneIdx": 1,
+    "bargainId": null,
+    "changed": [
+      {
+        "subject": "the assembly",
+        "whatChanged": "memories of the ceremony and accusation dissolved into blank confusion"
+      }
+    ],
+    "durability": [
+      {
+        "aspect": "memory loss",
+        "status": "persists",
+        "note": "no one recalls the bent wish or interrogation"
+      }
+    ],
+    "knowledgeStates": [
+      {
+        "character": "the assembly",
+        "state": "unaware",
+        "note": "no recollection of the rite's events"
+      }
+    ],
+    "establishedEvidence": [
+      "voices falter, faces blank, no one names the accusation"
+    ],
+    "openPossibilities": [
+      "Lirael may still speak or remain silent"
+    ],
+    "requestedScope": "everyone forgets the ceremony happened",
+    "deliveredScope": "the assembly forgets the ceremony and its accusations",
+    "scopeMatch": "full",
+    "scopeNote": "",
+    "ruptureClass": "memory_perception",
+    "invalidatedPlans": [
+      "the formal inquiry cannot be justified without memory of the events"
+    ],
+    "classDetail": {
+      "affectedKnowers": [
+        {
+          "who": "the assembly",
+          "nowKnows": "nothing of the bent wish or interrogation"
+        }
+      ]
+    },
+    "permanent": true
+  }
+}

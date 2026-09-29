@@ -1,0 +1,173 @@
+{
+  "at": "2026-09-07T22:55:36.441Z",
+  "mode": "E2E-LIVE",
+  "requestLimits": {
+    "planner": 2,
+    "author": 2
+  },
+  "plannerCalls": 1,
+  "authorCalls": 0,
+  "aborted": [],
+  "planner": [
+    {
+      "at": 1788821710994,
+      "url": "/api/proxy",
+      "role": "OPENING_PLANNER",
+      "model": "grok-4.3",
+      "effort": "none",
+      "rf": "json_object",
+      "max_tokens": 2400,
+      "sysBytes": 6239,
+      "usrBytes": 84004,
+      "status": 200,
+      "latencyMs": 21367,
+      "served": "grok-4.3",
+      "usage": {
+        "prompt_tokens": 20946,
+        "completion_tokens": 723,
+        "total_tokens": 23118,
+        "prompt_tokens_details": {
+          "text_tokens": 20946,
+          "audio_tokens": 0,
+          "image_tokens": 0,
+          "cached_tokens": 192
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 1449,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        },
+        "num_sources_used": 0,
+        "cost_in_usd_ticks": 314109000
+      },
+      "orch": {
+        "role": "OPENING_PLANNER",
+        "model": "grok-4.3",
+        "isSpecialistRenderer": true,
+        "timestamp": "2026-09-07T22:55:32.353Z"
+      },
+      "rawReplyBytes": 2890,
+      "replyTopKeys": [
+        "opening_spine",
+        "stage_contract"
+      ],
+      "replySpineKeys": [
+        "pressure_source_type",
+        "pressure_source",
+        "hook_object",
+        "opening_actor_id",
+        "opening_beat",
+        "rising_beats",
+        "decision_beat",
+        "pc_career",
+        "opening_setting",
+        "environment_elements",
+        "li_texture_beat",
+        "pc_wound_anchor",
+        "pc_self_presentation_beat",
+        "scene_want",
+        "scene_mission",
+        "reader_state",
+        "pc_body_callback",
+        "antagonist_body_callback",
+        "staged_characters",
+        "scene_skeleton"
+      ],
+      "replySkeletonKeys": [
+        "character_plus",
+        "environment_plus",
+        "pc_opening_fusion"
+      ],
+      "stageContractAt": [
+        "top"
+      ]
+    }
+  ],
+  "author": [],
+  "cost": [
+    {
+      "role": "OPENING_PLANNER",
+      "status": 200,
+      "latencyMs": 21367,
+      "served": "grok-4.3",
+      "prompt_tokens": 20946,
+      "completion_tokens": 723,
+      "reasoning_tokens": 1449,
+      "cached_tokens": 192,
+      "usd_list": 0.0316125,
+      "xai_usd": 0.0314109,
+      "replyBytes": 2890,
+      "stageContractAt": [
+        "top"
+      ]
+    }
+  ],
+  "totalUsdList": 0.0316125,
+  "totalXaiUsd": 0.0314109,
+  "gate": {
+    "authorAttempts": 0,
+    "pages": 0,
+    "fatal": "pc_opening_fusion.environment_target does not match environment_plus.target — the opening may not point at two different things; pc_opening_fusion.environment_axis does not match environment_plus.axis",
+    "verdict": "FAIL-CLOSED (named): pc_opening_fusion.environment_target does not match environment_plus.target — the opening may not point at two different things; pc_opening_fusion.environment_axis does not match environment_plus.axis"
+  },
+  "st": {
+    "fatal": "pc_opening_fusion.environment_target does not match environment_plus.target — the opening may not point at two different things; pc_opening_fusion.environment_axis does not match environment_plus.axis",
+    "pages": 0,
+    "genStage": true,
+    "mission": null,
+    "usage": {
+      "route": "/api/proxy",
+      "requested": "grok-4.3",
+      "effort": "none",
+      "served": "grok-4.3",
+      "usage": {
+        "prompt_tokens": 20946,
+        "completion_tokens": 723,
+        "total_tokens": 23118,
+        "prompt_tokens_details": {
+          "text_tokens": 20946,
+          "audio_tokens": 0,
+          "image_tokens": 0,
+          "cached_tokens": 192
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 1449,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        },
+        "num_sources_used": 0,
+        "cost_in_usd_ticks": 314109000
+      },
+      "attempt": 1,
+      "at": 1788821732361
+    },
+    "attempts": 1,
+    "retryReason": null
+  },
+  "threw": null,
+  "refunds": [
+    {
+      "context": "refund_issue_purchase_literary",
+      "amount": 60
+    }
+  ],
+  "dialogs": [
+    "Fate stumbled — your story didn't start, so your Fortunes have been refunded. Please try again."
+  ],
+  "logs": [
+    "[SCENE1:STAGE:PLANNER-OWNED] unseeded Scene 1 — the opening planner must return scene_mission + stage_contract over 3 issued ref(s): [pc:self, ent:the one who draws them forward, plot:aplot_x3a_977620c3_x2d_b1d0_x2d_450c_x2d_85fc_x2d_7c8785b51791:primary_antagonist]",
+    "[SCENE1:STAGE] source=planner-owned:pending settingOwner=planner presenceOwner=planner (PENDING — planner owns part of the stage) settingSource=planner-pending onStage=[Testa] offStage=[]",
+    "[SCENE1:PLANNER] eligible cast (1): [Testa] · chars=4340 → max_tokens=2400 (N_staged_max = N_eligible; staged_characters is an OUTPUT and never sizes the request)",
+    "[SCENE1:PLANNER:USAGE] {\"route\":\"/api/proxy\",\"requested\":\"grok-4.3\",\"effort\":\"none\",\"served\":\"grok-4.3\",\"usage\":{\"prompt_tokens\":20946,\"completion_tokens\":723,\"total_tokens\":23118,\"prompt_tokens_details\":{\"text_tokens\":20946,\"audio_tokens\":0,\"image_tokens\":0,\"cached_tokens\":192},\"completion_tokens_details\":{\"reasoning_tokens\":1449,\"audio_tokens\":0,\"accepted_prediction_tokens\":0,\"rejected_predictio",
+    "[SCENE1:PLANNER:ATTEMPTS] 1 (no retry)",
+    "[SCENE1:ENVELOPE] spine contract declares 19 field(s)",
+    "[SCENE1:ENVELOPE:NORMALISED] moved 1 field(s) to their declared position: scene_skeleton (opening_spine -> top level) — values moved intact; every semantic validator still runs",
+    "[SCENE1:STAGE:PLANNER-OWNED] resolved — source=generated:planner_stage · on stage [Testa] · mission=\"Extinguish the fire before the kitchen is destroyed.\"",
+    "[SCENE1:STAGE:RESOLVED] settingSource=planner.opening_setting WHERE=\"bakery kitchen\" onStage=[Testa]",
+    "[BeginStory] Error: Error: Scene 1 aborted: pc_opening_fusion.environment_target does not match environment_plus.target — the opening may not point at two different things; pc_opening_fusion.environment_axis does not match environment_plus.axis\n    at handleBeginStory (http://localhost:3000/app.js?v=20260907e-grok-only-author-flag:267981:20)\n    at async <anonymous>:337:30",
+    "[SPEND] +0.0314 USD (OPENING_PLANNER) cumulative 0.0314",
+    "[ISSUE-REFUND] refunded 60F. New balance: 9999"
+  ]
+}

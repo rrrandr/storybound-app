@@ -1,0 +1,94 @@
+{
+  "at": "2026-09-07T16:39:07.032Z",
+  "results": [
+    {
+      "name": "B1 the flag-on dry path emitted exactly one planner body and one author body at the client boundary (page mounted)",
+      "pass": true,
+      "detail": "{\"planner\":1,\"author\":1,\"pages\":1}"
+    },
+    {
+      "name": "B2 PROXY BOUNDARY — OPENING_PLANNER body: exactly one upstream fetch, to api.x.ai, upstream body model=grok-4.3, effort=none, response_format=json_object; response _orchestration.model=grok-4.3",
+      "pass": true,
+      "detail": "{\"status\":200,\"upstreamCalls\":1,\"upstream\":[{\"host\":\"api.x.ai\",\"model\":\"grok-4.3\",\"effort\":\"none\",\"rf\":\"json_object\"}],\"orchestrationModel\":\"grok-4.3\"}"
+    },
+    {
+      "name": "B3 PROXY BOUNDARY — NARRATIVE_AUTHOR_GROK_ONLY body (client sent preferredModel only, model=null): exactly one upstream fetch, to api.x.ai, upstream body model=grok-4.3; response _orchestration.model=grok-4.3",
+      "pass": true,
+      "detail": "{\"clientIntent\":{\"model\":\"undefined\",\"preferredModel\":\"grok-4.3\"},\"proxy\":{\"status\":200,\"upstreamCalls\":1,\"upstream\":[{\"host\":\"api.x.ai\",\"model\":\"grok-4.3\",\"effort\":\"high\",\"rf\":null}],\"orchestrationModel\":\"grok-4.3\"}}"
+    },
+    {
+      "name": "B3b the author's resolved effort is HIGH (the shipped author setting; the client sets none, the single-entry chain resolves grok-4.3 → high) — recorded as the policy in force",
+      "pass": true,
+      "detail": "{\"effort\":\"high\"}"
+    },
+    {
+      "name": "B4 error class \"503\" — attempt + retry: each client request = exactly ONE upstream fetch, both to api.x.ai model grok-4.3; nothing left the proxy toward any other host; the proxy returned the failure to the client (no fallback of its own)",
+      "pass": true,
+      "detail": "{\"attempt1\":{\"status\":503,\"upstreamCalls\":1,\"upstream\":[{\"host\":\"api.x.ai\",\"model\":\"grok-4.3\",\"effort\":\"high\",\"rf\":null}]},\"attempt2\":{\"status\":503,\"upstreamCalls\":1,\"upstream\":[{\"host\":\"api.x.ai\",\"model\":\"grok-4.3\",\"effort\":\"high\",\"rf\":null}]}}"
+    },
+    {
+      "name": "B4 error class \"empty content (200)\" — attempt + retry: each client request = exactly ONE upstream fetch, both to api.x.ai model grok-4.3; nothing left the proxy toward any other host; the proxy returned the failure to the client (no fallback of its own)",
+      "pass": true,
+      "detail": "{\"attempt1\":{\"status\":200,\"upstreamCalls\":1,\"upstream\":[{\"host\":\"api.x.ai\",\"model\":\"grok-4.3\",\"effort\":\"high\",\"rf\":null}],\"orchestrationModel\":\"grok-4.3\"},\"attempt2\":{\"status\":200,\"upstreamCalls\":1,\"upstream\":[{\"host\":\"api.x.ai\",\"model\":\"grok-4.3\",\"effort\":\"high\",\"rf\":null}],\"orchestrationModel\":\"grok-4.3\"}}"
+    },
+    {
+      "name": "B4 error class \"connection failure\" — attempt + retry: each client request = exactly ONE upstream fetch, both to api.x.ai model grok-4.3; nothing left the proxy toward any other host; the proxy returned the failure to the client (no fallback of its own)",
+      "pass": true,
+      "detail": "{\"attempt1\":{\"status\":502,\"upstreamCalls\":1,\"upstream\":[{\"host\":\"api.x.ai\",\"model\":\"grok-4.3\",\"effort\":\"high\",\"rf\":null}]},\"attempt2\":{\"status\":502,\"upstreamCalls\":1,\"upstream\":[{\"host\":\"api.x.ai\",\"model\":\"grok-4.3\",\"effort\":\"high\",\"rf\":null}]}}"
+    },
+    {
+      "name": "B4p OPENING_PLANNER 503: one upstream fetch to api.x.ai model grok-4.3, 503 returned to the client",
+      "pass": true,
+      "detail": "{\"status\":503,\"upstreamCalls\":1,\"upstream\":[{\"host\":\"api.x.ai\",\"model\":\"grok-4.3\",\"effort\":\"none\",\"rf\":\"json_object\"}]}"
+    },
+    {
+      "name": "R-a resolver mutated to a non-Grok model → B2/B3 assertions FAIL for both roles while the client bodies still say preferredModel=grok-4.3",
+      "pass": true,
+      "detail": "{\"planner\":{\"status\":200,\"upstreamCalls\":1,\"upstream\":[{\"host\":\"api.x.ai\",\"model\":\"mutant-not-grok\",\"effort\":\"none\",\"rf\":\"json_object\"}],\"orchestrationModel\":\"grok-4.3\"},\"author\":{\"status\":200,\"upstreamCalls\":1,\"upstream\":[{\"host\":\"api.x.ai\",\"model\":\"mutant-not-grok\",\"effort\":\"high\",\"rf\":null}],\"orchestrationModel\":\"grok-4.3\"}}",
+      "red": true
+    },
+    {
+      "name": "R-b upstream host mutated to api.openai.com → the xAI-only assertion FAILS for both roles (a request left toward another provider)",
+      "pass": true,
+      "detail": "{\"planner\":{\"status\":200,\"upstreamCalls\":1,\"upstream\":[{\"host\":\"api.openai.com\",\"model\":\"grok-4.3\",\"effort\":\"none\",\"rf\":\"json_object\"}],\"orchestrationModel\":\"grok-4.3\"},\"author\":{\"status\":200,\"upstreamCalls\":1,\"upstream\":[{\"host\":\"api.openai.com\",\"model\":\"grok-4.3\",\"effort\":\"high\",\"rf\":null}],\"orchestrationModel\":\"grok-4.3\"}}",
+      "red": true
+    },
+    {
+      "name": "R-c planner role chain mutated to the legacy 3-entry chain (client effort/preferredModel removed) → model STILL grok-4.3 (proxy is structurally Grok-only) but effort becomes high → the B2 effort assertion FAILS",
+      "pass": true,
+      "detail": "{\"status\":200,\"upstreamCalls\":1,\"upstream\":[{\"host\":\"api.x.ai\",\"model\":\"grok-4.3\",\"effort\":\"high\",\"rf\":\"json_object\"}],\"orchestrationModel\":\"grok-4-1-fast-reasoning\"}",
+      "red": true
+    },
+    {
+      "name": "B5 the tested \"real\" copy differs from api/proxy.js by exactly one line (the sanitizer import)",
+      "pass": true,
+      "detail": ""
+    }
+  ],
+  "clientBodies": {
+    "planner": [
+      {
+        "url": "/api/proxy",
+        "role": "OPENING_PLANNER",
+        "model": "grok-4.3",
+        "preferredModel": "grok-4.3",
+        "reasoningEffort": "none",
+        "response_format": {
+          "type": "json_object"
+        },
+        "max_tokens": 2400,
+        "sysBytes": 4283,
+        "usrBytes": 74769
+      }
+    ],
+    "author": [
+      {
+        "url": "/api/proxy",
+        "role": "NARRATIVE_AUTHOR_GROK_ONLY",
+        "preferredModel": "grok-4.3",
+        "max_tokens": 2400,
+        "convId": "boundary-7lqzfc"
+      }
+    ]
+  }
+}

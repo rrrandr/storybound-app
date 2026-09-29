@@ -1,0 +1,15 @@
+The velvet drapes muffled the whispers from the assembly, their heavy folds swallowing every sound except the soft rasp of parchment against my palm. I held the torn piece flat against the scarred oak, Julian’s name staring up at me in that familiar slant, the sigil’s silver heat still seeping through the paper into my skin. My fingers trembled once against the fabric of my dress before I stilled them, the motion small enough that only the table felt it.
+
+Julian stood at the edge of the circle, his long dark hair loose about his shoulders, the silver lines on his slate-blue skin catching the unsteady glow. He turned the ring on his finger with thumb and forefinger, the metal catching light in a slow, unconscious orbit. His gaze lingered on my lips a fraction longer than the moment required, as if weighing whether the words he had not yet spoken would cost more than silence.
+
+“The rite’s got more holes than a favor-seller’s promises,” he said, voice low and edged with deliberate calm. The words settled between us like a challenge offered without heat.
+
+<<MICRO_EXPRESSION>>
+Is this something to lean into or something to move past?
+<<CONTINUE>>
+
+The sigil pulsed once more, its light narrowing to a single point on the scroll at my knees. The name written there and the name on the parchment aligned too cleanly to be chance. Julian did not move. Breath left him through his nose in one controlled stream, and the ring turned again beneath his fingers.
+
+I felt the choice form in the space between us—speak the name aloud and force the confrontation, or keep the letter and unearth what else he had concealed. The Arcane Binding beneath the table shimmered faintly, its chain of energy pulling at the air as though the ancient laws themselves pressed for an answer.
+
+<!--sceneDuty: investigation | attraction: latent-->

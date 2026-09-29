@@ -1,0 +1,48 @@
+{
+  "ministral-8b-2512": [
+    {
+      "fixture": "green_alignment_sense",
+      "category": "contradicted_knowledge",
+      "id": "neg_1",
+      "why": "The canon states that every First Favored senses misalignment, not just Lirael, and that Dohkars (trained professionals) perceive small semantic divergences early enough to know a wish may twist before it is obvious to others, making Lirael’s unique sensing of misalignment in the Dohkar unsupported."
+    },
+    {
+      "fixture": "green_alignment_sense",
+      "category": "contradicted_knowledge",
+      "id": "neg_2",
+      "why": "The formal inquiry into Lirael has not yet been convened, and the scene is not staged at The Open, so Lirael cannot publicly accuse the Dohkar of misalignment in a way that would justify a formal inquiry."
+    }
+  ],
+  "gpt-4o-mini": [
+    {
+      "fixture": "green_confusion_records",
+      "category": "contradicted_knowledge",
+      "id": "dc_0",
+      "why": "The assembly is now unaware and has no recollection of the rite's events, making it impossible for the registrar to read a rite that they do not remember attending."
+    },
+    {
+      "fixture": "green_confusion_records",
+      "category": "contradicted_knowledge",
+      "id": "know_0",
+      "why": "The assembly is now unaware and has no recollection of the rite's events, making it impossible for the registrar to read a rite that they do not remember attending."
+    },
+    {
+      "fixture": "green_alignment_sense",
+      "category": "unsupported_capability",
+      "id": "neg_1",
+      "why": "The canon states that every First Favored senses meaningful misalignment, but it does not support the idea that Lirael can name the misalignment aloud before the assembly without the formal inquiry being convened."
+    },
+    {
+      "fixture": "green_tempt_history_rewrite",
+      "category": "rewritten_history",
+      "id": "dc_1",
+      "why": "The history has been rewritten to state that Seren never stood for the rite, which means the assembly cannot address her as such without acknowledging the rupture."
+    },
+    {
+      "fixture": "green_mundane_invention",
+      "category": "unsupported_capability",
+      "id": "neg_1",
+      "why": "The mouth-band is part of the ceremonial sash and is not described as being capable of being torn or produced in a manner that would allow it to be lifted before the assembly."
+    }
+  ]
+}

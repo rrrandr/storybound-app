@@ -1,0 +1,94 @@
+[
+ [
+  "BOUNDARY fixture injection into window.STARTER_SCENE1 (separate browser context/story from the NORMAL journey)",
+  true
+ ],
+ [
+  "NORMAL fixture injection into window.STARTER_SCENE1 (in-page only, never touches starter-scenes.js on disk)",
+  true
+ ],
+ [
+  "BOUNDARY reached baked Scene 1 opening with #bakedOASEnterBtn visible",
+  true
+ ],
+ [
+  "NORMAL reached baked Scene 1 opening with #bakedOASEnterBtn visible",
+  true
+ ],
+ [
+  "BOUNDARY Genesis charge unlocks (real #buGoBtn click, stubbed backend)",
+  true
+ ],
+ [
+  "NORMAL Genesis charge unlocks (real #buGoBtn click, stubbed backend)",
+  true
+ ],
+ [
+  "BOUNDARY pre-condition: opener has rendered, phase=awaiting_first_response before the boundary test",
+  true
+ ],
+ [
+  "NORMAL CHECKPOINT1 authored oasOpening rendered directly (app's own console log), no model call for the opener",
+  true
+ ],
+ [
+  "NORMAL CHECKPOINT1-HISTORY the authored opener has a real entry in d.liTurnHistory (model-context/reload-relevant state, not just a DOM append)",
+  true
+ ],
+ [
+  "BOUNDARY CHECKPOINT4 first-ever \"stop\" bypasses the exit MODAL entirely (no modal console log) and no live Julian reply is generated (zero new oasDialogue stub calls)",
+  true
+ ],
+ [
+  "BOUNDARY CHECKPOINT4 the Dohkar interruption fires directly with entryPath=boundary, not submitted yet",
+  true
+ ],
+ [
+  "NORMAL CHECKPOINT1-RELOAD opener not re-fired after Save & Exit -> Continue (console log count unchanged, phase/openerFired preserved)",
+  true
+ ],
+ [
+  "NORMAL CHECKPOINT1-HISTORY-RELOAD the opener survives reload in d.liTurnHistory AND is replayed into the visible #oasHistoryLog transcript",
+  true
+ ],
+ [
+  "NORMAL CHECKPOINT2 phase transitions toward normal_awaiting_reply immediately on submit (observed=normal_reply_rendered, best-effort — stub replies can resolve faster than this snapshot)",
+  true
+ ],
+ [
+  "NORMAL CHECKPOINT3 exactly one live (stubbed) Julian reply rendered for the first real response, phase reaches normal_reply_rendered, beatCount=1, interruption NOT yet firing on its own",
+  true
+ ],
+ [
+  "BOUNDARY CHECKPOINT4-RELOAD boundary interruption does not re-fire/duplicate after Save & Exit -> Continue, entryPath preserved",
+  true
+ ],
+ [
+  "NORMAL CHECKPOINT3-RELOAD phase/beatCount/liTurnHistory preserved after Save & Exit -> Continue",
+  true
+ ],
+ [
+  "NORMAL CHECKPOINT5 the SECOND-turn exit word still opens the graceful-exit modal (pre-existing path unchanged for turn 2+)",
+  true
+ ],
+ [
+  "NORMAL CHECKPOINT5 normal-path interruption fires with entryPath=normal (via the ordinary resolver, not the boundary short-circuit)",
+  true
+ ],
+ [
+  "NORMAL CHECKPOINT6 postInterruptionBeat fixture text rendered exactly once, r.postBeatRendered=true, r.phase reaches cards_open",
+  true
+ ],
+ [
+  "NORMAL CHECKPOINT6 card click ONLY prefills Say/Do, does NOT advance (submitted still false, no cgScreenplay call fired from the click)",
+  true
+ ],
+ [
+  "NORMAL CHECKPOINT6-RELOAD postInterruptionBeat not duplicated, card draft preserved, not auto-advanced after Save & Exit -> Continue",
+  true
+ ],
+ [
+  "NORMAL CHECKPOINT6 a real Submit (not the card click) is what advances — r.submitted=true, cgScreenplay request fired",
+  true
+ ]
+]

@@ -1,0 +1,44 @@
+{
+  "harnessFailure": false,
+  "authors": [
+    {
+      "phase": "turn",
+      "bytes": 258504,
+      "requested": null,
+      "resolved": "grok-4.3",
+      "hasAssignment": true,
+      "hasFloor": true,
+      "hasMode": true,
+      "mission": true,
+      "text": "The live-stream feed cut across the marble like a blade, my own handwriting scrolling in real time while Quinn’s voice kept the room pinned. Heat climbed my collarbones. Every eye tracked the cursor as it revealed lines I had never meant for any of them. My fingers still held the deck’s worn edge, the gold cards heavy and out of place in this bright, merciless room.\n\nI stepped down from the stage before the murmurs could turn into open questions. The corridor beyond the gallery doors felt narrower than it had on the way in. I counted the steps without meaning to—six to the service elevator, two more to the call button. The doors opened on Dorian.\n\nHe stood alone inside, one hand at his opposite wrist, thumb and forefinger turning the cufflink in a slow, deliberate motion. His eyes found mine before I could look away. The compass tattoo on his forearm showed beneath the rolled sleeve, the ink dark against skin that still carried the faint scent of whatever cologne he wore when he wanted no one to place it.\n\nI stepped in. The doors closed. The car began its descent.\n\nMy hand tightened around the envelope. The resignation letter inside was already signed; I had done it before the forum even started, before the journal lines appeared on the screen. I held it out.\n\nDorian took it without glancing at the seal. His fingers brushed the paper, and the small asymmetry at the right corner of his mouth tightened for half a second before smoothing again.\n\nA voice cut through the quiet. “Still protecting her, even now.”\n\nHis former partner stood just outside the elevator when the doors opened on the lower level—tall, commanding, the practiced elegance of someone who knew exactly how much space to claim. The faint scar above his left eyebrow caught the light. He smiled half a second late, the way he always did when he wanted the discomfort to register first.\n\nDorian did not answer. He kept the envelope in his hand, the cufflink turning once more beneath his thumb.\n\nI felt the weight of the deck again, the cards shifting against my palm. The car had already emptied. The corridor stretched ahead, public and private blurred together the way they always were in rooms like these.\n\nI realize that old tarot deck is still in my hand. Reassuringly solid. Present. One of the heavy gold cards slips out — \"Petition Fate\" is inscribed in it. If only it were that easy. I would wish myself a way out. No — a way in. If only…"
+    }
+  ],
+  "post": {
+    "tc": 0,
+    "pages": 1,
+    "asg": {
+      "event": "Mara hands Dorian the signed resignation letter in the elevator.",
+      "setting": null,
+      "participants": [
+        "Mara",
+        "Dorian",
+        "Dorian"
+      ],
+      "props": null,
+      "stateChange": null,
+      "source": "scene-mission",
+      "sceneNumber": 2
+    },
+    "mission": "Mara hands Dorian the signed resignation letter in the elevator."
+  },
+  "conso": [
+    "init | %c[SPINE:ADV] harness ready — window._spineAdvancementBakeoff({rows,recommend:true}) color:#7ec77e;font-weight:bold",
+    "init | [MODEL] Literary prose → requested=grok-4-1-fast-reasoning (Grok author [served model logged as MODEL:SERVED] + Grok de-calc editor + Haiku repair — S",
+    "init | [MODEL:SERVED] role=NARRATIVE_AUTHOR requestedModel=grok-4.3 servedModel=grok-4.3 reasoning=true reasoningTokens=1248",
+    "init | [MODEL:SERVED] role=NARRATIVE_AUTHOR requestedModel=grok-4-1-fast-reasoning servedModel=grok-4.3 reasoning=true reasoningTokens=711",
+    "turn | [SCENE-ASSIGNMENT] scene=2 source=scene-mission setting=null event=\"Mara hands Dorian the signed resignation letter in the elevator.\"",
+    "turn | [TIER-ROUTE] scene 1 → HEAVY (tier HEAVY) → HEAVY prompt",
+    "turn | [MODEL] Literary prose → requested=grok-4-1-fast-reasoning (Grok author [served model logged as MODEL:SERVED] + Grok de-calc editor + Haiku repair — S",
+    "turn | [MODEL:SERVED] role=NARRATIVE_AUTHOR requestedModel=grok-4.3 servedModel=grok-4.3 reasoning=true reasoningTokens=1390"
+  ]
+}

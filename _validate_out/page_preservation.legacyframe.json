@@ -1,0 +1,25 @@
+{
+ "stub": "The kiln room was cold for the first time in a year, and the gauge needle had already begun to slide. I set both palms on the workbench and counted the seconds between ticks.\n\nFlour and slip had dried in the lines of my knuckles. I wiped them on the apron and hated how the streak made me look unfinished.\n\nThe way he set the document down without lifting his eyes from the page came back to me, and the ache started low in my belly again.\n\n<<MICRO_EXPRESSION>>\nSay it plainly — or let it show without words?\n<<CONTINUE>>\n\nThe vent fan ticked once, then twice. I kept my hands on the bench because moving them would mean checking the gauge again.\n\nI kept my hands on the bench because moving them would mean checking the gauge again. The refrain was the only steady thing in the room.\n\nThe needle dropped another two degrees while I watched it, and the glaze on the tall vase was still wet enough to run.\n\nIf I opened the door now the piece would cool too fast and crawl. If I left it sealed the vase would crack from the inside out.\n\nMy hand tightened around my great-grandmother's old tarot deck. I didn't remember bringing it. I toyed with the idea of letting the cards decide.",
+ "dom": [
+  {
+   "tag": "P",
+   "cls": "",
+   "text": "The kiln room was cold for the first time in a year, and the gauge needle had already begun to slide. I set both palms on the workbench and counted the seconds between ticks. Flour and slip had dried in the lines of my knuckles. I wiped them on the apron and hated how the streak made me look unfinished. The way he set the document down without lifting his eyes from the page came back to me, and the ache started low in my belly again."
+  },
+  {
+   "tag": "DIV",
+   "cls": "scene1-micro-expr sme-hydrated",
+   "text": "Say it plainly — or let it show without words?"
+  },
+  {
+   "tag": "P",
+   "cls": "",
+   "text": "The vent fan ticked once, then twice. I kept my hands on the bench because moving them would mean checking the gauge again. I kept my hands on the bench because moving them would mean checking the gauge again. The refrain was the only steady thing in the room. The needle dropped another two degrees while I watched it, and the glaze on the tall vase was still wet enough to run. If I opened the door now the piece would cool too fast and crawl. If I left it sealed the vase would crack from the inside out. I didn't remember bringing it. I didn't remember bringing it. I didn't remember bringing it."
+  },
+  {
+   "tag": "P",
+   "cls": "",
+   "text": "My hand tightened around my great-grandmother's old tarot deck. I didn't remember bringing it. I toyed with the idea of letting the cards decide."
+  }
+ ]
+}

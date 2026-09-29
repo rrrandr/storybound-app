@@ -1,0 +1,20 @@
+{
+  "pathname": "/api/mistral-proxy",
+  "body": {
+    "role": "STRUCTURE_GENERATOR",
+    "model": "mistral-small-2603",
+    "temperature": 0,
+    "max_tokens": 2000,
+    "messages": [
+      {
+        "role": "system",
+        "content": "CANON AUDITOR"
+      },
+      {
+        "role": "user",
+        "content": "plan"
+      }
+    ],
+    "reasoning_effort": "high"
+  }
+}

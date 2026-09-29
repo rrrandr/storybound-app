@@ -1,0 +1,7 @@
+  ⚙ preflight ok — http://localhost:3000/ responded 200 in 252ms
+
+PASS G1 the opening planner request was BUILT and dispatched for an unseeded story (no pre-planner abort)  — planner requests=1 threw=null
+PASS G2 the request carries the STAGE_CONTRACT block, ISSUED REFS (pc:self first) and the mission requirement  — {"issued":["pc:self","plot:aplot_x3a_9062a61e_x2d_28f7_x2d_4f0d_x2d_8f7e_x2d_70ccea7b80cc:primary_antagonist"],"max":2400}
+PASS G3 with a valid reply the stage re-resolved from the planner stage and the author was dispatched  — {"contract":{"ok":true,"source":"generated:planner_stage","onStage":["Testa"]},"author":1,"fatal":null}
+PASS G4 Scene 1 mounted: one page, ledger p1, no fatal, no refund, no dialog  — {"pages":1,"ledger":1,"refunds":[],"dialogs":[]}
+PASS G5 the mission the planner returned became the corridor mission  — she understands the wish has already begun to cost her something she cannot name

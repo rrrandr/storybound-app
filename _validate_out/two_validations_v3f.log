@@ -1,0 +1,5 @@
+=== v3k_stage_order · stage_order_dry.mjs · 01:26:33 ===
+v3k_stage_order: exit=1 · 78 checks · 76 passed · 2 failed · invalid_markers=0 · samples=41 suite_rss_max=330MB free_min=1273MB server_rss_max=85MB
+v3k_stage_order: FAILURE — stopping. First failing lines:
+57:FAIL V3-b revelation only → named reject (action lacks the environment placeholder), no author, refund  — {"fatal":"fusion action lacks the environment identity — neither the literal {ENV_TARGET} token nor the exact canonical target \"the weighhouse ledger\" (a paraphrase or another object is not the target)"}
+59:FAIL V3-dup placeholder twice → named reject  — fusion action carries the environment identity more than once (token and/or canonical target repeated)

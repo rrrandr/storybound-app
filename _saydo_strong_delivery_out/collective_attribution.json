@@ -1,0 +1,46 @@
+{
+  "adult": [
+    {
+      "idx": 1,
+      "kind": "collective_possessive_from_nonmember",
+      "speaker": "THE PRESIDING DOHKAR",
+      "quote": "The cost fell on our child. The Sacrificiant must answer for it.",
+      "why": "\"our child\" claims membership of the group, but THE PRESIDING DOHKAR is not declared as one of its members"
+    }
+  ],
+  "safe": [
+    {
+      "idx": 1,
+      "kind": "collective_possessive_from_nonmember",
+      "speaker": "SEREN",
+      "quote": "You have claimed what belongs to our line.",
+      "why": "\"belongs to our\" claims membership of the group, but SEREN is not declared as one of its members"
+    },
+    {
+      "idx": 1,
+      "kind": "unnamed_member_attributed_to_individual",
+      "speaker": "SEREN",
+      "quote": "You have claimed what belongs to our line.",
+      "why": "the preceding narration introduced an unnamed member (\"The first of them\") but the line is attributed to SEREN"
+    },
+    {
+      "idx": 3,
+      "kind": "unnamed_member_attributed_to_individual",
+      "speaker": "SEREN",
+      "quote": "The wish was meant for her alone. You twisted it with your presence.",
+      "why": "the preceding narration introduced an unnamed member (\"The second family member\") but the line is attributed to SEREN"
+    },
+    {
+      "idx": 3,
+      "kind": "speaker_distinguished_then_given_the_line",
+      "speaker": "SEREN",
+      "quote": "The wish was meant for her alone. You twisted it with your presence.",
+      "why": "the narration placed the speaker BESIDE SEREN, distinguishing them, and then SEREN was given the line"
+    }
+  ],
+  "okFamily": [],
+  "okOwnLine": [],
+  "okDohkar": [],
+  "directive": "COLLECTIVE SPEECH — ATTRIBUTE IT HONESTLY (HARD RULE):\nThis scene includes a group acting as a pressure source: Seren's family\n- If a member of that group speaks, the line may NOT be attributed to a named individual who\n  is not one of them. A presiding official does not say \"our child\" about someone else's\n  child, and a line you have just introduced as coming from an unnamed member is not said by\n  a named character standing beside them.\n- If you introduce the speaker as unnamed (\"one of them steps forward\"), then either give the\n  line to a roster-permitted speaker who genuinely IS that member, or render it as NARRATION\n  of what the group said. Do not invent a new speaker name.\n- A group may be present and may exert pressure; it is still never the scene's objective\n  actor. One named individual owns the beat.\n\n",
+  "noGroups": ""
+}

@@ -1,0 +1,44 @@
+[A] control — initializing (author stubbed)…
+[B] subtraction — initializing (author stubbed)…
+[C] subtraction + exemplars — initializing (author stubbed)…
+
+════ SUBTRACTION DELIVERY PROOF ════
+
+──── arm A (control)  sub=false ex=false
+   payload sys=371866 usr=84
+   ✅  present  #1  embodied-response mandate
+   ✅  present  #1b body-response rewrite test
+   ✅  present  #2  wanting:appreciating ratio
+   ✅  present  #3  every-line desire-coding
+   ✅  present  #4  emotional barometer
+   ✅  present  #5  3:1 breath-paragraph ratio
+   ✅  present  #6  unconditional LI override
+   ✅  absent   narrowed #6 replacement
+   ✅  absent   A/50 exemplars
+
+──── arm B (subtraction)  sub=true ex=false
+   payload sys=371845 usr=84
+   ✅  absent   #1  embodied-response mandate
+   ✅  absent   #1b body-response rewrite test
+   ✅  absent   #2  wanting:appreciating ratio
+   ✅  absent   #3  every-line desire-coding
+   ✅  absent   #4  emotional barometer
+   ✅  absent   #5  3:1 breath-paragraph ratio
+   ✅  absent   #6  unconditional LI override
+   ✅  present  narrowed #6 replacement
+   ✅  absent   A/50 exemplars
+
+──── arm C (subtraction + exemplars)  sub=true ex=true
+   payload sys=365790 usr=84
+   ✅  absent   #1  embodied-response mandate
+   ✅  absent   #1b body-response rewrite test
+   ✅  absent   #2  wanting:appreciating ratio
+   ✅  absent   #3  every-line desire-coding
+   ✅  absent   #4  emotional barometer
+   ✅  absent   #5  3:1 breath-paragraph ratio
+   ✅  absent   #6  unconditional LI override
+   ✅  present  narrowed #6 replacement
+   ✅  present  A/50 exemplars
+
+  payload sizes: A=371866  B=371845  C=365790
+  ✅ ALL ARMS DELIVER AS DESIGNED

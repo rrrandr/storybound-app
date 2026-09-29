@@ -1,0 +1,5 @@
+=== v3s_stage_order · stage_order_dry.mjs · 17:22:04 ===
+v3s_stage_order: exit=1 ·  · invalid_markers=1 · samples=37 suite_rss_max=298MB free_min=93MB server_rss_max=85MB
+v3s_stage_order: FAILURE — stopping. First failing lines:
+65:   ⚠ SCENARIO INVALID (no begin-story flow started): unseeded Modern · v3 identity: revelation uses pronouns that are not the protagonist's resolved set · race=resolved · 133ms · last logs: ["[Corridor] Row store initialized with 11 stages","[BeginStory] handleBeginStory() called","[ISSUE-PURCHASE] server declined: authentication_required","[ISSUE-PURCHASE] charge declined for issue 1 (literary
+66:FAIL V3-id-wrong pronouns outside the resolved set and no name → named reject  — null

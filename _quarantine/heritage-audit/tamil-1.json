@@ -1,0 +1,24 @@
+{
+  "age": 28,
+  "ancestry": "Tamil",
+  "first_name": "Kavya",
+  "last_name": "Srinivasan",
+  "height": "five foot four, compact",
+  "build": "lean and muscled from standing all day, small-boned",
+  "hair": "black, thick and wavy, usually in a low braid or twisted knot at the nape of her neck; a few pieces always escape",
+  "complexion": "warm medium brown with golden undertones; a small dark mole on her left collarbone",
+  "face": "an open, expressive face with high cheekbones and a sharp jawline—the kind that broadcasts every feeling before her mouth catches up, dark eyes that widen when she's startled or moved",
+  "signature_feature": "her hands—long-fingered, precise, stained with dye or clay or coffee; the way she uses them when she talks, unselfconscious and alive",
+  "second_celebrated_feature": "the hollow at the base of her throat, visible when she tips her head back or breathes deep—delicate, vulnerable, the first place color rises when she's embarrassed or angry",
+  "signature_habits": "biting the inside of her cheek when concentrating; humming half-remembered Tamil film songs while working; touching her grandmother's small gold bangle on her left wrist when anxious; taking photographs of light on surfaces no one else notices; saying 'ayyo' under her breath when frustrated",
+  "occupation": "textile designer and owner of a small independent studio (Kavya Designs) specializing in hand-dyed silk and cotton—located in a converted warehouse in a gentrifying neighborhood, three employees, direct-to-client and boutique retail",
+  "current_crisis": {
+    "event": "her studio's largest contract—a six-month, high-revenue order from a major luxury retailer—has been cancelled with one week's notice via email; the retailer claims a 'strategic pivot'; Kavya has already purchased materials and committed labor; she has roughly three months of operating costs in savings",
+    "hottest_emotion": "panic—sharp, breath-stealing, the kind that makes her hands shake",
+    "immediate_want": "to find out WHY, to fix it, to NOT lose the studio her grandmother helped her finance"
+  },
+  "wound": {
+    "core": "she believes she is only safe if she is useful—if she produces, delivers, makes things with her hands that matter to someone else",
+    "surfacing_hint": "under pressure she becomes frantic and self-sacrificing; she overcommits; she apologizes for things that aren't her fault; she cannot ask for help without feeling like a failure"
+  }
+}

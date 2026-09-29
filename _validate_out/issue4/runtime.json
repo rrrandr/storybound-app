@@ -1,0 +1,64 @@
+{
+ "violations": [],
+ "preflight": [],
+ "reports": [
+  {
+   "validator": "li_social_proof",
+   "ok": false,
+   "type": "LI_SOCIAL_PROOF_GAP",
+   "detail": "LI named, no social signal in the window following first mention",
+   "liName": "Julian",
+   "firstMentionPosition": 758,
+   "evidence": "e carried the practiced steadiness we had drilled for months. The Dohkar presiding watched with the still patience of someone who had seen a hundred such rites begin correctly and end in celebration. I should have relaxed. Instead the tremor in my voice threatened to surface even…"
+  },
+  {
+   "validator": "hot_opening",
+   "type": "OPENING_TEMPERATURE",
+   "ok": false,
+   "failures": [],
+   "renderedTemp": "COLD_DISRUPTION",
+   "inMotionHits": 0,
+   "containerOpener": false,
+   "evidence": "The murmurs hit first. They always did when the gathered First Favored sensed the alignment slip. I stood at the edge of the crimson spiralgrass, the gossamer band across my mouth already damp from breath, and felt every eye measure the distance between my sealed lips and the kne"
+  },
+  {
+   "validator": "semantic_rewrite",
+   "type": "SEMANTIC_EDIT_REQUESTED",
+   "label": "body-dump-decluster",
+   "instruction": "A passage in this scene PAUSES the action to stack 5 physical appearance traits into one cluster — a paused character sheet (e.g. height + build + shoulders + frame + hair + eyes + mouth listed togeth"
+  },
+  {
+   "validator": "li_social_proof",
+   "ok": false,
+   "type": "LI_SOCIAL_PROOF_GAP",
+   "detail": "LI named, no social signal in the window following first mention",
+   "liName": "Julian",
+   "firstMentionPosition": 1328,
+   "evidence": "ard the senior guest who had spoken my buried name. The man still stared at me, recognition bright and wrong in his face. I could feel the story forming behind every pair of eyes: the apprentice who had broken the oldest rule, who had reached across the sealed silence to twist a …"
+  },
+  {
+   "validator": "pc_picturability",
+   "type": "PC_PICTURABILITY_GAP",
+   "ok": false,
+   "evidence": "The murmurs had not faded. They thickened instead, pressing against the crimson spiralgrass like a living thing. I stood with the ceremonial sash clutched in one hand, the torn gossamer band dangling from my fingers, and felt the weight of every gaze settle on the space where my "
+  },
+  {
+   "validator": "semantic_rewrite",
+   "type": "SEMANTIC_EDIT_REQUESTED",
+   "label": "flavor-physics",
+   "instruction": "CRITICAL: This scene MUST express the world's defining mechanic.\nWorld flavor: Arcane Binding\nScene does not express flavor physics for \"arcane_binding\". Expected keywords: binding, spell, contract, g"
+  },
+  {
+   "validator": "semantic_rewrite",
+   "type": "SEMANTIC_EDIT_REQUESTED",
+   "label": "fate-consequence",
+   "instruction": "\n5TH-PERSON FATE VOICE ENFORCEMENT (CRITICAL — PREVIOUS OUTPUT FAILED):\n\nThe Story / Fate voice must be rewritten. Regenerate with these constraints:\n\n\nFATE MAY ONLY:\n- Observe (\"The story watched...\""
+  },
+  {
+   "validator": "semantic_rewrite",
+   "type": "SEMANTIC_EDIT_REQUESTED",
+   "label": "tension-gate",
+   "instruction": "TENSION REPAIR DIRECTIVE (CRITICAL — scene failed tension gate):\n1. Introduce immediate conflict in the first 1-2 lines — a demand, disruption, reveal, or emotional push directed at the player.\n2. Con"
+  }
+ ]
+}

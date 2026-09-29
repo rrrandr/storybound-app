@@ -1,0 +1,13 @@
+
+════ LIVE ACCEPTANCE — C (prior state) + E (author delivery) ════
+  assignment: {"event":"Lirael passes the folded note to her contact at the market stall.","setting":"market stall","participants":["Lirael","Carys"],"props":["folded note"],"stateChange":null,"source":"plan-scene","sceneNumber":2}
+  environment_anchor: null
+  skeleton prompts captured: 0   author payloads: 2
+— E: author always gets the assignment —
+  ✅  author payload carries the event block
+  ✅  author payload names the assigned setting
+  ✅  structured staging line delivered
+  (no skeleton generated this turn — case E path; C needs a turn that generates one)
+
+  telemetry:
+    · [SCENE-ASSIGNMENT] scene=2 source=plan-scene setting="market stall" event="Lirael passes the folded note to her contact at the market stall."

@@ -1,0 +1,163 @@
+  > [CG:SCAFFOLD] generation start (the_inhuman, gpt-4o-mini)
+  > [CG:SCAFFOLD] awaiting 1 Bible(s) before spine (P2 sequencing — latency over cost)
+  > [CG:SCAFFOLD] Bibles ready (0ms) — pc=y li=y antag=n
+  > [CG:SCAFFOLD:GEN] 15289ms, model=gpt-4o-mini
+  > [CG:SCAFFOLD] thesis="Can Mira navigate the ruins of her heart while surviving the deadly ambush, discovering love in the most perilous of circumstances?"
+  > [CG:SCAFFOLD] issues=4, motifs=3, forbidden=3
+  > [CG:SCAFFOLD] FULL OBJECT: {runThesis: Can Mira navigate the ruins of her heart while sur…ering love in the most perilous of circumstances?, thematicDirection: The collis
+  > [CG:SCAFFOLD] active — scene_index=0, source=gpt-4o-mini, issues=4
+  > [CG:SCREENPLAY] gen start (scene 0)
+  > [CG:SCREENPLAY:USER-PROMPT]
+SCENE INDEX: 0 (Scene 1 — establishing)
+STORY LENGTH: affair
+SCENE DENSITY (ST1 — SETUP PACE): establishing register. The scene's job is chara
+  > [CG:SCREENPLAY] flavor "the_inhuman" → chain leads with Grok-4.1-reasoning (scene 1 / tentpole — Grok primary)
+  > [CG:SCREENPLAY] generated via Grok-4.1-reasoning in 34795ms
+  > [CG:SCREENPLAY] gen returned in 34808ms
+  > [STAGED:DIST] scene 0 beats=19 bands: micro=13 subtle=1 readable=5 strong=0 extreme=0 | avg raw=0.12 clamped=0.12 | llm-emitted=5/19 clamps=0
+  > [CG:SCREENPLAY] Expression peak enforcement: kept 3 (family=suppression), demoted 3 to neutral [reasons: spacing<3, cross-family(suppression→warmth), cross-family(suppres
+  > [STORYBOARD-LINT] pre-repair: 0 error(s), 1 warning(s)
+  > [STORYBOARD-REPAIR] dropped duplicate visual beat Threat@14 (same understanding+eye-magnet as an earlier panel)
+  > [STORYBOARD-LINT] post-repair STILL has 1 error(s): PANEL 5: duplicate visual beat — same understanding as PANEL 4 ("a way out / a new truth has appeared").
+  > [STORYBOARD] Orientation → Transformation → Consequence → Threat → Revelation → Revelation* → Consequence
+  > [CG:SCREENPLAY] region=Gloamwater Bay | species=[kwisheen]
+  > [STAGED:HERO] Generating 7 phase images for scene 0 (serial: phase 0 first, then 1+ as Kontext edits)
+  > [STAGED:TIER] phase 0 → simple → cheap
+  > [STAGED:STAGING-MODE] adversarial (liAbsent=true, sideChars=1)
+  > [STAGED:HERO:PHASE] Cache MISS — generating phase 0 (Orientation) for scene 0 at tier=cheap
+  > [STAGED:STYLE] artist="ender_bond" → 2 style anchor(s): ender_golden_master_v3.jpg, ender_golden_master_v3_bottom.jpg
+  > [STAGED:STYLE] phase 0 — SUBSTITUTED li_absent master ender_golden_master_v3_bottom.jpg for stripped golden_master (full artist signature, no couple bleed)
+  > [STAGED:STYLE] phase 0 — passing 3 style anchors to Gemini (filtered 1 LI-implying refs, liAbsent=true)
+  > [STAGED:STYLE] artist=ender_bond styleAnchors=2 regionAnchors=2 contractInjected=true phaseIdx=0
+  > [GEMINI:SCENE-CASE] SPECIAL_SPECIES — species: true, trait: false, fantasy: true, worldAnchor: true
+  > [IMAGE-GEN] {"provider":"Gemini","context":"visualize","reached":true,"blockedBy":"None","status":"SUCCESS","promptLength":49887,"promptPreview":"PRIMARY DIRECTIVE: Depic
+  > [STAGED:KONTEXT] Phase 0 stashed as scene 0 edit source
+  > [STAGED:STAGE_CACHE] Cached stage for future revisits (key=fantasy|the_inhuman|submerged ruins of gloamwater bay at dusk, cold currents thr…)
+  > [STAGED:HERO:PHASE] Phase 0 generated in 14676ms (tier=cheap)
+  > [STAGED:TIER] phase 1 → medium → mid
+  > [STAGED:STAGING-MODE] adversarial (liAbsent=true, sideChars=1)
+  > [STAGED:HERO:PHASE] Cache MISS — generating phase 1 (Transformation) for scene 0 at tier=mid
+  > [STAGED:STYLE] artist="ender_bond" → 2 style anchor(s): ender_golden_master_v3.jpg, ender_golden_master_v3_bottom.jpg
+  > [STAGED:STYLE] phase 1 LI-absent — SUBSTITUTED li_absent master ender_golden_master_v3_bottom.jpg
+  > [STAGED:STYLE] phase 1 LI-absent — passing 3 refs (filtered 1 LI/romance masters)
+  > [STAGED:STYLE] artist=ender_bond styleAnchors=2 regionAnchors=2 contractInjected=true phaseIdx=1
+  > [GEMINI:SCENE-CASE] SPECIAL_SPECIES — species: true, trait: false, fantasy: true, worldAnchor: true
+  > [STAGED:IMG] Phase 0 first-ready after 19919ms — scene mounting with image cached
+  > ═══ [STAGED:SCENE 0 MOUNT] 19 beats, 7 phase(s), gate@18 ═══
+  > [STAGED:HERO:SWAP] No image yet for phase:0 — staying on current
+  > [STAGED:ECHO] beat 0 inEcho=false age=-1 intensity=0.00 peakHere=false
+  > [STAGED:BEAT 0/18] | narration | tens=composed | profile=- | mouth=neutral | echoZone=- | decay=— | pacing=280ms | tint=- | crop=baseline | duck=- | silence=- | closeup=-
+  > [STAGED:RENDER] Mounted — 19 beats, gate at beat 18, micro after beat 6
+  > [STAGED:RENDER] Hero image mounted (phase 0)
+  > [IMAGE-GEN] {"provider":"Gemini","context":"visualize","reached":true,"blockedBy":"None","status":"SUCCESS","promptLength":51730,"promptPreview":"PRIMARY DIRECTIVE: Depic
+  > [STAGED:HERO:PHASE] Phase 1 generated in 14638ms (tier=mid)
+  > [STAGED:TIER] phase 2 → medium → mid
+  > [STAGED:STAGING-MODE] adversarial (liAbsent=true, sideChars=1)
+  > [STAGED:HERO:PHASE] Cache MISS — generating phase 2 (Consequence) for scene 0 at tier=mid
+  > [STAGED:STYLE] artist="ender_bond" → 2 style anchor(s): ender_golden_master_v3.jpg, ender_golden_master_v3_bottom.jpg
+  > [STAGED:STYLE] phase 2 LI-absent — SUBSTITUTED li_absent master ender_golden_master_v3_bottom.jpg
+  > [STAGED:STYLE] phase 2 LI-absent — passing 3 refs (filtered 1 LI/romance masters)
+  > [STAGED:STYLE] artist=ender_bond styleAnchors=2 regionAnchors=2 contractInjected=true phaseIdx=2
+  > [GEMINI:SCENE-CASE] SPECIAL_SPECIES — species: true, trait: false, fantasy: true, worldAnchor: true
+  > [CASTING] cast "the raider" from scene0_phase1 @ confidence 59
+  > [IMAGE-GEN] {"provider":"Gemini","context":"visualize","reached":true,"blockedBy":"None","status":"SUCCESS","promptLength":51125,"promptPreview":"PRIMARY DIRECTIVE: Depic
+  > [STAGED:HERO:PHASE] Phase 2 generated in 10964ms (tier=mid)
+  > [STAGED:TIER] phase 3 → medium → mid
+  > [STAGED:STAGING-MODE] adversarial (liAbsent=true, sideChars=1)
+  > [STAGED:HERO:PHASE] Cache MISS — generating phase 3 (Threat) for scene 0 at tier=mid
+  > [STAGED:STYLE] artist="ender_bond" → 2 style anchor(s): ender_golden_master_v3.jpg, ender_golden_master_v3_bottom.jpg
+  > [CASTING] reinject identity anchor for "the raider" (phase 3)
+  > [CASTING] authoritative — dropping generic kwisheen species anchor (cast actor owns identity in phase 3)
+  > [CASTING] authoritative — dropping generic kwisheen species anchor (cast actor owns identity in phase 3)
+  > [STAGED:STYLE] phase 3 LI-absent — SUBSTITUTED li_absent master ender_golden_master_v3_bottom.jpg
+  > [STAGED:STYLE] phase 3 LI-absent — passing 3 refs (filtered 1 LI/romance masters)
+  > [STAGED:STYLE] artist=ender_bond styleAnchors=2 regionAnchors=2 contractInjected=true phaseIdx=3
+  > [GEMINI:SCENE-CASE] SPECIAL_SPECIES — species: true, trait: false, fantasy: true, worldAnchor: true
+  > [IMAGE-GEN] {"provider":"Gemini","context":"visualize","reached":true,"blockedBy":"None","status":"SUCCESS","promptLength":50647,"promptPreview":"PRIMARY DIRECTIVE: Depic
+  > [STAGED:HERO:PHASE] Phase 3 generated in 17606ms (tier=mid)
+  > [STAGED:TIER] phase 4 → medium → mid
+  > [STAGED:STAGING-MODE] adversarial (liAbsent=true, sideChars=1)
+  > [STAGED:HERO:PHASE] Cache MISS — generating phase 4 (Revelation) for scene 0 at tier=mid
+  > [STAGED:STYLE] artist="ender_bond" → 2 style anchor(s): ender_golden_master_v3.jpg, ender_golden_master_v3_bottom.jpg
+  > [CASTING] reinject identity anchor for "the raider" (phase 4)
+  > [CASTING] authoritative — dropping generic kwisheen species anchor (cast actor owns identity in phase 4)
+  > [CASTING] authoritative — dropping generic kwisheen species anchor (cast actor owns identity in phase 4)
+  > [STAGED:STYLE] phase 4 LI-absent — SUBSTITUTED li_absent master ender_golden_master_v3_bottom.jpg
+  > [STAGED:STYLE] phase 4 LI-absent — passing 3 refs (filtered 1 LI/romance masters)
+  > [STAGED:STYLE] artist=ender_bond styleAnchors=2 regionAnchors=2 contractInjected=true phaseIdx=4
+  > [GEMINI:SCENE-CASE] SPECIAL_SPECIES — species: true, trait: false, fantasy: true, worldAnchor: true
+  > [IMAGE-GEN] {"provider":"Gemini","context":"visualize","reached":true,"blockedBy":"None","status":"SUCCESS","promptLength":50735,"promptPreview":"PRIMARY DIRECTIVE: Depic
+  > [STAGED:HERO:PHASE] Phase 4 generated in 11442ms (tier=mid)
+  > [STAGED:TIER] phase 5 → complex → hero
+  > [STAGED:STAGING-MODE] adversarial (liAbsent=true, sideChars=1)
+  > [STAGED:HERO:PHASE] Cache MISS — generating phase 5 (Revelation (page-turn)) for scene 0 at tier=hero
+  > [STAGED:STYLE] artist="ender_bond" → 2 style anchor(s): ender_golden_master_v3.jpg, ender_golden_master_v3_bottom.jpg
+  > [CASTING] reinject identity anchor for "the raider" (phase 5)
+  > [CASTING] authoritative — dropping generic kwisheen species anchor (cast actor owns identity in phase 5)
+  > [CASTING] authoritative — dropping generic kwisheen species anchor (cast actor owns identity in phase 5)
+  > [STAGED:STYLE] phase 5 LI-absent — SUBSTITUTED li_absent master ender_golden_master_v3_bottom.jpg
+  > [STAGED:STYLE] phase 5 LI-absent — passing 3 refs (filtered 1 LI/romance masters)
+  > [STAGED:STYLE] artist=ender_bond styleAnchors=2 regionAnchors=2 contractInjected=true phaseIdx=5
+  > [GEMINI:SCENE-CASE] SPECIAL_SPECIES — species: true, trait: false, fantasy: true, worldAnchor: true
+  > [IMAGE-GEN] {"provider":"Gemini","context":"visualize","reached":true,"blockedBy":"None","status":"SUCCESS","promptLength":50773,"promptPreview":"PRIMARY DIRECTIVE: Depic
+  > [STAGED:HERO:PHASE] Phase 5 generated in 16568ms (tier=hero)
+  > [STAGED:TIER] phase 6 → complex → hero
+  > [STAGED:STAGING-MODE] adversarial (liAbsent=true, sideChars=1)
+  > [STAGED:HERO:PHASE] Cache MISS — generating phase 6 (Consequence) for scene 0 at tier=hero
+  > [STAGED:STYLE] artist="ender_bond" → 2 style anchor(s): ender_golden_master_v3.jpg, ender_golden_master_v3_bottom.jpg
+  > [CASTING] reinject identity anchor for "the raider" (phase 6)
+  > [CASTING] authoritative — dropping generic kwisheen species anchor (cast actor owns identity in phase 6)
+  > [CASTING] authoritative — dropping generic kwisheen species anchor (cast actor owns identity in phase 6)
+  > [STAGED:STYLE] phase 6 LI-absent — SUBSTITUTED li_absent master ender_golden_master_v3_bottom.jpg
+  > [STAGED:STYLE] phase 6 LI-absent — passing 3 refs (filtered 1 LI/romance masters)
+  > [STAGED:STYLE] artist=ender_bond styleAnchors=2 regionAnchors=2 contractInjected=true phaseIdx=6
+  > [GEMINI:SCENE-CASE] SPECIAL_SPECIES — species: true, trait: false, fantasy: true, worldAnchor: true
+  > [GEMINI:SCENE-CASE] SPECIAL_SPECIES — species: true, trait: false, fantasy: true, worldAnchor: true
+  > [IMAGE-GEN] {"provider":"Gemini","context":"visualize","reached":true,"blockedBy":"None","status":"SUCCESS","promptLength":51053,"promptPreview":"PRIMARY DIRECTIVE: Depic
+  > [STAGED:HERO:PHASE] Phase 6 generated in 28107ms (tier=hero)
+  > [STAGED:CUT] Cache MISS — generating closeup closeup|pc|face|submerge_human|lips_pressed|cool at tier=hero
+  > [STAGED:CUT:GEN] beat closeup fresh gen | cacheKey=closeup|pc|face|submerge_human|lips_pressed|cool | shot=face | target=protagonist | tier=Clean costTier=hero shape=squa
+  > [STAGED:CUT:GEN:PROMPT] ILLUSTRATED INSERT — a drawn cut-in from the surrounding scene, rendered in the SAME artistic style as every other panel in this story (manga / in
+  > [STAGED:CUT] Cache MISS — generating closeup closeup|pc|face|submerge_human|lips_pressed|cool at tier=hero
+  > [STAGED:CUT:GEN] beat closeup fresh gen | cacheKey=closeup|pc|face|submerge_human|lips_pressed|cool | shot=face | target=protagonist | tier=Clean costTier=hero shape=squa
+  > [STAGED:CUT:GEN:PROMPT] ILLUSTRATED INSERT — a drawn cut-in from the surrounding scene, rendered in the SAME artistic style as every other panel in this story (manga / in
+  > [STAGED:RENDER] Phase images full-resolve — 7/7 cached
+  > [GEMINI:SCENE-CASE] FANTASY — species: false, trait: false, fantasy: true, worldAnchor: true
+  > [GEMINI:SCENE-CASE] FANTASY — species: false, trait: false, fantasy: true, worldAnchor: true
+  > [IMAGE-GEN] {"provider":"Gemini","context":"visualize","reached":true,"blockedBy":"None","status":"SUCCESS","promptLength":5005,"promptPreview":"PRIMARY DIRECTIVE: Depict
+  > [STAGED:CUT] closeup|pc|face|submerge_human|lips_pressed|cool generated in 24336ms
+  > [STAGED:CUT:SOURCE] beat closeup just-generated | cacheKey=closeup|pc|face|submerge_human|lips_pressed|cool | url=data:image/png;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/6xn5Sl
+  > [IMAGE-GEN] {"provider":"Gemini","context":"visualize","reached":true,"blockedBy":"None","status":"SUCCESS","promptLength":5005,"promptPreview":"PRIMARY DIRECTIVE: Depict
+  > [STAGED:CUT] closeup|pc|face|submerge_human|lips_pressed|cool generated in 24996ms
+  > [STAGED:CUT:SOURCE] beat closeup just-generated | cacheKey=closeup|pc|face|submerge_human|lips_pressed|cool | url=data:image/png;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/6xn5Sl
+
+  E2E SCENE 1 — Fatelands / Kwisheen
+  ────────────────────────────────────────────────────────────
+  error: none
+  prose length: 1509 chars | author: Grok-4.1-reasoning
+  stagedActive: true | heroCache keys: 7
+  hero phase images: 7 | closeup inserts: 2/2 queued | total: 9
+  kwisheen appearance lock: {"vael":{"skin":"royal violet","pattern":"iridescent speckle","iris":"silver-grey"},"the raider":{"skin":"deep crimson red","pattern":"dark banded stripes","iris":"pale jade"}}
+  images captured (hero): 7
+  ── phase plan ──
+    phase 0: li=absent | chars=[protagonist,the raider] | Orientation
+    phase 1: li=absent | chars=[protagonist,the raider] | Transformation
+    phase 2: li=absent | chars=[protagonist,the raider] | Consequence
+    phase 3: li=absent | chars=[protagonist,the raider] | Threat
+    phase 4: li=absent | chars=[protagonist,the raider] | Revelation
+    phase 5: li=absent | chars=[protagonist,the raider] | Revelation (page-turn)
+    phase 6: li=absent | chars=[protagonist,the raider] | Consequence
+  ── hero renders (anchor decision) ──
+  ── beat count: 19 (target 20–30, floor 18) ──
+  ── scene-1 axis ──
+    bespokeAxis: (none)
+    microDecision.prompt: Do I name the escape route aloud, or let my glance give it away?
+      • "name the tunnel" signal=direct+
+      • "let the glance speak" signal=subtle+
+  ── wardrobe grounding ──
+    pc_wardrobe: drifting surface linen tunic and trousers, waterlogged and billowing, small water-breathing charm on a cord at the throat
+    li_wardrobe: (blank/absent)
+    the raider [kwisheen]: shell-studded loincloth and beaded wraps, eight tentacles shifting color and length, spear in one limb and cutlass in another
+  saved: 7 images + prose → /private/tmp/claude-501/-Users-romantsukerman-storybound-app/5b50dbf4-5fe5-4c80-ae8b-5a341feb3c62/scratchpad/e2e
+  ────────────────────────────────────────────────────────────
+

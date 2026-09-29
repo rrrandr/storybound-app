@@ -1,0 +1,21 @@
+[DECK_MANDATE] ON (dev) — default. Use window._forceMandateOff() or set window._forceDeckMandate=false for palate-cleanser testing.
+[DECK_MANDATE] ON (dev) — default. Use window._forceMandateOff() or set window._forceDeckMandate=false for palate-cleanser testing.
+[DECK_MANDATE] ON (dev) — default. Use window._forceMandateOff() or set window._forceDeckMandate=false for palate-cleanser testing.
+[DECK_MANDATE] ON (dev) — default. Use window._forceMandateOff() or set window._forceDeckMandate=false for palate-cleanser testing.
+[DECK_MANDATE] ON (dev) — default. Use window._forceMandateOff() or set window._forceDeckMandate=false for palate-cleanser testing.
+[SCENE1-FRAME] Dropped fuzzy mandated-closer echo (overlap 100%): "My hand tightened around my great-grandmother's old tarot deck."
+[SCENE1-FRAME] Dropped fuzzy mandated-closer echo (overlap 100%): "I toyed with the idea of letting the cards decide."
+[SCENE1-FRAME] Appended mandated closer (model omitted it / replaced a junk ending).
+[SCENE1-FRAME] Dropped fuzzy mandated-closer echo (overlap 100%): "My hand tightened around my great-grandmother's old tarot deck."
+[SCENE1-FRAME] Dropped fuzzy mandated-closer echo (overlap 100%): "I toyed with the idea of letting the cards decide."
+[SCENE1-FRAME] Appended mandated closer (model omitted it / replaced a junk ending).
+[SCENE1-FRAME] Stripped premature deck mention from body (deck-at-end constraint): "I wrenched free, planted myself in front of Lirael, and snapped that the wish stood as spo"
+[SCENE1-FRAME] Appended mandated closer (model omitted it / replaced a junk ending).
+[SCENE1-FRAME:POST-PASS] Re-asserted verbatim mandated closer after post-gate mutators.
+[DECK_MANDATE] ON (dev) — default. Use window._forceMandateOff() or set window._forceDeckMandate=false for palate-cleanser testing.
+[DECK_MANDATE] ON (dev) — default. Use window._forceMandateOff() or set window._forceDeckMandate=false for palate-cleanser testing.
+[SCENE-FRAME] Stashing Scene 2 (Petition) mandate frame
+[SCENE-FRAME] petition closer: no <<WISH:>> emitted, neutral fallback used.
+[SCENE-FRAME] Appended mandated closer (turn path).
+[WISH] no fragment captured — neutral fallback composed
+[DECK_MANDATE] ON (dev) — default. Use window._forceMandateOff() or set window._forceDeckMandate=false for palate-cleanser testing.

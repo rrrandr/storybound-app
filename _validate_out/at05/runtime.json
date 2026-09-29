@@ -1,0 +1,18 @@
+{
+ "violations": [],
+ "preflight": [],
+ "reports": [
+  {
+   "validator": "hot_opening",
+   "type": "OPENING_TEMPERATURE",
+   "ok": false,
+   "failures": [
+    "no_li_250"
+   ],
+   "renderedTemp": "HOT_CRISIS",
+   "inMotionHits": 0,
+   "containerOpener": false,
+   "evidence": "The youth lifted her head from the crimson spiralgrass. Her aqua skin caught the filtered light through the white veil-curtains, and her pale coral hair trembled against the mated trunks behind her. She spoke the rehearsed offering first, the one we had practiced until the words "
+  }
+ ]
+}

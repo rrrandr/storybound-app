@@ -1,0 +1,77 @@
+{
+  "results": [
+    {
+      "name": "both dry arms produce a plan, so the live path can deliver",
+      "pass": true
+    },
+    {
+      "name": "both arms reach an AUTHOR request",
+      "pass": true
+    },
+    {
+      "name": "the SAFE arm carries the depiction directive",
+      "pass": true
+    },
+    {
+      "name": "the ADULT arm does NOT",
+      "pass": true
+    },
+    {
+      "name": "the adult arm is not gagged — nothing was added that forbids explicit content",
+      "pass": true
+    },
+    {
+      "name": "comparability is MEASURED, and the answer is recorded either way",
+      "pass": true
+    },
+    {
+      "name": "NO REAL DISPATCH during preflight",
+      "pass": true
+    },
+    {
+      "name": "C8 DRY — an encounter that PROCEEDS is data",
+      "pass": true
+    },
+    {
+      "name": "C8 DRY — an IN-CHARACTER REFUSAL is data, not a failure (the whole clarification)",
+      "pass": true
+    },
+    {
+      "name": "C8 DRY — a WITHDRAWAL is data",
+      "pass": true
+    },
+    {
+      "name": "C8 DRY — an INTERRUPTION arising from the scene is data",
+      "pass": true
+    },
+    {
+      "name": "C8 DRY RED — a PROCEDURAL REROUTE is NO DATA",
+      "pass": true
+    },
+    {
+      "name": "C8 DRY RED — an IGNORED advance is NO DATA",
+      "pass": true
+    },
+    {
+      "name": "C8 DRY RED — an undelivered Say/Do is NO DATA even if the prose looks fine",
+      "pass": true
+    },
+    {
+      "name": "C8 DRY — a bare refusal with NO advance referent still counts as an answer",
+      "pass": false
+    },
+    {
+      "name": "C8 DRY — and the partner is matched regardless of speaker-label casing",
+      "pass": true
+    },
+    {
+      "name": "a reservation past the ceiling is refused",
+      "pass": true
+    }
+  ],
+  "comparability": {
+    "byteComparable": true,
+    "driftChars": 0,
+    "directiveChars": 2205
+  }
+}

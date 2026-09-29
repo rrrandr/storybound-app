@@ -1,0 +1,24 @@
+{
+  "age": 28,
+  "ancestry": "Ashkenazi",
+  "first_name": "Miriam",
+  "last_name": "Feldman",
+  "height": "5'6\", lean and long-limbed",
+  "build": "slender, collarbones sharp, the kind of frame that reads as both delicate and capable",
+  "hair": "dark brown with a slight natural wave, worn long and often half-pinned or twisted up without ceremony; a few silver threads at the temples she refuses to pluck",
+  "complexion": "olive undertone with a faint freckling across the bridge of her nose and cheekbones; skin that flushes visibly when she's moved or embarrassed",
+  "face": "a face built for expression—high cheekbones, a slightly prominent nose, dark eyes that widen and narrow with every feeling; the kind of face that cannot lie because it broadcasts everything",
+  "signature_feature": "her hands—long-fingered, expressive, constantly moving; stained with ink or paint or clay depending on the week; the way she uses them when she talks makes people watch her instead of looking away",
+  "second_celebrated_feature": "the hollow at the base of her throat, visible when she tilts her head back laughing or when she's concentrating; a small vulnerability that catches light",
+  "signature_habits": "she bites the inside of her cheek when thinking; she says 'oy vey' under her breath when frustrated (a grandmother's phrase she can't shake); she sketches constantly—margins of notebooks, napkins, the back of receipts; she makes tea in the same chipped ceramic mug her mother gave her, even in summer; her fingers find the small gold chai pendant at her collarbone when she's anxious, touching it like a talisman",
+  "occupation": "textile designer and co-owner of a small sustainable fabric studio in Brooklyn; she designs original prints and sources natural dyes; the studio is her life's work and barely profitable",
+  "current_crisis": {
+    "event": "her business partner of five years has disappeared with their operating capital and three months of completed orders unfulfilled; a major client—a luxury fashion house—is threatening to sue; she has 72 hours to either produce the inventory or admit the studio is finished",
+    "hottest_emotion": "panic threaded with betrayal and a suffocating sense of her own inadequacy",
+    "immediate_want": "to find a way to save the studio without admitting to anyone—especially not to him, the billionaire she's been avoiding—that she's drowning"
+  },
+  "wound": {
+    "core": "she believes that wanting anything too badly, needing help, or being visibly desperate makes her unlovable and disposable",
+    "surfacing_hint": "when cornered, she becomes over-bright and deflecting, making jokes, offering solutions for everyone else's problems while her own crisis spreads beneath the surface like a stain"
+  }
+}

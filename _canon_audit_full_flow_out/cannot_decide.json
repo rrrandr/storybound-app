@@ -15,24 +15,26 @@
   },
   "st": {
     "blocked": {
-      "at": 1790270745075,
+      "at": 1790404756125,
       "sceneIndex": 1,
       "proposal": {
         "tactical_move": "Lirael steps back from the center of the clearing. — the presiding Dohkar sets a preliminary review date.",
         "local_objective": "The assembly's confusion continues to play out without resolution.",
-        "state_change": "The assembly mills, unable to say why they gathered. — the presiding Dohkar sets a preliminary review date.",
+        "state_change": "Julian draws the memory of the accusation out of Seren and it dissolves",
         "state_change_precondition": "The assembly is still gathered, confused.",
         "forces_choice": "Lirael must decide whether to speak into the confusion or let it stand.",
         "event_slots": {
           "exit_state": "The assembly disperses, still not agreeing on what just happened.",
-          "mechanism_grounding": "ordinary"
+          "mechanism_grounding": "ordinary",
+          "action": "draws the memory out",
+          "target": "Seren"
         },
         "mechanism_grounding": "ordinary",
-        "acceptedAt": 1790270744750,
+        "acceptedAt": 1790404756118,
         "sceneNum": 1,
         "owner": {
-          "id": "cpa:bb377550-3a02-4d8c-aa07-499a9c7a8536",
-          "storyId": "flow-1790270744412",
+          "id": "cpa:3b508c9f-81f5-437e-9b46-ed4c744bc3e1",
+          "storyId": "flow-1790404755782",
           "sceneIndex": 1,
           "branch": null
         }
@@ -56,6 +58,11 @@
         "wt_5",
         "dc_0",
         "know_0",
+        "dc_1",
+        "dc_2",
+        "ev_0",
+        "ev_1",
+        "dur_0",
         "inv_0"
       ],
       "verdict": {
@@ -64,18 +71,37 @@
         "violations": [],
         "paid": true,
         "uncertainty": "canon does not say",
+        "telemetry": {
+          "realizedUsd": 0.0053,
+          "costSource": "provider",
+          "upstreamAttempts": 1,
+          "resolvedModel": "grok-4.3",
+          "promptTokens": 3200,
+          "reasoningTokens": 0
+        },
         "reason": "the auditor could not decide from the supplied canon — failing closed rather than converting uncertainty into approval",
         "preserveForReview": true
       }
     },
     "lastAudit": {
-      "at": 1790270745075,
+      "at": 1790404756125,
       "sceneIndex": 1,
       "allow": false,
       "source": "audit-undecided",
+      "triggered": true,
+      "triggerReasons": [
+        "declared \"ordinary\" but the event text asserts a produced effect the deterministic check cannot see"
+      ],
+      "model": "grok-4.3",
+      "latencyMs": 5,
+      "realizedUsd": 0.0053,
+      "costSource": "provider",
+      "upstreamAttempts": 1,
+      "resolvedModel": "grok-4.3",
       "paid": true,
       "reason": "the auditor could not decide from the supplied canon — failing closed rather than converting uncertainty into approval",
       "violations": [],
+      "citedFactIds": [],
       "auditErrors": null,
       "uncertainty": "canon does not say"
     },

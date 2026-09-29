@@ -1,0 +1,6 @@
+=== d3e_stage_order · stage_order_dry.mjs · 21:22:52 ===
+d3e_stage_order: exit=0 · 92 checks · 92 passed · 0 failed · invalid_markers=0 · samples=54 suite_rss_max=314MB free_min=60MB server_rss_max=86MB
+=== d3f_skeleton · skeleton_delivery.mjs · 21:41:00 ===
+d3f_skeleton: exit=0 ·   404 passed · 0 failed · invalid_markers=0 · samples=31 suite_rss_max=2447MB free_min=70MB server_rss_max=85MB
+BOTH GREEN · 21:51:22
+leftover:        0

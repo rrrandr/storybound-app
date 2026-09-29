@@ -1,0 +1,39 @@
+{
+  "baseline": {
+    "laneId": "dohkar_preliminary_review",
+    "sourceSlot": null
+  },
+  "RED-safemode": {
+    "laneId": "family_accusation",
+    "sourceSlot": "boundary"
+  },
+  "advance": {
+    "laneId": "family_accusation",
+    "sourceSlot": "boundary"
+  },
+  "weak": {
+    "laneId": "dohkar_preliminary_review",
+    "sourceSlot": null
+  },
+  "weak-2": {
+    "laneId": "dohkar_preliminary_review",
+    "sourceSlot": null
+  },
+  "relational": {
+    "laneId": "dohkar_preliminary_review",
+    "sourceSlot": null
+  },
+  "procedural": {
+    "laneId": "dohkar_preliminary_review",
+    "sourceSlot": null
+  },
+  "confession": {
+    "laneId": "dohkar_preliminary_review",
+    "sourceSlot": "confession"
+  },
+  "reversal": {
+    "laneId": "julian_jurisdiction_challenge",
+    "sourceSlot": "reversal"
+  },
+  "__cardWins": "julian_jurisdiction_challenge"
+}

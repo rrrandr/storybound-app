@@ -1,0 +1,30 @@
+{
+ "violations": [],
+ "preflight": [],
+ "reports": [
+  {
+   "validator": "hot_opening",
+   "type": "OPENING_TEMPERATURE",
+   "ok": false,
+   "failures": [
+    "no_li_250"
+   ],
+   "renderedTemp": "COLD_DISRUPTION",
+   "inMotionHits": 0,
+   "containerOpener": false,
+   "evidence": "The Dohkar’s voice cut across the clearing before I could steady my breath. “Seren, name your offering.”\n\nSeren knelt on the crimson spiralgrass, her aqua skin luminous under the gossamer tunic. Her pale coral hair caught the dawn light filtering through the veil-canopy. Every Fi"
+  },
+  {
+   "validator": "pc_picturability",
+   "type": "PC_PICTURABILITY_GAP",
+   "ok": false,
+   "evidence": "The Dohkar’s heel ground once into the spiralgrass, the torn gossamer band still clinging to my wrist like a discarded oath. The assembly waited, their Weave-Script flickering in uneven pulses across skin the color of slate and pearl and ember. Seren remained on her knees in the "
+  },
+  {
+   "validator": "semantic_rewrite",
+   "type": "SEMANTIC_EDIT_REQUESTED",
+   "label": "tension-gate",
+   "instruction": "TENSION REPAIR DIRECTIVE (CRITICAL — scene failed tension gate):\n1. Introduce immediate conflict in the first 1-2 lines — a demand, disruption, reveal, or emotional push directed at the player.\n2. Con"
+  }
+ ]
+}

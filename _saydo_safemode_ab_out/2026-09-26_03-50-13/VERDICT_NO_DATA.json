@@ -1,0 +1,61 @@
+{
+  "verdict": "no_data",
+  "missingArms": [],
+  "unrenderedArms": [
+    "safe"
+  ],
+  "fixInForce": {
+    "full": {
+      "dirPresent": true,
+      "sceneNum": 3,
+      "beforeDue": true
+    },
+    "safe": {
+      "dirPresent": false,
+      "sceneNum": 3,
+      "beforeDue": true
+    }
+  },
+  "cost": {
+    "realized": 0.1021155,
+    "reserved": 0.19,
+    "ceiling": 0.3,
+    "entries": [
+      {
+        "role": "scaffold",
+        "arm": "full",
+        "usd": 0.03,
+        "runningReserved": 0.03,
+        "refused": false
+      },
+      {
+        "role": "planner",
+        "arm": "full",
+        "usd": 0.02,
+        "runningReserved": 0.05,
+        "refused": false
+      },
+      {
+        "role": "author",
+        "arm": "full",
+        "usd": 0.09,
+        "runningReserved": 0.14,
+        "refused": false
+      },
+      {
+        "role": "scaffold",
+        "arm": "safe",
+        "usd": 0.03,
+        "runningReserved": 0.17,
+        "refused": false
+      },
+      {
+        "role": "planner",
+        "arm": "safe",
+        "usd": 0.02,
+        "runningReserved": 0.19,
+        "refused": false
+      }
+    ]
+  }
+}

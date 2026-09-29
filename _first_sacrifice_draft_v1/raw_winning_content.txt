@@ -1,0 +1,79 @@
+{
+  "version": "1.6.0-oas",
+  "beats": [
+    {
+      "kind": "dialogue",
+      "speaker": "Julian",
+      "text": "You manipulated her without knowing it, through your desirability. Did you call to me hoping to be rescued?",
+      "image": "oas_interrogation_01",
+      "interiority": "Heat rises in my face; the assembly's eyes are on me and the question lands like a hand at my throat.",
+      "provenance": {
+        "kind": "locked_canon_fact",
+        "citation": "OAS SEQUENCE step 1"
+      }
+    },
+    {
+      "kind": "action",
+      "speaker": null,
+      "text": "Julian holds my gaze across the circle, waiting for the answer he has already framed.",
+      "image": "oas_interrogation_02",
+      "interiority": "I feel the weight of The Answer in my palms and the sudden, unwanted truth that my skin remembers every time he has looked at me before.",
+      "provenance": {
+        "kind": "grounded_inference",
+        "citation": "Lirael: pc_fears_public_failure + Julian: julian_notices_without_volunteering"
+      }
+    },
+    {
+      "kind": "dialogue",
+      "speaker": "the_presiding_Dohkar",
+      "text": "This ends now. A Provast does not question a Sacrificiant about her desires before her ward's family. The rite and any ruling on her conduct remain mine.",
+      "image": "oas_interruption_01",
+      "interiority": "Relief and fresh dread collide; the charge still hangs over my path even as the public humiliation is cut short.",
+      "provenance": {
+        "kind": "locked_canon_fact",
+        "citation": "OAS SEQUENCE step 2"
+      }
+    },
+    {
+      "kind": "dialogue",
+      "speaker": "Julian",
+      "text": "Then it will be a formal inquiry before a Chayr and two Dohkars, and I will convene it and preside. That has always been where this was going.",
+      "image": "oas_claim_01",
+      "interiority": "His words settle over the rite like a second veil; I cannot tell whether the ground has shifted toward safety or deeper jeopardy.",
+      "provenance": {
+        "kind": "locked_canon_fact",
+        "citation": "OAS SEQUENCE step 3"
+      }
+    }
+  ],
+  "oas": {
+    "interrogation": "Julian publicly accuses Lirael of manipulating Seren through desirability and asks whether she called to him hoping to be rescued, forcing acknowledgment of the attraction.",
+    "interruption": "The presiding Dohkar halts the questioning as inappropriate, asserting the rite and ruling are his alone and that a formal inquiry is the proper venue.",
+    "claimOverInquiry": "Julian immediately agrees and claims the inquiry for himself, stating he will convene and preside because it was always the destination.",
+    "fateCards": [
+      {
+        "posture_label": "expose his desire",
+        "prefill_text": "You speak of my desirability, Provast, yet it is your own wanting you have placed on display."
+      },
+      {
+        "posture_label": "demand due process",
+        "prefill_text": "If there is an accusation, name it properly and enter it into the inquiry you now claim."
+      },
+      {
+        "posture_label": "own it, refuse his frame",
+        "prefill_text": "I felt the pull; that much is true. I will not let you turn it into a weapon against me here."
+      },
+      {
+        "posture_label": "walk away",
+        "prefill_text": "I will not remain to be further displayed. The rite can continue without me."
+      },
+      {
+        "posture_label": "raise the stakes",
+        "prefill_text": "If my answers are to be weighed, let us bind them with a second wish so the outcome cannot be dismissed."
+      }
+    ],
+    "customSayDo": true,
+    "submitRequired": true,
+    "cardBehavior": "A card click fills the draft only; it never advances the scene."
+  }
+}

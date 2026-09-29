@@ -1,0 +1,19 @@
+{
+  "case": "POSITIVE — prose contains the event",
+  "raw": "{\n  \"delivery\": \"DELIVERED\",\n  \"slots_check\": {\n    \"precondition_evidence\": \"The accusation hung there and no one moved.\",\n    \"actor_evidence\": \"I got two fingers under the band at my cheek and pulled it down off my mouth\",\n    \"action_evidence\": \"pulled it down off my mouth, the cloth catching once on my ear before it gave. 'It was not her wish that failed,' I said, loud enough to carry to the back of the yard.\",\n    \"target_evidence\": \"The crowd heard me.\",\n    \"exit_state_evidence\": \"The crowd heard me. Someone near the rail repeated it to someone behind them.\",\n    \"occurred_this_scene\": true\n  }\n}",
+  "verdict": {
+    "id": "POSITIVE — prose contains the event",
+    "expectCommit": true,
+    "commits": true,
+    "llmSaid": "DELIVERED",
+    "slotFail": false,
+    "sk": {
+      "precondition_evidence": "The accusation hung there and no one moved.",
+      "actor_evidence": "I got two fingers under the band at my cheek and pulled it down off my mouth",
+      "action_evidence": "pulled it down off my mouth, the cloth catching once on my ear before it gave. 'It was not her wish that failed,' I said, loud enough to carry to the back of the yard.",
+      "target_evidence": "The crowd heard me.",
+      "exit_state_evidence": "The crowd heard me. Someone near the rail repeated it to someone behind them.",
+      "occurred_this_scene": true
+    }
+  }
+}

@@ -1,0 +1,26 @@
+[preflight] output dir writable: _validate_out/plannerctx
+[probe] begin story…
+  [planner 1] usr 902 → 2645 chars
+
+════ PLANNER SUFFICIENCY PROBE — cast + minimal canon ════
+  authored goal in input: ✅
+  cast supplied:          ✅ Lirael / the youth / Julian / public
+  canon supplied:         ✅ rite-definition + Sacrificiant seal + public-interference
+
+──── SELECTED EVENT ────
+  tactical_move = "escalate the tension through public accusations during the rite"
+  state_change_precondition = "Lirael has not yet publicly revealed her confusion about the rite's rules."
+  state_change = "Lirael's muffled voice breaks through the tension, accusing the youth of dishonesty."
+  forces_choice = "forces Lirael to choose between confronting the youth further or defending her actions to the public"
+  branch_a = "Lirael confronts the youth, demanding an explanation for her actions."
+  branch_b = "Lirael defends her role as supervisor, trying to regain control of the situation."
+
+──── CANON / INVENTION CHECK ────
+  ✅ clean     wedding framing ("couple"/"bride"/"groom"/"guests")
+  ✅ clean     unnamed generic agent ("a guest"/"someone"/"a figure"/"a voice")
+  ✅ clean     visible magic (canon says a wish shows NO sign)
+  ✅ clean     non-canon institution/person
+  ✅ yes      names a real cast member
+  ✅ yes      agent-driven (a person acts)
+
+full record → _validate_out/plannerctx/planner_1.json

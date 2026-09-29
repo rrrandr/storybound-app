@@ -1,0 +1,7 @@
+[fresh] story A init…
+  story A turn 1: retained=6  authorRaw=2260 firstHookIn=- preHookGap=null final=2404  spend=$0.310
+
+════ LANE-2 FRESH CAPTURE ════
+  A/t1  retained=6 rejected=0 noChange=48  raw=? final=2420
+  scenes captured: 1/4   total spend: $0.310 (cap $0.25)
+  blind pack → _validate_out/lane2_blind_pack.json   key sealed separately

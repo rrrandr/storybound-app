@@ -1,0 +1,176 @@
+{
+  "results": [
+    {
+      "name": "First Sacrifice has exactly one reserved world-truth group",
+      "pass": true
+    },
+    {
+      "name": "its release is resolved to the REAL reservedEvents id \"inquiry_opened\"",
+      "pass": true
+    },
+    {
+      "name": "...scheduled at scene 14 — LATE Issue 1, taken from the plan ROW that carries it",
+      "pass": true
+    },
+    {
+      "name": "...and it says WHICH structure supplied the number",
+      "pass": true
+    },
+    {
+      "name": "the link was made lexically on >=2 of the seed's own markers",
+      "pass": true
+    },
+    {
+      "name": "STATE 1 — early scene (2) + reserved markers => REJECTED",
+      "pass": true
+    },
+    {
+      "name": "...and the rejection reports the schedule it judged against (due 14, at 2)",
+      "pass": true
+    },
+    {
+      "name": "STATE 2 — early scene (2) + demand/pressure only => ALLOWED",
+      "pass": true
+    },
+    {
+      "name": "STATE 3 — DUE scene (14) + the reserved event => ALLOWED, the ban lifts",
+      "pass": true
+    },
+    {
+      "name": "...including the exact plan text that was rejected at scene 2 — same words, now permitted",
+      "pass": true
+    },
+    {
+      "name": "SCENE 4 NO LONGER RELEASES inquiry_opened — the old calendar is gone",
+      "pass": true
+    },
+    {
+      "name": "...so the OLD scene-4 formal-inquiry plan is now REJECTED at scene 4",
+      "pass": true
+    },
+    {
+      "name": "...and the REVISED scene-4 beat (notice + restriction, nothing convened) is ALLOWED at scene 4",
+      "pass": true
+    },
+    {
+      "name": "still reserved at 13, the scene before it is due — the boundary is exact",
+      "pass": true
+    },
+    {
+      "name": "released at 14",
+      "pass": true
+    },
+    {
+      "name": "STATE 4 — at scene 3 (the DUE scene of a different real reservation, price_identified) the inquiry is STILL reserved",
+      "pass": true
+    },
+    {
+      "name": "release is scene-ordered: withheld at 2, 3, 4 and 13; released at 14",
+      "pass": true
+    },
+    {
+      "name": "STATE 1 — at scene 2 the author IS forbidden the reserved composition",
+      "pass": true
+    },
+    {
+      "name": "STATE 4 — at scene 3 it is STILL forbidden",
+      "pass": true
+    },
+    {
+      "name": "at scene 4 it is STILL forbidden — the author follows the corrected calendar too",
+      "pass": true
+    },
+    {
+      "name": "at scene 13 it is still forbidden",
+      "pass": true
+    },
+    {
+      "name": "STATE 3 — at the DUE scene (14) the directive is EMPTY: the author is not forbidden its own scene",
+      "pass": true
+    },
+    {
+      "name": "and that reaches the REAL CG author payload — block present at scene 2",
+      "pass": true
+    },
+    {
+      "name": "...still present at scene 4, where it used to vanish",
+      "pass": true
+    },
+    {
+      "name": "...and ABSENT from the real payload at scene 14, via the production scene accessor",
+      "pass": true
+    },
+    {
+      "name": "there is ONE definition of the directive — no literary-only variant",
+      "pass": true
+    },
+    {
+      "name": "both call sites call it with no scene override, so both inherit _currentSceneNumber",
+      "pass": true
+    },
+    {
+      "name": "one definition of the release helper too — the gate and the directive cannot disagree",
+      "pass": true
+    },
+    {
+      "name": "the directive resolves its scene through the shared accessor, not its own arithmetic",
+      "pass": true
+    },
+    {
+      "name": "...and the helper falls back to _currentSceneNumber when no override is passed",
+      "pass": true
+    },
+    {
+      "name": "a literary OPENING is scene 1 by the shared accessor, so the rule applies there",
+      "pass": true
+    },
+    {
+      "name": "a literary CONTINUATION at turnCount=12 resolves to scene 14 and RELEASES the event",
+      "pass": true
+    },
+    {
+      "name": "price_identified is UNMOVED on row 3",
+      "pass": true
+    },
+    {
+      "name": "inquiry_opened is on row 14 and NOWHERE else",
+      "pass": true
+    },
+    {
+      "name": "row 4 carries NO reservedEvents at all now",
+      "pass": true
+    },
+    {
+      "name": "exactly TWO rows carry reservedEvents — nothing was added or dropped",
+      "pass": true
+    },
+    {
+      "name": "both sealedEvents still unseal at 16 — untouched",
+      "pass": true
+    },
+    {
+      "name": "row 4 no longer names the panel, the venue, or a convening",
+      "pass": true
+    },
+    {
+      "name": "...and it is still an early pressure beat with notice and restriction",
+      "pass": true
+    },
+    {
+      "name": "row 14 now authors the convening it owns",
+      "pass": true
+    },
+    {
+      "name": "row 19 is back to its original goal — the wrong date left no residue",
+      "pass": true
+    },
+    {
+      "name": "the due row IS the first row that seats the panel in person — no row stages it earlier",
+      "pass": true
+    },
+    {
+      "name": "zero provider dispatches",
+      "pass": true
+    }
+  ]
+}

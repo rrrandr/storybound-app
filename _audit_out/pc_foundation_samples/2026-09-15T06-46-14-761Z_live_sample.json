@@ -1,0 +1,26 @@
+{
+  "at": "2026-09-15T06:46:14.761Z",
+  "starterId": "starter_first_sacrifice",
+  "storyId": "f8f2187f-43b6-4930-aa1b-f676dd39fd9c",
+  "contractViolation": {
+    "kind": "pcBodyBible",
+    "attemptNumber": 3,
+    "cap": 1
+  },
+  "attempts": [
+    {
+      "kind": "pcBodyBible",
+      "attemptNumber": 1,
+      "model": "ministral-8b-2512",
+      "role": "STRUCTURE_GENERATOR",
+      "maxTokens": 2500,
+      "temperature": 0.6,
+      "sysBytes": 9743,
+      "usrBytes": 28435,
+      "responseStatus": 502,
+      "responseUsage": null,
+      "responseContent": null
+    }
+  ],
+  "parsedBible": null
+}

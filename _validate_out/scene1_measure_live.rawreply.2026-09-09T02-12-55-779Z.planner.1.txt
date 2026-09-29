@@ -1,0 +1,55 @@
+{
+  "opening_spine": {
+    "pressure_source_type": "survival",
+    "pressure_source": "the cracked skylight is letting rain pour in and the worktable is already underwater",
+    "hook_object": null,
+    "opening_actor_id": null,
+    "opening_beat": "rain is sheeting through the skylight and the orchids on the lower shelf are already drowning",
+    "rising_beats": ["I drag the heavy bench under the leak to catch what I can", "water reaches my ankles and the rare blooms start to wilt"],
+    "decision_beat": "Grab the orchids and run or stay and try to brace the roof?",
+    "pc_career": "florist",
+    "opening_setting": "floral studio",
+    "environment_elements": ["cracked skylight", "soaked worktable"],
+    "li_texture_beat": null,
+    "pc_wound_anchor": "beat 1: I cannot make myself step away from the damaged blooms even as the water rises",
+    "pc_self_presentation_beat": "beat 2: I shoved my sleeves to the elbow, the wet cotton sticking to my skin the way it always did when I refused to quit",
+    "scene_want": "wants to keep the orchids above the rising water",
+    "scene_mission": "Save the orchids before the studio floods completely",
+    "reader_state": {
+      "knows": "Testa is alone in her floral studio during a storm that is flooding it",
+      "believes": "the rare orchids will be ruined if she cannot move them fast enough",
+      "wondering": "how far will she go to protect what matters before the roof fails",
+      "must_not_confuse": "only Testa is present and acting; the water and skylight are the immediate threats"
+    },
+    "pc_body_callback": "opening: stress_tic (clenched jaw)",
+    "antagonist_body_callback": null,
+    "staged_characters": [
+      {"name": "Testa", "presence": "IN_PERSON", "anchor_beat": "FROM_PC_OPENING_FUSION"}
+    ]
+  },
+  "scene_skeleton": {
+    "character_plus": [],
+    "environment_plus": {
+      "target": "cracked skylight",
+      "axis": "damage",
+      "beat": "cracked skylight lets rain sheet directly onto the worktable below"
+    },
+    "pc_opening_fusion": {
+      "character": "Testa",
+      "placement": "PC_FIRST_EMBODIED_BEAT",
+      "contact": {"verb": "LEAN_INTO", "object": "{ENV_TARGET}"},
+      "action": "lean into the bench to shove it under the leak",
+      "pc_lens_operation": "INWARD_TRANSLATION_OF_ANOTHER_PERSONS_COST",
+      "character_revelation": "Testa treats the orchids as if their survival is her own",
+      "environment_pressure": {
+        "grounds": ["env:axis", "pc:self"],
+        "text": "the water is already at my ankles and the orchids are starting to drown"
+      }
+    }
+  },
+  "stage_contract": {
+    "v": 1,
+    "participants": [{"ref": "pc:self", "presence": "IN_PERSON"}],
+    "event_facts": [{"text": "storm floods the floral studio through the skylight", "participants": [{"ref": "pc:self", "role": "actor"}]}]
+  }
+}

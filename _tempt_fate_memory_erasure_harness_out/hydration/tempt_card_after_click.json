@@ -1,0 +1,12 @@
+{
+  "clickWorked": true,
+  "cardAfterClick": {
+    "classes": [
+      "fate-card",
+      "tempt-fate-card",
+      "flipped",
+      "tempt-zoomed"
+    ],
+    "zoomOverlayPresent": true
+  }
+}

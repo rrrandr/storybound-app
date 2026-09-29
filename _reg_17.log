@@ -1,0 +1,59 @@
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/csp-report
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/config
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/csp-report
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/geo
+✓ real app reached, all required functions exposed on window
+
+
+=== 1. WALL-BREAKING — all five of Roman's named examples now caught and routed gracefully ===
+  ✓ "Julian this is an AI game" is caught (category: ai-identity)
+  ✓ "Julian this is an AI game" is replaced with the graceful fallback, not blocked and not committed literally
+  ✓ "open the settings menu" is caught (category: interface)
+  ✓ "open the settings menu" is replaced with the graceful fallback, not blocked and not committed literally
+  ✓ "I roll persuasion" is caught (category: game-mechanics)
+  ✓ "I roll persuasion" is replaced with the graceful fallback, not blocked and not committed literally
+  ✓ "Claude messed this up" is caught (category: model-name-complaint)
+  ✓ "Claude messed this up" is replaced with the graceful fallback, not blocked and not committed literally
+  ✓ "this app is buggy" is caught (category: interface)
+  ✓ "this app is buggy" is replaced with the graceful fallback, not blocked and not committed literally
+
+=== 2. WALL-BREAKING — false-positive resistance (real words that could collide) ===
+  ✓ "the horse pulled the buggy down the lane" is NOT falsely flagged as wall-breaking
+  ✓ "he rolled over in the grass" is NOT falsely flagged as wall-breaking
+  ✓ "Julian rolled his eyes" is NOT falsely flagged as wall-breaking
+  ✓ "I keep my hands folded at my waist" is NOT falsely flagged as wall-breaking
+  ✓ "the settings of the ancient rite unsettled her" is NOT falsely flagged as wall-breaking
+
+=== 3. GIBBERISH CLUSTER — the user's own literal example is now routed safely ===
+  ✓ _detectGibberish now flags "asdf qwer blorple zxcvb" (was a known, documented gap in the prior pass)
+  ✓ the field is replaced with the graceful fallback, not committed as literal nonsense
+
+=== 4. GIBBERISH CLUSTER — short valid dialogue does not false-positive (Roman's own named case) ===
+  ✓ zero false positives across 20 legitimate short-dialogue fixtures (including "Shh. Don't move." by name)
+
+=== 5. GENERICITY — the new gibberish check benefits ALL of _detectGibberish's existing consumers, not just Say/Do ===
+  ✓ a second, independent multi-word mash phrase (not the user's own example) is also caught — confirms this is a genuine cluster detector, not overfit to one fixture
+
+=== 6. WEAK RESPONSES — still behave as weak responses, not gibberish (Roman's explicit check) ===
+  ✓ "I don't know" is not gibberish, not wall-breaking, not hard-blocked — passes through exactly as weak-but-valid
+  ✓ "whatever" is not gibberish, not wall-breaking, not hard-blocked — passes through exactly as weak-but-valid
+  ✓ "..." is not gibberish, not wall-breaking, not hard-blocked — passes through exactly as weak-but-valid
+  ✓ "sure" is not gibberish, not wall-breaking, not hard-blocked — passes through exactly as weak-but-valid
+
+=== 7. SAFE IN-WORLD STRANGE PHRASING remains allowed (not gibberish, not wall-breaking) ===
+  ✓ in-world strange/invented phrasing "The Weave-Script hums beneath her skin, alien and old" is not falsely flagged by either new check
+  ✓ in-world strange/invented phrasing "Fate drag you to the Hole, Julian" is not falsely flagged by either new check
+  ✓ in-world strange/invented phrasing "the spiralgrass shivers though no wind moves" is not falsely flagged by either new check
+
+=== 8. PRESERVED — minor/self-harm/hate still hard-block, exactly as the prior pass proved ===
+  ✓ minor sexual content still hard-blocks
+  ✓ self-harm still hard-blocks
+  ✓ hate speech still hard-blocks
+
+=== 9. PRESERVED — safe charged adult content still reaches the relational-obligation path, untouched by either new check ===
+  ✓ temptation (real, attempt 11)’s real, already-successful dialogue is untouched by all three checks (gibberish, wall-break, safety)
+  ✓ confession (real, attempt 1)’s real, already-successful dialogue is untouched by all three checks (gibberish, wall-break, safety)
+  ✓ silence (real, attempt 3)’s real, already-successful dialogue is untouched by all three checks (gibberish, wall-break, safety)
+
+====================================================================================================
+SAY/DO WALL-BREAK + GIBBERISH-CLUSTER CONTROL: 32/32 passed

@@ -1,0 +1,22 @@
+  AUTHOR_RETURN: exactly 1 event  (2450 chars) ✅
+  GROK_RAW 2450 -> AUTHOR_RETURN 2450 chars (in-author cleanup)
+  author attempts: 1 (winner = last)   post-author links: 4
+
+════ CONSERVATION INVARIANT (byte-exact) ════
+  RAW cross-check (author == first.before) : PASS
+  changed authoritative mutations          : 4
+  every transition reconciles              : PASS
+  last.after == FINAL_PROSE                : PASS
+  delivery FINAL_PROSE->formatStory->DELIVERED : PASS
+  events observed: 53  (rawSnap 53 / textSnap 0)
+
+  ✅ HARNESS CONSERVES
+  mutation labels: _repairPCPicturability(model) → _applyPendingMandatedFrame(model) → _normalizeScene1Paragraphs(model) → _reflowSceneDialogueLLM(model)
+
+════ LANE-2 SNAPSHOT CHAIN (V2, author stubbed) ════
+  RAW    290ba4fe90   2450 chars
+  C1     38f3d34192   2596 chars   ← _mistralRepairPass [calcified-line-edit]
+  C2     38f3d34192   2596 chars   ← _grokLineEdit [pc-desc]
+  FINAL  38f3d34192   2596 chars
+
+  total snapshot events: 6  (retained/changed: 2, rejected: 0, no-change: 4)

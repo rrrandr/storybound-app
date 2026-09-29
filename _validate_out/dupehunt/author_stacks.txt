@@ -1,0 +1,2 @@
+#1      at window._authorChatCapture (eval at evaluate (:311:30), <anonymous>:29:49) |     at HTMLButtonElement.<anonymous> (http://localhost:3000/app.js?v=20260823y-latecause:286218:61)
+#2      at window._authorChatCapture (eval at evaluate (:311:30), <anonymous>:29:49) |     at HTMLButtonElement.<anonymous> (http://localhost:3000/app.js?v=20260823y-latecause:286218:61)

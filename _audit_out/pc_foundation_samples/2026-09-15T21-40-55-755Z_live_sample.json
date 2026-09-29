@@ -1,0 +1,122 @@
+{
+  "at": "2026-09-15T21:40:55.755Z",
+  "starterId": "starter_first_sacrifice",
+  "storyId": "beb1116e-3f05-4370-a432-487b228534d9",
+  "contractViolation": null,
+  "attempts": [
+    {
+      "kind": "pcBodyBible",
+      "attemptNumber": 1,
+      "model": "ministral-8b-2512",
+      "role": "STRUCTURE_GENERATOR",
+      "maxTokens": 2500,
+      "temperature": 0.6,
+      "sysBytes": 9168,
+      "usrBytes": 28435,
+      "responseStatus": 200,
+      "responseUsage": {
+        "prompt_tokens": 9563,
+        "total_tokens": 11175,
+        "completion_tokens": 1612,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "service_tier": "standard"
+      }
+    },
+    {
+      "kind": "bodyTellReroll",
+      "attemptNumber": 1,
+      "model": "mistral-small-latest",
+      "role": "STRUCTURE_GENERATOR",
+      "maxTokens": 500,
+      "temperature": 0.9,
+      "sysBytes": 1272,
+      "usrBytes": 33,
+      "responseStatus": 429
+    }
+  ],
+  "parsedBible": {
+    "age": 27,
+    "height": "a head shorter than the average First Favored male, but not by much—she fills out the space between the tallest and the tallest",
+    "build": "lean but not wiry, with the kind of muscle that comes from years of precise, controlled movement rather than brute force",
+    "hair": "dark as a midnight sky over the Veilwood, streaked with a single unmistakable streak of premature white that runs from her left temple to her jawline—like a silver thread woven into the black",
+    "complexion": "olive, with a faint, sun-bronzed warmth that never quite fades, and a smattering of freckles across her nose that only deepen when she’s outside for too long",
+    "face": "a face that reads like a map of quiet intensity—high cheekbones, a sharp jawline that betrays her discipline, and lips that are always slightly parted, as if she’s holding back a question",
+    "signature_feature": "the way her fingers tap out a rhythm against her thigh when she’s thinking, a habit that’s become almost imperceptible unless you’re watching closely—like a heartbeat you can feel but not always see",
+    "visual_anchor": {
+      "focus": "the eyes",
+      "detail": "her irises are a deep, shifting emerald that catch the light like a spellbook’s ink—when she’s stressed, the pupils dilate slightly, making them look like they’re swallowing the world"
+    },
+    "second_celebrated_feature": "the way she hums under her breath when she’s alone, a low, off-key melody that sounds like it’s been stuck in her head for years—no one else ever notices, but it’s the sound of her thinking",
+    "stress_tic": "she twists her wedding ring (though it’s not one) around her left ring finger in a slow, deliberate circle until her knuckles whiten",
+    "desire_tell": "when she wants something, her left eyebrow lifts just a fraction, like she’s caught herself in the act of reaching for a secret",
+    "impatience_tell": "her foot taps out a steady, uneven rhythm against the ground, like she’s counting down the seconds until she can speak",
+    "confidence_tell": "she stops mid-sentence when she’s sure of herself, letting the silence hang until the other person fills it",
+    "vulnerability_tell": "when she’s exposed, her hands go still, pressed together in front of her like she’s trying to hold herself together",
+    "emotional_weather": "meaning-hungry—every word, every glance, every unspoken thing feels like it’s trying to tell her something, and she’s always waiting for the next clue",
+    "core_contradiction": "she believes in the magic of the Weave but has never trusted the people who wield it—she’s spent years memorizing the rules just to break them when it matters",
+    "private_hope": "to find out the Institution’s rules aren’t as absolute as they seem, and that there’s room for someone like her to bend them without breaking",
+    "current_crisis": {
+      "event": "the Dohkar’s inquiry into her role in Seren’s misaligned wish is underway, and every word she speaks is being weighed against the Institution’s laws—she’s standing trial for a mistake she didn’t make",
+      "time_since_impact": "since dawn, when the assembly turned on her",
+      "hottest_emotion": "shame",
+      "immediate_want": "to prove she didn’t interfere, before the Dohkar rules against her",
+      "immediate_fear": "everyone thinks she shaped the wish to protect herself",
+      "refusal": "to beg for mercy, even when she knows she deserves it",
+      "li_complication": "Julian, the Provast, is the only one who can vouch for her innocence—but his silence could mean he’s protecting her, or that he’s waiting to see how this plays out"
+    },
+    "wound": {
+      "core": "her mother, a First Favored who vanished during a botched ritual, leaving behind only whispers of a bargain gone wrong—Lirael has spent years trying to uncover the truth, but the Institution won’t let her",
+      "category": "PUBLIC",
+      "surfacing_hint": "a public inquiry that forces her to confront the same questions her mother couldn’t answer"
+    },
+    "signature_habits": [
+      "always counts the steps between her seat and the exit, no matter where she is",
+      "never finishes a sentence if she’s unsure of herself, trailing off into silence instead",
+      "carries a folded scrap of paper in her pocket—it’s the only thing she’s ever kept from her mother’s things",
+      "always asks the third question in any conversation, the one no one else thinks to ask",
+      "humms the same melody when she’s nervous, a lullaby her mother used to sing"
+    ],
+    "self_conscious_feature": "her voice—too soft, too hesitant, like she’s afraid of being heard too clearly",
+    "li_keenly_aware_of": [
+      "the way her hair catches the light when she moves, especially that silver streak",
+      "the way her hands tremble when she’s lying, just enough to make her look away",
+      "the way she hums when she thinks no one’s listening"
+    ],
+    "_provenance": {
+      "wound.core": {
+        "basis": "approved_bio",
+        "cites": "A young First Favored apprentice. Today is her first time SUPERVISING another person’s First Sacrifice — responsible for the ritual being conducted correctly, not for the wish itself."
+      },
+      "wound.surfacing_hint": {
+        "basis": "inferred",
+        "cites": ""
+      },
+      "core_contradiction": {
+        "basis": "inferred",
+        "cites": ""
+      },
+      "private_hope": {
+        "basis": "inferred",
+        "cites": ""
+      },
+      "current_crisis.event": {
+        "basis": "approved_scene1",
+        "cites": "the Dohkar charged her with shaping and interfering; he has not yet ruled, and her Dohkar qualification — and the Chayr and Provast she aspires to after it — is in jeopardy."
+      },
+      "current_crisis.immediate_fear": {
+        "basis": "approved_scene1",
+        "cites": "the Dohkar’s charge presumes an interferer; nobody has named one, and Lirael has not said aloud why the wish matters to her."
+      },
+      "current_crisis.li_complication": {
+        "basis": "approved_relationship",
+        "cites": "Julian, the Provast, publicly claimed Lirael is aligned with her own innocence and has ALREADY questioned her before the assembly — intimately, as an accusation through desirability — until the presiding Dohkar interrupted it as grossly inappropriate."
+      },
+      "current_crisis.refusal": {
+        "basis": "approved_bio",
+        "cites": "She knows the procedure better than she has ever performed it, and the gap between knowing and doing is where her fear lives."
+      }
+    }
+  }
+}

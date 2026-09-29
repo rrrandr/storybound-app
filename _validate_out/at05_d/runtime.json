@@ -1,0 +1,18 @@
+{
+ "violations": [],
+ "preflight": [],
+ "reports": [
+  {
+   "validator": "hot_opening",
+   "type": "OPENING_TEMPERATURE",
+   "ok": false,
+   "failures": [
+    "no_li_250"
+   ],
+   "renderedTemp": "HOT_CRISIS",
+   "inMotionHits": 0,
+   "containerOpener": false,
+   "evidence": "The youth knelt on the braided spiralgrass, her aqua skin catching the first light through the veil-canopy. She spoke the offering she had rehearsed with me for months. “I give the discipline to finish my studies and train as a Sacrificiant,” she said, her voice steady. I relaxed"
+  }
+ ]
+}

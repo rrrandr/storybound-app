@@ -1,0 +1,1652 @@
+--- a/public/app.js
++++ b/public/app.js
+@@ -19876,7 +19876,284 @@
+     } catch (_) { return ''; }
+   }
+   window._buildPicturabilityMandate = _buildPicturabilityMandate;
++
++  // ── FATELANDS PRESSURE-MENU READER (Roman 2026-06-11) ──────────────────────
++  // Lets you read the actual block that ships to the A-plot generator before
++  // running a story. Pulls from the A-plot prompt builder source so the menu
++  // shown here is byte-identical to what the model sees. Use:
++  //   window._inspectFatelandsPressureMenu()
++  // Resolver test v2 (Roman 2026-06-11) — inverted hierarchy. Inputs:
++  //   { locks: ['chosen_despite_evidence', ...], axis: 'visibility', tier: '',
++  //     mockHistory: ['broken_vow_bond', ...] }
++  // Tests the lighthouse selection without firing a generation. Construct a
++  // mock state object and call the production resolver against it.
++  window._testFatelandsLighthouseResolver = function (opts) {
++    opts = opts || {};
++    var origHistory;
++    try {
++      origHistory = localStorage.getItem('sb_fatelands_lighthouse_history');
++      if (opts.mockHistory) {
++        localStorage.setItem('sb_fatelands_lighthouse_history', JSON.stringify(opts.mockHistory));
++      }
++    } catch (_) {}
++    var mockState = {
++      pairBond: {
++        psychologicalLock_li: (opts.locks && opts.locks[0]) || null,
++        psychologicalLock_pc: (opts.locks && opts.locks[1]) || null,
++        psychologicalLock_li_secondary: (opts.locks && opts.locks[2]) || null,
++        psychologicalLock_pc_secondary: (opts.locks && opts.locks[3]) || null
++      },
++      rPlot: { escalationAxis: opts.axis || '' },
++      storyLength: opts.tier || ''
++    };
++    // The production resolver is closure-scoped inside generateAPlot —
++    // we re-implement the scoring identically here for offline testing.
++    var LOCK_MAP = {
++      chosen_despite_evidence: 'broken_vow_bond', believes_me_without_proof: 'broken_vow_bond',
++      chooses_when_room_doesnt: 'broken_vow_bond', stays_when_loyalty_costs: 'broken_vow_bond',
++      refuses_to_look_away: 'broken_vow_bond', holds_her_position: 'broken_vow_bond',
++      waits_without_shrinking: 'broken_vow_bond', keeps_the_light_on: 'broken_vow_bond',
++      lets_me_carry_quietly: 'broken_vow_bond',
++      accepts_being_the_cost: 'wrong_wish', refuses_clean_moral_frame: 'wrong_wish',
++      holds_the_other_half: 'wrong_wish', needs_to_be_needed: 'wrong_wish',
++      private_helplessness: 'wrong_wish',
++      competes_with_no_one: 'syzygy', accepts_being_second: 'syzygy', outlasts_my_grief: 'syzygy',
++      sees_through_me: 'fold', unflinching_witness: 'fold', risks_being_known: 'fold',
++      releases_me_from_the_name: 'fold', holds_when_old_self_walks_in: 'fold',
++      loves_me_as_spent: 'fold', private_recognition: 'fold',
++      trains_attention_on_what_i_care: 'fold'
++    };
++    var AXIS_MAP = {
++      visibility: 'broken_vow_bond', armor: 'broken_vow_bond', trust: 'broken_vow_bond',
++      proximity: 'broken_vow_bond', yielding: 'wrong_wish', care: 'wrong_wish', knowing: 'fold'
++    };
++    var CERT = {
++      broken_vow_bond: 'I was certain of US', wrong_wish: 'I was certain of WHAT I WANTED',
++      syzygy: 'I was certain of WHAT HAPPENED', fold: 'I was certain of WHO I AM'
++    };
++    var scores = { broken_vow_bond: 0, wrong_wish: 0, syzygy: 0, fold: 0 };
++    var matched = { broken_vow_bond: [], wrong_wish: [], syzygy: [], fold: [] };
++    (opts.locks || []).forEach(function (l) {
++      var k = String(l || '').toLowerCase().trim();
++      var lh = LOCK_MAP[k];
++      if (lh) { scores[lh] += 2; matched[lh].push(k); }
++    });
++    var axis = String(opts.axis || '').toLowerCase().trim();
++    var axisHint = AXIS_MAP[axis];
++    if (axisHint) scores[axisHint] += 1;
++    var recent = (opts.mockHistory || []).slice(-10);
++    var histPen = {};
++    for (var i = recent.length - 1; i >= 0; i--) {
++      var distance = (recent.length - 1) - i;
++      var pen = (distance === 0) ? 3 : (distance === 1) ? 2 : (distance === 2) ? 1 : 0;
++      if (pen && scores.hasOwnProperty(recent[i])) {
++        scores[recent[i]] -= pen;
++        histPen[recent[i]] = (histPen[recent[i]] || 0) - pen;
++      }
++    }
++    var lighthouse = 'broken_vow_bond';
++    var maxScore = -Infinity;
++    ['broken_vow_bond', 'wrong_wish', 'syzygy', 'fold'].forEach(function (lh) {
++      if (scores[lh] > maxScore) { maxScore = scores[lh]; lighthouse = lh; }
++    });
++    var why = [];
++    if (matched[lighthouse].length) why.push('locks=[' + matched[lighthouse].join(', ') + '] (+' + (matched[lighthouse].length * 2) + ')');
++    if (axisHint === lighthouse) why.push('axis=' + axis + ' (+1)');
++    if (histPen[lighthouse]) why.push('history-penalty=' + histPen[lighthouse] + ' (still won)');
++    if (!why.length) why.push('default tie-break');
++    console.log('[FATELANDS-RESOLVER:TEST] inputs → locks=' + JSON.stringify(opts.locks || []) + ' axis=' + (opts.axis || '(none)') + ' tier=' + (opts.tier || '(none)') + ' mockHistory=' + JSON.stringify(opts.mockHistory || []));
++    console.log('[FATELANDS-RESOLVER:TEST] resolved → ' + lighthouse + ' (score=' + scores[lighthouse] + ')');
++    console.log('[FATELANDS-RESOLVER:TEST] certainty → "' + CERT[lighthouse] + '"');
++    console.log('[FATELANDS-RESOLVER:TEST] why → ' + why.join(' | '));
++    console.log('[FATELANDS-RESOLVER:TEST] full scores → ' + JSON.stringify(scores));
++    // Restore original history (don't pollute LS during testing)
++    try { if (opts.mockHistory) {
++      if (origHistory === null || origHistory === undefined) localStorage.removeItem('sb_fatelands_lighthouse_history');
++      else localStorage.setItem('sb_fatelands_lighthouse_history', origHistory);
++    } } catch (_) {}
++    return { lighthouse: lighthouse, certainty: CERT[lighthouse], scores: scores, reason: why.join(' | ') };
++  };
++
++  window._inspectFatelandsPressureMenu = function () {
++    try {
++      // Reports the canonical Fatelands architectural spec shipped to the A-plot
++      // generator. Mirrors the actual block structure for confirmation without
++      // running a story.
++      var precedence = ['ALIGNMENT FAILURE', 'CONSEQUENCE REVELATION', 'FATE', 'BOND', 'SACRIFICE', 'WISH', 'OATH', 'OBLIGATION', 'INSTITUTIONAL (fallback)'];
++      var categories = ['ALIGNMENT FAILURE', 'CONSEQUENCE REVELATION', 'FATE', 'BOND', 'SACRIFICE', 'WISH', 'OATH', 'OBLIGATION'];
++      var alignmentFailureExamples = ['First Sacrifice twists unexpectedly', 'oath binds incorrectly (world heard differently)', 'respected reader misjudges someone', 'two readers reach opposite conclusions', 'alignment reads true while reality contradicts it', 'Wildfolk manipulator exploiting the system', 'supposedly impossible misalignment appears'];
++      var consequenceRevelationExamples = ['a wish granted years ago is finally being understood correctly', 'a sacrifice cost arrives late, in an unanticipated form', 'an oath hidden interpretation activates', 'a bond expresses an unintended clause', 'a fate-debt reveals what was actually purchased — and the LI was the currency'];
++      var firstFavoredRoles = ['Alignment Readers', 'Oath Witnesses', 'Bond Custodians', 'Sacrifice Keepers', 'Wish Registrars', 'Vow Arbiters', 'Fate Auditors'];
++      var firstSacrificeConflicts = ['fear of the sacrifice', 'hidden wishes', 'forbidden wishes', 'romantic entanglement', 'sacrifice gone wrong', 'public embarrassment'];
++      var marriageVowConflicts = ['vow that cannot be spoken honestly', 'hidden desire that would twist the vow', 'romantic triangle pressure', 'duty vs love', 'political necessity vs genuine alignment'];
++      var fateSecuredInstitutions = ['writs are binding strands of consequence', 'debts are attached to fate', 'oaths accumulate weight', 'contracts are living obligations'];
++      var forbidden = ['tribunal / hearing / board / vote', 'court / audit / review / filing', 'inheritance paperwork (human form)', 'bureaucratic summons (human form)', 'paperwork arriving at the door'];
+ 
++      console.log('[FATELANDS-MENU] active for worlds matching /fatelands|veilwood|thornwild|shackle.?isles|first.?favored|kwisheen/i');
++      console.log('');
++      console.log('[FATELANDS-MENU] CORE RULE — pressure precedence (1 = highest priority):');
++      precedence.forEach(function (p, i) { console.log('  ' + (i + 1) + '. ' + p); });
++      console.log('');
++      console.log('[FATELANDS-MENU] First Favored as civilization-scale social technology — trusted-region roles:');
++      firstFavoredRoles.forEach(function (r) { console.log('  • ' + r); });
++      console.log('  (suspicious regions: First Favored may be barred / treated as manipulators / reality-distorting / forbidden from witnessing vows)');
++      console.log('');
++      console.log('[FATELANDS-MENU] Alignment Logic — human courts ask "Did you do it?" / First Favored ask "When did your inner pattern diverge from your spoken pattern?"');
++      console.log('');
++      console.log('[FATELANDS-MENU] First Sacrifice Ceremony — preferred conflict sources:');
++      firstSacrificeConflicts.forEach(function (c) { console.log('  • ' + c); });
++      console.log('');
++      console.log('[FATELANDS-MENU] Marriage / Vow Institutions — preferred conflict sources:');
++      marriageVowConflicts.forEach(function (c) { console.log('  • ' + c); });
++      console.log('');
++      console.log('[FATELANDS-MENU] Fate-secured institutions (writs/debts/oaths/contracts are NOT human paperwork):');
++      fateSecuredInstitutions.forEach(function (i) { console.log('  • ' + i); });
++      console.log('');
++      console.log('[FATELANDS-MENU] HOT CRISIS PRINCIPLE — detonation NOW, not announcement of tomorrow\'s event. Crises that DETONATE on the page beat crises that SCHEDULE a future event.');
++      console.log('');
++      console.log('[FATELANDS-MENU] PRIMARY PRESSURE MENU — 7 world-native categories (5 SHAPE templates each):');
++      categories.forEach(function (c, i) { console.log('  ' + (i + 1) + '. ' + c); });
++      console.log('');
++      console.log('[FATELANDS-MENU] ALIGNMENT FAILURE (highest leverage; uniquely Fatelands) shapes:');
++      alignmentFailureExamples.forEach(function (e) { console.log('  • ' + e); });
++      console.log('');
++      console.log('[FATELANDS-MENU] CONSEQUENCE REVELATION (the bill arrives — PC-caused crisis) shapes:');
++      consequenceRevelationExamples.forEach(function (e) { console.log('  • ' + e); });
++      console.log('');
++      console.log('[FATELANDS-MENU] LI ENTANGLEMENT — strongest pressure WELDS the crisis to the LI structurally. Test: can the LI be removed without changing the conflict? If yes, re-architect.');
++      console.log('');
++      console.log('[FATELANDS-MENU] FOUR CANONICAL LIGHTHOUSES — the four corners of Fatelands emotional territory (rotate per story, never more than one):');
++      console.log('');
++      console.log('  ╔ LIGHTHOUSE 1: THE BROKEN VOW-BOND ═══════════════════════════════════');
++      console.log('    RELATIONSHIP × EXTERNAL  |  certainty attacked: "I was certain of US"');
++      console.log('    Categories: ALIGNMENT FAILURE + BOND + OATH + WISH + MYSTERY');
++      console.log('    Shape: husband gone; alignment still reads HE LOVES YOU; vow-thread fractured but glowing.');
++      console.log('    Poster: luminous vow-thread snapping, both ends still glowing.');
++      console.log('');
++      console.log('  ╔ LIGHTHOUSE 2: THE WRONG WISH ════════════════════════════════════════');
++      console.log('    RELATIONSHIP × PAST CHOICE  |  certainty attacked: "I was certain of WHAT I WANTED"');
++      console.log('    Categories: WISH + SACRIFICE + CONSEQUENCE REVELATION + GUILT');
++      console.log('    Shape (a): wished for him; the rival just collapsed dead. (b): wished for rain; crops failed; village blames the LI.');
++      console.log('    Romance-ending question: "Did you steal me?" / "Did your wish make me love you?"');
++      console.log('    Poster: child wish-sigil glowing under a wedding ring, twenty years late.');
++      console.log('');
++      console.log('  ╔ LIGHTHOUSE 3: THE SYZYGY IS UPON US ═════════════════════════════════');
++      console.log('    COSMOLOGY × PAST CHOICE  |  certainty attacked: "I was certain of WHAT HAPPENED"');
++      console.log('    Categories: WISH + SACRIFICE + CONSEQUENCE REVELATION + FATE + MORAL CHOICE');
++      console.log('    Shape: cosmic alignment opens the fate-ledger; she can undo 1-2 wishes but not all 3 (LI / sister / village).');
++      console.log('    Dramatic engine: forcing VALUES into conflict (not facts) — three goods, only two can be kept.');
++      console.log('    Detonation: she wakes feeling one of her wishes loosening.');
++      console.log('    Poster: three wish-sigils in her cupped hands, syzygy in the sky — she can keep only two.');
++      console.log('    Rarity: once per long arc; not every issue.');
++      console.log('');
++      console.log('  ╔ LIGHTHOUSE 4: THE FOLD ══════════════════════════════════════════════');
++      console.log('    IDENTITY × COSMOLOGY  |  certainty attacked: "I was certain of WHO I AM"');
++      console.log('    Categories: FATE + SACRIFICE + CONSEQUENCE REVELATION + IDENTITY');
++      console.log('    Shape: a Fold opens; she sees every version of the LI (never loved her / always loved her / husband / betrayer / died for her) simultaneously.');
++      console.log('    Question: "which version is real?"  Fatelands answer: ALL OF THEM.');
++      console.log('    Crisis: she must HOLD one; the others fade when the Fold collapses.');
++      console.log('    Poster: a couple in a Fold-doorway; behind them a hundred faded versions of themselves overlapping.');
++      console.log('    Rarity: once per long arc; not every issue.');
++      console.log('');
++      console.log('  THE MAP (FOUR CORNERS):');
++      console.log('                    RELATIONSHIP ←——————→ IDENTITY');
++      console.log('                    Broken Vow-Bond       The Fold');
++      console.log('                    Wrong Wish            The Syzygy');
++      console.log('                    PAST CHOICE  ←——————→ COSMOLOGY');
++      console.log('');
++      console.log('  UNIFYING PRINCIPLE: ALL FOUR ATTACK CERTAINTY (not institutions, not villains, not paperwork).');
++      console.log('  SHARED THEME: REALITY LISTENS MORE CAREFULLY THAN PEOPLE DO.');
++      console.log('');
++      console.log('  ROTATION RULE BY WOUND TYPE:');
++      console.log('    • betrayal / abandonment / exposure  → Broken Vow-Bond');
++      console.log('    • guilt / complicity / wanting-what-she-shouldn’t-have → Wrong Wish');
++      console.log('    • loss / regret / could-have-been    → Syzygy');
++      console.log('    • identity / becoming / self-betrayal → The Fold');
++      console.log('');
++      console.log('  DO NOT ADD A FIFTH LIGHTHOUSE. The four corners are complete; a fifth would be redundant or off-map.');
++      console.log('');
++      console.log('[FATELANDS-MENU] FORBIDDEN default engines:');
++      forbidden.forEach(function (f) { console.log('  ✗ ' + f); });
++      console.log('');
++      console.log('[FATELANDS-MENU] SCENE 1 ROMANCE PRIORITY — opening pressure arrives THROUGH the relationship:');
++      console.log('  ✗ "A writ arrives."   ✓ "His name appears in her obligation ledger."');
++      console.log('  ✗ "A tribunal is scheduled."   ✓ "Tomorrow she must witness his marriage vow and determine whether it is aligned."');
++      console.log('');
++      console.log('[FATELANDS-MENU] LITMUS TEST: if the conflict could be described to a 2024 lawyer WITHOUT Fate/Wishes/Sacrifice/Oaths/Bonds/Alignment, it is NOT YET Fatelands.');
++      console.log('[FATELANDS-MENU] POSTER TEST: "Woman holding magical paperwork" = FAIL. Required: His name in her ledger / Her bond visible to strangers / The First Sacrifice she has been avoiding / The vow she will witness tomorrow / The wish that rerouted through her.');
++      return {
++        precedence: precedence,
++        categories: categories,
++        alignmentFailureExamples: alignmentFailureExamples,
++        firstFavoredRoles: firstFavoredRoles,
++        firstSacrificeConflicts: firstSacrificeConflicts,
++        marriageVowConflicts: marriageVowConflicts,
++        fateSecuredInstitutions: fateSecuredInstitutions,
++        forbiddenSamples: forbidden,
++        canonicalExemplars: {
++          map: {
++            xAxis: 'RELATIONSHIP ←——————→ IDENTITY',
++            yAxis: 'PAST CHOICE  ←——————→ COSMOLOGY',
++            quadrants: {
++              relationshipExternal: 'Broken Vow-Bond',
++              relationshipPastChoice: 'Wrong Wish',
++              cosmologyPastChoice: 'The Syzygy',
++              identityCosmology: 'The Fold'
++            }
++          },
++          unifyingPrinciple: 'ALL FOUR ATTACK CERTAINTY — not institutions, not villains, not paperwork',
++          sharedTheme: 'REALITY LISTENS MORE CAREFULLY THAN PEOPLE DO',
++          rotationRule: {
++            'betrayal / abandonment / exposure': 'Broken Vow-Bond',
++            'guilt / complicity / wanting-what-she-shouldnt': 'Wrong Wish',
++            'loss / regret / could-have-been': 'Syzygy',
++            'identity / becoming / self-betrayal': 'The Fold'
++          },
++          noFifthLighthouse: 'four corners are complete — a fifth would be redundant or off-map',
++          brokenVowBond: {
++            position: 'RELATIONSHIP × EXTERNAL',
++            certaintyAttacked: 'I was certain of US',
++            sacredAssumption: 'vow-bonds are secure',
++            categoriesEngaged: ['ALIGNMENT FAILURE', 'BOND', 'OATH', 'WISH', 'MYSTERY'],
++            shape: 'Husband gone; alignment still reads HE LOVES YOU; vow-thread fractured but glowing.',
++            register: 'devastation + suspicion'
++          },
++          wrongWish: {
++            position: 'RELATIONSHIP × PAST CHOICE',
++            certaintyAttacked: 'I was certain of WHAT I WANTED',
++            sacredAssumption: 'I understand my own desires',
++            categoriesEngaged: ['WISH', 'SACRIFICE', 'CONSEQUENCE REVELATION', 'GUILT'],
++            shape: 'Wished for him; rival just collapsed dead. (Or: wished for rain; crops failed; village blames the LI.)',
++            register: 'dread + complicity',
++            romanceEndingQuestion: 'Did you steal me? / Did your wish make me love you?'
++          },
++          syzygy: {
++            position: 'COSMOLOGY × PAST CHOICE',
++            certaintyAttacked: 'I was certain of WHAT HAPPENED',
++            sacredAssumption: 'the past is fixed',
++            categoriesEngaged: ['WISH', 'SACRIFICE', 'CONSEQUENCE REVELATION', 'FATE', 'MORAL CHOICE'],
++            shape: 'Cosmic alignment opens the fate-ledger; she can undo 1-2 of her wishes, not all 3 (LI / sister / village).',
++            register: 'moral triangulation',
++            dramaticEngine: 'forcing VALUES into conflict, not facts — three goods, only two can be kept',
++            detonation: 'wakes feeling one of her wishes loosening',
++            rarity: 'once per long arc, not every issue'
++          },
++          theFold: {
++            position: 'IDENTITY × COSMOLOGY',
++            certaintyAttacked: 'I was certain of WHO I AM',
++            sacredAssumption: 'there is one version of me',
++            categoriesEngaged: ['FATE', 'SACRIFICE', 'CONSEQUENCE REVELATION', 'IDENTITY'],
++            shape: 'A Fold opens; she sees every version of the LI simultaneously (never loved her / always loved her / husband / betrayer / died for her).',
++            answer: 'which version is real? ALL OF THEM.',
++            register: 'identity-vertigo + paradoxical recognition',
++            crisis: 'she must HOLD one; the others fade when the Fold collapses',
++            rarity: 'once per long arc, not every issue'
++          }
++        }
++      };
++    } catch (e) { try { console.warn('[FATELANDS-MENU] inspect failed:', e && e.message); } catch (_) {} return null; }
++  };
++
+   // ── PICTURABILITY TELEMETRY (Roman 2026-06-09) ──────────────────────────────
+   // Tracks first-pass-pass vs repair-fired per side per scene + per-story aggregate.
+   // Reader: window._picturabilityReport() — shows the rate Sonnet's first draft
+@@ -43825,8 +44102,200 @@
+       return false;
+     }
+     return true;
++  }
++
++  // ── CG PANEL TRACKER (Roman 2026-06-11) ────────────────────────────────────
++  // Registry that the BFL render sites push into so health rules can detect
++  // visual-canon failures observed live. Stores classified compositions so the
++  // diversity detector compares VISUAL CLASS (subject / camera / composition /
++  // emotional beat), not lexical n-grams — per Roman's 2026-06-11 critique:
++  //   "Two prompts can be 95% different and render the same image."
++  //
++  // Callers populate via:
++  //   window._cgPanelTracker.recordPanel({
++  //     sceneIndex, panelIndex, prompt, region, castRoster, species,
++  //     consumedOpportunity  // optional scaffold-declared opportunity tag
++  //   });
++  //
++  // Auto-classifies the panel on record so health rules can read pre-computed
++  // class buckets instead of re-parsing. Classifier is regex-based — cheap,
++  // deterministic, no LLM call.
++  // ────────────────────────────────────────────────────────────────────────────
++
++  // Classify a panel prompt into 4 dimensions that drive USER-PERCEIVED diversity.
++  // Roman 2026-06-11: the user reads four images as "four pictures" iff at
++  // least three of these four classes vary. Identical subject + camera +
++  // composition across 4 panels reads as "I paid for one image" regardless
++  // of how lexically different the prompts are.
++  function _classifyPanelComposition(prompt) {
++    var p = String(prompt || '').toLowerCase();
++    var pcName = (window.state && (window.state.playerName || (window.state.picks && window.state.picks.identity && window.state.picks.identity.playerName))) || '';
++    var liName = (window.state && window.state.loveInterestName) || '';
++    var pcFirst = String(pcName).split(/\s+/)[0].toLowerCase();
++    var liFirst = String(liName).split(/\s+/)[0].toLowerCase();
++
++    // ── CAMERA CLASS ──
++    var camera = 'unknown';
++    if (/\b(extreme close|tight close|macro close|insert shot|cut.?in|object close)\b/.test(p)) camera = 'insert';
++    else if (/\b(close.?up|closeup|tight on|tight shot|close on)\b/.test(p)) camera = 'closeup';
++    else if (/\b(over.?the.?shoulder|ots|reverse ots|behind (?:him|her|them))\b/.test(p)) camera = 'ots';
++    else if (/\b(pov|first.?person|through (?:his|her|their) eyes)\b/.test(p)) camera = 'pov';
++    else if (/\b(wide|establishing|overview|landscape|aerial|long shot|environmental)\b/.test(p)) camera = 'wide';
++    else if (/\b(medium|mid.?shot|waist up|half.?body|three.?quarter)\b/.test(p)) camera = 'medium';
++    else camera = 'medium';  // default if unspecified
++
++    // ── SUBJECT CLASS ──
++    var hasPc = pcFirst && pcFirst.length >= 2 && p.indexOf(pcFirst) >= 0;
++    var hasLi = liFirst && liFirst.length >= 2 && p.indexOf(liFirst) >= 0;
++    var memoryShape = /\b(memory|remembered|recall|flash(?:back)?|her mind drifted|she saw again|she thought of)\b/.test(p);
++    var objectShape = /\b(close on (?:the|a) [a-z]+|object|symbol|writ|deck|letter|tarot|seal|knife|sword|ring|locket|photograph)\b/.test(p);
++    var environmentShape = /\b(forest|landscape|skyline|architecture|courtyard|hall|tavern|sanctuary|trees? loom|the (?:room|forest|city|night))\b/.test(p) && !hasPc && !hasLi;
++    var subject;
++    if (memoryShape && hasLi) subject = 'li_memory';
++    else if (hasPc && hasLi) subject = 'pc_li';
++    else if (memoryShape) subject = 'memory';
++    else if (objectShape && !hasPc && !hasLi) subject = 'object';
++    else if (environmentShape) subject = 'environment';
++    else if (hasLi && !hasPc) subject = 'li_solo';
++    else if (hasPc) subject = 'pc_solo';
++    else subject = 'unknown';
++
++    // ── COMPOSITION CLASS ──
++    var composition;
++    if (subject === 'environment') composition = 'env_dominated';
++    else if (subject === 'object') composition = 'object_dominated';
++    else if (subject === 'pc_li' || subject === 'li_memory') composition = 'two_shot';
++    else if (/\b(group|crowd|several|figures|onlookers|attendees|the room (?:was|filled))\b/.test(p)) composition = 'group';
++    else composition = 'single';
++
++    // ── EMOTIONAL BEAT (dominant verb / state) ──
++    var emoBeats = [
++      { rx: /\b(worry|worrying|worried|anxious|tense|brow furrow)\b/, tag: 'worry' },
++      { rx: /\b(glance|glanced|looking|gazing|stare|staring|watch)\b/, tag: 'looking' },
++      { rx: /\b(decide|decided|resolved|firm|set jaw|hardened)\b/, tag: 'decision' },
++      { rx: /\b(reach|reached|hand on|fingers? on|touch|grip)\b/, tag: 'reach' },
++      { rx: /\b(memory|remember|recall|flash)\b/, tag: 'memory_beat' },
++      { rx: /\b(surprise|shock|gasp|recoil|start|jolt)\b/, tag: 'shock' },
++      { rx: /\b(rage|anger|fury|shout|snarl|teeth bared)\b/, tag: 'rage' },
++      { rx: /\b(sorrow|grief|tears?|weep|cry|crying)\b/, tag: 'grief' },
++      { rx: /\b(laugh|smile|smirk|grin|joy|delight)\b/, tag: 'joy' },
++      { rx: /\b(tender|soft|gentle|quiet|breath held|breathing|whisper)\b/, tag: 'tender' }
++    ];
++    var emotionalBeat = 'neutral';
++    for (var ei = 0; ei < emoBeats.length; ei++) { if (emoBeats[ei].rx.test(p)) { emotionalBeat = emoBeats[ei].tag; break; } }
++
++    return { subject: subject, camera: camera, composition: composition, emotionalBeat: emotionalBeat };
+   }
++  window._classifyPanelComposition = _classifyPanelComposition;
+ 
++  if (!window._cgPanelTracker) {
++    window._cgPanelTracker = {
++      recordPanel: function (opts) {
++        try {
++          opts = opts || {};
++          var s = window.state || {};
++          if (!Array.isArray(s._cgPanelRecords)) s._cgPanelRecords = [];
++          var classification = _classifyPanelComposition(opts.prompt);
++          var rec = {
++            sceneIndex: typeof opts.sceneIndex === 'number' ? opts.sceneIndex : null,
++            panelIndex: typeof opts.panelIndex === 'number' ? opts.panelIndex : null,
++            prompt: String(opts.prompt || '').slice(0, 4000),
++            region: String(opts.region || s.worldSubtype || '').toLowerCase(),
++            castRoster: Array.isArray(opts.castRoster) ? opts.castRoster.slice() : [],
++            species: Array.isArray(opts.species) ? opts.species.slice() : (opts.species ? [opts.species] : []),
++            // Scaffold-declared opportunity tag (e.g. 'li_memory_beat',
++            // 'environment_establish', 'object_closeup'). Optional — when
++            // scaffold doesn't declare, the auto-classifier above still
++            // provides subject/camera/composition for diversity scoring.
++            consumedOpportunity: opts.consumedOpportunity || null,
++            subject: classification.subject,
++            camera: classification.camera,
++            composition: classification.composition,
++            emotionalBeat: classification.emotionalBeat,
++            ts: Date.now()
++          };
++          s._cgPanelRecords.push(rec);
++          while (s._cgPanelRecords.length > 200) s._cgPanelRecords.shift();
++          // Per-scene [CG:VALUE] readout — emits on the 4th panel of a scene.
++          // Streams passively to the console so the user sees both DIVERSITY and
++          // VALUE without having to query. Roman 2026-06-11 distinction: a scene
++          // can be diverse AND low-value (PC face / PC hand / PC boots / PC face
++          // passes diversity but feels cheap). Value-weighting captures whether
++          // panel budget went to high-leverage opportunities.
++          try {
++            var sameSc = s._cgPanelRecords.filter(function (r) { return r.sceneIndex === rec.sceneIndex; });
++            if (sameSc.length === 4) {
++              var subs = {}, cams = {}, comps = {}, emos = {};
++              sameSc.forEach(function (r) {
++                subs[r.subject] = (subs[r.subject] || 0) + 1;
++                cams[r.camera] = (cams[r.camera] || 0) + 1;
++                comps[r.composition] = (comps[r.composition] || 0) + 1;
++                emos[r.emotionalBeat] = (emos[r.emotionalBeat] || 0) + 1;
++              });
++              var fmt = function (m) { return Object.keys(m).map(function (k) { return k + '×' + m[k]; }).join(', '); };
++              var uniq = function (m) { return Object.keys(m).length; };
++              var dimScore = uniq(subs) + uniq(cams) + uniq(comps) + uniq(emos);
++              var dimMax = 4 * 4;
++              var dimFlag = dimScore <= 5 ? '⚠ LOW DIVERSITY' : (dimScore <= 8 ? '⚠ partial' : '✓ varied');
++
++              // ── VALUE WEIGHTING (Roman 2026-06-11) ─────────────────────────
++              // Per-subject value weights — what users perceive as worth paying for.
++              // Tuned for the romance-engine direction: LI presence + remembered LI
++              // beats are the highest-leverage opportunities; pure pc_solo is the
++              // default fallback (low marginal value). Object + environment sit
++              // mid-tier (useful establishing/symbol, but a scene of all-environment
++              // would still feel undermonetized).
++              var SUBJECT_VALUE = {
++                pc_li:        4,  // two-shot — peak romance value
++                li_memory:    4,  // remembered LI verb-anchored beat
++                li_solo:      3,  // LI alone
++                memory:       3,  // memory beat (PC-anchored)
++                object:       2,  // symbolic object close-up (depends on object, mid-tier default)
++                environment:  2,  // establishing
++                pc_solo:      1,  // PC alone — default fallback, low marginal value
++                unknown:      0
++              };
++              var valueSum = 0;
++              sameSc.forEach(function (r) { valueSum += (SUBJECT_VALUE[r.subject] != null ? SUBJECT_VALUE[r.subject] : 1); });
++              var valueMax = 4 * 4;  // 4 panels × max weight 4
++              var valuePct = Math.round(100 * valueSum / valueMax);
++              var valFlag = valuePct < 40 ? '⚠ LOW VALUE (panels spent on low-leverage subjects)' :
++                            valuePct < 60 ? '⚠ partial' : '✓ value-rich';
++
++              // ── OWNERSHIP SHARES (Roman 2026-06-11) ────────────────────────
++              // Per-scene panel-share by who owns the frame. LI_VISUAL_SHARE in
++              // particular is the romance-direction metric Roman called out:
++              // Scene 1 with PC 75% / LI 0% is a contract failure regardless
++              // of diversity. Counts pc_li as half-credit to both sides.
++              var liOwned = 0, pcOwned = 0, objOwned = 0, envOwned = 0, memOwned = 0;
++              sameSc.forEach(function (r) {
++                if (r.subject === 'pc_li') { liOwned += 0.5; pcOwned += 0.5; }
++                else if (r.subject === 'li_solo' || r.subject === 'li_memory') liOwned += 1;
++                else if (r.subject === 'pc_solo') pcOwned += 1;
++                else if (r.subject === 'memory') memOwned += 1;
++                else if (r.subject === 'object') objOwned += 1;
++                else if (r.subject === 'environment') envOwned += 1;
++              });
++              var pct = function (v) { return Math.round(100 * v / sameSc.length); };
++
++              console.log('[CG:VALUE] scene ' + rec.sceneIndex + ' (4 panels) — subjects: ' + fmt(subs) +
++                ' | cameras: ' + fmt(cams) + ' | compositions: ' + fmt(comps) + ' | beats: ' + fmt(emos) +
++                ' | DIVERSITY: ' + dimScore + '/' + dimMax + ' ' + dimFlag +
++                ' | VALUE: ' + valueSum + '/' + valueMax + ' (' + valuePct + '%) ' + valFlag +
++                ' | OWNERSHIP: pc ' + pct(pcOwned) + '% · li ' + pct(liOwned) + '% · object ' + pct(objOwned) + '% · environment ' + pct(envOwned) + '% · memory ' + pct(memOwned) + '%');
++            }
++          } catch (_) {}
++        } catch (_) {}
++      },
++      clearStory: function () {
++        try { if (window.state) window.state._cgPanelRecords = []; } catch (_) {}
++      },
++      getRecords: function () {
++        try { return (window.state && window.state._cgPanelRecords) || []; } catch (_) { return []; }
++      }
++    };
++  }
++
+   function _storyboundHealthCheck() {
+     const audits = (typeof window._auditTail === 'function') ? window._auditTail(50) : [];
+     const issues = [];
+@@ -44050,7 +44519,227 @@
+         });
+       }
+     } catch (_) {}
++
++    // ── CG VISUAL-CANON RULES (Roman 2026-06-11) ────────────────────────────
++    // Four detectors reading from window._cgPanelTracker.getRecords(). When no
++    // panels have been registered (BFL call sites not yet wired into the
++    // tracker), these all gracefully no-op. As wiring lands the rules start
++    // firing automatically — no further code change to the health framework.
++    try {
++      const panels = (window._cgPanelTracker && typeof window._cgPanelTracker.getRecords === 'function')
++        ? window._cgPanelTracker.getRecords() : [];
++      if (panels.length) {
++        // Group by sceneIndex to evaluate per-scene panel diversity.
++        const bySceneMap = {};
++        panels.forEach(p => {
++          const k = (p.sceneIndex == null) ? '?' : p.sceneIndex;
++          if (!bySceneMap[k]) bySceneMap[k] = [];
++          bySceneMap[k].push(p);
++        });
++        const scenesArr = Object.keys(bySceneMap).map(k => ({ idx: k, panels: bySceneMap[k] }));
++
++        // ── RULE 1: PANEL_DIVERSITY_COLLAPSE (Roman 2026-06-11 upgrade) ─────
++        // PRIMARY detector: composition CLASS diversity across 4 dimensions
++        // (subject / camera / composition / emotional beat). Replaces the
++        // n-gram detector because — per Roman 2026-06-11 — "two prompts can
++        // be 95% different and still render the same image." What matters
++        // is what the USER PERCEIVES: same subject + same camera + same
++        // composition = "one image, four times" regardless of prompt text.
++        //
++        // SECONDARY corroborator: n-gram overlap (preserved for the case
++        // where classifier mis-tags and lexical evidence is decisive).
++        try {
++          const collapseCases = [];
++          const ngrams = (s, n) => {
++            const t = String(s || '').toLowerCase().replace(/[^a-z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim().split(' ');
++            const set = new Set();
++            for (let i = 0; i + n <= t.length; i++) set.add(t.slice(i, i + n).join(' '));
++            return set;
++          };
++          scenesArr.forEach(sc => {
++            if (sc.panels.length < 3) return;
++            // PRIMARY: classification-based diversity score (subject + camera + composition + beat).
++            const subjects = new Set(), cameras = new Set(), comps = new Set(), beats = new Set();
++            sc.panels.forEach(p => {
++              if (p.subject) subjects.add(p.subject);
++              if (p.camera) cameras.add(p.camera);
++              if (p.composition) comps.add(p.composition);
++              if (p.emotionalBeat) beats.add(p.emotionalBeat);
++            });
++            const diversityScore = subjects.size + cameras.size + comps.size + beats.size;
++            // 4 dims × max 4 unique per dim = max 16. Identical = 4. Score ≤ 6
++            // means at most 2 dimensions varied (out of 4) — that's collapse.
++            const classifierCollapse = diversityScore <= 6;
++            // SECONDARY: n-gram corroboration.
++            const panelGrams = sc.panels.map(p => ngrams(p.prompt, 4));
++            let lexicalOverlap = 0;
++            if (!panelGrams.some(g => g.size === 0)) {
++              const pairs = [];
++              for (let i = 0; i < panelGrams.length; i++) {
++                for (let j = i + 1; j < panelGrams.length; j++) {
++                  const a = panelGrams[i], b = panelGrams[j];
++                  let shared = 0;
++                  a.forEach(g => { if (b.has(g)) shared++; });
++                  pairs.push(shared / Math.max(1, Math.min(a.size, b.size)));
++                }
++              }
++              lexicalOverlap = pairs.length ? Math.min.apply(null, pairs) : 0;
++            }
++            const lexicalCollapse = lexicalOverlap >= 0.70;
++            if (classifierCollapse || lexicalCollapse) {
++              collapseCases.push({
++                sceneIndex: sc.idx,
++                panelCount: sc.panels.length,
++                diversityScore: diversityScore,
++                uniqueSubjects: subjects.size,
++                uniqueCameras: cameras.size,
++                uniqueComps: comps.size,
++                uniqueBeats: beats.size,
++                lexicalOverlapPct: Math.round(100 * lexicalOverlap),
++                primaryFail: classifierCollapse ? 'composition_class' : 'n_gram_only'
++              });
++            }
++          });
++          if (collapseCases.length) {
++            const worst = collapseCases[collapseCases.length - 1];
++            const detailParts = [];
++            detailParts.push(worst.uniqueSubjects + ' unique subjects');
++            detailParts.push(worst.uniqueCameras + ' unique cameras');
++            detailParts.push(worst.uniqueComps + ' unique compositions');
++            detailParts.push(worst.uniqueBeats + ' unique emotional beats');
++            issues.push({
++              key: 'cg_panel_collapse_s' + worst.sceneIndex,
++              severity: 'high',
++              category: 'PANEL_DIVERSITY_COLLAPSE',
++              diagnostic: 'Scene ' + worst.sceneIndex + ': ' + worst.panelCount + ' panels collapsed to ' +
++                detailParts.join(' · ') + ' (diversity score ' + worst.diversityScore + '/16; n-gram overlap ' + worst.lexicalOverlapPct + '%; primary signal: ' + worst.primaryFail + '). Users perceive low-class-variance panels as ONE paid image regardless of prompt text differences.',
++              action: 'PLANNING-LAYER fix: the scaffold per-beat planner must declare a DIFFERENT shot type per panel — pick from {reaction echo, environment establish, memory insert, object close-up, LI glimpse, body-language shift, threat tell, revelation moment}. Same subject+camera+composition across 4 beats = composition calcification. Roman 2026-06-11: same-prompt is a RENDERING failure; same-CLASS is a PLANNING failure — the planning failure is the more expensive one to fix because rendering can\'t recover it.'
++            });
++          }
++        } catch (_) {}
+ 
++        // ── RULE 1b: OPPORTUNITY_CONSUMPTION_COLLAPSE (Roman 2026-06-11) ────
++        // Adjacent to diversity but at the planning layer: when scaffold
++        // declares a consumedOpportunity per panel, flag if ≥3/4 panels claim
++        // the same opportunity. This catches the planning-level failure even
++        // when the prompts are lexically varied. Graceful no-op until scaffold
++        // populates consumedOpportunity. Lower severity than the perceptual
++        // diversity collapse (which fires on user perception, not planning).
++        try {
++          scenesArr.forEach(sc => {
++            if (sc.panels.length < 3) return;
++            const oppCounts = {};
++            let withOpp = 0;
++            sc.panels.forEach(p => {
++              if (p.consumedOpportunity) { oppCounts[p.consumedOpportunity] = (oppCounts[p.consumedOpportunity] || 0) + 1; withOpp++; }
++            });
++            if (withOpp < 3) return; // not enough declared opportunities to evaluate
++            const maxShare = Math.max.apply(null, Object.values(oppCounts));
++            if (maxShare >= 3) {
++              const dominant = Object.keys(oppCounts).find(k => oppCounts[k] === maxShare);
++              issues.push({
++                key: 'cg_opp_collapse_s' + sc.idx,
++                severity: 'medium',
++                category: 'OPPORTUNITY_CONSUMPTION_COLLAPSE',
++                diagnostic: 'Scene ' + sc.idx + ': ' + maxShare + '/' + sc.panels.length + ' panels consumed the same scaffold-declared opportunity ("' + dominant + '"). Multiple visual opportunities existed; the planner spent ' + maxShare + ' panels on one.',
++                action: 'Scaffold per-beat planner is letting opportunity selection collapse. Force opportunity diversity in the scaffold prompt: list available opportunities for the scene and require panels 1-4 to consume DIFFERENT entries. Roman 2026-06-11: "even perfect style adherence won\'t save a scene that spends four panels on the same moment."'
++              });
++            }
++          });
++        } catch (_) {}
++
++        // ── RULE 2: CANON_LANDMARK_LOSS ─────────────────────────────────────
++        // Region-specific visual landmarks absent from all panels of a scene
++        // set in that region. Currently coded for Veilwood (helix/spiral/
++        // braided trees); extensible to other regions as canon expands.
++        try {
++          const REGION_LANDMARKS = {
++            veilwood: { landmarkRx: /\b(helix|helixed|spiral(?:bound|grass)?|braid(?:ed)?|twisted|gossamer|lumenweave|spirarch|red\s+spiralgrass)\b/i, label: 'Veilwood helix/spiral/braided trees + red spiralgrass + Lumenweave' },
++            the_veilwood: { landmarkRx: /\b(helix|spiral|braid|gossamer|lumenweave)\b/i, label: 'Veilwood landmarks' }
++          };
++          scenesArr.forEach(sc => {
++            const regions = new Set();
++            sc.panels.forEach(p => { if (p.region) regions.add(p.region); });
++            regions.forEach(region => {
++              const cfg = REGION_LANDMARKS[region];
++              if (!cfg) return;
++              const panelsForRegion = sc.panels.filter(p => p.region === region);
++              if (panelsForRegion.length < 2) return;  // need ≥2 to call canon loss
++              const anyMention = panelsForRegion.some(p => cfg.landmarkRx.test(p.prompt));
++              if (!anyMention) {
++                issues.push({
++                  key: 'cg_landmark_loss_' + region + '_s' + sc.idx,
++                  severity: 'medium',
++                  category: 'CANON_LANDMARK_LOSS',
++                  diagnostic: 'Scene ' + sc.idx + ' set in ' + region + ' but ' + panelsForRegion.length + '/' + panelsForRegion.length + ' panels mention NO region-defining landmarks (' + cfg.label + ').',
++                  action: 'Region-canon landmarks lost the competition against artist style. Verify the world-canon directive (e.g. VEILWOOD TREES at ~app.js:120854) is being injected into the panel render prompt. Likely cause: artist-style page overriding world canon — the canon-hierarchy clause shipped today should help; if not, surface the landmark requirement at PROMPT-TAIL position so it survives recency-effect competition.'
++                });
++              }
++            });
++          });
++        } catch (_) {}
++
++        // ── RULE 3: CAST_SPECIES_CONTAMINATION ──────────────────────────────
++        // Panel prompt mentions a species or named character NOT in the locked
++        // scene roster. Catches the "pig-ear panel" pattern: image gen reaches
++        // for additional Fatelands species (Thornwild werefolk, etc.) from
++        // broader prompt context when roster isn't locked.
++        try {
++          const FATELANDS_SPECIES = ['first_favored', 'first favored', 'kwisheen', 'octofolk', 'thornwild', 'werefolk', 'shackle isles', 'shackler'];
++          const ANIMAL_FEATURE_RX = /\b(pig ears?|wolf ears?|cat ears?|fox ears?|snout|muzzle|fur (?:covering|patches)|whiskers|tail|hooves|paws|tentacles?)\b/i;
++          scenesArr.forEach(sc => {
++            sc.panels.forEach(p => {
++              if (!p.species || !p.species.length) return;
++              const lockedSpecies = new Set(p.species.map(s => String(s).toLowerCase()));
++              const promptLower = String(p.prompt || '').toLowerCase();
++              const bled = [];
++              FATELANDS_SPECIES.forEach(sp => {
++                if (lockedSpecies.has(sp)) return;
++                if (promptLower.indexOf(sp) >= 0) bled.push(sp);
++              });
++              const animalBleed = ANIMAL_FEATURE_RX.test(promptLower) && !lockedSpecies.has('thornwild') && !lockedSpecies.has('kwisheen');
++              if (bled.length || animalBleed) {
++                issues.push({
++                  key: 'cg_cast_bleed_s' + sc.idx + '_p' + (p.panelIndex || 0),
++                  severity: 'high',
++                  category: 'CAST_SPECIES_CONTAMINATION',
++                  diagnostic: 'Scene ' + sc.idx + ' panel ' + (p.panelIndex || 0) + ': species/feature bleed-in [' + bled.concat(animalBleed ? ['animal-features-without-locked-species'] : []).join(', ') + '] — locked species: [' + Array.from(lockedSpecies).join(', ') + ']',
++                  action: 'Add HARD CAST ROSTER lock to the panel prompt header BEFORE the visual description: "PANEL CAST: <species + named characters>. FORBIDDEN: any additional species, additional named characters, non-roster animal morphologies." Users interpret cast bleed as "the AI drew the wrong picture" — high-severity perceptual failure.'
++                });
++              }
++            });
++          });
++        } catch (_) {}
++
++        // ── RULE 4: LI_VISUAL_ABSENCE (Scene 1 contract violation) ──────────
++        // Scene 1 + scene1Presence !== ABSENT + LI name appears in NO panel.
++        // CG has a visual advantage: even when LI is offstage in prose, a
++        // memory flash / object association / remembered silhouette panel
++        // should surface him.
++        try {
++          const sceneState = window.state || {};
++          const liName = String(sceneState.loveInterestName || '').split(/\s+/)[0];
++          const scene1Presence = (sceneState.romanceEnginePlan && sceneState.romanceEnginePlan.scene1Presence) || '';
++          if (liName && liName.length >= 2 && scene1Presence && scene1Presence !== 'ABSENT') {
++            const scene1Panels = (bySceneMap['0'] || bySceneMap[0] || []);
++            if (scene1Panels.length >= 3) {
++              const liRe = new RegExp('\\b' + liName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b', 'i');
++              const anyLi = scene1Panels.some(p => liRe.test(p.prompt));
++              if (!anyLi) {
++                issues.push({
++                  key: 'cg_li_absent_scene1',
++                  severity: 'high',
++                  category: 'LI_VISUAL_ABSENCE',
++                  diagnostic: 'Scene 1: ' + scene1Panels.length + ' panels rendered but the LI "' + liName + '" appears in NONE — engine resolved to ' + scene1Presence + ' (not ABSENT), so the LI should have AT LEAST a memory beat / remembered silhouette / associated object panel.',
++                  action: 'Add an LI-visibility requirement to the CG Scene 1 contract: when scene1Presence ∈ {ONSTAGE, PROXY, REPUTATION, MEMORY}, at least one of the 4 panels must surface the LI visually (memory flash, remembered hand/smile/silhouette, or an LI-associated object). CG has a visual advantage over literary here — the Scene 1 LI gravity directive should produce a panel beat, not just prose.'
++                });
++              }
++            }
++          }
++        } catch (_) {}
++      }
++    } catch (_) {}
++
+     // Filter out acknowledged issues
+     const activeIssues = issues.filter(i => !_isAcked(i.key, acks));
+     return { issues: activeIssues, healthy: activeIssues.length === 0, scenes: audits.length, classified: classified.length };
+@@ -49403,6 +50092,797 @@
+ 
+ ` : '';
+ 
++    // ── FATELANDS PRESSURE MENU (Roman 2026-06-11) ─────────────────────────
++    // Observed live: even after the conflict-family diversity work, Fatelands
++    // A-plots still default to procedural primitives (writ + tribunal + board +
++    // hearing tomorrow). Diagnosis: world physics existed but world-native
++    // PRESSURE PRIMITIVES were never named. The model reaches for paperwork
++    // because paperwork is what its training calls "pressure-shaped." This
++    // block names the alternatives + reorders the hierarchy:
++    //   1. WORLD-NATIVE pressure (BOND/DEBT/SACRIFICE/FATE/WISH/OBLIGATION/OATH/IDENTITY)
++    //   2. RELATIONSHIP pressure (PC↔LI direct)
++    //   3. INSTITUTIONAL pressure (FALLBACK only, transformed by world grammar)
++    //
++    // CATEGORIES not specific hooks (Roman 2026-06-11 anti-calcification): if
++    // every Fatelands story opened on "a sacrifice from years ago is collected,"
++    // we'd have moved the basin, not escaped it. The model sees 8 categories
++    // with 5 example shapes each — categorical structure forces variety.
++    const _fatelandsFlavor = /fatelands|veilwood|thornwild|shackle.?isles|first.?favored|kwisheen/i.test(
++      String(worldSubtype || '') + ' ' + String(flavor || '') + ' ' + String((opts && opts.world) || '')
++    );
++
++    // ── FATELANDS LIGHTHOUSE RESOLVER v2 (Roman 2026-06-11 — INVERTED) ────
++    // v1 (deprecated): wound → lighthouse. Wrong dependency direction; the
++    // user's asymmetry test was conclusive: lighthouses can generate stories
++    // without wounds, but wounds without lighthouses default to procedural
++    // basin. The stable layer must drive the unstable layer.
++    //
++    // v2: lighthouse drives wound EXPRESSION. Selection inputs are:
++    //   • pairBond psychological locks (already filtered upstream by shape)
++    //   • R-plot escalation axis (relationship developmental dimension)
++    //   • Recent lighthouse history (anti-calcification soft penalty)
++    //
++    // Tier is NOT an eligibility gate (Roman 2026-06-11 correction:
++    // "rarity ≠ chronology"). All four lighthouses can OPEN a story at any
++    // tier; tier controls RESOLUTION DEPTH downstream (in the prompt).
++    //
++    // Wound is no longer an input. It becomes a CONSUMER of the resolver
++    // output via the WOUND HARMONIZATION block in the A-plot prompt.
++    const _FATELANDS_LOCK_LIGHTHOUSE_MAP = {
++      // Broken Vow-Bond — relationship × external; certainty of US
++      chosen_despite_evidence: 'broken_vow_bond',
++      believes_me_without_proof: 'broken_vow_bond',
++      chooses_when_room_doesnt: 'broken_vow_bond',
++      stays_when_loyalty_costs: 'broken_vow_bond',
++      refuses_to_look_away: 'broken_vow_bond',
++      holds_her_position: 'broken_vow_bond',
++      waits_without_shrinking: 'broken_vow_bond',
++      keeps_the_light_on: 'broken_vow_bond',
++      lets_me_carry_quietly: 'broken_vow_bond',
++      // Wrong Wish — relationship × past choice; certainty of WHAT I WANTED
++      accepts_being_the_cost: 'wrong_wish',
++      refuses_clean_moral_frame: 'wrong_wish',
++      holds_the_other_half: 'wrong_wish',
++      needs_to_be_needed: 'wrong_wish',
++      private_helplessness: 'wrong_wish',
++      // Syzygy — cosmology × past choice; certainty of WHAT HAPPENED
++      competes_with_no_one: 'syzygy',
++      accepts_being_second: 'syzygy',
++      outlasts_my_grief: 'syzygy',
++      // Fold — identity × cosmology; certainty of WHO I AM
++      sees_through_me: 'fold',
++      unflinching_witness: 'fold',
++      risks_being_known: 'fold',
++      releases_me_from_the_name: 'fold',
++      holds_when_old_self_walks_in: 'fold',
++      loves_me_as_spent: 'fold',
++      private_recognition: 'fold',
++      trains_attention_on_what_i_care: 'fold'
++    };
++    const _FATELANDS_AXIS_LIGHTHOUSE_HINT = {
++      visibility: 'broken_vow_bond',
++      armor:      'broken_vow_bond',
++      trust:      'broken_vow_bond',
++      proximity:  'broken_vow_bond',
++      yielding:   'wrong_wish',
++      care:       'wrong_wish',
++      knowing:    'fold'
++    };
++    const _FATELANDS_CERTAINTY_BY_LH = {
++      broken_vow_bond: 'I was certain of US',
++      wrong_wish:      'I was certain of WHAT I WANTED',
++      syzygy:          'I was certain of WHAT HAPPENED',
++      fold:            'I was certain of WHO I AM'
++    };
++
++    function _resolveFatelandsLighthouse(s) {
++      s = s || {};
++      var pairBond = s.pairBond || {};
++      var rPlot = s.rPlot || {};
++      var tier = String(s.storyLength || '').toLowerCase();
++
++      // Collect locks (deduped, lower-cased)
++      var lockTags = [
++        pairBond.psychologicalLock_li,
++        pairBond.psychologicalLock_pc,
++        pairBond.psychologicalLock_li_secondary,
++        pairBond.psychologicalLock_pc_secondary
++      ].map(function (l) { return String(l || '').toLowerCase().trim(); }).filter(Boolean);
++      var seen = {};
++      var locks = [];
++      lockTags.forEach(function (t) { if (!seen[t]) { seen[t] = true; locks.push(t); } });
++
++      // Score by lock match (+2 per lock)
++      var scores = { broken_vow_bond: 0, wrong_wish: 0, syzygy: 0, fold: 0 };
++      var matchedLocks = { broken_vow_bond: [], wrong_wish: [], syzygy: [], fold: [] };
++      locks.forEach(function (lock) {
++        var lh = _FATELANDS_LOCK_LIGHTHOUSE_MAP[lock];
++        if (lh && scores.hasOwnProperty(lh)) {
++          scores[lh] += 2;
++          matchedLocks[lh].push(lock);
++        }
++      });
++
++      // Score by R-plot escalation axis (+1)
++      var axis = String(rPlot.escalationAxis || '').toLowerCase().trim();
++      var axisHint = _FATELANDS_AXIS_LIGHTHOUSE_HINT[axis] || null;
++      if (axisHint) scores[axisHint] += 1;
++
++      // Anti-calcification: soft penalties for recent uses (Roman 2026-06-11:
++      // -3 most-recent, -2 second-most, -1 third-most — not a hard ban, lets
++      // strong lock signals still dominate but breaks ties toward variety).
++      var history = [];
++      try {
++        var raw = localStorage.getItem('sb_fatelands_lighthouse_history');
++        history = raw ? (JSON.parse(raw) || []) : [];
++        if (!Array.isArray(history)) history = [];
++      } catch (_) {}
++      var recent = history.slice(-10);
++      var historyPenalties = {};
++      for (var i = recent.length - 1; i >= 0; i--) {
++        var rl = recent[i];
++        if (!scores.hasOwnProperty(rl)) continue;
++        var distance = (recent.length - 1) - i;  // 0 = most recent
++        var penalty = (distance === 0) ? 3 : (distance === 1) ? 2 : (distance === 2) ? 1 : 0;
++        if (penalty) {
++          scores[rl] -= penalty;
++          historyPenalties[rl] = (historyPenalties[rl] || 0) - penalty;
++        }
++      }
++
++      // Pick highest-scoring (tie-break: order in scores keys)
++      var lighthouse = 'broken_vow_bond';
++      var maxScore = -Infinity;
++      var order = ['broken_vow_bond', 'wrong_wish', 'syzygy', 'fold'];
++      order.forEach(function (lh) {
++        if (scores[lh] > maxScore) { maxScore = scores[lh]; lighthouse = lh; }
++      });
++
++      // Build reasoning trace — Roman 2026-06-11: "incredibly useful six months from now."
++      var why = [];
++      if (matchedLocks[lighthouse].length) {
++        why.push('locks=[' + matchedLocks[lighthouse].join(', ') + '] (+' + (matchedLocks[lighthouse].length * 2) + ')');
++      }
++      if (axisHint === lighthouse) {
++        why.push('axis=' + axis + ' (+1)');
++      }
++      if (historyPenalties[lighthouse]) {
++        why.push('history-penalty=' + historyPenalties[lighthouse] + ' (still won)');
++      }
++      if (!why.length) {
++        why.push('default (no strong signals); fell to alphabetical-order tie-break');
++      }
++      // Surface losing scores too — diagnostic when something close.
++      var losers = order.filter(function (lh) { return lh !== lighthouse; })
++        .map(function (lh) { return lh + ':' + scores[lh]; }).join(', ');
++
++      return {
++        lighthouse: lighthouse,
++        certainty: _FATELANDS_CERTAINTY_BY_LH[lighthouse],
++        score: scores[lighthouse],
++        reason: why.join(' | '),
++        losers: losers,
++        scores: scores,
++        matchedLocks: matchedLocks,
++        axis: axis,
++        tier: tier,
++        historyAtSelection: recent.slice()
++      };
++    }
++
++    // History recorder — Roman 2026-06-11. Called after A-plot success so the
++    // resolver's anti-calcification penalty has data to apply next story.
++    // Rolling 20-entry LS list.
++    function _recordFatelandsLighthouseHistory(lighthouse) {
++      try {
++        if (!lighthouse) return;
++        var raw = localStorage.getItem('sb_fatelands_lighthouse_history');
++        var arr = raw ? (JSON.parse(raw) || []) : [];
++        if (!Array.isArray(arr)) arr = [];
++        arr.push(String(lighthouse));
++        while (arr.length > 20) arr.shift();
++        localStorage.setItem('sb_fatelands_lighthouse_history', JSON.stringify(arr));
++      } catch (_) {}
++    }
++    window._recordFatelandsLighthouseHistory = _recordFatelandsLighthouseHistory;
++
++    // Per-lighthouse exemplar bodies. Only ONE is injected per A-plot based on
++    // the resolver's selection. Headers read "SELECTED LIGHTHOUSE" (not
++    // "CANONICAL EXEMPLAR") to make clear the architecture made the choice.
++    const _FATELANDS_LIGHTHOUSE_EXEMPLARS = {
++      broken_vow_bond: `═════════════════════════════════════════════════════════════════
++SELECTED LIGHTHOUSE — THE BROKEN VOW-BOND (resolved from PC wound; relationship × external; certainty attacked: "I was certain of US")
++═════════════════════════════════════════════════════════════════
++
++The architecture has selected THIS lighthouse based on the PC's wound architecture. Build the A-plot's emotional geometry around its pattern.
++
++THE STORY SHAPE:
++  Yesterday morning her husband left. He is now living with another woman. Every alignment reading on him still returns HE LOVES YOU. The vow-bond between them is fractured — visibly — but not broken; a thread the color of nothing still runs from her wrist to wherever he is. Either someone has discovered an impossible form of wishcraft (the world's central protection has been penetrated), OR the bond was never what everyone — including her, including the First Favored Vow Arbiter who witnessed it — believed it was.
++
++PRIMARY CATEGORIES SIMULTANEOUSLY ENGAGED:
++  • ALIGNMENT FAILURE — alignment reads true; the man is gone
++  • BOND — fractured but still glowing, still pointing at him
++  • OATH — the vow-bond is canonical Fatelands magic; this is an oath under attack
++  • WISH — if someone moved him, they did it with impossible wishcraft
++  • MYSTERY — did he change, was he changed, was she changed, or was the bond never what it appeared?
++
++SACRED ASSUMPTION ATTACKED: vow-bonds are supposed to be the strongest defense Fatelands has against editable reality. If THIS one breaks — or appears to break while NOT breaking — the world's foundations have moved.
++
++HOT CRISIS DETONATION: the story opens on "He is gone." Not "a hearing tomorrow." The emotional reality exists before the first player choice appears.
++
++LI ENTANGLEMENT VERIFIED (welding test passing in three dimensions):
++  • Remove the LI → story disappears
++  • Remove the romance → story disappears
++  • Remove the world mechanics → story disappears
++
++POSTER IMAGES:
++  • A luminous vow-thread connecting two lovers suddenly snaps, both ends still glowing
++  • A woman staring at a bond-thread that still points toward the man who just abandoned her
++  • A marriage-vow sigil burning on her wrist while another woman's name appears inside it
++
++USE THIS LIGHTHOUSE'S STRUCTURE, NOT ITS LITERAL SHAPE:
++  (1) a sacred Fatelands assumption attacked,
++  (2) multiple primary categories engaged simultaneously (3-5 of them),
++  (3) present-tense detonation in the opening line,
++  (4) LI structurally inseparable (welding test passes),
++  (5) world-mechanics-vs-observable-reality contradiction as the engine of mystery.
++Rotate the specific shape: broken vow / fractured bond / contradicting reading / sigil that names the wrong person / wish that rerouted.
++
++`,
++      wrong_wish: `═════════════════════════════════════════════════════════════════
++SELECTED LIGHTHOUSE — THE WRONG WISH (resolved from PC wound; relationship × past choice; certainty attacked: "I was certain of WHAT I WANTED")
++═════════════════════════════════════════════════════════════════
++
++The architecture has selected THIS lighthouse based on the PC's wound architecture. The PC did not suffer reality — the PC MADE reality, and the bill is arriving. Interior crisis, not exterior.
++
++THE STORY SHAPE — TWO VARIANTS:
++
++(a) THE RIVAL DIES. Years ago she made a meaningful sacrifice and wished for him. The wish bound. This morning — or last week — the woman he was pledged to collapsed dead in the middle of a festival. The questions begin immediately: did I cause this? Did I secretly want this? What did my wish actually mean? What exactly did I sacrifice? What did the world hear me ask for?
++
++(b) THE RAIN. She wished for rain because she wanted to avoid a ceremony. The rain came. The ceremony was canceled. The crops failed. People starved. Somehow the village now blames the LI.
++
++Either variant: the cost is not abstract. People are dead. Crops are gone. Trust has shifted onto the wrong person. And the PC cannot tell whether the wish granted what she SAID or what she actually WANTED.
++
++PRIMARY CATEGORIES SIMULTANEOUSLY ENGAGED:
++  • WISH — a wish granted years ago is finally being understood correctly
++  • SACRIFICE — the cost is arriving late, in an unanticipated form
++  • CONSEQUENCE REVELATION — the bill has come; the true meaning of an earlier choice has surfaced
++  • GUILT — moral pressure routed through the PC herself, not delivered by an external antagonist
++  • The LI is structurally INSIDE the wish — he is the object the wish reached for
++
++SACRED ASSUMPTION ATTACKED: "I understand my own desires." Fatelands teaches you that wishes obey intent. The Wrong Wish reveals that what the world heard was something the wisher could not bring herself to say aloud — or could not bring herself to KNOW.
++
++HOT CRISIS DETONATION: the story opens on the consequence. The rival is dead. The crops are failed. The village is mourning. The wish was made years ago; the bill is being delivered NOW. The detonation is not the wish — the detonation is the comprehension.
++
++THE ROMANCE-ENDING QUESTION:
++  "Did you steal me?"  /  "Did you love me — or did your wish make me love you?"  /  "Was anything between us my choice?"
++
++The LI eventually learns. When he does, the relationship's foundation cracks — not from conventional betrayal, but because neither of them now knows what was real desire and what was wishcraft.
++
++LI ENTANGLEMENT VERIFIED:
++  • Remove the LI → there is no wish to question (the wish was FOR him)
++  • Remove the romance → the wish has no weight
++  • Remove the world mechanics → wishes don't bind, the question doesn't exist
++
++POSTER IMAGES:
++  • A woman at a festival watching a body fall, her own hand against her mouth — not in shock, but in recognition
++  • A child's wish-sigil glowing under a wedding ring, twenty years late
++  • A man looking at his own hands and not recognizing them while she watches from the doorway
++
++USE THIS LIGHTHOUSE'S STRUCTURE, NOT ITS LITERAL SHAPE:
++  (1) the PC CAUSED the current crisis, not suffered it,
++  (2) a Fatelands mechanic she trusted is revealed to have heard her differently than she heard herself,
++  (3) the consequence DETONATES IN THE PRESENT from a choice made in the past (CONSEQUENCE REVELATION),
++  (4) the LI is structurally inside the wish/sacrifice/oath in question (often AS the object),
++  (5) moral pressure routes through GUILT, not external antagonism.
++Rotate which mechanic was misheard (wish / sacrifice / oath / bond / fate-debt), what was actually purchased, how long ago, and what form the bill takes.
++
++`,
++      syzygy: `═════════════════════════════════════════════════════════════════
++SELECTED LIGHTHOUSE — THE SYZYGY IS UPON US (resolved from PC wound; cosmology × past choice; certainty attacked: "I was certain of WHAT HAPPENED")
++═════════════════════════════════════════════════════════════════
++
++The architecture has selected THIS lighthouse based on the PC's wound architecture. This is COSMOLOGICAL — reality's accounting system is briefly open. Not a relationship crisis. The world surfacing the question of what cannot be undone — and showing her that for a single window, it can.
++
++THE STORY SHAPE:
++  A rare cosmic alignment — a syzygy — has come. During this window, the fate-ledger is loose: wishes can be unmade. A wish UNMADE rewrites everything it caused. The PC has discovered (or been told, or felt in her sleep) that during this alignment she can undo one or two of her past wishes. She cannot undo all of them. The question is not whether she will undo a wish. The question is WHICH.
++
++  Three of her wishes are eligible. Each costs the others:
++    • the wish that brought the LI into her life
++    • the wish that saved her village from a plague she no longer remembers
++    • the wish whose cost she now suspects was her sister's life
++
++  She must choose ONE or TWO to keep undone. The Syzygy closes at sunset. The math is binding.
++
++PRIMARY CATEGORIES SIMULTANEOUSLY ENGAGED:
++  • WISH — wishes are eligible for unmaking; the substrate of her life is editable
++  • SACRIFICE — every choice now is a new sacrifice
++  • CONSEQUENCE REVELATION — choosing illuminates what each wish actually purchased
++  • FATE — the cosmic window is fate-physical
++  • MORAL CHOICE — three goods, only two can be kept; values forced into open conflict
++
++SACRED ASSUMPTION ATTACKED: "the past is fixed." Fatelands lives partly on the implicit contract that what happened, happened. The Syzygy breaks that contract for a single window — and asks her to participate in the breaking.
++
++THE DRAMATIC ENGINE IS NOT THE WISH-UNDOING. IT IS THE CHOICE: she cannot keep all three. Forcing VALUES into conflict (LI vs sister vs village) is stronger than forcing FACTS into conflict (who did what to whom).
++
++HOT CRISIS DETONATION: she wakes up feeling one of her wishes loosening. The crisis is already underway. Not "the syzygy will happen next week" — "I can feel my own past beginning to shift."
++
++LI ENTANGLEMENT VERIFIED:
++  • Remove the LI → no dilemma (the LI-wish is one of the three)
++  • Remove the romance → the LI-wish becomes abstract
++  • Remove the world mechanics → wishes can't be unmade
++
++POSTER IMAGES:
++  • Three wish-sigils glowing in her cupped hands; a syzygy of stars visible in the sky behind her; she can keep only two
++  • A wedding ring fading from her finger while another woman's name appears in the empty groove
++  • A woman lit from above by an alignment of stars only she and the LI can see; both of them know what she may be about to do
++
++USE THIS LIGHTHOUSE'S STRUCTURE, NOT ITS LITERAL SHAPE:
++  (1) reality's normal rules briefly suspend (cosmological window),
++  (2) the PC must CHOOSE between incompatible goods (VALUES in conflict, not facts),
++  (3) the LI is one of the goods at stake but not the only one (the moral triangle is the engine),
++  (4) the crisis detonates internally — she feels the world change BEFORE the player chooses,
++  (5) the resolution is not winning, it is sacrificing.
++Rotate the cosmological event (syzygy / eclipse / fate-debt amnesty / sacrifice-festival), the wishes in question, what the LI represents in the moral triangle.
++
++`,
++      fold: `═════════════════════════════════════════════════════════════════
++SELECTED LIGHTHOUSE — THE FOLD (resolved from PC wound; identity × cosmology; certainty attacked: "I was certain of WHO I AM")
++═════════════════════════════════════════════════════════════════
++
++The architecture has selected THIS lighthouse based on the PC's wound architecture. This is an IDENTITY problem at cosmological scale. Not a fate problem. The deepest assumption: "there is one version of me."
++
++THE STORY SHAPE:
++  A Fold has opened. A Fold is a place — a structure, a grove, a derelict shrine, a back room of a temple — where the versions of a person who could have existed sit alongside the one who does. People enter hoping to become "better." They discover that "better" is not a vector. Different choices produce different selves. None of them is the true self; all of them are.
++
++  Her LI is inside the Fold today. Or she is. Or both. When the doorway opens she sees:
++    • the version of him who never loved her
++    • the version who always loved her
++    • the version who became her husband
++    • the version who betrayed her
++    • the version who died for her
++
++  All simultaneously. All true. The question "which version is real" has a Fatelands answer: ALL OF THEM.
++
++  The crisis: she must decide which version to HOLD. The Fold collapses at the end of the day. Only one configuration survives — and her holding determines it.
++
++PRIMARY CATEGORIES SIMULTANEOUSLY ENGAGED:
++  • FATE — the Fold IS Fate made structural; possibility crystallized into geometry
++  • SACRIFICE — every version chosen unmakes the others
++  • CONSEQUENCE REVELATION — she discovers what her past choices made her by seeing what she did NOT become
++  • IDENTITY — herself and the LI are both multiple; the romance partner she has been loving is one of several
++
++SACRED ASSUMPTION ATTACKED: "there is one version of me." Beyond that, the implicit promise that improvement has no cost — that becoming better is a vector with no opportunity cost. The Fold reveals: every "better" had to displace another self who was also real.
++
++ROMANCE GEOMETRY: this is the most devastating lighthouse for romance — it asks "which LI did you love?" The version who became your husband and never doubted you, or the version who almost left and came back, or the version who would have died for you in the war that did not happen? She must hold one. The others fade. The chosen one was already inside the relationship — but she did not know there was a choice to make.
++
++HOT CRISIS DETONATION: she walks into the Fold and sees her LI multiplied. The crisis is HERE. Not "tomorrow she must enter the Fold" — she has crossed the threshold; the choice is now.
++
++LI ENTANGLEMENT VERIFIED:
++  • Remove the LI → no choice (choosing about herself alone is a different and lesser story)
++  • Remove the romance → identity multiplicity becomes philosophical; the Fold turns abstract
++  • Remove the world mechanics → no multiplicity; her LI is just her LI
++
++POSTER IMAGES:
++  • A couple standing in a Fold-doorway; behind them, a hundred faded versions of themselves overlapping
++  • A woman watching her husband's hands and seeing them belonging to three different men, each of whom has touched her
++  • A child reaching for a version of her mother who never had her
++
++USE THIS LIGHTHOUSE'S STRUCTURE, NOT ITS LITERAL SHAPE:
++  (1) the PC's identity is revealed to be multiple — the self is shown to be a choice,
++  (2) the LI is also multiple — the romance partner she has loved is one of several,
++  (3) she must CHOOSE which version of him to hold,
++  (4) the choice is structurally a sacrifice of the others,
++  (5) the question "which is real" has the Fatelands answer: ALL OF THEM.
++Rotate which Fold-structure (grove / shrine / mirror-tower / fate-mountain), what configurations the LI manifests in, what she discovers about herself by choosing.
++
++`
++    };
++
++    // Resolve lighthouse for THIS story (only when Fatelands gate matched).
++    const _lhResult = _fatelandsFlavor ? _resolveFatelandsLighthouse(window.state || {}) : null;
++    const _lhExemplar = (_lhResult && _FATELANDS_LIGHTHOUSE_EXEMPLARS[_lhResult.lighthouse]) || '';
++
++    // ── WOUND HARMONIZATION (Roman 2026-06-11) ─────────────────────────────
++    // The PC's wound was generated independently in the Bible. The lighthouse
++    // (resolved above) provides the EXPRESSION REGISTER for that wound — not
++    // the wound itself. This block tells the model: "use the existing wound
++    // material, but render it through the lighthouse's certainty-attack."
++    //
++    // Cross-world wound continuity: the same abandoned_child wound expresses
++    // as Broken-Vow shape in Billionaire (someone who left her), Wrong-Wish
++    // shape in Glass House (a wish she made that drove her mother away),
++    // and Fold shape in Fatelands (the version of her her mother could leave).
++    // Wound = constant. Lighthouse = world-specific shape.
++    const _woundHarmonization = (_fatelandsFlavor && _lhResult) ? (function () {
++      var s = window.state || {};
++      var pcWound = (s.pcBodyBible && s.pcBodyBible.wound) || {};
++      var pcWoundCore = String(pcWound.core || '').slice(0, 200);
++      var pcWoundCat = String(pcWound.category || '');
++      return `\n═════════════════════════════════════════════════════════════════
++WOUND HARMONIZATION (HARD — Roman 2026-06-11; lighthouse drives expression, NOT wound)
++═════════════════════════════════════════════════════════════════
++
++The PC's wound was generated independently in the Bible. The lighthouse above provides the EXPRESSION REGISTER — how the wound MANIFESTS in THIS story — not the wound itself.
++
++  • PC wound (from Bible): "${pcWoundCore}"${pcWoundCat ? ' (category: ' + pcWoundCat + ')' : ''}
++  • Resolved lighthouse: ${_lhResult.lighthouse}
++  • Certainty attacked: "${_lhResult.certainty}"
++
++YOUR JOB: render the existing wound THROUGH the lighthouse's certainty-attack. Do not swap wounds. Do not soften them. RE-EXPRESS them in the lighthouse's register.
++
++EXAMPLE TRANSLATIONS (how the SAME wound material expresses through DIFFERENT lighthouses):
++  • abandoned_child + Broken-Vow-Bond → "her mother left in the middle of the bond-ceremony she swore to witness; the bond still glows where her mother used to stand"
++  • abandoned_child + Wrong Wish      → "she wished her mother into leaving when she was seven; the wish bound; she found the sigil years later"
++  • abandoned_child + Syzygy          → "she could undo the wish that drove her mother away — but it would unmake the LI"
++  • abandoned_child + The Fold        → "she became the version of herself her mother could leave; the Fold shows her the daughter her mother would have stayed for"
++
++Same wound material; four different expression geometries. The lighthouse picks the geometry; the wound provides the texture.
++
++═════════════════════════════════════════════════════════════════
++RESOLUTION DEPTH (Roman 2026-06-11; tier-aware; OPENING is NEVER gated)
++═════════════════════════════════════════════════════════════════
++
++The lighthouse can OPEN at any tier — the catastrophe is allowed to be enormous on page 1. What changes with tier is RESOLUTION DEPTH — how much time the story has to explore consequences before attempting closure.
++
++Tier this story: ${_lhResult.tier || '(unspecified)'}
++
++  • taste / single-issue: catastrophe happens; consequences are EXPLORED; full resolution is NOT attempted. The Fold collapsing into a single self / the Syzygy completing / the bond re-forming / the wish being undone — those are NOT issue-1 endings. The story closes on the PC LIVING IN the certainty-attack, not having resolved it.
++  • medium: partial resolution may be touched; the certainty-attack is processed but not closed.
++  • epic / long: full arc-scale exploration; resolution attempts are appropriate.
++
++OPENING IS ALLOWED at any tier. RESOLUTION is what's tier-gated. A Fold opener at taste-tier is GOOD storytelling; a Fold resolver at taste-tier is bad pacing.
++
++`;
++    })() : '';
++
++    const _fatelandsPressureMenu = _fatelandsFlavor ? `PRESSURE SOURCE HIERARCHY — FATELANDS (HARD — Roman 2026-06-11; canonical architectural spec; non-negotiable):
++
++Fatelands is a FATE-PHYSICAL world. Reality is editable. Wishes alter outcomes. Sacrifices have consequences. Oaths accumulate weight. Bonds become visible. Institutions evolved under "people alter reality," NOT "people lie." Different threat model, different forms.
++
++═════════════════════════════════════════════════════════════════
++CORE RULE — WORLD-NATIVE PRESSURE PRECEDENCE
++═════════════════════════════════════════════════════════════════
++
++When generating a Fatelands A-plot, draw goal/conflict from this list in this order:
++  1. ALIGNMENT FAILURE (the world's core mechanic failing in this case — highest leverage; uniquely Fatelands)
++  2. CONSEQUENCE REVELATION (the bill arrives — true meaning of an earlier wish/sacrifice/oath/bond is finally being read correctly; PC-caused crisis)
++  3. FATE pressure
++  4. BOND pressure
++  5. SACRIFICE pressure
++  6. WISH pressure
++  7. OATH pressure
++  8. OBLIGATION pressure
++  9. INSTITUTIONAL pressure (FALLBACK ONLY)
++
++Institutional pressure is fallback. If an institutional structure appears, it must EXPRESS one of the higher categories, not REPLACE it. The pressure IS the higher category. The institution merely processes it.
++
++  ✗ "A hearing is scheduled tomorrow."
++  ✓ "A wish-debt has come due; the Alignment Circle will determine who must pay it."
++
++The pressure is the debt. The institution merely processes it.
++
++═════════════════════════════════════════════════════════════════
++HOT CRISIS PRINCIPLE — DETONATION, NOT ANNOUNCEMENT
++═════════════════════════════════════════════════════════════════
++
++A Fatelands HOT crisis detonates NOW, on the page. It does not schedule conflict for tomorrow morning. The opening energy is the WORLD ATTACKING ITS OWN ASSUMPTIONS, not a calendar reminder.
++
++  ✗ "A tribunal is scheduled for tomorrow."   ← announcement of future conflict
++  ✓ "The First Sacrifice she just oversaw is twisting — the wish is rewriting reality and nobody knows what it's becoming."   ← detonation, now
++
++A writ arriving in the mail announces that conflict WILL happen. A failing alignment, a twisting wish, a bond suddenly visible to a hostile witness — those are crises HAPPENING ON THE PAGE. The opening-energy profile is completely different.
++
++TEST: "Is this crisis happening RIGHT NOW, or will it happen later?" If later, the pressure is deferred. Re-anchor to a present-tense detonation. A Fatelands story should not OPEN by scheduling a future event — it should open on the moment the world started going wrong.
++
++═════════════════════════════════════════════════════════════════
++FIRST FAVORED — CIVILIZATION-SCALE SOCIAL TECHNOLOGY
++═════════════════════════════════════════════════════════════════
++
++The First Favored are not merely a species. They are a civilization-scale social technology. Their ability to read alignment shapes every Fatelands institution.
++
++TRUSTED REGIONS — First Favored may serve as:
++  • Alignment Readers (probing the gap between inner and spoken pattern)
++  • Oath Witnesses (validating that an oath is honestly bound)
++  • Bond Custodians (cataloguing visible ties between persons)
++  • Sacrifice Keepers (tracking what was paid and what remains owed)
++  • Wish Registrars (recording wishes and their exact wording)
++  • Vow Arbiters (determining alignment between speaker and vow)
++  • Fate Auditors (reading the patterns around a person)
++
++SUSPICIOUS REGIONS — First Favored may be:
++  • barred from testimony
++  • treated as manipulators
++  • considered reality-distorting
++  • accused of influencing outcomes
++  • forbidden from witnessing vows
++
++This regional tension is permanent Fatelands story material. Where a First Favored stands geographically — and how they are received — is its own conflict source. A First Favored PC who must testify in a suspicious region carries a wholly different pressure shape than one operating in trusted regions.
++
++═════════════════════════════════════════════════════════════════
++ALIGNMENT LOGIC (human courts vs First Favored institutions)
++═════════════════════════════════════════════════════════════════
++
++Human courts evolved under "people lie." They ask: "Did you do it?"
++
++First Favored institutions evolved under "people alter reality." They ask:
++  • "When did your inner pattern diverge from your spoken pattern?"
++  • "Which sacrifice created this fracture?"
++  • "Were you lying, or did you misunderstand yourself?"
++  • "When did you begin wanting to do it?"
++
++The focus is NOT guilt. The focus is ALIGNMENT. Conflict in Fatelands grows from misalignment — between what someone wants and what they say, between an oath sworn and the heart that swore it, between a wish made and the wish actually wanted.
++
++═════════════════════════════════════════════════════════════════
++FIRST SACRIFICE CEREMONIES (canonical Fatelands institution)
++═════════════════════════════════════════════════════════════════
++
++First Sacrifice is one of the most important social institutions in Fatelands. A child becomes an adult by performing a meaningful sacrifice and binding a wish to it. The ceremony is public. The wish matters. The sacrifice matters. The outcome is visible. Failure carries consequences.
++
++PREFERRED conflict sources from First Sacrifice:
++  • fear of the sacrifice (the cost is real and irreversible)
++  • disagreement over what should be sacrificed
++  • hidden wishes (something the child won't say aloud)
++  • forbidden wishes (something they shouldn't want)
++  • public embarrassment / social shaming if the sacrifice is "lesser"
++  • romantic entanglement (the wish is about the LI)
++  • family pressure (the sacrifice they want vs the family's preferred sacrifice)
++  • sacrifice gone wrong (the wrong thing offered, or the wish twisted)
++
++These are HIGH-VALUE Fatelands pressure sources. Prefer them.
++
++═════════════════════════════════════════════════════════════════
++MARRIAGE & VOW INSTITUTIONS
++═════════════════════════════════════════════════════════════════
++
++In Fatelands, marriage is not symbolic. Marriage ALTERS REALITY. A vow has consequences. A vow spoken without alignment risks TWISTING — the world gives the speaker what they actually wanted, not what they said.
++
++First Favored are often requested at major unions. Their role is NOT to approve a marriage. Their role is to determine whether the participants are ALIGNED with the vows they intend to bind.
++
++PREFERRED conflict sources from Marriage / Vow institutions:
++  • a vow that cannot be spoken honestly
++  • a hidden desire that would twist the vow
++  • conflicting obligations beneath the vow
++  • romantic triangle pressure
++  • duty versus love
++  • political necessity versus genuine alignment
++
++═════════════════════════════════════════════════════════════════
++FATE-SECURED INSTITUTIONS (how Fatelands paperwork actually works)
++═════════════════════════════════════════════════════════════════
++
++NEVER assume Fatelands documents function like modern paperwork. The institutions evolved defenses against reality being editable.
++
++WRITS: a writ is NOT paper. A writ is a binding STRAND OF CONSEQUENCE.
++  • Destroying it causes it to return
++  • Ignoring it strengthens it
++  • Wishing it away often worsens it
++
++DEBTS: debts are attached to FATE.
++  • They cannot simply disappear
++  • Attempts to evade them alter WHO ultimately pays
++
++OATHS: oaths accumulate WEIGHT.
++  • Breaking them leaves visible consequences (skin discoloration, voice flattening, dreams missing texture)
++  • The weight is readable by fate-aware speakers
++
++CONTRACTS: contracts are LIVING OBLIGATIONS. The world itself remembers them.
++
++═════════════════════════════════════════════════════════════════
++PRIMARY PRESSURE MENU — pick ONE as the goal/conflict spine
++═════════════════════════════════════════════════════════════════
++
++Examples are SHAPE templates — substitute THIS story's bibles + wounds + locks. NEVER copy a template verbatim.
++
++ALIGNMENT FAILURE — the world's core mechanic failing in this case (HIGHEST LEVERAGE; uniquely Fatelands; cannot be transplanted to any other world):
++  • a First Sacrifice twists unexpectedly during or after the ceremony — the wish is rewriting reality in a way nobody anticipated
++  • an oath binds incorrectly — the world heard something different from what was spoken
++  • a respected First Favored reader misjudges someone, with visible consequences (death, betrayal, disappearance)
++  • two First Favored readers reach OPPOSITE conclusions about the same person and the same alignment question
++  • alignment says one thing; reality is doing another (people are dying, betraying, vanishing — yet every read returns true)
++  • a Wildfolk manipulator is exploiting the alignment system's edges (the world's central gift has a blind spot, and someone is using it)
++  • a supposedly impossible misalignment appears (categorical failure of the mechanic — what the species knew could not happen has just happened)
++  • a reading that was trusted years ago turns out to have been wrong, and the consequences are arriving now
++
++These are the strongest Fatelands openings. They detonate immediately, they raise mystery + shame + responsibility + consequence at once, and they collide directly with the species' identity. PREFER them.
++
++CONSEQUENCE REVELATION — the bill arrives (the true meaning of an earlier wish/sacrifice/oath/bond is finally being read correctly; the PC caused this and the crisis is interior):
++  • a wish granted years ago is being understood correctly for the first time, and what it actually meant is darker than what she thought she asked for
++  • a sacrifice's cost arrives late, in a form she never anticipated — the world heard a different price than the one she thought she was paying
++  • an oath's hidden interpretation activates — the binding contained a clause she did not know she was agreeing to
++  • a bond expresses an unintended term — the love she chose came with something attached, and the attachment is now visible
++  • a fate-debt reveals what was actually purchased years ago, and the LI was the currency
++
++This category is structurally different from the others: it is the PC's PAST CHOICE catching up with her, not the world acting upon her. The horror is interior. PREFER this when the wound architecture calls for guilt, complicity, or recognition.
++
++FATE — currents around her, working with or against:
++  • someone has spent fate against the PC; she does not know who
++  • fate begins collecting on an old choice
++  • a future consequence has arrived early
++  • the LI's fate-pattern is now visibly tangled with hers
++  • her path has been re-bound by another's wish
++
++BOND — visible / strengthening / threatened ties between people:
++  • a connection becomes visible to others who shouldn't see it
++  • a hidden attachment is exposed
++  • the binding tightens whenever his name is spoken aloud
++  • a third party can READ their bond now and is using the read
++  • her dreams have started including him uninvited
++
++SACRIFICE — payments offered, accepted, or being collected:
++  • a sacrifice she made years ago is being collected at the worst moment
++  • the price of an old wish is being charged now
++  • a sacrifice was misunderstood and now requires correction
++  • someone else paid the cost and is now collecting from her
++  • the wrong thing was sacrificed; the original debt remains
++
++WISH — half-named, granted, weaponized:
++  • a wish manifests unexpectedly, AS WORDED (not as intended)
++  • a forgotten wish activates
++  • the LI has made a wish about her he does not remember making
++  • multiple wishes are colliding and reorganizing reality between them
++  • a wish has been REVOKED and the absence is now active
++
++OATH — bindings spoken, witnessed, broken:
++  • an oath comes due in a form she did not anticipate
++  • an oath is reinterpreted by a fate-aware speaker
++  • someone invokes an old promise she half-remembers
++  • conflicting oaths emerge (she owes two parties incompatible bindings)
++  • an oath she spoke as a child is being witnessed again
++
++OBLIGATION — ledgers, duties, expectations stacked:
++  • a ledger discovers the PC (her name appears, she does not know how)
++  • an inherited obligation surfaces (her grandmother's debts pass to her)
++  • a debt transfers ownership (the LI now owns what he did not ask for)
++  • a payment becomes impossible to avoid
++  • an obligation names HIM and is reading itself aloud
++
++VARIETY MANDATE: across consecutive Fatelands plays, the 8 primary categories (ALIGNMENT FAILURE + CONSEQUENCE REVELATION + FATE + BOND + SACRIFICE + WISH + OATH + OBLIGATION) should ROTATE. Do NOT default to SACRIFICE every time, or BOND every time, or even ALIGNMENT FAILURE every time. The categories ARE the variety — use them.
++
++═════════════════════════════════════════════════════════════════
++LI ENTANGLEMENT (the romance-welding requirement — Roman 2026-06-11)
++═════════════════════════════════════════════════════════════════
++
++The strongest version of any Fatelands pressure source welds the crisis DIRECTLY to the LI. The world mechanic and the romance collide in the same event — not in parallel events that happen to coexist.
++
++  ✗ "A First Sacrifice in the village has twisted; the PC must investigate." (LI is adjacent)
++  ✓ "The First Sacrifice that just twisted was the LI's younger brother's — and the wish implicates the LI." (LI is structural)
++
++  ✗ "A Wildfolk manipulator is killing people." (LI is adjacent)
++  ✓ "The only person whose alignment she trusts completely is the LI. He is also the prime suspect." (LI is structural)
++
++  ✗ "A wish-debt has come due in the village." (LI is adjacent)
++  ✓ "The wish-debt being collected was a wish she made about HIM years ago, and she does not remember what she actually asked for." (LI is structural)
++
++TEST: can the LI be removed from the A-plot without changing the conflict? If yes, the crisis and the romance are not yet welded. Re-architect so the LI is STRUCTURALLY NECESSARY to the conflict, not merely adjacent to it. The pressure should travel through the relationship, not around it.
++
++${_lhExemplar}${_woundHarmonization}
++═════════════════════════════════════════════════════════════════
++THE FOUR LIGHTHOUSES — FATELANDS EMOTIONAL TERRITORY (Roman 2026-06-11)
++═════════════════════════════════════════════════════════════════
++
++The four lighthouses are NOT four templates. They are the FOUR CORNERS of the emotional territory Fatelands occupies. Every Fatelands story should sit somewhere on the map between them.
++
++THE MAP:
++
++                    RELATIONSHIP ←————————————→ IDENTITY
++
++                    BROKEN VOW-BOND              THE FOLD
++                    "vow-bonds are secure"       "there is one version of me"
++
++
++                    WRONG WISH                   THE SYZYGY
++                    "I understand my desires"    "the past is fixed"
++
++                    PAST CHOICE ←————————————→ COSMOLOGY
++
++THE UNIFYING PRINCIPLE — ALL FOUR ATTACK CERTAINTY:
++  • Broken Vow-Bond: I was certain of US.
++  • Wrong Wish:      I was certain of WHAT I WANTED.
++  • Syzygy:          I was certain of WHAT HAPPENED.
++  • The Fold:        I was certain of WHO I AM.
++
++Not institutions. Not villains. Not paperwork. CERTAINTY. This is the unifying register for every Fatelands HOT crisis. Every opening should arrive as THE MOMENT WHEN A CERTAINTY BREAKS.
++
++ROTATION RULE BY WOUND TYPE — pick the lighthouse the PC's wound architecture demands:
++  • PC wounds about betrayal / abandonment / exposure → BROKEN VOW-BOND (relationship × external; certainty of US)
++  • PC wounds about guilt / complicity / wanting-what-she-shouldn't-have → WRONG WISH (relationship × past choice; certainty of WHAT I WANTED)
++  • PC wounds about loss / regret / could-have-been → SYZYGY (cosmology × past choice; certainty of WHAT HAPPENED)
++  • PC wounds about identity / becoming / self-betrayal → THE FOLD (identity × cosmology; certainty of WHO I AM)
++
++NEVER MORE THAN ONE LIGHTHOUSE PER STORY. Pick the lighthouse the wound architecture points at. The chosen lighthouse defines the emotional register; the pressure menu provides the world-native material; the LI entanglement test welds them.
++
++DO NOT ADD A FIFTH LIGHTHOUSE. The four corners cover the emotional territory: relationship vs identity, past choice vs cosmology. A fifth would either be redundant (collapsing into one of the four) or off-map (no longer Fatelands). If a wound architecture seems to demand a different shape, re-read the wound — it almost certainly fits one of the four.
++
++THE SHARED THEME — across all four:
++  REALITY LISTENS MORE CAREFULLY THAN PEOPLE DO.
++
++A 2024 lawyer cannot explain ANY of these without first being taught how Fate, Wishes, Bonds, Sacrifice, Alignment, and reality itself work in Fatelands. That is the cleanest sign these are genuinely world-native conflicts, not fantasy-flavored paperwork.
++
++═════════════════════════════════════════════════════════════════
++SECONDARY PRESSURE SOURCES (acceptable only when tied to a primary)
++═════════════════════════════════════════════════════════════════
++
++  • succession pressure
++  • political pressure
++  • ceremonial pressure (e.g. First Sacrifice approaching)
++  • family pressure
++  • social pressure
++
++ACCEPTABLE only when tied to Fate, Wish, Sacrifice, Bond, or Oath. A "political pressure" that is just human politics has failed Fatelands.
++
++═════════════════════════════════════════════════════════════════
++FORBIDDEN DEFAULT ENGINES (the reach-for-the-familiar failure)
++═════════════════════════════════════════════════════════════════
++
++Do NOT use these as primary conflict engines:
++  ✗ tribunal / hearing / board / vote / court / audit / review / filing
++  ✗ inheritance paperwork (human legal form)
++  ✗ bureaucratic summons (human form)
++  ✗ paperwork arriving at the door
++  ✗ any conflict that could be described to a 2024 lawyer without explanation
++
++ALLOWED ONLY IF:
++  (a) transformed by Fatelands institutional mechanics (writs as bindings, tribunals probing alignment, boards as oath-witnesses)
++  AND
++  (b) the true underlying engine is one of the PRIMARY PRESSURE categories above
++
++═════════════════════════════════════════════════════════════════
++SCENE 1 ROMANCE PRIORITY
++═════════════════════════════════════════════════════════════════
++
++Scene 1 should preferentially organize around:
++  • longing
++  • fascination
++  • temptation
++  • remembered connection
++  • visible bond
++  • fear of losing the bond
++  • desire conflicting with duty
++  • sacrifice connected to the LI
++  • oath connected to the LI
++
++The opening pressure should arrive THROUGH the relationship, not around it.
++
++  ✗ "A writ arrives."
++  ✓ "His name appears in her obligation ledger."
++  ✗ "A tribunal is scheduled."
++  ✓ "Tomorrow she must witness his marriage vow and determine whether it is aligned."
++
++The relationship is the pressure. The institution merely reveals it.
++
++═════════════════════════════════════════════════════════════════
++LITMUS TEST (final check before returning the A-plot)
++═════════════════════════════════════════════════════════════════
++
++If the conflict could be described to a 2024 lawyer WITHOUT explaining Fate, Wishes, Sacrifice, Oaths, Bonds, or Alignment, it is NOT YET a Fatelands conflict. Fatelands stories should feel impossible to relocate into modern reality without breaking the conflict itself.
++
++POSTER TEST: if the Scene 1 poster reads "Woman holding magical paperwork," you have failed. The poster should read like one of:
++  • "His name in her obligation ledger"
++  • "Her bond suddenly visible to strangers"
++  • "The First Sacrifice she has been avoiding"
++  • "The vow she will witness tomorrow and cannot honestly speak herself"
++  • "The wish she made for someone else, rerouting through her"
++
++Fate-anchored, body-anchored, bond-anchored, vow-anchored — not paperwork.
++
++` : '';
++    if (_fatelandsFlavor) {
++      try {
++        console.log('[A-PLOT:FATELANDS-MENU] Core injected (8 world-native pressure categories + institutions + forbidden + scene1 + litmus).');
++        if (_lhResult) {
++          console.log('[A-PLOT:FATELANDS-LIGHTHOUSE] ──────────────────────────────────────');
++          console.log('  RESOLVED:    ' + _lhResult.lighthouse);
++          console.log('  CERTAINTY:   "' + _lhResult.certainty + '"');
++          console.log('  WHY:         ' + _lhResult.reason);
++          console.log('  SCORE:       ' + _lhResult.score + ' (losers: ' + _lhResult.losers + ')');
++          console.log('  HISTORY:     [' + (_lhResult.historyAtSelection || []).join(', ') + ']');
++          console.log('  WOUND:       harmonized through lighthouse register (existing wound stays; expression changes)');
++          console.log('  TIER:        ' + (_lhResult.tier || '(unspecified)') + ' — opening allowed; resolution depth tier-gated downstream');
++        }
++      } catch (_) {}
++    }
++
+     // ── CONFLICT-FAMILY WEIGHTED DIVERSITY (Roman 2026-06-03) ──────────────
+     // Measured: the A-plot generator collapses onto Institutional conflicts (board /
+     // trust / governance / dissolution / gala) regardless of config — entire families
+@@ -49433,7 +50913,7 @@
+     } catch (_eCf) {}
+ 
+     const user = `Generate the A-plot for this story.
+-${_nameDirective}${_ownershipBlock}${_currentCrisisBlock}${_rPlotInputBlock}${_relationshipNativeBlock}${_strangerGuardBlock}${_loomingGuardBlock}${_woundSourceBlock}${_kinkFitBlock}${_basinBan}${_conflictDiversityBlock}${_ownGravityBlock}Tier: ${tier}
++${_nameDirective}${_ownershipBlock}${_currentCrisisBlock}${_rPlotInputBlock}${_relationshipNativeBlock}${_strangerGuardBlock}${_loomingGuardBlock}${_woundSourceBlock}${_kinkFitBlock}${_basinBan}${_fatelandsPressureMenu}${_conflictDiversityBlock}${_ownGravityBlock}Tier: ${tier}
+ Pattern: ${cfg.pattern}
+ World: ${world} / ${worldSubtype}
+ Flavor: ${flavor}
+@@ -49869,6 +51349,13 @@
+         parsed = await callOneProvider(provider);
+         if (parsed) {
+           console.log('[A-PLOT] generated via ' + provider.name);
++          // Record Fatelands lighthouse history so anti-calcification works
++          // on the next play. No-op when Fatelands gate didn't match.
++          try {
++            if (_fatelandsFlavor && _lhResult && typeof _recordFatelandsLighthouseHistory === 'function') {
++              _recordFatelandsLighthouseHistory(_lhResult.lighthouse);
++            }
++          } catch (_) {}
+         }
+       } catch (err) {
+         _aplotLastErr = err;
+@@ -119015,7 +120502,7 @@
+             {
+               file: '/assets/Fatelands/First_Favored_Species_Sheet.jpg?v=20260408',
+               role: 'species_sheet',
+-              label: 'First Favored species reference sheet (AUTHORITATIVE — 4 panels: male face, female face, diamond pupil closeup, full-body male+female pair). Defines anatomy, pupil structure, skin luminous patterning, gossamer fabric, facial proportions. This image is BIOLOGICAL LAW — style may enhance rendering but MUST NOT alter anatomy, pupil geometry, or species traits.',
++              label: 'First Favored species reference sheet (AUTHORITATIVE — 4 panels: male face, female face, diamond pupil closeup, full-body male+female pair). Defines anatomy, pupil structure, skin luminous patterning, gossamer fabric, facial proportions, AND species-specific costume conventions. This image is BIOLOGICAL + WARDROBE LAW — the artist style reference may contribute rendering technique (line quality, palette, brush language) but MUST NOT alter: anatomy, pupil geometry, species traits, fabric type (gossamer/translucent drapery is canon — leather is NOT), surface treatment (organic subdermal luminous swirls under skin — cybernetic glowing lines / circuitry / face implants are NOT), or accessories. If the artist style page shows characters in leather, tech implants, modern clothing, or any non-gossamer attire, those are the artist\'s OTHER WORK and DO NOT apply to First Favored — refer ONLY to this species sheet for what First Favored look like.',
+               weight: 1.0,
+               focus: ['species_anatomy', 'pupil_geometry', 'skin_luminosity', 'subdermal_glow_patterns', 'facial_proportions', 'full_body_proportions', 'gossamer_fabric', 'gender_variation'],
+               authority: ['anatomy', 'pupil geometry', 'skin behavior', 'facial structure', 'species identity']
+@@ -119070,7 +120557,7 @@
+             {
+               file: '/assets/Fatelands/Kwisheen_Species_Sheet.jpg?v=20260408',
+               role: 'species_sheet',
+-              label: 'Kwisheen species reference sheet (AUTHORITATIVE — 4 panels: male face, female face, pupil geometry closeup, full-body male+female pair). Defines anatomy, pupil structure, tentacle count, chromatophore skin, cranial tentacle hair. This image is VISUAL LAW — do not reinterpret, simplify, or stylize these traits.',
++              label: 'Kwisheen species reference sheet (AUTHORITATIVE — 4 panels: male face, female face, pupil geometry closeup, full-body male+female pair). Defines anatomy, pupil structure, tentacle count, chromatophore skin, cranial tentacle hair, AND species-specific attire conventions. This image is VISUAL + WARDROBE LAW — do not reinterpret, simplify, or stylize these traits. The artist style reference may contribute rendering technique (line quality, palette, brush language) but MUST NOT alter: tentacle count or structure, pupil geometry, chromatophore behavior, cranial tentacle hair, or species-appropriate attire. If the artist style page shows characters in non-Kwisheen costume (modern dress, leather armor, tech gear), those are the artist\'s OTHER WORK and DO NOT apply to Kwisheen — refer ONLY to this species sheet.',
+               weight: 1.0,
+               focus: ['species_anatomy', 'pupil_geometry', 'tentacle_count', 'chromatophore_skin', 'cranial_tentacle_hair', 'full_body_proportions', 'gender_variation'],
+               authority: ['anatomy', 'pupil geometry', 'tentacle structure', 'skin texture', 'species identity']
+@@ -120261,18 +121748,41 @@
+       } else {
+         _renderTechnique = 'RENDERING: Match Golden Master image for all rendering technique. Glossy semi-realistic skin, smooth gradients, no highlight noise. Ink: pure black, on top of rendering. Contour: thick dry-brush, irregular, pressure variation. Crosshatch: shadow-only, sparse, form-describing. Imperfect ink required (wobble, variation). No digital-clean linework.\n';
+       }
++
++      // ── CANON HIERARCHY (Roman 2026-06-11) — non-negotiable precedence ─────
++      // Resolves the bug pattern observed live: Fatelands First Favored rendered
++      // in Japanese leather + cybernetic face implants, helix trees replaced by
++      // generic earth trees, pig-eared species bleed. Root cause: the artist
++      // style reference was being treated as substance authority (costume,
++      // architecture, vegetation, cast) when its only legitimate authority is
++      // rendering technique. This hierarchy fires BEFORE every render block so
++      // the model reads precedence before encountering the conflicting refs.
++      block += '\nCANON HIERARCHY (HARD — Roman 2026-06-11; non-negotiable precedence; read THIS before reading the references below):\n';
++      block += '  1. WORLD CANON (region, era, environment, architecture, vegetation) — defines what exists in this world\n';
++      block += '  2. SPECIES CANON (anatomy, fabric, surface treatment, costume conventions, luminous patterning) — defines what the species LOOKS LIKE\n';
++      block += '  3. SCENE CANON (named characters, locked cast roster, named objects, named locations) — defines what is in THIS panel\n';
++      block += '  4. ARTIST STYLE (line quality, rendering technique, palette, framing, brush language, edge handling, crosshatch behavior) — defines HOW things are drawn, not WHAT is drawn\n';
++      block += 'The artist style page MUST NOT contribute: costume, anatomy, species traits, fabric, surface treatment, world details, architecture, vegetation, accessories, or character design. If the artist style reference shows sample characters wearing leather, riding motorcycles, sporting cybernetic implants, or standing in modern cities, those are the artist\'s OTHER WORK — not relevant to this render. Take the HOW, not the WHAT. When sources conflict: higher in this list always wins. WORLD/SPECIES canon outranks ARTIST sample content under every condition.\n';
+ 
+       if (speciesAnatomyActive) {
+         // ── SUBSTRATE RULE — species geometry is the substrate, style is surface treatment (AIRS v2.0) ──
+-        block += '\nSUBSTRATE RULE (STYLE CONTAINMENT):\n';
+-        block += 'The species structure is the substrate (base geometry). The style reference applies ONLY as surface treatment (line quality, color, texture). Style must not alter anatomy, proportions, or structure.\n';
+-        block += 'Preserve exactly from species anchors: anatomy, species structure, tentacles, limbs, body plan, skin coloration, species traits.\n';
++        // EXPANDED 2026-06-11: substrate now covers FABRIC + COSTUME + SURFACE +
++        // CAST, not just anatomy. The original narrow phrasing let leather/
++        // cybernetic costumes from the artist style page slip past the gate
++        // because they technically didn't alter "anatomy."
++        block += '\nSUBSTRATE RULE (STYLE CONTAINMENT — EXPANDED Roman 2026-06-11):\n';
++        block += 'The species structure is the substrate (base geometry AND species-specific costume conventions AND surface treatment). The style reference applies ONLY as RENDERING SURFACE (line quality, color rendering technique, palette behavior, brush/ink language, crosshatch handling). Style must NOT alter: anatomy, proportions, structure, fabric type (gossamer vs leather vs whatever the species sheet declares), surface treatment (luminous swirls vs cybernetic implants vs whatever), costume conventions, accessories, cast roster, or world architecture/vegetation.\n';
++        block += 'Preserve exactly from species anchors: anatomy, species structure, body plan, skin coloration, species traits, AND fabric/costume conventions, surface treatment (subdermal luminosity, scale patterning, etc.), and species-appropriate accessories. The species sheet is AUTHORITATIVE on these — the style reference must not override them even if its sample characters look different.\n';
+         block += _renderTechnique;
+-        console.log('[' + artistKey.toUpperCase() + ':GM-SUBORDINATED] Species anatomy anchors present — style authority demoted to visual finish only');
++        console.log('[' + artistKey.toUpperCase() + ':GM-SUBORDINATED] Species anatomy anchors present — style authority demoted to RENDERING SURFACE only (anatomy + fabric + costume + surface = species-canon-locked)');
+       } else {
+-        // ── PRIMARY AUTHORITY — GOLDEN MASTER (ABSOLUTE) — no species anatomy conflict ──
+-        block += '\nSTYLE (GOLDEN MASTER — ABSOLUTE):\n';
+-        block += 'First reference image = Golden Master. Defines complete rendering identity. NON-NEGOTIABLE. If any supporting reference contradicts, IGNORE it.\n';
++        // ── PRIMARY AUTHORITY — GOLDEN MASTER (RENDERING-TECHNIQUE-ABSOLUTE) ──
++        // Roman 2026-06-11: re-scoped from "complete rendering identity" to
++        // "rendering technique." World/scene canon still outrank the Golden
++        // Master for substance — costume, architecture, vegetation, cast.
++        block += '\nSTYLE (GOLDEN MASTER — RENDERING TECHNIQUE ABSOLUTE; substance subordinate to canon):\n';
++        block += 'First reference image = Golden Master. Defines complete RENDERING TECHNIQUE: line quality, brush language, color rendering approach, edge handling, crosshatch behavior, palette behavior. NON-NEGOTIABLE for technique. If any supporting reference contradicts ON TECHNIQUE, IGNORE it.\n';
++        block += 'The Golden Master does NOT define: costume, architecture, vegetation, accessories, cast, character design, or species traits. If the Golden Master shows sample characters in modern dress, leather, cyberpunk gear, or any specific world details, those are the artist\'s sample work — substance for THIS render comes from the WORLD CANON and SCENE PROMPT below, not from the Golden Master\'s sample characters.\n';
+         block += _renderTechnique;
+ 
+         // Supporting anchors — role-specific constraints
+@@ -227951,6 +229461,47 @@
+       var _isMetaphorPanel = panelMeta && panelMeta.metaphorical;
+       var _panelImportance = panelMeta ? panelMeta.importance : null;
+       var _isLowImportancePanel = (_panelImportance === 'low') && context === 'graphic-novel-panel';
++
++      // ── CG PANEL TRACKER (Roman 2026-06-11) ────────────────────────────────
++      // Wire the panel tracker so the health rules + [CG:VALUE] readout start
++      // operating on real production data. Roman's stated critical milestone:
++      // "right now you've built a very good observability layer — the next test
++      // will tell you whether the style-hierarchy fix actually reduced leather
++      // armor … or whether the image model is still following the reference
++      // sheets more strongly than the prompt text."
++      //
++      // Records ONE entry per panel render attempt. sceneIndex from
++      // state.turnCount; panelIndex via a per-turn counter that resets when
++      // turnCount changes. Region from worldSubtype. Cast/species derived from
++      // panelMeta when available. Auto-classification (subject/camera/composition/
++      // emotional_beat) runs at record time inside the tracker.
++      try {
++        if (context === 'graphic-novel-panel' && window._cgPanelTracker && typeof window._cgPanelTracker.recordPanel === 'function') {
++          var _trkTurn = (typeof state.turnCount === 'number') ? state.turnCount : 0;
++          if (!state._cgPanelCounterForTurn || state._cgPanelCounterForTurn.turn !== _trkTurn) {
++            state._cgPanelCounterForTurn = { turn: _trkTurn, count: 0 };
++          }
++          var _trkPanelIdx = state._cgPanelCounterForTurn.count++;
++          // Derive cast + species when available; tracker accepts empty arrays
++          // gracefully (rule 3 cast-bleed needs species declared to fire).
++          var _trkCast = [];
++          var _trkSpecies = [];
++          try {
++            if (panelMeta && panelMeta.castRoster && Array.isArray(panelMeta.castRoster)) _trkCast = panelMeta.castRoster.slice();
++            if (panelMeta && panelMeta.species && Array.isArray(panelMeta.species)) _trkSpecies = panelMeta.species.slice();
++            else if (panelMeta && typeof panelMeta.species === 'string') _trkSpecies = [panelMeta.species];
++          } catch (_) {}
++          window._cgPanelTracker.recordPanel({
++            sceneIndex: _trkTurn,
++            panelIndex: _trkPanelIdx,
++            prompt: prompt,
++            region: state.worldSubtype || (state.picks && state.picks.worldSubtype) || '',
++            castRoster: _trkCast,
++            species: _trkSpecies,
++            consumedOpportunity: (panelMeta && panelMeta.consumedOpportunity) || null
++          });
++        }
++      } catch (_trkErr) { try { console.warn('[CG:TRACKER] record failed (non-fatal):', _trkErr && _trkErr.message); } catch (__) {} }
+ 
+       // ── BFL Reference Image Preload ──
+       // ONE style anchor + ONE species anchor + optional world anchor.

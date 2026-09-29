@@ -1,0 +1,259 @@
+{
+  "dump": {
+    "sceneNumber": 2,
+    "planScenes": [
+      {
+        "n": 1,
+        "goal": "The First Sacrifice begins (hot crisis). The youth suddenly falls into catastrophic misalignment; every experienced First Favored recognizes the signs. The impossible happens instead — the wish succeeds cleanly. The crowd turns on the PC."
+      },
+      {
+        "n": 2,
+        "goal": "The ceremony collapses into accusations; the PC tries to explain something she does not understand herself.",
+        "participants": [
+          "Lirael",
+          "the youth",
+          "Julian"
+        ],
+        "presentGroups": [
+          "the watching families and public of the rite"
+        ],
+        "requiredTruths": [
+          "first_sacrifice_definition",
+          "sacrificiant_role",
+          "first_sacrifice_no_interference",
+          "sacrificiant_mouth_band",
+          "rite_is_public",
+          "guide_threshold_dohkar"
+        ]
+      },
+      {
+        "n": 3,
+        "goal": "Evidence begins to point toward deliberate interference."
+      },
+      {
+        "n": 4,
+        "goal": "A Chayr and two Dohkars formally open an inquiry into the PC."
+      },
+      {
+        "n": 5,
+        "goal": "Julian quietly prevents the investigation from uncovering the truth."
+      },
+      {
+        "n": 6,
+        "goal": "The PC discovers the wish succeeded in a way that should have been impossible."
+      }
+    ],
+    "planKeys": [
+      "issue",
+      "scenes"
+    ],
+    "assignmentLive": {
+      "event": "The ceremony collapses into accusations; the PC tries to explain something she does not understand herself.",
+      "setting": null,
+      "participants": [
+        "Lirael",
+        "the youth",
+        "Julian"
+      ],
+      "props": null,
+      "stateChange": null,
+      "source": "plan-scene",
+      "sceneNumber": 2
+    },
+    "assignmentStored": null,
+    "spineEventVerbatim": null,
+    "spineStaging": null,
+    "sceneSkeleton": null,
+    "sceneIntent": null,
+    "sceneMissionCurrent": "trying to manage the town's perception before it spirals out of control.",
+    "seedKeys": [
+      "issue",
+      "cast",
+      "worldTruths",
+      "sceneOne",
+      "visualCanon",
+      "truths",
+      "dramaticTruth",
+      "constraints"
+    ],
+    "seedWorldTruths": [
+      "A First Sacrifice is a COMING-OF-AGE RITE — closest analogue a Bar Mitzvah / quinceañera / confirmation / graduation, NOT a death ritual. At 16 (younger minds are too unformed to wish safely) a youth, after long study and practice, publicly makes their first wish and offers its price to Fate. It can be stern and formal, but when it goes well it ENDS IN CELEBRATION; catastrophe is UNUSUAL — everyone understands the safeguards the way we understand fire drills. Do NOT default to disaster, apocalypse, curses, or world-ending stakes.",
+      "First Favored are hired to GUIDE and SUPERVISE the rite — their alignment-sense and powerful wish-strength make them the preferred (and pricier) choice over human or Kwisheen wishcraft scholars. The supervisor reads the alignment of EVERYONE present, above all the wishing youth, ready to HALT and re-align the wish before it can twist.",
+      "The supervisor is a SACRIFICIANT (the role): one whose misalignment-sense is honed enough to supervise (the PC is an apprentice Sacrificiant). THE SACRIFICIANT SEAL — worn by whoever supervises, during ANY official First Sacrifice rite: because a supervisor bolstering the youth’s sacrifice with a wish of their OWN would be a ruinous breach, every Sacrificiant is ceremonially SEALED for the rite — a gossamer BAND drawn across the mouth and tied behind the head (just cloth, part of their ceremonial sash; NO orb, NO bead, NO gag), so they cannot cleanly voice a wish while officiating. Vestments are otherwise the same sheer gossamer as everyone, with ONE ornamented ceremonial SASH (never robes). LITERARY: a sealed Sacrificiant’s cries and speech are MUFFLED behind the cloth — emotion reads through the eyes and body. CG: the mouth-band is drawn IN on the supervising Sacrificiant for the duration of the rite.",
+      "ALIGNMENT-SENSE (the First Favored gift): they do NOT read thoughts or emotions — they perceive ALIGNMENT, how far a person’s desire, intention, sacrifice, and deepest self all point at one truth. Misalignment is as unmistakable to them as a sour note in music."
+    ],
+    "aPlotKeys": [
+      "tier",
+      "pattern",
+      "goal",
+      "namedClock",
+      "clockUnit",
+      "totalClockUnits",
+      "timelineLength",
+      "currentTurn",
+      "milestones",
+      "stakesIfFail",
+      "stakesIfWin",
+      "resolutionShape",
+      "cliffhangerHook",
+      "antagonistOrAntiForce",
+      "antagonistPersonalTie",
+      "antagonistShape",
+      "personalStakePC",
+      "personalStakeLI",
+      "plotShape",
+      "pcWound",
+      "liWound",
+      "woundSurfacingMechanism",
+      "woundLoadBearingProof",
+      "pcWoundCategory",
+      "liWoundCategory",
+      "liEmotionalNeedFromPC",
+      "pcUnknowinglySatisfies",
+      "naturalSeparationBeats",
+      "naturalProximityBeats",
+      "sourceWorld",
+      "sourceFlavor",
+      "sourceWorldSubtype",
+      "generatedAt",
+      "continuationOf",
+      "storyShape",
+      "storyShapeLabel",
+      "readerQuestion",
+      "romanceEngine",
+      "desireQuestion",
+      "scene1Compressed",
+      "_woundLIIntegration"
+    ],
+    "aPlot": {
+      "tier": "fling",
+      "pattern": "B",
+      "goal": "Lirael must contain the surfacing of her misheard wish from seven years ago before the next alignment reading forces the town to confront the accident it caused, while deciding whether to let Julian bear the consequence or shield him at the cost of her own exposure.",
+      "namedClock": "the next alignment reading at the solstice festival",
+      "clockUnit": "days",
+      "totalClockUnits": 12,
+      "timelineLength": 40,
+      "currentTurn": 0,
+      "milestones": [
+        {
+          "atScene": 4,
+          "atPercent": 12,
+          "kind": "setup",
+          "event": "Julian arrives as historian to catalog festival sigils and his first question to Lirael exposes the family secret she buried.",
+          "emotional_conductivity": "his probing cuts straight through her defenses, making her feel both seen and trapped.",
+          "triggered": false
+        },
+        {
+          "atScene": 16,
+          "atPercent": 42,
+          "kind": "midpoint_reversal",
+          "event": "the alignment reading names Julian as the unspoken target of her wish, turning the accident into a third-order consequence of her desire.",
+          "emotional_conductivity": "trust fractures as she realizes he may never know if his feelings are his own.",
+          "triggered": false
+        },
+        {
+          "atScene": 28,
+          "atPercent": 72,
+          "kind": "dark_night",
+          "event": "old friends of Julian's begin arriving with memories triggered by the revelation, forcing him to confront his lingering abandonment while Lirael watches.",
+          "emotional_conductivity": "she glimpses his raw need for unjudged vulnerability and feels the pull to offer it.",
+          "triggered": false
+        },
+        {
+          "atScene": 35,
+          "atPercent": 88,
+          "kind": "crisis",
+          "event": "Lirael must choose at the solstice reading whether to let the wish stand as hers or redirect blame onto her estranged father's old sigil, knowing either path binds or severs Julian.",
+          "emotional_conductivity": "the choice forces her to decide if loving him means letting the thing he protects die or protecting him from the truth.",
+          "triggered": false
+        },
+        {
+          "atScene": 38,
+          "atPercent": 95,
+          "kind": "resolution",
+          "event": "the reading completes with the wish acknowledged as misheard rather than malicious, but a new sigil appears linking their fates visibly.",
+          "emotional_conductivity": "resolution brings strategic relief while the visible bond creates an unresolved emotional cost.",
+          "triggered": false
+        },
+        {
+          "atScene": 40,
+          "atPercent": 100,
+          "kind": "resolution",
+          "event": "the festival ends with the town quieted, yet Julian's new sigil pulses whenever Lirael is near, promising the wish's consequence is not finished.",
+          "emotional_conductivity": "practical coordination settles into ambient longing as they both sense the bond tightening without comment.",
+          "triggered": false
+        }
+      ],
+      "stakesIfFail": "the town judges her wish as deliberate harm, confirming her worthlessness and forcing Julian to relive the accident as his fault for being wanted.",
+      "stakesIfWin": "the wish is reframed as accidental misalignment, preserving her fragile sense of self but leaving Julian's agency in their bond permanently questioned.",
+      "resolutionShape": "complete-plus-cliffhanger",
+      "cliffhangerHook": "the new sigil begins to pull fate toward a second wish neither of them remembers making.",
+      "antagonistOrAntiForce": "the town's new alignment reader who interprets the twisted wish as deliberate harm",
+      "antagonistPersonalTie": "none; the reader is exploiting the consequence revelation from outside the original circle [Shape C]",
+      "antagonistShape": "C",
+      "personalStakePC": "her public worthlessness confirmed if the wish is judged as selfish abandonment of her family duty",
+      "personalStakeLI": "his childhood friend's death reframed as collateral from a wish aimed at him, reopening his abandonment wound",
+      "plotShape": "HIGH_STAKES_DECISION",
+      "pcWound": "her estranged father abandoned her at a young age, leaving her to grapple with feelings of worthlessness and rejection that she has carried for fifteen years.",
+      "liWound": "Julian lost his childhood friend in a tragic accident, leaving him with a sense of abandonment that lingers even years later.",
+      "woundSurfacingMechanism": "The solstice alignment reading publicly decodes Lirael's old wish as the cause of the accident that killed Julian's friend, dragging both her rejection ache and his abandonment into the open through the same revelation event.",
+      "woundLoadBearingProof": "WOUND: estranged father who abandoned Lirael at age seven, leaving her with worthlessness that makes her crave being truly seen. CIRCUMSTANCE: the alignment reading reveals her wish for Julian was the misheard cause of his friend's death. DEPENDENCY: Without this wound, Julian would not be the one whose presence forces her to choose between hiding the wish or letting herself be seen by the only person whose abandonment echoes her own.",
+      "pcWoundCategory": "PUBLIC",
+      "liWoundCategory": "PARTNER",
+      "liEmotionalNeedFromPC": "her habit of noticing and voicing small sensory details without self-editing lands on the part of him that has not been allowed to witness unperformed vulnerability since his friend died.",
+      "pcUnknowinglySatisfies": "her meaning-hungry way of registering tiny shifts in the air or a hand's hesitation and naming them aloud is exactly the raw openness his wound craves, though she does not know she is doing it for him.",
+      "naturalSeparationBeats": [
+        "Julian is summoned to interpret old sigils alone during the three-day vigil",
+        "Lirael is required to stand witness at the alignment circle while he is barred from the chamber",
+        "festival duties send him to the outer wards for two cycles",
+        "she is called to her family's abandoned sigil site while he remains in town"
+      ],
+      "naturalProximityBeats": [
+        "they must jointly examine the festival sigils to trace the wish's origin",
+        "hiding together in the archive during the first public accusation",
+        "traveling to the accident site to test the alignment reading",
+        "forced to share a vow-witness bench when the reader collapses"
+      ],
+      "sourceWorld": "Fantasy",
+      "sourceFlavor": "Arcane Binding",
+      "sourceWorldSubtype": "arcane_binding",
+      "generatedAt": 1787095944027,
+      "continuationOf": null,
+      "storyShape": "LEGACY",
+      "storyShapeLabel": "Legacy",
+      "readerQuestion": "Is he protecting it or himself?",
+      "romanceEngine": "COLLISION",
+      "desireQuestion": "What present-tense force is already pressing on her — and (if known adversaries) how is HE behind it?",
+      "scene1Compressed": {
+        "pressure_sentence": "Lirael wakes up knowing the town's alignment reading is imminent, threatening to expose her darkest secret.",
+        "emotional_consequence": "A heavy dread settles in her chest, amplifying her feelings of worthlessness and fear of judgment.",
+        "li_entanglement_one_line": "Julian's absence feels like a chasm; she knows he carries the weight of their shared past.",
+        "state_change_precondition": "No one yet knows that her wish caused the accident that took Julian's friend.",
+        "state_change": "The alignment reader announces her wish aloud, declaring it the cause of the tragic accident.",
+        "forces_choice": "This event forces Lirael to choose between confessing the truth to protect Julian or letting him take the blame.",
+        "branch_a_delete_test": "Confessing the truth is impossible if her wish is never revealed as the cause.",
+        "branch_b_delete_test": "Letting Julian take the blame becomes meaningless if the town never learns about her wish.",
+        "generated_at": 1787095949653
+      },
+      "_woundLIIntegration": {
+        "verdict": "INTEGRATED",
+        "mode": "INTERACTION",
+        "interactionType": "exposes",
+        "causeBasin": false,
+        "swapTest": "Replacing Julian with a different BEAUTIFUL_RUIN would break the wound's role, as only he uniquely exposes Lirael's feelings of worthlessness and rejection through their shared connection to the accident.",
+        "link": "Julian is the only one who can expose Lirael's wound of abandonment, as his presence forces her to confront her desire to be seen and the consequences of her past wish.",
+        "fix": "",
+        "ms": 3155
+      }
+    },
+    "narrativeState": null,
+    "scenePlotContract": null,
+    "priorSceneStateChange": null
+  },
+  "delivered": {
+    "SPINE_EVENT": null,
+    "SCENE_INTENT": null,
+    "SCENE_SPINE": null
+  },
+  "contSys": null
+}

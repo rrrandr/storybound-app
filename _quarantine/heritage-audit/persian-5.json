@@ -1,0 +1,24 @@
+{
+  "age": 28,
+  "ancestry": "Persian",
+  "first_name": "Nasrin",
+  "last_name": "Tehrani",
+  "height": "five foot six, fine-boned",
+  "build": "lean, muscled through the shoulders and forearms from years of detailed work",
+  "hair": "black, thick and slightly wavy, usually pinned up in a loose knot or worn long down her back; she touches it when she's thinking",
+  "complexion": "warm olive undertone with a small beauty mark just below her left collarbone",
+  "face": "a wide, expressive face with high cheekbones and a full mouth—the kind that telegraphs every emotion before she speaks, dark eyes that widen when she's afraid or delighted",
+  "signature_feature": "her hands—long-fingered, always slightly stained with dye or gold leaf from her work, capable and restless",
+  "second_celebrated_feature": "the particular tilt of her head when she's listening intently, chin slightly forward, a gesture that reads as both vulnerable and utterly present",
+  "signature_habits": "she hums while working—often half-remembered pieces of her grandmother's songs in Farsi; she keeps a small notebook in her bag where she sketches design ideas compulsively; she makes tea in the afternoon, loose leaf, and sits with it untouched while she thinks; when anxious, she traces the edge of her collarbone with one finger",
+  "occupation": "textile and jewelry designer with a small independent studio in a converted warehouse; she takes commissions and sells limited pieces through select boutiques",
+  "current_crisis": {
+    "event": "a major client—a luxury hotel chain—has rejected her six-month commissioned collection two weeks before the launch event, claiming the designs are 'too personal, not commercial enough'; the contract included a non-refundable deposit she's already spent on materials and studio rent",
+    "hottest_emotion": "panic mixed with a raw, humiliated sense of exposure—her work WAS personal, and now that's being weaponized",
+    "immediate_want": "to understand what went wrong and to find a way to salvage the collection before it destroys her studio's reputation"
+  },
+  "wound": {
+    "core": "she believes her sensitivity—her inability to hide what she feels or make work that doesn't bleed her interior—is a fatal flaw in a world that demands polish and distance",
+    "surfacing_hint": "when criticized, she doesn't defend; she crumples inward, assuming the critic is right, that she's too much, too raw, too visible"
+  }
+}

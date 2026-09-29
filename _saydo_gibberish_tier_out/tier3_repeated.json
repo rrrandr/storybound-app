@@ -1,0 +1,48 @@
+{
+  "first": {
+    "action": "a beat of dazed, wordless hesitation",
+    "dialogue": "a confused, wordless sound that never resolves into words",
+    "tier": "isolated",
+    "streak": 1,
+    "fields": {
+      "action": "pure",
+      "dialogue": "pure"
+    },
+    "fallbackGenerated": true
+  },
+  "second": {
+    "action": "a beat of dazed, wordless hesitation",
+    "dialogue": "a confused, wordless sound that never resolves into words",
+    "tier": "repeated",
+    "streak": 2,
+    "fields": {
+      "action": "pure",
+      "dialogue": "pure"
+    },
+    "fallbackGenerated": true
+  },
+  "third": {
+    "action": "a beat of dazed, wordless hesitation",
+    "dialogue": "a confused, wordless sound that never resolves into words",
+    "tier": "repeated",
+    "streak": 3,
+    "fields": {
+      "action": "pure",
+      "dialogue": "pure"
+    },
+    "fallbackGenerated": true
+  },
+  "dir": "REPEATED INCOHERENCE — THIS IS NOW THE CHARACTER'S BEHAVIOUR (HARD RULE):\nThe protagonist has now failed to produce coherent speech or action more than once. Stop\ntreating it as a stumble to be smoothed over: it is a STATE she is in, and the world may\nrespond to it seriously.\n- The canon fact is that she REPEATEDLY COULD NOT, or would not, make herself understood.\n  It is NEVER the literal text she typed — do not quote, spell, or transcribe it, ever.\n- Characters may now react, and consequentially: concern, fear, guilt, impatience, or a\n  reading of incapacity, defiance, shock, contamination, or evidence — whichever the world\n  and this scene actually support. The social cost may rise.\n- The story does NOT halt, refuse, or stall waiting for better input, and it does not break\n  frame to address the player. There is no apology and no instruction.\n- She keeps her agency: this is something happening to or chosen by HER, rendered as\n  behaviour, not a malfunction of the game.\n\n",
+  "strong": "",
+  "afterClean": {
+    "action": "I take the ledger and hold it up",
+    "dialogue": "Then say it plainly.",
+    "tier": "none",
+    "streak": 0,
+    "fields": {
+      "action": "clean",
+      "dialogue": "clean"
+    },
+    "fallbackGenerated": false
+  }
+}

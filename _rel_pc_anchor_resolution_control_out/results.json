@@ -1,0 +1,82 @@
+[
+  {
+    "name": "FIRST SACRIFICE resolves the PC anchor to \"Lirael\", not \"the protagonist\"",
+    "pass": true
+  },
+  {
+    "name": "...and it came from the starter seed's own PC entry, through _resolvePcIdentity",
+    "pass": true
+  },
+  {
+    "name": "the LI anchor still resolves through the nested identity state it already used",
+    "pass": true
+  },
+  {
+    "name": "a corridor-shaped story with a TOP-LEVEL configured name resolves it",
+    "pass": true
+  },
+  {
+    "name": "a story configured only through the NESTED picks.identity.playerName resolves it — the case the old chain could not see",
+    "pass": true
+  },
+  {
+    "name": "a KERNEL in state.playerName no longer beats the real name — the placeholder filter the old chain lacked",
+    "pass": true
+  },
+  {
+    "name": "no configured name anywhere → the PC anchor stays \"the protagonist\"",
+    "pass": true
+  },
+  {
+    "name": "...and the canonical resolver honestly reports NO hit rather than inventing one",
+    "pass": true
+  },
+  {
+    "name": "a carried ledger's placeholder PC label is UPGRADED to the resolved name",
+    "pass": true
+  },
+  {
+    "name": "...on the SAME entity id — no second protagonist was minted",
+    "pass": true
+  },
+  {
+    "name": "...with the entity set otherwise untouched (the neighbour survives, nothing added)",
+    "pass": true
+  },
+  {
+    "name": "...and the existing edge preserved, so nothing already asserted about the PC was orphaned",
+    "pass": true
+  },
+  {
+    "name": "...keeping the old label as an ALIAS, so prior matches against \"the protagonist\" still resolve",
+    "pass": true
+  },
+  {
+    "name": "the upgrade announced itself in the log rather than changing canon silently",
+    "pass": true
+  },
+  {
+    "name": "an existing REAL name is NEVER overwritten — the upgrade only replaces placeholders",
+    "pass": true
+  },
+  {
+    "name": "the REAL author-facing stage directive names \"Lirael\" in its PRESENT line",
+    "pass": true
+  },
+  {
+    "name": "...and no longer says \"the protagonist\" anywhere in it",
+    "pass": true
+  },
+  {
+    "name": "the roster's invoker is the SHARED ANCHOR label (\"Mira\"), not the configured identity (\"Sable\")",
+    "pass": true
+  },
+  {
+    "name": "...proving the roster kept NO private fallback chain of its own",
+    "pass": true
+  },
+  {
+    "name": "ZERO real provider dispatches across the whole control",
+    "pass": true
+  }
+]

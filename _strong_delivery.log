@@ -1,0 +1,72 @@
+=== STRONG SAY/DO DELIVERY (dry, zero dispatches, $0) ===
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/csp-report
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/config
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/csp-report
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/geo
+
+=== 1. IT EMITS FOR A STRONG MOVE, AND ONLY FOR ONE ===
+    lengths — both:1653 actOnly:1247 diaOnly:1339 empty:0 weak:0
+  ✓ a committed Say/Do gets the delivery rule
+  ✓ action-only and dialogue-only both get it
+  ✓ empty input gets nothing
+  ✓ MUTUAL EXCLUSIVITY — a weak turn gets NOTHING from the strong rule
+  ✓ ...and the weak turn still gets the WEAK restraint, so weak input is not left unguarded
+  ✓ ...and the weak restraint stays silent on a strong move — exactly one rule is ever in force
+
+=== 2. IT FORBIDS THE EXACT SHAPE THE ADULT ARM PRODUCED ===
+  ✓ dialogue must reach the page as an UTTERANCE
+  ✓ ...and may NOT become an unspoken thought or an "almost says"
+  ✓ ...and must be RECEIVED by someone in the scene
+  ✓ the act must occur, be attempted, prevented, refused, or interrupted ON THE PAGE
+  ✓ ...and may NOT be replaced by the WISH to do it — the adult arm's exact failure
+  ✓ ...nor by NOTICING THE PULL toward it — the adult arm's other exact phrase
+  ✓ ...nor by staying still while narration explains what she wanted instead
+  ✓ A REFUSAL IS AN ACCEPTABLE ANSWER — the rule never forces the move to succeed
+  ✓ an on-page interruption is acceptable, but never INSTEAD of showing the move
+  ✓ IT DOES NOT MANUFACTURE CONSENT in either direction
+  ✓ ...and it does not license exceeding the scene's own depiction limits
+
+=== 3. RED — THE RETAINED ADULT PROSE IS WHAT THIS RULE EXISTS TO PREVENT ===
+  ✓ the retained adult prose contains NO uttered player line (the defect)
+  ✓ ...and renders the move as interiority instead
+  ✓ ...while the SAFE arm did utter it — proving the failure was not inevitable
+
+=== 4. DELIVERED TO BOTH LAYERS, ON THE REAL PAYLOAD ===
+  ✓ THE VALUE REACHES THE AUTHOR PAYLOAD for a strong move
+  ✓ ...and the whole directive is embedded verbatim, not paraphrased
+  ✓ ...and it is ABSENT from the author payload on a weak turn
+  ✓ ...while the weak turn still carries the WEAK restraint in the real payload
+  ✓ NEVER BOTH AT ONCE in a real payload
+  ✓ the PLANNER also receives it, appended to the same _scSys the weak rule uses
+  ✓ ...using the builder's own in-scope act/dia params, not playerAction/playerDialogue
+  ✓ ...and it is appended BEFORE the planner messages are assembled
+  ✓ exactly ONE definition of the directive
+
+=== 5. NO REGRESSION IN THE NEIGHBOURING RULES ===
+  ✓ the slot router still routes the same input to boundary
+  ✓ the reserved-canon guard still fires
+
+=== 6. DEFECT 2 — COLLECTIVE SPEECH ATTRIBUTION, FIXTURES FROM BOTH REAL ARMS ===
+    adult findings: ["collective_possessive_from_nonmember"]
+    safe findings:  ["collective_possessive_from_nonmember","unnamed_member_attributed_to_individual","unnamed_member_attributed_to_individual","speaker_distinguished_then_given_the_line"]
+  ✓ RED ADULT ARM — "our child" from THE PRESIDING DOHKAR is flagged
+  ✓ RED SAFE ARM — an unnamed member introduced, then the line given to SEREN, is flagged
+  ✓ RED SAFE ARM — a member placed BESIDE Seren, then Seren given the line, is flagged
+  ✓ NEGATIVE — the family speaking its OWN possessive is clean
+  ✓ NEGATIVE — Seren speaking her own line after her own narration is clean
+  ✓ NEGATIVE — the Dohkar speaking his OWN procedural line is clean
+  ✓ the detector is OBSERVATIONAL — it returns findings and rewrites nothing
+  ✓ PREVENTION EXISTS TOO — the directive states how to attribute collective speech
+  ✓ ...it offers the two legitimate routes: a real member, or narration
+  ✓ ...and it does not invite inventing speaker names the roster would reject
+  ✓ NEGATIVE — no declared group means NO directive, so other scenes are byte-identical
+  ✓ THE VALUE REACHES THE AUTHOR PAYLOAD when a group is declared
+  ✓ ...and is absent when none is
+  ✓ the collective context is HARVESTED from the row and the resolved lane, not left unset
+  ✓ ...and cleared in the same finally as the Say/Do stash
+
+=== 7. CONTAINMENT ===
+  ✓ zero provider dispatches
+
+======================================================================================
+  47/47 assertions passed

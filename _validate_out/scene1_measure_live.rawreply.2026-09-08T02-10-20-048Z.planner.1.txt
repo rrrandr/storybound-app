@@ -1,0 +1,53 @@
+{
+  "opening_spine": {
+    "pressure_source_type": "survival",
+    "pressure_source": "the smoke is already choking the kitchen and the back exit is blocked by fallen shelves",
+    "hook_object": null,
+    "opening_actor_id": null,
+    "opening_beat": "Smoke pours from the oven and the flames catch the flour sacks.",
+    "rising_beats": ["I yank the extinguisher and it coughs once then dies.", "Rook's last delivery order is what overloaded the circuit."],
+    "decision_beat": "Smash the window or run for the front door?",
+    "pc_career": "pastry chef",
+    "opening_setting": "bakery kitchen",
+    "environment_elements": ["smoke-filled air", "flour sacks"],
+    "li_texture_beat": "beat 2: the way he always squared the invoice with both hands before handing it over made my pulse skip low in my stomach even now",
+    "pc_wound_anchor": "opening: my hands locked on the extinguisher and would not move",
+    "pc_self_presentation_beat": "opening: I shoved my sleeves higher, flour streaking my forearms, and hated how young I still looked when everything was falling apart",
+    "scene_want": "wants the smoke gone before the ledgers catch",
+    "scene_mission": "Reach the back records before the fire takes them.",
+    "reader_state": {
+      "knows": "Testa is alone in a burning bakery kitchen with failing equipment",
+      "believes": "Rook's recent order caused the overload and she is losing everything",
+      "wondering": "Why does thinking of him still pull at her when she should only hate him",
+      "must_not_confuse": "Only Testa is present; the fire is the immediate physical threat"
+    },
+    "pc_body_callback": "opening: stress_tic (hands locking)",
+    "antagonist_body_callback": null,
+    "staged_characters": [
+      { "name": "Testa", "presence": "IN_PERSON", "anchor_beat": "FROM_PC_OPENING_FUSION" }
+    ]
+  },
+  "scene_skeleton": {
+    "character_plus": [],
+    "environment_plus": {
+      "target": "flour sacks",
+      "axis": "damage",
+      "beat": "flour sacks blackened at the edges and releasing more smoke"
+    },
+    "pc_opening_fusion": {
+      "character": "Testa",
+      "placement": "PC_FIRST_EMBODIED_BEAT",
+      "character_angle": "her body reacts to the fire before her mind names the loss",
+      "beat": "I reached for the extinguisher and the smoke stung my eyes first"
+    }
+  },
+  "stage_contract": {
+    "v": 1,
+    "participants": [
+      { "ref": "pc:self", "presence": "IN_PERSON" }
+    ],
+    "event_facts": [
+      { "text": "the kitchen fire spreads from the oven", "participants": [ { "ref": "pc:self", "role": "actor" } ] }
+    ]
+  }
+}

@@ -1,0 +1,17 @@
+[BAKED] starter-scenes.js loaded — 3 package(s), 2 still PLACEHOLDER: starter_the_first_taste, starter_glass_house
+%c[STORYBOUND TELEMETRY] Console helpers ready:
+  copyConsole()              → copy all captured logs (last 5000)
+  copyConsole({filter:"NIL"})→ copy filtered subset
+  copyConsole({limit:50})    → copy last N lines
+  dum
+[STARTER] Launching "The First Sacrifice"
+[PHRASE-LEDGER] seeded 9 starter cooldown item(s).
+[STARTER] Locked pre-written title: The First Sacrifice
+[BAKED] mounting Scene 1 — starter_first_sacrifice v1.8.0-editorial
+[SCENE-AMB] baked Scene 1 → neutral_quiet (packaged; classifier suppressed)
+[SCENE-LEDGER] +p1 kind=baked issue=1 uid=pg:f4f1c910-ab17-4819-bf0a-65a274e45920 planned="Seren’s misaligned wish for Lirael — “so that Lirael may fin"
+[BAKED:EMITTED] parked on state._bakedEmitted (no verified consumer yet): sceneSummary, openState, obligations, ledgerSeeds, calcification, axes, expansions
+[BAKED:IDENTITY] ledger entities for the seed cast: +3
+[FATE-CARDS:PLOT-CTX] archetype=SPELLBINDER · ST=ST1 · intimacy=false · aplot=– · truth=– · grievances=0 · callbacks=0 · scars=0 · gravity=orbit · axis-lead=– · fateOAS=–
+[BAKED:OAS] handoff affordance mounted — this is the CG Book's gate
+[STAGED] Beginning Staged Story flow (legacy GN button → staged_story_mode)

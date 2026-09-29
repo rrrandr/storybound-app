@@ -1,0 +1,102 @@
+PASS U1 fresh story → block is empty (fail-closed)  — ""
+PASS U2 commit p1 → frozen entry; assignment kept only as plannedEvent  — {"n":1,"sceneNumber":1,"issue":1,"kind":"scene","pageUid":null,"plannedEvent":"PLANNED ONE","plannedSource":null,"setting":null,"participants":null,"act":"walked in","dia":"hello","card":null,"changes":[],"committedAt":1788797928899}
+PASS U2b block renders the reader's act and words, NOT the planned event  — 
+STORY LEDGER (authoritative — built from committed state, never from prose; it is what the reader has ALREADY READ, facts only: what the reader did, what Fate recorded, what was verified on the page):
+  ALREADY READ (1 page) — what is list
+PASS U2c block never prints undefined/null  — 
+STORY LEDGER (authoritative — built from committed state, never from prose; it is what the reader has ALREADY READ, facts only: what the reader did, what Fate recorded, what was verified on the page):
+  ALREADY READ (1 page) — what is list
+PASS U2d a verifier-committed fact for that scene IS rendered as verified  — 
+STORY LEDGER (authoritative — built from committed state, never from prose; it is what the reader has ALREADY READ, facts only: what the reader did, what Fate recorded, what was verified on the page):
+  ALREADY READ (1 page) — what is list
+PASS U2e a fact committed for another scene is NOT attached to p1  — 
+STORY LEDGER (authoritative — built from committed state, never from prose; it is what the reader has ALREADY READ, facts only: what the reader did, what Fate recorded, what was verified on the page):
+  ALREADY READ (1 page) — what is list
+PASS U3 identity from the commits: PC + LI appear  — STORY LEDGER (authoritative — built from committed state, never from prose; it is what the reader has ALREADY READ, facts only: what the reader did, what Fate recorded, what was verified on the page):
+PASS U3b uncommitted LI is NOT named (fail-closed)  — STORY LEDGER (authoritative — built from committed state, never from prose; it is what the reader has ALREADY READ, facts only: what the reader did, what Fate recorded, what was verified on the page):
+PASS U3c unresolved PC → no WHO line at all  — STORY LEDGER (authoritative — built from committed state, never from prose; it is what the reader has ALREADY READ, facts only: what the reader did, what Fate recorded, what was verified on the page):
+PASS U4 stamp before the author pass: scene 2, planned assignment, Tempt card, reader act  — {"storyId":"sid-A","sceneNumber":2,"act":"act two","dia":null,"card":"tempt","plannedEvent":"PLANNED TWO","plannedSource":"plan","setting":null,"participants":null,"durableBefore":0,"stampedAt":1788797928900}
+PASS U4b commit consumes the key: uid, act, card carried; key cleared  — {"n":2,"sceneNumber":2,"issue":1,"kind":"scene","pageUid":"uid-2","plannedEvent":"PLANNED TWO","plannedSource":"plan","setting":null,"participants":null,"act":"act two","dia":null,"card":"tempt","changes":[],"committedAt":1788797928900}
+PASS U4c block lists p2 with act + [Tempt Fate played], no planned text  — 
+STORY LEDGER (authoritative — built from committed state, never from prose; it is what the reader has ALREADY READ, facts only: what the reader did, what Fate recorded, what was verified on the page):
+  WHO: PC Testa
+  ALREADY READ (2 page
+PASS U4d a key stamped for scene 3 is NOT consumed by a commit that names scene 7  — {"n":3,"sceneNumber":7,"issue":1,"kind":"scene","pageUid":"uid-7","plannedEvent":null,"plannedSource":null,"setting":null,"participants":null,"act":null,"dia":null,"card":null,"changes":[],"committedAt":1788797928900}
+PASS U5 a durable consequence recorded during the page is attributed to that page  — {"n":4,"sceneNumber":8,"issue":1,"kind":"scene","pageUid":"uid-8","plannedEvent":null,"plannedSource":null,"setting":null,"participants":null,"act":"bargains","dia":"take it","card":"ordinary","changes":["fc_2_1_voice_lost"],"committedAt":1
+PASS U5b block carries the permanent change (existing directive, now delivered) + the page marker  — 
+STORY LEDGER (authoritative — built from committed state, never from prose; it is what the reader has ALREADY READ, facts only: what the reader did, what Fate recorded, what was verified on the page):
+  WHO: PC Testa
+  ALREADY READ (4 page
+PASS U6 earlier entries are immutable; a page commits once (duplicate returns the existing entry)  — len=4
+PASS U7 another story id → the ledger is not READ (block empty)  — ""
+PASS U7b a commit under the new story opens a fresh ledger
+PASS U8 40 pages → capped block, most recent six listed, older counted  — len=1105
+PASS U9 restamp for the issue boundary keeps every page, frozen, under the new story id
+PASS U9b replaying the same carry twice is idempotent (40 pages, not 80)
+PASS U10 pages from an earlier issue are tagged with their issue  —     issue 1 p40: reader did: did thing 40 with enough words to make the line long enough to matter for the cap |   NOW: page 8 — reach a dramatic state that is not on the list above; what is listed has been read and cannot be undone or re-t
+PASS U10b after the carry, the new issue appends (issue 2, p1) without touching issue-1 pages
+PASS U11 NOW line uses the canonical scene number (turnCount+2)
+PASS U0 zero provider POSTs during the unit part
+PASS S1 app.js author assemblies carry the block (heavy, pass2, speculative, CG, OAS)  — 189877:OAS intimacy prompt, 217504:CG screenplay sys, 301696:heavy fullSys, 302415:multi-pass pass2, 306451:speculative preload
+PASS S2 orchestration-client SD author + Mistral SD fallback carry the block  — 3144,3715
+PASS S3 page-commit sites write the ledger (continuation, Scene 1 ×2, baked, CG, issue open) — baked writes the ledger but receives NO block (verbatim prose, no prompt)  — 98815,134914,225363,254752,271144,304455
+PASS S4 the continuation stamps the scene key before the heavy assembly and before the speculative check
+PASS S5 issue boundary carries and re-stamps the ledger
+PASS S6 the block never renders plannedEvent (static: no "plannedEvent" read inside the block builder)
+INFO S7 turnCount=1 writers after a Scene-1 commit: 229704  — issue-open _mountAndTransition, Scene-1 site A (background-pregenerated path, unconditional after its branches), CG/GN renderer; baked uses "if (!(turnCount>0)) turnCount=1"
+INFO N0 plan rows: [{"n":1,"goal":"THE WISH — steps 1-4 of the tw"},{"n":2,"goal":"THE TWIST — steps 5-6, shaped "},{"n":3,"goal":"THE PRICE AND THE THRESHOLD — "}]
+PASS N1 baked starter unlock → turnCount 0 → canonical next scene 2 → plan row 2 "THE TWIST" (red control: pre-repair log shows row 3)  — {"turn":0,"canonical":2,"selected":{"sceneNumber":2,"source":"plan-scene","event":"THE TWIST — steps 5-6, shaped by what th"}}
+PASS N2 CG seam: generating scene index 1 → scene 2 / row 2; index 2 → scene 3 / row 3; index 0 → 1; cleared → literary rule  — {"i1":{"canonical":2,"selected":{"sceneNumber":2,"source":"plan-scene","event":"THE TWIST — steps 5-6, shaped by what th"}},"i2":{"canonical":3,"selected":{"sceneNumber":3,"source":"plan-scene","event":"THE PRICE AND THE THRESHOLD — step 7,
+PASS N3 genuine second continuation (turnCount 1) is scene 3 / row 3  — {"canonical":3,"selected":{"sceneNumber":3,"source":"plan-scene","event":"THE PRICE AND THE THRESHOLD — step 7, th"}}
+PASS N4 issue start: opening mounted → first continuation of the new issue is scene 2  — {"canonical":2}
+PASS N5 preview "stop after scene 3" fires after exactly three scenes displayed (not after two, not after four)  — {"a2":false,"a3":true,"a4":false}
+PASS N6 static: no reachable Scene-1 writer begins turnCount at 1 (only the legacy GN renderer, explicitly exempted); no decrement anywhere; couple resume has no +1  — turnCount=1 writers: 229704
+PASS N7 static: CG generator wrapper sets and clears the authoring index in finally
+PASS M1 (a) literary Scene-1-only save at 1 → normalized to 0, schema 2, migration record with before/after  — {"schemaFrom":1,"schemaTo":2,"at":1788797942714,"turnCountBefore":1,"turnCountAfter":0,"evidence":{"pages":1,"scenes":1,"ledger":null,"facts":0,"displayed":1},"applied":true,"reason":"pre-repair Scene-1-only save stored as 1 → 0 (completed 
+PASS M1b pages passed in are untouched
+PASS M2 (b) literary genuine first continuation (2 pages) stays 1, stamped  — {"schemaFrom":1,"schemaTo":2,"at":1788797942714,"turnCountBefore":1,"turnCountAfter":1,"evidence":{"pages":2,"scenes":1,"ledger":null,"facts":0,"displayed":2},"applied":false,"reason":"a continuation was displayed (2 pages/scenes) — legitim
+PASS M3 (a) baked starter after unlock (1 page, 1 scene) → 0  — {"schemaFrom":1,"schemaTo":2,"at":1788797942714,"turnCountBefore":1,"turnCountAfter":0,"evidence":{"pages":1,"scenes":1,"ledger":null,"facts":0,"displayed":1},"applied":true,"reason":"pre-repair Scene-1-only save stored as 1 → 0 (completed 
+PASS M4 (b) CG genuine first continuation (2 scenes, 1 page) stays 1  — {"schemaFrom":1,"schemaTo":2,"at":1788797942714,"turnCountBefore":1,"turnCountAfter":1,"evidence":{"pages":1,"scenes":2,"ledger":null,"facts":0,"displayed":2},"applied":false,"reason":"a continuation was displayed (2 pages/scenes) — legitim
+PASS M5 (a) issue-2 opening stored as 1 → 0  — {"schemaFrom":1,"schemaTo":2,"at":1788797942714,"turnCountBefore":1,"turnCountAfter":0,"evidence":{"pages":1,"scenes":1,"ledger":null,"facts":0,"displayed":1},"applied":true,"reason":"pre-repair Scene-1-only save stored as 1 → 0 (completed 
+PASS M6 AMBIGUOUS legacy single-blob save: left at 1, stamped so it is not re-evaluated, reason says ambiguous  — {"schemaFrom":1,"schemaTo":2,"at":1788797942714,"turnCountBefore":1,"turnCountAfter":1,"evidence":{"pages":null,"scenes":1,"ledger":null,"facts":0,"displayed":null},"applied":false,"reason":"AMBIGUOUS: legacy single-blob save (no storyPages
+PASS M7 mid-story legacy save (turnCount 3, 3 pages) left as saved  — {"schemaFrom":1,"schemaTo":2,"at":1788797942714,"turnCountBefore":3,"turnCountAfter":3,"evidence":{"pages":3,"scenes":1,"ledger":null,"facts":0,"displayed":3},"applied":false,"reason":"turnCount is 3 — not the Scene-1-only class; left as sa
+PASS MF1 (a) literary Scene-1-only at 1, one page, WITH a Scene-1 verifier fact → normalized to 0  — {"schemaFrom":1,"schemaTo":2,"at":1788797942714,"turnCountBefore":1,"turnCountAfter":0,"evidence":{"pages":1,"scenes":1,"ledger":null,"facts":1,"displayed":1},"applied":true,"reason":"pre-repair Scene-1-only save stored as 1 → 0 (completed 
+PASS MF2 (a) baked Scene-1-only at 1, one page, WITH a Scene-1 verifier fact (CG Scene 1 runs the plot contract) → 0  — {"schemaFrom":1,"schemaTo":2,"at":1788797942714,"turnCountBefore":1,"turnCountAfter":0,"evidence":{"pages":1,"scenes":1,"ledger":null,"facts":1,"displayed":1},"applied":true,"reason":"pre-repair Scene-1-only save stored as 1 → 0 (completed 
+PASS MF3 fact keyed only by sourceEvent scene1_transition → still normalized  — {"schemaFrom":1,"schemaTo":2,"at":1788797942714,"turnCountBefore":1,"turnCountAfter":0,"evidence":{"pages":1,"scenes":1,"ledger":null,"facts":1,"displayed":1},"applied":true,"reason":"pre-repair Scene-1-only save stored as 1 → 0 (completed 
+PASS MF4 fact at scene 0 (verifier fallback numbering) → still normalized  — {"schemaFrom":1,"schemaTo":2,"at":1788797942714,"turnCountBefore":1,"turnCountAfter":0,"evidence":{"pages":1,"scenes":1,"ledger":null,"facts":1,"displayed":1},"applied":true,"reason":"pre-repair Scene-1-only save stored as 1 → 0 (completed 
+PASS MF5 fact labeled scene 2 with ONE displayed page (aborted Scene-2 attempt verified against Scene 1) → page count governs → normalized  — {"schemaFrom":1,"schemaTo":2,"at":1788797942714,"turnCountBefore":1,"turnCountAfter":0,"evidence":{"pages":1,"scenes":1,"ledger":null,"facts":1,"displayed":1},"applied":true,"reason":"pre-repair Scene-1-only save stored as 1 → 0 (completed 
+PASS M9 scene ledger (when present for this story) is the authority: 2 committed pages → left at 1  — {"schemaFrom":1,"schemaTo":2,"at":1788797942714,"turnCountBefore":1,"turnCountAfter":1,"evidence":{"pages":1,"scenes":1,"ledger":2,"facts":0,"displayed":2},"applied":false,"reason":"a continuation was displayed (2 pages/scenes) — legitimate
+PASS M10 second pass is a no-op (schema stamp): turnCount stays 0, not −1, and the record keeps turnCountBefore=1 for rollback  — {"applied":false,"reason":"already schema 2"}
+PASS M11 a story born at schema 2 is never touched  — {"applied":false,"reason":"already schema 2"}
+PASS M12 inline-literary legacy save (already 0) stays 0, stamped  — {"schemaFrom":1,"schemaTo":2,"at":1788797942715,"turnCountBefore":0,"turnCountAfter":0,"evidence":{"pages":1,"scenes":1,"ledger":null,"facts":0,"displayed":1},"applied":false,"reason":"turnCount is 0 — not the Scene-1-only class; left as sa
+PASS M13 static: resume (continueStory) applies the snapshot, restores pages (both branches), THEN normalizes once  — {"iAssign":7487738,"iSet":7493218,"iBlob":7493788,"iHook":7494081}
+PASS M14 static: new stories are stamped schema 2 in _resetStoryState; no writer sets schema elsewhere except the normalizer
+PASS R1 author ABORT (HTTP 500) → no page added, no ledger entry, page count unchanged  — authorCalls=3 ledger=1 pages=1 errs=
+PASS R1b the aborted attempt left a stale key (expected) that names the scene it was for  — {"storyId":"harness-story-1","sceneNumber":2,"act":"I try the locked door.","dia":null,"card":"ordinary","plannedEvent":null,"plannedSource":null,"setting":null,"participants":null,"durableBefore":0,"stampedAt":1788797948253}
+INFO R2 author calls made by the retry turn (the app's own chain: author + follow-up passes): 2  — /api/proxy grok-4.3 ; /api/mistral-proxy mistral-small-2603
+PASS R2 retry → exactly ONE new page and ONE new entry with the NEW act (the aborted act never recorded), key consumed  — {"n":2,"sceneNumber":2,"kind":"scene","pageUid":"pg:f66f1716-add8-40b5-8f6e-10cd687e2b3a","act":"I walk down to the river instead.","card":"ordinary","plannedEvent":null} pages=2 key=null
+PASS R2b the entry's page uid is the page just displayed (last pagination uid)  — pg:f66f1716-add8-40b5-8f6e-10cd687e2b3a
+PASS R2c the author payload for the retry listed page 1 with the reader's act and the verified fact, and no planned text
+PASS G1 story-gravity one-shot fires on the SCENE 2 build (payload carries the opening-emphasis block)
+PASS G3 Scene-2 intro vision fires after SCENE 2 commits (flag set)  — {"vision":true,"indulge":false}
+PASS G5 Scene-3 indulgence does NOT fire on Scene 2 (adjacent red)  — {"vision":true,"indulge":false}
+PASS R2d NOW line agrees with the page being authored (Scene 1 read → NOW: page 2) and with the committed entry  — NOW: page 2
+PASS G2a gravity value is still set on the Scene 3 build (so G2 is not vacuous)  — {"vision":false,"indulge":true,"gravity":"outcome"}
+PASS G2 story-gravity one-shot does NOT fire on the Scene 3 build (adjacent red)
+PASS G4 Scene-2 intro vision does NOT fire after Scene 3 (adjacent red, re-armed)  — {"vision":false,"indulge":true,"gravity":"outcome"}
+PASS G6 Scene-3 indulgence fires after SCENE 3 commits (flag set)  — {"vision":false,"indulge":true,"gravity":"outcome"}
+PASS R3 speculative DISCARD (context mismatch) → the real author ran, ONE page + ONE entry for the real page, the draft never displayed, spec cleared  — {"n":3,"sceneNumber":3,"kind":"scene","pageUid":"pg:dca5c88a-52a1-4fae-98d1-0c5f4157cf71","act":"I follow the river to the mill.","card":"ordinary","plannedEvent":null} | lastPage= She left the customs house without looking back and the riv
+PASS R4 ledger entries are in page-uid order and one-to-one with displayed pages  — {"sceneUids":["pg:824a9d3b-0a24-4e23-841b-3082bd8834b2","pg:f66f1716-add8-40b5-8f6e-10cd687e2b3a","pg:dca5c88a-52a1-4fae-98d1-0c5f4157cf71"],"pages":3}
+PASS R5 scene numbers increase by one per displayed page from the seeded Scene 1  — 1,2,3
+PASS R5b the third page's author payload said NOW: page 3 and turnCount after it is 2 (completed continuation turns)  — turn=2
+PASS G7 Scene-3 indulgence does NOT fire on Scene 4 (adjacent red, re-armed)  — {"indulge":false}
+PASS R6a the knock turn committed ONE page/entry (p4) and its author payload listed exactly the three pages read before it  — {"n":4,"sceneNumber":4,"kind":"scene","pageUid":"pg:3d5b5e7a-9ccf-4a49-93ad-f41c03e21c6b","act":"I knock on the mill door.","card":"ordinary","plannedEvent":null}
+INFO R6 speculative preload did NOT store a draft in the dry run (gated or stub rejected) — the second-system assembly is proven STATIC only (S1); discard-on-mismatch is proven by R3; adoption UNPROVEN  — authorCalls after knock=2 spec=null logs=%c[FF-SPECULATIVE] phase-2 harness ready — await window._ffSpeculativeAudit({source:"The Winds of Winter", embody:"Arya", baseContinuity:"book"}) color:#7ec77e; ; [SPECULATIVE] Context mismatch
+PASS C1 CG screenplay system prompt (executed builder) carries the block with page 1 facts  — You are a screenplay-native cinematic-romance writer for an adult-romance visual
+PASS C2 SD author (executed) → captured POST carries the block  — posts=/api/proxy grok-4-1-fast-reasoning ret=ERR Grok SD Author returned malformed response
+PASS C3 Mistral SD fallback (executed) → captured POST carries the block  — posts=/api/mistral-proxy mistral-medium-latest ret=ERR Mistral SD Fallback returned malformed response
+PASS C4 OAS intimacy turn (executed) → captured POST carries the block  — posts=/api/mistral-proxy role=null mistral-small-latest ret=ok
+INFO C5 multi-pass pass-2: unreachable dry (buildScenePlan needs a real plan) — STATIC only (S1)
+INFO C6 baked Scene 1: EXCLUDED — verbatim prose, no prompt; the ledger records the page but no block is delivered there
+
+80 checks · 80 passed · 0 failed · 6 info

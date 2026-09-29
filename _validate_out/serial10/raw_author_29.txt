@@ -1,0 +1,17 @@
+The ship's deck slick with rain forced my steps to slow, boards treacherous underfoot as the Dohkar's gaze fixed on me. Julian stepped forward from the shadows, his slate-blue skin catching stray moonlight through the downpour, the long scar on his forearm stark against the sheer fabric of his tunic. His hand turned the ring on his finger once.
+
+"You stand there as if the lineage means nothing," he said, voice low and edged with skeptical warmth. "The Dohkar named your claim. The note in my pocket names a meeting. Which truth do you press first, or do you expect the rest of us to wait while you choose?"
+
+The artifact's faint glow pulsed between us on the planks. Salt stung my eyes. The Dohkar's raised hand held the rite open, the crowd's murmurs pressing closer.
+
+"This whole thing's holed, a massive prick of a situation," Julian added, gaze flicking away before locking back on mine.
+
+<<MICRO_EXPRESSION>>
+Is this something to lean into or something to move past?
+<<CONTINUE>>
+
+I felt the warmth spread through my chest, radiating outward as I faced him. The rain drummed harder, each drop a small demand for motion. The Dohkar waited without shifting, their alignment-sense reading every misalignment in the air. Julian's stillness held the moment taut, the scar visible where his sleeve had slipped, the ring catching what light remained. The crowd edged nearer, their Weave-Script flickering with unease. I stepped closer to the artifact, heel lifting half an inch before settling, the note still face-up between the planks. The Dohkar's voice cut through the downpour.
+
+"Answer him, or the rite closes without your claim settled."
+
+The pressure hung between us, unresolved, the deck creaking under the weight of what waited.

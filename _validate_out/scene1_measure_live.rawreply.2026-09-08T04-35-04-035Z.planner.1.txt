@@ -1,0 +1,61 @@
+{
+  "opening_spine": {
+    "pressure_source_type": "emotional",
+    "pressure_source": "the last roses are already wilting in the heat while the new bolt on the door holds fast",
+    "hook_object": null,
+    "opening_actor_id": null,
+    "opening_beat": "The lock on the shop door is already turning from the outside.",
+    "rising_beats": [
+      "I wipe my hands on the apron and the tremor climbs to my elbow.",
+      "Rook's proxy set the notice down with both hands and did not let go; my pulse went uneven at the memory of his precise grip."
+    ],
+    "decision_beat": "Stay and fight the notice or walk away before the light fails?",
+    "pc_career": "florist",
+    "opening_setting": "florist shop",
+    "environment_elements": ["wilting roses", "locked door"],
+    "li_texture_beat": "beat 2: Rook's proxy set the notice down with both hands and did not let go; my pulse went uneven at the memory of his precise grip",
+    "pc_wound_anchor": "beat 1: the silence after the lock turned bothered her more than it should have",
+    "pc_self_presentation_beat": "opening: I wiped my hands on my apron, the way I always did when I was about to lose something I couldn't afford to lose",
+    "scene_want": "wants the roses to stay fresh one hour longer",
+    "scene_mission": "Finish the last arrangement before the light fails",
+    "reader_state": {
+      "knows": "Testa is alone in the florist shop as the door is being locked from outside",
+      "believes": "her livelihood is ending right now because of Rook's move",
+      "wondering": "which betrayal will he choose",
+      "must_not_confuse": "only Testa is present; the crisis is the lock turning and the wilting flowers"
+    },
+    "pc_body_callback": "opening: stress_tic (hands on apron)",
+    "antagonist_body_callback": null,
+    "staged_characters": [
+      { "name": "Testa", "presence": "IN_PERSON", "anchor_beat": "FROM_PC_OPENING_FUSION" }
+    ]
+  },
+  "scene_skeleton": {
+    "character_plus": [],
+    "environment_plus": {
+      "target": "locked door",
+      "axis": "damage",
+      "beat": "the locked door has a new bolt installed this morning"
+    },
+    "pc_opening_fusion": {
+      "character": "Testa",
+      "placement": "PC_FIRST_EMBODIED_BEAT",
+      "action": "I wipe my hands on the apron while standing at the locked door",
+      "pc_lens_operation": "INWARD_TRANSLATION_OF_ANOTHER_PERSONS_COST",
+      "character_revelation": "Testa feels the loss in her body before she names it",
+      "environment_pressure": {
+        "grounds": ["env:axis", "pick:world"],
+        "text": "the new bolt makes the shop feel smaller and already lost"
+      }
+    }
+  },
+  "stage_contract": {
+    "v": 1,
+    "participants": [
+      { "ref": "pc:self", "presence": "IN_PERSON" }
+    ],
+    "event_facts": [
+      { "text": "the lock on the shop door is already turning from the outside", "participants": [ { "ref": "pc:self", "role": "actor" } ] }
+    ]
+  }
+}

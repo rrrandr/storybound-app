@@ -1,0 +1,5 @@
+[SCENE1-GATE] Surgical edit attempt 1 → mistral-small (targeted rewrite, preserves voice/length/architecture; Haiku BANNED for prose, Roman 2026-06-26)
+[SCENE1-GATE] Surgical edit attempt 2 → mistral-small (targeted rewrite, preserves voice/length/architecture; Haiku BANNED for prose, Roman 2026-06-26)
+[MODEL-ROUTE:PROSE] provider=mistral-small task=line_edit callsite=cheap-edit:scene1-edit
+[CHEAP-EDIT] scene1-edit applied via Mistral (3025→3025 chars) — line-edit, not a re-roll.
+[SCENE-BUDGET:COUNT] scene=89d7b934-1a0c-4379-a153-36f3a024afd2:0 repair=2 polish=0 fallback=0 regen=0 cosmetic=1/2 (conditional spent=2/4) skipped=[] provenance=repair

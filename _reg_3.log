@@ -1,0 +1,17 @@
+=== RESERVED-CANON DIRECTIVE — LEXICAL SCOPE PROOF (AST, $0) ===
+
+  ✓ the directive is declared exactly once, as a function declaration
+  ✓ the already-working world-truth builder is declared in the SAME scope
+  ✓ ...and only once — no shadowing copy in another scope
+    call sites: 2 at offsets [15391151,18185345]
+  ✓ there are exactly TWO call sites — the CG author builder and the literary introPrompt
+  ✓ call site at line 228107 is lexically INSIDE the declaring scope, so the typeof guard cannot be silently false
+  ✓ call site at line 268748 is lexically INSIDE the declaring scope, so the typeof guard cannot be silently false
+  ✓ one call site sits after the CG author builder opens
+  ✓ the other sits inside the literary introPrompt template
+  ✓ the literary call sits immediately after the seed-context directive that DELIVERS the reserved truth
+  ✓ RED — the walker reports an out-of-scope call site as NOT inside the declaring scope
+  ✓ GREEN — and the same walker accepts the in-scope version, so it is not simply refusing everything
+
+======================================================================================
+  11/11 assertions passed

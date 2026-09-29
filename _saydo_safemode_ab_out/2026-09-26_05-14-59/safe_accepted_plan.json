@@ -1,0 +1,24 @@
+{
+  "tactical_move": "Lirael's unretreating intimate defiance draws Seren's family forward to issue the public demand for remedy, shifting confrontation onto her standing.",
+  "local_objective": "Lirael pulls Julian close in open want, her unretreating stance prompting Seren's family to step forward with their demand.",
+  "state_change": "Seren's family steps out of the assembly and publicly demands remedy for what the wish cost Seren.",
+  "state_change_precondition": "Seren's family has not yet stepped forward from the assembly to demand remedy.",
+  "forces_choice": "forces Lirael to choose between claiming the interference openly and letting the assembly keep its assumption",
+  "event_slots": {
+    "precondition": "Lirael, Julian, Seren, the presiding Dohkar and the assembly are all present",
+    "actor": "Seren's family",
+    "action": "step out of the assembly and publicly demand remedy",
+    "target": "Lirael",
+    "exit_state": "Seren's family has publicly demanded remedy for what the wish cost Seren",
+    "mechanism_grounding": "ordinary"
+  },
+  "mechanism_grounding": "ordinary",
+  "acceptedAt": 1790399832426,
+  "sceneNum": 1,
+  "owner": {
+    "id": "cpa:746d4088-c5da-4b0b-b6c8-88064c2a81c6",
+    "storyId": "live-safemode-safe-1790399802727",
+    "sceneIndex": 1,
+    "branch": "remain"
+  }
+}

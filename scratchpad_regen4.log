@@ -1,0 +1,107 @@
+  > [CG:SCAFFOLD] generation start (the_inhuman, gpt-4o-mini)
+  > [CG:SCAFFOLD] awaiting 1 Bible(s) before spine (P2 sequencing — latency over cost)
+  > [CG:SCAFFOLD] Bibles ready (0ms) — pc=y li=y antag=n
+  > [CG:SCAFFOLD:GEN] 24426ms, model=gpt-4o-mini
+  > [CG:SCAFFOLD] thesis="Can she allow herself to be seen while navigating the chaos of survival with a stranger whose beauty hides deeper wounds?"
+  > [CG:SCAFFOLD] issues=4, motifs=3, forbidden=3
+  > [CG:SCAFFOLD] FULL OBJECT: {runThesis: Can she allow herself to be seen while navigating …with a stranger whose beauty hides deeper wounds?, thematicD
+  > [CG:SCAFFOLD] active — scene_index=0, source=gpt-4o-mini, issues=4
+  > [CG:SCREENPLAY] gen start (scene 0)
+  > [CG:SCREENPLAY:USER-PROMPT]
+SCENE INDEX: 0 (Scene 1 — establishing)
+STORY LENGTH: affair
+SCENE DENSITY (ST1 — SETUP PACE): establishing register. The 
+  > [CG:SCREENPLAY] flavor "the_inhuman" → chain leads with Grok-4.1-reasoning (scene 1 / tentpole — Grok primary)
+  > [CG:SCREENPLAY] generated via Grok-4.1-reasoning in 56622ms
+  > [CG:SCREENPLAY] gen returned in 56626ms
+  > [STAGED:DIST] scene 0 beats=20 bands: micro=11 subtle=5 readable=4 strong=0 extreme=0 | avg raw=0.14 clamped=0.14 | llm-emitted=9/20 clamps=0
+  > [CG:SCREENPLAY] Expression peak enforcement: kept 4 (family=suppression), demoted 5 to neutral [reasons: spacing<3, spacing<3, cross-family(suppressio
+  > [STAGED:VARIATION] Scene 0 OK — beats=20 peaks=4 phases=4 hands=0 closeups=1
+  > [CG:SCREENPLAY] region=Gloamwater Bay | species=[kwisheen]
+  > [STAGED:HERO] Generating 4 phase images for scene 0 (serial: phase 0 first, then 1+ as Kontext edits)
+  > [STAGED:TIER] phase 0 → simple → cheap
+  > [STAGED:STAGING-MODE] adversarial (liAbsent=true, sideChars=1)
+  > [STAGED:HERO:PHASE] Cache MISS — generating phase 0 (ambush in the ruins) for scene 0 at tier=cheap
+  > [STAGED:STYLE] artist="ender_bond" → 2 style anchor(s): ender_golden_master_v3.jpg, ender_golden_master_v3_bottom.jpg
+  > [STAGED:STYLE] phase 0 — SUBSTITUTED li_absent master ender_golden_master_v3_bottom.jpg for stripped golden_master (full artist signature, no couple b
+  > [STAGED:STYLE] phase 0 — passing 3 style anchors to Gemini (filtered 1 LI-implying refs, liAbsent=true)
+  > [STAGED:STYLE] artist=ender_bond styleAnchors=2 regionAnchors=2 contractInjected=true phaseIdx=0
+  > [GEMINI:SCENE-CASE] SPECIAL_SPECIES — species: true, trait: false, fantasy: true, worldAnchor: true
+  > [STAGED:IMG] Phase 0 image NOT ready within 25s — mounting scene anyway (image will swap in when it lands). User sees text + dark frame until then.
+  > ═══ [STAGED:SCENE 0 MOUNT] 20 beats, 4 phase(s), gate@19 ═══
+  > [STAGED:HERO:SWAP] No image yet for phase:0 — staying on current
+  > [STAGED:ECHO-PROFILE] peak@0 tension=tightening → profile="simmer"
+  > [STAGED:ECHO] beat 0 inEcho=true age=0 intensity=1.00 peakHere=true
+  > [STAGED:BEAT 0/19] | narration | tens=tightening | profile=simmer | mouth=jaw_clench✓PEAK@0.35 | echoZone=age0@1.00 | decay=— | pacing=696ms(×1.20) | 
+  > [STAGED:RENDER] Mounted — 20 beats, gate at beat 19, micro after beat 7
+  > [IMAGE-GEN] {"provider":"Gemini","context":"visualize","reached":true,"blockedBy":"None","status":"SUCCESS","promptLength":46780,"promptPreview":"PRIM
+  > [STAGED:KONTEXT] Phase 0 stashed as scene 0 edit source
+  > [STAGED:STAGE_CACHE] Cached stage for future revisits (key=fantasy|the_inhuman|drowned ruins of gloamwater bay at dusk, murky water filteri…)
+  > [STAGED:HERO:PHASE] Phase 0 generated in 49544ms (tier=cheap)
+  > [STAGED:TIER] phase 1 → medium → mid
+  > [STAGED:STAGING-MODE] adversarial (liAbsent=true, sideChars=1)
+  > [STAGED:HERO:PHASE] Cache MISS — generating phase 1 (the raider speaks the wish) for scene 0 at tier=mid
+  > [STAGED:STYLE] artist="ender_bond" → 2 style anchor(s): ender_golden_master_v3.jpg, ender_golden_master_v3_bottom.jpg
+  > [STAGED:STYLE] phase 1 LI-absent — SUBSTITUTED li_absent master ender_golden_master_v3_bottom.jpg
+  > [STAGED:STYLE] phase 1 LI-absent — passing 3 refs (filtered 1 LI/romance masters)
+  > [STAGED:STYLE] artist=ender_bond styleAnchors=2 regionAnchors=2 contractInjected=true phaseIdx=1
+  > [GEMINI:SCENE-CASE] SPECIAL_SPECIES — species: true, trait: false, fantasy: true, worldAnchor: true
+  > [STAGED:RENDER] Hero image mounted (phase 0)
+  > [IMAGE-GEN] {"provider":"Gemini","context":"visualize","reached":true,"blockedBy":"None","status":"SUCCESS","promptLength":46551,"promptPreview":"PRIM
+  > [STAGED:HERO:PHASE] Phase 1 generated in 15172ms (tier=mid)
+  > [STAGED:TIER] phase 2 → medium → mid
+  > [STAGED:STAGING-MODE] adversarial (liAbsent=true, sideChars=1)
+  > [STAGED:HERO:PHASE] Cache MISS — generating phase 2 (Fate answers) for scene 0 at tier=mid
+  > [STAGED:STYLE] artist="ender_bond" → 2 style anchor(s): ender_golden_master_v3.jpg, ender_golden_master_v3_bottom.jpg
+  > [STAGED:STYLE] phase 2 LI-absent — SUBSTITUTED li_absent master ender_golden_master_v3_bottom.jpg
+  > [STAGED:STYLE] phase 2 LI-absent — passing 3 refs (filtered 1 LI/romance masters)
+  > [STAGED:STYLE] artist=ender_bond styleAnchors=2 regionAnchors=2 contractInjected=true phaseIdx=2
+  > [GEMINI:SCENE-CASE] SPECIAL_SPECIES — species: true, trait: false, fantasy: true, worldAnchor: true
+  > [IMAGE-GEN] {"provider":"Gemini","context":"visualize","reached":true,"blockedBy":"None","status":"SUCCESS","promptLength":46814,"promptPreview":"PRIM
+  > [STAGED:HERO:PHASE] Phase 2 generated in 17054ms (tier=mid)
+  > [STAGED:TIER] phase 3 → medium → mid
+  > [STAGED:STAGING-MODE] adversarial (liAbsent=true, sideChars=1)
+  > [STAGED:HERO:PHASE] Cache MISS — generating phase 3 (the choice forms) for scene 0 at tier=mid
+  > [STAGED:STYLE] artist="ender_bond" → 2 style anchor(s): ender_golden_master_v3.jpg, ender_golden_master_v3_bottom.jpg
+  > [STAGED:STYLE] phase 3 LI-absent — SUBSTITUTED li_absent master ender_golden_master_v3_bottom.jpg
+  > [STAGED:STYLE] phase 3 LI-absent — passing 3 refs (filtered 1 LI/romance masters)
+  > [STAGED:STYLE] artist=ender_bond styleAnchors=2 regionAnchors=2 contractInjected=true phaseIdx=3
+  > [GEMINI:SCENE-CASE] SPECIAL_SPECIES — species: true, trait: false, fantasy: true, worldAnchor: true
+  > [IMAGE-GEN] {"provider":"Gemini","context":"visualize","reached":true,"blockedBy":"None","status":"SUCCESS","promptLength":46724,"promptPreview":"PRIM
+  > [STAGED:HERO:PHASE] Phase 3 generated in 11865ms (tier=mid)
+  > [STAGED:CUT] Cache MISS — generating closeup closeup|pc|face|drowned_human|mouth_soft|cool at tier=hero
+  > [STAGED:CUT:GEN] beat closeup fresh gen | cacheKey=closeup|pc|face|drowned_human|mouth_soft|cool | shot=face | target=protagonist | tier=Clean costTie
+  > [STAGED:CUT:GEN:PROMPT] ILLUSTRATED INSERT — a drawn cut-in from the surrounding scene, rendered in the SAME artistic style as every other panel in th
+  > [STAGED:RENDER] Phase images full-resolve — 4/4 cached
+  > [GEMINI:SCENE-CASE] FANTASY — species: false, trait: false, fantasy: true, worldAnchor: true
+  > [IMAGE-GEN] {"provider":"Gemini","context":"visualize","reached":true,"blockedBy":"None","status":"SUCCESS","promptLength":5005,"promptPreview":"PRIMA
+  > [STAGED:CUT] closeup|pc|face|drowned_human|mouth_soft|cool generated in 25696ms
+  > [STAGED:CUT:SOURCE] beat closeup just-generated | cacheKey=closeup|pc|face|drowned_human|mouth_soft|cool | url=data:image/png;base64,/9j/4AAQSkZJRgABA
+
+  E2E SCENE 1 — Fatelands / Kwisheen
+  ────────────────────────────────────────────────────────────
+  error: none
+  prose length: 1573 chars | author: Grok-4.1-reasoning
+  stagedActive: true | heroCache keys: 4
+  hero phase images: 4 | closeup inserts: 1/1 queued | total: 5
+  kwisheen appearance lock: {"vael":{"skin":"royal violet","pattern":"iridescent speckle","iris":"silver-grey"},"kesh":{"skin":"ember red-orange","pattern":"a fine reticulated lattice","iris":"deep amber"}}
+  images captured (hero): 4
+  ── phase plan ──
+    phase 0: li=absent | chars=[protagonist,Kesh] | ambush in the ruins
+    phase 1: li=absent | chars=[protagonist,Kesh] | the raider speaks the wish
+    phase 2: li=absent | chars=[protagonist,Kesh] | Fate answers
+    phase 3: li=absent | chars=[protagonist,Kesh] | the choice forms
+  ── hero renders (anchor decision) ──
+  ── beat count: 20 (target 20–30, floor 18) ──
+  ── scene-1 axis ──
+    bespokeAxis: (none)
+    microDecision.prompt: Say the passage is mine, or let the silence show it?
+      • "say it plainly" signal=direct+
+      • "let it show" signal=subtle+
+  ── wardrobe grounding ──
+    pc_wardrobe: linen tunic and breeches billowing in the current, water-breathing talisman at throat
+    li_wardrobe: (blank/absent)
+    Kesh [kwisheen]: shell-studded loincloth and scaled shoulder armor, one tentacle bleeding
+  saved: 4 images + prose → /private/tmp/claude-501/-Users-romantsukerman-storybound-app/5b50dbf4-5fe5-4c80-ae8b-5a341feb3c62/scratchpad/e2e
+  ────────────────────────────────────────────────────────────
+

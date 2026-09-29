@@ -1,0 +1,66 @@
+{
+  "curMilestone": null,
+  "aPlotMilestones": [
+    {
+      "atScene": 4,
+      "atPercent": 12,
+      "kind": "setup",
+      "event": "Lirael's family learns of the vow-bond's misalignment during the revelation of her old oath; Julian arrives unannounced holding the alignment key.",
+      "emotional_conductivity": "PC feels the weight of his attention from afar as panic spikes — proximity begins under crisis pressure.",
+      "triggered": false
+    },
+    {
+      "atScene": 10,
+      "atPercent": 25,
+      "kind": "first_complication",
+      "event": "A secondary debt-collapse in the Circle's fate-ledger forces Lirael and Julian into a shared registry chamber to prevent immediate default.",
+      "emotional_conductivity": "Medium: visible admiration as she watches him handle the ledger with unexpected gentleness toward a subordinate.",
+      "triggered": false
+    },
+    {
+      "atScene": 18,
+      "atPercent": 45,
+      "kind": "midpoint_reversal",
+      "event": "The clock lie surfaces — the Conclave is two cycles earlier than recorded; Veyra engineered the false timeline to force an early vote on bond dissolution.",
+      "emotional_conductivity": "Heavy: trust fracture as Lirael realizes Julian withheld the true date to test her reaction.",
+      "triggered": false
+    },
+    {
+      "atScene": 28,
+      "atPercent": 70,
+      "kind": "dark_night",
+      "event": "Lirael's father’s abandonment wound resurfaces when Veyra publicly reads the bond-thread as proof of Lirael’s unworthiness; Julian must decide whether to defend her alignment or stay silent.",
+      "emotional_conductivity": "Heavy: sacrifice crisis — defending her costs him his last remaining professional loyalty.",
+      "triggered": false
+    },
+    {
+      "atScene": 35,
+      "atPercent": 88,
+      "kind": "crisis",
+      "event": "At the Conclave, Lirael must choose whether to publicly reaffirm the vow-bond with Julian or let it dissolve to protect the Circle from Veyra’s takeover.",
+      "emotional_conductivity": "Heavy: impossible loyalty choice between her craving for connection and his need for unconditional proof.",
+      "triggered": false
+    },
+    {
+      "atScene": 40,
+      "atPercent": 100,
+      "kind": "resolution",
+      "event": "The bond stabilizes enough to block Veyra; the Circle holds but the thread now visibly pulses only when they are in the same room.",
+      "emotional_conductivity": "Light: shared competence rhythm as they coordinate the final registry seal without speaking.",
+      "triggered": false
+    }
+  ],
+  "planScene": {
+    "event": "The ceremony collapses into accusations; the PC tries to explain something she does not understand herself.",
+    "setting": null,
+    "participants": [
+      "Lirael",
+      "the youth",
+      "Julian"
+    ],
+    "props": null,
+    "stateChange": null,
+    "source": "plan-scene",
+    "sceneNumber": 2
+  }
+}

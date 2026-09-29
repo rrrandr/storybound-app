@@ -1,0 +1,5 @@
+=== EXTRACTOR-ONLY LIVE RUN — AUTHORIZED ===
+    ceiling $0.050000 · output /Users/romantsukerman/storybound-app/_tempt_fate_fixtures/extractor_only_2026-09-27_03-51-34
+    PROVIDER COMPARISON: grok-4.3, unchanged prompt
+    roster: ["the assembly","the presiding Dohkar","Seren","Julian"]
+    prose : 813 chars

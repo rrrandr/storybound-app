@@ -1,0 +1,34 @@
+You are S. Tory Bound's PERCEPTION EDITOR. The scene below is already written and already works. Perception lenses are a SCARCE resource — their purpose is occasional moments of Storybound voice, NOT a continuous stylistic layer. The DEFAULT outcome is to change NOTHING. You apply a lens ONLY to a sentence that is genuinely flatter than the prose around it. You are NOT rewriting the scene; you do NOT maintain a lens across paragraphs. The vast majority of the prose must come back untouched.
+=====USER=====
+RULES (HARD):
+- Apply AT MOST 1 lens this scene. Applying FEWER is better, and ZERO is the correct answer when no sentence is genuinely flat. Need creates the opportunity — do not hunt for sentences to elevate.
+- Choose only sentences that are genuinely FLATTER than their surroundings. Do NOT touch sentences that already work; the strongest scene is ~90% plain prose and a little memorable, never uniformly elevated.
+- One lens per sentence. NEVER apply a lens to two adjacent sentences.
+- Touch only genuinely FLAT, generic emotional sentences. Leave sentences that already work alone. Leave plot, dialogue, action, and description untouched.
+- Leave ALL other prose unchanged: same paragraphs, same opening line, same closing line, same names.
+- Do NOT create catchphrases, signature lines, or quotable aphorisms. If a rewrite sounds like a line a reader would screenshot as "the Storybound line," it has FAILED — make it a way of PERCEIVING reality, not a memorable phrase. The reader should think "these characters experience emotion differently," NEVER "that same phrase again."
+- Wrap EACH rewritten sentence in markers exactly: ⟦LENS:KEY⟧the rewritten sentence⟦/LENS⟧ using the KEY from the menu. Wrap ONLY rewritten sentences; mark nothing else.
+- Return the COMPLETE scene with the markers in place.
+
+ELIGIBLE LENSES (use ONLY these this scene):
+  INTERNAL_EXTERNAL — TARGET: a flatly-stated internal feeling ("I was nervous", "she felt uneasy") — TRANSFORM: let the ENVIRONMENT subtly participate in the emotion — the room, the light, the air, an object registers it — WITHOUT becoming magical or purple pathetic-fallacy. Restrained, once.
+  REALITY_VOTES — TARGET: a flat statement of wanting an outcome ("I wanted him", "she hoped it would work out") — TRANSFORM: render circumstances as quietly LEANING toward one outcome — small alignments/coincidences that seem to tilt one way. Never name destiny or fate. — NEVER USE THE WORDS: destiny, fate
+  BODY_CONSPIRACY — TARGET: a flat attraction/restraint statement ("I wanted him", "I was attracted to him", "I tried not to react") — TRANSFORM: stage the BODY and the conscious mind DISAGREEING — the body answers before the mind consents, or betrays the composure the mind is holding.
+  ATTENTION_FORCE — TARGET: a flat statement of looking/noticing ("I kept looking at him", "her eyes went to him again") — TRANSFORM: render ATTENTION as a physical law — gravity, orbit, current, pressure, momentum, drift. The look obeys a force, not a choice.
+  DESIRE_GEOMETRY — TARGET: a flat spatial statement near desire ("he stood across the room", "she sat down beside him") — TRANSFORM: let emotional reality DISTORT spatial reality — distance, scale, the shape of the room bends to the wanting.
+  INEVITABILITY — TARGET: a flat statement of choosing/wanting ("I chose him", "I wanted him") — TRANSFORM: make the outcome feel OLDER than the decision — already true before it was decided. — NEVER USE THE WORDS: fate, destiny, meant to be, soulmate, preordained
+  MISSING_SHAPE — TARGET: a flat statement of absence/longing ("I missed him", "the house felt empty") — TRANSFORM: make the ABSENCE perceptible — a shape where a presence should be, a negative space the senses keep finding.
+
+=== THE FINISHED SCENE (rewrite ≤3 flat emotional sentences via the lenses above; return the whole scene) ===
+
+The clearing and I stood at its edge, before the rite would begin.Seren named her sacrifice aloud and made the wish she had rehearsed, and Fate answered the words as spoken. The price was taken in the same breath. The assembly had gathered in a loose ring and no one spoke. I watched the light move across the ground and waited, and the waiting was its own kind of work. I kept my hands still because keeping them still was the only thing left that I could decide.
+
+The clearing and I stood at its edge, before the rite would begin.Seren named her sacrifice aloud and made the wish she had rehearsed, and Fate answered the words as spoken. The price was taken in the same breath. The assembly had gathered in a loose ring and no one spoke. I watched the light move across the ground and waited, and the waiting was its own kind of work. I kept my hands still because keeping them still was the only thing left that I could decide.
+
+The clearing and I stood at its edge, before the rite would begin.Seren named her sacrifice aloud and made the wish she had rehearsed, and Fate answered the words as spoken. The price was taken in the same breath. The assembly had gathered in a loose ring and no one spoke. I watched the light move across the ground and waited, and the waiting was its own kind of work. I kept my hands still because keeping them still was the only thing left that I could decide.
+
+The clearing and I stood at its edge, before the rite would begin.Seren named her sacrifice aloud and made the wish she had rehearsed, and Fate answered the words as spoken. The price was taken in the same breath. The assembly had gathered in a loose ring and no one spoke. I watched the light move across the ground and waited, and the waiting was its own kind of work. I kept my hands still because keeping them still was the only thing left that I could decide.
+
+The clearing and I stood at its edge, before the rite would begin.Seren named her sacrifice aloud and made the wish she had rehearsed, and Fate answered the words as spoken. The price was taken in the same breath. The assembly had gathered in a loose ring and no one spoke. I watched the light move across the ground and waited, and the waiting was its own kind of work. I kept my hands still because keeping them still was the only thing left that I could decide.
+
+The clearing and I stood at its edge, before the rite would begin.Seren named her sacrifice aloud and made the wish she had rehearsed, and Fate answered the words as spoken. The price was taken in the same breath. The assembly had gathered in a loose ring and no one spoke. I watched the light move across the ground and waited, and the waiting was its own kind of work. I kept my hands still because keeping them still was the only thing left that I could decide.

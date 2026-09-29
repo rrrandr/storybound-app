@@ -1,0 +1,23 @@
+  GROK_RAW 2450 -> AUTHOR_RETURN 2450 chars (in-author cleanup)
+  author attempts: 1 (winner = last)   post-author links: 2
+
+════ CONSERVATION INVARIANT (byte-exact) ════
+  RAW cross-check (author == first.before) : PASS
+  changed authoritative mutations          : 2
+  every transition reconciles              : FAIL
+  last.after == FINAL_PROSE                : FAIL
+  delivery FINAL_PROSE->formatStory->DELIVERED : PASS
+  FIRST MISMATCH between sites 505ea2c6#1 -> 5d86e8e0#1  owner=_famousFateContractCheck
+  events observed: 33  (rawSnap 33 / textSnap 0)
+
+  ❌ HARNESS FAILURE
+  mutation labels: _repairPCPicturability(model) → _famousFateContractCheck(model)
+
+════ LANE-2 SNAPSHOT CHAIN (V2, author stubbed) ════
+  RAW    290ba4fe90   2450 chars
+  C1     29c7adbdff   2450 chars   ← _mistralRepairPass [Mistral-small repair]
+  C2     954dd7467f   2807 chars   ← _mistralRepairPass [calcified-line-edit]
+  C3     954dd7467f   2807 chars   ← _grokLineEdit [pc-desc]
+  FINAL  954dd7467f   2807 chars
+
+  total snapshot events: 7  (retained/changed: 3, rejected: 0, no-change: 4)

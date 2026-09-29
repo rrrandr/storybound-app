@@ -1,0 +1,10 @@
+{
+  "label": "v2-contract",
+  "sys": "2508954bf9818343289e6251ab7eaffc250820514f60b18869016871541d20f7",
+  "usr": "415a5942ddb9f1e159400c7cff2a05c103aa2f719c2b3ac06477b5657c67990f",
+  "sysLen": 4239,
+  "usrLen": 65264,
+  "stable": true,
+  "model": "mistral-small-latest",
+  "max_tokens": 2921
+}

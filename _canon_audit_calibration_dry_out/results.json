@@ -1,0 +1,346 @@
+[
+  {
+    "name": "four reds and four greens, as specified",
+    "pass": true
+  },
+  {
+    "name": "the memory-extraction red is the RETAINED failed Scene B proposal, relabelled ordinary",
+    "pass": true
+  },
+  {
+    "name": "the glow red is a REAL retained corpus plan, not written for this test",
+    "pass": true
+  },
+  {
+    "name": "every plan declares a mechanism_grounding, so none is short-circuited deterministically before the model sees it",
+    "pass": true
+  },
+  {
+    "name": "the prompt is the production CANON AUDITOR prompt, not a calibration-only copy",
+    "pass": true
+  },
+  {
+    "name": "the packet carries ID-addressed facts the reply can cite",
+    "pass": true
+  },
+  {
+    "name": "a VALID pass on a RED is scored MISSED and flagged CRITICAL",
+    "pass": true
+  },
+  {
+    "name": "...and the note says why it is the worst case: no tier fallback fires",
+    "pass": true
+  },
+  {
+    "name": "a valid violation on a RED is scored caught",
+    "pass": true
+  },
+  {
+    "name": "cannot_decide on a RED is scored undecided, NOT caught — failing closed is not detection",
+    "pass": true
+  },
+  {
+    "name": "a violation on a GREEN is scored FALSE_POSITIVE and flagged CRITICAL",
+    "pass": true
+  },
+  {
+    "name": "a pass on a GREEN is scored correct",
+    "pass": true
+  },
+  {
+    "name": "an invalid reply is scored invalid_response, never silently counted as a pass",
+    "pass": true
+  },
+  {
+    "name": "a transport error is scored unavailable, never a pass",
+    "pass": true
+  },
+  {
+    "name": "the fixture supplies a WHOLE internally consistent history_rewrite consequence, not a mutated memory one",
+    "pass": true
+  },
+  {
+    "name": "the AUTHORISING FACT appears VERBATIM in the real audit request",
+    "pass": true
+  },
+  {
+    "name": "...labelled as what now actually happened, not as a wish that was made",
+    "pass": true
+  },
+  {
+    "name": "...and the surviving contradiction the rewrite left is carried too",
+    "pass": true
+  },
+  {
+    "name": "the packet no longer describes this rupture as a forgetting",
+    "pass": true
+  },
+  {
+    "name": "identity/reputation detail reaches the packet",
+    "pass": true
+  },
+  {
+    "name": "possession detail reaches the packet",
+    "pass": true
+  },
+  {
+    "name": "relationship/social detail reaches the packet",
+    "pass": true
+  },
+  {
+    "name": "memory detail reaches the packet — knower dispositions and the invoker anchor",
+    "pass": true
+  },
+  {
+    "name": "4 caught reds + 4 passing greens + no undecided/unavailable/invalid ⇒ ENABLE",
+    "pass": true
+  },
+  {
+    "name": "ONE missed red ⇒ DO NOT ENABLE",
+    "pass": true
+  },
+  {
+    "name": "ONE green false positive ⇒ DO NOT ENABLE",
+    "pass": true
+  },
+  {
+    "name": "a green returning CANNOT_DECIDE ⇒ DO NOT ENABLE (it blocks a legitimate scene)",
+    "pass": true
+  },
+  {
+    "name": "a green that is UNAVAILABLE ⇒ DO NOT ENABLE (no usable response)",
+    "pass": true
+  },
+  {
+    "name": "a green with an INVALID response ⇒ DO NOT ENABLE (it blocks a legitimate scene)",
+    "pass": true
+  },
+  {
+    "name": "the summary reports usable responses out of total, so a partially-answered run cannot read as success",
+    "pass": true
+  },
+  {
+    "name": "the signature is recognised: 502 + NO_RESPONSE_FROM_FUNCTION + no provider usage",
+    "pass": true
+  },
+  {
+    "name": "...and is NOT tripped when the provider actually answered",
+    "pass": true
+  },
+  {
+    "name": "...nor by an ordinary upstream error",
+    "pass": true
+  },
+  {
+    "name": "...nor by a bare 502 without the function-layer marker",
+    "pass": true
+  },
+  {
+    "name": "TWO consecutive dead calls produce EXACTLY TWO requests",
+    "pass": true
+  },
+  {
+    "name": "...and SIX fixtures are never dispatched",
+    "pass": true
+  },
+  {
+    "name": "...realized provider cost is ZERO — the requests never reached the provider",
+    "pass": true
+  },
+  {
+    "name": "...the run is marked INFRASTRUCTURE-INCONCLUSIVE, not a model result",
+    "pass": true
+  },
+  {
+    "name": "...and the verdict is DO NOT ENABLE",
+    "pass": true
+  },
+  {
+    "name": "...with the undispatched fixtures named as a blocker, so a short run cannot read as success",
+    "pass": true
+  },
+  {
+    "name": "a SINGLE dead call followed by a live one does NOT stop the run — the stop needs two consecutive",
+    "pass": true
+  },
+  {
+    "name": "an APPROPRIATE category citing a SUPPORTING fact scores caught",
+    "pass": true
+  },
+  {
+    "name": "the same category citing an IRRELEVANT real fact scores unsupported_finding, NOT caught",
+    "pass": true
+  },
+  {
+    "name": "...and is flagged critical, with the reason named",
+    "pass": true
+  },
+  {
+    "name": "a WRONG category citing a supporting fact also scores unsupported_finding",
+    "pass": true
+  },
+  {
+    "name": "a bracketed-but-real id still counts as support — display brackets are normalised",
+    "pass": true
+  },
+  {
+    "name": "ONE unsupported finding ⇒ DO NOT ENABLE",
+    "pass": true
+  },
+  {
+    "name": "gpt-4o-mini is priced from the real table at $0.000810 per call",
+    "pass": true
+  },
+  {
+    "name": "...so eight fixtures are $0.006480, inside the $0.01 ceiling",
+    "pass": true
+  },
+  {
+    "name": "gpt-4o-mini routes to its OWN endpoint, not Mistral's",
+    "pass": true
+  },
+  {
+    "name": "an UNLISTED model is refused rather than silently run",
+    "pass": true
+  },
+  {
+    "name": "a DIFFERENT endpoint is blocked before dispatch",
+    "pass": true
+  },
+  {
+    "name": "a DIFFERENT model on the allowed endpoint is blocked — a cascade cannot masquerade as Mistral",
+    "pass": true
+  },
+  {
+    "name": "an image endpoint is blocked",
+    "pass": true
+  },
+  {
+    "name": "the ledger refuses the call that would pass the ceiling",
+    "pass": true
+  },
+  {
+    "name": "eight primary calls fit the $0.01 ceiling with headroom",
+    "pass": true
+  },
+  {
+    "name": "bare invocation refuses and exits non-zero",
+    "pass": true
+  },
+  {
+    "name": "...and prints the plan, the pass gate and the primary-only rationale",
+    "pass": true
+  },
+  {
+    "name": "an approximate phrase is refused",
+    "pass": true
+  },
+  {
+    "name": "the REAL 429 text from the failed run is recognised as a rate limit",
+    "pass": true
+  },
+  {
+    "name": "RED PROOF — it was NOT recognised by the infra rule, which is why eight requests were sent",
+    "pass": true
+  },
+  {
+    "name": "and the 502 infra signature is still NOT treated as a rate limit",
+    "pass": true
+  },
+  {
+    "name": "a scored 429 fixture carries its own rateLimited flag, never the infra flag",
+    "pass": true
+  },
+  {
+    "name": "the summary reports PROVIDER-INCONCLUSIVE as a distinct state from infrastructure",
+    "pass": true
+  },
+  {
+    "name": "a rate-limited run can never read as ENABLE",
+    "pass": true
+  },
+  {
+    "name": "the stop threshold is two consecutive, matching the infra rule",
+    "pass": true
+  },
+  {
+    "name": "the runner now counts SERVED responses before making any identity claim",
+    "pass": true
+  },
+  {
+    "name": "modelIdentityClean now REQUIRES at least one served response",
+    "pass": true
+  },
+  {
+    "name": "and an unserved run prints NOT CHECKABLE rather than clean",
+    "pass": true
+  },
+  {
+    "name": "RED PROOF — the retained failed run really did claim identity over zero served responses",
+    "pass": true
+  },
+  {
+    "name": "a canary that dispatched ONCE reports 0 usable responses, not 7",
+    "pass": true
+  },
+  {
+    "name": "...and reports how many were actually dispatched",
+    "pass": true
+  },
+  {
+    "name": "it is PROVIDER-inconclusive, and one refusal is decisive in canary mode",
+    "pass": true
+  },
+  {
+    "name": "CRITICAL — it does NOT claim the local function layer failed; that layer worked and relayed the 429",
+    "pass": true
+  },
+  {
+    "name": "the skip blocker names the PROVIDER, and says the local layer worked",
+    "pass": true
+  },
+  {
+    "name": "the skipped fixtures each carry the real stop reason, not a hardcoded infra one",
+    "pass": true
+  },
+  {
+    "name": "a canary run can never read as ENABLE",
+    "pass": true
+  },
+  {
+    "name": "RED PROOF — a genuine 502 run is STILL reported as infrastructure-inconclusive",
+    "pass": true
+  },
+  {
+    "name": "REAL usage proves completion_tokens EXCLUDES reasoning tokens on xAI",
+    "pass": true
+  },
+  {
+    "name": "RED PROOF — charging only completion_tokens understates this fixture badly",
+    "pass": true
+  },
+  {
+    "name": "the runner now adds reasoning tokens to billed output",
+    "pass": true
+  },
+  {
+    "name": "and PREFERS the provider's own reported cost when it publishes one",
+    "pass": true
+  },
+  {
+    "name": "xAI's own tick cost matches list-price arithmetic on the real numbers, so the tick scale is right",
+    "pass": true
+  },
+  {
+    "name": "an un-echoed reasoning effort is no longer counted as a mismatch",
+    "pass": true
+  },
+  {
+    "name": "and reasoning is corroborated independently from reasoning_tokens",
+    "pass": true
+  },
+  {
+    "name": "ZERO real provider dispatches",
+    "pass": true
+  }
+]

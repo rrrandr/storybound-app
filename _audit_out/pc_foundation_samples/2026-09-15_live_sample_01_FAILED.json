@@ -1,0 +1,68 @@
+{
+  "at": "2026-09-14T21:39:48.715Z",
+  "starterId": "starter_first_sacrifice",
+  "storyId": "cb84a784-1958-49e2-8ba5-740bd6df7d93",
+  "request": {
+    "model": "ministral-8b-2512",
+    "maxTokens": 2500,
+    "temperature": 0.6,
+    "sysBytes": 9187,
+    "usrBytes": 26324
+  },
+  "rawHttpResponse": {
+    "status": 200,
+    "json": {
+      "content": "{}"
+    },
+    "at": 1789421986171
+  },
+  "parsedBible": {
+    "age": 28,
+    "height": "a head shorter than the average First Favored male, standing at five-foot-six with a slight tilt to her gait that makes her seem even shorter when she’s nervous",
+    "build": "lean but not wiry, with the kind of quiet strength that comes from years of bending to the weight of the Veilwood’s rituals—her arms are long enough to reach the altar without stretching, her hands ending in fingers that are too long for grace, too short for dexterity, but perfect for holding the Answer’s weight",
+    "hair": "auburn, the kind that catches the light like a flame when it moves, usually braided into a loose crown that keeps it off her face but lets it spill over her shoulders when she’s distracted—today, it’s half-undone, the braid slipping at the nape of her neck as if she’s been reaching for it without thinking",
+    "complexion": "sun-baked and wind-scoured, her skin the color of aged oak—deep enough to hold the shadows of her eyes, but not dark enough to hide the faintest flush when she’s embarrassed or the pale streaks of exhaustion under her cheekbones",
+    "face": "a face that looks like it was carved from the same stone as the Veilwood’s altars—sharp cheekbones, a narrow nose that flares at the nostrils when she’s angry or excited, and a mouth that’s always either pressed into a thin line or slightly open, as if she’s about to speak but hasn’t decided what to say yet",
+    "signature_feature": "the way her left eyebrow twitches when she’s lying, just the faintest flicker that only lasts a second but makes her look like she’s trying to remember something she’s forgotten",
+    "visual_anchor": {
+      "focus": "the eyes",
+      "detail": "her irises are a storm-gray, the kind that looks like the sky right before a storm—ringed with gold that only shows when she’s truly focused, like now, when she’s staring at The Answer as if it might bite her"
+    },
+    "second_celebrated_feature": "the way she hums under her breath when she’s thinking, a low, tuneless sound that starts in her chest and vibrates against her teeth, like she’s testing words before she says them",
+    "stress_tic": "she twists her wedding ring—if she had one—around her right thumb, but since she doesn’t, she twists the hem of her ceremonial sash instead, pulling it taut between her fingers until her knuckles turn white",
+    "desire_tell": "when she wants something, her tongue presses against the inside of her lower lip just long enough to leave a damp spot, and her breath hitches once, like she’s holding it to steady herself",
+    "impatience_tell": "her foot taps out a rhythm against the ground, three quick beats followed by a pause, as if she’s counting down the seconds until she can speak without being interrupted",
+    "confidence_tell": "she stops apologizing mid-sentence, as if she’s realized she doesn’t need to explain herself anymore",
+    "vulnerability_tell": "when she’s exposed, her hands go still and her fingers curl inward, as if she’s trying to pull herself smaller, like a child hiding under a table",
+    "emotional_weather": "meaning-hungry—every word, every glance, every misaligned wish feels like a puzzle piece she’s been waiting to fit into place, and the fear of it not being hers is a weight in her chest she can’t shake",
+    "core_contradiction": "she believes in the magic of the Sacrifice but resents how it demands she perform her grief like a ritual, as if it’s something she can just *do* instead of feeling",
+    "private_hope": "to be allowed to fail in front of someone who doesn’t need her to be perfect to love her",
+    "current_crisis": {
+      "event": "the Dohkar is publicly charging her with shaping Seren’s wish, and the assembly is waiting for her to explain how she could have misaligned it—right now, as she stands there holding The Answer, the weight of their judgment pressing down on her like the Veilwood’s canopy",
+      "time_since_impact": "three hours",
+      "hottest_emotion": "shame",
+      "immediate_want": "to disappear before the inquiry begins",
+      "immediate_fear": "everyone thinking she did it on purpose",
+      "refusal": "to let Julian see her like this—weak, exposed, *human*—before the Dohkar even rules",
+      "li_complication": "Julian is the only one who’s ever made her feel like she didn’t have to be the strong one, and now he’s the one who’s going to have to decide whether she’s guilty or not—and she can’t bear the thought of him seeing her like this"
+    },
+    "wound": {
+      "core": "her mother, the First Favored who raised her, vanished during a Sacrifice when Lirael was twelve—officially, she ‘ascended,’ but the rumors say she was pulled into the Veilwood’s hunger and never came back, leaving Lirael with a mother who was more myth than woman, and a lineage that demands she perform what she can’t feel",
+      "category": "PUBLIC",
+      "surfacing_hint": "a public misalignment of a wish that forces her to confront the fact that she’s been hiding how much she resents the magic’s rules"
+    },
+    "signature_habits": [
+      "always counts the steps between the altar and the exit, even when she’s not running",
+      "never finishes a sentence with ‘I think’—she either knows or she doesn’t",
+      "carries a small, chipped crystal in her pocket, the one her mother left behind, and touches it when she’s lying",
+      "always orders the second-cheapest wine at gatherings, as if she’s trying to prove she can afford luxury without needing it",
+      "never looks directly at the Dohkar unless she has to"
+    ],
+    "self_conscious_feature": "her voice cracks when she’s tired, and she resents how it makes her sound younger than she is—like she’s still the apprentice she was when her mother disappeared",
+    "li_keenly_aware_of": [
+      "the way her auburn hair catches the light like a flame when she’s angry or excited",
+      "the faint scar above her left eyebrow, a reminder of the time she fell during a ritual and no one helped her up",
+      "the way she hums when she’s thinking, like she’s singing a song only she can hear"
+    ]
+  }
+}

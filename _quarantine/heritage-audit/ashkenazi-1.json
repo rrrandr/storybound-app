@@ -1,0 +1,24 @@
+{
+  "age": 28,
+  "ancestry": "Ashkenazi",
+  "first_name": "Miriam",
+  "last_name": "Kessler",
+  "height": "5'6\", lean and long-limbed",
+  "build": "willowy, collarbones sharp, hands always moving",
+  "hair": "dark brown with natural wave, worn long and often half-pinned or escaping from clips — the kind that catches light",
+  "complexion": "warm olive undertone with a faint scatter of freckles across the bridge of her nose and shoulders",
+  "face": "a face that broadcasts everything — wide-set dark eyes that widen first when shocked, a mouth quick to tremble or curve, cheekbones high enough to cast shadows but softened by an openness that reads as almost naive in rooms full of guarded people",
+  "signature_feature": "her hands — long-fingered, expressive, constantly sketching or reaching or gesturing mid-thought, with paint permanently under at least two fingernails",
+  "second_celebrated_feature": "the hollow at the base of her throat, visible when she tilts her head back laughing or when she's anxious and swallowing hard",
+  "signature_habits": "talks to herself while working — half Yiddish phrases her grandmother used ('oy, what a mess'), half English —; bites the inside of her cheek when concentrating; keeps a small notebook in every pocket and sketches compulsively on margins, napkins, the back of receipts; makes strong coffee at 6 a.m. even on days she doesn't sleep",
+  "occupation": "textile and surface designer — owns a small independent studio producing hand-dyed fabrics and custom wallpapers for high-end residential clients; works with a team of three, operates from a converted warehouse in a gentrifying neighborhood",
+  "current_crisis": {
+    "event": "a major client — a billionaire developer's wife — has rejected her entire spring collection two weeks before a flagship installation, citing 'wrong energy,' and Miriam has already spent her operating budget on materials; the client is threatening to pull her name from three other high-profile projects and publicly claim the work was substandard",
+    "hottest_emotion": "panic undercut with shame — the feeling that she's been exposed as a fraud",
+    "immediate_want": "to salvage the work, to prove the designs aren't wrong, to NOT lose the income she was counting on to pay her team"
+  },
+  "wound": {
+    "core": "she believes her worth is contingent on being useful, on producing something beautiful that justifies her taking up space",
+    "surfacing_hint": "under pressure, she apologizes reflexively — for things that aren't her fault, for existing, for having needs — and becomes almost feverishly productive, as if busyness can outrun the fear that she's fundamentally not enough"
+  }
+}

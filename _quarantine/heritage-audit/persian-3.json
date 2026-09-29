@@ -1,0 +1,24 @@
+{
+  "age": 28,
+  "ancestry": "Persian",
+  "first_name": "Nasrin",
+  "last_name": "Tehrani",
+  "height": "5'6\", lean and long-limbed",
+  "build": "dancer's body — narrow shoulders, defined collarbone, minimal softness anywhere",
+  "hair": "black, thick and naturally wavy, worn long past her shoulders; she braids it when stressed, a habit from childhood",
+  "complexion": "warm olive undertone with a faint scar along her left jawline — a childhood accident she never bothers to hide",
+  "face": "angular and expressive, all high cheekbones and a sharp chin; her face is a live wire — every emotion broadcasts before she can catch it, especially the hurt",
+  "signature_feature": "her eyes — dark brown, almost black, with an unusual amber ring around the iris that catches light; they're the first thing people notice because they're always slightly wide, as if she's perpetually surprised or wounded",
+  "second_celebrated_feature": "her hands — long-fingered, elegant, with bitten nails and ink stains; they move when she talks, expressive and restless",
+  "signature_habits": "she touches her jawline scar when lying or uncomfortable — a tell she can't suppress; she hums fragments of old Persian lullabies (the ones her maman sang) without realizing it, especially in the shower; she keeps a worn leather journal in her bag and writes in it compulsively when anxious; she orders tea in the afternoons, always black tea, never coffee",
+  "occupation": "textile designer and owner of a small independent studio in the city — she designs custom fabrics for high-end interiors and fashion; the studio is her sanctuary and her entire identity",
+  "current_crisis": {
+    "event": "her studio's largest client — a major luxury hotel chain — just terminated their contract via email, citing 'creative misalignment'; the contract was supposed to fund her expansion and her assistant's salary for the next year; she has 72 hours before she has to tell her team they might be laid off",
+    "hottest_emotion": "panic mixed with a suffocating sense of failure — the feeling that she's about to lose everything she built",
+    "immediate_want": "to find out WHY they really dropped her, and to somehow fix it before anyone finds out how close to the edge she actually is"
+  },
+  "wound": {
+    "core": "she believes that if she's not indispensable — if her work isn't perfect, if she can't deliver flawlessly — she will be abandoned",
+    "surfacing_hint": "when criticized or rejected, she doesn't argue; she goes very still and quiet, and her eyes get that wounded, flinching look; later, alone, she spirals into catastrophizing and self-blame"
+  }
+}

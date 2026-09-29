@@ -1,0 +1,19 @@
+[fresh] story A init…
+  story A turn 1: retained=4  authorRaw=1922 firstHookIn=- preHookGap=null final=1917  spend=$0.323
+  ⚠ CONSERVATION FAILED for A/t2 — halting run
+[fresh] story B init…
+  story B turn 1: retained=5  authorRaw=4804 firstHookIn=- preHookGap=null final=5142  spend=$0.599
+  ⚠ CONSERVATION FAILED for B/t2 — halting run
+
+════ LANE-2 FRESH CAPTURE ════
+  A/t1  retained=4 rejected=0 noChange=49  raw=? final=1934
+file:///Users/romantsukerman/storybound-app/_lane2_fresh.mjs:113
+  +' rejected='+r.rejected+' noChange='+r.noChange+'  raw='+(r.raw?r.raw.length:'?')+' final='+r.final.length));
+                                                                                                       ^
+
+TypeError: Cannot read properties of undefined (reading 'length')
+    at file:///Users/romantsukerman/storybound-app/_lane2_fresh.mjs:113:104
+    at Array.forEach (<anonymous>)
+    at file:///Users/romantsukerman/storybound-app/_lane2_fresh.mjs:112:9
+
+Node.js v25.3.0

@@ -1,0 +1,17 @@
+{
+  "ledger": [
+    {
+      "id": "tfl_1",
+      "sceneIdx": 0,
+      "wishText": "everyone forgets the ceremony happened"
+    }
+  ],
+  "owned": null,
+  "durable": [
+    {
+      "proposalId": "tfl_1",
+      "requestedRupture": "everyone forgets the ceremony happened"
+    }
+  ],
+  "scenes": 1
+}

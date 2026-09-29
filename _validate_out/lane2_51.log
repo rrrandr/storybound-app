@@ -1,0 +1,18 @@
+
+════ CONSERVATION INVARIANT (byte-exact) ════
+  RAW cross-check (author == first.before) : FAIL
+  changed authoritative mutations          : 2
+  every transition reconciles              : FAIL
+  last.after == FINAL_PROSE                : FAIL
+  delivery FINAL_PROSE->formatStory->DELIVERED : PASS
+  FIRST MISMATCH between sites 284398 -> 284383  owner=window._authorChatCapture
+  events observed: 35  (rawSnap 35 / textSnap 0)
+
+  ❌ HARNESS FAILURE
+  mutation labels: window._authorChatCapture(model) → window._authorChatCapture(model)
+
+════ LANE-2 SNAPSHOT CHAIN (V2, author stubbed) ════
+  RAW    290ba4fe90   2450 chars
+  FINAL  290ba4fe90   2450 chars
+
+  total snapshot events: 4  (retained/changed: 0, rejected: 0, no-change: 4)

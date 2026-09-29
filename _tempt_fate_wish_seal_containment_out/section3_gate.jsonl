@@ -1,0 +1,8 @@
+{"kind":"abort-undeclared","url":"http://localhost:3000/api/csp-report","method":"POST","reason":"no registered stub or real-lane for this path","at":1790277767261,"loggedAt":1790277767261}
+{"kind":"abort-undeclared","url":"http://localhost:3000/api/config","method":"GET","reason":"no registered stub or real-lane for this path","at":1790277775939,"loggedAt":1790277775939}
+{"kind":"abort-undeclared","url":"http://localhost:3000/api/csp-report","method":"POST","reason":"no registered stub or real-lane for this path","at":1790277775949,"loggedAt":1790277775949}
+{"kind":"abort-undeclared","url":"http://localhost:3000/api/geo","method":"GET","reason":"no registered stub or real-lane for this path","at":1790277775992,"loggedAt":1790277775992}
+{"kind":"abort-undeclared","url":"http://localhost:3000/api/image","method":"POST","reason":"no registered stub or real-lane for this path","at":1790277776012,"loggedAt":1790277776012}
+{"kind":"abort-undeclared","url":"http://localhost:3000/api/bfl-kontext","method":"POST","reason":"no registered stub or real-lane for this path","at":1790277776015,"loggedAt":1790277776015}
+{"kind":"abort-undeclared","url":"http://localhost:3000/api/dashscope-image","method":"POST","reason":"no registered stub or real-lane for this path","at":1790277776016,"loggedAt":1790277776016}
+{"kind":"abort-image-preparation","url":"http://localhost:3000/api/chatgpt-proxy","method":"POST","reason":"blockImagePreparation: request body matches an image-preparation operation (purpose=\"image_style_extraction\")","at":1790277777520,"loggedAt":1790277777520}

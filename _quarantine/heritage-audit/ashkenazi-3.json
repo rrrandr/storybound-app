@@ -1,0 +1,24 @@
+{
+  "age": 28,
+  "ancestry": "Ashkenazi",
+  "first_name": "Miriam",
+  "last_name": "Kessler",
+  "height": "5'6\", on the taller side of average",
+  "build": "lean and angular, collarbones prominent, wrists narrow",
+  "hair": "dark brown, almost black, naturally wavy with a slight frizz she doesn't fight—worn long, often pulled into a loose knot or falling across one shoulder",
+  "complexion": "olive-toned with a warm undertone; a small, dark mole on her left temple she's never covered",
+  "face": "a face that broadcasts everything—wide-set dark eyes that go soft when she's hurt, a full mouth that trembles before she cries, high cheekbones that hollow when she's anxious; the overall impression is of someone perpetually on the verge of feeling something deeply",
+  "signature_feature": "her hands—long-fingered, expressive, always moving when she talks; the way she touches things (fabric, a person's arm, her own collarbone) with an almost tactile hunger, like she's reading the world through her fingertips",
+  "second_celebrated_feature": "the small scar on her left eyebrow from a childhood accident—barely visible but present; it gives her face an asymmetry that makes her look less polished, more real",
+  "signature_habits": "bites her lower lip when concentrating; hums Yiddish lullabies her grandmother taught her without realizing she's doing it; keeps a small notebook in every bag to sketch fabric patterns or write fragments of thought; reaches for people's hands when she's nervous, as if anchoring herself; says 'oy vey' when frustrated, a phrase that slips out untranslated",
+  "occupation": "textile designer and owner of a small sustainable fabric studio in Brooklyn; she sources vintage and deadstock materials, redesigns them into limited collections for independent fashion labels and boutiques",
+  "current_crisis": {
+    "event": "her studio's primary investor—a venture capitalist who funded her expansion two years ago—has demanded she either sell the business to his larger conglomerate or he will call in the loan immediately; she has six weeks to decide, and the business cannot survive the debt repayment alone",
+    "hottest_emotion": "panic threaded with betrayal—she trusted him, and now she feels the ground collapsing",
+    "immediate_want": "to find a way to save the studio without surrendering it, without asking for help, without admitting she may have made a catastrophic mistake"
+  },
+  "wound": {
+    "core": "she believes that needing someone means losing herself—that love and independence are irreconcilable, a lesson learned watching her mother subsume her own talents into her father's career",
+    "surfacing_hint": "when someone gets close, she pulls away by over-explaining her self-sufficiency; she refuses help even when drowning; she becomes brittle and defensive if she senses someone might 'save' her, interpreting rescue as erasure"
+  }
+}

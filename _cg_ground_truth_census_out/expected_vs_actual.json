@@ -1,0 +1,14 @@
+{
+  "expected": {
+    "render_mode": "staged_story_mode",
+    "launchKind": "cg_demo",
+    "found": true
+  },
+  "actual": {
+    "currentEngine": "literary",
+    "renderMode": "staged_story_mode",
+    "bakedSetupOnly": false,
+    "bakedSetupComplete": true,
+    "bakedSetupRunning": false
+  }
+}

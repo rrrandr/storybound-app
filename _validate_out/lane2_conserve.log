@@ -1,0 +1,16 @@
+
+════ CONSERVATION INVARIANT (byte-exact) ════
+  RAW cross-check (author == first.before) : n/a
+  changed authoritative mutations          : 0
+  every transition reconciles              : PASS
+  last.after == FINAL_PROSE                : n/a
+  delivery FINAL_PROSE->formatStory->DELIVERED : n/a
+
+  ✅ HARNESS CONSERVES
+  mutation labels: 
+
+════ LANE-2 SNAPSHOT CHAIN (V2, author stubbed) ════
+  RAW    290ba4fe90   2450 chars
+  FINAL  290ba4fe90   2450 chars
+
+  total snapshot events: 6  (retained/changed: 0, rejected: 0, no-change: 6)

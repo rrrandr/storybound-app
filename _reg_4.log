@@ -1,0 +1,49 @@
+
+=== CONTROL 1 — the_open available in an ordinary Fatelands story ===
+  ✓ an ordinary story with no matching constraint reads available
+  ✓ a Corridor story (no seed at all) also reads available
+
+=== CONTROL 2 — the_open locked for First Sacrifice, no committed event yet ===
+  ✓ First Sacrifice reads UNAVAILABLE before the Inquiry commits
+  ✓ the ONLY exposed reason is the canon-approved key
+  ✓ the constraint_id is stable and identifies the real seed-authored record
+  ✓ _checkArcConstraint is READ-ONLY — state is byte-identical before and after a locked check
+
+=== CONTROL 3 — reader attempt records durable posture, never stages the target ===
+  ✓ the attempt is NOT an error — ok:true regardless of lock state
+  ✓ the attempt reports available:false (still locked)
+  ✓ only the canon-approved reason key is exposed, nothing else
+  ✓ the result carries NO staged location/object/stage content for The Open
+  ✓ a durable deferral record was written (never discarded)
+  ✓ the submitted intent is preserved VERBATIM — not rewritten, not summarized, not refused
+  ✓ the deferral is stamped with the same constraint_id and reason_key
+  ✓ the deferral records which scene the attempt happened in
+
+=== CONTROL 4 — unlock is structural (committed event id), never lexical ===
+  ✓ a phrase alone (no committed event) does NOT unlock the target
+  ✓ committing an unrelated event id does not unlock it
+  ✓ _commitStoryEvent records the real structured id
+  ✓ the target becomes available ONLY after the real committed event id
+  ✓ the unlock reports which event id unlocked it
+  ✓ re-committing the same event id is idempotent (first-write-wins)
+
+=== CONTROL 5 — persistence through save/reload and Issue transition ===
+  ✓ _arcConstraints survives a save/reload round trip
+  ✓ _arcConstraintDeferrals survives a save/reload round trip, verbatim intent included
+  ✓ _committedStoryEvents survives a save/reload round trip
+  ✓ the constraint (scoped by _starterId, not storyId) still applies after an Issue transition
+  ✓ a previously committed event remains committed across an Issue transition
+  ✓ the prior deferral record is still present, unmutated, after the boundary
+
+=== CONTROL 6 — Famous Fate receives no Fatelands constraint ===
+  ✓ Famous Fate reads the target as available — the lock never reaches it
+  ✓ an FF "attempt" is never deferred — nothing to defer, since nothing is locked for FF
+
+=== CONTROL 7 — zero live consumers (static audit of the real file) ===
+  ✓ CONTROL7 _checkArcConstraint( — occurrence count is exactly the registry's own internal wiring (2)
+  ✓ CONTROL7 _attemptArcConstraintTarget( — occurrence count is exactly the registry's own internal wiring (2)
+  ✓ CONTROL7 _commitStoryEvent( — occurrence count is exactly the registry's own internal wiring (1)
+  ✓ CONTROL7 _ensureArcConstraintsForStory( — occurrence count is exactly the registry's own internal wiring (2)
+
+============================================================
+RESULT: 32 passed, 0 failed

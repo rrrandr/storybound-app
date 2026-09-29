@@ -1,0 +1,21 @@
+{
+  "ownedProposal": {
+    "id": "tfl_1",
+    "sceneIdx": 0,
+    "wishText": "everyone forgets the ceremony happened",
+    "anatomyKeywords": [],
+    "quantityKeywords": [],
+    "claimedByPlayer": false,
+    "scale": "mass",
+    "affectedTargets": [],
+    "landmarks": [],
+    "publicAttribution": "debated",
+    "witnessScope": "public",
+    "liName": "the love interest",
+    "sealedAt": 1790211019892,
+    "callbackCount": 0,
+    "lastCallbackScene": null
+  },
+  "durableConsequences": [],
+  "committed": false
+}

@@ -1,0 +1,8 @@
+=== v3o_stage_order · stage_order_dry.mjs · 14:07:26 ===
+v3o_stage_order: exit=1 · 80 checks · 43 passed · 37 failed · invalid_markers=0 · samples=41 suite_rss_max=331MB free_min=105MB server_rss_max=107MB
+v3o_stage_order: FAILURE — stopping. First failing lines:
+5:FAIL G3 with a valid reply the stage re-resolved from the planner stage and the author was dispatched  — {"contract":{"ok":true,"source":"generated:planner_stage","onStage":["Testa"]},"author":0,"fatal":"pc_opening_fusion is missing v3 fields (contact, pc_lens_operation, character_revelation, environment_pressure) — a free \"beat\"/\"character_angle\" is the reti
+6:FAIL G4 Scene 1 mounted: one page, ledger p1, no fatal, no refund, no dialog  — {"pages":0,"ledger":0,"refunds":[{"context":"refund_issue_purchase_literary","amount":60}],"dialogs":["Fate stumbled — your story didn't start, so your Fortunes have been refunded. Please try again."]}
+7:FAIL G5 the mission the planner returned became the corridor mission  — null
+17:FAIL T1 one 503 → retried ONCE (transport-only), Scene 1 mounts, no refund, no dialog  — {"planner":2,"pages":0,"fatal":"pc_opening_fusion is missing v3 fields (contact, pc_lens_operation, character_revelation, environment_pressure) — a free \"beat\"/\"character_angle\" is the retired shape; the fusion has no target; environment_target is backend-
+21:FAIL N1 contract nested in opening_spine → lifted intact, stage resolves, Scene 1 mounts  — {"pages":0,"fatal":"pc_opening_fusion is missing v3 fields (contact, pc_lens_operation, character_revelation, environment_pressure) — a free \"beat\"/\"character_angle\" is the retired shape; the fusion has no target; environment_target is backend-owned (v3) a

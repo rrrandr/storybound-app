@@ -1,0 +1,19 @@
+
+════ ORDERING / INDEX TRACE ════
+  +7719ms  tc=0    ── BEFORE Scene 1 ──  turnCount=0 committedPages=0 verbatim=false staging=false anchor=null
+ +85267ms  tc=0    AUTHOR payload assembled →sent
+ +85290ms  tc=0    AUTHOR payload assembled →sent
++544126ms  tc=0    ── AFTER Scene 1 ──  turnCount=0 committedPages=0 verbatim=false staging=false anchor=null
++544136ms  tc=0    ── BEFORE continuation 1 ──  turnCount=0 committedPages=0 verbatim=false staging=false anchor=null
++549251ms          PLAN-SPINE selected  planIndex=2
++551373ms  tc=0    AUTHOR payload assembled →sent
++551398ms  tc=0    AUTHOR payload assembled →sent
++613368ms  tc=1    ── AFTER continuation 1 ──  turnCount=1 committedPages=0 verbatim=true staging=false anchor=null
++613369ms  tc=1    ── BEFORE continuation 2 ──  turnCount=1 committedPages=0 verbatim=true staging=false anchor=null
++623429ms          PLAN-SPINE selected  planIndex=3
++625794ms  tc=1    SKELETON start
++630022ms  tc=1    SKELETON returned
++630023ms          SKELETON end  loggedScene=1
++632502ms  tc=1    AUTHOR payload assembled →sent
++648743ms  tc=1    AUTHOR payload assembled →sent
++682742ms  tc=2    ── AFTER continuation 2 ──  turnCount=2 committedPages=0 verbatim=true staging=false anchor="the flickering lantern light in the tavern"

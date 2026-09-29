@@ -1,0 +1,207 @@
+{
+  "realCostByRole": {
+    "wish-classifier": 0.000177,
+    "scaffold": 0.014325,
+    "bible-pc": 0,
+    "bible-li": 0,
+    "bible-antagonist": 0.006025000000000001,
+    "scenePlanner-A": 0.015063,
+    "gravityAudit-A": 0.00054,
+    "author-A": 0.05534000000000001,
+    "scenePlanner+commitVerifier-B": 0.024033000000000002,
+    "gravityAudit-B": 0.00054,
+    "author-B": 0.05534000000000001
+  },
+  "wishClassifierUsd": 0.000177,
+  "sceneAUsd": 0.09129300000000001,
+  "sceneBUsd": 0.07991300000000001,
+  "ledgerEntries": [
+    {
+      "roleTag": "wish-classifier",
+      "requests": 1,
+      "phaseUsd": 0.000177,
+      "runningTotalUsd": 0.000177
+    },
+    {
+      "roleTag": "scaffold",
+      "requests": 3,
+      "phaseUsd": 0.014325,
+      "runningTotalUsd": 0.014502
+    },
+    {
+      "roleTag": "bible-pc",
+      "requests": 3,
+      "phaseUsd": 0.006025000000000001,
+      "runningTotalUsd": 0.020527
+    },
+    {
+      "roleTag": "bible-li",
+      "requests": 3,
+      "phaseUsd": 0.006025000000000001,
+      "runningTotalUsd": 0.026552
+    },
+    {
+      "roleTag": "bible-antagonist",
+      "requests": 3,
+      "phaseUsd": 0.006025000000000001,
+      "runningTotalUsd": 0.032577
+    },
+    {
+      "roleTag": "scenePlanner-A",
+      "requests": 3,
+      "phaseUsd": 0.015063,
+      "runningTotalUsd": 0.04764
+    },
+    {
+      "roleTag": "gravityAudit-A",
+      "requests": 1,
+      "phaseUsd": 0.00054,
+      "runningTotalUsd": 0.04818
+    },
+    {
+      "roleTag": "author-A",
+      "requests": 3,
+      "phaseUsd": 0.05534000000000001,
+      "runningTotalUsd": 0.10352
+    },
+    {
+      "roleTag": "scenePlanner+commitVerifier-B",
+      "requests": 3,
+      "phaseUsd": 0.00897,
+      "runningTotalUsd": 0.11249
+    },
+    {
+      "roleTag": "scenePlanner+commitVerifier-B-scenePlanner-part",
+      "requests": 3,
+      "phaseUsd": 0.015063,
+      "runningTotalUsd": 0.127553
+    },
+    {
+      "roleTag": "gravityAudit-B",
+      "requests": 1,
+      "phaseUsd": 0.00054,
+      "runningTotalUsd": 0.128093
+    },
+    {
+      "roleTag": "author-B",
+      "requests": 3,
+      "phaseUsd": 0.05534000000000001,
+      "runningTotalUsd": 0.183433
+    },
+    {
+      "roleTag": "plannerLegacyFallback-A",
+      "requests": 1,
+      "phaseUsd": 0.000627,
+      "runningTotalUsd": 0.18406
+    },
+    {
+      "roleTag": "plannerLegacyFallback-B",
+      "requests": 1,
+      "phaseUsd": 0.000627,
+      "runningTotalUsd": 0.184687
+    },
+    {
+      "roleTag": "sceneAmbient-A",
+      "requests": 1,
+      "phaseUsd": 0.00503,
+      "runningTotalUsd": 0.189717
+    },
+    {
+      "roleTag": "characterDisclosure-A",
+      "requests": 3,
+      "phaseUsd": 0.008225,
+      "runningTotalUsd": 0.197942
+    },
+    {
+      "roleTag": "sceneAmbient-B",
+      "requests": 1,
+      "phaseUsd": 0.00503,
+      "runningTotalUsd": 0.202972
+    },
+    {
+      "roleTag": "characterDisclosure-B",
+      "requests": 3,
+      "phaseUsd": 0.008225,
+      "runningTotalUsd": 0.21119700000000002
+    },
+    {
+      "roleTag": "temptOutcomeExtractor-A",
+      "requests": 3,
+      "phaseUsd": 0.01013,
+      "runningTotalUsd": 0.22132700000000002
+    },
+    {
+      "roleTag": "temptOutcomeExtractor-A-retry",
+      "requests": 3,
+      "phaseUsd": 0.01013,
+      "runningTotalUsd": 0.23145700000000002
+    },
+    {
+      "roleTag": "canonAudit-A",
+      "requests": 3,
+      "phaseUsd": 0.006305,
+      "runningTotalUsd": 0.23776200000000003
+    },
+    {
+      "roleTag": "canonAudit-B",
+      "requests": 3,
+      "phaseUsd": 0.006305,
+      "runningTotalUsd": 0.24406700000000003
+    },
+    {
+      "roleTag": "retry-scenePlanner-A",
+      "requests": 3,
+      "phaseUsd": 0.015063,
+      "runningTotalUsd": 0.25913
+    },
+    {
+      "roleTag": "retry-author-A",
+      "requests": 3,
+      "phaseUsd": 0.05534000000000001,
+      "runningTotalUsd": 0.31447
+    },
+    {
+      "roleTag": "retry-gravityAudit-A",
+      "requests": 1,
+      "phaseUsd": 0.00054,
+      "runningTotalUsd": 0.31501
+    },
+    {
+      "roleTag": "retry-commitVerifier-B",
+      "requests": 3,
+      "phaseUsd": 0.00897,
+      "runningTotalUsd": 0.32398
+    },
+    {
+      "roleTag": "retry-scenePlanner-B",
+      "requests": 3,
+      "phaseUsd": 0.015063,
+      "runningTotalUsd": 0.339043
+    },
+    {
+      "roleTag": "retry-author-B",
+      "requests": 3,
+      "phaseUsd": 0.05534000000000001,
+      "runningTotalUsd": 0.394383
+    },
+    {
+      "roleTag": "retry-gravityAudit-B",
+      "requests": 1,
+      "phaseUsd": 0.00054,
+      "runningTotalUsd": 0.39492299999999997
+    },
+    {
+      "roleTag": "retry-plannerLegacyFallback-A",
+      "requests": 1,
+      "phaseUsd": 0.000627,
+      "runningTotalUsd": 0.39554999999999996
+    },
+    {
+      "roleTag": "retry-plannerLegacyFallback-B",
+      "requests": 1,
+      "phaseUsd": 0.000627,
+      "runningTotalUsd": 0.39617699999999995
+    }
+  ],
+  "ledgerReservedUsd": 0.39617699999999995
+}

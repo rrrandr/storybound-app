@@ -1,0 +1,24 @@
+[
+  {
+    "url": "http://localhost:3000/api/mistral-proxy",
+    "model": "mistral-small-latest",
+    "status": 429,
+    "networkError": null,
+    "usage": null,
+    "costUsd": null,
+    "costNote": "no usage block returned",
+    "at": 1789845409473,
+    "settledAt": 1789845424302
+  },
+  {
+    "url": "http://localhost:3000/api/proxy",
+    "model": "grok-4.20-0309-non-reasoning",
+    "status": null,
+    "networkError": "net::ERR_ABORTED",
+    "usage": null,
+    "costUsd": null,
+    "costNote": "no usage block returned",
+    "at": 1789845424256,
+    "settledAt": 1789845436254
+  }
+]

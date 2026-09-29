@@ -1,0 +1,38 @@
+{
+ "spineState": {
+  "turnCount": 1,
+  "planScenes": 20,
+  "spineEventVerbatim": "THE TWIST — steps 5-6, shaped by what the player chose. IN THIS ORDER: (A) The consequence of Lirael's choice registers ",
+  "sceneAssignment": "THE TWIST — steps 5-6, shaped by what the player chose. IN THIS ORDER: (A) The consequence of Lirael's choice registers ",
+  "spineStaging": null
+ },
+ "spineLog": [
+  "%c[SPINE:BAKEOFF] harness ready — window._spineModelBakeoff({recommend:true}) color:#7ec77e;font-weight:bold",
+  "%c[SPINE:ADV] harness ready — window._spineAdvancementBakeoff({rows,recommend:true}) color:#7ec77e;font-weight:bold",
+  "[Modifier] No secondary assigned (75% path)",
+  "[LIT:SPINE] awaiting 2 character Bible(s) before R-plot (PC+LI — wounds are Bible-native in the inverted chain)",
+  "[LIT:SPINE] character Bibles ready (15ms) — pc=n li=n (antag deferred until after A-plot)",
+  "[STORY-SPINE] shape=RISE_FALL_RISE worldArc=BROKEN_VOW world=fatelands tier=fling",
+  "[A-PLOT] First-attempt validation failed: [missing_goal, missing_namedClock, missing_antagonistOrAntiForce, missing_stakesIfFail, missing_stakesIfWin, missing_milestones, milestones_not_array, specificity_missing_named_t",
+  "[A-PLOT:DUMP] first-attempt parsed output (validation rejected): \n  goal:                      (missing) \n  namedClock:                (missing) \n  antagonistOrAntiForce:     (missing) \n  pcWound:                   (miss",
+  "[A-PLOT:DUMP] correction-attempt parsed output (validation rejected again): \n  goal:                      (missing) \n  namedClock:                (missing) \n  antagonistOrAntiForce:     (missing) \n  pcWound:             ",
+  "[A-PLOT] Init failed (story continues without A-plot): A-plot correction produced no usable goal at all: missing_goal, missing_namedClock, missing_antagonistOrAntiForce, missing_stakesIfFail, missing_stakesIfWin, missing",
+  "[LIT:SPINE] antagonist Bible (1ms) — antag=n (not eligible / shape C / unnamed)",
+  "[SPINE] flavor=arcane_binding · spine=GENERIC (gpt-4o-mini)",
+  "[CG:SCAFFOLD] awaiting 3 Bible(s) before spine (P2 sequencing — latency over cost)",
+  "[EMIT] WISH_AUTHORING_CORE gate=OPEN spineLoadBearing=no openWithoutSpine=true gateTextChars=766 scene=1 via=_buildFatelandsWishCoreDirective <- http://localhost:3000/app.js?v=20260823r-reanchor:243618:515 <- handleBegin",
+  "[EMIT] WISH_ADJUDICATION gate=OPEN spineLoadBearing=no openWithoutSpine=true gateTextChars=766 scene=1 via=_buildFatelandsWishAdjudicationDirective <- http://localhost:3000/app.js?v=20260823r-reanchor:243618:629 <- handl",
+  "[WISH-DEMO] cycle incomplete (2/3 signals: wish=true omen=false sacrifice=true) → milestone NOT set (will re-demo)",
+  "[SCENE-ASSIGNMENT] scene=2 source=plan-scene setting=null event=\"THE TWIST — steps 5-6, shaped by what the player chose. IN THIS ORDER: (A) The consequence\"",
+  "[SPINE-STAGING] compiled → setting=null cast=[\"Julian\"]",
+  "[PLAN-SPINE] scene=2 OBJECTIVE from authored spine: \"THE TWIST — steps 5-6, shaped by what the player chose. IN THIS ORDER: (A) The consequence of Lirael's choice \"",
+  "[MILESTONE-TRANSITION] scene=0 transition=INIT prev=\"\" current=\"THE TWIST — steps 5-6, shaped by what the pla\"",
+  "[LI:GESTURE] Hierarchy assigned: primary=ring_twist | secondary=jaw_tendon | rare=thumb_to_lip(intimate)",
+  "[EMIT] WISH_AUTHORING_CORE gate=OPEN spineLoadBearing=YES openWithoutSpine=false gateTextChars=2231 scene=1 via=_buildFatelandsWishCoreDirective <- http://localhost:3000/app.js?v=20260823r-reanchor:285246:1009 <- HTMLBut",
+  "[EMIT] WISH_ADJUDICATION gate=OPEN spineLoadBearing=YES openWithoutSpine=false gateTextChars=2231 scene=1 via=_buildFatelandsWishAdjudicationDirective <- http://localhost:3000/app.js?v=20260823r-reanchor:285246:1121 <- H",
+  "[A-PLOT] First-attempt validation failed: [missing_goal, missing_namedClock, missing_antagonistOrAntiForce, missing_stakesIfFail, missing_stakesIfWin, missing_milestones, milestones_not_array, specificity_missing_named_t",
+  "[A-PLOT:DUMP] first-attempt parsed output (validation rejected): \n  goal:                      (missing) \n  namedClock:                (missing) \n  antagonistOrAntiForce:     (missing) \n  pcWound:                   (miss",
+  "[A-PLOT:DUMP] correction-attempt parsed output (validation rejected again): \n  goal:                      (missing) \n  namedClock:                (missing) \n  antagonistOrAntiForce:     (missing) \n  pcWound:             ",
+  "[A-PLOT] Init failed (story continues without A-plot): A-plot correction produced no usable goal at all: missing_goal, missing_namedClock, missing_antagonistOrAntiForce, missing_stakesIfFail, missing_stakesIfWin, missing"
+ ]
+}

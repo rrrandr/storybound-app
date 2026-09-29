@@ -1,0 +1,70 @@
+[
+  {
+    "name": "the real Proceed click DID attempt the classifier dispatch — the control is exercising a real request, not a hypothetical one",
+    "pass": true
+  },
+  {
+    "name": "that attempt was ABORTED before leaving the browser (fail-closed: no registered stub or real-lane for this path)",
+    "pass": true
+  },
+  {
+    "name": "ZERO real provider dispatches occurred in this section",
+    "pass": true
+  },
+  {
+    "name": "the wish STILL SEALED despite containment — state.temptFateWish is set and the invocation flag is true (containment does not work by breaking the mechanism)",
+    "pass": true
+  },
+  {
+    "name": "the classifier request was captured UNDER ITS DECLARED PHASE — attributable and countable against a ceiling, not escaping unaccounted",
+    "pass": true
+  },
+  {
+    "name": "the captured request is genuinely the wish classifier (its real prompt names the wish and asks for the in_scope/out_of_scope verdict)",
+    "pass": true
+  },
+  {
+    "name": "ZERO real provider dispatches occurred in this section either — the stub lane answered it locally",
+    "pass": true
+  },
+  {
+    "name": "the wish STILL SEALED on this posture too",
+    "pass": true
+  },
+  {
+    "name": "the declared request cap BITES — a second request under the ceiling-1 \"wish-classifier\" phase was refused, not served",
+    "pass": true
+  },
+  {
+    "name": "still ZERO real dispatches after the deliberate over-cap probe",
+    "pass": true
+  },
+  {
+    "name": "image endpoint /api/image was attempted and ABORTED before dispatch (never in allowRealPaths — fail-closed by default)",
+    "pass": true
+  },
+  {
+    "name": "image endpoint /api/bfl-kontext was attempted and ABORTED before dispatch (never in allowRealPaths — fail-closed by default)",
+    "pass": true
+  },
+  {
+    "name": "image endpoint /api/dashscope-image was attempted and ABORTED before dispatch (never in allowRealPaths — fail-closed by default)",
+    "pass": true
+  },
+  {
+    "name": "ZERO real dispatches after all three image-endpoint probes",
+    "pass": true
+  },
+  {
+    "name": "an image-PREPARATION body riding a REAL-allowed text lane was blocked before dispatch by blockImagePreparation",
+    "pass": true
+  },
+  {
+    "name": "ZERO real dispatches after the image-preparation-on-a-real-lane probe",
+    "pass": true
+  },
+  {
+    "name": "ZERO real provider dispatches occurred anywhere in this entire control run (the one claim that does not depend on any architectural reasoning above being correct)",
+    "pass": true
+  }
+]

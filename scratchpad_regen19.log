@@ -1,0 +1,149 @@
+  > [CG:SCAFFOLD] generation start (the_inhuman, gpt-4o-mini)
+  > [CG:SCAFFOLD] awaiting 1 Bible(s) before spine (P2 sequencing — latency over cost)
+  > [CG:SCAFFOLD] Bibles ready (0ms) — pc=y li=y antag=n
+  > [CG:SCAFFOLD:GEN] 12388ms, model=gpt-4o-mini
+  > [CG:SCAFFOLD] thesis="Can connection survive the chaos of the Many-Tide ambush?"
+  > [CG:SCAFFOLD] issues=4, motifs=3, forbidden=5
+  > [CG:SCAFFOLD] FULL OBJECT: {runThesis: Can connection survive the chaos of the Many-Tide ambush?, thematicDirection: The search for solace amidst the storm of vulnerability., visualThesis: from chaoti
+  > [CG:SCAFFOLD] active — scene_index=0, source=gpt-4o-mini, issues=4
+  > [CG:SCREENPLAY] gen start (scene 0)
+  > [CG:SCREENPLAY:USER-PROMPT]
+SCENE INDEX: 0 (Scene 1 — establishing)
+STORY LENGTH: affair
+SCENE DENSITY (ST1 — SETUP PACE): establishing register. The scene's job is character-in-context, not plot velo
+  > [CG:SCREENPLAY] flavor "the_inhuman" → chain leads with Grok-4.1-reasoning (scene 1 / tentpole — Grok primary)
+  > [CG:SCREENPLAY] generated via Grok-4.1-reasoning in 55003ms
+  > [CG:SCREENPLAY] gen returned in 55008ms
+  > [STAGED:DIST] scene 0 beats=21 bands: micro=14 subtle=3 readable=4 strong=0 extreme=0 | avg raw=0.11 clamped=0.11 | llm-emitted=2/21 clamps=0
+  > [CG:SCREENPLAY] Expression peak enforcement: kept 5 (family=suppression), demoted 2 to neutral [reasons: spacing<3, spacing<3] (~ saved $0.04 on Klein mutations)
+  > [STAGED:VARIATION] Promoted beat 8 to PC face cut-in (face, expr=jaw_clench)
+  > [STAGED:VARIATION] Scene 0 recovered: promoted 1 beat(s) to closeup (8) — closeup density floor. Final state — peaks=5 phases=4 hands=0 closeups=1
+  > [STAGED:VARIATION] Scene 0 OK — beats=21 peaks=5 phases=4 hands=0 closeups=1
+  > [STORYBOARD-LINT] pre-repair: 0 error(s), 1 warning(s)
+  > [STORYBOARD] establishing shot reserved for "Thal" @ panel 0
+  > [STORYBOARD] Orientation → Transformation → Threat → Decision
+  > [CG:SCREENPLAY] region=Gloamwater Bay | species=[kwisheen]
+  > [STAGED:HERO] Generating 4 phase images for scene 0 (serial: phase 0 first, then 1+ as Kontext edits)
+  > [STAGED:TIER] phase 0 → simple → cheap
+  > [STAGED:STAGING-MODE] adversarial (liAbsent=true, sideChars=1)
+  > [STAGED:HERO:PHASE] Cache MISS — generating phase 0 (Orientation) for scene 0 at tier=cheap
+  > [STAGED:STYLE] artist="ender_bond" → 2 style anchor(s): ender_golden_master_v3.jpg, ender_golden_master_v3_bottom.jpg
+  > [STAGED:STYLE] canonical asset "composition:establishing_solo" (tier 2) attached (phase 0)
+  > [STAGED:STYLE] phase 0 — SUBSTITUTED li_absent master ender_golden_master_v3_bottom.jpg for stripped golden_master (full artist signature, no couple bleed)
+  > [STAGED:STYLE] phase 0 — passing 4 style anchors to Gemini (filtered 1 LI-implying refs, liAbsent=true)
+  > [STAGED:STYLE] artist=ender_bond styleAnchors=2 regionAnchors=2 contractInjected=true phaseIdx=0
+  > [GEMINI:SCENE-CASE] SPECIAL_SPECIES — species: true, trait: false, fantasy: true, worldAnchor: true
+  > [IMAGE-GEN] {"provider":"Gemini","context":"visualize","reached":true,"blockedBy":"None","status":"SUCCESS","promptLength":45187,"promptPreview":"PRIMARY DIRECTIVE: Depict the scene exactly as describ
+  > [VERIFY] FAIL: Kwisheen Thal's eyes are pale jade in canon, but are drawn as yellow/orange.; Kwisheen Thal's skin is ember red-orange in canon, but is drawn as a lighter orange.; Kwisheen Thal's skin-
+  > [ANATOMY-REPAIR] fail but not Klein-repairable (type=eye_color, bbox=y) — keeping original
+  > [CASTING] harvest "Thal" clean-source OK but confidence 28 < 40 — waiting for a better frame
+  > [STAGED:KONTEXT] Phase 0 stashed as scene 0 edit source
+  > [STAGED:STAGE_CACHE] Cached stage for future revisits (key=fantasy|the_inhuman|drowned ruins of gloamwater bay at twilight, fragmented cora…)
+  > [STAGED:HERO:PHASE] Phase 0 generated in 13018ms (tier=cheap)
+  > [STAGED:TIER] phase 1 → medium → mid
+  > [STAGED:STAGING-MODE] adversarial (liAbsent=true, sideChars=1)
+  > [STAGED:HERO:PHASE] Cache MISS — generating phase 1 (Transformation) for scene 0 at tier=mid
+  > [STAGED:STYLE] artist="ender_bond" → 2 style anchor(s): ender_golden_master_v3.jpg, ender_golden_master_v3_bottom.jpg
+  > [STAGED:STYLE] canonical asset "wish_burst" (tier 1) attached (phase 1)
+  > [STAGED:STYLE] canonical asset "composition:underwater_float" (tier 2) attached (phase 1)
+  > [STAGED:STYLE] phase 1 LI-absent — SUBSTITUTED li_absent master ender_golden_master_v3_bottom.jpg
+  > [STAGED:STYLE] phase 1 LI-absent — passing 5 refs (filtered 1 LI/romance masters)
+  > [STAGED:STYLE] artist=ender_bond styleAnchors=2 regionAnchors=2 contractInjected=true phaseIdx=1
+  > [GEMINI:SCENE-CASE] SPECIAL_SPECIES — species: true, trait: false, fantasy: true, worldAnchor: true
+  > [STAGED:IMG] Phase 0 first-ready after 17418ms — scene mounting with image cached
+  > ═══ [STAGED:SCENE 0 MOUNT] 21 beats, 4 phase(s), gate@20 ═══
+  > [STAGED:HERO:SWAP] No image yet for phase:0 — staying on current
+  > [STAGED:ECHO] beat 0 inEcho=false age=-1 intensity=0.00 peakHere=false
+  > [STAGED:BEAT 0/20] | narration | tens=composed | profile=- | mouth=neutral | echoZone=- | decay=— | pacing=280ms | tint=- | crop=baseline | duck=- | silence=- | closeup=- | rack=- | proxy=-
+  > [STAGED:RENDER] Mounted — 21 beats, gate at beat 20, micro after beat 7
+  > [STAGED:RENDER] Hero image mounted (phase 0)
+  > [VERIFY] FAIL: The Kwisheen's eyes have plain round human pupils instead of capsule_pupil (horizontal rounded rectangle + central vertical slit).; The Kwisheen's hands have distinct joints and knuckle
+  > [FAVORED-SHIFT] #1 feature="The Kwisheen's lower body has 8 tentacles, not the required 6_tentacles for locomotion and six_point_ground_contact." species=Kwisheen → caption=true
+  > [FAVORED-SHIFT] caption shown: "The disguise guttered like a low flame. He steadied it, …"
+  > [GEMINI:SCENE-CASE] SPECIAL_SPECIES — species: true, trait: false, fantasy: true, worldAnchor: true
+  > [IMAGE-GEN] {"provider":"Gemini","context":"visualize","reached":true,"blockedBy":"None","status":"SUCCESS","promptLength":55470,"promptPreview":"PRIMARY DIRECTIVE: Depict the scene exactly as describ
+  > [VERIFY] FAIL: Thal's eyes are pale jade in canon, but are depicted as light blue/teal.; Thal's skin is ember red-orange in canon, but is depicted as a lighter orange/brown.; Thal's skin-pattern is a 
+  > [ANATOMY-REPAIR] fail but not Klein-repairable (type=eye_color, bbox=y) — keeping original
+  > [STAGED:HERO:PHASE] Phase 1 generated in 17483ms (tier=mid)
+  > [STAGED:TIER] phase 2 → medium → mid
+  > [STAGED:STAGING-MODE] adversarial (liAbsent=true, sideChars=1)
+  > [STAGED:HERO:PHASE] Cache MISS — generating phase 2 (Threat) for scene 0 at tier=mid
+  > [STAGED:STYLE] artist="ender_bond" → 2 style anchor(s): ender_golden_master_v3.jpg, ender_golden_master_v3_bottom.jpg
+  > [STAGED:STYLE] canonical asset "wish_burst" (tier 1) attached (phase 2)
+  > [STAGED:STYLE] canonical asset "composition:underwater_float" (tier 2) attached (phase 2)
+  > [STAGED:STYLE] phase 2 LI-absent — SUBSTITUTED li_absent master ender_golden_master_v3_bottom.jpg
+  > [STAGED:STYLE] phase 2 LI-absent — passing 5 refs (filtered 1 LI/romance masters)
+  > [STAGED:STYLE] artist=ender_bond styleAnchors=2 regionAnchors=2 contractInjected=true phaseIdx=2
+  > [GEMINI:SCENE-CASE] SPECIAL_SPECIES — species: true, trait: false, fantasy: true, worldAnchor: true
+  > [CASTING] cast "Thal" from scene0_phase1 @ confidence 59
+  > [VERIFY] FAIL: Kwisheen's pupils are round human dots instead of horizontal capsule pupils.; Kwisheen's hands have distinct fingers and knuckles, not smooth tapering tentacle-fingers. | regions: eye, 
+  > [IMAGE-GEN] {"provider":"Gemini","context":"visualize","reached":true,"blockedBy":"None","status":"SUCCESS","promptLength":53849,"promptPreview":"PRIMARY DIRECTIVE: Depict the scene exactly as describ
+  > [VERIFY] FAIL: Thal's body_plan is incorrect: she has four manipulator arms instead of two.; Thal's skin color is incorrect: it is red-orange instead of ember red-orange.; Thal's eye color is incorrec
+  > [CANON-REPAIR] Klein body-plan: char="Thal" bbox=[0.36,0.25,0.58,0.7]
+  > [STAGED:HERO:PHASE] phase 2 spot-repaired (Klein)
+  > [CASTING] skip harvest "Thal" (not a clean identity source: not NPC-primary/close/solo)
+  > [STAGED:HERO:PHASE] Phase 2 generated in 13943ms (tier=mid)
+  > [STAGED:TIER] phase 3 → medium → mid
+  > [STAGED:STAGING-MODE] adversarial (liAbsent=true, sideChars=1)
+  > [STAGED:HERO:PHASE] Cache MISS — generating phase 3 (Decision) for scene 0 at tier=mid
+  > [STAGED:STYLE] artist="ender_bond" → 2 style anchor(s): ender_golden_master_v3.jpg, ender_golden_master_v3_bottom.jpg
+  > [STAGED:STYLE] canonical asset "composition:underwater_float" (tier 2) attached (phase 3)
+  > [CASTING] reinject identity anchor for "Thal" (phase 3)
+  > [STAGED:STYLE] phase 3 LI-absent — SUBSTITUTED li_absent master ender_golden_master_v3_bottom.jpg
+  > [STAGED:STYLE] phase 3 LI-absent — passing 5 refs (filtered 1 LI/romance masters)
+  > [STAGED:STYLE] artist=ender_bond styleAnchors=2 regionAnchors=2 contractInjected=true phaseIdx=3
+  > [GEMINI:SCENE-CASE] SPECIAL_SPECIES — species: true, trait: false, fantasy: true, worldAnchor: true
+  > [VERIFY] FAIL: The Kwisheen's pupils are round human dots instead of horizontal capsule pupils.; The Kwisheen's lower body has too many tentacles for locomotion (more than 6 ground contact tentacles).
+  > [IMAGE-GEN] {"provider":"Gemini","context":"visualize","reached":true,"blockedBy":"None","status":"SUCCESS","promptLength":52154,"promptPreview":"PRIMARY DIRECTIVE: Depict the scene exactly as describ
+  > [VERIFY] FAIL: Thal's eyes are pale jade in canon, but are drawn as white/light blue in the image.; Thal's skin is ember red-orange in canon, but is drawn as a more muted orange/brown in the image.; T
+  > [CANON-REPAIR] BUDGET: 2 P1 defects on phase 3 — regenerate would beat 2 repaints (repairing the top one for now)
+  > [CANON-REPAIR] Klein body-plan: char="Thal" bbox=[0.53,0.5,0.47,0.5]
+  > [STAGED:HERO:PHASE] phase 3 spot-repaired (Klein)
+  > [STAGED:HERO:PHASE] Phase 3 generated in 13726ms (tier=mid)
+  > [STAGED:CUT] Cache MISS — generating closeup closeup|pc|face|drowned_human|jaw_clench|dark at tier=hero
+  > [STAGED:CUT:GEN] beat closeup fresh gen | cacheKey=closeup|pc|face|drowned_human|jaw_clench|dark | shot=face | target=protagonist | tier=Clean costTier=hero shape=square intent=cut_closeup
+  > [STAGED:CUT:GEN:PROMPT] ILLUSTRATED INSERT — a drawn cut-in from the surrounding scene, rendered in the SAME artistic style as every other panel in this story (manga / inked / painterly / linework per
+  > [STAGED:RENDER] Phase images full-resolve — 4/4 cached
+  > [CASTING] promote "Thal" from scene0_phase3 @ confidence 96 (was 59)
+  > [VERIFY] FAIL: The Kwisheen on the left has human legs instead of a tentacle mantle.; The Kwisheen on the left has a silhouette that does not match the non_bipedal, tentacle_mass_below_waist, six_poin
+  > [FAVORED-SHIFT] #2 feature="The Kwisheen on the left has a silhouette that does not match the non_bipedal, tentacle_mass_below_waist, six_point_ground_contact description." species=Kwisheen → caption=
+  > [GEMINI:SCENE-CASE] FANTASY — species: false, trait: false, fantasy: true, worldAnchor: true
+  > [IMAGE-GEN] {"provider":"Gemini","context":"visualize","reached":true,"blockedBy":"None","status":"SUCCESS","promptLength":5005,"promptPreview":"PRIMARY DIRECTIVE: Depict the scene exactly as describe
+  > [STAGED:CUT] closeup|pc|face|drowned_human|jaw_clench|dark generated in 18831ms
+  > [STAGED:CUT:SOURCE] beat closeup just-generated | cacheKey=closeup|pc|face|drowned_human|jaw_clench|dark | url=data:image/png;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/6xn4SlAAAQAAAAEAABnuanVtYgAAAB5qdW1kYzJ
+
+  E2E SCENE 1 — Fatelands / Kwisheen
+  ────────────────────────────────────────────────────────────
+  error: none
+  prose length: 1722 chars | author: Grok-4.1-reasoning
+  stagedActive: true | heroCache keys: 4
+  hero phase images: 4 | closeup inserts: 1/1 queued | total: 5
+  kwisheen appearance lock: {"vael":{"skin":"royal violet","pattern":"iridescent speckle","iris":"silver-grey","body_plan":"a humanoid torso with two manipulator arms above the waist, and a lower body that is a cephalopod TENTACLE-MANTLE for locomotion (about six boneless tentacles — the exact number is not important) — NO human legs, NO knees or feet; a mane of living tentacle-dreadlocks from the scalp"},"thal":{"skin":"ember red-orange","pattern":"a fine reticulated lattice","iris":"pale jade","body_plan":"a humanoid torso with two manipulator arms above the waist, and a lower body that is a cephalopod TENTACLE-MANTLE for locomotion (about six boneless tentacles — the exact number is not important) — NO human legs, NO knees or feet; a mane of living tentacle-dreadlocks from the scalp"}}
+  images captured (hero): 4
+  ── phase plan ──
+    phase 0: li=absent | chars=[protagonist,Thal] | Orientation
+    phase 1: li=absent | chars=[protagonist,Thal] | Transformation
+    phase 2: li=absent | chars=[protagonist,Thal] | Threat
+    phase 3: li=absent | chars=[protagonist,Thal] | Decision
+  ── hero renders (anchor decision) ──
+  ── beat count: 21 (target 20–30, floor 18) ──
+  ── scene-1 axis ──
+    bespokeAxis: (none)
+    microDecision.prompt: Do I name the escape aloud, or let my silence hold the plan?
+      • "name the passage" signal=direct+
+      • "let silence carry it" signal=subtle+
+  ── wardrobe grounding ──
+    pc_wardrobe: drifting surface linen tunic and breeches, water-breathing talisman at throat
+    li_wardrobe: (blank/absent)
+    Thal [kwisheen]: scaled loincloth and shell-studded wraps, one tentacle bloodied
+  saved: 4 images + prose → /private/tmp/claude-501/-Users-romantsukerman-storybound-app/5b50dbf4-5fe5-4c80-ae8b-5a341feb3c62/scratchpad/e2e
+  ── canon-repair scorecard ──
+    panel 0: no repairs | reported-only [eye_color(detected)]
+    panel 1: no repairs | reported-only [eye_color(detected)]
+    panel 2: repaired [body_plan:Thal]
+    panel 3: repaired [body_plan:Thal] | ⚠ 2 P1 defects (regen-budget signal)
+    ── totals ── repairs=2 across 4 panels = 0.50 repairs/panel (goal: → 0 as upstream conditioning improves)
+    ⚠ OSCILLATION — same defect repaired on multiple panels (needs UPSTREAM fix, not permanent downstream correction):
+        body_plan|Thal → panels 2, 3
+  ────────────────────────────────────────────────────────────
+

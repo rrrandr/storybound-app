@@ -1,0 +1,8 @@
+=== fus3_stage_order · stage_order_dry.mjs · 19:13:01 ===
+fus3_stage_order: exit=1 ·  · invalid_markers=2 · samples=20 suite_rss_max=334MB free_min=559MB server_rss_max=84MB
+fus3_stage_order: FAILURE — stopping. First failing lines:
+13:   ⚠ SCENARIO INVALID (no begin-story flow started): seeded First Sacrifice · generic planner reply (unchanged path) · race=resolved · 15ms · last logs: ["[Corridor] Row store initialized with 11 stages","[BeginStory] handleBeginStory() called","[ISSUE-PURCHASE] server declined: authentication_required","[ISSUE-PURCHASE] charge declined for issue 1 (literary) — aborted (subscribed=true, balance
+14:FAIL S1 seeded: planner-owned mode NOT entered (no STAGE_CONTRACT block, no mission rule)  — null
+15:FAIL S2 seeded: the generic reply still fails at the envelope (behavior identical to before the repair)  — null
+17:FAIL T0 the planner request goes to /api/proxy as OPENING_PLANNER · grok-4.3 (pinned via preferredModel) · effort none · JSON mode — never to the governed Mistral route  — {"url":"/api/proxy","role":"OPENING_PLANNER","model":"grok-4.3","effort":"none","rf":"json_object","seededUrl":null}
+23:   ⚠ SCENARIO INVALID (no begin-story flow started): unseeded Modern · stage_contract nested inside scene_skeleton · race=resolved · 50ms · last logs: ["[Corridor] Row store initialized with 11 stages","[BeginStory] handleBeginStory() called","[ISSUE-PURCHASE] server declined: authentication_required","[ISSUE-PURCHASE] charge declined for issue 1 (literary) — aborted (subscribed=true, balance=9

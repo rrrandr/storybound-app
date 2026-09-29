@@ -1,0 +1,24 @@
+{
+  "age": 28,
+  "ancestry": "Ashkenazi",
+  "first_name": "Miriam",
+  "last_name": "Kessler",
+  "height": "5'6\", lean and slightly sharp-boned",
+  "build": "narrow-shouldered, small-breasted, the kind of frame that reads as boyish until she moves",
+  "hair": "dark brown, nearly black, naturally wavy with a slight frizz she stopped fighting; worn long, often in a loose braid or twisted up without pins",
+  "complexion": "warm olive undertone, a faint spray of freckles across her nose and cheekbones, a small dark mole on her left collarbone",
+  "face": "a face built on angles—high sharp cheekbones, a slightly prominent nose, a small pointed chin—that reads as intensely present and unsettlingly honest, as if her feelings are always one blink away from the surface",
+  "signature_feature": "her eyes—dark brown, almost black, with an unusual clarity that makes direct eye contact feel like being looked through; they widen when she's afraid, narrow when she's thinking, and water too easily when she's moved",
+  "second_celebrated_feature": "her hands—long-fingered, precise, always slightly stained with ink or paint or thread; they move when she talks, and there's an unconscious grace to them that reads as intelligence made visible",
+  "signature_habits": "she bites the inside of her cheek when she's anxious (a habit her grandmother called 'eating your own worry'); she speaks in quick, tumbling sentences when nervous, sometimes slipping into Yiddish phrases her mother used ('oy vey,' 'feh,' 'meshuga'); she makes lists obsessively on scraps of paper and loses them; she touches her collarbone—specifically that small mole—when she's grounding herself",
+  "occupation": "textile designer and owner of a small independent studio (Kessler Textiles) in Brooklyn; she designs custom fabrics for high-end fashion and interior design, works with natural dyes, and employs three other designers; the business is struggling but not yet failing",
+  "current_crisis": {
+    "event": "a major client—a luxury fashion house that accounts for 40% of her studio's revenue—has just cancelled their contract via email, citing 'strategic direction changes,' and she has 48 hours to secure new work or make payroll for her three employees; her business partner (who owns 30% of the studio) is pushing to sell to a larger conglomerate",
+    "hottest_emotion": "panic mixed with a sharp, clarifying shame—the feeling that she's failed the people who depend on her",
+    "immediate_want": "to find a way to keep the studio alive without selling it, to not let her employees down, to prove she's not just a dreamer playing at business"
+  },
+  "wound": {
+    "core": "she believes that wanting something badly enough means she'll eventually ruin it—that her intensity and her need are contagious, that people she loves leave because she loves them too much",
+    "surfacing_hint": "when she's under pressure, she becomes hyperaware of being 'too much'—too emotional, too needy, too present—and begins apologizing for taking up space, for asking for help, for even existing in the room"
+  }
+}

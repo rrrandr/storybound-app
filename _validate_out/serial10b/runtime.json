@@ -1,0 +1,211 @@
+{
+ "violations": [],
+ "preflight": [],
+ "reports": [
+  {
+   "validator": "li_social_proof",
+   "ok": false,
+   "type": "LI_SOCIAL_PROOF_GAP",
+   "detail": "LI named, no social signal in the window following first mention",
+   "liName": "Julian",
+   "firstMentionPosition": 1326,
+   "evidence": "eaning. Her eyes stayed on me, but the recognition that had always lived behind them was gone. She had paid what she named, and the shape of why it had mattered no longer reached her. I tore the gossamer band from my mouth. The cloth came away with a soft rip that sounded louder …"
+  },
+  {
+   "validator": "hot_opening",
+   "type": "OPENING_TEMPERATURE",
+   "ok": true,
+   "failures": [],
+   "renderedTemp": "HOT_CRISIS",
+   "inMotionHits": 1,
+   "containerOpener": false,
+   "evidence": "The Dohkar’s voice rolled through the clearing like slow water over stone. “Name the offering. Name the desire.”\n\nSeren knelt on the crimson spiralgrass, her aqua skin luminous under the gossamer tunic, coral hair falling forward as she spoke the invocation we had rehearsed for m"
+  },
+  {
+   "validator": "li_social_proof",
+   "ok": false,
+   "type": "LI_SOCIAL_PROOF_GAP",
+   "detail": "LI named, no social signal in the window following first mention",
+   "liName": "Julian",
+   "firstMentionPosition": 1021,
+   "evidence": "or a fool. You never named who.”\n\nHeat climbed my throat. The sigil burned like a brand I had not placed there. I closed my fingers over it, but the light leaked between them, and the Dohkar’s gaze sharpened, reading the alignment I could no longer hide. I had not spoken the wish…"
+  },
+  {
+   "validator": "pc_picturability",
+   "type": "PC_PICTURABILITY_GAP",
+   "ok": false,
+   "evidence": "The Dohkar’s hand stayed frozen, the weight of the assembly pressing down like a held breath. Every eye tracked the torn band in my fingers, the way it fluttered once before I let it fall. I opened my mouth to speak, to say that Seren had offered what she offered because she thou"
+  },
+  {
+   "validator": "semantic_rewrite",
+   "type": "SEMANTIC_EDIT_REQUESTED",
+   "label": "flavor-physics",
+   "instruction": "CRITICAL: This scene MUST express the world's defining mechanic.\nWorld flavor: Arcane Binding\nScene does not express flavor physics for \"arcane_binding\". Expected keywords: binding, spell, contract, g"
+  },
+  {
+   "validator": "semantic_rewrite",
+   "type": "SEMANTIC_EDIT_REQUESTED",
+   "label": "fate-consequence",
+   "instruction": "\n5TH-PERSON FATE VOICE ENFORCEMENT (CRITICAL — PREVIOUS OUTPUT FAILED):\n\nThe Story / Fate voice must be rewritten. Regenerate with these constraints:\n\n\nFATE MAY ONLY:\n- Observe (\"The story watched...\""
+  },
+  {
+   "validator": "semantic_rewrite",
+   "type": "SEMANTIC_EDIT_REQUESTED",
+   "label": "tension-gate",
+   "instruction": "TENSION REPAIR DIRECTIVE (CRITICAL — scene failed tension gate):\n1. Introduce immediate conflict in the first 1-2 lines — a demand, disruption, reveal, or emotional push directed at the player.\n2. Con"
+  },
+  {
+   "validator": "pc_picturability",
+   "type": "PC_PICTURABILITY_GAP",
+   "ok": false,
+   "evidence": "The threshold loomed before me, the spiralgrass darkening at its edge where the sigil had burned its way into the ground. The Dohkar’s hand remained frozen mid-gesture, his eyes fixed on the silver lines that had bloomed across my palm. Seren knelt still, her coral hair falling f"
+  },
+  {
+   "validator": "semantic_rewrite",
+   "type": "SEMANTIC_EDIT_REQUESTED",
+   "label": "engine-vocab",
+   "instruction": "The previous response referenced internal mechanics that must never appear in prose.\n\nHARD RULES:\n- Characters do NOT know about game mechanics — translate wishes into narrative desire, petitions into"
+  },
+  {
+   "validator": "semantic_rewrite",
+   "type": "SEMANTIC_EDIT_REQUESTED",
+   "label": "fate-consequence",
+   "instruction": "\n5TH-PERSON FATE VOICE ENFORCEMENT (CRITICAL — PREVIOUS OUTPUT FAILED):\n\nThe Story / Fate voice must be rewritten. Regenerate with these constraints:\n\n\nFATE MAY ONLY:\n- Observe (\"The story watched...\""
+  },
+  {
+   "validator": "semantic_rewrite",
+   "type": "SEMANTIC_EDIT_REQUESTED",
+   "label": "checklist",
+   "instruction": "The previous response contained structural violations. Regenerate with strict compliance.\n\nABSOLUTE RULES:\n- Zero engine vocabulary or meta-mechanical phrasing in prose\n- Zero developer/editorial tone"
+  },
+  {
+   "validator": "tension_gate",
+   "type": "LOW_TENSION",
+   "ok": false,
+   "evidence": "The threshold loomed before me, the spiralgrass darkening at its edge where the sigil had burned its way into the ground. The Dohkar’s hand remained frozen mid-gesture, his eyes fixed on the silver lines that had bloomed across my palm. Seren knelt still, her coral hair falling f"
+  },
+  {
+   "validator": "pc_picturability",
+   "type": "PC_PICTURABILITY_GAP",
+   "ok": false,
+   "evidence": "The polished stone table reflected every gaze in the room back into the air above it, its surface catching the faint silver lines still burning across my palm. My fingers traced the edge without thinking, the sigil’s pulse steady beneath them, and I felt the deck press lightly ag"
+  },
+  {
+   "validator": "tension_gate",
+   "type": "LOW_TENSION",
+   "ok": false,
+   "evidence": "The polished stone table reflected every gaze in the room back into the air above it, its surface catching the faint silver lines still burning across my palm. My fingers traced the edge without thinking, the sigil’s pulse steady beneath them, and I felt the deck press lightly ag"
+  },
+  {
+   "validator": "li_social_proof",
+   "ok": false,
+   "type": "LI_SOCIAL_PROOF_GAP",
+   "detail": "LI named, no social signal in the window following first mention",
+   "liName": "Julian",
+   "firstMentionPosition": 540,
+   "evidence": "e wish left her and the cost settled on me instead. The assembly’s eyes found my mouth and stayed there.\n\nI stepped toward her, the deck warm against my side. It was always warm. Chayr’s voice cut the space between us before I could reach her. “The rite is not concluded. You will…"
+  },
+  {
+   "validator": "pc_picturability",
+   "type": "PC_PICTURABILITY_GAP",
+   "ok": false,
+   "evidence": "The flickering lanterns cast long, restless shadows across the polished stone, their flames bending away from the sigil still burning on my palm. I needed to reach Seren alone, to ask what she had seen in my face when the wish left her and the cost settled on me instead. The asse"
+  },
+  {
+   "validator": "tension_gate",
+   "type": "LOW_TENSION",
+   "ok": false,
+   "evidence": "The flickering lanterns cast long, restless shadows across the polished stone, their flames bending away from the sigil still burning on my palm. I needed to reach Seren alone, to ask what she had seen in my face when the wish left her and the cost settled on me instead. The asse"
+  },
+  {
+   "validator": "li_social_proof",
+   "ok": false,
+   "type": "LI_SOCIAL_PROOF_GAP",
+   "detail": "LI named, no social signal in the window following first mention",
+   "liName": "Julian",
+   "firstMentionPosition": 878,
+   "evidence": "fingers found the edge of the tapestry, and the silver lines across my palm answered with a sudden, sharp pulse. Light flared outward, bright enough to throw the entire room into stark relief. Every face turned. The Dohkar’s band-muffled mouth moved in a soundless protest. Chayr’…"
+  },
+  {
+   "validator": "pc_picturability",
+   "type": "PC_PICTURABILITY_GAP",
+   "ok": false,
+   "evidence": "The tapestry-draped alcove in the gathering room swallowed the worst of the lantern light, its heavy folds catching every flicker and turning it into long, uncertain lines across the polished stone. I stepped into that half-shadow without deciding to, the sigil on my palm still w"
+  },
+  {
+   "validator": "tension_gate",
+   "type": "LOW_TENSION",
+   "ok": false,
+   "evidence": "The tapestry-draped alcove in the gathering room swallowed the worst of the lantern light, its heavy folds catching every flicker and turning it into long, uncertain lines across the polished stone. I stepped into that half-shadow without deciding to, the sigil on my palm still w"
+  },
+  {
+   "validator": "li_social_proof",
+   "ok": false,
+   "type": "LI_SOCIAL_PROOF_GAP",
+   "detail": "LI named, no social signal in the window following first mention",
+   "liName": "Julian",
+   "firstMentionPosition": 367,
+   "evidence": "ed as the assembly pressed closer, their bare soles scuffing the grain while the sigil on my palm sent thin ribbons of silver light skittering across the boards. A thin curl of smoke rose from the charred edge where palm met wood, and every eye in the gathering room fixed on the …"
+  },
+  {
+   "validator": "pc_picturability",
+   "type": "PC_PICTURABILITY_GAP",
+   "ok": false,
+   "evidence": "The cracked wooden floor beneath her feet groaned as the assembly pressed closer, their bare soles scuffing the grain while the sigil on my palm sent thin ribbons of silver light skittering across the boards. A thin curl of smoke rose from the charred edge where palm met wood, an"
+  },
+  {
+   "validator": "semantic_rewrite",
+   "type": "SEMANTIC_EDIT_REQUESTED",
+   "label": "intimacy-consent",
+   "instruction": "\n═══════════════════════════════════════════════════════════════════════════════\nINTIMACY & CONSENT FAILSAFE — SILENT REGENERATION REQUIRED\n════════════════════════════════════════════════════════════"
+  },
+  {
+   "validator": "pc_picturability",
+   "type": "PC_PICTURABILITY_GAP",
+   "ok": false,
+   "evidence": "The heavy oak table covered in scrolls lay before me, its surface scarred with the marks of countless rites, the sigil’s silver light casting long shadows across the unfurled parchments as I kept my silence, refusing to speak until my voice was acknowledged. The assembly’s whispe"
+  },
+  {
+   "validator": "tension_gate",
+   "type": "LOW_TENSION",
+   "ok": false,
+   "evidence": "The heavy oak table covered in scrolls lay before me, its surface scarred with the marks of countless rites, the sigil’s silver light casting long shadows across the unfurled parchments as I kept my silence, refusing to speak until my voice was acknowledged. The assembly’s whispe"
+  },
+  {
+   "validator": "li_social_proof",
+   "ok": false,
+   "type": "LI_SOCIAL_PROOF_GAP",
+   "detail": "LI named, no social signal in the window following first mention",
+   "liName": "Julian",
+   "firstMentionPosition": 747,
+   "evidence": ". The assembly’s whispers had thinned to a low current, bare feet shifting on the cracked boards, but no one stepped forward to claim the name on the scroll at my knees. The Dohkar’s band-muffled mouth worked soundlessly. Seren remained still on the floor, coral hair veiling her …"
+  },
+  {
+   "validator": "pc_picturability",
+   "type": "PC_PICTURABILITY_GAP",
+   "ok": false,
+   "evidence": "The flickering lanterns along the chamber walls cast long, wavering shadows that the scarred oak table held flat against its grain. Their light caught the silver edges of the sigil still burning on my palm and threw them over the unfurled scrolls in restless patterns, the flame p"
+  },
+  {
+   "validator": "li_social_proof",
+   "ok": false,
+   "type": "LI_SOCIAL_PROOF_GAP",
+   "detail": "LI named, no social signal in the window following first mention",
+   "liName": "Julian",
+   "firstMentionPosition": 172,
+   "evidence": "The velvet drapes pressed the whispers back into the assembly, leaving only the soft rasp of parchment against my palm. I held the torn piece flat against the scarred oak, Julian’s name staring up at me in that familiar slant, the sigil’s silver heat still seeping through the pap…"
+  },
+  {
+   "validator": "pc_picturability",
+   "type": "PC_PICTURABILITY_GAP",
+   "ok": false,
+   "evidence": "The velvet drapes pressed the whispers back into the assembly, leaving only the soft rasp of parchment against my palm. I held the torn piece flat against the scarred oak, Julian’s name staring up at me in that familiar slant, the sigil’s silver heat still seeping through the pap"
+  },
+  {
+   "validator": "tension_gate",
+   "type": "LOW_TENSION",
+   "ok": false,
+   "evidence": "The velvet drapes pressed the whispers back into the assembly, leaving only the soft rasp of parchment against my palm. I held the torn piece flat against the scarred oak, Julian’s name staring up at me in that familiar slant, the sigil’s silver heat still seeping through the pap"
+  }
+ ]
+}

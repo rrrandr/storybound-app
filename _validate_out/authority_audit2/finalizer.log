@@ -1,0 +1,32 @@
+[DECK_MANDATE] ON (dev) — default. Use window._forceMandateOff() or set window._forceDeckMandate=false for palate-cleanser testing.
+[DECK_MANDATE] ON (dev) — default. Use window._forceMandateOff() or set window._forceDeckMandate=false for palate-cleanser testing.
+[DECK_MANDATE] ON (dev) — default. Use window._forceMandateOff() or set window._forceDeckMandate=false for palate-cleanser testing.
+[DECK_MANDATE] ON (dev) — default. Use window._forceMandateOff() or set window._forceDeckMandate=false for palate-cleanser testing.
+[DECK_MANDATE] ON (dev) — default. Use window._forceMandateOff() or set window._forceDeckMandate=false for palate-cleanser testing.
+[SCENE1-FRAME] Dropped fuzzy mandated-closer echo (overlap 100%): "My hand tightened around my great-grandmother's old tarot deck."
+[SCENE1-FRAME] Dropped fuzzy mandated-closer echo (overlap 100%): "I toyed with the idea of letting the cards decide."
+[SCENE1-FRAME] Stripped premature deck mention from body (deck-at-end constraint): "I turned to the cards."
+[SCENE1-FRAME] Appended mandated closer (model omitted it / replaced a junk ending).
+[SCENE1-FRAME] Dropped fuzzy mandated-closer echo (overlap 100%): "My hand tightened around my great-grandmother's old tarot deck."
+[SCENE1-FRAME] Dropped fuzzy mandated-closer echo (overlap 100%): "I toyed with the idea of letting the cards decide."
+[SCENE1-FRAME] Appended mandated closer (model omitted it / replaced a junk ending).
+[LI-PROOF:REPAIR] firing — li=Julian allowed=[status,competence,myth,scarcity,sexual] locked=none
+[LI-PROOF:REPAIR] post-check failed — reverting LI-PROOF candidate
+[PC-PICTURABILITY:SKIP] HOT_CRISIS Scene-1 — deferring PC establishment to avoid mid-crisis inventory dump
+[HOT-RENDER:GATE] functional fails=[] (n=0) · rendered=COLD_DISRUPTION · in-motion=0 · container-opener=false ⟹ REPAIR FIRES
+[HOT-RENDER:REPAIR] applied (segment 2453→2011 chars) — functional fails 0→0 · rendered COLD_DISRUPTION→HOT_CRISIS ✓ HOT · remaining=[]
+[SCENE1-FRAME] Stripped premature deck mention from body (deck-at-end constraint): "Lirael planted her feet in the spiralgrass, refusing to retreat, and raised her great-gran"
+[SCENE1-FRAME] Appended mandated closer (model omitted it / replaced a junk ending).
+[SCENE1-FRAME:POST-PASS] Re-asserted verbatim mandated closer after post-gate mutators.
+[DECK_MANDATE] ON (dev) — default. Use window._forceMandateOff() or set window._forceDeckMandate=false for palate-cleanser testing.
+[DECK_MANDATE] ON (dev) — default. Use window._forceMandateOff() or set window._forceDeckMandate=false for palate-cleanser testing.
+[SCENE-FRAME] Stashing Scene 2 (Petition) mandate frame
+[LI-PROOF:REPAIR] firing — li=Julian allowed=[status,competence,myth,scarcity,sexual] locked=none
+[LI-PROOF:REPAIR] post-check failed — reverting LI-PROOF candidate
+[SCENE-FRAME] Dropped fuzzy mandated-closer echo (turn path, overlap 100%): "I realize that old tarot deck is still in my hand."
+[SCENE-FRAME] Dropped fuzzy mandated-closer echo (turn path, overlap 100%): "One of the heavy gold cards slips out — "Petition Fate" is inscribed on it."
+[SCENE-FRAME] Stripped 1 echoed closer fragment-type(s) from body (turn path — anti triple-closer).
+[SCENE-FRAME] petition closer: no <<WISH:>> emitted, neutral fallback used.
+[SCENE-FRAME] Appended mandated closer (turn path).
+[WISH] composing captured fragment into the Petition tail
+[DECK_MANDATE] ON (dev) — default. Use window._forceMandateOff() or set window._forceDeckMandate=false for palate-cleanser testing.

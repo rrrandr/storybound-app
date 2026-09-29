@@ -1,0 +1,43 @@
+{
+ "violations": [],
+ "preflight": [],
+ "reports": [
+  {
+   "validator": "li_social_proof",
+   "ok": false,
+   "type": "LI_SOCIAL_PROOF_GAP",
+   "detail": "LI named, no social signal in the window following first mention",
+   "liName": "Julian",
+   "firstMentionPosition": 902,
+   "evidence": "ront rank drew both hands up as if to push the words back. Someone whispered,\n\n“Never hand Fate a blank page.”\n\nThe spiralgrass at Seren’s knees darkened at the edges, the color draining upward into the stems. She blinked once, and her mouth stayed open on the last syllable as th…"
+  },
+  {
+   "validator": "hot_opening",
+   "type": "OPENING_TEMPERATURE",
+   "ok": false,
+   "failures": [],
+   "renderedTemp": "COLD_DISRUPTION",
+   "inMotionHits": 0,
+   "containerOpener": false,
+   "evidence": "The Dohkar’s hand rose, palm open toward the mated veil-trees. “Begin.”\n\nSeren knelt on the crimson spiralgrass, aqua skin luminous under her child’s gossamer. Her pale coral hair fell forward as she drew breath. She spoke the invocation we had rehearsed for months, each word ali"
+  },
+  {
+   "validator": "pc_picturability",
+   "type": "PC_PICTURABILITY_GAP",
+   "ok": false,
+   "evidence": "I stepped forward, the torn band still clutched in my fist, and tried to shape the words that would untangle what Seren had done. My voice came out raw from the seal. “She meant no harm. The wish was hers, but the cost—”\n\nThe ritual stone at the center of the clearing answered fi"
+  },
+  {
+   "validator": "semantic_rewrite",
+   "type": "SEMANTIC_EDIT_REQUESTED",
+   "label": "flavor-physics",
+   "instruction": "CRITICAL: This scene MUST express the world's defining mechanic.\nWorld flavor: Arcane Binding\nScene does not express flavor physics for \"arcane_binding\". Expected keywords: binding, spell, contract, g"
+  },
+  {
+   "validator": "semantic_rewrite",
+   "type": "SEMANTIC_EDIT_REQUESTED",
+   "label": "tension-gate",
+   "instruction": "TENSION REPAIR DIRECTIVE (CRITICAL — scene failed tension gate):\n1. Introduce immediate conflict in the first 1-2 lines — a demand, disruption, reveal, or emotional push directed at the player.\n2. Con"
+  }
+ ]
+}

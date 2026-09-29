@@ -1,0 +1,24 @@
+{
+  "age": 28,
+  "ancestry": "Ashkenazi",
+  "first_name": "Miriam",
+  "last_name": "Kessler",
+  "height": "5'6\", lean and long-limbed",
+  "build": "slight, almost fragile-looking — the kind of frame that reads as delicate until you notice the muscle in her forearms from years of hand work",
+  "hair": "dark brown, almost black, naturally wavy; she wears it long and usually half-pinned, strands escaping throughout the day",
+  "complexion": "warm olive undertone with a scatter of freckles across her nose and shoulders; a small, pale scar on her left collarbone from a childhood accident",
+  "face": "a face built for feeling — wide-set dark eyes that telegraph every shift in her mood, a full mouth that curves easily into a smile but trembles when she's afraid, high cheekbones that catch light and shadow in ways that make her look younger than she is",
+  "signature_feature": "her hands — long-fingered, precise, always slightly stained with dye or clay or ink from her work; the LI notices the deliberate grace of them first, the way she moves them when she speaks, the faint calluses that speak to discipline and craft",
+  "second_celebrated_feature": "the hollow at the base of her throat — visible when she wears anything loose or open, it deepens when she swallows hard, a tell that betrays every moment of vulnerability or desire",
+  "signature_habits": "she bites the inside of her cheek when concentrating, leaving small marks; she says 'oy vey' under her breath when frustrated, a holdover from her grandmother's kitchen; she touches things — fabric, wood, stone — with her fingertips when she enters a new space, as if reading it; she makes tea obsessively when anxious, the ritual of heating water and steeping leaves a form of self-soothing",
+  "occupation": "textile artist and small-studio owner — she dyes and hand-prints luxury fabrics for high-end designers and bespoke clients; her studio is in a converted warehouse in the arts district, and she's been scraping by on passion and word-of-mouth for five years",
+  "current_crisis": {
+    "event": "her studio's landlord — a shell corporation owned by a development firm — has given her 60 days to vacate; the building is being demolished for a luxury residential tower; she has no capital to relocate, no savings, and her biggest client just signed a contract with a mass-production mill in Vietnam",
+    "hottest_emotion": "panic threaded with a bone-deep sense of being erased",
+    "immediate_want": "to find a way to keep her studio alive, or at minimum to save her equipment and her current commissions before the eviction"
+  },
+  "wound": {
+    "core": "she believes that anything she builds will be taken from her — that she is not allowed to have permanence or safety",
+    "surfacing_hint": "when threatened with loss, she becomes hypervigilant and self-sabotaging, pulling away from people who try to help because accepting help feels like admitting defeat; she also becomes reckless, making decisions from panic rather than strategy"
+  }
+}

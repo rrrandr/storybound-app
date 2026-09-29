@@ -1,0 +1,41 @@
+[CHARACTERS: Lirael:F, Julian:M, Seren:F, Quinn:F]
+
+[TITLE: "The Chains That Bind"]
+
+[SYNOPSIS: In the storm-lashed Shackle Isles, a ship founders on the harbour chains and the crowd turns to Fate for rescue. Lirael watches an open-ended wish reshape the crisis, its price landing on the wisher in the same breath, while her own hidden lineage draws the first public scrutiny.]
+
+The ship struck the chains with a sound like bone breaking. Salt spray burst over the dock as the hull folded around the links, timbers shrieking. I stood in the village square above the harbour, the crowd pressing close, their eyes already sliding toward me.
+
+Quinn reached my side first. "They say the chains only hold what the bloodline summons," she said, short-cropped hair glinting, arms crossed. Her gaze cut past the wreck to the faces turning my way.
+
+The crew clawed at the rails. Ropes thrown from shore fell short. Two men tried to swim the gap and the current dragged them under. No one reached them. The murmurs started low, then louder, naming the lineage that had once sworn the chains into place.
+
+My heart raced. A stranger in the crowd met my eyes, his stare sharp enough to cut through the noise. I twisted a strand of hair around my finger, the motion useless against the rising weight in my chest.
+
+<<MICRO_EXPRESSION>>
+Say it plainly — or let it show without words?
+<<CONTINUE>>
+
+Seren knelt in the square's center, the youth chosen for the rite that had drawn half the village. She lifted her hands, eyes closing, face turned toward the failing ship. Her voice carried clear over the water.
+
+"Fate, hear my offering. I offer the memory of my mother's face. So that they reach the shore."
+
+The old woman beside me flinched. "Never hand Fate a blank page," she breathed.
+
+The omen came as warmth leaving my palms, though the air stayed thick with salt. Seren's Weave-Script dimmed at the throat.
+
+The current shifted. A wave lifted the foundering hull and carried three survivors onto the rocks. Relief moved through the crowd in a single exhaled breath.
+
+Seren's hands dropped. The colour drained from her eyes, leaving them pale and strange. She blinked once, twice, and did not speak again.
+
+The square went still. Every face that had turned from the wreck now fixed on me. The lineage the chains answered had been spoken aloud, and the price paid in front of them all.
+
+Will I confront the truth or hide in the shadows of their judgment?
+
+My hand tightened around my great-grandmother's old tarot deck. I didn't remember bringing it. I toyed with the idea of letting the cards decide.
+
+<<EXPANSION_A>>
+I told Quinn the lineage was mine and watched the square divide around the admission.
+<<EXPANSION_B>>
+I stayed silent and let the weight of every stare settle on the truth without naming it.
+<<END_EXPANSION>>

@@ -1,0 +1,5 @@
+=== v3u_stage_order · stage_order_dry.mjs · 17:57:23 ===
+v3u_stage_order: exit=1 · 85 checks · 83 passed · 2 failed · invalid_markers=0 · samples=45 suite_rss_max=330MB free_min=258MB server_rss_max=85MB
+v3u_stage_order: FAILURE — stopping. First failing lines:
+77:FAIL V3-alias-ref bare issued participant ref → normalised to stage:participant:pc:self (unique in the accepted stage), accepted, mounts  — {"pages":0,"fatal":"environment_pressure.grounds cites unissued ids (pc:self) — free spine prose is not a fact"}
+88:FAIL RL1 the LATEST retained real reply (17:16: structured contact WIPE→target, grounds [env:use, pc:self], near-gloss revelation): its ground-format faults CLEAR by aliasing (log names both) and the ONLY remaining fault is the named revelation restatement; 0 author, 0 pages, refund + honest dialog  — {"fatal":"character_revelation restates the lens operation's gloss instead of revealing throug

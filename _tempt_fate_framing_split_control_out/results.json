@@ -1,0 +1,90 @@
+[
+  {
+    "name": "HYPOTHESIS CONFIRMED: the author-side callback guard fails because the ledger's seal-time sceneIdx no longer equals the live turnCount by the time the author prompt is built",
+    "pass": true
+  },
+  {
+    "name": "a planner request and an author request were both captured (the control is exercising both layers)",
+    "pass": true
+  },
+  {
+    "name": "PLANNER receives ACTIVE INVOCATION THIS SCENE",
+    "pass": true
+  },
+  {
+    "name": "AUTHOR receives ACTIVE INVOCATION THIS SCENE — the parity requirement this whole fix exists for",
+    "pass": true
+  },
+  {
+    "name": "AUTHOR does NOT receive a historical MEMORY CALLBACK for the proposal it is currently enacting",
+    "pass": true
+  },
+  {
+    "name": "exactly one wish classifier request fired, captured by the stub",
+    "pass": true
+  },
+  {
+    "name": "the author is no longer asked for the outcome contract at all — no scope fields in its real request",
+    "pass": true
+  },
+  {
+    "name": "the EXTRACTOR's real prompt requests the scope fields the validator requires (requestedScope / deliveredScope / scopeMatch)",
+    "pass": true
+  },
+  {
+    "name": "the EXTRACTOR's real prompt requests ruptureClass, enumerating all five classes",
+    "pass": true
+  },
+  {
+    "name": "the EXTRACTOR's real prompt keeps class fields conditional, and requests invalidatedPlans",
+    "pass": true
+  },
+  {
+    "name": "Scene A persisted as a real scene",
+    "pass": true
+  },
+  {
+    "name": "the author returned a POPULATED temptFateOutcome (the invocation-scene schema requirement is satisfied, not merely stated)",
+    "pass": true
+  },
+  {
+    "name": "the durable consequence committed through the production path is attributed to the OWNED proposal",
+    "pass": true
+  },
+  {
+    "name": "the owned invocation is RELEASED once its generation ends",
+    "pass": true
+  },
+  {
+    "name": "SCENE B: the author does NOT receive ACTIVE INVOCATION — the directive disappears with the generation that owned it, so temptFateOutcome: null is the correct answer there",
+    "pass": true
+  },
+  {
+    "name": "SCENE B: the author's schema no longer REQUIRES a populated outcome — the invocation-scene demand is gone, so null is valid here",
+    "pass": true
+  },
+  {
+    "name": "SCENE B: a planner request was captured for the continuation",
+    "pass": true
+  },
+  {
+    "name": "SCENE B: the planner does NOT receive ACTIVE INVOCATION either",
+    "pass": true
+  },
+  {
+    "name": "SCENE B: the COMMITTED memory-erasure consequence reaches BOTH layers — planner and author each carry the wish forward as settled fact, not as a live rupture",
+    "pass": true
+  },
+  {
+    "name": "SCENE B: the original proposal is NOT committed twice — still exactly one durable consequence, still attributed to the owned proposal",
+    "pass": true
+  },
+  {
+    "name": "SCENE A REGRESSION PRESERVED: the same proposal was never simultaneously an active invocation and a historical callback",
+    "pass": true
+  },
+  {
+    "name": "ZERO real provider dispatches anywhere in this control",
+    "pass": true
+  }
+]

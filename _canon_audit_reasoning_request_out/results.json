@@ -1,0 +1,588 @@
+{
+  "results": [
+    {
+      "name": "the calibration candidate is the pinned snapshot mistral-small-2603",
+      "pass": true
+    },
+    {
+      "name": "it is NOT a drifting alias — \"latest\" would let the measured model change underneath the run",
+      "pass": true
+    },
+    {
+      "name": "reasoning effort is pinned to \"high\", one of the two values Mistral actually documents",
+      "pass": true
+    },
+    {
+      "name": "it routes to the mistral proxy, not OpenAI or Grok",
+      "pass": true
+    },
+    {
+      "name": "output is priced at Mistral Small 4's published $0.60/M, NOT Ministral 8B's $0.15/M",
+      "pass": true
+    },
+    {
+      "name": "the $0.02 ceiling covers the WORST case (max_tokens fully spent on all eight), not an expected case",
+      "pass": true
+    },
+    {
+      "name": "max_tokens is raised above the 700 used for non-reasoning candidates, so thinking cannot eat the whole answer",
+      "pass": true
+    },
+    {
+      "name": "a request actually reached the wire",
+      "pass": true
+    },
+    {
+      "name": "THE WIRE NAMES mistral-small-2603",
+      "pass": true
+    },
+    {
+      "name": "THE WIRE CARRIES reasoning_effort=\"high\", explicitly — not inferred, not defaulted",
+      "pass": true
+    },
+    {
+      "name": "the wire carries max_tokens 2000, the bound the cost estimate rests on",
+      "pass": true
+    },
+    {
+      "name": "the full assertion passes on a correct request",
+      "pass": true
+    },
+    {
+      "name": "the calibration route logged the SAME body independently of the stub",
+      "pass": true
+    },
+    {
+      "name": "the dispatch succeeded rather than erroring on the block array",
+      "pass": true
+    },
+    {
+      "name": "content is a STRING, flattened from the block array",
+      "pass": true
+    },
+    {
+      "name": "content is the model's actual JSON answer, not \"[object Object]\"",
+      "pass": true
+    },
+    {
+      "name": "the thinking trace is preserved SEPARATELY, not pasted into the answer",
+      "pass": true
+    },
+    {
+      "name": "the PROXY's reported reasoning_effort is surfaced — evidence of what was served, not what we asked",
+      "pass": true
+    },
+    {
+      "name": "usage survives for the realized-cost calculation",
+      "pass": true
+    },
+    {
+      "name": "RED PROOF — the UNFLATTENED array really does stringify to garbage, so the flattener is load-bearing",
+      "pass": true
+    },
+    {
+      "name": "RED PROOF — the assertion REJECTS a body whose reasoning_effort was stripped",
+      "pass": true
+    },
+    {
+      "name": "RED PROOF — the assertion REJECTS reasoning_effort=\"none\" (a value the proxy would happily accept)",
+      "pass": true
+    },
+    {
+      "name": "RED PROOF — the assertion REJECTS the wrong model even with reasoning set correctly",
+      "pass": true
+    },
+    {
+      "name": "RED PROOF — the assertion REJECTS the right body sent to the wrong endpoint",
+      "pass": true
+    },
+    {
+      "name": "RED PROOF — a dispatch that omits reasoning_effort is ABORTED, not served",
+      "pass": true
+    },
+    {
+      "name": "RED PROOF — and it never reached the wire at all (zero further stub hits)",
+      "pass": true
+    },
+    {
+      "name": "the block explains the SILENT failure it prevents, not just \"invalid\"",
+      "pass": true
+    },
+    {
+      "name": "no budget was reserved for the aborted request",
+      "pass": true
+    },
+    {
+      "name": "a different Mistral model is aborted before dispatch",
+      "pass": true
+    },
+    {
+      "name": "a different ENDPOINT is aborted before dispatch, even carrying the right model name",
+      "pass": true
+    },
+    {
+      "name": "the openai stub was never reached, so nothing could have been served from the wrong provider",
+      "pass": true
+    },
+    {
+      "name": "Grok is aborted too — the run is pinned to reasoning Mistral only, with no fallback",
+      "pass": true
+    },
+    {
+      "name": "a caller that asks for no reasoning is SERVED, not blocked",
+      "pass": true
+    },
+    {
+      "name": "and its request carries NO reasoning_effort key at all — the field is added only on request",
+      "pass": true
+    },
+    {
+      "name": "a plain string reply passes through the flattener byte-identical",
+      "pass": true
+    },
+    {
+      "name": "the grok request goes to /api/proxy, not the mistral or openai endpoint",
+      "pass": true
+    },
+    {
+      "name": "it names grok-4.3 via preferredModel, which is how api/proxy.js reads it",
+      "pass": true
+    },
+    {
+      "name": "THE WIRE CARRIES reasoningEffort:\"high\" in xAI's camelCase spelling",
+      "pass": true
+    },
+    {
+      "name": "RED PROOF — it does NOT use Mistral's snake_case spelling, which api/proxy.js would ignore",
+      "pass": true
+    },
+    {
+      "name": "the candidate declares the field name it enforces, rather than assuming one spelling",
+      "pass": true
+    },
+    {
+      "name": "the dispatch succeeded and returned the model's answer",
+      "pass": true
+    },
+    {
+      "name": "usage survives for realized cost",
+      "pass": true
+    },
+    {
+      "name": "RED PROOF — a grok dispatch missing reasoningEffort is ABORTED before the wire",
+      "pass": true
+    },
+    {
+      "name": "grok-4.3 is priced at the REAL 4.3 rate, not the retired cheap-4.1 SKU",
+      "pass": true
+    },
+    {
+      "name": "eight fixtures genuinely do NOT fit a $0.05 ceiling — the number was checked, not assumed",
+      "pass": true
+    },
+    {
+      "name": "the ceiling is set above the worst case so the run cannot be refused mid-way",
+      "pass": true
+    },
+    {
+      "name": "the Haiku request goes to the ISOLATED /api/anthropic-proxy, not the Mistral route",
+      "pass": true
+    },
+    {
+      "name": "it names the pinned snapshot claude-haiku-4-5-20251001, not a floating alias",
+      "pass": true
+    },
+    {
+      "name": "EXTENDED THINKING IS EXPLICIT ON THE WIRE, with a real budget",
+      "pass": true
+    },
+    {
+      "name": "max_tokens exceeds the thinking budget, so the answer has room after thinking",
+      "pass": true
+    },
+    {
+      "name": "the dispatch returned the answer with the thinking kept SEPARATE from it",
+      "pass": true
+    },
+    {
+      "name": "Anthropic usage (input_tokens/output_tokens) survives for realized cost",
+      "pass": true
+    },
+    {
+      "name": "RED PROOF — a Haiku dispatch with no thinking budget is ABORTED before the wire",
+      "pass": true
+    },
+    {
+      "name": "and the block says what the silent failure would have been",
+      "pass": true
+    },
+    {
+      "name": "Haiku priced $1/M in, $5/M out; worst case fits the $0.11 ceiling",
+      "pass": true
+    },
+    {
+      "name": "the wire names grok-4.7 exactly, not a legacy grok-* alias",
+      "pass": true
+    },
+    {
+      "name": "THE RESOLVER BYPASS IS ON THE WIRE — _sbModelOverride=\"grok-4.7\"",
+      "pass": true
+    },
+    {
+      "name": "reasoning high is sent explicitly rather than relying on 4.7's default",
+      "pass": true
+    },
+    {
+      "name": "RED PROOF — without the bypass the dispatch is ABORTED, not silently served as 4.3",
+      "pass": true
+    },
+    {
+      "name": "and the block names the exact substitution it prevents",
+      "pass": true
+    },
+    {
+      "name": "api/proxy.js allowlists grok-4.7 for the _sbModelOverride bypass",
+      "pass": true
+    },
+    {
+      "name": "...and the production auditor's own pin, grok-4.3, is honoured by the same bypass",
+      "pass": true
+    },
+    {
+      "name": "...and grok-4.7 is an allowed model, so validation cannot refuse it",
+      "pass": true
+    },
+    {
+      "name": "grok-4.7 priced from xAI docs at $2/M in, $6/M out; worst case fits $0.16",
+      "pass": true
+    },
+    {
+      "name": "the two runs together stay inside the $0.27 combined hard ceiling",
+      "pass": true
+    },
+    {
+      "name": "mistral-small-2603 is a registered, priced candidate",
+      "pass": true
+    },
+    {
+      "name": "its authorization phrase names its OWN $0.02 ceiling, so a $0.01 authorization cannot release it",
+      "pass": true
+    },
+    {
+      "name": "grok-4.3 has its own phrase naming its own $0.08 ceiling — no cheaper authorization releases it",
+      "pass": true
+    },
+    {
+      "name": "no request was allowed through to a real provider",
+      "pass": true
+    }
+  ],
+  "routeLog": [
+    {
+      "kind": "blocked-endpoint",
+      "pathname": "/api/csp-report",
+      "reason": "calibration allows only /api/mistral-proxy"
+    },
+    {
+      "kind": "blocked-endpoint",
+      "pathname": "/api/config",
+      "reason": "calibration allows only /api/mistral-proxy"
+    },
+    {
+      "kind": "blocked-endpoint",
+      "pathname": "/api/csp-report",
+      "reason": "calibration allows only /api/mistral-proxy"
+    },
+    {
+      "kind": "blocked-endpoint",
+      "pathname": "/api/geo",
+      "reason": "calibration allows only /api/mistral-proxy"
+    },
+    {
+      "kind": "request-body",
+      "fixture": "control_correct",
+      "pathname": "/api/mistral-proxy",
+      "body": {
+        "role": "STRUCTURE_GENERATOR",
+        "model": "mistral-small-2603",
+        "temperature": 0,
+        "max_tokens": 2000,
+        "messages": [
+          {
+            "role": "system",
+            "content": "CANON AUDITOR"
+          },
+          {
+            "role": "user",
+            "content": "plan"
+          }
+        ],
+        "reasoning_effort": "high"
+      }
+    },
+    {
+      "kind": "reserved",
+      "fixture": "control_correct",
+      "usd": 0.00165,
+      "runningTotalUsd": 0.00165
+    },
+    {
+      "kind": "blocked-reasoning",
+      "pathname": "/api/mistral-proxy",
+      "model": "mistral-small-2603",
+      "field": "reasoning_effort",
+      "sent": null,
+      "reason": "calibration requires reasoning_effort=\"high\" explicitly on the wire; the request carried none, and the proxy would serve this as ordinary (non-reasoning) mistral-small-2603"
+    },
+    {
+      "kind": "blocked-model",
+      "pathname": "/api/mistral-proxy",
+      "model": "ministral-8b-2512",
+      "reason": "calibration measures mistral-small-2603 only; a cascade would report another model as this one"
+    },
+    {
+      "kind": "blocked-endpoint",
+      "pathname": "/api/chatgpt-proxy",
+      "reason": "calibration allows only /api/mistral-proxy"
+    },
+    {
+      "kind": "blocked-endpoint",
+      "pathname": "/api/proxy",
+      "reason": "calibration allows only /api/mistral-proxy"
+    },
+    {
+      "kind": "request-body",
+      "fixture": "control_plain",
+      "pathname": "/api/mistral-proxy",
+      "body": {
+        "role": "STRUCTURE_GENERATOR",
+        "model": "ministral-8b-2512",
+        "temperature": 0,
+        "max_tokens": 700,
+        "messages": [
+          {
+            "role": "system",
+            "content": "CANON AUDITOR"
+          },
+          {
+            "role": "user",
+            "content": "plan"
+          }
+        ]
+      }
+    },
+    {
+      "kind": "reserved",
+      "fixture": "control_plain",
+      "usd": 0.00165,
+      "runningTotalUsd": 0.0033
+    },
+    {
+      "kind": "request-body",
+      "fixture": "control_grok_pinned",
+      "pathname": "/api/proxy",
+      "body": {
+        "role": "STRUCTURE_GENERATOR",
+        "preferredModel": "grok-4.3",
+        "temperature": 0,
+        "max_tokens": 2000,
+        "messages": [
+          {
+            "role": "system",
+            "content": "CANON AUDITOR"
+          },
+          {
+            "role": "user",
+            "content": "plan"
+          }
+        ],
+        "reasoningEffort": "high"
+      }
+    },
+    {
+      "kind": "reserved",
+      "fixture": "control_grok_pinned",
+      "usd": 0.00165,
+      "runningTotalUsd": 0.0049499999999999995
+    },
+    {
+      "kind": "blocked-reasoning",
+      "pathname": "/api/proxy",
+      "model": "grok-4.3",
+      "field": "reasoningEffort",
+      "sent": null,
+      "reason": "calibration requires reasoningEffort=\"high\" explicitly on the wire; the request carried none, and the proxy would serve this as ordinary (non-reasoning) grok-4.3"
+    },
+    {
+      "kind": "request-body",
+      "fixture": "control_haiku",
+      "pathname": "/api/anthropic-proxy",
+      "body": {
+        "role": "STRUCTURE_GENERATOR",
+        "model": "claude-haiku-4-5-20251001",
+        "max_tokens": 2000,
+        "messages": [
+          {
+            "role": "system",
+            "content": "CANON AUDITOR"
+          },
+          {
+            "role": "user",
+            "content": "plan"
+          }
+        ],
+        "thinking_budget_tokens": 1024
+      }
+    },
+    {
+      "kind": "reserved",
+      "fixture": "control_haiku",
+      "usd": 0.00165,
+      "runningTotalUsd": 0.0066
+    },
+    {
+      "kind": "blocked-thinking",
+      "pathname": "/api/anthropic-proxy",
+      "model": "claude-haiku-4-5-20251001",
+      "sent": null,
+      "reason": "calibration requires thinking_budget_tokens=1024 explicitly; the request carried none and would be served as ORDINARY claude-haiku-4-5-20251001"
+    },
+    {
+      "kind": "request-body",
+      "fixture": "control_grok47",
+      "pathname": "/api/proxy",
+      "body": {
+        "role": "STRUCTURE_GENERATOR",
+        "preferredModel": "grok-4.7",
+        "temperature": 0,
+        "max_tokens": 2000,
+        "messages": [
+          {
+            "role": "system",
+            "content": "CANON AUDITOR"
+          },
+          {
+            "role": "user",
+            "content": "plan"
+          }
+        ],
+        "reasoningEffort": "high",
+        "_sbModelOverride": "grok-4.7"
+      }
+    },
+    {
+      "kind": "reserved",
+      "fixture": "control_grok47",
+      "usd": 0.00165,
+      "runningTotalUsd": 0.00825
+    },
+    {
+      "kind": "blocked-resolver-bypass",
+      "pathname": "/api/proxy",
+      "model": "grok-4.7",
+      "sent": null,
+      "reason": "calibration requires _sbModelOverride=\"grok-4.7\"; without it api/proxy.js:_resolveGrokModel serves grok-4.3 while this run reports grok-4.7"
+    }
+  ],
+  "seen": [
+    {
+      "pathname": "/api/mistral-proxy",
+      "body": {
+        "role": "STRUCTURE_GENERATOR",
+        "model": "mistral-small-2603",
+        "temperature": 0,
+        "max_tokens": 2000,
+        "messages": [
+          {
+            "role": "system",
+            "content": "CANON AUDITOR"
+          },
+          {
+            "role": "user",
+            "content": "plan"
+          }
+        ],
+        "reasoning_effort": "high"
+      }
+    },
+    {
+      "pathname": "/api/mistral-proxy",
+      "body": {
+        "role": "STRUCTURE_GENERATOR",
+        "model": "ministral-8b-2512",
+        "temperature": 0,
+        "max_tokens": 700,
+        "messages": [
+          {
+            "role": "system",
+            "content": "CANON AUDITOR"
+          },
+          {
+            "role": "user",
+            "content": "plan"
+          }
+        ]
+      }
+    },
+    {
+      "pathname": "/api/proxy",
+      "body": {
+        "role": "STRUCTURE_GENERATOR",
+        "preferredModel": "grok-4.3",
+        "temperature": 0,
+        "max_tokens": 2000,
+        "messages": [
+          {
+            "role": "system",
+            "content": "CANON AUDITOR"
+          },
+          {
+            "role": "user",
+            "content": "plan"
+          }
+        ],
+        "reasoningEffort": "high"
+      }
+    },
+    {
+      "pathname": "/api/anthropic-proxy",
+      "body": {
+        "role": "STRUCTURE_GENERATOR",
+        "model": "claude-haiku-4-5-20251001",
+        "max_tokens": 2000,
+        "messages": [
+          {
+            "role": "system",
+            "content": "CANON AUDITOR"
+          },
+          {
+            "role": "user",
+            "content": "plan"
+          }
+        ],
+        "thinking_budget_tokens": 1024
+      }
+    },
+    {
+      "pathname": "/api/proxy",
+      "body": {
+        "role": "STRUCTURE_GENERATOR",
+        "preferredModel": "grok-4.7",
+        "temperature": 0,
+        "max_tokens": 2000,
+        "messages": [
+          {
+            "role": "system",
+            "content": "CANON AUDITOR"
+          },
+          {
+            "role": "user",
+            "content": "plan"
+          }
+        ],
+        "reasoningEffort": "high",
+        "_sbModelOverride": "grok-4.7"
+      }
+    }
+  ]
+}

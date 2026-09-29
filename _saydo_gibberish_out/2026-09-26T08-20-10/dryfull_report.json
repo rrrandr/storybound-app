@@ -1,0 +1,34 @@
+{
+  "telemetry": [],
+  "roles": [
+    "continuity",
+    "continuity",
+    "continuity",
+    "continuity",
+    "continuity",
+    "continuity",
+    "planner",
+    "planner",
+    "planner",
+    "author",
+    "author",
+    "author"
+  ],
+  "acceptance": {
+    "scenesDelta": 0,
+    "lastTextLen": 35,
+    "lastTextChanged": false
+  },
+  "settled": false,
+  "reservations": [],
+  "noFallbackInjected": 0,
+  "abortReason": null,
+  "consoleRejections": [
+    "[TIERED:scaffold] primary/mistral/ministral-8b-2512 failed: mistral returned empty content",
+    "[TIERED:scaffold] fallback/grok/grok-4-1-fast-reasoning failed: grok returned empty content",
+    "[TIERED:scaffold] terminal/openai/gpt-4o-mini failed: openai returned empty content",
+    "[CG:SCAFFOLD] all provider tiers failed: [TIERED:scaffold] all tiers exhausted — last error: openai returned empty content",
+    "[CG:SCAFFOLD] generation FAILED — scene proceeds without scaffold: scaffold generation failed — all tiers exhausted ([TIERED:scaffold] all tiers exhausted — last error: openai returned empty content)",
+    "[TIERED:scaffold] primary/mistral/ministral-8b-2512 failed: mistral returned empty content"
+  ]
+}

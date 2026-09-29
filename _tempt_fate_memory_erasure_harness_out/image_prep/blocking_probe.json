@@ -1,0 +1,12 @@
+[
+  {
+    "shape": "purpose-field",
+    "threw": true,
+    "message": "Failed to fetch"
+  },
+  {
+    "shape": "system-prompt-text",
+    "threw": true,
+    "message": "Failed to fetch"
+  }
+]

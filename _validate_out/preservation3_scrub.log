@@ -1,0 +1,116 @@
+page text retained → _validate_out/dry_rehearsal/scene1_measure_live.page.2026-09-10T03-39-52-644Z.txt (998 chars)
+PASS R0 one stubbed author, one page
+FAIL R1 paragraph count preserved (8 prose paragraphs)  — page paragraphs=7 expected=8
+FAIL R2 sentence multiset preserved (nothing deleted, nothing duplicated)  — missing=["The way he set the document down without lifting his eyes from the pag ×1"] extra=[]
+PASS R3 mandated closer exactly once and last
+FAIL R4 offstage-LI memory sentence intact  — sentence deleted
+FAIL R5 micro widget present at the author's position (after prose paragraph 3)  — widgetIdx=2 layout=P,P,DIV[widget],P,P,P,P,P
+
+PRESERVATION TEST (RED=scrub): 6 rows · 2 passed · 4 failed → R1 paragraph count preserved (8 prose paragraphs) | R2 sentence multiset preserved (nothing deleted, nothing duplicated) | R4 offstage-LI memory sentence intact | R5 micro widget present at the author's position (after prose paragraph 3)
+written _validate_out/scene1_measure_E2E-DRY.2026-09-10T03-40-16-236Z.json
+{
+  "mode": "E2E-DRY",
+  "plannerCalls": 1,
+  "authorCalls": 1,
+  "aborted": [],
+  "cost": [
+    {
+      "role": "OPENING_PLANNER",
+      "status": 200,
+      "latencyMs": 4,
+      "served": "grok-4.3",
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "reasoning_tokens": 0,
+      "cached_tokens": 0,
+      "usd_list": 0,
+      "xai_usd": null,
+      "replyBytes": 2821,
+      "stageContractAt": [
+        "top"
+      ]
+    },
+    {
+      "role": "NARRATIVE_AUTHOR_GROK_ONLY",
+      "status": 200,
+      "latencyMs": 4,
+      "served": null,
+      "reasoning_tokens": 0,
+      "cached_tokens": 0,
+      "usd_list": 0,
+      "xai_usd": null,
+      "replyBytes": 1182,
+      "stageContractAt": null
+    }
+  ],
+  "totalList": 0,
+  "totalXaiUsd": 0,
+  "gate": {
+    "softFindings": [
+      {
+        "code": "fusion_legacy_member_ignored",
+        "field": "scene_skeleton.fusion",
+        "action": "omitted"
+      }
+    ],
+    "pinned": "FROM_START",
+    "openingState": "FROM_START",
+    "pinnedShape": "CARETAKING",
+    "shapeSeen": "CARETAKING",
+    "stateLogs": [
+      "[LI-ARRIVAL] FROM_START (engine=?, deferIntent=false, recent=)",
+      "[A-PLOT:SHAPE] using INVERTED pre-pick: Caretaking",
+      "[A-PLOT:READER-Q] Can this man actually love somebody?",
+      "[A-PLOT:SHAPE] persisted: Caretaking (CARETAKING) — readerQuestion: \"Can this man actually love somebody?\""
+    ],
+    "authorAttempts": 1,
+    "pages": 1,
+    "pageFile": "_validate_out/dry_rehearsal/scene1_measure_live.page.2026-09-10T03-39-52-644Z.txt",
+    "pageChars": 998,
+    "fatal": null,
+    "verdict": "PASS: one author attempt, one page"
+  },
+  "envelope": [
+    {
+      "top": [
+        "opening_spine",
+        "scene_skeleton",
+        "stage_contract"
+      ],
+      "spine": [
+        "pressure_source_type",
+        "pressure_source",
+        "hook_object",
+        "opening_beat",
+        "rising_beats",
+        "decision_beat",
+        "pc_career",
+        "opening_setting",
+        "li_texture_beat",
+        "pc_wound_anchor",
+        "pc_self_presentation_beat",
+        "scene_want",
+        "scene_mission",
+        "reader_state",
+        "pc_body_callback",
+        "li_body_callback",
+        "antagonist_body_callback",
+        "perceptual_signature_beat",
+        "staged_characters",
+        "opening_actor_id",
+        "environment_elements"
+      ],
+      "skeleton": [
+        "character_plus",
+        "fusion",
+        "pc_opening_fusion",
+        "environment_plus"
+      ],
+      "stageContractAt": [
+        "top"
+      ]
+    }
+  ],
+  "attempts": 1,
+  "retryReason": null
+}

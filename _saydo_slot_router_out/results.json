@@ -1,0 +1,140 @@
+{
+  "results": [
+    {
+      "name": "CLASSIFY RED-safemode (the retained Safe Mode adult input) → \"boundary\"",
+      "pass": true
+    },
+    {
+      "name": "CLASSIFY advance (a plainer sexual advance) → \"boundary\"",
+      "pass": true
+    },
+    {
+      "name": "CLASSIFY weak (a weak/uncertain input) → null",
+      "pass": true
+    },
+    {
+      "name": "CLASSIFY weak-2 (another weak shape) → null",
+      "pass": true
+    },
+    {
+      "name": "CLASSIFY relational (a NONSEXUAL relational move) → null",
+      "pass": true
+    },
+    {
+      "name": "CLASSIFY procedural (a purely PROCEDURAL player move) → null",
+      "pass": true
+    },
+    {
+      "name": "CLASSIFY confession (an admission (existing slot)) → \"confession\"",
+      "pass": true
+    },
+    {
+      "name": "CLASSIFY reversal (an authority challenge (existing slot)) → \"reversal\"",
+      "pass": true
+    },
+    {
+      "name": "every classification carries EVIDENCE or an explicit reason, so a misfire is explainable",
+      "pass": true
+    },
+    {
+      "name": "deterministic — identical input, identical answer (no model call)",
+      "pass": true
+    },
+    {
+      "name": "WEAK INPUT IS EXCLUDED BY THE WEAK-TURN AUTHORITY, not by a separate guess",
+      "pass": true
+    },
+    {
+      "name": "...and the weak reason states WHY inflation is refused",
+      "pass": true
+    },
+    {
+      "name": "the PROCEDURAL fallback explains that the institutional default is correct for it",
+      "pass": true
+    },
+    {
+      "name": "the RELATIONAL fallback says no slot represents it, rather than forcing one",
+      "pass": true
+    },
+    {
+      "name": "BASELINE UNCHANGED — with no classified slot the institutional default still wins",
+      "pass": true
+    },
+    {
+      "name": "RED — the retained Safe Mode input now resolves to the BOUNDARY lane, not the review lane",
+      "pass": true
+    },
+    {
+      "name": "...and that is NO LONGER dohkar_preliminary_review — the exact bug that killed the paid run",
+      "pass": true
+    },
+    {
+      "name": "a plainer sexual advance routes the same way",
+      "pass": true
+    },
+    {
+      "name": "WEAK input stays on the institutional default — never promoted to boundary",
+      "pass": true
+    },
+    {
+      "name": "PROCEDURAL input stays institutional, as it should",
+      "pass": true
+    },
+    {
+      "name": "NONSEXUAL RELATIONAL input falls back to the default rather than borrowing boundary",
+      "pass": true
+    },
+    {
+      "name": "an admission routes through the seed's confession frame",
+      "pass": true
+    },
+    {
+      "name": "an authority challenge routes through the seed's reversal frame",
+      "pass": true
+    },
+    {
+      "name": "AN EXPLICIT READER FATE-CARD CHOICE OUTRANKS AN INFERRED SLOT",
+      "pass": true
+    },
+    {
+      "name": "the lane menu is still the seed's original five — nothing was added",
+      "pass": true
+    },
+    {
+      "name": "the slot set is still the seed's original five",
+      "pass": true
+    },
+    {
+      "name": "the classifier only ever returns slots the seed already authors",
+      "pass": true
+    },
+    {
+      "name": "no broad intimacy bucket: the want test requires a STRONG act or an explicit want-claim",
+      "pass": true
+    },
+    {
+      "name": "buildPlayerImpactDirective still runs and still produces content after plan selection",
+      "pass": true
+    },
+    {
+      "name": "...and it still carries the player's LITERAL Say/Do through to the author",
+      "pass": true
+    },
+    {
+      "name": "RESERVED-CANON NON-REGRESSION — reserved markers are still rejected before author dispatch",
+      "pass": true
+    },
+    {
+      "name": "...and it still reports the schedule it judged against (due row 14)",
+      "pass": true
+    },
+    {
+      "name": "the weak-turn restraint still emits for a weak turn",
+      "pass": true
+    },
+    {
+      "name": "zero provider dispatches",
+      "pass": true
+    }
+  ]
+}

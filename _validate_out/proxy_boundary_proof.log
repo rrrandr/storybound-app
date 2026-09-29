@@ -1,0 +1,91 @@
+  ✓ B1 the flag-on dry path emitted exactly one planner body and one author body at the client boundary (page mounted)
+[SPECIALIST-PROXY] Client preferredModel: grok-4.3 → chain reordered.
+[SPECIALIST-PROXY] Role: OPENING_PLANNER, Model chain: grok-4.3
+[SPECIALIST-PROXY] Trying model 1/1: grok-4.3
+[SPECIALIST-PROXY] latency=1ms model=grok-4.3 effort=none (chain="grok-4.3") status=200
+[SPECIALIST-PROXY] ✓ Model grok-4.3 succeeded
+  ✓ B2 PROXY BOUNDARY — OPENING_PLANNER body: exactly one upstream fetch, to api.x.ai, upstream body model=grok-4.3, effort=none, response_format=json_object; response _orchestration.model=grok-4.3
+[SPECIALIST-PROXY] Client preferredModel: grok-4.3 → chain reordered.
+[SPECIALIST-PROXY] Role: NARRATIVE_AUTHOR, Model chain: grok-4.3 → grok-4-1-fast-non-reasoning → grok-4-1-fast-reasoning
+[SPECIALIST-PROXY] Trying model 1/3: grok-4.3
+[SPECIALIST-PROXY] latency=0ms model=grok-4.3 effort=high (chain="grok-4.3") status=200
+[SPECIALIST-PROXY] ✓ Model grok-4.3 succeeded
+  ✓ B3 PROXY BOUNDARY — NARRATIVE_AUTHOR body (client sent preferredModel only, model=null): exactly one upstream fetch, to api.x.ai, upstream body model=grok-4.3; response _orchestration.model=grok-4.3
+  ✓ B3b the author's resolved effort is the proxy default for the NARRATIVE_AUTHOR chain (high) — the client did not set one; recorded, not asserted as policy
+[SPECIALIST-PROXY] Client preferredModel: grok-4.3 → chain reordered.
+[SPECIALIST-PROXY] Role: NARRATIVE_AUTHOR, Model chain: grok-4.3 → grok-4-1-fast-non-reasoning → grok-4-1-fast-reasoning
+[SPECIALIST-PROXY] Trying model 1/3: grok-4.3
+[SPECIALIST-PROXY] latency=1ms model=grok-4.3 effort=high (chain="grok-4.3") status=503
+[SPECIALIST-PROXY] Model grok-4.3 returned 503: upstream 503
+[SPECIALIST-PROXY] Non-retryable status — failing fast.
+[SPECIALIST-PROXY] Client preferredModel: grok-4.3 → chain reordered.
+[SPECIALIST-PROXY] Role: NARRATIVE_AUTHOR, Model chain: grok-4.3 → grok-4-1-fast-non-reasoning → grok-4-1-fast-reasoning
+[SPECIALIST-PROXY] Trying model 1/3: grok-4.3
+[SPECIALIST-PROXY] latency=1ms model=grok-4.3 effort=high (chain="grok-4.3") status=503
+[SPECIALIST-PROXY] Model grok-4.3 returned 503: upstream 503
+[SPECIALIST-PROXY] Non-retryable status — failing fast.
+  ✓ B4 error class "503" — attempt + retry: each client request = exactly ONE upstream fetch, both to api.x.ai model grok-4.3; nothing left the proxy toward any other host; the proxy returned the failure to the client (no fallback of its own)
+[SPECIALIST-PROXY] Client preferredModel: grok-4.3 → chain reordered.
+[SPECIALIST-PROXY] Role: NARRATIVE_AUTHOR, Model chain: grok-4.3 → grok-4-1-fast-non-reasoning → grok-4-1-fast-reasoning
+[SPECIALIST-PROXY] Trying model 1/3: grok-4.3
+[SPECIALIST-PROXY] latency=1ms model=grok-4.3 effort=high (chain="grok-4.3") status=200
+[SPECIALIST-PROXY] ✓ Model grok-4.3 succeeded
+[SPECIALIST-PROXY] Client preferredModel: grok-4.3 → chain reordered.
+[SPECIALIST-PROXY] Role: NARRATIVE_AUTHOR, Model chain: grok-4.3 → grok-4-1-fast-non-reasoning → grok-4-1-fast-reasoning
+[SPECIALIST-PROXY] Trying model 1/3: grok-4.3
+[SPECIALIST-PROXY] latency=0ms model=grok-4.3 effort=high (chain="grok-4.3") status=200
+[SPECIALIST-PROXY] ✓ Model grok-4.3 succeeded
+  ✓ B4 error class "empty content (200)" — attempt + retry: each client request = exactly ONE upstream fetch, both to api.x.ai model grok-4.3; nothing left the proxy toward any other host; the proxy returned the failure to the client (no fallback of its own)
+[SPECIALIST-PROXY] Client preferredModel: grok-4.3 → chain reordered.
+[SPECIALIST-PROXY] Role: NARRATIVE_AUTHOR, Model chain: grok-4.3 → grok-4-1-fast-non-reasoning → grok-4-1-fast-reasoning
+[SPECIALIST-PROXY] Trying model 1/3: grok-4.3
+[SPECIALIST-PROXY] Model grok-4.3 FETCH ERROR after 6ms: connection failed — advancing chain
+[SPECIALIST-PROXY] Trying model 2/3: grok-4-1-fast-non-reasoning
+[SPECIALIST-PROXY] latency=1ms model=grok-4.3 effort=none (chain="grok-4-1-fast-non-reasoning") status=200
+[SPECIALIST-PROXY] ✓ Model grok-4-1-fast-non-reasoning succeeded
+[SPECIALIST-PROXY] Client preferredModel: grok-4.3 → chain reordered.
+[SPECIALIST-PROXY] Role: NARRATIVE_AUTHOR, Model chain: grok-4.3 → grok-4-1-fast-non-reasoning → grok-4-1-fast-reasoning
+[SPECIALIST-PROXY] Trying model 1/3: grok-4.3
+[SPECIALIST-PROXY] Model grok-4.3 FETCH ERROR after 6ms: connection failed — advancing chain
+[SPECIALIST-PROXY] Trying model 2/3: grok-4-1-fast-non-reasoning
+[SPECIALIST-PROXY] latency=1ms model=grok-4.3 effort=none (chain="grok-4-1-fast-non-reasoning") status=200
+[SPECIALIST-PROXY] ✓ Model grok-4-1-fast-non-reasoning succeeded
+  ✗ B4 error class "connection failure" — attempt + retry: each client request = exactly ONE upstream fetch, both to api.x.ai model grok-4.3; nothing left the proxy toward any other host; the proxy returned the failure to the client (no fallback of its own)
+      {"attempt1":{"status":200,"upstreamCalls":2,"upstream":[{"host":"api.x.ai","model":"grok-4.3","effort":"high","rf":null},{"host":"api.x.ai","model":"grok-4.3","effort":"none","rf":null}],"orchestrationModel":"grok-4-1-fast-non-reasoning"},"attempt2":{"status":200,"upstreamCalls":2,"upstream":[{"host":"api.x.ai","model":"grok-4.3","effort":"high","rf":null},{"host":"api.x.ai","model":"grok-4.3","effort":"none","rf":null}],"orchestrationModel":"grok-4-1-fast-non-reasoning"}}
+[SPECIALIST-PROXY] Client preferredModel: grok-4.3 → chain reordered.
+[SPECIALIST-PROXY] Role: OPENING_PLANNER, Model chain: grok-4.3
+[SPECIALIST-PROXY] Trying model 1/1: grok-4.3
+[SPECIALIST-PROXY] latency=1ms model=grok-4.3 effort=none (chain="grok-4.3") status=503
+[SPECIALIST-PROXY] Model grok-4.3 returned 503: upstream 503
+[SPECIALIST-PROXY] Non-retryable status — failing fast.
+  ✓ B4p OPENING_PLANNER 503: one upstream fetch to api.x.ai model grok-4.3, 503 returned to the client
+[SPECIALIST-PROXY] Client preferredModel: grok-4.3 → chain reordered.
+[SPECIALIST-PROXY] Role: OPENING_PLANNER, Model chain: grok-4.3
+[SPECIALIST-PROXY] Trying model 1/1: grok-4.3
+[SPECIALIST-PROXY] latency=0ms model=mutant-not-grok effort=none (chain="grok-4.3") status=200
+[SPECIALIST-PROXY] ✓ Model grok-4.3 succeeded
+[SPECIALIST-PROXY] Client preferredModel: grok-4.3 → chain reordered.
+[SPECIALIST-PROXY] Role: NARRATIVE_AUTHOR, Model chain: grok-4.3 → grok-4-1-fast-non-reasoning → grok-4-1-fast-reasoning
+[SPECIALIST-PROXY] Trying model 1/3: grok-4.3
+[SPECIALIST-PROXY] latency=0ms model=mutant-not-grok effort=high (chain="grok-4.3") status=200
+[SPECIALIST-PROXY] ✓ Model grok-4.3 succeeded
+  ✓ RED R-a resolver mutated to a non-Grok model → B2/B3 assertions FAIL for both roles while the client bodies still say preferredModel=grok-4.3
+[SPECIALIST-PROXY] Client preferredModel: grok-4.3 → chain reordered.
+[SPECIALIST-PROXY] Role: OPENING_PLANNER, Model chain: grok-4.3
+[SPECIALIST-PROXY] Trying model 1/1: grok-4.3
+[SPECIALIST-PROXY] latency=1ms model=grok-4.3 effort=none (chain="grok-4.3") status=200
+[SPECIALIST-PROXY] ✓ Model grok-4.3 succeeded
+[SPECIALIST-PROXY] Client preferredModel: grok-4.3 → chain reordered.
+[SPECIALIST-PROXY] Role: NARRATIVE_AUTHOR, Model chain: grok-4.3 → grok-4-1-fast-non-reasoning → grok-4-1-fast-reasoning
+[SPECIALIST-PROXY] Trying model 1/3: grok-4.3
+[SPECIALIST-PROXY] latency=1ms model=grok-4.3 effort=high (chain="grok-4.3") status=200
+[SPECIALIST-PROXY] ✓ Model grok-4.3 succeeded
+  ✓ RED R-b upstream host mutated to api.openai.com → the xAI-only assertion FAILS for both roles (a request left toward another provider)
+[SPECIALIST-PROXY] Role: OPENING_PLANNER, Model chain: grok-4-1-fast-reasoning → grok-4-1-fast-non-reasoning → grok-4.3
+[SPECIALIST-PROXY] Trying model 1/3: grok-4-1-fast-reasoning
+[SPECIALIST-PROXY] latency=0ms model=grok-4.3 effort=high (chain="grok-4-1-fast-reasoning") status=200
+[SPECIALIST-PROXY] ✓ Model grok-4-1-fast-reasoning succeeded
+  ✓ RED R-c planner role chain mutated to the legacy 3-entry chain (client effort/preferredModel removed) → model STILL grok-4.3 (proxy is structurally Grok-only) but effort becomes high → the B2 effort assertion FAILS
+  ✓ B5 the tested "real" copy differs from api/proxy.js by exactly one line (the sanitizer import)
+
+12 checks · 11 passed · 1 failed

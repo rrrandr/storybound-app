@@ -1,0 +1,270 @@
+{
+  "results": [
+    {
+      "name": "the staged renderer still writes beat.text straight to the DOM — no display-time filter added",
+      "pass": true
+    },
+    {
+      "name": "and NO post-generation prose filter was introduced for CG",
+      "pass": true
+    },
+    {
+      "name": "normal adult mode emits NO safe-mode directive at all",
+      "pass": true
+    },
+    {
+      "name": "...so the adult prompt is byte-identical to before this change",
+      "pass": true
+    },
+    {
+      "name": "...and it did not error while building",
+      "pass": true
+    },
+    {
+      "name": "normal mode remains CAPABLE of sexually charged Say/Do — nothing was added to forbid it",
+      "pass": true
+    },
+    {
+      "name": "safe mode emits a directive",
+      "pass": true
+    },
+    {
+      "name": "THE VALUE REACHES THE PAYLOAD — it is present in the real CG author system prompt",
+      "pass": true
+    },
+    {
+      "name": "it is framed as a HARD RULE, not a suggestion",
+      "pass": true
+    },
+    {
+      "name": "it states plainly that Safe Mode changes only how explicit detail is DEPICTED",
+      "pass": true
+    },
+    {
+      "name": "...and that it changes nothing about what characters want, choose, or agree to",
+      "pass": true
+    },
+    {
+      "name": "CONSENT RESOLVES EXACTLY AS IN FULL MODE — not a reason for yes, not a reason for no",
+      "pass": true
+    },
+    {
+      "name": "inventing or softening consent to satisfy the player is forbidden outright",
+      "pass": true
+    },
+    {
+      "name": "an in-character refusal or withdrawal is PRESERVED in full, with its real weight",
+      "pass": true
+    },
+    {
+      "name": "...and the converse: a discreet camera is not a reason to stage a refusal either",
+      "pass": true
+    },
+    {
+      "name": "RED PROOF — the coercive wording from the first draft is GONE",
+      "pass": true
+    },
+    {
+      "name": "the player's attempt is acknowledged on the page",
+      "pass": true
+    },
+    {
+      "name": "...and is CONSEQUENTIAL — it moves the relationship, whichever way it goes",
+      "pass": true
+    },
+    {
+      "name": "...never ignored, skipped, or swapped for an unrelated event",
+      "pass": true
+    },
+    {
+      "name": "what it MEANS is preserved — desire, nerves, tenderness, power, embarrassment, regret",
+      "pass": true
+    },
+    {
+      "name": "the camera rules apply specifically to the case where the encounter PROCEEDS",
+      "pass": true
+    },
+    {
+      "name": "approach and aftermath render in full emotional detail",
+      "pass": true
+    },
+    {
+      "name": "the cut lands at the act itself, with concrete places to land it",
+      "pass": true
+    },
+    {
+      "name": "graphic anatomy and explicit sexual verbs are barred",
+      "pass": true
+    },
+    {
+      "name": "consent stays legible in BOTH directions before the cut",
+      "pass": true
+    },
+    {
+      "name": "a faded beat is still a FULL beat — structure, length and weight unchanged",
+      "pass": true
+    },
+    {
+      "name": "the diagnostic DETECTED the explicit signal",
+      "pass": true
+    },
+    {
+      "name": "...and names WHICH beat, so a review is actionable",
+      "pass": true
+    },
+    {
+      "name": "NO BEAT WAS MUTATED — not one character changed",
+      "pass": true
+    },
+    {
+      "name": "NO BEAT WAS DELETED — all three survive",
+      "pass": true
+    },
+    {
+      "name": "it reports its own inaction explicitly",
+      "pass": true
+    },
+    {
+      "name": "an explicit survivor is reported as a PROMPT failure, not a render-time one",
+      "pass": true
+    },
+    {
+      "name": "ordinary English that merely brushes a soft word is NOT a directive failure",
+      "pass": true
+    },
+    {
+      "name": "...and \"thrusts the ledger at him\" specifically is NOT called explicit — the diagnostic must\n     not cry wolf on the very false-positive class that ruled out a display-time filter",
+      "pass": true
+    },
+    {
+      "name": "both arms reached an AUTHOR request specifically — not a planner request counted as one",
+      "pass": true
+    },
+    {
+      "name": "the player's ACTION reaches the payload UNCHANGED in normal adult mode",
+      "pass": true
+    },
+    {
+      "name": "...and UNCHANGED in Safe Mode — the input is never scrubbed or softened on the way in",
+      "pass": true
+    },
+    {
+      "name": "the player's DIALOGUE reaches the payload unchanged in both modes",
+      "pass": true
+    },
+    {
+      "name": "ONLY the Safe Mode arm carries the rendering directive",
+      "pass": true
+    },
+    {
+      "name": "neither arm let anything reach a real provider",
+      "pass": true
+    },
+    {
+      "name": "there is a production CALL SITE, not just an export",
+      "pass": true
+    },
+    {
+      "name": "...at the ACCEPTANCE point, which precedes persistence and render",
+      "pass": true
+    },
+    {
+      "name": "...guarded so a diagnostic can never break a finished scene",
+      "pass": true
+    },
+    {
+      "name": "the report is retained in a BOUNDED log",
+      "pass": true
+    },
+    {
+      "name": "a REAL Safe Mode generation produced an ACCEPTED plan",
+      "pass": true
+    },
+    {
+      "name": "...and the diagnostic ran AUTOMATICALLY — nothing in this control called it",
+      "pass": true
+    },
+    {
+      "name": "...stamped with the scene it describes",
+      "pass": true
+    },
+    {
+      "name": "it IDENTIFIED the planted explicit phrase in the authored beat",
+      "pass": true
+    },
+    {
+      "name": "...and reported the directive as NOT held, which is the signal to fix the PROMPT",
+      "pass": true
+    },
+    {
+      "name": "THE BEAT SURVIVED UNTOUCHED — the returned plan still carries the phrase verbatim",
+      "pass": true
+    },
+    {
+      "name": "...and acceptance was never gated — the plan came back despite the finding",
+      "pass": true
+    },
+    {
+      "name": "the normal adult arm recorded a clean report — no false alarm on ordinary prose",
+      "pass": true
+    },
+    {
+      "name": "...and the report is retained for later review",
+      "pass": true
+    },
+    {
+      "name": "zero provider dispatches",
+      "pass": true
+    }
+  ],
+  "arms": {
+    "full": {
+      "kinds": [
+        "other",
+        "other",
+        "other",
+        "planner",
+        "author"
+      ],
+      "diag": {
+        "at": 1790404795811,
+        "contentMode": "full",
+        "beatCount": 1,
+        "flagged": [],
+        "explicitBeats": 0,
+        "softBeats": 0,
+        "directiveHeld": true,
+        "action": "none — diagnostic only; beats are never modified",
+        "sceneIndex": 1
+      }
+    },
+    "safe": {
+      "kinds": [
+        "other",
+        "other",
+        "other",
+        "planner",
+        "author"
+      ],
+      "diag": {
+        "at": 1790404796174,
+        "contentMode": "safe",
+        "beatCount": 1,
+        "flagged": [
+          {
+            "beatIndex": 0,
+            "beatId": null,
+            "explicit": true,
+            "soft": false,
+            "matched": "fucks"
+          }
+        ],
+        "explicitBeats": 1,
+        "softBeats": 0,
+        "directiveHeld": false,
+        "action": "none — diagnostic only; beats are never modified",
+        "sceneIndex": 1
+      }
+    }
+  }
+}

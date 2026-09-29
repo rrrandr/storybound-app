@@ -1,0 +1,20 @@
+[preflight] output dir writable: _validate_out/petition_notag
+[baseline] SCENE 1 — real generation…
+[STUB] scene2=false tagged=false
+  [author response 1] 254 chars captured
+[STUB] scene2=false tagged=false
+  [author response 2] 254 chars captured
+  scene 1 final: 645 chars   spend=$0.064
+[baseline] SCENE 2 — real generation…
+[STUB] scene2=true tagged=false
+  [author response 3] 254 chars captured
+[STUB] scene2=true tagged=false
+  [author response 4] 254 chars captured
+  settled: page text stable at 1355
+  scene 2 final: 709 chars
+
+════ BASELINE CAPTURE ════
+  scene 1: 645 chars   scene 2: 709 chars
+  raw author responses captured: 4
+  total spend: $0.070
+  → _validate_out/petition_notag/scene1_final.txt · scene2_final.txt · raw_author_*.txt

@@ -1,0 +1,34 @@
+
+═══ STORYBOUND ARCHITECTURE LAWS ═══
+LAW 0 — CANON AUTHORITY ORDER (WHAT OUTRANKS WHAT WHEN TWO INSTRUCTIONS DISAGREE).
+You will receive more guidance than any one sentence can satisfy. When two parts of this prompt pull in different directions, resolve STRICTLY in this order — a lower tier NEVER overrides a higher one:
+  1. IMMUTABLE SCENE FACTS — the stated place, the stated cast, the required opening condition. You RENDER these; you never relocate, reframe or replace them. If the scene says a dawn clearing of crimson spiralgrass, the scene is not a harbour.
+  2. CONTINUITY STATE — what has already happened, what was established, who is wounded, who owes whom.
+  3. PLANNER DIRECTION — the beat to reach, pressure to apply, artifacts offered as AVAILABLE.
+  4. STYLE GUIDANCE — voice, prose density, Character+, Environment+, sensory canon.
+  5. YOUR OWN INVENTION — everything not fixed above.
+CAST IS CLOSED. Every named person you write must already appear in the cast you were given. Inventing a named character is not a style choice you may make; refer to unlisted people by role ("a guest at the edge", "the older woman") and never christen them.
+THE POPULATION IS CLOSED TOO. Who is PRESENT is an immutable scene fact, not set dressing you may extend. If the scene states who attends, no other kind of being is in the room — not as background, not as crowd, not as children or servants or wards. Adding unlisted attendees is the same violation as inventing a name, and it is easier to miss: a scene that says every person present is of one people does not get "and their households behind them".
+THE OPENING SEQUENCE IS TIER 1. Where a scene specifies an ORDER OF EVENTS, that order is an immutable fact. Do not open after the turning point, do not begin with the consequence, and do not compress the setup into a clause. If the sequence says the rite proceeds and THEN goes wrong, the scene may not open on the fire.
+WORLD RULES ARE CLOSED. Do not invent laws of wishcraft, Fate, b
+You are revising a scene ending for energy. Preserve style and continuity.
+=====USER=====
+ENERGY BOOST — REWRITE LAST SECTION ONLY:
+The following scene ending lacks energy. Rewrite ONLY this ending section to:
+- Increase immediacy of interaction, but maintain consistency with earlier scene tone
+- Do NOT create a sudden tonal spike at the end
+- Introduce a line of dialogue, interruption, or direct character action
+- Reduce passive description and introspection
+- Create forward momentum or unresolved tension
+- Maintain exact continuity with the preceding text
+- Do NOT escalate beyond the current phase
+- Do NOT change characters, setting, or established facts
+- Match the prose style and tone of the preceding section
+
+PRECEDING TEXT (do NOT modify, for context only):
+...this clearing alone.” I felt the old deck shift in my grip, heavier for a single breath, the gold edge catching the dawn, the light spreading outward. The card I
+
+SECTION TO REWRITE:
+had not drawn leaned toward my thumb, the place already taken. I realized the deck was still in my hand. As I slid Petition Fate back in, I noticed a flash of red in the otherwise gold stack. “Tempt Fate.” Grandma never let me play with that one. A sword raised to a blood-red sky, lightning arcing down from the clouds—or maybe arcing up? Ow! Static shock reminds me I need to pay attention to the present…
+
+Output ONLY the rewritten ending section. No commentary.

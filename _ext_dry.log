@@ -1,0 +1,85 @@
+=== EXTRACTOR-ONLY RUNNER — DRY PROOF (zero provider dispatches) ===
+    fixture: tfl_1 · wish "everyone forgets the ceremony happened" · sceneIdx 1 · raw output 13697 bytes
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/csp-report
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/config
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/csp-report
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/geo
+    roster: ["the assembly","the presiding Dohkar","Seren","Julian"]
+    prose : 813 chars
+
+=== 0. THE CONTEXT COMES FROM THE COMMITTED FIXTURE, BYTE-FOR-BYTE ===
+  ✓ the fixture's own proposal id and wish are used, not re-invented
+  ✓ the prose is built by the PRODUCTION reader-facing builder over the fixture's raw output
+  ✓ the context is frozen
+  ✓ the roster resolves Julian and the assembly from the fixture itself
+
+=== A. VALID PRIMARY RESPONSE — one dispatch, structurally valid, nothing mutated ===
+  ✓ exactly ONE dispatch — it stopped at the primary tier
+  ✓ the dispatch really was the extractor prompt (not some other role riding the same endpoint)
+  ✓ the result is structurally valid, citations included
+  ✓ NOTHING was mutated — no pending resolved, no consequence committed, no story touched
+  ✓ cost reserved BEFORE the dispatch, and it is the primary tier's sourced price
+  ✓ the five sheet questions are answerable from the result
+
+=== B. INVALID-BUT-PARSEABLE PRIMARY — the distinction that matters ===
+  ✓ exactly ONE dispatch — a semantic rejection does NOT fall through to another model
+  ✓ ...and it is reported as a VALIDATION FAILURE, not a transport failure
+  ✓ ...failing specifically on citations — the quote is not in the accepted prose
+  ✓ ...spending only ONE tier's cost, not the whole cascade
+  ✓ ...and still mutating nothing
+  ✓ STRUCTURAL REASON — the production extractor passes NO opts.validateContent, so _callTieredProvider cannot cascade on a semantic rejection
+
+=== C. TRANSPORT FAILURE ON PRIMARY — cascades, and only then ===
+  ✓ two dispatches — primary then fallback
+  ✓ the fallback result is structurally valid
+  ✓ BOTH tiers were reserved before dispatch, in order
+  ✓ ...and the running total is the sum of the two sourced tier prices
+
+=== D. UNUSABLE RESPONSES — empty content advances a tier; unparsable does not cascade ===
+  ✓ three dispatches — empty content is "unusable" and advances the tier
+  ✓ the terminal tier produced a structurally valid result
+  ✓ the full cascade stays under the $0.02 ceiling
+  ✓ an UNPARSABLE primary reply stops at one dispatch — it is a parse failure in the extractor, not a tier signal
+  ✓ ...and is reported as an error rather than silently retried on another model
+
+=== E. ALL TIERS FAIL — clean, bounded exhaustion ===
+  ✓ the cascade is bounded at exactly THREE dispatches
+  ✓ exhaustion is reported as an error, not a silent empty success
+  ✓ ...carrying the tier attempt log, so which tier failed and why is preserved
+  ✓ nothing was mutated even on total failure
+  ✓ the worst case stays under the ceiling
+
+=== F. THE BOUNDARIES THE SHEET CLAIMS — enforced, not asserted ===
+  ✓ an IMAGE endpoint is blocked before dispatch
+  ✓ a non-declared TEXT endpoint is blocked before dispatch
+  ✓ a declared endpoint carrying a NON-declared model is blocked
+  ✓ each block is recorded with its reason
+  ✓ no cost was reserved for any blocked request
+  ✓ the reservation ledger REFUSES a dispatch that would breach its ceiling
+  ✓ an unsourced model is refused rather than priced at zero
+
+=== F2. THE RAISED OUTPUT LIMIT CHANGES NOTHING ABOUT WHAT IS ACCEPTED ===
+  ✓ the production extractor now dispatches with the raised limit
+  ✓ ...and the reservation accounting tracks it, so the worst case is not under-reserved
+  ✓ the citation requirement is still in the prompt
+    complete report parses: {"parsed":true,"via":"direct"}   truncated parses: {"parsed":false,"via":"no-object-match"}
+  ✓ a COMPLETE report parses on the first attempt
+    fenced+truncated parses: {"parsed":false,"via":"regex-fallback-invalid"}
+  ✓ RED — a plain TRUNCATED body cannot be parsed by either route, so nothing can commit
+  ✓ RED — a MARKDOWN-FENCED truncated body reaches the regex fallback and still fails to parse
+  ✓ ...which is exactly the daefe5aa chain: parse fail -> fallback invalid -> extractor throws
+  ✓ MISSING/FABRICATED citations are proven refused earlier in this file, against the real validator
+  ✓ ...and a refused report mutates nothing
+  ✓ COMMITMENT of a complete cited report is proven by the outcome integration control
+
+=== G. THE CLI ITSELF FAILS CLOSED — no default that dispatches ===
+  ✓ invoked with no arguments the live runner REFUSES and exits non-zero
+  ✓ ...printing the plan it would have run, so the refusal is informative rather than silent
+  ✓ ...and an APPROXIMATE authorization phrase is refused too — only the exact phrase runs
+
+=== CONTAINMENT ===
+  ✓ ZERO real provider dispatches across the entire dry proof
+
+====================================================================================================
+EXTRACTOR RUNNER DRY PROOF: 51/51 passed
+Evidence written to /Users/romantsukerman/storybound-app/_tempt_outcome_extractor_runner_dry_out

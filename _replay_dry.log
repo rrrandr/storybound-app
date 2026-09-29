@@ -1,0 +1,53 @@
+=== EXTRACTOR REPLAY DRY PROOF (zero provider requests, $0) ===
+
+  ✓ the original run's extraction CONTEXT is retained
+  ✓ the original FAILED RESPONSE is retained and must not be overwritten
+    original: model=ministral-8b-2512  prompt=2005  completion=1400  response bytes=5802
+  ✓ the original completion hit the OLD limit exactly — the failure being retested
+  ✓ the original model is the one this replay pins
+  ✓ the retained context is unwrapped to the SAME inner ctx the original run used
+  ✓ the prompt REBUILDS from the retained context without error
+  ✓ ...and it still carries the citation requirement
+  ✓ the LAST PAID REQUEST is retained in the gate log
+    SYSTEM original=8550 current=10058  DIFFERENT
+    USER   original=834 current=834  IDENTICAL
+    SYSTEM diff: 3 line(s) replaced by 3  (8550 -> 10058 chars)
+      - "scopeMatch": "full | narrower | broader",  /* compare honestly. "full" ONLY if delivered covers requested. A 
+      - "scopeNote": "<required when scopeMatch is not \"full\": why the scene delivered a different scope, and what s
+      - "affectedKnowers": [ { "who": "<name or collective>", "disposition": "forgot | retained | partial | suspects |
+      + "scopeMatch": "full | narrower | broader | undetermined",  /* compare honestly. "full" ONLY if delivered cover
+      + "scopeNote": "<required when scopeMatch is not \"full\": why the scene delivered a different scope, and what s
+      + "affectedKnowers": [ { "who": "<name or collective>", "disposition": "forgot | retained | partial | suspects |
+  ✓ the SYSTEM prompt differs from the LAST PAID replay by exactly THREE replaced lines
+  ✓ ...and every changed line is one of the three intended schema lines, nothing else
+  ✓ ...knowledgeStates is UNCHANGED since the last paid replay — already corrected then
+  ✓ ...the undetermined scope value is what was added to the scopeMatch line
+  ✓ ...and the grounding prohibition is what was added to the knowers line
+  ✓ ...the citation field is what was added to the knowers line
+  ✓ ...and the grounding rules are what was added to the knowers line
+  ✓ NOTHING ELSE in the system prompt changed — every other original line survives verbatim
+  ✓ the USER message is BYTE-IDENTICAL to the original request
+  ✓ model and temperature are unchanged from the original request
+  ✓ the last paid request already carried max_tokens 3200 — the limit is NOT what changed this time
+  ✓ THE CONTROLLED REPLAY HOLDS EVERYTHING ELSE FIXED: same prose, same model, same temperature
+  ✓ ...and NOTHING ELSE changed since the last paid replay — same limit, model, temperature, prose
+    route decisions: ["reserved","blocked-over-request-cap","blocked-unpinned-model","blocked-unpinned-model"]
+  ✓ the FIRST pinned request is reserved and allowed through
+  ✓ a SECOND request is blocked by the one-shot cap — a retry cannot become a second sample
+  ✓ the GROK tier is blocked as an unpinned model — no cascade
+  ✓ the OPENAI tier is blocked as an unpinned model
+  ✓ exactly ONE request was ever reserved
+  ✓ every block carries a reason
+    single-call price at {"in":3600,"out":3200} = $0.001020
+  ✓ the reservation is ONE tier at the sourced price, not a cascade sum
+  ✓ ...and it fits the replay ceiling with headroom
+  ✓ the production dispatch carries the RAISED limit
+  ✓ the semantic criterion is PRE-REGISTERED on disk before any dispatch
+  ✓ ...and it states that a quote must SUPPORT the claim, not merely accompany it
+  ✓ ...and that a gaze establishes none of remembering, forgetting or suspicion
+  ✓ ...and that insufficient evidence goes to unaccountedParties
+  ✓ ...and that undetermined scope coexists with established individual effects
+  ✓ ZERO real provider requests during this proof
+
+======================================================================================
+  36/36 assertions passed

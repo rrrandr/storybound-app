@@ -1,0 +1,66 @@
+
+  IDENTITY-PERSISTENCE BENCHMARK (A/B) — recurring Mira + Kwisheen raider
+  ──────────────────────────────────────────────────────────────────────
+  > [CG:SCREENPLAY:USER-PROMPT]
+SCENE INDEX: 0 (Scene 1 — establishing)
+STORY LENGTH: affair
+SCENE DENSITY (ST1 — SETUP PACE): establishing register. The scene's jo
+  > [ID-CARD] requested: "Kresh" | resolved: NO | source: none
+  > [CANON-REPAIR] Klein eye-color: char="Kresh" bbox=[0.669,0.28,0.03,0.015]
+  > [STRUCTURAL-PASS] CONDITIONING FAILURE — structure broke on recolorize too
+  > [CANON-REPAIR] BUDGET: 2 P1 defects on phase 1 — regenerate would beat 2 repaints (repairing the top one for now)
+  > [ID-CARD] requested: "Kresh" | resolved: NO | source: none
+  > [STRUCTURAL-PASS] CONDITIONING FAILURE — structure broke on recolorize too
+  > [STRUCTURAL-PASS] CONDITIONING FAILURE — structure broke on recolorize too
+  > [ID-CARD] requested: "Kresh" | resolved: yes | source: casting-library
+  > [CANON-REPAIR] Klein weapon: char="Kresh" bbox=[0.46,0.46,0.2,0.2]
+  > [CG:SCREENPLAY:USER-PROMPT]
+SCENE INDEX: 0 (Scene 1 — establishing)
+STORY LENGTH: affair
+SCENE DENSITY (ST1 — SETUP PACE): establishing register. The scene's jo
+  > [ID-CARD] requested: "Thal" | resolved: yes | source: casting-library
+  > [CANON-REPAIR] Klein eye-color: char="Thal" +id-card bbox=[0.548,0.37,0.02,0.01]
+  > [ID-CARD] requested: "Thal" | resolved: yes | source: casting-library
+  > [CANON-REPAIR] Klein eye-color: char="Thal" +id-card bbox=[0.669,0.098,0.06,0.04]
+
+  ══ RUN A — identity card OFF ══ (panels=6)
+    IDENTITY-CARD AVAILABILITY:    1/3 repair sites = 33%  ← subsystem health metric
+    repairs USING identity card:   0 (0% of available used)
+    identity-related defects seen: 3  (face/eyes/palette/identity/wardrobe/weapon)
+    repair categories:             eyes:1, face:1, weapon:1
+    Klein repairs (total):         3
+    clean-through (no repair):     1/6
+    structural entropy:            measured-0 0 | unknown 6/6
+    avg image-calls/panel:         3.33 render + 3.33 verify
+    avg total ms/panel:            86399.83
+
+  ══ RUN B — identity card ON ══ (panels=4)
+    IDENTITY-CARD AVAILABILITY:    2/2 repair sites = 100%  ← subsystem health metric
+    repairs USING identity card:   2 (100% of available used)
+    identity-related defects seen: 2  (face/eyes/palette/identity/wardrobe/weapon)
+    repair categories:             eyes:2
+    Klein repairs (total):         2
+    clean-through (no repair):     0/4
+    structural entropy:            measured-0 0 | unknown 4/4
+    avg image-calls/panel:         3.50 render + 3.50 verify
+    avg total ms/panel:            78418.25
+
+  ══ IDENTITY CARD IMPACT (OFF → ON, Δ) ══
+    card usage (repairs):     OFF 0  → ON 2   +2 (new)   (must be 0→N or the card is not firing)
+    identity defects seen:    OFF 3  → ON 2   -33%
+    eyes repairs:            OFF 1  → ON 2   +100%
+    face repairs:            OFF 1  → ON 0   -100%
+    weapon repairs:          OFF 1  → ON 0   -100%
+    repair avoidance:         OFF 17%  → ON 0%   -17 pts
+    latency (ms/panel):       OFF 86399.83  → ON 78418.25   -9%
+    render calls/panel:       OFF 3.33  → ON 3.5   +5%
+    NOTE: OFF/ON are DIFFERENT generations (non-deterministic) — treat count deltas as DIRECTIONAL; the real verdict is VISUAL (below).
+
+  ══ OVER-CONSTRAIN CHECK (the downside of stronger conditioning — inspect visually) ══
+    In the B_on_* panels, did the card-conditioned repairs COPY the reference's pose / expression / framing / lighting?
+    The prompt says "preserve identity, not pose" — verify it held. [ pose reused? expression reused? camera reused? ]  → PASS/FAIL by eye.
+
+  ── VISUAL VERDICT (lead with this, not the numbers) ──
+    Panel by panel: "would a reader recognize this as the SAME Mira / same Kwisheen?"  A_off_*.png  vs  B_on_*.png  in /private/tmp/claude-501/-Users-romantsukerman-storybound-app/80c638ef-dc45-46dc-ad83-43ad5d0e1a40/scratchpad/idbench
+  ──────────────────────────────────────────────────────────────────────
+

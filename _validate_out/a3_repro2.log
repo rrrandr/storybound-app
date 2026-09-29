@@ -1,0 +1,5 @@
+  ✓ stringNested #1: race=resolved 216ms pastGuard=1 dupIgnored=0 checkoutAuto=3 fatal=planner stage_contract rejected (absent) — the stage is not established pages=0 author=0 refunds=1
+  ✓ stringNested #2: race=resolved 229ms pastGuard=1 dupIgnored=0 checkoutAuto=3 fatal=planner stage_contract rejected (absent) — the stage is not established pages=0 author=0 refunds=1
+  ✓ malformedNested #1: race=resolved 217ms pastGuard=1 dupIgnored=0 checkoutAuto=3 fatal=planner stage_contract rejected (malformed:participants) — the stage is not established pages=0 author=0 refunds=1
+
+3 runs · 3 held the invariant · 0 did not

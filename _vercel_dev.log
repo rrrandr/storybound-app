@@ -1,0 +1,56 @@
+<claude-code-hint v="1" type="plugin" value="vercel@claude-plugins-official" />
+Vercel CLI 59.25.0 (Node.js 25.3.0)
+Retrieving project…
+> Local resources:
+  Vercel Queues   http://127.0.0.1:4782
+  Runtime Cache   http://127.0.0.1:4783/v1/suspense-cache/
+> Ready! Available at http://localhost:3000
+[CHATGPT-PROXY] Request body keys: [messages], role: PRIMARY_AUTHOR, model: (default)
+[CHATGPT-PROXY] Validation failed: messages missing or empty. Body keys: [ 'messages' ]
+[CHATGPT-PROXY] Request body keys: [messages], role: PRIMARY_AUTHOR, model: (default)
+[CHATGPT-PROXY] Validation failed: messages missing or empty. Body keys: [ 'messages' ]
+[CHATGPT-PROXY] Request body keys: [messages], role: PRIMARY_AUTHOR, model: (default)
+[CHATGPT-PROXY] Validation failed: messages missing or empty. Body keys: [ 'messages' ]
+[CHATGPT-PROXY] Request body keys: [messages], role: PRIMARY_AUTHOR, model: (default)
+[CHATGPT-PROXY] Validation failed: messages missing or empty. Body keys: [ 'messages' ]
+[MISTRAL-PROXY] Role: STRUCTURE_GENERATOR, Model: ministral-8b-2512
+[MISTRAL-PROXY] usage {"prompt_tokens":5696,"total_tokens":7478,"completion_tokens":1782,"prompt_tokens_details":{"cached_tokens":0},"service_tier":"standard"}
+[MISTRAL-PROXY] quota reconcile op=mq_muioc0yy_fy3y1q82 released=17362 held=7478 exact=true
+[SPECIALIST-PROXY] _noFallback — chain reduced to ONE entry: grok-4-1-fast-non-reasoning
+[SPECIALIST-PROXY] Client preferredModel: grok-4-1-fast-non-reasoning → chain reordered.
+[SPECIALIST-PROXY] Role: STRUCTURE_GENERATOR, Model chain: grok-4-1-fast-non-reasoning
+[SPECIALIST-PROXY] Trying model 1/1: grok-4-1-fast-non-reasoning
+[SPECIALIST-PROXY] latency=9496ms model=grok-4.3 effort=none (chain="grok-4-1-fast-non-reasoning") status=200
+[SPECIALIST-PROXY] ✓ Model grok-4-1-fast-non-reasoning succeeded
+[SPECIALIST-PROXY] _noFallback — chain reduced to ONE entry: grok-4-1-fast-reasoning
+[SPECIALIST-PROXY] Client preferredModel: grok-4-1-fast-reasoning → chain reordered.
+[SPECIALIST-PROXY] Role: STRUCTURE_GENERATOR, Model chain: grok-4-1-fast-reasoning
+[SPECIALIST-PROXY] Trying model 1/1: grok-4-1-fast-reasoning
+[SPECIALIST-PROXY] latency=39243ms model=grok-4.3 effort=high (chain="grok-4-1-fast-reasoning") status=200
+[SPECIALIST-PROXY] ✓ Model grok-4-1-fast-reasoning succeeded
+[MISTRAL-PROXY] Role: SD_FALLBACK, Model: ministral-8b-2512
+[MISTRAL-PROXY] usage {"prompt_tokens":3144,"total_tokens":4071,"completion_tokens":927,"prompt_tokens_details":{"cached_tokens":0},"service_tier":"standard"}
+[MISTRAL-PROXY] quota reconcile op=mq_muiodk2x_ivknialt released=9188 held=4071 exact=true
+[CHATGPT-PROXY] Request body keys: [messages], role: PRIMARY_AUTHOR, model: (default)
+[CHATGPT-PROXY] Validation failed: messages missing or empty. Body keys: [ 'messages' ]
+[MISTRAL-PROXY] Role: STRUCTURE_GENERATOR, Model: ministral-8b-2512
+[MISTRAL-PROXY] usage {"prompt_tokens":2005,"total_tokens":3347,"completion_tokens":1342,"prompt_tokens_details":{"cached_tokens":0},"service_tier":"standard"}
+[MISTRAL-PROXY] quota reconcile op=mq_muj1bn00_w57ebsp6 released=8260 held=3347 exact=true
+[MISTRAL-PROXY] Role: STRUCTURE_GENERATOR, Model: ministral-8b-2512
+[MISTRAL-PROXY] usage {"prompt_tokens":2250,"total_tokens":3568,"completion_tokens":1318,"prompt_tokens_details":{"cached_tokens":0},"service_tier":"standard"}
+[MISTRAL-PROXY] quota reconcile op=mq_muj5dbx0_8n6twzk9 released=9060 held=3568 exact=true
+[MISTRAL-PROXY] Role: STRUCTURE_GENERATOR, Model: ministral-8b-2512
+[MISTRAL-PROXY] usage {"prompt_tokens":2597,"total_tokens":3897,"completion_tokens":1300,"prompt_tokens_details":{"cached_tokens":0},"service_tier":"standard"}
+[MISTRAL-PROXY] quota reconcile op=mq_muj84ntq_thr9b1g6 released=10249 held=3897 exact=true
+[SPECIALIST-PROXY] _noFallback — chain reduced to ONE entry: grok-4.3
+[SPECIALIST-PROXY] Role: STRUCTURE_GENERATOR, Model chain: grok-4.3
+[SPECIALIST-PROXY] Trying model 1/1: grok-4.3
+[PROXY] SB model override -> grok-4.3 (effort high)
+[SPECIALIST-PROXY] latency=9979ms model=grok-4.3 effort=high (chain="grok-4.3") status=200
+[SPECIALIST-PROXY] ✓ Model grok-4.3 succeeded
+[SPECIALIST-PROXY] _noFallback — chain reduced to ONE entry: grok-4.3
+[SPECIALIST-PROXY] Role: STRUCTURE_GENERATOR, Model chain: grok-4.3
+[SPECIALIST-PROXY] Trying model 1/1: grok-4.3
+[PROXY] SB model override -> grok-4.3 (effort high)
+[SPECIALIST-PROXY] latency=13033ms model=grok-4.3 effort=high (chain="grok-4.3") status=200
+[SPECIALIST-PROXY] ✓ Model grok-4.3 succeeded

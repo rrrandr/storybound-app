@@ -1,0 +1,31 @@
+[preflight] output dir writable: _validate_out/eventsel
+[probe] begin story…
+  [planner call 1] captured  sys=5160 usr=2699 out=827
+[probe] planner calls captured: 1
+
+════ EVENT SELECTION TRACE ════
+model: gpt-4o-mini   sys=5160   usr=2699
+
+──── CHOSEN OUTPUT ────
+  tactical_move = "introduce conflict during the ceremony"
+  state_change_precondition = "Lirael has not yet accused Julian of sabotaging the First Sacrifice."
+  state_change = "Lirael points an accusing finger at Julian, claiming he tampered with the ceremony."
+  forces_choice = "forces Lirael to choose between confronting Julian further or defending him against the crowd"
+  branch_a = "confront Julian about the accusations and demand an explanation"
+  branch_b = "defend Julian, insisting he would never sabotage the ceremony"
+  event_slots = {"precondition":"Lirael and Julian are present at the First Sacrifice ceremony.","actor":"Lirael","action":"points an accusing finger","target":"Julian","exit_state":"the crowd now believes Julian sabotaged the First Sacrifice"}
+
+──── INPUT CONTEXT (labelled sections found in the user message) ────
+
+──── DOES THE INPUT CONSTRAIN *HOW* THE EVENT HAPPENS? ────
+  ✅ present   milestone supplied
+  ✅ present   precondition / before-state
+  ✅ present   target after-state
+  ✅ present   setting / location available
+  ✅ present   participants / cast available
+  ✅ present   canon / world constraints
+  ❌ ABSENT    DRAMATIC CAUSATION required
+  ❌ ABSENT    bans cheap exposition mechanisms
+  ❌ ABSENT    requires a HUMAN AGENT for the change
+
+full records → _validate_out/eventsel/planner_*.json

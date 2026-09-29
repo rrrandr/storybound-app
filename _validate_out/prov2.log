@@ -1,0 +1,12 @@
+[preflight] output dir writable: _validate_out/provenance_run
+[baseline] SCENE 1 — real generation…
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+page.evaluate: Target page, context or browser has been closed
+    at /Users/romantsukerman/storybound-app/_provenance_run.mjs:90:12 {
+  log: []
+}
+
+Node.js v25.3.0

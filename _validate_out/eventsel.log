@@ -1,0 +1,30 @@
+[preflight] output dir writable: _validate_out/eventsel
+[probe] begin story…
+  [planner call 1] captured  sys=3949 usr=1145 out=610
+[probe] planner calls captured: 1
+
+════ EVENT SELECTION TRACE ════
+model: gpt-4o-mini   sys=3949   usr=1145
+
+──── CHOSEN OUTPUT ────
+  tactical_move = "introduce a pivotal event that reveals the community's reaction to the heritage secret"
+  state_change_precondition = "the heritage secret has not yet been revealed to the community"
+  state_change = "the heritage secret detonates in the community square, sending shockwaves through the crowd"
+  forces_choice = "forces Lirael to choose between unmaking the wish that brought Julian into her life or another wish"
+  branch_a = "unmake the wish that brought Julian into her life, risking their connection"
+  branch_b = "unmake a different wish, preserving her bond with Julian"
+
+──── INPUT CONTEXT (labelled sections found in the user message) ────
+
+──── DOES THE INPUT CONSTRAIN *HOW* THE EVENT HAPPENS? ────
+  ✅ present   milestone supplied
+  ✅ present   precondition / before-state
+  ✅ present   target after-state
+  ✅ present   setting / location available
+  ❌ ABSENT    participants / cast available
+  ✅ present   canon / world constraints
+  ❌ ABSENT    DRAMATIC CAUSATION required
+  ❌ ABSENT    bans cheap exposition mechanisms
+  ❌ ABSENT    requires a HUMAN AGENT for the change
+
+full records → _validate_out/eventsel/planner_*.json

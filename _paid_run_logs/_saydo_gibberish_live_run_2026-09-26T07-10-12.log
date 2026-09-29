@@ -1,0 +1,103 @@
+# 2026-09-26T07:10:12.765Z
+# node _saydo_gibberish_live_run.mjs --authorize run the gibberish continuation once under $0.20 with the fixed reservation math
+
+=== SAY/DO GIBBERISH CONTINUATION — AUTHORIZED ===
+  input   : action="asdkfjh sdkfj lkjwer"  dialogue="qwerty zzzz aaaa"
+  ceiling : $0.20, reserved per call BEFORE dispatch
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/csp-report
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/config
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/csp-report
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/geo
+
+=== 1. THE REAL DETECTOR CATCHES THE CHOSEN INPUT (else the run tests nothing) ===
+    detector: action={"gibberish":true,"reason":"Long consonant run (likely keyboard mash)."} dialogue={"gibberish":true,"reason":"Too many repeated characters."}
+    fallback action  : "a beat of dazed, wordless hesitation"
+    fallback dialogue: "a confused, wordless sound that never resolves into words"
+  ✓ the REAL _detectGibberish classifies the chosen ACTION as gibberish
+  ✓ ...and the chosen DIALOGUE
+  ✓ ...and each verdict carries the detector's own reason
+  ✓ _sayDoGibberishFallback returns the documented ACTION placeholder
+  ✓ ...and the documented DIALOGUE placeholder
+  ✓ NEGATIVE — an ordinary sentence is NOT detected and NOT substituted
+
+=== 2. THE SUBSTITUTION IS ON THE REAL SUBMIT PATH, BEFORE ANY GENERATION ===
+  ✓ the handler reads the gn* inputs and sanitizes them first
+  ✓ ...then reassigns BOTH fields through the fallback
+  ✓ ...inside the real Submit click listener
+  ✓ the Submit handler invokes the tiered policy exactly ONCE
+  ✓ ...and placeholder application is confined to the policy plus one guarded legacy fallback
+
+=== 3. RAW GIBBERISH MUST NOT REACH ANY PAYLOAD — DRIVEN THROUGH THE REAL UI ===
+    Say/Do controls present (DOM): {"gnActionInput":true,"gnDialogueInput":true,"gnSubmitBtn":true,"actionInput":true,"dialogueInput":true,"submitBtn":true}
+  ✓ THE REAL SAY/DO CONTROLS ARE REACHABLE — required, because the substitution lives only in the Submit handler and no generator shortcut may stand in for it
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/beta-events
+    captured: ["scaffold","author","author","scaffold","author","author","planner","scaffold","planner","author","scaffold","author"]
+  ✓ the real Submit produced at least a planner request
+  ✓ RAW GIBBERISH APPEARS IN NO PAYLOAD — neither field, anywhere
+  ✓ the SUBSTITUTED placeholders reach the real AUTHOR payload
+  ✓ the STRONG-DELIVERY directive is ABSENT — a placeholder is not a committed player move
+  ✓ the reserved-canon guard is still active in the author payload
+  ✓ GIBBERISH HANDLING IS PRESENT — the input is acknowledged lightly, not elevated
+    production log: [SAYDO:GIBBERISH] action replaced with a graceful fallback — reason: Long consonant run (likely keyboard mash).
+  ✓ ...and the production log records tier=isolated for a first offence
+  ✓ ...and the streak was persisted for the next turn
+
+=== 4. THE SLOT ROUTER FALLS BACK, WITH ITS REASON LOGGED ===
+    placeholder → slot null :: no slot represented: the move is not an admission, an authority challenge, an unretreating
+  ✓ the placeholder claims NO slot
+  ✓ ...and says WHY, so a later misfire is explainable
+  ✓ raw gibberish would also claim no slot
+  ✓ the frame falls back to the institutional default
+
+=== 5. RESERVATION MATH — THE BUG THAT COST A PAID RUN, PROVEN FIXED ===
+    /api/mistral-proxy → scaffold   (the scaffold call, whose payload contains author-ish schema words — the exact misfire)
+  ✓ CLASSIFY /api/mistral-proxy as scaffold — the scaffold call, whose payload contains author-ish schema words — the exact misfire
+    /api/proxy → planner   (planner contract markers)
+  ✓ CLASSIFY /api/proxy as planner — planner contract markers
+    /api/proxy → author   (author schema on the proxy endpoint)
+  ✓ CLASSIFY /api/proxy as author — author schema on the proxy endpoint
+  ✓ ...and each role therefore reserves its OWN rate, not the author rate
+    corrected sequence at $0.20: {"ok":true,"total":0.14,"running":[{"role":"scaffold","running":0.03},{"role":"planner","running":0.05},{"role":"author","running":0.14}]}
+    the bug replayed at $0.15: {"ok":false,"refusedAt":"author","total":0.11,"running":[{"role":"author","running":0.09},{"role":"planner","running":0.11}]}
+  ✓ RED — the OLD misclassification aborts, reproducing the no-data run
+  ✓ THE SAME SEQUENCE NO LONGER ABORTS under the corrected classifier
+  ✓ ...and it would not even have aborted at the old $0.15 ceiling
+  ✓ THE $0.20 CEILING IS JUSTIFIED — one planner retry fits at $0.20 but NOT at $0.15
+  ✓ ...and a SECOND author attempt is still refused, so the guard was not loosened
+
+=== 6. CONTAINMENT AND COST DISCIPLINE ===
+  ✓ images were blocked for the whole preflight
+  ✓ NO REAL DISPATCH during preflight
+  ✓ a reservation past the ceiling is REFUSED before dispatch
+
+  PREFLIGHT: 36/36 — PASSED
+  Evidence: /Users/romantsukerman/storybound-app/_saydo_gibberish_out/2026-09-26T07-10-13
+
+=== LIVE — ONE SCENE, REAL PROVIDERS ===
+    [live] scaffold → /api/mistral-proxy  (running reserved $0.030)
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/beta-events
+    [live] author → /api/proxy  (running reserved $0.120)
+    [live] planner → /api/proxy  (running reserved $0.140)
+    captured live: ["scaffold","author","planner"]  beats=0  48077ms
+    gibberish log: [SAYDO:GIBBERISH] tier=isolated streak=1 fields={"action":"pure","dialogue":"pure"}
+  ✓ LIVE — no ceiling abort occurred
+  ✓ LIVE — raw gibberish reached NO payload
+  ✓ LIVE — raw gibberish is absent from the delivered PROSE
+  ✗ LIVE — the substituted placeholders reached the real author payload
+  ✓ LIVE — the strong-delivery rule did NOT fire
+  ✗ LIVE — the gibberish-handling directive WAS in force
+  ✗ LIVE — a scene was actually delivered
+        → beats=0 chars=0
+  ✓ LIVE — spend stayed inside the ceiling
+
+======================================================================================
+  DELIVERED PROSE:
+
+    
+
+  REALIZED $0.010893 of $0.20 (reserved $0.140)
+  41/44 mechanical assertions passed
+  HUMAN JUDGEMENT DECIDES THE VERDICT: does the prose move, acknowledge without inflating, and leave the scene playable?
+  Evidence: /Users/romantsukerman/storybound-app/_saydo_gibberish_out/2026-09-26T07-10-13
+
+# EXIT: 1

@@ -81,13 +81,42 @@ drift; the derived model already prevents that.**
 `originScopeKey` from the sealed scene, so the guard resolves to the same scope. **A rewind buys a second
 decision, never a second Fate intervention.**
 
-## A7. One edge the contract must name
+## A7. Failed replay presentation — a deterministic recovery path
 
-**If replay generation fails after the revision is sealed**, `choice_pending` is active with no scene to show.
-The revision seals at Tempt acceptance; the scene generates after. So: **a failed generation does not consume
-`choice_pending`**, and the replay scene must be re-generatable against the same revision. The player returns
-to an unresolved choice, which is exactly A5's behaviour — the state is already correct; only the scene is
-missing.
+**A surviving `choice_pending` is not sufficient.** The state being correct does not help a player who cannot
+*reach* the choice. The revision seals at Tempt acceptance and the scene generates afterwards, so a generation
+failure leaves an owed choice with nothing on screen — **and an owed choice that cannot be reached is a
+stranded save.** This was under-specified and is now a blocker on `unm.time_gives_way`.
+
+### Tier 1 — retryable replay generation
+
+- **The replay scene is re-generatable against the same sealed delta**, on demand and without limit.
+- **Retry appends nothing.** The delta is already in the log; regeneration produces a *scene*, never a second
+  delta. Retrying twice must not revise the world twice.
+- **No further charge.** The Fortune was spent at acceptance and the delta is sealed; generation is downstream
+  of payment. **A failure the player did not cause may never be billed to them.**
+- **No second Tempt is consumed or permitted** — the scope key is inherited per A6, retry or not.
+
+### Tier 2 — authored, non-model choice presentation
+
+**Tier 1 depends on a provider and therefore cannot be the guarantee.** So the floor is a presentation that
+requires no model call at all:
+
+- The renewed choice is presented from **authored, static text** — the Scene-1 choice itself, both options, as
+  already authored.
+- **It presents the choice and nothing else.** No prose, no recap, no continuation, no implied aftermath — A1
+  and A2 bind here exactly as they do on the generated path.
+- Because it makes no request, **it cannot fail for provider reasons**, which is what makes it a guarantee
+  rather than another attempt.
+
+### The invariant this establishes
+
+> **The renewed choice is always reachable.** Tier 1 gives the intended experience; Tier 2 guarantees access
+> when Tier 1 cannot run. A player is never stranded at an owed choice, never charged twice for one Tempt, and
+> never handed a continuation the engine invented to paper over a failure.
+
+**Choosing on the Tier 2 path is a real choice** — it seals exactly as A4 describes. The missing scene is a
+presentation loss, not a canon loss.
 
 ---
 
@@ -133,12 +162,23 @@ doubly withdrawn.
 as *"reality revision: no"* — but it changes active canon, and §4 defines active canon as base facts folded
 with revisions. **A fact that appears from neither is unreachable.**
 
-**Proposed:** it is a revision record with **`ceases: []`** and a non-empty `establishes[]`. The existing
-prohibition is one-directional — *empty `establishes` alongside a non-empty `ceases` is malformed* — and its
-converse is legitimate. **One channel, no new machinery.**
+> ### Corrected 2026-09-28 — my proposal was rejected, and rightly
+> I proposed making it a revision with an empty `ceases[]` so it would fit the existing type. **That is
+> type-driven modelling, not design.** It would have called every new fact a rewrite of reality, and made
+> "revision" stop meaning anything in particular.
 
-Consequence, stated: **additive outcomes are revisions too**, so the count is **five of seven** unmoored
-outcomes creating revisions, not four. Revisions are less rare than the design assumed.
+**The model is amended instead.** The log holds **canonical deltas**:
+
+| delta | shape | what it is |
+|---|---|---|
+| **reality revision** | non-empty `ceases[]` | something that governed no longer does |
+| **additive / revelatory canon change** | `establishes[]` only | something now governs that did not |
+
+**`unm.the_answer_speaks` is an additive canon change, not a revision.** Nothing is taken back; a reading
+that was never on the record is now on it. **Revising is taking something back; revealing is not.**
+
+So the count stands at **four of seven** unmoored outcomes creating revisions, plus one additive delta.
+Revisions stay as rare as the design assumed — which is what makes them mean something.
 
 ## F3 — `incoherent` is an undeclared memory-effect kind
 
@@ -150,8 +190,20 @@ That is a materially different claim — it asserts **content** about what each 
 absence. **No declared semantics exist for it**, and under D2 a rupture may reach interior states only when the
 authored grant names target, proposition and effect. *Effect* is exactly what is undefined here.
 
-**Not resolved in this pass.** Either `incoherent` gets declared semantics, or the outcome is re-authored in
-terms of `forgotten`.
+### ⛔ `unm.witness_scattered` is BLOCKED (2026-09-28)
+
+**A vague label cannot alter minds.** `incoherent` is not an effect until its content is authored. Two ways
+forward, both editorial:
+
+1. **Author each affected party's exact mistaken or fragmented proposition** — what *this* person now believes
+   happened, named per party. That is a large authoring job: it is a separate false belief for every member of
+   `population.scene_present`, and `population.assembly` is a collective that cannot hold individual
+   beliefs, so the outcome may not even be expressible at that reach.
+2. **Re-author the outcome as a defined forgetting effect** — `forgotten`, which already has semantics, at
+   whatever reach is dramatically right.
+
+**Blocked until one is chosen.** It may not be ranked, counted in coverage, or presented for approval
+meanwhile.
 
 ## F4 — `mem.exact.seren_forgets_price` has no target atom at all
 
@@ -168,22 +220,36 @@ because **she is the object of the shunning, not a participant in it.** One cann
 require the protagonist to appear in every roster. **The test is whether the population's own definition
 includes her**, and here the population is *those who withdraw from Lirael*, which she cannot be in.
 
-Also: its `establishes` fact should be renamed from `shunned_by_assembly` — the assembly is now a narrower
-body than the outcome's actual reach. **Proposed: `lirael.shunned_by_all_present`.**
+**APPROVED 2026-09-28**, and the established fact is renamed `shunned_by_assembly` →
+**`lirael.shunned_by_all_present`** — "assembly" is now a narrower body than the outcome's actual reach, and
+a fact named after the wrong population is the same class of error as an outcome scoped to one.
 
 ---
 
-# Part C — Status
+# Part C — Status of every numbered finding
 
-**All thirteen outcomes now carry atom targets, `requiresActive[]`, and a declared invalidation set.**
+**All five findings are reported here, including the one that needs no further work.** F4 was recorded in
+Part B and in the table above but was **omitted from my spoken summary** of this audit — the finding never
+left the document, and reporting it was still incomplete. Listed explicitly from here on.
+
+| # | finding | status |
+|---|---|---|
+| **F1** | `mem.exact.assembly_forgets_twist` reaches the crowd only; the sheet's flagship example overstates it | **CORRECTED** — example moved to `all_present` / `population.scene_present`; the crowd-only reading kept distinct |
+| **F2** | additive-only outcomes had no channel | **MODEL AMENDED** — canonical deltas; a delta with `ceases[]` is a revision, a delta with only `establishes[]` is an additive/revelatory change. **No empty-cease "revision" is manufactured.** |
+| **F3** | `incoherent` is an undeclared effect | **`unm.witness_scattered` BLOCKED** until each party's exact mistaken or fragmented proposition is authored, or the outcome is re-authored as a defined forgetting effect |
+| **F4** | `mem.exact.seren_forgets_price` has **no target atom at all** in this phase | **STANDS, and is not closed.** `price_identified` is not active in the opening, so there is nothing to target and nothing in `requiresActive[]`. It is **not an exact reading in this phase**; its wording routes to Fate-chosen. **The opening exact-reading set is five, not six** — and that count must survive into every later document. |
+| **F5** | `unm.the_shunning` excludes Lirael structurally, not by privilege | **APPROVED**; established fact renamed `lirael.shunned_by_all_present` |
+
+### Blocked
+
+- **`unm.witness_scattered`** — F3. May not be ranked, counted in coverage, or presented for approval.
+- **`unm.time_gives_way`** — until the A7 recovery path is approved.
 
 ### Owed before ranking
 
-1. **F2** — approve additive-only revisions (`ceases: []`).
-2. **F3** — declare `incoherent` semantics, or re-author `unm.witness_scattered`.
-3. **F5** — approve the `lirael.shunned_by_all_present` rename.
-4. **F1** — re-scope `mem.exact.assembly_forgets_twist` to the crowd in the source documents.
-5. Then: re-rank all thirteen complete packages, and compute revision-expanded coverage
+1. Resolve F3 for `unm.witness_scattered` (an editorial choice between two authoring routes).
+2. Approve the A7 recovery path.
+3. Then: re-rank the complete packages, and compute revision-expanded coverage
    (states × ask-classes × active-canon configuration).
 
 **No ranking. No coverage computation. No implementation.**

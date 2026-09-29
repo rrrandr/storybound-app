@@ -1,0 +1,450 @@
+═══ CONTINUATION-WINDOW EXPERIMENT — RUN #1 (internal validity) ═══
+arms=600 / 5500 / 11000  replicates=2  scenes=12
+total runs = 6   total scenes = 72
+output → /Users/romantsukerman/storybound-app/_contwindow_out
+NOTE: no seeding exists — replicates are samples, not reproductions.
+
+
+─── [1/6] arm=600 replicate=1 ───
+[literary] begin scene 1 …
+  pg> [OPENING:TEMP] selected=HOT_CRISIS · BILLIONAIRE ONBOARDING (one of the user's first 2 billionaire stories — guaranteed hot to set the tone)
+  pg> [BODY-TELL:REROLL] pass=1 produced no usable JSON — accepting best-effort
+  pg> [BEHAV-CANON:ROTATE] role=PC fired=false (already varied)
+  pg> [PHYSICAL-CANON:ROTATE] role=LI fired=false (already varied)
+  pg> [BEHAV-CANON:ROTATE] role=LI fired=false (already varied)
+  pg> [CG:SCAFFOLD] generation start (billionaire_modern, gpt-4o-mini)
+  pg> [CG:SCAFFOLD] P2 awaiter — no Bibles to fire (pc=y li=y antag=y, pcFn=function liFn=function anFn=function)
+  pg> [CG:SCAFFOLD:GEN] 11179ms, model=gpt-4o-mini
+  pg> [CG:SCAFFOLD] thesis="Can this man actually love somebody?"
+  pg> [CG:SCAFFOLD] issues=2, motifs=5, forbidden=5
+  pg> [CG:SCAFFOLD] FULL OBJECT: {runThesis: Can this man actually love somebody?, thematicDirection: Exploring vulnerability as a pathway to connection., visualThesis: From stark public scrutiny to intimate revelations, revealing warmth beneath the surface., worldPhysics: Public scrutiny amplifies privat
+  pg> [LI-TEXTURE:PRESELECT:SKIP] Scene-1 offstage LI — reputation/name only, face deferred to first encounter
+  pg> [HOOK:TEMP] intended=HOT actual=COLD reason=PC first action is read/check/review/receive
+  pg> [HOOK:IMAGE-TEST] fail — opens as a memo / information container
+  pg> [SCENE1:CAST] on-page=1 [Iris] · referenced=0 [] · named-besides-LI=1 ⟹ ✓ within cap (≤1 named actor besides the LI).
+  pg> [GROK-LIT] author = Grok 4.3 (premium/tentpole)
+  pg> [GROK-LIT] Grok de-calc editor: 5/5 surgical fixes applied (~150 tok rewritten, not whole-scene)
+  pg> [REPAIR] Mistral-small repair via mistral-small rejected (empty/invalid/meta-leak) — falling back to gpt-4o-mini
+  pg> [OPENING:TEMP:v2] rendered=COLD_DISRUPTION (selected=HOT_CRISIS) — ⚠ selected HOT_CRISIS → rendered COLD_DISRUPTION · crisis-intensity=0 · in-motion=0 (0 — reflective/reported, not in-progress) · emotional-urgency=0 · protagonist-distress-share=0% · external-plot-share=0% [v2 in-motion-aware heurist
+  pg> [CRISIS:AGENCY] type=BEFELL · stance=PASSIVE · agency-verbs=0 ⟹ ⚠ VICTIM DRIFT: the crisis happened TO her and she only reacts (no agency verbs). Healthy HOT_CRISIS needs a MIX of befell / caused / chosen. Watch across the batch — emotional MOMENTUM and PASSIVE SUFFERING look alike in numbers but fe
+  pg> [EDITORIAL:TIER] scene 0 tier=premium lensBudget=1
+  pg> [GEN-FAIL:PC-DESCRIPTION:FINAL] ✓ PC picturable in FINAL prose — 3 categories incl. image-defining (build, handsOther, clothing). BATCH RATE: 0/1 final-prose runs PC-unpicturable.
+  pg> [GEN-FAIL:SETTING:FINAL] ✓ place established (material + light) in first ~2¶. FLOOR MET 1/1.
+  pg> [INTERIORITY] analysis=0 · experience=4 · analysis-share=0% — ✓ experience-led [hypothesis: cold ↔ analysis replacing experience; correlate with SCENE1:DESIRE]
+  pg> [SINGLE-CRISIS:ENFORCE] fired=false (1 crisis family: none)
+  pg> [SCENE1:GRAVITY:REPAIR] skipped — gravity audit not ready at mount (fire-and-forget; not awaited).
+  pg> [STAGED:INTERCEPT-CHECK] standard mount — _isStagedMode(): false | renderMode: literary | _stagedAwaitingProse: undefined | _stagedScene1Initiated: undefined
+  pg> [AXIS:SHIPPED] "Say it plainly — or let it show without words?"
+  pg> [SCENE-COST] LLM calls: 20 (gpt:13 other:4 grok:3)
+  pg> [SCENE-BUDGET:COUNT] scene=5575ef59-e7a4-4659-9e06-3d699fdcf822:0 repair=0 polish=0 fallback=0 regen=0 cosmetic=0/2 (conditional spent=0/4) skipped=[] provenance=original
+  pg> [SCENE-COST] by category: prose+spine $0.0664 ×6 · STORY-SETUP (one-time, amortized) $0.0411 ×10 · audits (instrumentation) $0.0014 ×4
+    [probe] scene 1: probe did not refresh in 30s — entity metric will be stale for this scene
+[literary] scene 1 captured  len=1997 tc=0 inIssue=0
+[literary] -> advancing to scene 2  act="I stand my ground instead of backing down."
+    [click] btn=true disabled=false adv=false intim=false fc=0
+    [wait] n=1 busy=false intim=false stuck=false t+0s pending=none
+  pg> [PLOT-CONTRACT:ENABLED] true
+  pg> [PLOT-CONTRACT:BEATS] scene=0 count=3
+  pg> [SCENE-FRAME] Stashing Scene 2 (Petition) mandate frame
+  pg> [PLOT-CONTRACT:DIRECTIVE] scene=0 beats=3
+  pg> [GROK-LIT] author = Grok 4.3 (premium/tentpole)
+    [wait] n=1 busy=true intim=false stuck=false t+30s pending=none
+  pg> [GROK-LIT] Grok de-calc editor: 0/0 surgical fixes applied (~0 tok rewritten, not whole-scene)
+  pg> [GEN-FAIL:LI-DESCRIPTION:DRAFT] ✓ LI picturable in draft — 4 categories incl. image-defining (hair, build, handsOther, clothing). (:FINAL below is authoritative.)
+  pg> [OPENING:TEMP:v2] rendered=HOT_CRISIS (selected=HOT_CRISIS) — ✓ matches selection · crisis-intensity=0 · in-motion=3 (T+30s — LIVE pressure, credited toward HOT) · emotional-urgency=2 · protagonist-distress-share=0% · external-plot-share=0% [v2 in-motion-aware heuristic; in-motion counts up to 2 HOT
+  pg> [CRISIS:AGENCY] type=BEFELL · stance=PASSIVE · agency-verbs=0 ⟹ ⚠ VICTIM DRIFT: the crisis happened TO her and she only reacts (no agency verbs). Healthy HOT_CRISIS needs a MIX of befell / caused / chosen. Watch across the batch — emotional MOMENTUM and PASSIVE SUFFERING look alike in numbers but fe
+  pg> [EDITORIAL:TIER] scene 0 tier=premium lensBudget=1
+  pg> [PHRASE-LEDGER:LEAK] 1 banned phrase(s) slipped through scene 1 (now re-banked as reskins):
+  pg> [TENSION GATE] Attempt 1/1 (FORCE INJECT) — reasons: [NO_FORCING_FUNCTION: no character directly demands, challenges, or pressures the player, NO_URGENCY: scene lacks forcing function + intensity needed to create felt pressure]
+  pg> [TENSION GATE] PASSED on attempt 2
+  pg> [CRISIS:STALL] OK — 2 crisis-advance marker(s), attraction 0/1k. The crisis must keep moving THROUGH the relationship, not park behind attraction prose.
+  pg> [SCENE-FRAME] Appended mandated closer (turn path).
+  pg> [SCENE-COST] LLM calls: 7 (gpt:4 grok:2 other:1)
+  pg> [SCENE-BUDGET:COUNT] scene=5575ef59-e7a4-4659-9e06-3d699fdcf822:1 repair=0 polish=0 fallback=0 regen=0 cosmetic=0/2 (conditional spent=0/4) skipped=[] provenance=original
+  pg> [SCENE-COST] by category: prose+spine $0.1208 ×5 · audits (instrumentation) $0.0009 ×2
+[literary] scene 2 captured  len=3107 tc=0 inIssue=1
+[literary] -> advancing to scene 3  act="I push for the truth about what he's reall"
+    [click] btn=true disabled=false adv=false intim=false fc=0
+    [wait] n=2 busy=false intim=false stuck=false t+0s pending=none
+  pg> [PLOT-CONTRACT:ENABLED] true
+  pg> [PLOT-CONTRACT:BEATS] scene=1 count=3
+  pg> [SCENE-FRAME] Stashing Scene 3 (Tempt) mandate frame
+  pg> [PLOT-CONTRACT:DIRECTIVE] scene=1 beats=3
+  pg> [GROK-LIT] author = Mistral-small (non-premium, continuity-bridge after tentpole, restraint-guarded)
+    [wait] n=2 busy=true intim=false stuck=false t+30s pending=none
+  pg> [GROK-LIT] Grok de-calc editor: 5/5 surgical fixes applied (~150 tok rewritten, not whole-scene)
+  pg> [GROK-LIT] purple-lens applied to Small-authored prose
+  pg> [GEN-FAIL:LI-DESCRIPTION:DRAFT] ✓ LI picturable in draft — 5 categories incl. image-defining (faceDescribed, build, handsOther, clothing, age). (:FINAL below is authoritative.)
+  pg> [EDITORIAL:TIER] scene 1 tier=normal lensBudget=1
+  pg> [PHRASE-LEDGER:LEAK] 5 banned phrase(s) slipped through scene 2 (now re-banked as reskins):
+  pg> [CRISIS:STALL] OK — 0 crisis-advance marker(s), attraction 0/1k. The crisis must keep moving THROUGH the relationship, not park behind attraction prose.
+  pg> [SCENE-FRAME] Appended mandated closer (turn path).
+  pg> [SCENE-FRAME] Re-asserted mandated closer as the single final beat (turn path).
+  pg> [SCENE-COST] LLM calls: 9 (grok:2 gpt:5 other:2)
+  pg> [SCENE-BUDGET:COUNT] scene=5575ef59-e7a4-4659-9e06-3d699fdcf822:2 repair=0 polish=0 fallback=0 regen=0 cosmetic=0/2 (conditional spent=0/4) skipped=[] provenance=original
+  pg> [SCENE-COST] by category: prose+spine $0.0147 ×7 · audits (instrumentation) $0.0004 ×2
+[literary] scene 3 captured  len=3239 tc=1 inIssue=2
+[literary] -> advancing to scene 4  act="I follow the thread I'm not supposed to no"
+    [click] btn=true disabled=false adv=false intim=false fc=0
+    [wait] n=3 busy=false intim=false stuck=false t+0s pending=none
+  pg> [PLOT-CONTRACT:ENABLED] true
+  pg> [PLOT-CONTRACT:BEATS] scene=2 count=3
+  pg> [PLOT-CONTRACT:DIRECTIVE] scene=2 beats=3
+  pg> [GROK-LIT] author = Mistral-small (non-premium, restraint-guarded)
+    [wait] n=3 busy=true intim=false stuck=false t+30s pending=none
+  pg> [GROK-LIT] Grok de-calc editor: 5/5 surgical fixes applied (~150 tok rewritten, not whole-scene)
+  pg> [GROK-LIT] purple-lens applied to Small-authored prose
+  pg> [GEN-FAIL:LI-DESCRIPTION:DRAFT] ✓ LI picturable in draft — 6 categories incl. image-defining (hair, faceDescribed, build, handsOther, clothing, age). (:FINAL below is authoritative.)
+  pg> [CALCIFIED-MOVE:REPAIR] provider=mistral-small repair_passed · path=mistral · moves=phrase:the kind of pressure that could shatter glass
+  pg> [PHRASE-LEDGER:LEAK] 2 banned phrase(s) slipped through scene 3 (now re-banked as reskins):
+  pg> [CRISIS:STALL] OK — 0 crisis-advance marker(s), attraction 1.3/1k. The crisis must keep moving THROUGH the relationship, not park behind attraction prose.
+  pg> [SCENE-COST] LLM calls: 9 (grok:2 gpt:5 other:2)
+  pg> [SCENE-BUDGET:COUNT] scene=5575ef59-e7a4-4659-9e06-3d699fdcf822:3 repair=0 polish=0 fallback=0 regen=0 cosmetic=0/2 (conditional spent=0/4) skipped=[] provenance=original
+  pg> [SCENE-COST] by category: prose+spine $0.0152 ×7 · audits (instrumentation) $0.0004 ×2
+[literary] scene 4 captured  len=4151 tc=2 inIssue=3
+[literary] -> advancing to scene 5  act="I confront him with what I found."
+    [click] btn=true disabled=false adv=false intim=false fc=0
+    [wait] n=4 busy=false intim=false stuck=false t+0s pending=none
+  pg> [PLOT-CONTRACT:ENABLED] true
+  pg> [PLOT-CONTRACT:BEATS] scene=3 count=3
+  pg> [PLOT-CONTRACT:DIRECTIVE] scene=3 beats=3
+  pg> [GROK-LIT] author = Mistral-small (non-premium, restraint-guarded)
+    [wait] n=4 busy=true intim=false stuck=false t+30s pending=none
+  pg> [GROK-LIT] Grok de-calc editor: 5/5 surgical fixes applied (~150 tok rewritten, not whole-scene)
+  pg> [GROK-LIT] purple-lens applied to Small-authored prose
+  pg> [GEN-FAIL:LI-DESCRIPTION:DRAFT] ✓ LI picturable in draft — 5 categories incl. image-defining (hair, faceDescribed, build, clothing, age). (:FINAL below is authoritative.)
+  pg> [CALCIFIED-MOVE:REPAIR] provider=mistral-small repair_passed · path=mistral · moves=phrase:with the kind of pressure that could split steel,phrase:the kind of face that didn’t turn heads so much as turn women toward him
+  pg> [CRISIS:STALL] OK — 0 crisis-advance marker(s), attraction 0/1k. The crisis must keep moving THROUGH the relationship, not park behind attraction prose.
+    [wait] n=5 busy=true intim=false stuck=false t+60s pending=none
+  pg> [SCENE-COST] LLM calls: 10 (grok:2 gpt:6 other:2)
+  pg> [SCENE-BUDGET:COUNT] scene=5575ef59-e7a4-4659-9e06-3d699fdcf822:4 repair=0 polish=0 fallback=0 regen=0 cosmetic=0/2 (conditional spent=0/4) skipped=[] provenance=original
+  pg> [SCENE-COST] by category: prose+spine $0.0159 ×8 · audits (instrumentation) $0.0004 ×2
+    [click] btn=true disabled=false adv=false intim=false fc=0
+  pg> [NORMALIZATION] Request blocked — another normalization in flight
+  pg> [NORMALIZATION] Request blocked — another normalization in flight
+  pg> [GROK-LIT] author = Grok 4.3 (premium/tentpole)
+  pg> [PLOT-CONTRACT:ENABLED] true
+  pg> [PLOT-CONTRACT:BEATS] scene=4 count=3
+  pg> [PLOT-CONTRACT:DIRECTIVE] scene=4 beats=3
+  pg> [PROSE] Request blocked — another prose generation in flight
+  pg> Turn submission error: Error: Prose generation blocked: request already in flight
+    at callChat (http://localhost:3000/app.js?v=20260719-image-cost-tiered:243190:15)
+    at HTMLButtonElement.<anonymous> (http://localhost:3000/app.js?v=20260719-image-cost-tiered:272880:27)
+    [wait] n=5 busy=false intim=false stuck=false t+90s pending=none
+  pg> [GROK-LIT] Grok de-calc editor: 1/1 surgical fixes applied (~30 tok rewritten, not whole-scene)
+[literary] scene 5 captured  len=2101 tc=4 inIssue=4
+[literary] -> advancing to scene 6  act="I let my guard down for a moment, then cat"
+    [click] btn=true disabled=false adv=false intim=false fc=0
+    [wait] n=6 busy=false intim=false stuck=false t+0s pending=none
+  pg> [PLOT-CONTRACT:ENABLED] true
+  pg> [PLOT-CONTRACT:BEATS] scene=4 count=3
+  pg> [PLOT-CONTRACT:DIRECTIVE] scene=4 beats=3
+  pg> [GROK-LIT] author = Grok 4.3 (premium/tentpole)
+    [wait] n=6 busy=true intim=false stuck=false t+30s pending=none
+  pg> [GROK-LIT] Grok de-calc editor: 5/5 surgical fixes applied (~150 tok rewritten, not whole-scene)
+  pg> [GEN-FAIL:LI-DESCRIPTION:DRAFT] ✓ LI picturable in draft — 4 categories incl. image-defining (hair, faceDescribed, posture, clothing). (:FINAL below is authoritative.)
+  pg> [PHRASE-LEDGER:LEAK] 2 banned phrase(s) slipped through scene 5 (now re-banked as reskins):
+  pg> [TENSION GATE] Attempt 1/1 (FORCE INJECT) — reasons: [WEAK_OPENING: opening lacks both structural tensio…kes / asymmetry / emotion / demand) — fully inert, NO_EARLY_ANCHOR: no character reacts to or addresses the player within first 180 words]
+  pg> [GROK-LIT] author = Grok 4.3 (premium/tentpole)
+    [wait] n=6 busy=true intim=false stuck=false t+60s pending=none
+  pg> [GROK-LIT] Grok de-calc editor: 5/5 surgical fixes applied (~150 tok rewritten, not whole-scene)
+  pg> [TENSION GATE] from-scaffold re-author applied (1643 chars · Mistral for non-premium). [SCENE-BUDGET:ROUTE-REGEN]
+  pg> [TENSION GATE] PASSED on attempt 2
+  pg> [HOOK ENFORCEMENT] Skipping regen — tension gate already corrected this scene
+  pg> [CRISIS:STALL] OK — 1 crisis-advance marker(s), attraction 0/1k. The crisis must keep moving THROUGH the relationship, not park behind attraction prose.
+  pg> [SCENE-COST] LLM calls: 12 (grok:5 gpt:5 other:2)
+  pg> [SCENE-BUDGET:COUNT] scene=5575ef59-e7a4-4659-9e06-3d699fdcf822:5 repair=0 polish=0 fallback=0 regen=0 cosmetic=0/2 (conditional spent=0/4) skipped=[] provenance=original
+  pg> [SCENE-COST] by category: prose+spine $0.2340 ×10 · audits (instrumentation) $0.0003 ×2
+    [click] btn=true disabled=false adv=false intim=false fc=0
+  pg> [NORMALIZATION] Request blocked — another normalization in flight
+  pg> [NORMALIZATION] Request blocked — another normalization in flight
+  pg> [GROK-LIT] author = Grok 4.3 (premium/tentpole)
+  pg> [PLOT-CONTRACT:ENABLED] true
+  pg> [PLOT-CONTRACT:BEATS] scene=5 count=3
+  pg> [PLOT-CONTRACT:DIRECTIVE] scene=5 beats=3
+    [wait] n=6 busy=true intim=false stuck=false t+90s pending=none
+  pg> [PROSE] Request blocked — another prose generation in flight
+  pg> Turn submission error: Error: Prose generation blocked: request already in flight
+    at callChat (http://localhost:3000/app.js?v=20260719-image-cost-tiered:243190:15)
+    at HTMLButtonElement.<anonymous> (http://localhost:3000/app.js?v=20260719-image-cost-tiered:272880:27)
+  pg> [GROK-LIT] Grok de-calc editor: 5/5 surgical fixes applied (~150 tok rewritten, not whole-scene)
+[literary] scene 6 captured  len=1643 tc=5 inIssue=5
+[literary] -> advancing to scene 7  act="I make a choice that costs me something."
+    [click] btn=true disabled=false adv=false intim=false fc=0
+    [wait] n=7 busy=false intim=false stuck=false t+0s pending=none
+  pg> [PLOT-CONTRACT:ENABLED] true
+  pg> [PLOT-CONTRACT:BEATS] scene=5 count=3
+  pg> [PLOT-CONTRACT:DIRECTIVE] scene=5 beats=3
+  pg> [GROK-LIT] author = Grok 4.3 (premium/tentpole)
+    [wait] n=7 busy=true intim=false stuck=false t+30s pending=none
+  pg> [GROK-LIT] Grok de-calc editor: 5/5 surgical fixes applied (~150 tok rewritten, not whole-scene)
+  pg> [GEN-FAIL:LI-DESCRIPTION:DRAFT] ✓ LI picturable in draft — 4 categories incl. image-defining (hair, build, handsOther, clothing). (:FINAL below is authoritative.)
+  pg> [PHRASE-LEDGER:LEAK] 1 banned phrase(s) slipped through scene 6 (now re-banked as reskins):
+  pg> [CRISIS:STALL] OK — 2 crisis-advance marker(s), attraction 0/1k. The crisis must keep moving THROUGH the relationship, not park behind attraction prose.
+  pg> [SCENE-COST] LLM calls: 9 (grok:3 gpt:5 other:1)
+  pg> [SCENE-BUDGET:COUNT] scene=5575ef59-e7a4-4659-9e06-3d699fdcf822:6 repair=0 polish=0 fallback=0 regen=0 cosmetic=0/2 (conditional spent=0/4) skipped=[] provenance=original
+  pg> [SCENE-COST] by category: prose+spine $0.1221 ×7 · audits (instrumentation) $0.0004 ×2
+    [click] btn=true disabled=false adv=false intim=false fc=0
+  pg> [NORMALIZATION] Request blocked — another normalization in flight
+  pg> [NORMALIZATION] Request blocked — another normalization in flight
+  pg> [GROK-LIT] author = Grok 4.3 (premium/tentpole)
+    [wait] n=7 busy=true intim=false stuck=false t+60s pending=none
+  pg> [PLOT-CONTRACT:ENABLED] true
+  pg> [PLOT-CONTRACT:BEATS] scene=6 count=3
+  pg> [PLOT-CONTRACT:DIRECTIVE] scene=6 beats=3
+  pg> [GROK-LIT] Grok de-calc editor: 5/5 surgical fixes applied (~150 tok rewritten, not whole-scene)
+  pg> [GROK-LIT] author = Grok 4.3 (premium/tentpole)
+  pg> [GROK-LIT] Grok de-calc editor: 5/5 surgical fixes applied (~150 tok rewritten, not whole-scene)
+  pg> [GEN-FAIL:LI-DESCRIPTION:DRAFT] ✓ LI picturable in draft — 4 categories incl. image-defining (hair, build, handsOther, clothing). (:FINAL below is authoritative.)
+  pg> [PHRASE-LEDGER:LEAK] 1 banned phrase(s) slipped through scene 7 (now re-banked as reskins):
+  pg> [MODEL-ROUTE:PROSE] provider=mistral-small task=line_edit callsite=cheap-edit:intimacy-consent
+  pg> [TENSION GATE] Attempt 1/1 (FORCE INJECT) — reasons: [NO_FORCING_FUNCTION: no character directly demands, challenges, or pressures the player, NO_URGENCY: scene lacks forcing function + intensity needed to create felt pressure]
+  pg> [GROK-LIT] author = Grok 4.3 (premium/tentpole)
+  pg> [GROK-LIT] Grok de-calc editor: 5/5 surgical fixes applied (~150 tok rewritten, not whole-scene)
+  pg> [TENSION GATE] from-scaffold re-author applied (2236 chars · Mistral for non-premium). [SCENE-BUDGET:ROUTE-REGEN]
+  pg> [TENSION GATE] HARD_FAIL after 1 attempts — accepting scene: [NO_FORCING_FUNCTION: no character directly demands, challenges, or pressures the player, NO_URGENCY: scene lacks forcing function + intensity needed to create felt pressure]
+  pg> [HOOK ENFORCEMENT] Skipping regen — tension gate already corrected this scene
+  pg> [CRISIS:STALL] OK — 0 crisis-advance marker(s), attraction 0/1k. The crisis must keep moving THROUGH the relationship, not park behind attraction prose.
+  pg> [SCENE-COST] LLM calls: 18 (gpt:8 grok:7 other:3)
+  pg> [SCENE-BUDGET:COUNT] scene=5575ef59-e7a4-4659-9e06-3d699fdcf822:7 repair=0 polish=0 fallback=0 regen=0 cosmetic=0/2 (conditional spent=0/4) skipped=[] provenance=original
+  pg> [SCENE-COST] by category: prose+spine $0.2912 ×16 · audits (instrumentation) $0.0004 ×2
+[literary] scene 7 captured  len=2496 tc=6 inIssue=7
+[literary] -> advancing to scene 8  act="I refuse the easy way out he offers."
+    [click] btn=true disabled=false adv=false intim=false fc=0
+    [wait] n=8 busy=false intim=false stuck=false t+0s pending=none
+  pg> [PLOT-CONTRACT:ENABLED] true
+  pg> [PLOT-CONTRACT:BEATS] scene=7 count=3
+  pg> [PLOT-CONTRACT:DIRECTIVE] scene=7 beats=3
+  pg> [GROK-LIT] author = Grok 4.3 (premium/tentpole)
+    [wait] n=8 busy=true intim=false stuck=false t+30s pending=none
+  pg> [GROK-LIT] Grok de-calc editor: 5/5 surgical fixes applied (~150 tok rewritten, not whole-scene)
+  pg> [PHRASE-LEDGER:LEAK] 4 banned phrase(s) slipped through scene 8 (now re-banked as reskins):
+  pg> [TENSION GATE] Attempt 1/1 (FORCE INJECT) — reasons: [WEAK_OPENING: opening lacks both structural tensio…kes / asymmetry / emotion / demand) — fully inert, NO_FORCING_FUNCTION: no character directly demands, challenges, or pressures the player, NO_URGENCY: scene lacks forcing function + intensity ne
+  pg> [GROK-LIT] author = Grok 4.3 (premium/tentpole)
+  pg> [GROK-LIT] Grok de-calc editor: 3/3 surgical fixes applied (~90 tok rewritten, not whole-scene)
+  pg> [TENSION GATE] from-scaffold re-author applied (2088 chars · Mistral for non-premium). [SCENE-BUDGET:ROUTE-REGEN]
+  pg> [TENSION GATE] HARD_FAIL after 1 attempts — accepting scene: [NO_FORCING_FUNCTION: no character directly demands, challenges, or pressures the player, NO_URGENCY: scene lacks forcing function + intensity needed to create felt pressure]
+  pg> [HOOK ENFORCEMENT] Skipping regen — tension gate already corrected this scene
+  pg> [CRISIS:STALL] OK — 0 crisis-advance marker(s), attraction 0/1k. The crisis must keep moving THROUGH the relationship, not park behind attraction prose.
+  pg> [SCENE-COST] LLM calls: 13 (grok:5 gpt:6 other:2)
+  pg> [SCENE-BUDGET:COUNT] scene=5575ef59-e7a4-4659-9e06-3d699fdcf822:8 repair=0 polish=0 fallback=0 regen=0 cosmetic=0/2 (conditional spent=0/4) skipped=[] provenance=original
+  pg> [SCENE-COST] by category: prose+spine $0.2420 ×11 · audits (instrumentation) $0.0004 ×2
+[literary] scene 8 captured  len=1992 tc=7 inIssue=8
+[literary] -> advancing to scene 9  act="I close the distance between us."
+    [click] btn=true disabled=false adv=false intim=false fc=0
+    [wait] n=9 busy=false intim=false stuck=false t+0s pending=none
+  pg> [PLOT-CONTRACT:ENABLED] true
+  pg> [PLOT-CONTRACT:BEATS] scene=8 count=3
+  pg> [PLOT-CONTRACT:DIRECTIVE] scene=8 beats=3
+  pg> [GROK-LIT] author = Grok 4.3 (premium/tentpole)
+    [wait] n=9 busy=true intim=false stuck=false t+30s pending=none
+  pg> [GROK-LIT] Grok de-calc editor: 5/5 surgical fixes applied (~150 tok rewritten, not whole-scene)
+  pg> [PHRASE-LEDGER:LEAK] 1 banned phrase(s) slipped through scene 9 (now re-banked as reskins):
+  pg> [CRISIS:STALL] OK — 0 crisis-advance marker(s), attraction 0/1k. The crisis must keep moving THROUGH the relationship, not park behind attraction prose.
+  pg> [SCENE-COST] LLM calls: 9 (grok:3 gpt:5 other:1)
+  pg> [SCENE-BUDGET:COUNT] scene=5575ef59-e7a4-4659-9e06-3d699fdcf822:9 repair=0 polish=0 fallback=0 regen=0 cosmetic=0/2 (conditional spent=0/4) skipped=[] provenance=original
+  pg> [SCENE-COST] by category: prose+spine $0.1216 ×7 · audits (instrumentation) $0.0003 ×2
+[literary] scene 9 captured  len=2046 tc=8 inIssue=9
+[literary] -> advancing to scene 10  act="I pull back, suddenly afraid of how much I"
+    [click] btn=true disabled=false adv=false intim=false fc=0
+    [wait] n=10 busy=false intim=false stuck=false t+0s pending=none
+  pg> [PLOT-CONTRACT:ENABLED] true
+  pg> [PLOT-CONTRACT:BEATS] scene=9 count=3
+  pg> [PLOT-CONTRACT:DIRECTIVE] scene=9 beats=3
+  pg> [GROK-LIT] author = Grok 4.3 (premium/tentpole)
+    [wait] n=10 busy=true intim=false stuck=false t+30s pending=none
+  pg> [GROK-LIT] Grok de-calc editor: 0/0 surgical fixes applied (~0 tok rewritten, not whole-scene)
+  pg> [PHRASE-LEDGER:LEAK] 1 banned phrase(s) slipped through scene 10 (now re-banked as reskins):
+  pg> [TENSION GATE] Attempt 1/1 (FORCE INJECT) — reasons: [NO_FORCING_FUNCTION: no character directly demands, challenges, or pressures the player, NO_URGENCY: scene lacks forcing function + intensity needed to create felt pressure]
+  pg> [GROK-LIT] author = Grok 4.3 (premium/tentpole)
+  pg> [GROK-LIT] Grok de-calc editor: 5/5 surgical fixes applied (~150 tok rewritten, not whole-scene)
+  pg> [TENSION GATE] from-scaffold re-author applied (1406 chars · Mistral for non-premium). [SCENE-BUDGET:ROUTE-REGEN]
+  pg> [TENSION GATE] HARD_FAIL after 1 attempts — accepting scene: [NO_ACTIVE_DESIRE: no character wants something NOW, NO_FORCING_FUNCTION: no character directly demands, challenges, or pressures the player, NO_URGENCY: scene lacks forcing function + intensity needed to create felt pressure]
+  pg> [HOOK ENFORCEMENT] Skipping regen — tension gate already corrected this scene
+  pg> [CRISIS:STALL] OK — 0 crisis-advance marker(s), attraction 0/1k. The crisis must keep moving THROUGH the relationship, not park behind attraction prose.
+  pg> [SCENE-COST] LLM calls: 12 (grok:5 gpt:5 other:2)
+  pg> [SCENE-BUDGET:COUNT] scene=5575ef59-e7a4-4659-9e06-3d699fdcf822:10 repair=0 polish=0 fallback=0 regen=0 cosmetic=0/2 (conditional spent=0/4) skipped=[] provenance=original
+  pg> [SCENE-COST] by category: prose+spine $0.2389 ×10 · audits (instrumentation) $0.0004 ×2
+    [probe] scene 10: probe did not refresh in 30s — entity metric will be stale for this scene
+[literary] scene 10 captured  len=1752 tc=9 inIssue=10
+[literary] -> advancing to scene 11  act="I decide to fight back on my own terms."
+    [click] btn=true disabled=false adv=false intim=false fc=0
+    [wait] n=11 busy=false intim=false stuck=false t+0s pending=none
+  pg> [PLOT-CONTRACT:ENABLED] true
+  pg> [PLOT-CONTRACT:BEATS] scene=10 count=3
+  pg> [PLOT-CONTRACT:DIRECTIVE] scene=10 beats=3
+  pg> [GROK-LIT] author = Grok 4.3 (premium/tentpole)
+    [wait] n=11 busy=true intim=false stuck=false t+30s pending=none
+  pg> [GROK-LIT] Grok de-calc editor: 5/5 surgical fixes applied (~150 tok rewritten, not whole-scene)
+  pg> [GEN-FAIL:LI-DESCRIPTION:DRAFT] ✓ LI picturable in draft — 2 categories incl. image-defining (hair, clothing). (:FINAL below is authoritative.)
+  pg> [PHRASE-LEDGER:LEAK] 1 banned phrase(s) slipped through scene 11 (now re-banked as reskins):
+  pg> [CRISIS:STALL] OK — 2 crisis-advance marker(s), attraction 0/1k. The crisis must keep moving THROUGH the relationship, not park behind attraction prose.
+  pg> [SCENE-COST] LLM calls: 9 (grok:3 gpt:5 other:1)
+  pg> [SCENE-BUDGET:COUNT] scene=5575ef59-e7a4-4659-9e06-3d699fdcf822:11 repair=0 polish=0 fallback=0 regen=0 cosmetic=0/2 (conditional spent=0/4) skipped=[] provenance=original
+  pg> [SCENE-COST] by category: prose+spine $0.1197 ×7 · audits (instrumentation) $0.0004 ×2
+    [probe] scene 11: probe did not refresh in 30s — entity metric will be stale for this scene
+[literary] scene 11 captured  len=2813 tc=10 inIssue=11
+[literary] -> advancing to scene 12  act="I expose the secret I've been protecting."
+    [click] btn=true disabled=false adv=false intim=false fc=0
+    [wait] n=12 busy=false intim=false stuck=false t+0s pending=none
+  pg> [PLOT-CONTRACT:ENABLED] true
+  pg> [PLOT-CONTRACT:BEATS] scene=11 count=3
+  pg> [PLOT-CONTRACT:DIRECTIVE] scene=11 beats=3
+  pg> [GROK-LIT] author = Grok 4.3 (premium/tentpole)
+    [wait] n=12 busy=true intim=false stuck=false t+30s pending=none
+  pg> [GROK-LIT] Grok de-calc editor: 5/5 surgical fixes applied (~150 tok rewritten, not whole-scene)
+  pg> [CRISIS:STALL] OK — 0 crisis-advance marker(s), attraction 0/1k. The crisis must keep moving THROUGH the relationship, not park behind attraction prose.
+  pg> [SCENE-COST] LLM calls: 10 (grok:3 gpt:6 other:1)
+  pg> [SCENE-BUDGET:COUNT] scene=5575ef59-e7a4-4659-9e06-3d699fdcf822:12 repair=0 polish=0 fallback=0 regen=0 cosmetic=0/2 (conditional spent=0/4) skipped=[] provenance=original
+  pg> [SCENE-COST] by category: prose+spine $0.1207 ×8 · audits (instrumentation) $0.0003 ×2
+    [probe] scene 12: probe did not refresh in 30s — entity metric will be stale for this scene
+[literary] scene 12 captured  len=2726 tc=11 inIssue=12
+[literary] WROTE /Users/romantsukerman/storybound-app/_contwindow_out/600_r1.console.log  tagLines=2258
+
+[literary] WROTE /Users/romantsukerman/storybound-app/_contwindow_out/600_r1.json  scenes=12/12  arm=600  run=600_r1
+─── arm=600 r=1 → OK scenes=12/12 1254s
+
+─── [2/6] arm=5500 replicate=1 ───
+[literary] begin scene 1 …
+  pg> [OPENING:TEMP] selected=HOT_CRISIS · BILLIONAIRE ONBOARDING (one of the user's first 2 billionaire stories — guaranteed hot to set the tone)
+  pg> [BODY-TELL:REROLL] pass=1
+   before: stress_tic="she twists a bracelet arou" · desire_tell="she tilts her head slightl" · impatience_tell="she taps her fingers rhyth" · confidence_tell="she stands with her hands " · vulnerability_tell="she bites her lower lip, a"
+   after:  stress_tic="heel of left 
+  pg> [BEHAV-CANON:ROTATE] role=PC fired=false (already varied)
+  pg> [PHYSICAL-CANON:ROTATE] role=LI fired=false (already varied)
+  pg> [BEHAV-CANON:ROTATE] role=LI fired=false (already varied)
+  pg> [CG:SCAFFOLD] generation start (billionaire_modern, gpt-4o-mini)
+  pg> [CG:SCAFFOLD] P2 awaiter — no Bibles to fire (pc=y li=y antag=y, pcFn=function liFn=function anFn=function)
+  pg> [CG:SCAFFOLD:GEN] 14420ms, model=gpt-4o-mini
+  pg> [CG:SCAFFOLD] thesis="Who is this person and what do they want?"
+  pg> [CG:SCAFFOLD] issues=2, motifs=5, forbidden=3
+  pg> [CG:SCAFFOLD] FULL OBJECT: {runThesis: Who is this person and what do they want?, thematicDirection: The desire for authentic connection amidst the shadows of past betrayals., visualThesis: from detached observation and whispers to intimate entanglements and shared vulnerabilities, worldPhysics: pub
+  pg> [LI-TEXTURE:PRESELECT:SKIP] Scene-1 offstage LI — reputation/name only, face deferred to first encounter
+  pg> [HOOK:TEMP] intended=HOT actual=HOT reason=in-motion opener
+  pg> [HOOK:IMAGE-TEST] pass — opens as an image
+  pg> [LI-TEXTURE:VERB-GUARD] pass (no restraint verb in desire-bearing Scene-1 beat)
+  pg> [SCENE1:CAST] on-page=1 [Margot] · referenced=0 [] · named-besides-LI=1 ⟹ ✓ within cap (≤1 named actor besides the LI).
+  pg> [GROK-LIT] author = Grok 4.3 (premium/tentpole)
+  pg> [GROK-LIT] Grok de-calc editor: 0/0 surgical fixes applied (~0 tok rewritten, not whole-scene)
+  pg> [REPAIR] Mistral-small repair via mistral-small rejected (empty/invalid/meta-leak) — falling back to gpt-4o-mini
+  pg> [REPAIR] Mistral-small repair recovered via gpt-4o-mini
+  pg> [OPENING:TEMP:v2] rendered=COLD_DISRUPTION (selected=HOT_CRISIS) — ⚠ selected HOT_CRISIS → rendered COLD_DISRUPTION · crisis-intensity=0 · in-motion=0 (0 — reflective/reported, not in-progress) · emotional-urgency=0 · protagonist-distress-share=0% · external-plot-share=0% [v2 in-motion-aware heurist
+  pg> [CRISIS:AGENCY] type=BEFELL · stance=PASSIVE · agency-verbs=0 ⟹ ⚠ VICTIM DRIFT: the crisis happened TO her and she only reacts (no agency verbs). Healthy HOT_CRISIS needs a MIX of befell / caused / chosen. Watch across the batch — emotional MOMENTUM and PASSIVE SUFFERING look alike in numbers but fe
+  pg> [CALCIFIED-MOVE:REPAIR] provider=mistral-small repair_failed · path=mistral · moves=scar · still present: scar
+  pg> [CALCIFIED-MOVE:FALLBACK] provider=mistral-small (path=mistral→fallback) — repair tiers failed → deterministically removed 1 offending sentence(s) (271w→269w) — now CLEAN.
+  pg> [EDITORIAL:TIER] scene 0 tier=premium lensBudget=2
+  pg> [CALCIFIED-MOVE:REPAIR] provider=mistral-small repair_failed · path=mistral · moves=scar · still present: scar
+  pg> [CALCIFIED-MOVE:DELETE-BLOCKED] reason=load-bearing(LI/closer/axis sentence) — kept the calcified text (re-banked) rather than amputating; the whole scene survives. unresolved: scar [escalate to regen, not deletion]
+  pg> [GEN-FAIL:PC-DESCRIPTION:FINAL] ✓ PC picturable in FINAL prose — 2 categories incl. image-defining (hair, handsOther). BATCH RATE: 0/1 final-prose runs PC-unpicturable.
+  pg> [GEN-FAIL:SETTING:FINAL] ✓ place established (material + light) in first ~2¶. FLOOR MET 1/1.
+  pg> [SINGLE-CRISIS:ENFORCE] fired=false (1 crisis family: none)
+  pg> [SCENE1:GRAVITY:REPAIR] skipped — gravity audit not ready at mount (fire-and-forget; not awaited).
+  pg> [STAGED:INTERCEPT-CHECK] standard mount — _isStagedMode(): false | renderMode: literary | _stagedAwaitingProse: undefined | _stagedScene1Initiated: undefined
+  pg> [AXIS:SHIPPED] "Say it plainly — or let it show without words?"
+  pg> [SCENE-COST] LLM calls: 21 (gpt:14 other:4 grok:3)
+  pg> [SCENE-BUDGET:COUNT] scene=3a9a1653-4aba-48e2-95ec-4c43b98a3895:0 repair=3 polish=0 fallback=0 regen=0 cosmetic=2/2 (conditional spent=3/4) skipped=[] provenance=fallback
+  pg> [SCENE-COST] by category: prose+spine $0.0687 ×6 · STORY-SETUP (one-time, amortized) $0.0426 ×10 · audits (instrumentation) $0.0016 ×5
+    [probe] scene 1: probe did not refresh in 30s — entity metric will be stale for this scene
+[literary] scene 1 captured  len=1989 tc=0 inIssue=0
+[literary] -> advancing to scene 2  act="I stand my ground instead of backing down."
+    [click] btn=true disabled=false adv=false intim=false fc=0
+    [wait] n=1 busy=false intim=false stuck=false t+0s pending=none
+  pg> [PLOT-CONTRACT:ENABLED] true
+  pg> [PLOT-CONTRACT:BEATS] scene=0 count=3
+  pg> [SCENE-FRAME] Stashing Scene 2 (Petition) mandate frame
+  pg> [PLOT-CONTRACT:DIRECTIVE] scene=0 beats=3
+  pg> [GROK-LIT] author = Grok 4.3 (premium/tentpole)
+    [wait] n=1 busy=true intim=false stuck=false t+30s pending=none
+  pg> [GROK-LIT] Grok de-calc editor: 4/4 surgical fixes applied (~120 tok rewritten, not whole-scene)
+  pg> [GEN-FAIL:LI-DESCRIPTION:DRAFT] ✓ LI picturable in draft — 5 categories incl. image-defining (hair, faceDescribed, build, posture, age). (:FINAL below is authoritative.)
+  pg> [OPENING:TEMP:v2] rendered=COLD_DISRUPTION (selected=HOT_CRISIS) — ⚠ selected HOT_CRISIS → rendered COLD_DISRUPTION · crisis-intensity=0 · in-motion=0 (0 — reflective/reported, not in-progress) · emotional-urgency=1 · protagonist-distress-share=0% · external-plot-share=0% [v2 in-motion-aware heurist
+  pg> [CRISIS:AGENCY] type=BEFELL · stance=PASSIVE · agency-verbs=0 ⟹ ⚠ VICTIM DRIFT: the crisis happened TO her and she only reacts (no agency verbs). Healthy HOT_CRISIS needs a MIX of befell / caused / chosen. Watch across the batch — emotional MOMENTUM and PASSIVE SUFFERING look alike in numbers but fe
+  pg> [SCENE-BUDGET:DESC-GUARANTEED] pc-desc — description repair allowed past the cosmetic sub-cap (cosmetic=2, overall spent=3/4, descCeiling=6)
+  pg> [SCENE-BUDGET:SKIP-REPAIR] calcified-move — COSMETIC sub-cap (2) hit; reserving remaining budget for structural repairs. cosmetic=2 skipped=[calcified-move]
+  pg> [CALCIFIED-MOVE:REPAIR] provider=mistral-small repair_failed · path=mistral · moves=scar · still present: scar
+  pg> [CALCIFIED-MOVE:FALLBACK] provider=mistral-small (path=mistral→fallback) — repair tiers failed → deterministically removed 1 offending sentence(s) (522w→520w) — now CLEAN.
+  pg> [EDITORIAL:TIER] scene 0 tier=premium lensBudget=2
+  pg> [PHRASE-LEDGER:LEAK] 1 banned phrase(s) slipped through scene 1 (now re-banked as reskins):
+  pg> [SCENE-BUDGET:SKIP-REPAIR] hook-gate — conditional-repair cap (4) hit; skipping. spent=4 skipped=[calcified-move,hook-gate]
+  pg> [SCENE-BUDGET:SKIP-REPAIR] hook-gate — conditional-repair cap (4) hit; skipping. spent=4 skipped=[calcified-move,hook-gate]
+  pg> [CRISIS:STALL] OK — 2 crisis-advance marker(s), attraction 0/1k. The crisis must keep moving THROUGH the relationship, not park behind attraction prose.
+  pg> [SCENE-FRAME] Appended mandated closer (turn path).
+  pg> [SCENE-COST] LLM calls: 8 (gpt:5 grok:2 other:1)
+  pg> [SCENE-BUDGET:COUNT] scene=3a9a1653-4aba-48e2-95ec-4c43b98a3895:1 repair=0 polish=0 fallback=0 regen=0 cosmetic=0/2 (conditional spent=0/4) skipped=[] provenance=original
+  pg> [SCENE-COST] by category: prose+spine $0.1030 ×5 · audits (instrumentation) $0.0010 ×3
+[literary] scene 2 captured  len=2784 tc=0 inIssue=1
+[literary] -> advancing to scene 3  act="I push for the truth about what he's reall"
+    [click] btn=true disabled=false adv=false intim=false fc=0
+    [wait] n=2 busy=false intim=false stuck=false t+0s pending=none
+  pg> [PLOT-CONTRACT:ENABLED] true
+  pg> [PLOT-CONTRACT:BEATS] scene=1 count=3
+  pg> [SCENE-FRAME] Stashing Scene 3 (Tempt) mandate frame
+  pg> [PLOT-CONTRACT:DIRECTIVE] scene=1 beats=3
+  pg> [GROK-LIT] author = Mistral-small (non-premium, continuity-bridge after tentpole, restraint-guarded)
+    [wait] n=2 busy=true intim=false stuck=false t+30s pending=none
+  pg> [GROK-LIT] Grok de-calc editor: 5/5 surgical fixes applied (~150 tok rewritten, not whole-scene)
+  pg> [GROK-LIT] purple-lens applied to Small-authored prose
+  pg> [GEN-FAIL:LI-DESCRIPTION:DRAFT] ✓ LI picturable in draft — 4 categories incl. image-defining (hair, faceDescribed, handsOther, posture). (:FINAL below is authoritative.)
+  pg> [CALCIFIED-MOVE:REPAIR] provider=mistral-small repair_passed · path=mistral · moves=scar
+  pg> [EDITORIAL:TIER] scene 1 tier=normal lensBudget=1
+  pg> [PHRASE-LEDGER:LEAK] 1 banned phrase(s) slipped through scene 2 (now re-banked as reskins):
+  pg> [CRISIS:STALL] OK — 1 crisis-advance marker(s), attraction 3.7/1k. The crisis must keep moving THROUGH the relationship, not park behind attraction prose.
+  pg> [SCENE-FRAME] Appended mandated closer (turn path).
+  pg> [SCENE-FRAME] Re-asserted mandated closer as the single final beat (turn path).
+  pg> [SCENE-COST] LLM calls: 9 (grok:2 gpt:5 other:2)
+  pg> [SCENE-BUDGET:COUNT] scene=3a9a1653-4aba-48e2-95ec-4c43b98a3895:2 repair=0 polish=0 fallback=0 regen=0 cosmetic=0/2 (conditional spent=0/4) skipped=[] provenance=original
+  pg> [SCENE-COST] by category: prose+spine $0.0145 ×7 · audits (instrumentation) $0.0003 ×2
+[literary] scene 3 captured  len=2584 tc=1 inIssue=2
+[literary] -> advancing to scene 4  act="I follow the thread I'm not supposed to no"
+    [click] btn=true disabled=false adv=false intim=false fc=0
+    [wait] n=3 busy=false intim=false stuck=false t+0s pending=none
+  pg> [PLOT-CONTRACT:ENABLED] true
+  pg> [PLOT-CONTRACT:BEATS] scene=2 count=3
+  pg> [PLOT-CONTRACT:DIRECTIVE] scene=2 beats=3
+  pg> [GROK-LIT] author = Mistral-small (non-premium, restraint-guarded)
+    [wait] n=3 busy=true intim=false stuck=false t+30s pending=none
+  pg> [GROK-LIT] Grok de-calc editor: 4/5 surgical fixes applied (~120 tok rewritten, not whole-scene)
+  pg> [GROK-LIT] purple-lens applied to Small-authored prose
+  pg> [GEN-FAIL:LI-DESCRIPTION:DRAFT] ✓ LI picturable in draft — 6 categories incl. image-defining (hair, faceDescribed, build, handsOther, posture, clothing). (:FINAL below is authoritative.)
+  pg> [CALCIFIED-MOVE:REPAIR] provider=mistral-small repair_failed · path=mistral · moves=scar,phrase:dorian finally looked at me, and the room reset itself by a half-degree. · still present: scar
+  pg> [CALCIFIED-MOVE:FALLBACK] provider=mistral-small (path=mistral→fallback) — repair tiers failed → deterministically removed 1 offending sentence(s) (607w→602w) — now CLEAN.
+  pg> [PHRASE-LEDGER:LEAK] 1 banned phrase(s) slipped through scene 3 (now re-banked as reskins):
+  pg> [TENSION GATE] Attempt 1/1 (FORCE INJECT) — reasons: [NO_EARLY_ANCHOR: no character reacts to or addresses the player within first 180 words, NO_FORCING_FUNCTION: no character directly demands, challenges, or pressures the player, NO_URGENCY: scene lacks forcing function + intensity needed to create
+  pg> [GROK-LIT] author = Mistral-small (non-premium, restraint-guarded)
+  pg> [GROK-LIT] Grok de-calc editor: 5/5 surgical fixes applied (~150 tok rewritten, not whole-scene)
+  pg> [GROK-LIT] purple-lens applied to Small-authored prose
+  pg> [TENSION GATE] from-scaffold re-author applied (4961 chars · Mistral for non-premium). [SCENE-BUDGET:ROUTE-REGEN]
+  pg> [TENSION GATE] HARD_FAIL after 1 attempts — accepting scene: [WEAK_OPENING: opening lacks both structural tensio…kes / asymmetry / emotion / demand) — fully inert, NO_EARLY_ANCHOR: no character reacts to or addresses the player within first 180 words]
+  pg> [CRISIS:STALL] OK — 1 crisis-advance marker(s), attraction 4.6/1k. The crisis must keep moving THROUGH the relationship, not park behind attraction prose.
+  pg> [SCENE-COST] LLM calls: 12 (grok:3 gpt:5 other:4)
+  pg> [SCENE-BUDGET:COUNT] scene=3a9a1653-4aba-48e2-95ec-4c43b98a3895:3 repair=0 polish=0 fallback=0 regen=0 cosmetic=0/2 (conditional spent=0/4) skipped=[] provenance=original
+  pg> [SCENE-COST] by category: prose+spine $0.0289 ×10 · audits (instrumentation) $0.0003 ×2
+    [probe] scene 4: probe did not refresh in 30s — entity metric will be stale for this scene
+[literary] scene 4 captured  len=3435 tc=2 inIssue=3
+[literary] -> advancing to scene 5  act="I confront him with what I found."
+    [click] btn=true disabled=false adv=false intim=false fc=0
+    [wait] n=4 busy=false intim=false stuck=false t+0s pending=none
+  pg> [PLOT-CONTRACT:ENABLED] true
+  pg> [PLOT-CONTRACT:BEATS] scene=3 count=3
+  pg> [PLOT-CONTRACT:DIRECTIVE] scene=3 beats=3
+  pg> [GROK-LIT] author = Mistral-small (non-premium, restraint-guarded)
+    [wait] n=4 busy=true intim=false stuck=false t+30s pending=none
+  pg> [GROK-LIT] Grok de-calc editor: 1/1 surgical fixes applied (~30 tok rewritten, not whole-scene)
+  pg> [GROK-LIT] purple-lens applied to Small-authored prose
+  pg> [GEN-FAIL:LI-DESCRIPTION:DRAFT] ✓ LI picturable in draft — 6 categories incl. image-defining (hair, faceDescribed, build, handsOther, posture, clothing). (:FINAL below is authoritative.)
+  pg> [CALCIFIED-MOVE:REPAIR] provider=mistral-small repair_failed · path=mistral · moves=scar · still present: scar
+  pg> [CALCIFIED-MOVE:FALLBACK] provider=mistral-small (path=mistral→fallback) — repair tiers failed → deterministically removed 1 offending sentence(s) (904w→901w) — now CLEAN.
+  pg> [PHRASE-LEDGER:LEAK] 1 banned phrase(s) slipped through scene 4 (now re-banked as reskins):
+  pg> [CRISIS:STALL] OK — 0 crisis-advance marker(s), attraction 3.1/1k. The crisis must keep moving THROUGH the relationship, not park behind attraction prose.
+  pg> [SCENE-COST] LLM calls: 10 (grok:2 gpt:6 other:2)
+  pg> [SCENE-BUDGET:COUNT] scene=3a9a1653-4aba-48e2-95ec-4c43b98a3895:4 repair=0 polish=0 fallback=0 regen=0 cosmetic=0/2 (conditional spent=0/4) skipped=[] provenance=original
+  pg> [SCENE-COST] by category: prose+spine $0.0165 ×8 · audits (instrumentation) $0.0004 ×2
+[literary] scene 5 captured  len=5115 tc=3 inIssue=4
+[literary] -> advancing to scene 6  act="I let my guard down for a moment, then cat"
+    [click] btn=true disabled=false adv=false intim=false fc=0
+    [wait] n=5 busy=false intim=false stuck=false t+0s pending=none
+  pg> [PLOT-CONTRACT:ENABLED] true
+  pg> [PLOT-CONTRACT:BEATS] scene=4 count=3
+  pg> [PLOT-CONTRACT:DIRECTIVE] scene=4 beats=3
+  pg> [GROK-LIT] author = Grok 4.3 (premium/tentpole)
+DRIVER-ERR page.waitForTimeout: Target page, context or browser has been closed

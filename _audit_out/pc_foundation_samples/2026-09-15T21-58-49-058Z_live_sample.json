@@ -1,0 +1,122 @@
+{
+  "at": "2026-09-15T21:58:49.058Z",
+  "starterId": "starter_first_sacrifice",
+  "storyId": "832289d0-6946-4190-a4b0-178a3e26f57d",
+  "contractViolation": null,
+  "attempts": [
+    {
+      "kind": "pcBodyBible",
+      "attemptNumber": 1,
+      "model": "ministral-8b-2512",
+      "role": "STRUCTURE_GENERATOR",
+      "maxTokens": 2500,
+      "temperature": 0.6,
+      "sysBytes": 9079,
+      "usrBytes": 28435,
+      "responseStatus": 200,
+      "responseUsage": {
+        "prompt_tokens": 9545,
+        "total_tokens": 11062,
+        "completion_tokens": 1517,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "service_tier": "standard"
+      }
+    },
+    {
+      "kind": "bodyTellReroll",
+      "attemptNumber": 1,
+      "model": "mistral-small-latest",
+      "role": "STRUCTURE_GENERATOR",
+      "maxTokens": 500,
+      "temperature": 0.9,
+      "sysBytes": 1243,
+      "usrBytes": 33,
+      "responseStatus": 429
+    }
+  ],
+  "parsedBible": {
+    "age": 26,
+    "height": "five-foot-two, with the lean, wiry grace of someone who has spent years climbing the Veilwood’s lower branches",
+    "build": "lithe and compact, the kind of body that moves like it was designed for precision rather than power",
+    "hair": "dark auburn, the color of dried autumn leaves, usually braided into a loose, uneven plait that falls just past her shoulders",
+    "complexion": "porcelain-pale, with a faint, freckled dusting across the bridge of her nose that only deepens when she’s outside for too long",
+    "face": "a fine-boned face carved from pale marble, with high cheekbones and a sharp jawline that makes her look perpetually on the verge of thought rather than emotion",
+    "signature_feature": "a single gold-capped tooth that glints when she grins, a reminder of a childhood promise she made to herself: *‘I will never be afraid of what I cannot control.’*",
+    "visual_anchor": {
+      "focus": "the eyes",
+      "detail": "her irises are a deep, shifting violet that seems to darken when she’s concentrating, like the petals of a flower closing in the light"
+    },
+    "second_celebrated_feature": "the way her fingers twitch when she’s nervous, always folding and refolding the hem of her ceremonial sash until it’s smooth as silk",
+    "stress_tic": "she spins a single silver ring around her left middle finger in tight, deliberate circles when she’s trying to steady herself",
+    "desire_tell": "her breath hitches just before she speaks, and her lower lip presses against her teeth for half a second—something she’s never noticed anyone else do",
+    "impatience_tell": "her foot taps out a slow, uneven rhythm against the ground, like she’s counting down the seconds until something changes",
+    "confidence_tell": "she stops apologizing mid-sentence, as if realizing she doesn’t need to explain herself anymore",
+    "vulnerability_tell": "when she’s exposed, her hands press together at the small of her back, as if trying to fold herself into something smaller",
+    "emotional_weather": "meaning-hungry—every misaligned wish, every bent spell, every public failure feels like a puzzle piece waiting to be placed, even when it shouldn’t matter",
+    "core_contradiction": "she believes in the Institution’s rules but has already broken them twice—once in secret, once in front of everyone",
+    "private_hope": "to be allowed to make a mistake in front of someone who won’t judge her for it",
+    "current_crisis": {
+      "event": "the Dohkar is publicly charging her with shaping Seren’s wish and interfering, and the Provast’s questioning has already made it clear she’s being held accountable before the formal inquiry even begins",
+      "time_since_impact": "since this morning",
+      "hottest_emotion": "shame",
+      "immediate_want": "to prove she didn’t do anything wrong before the Dohkar rules",
+      "immediate_fear": "everyone thinking she’s the kind of Favored who bends the rules for her own gain",
+      "refusal": "to let Julian see her like this—weak, desperate, *human*—before the inquiry even starts",
+      "li_complication": "Julian is the only person who knows the full weight of the Institution’s rules, and the last thing she needs is for him to see her stumble under their pressure"
+    },
+    "wound": {
+      "core": "her estranged sister, Elowen, who left the Favored ranks after a public scandal—Lirael has carried the guilt of not stopping her ever since, even though she was only sixteen",
+      "category": "PUBLIC",
+      "surfacing_hint": "a public failure that forces her to confront the fact she’s just as flawed as the people she’s been training to be perfect"
+    },
+    "signature_habits": [
+      "always counts the steps between the altar and the exit in every ceremony, no matter how many times she’s done it",
+      "never finishes a thought about her sister without trailing off into silence, as if afraid of what might come next",
+      "carries a small, chipped obsidian pendant—her sister’s last gift—hidden beneath her ceremonial sash",
+      "always asks the second question in any conversation, the one that reveals the unspoken",
+      "folds her hands in her lap when she’s lying, even when no one’s looking"
+    ],
+    "self_conscious_feature": "her voice—too soft, too hesitant, the kind that makes people assume she’s not sure of herself, even when she’s the one who knows the rules by heart",
+    "li_keenly_aware_of": [
+      "the way her gold-capped tooth catches the light when she grins, like a secret she’s never told",
+      "the way her fingers tremble when she’s trying to hide it, but only for half a second before she steadies them",
+      "the scent of her perfume—something faintly herbal, like crushed mint and damp earth, that lingers even after she’s moved on"
+    ],
+    "_provenance": {
+      "wound.core": {
+        "basis": "approved_bio",
+        "cites": "A young First Favored apprentice. Today is her first time SUPERVISING another person’s First Sacrifice — responsible for the ritual being conducted correctly, not for the wish itself."
+      },
+      "wound.surfacing_hint": {
+        "basis": "inferred",
+        "cites": ""
+      },
+      "core_contradiction": {
+        "basis": "inferred",
+        "cites": ""
+      },
+      "private_hope": {
+        "basis": "inferred",
+        "cites": ""
+      },
+      "current_crisis.event": {
+        "basis": "approved_scene1",
+        "cites": "the Dohkar charged her with shaping and interfering; the Provast, Julian, publicly claimed Lirael is aligned with her own innocence and has ALREADY questioned her before the assembly — intimately, as an accusation through desirability — until the presiding Dohkar interrupted it as grossly inappropriate."
+      },
+      "current_crisis.immediate_fear": {
+        "basis": "approved_scene1",
+        "cites": "the Dohkar’s charge presumes an interferer; nobody has named one, and Lirael has not said aloud why the wish matters to her."
+      },
+      "current_crisis.li_complication": {
+        "basis": "approved_scene1",
+        "cites": "Julian, the Provast, put The Answer in her hands and questioned her before all; the Dohkar cut it off."
+      },
+      "current_crisis.refusal": {
+        "basis": "approved_scene1",
+        "cites": "the inquiry has NOT yet been opened."
+      }
+    }
+  }
+}

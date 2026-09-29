@@ -302,11 +302,17 @@ const mistralFail = await runScenario('2-mistral-fail', {
   console.log('  [MISTRAL-FAIL _providerTierLog] ' + JSON.stringify(tl.map(x => ({ role: x.role, tier: x.tier, provider: x.provider, attempt: x.attempt, fallbackReason: x.fallbackReason }))));
   // Confirm the empty-content role's fallbackReason specifically names "empty content", and the
   // HTTP-500 roles' fallbackReason specifically names the HTTP status — two distinct failure shapes.
+  // EXAMPLE ROLE CHANGED FROM scaffold TO rplot (Roman 2026-09-16, deferred-CG_SCAFFOLD pass):
+  // scaffold is now ALSO deferred out of handleBeginStory's baked-setup-only run for First
+  // Sacrifice (fires only after Submit, inside _advanceStagedScene — this real-click scenario
+  // never reaches Submit), so it no longer fires here to demonstrate ANY shape. rplot is
+  // unaffected by that change and still fires reliably in this scenario (confirmed in the
+  // HEALTHY scenario's own role list above).
   const pairBondReason = (byRole.pairBond[1] || {}).fallbackReason || '';
-  const scaffoldReason = (byRole.scaffold[1] || {}).fallbackReason || '';
-  ok('MISTRAL-FAIL: the two induced failure SHAPES are both evidenced in fallbackReason text — empty content (pairBond) vs HTTP 500 (scaffold)',
-    /empty content/i.test(pairBondReason) && /HTTP 500/.test(scaffoldReason),
-    JSON.stringify({ pairBondReason, scaffoldReason }));
+  const rplotReason = (byRole.rplot[1] || {}).fallbackReason || '';
+  ok('MISTRAL-FAIL: the two induced failure SHAPES are both evidenced in fallbackReason text — empty content (pairBond) vs HTTP 500 (rplot)',
+    /empty content/i.test(pairBondReason) && /HTTP 500/.test(rplotReason),
+    JSON.stringify({ pairBondReason, rplotReason }));
 }
 
 // ═══════════════════════════════════════════════════════ 3. MISTRAL + GROK FAILURE ═══════════════════════════════════════════════════════

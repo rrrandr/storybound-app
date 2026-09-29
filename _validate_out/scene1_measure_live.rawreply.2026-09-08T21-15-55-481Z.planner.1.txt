@@ -1,0 +1,59 @@
+{
+  "opening_spine": {
+    "pressure_source_type": "moral",
+    "pressure_source": "the oven timer is beeping and the switched label is still visible on the bowl",
+    "hook_object": null,
+    "opening_actor_id": null,
+    "opening_beat": "the oven timer is beeping and the switched label is still visible on the bowl",
+    "rising_beats": ["I reach for the label", "my hands hesitate longer than they should"],
+    "decision_beat": "Rip off the label or leave it and walk away?",
+    "pc_career": "pastry chef",
+    "opening_setting": "bakery kitchen",
+    "environment_elements": ["steel counter", "oven timer"],
+    "li_texture_beat": null,
+    "pc_wound_anchor": "rising beat 1 — hands hesitate on the label",
+    "pc_self_presentation_beat": "opening — I wipe my hands on the apron, the flour streaking like a mark I cannot hide",
+    "scene_want": "wants to clear the counter before the timer finishes",
+    "scene_mission": "Destroy the evidence of the switch before the timer runs out",
+    "reader_state": {
+      "knows": "Testa is alone in the bakery kitchen with a switched label on a bowl and a beeping timer",
+      "believes": "the switched label will expose what she did if not removed",
+      "wondering": "how is she going to survive this",
+      "must_not_confuse": "only Testa is acting; the crisis is the visible label and the timer"
+    },
+    "pc_body_callback": "opening — stress_tic (hands on apron)",
+    "antagonist_body_callback": null,
+    "staged_characters": [
+      { "name": "Testa", "presence": "IN_PERSON", "anchor_beat": "FROM_PC_OPENING_FUSION" }
+    ]
+  },
+  "scene_skeleton": {
+    "character_plus": [],
+    "environment_plus": {
+      "target": "steel counter",
+      "axis": "use",
+      "beat": "steel counter shows repeated wipe marks from hurried cleanings"
+    },
+    "pc_opening_fusion": {
+      "character": "Testa",
+      "placement": "PC_FIRST_EMBODIED_BEAT",
+      "contact": { "verb": "WIPE", "object": "{ENV_TARGET}" },
+      "action": "wiping flour from the steel counter",
+      "pc_lens_operation": "EMOTIONAL_CONCLUSION_BEFORE_EVIDENCE",
+      "character_revelation": "Testa acts before she has decided what the mark means",
+      "environment_pressure": {
+        "grounds": ["env:use", "pc:self"],
+        "text": "the counter's worn surface reminds me the evidence is still mine to erase"
+      }
+    }
+  },
+  "stage_contract": {
+    "v": 1,
+    "participants": [
+      { "ref": "pc:self", "presence": "IN_PERSON" }
+    ],
+    "event_facts": [
+      { "text": "the oven timer beeps while the switched label remains visible", "participants": [ { "ref": "pc:self", "role": "actor" } ] }
+    ]
+  }
+}

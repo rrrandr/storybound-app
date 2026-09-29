@@ -1,0 +1,55 @@
+{
+  "opening_spine": {
+    "pressure_source_type": "moral",
+    "pressure_source": "the recording is playing and my voice is still on it",
+    "hook_object": "recording",
+    "opening_actor_id": null,
+    "opening_beat": "the oven timer ticks and the recording keeps running",
+    "rising_beats": [
+      "I reach for the stop button but my hand stops short",
+      "Rook's proxy left it here knowing exactly what it would do"
+    ],
+    "decision_beat": "erase the recording or let it finish and face what it proves?",
+    "pc_career": "pastry chef",
+    "opening_setting": "bakery kitchen",
+    "environment_elements": ["oven door", "flour-dusted counter"],
+    "li_texture_beat": "beat 2: the way he always squared the papers with both hands before handing them over, and heat low in my belly answered before I could stop it",
+    "pc_wound_anchor": "opening: my hand froze on the button the way it always does when something might leave me behind",
+    "pc_self_presentation_beat": "opening: I braced both palms on the counter, the red of my knuckles showing against the flour, and told myself it looked like someone who could still choose",
+    "scene_want": "wants the recording to stop before it says the rest of what I did",
+    "scene_mission": "destroy the recording before the timer hits zero",
+    "reader_state": {
+      "knows": "Testa is alone in the bakery kitchen with a recording playing that carries her own voice",
+      "believes": "the recording will expose something she did that she cannot take back",
+      "wondering": "why Rook chose to send this exact thing now",
+      "must_not_confuse": "only Testa is in the room and the recording is the thing happening to her"
+    },
+    "pc_body_callback": "opening: stress_tic (hands braced on counter)",
+    "antagonist_body_callback": null,
+    "staged_characters": [
+      { "name": "Testa", "presence": "IN_PERSON", "anchor_beat": "FROM_PC_OPENING_FUSION" }
+    ]
+  },
+  "scene_skeleton": {
+    "character_plus": [],
+    "pc_opening_fusion": {
+      "character": "Testa",
+      "placement": "PC_FIRST_EMBODIED_BEAT",
+      "contact": { "verb": "PRESS", "object": "oven door" },
+      "action": "palm flat against the warm metal",
+      "pc_lens_operation": "INWARD_TRANSLATION_OF_ANOTHER_PERSONS_COST",
+      "character_revelation": "Testa absorbs the cost of exposure as a physical weight before she names it",
+      "environment_pressure": { "grounds": ["env:axis", "pc:self"], "text": "the oven door holds the heat of the day and presses it back into my skin, refusing to let the moment cool" }
+    },
+    "environment_plus": { "axis": "damage", "beat": "oven door shows a hairline crack along the hinge from years of being slammed shut too hard" }
+  },
+  "stage_contract": {
+    "v": 1,
+    "participants": [ { "ref": "pc:self", "presence": "IN_PERSON" } ],
+    "event_facts": [ { "text": "the recording plays in the bakery kitchen", "participants": [ { "ref": "pc:self", "role": "actor" } ] } ],
+    "elements": [
+      { "name": "oven door", "affordance": "FIXTURE" },
+      { "name": "flour-dusted counter", "affordance": "SURFACE" }
+    ]
+  }
+}

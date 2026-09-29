@@ -1,0 +1,23 @@
+{
+  "plannerCalls": 1,
+  "aborted": [],
+  "cost": [
+    {
+      "status": 200,
+      "latencyMs": 21633,
+      "served": "grok-4.3",
+      "prompt_tokens": 18389,
+      "completion_tokens": 529,
+      "reasoning_tokens": 817,
+      "cached_tokens": 192,
+      "usd_list": 0.024308750000000004,
+      "note": "reasoning tokens are included in completion_tokens by xAI; listed separately for the record"
+    }
+  ],
+  "total": 0.024308750000000004,
+  "fatal": "planner stage_contract rejected (absent) — the stage is not established",
+  "pages": 0,
+  "genStage": false,
+  "attempts": 1,
+  "retryReason": null
+}

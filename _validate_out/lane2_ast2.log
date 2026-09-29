@@ -1,0 +1,20 @@
+  GROK_RAW 2450 -> AUTHOR_RETURN 2441 chars (in-author cleanup)
+  author attempts: 1 (winner = last)   post-author links: 0
+
+════ CONSERVATION INVARIANT (byte-exact) ════
+  RAW cross-check (author == first.before) : FAIL
+  changed authoritative mutations          : 0
+  every transition reconciles              : PASS
+  last.after == FINAL_PROSE                : FAIL
+  delivery FINAL_PROSE->formatStory->DELIVERED : PASS
+  events observed: 35  (rawSnap 35 / textSnap 0)
+
+  ❌ HARNESS FAILURE
+  mutation labels: 
+
+════ LANE-2 SNAPSHOT CHAIN (V2, author stubbed) ════
+  RAW    290ba4fe90   2450 chars
+  C1     4ef38ee037   2441 chars   ← _mistralRepairPass [Mistral-small repair]
+  FINAL  4ef38ee037   2441 chars
+
+  total snapshot events: 6  (retained/changed: 1, rejected: 0, no-change: 5)

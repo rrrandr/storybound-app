@@ -1,0 +1,6 @@
+=== tpl3_stage_order · stage_order_dry.mjs · 21:25:15 ===
+tpl3_stage_order: exit=0 · 64 checks · 64 passed · 0 failed · invalid_markers=0 · samples=28 suite_rss_max=330MB free_min=1857MB server_rss_max=85MB
+=== tpl4_skeleton · skeleton_delivery.mjs · 21:34:40 ===
+tpl4_skeleton: exit=0 ·   404 passed · 0 failed · invalid_markers=0 · samples=31 suite_rss_max=2605MB free_min=354MB server_rss_max=87MB
+BOTH GREEN · 21:45:05
+leftover:        0

@@ -1,0 +1,72 @@
+
+=====USER=====
+Analyze this opening scene and generate a VOICE ANCHOR — a concise narration blueprint that will maintain voice consistency across all future scenes.
+
+STORY CONTEXT:
+- World: Fantasy (arcane_binding)
+- Tone: Earnest
+- POV: First
+- Genre: Billionaire
+- Archetype: BEAUTIFUL_RUIN
+
+
+World constraints for Voice Anchor:
+- Prohibit modern astrophysics terminology (black holes, supernovae, quantum)
+- Prohibit modern scientific framing (DNA, evolution, psychology as clinical discipline)
+- Magic must feel sacrificial and embodied, not systematic or academic
+- Metaphors may draw from nature, blood, fate, shadow, flame — never circuits or engines
+
+OPENING SCENE:
+The clearing and I stood at its edge, before the rite would begin. Seren named her sacrifice aloud and made the wish she had rehearsed, and Fate answered the words as spoken. The price was taken in the same breath. The assembly had gathered in a loose ring and no one spoke. I watched the light move across the ground and waited, and the waiting was its own kind of work. I kept my hands still because keeping them still was the only thing left that I could decide. The clearing and I stood at its edge, before the rite would begin. Seren named her sacrifice aloud and made the wish she had rehearsed, and Fate answered the words as spoken. The price was taken in the same breath. The assembly had gathered in a loose ring and no one spoke. I watched the light move across the ground and waited, and the waiting was its own kind of work. I kept my hands still because keeping them still was the only thing left that I could decide. The clearing and I stood at its edge, before the rite would begin. Seren named her sacrifice aloud and made the wish she had rehearsed, and Fate answered the words as spoken. The price was taken in the same breath. The assembly had gathered in a loose ring and no one spoke. I watched the light move across the ground and waited, and the waiting was its own kind of work. I kept my hands still because keeping them still was the only thing left that I could decide. The clearing and I stood at its edge, before the rite would begin. Seren named her sacrifice aloud and
+
+Generate a Voice Anchor with EXACTLY this structure (prose instructions, not metrics):
+
+VOICE ANCHOR
+
+Narrator identity:
+Who is narrating — their relationship to the story, their stance toward events (1-2 sentences)
+
+Observational style:
+• How the narrator perceives and frames what happens (sensory vs analytical vs emotional)
+• How emotional states are conveyed (interior monologue vs behavioral cues vs environmental mirroring)
+
+Emotional stance:
+• The narrator's default emotional posture toward events (detached, invested, amused, grieving, etc.)
+• How that stance shifts under pressure
+
+Cadence:
+• Sentence rhythm tendency (short/punchy vs flowing vs mixed)
+• Pacing pattern (when prose accelerates, when it lingers)
+
+Language constraints:
+• World-specific prohibitions (what vocabulary/imagery is forbidden)
+• Anachronism or register rules
+
+Voice prohibitions:
+• Specific tendencies to avoid (melodrama, generic phrasing, etc.)
+• Anti-patterns that would break this story's voice
+
+Narrator continuity:
+The narrator remembers prior observations and may reference them indirectly in later scenes.
+Observations accumulate across the story and shape how the narrator frames new events.
+The narrator must NEVER summarize past scenes, explain the story, or break immersion.
+Continuity must remain subtle and literary — a quiet awareness, not exposition.
+The narrator speaks as though it has witnessed many versions of similar moments before.
+
+Narrative anticipation:
+The narrator may sense fragile moments where events could unfold in multiple ways.
+These moments may be framed as tension, hesitation, or convergence — noticed, not explained.
+The narrator should observe: moments of choice, emotional turning points, fragile alignments between characters, small events that may reshape the story.
+The narrator must NOT predict outcomes, reveal future events, or state that something will happen.
+Anticipation must remain observational, not prophetic.
+
+Narrative pattern awareness:
+The narrator perceives patterns forming within events rather than merely describing outcomes.
+It notices convergences, hesitations, echoes of earlier moments, and fragile alignments between characters.
+The narrator may recognize when a moment resembles something it has witnessed before.
+This recognition should deepen tension or irony but must never reveal future events or explain the plot.
+The narrator must NOT predict outcomes, state what will happen, summarize the story, or break immersion.
+Pattern awareness should feel like quiet recognition rather than prophecy.
+
+Keep the total anchor between 140–220 tokens. Be specific to THIS story's voice, not generic writing advice.
+Return ONLY the Voice Anchor text, no preamble.

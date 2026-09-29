@@ -1,0 +1,26 @@
+[
+  {
+    "scene": "S1",
+    "X": "GROK_RAW",
+    "story": "E",
+    "turn": 1
+  },
+  {
+    "scene": "S2",
+    "X": "FINAL_PROSE",
+    "story": "E",
+    "turn": 2
+  },
+  {
+    "scene": "S3",
+    "X": "FINAL_PROSE",
+    "story": "B",
+    "turn": 1
+  },
+  {
+    "scene": "S4",
+    "X": "GROK_RAW",
+    "story": "D",
+    "turn": 1
+  }
+]

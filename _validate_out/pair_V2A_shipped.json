@@ -1,0 +1,20 @@
+{
+  "label": "V2A_shipped",
+  "maxTokens": 3000,
+  "secs": 9,
+  "usage": {
+    "prompt_tokens": 85978,
+    "total_tokens": 86454,
+    "completion_tokens": 476,
+    "prompt_tokens_details": {
+      "cached_tokens": 0
+    },
+    "service_tier": "standard"
+  },
+  "costUSD": 0.013182,
+  "reasoningChars": 0,
+  "proseChars": 2009,
+  "finish": "stop",
+  "reasoning": "",
+  "text": "I make my way through the market stall’s tight aisles, the air thick with the scent of crushed spiralgrass beneath the weight of so many voices. My fingers tighten around the folded note in my pocket—the one I shouldn’t have taken from the archives, the one that could undo me if it’s ever traced. The vendor’s stall is a riot of color: bolts of cloth dyed the deep red of blood oranges, jars of honeyed blushery that catch the light, and trinkets of polished bone strung on thin silver wire. The bustle around me feels like a current, pulling me forward even as my pulse thrums in my throat.\n\nA friend lingers near the back, pretending to examine a carved bone comb. I slip the note into her palm when the vendor turns to haggle with another customer, my voice low as I say, “Burn this when you’re alone. Don’t let anyone see it.”\n\nShe tucks it into her sleeve, her eyes flicking up at me with a mix of excitement and dread. “You’re certain?” she whispers back, her voice barely audible over the vendor’s sharp retort about the price of the blushery.\n\nBefore I can answer, a shout cuts through the noise—a vendor arguing with a customer over a chipped cup. The stall’s owner, a broad-shouldered man with a face like a weathered cliff, turns to intervene. The crowd parts just enough for me to catch sight of a figure watching from the edge of the stall, his dark cloak blending into the shadows. A watcher. My breath catches.\n\nThe friend’s fingers brush my wrist, her voice barely a murmur. “You need to go. Now.” The note’s weight in her sleeve feels like a lead weight against my ribs.\n\nA vendor shouts about the quality of the blushery, the sound sharp and insistent. The colors of the stall—reds, golds, deep purples—blur together as my heart races. I force myself to move, to blend into the crowd, but I can feel the watcher’s gaze like a brand between my shoulders.\n\nI turn away, my steps quickening, but not before I hear my friend’s urgent whisper cut through the noise: “Lirael—”\n\nI don’t look back."
+}

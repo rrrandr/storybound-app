@@ -1,0 +1,15 @@
+{
+  "r": {
+    "action": "a beat of dazed, wordless hesitation",
+    "dialogue": "a confused, wordless sound that never resolves into words",
+    "tier": "isolated",
+    "streak": 1,
+    "fields": {
+      "action": "pure",
+      "dialogue": "pure"
+    },
+    "fallbackGenerated": true
+  },
+  "strong": "",
+  "dir": "UNCLEAR PLAYER INPUT — ACKNOWLEDGE LIGHTLY (HARD RULE):\nWhat the player submitted did not resolve into an intelligible move. It has already been\nreplaced with a description of an unclear sound or gesture; that description is what you\nhave, and the player's literal keystrokes are NOT canon and must never be quoted.\n- Give it ONE light beat: an unfinished sound, a gesture that does not land, a breath.\n- Do NOT treat it as a deliberate, meaningful statement, and do NOT build the scene on it.\n  Nobody interprets it, answers its content, or acts on it as though it carried intent.\n- Do NOT comment on the player, the interface, or the input itself. Stay in the world.\n- The scene continues on its own momentum. Let the other characters carry it.\n\n"
+}

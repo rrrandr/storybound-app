@@ -1,0 +1,140 @@
+{"kind":"stop","phaseTag":"authorSourcedOnlyForProof","reason":"reserving phase \"authorSourcedOnlyForProof\" ($0.0538) would push total reserved ($0.0000) past the ceiling ($0.0000)","at":1790153657946}
+{"kind":"stop","phaseTag":"scaffold","reason":"UNSOURCED PRICING for ministral-8b-2512 (role scaffold) in phase \"scaffold\" — treated as a STOP, not $0, per the explicit requirement","at":1790153657946}
+{"kind":"reserved","phaseTag":"authorSourcedOnlyForProof","phaseUsd":0.053750000000000006,"runningTotalUsd":0.053750000000000006,"at":1790153657946}
+{"kind":"stop","phaseTag":"author","reason":"UNSOURCED PRICING for ministral-8b-2512 (role author) in phase \"author\" — treated as a STOP, not $0, per the explicit requirement","at":1790153657946}
+{"kind":"stop","phaseTag":"authorSourcedOnlyForProof","reason":"reserving phase \"authorSourcedOnlyForProof\" ($0.0538) would push total reserved ($0.0000) past the ceiling ($0.0000)","at":1790153795901}
+{"kind":"stop","phaseTag":"scaffold","reason":"UNSOURCED PRICING for ministral-8b-2512 (role scaffold) in phase \"scaffold\" — treated as a STOP, not $0, per the explicit requirement","at":1790153795902}
+{"kind":"reserved","phaseTag":"authorSourcedOnlyForProof","phaseUsd":0.053750000000000006,"runningTotalUsd":0.053750000000000006,"at":1790153795902}
+{"kind":"stop","phaseTag":"author","reason":"UNSOURCED PRICING for ministral-8b-2512 (role author) in phase \"author\" — treated as a STOP, not $0, per the explicit requirement","at":1790153795902}
+{"kind":"stop","phaseTag":"authorSourcedOnlyForProof","reason":"reserving phase \"authorSourcedOnlyForProof\" ($0.0538) would push total reserved ($0.0000) past the ceiling ($0.0000)","at":1790154231465}
+{"kind":"stop","phaseTag":"scaffold","reason":"UNSOURCED PRICING for ministral-8b-2512 (role scaffold) in phase \"scaffold\" — treated as a STOP, not $0, per the explicit requirement","at":1790154231466}
+{"kind":"reserved","phaseTag":"authorSourcedOnlyForProof","phaseUsd":0.053750000000000006,"runningTotalUsd":0.053750000000000006,"at":1790154231466}
+{"kind":"stop","phaseTag":"author","reason":"UNSOURCED PRICING for ministral-8b-2512 (role author) in phase \"author\" — treated as a STOP, not $0, per the explicit requirement","at":1790154231466}
+{"kind":"stop","phaseTag":"authorSourcedOnlyForProof","reason":"reserving phase \"authorSourcedOnlyForProof\" ($0.0538) would push total reserved ($0.0000) past the ceiling ($0.0000)","at":1790155556929}
+{"kind":"stop","phaseTag":"scaffold","reason":"UNSOURCED PRICING for ministral-8b-2512 (role scaffold) in phase \"scaffold\" — treated as a STOP, not $0, per the explicit requirement","at":1790155556929}
+{"kind":"reserved","phaseTag":"authorSourcedOnlyForProof","phaseUsd":0.053750000000000006,"runningTotalUsd":0.053750000000000006,"at":1790155556929}
+{"kind":"stop","phaseTag":"author","reason":"UNSOURCED PRICING for ministral-8b-2512 (role author) in phase \"author\" — treated as a STOP, not $0, per the explicit requirement","at":1790155556929}
+{"kind":"stop","phaseTag":"authorSourcedOnlyForProof","reason":"reserving phase \"authorSourcedOnlyForProof\" ($0.0538) would push total reserved ($0.0000) past the ceiling ($0.0000)","at":1790194188495}
+{"kind":"stop","phaseTag":"scaffold","reason":"UNSOURCED PRICING for ministral-8b-2512 (role scaffold) in phase \"scaffold\" — treated as a STOP, not $0, per the explicit requirement","at":1790194188496}
+{"kind":"reserved","phaseTag":"authorSourcedOnlyForProof","phaseUsd":0.053750000000000006,"runningTotalUsd":0.053750000000000006,"at":1790194188496}
+{"kind":"stop","phaseTag":"author","reason":"UNSOURCED PRICING for ministral-8b-2512 (role author) in phase \"author\" — treated as a STOP, not $0, per the explicit requirement","at":1790194188496}
+{"kind":"stop","phaseTag":"authorSourcedOnlyForProof","reason":"reserving phase \"authorSourcedOnlyForProof\" ($0.0538) would push total reserved ($0.0000) past the ceiling ($0.0000)","at":1790196340278}
+{"kind":"stop","phaseTag":"scaffold","reason":"UNSOURCED PRICING for ministral-8b-2512 (role scaffold) in phase \"scaffold\" — treated as a STOP, not $0, per the explicit requirement","at":1790196340278}
+{"kind":"reserved","phaseTag":"authorSourcedOnlyForProof","phaseUsd":0.053750000000000006,"runningTotalUsd":0.053750000000000006,"at":1790196340282}
+{"kind":"stop","phaseTag":"author","reason":"UNSOURCED PRICING for ministral-8b-2512 (role author) in phase \"author\" — treated as a STOP, not $0, per the explicit requirement","at":1790196340282}
+{"kind":"stop","phaseTag":"authorSourcedOnlyForProof","reason":"reserving phase \"authorSourcedOnlyForProof\" ($0.0538) would push total reserved ($0.0000) past the ceiling ($0.0000)","at":1790199901989}
+{"kind":"stop","phaseTag":"scaffold","reason":"UNSOURCED PRICING for ministral-8b-2512 (role scaffold) in phase \"scaffold\" — treated as a STOP, not $0, per the explicit requirement","at":1790199901990}
+{"kind":"reserved","phaseTag":"authorSourcedOnlyForProof","phaseUsd":0.053750000000000006,"runningTotalUsd":0.053750000000000006,"at":1790199901990}
+{"kind":"stop","phaseTag":"author","reason":"UNSOURCED PRICING for ministral-8b-2512 (role author) in phase \"author\" — treated as a STOP, not $0, per the explicit requirement","at":1790199901990}
+{"kind":"stop","phaseTag":"authorSourcedOnlyForProof","reason":"reserving phase \"authorSourcedOnlyForProof\" ($0.0538) would push total reserved ($0.0000) past the ceiling ($0.0000)","at":1790203925812}
+{"kind":"stop","phaseTag":"scaffold","reason":"UNSOURCED PRICING for ministral-8b-2512 (role scaffold) in phase \"scaffold\" — treated as a STOP, not $0, per the explicit requirement","at":1790203925813}
+{"kind":"reserved","phaseTag":"authorSourcedOnlyForProof","phaseUsd":0.053750000000000006,"runningTotalUsd":0.053750000000000006,"at":1790203925813}
+{"kind":"stop","phaseTag":"author","reason":"UNSOURCED PRICING for ministral-8b-2512 (role author) in phase \"author\" — treated as a STOP, not $0, per the explicit requirement","at":1790203925813}
+{"kind":"stop","phaseTag":"authorSourcedOnlyForProof","reason":"reserving phase \"authorSourcedOnlyForProof\" ($0.0538) would push total reserved ($0.0000) past the ceiling ($0.0000)","at":1790206538232}
+{"kind":"stop","phaseTag":"scaffold","reason":"UNSOURCED PRICING for ministral-8b-2512 (role scaffold) in phase \"scaffold\" — treated as a STOP, not $0, per the explicit requirement","at":1790206538232}
+{"kind":"reserved","phaseTag":"authorSourcedOnlyForProof","phaseUsd":0.053750000000000006,"runningTotalUsd":0.053750000000000006,"at":1790206538233}
+{"kind":"stop","phaseTag":"author","reason":"UNSOURCED PRICING for ministral-8b-2512 (role author) in phase \"author\" — treated as a STOP, not $0, per the explicit requirement","at":1790206538233}
+{"kind":"stop","phaseTag":"authorSourcedOnlyForProof","reason":"reserving phase \"authorSourcedOnlyForProof\" ($0.0538) would push total reserved ($0.0000) past the ceiling ($0.0000)","at":1790206565924}
+{"kind":"stop","phaseTag":"scaffold","reason":"UNSOURCED PRICING for ministral-8b-2512 (role scaffold) in phase \"scaffold\" — treated as a STOP, not $0, per the explicit requirement","at":1790206565924}
+{"kind":"reserved","phaseTag":"authorSourcedOnlyForProof","phaseUsd":0.053750000000000006,"runningTotalUsd":0.053750000000000006,"at":1790206565924}
+{"kind":"stop","phaseTag":"author","reason":"UNSOURCED PRICING for ministral-8b-2512 (role author) in phase \"author\" — treated as a STOP, not $0, per the explicit requirement","at":1790206565924}
+{"kind":"stop","phaseTag":"authorSourcedOnlyForProof","reason":"reserving phase \"authorSourcedOnlyForProof\" ($0.0538) would push total reserved ($0.0000) past the ceiling ($0.0000)","at":1790206639519}
+{"kind":"stop","phaseTag":"scaffold","reason":"UNSOURCED PRICING for ministral-8b-2512 (role scaffold) in phase \"scaffold\" — treated as a STOP, not $0, per the explicit requirement","at":1790206639519}
+{"kind":"reserved","phaseTag":"authorSourcedOnlyForProof","phaseUsd":0.053750000000000006,"runningTotalUsd":0.053750000000000006,"at":1790206639519}
+{"kind":"stop","phaseTag":"author","reason":"UNSOURCED PRICING for ministral-8b-2512 (role author) in phase \"author\" — treated as a STOP, not $0, per the explicit requirement","at":1790206639519}
+{"kind":"stop","phaseTag":"authorSourcedOnlyForProof","reason":"reserving phase \"authorSourcedOnlyForProof\" ($0.0538) would push total reserved ($0.0000) past the ceiling ($0.0000)","at":1790207858143}
+{"kind":"stop","phaseTag":"scaffold","reason":"UNSOURCED PRICING for ministral-8b-2512 (role scaffold) in phase \"scaffold\" — treated as a STOP, not $0, per the explicit requirement","at":1790207858143}
+{"kind":"reserved","phaseTag":"authorSourcedOnlyForProof","phaseUsd":0.053750000000000006,"runningTotalUsd":0.053750000000000006,"at":1790207858144}
+{"kind":"stop","phaseTag":"author","reason":"UNSOURCED PRICING for ministral-8b-2512 (role author) in phase \"author\" — treated as a STOP, not $0, per the explicit requirement","at":1790207858144}
+{"kind":"stop","phaseTag":"authorSourcedOnlyForProof","reason":"reserving phase \"authorSourcedOnlyForProof\" ($0.0538) would push total reserved ($0.0000) past the ceiling ($0.0000)","at":1790210711310}
+{"kind":"stop","phaseTag":"scaffold","reason":"UNSOURCED PRICING for ministral-8b-2512 (role scaffold) in phase \"scaffold\" — treated as a STOP, not $0, per the explicit requirement","at":1790210711310}
+{"kind":"reserved","phaseTag":"authorSourcedOnlyForProof","phaseUsd":0.053750000000000006,"runningTotalUsd":0.053750000000000006,"at":1790210711310}
+{"kind":"stop","phaseTag":"author","reason":"UNSOURCED PRICING for ministral-8b-2512 (role author) in phase \"author\" — treated as a STOP, not $0, per the explicit requirement","at":1790210711311}
+{"kind":"stop","phaseTag":"authorSourcedOnlyForProof","reason":"reserving phase \"authorSourcedOnlyForProof\" ($0.0538) would push total reserved ($0.0000) past the ceiling ($0.0000)","at":1790211847136}
+{"kind":"stop","phaseTag":"scaffold","reason":"UNSOURCED PRICING for ministral-8b-2512 (role scaffold) in phase \"scaffold\" — treated as a STOP, not $0, per the explicit requirement","at":1790211847137}
+{"kind":"reserved","phaseTag":"authorSourcedOnlyForProof","phaseUsd":0.053750000000000006,"runningTotalUsd":0.053750000000000006,"at":1790211847137}
+{"kind":"stop","phaseTag":"author","reason":"UNSOURCED PRICING for ministral-8b-2512 (role author) in phase \"author\" — treated as a STOP, not $0, per the explicit requirement","at":1790211847137}
+{"kind":"stop","phaseTag":"authorSourcedOnlyForProof","reason":"reserving phase \"authorSourcedOnlyForProof\" ($0.0538) would push total reserved ($0.0000) past the ceiling ($0.0000)","at":1790213388477}
+{"kind":"stop","phaseTag":"scaffold","reason":"UNSOURCED PRICING for ministral-8b-2512 (role scaffold) in phase \"scaffold\" — treated as a STOP, not $0, per the explicit requirement","at":1790213388478}
+{"kind":"reserved","phaseTag":"authorSourcedOnlyForProof","phaseUsd":0.053750000000000006,"runningTotalUsd":0.053750000000000006,"at":1790213388478}
+{"kind":"stop","phaseTag":"author","reason":"UNSOURCED PRICING for ministral-8b-2512 (role author) in phase \"author\" — treated as a STOP, not $0, per the explicit requirement","at":1790213388478}
+{"kind":"stop","phaseTag":"authorSourcedOnlyForProof","reason":"reserving phase \"authorSourcedOnlyForProof\" ($0.0538) would push total reserved ($0.0000) past the ceiling ($0.0000)","at":1790217178084}
+{"kind":"stop","phaseTag":"scaffold","reason":"UNSOURCED PRICING for ministral-8b-2512 (role scaffold) in phase \"scaffold\" — treated as a STOP, not $0, per the explicit requirement","at":1790217178085}
+{"kind":"reserved","phaseTag":"authorSourcedOnlyForProof","phaseUsd":0.053750000000000006,"runningTotalUsd":0.053750000000000006,"at":1790217178085}
+{"kind":"stop","phaseTag":"author","reason":"UNSOURCED PRICING for ministral-8b-2512 (role author) in phase \"author\" — treated as a STOP, not $0, per the explicit requirement","at":1790217178085}
+{"kind":"stop","phaseTag":"authorSourcedOnlyForProof","reason":"reserving phase \"authorSourcedOnlyForProof\" ($0.0538) would push total reserved ($0.0000) past the ceiling ($0.0000)","at":1790221934782}
+{"kind":"stop","phaseTag":"scaffold","reason":"UNSOURCED PRICING for ministral-8b-2512 (role scaffold) in phase \"scaffold\" — treated as a STOP, not $0, per the explicit requirement","at":1790221934783}
+{"kind":"reserved","phaseTag":"authorSourcedOnlyForProof","phaseUsd":0.053750000000000006,"runningTotalUsd":0.053750000000000006,"at":1790221934783}
+{"kind":"stop","phaseTag":"author","reason":"UNSOURCED PRICING for ministral-8b-2512 (role author) in phase \"author\" — treated as a STOP, not $0, per the explicit requirement","at":1790221934783}
+{"kind":"stop","phaseTag":"authorSourcedOnlyForProof","reason":"reserving phase \"authorSourcedOnlyForProof\" ($0.0538) would push total reserved ($0.0000) past the ceiling ($0.0000)","at":1790226035925}
+{"kind":"stop","phaseTag":"scaffold","reason":"UNSOURCED PRICING for ministral-8b-2512 (role scaffold) in phase \"scaffold\" — treated as a STOP, not $0, per the explicit requirement","at":1790226035926}
+{"kind":"reserved","phaseTag":"authorSourcedOnlyForProof","phaseUsd":0.053750000000000006,"runningTotalUsd":0.053750000000000006,"at":1790226035926}
+{"kind":"stop","phaseTag":"author","reason":"UNSOURCED PRICING for ministral-8b-2512 (role author) in phase \"author\" — treated as a STOP, not $0, per the explicit requirement","at":1790226035926}
+{"kind":"stop","phaseTag":"authorSourcedOnlyForProof","reason":"reserving phase \"authorSourcedOnlyForProof\" ($0.0538) would push total reserved ($0.0000) past the ceiling ($0.0000)","at":1790233067326}
+{"kind":"stop","phaseTag":"scaffold","reason":"UNSOURCED PRICING for ministral-8b-2512 (role scaffold) in phase \"scaffold\" — treated as a STOP, not $0, per the explicit requirement","at":1790233067326}
+{"kind":"reserved","phaseTag":"authorSourcedOnlyForProof","phaseUsd":0.053750000000000006,"runningTotalUsd":0.053750000000000006,"at":1790233067326}
+{"kind":"stop","phaseTag":"author","reason":"UNSOURCED PRICING for ministral-8b-2512 (role author) in phase \"author\" — treated as a STOP, not $0, per the explicit requirement","at":1790233067326}
+{"kind":"stop","phaseTag":"authorSourcedOnlyForProof","reason":"reserving phase \"authorSourcedOnlyForProof\" ($0.0538) would push total reserved ($0.0000) past the ceiling ($0.0000)","at":1790233507153}
+{"kind":"stop","phaseTag":"scaffold","reason":"UNSOURCED PRICING for ministral-8b-2512 (role scaffold) in phase \"scaffold\" — treated as a STOP, not $0, per the explicit requirement","at":1790233507153}
+{"kind":"reserved","phaseTag":"authorSourcedOnlyForProof","phaseUsd":0.053750000000000006,"runningTotalUsd":0.053750000000000006,"at":1790233507153}
+{"kind":"stop","phaseTag":"author","reason":"UNSOURCED PRICING for ministral-8b-2512 (role author) in phase \"author\" — treated as a STOP, not $0, per the explicit requirement","at":1790233507153}
+{"kind":"stop","phaseTag":"authorSourcedOnlyForProof","reason":"reserving phase \"authorSourcedOnlyForProof\" ($0.0538) would push total reserved ($0.0000) past the ceiling ($0.0000)","at":1790233701913}
+{"kind":"stop","phaseTag":"scaffold","reason":"UNSOURCED PRICING for ministral-8b-2512 (role scaffold) in phase \"scaffold\" — treated as a STOP, not $0, per the explicit requirement","at":1790233701913}
+{"kind":"reserved","phaseTag":"authorSourcedOnlyForProof","phaseUsd":0.053750000000000006,"runningTotalUsd":0.053750000000000006,"at":1790233701913}
+{"kind":"stop","phaseTag":"author","reason":"UNSOURCED PRICING for ministral-8b-2512 (role author) in phase \"author\" — treated as a STOP, not $0, per the explicit requirement","at":1790233701913}
+{"kind":"stop","phaseTag":"authorSourcedOnlyForProof","reason":"reserving phase \"authorSourcedOnlyForProof\" ($0.0538) would push total reserved ($0.0000) past the ceiling ($0.0000)","at":1790233728732}
+{"kind":"stop","phaseTag":"scaffold","reason":"UNSOURCED PRICING for ministral-8b-2512 (role scaffold) in phase \"scaffold\" — treated as a STOP, not $0, per the explicit requirement","at":1790233728732}
+{"kind":"reserved","phaseTag":"authorSourcedOnlyForProof","phaseUsd":0.053750000000000006,"runningTotalUsd":0.053750000000000006,"at":1790233728733}
+{"kind":"stop","phaseTag":"author","reason":"UNSOURCED PRICING for ministral-8b-2512 (role author) in phase \"author\" — treated as a STOP, not $0, per the explicit requirement","at":1790233728733}
+{"kind":"stop","phaseTag":"authorSourcedOnlyForProof","reason":"reserving phase \"authorSourcedOnlyForProof\" ($0.0538) would push total reserved ($0.0000) past the ceiling ($0.0000)","at":1790235007858}
+{"kind":"stop","phaseTag":"scaffold","reason":"UNSOURCED PRICING for ministral-8b-2512 (role scaffold) in phase \"scaffold\" — treated as a STOP, not $0, per the explicit requirement","at":1790235007858}
+{"kind":"reserved","phaseTag":"authorSourcedOnlyForProof","phaseUsd":0.053750000000000006,"runningTotalUsd":0.053750000000000006,"at":1790235007858}
+{"kind":"stop","phaseTag":"author","reason":"UNSOURCED PRICING for ministral-8b-2512 (role author) in phase \"author\" — treated as a STOP, not $0, per the explicit requirement","at":1790235007858}
+{"kind":"stop","phaseTag":"authorSourcedOnlyForProof","reason":"reserving phase \"authorSourcedOnlyForProof\" ($0.0538) would push total reserved ($0.0000) past the ceiling ($0.0000)","at":1790235326916}
+{"kind":"stop","phaseTag":"scaffold","reason":"UNSOURCED PRICING for ministral-8b-2512 (role scaffold) in phase \"scaffold\" — treated as a STOP, not $0, per the explicit requirement","at":1790235326917}
+{"kind":"reserved","phaseTag":"authorSourcedOnlyForProof","phaseUsd":0.053750000000000006,"runningTotalUsd":0.053750000000000006,"at":1790235326917}
+{"kind":"stop","phaseTag":"author","reason":"UNSOURCED PRICING for ministral-8b-2512 (role author) in phase \"author\" — treated as a STOP, not $0, per the explicit requirement","at":1790235326917}
+{"kind":"stop","phaseTag":"authorSourcedOnlyForProof","reason":"reserving phase \"authorSourcedOnlyForProof\" ($0.0538) would push total reserved ($0.0000) past the ceiling ($0.0000)","at":1790240536805}
+{"kind":"stop","phaseTag":"scaffold","reason":"UNSOURCED PRICING for ministral-8b-2512 (role scaffold) in phase \"scaffold\" — treated as a STOP, not $0, per the explicit requirement","at":1790240536806}
+{"kind":"reserved","phaseTag":"authorSourcedOnlyForProof","phaseUsd":0.053750000000000006,"runningTotalUsd":0.053750000000000006,"at":1790240536806}
+{"kind":"stop","phaseTag":"author","reason":"UNSOURCED PRICING for ministral-8b-2512 (role author) in phase \"author\" — treated as a STOP, not $0, per the explicit requirement","at":1790240536807}
+{"kind":"stop","phaseTag":"authorSourcedOnlyForProof","reason":"reserving phase \"authorSourcedOnlyForProof\" ($0.0538) would push total reserved ($0.0000) past the ceiling ($0.0000)","at":1790240706008}
+{"kind":"stop","phaseTag":"scaffold","reason":"UNSOURCED PRICING for ministral-8b-2512 (role scaffold) in phase \"scaffold\" — treated as a STOP, not $0, per the explicit requirement","at":1790240706008}
+{"kind":"reserved","phaseTag":"authorSourcedOnlyForProof","phaseUsd":0.053750000000000006,"runningTotalUsd":0.053750000000000006,"at":1790240706008}
+{"kind":"stop","phaseTag":"author","reason":"UNSOURCED PRICING for ministral-8b-2512 (role author) in phase \"author\" — treated as a STOP, not $0, per the explicit requirement","at":1790240706008}
+{"kind":"stop","phaseTag":"authorSourcedOnlyForProof","reason":"reserving phase \"authorSourcedOnlyForProof\" ($0.0538) would push total reserved ($0.0000) past the ceiling ($0.0000)","at":1790240747257}
+{"kind":"stop","phaseTag":"scaffold","reason":"UNSOURCED PRICING for ministral-8b-2512 (role scaffold) in phase \"scaffold\" — treated as a STOP, not $0, per the explicit requirement","at":1790240747257}
+{"kind":"reserved","phaseTag":"authorSourcedOnlyForProof","phaseUsd":0.053750000000000006,"runningTotalUsd":0.053750000000000006,"at":1790240747257}
+{"kind":"stop","phaseTag":"author","reason":"UNSOURCED PRICING for ministral-8b-2512 (role author) in phase \"author\" — treated as a STOP, not $0, per the explicit requirement","at":1790240747257}
+{"kind":"stop","phaseTag":"authorSourcedOnlyForProof","reason":"reserving phase \"authorSourcedOnlyForProof\" ($0.0538) would push total reserved ($0.0000) past the ceiling ($0.0000)","at":1790241758142}
+{"kind":"stop","phaseTag":"scaffold","reason":"UNSOURCED PRICING for ministral-8b-2512 (role scaffold) in phase \"scaffold\" — treated as a STOP, not $0, per the explicit requirement","at":1790241758142}
+{"kind":"reserved","phaseTag":"authorSourcedOnlyForProof","phaseUsd":0.053750000000000006,"runningTotalUsd":0.053750000000000006,"at":1790241758143}
+{"kind":"stop","phaseTag":"author","reason":"UNSOURCED PRICING for ministral-8b-2512 (role author) in phase \"author\" — treated as a STOP, not $0, per the explicit requirement","at":1790241758143}
+{"kind":"stop","phaseTag":"authorSourcedOnlyForProof","reason":"reserving phase \"authorSourcedOnlyForProof\" ($0.0538) would push total reserved ($0.0000) past the ceiling ($0.0000)","at":1790269001553}
+{"kind":"stop","phaseTag":"scaffold","reason":"UNSOURCED PRICING for ministral-8b-2512 (role scaffold) in phase \"scaffold\" — treated as a STOP, not $0, per the explicit requirement","at":1790269001554}
+{"kind":"reserved","phaseTag":"authorSourcedOnlyForProof","phaseUsd":0.053750000000000006,"runningTotalUsd":0.053750000000000006,"at":1790269001554}
+{"kind":"stop","phaseTag":"author","reason":"UNSOURCED PRICING for ministral-8b-2512 (role author) in phase \"author\" — treated as a STOP, not $0, per the explicit requirement","at":1790269001554}
+{"kind":"stop","phaseTag":"authorSourcedOnlyForProof","reason":"reserving phase \"authorSourcedOnlyForProof\" ($0.0538) would push total reserved ($0.0000) past the ceiling ($0.0000)","at":1790269070215}
+{"kind":"stop","phaseTag":"scaffold","reason":"UNSOURCED PRICING for ministral-8b-2512 (role scaffold) in phase \"scaffold\" — treated as a STOP, not $0, per the explicit requirement","at":1790269070215}
+{"kind":"reserved","phaseTag":"authorSourcedOnlyForProof","phaseUsd":0.053750000000000006,"runningTotalUsd":0.053750000000000006,"at":1790269070215}
+{"kind":"stop","phaseTag":"author","reason":"UNSOURCED PRICING for ministral-8b-2512 (role author) in phase \"author\" — treated as a STOP, not $0, per the explicit requirement","at":1790269070215}
+{"kind":"stop","phaseTag":"authorSourcedOnlyForProof","reason":"reserving phase \"authorSourcedOnlyForProof\" ($0.0538) would push total reserved ($0.0000) past the ceiling ($0.0000)","at":1790269239184}
+{"kind":"stop","phaseTag":"scaffold","reason":"UNSOURCED PRICING for ministral-8b-2512 (role scaffold) in phase \"scaffold\" — treated as a STOP, not $0, per the explicit requirement","at":1790269239184}
+{"kind":"reserved","phaseTag":"authorSourcedOnlyForProof","phaseUsd":0.053750000000000006,"runningTotalUsd":0.053750000000000006,"at":1790269239184}
+{"kind":"stop","phaseTag":"author","reason":"UNSOURCED PRICING for ministral-8b-2512 (role author) in phase \"author\" — treated as a STOP, not $0, per the explicit requirement","at":1790269239184}
+{"kind":"stop","phaseTag":"authorSourcedOnlyForProof","reason":"reserving phase \"authorSourcedOnlyForProof\" ($0.0538) would push total reserved ($0.0000) past the ceiling ($0.0000)","at":1790271004185}
+{"kind":"stop","phaseTag":"scaffold","reason":"UNSOURCED PRICING for ministral-8b-2512 (role scaffold) in phase \"scaffold\" — treated as a STOP, not $0, per the explicit requirement","at":1790271004185}
+{"kind":"reserved","phaseTag":"authorSourcedOnlyForProof","phaseUsd":0.053750000000000006,"runningTotalUsd":0.053750000000000006,"at":1790271004186}
+{"kind":"stop","phaseTag":"author","reason":"UNSOURCED PRICING for ministral-8b-2512 (role author) in phase \"author\" — treated as a STOP, not $0, per the explicit requirement","at":1790271004186}
+{"kind":"stop","phaseTag":"authorSourcedOnlyForProof","reason":"reserving phase \"authorSourcedOnlyForProof\" ($0.0538) would push total reserved ($0.0000) past the ceiling ($0.0000)","at":1790273128697}
+{"kind":"stop","phaseTag":"scaffold","reason":"UNSOURCED PRICING for ministral-8b-2512 (role scaffold) in phase \"scaffold\" — treated as a STOP, not $0, per the explicit requirement","at":1790273128697}
+{"kind":"reserved","phaseTag":"authorSourcedOnlyForProof","phaseUsd":0.053750000000000006,"runningTotalUsd":0.053750000000000006,"at":1790273128697}
+{"kind":"stop","phaseTag":"author","reason":"UNSOURCED PRICING for ministral-8b-2512 (role author) in phase \"author\" — treated as a STOP, not $0, per the explicit requirement","at":1790273128697}
+{"kind":"stop","phaseTag":"authorSourcedOnlyForProof","reason":"reserving phase \"authorSourcedOnlyForProof\" ($0.0538) would push total reserved ($0.0000) past the ceiling ($0.0000)","at":1790276988529}
+{"kind":"stop","phaseTag":"scaffold","reason":"UNSOURCED PRICING for ministral-8b-2512 (role scaffold) in phase \"scaffold\" — treated as a STOP, not $0, per the explicit requirement","at":1790276988529}
+{"kind":"reserved","phaseTag":"authorSourcedOnlyForProof","phaseUsd":0.053750000000000006,"runningTotalUsd":0.053750000000000006,"at":1790276988530}
+{"kind":"stop","phaseTag":"author","reason":"UNSOURCED PRICING for ministral-8b-2512 (role author) in phase \"author\" — treated as a STOP, not $0, per the explicit requirement","at":1790276988530}
+{"kind":"stop","phaseTag":"authorSourcedOnlyForProof","reason":"reserving phase \"authorSourcedOnlyForProof\" ($0.0538) would push total reserved ($0.0000) past the ceiling ($0.0000)","at":1790277802653}
+{"kind":"stop","phaseTag":"scaffold","reason":"UNSOURCED PRICING for ministral-8b-2512 (role scaffold) in phase \"scaffold\" — treated as a STOP, not $0, per the explicit requirement","at":1790277802653}
+{"kind":"reserved","phaseTag":"authorSourcedOnlyForProof","phaseUsd":0.053750000000000006,"runningTotalUsd":0.053750000000000006,"at":1790277802653}
+{"kind":"stop","phaseTag":"author","reason":"UNSOURCED PRICING for ministral-8b-2512 (role author) in phase \"author\" — treated as a STOP, not $0, per the explicit requirement","at":1790277802653}

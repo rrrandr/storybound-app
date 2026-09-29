@@ -1,0 +1,331 @@
+info: Loading the stylesheet 'https://p.typekit.net/p.css?s=1&k=bzl3zth&ht=tk&f=720.721.722.22354.22355.30184.30186.45912&a=23276850&app=typekit&e=css' violates the following Content Security Policy directive: "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://use.typekit.net". Note th
+log: [ORCHESTRATION] Storybound AI Orchestration Client initialized
+log: [BAKED] starter-scenes.js loaded — 3 package(s), 2 still PLACEHOLDER: starter_the_first_taste, starter_glass_house
+log: [GN DEV] Dev tools IIFE executing...
+log: %c[Card Designer] Ready — Ctrl+Shift+D to toggle | _resetCardDesigner() to clear mods color: #d4a844
+info: Executing inline script violates the following Content Security Policy directive 'script-src 'self' https://cdn.jsdelivr.net https://js.stripe.com https://use.typekit.net'. Either the 'unsafe-inline' keyword, a hash ('sha256-rh22l1VHiHeOFds7l3h60nicRfgju77rXlx3IPUVD+M='), or a nonce ('nonce-...') is
+log: [FATE] DOMContentLoaded — initializing
+log: [BETA] beta_session_started {"ua":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/","storyId":null,"fateMode":null,"turnCount":0,"userLanguage":"en","storyLanguage":"en","generationLanguage":"en","storyPath":"normal
+log: [CONTENT REGISTER] FULL_WEB (full) — platform: web
+log: %c[LENS] perception-lens editorial pass ready — author-prompt-free, rotation+de-prime guarded color:#7ec77e;font-weight:bold
+log: %c[CGLENS] CG signature-lens pass ready — caption-only, ≤1/scene, shared anti-calc/CDS color:#7ec77e;font-weight:bold
+log: [Phase1LI] UI wired (collapse cover + name-input reactivity)
+log: %c[GROK:HONEST] harness ready color:#7ec77e;font-weight:bold
+log: %c[STORYBOUND TELEMETRY] Console helpers ready:
+  copyConsole()              → copy all captured logs (last 5000)
+  copyConsole({filter:"NIL"})→ copy filtered subset
+  copyConsole({limit:50})    → copy last N lines
+  dumpNILState()             → print + copy current NIL/ERA/OAS state
+  clearConsoleB
+log: %c[GROK:HONEST] harness ready ✓ — run: await window._scene1GrokHonestTest({pairs:3}) color:#7ec77e;font-weight:bold
+log: [GEMMA_TURN] Turn-based collaborative system initialized.
+log: [GEMMA_READ_ORB] Read Orb + Stay-in-Character system initialized.
+log: [NMD] Seeded Volume 1 with Entry 1.
+log: %c[FF-SPECULATIVE] phase-2 harness ready — await window._ffSpeculativeAudit({source:"The Winds of Winter", embody:"Arya", baseContinuity:"book"}) color:#7ec77e;font-weight:bold
+log: %c[FF-CROSSOVER] harness ready — await window._ffCrossoverModeAudit() · await window._ffCrossoverAudit({character:"Miles Morales", world:"Old Man Logan"}) color:#7ec77e;font-weight:bold
+log: %c[ARC-AUDIT] harness ready — await window._ffCanonArcAudit({source:"Old Man Logan (2008)", embody:"Logan"}) color:#7ec77e;font-weight:bold
+log: %c[PACING-AUDIT] harness ready — await window._pacingArcAudit() on a loaded ORIGINAL story (or pass {aplot,tier}) color:#7ec77e;font-weight:bold
+log: %c[ORIG-DIVERGE] harness ready — window._origDivergenceAudit() · kill: window.__origDivergence=false color:#7ec77e;font-weight:bold
+log: %c[SPINE:BAKEOFF] harness ready — window._spineModelBakeoff({recommend:true}) color:#7ec77e;font-weight:bold
+log: %c[SPINE:ADV] harness ready — window._spineAdvancementBakeoff({rows,recommend:true}) color:#7ec77e;font-weight:bold
+log: [CG:HELPERS] ready=true
+log: [STORY:SHAPE] Button label updated: Enter Your Story | canContinue: false
+log: [ModeCards] Initialized 4 mode cards
+log: [Corridor] Initializing 9-row corridor system with DOM mount/unmount...
+log: [Corridor] Header height measurement returned 0 — keeping default (80px), will retry on next trigger
+log: [Corridor] Stored 2 elements for stage: authorship
+log: [Corridor] Stored 3 elements for stage: identity
+log: [Corridor] Stored 3 elements for stage: playermask
+log: [Corridor] Stored 3 elements for stage: storybeau
+log: [Corridor] Stored 1 elements for stage: world
+log: [Corridor] Stored 1 elements for stage: tone
+log: [Corridor] Stored 1 elements for stage: pressure
+log: [Corridor] Stored 3 elements for stage: pov
+log: [Corridor] Stored 2 elements for stage: length
+log: [Corridor] Stored 2 elements for stage: dynamic
+log: [Corridor] Stored 1 elements for stage: beginstory
+log: [Sparkle] Started emitter: guidedFateSparkles (profile: guidedFate, continuous)
+log: [Authorship] Choice reset
+log: [Corridor] Authorship mount: Reset authorship choice for re-selection
+log: [Corridor] DOM updated. Mounted row 0: authorship
+log: [Ghost Steps] Initialized 8 ghost step placeholders
+log: [DSP] Hidden — stage authorship
+log: [Corridor Nav] Navigation affordances initialized
+log: [Corridor] Initialization complete. Active row: 0
+log: [Corridor] Row store initialized with 11 stages
+log: [ENTITLEMENT] syncTierFromAccess: {access: free, tier: free, subscriptionTier: null, subscribed: false, keyholeMarked: false}
+log: [GOOD_REASONS] Mechanic + library variant system initialized.
+log: [REINCARNATION] System initialized
+log: [FATE_EVENT] System initialized. Active: false
+log: [PROMO] Seasonal promotions initialized. Active: none
+log: [DevHUD] Dev HUD ready — press ` to toggle
+log: [BOOT] Complete — flushed 0 deferred task(s)
+log: [QA] Not enabled — host: localhost | _isQaHost: true | _devBypass: false
+info: Connecting to 'http://sb-test.localhost/rest/v1/profiles?select=tier%2Cfortunes%2Cis_subscriber%2Csubscription_tier%2Cage_confirmed%2Ctos_version%2Cprivacy_version%2Cadult_ack_version%2Cromance_preferences%2Cavoidances%2Cfirst_tempt_fate_vision_triggered%2Cattraction_profile%2Cbilling_status%2Cbilli
+info: Connecting to 'http://sb-test.localhost/rest/v1/profiles?select=tier%2Cfortunes%2Cis_subscriber%2Csubscription_tier%2Cage_confirmed%2Ctos_version%2Cprivacy_version%2Cadult_ack_version%2Cromance_preferences%2Cavoidances%2Cfirst_tempt_fate_vision_triggered%2Cattraction_profile%2Cbilling_status%2Cbilli
+log: [SUMMON:ALIGN] figure: left=-110, bottom=-159, w=217, h=516 | bell: bottom=710, left=12, viewport=720
+log: [ENTITLEMENT] syncTierFromAccess: {access: sub, tier: storied, subscriptionTier: chosen, subscribed: true, keyholeMarked: false}
+log: Profile hydrated. Subscribed: true | Tier: storied | Keyhole: false | Fortunes: 9999999 | Resonance: Quiet
+info: Connecting to 'http://sb-test.localhost/rest/v1/purchase_intents?select=*&user_id=eq.00000000-0000-0000-0000-000000000001&status=eq.completed&resumed_at=is.null&order=created_at.desc&limit=1' violates the following Content Security Policy directive: "connect-src 'self' https://*.supabase.co wss://*.
+info: Connecting to 'http://sb-test.localhost/rest/v1/purchase_intents?select=*&user_id=eq.00000000-0000-0000-0000-000000000001&status=eq.completed&resumed_at=is.null&order=created_at.desc&limit=1' violates the following Content Security Policy directive: "connect-src 'self' https://*.supabase.co wss://*.
+log: [BOOT] Found unresumed purchase intent: undefined | type: undefined
+info: Connecting to 'http://sb-test.localhost/rest/v1/purchase_intents?id=eq.undefined' violates the following Content Security Policy directive: "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.stripe.com https://*.googleapis.com". The policy is report-only, so the violation has 
+info: Connecting to 'http://sb-test.localhost/rest/v1/purchase_intents?id=eq.undefined' violates the following Content Security Policy directive: "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.stripe.com https://*.googleapis.com". The policy is report-only, so the violation has 
+info: Connecting to 'http://sb-test.localhost/rest/v1/profiles?select=tier%2Cfortunes%2Cis_subscriber%2Csubscription_tier%2Cage_confirmed%2Ctos_version%2Cprivacy_version%2Cadult_ack_version%2Cromance_preferences%2Cavoidances%2Cfirst_tempt_fate_vision_triggered%2Cattraction_profile%2Cbilling_status%2Cbilli
+info: Connecting to 'http://sb-test.localhost/rest/v1/profiles?select=tier%2Cfortunes%2Cis_subscriber%2Csubscription_tier%2Cage_confirmed%2Ctos_version%2Cprivacy_version%2Cadult_ack_version%2Cromance_preferences%2Cavoidances%2Cfirst_tempt_fate_vision_triggered%2Cattraction_profile%2Cbilling_status%2Cbilli
+log: [ENTITLEMENT] syncTierFromAccess: {access: sub, tier: storied, subscriptionTier: chosen, subscribed: true, keyholeMarked: false}
+log: Profile hydrated. Subscribed: true | Tier: storied | Keyhole: false | Fortunes: 9999999 | Resonance: Quiet
+info: Connecting to 'http://sb-test.localhost/rest/v1/purchase_intents?select=*&user_id=eq.00000000-0000-0000-0000-000000000001&status=in.%28completed%2Cpending%29&order=created_at.desc&limit=1' violates the following Content Security Policy directive: "connect-src 'self' https://*.supabase.co wss://*.sup
+info: Connecting to 'http://sb-test.localhost/rest/v1/purchase_intents?select=*&user_id=eq.00000000-0000-0000-0000-000000000001&status=in.%28completed%2Cpending%29&order=created_at.desc&limit=1' violates the following Content Security Policy directive: "connect-src 'self' https://*.supabase.co wss://*.sup
+log: [CHECKOUT_RETURN] Success return (localStorage fallback) — tier: null | story: null | has pending state: false
+log: [CHECKOUT_RETURN] Corridor complete (no saved story) — auto-beginning literary story
+log: [BeginStory] handleBeginStory() called
+log: [ISSUE-PURCHASE] charged 60F (issue_purchase_literary, issue=1, opid=2d8f101c-055d-4ec6-bc44-0c283d452f1b)
+log: [FB-AUTOBIND] Canonical LI synthesized: fb_li_canon | archetype: BEAUTIFUL_RUIN
+log: [DECK_MANDATE] OFF — state.fateAnchorPresent is falsy (resolveFateAnchor() may not have been called for this story)
+log: [BeginStory] DEBUG state.picks: {"world":"Modern","tone":"Earnest","genre":"Billionaire","pressure":"PowerControl","flavor":"Billionaire","dynamic":"Enemies","era":null,"pov":"First"}
+log: [BeginStory] DEBUG state.archetype: {"primary":"BEAUTIFUL_RUIN","modifier":null,"bound":true,"canonicalLIId":"fb_li_canon","boundAtScene":0}
+log: [BeginStory] DEBUG state.mode: solo state.storyLength: null
+log: [BeginStory] Past _beginStoryInProgress guard, entering main flow
+log: [OPENING:TEMP] selected=HOT_CRISIS · DEV-FORCED (localhost — set window._forceHotOpener=false to restore the roll)
+log: [ACCESS:RESOLVER] Decision: {"decisionId":"NEW_HAS_FORTUNES","allowed":true,"costType":"fortune","reason":"has_fortunes","uiAction":"none","meta":{"requiresPremiumWorld":false,"hasUsableFortunesForNewStory":true,"globalFortuneCount":0,"storyId":null,"isNewStory":true,"isContinuation":false,"entryMod
+warning: [Corridor] Unresolved rows: playermask, length
+log: [BeginStory] EXITING — corridor validation failed
+log: [BeginStory] DEBUG corridorSelections: []
+info: Connecting to 'http://sb-test.localhost/rest/v1/user_events' violates the following Content Security Policy directive: "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.stripe.com https://*.googleapis.com". The policy is report-only, so the violation has been logged but no fu
+info: Connecting to 'http://sb-test.localhost/rest/v1/user_events' violates the following Content Security Policy directive: "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.stripe.com https://*.googleapis.com". The policy is report-only, so the violation has been logged but no fu
+log: [BETA] geo_gate_decision {"country":null,"signal":"ip","decision":"dev_allow","mode":"log","blocked":false,"storyId":null,"fateMode":null,"turnCount":0,"userLanguage":"en","storyLanguage":"en","generationLanguage":"en","story
+info: Connecting to 'http://sb-test.localhost/rest/v1/profiles?select=tier%2Cfortunes%2Cis_subscriber%2Csubscription_tier%2Cage_confirmed%2Ctos_version%2Cprivacy_version%2Cadult_ack_version%2Cromance_preferences%2Cavoidances%2Cfirst_tempt_fate_vision_triggered%2Cattraction_profile%2Cbilling_status%2Cbilli
+info: Connecting to 'http://sb-test.localhost/rest/v1/profiles?select=tier%2Cfortunes%2Cis_subscriber%2Csubscription_tier%2Cage_confirmed%2Ctos_version%2Cprivacy_version%2Cadult_ack_version%2Cromance_preferences%2Cavoidances%2Cfirst_tempt_fate_vision_triggered%2Cattraction_profile%2Cbilling_status%2Cbilli
+log: [ENTITLEMENT] syncTierFromAccess: {access: sub, tier: storied, subscriptionTier: chosen, subscribed: true, keyholeMarked: false}
+log: Profile hydrated. Subscribed: true | Tier: storied | Keyhole: false | Fortunes: 9999999 | Resonance: Quiet
+log: [CHECKOUT_RETURN] Late profile re-sync (4000ms) — fortunes: 9999999 | subscribed: true
+log: [TEMPT:CRACKLE] segmented into 2 discrete crackles
+log: [SOUND] AudioContext unlocked, state: running
+log: [LORE-LEDGER] scene 1 · candidates=0 glossed=0 ledger=0
+log: [ENTITLEMENT] syncTierFromAccess: {access: sub, tier: storied, subscriptionTier: chosen, subscribed: true, keyholeMarked: false}
+log: [ENTITLEMENT] syncTierFromAccess: {access: sub, tier: storied, subscriptionTier: chosen, subscribed: true, keyholeMarked: false}
+log: [ENTITLEMENT] applyLengthLocks: {access: sub, currentStoryLength: fling, cardsFound: 0}
+log: [ENTITLEMENT] syncTierFromAccess: {access: sub, tier: storied, subscriptionTier: chosen, subscribed: true, keyholeMarked: false}
+log: [ENTITLEMENT] syncTierFromAccess: {access: sub, tier: storied, subscriptionTier: chosen, subscribed: true, keyholeMarked: false}
+log: [ENTITLEMENT] applyLengthLocks: {access: sub, currentStoryLength: fling, cardsFound: 0}
+log: [READER-MODE] OFF — present-tense play resumes
+log: [DECK_MANDATE] OFF — state.fateAnchorPresent is falsy (resolveFateAnchor() may not have been called for this story)
+warning: [SCENE-AMB] classifier returned unknown tag: {} → neutral_quiet
+log: [FATE:ENGAGEMENT] submit#1 mode=literary | reliance=0.00 (0clicks/1submits) | distinctThisTurn=0 | pauseAfterClick=- | hedging=no
+log: [OWNERSHIP] scene 2 — lead=-1.5 (obj=0 rel=1.5) | unset → mixed
+log: [AGENCY] engaged (act: 74 ch, dia: 0 ch)
+log: [GHOST] Fast override: in-story signals now dominant
+log: [SAFETY_REWRITE] theatrical_mischief (deterministic). Flavor: "the kind of provocation that deserves applause". Input: "I lean in and kiss him. I reach out and touch his arm, pulling him closer. ..."
+log: [PLAYER-IMPACT] turn 2 — score=0 mustReact=false
+log: [PROMPT-PROFILE] STRATEGY_PASS · gpt-4o-mini · prompt=0 reasoning=0 visible=0 · turn 2
+log: [ST-CONSTRAINT] scene: 3 storyLength: fling allowed: ST1-ST1 llm: undefined final: ST1
+warning: [STRATEGY_PASS] Missing top-level keys: power_vector_shift, world_artifact_to_surface, tone_pressure, petition
+log: [PASS_ROUTING] Tier 1, ST: ST3, complexity: 1, reason: low complexity
+log: [DIRECTIVES] Persistent directive cache refreshed (scene 2 )
+warning: [NARRATIVE] state.callbackLedger had non-array shape (legacy foreshadow-seed corruption) — resetting to []
+log: [COMMIT-SCENE:SKIP] plan-scene=2 reason=no-prior-transition
+log: [DECK_MANDATE] OFF — state.fateAnchorPresent is falsy (resolveFateAnchor() may not have been called for this story)
+log: [VOICE] Profile initialized for Theo (BEAUTIFUL_RUIN)
+log: [PYRAMID] Scene 3 [VoiceInterior]: 8/12 directives (ARC:3 REL:2 ENERGY:0 WORLD:1 VOICE:2) (4 dropped by global cap)
+log: [HUMAN_ANCHOR] Generated: "keeps a line of credit open for a struggling former employee without record of the debt" (quiet_goodness, Modern) [CONTRADICTION]
+log: [DOOM] Generated: "career scandal that would destroy both reputations" (resonance: sacrifice, world: Modern)
+log: [LI:GESTURE] Hierarchy assigned: primary=jaw_tendon | secondary=glass_rim | rare=thumb_to_lip(intimate)
+log: [COMMITTED-TRUTH:DEV-FORCE] gate bypassed (localhost/dev or __forceCommittedTruth=true)
+log: [COMMITTED-TRUTH:SEED] about=doppelganger_trauma family=hidden_identity/identity_history truth="The protagonist physically resembles someone the LI lost; the testing is fear of losing again." pool-size=5
+log: [ADAPTIVE LENGTH] {sceneIndex: 2, commitmentScore: 0, storyMode: participatory, densityScalar: 1.00, targetRange: 730-900}
+log: [SCENE1_MODE] orbit_entry (derived from liArrival=FROM_START)
+log: [FF-CANON-AUTH] false reason=nonff
+log: [HUMOR-SIG] primary=rare_withheld (archetype=BEAUTIFUL_RUIN)
+log: [HONEY-POT] Trigger conditions not met or random gate failed — no agenda this story
+log: [PHRASE-LEDGER] seeded 9 starter cooldown item(s).
+log: [TIER-ROUTE] scene 3 → HEAVY (tier HEAVY) → HEAVY prompt
+warning: [STORY-GEN-DEBUG] turn-generation-fullSys exceeds soft limit: 206043 chars (limit: 50000)
+log: [DIRECTIVE-SIZES] fullSys=206043c(~51511t) sysPrompt=0c sceneDirectives=15508c unmeasured(turn-literal+picturability+act/dia)=34270c | top: scene1Contract=66451  intentTransmutation=20440  inl:literaryCraft=13216  explicitTolerance=7933  inl:liAttractionTexture=7195  attractionAnchor=6936  turn:inst
+log: [PROMPT-TIER] scene 3 → HEAVY (route=HEAVY) · reasons=first_kiss_acceptance · safety=context_missing(bibles) · actual=51511t projected=51511t savings=0t (0.0%)
+log: [PROMPT-TIER:ROLLUP] scenes=1 (HEAVY=1 GROK=0 LITE=0) · actual=52k projected=52k savings=0.0k (0.0%)
+log: [PROMPT-TIER:MASS-BY-TIER] HEAVY after 1 scene(s)
+log:   1. scene1Contract avg=16.6k max=16.6k total=16.6k
+log:   2. intentTransmutation avg=5.1k max=5.1k total=5.1k [always-kept]
+log:   3. inl:literaryCraft avg=3.3k max=3.3k total=3.3k [always-kept]
+log:   4. explicitTolerance avg=2.0k max=2.0k total=2.0k
+log:   5. inl:liAttractionTexture avg=1.8k max=1.8k total=1.8k [always-kept]
+log:   6. attractionAnchor avg=1.7k max=1.7k total=1.7k
+log:   7. turn:instructionBlock avg=1.5k max=1.5k total=1.5k [always-kept]
+log:   8. persistentCache avg=975t max=975t total=975t [always-kept]
+log:   9. inl:signaturePhraseBan avg=935t max=935t total=935t [always-kept]
+log:   10. inl:liPrivateExplanation avg=827t max=827t total=827t [always-kept]
+log:   11. storyPullEnforcement avg=747t max=747t total=747t
+log:   12. inl:liInitiative avg=742t max=742t total=742t [always-kept]
+log:   13. inl:liSocialProof avg=677t max=677t total=677t [always-kept]
+log:   14. inl:phraseMarker avg=579t max=579t total=579t [always-kept]
+log:   15. humorSignature avg=571t max=571t total=571t [always-kept]
+log: [CACHE:ROUTE] story=safetyfix-A-ed2pl7 turn=2 route=HEAVY builtHeavyFullSys=206043c sentSystem=206043c (HEAVY fullSys)
+log: [MODEL] Literary prose → requested=grok-4-1-fast-reasoning (Grok author [served model logged as MODEL:SERVED] + Grok de-calc editor + Haiku repair — Sonnet/Opus cost-deprecated)
+log: [GROK-LIT] author = Mistral-small (non-premium, restraint-guarded)
+log: [A-PLOT:SHAPE] selected: Impossible Promise (OPEN_VEIN × BEAUTIFUL_RUIN) — legacy pressure-first pick
+log: [A-PLOT:READER-Q] Which betrayal will he choose?
+log: [A-PLOT:PRESSURE-TYPE] incompatible obligations whose collision is accelerating
+log: [A-PLOT:ROMANCE-ENGINE] classified as: SHARED_HISTORY (Shared History) — Scene 1 question: Why does this specific person still occupy space in her head — and why does remembering him still do something to her body?
+log: [CRISIS] category=MORAL_CATASTROPHE (dedicated persistent cursor — no repeat until all 6 cycle)
+log: [A-PLOT] provider chain (Grok-first, health-aware): Grok-4.1-reasoning → GPT-4o-mini → GPT-4o → DeepSeek-V4-Pro
+log: [PROMPT-PROFILE] author · mistral-small-latest · prompt=0 reasoning=0 visible=0 · turn 2
+log: [A-PLOT] generated via Grok-4.1-reasoning (8ms)
+warning: [A-PLOT] First-attempt validation failed: [missing_goal, missing_namedClock, missing_antagonistOrAntiForce, missing_stakesIfFail, missing_stakesIfWin, missing_milestones, antagonistSubject_missing, milestones_not_array, specificity_missing_named_thing, specificity_missing_measurable_variable, specif
+warning: [A-PLOT:DUMP] first-attempt parsed output (validation rejected): 
+  goal:                      (missing) 
+  namedClock:                (missing) 
+  antagonistOrAntiForce:     (missing) 
+  pcWound:                   (missing) 
+  liWound:                   (missing) 
+  woundSurfacingMechanism:   (miss
+log: [PROMPT-PROFILE] narrative_author · mock · prompt=0 reasoning=0 visible=0 · turn 2
+log: [MODEL:SERVED] role=NARRATIVE_AUTHOR requestedModel=grok-4-1-fast-reasoning servedModel=mock reasoning=false reasoningTokens=0
+log: [GROK-LIT] Grok de-calc editor: 0/0 surgical fixes applied (~0 tok rewritten, not whole-scene)
+warning: [A-PLOT:DUMP] correction-attempt parsed output (validation rejected again): 
+  goal:                      (missing) 
+  namedClock:                (missing) 
+  antagonistOrAntiForce:     (missing) 
+  pcWound:                   (missing) 
+  liWound:                   (missing) 
+  woundSurfacingMechani
+warning: [A-PLOT] antagonist classification still invalid after the correction attempt (antagonistSubject_kind_invalid:UNKNOWN) — DEGRADING to UNKNOWN. The plot is kept; no identity and no portfolio will be minted for this antagonist.
+error: [A-PLOT] Init failed (story continues without A-plot): A-plot correction produced no usable goal at all: missing_goal, missing_namedClock, missing_antagonistOrAntiForce, missing_stakesIfFail, missing_stakesIfWin, missing_milestones, milestones_not_array, specificity_missing_named_thing, specificity_
+log: [PROMPT-PROFILE] repair · mistral-small-latest · prompt=0 reasoning=0 visible=0 · turn 2
+warning: [REPAIR] Mistral-small repair via mistral-small rejected (empty/invalid/meta-leak) — falling back to gpt-4o-mini
+log: [PROMPT-PROFILE] mistral_small_repair · gpt-4o-mini · prompt=0 reasoning=0 visible=0 · turn 2
+log: [GROK-LIT] purple-lens applied to Small-authored prose
+log: [PHRASE-MARKER] mode=literary scene=3 markers_emitted=0 markers_harvested=0 scene_words=26 markers_per_1k_words=0
+log: [PREWRITE] author_appendix=false fallback_generated=false
+log: [DECISION] _repairLIRelationalValue ENTERED
+log: [DECISION] _repairLIPicturability ENTERED
+log: [PC-PICT] VALIDATE-ONLY (default) — reporting, not writing.
+log: [DECISION] _repairInterlocutorPicturability ENTERED
+log: [DECISION] _repairCalcifiedMoves ENTERED
+log: [PARAGRAPH OWNERSHIP] scene3 full 1 paragraphs (heuristic)
+  ¶ 1  PLOT · Setting       "The room held its breath along with them, the quiet …"
+[SCENE:NARRATIVE REAL ESTATE] scene3 full
+  Procedural Plot         0%
+  Worldbuilding         100%
+  Self Analysis           0%
+  LI Presence (object)    0%
+log: [DESC:LEDGER] issue=safetyfix-A-ed2pl7:1 scene=1 · eyeColor=0/1 greySilver=0/1 widowsPeak=0/1 pcHair=0/1 chandelier/ballroom=0/2 galaEntrance=0/2 events=[] · this scene +{"liEyeColor":0,"liGreySilver":0,"widowsPeak":0,"pcHair":0,"chandeliersBallroom":0,"galaEntrance":0}
+warning: [FlavorPhysics] Scene lacks world mechanic evidence, regenerating once: Scene does not express flavor physics for "small_town". Expected keywords: gossip, neighbor, reputation, town, everyone knows...
+log: [MODEL-ROUTE:PROSE] provider=mistral-small task=line_edit callsite=cheap-edit:flavor-physics
+warning: [CHEAP-EDIT] flavor-physics DRIFTED (len 148→2 or opening changed) — keeping the ORIGINAL draft rather than re-rolling.
+log: [LINE-EDIT] SEMANTIC label "flavor-physics" — pen off by default; reporting, not rewriting. Restore with window._semanticRewritePenOff = false.
+log: [ToneDrift] Turn validation failed (validate-only, no regen): [TONE_DRIFT: Prose lacks basic emotional presence (Earnest baseline)]
+log: [ToneDrift] Metrics: found 0 markers, need 2
+log: [PRESSURE QUALITY] {hasStakes: false, hasAsymmetry: true, hasUncertainty: false, hasEmotionalCharge: false, hasDemand: false}
+log: [TENSION AUDIT] {scene: 2, desire: false, resistance: false, player: true, uncertainty: false}
+warning: [TENSION GATE] Attempt 1/1 (FORCE INJECT) — reasons: [NO_ACTIVE_DESIRE: no character wants something NOW, NO_RESISTANCE: nothing blocks the desire, NO_UNCERTAINTY: outcome is predetermined or trivial, NO_EARLY_ANCHOR: no character reacts to or addresses the player within first 180 words, NO_FORCING_
+log: [GROK-LIT] author = Mistral-small (non-premium, restraint-guarded)
+log: [PROMPT-PROFILE] author · mistral-small-latest · prompt=0 reasoning=0 visible=0 · turn 2
+log: [PROMPT-PROFILE] narrative_author · mock · prompt=0 reasoning=0 visible=0 · turn 2
+log: [MODEL:SERVED] role=NARRATIVE_AUTHOR requestedModel=grok-4-1-fast-reasoning servedModel=mock reasoning=false reasoningTokens=0
+log: [GROK-LIT] Grok de-calc editor: 0/0 surgical fixes applied (~0 tok rewritten, not whole-scene)
+log: [PROMPT-PROFILE] repair · mistral-small-latest · prompt=0 reasoning=0 visible=0 · turn 2
+warning: [REPAIR] Mistral-small repair via mistral-small rejected (empty/invalid/meta-leak) — falling back to gpt-4o-mini
+log: [PROMPT-PROFILE] mistral_small_repair · gpt-4o-mini · prompt=0 reasoning=0 visible=0 · turn 2
+log: [GROK-LIT] purple-lens applied to Small-authored prose
+log: [TENSION GATE] VALIDATE-ONLY (default) — low tension detected; reporting, not re-authoring. Restore with window._tensionPenOff = false.
+log: [PRESSURE QUALITY] {hasStakes: false, hasAsymmetry: true, hasUncertainty: false, hasEmotionalCharge: false, hasDemand: false}
+log: [TENSION AUDIT] {scene: 2, desire: false, resistance: false, player: true, uncertainty: false}
+error: [TENSION GATE] HARD_FAIL after 1 attempts — accepting scene: [NO_ACTIVE_DESIRE: no character wants something NOW, NO_RESISTANCE: nothing blocks the desire, NO_UNCERTAINTY: outcome is predetermined or trivial, NO_EARLY_ANCHOR: no character reacts to or addresses the player within first 180 words, NO_
+log: [PACING AUDIT] WARN: scene_too_short (26 < 730)
+log: [PACING AUDIT] {sceneIndex: 2, wordCount: 26, firstMicroExpressionPosition: -1, firstChoicePosition: -1, wordCountBeforeChoice: 26}
+log: [HOOK AUDIT] ═══ Scene 2 ═══
+log:   HOOK_STATUS: FAIL (NONE)
+log:   ANTI_ADDICTION: PASS 
+log:   PRESSURE_LEVEL: NONE
+log:   ESCALATION_PHASE: PROBE (expected: test, aligned: false)
+log:   DECISION_QUALITY: NONE
+log:   RESOLUTION: HELD
+log:   VARIABILITY: NATURAL
+log:   ENERGY_LEVEL: LOW
+log:   OVERALL: FAIL
+warning:   ISSUES: no valid hook; no pressure detected
+log:   WARNINGS: phase mismatch (expected test, detected PROBE); low energy — mostly description/introspection
+log: [HOOK AUDIT] Severity: CRITICAL
+log: [HOOK ENFORCEMENT] Skipping regen — tension gate already corrected this scene
+log: [STORYTURN] advance HELD by pacing window: scene=4 storyLength=fling current=ST3 window-ceiling=ST2 (raw advance wanted ST4)
+log: [LIT:ST] Storyturn advanced to ST3 (dynamic: fling, scene 3)
+log: [HIDDEN-TRUTH:SUPPRESS] committedTruth seeded; emergent system stays inactive this story
+debug: [EMG] Emotional gradient: 0.0800 | trend: neutral
+log: [DID] Drift: dry_humor at scene 3
+warning: [FOREGROUND:STORY] Scene 4 validator: FAIL [ENDING STRUCTURE: final paragraph lacks a physical…/ brush / hover / etc.) — ending is not embodied., ENDING STRUCTURE: final paragraph contains resolut…The decision must remain UNRESOLVED at scene end., FINAL ACTION VERB: last sentence has no physical, …n
+log: [ROMANCE:PLACEHOLDER] 0 — clean
+log: [ROMANCE:SATURATION] OK — 0 attraction beat(s) (0/1k words). Relationship-gravity channels should carry it; attraction prose is the minority tool.
+log: [ROMANCE:RUMINATION] 0 — OK
+log: [CHARACTER:LI-CONTAMINATION] 0 — clean
+log: [SCENE-DYNAMICS] turn=3 body=1 reused=0 dialogue=0 action=0 decision=0 interrupt=0 reloc=0 env=0 once=0
+log: [FORMAT:AUDIT] source=turn-pre-final-normalize fused=0
+log: [FORMAT:FINAL-NORMALIZE] fired=false (no fused boundaries)
+log: [FORMAT:AUDIT] source=turn-path fused=0
+log: [PROSE:ENUMERATION] pass
+log: [PROSE:QUOTE-MASH] pass
+log: [LORE-LEDGER] scene 4 · candidates=0 glossed=0 ledger=0
+log: [SCENE-LEDGER] +p4 kind=scene issue=1 uid=pg:61f9795b-d67c-4cda-8d58-377156cc9751 planned=none
+log: [ENGAGEMENT:SCENE] {dwellMs: 481, idleMs: 116, scrolledWithoutClicking: false, nudgeFired: false, mode: participatory}
+log: [ENGAGEMENT KPI] {microExprInteractionRate: 0%, avgTimeToFirstInteraction: 0.0s, dropOffBeforeChoiceRate: 0%, choiceCompletionRate: 0%, totalScenes: 1}
+log: [PRESSURE ENGINE] {romance: 0.60, power: 0.53, conflict: 0.50, uncertainty: 0.50, scene: 3}
+log: [RELSHAPE] raw input — act=initiated tension=advanced desire=hidden reciprocity=na register=grounded | recept=na own=na presence=na vuln=na | prior(pc=female,li=male) (scene 3, v0-heuristic)
+log: [CHARACTER MEMORY] {characterId: BEAUTIFUL_RUIN, affinity: 0.00, respect: 0.00, tension: 0.00, repeatCount: 0}
+log: [ADAPTIVE TUNING] {paceScalar: 0.97, hookScalar: 0.97, densityScalar: 1.03, scene: 3, storyMode: participatory}
+log: [SCENE-COST] Finalized: $0.0000 | type: literary | text $0.0000 | image $0.0000 | cumulative $0.0000
+log: [SCENE-AUDIT] {"sc":2,"ms":236,"ttft":0,"ttftProse":0,"spend":{"initial":0,"regens":0,"setup":0,"audits":0,"wasted":0,"total":0},"hitPct":0,"regens":0,"gates":""}
+log: %c
+=== NARRATIVE DIAGNOSTICS ===
+ color: #c9a84c; font-weight: bold; font-size: 14px
+log: POV LAYER            N/A      Influence: N/A     Standard 3rd person
+log: WORLD LAYER          FAIL     Influence: NONE    No signals for small_town
+log: DIRECTIVES           Active: []  Suppressed: [MISBELIEF_PRESSURE]  Influence: NONE
+log: SIGNATURE STYLE      NONE     Influence: NONE    None
+log: COINCIDENCE          NONE     Influence: NONE    
+log: RHYTHM               NONE     Influence: NONE    No rhythm
+log: FATE ECHO            NONE     Influence: NONE    
+log: MOMENT SIGNIFICANCE  N/A      Location: Too short  Influence: N/A
+log: 
+STRUCTURALLY BROKEN | Primary: World layer missing | Secondary: None
+log: [INTIMACY:LATCH] first_kiss milestone latched — future attempts will not interrupt
+log: [ST3-PACING] Physical escalation at turn 3
+log: [FATE:STAGE-DIAG] turnCount=3 · scenes.length=1 · _scene1OnStagePhysical=null/undefined · _scene1OnPhone=null/undefined · _lastProbeOnStagePhysical=null/undefined · _scene1Active=false
+log: [FATE-CARDS:PLOT-CTX] archetype=BEAUTIFUL_RUIN · ST=ST3 · intimacy=false · aplot=– · truth=doppelganger_trauma · grievances=0 · callbacks=0 · scars=0 · gravity=– · axis-lead=– · fateOAS=–
+log: [FATE:AUTHORITY] LI offstage — romantic card retargeted to present interlocutor (non-romantic) {cardId: temptation, interlocutor: null, presentCharacters: Array(0)}
+log: [FATE:AUTHORITY] Card target resolved {cardId: temptation, resolvedTarget: Theo, isStorybeau: false, sceneCharacters: Array(0)}
+log: [FATE:AUTHORITY] LI offstage — romantic card retargeted to present interlocutor (non-romantic) {cardId: confession, interlocutor: null, presentCharacters: Array(0)}
+log: [FATE:AUTHORITY] Card target resolved {cardId: confession, resolvedTarget: Theo, isStorybeau: false, sceneCharacters: Array(0)}
+log: [FATE:AUTHORITY] LI offstage — romantic card retargeted to present interlocutor (non-romantic) {cardId: boundary, interlocutor: null, presentCharacters: Array(0)}
+log: [FATE:AUTHORITY] Card target resolved {cardId: boundary, resolvedTarget: Theo, isStorybeau: false, sceneCharacters: Array(0)}
+log: [FATE:AUTHORITY] LI offstage — romantic card retargeted to present interlocutor (non-romantic) {cardId: reversal, interlocutor: null, presentCharacters: Array(0)}
+log: [FATE:AUTHORITY] Card target resolved {cardId: reversal, resolvedTarget: Theo, isStorybeau: false, sceneCharacters: Array(0)}
+log: [FATE] dealFateCards complete — cards bound
+log: [FATE] initFateCards called
+log: [FATE] Bind flags reset — ready for rebind
+log: [FATE] FX functions status: {startSparkleCycle: true, stopSparkleCycle: true, startFireflyEmanation: true, stopAllEmanations: true, triggerGoldenFlow: true}
+log: [FATE] Rebinding existing cards
+log: [FATE] Existing cards rebound: 5
+log: [FATE] initFateCards bound
+log: [SCENE_CONTEXT] Updated for scene 3
+info: Connecting to 'http://sb-test.localhost/rest/v1/user_events' violates the following Content Security Policy directive: "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.stripe.com https://*.googleapis.com". The policy is report-only, so the violation has been logged but no fu
+info: Connecting to 'http://sb-test.localhost/rest/v1/user_events' violates the following Content Security Policy directive: "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.stripe.com https://*.googleapis.com". The policy is report-only, so the violation has been logged but no fu
+info: Connecting to 'http://sb-test.localhost/rest/v1/story_snapshots?on_conflict=profile_id%2Cstory_id' violates the following Content Security Policy directive: "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.stripe.com https://*.googleapis.com". The policy is report-only, so t
+info: Connecting to 'http://sb-test.localhost/rest/v1/story_snapshots?on_conflict=profile_id%2Cstory_id' violates the following Content Security Policy directive: "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.stripe.com https://*.googleapis.com". The policy is report-only, so t
+info: Connecting to 'http://sb-test.localhost/rest/v1/story_snapshots?on_conflict=profile_id%2Cstory_id' violates the following Content Security Policy directive: "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.stripe.com https://*.googleapis.com". The policy is report-only, so t
+info: Connecting to 'http://sb-test.localhost/rest/v1/story_snapshots?on_conflict=profile_id%2Cstory_id' violates the following Content Security Policy directive: "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.stripe.com https://*.googleapis.com". The policy is report-only, so t
+log: [PROMPT-PROFILE] PRIMARY_AUTHOR · gpt-4o-mini · prompt=0 reasoning=0 visible=0 · turn 3
+log: [CORRIDOR] scene 3 — maintained (storyturn-advanced:→ST3)
+log: [MEMORY] Extracted for scene 3
+warning: [SCENE-AMB] classifier returned unknown tag: {} → neutral_quiet
+warning: [BACK-COVER-SYNOPSIS] Generation failed (non-fatal): Blurb too short: 2
+log: [Supabase] Snapshot saved for story: safetyfix-A-ed2pl7
+log: [Supabase] Snapshot saved for story: safetyfix-A-ed2pl7
+log: [PRELOAD:SCROLL] 60% depth reached
+log: [ENTITLEMENT] syncTierFromAccess: {access: sub, tier: storied, subscriptionTier: chosen, subscribed: true, keyholeMarked: false}
+log: [ENTITLEMENT] syncTierFromAccess: {access: sub, tier: storied, subscriptionTier: chosen, subscribed: true, keyholeMarked: false}
+log: [ENTITLEMENT] applyLengthLocks: {access: sub, currentStoryLength: fling, cardsFound: 0}
+log: [ENTITLEMENT] syncTierFromAccess: {access: sub, tier: storied, subscriptionTier: chosen, subscribed: true, keyholeMarked: false}
+log: [ENTITLEMENT] syncTierFromAccess: {access: sub, tier: storied, subscriptionTier: chosen, subscribed: true, keyholeMarked: false}
+log: [ENTITLEMENT] applyLengthLocks: {access: sub, currentStoryLength: fling, cardsFound: 0}
+log: [READER-MODE] OFF — present-tense play resumes
+log: [DECK_MANDATE] OFF — state.fateAnchorPresent is falsy (resolveFateAnchor() may not have been called for this story)

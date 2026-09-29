@@ -1,0 +1,639 @@
+{
+  "beats": [
+    {
+      "idx": 0,
+      "kind": "narration",
+      "text": "The clearing forgets its own reason for gathering.",
+      "speaker": null,
+      "tension_state": "composed",
+      "echo_profile": null,
+      "expression_intensity": 0,
+      "_intentRawEmitted": 0,
+      "_intentSource": "default",
+      "expression_target": "neutral",
+      "cut_to_closeup": false,
+      "closeup_target": null,
+      "shot_type": null,
+      "impact_burst": false,
+      "metaphor_hint": null,
+      "metaphor_peak": false,
+      "pc_proxy_action": null
+    },
+    {
+      "idx": 1,
+      "kind": "dialogue",
+      "text": "The question stands.",
+      "speaker": "Julian",
+      "tension_state": "composed",
+      "echo_profile": null,
+      "expression_intensity": 0,
+      "_intentRawEmitted": 0,
+      "_intentSource": "default",
+      "expression_target": "neutral",
+      "cut_to_closeup": false,
+      "closeup_target": null,
+      "shot_type": null,
+      "impact_burst": false,
+      "metaphor_hint": null,
+      "metaphor_peak": false,
+      "pc_proxy_action": null
+    }
+  ],
+  "visualState": {},
+  "is_consummate_scene": false,
+  "hardBeats": [],
+  "temptFateOutcome": {
+    "delivered": true,
+    "changed": [
+      {
+        "subject": "the assembly",
+        "whatChanged": "no longer remembers the ceremony"
+      }
+    ],
+    "durability": [
+      {
+        "aspect": "the memory gap",
+        "status": "persists"
+      }
+    ],
+    "knowledgeStates": [
+      {
+        "character": "Lirael",
+        "state": "remembers",
+        "note": "invoker anchor"
+      }
+    ],
+    "establishedEvidence": [
+      "torn mouth-band on the ground"
+    ],
+    "openPossibilities": [
+      "someone could notice the arrangement of the clearing does not match anyone's memory of why they gathered"
+    ],
+    "requestedScope": "everyone forgets the ceremony happened",
+    "deliveredScope": "every witness present loses the memory of the ceremony",
+    "scopeMatch": "full",
+    "ruptureClass": "memory_perception",
+    "targetPopulation": {
+      "kind": "all_present_except_invoker"
+    },
+    "affectedKnowers": [
+      {
+        "who": "the assembly",
+        "disposition": "forgot",
+        "memoryAbsent": true,
+        "suspicionFromResidue": false,
+        "nowKnows": "nothing of the ceremony"
+      },
+      {
+        "who": "Julian",
+        "disposition": "suspects",
+        "memoryAbsent": true,
+        "suspicionFromResidue": true,
+        "nowKnows": "nothing of the ceremony, but the torn band on the ground does not fit the morning he remembers"
+      }
+    ],
+    "invokerExemption": {
+      "who": "Lirael",
+      "status": "exempt",
+      "reason": "invoker_anchor",
+      "note": "she keeps the memory of what she changed"
+    },
+    "unaccountedParties": []
+  },
+  "phases": [
+    {
+      "phaseIdx": 0,
+      "startBeat": 0,
+      "label": "Orientation",
+      "characters_present": [
+        "protagonist"
+      ],
+      "props_present": [],
+      "li_visibility_phase": "partial",
+      "pc_posture": null,
+      "pc_emotional_state": null,
+      "other_postures": null,
+      "proximity": null,
+      "_readerLearning": "Orientation",
+      "_isPageTurn": false,
+      "_storyboardDoc": {
+        "purpose": "Orientation",
+        "frozenMoment": "The clearing forgets its own reason for gathering.",
+        "primarySubject": "the whole precarious situation",
+        "compositionPriority": "the SITUATION at a glance — WHERE they are, WHO they are, and the danger they are in, all readable in one frame",
+        "forbiddenFocus": "",
+        "composition": "Wide Establishing",
+        "understandingGain": "where they are, who they are, and the danger they are in",
+        "eyeMagnet": "the whole precarious situation",
+        "emotionalPurpose": "creeping dread — they are already in danger",
+        "emotionalApex": "MEDIUM",
+        "pcEmotion": {
+          "emotion": "wary fear",
+          "intensity": 5,
+          "expression": "tense, alert, eyes scanning, breath held"
+        },
+        "otherEmotion": {
+          "emotion": "coiled menace",
+          "intensity": 5,
+          "expression": "watchful, unhurried, sure of the kill"
+        },
+        "graphicLanguage": {
+          "energy": {
+            "level": "low",
+            "cue": "ambient atmosphere — drifting silt, slow underwater currents, hanging haze",
+            "target": "the whole precarious situation"
+          },
+          "tension": {
+            "level": "low",
+            "cue": "a faint unease in the water"
+          }
+        },
+        "visualQuestion": "What is this place, and why is she in danger here?",
+        "eyePath": [
+          "the whole precarious situation",
+          "the protagonist",
+          "the other figure"
+        ],
+        "colorDirection": {
+          "palette": "cold blue-green (deep water)",
+          "accent": "pale shell-white",
+          "lighting": "diffuse underwater light from above",
+          "contrast": "moderate",
+          "mood": "wary unease"
+        },
+        "readerKnowledge": null,
+        "characterKnowledge": null,
+        "wishAnchor": null
+      },
+      "_state": {
+        "protagonist": {
+          "status": "active",
+          "injuries": [],
+          "position": "",
+          "holding": "",
+          "attitudeToward": {},
+          "looking_at": "",
+          "speaking": false
+        }
+      },
+      "_panel": {
+        "type": "establishing",
+        "narrativePanelType": "scene",
+        "panelIdx": 0,
+        "dramaticQuestion": "What happens as Orientation?",
+        "shotType": "discovery",
+        "shotExpansion": "DISCOVERY SHOT: wide establishing, the subject small against the reveal; negative space with the discovered thing as the focal point; a slow implied push-in.",
+        "hierarchy": {
+          "primary": "Lirael",
+          "secondary": "Lirael",
+          "background": []
+        },
+        "grammarCues": [],
+        "perspectiveContract": null,
+        "wishAnchor": null,
+        "eventLed": false,
+        "establishing": false,
+        "castingEligible": false,
+        "wishOutcome": null,
+        "sacrifice": false,
+        "livingWorld": [],
+        "cast": [
+          {
+            "key": "protagonist",
+            "name": "Lirael",
+            "performance": {
+              "pose": "",
+              "expression": "",
+              "looking_at": "",
+              "action_tags": []
+            }
+          }
+        ],
+        "authored": false,
+        "invalidFields": [],
+        "shot": {
+          "distance": "wide",
+          "angle": "high",
+          "blocking": "environment_led",
+          "movement": "a slow establishing drift over the place",
+          "subject": "Lirael"
+        }
+      },
+      "_shot": {
+        "distance": "wide",
+        "angle": "high",
+        "blocking": "environment_led",
+        "movement": "a slow establishing drift over the place",
+        "subject": "Lirael"
+      }
+    }
+  ],
+  "decisionGateBeatIdx": 1,
+  "interruption": null,
+  "_canon": {
+    "protagonist": {
+      "key": "protagonist",
+      "displayName": "Lirael",
+      "role": "protagonist",
+      "species": "human",
+      "humanNoTentacles": true,
+      "look": {
+        "heritage": "Thai",
+        "heritageSource": "default",
+        "hairColor": "warm brown",
+        "hairLength": "waist-length",
+        "hairStyle": "twisted up off the neck",
+        "skinTone": "fair"
+      },
+      "garment": "",
+      "weapon": "",
+      "morphology": {
+        "genderPresentation": "female",
+        "build": "tall and rangy",
+        "facialTopology": "a gaunt hollow-cheeked face with a jutting brow",
+        "speciesTopology": "fully human — NO tentacles, scales, or non-human features",
+        "ears": "ordinary human ears"
+      },
+      "recognitionTraits": [
+        "Thai features",
+        "waist-length warm brown hair, twisted up off the neck"
+      ]
+    },
+    "julian": {
+      "key": "julian",
+      "displayName": "Julian",
+      "role": "love_interest",
+      "species": "human",
+      "humanNoTentacles": true,
+      "look": {
+        "faceShape": "a narrow",
+        "eyeColor": "hazel",
+        "build": "slight",
+        "hairColor": "chestnut brown",
+        "hairLength": "shoulder-length",
+        "hairStyle": "pulled back in a low bun",
+        "heritage": "Maori"
+      },
+      "garment": "",
+      "weapon": "",
+      "morphology": {
+        "genderPresentation": "male",
+        "build": "lean and wiry",
+        "facialTopology": "a narrow angular face with high, sharp cheekbones",
+        "speciesTopology": "fully human — NO tentacles, scales, or non-human features",
+        "ears": "ordinary human ears"
+      },
+      "recognitionTraits": [
+        "Maori features",
+        "shoulder-length chestnut brown hair, pulled back in a low bun"
+      ]
+    }
+  },
+  "_storyboardLint": {
+    "errors": [],
+    "warnings": [
+      "RECONSTRUCTION: no Revelation beat — the reader cannot answer what changed.",
+      "RECONSTRUCTION: no Decision beat — the reader cannot answer what choice.",
+      "RECONSTRUCTION: no Transformation/Consequence beat — the reader cannot see what caused the change."
+    ]
+  },
+  "_graphicLanguageLint": {
+    "warnings": []
+  },
+  "_visualPolishLint": {
+    "warnings": []
+  },
+  "_storyboard": [
+    {
+      "panelIdx": 0,
+      "beatIdx": 0,
+      "type": "Orientation",
+      "isPageTurn": false
+    }
+  ],
+  "_storyboardPhases": [
+    {
+      "phaseIdx": 0,
+      "startBeat": 0,
+      "label": "Orientation",
+      "characters_present": [
+        "protagonist"
+      ],
+      "props_present": [],
+      "li_visibility_phase": "partial",
+      "pc_posture": null,
+      "pc_emotional_state": null,
+      "other_postures": null,
+      "proximity": null,
+      "_readerLearning": "Orientation",
+      "_isPageTurn": false,
+      "_storyboardDoc": {
+        "purpose": "Orientation",
+        "frozenMoment": "The clearing forgets its own reason for gathering.",
+        "primarySubject": "the whole precarious situation",
+        "compositionPriority": "the SITUATION at a glance — WHERE they are, WHO they are, and the danger they are in, all readable in one frame",
+        "forbiddenFocus": "",
+        "composition": "Wide Establishing",
+        "understandingGain": "where they are, who they are, and the danger they are in",
+        "eyeMagnet": "the whole precarious situation",
+        "emotionalPurpose": "creeping dread — they are already in danger",
+        "emotionalApex": "MEDIUM",
+        "pcEmotion": {
+          "emotion": "wary fear",
+          "intensity": 5,
+          "expression": "tense, alert, eyes scanning, breath held"
+        },
+        "otherEmotion": {
+          "emotion": "coiled menace",
+          "intensity": 5,
+          "expression": "watchful, unhurried, sure of the kill"
+        },
+        "graphicLanguage": {
+          "energy": {
+            "level": "low",
+            "cue": "ambient atmosphere — drifting silt, slow underwater currents, hanging haze",
+            "target": "the whole precarious situation"
+          },
+          "tension": {
+            "level": "low",
+            "cue": "a faint unease in the water"
+          }
+        },
+        "visualQuestion": "What is this place, and why is she in danger here?",
+        "eyePath": [
+          "the whole precarious situation",
+          "the protagonist",
+          "the other figure"
+        ],
+        "colorDirection": {
+          "palette": "cold blue-green (deep water)",
+          "accent": "pale shell-white",
+          "lighting": "diffuse underwater light from above",
+          "contrast": "moderate",
+          "mood": "wary unease"
+        },
+        "readerKnowledge": null,
+        "characterKnowledge": null,
+        "wishAnchor": null
+      },
+      "_state": {
+        "protagonist": {
+          "status": "active",
+          "injuries": [],
+          "position": "",
+          "holding": "",
+          "attitudeToward": {},
+          "looking_at": "",
+          "speaking": false
+        }
+      },
+      "_panel": {
+        "type": "establishing",
+        "narrativePanelType": "scene",
+        "panelIdx": 0,
+        "dramaticQuestion": "What happens as Orientation?",
+        "shotType": "discovery",
+        "shotExpansion": "DISCOVERY SHOT: wide establishing, the subject small against the reveal; negative space with the discovered thing as the focal point; a slow implied push-in.",
+        "hierarchy": {
+          "primary": "Lirael",
+          "secondary": "Lirael",
+          "background": []
+        },
+        "grammarCues": [],
+        "perspectiveContract": null,
+        "wishAnchor": null,
+        "eventLed": false,
+        "establishing": false,
+        "castingEligible": false,
+        "wishOutcome": null,
+        "sacrifice": false,
+        "livingWorld": [],
+        "cast": [
+          {
+            "key": "protagonist",
+            "name": "Lirael",
+            "performance": {
+              "pose": "",
+              "expression": "",
+              "looking_at": "",
+              "action_tags": []
+            }
+          }
+        ],
+        "authored": false,
+        "invalidFields": [],
+        "shot": {
+          "distance": "wide",
+          "angle": "high",
+          "blocking": "environment_led",
+          "movement": "a slow establishing drift over the place",
+          "subject": "Lirael"
+        }
+      },
+      "_shot": {
+        "distance": "wide",
+        "angle": "high",
+        "blocking": "environment_led",
+        "movement": "a slow establishing drift over the place",
+        "subject": "Lirael"
+      }
+    }
+  ],
+  "_storyboardConvergenceLint": {
+    "warnings": []
+  },
+  "_prosePhases": [
+    {
+      "phaseIdx": 0,
+      "startBeat": 0,
+      "label": "establishing",
+      "li_visibility_phase": "partial",
+      "characters_present": [
+        "protagonist"
+      ],
+      "props_present": [],
+      "camera_override": "over_shoulder_pc",
+      "li_position_override": null,
+      "li_expression_override": null,
+      "camera_move": "none",
+      "shot_style": "default",
+      "focus_target": null
+    }
+  ],
+  "_panels": [
+    {
+      "type": "establishing",
+      "narrativePanelType": "scene",
+      "panelIdx": 0,
+      "dramaticQuestion": "What happens as Orientation?",
+      "shotType": "discovery",
+      "shotExpansion": "DISCOVERY SHOT: wide establishing, the subject small against the reveal; negative space with the discovered thing as the focal point; a slow implied push-in.",
+      "hierarchy": {
+        "primary": "Lirael",
+        "secondary": "Lirael",
+        "background": []
+      },
+      "grammarCues": [],
+      "perspectiveContract": null,
+      "wishAnchor": null,
+      "eventLed": false,
+      "establishing": false,
+      "castingEligible": false,
+      "wishOutcome": null,
+      "sacrifice": false,
+      "livingWorld": [],
+      "cast": [
+        {
+          "key": "protagonist",
+          "name": "Lirael",
+          "performance": {
+            "pose": "",
+            "expression": "",
+            "looking_at": "",
+            "action_tags": []
+          }
+        }
+      ],
+      "authored": false,
+      "invalidFields": [],
+      "shot": {
+        "distance": "wide",
+        "angle": "high",
+        "blocking": "environment_led",
+        "movement": "a slow establishing drift over the place",
+        "subject": "Lirael"
+      }
+    }
+  ],
+  "_shotSequence": [
+    {
+      "distance": "wide",
+      "angle": "high",
+      "blocking": "environment_led",
+      "movement": "a slow establishing drift over the place",
+      "subject": "Lirael"
+    }
+  ],
+  "_shotSequenceLint": {
+    "warnings": []
+  },
+  "_shotDiversity": null,
+  "_continuityLint": {
+    "errors": [],
+    "warnings": []
+  },
+  "_qualityScorecard": {
+    "dimensions": {
+      "storyboard": 85,
+      "emotion": 70,
+      "graphicLanguage": 100,
+      "visualPolish": 100,
+      "continuity": 100,
+      "coverage": 20,
+      "narrativeProgression": null,
+      "shotRhythm": null,
+      "identityDirective": 100
+    },
+    "overall": 82,
+    "postRender": {
+      "identity": null,
+      "speciesFidelity": null,
+      "characterFidelity": null,
+      "emotionLanding": null,
+      "typographyQuality": null,
+      "narrativeProgression": null,
+      "visualProseAlignment": null
+    },
+    "note": "PRE-RENDER directive quality (deterministic). The postRender rubric (character fidelity / narrative progression / visual-prose alignment / identity / emotion-landing / typography) grades the COMIC and requires the blind eval — never faked from a lint."
+  },
+  "_storyDirectorVer": 1,
+  "scene_assignments": {
+    "sceneKey": 1,
+    "source": "cg_delivered",
+    "character_plus": [],
+    "environment_plus": null,
+    "fusion": null,
+    "status": "issued"
+  },
+  "_deliveredAttemptId": "cpa:288c962b-5a16-4de4-8623-43a68647d6a2",
+  "_deliveredBranch": null,
+  "__temptOwnership": {
+    "proposalEntry": {
+      "id": "tfl_1",
+      "sceneIdx": 0,
+      "wishText": "everyone forgets the ceremony happened",
+      "anatomyKeywords": [],
+      "quantityKeywords": [],
+      "claimedByPlayer": false,
+      "scale": "mass",
+      "affectedTargets": [],
+      "landmarks": [],
+      "publicAttribution": "debated",
+      "witnessScope": "public",
+      "liName": "Julian",
+      "sealedAt": 1790277802656,
+      "callbackCount": 0,
+      "lastCallbackScene": null
+    },
+    "wasInvokedAtStart": true,
+    "pendingOutcome": {
+      "delivered": true,
+      "changed": [
+        {
+          "subject": "the assembly",
+          "whatChanged": "no longer remembers the ceremony"
+        }
+      ],
+      "durability": [
+        {
+          "aspect": "the memory gap",
+          "status": "persists"
+        }
+      ],
+      "knowledgeStates": [
+        {
+          "character": "Lirael",
+          "state": "remembers",
+          "note": "invoker anchor"
+        }
+      ],
+      "establishedEvidence": [
+        "torn mouth-band on the ground"
+      ],
+      "openPossibilities": [
+        "someone could notice the arrangement of the clearing does not match anyone's memory of why they gathered"
+      ],
+      "requestedScope": "everyone forgets the ceremony happened",
+      "deliveredScope": "every witness present loses the memory of the ceremony",
+      "scopeMatch": "full",
+      "ruptureClass": "memory_perception",
+      "targetPopulation": {
+        "kind": "all_present_except_invoker"
+      },
+      "affectedKnowers": [
+        {
+          "who": "the assembly",
+          "disposition": "forgot",
+          "memoryAbsent": true,
+          "suspicionFromResidue": false,
+          "nowKnows": "nothing of the ceremony"
+        },
+        {
+          "who": "Julian",
+          "disposition": "suspects",
+          "memoryAbsent": true,
+          "suspicionFromResidue": true,
+          "nowKnows": "nothing of the ceremony, but the torn band on the ground does not fit the morning he remembers"
+        }
+      ],
+      "invokerExemption": {
+        "who": "Lirael",
+        "status": "exempt",
+        "reason": "invoker_anchor",
+        "note": "she keeps the memory of what she changed"
+      },
+      "unaccountedParties": []
+    },
+    "sceneIndex": 1
+  }
+}

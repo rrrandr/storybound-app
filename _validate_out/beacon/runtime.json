@@ -1,0 +1,49 @@
+{
+ "violations": [],
+ "preflight": [],
+ "reports": [
+  {
+   "validator": "li_social_proof",
+   "ok": false,
+   "type": "LI_SOCIAL_PROOF_GAP",
+   "detail": "LI named, no social signal in the window following first mention",
+   "liName": "Julian",
+   "firstMentionPosition": 998,
+   "evidence": "he said, her voice clear. “So that Lirael finds the one she lost.”\n\nThe Dohkar’s hand faltered mid-gesture. A low murmur cut through the clearing like a blade drawn across silk. My chest tightened. She knew the rule. She had recited it back to me. The sacrifice belonged to the wi…"
+  },
+  {
+   "validator": "hot_opening",
+   "type": "OPENING_TEMPERATURE",
+   "ok": true,
+   "failures": [],
+   "renderedTemp": "HOT_CRISIS",
+   "inMotionHits": 1,
+   "containerOpener": false,
+   "evidence": "The Dohkar’s voice rose steady over the crimson spiralgrass. “Speak the offering, Seren.”\n\nI stood at the edge of the mated-pair trees, my mouth sealed beneath the gossamer band, the weight of two dozen First Favored eyes pressing against my skin. My Weave-Script flickered silver"
+  },
+  {
+   "validator": "semantic_rewrite",
+   "type": "SEMANTIC_EDIT_REQUESTED",
+   "label": "body-dump-decluster",
+   "instruction": "A passage in this scene PAUSES the action to stack 4 physical appearance traits into one cluster — a paused character sheet (e.g. height + build + shoulders + frame + hair + eyes + mouth listed togeth"
+  },
+  {
+   "validator": "semantic_rewrite",
+   "type": "SEMANTIC_EDIT_REQUESTED",
+   "label": "scene1-edit",
+   "instruction": "EDIT this Scene 1 to reduce its LOAD — do NOT shorten the emotional scene, do NOT cut the ending. NEVER rename the protagonist or Julian (the love interest); they always keep their names. (1) SINGLE C"
+  },
+  {
+   "validator": "pc_picturability",
+   "type": "PC_PICTURABILITY_GAP",
+   "ok": false,
+   "evidence": "The Dohkar’s gaze found me across the clearing, his Weave-Script flaring gold at the wrists as if he could still bind what had already slipped loose. “The words are spoken,” he repeated, slower now, and the weight of every First Favored eye settled on my bare feet in the crimson "
+  },
+  {
+   "validator": "semantic_rewrite",
+   "type": "SEMANTIC_EDIT_REQUESTED",
+   "label": "flavor-physics",
+   "instruction": "CRITICAL: This scene MUST express the world's defining mechanic.\nWorld flavor: Arcane Binding\nScene does not express flavor physics for \"arcane_binding\". Expected keywords: binding, spell, contract, g"
+  }
+ ]
+}

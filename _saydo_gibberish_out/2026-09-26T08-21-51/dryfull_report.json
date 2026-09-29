@@ -1,0 +1,21 @@
+{
+  "telemetry": [],
+  "roles": [],
+  "acceptance": {
+    "scenesDelta": 0,
+    "lastTextLen": 35,
+    "lastTextChanged": false
+  },
+  "settled": false,
+  "reservations": [],
+  "noFallbackInjected": 0,
+  "abortReason": null,
+  "consoleRejections": [
+    "Failed to load resource: net::ERR_FAILED",
+    "Failed to load resource: net::ERR_FAILED",
+    "Failed to load resource: the server responded with a status of 502 (Bad Gateway)",
+    "[TIERED:scaffold] primary/mistral/ministral-8b-2512 failed: mistral HTTP 502 An error occurred with this application.\n\nNO_RESPONSE_FROM_FUNCTION\n",
+    "Failed to load resource: the server responded with a status of 502 (Bad Gateway)",
+    "[TIERED:scaffold] fallback/grok/grok-4-1-fast-reasoning failed: grok HTTP 502 An error occurred with this application.\n\nNO_RESPONSE_FROM_FUNCTION\n"
+  ]
+}

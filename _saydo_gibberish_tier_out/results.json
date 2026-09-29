@@ -1,0 +1,148 @@
+{
+  "results": [
+    {
+      "name": "an isolated pure-gibberish turn is tier \"isolated\"",
+      "pass": true
+    },
+    {
+      "name": "both fields are substituted with the documented placeholders",
+      "pass": true
+    },
+    {
+      "name": "RAW KEYSTROKES ARE GONE from both fields",
+      "pass": true
+    },
+    {
+      "name": "THE STRONG-DELIVERY RULE DOES NOT FIRE — a placeholder is not a committed move",
+      "pass": true
+    },
+    {
+      "name": "a light-acknowledgement directive is present instead",
+      "pass": true
+    },
+    {
+      "name": "...and it forbids treating it as meaningful or building the scene on it",
+      "pass": true
+    },
+    {
+      "name": "...and forbids quoting the literal keystrokes",
+      "pass": true
+    },
+    {
+      "name": "...and forbids breaking frame to comment on the player or the interface",
+      "pass": true
+    },
+    {
+      "name": "a mixed input is tier \"mixed\"",
+      "pass": true
+    },
+    {
+      "name": "THE INTELLIGIBLE SENTENCE SURVIVES — the whole input is not discarded",
+      "pass": true
+    },
+    {
+      "name": "...and the action's intelligible half survives too",
+      "pass": true
+    },
+    {
+      "name": "ONLY the corrupt fragment is rendered, as a broken sound",
+      "pass": true
+    },
+    {
+      "name": "RAW FRAGMENT IS GONE from the action too",
+      "pass": true
+    },
+    {
+      "name": "a mixed turn RESETS the pure-gibberish streak — the player is communicating",
+      "pass": true
+    },
+    {
+      "name": "the SECOND consecutive pure-gibberish turn escalates to tier \"repeated\"",
+      "pass": true
+    },
+    {
+      "name": "...and it stays escalated on the third",
+      "pass": true
+    },
+    {
+      "name": "THE STORY IS NOT HALTED AND THE RAW TEXT IS STILL NOT CANON",
+      "pass": true
+    },
+    {
+      "name": "the strong-delivery rule still does not fire",
+      "pass": true
+    },
+    {
+      "name": "an IN-WORLD INCOHERENCE directive is present",
+      "pass": true
+    },
+    {
+      "name": "...it states the canon fact is repeated failure to be understood, NEVER the typed text",
+      "pass": true
+    },
+    {
+      "name": "...it licenses CONSEQUENTIAL in-world reactions",
+      "pass": true
+    },
+    {
+      "name": "...it forbids halting, stalling, or breaking frame to address the player",
+      "pass": true
+    },
+    {
+      "name": "...and it preserves her AGENCY rather than reading as a malfunction",
+      "pass": true
+    },
+    {
+      "name": "a CLEAN turn afterwards resets the streak and emits no gibberish directive",
+      "pass": true
+    },
+    {
+      "name": "an ordinary committed move is tier \"none\" and is passed through verbatim",
+      "pass": true
+    },
+    {
+      "name": "...it emits NO gibberish directive, so ordinary play is byte-identical",
+      "pass": true
+    },
+    {
+      "name": "...and it DOES get the strong-delivery rule — the fix did not disarm the real case",
+      "pass": true
+    },
+    {
+      "name": "CONCIERGE IS NOT SUMMONED BY GIBBERISH — raw or substituted",
+      "pass": true
+    },
+    {
+      "name": "...but a genuine app complaint STILL routes",
+      "pass": true
+    },
+    {
+      "name": "the Submit handler calls the tiered policy, not the two flat fallbacks",
+      "pass": true
+    },
+    {
+      "name": "...it persists the streak across turns",
+      "pass": true
+    },
+    {
+      "name": "...and marks the values as fallback-generated",
+      "pass": true
+    },
+    {
+      "name": "the strong rule honours that mark and returns early",
+      "pass": true
+    },
+    {
+      "name": "the tier directive reaches the author prompt",
+      "pass": true
+    },
+    {
+      "name": "the tier flags are cleared with the rest of the Say/Do turn state",
+      "pass": true
+    },
+    {
+      "name": "zero provider dispatches",
+      "pass": true
+    }
+  ]
+}

@@ -1,0 +1,243 @@
+{
+  "dump": {
+    "sceneNumber": 2,
+    "planScenes": [
+      {
+        "n": 1,
+        "goal": "The First Sacrifice begins (hot crisis). The youth suddenly falls into catastrophic misalignment; every experienced First Favored recognizes the signs. The impossible happens instead — the wish succeeds cleanly. The crowd turns on the PC."
+      },
+      {
+        "n": 2,
+        "goal": "The ceremony collapses into accusations; the PC tries to explain something she does not understand herself."
+      },
+      {
+        "n": 3,
+        "goal": "Evidence begins to point toward deliberate interference."
+      },
+      {
+        "n": 4,
+        "goal": "The elders formally begin investigating the PC."
+      },
+      {
+        "n": 5,
+        "goal": "Julian quietly prevents the investigation from uncovering the truth."
+      },
+      {
+        "n": 6,
+        "goal": "The PC discovers the wish succeeded in a way that should have been impossible."
+      }
+    ],
+    "planKeys": [
+      "issue",
+      "scenes"
+    ],
+    "assignmentLive": {
+      "event": "The ceremony collapses into accusations; the PC tries to explain something she does not understand herself.",
+      "setting": null,
+      "participants": null,
+      "props": null,
+      "stateChange": null,
+      "source": "plan-scene",
+      "sceneNumber": 2
+    },
+    "assignmentStored": {
+      "event": "The ceremony collapses into accusations; the PC tries to explain something she does not understand herself.",
+      "setting": null,
+      "participants": null,
+      "props": null,
+      "stateChange": null,
+      "source": "plan-scene",
+      "sceneNumber": 2
+    },
+    "spineEventVerbatim": null,
+    "spineStaging": null,
+    "sceneSkeleton": null,
+    "sceneIntent": null,
+    "sceneMissionCurrent": "Survive the festival without revealing my past.",
+    "seedKeys": [
+      "issue",
+      "cast",
+      "worldTruths",
+      "sceneOne",
+      "visualCanon",
+      "truths",
+      "dramaticTruth",
+      "constraints"
+    ],
+    "seedWorldTruths": [
+      "A First Sacrifice is a COMING-OF-AGE RITE — closest analogue a Bar Mitzvah / quinceañera / confirmation / graduation, NOT a death ritual. At 16 (younger minds are too unformed to wish safely) a youth, after long study and practice, publicly makes their first wish and offers its price to Fate. It can be stern and formal, but when it goes well it ENDS IN CELEBRATION; catastrophe is UNUSUAL — everyone understands the safeguards the way we understand fire drills. Do NOT default to disaster, apocalypse, curses, or world-ending stakes.",
+      "First Favored are hired to GUIDE and SUPERVISE the rite — their alignment-sense and powerful wish-strength make them the preferred (and pricier) choice over human or Kwisheen wishcraft scholars. The supervisor reads the alignment of EVERYONE present, above all the wishing youth, ready to HALT and re-align the wish before it can twist.",
+      "The supervisor is a SACRIFICIANT (the role): one whose misalignment-sense is honed enough to supervise (the PC is an apprentice Sacrificiant). THE SACRIFICIANT SEAL — worn by whoever supervises, during ANY official First Sacrifice rite: because a supervisor bolstering the youth’s sacrifice with a wish of their OWN would be a ruinous breach, every Sacrificiant is ceremonially SEALED for the rite — a gossamer BAND drawn across the mouth and tied behind the head (just cloth, part of their ceremonial sash; NO orb, NO bead, NO gag), so they cannot cleanly voice a wish while officiating. Vestments are otherwise the same sheer gossamer as everyone, with ONE ornamented ceremonial SASH (never robes). LITERARY: a sealed Sacrificiant’s cries and speech are MUFFLED behind the cloth — emotion reads through the eyes and body. CG: the mouth-band is drawn IN on the supervising Sacrificiant for the duration of the rite.",
+      "ALIGNMENT-SENSE (the First Favored gift): they do NOT read thoughts or emotions — they perceive ALIGNMENT, how far a person’s desire, intention, sacrifice, and deepest self all point at one truth. Misalignment is as unmistakable to them as a sour note in music."
+    ],
+    "aPlotKeys": [
+      "tier",
+      "pattern",
+      "goal",
+      "namedClock",
+      "clockUnit",
+      "totalClockUnits",
+      "timelineLength",
+      "currentTurn",
+      "milestones",
+      "stakesIfFail",
+      "stakesIfWin",
+      "resolutionShape",
+      "cliffhangerHook",
+      "antagonistOrAntiForce",
+      "antagonistPersonalTie",
+      "antagonistShape",
+      "personalStakePC",
+      "personalStakeLI",
+      "plotShape",
+      "pcWound",
+      "liWound",
+      "woundSurfacingMechanism",
+      "woundLoadBearingProof",
+      "pcWoundCategory",
+      "liWoundCategory",
+      "liEmotionalNeedFromPC",
+      "pcUnknowinglySatisfies",
+      "naturalSeparationBeats",
+      "naturalProximityBeats",
+      "sourceWorld",
+      "sourceFlavor",
+      "sourceWorldSubtype",
+      "generatedAt",
+      "continuationOf",
+      "storyShape",
+      "storyShapeLabel",
+      "readerQuestion",
+      "romanceEngine",
+      "desireQuestion",
+      "scene1Compressed",
+      "_woundLIIntegration"
+    ],
+    "aPlot": {
+      "tier": "fling",
+      "pattern": "B",
+      "goal": "Contain the public revelation of Lirael's mother's abandonment secret at the festival before it fractures her vow-bond and exposes the misalignment to the Alignment Circle",
+      "namedClock": "the closing Alignment Reading at the festival's final cycle",
+      "clockUnit": "cycles",
+      "totalClockUnits": 5,
+      "timelineLength": 40,
+      "currentTurn": 0,
+      "milestones": [
+        {
+          "atScene": 5,
+          "atPercent": 12,
+          "kind": "setup",
+          "event": "The secret about her mother's abandonment is shouted to the festival crowd while Julian watches from the edge of the circle",
+          "emotional_conductivity": "PC feels the weight of his gaze as the only person who could confirm or deny the story, creating immediate visibility tension.",
+          "triggered": false
+        },
+        {
+          "atScene": 16,
+          "atPercent": 40,
+          "kind": "midpoint_reversal",
+          "event": "Julian offers a private alignment reading that appears to support her version but reveals the bond thread now points toward him",
+          "emotional_conductivity": "MEDIUM: admiration for his quiet competence collides with fresh distrust as the reframing begins.",
+          "triggered": false
+        },
+        {
+          "atScene": 28,
+          "atPercent": 70,
+          "kind": "dark_night",
+          "event": "A second witness claims the bond was never hers but was always meant for Julian's first love",
+          "emotional_conductivity": "HEAVY: trust fracture as the first major revision of who Julian is lands.",
+          "triggered": false
+        },
+        {
+          "atScene": 35,
+          "atPercent": 88,
+          "kind": "crisis",
+          "event": "To contain the exposure Lirael must publicly invoke the bond in front of the Circle, forcing Julian to choose whether to let her see his true history",
+          "emotional_conductivity": "HEAVY: sacrifice crisis that pins the romance climax — visibility demanded at the cost of both their wounds.",
+          "triggered": false
+        },
+        {
+          "atScene": 38,
+          "atPercent": 95,
+          "kind": "resolution",
+          "event": "The bond realigns but only after Julian reveals he once wished the original vow into existence",
+          "emotional_conductivity": "MEDIUM: new dependence emerges as the reframing settles into uneasy partnership.",
+          "triggered": false
+        },
+        {
+          "atScene": 40,
+          "atPercent": 100,
+          "kind": "resolution",
+          "event": "The arbiter is discredited and the secret contained, yet a second thread now visibly connects Lirael to Julian's first love",
+          "emotional_conductivity": "LIGHT: practical coordination rhythm undercut by the cliffhanger consequence.",
+          "triggered": false
+        }
+      ],
+      "stakesIfFail": "The bond fracture becomes public, confirming Lirael's unworthiness and forcing Julian back into permanent emotional deflection",
+      "stakesIfWin": "The secret is contained and the bond realigned on terms that let both see each other without masks",
+      "resolutionShape": "complete-plus-cliffhanger",
+      "cliffhangerHook": "The second thread begins to pulse, promising the next layer of who Julian truly is",
+      "antagonistOrAntiForce": "a rival vow arbiter exploiting the bond fracture for public realignment authority",
+      "antagonistPersonalTie": "null",
+      "antagonistShape": "C",
+      "personalStakePC": "her already-fragile sense of worthiness collapses if the secret confirms she was abandoned because she was unworthy",
+      "personalStakeLI": "his own wariness of vulnerability is forced into the open when the bond's true history implicates his hidden past",
+      "plotShape": "SCANDAL_EXPOSURE",
+      "pcWound": "Her mother's abandonment at a young age left Lirael with a deep sense of unworthiness and distrust in relationships.",
+      "liWound": "Julian's first love left him for someone more stable, leaving him wary of vulnerability for years.",
+      "woundSurfacingMechanism": "The festival revelation of the abandonment secret drags both wounds into the open because Julian alone knows the full truth and his presence forces Lirael to decide whether to trust him with her unworthiness while his charm masks his own fear of being left again.",
+      "woundLoadBearingProof": "WOUND: The betrayal by her mother who abandoned her at a young age. CIRCUMSTANCE: The public revelation of that secret at the festival. DEPENDENCY: Without this wound, Julian would not be the one whose knowledge of the truth could either heal or deepen her distrust in relationships — his charm deflects vulnerability in the exact way her wound fears.",
+      "pcWoundCategory": "PUBLIC",
+      "liWoundCategory": "PARTNER",
+      "liEmotionalNeedFromPC": "Her capacity to need comfort without disguising it fascinates him because it creates space for him to explore his own vulnerability without fear of rejection.",
+      "pcUnknowinglySatisfies": "Despite her mask of strength she lets small moments of vulnerability show through her meaning-hungry emotional weather, which unknowingly answers his hunger for emotional honesty.",
+      "naturalSeparationBeats": [
+        "Julian is summoned to a private arbiter chamber immediately after the first revelation",
+        "Lirael must attend the public closing ceremony alone while he is questioned",
+        "A bond-custodian blocks private contact until the next cycle"
+      ],
+      "naturalProximityBeats": [
+        "They are forced into the same alignment circle to contain the spreading rumor",
+        "Julian pulls her into a side alcove to offer the reading that changes everything",
+        "They must hide together when the arbiter's agents search the festival grounds"
+      ],
+      "sourceWorld": "Fantasy",
+      "sourceFlavor": "Arcane Binding",
+      "sourceWorldSubtype": "arcane_binding",
+      "generatedAt": 1787036123844,
+      "continuationOf": null,
+      "storyShape": "FALSE_HISTORY",
+      "storyShapeLabel": "False History",
+      "readerQuestion": "Who is he really?",
+      "romanceEngine": "COLLISION",
+      "desireQuestion": "What present-tense force is already pressing on her — and (if known adversaries) how is HE behind it?",
+      "scene1Compressed": {
+        "pressure_sentence": "Lirael stands at the festival, heart racing as whispers of her mother's secret swirl around her.",
+        "emotional_consequence": "She feels the weight of shame pressing down, threatening to suffocate her in front of the crowd.",
+        "li_entanglement_one_line": "Julian's presence looms over her thoughts, a reminder of a bond that could shatter at any moment.",
+        "state_change_precondition": "The truth of her mother's abandonment remains hidden from the festival attendees.",
+        "state_change": "A guest accidentally reveals Lirael's mother's abandonment secret to the crowd, silencing the festivities.",
+        "forces_choice": "This event forces Lirael to choose between confronting the truth publicly or fleeing to protect her heart.",
+        "branch_a_delete_test": "Confronting the truth publicly is impossible if the secret has not been revealed.",
+        "branch_b_delete_test": "Fleeing to protect her heart becomes meaningless if the truth is not out in the open.",
+        "generated_at": 1787036128362
+      },
+      "_woundLIIntegration": {
+        "verdict": "INTEGRATED",
+        "mode": "INTERACTION",
+        "interactionType": "embodies",
+        "causeBasin": false,
+        "swapTest": "Replacing Julian with another BEAUTIFUL_RUIN would break the wound's role, as only he knows the full truth about her mother's abandonment and can uniquely challenge her distrust in relationships.",
+        "link": "Julian embodies Lirael's fear of vulnerability and abandonment, making him the only one who can either deepen her distrust or help her heal.",
+        "fix": "",
+        "ms": 3427
+      }
+    },
+    "narrativeState": null
+  },
+  "delivered": {
+    "SPINE_EVENT": "SPINE EVENT — MUST STAGE (HIGHEST AUTHORITY on WHAT HAPPENS AND WHERE; quoted verbatim from the story spine, NOT a summary): «The ceremony collapses into accusations; the PC tries to explain something she does not understand herself.» This owns the scene's SETTING, named PROPS, ARRIVALS and DEPARTURES, and the specific ACTION. If it names a place, the scene HAPPENS IN THAT PLACE. If it names an object, that objec",
+    "SCENE_INTENT": null,
+    "SCENE_SPINE": "SCENE SPINE — THE STATE CHANGE (HARD; what must BECOME TRUE by the end — the causal delta of the event above, not a competing event): • BEFORE (still FALSE at the first line — OPEN with this unresolved and establish it as not-yet-true): Lirael's mother's abandonment secret has not yet been revealed to the festival crowd. • THE EVENT — stage THIS EXACT event as a concrete on-page MOMENT, witnessed, in motion (a so"
+  },
+  "contSys": 355786
+}

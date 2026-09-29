@@ -1,0 +1,318 @@
+[
+  {
+    "name": "every field the validator can require is emitted by the renderer — drift is structurally impossible, not merely asserted",
+    "pass": true
+  },
+  {
+    "name": "there is no second, unused schema builder left to drift",
+    "pass": true
+  },
+  {
+    "name": "a REAL author request was captured through the full UI-shaped path",
+    "pass": true
+  },
+  {
+    "name": "the author is NO LONGER asked to self-certify the outcome — the schema is absent from the real author request",
+    "pass": true
+  },
+  {
+    "name": "the EXTRACTOR prompt represents every field the validator can require — the contract moved layer, it did not weaken",
+    "pass": true
+  },
+  {
+    "name": "evidenceQuote is IN THE affectedKnowers OUTPUT SHAPE, not only in prose",
+    "pass": true
+  },
+  {
+    "name": "...carrying its conditional requirement (every entry except a disposition of \"absent\")",
+    "pass": true
+  },
+  {
+    "name": "...and its verbatim constraints (10-120 chars, copied exactly, checked against the text)",
+    "pass": true
+  },
+  {
+    "name": "...and it directs an uncitable party to unaccountedParties rather than an invented quote",
+    "pass": true
+  },
+  {
+    "name": "the quote must establish the SPECIFIC claim, not merely mention the party",
+    "pass": true
+  },
+  {
+    "name": "...and inferring memory from gaze, silence, stillness, composure or presence is PROHIBITED",
+    "pass": true
+  },
+  {
+    "name": "...and an INTENDED or PLANNED event may not stand in for recollection of one that occurred",
+    "pass": true
+  },
+  {
+    "name": "...and an incomplete roster is stated to be HONEST rather than unfinished",
+    "pass": true
+  },
+  {
+    "name": "scopeMatch can express an UNDETERMINED comparison",
+    "pass": true
+  },
+  {
+    "name": "...defined as INSUFFICIENT EVIDENCE to compare delivered with requested scope",
+    "pass": true
+  },
+  {
+    "name": "...and explicitly NOT a weaker narrower, a hedge, or a partial grant",
+    "pass": true
+  },
+  {
+    "name": "narrower/broader remain for EVIDENCED differences and full for established coverage",
+    "pass": true
+  },
+  {
+    "name": "scopeNote must name WHAT REMAINS UNESTABLISHED under undetermined",
+    "pass": true
+  },
+  {
+    "name": "the validator accepts all FOUR legitimate values",
+    "pass": true
+  },
+  {
+    "name": "...and still refuses invented ones — the enum did not become open",
+    "pass": true
+  },
+  {
+    "name": "the continuation prompt flags an undetermined scope as NOT ESTABLISHED",
+    "pass": true
+  },
+  {
+    "name": "...telling the next scene the ESTABLISHED effects are binding while the REACH stays open",
+    "pass": true
+  },
+  {
+    "name": "...and refusing BOTH readings, not just the optimistic one",
+    "pass": true
+  },
+  {
+    "name": "...and naming unaccounted parties as genuinely unknown rather than banning reliance wholesale",
+    "pass": true
+  },
+  {
+    "name": "the canon packet marks an undetermined rupture open WITHOUT forbidding established effects",
+    "pass": true
+  },
+  {
+    "name": "...and neither downstream line fires for full, narrower or broader",
+    "pass": true
+  },
+  {
+    "name": "knowledgeStates.state carries its OWN enum and says what it describes",
+    "pass": true
+  },
+  {
+    "name": "...and prohibits using a disposition value in it, by name",
+    "pass": true
+  },
+  {
+    "name": "affectedKnowers.disposition carries its OWN enum and says what it describes",
+    "pass": true
+  },
+  {
+    "name": "...and states the two enums are never interchangeable",
+    "pass": true
+  },
+  {
+    "name": "BOTH ENUMS ARE PRESERVED INTACT — overlap on \"suspects\" is kept, not removed",
+    "pass": true
+  },
+  {
+    "name": "the preflight invariant is retired for the author path (it guarded a schema the author no longer receives)",
+    "pass": true
+  },
+  {
+    "name": "scene persistence writes a PENDING outcome record rather than committing",
+    "pass": true
+  },
+  {
+    "name": "...and the next continuation is blocked until it resolves",
+    "pass": true
+  },
+  {
+    "name": "the EXTRACTED, citation-checked outcome commits through the production resolver",
+    "pass": true
+  },
+  {
+    "name": "the committed canon record carries the invoker exemption — a later scene can read WHY Lirael still remembers",
+    "pass": true
+  },
+  {
+    "name": "the committed canon record resolves the speaking witness BY NAME, not absorbed into a collective",
+    "pass": true
+  },
+  {
+    "name": "the PRODUCTION commit path computed a non-empty composite roster (otherwise every check below is vacuous)",
+    "pass": true
+  },
+  {
+    "name": "roster source \"invoker\" actually fired on the real path",
+    "pass": true
+  },
+  {
+    "name": "roster source \"love_interest\" actually fired on the real path",
+    "pass": true
+  },
+  {
+    "name": "roster source \"accepted_stage\" actually fired on the real path",
+    "pass": true
+  },
+  {
+    "name": "roster source \"declared_collective\" actually fired on the real path",
+    "pass": true
+  },
+  {
+    "name": "roster source \"beat_speaker\" actually fired on the real path",
+    "pass": true
+  },
+  {
+    "name": "the composite is strictly WIDER than the speakers — it carries parties who never spoke a line",
+    "pass": true
+  },
+  {
+    "name": "...including a DECLARED COLLECTIVE, which by construction never speaks and so is invisible to any speaker-based roster",
+    "pass": true
+  },
+  {
+    "name": "the paid run's actual record — \"the assembly\" only — is REJECTED against the composite roster, naming EVERY omitted party",
+    "pass": true
+  },
+  {
+    "name": "that same record is accepted with NO roster — proving the rejection comes from the roster, not from some unrelated field",
+    "pass": true
+  },
+  {
+    "name": "the DEFAULT invoker anchor validates with no justification anywhere in the report — the prose does not have to earn it",
+    "pass": true
+  },
+  {
+    "name": "an invoker who is neither forgetting nor named as exempt is REJECTED — silence about the protagonist is not an account",
+    "pass": true
+  },
+  {
+    "name": "an explicitly self-including wish MAY take the invoker, declared as wish_explicitly_includes_self",
+    "pass": true
+  },
+  {
+    "name": "targeting the invoker while still claiming reason \"invoker_anchor\" is REJECTED — self-targeting cannot be silent",
+    "pass": true
+  },
+  {
+    "name": "ambiguous wording may take the invoker when declared as a wording consequence WITH a note",
+    "pass": true
+  },
+  {
+    "name": "scopeMatch \"full\" with a party openly listed as unaccounted is REJECTED",
+    "pass": true
+  },
+  {
+    "name": "the same honest admission is ACCEPTED at scopeMatch \"narrower\" with a scopeNote — the rule forces the downgrade, not the omission",
+    "pass": true
+  },
+  {
+    "name": "a knower listed WITHOUT a disposition is REJECTED — naming someone is not resolving them",
+    "pass": true
+  },
+  {
+    "name": "1. a silent NAMED bystander omitted from the record is REJECTED — a speaker-only roster could never have caught this",
+    "pass": true
+  },
+  {
+    "name": "2. a silent declared COLLECTIVE omitted from the record is REJECTED — collectives never speak by construction",
+    "pass": true
+  },
+  {
+    "name": "3. Julian RETAINED but fully accounted for is REJECTED at \"full\" — the exact gap: structurally complete, semantically narrower",
+    "pass": true
+  },
+  {
+    "name": "3b. the SAME record declared \"narrower\" is VALID — the rule forces an honest downgrade, never an omission",
+    "pass": true
+  },
+  {
+    "name": "4. Julian SUSPECTS from residue with the memory genuinely absent may remain \"full\" — the wish did reach him",
+    "pass": true
+  },
+  {
+    "name": "4b. \"suspects\" while still REMEMBERING is REJECTED at \"full\" — a retained memory cannot pass as delivery",
+    "pass": true
+  },
+  {
+    "name": "5. the standard invoker anchor is ALLOWED under \"full\"",
+    "pass": true
+  },
+  {
+    "name": "6. explicit self-targeting with the invoker RETAINED is REJECTED at \"full\" as inconsistent",
+    "pass": true
+  },
+  {
+    "name": "6b. ...and is VALID once declared \"narrower\" — the second half of Roman's \"narrower or rejected as inconsistent\"",
+    "pass": true
+  },
+  {
+    "name": "7. a NAMED-SUBSET wish does NOT require unrelated bystanders to forget — they need accounting, not amnesia",
+    "pass": true
+  },
+  {
+    "name": "7b. ...but a declared target the report never resolves is still REJECTED",
+    "pass": true
+  },
+  {
+    "name": "the minimal report is valid as a baseline (otherwise the removals below prove nothing)",
+    "pass": true
+  },
+  {
+    "name": "removing \"requestedScope\" is REJECTED",
+    "pass": true
+  },
+  {
+    "name": "removing \"deliveredScope\" is REJECTED",
+    "pass": true
+  },
+  {
+    "name": "removing \"scopeMatch\" is REJECTED",
+    "pass": true
+  },
+  {
+    "name": "removing \"ruptureClass\" is REJECTED",
+    "pass": true
+  },
+  {
+    "name": "removing \"targetPopulation\" is REJECTED",
+    "pass": true
+  },
+  {
+    "name": "removing \"affectedKnowers\" is REJECTED",
+    "pass": true
+  },
+  {
+    "name": "removing \"invokerExemption\" is REJECTED",
+    "pass": true
+  },
+  {
+    "name": "removing \"unaccountedParties\" is REJECTED",
+    "pass": true
+  },
+  {
+    "name": "a materialization_possession outcome validates with NO affectedKnowers and no other memory-only field",
+    "pass": true
+  },
+  {
+    "name": "preflight passes on the complete schema",
+    "pass": true
+  },
+  {
+    "name": "preflight FAILS on a deliberately incomplete schema and NAMES the missing field — before any network release",
+    "pass": true
+  },
+  {
+    "name": "ZERO real provider dispatches across the whole control",
+    "pass": true
+  }
+]

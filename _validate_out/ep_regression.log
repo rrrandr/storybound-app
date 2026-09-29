@@ -1,0 +1,17 @@
+=== directive excerpt ===
+  • Seren — IN_PERSON
+      SOURCE TRUTH — DO NOT STATE: FACET-TRUTH-A (source, never stated)
+      VISIBLE ACTION — MUST OCCUR: BEHAVIOR-A: she answers before the question ends
+      PC INTERPRETATION — MUST GOVERN THE NARRATION: INTERP-A: her compassion needs a witness before it can begin
+      HOW HER ATTENTION MOVES ONTO IT (lens operation): OPERATION_A
+  • the presiding Dohkar — read: BEHAVIOR-B: he names the bent word before anyone asks
+      PC INTERPRETATION — MUST GOVERN THE NARRATION: INTERP-B: being passed over is the only feeling he has left that shows
+      HOW HER ATTENTION MOVES ONTO IT (lens operation): OPERATION_B
+  RECONSTRUCT each of these into ONE OR TWO natural sentences of finished prose: the VISIBLE ACTION happens, and the PC INTERPRETATION governs how it is narrated. The SOURCE TRUTH governs accuracy and must remain UNSTATED — never write it, never paraphrase it, 
+
+PASS R1 normalization keeps pc_interpretation and pc_lens_operation on every entry
+PASS R2 RICH branch (cited facet): the specific interpretation and the lens operation each render EXACTLY ONCE, alongside each other
+PASS R3 FALLBACK branch (no cited facet): the specific interpretation and the lens operation each render EXACTLY ONCE too
+PASS R4 each visible action renders once
+
+C+ RENDER REGRESSION: 4 rows · 4 passed · 0 failed

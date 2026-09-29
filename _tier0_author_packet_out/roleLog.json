@@ -1,0 +1,21 @@
+[
+  {
+    "role": "OPENING_PLANNER",
+    "url": "/api/proxy",
+    "model": "grok-4.3",
+    "max_tokens": 2921,
+    "temperature": 0.4,
+    "evidence": "sys signature",
+    "t": 1789592922337,
+    "stack": "    at window.fetch (<anonymous>:10:24) |     at _doScaffoldCall (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:269103:28) |     at _buildScene1Scaffold (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:269259:24) |     at async handleBeginStory (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:272831:34)"
+  },
+  {
+    "role": "AUTHOR",
+    "url": "/api/proxy",
+    "max_tokens": 2400,
+    "temperature": 0.8,
+    "evidence": "sys signature",
+    "t": 1789592922395,
+    "stack": "    at window.fetch (<anonymous>:10:24) |     at callGrokNarrativeAuthor (http://localhost:3000/orchestration-client.js?v=20260916a-tier0-defer-post-author-edits:2652:23) |     at _grokAuthor (http://localhost:3000/orchestration-client.js?v=20260916a-tier0-defer-post-author-edits:2968:14) |     at Object._grokLiteraryAuthor (http://localhost:3000/orchestration-client.js?v=20260916a-tier0-defer-post-author-edits:2978:32) |     at callChat (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:277423:56) |     at handleBeginStory (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:273173:26)"
+  }
+]

@@ -1,0 +1,65 @@
+=== SAY/DO SLOT ROUTER (dry, zero dispatches, $0) ===
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/csp-report
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/config
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/csp-report
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/geo
+
+=== 1. CLASSIFICATION — NARROW, DETERMINISTIC, AND IT EXPLAINS ITSELF ===
+    RED-safemode → "boundary"  [strong]  open, unretreating want made visible — the seed's own boundary frame
+  ✓ CLASSIFY RED-safemode (the retained Safe Mode adult input) → "boundary"
+    advance → "boundary"  [strong]  open, unretreating want made visible — the seed's own boundary frame
+  ✓ CLASSIFY advance (a plainer sexual advance) → "boundary"
+    weak → null  [none]  weak turn (weak) — stays under the weak-turn restraint; an uncertain move is not a claim of unre
+  ✓ CLASSIFY weak (a weak/uncertain input) → null
+    weak-2 → null  [none]  weak turn (weak) — stays under the weak-turn restraint; an uncertain move is not a claim of unre
+  ✓ CLASSIFY weak-2 (another weak shape) → null
+    relational → null  [none]  no slot represented: the move is not an admission, an authority challenge, an unretreating want-
+  ✓ CLASSIFY relational (a NONSEXUAL relational move) → null
+    procedural → null  [none]  procedural/institutional player move — the institutional default frame IS the right answer for i
+  ✓ CLASSIFY procedural (a purely PROCEDURAL player move) → null
+    confession → "confession"  [strong]  an admission has landed
+  ✓ CLASSIFY confession (an admission (existing slot)) → "confession"
+    reversal → "reversal"  [strong]  the player contests who has authority to rule
+  ✓ CLASSIFY reversal (an authority challenge (existing slot)) → "reversal"
+  ✓ every classification carries EVIDENCE or an explicit reason, so a misfire is explainable
+  ✓ deterministic — identical input, identical answer (no model call)
+  ✓ WEAK INPUT IS EXCLUDED BY THE WEAK-TURN AUTHORITY, not by a separate guess
+  ✓ ...and the weak reason states WHY inflation is refused
+  ✓ the PROCEDURAL fallback explains that the institutional default is correct for it
+  ✓ the RELATIONAL fallback says no slot represents it, rather than forcing one
+
+=== 2. THE ROUTER — WHICH LANE THE PLANNER WOULD ACTUALLY BE REQUIRED TO USE ===
+    baseline (no slot) → {"laneId":"dohkar_preliminary_review","sourceSlot":null}
+  ✓ BASELINE UNCHANGED — with no classified slot the institutional default still wins
+    RED-safemode → {"laneId":"family_accusation","sourceSlot":"boundary"}
+  ✓ RED — the retained Safe Mode input now resolves to the BOUNDARY lane, not the review lane
+  ✓ ...and that is NO LONGER dohkar_preliminary_review — the exact bug that killed the paid run
+  ✓ a plainer sexual advance routes the same way
+  ✓ WEAK input stays on the institutional default — never promoted to boundary
+  ✓ PROCEDURAL input stays institutional, as it should
+  ✓ NONSEXUAL RELATIONAL input falls back to the default rather than borrowing boundary
+  ✓ an admission routes through the seed's confession frame
+  ✓ an authority challenge routes through the seed's reversal frame
+  ✓ AN EXPLICIT READER FATE-CARD CHOICE OUTRANKS AN INFERRED SLOT
+
+=== 3. NO NEW LANE WAS INVENTED, AND NO "ANYTHING INTIMATE" BUCKET ===
+    lanes: ["dohkar_preliminary_review","family_accusation","julian_jurisdiction_challenge","lirael_constrained","lirael_defensive_path"]
+    slots: ["temptation","silence","reversal","boundary","confession"]
+  ✓ the lane menu is still the seed's original five — nothing was added
+  ✓ the slot set is still the seed's original five
+  ✓ the classifier only ever returns slots the seed already authors
+  ✓ no broad intimacy bucket: the want test requires a STRONG act or an explicit want-claim
+
+=== 4. THE OTHER TWO SYSTEMS STILL WORK ===
+    playerImpact: string len=833  weakDirective len=1679
+  ✓ buildPlayerImpactDirective still runs and still produces content after plan selection
+  ✓ ...and it still carries the player's LITERAL Say/Do through to the author
+  ✓ RESERVED-CANON NON-REGRESSION — reserved markers are still rejected before author dispatch
+  ✓ ...and it still reports the schedule it judged against (due row 14)
+  ✓ the weak-turn restraint still emits for a weak turn
+
+=== 5. CONTAINMENT ===
+  ✓ zero provider dispatches
+
+======================================================================================
+  34/34 assertions passed

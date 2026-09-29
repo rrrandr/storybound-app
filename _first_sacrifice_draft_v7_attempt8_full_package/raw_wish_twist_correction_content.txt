@@ -1,0 +1,7 @@
+{
+  "repairs": [
+    {"n": 13, "text": "The words settled into the weave and I felt them pull toward me instead of remaining with the one who had spoken them. A cold directionality opened beneath my ribs, as though the loss Seren had named was already searching for a new anchor in the person conducting the rite. I recognized the danger in the same breath the assembly seemed to lean forward, the implication already naming me as the one who would have to carry what she had offered away."},
+    {"n": 14, "text": "The pull vanished without transition or cause. One moment the wrong current had been moving; the next it was simply not there. The clearing remained ordinary dawn light and grass, the air between us unchanged, and no one moved or spoke to account for the sudden absence. The question of what had checked it stayed open in the silence that followed."},
+    {"n": 15, "text": "You shaped the wish for your own benefit and the rite answered by turning its weight toward the one who must conduct it. That turning has not gone unseen."}
+  ]
+}

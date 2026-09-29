@@ -1,0 +1,206 @@
+=== __textSnap stages (12) — Rook sentence / paragraphs / micro marker / closer intact ===
+  #0 site=251524 callChat [model] len 0→1944 paras 0→8 rook false→true micro false→false closer3 false→true   ◀ CHANGE
+  #1 site=251543 text [deterministic] len 1944→1937 paras 8→8 rook true→true micro false→false closer3 true→true
+  #2 site=252829 enforceVocabularyBans [model] len 1937→1937 paras 8→8 rook true→true micro false→false closer3 true→true
+  #3 site=252994 enforceScene1MandatedFrame [deterministic] len 1954→1985 paras 1→1 rook true→true micro false→false closer3 true→true
+  #4 site=LI_PROOF _repairLISocialProof [model] len 1985→1985 paras 1→1 rook true→true micro false→false closer3 true→true
+  #5 site=HOT_REPAIR _repairHotOpening [model] len 1985→1985 paras 1→1 rook true→true micro false→false closer3 true→true
+  #6 site=253167 enforceScene1MandatedFrame [deterministic] len 1985→2016 paras 1→1 rook true→true micro false→false closer3 true→true
+  #7 site=253796 trimToCompleteSentence [deterministic] len 2016→2016 paras 1→1 rook true→true micro false→false closer3 true→true
+  #8 site=253910 scrubOffstageLiFace [deterministic] len 2016→1882 paras 1→1 rook true→false micro false→false closer3 true→true   ◀ CHANGE
+  #9 site=253916 neutralizeLeakedPlaceholderName [deterministic] len 1882→1882 paras 1→1 rook false→false micro false→false closer3 true→true
+  #10 site=FINAL_PROSE final-prose [endpoint] len 0→1789 paras 0→1 rook false→false micro false→false closer3 false→false   ◀ CHANGE
+  #11 site=DELIVERED formatStory [presentation] len 0→2017 paras 0→0 rook false→false micro false→false closer3 false→false
+=== scope/state probe === {"genPC":"function","genLI":"function","pcBible":false,"liBible":false,"antBible":true,"pairBond":false,"portfolio":false,"aPlot":true,"rPlot":false,"storyScaffold":false,"pov":"First","povRule":"POV PROSE RULE (HARD — FIRST PERSON)"}
+=== model calls by kind (fixture-answered unless planner/author) === ["canonicalizer@NORMALIZATION","canonicalizer@NORMALIZATION","null@PRIMARY_AUTHOR","null@PRIMARY_AUTHOR","rplot@PRIMARY_AUTHOR","aplotGenerator@STRUCTURE_GENERATOR","aplotCompression@PRIMARY_AUTHOR","antagonistBodyBible@PRIMARY_AUTHOR","woundSwapTest@PRIMARY_AUTHOR","null@PRIMARY_AUTHOR","null@PRIMARY_AUTHOR","scaffold@PRIMARY_AUTHOR","null@PRIMARY_AUTHOR","null@PRIMARY_AUTHOR","author@NARRATIVE_AUTHOR_GROK_ONLY","pa_lineEditor@NARRATIVE_AUTHOR","pa_continuation@SPECIALIST_RENDERER","pa_continuation@SPECIALIST_RENDERER","pa_gravity@PRIMARY_AUTHOR","pa_bannedPhrase@SPECIALIST_RENDERER","pa_archetype@PRIMARY_AUTHOR","pa_liBibleField@PRIMARY_AUTHOR","pa_bannedPhrase@SPECIALIST_RENDERER","pa_perception@SPECIALIST_RENDERER","pa_calcification@PRIMARY_AUTHOR","subplots@PRIMARY_AUTHOR","pa_voiceAnchor@PRIMARY_AUTHOR","pa_soundscape@INTIMACY_SPECIALIST","pa_memory@PRIMARY_AUTHOR"]
+=== DOM children of .story-page ===
+  P :: The needle on the kiln gauge had begun its slow slide left ten minutes ago, and the glaze on the tall vase inside was still wet enough to run. I pressed both palms flat a
+  P :: 
+  DIV.scene1-micro-expr.sme-hydrated :: Say it plainly — or let it show without words?
+  P :: 
+  P :: My hand tightened around my great-grandmother's old tarot deck. I toyed with the idea of letting the cards decide.
+=== assembly / stripper logs ===
+  info: Executing inline script violates the following Content Security Policy directive 'script-src 'self' https://cdn.jsdelivr.net https://js.stripe.com https://use.typekit.net'. Either the 'unsafe-inline' keyword, a hash ('sha256-rh22l1VHiHeOFds7l3h60nicRfgju77rXlx3IPUVD+M='), or a nonce ('nonce-...') is required to enable inli
+  log: %c[LENS] perception-lens editorial pass ready — author-prompt-free, rotation+de-prime guarded color:#7ec77e;font-weight:bold
+  log: %c[CGLENS] CG signature-lens pass ready — caption-only, ≤1/scene, shared anti-calc/CDS color:#7ec77e;font-weight:bold
+  log: [Corridor] Header height measurement returned 0 — keeping default (80px), will retry on next trigger
+  info: Connecting to 'http://sb-test.localhost/rest/v1/purchase_intents?select=*&user_id=eq.00000000-0000-0000-0000-000000000001&status=eq.completed&resumed_at=is.null&order=created_at.desc&limit=1' violates the following Content Security Policy directive: "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.
+  info: Connecting to 'http://sb-test.localhost/rest/v1/purchase_intents?select=*&user_id=eq.00000000-0000-0000-0000-000000000001&status=eq.completed&resumed_at=is.null&order=created_at.desc&limit=1' violates the following Content Security Policy directive: "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.
+  info: Connecting to 'http://sb-test.localhost/rest/v1/purchase_intents?id=eq.undefined' violates the following Content Security Policy directive: "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.stripe.com https://*.googleapis.com". The policy is report-only, so the violation has been logged but no furth
+  info: Connecting to 'http://sb-test.localhost/rest/v1/purchase_intents?id=eq.undefined' violates the following Content Security Policy directive: "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.stripe.com https://*.googleapis.com". The policy is report-only, so the violation has been logged but no furth
+  info: Connecting to 'http://sb-test.localhost/rest/v1/purchase_intents?select=*&user_id=eq.00000000-0000-0000-0000-000000000001&status=in.%28completed%2Cpending%29&order=created_at.desc&limit=1' violates the following Content Security Policy directive: "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.str
+  info: Connecting to 'http://sb-test.localhost/rest/v1/purchase_intents?select=*&user_id=eq.00000000-0000-0000-0000-000000000001&status=in.%28completed%2Cpending%29&order=created_at.desc&limit=1' violates the following Content Security Policy directive: "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.str
+  log: [DECK_MANDATE] OFF — state.fateAnchorPresent is falsy (resolveFateAnchor() may not have been called for this story)
+  log: [OPENING:TEMP] selected=HOT_CRISIS · DEV-FORCED (localhost — set window._forceHotOpener=false to restore the roll)
+  info: Connecting to 'http://sb-test.localhost/rest/v1/user_events' violates the following Content Security Policy directive: "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.stripe.com https://*.googleapis.com". The policy is report-only, so the violation has been logged but no further action has been ta
+  info: Connecting to 'http://sb-test.localhost/rest/v1/user_events' violates the following Content Security Policy directive: "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.stripe.com https://*.googleapis.com". The policy is report-only, so the violation has been logged but no further action has been ta
+  info: Connecting to 'http://sb-test.localhost/rest/v1/user_events' violates the following Content Security Policy directive: "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.stripe.com https://*.googleapis.com". The policy is report-only, so the violation has been logged but no further action has been ta
+  info: Connecting to 'http://sb-test.localhost/rest/v1/user_events' violates the following Content Security Policy directive: "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.stripe.com https://*.googleapis.com". The policy is report-only, so the violation has been logged but no further action has been ta
+  log: [A-PLOT:ROMANCE-ENGINE] classified as: COLLISION (Collision) — Scene 1 question: What present-tense force is already pressing on her — and (if known adversaries) how is HE behind it?
+  log: [DECK_MANDATE] ON — story onboard count=0 (need 0 or 2; 0=Story 1, 1=Story 2 palate-cleanser, 2=Story 3, 3+=past onboarding)
+  log: [DECK_MANDATE] ON — story onboard count=0 (need 0 or 2; 0=Story 1, 1=Story 2 palate-cleanser, 2=Story 3, 3+=past onboarding)
+  log: [DEMAND-HINT] axis="Say it plainly — or let it show without words?" source=scene1_micro_decision universal=1 pressure=?
+  log: [DECK_MANDATE] ON — story onboard count=0 (need 0 or 2; 0=Story 1, 1=Story 2 palate-cleanser, 2=Story 3, 3+=past onboarding)
+  log: [DECK_MANDATE] ON — story onboard count=0 (need 0 or 2; 0=Story 1, 1=Story 2 palate-cleanser, 2=Story 3, 3+=past onboarding)
+  startGroup: STORYBOUND FINAL PROMPT PAYLOAD
+  log: [SCENE1:STAGE:PLANNER-OWNED] unseeded Scene 1 — the opening planner must return scene_mission + stage_contract over 3 issued ref(s): [pc:self, ent:the one who draws them forward, plot:aplot_x3a_d77af784_x2d_fdf1_x2d_46f2_x2d_ab9e_x2d_74bb149572b6:primary_antagonist]
+  log: [SCENE1:ENVELOPE] spine contract declares 19 field(s)
+  warning: [SCENE1:SOFT] ep_beat_other_target · environment_plus.beat · omitted — environment_plus.beat does not name its own target — it should show what happened to "clay workbench": "kiln gauge needle sliding left from the cooling cycle"
+  log: [SCENE1:SKELETON] C+ 1/1 assigned [Testa] · E+ clay workbench/damage · fusion null
+  log: [DEMAND-HINT] axis="Say it plainly — or let it show without words?" source=scene1_micro_decision universal=1 pressure=procedural
+  log: [SCENE1:SCAFFOLD] micro_decision: library-only (Haiku no longer generates this field): "Say it plainly — or let it show without words?"
+  log: [SCENE1:SCAFFOLD] built in 42ms | hook="" pc=ceramicist setting=kiln room shape=any_world_anomaly echo=false micro=@1 "Say it plainly — or let it show without words?" variety=guarded deck=frame-owned(deferred)
+  log: [MODEL] Literary prose → requested=grok-4-1-fast-reasoning (Grok author [served model logged as MODEL:SERVED] + Grok de-calc editor + Haiku repair — Sonnet/Opus cost-deprecated)
+  log: [GROK-LIT] author = Grok 4.3 (premium/tentpole)
+  log: [GROK-LIT] stripped 3 leaked header artefact block(s) (TITLE, SYNOPSIS, CHARACTERS) from author output
+  log: [GROK-LIT] Grok de-calc editor: 0/0 surgical fixes applied (~0 tok rewritten, not whole-scene)
+  log: [GROK-LIT] grok-only: Mistral-small mechanical repair skipped by policy
+  log: [CRISIS-COOLDOWN] recorded category=INTIMATE_BETRAYAL subtype=INTIMATE_BETRAYAL emotion=? opener=? for flavor "smalltown"
+  log: [PROSE:CANONICAL]   collarbone_throat_line 0/1 (0%) — collarbone / throat-line self-presentation (calcified PC delta — Roman 2026-06-04)
+  log: [PROSE:CANONICAL]   hair_loose 0/1 (0%) — hair coming loose / strand falling / tucking hair behind ear (calcified hair tell — was an untracked blind spot, Roman 2026-06-17)
+  log: [PROSE:CANONICAL]   ringed_iris 0/1 (0%) — eyes "ringed (darker) at the iris/rim" OR "perpetual/faint squint" (calcified LI eye-detail — Roman 2026-06-10)
+  log: [PROSE:CANONICAL]   cliche_piercing_gaze 0/1 (0%) — stock "piercing" eyes/gaze/stare (calcified romance-hero look — Roman 2026-06-17)
+  log: [PROSE:CANONICAL]   earned_through_discipline 0/1 (0%) — "the one thing on my body I hadn't earned through discipline" (PC self-presentation calcification — Roman 2026-06-10)
+  log: [PROSE:CANONICAL]   taking_up_space 0/1 (0%) — taking up space / sidewalk (calcified — Roman 2026-06-08)
+  log: [PROSE:CANONICAL]   left_behind 0/1 (0%) — left-behind / abandonment echo
+  log: [SCENE1-GATE] Mandated closer already in final paragraph — bypassing gate (contract honored).
+  log: [MICRO-CHOICE:SNAPSHOT] pass source=normalized
+  log: [SCENE1-FRAME] Dropped fuzzy mandated-closer echo (overlap 100%): "My hand tightened around my great-grandmother's old tarot deck."
+  log: [SCENE1-FRAME] Dropped fuzzy mandated-closer echo (overlap 100%): "I toyed with the idea of letting the cards decide."
+  log: [SCENE1-FRAME] Appended mandated closer (model omitted it / replaced a junk ending).
+  log: [SCENE1-FRAME] Dropped fuzzy mandated-closer echo (overlap 100%): "My hand tightened around my great-grandmother's old tarot deck."
+  log: [SCENE1-FRAME] Dropped fuzzy mandated-closer echo (overlap 100%): "I toyed with the idea of letting the cards decide."
+  log: [SCENE1-FRAME] Appended mandated closer (model omitted it / replaced a junk ending).
+  log: [SCENE1-GATE:FINAL] Re-asserted mandated frame (opener and/or closer lost during a late regen pass).
+  log: [DECISION] _repairLIRelationalValue ENTERED
+  log: [GEN-FAIL:LI-DESCRIPTION:FINAL] ✓ LI picturable in FINAL prose — 2 categories incl. image-defining (build, handsOther) ⚠ CLINICAL — present but NOT desire-coded (catalog, not wanting); the repair should have hot-coded it. BATCH RATE: 0/1 final-prose runs LI-unpicturable.
+  log: [DECISION] _repairInterlocutorPicturability ENTERED
+  log: [DECISION] _repairCalcifiedMoves ENTERED
+  log: [HOT-RENDER:GATE] functional fails=[] (n=0) · rendered=COLD_DISRUPTION · in-motion=0 · container-opener=false ⟹ REPAIR FIRES
+  log: [BODY-DUMP:REPAIR] fired=false (densest 40w window=1, under 4 — no cluster, no cost)
+  log: [EDITORIAL:TIER] scene 0 tier=premium lensBudget=2
+  log: [EDITORIAL:REPAIR] premium → extra de-calc sweep
+  log: [DECISION] _repairCalcifiedMoves ENTERED
+  log: [SCENE1-FRAME] Dropped fuzzy mandated-closer echo (overlap 100%): "My hand tightened around my great-grandmother's old tarot deck."
+  log: [SCENE1-FRAME] Dropped fuzzy mandated-closer echo (overlap 100%): "I toyed with the idea of letting the cards decide."
+  log: [SCENE1-FRAME] Appended mandated closer (model omitted it / replaced a junk ending).
+  log: [SCENE1-FRAME:POST-PASS] Re-asserted verbatim mandated closer after post-gate mutators.
+  warning: [GEN-FAIL:PC-DESCRIPTION:FINAL] PC "the" (first-person narrator) has NO image-defining self-anchor (build/hair/described-face) anywhere in the scene. The reader cannot SEE her. BATCH RATE: 1/1 final-prose runs PC-unpicturable. [tracked, NOT repaired]
+  log: [MICRO-CHOICE:POST-GATE] pass
+  log: [POST-GATE:PAYLOAD-OK] shipped draft preserved all approved-draft payloads (a post-gate pass edited the text but did not damage crisis/attraction/micro/hook/temperature).
+  log: [SCENE1:GRAVITY:REPAIR] skipped — gravity audit not ready at mount (fire-and-forget; not awaited).
+  log: [SCENE1-MICRO] recovered KNOWN library/scaffold question (any shape): Say it plainly — or let it show without words?
+  log: [SCENE1-MICRO] placed after LI PHYSICAL DESCRIPTION + past hook (anchor para 0, LI="the")
+  log: [SCENE1-MICRO] recovered KNOWN library/scaffold question (any shape): Say it plainly — or let it show without words?
+  log: [SCENE1-MICRO] placed after LI PHYSICAL DESCRIPTION + past hook (anchor para 0, LI="the")
+  log: [READER-MODE] OFF — present-tense play resumes
+  log: [DECK_MANDATE] ON — story onboard count=0 (need 0 or 2; 0=Story 1, 1=Story 2 palate-cleanser, 2=Story 3, 3+=past onboarding)
+  info: Connecting to 'http://sb-test.localhost/rest/v1/user_events' violates the following Content Security Policy directive: "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.stripe.com https://*.googleapis.com". The policy is report-only, so the violation has been logged but no further action has been ta
+  info: Connecting to 'http://sb-test.localhost/rest/v1/user_events' violates the following Content Security Policy directive: "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.stripe.com https://*.googleapis.com". The policy is report-only, so the violation has been logged but no further action has been ta
+  info: Connecting to 'http://sb-test.localhost/rest/v1/story_snapshots?on_conflict=profile_id%2Cstory_id' violates the following Content Security Policy directive: "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.stripe.com https://*.googleapis.com". The policy is report-only, so the violation has been lo
+  info: Connecting to 'http://sb-test.localhost/rest/v1/story_snapshots?on_conflict=profile_id%2Cstory_id' violates the following Content Security Policy directive: "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.stripe.com https://*.googleapis.com". The policy is report-only, so the violation has been lo
+page text retained → _validate_out/dry_rehearsal/scene1_measure_live.page.2026-09-10T03-16-09-336Z.txt (1786 chars)
+written _validate_out/scene1_measure_E2E-DRY.2026-09-10T03-16-32-425Z.json
+{
+  "mode": "E2E-DRY",
+  "plannerCalls": 1,
+  "authorCalls": 1,
+  "aborted": [],
+  "cost": [
+    {
+      "role": "OPENING_PLANNER",
+      "status": 200,
+      "latencyMs": 4,
+      "served": "grok-4.3",
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "reasoning_tokens": 0,
+      "cached_tokens": 0,
+      "usd_list": 0,
+      "xai_usd": null,
+      "replyBytes": 3004,
+      "stageContractAt": [
+        "top"
+      ]
+    },
+    {
+      "role": "NARRATIVE_AUTHOR_GROK_ONLY",
+      "status": 200,
+      "latencyMs": 3,
+      "served": null,
+      "reasoning_tokens": 0,
+      "cached_tokens": 0,
+      "usd_list": 0,
+      "xai_usd": null,
+      "replyBytes": 2305,
+      "stageContractAt": null
+    }
+  ],
+  "totalList": 0,
+  "totalXaiUsd": 0,
+  "gate": {
+    "softFindings": [
+      {
+        "code": "ep_beat_other_target",
+        "field": "environment_plus.beat",
+        "action": "omitted"
+      }
+    ],
+    "pinned": "FROM_START",
+    "openingState": "FROM_START",
+    "pinnedShape": "CARETAKING",
+    "shapeSeen": "CARETAKING",
+    "stateLogs": [
+      "log: [LI-ARRIVAL] FROM_START (engine=?, deferIntent=false, recent=)",
+      "log: [A-PLOT:SHAPE] using INVERTED pre-pick: Caretaking",
+      "log: [A-PLOT:READER-Q] Can this man actually love somebody?",
+      "log: [A-PLOT:SHAPE] persisted: Caretaking (CARETAKING) — readerQuestion: \"Can this man actually love somebody?\""
+    ],
+    "authorAttempts": 1,
+    "pages": 1,
+    "pageFile": "_validate_out/dry_rehearsal/scene1_measure_live.page.2026-09-10T03-16-09-336Z.txt",
+    "pageChars": 1786,
+    "fatal": null,
+    "verdict": "PASS: one author attempt, one page"
+  },
+  "envelope": [
+    {
+      "top": [
+        "opening_spine",
+        "scene_skeleton",
+        "stage_contract"
+      ],
+      "spine": [
+        "pressure_source_type",
+        "pressure_source",
+        "hook_object",
+        "opening_actor_id",
+        "opening_beat",
+        "rising_beats",
+        "decision_beat",
+        "pc_career",
+        "opening_setting",
+        "environment_elements",
+        "li_texture_beat",
+        "pc_wound_anchor",
+        "pc_self_presentation_beat",
+        "scene_want",
+        "scene_mission",
+        "reader_state",
+        "pc_body_callback",
+        "antagonist_body_callback",
+        "staged_characters"
+      ],
+      "skeleton": [
+        "character_plus",
+        "pc_opening_fusion",
+        "environment_plus"
+      ],
+      "stageContractAt": [
+        "top"
+      ]
+    }
+  ],
+  "attempts": 1,
+  "retryReason": null
+}

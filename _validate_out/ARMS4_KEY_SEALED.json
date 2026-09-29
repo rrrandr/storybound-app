@@ -1,0 +1,26 @@
+[
+  {
+    "variant": "V1",
+    "arm": "B",
+    "a50": false,
+    "stg": true
+  },
+  {
+    "variant": "V2",
+    "arm": "C",
+    "a50": true,
+    "stg": false
+  },
+  {
+    "variant": "V3",
+    "arm": "D",
+    "a50": true,
+    "stg": true
+  },
+  {
+    "variant": "V4",
+    "arm": "A",
+    "a50": false,
+    "stg": false
+  }
+]

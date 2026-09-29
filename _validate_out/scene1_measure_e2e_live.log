@@ -1,0 +1,73 @@
+written _validate_out/scene1_measure_E2E-LIVE.2026-09-07T22-55-36-441Z.json
+{
+  "mode": "E2E-LIVE",
+  "plannerCalls": 1,
+  "authorCalls": 0,
+  "aborted": [],
+  "cost": [
+    {
+      "role": "OPENING_PLANNER",
+      "status": 200,
+      "latencyMs": 21367,
+      "served": "grok-4.3",
+      "prompt_tokens": 20946,
+      "completion_tokens": 723,
+      "reasoning_tokens": 1449,
+      "cached_tokens": 192,
+      "usd_list": 0.0316125,
+      "xai_usd": 0.0314109,
+      "replyBytes": 2890,
+      "stageContractAt": [
+        "top"
+      ]
+    }
+  ],
+  "totalList": 0.0316125,
+  "totalXaiUsd": 0.0314109,
+  "gate": {
+    "authorAttempts": 0,
+    "pages": 0,
+    "fatal": "pc_opening_fusion.environment_target does not match environment_plus.target — the opening may not point at two different things; pc_opening_fusion.environment_axis does not match environment_plus.axis",
+    "verdict": "FAIL-CLOSED (named): pc_opening_fusion.environment_target does not match environment_plus.target — the opening may not point at two different things; pc_opening_fusion.environment_axis does not match environment_plus.axis"
+  },
+  "envelope": [
+    {
+      "top": [
+        "opening_spine",
+        "stage_contract"
+      ],
+      "spine": [
+        "pressure_source_type",
+        "pressure_source",
+        "hook_object",
+        "opening_actor_id",
+        "opening_beat",
+        "rising_beats",
+        "decision_beat",
+        "pc_career",
+        "opening_setting",
+        "environment_elements",
+        "li_texture_beat",
+        "pc_wound_anchor",
+        "pc_self_presentation_beat",
+        "scene_want",
+        "scene_mission",
+        "reader_state",
+        "pc_body_callback",
+        "antagonist_body_callback",
+        "staged_characters",
+        "scene_skeleton"
+      ],
+      "skeleton": [
+        "character_plus",
+        "environment_plus",
+        "pc_opening_fusion"
+      ],
+      "stageContractAt": [
+        "top"
+      ]
+    }
+  ],
+  "attempts": 1,
+  "retryReason": null
+}

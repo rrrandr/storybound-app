@@ -1,0 +1,31 @@
+{
+ "violations": [],
+ "preflight": [],
+ "reports": [
+  {
+   "validator": "li_social_proof",
+   "ok": false,
+   "type": "LI_SOCIAL_PROOF_GAP",
+   "detail": "LI named, no social signal in the window following first mention",
+   "liName": "Julian",
+   "firstMentionPosition": 1115,
+   "evidence": "d, \"Never hand Fate a blank page.\"\n\nI tore the band from my mouth. The cloth fluttered to the spiralgrass as I stepped forward. The youth had meant it as a gift. She had built it from a confidence I once gave her in private. The sacrifice she named belonged to the other wish. The…"
+  },
+  {
+   "validator": "hot_opening",
+   "type": "OPENING_TEMPERATURE",
+   "ok": false,
+   "failures": [],
+   "renderedTemp": "HOT_CRISIS",
+   "inMotionHits": 0,
+   "containerOpener": false,
+   "evidence": "The youth's voice carried across the crimson spiralgrass. \"I offer the discipline to finish my studies and train as a Sacrificiant.\"\n\nI stood sealed at the edge of the mated-pair trees, the gossamer band tight across my mouth. My hands stayed at my sides. The assembled First Favo"
+  },
+  {
+   "validator": "semantic_rewrite",
+   "type": "SEMANTIC_EDIT_REQUESTED",
+   "label": "scene1-edit",
+   "instruction": "EDIT this Scene 1 to reduce its LOAD — do NOT shorten the emotional scene, do NOT cut the ending. NEVER rename the protagonist or Julian (the love interest); they always keep their names. (1) SINGLE C"
+  }
+ ]
+}

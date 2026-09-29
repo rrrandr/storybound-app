@@ -1,0 +1,16 @@
+{
+  "attempted": [
+    {
+      "url": "http://localhost:3000/api/chatgpt-proxy",
+      "method": "POST",
+      "at": 1790277737718,
+      "reason": "no registered stub or real-lane for this path"
+    }
+  ],
+  "realCalls": 0,
+  "seal": {
+    "wish": "everyone forgets the ceremony happened",
+    "invoked": true,
+    "pendingWish": true
+  }
+}

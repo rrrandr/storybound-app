@@ -1,0 +1,840 @@
+{
+  "results": [
+    {
+      "name": "a detector ALREADY EXISTS and is reachable — nothing here needs a second one",
+      "pass": true
+    },
+    {
+      "name": "\"Claude messed this up.\" is caught as a MODEL complaint",
+      "pass": true
+    },
+    {
+      "name": "\"You forgot what happened.\" is caught as a CONTINUITY complaint",
+      "pass": true
+    },
+    {
+      "name": "in-character \"This ceremony is boring.\" is NOT caught",
+      "pass": true
+    },
+    {
+      "name": "...and reaches the story unchanged",
+      "pass": true
+    },
+    {
+      "name": "in-character \"You forgot your oath.\" is NOT caught — the pattern requires the/what/that",
+      "pass": true
+    },
+    {
+      "name": "...and reaches the story unchanged",
+      "pass": true
+    },
+    {
+      "name": "WAS A GAP, NOW COVERED — \"This game is boring.\" is caught",
+      "pass": true
+    },
+    {
+      "name": "WAS A GAP, NOW COVERED — \"The Continue button is broken.\" is caught",
+      "pass": true
+    },
+    {
+      "name": "...and each is caught as its OWN kind, not lumped together",
+      "pass": true
+    },
+    {
+      "name": "the detector DOES distinguish complaint kinds — the taxonomy already exists",
+      "pass": true
+    },
+    {
+      "name": "MEASURED: but every caught complaint collapses to ONE identical fallback, so the taxonomy\n     is computed and then discarded",
+      "pass": true
+    },
+    {
+      "name": "...and that fallback is a neutral placeholder, not authored prose — so nothing a complaint\n     said enters canon",
+      "pass": true
+    },
+    {
+      "name": "no weak response is caught by any detector",
+      "pass": true
+    },
+    {
+      "name": "none is substituted or rewritten",
+      "pass": true
+    },
+    {
+      "name": "none is blanked by sanitize — \"...\" and \"sure\" survive intact",
+      "pass": true
+    },
+    {
+      "name": "a weak move still reaches the author as the player's literal input",
+      "pass": true
+    },
+    {
+      "name": "MEASURED: the directive tells the author the input is CANON and the scene must react\n     \"proportionally\" — which for a shrug is exactly where inflation could happen",
+      "pass": true
+    },
+    {
+      "name": "MEASURED: it contains NO instruction to preserve uncertainty, hesitation or weak assent",
+      "pass": true
+    },
+    {
+      "name": "MEASURED: and nothing forbids converting a weak move into a decision the player never made",
+      "pass": true
+    },
+    {
+      "name": "the high-impact variant escalates harder still — \"the moment escalates or breaks from the plan\"",
+      "pass": true
+    },
+    {
+      "name": "the NEW coverage catches \"This game is boring.\" as subjective frustration",
+      "pass": true
+    },
+    {
+      "name": "the NEW coverage catches \"The Continue button is broken.\" as interface",
+      "pass": true
+    },
+    {
+      "name": "THE NEGATIVE CONTROLS STILL SURVIVE — \"This ceremony is boring.\" is not routed",
+      "pass": true
+    },
+    {
+      "name": "...and \"You forgot your oath.\" is not routed",
+      "pass": true
+    },
+    {
+      "name": "...and \"My coat button is broken.\" is NOT routed — the pattern needs a UI noun nearby",
+      "pass": true
+    },
+    {
+      "name": "THE CATEGORY IS PRESERVED THROUGH ROUTING, not discarded",
+      "pass": true
+    },
+    {
+      "name": "a bug report opens the BUG-REPORT panel",
+      "pass": true
+    },
+    {
+      "name": "a continuity claim goes to VERIFICATION, not to an apology or a retcon",
+      "pass": true
+    },
+    {
+      "name": "model complaints and frustration go to the OOC concierge",
+      "pass": true
+    },
+    {
+      "name": "NO routed complaint advances the story",
+      "pass": true
+    },
+    {
+      "name": "the handler reports the turn was CONSUMED BY ROUTING, so the caller stops",
+      "pass": true
+    },
+    {
+      "name": "THE TURN COUNT DID NOT ADVANCE",
+      "pass": true
+    },
+    {
+      "name": "NOTHING WAS WRITTEN TO THE SCENE LEDGER",
+      "pass": true
+    },
+    {
+      "name": "...and the route was recorded for review, with its category",
+      "pass": true
+    },
+    {
+      "name": "RED PROOF — the old in-world fallback no longer runs on the Submit path, so no fake\n     canonical action is manufactured",
+      "pass": true
+    },
+    {
+      "name": "every whole-response weak shape is recognised",
+      "pass": true
+    },
+    {
+      "name": "the posture is identified, not just the weakness",
+      "pass": true
+    },
+    {
+      "name": "A SUBSTANTIVE ACTION PLUS \"sure\" IS NOT A WEAK TURN — the substance is the move",
+      "pass": true
+    },
+    {
+      "name": "...nor is a weak action beside a substantive line",
+      "pass": true
+    },
+    {
+      "name": "a Fate action beside weak text disables it — that turn is not weak",
+      "pass": true
+    },
+    {
+      "name": "an empty turn is not a weak turn",
+      "pass": true
+    },
+    {
+      "name": "the contract preserves the posture exactly",
+      "pass": true
+    },
+    {
+      "name": "it forbids upgrading to enthusiasm, confession, refusal, commitment or decisive action",
+      "pass": true
+    },
+    {
+      "name": "...and names the exact inflation it prevents",
+      "pass": true
+    },
+    {
+      "name": "the scene may still move — from OUTSIDE the protagonist",
+      "pass": true
+    },
+    {
+      "name": "a new pressure or consequence is allowed; pretending the player chose is not",
+      "pass": true
+    },
+    {
+      "name": "an ORDINARY turn emits nothing, so every normal scene is byte-identical",
+      "pass": true
+    },
+    {
+      "name": "DELIVERED TO THE PLANNER — before the event is chosen",
+      "pass": true
+    },
+    {
+      "name": "...and that happens BEFORE the planner messages are assembled",
+      "pass": true
+    },
+    {
+      "name": "DELIVERED TO THE AUTHOR — the same contract survives the handoff",
+      "pass": true
+    },
+    {
+      "name": "THE VALUE REACHES THE AUTHOR PAYLOAD — present in the real CG system prompt",
+      "pass": true
+    },
+    {
+      "name": "mixed interface: the DIALOGUE field is identified as the source",
+      "pass": true
+    },
+    {
+      "name": "...and the routed text is the COMPLAINT, not the innocent action",
+      "pass": true
+    },
+    {
+      "name": "...routed to bug-report",
+      "pass": true
+    },
+    {
+      "name": "mixed plot-memory-complaint: the DIALOGUE field is identified as the source",
+      "pass": true
+    },
+    {
+      "name": "...and the routed text is the COMPLAINT, not the innocent action",
+      "pass": true
+    },
+    {
+      "name": "...routed to concierge-verify",
+      "pass": true
+    },
+    {
+      "name": "mixed model-name-complaint: the DIALOGUE field is identified as the source",
+      "pass": true
+    },
+    {
+      "name": "...and the routed text is the COMPLAINT, not the innocent action",
+      "pass": true
+    },
+    {
+      "name": "...routed to concierge-ooc",
+      "pass": true
+    },
+    {
+      "name": "a complaint in the ACTION field routes the action text",
+      "pass": true
+    },
+    {
+      "name": "RED — a claim about the WRONG ACTOR is not supported by the right words",
+      "pass": true
+    },
+    {
+      "name": "...and a pronoun object in the record is UNRESOLVED, not guessed at",
+      "pass": true
+    },
+    {
+      "name": "...while a record naming the object explicitly DOES support the right actor",
+      "pass": true
+    },
+    {
+      "name": "RED — a TRUE claim is not contradicted by the other actor's opposite predicate",
+      "pass": true
+    },
+    {
+      "name": "...while the genuinely opposed claim about the SAME actor IS contradicted",
+      "pass": true
+    },
+    {
+      "name": "RED — \"did not admit\" CONTRADICTS \"admitted\" instead of supporting it",
+      "pass": true
+    },
+    {
+      "name": "...and the negated claim itself is supported by the negated record",
+      "pass": true
+    },
+    {
+      "name": "the parser binds polarity to the relation, so \"denied\" is the negative pole of the same axis",
+      "pass": true
+    },
+    {
+      "name": "...and \"did not deny\" is positive on that axis",
+      "pass": true
+    },
+    {
+      "name": "RED — a PLANNED event that never reached prose cannot prove it happened",
+      "pass": true
+    },
+    {
+      "name": "...the planned entry is visible as CONTEXT, and is labelled as such",
+      "pass": true
+    },
+    {
+      "name": "...and the reason names the authority problem, not a matching problem",
+      "pass": true
+    },
+    {
+      "name": "DELIVERED prose in the same story DOES support it",
+      "pass": true
+    },
+    {
+      "name": "a claim OUTSIDE the bounded grammar returns unresolved, never a confident verdict",
+      "pass": true
+    },
+    {
+      "name": "RED — a DIFFERENT object sharing only filler words is not supported",
+      "pass": true
+    },
+    {
+      "name": "...and no evidence was accepted at all",
+      "pass": true
+    },
+    {
+      "name": "the SAME object still matches across a differing adjunct — the object is the direct object,\n     not the phrase that follows it",
+      "pass": true
+    },
+    {
+      "name": "RED — a proposition embedded in the player's own dialogue cannot prove itself",
+      "pass": true
+    },
+    {
+      "name": "...the player input is visible but labelled CONTEXT, not delivered fact",
+      "pass": true
+    },
+    {
+      "name": "...and delivered prose asserting the same thing DOES support it",
+      "pass": true
+    },
+    {
+      "name": "RED — matching AND opposing authoritative evidence yields UNRESOLVED, not contradicted",
+      "pass": true
+    },
+    {
+      "name": "...and both sides of the conflict are preserved for the conversation",
+      "pass": true
+    },
+    {
+      "name": "...with a reason that names the disagreement",
+      "pass": true
+    },
+    {
+      "name": "THE READER IS RIGHT — prior canon supports it and the LATEST scene contradicts it",
+      "pass": true
+    },
+    {
+      "name": "...factStatus and complaintStatus are reported SEPARATELY",
+      "pass": true
+    },
+    {
+      "name": "...the message AGREES with the reader instead of dismissing them",
+      "pass": true
+    },
+    {
+      "name": "...and it is HANDED OFF to the conversation, not answered with a whisper",
+      "pass": true
+    },
+    {
+      "name": "RED PROOF — this is no longer filed as a self-conflicting record",
+      "pass": true
+    },
+    {
+      "name": "CONVERSE — the latest scene remembered it, so the complaint is contradicted",
+      "pass": true
+    },
+    {
+      "name": "...and ONLY here is \"Nothing was lost\" said",
+      "pass": true
+    },
+    {
+      "name": "...and only here is no conversation needed",
+      "pass": true
+    },
+    {
+      "name": "SILENCE in the latest scene is UNRESOLVED — absence alone is not forgetting",
+      "pass": true
+    },
+    {
+      "name": "...and it still reaches the conversation rather than being dismissed",
+      "pass": true
+    },
+    {
+      "name": "with NO latest scene the complaint cannot be judged, and is handed off",
+      "pass": true
+    },
+    {
+      "name": "the parser keeps auxiliary negation intact — \"has never admitted\" is negative",
+      "pass": true
+    },
+    {
+      "name": "STALE-LEDGER NEGATIVE — a ledger stamped for another story is not read",
+      "pass": true
+    },
+    {
+      "name": "...so it cannot support the claim",
+      "pass": true
+    },
+    {
+      "name": "ALREADY-OPEN WITH HISTORY — the handoff still delivers",
+      "pass": true
+    },
+    {
+      "name": "...appending BOTH the claim and the finding to the visible dialogue",
+      "pass": true
+    },
+    {
+      "name": "...and the player's exact words are on screen, not just the finding",
+      "pass": true
+    },
+    {
+      "name": "SUPPRESSED — it reports delivered=FALSE rather than claiming success",
+      "pass": true
+    },
+    {
+      "name": "...and queues the message instead of dropping it",
+      "pass": true
+    },
+    {
+      "name": "...and an ORDINARY panel open drains it — no second complaint required",
+      "pass": true
+    },
+    {
+      "name": "a dispute queued under ANOTHER story is discarded, not surfaced in this one",
+      "pass": true
+    },
+    {
+      "name": "it answers out-of-character and states the story is untouched",
+      "pass": true
+    },
+    {
+      "name": "NO STORY FACT CHANGED",
+      "pass": true
+    },
+    {
+      "name": "and the code documents it as a TRANSIENT acknowledgement, not Concierge routing",
+      "pass": true
+    },
+    {
+      "name": "the cleanup is NOT in the translation block any more",
+      "pass": true
+    },
+    {
+      "name": "...and there is exactly ONE cleanup site",
+      "pass": true
+    },
+    {
+      "name": "...and it sits in the generation's own finally, right after the plan is returned",
+      "pass": true
+    },
+    {
+      "name": "the weak turn reached a real PLANNER request",
+      "pass": true
+    },
+    {
+      "name": "THE RESTRAINT REACHED THE PLANNER PAYLOAD",
+      "pass": true
+    },
+    {
+      "name": "the weak turn reached a real AUTHOR request",
+      "pass": true
+    },
+    {
+      "name": "THE RESTRAINT REACHED THE AUTHOR PAYLOAD",
+      "pass": true
+    },
+    {
+      "name": "...and it is the SAME contract in both, not two drifting copies",
+      "pass": true
+    },
+    {
+      "name": "THE STATE WAS CLEARED after generation — nothing is left behind",
+      "pass": true
+    },
+    {
+      "name": "the NEXT ordinary turn still reached planner and author",
+      "pass": true
+    },
+    {
+      "name": "NO LEAK — the ordinary turn carries NO weak-turn restraint in the planner",
+      "pass": true
+    },
+    {
+      "name": "...nor in the author",
+      "pass": true
+    },
+    {
+      "name": "...and nothing was left on state",
+      "pass": true
+    },
+    {
+      "name": "a spoken weak turn requires the line to remain an ATTEMPTED UTTERANCE",
+      "pass": true
+    },
+    {
+      "name": "...and explicitly forbids turning it into silence or unspoken thought",
+      "pass": true
+    },
+    {
+      "name": "...names the softenings that ARE allowed, so it is not a demand for volume",
+      "pass": true
+    },
+    {
+      "name": "...and requires it to be VISIBLY RECEIVED on the page",
+      "pass": true
+    },
+    {
+      "name": "an ACTION-only weak turn gets the action rule, not the speech rule",
+      "pass": true
+    },
+    {
+      "name": "an ordinary turn still emits nothing",
+      "pass": true
+    },
+    {
+      "name": "RED — the ACTUAL failing plan is detected as seed-reserved content",
+      "pass": true
+    },
+    {
+      "name": "...and the DETERMINISTIC gate rejects it, despite grounding being \"ordinary\"",
+      "pass": true
+    },
+    {
+      "name": "...with a reason that says a label does not launder the content",
+      "pass": true
+    },
+    {
+      "name": "NEGATIVE — an accusation (explicitly permitted early) is NOT flagged",
+      "pass": true
+    },
+    {
+      "name": "NEGATIVE — DEMANDING a preliminary review is not CONVENING one",
+      "pass": true
+    },
+    {
+      "name": "NEGATIVE — one marker plus a convening verb is a mention, not the proceeding",
+      "pass": true
+    },
+    {
+      "name": "NEGATIVE — ordinary business is untouched",
+      "pass": true
+    },
+    {
+      "name": "cast names are excluded from markers, or every scene naming a character would trip it",
+      "pass": true
+    },
+    {
+      "name": "ownership is checked unconditionally, not behind the paid flag",
+      "pass": true
+    },
+    {
+      "name": "the deterministic block runs on _caProposal alone — no _canonAuditIsEnabled() in its guard",
+      "pass": true
+    },
+    {
+      "name": "...and it rejects before author dispatch with its own source label",
+      "pass": true
+    },
+    {
+      "name": "only the PAID audit remains gated by the flag and the risk trigger",
+      "pass": true
+    },
+    {
+      "name": "with the paid auditor DISABLED, deterministic rejection still fires",
+      "pass": true
+    },
+    {
+      "name": "the lane no longer instructs naming conveners or a date",
+      "pass": true
+    },
+    {
+      "name": "...it now states the HARD LIMITS explicitly",
+      "pass": true
+    },
+    {
+      "name": "...and draws the line in one sentence a planner can act on",
+      "pass": true
+    },
+    {
+      "name": "the signal regex no longer advertises the reserved markers (date/convene/terms)",
+      "pass": true
+    },
+    {
+      "name": "RETAINED WEAK-TURN PLAN is rejected before author dispatch",
+      "pass": true
+    },
+    {
+      "name": "RETAINED SAFE-MODE PLAN is rejected before author dispatch",
+      "pass": true
+    },
+    {
+      "name": "...both with a reason naming the reserved markers",
+      "pass": true
+    },
+    {
+      "name": "A MERE DEMAND for review still passes — demanding is not convening",
+      "pass": true
+    },
+    {
+      "name": "ORDINARY EARLY PRESSURE still passes — stating conduct will be reviewed is allowed",
+      "pass": true
+    },
+    {
+      "name": "...and ordinary business is untouched",
+      "pass": true
+    },
+    {
+      "name": "the retained run-4 prose is on disk and still contains the offending line",
+      "pass": true
+    },
+    {
+      "name": "RED — the ORIGINAL check reported ONE marker and no convening verb on that line",
+      "pass": true
+    },
+    {
+      "name": "RED — so the ORIGINAL assertion (!(markers>=2 && convenes)) PASSED on reserved prose",
+      "pass": true
+    },
+    {
+      "name": "CORRECTED — /g plus distinct counting finds BOTH markers",
+      "pass": true
+    },
+    {
+      "name": "CORRECTED — \"placed before\" now counts as constituting the proceeding",
+      "pass": true
+    },
+    {
+      "name": "the live runner's own regex carries the global flag, and is case-SENSITIVE",
+      "pass": true
+    },
+    {
+      "name": "...so ordinary English \"the open air\" is NOT a reserved marker",
+      "pass": true
+    },
+    {
+      "name": "...while the capitalised venue still is",
+      "pass": true
+    },
+    {
+      "name": "...counts DISTINCT markers through a Set, not match-array length",
+      "pass": true
+    },
+    {
+      "name": "...includes \"placed before\" in the convening vocabulary",
+      "pass": true
+    },
+    {
+      "name": "...and now asserts the reserved body is not named AT ALL, not merely under-counted",
+      "pass": true
+    },
+    {
+      "name": "the author-side directive is exposed and emits for a seed that reserves content",
+      "pass": true
+    },
+    {
+      "name": "THE VALUE REACHES THE AUTHOR PAYLOAD — present in the real CG system prompt",
+      "pass": true
+    },
+    {
+      "name": "...and the whole directive is embedded verbatim, not a paraphrase of it",
+      "pass": true
+    },
+    {
+      "name": "it forbids naming the body and its composition",
+      "pass": true
+    },
+    {
+      "name": "it forbids the venue, a date, and terms",
+      "pass": true
+    },
+    {
+      "name": "IT COVERS DIALOGUE — the exact channel run 4 used to smuggle it in",
+      "pass": true
+    },
+    {
+      "name": "it names the permitted pressure, so the scene is redirected and not merely blocked",
+      "pass": true
+    },
+    {
+      "name": "the harvester really does return an ordinary role word among its markers",
+      "pass": true
+    },
+    {
+      "name": "...and the directive does NOT ban it — it forbids CATEGORIES, never a word list",
+      "pass": true
+    },
+    {
+      "name": "...nor does it re-print the reserved composition or venue back to the author",
+      "pass": true
+    },
+    {
+      "name": "it cites the reserved canon by HEADING so the author knows which proceeding is meant",
+      "pass": true
+    },
+    {
+      "name": "NEGATIVE — a seed with no reserved world truths gets NOTHING",
+      "pass": true
+    },
+    {
+      "name": "...so its author payload carries no reserved-canon block at all",
+      "pass": true
+    },
+    {
+      "name": "still only ONE wall-break detector — nothing was duplicated",
+      "pass": true
+    },
+    {
+      "name": "weak input is still never BLOCKED — the contract restrains the scene, not the player",
+      "pass": true
+    },
+    {
+      "name": "zero provider dispatches",
+      "pass": true
+    }
+  ],
+  "cat4": [
+    {
+      "id": "model-complaint",
+      "text": "Claude messed this up.",
+      "expectCaught": true,
+      "kind": "subjective/model",
+      "detected": {
+        "category": "model-name-complaint",
+        "matched": "Claude messed this up"
+      },
+      "sanitized": "Claude messed this up.",
+      "afterFallbackAction": "a brief, unplaceable pause, as if she lost her train of thought",
+      "afterFallbackDialogue": "a half-formed thought that trails off, unfinished",
+      "sanitizedToEmpty": false,
+      "changedByFallback": true
+    },
+    {
+      "id": "boring",
+      "text": "This game is boring.",
+      "expectCaught": null,
+      "kind": "subjective frustration",
+      "detected": {
+        "category": "subjective-frustration",
+        "matched": "This game is boring"
+      },
+      "sanitized": "This game is boring.",
+      "afterFallbackAction": "a brief, unplaceable pause, as if she lost her train of thought",
+      "afterFallbackDialogue": "a half-formed thought that trails off, unfinished",
+      "sanitizedToEmpty": false,
+      "changedByFallback": true
+    },
+    {
+      "id": "continuity",
+      "text": "You forgot what happened.",
+      "expectCaught": true,
+      "kind": "continuity claim",
+      "detected": {
+        "category": "plot-memory-complaint",
+        "matched": "You forgot what"
+      },
+      "sanitized": "You forgot what happened.",
+      "afterFallbackAction": "a brief, unplaceable pause, as if she lost her train of thought",
+      "afterFallbackDialogue": "a half-formed thought that trails off, unfinished",
+      "sanitizedToEmpty": false,
+      "changedByFallback": true
+    },
+    {
+      "id": "button-broken",
+      "text": "The Continue button is broken.",
+      "expectCaught": null,
+      "kind": "bug report",
+      "detected": {
+        "category": "interface",
+        "matched": "The Continue button is"
+      },
+      "sanitized": "The Continue button is broken.",
+      "afterFallbackAction": "a brief, unplaceable pause, as if she lost her train of thought",
+      "afterFallbackDialogue": "a half-formed thought that trails off, unfinished",
+      "sanitizedToEmpty": false,
+      "changedByFallback": true
+    },
+    {
+      "id": "NEG-ceremony",
+      "text": "This ceremony is boring.",
+      "expectCaught": false,
+      "kind": "in-character",
+      "detected": null,
+      "sanitized": "This ceremony is boring.",
+      "afterFallbackAction": "This ceremony is boring.",
+      "afterFallbackDialogue": "This ceremony is boring.",
+      "sanitizedToEmpty": false,
+      "changedByFallback": false
+    },
+    {
+      "id": "NEG-oath",
+      "text": "You forgot your oath.",
+      "expectCaught": false,
+      "kind": "in-character",
+      "detected": null,
+      "sanitized": "You forgot your oath.",
+      "afterFallbackAction": "You forgot your oath.",
+      "afterFallbackDialogue": "You forgot your oath.",
+      "sanitizedToEmpty": false,
+      "changedByFallback": false
+    }
+  ],
+  "cat5": [
+    {
+      "text": "I don't know",
+      "detected": null,
+      "sanitized": "I don't know",
+      "afterFallbackAction": "I don't know",
+      "afterFallbackDialogue": "I don't know",
+      "sanitizedToEmpty": false,
+      "changedByFallback": false
+    },
+    {
+      "text": "whatever",
+      "detected": null,
+      "sanitized": "whatever",
+      "afterFallbackAction": "whatever",
+      "afterFallbackDialogue": "whatever",
+      "sanitizedToEmpty": false,
+      "changedByFallback": false
+    },
+    {
+      "text": "...",
+      "detected": null,
+      "sanitized": "...",
+      "afterFallbackAction": "...",
+      "afterFallbackDialogue": "...",
+      "sanitizedToEmpty": false,
+      "changedByFallback": false
+    },
+    {
+      "text": "sure",
+      "detected": null,
+      "sanitized": "sure",
+      "afterFallbackAction": "sure",
+      "afterFallbackDialogue": "sure",
+      "sanitizedToEmpty": false,
+      "changedByFallback": false
+    }
+  ]
+}

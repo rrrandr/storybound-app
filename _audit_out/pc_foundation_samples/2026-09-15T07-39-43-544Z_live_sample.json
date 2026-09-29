@@ -1,0 +1,47 @@
+{
+  "at": "2026-09-15T07:39:43.544Z",
+  "starterId": "starter_first_sacrifice",
+  "storyId": "3e849331-48e2-47ec-b0cd-351bffdc052a",
+  "contractViolation": null,
+  "attempts": [
+    {
+      "kind": "pcBodyBible",
+      "attemptNumber": 1,
+      "model": "ministral-8b-2512",
+      "role": "STRUCTURE_GENERATOR",
+      "maxTokens": 2500,
+      "temperature": 0.6,
+      "sysBytes": 9101,
+      "usrBytes": 28435,
+      "responseStatus": 502,
+      "responseUsage": null,
+      "responseContent": null
+    },
+    {
+      "kind": "pcBodyBible",
+      "attemptNumber": 2,
+      "role": "STRUCTURE_GENERATOR",
+      "maxTokens": 2500,
+      "temperature": 0.6,
+      "sysBytes": 9101,
+      "usrBytes": 28435,
+      "responseStatus": null,
+      "responseUsage": null,
+      "responseContent": null
+    },
+    {
+      "kind": "pcBodyBible",
+      "attemptNumber": 3,
+      "model": "gpt-4o-mini",
+      "role": "PRIMARY_AUTHOR",
+      "maxTokens": 2500,
+      "temperature": 0.6,
+      "sysBytes": 9101,
+      "usrBytes": 28435,
+      "responseStatus": null,
+      "responseUsage": null,
+      "responseContent": null
+    }
+  ],
+  "parsedBible": null
+}

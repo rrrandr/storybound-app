@@ -1,0 +1,17 @@
+[arm A] a50=false stg=false — init…
+   captured 3096 chars   spend=$0.180
+[arm B] a50=false stg=true — init…
+   captured 1974 chars   spend=$0.353
+[arm C] a50=true stg=false — init…
+   captured 2016 chars   spend=$0.522
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+page.waitForFunction: Timeout 30000ms exceeded.
+    at /Users/romantsukerman/storybound-app/_arms4.mjs:32:14 {
+  log: [],
+  name: 'TimeoutError'
+}
+
+Node.js v25.3.0

@@ -1,0 +1,66 @@
+<claude-code-hint v="1" type="plugin" value="vercel@claude-plugins-official" />
+Vercel CLI 59.5.0 (Node.js 25.3.0)
+Retrieving project…
+> Ready! Available at http://localhost:3000
+[GEO-GATE] geo_gate_decision {"country":null,"decision":"dev_allow","mode":"log","reason":"dev","path":"geo"}
+[beta-events] insert failed: Could not find the table 'public.beta_events' in the schema cache
+[beta-events] insert failed: Could not find the table 'public.beta_events' in the schema cache
+[GEO-GATE] geo_gate_decision {"country":null,"decision":"dev_allow","mode":"log","reason":"dev","path":"geo"}
+[beta-events] insert failed: Could not find the table 'public.beta_events' in the schema cache
+[beta-events] insert failed: Could not find the table 'public.beta_events' in the schema cache
+[GEO-GATE] geo_gate_decision {"country":null,"decision":"dev_allow","mode":"log","reason":"dev","path":"geo"}
+[beta-events] insert failed: Could not find the table 'public.beta_events' in the schema cache
+[beta-events] insert failed: Could not find the table 'public.beta_events' in the schema cache
+[GEO-GATE] geo_gate_decision {"country":null,"decision":"dev_allow","mode":"log","reason":"dev","path":"geo"}
+[beta-events] insert failed: Could not find the table 'public.beta_events' in the schema cache
+[beta-events] insert failed: Could not find the table 'public.beta_events' in the schema cache
+[GEO-GATE] geo_gate_decision {"country":null,"decision":"dev_allow","mode":"log","reason":"dev","path":"geo"}
+[beta-events] insert failed: Could not find the table 'public.beta_events' in the schema cache
+[beta-events] insert failed: Could not find the table 'public.beta_events' in the schema cache
+[GEO-GATE] geo_gate_decision {"country":null,"decision":"dev_allow","mode":"log","reason":"dev","path":"geo"}
+[beta-events] insert failed: Could not find the table 'public.beta_events' in the schema cache
+[beta-events] insert failed: Could not find the table 'public.beta_events' in the schema cache
+[GEO-GATE] geo_gate_decision {"country":null,"decision":"dev_allow","mode":"log","reason":"dev","path":"geo"}
+[beta-events] insert failed: Could not find the table 'public.beta_events' in the schema cache
+[beta-events] insert failed: Could not find the table 'public.beta_events' in the schema cache
+[GEO-GATE] geo_gate_decision {"country":null,"decision":"dev_allow","mode":"log","reason":"dev","path":"geo"}
+[beta-events] insert failed: Could not find the table 'public.beta_events' in the schema cache
+[beta-events] insert failed: Could not find the table 'public.beta_events' in the schema cache
+[GEO-GATE] geo_gate_decision {"country":null,"decision":"dev_allow","mode":"log","reason":"dev","path":"geo"}
+[beta-events] insert failed: Could not find the table 'public.beta_events' in the schema cache
+[beta-events] insert failed: Could not find the table 'public.beta_events' in the schema cache
+[GEO-GATE] geo_gate_decision {"country":null,"decision":"dev_allow","mode":"log","reason":"dev","path":"geo"}
+[beta-events] insert failed: Could not find the table 'public.beta_events' in the schema cache
+[beta-events] insert failed: Could not find the table 'public.beta_events' in the schema cache
+[GEO-GATE] geo_gate_decision {"country":null,"decision":"dev_allow","mode":"log","reason":"dev","path":"geo"}
+[beta-events] insert failed: Could not find the table 'public.beta_events' in the schema cache
+[beta-events] insert failed: Could not find the table 'public.beta_events' in the schema cache
+[GEO-GATE] geo_gate_decision {"country":null,"decision":"dev_allow","mode":"log","reason":"dev","path":"geo"}
+[beta-events] insert failed: Could not find the table 'public.beta_events' in the schema cache
+[beta-events] insert failed: Could not find the table 'public.beta_events' in the schema cache
+[GEO-GATE] geo_gate_decision {"country":null,"decision":"dev_allow","mode":"log","reason":"dev","path":"geo"}
+[beta-events] insert failed: Could not find the table 'public.beta_events' in the schema cache
+[beta-events] insert failed: Could not find the table 'public.beta_events' in the schema cache
+[GEO-GATE] geo_gate_decision {"country":null,"decision":"dev_allow","mode":"log","reason":"dev","path":"geo"}
+[beta-events] insert failed: Could not find the table 'public.beta_events' in the schema cache
+[beta-events] insert failed: Could not find the table 'public.beta_events' in the schema cache
+[GEO-GATE] geo_gate_decision {"country":null,"decision":"dev_allow","mode":"log","reason":"dev","path":"geo"}
+[beta-events] insert failed: Could not find the table 'public.beta_events' in the schema cache
+[beta-events] insert failed: Could not find the table 'public.beta_events' in the schema cache
+[GEO-GATE] geo_gate_decision {"country":null,"decision":"dev_allow","mode":"log","reason":"dev","path":"geo"}
+[beta-events] insert failed: Could not find the table 'public.beta_events' in the schema cache
+[beta-events] insert failed: Could not find the table 'public.beta_events' in the schema cache
+[GEO-GATE] geo_gate_decision {"country":null,"decision":"dev_allow","mode":"log","reason":"dev","path":"geo"}
+[beta-events] insert failed: Could not find the table 'public.beta_events' in the schema cache
+[beta-events] insert failed: Could not find the table 'public.beta_events' in the schema cache
+[GEO-GATE] geo_gate_decision {"country":null,"decision":"dev_allow","mode":"log","reason":"dev","path":"geo"}
+[beta-events] insert failed: Could not find the table 'public.beta_events' in the schema cache
+[beta-events] insert failed: Could not find the table 'public.beta_events' in the schema cache
+[GEO-GATE] geo_gate_decision {"country":null,"decision":"dev_allow","mode":"log","reason":"dev","path":"geo"}
+[beta-events] insert failed: Could not find the table 'public.beta_events' in the schema cache
+[beta-events] insert failed: Could not find the table 'public.beta_events' in the schema cache
+[GEO-GATE] geo_gate_decision {"country":null,"decision":"dev_allow","mode":"log","reason":"dev","path":"geo"}
+[beta-events] insert failed: Could not find the table 'public.beta_events' in the schema cache
+[beta-events] insert failed: Could not find the table 'public.beta_events' in the schema cache
+[GEO-GATE] geo_gate_decision {"country":null,"decision":"dev_allow","mode":"log","reason":"dev","path":"geo"}
+[beta-events] insert failed: Could not find the table 'public.beta_events' in the schema cache

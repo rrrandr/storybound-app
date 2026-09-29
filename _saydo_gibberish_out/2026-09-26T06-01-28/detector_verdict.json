@@ -1,0 +1,22 @@
+{
+  "input": {
+    "action": "asdkfjh sdkfj lkjwer",
+    "dialogue": "qwerty zzzz aaaa"
+  },
+  "verdict": {
+    "action": {
+      "gibberish": true,
+      "reason": "Long consonant run (likely keyboard mash)."
+    },
+    "dialogue": {
+      "gibberish": true,
+      "reason": "Too many repeated characters."
+    },
+    "fbAction": "a beat of dazed, wordless hesitation",
+    "fbDialogue": "a confused, wordless sound that never resolves into words",
+    "controlReal": "I take his hand and hold it",
+    "controlRealDetected": {
+      "gibberish": false
+    }
+  }
+}

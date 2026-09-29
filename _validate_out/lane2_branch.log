@@ -1,0 +1,20 @@
+  author attempts: 2 (winner = last)   post-author links: 3
+
+════ CONSERVATION INVARIANT (byte-exact) ════
+  RAW cross-check (author == first.before) : PASS
+  changed authoritative mutations          : 3
+  every transition reconciles              : FAIL
+  last.after == FINAL_PROSE                : FAIL
+  delivery FINAL_PROSE->formatStory->DELIVERED : PASS
+  FIRST MISMATCH between sites 284430 -> 284431  owner=_repairCalcifiedMoves
+  events observed: 35  (rawSnap 35 / textSnap 0)
+
+  ❌ HARNESS FAILURE
+  mutation labels: _repairInterlocutorPicturability(model) → _repairCalcifiedMoves(model) → window._applyPerceptionLens(model)
+
+════ LANE-2 SNAPSHOT CHAIN (V2, author stubbed) ════
+  RAW    290ba4fe90   2450 chars
+  C1     29c7adbdff   2450 chars   ← _mistralRepairPass [Mistral-small repair]
+  FINAL  985bb30633   2518 chars
+
+  total snapshot events: 4  (retained/changed: 1, rejected: 0, no-change: 3)

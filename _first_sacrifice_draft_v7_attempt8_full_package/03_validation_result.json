@@ -1,0 +1,25 @@
+{
+  "finalValidation": {
+    "ok": true,
+    "violations": [],
+    "diagnostics": [
+      {
+        "rule": "exemplar_similarity",
+        "detail": "oasOpening contains a 6+ word verbatim match against the withheld, non-rendered julian_opening_turn exemplar — non-blocking similarity report, not evidence of copying (the exemplar was never supplied to the model; the matched framing is independently required by the rendered opening_frame_brief / oas_opening_requirement.content_requirement)"
+      }
+    ]
+  },
+  "repairOutcome": "merged_passing",
+  "repairPassesRun": 2,
+  "repairPassRecords": [
+    {
+      "pass": 1,
+      "outcome": "merged_still_density_failing"
+    },
+    {
+      "pass": 2,
+      "outcome": "merged_passing"
+    }
+  ],
+  "resumed_from": "real Attempt 8 pass-1-merged draft (07_final_draft_after_pass1.json), over-ceiling-capable engine, pass 2 (final)"
+}

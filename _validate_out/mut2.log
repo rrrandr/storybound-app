@@ -1,0 +1,147 @@
+[trace] init…
+[trace] firing turn (author stubbed with saved V2 raw)…
+
+════ MUTATION TIMELINE (V2 replay, author stubbed) ════
+  RAW  290ba4fe90  2450 chars   (author stubs served: 1)
+  [1] REPAIR-CALL  (no label)  → gpt-4o
+        in be417532cb (4873)  → cand 7e171c70e6 (2080)  changed=true
+        sys: 
+  [2] REPAIR-CALL  (no label)  → grok-4.3
+        in df37259199 (1080)  → cand 548e6897f7 (129)  changed=true
+        sys: You are the same narrator continuing THIS exact scene. Write ONE or TWO short sentences (~
+  [3] REPAIR-CALL  (no label)  → grok-4.3
+        in 31375c02da (1855)  → cand a0d8d36c24 (16)  changed=true
+        sys: You classify the ambient soundscape of a romance/fiction scene. Return EXACTLY one tag fro
+  [4] REPAIR-CALL  (no label)  → grok-4.3
+        in 4d2df9052f (1075)  → cand 00cd4d2790 (79)  changed=true
+        sys: You are the same narrator continuing THIS exact scene. Write ONE or TWO short sentences (~
+  [5] REPAIR-CALL  (no label)  → gpt-4o-mini
+        in 032390eee1 (6332)  → cand 1f34399971 (63)  changed=true
+        sys: You are a canonicalization and normalization engine for Storybound. You do NOT write pros
+  [6] REPAIR-CALL  (no label)  → gpt-4o-mini
+        in 49b961a873 (1691)  → cand b23593081c (320)  changed=true
+        sys: Write a "Previously…" recap as EXACTLY four bullet points, each 13 words or fewer, address
+  [7] REPAIR-CALL  (no label)  → gpt-4o-mini
+        in fc220b551c (2805)  → cand a702d1027b (188)  changed=true
+        sys: ROLE: You are the Strategy Engine for an interactive romance story generator. You make STR
+  [8] REPAIR-CALL  (no label)  → gpt-4o-mini
+        in ac9c3a7db3 (5659)  → cand 6659cc9dfa (2379)  changed=true
+        sys: You are an editorial auditor measuring EMOTIONAL GRAVITY in a romance scene. The ONE quest
+      log: [SCENE1:DESIRE-TARGET] ROMAN — Roman 20% · plot-truth 10% · wound-repair 10% · self-understanding 0% · She wants Julian to explain himself a
+  [9] REPAIR-CALL  (no label)  → gpt-4o-mini
+        in d57355c57f (1093)  → cand 962d399dfe (550)  changed=true
+        sys: You are the SCENE-SPINE planner for an interactive romance engine. The scene has ONE organ
+      log: [COMMITTED-TRUTH:DEV-FORCE] gate bypassed (localhost/dev or __forceCommittedTruth=true)
+      log: [CONTINUATION-REGIME] scene=0 raw_storyturn=ST1 gated_storyturn=(unset) li_presence=PROXY li_connected=false relationship_phase=? intensity=
+      log: [MODEL] Literary prose → requested=grok-4-1-fast-reasoning (Grok author [served model logged as MODEL:SERVED] + Grok de-calc editor + Haiku 
+  [10] REPAIR-CALL  (no label)  → gpt-4o-mini
+        in 49fed82d9f (6116)  → cand e3b0c44298 (0)  changed=true
+        sys: You are the HIDDEN-AGENDA GENERATOR for Storybound. Generate a covert agenda the love int
+  [11] REPAIR-CALL  (no label)  → grok-4.3
+        in 290ba4fe90 (2450)  → cand 4f53cda18c (2)  changed=true
+        sys: You are a ruthless line-editor for romance prose. Find the up-to-FIVE worst spans, by prio
+  [12] REPAIR-CALL  (no label)  → mistral-small-latest
+        in 290ba4fe90 (2450)  → cand 29c7adbdff (2450)  changed=true
+        sys: Fix ONLY mechanical defects in this scene: broken or incomplete sentences (including fragm
+      log: [PROMPT-PROFILE] repair · mistral-small-latest · prompt=746 reasoning=0 visible=556 · turn 0
+      log: [GEN-FAIL:LI-DESCRIPTION:DRAFT] (pre-gate draft — :FINAL below is authoritative for what the reader got) LI "Julian" mentioned 3× but NO ima
+      log: [PROSE:CANONICAL] collarbone_throat_line 0/7 (0%) — collarbone / throat-line self-presentation (calcified PC delta — Roman 2026-06-04)
+      log: [PROSE:CANONICAL] hair_loose 0/7 (0%) — hair coming loose / strand falling / tucking hair behind ear (calcified hair tell — was an untracked
+      log: [PROSE:CANONICAL] ringed_iris 0/7 (0%) — eyes "ringed (darker) at the iris/rim" OR "perpetual/faint squint" (calcified LI eye-detail — Roman
+      log: [PROSE:CANONICAL] cliche_piercing_gaze 0/7 (0%) — stock "piercing" eyes/gaze/stare (calcified romance-hero look — Roman 2026-06-17)
+      log: [PROSE:CANONICAL] taking_up_space 0/7 (0%) — taking up space / sidewalk (calcified — Roman 2026-06-08)
+      log: [UNAVAILABILITY:MANIFESTATION] 6 run(s) scanned, 0 carry avoidance. Aggregate: 0 absence vs 0 deflection → absence share = 0% ✓
+  [13] REPAIR-CALL  (no label)  → gpt-4o-mini
+        in e77142d96a (4798)  → cand 17d415ae9a (341)  changed=true
+        sys: You are a craft auditor measuring ARCHETYPE MANIFESTATION COLLAPSE in a romance scene. An 
+  [14] REPAIR-CALL  (no label)  → gpt-4o-mini
+        in c5ac6cc983 (3602)  → cand c46168e2c2 (667)  changed=true
+        sys: You are an editorial auditor. Read the SCENE PROSE and return TWO orthogonal judgments abo
+      log: [R-PLOT:SCENE] PRESENT (presence: OFFSTAGE_A_PLOT_ECHO) — state: "she feels the weight of his gaze during their tasks" · reason: The tension
+  [15] REPAIR-CALL  (no label)  → grok-4.3
+        in 9cad07f18d (2679)  → cand 2d0941e7bc (12)  changed=true
+        sys: You audit prose for BANNED-phrase reuse. The user sends a BANNED LIST and a SCENE. Report 
+  [16] REPAIR-CALL  (no label)  → grok-4.3
+        in 740d483fec (1463)  → cand c7ddc21cbd (149)  changed=true
+        sys: You are the same narrator continuing THIS exact scene. Write ONE or TWO short sentences (~
+  [17] REPAIR-CALL  (no label)  → grok-4.3
+        in 14659ea6c6 (1463)  → cand 4cbcf16e9e (88)  changed=true
+        sys: You are the same narrator continuing THIS exact scene. Write ONE or TWO short sentences (~
+  [18] REPAIR-CALL  (no label)  → gpt-4o-mini
+        in 14c45d9a68 (7792)  → cand bb134fb851 (2299)  changed=true
+        sys: You are an editorial auditor measuring EMOTIONAL GRAVITY in a romance scene. The ONE quest
+      log: [SCENE1:DESIRE-TARGET] WOUND_REPAIR — Roman 10% · plot-truth 0% · wound-repair 15% · self-understanding 0% · Lirael is focused on her own pa
+  [19] REPAIR-CALL  (no label)  → grok-4.3
+        in 05a1dca9e9 (4837)  → cand f9331b0e76 (2679)  changed=true
+        sys: You are a precise line-editor, NOT a writer. Fix ONLY what the instruction names. Do NOT c
+  [20] REPAIR-CALL  (no label)  → grok-4.3
+        in e044638ab5 (5288)  → cand 016d4aae43 (2689)  changed=true
+        sys: You are a precise line-editor, NOT a writer. Fix ONLY what the instruction names. Do NOT c
+      log: [PC-DESC:PROSE-REPAIR turn 1] applied in 2 pass(es), STILL thin: flat
+      log: [EDITORIAL:TIER] scene 0 tier=premium lensBudget=1
+  [21] REPAIR-CALL  (no label)  → grok-4.3
+        in b99abf7e10 (6043)  → cand 016d4aae43 (2689)  changed=true
+        sys: You are S. Tory Bound's PERCEPTION EDITOR. The scene below is already written and already 
+      log: [LENS:NONE] scene 0 — budget 1 but no sentence genuinely flat (need-gated to 0)
+      log: [EDITORIAL:REPAIR] premium → extra de-calc sweep
+      log: [PACING GATE] FAILED — accepting without LLM regen (cost cut 2026-05-29); deterministic marker relocation only: [WEAK_PRE_CHOICE_SPIKE: no d
+      log: [PACING GATE] Still failing (no regen — cost cut) — accepting + relocating late marker if present: [WEAK_PRE_CHOICE_SPIKE: no direct address
+  [22] REPAIR-CALL  (no label)  → grok-4.3
+        in c64704acb2 (2918)  → cand e2b662c00a (148)  changed=true
+        sys: You audit prose for BANNED-phrase reuse. The user sends a BANNED LIST and a SCENE. Report 
+  [23] REPAIR-CALL  (no label)  → gpt-4o-mini
+        in 654a569970 (7556)  → cand c6cc4d0900 (2143)  changed=true
+        sys: You extract structured narrative memory from fiction scenes. Respond ONLY with valid JSON,
+  [24] REPAIR-CALL  (no label)  → grok-4.3
+        in c34765ece5 (2703)  → cand da95ae42eb (2705)  changed=true
+        sys: You are a copy editor. Re-paragraph the SCENE the user sends for standard novel dialogue f
+      log: [SCENE-BUDGET:COUNT] scene=b8f85685-1a4d-48e0-82c6-4275c049c536:1 repair=0 polish=0 fallback=0 regen=0 cosmetic=0/2 (conditional spent=0/4) 
+      log: [LITE-COST] HEAVY scene 2 · classifier→HEAVY/HEAVY · provider=gpt · prose+spine $0.0119 · audits $0.0034 (DEV instrumentation — PROD gates t
+      log: [LITE-COST] → PROD marginal (audits gated, no dual shadow): $0.0121 vs 10¢ SAFETY CEILING → ✓ under ceiling (9¢ headroom) [heavy is primary 
+      log: [SCENE-AUDIT] {"sc":0,"ms":66163,"ttft":0,"ttftProse":0,"spend":{"initial":0.00852,"regens":0,"setup":0,"audits":0.00246,"wasted":0,"total":
+      log: [FATE:AUTHORITY] LI offstage — romantic card retargeted to present interlocutor (non-romantic) {cardId: temptation, interlocutor: Quinn, pre
+      log: [FATE:AUTHORITY] LI offstage — romantic card retargeted to present interlocutor (non-romantic) {cardId: confession, interlocutor: Quinn, pre
+      log: [FATE:AUTHORITY] LI offstage — romantic card retargeted to present interlocutor (non-romantic) {cardId: boundary, interlocutor: Quinn, prese
+      log: [FATE:AUTHORITY] LI offstage — romantic card retargeted to present interlocutor (non-romantic) {cardId: reversal, interlocutor: Quinn, prese
+  [25] REPAIR-CALL  (no label)  → gpt-4o-mini
+        in b85aa5db78 (867)  → cand 2410b378a6 (446)  changed=true
+        sys: You generate JSON continuity components for fiction scenes. Respond ONLY with valid JSON, 
+  [26] REPAIR-CALL  (no label)  → grok-4.3
+        in 9b90683038 (1867)  → cand a0d8d36c24 (16)  changed=true
+        sys: You classify the ambient soundscape of a romance/fiction scene. Return EXACTLY one tag fro
+
+──── PER-CALL COST (resolved model authoritative) ────
+  [1] gpt-4o                 in=993 cached=0 out=371  $0.006193   (as mistral-small: $0.000372)
+  [2] grok-4.3               in=520 cached=384 out=27  $0.000314   (as mistral-small: $0.000094)
+  [3] grok-4.3               in=3285 cached=128 out=4  $0.003982   (as mistral-small: $0.000495)
+  [4] grok-4.3               in=514 cached=384 out=20  $0.000289   (as mistral-small: $0.000089)
+  [5] gpt-4o-mini            in=1898 cached=1792 out=20  $0.000297   (as mistral-small: $0.000297)
+  [6] gpt-4o-mini            in=526 cached=0 out=68  $0.000120   (as mistral-small: $0.000120)
+  [7] gpt-4o-mini            in=4297 cached=0 out=58  $0.000679   (as mistral-small: $0.000679)
+  [8] gpt-4o-mini            in=2861 cached=1024 out=794  $0.000906   (as mistral-small: $0.000906)
+  [9] gpt-4o-mini            in=1158 cached=0 out=136  $0.000255   (as mistral-small: $0.000255)
+  [10] ?  NO USAGE METADATA
+  [11] grok-4.3               in=1194 cached=192 out=1  $0.001293   (as mistral-small: $0.000180)
+  [12] mistral-small-latest   in=746 cached=0 out=556  $0.000445   (as mistral-small: $0.000445)
+  [13] gpt-4o-mini            in=1431 cached=0 out=83  $0.000264   (as mistral-small: $0.000264)
+  [14] gpt-4o-mini            in=1568 cached=0 out=152  $0.000326   (as mistral-small: $0.000326)
+  [15] grok-4.3               in=912 cached=320 out=5  $0.000817   (as mistral-small: $0.000140)
+  [16] grok-4.3               in=761 cached=384 out=32  $0.000628   (as mistral-small: $0.000133)
+  [17] grok-4.3               in=755 cached=384 out=19  $0.000588   (as mistral-small: $0.000125)
+  [18] gpt-4o-mini            in=3336 cached=1024 out=772  $0.000964   (as mistral-small: $0.000964)
+  [19] grok-4.3               in=1347 cached=192 out=588  $0.002952   (as mistral-small: $0.000555)
+  [20] grok-4.3               in=1450 cached=256 out=592  $0.003024   (as mistral-small: $0.000573)
+  [21] grok-4.3               in=1640 cached=192 out=592  $0.003328   (as mistral-small: $0.000601)
+  [22] grok-4.3               in=966 cached=128 out=35  $0.001161   (as mistral-small: $0.000166)
+  [23] gpt-4o-mini            in=1831 cached=0 out=556  $0.000608   (as mistral-small: $0.000608)
+  [24] grok-4.3               in=1688 cached=1088 out=594  $0.002453   (as mistral-small: $0.000610)
+  [25] gpt-4o-mini            in=237 cached=0 out=98  $0.000094   (as mistral-small: $0.000094)
+  [26] grok-4.3               in=3313 cached=192 out=4  $0.003950   (as mistral-small: $0.000499)
+  ─────
+  gpt-4o                 $0.00619
+  grok-4.3               $0.02478
+  gpt-4o-mini            $0.00451
+  mistral-small-latest   $0.00045
+  TOTAL DOWNSTREAM (author stubbed): $0.03593   [1 calls lacked usage]
+  FINAL a1e4dd4d83  2689 chars
+  RAW→FINAL changed: true

@@ -1,0 +1,12 @@
+[preflight] output dir writable: _validate_out/provenance
+  load attempt 1 failed: page.waitForFunction: Target page, context or browser has be
+  load attempt 2 failed: page.goto: Target page, context or browser has been closed
+  load attempt 3 failed: page.goto: Target page, context or browser has been closed
+file:///Users/romantsukerman/storybound-app/_provenance_probe.mjs:45
+if (!loaded) { await browser.close(); throw new Error('page never loaded'); }
+                                            ^
+
+Error: page never loaded
+    at file:///Users/romantsukerman/storybound-app/_provenance_probe.mjs:45:45
+
+Node.js v25.3.0

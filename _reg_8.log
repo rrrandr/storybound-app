@@ -1,0 +1,98 @@
+=== CANON AUDIT FULL-FLOW CONTROL (dry; zero provider dispatches) ===
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/csp-report
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/config
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/csp-report
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/geo
+
+=== 1. THE PRODUCTION CALL SITE EXISTS (the claim that was false before) ===
+    non-definition references: ["app.js:235445","app.js:235446","app.js:235463","app.js:235465","app.js:235477"]
+  ✓ _buildCanonPacket has a real production consumer
+  ✓ _canonAuditGate is AWAITED on the production path
+
+=== 2. RED FULL-FLOW — supernatural proposal labelled "ordinary", auditor finds a violation (req 8) ===
+    dispatches: {"planner":1,"auditor":1,"author":0,"other":3}
+  ✓ the planner ran
+  ✓ an ORDINARY declaration DID reach the semantic auditor — it did not go straight to the author (req 4)
+  ✓ THE AUTHOR WAS NEVER DISPATCHED — zero author requests (req 8)
+  ✓ the generation returned a canon-audit block
+  ✓ the proposal and audit result were PRESERVED for review (req 6)
+
+=== 3. GREEN FULL-FLOW — legitimate ordinary plan, auditor passes, author dispatches ONCE (req 9) ===
+    dispatches: {"planner":1,"auditor":1,"author":1,"other":3}
+  ✓ the auditor ran on the auditable plan
+  ✓ THE AUTHOR DISPATCHED EXACTLY ONCE (req 9)
+  ✓ ...and the generation was not blocked
+
+=== 4. DETERMINISTIC SHORT-CIRCUIT — invalid grounding costs NOTHING (req 3, 10) ===
+    dispatches: {"planner":1,"auditor":0,"author":0,"other":3}
+  ✓ the AUDITOR was never dispatched — the local check already decided (req 10)
+  ✓ the AUTHOR was never dispatched
+  ✓ ...and the block is attributed to the deterministic layer, unpaid
+
+=== 5. FAIL-CLOSED FULL-FLOW — every undecided path stops before the author (req 6) ===
+  ✓ cannot_decide → zero author dispatches
+  ✓ an INVALID audit reply (fabricated id + fabricated claim) → zero author dispatches
+  ✓ an auditor that tries to REWRITE the plan → zero author dispatches
+  ✓ an unparsable audit reply → zero author dispatches
+
+=== 6. THE RETRY IS THE EXISTING ONE, AND IT IS BOUNDED AT ONE (req 7) ===
+  ✓ an audit violation returns __plannerFunctionRejected — the signal the EXISTING bounded retry consumes
+  ✓ no independent retry loop was introduced inside the audit gate
+  ✓ the existing retry calls the generator exactly ONCE
+  ✓ ...and a SECOND rejection stops with resumable state rather than retrying again
+
+=== 7. THE PRODUCTION PACKET CARRIES THE REAL CANON (req 11) ===
+    [CANON-AUDIT] scene 1 — RISK TRIGGERED, auditing: declared "ordinary" but the event text asserts a produced effect the deterministic check cannot see (packet: 24 facts, 1 invalidated)
+  ✓ the production gate logged a packet built at dispatch time
+  ✓ the PRODUCTION packet contains "a wish produces NO visible magical effect"
+  ✓ ...and the alignment-sense truth foreclosing mind-reading
+  ✓ ...and the committed durable consequence with its invalidatedPlans
+
+=== 8. ACCEPTED-PROPOSAL OWNERSHIP — a stale proposal can never be the thing audited ===
+  ✓ the accepted proposal is CLEARED when the generation ends
+  ✓ ...and so is the generation attempt token
+  ✓ a proposal carries an owner stamped with id, storyId, sceneIndex and branch
+  ✓ ...and it is cleared at generation START too, so a throw on the previous turn cannot leave one behind
+  ✓ ownership matches only on an EXACT id+story+scene+branch tuple
+  ✓ a PRIOR-SCENE proposal does not match
+  ✓ a PRIOR-STORY proposal does not match
+  ✓ a DIFFERENT-BRANCH proposal does not match
+  ✓ a PRIOR-ATTEMPT proposal does not match
+  ✓ an UNSTAMPED proposal does not match
+    stale-run dispatches: {"planner":1,"auditor":1,"author":1,"other":3}  auditor saw the stale plan: false
+  ✓ FULL FLOW — a planted PRIOR-STORY/PRIOR-SCENE proposal is NEVER what the auditor inspects
+  ✓ ...because generation START clears it, so a stale proposal cannot survive into a new scene at all
+  ✓ ...and the ownership branch that would otherwise fail closed is present in production source
+
+=== 9. PACKET SELECTION IS PROPOSAL-AWARE — a relevant fact beyond the cutoff survives ===
+    synthetic seed: 30 positive / 20 negative truths (caps 10/12)
+    authorising fact at index 25: "A Tidecaller of the Salt Guild may becalm a single vessel once per tide, by name."
+  ✓ the synthetic seed genuinely exceeds both caps, so this test is not vacuous
+  ✓ WITHOUT the proposal the authorising fact is CUT — this is the false-violation risk Roman identified
+  ✓ WITH the proposal it is INCLUDED, despite sitting 15 entries beyond the cap
+  ✓ ...and the packet reports itself proposal-aware
+  ✓ a truncated packet STOPS claiming to be the complete and only canon
+  ✓ ...and forbids concluding "ungrounded" from mere absence
+  ✓ ...directing an unfindable capability to "cannot_decide" rather than a violation
+  ✓ when NOTHING was omitted the packet may still claim completeness — First Sacrifice fits under both caps
+
+=== 10. THE SEMANTIC AUDITOR IS OFF BY DEFAULT — a normal scene reaches the author ===
+  ✓ UNSET means ENABLED — selective auditing is the production default
+  ✓ an explicit true enables it (the test-only opt-in)
+  ✓ an explicit false disables it
+    disabled-run dispatches: {"planner":1,"auditor":0,"author":1,"other":3}
+  ✓ with the auditor EXPLICITLY disabled a normal scene makes ZERO auditor calls
+  ✓ ...and the AUTHOR is dispatched exactly once — the scene is not blocked
+    ship-state dispatches: {"planner":1,"auditor":0,"author":1,"other":3}
+  ✓ SHIP STATE (unset = enabled + selective): the author still dispatches once, unblocked
+  ✓ ...and at most ONE auditor call was made for the one candidate plan
+  ✓ DETERMINISTIC grounding still rejects an ungrounded plan while the semantic audit is OFF
+  ✓ ...still making zero auditor calls and zero author calls
+  ✓ production carries NO implicit-enable expression — the default is a named constant
+  ✓ ...and both gate sites route through the explicit opt-in helper
+
+=== CONTAINMENT ===
+  ✓ ZERO real provider dispatches; no live auditor call
+
+====================================================================================================
+CANON AUDIT FULL-FLOW CONTROL: 58/58 passed

@@ -1,0 +1,43 @@
+{
+  "build": "cffacf489ba7aa4a92334e15a66df1d84852e001ae718a65de69da34883f7a6b",
+  "results": [
+    {
+      "id": "V4",
+      "assignmentBefore": null,
+      "assignment": null,
+      "sceneNumber": 2,
+      "anchor": null,
+      "staged": null,
+      "skeletonGenerated": false,
+      "skeletonInput": null,
+      "skeletonOutput": null,
+      "authorEventBlock": null,
+      "authorModels": [],
+      "authorRaw": null,
+      "finalProse": "Quinn's heel struck the floor once, the sound sharp. She seized Mara's elbow and hauled her upright, driving her straight toward the Harrington cluster where Elena's words cut across the string quartet and sent a ripple through the nearest tables. Mara shook free, crossed the open floor in three strides, and planted herself between Elena and the Harringtons before the next accusation could land. Her breath locked high in her chest, skin prickling under the sudden weight of every turned head. Elena's mouth kept moving, the lie about the family collection spilling louder now that the polite distance had broken. Mara raised her voice over it, naming the exact auction date and the buyer who had handled the transfer, forcing the Harringtons to look at her instead of the red dress hovering at her shoulder. A server veered off course to avoid them; crystal rang against crystal as the tray tilted. Mara stepped closer to Elena, refusing to yield the space, and demanded the source of the fabrication claim while the quartet faltered on a missed cue. The room's attention pressed harder, silk and perfume closing in, yet she held her ground and kept speaking, each word aimed at the Harringtons' narrowing eyes. Someone at the next table muttered Dorian's name, the syllables dropping like a thrown match, and the old pull of his attention flared at the edge of her focus even though he was not in the room. She could not afford to scan for him; the Harringtons were already exchanging glances that meant money and doors were about to move. The crowd's murmur thickened, but she stayed where she stood, refusing to retreat while the quartet tried and failed to recover its tempo.My hand tightened around my great-grandmother's old tarot deck. I didn't remember bringing it. I toyed with the idea of letting the cards decide.",
+      "console": []
+    }
+  ],
+  "console": [
+    "init | [R-PLOT] generated: coreTension: \"she craves connection while he keeps his distance, fearing vulnerability.\" relationshipQuestion: \"Will she let him close enough to reveal her",
+    "init | [R-PLOT:FINGERPRINT] STRONG — PC=OPEN_VEIN × LI=DARK_VICE · coreTension=\"she craves connection while he keeps his distance, fearing vulnerability.\" · reason: The core tension ",
+    "init | [ANT-BODY-BIBLE] generated for Elena, Dorian's old flame who never moved on and will force his distance (shape B): archetype: INTIMATE_KNOWING archetype_signature: Elena's pre",
+    "init | [MODEL] Literary prose → requested=grok-4-1-fast-reasoning (Grok author [served model logged as MODEL:SERVED] + Grok de-calc editor + Haiku repair — Sonnet/Opus cost-deprecate",
+    "init | [PROMPT-PROFILE] repair · mistral-small-latest · prompt=829 reasoning=0 visible=538 · turn 0",
+    "init | [REPAIR] Mistral-small repair via mistral-small rejected (empty/invalid/meta-leak) — falling back to gpt-4o-mini",
+    "init | [PROMPT-PROFILE] mistral_small_repair · gpt-4o-mini · prompt=784 reasoning=0 visible=517 · turn 0",
+    "init | [SCENE1:DESIRE-TARGET] ROMAN — Roman 30% · plot-truth 5% · wound-repair 5% · self-understanding 0% · Mara wants Dorian to understand her and to connect with him, rather than s",
+    "init | [LI-PROOF:REPAIR] firing — li=Dorian allowed=[status,scarcity] locked=none",
+    "init | [LI-PROOF:REPAIR] edit applied but detector still finds no signal in the window — leaving as-is for inspection.",
+    "init | [INTERLOCUTOR-DESC:PROSE-REPAIR] wove a face for \"Quinn\" (surgical, no re-roll).",
+    "init | [CALCIFIED-MOVE:REPAIR] provider=mistral-small repair_failed · path=mistral · moves=cuff_adjust,left_behind,phrase:the room shifted around her, shoulders angling toward the so",
+    "init | [HOT-RENDER:GATE] functional fails=[] (n=0) · rendered=COLD_DISRUPTION · in-motion=0 · container-opener=true ⟹ REPAIR FIRES",
+    "init | [HOT-RENDER:REPAIR] applied (segment 2075→2164 chars) — functional fails 0→0 · rendered COLD_DISRUPTION→HOT_CRISIS ✓ HOT · remaining=[]",
+    "init | [BODY-DUMP:REPAIR] fired=false (densest 40w window=2, under 4 — no cluster, no cost)",
+    "init | [EDITORIAL:REPAIR] premium → extra de-calc sweep",
+    "init | [MICRO-CHOICE:POST-GATE] pass (repaired)",
+    "init | [SCENE1:GRAVITY:REPAIR] skipped — R-plot owns the scene (R-PLOT 90% / A-PLOT 5%).",
+    "init | [SCENE-COST] Finalized: $0.1216 | type: grok | text $0.0869 | image $0.0000 | cumulative $0.1216",
+    "init | [SCENE-BUDGET:COUNT] scene=ceec352c-2b7b-4966-8dd2-2ca21ddae147:0 repair=1 polish=0 fallback=0 regen=0 cosmetic=1/2 (conditional spent=1/4) skipped=[] provenance=repair"
+  ]
+}

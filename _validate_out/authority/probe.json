@@ -1,0 +1,276 @@
+{
+  "dump": {
+    "sceneNumber": 2,
+    "planScenes": [
+      {
+        "n": 1,
+        "goal": "The First Sacrifice begins (hot crisis). The youth suddenly falls into catastrophic misalignment; every experienced First Favored recognizes the signs. The impossible happens instead — the wish succeeds cleanly. The crowd turns on the PC."
+      },
+      {
+        "n": 2,
+        "goal": "The ceremony collapses into accusations; the PC tries to explain something she does not understand herself."
+      },
+      {
+        "n": 3,
+        "goal": "Evidence begins to point toward deliberate interference."
+      },
+      {
+        "n": 4,
+        "goal": "The elders formally begin investigating the PC."
+      },
+      {
+        "n": 5,
+        "goal": "Julian quietly prevents the investigation from uncovering the truth."
+      },
+      {
+        "n": 6,
+        "goal": "The PC discovers the wish succeeded in a way that should have been impossible."
+      }
+    ],
+    "planKeys": [
+      "issue",
+      "scenes"
+    ],
+    "assignmentLive": {
+      "event": "The ceremony collapses into accusations; the PC tries to explain something she does not understand herself.",
+      "setting": null,
+      "participants": null,
+      "props": null,
+      "stateChange": null,
+      "source": "plan-scene",
+      "sceneNumber": 2
+    },
+    "assignmentStored": {
+      "event": "The ceremony collapses into accusations; the PC tries to explain something she does not understand herself.",
+      "setting": null,
+      "participants": null,
+      "props": null,
+      "stateChange": null,
+      "source": "plan-scene",
+      "sceneNumber": 2
+    },
+    "spineEventVerbatim": "The ceremony collapses into accusations; the PC tries to explain something she does not understand herself.",
+    "spineStaging": null,
+    "sceneSkeleton": null,
+    "sceneIntent": null,
+    "sceneMissionCurrent": "survive the scrutiny of the crowd while hiding my panic.",
+    "seedKeys": [
+      "issue",
+      "cast",
+      "worldTruths",
+      "sceneOne",
+      "visualCanon",
+      "truths",
+      "dramaticTruth",
+      "constraints"
+    ],
+    "seedWorldTruths": [
+      "A First Sacrifice is a COMING-OF-AGE RITE — closest analogue a Bar Mitzvah / quinceañera / confirmation / graduation, NOT a death ritual. At 16 (younger minds are too unformed to wish safely) a youth, after long study and practice, publicly makes their first wish and offers its price to Fate. It can be stern and formal, but when it goes well it ENDS IN CELEBRATION; catastrophe is UNUSUAL — everyone understands the safeguards the way we understand fire drills. Do NOT default to disaster, apocalypse, curses, or world-ending stakes.",
+      "First Favored are hired to GUIDE and SUPERVISE the rite — their alignment-sense and powerful wish-strength make them the preferred (and pricier) choice over human or Kwisheen wishcraft scholars. The supervisor reads the alignment of EVERYONE present, above all the wishing youth, ready to HALT and re-align the wish before it can twist.",
+      "The supervisor is a SACRIFICIANT (the role): one whose misalignment-sense is honed enough to supervise (the PC is an apprentice Sacrificiant). THE SACRIFICIANT SEAL — worn by whoever supervises, during ANY official First Sacrifice rite: because a supervisor bolstering the youth’s sacrifice with a wish of their OWN would be a ruinous breach, every Sacrificiant is ceremonially SEALED for the rite — a gossamer BAND drawn across the mouth and tied behind the head (just cloth, part of their ceremonial sash; NO orb, NO bead, NO gag), so they cannot cleanly voice a wish while officiating. Vestments are otherwise the same sheer gossamer as everyone, with ONE ornamented ceremonial SASH (never robes). LITERARY: a sealed Sacrificiant’s cries and speech are MUFFLED behind the cloth — emotion reads through the eyes and body. CG: the mouth-band is drawn IN on the supervising Sacrificiant for the duration of the rite.",
+      "ALIGNMENT-SENSE (the First Favored gift): they do NOT read thoughts or emotions — they perceive ALIGNMENT, how far a person’s desire, intention, sacrifice, and deepest self all point at one truth. Misalignment is as unmistakable to them as a sour note in music."
+    ],
+    "aPlotKeys": [
+      "tier",
+      "pattern",
+      "goal",
+      "namedClock",
+      "clockUnit",
+      "totalClockUnits",
+      "timelineLength",
+      "currentTurn",
+      "milestones",
+      "stakesIfFail",
+      "stakesIfWin",
+      "resolutionShape",
+      "cliffhangerHook",
+      "antagonistOrAntiForce",
+      "antagonistPersonalTie",
+      "antagonistShape",
+      "personalStakePC",
+      "personalStakeLI",
+      "plotShape",
+      "pcWound",
+      "liWound",
+      "woundSurfacingMechanism",
+      "woundLoadBearingProof",
+      "pcWoundCategory",
+      "liWoundCategory",
+      "liEmotionalNeedFromPC",
+      "pcUnknowinglySatisfies",
+      "naturalSeparationBeats",
+      "naturalProximityBeats",
+      "sourceWorld",
+      "sourceFlavor",
+      "sourceWorldSubtype",
+      "generatedAt",
+      "continuationOf",
+      "storyShape",
+      "storyShapeLabel",
+      "readerQuestion",
+      "romanceEngine",
+      "desireQuestion",
+      "scene1Compressed",
+      "_woundLIIntegration"
+    ],
+    "aPlot": {
+      "tier": "fling",
+      "pattern": "B",
+      "goal": "Trace the fractured vow-bond between Lirael and Julian to its living source before the misalignment collapses their shared fate-thread and strands both in the null-space it creates.",
+      "namedClock": "the next Alignment Circle reading",
+      "clockUnit": "cycles",
+      "totalClockUnits": 7,
+      "timelineLength": 40,
+      "currentTurn": 0,
+      "milestones": [
+        {
+          "atScene": 5,
+          "atPercent": 12,
+          "kind": "setup",
+          "event": "The public revelation of Lirael's secrets detonates mid-gathering; Julian is the only person present whose gaze she cannot meet.",
+          "emotional_conductivity": "her panic sharpens into resentment that he alone sees her stripped bare.",
+          "triggered": false
+        },
+        {
+          "atScene": 16,
+          "atPercent": 40,
+          "kind": "midpoint_reversal",
+          "event": "The bond-thread visibly tugs toward the dead friend's old oath-site, proving the fracture was engineered rather than chosen.",
+          "emotional_conductivity": "Julian's quiet steadiness beside her forces Lirael to confront that his presence both threatens and steadies her.",
+          "triggered": false
+        },
+        {
+          "atScene": 28,
+          "atPercent": 70,
+          "kind": "dark_night",
+          "event": "A rescue attempt into the null-space reveals the dead friend's final wish was to keep them bound in mutual doubt.",
+          "emotional_conductivity": "trust fractures when Lirael realizes Julian withheld that he already suspected the dead friend's hand.",
+          "triggered": false
+        },
+        {
+          "atScene": 35,
+          "atPercent": 88,
+          "kind": "crisis",
+          "event": "The correct severance of the bond-thread requires Lirael to publicly name the dead friend's betrayal, destroying what remains of her rebuilt status.",
+          "emotional_conductivity": "the right strategic move forces her to expose herself again in front of the one man she never wanted to see her weak.",
+          "triggered": false
+        },
+        {
+          "atScene": 38,
+          "atPercent": 95,
+          "kind": "resolution",
+          "event": "The bond severs; the dead friend's influence ends, but the victory leaves Lirael and Julian on opposite sides of the null-space scar.",
+          "emotional_conductivity": "quiet coordination in the rescue rhythm reveals how much they have come to rely on each other.",
+          "triggered": false
+        },
+        {
+          "atScene": 40,
+          "atPercent": 100,
+          "kind": "resolution",
+          "event": "A single luminous thread fragment remains, pointing from Lirael's wrist toward Julian's location even after the official severance.",
+          "emotional_conductivity": "the post-completion consequence makes clear that moving on is no longer a choice either of them controls.",
+          "triggered": false
+        }
+      ],
+      "stakesIfFail": "the null-space swallows both their fates and the dead friend's narrative becomes the only truth the community remembers",
+      "stakesIfWin": "the bond-thread is severed cleanly but the victory leaves Lirael publicly confirmed as the one who could not hold him",
+      "resolutionShape": "complete-plus-cliffhanger",
+      "cliffhangerHook": "the remaining thread fragment begins to pulse with the dead friend's final unfinished loyalty, promising it will re-bind them unless they discover why she could never release them",
+      "antagonistOrAntiForce": "the lingering will of Lirael's dead betraying friend, whose final unfinished oath still tugs the bond-thread",
+      "antagonistPersonalTie": "the dead friend was once Lirael's closest confidante and Julian's secret informant on her vulnerabilities [Shape C — exploiter of the public wound]",
+      "antagonistShape": "C",
+      "personalStakePC": "her public status and any chance of private connection both shatter if the bond's true fracture is revealed as her own fault",
+      "personalStakeLI": "his worth is reduced to the shadow of a man whose partner could never choose him over the dead woman's engineered narrative",
+      "plotShape": "DISASTER_OR_RESCUE",
+      "pcWound": "the betrayal by her closest friend, who shared her secrets with others, leaving her feeling exposed and alone for years",
+      "liWound": "his partner left him for someone they deemed more successful, leaving him questioning his worth for years",
+      "woundSurfacingMechanism": "the public revelation of Lirael's secrets twenty minutes ago is the first visible symptom of the vow-bond's misalignment, forcing Julian's presence into the exact moment her exposure peaks and dragging both wounds into the open through the bond-thread they still share.",
+      "woundLoadBearingProof": "WOUND: betrayal by closest friend who shared Lirael's secrets, leaving her exposed for years. CIRCUMSTANCE: public revelation of those secrets coincides with the visible fracture of the vow-bond she shares with Julian. DEPENDENCY: Without this wound the dead friend's lingering oath would have no specific thread to tug; Julian would not be the only person whose presence reopens the exact exposure Lirael cannot bear him to witness.",
+      "pcWoundCategory": "PUBLIC",
+      "liWoundCategory": "PARTNER",
+      "liEmotionalNeedFromPC": "her habit of letting herself need comfort in public without performing invulnerability lands on the part of him that has only ever been chosen as a legacy, never as a man whose presence can actually steady someone.",
+      "pcUnknowinglySatisfies": "her core contradiction of wanting connection while resenting the need for it makes her genuine moments of visible vulnerability the precise behavior that lets him feel real instead of ornamental.",
+      "naturalSeparationBeats": [
+        "Julian must enter the null-space alone to map the fracture while Lirael stabilizes the public reading",
+        "Lirael is summoned to testify before the Alignment Circle without him present"
+      ],
+      "naturalProximityBeats": [
+        "both must physically hold the bond-thread during the rescue attempt",
+        "they hide together in a fate-warded alcove while the null-space expands"
+      ],
+      "sourceWorld": "Fantasy",
+      "sourceFlavor": "Arcane Binding",
+      "sourceWorldSubtype": "arcane_binding",
+      "generatedAt": 1787086959338,
+      "continuationOf": null,
+      "storyShape": "GHOST_RELATIONSHIP",
+      "storyShapeLabel": "Ghost Relationship",
+      "readerQuestion": "Why can't they move on?",
+      "romanceEngine": "COLLISION",
+      "desireQuestion": "What present-tense force is already pressing on her — and (if known adversaries) how is HE behind it?",
+      "scene1Compressed": {
+        "pressure_sentence": "Her secrets have just been laid bare in front of the entire community.",
+        "emotional_consequence": "She feels raw and exposed, as if her soul is laid open for judgment.",
+        "li_entanglement_one_line": "His absence is a weight in the air, reminding her of what he knows.",
+        "state_change_precondition": "No one yet knows the identity of the person who betrayed her trust.",
+        "state_change": "The name of her betrayer is spoken out loud, echoing through the room.",
+        "forces_choice": "This event forces Lirael to choose between confronting her betrayer or fleeing the scene.",
+        "branch_a_delete_test": "Confronting her betrayer becomes impossible if their name is never revealed.",
+        "branch_b_delete_test": "Fleeing the scene becomes meaningless if she is not publicly exposed.",
+        "generated_at": 1787086963625
+      },
+      "_woundLIIntegration": {
+        "verdict": "INTEGRATED",
+        "mode": "INTERACTION",
+        "interactionType": "reopens",
+        "causeBasin": false,
+        "swapTest": "Replacing Julian with a different BEAUTIFUL_RUIN would break the wound's role, as only Julian's presence uniquely reopens Lirael's feelings of exposure tied to her betrayal.",
+        "link": "Julian embodies the quiet intensity that forces Lirael to confront her wound of betrayal, as he is the only one who can truly see her vulnerabilities and the impact of her past.",
+        "fix": "",
+        "ms": 2904
+      }
+    },
+    "narrativeState": null,
+    "scenePlotContract": {
+      "sceneIndex": 0,
+      "stateChange": {
+        "precondition": "the truth about her feelings for him is still unspoken.",
+        "event": "she shouts her feelings, interrupting the accusations and shocking everyone.",
+        "forces_choice": "forces her to choose between defending her feelings or retreating into silence.",
+        "tactical_move": "escalate the conflict during the ceremony",
+        "branch_a": "defend her feelings and confront the accusations head-on.",
+        "branch_b": "retreat into silence, avoiding further conflict and accusations.",
+        "sceneProposed": 0
+      },
+      "hardBeats": [
+        {
+          "id": "scene0_statechange",
+          "description": "she shouts her feelings, interrupting the accusations and shocking everyone.",
+          "whyItMatters": "forces her to choose between defending her feelings or retreating into silence.",
+          "type": "plot",
+          "importance": "hard",
+          "bornScene": 0,
+          "locationBound": null,
+          "carryStrategy": "pay_if_plausible_else_adapt",
+          "dropAllowed": false,
+          "_derivedFromStateChange": true
+        }
+      ]
+    },
+    "priorSceneStateChange": {
+      "precondition": "the truth about her feelings for him is still unspoken.",
+      "event": "she shouts her feelings, interrupting the accusations and shocking everyone.",
+      "forces_choice": "forces her to choose between defending her feelings or retreating into silence.",
+      "tactical_move": "escalate the conflict during the ceremony",
+      "branch_a": "defend her feelings and confront the accusations head-on.",
+      "branch_b": "retreat into silence, avoiding further conflict and accusations.",
+      "sceneProposed": 0
+    }
+  },
+  "delivered": {
+    "SPINE_EVENT": null,
+    "SCENE_INTENT": null,
+    "SCENE_SPINE": null
+  },
+  "contSys": 373038
+}

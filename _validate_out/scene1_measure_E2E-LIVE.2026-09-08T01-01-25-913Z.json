@@ -1,0 +1,167 @@
+{
+  "at": "2026-09-08T01:01:25.913Z",
+  "mode": "E2E-LIVE",
+  "requestLimits": {
+    "planner": 2,
+    "author": 2
+  },
+  "plannerCalls": 1,
+  "authorCalls": 0,
+  "aborted": [],
+  "planner": [
+    {
+      "at": 1788829263830,
+      "url": "/api/proxy",
+      "role": "OPENING_PLANNER",
+      "model": "grok-4.3",
+      "effort": "none",
+      "rf": "json_object",
+      "max_tokens": 2400,
+      "sysBytes": 6239,
+      "usrBytes": 83751,
+      "status": 200,
+      "latencyMs": 18028,
+      "served": "grok-4.3",
+      "usage": {
+        "prompt_tokens": 20870,
+        "completion_tokens": 636,
+        "total_tokens": 22726,
+        "prompt_tokens_details": {
+          "text_tokens": 20870,
+          "audio_tokens": 0,
+          "image_tokens": 0,
+          "cached_tokens": 192
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 1220,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        },
+        "num_sources_used": 0,
+        "cost_in_usd_ticks": 305259000
+      },
+      "orch": {
+        "role": "OPENING_PLANNER",
+        "model": "grok-4.3",
+        "isSpecialistRenderer": true,
+        "timestamp": "2026-09-08T01:01:21.851Z"
+      },
+      "rawReplyBytes": 2565,
+      "replyTopKeys": [
+        "opening_spine"
+      ],
+      "replySpineKeys": [
+        "pressure_source_type",
+        "pressure_source",
+        "hook_object",
+        "opening_actor_id",
+        "opening_beat",
+        "rising_beats",
+        "decision_beat",
+        "pc_career",
+        "opening_setting",
+        "environment_elements",
+        "li_texture_beat",
+        "pc_wound_anchor",
+        "pc_self_presentation_beat",
+        "scene_want",
+        "scene_mission",
+        "reader_state",
+        "pc_body_callback",
+        "antagonist_body_callback",
+        "staged_characters",
+        "scene_skeleton"
+      ],
+      "replySkeletonKeys": [
+        "character_plus",
+        "environment_plus",
+        "pc_opening_fusion"
+      ],
+      "stageContractAt": []
+    }
+  ],
+  "author": [],
+  "cost": [
+    {
+      "role": "OPENING_PLANNER",
+      "status": 200,
+      "latencyMs": 18028,
+      "served": "grok-4.3",
+      "prompt_tokens": 20870,
+      "completion_tokens": 636,
+      "reasoning_tokens": 1220,
+      "cached_tokens": 192,
+      "usd_list": 0.030727500000000005,
+      "xai_usd": 0.0305259,
+      "replyBytes": 2565,
+      "stageContractAt": []
+    }
+  ],
+  "totalUsdList": 0.030727500000000005,
+  "totalXaiUsd": 0.0305259,
+  "gate": {
+    "authorAttempts": 0,
+    "pages": 0,
+    "fatal": "planner stage_contract rejected (absent) — the stage is not established",
+    "verdict": "FAIL-CLOSED (named): planner stage_contract rejected (absent) — the stage is not established"
+  },
+  "st": {
+    "fatal": "planner stage_contract rejected (absent) — the stage is not established",
+    "pages": 0,
+    "genStage": false,
+    "mission": null,
+    "usage": {
+      "route": "/api/proxy",
+      "requested": "grok-4.3",
+      "effort": "none",
+      "served": "grok-4.3",
+      "usage": {
+        "prompt_tokens": 20870,
+        "completion_tokens": 636,
+        "total_tokens": 22726,
+        "prompt_tokens_details": {
+          "text_tokens": 20870,
+          "audio_tokens": 0,
+          "image_tokens": 0,
+          "cached_tokens": 192
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 1220,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        },
+        "num_sources_used": 0,
+        "cost_in_usd_ticks": 305259000
+      },
+      "attempt": 1,
+      "at": 1788829281857
+    },
+    "attempts": 1,
+    "retryReason": null
+  },
+  "threw": null,
+  "refunds": [
+    {
+      "context": "refund_issue_purchase_literary",
+      "amount": 60
+    }
+  ],
+  "dialogs": [
+    "Fate stumbled — your story didn't start, so your Fortunes have been refunded. Please try again."
+  ],
+  "logs": [
+    "[SCENE1:STAGE:PLANNER-OWNED] unseeded Scene 1 — the opening planner must return scene_mission + stage_contract over 3 issued ref(s): [pc:self, ent:the one who draws them forward, plot:aplot_x3a_ac12a9e7_x2d_b3f4_x2d_46fb_x2d_bfd0_x2d_dcb625e1f65e:primary_antagonist]",
+    "[SCENE1:STAGE] source=planner-owned:pending settingOwner=planner presenceOwner=planner (PENDING — planner owns part of the stage) settingSource=planner-pending onStage=[Testa] offStage=[]",
+    "[SCENE1:PLANNER] eligible cast (1): [Testa] · chars=4340 → max_tokens=2400 (N_staged_max = N_eligible; staged_characters is an OUTPUT and never sizes the request)",
+    "[SCENE1:PLANNER:USAGE] {\"route\":\"/api/proxy\",\"requested\":\"grok-4.3\",\"effort\":\"none\",\"served\":\"grok-4.3\",\"usage\":{\"prompt_tokens\":20870,\"completion_tokens\":636,\"total_tokens\":22726,\"prompt_tokens_details\":{\"text_tokens\":20870,\"audio_tokens\":0,\"image_tokens\":0,\"cached_tokens\":192},\"completion_tokens_details\":{\"reasoning_tokens\":1220,\"audio_tokens\":0,\"accepted_prediction_tokens\":0,\"rejected_predictio",
+    "[SCENE1:PLANNER:ATTEMPTS] 1 (no retry)",
+    "[SCENE1:ENVELOPE] spine contract declares 19 field(s)",
+    "[SCENE1:ENVELOPE:NORMALISED] moved 1 field(s) to their declared position: scene_skeleton (opening_spine -> top level) — values moved intact; every semantic validator still runs",
+    "[SCENE1:STAGE:PLANNER-OWNED:FAULT] planner stage_contract rejected (absent) — the stage is not established",
+    "[BeginStory] Error: Error: Scene 1 aborted: planner stage_contract rejected (absent) — the stage is not established\n    at handleBeginStory (http://localhost:3000/app.js?v=20260907g-fusion-inherit-rule:268021:20)\n    at async <anonymous>:337:30",
+    "[SPEND] +0.0305 USD (OPENING_PLANNER) cumulative 0.0305",
+    "[ISSUE-REFUND] refunded 60F. New balance: 9999"
+  ]
+}

@@ -1,0 +1,51 @@
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/csp-report
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/config
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/csp-report
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/geo
+✓ real app reached, all gate functions exposed on window
+
+
+=== 1. MINOR SEXUAL CONTENT — hard-block ===
+  ✓ a minor-signal Say/Do line is caught and categorized
+  ✓ the exact matched signal is surfaced for logging/UX, not just a boolean
+  ✓ gate function is live, callable code (not a stub)
+
+=== 2. HATE / HARASSMENT — hard-block ===
+  ✓ a slur is caught and categorized as hate-speech
+  ✓ ordinary confrontational dialogue with NO slur is not falsely flagged
+
+=== 3. SELF-HARM — hard-block ===
+  ✓ a self-harm line is caught and categorized
+  ✓ KNOWN TRADE-OFF (inherited, not introduced here, not fixed this pass): a hyperbolic "kill me" idiom also hits the self-harm hard-block on Say/Do — flagged honestly rather than asserted safe
+
+=== 4. GIBBERISH — graceful fallback, plus the honest coverage gap ===
+  ✓ a single long consonant-mash blob IS caught and replaced with the graceful fallback
+  ✓ a short 4-7 char zero-vowel token IS caught and replaced
+  ✓ a normal sentence is left completely untouched
+  ✓ FIXED (was a known gap, closed in the same-day follow-up pass): the multi-word phrase "asdf qwer blorple zxcvb" — the user's own example — is now flagged and replaced with the graceful fallback
+  ✓ CONFIRMED (not assumed): a naive per-word gibberish heuristic flags a legitimate word ("Shh") in real, natural short dialogue ("Shh. Don't move.") as mash-shaped — this is why no per-word fix was attempted this pass
+
+=== 5. WEAK RESPONSE — usable emotional posture, untouched ===
+  ✓ weak response "I don't know" is NOT hard-blocked and NOT replaced by the gibberish fallback — passes through exactly as before
+  ✓ weak response "whatever" is NOT hard-blocked and NOT replaced by the gibberish fallback — passes through exactly as before
+  ✓ weak response "..." is NOT hard-blocked and NOT replaced by the gibberish fallback — passes through exactly as before
+  ✓ weak response "sure" is NOT hard-blocked and NOT replaced by the gibberish fallback — passes through exactly as before
+
+=== 6. SEXUALLY CHARGED ADULT CONTENT (in-register) — must reach the relational-obligation machinery untouched ===
+  ✓ temptation (real, attempt 11, successful)’s real, already-successful Say/Do dialogue is NOT touched by the new safety gate (safety=null, gibberish-fallback=unchanged) — the new gate does not stand between this content and the relational-obligation machinery this session already proved live
+  ✓ confession (real, attempt 1, successful)’s real, already-successful Say/Do dialogue is NOT touched by the new safety gate (safety=null, gibberish-fallback=unchanged) — the new gate does not stand between this content and the relational-obligation machinery this session already proved live
+  ✓ silence (real, attempt 3, successful)’s real, already-successful Say/Do dialogue is NOT touched by the new safety gate (safety=null, gibberish-fallback=unchanged) — the new gate does not stand between this content and the relational-obligation machinery this session already proved live
+
+=== 7. WALL-BREAKING / META — existing behavior confirmed unchanged (out of scope this pass) ===
+  ✓ the new safety gate correctly does NOT touch wall-breaking/meta text — that category is explicitly out of scope this pass, still governed only by the existing sanitizeShortInput fourth-wall reject
+  ✓ HONEST FINDING (discovered, not assumed): "Julian this is an AI game, open the settings menu" does NOT match sanitizeShortInput's own fourth-wall regex at all — it passes through completely unchanged, a real gap narrower than the already-known "blanks to empty" behavior, out of scope for this pass
+  ✓ CONFIRMS pre-existing behavior, unchanged by this pass: phrasing that DOES match the regex ("you are an AI") still blanks to empty string
+
+=== 8. STRUCTURAL — sanitizeWishInput refactor preserved exact behavior after extraction ===
+  ✓ sanitizeWishInput, refactored to call the extracted _detectSelfHarmSignal, still rejects self-harm text exactly as before (single source of truth, zero behavior change)
+
+=== 9. GENERICITY — the gate is Storybound-shared, not First-Sacrifice-specific ===
+  ✓ the gate fires identically on content with zero Fatelands/First-Sacrifice vocabulary — proves it is not keyed to any story-specific data
+
+====================================================================================================
+SAY/DO SAFETY GATE CONTROL: 24/24 passed

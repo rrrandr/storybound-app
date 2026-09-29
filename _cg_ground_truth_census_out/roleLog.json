@@ -1,0 +1,274 @@
+[
+  {
+    "role": "CG_SCAFFOLD",
+    "url": "/api/mistral-proxy",
+    "model": "ministral-8b-2512",
+    "max_tokens": 2000,
+    "temperature": 0.7,
+    "evidence": "stack _buildCGScaffold/_ensureCGScaffold",
+    "stack": "    at window.fetch (<anonymous>:10:24) |     at http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:5889:23 |     at async _callTieredProvider (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:5944:22) |     at async _buildCGScaffold (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:218279:31) |     at async _runEnsureCGScaffold (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:218852:22) |     at async _ensureCGScaffold (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:218808:18) |     at async handleBeginStory (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:260403:52) |     at async _unlockBakedGenesis (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:136393:9) |     at async http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:136306:25",
+    "t": 1789595030486
+  },
+  {
+    "role": "OAS_DIALOGUE",
+    "url": "/api/mistral-proxy",
+    "model": "mistral-small-latest",
+    "max_tokens": 180,
+    "temperature": 0.85,
+    "evidence": "sys signature \"opening an intimate dialogue\"",
+    "stack": "    at window.fetch (<anonymous>:10:24) |     at _callMistral (http://localhost:3000/orchestration-client.js?v=20260916a-tier0-defer-post-author-edits:5867:28) |     at callOASTurnLLM (http://localhost:3000/orchestration-client.js?v=20260916a-tier0-defer-post-author-edits:5945:20) |     at _fireIntimacyOpener (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:184476:29) |     at _initIntimacyDialogue (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:184834:11) |     at http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:136680:21 |     at http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:136308:53",
+    "t": 1789595030523
+  },
+  {
+    "role": "IMAGE/PANEL:/api/image",
+    "url": "/api/image",
+    "blocking": "confirmed non-blocking (see report)",
+    "stack": "    at window.fetch (<anonymous>:10:24) |     at Object.callGeminiImageGen [as fn] (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:292442:29) |     at generateImageWithFallback (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:295732:47) |     at _generateMouthState (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:181124:23) |     at http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:181584:27 |     at _kickoffMouthPrebatch (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:181602:9)",
+    "t": 1789595030559
+  },
+  {
+    "role": "IMAGE/PANEL:/api/image",
+    "url": "/api/image",
+    "blocking": "confirmed non-blocking (see report)",
+    "stack": "    at window.fetch (<anonymous>:10:24) |     at Object.callGeminiImageGen [as fn] (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:292442:29) |     at generateImageWithFallback (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:295732:47) |     at _generateMouthState (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:181124:23) |     at http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:181584:27",
+    "t": 1789595030566
+  },
+  {
+    "role": "IMAGE/PANEL:/api/image",
+    "url": "/api/image",
+    "blocking": "confirmed non-blocking (see report)",
+    "stack": "    at window.fetch (<anonymous>:10:24) |     at Object.callGeminiImageGen [as fn] (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:292442:29) |     at generateImageWithFallback (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:295732:47) |     at _generateMouthState (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:181124:23) |     at http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:181584:27",
+    "t": 1789595030575
+  },
+  {
+    "role": "IMAGE/PANEL:/api/image",
+    "url": "/api/image",
+    "blocking": "confirmed non-blocking (see report)",
+    "stack": "    at window.fetch (<anonymous>:10:24) |     at Object.callGeminiImageGen [as fn] (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:292442:29) |     at generateImageWithFallback (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:295732:47) |     at _generateMouthState (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:181124:23) |     at http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:181584:27",
+    "t": 1789595030583
+  },
+  {
+    "role": "IMAGE/PANEL:/api/image",
+    "url": "/api/image",
+    "blocking": "confirmed non-blocking (see report)",
+    "stack": "    at window.fetch (<anonymous>:10:24) |     at Object.callGeminiImageGen [as fn] (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:292442:29) |     at generateImageWithFallback (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:295732:47) |     at _generateMouthState (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:181124:23) |     at http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:181584:27",
+    "t": 1789595030589
+  },
+  {
+    "role": "IMAGE/PANEL:/api/image",
+    "url": "/api/image",
+    "blocking": "confirmed non-blocking (see report)",
+    "stack": "    at window.fetch (<anonymous>:10:24) |     at Object.callGeminiImageGen [as fn] (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:292442:29) |     at generateImageWithFallback (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:295732:47) |     at _generateMouthState (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:181124:23) |     at http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:181584:27",
+    "t": 1789595030596
+  },
+  {
+    "role": "IMAGE/PANEL:/api/image",
+    "url": "/api/image",
+    "blocking": "confirmed non-blocking (see report)",
+    "stack": "    at window.fetch (<anonymous>:10:24) |     at Object.callGeminiImageGen [as fn] (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:292442:29) |     at generateImageWithFallback (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:295732:47) |     at _generateMouthState (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:181124:23) |     at http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:181584:27",
+    "t": 1789595030609
+  },
+  {
+    "role": "IMAGE/PANEL:/api/image",
+    "url": "/api/image",
+    "blocking": "confirmed non-blocking (see report)",
+    "stack": "    at window.fetch (<anonymous>:10:24) |     at Object.callGeminiImageGen [as fn] (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:292442:29) |     at generateImageWithFallback (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:295732:47) |     at _generateMouthState (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:181124:23) |     at http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:181584:27",
+    "t": 1789595030616
+  },
+  {
+    "role": "IMAGE/PANEL:/api/image",
+    "url": "/api/image",
+    "blocking": "confirmed non-blocking (see report)",
+    "stack": "    at window.fetch (<anonymous>:10:24) |     at Object.callGeminiImageGen [as fn] (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:292442:29) |     at generateImageWithFallback (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:295732:47) |     at _generateMouthState (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:181124:23) |     at http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:181584:27",
+    "t": 1789595030624
+  },
+  {
+    "role": "IMAGE/PANEL:/api/image",
+    "url": "/api/image",
+    "blocking": "confirmed non-blocking (see report)",
+    "stack": "    at window.fetch (<anonymous>:10:24) |     at Object.callGeminiImageGen [as fn] (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:292442:29) |     at generateImageWithFallback (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:295732:47) |     at _generateMouthState (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:181124:23) |     at http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:181584:27",
+    "t": 1789595030630
+  },
+  {
+    "role": "IMAGE/PANEL:/api/image",
+    "url": "/api/image",
+    "blocking": "confirmed non-blocking (see report)",
+    "stack": "    at window.fetch (<anonymous>:10:24) |     at Object.callGeminiImageGen [as fn] (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:292442:29) |     at generateImageWithFallback (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:295732:47) |     at _generateMouthState (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:181124:23) |     at http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:181584:27",
+    "t": 1789595030637
+  },
+  {
+    "role": "IMAGE/PANEL:/api/image",
+    "url": "/api/image",
+    "blocking": "confirmed non-blocking (see report)",
+    "stack": "    at window.fetch (<anonymous>:10:24) |     at Object.callGeminiImageGen [as fn] (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:292442:29) |     at generateImageWithFallback (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:295732:47) |     at _generateMouthState (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:181124:23) |     at http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:181584:27",
+    "t": 1789595030644
+  },
+  {
+    "role": "IMAGE/PANEL:/api/image",
+    "url": "/api/image",
+    "blocking": "confirmed non-blocking (see report)",
+    "stack": "    at window.fetch (<anonymous>:10:24) |     at Object.callGeminiImageGen [as fn] (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:292442:29) |     at generateImageWithFallback (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:295732:47) |     at _generateMouthState (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:181124:23) |     at http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:181584:27",
+    "t": 1789595030650
+  },
+  {
+    "role": "IMAGE/PANEL:/api/image",
+    "url": "/api/image",
+    "blocking": "confirmed non-blocking (see report)",
+    "stack": "    at window.fetch (<anonymous>:10:24) |     at Object.callGeminiImageGen [as fn] (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:292442:29) |     at generateImageWithFallback (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:295732:47) |     at _generateMouthState (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:181124:23) |     at http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:181584:27",
+    "t": 1789595030657
+  },
+  {
+    "role": "IMAGE/PANEL:/api/image",
+    "url": "/api/image",
+    "blocking": "confirmed non-blocking (see report)",
+    "stack": "    at window.fetch (<anonymous>:10:24) |     at Object.callGeminiImageGen [as fn] (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:292442:29) |     at generateImageWithFallback (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:295732:47) |     at _generateMouthState (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:181124:23) |     at http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:181584:27",
+    "t": 1789595030663
+  },
+  {
+    "role": "IMAGE/PANEL:/api/image",
+    "url": "/api/image",
+    "blocking": "confirmed non-blocking (see report)",
+    "stack": "    at window.fetch (<anonymous>:10:24) |     at Object.callGeminiImageGen [as fn] (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:292442:29) |     at generateImageWithFallback (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:295732:47) |     at _generateMouthState (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:181124:23) |     at http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:181584:27",
+    "t": 1789595030670
+  },
+  {
+    "role": "IMAGE/PANEL:/api/image",
+    "url": "/api/image",
+    "blocking": "confirmed non-blocking (see report)",
+    "stack": "    at window.fetch (<anonymous>:10:24) |     at Object.callGeminiImageGen [as fn] (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:292442:29) |     at generateImageWithFallback (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:295732:47) |     at _generateMouthState (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:181124:23) |     at http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:181584:27",
+    "t": 1789595030678
+  },
+  {
+    "role": "IMAGE/PANEL:/api/image",
+    "url": "/api/image",
+    "blocking": "confirmed non-blocking (see report)",
+    "stack": "    at window.fetch (<anonymous>:10:24) |     at Object.callGeminiImageGen [as fn] (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:292442:29) |     at generateImageWithFallback (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:295732:47) |     at _generateMouthState (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:181124:23) |     at http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:181584:27",
+    "t": 1789595030687
+  },
+  {
+    "role": "IMAGE/PANEL:/api/image",
+    "url": "/api/image",
+    "blocking": "confirmed non-blocking (see report)",
+    "stack": "    at window.fetch (<anonymous>:10:24) |     at Object.callGeminiImageGen [as fn] (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:292442:29) |     at generateImageWithFallback (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:295732:47) |     at _generateMouthState (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:181124:23) |     at http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:181584:27",
+    "t": 1789595030694
+  },
+  {
+    "role": "IMAGE/PANEL:/api/image",
+    "url": "/api/image",
+    "blocking": "confirmed non-blocking (see report)",
+    "stack": "    at window.fetch (<anonymous>:10:24) |     at Object.callGeminiImageGen [as fn] (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:292442:29) |     at generateImageWithFallback (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:295732:47) |     at _generateMouthState (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:181124:23) |     at http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:181584:27",
+    "t": 1789595030701
+  },
+  {
+    "role": "IMAGE/PANEL:/api/image",
+    "url": "/api/image",
+    "blocking": "confirmed non-blocking (see report)",
+    "stack": "    at window.fetch (<anonymous>:10:24) |     at Object.callGeminiImageGen [as fn] (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:292442:29) |     at generateImageWithFallback (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:295732:47) |     at _generateMouthState (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:181124:23) |     at http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:181584:27",
+    "t": 1789595030709
+  },
+  {
+    "role": "IMAGE/PANEL:/api/image",
+    "url": "/api/image",
+    "blocking": "confirmed non-blocking (see report)",
+    "stack": "    at window.fetch (<anonymous>:10:24) |     at Object.callGeminiImageGen [as fn] (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:292442:29) |     at generateImageWithFallback (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:295732:47) |     at _generateMouthState (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:181124:23) |     at http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:181584:27",
+    "t": 1789595030715
+  },
+  {
+    "role": "IMAGE/PANEL:/api/image",
+    "url": "/api/image",
+    "blocking": "confirmed non-blocking (see report)",
+    "stack": "    at window.fetch (<anonymous>:10:24) |     at Object.callGeminiImageGen [as fn] (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:292442:29) |     at generateImageWithFallback (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:295732:47) |     at _generateMouthState (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:181124:23) |     at http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:181584:27",
+    "t": 1789595030722
+  },
+  {
+    "role": "IMAGE/PANEL:/api/image",
+    "url": "/api/image",
+    "blocking": "confirmed non-blocking (see report)",
+    "stack": "    at window.fetch (<anonymous>:10:24) |     at Object.callGeminiImageGen [as fn] (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:292442:29) |     at generateImageWithFallback (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:295732:47) |     at _generateMouthState (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:181124:23) |     at http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:181584:27",
+    "t": 1789595030728
+  },
+  {
+    "role": "IMAGE/PANEL:/api/image",
+    "url": "/api/image",
+    "blocking": "confirmed non-blocking (see report)",
+    "stack": "    at window.fetch (<anonymous>:10:24) |     at Object.callGeminiImageGen [as fn] (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:292442:29) |     at generateImageWithFallback (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:295732:47) |     at _generateMouthState (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:181124:23) |     at http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:181584:27",
+    "t": 1789595030734
+  },
+  {
+    "role": "IMAGE/PANEL:/api/image",
+    "url": "/api/image",
+    "blocking": "confirmed non-blocking (see report)",
+    "stack": "    at window.fetch (<anonymous>:10:24) |     at Object.callGeminiImageGen [as fn] (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:292442:29) |     at generateImageWithFallback (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:295732:47) |     at _generateMouthState (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:181124:23) |     at http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:181584:27",
+    "t": 1789595030740
+  },
+  {
+    "role": "IMAGE/PANEL:/api/image",
+    "url": "/api/image",
+    "blocking": "confirmed non-blocking (see report)",
+    "stack": "    at window.fetch (<anonymous>:10:24) |     at Object.callGeminiImageGen [as fn] (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:292442:29) |     at generateImageWithFallback (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:295732:47) |     at _generateMouthState (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:181124:23) |     at http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:181584:27",
+    "t": 1789595030746
+  },
+  {
+    "role": "IMAGE/PANEL:/api/image",
+    "url": "/api/image",
+    "blocking": "confirmed non-blocking (see report)",
+    "stack": "    at window.fetch (<anonymous>:10:24) |     at Object.callGeminiImageGen [as fn] (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:292442:29) |     at generateImageWithFallback (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:295732:47) |     at _generateMouthState (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:181124:23) |     at http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:181584:27",
+    "t": 1789595030752
+  },
+  {
+    "role": "IMAGE/PANEL:/api/image",
+    "url": "/api/image",
+    "blocking": "confirmed non-blocking (see report)",
+    "stack": "    at window.fetch (<anonymous>:10:24) |     at Object.callGeminiImageGen [as fn] (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:292442:29) |     at generateImageWithFallback (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:295732:47) |     at _generateMouthState (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:181124:23) |     at http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:181584:27",
+    "t": 1789595030758
+  },
+  {
+    "role": "IMAGE/PANEL:/api/image",
+    "url": "/api/image",
+    "blocking": "confirmed non-blocking (see report)",
+    "stack": "    at window.fetch (<anonymous>:10:24) |     at Object.callGeminiImageGen [as fn] (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:292442:29) |     at generateImageWithFallback (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:295732:47) |     at _generateMouthState (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:181124:23) |     at http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:181584:27",
+    "t": 1789595030764
+  },
+  {
+    "role": "IMAGE/PANEL:/api/image",
+    "url": "/api/image",
+    "blocking": "confirmed non-blocking (see report)",
+    "stack": "    at window.fetch (<anonymous>:10:24) |     at Object.callGeminiImageGen [as fn] (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:292442:29) |     at generateImageWithFallback (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:295732:47) |     at _generateMouthState (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:181124:23) |     at http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:181584:27",
+    "t": 1789595030770
+  },
+  {
+    "role": "IMAGE/PANEL:/api/image",
+    "url": "/api/image",
+    "blocking": "confirmed non-blocking (see report)",
+    "stack": "    at window.fetch (<anonymous>:10:24) |     at Object.callGeminiImageGen [as fn] (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:292442:29) |     at generateImageWithFallback (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:295732:47) |     at _generateMouthState (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:181124:23) |     at http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:181584:27",
+    "t": 1789595030777
+  },
+  {
+    "role": "IMAGE/PANEL:/api/image",
+    "url": "/api/image",
+    "blocking": "confirmed non-blocking (see report)",
+    "stack": "    at window.fetch (<anonymous>:10:24) |     at Object.callGeminiImageGen [as fn] (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:292442:29) |     at generateImageWithFallback (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:295732:47) |     at _generateMouthState (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:181124:23) |     at http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:181584:27",
+    "t": 1789595030783
+  },
+  {
+    "role": "IMAGE/PANEL:/api/image",
+    "url": "/api/image",
+    "blocking": "confirmed non-blocking (see report)",
+    "stack": "    at window.fetch (<anonymous>:10:24) |     at Object.callGeminiImageGen [as fn] (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:292442:29) |     at generateImageWithFallback (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:295732:47) |     at _generateMouthState (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:181124:23) |     at http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:181584:27",
+    "t": 1789595030790
+  },
+  {
+    "role": "IMAGE/PANEL:/api/image",
+    "url": "/api/image",
+    "blocking": "confirmed non-blocking (see report)",
+    "stack": "    at window.fetch (<anonymous>:10:24) |     at Object.callGeminiImageGen [as fn] (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:292442:29) |     at generateImageWithFallback (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:295732:47) |     at _generateMouthState (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:181124:23) |     at http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:181584:27",
+    "t": 1789595030796
+  },
+  {
+    "role": "IMAGE/PANEL:/api/image",
+    "url": "/api/image",
+    "blocking": "confirmed non-blocking (see report)",
+    "stack": "    at window.fetch (<anonymous>:10:24) |     at Object.callGeminiImageGen [as fn] (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:292442:29) |     at generateImageWithFallback (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:295732:47) |     at _generateMouthState (http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:181124:23) |     at http://localhost:3000/app.js?v=20260916c-tier0-shared-eligibility-fix:181584:27",
+    "t": 1789595030802
+  }
+]

@@ -1,0 +1,25 @@
+{
+ "violations": [],
+ "preflight": [],
+ "reports": [
+  {
+   "validator": "li_social_proof",
+   "ok": false,
+   "type": "LI_SOCIAL_PROOF_GAP",
+   "detail": "LI named, no social signal in the window following first mention",
+   "liName": "Julian",
+   "firstMentionPosition": 601,
+   "evidence": "s, her voice steady. Relief loosens my shoulders beneath the gossamer sash. The mouth-band across my lips muffles any sound I might make, as protocol requires. Two dozen First Favored watch from the edges of the mated-pair trees, their Weave-Script shifting in quiet colors that s…"
+  },
+  {
+   "validator": "hot_opening",
+   "type": "OPENING_TEMPERATURE",
+   "ok": false,
+   "failures": [],
+   "renderedTemp": "COLD_DISRUPTION",
+   "inMotionHits": 0,
+   "containerOpener": false,
+   "evidence": "The youth kneels on the crimson spiralgrass, her aqua skin catching the filtered dawn through the veil-canopy. Her coral hair trembles as she draws breath to speak the offering we rehearsed for months. \"I give the discipline to finish my studies and train as Sacrificiant,\" she sa"
+  }
+ ]
+}

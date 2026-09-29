@@ -1,0 +1,53 @@
+{
+  "ok": false,
+  "violations": [
+    {
+      "rule": "scene1_too_thin",
+      "detail": "scene1Candidate totals 507 words across 20 beats — accepted range 1,100-1,700, target 1,350-1,550 (baked scene ~1,444); beats satisfying the COUNT target with flat one-line prose is a hard failure, not just a quality preference"
+    },
+    {
+      "rule": "required_beat_not_covered",
+      "detail": "required_content_beats id \"ceremony_setting\" has no covering scene1Candidate beat index in scene1Coverage"
+    },
+    {
+      "rule": "required_beat_not_covered",
+      "detail": "required_content_beats id \"seren_kneeling_rehearsed\" has no covering scene1Candidate beat index in scene1Coverage"
+    },
+    {
+      "rule": "required_beat_not_covered",
+      "detail": "required_content_beats id \"cost_offering_statement\" has no covering scene1Candidate beat index in scene1Coverage"
+    },
+    {
+      "rule": "required_beat_not_covered",
+      "detail": "required_content_beats id \"julian_introduced\" has no covering scene1Candidate beat index in scene1Coverage"
+    },
+    {
+      "rule": "required_beat_not_covered",
+      "detail": "required_content_beats id \"invocation_begins\" has no covering scene1Candidate beat index in scene1Coverage"
+    },
+    {
+      "rule": "required_beat_not_covered",
+      "detail": "required_content_beats id \"wish_and_sacrifice\" has no covering scene1Candidate beat index in scene1Coverage"
+    },
+    {
+      "rule": "required_beat_not_covered",
+      "detail": "required_content_beats id \"wish_visibly_twists\" has no covering scene1Candidate beat index in scene1Coverage"
+    },
+    {
+      "rule": "required_beat_not_covered",
+      "detail": "required_content_beats id \"twist_unnaturally_arrested\" has no covering scene1Candidate beat index in scene1Coverage"
+    },
+    {
+      "rule": "required_beat_not_covered",
+      "detail": "required_content_beats id \"public_charge\" has no covering scene1Candidate beat index in scene1Coverage"
+    },
+    {
+      "rule": "required_beat_not_covered",
+      "detail": "required_content_beats id \"julian_claims_the_answer\" has no covering scene1Candidate beat index in scene1Coverage"
+    },
+    {
+      "rule": "unapproved_output_field",
+      "detail": "scene1Coverage has unapproved key(s) not in required_content_beats: intro_lirael, intro_seren, intro_dohkar, intro_julian, d1, d2, d3, d4"
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+ "test": "Acceptance Test 1 \u2014 one 3-scene issue, constrained architecture",
+ "commit": "47a95e7b1d82bd0d2ee2a2eea2fcb0b87adaec1a",
+ "app_js_sha256": "346ff424359304f7",
+ "contracts_sha256": "d4910a764cec6a38",
+ "pens_removed": [
+  "clr",
+  "_repairLISocialProof",
+  "_repairHotOpening",
+  "_repairPCPicturability",
+  "_reauthored (tension gate)",
+  "scene1-gate accept",
+  "semantic line edits (all labels + unknown)"
+ ],
+ "pens_active": [
+  "mechanical line edits (vocab-ban, dialogue-merge, pov-*)",
+  "_mistralRepairPass",
+  "_repairLIPicturability",
+  "_repairLIRelationalValue",
+  "enforceScene1MandatedFrame"
+ ],
+ "baseline_for_audit": "first __textSnap record (pipeline input), NOT the network capture",
+ "seed": "starter_first_sacrifice \u00b7 Lirael OPEN_VEIN first_person \u00b7 Julian LI"
+}

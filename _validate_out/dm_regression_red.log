@@ -1,0 +1,28 @@
+=== directive excerpt ===
+  • Seren — IN_PERSON
+      SOURCE TRUTH — DO NOT STATE: FACET-TRUTH-A (source, never stated)
+      VISIBLE ACTION — MUST OCCUR: BEHAVIOR-A: she answers before the question ends
+      PC INTERPRETATION — MUST GOVERN THE NARRATION: INTERP-A: her compassion needs a witness before it can begin
+      HOW HER ATTENTION MOVES ONTO IT (lens operation): OPERATION_A
+  • the presiding Dohkar — read: BEHAVIOR-B: he names the bent word before anyone asks
+      PC INTERPRETATION — MUST GOVERN THE NARRATION: INTERP-B: being passed over is the only feeling he has left that shows
+      HOW HER ATTENTION MOVES ONTO IT (lens operation): OPERATION_B
+  • Halvern (first mention — the beat lands here) — ANTICIPATED
+      SOURCE TRUTH — DO NOT STATE: FACET-TRUTH-C (source, never stated)
+      VISIBLE ACTION — MUST OCCUR: BEHAVIOR-C: he is spoken of as already on his way
+      PC INTERPRETATION — MUST GOVERN THE NARRATION: INTERP-C: being sent for would mean he had been forgotten
+      HOW HER ATTENTION MOVES ONTO IT (lens operation): OPERATION_C
+  RECONSTRUCT each of these into ONE OR TWO natural sentences of finished prose: the VISIBLE ACTION happens, and the PC INTERPRETATION governs how it is narrated. The SOURCE TRUTH governs accuracy and must remain UNSTATED — never write it, never paraphrase it, never let a character say it.
+  DO NOT write the action and then append an explanatory diagnosis of 
+
+FAIL R1 normalization keeps pc_interpretation and pc_lens_operation on every entry  — {"normKeeps":false,"dirLen":2740,"interpA":1,"opA":1,"interpB":1,"opB":1,"behA":1,"behB":1,"absentHead":0,"law":0,"trustedNote":1,"truthC":1,"interpC":1,"opC":1,"presentHead":1,"presentAbsentMarker":0,"snippet":"  • Seren — IN_PERSON\n      SOURCE TRUTH — DO NOT STATE: FACET-TRUTH-A (source, never stated)\n      VISIBLE ACTION — MUST OCCUR: BEHAVIOR-A: she answers before the question ends\n      PC INTERPRETATION — MUST GOVERN THE NARRATION: INTERP-A: her compassion needs a witness before it can begin\n      HOW HER ATTENTION MOVES ONTO IT (lens operation): OPERATION_A\n  • the presiding Dohkar — read: BEHAVIOR-B: he names the bent word before anyone asks\n      PC INTERPRETATION — MUST GOVERN THE NARRATION: INTERP-B: being passed over is the only feeling he has left that shows\n      HOW HER ATTENTION MOVES ONTO IT (lens operation): OPERATION_B\n  • Halvern (first mention — the beat lands here) — ANTICIPATED\n      SOURCE TRUTH — DO NOT STATE: FACET-TRUTH-C (source, never stated)\n      VISIBLE ACTION — MUST OCCUR: BEHAVIOR-C: he is spoken of as already on his way\n      PC INTERPRETATION — MUST GOVERN THE NARRATION: INTERP-C: being sent for would mean he had been forgotten\n      HOW HER ATTENTION MOVES ONTO IT (lens operation): OPERATION_C\n  RECONSTRUCT each of these into ONE OR TWO natural sentences of finished prose: the VISIBLE ACTION happens, and the PC INTERPRETATION governs how it is narrated. The SOURCE TRUTH governs accuracy and must remain UNSTATED — never write it, never paraphrase it, never let a character say it.\n  DO NOT write the action and then append an explanatory diagnosis of "}
+PASS R2 RICH branch (cited facet): the specific interpretation and the lens operation each render EXACTLY ONCE, alongside each other
+PASS R3 FALLBACK branch (no cited facet): the specific interpretation and the lens operation each render EXACTLY ONCE too
+PASS R4 each visible action renders once
+FAIL R5 [6a 6b 6c3] the absent recipient's head line carries first-mention tag, MODE and NOT PHYSICALLY PRESENT, once  — absentHead=0
+PASS R6 [6b2] …and the same construction: SOURCE TRUTH once, interpretation once, lens operation once
+FAIL R7 [6e 6g] the NON-MATERIALISATION LAW reaches the author exactly once when an absent recipient exists  — law=0
+PASS R8 [6f] the trusted-facet note is present once
+PASS R9 [6d] a PRESENT recipient carries a mode and NO absence marker
+
+C+ RENDER REGRESSION (RED=absent): 9 rows · 6 passed · 3 failed

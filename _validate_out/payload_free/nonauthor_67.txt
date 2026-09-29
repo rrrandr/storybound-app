@@ -1,0 +1,6 @@
+Predict 2-3 likely dialogue lines this character might say next. Return ONLY the lines, one per line. No labels. No prose.
+=====USER=====
+Character: Julian
+Momentum: neutral
+Relationship stage: attraction
+Predict 2-3 short dialogue lines (max 12 words each).

@@ -1,0 +1,24 @@
+{
+  "age": 28,
+  "ancestry": "Korean",
+  "first_name": "Mina",
+  "last_name": "Park",
+  "height": "5'4\", compact and present",
+  "build": "lean, defined shoulders from studio work, small-boned wrists",
+  "hair": "black, straight, chin-length with a blunt cut; she tucks it behind her ear when concentrating",
+  "complexion": "warm ivory undertone with a faint beauty mark just below her left cheekbone",
+  "face": "a fox-sharp face—high cheekbones, slightly uptilted eyes, a mouth quick to smile and quicker to betray hurt; it reads as intelligent and unguarded, the kind of face that cannot lie",
+  "signature_feature": "her eyes—dark brown, large-set, with a particular intensity when she's looking at something she loves; they widen fractionally before she speaks when she's afraid",
+  "second_celebrated_feature": "her hands—long-fingered, graceful, always moving; they're the hands of someone who builds things, and they're scarred in small precise ways from her work",
+  "signature_habits": "she hums while working—old Korean lullabies her omma taught her, unconsciously; she keeps a worn leather notebook for design sketches and writes in it obsessively when anxious; she touches her own wrists when she's self-soothing, pressing her thumbs into the pulse point; she makes eye contact too long, a tell that she's feeling something she can't name",
+  "occupation": "textile designer and small-studio owner—she runs a sustainable fabric dyeing and pattern house in a converted warehouse, employing three people, selling to independent fashion designers and boutiques across the region",
+  "current_crisis": {
+    "event": "her studio's primary investor—a venture capitalist who bankrolled her expansion two years ago—has just demanded she sell the company to a fast-fashion conglomerate or he will call in the debt and force liquidation; she has seventy-two hours to decide",
+    "hottest_emotion": "betrayal mixed with drowning panic",
+    "immediate_want": "to find a way to keep the studio alive without surrendering her vision or her independence"
+  },
+  "wound": {
+    "core": "she believes that wanting something badly enough means she will inevitably lose it—that her hunger for control and creation is a curse that attracts people who will exploit it",
+    "surfacing_hint": "when cornered, she becomes very still and very quiet; her eyes go distant; she stops touching people; she speaks in short sentences that sound like she's reading from far away"
+  }
+}

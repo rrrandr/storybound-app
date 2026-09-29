@@ -1,0 +1,47 @@
+[CHARACTERS: Lirael:F, Julian:M, the youth:F]
+[TITLE: "The Wish That Turned"]
+[SYNOPSIS: In the Veilwood clearing, Lirael supervises her first First Sacrifice as the youth offers a rehearsed price for her future. When the girl redirects the wish toward Lirael's hidden past, the rite fractures and the assembly draws its own conclusions about interference. The cost of that single changed word now hangs over Lirael's standing.]
+
+The youth knelt on the crimson spiralgrass, her aqua skin catching the filtered light beneath the mated-pair trees. Her coral hair fell forward as she spoke the words we had practiced for months.
+
+"I offer the discipline to finish my studies," she said, voice steady. "Let it buy the right to train as a Sacrificiant."
+
+The Dohkar inclined her head. The crowd of two dozen First Favored stood barefoot in their gossamer, Weave-Script pulsing faint colors across arms and throats. I felt the alignment hold. My own mouth-band pressed warm against my lips, the ceremonial sash heavy across my shoulder.
+
+The youth lifted her face and looked straight at me.
+
+"Let it instead bring Lirael the father who left her."
+
+The prepared sacrifice and the new desire met like mismatched blades. The misalignment rang through every First Favored present. Several Weave-Script patterns stuttered. A low murmur cut off.
+
+I knew the wording had come from a private confidence I had once given her in trust. She meant it as a gift. The crowd only knew the rite had twisted.
+
+<<MICRO_EXPRESSION>>
+Say it plainly — or let it show without words?
+<<CONTINUE>>
+
+Julian stood at the edge of the gathering, long black hair curtaining his slate-blue face, body perfectly still. He had not moved since the rite began. I remembered the time he had stepped between a friend and a rival whose words had grown sharp; his calm voice had cut the tension without raising volume, and something in my chest had answered before I could name it.
+
+The Dohkar's hands rose. The youth's Weave-Script flared with sudden fear.
+
+I tore the gossamer band from my mouth. The cloth whispered free. Protocol shattered with it. I stepped toward the girl.
+
+A guest near the back spoke without prompting, voice carrying across the clearing.
+
+"I knew a man who left a daughter in the Long Thread villages. The name matches what she said."
+
+The words landed like a verdict. Every eye turned to me. The inference was immediate and ordinary: the Sacrificiant had manipulated her ward's rite for personal gain. No one needed magic to reach that conclusion. The youth's face crumpled. Julian's stillness broke only enough for his silver Weave-Script to shift once across his wrist.
+
+The Dohkar lowered her hands. The crowd's silence pressed like a second band across my mouth.
+
+My shoulder lifted toward my ear before I could stop it.
+
+Will I let them see my shame, or will I fight to keep my composure?
+
+My hand tightened around my great-grandmother's old tarot deck. I didn't remember bringing it. I toyed with the idea of letting the cards decide.
+
+<<EXPANSION_A>>
+I met the Dohkar's eyes and said the youth had spoken from private knowledge I once shared with her.
+<<EXPANSION_B>>
+I held the Dohkar's gaze and let the silence stand as my only answer.
+<<END_EXPANSION>>

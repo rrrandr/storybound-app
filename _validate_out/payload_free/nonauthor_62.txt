@@ -1,0 +1,51 @@
+You extract structured narrative memory from fiction scenes. Respond ONLY with valid JSON, no markdown.
+=====USER=====
+Given this scene and current memory state, extract updated narrative memory.
+
+SCENE TEXT (last 1500 chars):
+"ng held its breath and I stood at its edge, counting the seconds before the rite would begin. Seren named her sacrifice aloud and made the wish she had rehearsed, and Fate answered the words as spoken. The price was taken in the same breath. The assembly had gathered in a loose ring and no one spoke. I watched the light move across the ground and waited, and the waiting was its own kind of work. I kept my hands still because keeping them still was the only thing left that I could decide.
+
+The clearing held its breath and I stood at its edge, counting the seconds before the rite would begin. Seren named her sacrifice aloud and made the wish she had rehearsed, and Fate answered the words as spoken. The price was taken in the same breath. The assembly had gathered in a loose ring and no one spoke. I watched the light move across the ground and waited, and the waiting was its own kind of work. I kept my hands still because keeping them still was the only thing left that I could decide.
+
+The clearing held its breath and I stood at its edge, counting the seconds before the rite would begin. Seren named her sacrifice aloud and made the wish she had rehearsed, and Fate answered the words as spoken. The price was taken in the same breath. The assembly had gathered in a loose ring and no one spoke. I watched the light move across the ground and waited, and the waiting was its own kind of work. I kept my hands still because keeping them still was the only thing left that I could decide."
+
+CURRENT MEMORY:
+{"callbacks":[],"sharedHistory":[]}
+
+Return JSON with these exact fields:
+{
+  "narrativeState": { "relationship_state": "", "location_state": "", "storyturn_state": "", "arousal_state": "", "character_positioning": "", "emotional_temperature": "" },
+  "relationshipTension": { "attraction": "", "trust": "", "resentment": "", "curiosity": "", "vulnerability": "", "power_dynamic": "" },
+  "physicalState": { "location": "", "mc_position": "", "li_position": "", "proximity": "", "objects_notable": "" },
+  "narrativeIntent": { "primary_goal": "", "secondary_goal": "", "active_tension": "", "approaching_shift": "", "long_term_arc": "" },
+  "continuityProbe": { "depicted_li_gender": "male | female | unclear", "depicted_pc_gender": "male | female | unclear", "present_characters": [ { "name": "<character name>", "presence_mode": "IN_PERSON | ON_PHONE | OFFSTAGE_REFERENCED", "role": "<2-5 word role>" } ], "location_change": { "changed": false, "transition_shown": false, "reason": null } },
+  "sceneRelationalContext": { "li_signaled": false, "li_revealed": false, "li_offered": false, "ambiguity_closure": false, "contact_moment": false, "evidence": null },
+  "pcAttractionRegister": { "li_availability": "present | remembered | absent", "registers": [], "intensity": "none | faint | clear | strong", "evidence": null },
+  "new_callbacks": [],
+  "resolved_callback_ids": [],
+  "new_shared_history": []
+}
+
+Rules:
+- Each field: 3-15 words max, present tense
+- new_callbacks: array of { "type": "promise|secret|wound|desire|threat", "text": "..." } — only if scene introduces one
+- resolved_callback_ids: IDs of callbacks resolved in this scene (empty array if none)
+- new_shared_history: array of { "type": "milestone|revelation|betrayal|intimacy|conflict", "text": "..." } — only for significant shared moments
+- continuityProbe: report what THIS scene's TEXT ACTUALLY DEPICTS, not what the memory says it should be. This is an observation of the rendered scene.
+  - depicted_li_gender / depicted_pc_gender: the gender the scene's prose actually renders for the love interest / protagonist. Use "unclear" when the scene gives no gendered signal (no pronouns, no gendered description) — do NOT guess from memory.
+  - present_characters: array of objects, ONE per named character who APPEARS or is REFERENCED in this scene (include the protagonist as IN_PERSON). presence_mode is HARD-CLASSIFIED into exactly one of three values: IN_PERSON = physically present in the scene's location, can be looked at / touched / handed a physical object; ON_PHONE = audible only via phone / radio / voice channel, NOT physically present, CANNOT receive a physical handoff (no laptop screen, no document, no glance can pass between the protagonist and them); OFFSTAGE_REFERENCED = named or discussed but not actually present in any form during the scene (a memory, a text message, a person being talked about). Be STRICT about ON_PHONE vs IN_PERSON — if the character speaks via a phone call held to the protagonist's ear, they are ON_PHONE, not IN_PERSON. role: a 2-5 word relationship label (protagonist, love interest, mentor, opposing counsel, colleague, etc.).
+  - location_change.changed: true if this scene's location differs from CURRENT MEMORY physicalState.location.
+  - location_change.transition_shown: true ONLY if the scene depicts the move (a walk, a door, a drive, a deliberate cut with cause). false if the location simply differs with no shown transition (a hard teleport).
+  - location_change.reason: ≤8 words naming the transition, or null when changed is false.
+- sceneRelationalContext: observe what the LOVE INTEREST (not the protagonist) did THIS scene. Flag only what the text ACTUALLY depicts; when unclear, false. If several characters are present, judge the PRIMARY romantic LI.
+  - li_signaled: the LI gave a reciprocity / attraction cue (a look held, a lean-in, a warmth she didn't have to offer).
+  - li_revealed: the LI exposed vulnerability or risked something emotionally (a confession, an admission, a guard dropped).
+  - li_offered: the LI made an opening or invitation toward closeness (an invite, an offer, a door left open).
+  - ambiguity_closure: a hanging question / tension in the relationship got RESOLVED this scene (not merely raised).
+  - contact_moment: there was a sincere or intimate beat the protagonist must now respond to — the point where deflection/ironic retreat WOULD fire if it were going to.
+  - evidence: ≤12 words quoting or naming the single beat that most drove the flags above, or null if nothing flagged.
+- pcAttractionRegister: observe what the PROTAGONIST registered TOWARD the romantic love interest THIS scene — desire-as-presence, not body description. This is the protagonist's interior pull, in whatever form the prose actually renders it. Read ONLY from the text; never infer from plot.
+  - li_availability: was the love interest available to be desired this scene? "present" = physically in the scene; "remembered" = evoked in any form (a memory, a voice on a call, a face on a screen, named in the protagonist's thought, another person measured against him); "absent" = the LI appears in NO form at all this scene.
+  - registers: array of any the protagonist's narration ACTUALLY expressed toward the LI, drawn ONLY from this set — "attraction" (physical/aesthetic pull), "curiosity" (wanting to know or understand him), "longing" (yearning, missing, ache), "anticipation" (wanting to see him, looking forward to him), "jealousy" (a territorial pang, a rival), "relief" (settling, safety, ease at his presence or return), "awareness" (distracted by him, hyper-conscious of him, unable to look away). Empty array if the protagonist registered NONE of these toward the LI.
+  - intensity: overall strength of the pull this scene — "none" (registers empty), "faint", "clear", or "strong".
+  - evidence: ≤12 words quoting the beat that most shows the pull, or null if none.

@@ -1,0 +1,70 @@
+{
+  "id": "tfc_tfl_1",
+  "source": "tempt",
+  "requestedRupture": "everyone forgets the ceremony happened",
+  "proposalId": "tfl_1",
+  "sceneIdx": 1,
+  "bargainId": null,
+  "changed": [
+    {
+      "subject": "the assembly",
+      "whatChanged": "no longer remembers the ceremony"
+    }
+  ],
+  "durability": [
+    {
+      "aspect": "the memory gap",
+      "status": "persists"
+    }
+  ],
+  "knowledgeStates": [
+    {
+      "character": "Lirael",
+      "state": "remembers",
+      "note": "invoker anchor"
+    }
+  ],
+  "establishedEvidence": [
+    "torn mouth-band on the ground"
+  ],
+  "openPossibilities": [
+    "someone could notice the arrangement of the clearing does not match anyone's memory of why they gathered"
+  ],
+  "requestedScope": "everyone forgets the ceremony happened",
+  "deliveredScope": "every witness present loses the memory of the ceremony",
+  "scopeMatch": "full",
+  "scopeNote": "",
+  "ruptureClass": "memory_perception",
+  "invalidatedPlans": [],
+  "classDetail": {
+    "affectedKnowers": [
+      {
+        "who": "the assembly",
+        "disposition": "forgot",
+        "memoryAbsent": true,
+        "suspicionFromResidue": false,
+        "nowKnows": "nothing of the ceremony",
+        "evidenceQuote": "The clearing forgets its own reason for gathering."
+      },
+      {
+        "who": "Julian",
+        "disposition": "suspects",
+        "memoryAbsent": true,
+        "suspicionFromResidue": true,
+        "nowKnows": "nothing of the ceremony, but the torn band on the ground does not fit the morning he remembers",
+        "evidenceQuote": "The clearing forgets its own reason for gathering."
+      }
+    ],
+    "invokerExemption": {
+      "who": "Lirael",
+      "status": "exempt",
+      "reason": "invoker_anchor",
+      "note": "she keeps the memory of what she changed"
+    },
+    "unaccountedParties": [],
+    "targetPopulation": {
+      "kind": "all_present_except_invoker"
+    }
+  },
+  "permanent": true
+}

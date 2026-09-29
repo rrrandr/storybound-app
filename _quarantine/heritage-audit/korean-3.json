@@ -1,0 +1,24 @@
+{
+  "age": 28,
+  "ancestry": "Korean",
+  "first_name": "Mina",
+  "last_name": "Park",
+  "height": "5'4\", compact and proportional",
+  "build": "lean, muscled through the shoulders from studio work, small-boned",
+  "hair": "black, straight with a slight natural wave, worn in a low ponytail most days or loose past her shoulders; she has a habit of tucking it behind her ear when she's thinking",
+  "complexion": "warm ivory undertone with a faint freckling across her nose and cheekbones; a small scar on her left temple from a childhood accident, barely visible but she's aware of it always",
+  "face": "a face that reads every feeling in real time—wide-set eyes that go liquid when she's moved, a mouth quick to smile or tremble, the kind of face that makes strangers trust her too soon and makes her dangerous to herself",
+  "signature_feature": "her hands—long-fingered, precise, stained with whatever she's been making (clay dust, paint, ink); the LI notices how she moves them when she speaks, how deliberately she touches things",
+  "second_celebrated_feature": "the hollow at the base of her throat, visible when she's wearing anything open-necked; the LI finds himself looking there when she's nervous",
+  "signature_habits": "she makes things with her hands constantly—sketching in margins, kneading clay between conversations, rearranging objects on surfaces; she says 'eomma would kill me' when she's about to do something reckless (her mother's voice, half-joking, half-real); she drinks her coffee black and forgets it goes cold; she cries easily at small kindnesses and is ashamed of it afterward",
+  "occupation": "ceramicist and studio owner—she runs a small independent ceramics studio in the city where she teaches classes, sells her own work, and takes custom commissions; the studio is her life and her identity",
+  "current_crisis": {
+    "event": "a wealthy developer has bought the building her studio occupies and is evicting her in 60 days to demolish it for luxury condos; she has no capital to relocate, no savings, and the LI is somehow connected to the development deal",
+    "hottest_emotion": "betrayal mixed with panic—the ground is disappearing and she doesn't know who to trust",
+    "immediate_want": "to save the studio, to find a way to stay, to understand if the LI knew about this all along"
+  },
+  "wound": {
+    "core": "she believes that if she loves something enough, works hard enough, makes it beautiful enough, it will be safe—and she's terrified that belief is a lie",
+    "surfacing_hint": "under pressure she becomes very still and very quiet, her hands stop moving, and she asks the same question over and over in a small voice, as if repetition might change the answer"
+  }
+}

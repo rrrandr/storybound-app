@@ -1,0 +1,70 @@
+{
+  "generatedAt": "2026-09-24T07:43:12.554Z",
+  "scene": {
+    "beats": 18,
+    "proseChars": 796,
+    "tail": [
+      "The assembly settles into confusion that carries no memory of accusation.",
+      "I could speak now and claim what I did.",
+      "Or I could let the forgetting stand and keep my place.",
+      "Julian waits without moving.",
+      "The choice is mine to name or bury."
+    ]
+  },
+  "adequacy": {
+    "failed": true,
+    "reasons": [
+      "no aftermath/procedure/consequence-movement signal found anywhere in the scene — reads as a single extended reaction beat, not scene progression"
+    ],
+    "warnings": [
+      "density below the observed corpus floor: 18 beats / 796 chars (corpus minimum 23 beats / 915 chars across 16 real scenes) — RECORDED ONLY, not a rejection",
+      "the scene's final 5 beat(s) are dominated by suspension vocabulary (waits/holds its breath/half-raised) with no completed forward movement — but whether the assigned event landed is UNKNOWN (no post-scene fulfilment data), so this is recorded, not failed"
+    ],
+    "checks": {
+      "density": {
+        "beats": 18,
+        "proseChars": 796,
+        "charsPerBeat": 44,
+        "beatFloor": 23,
+        "proseFloor": 915
+      },
+      "aftermath": {
+        "present": false
+      },
+      "relicViolations": [],
+      "ending": {
+        "suspensionVocabPresent": true,
+        "movementVerbPresent": false,
+        "tailBeatCount": 5,
+        "assignedEventLanded": "unknown"
+      },
+      "cosmology": {
+        "failed": false,
+        "reasons": []
+      },
+      "establishedStateReversion": []
+    }
+  },
+  "liPresenceFloor": {
+    "flagged": false,
+    "liPresent": true,
+    "hasDialogue": true,
+    "hasAnchoredBeat": false,
+    "reason": null
+  },
+  "liPresenceDominance": {
+    "flagged": false,
+    "liBeatCount": 2,
+    "flatCount": 0,
+    "ratio": 0,
+    "flatBeats": [],
+    "reason": null
+  },
+  "movementVerbTriggersInTail": [
+    "I could speak now and claim what I did."
+  ],
+  "exportedDetectorsWithBeatFloor": [
+    "_detectSceneAdequacyFailure"
+  ],
+  "julianBeatCount": 3
+}

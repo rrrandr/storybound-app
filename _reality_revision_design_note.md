@@ -142,8 +142,29 @@ Full traces: `_revision_fact_dependency_traces.md`.
 
 **Never store "current truth" as a mutable blob.** Fold it:
 
-> `activeCanon()` = base declared facts, with every revision applied in ascending `seq` order,
+> `activeCanon()` = base declared facts, with every **canonical delta** applied in ascending `seq` order,
 > each removing its `ceases` and adding its `establishes`.
+
+## 4a. Two kinds of delta (amended 2026-09-28)
+
+The append-only log holds **canonical deltas**. They are not all revisions:
+
+| delta | shape | what it is |
+|---|---|---|
+| **reality revision** | has a non-empty `ceases[]` (and a mandatory `establishes[]`) | something that governed no longer does — the world is **revised** |
+| **additive / revelatory canon change** | `establishes[]` only | something now governs that did not — the world **gains** a fact |
+
+**An additive change is NOT a revision, and must not be dressed as one.** An earlier proposal here was to give
+it an empty `ceases[]` so it would fit the existing type. That was **type-driven modelling, not design**: it
+would have labelled every new fact a rewrite of reality, made "revision" mean nothing in particular, and made
+the count of revisions useless as a signal of how much a story had been unmade.
+
+The distinction is real and worth keeping sharp. **Revising is taking something back; revealing is not.**
+`unm.the_answer_speaks` puts a reading on the record that was never there — nothing is taken back, and the
+player who cast it did not unmake the world.
+
+**Everything else in this note applies to both kinds**: immutable RECORD, closed sets, no inference from
+absence, atoms only, explicit memory, derived canon, forward citation. Only `ceases[]` distinguishes them.
 
 The **active world revision** is the highest-`seq` entry in the log.
 

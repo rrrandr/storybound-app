@@ -1,0 +1,40 @@
+
+═══ STORYBOUND ARCHITECTURE LAWS — PHASE 1 ═══
+(These three laws are the LOAD-BEARING contract for Scene 1. Every doctrine below INTERPRETS within these laws. If a doctrine clause and an architecture law conflict, the architecture law wins.)
+
+LAW 1 — HIERARCHY (R-PLOT IS PRIMARY; A-PLOT IS PRESSURE).
+This scene's PRIMARY axis is the RELATIONSHIP. The A-plot (the named crisis, antagonist, plagiarism, board, lawsuit, etc.) exists ONLY as PRESSURE — its function is to force the relationship question into the open. Render A-plot details ONLY when they activate the relationship axis.
+  • INVERSION TEST: If you removed the LI entirely from this scene, would the scene still work as a coherent piece of writing? If YES, you have written A-plot. The scene must COLLAPSE without the LI, even when the LI is OFFSTAGE — his absence IS the gravity.
+  • SUBORDINATION TEST: Every A-plot beat must be answered by a relationship beat in the same paragraph or the next. A bare A-plot paragraph that does not activate the relationship is over-budget.
+
+LAW 2 — LI GRAVITY RATIO (HOW THE LI IS HELD IN HER ATTENTION).
+Every paragraph that mentions the love interest must fall into ONE category, judged by the BODY of the paragraph (not the topic sentence):
+  A. WANTING — her body or interior responds to him AS A DESIRED MAN.
+  B. WONDERING — curiosity about his interior, his feelings, his intentions TOWARD HER.
+  C. SOURCE — he is a source of information, a plot variable, a status object.
+REQUIRED: (A + B) ≥ 75% of LI-paragraphs. C ≤ 25%.
+ANTI-CHEAT: a paragraph that opens "I wondered if he had touched my arm on purpose" and spends its body on "the board meeting Roman holds next Tuesday" is SOURCE, not WONDERING. Allocation is by paragraph BODY, not topic sentence. On 5 LI-paragraphs: 4 must be A or B. On 8: 6 must be A or B. The ratio scales.
+
+LAW 0 — CANON AUTHORITY ORDER (WHAT OUTRANKS WHAT WHEN TWO INSTRUCTIONS DISAGREE).
+You will receive more guidance than any one sentence can satisfy. When
+You are revising a scene ending for energy. Preserve style and continuity.
+=====USER=====
+ENERGY BOOST — REWRITE LAST SECTION ONLY:
+The following scene ending lacks energy. Rewrite ONLY this ending section to:
+- Increase immediacy of interaction, but maintain consistency with earlier scene tone
+- Do NOT create a sudden tonal spike at the end
+- Introduce a line of dialogue, interruption, or direct character action
+- Reduce passive description and introspection
+- Create forward momentum or unresolved tension
+- Maintain exact continuity with the preceding text
+- Do NOT escalate beyond the current phase
+- Do NOT change characters, setting, or established facts
+- Match the prose style and tone of the preceding section
+
+PRECEDING TEXT (do NOT modify, for context only):
+...his lashes, long and dark enough to soften the hard line of his face, had lowered the single time he had looked at me across a threshold and chosen not
+
+SECTION TO REWRITE:
+to step through. He would have read the sigil the way he read every misalignment—quietly, without needing the words spoken aloud. The Dohkar took one step toward me. The assembly’s attention shifted with him. I could still name what Seren had done. I could still let them believe the light was proof of my interference and nothing more. The choice hung between us like a blade that had not yet fallen. I realize that old tarot deck is still in my hand. The deck lay heavy in my palm, its edges pressing cool against skin the dawn had not yet warmed. One of the heavy gold cards slips out—“Petition Fate” is inscribed on it.
+
+Output ONLY the rewritten ending section. No commentary.
