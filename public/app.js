@@ -130948,12 +130948,19 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
         'The rite is PUBLIC partly because anyone present who wishes the youth ILL can twist the outcome — which is exactly what the supervising First Favored guards against.',
         'Youth are barred from wishcraft until 16 — but kids sneak little illegal wishes all the time, the way modern teens sneak alcohol.',
         'Everyone present is First Favored.',
-        'Fate is never visibly seen; a wish produces NO visible magical effect — no light, glow, surge, or sign.',
+        // Positive description, for the same reason as the rite-machinery truth below: the writer
+        // is told what the world LOOKS like, not handed a list of effects to avoid.
+        'Fate works unseen. A wish changes what happens — what surfaces, who turns, what a person finds they meant — and never changes how anything looks. Light, air and ground stay ordinary throughout a rite and after it; a wish leaves the clearing looking exactly as any ordinary evening would.',
         'Misalignment is SENSED directly by First Favored (their alignment-sense — like a sour note), and by non-First-Favored ONLY through trained observation of BODY-LANGUAGE signs — changed breathing, a faltering or discordant voice, collapsing posture, ritual cues. It is NEVER visible on the Weave-Script: the Weave-Script glows/shifts with EMOTION only (each FF their own colours), and does NOT indicate alignment or a twisting wish. Reading misalignment is a perception / trained expertise, NOT a psychic mind-read and NOT a light show.',
         'During a First Sacrifice, NO ONE may interfere.',
         'Wishing on another person’s First Sacrifice is among the gravest taboos: the sacrifice and its consequences must belong ENTIRELY to the wisher.',
         'A First Sacrifice is ALSO the supervising Sacrificiant’s professional threshold. Successfully guiding a youth through the rite WITHOUT interfering earns the guide the title DOHKAR. If the guide is judged to have interfered, manipulated the wish, or otherwise compromised the rite, the qualification can be DENIED and the guide may face formal inquiry (a Chayr and Dohkars). So the guide has their own rise at stake in the same ceremony as Seren’s coming of age.',
-        'THE RITE HAS NO MAGICAL MACHINERY. There is NO "sealing of the rite" - no seal to finish, no ward to close, no circle that locks, no ceremony-state whose incompletion makes a wish malfunction. Also absent: wardens, glowing ward-signs, warding gestures, visible wish-energy, responsive ceremonial fire, and any "elder" caste (First Favored authority is professional - Dohkar / Profer / Chayr). NO touch transfers, bends, contaminates or redirects a wish. The non-interference rule is PROCEDURAL AND CULTURAL, not magical.',
+        // POSITIVE WORLD DESCRIPTION (Roman 2026-09-29). This was a prohibition list naming
+        // "glowing ward-signs" and "visible wish-energy", and a run came back with grass "glowing
+        // faintly from generations of offerings" — the writer had the vocabulary in hand. The
+        // constraint is unchanged; it is now stated as what the rite IS. The prohibition itself
+        // lives on in validation, where the magical-residue scanner enforces it against the prose.
+        'THE RITE IS PROCEDURE AND CUSTOM. It is carried entirely by spoken formula, standing, witness and judgement — the authority in the clearing is professional (Dohkar / Profer / Chayr). A rite runs from first word to last word and is complete when the words are done; nothing in it is switched on, closed, locked or finished by any physical working, and no incomplete ceremony-state can make a wish go wrong. Hands and contact carry ordinary human meaning only: comfort, restraint, warning. A wish answers to the words and the desire behind them, and to nothing that anyone does with their body. The non-interference rule is PROCEDURAL AND CULTURAL.',
         'WHO SENSES MISALIGNMENT: EVERY First Favored senses meaningful misalignment - it is part of being First Favored, not a rare talent. TRAINING CHANGES RESOLUTION, NOT POSSESSION: Sacrificiants, Dohkars and unusual savants perceive small semantic divergences early enough to know a wish may twist before it is obvious to everyone else. Never write a scene in which one First Favored senses misalignment while the other trained professionals present cannot.',
         // STORY-SPECIFIC (Roman 2026-09-13, split out of FATELANDS_CANON.landmarks.the_open, which
         // stays shared/generic — see the correction note there). This fact belongs ONLY here: it names
@@ -228411,7 +228418,11 @@ No text, no watermark, no UI elements, share-ready.`;
       '  "microDecision": null | { "afterBeat": <int in first 40% of beats>, "prompt": "<≤8 words>",\n' +
       '                     "options": [ { "text": "<≤6 words>", "signal": "<one of objective+ relationship+ linger+ contained+ direct+ subtle+ warmth+ distance+ curiosity+ guard+>", "hiddenExpansion": "<1-2 sentence prewritten payoff revealed WHEN THIS OPTION IS CHOSEN — see MICRODECISION directive for rules>" },\n' +
       '                                  { "text": "<≤6 words>", "signal": "<…>", "hiddenExpansion": "<…>" } ] },  /* null when scene is outside probe cadence — see user prompt MICRODECISION FOR THIS SCENE directive */\n' +
-      '  "decisionGateBeatIdx": <int — final beat index>,\n' +
+      // decisionGateBeatIdx is NOT asked of the author (Roman 2026-09-29). It is an internal index
+      // and the engine already owns it: the CG validator defaults it to the last beat when absent
+      // and then CLAMPS it to the true last index unconditionally, so anything the model emitted
+      // was overwritten. Asking for it bought nothing and put a schema label in front of the
+      // writer — which came back as the beat "The decision gate stands before me."
       '  "is_consummate_scene": <bool>,\n' +
       '  "kink_introduced": "<short kink label (1-3 words, e.g. \\"praise\\" / \\"choking\\" / \\"blindfold\\" / \\"eye_contact\\") if the LI INTRODUCED a new kink behavior in THIS scene that was not in the prior KINK MEMORY block. null otherwise. ONLY meaningful when is_consummate_scene=true.>",\n' +
       '  "pc_kink_response": "<liked | rejected | none — if the KINK MEMORY block above lists a PENDING kink from a prior scene, classify how the protagonist reacted to it in THIS scene (engagement / acceptance → liked; pushback / discomfort / topic-shift → rejected; not relevant / no signal → none). Default \\"none\\".>",\n' +
@@ -229406,7 +229417,7 @@ No text, no watermark, no UI elements, share-ready.`;
       '- An exposition beat\'s "text" is the PC\'s internal thought / reflection (1–2 sentences, no quotes — interior monologue, not spoken).\n' +
       '- 1–2 sentences per beat — HARD, no exceptions. NEVER 3+. A beat is ONE sustained moment (a glance, a line, a noticed detail, a breath), never a paragraph. If a beat wants a third sentence, SPLIT it into a new beat instead of letting it swell.\n' +
       '- GRAMMATICAL CAPTIONS (HARD): every beat is a COMPLETE, readable sentence with its articles ("the"/"a") and verbs intact. Terse is good; telegram/headline-ese that drops articles and the connecting verb is NOT — it reads as broken. BAD (article- and verb-dropped, reads as garbled): "Lines inside name Vael and me in secret exchange three years ago." GOOD (same beat, grammatical and still tight): "The lines inside name Vael and me — a secret exchange, three years ago." Read each beat back to yourself; if it does not parse as English, repair it before emitting.\n' +
-      '- The FINAL beat (idx === decisionGateBeatIdx) is EXACTLY ONE SENTENCE — the closing line that delivers the scene\'s decision moment. Never bury it in a wall.\n' +
+      '- The FINAL beat of the scene is EXACTLY ONE SENTENCE — the closing line that delivers the scene\'s decision moment. Never bury it in a wall.\n' +
       '- BEAT COUNT (TARGET, not a rigid quota — it YIELDS to the two priority bounds below): beats are PROSE, not panels. Only ~5 phase IMAGES render per scene (see PHASE COUNT); beats ride beneath them at ZERO extra render cost. So use beats to PAINT the scene far beyond what the panels could show — give every world-texture stroke, every character tell, every noticed detail, every hesitation its OWN tight beat rather than cramming them into fewer fat ones. Split freely: a glance is a beat, a noticed detail is a beat, a held breath is a beat, one line of dialogue is a beat. Richness comes from MANY SMALL TIGHT beats, never from fat 3-sentence beats. TARGET ~28–45 tight beats for a standard scene (a thin <22-beat scene is a FAILURE unless a bound below forces fewer). PRIORITY 1 — if a LENGTH CEILING is active (see the user prompt), the CEILING WINS: fit as many tight beats as fit UNDER it; do NOT blow the ceiling to reach a beat count. PRIORITY 2 — on an INTIMACY-PACE scene (ST3/ST4, see SCENE DENSITY), run FEWER beats that breathe (~22–30); felt time between charged beats matters more than raw count there. These are not simultaneous rigid quotas — when they conflict, the active bound governs and the beat-count target flexes.\n' +
       '- Alternate dialogue and narration freely; do not bunch dialogue.\n\n' +
       (typeof buildProseDensityConductorDirective === 'function' ? buildProseDensityConductorDirective() +
@@ -229493,7 +229504,7 @@ No text, no watermark, no UI elements, share-ready.`;
       '  PEAK SPACING (HARD): the two non-neutral peaks must be at least 4 beats apart. Adjacent peaks (consecutive non-neutral beats) read as a single state, not two. Spread them across the scene\'s arc.\n\n' +
       'MICRO-DECISION RULES (HARD — literary structural form):\n' +
       '- microDecision.afterBeat MUST be inside the FIRST 40% of beats (early scene). It is a small in-scene choice with 2 options, each ≤6 words.\n' +
-      '- decisionGateBeatIdx is the FINAL beat index — the closing line of the scene.\n' +
+      '- The FINAL beat is the closing line of the scene.\n' +
       '- The two options MUST be structurally OPPOSED on the goal-vs-relationship axis. One option pushes toward the protagonist\'s OBJECTIVE / TASK / GOAL (signal family: objective+ / directness+ / distance+ / guard+); the other pushes toward CONNECTION / EMOTION / RELATIONSHIP (signal family: relationship+ / warmth+ / deference+ / curiosity+). The two options are never the same axis. The reader feels a real fork between "do the thing I came here to do" and "stay with the person in front of me."\n' +
       '- microDecision.prompt is a single phrase that frames that fork — NEVER a literal "Is this goal-oriented or relationship-oriented?" question. The phrasing is in-scene and diegetic: "Ask her about the article, or…?" / "Open the file, or look up?" / "Stay, or leave?" — short, ambiguous, charged. The OPTIONS carry the goal-vs-relationship axis; the prompt just opens the fork.\n' +
       '- Example pair (signal family balance):\n' +
@@ -229515,7 +229526,7 @@ No text, no watermark, no UI elements, share-ready.`;
       // concrete named dilemma the protagonist faces — not a goodbye, not
       // a "she watched the door close," not workshop filler.
       'SCENE ENDING — PENULTIMATE BEAT (HARD — applies to every scene EXCEPT an issue-final DETONATION scene: if the user prompt carries the ISSUE CLIFFHANGER — DETONATION override, THAT governs the ending and this penultimate-dilemma / decision-gate rule is SUSPENDED):\n' +
-      '- The PENULTIMATE beat (the beat IMMEDIATELY BEFORE the final beat / decisionGateBeatIdx) MUST be the protagonist\'s CONCRETE DECISION MOMENT — a specific named dilemma drawn from THIS scene\'s actual situation.\n' +
+      '- The PENULTIMATE beat (the beat IMMEDIATELY BEFORE the final beat) MUST be the protagonist\'s CONCRETE DECISION MOMENT — a specific named dilemma drawn from THIS scene\'s actual situation.\n' +
       '- CORRECT EXAMPLES of penultimate beats (note: they NAME the dilemma): "Tell Devorah about the email, or wait until morning?" / "Push for the byline, or hand it back?" / "Take the call, or let it ring?" / "Cross the room to him, or hold here?" / "Confess what she did, or let the silence hold?"\n' +
       '- FORBIDDEN at penultimate position — these waste the most important beat of the scene:\n' +
       '   ✗ Side characters gathering their things / waving goodbye / saying farewell ("Alyssa gathers her things and waves goodbye." ← WRONG. A goodbye is exit traffic, not a dilemma.)\n' +
@@ -229565,7 +229576,7 @@ No text, no watermark, no UI elements, share-ready.`;
       // that physically/narratively ESCALATES toward the decision —
       // the body proxy for the dilemma being named.
       'DECISION-TIED PEAK MOMENT (HARD — applies to every consummate+non-consummate scene; on an issue-final DETONATION scene there is no penultimate decision, so the peak ties to the DETONATION itself instead):\n' +
-      '- In the SECOND HALF of the scene (after microDecision.afterBeat, before decisionGateBeatIdx), EXACTLY ONE beat MUST have impact_burst:true. This is the OAS-style push-zoom-burst — a brief scale push-pull on the hero image (~360ms) that punctuates a shock / revelation / turn / threshold-crossing moment.\n' +
+      '- In the SECOND HALF of the scene (after the micro-decision beat, before the final beat), EXACTLY ONE beat MUST have impact_burst:true. This is the OAS-style push-zoom-burst — a brief scale push-pull on the hero image (~360ms) that punctuates a shock / revelation / turn / threshold-crossing moment.\n' +
       '- THE PEAK MOMENT MUST BE THEMATICALLY TIED to the penultimate-beat decision. The decision asks "X or Y?"; the peak is the IN-SCENE EVENT that forces X-or-Y to land. Examples (peak ↔ decision pairing):\n' +
       '   • Decision: "Confess about the article, or keep silent?" → Peak: phone buzzes with editor\'s name on screen / printer suddenly spits the front page / coworker tosses the early-edition on her desk\n' +
       '   • Decision: "Call him back, or let it ring?" → Peak: the phone actually rings (impact on the silence)\n' +
@@ -232716,7 +232727,7 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
       if (_isLastOfIssue2) {
         var _chFam2 = (typeof _pickCliffhangerFamily === 'function') ? _pickCliffhangerFamily(state) : null;
         if (_chFam2) lines.push('  • CLIFFHANGER FAMILY (rotation steer — GROUND it in seeded pressure, do not bolt on): ' + _chFam2.label + ' — ' + _chFam2.desc + ' Realize it through the A/R threads this story has already been tightening; if it cannot be grounded here, use the nearest family that CAN. Grounding beats hitting the assigned family.');
-        lines.push('  • ISSUE CLIFFHANGER — DETONATION (this is the FINAL scene of the issue, a PAID boundary): OVERRIDE the standard penultimate-dilemma + decision-gate closing structure. Do NOT emit a penultimate "Tell X, or Y?" named-dilemma beat, and the final beat (decisionGateBeatIdx) is NOT a player-decidable fork — it is the DETONATION itself: a HOT-CRISIS-scale REVERSAL that FUSES A-plot and R-plot and CHANGES THE BOARD (a public scandal breaking, an enemy\'s irreversible move, someone presumed gone/dead walking in, a betrayal surfacing, a deadline collapsing to NOW, a damning reveal, a trap springing — fused with a trust break / desire crossed past return / forced alliance / costly confession / weaponized intimacy / sacrifice). The penultimate beat is the reversal LANDING; the final beat is the BLAST (an event that HAS happened). FORBIDDEN: restating any earlier scene\'s fork or decision axis; "tell him / stay silent"; a soft conversation; a reflective wrap. End ON the detonation, leaving a NEW, LARGER question only the next issue can answer.');
+        lines.push('  • ISSUE CLIFFHANGER — DETONATION (this is the FINAL scene of the issue, a PAID boundary): OVERRIDE the standard penultimate-dilemma + decision-gate closing structure. Do NOT emit a penultimate "Tell X, or Y?" named-dilemma beat, and the final beat is NOT a player-decidable fork — it is the DETONATION itself: a HOT-CRISIS-scale REVERSAL that FUSES A-plot and R-plot and CHANGES THE BOARD (a public scandal breaking, an enemy\'s irreversible move, someone presumed gone/dead walking in, a betrayal surfacing, a deadline collapsing to NOW, a damning reveal, a trap springing — fused with a trust break / desire crossed past return / forced alliance / costly confession / weaponized intimacy / sacrifice). The penultimate beat is the reversal LANDING; the final beat is the BLAST (an event that HAS happened). FORBIDDEN: restating any earlier scene\'s fork or decision axis; "tell him / stay silent"; a soft conversation; a reflective wrap. End ON the detonation, leaving a NEW, LARGER question only the next issue can answer.');
       }
       lines.push('  • BALANCE (do not over-correct): this is NOT a plot procedural. Lead with the romance and feeling; the A-pressure and clock are the CHANGING TERRAIN the desire crosses, not the subject. ONE new A-beat + ONE new R-delta per scene — no more.');
     }
@@ -233422,10 +233433,10 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
         '    STRUCTURAL MEANING: the crisis is already underway when the reader arrives. beats[0] shows WHAT IS HAPPENING NOW — the demand, the accusation, the named person\'s arrival, the specific message just read — not a setup for it. If a new character drives the pressure, NAME them on first reference (never a bare "she") and give them an introductory DESCRIPTOR that lets the reader see and judge them at once.\n' +
         '- THE DECK MUST NOT APPEAR in any beat before the FINAL beat — not in hand, not in a pocket, not glanced at, not shuffled / drawn, no named cards ("the Tower", "the Lovers"), no reading. It appears for the FIRST time in the closing beat below.\n' +
         '- The beat IMMEDIATELY BEFORE the closer (the penultimate beat) MUST be the protagonist\'s CONCRETE NAMED dilemma drawn from THIS scene (e.g. "Tell Devorah about the email, or wait until morning?"). The closer then primes the deck as a possible resolution path.\n' +
-        '- beats[decisionGateBeatIdx].text MUST be EXACTLY this text, verbatim, no rewording, no substitution, kind = "narration", speaker = null:\n' +
+        '- The FINAL beat text MUST be EXACTLY this text, verbatim, no rewording, no substitution, kind = "narration", speaker = null:\n' +
         '    ' + _mergedCloser + '\n' +
         '    STRUCTURAL MEANING OF THE CLOSER: the hand-tightening is the protagonist\'s body reaching for the inherited anchor AFTER the scene\'s pressure has landed — an involuntary reflex, NOT a calm observation; "didn\'t remember bringing it" is her catching her own body doing something she did not consciously decide. Because the deck has not appeared earlier, this final beat lands as an uncanny discovery.\n' +
-        '- decisionGateBeatIdx is the index of the FINAL beat. The closer IS the last beat of the scene; no beat follows it.\n'
+        '- The closer IS the last beat of the scene; no beat follows it.\n'
       );
     } else {
       // Clear stale state if we\'re NOT in mandated-frame territory so
@@ -233481,7 +233492,7 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
       lines.push(
         'SCENE 2 MANDATED FRAME (HARD — overrides every other instruction about opening / closing beats):\n' +
         '- The deck mandate is a SINGLE consolidated block at the END of the scene. Do NOT feature, name, draw, or re-introduce the deck in beats[0] or any early beat — Scene 2 opens on the story\'s real action, NOT on the deck.\n' +
-        '- beats[decisionGateBeatIdx].text MUST BEGIN with this discovery, verbatim, no rewording, no substitution (kind = "narration", speaker = null):\n' +
+        '- The FINAL beat text MUST BEGIN with this discovery, verbatim, no rewording, no substitution (kind = "narration", speaker = null):\n' +
         '    ' + _closerS2 + '\n' +
         '- PETITION FATE INTRO - CONTEXTUAL WISH TURN (yours to write): emit it as the LAST line of your response in the exact form <<WISH: ...>> - it is attached downstream, so do NOT write it into the scene body yourself. In it, the POV briefly imagines what they would ask Fate for in THIS exact situation. Begin with a concrete wish they could easily admit to themselves, then sharpen or correct it into the thing they actually want. Both must arise from the unresolved pressure of this scene. Keep it short and interior.\n' +
         '  - The correction IS the characterisation: what they can admit to shows how they cope; what they correct to shows what they actually want. Do not skip straight to the second one.\n' +
@@ -233494,7 +233505,7 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
         '      earnest register: "If Fate really listened, I would ask it to put the ship back on course. No. I would ask it to tell me which of them cut the line."\n' +
         '- STRUCTURAL MEANING OF the closer: the deck is still in the protagonist\'s hand (tactile continuity from Scene 1), and the Petition Fate card EMERGES from it on its own. The protagonist\'s instinctive wish (a way out → a way in → "if only…") lowers resistance, then opens onto real desire. This is the diegetic introduction of the Petition mechanic. The card has not yet been activated — the UI unlock animation fires after the player clicks Next. The "If only…" trails off — DO NOT complete the thought. The card does that.\n' +
         '- The body of the scene unfolds in your own voice per all other directives. The deck stays at most an incidental carried object (referenced lightly, if at all); the SPECIFIC "Petition Fate" emergence is ONLY in the closer — not earlier in the scene, and not at the top.\n' +
-        '- decisionGateBeatIdx is the index of the FINAL beat. The closer IS the last sentence of the scene.\n'
+        '- The closer IS the last sentence of the scene.\n'
       );
     } else {
       state._sceneTwoMandatedOpener = null;
@@ -233551,10 +233562,10 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
         '   • THE WISH IS GRANTED IN A "WAS THAT COINCIDENCE?" WAY: the thing she wished for happens — but in a form that could plausibly have happened anyway. He calls, or the meeting tilts her way, or the door is unlocked — but in a way that leaves room for skepticism. The protagonist\'s reaction is CURIOSITY + SKEPTICISM, not certainty. She doesn\'t say "Fate is real." She thinks "Was that…? No. Coincidence."\n' +
         '   • DO NOT have the protagonist mentally narrate the system mechanic ("I used the Petition Fate card") — show the WISH and the OMEN and the GRANT through behavior, not exposition.\n' +
         '- MIDDLE: the scene develops with plot-acceleration pressure — whatever stakes the A-plot / LI dynamic generates. Standard scene structure; the second half should escalate toward the closer.\n' +
-        '- beats[decisionGateBeatIdx].text MUST be EXACTLY this sentence, verbatim, no rewording, no substitution, kind = "narration", speaker = null:\n' +
+        '- The FINAL beat text MUST be EXACTLY this sentence, verbatim, no rewording, no substitution, kind = "narration", speaker = null:\n' +
         '    ' + _closerS3 + '\n' +
         '- STRUCTURAL MEANING OF the closer: the protagonist puts Petition back, and Tempt Fate REVEALS ITSELF in the deck. The static shock is Fate touching her — a small physical confirmation that the deck is NOT inert. The "pay attention to the present" half-line pulls her back into the room. The UI unlock animation for Tempt Fate fires after the player clicks Next. DO NOT continue the thought past the ellipsis — the card does that.\n' +
-        '- decisionGateBeatIdx is the index of the FINAL beat. The closer IS the last sentence of the scene.\n' +
+        '- The closer IS the last sentence of the scene.\n' +
         '- The deck stays in the frame across this scene (referenced incidentally) but the SPECIFIC "Tempt Fate" emergence prose appears ONLY in the closer.\n'
       );
     } else {
@@ -340454,6 +340465,11 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
   var FSC_OUTCOMES = [
     { id: 'unm.dohkar_demand_unmade', ask: 'stop',
       aftermathBeat: { id: 'aftermath.demand_unspoken', text: 'The presiding Dohkar draws breath as though to say something formal, and finds nothing there to say. He closes his mouth. The assembly waits for a pronouncement that does not come, and the pause goes on a beat too long before anyone moves.' },
+      authorBrief:
+        'The rite is over and the clearing is waiting. The presiding Dohkar has asked for nothing; no demand for a review of the Sacrificiant’s conduct has been spoken here.\n'
+        + 'Julian’s own demand for a review stands, made away from this clearing and untouched.\n'
+        + 'The Dohkar draws breath as though to say something formal and finds nothing there to say. He closes his mouth. The assembly waits for a pronouncement that does not come, and the pause goes on a beat too long before anyone moves. Let him feel it; he cannot account for it, and he does not try to explain it.\n'
+        + 'Lirael stands in front of an assembly that expected a ruling and did not get one.',
       cls: 'history_rewrite', temporalOperation: 'historical_replacement',
       requiresActive: ['review.demanded_by_dohkar'], requiresInactive: [],
       ceases: ['review.demanded_by_dohkar'],
@@ -340480,8 +340496,8 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
       + 'Julian has kept the Answer in his hands throughout. No one has put a question to Lirael '
       + 'before the assembly, and the assembly’s suspicion rests on her all the same — the '
       + 'words of her wish came true where everyone could see how.\n'
-      + 'Lirael, Seren, Julian, the presiding Dohkar and the assembly all carry a faint sense they '
-      + 'cannot place. Seren looks at her own hands as if checking them. The Dohkar loses his place '
+      + 'Lirael, Seren, Julian, and the presiding Dohkar—along with the assembled crowd—carry '
+      + 'a faint sense they cannot place. Seren looks at her own hands as if checking them. The Dohkar loses his place '
       + 'in words he has spoken a hundred times. Julian’s gaze finds Lirael a moment before '
       + 'there is any reason for it. Let each of them feel it; none of them can name it, and none '
       + 'of them tries to explain it.\n'
@@ -340518,6 +340534,10 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
 
     { id: 'unm.the_accusation_unmade', ask: 'escape',
       aftermathBeat: { id: 'aftermath.grievance_without_words', text: 'Seren\'s family stand where they stood, still holding the shape of a thing they meant to do. One of them steps half a pace forward and stops, mouth open, the accusation gone from behind their teeth while the anger behind it stays exactly where it was.' },
+      authorBrief:
+        'Seren’s family have made no public accusation against Lirael. No one with standing has said aloud that the twisted wish was her doing.\n'
+        + 'They stand where they stood, still holding the shape of a thing they meant to do. One of them steps half a pace forward and stops, mouth open, the accusation gone from behind their teeth while the anger behind it stays exactly where it was. Let them feel it; none of them can name what is missing, and none of them tries to explain it.\n'
+        + 'The anger in the clearing is undiminished and unspoken, and Lirael is standing in front of it.',
       cls: 'history_rewrite', temporalOperation: 'historical_replacement',
       requiresActive: ['accusation.family_accused'], requiresInactive: [],
       ceases: ['accusation.family_accused'],
@@ -340530,6 +340550,10 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
 
     { id: 'unm.the_claim_unmade', ask: 'escape',
       aftermathBeat: { id: 'aftermath.no_one_presides', text: 'The Dohkar reaches for an authority he is certain he holds and closes on nothing. Julian, who agreed to something, cannot locate what. The clearing has the particular silence of a room where everyone is waiting for whoever is in charge to speak, and no one is.' },
+      authorBrief:
+        'No one has claimed the right to rule on Lirael’s conduct, and no venue has been named for any proceeding against her.\n'
+        + 'The Dohkar reaches for an authority he is certain he holds and closes on nothing. Julian, who agreed to something, cannot locate what. The clearing has the particular silence of a room where everyone is waiting for whoever is in charge to speak, and no one is. Let them feel it; neither can say what has gone, and neither tries to explain it.\n'
+        + 'Lirael is not cleared and not charged. She is simply standing in a clearing with no one in it who can decide anything about her.',
       cls: 'history_rewrite', temporalOperation: 'historical_replacement',
       requiresActive: ['auth.dohkar_claims_rite_and_ruling'],
       requiresInactive: ['accusation.family_accused'],
@@ -340570,6 +340594,10 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
 
     { id: 'unm.the_custody_unremembered', ask: 'silence',
       aftermathBeat: { id: 'aftermath.a_thing_in_her_hands', text: 'The Answer sits in Lirael\'s hands and no one thinks to ask why. Julian\'s glance passes over it the way it passes over the trees. She looks down at it herself with the mild puzzlement of someone holding an object they have no memory of picking up, and does not put it down.' },
+      authorBrief:
+        'The Answer is in Lirael’s hands, and no one in the clearing can say whose it is or how it came to be hers — Lirael least of all.\n'
+        + 'It sits in her hands and no one thinks to ask why. Julian’s glance passes over it the way it passes over the trees. She looks down at it herself with the mild puzzlement of someone holding an object they have no memory of picking up, and does not put it down. Let each of them feel it; none of them can name what is wrong, and none of them tries to explain it.\n'
+        + 'She is holding something she cannot account for in front of people who have stopped wondering about it, and her standing in front of them is what is in front of her now.',
       cls: 'memory_perception', temporalOperation: null,
       requiresActive: ['answer.owned_by_institution', 'answer.entrusted_to_julian'],
       requiresInactive: [],
@@ -340581,6 +340609,10 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
 
     { id: 'unm.standing_dissolved', ask: 'authority',
       aftermathBeat: { id: 'aftermath.emptied_claim', text: 'Julian says the words that made him the one to convene this and they land flat, in a clearing that does not receive them. Somebody near the back makes a small involuntary sound. He hears it. He does not look for who.' },
+      authorBrief:
+        'Julian has no authority to convene or preside over any ruling on Lirael’s conduct, and the clearing knows it.\n'
+        + 'He says the words that made him the one to convene this and they land flat, in a clearing that does not receive them. Somebody near the back makes a small involuntary sound. He hears it. He does not look for who.\n'
+        + 'What he has lost is real and it does not settle the matter. The question of Lirael’s conduct is still open and now there is no one steady enough to hold it, which leaves the room hotter than it was, not cooler.',
       cls: 'identity_reputation', temporalOperation: 'current_state_transition',
       requiresActive: ['auth.julian_standing_to_convene'], requiresInactive: [],
       ceases: ['auth.julian_standing_to_convene'],
@@ -340595,6 +340627,10 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
 
     { id: 'unm.the_shunning', ask: 'solitude',
       aftermathBeat: { id: 'aftermath.a_space_that_opens', text: 'The withdrawal is not announced. The gathering simply rearranges itself around an absence where Lirael is standing. Seren turns her face away and keeps it turned. The Dohkar addresses his next words to a point slightly past her shoulder. The space around her stays open, and no one steps into it.' },
+      authorBrief:
+        'Everyone present has withdrawn from Lirael. No one stands near her, addresses her, or meets her eye.\n'
+        + 'The withdrawal is not announced. The gathering simply rearranges itself around an absence where Lirael is standing. Seren turns her face away and keeps it turned. The Dohkar addresses his next words to a point slightly past her shoulder. The space around her stays open, and no one steps into it.\n'
+        + 'She has the quiet she asked for. It also means there is no one beside her to speak for her if anything is said about her conduct, and she is standing in that clearing alone.',
       cls: 'relationship_social', temporalOperation: 'additive_canon_change',
       requiresActive: [], requiresInactive: [],
       ceases: [],

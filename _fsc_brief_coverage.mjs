@@ -64,12 +64,15 @@ t('no brief mentions replay, erasure or a count',
   !rows.some(r => /\b(replay\w*|erased|a second time|the first time|again\b)/i.test(r.text)),
   rows.filter(r => /\b(replay\w*|erased|a second time|the first time|again\b)/i.test(r.text)).map(r => r.id).join(','));
 
-console.log('\nD. THE REMAINING GAP IS RECORDED, NOT HIDDEN');
-console.log('  ' + composed.length + ' outcomes still need an authored brief before they are live-tested.');
-console.log('  Their composed fallback is structurally thin for memory_perception outcomes, which');
-console.log('  carry no delta to draw sentences from.');
-t('the two live-tested outcomes are covered, so no live run depends on a composed brief',
-  ['unm.time_gives_way', 'unm.the_turning_forgotten'].every(id => rows.find(r => r.id === id).authored));
+console.log('\nD. COVERAGE IS A LIVE-RUN GATE');
+t('ALL 8 outcomes have an authored brief — no live test may run below 8/8',
+  composed.length === 0, composed.length + ' still composed: ' + composed.map(r => r.id).join(','));
+t('every brief is substantial (300+ chars)', rows.every(r => r.chars >= 300),
+  rows.filter(r => r.chars < 300).map(r => r.id + ':' + r.chars).join(','));
+t('every brief carries at least three sentences of present reality',
+  rows.every(r => (r.text.match(/[.!?]\s/g) || []).length >= 3),
+  rows.filter(r => (r.text.match(/[.!?]\s/g) || []).length < 3).map(r => r.id).join(','));
+t('no brief is a generic fallback', rows.every(r => r.authored));
 
 console.log('\n' + (fail === 0 ? 'PASS' : 'FAIL') + '  ' + pass + '/' + (pass + fail) + ' assertions'
   + '   — ' + composed.length + ' briefs still to author');

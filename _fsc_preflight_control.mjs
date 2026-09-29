@@ -197,15 +197,23 @@ export async function preflight(opts = {}) {
   ok('NO machine-specification term reaches the author request',
     leaked.length === 0, 'leaked: ' + leaked.join(' | '));
 
-  // TWO TERMS ARE PRE-EXISTING AND OUT OF SCOPE FOR THIS SPLIT. Recorded, not asserted, so their
-  // presence is a known fact rather than a silent one:
-  //   "visible wish-energy"  — the SEED's own world rule ("THE RITE HAS NO MAGICAL MACHINERY…"),
-  //                            shipped to every First Sacrifice scene long before this work.
-  //   "decisionGateBeatIdx"  — the BASE screenplay schema, used by every story in the app.
-  // The final run's "The decision gate stands before me." came from the second of these, NOT from
-  // the Fate boundary. Changing either is an app-wide decision, not part of this refactor.
-  const preexisting = ['visible wish-energy', 'decisionGateBeatIdx'].filter(t => b.indexOf(t) >= 0);
-  say('  pre-existing, out of scope: ' + (preexisting.join(', ') || 'none'));
+  // NO LONGER EXEMPT. These two were previously recorded as "pre-existing, out of scope" because
+  // they originate outside the Fate block. That was the wrong test: an internal label is a defect
+  // wherever it comes from, and the model had already copied one into prose ("The decision gate
+  // stands before me."). Both are now removed from author-visible material and ASSERTED absent:
+  //   decisionGateBeatIdx — withdrawn from the CG author schema entirely. The engine already owned
+  //                         the value: it defaults to the last beat and is then clamped to the true
+  //                         last index, so nothing the model emitted ever survived.
+  //   visible wish-energy — the seed's world truths now describe what the world LOOKS like instead
+  //                         of listing effects to avoid. The prohibition itself lives on in the
+  //                         machine spec and in the magical-residue scanner.
+  const INTERNAL_LABELS = ['decisionGateBeatIdx', 'decision gate', 'visible wish-energy',
+    'glowing ward-signs', 'warding gestures', 'responsive ceremonial fire'];
+  const labelLeaks = INTERNAL_LABELS.filter(t => b.indexOf(t) >= 0);
+  ok('NO internal schema label or prohibition vocabulary reaches the author request',
+    labelLeaks.length === 0, 'leaked: ' + labelLeaks.join(' | '));
+  ok('the world truths describe the world positively instead',
+    b.indexOf('Fate works unseen') >= 0 && b.indexOf('THE RITE IS PROCEDURE AND CUSTOM') >= 0);
 
   // The forbidden-token lists must be gone as lists, not merely reworded.
   const FORBIDDEN_LIST_MARKERS = ['FORBIDDEN, in narration and dialogue alike',
