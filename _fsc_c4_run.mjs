@@ -9,7 +9,7 @@ import fs from 'fs';
 import path from 'path';
 import { preflight } from './_fsc_preflight_control.mjs';
 import { guardDispatch, CHARS_PER_TOKEN, REASONING_MULT, SAFETY_MARGIN } from './_fsc_cost_guard.mjs';
-import { scoreC1, scoreC2, aftermathLanded, loadExternalTimelinePhrases, ROSTER_TOKENS }
+import { scoreC1, scoreC2, aftermathLanded, loadExternalTimelinePhrases, loadAmbiguousTemporal, ROSTER_TOKENS }
   from './_fsc_scoring.mjs';
 
 const PHRASES = loadExternalTimelinePhrases();

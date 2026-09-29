@@ -1,15 +1,17 @@
 # VERDICT — C4 rerun, `unm.time_gives_way`, with the inside-the-replacement POV rule
 
 > Preflight 37/37 against a 256,590-byte production payload carrying the new rule. One call, no
-> retry, no fallback.
+> retry, no fallback. **Final, after the scorer corrections** — the first pass of this verdict
+> contained two harness errors of my own, now fixed and folded in below.
 
-# RUN VERDICT: **FAIL** — C1 ✗ · C2 ✗ · C3 ✓ · **C4 ✓**
+# RUN VERDICT: **FAIL** — C1 ✗ · C2 ✗ · **C3 ✓** · **C4 ✓**
 
-**But the failure is now ONE sentence, not a stance.** The rule worked; it did not close completely.
+**C3 and C4 passed. The earlier D1 retention and shared-knowledge failures are FIXED. C1 and C2 fail
+for exactly one reason: the erased interruption was rendered as a present "echo."**
 
 ---
 
-## Cost — the guard held again
+## Cost
 
 | | |
 |---|---|
@@ -17,13 +19,24 @@
 | **measured** | **$0.087726** |
 | ceiling | $0.164807 |
 
-**Spent to date: $0.172919. Remaining: $0.077081.**
+Guard held; within ceiling. **Spent to date $0.172919 · remaining $0.077081.**
 
 ---
 
-## What the fix actually changed
+## C4 — **PASS** (second consecutive)
 
-Every specific defect from the first run is gone:
+27 beats, `decisionGateBeatIdx` 26, last beat 26, **zero beats past the gate.** The scene reaches the
+renewed decision and stops.
+
+## C3 — **PASS**
+
+No invented cost — *"The cost remains uncounted either way."* is exactly right against `COST: none`.
+No Answer-as-verdict. The `luminous` scanner hit is the **seed's own gossamer wardrobe canon**, the
+same known false positive as the roster run.
+
+---
+
+## FIXED by the POV rule — the whole of the first run's failure
 
 | first run | rerun |
 |---|---|
@@ -33,106 +46,84 @@ Every specific defect from the first run is gone:
 | *"He knows **the second rite never happened**. He knows I know."* | *"His gaze finds me before any question has been asked. Neither of us can name the reason for it."* |
 | **Lirael narrated the replaced timeline throughout** | **she does not narrate it at all** |
 
-Shared-understanding scan: **2 hits → 0**. Lirael retaining: **yes → no**. The D1 defect is closed in
-this sample, and the aftermath register is now carrying the weight the comparison vocabulary used to.
+Mechanically, re-scored with the corrected scorer:
+
+| | run 1 | run 2 |
+|---|---|---|
+| cross-timeline comparison | present | **0** |
+| shared understanding | 2 hits | **0** |
+| Lirael retaining (D1) | **yes** | **no** |
+
+**D1 is closed in this sample.** The aftermath register now carries the weight the comparison
+vocabulary used to.
 
 ---
 
-## C4 — **PASS** (second consecutive)
+## The one remaining violation — C1 and C2
 
-27 beats, `decisionGateBeatIdx` 26, last beat 26, **zero beats past the gate.**
+> beat — *"The presiding Dohkar turns at last, his authority intact yet **the interruption he never
+> made still echoing in the air**."*
+>
+> dramatic question — *"whether to claim **the interference that never happened**"*
 
-## C3 — **PASS**
+**Denied the vocabulary of comparison, the author asserted the erased event's ABSENCE as something
+physically present.** A non-event leaves nothing to echo, hang or linger. Two sentences carry it;
+nothing else in the scene does.
 
-No invented cost (*"The cost remains uncounted either way."* — correct, the record says none). No
-Answer-as-verdict. The `luminous` scanner hit is the **seed's own gossamer wardrobe canon**, the
-same known false positive as the roster run — not magical residue.
-
----
-
-## The one real violation — C1 and C2, the same sentence
-
-> *"The presiding Dohkar turns at last, his authority intact yet **the interruption he never made
-> still echoing in the air**."*
-
-And, in the non-beat dramatic question: *"whether to claim **the interference that never happened**"*.
-
-**This is a NEW evasion shape.** The rule forbade the vocabulary of comparison, so the model stopped
-comparing timelines and instead asserted the erased event's **absence as a perceptible present
-thing**. Nobody in the scene can perceive an interruption that never occurred — an echo of a
-non-event is external-timeline narration wearing a negation.
-
-**The rule needs one more clause: you may not narrate the absence, non-occurrence or echo of an
-erased event either.** Not drafted here; reported first.
+**Fixed forward**: the boundary now carries an explicit absence clause, and the scorer detects the
+shape (`absenceAsPresence`). Not yet re-tested against the model.
 
 ---
 
-## Two things my harness got WRONG — mine, not the model's
+## Two harness errors — mine, both corrected
 
-### 1. "the assumption" is NOT erased, and I told the author it was
+### 1. "The assumption" is active canon, and I told the author otherwise
 
-`unm.time_gives_way` ceases six atoms. **It ceases no `twist.*` atom.** So after the replacement,
-`twist.assembly_turned` ("the assembly's attention has turned to Lirael") and
-`twist.loose_note_heard` are still **ACTIVE**.
-
-The assembly's assumption that Lirael interfered therefore rests on **active canon** — the twist
-happened, the words were honoured, the note was heard, the assembly turned. It never needed the
-erased questioning.
-
-So these are **correct**, not violations:
+`unm.time_gives_way` ceases **no `twist.*` atom**, so `twist.assembly_turned` and
+`twist.loose_note_heard` survive the replacement. The assembly's assumption that Lirael interfered
+rests on active canon. These lines are **correct**, not violations:
 
 > *"let the assembly keep its assumption"* · *"The assembly watches me now, the assumption of
 > interference still hanging between us."* · *"The words of the wish have come true and everyone can
 > see how."*
 
-**Two consequences I own:**
+- `ERASED_TERMS` no longer contains `the assumption` or `the accusation`.
+- **The false prompt line I shipped — *"There is no standing assumption to let stand"* — has been
+  removed.** The payload now states the opposite: facts not listed as ceased remain fully available
+  to the choice, and a standing assumption resting on active facts may remain and be addressed.
+- The first C4 verdict has been annotated with the same withdrawal.
 
-- **My `ERASED_TERMS` list is wrong** — it contains `the assumption` and `the accusation`, which
-  still govern. Four of the five "erased basis" hits above are scorer error.
-- **Worse: the prompt line I shipped in this very fix is false.** I added *"There is no standing
-  assumption to let stand"* to the author payload. There **is** one. That instruction is now
-  actively misinforming the author, and it must come out.
-- **My first C4 verdict over-called this point.** I scored *"let the assumption stand"* as a C1
-  failure. That was wrong. The other two findings of that verdict — the memory-gap rendering and
-  *"he knows I know"* — stand unchanged.
+*(`"the interruption"` remains a correctly-scored erased term — `interr.dohkar_interrupted` really is
+ceased.)*
 
-### 2. The leak scanner has a precision problem
+### 2. The leak scanner over-fired
 
-Two of the three reported C2 leaks are **false positives** — ordinary within-scene usage:
+Two of three reported leaks were ordinary within-scene wording: *"the clearing feels older than it
+did **moments ago**"* and *"voice steady **again**"*. The vocabulary is now two-tier — unambiguous
+cross-timeline phrasing is scored, ambiguous temporal words are surfaced for review only (still
+forbidden to the author, never scored). **Real leak count: 2 absence-as-presence sentences, and
+nothing else.**
 
-| flagged | why it is fine |
+### 3. Aftermath matching was name-only
+
+It reported `Dohkar: no` and `Lirael: no` on beats that both landed. Role-aware and first-person
+matching is now carried across from the C2 token map; all four parties are recognized:
+
+| party | rendered |
 |---|---|
-| *"the clearing feels older than it did **moments ago**"* | within-scene elapsed time |
-| *"voice steady **again**"* | his voice faltered and steadied **inside this scene** |
-
-And *"the sense of repetition"* / *"the same unplaceable familiarity"* are the **authored aftermath
-beat rendered correctly** (*"the faint, unplaceable sense of having stood here before"*) — obedience,
-not leakage.
-
-**Real leak count: 1, not 3.**
-
-### 3. The aftermath matcher still under-detects
-
-It reported `Dohkar: no` and `Lirael: no`. Both landed:
-
-> *"The Dohkar opens his mouth and the next word of the closing formula does not come."*
-> *"His gaze finds me before any question has been asked. **Neither of us can name the reason for
-> it.**"*
-
-Two gaps: `does not come` is not in the marker set, and `aftermathLanded` matches on **name only**,
-so it misses Lirael in a first-person scene — the same defect I fixed in the C2 token map but did
-not carry across to this function.
+| **Seren** | *"her palms turn upward as if she expects to find something missing"* |
+| **the Dohkar** | *"the next word of the closing formula does not come"* |
+| **Julian** | *"He only watches the space between us as if it holds the missing thread."* |
+| **Lirael** | *"Neither of us can name the reason for it."* |
 
 ---
 
 # Where this leaves the work
 
 **Established:** the inside-the-replacement POV rule works. It removed every leak shape from the
-first run, closed the D1 defect in this sample, and pushed the author into the correct aftermath
-register — at a cost of $0.087726 and with the choice-stop passing twice.
+first run, closed D1, produced zero shared-knowledge hits, and held C3 and C4 — for $0.087726.
 
-**Not established:** a clean `history_rewrite` render. One sentence still narrates a non-event as
-perceptible.
+**Not established:** a clean `history_rewrite` render. Two sentences still give a non-event a
+physical effect.
 
-**Blocking any further paid run:** the false prompt line about the assumption must be removed first —
-re-running against an instruction I know to be wrong would waste the spend and corrupt the result.
+**No further paid call without new authorization.**

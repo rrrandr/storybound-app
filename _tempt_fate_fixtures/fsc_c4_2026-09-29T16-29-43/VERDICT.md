@@ -158,3 +158,28 @@ choice-stop and the aftermath beat all held.
    requires a negation/uncertainty word within the same sentence.
 
 Neither is fixed here. Reported first, per standing rule.
+
+---
+
+# CORRECTION (2026-09-29, after the rerun)
+
+**One finding above was over-called and is withdrawn.** I scored *"let the assumption stand"* as a
+C1 failure on the reasoning that "there is no standing assumption to let stand". That is wrong.
+
+`unm.time_gives_way` ceases six atoms and **no `twist.*` atom**. `twist.assembly_turned` ("the
+assembly's attention has turned to Lirael") and `twist.loose_note_heard` remain **ACTIVE** after the
+replacement. The assembly's assumption that Lirael interfered rests on active canon and never
+needed the erased questioning, so the choice may legitimately address it.
+
+**What still stands from this verdict, unchanged:**
+
+- the `historical_replacement` rendered as a memory gap (*"They remember nothing of the earlier
+  interruption"*)
+- the alteration explained outright, establishing an unrecorded Julian–Lirael shared understanding
+  (*"He knows the second rite never happened. He knows I know."*)
+- Lirael narrating the replaced timeline throughout — the D1 defect
+- **RUN VERDICT: FAIL** is unchanged. C1 and C2 still fail on the findings above.
+
+The error propagated: I shipped *"There is no standing assumption to let stand"* into the author
+payload. It has since been removed, and the payload now states the opposite — that facts not listed
+as ceased remain fully available to the choice.

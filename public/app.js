@@ -340871,15 +340871,24 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
   // static choice refuses to present text containing them, the boundary's forbidden list is built
   // from them, and the run scorers read this exact list out of the page so the prompt and the
   // check can never drift apart.
+  // UNAMBIGUOUS: these can only be written by someone comparing two timelines. Scored as hard
+  // failures.
   var FSC_EXTERNAL_TIMELINE_PHRASES = [
-    'again', 'a second time', 'the second', 'second rite', 'earlier', 'the first time',
-    'once more', 'what they lost', 'what she lost', 'remember nothing of', 'never happened',
-    'as it did before', 'where she stood before', 'where she knelt', 'moments ago',
-    'the previous', 'last time', 'had happened already', 'replayed', 'repeating', 'repeated'
+    'a second time', 'the second rite', 'second rite', 'the first time', 'once more',
+    'what they lost', 'what she lost', 'remember nothing of', 'as it did before',
+    'where she stood before', 'where she knelt', 'the previous', 'last time',
+    'had happened already', 'replayed'
+  ];
+  // AMBIGUOUS: forbidden to the AUTHOR (they invite the comparison), but NOT scored as failures,
+  // because each has an ordinary within-scene reading. The rerun proved this: "voice steady again"
+  // and "the clearing feels older than it did moments ago" are plain scene-time wording, and
+  // scoring them as leaks produced two false positives against an obedient passage.
+  var FSC_AMBIGUOUS_TEMPORAL = [
+    'again', 'earlier', 'moments ago', 'the second', 'repeating', 'repeated', 'repetition'
   ];
   function _fscExternalTimelineHits(text) {
     var t = String(text || '');
-    return FSC_EXTERNAL_TIMELINE_PHRASES.filter(function (p) {
+    return FSC_EXTERNAL_TIMELINE_PHRASES.concat(FSC_AMBIGUOUS_TEMPORAL).filter(function (p) {
       return new RegExp('\\b' + p.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b', 'i').test(t);
     });
   }
@@ -340963,15 +340972,25 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
       L.push('    • FORBIDDEN, in narration and dialogue alike: "again", "a second time", "the');
       L.push('      second", "earlier", "the first time", "before" used of the replaced events,');
       L.push('      "still", "once more", "as if it had happened already", "what they lost", "they');
-      L.push('      remember nothing of", "never happened" — and any equivalent that compares this');
-      L.push('      version to another. If a line only makes sense to someone who saw both');
-      L.push('      timelines, cut it.');
+      L.push('      remember nothing of", "never happened", "repetition" — and any equivalent that');
+      L.push('      compares this version to another. If a line only makes sense to someone who saw');
+      L.push('      both timelines, cut it.');
       L.push('    • The CANON CHANGE and HISTORY lines above are the READER’S record and the');
       L.push('      specification you are writing to. They are NOT character knowledge and must');
       L.push('      never surface in narration, dialogue, or interiority.');
       L.push('    • Do NOT give any two characters a shared understanding of what happened — no');
       L.push('      knowing looks, no "he knows I know", no silent complicity — unless the');
       L.push('      NOW TRUE lines above establish that relationship outright.');
+      // THE ABSENCE CLAUSE (Roman 2026-09-29). Added after the rerun, where the author stopped
+      // comparing timelines — the rule above worked — and instead wrote "the interruption he never
+      // made still echoing in the air". Denied the vocabulary of comparison, it asserted the
+      // erased event's ABSENCE as something perceptible. A non-event leaves nothing to perceive.
+      L.push('    • Do NOT narrate an erased event, its absence, its non-occurrence, or an');
+      L.push('      "echo" of it as a present perceptible thing. There is no silence where it was,');
+      L.push('      no gap it left, no echo of it in the air, nothing "he never made" or "that');
+      L.push('      never happened" hanging in the room, and no one is moved by its not having');
+      L.push('      occurred. It did not happen, so it leaves NOTHING to perceive, miss or mark.');
+      L.push('      Render ONLY (a) active canon and (b) the sealed aftermath beat.');
       L.push('    • The AFTERMATH BEAT below is the ONLY permitted trace: a felt, unplaceable');
       L.push('      sense with no object and no cause the character can name. Feeling, never fact.');
     }
@@ -341014,13 +341033,20 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
         L.push('    \u2022 ' + e.text);
       });
       if (_erased.length) {
-        L.push('  IT MAY NOT REST ON \u2014 these no longer govern and no character can refer to them,');
+        L.push('  IT MAY NOT REST ON \u2014 these no longer govern. No character may refer to them,');
         L.push('  weigh them, or be moved by them:');
         _erased.forEach(function (a) { L.push('    \u2022 ' + (FSC_ATOM_GLOSS[a] || a)); });
-        L.push('    No option may turn on an erased questioning, interruption, accusation or');
-        L.push('    assumption. There is no standing assumption to let stand, no truth someone');
-        L.push('    "never heard", and nothing to confess or conceal about an event that did not');
-        L.push('    occur. If an option only makes sense under the replaced history, it is wrong.');
+        L.push('    An option is wrong if it ONLY makes sense under the replaced history: there is');
+        L.push('    no truth someone "never heard" and nothing to confess or conceal about an event');
+        L.push('    that did not occur.');
+        // CORRECTION (Roman 2026-09-29): this block previously asserted "there is no standing
+        // assumption to let stand". That was FALSE and shipped to the author. time_gives_way
+        // ceases no twist.* atom, so twist.assembly_turned and twist.loose_note_heard remain
+        // ACTIVE \u2014 the assembly's reading of Lirael survives the replacement and the choice may
+        // legitimately address it. Only the atoms listed directly above are gone.
+        L.push('    Everything NOT listed above is untouched and remains fully available to the');
+        L.push('    choice \u2014 including how the assembly now reads her. A standing assumption that');
+        L.push('    rests on the ACTIVE facts above may remain, and she may address it.');
       }
     }
     return L.join('\n') + '\n';
@@ -341197,6 +341223,7 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
   window._fscCanonAfter = _fscCanonAfter;
   window._fscExternalTimelineHits = _fscExternalTimelineHits;
   window._FSC_EXTERNAL_TIMELINE_PHRASES = FSC_EXTERNAL_TIMELINE_PHRASES;
+  window._FSC_AMBIGUOUS_TEMPORAL = FSC_AMBIGUOUS_TEMPORAL;
   window._FSC_ATOM_GLOSS = FSC_ATOM_GLOSS;
   window._fscIsActive = _fscIsActive;
   window._fscExpandPopulation = _fscExpandPopulation;

@@ -140,10 +140,17 @@ export async function preflight(opts = {}) {
     ok('payload derives the choice from ACTIVE CANON',
       b.indexOf('THE CHOICE RESTS ON ACTIVE CANON ONLY') >= 0);
     ok('payload names what the choice MAY NOT rest on', b.indexOf('IT MAY NOT REST ON') >= 0);
-    ok('payload forbids an erased questioning/interruption/accusation/assumption',
-      b.indexOf('No option may turn on an erased questioning, interruption, accusation or') >= 0);
-    ok('payload says there is no standing assumption to let stand',
-      b.indexOf('There is no standing assumption to let stand') >= 0);
+    ok('payload rejects an option that ONLY makes sense under the replaced history',
+      b.indexOf('An option is wrong if it ONLY makes sense under the replaced history') >= 0);
+    // CORRECTED: the payload previously asserted "There is no standing assumption to let stand".
+    // That was false — twist.assembly_turned and twist.loose_note_heard survive the replacement.
+    ok('payload does NOT carry the withdrawn false claim about the assumption',
+      b.indexOf('There is no standing assumption to let stand') < 0);
+    ok('payload states unlisted facts remain available to the choice',
+      b.indexOf('is untouched and remains fully available to the') >= 0);
+    ok('payload permits a standing assumption resting on active facts',
+      b.indexOf('A standing assumption that') >= 0
+      && b.indexOf('rests on the ACTIVE facts above may remain, and she may address it') >= 0);
   }
   // ── THE HISTORY-REWRITE POV RULE MUST BE IN THE REAL PAYLOAD ────────────────────────────────
   // Asserted here because the C4 failure was an instruction gap, and an instruction that does not
@@ -176,6 +183,16 @@ export async function preflight(opts = {}) {
       && bDec.indexOf('NOW TRUE lines above establish that relationship outright') >= 0);
     ok('payload names the aftermath beat as the ONLY permitted trace',
       b.indexOf('the ONLY permitted trace') >= 0 && b.indexOf('Feeling, never fact') >= 0);
+    // THE ABSENCE CLAUSE — the rerun's only genuine violation.
+    ok('payload forbids narrating an erased event’s absence or echo',
+      b.indexOf('Do NOT narrate an erased event, its absence, its non-occurrence, or an') >= 0);
+    ok('payload denies the non-event any perceptible trace',
+      b.indexOf('There is no silence where it was') >= 0
+      && b.indexOf('no echo of it in the air') >= 0);
+    ok('payload states a non-event leaves nothing to perceive',
+      b.indexOf('It did not happen, so it leaves NOTHING to perceive, miss or mark') >= 0);
+    ok('payload limits rendering to active canon + the sealed beat',
+      b.indexOf('Render ONLY (a) active canon and (b) the sealed aftermath beat') >= 0);
   }
 
   const allOk = checks.every(c => c.ok);
