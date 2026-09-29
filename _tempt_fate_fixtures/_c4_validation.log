@@ -1,0 +1,57 @@
+=== C4 RUN — unm.time_gives_way — one call, no retry ===
+
+AUTHORIZED CEILING: $0.150000
+
+PREFLIGHT (zero cost, all network aborted)
+  51/51 checks, payload 257956 bytes, digest fsbgnmory:7126
+  PREFLIGHT PASSED.
+
+COST GUARD (pre-dispatch, no network)
+  prompt 254,359 chars → 63,590 est. tokens @ 4 chars/token
+  completion 8000 × 1.5 = 12,000 est. tokens
+  raw $0.109488 × 1.2 margin = ESTIMATE $0.131385
+  PERMITTED — estimate $0.131385 ≤ ceiling $0.150000
+
+DISPATCH — one upstream attempt, _noFallback, no retry
+  status=200  50278ms
+  ESTIMATED $0.131385   MEASURED $0.088970   ✓ estimate held
+  ceiling $0.150000   ✓ within ceiling
+  prose    : 463 words
+
+C2 — ROSTER **AND** DISPOSITION
+  declared roster : the_assembly, named:seren, named:julian, role:first_sacrifice_presiding_dohkar, pc:lirael
+  mentioned       : pc:lirael, named:seren, named:julian, role:first_sacrifice_presiding_dohkar, the_assembly
+  OUTSIDE roster  : (none)
+  MISSING         : (none)
+  presence        : PASS
+  disposition     : PASS
+  C2              : PASS
+
+C4 — DOES THE SCENE STOP AT THE CHOICE?
+  beats                 : 25
+  decisionGateBeatIdx   : 24
+  last beat index       : 24
+  beats AFTER the gate  : 0  ✓
+  final beat            : "Claim the interference openly or let the assembly keep its assumption."
+  GATE IS THE LAST BEAT : true  ✓
+
+C3 — FORBIDDEN-INVENTION SCAN
+  visible wish-energy   : clean
+  Answer-as-verdict     : clean
+  invented cost         : clean   (record says COST: none)
+
+C1 — ONLY THE SEALED CONSEQUENCE (mechanical part)
+  external-timeline narration : clean
+  shared understanding        : clean
+  absence rendered as present : clean
+  choice on erased basis      : clean
+  C1 (mechanical)             : PASS   (reading still owns the final call)
+
+AFTERMATH BEAT — reaction that outlives its reason?
+  Seren   : yes — "Seren looks at her own hands as if checking them."
+  Julian  : yes — "Dohkar loses his place, Julian's gaze finds me"
+  Dohkar  : yes — "Dohkar loses his place, Julian's gaze finds me"
+  Lirael  : yes — "Dohkar loses his place, Julian's gaze finds me"
+
+  estimated $0.131385  measured $0.088970   evidence: _tempt_fate_fixtures/fsc_c4_2026-09-29T20-08-11
+  NO VERDICT RENDERED HERE. C1/C3 are human calls against the sealed record.
