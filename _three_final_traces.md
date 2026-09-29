@@ -82,7 +82,13 @@ what lets the trace say it without marking a mixed fact unchanged.
 
 ---
 
-# 2. `unm.custody_severed`
+# 2. `unm.custody_severed` — ⛔ **RE-AUTHORED 2026-09-29, see `_answer_custody_canon.md` §2**
+
+> **The table below is superseded.** Under the recorded custody canon, **Julian — not the Dohkar — holds the
+> entrustment**, by virtue of office. The grant now ceases **`answer.entrusted_to_julian` alone**;
+> `answer.owned_by_institution` stays **unchanged** because title and custody are different layers; and
+> Lirael's holding is founded on **`answer.handed_to_lirael_for_questioning`**, a completed act, **not on any
+> live authority**. The presiding Dohkar **gains nothing**. Original table retained for the record.
 
 | | |
 |---|---|

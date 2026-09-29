@@ -137,8 +137,16 @@ taken, with a result** is a current world state the seed **requires** to be visi
 | atom | kind | source phrase | depends on |
 |---|---|---|---|
 | `answer.owned_by_institution` | **state** | *"The Answer belongs to the Institution"* | — |
-| `answer.julian_is_caretaker` | **state** | *"Julian is its caretaker"* | `answer.owned_by_institution` |
-| `answer.lirael_holding_bounded` | **availability** | *"Lirael holds it only for the questioning. It is not hers."* | `answer.owned_by_institution` |
+| ~~`answer.julian_is_caretaker`~~ | — | — | ⛔ **RETIRED 2026-09-29** → `answer.entrusted_to_julian` |
+| ~~`answer.lirael_holding_bounded`~~ | — | — | ⛔ **RETIRED 2026-09-29** — fused an act with its limit |
+| **`answer.instance_identity`** | **state** | this Answer is one specific, stable instance among many | — |
+| **`answer.entrusted_to_julian`** | **state** | *"Julian is its caretaker"*, read under the 2026-09-29 canon: **ceremonial entrustment of this instance by virtue of office — not personal ownership** | `answer.instance_identity` |
+| **`answer.handed_to_lirael_for_questioning`** | **event** | *"Lirael holds it only for the questioning"* — the **separately declared temporary act** | — |
+
+> **Custody canon, 2026-09-29.** Four layers stay separate: **instance · title · entrustment · physical
+> holding**, with **rite authority conferring none of them**. The Answer is entrusted to the highest-ranking
+> First Favored for ceremonial and judgement rites; **a Dohkar presiding at a First Sacrifice is too junior**,
+> and the presiding Dohkar has **no custodial authority over the relic**. See `_answer_custody_canon.md`.
 
 **This is the split that matters most.** The trace found that ceasing the compound id silently unbound
 Lirael's possession. With atoms, `unm.custody_severed` can cease `answer.owned_by_institution` **and leave

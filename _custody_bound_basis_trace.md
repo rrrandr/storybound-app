@@ -1,6 +1,13 @@
 # Focused trace — the active basis of Lirael's holding after `custody_severed`
 
-> **One trace only. No ranking, no coverage run, no implementation.**
+> ## ⛔ SUPERSEDED IN FULL — 2026-09-29
+> **This trace grounded Lirael's holding in `auth.dohkar_claims_rite_and_ruling`. That is wrong.**
+> **Julian — not the Dohkar — is the Answer's entrusted holder**, by virtue of his office; a Dohkar presiding
+> at a First Sacrifice is **too junior to hold one**, and rite authority is not relic authority. This document
+> committed the exact collapse it was written to fix, one layer over.
+>
+> Replaced by `_answer_custody_canon.md`, where the holding is founded on a **completed act** rather than on
+> anyone's live authority. Retained for the record only.
 
 ---
 
