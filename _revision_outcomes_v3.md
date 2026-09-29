@@ -296,7 +296,7 @@ remaining-nine pass must declare `requiresActive[]` for each.
 `auth.julian_claims_convene_preside` — a claim he has not made cannot be voided.
 
 ### `ceases[]`
-`auth.julian_claims_convene_preside` — **alone**
+~~`auth.julian_claims_convene_preside`~~ → **`auth.julian_standing_to_convene`** (the current state) **alone**. The historical act `auth.julian_claimed_convene_preside` is **unchanged** — Reading B approved 2026-09-28. See `_three_final_traces.md` §1.
 
 ### `establishes[]`
 | fact | text |

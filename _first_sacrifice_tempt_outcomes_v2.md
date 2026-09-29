@@ -209,7 +209,7 @@ conduct ceases to have been made. The Provast has no standing over this rite.
 | **roster** | `named:julian` — his **standing**, an institutional fact |
 | **memory effects** | **none.** Per D2 the grant names a role and a proposition; it does not reach his mind. **His feelings, intentions, knowledge and next actions are untouched.** |
 | **establishes** | `provast_standing_void` |
-| **ceases** | `inquiry_authority_claimed` |
+| **ceases** | **`auth.julian_standing_to_convene`** — the current state only. The historical act **`auth.julian_claimed_convene_preside` is unchanged.** Reading B, 2026-09-28. |
 | **reality revision** | **YES** — `ceases: ['inquiry_authority_claimed']` |
 | **intrinsic cost** | **`escalation_invited`** — a Provast publicly without standing is an institutional crisis, and Issue 1 will have it |
 | **unchanged** | every memory; `twist_manifested`; the presiding Dohkar's own assertion over the rite |

@@ -161,7 +161,13 @@ remains available as an authored grant — it simply has to be *named*, and pric
 |---|---|---|---|
 | `auth.dohkar_claims_rite_and_ruling` | **state** | *"The presiding Dohkar asserted that the rite and the ruling on the Sacrificiant's conduct are his"* | — |
 | `auth.venue_named_formal_inquiry` | **state** | *"named a formal inquiry (a Chayr and two Dohkars) as the venue"* | `auth.dohkar_claims_rite_and_ruling` |
-| `auth.julian_claims_convene_preside` | **state** | *"Julian agreed and publicly claimed authority to convene and preside over it"* | `auth.venue_named_formal_inquiry` |
+| ~~`auth.julian_claims_convene_preside`~~ | ~~state~~ | — | ⛔ **RETIRED 2026-09-28 — mixed atom, split below** |
+| **`auth.julian_claimed_convene_preside`** | **event** | *"Julian agreed and **publicly claimed**"* — the act, before the assembly | `auth.venue_named_formal_inquiry` |
+| **`auth.julian_standing_to_convene`** | **state** | *"**authority to convene and preside** over it"* — whether that claim presently carries authority | `auth.julian_claimed_convene_preside` |
+
+> **Split required 2026-09-28.** The clause carries **an act and a condition**. One mixed atom cannot be
+> marked `unchanged` while part of its meaning changes — `unm.standing_dissolved` leaves the claim standing
+> and voids the standing, which is two facts. See `_three_final_traces.md` §1a.
 | `auth.inquiry_not_yet_opened` | **availability** | *"The inquiry is NOT yet opened (that is a later scene)"* | — |
 
 **`auth.inquiry_not_yet_opened` is the same statement as the opening matrix's `inquiryOpened = false`
