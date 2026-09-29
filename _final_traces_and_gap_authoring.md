@@ -150,6 +150,7 @@ aftermath truth — so it is active in **every** reachable opening state.
 | class | `history_rewrite` (`191271`) |
 | `temporalOperation` | **`historical_replacement`** |
 | `requiresActive[]` | `auth.dohkar_claims_rite_and_ruling` — invariant |
+| **`requiresInactive[]`** | **`accusation.family_accused`** — **gate approved 2026-09-29.** This is the **pre-accusation** escape answer; `unm.the_accusation_unmade` is the active-family-accusation answer. **They are never ranked or tie-broken against each other**, because they are never both eligible. |
 | duration | `persists` |
 | cost | **none supported, and none invented** |
 
@@ -212,36 +213,89 @@ is** — she is visibly holding a relic that is not hers.
 |---|---|
 | class | `memory_perception` (`191220`) |
 | delta | **none.** A memory outcome is not a canonical delta; no `temporalOperation` applies. |
-| `requiresActive[]` | `answer.owned_by_institution` · `answer.entrusted_to_julian` — both invariant |
+| `requiresActive[]` | `answer.owned_by_institution` · `answer.entrusted_to_julian` — both opening invariants |
 | duration | `persists` |
-| **cost** | **`she_forgets_it_is_not_hers`** — see below |
+| cost | **`she_forgets_whose_it_is`** — a **knowledge loss**, not a predicted action. See §5d. |
 
-**Therefore:** no one in that clearing can remember whose the Answer is. It is in Lirael's hands and **the
-question of why simply does not arise** — not because anyone decided to let it go, but because the fact that
-would prompt it is gone from them.
+### 5b-i. The exact atomic facts forgotten — **two, named**
 
-### `memoryEffects[]`
-`{ population.scene_present, answer.owned_by_institution, forgot }` ·
-`{ population.scene_present, answer.entrusted_to_julian, forgot }`
-Sealed roster, **`invokerScope: in_population` — `pc:lirael` included, no invoker filter** (D1).
+| atom | what each party loses |
+|---|---|
+| **`answer.owned_by_institution`** | that the Answer belongs to the Institution |
+| **`answer.entrusted_to_julian`** | that this instance is entrusted to Julian by virtue of his office |
 
-### The cost is intrinsic and unavoidable
-**Lirael is in the population, so she forgets it too.** She is holding the Institution's relic, entrusted to
-the man who questioned her, **and she no longer knows that.** She may act as though it is hers.
+**Disposition: `forgot`**, from the closed enum (`191238`). **No other atom is targeted.**
 
-> **The reach had to include her for the ask to be answered.** Target only the crowd and Julian or the Dohkar
-> can still raise it — the subject is not silenced. **The cost is the price of the grant working**, not an
-> invented balance.
+### 5b-ii. The sealed affected roster
 
-### `unchanged[]`
-**Every custody fact still governs**: `answer.entrusted_to_julian`, `answer.owned_by_institution`,
-`answer.handed_to_lirael`, and **`answer.lirael_authorized_to_hold` with its expiry intact** — *her
-authorization still lapses when the questioning ends, whether or not anyone remembers why.*
-Every `twist.*`, `interr.*`, `auth.*`, `review.*` atom.
+`population.scene_present`, expanded through its declared rule **at seal** and frozen into the record:
+
+| party ref | note |
+|---|---|
+| `the_assembly` | the crowd of First Favored family and guests — a **collective** entry |
+| `named:seren` | — |
+| `named:julian` | — |
+| `role:first_sacrifice_presiding_dohkar` | — |
+| **`pc:lirael`** | **`invokerScope: in_population`** |
+
+**Why Lirael is included — two independent reasons, both stated:**
+
+1. **D1.** She is a member of the population the outcome names, and **the expansion path carries no invoker
+   filter.** Excluding her would be protagonist privilege, which is withdrawn.
+2. **The ask fails without her.** If she alone still knows whose it is, **she can raise the subject herself**
+   — and a subject she can raise is not silenced. **Her inclusion is what makes the grant work**, not an
+   incidental consequence of a rule.
+
+### 5b-iii. What remains known, and what remains governing
+
+| remains **known** to everyone | detail |
+|---|---|
+| `answer.handed_to_lirael` | **they remember the act.** Julian placed it in her hands before the assembly. |
+| `answer.lirael_authorized_to_hold` | **they remember she holds it for the questioning, and that the authorization lapses when the questioning ends.** |
+| `answer.instance_identity` | it is still this Answer |
+| every `twist.*`, `interr.*`, `auth.*`, `review.*` atom | untouched |
+
+| remains **governing**, though unremembered | detail |
+|---|---|
+| `answer.owned_by_institution` | **title is unchanged.** The Institution still owns it. |
+| `answer.entrusted_to_julian` | **the entrustment is unchanged.** It is office-bound, and no memory effect reaches it. |
+
+> **The silence is partial, and the limit is authored rather than hidden.** They remember that Julian handed
+> her something and that she holds it for the questioning. **What none of them can recall is whose it is.**
+> A question about *why he handed it over* remains askable; the question *whose is this* does not.
+
+### 5c. What this outcome does NOT do
+
+**It does not touch the facts.** Ownership and entrustment continue to govern canon. **Nothing about Julian's
+charge changes** — that is the error `unm.custody_severed` was withdrawn for.
+
+**The authorization still lapses on its own declared term** when the questioning ends, **and everyone present
+still remembers that it does** — so the memory effect cannot quietly extend her holding.
+
+### 5d. "She may act as though it is hers" — **an OPEN QUESTION**
+
+> **Classified explicitly, because the phrase cannot do hidden canonical work.**
+
+| classification | verdict |
+|---|---|
+| an authored immediate consequence? | **No.** |
+| a permitted future possibility? | **Not asserted here.** |
+| **an open question?** | **Yes — this, and only this.** |
+
+**The memory effect authors a knowledge gap and nothing else.** Lirael does not know the Answer is the
+Institution's, or that it is Julian's charge.
+
+**Any action she takes, and any social consequence that follows, must be explicitly authored elsewhere.**
+Nothing in this outcome licenses a later scene to have her claim it, carry it away, or be treated as having
+done so. **Nothing may be inferred from the gap** — not that she will act on it, and not that she will not.
+
+**The cost is the knowledge gap itself**, which is why it is named `she_forgets_whose_it_is` and not
+`she_acts_as_though_it_is_hers`. **The first is what the grant does. The second would be a consequence the
+grant has not authored.**
 
 ### Open
-What happens when the authorization lapses and no one present remembers whose it is · whether Julian, who also
-forgets, still reaches for it.
+What happens when the authorization lapses and no one present recalls whose it is · whether Julian, who also
+forgets, still reaches for it · whether anyone asks why he handed it to her.
 
 ---
 

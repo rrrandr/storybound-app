@@ -28,7 +28,7 @@ const OUTCOMES = [
   { id: 'unm.dohkar_demand_unmade',     ask: 'stop',      requires: ['review.demanded_by_dohkar'] },
   { id: 'unm.time_gives_way',           ask: 'undo',      requires: ['interr.julian_questioned_lirael'] },
   { id: 'unm.the_accusation_unmade',    ask: 'escape',    requires: ['accusation.family_accused'] },
-  { id: 'unm.the_claim_unmade',         ask: 'escape',    requires: ['auth.dohkar_claims_rite_and_ruling'] },
+  { id: 'unm.the_claim_unmade',         ask: 'escape',    requires: ['auth.dohkar_claims_rite_and_ruling'], requiresInactive: ['accusation.family_accused'] },
   { id: 'unm.the_turning_forgotten',    ask: 'unseen',    requires: ['twist.assembly_turned'] },
   { id: 'unm.the_custody_unremembered', ask: 'silence',   requires: ['answer.owned_by_institution', 'answer.entrusted_to_julian'] },
   { id: 'unm.standing_dissolved',       ask: 'authority', requires: ['auth.julian_standing_to_convene'] },
@@ -52,10 +52,15 @@ for (let m = 0; m < (1 << FREE.length); m++) {
   cells.push(c);
 }
 const fmt = c => ORDER.map(k => c[k] ? k[0].toUpperCase() : '·').join('');
-const eligible = (o, c) => o.requires.every(a => isActive(a, c));
+const eligible = (o, c) => o.requires.every(a => isActive(a, c)) &&
+  (o.requiresInactive || []).every(a => !isActive(a, c));
 
+// AMBIGUITY IS A FAILURE, NOT A TIE-BREAK. If more than one outcome in an ask-class is
+// eligible in a state, selection would fall to array order — an invalid selection rule.
+const AMBIGUOUS = [];
 function resolve(cell, ask, hops = 0) {
   const direct = OUTCOMES.filter(o => o.ask === ask && eligible(o, cell));
+  if (direct.length > 1) AMBIGUOUS.push(fmt(cell) + '  ask=' + ask + '  → ' + direct.map(o => o.id).join(' | '));
   if (direct.length) return { outcome: direct[0], viaFallback: hops > 0, alternatives: direct.length };
   const next = FALLBACK[ask];
   if (next && hops < 2) return resolve(cell, next, hops + 1);
@@ -113,5 +118,15 @@ console.log('\n--- per-outcome selection reach (of ' + cells.length * CLASSES.le
 OUTCOMES.forEach(o => console.log('  ' + o.id.padEnd(30) + String(use[o.id] || 0).padStart(4) +
   ((use[o.id] || 0) === 0 ? '   ** never selected **' : '')));
 
+console.log('\n--- SELECTION DETERMINACY ---');
+console.log('  (state, ask) pairs with more than one eligible outcome: ' + AMBIGUOUS.length);
+AMBIGUOUS.slice(0, 12).forEach(a => console.log('    ' + a));
+if (AMBIGUOUS.length === 0) {
+  console.log('  Every covered pair resolves to EXACTLY ONE outcome under declared eligibility.');
+  console.log('  No array-order winner. The coverage figure is FINAL, not provisional.');
+} else {
+  console.log('  ⚠ COVERAGE IS PROVISIONAL — selection would fall to array order in the pairs above.');
+}
+
 console.log('\nCOVERAGE IS NOT APPROVAL.');
-process.exit(gaps.length ? 1 : 0);
+process.exit(gaps.length || AMBIGUOUS.length ? 1 : 0);

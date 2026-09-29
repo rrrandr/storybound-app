@@ -9,7 +9,7 @@
 | outcome | ask | class | temporal operation | cost |
 |---|---|---|---|---|
 | `unm.the_turning_forgotten` | `unseen` | `memory_perception` | — *(memory channel)* | none |
-| `unm.the_accusation_unmade` | `escape` | `history_rewrite` | `historical_replacement` | none |
+| `unm.the_accusation_unmade` | `escape`, accusation active | `history_rewrite` | `historical_replacement` | none |
 | `unm.time_gives_way` | `undo` | `history_rewrite` | `historical_replacement` | **none — approved costless** |
 | `unm.dohkar_demand_unmade` | `stop` | `history_rewrite` | `historical_replacement` | none |
 
@@ -17,30 +17,38 @@
 `institution_forgets_custody`, `julian_forgets_interrogation`, `dohkar_forgets_authority`.
 *(`seren_forgets_price` is not an exact reading in this phase — the price has not been named.)*
 
-# 2. Awaiting your approval — final traces, ready
+---
+
+# 2. Awaiting approval — four traces, final and ready
 
 | outcome | ask | class | temporal operation | cost |
 |---|---|---|---|---|
 | `unm.standing_dissolved` | `authority` | `identity_reputation` | `current_state_transition` | `escalation_invited` |
 | `unm.the_shunning` | `solitude` | `relationship_social` | `additive_canon_change` | `undefended` |
+| `unm.the_claim_unmade` | `escape`, **pre-accusation** | `history_rewrite` | `historical_replacement` | none |
+| `unm.the_custody_unremembered` | `silence` | `memory_perception` | — *(memory channel)* | `she_forgets_whose_it_is` |
 
-# 3. Awaiting your approval — newly authored, closing the two gaps
+**Each carrier was audited before drafting. Neither new outcome uses the Answer to establish past guilt,
+truth, or causation, and neither invents a capability.**
 
-| outcome | ask | class | carrier audited first | cost |
-|---|---|---|---|---|
-| `unm.the_claim_unmade` | `escape`, pre-accusation | `history_rewrite` | ceases the Dohkar's claim to rule on her conduct | none |
-| `unm.the_custody_unremembered` | `silence` | `memory_perception` | makes the custody facts unrememberable; **facts still govern** | **`she_forgets_it_is_not_hers`** |
+### The two `escape` branches have distinct jobs and never compete
 
-**Neither uses the Answer to establish past guilt, truth, or causation. Neither invents a capability.**
+| | `unm.the_accusation_unmade` | `unm.the_claim_unmade` |
+|---|---|---|
+| eligible when | a family accusation **is** active | a family accusation is **not** active |
+| ceases | the family's public accusation | the Dohkar's claim to rule on her conduct, the venue he named, and Julian's agreement |
+| leaves standing | **the remedy demand** — *no one says she did it, and they still want paying* | **nothing accusing her yet** — *and now no one has claimed the right to judge* |
+
+**`requiresInactive: accusation.family_accused` is declared on `unm.the_claim_unmade`.** They are never both
+eligible, so **they are never ranked or tie-broken against each other.**
 
 ---
 
-# 4. Intentionally unsupported
+# 3. Intentionally unsupported
 
-**None.** Both gaps had supported carriers and are drafted. **No product gap is recorded, and no ask is
-unserved.**
+**None. No ask is unserved, and no product gap is recorded.**
 
-Three entries are blocked or withdrawn, but **their ask-classes are covered** by the outcomes above:
+Three entries are blocked or withdrawn; **their ask-classes are covered by the outcomes above**:
 
 | entry | state |
 |---|---|
@@ -50,54 +58,45 @@ Three entries are blocked or withdrawn, but **their ask-classes are covered** by
 
 ---
 
-# 5. Coverage — corrected 32-state domain
+# 4. Coverage — corrected 32-state domain
 
 ```
-VALID STATE CELLS : 32        live exclusions: 0
+VALID STATE CELLS : 32          live exclusions: 0
 SELECTION DOMAIN  : 32 × 7 = 224 (state, ask) pairs
 
-COVERED   : 224 / 224     (16 via authored adjacency fallback)
+COVERED   : 224 / 224           (16 via authored adjacency fallback)
 UNCOVERED : 0
+
+SELECTION DETERMINACY
+  (state, ask) pairs with more than one eligible outcome : 0
+  Every covered pair resolves to EXACTLY ONE outcome under declared eligibility.
 ```
 
 | category | result |
 |---|---|
-| **fully covered** | **224 / 224 pairs**; all seven ask-classes resolve in all 32 states |
-| **partial** | two outcomes are eligible in **16/32** states — `unm.dohkar_demand_unmade` (needs a live Dohkar demand) and `unm.the_accusation_unmade` (needs a live family accusation). **Neither leaves a pair uncovered**: `stop` falls through to `undo`, and `escape` has `unm.the_claim_unmade` in the other 16. |
+| **fully covered** | **224 / 224 pairs.** All seven ask-classes resolve in all 32 states. |
+| **partial** | three outcomes are eligible in **16/32** states each — `dohkar_demand_unmade` (live Dohkar demand), `the_accusation_unmade` (live family accusation), `the_claim_unmade` (**no** family accusation). **None leaves a pair uncovered**: `stop` falls through to `undo`, and the two `escape` branches partition the domain exactly. |
 | **intentionally unsupported** | **0 cells, 0 ask-classes** |
 
----
-
-# 6. The one user-facing decision still required
-
-> ### Two `escape` outcomes are eligible in the same 16 states, and nothing chooses between them.
-
-Where a family accusation is live, **both `unm.the_accusation_unmade` and `unm.the_claim_unmade` qualify.**
-The coverage run picked one only by array order — **which is exactly the runtime tie the standing rule
-forbids.**
-
-They are genuinely different grants:
-
-| | `unm.the_accusation_unmade` | `unm.the_claim_unmade` |
-|---|---|---|
-| ceases | the family's public accusation | the Dohkar's claim to rule on her conduct **+ the named venue + Julian's agreement** |
-| leaves | **the remedy demand standing** — *no one says she did it, and they still want paying* | **the accusation standing** — *she is accused, and no one has claimed the right to judge it* |
-| reach | one event | three atoms |
-
-**This needs an authored answer before either ships**, and there are two honest shapes:
-
-1. **Rank them** — a total order, decided now, as the standing rule requires.
-2. **Gate `unm.the_claim_unmade` to `¬accusationMade`** — making it strictly the pre-accusation branch.
-   Coverage stays 224/224; the two never compete.
-
-**My recommendation: option 2.** It is what the outcome was authored for, it removes the tie by construction
-rather than by adjudication, and it leaves ranking to a pass that ranks the whole set at once.
+> **This result is final, not provisional.** The run asserts selection determinacy: **no pair has more than
+> one eligible outcome**, so no selection falls to array order. The earlier 224/224 figure was produced with
+> an array-order winner in 16 cells and was **not** a valid coverage result; this one is.
 
 ---
 
-# 7. Not done, and deliberately
+# 5. Decisions still required from you
+
+**One, and it is an approval rather than a design question:** approve or amend the four traces in §2.
+
+**No other user-facing decision is outstanding.** The `escape` tie is gone by construction, both gaps are
+authored, and coverage is determinate.
+
+---
+
+# 6. Not done, deliberately
 
 - **Ranking.** No rank is assigned to any outcome. The set has never been ranked as a whole at its corrected
-  amplitudes, and doing it piecemeal is how the last ladder went wrong.
+  amplitudes, and ranking it piecemeal is how the last ladder went wrong. **It does not block approval** —
+  rank is used only to choose among simultaneously eligible outcomes, and there are none.
 - **Implementation.** Nothing is wired. Automatic extraction and outcome commitment remain disabled.
-- The **late-Issue-1 phase matrix** — its own unit, unstarted.
+- **The late-Issue-1 phase matrix** — its own unit, unstarted.
