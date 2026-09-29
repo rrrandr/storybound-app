@@ -22,6 +22,11 @@ const MARKERS = [/FORBIDDEN INVENTIONS/i, /SCENE DIRECTIVES/i, /DIRECTIVE/, /wri
 
 export async function preflight(opts = {}) {
   const verbose = !!opts.verbose;
+  // The wish and the outcome it must compile to are parameters so the SAME proven gate serves every
+  // outcome. Defaults keep the standalone control and the roster runner unchanged.
+  const wish = opts.wish || WISH;
+  const expect = opts.expect || EXPECT;
+  const expectChoicePending = !!opts.expectChoicePending;
   const say = (...a) => { if (verbose) console.log(...a); };
   const checks = [];
   const ok = (n, c, d) => { checks.push({ name: n, ok: !!c, detail: d }); return !!c; };
@@ -71,6 +76,7 @@ export async function preflight(opts = {}) {
       roster: rec && rec.population && rec.population.roster,
       invokerScope: rec && rec.invokerScope,
       beat: rec && rec.aftermathBeat && rec.aftermathBeat.text,
+      opensChoicePending: !!(rec && rec.opensChoicePending),
       block: window._fscPromptBlock(),
       digest: window._fscBoundaryDigest(window._fscPromptBlock()) };
     // First Sacrifice ships a BAKED Scene 1 — no author call is made for it. Walk forward to
@@ -84,10 +90,10 @@ export async function preflight(opts = {}) {
     }
     o.deliveryFailure = window.state._fscDeliveryFailure || null;
     return o;
-  }, WISH);
+  }, wish);
   await browser.close();
 
-  ok('consequence compiled: ' + EXPECT, run.outcomeId === EXPECT, run.outcomeId);
+  ok('consequence compiled: ' + expect, run.outcomeId === expect, run.outcomeId);
   ok('roster is all five present', (run.roster || []).length === 5, (run.roster || []).join(','));
   ok('invokerScope in_population', run.invokerScope === 'in_population', run.invokerScope);
   ok('an aftermath beat is present', !!(run.beat && run.beat.length > 40));
@@ -110,7 +116,7 @@ export async function preflight(opts = {}) {
   ok('payload does NOT carry the default corporate story',
     !/Veyne Tower|skyscraper|floor-to-ceiling glass/i.test(b));
   // The sealed boundary, exactly.
-  ok('payload carries OUTCOME: ' + EXPECT, b.indexOf('OUTCOME: ' + EXPECT) >= 0);
+  ok('payload carries OUTCOME: ' + expect, b.indexOf('OUTCOME: ' + expect) >= 0);
   ok('payload carries EFFECT BOUNDARY', b.indexOf('EFFECT BOUNDARY') >= 0);
   ok('payload carries AFFECTED scope', b.indexOf('AFFECTED — exactly these people') >= 0);
   ok('payload carries LIRAEL IS AFFECTED', b.indexOf('LIRAEL IS AFFECTED') >= 0);
@@ -118,6 +124,14 @@ export async function preflight(opts = {}) {
   ok('payload carries the authored beat text', !!(run.beat && b.indexOf(run.beat.slice(0, 48)) >= 0));
   ok('payload carries FORBIDDEN INVENTIONS', b.indexOf('FORBIDDEN INVENTIONS') >= 0);
   ok('payload forbids visible wish-energy', b.indexOf('visible wish-energy') >= 0);
+  // C4 is only reachable if the STOP instruction is actually in the request. Without these the
+  // run could "fail C4" on an instruction the author was never given — an untestable run.
+  if (expectChoicePending) {
+    ok('the compiled record opens a pending choice', run.opensChoicePending === true);
+    ok('payload carries END ON THE CHOICE', b.indexOf('END ON THE CHOICE') >= 0);
+    ok('payload forbids authoring past the choice',
+      b.indexOf('Author nothing past it') >= 0 && b.indexOf('imply nothing about which way she goes') >= 0);
+  }
 
   const allOk = checks.every(c => c.ok);
   return { ok: allOk, checks, body: b, bytes: terminal ? terminal.bytes : 0,
