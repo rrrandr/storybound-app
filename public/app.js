@@ -342013,7 +342013,11 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
       fork: /\bor\b|\beither\b/i,
       alternatives: [
         [/\bclaim(?:s|ing|ed)?\s+(?:the\s+|what\s+|it\b)/i, /\b(?:say|speak|tell|name)\s+(?:it|the truth|what happened)\b/i,
-         /\badmit(?:s|ting|ted)?\b/i, /\bconfess(?:es|ing|ed)?\b/i, /\bspeak (?:up|out|through the seal)\b/i],
+         /\badmit(?:s|ting|ted)?\b/i, /\bconfess(?:es|ing|ed)?\b/i, /\bspeak (?:up|out|through the seal)\b/i,
+         // The BARE IMPERATIVE. A live scene closed on "Speak or let the assumption stand." and the
+         // anchors did not see it. "speaks"/"speaking" do not match, so a third-person description
+         // of someone talking is not mistaken for the choice.
+         /\bspeak\b(?!\s+(?:of|about|to|with|for))/i],
         [/\blet\s+(?:the\s+assembly|them|it)\b/i, /\bkeep\s+(?:their|its|the)\s+assumption\b/i,
          /\bassumption\s+(?:stand|hold|remain)/i, /\b(?:stay|remain|keep)\s+silent\b/i, /\bsay nothing\b/i]
       ]
@@ -342023,13 +342027,74 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
   var _S = function (t) { return String(t || '').split(/(?<=[.?!])\s+|\n+/).filter(Boolean); };
   var _any = function (rxs, t) { return rxs.some(function (rx) { return rx.test(t); }); };
 
+  // NEGATION AWARENESS (Roman 2026-09-30). "The object does not glow or speak." is the author
+  // STATING the prohibition, and it was scored as violating it — then the one allowed repair call
+  // was spent rewriting a line that was never wrong. Stating a rule is not breaking it.
+  // "not a price" is not an invented cost either.
+  G.negation = /\b(?:not|never|no|none|nothing|neither|nor|without|cannot|can[’']?t|does\s?n[’']?t|do\s?n[’']?t|did\s?n[’']?t|is\s?n[’']?t|are\s?n[’']?t|was\s?n[’']?t|were\s?n[’']?t|has\s?n[’']?t|have\s?n[’']?t|had\s?n[’']?t|wo\s?n[’']?t|would\s?n[’']?t)\b[^.;]{0,36}$/i;
+  // True when the matched term is inside the scope of a preceding negation. Deliberately narrow:
+  // "the cost is still uncounted" carries NO negation before "cost" and stays a violation, because
+  // it asserts a price while declining to name it.
+  function _negatedBefore(sentence, rx) {
+    var s = String(sentence || '');
+    var m = s.match(rx);
+    if (!m || m.index == null) return false;
+    return G.negation.test(s.slice(0, m.index));
+  }
+  function _firstUnnegated(rxs, sentence) {
+    for (var i = 0; i < rxs.length; i++) {
+      var rx = rxs[i];
+      if (!rx.test(sentence)) continue;
+      if (!_negatedBefore(sentence, rx)) return rx;
+    }
+    return null;
+  }
+
+  // A resolution must be ASSERTED, not hypothesised. "My standing hangs on what I choose to say
+  // next." contains "I choose" but is the choice still ahead of her — the opposite of deciding.
+  G.hypothetical = /\b(?:what|whatever|whether|which|if|before|until|unless|when|however|could|would|might|may|must|should|will)\b[^.]{0,24}$/i;
+  function _resolutionHits(sentence) {
+    var s = String(sentence || '');
+    return G.resolution.filter(function (rx) {
+      var m = s.match(rx);
+      if (!m || m.index == null) return false;
+      if (G.hypothetical.test(s.slice(0, m.index))) return false;
+      if (/^\s*to\b/i.test(s.slice(m.index + m[0].length))) return false;
+      return true;
+    });
+  }
+
+  // READER-FACING PROSE ONLY (Roman 2026-09-30). This used to flatten every string over 25 chars in
+  // the whole normalized plan, which swept up app-chosen ART directives. A live run was rejected on
+  // "a subtle cold glow bleeding from the discovery" — app.js:179511, an entry in a comic-panel
+  // style table, never written by the author and never shown to the reader as text. Worse, it made
+  // the rejection unfixable: the repair path replaces BEATS, and a panel directive is not a beat.
+  //
+  // Scored: beat text (narration and dialogue), panel captions, and the micro-decision text the
+  // reader actually sees. NOT scored: visualState, phases, panels' art fields, camera, lighting,
+  // wardrobe, style, scene assignments, sceneCharge, expression arcs, or any schema bookkeeping.
   function _proseOf(plan) {
     var bits = [];
-    try { JSON.stringify(plan, function (k, v) {
-      // Internal bookkeeping is NOT prose and must never be scored as it — the recovery marker in
-      // particular. Skipped explicitly rather than relying on its strings being short.
-      if (typeof k === 'string' && k.indexOf('_fsc') === 0) return undefined;
-      if (typeof v === 'string' && v.length > 25) bits.push(v); return v; }); } catch (_) {}
+    if (!plan) return '';
+    try {
+      (Array.isArray(plan.beats) ? plan.beats : []).forEach(function (b) {
+        if (b && typeof b.text === 'string' && b.text.trim()) bits.push(b.text);
+      });
+      (Array.isArray(plan.panels) ? plan.panels : []).forEach(function (p) {
+        if (!p) return;
+        ['captionText', 'caption', 'narration'].forEach(function (k) {
+          if (typeof p[k] === 'string' && p[k].trim()) bits.push(p[k]);
+        });
+      });
+      var md = plan.microDecision;
+      if (md) {
+        if (typeof md.prompt === 'string' && md.prompt.trim()) bits.push(md.prompt);
+        (Array.isArray(md.options) ? md.options : []).forEach(function (o) {
+          if (o && typeof o.text === 'string' && o.text.trim()) bits.push(o.text);
+          if (o && typeof o.hiddenExpansion === 'string' && o.hiddenExpansion.trim()) bits.push(o.hiddenExpansion);
+        });
+      }
+    } catch (_) {}
     return bits.join('\n');
   }
 
@@ -342094,7 +342159,8 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
 
     // ── C3 ──
     sentences.forEach(function (s) {
-      var costShaped = _any(G.explicitCost, s) || _any(G.deferredCost, s);
+      // Negation-aware: a cost stated only to be denied is not an invented cost.
+      var costShaped = !!_firstUnnegated(G.explicitCost.concat(G.deferredCost), s);
       if (costShaped) {
         var admitted = false;
         if (rec.cost) {
@@ -342103,7 +342169,9 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
         }
         if (!admitted) f.push({ criterion: 'C3', kind: 'unsourced_cost', line: s.slice(0, 140) });
       }
-      if (G.magicalResidue.test(s) && !G.seedGossamer.test(s))
+      // Negation-aware: "does not glow" is the rule being stated, not residue.
+      if (G.magicalResidue.test(s) && !G.seedGossamer.test(s)
+          && !_negatedBefore(s, G.magicalResidue))
         f.push({ criterion: 'C3', kind: 'magical_residue', line: s.slice(0, 140) });
       if (_emissionHits(s).length)
         f.push({ criterion: 'C3', kind: 'intervention_as_emission', line: s.slice(0, 140) });
@@ -342129,7 +342197,7 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
         if (through < 0) f.push({ criterion: 'C4', kind: 'choice_never_presented', line: '' });
         else {
           for (var j = through + 1; j < beats.length; j++) {
-            if (_any(G.resolution, beats[j])) f.push({ criterion: 'C4', kind: 'resolved_after_choice', line: beats[j].slice(0, 140) });
+            if (_resolutionHits(beats[j]).length) f.push({ criterion: "C4", kind: "resolved_after_choice", line: beats[j].slice(0, 140) });
             else if (G.temporalAdvance.test(beats[j])) f.push({ criterion: 'C4', kind: 'time_advanced_after_choice', line: beats[j].slice(0, 140) });
           }
           var last = beats[beats.length - 1];

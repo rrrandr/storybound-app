@@ -101,3 +101,31 @@ no gate — it makes the reader pay for the validator's mistakes instead of the 
 3. Add the bare imperative to the choice anchors.
 
 Not fixed. Reported first, per standing rule. **No further paid run without fresh authorization.**
+
+---
+
+# CORRECTED AFTER THE HISTORICAL RE-SCORE (2026-09-30)
+
+**This scene ACCEPTS under the corrected gate — all four criteria.** The three findings that
+triggered the repair were all false positives, exactly as reported above. It needed no repair at all.
+
+## What this run PROVES
+
+| | |
+|---|---|
+| two-call reservation | initial $0.128888 + repair $0.007350 = $0.136238, reserved before the first request |
+| hard ceiling | measured $0.087989 against $0.150000 |
+| exactly two calls | scene + repair permitted; 11 other requests aborted |
+| model-authored replacement | the writer returned the new line; no local prose edit exists |
+| beat-only splice | the replacement landed on beat 2 and nowhere else |
+| post-repair gate recheck | the spliced plan was re-judged by the same full gate |
+| non-persistence | nothing mounted, no continuity written |
+| reader-invisibility | no trace in the DOM |
+
+## What it does NOT prove
+
+**Recovery from a genuine rejected scene.** All three triggering findings were false positives, so
+the repair pass was exercised against a fault that did not exist. The writer's replacement was
+correct — *"Julian keeps the Answer in his hands."* — but it was correcting nothing.
+
+**A real recovery test still requires a scene that genuinely violates the sealed consequence.**

@@ -319,6 +319,55 @@ export const C3_PROVENANCE_RULE =
 + 'separately established active story fact whose provenance is named. An unresolved question in a '
 + 'baseline plan is neither, and may not become a cost of the Tempt or of the pending choice.';
 
+// ── READER-FACING PROSE ONLY ──────────────────────────────────────────────────────────────────
+// Mirrors the production gate's _proseOf. Beat text, panel captions and the micro-decision text the
+// reader sees. NEVER art, panel, camera, lighting, wardrobe, style or schema fields — a live run
+// was rejected on an app-authored comic-panel style string (app.js:179511) that the author never
+// wrote and the reader never sees, which also made the rejection unrepairable.
+export function readerFacingProse(plan) {
+  const bits = [];
+  if (!plan) return '';
+  (Array.isArray(plan.beats) ? plan.beats : []).forEach(b => {
+    if (b && typeof b.text === 'string' && b.text.trim()) bits.push(b.text);
+  });
+  (Array.isArray(plan.panels) ? plan.panels : []).forEach(p => {
+    if (!p) return;
+    ['captionText', 'caption', 'narration'].forEach(k => {
+      if (typeof p[k] === 'string' && p[k].trim()) bits.push(p[k]);
+    });
+  });
+  const md = plan.microDecision;
+  if (md) {
+    if (typeof md.prompt === 'string' && md.prompt.trim()) bits.push(md.prompt);
+    (Array.isArray(md.options) ? md.options : []).forEach(o => {
+      if (o && typeof o.text === 'string' && o.text.trim()) bits.push(o.text);
+      if (o && typeof o.hiddenExpansion === 'string' && o.hiddenExpansion.trim()) bits.push(o.hiddenExpansion);
+    });
+  }
+  return bits.join('\n');
+}
+
+// ── NEGATION AWARENESS ────────────────────────────────────────────────────────────────────────
+// Stating a prohibition is not breaking it. "The object does not glow or speak." was scored as
+// magical residue, and the single allowed repair call was spent rewriting a correct line.
+export const NEGATION_RX =
+  /\b(?:not|never|no|none|nothing|neither|nor|without|cannot|can[’']?t|does\s?n[’']?t|do\s?n[’']?t|did\s?n[’']?t|is\s?n[’']?t|are\s?n[’']?t|was\s?n[’']?t|were\s?n[’']?t|has\s?n[’']?t|have\s?n[’']?t|had\s?n[’']?t|wo\s?n[’']?t|would\s?n[’']?t)\b[^.;]{0,36}$/i;
+// Narrow on purpose: "the cost is still uncounted" has no negation BEFORE "cost" and remains a
+// violation, because it asserts a price while declining to name it.
+export function negatedBefore(sentence, rx) {
+  const s = String(sentence || '');
+  const m = s.match(rx);
+  if (!m || m.index == null) return false;
+  return NEGATION_RX.test(s.slice(0, m.index));
+}
+export function firstUnnegated(rxs, sentence) {
+  for (const rx of rxs) {
+    if (!rx.test(sentence)) continue;
+    if (!negatedBefore(sentence, rx)) return rx;
+  }
+  return null;
+}
+
 export function scoreC3(prose, { costless = true, sealedCost = null, costProvenance = [] } = {}) {
   const explicit = [], deferred = [], emission = [], residue = [], wardrobeAllowed = [], allowedCost = [];
   // A cost line is admissible only against a named source.
@@ -331,8 +380,9 @@ export function scoreC3(prose, { costless = true, sealedCost = null, costProvena
     return { ok: false };
   };
   for (const s of SENTENCES(prose)) {
-    const costShaped = EXPLICIT_COST_RX.some(rx => rx.test(s))
-      || (costless && DEFERRED_COST_RX.some(rx => rx.test(s)));
+    // Negation-aware: a cost named only to be denied is not an invented cost.
+    const costShaped = !!firstUnnegated(
+      costless ? EXPLICIT_COST_RX.concat(DEFERRED_COST_RX) : EXPLICIT_COST_RX, s);
     if (costShaped) {
       const a = admissible(s);
       if (a.ok) { allowedCost.push({ line: s.trim().slice(0, 150), via: a.via }); }
@@ -342,7 +392,8 @@ export function scoreC3(prose, { costless = true, sealedCost = null, costProvena
     if (emissionHits(s).length) emission.push(s.trim().slice(0, 150));
     if (MAGICAL_RESIDUE_RX.test(s)) {
       if (SEED_GOSSAMER_RX.test(s)) wardrobeAllowed.push(s.trim().slice(0, 110));
-      else residue.push(s.trim().slice(0, 150));
+      // Negation-aware: "does not glow" states the rule rather than breaking it.
+      else if (!negatedBefore(s, MAGICAL_RESIDUE_RX)) residue.push(s.trim().slice(0, 150));
     }
   }
   return { pass: explicit.length === 0 && deferred.length === 0
@@ -378,6 +429,21 @@ export const RESOLUTION_RX = [
   /\bthe (?:choice|decision) (?:is|was) (?:made|taken|hers now and made)\b/i,
   /\b(?:in the end|so I|and so I|I do|I did)\b/i
 ];
+// A resolution must be ASSERTED, not hypothesised. "My standing hangs on what I choose to say
+// next." contains "I choose" but is the choice still ahead of her — the opposite of deciding. Skip
+// a match sitting in a subordinate/hypothetical frame, or taking an infinitive complement.
+export const HYPOTHETICAL_RX = /\b(?:what|whatever|whether|which|if|before|until|unless|when|however|could|would|might|may|must|should|will)\b[^.]{0,24}$/i;
+export function resolutionHits(sentence) {
+  const s = String(sentence || '');
+  return RESOLUTION_RX.filter(rx => {
+    const m = s.match(rx);
+    if (!m || m.index == null) return false;
+    if (HYPOTHETICAL_RX.test(s.slice(0, m.index))) return false;      // "what I choose…"
+    if (/^\s*to\b/i.test(s.slice(m.index + m[0].length))) return false; // "choose to say"
+    return true;
+  });
+}
+
 export const TEMPORAL_ADVANCE_RX =
   /\b(later|afterward|afterwards|by (?:morning|nightfall|dawn)|hours? later|days? later|that night|the next (?:day|morning|hour)|when it (?:was|had) (?:over|ended)|by the time)\b/i;
 // The final beat must still hold the choice open: either it restates the fork, or it says plainly
@@ -428,7 +494,7 @@ export function scoreC4(plan, { anchors = null, window = 3 } = {}) {
   const violations = [];
   for (let i = presentedThrough + 1; i < texts.length; i++) {
     const t = texts[i];
-    if (RESOLUTION_RX.some(rx => rx.test(t))) violations.push({ idx: i, kind: 'resolution', text: t.slice(0, 120) });
+    if (resolutionHits(t).length) violations.push({ idx: i, kind: 'resolution', text: t.slice(0, 120) });
     else if (TEMPORAL_ADVANCE_RX.test(t)) violations.push({ idx: i, kind: 'temporal_advance', text: t.slice(0, 120) });
   }
   // 3. The FINAL beat must still leave the same choice unresolved — restating the fork, restating
@@ -460,7 +526,10 @@ export const CHOICE_ANCHORS = {
         /\bclaim(?:s|ing|ed)?\s+(?:the\s+|what\s+|it\b)/i,
         /\b(?:say|speak|tell|name)\s+(?:it|the truth|what happened)\b/i,
         /\badmit(?:s|ting|ted)?\b/i, /\bconfess(?:es|ing|ed)?\b/i,
-        /\bspeak (?:up|out|through the seal)\b/i
+        /\bspeak (?:up|out|through the seal)\b/i,
+        // The BARE IMPERATIVE — "Speak or let the assumption stand." "speaks"/"speaking" do not
+        // match, so a third-person description of someone talking is not read as the choice.
+        /\bspeak\b(?!\s+(?:of|about|to|with|for))/i
       ] },
       { label: 'let the assumption stand', rx: [
         /\blet\s+(?:the\s+assembly|them|it)\b/i,

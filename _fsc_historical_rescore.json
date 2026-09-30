@@ -1,0 +1,143 @@
+{
+  "at": "2026-09-30T07:07:34.317Z",
+  "runs": [
+    {
+      "run": "fsc_c4_2026-09-29T16-29-43",
+      "beats": 24,
+      "c1": false,
+      "c2": false,
+      "c3": true,
+      "c4": true,
+      "accepted": false,
+      "faults": [
+        "cross-timeline x4",
+        "shared-knowing",
+        "erased-basis x1"
+      ]
+    },
+    {
+      "run": "fsc_c4_2026-09-29T16-46-27",
+      "beats": 27,
+      "c1": false,
+      "c2": false,
+      "c3": false,
+      "c4": true,
+      "accepted": false,
+      "faults": [
+        "absence-as-presence x1",
+        "erased-basis x1",
+        "cost x1"
+      ]
+    },
+    {
+      "run": "fsc_c4_2026-09-29T19-42-53",
+      "beats": 27,
+      "c1": false,
+      "c2": false,
+      "c3": false,
+      "c4": true,
+      "accepted": false,
+      "faults": [
+        "cross-timeline x1",
+        "cost x2"
+      ]
+    },
+    {
+      "run": "fsc_c4_2026-09-29T20-08-11",
+      "beats": 25,
+      "c1": true,
+      "c2": true,
+      "c3": false,
+      "c4": true,
+      "accepted": false,
+      "faults": [
+        "cost x1"
+      ]
+    },
+    {
+      "run": "fsc_c4_2026-09-29T20-26-45",
+      "beats": 29,
+      "c1": true,
+      "c2": true,
+      "c3": false,
+      "c4": false,
+      "accepted": false,
+      "faults": [
+        "cost x1",
+        "C4:final_beat_does_not_hold_the_choice"
+      ]
+    },
+    {
+      "run": "fsc_c4_2026-09-29T21-45-14",
+      "beats": 26,
+      "c1": true,
+      "c2": true,
+      "c3": false,
+      "c4": true,
+      "accepted": false,
+      "faults": [
+        "emission x3"
+      ]
+    },
+    {
+      "run": "fsc_c4_2026-09-29T21-54-50",
+      "beats": 25,
+      "c1": true,
+      "c2": true,
+      "c3": false,
+      "c4": true,
+      "accepted": false,
+      "faults": [
+        "cost x1"
+      ]
+    },
+    {
+      "run": "fsc_c4_2026-09-29T22-50-35",
+      "beats": 27,
+      "c1": true,
+      "c2": true,
+      "c3": false,
+      "c4": true,
+      "accepted": false,
+      "faults": [
+        "cost x1"
+      ]
+    },
+    {
+      "run": "fsc_c4_2026-09-30T00-58-17",
+      "beats": 25,
+      "c1": false,
+      "c2": true,
+      "c3": true,
+      "c4": true,
+      "accepted": false,
+      "faults": [
+        "Answer-as-judge x1",
+        "unpinned-charge x1"
+      ]
+    },
+    {
+      "run": "fsc_chain_2026-09-30T06-54-24",
+      "beats": 25,
+      "c1": true,
+      "c2": true,
+      "c3": true,
+      "c4": true,
+      "accepted": true,
+      "faults": []
+    },
+    {
+      "run": "fsc_roster_2026-09-29T15-59-11",
+      "beats": 21,
+      "c1": false,
+      "c2": true,
+      "c3": false,
+      "c4": true,
+      "accepted": false,
+      "faults": [
+        "unpinned-charge x1",
+        "cost x1"
+      ]
+    }
+  ]
+}

@@ -9,7 +9,7 @@
 // between them is itself a test failure.
 import fs from 'fs';
 import { chromium } from 'playwright-core';
-import { scoreC1, scoreC2, scoreC3, scoreC4, CHOICE_ANCHORS, ROSTER_TOKENS,
+import { scoreC1, scoreC2, scoreC3, scoreC4, CHOICE_ANCHORS, ROSTER_TOKENS, readerFacingProse,
          ERASED_PROSE_TERMS, loadExternalTimelinePhrases, loadAmbiguousTemporal } from './_fsc_scoring.mjs';
 
 let pass = 0, fail = 0;
@@ -122,7 +122,9 @@ let parity = 0;
 for (const d of RUNS) {
   const dir = '_tempt_fate_fixtures/' + d;
   const plan = JSON.parse(fs.readFileSync(dir + '/scene.json', 'utf8'));
-  const prose = fs.readFileSync(dir + '/prose.txt', 'utf8');
+  // READER-FACING PROSE, not the old prose.txt — that file was written by the previous flattening,
+  // which swept in app-authored art directives. Parity must compare like with like.
+  const prose = readerFacingProse(plan);
   const gate = await page.evaluate((p) => window._fscAcceptProse(p, 2), plan);
   const n1 = scoreC1(prose, { phrases: PH, ambiguous: AM,
     erasedTerms: ERASED_PROSE_TERMS['unm.time_gives_way'] });
