@@ -206392,6 +206392,37 @@ No text, no watermark, no UI elements, share-ready.`;
   }
   window._isStoryEventCommitted = _isStoryEventCommitted;
 
+  // ══════════════════════════════════════════════════════════════════════════════════════════
+  // DELIBERATELY UNUSED — DO NOT WIRE THIS TO A SCENE COUNTER (Roman 2026-09-30)
+  //
+  // `_commitStoryEvent` has NO callers, and that is a decision, not an oversight. It is the
+  // write half of the canon loop: `_isStoryEventCommitted` above is read by arc-constraint
+  // unlocks (`unlock_condition.type === 'committed_event_id'`), and because nothing writes,
+  // `state._committedStoryEvents` stays empty and those unlocks never fire.
+  //
+  // THE TEMPTING WRONG FIX, explicitly rejected: "commit each plan row's `reservedEvents` when
+  // an accepted scene reaches that row's due index." `reservedEvents` are plan AVAILABILITY and
+  // INTENT, not self-executing canon. A due scene means "this event is now available to use",
+  // NOT "this event happened". A scene accepted at or after the due point does not prove
+  // `inquiry_opened` or `price_identified` occurred. Committing on scene number would force the
+  // linear plan over player-driven branches — quietly reinstating a fixed Scene-14 hearing when
+  // the story may instead have become a pursuit across the Fatelands. That is the pre-authored-
+  // tracks shape rejected in [[project_branch_capable_continuation_contract]].
+  //
+  // THE CORRECT WRITE RULE, for whenever the writer is finally built:
+  //   • a plan event is committed ONLY when the pre-author continuation selection explicitly
+  //     chooses it as a fact for THIS particular scene;
+  //   • that selection happens BEFORE prose, and is recorded with its source;
+  //   • the author then RENDERS an already-committed fact;
+  //   • no event is inferred from completed prose, and no event is committed from scene number.
+  //
+  // Consequence worth noting: the third clause retires the prose-outcome extractor for this
+  // purpose. Inferring events from finished prose is ruled out by design here, not merely by the
+  // extractor's measured unreliability — so its pending Grok-vs-Ministral comparison does not
+  // gate this loop.
+  //
+  // Until that selection step exists, leaving this unused is CORRECT. Do not solve the missing
+  // writer with a timer, and do not add a kill switch to make a timer feel safe.
   function _commitStoryEvent(eventId, opts) {
     var s = window.state; if (!s || !eventId) return null;
     if (!s._committedStoryEvents) s._committedStoryEvents = {};
