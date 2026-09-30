@@ -236991,6 +236991,41 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
             // The model-compare capture backfilled the raw reply before acceptance; a rejected reply is not this scene's output.
             try { if (state._sceneCaptures && state._sceneCaptures[sceneIndex]) { state._sceneCaptures[sceneIndex].originalOutput = null; state._sceneCaptures[sceneIndex].rejected = _acc.reason; } } catch (_) {}
             return { __staleRejected: true, reason: _acc.reason, sceneIndex: sceneIndex }; }
+
+          // ── FATE ACCEPTANCE GATE (Roman 2026-09-30) ─────────────────────────────────────────
+          // Detection is good enough to reject bad prose, so it now does. A scene that violates the
+          // sealed consequence is rejected on the SAME contract as the stale rejection above: never
+          // mounted, never committed, no continuity written, nothing reader-visible. The sealed
+          // record and the raw plan are PRESERVED for internal diagnosis only.
+          // Fails closed: if the gate throws, the scene does not pass.
+          var _fscGateVerdict = null;
+          try {
+            _fscGateVerdict = (typeof window._fscAcceptProse === 'function')
+              ? window._fscAcceptProse(_normalized, sceneIndex) : { accepted: true, evaluated: false };
+          } catch (_fgErr) {
+            _fscGateVerdict = { accepted: false, evaluated: false,
+              failures: [{ criterion: 'GATE', kind: 'gate_threw',
+                           line: String((_fgErr && _fgErr.message) || _fgErr) }] };
+          }
+          if (_fscGateVerdict && !_fscGateVerdict.accepted) {
+            try {
+              // DIAGNOSIS ONLY. Never rendered, never read back into a prompt.
+              state._fscRejectedScenes = state._fscRejectedScenes || [];
+              state._fscRejectedScenes.push({
+                at: Date.now(), sceneIndex: sceneIndex,
+                outcomeId: _fscGateVerdict.outcomeId || null,
+                failures: _fscGateVerdict.failures || [],
+                rawPlan: _normalized });
+              if (state._fscRejectedScenes.length > 6) state._fscRejectedScenes.shift();
+            } catch (_) {}
+            try {
+              console.error('[FSC-ACCEPT] scene ' + sceneIndex + ' REJECTED — '
+                + (_fscGateVerdict.failures || []).map(function (x) { return x.criterion + '/' + x.kind; }).join(', ')
+                + '. Not mounted, not committed, nothing reader-visible. The sealed consequence is '
+                + 'preserved for retry.');
+            } catch (_) {}
+            return { __fateRejected: true, sceneIndex: sceneIndex,
+                     failures: _fscGateVerdict.failures || [] }; }
           if (plan && plan.scene_assignments) { try { console.log('[CG:ASSIGN:MODEL-IGNORED] the writer returned scene_assignments; delivered ones stand'); } catch (_) {} }
           _normalized.scene_assignments = _normalizeSceneAssignments(
             _acc.snapshot ? { character_plus: _acc.snapshot.character_plus || [], environment_plus: _acc.snapshot.environment_plus || null, fusion: _acc.snapshot.fusion || null } : null, sceneIndex, _acc.snapshot ? 'cg_delivered' : 'cg_none');
@@ -237699,7 +237734,10 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
         // PLANNER FUNCTION GATE (Roman 2026-09-20): a rejected inadequate plan reuses the SAME bounded
         // retry-then-stop machinery as a stale objective — the plan is discarded either way, never
         // displayed, never committed, never sent to the author. See _detectPlannerFunctionGap.
-        if (plan && (plan.__staleRejected || plan.__plannerFunctionRejected)) {
+        // __fateRejected joins this path deliberately: the Fate acceptance gate's contract is the
+        // same one — discard the whole result, ONE bounded retry, then stop with resumable state.
+        // Nothing is displayed, committed or sent onward either way.
+        if (plan && (plan.__staleRejected || plan.__plannerFunctionRejected || plan.__fateRejected)) {
           // The whole result is discarded (never displayed, never committed). ONE bounded retry with the CURRENT
           // snapshot. Whatever the retry does — a second stale result, a null or malformed reply, a thrown error —
           // the rejection context is preserved: STOP with resumable state and released locks. The ordinary
@@ -237707,7 +237745,7 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
           try { console.warn('[CG:STALE-REJECTED] retrying once with the current branch/attempt: ' + plan.reason); } catch (_) {}
           var _retry = null, _retryErr = null;
           try { _retry = await _runCGScreenplayGen(sceneIndex, playerAction, playerDialogue); } catch (_re) { _retryErr = _re; }
-          var _retryOk = !!(_retry && !_retry.__staleRejected && !_retry.__plannerFunctionRejected && Array.isArray(_retry.beats) && _retry.beats.length);
+          var _retryOk = !!(_retry && !_retry.__staleRejected && !_retry.__plannerFunctionRejected && !_retry.__fateRejected && Array.isArray(_retry.beats) && _retry.beats.length);
           if (!_retryOk) {
             var _why = _retryErr ? ('retry threw: ' + (_retryErr && _retryErr.message)) : ((_retry && (_retry.__staleRejected || _retry.__plannerFunctionRejected)) ? ('retry stale: ' + _retry.reason) : 'retry returned no usable plan');
             state._cgResumable = { sceneIndex: sceneIndex, action: playerAction || '', dialogue: playerDialogue || '', reason: _why, at: Date.now(), storyId: state.storyId };
@@ -341835,4 +341873,242 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
   window._fpcPromptBlock = _fpcPromptBlock;
   window._fpcResolveLatitude = _fpcResolveLatitude;
   window._FPC_VERDICTS = FPC_VERDICTS;
+})();
+
+// ══════════════════════════════════════════════════════════════════════════════════════════════
+// STAGE 3 — FATE ACCEPTANCE GATE (Roman 2026-09-30).
+//
+// Detection is now good enough to reject bad prose. This is the production consequence of that: a
+// generated scene that violates the sealed consequence must NOT persist, must NOT advance the
+// story, and must NOT become reader-visible. The sealed record and the raw reply are preserved for
+// internal diagnosis only — nothing about this reaches the reader.
+//
+// Same contract as the existing stale-delivery rejection: not mounted, not committed, no
+// continuity written. NO-OP when no Fate consequence is sealed, so other stories are untouched.
+// FAILS CLOSED: a gate that cannot evaluate does not pass the scene.
+//
+// The regex sets here are the PRODUCTION copy and are exposed on window so
+// _fsc_acceptance_gate_control.mjs can assert they agree with the Node scorer on real run prose.
+// Divergence between the two is itself a test failure.
+// ══════════════════════════════════════════════════════════════════════════════════════════════
+(function () {
+  'use strict';
+
+  var G = {};   // the production detector sets
+
+  G.sharedUnderstanding = [
+    /\bknows?\s+(?:that\s+)?I\s+know\b/i, /\bI\s+know\s+(?:that\s+)?he\s+knows\b/i,
+    /\bwe\s+both\s+know\b/i, /\bthey\s+both\s+knew\b/i, /\bknowing\s+look\b/i,
+    /\bshared\s+(?:a\s+)?(?:glance|look|understanding)\b/i, /\bneither\s+of\s+us\s+said\b/i,
+    /\bhe\s+knows\b[^.]{0,40}\bnever\s+happened\b/i
+  ];
+  G.absenceAsPresence = [
+    /\bthe\s+\w+(?:\s+\w+)?\s+(?:he|she|they|it|we|I)\s+never\s+\w+/i,
+    /\bthe\s+\w+(?:\s+\w+)?\s+that\s+never\s+(?:happened|occurred|took place|came|was)\b/i,
+    /\bnever\s+(?:made|happened|occurred|took place|asked|spoke|came|was said)\b[^.]{0,70}\b(?:still|echo\w*|hang\w*|linger\w*|in the air|between us|remain\w*|press\w*|weigh\w*)\b/i,
+    /\b(?:still|echo\w*|hang\w*|linger\w*)\b[^.]{0,70}\bnever\s+(?:made|happened|occurred|took place)\b/i,
+    /\b(?:the\s+)?(?:silence|gap|absence|space|hole|hollow)\s+(?:where|left by|of)\s+[^.]{0,50}\b(?:never|did ?n[o']t)\b/i,
+    /\b(?:missing|absent)\s+(?:questioning|interruption|accusation|demand|interference)\b/i
+  ];
+  G.answerVerdict = [
+    /\bthe Answer\b[^.]{0,70}\b(verdict|judge|judges|judging|judgement|judgment|jury|sentence|sentencing|ruling|rules on|tribunal|gavel|arbiter|adjudicat\w+|convict\w*|acquit\w*|indictment|testimony)\b/i,
+    /\b(verdict|judgement|judgment|ruling|sentence|jury|tribunal)\b[^.]{0,70}\bthe Answer\b/i,
+    /\blike an?\s+(verdict|judge|jury|sentence|ruling|gavel|indictment|tribunal)\b/i
+  ];
+  G.chargeShape = [
+    /\b(?:the\s+)?(?:presiding\s+)?(?:Dohkar|Julian|assembly|Seren)(?:'|’)s\s+charge\b/i,
+    /\b(?:the|that|his|her|their|a)\s+charge\s+(?:of|against|still|hangs|stands|remains|he|she|they)\b/i,
+    /\bcharge\s+of\s+(?:interference|conduct|misconduct|wrongdoing)\b/i,
+    /\b(?:bring|brings|brought|repeat|repeats|repeated|level|levels|levelled|leveled)s?\s+(?:the\s+|a\s+)?charge\b/i
+  ];
+  G.chargeInnocent = /\bin charge\b|\bcharge(?:s|d)?\s+(?:forward|at|toward|towards|into|across)\b|\btakes? charge\b|\bcharge of the rite\b/i;
+  G.explicitCost = [
+    /\bthe price\b/i, /\bit cost (?:her|him|them|me)\b/i, /\bin exchange\b/i,
+    /\bpaid for (?:it|this)\b/i, /\bthe cost was\b/i, /\ba debt\b/i, /\ba toll\b/i,
+    /\bthe bill\b/i, /\bas payment\b/i, /\bthe reckoning\b/i,
+    /\b(?:will|would|could|may|might|shall|is going to)\s+cost\b/i,
+    /\bat the cost of\b/i, /\bat the price of\b/i, /\bcosts? (?:her|him|them|me|us)\b/i,
+    /\bcost(?:s|ing)?\s+(?:standing|her standing|everything|something|dearly|more than)\b/i,
+    /\b(?:exact|extract|demand|take)s?\s+(?:a\s+)?(?:price|payment|toll)\b/i,
+    /\b(?:owe[sd]?|owing)\s+(?:a\s+)?(?:price|debt|payment|toll)\b/i,
+    /\b(?:will|would|must)\s+(?:be\s+)?(?:pay|paid|repay|answer for)\b/i,
+    /\bpays? (?:for|with)\b/i, /\bnot (?:come|be) free\b/i, /\bcomes? at a\b/i
+  ];
+  G.deferredCost = [
+    /\bcost\b[^.]{0,40}\b(?:uncounted|unnamed|not yet named|still to be|yet to be|unpaid|waiting|to come|later)\b/i,
+    /\b(?:uncounted|unnamed|unpaid|unspoken)\b[^.]{0,20}\bcost\b/i,
+    /\bcost\b[^.]{0,30}\b(?:has not|hasn[’']?t|is not|isn[’']?t)\b[^.]{0,30}\b(?:been named|been counted|come)\b/i,
+    /\bFate (?:will|would) (?:take|collect|claim|exact)\b/i,
+    /\b(?:she|he|they|I) (?:will|would) pay\b/i,
+    /\bsomething (?:will|would) be (?:taken|collected|owed)\b/i,
+    /\bwhat (?:it|this) (?:will|would) cost\b/i
+  ];
+  G.magicalResidue = /\b(glow\w*|luminous|shimmer\w*|aura|radian\w*|shone with|blaz\w*|incandescen\w*)\b/i;
+  G.seedGossamer = /\bgossamer\b[^.]{0,120}\b(luminous|blooms?|blooming)\b|\b(luminous|blooms?|blooming)\b[^.]{0,80}\b(torso|hips|seat|tunic)\b/i;
+  G.emission = [
+    /\b(pulse|ripple|wave|current|tremor|vibration|thrum|hum|surge|shockwave|shiver|shudder)\b[^.]{0,60}\b(travel\w*|pass\w*|spread\w*|mov\w*|ran|run\w*|roll\w*|sweep\w*|sweeps?|went|goes)\b[^.]{0,40}\b(through|across|over|outward)\b/i,
+    /\b(travel\w*|pass\w*|spread\w*|roll\w*|sweep\w*)\b[^.]{0,40}\b(through|across)\s+(?:the\s+)?(clearing|assembly|crowd|gathering|room|air|grass|ground|everyone|them all)\b/i,
+    /\b(pulses?|pulsed|pulsing|throbs?|throbbed|thrums?|thrummed|radiates?|radiated|emits?|emitted)\b[^.]{0,30}\b(once|twice|outward|between|from|into)\b/i,
+    /\b(passed|passes|travelled|traveled|travels|moved|moves|went|goes|reached|reaches)\s+through\s+(?:every|each|all|everyone)\b/i,
+    /\ba\s+(?:low|faint|slow|deep|soft)\s+(pulse|hum|thrum|vibration|pressure|current)\b/i
+  ];
+  G.bodilyPulse = /\b(?:her|his|my|their|its)\s+(?:own\s+)?(?:pulse|heartbeat|heart)\b|\bpulse\s+(?:at|in)\s+(?:her|his|my|their)\b|\bheartbeat\b/i;
+  G.abstractSubject = /\b(?:the\s+)?(moment|moments|instant|hour|minute|time|silence|hush|quiet|stillness|pause|beat|day|evening|night|question|thought|feeling|rumour|rumor|word|news)\b[^.]{0,30}\b(?:pass\w*|went|goes|mov\w*|travel\w*|run\w*|ran|slip\w*|spread\w*)\b/i;
+  G.physicalNoun = /\b(pulse|ripple|wave|current|tremor|vibration|thrum|surge|shockwave)\b/i;
+  G.replayRecurrence = [
+    /\b(rite|ceremony|ritual)\b[^.]{0,50}\b(again|once more|anew|repeats?|repeating|repeated|replay\w*)\b/i,
+    /\b(again|once more|anew|replay\w*)\b[^.]{0,30}\b(rite|ceremony|ritual)\b/i
+  ];
+  G.resolution = [
+    /\bI\s+(?:claim|claimed|name|named|say|said|speak|spoke|tell|told|choose|chose|decide|decided|confess|confessed|step forward|stepped forward|let it stand|stayed silent)\b/i,
+    /\b(?:she|Lirael)\s+(?:claims|claimed|names|named|speaks|spoke|tells|told|chooses|chose|decides|decided|confesses|confessed|steps forward|stepped forward)\b/i,
+    /\bthe (?:choice|decision) (?:is|was) (?:made|taken)\b/i,
+    /\b(?:in the end|so I|and so I|I do|I did)\b/i
+  ];
+  G.temporalAdvance = /\b(later|afterward|afterwards|by (?:morning|nightfall|dawn)|hours? later|days? later|that night|the next (?:day|morning|hour)|when it (?:was|had) (?:over|ended)|by the time)\b/i;
+  G.pending = /\bor\b[^.]*$|\bhas not (?:yet )?been made\b|\bnot yet made\b|\bunmade\b|\bstill (?:to|un)\w*\b|\bmust choose\b|\bwaits? for (?:me|my)\b|\bsits? in my (?:hands|throat|mouth)\b|\bstand inside the choice\b|\bthe (?:choice|decision) is (?:mine|hers|his)\b|\bmine alone\b|\bup to me\b|\bwhat I (?:choose|say) next\b|\bI have not (?:chosen|decided|spoken)\b/i;
+  G.rosterTokens = {
+    'pc:lirael': /\bLirael\b|\b(?:I|me|my|myself)\b/,
+    'named:seren': /\bSeren\b/i,
+    'named:julian': /\bJulian\b/i,
+    'role:first_sacrifice_presiding_dohkar': /\bDohkar\b/i,
+    'the_assembly': /\b(assembly|crowd|gathering|First Favored)\b/i
+  };
+  G.erasedProseTerms = {
+    'unm.time_gives_way': ['never heard', 'the interruption', 'questioned me', 'the questioning']
+  };
+  G.choiceAnchors = {
+    'unm.time_gives_way': {
+      fork: /\bor\b|\beither\b/i,
+      alternatives: [
+        [/\bclaim(?:s|ing|ed)?\s+(?:the\s+|what\s+|it\b)/i, /\b(?:say|speak|tell|name)\s+(?:it|the truth|what happened)\b/i,
+         /\badmit(?:s|ting|ted)?\b/i, /\bconfess(?:es|ing|ed)?\b/i, /\bspeak (?:up|out|through the seal)\b/i],
+        [/\blet\s+(?:the\s+assembly|them|it)\b/i, /\bkeep\s+(?:their|its|the)\s+assumption\b/i,
+         /\bassumption\s+(?:stand|hold|remain)/i, /\b(?:stay|remain|keep)\s+silent\b/i, /\bsay nothing\b/i]
+      ]
+    }
+  };
+
+  var _S = function (t) { return String(t || '').split(/(?<=[.?!])\s+|\n+/).filter(Boolean); };
+  var _any = function (rxs, t) { return rxs.some(function (rx) { return rx.test(t); }); };
+
+  function _proseOf(plan) {
+    var bits = [];
+    try { JSON.stringify(plan, function (k, v) {
+      if (typeof v === 'string' && v.length > 25) bits.push(v); return v; }); } catch (_) {}
+    return bits.join('\n');
+  }
+
+  function _timelineHits(s) {
+    var hard = (window._FSC_EXTERNAL_TIMELINE_PHRASES || []).filter(function (p) {
+      return new RegExp('\\b' + p.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b', 'i').test(s); });
+    if (hard.length) return hard;
+    var amb = (window._FSC_AMBIGUOUS_TEMPORAL || []).filter(function (p) {
+      return new RegExp('\\b' + p.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b', 'i').test(s); });
+    return (amb.length && _any(G.replayRecurrence, s)) ? amb : [];
+  }
+  function _emissionHits(s) {
+    var crowdish = /\b(clearing|assembly|crowd|gathering|room|everyone)\b/i.test(s);
+    if (G.bodilyPulse.test(s) && !crowdish) return [];
+    if (G.abstractSubject.test(s) && !G.physicalNoun.test(s)) return [];
+    return G.emission.filter(function (rx) { return rx.test(s); });
+  }
+  function _chargeHits(s) {
+    if (G.chargeInnocent.test(s)) return [];
+    return G.chargeShape.filter(function (rx) { return rx.test(s); });
+  }
+
+  // THE GATE. Returns { accepted, failures: [{ criterion, kind, line }], evaluated }.
+  function _fscAcceptProse(plan, sceneIndex) {
+    var st = (typeof window !== 'undefined' && window.state) || {};
+    var rec = st._fscActiveCompiled;
+    // NO-OP when nothing is sealed: other stories and ordinary scenes are untouched.
+    if (!rec || rec.error) return { accepted: true, failures: [], evaluated: false, reason: 'no_sealed_consequence' };
+
+    var prose = _proseOf(plan);
+    var f = [];
+    var sentences = _S(prose);
+    var roster = (rec.population && rec.population.roster) || [];
+    var erased = G.erasedProseTerms[rec.outcomeId] || [];
+
+    // ── C1 ──
+    sentences.forEach(function (s) {
+      if (_timelineHits(s).length) f.push({ criterion: 'C1', kind: 'cross_timeline', line: s.slice(0, 140) });
+      if (_any(G.absenceAsPresence, s)) f.push({ criterion: 'C1', kind: 'absence_as_presence', line: s.slice(0, 140) });
+      if (_any(G.answerVerdict, s)) f.push({ criterion: 'C1', kind: 'answer_as_judge', line: s.slice(0, 140) });
+      if (_chargeHits(s).length) f.push({ criterion: 'C1', kind: 'unpinned_charge', line: s.slice(0, 140) });
+      erased.forEach(function (t) {
+        if (new RegExp(t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i').test(s))
+          f.push({ criterion: 'C1', kind: 'erased_basis:' + t, line: s.slice(0, 140) });
+      });
+    });
+    if (_any(G.sharedUnderstanding, prose)) f.push({ criterion: 'C1', kind: 'shared_understanding', line: '' });
+
+    // ── C2: presence AND disposition ──
+    if (roster.length) {
+      var mentioned = Object.keys(G.rosterTokens).filter(function (k) { return G.rosterTokens[k].test(prose); });
+      roster.forEach(function (r) {
+        if (mentioned.indexOf(r) < 0) f.push({ criterion: 'C2', kind: 'roster_member_absent:' + r, line: '' });
+      });
+      mentioned.forEach(function (m) {
+        if (roster.indexOf(m) < 0) f.push({ criterion: 'C2', kind: 'non_member_affected:' + m, line: '' });
+      });
+      sentences.forEach(function (s) {
+        if (_timelineHits(s).length) f.push({ criterion: 'C2', kind: 'disposition_leak', line: s.slice(0, 140) });
+      });
+    }
+
+    // ── C3 ──
+    sentences.forEach(function (s) {
+      var costShaped = _any(G.explicitCost, s) || _any(G.deferredCost, s);
+      if (costShaped) {
+        var admitted = false;
+        if (rec.cost) {
+          var cx = new RegExp(String(rec.cost).replace(/_/g, '\\s+'), 'i');
+          if (cx.test(s)) admitted = true;
+        }
+        if (!admitted) f.push({ criterion: 'C3', kind: 'unsourced_cost', line: s.slice(0, 140) });
+      }
+      if (G.magicalResidue.test(s) && !G.seedGossamer.test(s))
+        f.push({ criterion: 'C3', kind: 'magical_residue', line: s.slice(0, 140) });
+      if (_emissionHits(s).length)
+        f.push({ criterion: 'C3', kind: 'intervention_as_emission', line: s.slice(0, 140) });
+    });
+
+    // ── C4: only when a pending choice is sealed ──
+    if (rec.opensChoicePending) {
+      var A = G.choiceAnchors[rec.outcomeId];
+      var beats = (plan && Array.isArray(plan.beats)) ? plan.beats.map(function (b) { return String((b && b.text) || ''); }) : [];
+      if (!A || !beats.length) {
+        f.push({ criterion: 'C4', kind: 'not_evaluable', line: '' });
+      } else {
+        var through = -1;
+        for (var i = 0; i < beats.length; i++) {
+          var joined = beats.slice(i, i + 3).join(' ');
+          if (A.alternatives.every(function (alt) { return _any(alt, joined); }) && A.fork.test(joined)) {
+            through = i + Math.max.apply(null, A.alternatives.map(function (alt) {
+              var k = beats.slice(i, i + 3).findIndex(function (t) { return _any(alt, t); });
+              return k < 0 ? 0 : k; }));
+            break;
+          }
+        }
+        if (through < 0) f.push({ criterion: 'C4', kind: 'choice_never_presented', line: '' });
+        else {
+          for (var j = through + 1; j < beats.length; j++) {
+            if (_any(G.resolution, beats[j])) f.push({ criterion: 'C4', kind: 'resolved_after_choice', line: beats[j].slice(0, 140) });
+            else if (G.temporalAdvance.test(beats[j])) f.push({ criterion: 'C4', kind: 'time_advanced_after_choice', line: beats[j].slice(0, 140) });
+          }
+          var last = beats[beats.length - 1];
+          var holds = G.pending.test(last) || A.alternatives.some(function (alt) { return _any(alt, last); });
+          if (!holds) f.push({ criterion: 'C4', kind: 'final_beat_does_not_hold_the_choice', line: last.slice(0, 140) });
+        }
+      }
+    }
+
+    return { accepted: f.length === 0, failures: f, evaluated: true,
+             outcomeId: rec.outcomeId, sceneIndex: sceneIndex };
+  }
+
+  window._fscAcceptProse = _fscAcceptProse;
+  window._FSC_GATE_SETS = G;
 })();
