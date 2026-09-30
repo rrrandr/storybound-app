@@ -1,0 +1,27 @@
+=== REPAIR-ONLY LIVE TEST — one author-revision call, no new generation ===
+
+SOURCE: fsc_c4_2026-09-29T22-50-35  (27 beats, saved rejected prose)
+  → REPAIR CALL permitted: 1,859 chars, est $0.003398
+
+BEFORE — the saved plan against the live gate
+  accepted: false
+     ✗ C3/unsourced_cost: "Either path will cost standing."
+  beats handed to the writer: 23 [unsourced_cost]
+
+REPAIR
+  ACCEPTED by the gate
+  beat 23
+     was : "Either path will cost standing."
+     now : "Either path will risk standing."
+
+AFTER — the repaired plan against the same full gate
+  accepted: true
+
+ACCOUNTING
+  repair calls permitted : 1   (5 others aborted)
+  receipt 1: status 200  $0.001393  in 610 / out 17
+  MEASURED: $0.001393   vs ceiling $0.020000   ✓ within
+  saved plan not mutated in place: true
+  marker: {"recovery":"author_revision","codes":["unsourced_cost"],"repairedIdx":[23],"at":1790753461158}
+
+  evidence: _tempt_fate_fixtures/fsc_repair_2026-09-30T07-30-03

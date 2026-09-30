@@ -1,0 +1,104 @@
+{
+  "source": "fsc_c4_2026-09-29T22-50-35",
+  "authorized": 0.02,
+  "receipts": [
+    {
+      "status": 200,
+      "cost": 0.0013934000000000002,
+      "inTok": 610,
+      "outTok": 17
+    }
+  ],
+  "measured": 0.0013934000000000002,
+  "result": {
+    "outcomeId": "unm.time_gives_way",
+    "before": {
+      "accepted": false,
+      "failures": [
+        {
+          "criterion": "C3",
+          "kind": "unsourced_cost",
+          "line": "Either path will cost standing."
+        }
+      ]
+    },
+    "failingBeats": [
+      {
+        "idx": 23,
+        "text": "Either path will cost standing.",
+        "reasons": [
+          "unsourced_cost"
+        ]
+      }
+    ],
+    "brief": {
+      "sys": "You are revising a few lines of a finished comic-script scene. Rewrite ONLY the lines listed below, one line each, with the SMALLEST change that fixes the problem named for it. Keep each line about the same length and the same register as the original — these are comic-panel narration lines, not paragraphs. Do not add events, do not change who does what, and do not touch anything not listed.\nReturn ONLY a JSON array: [{\"idx\": <line number>, \"text\": \"<rewritten line>\"}], exactly one entry per line listed, nothing else — no commentary, no code fences.",
+      "usr": "THE SCENE AS IT STANDS:\nThe rite concludes uninterrupted. The crimson spiralgrass is dark with the colour of old offerings, and the air over the clearing is still.\nJulian has kept the Answer in his hands throughout. No one has put a question to Lirael before the assembly, and the assembly’s suspicion rests on her all the same.\nSeren looks down at her own hands as if checking them, and could not say what prompted it. The presiding Dohkar loses his place in words he has spoken a hundred times, then recovers without remarking on it. Julian’s gaze finds Lirael a moment before anything gives him a reason to look. Here and there in the crowd someone shifts their weight or half-turns to go and then stays. Lirael watches all of it and has no better account of it than they do. None of them explains any of it, and none of them tries.\nThe assembly’s suspicion remains and the inquiry has not opened. Lirael must choose: claim the interference openly, or let the assembly keep its assumption. Bring the scene to that choice and end there.\n\nWHAT MUST CHANGE:\n- Nothing is owed and no price is coming. Remove any sense that this will be paid for, by her or by anyone, now or later. Her standing can be at risk without being a payment.\n\nTHE LINES TO REWRITE (1):\n  line 23: \"Either path will cost standing.\"",
+      "codes": [
+        "unsourced_cost"
+      ]
+    },
+    "repair": {
+      "ok": true,
+      "reason": null,
+      "codes": [
+        "unsourced_cost"
+      ],
+      "repairedIdx": [
+        23
+      ],
+      "failuresAfter": null,
+      "marker": {
+        "recovery": "author_revision",
+        "codes": [
+          "unsourced_cost"
+        ],
+        "repairedIdx": [
+          23
+        ],
+        "at": 1790753461158
+      }
+    },
+    "after": {
+      "accepted": true,
+      "failures": []
+    },
+    "replaced": [
+      {
+        "idx": 23,
+        "was": "Either path will cost standing.",
+        "now": "Either path will risk standing."
+      }
+    ],
+    "repairedBeats": [
+      "The final words of the rite fade into the still air.",
+      "The Answer rests in Julian's hands, silver script catching the last light.",
+      "The assembly does not disperse.",
+      "Bodies shift. Eyes turn toward me.",
+      "No one speaks my name.",
+      "Seren kneels with her hands in her lap, looking down as if counting her own fingers.",
+      "The presiding Dohkar loses his place in the closing formula.",
+      "He finds it again without comment.",
+      "Julian's gaze finds me before any sound gives him reason.",
+      "The Answer does not move in his hands.",
+      "I feel the weight of every eye that does not look away.",
+      "The rite is finished.",
+      "The suspicion that should have ended with it does not.",
+      "Julian stands too still, the Answer between us like an unasked question.",
+      "No one has spoken against me.",
+      "No one has defended me either.",
+      "The Dohkar's voice steadies, but the moment has already passed through the clearing.",
+      "I know what they are waiting for.",
+      "Julian does not speak.",
+      "He watches.",
+      "The choice sits in my mouth like the band that is no longer there.",
+      "I can claim what happened.",
+      "Or I can let them keep their assumption.",
+      "Either path will risk standing.",
+      "Julian's stillness says nothing and everything.",
+      "The assembly waits.",
+      "I must choose which story they will carry away from this clearing."
+    ],
+    "originalIntact": true
+  }
+}
