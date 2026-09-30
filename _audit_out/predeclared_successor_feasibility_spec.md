@@ -1,9 +1,12 @@
 # Feasibility specification: predeclared local successors, depth 1
 
-**Status:** bounded-feasibility spec, **rev 2**. No code, no provider call, **no authorization
+**Status:** bounded-feasibility spec, **rev 3**. No code, no provider call, **no authorization
 requested**. `_invariantRuntimeV0` OFF. 2026-09-30.
 
-Seventh of the planning thread. Rev 2 corrects five overclaims in rev 1.
+Seventh of the planning thread. Rev 2 corrected five overclaims in rev 1. **Rev 3 records Roman's
+overflow decision — policy (a), reject before the paid unit starts, generate before charging, no
+truncation (§2)** — adjusts the cost bound to that policy (§6), and submits the quality-evaluation plan
+for approval (§9). The prototype is **not funded**; see Decision state at the end.
 
 ## 0. What this spec establishes — and what it cannot
 
@@ -43,7 +46,40 @@ perfectly safe, perfectly bounded, and still too thin to make a player's branch 
 
 Maximum candidate objects: 6 + (3 × 4) = **18**.
 
-## 2. Overflow policy — a product decision, not chosen here
+## 2. Overflow policy — **DECIDED: (a) reject before the paid unit starts**
+
+**Roman, 2026-09-30: policy (a). Catalogue generation precedes charging. Do not truncate.**
+
+His reasoning, recorded because it governs future variants of this question: *a thin but "successful"
+catalogue is worse than a temporary generation failure — it silently takes away routes the player may
+need.* **Priority-ordered truncation is also rejected**: it reduces the risk but cannot prove the omitted
+candidate was unimportant. On failure the reader is **not charged**, and the app either retries or tells
+them the unit cannot begin yet.
+
+The comparison below is retained as the record of what was weighed.
+
+### What this decision requires
+
+1. **`_chargeIssuePurchase` must be gated on a valid catalogue.** The charge cannot fire until
+   generation has succeeded and validated.
+2. **The whole boundary sequence must be gated with it.** `_advanceToNextIssueIfNeeded` (`143194-143214`)
+   currently clears purchase status, auto-renders the prior cover, refreshes the back-cover synopsis and
+   ticks the Fatelands quest in one step. None of that may run for a unit that cannot begin — otherwise a
+   cover renders for a unit the reader was never charged for and never played.
+3. **A user-facing failure state is required**, not a silent stall: bounded retry, then an explicit "this
+   unit cannot begin yet" message.
+
+### Two consequences worth stating plainly
+
+- **Provider cost is incurred with no revenue on a failed unit.** The reader is not charged, but the
+  failed generation attempts are still billed to us. Policy (a) therefore trades revenue-certainty for
+  route-safety — which is the trade Roman chose knowingly, but it should not be discovered later in a
+  bill.
+- **A persistent provider outage blocks readers mid-story.** With no truncation fallback and no stale
+  catalogue permitted, a sustained failure means affected readers cannot start their next unit at all.
+  That needs a user-facing message and a support/status story, not just a retry loop.
+
+### The comparison that was weighed
 
 Rev 1 chose truncate-after-one-retry and called it harmless. **It is not harmless.** Truncation drops by
 declared order, and nothing guarantees the generator declares the destructive-escalation or replacement
@@ -57,17 +93,11 @@ coherent, and remove it invisibly.
 | **c. start in explicitly catalogue-less mode** | whole unit runs under §7 — consequence and relationship scenes only, no plot-fact selection, for up to `scenesPerIssue` scenes. The circling this project exists to prevent | total for that unit, but **visible and recorded** | strongest refund/credit exposure — the reader paid for a unit that cannot advance plot. Arguably should not charge |
 | **d. truncate after one retry** (rev 1's choice) | slight delay, then (b)'s invisible narrowing | (b)'s risk | **adds a billed call**, breaking the one-call bound (§6) |
 
-**Two mitigations that change the calculus, offered as analysis rather than preference:**
-
-- **Priority-ordered truncation** converts (b) from blind to policy-guided: require the emission to tag
-  each candidate, and drop plain non-terminal candidates first — **never** an escalation/replacement
-  candidate, and never the unresolved terminal. This directly addresses the route-loss objection without
-  changing cost.
-- **Generate before charging** makes (a) viable rather than punitive: if a valid catalogue is a
-  precondition of `_chargeIssuePurchase` at the boundary, a failure costs the reader nothing and needs no
-  refund path.
-
-**Not chosen here.** This is one of the two decisions left to you.
+Two mitigations were considered. **Generate-before-charging is ADOPTED** — it is what makes (a) viable
+rather than punitive, since a failure then costs the reader nothing and needs no refund path.
+**Priority-ordered truncation is REJECTED** along with truncation itself: tagging candidates and dropping
+only plain non-terminal ones would reduce route-loss risk, but it cannot establish that the dropped
+candidate was dispensable, and an unprovable safety argument is not a safety argument.
 
 ## 3. Successor assumption rule
 
@@ -139,15 +169,22 @@ instrumented before depth 2 is considered. Partial mitigation now: successors ma
 **Worst-case reservation per paid unit**, which is what must be reserved before the first dispatch via
 the existing `openChainReservation` discipline:
 
+Under the decided policy there is **no truncation retry** — a failed or invalid emission is retried as a
+failure, capped, and then the unit is refused. So the components are:
+
 | Component | Calls | Cost |
 |---|---|---|
 | initial generation | 1 | $0.0196 |
-| overflow/validation retry (if policy allows) | ≤ 1 | $0.0196 |
-| setup-failure recovery, capped at R = 2 | ≤ 2 | $0.0392 |
-| **worst case per paid unit** | **≤ 4** | **≈ $0.0784** |
+| failure/validation retry, capped at R = 2 | ≤ 2 | $0.0392 |
+| **worst case per paid unit that eventually starts** | **≤ 3** | **≈ $0.0588** |
+| a unit that never starts (all attempts fail) | ≤ 3 | ≈ $0.0588 **with no revenue** |
 
-Per story, worst case: a 90-scene CG Soulmates ≈ 9 units × 4 calls = 36 calls ≈ **$0.71** — roughly **4×**
-the $0.176 happy-path figure rev 1 quoted. A 40-scene CG Fling ≈ 4 units ≈ **$0.31** worst case.
+Per story, worst case: a 90-scene CG Soulmates ≈ 9 units × 3 calls = 27 calls ≈ **$0.53**; a 40-scene CG
+Fling ≈ 4 units ≈ **$0.24**. Both remain well above rev 1's $0.176 / $0.078 happy-path figures.
+
+The last row is the one to watch: under policy (a) a refused unit is **pure cost**. A reader who retries
+a failing boundary several times generates provider spend and no Fortune revenue, so the retry cap R is
+a cost control as much as a UX rule.
 
 **Explicitly non-authoritative.** These are planning figures, not measurements:
 
@@ -227,25 +264,55 @@ for all stories.
 7. `_commitStoryEvent` has exactly one caller (static scan);
 8. catalogue generation commits nothing.
 
-**Claim B — catalogue breadth. Not provable provider-free; needs its own funded evaluation:**
+**Claim B — catalogue breadth. Not provable provider-free. Plan submitted for approval below.**
 
-- a pre-registered corpus of player branch intents per issue — stay, flee, return, negotiate, refuse,
-  escalate destructively, go silent;
-- for each, does the generated catalogue contain a **coherent** destination? Scored by **reading**, blind
-  and pre-registered ([[feedback_pre_register_verdict]], [[feedback_comparative_blind_evaluation]]) —
-  not by keyword match, which is the same lexical trap as §7;
-- headline metric: branch coverage rate, reported **separately** for destructive-escalation branches,
-  which are the routes most likely to be missing and the ones that make route C coherent;
-- this requires paid generation and is therefore its own authorization, separate from any prototype.
+### The quality-evaluation plan (awaiting approval)
+
+Policy (a) raises the stakes on this: with no truncation and no stale fallback, a catalogue either
+supports the player's branch or the branch has no destination. Breadth is now the load-bearing quality
+property, so it must be measured rather than assumed.
+
+**Pre-register before any generation** ([[feedback_pre_register_verdict]]):
+
+- **Branch-intent corpus — 7 intents**, fixed in advance: comply/stay · flee · return and negotiate ·
+  refuse and stonewall · **escalate destructively** · conceal and go silent · seek an ally against the
+  accuser.
+- **Canon states — 3**, each derived from *committed* canon, not from prose: (i) the opening; (ii)
+  post-flight (she is at large); (iii) post-escalation (the convening authority is damaged).
+- **Method:** generate one catalogue per state (3 calls), then for each of the 21 (state, intent) pairs a
+  **blind read** judges one question — *does this catalogue contain a destination that would make this
+  intent coherent?* Scored before it is revealed which prompt or policy produced the catalogue
+  ([[feedback_comparative_blind_evaluation]]). **Not keyword-scored** — that is the same lexical trap as
+  §7, and a keyword match would measure vocabulary rather than coherence.
+- **Metrics:** overall branch-coverage rate; **destructive-escalation coverage reported separately**,
+  because it is the route most likely to be missing and the one that makes route C coherent; and a count
+  of intents with **zero** coherent destination, which is the empty-set case §5e and the
+  cost-and-bounds note both warn about.
+- **Proposed pass criteria — yours to set, these are a starting proposal:** ≥ 6 of 7 intents covered in
+  every state; destructive-escalation covered in **every** state; zero uncovered intents in the opening
+  state.
+- **Cost:** 3 catalogue calls ≤ $0.0196 each ≈ **$0.06** (non-authoritative, §6), plus blind-read time.
+  Small, but it is paid generation and therefore needs its own explicit authorization and ceiling.
+
+A failure here is a **prompt-quality** finding, not an architecture finding — and it is much cheaper to
+learn at $0.06 than after a prototype is built on the assumption of breadth.
 
 ---
 
-## The next decision is yours, and it is not code
+## Decision state
 
-1. **Fund a bounded prototype?** Contained, one story, proving claim A and producing claim B's evidence.
-2. **Which overflow policy** — (a) reject before the unit starts, (b) truncate with a durable diagnostic,
-   (c) explicit catalogue-less start, or (d) truncate after a retry — and whether to adopt
-   priority-ordered truncation and generate-before-charging (§2).
+**Decided (2026-09-30):** overflow policy (a) — reject before the paid unit starts, generate before
+charging, no truncation and no priority-ordered truncation (§2).
 
-Nothing is built. No provider call. No authorization requested. Claim B remains unproven and the cost
-figures remain arithmetic.
+**Not funded:** the bounded prototype. Roman: *"otherwise the prototype can prove safety while
+preserving the billing-driven story progression problem"* — which is exactly what rev 1's "v1 unblocked"
+framing would have let happen. Two prerequisites, in order:
+
+1. **Narrative-index separation resolved** — story-wide posts must stop advancing on `issueIndexInRun`
+   (§8). Until then a prototype would demonstrate claim A while leaving the audit's central defect in
+   place.
+2. **This quality-evaluation plan approved** — and then run, since claim B is unproven and policy (a)
+   makes breadth load-bearing.
+
+Nothing is built. No provider call. No authorization requested. The cost figures remain arithmetic and
+non-authoritative until a measured run exists.
