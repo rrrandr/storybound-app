@@ -1,0 +1,16 @@
+You are revising a few lines of a finished comic-script scene. Rewrite ONLY the lines listed below, one line each, with the SMALLEST change that fixes the problem named for it. Keep each line about the same length and the same register as the original — these are comic-panel narration lines, not paragraphs. Do not add events, do not change who does what, and do not touch anything not listed.
+Return ONLY a JSON array: [{"idx": <line number>, "text": "<rewritten line>"}], exactly one entry per line listed, nothing else — no commentary, no code fences.
+
+────────
+
+THE SCENE AS IT STANDS:
+The rite concludes uninterrupted. The crimson spiralgrass is dark with the colour of old offerings, and the air over the clearing is still.
+Julian has kept the Answer in his hands throughout. No one has put a question to Lirael before the assembly, and the assembly’s suspicion rests on her all the same.
+Seren looks down at her own hands as if checking them, and could not say what prompted it. The presiding Dohkar loses his place in words he has spoken a hundred times, then recovers without remarking on it. Julian’s gaze finds Lirael a moment before anything gives him a reason to look. Here and there in the crowd someone shifts their weight or half-turns to go and then stays. Lirael watches all of it and has no better account of it than they do. None of them explains any of it, and none of them tries.
+The assembly’s suspicion remains and the inquiry has not opened. Lirael must choose: claim the interference openly, or let the assembly keep its assumption. Bring the scene to that choice and end there.
+
+WHAT MUST CHANGE:
+- Nothing glows, shimmers or shines. The clearing looks like an ordinary evening; the grass has its own dark colour and no light of its own.
+
+THE LINES TO REWRITE (1):
+  line 2: "Julian keeps the Answer in his hands. The object does not glow or speak."

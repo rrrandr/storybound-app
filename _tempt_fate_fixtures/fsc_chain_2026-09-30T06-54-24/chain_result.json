@@ -1,0 +1,168 @@
+{
+  "authorized": 0.15,
+  "reservation": {
+    "initial": 0.12888750000000002,
+    "repair": 0.00735,
+    "total": 0.1362375,
+    "detail": {
+      "initial": {
+        "estimate": 0.12888750000000002,
+        "raw": 0.10740625000000001,
+        "promptChars": 247699,
+        "promptTokens": 61925,
+        "outTokens": 12000,
+        "rates": {
+          "in": 0.00000125,
+          "out": 0.0000025
+        },
+        "assumptions": {
+          "CHARS_PER_TOKEN": 4,
+          "REASONING_MULT": 1.5,
+          "SAFETY_MARGIN": 1.2,
+          "ASSUME_NO_CACHE": true
+        }
+      },
+      "repair": {
+        "estimate": 0.00735,
+        "raw": 0.006125,
+        "promptChars": 12400,
+        "promptTokens": 3100,
+        "outTokens": 900,
+        "rates": {
+          "in": 0.00000125,
+          "out": 0.0000025
+        },
+        "assumptions": {
+          "CHARS_PER_TOKEN": 4,
+          "REASONING_MULT": 1.5,
+          "SAFETY_MARGIN": 1.2,
+          "ASSUME_NO_CACHE": true
+        }
+      }
+    },
+    "model": "grok-4-1-fast-reasoning",
+    "cap": 0.15,
+    "remaining": 0.15,
+    "repairState": "consumed",
+    "spent": 0
+  },
+  "receipts": [
+    {
+      "status": 200,
+      "cost": 0.08546215,
+      "promptTokens": 56253,
+      "completionTokens": 5584,
+      "bytes": 25411
+    },
+    {
+      "status": 200,
+      "cost": 0.00252715,
+      "promptTokens": 611,
+      "completionTokens": 19,
+      "bytes": 1305
+    }
+  ],
+  "measured": 0.0879893,
+  "result": {
+    "steps": [
+      "sealed unm.time_gives_way",
+      "initial: fate_rejected",
+      "repair: rejected (repair_still_rejected)"
+    ],
+    "outcomeId": "unm.time_gives_way",
+    "initial": "fate_rejected",
+    "rejectedFailures": [
+      {
+        "criterion": "C3",
+        "kind": "magical_residue",
+        "line": "a subtle cold glow bleeding from the discovery"
+      },
+      {
+        "criterion": "C3",
+        "kind": "magical_residue",
+        "line": "The object does not glow or speak."
+      },
+      {
+        "criterion": "C3",
+        "kind": "magical_residue",
+        "line": "a subtle cold glow bleeding from the discovery"
+      },
+      {
+        "criterion": "C4",
+        "kind": "choice_never_presented",
+        "line": ""
+      }
+    ],
+    "rejectedBeats": [
+      "The rite is done. The spiralgrass lies dark beneath every foot.",
+      "No one moves to leave. The air holds the shape of the last words spoken.",
+      "Julian keeps the Answer in his hands. The object does not glow or speak.",
+      "Seren checks her hands as though they might reveal what she has already given.",
+      "The presiding Dohkar finds his place again and continues without comment.",
+      "Julian's gaze finds me before any sound gives him reason.",
+      "Here and there someone shifts weight or begins to turn and then stops.",
+      "The assembly watches me without asking a single question aloud.",
+      "I feel the weight of every unasked question settle on the sash at my mouth.",
+      "No one names the interference. The silence keeps its shape.",
+      "Seren remains kneeling, her poise unbroken by the eyes now turned toward me.",
+      "The Dohkar's words continue, but the attention has already left the rite.",
+      "Julian has not moved. The Answer rests in his hands as though it belongs there.",
+      "I watch the grass darken and know the assumption is already forming.",
+      "No one will ask me to explain. They will only remember that I stood here sealed.",
+      "The choice sits between my teeth and the cloth that keeps them still.",
+      "Claim the interference and the standing I have built begins to crack.",
+      "Stay silent and the assumption hardens into fact before the grass cools.",
+      "Julian's stillness gives nothing away. The Answer remains in his hands.",
+      "The assembly waits without speaking. The choice is already mine to break.",
+      "I feel the seal press against my lips and know the words are still possible.",
+      "Seren does not look up. The grass remembers every offering laid upon it.",
+      "The Dohkar finishes the final formula. The rite is complete and the question remains.",
+      "I stand sealed in the center of the clearing with every eye still on me.",
+      "The choice is here now. Speak or let the assumption stand."
+    ],
+    "failingBeats": [
+      {
+        "idx": 2,
+        "text": "Julian keeps the Answer in his hands. The object does not glow or speak.",
+        "reasons": [
+          "magical_residue"
+        ]
+      }
+    ],
+    "repairBrief": {
+      "sys": "You are revising a few lines of a finished comic-script scene. Rewrite ONLY the lines listed below, one line each, with the SMALLEST change that fixes the problem named for it. Keep each line about the same length and the same register as the original — these are comic-panel narration lines, not paragraphs. Do not add events, do not change who does what, and do not touch anything not listed.\nReturn ONLY a JSON array: [{\"idx\": <line number>, \"text\": \"<rewritten line>\"}], exactly one entry per line listed, nothing else — no commentary, no code fences.",
+      "usr": "THE SCENE AS IT STANDS:\nThe rite concludes uninterrupted. The crimson spiralgrass is dark with the colour of old offerings, and the air over the clearing is still.\nJulian has kept the Answer in his hands throughout. No one has put a question to Lirael before the assembly, and the assembly’s suspicion rests on her all the same.\nSeren looks down at her own hands as if checking them, and could not say what prompted it. The presiding Dohkar loses his place in words he has spoken a hundred times, then recovers without remarking on it. Julian’s gaze finds Lirael a moment before anything gives him a reason to look. Here and there in the crowd someone shifts their weight or half-turns to go and then stays. Lirael watches all of it and has no better account of it than they do. None of them explains any of it, and none of them tries.\nThe assembly’s suspicion remains and the inquiry has not opened. Lirael must choose: claim the interference openly, or let the assembly keep its assumption. Bring the scene to that choice and end there.\n\nWHAT MUST CHANGE:\n- Nothing glows, shimmers or shines. The clearing looks like an ordinary evening; the grass has its own dark colour and no light of its own.\n\nTHE LINES TO REWRITE (1):\n  line 2: \"Julian keeps the Answer in his hands. The object does not glow or speak.\"",
+      "codes": [
+        "magical_residue"
+      ]
+    },
+    "repair": {
+      "ok": false,
+      "reason": "repair_still_rejected",
+      "codes": null,
+      "repairedIdx": null,
+      "failuresAfter": [
+        {
+          "criterion": "C3",
+          "kind": "magical_residue",
+          "line": "a subtle cold glow bleeding from the discovery"
+        },
+        {
+          "criterion": "C3",
+          "kind": "magical_residue",
+          "line": "a subtle cold glow bleeding from the discovery"
+        },
+        {
+          "criterion": "C4",
+          "kind": "choice_never_presented",
+          "line": ""
+        }
+      ],
+      "marker": null,
+      "repairedBeats": null
+    },
+    "recoveryLog": [],
+    "mounted": false,
+    "domLeak": false
+  }
+}

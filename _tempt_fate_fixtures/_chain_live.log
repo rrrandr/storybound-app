@@ -1,0 +1,40 @@
+=== LIVE CHAIN — one scene call + at most one repair call ===
+
+AUTHORIZED HARD CEILING: $0.150000   (no fallback beyond one repair)
+
+CHAIN RESERVATION (pre-dispatch, no network)
+  initial author call      $0.128888   (247,699 chars)
+  one author-revision call $0.007350   (worst case 12,400 chars / 600 out)
+  ── CHAIN TOTAL           $0.136238   vs ceiling $0.150000
+  RESERVED — both calls fit.
+
+RUNNING — story launch, seal, one scene call, gate, then repair if rejected
+  → SCENE CALL permitted: est $0.128913
+  → REPAIR CALL permitted: est $0.003401 of $0.007350 reserved
+
+ACCOUNTING
+  requests permitted : scene 1, repair 1   (11 others aborted)
+  receipt 1: status 200  $0.085462  in 56253 / out 5584
+  receipt 2: status 200  $0.002527  in 611 / out 19
+  MEASURED TOTAL     : $0.087989   vs reserved $0.136238   vs ceiling $0.150000
+  ✓ within the hard ceiling
+
+OUTCOME
+  · sealed unm.time_gives_way
+  · initial: fate_rejected
+  · repair: rejected (repair_still_rejected)
+  initial rejection:
+     ✗ C3/magical_residue: "a subtle cold glow bleeding from the discovery"
+     ✗ C3/magical_residue: "The object does not glow or speak."
+     ✗ C3/magical_residue: "a subtle cold glow bleeding from the discovery"
+     ✗ C4/choice_never_presented
+  failing beats handed to the writer: 2 [magical_residue]
+  repair: DISCARDED — repair_still_rejected
+     ✗ still C3/magical_residue: "a subtle cold glow bleeding from the discovery"
+     ✗ still C3/magical_residue: "a subtle cold glow bleeding from the discovery"
+     ✗ still C4/choice_never_presented
+  nothing mounted: true
+  no DOM leak    : true
+
+  evidence: _tempt_fate_fixtures/fsc_chain_2026-09-30T06-54-24
+  NO VERDICT RENDERED HERE. C1/C3 are human calls against the sealed record.
