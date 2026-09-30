@@ -99837,15 +99837,105 @@ function _buildAuthorFloorDirective(s) {
 
   function _ensureCommittedState() {
     if (!window.state._committedState) window.state._committedState = { facts: [], tableau: null, pendingIntent: null };
-    return window.state._committedState;
-  }
-  function _commitTransition(fact, sourceEvent, scene) {
+    var cs = window.state._committedState;
+    // LEGACY FACTS STAY ACTIVE CANON (Roman 2026-09-30). Facts committed before sealed references
+    // existed have no `proposalRef` — but they are NOT verifier-authored: `_commitTransition` has
+    // always had exactly one caller, passing the planner's own pre-author `prevProposal.event`. So
+    // their CONTENT is pre-author by construction; only the reference is absent. Mark them, keep
+    // them, and never let them impersonate a referentially sealed record. ADDITIVE ONLY — the
+    // stored fact text is never rewritten.
     try {
-      if (!fact) return;
-      var cs = _ensureCommittedState();
-      cs.facts.push({ fact: String(fact).slice(0, 200), sourceEvent: String(sourceEvent || '').slice(0, 60), committedAtScene: (typeof scene === 'number' ? scene : (window.state.turnCount || 0)), provenance: 'delivered' });
-      if (cs.facts.length > 40) cs.facts = cs.facts.slice(-40); // bound
+      if (Array.isArray(cs.facts)) {
+        for (var i = 0; i < cs.facts.length; i++) {
+          var f = cs.facts[i];
+          if (f && typeof f === 'object' && !f.provenanceLink) f.provenanceLink = 'absent_legacy';
+        }
+      }
     } catch (_) {}
+    return cs;
+  }
+  // ══════════════════════════════════════════════════════════════════════════════════════════
+  // SEALED PRE-AUTHOR PROPOSAL RECORDS (Roman 2026-09-30) — referential integrity for canon.
+  //
+  // THE RULE: the planner may creatively propose canon BEFORE prose; prose renders it; post-prose
+  // checks verify DELIVERY, never author new canon.
+  //
+  // `pendingIntent` already carried the proposal pre-prose, but its own header calls it "planner
+  // memory … NOT authority", and `_commitTransition` used to take the proposal's TEXT — a copy,
+  // truncated to 200 chars, with no reference. So nothing ENFORCED that a committed fact derived
+  // from a pre-author proposal, and the stored text could diverge from what was proposed.
+  //
+  // A sealed record fixes that: system-minted id, the exact proposed fact untruncated, provenance,
+  // and frozen so it cannot change through author generation, retries or delivery checking. The
+  // planner never supplies an id — the same discipline _validateEntityCreationProposal enforces.
+  function _sealedProposalStore(create) {
+    var s = window.state; if (!s) return null;
+    if (!s._sealedProposals && create) s._sealedProposals = { seq: 0, byId: {}, byInvocation: {} };
+    return s._sealedProposals || null;
+  }
+  function _resolveSealedProposal(ref) {
+    var st = _sealedProposalStore(false); if (!st) return null;
+    var id = (ref && typeof ref === 'object') ? ref.id : ref;
+    if (typeof id !== 'string' || !id) return null;
+    return st.byId[id] || null;
+  }
+  // IDEMPOTENT PER INVOCATION. A retried plan for the same scene+posture re-enters here and gets
+  // back the SAME record — it never mints a second one, so a retry cannot duplicate canon.
+  function _sealProposal(spec) {
+    try {
+      var s = window.state; if (!s || !spec) return null;
+      var fact = (typeof spec.fact === 'string') ? spec.fact : '';
+      if (!fact.trim()) return null;
+      var st = _sealedProposalStore(true); if (!st) return null;
+      var scene = (typeof spec.scene === 'number') ? spec.scene : (s.turnCount || 0);
+      var ph = null;
+      try { var p = s._scenePosture && s._scenePosture[String(scene)]; ph = (p && p.hash) || null; } catch (_) {}
+      var invocationId = 'inv:' + scene + ':' + (ph || 'noposture');
+      var prior = st.byInvocation[invocationId];
+      if (prior && st.byId[prior]) return st.byId[prior];
+      var id = 'prop:' + scene + ':' + (++st.seq);
+      var rec = { id: id, scene: scene,
+        fact: fact,                                   // EXACT, untruncated — the committed text
+        milestone: (typeof spec.milestone === 'string') ? spec.milestone : '',
+        provenance: Object.freeze({ invocationId: invocationId, postureHash: ph,
+          plannerModel: (typeof spec.plannerModel === 'string') ? spec.plannerModel : null,
+          sceneProposed: scene, at: Date.now() }),
+        sealed: true };
+      Object.freeze(rec);                             // immutable through generation/retry/verify
+      st.byId[id] = rec; st.byInvocation[invocationId] = id;
+      try { console.log('[SEAL] ' + id + ' scene=' + scene + ' posture=' + (ph || 'none') + ' fact="' + fact.slice(0, 70) + '"'); } catch (_) {}
+      return rec;
+    } catch (_) { return null; }
+  }
+  window._sealProposal = _sealProposal;
+  window._resolveSealedProposal = _resolveSealedProposal;
+
+  // REFERENCE-ONLY. Takes a sealed proposal reference and nothing else: the fact text is read FROM
+  // the sealed record, byte-identical and untruncated, so a verifier (or any caller) can never
+  // supply, alter or broaden the committed content. A missing or unresolvable reference is REJECTED
+  // — fail closed, no fact written.
+  function _commitTransition(ref, sourceEvent, scene) {
+    try {
+      var rec = _resolveSealedProposal(ref);
+      if (!rec) {
+        try { console.warn('[COMMIT:REJECT] unresolvable sealed-proposal reference ' + JSON.stringify((ref && ref.id) || ref || null) + ' — no fact committed'); } catch (_) {}
+        return null;
+      }
+      var cs = _ensureCommittedState();
+      for (var i = 0; i < cs.facts.length; i++) {
+        if (cs.facts[i] && cs.facts[i].proposalRef === rec.id) {
+          try { console.log('[COMMIT:IDEMPOTENT] ' + rec.id + ' already committed — no duplicate'); } catch (_) {}
+          return cs.facts[i];
+        }
+      }
+      var entry = { fact: rec.fact, proposalRef: rec.id, provenanceLink: 'sealed',
+        sourceEvent: String(sourceEvent || '').slice(0, 60),
+        committedAtScene: (typeof scene === 'number' ? scene : (window.state.turnCount || 0)),
+        provenance: 'delivered' };
+      cs.facts.push(entry);
+      if (cs.facts.length > 40) cs.facts = cs.facts.slice(-40); // bound
+      return entry;
+    } catch (_) { return null; }
   }
   window._ensureCommittedState = _ensureCommittedState;
   window._commitTransition = _commitTransition;
@@ -99934,7 +100024,11 @@ function _buildAuthorFloorDirective(s) {
       try { if (_slots) { var _entrySt = cs._priorExitState || 'story open'; var _actualEx = (typeof _vP !== 'undefined' && _vP && _vP.actual_exit_state) ? String(_vP.actual_exit_state).slice(0, 90) : '(unreported)'; console.log('[STATE-TRANSITION] scene=' + prevSceneNum + ' ENTRY="' + String(_entrySt).slice(0, 80) + '" PLANNED_EXIT="' + String(_slots.exitState).slice(0, 80) + '" ACTUAL_EXIT="' + _actualEx + '" MATCH=' + (_delivery === 'DELIVERED' ? 'PASS' : 'FAIL')); } } catch (_) {}
       if (_delivery === 'DELIVERED') {
         if (_slots && _slots.exitState) cs._priorExitState = _slots.exitState; // becomes the ENTRY state for the next scene's transition log
-        _commitTransition(prevProposal.event, 'scene' + prevSceneNum + '_transition', prevSceneNum);
+        // BY REFERENCE ONLY. The fact text comes from the sealed record, never from here and never
+        // from the verifier. A proposal with no sealed reference (an in-flight story that planned
+        // its last scene before sealing existed) is REJECTED by _commitTransition — one lost commit
+        // at the upgrade boundary, never a false one; the planner replans from unchanged state.
+        _commitTransition(prevProposal.proposalRef, 'scene' + prevSceneNum + '_transition', prevSceneNum);
         cs.pendingIntent = null; // intent achieved
         console.log('[COMMIT] transition=accepted scene=' + prevSceneNum + ' fact+=1 factsTotal=' + cs.facts.length);
       } else {
@@ -99945,8 +100039,22 @@ function _buildAuthorFloorDirective(s) {
       }
       // RUNTIME owns the tableau now (closes the headless/prod gap where _sceneStateCard was only written by the
       // mount-gated scorer). The planner reads this as continuity, identically in both paths.
-      if (_tab && typeof _tab === 'object') {
-        var _tc = { forScene: prevSceneNum, setting: (typeof _tab.setting === 'string' ? _tab.setting.slice(0, 120) : null), charactersPresent: Array.isArray(_tab.charactersPresent) ? _tab.charactersPresent.map(function (x) { return String(x || '').trim(); }).filter(Boolean).slice(0, 8) : [], protagonistStatus: (typeof _tab.protagonistStatus === 'string' ? _tab.protagonistStatus.slice(0, 140) : null), decisiveChange: (typeof _tab.decisiveChange === 'string' ? _tab.decisiveChange.slice(0, 140) : null), activeInterlocutor: (typeof _tab.activeInterlocutor === 'string' ? _tab.activeInterlocutor.slice(0, 60) : null), protagonistAlone: (_tab.protagonistAlone === true) };
+      // ═══ VERIFIER OUTPUT IS NARROWED TO DELIVERY + EVIDENCE (Roman 2026-09-30) ═══
+      // Two changes, both closing the one place a post-prose verifier could author unsealed canon:
+      //
+      // 1. `decisiveChange` is NEVER persisted. Its own prompt asks the verifier to name what
+      //    "OVERTURNED the scene premise" — a fresh, unsealed interpretation of what changed,
+      //    authored from prose. That is precisely the claim only a sealed pre-author proposal may
+      //    make. It stays available for logging; it no longer enters the tableau, so it can never
+      //    reach _sceneStateCard, cs.tableau, the planner, or the protected register.
+      //
+      // 2. The tableau is written ONLY on DELIVERED. It used to be written outside this branch, so
+      //    a MISSED/PARTIAL scene still had the verifier's continuity summary adopted as fact and
+      //    read by the next planner. On a non-delivery the existing card is left untouched —
+      //    continuity then comes from the accepted rendered scene and sealed proposal state, not
+      //    from a verifier's summary of a scene that did not deliver.
+      if (_tab && typeof _tab === 'object' && _delivery === 'DELIVERED') {
+        var _tc = { forScene: prevSceneNum, setting: (typeof _tab.setting === 'string' ? _tab.setting.slice(0, 120) : null), charactersPresent: Array.isArray(_tab.charactersPresent) ? _tab.charactersPresent.map(function (x) { return String(x || '').trim(); }).filter(Boolean).slice(0, 8) : [], protagonistStatus: (typeof _tab.protagonistStatus === 'string' ? _tab.protagonistStatus.slice(0, 140) : null), activeInterlocutor: (typeof _tab.activeInterlocutor === 'string' ? _tab.activeInterlocutor.slice(0, 60) : null), protagonistAlone: (_tab.protagonistAlone === true) };
         // NOTE (Roman 2026-08-12): a spine-staging override was briefly applied here and REMOVED as
         // semantically wrong. This tableau is `forScene: prevSceneNum` — it records the scene that just
         // FINISHED. Overwriting it with the UPCOMING scene's setting/cast corrupts continuity history to
@@ -101367,6 +101475,17 @@ function _buildAuthorFloorDirective(s) {
           state._scenePlotContract = { sceneIndex: (s.turnCount || 0), stateChange: _stateChange, hardBeats: [_derivedBeat],
             aftermathTruths: (_curMs && _curMs._eff && Array.isArray(_curMs._eff.aftermathTruths)) ? _curMs._eff.aftermathTruths.slice() : [],
             reservedConstraints: (_curMs && _curMs._eff && Array.isArray(_curMs._eff.reserved)) ? _curMs._eff.reserved.slice() : [] };
+          // SEAL BEFORE PROSE (Roman 2026-09-30). The proposed change becomes a sealed, frozen,
+          // system-identified record HERE — before the author runs — and its reference rides on
+          // _stateChange into the next scene's commit gate. The gate can then commit only this
+          // exact content, by reference. Idempotent per scene+posture, so a retry reuses the same
+          // record rather than minting a second.
+          try {
+            var _sealedProp = (typeof _sealProposal === 'function')
+              ? _sealProposal({ fact: _stateChange.event, milestone: (_curMs && _curMs.event) || '', scene: (s.turnCount || 0) })
+              : null;
+            if (_sealedProp) _stateChange.proposalRef = _sealedProp.id;
+          } catch (_sealErr) { try { console.warn('[SEAL] failed: ' + (_sealErr && _sealErr.message)); } catch (_) {} }
           state._priorSceneStateChange = _stateChange; // next scene's "before" (DECLARED, not delivery-verified — the commit gate verifies)
           if (_openAccept && _openAccept.ok) {
             s._sceneObjectives = s._sceneObjectives || {};
