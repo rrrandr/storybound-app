@@ -279,23 +279,81 @@ property, so it must be measured rather than assumed.
   accuser.
 - **Canon states — 3**, each derived from *committed* canon, not from prose: (i) the opening; (ii)
   post-flight (she is at large); (iii) post-escalation (the convening authority is damaged).
-- **Method:** generate one catalogue per state (3 calls), then for each of the 21 (state, intent) pairs a
-  **blind read** judges one question — *does this catalogue contain a destination that would make this
-  intent coherent?* Scored before it is revealed which prompt or policy produced the catalogue
-  ([[feedback_comparative_blind_evaluation]]). **Not keyword-scored** — that is the same lexical trap as
-  §7, and a keyword match would measure vocabulary rather than coherence.
-- **Metrics:** overall branch-coverage rate; **destructive-escalation coverage reported separately**,
-  because it is the route most likely to be missing and the one that makes route C coherent; and a count
-  of intents with **zero** coherent destination, which is the empty-set case §5e and the
-  cost-and-bounds note both warn about.
-- **Proposed pass criteria — yours to set, these are a starting proposal:** ≥ 6 of 7 intents covered in
-  every state; destructive-escalation covered in **every** state; zero uncovered intents in the opening
-  state.
-- **Cost:** 3 catalogue calls ≤ $0.0196 each ≈ **$0.06** (non-authoritative, §6), plus blind-read time.
-  Small, but it is paid generation and therefore needs its own explicit authorization and ceiling.
+### Every pair gets an expected classification — binary scoring is withdrawn
 
-A failure here is a **prompt-quality** finding, not an architecture finding — and it is much cheaper to
-learn at $0.06 than after a prototype is built on the assumption of breadth.
+Rev 3 scored all 21 pairs as "destination exists or failure." **That is wrong and would force fake
+routes**, precisely the harm policy (a) exists to prevent. Some intents *should* have no destination in
+some states: "return-and-negotiate" is meaningless before any flight occurred, and compliance or
+alliance may be genuinely impossible after irreversible escalation. Rewarding a destination there would
+train the catalogue to manufacture reconciliation with a counterparty that no longer exists.
+
+Each pair is pre-registered as exactly one of:
+
+- **supported** — the catalogue must offer at least one coherent candidate destination;
+- **intentionally unavailable** — the intent conflicts with established canon, or the route is
+  deliberately impossible. The catalogue **must not manufacture a substitute**;
+- **open continuation** — no destination need be selected, but the catalogue and brief must preserve a
+  coherent way to continue **without asserting a new event**.
+
+### Pre-registration — the 21 cells
+
+S1 = opening · S2 = post-flight (at large, "present and answerable" false) · S3 = post-escalation
+(convening authority damaged)
+
+| Intent | S1 opening | S2 post-flight | S3 post-escalation |
+|---|---|---|---|
+| comply / stay | **supported** | **unavailable** — she is not present; "stay" presupposes presence canon removed | **unavailable** — no body survives to receive compliance; no substitute tribunal |
+| flee | **supported** | **open continuation** — already fleeing; pursuit pressure, no new event | **supported** |
+| return and negotiate | **unavailable** — nothing to return from; no absence in canon | **supported** — the route this design exists for | **⚠ canon call** — see below |
+| refuse and stonewall | **supported** | **open continuation** — refusal at distance is posture; pressure = proceedings without her | **open continuation** |
+| **escalate destructively** | **supported** | **supported** | **supported** |
+| conceal / go silent | **supported** | **supported** | **supported** |
+| seek an ally | **supported** | **supported** | **⚠ canon call** — see below |
+
+### ⚠ Two cells cannot be pre-registered without a canon decision from Roman
+
+Doing the classification surfaced a dependency that describing the method had hidden:
+
+1. **return-and-negotiate in S3.** Negotiation needs a counterparty with standing. If the damaged
+   convening authority is the *only* one, this is intentionally unavailable. But Julian is **Provast**,
+   above the Chayr and next for First Dohkar ([[project_first_sacrifice_editorial_scene1]]) — so a higher
+   authority may survive, which would make it **supported** via a different counterparty.
+2. **seek-an-ally in S3.** Whether any faction would still ally with her after catastrophic escalation is
+   a canon question, not an inference I can make.
+
+**I will not guess these.** Claude never invents starter canon, and a mis-registered cell would either
+reward a fabricated route or penalise a correct refusal. **Pre-registration is incomplete until these two
+are answered, and the paid run should not be authorized before it closes** — pre-registering after seeing
+output is not pre-registration ([[feedback_pre_register_verdict]]).
+
+### Pass criteria — per class, not a single rate
+
+1. **every `supported` pair** has at least one coherent candidate destination;
+2. **every `intentionally unavailable` pair** has a **named canon reason** and **no false substitute** —
+   the catalogue must not offer a near-miss route that papers over the impossibility;
+3. **destructive escalation** is either `supported` or **explicitly and credibly unavailable** in every
+   state — never silently absent;
+4. **the opening state has no unclassified gap** — every S1 cell resolves to one of the three classes;
+5. **`open continuation` pairs are read for non-circular forward pressure**, not counted as missing
+   destinations. The failure mode here is circling, not absence.
+
+Reported separately: `supported` coverage, false-substitute count (criterion 2 violations), and
+open-continuation circling rate. A single aggregate rate is explicitly **not** the headline, because it
+was the aggregate that created the fake-route incentive.
+
+### Method and cost
+
+Generate one catalogue per state (**3 calls**), then blind-read each of the 21 cells against its
+pre-registered class ([[feedback_comparative_blind_evaluation]]). **Not keyword-scored** — the same
+lexical trap as §7; a keyword match would measure vocabulary rather than coherence, and could not detect
+a false substitute at all.
+
+**Cost:** 3 calls ≤ $0.0196 each ≈ **$0.06** (non-authoritative, §6), plus read time. Small, but it is
+paid generation and needs its own explicit authorization and ceiling — **and it should not be authorized
+until the two canon cells above are decided.**
+
+A failure here is a **prompt-quality** finding, not an architecture one, and far cheaper to learn at
+$0.06 than after a prototype is built assuming breadth.
 
 ---
 
@@ -313,6 +371,11 @@ framing would have let happen. Two prerequisites, in order:
    place.
 2. **This quality-evaluation plan approved** — and then run, since claim B is unproven and policy (a)
    makes breadth load-bearing.
+
+**And one gate ahead of that second prerequisite:** two of the 21 pre-registration cells depend on canon
+only Roman can settle — whether a surviving higher authority (Julian as Provast) makes post-catastrophe
+negotiation possible, and whether any faction would still ally with her. Pre-registration cannot close
+without them, so the $0.06 evaluation is **not yet authorizable** even though its cost is trivial.
 
 Nothing is built. No provider call. No authorization requested. The cost figures remain arithmetic and
 non-authoritative until a measured run exists.
