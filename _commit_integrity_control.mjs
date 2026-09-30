@@ -158,9 +158,13 @@ console.log('\nF. the verifier\'s output surface is narrowed  [STATIC — source
 t('_commitScene body was located', body.length > 0);
 t('the commit call passes a REFERENCE, not proposal text',
   /_commitTransition\(prevProposal\.proposalRef/.test(body) && !/_commitTransition\(prevProposal\.event/.test(body));
-t('the tableau write is gated on DELIVERED',
-  /_tab && typeof _tab === 'object' && _delivery === 'DELIVERED'/.test(body));
-t('the built tableau carries NO decisiveChange key',
+// SUPERSEDED, not relaxed: the first repair pass gated the verifier's tableau on DELIVERED, and
+// this asserted that gate. The second pass removed the verifier tableau from the sink ENTIRELY at
+// every delivery status — strictly stronger, so gating no longer exists to assert. Full
+// source-to-sink coverage now lives in _scene_card_purity_control.mjs.
+t('the card is built DETERMINISTICALLY, not from the verifier tableau',
+  /_tc = _deterministicSceneCard\(/.test(body) && !/_tc = \{\s*forScene/.test(body));
+t('the built card carries NO decisiveChange key',
   !/_tc = \{[^}]*decisiveChange/.test(body));
 t('dominant_replacement is never persisted (log-only)',
   !/(cs|_tc|state)\.[A-Za-z_]*\s*=\s*_replacement\b/.test(body));

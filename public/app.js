@@ -32243,19 +32243,22 @@ window._reflowSceneDialogueLLM = _reflowSceneDialogueLLM;
           var _present = Array.isArray(ss.charactersPresent)
             ? ss.charactersPresent.map(function(x){ return String(x || '').trim(); }).filter(Boolean).slice(0, 8)
             : [];
-          window.state._sceneStateCard = {
-            forScene: sceneNum,
-            setting: (typeof ss.setting === 'string' && ss.setting.trim()) ? ss.setting.trim().slice(0, 120) : null,
-            charactersPresent: _present,
-            protagonistStatus: (typeof ss.protagonistStatus === 'string' && ss.protagonistStatus.trim()) ? ss.protagonistStatus.trim().slice(0, 140) : null,
-            decisiveChange: (typeof ss.decisiveChange === 'string' && ss.decisiveChange.trim()) ? ss.decisiveChange.trim().slice(0, 140) : null,
-            activeInterlocutor: (typeof ss.activeInterlocutor === 'string' && ss.activeInterlocutor.trim()) ? ss.activeInterlocutor.trim().slice(0, 60) : null,
-            protagonistAlone: (ss.protagonistAlone === true) || (_present.length === 0)
-          };
-          console.log('[SCENE-STATE] scene ' + sceneNum + ': ' +
-            (window.state._sceneStateCard.protagonistAlone ? 'ALONE' : 'present=[' + _present.join(', ') + ']') +
-            (window.state._sceneStateCard.decisiveChange ? '  Δ=' + window.state._sceneStateCard.decisiveChange : '') +
-            (window.state._sceneStateCard.protagonistStatus ? '  status=' + window.state._sceneStateCard.protagonistStatus : ''));
+          // ═══ NOT PERSISTED (Roman 2026-09-30, second repair pass) ═══
+          // This block used to write model-generated `setting` / `charactersPresent` /
+          // `protagonistStatus` / `decisiveChange` / `activeInterlocutor` / `protagonistAlone`
+          // straight into state._sceneStateCard, from which they reached the planner and the
+          // fate-card grounding directive (~33626, ~72701). `decisiveChange` in particular is a
+          // post-prose model interpretation of what changed — a claim only a sealed pre-author
+          // proposal may make. Under the rule (see _deterministicSceneCard) NO post-prose
+          // model field may enter that sink at any delivery status, so this is now
+          // DIAGNOSTIC-ONLY: logged for analysis, never stored, never planner input.
+          // The prompt still requests `sceneState` (~31905); leaving that in place keeps this
+          // shared call's response shape — and the disclosure-ledger path that rides it —
+          // untouched. Trimming the now-unused request is a token saving, not a correctness fix.
+          console.log('[SCENE-STATE:DIAGNOSTIC-ONLY] scene ' + sceneNum + ' (NOT persisted): ' +
+            (((ss.protagonistAlone === true) || (_present.length === 0)) ? 'ALONE' : 'present=[' + _present.join(', ') + ']') +
+            ((typeof ss.decisiveChange === 'string' && ss.decisiveChange.trim()) ? '  Δ=' + ss.decisiveChange.trim().slice(0, 140) : '') +
+            ((typeof ss.protagonistStatus === 'string' && ss.protagonistStatus.trim()) ? '  status=' + ss.protagonistStatus.trim().slice(0, 140) : ''));
         }
       } catch (_) { /* non-fatal */ }
       // ── 3B: relations ride the SAME response. Fully isolated: a ledger fault
@@ -33620,6 +33623,13 @@ window._reflowSceneDialogueLLM = _reflowSceneDialogueLLM;
       if (!c || (typeof sceneNum === 'number' && typeof c.forScene === 'number' && c.forScene !== sceneNum)) {
         return DIRECTIVE_ONLY;
       }
+      // A DETERMINISTIC card carries no model-derived setting/presence/status (see
+      // _deterministicSceneCard). The lines below would otherwise fabricate a claim from its nulls
+      // — `protagonistAlone:false` would emit "Physically present with her: (unnamed others)",
+      // asserting company no deterministic source established. So fall back to DIRECTIVE_ONLY,
+      // whose own text already points the author at the scene's final lines as the authoritative
+      // present moment — the accepted rendered text, which is the permitted continuity source.
+      if (c.source === 'deterministic') return DIRECTIVE_ONLY;
       var lines = ['SCENE END-STATE (HARD — this is WHERE THINGS STAND at the scene\'s final line; ground EVERY card in it, NOT in the scene\'s opening premise):'];
       if (c.setting) lines.push('- Protagonist is now at: ' + c.setting);
       if (c.protagonistStatus) lines.push('- Protagonist\'s status right now: ' + c.protagonistStatus);
@@ -99937,6 +99947,72 @@ function _buildAuthorFloorDirective(s) {
       return entry;
     } catch (_) { return null; }
   }
+
+  // ══════════════════════════════════════════════════════════════════════════════════════════
+  // SCENE-STATE CARD — DETERMINISTIC ONLY (Roman 2026-09-30, second repair pass)
+  //
+  // THE RULE: no post-prose model-generated interpretation, summary, decisive change, or
+  // replacement framing may enter _sceneStateCard, planner input, protected-register derivation,
+  // or canon — at ANY delivery status.
+  //
+  // The first pass gated the delivery verifier's tableau on DELIVERED. That was INSUFFICIENT: a
+  // verifier's interpretation is unsealed and can be wrong even when it correctly recognises
+  // delivery, and it still steered the next planner on every DELIVERED scene. And it left the
+  // SECOND writer untouched — the post-prose scene scorer (~32246) wrote its own model-generated
+  // `decisiveChange` / `setting` / `protagonistStatus` straight into the same sink, reaching the
+  // planner at ~33626 and ~72701.
+  //
+  // So the sink itself is now incapable of carrying model interpretation. Both writers route here,
+  // and the ONLY permitted continuity sources are:
+  //   • the exact sealed proposal and its activation status;
+  //   • the accepted rendered scene text, as a bounded VERBATIM tail (no model, no summary);
+  //   • already committed canon.
+  // The interpretive keys are kept present-but-null so existing consumers' own `if (c.field)`
+  // guards skip them rather than needing to know about this change — and so that nothing
+  // fabricates a substitute claim (notably `protagonistAlone`, where either value would assert
+  // something about presence that no deterministic source established).
+  var _SCENE_CARD_TAIL_CHARS = 600;
+  function _deterministicSceneCard(sceneNum, acceptedText, proposalRef) {
+    var rec = null;
+    try { rec = _resolveSealedProposal(proposalRef); } catch (_) {}
+    var tail = '';
+    try {
+      var t = String(acceptedText || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+      tail = t.length > _SCENE_CARD_TAIL_CHARS ? t.slice(-_SCENE_CARD_TAIL_CHARS) : t;
+    } catch (_) { tail = ''; }
+    var activation = 'none';
+    try {
+      if (rec) {
+        var cs = _ensureCommittedState();
+        activation = cs.facts.some(function (f) { return f && f.proposalRef === rec.id; }) ? 'delivered' : 'pending';
+      }
+    } catch (_) {}
+    return {
+      forScene: (typeof sceneNum === 'number') ? sceneNum : null,
+      source: 'deterministic',
+      sealedProposalRef: rec ? rec.id : null,
+      sealedFact: rec ? rec.fact : null,      // byte-identical from the sealed record
+      activation: activation,                 // delivered | pending | none
+      sceneTail: tail,                        // VERBATIM accepted text, bounded. Not a summary.
+      // Model-interpretation fields — permanently null. Never populated by any writer.
+      setting: null, charactersPresent: [], protagonistStatus: null,
+      decisiveChange: null, activeInterlocutor: null, protagonistAlone: false
+    };
+  }
+  // THE ONE WRITER. Any card whose `source` is not 'deterministic' is refused outright, so a
+  // future third writer cannot reintroduce the leak by assigning a model object here.
+  function _setSceneStateCard(card) {
+    try {
+      if (!card || typeof card !== 'object' || card.source !== 'deterministic') {
+        try { console.warn('[SCENE-CARD:REJECT] non-deterministic scene-state card refused (source=' + (card && card.source) + ')'); } catch (_) {}
+        return null;
+      }
+      window.state._sceneStateCard = card;
+      return card;
+    } catch (_) { return null; }
+  }
+  window._deterministicSceneCard = _deterministicSceneCard;
+  window._setSceneStateCard = _setSceneStateCard;
   window._ensureCommittedState = _ensureCommittedState;
   window._commitTransition = _commitTransition;
 
@@ -100037,29 +100113,24 @@ function _buildAuthorFloorDirective(s) {
         // AUTHOR PRIORITY INDEX (Roman 2026-07-27): what displaced the transition = what the author optimized for.
         console.log('[AUTHOR-PRIORITY] scene=' + prevSceneNum + ' delivery=' + _delivery + ' replaced_by=' + _replacement + ' mandate=' + (typeof window !== 'undefined' && window._deliveryMandate === 'B' ? 'B' : 'A'));
       }
-      // RUNTIME owns the tableau now (closes the headless/prod gap where _sceneStateCard was only written by the
-      // mount-gated scorer). The planner reads this as continuity, identically in both paths.
-      // ═══ VERIFIER OUTPUT IS NARROWED TO DELIVERY + EVIDENCE (Roman 2026-09-30) ═══
-      // Two changes, both closing the one place a post-prose verifier could author unsealed canon:
-      //
-      // 1. `decisiveChange` is NEVER persisted. Its own prompt asks the verifier to name what
-      //    "OVERTURNED the scene premise" — a fresh, unsealed interpretation of what changed,
-      //    authored from prose. That is precisely the claim only a sealed pre-author proposal may
-      //    make. It stays available for logging; it no longer enters the tableau, so it can never
-      //    reach _sceneStateCard, cs.tableau, the planner, or the protected register.
-      //
-      // 2. The tableau is written ONLY on DELIVERED. It used to be written outside this branch, so
-      //    a MISSED/PARTIAL scene still had the verifier's continuity summary adopted as fact and
-      //    read by the next planner. On a non-delivery the existing card is left untouched —
-      //    continuity then comes from the accepted rendered scene and sealed proposal state, not
-      //    from a verifier's summary of a scene that did not deliver.
-      if (_tab && typeof _tab === 'object' && _delivery === 'DELIVERED') {
-        var _tc = { forScene: prevSceneNum, setting: (typeof _tab.setting === 'string' ? _tab.setting.slice(0, 120) : null), charactersPresent: Array.isArray(_tab.charactersPresent) ? _tab.charactersPresent.map(function (x) { return String(x || '').trim(); }).filter(Boolean).slice(0, 8) : [], protagonistStatus: (typeof _tab.protagonistStatus === 'string' ? _tab.protagonistStatus.slice(0, 140) : null), activeInterlocutor: (typeof _tab.activeInterlocutor === 'string' ? _tab.activeInterlocutor.slice(0, 60) : null), protagonistAlone: (_tab.protagonistAlone === true) };
+      // RUNTIME owns the card (closes the headless/prod gap where _sceneStateCard was only written by the
+      // mount-gated scorer). The planner reads it as continuity, identically in both paths.
+      // ═══ THE VERIFIER'S TABLEAU IS NEVER PERSISTED (Roman 2026-09-30, second repair pass) ═══
+      // The first pass merely gated this on DELIVERED. INSUFFICIENT: a verifier's tableau is an
+      // unsealed interpretation and can be wrong even when it correctly recognises delivery, and
+      // gating still let it steer the next planner on every delivered scene. `_tab` is now used
+      // for logging only. The card is rebuilt DETERMINISTICALLY from the sealed proposal, its
+      // activation status, and a bounded verbatim tail of the accepted scene text.
+      {
+        var _tc = _deterministicSceneCard(prevSceneNum, _pt, prevProposal && prevProposal.proposalRef);
+        try { console.log('[TABLEAU:DISCARDED] scene=' + prevSceneNum + ' delivery=' + _delivery
+          + ' verifier_tableau_ignored=' + (_tab && typeof _tab === 'object' ? 'yes' : 'none')
+          + ' card=deterministic activation=' + _tc.activation + ' tail_chars=' + (_tc.sceneTail || '').length); } catch (_) {}
         // NOTE (Roman 2026-08-12): a spine-staging override was briefly applied here and REMOVED as
         // semantically wrong. This tableau is `forScene: prevSceneNum` — it records the scene that just
         // FINISHED. Overwriting it with the UPCOMING scene's setting/cast corrupts continuity history to
         // solve a staging problem that belongs to sceneSkeleton / spine_staging. Do not re-add it.
-        window.state._sceneStateCard = _tc; cs.tableau = _tc;
+        _setSceneStateCard(_tc); cs.tableau = _tc;
       }
       cs._committedThroughScene = prevSceneNum;
       var _piAfter = (cs.pendingIntent && cs.pendingIntent.proposed) ? String(cs.pendingIntent.proposed).slice(0, 55) : 'none';
