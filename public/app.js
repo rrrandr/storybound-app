@@ -340499,6 +340499,34 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
   var FSC_INVOKER = 'pc:lirael';
 
   // ── Opening-phase invariant atoms (always active). ──────────────────────────────────────────
+  // ══════════════════════════════════════════════════════════════════════════════════════════
+  // STORY SCOPE OF THIS AUTHORED CANON (Roman 2026-09-30)
+  //
+  // Everything below — atoms, ask grammar, outcomes, briefs — is FIRST SACRIFICE canon. It names
+  // Lirael, Seren, the presiding Dohkar, Julian and The Answer. None of it is generic.
+  //
+  // Until this guard existed the compiler was reachable from the SHARED tempt-seal path with no
+  // story scope at all, so a reader of The First Taste (billionaire literary) who sealed "I wish
+  // this had never happened" had `unm.time_gives_way` compiled for them and was handed an author
+  // brief about crimson spiralgrass and the presiding Dohkar. Proven RED across all 7 ask classes
+  // × 3 non-Fatelands starter Books by _fsc_cross_story_control.mjs.
+  //
+  // THE SEAM: a story appears here only when its own Fate consequence canon has been AUTHORED by
+  // Roman. Claude never invents starter canon (feedback_seed_planner_author_layers,
+  // feedback_reader_owned_identity). Anything absent from this registry — the other three starter
+  // Books, and every Corridor story, which has no `_starterId` at all — FAILS CLOSED: no outcome
+  // is selected, no delta is logged, and no Fate material reaches the writer. Fate cards remain
+  // playable there; they simply do not route through this opening compiler.
+  var FSC_STORY_CANON = {
+    starter_first_sacrifice: { label: 'First Sacrifice — Issue 1 opening', scope: 'opening' }
+  };
+  function _fscStoryId() {
+    try { var s = window.state; return (s && s._starterId) || null; } catch (_) { return null; }
+  }
+  function _fscStorySupported(id) {
+    return !!(id && Object.prototype.hasOwnProperty.call(FSC_STORY_CANON, id));
+  }
+
   var FSC_INVARIANT_ATOMS = {
     'interr.julian_questioned_lirael': 1, 'interr.dohkar_interrupted': 1, 'interr.choice_arose': 1,
     'twist.wish_misaligned': 1, 'twist.words_honoured': 1, 'twist.assembly_turned': 1,
@@ -340843,8 +340871,20 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
 
   // ── COMPILE. Runs at Tempt acceptance, synchronously, BEFORE prose generation. ──────────────
   function _fscCompile(wishText, opts) {
+    // STORY SCOPE FIRST — before any canon is read or any ask class is matched. A story with no
+    // authored Fate consequence set gets an error record, which every emission site already
+    // treats as "deliver nothing" (`if (!rec || rec.error) return ''`). See FSC_STORY_CANON.
+    var _sid = _fscStoryId();
+    if (!_fscStorySupported(_sid)) {
+      try { console.log('[FSC] no authored Fate canon for story ' + (_sid || '(none)')
+        + ' — consequence compiler declined; nothing delivered to the writer'); } catch (_) {}
+      return { v: FSC_V, compiledAt: Date.now(), wishText: String(wishText || ''),
+               mode: null, outcomeId: null, askClass: null, storyId: _sid,
+               error: 'story_has_no_authored_fate_canon' };
+    }
     var active = _fscActiveCanon();
     var rec = { v: FSC_V, compiledAt: Date.now(), wishText: String(wishText || ''),
+                storyId: _sid,
                 mode: null, outcomeId: null, askClass: null, viaFallback: false,
                 population: null, invokerScope: null, memoryEffects: [],
                 delta: null, cost: null, durability: null, error: null };

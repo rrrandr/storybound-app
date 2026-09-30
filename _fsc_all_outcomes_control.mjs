@@ -13,7 +13,7 @@ new Function('window', SRC.slice(S - 100))(win);
 let pass = 0, fail = 0;
 const t = (n, c, d) => { if (c) { pass++; console.log('  ok   ' + n); }
   else { fail++; console.log('  FAIL ' + n + (d ? '  — ' + d : '')); } };
-const reset = (f) => { win.state = Object.assign({ _fscDeltas: [], _fscCompiled: [] }, f || {}); };
+const reset = (f) => { win.state = Object.assign({ _starterId: 'starter_first_sacrifice', _fscDeltas: [], _fscCompiled: [] }, f || {}); };
 const compile = (wish, flags) => { reset(flags); return win._fscCompileAndPersist(wish); };
 const promptFor = (wish, flags) => { compile(wish, flags); return win._fscPromptBlock(); };
 

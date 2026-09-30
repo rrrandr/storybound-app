@@ -13,7 +13,7 @@ new Function('window', SRC.slice(S - 100))(win);
 let pass = 0, fail = 0;
 const t = (n, c, d) => { if (c) { pass++; console.log('  ok   ' + n); }
   else { fail++; console.log('  FAIL ' + n + (d ? '  — ' + d : '')); } };
-const reset = () => { win.state = { _fscDeltas: [], _fscCompiled: [], _fpcCompiled: [] }; };
+const reset = () => { win.state = { _starterId: 'starter_first_sacrifice', _fscDeltas: [], _fscCompiled: [], _fpcCompiled: [] }; };
 
 console.log('=== PETITION CARRIER ===\n');
 

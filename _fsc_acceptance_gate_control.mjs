@@ -53,6 +53,7 @@ t('  capped so it cannot grow without bound', /_fscRejectedScenes\.length > 6/.t
 console.log('\nB. it is a NO-OP when no Fate consequence is sealed');
 const noop = await page.evaluate(() => {
   window.state = window.state || {};
+  window.state._starterId = 'starter_first_sacrifice';
   delete window.state._fscActiveCompiled;
   return window._fscAcceptProse({ beats: [{ idx: 0, text: 'The cost will be terrible and the Answer judged her like a jury.' }] }, 2);
 });

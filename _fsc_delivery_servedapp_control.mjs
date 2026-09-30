@@ -40,6 +40,7 @@ t('_fscPayloadIntegrity (render precheck) exposed', surface.precheck === 'functi
 console.log('\nB. delivery is independent of legacy Fate-weave state');
 const indep = await page.evaluate(() => {
   window.state = window.state || {};
+  window.state._starterId = 'starter_first_sacrifice';
   // Deliberately leave every legacy carrier unset: no weave, no OAS budget, no active scenario.
   delete window.state._fateScenarioWeave; delete window.state._fateOASBudget;
   const rec = window._fscCompileAndPersist('I want to disappear.', { source: 'servedapp_control' });
@@ -115,6 +116,16 @@ const rows = calls.filter(c => c.body).map(c => {
 const authorReqs = rows.filter(r => r.marks >= 2 && r.msgs === 2);
 console.log('  provider calls attempted : ' + calls.length + '  (all aborted)');
 console.log('  author-instruction requests identified by role+markers : ' + authorReqs.length);
+// WHICH stages consumed the funnel. Without this the control could only say "0 author requests",
+// never which upstream stage the funnel died in — the exact ambiguity that made a story-scope
+// change look like a delivery regression. Diagnostics only; asserts nothing.
+if (rows.length) {
+  console.log('  funnel stages reached, in order:');
+  rows.forEach(function (r, i) {
+    console.log('    ' + (i + 1) + '. ' + r.url + '  role=' + (r.role || '-')
+      + ' msgs=' + (r.msgs === null ? '-' : r.msgs) + ' bytes=' + r.bytes + ' markers=' + r.marks);
+  });
+}
 
 t('at least one terminal author request was made', authorReqs.length > 0);
 if (authorReqs.length) {

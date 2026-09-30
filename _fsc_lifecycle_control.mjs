@@ -16,7 +16,7 @@ new Function('window', SRC.slice(START - 100))(win);
 let pass = 0, fail = 0;
 const t = (n, c, d) => { if (c) { pass++; console.log('  ok   ' + n); }
   else { fail++; console.log('  FAIL ' + n + (d ? '  — ' + d : '')); } };
-const reset = (f) => { win.state = Object.assign({ _fscDeltas: [], _fscCompiled: [] }, f || {}); };
+const reset = (f) => { win.state = Object.assign({ _starterId: 'starter_first_sacrifice', _fscDeltas: [], _fscCompiled: [] }, f || {}); };
 
 // ── THE LIVE GATE, extracted verbatim from _runCGScreenplayGen. ────────────────────────────
 // If the wiring in app.js changes, this extraction changes with it — the control cannot drift

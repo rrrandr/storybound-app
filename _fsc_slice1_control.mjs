@@ -20,7 +20,7 @@ const t = (name, cond, detail) => {
   else { fail++; console.log('  FAIL ' + name + (detail ? '  — ' + detail : '')); }
 };
 const resetState = (flags) => {
-  win.state = Object.assign({ _fscDeltas: [], _fscCompiled: [] }, flags || {});
+  win.state = Object.assign({ _starterId: 'starter_first_sacrifice', _fscDeltas: [], _fscCompiled: [] }, flags || {});
 };
 
 console.log('=== SLICE 1: compile at acceptance, populations, selection, persistence, prompt ===\n');

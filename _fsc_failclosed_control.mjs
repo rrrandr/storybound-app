@@ -37,7 +37,7 @@ function attemptGeneration(sceneIndex) {
   dispatches++;                       // ONLY reached if the gate let generation begin
   return { dispatched: true };
 }
-const reset = () => { win.state = { _fscDeltas: [], _fscCompiled: [], _fpcCompiled: [] }; dispatches = 0; };
+const reset = () => { win.state = { _starterId: 'starter_first_sacrifice', _fscDeltas: [], _fscCompiled: [], _fpcCompiled: [] }; dispatches = 0; };
 
 console.log('=== FAIL CLOSED: a sealed consequence that cannot be rendered stops generation ===\n');
 
