@@ -70,32 +70,69 @@ The planner **may not smuggle this in as an additive fact.** It requires an expl
 
 ```
 basis: { kind: 'player_action' | 'fate_outcome' | 'declared_high_authority',
-         ref:  <recordId | postureHash | compiled Fate outcomeId>,
-         statement: <why the change follows from that ref> }
+         ref:  <postureHash | compiled Fate outcomeId | recordId>,
+         causal_chain: <how the change follows from that ref> }
 ```
 
-- **player action with a recorded causal basis** — `ref` resolves to the posture record
-  (`_recordScenePosture`, hashed) whose action causes it;
-- **approved Fate outcome** — `ref` resolves to a compiled, accepted Tempt/Petition consequence, the
-  path already built and gated;
-- **another declared high-authority event** — `ref` resolves to an existing ledger record of sufficient
-  tier.
+**DECIDED (Roman, 2026-09-30): a player action is a sufficient basis on its own** — including for a
+named character's death, removal from office, or destruction. It does **not** require a Fate outcome or a
+higher authority.
 
-A tier-3 proposal with no `basis`, or whose `ref` does not resolve, is **rejected**.
+**But player intent is not an automatic outcome.** This is the whole safety property, and it is
+ordering, not gatekeeping by authority. For a protected change to happen, all of these must hold:
+
+1. the planner **explicitly proposes** the protected change — it is never inferred from the player's
+   words;
+2. it names the **recorded** player-action basis (`postureHash` from `_recordScenePosture`) and the
+   causal chain;
+3. it passes contradiction checks against hard canon and the scaffolds;
+4. it is **sealed before prose**.
+
+So a player typing *"I kill Julian"* commits nothing. The posture is an **input to a proposal**, never a
+directive. With no explicit proposal, the ledger is unchanged; and nothing may make the change merely
+because the prose described it. A tier-3 proposal with no `basis`, or whose `ref` does not resolve, is
+rejected.
 
 ### Tier classification is deterministic, not self-reported
 
-The planner declares a tier, but that declaration is **not trusted alone.** The runtime maintains a
-**protected register** — enumerable from the seed — and any proposal touching it is tier 3 regardless of
-what the planner claimed.
-
-For First Sacrifice the register is already enumerable from existing data: Lirael · Seren · the presiding
-Dohkar · Julian; the office ladder Dohkar → Profer → Chayr → Provast → First Dohkar
-(`app.js:16721-16726`); The Answer's ownership (the Institution) and entrustment (Julian); the twist's
-established history; the assembly.
+The planner declares a tier, but that declaration is **not trusted alone.** The runtime computes a
+**protected register**, and any proposal touching it is tier 3 regardless of what the planner claimed.
 
 **Self-declared tier 2 + detected protected touch = smuggling → reject.** That is the mechanically
 checkable form of "may not smuggle it in."
+
+### The protected register — a universal DERIVED policy, not a story roster
+
+**APPROVED as policy (Roman, 2026-09-30). It must not be a hardcoded First Sacrifice list.**
+
+Initialized **per story** from whatever establishes canon there, spanning five kinds:
+
+| Kind | Seeded story source | Original / Corridor story source |
+|---|---|---|
+| named characters | `STARTER_SEEDS[id].cast` | generated cast, PC/LI, `generated_cast`, relationship-ledger entities |
+| core groups / institutions | seed `collectives`, `worldTruths` | `cgScaffold.socialGeometry` / `worldPhysics`, `aPlot.antagonistOrAntiForce` |
+| office / title ladders | the culture's own ladder (for Fatelands, `app.js:16721-16726`) | whatever the scaffold establishes |
+| artifacts + ownership / entrustment | seed artifact facts (The Answer: Institution-owned, Julian-entrusted) | scaffold + ledger |
+| historical facts | seed `truths`, `STARTER_PLANS` history | accepted ledger records |
+
+**Plus the growth rule:** *every accepted tier-2 addition becomes protected for future scenes.* It may
+be **referenced** freely; any later **alteration** of it is tier 3.
+
+That closes the hole the policy would otherwise have: Aeryn's Reach could be introduced additively in
+one scene and silently redefined in the next. Once sealed, it is canon like any other canon.
+
+**Protection is DERIVED, not stored** — the same discipline as retirement and backgrounding:
+
+```
+protectedRegister(story) = established-canon entities (per the table above)
+                         ∪ { every entity named in an accepted ledger record }
+```
+
+A stored register would need a write at seal time, and a missed write is a window in which a brand-new
+institution is unprotected. Deriving it means a tier-2 addition is protected **the instant it seals**,
+with no separate registration step that could be forgotten or fail. The asymmetry is what makes it work:
+*not in the register* → may be added additively; *in the register* → alteration is tier 3. So a thing can
+be created once and never silently changed after.
 
 ### The catastrophe example
 
@@ -122,11 +159,25 @@ the clause, a repair path, fail-closed rejection, and re-scoring saved history w
    `future_relevance`: what pressure it will exert later. An addition with none is **rejected**. This is
    not a cap — it is a relevance requirement, and it naturally prevents scenery from entering the
    ledger.
-2. **Unreferenced minor additions are backgrounded, never deleted.** The author receives a **foreground
-   projection** of canon. A record not referenced recently and not cited by an open pressure is omitted
-   from author context while remaining in the ledger, retrievable the moment it is referenced again.
-   **Backgrounding is derived, not a stored flag** — the same reason catalogue retirement was derived:
-   a flag leaves a window and can drift from the ledger.
+2. **Unreferenced additions are backgrounded, never deleted.** The author receives a **foreground
+   projection** of canon.
+
+   **DECIDED (Roman, 2026-09-30) — foreground only what is active now.** A record is foregrounded when
+   it is any of:
+
+   - part of the **current player action**;
+   - part of the **selected continuation**;
+   - an **unresolved pressure**;
+   - an **active issue or story post**;
+   - **referenced in either of the last two accepted scenes** (accepted, not merely generated — a
+     rejected scene's references do not count).
+
+   Everything else is backgrounded into reproducible summaries. **Backgrounding is derived, not a stored
+   flag** — a flag leaves a window and can drift from the ledger.
+
+   **Backgrounded is not less protected.** This is projection only: no record is deleted, weakened, or
+   removed from the protected register. Altering a backgrounded record is still tier 3. That closes the
+   obvious attack — let a fact fall out of the window, then redefine it as though it were new.
 3. **Aggregation and summarization are projections, never rewrites.** A summary is a computed view over
    the append-only ledger. It is never written back, and it never replaces the records it summarizes.
    The ledger stays authoritative; every projection is reproducible from it.
@@ -195,17 +246,50 @@ The two S3 cells previously flagged as needing a canon call are **resolved by th
 longer ask whether an ally or counterparty was predeclared, but whether the planner can propose a fresh
 canon-compatible pressure. That is testable without settling the canon question.
 
-## 6. What still needs Roman
+## 6. Provider-free proofs for the three decisions
 
-1. **Approve the protected register** — the enumerated list of tier-3-protected characters, offices,
-   titles, entrustments, history and institutions. Bounded and enumerable, unlike the open canon
-   questions it replaces, but it is the policy's load-bearing input and it is authored canon.
-2. **Backgrounding threshold** — what "not referenced recently" means. A projection parameter, not a
-   canon rule.
-3. **Tier-3 basis sufficiency** — whether a player action alone may ever justify killing a named
-   character, or whether that always requires a Fate outcome or higher-authority event.
+Each shown RED first.
 
-Unchanged prerequisites: narrative-index separation before anything universal; quality remains unproven
-until the corpus is run.
+**A — a dynamic tier-2 institution becomes protected.**
+
+1. seal a tier-2 addition (a new institution, declared as new, with a `future_relevance`);
+2. a later proposal that **alters** it — disbands it, or asserts it never held jurisdiction — is
+   classified **tier 3** and rejected without a resolvable basis;
+3. the same proposal *referencing* it without alteration is admitted;
+4. **structural leg:** assert protection required **no register-mutation write** — the seal path contains
+   no register update, because the register is derived (§2). This is what proves there is no window in
+   which the new institution was unprotected.
+
+**B — a player-action tier-3 proposal is explicitly sealed before prose.**
+
+1. a player posture that *could* justify a protected change, with **no proposal**: assert the ledger is
+   **unchanged** — intent is not outcome;
+2. an explicit tier-3 proposal citing that `postureHash`, passing contradiction checks: assert a record
+   is sealed **before the author dispatch**, and that the author payload carries it as already-true;
+3. the same proposal with a **missing or unresolvable** `basis.ref`: rejected;
+4. prose describing the death/removal with **no sealed proposal**: assert the ledger is **unchanged** —
+   prose cannot add a record after the fact.
+
+Legs 1 and 4 are the bites: *intent ≠ outcome* and *prose ≠ record*.
+
+**C — a backgrounded record returns intact.**
+
+1. seal a record, then let it fall outside the §3 window;
+2. assert it is **absent from the author foreground projection**;
+3. assert it is **present in the ledger** and **still protected** — altering it is still tier 3;
+4. make it relevant again (reference it in a selected continuation) and assert it returns to the
+   foreground **byte-identical** — no lossy round-trip through the summary.
+
+Leg 4 is the guard that summarization is a projection and not a rewrite.
+
+## 7. What still needs Roman
+
+All three policy questions are now **decided** (§2 register, §2 tier-3 basis, §3 backgrounding). What
+remains:
+
+1. **Per-story derivation sources** — the §2 table is my reading of what establishes canon in each story
+   shape. The original/Corridor column especially is inference from the scaffolds and deserves a check.
+2. **Narrative-index separation** — unchanged prerequisite before anything universal.
+3. **Quality remains unproven** until the revised corpus (§5) is run, which needs its own authorization.
 
 No code, no provider call, no authorization requested.
