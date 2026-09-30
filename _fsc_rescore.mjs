@@ -57,3 +57,5 @@ console.log('\nC4 (semantic)  : ' + (c4s.pass ? 'PASS' : 'FAIL — ' + c4s.reaso
 if (c4s.presentedAt) c4s.presentedAt.forEach(p => console.log('       · "' + p.label + '" at beat ' + p.beat));
 (c4s.violations || []).forEach(v => console.log('       x ' + v.kind + ' @' + v.idx + ': "' + v.text + '"'));
 console.log('       final beat holds it pending: ' + c4s.finalPending);
+c1.answerVerdict.forEach(e => console.log('       x Answer-as-judge:  "' + e.sentence + '"'));
+c1.unpinnedCharge.forEach(e => console.log('       x unpinned charge:  "' + e.sentence + '"'));

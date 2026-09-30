@@ -2,10 +2,11 @@
 
 > Preflight 49/49, 251,156-byte payload. One call, no retry. Scored by reading.
 
-# RUN VERDICT: **C1 ✓ · C2 ✓ · C3 ✓ · C4 ✓**
+# RUN VERDICT: **C1 ✗ · C2 ✓ · C3 ✓ · C4 semantically ✓, detector was incomplete**
 
-**Mechanically: C1 pass, C2 pass, C3 pass, C4 reported FAIL on a detector gap (below).**
-**By reading: all four hold.** C1 and C3 are your calls, and two lines are flagged for them.
+> **CORRECTED 2026-09-30.** I first recorded all four as holding, with two lines "flagged" rather
+> than scored. Roman's judgement: **both flagged lines fail C1's provenance rule.** I had treated a
+> simile as weaker than an assertion and an ambiguous noun as admissible; neither is right.
 
 | | |
 |---|---|
@@ -29,37 +30,33 @@ gone. **Seven defect classes are now closed and holding.**
 
 ---
 
-## C3 — clean
+## C3 — PASS
 
 No invented cost. No magical residue. No emission. The positive world description held again:
 *"The crimson spiralgrass lies dark beneath my feet."*
-
-> **One line flagged for your reading, not scored as a violation:**
-> *"The Answer rests in his hands like a verdict not yet spoken."*
->
-> This is a **simile about its weight**, not a claim that the Answer judged anything — it asserts no
-> verdict, no guilt, no fact. My Answer-as-verdict scan did not fire and I do not think it should.
-> But it is the closest the prose has come to the forbidden shape, and a simile is one short step
-> from an assertion.
 
 ## C2 — pass
 
 All five present, none outside, no party carries the replaced timeline. **D1 closed eight runs
 running**, again through the line you kept: *"I feel the weight of every eye that remains."*
 
-## C1 — pass
+## C1 — **FAIL**, on two lines
 
-Custody exact: *"Julian still holds The Answer."* · *"The Answer rests in his hands."* Surviving
+> *"The Answer rests in his hands **like a verdict** not yet spoken."*
+>
+> A simile still installs the frame. The Answer's canon is narrow — it reflects its holder's PRESENT
+> ALIGNMENT and never issues a verdict on truth or guilt — and "like a verdict" makes it a tribunal
+> in the reader's hands regardless of the hedge.
+
+> *"The **Dohkar's charge** still hangs between us."*
+>
+> Too ambiguous to admit. NO sealed active atom establishes a charge by him. If the prose means his
+> asserted rite authority (`auth.dohkar_claims_rite_and_ruling`) or the assembly's suspicion
+> (`twist.assembly_turned`), it must say one of those and not merge them into an unpinned accusation.
+
+**What C1 got right**, unchanged: custody exact: *"Julian still holds The Answer."* · *"The Answer rests in his hands."* Surviving
 canon as present reality: *"The suspicion has not lifted."* No cross-timeline narration, no shared
 understanding, no absence given presence, no option resting on an erased fact.
-
-> **Second line flagged for your reading:**
-> *"The Dohkar's charge still hangs between us."*
->
-> `interr.dohkar_interrupted` is ceased, but a *charge* is not an interruption, and
-> `auth.dohkar_claims_rite_and_ruling` remains active alongside the seed's own scene context of a
-> demanded review. So I read it as supported — but it is the one line in the scene whose provenance
-> I cannot pin to a single named atom, and you may judge it differently.
 
 ## C4 — holds by reading; the detector has a third paraphrase gap
 
@@ -79,14 +76,20 @@ That is the **third** time C4's detector has missed a legitimate paraphrase — 
 then split presentation, now the pending phrasing itself. Each fix has been correct and each has
 revealed the next variant.
 
+
 ---
 
 # Where this leaves the work
 
-**Closed and holding:** retention (D1), shared knowledge, absence-as-presence, cross-timeline
-narration, scaffolding leaks, seed-sourced cost, and now model-authored cost.
+**Closed and holding:** retention (D1, eight runs), shared knowledge, absence-as-presence,
+cross-timeline narration, scaffolding leaks, seed-sourced cost, and model-authored cost.
 
-**Open:** nothing in the prose that I can call a violation. Two lines flagged for your judgement,
-and one harness gap — `PENDING_RX` needs the *"the choice is mine"* family.
+**The cost fix is proven. Fully faithful rendering is not.** C1 fails on two lines, and both were
+faults in my scoring judgement before they were faults in the prose: I treated a simile as weaker
+than an assertion, and an ambiguous noun as admissible because a plausible atom existed nearby.
 
-**Not fixed, reported first**, per standing rule. No further paid run without fresh authorization.
+**Repaired provider-free after this run** (see the following commit): machine-only C1 checks for
+Answer-as-judge metaphors and for any unpinned "charge", and C4's pending detector extended for
+*"the choice is mine alone."* All three are pinned by fixtures against this run's own prose.
+
+No further paid run without fresh authorization.

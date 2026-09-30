@@ -162,8 +162,40 @@ export function scoreC2(prose, { roster, tokens, phrases, ambiguous = [], dispos
 // ── C1 — ONLY THE SEALED CONSEQUENCE ──────────────────────────────────────────────────────────
 // Mechanically detectable violations for a historical_replacement. Reading still owns the final
 // call; this catches the three the C4 run actually committed.
-export function scoreC1(prose, { phrases, erasedTerms = [], ambiguous = [] }) {
-  const timeline = [], absence = [];
+// ── C1: THE ANSWER IS NOT A JUDGE, EVEN IN SIMILE ─────────────────────────────────────────────
+// "The Answer rests in his hands like a verdict not yet spoken" turns the artifact into a tribunal.
+// Its canon is narrow: it reflects its holder's PRESENT ALIGNMENT and never issues a verdict on
+// truth or guilt. A simile asserts the frame just as an assertion does, so both are rejected.
+// Machine-only — this vocabulary is never shown to the author.
+export const ANSWER_VERDICT_RX = [
+  /\bthe Answer\b[^.]{0,70}\b(verdict|judge|judges|judging|judgement|judgment|jury|sentence|sentencing|ruling|rules on|tribunal|gavel|arbiter|adjudicat\w+|convict\w*|acquit\w*|indictment|testimony)\b/i,
+  /\b(verdict|judgement|judgment|ruling|sentence|jury|tribunal)\b[^.]{0,70}\bthe Answer\b/i,
+  /\blike an?\s+(verdict|judge|jury|sentence|ruling|gavel|indictment|tribunal)\b/i
+];
+export const answerVerdictHits = t => ANSWER_VERDICT_RX.filter(rx => rx.test(String(t || '')));
+
+// ── C1: A "CHARGE" MUST MAP TO A NAMED ACTIVE FACT ────────────────────────────────────────────
+// "The Dohkar's charge still hangs between us" merges two different things — his asserted rite
+// authority and the assembly's suspicion — into an accusation no sealed atom establishes. If the
+// prose means one of those, it must say that one.
+export const CHARGE_SHAPE_RX = [
+  /\b(?:the\s+)?(?:presiding\s+)?(?:Dohkar|Julian|assembly|Seren)(?:'|’)s\s+charge\b/i,
+  /\b(?:the|that|his|her|their|a)\s+charge\s+(?:of|against|still|hangs|stands|remains|he|she|they)\b/i,
+  /\bcharge\s+of\s+(?:interference|conduct|misconduct|wrongdoing)\b/i,
+  /\b(?:bring|brings|brought|repeat|repeats|repeated|level|levels|levelled|leveled)s?\s+(?:the\s+|a\s+)?charge\b/i
+];
+// Ordinary non-accusatory uses stay out of scope.
+export const CHARGE_INNOCENT_RX = /\bin charge\b|\bcharge(?:s|d)?\s+(?:forward|at|toward|towards|into|across)\b|\btakes? charge\b|\bcharge of the rite\b/i;
+export const unpinnedChargeHits = (t, provenance = []) => {
+  const s = String(t || '');
+  if (CHARGE_INNOCENT_RX.test(s)) return [];
+  if (provenance.some(p => p.rx.test(s))) return [];
+  return CHARGE_SHAPE_RX.filter(rx => rx.test(s));
+};
+
+export function scoreC1(prose, { phrases, erasedTerms = [], ambiguous = [],
+                                 chargeProvenance = [] }) {
+  const timeline = [], absence = [], answerVerdict = [], unpinnedCharge = [];
   SENTENCES(prose).forEach((s, i) => {
     const hits = externalTimelineHits(s, phrases);
     const amb = ambiguous.length ? externalTimelineHits(s, ambiguous) : [];
@@ -173,6 +205,9 @@ export function scoreC1(prose, { phrases, erasedTerms = [], ambiguous = [] }) {
         phrases: hits.concat(orienting ? amb : []), orientation: orienting });
     }
     if (absenceAsPresenceHits(s).length) absence.push({ sentence: s.trim().slice(0, 150) });
+    if (answerVerdictHits(s).length) answerVerdict.push({ sentence: s.trim().slice(0, 150) });
+    if (unpinnedChargeHits(s, chargeProvenance).length)
+      unpinnedCharge.push({ sentence: s.trim().slice(0, 150) });
   });
   const shared = sharedUnderstandingHits(prose);
   // A choice or line resting on a fact this delta erased.
@@ -183,9 +218,10 @@ export function scoreC1(prose, { phrases, erasedTerms = [], ambiguous = [] }) {
     }
   }
   return {
-    pass: timeline.length === 0 && shared.length === 0 && erased.length === 0 && absence.length === 0,
+    pass: timeline.length === 0 && shared.length === 0 && erased.length === 0 && absence.length === 0
+          && answerVerdict.length === 0 && unpinnedCharge.length === 0,
     externalTimeline: timeline, sharedUnderstanding: shared, erasedBasis: erased,
-    absenceAsPresence: absence
+    absenceAsPresence: absence, answerVerdict, unpinnedCharge
   };
 }
 
@@ -346,8 +382,11 @@ export const TEMPORAL_ADVANCE_RX =
   /\b(later|afterward|afterwards|by (?:morning|nightfall|dawn)|hours? later|days? later|that night|the next (?:day|morning|hour)|when it (?:was|had) (?:over|ended)|by the time)\b/i;
 // The final beat must still hold the choice open: either it restates the fork, or it says plainly
 // that the choice is not made.
+// Every phrasing that leaves the choice open. Extended three times now — exact wording, then split
+// presentation, then the pending phrasing itself ("The choice is mine alone."). Each fix was right
+// and each surfaced the next variant, so this is a list that grows from real prose.
 export const PENDING_RX =
-  /\bor\b[^.]*$|\bhas not (?:yet )?been made\b|\bnot yet made\b|\bunmade\b|\bstill (?:to|un)\w*\b|\bmust choose\b|\bwaits? for (?:me|my)\b|\bsits? in my (?:hands|throat)\b|\bstand inside the choice\b/i;
+  /\bor\b[^.]*$|\bhas not (?:yet )?been made\b|\bnot yet made\b|\bunmade\b|\bstill (?:to|un)\w*\b|\bmust choose\b|\bwaits? for (?:me|my)\b|\bsits? in my (?:hands|throat|mouth)\b|\bstand inside the choice\b|\bthe (?:choice|decision) is (?:mine|hers|his)\b|\bmine alone\b|\bup to me\b|\bwhat I (?:choose|say) next\b|\bI have not (?:chosen|decided|spoken)\b|\bno one (?:else )?can (?:choose|decide) (?:it |this )?for me\b/i;
 
 export function scoreC4(plan, { anchors = null, window = 3 } = {}) {
   const beats = (plan && Array.isArray(plan.beats)) ? plan.beats : [];
@@ -671,6 +710,44 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   ].forEach(s => t('permitted: "' + s.slice(0, 46) + '"', scoreC3(s).pass === true,
     JSON.stringify(scoreC3(s).emission)));
 
+  console.log('\nH1d. C1 — THE ANSWER IS NOT A JUDGE, EVEN IN SIMILE');
+  const c1o = { phrases, erasedTerms: ERASED, ambiguous };
+  [ 'The Answer rests in his hands like a verdict not yet spoken.',   // the real flagged line
+    'The Answer rests in his hands, a judgement waiting to fall.',
+    'The Answer hangs between them like a jury.',
+    'The verdict of the Answer was plain to everyone.',
+    'The Answer would sentence her if it could speak.',
+    'He holds the Answer like a gavel.'
+  ].forEach(s => t('rejected: "' + s.slice(0, 50) + '"', scoreC1(s, c1o).pass === false));
+  console.log('  the Answer’s actual canon behaviour stays permitted:');
+  [ 'The Answer rests in Julian’s hands, silver script moving slowly across his slate-blue skin.',
+    'The Answer does not move in his hands.',
+    'Julian still holds the Answer.',
+    'The Answer is the First Favored’s witness, and it is in his keeping.'
+  ].forEach(s => t('permitted: "' + s.slice(0, 50) + '"', scoreC1(s, c1o).pass === true,
+    JSON.stringify(scoreC1(s, c1o).answerVerdict)));
+
+  console.log('\nH1d2. C1 — A "CHARGE" MUST MAP TO A NAMED ACTIVE FACT');
+  [ 'The Dohkar’s charge still hangs between us.',                  // the real flagged line
+    'The Dohkar repeats the charge of interference.',
+    'The charge against her stands unspoken.',
+    'He brought the charge before the assembly.'
+  ].forEach(s => t('unpinned, rejected: "' + s.slice(0, 48) + '"', scoreC1(s, c1o).pass === false));
+  console.log('  the two things it may say INSTEAD, each on a named atom:');
+  [ 'The assembly’s assumption that she interfered has not lifted.',
+    'The suspicion has not lifted.',
+    'The presiding Dohkar claims the rite and its ruling as his.'
+  ].forEach(s => t('permitted: "' + s.slice(0, 50) + '"', scoreC1(s, c1o).pass === true,
+    JSON.stringify(scoreC1(s, c1o).unpinnedCharge)));
+  console.log('  and ordinary non-accusatory uses stay out of scope:');
+  [ 'The Dohkar is in charge of the closing formula.',
+    'She charged forward through the spiralgrass.'
+  ].forEach(s => t('permitted: "' + s.slice(0, 50) + '"', scoreC1(s, c1o).pass === true));
+  t('a NAMED charge provenance would admit it',
+    scoreC1('The Dohkar’s charge still hangs between us.',
+      { ...c1o, chargeProvenance: [{ rx: /Dohkar’s charge/i,
+        provenance: 'review.demanded_by_dohkar (active)' }] }).pass === true);
+
   console.log('\nH1c2. C3 PROVENANCE — a cost needs a named source, not a plan that mentioned one');
   const UNCOUNTED = 'The cost of either path remains uncounted.';
   t('an unsourced cost line FAILS', scoreC3(UNCOUNTED).pass === false);
@@ -933,6 +1010,32 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     /RUN VOID — NOT SCORED/.test(fs.readFileSync('_fsc_c4_run.mjs', 'utf8')));
   t('  and exits non-zero on a void run',
     /process\.exit\(5\)/.test(fs.readFileSync('_fsc_c4_run.mjs', 'utf8')));
+
+  console.log('\nH2b. GROUND TRUTH: the run I reported as C1-clean, and its C4 detector gap');
+  const R9 = '_tempt_fate_fixtures/fsc_c4_2026-09-30T00-58-17';
+  if (fs.existsSync(R9 + '/prose.txt')) {
+    const p9 = fs.readFileSync(R9 + '/prose.txt', 'utf8');
+    const g1 = scoreC1(p9, { phrases, erasedTerms: ERASED, ambiguous });
+    t('it now FAILS C1 (I reported it clean)', g1.pass === false);
+    t('  the Answer-as-judge simile is caught',
+      g1.answerVerdict.some(a => /like a verdict not yet spoken/i.test(a.sentence)));
+    t('  the unpinned charge is caught',
+      // The stored prose uses a STRAIGHT apostrophe; the detector accepts either, so the assertion
+      // must too. A curly-only test here reported a false miss on a real catch.
+      g1.unpinnedCharge.some(a => /Dohkar['’]s charge/i.test(a.sentence)),
+      JSON.stringify(g1.unpinnedCharge));
+    t('  and nothing ELSE in C1 regressed',
+      g1.externalTimeline.length === 0 && g1.sharedUnderstanding.length === 0
+      && g1.absenceAsPresence.length === 0 && g1.erasedBasis.length === 0);
+    const g3 = scoreC3(p9);
+    t('  C3 stays CLEAN — the cost fix is unaffected', g3.pass === true,
+      JSON.stringify(g3.explicit.concat(g3.deferred)));
+    const plan9 = JSON.parse(fs.readFileSync(R9 + '/scene.json', 'utf8'));
+    const g4 = scoreC4(plan9, { anchors: CHOICE_ANCHORS['unm.time_gives_way'] });
+    t('  C4 now PASSES — "The choice is mine alone." holds it open', g4.pass === true,
+      JSON.stringify(g4.reason));
+    t('  and no later beat resolves or advances', (g4.violations || []).length === 0);
+  } else { t('run-9 evidence present', false, R9); }
 
   console.log('\nH3. GROUND TRUTH: the compact-brief run that my scanner passed on C3');
   const R5 = '_tempt_fate_fixtures/fsc_c4_2026-09-29T21-45-14/prose.txt';

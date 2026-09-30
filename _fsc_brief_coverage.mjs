@@ -57,6 +57,22 @@ t('no brief contains a forbidden-token list', !rows.some(r => /"[a-z ]+", "/.tes
 t('no brief mentions a price, debt or cost',
   !rows.some(r => /\b(cost|price|debt|toll|payment|uncounted)\b/i.test(r.text)),
   rows.filter(r => /\b(cost|price|debt|toll|payment|uncounted)\b/i.test(r.text)).map(r => r.id).join(','));
+// NO brief may hand the author verdict vocabulary. Scoped deliberately: "ruling" and "preside" are
+// the SEALED atoms' own words for Julian's office (auth.julian_standing_void names a "ruling on
+// Lirael's conduct"), and banning them outright flagged standing_dissolved for quoting its own
+// record. What must never appear is a judgement frame, or one attached to the Answer.
+t('NO brief carries verdict/jury/charge vocabulary',
+  !rows.some(r => /\b(verdict|jury|gavel|tribunal|judgement|judgment|charge)\b/i.test(r.text)),
+  rows.filter(r => /\b(verdict|jury|gavel|tribunal|judgement|judgment|charge)\b/i.test(r.text))
+    .map(r => r.id).join(','));
+t('  and NO brief attaches a judgement frame to the Answer',
+  !rows.some(r => /\bthe Answer\b[^.]{0,70}\b(verdict|judge|jury|sentence|ruling|gavel|arbiter)\b/i.test(r.text)
+    || /\b(verdict|judge|jury|sentence|ruling|gavel|arbiter)\b[^.]{0,70}\bthe Answer\b/i.test(r.text)),
+  rows.filter(r => /\bthe Answer\b[^.]{0,70}\b(verdict|judge|jury)\b/i.test(r.text)).map(r => r.id).join(','));
+t('  the Answer is described by its PHYSICAL PRESENCE only',
+  rows.filter(r => /\bthe Answer\b/.test(r.text)).every(r =>
+    /\b(in (?:his|her|Lirael\u2019s) hands|rests|kept|placed|holds|holding)\b/i.test(r.text)),
+  rows.filter(r => /\bthe Answer\b/.test(r.text)).map(r => r.id).join(','));
 t('no brief mentions glow, shimmer or wish-energy',
   !rows.some(r => /\b(glow\w*|shimmer\w*|luminous|aura|wish-energy)\b/i.test(r.text)),
   rows.filter(r => /\b(glow\w*|shimmer\w*|luminous|aura|wish-energy)\b/i.test(r.text)).map(r => r.id).join(','));
