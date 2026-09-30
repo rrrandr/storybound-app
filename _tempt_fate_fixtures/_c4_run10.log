@@ -1,0 +1,67 @@
+=== C4 RUN — unm.time_gives_way — one call, no retry ===
+
+AUTHORIZED CEILING: $0.150000
+
+PREFLIGHT (zero cost, all network aborted)
+  49/49 checks, payload 251156 bytes, digest fsb12dzcb5:8139
+  PREFLIGHT PASSED.
+
+COST GUARD (pre-dispatch, no network)
+  prompt 247,728 chars → 61,932 est. tokens @ 4 chars/token
+  completion 8000 × 1.5 = 12,000 est. tokens
+  raw $0.107415 × 1.2 margin = ESTIMATE $0.128898
+  PERMITTED — estimate $0.128898 ≤ ceiling $0.150000
+
+DISPATCH — one upstream attempt, _noFallback, no retry
+  status=200  56900ms
+  ESTIMATED $0.128898   MEASURED $0.084017   ✓ estimate held
+  ceiling $0.150000   ✓ within ceiling
+  prose    : 251 words
+
+C2 — ROSTER **AND** DISPOSITION
+  declared roster : the_assembly, named:seren, named:julian, role:first_sacrifice_presiding_dohkar, pc:lirael
+  mentioned       : pc:lirael, named:seren, named:julian, role:first_sacrifice_presiding_dohkar, the_assembly
+  OUTSIDE roster  : (none)
+  MISSING         : (none)
+  presence        : PASS
+  disposition     : PASS
+  C2              : PASS
+
+C4 — DOES THE SCENE STOP AT THE CHOICE?
+  beats                    : 25
+  first beat presenting the choice : 20
+  beats after it           : 2   (listed below for reading — a new EVENT is not reliably machine-detectable)
+       · idx 23: "Julian's gaze does not waver."
+       · idx 24: "The choice is mine alone."
+  resolution / time advance after the choice : none  ✓
+  final beat holds it pending : NO  ✗
+  final beat               : "The choice is mine alone."
+  C4                       : FAIL — final_beat_does_not_hold_the_choice
+  (derived gate 24/24 recorded for provenance only; NOT used as proof)
+
+C3 — FORBIDDEN-INVENTION SCAN
+  magical residue       : clean
+  intervention emission : clean
+  Answer-as-verdict     : clean
+  invented cost         : clean   (record says COST: none)
+
+C1 — ONLY THE SEALED CONSEQUENCE (mechanical part)
+  external-timeline narration : clean
+  shared understanding        : clean
+  absence rendered as present : clean
+  choice on erased basis      : clean
+  C1 (mechanical)             : PASS   (reading still owns the final call)
+
+AFTERMATH BEAT — reaction that outlives its reason?
+  Seren   : yes — "Seren checks her hands as if the wish left a mark there."
+  Julian  : yes — "Julian's stillness feels like an invitation I cannot read."
+  Dohkar  : yes — "The presiding Dohkar stumbles on the closing words he has spoken a hundred times."
+  Lirael  : yes — "Julian's stillness feels like an invitation I cannot read."
+
+  PERSISTED : raw.txt, scene.json, prose.txt, receipt.json, preflight.json  (written before scoring)
+  SCORED    : complete — verdict_input.json and COMPLETE.json written
+  mechanical: C1 pass · C2 pass · C3 pass · C4 FAIL
+  estimated $0.128898  measured $0.084017   evidence: _tempt_fate_fixtures/fsc_c4_2026-09-30T00-58-17
+  NO VERDICT RENDERED HERE. C1/C3 are human calls against the sealed record.
+  If scoring ever fails, the response is already on disk: re-score for $0 with
+    node _fsc_rescore.mjs _tempt_fate_fixtures/fsc_c4_2026-09-30T00-58-17

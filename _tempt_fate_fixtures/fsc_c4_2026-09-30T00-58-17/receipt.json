@@ -1,0 +1,9 @@
+{
+  "status": 200,
+  "ms": 56900,
+  "err": null,
+  "model": "grok-4-1-fast-reasoning",
+  "authorized": 0.15,
+  "estimate": 0.128898,
+  "at": "2026-09-30T00:59:30.031Z"
+}
