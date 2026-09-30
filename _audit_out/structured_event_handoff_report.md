@@ -104,4 +104,63 @@ Point 4 is the real reason to prioritise it: the referential-integrity repair gu
 fact is *exactly what was proposed*, but not that the prose *rendered* it. That remaining gap is a
 delivery-accuracy question, and the free evaluation above measures it.
 
+---
+
+## 6. CORRECTION: the "free half" is not free, and cannot be run on existing data
+
+Asked to run the free evaluation after closing the tableau leak, I checked what it would actually
+need — and §4's claim that the verifier half is free **is wrong.**
+
+**Why it is not free.** The slot-evidence check *is* an LLM call. "Run the slot-evidence check against
+saved prose" therefore means running the verifier — paid, once per pair. The existing suite makes that
+explicit: `_verifier_regression.mjs` hits `/api/chatgpt-proxy` for ~18 classification calls. Cheap, but
+not free, and not authorized.
+
+**Why the fallback does not exist either.** A genuinely free analysis would compare *already-recorded*
+verdicts against the prose they judged. That corpus is not on disk:
+
+- `_scene2_repair_replay_sample_out/run_1789884119160.jsonl` — **0** occurrences of the verifier's own
+  system prompt ("RUNTIME COMMIT verifier"); it captured the body-bible and scene-spine stages, not a
+  commit verification;
+- only **2** occurrences of `event_slots`/`exit_state` across that recording — a data point, not a
+  corpus;
+- `[VERIFIER-INPUT]` instrumentation exists (`app.js:99866`) and appears **once** in one saved console
+  log — and it deliberately records only a 70-char head and tail, which is far too little for a blind
+  read of whether an event landed.
+
+So there is nothing to score. **I am not running it, and not spending to run it.**
+
+### What IS genuinely free, and worth more than I first credited
+
+A **deterministic false-positive detector**, needing no model at all. The verifier's own contract
+requires every evidence value to be a *verbatim substring of the prose*. So for any (slots, prose) pair:
+if the prose does not literally contain the named actor or target, a `DELIVERED` verdict is **provably**
+a false positive — decidable by string search.
+
+That matters more than a sampled accuracy figure, because false positives are the asymmetric harm: a
+false `DELIVERED` activates a sealed fact the prose never rendered, and committed state is downstream
+authority for every later scene. It is also the exact gap the referential-integrity repair
+(`10ceb44c`) does **not** close — that repair guarantees a committed fact is precisely what was
+proposed, never that the prose delivered it.
+
+Two forms, and the second is the interesting one:
+
+1. **As a harness** — provider-free, runnable now, but only over the two saved pairs that exist. Near
+   worthless as measurement.
+2. **As a production pre-check on the commit gate** — a deterministic guard that refuses `DELIVERED`
+   when the actor or target is literally absent from the prose. Free at runtime, no model, and it
+   strictly narrows false positives. This is adjacent to the shipped repair and **its own decision**
+   ([[feedback_adjacent_defect_is_separate_decision]]) — it changes commit-gate behaviour, so it is not
+   being slipped in here.
+
+### What I would need from you
+
+- either **authorization with a ceiling** to run the paid verifier-accuracy evaluation — `_verifier_regression.mjs`
+  as it stands (~18 calls) for the labelled-mode baseline, plus optionally a small corpus generated for
+  the purpose;
+- or **a decision on form 2 above**, which gets the asymmetric half of the benefit for nothing.
+
+Reporting false positives separately from false negatives remains the right output shape whenever it is
+run. The recommendation in §5 is unchanged: `_structuredEventHandoff` stays off.
+
 No code, no provider call, no authorization requested. Flag unchanged.
