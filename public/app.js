@@ -342348,19 +342348,31 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
     try { built = _fscBuildRepairBrief(rejectedPlan); } catch (e) { return { ok: false, reason: 'brief_threw: ' + (e && e.message) }; }
     if (!built) return { ok: false, reason: 'no_repairable_beats' };
 
-    var res = null;
+    // EXACTLY ONE UPSTREAM ATTEMPT (Roman 2026-09-30). This used _authorFullScenePolicy, which is a
+    // THREE-TIER fallback chain (grok → ministral → gpt-4o) — so one logical repair could have
+    // become three paid calls, breaking both the one-call guarantee and the single reserved share.
+    // A direct dispatch with _noFallback reduces the chain to one entry, exactly as the scene path
+    // does. The repair is small and bounded; it does not need the resilience chain.
+    var raw = '';
     try {
-      res = await window._authorFullScenePolicy(built.sys, built.usr, {
-        maxTokens: 600, temperature: 0.3, roleTag: 'fate-revision',
-        grokModel: 'grok-4-1-fast-reasoning' });
+      var resp = await fetch('/api/proxy', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ role: 'STRUCTURE_GENERATOR',
+          preferredModel: 'grok-4-1-fast-reasoning', _noFallback: true, roleTag: 'fate-revision',
+          messages: [{ role: 'system', content: built.sys }, { role: 'user', content: built.usr }],
+          max_tokens: 600, temperature: 0.3 })
+      });
+      if (!resp.ok) return { ok: false, reason: 'revision_http_' + resp.status };
+      var data = await resp.json();
+      try {
+        if (typeof _recordProxyTextCost === 'function')
+          _recordProxyTextCost(data, 'grok-4-1-fast-reasoning', 'fate-revision');
+      } catch (_) {}
+      raw = (data && data.choices && data.choices[0] && data.choices[0].message
+        && data.choices[0].message.content) || (data && data.content) || '';
     } catch (e) { return { ok: false, reason: 'revision_call_failed: ' + (e && e.message) }; }
-    try {
-      if (typeof _recordProxyTextCost === 'function')
-        _recordProxyTextCost({ usage: res && res.usage, _orchestration: { model: res && res.model } },
-          res && res.model, 'fate-revision');
-    } catch (_) {}
 
-    var raw = String((res && res.text) || '').replace(/```json?/gi, '').replace(/```/g, '').trim();
+    raw = String(raw).replace(/```json?/gi, '').replace(/```/g, '').trim();
     var edits = null;
     try { edits = JSON.parse(raw); } catch (_) {
       var m = raw.match(/\[[\s\S]*\]/); if (m) { try { edits = JSON.parse(m[0]); } catch (_2) {} }

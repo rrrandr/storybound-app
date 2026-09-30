@@ -35,7 +35,14 @@ const src = fs.readFileSync('public/app.js', 'utf8');
 t('the writer supplies the replacement text, not local code',
   /THE WRITER supplies the\s*\/\/ replacement text/.test(src) || /THE WRITER returns the replacement/.test(src));
 t('the recovery is a model call, not a string substitution',
-  /_authorFullScenePolicy\(built\.sys, built\.usr/.test(src));
+  /content: built\.sys/.test(src) && /content: built\.usr/.test(src)
+  && /fetch\('\/api\/proxy'/.test(src));
+// _authorFullScenePolicy is a THREE-TIER chain (grok → ministral → gpt-4o), so using it would have
+// let one logical repair become three paid calls. The repair dispatches directly instead.
+t('  and it does NOT go through the multi-tier policy chain',
+  !/_authorFullScenePolicy\(built\.sys/.test(src));
+t('  it reduces the chain to one entry with _noFallback',
+  /_noFallback: true, roleTag: 'fate-revision'/.test(src));
 t('the splice is restricted to flagged indices', /if \(i < 0 \|\| !allowed\[i\]/.test(src));
 t('the repaired plan is re-checked by the SAME gate',
   /window\._fscAcceptProse\(next, sceneIndex\)/.test(src));
@@ -96,9 +103,23 @@ console.log('\nD. ONE call, splice bounded, gate re-checked');
 const run = await page.evaluate(async (b) => {
   const plan = { beats: b.map((x, i) => ({ idx: i, text: x })), visualState: {}, panels: [] };
   const out = {};
-  // Stub the writer. Provider-free: this is the only thing standing in for the model.
-  const mk = (fn) => { window.__revCalls = 0; window._authorFullScenePolicy = async (s, u, o) => {
-    window.__revCalls++; return { text: fn(s, u), model: 'stub', usage: null, provider: 'stub' }; }; };
+  // Stub the writer at the FETCH boundary. The revision now dispatches directly with _noFallback
+  // rather than through the three-tier policy chain, so the stub must sit where the request is
+  // actually made — and this also verifies the request carries _noFallback.
+  const realFetch = window.fetch;
+  const mk = (fn) => {
+    window.__revCalls = 0; window.__revNoFallback = null; window.__revRoleTag = null;
+    window.fetch = async (url, init) => {
+      if (String(url).indexOf('/api/proxy') < 0) return realFetch(url, init);
+      window.__revCalls++;
+      let b = {}; try { b = JSON.parse(init.body); } catch (_) {}
+      window.__revNoFallback = b._noFallback === true;
+      window.__revRoleTag = b.roleTag || null;
+      const content = fn(b);
+      return { ok: true, status: 200, json: async () => ({
+        choices: [{ message: { content } }], usage: null }) };
+    };
+  };
 
   // D1 — a GOOD repair: both lines fixed in canon-safe language.
   mk(() => JSON.stringify([
@@ -139,6 +160,9 @@ const run = await page.evaluate(async (b) => {
 
   // D5 — the original plan object must be untouched throughout.
   out.originalIntact = plan.beats[2].text === b[2] && plan.beats[5].text === b[5];
+  out.noFallback = window.__revNoFallback;
+  out.roleTag = window.__revRoleTag;
+  window.fetch = realFetch;
   return out;
 }, BAD);
 
@@ -167,6 +191,9 @@ t('  with the reason named', run.junk.reason === 'no_parseable_edits');
 t('  and still only ONE call', run.junk.calls === 1);
 
 t('the rejected plan object is never mutated in place', run.originalIntact === true);
+t('the repair dispatches with _noFallback 2014 exactly ONE upstream attempt',
+  run.noFallback === true);
+t('  tagged fate-revision for cost attribution', run.roleTag === 'fate-revision');
 
 console.log('\nE. the marker is measurement-only — not canon, not prompt, not UI');
 const iso = await page.evaluate(() => {

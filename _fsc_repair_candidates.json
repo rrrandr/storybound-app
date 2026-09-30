@@ -1,0 +1,41 @@
+[
+  {
+    "d": "fsc_c4_2026-09-29T20-08-11",
+    "beats": 25,
+    "offending": [
+      "My standing is at risk and the cost is still uncounted."
+    ],
+    "inBeats": [
+      {
+        "idx": 14,
+        "text": "My standing is at risk and the cost is still uncounted."
+      }
+    ]
+  },
+  {
+    "d": "fsc_c4_2026-09-29T21-54-50",
+    "beats": 25,
+    "offending": [
+      "The cost of either path remains uncounted."
+    ],
+    "inBeats": [
+      {
+        "idx": 23,
+        "text": "The cost of either path remains uncounted."
+      }
+    ]
+  },
+  {
+    "d": "fsc_c4_2026-09-29T22-50-35",
+    "beats": 27,
+    "offending": [
+      "Either path will cost standing."
+    ],
+    "inBeats": [
+      {
+        "idx": 23,
+        "text": "Either path will cost standing."
+      }
+    ]
+  }
+]
