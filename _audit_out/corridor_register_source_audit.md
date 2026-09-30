@@ -36,24 +36,51 @@ Those facts then reach the planner as irreversible truth (`100647`):
 
 > `COMMITTED WORLD STATE — facts already TRUE (irreversible; do NOT re-establish or re-flip; your event MUST build FROM these)`
 
-**In fairness, this is not "invent a fact from prose."** The event was *proposed before prose*
-(`prevProposal.event`); the prose decides only whether it **landed**. That is a third ordering —
-propose-before, commit-after-verification — and it has a real virtue: nothing becomes canon that the
-reader did not see. It differs from the ordering you chose (seal before prose, then gate that the prose
-rendered it) in what happens on mismatch: `_commitScene` keeps the prose and leaves canon unmoved; your
-ordering moves canon and rejects the prose.
+### The narrow question, answered: `cs.facts` is the SAFE shape
 
-**But the code already documents its own hazard** (`101074-101076`):
+**Withdrawn:** my framing that this should be default-disabled because it runs after prose. Canon
+*should* become real through rendered story. The only unsafe thing is a post-prose verifier **inventing
+or redefining** the canon change. So the question is whether the verifier supplies the fact.
 
-> *"production commits on the verifier LLM's unsupported say-so, and `cs.facts` can record events the
-> prose never delivered. Committed state is downstream authority for every later scene, so a false
-> commit poisons all subsequent planning."*
+**It does not.** Line `99937`:
 
-The evidence-grounded fix shipped behind `_structuredEventHandoff`, which is **default OFF**;
-`_evidenceCommitCheck` (default ON) covers only the producer→verifier slot path.
+```js
+_commitTransition(prevProposal.event, 'scene' + prevSceneNum + '_transition', prevSceneNum);
+```
 
-This belongs in the thread's record because it is a live, model-judgment canon writer that neither the
-audit nor the policy notes accounted for.
+The committed fact text is **`prevProposal.event`** — the planner's own pre-author proposed event. And
+`_commitTransition` has **exactly one caller** (definition `99842`, call `99937`), so *by construction*
+every `cs.facts` entry's content originates in a pre-author planner proposal.
+
+The verifier returns only `delivery`, `dominant_replacement`, `transition_position`,
+`first_irreversible_position` and `tableau`. **None of those becomes a fact.** Controls in place:
+
+- `DELIVERED` → commit; anything else → no commit, `pendingIntent` kept, planner replans (`99940-99943`);
+- verifier unreachable → caught and treated as MISSED (`99931`) — fail-closed;
+- the slot-evidence check can only make it **stricter**: `if (_slotFail && _delivery === 'DELIVERED')
+  { _delivery = 'MISSED'; }` (`99926`).
+
+So `_commitScene` is your valid shape: planner proposes → author renders → verifier confirms delivery →
+that same content activates. The in-code hazard note at `101074` is about **false DELIVERED verdicts**
+(a delivery-accuracy problem), not about the verifier authoring facts.
+
+### Three real gaps, all narrower than I implied
+
+1. **No stable reference.** The fact is a *copy of the text*, truncated to 200 chars
+   (`String(fact).slice(0, 200)`), with `provenance: 'delivered'` as a literal string and `sourceEvent`
+   as `'sceneN_transition'`. There is **no proposal id**. So nothing *enforces* that a fact must derive
+   from a sealed proposal — a future second caller could pass any string — and the stored text can
+   differ from the proposal's.
+2. **The pre-author record is informal.** `cs.pendingIntent` holds the proposal pre-prose, but its own
+   header says it is *"planner memory of what it's driving toward (**NOT authority**)"*. There is a
+   pre-prose record; there is no sealed canon-candidate record with an id.
+3. **The tableau IS verifier-authored, and it is written even on MISSED.** `_tc` (`99951-99956`) is built
+   entirely from the verifier's returned object — `setting`, `charactersPresent`, `protagonistStatus`,
+   **`decisiveChange`** ("if the closing beat OVERTURNED the scene premise name it"), `activeInterlocutor`
+   — then written to `window.state._sceneStateCard` and `cs.tableau`, **outside** the
+   `if (_delivery === 'DELIVERED')` block, and read by the planner *"as continuity."* `decisiveChange` is
+   a fresh claim about what changed, authored from prose. Narrower than canon — it is a continuity view,
+   not a `facts` entry — but it is the one place shape 2 genuinely occurs.
 
 ## 1. Classification of every proposed Corridor source
 
@@ -152,13 +179,65 @@ Each shown RED first.
 1. **Historical facts have no structured Corridor source.** Every other kind resolves to a ledger entity;
    history does not. Either history stays seed-only for now, or it needs its own structured record kind —
    a decision, not an inference.
-2. **`_commitScene` (§0) needs its own decision.** It is a live, default-on, model-judgment canon writer
-   whose own comment says it can record undelivered events. It is not in scope for the register (its
-   facts are excluded as a source), but it is downstream authority for all planning, and the ordering it
-   uses is not the ordering you approved.
+2. **`_commitScene` remediation — see §6.** It stays enabled; three referential gaps to close.
 3. **The substrate is unwired.** Its ledger, ids and validators exist and are controlled green, but no
    production path consumes it, so nothing above is proven against real Corridor data.
 4. **This was a static trace, not a driven playthrough.** What a real Corridor ledger holds after ten
    scenes is unverified.
+
+## 6. Revised remediation plan for `_commitScene`
+
+**The core rule, stated once and precisely:**
+
+> **The author may creatively propose canon before prose; prose renders it; post-prose checks verify
+> delivery, never author new canon.**
+
+That permits exactly the dynamism the design needs — the Answer destroyed, Julian turned villainous, the
+Fold temporarily closed, Aeryn's Reach opening an investigation — none of it prewritten, all of it
+proposed before prose and made real by being rendered.
+
+**1. Preserve post-prose delivery verification as an activation step.** Keep `_committedState` enabled.
+Do not default-disable it. Canon becoming real through rendered story is the intended behaviour, and the
+existing rollback/replan path is the correct response to non-delivery.
+
+**2. Every newly active fact must reference a pre-author sealed record.** The delta:
+
+- the planner's proposed change is **sealed pre-prose as a record with a system-minted id** — the same
+  discipline `_proposeNewEntity` already enforces (`id` backend-minted, a caller-supplied id
+  **rejected**, `206122`);
+- `_commitTransition` takes a **reference, not a string**, and reads the fact text **from** the sealed
+  record. It never re-supplies content, so the 200-char truncation divergence disappears;
+- a commit whose ref does not resolve is **rejected**;
+- the verifier's accepted return surface is narrowed to **delivery status + evidence only**. It may not
+  supply fact content, an id, a broader interpretation, or a substitute event.
+
+**3. Partial or missed → pending, never canon.** Already true for `facts`. **Extend it to the tableau:**
+verifier-authored `decisiveChange` (and any other fresh claim) must not be written on a non-DELIVERED
+scene, and the tableau must be explicitly marked non-canonical and permanently excluded as a register
+source — which §3's corrected table already does for `charactersPresent`. Delivery confidence alone
+never activates a record.
+
+**4. Legacy `cs.facts` — trusted content, absent provenance link.** The distinction matters and the
+answer is favourable: because `_commitTransition` has exactly one caller passing `prevProposal.event`,
+**no legacy fact is verifier-synthesized.** Their content is pre-author by construction. What they lack
+is a *reference*. So: **do not label them untrusted.** Migration marks them
+`provenanceLink: 'absent_legacy'` — keeping them active canon, without retroactively inventing links
+they never had, and without claiming referential integrity for them.
+
+**5. What this does not fix.** The `101074` hazard is a **delivery-accuracy** problem, not an authority
+problem: a false `DELIVERED` still activates a pre-author fact the prose did not render. Closing that is
+the evidence-grounded check behind `_structuredEventHandoff` (default OFF), and it is a separate
+decision from anything above.
+
+**Provider-free proofs:**
+
+1. a commit with an unresolvable proposal ref is rejected, and no fact is added;
+2. a verifier reply containing fact-like content in any field cannot change the committed text —
+   assert the stored fact is byte-identical to the sealed record;
+3. `PARTIAL` / `MISSED` / verifier-unreachable each leave `facts` unchanged and `pendingIntent` intact;
+4. a non-DELIVERED scene writes no verifier-authored `decisiveChange`;
+5. `_commitTransition` has exactly one caller, and it passes a reference (static scan);
+6. a legacy fact with `provenanceLink: 'absent_legacy'` remains active canon and is not treated as
+   untrusted.
 
 No implementation. No provider call. No authorization requested.
