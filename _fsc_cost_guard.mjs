@@ -45,6 +45,67 @@ export function estimateUsd(body, model) {
     rates: r, assumptions: { CHARS_PER_TOKEN, REASONING_MULT, SAFETY_MARGIN, ASSUME_NO_CACHE } };
 }
 
+// ── CHAINED RESERVATION (Roman 2026-09-30) ────────────────────────────────────────────────────
+// The recovery path is allowed ONE author-revision call. A one-call cap at admission plus an
+// unreserved second call is not a cap at all, so BOTH calls are reserved before the first network
+// request. If the initial scene passes, the repair reservation is released; if it is rejected, the
+// repair spends its already-reserved share and cannot exceed it.
+//
+// The repair prompt is far smaller than the scene prompt — the compact brief, the failing lines and
+// the plain-language guidance — but it is reserved at a deliberately generous worst case, not at a
+// typical one.
+export const REPAIR_MAX_BEATS = 40;        // the schema targets ~25-30; 40 is headroom
+export const REPAIR_MAX_BEAT_CHARS = 200;  // a narration beat is one sentence
+export const REPAIR_BRIEF_CHARS = 1200;    // the longest authored brief is ~1,013
+export const REPAIR_GUIDANCE_CHARS = 2400; // every guidance clause at once
+export const REPAIR_SYS_CHARS = 800;
+export const REPAIR_MAX_TOKENS = 600;      // what _fscAttemptAuthorRevision requests
+
+export function repairWorstCaseChars() {
+  return REPAIR_SYS_CHARS + REPAIR_BRIEF_CHARS + REPAIR_GUIDANCE_CHARS
+       + (REPAIR_MAX_BEATS * REPAIR_MAX_BEAT_CHARS);
+}
+export function estimateRepairUsd(model) {
+  return estimateUsd({ messages: [{ role: 'system', content: 'x'.repeat(repairWorstCaseChars()) }],
+                       max_tokens: REPAIR_MAX_TOKENS, model: model }, model);
+}
+
+// Open a reservation covering the WHOLE chain. Nothing is dispatched unless this returns ok.
+export function openChainReservation(body, { model, cap, remainingAuthorization }) {
+  const initial = estimateUsd(body, model);
+  const repair = estimateRepairUsd(model);
+  const total = initial.estimate + repair.estimate;
+  const r = { initial: initial.estimate, repair: repair.estimate, total,
+              detail: { initial, repair }, model,
+              cap: cap == null ? null : cap,
+              remaining: remainingAuthorization == null ? null : remainingAuthorization,
+              repairState: 'reserved', spent: 0 };
+  if (cap != null && total > cap)
+    return { ok: false, reason: 'chain_over_run_cap', reservation: r };
+  if (remainingAuthorization != null && total > remainingAuthorization)
+    return { ok: false, reason: 'chain_over_remaining_authorization', reservation: r };
+  return { ok: true, reservation: r };
+}
+// The initial scene passed the gate: the repair will not happen, so give its share back.
+export function releaseRepairReservation(r) {
+  if (!r || r.repairState !== 'reserved') return { released: 0, repairState: r && r.repairState };
+  r.repairState = 'released';
+  return { released: r.repair, repairState: 'released', remainingReserved: r.initial };
+}
+// The initial scene was rejected: the repair spends its reserved share and may not exceed it.
+export function consumeRepairReservation(r, actualEstimate) {
+  if (!r) return { allowed: false, reason: 'no_reservation' };
+  if (r.repairState === 'released')
+    return { allowed: false, reason: 'repair_reservation_released' };
+  if (r.repairState === 'consumed')
+    return { allowed: false, reason: 'repair_already_consumed' };
+  if (actualEstimate > r.repair)
+    return { allowed: false, reason: 'repair_exceeds_reservation',
+             reserved: r.repair, needed: actualEstimate };
+  r.repairState = 'consumed';
+  return { allowed: true, reserved: r.repair, using: actualEstimate };
+}
+
 // THE GUARD. Returns { allowed, reason, estimate, ... }. A runner must not dispatch on allowed=false.
 export function guardDispatch(body, { model, cap, remainingAuthorization }) {
   const e = estimateUsd(body, model);
@@ -157,6 +218,80 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     !!rem && Number(rem[1]) === 0, rem ? rem[1] : 'not declared');
   t('with REMAINING=0 the guard refuses even a trivial payload',
     guardDispatch(mk(10, 10), { model: MODEL, cap: 0.06, remainingAuthorization: 0 }).allowed === false);
+
+  // ── CHAINED RESERVATION ─────────────────────────────────────────────────────────────────────
+  console.log('\nJ. CHAINED RESERVATION — both calls reserved before the first request');
+  const REAL = mk(248000, 8000);                       // a real scene payload
+  const rep = estimateRepairUsd(MODEL);
+  console.log('    repair worst case: ' + repairWorstCaseChars().toLocaleString() + ' chars, '
+    + REPAIR_MAX_TOKENS + ' completion → $' + rep.estimate.toFixed(6));
+  const chainTotal = estimateUsd(REAL, MODEL).estimate + rep.estimate;
+  console.log('    initial $' + estimateUsd(REAL, MODEL).estimate.toFixed(6)
+    + ' + repair $' + rep.estimate.toFixed(6) + ' = CHAIN $' + chainTotal.toFixed(6));
+  t('the repair is reserved at a worst case, not a typical case',
+    repairWorstCaseChars() > 10000, String(repairWorstCaseChars()));
+  t('the chain total exceeds the single-call estimate',
+    chainTotal > estimateUsd(REAL, MODEL).estimate);
+
+  console.log('\n  PATH 1 — the initial scene PASSES, the repair share is released');
+  const p1 = openChainReservation(REAL, { model: MODEL, cap: 0.15, remainingAuthorization: 0.5 });
+  t('the chain is admitted under a covering ceiling', p1.ok === true, JSON.stringify(p1.reason));
+  t('  both shares are recorded', p1.reservation.initial > 0 && p1.reservation.repair > 0);
+  const rel = releaseRepairReservation(p1.reservation);
+  t('  releasing returns the repair share', Math.abs(rel.released - rep.estimate) < 1e-9);
+  t('  and only the initial share stays reserved',
+    Math.abs(rel.remainingReserved - p1.reservation.initial) < 1e-9);
+  t('  a released reservation cannot then fund a repair',
+    consumeRepairReservation(p1.reservation, 0.001).allowed === false);
+  t('    for the stated reason',
+    consumeRepairReservation(p1.reservation, 0.001).reason === 'repair_reservation_released');
+
+  console.log('\n  PATH 2 — the initial scene is REJECTED, the repair spends its reserved share');
+  const p2 = openChainReservation(REAL, { model: MODEL, cap: 0.15, remainingAuthorization: 0.5 });
+  const use = consumeRepairReservation(p2.reservation, rep.estimate);
+  t('the repair is funded from the existing reservation', use.allowed === true);
+  t('  it spends no more than was reserved', use.using <= use.reserved);
+  t('  and it can be consumed only ONCE',
+    consumeRepairReservation(p2.reservation, rep.estimate).allowed === false);
+  t('    for the stated reason',
+    consumeRepairReservation(p2.reservation, rep.estimate).reason === 'repair_already_consumed');
+  const overRes = openChainReservation(REAL, { model: MODEL, cap: 0.15, remainingAuthorization: 0.5 });
+  t('a repair that would exceed its share is REFUSED',
+    consumeRepairReservation(overRes.reservation, rep.estimate * 3).allowed === false);
+  t('    naming the overrun',
+    consumeRepairReservation(overRes.reservation, rep.estimate * 3).reason === 'repair_exceeds_reservation');
+
+  console.log('\n  PATH 3 — the CHAIN exceeds the ceiling: ZERO dispatch');
+  // A ceiling that covers the initial call ALONE but not the chain must refuse everything.
+  const justInitial = estimateUsd(REAL, MODEL).estimate + (rep.estimate / 2);
+  const p3 = openChainReservation(REAL, { model: MODEL, cap: justInitial, remainingAuthorization: 0.5 });
+  t('a ceiling that covers only the first call REFUSES the chain', p3.ok === false);
+  t('  naming the chain, not the single call', p3.reason === 'chain_over_run_cap', p3.reason);
+  t('  and the single-call guard WOULD have allowed it — the hole this closes',
+    guardDispatch(REAL, { model: MODEL, cap: justInitial }).allowed === true);
+  const p3b = openChainReservation(REAL, { model: MODEL, cap: 10, remainingAuthorization: justInitial });
+  t('the same holds against the remaining authorization', p3b.ok === false
+    && p3b.reason === 'chain_over_remaining_authorization');
+
+  let chainDispatches = 0, chainSpent = 0;
+  function chainedRunner(cap, remaining) {
+    const res = openChainReservation(REAL, { model: MODEL, cap: cap, remainingAuthorization: remaining });
+    if (!res.ok) return { dispatched: 0, reason: res.reason };
+    chainDispatches++; chainSpent += res.reservation.initial;          // initial call
+    const rejected = true;                                            // simulate a gate rejection
+    if (rejected) {
+      const c = consumeRepairReservation(res.reservation, rep.estimate);
+      if (c.allowed) { chainDispatches++; chainSpent += rep.estimate; }
+    }
+    return { dispatched: 2, spent: chainSpent };
+  }
+  const blocked = chainedRunner(justInitial, 0.5);
+  t('an over-cap chain produces ZERO dispatch and ZERO spend',
+    blocked.dispatched === 0 && chainDispatches === 0 && chainSpent === 0);
+  const ran = chainedRunner(0.15, 0.5);
+  t('a covered chain dispatches BOTH calls within the reservation',
+    ran.dispatched === 2 && chainDispatches === 2 && chainSpent <= 0.15,
+    '$' + chainSpent.toFixed(6));
 
   console.log('\n' + (fail === 0 ? 'PASS' : 'FAIL') + '  ' + pass + '/' + (pass + fail) + ' assertions');
   process.exit(fail === 0 ? 0 : 1);

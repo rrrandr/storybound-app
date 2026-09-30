@@ -1,0 +1,15 @@
+=== C4 RUN — unm.time_gives_way — one call, no retry ===
+
+AUTHORIZED CEILING: $0.130000
+
+PREFLIGHT (zero cost, all network aborted)
+  49/49 checks, payload 251179 bytes, digest fsb12dzcb5:8139
+  PREFLIGHT PASSED.
+
+CHAIN RESERVATION (pre-dispatch, no network)
+  initial author call     $0.128908
+  one author-revision call $0.007350   (worst case: 12,400 chars, 600 completion)
+  ── CHAIN TOTAL           $0.136258   vs ceiling $0.130000
+
+  REFUSED BEFORE DISPATCH — chain_over_run_cap
+  The whole chain does not fit. ZERO dispatch. ZERO spend.

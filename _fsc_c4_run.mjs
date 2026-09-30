@@ -8,7 +8,8 @@
 import fs from 'fs';
 import path from 'path';
 import { preflight } from './_fsc_preflight_control.mjs';
-import { guardDispatch, CHARS_PER_TOKEN, REASONING_MULT, SAFETY_MARGIN } from './_fsc_cost_guard.mjs';
+import { guardDispatch, openChainReservation, releaseRepairReservation, repairWorstCaseChars,
+         REPAIR_MAX_TOKENS, CHARS_PER_TOKEN, REASONING_MULT, SAFETY_MARGIN } from './_fsc_cost_guard.mjs';
 import { scoreC1, scoreC2, scoreC3, scoreC4, effectiveGate, CHOICE_ANCHORS, aftermathLanded, loadExternalTimelinePhrases, loadAmbiguousTemporal, ROSTER_TOKENS, ERASED_PROSE_TERMS }
   from './_fsc_scoring.mjs';
 
@@ -55,7 +56,33 @@ fs.writeFileSync(path.join(OUT, 'preflight.json'), JSON.stringify(
 const body = JSON.parse(pre.body);
 body.model = MODEL; body._sbModelOverride = MODEL; body._noFallback = true;
 
-// ── PRE-DISPATCH COST GUARD ───────────────────────────────────────────────────────────────────
+// ── CHAINED RESERVATION, THEN THE PRE-DISPATCH GUARD ──────────────────────────────────────────
+// The recovery path may make ONE author-revision call. Both calls are reserved BEFORE the first
+// network request: a one-call cap at admission plus an unreserved second call is not a cap.
+const chain = openChainReservation(body, { model: MODEL, cap: AUTHORIZED,
+  remainingAuthorization: AUTHORIZED });
+log('CHAIN RESERVATION (pre-dispatch, no network)');
+log('  initial author call     $' + chain.reservation.initial.toFixed(6));
+log('  one author-revision call $' + chain.reservation.repair.toFixed(6)
+  + '   (worst case: ' + repairWorstCaseChars().toLocaleString() + ' chars, '
+  + REPAIR_MAX_TOKENS + ' completion)');
+log('  ── CHAIN TOTAL           $' + chain.reservation.total.toFixed(6)
+  + '   vs ceiling $' + AUTHORIZED.toFixed(6));
+if (ESTIMATE_ONLY) {
+  log('\n  ESTIMATE ONLY — nothing dispatched, $0 spent.');
+  log('  This run needs a ceiling of at least $' + chain.reservation.total.toFixed(6)
+    + ' to cover the WHOLE chain.');
+  fs.writeFileSync(path.join(OUT, 'chain_estimate.json'), JSON.stringify(chain.reservation, null, 2));
+  process.exit(0);
+}
+if (!chain.ok) {
+  log('\n  REFUSED BEFORE DISPATCH — ' + chain.reason);
+  log('  The whole chain does not fit. ZERO dispatch. ZERO spend.');
+  fs.writeFileSync(path.join(OUT, 'chain_refusal.json'), JSON.stringify(chain, null, 2));
+  process.exit(3);
+}
+log('  RESERVED — both calls fit inside the ceiling.\n');
+
 const guard = guardDispatch(body, { model: MODEL, cap: AUTHORIZED, remainingAuthorization: AUTHORIZED });
 log('COST GUARD (pre-dispatch, no network)');
 log('  prompt ' + guard.detail.promptChars.toLocaleString() + ' chars → '
@@ -220,6 +247,19 @@ fs.writeFileSync(path.join(OUT, 'verdict_input.json'), JSON.stringify(
     verdictWords: [...new Set(verdictWords)], costWords,
     estimate: guard.estimate, measured,
     words: prose.split(/\s+/).filter(Boolean).length }, null, 2));
+
+// ── THE REPAIR RESERVATION IS RELEASED WHEN THE SCENE PASSES ──────────────────────────────────
+// This harness scores but does not run the recovery path, so a scene that passes the gate releases
+// the repair share, and a scene that fails leaves it reserved for the one call it is owed.
+const _gatePassed = c1.pass && c2.pass && c3.pass && c4.pass;
+if (_gatePassed) {
+  const rel = releaseRepairReservation(chain.reservation);
+  log('\n  CHAIN: scene passed — repair reservation RELEASED ($' + rel.released.toFixed(6)
+    + ' returned; $' + rel.remainingReserved.toFixed(6) + ' stays committed to the initial call)');
+} else {
+  log('\n  CHAIN: scene rejected — $' + chain.reservation.repair.toFixed(6)
+    + ' stays RESERVED for the one author-revision call it is owed (not dispatched by this harness)');
+}
 
 // ── COMPLETION IS EXPLICIT ────────────────────────────────────────────────────────────────────
 // A previous run crashed HERE, after a successful paid call, and the output gave no sign that the
