@@ -237734,10 +237734,41 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
         // PLANNER FUNCTION GATE (Roman 2026-09-20): a rejected inadequate plan reuses the SAME bounded
         // retry-then-stop machinery as a stale objective — the plan is discarded either way, never
         // displayed, never committed, never sent to the author. See _detectPlannerFunctionGap.
-        // __fateRejected joins this path deliberately: the Fate acceptance gate's contract is the
-        // same one — discard the whole result, ONE bounded retry, then stop with resumable state.
-        // Nothing is displayed, committed or sent onward either way.
-        if (plan && (plan.__staleRejected || plan.__plannerFunctionRejected || plan.__fateRejected)) {
+        // ── FATE REJECTION → ONE BOUNDED AUTHOR-REVISION PASS (Roman 2026-09-30) ──────────────
+        // Not a blind retry: the rejection is new information, and the writer is asked to fix the
+        // named lines against the same approved brief. NOT a local prose edit — a deterministic
+        // rewrite here would make the validator a hidden second author. THE WRITER supplies the
+        // replacement text; this code only splices it, and only if the result re-passes the gate.
+        // ONE call. On failure, fall through to the existing resumable path — never a loop.
+        if (plan && plan.__fateRejected) {
+          var _rev = null;
+          try {
+            _rev = (typeof window._fscAttemptAuthorRevision === 'function')
+              ? await window._fscAttemptAuthorRevision(
+                  (state._fscRejectedScenes || []).slice(-1)[0] &&
+                  (state._fscRejectedScenes || []).slice(-1)[0].rawPlan, sceneIndex)
+              : { ok: false, reason: 'revision_path_unavailable' };
+          } catch (_rvErr) { _rev = { ok: false, reason: 'revision_threw: ' + (_rvErr && _rvErr.message) }; }
+          if (_rev && _rev.ok && _rev.plan && Array.isArray(_rev.plan.beats) && _rev.plan.beats.length) {
+            plan = _rev.plan;                       // repaired, gate-re-passed; continue normally
+          } else {
+            try { console.warn('[FSC-REVISION] scene ' + sceneIndex + ' not recovered — '
+              + ((_rev && _rev.reason) || 'unknown') + ' — stopping with resumable state'); } catch (_) {}
+            state._cgResumable = { sceneIndex: sceneIndex, action: playerAction || '',
+              dialogue: playerDialogue || '', reason: 'fate_gate_rejected', at: Date.now(),
+              storyId: state.storyId || null };
+            try { _hideStagedComposingIndicator(); } catch (_) {}
+            // The reader is told only what they are told for any unfinished scene. No rule codes,
+            // no mention of a rejection, a revision, or the Fate machinery.
+            try { showToast('The story changed while this scene was being written. Submit again to continue.'); } catch (_) {}
+            try { state.turnCount = Math.max(0, (sceneIndex | 0) - 1); } catch (_) {}
+            state._stagedSubmitting = false; state._isAdvancingScene = false;
+            return;
+          }
+        }
+        // The stale/planner rejections keep their own existing contract: discard, ONE bounded
+        // regeneration, then stop with resumable state.
+        if (plan && (plan.__staleRejected || plan.__plannerFunctionRejected)) {
           // The whole result is discarded (never displayed, never committed). ONE bounded retry with the CURRENT
           // snapshot. Whatever the retry does — a second stale result, a null or malformed reply, a thrown error —
           // the rejection context is preserved: STOP with resumable state and released locks. The ordinary
@@ -237745,7 +237776,7 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
           try { console.warn('[CG:STALE-REJECTED] retrying once with the current branch/attempt: ' + plan.reason); } catch (_) {}
           var _retry = null, _retryErr = null;
           try { _retry = await _runCGScreenplayGen(sceneIndex, playerAction, playerDialogue); } catch (_re) { _retryErr = _re; }
-          var _retryOk = !!(_retry && !_retry.__staleRejected && !_retry.__plannerFunctionRejected && !_retry.__fateRejected && Array.isArray(_retry.beats) && _retry.beats.length);
+          var _retryOk = !!(_retry && !_retry.__staleRejected && !_retry.__plannerFunctionRejected && Array.isArray(_retry.beats) && _retry.beats.length);
           if (!_retryOk) {
             var _why = _retryErr ? ('retry threw: ' + (_retryErr && _retryErr.message)) : ((_retry && (_retry.__staleRejected || _retry.__plannerFunctionRejected)) ? ('retry stale: ' + _retry.reason) : 'retry returned no usable plan');
             state._cgResumable = { sceneIndex: sceneIndex, action: playerAction || '', dialogue: playerDialogue || '', reason: _why, at: Date.now(), storyId: state.storyId };
@@ -341995,6 +342026,9 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
   function _proseOf(plan) {
     var bits = [];
     try { JSON.stringify(plan, function (k, v) {
+      // Internal bookkeeping is NOT prose and must never be scored as it — the recovery marker in
+      // particular. Skipped explicitly rather than relying on its strings being short.
+      if (typeof k === 'string' && k.indexOf('_fsc') === 0) return undefined;
       if (typeof v === 'string' && v.length > 25) bits.push(v); return v; }); } catch (_) {}
     return bits.join('\n');
   }
@@ -342111,4 +342145,199 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
 
   window._fscAcceptProse = _fscAcceptProse;
   window._FSC_GATE_SETS = G;
+})();
+
+// ══════════════════════════════════════════════════════════════════════════════════════════════
+// STAGE 3 — BOUNDED AUTHOR-REVISION RECOVERY (Roman 2026-09-30).
+//
+// When the acceptance gate rejects a scene, the reader must not pay for it. The recovery is ONE
+// model-authored repair pass — not a blind retry, and NOT a local prose edit. A deterministic
+// local rewrite was considered and REJECTED: it would make the validator a hidden second author,
+// which is the boundary already drawn for validators.
+//
+// The rejection is new information, so this is not asking the same model the same question. The
+// writer receives only: the approved compact story brief, the failing beats, and a natural-language
+// statement of what must change. THE WRITER returns the replacement text; local code only splices
+// it, and only if the result passes the SAME full acceptance gate.
+//
+// ONE call. If it fails, the caller falls through to the existing resumable path — no loop.
+// Nothing about the rejection, the revision, or the diagnostics is reader-visible.
+// ══════════════════════════════════════════════════════════════════════════════════════════════
+(function () {
+  'use strict';
+
+  // Rule code → what must change, in PLAIN LANGUAGE. The writer never sees a rule code, a criterion
+  // name, or any validator vocabulary — the same discipline as the compact story brief.
+  var FSC_REPAIR_GUIDANCE = {
+    answer_as_judge:
+      'The Answer is not a judge and hands down nothing. Say only where it is and whose hands hold '
+    + 'it. No verdict, no judgement, no sentence, and no comparison to one.',
+    unpinned_charge:
+      'No one has accused her of anything in words. Write either that the assembly’s suspicion '
+    + 'rests on her, or that the presiding Dohkar claims the rite and its ruling as his — one or '
+    + 'the other, plainly, and not merged into an accusation nobody made.',
+    unsourced_cost:
+      'Nothing is owed and no price is coming. Remove any sense that this will be paid for, by her '
+    + 'or by anyone, now or later. Her standing can be at risk without being a payment.',
+    magical_residue:
+      'Nothing glows, shimmers or shines. The clearing looks like an ordinary evening; the grass has '
+    + 'its own dark colour and no light of its own.',
+    intervention_as_emission:
+      'Nothing travels through the clearing or through the people in it — no pulse, no wave, no '
+    + 'current. Each person’s reaction is their own and arrives on its own.',
+    cross_timeline:
+      'No one here has stood through this before. Write it as the only version of events there is, '
+    + 'with no counting and no comparison.',
+    absence_as_presence:
+      'What did not happen leaves nothing behind — no echo, no gap, no silence where it was. Do '
+    + 'not give it a presence in the room.',
+    shared_understanding:
+      'No two people here share a private understanding of what happened. No knowing looks and no '
+    + 'one reading another’s mind.',
+    disposition_leak:
+      'Everyone present experiences this as the only thing that happened. No one recalls it going '
+    + 'any other way.',
+    resolved_after_choice:
+      'The scene must end with the choice still unmade. Do not have her decide, speak, or act on it.',
+    time_advanced_after_choice:
+      'The scene must end in this moment, with the choice still unmade. Do not move time forward.',
+    final_beat_does_not_hold_the_choice:
+      'The last line must leave the choice open and unmade, without hinting which way she goes.',
+    choice_never_presented:
+      'The scene must reach the choice in front of her and put both options plainly, then stop.'
+  };
+  function _guidanceFor(codes) {
+    var seen = {}, out = [];
+    codes.forEach(function (c) {
+      var key = String(c || '').split(':')[0];
+      var g = FSC_REPAIR_GUIDANCE[key];
+      if (g && !seen[key]) { seen[key] = 1; out.push(g); }
+    });
+    return out;
+  }
+
+  // Which BEATS are failing, and why. The gate scores the whole plan; the repair brief must carry
+  // only the offending beats, so each beat's own text is re-tested against the same detectors.
+  function _fscFailingBeats(plan) {
+    var G = window._FSC_GATE_SETS; if (!G) return [];
+    var st = window.state || {}; var rec = st._fscActiveCompiled;
+    if (!rec || rec.error) return [];
+    var beats = (plan && Array.isArray(plan.beats)) ? plan.beats : [];
+    var erased = (G.erasedProseTerms && G.erasedProseTerms[rec.outcomeId]) || [];
+    var out = [];
+    beats.forEach(function (b, i) {
+      var s = String((b && b.text) || ''); if (!s) return;
+      var why = [];
+      try {
+        var one = window._fscAcceptProse({ beats: [{ idx: 0, text: s }] }, -1);
+        // A single beat cannot satisfy C2/C4 on its own, so only content faults are attributed.
+        (one.failures || []).forEach(function (f) {
+          if (f.criterion === 'C1' || f.criterion === 'C3') {
+            if (f.kind !== 'disposition_leak') why.push(f.kind);
+          }
+        });
+      } catch (_) {}
+      erased.forEach(function (tm) {
+        if (new RegExp(tm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i').test(s)) why.push('erased_basis');
+      });
+      if (why.length) out.push({ idx: i, text: s, reasons: why.filter(function (v, k, a) { return a.indexOf(v) === k; }) });
+    });
+    return out;
+  }
+
+  // THE REPAIR BRIEF. Only three things: the approved story brief, the failing beats, and plain
+  // statements of what must change. No rule codes, no criterion names, no diagnostics.
+  function _fscBuildRepairBrief(plan) {
+    var failing = _fscFailingBeats(plan);
+    if (!failing.length) return null;
+    var brief = '';
+    try { brief = (typeof window._fscAuthorBriefBlock === 'function') ? window._fscAuthorBriefBlock() : ''; } catch (_) {}
+    if (!brief) return null;
+    var codes = []; failing.forEach(function (f) { f.reasons.forEach(function (r) { codes.push(r); }); });
+    var guidance = _guidanceFor(codes);
+    if (!guidance.length) return null;
+
+    var sys = 'You are revising a few lines of a finished comic-script scene. Rewrite ONLY the lines '
+      + 'listed below, one line each, with the SMALLEST change that fixes the problem named for it. '
+      + 'Keep each line about the same length and the same register as the original — these are '
+      + 'comic-panel narration lines, not paragraphs. Do not add events, do not change who does '
+      + 'what, and do not touch anything not listed.\n'
+      + 'Return ONLY a JSON array: [{"idx": <line number>, "text": "<rewritten line>"}], exactly one '
+      + 'entry per line listed, nothing else — no commentary, no code fences.';
+
+    var usr = 'THE SCENE AS IT STANDS:\n' + brief.trim() + '\n\n'
+      + 'WHAT MUST CHANGE:\n' + guidance.map(function (g) { return '- ' + g; }).join('\n') + '\n\n'
+      + 'THE LINES TO REWRITE (' + failing.length + '):\n'
+      + failing.map(function (f) { return '  line ' + f.idx + ': "' + f.text + '"'; }).join('\n');
+
+    return { sys: sys, usr: usr, failing: failing, codes: codes.filter(function (v, k, a) { return a.indexOf(v) === k; }) };
+  }
+
+  // ONE bounded call. Returns { ok, plan, codes, repairedIdx } or { ok:false, reason }.
+  async function _fscAttemptAuthorRevision(rejectedPlan, sceneIndex) {
+    var st = window.state || {};
+    var built = null;
+    try { built = _fscBuildRepairBrief(rejectedPlan); } catch (e) { return { ok: false, reason: 'brief_threw: ' + (e && e.message) }; }
+    if (!built) return { ok: false, reason: 'no_repairable_beats' };
+
+    var res = null;
+    try {
+      res = await window._authorFullScenePolicy(built.sys, built.usr, {
+        maxTokens: 600, temperature: 0.3, roleTag: 'fate-revision',
+        grokModel: 'grok-4-1-fast-reasoning' });
+    } catch (e) { return { ok: false, reason: 'revision_call_failed: ' + (e && e.message) }; }
+    try {
+      if (typeof _recordProxyTextCost === 'function')
+        _recordProxyTextCost({ usage: res && res.usage, _orchestration: { model: res && res.model } },
+          res && res.model, 'fate-revision');
+    } catch (_) {}
+
+    var raw = String((res && res.text) || '').replace(/```json?/gi, '').replace(/```/g, '').trim();
+    var edits = null;
+    try { edits = JSON.parse(raw); } catch (_) {
+      var m = raw.match(/\[[\s\S]*\]/); if (m) { try { edits = JSON.parse(m[0]); } catch (_2) {} }
+    }
+    if (!Array.isArray(edits) || !edits.length) return { ok: false, reason: 'no_parseable_edits' };
+
+    // SPLICE ONLY THE FLAGGED INDICES. An edit naming any other line is dropped, so it is
+    // structurally impossible for this pass to alter a beat the gate did not flag.
+    var allowed = {}; built.failing.forEach(function (f) { allowed[f.idx] = true; });
+    var next = JSON.parse(JSON.stringify(rejectedPlan));
+    var applied = [];
+    edits.forEach(function (e) {
+      var i = (e && typeof e.idx === 'number') ? e.idx : -1;
+      var txt = (e && typeof e.text === 'string') ? e.text.trim() : '';
+      if (i < 0 || !allowed[i] || !txt || !next.beats[i]) return;
+      next.beats[i].text = txt; applied.push(i);
+    });
+    if (!applied.length) return { ok: false, reason: 'no_edits_on_flagged_lines' };
+
+    // THE SAME FULL GATE, on the spliced plan. A repair that still violates is discarded.
+    var verdict = null;
+    try { verdict = window._fscAcceptProse(next, sceneIndex); }
+    catch (e) { return { ok: false, reason: 'gate_threw_on_repair: ' + (e && e.message) }; }
+    if (!verdict || !verdict.accepted) {
+      return { ok: false, reason: 'repair_still_rejected',
+               failures: (verdict && verdict.failures) || [] };
+    }
+
+    // MEASUREMENT ONLY. Never canon, never a prompt, never UI. Underscore-prefixed and skipped by
+    // the gate's own prose flattening.
+    next._fscRecovery = { recovery: 'author_revision', codes: built.codes,
+                          repairedIdx: applied, at: Date.now() };
+    try {
+      st._fscRecoveryLog = st._fscRecoveryLog || [];
+      st._fscRecoveryLog.push({ at: Date.now(), sceneIndex: sceneIndex,
+        recovery: 'author_revision', codes: built.codes, repairedIdx: applied });
+      if (st._fscRecoveryLog.length > 20) st._fscRecoveryLog.shift();
+    } catch (_) {}
+    try { console.log('[FSC-REVISION] scene ' + sceneIndex + ' repaired by the author on '
+      + applied.length + ' line(s) [' + built.codes.join(',') + '] — re-passed the gate'); } catch (_) {}
+    return { ok: true, plan: next, codes: built.codes, repairedIdx: applied };
+  }
+
+  window._fscFailingBeats = _fscFailingBeats;
+  window._fscBuildRepairBrief = _fscBuildRepairBrief;
+  window._fscAttemptAuthorRevision = _fscAttemptAuthorRevision;
+  window._FSC_REPAIR_GUIDANCE = FSC_REPAIR_GUIDANCE;
 })();

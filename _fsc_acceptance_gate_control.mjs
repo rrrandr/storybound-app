@@ -36,8 +36,16 @@ t('the generator calls the gate', /window\._fscAcceptProse\(_normalized, sceneIn
 t('a rejection returns the __fateRejected sentinel', /__fateRejected: true, sceneIndex/.test(src));
 t('  and it is checked BEFORE the plan is handed on',
   src.indexOf('window._fscAcceptProse(_normalized') < src.indexOf('_normalized.scene_assignments'));
-t('the caller discards a __fateRejected result', /plan\.__plannerFunctionRejected \|\| plan\.__fateRejected/.test(src));
-t('  and a retry that also fails is not accepted', /!_retry\.__fateRejected/.test(src));
+// A rejection now routes to its OWN handler — the bounded author-revision pass — rather than
+// joining the stale-delivery regeneration. One call, then the existing resumable path.
+t('the caller has a dedicated __fateRejected handler', /if \(plan && plan\.__fateRejected\) \{/.test(src));
+t('  it attempts ONE author revision', /window\._fscAttemptAuthorRevision\(/.test(src));
+t('  a successful repair continues normally', /plan = _rev\.plan;/.test(src));
+t('  a failed repair stops with resumable state, no loop',
+  /reason: 'fate_gate_rejected'/.test(src) && /state\.turnCount = Math\.max\(0, \(sceneIndex \| 0\) - 1\)/.test(src));
+t('  the reader is told nothing about the rejection',
+  /The story changed while this scene was being written/.test(src)
+  && !/showToast\([^)]*(?:reject|violat|revision|C1|C2|C3|C4)/i.test(src));
 t('the gate FAILS CLOSED when it throws', /kind: 'gate_threw'/.test(src));
 t('the raw plan is preserved for diagnosis', /rawPlan: _normalized/.test(src));
 t('  capped so it cannot grow without bound', /_fscRejectedScenes\.length > 6/.test(src));
