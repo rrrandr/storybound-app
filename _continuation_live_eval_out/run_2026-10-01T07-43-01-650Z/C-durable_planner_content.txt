@@ -1,0 +1,34 @@
+{
+  "tactical_move": "Lodge the formal demand by having the sealed letter reach the commission",
+  "state_change_precondition": "The commission has received no formal demand about the burning",
+  "state_change": "The sealed letter is delivered to the commission's clerk and opened",
+  "forces_choice": "forces the PC to choose between monitoring the commission's response or seeking witnesses first",
+  "branch_a": "Monitor the commission's proceedings closely",
+  "branch_b": "Seek out potential witnesses before they can be summoned",
+  "scene_purpose": "Make the player's demand officially received and active",
+  "forward_pressure": "The commission will now investigate the burning and summon profiteers",
+  "pressure_scope": "durable",
+  "canon_change": {
+    "tier": 2,
+    "targets": ["Toll Road Commission"],
+    "content": "The commission has received a formal demand to investigate the burning"
+  },
+  "introduces": [
+    {
+      "kind": "institution",
+      "label": "Toll Road Commission",
+      "aliases": ["the commission"],
+      "justification": "Player action directly engages this body",
+      "future_relevance": "Will investigate the burning and summon witnesses in future scenes"
+    }
+  ],
+  "existingRefs": [],
+  "event_slots": {
+    "precondition": "A messenger carrying the sealed demand is present and able to reach the commission",
+    "actor": "the messenger",
+    "action": "delivers and has opened",
+    "target": "the sealed demand letter",
+    "exit_state": "the commission has now received the formal demand for investigation",
+    "mechanism_grounding": "ordinary"
+  }
+}

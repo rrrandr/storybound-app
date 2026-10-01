@@ -1,0 +1,55 @@
+{
+  "facts": [],
+  "ctResult": {
+    "outcome": "rejected",
+    "why": [
+      "missing derivation"
+    ],
+    "sealedId": null,
+    "introduced": []
+  },
+  "seal": null,
+  "sealed": [
+    {
+      "id": "prop:2:1",
+      "scene": 2,
+      "kind": "state_change",
+      "fact": "The sealed letter is delivered to the commission's clerk and opened",
+      "anchors": [],
+      "pendingEntities": [],
+      "milestone": "",
+      "provenance": {
+        "invocationId": "inv:state_change:2:noposture",
+        "postureHash": null,
+        "plannerModel": null,
+        "sceneProposed": 2,
+        "at": 1790840625154
+      },
+      "sealed": true
+    }
+  ],
+  "localPressures": [],
+  "ledger": [
+    {
+      "id": "pc",
+      "kind": "named",
+      "label": "Wren",
+      "aliases": []
+    },
+    {
+      "id": "ent:cassel",
+      "kind": "named",
+      "label": "Cassel",
+      "aliases": []
+    },
+    {
+      "id": "ent:stage:1",
+      "kind": "named",
+      "label": "Julian",
+      "aliases": [
+        "the Provast"
+      ],
+      "prov": "stage_issuer_generated"
+    }
+  ]
+}

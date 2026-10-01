@@ -1,0 +1,96 @@
+=== LIVE CONTINUATION EVALUATION — 1 CASE(S) ===
+    authorized: $0.03
+    output: _continuation_live_eval_out/run_2026-10-01T07-43-01-650Z
+
+PRE-REGISTERED EXPECTATIONS (before any dispatch)
+  A-null     : envelope present, canon_change null, introduces [], outcome none, 0 facts
+  BOTH       : pressure_scope returned as "scene_local" or "durable", and the payload AGREES with it — durable identifies its referent, scene_local proposes no canon.
+  B-pressure : EITHER scene_local + null (nothing sealed, 0 facts, recorded non-durable)
+               OR durable + an identified referent (sealed, at most 1 fact, sealed provenance)
+  C-durable  : pressure_scope durable, >=1 structured introduced institution/collective with
+               future_relevance and aliases, NO planner-supplied ids, and no established
+               entity silently redefined. Graded by _continuation_durable_grader.mjs, whose
+               every criterion is proven RED in _continuation_durable_grading_control.mjs.
+  Either surprise is a reportable finding, not a failure to explain away.
+
+CHAIN RESERVATION (worst case per stage, no fallback doubling)
+  planner  : $0.017550
+  (--planner-only: author and verifier are not reserved and will be aborted)
+  per case : $0.017550  x 1 case(s)
+  TOTAL    : $0.017550
+  within authorization — $0.012450 headroom
+
+PREFLIGHT GATE (provider-free, $0): _corridor_continuation_preflight.mjs
+  preflight PASSED — the target story has no authored objective and the path is active.
+
+──────── CASE C-durable: PETITION A GOVERNING BODY (expect pressure_scope: durable) ────────
+  posture: "I send sealed word to the commission that governs the toll road, demanding they open an investigation into the burning and summon everyone who profited from it."
+    [DISPATCH] planner  13785ch  est $0.010373
+      measured $0.006773 (total $0.006773)
+    [PLANNER-ONLY] aborting author — not reserved in this run
+    [PLANNER-ONLY] aborting author — not reserved in this run
+    [PLANNER-ONLY] aborting author — not reserved in this run
+
+=== SPEND ===
+  running estimate : $0.010373
+  MEASURED         : $0.006773 of $0.03  (22.6%)
+
+=== CASE C-durable — ENVELOPE COMPLIANCE ===
+  ok   C-durable: a planner reply was parsed
+  envelope keys returned : ["scene_purpose","forward_pressure","pressure_scope","canon_change","introduces"]
+  scene_purpose    : "Make the player's demand officially received and active"
+  forward_pressure : "The commission will now investigate the burning and summon profiteers"
+  pressure_scope   : "durable"
+  canon_change     : {"tier":2,"targets":["Toll Road Commission"],"content":"The commission has received a formal demand to investigate the burning"}
+  introduces       : [{"kind":"institution","label":"Toll Road Commission","aliases":["the commission"],"justification":"Player action directly engages this body","future_relevance":"Will investigate the burning and summon witnesses in future scenes"}]
+  ok     all five envelope keys returned
+  ok     scene_purpose is non-empty
+  ok     forward_pressure is non-empty
+  ok     introduces is an array
+  ok     pressure_scope is one of the two contract literals
+  ok     durable: the continuing referent IS identified (introduces[] or existingRefs[])
+  ok     the handler did NOT reject it as a persistence violation
+  ok     no planner-supplied durable id
+
+  handler result : {"outcome":"rejected","why":["missing derivation"],"sealedId":null,"introduced":[]}
+  committed facts: []
+  PRE-REGISTERED PASS CRITERIA (Roman): pressure_scope durable · >=1 structured introduced institution/collective · future relevance and aliases · no planner-supplied IDs · no existing canon silently redefined
+
+  — reply grading —
+  ok     pressure_scope is exactly "durable"
+  ok     scope coherence: not a scene_local declaration, nothing to check
+  ok     introduces is an array
+  ok       it is not empty
+  ok       at least one entry is an institution or collective
+  ok       entry 0 (Toll Road Commission): label is non-empty
+  ok       entry 0 (Toll Road Commission): kind is declared
+  ok       entry 0 (Toll Road Commission): future_relevance is non-empty
+  ok       entry 0 (Toll Road Commission): justification is non-empty
+  ok       entry 0 (Toll Road Commission): aliases is a non-empty array of strings
+  ok     no id on any introduced entity
+  ok     no id on canon_change
+  ok     every existingRefs entry resolves to a pre-existing entity
+  ok       none is a fabricated system-format id
+  ok     no established entity is targeted at all (purely additive)
+  ok     every pre-existing entity record is unchanged
+  ok       and none was removed
+
+  — handler grading —
+  FAIL   the handler SEALED the proposal  — ["missing derivation"]
+  ok       it was not rejected as a persistence violation
+  FAIL     exactly one CONTINUATION-kind seal exists  — kinds=["state_change"]
+  FAIL     the seal carries the untruncated fact  — null
+  FAIL     its pending entities carry BACKEND-MINTED ids  — []
+  ok       none of those ids existed before the reply
+  ok     ZERO facts activated — sealing is not committing
+  ok     no unplanned entity entered the ledger
+  (planner-only: author aborted — the sealed fact reaching Grok and rendering as prose remain UNPROVEN live; that is the full-chain test, not this one)
+
+  prose chars: 0
+  (planner-only: the author call was aborted by design — prose NOT scored, and this run is therefore NOT evidence about rendering)
+  ok     no unplanned entity entered the ledger
+  ok     every fact carries sealed provenance
+
+32/36 assertions passed
+MEASURED SPEND: $0.006773 of $0.03
+Artefacts: _continuation_live_eval_out/run_2026-10-01T07-43-01-650Z
