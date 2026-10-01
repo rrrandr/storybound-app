@@ -1,0 +1,16 @@
+{
+  "seal_gated": true,
+  "verdict": "boundary_tested",
+  "draws": [
+    {
+      "d": 1,
+      "scope": "durable",
+      "outcome": "sealed",
+      "gate": "sealed",
+      "responseLen": 4390,
+      "why": []
+    }
+  ],
+  "measured": 0.08229305,
+  "authorized": 0.2
+}

@@ -1,0 +1,108 @@
+{
+  "facts": [],
+  "ctResult": {
+    "outcome": "sealed",
+    "tier": 2,
+    "sealedId": "prop:2:2",
+    "introduced": [
+      {
+        "id": "ent:stage:2",
+        "kind": "institution",
+        "label": "Toll Road Commission",
+        "aliases": [
+          "the commission",
+          "the Toll Road Commission"
+        ],
+        "pending": true
+      }
+    ],
+    "targets": [
+      "Toll Road Commission"
+    ],
+    "why": []
+  },
+  "seal": {
+    "sealedId": "prop:2:2",
+    "scene": 2,
+    "readerFacing": {
+      "scene_purpose": "Execute the player's delivery of the sealed demand and make the commission's receipt irreversible",
+      "forward_pressure": "The commission must now convene and investigate the burning"
+    }
+  },
+  "sealed": [
+    {
+      "id": "prop:2:1",
+      "scene": 2,
+      "kind": "state_change",
+      "fact": "The commission clerk breaks the seal and reads the demand aloud in chambers",
+      "anchors": [],
+      "pendingEntities": [],
+      "milestone": "",
+      "provenance": {
+        "invocationId": "inv:state_change:2:noposture",
+        "postureHash": null,
+        "plannerModel": null,
+        "sceneProposed": 2,
+        "at": 1790884975152
+      },
+      "sealed": true
+    },
+    {
+      "id": "prop:2:2",
+      "scene": 2,
+      "kind": "continuation",
+      "fact": "The Toll Road Commission has formally received and acknowledged a demand to investigate the burning",
+      "anchors": [
+        {
+          "role": "institution",
+          "ref": "ent:stage:2"
+        }
+      ],
+      "pendingEntities": [
+        {
+          "id": "ent:stage:2",
+          "kind": "institution",
+          "label": "Toll Road Commission",
+          "aliases": [
+            "the commission",
+            "the Toll Road Commission"
+          ]
+        }
+      ],
+      "milestone": "The commission must now convene and investigate the burning",
+      "provenance": {
+        "invocationId": "inv:continuation:2:noposture",
+        "postureHash": null,
+        "plannerModel": null,
+        "sceneProposed": 2,
+        "at": 1790884975152
+      },
+      "sealed": true
+    }
+  ],
+  "localPressures": [],
+  "ledger": [
+    {
+      "id": "pc",
+      "kind": "named",
+      "label": "Wren",
+      "aliases": []
+    },
+    {
+      "id": "ent:cassel",
+      "kind": "named",
+      "label": "Cassel",
+      "aliases": []
+    },
+    {
+      "id": "ent:stage:1",
+      "kind": "named",
+      "label": "Julian",
+      "aliases": [
+        "the Provast"
+      ],
+      "prov": "stage_issuer_generated"
+    }
+  ],
+  "sceneCard": null
+}
