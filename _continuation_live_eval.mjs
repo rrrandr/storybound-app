@@ -127,6 +127,16 @@ if (SEAL_GATED && !WANTED) {
 // happen. Implies --seal-gated for scene 1: paying for an author on a draw that never sealed would
 // leave scene 2 with nothing to adjudicate.
 const TWO_SCENE = ARG.includes('--two-scene');
+// ── VERIFIER-ONLY (Roman 2026-10-01): "keep verifier judgment as the only live provider step".
+// The planner, the author and the character-memory extractor are all PROVEN by the free chain
+// control, so replaying them from run 13's recorded artefacts isolates the ONE remaining unknown —
+// whether the live verifier correctly adjudicates real rendered prose — and collapses the cost from
+// two full scenes to a single verifier call.
+const LIVE_VERIFIER_ONLY = ARG.includes('--live-verifier-only');
+if (LIVE_VERIFIER_ONLY && !TWO_SCENE) {
+  console.error('REFUSED: --live-verifier-only only applies to --two-scene.');
+  process.exit(2);
+}
 if (TWO_SCENE && SAMPLES_IDX >= 0) {
   console.error('REFUSED: --two-scene and --samples are different experiments.');
   process.exit(2);
@@ -175,7 +185,9 @@ const ATTEMPTS = SAMPLES || CASES.length;
 // TWO SCENES, conservatively: Roman fixed this at ~$0.297300 and said to keep it unchanged until
 // more author measurements exist, so it is TWO FULL SCENES at the untightened per-stage figures —
 // not the seal-gated shape, and not reduced by the two author measurements now in hand.
-const reserved = TWO_SCENE
+const reserved = (TWO_SCENE && LIVE_VERIFIER_ONLY)
+  ? R_VERIFIER
+  : TWO_SCENE
   ? (PER_CASE * 2)
   : (SEAL_GATED ? (R_PLANNER * MAX_DRAWS + R_AUTHOR + R_VERIFIER) : PER_CASE * ATTEMPTS);
 say('\nCHAIN RESERVATION (worst case per stage, no fallback doubling)');
@@ -184,7 +196,12 @@ if (!PLANNER_ONLY) {
   say('  author   : $' + R_AUTHOR.toFixed(6));
   say('  verifier : $' + R_VERIFIER.toFixed(6));
 } else { say('  (--planner-only: author and verifier are not reserved and will be aborted)'); }
-if (TWO_SCENE) {
+if (TWO_SCENE && LIVE_VERIFIER_ONLY) {
+  say('  TWO-SCENE, VERIFIER-ONLY: the planner, author and memory extractor are REPLAYED from');
+  say('             run 13 artefacts and the shape-faithful skeleton. The ONLY live provider call');
+  say('             is the RUNTIME COMMIT VERIFIER: $' + R_VERIFIER.toFixed(6));
+  say('             Everything else in the chain is already proven provider-free (23/23).');
+} else if (TWO_SCENE) {
   say('  TWO-SCENE: two full scenes at $' + PER_CASE.toFixed(6) + ' each');
   say('             scene 1 seals + renders; scene 2 opens by adjudicating scene 1 via _commitScene');
   say('             author gated on a seal in scene 1 (seal-gated semantics)');
@@ -445,6 +462,26 @@ const runCase = async (C, sampleIx, opts) => {
 // Stage policy: scene 1's author is gated on a seal (paying it on a non-sealing draw leaves scene 2
 // nothing to adjudicate); scene 2's VERIFIER is released, because it IS the test; scene 2's author
 // is aborted, since no check needs it and the planner — which does — runs before it.
+// Run 13's recorded planner and author responses, and the character-memory extractor's own
+// declared skeleton (app.js ~31922) — ONE real shape, empty collections, null interpretation, no
+// canon asserted. Used only under --live-verifier-only.
+const RUN13_DIR = '_continuation_live_eval_out/run_2026-10-01T22-08-44-097Z';
+const recordedContent = (f) => {
+  try {
+    const j = JSON.parse(fs.readFileSync(RUN13_DIR + '/' + f, 'utf8'));
+    return j.content || (j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content) || '';
+  } catch (_) { return ''; }
+};
+const REPLAY_PLANNER = recordedContent('s1_response_planner_1.json');
+const REPLAY_AUTHOR = recordedContent('s1_response_author_2.json');
+const MEMORY_SKELETON = JSON.stringify({
+  characters: [],
+  scene: { chargeTier: 'low', interpretiveDensity: 'measured', loadedSentenceRatio: 0.0 },
+  sceneState: { setting: null, charactersPresent: [], protagonistStatus: null,
+    decisiveChange: null, activeInterlocutor: null, protagonistAlone: false },
+  relations: []
+});
+
 const runTwoScene = async (C) => {
   const browser = await chromium.launch();
   const page = await browser.newPage();
@@ -462,8 +499,25 @@ const runTwoScene = async (C) => {
     const sys = (body && body.messages && body.messages[0] && String(body.messages[0].content)) || '';
     const est = estimateUsd(body || { messages: [] }, (body && body.model) || 'grok-4-1-fast-reasoning').estimate;
     const stage = /RUNTIME COMMIT verifier/.test(sys) ? 'verifier'
+      : (/CHARACTER MEMORY EXTRACTOR/.test(sys) ? 'memory'
       : (/SCENE-SPINE planner|SCENE planner/.test(sys) ? 'planner'
-      : (/screenplay-native|cinematic-romance writer|FORBIDDEN INVENTIONS/.test(sys) ? 'author' : 'other'));
+      : (/screenplay-native|cinematic-romance writer|FORBIDDEN INVENTIONS/.test(sys) ? 'author' : 'other')));
+    // THE MEMORY EXTRACTOR IS SERVED, NEVER ABORTED. Aborting it stalled scene 2 before the planner
+    // (its three retries were the only requests that got through), so it is answered with its own
+    // declared skeleton at $0.
+    if (stage === 'memory') {
+      say('      [REPLAY] memory extractor — shape-faithful skeleton, $0');
+      return route.fulfill({ status: 200, contentType: 'application/json',
+        body: JSON.stringify({ content: MEMORY_SKELETON }) });
+    }
+    // VERIFIER-ONLY: the planner and author are replayed from run 13's recordings, so the verifier
+    // judgement is the sole live provider step.
+    if (LIVE_VERIFIER_ONLY && (stage === 'planner' || stage === 'author')) {
+      const body = stage === 'planner' ? REPLAY_PLANNER : REPLAY_AUTHOR;
+      say('      [REPLAY] ' + stage + ' — run 13 recorded response (' + body.length + ' chars), $0');
+      return route.fulfill({ status: 200, contentType: 'application/json',
+        body: JSON.stringify({ content: body }) });
+    }
     if (stage === 'other') { try { await route.abort(); } catch (_) {} return; }
 
     if (stage === 'planner' && plannerThisDraw >= 1) {
@@ -539,7 +593,12 @@ const runTwoScene = async (C) => {
     window.state._activeContinuationSeal = null;
     window.state._lastContinuationResult = null;
     window.state.turnCount = 2;
-    return { enabled: window._continuationSchemaEnabled() };
+    // THE MODE GATE: _isStagedMode() reads state.renderMode (camelCase). Without it
+    // _advanceStagedScene bails before generating and nothing dispatches.
+    window.state.renderMode = 'staged_story_mode';
+    window.state._cgScreenplayMode = true;
+    return { enabled: window._continuationSchemaEnabled(),
+      staged: (typeof window._isStagedMode === 'function') ? !!window._isStagedMode() : null };
   });
   if (!setup.enabled) { await browser.close(); throw new Error('opt-in flag not set'); }
 
@@ -548,8 +607,11 @@ const runTwoScene = async (C) => {
   for (let d = 1; d <= MAX_DRAWS; d++) {
     say('\n  ── scene 1, draw ' + d + '/' + MAX_DRAWS);
     plannerThisDraw = 0; authorGate = null;
+    // THE REAL PRODUCTION ENTRY POINT. Run 13 called _runCGScreenplayGen, which bypasses the mode
+    // gate AND the scene completion that persists the projection — so the commit gate had no prose
+    // to read. _advanceStagedScene awaits _completeStagedSceneFromScreenplay, which persists it.
     await page.evaluate(async ({ a, dlg }) => {
-      try { await Promise.race([window._runCGScreenplayGen(1, a, dlg),
+      try { await Promise.race([window._advanceStagedScene(a, dlg),
         new Promise(r => setTimeout(r, 420000))]); } catch (_) {}
     }, { a: C.action, dlg: C.dialogue });
     s1 = await page.evaluate(() => ({
@@ -575,16 +637,58 @@ const runTwoScene = async (C) => {
   });
   if (prose1) write('s1_prose.txt', prose1);
 
-  let s2 = null, repeat = null;
+  let s2 = null, repeat = null, progression = null;
   if (sealedOk) {
+    // ── READ SCENE 1 THROUGH ITS FINAL BEAT ──────────────────────────────────
+    // _advanceStagedScene's Guard 1 is `if (active && !active.gateShown) return;`, and gateShown
+    // only becomes true inside _advanceStagedBeat at the LAST beat, which then shows the say/do
+    // gate. Without this, scene 2 is blocked with "[STAGED:SUBMIT] Blocked — gate not yet open"
+    // and the commit gate never runs. gateShown is NEVER set by hand and no latch is cleared —
+    // the scene is read, which is what a reader does.
+    say('\n  ── reading scene 1 through to the say/do gate');
+    progression = await page.evaluate(async () => {
+      const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+      const st = () => {
+        const a = window.state._stagedActive || null;
+        return a ? { beat: a.currentBeatIdx, last: (a.plan && a.plan.beats || []).length - 1,
+          gateShown: !!a.gateShown, microShown: !!a.microShown } : null;
+      };
+      const before = st();
+      if (!before) return { ok: false, why: 'no _stagedActive session' };
+      let micros = 0;
+      for (let i = 0; i < 200; i++) {
+        const cur = st();
+        if (!cur || cur.gateShown) break;
+        const prevBeat = cur.beat;
+        try { window._advanceStagedBeat(); } catch (_) {}
+        await sleep(60);
+        const nxt = st();
+        if (nxt && nxt.beat === prevBeat && !nxt.gateShown) {
+          if (!nxt.microShown && typeof window._resolveMicroDecision === 'function') {
+            try { window._resolveMicroDecision(0); micros++; } catch (_) {}
+            await sleep(80);
+          } else { await sleep(120); }
+        }
+      }
+      return { ok: true, before, after: st(), micros };
+    });
+    say('    ' + JSON.stringify(progression));
+
     // ── SCENE 2 — opens by adjudicating scene 1 through the REAL _commitScene ──
     say('\n  ── scene 2 (adjudicates scene 1)');
     phase = 2; plannerThisDraw = 0;
     await page.evaluate(() => { window.state.turnCount = (window.state.turnCount || 2) + 1; });
-    await page.evaluate(async ({ a, dlg }) => {
-      try { await Promise.race([window._runCGScreenplayGen(1, a, dlg),
-        new Promise(r => setTimeout(r, 420000))]); } catch (_) {}
+    await page.evaluate(({ a, dlg }) => {
+      try { window._advanceStagedScene(a, dlg); } catch (_) {}
     }, { a: 'I wait for the commission to answer.', dlg: 'Let them send for me.' });
+    // wait for the commit gate to dispatch the verifier (or give up)
+    {
+      const deadline = Date.now() + 300000;
+      while (Date.now() < deadline && !calls.some(c => c.phase === 2 && c.stage === 'verifier')) {
+        await new Promise(r => setTimeout(r, 1000));
+      }
+      await new Promise(r => setTimeout(r, 5000));
+    }
     s2 = await page.evaluate(() => {
       const cs = window._ensureCommittedState();
       const reg = window._protectedRegisterIds();
@@ -616,7 +720,7 @@ const runTwoScene = async (C) => {
   }
   const plannerReqs = calls.filter(c => c.stage === 'planner');
   await browser.close();
-  return { calls, s1, s2, repeat, sealedOk, prose1, retriesBlocked, authorGate,
+  return { calls, s1, s2, repeat, sealedOk, prose1, retriesBlocked, authorGate, progression,
     s2PlannerRequest: (plannerReqs.filter(c => c.phase === 2).pop() || {}).request || '' };
 };
 

@@ -315,6 +315,37 @@ const ppd = fs.readFileSync('_per_proposal_delivery_control.mjs', 'utf8');
 t('the per-proposal control drives the REAL adjudication loop',
   /window\._adjudicateSceneProposals\(/.test(ppd));
 
+// ── THE PAID RUNNER CARRIES THE SAME FIXES ──────────────────────────────────
+// Static, because running the two-scene runner costs money. Each assertion pins one of the four
+// sequencing fixes the free chain control had to discover.
+console.log('\nTHE PAID --two-scene RUNNER CARRIES THE FOUR FIXES');
+const runner = fs.readFileSync('_continuation_live_eval.mjs', 'utf8');
+t('1. it drives the real entry point _advanceStagedScene, not _runCGScreenplayGen',
+  /window\._advanceStagedScene\(a, dlg\)/.test(runner));
+t('   and the two-scene path no longer calls _runCGScreenplayGen',
+  (function () {
+    const i = runner.indexOf('const runTwoScene = async (C)');
+    const body = i >= 0 ? runner.slice(i) : '';
+    return i >= 0 && !/window\._runCGScreenplayGen\(/.test(body);
+  })(), 'runTwoScene still calls _runCGScreenplayGen');
+t('2. it sets the staged render mode gate', /renderMode = 'staged_story_mode'/.test(runner));
+t('3. it READS scene 1 through to the say/do gate via the real beat advance',
+  /window\._advanceStagedBeat\(\)/.test(runner) && /gateShown/.test(runner));
+t('   resolving micro-decisions with the real resolver',
+  /window\._resolveMicroDecision\(0\)/.test(runner));
+t('   and NEVER sets gateShown or clears a submission latch itself',
+  !/gateShown\s*=\s*true/.test(runner) && !/_stagedSubmitting\s*=\s*false/.test(runner),
+  'the runner writes a gate flag directly');
+t('4. it SERVES the memory extractor instead of aborting it',
+  /stage === 'memory'/.test(runner) && /MEMORY_SKELETON/.test(runner));
+t('   with the contract\'s own skeleton and no interpretation',
+  /decisiveChange: null/.test(runner) && /characters: \[\]/.test(runner));
+t('and under --live-verifier-only the planner and author are REPLAYED',
+  /LIVE_VERIFIER_ONLY && \(stage === 'planner' \|\| stage === 'author'\)/.test(runner));
+t('   leaving the verifier as the ONLY live provider call',
+  /is the RUNTIME COMMIT VERIFIER/.test(runner)
+  && /\(TWO_SCENE && LIVE_VERIFIER_ONLY\)\s*\n?\s*\? R_VERIFIER/.test(runner));
+
 console.log('\nWHAT IS STUBBED, and it is exactly one thing');
 console.log('   · the RUNTIME COMMIT VERIFIER\'s reply. Its request was issued by the real');
 console.log('     _commitScene and intercepted at the network boundary; only the model\'s');
