@@ -30921,7 +30921,8 @@ window._reflowSceneDialogueLLM = _reflowSceneDialogueLLM;
     try {
       var sc = window.state && window.state.cgScaffold;
       if (!sc) return '';
-      var idx = (typeof _currentIssueIndex === 'function') ? _currentIssueIndex() : 1;
+      // NARRATIVE read (issueArcs) — see the currentNarrativeIssueIndex seam.
+      var idx = (typeof currentNarrativeIssueIndex === 'function') ? currentNarrativeIssueIndex() : 1;
       var arc = (Array.isArray(sc.issueArcs) && sc.issueArcs.length)
         ? (sc.issueArcs[idx - 1] || sc.issueArcs[sc.issueArcs.length - 1]) : null;
       var motifs = (Array.isArray(sc.motifBank) && sc.motifBank.length) ? sc.motifBank.join(' | ') : '';
@@ -45205,8 +45206,9 @@ If the main title does not include a strong marker, you MAY append a subtitle:
     var _issueRevealEligible = false;
     try {
       var _sc = s.cgScaffold;
-      if (_sc && Array.isArray(_sc.issueArcs) && _sc.issueArcs.length && typeof _currentIssueIndex === 'function') {
-        var _ri = _currentIssueIndex();
+      // NARRATIVE read (issueArcs reveal window) — see the currentNarrativeIssueIndex seam.
+      if (_sc && Array.isArray(_sc.issueArcs) && _sc.issueArcs.length && typeof currentNarrativeIssueIndex === 'function') {
+        var _ri = currentNarrativeIssueIndex();
         var _ra = _sc.issueArcs[_ri - 1];
         var _isLastIssue = _ri >= _sc.issueArcs.length;
         var _isCompletionIssue = !!(_ra && _ra.regimePhase === 'completion');
@@ -48918,7 +48920,8 @@ AESTHETIC: Polished editorial illustration. The object's compromised state reads
     try {
       var s = window.state, sc = s && s.cgScaffold;
       if (!sc || !Array.isArray(sc.issueArcs) || !sc.issueArcs.length) return null;
-      var ii = (typeof _currentIssueIndex === 'function') ? _currentIssueIndex() : 1;
+      // NARRATIVE read (issueArcs cliffShape) — see the currentNarrativeIssueIndex seam.
+      var ii = (typeof currentNarrativeIssueIndex === 'function') ? currentNarrativeIssueIndex() : 1;
       var arc = sc.issueArcs[ii - 1] || sc.issueArcs[sc.issueArcs.length - 1];
       return (arc && arc.cliffShape && typeof arc.cliffShape === 'object') ? arc.cliffShape : null;
     } catch (_) { return null; }
@@ -66169,8 +66172,9 @@ Return ONLY a single valid JSON object. STRICT JSON RULES (HARD — malformed JS
     // safety gate — the spine cannot skip the catharsis check.
     try {
       var sc = s.cgScaffold;
-      if (sc && Array.isArray(sc.issueArcs) && sc.issueArcs.length && typeof _currentIssueIndex === 'function') {
-        var _ii = _currentIssueIndex();
+      // NARRATIVE read (issueArcs regimePhase) — see the currentNarrativeIssueIndex seam.
+      if (sc && Array.isArray(sc.issueArcs) && sc.issueArcs.length && typeof currentNarrativeIssueIndex === 'function') {
+        var _ii = currentNarrativeIssueIndex();
         var _arc = sc.issueArcs[_ii - 1] || sc.issueArcs[sc.issueArcs.length - 1];
         var _rp = _arc && _arc.regimePhase;
         if (_rp && { apparent: 1, instability: 1, pressure_accumulation: 1, completion: 1 }[_rp]) {
@@ -93245,7 +93249,8 @@ ${profile.desc} Do not reference pacing mechanics in narrative text.`;
       opts = opts || {};
       var s = window.state, sc = s && s.cgScaffold;
       if (!sc) return '';
-      var idx = (typeof _currentIssueIndex === 'function') ? _currentIssueIndex() : 1;
+      // NARRATIVE read (issueArcs OAS spine) — see the currentNarrativeIssueIndex seam.
+      var idx = (typeof currentNarrativeIssueIndex === 'function') ? currentNarrativeIssueIndex() : 1;
       var arc = (Array.isArray(sc.issueArcs) && sc.issueArcs.length)
         ? (sc.issueArcs[idx - 1] || sc.issueArcs[sc.issueArcs.length - 1]) : null;
       var out = [];
@@ -143538,9 +143543,41 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
   //   state._issuePurchaseStatus        — 'paid' | 'refunded' | unset
   // ═══════════════════════════════════════════════════════════════════════════
 
+  // THE PAID-UNIT INDEX. `issueIndexInRun` is the unit of sale: scenesPerIssue scenes for one
+  // Fortune charge (literary 20/60F, cg 10/130F). It owns charging, covers, back-cover synopsis,
+  // the quest tick, issue numbering and every product label.
   function _currentIssueIndex() {
     return (state && state.issueIndexInRun) || 1;
   }
+
+  // ══════════════════════════════════════════════════════════════════════════════════════════
+  // NARRATIVE-INDEX SEAM — DELIBERATELY A NO-OP TODAY (Roman 2026-10-01)
+  //
+  // One counter was doing two unrelated jobs. `issueIndexInRun` is a BILLING boundary, yet it also
+  // indexes `cgScaffold.issueArcs[ii-1]` — the story's thesis, regimePhase, cliffShape and the
+  // committed-truth reveal window. So a Fortune charge decides which narrative arc is in force,
+  // which is the same category error as _tickAPlot firing a milestone because a scene number
+  // arrived, moved up to the issue layer.
+  //
+  // THIS IS PREPARATION, NOT THE SEPARATION. It returns the paid-unit index EXACTLY. No new state,
+  // no transitions, no terminals, no lifecycle change. Behaviour is identical by construction.
+  //
+  // WHY IT CANNOT BE SEPARATED YET: a narrative index only advances if something advances it, and
+  // the thing that would — an issue-closing terminal selected by a pre-author continuation planner
+  // — does not exist. Returning anything else today would freeze every story on issueArcs[0],
+  // so thesis, regime phase, cliff shape and the reveal window would stop progressing entirely.
+  // That is strictly worse than the current proxy.
+  //
+  // WHAT IT BUYS: the eventual change is ONE function body instead of a hunt across ~35 sites, and
+  // every narrative read is now self-declaring at its call site.
+  //
+  // Classification of all consumers is recorded in
+  // _audit_out/narrative_index_consumer_classification.md. Ambiguous consumers were deliberately
+  // NOT converted — each carries an unanswered semantic question that is Roman's to settle.
+  function currentNarrativeIssueIndex() {
+    return _currentIssueIndex();   // no-op seam: identical to the paid-unit index, by design
+  }
+  try { if (typeof window !== 'undefined') window.currentNarrativeIssueIndex = currentNarrativeIssueIndex; } catch (_) {}
 
   // Advance state.issueIndexInRun when crossing into a new issue. Computes
   // the target index from sceneIndex (the 0-indexed scene about to generate)
@@ -174515,7 +174552,8 @@ No text, no watermark, no UI elements, share-ready.`;
       var _vsc = window.state && window.state.cgScaffold;
       if (_vsc) {
         if (_vsc.visualThesis) prompt += 'RUN VISUAL THESIS (the imagery\'s evolution across the whole run — bias toward where THIS issue sits on that curve): ' + _vsc.visualThesis + '\n';
-        var _vii = (typeof _currentIssueIndex === 'function') ? _currentIssueIndex() : 1;
+        // NARRATIVE read (issueArcs visualArc) — see the currentNarrativeIssueIndex seam.
+        var _vii = (typeof currentNarrativeIssueIndex === 'function') ? currentNarrativeIssueIndex() : 1;
         var _vArc = Array.isArray(_vsc.issueArcs) ? (_vsc.issueArcs[_vii - 1] || _vsc.issueArcs[_vsc.issueArcs.length - 1]) : null;
         var _va = _vArc && _vArc.visualArc;
         if (_va) {
@@ -227682,7 +227720,8 @@ No text, no watermark, no UI elements, share-ready.`;
       // generator (which includes this block) gets the per-issue visual
       // dramaturgy, not just the run-level visualThesis.
       try {
-        var _vii = (typeof _currentIssueIndex === 'function') ? _currentIssueIndex() : 1;
+        // NARRATIVE read (issueArcs visualArc) — see the currentNarrativeIssueIndex seam.
+        var _vii = (typeof currentNarrativeIssueIndex === 'function') ? currentNarrativeIssueIndex() : 1;
         var _vArc = scaffold.issueArcs[_vii - 1] || scaffold.issueArcs[scaffold.issueArcs.length - 1];
         var _va = _vArc && _vArc.visualArc;
         if (_va) {
