@@ -1,0 +1,21 @@
+{
+  "tactical_move": "making the demand to the commission visible and received so the investigation becomes an active external pressure",
+  "state_change_precondition": "No sealed demand for an investigation into the burning has yet reached the commission.",
+  "state_change": "The sealed letter is handed to the courier and leaves the room bound for the commission.",
+  "forces_choice": "forces the PC to choose between waiting for the commission's reply or immediately seeking an ally who can influence the toll road",
+  "branch_a": "remain at the posting station to intercept any early response from the commission",
+  "branch_b": "ride out at once to meet the merchant who controls the southern toll gate before the summons arrives",
+  "scene_purpose": "render the player's committed action of sending the sealed demand on-page and received",
+  "forward_pressure": "the commission now holds an active demand that will force responses from those who profited",
+  "pressure_scope": "scene_local",
+  "canon_change": null,
+  "introduces": [],
+  "event_slots": {
+    "precondition": "The PC has prepared the sealed letter and a courier is present.",
+    "actor": "PC",
+    "action": "hands over the sealed letter",
+    "target": "courier",
+    "exit_state": "the sealed demand has left the room and is en route to the commission",
+    "mechanism_grounding": "ordinary"
+  }
+}
