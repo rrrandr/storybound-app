@@ -100015,9 +100015,24 @@ function _buildAuthorFloorDirective(s) {
   function _activatePendingEntities(rec) {
     try {
       var pend = (rec && Array.isArray(rec.pendingEntities)) ? rec.pendingEntities : [];
-      if (!pend.length) return [];
+      if (!pend.length) return { ok: true, admitted: [], issues: [] };
       var L = (typeof _relLedger === 'function') ? _relLedger(true) : null;
-      if (!L || !L.entities) return [];
+      if (!L || !L.entities) return { ok: false, admitted: [], issues: ['no entity register'] };
+      // RE-CHECK IDENTITY AT ACTIVATION, AND FAIL CLOSED. Pending entities deliberately do NOT
+      // participate in global collision checks while they ride the sealed proposal — they are not
+      // canon yet. But the ACTIVE register can move on between sealing and delivery, so a name
+      // that was free at seal time may be taken by the time this admits it. Collisions only: the
+      // alias requirement was already enforced when the proposal sealed, and re-litigating it here
+      // would reject a record that was valid when written. Nothing is admitted on a conflict —
+      // partial admission would leave half a proposal in canon.
+      var reIssues = _entityIdentityIssues(pend, { collisionsOnly: true,
+        skipIds: pend.map(function (e) { return e && e.id; }).filter(Boolean) });
+      if (reIssues.length) {
+        try { console.warn('[CONTINUATION:ACTIVATION-REFUSED] ' + ((rec && rec.id) || '?')
+          + ' — a colliding name appeared after sealing; nothing admitted: '
+          + JSON.stringify(reIssues)); } catch (_) {}
+        return { ok: false, admitted: [], issues: reIssues };
+      }
       var admitted = [];
       pend.forEach(function (e) {
         var already = !!L.entities[e.id];
@@ -100029,8 +100044,8 @@ function _buildAuthorFloorDirective(s) {
         try { console.log('[CONTINUATION:ACTIVATED] ' + rec.id + ' admitted '
           + JSON.stringify(admitted) + ' into active canon'); } catch (_) {}
       }
-      return admitted;
-    } catch (_) { return []; }
+      return { ok: true, admitted: admitted, issues: [] };
+    } catch (_) { return { ok: false, admitted: [], issues: ['activation threw'] }; }
   }
 
   // REFERENCE-ONLY. Takes a sealed proposal reference and nothing else: the fact text is read FROM
@@ -100056,7 +100071,15 @@ function _buildAuthorFloorDirective(s) {
       // protected register, unavailable as existing references to later planning. They enter with
       // the SAME system-minted ids they were sealed with, exactly once (idempotent by id), so a
       // retried or double activation cannot duplicate them.
-      _activatePendingEntities(rec);
+      // AND THE COMMIT IS REFUSED IF ACTIVATION IS. The fact is written AFTER admission, so a
+      // collision that appeared since sealing blocks the whole commit rather than committing a
+      // fact about a body that never entered canon.
+      var act = _activatePendingEntities(rec);
+      if (act && act.ok === false) {
+        try { console.warn('[COMMIT:REJECT] ' + rec.id + ' — pending entities could not be '
+          + 'activated; no fact committed: ' + JSON.stringify(act.issues)); } catch (_) {}
+        return null;
+      }
       var entry = { fact: rec.fact, proposalRef: rec.id, provenanceLink: 'sealed',
         sourceEvent: String(sourceEvent || '').slice(0, 60),
         committedAtScene: (typeof scene === 'number' ? scene : (window.state.turnCount || 0)),
@@ -100438,6 +100461,102 @@ function _buildAuthorFloorDirective(s) {
   window._undeclaredDurableReferents = _undeclaredDurableReferents;
   window._continuingReferentDetail = _continuingReferentDetail;
 
+  // ── ENTITY IDENTITY GUARD (Roman 2026-10-01) ────────────────────────────────────────────────
+  // The alias trace established the three facts that make this necessary:
+  //   · the canonical label IS already a deterministic fallback identity — but ONLY while labels
+  //     stay unique, and nothing enforced that;
+  //   · "the commission" resolves ONLY when explicitly declared, never guessed or inferred;
+  //   · two entities could be declared with the same label, or the same generic alias, and that
+  //     name then resolved to NEITHER — fail-closed "ambiguous (2)". A name silently lost.
+  // So identity is settled at DECLARATION time, where it can still be refused, instead of being
+  // discovered at resolution time when the canon is already written.
+  //
+  // IT NEVER MERGES AND NEVER AUTO-DISAMBIGUATES. It reports the conflicting entity ids and the
+  // conflicting values, and the proposal is rejected whole.
+  function _nameIndexOfActive() {
+    var idx = {};
+    try {
+      var reg = _protectedRegisterIds();
+      for (var id in reg) {
+        var e = reg[id]; if (!e) continue;
+        var add = function (eid, field, value) {
+          var n = _relNorm(value); if (!n) return;
+          (idx[n] = idx[n] || []).push({ id: eid, field: field, value: String(value) });
+        };
+        add(id, 'label', e.label);
+        (e.aliases || []).forEach(function (a) { add(id, 'alias', a); });
+      }
+    } catch (_) {}
+    return idx;
+  }
+  // Every name one candidate entity claims: its canonical label and each declared alias.
+  function _candidateNames(e) {
+    var out = [];
+    if (e && typeof e.label === 'string' && e.label.trim()) out.push({ field: 'label', value: e.label.trim() });
+    if (e && Array.isArray(e.aliases)) e.aliases.forEach(function (a) {
+      if (typeof a === 'string' && a.trim()) out.push({ field: 'alias', value: a.trim() });
+    });
+    return out;
+  }
+  // opts.collisionsOnly — skip the "must declare an alias" requirement. Used at ACTIVATION, where
+  //   that requirement was already enforced at seal time and the only new question is whether a
+  //   colliding name has appeared since.
+  // opts.skipIds — ids to treat as "not a conflict with myself", for the activation re-check.
+  function _entityIdentityIssues(intro, opts) {
+    var issues = [];
+    var o = opts || {};
+    var idx = o.activeIndex || _nameIndexOfActive();
+    var skip = {}; (o.skipIds || []).forEach(function (s) { skip[s] = 1; });
+    var claimed = {};           // normalised name -> the earlier entity in THIS proposal that took it
+    (intro || []).forEach(function (e, i) {
+      var tag = 'introduces[' + i + ']';
+      if (!e || typeof e !== 'object') return;   // shape errors are reported by the caller
+      // 1. AN EXPLICIT ALIAS IS REQUIRED. 2 of 5 live samples sealed a durable institution with
+      //    aliases [], and that body's own sealed fact then named it "the commission" — a form
+      //    that cannot resolve back to it. The canonical label alone cannot carry later natural
+      //    references, and the system will never guess one.
+      var al = Array.isArray(e.aliases)
+        ? e.aliases.filter(function (a) { return typeof a === 'string' && a.trim(); }) : null;
+      if (!o.collisionsOnly && (!al || !al.length)) {
+        issues.push(tag + ' "' + String((e && e.label) || '') + '" declares no aliases — a durable '
+          + 'entity must declare at least one explicit natural reference (e.g. "the commission"). '
+          + 'The canonical label remains a valid fallback identity, but natural variants are never '
+          + 'guessed, so an undeclared one will not resolve');
+      }
+      // 2. DUPLICATES WITHIN THE ENTITY, the canonical label included.
+      var seen = {};
+      _candidateNames(e).forEach(function (nm) {
+        var n = _relNorm(nm.value); if (!n) return;
+        if (seen[n]) {
+          issues.push(tag + ' repeats the name ' + JSON.stringify(nm.value) + ' (normalised "' + n
+            + '") already used as its ' + seen[n].field + ' ' + JSON.stringify(seen[n].value));
+        } else seen[n] = nm;
+      });
+      // 3. COLLISION WITH AN ACTIVE ENTITY — label against label, label against alias, either way.
+      Object.keys(seen).forEach(function (n) {
+        var hits = (idx[n] || []).filter(function (h) { return !skip[h.id]; });
+        if (hits.length) {
+          issues.push(tag + ' ' + seen[n].field + ' ' + JSON.stringify(seen[n].value)
+            + ' (normalised "' + n + '") collides with established '
+            + hits.map(function (h) { return h.id + ' ' + h.field + ' ' + JSON.stringify(h.value); }).join(', ')
+            + ' — normalised labels and aliases must be unique within a story, and an ambiguous '
+            + 'name is rejected rather than merged or auto-disambiguated');
+        }
+      });
+      // 4. COLLISION WITH ANOTHER ENTITY INTRODUCED IN THE SAME PROPOSAL.
+      Object.keys(seen).forEach(function (n) {
+        if (claimed[n]) {
+          issues.push(tag + ' ' + seen[n].field + ' ' + JSON.stringify(seen[n].value)
+            + ' (normalised "' + n + '") collides with ' + claimed[n].tag + ' ' + claimed[n].field
+            + ' ' + JSON.stringify(claimed[n].value) + ' declared in this same proposal');
+        } else claimed[n] = { tag: tag, field: seen[n].field, value: seen[n].value };
+      });
+    });
+    return issues;
+  }
+  window._entityIdentityIssues = _entityIdentityIssues;
+  window._nameIndexOfActive = _nameIndexOfActive;
+
   // REJECT-ONLY. Returns { ok, why[], … }. Never rewrites a proposal, never partially commits.
   function _validateContinuationProposal(reply) {
     var why = [];
@@ -100558,6 +100677,13 @@ function _buildAuthorFloorDirective(s) {
           + ') — introducing it again would redefine it; alteration is Tier 3');
       }
     });
+    // IDENTITY: required aliases, intra-entity duplicates, and normalised collisions against both
+    // the active register and the other entities in this same proposal. Deliberately AFTER the
+    // shape checks above, which report malformed entries. The label-vs-label case overlaps the
+    // "already established" check just above — that one carries the Tier 3 guidance, this one
+    // still fires when the register ALREADY holds two colliding names (where the resolver returns
+    // ambiguous and `_registerEntityByName` therefore finds nothing).
+    _entityIdentityIssues(intro).forEach(function (m) { why.push(m); });
 
     // ── existingRefs[]: must be STABLE LEDGER IDS that resolve. Reference is always allowed.
     var reg = _protectedRegisterIds();
@@ -102088,6 +102214,18 @@ function _buildAuthorFloorDirective(s) {
               + '  "introduces": [ { "kind": "named|role|artifact|institution|collective|place", "label": "", "aliases": [], "justification": "", "future_relevance": "what pressure it will exert later" } ]\n'
               + '      — for genuinely NEW people, offices, relics, governing bodies, groups or places. Ordinary props are scene texture; do NOT register them.\n'
               + '      NEVER supply an id — ids are assigned by the system, never by you.\n'
+              // IDENTITY (Roman 2026-10-01). Measured: 2 of 5 live samples sealed a durable
+              // institution with "aliases": [], and that body's own sealed fact then called it
+              // "the commission" — a form that cannot resolve back to it, because natural variants
+              // are matched whole-string and are never guessed.
+              + '      "aliases" MUST BE NON-EMPTY: declare every natural form later scenes will actually use\n'
+              + '          ("the commission", "the Assembly"). The canonical "label" is always a valid fallback\n'
+              + '          identity, but variants are matched WHOLE-STRING and NEVER guessed — an undeclared\n'
+              + '          "the commission" simply will not resolve to your "Toll Road Commission".\n'
+              + '      NAMES MUST BE UNIQUE WITHIN THE STORY. A label or alias that collides with an existing\n'
+              + '          entity\'s label or alias — or with another entity you introduce in this same reply —\n'
+              + '          is REJECTED outright, with the conflicting ids reported. Nothing is merged and nothing\n'
+              + '          is auto-renamed, because a contested name resolves to NEITHER entity.\n'
               + '  "existingRefs": [ "<stable entity id>" ] — established entities this change RELIES ON. Ids only, never names.\n'
               + '  "canon_change": { "tier": 2|3, "targets": [ "<id or an introduces[] label>" ], "content": "the durable fact, one sentence" }\n'
               + '      targets = what the change ALTERS (not merely references).\n'

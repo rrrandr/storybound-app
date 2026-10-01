@@ -180,6 +180,12 @@ console.log('TIER 2 — funnel reached ' + h2.callCount + ' stages; planner=' + 
 console.log('\nA. PREFLIGHT — the planner request carries the continuation contract');
 t('a scene-spine planner request was assembled', !!h2.planner);
 const P = h2.planner ? h2.planner.sys : '';
+// Whitespace-NORMALISED view, defined alongside P because assertions throughout this file use it.
+// The contract is hand-wrapped prose, so a regex that encodes where the line breaks fall tests my
+// wrapping, not the rule's presence — and the `||` fallbacks I first wrote to cope with that made
+// each assertion weaker than it looked. One normalisation, then every check is a single strict
+// match on the real assembled payload.
+const Pn = P.replace(/\s+/g, ' ');
 t('the CONTINUATION ENVELOPE schema is present', /CONTINUATION ENVELOPE \(REQUIRED/.test(P));
 t('  it demands ALL FIVE keys, every scene',
   /CONTINUATION ENVELOPE \(REQUIRED — all five keys every scene/.test(P));
@@ -189,6 +195,33 @@ t('  and names derivation IN THE HEADER as the conditional sixth',
 t('  it offers all six entity kinds',
   /named\|role\|artifact\|institution\|collective\|place/.test(P));
 t('  it forbids planner-supplied ids', /NEVER supply an id/.test(P));
+// ── ENTITY IDENTITY (Roman 2026-10-01), harvested against the real payload ───────────────────
+// Driven by the alias trace plus the 5-sample run: 2/5 sealed a durable institution with
+// "aliases": [], and its own sealed fact then named it "the commission" — unresolvable. Nothing is
+// guessed, so the requirement has to be stated where the planner builds the entry.
+t('  "aliases" is stated as MUST BE NON-EMPTY',
+  /"aliases" MUST BE NON-EMPTY/.test(P));
+t('    with concrete examples of the natural forms wanted',
+  /declare every natural form later scenes will actually use/.test(Pn)
+  && /"the commission", "the Assembly"/.test(Pn));
+t('    preserving the canonical label as a valid fallback identity',
+  /The canonical "label" is always a valid fallback\s*identity/.test(Pn));
+t('    and saying variants are matched WHOLE-STRING and never guessed',
+  /variants are matched WHOLE-STRING and NEVER guessed/.test(Pn));
+t('    with the concrete consequence spelled out',
+  /an undeclared\s*"the commission" simply will not resolve to your "Toll Road Commission"/.test(Pn));
+t('  NAME UNIQUENESS is required within the story',
+  /NAMES MUST BE UNIQUE WITHIN THE STORY/.test(P));
+t('    covering an existing entity\'s label OR alias',
+  /collides with an existing\s*entity's label or alias/.test(Pn));
+t('    and another entity introduced in the SAME reply',
+  /or with another entity you introduce in this same reply/.test(Pn));
+t('    rejected outright, with the conflicting ids reported',
+  /is REJECTED outright, with the conflicting ids reported/.test(Pn));
+t('    never merged and never auto-renamed',
+  /Nothing is merged and nothing\s*is auto-renamed/.test(Pn));
+t('    with the REASON given — a contested name resolves to neither',
+  /because a contested name resolves to NEITHER entity/.test(Pn));
 t('  it requires future_relevance on an addition', /future_relevance/.test(P));
 t('  it defines Tier 2 vs Tier 3', /TIER 2 = additive/.test(P) && /TIER 3 = alters established canon/.test(P));
 t('  it requires a Tier 3 basis', /TIER 3 ALSO REQUIRES "basis"/.test(P));
@@ -237,11 +270,6 @@ t('the rule that closes the leak is stated verbatim',
 // Live case C declared scene_local while branching into "the commission chambers". The contract
 // said nothing about a body the PLAYER names, so this adds the rule and the harvest proves it
 // arrives. No paid rerun until these assertions are green.
-// Whitespace-NORMALISED view. The contract is hand-wrapped prose, so a regex that encodes where
-// the line breaks fall tests my wrapping, not the rule's presence — and the `||` fallbacks I first
-// wrote to cope with that made each assertion weaker than it looked. One normalisation, then every
-// check below is a single strict match on the real assembled payload.
-const Pn = P.replace(/\s+/g, ' ');
 t('the PLAYER-NAMED-BODY rule is present',
   /A BODY THE PLAYER NAMES IS NOT CANON BY THAT ACT/.test(Pn));
 t('  it grants the player the right to name one',

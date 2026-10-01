@@ -189,6 +189,16 @@ t('  derivation is surfaced in the envelope HEADER',
 t('  stated as a biconditional covering introduces-only proposals',
   /REQUIRED IF AND ONLY IF this envelope proposes something durable/.test(Pnq)
   && /"canon_change" is non-null OR "introduces" is non-empty/.test(Pnq));
+// ENTITY IDENTITY at the dispatch gate. The full-chain test is exactly where a sealed fact gets
+// rendered and later referenced, so the alias and uniqueness rules must be in the prompt before
+// any such run goes out — not merely in the harvest control.
+t('  "aliases" MUST BE NON-EMPTY is in the planner prompt',
+  /"aliases" MUST BE NON-EMPTY/.test(Pnq));
+t('  with the canonical label preserved as a fallback identity',
+  /The canonical "label" is always a valid fallback identity/.test(Pnq));
+t('  and name uniqueness required within the story',
+  /NAMES MUST BE UNIQUE WITHIN THE STORY/.test(Pnq)
+  && /Nothing is merged and nothing is auto-renamed/.test(Pnq));
 
 console.log('\n   the funnel reached the author with a stubbed planner reply');
 t('an author request was assembled', !!author);
