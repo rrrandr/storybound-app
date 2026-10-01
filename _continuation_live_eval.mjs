@@ -121,6 +121,25 @@ if (SEAL_GATED && !WANTED) {
   process.exit(2);
 }
 
+// ── TWO-SCENE ACTIVATION / IDEMPOTENCY MODE (Roman 2026-10-01) ──────────────────────────────
+// Scene 1 seals and renders both proposal kinds; scene 2 OPENS by adjudicating scene 1's pending
+// proposals through the real _commitScene, which is where activation and idempotency actually
+// happen. Implies --seal-gated for scene 1: paying for an author on a draw that never sealed would
+// leave scene 2 with nothing to adjudicate.
+const TWO_SCENE = ARG.includes('--two-scene');
+if (TWO_SCENE && SAMPLES_IDX >= 0) {
+  console.error('REFUSED: --two-scene and --samples are different experiments.');
+  process.exit(2);
+}
+if (TWO_SCENE && PLANNER_ONLY) {
+  console.error('REFUSED: --two-scene must reach the author and the verifier.');
+  process.exit(2);
+}
+if (TWO_SCENE && !WANTED) {
+  console.error('REFUSED: --two-scene needs exactly one --case.');
+  process.exit(2);
+}
+
 say('=== LIVE CONTINUATION EVALUATION — ' + CASES.length + ' CASE(S) ===');
 say('    authorized: ' + (ESTIMATE_ONLY ? 'ESTIMATE ONLY ($0)' : '$' + AUTHORIZED.toFixed(2)));
 say('    output: ' + RUN);
@@ -153,16 +172,23 @@ const PER_CASE = PLANNER_ONLY ? R_PLANNER : (R_PLANNER + R_AUTHOR + R_VERIFIER);
 const ATTEMPTS = SAMPLES || CASES.length;
 // Seal-gated reserves the WORST CASE: every one of the three planner draws, plus one author and
 // one verifier, because a sealing draw may be the last one.
-const reserved = SEAL_GATED
-  ? (R_PLANNER * MAX_DRAWS + R_AUTHOR + R_VERIFIER)
-  : PER_CASE * ATTEMPTS;
+// TWO SCENES, conservatively: Roman fixed this at ~$0.297300 and said to keep it unchanged until
+// more author measurements exist, so it is TWO FULL SCENES at the untightened per-stage figures —
+// not the seal-gated shape, and not reduced by the two author measurements now in hand.
+const reserved = TWO_SCENE
+  ? (PER_CASE * 2)
+  : (SEAL_GATED ? (R_PLANNER * MAX_DRAWS + R_AUTHOR + R_VERIFIER) : PER_CASE * ATTEMPTS);
 say('\nCHAIN RESERVATION (worst case per stage, no fallback doubling)');
 say('  planner  : $' + R_PLANNER.toFixed(6));
 if (!PLANNER_ONLY) {
   say('  author   : $' + R_AUTHOR.toFixed(6));
   say('  verifier : $' + R_VERIFIER.toFixed(6));
 } else { say('  (--planner-only: author and verifier are not reserved and will be aborted)'); }
-if (SEAL_GATED) {
+if (TWO_SCENE) {
+  say('  TWO-SCENE: two full scenes at $' + PER_CASE.toFixed(6) + ' each');
+  say('             scene 1 seals + renders; scene 2 opens by adjudicating scene 1 via _commitScene');
+  say('             author gated on a seal in scene 1 (seal-gated semantics)');
+} else if (SEAL_GATED) {
   say('  SEAL-GATED: ' + MAX_DRAWS + ' planner draw(s) reserved at $' + R_PLANNER.toFixed(6)
     + ' each = $' + (R_PLANNER * MAX_DRAWS).toFixed(6));
   say('              + one author + one verifier, dispatched ONLY after a valid durable seal');
@@ -411,11 +437,283 @@ const runCase = async (C, sampleIx, opts) => {
     authorReq: calls.filter(c => c.stage === 'author').pop() || null };
 };
 
+// ── TWO-SCENE RUN ───────────────────────────────────────────────────────────────────────────
+// ONE browser session, because scene 2 must inherit scene 1's sealed store, _priorSceneStateChange
+// and rendered prose — the three things _commitScene reads. Two separate runCase() calls would
+// each open and close their own browser and lose exactly that.
+//
+// Stage policy: scene 1's author is gated on a seal (paying it on a non-sealing draw leaves scene 2
+// nothing to adjudicate); scene 2's VERIFIER is released, because it IS the test; scene 2's author
+// is aborted, since no check needs it and the planner — which does — runs before it.
+const runTwoScene = async (C) => {
+  const browser = await chromium.launch();
+  const page = await browser.newPage();
+  const calls = [];
+  let phase = 1, plannerThisDraw = 0, retriesBlocked = 0, authorGate = null;
+
+  await page.route('**/api/**', async (route) => {
+    const req = route.request();
+    const url = req.url();
+    let raw = null; try { raw = req.postData(); } catch (_) {}
+    if (!/\/api\/(proxy|mistral-proxy|chatgpt-proxy|deepseek-proxy)/.test(url)) {
+      try { await route.abort(); } catch (_) {} return;
+    }
+    let body = null; try { body = JSON.parse(raw || '{}'); } catch (_) {}
+    const sys = (body && body.messages && body.messages[0] && String(body.messages[0].content)) || '';
+    const est = estimateUsd(body || { messages: [] }, (body && body.model) || 'grok-4-1-fast-reasoning').estimate;
+    const stage = /RUNTIME COMMIT verifier/.test(sys) ? 'verifier'
+      : (/SCENE-SPINE planner|SCENE planner/.test(sys) ? 'planner'
+      : (/screenplay-native|cinematic-romance writer|FORBIDDEN INVENTIONS/.test(sys) ? 'author' : 'other'));
+    if (stage === 'other') { try { await route.abort(); } catch (_) {} return; }
+
+    if (stage === 'planner' && plannerThisDraw >= 1) {
+      retriesBlocked++;
+      say('      [ONE-ATTEMPT] aborting a SECOND planner request in this draw');
+      try { await route.abort(); } catch (_) {} return;
+    }
+    if (stage === 'author' && phase === 2) {
+      say('      [TWO-SCENE] aborting scene 2 author — no check needs it');
+      try { await route.abort(); } catch (_) {} return;
+    }
+    if (stage === 'author' && phase === 1) {
+      let sealed = null;
+      try {
+        sealed = await page.evaluate(() => {
+          const st = (window.state && window.state._sealedProposals) || null;
+          if (!st) return null;
+          const rec = Object.keys(st.byId).map(k => st.byId[k])
+            .filter(x => x && x.kind === 'continuation')[0] || null;
+          return rec ? rec.id : null;
+        });
+      } catch (_) { sealed = null; }
+      if (!sealed) {
+        authorGate = 'no-seal';
+        say('      [SEAL-GATE] no continuation seal — aborting the author UNPAID');
+        try { await route.abort(); } catch (_) {} return;
+      }
+      authorGate = 'sealed';
+      say('      [SEAL-GATE] seal ' + sealed + ' — releasing the author');
+    }
+    if (spentEstimate + est > AUTHORIZED) {
+      say('      [GUARD] ABORT ' + stage + ' — would exceed authorization');
+      try { await route.abort(); } catch (_) {} return;
+    }
+    spentEstimate += est;
+    if (stage === 'planner') plannerThisDraw++;
+    say('      [DISPATCH] s' + phase + ' ' + stage + '  ' + (raw || '').length + 'ch  est $' + est.toFixed(6));
+    write('s' + phase + '_request_' + stage + '_' + (calls.length + 1) + '.json', raw || '');
+    try {
+      const FT = stage === 'author' ? 300000 : (stage === 'planner' ? 120000 : 90000);
+      const resp = await route.fetch({ timeout: FT });
+      const text = await resp.text();
+      write('s' + phase + '_response_' + stage + '_' + (calls.length + 1) + '.json', text);
+      try { const j = JSON.parse(text); const ticks = j && j.usage && j.usage.cost_in_usd_ticks;
+        if (typeof ticks === 'number') { measured += ticks * 1e-10;
+          say('        measured $' + (ticks * 1e-10).toFixed(6) + ' (total $' + measured.toFixed(6) + ')'); }
+      } catch (_) {}
+      calls.push({ phase, stage, request: raw, response: text });
+      await route.fulfill({ response: resp });
+    } catch (e) {
+      say('        dispatch error: ' + (e && e.message));
+      calls.push({ phase, stage, request: raw, response: null, error: String(e && e.message) });
+      try { await route.abort(); } catch (_) {}
+    }
+  });
+
+  await page.goto('http://localhost:3000/', { waitUntil: 'domcontentloaded', timeout: 30000 });
+  await page.waitForFunction(() => typeof window._commitScene === 'function', { timeout: 20000 });
+  const setup = await page.evaluate(() => {
+    window._continuationProposalSchema = true;
+    window.state = window.state || {};
+    delete window.state._starterId;
+    window.state.storyId = 'live-twoscene-fixed';
+    window.state.world = 'Fatelands';
+    window.state.worldSubtype = 'arcane_binding';
+    window.state.picks = { flavor: 'Arcane Binding', world: 'Fatelands' };
+    window.state.storyLength = 'fling';
+    window.state.playerName = 'Wren';
+    window.state.loveInterestName = 'Cassel';
+    window.state._relationshipLedger = null;
+    window.state._committedState = null;
+    window.state._sealedProposals = null;
+    window.state._activeContinuationSeal = null;
+    window.state._lastContinuationResult = null;
+    window.state.turnCount = 2;
+    return { enabled: window._continuationSchemaEnabled() };
+  });
+  if (!setup.enabled) { await browser.close(); throw new Error('opt-in flag not set'); }
+
+  // ── SCENE 1, up to MAX_DRAWS draws until something seals ──────────────────
+  let s1 = null;
+  for (let d = 1; d <= MAX_DRAWS; d++) {
+    say('\n  ── scene 1, draw ' + d + '/' + MAX_DRAWS);
+    plannerThisDraw = 0; authorGate = null;
+    await page.evaluate(async ({ a, dlg }) => {
+      try { await Promise.race([window._runCGScreenplayGen(1, a, dlg),
+        new Promise(r => setTimeout(r, 420000))]); } catch (_) {}
+    }, { a: C.action, dlg: C.dialogue });
+    s1 = await page.evaluate(() => ({
+      ctResult: window.state._lastContinuationResult || null,
+      sealedKinds: window.state._sealedProposals
+        ? Object.keys(window.state._sealedProposals.byId).map(k => window.state._sealedProposals.byId[k].kind) : [],
+      pending: (window._pendingSealedForScene(window.state.turnCount) || []).map(p => ({ id: p.id, kind: p.kind })),
+      priorRef: (window.state._priorSceneStateChange || {}).proposalRef || null,
+      facts: window._ensureCommittedState().facts.length
+    }));
+    draws.push({ d, scope: null, outcome: s1.ctResult && s1.ctResult.outcome, gate: authorGate });
+    say('    handler=' + JSON.stringify(s1.ctResult && s1.ctResult.outcome)
+      + ' authorGate=' + JSON.stringify(authorGate)
+      + ' pending=' + JSON.stringify(s1.pending.map(p => p.kind)));
+    if (s1.ctResult && s1.ctResult.outcome === 'sealed' && authorGate === 'sealed') break;
+    if (d === MAX_DRAWS) { s1.exhausted = true; }
+  }
+  const sealedOk = !!(s1 && s1.ctResult && s1.ctResult.outcome === 'sealed' && authorGate === 'sealed');
+  const prose1 = await page.evaluate(() => {
+    try { if (typeof StoryPagination !== 'undefined' && StoryPagination.getAllContent)
+      return StoryPagination.getAllContent().replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim(); } catch (_) {}
+    try { return String(window._sbLatestProseText(window.state) || ''); } catch (_) { return ''; }
+  });
+  if (prose1) write('s1_prose.txt', prose1);
+
+  let s2 = null, repeat = null;
+  if (sealedOk) {
+    // ── SCENE 2 — opens by adjudicating scene 1 through the REAL _commitScene ──
+    say('\n  ── scene 2 (adjudicates scene 1)');
+    phase = 2; plannerThisDraw = 0;
+    await page.evaluate(() => { window.state.turnCount = (window.state.turnCount || 2) + 1; });
+    await page.evaluate(async ({ a, dlg }) => {
+      try { await Promise.race([window._runCGScreenplayGen(1, a, dlg),
+        new Promise(r => setTimeout(r, 420000))]); } catch (_) {}
+    }, { a: 'I wait for the commission to answer.', dlg: 'Let them send for me.' });
+    s2 = await page.evaluate(() => {
+      const cs = window._ensureCommittedState();
+      const reg = window._protectedRegisterIds();
+      return {
+        facts: cs.facts.map(f => ({ fact: f.fact, ref: f.proposalRef, prov: f.provenanceLink,
+          scene: f.committedAtScene })),
+        committedThrough: cs._committedThroughScene,
+        adjudication: window.state._lastPerProposalAdjudication || null,
+        registerLabels: Object.keys(reg).map(k => String(reg[k].label || '')),
+        activated: Object.keys(reg).filter(k => reg[k].provenance === 'continuation_activated')
+          .map(k => ({ id: k, label: reg[k].label, aliases: reg[k].aliases || [] })),
+        sceneCard: window.state._sceneStateCard || null
+      };
+    });
+    // ── IDEMPOTENCY through the real path, re-entered twice ──────────────────
+    say('\n  ── re-entering _commitScene on the same scene, twice');
+    repeat = await page.evaluate(async (prose) => {
+      const before = window._ensureCommittedState().facts.length;
+      await window._commitScene(prose, window.state._priorSceneStateChange,
+        (window.state._priorSceneStateChange || {}).sceneProposed);
+      await window._commitScene(prose, window.state._priorSceneStateChange,
+        (window.state._priorSceneStateChange || {}).sceneProposed);
+      const cs = window._ensureCommittedState();
+      const reg = window._protectedRegisterIds();
+      return { before, facts: cs.facts.length,
+        refs: cs.facts.map(f => f.proposalRef),
+        activated: Object.keys(reg).filter(k => reg[k].provenance === 'continuation_activated').length };
+    }, prose1);
+  }
+  const plannerReqs = calls.filter(c => c.stage === 'planner');
+  await browser.close();
+  return { calls, s1, s2, repeat, sealedOk, prose1, retriesBlocked, authorGate,
+    s2PlannerRequest: (plannerReqs.filter(c => c.phase === 2).pop() || {}).request || '' };
+};
+
 const results = {};
 const samples = [];
 const draws = [];
 
-if (SEAL_GATED) {
+if (TWO_SCENE) {
+  const C = CASES[0];
+  say('\n──────── TWO-SCENE ACTIVATION / IDEMPOTENCY — CASE ' + C.id + ' ────────');
+  say('  posture: ' + JSON.stringify(C.action));
+  say('  scene 1 seals + renders (author gated on a seal); scene 2 OPENS by adjudicating scene 1');
+  say('  through the real _commitScene. Scene 2\'s author is aborted — no check needs it.');
+  const R = await runTwoScene(C);
+
+  say('\n=== SCENE 1 ===');
+  t('a continuation proposal sealed in scene 1',
+    !!(R.s1 && R.s1.ctResult && R.s1.ctResult.outcome === 'sealed'),
+    JSON.stringify(R.s1 && R.s1.ctResult && R.s1.ctResult.why));
+  if (!R.sealedOk) {
+    say('\n  BOUNDARY UNTESTED — no draw sealed a durable proposal, so scene 2 had nothing to');
+    say('  adjudicate. NOT a failure of the system or the planner; the gate withheld the author.');
+    write('twoscene.json', { verdict: 'boundary_untested', draws, measured, authorized: AUTHORIZED });
+    say('\n' + pass + '/' + (pass + fail) + ' harness assertions passed');
+    say('MEASURED SPEND: $' + measured.toFixed(6) + ' of $' + AUTHORIZED.toFixed(2));
+    say('Artefacts: ' + RUN);
+    process.exit(0);
+  }
+  t('  the author was released only because a seal existed', R.authorGate === 'sealed');
+  t('  BOTH proposal kinds were pending after scene 1',
+    (R.s1.pending || []).length === 2, JSON.stringify(R.s1.pending));
+  t('  and NOTHING was committed by scene 1', R.s1.facts === 0, 'facts=' + R.s1.facts);
+  t('  scene 1 rendered prose', (R.prose1 || '').length > 200, 'len=' + (R.prose1 || '').length);
+
+  say('\n=== SCENE 2 — adjudication through the real _commitScene ===');
+  const verifierCalls = R.calls.filter(c => c.phase === 2 && c.stage === 'verifier');
+  t('scene 2 issued a RUNTIME COMMIT VERIFIER request', verifierCalls.length >= 1,
+    'verifier calls=' + verifierCalls.length);
+  const vreq = verifierCalls.length ? String(verifierCalls[0].request || '') : '';
+  t('  its payload listed BOTH sealed refs for judgement',
+    (R.s1.pending || []).every(p => vreq.indexOf(p.id) >= 0),
+    JSON.stringify((R.s1.pending || []).map(p => [p.id, vreq.indexOf(p.id) >= 0])));
+  say('  adjudication: ' + JSON.stringify(R.s2.adjudication && R.s2.adjudication.verdicts));
+  say('  facts: ' + JSON.stringify(R.s2.facts));
+  const ctRef = ((R.s1.pending || []).filter(p => p.kind === 'continuation')[0] || {}).id;
+  const scRef = ((R.s1.pending || []).filter(p => p.kind === 'state_change')[0] || {}).id;
+  const ctFact = R.s2.facts.filter(f => f.ref === ctRef)[0] || null;
+  t('each proposal got its OWN verdict', !!(R.s2.adjudication
+    && R.s2.adjudication.verdicts[ctRef] && R.s2.adjudication.verdicts[scRef]),
+    JSON.stringify(R.s2.adjudication));
+  if (ctFact) {
+    t('the CONTINUATION committed its own exact sealed record',
+      ctFact.prov === 'sealed' && ctFact.scene === (R.s1.pending.length ? 2 : ctFact.scene),
+      JSON.stringify(ctFact));
+    t('  exactly one fact per sealed ref — no duplicates',
+      new Set(R.s2.facts.map(f => f.ref)).size === R.s2.facts.length,
+      JSON.stringify(R.s2.facts.map(f => f.ref)));
+    t('THE INSTITUTION IS IN THE ACTIVE REGISTER',
+      R.s2.activated.length === 1, JSON.stringify(R.s2.activated));
+    t('  with its sealed aliases', R.s2.activated.length === 1
+      && (R.s2.activated[0].aliases || []).length >= 1, JSON.stringify(R.s2.activated));
+    t('  and the NEXT planner payload names it',
+      R.s2.activated.length === 1
+      && R.s2PlannerRequest.indexOf(String(R.s2.activated[0].label)) >= 0,
+      'label=' + (R.s2.activated.length ? R.s2.activated[0].label : '?'));
+    t('  while carrying NO pending-entity machinery',
+      !/ent:stage:\d+/.test(R.s2PlannerRequest),
+      (R.s2PlannerRequest.match(/ent:stage:\d+/) || [''])[0]);
+  } else {
+    say('  the continuation did NOT commit — recording the verdict rather than asserting success');
+    t('a continuation verdict was recorded', !!(R.s2.adjudication
+      && R.s2.adjudication.verdicts[ctRef]), JSON.stringify(R.s2.adjudication));
+    t('  and nothing was activated without it', R.s2.activated.length === 0,
+      JSON.stringify(R.s2.activated));
+  }
+  const canon2 = JSON.stringify(R.s2.facts) + JSON.stringify(R.s2.sceneCard);
+  t('no verifier tableau or replacement text entered canon or the card',
+    !/decisiveChange|dominant_replacement|tableau/.test(canon2), canon2.slice(0, 160));
+
+  say('\n=== IDEMPOTENCY — _commitScene re-entered twice on the same scene ===');
+  t('the fact count did not change', R.repeat && R.repeat.facts === R.repeat.before,
+    JSON.stringify(R.repeat));
+  t('  no duplicate refs', R.repeat
+    && new Set(R.repeat.refs).size === R.repeat.refs.length, JSON.stringify(R.repeat && R.repeat.refs));
+  t('  the activated entity count did not change', R.repeat && R.repeat.activated <= 1,
+    JSON.stringify(R.repeat));
+  t('  and the verifier was not re-called (committedThrough short-circuits)',
+    R.calls.filter(c => c.stage === 'verifier').length === verifierCalls.length,
+    'verifier calls=' + R.calls.filter(c => c.stage === 'verifier').length);
+
+  write('twoscene.json', { verdict: 'boundary_tested', draws, s1: R.s1, s2: R.s2,
+    repeat: R.repeat, measured, authorized: AUTHORIZED });
+  say('\n' + pass + '/' + (pass + fail) + ' assertions passed');
+  say('MEASURED SPEND: $' + measured.toFixed(6) + ' of $' + AUTHORIZED.toFixed(2));
+  say('Artefacts: ' + RUN);
+  process.exit(fail ? 1 : 0);
+} else if (SEAL_GATED) {
   // ── THE BOUNDARY TEST ───────────────────────────────────────────────────────────────────────
   // Up to MAX_DRAWS planner draws, one request each, no retries. Every draw is logged with its
   // outcome whether it seals or not. The author is released on the FIRST valid durable seal and
