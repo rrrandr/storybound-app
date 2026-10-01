@@ -1,0 +1,172 @@
+=== CONTINUATION PROMPT HARVEST (no network, no model, $0) ===
+
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/csp-report
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/config
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/csp-report
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/geo
+TIER 2 — funnel reached 5 stages; planner=33131B author=229614B
+
+A. PREFLIGHT — the planner request carries the continuation contract
+  ok   a scene-spine planner request was assembled
+  ok   the CONTINUATION ENVELOPE schema is present
+  ok     it demands ALL FIVE keys, every scene
+  ok     and names derivation IN THE HEADER as the conditional sixth
+  ok     it offers all six entity kinds
+  ok     it forbids planner-supplied ids
+  FAIL   "aliases" is stated as MUST BE NON-EMPTY
+  FAIL     with concrete examples of the natural forms wanted
+  FAIL     preserving the canonical label as a valid fallback identity
+  FAIL     and saying variants are matched WHOLE-STRING and never guessed
+  FAIL     with the concrete consequence spelled out
+  FAIL   NAME UNIQUENESS is required within the story
+  FAIL     covering an existing entity's label OR alias
+  FAIL     and another entity introduced in the SAME reply
+  FAIL     rejected outright, with the conflicting ids reported
+  FAIL     never merged and never auto-renamed
+  FAIL     with the REASON given — a contested name resolves to neither
+  ok     it requires future_relevance on an addition
+  ok     it defines Tier 2 vs Tier 3
+  ok     it requires a Tier 3 basis
+  ok     it forbids presenting a protected change as additive
+  ok     a null change is declared the NORMAL answer
+  ok     and manufacturing a change to fill the envelope is forbidden
+  ok   the event-slots contract is still present (unchanged)
+
+A2. HARVEST — the PERSISTENCE distinction reaches the real planner payload
+  ok   pressure_scope is a REQUIRED envelope key
+  ok     and it points at the PERSISTENCE section
+  ok   the PERSISTENCE section is present
+  ok     "scene_local" is defined as naming NO continuing referent
+  ok     with the planner's own Corridor phrasing as a legitimate example
+  ok     explicitly called a legitimate, common answer
+  ok     creating NO canon, unusable by later scenes
+  ok     "durable" is defined as depending on a CONTINUING identifiable referent
+  ok     which MUST be declared with kind, aliases and future_relevance
+  ok     and a durable pressure with an empty introduces is called invalid
+  ok   the rule that closes the leak is stated verbatim
+  ok   the PLAYER-NAMED-BODY rule is present
+  ok     it grants the player the right to name one
+  ok     while denying that this establishes it
+  ok     it offers exactly two explicit paths
+  ok     path (a) requires kind, aliases and future_relevance
+  ok     path (b) forbids later treatment as established
+  ok     path (b) is declared INVALID when the proposal relies on the body
+  ok     naming the reliance fields exactly
+  ok     and offering the no-change alternative as the other legal exit
+  ok     the contradiction is named as rejectable
+  ok     adoption is explicitly distinguished from inventing a durable fact
+  ok     and the no-invention rule is scoped to manufactured changes only
+  ok     LOWERCASE referents are named as continuing too, with case C's own words
+  ok     with the either/or spelled out
+  ok   the PERSISTENCE section sits INSIDE the envelope block (not appended elsewhere)
+
+A3. HARVEST — derivation is surfaced in the envelope header
+  ok   the derivation clause is in the KEY LIST, not only in the later block
+  ok     it states the condition as a biconditional
+  ok     naming BOTH triggers, so an introduces-only proposal is covered
+  ok     and says to omit it when neither holds
+  ok     with the consequence stated plainly
+  ok   the later block no longer restates the rule, it back-references it
+  ok     so the requirement is stated in exactly ONE place
+  ok   the envelope key list was located
+  ok   the five envelope keys appear in contract order
+  ok     with derivation last, after introduces
+
+B. PREFLIGHT — the planner receives its decision inputs
+  ok   the player's own action reaches the planner
+  ok   committed canon reaches the planner
+  ok   issue/story scaffold pressure reaches the planner
+
+C. the TIER 2 author payload carries ONLY reader-facing material
+  ok   a terminal author request was assembled
+  ok   the sealed fact reaches the author
+  ok     under an already-true heading
+  ok     with the scene purpose
+  ok     and the forward pressure
+  ok     NO entity id anywhere in the author payload
+  ok     NO sealed proposal id anywhere in the author payload
+  ok     NO posture hash anywhere in the author payload
+  ok     NO basis vocabulary anywhere in the author payload
+  ok     NO validator language anywhere in the author payload
+  ok     NO register/schema field names anywhere in the author payload
+  ok     NO persistence field names anywhere in the author payload
+  ok     NO derivation field name anywhere in the author payload
+  ok     NO verifier-only field names anywhere in the author payload
+   continuation block (2042B): "CONTINUATION — ALREADY TRUE (render it; do not add to it):\\n  The Reach Commission opens an investig"
+  ok     the continuation block was located
+  ok     NO tier in the continuation block
+  ok     NO basis in the continuation block
+  ok     NO targets in the continuation block
+  ok     NO delivery verdict in the continuation block
+  ok     NO tableau in the continuation block
+  ok     NO protected/register in the continuation block
+  ok     the pending entity's own id never appears
+  ok     no unproposed alternative appears
+
+D. a PENDING Tier 2 proposal is confined to its own path
+  ok   the pending entity is not in the active ledger yet (sealing wrote no fact)
+  ok   the author carrier holds reader-facing fields only
+  ok     and carries no tier/targets/basis
+
+E. no post-prose verifier data leaks into either prompt
+  ok   planner payload has no decisiveChange
+  ok   author payload has no decisiveChange
+  ok   planner payload has no dominant_replacement
+  ok   author payload has no dominant_replacement
+  ok   planner payload has no slots_check
+  ok   author payload has no slots_check
+  ok   planner payload has no protagonistStatus
+  ok   author payload has no protagonistStatus
+  ok   planner payload has no transition_position
+  ok   author payload has no transition_position
+  ok   planner payload has no first_irreversible_position
+  ok   author payload has no first_irreversible_position
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/csp-report
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/config
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/csp-report
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/geo
+
+F. NONE — no canon block, ordinary continuation preserved
+  ok   the proposal resolved to none
+  ok     no seal carrier was set
+  ok   an author request was still assembled
+  ok     it carries NO continuation block
+  ok     and no continuation fact text
+  ok     while ordinary author directives remain
+  ok     the ledger is empty
+  ok     NO entity id in the scene_local author payload
+  ok     NO sealed proposal id in the scene_local author payload
+  ok     NO posture hash in the scene_local author payload
+  ok     NO basis vocabulary in the scene_local author payload
+  ok     NO validator language in the scene_local author payload
+  ok     NO register/schema field names in the scene_local author payload
+  ok     NO persistence field names in the scene_local author payload
+  ok     NO derivation field name in the scene_local author payload
+  ok     NO verifier-only field names in the scene_local author payload
+  ok     the scene_local pressure was recorded as explicitly non-durable
+  ok     and the protected register is byte-identical before and after
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/csp-report
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/config
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/csp-report
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/geo
+
+G. TIER 3 — a protected change delivers its fact, never its basis
+  ok   the Tier 3 proposal sealed
+  ok     derived as Tier 3
+  ok   the sealed fact reaches the author
+  ok     the posture hash does NOT
+  ok     the causal chain does NOT
+  ok     the basis kind does NOT
+  ok     Julian's entity id does NOT
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/csp-report
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/config
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/csp-report
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/geo
+
+H. DELIVERED — the exact active fact is what later planner context receives
+  ok   exactly one fact activated
+  ok     it is byte-identical to the sealed content
+  ok   the planner's COMMITTED WORLD STATE carries that exact fact
+  ok     and carries no pending-entity id
+
+119/130 passed

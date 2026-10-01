@@ -1,0 +1,57 @@
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/csp-report
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/config
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/csp-report
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/geo
+=== CORRIDOR CONTINUATION PREFLIGHT (no network, no model, $0) ===
+
+1. THE TEST STORY HAS NO AUTHORED OBJECTIVE
+  ok   no _starterId is set (a Corridor/original story)
+  ok   _activeSeed returns null
+  ok   _activePlan returns null
+  ok   _effectiveSceneRow returns null — no row owns this scene
+
+3. THE CONTINUATION PATH IS ACTIVE
+  ok   the opt-in flag is enabled
+  ok   the handler, author block and anchor check are present
+
+4. THE TWO SEAL KINDS CANNOT COLLIDE
+   state_change=prop:4:1 (state_change)  continuation=prop:4:2 (continuation)
+  ok   both kinds seal at the same scene+posture as DISTINCT records
+  ok     each keeps its own fact
+  ok     state_change idempotency is still per kind
+  ok     continuation idempotency is still per kind
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/deepseek-proxy
+
+2. THE AUTHORED-SPINE LANGUAGE IS ABSENT FROM THE PLANNER PROMPT
+  ok   a planner request was assembled
+  ok     no "authored story spine" in the prompt
+  ok     no "scheduled objective" in the prompt
+  ok     no "must still be true" in the prompt
+  ok     no "scene exit state" in the prompt
+  ok     no "reserved canon block" in the prompt
+  ok     the reader's own action IS present
+
+   and the continuation contract IS present
+  ok   the CONTINUATION ENVELOPE schema is in the planner prompt
+  ok     with the null-is-normal guidance
+  ok     and the no-manufacturing prohibition
+  ok     the PERSISTENCE distinction is in the planner prompt
+  ok     forward_pressure is declared never a second canon channel
+  ok     the PLAYER-NAMED-BODY rule is in the planner prompt
+  ok     with the lowercase clause that case C walked through
+  ok     derivation is surfaced in the envelope HEADER
+  ok     stated as a biconditional covering introduces-only proposals
+  FAIL   "aliases" MUST BE NON-EMPTY is in the planner prompt
+  FAIL   with the canonical label preserved as a fallback identity
+  FAIL   and name uniqueness required within the story
+
+   the funnel reached the author with a stubbed planner reply
+  ok   an author request was assembled
+  ok   the handler ran on the (fixture) planner reply
+  ok     and the stubbed reply, lacking an envelope, is an envelope VIOLATION — not a silent none
+  ok     nothing was activated
+
+READINESS FOR THE NEXT LIVE RUN
+  NOT READY — 3 precondition(s) unmet; do not dispatch.
+
+30/33 passed
