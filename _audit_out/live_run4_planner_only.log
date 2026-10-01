@@ -1,0 +1,105 @@
+=== LIVE CONTINUATION EVALUATION — 2 CASES ===
+    authorized: $0.15
+    output: _continuation_live_eval_out/run_2026-10-01T07-04-34-260Z
+
+PRE-REGISTERED EXPECTATIONS (before any dispatch)
+  A-null     : envelope present, canon_change null, introduces [], outcome none, 0 facts
+  BOTH       : pressure_scope returned as "scene_local" or "durable", and the payload AGREES with it — durable identifies its referent, scene_local proposes no canon.
+  B-pressure : EITHER scene_local + null (nothing sealed, 0 facts, recorded non-durable)
+               OR durable + an identified referent (sealed, at most 1 fact, sealed provenance)
+  Either surprise is a reportable finding, not a failure to explain away.
+
+CHAIN RESERVATION (worst case per stage, no fallback doubling)
+  planner  : $0.017550
+  (--planner-only: author and verifier are not reserved and will be aborted)
+  per case : $0.017550  x 2 case(s)
+  TOTAL    : $0.035100
+  within authorization — $0.114900 headroom
+
+PREFLIGHT GATE (provider-free, $0): _corridor_continuation_preflight.mjs
+  preflight PASSED — the target story has no authored objective and the path is active.
+
+──────── CASE A-null: QUIET AFTERMATH (expect canon_change: null) ────────
+  posture: "I say nothing and let it stand."
+    [DISPATCH] planner  12115ch  est $0.009765
+      measured $0.006072 (total $0.006072)
+    [PLANNER-ONLY] aborting author — not reserved in this run
+    [PLANNER-ONLY] aborting author — not reserved in this run
+    [PLANNER-ONLY] aborting author — not reserved in this run
+
+──────── CASE B-pressure: DESTRUCTIVE ACT (expect a justified new pressure, or an explicit null) ────────
+  posture: "I burn the toll-house and ride for the river."
+    [DISPATCH] planner  12140ch  est $0.009774
+      measured $0.005566 (total $0.011638)
+    [PLANNER-ONLY] aborting author — not reserved in this run
+    [PLANNER-ONLY] aborting author — not reserved in this run
+    [PLANNER-ONLY] aborting author — not reserved in this run
+
+=== SPEND ===
+  running estimate : $0.019539
+  MEASURED         : $0.011638 of $0.15  (7.8%)
+
+=== CASE A-null — ENVELOPE COMPLIANCE ===
+  ok   A-null: a planner reply was parsed
+  envelope keys returned : ["scene_purpose","forward_pressure","pressure_scope","canon_change","introduces"]
+  scene_purpose    : "Convert the player's deliberate silence into an opening for Elara to cross the physical boundary"
+  forward_pressure : "Elara now waits for a response to her touch"
+  pressure_scope   : "scene_local"
+  canon_change     : null
+  introduces       : []
+  ok     all five envelope keys returned
+  ok     scene_purpose is non-empty
+  ok     forward_pressure is non-empty
+  ok     introduces is an array
+  ok     pressure_scope is one of the two contract literals
+  ok     scene_local: no canon was proposed alongside it
+  ok     the handler did NOT reject it as a persistence violation
+  ok     no planner-supplied durable id
+
+  handler result : {"outcome":"none","why":[],"sealedId":null,"introduced":[]}
+  committed facts: []
+  ok     PRE-REGISTERED: canon_change is null
+  ok     PRE-REGISTERED: introduces is empty
+  ok     outcome is none
+  ok     ZERO facts activated
+  ok     no CONTINUATION proposal was sealed
+  ok     (the authored state_change seal is present, as it should be)
+
+  prose chars: 0
+  (planner-only: the author call was aborted by design — prose NOT scored, and this run is therefore NOT evidence about rendering)
+  ok     no unplanned entity entered the ledger
+  ok     every fact carries sealed provenance
+
+=== CASE B-pressure — ENVELOPE COMPLIANCE ===
+  ok   B-pressure: a planner reply was parsed
+  envelope keys returned : ["scene_purpose","forward_pressure","pressure_scope","canon_change","introduces"]
+  scene_purpose    : "Execute the player's committed act of burning the toll-house as the first irreversible defiance."
+  forward_pressure : "Whoever governs this place will come and find the player."
+  pressure_scope   : "scene_local"
+  canon_change     : null
+  introduces       : []
+  ok     all five envelope keys returned
+  ok     scene_purpose is non-empty
+  ok     forward_pressure is non-empty
+  ok     introduces is an array
+  ok     pressure_scope is one of the two contract literals
+  ok     scene_local: no canon was proposed alongside it
+  ok     the handler did NOT reject it as a persistence violation
+  ok     no planner-supplied durable id
+
+  handler result : {"outcome":"none","why":[],"sealedId":null,"introduced":[]}
+  committed facts: []
+  B is scored on consistency, not on producing canon: scene_local+null and durable+identified are BOTH pre-registered as acceptable.
+  ok     PRE-REGISTERED: the scope and the payload agree
+  ok     scene_local: nothing was sealed
+  ok     scene_local: ZERO facts activated
+  ok     scene_local: recorded as explicitly non-durable
+
+  prose chars: 0
+  (planner-only: the author call was aborted by design — prose NOT scored, and this run is therefore NOT evidence about rendering)
+  ok     no unplanned entity entered the ledger
+  ok     every fact carries sealed provenance
+
+32/32 assertions passed
+MEASURED SPEND: $0.011638 of $0.15
+Artefacts: _continuation_live_eval_out/run_2026-10-01T07-04-34-260Z

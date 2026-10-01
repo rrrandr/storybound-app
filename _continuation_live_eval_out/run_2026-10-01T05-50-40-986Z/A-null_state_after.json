@@ -1,0 +1,64 @@
+{
+  "facts": [],
+  "ctResult": {
+    "outcome": "none",
+    "why": [],
+    "sealedId": null,
+    "introduced": []
+  },
+  "seal": null,
+  "sealed": [
+    {
+      "id": "prop:2:1",
+      "scene": 2,
+      "fact": "The presiding Dohkar states that Lirael's conduct will be reviewed and she will answer for it",
+      "anchors": [],
+      "pendingEntities": [],
+      "milestone": "",
+      "provenance": {
+        "invocationId": "inv:2:ph:1va1kfo",
+        "postureHash": "ph:1va1kfo",
+        "plannerModel": null,
+        "sceneProposed": 2,
+        "at": 1790833865200
+      },
+      "sealed": true
+    }
+  ],
+  "ledger": [
+    {
+      "id": "pc",
+      "kind": "named",
+      "label": "Lirael"
+    },
+    {
+      "id": "li",
+      "kind": "named",
+      "label": "the love interest"
+    },
+    {
+      "id": "ent:stage:1",
+      "kind": "named",
+      "label": "Julian",
+      "prov": "stage_issuer_generated"
+    },
+    {
+      "id": "ent:stage:2",
+      "kind": "named",
+      "label": "Seren",
+      "prov": "stage_issuer_generated"
+    },
+    {
+      "id": "ent:stage:3",
+      "kind": "named",
+      "label": "the presiding Dohkar",
+      "prov": "stage_issuer_generated"
+    },
+    {
+      "id": "ent:stage:4",
+      "kind": "named",
+      "label": "the assembly",
+      "prov": "stage_issuer_generated"
+    }
+  ]
+}

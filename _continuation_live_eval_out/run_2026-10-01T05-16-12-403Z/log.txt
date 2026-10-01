@@ -1,0 +1,101 @@
+=== LIVE CONTINUATION EVALUATION ===
+    authorized: $1.00
+    output: _continuation_live_eval_out/run_2026-10-01T05-16-12-403Z
+
+CHAIN RESERVATION (worst case, before any request)
+  planner  (~30000ch in / 1400 out, x2 fallback) : $0.035100
+  author   (~240000ch in / 8000 out, x2 fallback) : $0.252000
+  verifier (~10000ch in / 300 out, x2 fallback) : $0.010200
+  TOTAL RESERVED : $0.297300
+  within authorization — 0.702700 headroom
+
+PREFLIGHT (provider-free) — the contract must be present before any spend
+  ok   the continuation schema is explicitly enabled
+  ok   the handler, author block, anchors and seal are all present
+  preflight clean — proceeding to stage 1
+
+SCENE SETUP: established canon = ["pc","li","ent:stage:1"]
+
+── STAGE 1: real scene-spine planner call (the cheapest live question) ──
+  [SKIP] unrecognised provider stage aborted (not part of this evaluation)
+  [SKIP] unrecognised provider stage aborted (not part of this evaluation)
+  [SKIP] unrecognised provider stage aborted (not part of this evaluation)
+  [DISPATCH] planner  29814ch  est $0.016361  (running estimate $0.016361)
+    measured: $0.011226  (total measured $0.011226)
+  [DISPATCH] author  228133ch  est $0.120332  (running estimate $0.136692)
+    dispatch error: route.fetch: Timeout 30000ms exceeded.
+Call log:
+[2m  - → POST http://localhost:3000/api/proxy[22m
+[2m    - user-agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.8010.12 Safari/537.36[22m
+[2m    - accept: */*[22m
+[2m    - accept-encoding: gzip,deflate,br[22m
+[2m    - content-type: application/json[22m
+[2m    - origin: http://localhost:3000[22m
+[2m    - referer: http://localhost:3000/[22m
+[2m    - sec-ch-ua: "HeadlessChrome";v="153", "Not_A Brand";v="8", "Chromium";v="153"[22m
+[2m    - sec-ch-ua-mobile: ?0[22m
+[2m    - sec-ch-ua-platform: "macOS"[22m
+[2m    - content-length: 232171[22m
+
+  [DISPATCH] author  228089ch  est $0.120332  (running estimate $0.257024)
+    dispatch error: route.fetch: Timeout 30000ms exceeded.
+Call log:
+[2m  - → POST http://localhost:3000/api/mistral-proxy[22m
+[2m    - user-agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.8010.12 Safari/537.36[22m
+[2m    - accept: */*[22m
+[2m    - accept-encoding: gzip,deflate,br[22m
+[2m    - content-type: application/json[22m
+[2m    - origin: http://localhost:3000[22m
+[2m    - referer: http://localhost:3000/[22m
+[2m    - sec-ch-ua: "HeadlessChrome";v="153", "Not_A Brand";v="8", "Chromium";v="153"[22m
+[2m    - sec-ch-ua-mobile: ?0[22m
+[2m    - sec-ch-ua-platform: "macOS"[22m
+[2m    - content-length: 232127[22m
+
+  [DISPATCH] author  228071ch  est $0.120321  (running estimate $0.377345)
+    dispatch error: route.fetch: Timeout 30000ms exceeded.
+Call log:
+[2m  - → POST http://localhost:3000/api/chatgpt-proxy[22m
+[2m    - user-agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.8010.12 Safari/537.36[22m
+[2m    - accept: */*[22m
+[2m    - accept-encoding: gzip,deflate,br[22m
+[2m    - content-type: application/json[22m
+[2m    - origin: http://localhost:3000[22m
+[2m    - referer: http://localhost:3000/[22m
+[2m    - sec-ch-ua: "HeadlessChrome";v="153", "Not_A Brand";v="8", "Chromium";v="153"[22m
+[2m    - sec-ch-ua-mobile: ?0[22m
+[2m    - sec-ch-ua-platform: "macOS"[22m
+[2m    - content-length: 232109[22m
+
+
+=== DISPATCH LEDGER ===
+  1. planner  29814ch  est $0.016361
+  2. author  228133ch  est $0.120332
+  3. author  228089ch  est $0.120332
+  4. author  228071ch  est $0.120321
+  running estimate : $0.377345
+  MEASURED         : $0.011226
+  authorization    : $1.00  (used 1.1%)
+
+=== Q1: did the planner propose a plausible new Tier 2 pressure? ===
+  ok   a real planner call was dispatched
+  ok   the planner reply parsed as JSON
+  canon_change: null
+  introduces  : []
+  scene_purpose: null
+  forward_pressure: null
+  FAIL the planner used the continuation schema at all  — no canon_change and no introduces — the model declined the optional contract
+
+=== Q3/Q4: sealed → rendered → activated ===
+  FAIL an author call was dispatched
+  committed facts: []
+  ok   at most ONE fact was activated
+
+=== Q5: did any unplanned canon enter? ===
+  ledger: [{"id":"pc","kind":"named","label":"Lirael"},{"id":"li","kind":"named","label":"the love interest"},{"id":"ent:stage:1","kind":"named","label":"Julian"},{"id":"ent:stage:2","kind":"named","label":"Seren"},{"id":"ent:stage:3","kind":"named","label":"the presiding Dohkar"},{"id":"ent:stage:4","kind":"named","label":"the assembly"}]
+  ok   no entity entered the ledger that was not established or sealed-and-planned
+  ok   every activated fact carries a sealed provenance link
+
+7/9 assertions passed
+MEASURED SPEND: $0.011226 of $1.00
+Artefacts: _continuation_live_eval_out/run_2026-10-01T05-16-12-403Z

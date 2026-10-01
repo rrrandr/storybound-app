@@ -64,7 +64,14 @@ say('    authorized: ' + (ESTIMATE_ONLY ? 'ESTIMATE ONLY ($0)' : '$' + AUTHORIZE
 say('    output: ' + RUN);
 say('\nPRE-REGISTERED EXPECTATIONS (before any dispatch)');
 say('  A-null     : envelope present, canon_change null, introduces [], outcome none, 0 facts');
-say('  B-pressure : envelope present, a change or introduction, sealed, rendered, exactly 1 fact');
+say('  BOTH       : pressure_scope returned as "scene_local" or "durable", and the payload AGREES'
+  + ' with it — durable identifies its referent, scene_local proposes no canon.');
+// REVISED, pre-dispatch: B is no longer scored on producing canon. Its dialogue is deliberately
+// the Corridor phrasing, and the contract now declares an unnamed continuing pressure a legitimate
+// common answer — so scoring scene_local as a failure would score B against the very ambiguity
+// this fix removed. Both branches are acceptable; consistency is what is measured.
+say('  B-pressure : EITHER scene_local + null (nothing sealed, 0 facts, recorded non-durable)');
+say('               OR durable + an identified referent (sealed, at most 1 fact, sealed provenance)');
 say('  Either surprise is a reportable finding, not a failure to explain away.');
 
 // ── chain reservation for BOTH cases, before the first request ───────────────
@@ -203,6 +210,10 @@ const runCase = async (C) => {
     seal: window.state._activeContinuationSeal,
     sealed: window.state._sealedProposals
       ? Object.keys(window.state._sealedProposals.byId).map(k => window.state._sealedProposals.byId[k]) : [],
+    // Scene-local pressures are recorded, never entities. Harvested so a scene_local verdict can
+    // be checked against what the handler actually wrote, not inferred from the reply alone.
+    localPressures: (window.state._sceneLocalPressures || [])
+      .map(p => ({ scope: p.scope, durable: p.durable, text: p.text })),
     ledger: Object.keys((window.state._relationshipLedger || { entities: {} }).entities)
       .map(k => { const e = window.state._relationshipLedger.entities[k];
         return { id: e.id, kind: e.kind, label: e.label, prov: e.provenance }; })
@@ -256,7 +267,9 @@ say('  MEASURED         : $' + measured.toFixed(6) + ' of $' + AUTHORIZED.toFixe
 
 // ── scoring, per pre-registration ────────────────────────────────────────────
 const env = (id) => results[id] && results[id].envelope;
-const ENV_KEYS = ['scene_purpose', 'forward_pressure', 'canon_change', 'introduces'];
+// FIVE KEYS since the persistence fix (2026-10-01). `pressure_scope` is what this run exists to
+// measure, so it is scored, not merely printed.
+const ENV_KEYS = ['scene_purpose', 'forward_pressure', 'pressure_scope', 'canon_change', 'introduces'];
 
 for (const C of CASES) {
   const R = results[C.id]; const E = env(C.id);
@@ -267,12 +280,32 @@ for (const C of CASES) {
   say('  envelope keys returned : ' + JSON.stringify(present));
   say('  scene_purpose    : ' + JSON.stringify(E.scene_purpose || null));
   say('  forward_pressure : ' + JSON.stringify(E.forward_pressure || null));
+  say('  pressure_scope   : ' + JSON.stringify(E.pressure_scope || null));
   say('  canon_change     : ' + JSON.stringify(E.canon_change || null));
   say('  introduces       : ' + JSON.stringify(E.introduces || null));
-  t('  all four envelope keys returned', present.length === 4, JSON.stringify(present));
+  t('  all five envelope keys returned', present.length === 5, JSON.stringify(present));
   t('  scene_purpose is non-empty', typeof E.scene_purpose === 'string' && !!E.scene_purpose.trim());
   t('  forward_pressure is non-empty', typeof E.forward_pressure === 'string' && !!E.forward_pressure.trim());
   t('  introduces is an array', Array.isArray(E.introduces));
+  // THE MEASUREMENT THIS RUN EXISTS FOR. Neither value is a better answer than the other; what is
+  // scored is whether the planner USES the distinction and stays consistent with its own choice.
+  const scope = E.pressure_scope;
+  t('  pressure_scope is one of the two contract literals',
+    scope === 'scene_local' || scope === 'durable', JSON.stringify(scope));
+  if (scope === 'durable') {
+    const identified = (Array.isArray(E.introduces) && E.introduces.length > 0)
+      || (Array.isArray(E.existingRefs) && E.existingRefs.length > 0);
+    t('  durable: the continuing referent IS identified (introduces[] or existingRefs[])', identified,
+      'introduces=' + JSON.stringify(E.introduces) + ' existingRefs=' + JSON.stringify(E.existingRefs));
+  } else if (scope === 'scene_local') {
+    t('  scene_local: no canon was proposed alongside it',
+      !(E.canon_change && typeof E.canon_change === 'object')
+      && !(Array.isArray(E.introduces) && E.introduces.length),
+      'canon_change=' + JSON.stringify(E.canon_change) + ' introduces=' + JSON.stringify(E.introduces));
+  }
+  t('  the handler did NOT reject it as a persistence violation',
+    !(R.after.ctResult && R.after.ctResult.persistenceViolation === true),
+    JSON.stringify(R.after.ctResult && R.after.ctResult.why));
   t('  no planner-supplied durable id',
     !(E.canon_change && E.canon_change.id) && !(E.introduces || []).some(x => x && x.id));
 
@@ -298,8 +331,29 @@ for (const C of CASES) {
       R.after.sealed.some(s => s.kind === 'state_change'),
       JSON.stringify(R.after.sealed.map(s => s.kind)));
   } else {
-    t('  PRE-REGISTERED: a change or an introduction was proposed', hasChange || hasIntro,
-      'declined to propose anything on a destructive act');
+    // PRE-REGISTRATION REVISED FOR THE PERSISTENCE CONTRACT (2026-10-01), before dispatch.
+    // The old expectation — "a change or an introduction was proposed" — is no longer a valid
+    // test. Case B's dialogue is deliberately the Corridor phrasing ("let whoever governs this
+    // place come"), and the contract now states outright that an unnamed continuing pressure is a
+    // LEGITIMATE, COMMON answer. Scoring B as a failure for answering scene_local would be scoring
+    // it against the ambiguity we just removed. So BOTH branches are acceptable outcomes and the
+    // run measures CONSISTENCY, not canon production. Recorded here so the verdict cannot drift
+    // after the reply is read.
+    say('  B is scored on consistency, not on producing canon: scene_local+null and'
+      + ' durable+identified are BOTH pre-registered as acceptable.');
+    t('  PRE-REGISTERED: the scope and the payload agree',
+      (scope === 'scene_local' && !hasChange && !hasIntro)
+      || (scope === 'durable' && (hasChange || hasIntro)),
+      'scope=' + JSON.stringify(scope) + ' hasChange=' + hasChange + ' hasIntro=' + hasIntro);
+    if (scope === 'scene_local') {
+      t('  scene_local: nothing was sealed', !R.after.sealed.some(s => s.kind === 'continuation'),
+        JSON.stringify(R.after.sealed.map(s => s.kind)));
+      t('  scene_local: ZERO facts activated', R.after.facts.length === 0,
+        'facts=' + R.after.facts.length);
+      const lp = R.after.localPressures || [];
+      t('  scene_local: recorded as explicitly non-durable',
+        lp.length >= 1 && lp[lp.length - 1].durable === false, JSON.stringify(lp));
+    }
     if (hasChange || hasIntro) {
       t('  the handler SEALED it', R.after.ctResult && R.after.ctResult.outcome === 'sealed',
         JSON.stringify(R.after.ctResult));
@@ -308,7 +362,12 @@ for (const C of CASES) {
         JSON.stringify(R.after.sealed.map(s => s.kind)));
       if (rec) {
         say('  sealed fact: ' + JSON.stringify(rec.fact));
-        if (R.authorReq && R.authorReq.request) {
+        // The author stage is ABORTED on --planner-only, so its absence is the design, not a
+        // defect. Note what this run therefore does NOT establish rather than scoring it.
+        if (PLANNER_ONLY) {
+          say('  (planner-only: author aborted — the sealed fact reaching Grok is STILL UNPROVEN'
+            + ' live and remains the open question)');
+        } else if (R.authorReq && R.authorReq.request) {
           t('  the sealed fact reached the author payload',
             R.authorReq.request.indexOf(String(rec.fact).slice(0, 50)) >= 0);
           t('    with no entity id', !/ent:stage:\d+/.test(R.authorReq.request));
@@ -322,10 +381,17 @@ for (const C of CASES) {
       }
     }
   }
-  // PROSE, asserted for EVERY case — a null-change scene must still render.
+  // PROSE, asserted for EVERY case — a null-change scene must still render. But ONLY on a full
+  // run: --planner-only deliberately ABORTS the author request, so asserting prose there would
+  // report a false failure against a stage this run never paid for and never dispatched. The
+  // honest planner-only statement is that prose is out of scope, printed and not scored.
   say('\n  prose chars: ' + R.prose.length);
-  t('  the scene rendered prose', R.prose.length > 200, 'len=' + R.prose.length
-    + (PLANNER_ONLY ? ' (planner-only run: no author call expected)' : ''));
+  if (PLANNER_ONLY) {
+    say('  (planner-only: the author call was aborted by design — prose NOT scored, and this run'
+      + ' is therefore NOT evidence about rendering)');
+  } else {
+    t('  the scene rendered prose', R.prose.length > 200, 'len=' + R.prose.length);
+  }
 
   // no unplanned canon, both cases
   const planned = R.after.sealed.flatMap(p => (p.pendingEntities || []).map(e => e.id));

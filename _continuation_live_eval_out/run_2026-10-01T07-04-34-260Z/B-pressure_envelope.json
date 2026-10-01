@@ -1,0 +1,21 @@
+{
+  "tactical_move": "Escalate from words to irreversible action by destroying a symbol of control",
+  "state_change_precondition": "The toll-house still stands untouched by any act of defiance.",
+  "state_change": "The player sets the toll-house ablaze and rides for the river.",
+  "forces_choice": "forces the player to choose between riding openly across the river or concealing the horse in the reeds",
+  "branch_a": "ride openly across the river to draw pursuit",
+  "branch_b": "conceal the horse among the reeds and wait for night",
+  "scene_purpose": "Execute the player's committed act of burning the toll-house as the first irreversible defiance.",
+  "forward_pressure": "Whoever governs this place will come and find the player.",
+  "pressure_scope": "scene_local",
+  "canon_change": null,
+  "introduces": [],
+  "event_slots": {
+    "precondition": "The toll-house is present and intact in the scene.",
+    "actor": "player",
+    "action": "burn",
+    "target": "toll-house",
+    "exit_state": "the toll-house is now burning",
+    "mechanism_grounding": "ordinary"
+  }
+}

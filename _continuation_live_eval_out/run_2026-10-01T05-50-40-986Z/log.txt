@@ -1,0 +1,75 @@
+=== LIVE CONTINUATION EVALUATION — 2 CASES ===
+    authorized: $1.00
+    output: _continuation_live_eval_out/run_2026-10-01T05-50-40-986Z
+
+PRE-REGISTERED EXPECTATIONS (before any dispatch)
+  A-null     : envelope present, canon_change null, introduces [], outcome none, 0 facts
+  B-pressure : envelope present, a change or introduction, sealed, rendered, exactly 1 fact
+  Either surprise is a reportable finding, not a failure to explain away.
+
+CHAIN RESERVATION (worst case, x2 fallback per stage, both cases)
+  per case : $0.297300
+  TOTAL    : $0.594600
+  within authorization — $0.405400 headroom
+
+──────── CASE A-null: QUIET AFTERMATH (expect canon_change: null) ────────
+  posture: "I say nothing and let the assembly keep its assumption."
+    [DISPATCH] planner  30266ch  est $0.016524
+      measured $0.011883 (total $0.011883)
+
+──────── CASE B-pressure: DESTRUCTIVE ACT (expect a new pressure) ────────
+  posture: "I set the taper to the Reach archive and ride north before the bell stops."
+    [DISPATCH] planner  30326ch  est $0.016546
+      measured $0.012056 (total $0.023939)
+    [DISPATCH] author  228110ch  est $0.120324
+      measured $0.071477 (total $0.095416)
+
+=== SPEND ===
+  running estimate : $0.153394
+  MEASURED         : $0.095416 of $1.00  (9.5%)
+
+=== CASE A-null — ENVELOPE COMPLIANCE ===
+  ok   A-null: a planner reply was parsed
+  envelope keys returned : ["scene_purpose","forward_pressure","canon_change","introduces"]
+  scene_purpose    : "Land the Dohkar's formal questioning of Lirael's conduct to initiate preliminary review"
+  forward_pressure : "The announcement creates immediate procedural pressure on Lirael, forcing her next response"
+  canon_change     : null
+  introduces       : []
+  ok     all four envelope keys returned
+  ok     scene_purpose is non-empty
+  ok     forward_pressure is non-empty
+  ok     introduces is an array
+  ok     no planner-supplied durable id
+
+  handler result : {"outcome":"none","why":[],"sealedId":null,"introduced":[]}
+  committed facts: []
+  ok     PRE-REGISTERED: canon_change is null
+  ok     PRE-REGISTERED: introduces is empty
+  ok     outcome is none
+  ok     ZERO facts activated
+  FAIL   nothing sealed  — sealed=1
+  ok     no unplanned entity entered the ledger
+  ok     every fact carries sealed provenance
+
+=== CASE B-pressure — ENVELOPE COMPLIANCE ===
+  ok   B-pressure: a planner reply was parsed
+  envelope keys returned : ["scene_purpose","forward_pressure","canon_change","introduces"]
+  scene_purpose    : "Land the Dohkar's formal questioning of Lirael's conduct to initiate preliminary review and place her standing visibly at risk."
+  forward_pressure : "The assembly's attention now turns to the announced review, compelling Lirael to decide how to respond before the procedure advances."
+  canon_change     : null
+  introduces       : []
+  ok     all four envelope keys returned
+  ok     scene_purpose is non-empty
+  ok     forward_pressure is non-empty
+  ok     introduces is an array
+  ok     no planner-supplied durable id
+
+  handler result : {"outcome":"none","why":[],"sealedId":null,"introduced":[]}
+  committed facts: []
+  FAIL   PRE-REGISTERED: a change or an introduction was proposed  — declined to propose anything on a destructive act
+  ok     no unplanned entity entered the ledger
+  ok     every fact carries sealed provenance
+
+20/22 assertions passed
+MEASURED SPEND: $0.095416 of $1.00
+Artefacts: _continuation_live_eval_out/run_2026-10-01T05-50-40-986Z

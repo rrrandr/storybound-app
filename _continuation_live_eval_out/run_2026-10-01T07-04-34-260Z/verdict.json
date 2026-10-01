@@ -1,0 +1,81 @@
+{
+  "pass": 32,
+  "fail": 0,
+  "measured": 0.01163805,
+  "spentEstimate": 0.019539,
+  "authorized": 0.15,
+  "cases": [
+    {
+      "id": "A-null",
+      "envelope": {
+        "tactical_move": "Let the player's silence invite the first physical advance",
+        "state_change_precondition": "No physical contact has occurred between them in the room.",
+        "state_change": "She steps close and rests her hand lightly on his chest.",
+        "forces_choice": "forces the PC to choose between covering her hand or turning aside",
+        "branch_a": "cover her hand with his own and hold it there",
+        "branch_b": "turn his body aside while keeping his eyes on hers",
+        "stage_present": [
+          "PC",
+          "Elara"
+        ],
+        "stage_location": "quiet alcove off the main hall",
+        "stage_issued_objects": [],
+        "stage_affordances": [
+          "dim lighting",
+          "close proximity"
+        ],
+        "scene_purpose": "Convert the player's deliberate silence into an opening for Elara to cross the physical boundary",
+        "forward_pressure": "Elara now waits for a response to her touch",
+        "pressure_scope": "scene_local",
+        "canon_change": null,
+        "introduces": [],
+        "event_slots": {
+          "precondition": "Elara and the PC are alone together in the alcove",
+          "actor": "Elara",
+          "action": "initiates physical contact",
+          "target": "PC",
+          "exit_state": "Elara's hand is now resting on the PC's chest",
+          "mechanism_grounding": "ordinary"
+        }
+      },
+      "ctResult": {
+        "outcome": "none",
+        "why": [],
+        "sealedId": null,
+        "introduced": []
+      },
+      "facts": []
+    },
+    {
+      "id": "B-pressure",
+      "envelope": {
+        "tactical_move": "Escalate from words to irreversible action by destroying a symbol of control",
+        "state_change_precondition": "The toll-house still stands untouched by any act of defiance.",
+        "state_change": "The player sets the toll-house ablaze and rides for the river.",
+        "forces_choice": "forces the player to choose between riding openly across the river or concealing the horse in the reeds",
+        "branch_a": "ride openly across the river to draw pursuit",
+        "branch_b": "conceal the horse among the reeds and wait for night",
+        "scene_purpose": "Execute the player's committed act of burning the toll-house as the first irreversible defiance.",
+        "forward_pressure": "Whoever governs this place will come and find the player.",
+        "pressure_scope": "scene_local",
+        "canon_change": null,
+        "introduces": [],
+        "event_slots": {
+          "precondition": "The toll-house is present and intact in the scene.",
+          "actor": "player",
+          "action": "burn",
+          "target": "toll-house",
+          "exit_state": "the toll-house is now burning",
+          "mechanism_grounding": "ordinary"
+        }
+      },
+      "ctResult": {
+        "outcome": "none",
+        "why": [],
+        "sealedId": null,
+        "introduced": []
+      },
+      "facts": []
+    }
+  ]
+}

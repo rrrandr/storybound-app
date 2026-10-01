@@ -1,0 +1,54 @@
+{
+  "facts": [],
+  "ctResult": {
+    "outcome": "none",
+    "why": [],
+    "sealedId": null,
+    "introduced": []
+  },
+  "seal": null,
+  "sealed": [
+    {
+      "id": "prop:2:1",
+      "scene": 2,
+      "kind": "state_change",
+      "fact": "The player sets the toll-house ablaze and rides for the river.",
+      "anchors": [],
+      "pendingEntities": [],
+      "milestone": "",
+      "provenance": {
+        "invocationId": "inv:state_change:2:noposture",
+        "postureHash": null,
+        "plannerModel": null,
+        "sceneProposed": 2,
+        "at": 1790838351801
+      },
+      "sealed": true
+    }
+  ],
+  "localPressures": [
+    {
+      "scope": "scene_local",
+      "durable": false,
+      "text": "Whoever governs this place will come and find the player."
+    }
+  ],
+  "ledger": [
+    {
+      "id": "pc",
+      "kind": "named",
+      "label": "Wren"
+    },
+    {
+      "id": "ent:cassel",
+      "kind": "named",
+      "label": "Cassel"
+    },
+    {
+      "id": "ent:stage:1",
+      "kind": "named",
+      "label": "Julian",
+      "prov": "stage_issuer_generated"
+    }
+  ]
+}

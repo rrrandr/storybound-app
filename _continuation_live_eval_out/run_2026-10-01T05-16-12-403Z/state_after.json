@@ -1,0 +1,62 @@
+{
+  "facts": [],
+  "seal": null,
+  "sealedProposals": [
+    {
+      "id": "prop:2:1",
+      "scene": 2,
+      "fact": "The presiding Dohkar declares that Lirael's conduct during the rite will be reviewed",
+      "anchors": [],
+      "pendingEntities": [],
+      "milestone": "",
+      "provenance": {
+        "invocationId": "inv:2:ph:s4j2r6",
+        "postureHash": "ph:s4j2r6",
+        "plannerModel": null,
+        "sceneProposed": 2,
+        "at": 1790831802271
+      },
+      "sealed": true
+    }
+  ],
+  "register": [
+    "pc",
+    "li",
+    "ent:stage:1",
+    "ent:stage:2",
+    "ent:stage:3",
+    "ent:stage:4"
+  ],
+  "ledger": [
+    {
+      "id": "pc",
+      "kind": "named",
+      "label": "Lirael"
+    },
+    {
+      "id": "li",
+      "kind": "named",
+      "label": "the love interest"
+    },
+    {
+      "id": "ent:stage:1",
+      "kind": "named",
+      "label": "Julian"
+    },
+    {
+      "id": "ent:stage:2",
+      "kind": "named",
+      "label": "Seren"
+    },
+    {
+      "id": "ent:stage:3",
+      "kind": "named",
+      "label": "the presiding Dohkar"
+    },
+    {
+      "id": "ent:stage:4",
+      "kind": "named",
+      "label": "the assembly"
+    }
+  ]
+}

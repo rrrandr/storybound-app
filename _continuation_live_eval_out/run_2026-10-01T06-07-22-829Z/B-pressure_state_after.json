@@ -1,0 +1,47 @@
+{
+  "facts": [],
+  "ctResult": {
+    "outcome": "none",
+    "why": [],
+    "sealedId": null,
+    "introduced": []
+  },
+  "seal": null,
+  "sealed": [
+    {
+      "id": "prop:2:1",
+      "scene": 2,
+      "kind": "state_change",
+      "fact": "The player sets the toll-house ablaze, flames roaring through its timbers.",
+      "anchors": [],
+      "pendingEntities": [],
+      "milestone": "",
+      "provenance": {
+        "invocationId": "inv:state_change:2:noposture",
+        "postureHash": null,
+        "plannerModel": null,
+        "sceneProposed": 2,
+        "at": 1790834888692
+      },
+      "sealed": true
+    }
+  ],
+  "ledger": [
+    {
+      "id": "pc",
+      "kind": "named",
+      "label": "Wren"
+    },
+    {
+      "id": "ent:cassel",
+      "kind": "named",
+      "label": "Cassel"
+    },
+    {
+      "id": "ent:stage:1",
+      "kind": "named",
+      "label": "Julian",
+      "prov": "stage_issuer_generated"
+    }
+  ]
+}

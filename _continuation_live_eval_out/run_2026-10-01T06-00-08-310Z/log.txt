@@ -1,0 +1,16 @@
+=== LIVE CONTINUATION EVALUATION — 2 CASES ===
+    authorized: ESTIMATE ONLY ($0)
+    output: _continuation_live_eval_out/run_2026-10-01T06-00-08-310Z
+
+PRE-REGISTERED EXPECTATIONS (before any dispatch)
+  A-null     : envelope present, canon_change null, introduces [], outcome none, 0 facts
+  B-pressure : envelope present, a change or introduction, sealed, rendered, exactly 1 fact
+  Either surprise is a reportable finding, not a failure to explain away.
+
+CHAIN RESERVATION (worst case per stage, no fallback doubling)
+  planner  : $0.017550
+  (--planner-only: author and verifier are not reserved and will be aborted)
+  per case : $0.017550  x 1 case(s)
+  TOTAL    : $0.017550
+
+ESTIMATE ONLY — nothing dispatched. $0 spent.

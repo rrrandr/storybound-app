@@ -1,0 +1,12 @@
+=== LIVE CONTINUATION EVALUATION ===
+    authorized: ESTIMATE ONLY ($0)
+    output: _continuation_live_eval_out/run_2026-10-01T05-37-37-736Z
+
+CHAIN RESERVATION (worst case, before any request)
+  planner  (~30000ch in / 1400 out, x2 fallback) : $0.035100
+  author   (~240000ch in / 8000 out, x2 fallback) : $0.252000
+  verifier (~10000ch in / 300 out, x2 fallback) : $0.010200
+  TOTAL RESERVED : $0.297300
+  (estimate-only: nothing will be dispatched)
+
+ESTIMATE ONLY — no provider call made. $0 spent.

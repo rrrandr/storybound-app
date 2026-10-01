@@ -1,0 +1,39 @@
+{
+  "pass": 8,
+  "fail": 1,
+  "measured": 0.07869805,
+  "spentEstimate": 0.12208200000000001,
+  "authorized": 0.16,
+  "cases": [
+    {
+      "id": "B-pressure",
+      "envelope": {
+        "tactical_move": "Launch open defiance by destroying the toll point and issuing a public challenge",
+        "state_change_precondition": "The toll-house stands untouched by any flame or act of rebellion.",
+        "state_change": "The player sets the toll-house ablaze, flames roaring through its timbers.",
+        "forces_choice": "forces the player to choose between riding straight for the river crossing or lingering to watch who answers the fire",
+        "branch_a": "Spur the horse onward and cross the river without stopping",
+        "branch_b": "Dismount in cover nearby and observe who arrives to investigate the blaze",
+        "scene_purpose": "Stage the player's first irreversible act of rebellion against local authority",
+        "forward_pressure": "The visible fire and spoken challenge will draw pursuit or response from whoever governs the toll",
+        "canon_change": null,
+        "introduces": [],
+        "event_slots": {
+          "precondition": "The player is present at the toll-house with means to start a fire.",
+          "actor": "the player",
+          "action": "ignites and burns",
+          "target": "the toll-house",
+          "exit_state": "the toll-house is now visibly burning",
+          "mechanism_grounding": "ordinary"
+        }
+      },
+      "ctResult": {
+        "outcome": "none",
+        "why": [],
+        "sealedId": null,
+        "introduced": []
+      },
+      "facts": []
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "tactical_move": "Let the player's silence invite the first physical advance",
+  "state_change_precondition": "No physical contact has occurred between them in the room.",
+  "state_change": "She steps close and rests her hand lightly on his chest.",
+  "forces_choice": "forces the PC to choose between covering her hand or turning aside",
+  "branch_a": "cover her hand with his own and hold it there",
+  "branch_b": "turn his body aside while keeping his eyes on hers",
+  "stage_present": [
+    "PC",
+    "Elara"
+  ],
+  "stage_location": "quiet alcove off the main hall",
+  "stage_issued_objects": [],
+  "stage_affordances": [
+    "dim lighting",
+    "close proximity"
+  ],
+  "scene_purpose": "Convert the player's deliberate silence into an opening for Elara to cross the physical boundary",
+  "forward_pressure": "Elara now waits for a response to her touch",
+  "pressure_scope": "scene_local",
+  "canon_change": null,
+  "introduces": [],
+  "event_slots": {
+    "precondition": "Elara and the PC are alone together in the alcove",
+    "actor": "Elara",
+    "action": "initiates physical contact",
+    "target": "PC",
+    "exit_state": "Elara's hand is now resting on the PC's chest",
+    "mechanism_grounding": "ordinary"
+  }
+}
