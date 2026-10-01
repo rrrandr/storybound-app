@@ -1,0 +1,33 @@
+{
+  "tactical_move": "Delivering the sealed demand to force the commission's formal involvement in the burning",
+  "state_change_precondition": "The commission has not yet received any demand or notice of the burning",
+  "state_change": "The sealed letter is placed in the clerk's hands at the commission chambers",
+  "forces_choice": "forces the PC to choose between presenting evidence at the convened hearing or directing a proxy to speak",
+  "branch_a": "Attend the hearing in person to name the profiteers directly",
+  "branch_b": "Dispatch a trusted proxy to the hearing while pursuing independent leads on the fire",
+  "scene_purpose": "Trigger the commission's receipt of the demand and open the path to investigation",
+  "forward_pressure": "The commission will now convene and issue summonses",
+  "pressure_scope": "durable",
+  "canon_change": null,
+  "introduces": [
+    {
+      "kind": "institution",
+      "label": "Toll Road Commission",
+      "aliases": [
+        "the commission",
+        "the governing commission"
+      ],
+      "justification": "Player action names and addresses this body to demand action",
+      "future_relevance": "Will investigate the burning and summon those who profited"
+    }
+  ],
+  "derivation": "Player's explicit action of sending sealed word to the commission that governs the toll road directly requires adopting the body as canon so the demand can be received and acted upon",
+  "event_slots": {
+    "precondition": "A messenger carrying the sealed letter must reach the commission chambers",
+    "actor": "the messenger",
+    "action": "delivers the sealed letter",
+    "target": "the Toll Road Commission clerk",
+    "exit_state": "the commission has received the demand for an investigation into the burning",
+    "mechanism_grounding": "ordinary"
+  }
+}

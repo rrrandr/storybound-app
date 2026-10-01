@@ -1,0 +1,21 @@
+{
+  "tactical_move": "commit the PC's demand to an external body by making the dispatch visible and received",
+  "state_change_precondition": "No sealed demand for investigation has yet left the PC's hands.",
+  "state_change": "The PC places the sealed letter into the courier's hands and watches it carried away.",
+  "forces_choice": "forces the PC to choose between remaining at the toll road to intercept the first reply or riding out to gather independent witnesses before the commission arrives",
+  "branch_a": "remain at the toll road to intercept the first reply",
+  "branch_b": "ride out to gather independent witnesses before the commission arrives",
+  "scene_purpose": "make the player's demand to the commission an irreversible, witnessed action that opens external pressure",
+  "forward_pressure": "the commission will now respond to the sealed demand",
+  "pressure_scope": "scene_local",
+  "canon_change": null,
+  "introduces": [],
+  "event_slots": {
+    "precondition": "The PC and a courier are both present in the scene.",
+    "actor": "PC",
+    "action": "hands over the sealed letter",
+    "target": "courier",
+    "exit_state": "the sealed demand for investigation has been dispatched",
+    "mechanism_grounding": "ordinary"
+  }
+}

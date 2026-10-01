@@ -1,0 +1,39 @@
+{
+  "tactical_move": "enact the player's dispatch of the sealed demand to force the commission's involvement",
+  "state_change_precondition": "No sealed demand for investigation has reached the commission.",
+  "state_change": "The sealed letter is handed to the courier bound for the commission.",
+  "forces_choice": "forces the PC to choose between monitoring the commission's response or confronting a profiteer directly",
+  "branch_a": "Monitor the commission's chambers for their first summons",
+  "branch_b": "Seek out one of the known profiteers before they can be summoned",
+  "scene_purpose": "Stage the player's committed action of sending the sealed demand and make the commission's involvement irreversible",
+  "forward_pressure": "The commission will now convene and summon those who profited from the burning",
+  "pressure_scope": "durable",
+  "canon_change": {
+    "tier": 2,
+    "targets": [
+      "Toll Road Commission"
+    ],
+    "content": "The commission has received a sealed demand to investigate the burning and summon profiteers"
+  },
+  "introduces": [
+    {
+      "kind": "institution",
+      "label": "Toll Road Commission",
+      "aliases": [
+        "the commission",
+        "the commission that governs the toll road"
+      ],
+      "justification": "Player action directly invokes and addresses this body to open the investigation",
+      "future_relevance": "Will convene, summon profiteers, and issue questions that continue to pressure the PC"
+    }
+  ],
+  "derivation": "Player's explicit action of sending sealed word to the commission makes its involvement the next durable fact",
+  "event_slots": {
+    "precondition": "The sealed letter and a courier are present with the PC",
+    "actor": "PC",
+    "action": "hands over the sealed letter",
+    "target": "courier",
+    "exit_state": "the sealed demand has been dispatched to the Toll Road Commission",
+    "mechanism_grounding": "ordinary"
+  }
+}

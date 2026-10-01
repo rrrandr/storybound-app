@@ -1,0 +1,50 @@
+{
+  "samples": [
+    {
+      "i": 1,
+      "bucket": "incoherent",
+      "path": "scene_local",
+      "why": [
+        "scene_local: forward_pressure names NO continuing referent",
+        "scene_local: the proposal does not RELY on a continuing body persisting"
+      ]
+    },
+    {
+      "i": 2,
+      "bucket": "valid_durable",
+      "path": "durable",
+      "why": []
+    },
+    {
+      "i": 3,
+      "bucket": "valid_durable",
+      "path": "durable",
+      "why": []
+    }
+  ],
+  "buckets": {
+    "valid_durable": 2,
+    "valid_scene_local": 0,
+    "incoherent": 1,
+    "envelope_violation": 0,
+    "void": 0
+  },
+  "paths": {
+    "durable": 2,
+    "scene_local": 1,
+    "none": 0
+  },
+  "hashes": [
+    "661ac12f5eb068c1",
+    "661ac12f5eb068c1",
+    "661ac12f5eb068c1"
+  ],
+  "dispatches": [
+    1,
+    1,
+    1
+  ],
+  "blocked": 0,
+  "measured": 0.015420800000000002,
+  "authorized": 0.07
+}
