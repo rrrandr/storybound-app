@@ -1,0 +1,21 @@
+{
+  "tactical_move": "Dispatch formal demand to force commission involvement",
+  "state_change_precondition": "No demand for investigation into the burning has reached the commission",
+  "state_change": "The player seals and dispatches the letter to the commission",
+  "forces_choice": "forces the player to choose between monitoring the commission's response or pursuing independent leads",
+  "branch_a": "Monitor the commission's response closely for any summons",
+  "branch_b": "Pursue independent leads while the commission deliberates",
+  "scene_purpose": "Show the player visibly sending the sealed demand as the initiating action",
+  "forward_pressure": "The commission now holds the demand and may act on it",
+  "pressure_scope": "scene_local",
+  "canon_change": null,
+  "introduces": [],
+  "event_slots": {
+    "precondition": "The player is present with writing materials and a messenger",
+    "actor": "player",
+    "action": "seals and dispatches the letter",
+    "target": "the commission",
+    "exit_state": "the demand for investigation has been sent to the commission",
+    "mechanism_grounding": "ordinary"
+  }
+}

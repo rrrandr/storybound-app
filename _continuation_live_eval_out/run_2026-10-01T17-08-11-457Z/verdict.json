@@ -1,0 +1,43 @@
+{
+  "pass": 24,
+  "fail": 9,
+  "measured": 0.007059650000000001,
+  "spentEstimate": 0.0105405,
+  "authorized": 0.03,
+  "cases": [
+    {
+      "id": "C-durable",
+      "envelope": {
+        "tactical_move": "Dispatch formal demand to force commission involvement",
+        "state_change_precondition": "No demand for investigation into the burning has reached the commission",
+        "state_change": "The player seals and dispatches the letter to the commission",
+        "forces_choice": "forces the player to choose between monitoring the commission's response or pursuing independent leads",
+        "branch_a": "Monitor the commission's response closely for any summons",
+        "branch_b": "Pursue independent leads while the commission deliberates",
+        "scene_purpose": "Show the player visibly sending the sealed demand as the initiating action",
+        "forward_pressure": "The commission now holds the demand and may act on it",
+        "pressure_scope": "scene_local",
+        "canon_change": null,
+        "introduces": [],
+        "event_slots": {
+          "precondition": "The player is present with writing materials and a messenger",
+          "actor": "player",
+          "action": "seals and dispatches the letter",
+          "target": "the commission",
+          "exit_state": "the demand for investigation has been sent to the commission",
+          "mechanism_grounding": "ordinary"
+        }
+      },
+      "ctResult": {
+        "outcome": "rejected",
+        "why": [
+          "pressure_scope \"scene_local\" but forward_pressure names what reads as a continuing referent: [commission]. Either leave it unnamed, or mark the pressure \"durable\" and declare it in introduces[]. forward_pressure is never a second canon channel",
+          "pressure_scope \"scene_local\" but this proposal DEPENDS on a continuing body persisting: [commission] appears in forward_pressure, branch_a, branch_b, event_slots.exit_state. A body the player named is not canon by that act alone — but you may not keep it provisional while relying on it. Either adopt it as durable canon (pressure_scope \"durable\" with kind, aliases and future_relevance in introduces[]), or return a no-change alternative that does not rely on it"
+        ],
+        "sealedId": null,
+        "introduced": []
+      },
+      "facts": []
+    }
+  ]
+}
