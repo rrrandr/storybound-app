@@ -1,4 +1,4 @@
-// LIVE OPT-IN CONTINUATION EVALUATION — TWO CASES, ONE SCENE EACH.
+// LIVE OPT-IN CONTINUATION EVALUATION — THREE CASES, ONE SCENE EACH.
 //
 // REQUIRES --authorize <usd>. Nothing dispatches without it.
 //
@@ -7,11 +7,16 @@
 //
 // Same story, same scaffold, same scene position — ONLY the reader's posture differs:
 //   CASE A  "I say nothing..."        a quiet aftermath; a durable change is NOT warranted
-//   CASE B  "I burn the archive..."   a destructive act that invites an outside authority
+//   CASE B  "I burn the archive..."   a destructive act with the opposition left UNNAMED, so
+//                                     scene_local is the correct answer (measured, run 4)
+//   CASE C  "I send sealed word..."   a petition to a governing commission with an expectation
+//                                     spanning later scenes, so a CONTINUING body is required
 //
 // PRE-REGISTERED EXPECTATIONS (stated before any dispatch, per feedback_pre_register_verdict):
 //   A: envelope present · canon_change null · introduces [] · outcome none · zero facts
-//   B: envelope present · a change OR an introduction · sealed · rendered · exactly one fact
+//   B: scene_local + null, OR durable + an identified referent — consistency, not canon output
+//   C: durable · a structured institution/collective · future_relevance + aliases · no planner ids
+//      · no established entity silently redefined
 // A planner that proposes a change for A, or declines one for B, is a REPORTABLE FINDING either
 // way — the point is to measure judgement, not to confirm a hope.
 //
@@ -21,6 +26,7 @@
 import fs from 'fs';
 import { chromium } from 'playwright-core';
 import { estimateUsd } from './_fsc_cost_guard.mjs';
+import { gradeDurable, gradeHandler } from './_continuation_durable_grader.mjs';
 
 const ARG = process.argv.slice(2);
 const ESTIMATE_ONLY = ARG.includes('--estimate-only');
@@ -49,7 +55,16 @@ const ALL_CASES = [
     dialogue: 'Nothing. I will not give them a word.' },
   { id: 'B-pressure', label: 'DESTRUCTIVE ACT (expect a justified new pressure, or an explicit null)',
     action: 'I burn the toll-house and ride for the river.',
-    dialogue: 'Let whoever governs this place come and find me.' }
+    dialogue: 'Let whoever governs this place come and find me.' },
+  // CASE C (Roman, 2026-10-01): the posture that REQUIRES a continuing body. Run 4 showed B cannot
+  // produce a `durable` answer by construction — its dialogue has the PLAYER decline to name the
+  // opposition, so scene_local was correct there. This action does the opposite: it addresses a
+  // governing commission directly and states an expectation that spans later scenes, so there IS
+  // a continuing referent and leaving it unnamed would be the wrong answer.
+  { id: 'C-durable', label: 'PETITION A GOVERNING BODY (expect pressure_scope: durable)',
+    action: 'I send sealed word to the commission that governs the toll road, demanding they open '
+      + 'an investigation into the burning and summon everyone who profited from it.',
+    dialogue: 'They will convene over this, and I will still be answering their questions a season from now.' }
 ];
 // --case <id> runs one case. Both run by default. Selection matters because a full chain's
 // worst-case reservation is larger than a planner-only one, and the ceiling decides what fits.
@@ -59,7 +74,7 @@ const PLANNER_ONLY = ARG.includes('--planner-only');
 const CASES = WANTED ? ALL_CASES.filter(c => c.id === WANTED) : ALL_CASES;
 if (WANTED && !CASES.length) { console.error('unknown --case ' + WANTED); process.exit(2); }
 
-say('=== LIVE CONTINUATION EVALUATION — 2 CASES ===');
+say('=== LIVE CONTINUATION EVALUATION — ' + CASES.length + ' CASE(S) ===');
 say('    authorized: ' + (ESTIMATE_ONLY ? 'ESTIMATE ONLY ($0)' : '$' + AUTHORIZED.toFixed(2)));
 say('    output: ' + RUN);
 say('\nPRE-REGISTERED EXPECTATIONS (before any dispatch)');
@@ -72,6 +87,10 @@ say('  BOTH       : pressure_scope returned as "scene_local" or "durable", and t
 // this fix removed. Both branches are acceptable; consistency is what is measured.
 say('  B-pressure : EITHER scene_local + null (nothing sealed, 0 facts, recorded non-durable)');
 say('               OR durable + an identified referent (sealed, at most 1 fact, sealed provenance)');
+say('  C-durable  : pressure_scope durable, >=1 structured introduced institution/collective with');
+say('               future_relevance and aliases, NO planner-supplied ids, and no established');
+say('               entity silently redefined. Graded by _continuation_durable_grader.mjs, whose');
+say('               every criterion is proven RED in _continuation_durable_grading_control.mjs.');
 say('  Either surprise is a reportable finding, not a failure to explain away.');
 
 // ── chain reservation for BOTH cases, before the first request ───────────────
@@ -195,7 +214,11 @@ const runCase = async (C) => {
     window.state.turnCount = 2;
     const j = window._proposeNewEntity({ kind: 'named', label: 'Julian', aliases: ['the Provast'] });
     return { enabled: window._continuationSchemaEnabled(), julianId: j.ok ? j.entity.id : null,
-      ledgerBefore: Object.keys((window.state._relationshipLedger || { entities: {} }).entities) };
+      ledgerBefore: Object.keys((window.state._relationshipLedger || { entities: {} }).entities),
+      // FULL records, not just ids: "no existing canon silently redefined" is a field-level claim.
+      ledgerBeforeFull: Object.keys((window.state._relationshipLedger || { entities: {} }).entities)
+        .map(k => { const e = window.state._relationshipLedger.entities[k];
+          return { id: e.id, kind: e.kind, label: e.label, aliases: e.aliases || [] }; }) };
   });
   if (!setup.enabled) { await browser.close(); throw new Error('opt-in flag not set'); }
 
@@ -216,7 +239,8 @@ const runCase = async (C) => {
       .map(p => ({ scope: p.scope, durable: p.durable, text: p.text })),
     ledger: Object.keys((window.state._relationshipLedger || { entities: {} }).entities)
       .map(k => { const e = window.state._relationshipLedger.entities[k];
-        return { id: e.id, kind: e.kind, label: e.label, prov: e.provenance }; })
+        // aliases included so the durable grader can compare established records field-by-field.
+        return { id: e.id, kind: e.kind, label: e.label, aliases: e.aliases || [], prov: e.provenance }; })
   }));
   await browser.close();
 
@@ -330,6 +354,25 @@ for (const C of CASES) {
     t('  (the authored state_change seal is present, as it should be)',
       R.after.sealed.some(s => s.kind === 'state_change'),
       JSON.stringify(R.after.sealed.map(s => s.kind)));
+  } else if (C.id === 'C-durable') {
+    // CASE C. The pass criteria are Roman's, and they are graded by the SHARED module that
+    // _continuation_durable_grading_control.mjs proved RED fixture by fixture — so this run cannot
+    // repeat run 4's near-miss of paying for a measurement the harness did not make.
+    // The reply is graded on its own first; the handler is graded separately afterwards, so a
+    // validator bug cannot launder a bad reply into a pass or a good one into a failure.
+    say('  PRE-REGISTERED PASS CRITERIA (Roman): pressure_scope durable · >=1 structured introduced'
+      + ' institution/collective · future relevance and aliases · no planner-supplied IDs ·'
+      + ' no existing canon silently redefined');
+    say('\n  — reply grading —');
+    gradeDurable(E, R.after, R.setup.ledgerBeforeFull).forEach(c => t('  ' + c.name, c.ok, c.detail));
+    say('\n  — handler grading —');
+    gradeHandler(E, R.after, R.setup.ledgerBeforeFull).forEach(c => t('  ' + c.name, c.ok, c.detail));
+    const rec = R.after.sealed.filter(s => s.kind === 'continuation')[0] || null;
+    if (rec) say('  sealed fact: ' + JSON.stringify(rec.fact));
+    if (PLANNER_ONLY) {
+      say('  (planner-only: author aborted — the sealed fact reaching Grok and rendering as prose'
+        + ' remain UNPROVEN live; that is the full-chain test, not this one)');
+    }
   } else {
     // PRE-REGISTRATION REVISED FOR THE PERSISTENCE CONTRACT (2026-10-01), before dispatch.
     // The old expectation — "a change or an introduction was proposed" — is no longer a valid
