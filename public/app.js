@@ -99930,19 +99930,29 @@ function _buildAuthorFloorDirective(s) {
     if (typeof id !== 'string' || !id) return null;
     return st.byId[id] || null;
   }
-  // The invocation key _sealProposal seals under: scene + the reader's posture hash for that scene.
-  function _invocationIdFor(scene) {
+  // The invocation key _sealProposal seals under: KIND + scene + the reader's posture hash.
+  //
+  // KIND IS LOAD-BEARING (Roman 2026-10-01). Two different mechanisms seal into this one store for
+  // the same scene: the authored STATE_CHANGE (the planner's chosen event, sealed for the commit
+  // gate) and a CONTINUATION proposal. Without `kind` in the key they collide — the state_change
+  // seals first, and the continuation's idempotency short-circuit then finds THAT record and
+  // returns it as its own. The author would have been handed the state_change event as the
+  // continuation's "already true" fact, with the proposed entities never minted.
+  //
+  // Found while scoping a control assertion; the mis-targeted live case B masked it, because the
+  // planner proposed nothing and the collision never triggered.
+  function _invocationIdFor(scene, kind) {
     var ph = null;
     try { var p = window.state && window.state._scenePosture && window.state._scenePosture[String(scene)]; ph = (p && p.hash) || null; } catch (_) {}
-    return 'inv:' + scene + ':' + (ph || 'noposture');
+    return 'inv:' + (kind || 'state_change') + ':' + scene + ':' + (ph || 'noposture');
   }
   // Already sealed for this scene+posture? Used to make a RETRY idempotent END TO END, not just at
   // the seal: without this, a retry mints fresh pending ids, then _sealProposal hands back the
   // original record, and the returned ids disagree with the sealed ones while the ledger's id
   // sequence leaks a number per retry.
-  function _sealedProposalForInvocation(scene) {
+  function _sealedProposalForInvocation(scene, kind) {
     var st = _sealedProposalStore(false); if (!st) return null;
-    var prior = st.byInvocation[_invocationIdFor(scene)];
+    var prior = st.byInvocation[_invocationIdFor(scene, kind)];
     return (prior && st.byId[prior]) ? st.byId[prior] : null;
   }
   // IDEMPOTENT PER INVOCATION. A retried plan for the same scene+posture re-enters here and gets
@@ -99956,7 +99966,8 @@ function _buildAuthorFloorDirective(s) {
       var scene = (typeof spec.scene === 'number') ? spec.scene : (s.turnCount || 0);
       var ph = null;
       try { var p = s._scenePosture && s._scenePosture[String(scene)]; ph = (p && p.hash) || null; } catch (_) {}
-      var invocationId = 'inv:' + scene + ':' + (ph || 'noposture');
+      var kind = (spec.kind === 'continuation') ? 'continuation' : 'state_change';
+      var invocationId = 'inv:' + kind + ':' + scene + ':' + (ph || 'noposture');
       var prior = st.byInvocation[invocationId];
       if (prior && st.byId[prior]) return st.byId[prior];
       var id = 'prop:' + scene + ':' + (++st.seq);
@@ -99980,6 +99991,7 @@ function _buildAuthorFloorDirective(s) {
           aliases: Object.freeze((Array.isArray(e.aliases) ? e.aliases : []).slice()) });
       }) : [];
       var rec = { id: id, scene: scene,
+        kind: kind,                                   // 'state_change' | 'continuation' — never collide
         fact: fact,                                   // EXACT, untruncated — the committed text
         anchors: Object.freeze(anchors),
         pendingEntities: Object.freeze(pending),
@@ -100456,7 +100468,7 @@ function _buildAuthorFloorDirective(s) {
     // RETRY SHORT-CIRCUIT, BEFORE ANY MINTING. If this scene+posture already sealed a proposal,
     // return it unchanged with its own pending entities. Minting first and sealing second would
     // hand back ids that disagree with the sealed record and burn an id per retry.
-    var prior = _sealedProposalForInvocation(scene);
+    var prior = _sealedProposalForInvocation(scene, 'continuation');
     if (prior) {
       try { console.log('[CONTINUATION:RETRY] scene=' + scene + ' reusing ' + prior.id
         + ' (' + (prior.pendingEntities || []).length + ' pending entities, no new ids)'); } catch (_) {}
@@ -100491,7 +100503,7 @@ function _buildAuthorFloorDirective(s) {
     var factText = (reply.canon_change && reply.canon_change.content)
       ? String(reply.canon_change.content)
       : ('Introduced: ' + introduced.map(function (e) { return e.label; }).join(', '));
-    var sealed = _sealProposal({ fact: factText, scene: scene, anchors: anchors,
+    var sealed = _sealProposal({ kind: 'continuation', fact: factText, scene: scene, anchors: anchors,
       pendingEntities: introduced,
       milestone: String(reply.forward_pressure || '') });
     if (!sealed) return { outcome: 'rejected', why: ['seal failed'], sealedId: null, introduced: introduced };
@@ -102130,7 +102142,7 @@ function _buildAuthorFloorDirective(s) {
           // record rather than minting a second.
           try {
             var _sealedProp = (typeof _sealProposal === 'function')
-              ? _sealProposal({ fact: _stateChange.event, milestone: (_curMs && _curMs.event) || '', scene: (s.turnCount || 0) })
+              ? _sealProposal({ kind: 'state_change', fact: _stateChange.event, milestone: (_curMs && _curMs.event) || '', scene: (s.turnCount || 0) })
               : null;
             if (_sealedProp) _stateChange.proposalRef = _sealedProp.id;
           } catch (_sealErr) { try { console.warn('[SEAL] failed: ' + (_sealErr && _sealErr.message)); } catch (_) {} }
