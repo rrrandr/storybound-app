@@ -1,0 +1,68 @@
+{
+  "verdict": "boundary_tested",
+  "draws": [
+    {
+      "d": 1,
+      "scope": null,
+      "outcome": "sealed",
+      "gate": "sealed"
+    }
+  ],
+  "s1": {
+    "ctResult": {
+      "outcome": "sealed",
+      "tier": 2,
+      "sealedId": "prop:2:2",
+      "introduced": [
+        {
+          "id": "ent:stage:1",
+          "kind": "institution",
+          "label": "Toll Road Commission",
+          "aliases": [
+            "the commission",
+            "the governing commission"
+          ],
+          "pending": true
+        }
+      ],
+      "targets": [
+        "Toll Road Commission"
+      ],
+      "why": []
+    },
+    "sealedKinds": [
+      "state_change",
+      "continuation"
+    ],
+    "pending": [
+      {
+        "id": "prop:2:1",
+        "kind": "state_change"
+      },
+      {
+        "id": "prop:2:2",
+        "kind": "continuation"
+      }
+    ],
+    "priorRef": "prop:2:1",
+    "facts": 0
+  },
+  "s2": {
+    "facts": [],
+    "adjudication": null,
+    "registerLabels": [
+      "Wren",
+      "Cassel"
+    ],
+    "activated": [],
+    "sceneCard": null
+  },
+  "repeat": {
+    "before": 0,
+    "facts": 0,
+    "refs": [],
+    "activated": 0
+  },
+  "measured": 0.08997895,
+  "authorized": 0.35
+}
