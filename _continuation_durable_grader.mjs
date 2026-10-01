@@ -92,7 +92,13 @@ export function detectContinuingReferents(reply, knownNames) {
 // relies on a continuing institution is the defect live case C exhibited and the old guard missed.
 export function gradeScopeCoherence(E, knownNames) {
   const out = [];
-  const t = (name, ok, detail) => out.push({ name, ok: !!ok, detail: detail == null ? '' : String(detail) });
+  // `whenFailed` is the phrasing used when this check FAILS. Check NAMES are written as the
+  // passing condition ("forward_pressure names NO continuing referent"), which reads as the
+  // OPPOSITE of what happened when it is listed as a reason — run 10 reported exactly that
+  // inversion. Reasons now come from whenFailed, and anything lacking one is prefixed so the
+  // polarity can never be ambiguous.
+  const t = (name, ok, detail, whenFailed) => out.push({ name, ok: !!ok,
+    detail: detail == null ? '' : String(detail), whenFailed: whenFailed || null });
   const scope = E && E.pressure_scope;
   if (scope !== 'scene_local') {
     t('scope coherence: not a scene_local declaration, nothing to check', true, 'scope=' + JSON.stringify(scope));
@@ -100,9 +106,13 @@ export function gradeScopeCoherence(E, knownNames) {
   }
   const d = detectContinuingReferents(E, knownNames);
   t('scene_local: forward_pressure names NO continuing referent', d.inPressure.length === 0,
-    JSON.stringify(d.inPressure.map(x => x.phrase)));
+    JSON.stringify(d.inPressure.map(x => x.phrase)),
+    'declared scene_local, but forward_pressure NAMES a continuing referent: '
+      + JSON.stringify(d.inPressure.map(x => x.phrase)));
   t('scene_local: the proposal does not RELY on a continuing body persisting', d.relied.length === 0,
-    JSON.stringify(d.relied.map(g => ({ phrases: g.phrases, fields: g.fields }))));
+    JSON.stringify(d.relied.map(g => ({ phrases: g.phrases, fields: g.fields }))),
+    'declared scene_local, but the proposal RELIES on a continuing body persisting: '
+      + JSON.stringify(d.relied.map(g => g.phrases.join('/') + ' in ' + g.fields.join('+'))));
   return out;
 }
 
@@ -133,6 +143,13 @@ export function gradeScopeCoherence(E, knownNames) {
 // `transport` is how void is told apart from a real contract failure. The discriminator is whether
 // a non-empty CONTENT string came back: content present means the model spoke, so a missing or
 // malformed envelope is ITS fault; no content means nothing reached us and the sample is void.
+// A FAILED check's reason. Prefers the explicit failure phrasing; falls back to the check name with
+// an unmistakable prefix, so a reason can never read as the condition that was satisfied.
+function reasonOf(c) {
+  if (c && c.whenFailed) return String(c.whenFailed);
+  return 'FAILED CHECK: ' + String((c && c.name) || '').trim();
+}
+
 export function classifySample(E, after, ledgerBefore, transport) {
   const tr = transport || null;
   if (tr) {
@@ -173,14 +190,14 @@ export function classifySample(E, after, ledgerBefore, transport) {
   const rejectWhy = (after && after.ctResult && after.ctResult.why) || [];
 
   if (pathChosen === 'durable') {
-    const reds = gradeDurable(r, after, ledgerBefore).filter(c => !c.ok).map(c => c.name);
+    const reds = gradeDurable(r, after, ledgerBefore).filter(c => !c.ok).map(reasonOf);
     if (reds.length === 0 && sealed) return { bucket: 'valid_durable', pathChosen, why: [] };
     return { bucket: 'incoherent', pathChosen,
       why: reds.length ? reds : (rejectWhy.length ? rejectWhy : ['durable but not sealed']) };
   }
   const coh = gradeScopeCoherence(r, (arr(ledgerBefore) || []).flatMap(e =>
     [s(e.label).toLowerCase()].concat((arr(e.aliases) || []).map(a => s(a).toLowerCase()))).filter(Boolean));
-  const cohReds = coh.filter(c => !c.ok).map(c => c.name);
+  const cohReds = coh.filter(c => !c.ok).map(reasonOf);
   if (cohReds.length === 0 && accepted) return { bucket: 'valid_scene_local', pathChosen, why: [] };
   return { bucket: 'incoherent', pathChosen,
     why: cohReds.length ? cohReds : (rejectWhy.length ? rejectWhy : ['scene_local but not accepted']) };
@@ -190,7 +207,13 @@ export function classifySample(E, after, ledgerBefore, transport) {
 // after:        { ctResult, facts, sealed, ledger, localPressures }
 export function gradeDurable(E, after, ledgerBefore) {
   const out = [];
-  const t = (name, ok, detail) => out.push({ name, ok: !!ok, detail: detail == null ? '' : String(detail) });
+  // `whenFailed` is the phrasing used when this check FAILS. Check NAMES are written as the
+  // passing condition ("forward_pressure names NO continuing referent"), which reads as the
+  // OPPOSITE of what happened when it is listed as a reason — run 10 reported exactly that
+  // inversion. Reasons now come from whenFailed, and anything lacking one is prefixed so the
+  // polarity can never be ambiguous.
+  const t = (name, ok, detail, whenFailed) => out.push({ name, ok: !!ok,
+    detail: detail == null ? '' : String(detail), whenFailed: whenFailed || null });
   const before = arr(ledgerBefore) || [];
   const beforeIds = before.map(e => e.id);
   // Established NAMES the planner must not quietly repurpose: labels and aliases alike.
@@ -199,7 +222,8 @@ export function gradeDurable(E, after, ledgerBefore) {
     (arr(e.aliases) || []).forEach(a => { if (s(a)) beforeNames.push(s(a).toLowerCase()); }); });
 
   // ── 1. the scope itself
-  t('pressure_scope is exactly "durable"', E.pressure_scope === 'durable', JSON.stringify(E.pressure_scope));
+  t('pressure_scope is exactly "durable"', E.pressure_scope === 'durable', JSON.stringify(E.pressure_scope),
+    'pressure_scope is ' + JSON.stringify(E.pressure_scope) + ', not "durable"');
   // And when it is NOT durable, say WHY that is incoherent rather than only that it is wrong: a
   // scene_local declaration that names or relies on a continuing institution is the exact defect
   // live case C exhibited. Established names are exempt — referencing canon is not creation.
@@ -209,10 +233,13 @@ export function gradeDurable(E, after, ledgerBefore) {
   const intro = arr(E.introduces) || [];
   const structured = intro.filter(x => x && typeof x === 'object' && !Array.isArray(x));
   t('introduces is an array', !!arr(E.introduces), JSON.stringify(E.introduces));
-  t('  it is not empty', structured.length > 0, 'structured entries=' + structured.length);
+  t('  it is not empty', structured.length > 0, 'structured entries=' + structured.length,
+    'introduces[] contains no structured entity');
   const bodies = structured.filter(x => DURABLE_KINDS.indexOf(s(x.kind)) >= 0);
   t('  at least one entry is an institution or collective', bodies.length > 0,
-    'kinds=' + JSON.stringify(structured.map(x => s(x.kind))));
+    'kinds=' + JSON.stringify(structured.map(x => s(x.kind))),
+    'no introduced entity is an institution or collective; kinds were '
+      + JSON.stringify(structured.map(x => s(x.kind))));
 
   // ── 3. future relevance and aliases, on every introduced entity
   //     Checked on ALL entries, not just the institution: a half-declared companion entity is the
@@ -222,11 +249,13 @@ export function gradeDurable(E, after, ledgerBefore) {
     const tag = '  entry ' + i + ' (' + (s(x.label) || '?') + ')';
     t(tag + ': label is non-empty', !!s(x.label));
     t(tag + ': kind is declared', !!s(x.kind), JSON.stringify(x.kind));
-    t(tag + ': future_relevance is non-empty', !!s(x.future_relevance), JSON.stringify(x.future_relevance));
+    t(tag + ': future_relevance is non-empty', !!s(x.future_relevance), JSON.stringify(x.future_relevance),
+      tag + ' has no future_relevance');
     t(tag + ': justification is non-empty', !!s(x.justification), JSON.stringify(x.justification));
     const al = arr(x.aliases);
     t(tag + ': aliases is a non-empty array of strings',
-      !!al && al.length > 0 && al.every(a => !!s(a)), JSON.stringify(x.aliases));
+      !!al && al.length > 0 && al.every(a => !!s(a)), JSON.stringify(x.aliases),
+      tag + ' declares no usable aliases (got ' + JSON.stringify(x.aliases) + ')');
   });
 
   // ── 3b. DERIVATION, required IF AND ONLY IF canon_change is non-null.
@@ -241,7 +270,8 @@ export function gradeDurable(E, after, ledgerBefore) {
   const proposesDurable = hasChangeObj || (arr(E.introduces) || []).length > 0;
   if (proposesDurable) {
     t('derivation is present (this envelope proposes something durable, so it is owed)',
-      !!s(E.derivation), JSON.stringify(E.derivation));
+      !!s(E.derivation), JSON.stringify(E.derivation),
+      'something durable is proposed but "derivation" is missing or empty');
   } else {
     t('derivation is not required (nothing durable proposed)', true,
       E.derivation == null ? 'absent, as expected' : 'supplied anyway, which is harmless');
@@ -249,7 +279,8 @@ export function gradeDurable(E, after, ledgerBefore) {
 
   // ── 4. NO planner-supplied ids, by any route
   const introIds = structured.filter(x => x.id || x.recordId).map(x => x.id || x.recordId);
-  t('no id on any introduced entity', introIds.length === 0, JSON.stringify(introIds));
+  t('no id on any introduced entity', introIds.length === 0, JSON.stringify(introIds),
+    'the planner supplied its own entity id(s): ' + JSON.stringify(introIds));
   const ch = (E.canon_change && typeof E.canon_change === 'object') ? E.canon_change : null;
   t('no id on canon_change', !ch || (!ch.id && !ch.recordId), JSON.stringify(ch && (ch.id || ch.recordId)));
   // existingRefs is the subtle route: an INVENTED "ent:stage:7" is a planner-supplied id wearing
@@ -295,7 +326,13 @@ export function gradeDurable(E, after, ledgerBefore) {
 // THE HANDLER'S SIDE, graded separately and only after the reply has been graded on its own.
 export function gradeHandler(E, after, ledgerBefore) {
   const out = [];
-  const t = (name, ok, detail) => out.push({ name, ok: !!ok, detail: detail == null ? '' : String(detail) });
+  // `whenFailed` is the phrasing used when this check FAILS. Check NAMES are written as the
+  // passing condition ("forward_pressure names NO continuing referent"), which reads as the
+  // OPPOSITE of what happened when it is listed as a reason — run 10 reported exactly that
+  // inversion. Reasons now come from whenFailed, and anything lacking one is prefixed so the
+  // polarity can never be ambiguous.
+  const t = (name, ok, detail, whenFailed) => out.push({ name, ok: !!ok,
+    detail: detail == null ? '' : String(detail), whenFailed: whenFailed || null });
   const beforeIds = (arr(ledgerBefore) || []).map(e => e.id);
   const R = after || {};
   const res = R.ctResult || null;

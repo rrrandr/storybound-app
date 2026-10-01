@@ -272,8 +272,33 @@ const runCase = async (C, sampleIx) => {
     ledger: Object.keys((window.state._relationshipLedger || { entities: {} }).entities)
       .map(k => { const e = window.state._relationshipLedger.entities[k];
         // aliases included so the durable grader can compare established records field-by-field.
-        return { id: e.id, kind: e.kind, label: e.label, aliases: e.aliases || [], prov: e.provenance }; })
+        return { id: e.id, kind: e.kind, label: e.label, aliases: e.aliases || [], prov: e.provenance }; }),
+    sceneCard: window.state._sceneStateCard || null
   }));
+
+  // IDEMPOTENCY PROBE. Replays _commitTransition against the SAME sealed id and measures whether a
+  // second delivery duplicates the fact or the entity. Run ONLY when a fact already exists: if the
+  // natural flow has not committed yet, a "replay" would be the FIRST commit and would prove
+  // nothing about retries, so it is recorded as untestable instead of faked.
+  const replay = await page.evaluate(() => {
+    try {
+      const cs = window._ensureCommittedState();
+      const ct = (window.state._sealedProposals
+        ? Object.keys(window.state._sealedProposals.byId)
+            .map(k => window.state._sealedProposals.byId[k])
+            .filter(x => x && x.kind === 'continuation')[0] : null) || null;
+      if (!ct) return { tested: false, why: 'no continuation seal' };
+      if (!cs.facts.length) return { tested: false, why: 'nothing was committed by the natural flow — nothing to retry' };
+      const L = window.state._relationshipLedger || { entities: {} };
+      const before = Object.keys(L.entities).length;
+      window._commitTransition(ct.id, 'replay_probe', window.state.turnCount || 0);
+      window._commitTransition(ct.id, 'replay_probe', window.state.turnCount || 0);
+      const L2 = window.state._relationshipLedger || { entities: {} };
+      return { tested: true, facts: window._ensureCommittedState().facts.length,
+        activated: Object.keys(L2.entities).filter(k => L2.entities[k].provenance === 'continuation_activated').length,
+        ledgerSizeBefore: before, ledgerSize: Object.keys(L2.entities).length };
+    } catch (e) { return { tested: false, why: String(e && e.message) }; }
+  });
   await browser.close();
 
   // SHAPE-AWARE EXTRACTION, one place. Providers return either a flat {content} (the proxy's own
@@ -313,7 +338,7 @@ const runCase = async (C, sampleIx) => {
   if (prose) write(tag + '_prose.txt', prose);
   write(tag + '_state_after.json', after);
   write(tag + '_envelope.json', envelope || {});
-  return { calls, setup, after, envelope, prose, plannerDispatched, retriesBlocked, transport,
+  return { calls, setup, after, envelope, prose, plannerDispatched, retriesBlocked, transport, replay,
     plannerRequest: (calls.filter(c => c.stage === 'planner').pop() || {}).request || '',
     author: authorResp,
     authorReq: calls.filter(c => c.stage === 'author').pop() || null };
@@ -573,6 +598,89 @@ for (const C of CASES) {
     if (PLANNER_ONLY) {
       say('  (planner-only: author aborted — the sealed fact reaching Grok and rendering as prose'
         + ' remain UNPROVEN live; that is the full-chain test, not this one)');
+    } else if (rec) {
+      // ── THE FULL CHAIN (Roman's six checks) ────────────────────────────────────────────────
+      // Only reached when the author and verifier actually ran. Everything here is about what
+      // crossed a boundary, not about planner judgement.
+      const AP = (R.authorReq && R.authorReq.request) || '';
+      const aliases = ((R.after.sealed.filter(s => s.kind === 'continuation')[0] || {}).pendingEntities || [])
+        .reduce((acc, e) => acc.concat([e.label]).concat(e.aliases || []), []).filter(Boolean);
+      say('\n  — 1. the proposal sealed WITH aliases —');
+      t('  pending entities carry a non-empty alias set', aliases.length >= 2, JSON.stringify(aliases));
+
+      say('\n  — 2. the author receives ONLY reader-facing material —');
+      t('  an author request was dispatched', !!AP, 'no author request captured');
+      t('  the sealed fact reached it', AP.indexOf(String(rec.fact).slice(0, 48)) >= 0);
+      t('    under the already-true heading', /CONTINUATION — ALREADY TRUE/.test(AP));
+      t('    with the scene purpose', AP.indexOf(String(E.scene_purpose || '').slice(0, 40)) >= 0);
+      t('    and the forward pressure', AP.indexOf(String(E.forward_pressure || '').slice(0, 40)) >= 0);
+      [['entity id', /ent:stage:\d+/], ['proposal id', /prop:\d+:\d+/], ['posture hash', /ph-[a-z0-9-]+/],
+       ['pressure_scope', /pressure_scope/], ['derivation key', /"derivation"/],
+       ['tier/basis vocabulary', /causal_chain|declared_high_authority|"tier"/],
+       ['schema field names', /existingRefs|canon_change|pendingEntities|future_relevance/]
+      ].forEach(([n, rx]) => {
+        const m = AP.match(rx);
+        t('    NO ' + n + ' in the author payload', !m, m ? 'found "' + m[0] + '"' : '');
+      });
+
+      say('\n  — 3. the prose renders the commission and the demand —');
+      say('  prose chars: ' + R.prose.length);
+      t('  prose was produced', R.prose.length > 200, 'len=' + R.prose.length);
+      const aliasHit = aliases.filter(a => {
+        try { return new RegExp('(^|[^A-Za-z0-9])' + String(a).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+          + '($|[^A-Za-z0-9])', 'i').test(R.prose); } catch (_) { return false; }
+      });
+      t('  the body is named in the prose by a CONTROLLED name', aliasHit.length > 0,
+        'none of ' + JSON.stringify(aliases) + ' appears in the prose');
+      say('    names used: ' + JSON.stringify(aliasHit));
+      t('  the demand/petition is rendered', /demand|petition|sealed (?:word|letter)|investigat/i.test(R.prose),
+        'no demand language found in the prose');
+
+      say('\n  — 4. delivery activates the EXACT sealed fact —');
+      t('  exactly one fact is committed', R.after.facts.length === 1, 'facts=' + R.after.facts.length);
+      if (R.after.facts.length) {
+        t('    byte-identical to the sealed content', R.after.facts[0].fact === rec.fact,
+          JSON.stringify([R.after.facts[0].fact, rec.fact]));
+        t('    carrying sealed provenance', R.after.facts[0].provenanceLink === 'sealed',
+          String(R.after.facts[0].provenanceLink));
+        t('    and referencing this proposal', R.after.facts[0].proposalRef === rec.id,
+          String(R.after.facts[0].proposalRef));
+      }
+      t('  the entity entered the active ledger',
+        R.after.ledger.some(x => x.prov === 'continuation_activated'),
+        JSON.stringify(R.after.ledger.map(x => x.prov)));
+
+      say('\n  — 5. no verifier or tableau text became canon —');
+      const factText = JSON.stringify(R.after.facts);
+      [['verifier field names', /decisiveChange|dominant_replacement|slots_check|protagonistStatus/],
+       ['tableau', /tableau/i], ['delivery verdict', /DELIVERED|PARTIAL|MISSED/]
+      ].forEach(([n, rx]) => {
+        const m = factText.match(rx);
+        t('  NO ' + n + ' in committed canon', !m, m ? 'found "' + m[0] + '"' : '');
+      });
+      t('  every committed fact is sealed-provenance',
+        R.after.facts.every(f => f.provenanceLink === 'sealed'),
+        JSON.stringify(R.after.facts.map(f => f.provenanceLink)));
+      t('  the scene card carries no model interpretation',
+        !R.after.sceneCard || R.after.sceneCard.source === 'deterministic',
+        JSON.stringify(R.after.sceneCard && R.after.sceneCard.source));
+
+      say('\n  — 6. a RETRY duplicates neither the entity nor the fact —');
+      const rep = R.replay || null;
+      if (rep && rep.tested) {
+        say('    replayed _commitTransition twice on the same sealed id');
+        t('  still exactly one fact', rep.facts === 1, 'facts=' + rep.facts);
+        t('  still exactly one activated entity', rep.activated === 1, 'activated=' + rep.activated);
+        t('  and the ledger did not grow', rep.ledgerSize === rep.ledgerSizeBefore,
+          'before=' + rep.ledgerSizeBefore + ' after=' + rep.ledgerSize);
+      } else {
+        // NOT a pass. _commitTransition is wired into the DELIVERED branch keyed on the PREVIOUS
+        // scene, so a single-scene run seals but never commits — and a retry check against an
+        // uncommitted proposal would be testing the function, not the pipeline.
+        say('    RETRY CHECK NOT PERFORMED: ' + ((rep && rep.why) || 'no replay data'));
+        t('  the retry check could run (needs a committed fact, i.e. a SECOND scene)', false,
+          (rep && rep.why) || 'no replay data');
+      }
     }
   } else {
     // PRE-REGISTRATION REVISED FOR THE PERSISTENCE CONTRACT (2026-10-01), before dispatch.

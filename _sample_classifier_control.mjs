@@ -208,6 +208,48 @@ t('with NO transport information a null reply is VOID, not attributed to the pla
   classifySample(null, {}, []).bucket === 'void',
   JSON.stringify(classifySample(null, {}, []).why));
 
+// ── REASON POLARITY ──────────────────────────────────────────────────────────
+// Run 10 reported sample 1's failure as: why = ["scene_local: forward_pressure names NO continuing
+// referent"] — a check NAME phrased as the passing condition, listed because it FAILED, so the
+// reason read as the opposite of what happened. Reasons must describe the fault.
+console.log('\n3d. a failure REASON describes the fault, never the satisfied condition');
+const run10s1 = {
+  scene_purpose: 'make the demand an irreversible, witnessed action',
+  forward_pressure: 'the commission will now respond to the sealed demand',
+  pressure_scope: 'scene_local', canon_change: null, introduces: [],
+  branch_a: 'remain at the toll road to intercept the first reply',
+  branch_b: 'ride out to gather independent witnesses before the commission arrives'
+};
+const c10 = classifySample(run10s1, { ctResult: { outcome: 'rejected', why: ['x'] }, ledger: [] }, [],
+  { dispatched: true, responded: true, content: JSON.stringify(run10s1) });
+const w10 = JSON.stringify(c10.why);
+console.log('   reason now: ' + w10);
+t('run 10 sample 1 still classifies as incoherent', c10.bucket === 'incoherent', c10.bucket);
+t('  the reason states the VIOLATION, not the condition',
+  w10.indexOf('declared scene_local, but') >= 0, w10);
+t('  it no longer reads as "names NO continuing referent"',
+  w10.indexOf('names NO continuing referent') === -1, w10);
+t('  and it names the offending phrase', w10.indexOf('commission') >= 0, w10);
+t('  and the fields it was relied on in', w10.indexOf('forward_pressure') >= 0
+  && w10.indexOf('branch_b') >= 0, w10);
+// The same inversion existed in gradeDurable: run 6's reason was "aliases is a non-empty array".
+const noAlias = Object.assign(JSON.parse(JSON.stringify(GOOD_DURABLE)));
+noAlias.introduces[0].aliases = [];
+const cNoAlias = classifySample(noAlias, { ctResult: { outcome: 'rejected', why: ['x'] }, ledger: [] }, [],
+  { dispatched: true, responded: true, content: '{}' });
+console.log('   empty-alias reason: ' + JSON.stringify(cNoAlias.why));
+t('an empty alias list reports "declares no usable aliases", not "aliases is a non-empty array"',
+  JSON.stringify(cNoAlias.why).indexOf('declares no usable aliases') >= 0
+  && JSON.stringify(cNoAlias.why).indexOf('is a non-empty array of strings') === -1,
+  JSON.stringify(cNoAlias.why));
+const wrongScope = Object.assign(JSON.parse(JSON.stringify(GOOD_DURABLE)), { pressure_scope: 'scene_local' });
+const cScope = classifySample(wrongScope, { ctResult: { outcome: 'rejected', why: ['x'] }, ledger: [] }, [],
+  { dispatched: true, responded: true, content: '{}' });
+t('and no reason anywhere reads as a satisfied condition (no bare check names)',
+  [c10, cNoAlias, cScope].every(c => c.why.every(w =>
+    !/^\s*(scene_local: |pressure_scope is exactly|derivation is present|  it is not empty)/.test(w))),
+  JSON.stringify([c10.why, cNoAlias.why, cScope.why]));
+
 console.log('\n4. a durable reply that SEALS is the only thing counted as valid_durable');
 const gd = byId['good-durable'];
 t('the good durable fixture actually sealed in the live validator',
