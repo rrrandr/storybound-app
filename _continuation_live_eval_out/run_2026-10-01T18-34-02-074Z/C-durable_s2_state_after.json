@@ -1,0 +1,30 @@
+{
+  "facts": [],
+  "ctResult": null,
+  "seal": null,
+  "sealed": [],
+  "localPressures": [],
+  "ledger": [
+    {
+      "id": "pc",
+      "kind": "named",
+      "label": "Wren",
+      "aliases": []
+    },
+    {
+      "id": "ent:cassel",
+      "kind": "named",
+      "label": "Cassel",
+      "aliases": []
+    },
+    {
+      "id": "ent:stage:1",
+      "kind": "named",
+      "label": "Julian",
+      "aliases": [
+        "the Provast"
+      ],
+      "prov": "stage_issuer_generated"
+    }
+  ]
+}

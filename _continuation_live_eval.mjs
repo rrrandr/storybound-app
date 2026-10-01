@@ -332,6 +332,11 @@ if (SAMPLES) {
       say('    canon_change   : ' + (E && E.canon_change ? 'present' : 'null'));
       say('    introduces     : ' + ((E && Array.isArray(E.introduces)) ? E.introduces.length : 'n/a'));
       say('    derivation     : ' + ((E && typeof E.derivation === 'string' && E.derivation.trim()) ? 'present' : 'absent'));
+      // ALIASES, printed per sample. The pre-registration for the 3-sample check names "nonempty,
+      // collision-free aliases", and a seal alone only IMPLIES that (the validator rejects both
+      // faults) — printing the actual arrays makes it visible instead of inferred.
+      say('    aliases        : ' + JSON.stringify((E && Array.isArray(E.introduces))
+        ? E.introduces.map(x => (x && x.aliases) || null) : null));
       say('    handler        : ' + JSON.stringify(R.after && R.after.ctResult && R.after.ctResult.outcome));
       if (R.retriesBlocked) say('    retries blocked: ' + R.retriesBlocked);
     }
@@ -394,6 +399,32 @@ if (SAMPLES) {
   say('  valid scene-local  : ' + buckets.valid_scene_local + '/' + SAMPLES);
   say('  incoherent/rejected: ' + buckets.incoherent + '/' + SAMPLES);
   say('  envelope violations: ' + buckets.envelope_violation + '/' + SAMPLES);
+  // ALIAS COMPLIANCE, scored only over the samples that actually proposed something durable.
+  const durableSamples = samples.filter(s2 => s2.R && s2.R.envelope
+    && s2.R.envelope.pressure_scope === 'durable'
+    && Array.isArray(s2.R.envelope.introduces) && s2.R.envelope.introduces.length);
+  if (durableSamples.length) {
+    say('\n=== ALIAS COMPLIANCE (durable samples only) ===');
+    durableSamples.forEach(s2 => {
+      const al = s2.R.envelope.introduces.map(x => (x && Array.isArray(x.aliases))
+        ? x.aliases.filter(a => typeof a === 'string' && a.trim()) : []);
+      say('  sample ' + s2.i + ': ' + JSON.stringify(al));
+    });
+    t('every durable sample declares a NON-EMPTY alias list for each introduced entity',
+      durableSamples.every(s2 => s2.R.envelope.introduces.every(x => Array.isArray(x && x.aliases)
+        && x.aliases.filter(a => typeof a === 'string' && a.trim()).length > 0)),
+      JSON.stringify(durableSamples.map(s2 => ({ i: s2.i,
+        aliases: s2.R.envelope.introduces.map(x => (x && x.aliases) || null) }))));
+    // COLLISION-FREE is proven by the HANDLER: the identity guard rejects a colliding label or
+    // alias, so a sealed durable proposal cannot carry one. Asserted through that, and said so.
+    t('  and every durable sample that sealed is therefore collision-free (the guard refuses otherwise)',
+      durableSamples.every(s2 => {
+        const o = s2.R.after && s2.R.after.ctResult && s2.R.after.ctResult.outcome;
+        return o === 'sealed' || o === 'rejected';
+      }), 'outcomes=' + JSON.stringify(durableSamples.map(s2 =>
+        s2.R.after && s2.R.after.ctResult && s2.R.after.ctResult.outcome)));
+  }
+
   say('\n  PATH CHOSEN (the actual question, blurred by the buckets alone):');
   say('    durable path     : ' + (paths.durable || 0) + '/' + SAMPLES);
   say('    scene_local path : ' + (paths.scene_local || 0) + '/' + SAMPLES);

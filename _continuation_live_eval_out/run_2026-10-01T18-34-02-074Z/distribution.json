@@ -1,0 +1,52 @@
+{
+  "samples": [
+    {
+      "i": 1,
+      "bucket": "envelope_violation",
+      "path": null,
+      "why": [
+        "no parseable reply"
+      ]
+    },
+    {
+      "i": 2,
+      "bucket": "envelope_violation",
+      "path": null,
+      "why": [
+        "no parseable reply"
+      ]
+    },
+    {
+      "i": 3,
+      "bucket": "envelope_violation",
+      "path": null,
+      "why": [
+        "no parseable reply"
+      ]
+    }
+  ],
+  "buckets": {
+    "valid_durable": 0,
+    "valid_scene_local": 0,
+    "incoherent": 0,
+    "envelope_violation": 3
+  },
+  "paths": {
+    "durable": 0,
+    "scene_local": 0,
+    "none": 3
+  },
+  "hashes": [
+    "661ac12f5eb068c1",
+    "661ac12f5eb068c1",
+    "661ac12f5eb068c1"
+  ],
+  "dispatches": [
+    1,
+    1,
+    1
+  ],
+  "blocked": 6,
+  "measured": 0,
+  "authorized": 0.07
+}

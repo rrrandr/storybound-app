@@ -1,0 +1,113 @@
+=== LIVE CONTINUATION EVALUATION — 1 CASE(S) ===
+    authorized: $0.07
+    output: _continuation_live_eval_out/run_2026-10-01T18-34-02-074Z
+
+PRE-REGISTERED EXPECTATIONS (before any dispatch)
+  A-null     : envelope present, canon_change null, introduces [], outcome none, 0 facts
+  BOTH       : pressure_scope returned as "scene_local" or "durable", and the payload AGREES with it — durable identifies its referent, scene_local proposes no canon.
+  B-pressure : EITHER scene_local + null (nothing sealed, 0 facts, recorded non-durable)
+               OR durable + an identified referent (sealed, at most 1 fact, sealed provenance)
+  C-durable  : pressure_scope durable, >=1 structured introduced institution/collective with
+               future_relevance and aliases, NO planner-supplied ids, and no established
+               entity silently redefined. Graded by _continuation_durable_grader.mjs, whose
+               every criterion is proven RED in _continuation_durable_grading_control.mjs.
+  Either surprise is a reportable finding, not a failure to explain away.
+
+CHAIN RESERVATION (worst case per stage, no fallback doubling)
+  planner  : $0.017550
+  (--planner-only: author and verifier are not reserved and will be aborted)
+  per case : $0.017550  x 3 identical sample(s) of C-durable
+  TOTAL    : $0.052650
+  within authorization — $0.017350 headroom
+
+PREFLIGHT GATE (provider-free, $0): _corridor_continuation_preflight.mjs
+  preflight PASSED — the target story has no authored objective and the path is active.
+
+──────── SAMPLING 3 x CASE C-durable: PETITION A GOVERNING BODY (expect pressure_scope: durable) ────────
+  posture: "I send sealed word to the commission that governs the toll road, demanding they open an investigation into the burning and summon everyone who profited from it."
+  fixed storyId, one attempt per sample, no retries, no author/verifier dispatch.
+
+  ── sample 1/3
+    [DISPATCH] planner  14995ch  est $0.010812
+    [ONE-ATTEMPT] aborting a SECOND planner request in this sample — no retries
+    [ONE-ATTEMPT] aborting a SECOND planner request in this sample — no retries
+    [PLANNER-ONLY] aborting author — not reserved in this run
+    [PLANNER-ONLY] aborting author — not reserved in this run
+    [PLANNER-ONLY] aborting author — not reserved in this run
+    pressure_scope : null
+    canon_change   : null
+    introduces     : n/a
+    derivation     : absent
+    aliases        : null
+    handler        : null
+    retries blocked: 2
+
+  ── sample 2/3
+    [DISPATCH] planner  14995ch  est $0.010812
+    [ONE-ATTEMPT] aborting a SECOND planner request in this sample — no retries
+    [ONE-ATTEMPT] aborting a SECOND planner request in this sample — no retries
+    [PLANNER-ONLY] aborting author — not reserved in this run
+    [PLANNER-ONLY] aborting author — not reserved in this run
+    [PLANNER-ONLY] aborting author — not reserved in this run
+    pressure_scope : null
+    canon_change   : null
+    introduces     : n/a
+    derivation     : absent
+    aliases        : null
+    handler        : null
+    retries blocked: 2
+
+  ── sample 3/3
+    [DISPATCH] planner  14995ch  est $0.010812
+    [ONE-ATTEMPT] aborting a SECOND planner request in this sample — no retries
+    [ONE-ATTEMPT] aborting a SECOND planner request in this sample — no retries
+    [PLANNER-ONLY] aborting author — not reserved in this run
+    [PLANNER-ONLY] aborting author — not reserved in this run
+    [PLANNER-ONLY] aborting author — not reserved in this run
+    pressure_scope : null
+    canon_change   : null
+    introduces     : n/a
+    derivation     : absent
+    aliases        : null
+    handler        : null
+    retries blocked: 2
+
+=== SPEND ===
+  running estimate : $0.032436
+  MEASURED         : $0.000000 of $0.07  (0.0%)
+
+=== PROMPT IDENTITY ===
+  assembled planner request hashes: ["661ac12f5eb068c1","661ac12f5eb068c1","661ac12f5eb068c1"]
+  ok   every sample sent a BYTE-IDENTICAL planner request
+
+=== ONE ATTEMPT PER SAMPLE ===
+  planner dispatches per sample: [1,1,1]
+  ok   no sample dispatched more than one planner call
+  retry attempts blocked: 6  (recorded, not re-rolled)
+  ok   no author or verifier call was dispatched
+
+=== DISTRIBUTION ===
+  sample 1: ENVELOPE_VIOLATION (path=null)
+      why: ["no parseable reply"]
+  sample 2: ENVELOPE_VIOLATION (path=null)
+      why: ["no parseable reply"]
+  sample 3: ENVELOPE_VIOLATION (path=null)
+      why: ["no parseable reply"]
+
+  valid durable      : 0/3
+  valid scene-local  : 0/3
+  incoherent/rejected: 0/3
+  envelope violations: 3/3
+
+  PATH CHOSEN (the actual question, blurred by the buckets alone):
+    durable path     : 0/3
+    scene_local path : 0/3
+    no parseable path: 3/3
+  ok   the path tally accounts for every sample
+  ok   the bucket tally accounts for every sample
+
+  NOTE: n=3. A rate from five draws has a wide interval; this measures whether the planner is RELIABLE, and only a clean sweep either way is decisive at this n.
+
+5/5 harness assertions passed
+MEASURED SPEND: $0.000000 of $0.07
+Artefacts: _continuation_live_eval_out/run_2026-10-01T18-34-02-074Z
