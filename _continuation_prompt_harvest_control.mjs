@@ -34,6 +34,11 @@ const FORBIDDEN_ANYWHERE = [
   ['basis vocabulary', /causal_chain|declared_high_authority|fate_outcome|player_action/],
   ['validator language', /SMUGGLING|anchor_missing|provenanceLink|does not resolve/],
   ['register/schema field names', /protectedRegister|existingRefs|canon_change|introduces\[|pendingEntities/],
+  // PERSISTENCE vocabulary (2026-10-01). `pressure_scope` is a PLANNER-side declaration that
+  // decides whether anything becomes canon. The author is told the scene's purpose and pressure
+  // and nothing about the bookkeeping, so these strings must not appear in an author payload at
+  // all. Verified unique to this machinery: no other app text produces them.
+  ['persistence field names', /pressure_scope|scene_local|_sceneLocalPressures/],
   ['verifier-only field names', /decisiveChange|dominant_replacement|slots_check/]
 ];
 // (2) CONTINUATION BLOCK ONLY — generic words that legitimately occur elsewhere in the app, so a
@@ -102,8 +107,15 @@ const harvest = async (scenario) => {
       // pressure with an explicit null change and an explicit empty introduces. Omitting the keys
       // entirely is an envelope VIOLATION, not a no-change scene — proven in
       // _continuation_envelope_control.mjs.
+      // IDENTITY, NOT COUNT. The ledger bootstraps PC/LI anchors and this prep already proposed
+      // Julian, so "zero entities" is the wrong measure — a count delta has burned me twice.
+      // Snapshot the register's exact id set and require it UNCHANGED across the proposal.
+      const regBefore = Object.keys(window._protectedRegisterIds()).sort().join('|');
       out.res = window._processContinuationProposal(
         Object.assign({}, base, { pressure_scope: 'scene_local', canon_change: null, introduces: [] }), { scene: 30 });
+      out.localRegisterUnchanged = Object.keys(window._protectedRegisterIds()).sort().join('|') === regBefore;
+      out.localPressures = (window.state._sceneLocalPressures || [])
+        .map(p => ({ scope: p.scope, durable: p.durable }));
     } else if (sc === 'tier2') {
       out.res = window._processContinuationProposal(Object.assign({}, base, {
         pressure_scope: 'durable',
@@ -163,6 +175,8 @@ console.log('\nA. PREFLIGHT — the planner request carries the continuation con
 t('a scene-spine planner request was assembled', !!h2.planner);
 const P = h2.planner ? h2.planner.sys : '';
 t('the CONTINUATION ENVELOPE schema is present', /CONTINUATION ENVELOPE \(REQUIRED/.test(P));
+t('  it demands ALL FIVE keys, every scene',
+  /CONTINUATION ENVELOPE \(REQUIRED — all five keys, every scene\)/.test(P));
 t('  it offers all six entity kinds',
   /named\|role\|artifact\|institution\|collective\|place/.test(P));
 t('  it forbids planner-supplied ids', /NEVER supply an id/.test(P));
@@ -179,6 +193,51 @@ t('  a null change is declared the NORMAL answer',
 t('  and manufacturing a change to fill the envelope is forbidden',
   /Do NOT invent a durable fact merely to fill the envelope/.test(P));
 t('the event-slots contract is still present (unchanged)', /STRUCTURED EVENT HANDOFF/.test(P));
+
+// ── HARVEST OF THE CONTRACT CHANGE (Roman 2026-10-01) ────────────────────────────────────────
+// The Corridor run was a CONTRACT AMBIGUITY: the planner correctly identified a continuing
+// pressure but the envelope gave it nowhere to say whether that referent is a deliberately
+// unknown scene-local possibility or a continuing institution. `pressure_scope` closes that.
+// Roman's gate: the change must be HARVESTED against the real assembled payload — the same
+// evidence standard the envelope itself was held to — before any planner-only dispatch.
+// Every assertion below reads the actual planner `sys` string that the funnel built, not the
+// prompt-builder source.
+console.log('\nA2. HARVEST — the PERSISTENCE distinction reaches the real planner payload');
+t('pressure_scope is a REQUIRED envelope key',
+  /"pressure_scope": "scene_local" or "durable" \(REQUIRED/.test(P));
+t('  and it points at the PERSISTENCE section', /\(REQUIRED — see PERSISTENCE below\)/.test(P));
+t('the PERSISTENCE section is present',
+  /PERSISTENCE — the distinction that decides whether anything becomes canon:/.test(P));
+t('  "scene_local" is defined as naming NO continuing referent',
+  /"scene_local": forward_pressure names NO continuing referent/.test(P));
+t('  with the planner\'s own Corridor phrasing as a legitimate example',
+  /whoever governs this place will come/.test(P));
+t('  explicitly called a legitimate, common answer',
+  /deliberately unknown, and that is a legitimate/.test(P) && /common answer/.test(P));
+t('  creating NO canon, unusable by later scenes',
+  /It creates NO canon/.test(P) && /later scenes may NOT treat it as an existing thing/.test(P));
+t('  "durable" is defined as depending on a CONTINUING identifiable referent',
+  /"durable": the pressure depends on a CONTINUING identifiable actor, institution, faction, place/.test(P));
+t('  which MUST be declared with kind, aliases and future_relevance',
+  /MUST declare that referent in "introduces"/.test(P) && /kind, aliases and future_relevance/.test(P));
+t('  and a durable pressure with an empty introduces is called invalid',
+  /A durable pressure with an empty "introduces" is invalid/.test(P));
+t('the rule that closes the leak is stated verbatim',
+  /forward_pressure is NEVER a second canon channel/.test(P));
+t('  with the either/or spelled out',
+  /Either it is unnamed and scene_local, or it is named and/.test(P) && /declared in introduces/.test(P));
+t('the PERSISTENCE section sits INSIDE the envelope block (not appended elsewhere)',
+  P.indexOf('PERSISTENCE — the distinction') > P.indexOf('CONTINUATION ENVELOPE (REQUIRED')
+  && P.indexOf('PERSISTENCE — the distinction') < P.indexOf('MOST SCENES ADVANCE PRESSURE'),
+  'env=' + P.indexOf('CONTINUATION ENVELOPE (REQUIRED') + ' pers=' + P.indexOf('PERSISTENCE — the distinction')
+  + ' most=' + P.indexOf('MOST SCENES ADVANCE PRESSURE'));
+t('the five envelope keys appear in contract order',
+  (function () { var k = ['"scene_purpose"', '"forward_pressure"', '"pressure_scope"', '"canon_change"', '"introduces"'];
+    var at = k.map(function (s) { return P.indexOf(s); });
+    return at.every(function (n) { return n >= 0; })
+      && at.every(function (n, i) { return i === 0 || n > at[i - 1]; }); })(),
+  JSON.stringify(['"scene_purpose"', '"forward_pressure"', '"pressure_scope"', '"canon_change"', '"introduces"']
+    .map(function (s) { return [s, P.indexOf(s)]; })));
 
 console.log('\nB. PREFLIGHT — the planner receives its decision inputs');
 const PU = h2.planner ? h2.planner.raw : '';
@@ -242,6 +301,18 @@ t('  and no continuation fact text', !/Reach Commission opens an investigation/.
 t('  while ordinary author directives remain', hN.author && hN.author.marks >= 2,
   'marks=' + (hN.author && hN.author.marks));
 t('  the ledger is empty', hN.facts.length === 0, JSON.stringify(hN.facts));
+// This is the route the live Corridor run actually took — a legitimate scene_local pressure. The
+// scope declaration is planner bookkeeping; none of it may reach the author or the ledger.
+FORBIDDEN_ANYWHERE.forEach(([name, rx]) => {
+  const m = AN.match(rx);
+  t('  NO ' + name + ' in the scene_local author payload', !m, m ? 'found "' + m[0] + '"' : '');
+});
+t('  the scene_local pressure was recorded as explicitly non-durable',
+  hN.prep.localPressures && hN.prep.localPressures.length === 1
+  && hN.prep.localPressures[0].scope === 'scene_local' && hN.prep.localPressures[0].durable === false,
+  JSON.stringify(hN.prep.localPressures));
+t('  and the protected register is byte-identical before and after',
+  hN.prep.localRegisterUnchanged === true);
 
 // ───────────────────────────────────────────── TIER 3
 const h3 = await harvest('tier3');

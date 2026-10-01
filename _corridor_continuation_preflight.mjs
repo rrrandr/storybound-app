@@ -157,6 +157,18 @@ t('the CONTINUATION ENVELOPE schema is in the planner prompt',
 t('  with the null-is-normal guidance', /null is the NORMAL answer/.test(P));
 t('  and the no-manufacturing prohibition',
   /Do NOT invent a durable fact merely to fill the envelope/.test(P));
+// THE DISPATCH GATE FOR THE PERSISTENCE FIX. This preflight is what the live runner calls before
+// it spends, so the contract the next paid run is meant to test must be PRESENT here, not merely
+// present in the harvest control. The full wording harvest is _continuation_prompt_harvest_control.
+// `P` is the raw JSON request body, where every prompt quote arrives BACKSLASH-ESCAPED. The
+// other assertions here happen to use quote-free phrases and so never hit it; this one names a
+// JSON field, so it must read an unescaped view or it fails on the harness, not the code.
+const Punq = P.replace(/\\"/g, '"');
+t('  the PERSISTENCE distinction is in the planner prompt',
+  /"pressure_scope": "scene_local" or "durable" \(REQUIRED/.test(Punq)
+  && /PERSISTENCE — the distinction that decides whether anything becomes canon:/.test(Punq));
+t('  forward_pressure is declared never a second canon channel',
+  /forward_pressure is NEVER a second canon channel/.test(P));
 
 console.log('\n   the funnel reached the author with a stubbed planner reply');
 t('an author request was assembled', !!author);
