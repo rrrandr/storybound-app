@@ -32465,6 +32465,34 @@ window._reflowSceneDialogueLLM = _reflowSceneDialogueLLM;
   }
   window._relPcId = _relPcId; window._relLiId = _relLiId;
 
+  // ══════════════════════════════════════════════════════════════════════════════════════════
+  // CONTROLLED ENTITY-KIND VOCABULARY (Roman 2026-09-30) — ONE source of truth.
+  //
+  // Declared here, beside the ledger the kinds describe, and consumed by the stage-issuer's
+  // validator (_STAGE_ALLOWED_ENTITY_KINDS) so the taxonomy cannot drift between the two.
+  //
+  //   named       — a named person/character (the pre-existing compatibility category)
+  //   role        — an office or formal position
+  //   artifact    — a durable, identity-bearing relic: the Answer. Not a prop.
+  //   institution — governance, an order, a college, a court
+  //   collective  — a group: a patrol, the assembly
+  //   place       — a location: Aeryn's Reach, a village, the Fold
+  //
+  // DELIBERATELY ABSENT: a generic `object`. Ordinary props are scene texture and must stay
+  // scene-local; only something meeting the durable-artifact standard earns a register record.
+  //
+  // KIND DOES NOT MERGE IDENTITY. A place, its governing institution, and a patrol from that
+  // institution are SEPARATE records with separate ids. Only an explicit identity relationship
+  // (`identityClaims`, or a shared alias set on one record) may tie them together.
+  var _REL_ENTITY_KINDS = { named: 1, role: 1, artifact: 1, institution: 1, collective: 1, place: 1 };
+  // NON-PERSON kinds may never be a dialogue speaker, a relationship subject, or Character+
+  // grounding — the doctrine _validateLocalObjective already states for seed collectives ("a
+  // collective supplies pressure/reaction/context only, never dialogue attribution, a facet, or
+  // Character+/relationship grounding"). Extending the four new kinds into the person-resolution
+  // paths without this would let prose attribute a line to a village.
+  var _REL_NONPERSON_KINDS = { artifact: 1, institution: 1, collective: 1, place: 1 };
+  function _relIsNonPerson(e) { return !!(e && _REL_NONPERSON_KINDS[e.kind]); }
+
   function _relEnsureEntity(L, id, patch) {
     if (!L.entities[id]) L.entities[id] = { id: id, kind: 'named', label: id, aliases: [] };
     var e = L.entities[id];
@@ -32486,7 +32514,9 @@ window._reflowSceneDialogueLLM = _reflowSceneDialogueLLM;
     for (var id in L.entities) {
       var e = L.entities[id];
       if (e.supersededBy) continue;
-      if (opts && opts.skipRoles && e.kind === 'role') continue;
+      // `skipRoles` means "people only" — so it also skips every NON-PERSON kind. Without this a
+      // place or institution sharing a name with a person could be matched as the person.
+      if (opts && opts.skipRoles && (e.kind === 'role' || _relIsNonPerson(e))) continue;
       if (_relNorm(e.label) === n || (e.aliases || []).indexOf(n) !== -1) ids.push(e.id);
     }
     if (ids.length === 1) return { status: 'unique', id: ids[0] };
@@ -33350,11 +33380,17 @@ window._reflowSceneDialogueLLM = _reflowSceneDialogueLLM;
     var L = _relLedger(false); if (!L) return null;
     for (var id in L.entities) {
       var e = L.entities[id];
-      if (e.supersededBy || e.kind === 'role') continue;
+      // A SPEAKER IS A PERSON. Roles were already excluded; the non-person kinds are excluded for
+      // the same reason — a village, an order or a relic can never be the attributed speaker of a
+      // quoted line, however closely its name matches.
+      if (e.supersededBy || e.kind === 'role' || _relIsNonPerson(e)) continue;
       if (_relNorm(e.label) === _relNorm(n)) return id;
     }
     return null;
   }
+  // Exported read-only so the entity-kind control can prove the non-person guard above directly
+  // rather than inferring it. Resolution only; it never creates or mutates an entity.
+  try { if (typeof window !== 'undefined') { window._relResolveWho = _relResolveWho; window._relIsNonPerson = _relIsNonPerson; } } catch (_) {}
 
   // A speaker is verified when the prose ATTRIBUTES the quote — a dialogue tag
   // adjacent to it, or first-person "I said". The model's claim alone is not enough.
@@ -206433,7 +206469,11 @@ No text, no watermark, no UI elements, share-ready.`;
   // backend-only. Reject-only validation; the backend mints (via _relEnsureEntity + a
   // freshly incremented _relLedger seq) and commits ONLY on success. No fuzzy matching,
   // no review queue, no name-similarity rejection — see the design doc's final correction.
-  var _STAGE_ALLOWED_ENTITY_KINDS = { named: 1, role: 1 };
+  // BOUNDED EXPANSION (Roman 2026-09-30): was { named, role }. Now the one controlled vocabulary
+  // declared beside the ledger — named · role · artifact · institution · collective · place.
+  // `named` and `role` stay valid unchanged, and no existing record is rewritten. A generic
+  // `object` kind is deliberately NOT offered: ordinary props stay scene-local.
+  var _STAGE_ALLOWED_ENTITY_KINDS = _REL_ENTITY_KINDS;
   function _validateEntityCreationProposal(proposal) {
     var why = [];
     if (!proposal || typeof proposal !== 'object') { why.push('no proposal'); return { ok: false, why: why }; }
