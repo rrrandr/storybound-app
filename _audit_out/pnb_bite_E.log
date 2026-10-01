@@ -1,0 +1,90 @@
+=== PLAYER-NAMED-BODY CONTROL (no network, no model, $0) ===
+
+0. the grader vocabulary and the app guard vocabulary are IDENTICAL
+  ok   body nouns match
+  ok   adjunct nouns match
+  ok   persistence fields match
+
+1. legitimate scene-local unknowns are PRESERVED (the other half of the test)
+  ok     names nothing continuing: "Someone will answer for this before the week is "
+  ok       and the validator accepts it
+  ok     names nothing continuing: "Whoever governs this place will come and find he"
+  ok       and the validator accepts it
+  ok     names nothing continuing: "The toll road will be watched more closely now."
+  ok       and the validator accepts it
+  ok     names nothing continuing: "Word of the burning will travel faster than she "
+  ok       and the validator accepts it
+  ok     names nothing continuing: "She has no idea who heard the bell, and that is "
+  ok       and the validator accepts it
+  ok     names nothing continuing: "a magistrate will be sent to take her statement"
+  ok       and the validator accepts it
+
+2. continuing bodies in ORDINARY LOWERCASE are caught (the definite guard miss)
+  FAIL   "the commission" is detected  — "the commission must now respond to the sealed demand"
+  FAIL     rejected as a persistence violation  — []
+  FAIL   "the council" is detected  — "the council will take up the matter at its next sitting"
+  FAIL     rejected as a persistence violation  — []
+  FAIL   "their chambers" is detected  — "she will be summoned to their chambers before the month turns"
+  FAIL     rejected as a persistence violation  — []
+  FAIL   "its clerk" is detected  — "its clerk has already entered the complaint in the book"
+  FAIL     rejected as a persistence violation  — []
+  FAIL   "the tribunal" is detected  — "the tribunal will decide what the burning cost her"
+  FAIL     rejected as a persistence violation  — []
+  FAIL   "the board" is detected  — "the board intends to make an example of her"
+  FAIL     rejected as a persistence violation  — []
+  FAIL   "the magistrate" is detected  — "the magistrate will be sent to take her statement"
+  FAIL     rejected as a persistence violation  — []
+  FAIL   "a commission" is detected  — "a commission will be convened over the burning"
+  FAIL     rejected as a persistence violation  — []
+  FAIL   "the hearing" is detected  — "the hearing will go on with or without her"
+  FAIL     rejected as a persistence violation  — []
+  ok     none of these needed a capital letter
+
+2b. the definite/indefinite asymmetry is deliberate
+  ok   "a magistrate" (indefinite official) stays a legitimate unknown
+  FAIL "the magistrate" (a particular official) is caught
+  FAIL "a commission" (an institution coming into being) is caught
+
+3. the EXACT saved live case C reply — the one the old guard passed
+   forward_pressure: "the commission must now respond to the sealed demand"
+   branch_a        : "appear at the commission chambers to testify in person"
+   pressure_scope  : "scene_local"
+  FAIL forward_pressure is flagged  — []
+  FAIL   the commission is identified by name
+  FAIL the proposal is detected as RELYING on it across fields  — []
+  FAIL   the reliance spans forward_pressure AND a later branch  — []
+  FAIL   and the exit state  — []
+  FAIL the validator now REJECTS it  — {"ok":true,"outcome":"none","why":[],"pressureScope":"scene_local","readerFacing":{"scene_purpose":"make the player's demand to the commission an irreversible fact in the world","forward_pressure":"the commission must now respond to the sealed demand"}}
+  FAIL   as a persistence violation
+  FAIL   and the reason states the player-named-body rule  — []
+
+   and processed end to end it writes NOTHING
+  FAIL outcome is rejected  — {"outcome":"none","persistenceViolation":false,"facts":0,"localPressures":1,"sealed":[]}
+  ok     zero facts
+  ok     no continuation seal
+  FAIL   and it was NOT recorded as a scene-local pressure either  — recorded=1
+
+   the node-side grader reaches the same verdict independently
+  ok   grader: forward_pressure check is RED
+  ok   grader: reliance check is RED
+  ok   grader detects the same head noun as the app
+
+4. PATH (a): the player-named body ADOPTED as durable canon
+  ok   the proposal seals
+  ok     as Tier 2
+  ok     with a backend-minted pending id
+  ok     declaring it is what makes the SAME branch_a/exit_state legitimate
+
+5. PATH (b): provisional — legitimate only when nothing relies on the body
+  ok   provisional with NO continuing reliance is accepted
+  ok     recorded as explicitly non-durable
+  FAIL provisional WHILE RELYING on the body is REJECTED  — {"ok":true,"outcome":"none","why":[],"pressureScope":"scene_local","readerFacing":{"scene_purpose":"Stage the petition and its consequence.","forward_pressure":"She will not be left alone with this for long."}}
+  FAIL   even though forward_pressure itself names nothing  — []
+  FAIL   the reason offers both legal exits  — []
+
+6. ESTABLISHED canon may be referenced freely — referencing is not creation
+  ok   an established commission in forward_pressure is allowed
+  ok     and relying on it across fields is allowed too
+  ok   a body declared in THIS proposal's introduces[] is not "undeclared"
+
+31/64 passed

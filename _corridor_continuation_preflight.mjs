@@ -169,6 +169,14 @@ t('  the PERSISTENCE distinction is in the planner prompt',
   && /PERSISTENCE — the distinction that decides whether anything becomes canon:/.test(Punq));
 t('  forward_pressure is declared never a second canon channel',
   /forward_pressure is NEVER a second canon channel/.test(P));
+// Same reasoning as the persistence gate above: the rule the NEXT paid run is meant to test must
+// be present at dispatch time, not merely in the harvest control. Live case C is the reason it
+// exists, so a rerun must not be able to go out without it.
+t('  the PLAYER-NAMED-BODY rule is in the planner prompt',
+  /A BODY THE PLAYER NAMES IS NOT CANON BY THAT ACT/.test(Punq)
+  && /PATH \(b\) IS INVALID IF THIS PROPOSAL ITSELF RELIES ON THAT BODY PERSISTING/.test(Punq));
+t('  with the lowercase clause that case C walked through',
+  /This applies in LOWERCASE too/.test(Punq));
 
 console.log('\n   the funnel reached the author with a stubbed planner reply');
 t('an author request was assembled', !!author);
