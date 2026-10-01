@@ -1,0 +1,36 @@
+{
+  "tactical_move": "Formalize the demand by dispatching sealed word to the named commission",
+  "state_change_precondition": "No sealed demand for investigation has yet reached the toll road commission.",
+  "state_change": "The courier places the sealed letter into the commission clerk's hands.",
+  "forces_choice": "forces the PC to choose between demanding an immediate public hearing or insisting the summons remain sealed",
+  "branch_a": "Demand the commission hold an immediate public hearing on the burning",
+  "branch_b": "Insist the summons and investigation remain sealed from all other parties",
+  "scene_purpose": "Stage the player's committed action of sending the sealed demand and make its delivery the irreversible state change",
+  "forward_pressure": "The commission now holds the demand and must respond",
+  "pressure_scope": "durable",
+  "canon_change": {
+    "tier": 2,
+    "targets": [
+      "Toll Road Commission"
+    ],
+    "content": "The Toll Road Commission has received a sealed demand to investigate the burning and summon profiting parties."
+  },
+  "introduces": [
+    {
+      "kind": "institution",
+      "label": "Toll Road Commission",
+      "aliases": [],
+      "justification": "Player action directly invokes and relies on this body to receive and act on the demand",
+      "future_relevance": "Will convene, issue summons, and conduct the investigation in subsequent scenes"
+    }
+  ],
+  "event_slots": {
+    "precondition": "The courier and sealed letter must be present and ready to depart.",
+    "actor": "courier",
+    "action": "delivers",
+    "target": "commission clerk",
+    "exit_state": "the sealed demand has been received by the Toll Road Commission",
+    "mechanism_grounding": "ordinary"
+  },
+  "derivation": "Player's explicit action of sending sealed word to the commission they named directly establishes receipt as the next irreversible step."
+}

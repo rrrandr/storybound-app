@@ -1,0 +1,36 @@
+{
+  "tactical_move": "Escalate the burning by routing a formal demand through the toll-road commission",
+  "state_change_precondition": "The commission governing the toll road has received no demand for investigation",
+  "state_change": "The sealed letter is delivered to the commission clerk and logged for review",
+  "forces_choice": "forces the PC to choose between pressing for an immediate public hearing or letting the commission control the timeline",
+  "branch_a": "Insist the commission hold open hearings within the month",
+  "branch_b": "Permit the commission to issue private summonses first",
+  "scene_purpose": "Formalize the demand for investigation by delivering the sealed letter to the commission",
+  "forward_pressure": "The commission will now convene and summon witnesses",
+  "pressure_scope": "durable",
+  "canon_change": {
+    "tier": 2,
+    "targets": [
+      "Toll Road Commission"
+    ],
+    "content": "The commission has received and logged a formal demand to investigate the burning"
+  },
+  "introduces": [
+    {
+      "kind": "institution",
+      "label": "Toll Road Commission",
+      "aliases": [],
+      "justification": "Player action directly addresses and activates this body",
+      "future_relevance": "Will convene, issue summonses, and conduct the investigation"
+    }
+  ],
+  "derivation": "Player explicitly sent sealed word demanding the commission open an investigation, making their receipt and logging the irreversible next step",
+  "event_slots": {
+    "precondition": "The sealed letter and a messenger capable of delivering it are present",
+    "actor": "messenger",
+    "action": "delivers and hands over the sealed letter",
+    "target": "commission clerk",
+    "exit_state": "the commission has received and logged the demand for investigation",
+    "mechanism_grounding": "ordinary"
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "tactical_move": "Deliver the sealed demand to force the commission into formal action",
+  "state_change_precondition": "The commission has not yet received any demand about the burning.",
+  "state_change": "The sealed letter is placed in the clerk's hands and opened.",
+  "forces_choice": "forces the PC to choose between preparing testimony alone or aligning witnesses first",
+  "branch_a": "Draft a full statement of evidence to present at the hearing",
+  "branch_b": "Seek out the toll-road profiteers to secure their cooperation before they are summoned",
+  "scene_purpose": "Execute the player's committed action of sending the sealed demand and make the commission's receipt of it irreversible",
+  "forward_pressure": "The commission will now convene and issue summonses",
+  "pressure_scope": "durable",
+  "canon_change": {
+    "tier": 2,
+    "targets": ["Toll Road Commission"],
+    "content": "The commission has received the sealed demand and must open an investigation"
+  },
+  "introduces": [
+    {
+      "kind": "institution",
+      "label": "Toll Road Commission",
+      "aliases": ["the commission"],
+      "justification": "Player action directly engages this body by sending a formal demand",
+      "future_relevance": "Will convene, issue summonses, and question witnesses in subsequent scenes"
+    }
+  ],
+  "derivation": "Player explicitly sent sealed word to the commission, making its receipt and resulting investigation the direct next step",
+  "event_slots": {
+    "precondition": "A messenger or PC is present with the sealed letter addressed to the commission",
+    "actor": "PC or messenger",
+    "action": "delivers the sealed letter",
+    "target": "Toll Road Commission clerk",
+    "exit_state": "The commission has received the demand for investigation into the burning",
+    "mechanism_grounding": "ordinary"
+  }
+}

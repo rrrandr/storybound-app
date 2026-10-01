@@ -1,0 +1,126 @@
+{
+  "facts": [],
+  "ctResult": {
+    "outcome": "sealed",
+    "tier": 2,
+    "sealedId": "prop:2:2",
+    "introduced": [
+      {
+        "id": "ent:stage:2",
+        "kind": "institution",
+        "label": "Toll Road Commission",
+        "aliases": [
+          "the commission"
+        ],
+        "pending": true
+      }
+    ],
+    "targets": [
+      "Toll Road Commission"
+    ],
+    "why": []
+  },
+  "seal": {
+    "sealedId": "prop:2:2",
+    "scene": 2,
+    "readerFacing": {
+      "scene_purpose": "Register the player's demand with the commission as an irreversible first step",
+      "forward_pressure": "The commission must now decide whether to open the investigation"
+    }
+  },
+  "sealed": [
+    {
+      "id": "prop:2:1",
+      "scene": 2,
+      "kind": "state_change",
+      "fact": "The clerk stamps and files the sealed letter from the courier.",
+      "anchors": [],
+      "pendingEntities": [],
+      "milestone": "",
+      "provenance": {
+        "invocationId": "inv:state_change:2:noposture",
+        "postureHash": null,
+        "plannerModel": null,
+        "sceneProposed": 2,
+        "at": 1790875705696
+      },
+      "sealed": true
+    },
+    {
+      "id": "prop:2:2",
+      "scene": 2,
+      "kind": "continuation",
+      "fact": "A formal demand for investigation into the toll-road burning has been lodged with the commission.",
+      "anchors": [
+        {
+          "role": "institution",
+          "ref": "ent:stage:2"
+        }
+      ],
+      "pendingEntities": [
+        {
+          "id": "ent:stage:2",
+          "kind": "institution",
+          "label": "Toll Road Commission",
+          "aliases": [
+            "the commission"
+          ]
+        }
+      ],
+      "milestone": "The commission must now decide whether to open the investigation",
+      "provenance": {
+        "invocationId": "inv:continuation:2:noposture",
+        "postureHash": null,
+        "plannerModel": null,
+        "sceneProposed": 2,
+        "at": 1790875705697
+      },
+      "sealed": true
+    }
+  ],
+  "localPressures": [],
+  "ledger": [
+    {
+      "id": "pc",
+      "kind": "named",
+      "label": "Wren",
+      "aliases": []
+    },
+    {
+      "id": "ent:cassel",
+      "kind": "named",
+      "label": "Cassel",
+      "aliases": []
+    },
+    {
+      "id": "ent:stage:1",
+      "kind": "named",
+      "label": "Julian",
+      "aliases": [
+        "the Provast"
+      ],
+      "prov": "stage_issuer_generated"
+    },
+    {
+      "id": "ent:stage:3",
+      "kind": "named",
+      "label": "PC",
+      "aliases": [],
+      "prov": "stage_issuer_generated"
+    },
+    {
+      "id": "ent:stage:4",
+      "kind": "named",
+      "label": "courier",
+      "aliases": [],
+      "prov": "stage_issuer_generated"
+    },
+    {
+      "id": "ent:stage:5",
+      "kind": "named",
+      "label": "commission clerk",
+      "aliases": [],
+      "prov": "stage_issuer_generated"
+    }
+  ]
+}

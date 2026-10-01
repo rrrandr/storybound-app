@@ -1,0 +1,38 @@
+{
+  "tactical_move": "Formalize the demand by dispatching the sealed letter to the named commission",
+  "state_change_precondition": "No demand for an investigation into the burning has yet been sent.",
+  "state_change": "The sealed letter is handed to the courier and leaves for the commission.",
+  "forces_choice": "forces the PC to choose between preparing evidence for the commission or identifying specific profiteers to summon",
+  "branch_a": "Compile a sealed list of names and profits to accompany the demand",
+  "branch_b": "Dispatch a second messenger to locate and warn the most vulnerable witness",
+  "stage_present": [],
+  "stage_location": "a roadside courier post",
+  "stage_issued_objects": [],
+  "stage_affordances": [],
+  "scene_purpose": "Execute the player's committed action of sending the sealed demand and make the commission's involvement concrete",
+  "forward_pressure": "The commission now holds the demand and must respond",
+  "pressure_scope": "durable",
+  "canon_change": {
+    "tier": 2,
+    "targets": ["Toll Road Commission"],
+    "content": "The Toll Road Commission has received a formal demand to investigate the burning"
+  },
+  "introduces": [
+    {
+      "kind": "institution",
+      "label": "Toll Road Commission",
+      "aliases": ["the commission"],
+      "justification": "Player action directly invokes and relies on this body as the recipient of the sealed demand",
+      "future_relevance": "Will convene, summon witnesses, and issue findings that shape later scenes"
+    }
+  ],
+  "event_slots": {
+    "precondition": "A courier must be present at the post",
+    "actor": "PC",
+    "action": "hands over the sealed letter",
+    "target": "courier",
+    "exit_state": "the demand has been dispatched to the Toll Road Commission",
+    "mechanism_grounding": "ordinary"
+  },
+  "derivation": "Player's explicit action of sending sealed word to the commission requires adopting that body as canon so the demand can be received and acted upon"
+}

@@ -1,0 +1,105 @@
+{
+  "facts": [],
+  "ctResult": {
+    "outcome": "sealed",
+    "tier": 2,
+    "sealedId": "prop:2:2",
+    "introduced": [
+      {
+        "id": "ent:stage:2",
+        "kind": "institution",
+        "label": "Toll Road Commission",
+        "aliases": [
+          "the commission"
+        ],
+        "pending": true
+      }
+    ],
+    "targets": [
+      "Toll Road Commission"
+    ],
+    "why": []
+  },
+  "seal": {
+    "sealedId": "prop:2:2",
+    "scene": 2,
+    "readerFacing": {
+      "scene_purpose": "Execute the player's committed action of sending the sealed demand and make the commission's receipt of it irreversible",
+      "forward_pressure": "The commission will now convene and issue summonses"
+    }
+  },
+  "sealed": [
+    {
+      "id": "prop:2:1",
+      "scene": 2,
+      "kind": "state_change",
+      "fact": "The sealed letter is placed in the clerk's hands and opened.",
+      "anchors": [],
+      "pendingEntities": [],
+      "milestone": "",
+      "provenance": {
+        "invocationId": "inv:state_change:2:noposture",
+        "postureHash": null,
+        "plannerModel": null,
+        "sceneProposed": 2,
+        "at": 1790875608942
+      },
+      "sealed": true
+    },
+    {
+      "id": "prop:2:2",
+      "scene": 2,
+      "kind": "continuation",
+      "fact": "The commission has received the sealed demand and must open an investigation",
+      "anchors": [
+        {
+          "role": "institution",
+          "ref": "ent:stage:2"
+        }
+      ],
+      "pendingEntities": [
+        {
+          "id": "ent:stage:2",
+          "kind": "institution",
+          "label": "Toll Road Commission",
+          "aliases": [
+            "the commission"
+          ]
+        }
+      ],
+      "milestone": "The commission will now convene and issue summonses",
+      "provenance": {
+        "invocationId": "inv:continuation:2:noposture",
+        "postureHash": null,
+        "plannerModel": null,
+        "sceneProposed": 2,
+        "at": 1790875608943
+      },
+      "sealed": true
+    }
+  ],
+  "localPressures": [],
+  "ledger": [
+    {
+      "id": "pc",
+      "kind": "named",
+      "label": "Wren",
+      "aliases": []
+    },
+    {
+      "id": "ent:cassel",
+      "kind": "named",
+      "label": "Cassel",
+      "aliases": []
+    },
+    {
+      "id": "ent:stage:1",
+      "kind": "named",
+      "label": "Julian",
+      "aliases": [
+        "the Provast"
+      ],
+      "prov": "stage_issuer_generated"
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "tactical_move": "Formally lodge the demand to force the commission into motion",
+  "state_change_precondition": "The commission has not yet received any formal demand about the burning.",
+  "state_change": "The clerk stamps and files the sealed letter from the courier.",
+  "forces_choice": "forces the PC to choose between waiting for the commission's first summons or leaking the demand to the toll-road merchants",
+  "branch_a": "Wait in the capital for the commission's summons",
+  "branch_b": "Send a second copy of the demand to the merchants who profited",
+  "stage_present": ["PC", "courier", "commission clerk"],
+  "stage_location": "the commission's outer records hall",
+  "stage_issued_objects": [],
+  "stage_affordances": [],
+  "scene_purpose": "Register the player's demand with the commission as an irreversible first step",
+  "forward_pressure": "The commission must now decide whether to open the investigation",
+  "pressure_scope": "durable",
+  "canon_change": {
+    "tier": 2,
+    "targets": ["Toll Road Commission"],
+    "content": "A formal demand for investigation into the toll-road burning has been lodged with the commission."
+  },
+  "introduces": [
+    {
+      "kind": "institution",
+      "label": "Toll Road Commission",
+      "aliases": ["the commission"],
+      "justification": "Player action directly addresses and engages this body",
+      "future_relevance": "Will decide on and conduct the demanded investigation and summons"
+    }
+  ],
+  "derivation": "Player explicitly sent sealed word to the commission, making its involvement the next durable fact",
+  "event_slots": {
+    "precondition": "A courier carrying the sealed demand must reach the commission clerk",
+    "actor": "courier",
+    "action": "delivers and has accepted the sealed demand",
+    "target": "commission clerk",
+    "exit_state": "the commission has received and filed the formal demand for investigation",
+    "mechanism_grounding": "ordinary"
+  }
+}

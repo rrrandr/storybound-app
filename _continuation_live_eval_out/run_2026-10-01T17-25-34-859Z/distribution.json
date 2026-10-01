@@ -1,0 +1,66 @@
+{
+  "samples": [
+    {
+      "i": 1,
+      "bucket": "incoherent",
+      "path": "durable",
+      "why": [
+        "  entry 0 (Toll Road Commission): aliases is a non-empty array of strings"
+      ]
+    },
+    {
+      "i": 2,
+      "bucket": "valid_durable",
+      "path": "durable",
+      "why": []
+    },
+    {
+      "i": 3,
+      "bucket": "incoherent",
+      "path": "durable",
+      "why": [
+        "  entry 0 (Toll Road Commission): aliases is a non-empty array of strings"
+      ]
+    },
+    {
+      "i": 4,
+      "bucket": "valid_durable",
+      "path": "durable",
+      "why": []
+    },
+    {
+      "i": 5,
+      "bucket": "valid_durable",
+      "path": "durable",
+      "why": []
+    }
+  ],
+  "buckets": {
+    "valid_durable": 3,
+    "valid_scene_local": 0,
+    "incoherent": 2,
+    "envelope_violation": 0
+  },
+  "paths": {
+    "durable": 5,
+    "scene_local": 0,
+    "none": 0
+  },
+  "hashes": [
+    "c936c19b21369135",
+    "c936c19b21369135",
+    "c936c19b21369135",
+    "c936c19b21369135",
+    "c936c19b21369135"
+  ],
+  "dispatches": [
+    1,
+    1,
+    1,
+    1,
+    1
+  ],
+  "blocked": 0,
+  "measured": 0.01964775,
+  "authorized": 0.1
+}

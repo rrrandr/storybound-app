@@ -1,0 +1,101 @@
+{
+  "facts": [],
+  "ctResult": {
+    "outcome": "sealed",
+    "tier": 2,
+    "sealedId": "prop:2:2",
+    "introduced": [
+      {
+        "id": "ent:stage:2",
+        "kind": "institution",
+        "label": "Toll Road Commission",
+        "aliases": [],
+        "pending": true
+      }
+    ],
+    "targets": [
+      "Toll Road Commission"
+    ],
+    "why": []
+  },
+  "seal": {
+    "sealedId": "prop:2:2",
+    "scene": 2,
+    "readerFacing": {
+      "scene_purpose": "Formalize the demand for investigation by delivering the sealed letter to the commission",
+      "forward_pressure": "The commission will now convene and summon witnesses"
+    }
+  },
+  "sealed": [
+    {
+      "id": "prop:2:1",
+      "scene": 2,
+      "kind": "state_change",
+      "fact": "The sealed letter is delivered to the commission clerk and logged for review",
+      "anchors": [],
+      "pendingEntities": [],
+      "milestone": "",
+      "provenance": {
+        "invocationId": "inv:state_change:2:noposture",
+        "postureHash": null,
+        "plannerModel": null,
+        "sceneProposed": 2,
+        "at": 1790875640680
+      },
+      "sealed": true
+    },
+    {
+      "id": "prop:2:2",
+      "scene": 2,
+      "kind": "continuation",
+      "fact": "The commission has received and logged a formal demand to investigate the burning",
+      "anchors": [
+        {
+          "role": "institution",
+          "ref": "ent:stage:2"
+        }
+      ],
+      "pendingEntities": [
+        {
+          "id": "ent:stage:2",
+          "kind": "institution",
+          "label": "Toll Road Commission",
+          "aliases": []
+        }
+      ],
+      "milestone": "The commission will now convene and summon witnesses",
+      "provenance": {
+        "invocationId": "inv:continuation:2:noposture",
+        "postureHash": null,
+        "plannerModel": null,
+        "sceneProposed": 2,
+        "at": 1790875640681
+      },
+      "sealed": true
+    }
+  ],
+  "localPressures": [],
+  "ledger": [
+    {
+      "id": "pc",
+      "kind": "named",
+      "label": "Wren",
+      "aliases": []
+    },
+    {
+      "id": "ent:cassel",
+      "kind": "named",
+      "label": "Cassel",
+      "aliases": []
+    },
+    {
+      "id": "ent:stage:1",
+      "kind": "named",
+      "label": "Julian",
+      "aliases": [
+        "the Provast"
+      ],
+      "prov": "stage_issuer_generated"
+    }
+  ]
+}

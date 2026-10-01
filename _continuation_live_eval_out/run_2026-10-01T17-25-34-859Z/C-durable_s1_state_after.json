@@ -1,0 +1,101 @@
+{
+  "facts": [],
+  "ctResult": {
+    "outcome": "sealed",
+    "tier": 2,
+    "sealedId": "prop:2:2",
+    "introduced": [
+      {
+        "id": "ent:stage:2",
+        "kind": "institution",
+        "label": "Toll Road Commission",
+        "aliases": [],
+        "pending": true
+      }
+    ],
+    "targets": [
+      "Toll Road Commission"
+    ],
+    "why": []
+  },
+  "seal": {
+    "sealedId": "prop:2:2",
+    "scene": 2,
+    "readerFacing": {
+      "scene_purpose": "Stage the player's committed action of sending the sealed demand and make its delivery the irreversible state change",
+      "forward_pressure": "The commission now holds the demand and must respond"
+    }
+  },
+  "sealed": [
+    {
+      "id": "prop:2:1",
+      "scene": 2,
+      "kind": "state_change",
+      "fact": "The courier places the sealed letter into the commission clerk's hands.",
+      "anchors": [],
+      "pendingEntities": [],
+      "milestone": "",
+      "provenance": {
+        "invocationId": "inv:state_change:2:noposture",
+        "postureHash": null,
+        "plannerModel": null,
+        "sceneProposed": 2,
+        "at": 1790875577699
+      },
+      "sealed": true
+    },
+    {
+      "id": "prop:2:2",
+      "scene": 2,
+      "kind": "continuation",
+      "fact": "The Toll Road Commission has received a sealed demand to investigate the burning and summon profiting parties.",
+      "anchors": [
+        {
+          "role": "institution",
+          "ref": "ent:stage:2"
+        }
+      ],
+      "pendingEntities": [
+        {
+          "id": "ent:stage:2",
+          "kind": "institution",
+          "label": "Toll Road Commission",
+          "aliases": []
+        }
+      ],
+      "milestone": "The commission now holds the demand and must respond",
+      "provenance": {
+        "invocationId": "inv:continuation:2:noposture",
+        "postureHash": null,
+        "plannerModel": null,
+        "sceneProposed": 2,
+        "at": 1790875577699
+      },
+      "sealed": true
+    }
+  ],
+  "localPressures": [],
+  "ledger": [
+    {
+      "id": "pc",
+      "kind": "named",
+      "label": "Wren",
+      "aliases": []
+    },
+    {
+      "id": "ent:cassel",
+      "kind": "named",
+      "label": "Cassel",
+      "aliases": []
+    },
+    {
+      "id": "ent:stage:1",
+      "kind": "named",
+      "label": "Julian",
+      "aliases": [
+        "the Provast"
+      ],
+      "prov": "stage_issuer_generated"
+    }
+  ]
+}
