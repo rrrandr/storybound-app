@@ -100254,6 +100254,27 @@ function _buildAuthorFloorDirective(s) {
   // PROTECTED REGISTER — DERIVED, never stored (canon_mutation_policy.md). Every entity in the
   // ledger is protected, which is the growth rule: an accepted Tier 2 addition becomes protected
   // the instant it seals, with no registration step that could be forgotten.
+  // ══════════════════════════════════════════════════════════════════════════════════════════
+  // RELEASE SAFETY: EXPLICIT OPT-IN ONLY (Roman 2026-10-01)
+  //
+  // This schema can cause DYNAMIC CANON PROPOSALS, so it must not be live before a funded live
+  // evaluation of planner behaviour. Undefined means the EXISTING planner contract — only an
+  // explicit `true` enables the new path. Test runners set it deliberately.
+  //
+  // Gated in three independent places, so no single miss can make it live: the planner prompt
+  // append, the proposal handler, and the author attach. A reply containing proposal-shaped fields
+  // under production defaults is therefore inert — it cannot be received, sealed, activated or
+  // delivered.
+  //
+  // (I had this default ON, disclosing the prompt delta as a known side effect. That was the wrong
+  // trade for something that can write durable canon: an unmeasured planner prompt must not become
+  // live story canon merely because the code ships.)
+  function _continuationSchemaEnabled() {
+    try { return (typeof window !== 'undefined') && window._continuationProposalSchema === true; }
+    catch (_) { return false; }
+  }
+  window._continuationSchemaEnabled = _continuationSchemaEnabled;
+
   function _protectedRegisterIds() {
     var out = {};
     try {
@@ -100394,6 +100415,13 @@ function _buildAuthorFloorDirective(s) {
   function _processContinuationProposal(reply, ctx) {
     var o = ctx || {};
     var scene = (typeof o.scene === 'number') ? o.scene : ((window.state && window.state.turnCount) || 0);
+    // GATE 2 of 3. Under production defaults this refuses outright, so a reply carrying
+    // proposal-shaped fields can never be received, sealed, activated or delivered.
+    if (!_continuationSchemaEnabled()) {
+      try { console.log('[CONTINUATION:DISABLED] scene=' + scene
+        + ' — _continuationProposalSchema is not explicitly true; proposal ignored, nothing written'); } catch (_) {}
+      return { outcome: 'none', why: ['continuation schema not enabled'], sealedId: null, introduced: [], disabled: true };
+    }
     var v = _validateContinuationProposal(reply);
     if (!v.ok) {
       try { console.warn('[CONTINUATION:REJECT] scene=' + scene + ' :: ' + v.why.join(' | ')); } catch (_) {}
@@ -101751,18 +101779,21 @@ function _buildAuthorFloorDirective(s) {
           // but this is not literally a zero-delta planner call.
           // ═══ UNIVERSAL CONTINUATION PROPOSAL SCHEMA (Roman 2026-10-01) ═══
           // Applies to whichever contract set _scSys above, exactly as the event-slots block does.
-          // Kill switch: window._continuationProposalSchema === false.
+          // EXPLICIT OPT-IN ONLY: window._continuationProposalSchema === true. Undefined keeps the
+          // existing planner contract byte-for-byte — see _continuationSchemaEnabled for why.
           //
-          // The planner may now propose ONE structured continuation record, or nothing. Handled by
+          // The planner may propose ONE structured continuation record, or nothing. Handled by
           // _processContinuationProposal, which is fully validated provider-free: an omitted or
           // empty proposal resolves to `none`, writes no canon, and leaves ordinary continuation
           // untouched. Nothing here can create canon — the seal happens after validation and
           // activation only after delivery.
           //
-          // KNOWN, DISCLOSED SIDE EFFECT (same shape as _evidenceCommitCheck's): the planner is
-          // asked for additional OPTIONAL keys and the system prompt grows, so this is not a
-          // literally zero-delta planner call. Event SELECTION semantics are unchanged.
-          if (typeof window !== 'undefined' && window._continuationProposalSchema !== false) {
+          // WHEN ENABLED the planner is asked for additional OPTIONAL keys and the system prompt
+          // grows, so an enabled call is not a zero-delta planner call. Event SELECTION semantics
+          // are unchanged either way. That delta is exactly why this waits on a funded live
+          // evaluation rather than shipping on by default.
+          // GATE 1 of 3. DEFAULT OFF — undefined keeps the existing planner contract byte-for-byte.
+          if (_continuationSchemaEnabled()) {
             _scSys += '\n\nCONTINUATION PROPOSAL (OPTIONAL — omit entirely when this scene needs no durable change; omitting is NORMAL and correct):\n'
               + 'If, and only if, the player\'s action makes a NEW DURABLE development the honest next step, you may also return:\n'
               + '  "scene_purpose": what this scene exists to do · "forward_pressure": what pushes the story on · "derivation": why this follows from the player\'s action\n'
@@ -237669,7 +237700,9 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
       // terms, pending-entity records, or unproposed alternatives — a sealed possibility rendered
       // as machinery is the defect class already closed for Fate briefs.
       try {
-        if (typeof _continuationAuthorBlock === 'function') {
+        // GATE 3 of 3. Even a stale seal cannot reach the author while the flag is off.
+        if (typeof _continuationAuthorBlock === 'function'
+            && typeof _continuationSchemaEnabled === 'function' && _continuationSchemaEnabled()) {
           var _ctSeal = state && state._activeContinuationSeal;
           if (_ctSeal && _ctSeal.sealedId) {
             var _ctBlock = _continuationAuthorBlock(_ctSeal.sealedId, _ctSeal.readerFacing || {});

@@ -31,6 +31,9 @@ if (!ok) { await browser.close(); console.log('\n' + pass + '/' + (pass + fail) 
 
 const r = await page.evaluate(() => {
   const out = {};
+  // EXPLICIT OPT-IN: the continuation schema is default OFF for release safety. A test runner
+  // enables it deliberately; production never does.
+  window._continuationProposalSchema = true;
   window.state = window.state || {};
   window.state.storyId = 'story-pending-boundary';
   window.state._relationshipLedger = null;

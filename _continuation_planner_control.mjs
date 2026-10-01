@@ -38,6 +38,9 @@ if (Object.values(installed).some(x => x !== 'function')) {
 
 const r = await page.evaluate(() => {
   const out = {};
+  // EXPLICIT OPT-IN: the continuation schema is default OFF for release safety. A test runner
+  // enables it deliberately; production never does.
+  window._continuationProposalSchema = true;
   window.state = window.state || {};
   window.state.storyId = 'story-continuation-slice1';
   window.state._relationshipLedger = null;

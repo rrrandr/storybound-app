@@ -76,6 +76,9 @@ const harvest = async (scenario) => {
 
   const prep = await page.evaluate((sc) => {
     const out = {};
+    // EXPLICIT OPT-IN: the continuation schema is default OFF for release safety. A test runner
+    // enables it deliberately; production never does.
+    window._continuationProposalSchema = true;
     window.state = window.state || {};
     window.state._starterId = 'starter_first_sacrifice';
     window.state.storyId = 'story-harvest-' + sc;
