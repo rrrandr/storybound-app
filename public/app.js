@@ -99904,8 +99904,18 @@ function _buildAuthorFloorDirective(s) {
       var prior = st.byInvocation[invocationId];
       if (prior && st.byId[prior]) return st.byId[prior];
       var id = 'prop:' + scene + ':' + (++st.seq);
+      // REQUIRED DELIVERY ANCHORS — the concrete participants whose presence in rendered prose is
+      // necessary for the fact to have happened. Each `ref` names an entity in the register; the
+      // permitted wording comes from that record's controlled alias set at check time, never from
+      // here, so a scene may use any legitimate alias. Frozen with the proposal.
+      var anchors = Array.isArray(spec.anchors) ? spec.anchors.filter(function (a) {
+        return a && typeof a.ref === 'string' && a.ref.trim();
+      }).map(function (a) {
+        return Object.freeze({ role: (typeof a.role === 'string' ? a.role : 'participant'), ref: a.ref.trim() });
+      }) : [];
       var rec = { id: id, scene: scene,
         fact: fact,                                   // EXACT, untruncated — the committed text
+        anchors: Object.freeze(anchors),
         milestone: (typeof spec.milestone === 'string') ? spec.milestone : '',
         provenance: Object.freeze({ invocationId: invocationId, postureHash: ph,
           plannerModel: (typeof spec.plannerModel === 'string') ? spec.plannerModel : null,
@@ -100016,6 +100026,101 @@ function _buildAuthorFloorDirective(s) {
   window._ensureCommittedState = _ensureCommittedState;
   window._commitTransition = _commitTransition;
 
+  // ══════════════════════════════════════════════════════════════════════════════════════════
+  // DETERMINISTIC DELIVERY PRE-CHECK (Roman 2026-09-30) — ONE-WAY SAFETY
+  //
+  // The referential-integrity repair guarantees a committed fact is EXACTLY what was proposed. It
+  // does not guarantee the prose RENDERED it: a false DELIVERED still activates a sealed fact the
+  // reader never saw, and committed state is downstream authority for every later scene.
+  //
+  // This closes the asymmetric half of that gap with NO model. The verifier's own contract requires
+  // every evidence value to be a verbatim substring of the prose, so some false positives are
+  // decidable by string search alone.
+  //
+  // ONE-WAY BY CONSTRUCTION: it may only downgrade DELIVERED → MISSED (proposal stays pending for
+  // recovery). It can never upgrade a verdict, substitute an alias, invent evidence, or touch the
+  // sealed fact. Withholding a valid activation is a tolerable cost; creating a false fact is not.
+  //
+  // NOT A PROPER-NAME REQUIREMENT. A scene may legitimately call Julian "the Provast" or the Answer
+  // "the relic". Each anchor resolves to the CONTROLLED ALIAS SET on that entity's register record,
+  // and any one permitted alias satisfies it. An anchor that cannot be resolved to a controlled set
+  // is reported UNANCHORABLE — never silently treated as satisfied.
+  function _deliveryAnchorAliases(ref) {
+    try {
+      if (typeof ref !== 'string' || !ref.trim()) return { ok: false, why: 'no ref' };
+      var L = (typeof _relLedger === 'function') ? _relLedger(false) : null;
+      if (!L || !L.entities) return { ok: false, why: 'no entity register' };
+      var e = L.entities[ref] || null;
+      if (!e) {
+        // Resolve by label or alias, FAILING CLOSED on ambiguity — the same discipline
+        // _relMatchByName uses. Two same-named entities must not silently pick one.
+        var n = (typeof _relNorm === 'function') ? _relNorm(ref) : String(ref).trim().toLowerCase();
+        var hits = [];
+        for (var id in L.entities) {
+          var x = L.entities[id]; if (!x || x.supersededBy) continue;
+          var ln = (typeof _relNorm === 'function') ? _relNorm(x.label) : String(x.label || '').trim().toLowerCase();
+          var al = (x.aliases || []).some(function (a) {
+            var an = (typeof _relNorm === 'function') ? _relNorm(a) : String(a || '').trim().toLowerCase();
+            return an === n;
+          });
+          if (ln === n || al) hits.push(x);
+        }
+        if (hits.length !== 1) return { ok: false, why: hits.length ? 'ambiguous (' + hits.length + ')' : 'unresolved' };
+        e = hits[0];
+      }
+      if (e.supersededBy) return { ok: false, why: 'superseded' };
+      var aliases = [e.label].concat(e.aliases || []).filter(function (a) { return typeof a === 'string' && a.trim(); });
+      if (!aliases.length) return { ok: false, why: 'no controlled alias set' };
+      return { ok: true, entityId: e.id, aliases: aliases };
+    } catch (_) { return { ok: false, why: 'resolver threw' }; }
+  }
+  // Word-boundary, case-insensitive, multi-word phrases matched whole. Returns the alias that hit,
+  // so a diagnosis can say WHICH permitted name the prose used.
+  function _anchorAliasInProse(aliases, prose) {
+    var p = String(prose || '');
+    for (var i = 0; i < aliases.length; i++) {
+      var a = String(aliases[i] || '').trim(); if (!a) continue;
+      try {
+        var rx = new RegExp('(^|[^A-Za-z0-9])' + a.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '($|[^A-Za-z0-9])', 'i');
+        if (rx.test(p)) return a;
+      } catch (_) {}
+    }
+    return null;
+  }
+  // verdict: 'anchors_present' | 'anchor_missing' (→ downgrade) | 'inapplicable' (recorded, NOT a pass)
+  function _checkDeliveryAnchors(proposalRef, prose, evidenceValues) {
+    var rec = null;
+    try { rec = _resolveSealedProposal(proposalRef); } catch (_) {}
+    if (!rec) return { verdict: 'inapplicable', perAnchor: [], evidenceVerbatim: true, why: ['no sealed proposal to check against'] };
+    var p = String(prose || '');
+    var anchors = Array.isArray(rec.anchors) ? rec.anchors : [];
+    var per = [], why = [], anchorable = 0;
+    anchors.forEach(function (a) {
+      var res = _deliveryAnchorAliases(a && a.ref);
+      if (!res.ok) { per.push({ role: (a && a.role) || null, ref: (a && a.ref) || null, status: 'unanchorable', why: res.why }); return; }
+      anchorable++;
+      var hit = _anchorAliasInProse(res.aliases, p);
+      per.push({ role: (a && a.role) || null, ref: a.ref, entityId: res.entityId,
+        status: hit ? 'present' : 'absent', matchedAlias: hit, aliases: res.aliases });
+      if (!hit) why.push(((a && a.role) || 'participant') + ' "' + a.ref + '" absent — no permitted alias ['
+        + res.aliases.join(' / ') + '] appears in accepted prose');
+    });
+    // The verifier's own verbatim rule, enforced deterministically.
+    var bad = (Array.isArray(evidenceValues) ? evidenceValues : []).filter(function (q) {
+      return typeof q === 'string' && q.trim() && p.indexOf(q) === -1;
+    });
+    if (bad.length) why.push(bad.length + ' verifier evidence quote(s) are not verbatim substrings of the accepted prose');
+    // Evidence failure always downgrades, even when no participant was anchorable.
+    if (bad.length) return { verdict: 'anchor_missing', perAnchor: per, evidenceVerbatim: false, why: why };
+    if (!anchors.length || anchorable === 0) {
+      return { verdict: 'inapplicable', perAnchor: per, evidenceVerbatim: true,
+        why: why.concat(['no concrete participant could be anchored — the lexical check does not apply, and delivery is NOT asserted by it']) };
+    }
+    return { verdict: why.length ? 'anchor_missing' : 'anchors_present', perAnchor: per, evidenceVerbatim: true, why: why };
+  }
+  window._deliveryAnchorAliases = _deliveryAnchorAliases;
+  window._checkDeliveryAnchors = _checkDeliveryAnchors;
+
   // COMMIT SCENE (Roman 2026-07-27) — the ONE deterministic runtime commit stage. A scene does not "exist"
   // (transactionally) until this finishes. Runs at the top of _generateLiteraryPlotContract for scene N,
   // committing scene N-1 BEFORE N plans → structurally enforces the ordering invariant (planner reads
@@ -100098,6 +100203,30 @@ function _buildAuthorFloorDirective(s) {
       try { console.log('[TRANSITION-POS] scene=' + prevSceneNum + ' delivery=' + _delivery + ' first_occurs_at=' + (_txnPos < 0 ? 'ABSENT' : (_txnPos + '%')) + ' first_irreversible_at=' + (_firstIrrev < 0 ? 'NONE' : (_firstIrrev + '%')) + ' placement=' + ((typeof window !== 'undefined' && window.__transitionWindowV1 === true) ? 'windowV1' : 'end-slot')); } catch (_) {}
       // STATE-TRANSITION diagnostic (Roman 2026-08-10): read drift in ONE line — Entry → Planned Exit → Actual Exit → Match.
       try { if (_slots) { var _entrySt = cs._priorExitState || 'story open'; var _actualEx = (typeof _vP !== 'undefined' && _vP && _vP.actual_exit_state) ? String(_vP.actual_exit_state).slice(0, 90) : '(unreported)'; console.log('[STATE-TRANSITION] scene=' + prevSceneNum + ' ENTRY="' + String(_entrySt).slice(0, 80) + '" PLANNED_EXIT="' + String(_slots.exitState).slice(0, 80) + '" ACTUAL_EXIT="' + _actualEx + '" MATCH=' + (_delivery === 'DELIVERED' ? 'PASS' : 'FAIL')); } } catch (_) {}
+      // ═══ DETERMINISTIC DELIVERY PRE-CHECK — DOWNGRADE ONLY (Roman 2026-09-30) ═══
+      // Runs only when the verifier said DELIVERED, and can only take that away. No model, no
+      // alias substitution, no evidence invention, no change to the sealed fact. An `inapplicable`
+      // result is RECORDED as inapplicable — it never stands in for a verification.
+      try {
+        if (_delivery === 'DELIVERED' && typeof _checkDeliveryAnchors === 'function') {
+          var _evQuotes = [];
+          try {
+            var _sk2 = (typeof _vP !== 'undefined' && _vP && _vP.slots_check) ? _vP.slots_check : null;
+            if (_sk2) ['precondition_evidence', 'actor_evidence', 'action_evidence', 'target_evidence', 'exit_state_evidence']
+              .forEach(function (k) { if (typeof _sk2[k] === 'string' && _sk2[k].trim()) _evQuotes.push(_sk2[k]); });
+          } catch (_) {}
+          var _anchorChk = _checkDeliveryAnchors(prevProposal && prevProposal.proposalRef, _pt, _evQuotes);
+          if (_anchorChk.verdict === 'anchor_missing') {
+            _delivery = 'MISSED';   // ONE-WAY: downgrade only. Proposal stays pending for recovery.
+            try { console.log('[ANCHOR-CHECK] scene=' + prevSceneNum + ' FAIL→MISSED (deterministic) :: '
+              + _anchorChk.why.join(' | ')); } catch (_) {}
+          } else {
+            try { console.log('[ANCHOR-CHECK] scene=' + prevSceneNum + ' ' + _anchorChk.verdict
+              + (_anchorChk.verdict === 'inapplicable' ? ' (lexical check does not apply — delivery NOT asserted by it)' : '')
+              + ' anchors=' + JSON.stringify((_anchorChk.perAnchor || []).map(function (a) { return a.role + ':' + a.status; }))); } catch (_) {}
+          }
+        }
+      } catch (_) { /* a throw here must never upgrade a verdict — leave _delivery untouched */ }
       if (_delivery === 'DELIVERED') {
         if (_slots && _slots.exitState) cs._priorExitState = _slots.exitState; // becomes the ENTRY state for the next scene's transition log
         // BY REFERENCE ONLY. The fact text comes from the sealed record, never from here and never
