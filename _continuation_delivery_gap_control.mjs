@@ -48,12 +48,17 @@ console.log('1. the committer has exactly ONE production call site');
 console.log('   call sites found: ' + callSites.length);
 callSites.forEach(c => console.log('     app.js:' + c.line + '  ' + c.text.slice(0, 110)));
 t('exactly one call site', callSites.length === 1, JSON.stringify(callSites.map(c => c.line)));
-t('  and it passes prevProposal.proposalRef',
-  callSites.length === 1 && /_commitTransition\(prevProposal\.proposalRef/.test(callSites[0].text),
+// ── THE GAP IS NOW CLOSED (2026-10-01). This control originally proved the gap: the single call
+// site passed prevProposal.proposalRef — the STATE_CHANGE seal — so a continuation seal had no
+// committer. Per-proposal delivery replaced that with a loop over the scene's PENDING SEALED
+// STORE, passing each record's own id. The assertions below are inverted accordingly and kept as a
+// REGRESSION GUARD: the committer must never again be hard-wired to one proposal kind.
+t('  and it passes a per-proposal sealed id, not prevProposal.proposalRef',
+  callSites.length === 1 && /_commitTransition\(pp\.id,/.test(callSites[0].text)
+  && !/prevProposal\.proposalRef/.test(callSites[0].text),
   callSites.length ? callSites[0].text : 'none');
-t('  no call site passes a continuation sealed id',
-  callSites.every(c => !/continuation|_activeContinuationSeal|sealedId/.test(c.text)),
-  JSON.stringify(callSites.map(c => c.text)));
+t('  and the ref comes from the pending sealed store',
+  /_pendProps\.forEach\(function \(pp\)/.test(src));
 
 // The ref that reaches it is minted as a state_change seal.
 const refAssign = lines.filter(ln => /_stateChange\.proposalRef\s*=/.test(ln)).map(l => l.trim());

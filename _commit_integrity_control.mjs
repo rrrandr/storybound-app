@@ -156,8 +156,17 @@ const body = (cs0 >= 0 && cs1 > cs0) ? SRC.slice(cs0, cs1) : '';
 
 console.log('\nF. the verifier\'s output surface is narrowed  [STATIC — source properties]');
 t('_commitScene body was located', body.length > 0);
+// UPDATED for per-proposal delivery (2026-10-01). The commit used to be
+// _commitTransition(prevProposal.proposalRef, ...) — the STATE_CHANGE seal, which was the whole
+// gap: a continuation seal was never committed. The loop now iterates this scene's PENDING SEALED
+// STORE and passes each record's own id. The invariant under test is unchanged and is the one that
+// matters: a sealed REFERENCE goes in, never proposal or verifier TEXT.
 t('the commit call passes a REFERENCE, not proposal text',
-  /_commitTransition\(prevProposal\.proposalRef/.test(body) && !/_commitTransition\(prevProposal\.event/.test(body));
+  /_commitTransition\(pp\.id,/.test(body)
+  && !/_commitTransition\(prevProposal\.event/.test(body)
+  && !/_commitTransition\(_vP/.test(body) && !/_commitTransition\(_tab/.test(body));
+t('  and the reference comes from the pending sealed store, not the verifier reply',
+  /_pendProps\.forEach\(function \(pp\)/.test(body));
 // SUPERSEDED, not relaxed: the first repair pass gated the verifier's tableau on DELIVERED, and
 // this asserted that gate. The second pass removed the verifier tableau from the sink ENTIRELY at
 // every delivery status — strictly stronger, so gating no longer exists to assert. Full

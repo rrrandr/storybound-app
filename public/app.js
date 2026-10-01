@@ -100875,6 +100875,86 @@ function _buildAuthorFloorDirective(s) {
   // verifier (NOT the mount-gated fulfillment scorer) decides DELIVERED/PARTIAL/MISSED and returns the
   // end-state tableau in ONE awaited call. DELIVERED → commit fact + clear pendingIntent; else → no commit,
   // pendingIntent kept → planner replans from the unchanged committed state. Kill switch: window._committedStateV0.
+  // ── PER-PROPOSAL DELIVERY (Roman 2026-10-01) ────────────────────────────────────────────────
+  // THE GAP THIS CLOSES: the committer had ONE call site and it passed
+  // prevProposal.proposalRef — the STATE_CHANGE seal. A continuation seal was author-facing only;
+  // nothing ever committed it, so a continuation fact never entered canon and its pending entity
+  // never activated, in any scene. Proven in _continuation_delivery_gap_control.mjs.
+  //
+  // THE RULE Roman set: a continuation does NOT inherit the state-change verdict. It uses the same
+  // runtime delivery pass but receives its OWN delivery status and its OWN anchor check.
+  //
+  // Every sealed proposal for the rendered scene that is not already committed. Keyed on the
+  // sealed store, so nothing here can invent a reference.
+  function _pendingSealedForScene(scene) {
+    var out = [];
+    try {
+      var st = (window.state && window.state._sealedProposals) || null;
+      if (!st || !st.byId) return out;
+      var cs = _ensureCommittedState();
+      var committed = {};
+      (cs.facts || []).forEach(function (f) { if (f && f.proposalRef) committed[f.proposalRef] = 1; });
+      for (var id in st.byId) {
+        var rec = st.byId[id]; if (!rec) continue;
+        if (rec.scene !== scene) continue;
+        if (committed[rec.id]) continue;              // first-write-wins: already canon
+        out.push({ id: rec.id, kind: rec.kind, fact: rec.fact });
+      }
+    } catch (_) {}
+    return out;
+  }
+  window._pendingSealedForScene = _pendingSealedForScene;
+
+  // ADJUDICATE ONE PROPOSAL. Returns { ref, commit, status, why }. Never writes.
+  //
+  // THREE INDEPENDENT BARRIERS, and the verifier can only ever pass them, never bypass them:
+  //   1. the ref must be one of THIS scene's pending sealed refs — an unknown or invented ref is
+  //      discarded, so a hallucinated reference commits nothing;
+  //   2. the status must be exactly DELIVERED for THAT ref — PARTIAL, MISSED, absent, or anything
+  //      unrecognised leaves the proposal pending;
+  //   3. its own _checkDeliveryAnchors must not come back anchor_missing.
+  // The verifier's own fact text, tableau and dominant_replacement are NEVER consulted here: the
+  // committed content comes from the sealed record by reference, and the only thing taken from the
+  // verifier is a verdict plus a citation that is itself checked against the prose.
+  function _adjudicateSealedProposal(pend, entry, prose) {
+    var why = [];
+    if (!pend || !pend.id) return { ref: null, commit: false, status: 'unknown', why: ['no pending record'] };
+    if (!entry) return { ref: pend.id, commit: false, status: 'unreported',
+      why: ['the verifier returned no status for this reference'] };
+    var status = String((entry && entry.delivery) || '').toUpperCase();
+    if (status !== 'DELIVERED') {
+      return { ref: pend.id, commit: false, status: status || 'unreported',
+        why: ['status is ' + (status || 'absent') + ' — stays pending'] };
+    }
+    // The citation must be VERBATIM prose, mechanically checked. A verifier cannot fabricate a
+    // quote it cannot find; this is the same discipline the slot check uses.
+    var ev = (entry && typeof entry.evidence === 'string') ? entry.evidence.trim() : '';
+    var cited = false;
+    if (ev.length > 3) {
+      try {
+        var hay = String(prose || '').replace(/\s+/g, ' ');
+        cited = hay.indexOf(ev.replace(/\s+/g, ' ')) >= 0;
+      } catch (_) { cited = false; }
+    }
+    if (!cited) {
+      return { ref: pend.id, commit: false, status: 'DELIVERED',
+        why: ['DELIVERED but its evidence is not a verbatim quote from the prose — not committed'] };
+    }
+    // Its OWN anchors, not the other proposal's.
+    try {
+      if (typeof _checkDeliveryAnchors === 'function') {
+        var chk = _checkDeliveryAnchors(pend.id, prose, [ev]);
+        if (chk && chk.verdict === 'anchor_missing') {
+          return { ref: pend.id, commit: false, status: 'DELIVERED',
+            why: ['its own delivery anchors are missing: ' + (chk.why || []).join(' | ')] };
+        }
+        why.push('anchors=' + ((chk && chk.verdict) || 'unchecked'));
+      }
+    } catch (_) {}
+    return { ref: pend.id, commit: true, status: 'DELIVERED', why: why };
+  }
+  window._adjudicateSealedProposal = _adjudicateSealedProposal;
+
   async function _commitScene(prevText, prevProposal, prevSceneNum) {
     try {
       if (typeof window !== 'undefined' && window._committedStateV0 === false) return;
@@ -100896,6 +100976,25 @@ function _buildAuthorFloorDirective(s) {
         + 'tableau: { "setting": <=120 chars or null, "charactersPresent": [names], "protagonistStatus": short phrase for what the protagonist is DOING or has just BECOME at the final line, "decisiveChange": if the closing beat OVERTURNED the scene premise name it else null, "activeInterlocutor": name of whoever the protagonist must respond to or null, "protagonistAlone": bool }.\n'
         + 'JSON: {"delivery":"MISSED","dominant_replacement":"atmosphere","transition_position":-1,"first_irreversible_position":-1,"tableau":{"setting":null,"charactersPresent":[],"protagonistStatus":null,"decisiveChange":null,"activeInterlocutor":null,"protagonistAlone":false}}';
       var _vUsr = 'PROPOSED TRANSITION: ' + String(prevProposal.event).slice(0, 240) + '\n\nSCENE PROSE:\n' + _pt.slice(0, 6000) + '\n\nReturn the JSON now.';
+      // ── EVERY PENDING SEALED PROPOSAL FOR THIS SCENE, judged independently ───────────────────
+      // The state_change proposal and any continuation proposal are separate records with separate
+      // ids. Each gets its own status and its own verbatim citation; a verdict on one says nothing
+      // about the other.
+      var _pendProps = _pendingSealedForScene(prevSceneNum);
+      if (_pendProps.length) {
+        _vSys += '\n\nPER-PROPOSAL DELIVERY (judge EACH listed proposal INDEPENDENTLY — a verdict on one says'
+          + ' NOTHING about another). Return "per_proposal": [ { "ref": "<the exact ref string given below,'
+          + ' copied verbatim>", "delivery": "DELIVERED" | "PARTIAL" | "MISSED", "evidence": "<a VERBATIM'
+          + ' substring of the SCENE PROSE showing it concretely happened on the page, or \"\" if you cannot'
+          + ' find one>" } ] with ONE entry per ref. HARD RULES: copy each ref EXACTLY — an unrecognised ref is'
+          + ' discarded and commits nothing; "evidence" must be a verbatim quote from the prose, never a'
+          + ' paraphrase and never an inference, and a DELIVERED with no verbatim quote is treated as NOT'
+          + ' delivered. Judge only whether each proposal\'s own content landed on the page.';
+        _vUsr += '\n\nPROPOSALS FOR THIS SCENE (judge each by its ref):';
+        _pendProps.forEach(function (pp) {
+          _vUsr += '\n  ref ' + pp.id + ' :: ' + String(pp.fact || '').slice(0, 220);
+        });
+      }
       // STRUCTURED EVENT HANDOFF: when the proposal carries load-bearing slots, verify them SLOT-BY-SLOT. A slot
       // mismatch (e.g. TARGET=Julian but Julian absent) is NOT "close enough" — it forces MISSED. This is the
       // determinism gate: the planned event must appear with its essential slots intact, or be rejected.
@@ -100905,6 +101004,7 @@ function _buildAuthorFloorDirective(s) {
         _vUsr += '\n\nPLANNED EVENT SLOTS (find verbatim supporting text in the SCENE PROSE for each; use "" if absent):\n  PRECONDITION: ' + (_slots.precondition || '(none)') + '\n  ACTOR: ' + _slots.actor + '\n  ACTION: ' + _slots.action + '\n  TARGET: ' + _slots.target + '\n  EXIT STATE: ' + _slots.exitState;
       }
       var _delivery = 'MISSED', _tab = null, _replacement = 'none', _txnPos = -1, _firstIrrev = -1;
+      var _perProposal = null;   // the verifier's per-ref statuses, when it supplied them
       try {
         // TIERED PROVIDER POLICY (2026-09-13): this semantic judgment call (did the prose deliver
         // the proposed transition — genuine reading-comprehension work, not reducible to
@@ -100928,6 +101028,7 @@ function _buildAuthorFloorDirective(s) {
           var _vC = _vData && _vData.content;
           var _vP; try { _vP = JSON.parse(_vC); } catch (e) { var _m = String(_vC || '').match(/\{[\s\S]*\}/); if (_m) { try { _vP = JSON.parse(_m[0]); } catch (_) {} } }
           if (_vP) { _delivery = String(_vP.delivery || 'MISSED').toUpperCase(); _tab = _vP.tableau || null; _replacement = String(_vP.dominant_replacement || 'none'); _txnPos = (typeof _vP.transition_position === 'number') ? _vP.transition_position : -1; _firstIrrev = (typeof _vP.first_irreversible_position === 'number') ? _vP.first_irreversible_position : -1; }
+          if (_vP && Array.isArray(_vP.per_proposal)) _perProposal = _vP.per_proposal;
           // SLOT-CHECK OVERRIDE: a load-bearing slot mismatch forces MISSED regardless of the LLM's delivery label.
           if (_slots && _vP && _vP.slots_check) {
             var _sk = _vP.slots_check;
@@ -100974,17 +101075,74 @@ function _buildAuthorFloorDirective(s) {
           }
         }
       } catch (_) { /* a throw here must never upgrade a verdict — leave _delivery untouched */ }
-      if (_delivery === 'DELIVERED') {
-        if (_slots && _slots.exitState) cs._priorExitState = _slots.exitState; // becomes the ENTRY state for the next scene's transition log
-        // BY REFERENCE ONLY. The fact text comes from the sealed record, never from here and never
-        // from the verifier. A proposal with no sealed reference (an in-flight story that planned
-        // its last scene before sealing existed) is REJECTED by _commitTransition — one lost commit
-        // at the upgrade boundary, never a false one; the planner replans from unchanged state.
-        _commitTransition(prevProposal.proposalRef, 'scene' + prevSceneNum + '_transition', prevSceneNum);
-        cs.pendingIntent = null; // intent achieved
-        console.log('[COMMIT] transition=accepted scene=' + prevSceneNum + ' fact+=1 factsTotal=' + cs.facts.length);
-      } else {
-        if (cs.pendingIntent) cs.pendingIntent.lastStatus = _delivery;
+      // ══ PER-PROPOSAL ADJUDICATION (Roman 2026-10-01) ══════════════════════════════════════
+      // Each pending sealed proposal for this scene is judged on ITS OWN status and ITS OWN
+      // anchors. A DELIVERED state_change can no longer carry a continuation into canon with it,
+      // and a DELIVERED continuation no longer needs the state_change to have landed.
+      //
+      // _commitTransition REMAINS THE ONLY WRITER and still receives a sealed REFERENCE, never
+      // text. Its own idempotency (dedupe by proposalRef) plus _pendingSealedForScene's exclusion
+      // of already-committed refs give first-write-wins on repeated adjudication.
+      var _ctAdjudicated = {};
+      try {
+        var _byRef = {};
+        (Array.isArray(_perProposal) ? _perProposal : []).forEach(function (e) {
+          if (e && typeof e.ref === 'string' && e.ref.trim()) _byRef[e.ref.trim()] = e;
+        });
+        // AN UNKNOWN REF COMMITS NOTHING: we iterate the PENDING STORE, never the verifier's list,
+        // so a reference the verifier invented is simply never looked up.
+        var _unknownRefs = Object.keys(_byRef).filter(function (rf) {
+          return !_pendProps.some(function (pp) { return pp.id === rf; });
+        });
+        if (_unknownRefs.length) {
+          try { console.warn('[PER-PROPOSAL] DISCARDED unknown ref(s) ' + JSON.stringify(_unknownRefs)
+            + ' — not pending for scene ' + prevSceneNum + '; nothing committed from them'); } catch (_) {}
+        }
+        _pendProps.forEach(function (pp) {
+          // LEGACY FALLBACK, deliberately NARROW. An older verifier reply has no per_proposal
+          // array; its single `delivery` verdict belongs to the STATE_CHANGE proposal and to
+          // nothing else. A continuation must never be committed by a verdict that was not about
+          // it — that is the accidental-activation route this whole repair exists to close.
+          var entry = _byRef[pp.id] || null;
+          if (!entry && !Array.isArray(_perProposal)) {
+            if (pp.kind === 'state_change' && pp.id === (prevProposal && prevProposal.proposalRef)) {
+              entry = { delivery: _delivery, evidence: '__LEGACY_STATE_CHANGE__' };
+            } else {
+              try { console.log('[PER-PROPOSAL] ' + pp.id + ' (' + pp.kind + ') has no per-ref status and'
+                + ' the legacy verdict does not apply to it — stays pending'); } catch (_) {}
+            }
+          }
+          var verdict;
+          if (entry && entry.evidence === '__LEGACY_STATE_CHANGE__') {
+            // The legacy path keeps its historical behaviour exactly: the single verdict plus the
+            // anchor pre-check already applied to _delivery above.
+            verdict = { ref: pp.id, commit: (_delivery === 'DELIVERED'), status: _delivery,
+              why: ['legacy single-proposal verdict'] };
+          } else {
+            verdict = _adjudicateSealedProposal(pp, entry, _pt);
+          }
+          _ctAdjudicated[pp.id] = verdict;
+          if (verdict.commit) {
+            _commitTransition(pp.id, 'scene' + prevSceneNum + '_transition', prevSceneNum);
+            try { console.log('[COMMIT] ' + pp.kind + ' ' + pp.id + ' DELIVERED scene=' + prevSceneNum
+              + ' factsTotal=' + _ensureCommittedState().facts.length); } catch (_) {}
+            if (pp.kind === 'state_change') {
+              if (_slots && _slots.exitState) cs._priorExitState = _slots.exitState;
+              cs.pendingIntent = null;
+            }
+          } else {
+            try { console.log('[PENDING] ' + pp.kind + ' ' + pp.id + ' status=' + verdict.status
+              + ' scene=' + prevSceneNum + ' :: ' + (verdict.why || []).join(' | ')); } catch (_) {}
+            if (pp.kind === 'state_change' && cs.pendingIntent) cs.pendingIntent.lastStatus = verdict.status;
+          }
+        });
+        try { window.state._lastPerProposalAdjudication = { scene: prevSceneNum,
+          verdicts: _ctAdjudicated, unknownRefs: _unknownRefs }; } catch (_) {}
+      } catch (_ppErr) {
+        try { console.warn('[PER-PROPOSAL] adjudication threw — nothing committed: '
+          + (_ppErr && _ppErr.message)); } catch (_) {}
+      }
+      if (_delivery !== 'DELIVERED') {
         console.log('[ROLLBACK] transition=rejected scene=' + prevSceneNum + ' delivery=' + _delivery + ' → replan from unchanged CommittedState (pendingIntent kept)');
         // AUTHOR PRIORITY INDEX (Roman 2026-07-27): what displaced the transition = what the author optimized for.
         console.log('[AUTHOR-PRIORITY] scene=' + prevSceneNum + ' delivery=' + _delivery + ' replaced_by=' + _replacement + ' mandate=' + (typeof window !== 'undefined' && window._deliveryMandate === 'B' ? 'B' : 'A'));
