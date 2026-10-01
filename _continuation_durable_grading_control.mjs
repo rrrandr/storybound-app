@@ -37,8 +37,12 @@ const mut = (f) => { const r = clone(IDEAL); f(r); return r; };
 // so the assertion is pinned to the criterion, not to wording I might reorder later.
 const FIXTURES = [
   { id: 'ideal', reply: IDEAL, expectFail: [] },
+  // Declaring scene_local on this reply is now TWO reds, and the second is the diagnosis: its
+  // forward_pressure names the Commission outright, so the declaration is incoherent, not merely
+  // the wrong answer for case C.
   { id: 'scope-scene_local', reply: mut(r => { r.pressure_scope = 'scene_local'; }),
-    expectFail: ['pressure_scope is exactly "durable"'] },
+    expectFail: ['pressure_scope is exactly "durable"',
+      'forward_pressure names NO continuing referent'] },
   { id: 'scope-missing', reply: mut(r => { delete r.pressure_scope; }),
     expectFail: ['pressure_scope is exactly "durable"'] },
   { id: 'no-introduces', reply: mut(r => { r.introduces = []; r.canon_change.targets = ['the Reach Commission']; }),

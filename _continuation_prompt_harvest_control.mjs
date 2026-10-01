@@ -224,6 +224,43 @@ t('  and a durable pressure with an empty introduces is called invalid',
   /A durable pressure with an empty "introduces" is invalid/.test(P));
 t('the rule that closes the leak is stated verbatim',
   /forward_pressure is NEVER a second canon channel/.test(P));
+// ── THE PLAYER-NAMED-BODY RULE (Roman 2026-10-01), harvested against the real payload ─────────
+// Live case C declared scene_local while branching into "the commission chambers". The contract
+// said nothing about a body the PLAYER names, so this adds the rule and the harvest proves it
+// arrives. No paid rerun until these assertions are green.
+// Whitespace-NORMALISED view. The contract is hand-wrapped prose, so a regex that encodes where
+// the line breaks fall tests my wrapping, not the rule's presence — and the `||` fallbacks I first
+// wrote to cope with that made each assertion weaker than it looked. One normalisation, then every
+// check below is a single strict match on the real assembled payload.
+const Pn = P.replace(/\s+/g, ' ');
+t('the PLAYER-NAMED-BODY rule is present',
+  /A BODY THE PLAYER NAMES IS NOT CANON BY THAT ACT/.test(Pn));
+t('  it grants the player the right to name one',
+  /The reader may address or name a commission, council, court, house or office that canon does not yet contain/.test(Pn));
+t('  while denying that this establishes it', /Their words do not establish it/.test(Pn));
+t('  it offers exactly two explicit paths',
+  /MUST choose one of exactly two paths, explicitly/.test(Pn)
+  && /\(a\) ADOPT IT/.test(Pn) && /\(b\) KEEP IT PROVISIONAL/.test(Pn));
+t('  path (a) requires kind, aliases and future_relevance',
+  /\(a\) ADOPT IT — "pressure_scope": "durable", and declare it in "introduces" with kind, aliases and future_relevance/.test(Pn));
+t('  path (b) forbids later treatment as established',
+  /\(b\) KEEP IT PROVISIONAL — "pressure_scope": "scene_local"\. It is then NOT established, and no later scene may treat it as an existing entity/.test(Pn));
+t('  path (b) is declared INVALID when the proposal relies on the body',
+  /PATH \(b\) IS INVALID IF THIS PROPOSAL ITSELF RELIES ON THAT BODY PERSISTING/.test(Pn));
+t('  naming the reliance fields exactly',
+  /If your "branch_a", "branch_b", "exit_state" or "forward_pressure" assumes it will convene, respond, summon, hold, rule or still exist in a later scene/.test(Pn));
+t('  and offering the no-change alternative as the other legal exit',
+  /you must take path \(a\) — or return a coherent no-change alternative that does not depend on it at all/.test(Pn));
+t('  the contradiction is named as rejectable',
+  /Naming that body across several fields while declaring "scene_local" is a contradiction and will be rejected/.test(Pn));
+// THE HYPOTHESIS FROM RUN 5, answered IN THE CONTRACT rather than assumed away: the planner may
+// have read the no-invention rule as forbidding adoption. The contract now says it does not.
+t('  adoption is explicitly distinguished from inventing a durable fact',
+  /Adopting a body the PLAYER named is NOT "inventing a durable fact"/.test(Pn));
+t('  and the no-invention rule is scoped to manufactured changes only',
+  /forbids manufacturing a change the player's action did not make; it never asks you to decline structuring one the player's action actually requires/.test(Pn));
+t('  LOWERCASE referents are named as continuing too, with case C\'s own words',
+  /This applies in LOWERCASE too: "the commission", "the council", "their chambers", "its clerk" are continuing referents exactly as much as "the Reach Commission" is/.test(Pn));
 t('  with the either/or spelled out',
   /Either it is unnamed and scene_local, or it is named and/.test(P) && /declared in introduces/.test(P));
 t('the PERSISTENCE section sits INSIDE the envelope block (not appended elsewhere)',

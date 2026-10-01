@@ -100302,46 +100302,141 @@ function _buildAuthorFloorDirective(s) {
     return res && res.ok ? res : null;
   }
 
-  // Candidate continuing referents named in a supposedly scene-local pressure: an article followed
-  // by a capitalised noun phrase ("the Reach Commission", "a Reach Magistrate"). Deliberately
-  // narrow — "whoever governs the toll" and "someone will answer" name nothing and pass.
-  // The ARTICLE is matched case-insensitively (a sentence may open with "The Reach Commission…"),
-  // while the noun phrase stays case-SENSITIVE — capitalisation is the signal that distinguishes a
-  // named body from "the toll". An all-lowercase article class silently passed every
-  // sentence-initial referent, which is how "The Reach Commission" first slipped this guard.
+  // ── CONTINUING-REFERENT DETECTION ───────────────────────────────────────────────────────────
+  // CAPITALISATION IS NOT THE SIGNAL. The first version of this guard matched only an article plus
+  // a CAPITALISED noun phrase, and live case C walked straight through it: the planner declared
+  // pressure_scope "scene_local" while its forward_pressure said "the commission must now respond
+  // to the sealed demand" and its branch_a said "appear at the commission chambers to testify in
+  // person". Lowercase, and therefore invisible — which is the COMMON case, since institutions are
+  // routinely referred to generically. Three detectors now, none of them capitalisation-only.
+  //
+  //   TIER A  a capitalised noun phrase after an article          "the Reach Commission"
+  //   TIER B  an institutional BODY noun, any case                "the commission", "the council"
+  //   TIER C  a possessive/pronoun continuation onto an           "their chambers", "its clerk"
+  //           institutional ADJUNCT noun
+  //
+  // Still a REJECTION GUARD, NOT PROOF. A paraphrase that names a continuing body with none of
+  // this vocabulary ("the people who collect the toll will convene") still slips, as every lexical
+  // guard in this codebase does. What it no longer does is depend on a capital letter.
   var _DURABLE_REFERENT_RX = /\b(?:[Tt]he|[Aa]n?)\s+((?:[A-Z][a-z]+(?:['’]s)?\s+)*[A-Z][a-z]+)\b/g;
-  function _undeclaredDurableReferents(text, declaredLabels) {
-    var out = [], seen = {};
+  // A BODY: an organisation that persists on its own and can act in a later scene.
+  var _INSTITUTION_BODY_NOUNS = ['commission', 'commissions', 'council', 'councils', 'assembly',
+    'assemblies', 'court', 'courts', 'tribunal', 'tribunals', 'board', 'boards', 'bureau',
+    'committee', 'committees', 'authority', 'authorities', 'directorate', 'panel', 'jury',
+    'ministry', 'senate', 'synod', 'chancery', 'conclave', 'consortium', 'guild', 'guilds',
+    'league', 'lodge', 'syndicate', 'cartel', 'magistracy', 'constabulary', 'garrison',
+    'registry', 'inquisition', 'parliament', 'diet', 'curia', 'bench'];
+  // An ADJUNCT: something that only exists AS part of a continuing body, so naming it names the
+  // body. "its clerk" presupposes an institution with a clerk.
+  var _INSTITUTION_ADJUNCT_NOUNS = ['chambers', 'chamber', 'clerk', 'clerks', 'warden', 'wardens',
+    'provost', 'prefect', 'magistrate', 'magistrates', 'registrar', 'bailiff', 'steward',
+    'inquisitor', 'adjudicator', 'arbiter', 'session', 'sessions', 'hearing', 'hearings',
+    'inquiry', 'inquiries', 'inquest', 'docket', 'summons', 'writ', 'ruling', 'rulings',
+    'jurisdiction', 'quorum', 'charter', 'members', 'membership', 'offices', 'officers'];
+  // The fields that reach BEYOND this scene. Roman's rule names exactly these: a later branch, an
+  // exit state, or the forward pressure. Within-scene fields (tactical_move, state_change) are
+  // deliberately NOT persistence signals — a scene may mention a clerk as texture.
+  var _PERSISTENCE_FIELDS = ['forward_pressure', 'branch_a', 'branch_b', 'exit_state'];
+  window._CONTINUING_REFERENT_VOCAB = { body: _INSTITUTION_BODY_NOUNS,
+    adjunct: _INSTITUTION_ADJUNCT_NOUNS, persistenceFields: _PERSISTENCE_FIELDS };
+
+  function _esc(s) { return String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+  var _BODY_RX = new RegExp('\\b(?:the|a|an|its|their|his|her|our|this|that|those|these)\\s+'
+    + '((?:[a-z][a-z\\-\']*\\s+){0,2}(?:' + _INSTITUTION_BODY_NOUNS.map(_esc).join('|') + '))\\b', 'gi');
+  var _ADJUNCT_RX = new RegExp('\\b(?:the|its|their|his|her|our|this|that)\\s+'
+    + '((?:[a-z][a-z\\-\']*\\s+){0,2}(?:' + _INSTITUTION_ADJUNCT_NOUNS.map(_esc).join('|') + '))\\b', 'gi');
+
+  // Names that may be referenced freely: established canon, this proposal's own declarations, and
+  // the cast. Referencing established canon is always allowed — that is not creation.
+  function _knownReferentNames(declaredLabels) {
+    var known = [];
     try {
-      var s = String(text || '');
       var reg = _protectedRegisterIds();
-      var known = [];
       for (var id in reg) {
         known.push(String(reg[id].label || '').toLowerCase());
         (reg[id].aliases || []).forEach(function (a) { known.push(String(a || '').toLowerCase()); });
       }
-      try {
-        var st = window.state || {};
-        [st.playerName, st.name, st.loveInterestName, st.partnerName].forEach(function (n) {
-          if (n) known.push(String(n).toLowerCase());
-        });
-      } catch (_) {}
-      (declaredLabels || []).forEach(function (l) { known.push(String(l).toLowerCase()); });
-      var m;
-      _DURABLE_REFERENT_RX.lastIndex = 0;
-      while ((m = _DURABLE_REFERENT_RX.exec(s)) !== null) {
-        var phrase = (m[1] || '').trim(); if (!phrase) continue;
-        var full = (m[0] || '').trim().toLowerCase();
-        var low = phrase.toLowerCase();
-        // exempt anything already established, declared here, or a cast name
-        var exempt = known.some(function (k) { return k && (k === low || k === full || low.indexOf(k) >= 0 || k.indexOf(low) >= 0); });
-        if (exempt || seen[low]) continue;
-        seen[low] = 1; out.push(phrase);
-      }
     } catch (_) {}
+    try {
+      var st = window.state || {};
+      [st.playerName, st.name, st.loveInterestName, st.partnerName].forEach(function (n) {
+        if (n) known.push(String(n).toLowerCase());
+      });
+    } catch (_) {}
+    (declaredLabels || []).forEach(function (l) { known.push(String(l).toLowerCase()); });
+    return known.filter(Boolean);
+  }
+  function _isKnownReferent(known, phrase) {
+    var low = String(phrase || '').toLowerCase().replace(/^(?:the|a|an|its|their|his|her|our|this|that|those|these)\s+/, '');
+    if (!low) return false;
+    return known.some(function (k) {
+      return k === low || low.indexOf(k) >= 0 || (k.length > 3 && k.indexOf(low) >= 0);
+    });
+  }
+
+  // Scan ONE string. Returns [{ phrase, head, tier }].
+  function _continuingReferentsIn(text, declaredLabels) {
+    var out = [], seen = {}, known = _knownReferentNames(declaredLabels), m;
+    var s = String(text || '');
+    var push = function (phrase, head, tier) {
+      var low = String(phrase).toLowerCase().trim();
+      if (!low || seen[low] || _isKnownReferent(known, phrase)) return;
+      seen[low] = 1; out.push({ phrase: String(phrase).trim(), head: String(head).toLowerCase(), tier: tier });
+    };
+    _DURABLE_REFERENT_RX.lastIndex = 0;
+    while ((m = _DURABLE_REFERENT_RX.exec(s)) !== null) {
+      if (m[1] && m[1].trim()) push(m[1].trim(), m[1].trim().split(/\s+/).pop(), 'A');
+    }
+    _BODY_RX.lastIndex = 0;
+    while ((m = _BODY_RX.exec(s)) !== null) {
+      if (m[1] && m[1].trim()) push(m[1].trim(), m[1].trim().split(/\s+/).pop(), 'B');
+    }
+    _ADJUNCT_RX.lastIndex = 0;
+    while ((m = _ADJUNCT_RX.exec(s)) !== null) {
+      if (m[1] && m[1].trim()) push(m[1].trim(), m[1].trim().split(/\s+/).pop(), 'C');
+    }
     return out;
   }
+
+  // THE TEXT-ONLY VIEW, unchanged in signature and meaning: phrases naming a continuing referent
+  // in one string. Kept because the validator's forward_pressure check and existing controls use it.
+  function _undeclaredDurableReferents(text, declaredLabels) {
+    try { return _continuingReferentsIn(text, declaredLabels).map(function (r) { return r.phrase; }); }
+    catch (_) { return []; }
+  }
+
+  // THE CROSS-FIELD VIEW. A referent the proposal itself RELIES ON: the same head noun surfacing in
+  // two or more fields that reach beyond this scene. Case C's "commission" appears in
+  // forward_pressure, branch_a and exit_state — the proposal cannot both depend on that body and
+  // call the pressure scene-local.
+  function _continuingReferentDetail(reply, declaredLabels) {
+    var res = { inPressure: [], relied: [] };
+    try {
+      var r = (reply && typeof reply === 'object') ? reply : {};
+      res.inPressure = _continuingReferentsIn(r.forward_pressure, declaredLabels);
+      var byHead = {};
+      _PERSISTENCE_FIELDS.forEach(function (f) {
+        _continuingReferentsIn(r[f], declaredLabels).forEach(function (hit) {
+          byHead[hit.head] = byHead[hit.head] || { head: hit.head, fields: [], phrases: [] };
+          if (byHead[hit.head].fields.indexOf(f) === -1) byHead[hit.head].fields.push(f);
+          if (byHead[hit.head].phrases.indexOf(hit.phrase) === -1) byHead[hit.head].phrases.push(hit.phrase);
+        });
+      });
+      // event_slots.exit_state is an exit state too, counted under the same head.
+      try {
+        var es = r.event_slots && r.event_slots.exit_state;
+        _continuingReferentsIn(es, declaredLabels).forEach(function (hit) {
+          byHead[hit.head] = byHead[hit.head] || { head: hit.head, fields: [], phrases: [] };
+          if (byHead[hit.head].fields.indexOf('event_slots.exit_state') === -1) byHead[hit.head].fields.push('event_slots.exit_state');
+          if (byHead[hit.head].phrases.indexOf(hit.phrase) === -1) byHead[hit.head].phrases.push(hit.phrase);
+        });
+      } catch (_) {}
+      for (var h in byHead) { if (byHead[h].fields.length >= 2) res.relied.push(byHead[h]); }
+    } catch (_) {}
+    return res;
+  }
   window._undeclaredDurableReferents = _undeclaredDurableReferents;
+  window._continuingReferentDetail = _continuingReferentDetail;
 
   // REJECT-ONLY. Returns { ok, why[], … }. Never rewrites a proposal, never partially commits.
   function _validateContinuationProposal(reply) {
@@ -100389,18 +100484,34 @@ function _buildAuthorFloorDirective(s) {
         + 'if it is already established canon');
     }
     if (scope === 'scene_local') {
-      // forward_pressure MUST NOT name a continuing referent while claiming to be scene-local.
-      // REJECTION GUARD, NOT PROOF: this is a lexical scan for an article followed by a
-      // capitalised noun phrase — it catches "the Reach Commission" and passes "whoever governs
-      // the toll", but a paraphrase can slip, exactly like the other lexical guards in this
-      // codebase. Named referents already in the register are EXEMPT (referencing established
-      // canon is always allowed), as are the reader's and love interest's own names.
-      var undeclared = _undeclaredDurableReferents(r.forward_pressure, declared);
-      if (undeclared.length) {
+      // TWO INDEPENDENT ROUTES TO REJECTION, because case C showed one was not enough.
+      //
+      // (i) forward_pressure NAMES a continuing referent while claiming to be scene-local. Now
+      //     case-insensitive and vocabulary-driven, so "the commission" is caught as surely as
+      //     "the Reach Commission". Established canon and cast names stay exempt.
+      //
+      // (ii) THE PLAYER-NAMED-BODY RULE (Roman 2026-10-01). A player may nominate a body canon
+      //      does not contain — and their words do not make it canon. The planner may ADOPT it as
+      //      a durable introduction, or keep the reference provisional. But it may not keep it
+      //      provisional while RELYING on it: if a later branch, an exit state or the forward
+      //      pressure assumes that body persists, scene_local is incoherent. Measured directly in
+      //      live case C, which declared scene_local while branching into "the commission
+      //      chambers" and ending with the demand "in the commission's possession".
+      var detail = _continuingReferentDetail(r, declared);
+      if (detail.inPressure.length) {
         why.push('pressure_scope "scene_local" but forward_pressure names what reads as a continuing '
-          + 'referent: [' + undeclared.join(', ') + ']. Either leave it unnamed, or mark the pressure '
-          + '"durable" and declare it in introduces[]. forward_pressure is never a second canon channel');
+          + 'referent: [' + detail.inPressure.map(function (x) { return x.phrase; }).join(', ')
+          + ']. Either leave it unnamed, or mark the pressure "durable" and declare it in '
+          + 'introduces[]. forward_pressure is never a second canon channel');
       }
+      detail.relied.forEach(function (g) {
+        why.push('pressure_scope "scene_local" but this proposal DEPENDS on a continuing body '
+          + 'persisting: [' + g.phrases.join(', ') + '] appears in ' + g.fields.join(', ')
+          + '. A body the player named is not canon by that act alone — but you may not keep it '
+          + 'provisional while relying on it. Either adopt it as durable canon (pressure_scope '
+          + '"durable" with kind, aliases and future_relevance in introduces[]), or return a '
+          + 'no-change alternative that does not rely on it');
+      });
     }
     if (why.length) return { ok: false, why: why, outcome: 'rejected', persistenceViolation: true };
 
@@ -101932,6 +102043,23 @@ function _buildAuthorFloorDirective(s) {
               + '  forward_pressure is NEVER a second canon channel: do not name a continuing body, office or place\n'
               + '      there while leaving it undeclared. Either it is unnamed and scene_local, or it is named and\n'
               + '      declared in introduces.\n'
+              + '\nA BODY THE PLAYER NAMES IS NOT CANON BY THAT ACT. The reader may address or name a commission,\n'
+              + 'council, court, house or office that canon does not yet contain. Their words do not establish it.\n'
+              + 'You MUST choose one of exactly two paths, explicitly:\n'
+              + '  (a) ADOPT IT — "pressure_scope": "durable", and declare it in "introduces" with kind, aliases\n'
+              + '      and future_relevance. It then becomes canon and later scenes may rely on it.\n'
+              + '  (b) KEEP IT PROVISIONAL — "pressure_scope": "scene_local". It is then NOT established, and no\n'
+              + '      later scene may treat it as an existing entity.\n'
+              + 'PATH (b) IS INVALID IF THIS PROPOSAL ITSELF RELIES ON THAT BODY PERSISTING. If your "branch_a",\n'
+              + '"branch_b", "exit_state" or "forward_pressure" assumes it will convene, respond, summon, hold,\n'
+              + 'rule or still exist in a later scene, you must take path (a) — or return a coherent no-change\n'
+              + 'alternative that does not depend on it at all. Naming that body across several fields while\n'
+              + 'declaring "scene_local" is a contradiction and will be rejected.\n'
+              + 'Adopting a body the PLAYER named is NOT "inventing a durable fact". The no-invention rule below\n'
+              + 'forbids manufacturing a change the player\'s action did not make; it never asks you to decline\n'
+              + 'structuring one the player\'s action actually requires.\n'
+              + 'This applies in LOWERCASE too: "the commission", "the council", "their chambers", "its clerk"\n'
+              + '      are continuing referents exactly as much as "the Reach Commission" is.\n'
               + 'MOST SCENES ADVANCE PRESSURE WITHOUT CHANGING DURABLE CANON. For those, return a real\n'
               + 'scene_purpose and forward_pressure with "canon_change": null and "introduces": [].\n'
               + 'Do NOT invent a durable fact merely to fill the envelope — a manufactured change is worse\n'

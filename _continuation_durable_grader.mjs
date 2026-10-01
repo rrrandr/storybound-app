@@ -23,6 +23,89 @@ const DURABLE_KINDS = ['institution', 'collective'];
 // The system mints these. A planner-supplied one is a contract violation even if it looks right.
 const MINTED_ID_RX = /^ent:stage:\d+$/;
 
+// ── CONTINUING-REFERENT VOCABULARY ───────────────────────────────────────────────────────────
+// Deliberately duplicated from public/app.js, because this module runs in node and app.js runs in
+// the browser as a plain script — neither can import the other. Duplication is only safe if drift
+// is impossible, so _continuation_durable_grading_control.mjs asserts these three lists are
+// IDENTICAL to window._CONTINUING_REFERENT_VOCAB. Change one and that parity assertion fails.
+export const INSTITUTION_BODY_NOUNS = ['commission', 'commissions', 'council', 'councils', 'assembly',
+  'assemblies', 'court', 'courts', 'tribunal', 'tribunals', 'board', 'boards', 'bureau',
+  'committee', 'committees', 'authority', 'authorities', 'directorate', 'panel', 'jury',
+  'ministry', 'senate', 'synod', 'chancery', 'conclave', 'consortium', 'guild', 'guilds',
+  'league', 'lodge', 'syndicate', 'cartel', 'magistracy', 'constabulary', 'garrison',
+  'registry', 'inquisition', 'parliament', 'diet', 'curia', 'bench'];
+export const INSTITUTION_ADJUNCT_NOUNS = ['chambers', 'chamber', 'clerk', 'clerks', 'warden', 'wardens',
+  'provost', 'prefect', 'magistrate', 'magistrates', 'registrar', 'bailiff', 'steward',
+  'inquisitor', 'adjudicator', 'arbiter', 'session', 'sessions', 'hearing', 'hearings',
+  'inquiry', 'inquiries', 'inquest', 'docket', 'summons', 'writ', 'ruling', 'rulings',
+  'jurisdiction', 'quorum', 'charter', 'members', 'membership', 'offices', 'officers'];
+export const PERSISTENCE_FIELDS = ['forward_pressure', 'branch_a', 'branch_b', 'exit_state'];
+
+const esc = (x) => String(x).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const CAP_RX = /\b(?:[Tt]he|[Aa]n?)\s+((?:[A-Z][a-z]+(?:['’]s)?\s+)*[A-Z][a-z]+)\b/g;
+const BODY_RX = new RegExp('\\b(?:the|a|an|its|their|his|her|our|this|that|those|these)\\s+'
+  + '((?:[a-z][a-z\\-\']*\\s+){0,2}(?:' + INSTITUTION_BODY_NOUNS.map(esc).join('|') + '))\\b', 'gi');
+const ADJUNCT_RX = new RegExp('\\b(?:the|its|their|his|her|our|this|that)\\s+'
+  + '((?:[a-z][a-z\\-\']*\\s+){0,2}(?:' + INSTITUTION_ADJUNCT_NOUNS.map(esc).join('|') + '))\\b', 'gi');
+
+const hitsIn = (text, known) => {
+  const out = [], seen = {};
+  const str = String(text || '');
+  const isKnown = (p) => {
+    const low = p.toLowerCase().replace(/^(?:the|a|an|its|their|his|her|our|this|that|those|these)\s+/, '');
+    return !low || known.some(k => k === low || low.indexOf(k) >= 0 || (k.length > 3 && k.indexOf(low) >= 0));
+  };
+  const push = (phrase, tier) => {
+    const p = String(phrase).trim(), low = p.toLowerCase();
+    if (!p || seen[low] || isKnown(p)) return;
+    seen[low] = 1; out.push({ phrase: p, head: low.split(/\s+/).pop(), tier });
+  };
+  let m;
+  CAP_RX.lastIndex = 0; while ((m = CAP_RX.exec(str)) !== null) if (s(m[1])) push(m[1], 'A');
+  BODY_RX.lastIndex = 0; while ((m = BODY_RX.exec(str)) !== null) if (s(m[1])) push(m[1], 'B');
+  ADJUNCT_RX.lastIndex = 0; while ((m = ADJUNCT_RX.exec(str)) !== null) if (s(m[1])) push(m[1], 'C');
+  return out;
+};
+
+// Which continuing bodies does this proposal NAME, and which does it RELY ON? "Rely on" means the
+// same head noun surfaces in two or more fields that reach beyond this scene — the proposal's own
+// later branch or exit state assumes that body is still there.
+export function detectContinuingReferents(reply, knownNames) {
+  const r = (reply && typeof reply === 'object') ? reply : {};
+  const known = (arr(knownNames) || []).map(x => String(x).toLowerCase()).filter(Boolean);
+  const inPressure = hitsIn(r.forward_pressure, known);
+  const byHead = {};
+  const note = (field, hit) => {
+    byHead[hit.head] = byHead[hit.head] || { head: hit.head, fields: [], phrases: [] };
+    if (byHead[hit.head].fields.indexOf(field) === -1) byHead[hit.head].fields.push(field);
+    if (byHead[hit.head].phrases.indexOf(hit.phrase) === -1) byHead[hit.head].phrases.push(hit.phrase);
+  };
+  PERSISTENCE_FIELDS.forEach(f => hitsIn(r[f], known).forEach(h => note(f, h)));
+  if (r.event_slots && r.event_slots.exit_state) {
+    hitsIn(r.event_slots.exit_state, known).forEach(h => note('event_slots.exit_state', h));
+  }
+  const relied = Object.keys(byHead).map(k => byHead[k]).filter(g => g.fields.length >= 2);
+  return { inPressure, relied };
+}
+
+// SCOPE COHERENCE, graded for EVERY case, not just case C. A scene_local declaration that names or
+// relies on a continuing institution is the defect live case C exhibited and the old guard missed.
+export function gradeScopeCoherence(E, knownNames) {
+  const out = [];
+  const t = (name, ok, detail) => out.push({ name, ok: !!ok, detail: detail == null ? '' : String(detail) });
+  const scope = E && E.pressure_scope;
+  if (scope !== 'scene_local') {
+    t('scope coherence: not a scene_local declaration, nothing to check', true, 'scope=' + JSON.stringify(scope));
+    return out;
+  }
+  const d = detectContinuingReferents(E, knownNames);
+  t('scene_local: forward_pressure names NO continuing referent', d.inPressure.length === 0,
+    JSON.stringify(d.inPressure.map(x => x.phrase)));
+  t('scene_local: the proposal does not RELY on a continuing body persisting', d.relied.length === 0,
+    JSON.stringify(d.relied.map(g => ({ phrases: g.phrases, fields: g.fields }))));
+  return out;
+}
+
 // ledgerBefore: [{ id, kind, label, aliases }] — the established register BEFORE the reply.
 // after:        { ctResult, facts, sealed, ledger, localPressures }
 export function gradeDurable(E, after, ledgerBefore) {
@@ -37,6 +120,10 @@ export function gradeDurable(E, after, ledgerBefore) {
 
   // ── 1. the scope itself
   t('pressure_scope is exactly "durable"', E.pressure_scope === 'durable', JSON.stringify(E.pressure_scope));
+  // And when it is NOT durable, say WHY that is incoherent rather than only that it is wrong: a
+  // scene_local declaration that names or relies on a continuing institution is the exact defect
+  // live case C exhibited. Established names are exempt — referencing canon is not creation.
+  gradeScopeCoherence(E, beforeNames).forEach(c => out.push(c));
 
   // ── 2. at least one STRUCTURED introduced institution/collective
   const intro = arr(E.introduces) || [];
