@@ -193,8 +193,15 @@ t('  the institution and the place kept their distinct kinds',
 t('SEALING WROTE NO FACT (activation is separate)', r.tier2FactsBeforeDelivery === 0,
   'facts=' + r.tier2FactsBeforeDelivery);
 t('Julian is untouched — still the Provast', r.julianStillProvast === true);
-t('the new institution is now PROTECTED (growth rule)', r.commissionProtected === true);
-t('the register grew by exactly the two additions', r.registerAfterTier2 === r.registerBefore + 2,
+// CORRECTED, not relaxed. These two previously asserted that the new institution was PROTECTED and
+// the register had GROWN immediately at seal time. That contradicted this control's own
+// "SEALING WROTE NO FACT" assertion: if the register derives from ACTIVE canon, an entity cannot be
+// protected before delivery admits it — otherwise something the reader never saw constrains later
+// planning. The seal-time expectation is now the opposite, and the full boundary (pending → active
+// on DELIVERED, never on MISSED) is proven in _pending_entity_boundary_control.mjs.
+t('the new institution is NOT yet protected — it is pending until delivery',
+  r.commissionProtected === false, 'protected=' + r.commissionProtected);
+t('the register has NOT grown at seal time', r.registerAfterTier2 === r.registerBefore,
   r.registerBefore + ' → ' + r.registerAfterTier2);
 console.log('   anchors: ' + r.tier2Anchors.verdict + ' ' + JSON.stringify(r.tier2Anchors.perAnchor.map(a => a.role + ':' + a.status)));
 t('delivery anchors are satisfied by alias-only prose', r.tier2Anchors.verdict === 'anchors_present',

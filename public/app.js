@@ -99930,6 +99930,21 @@ function _buildAuthorFloorDirective(s) {
     if (typeof id !== 'string' || !id) return null;
     return st.byId[id] || null;
   }
+  // The invocation key _sealProposal seals under: scene + the reader's posture hash for that scene.
+  function _invocationIdFor(scene) {
+    var ph = null;
+    try { var p = window.state && window.state._scenePosture && window.state._scenePosture[String(scene)]; ph = (p && p.hash) || null; } catch (_) {}
+    return 'inv:' + scene + ':' + (ph || 'noposture');
+  }
+  // Already sealed for this scene+posture? Used to make a RETRY idempotent END TO END, not just at
+  // the seal: without this, a retry mints fresh pending ids, then _sealProposal hands back the
+  // original record, and the returned ids disagree with the sealed ones while the ledger's id
+  // sequence leaks a number per retry.
+  function _sealedProposalForInvocation(scene) {
+    var st = _sealedProposalStore(false); if (!st) return null;
+    var prior = st.byInvocation[_invocationIdFor(scene)];
+    return (prior && st.byId[prior]) ? st.byId[prior] : null;
+  }
   // IDEMPOTENT PER INVOCATION. A retried plan for the same scene+posture re-enters here and gets
   // back the SAME record — it never mints a second one, so a retry cannot duplicate canon.
   function _sealProposal(spec) {
@@ -99954,9 +99969,20 @@ function _buildAuthorFloorDirective(s) {
       }).map(function (a) {
         return Object.freeze({ role: (typeof a.role === 'string' ? a.role : 'participant'), ref: a.ref.trim() });
       }) : [];
+      // PENDING ENTITIES (Roman 2026-10-01). Declared-new entities carry their system-minted ids
+      // here but are NOT in the active ledger: they belong to this sealed proposal alone, visible
+      // only to its author/retry/delivery path, until DELIVERED activation admits them. See
+      // _activatePendingEntities.
+      var pending = Array.isArray(spec.pendingEntities) ? spec.pendingEntities.filter(function (e) {
+        return e && typeof e.id === 'string' && typeof e.label === 'string';
+      }).map(function (e) {
+        return Object.freeze({ id: e.id, kind: e.kind || 'named', label: e.label,
+          aliases: Object.freeze((Array.isArray(e.aliases) ? e.aliases : []).slice()) });
+      }) : [];
       var rec = { id: id, scene: scene,
         fact: fact,                                   // EXACT, untruncated — the committed text
         anchors: Object.freeze(anchors),
+        pendingEntities: Object.freeze(pending),
         milestone: (typeof spec.milestone === 'string') ? spec.milestone : '',
         provenance: Object.freeze({ invocationId: invocationId, postureHash: ph,
           plannerModel: (typeof spec.plannerModel === 'string') ? spec.plannerModel : null,
@@ -99970,6 +99996,30 @@ function _buildAuthorFloorDirective(s) {
   }
   window._sealProposal = _sealProposal;
   window._resolveSealedProposal = _resolveSealedProposal;
+
+  // Admit a sealed proposal's pending entities into the ACTIVE ledger. Called only from the
+  // DELIVERED branch of _commitTransition. Idempotent: _relEnsureEntity keys on the id, so a retry
+  // or a second activation reuses the same record rather than minting a duplicate.
+  function _activatePendingEntities(rec) {
+    try {
+      var pend = (rec && Array.isArray(rec.pendingEntities)) ? rec.pendingEntities : [];
+      if (!pend.length) return [];
+      var L = (typeof _relLedger === 'function') ? _relLedger(true) : null;
+      if (!L || !L.entities) return [];
+      var admitted = [];
+      pend.forEach(function (e) {
+        var already = !!L.entities[e.id];
+        _relEnsureEntity(L, e.id, { kind: e.kind, label: e.label,
+          aliases: (e.aliases || []).slice(), provenance: 'continuation_activated' });
+        if (!already) admitted.push(e.id);
+      });
+      if (admitted.length) {
+        try { console.log('[CONTINUATION:ACTIVATED] ' + rec.id + ' admitted '
+          + JSON.stringify(admitted) + ' into active canon'); } catch (_) {}
+      }
+      return admitted;
+    } catch (_) { return []; }
+  }
 
   // REFERENCE-ONLY. Takes a sealed proposal reference and nothing else: the fact text is read FROM
   // the sealed record, byte-identical and untruncated, so a verifier (or any caller) can never
@@ -99989,6 +100039,12 @@ function _buildAuthorFloorDirective(s) {
           return cs.facts[i];
         }
       }
+      // ACTIVATION ADMITS PENDING ENTITIES (Roman 2026-10-01) — and only here. Until this line
+      // they existed on the sealed proposal alone: absent from the active ledger, absent from the
+      // protected register, unavailable as existing references to later planning. They enter with
+      // the SAME system-minted ids they were sealed with, exactly once (idempotent by id), so a
+      // retried or double activation cannot duplicate them.
+      _activatePendingEntities(rec);
       var entry = { fact: rec.fact, proposalRef: rec.id, provenanceLink: 'sealed',
         sourceEvent: String(sourceEvent || '').slice(0, 60),
         committedAtScene: (typeof scene === 'number' ? scene : (window.state.turnCount || 0)),
@@ -100086,9 +100142,27 @@ function _buildAuthorFloorDirective(s) {
   // "the relic". Each anchor resolves to the CONTROLLED ALIAS SET on that entity's register record,
   // and any one permitted alias satisfies it. An anchor that cannot be resolved to a controlled set
   // is reported UNANCHORABLE — never silently treated as satisfied.
-  function _deliveryAnchorAliases(ref) {
+  // `pending` (optional) is ONE sealed proposal's own pending entities. It is scoped to that
+  // proposal's delivery check and is never a source for the active protected register — an entity
+  // the reader has not seen must not constrain later planning.
+  function _deliveryAnchorAliases(ref, pending) {
     try {
       if (typeof ref !== 'string' || !ref.trim()) return { ok: false, why: 'no ref' };
+      if (Array.isArray(pending) && pending.length) {
+        for (var pi = 0; pi < pending.length; pi++) {
+          var pe = pending[pi]; if (!pe) continue;
+          var pn = (typeof _relNorm === 'function') ? _relNorm(ref) : String(ref).trim().toLowerCase();
+          var pLabel = (typeof _relNorm === 'function') ? _relNorm(pe.label) : String(pe.label || '').trim().toLowerCase();
+          var pAlias = (pe.aliases || []).some(function (a) {
+            var an = (typeof _relNorm === 'function') ? _relNorm(a) : String(a || '').trim().toLowerCase();
+            return an === pn;
+          });
+          if (pe.id === ref || pLabel === pn || pAlias) {
+            var pAliases = [pe.label].concat(pe.aliases || []).filter(function (a) { return typeof a === 'string' && a.trim(); });
+            return { ok: true, entityId: pe.id, aliases: pAliases, pending: true };
+          }
+        }
+      }
       var L = (typeof _relLedger === 'function') ? _relLedger(false) : null;
       if (!L || !L.entities) return { ok: false, why: 'no entity register' };
       var e = L.entities[ref] || null;
@@ -100135,9 +100209,11 @@ function _buildAuthorFloorDirective(s) {
     if (!rec) return { verdict: 'inapplicable', perAnchor: [], evidenceVerbatim: true, why: ['no sealed proposal to check against'] };
     var p = String(prose || '');
     var anchors = Array.isArray(rec.anchors) ? rec.anchors : [];
+    var pend = Array.isArray(rec.pendingEntities) ? rec.pendingEntities : [];
     var per = [], why = [], anchorable = 0;
     anchors.forEach(function (a) {
-      var res = _deliveryAnchorAliases(a && a.ref);
+      // This proposal's OWN pending entities are resolvable for ITS delivery check only.
+      var res = _deliveryAnchorAliases(a && a.ref, pend);
       if (!res.ok) { per.push({ role: (a && a.role) || null, ref: (a && a.ref) || null, status: 'unanchorable', why: res.why }); return; }
       anchorable++;
       var hit = _anchorAliasInProse(res.aliases, p);
@@ -100327,12 +100403,33 @@ function _buildAuthorFloorDirective(s) {
       try { console.log('[CONTINUATION:NONE] scene=' + scene + ' — no durable change proposed; nothing written'); } catch (_) {}
       return { outcome: 'none', why: [], sealedId: null, introduced: [] };
     }
-    // MINT declared-new entities through the backend path — ids and provenance are the system's.
+    // RETRY SHORT-CIRCUIT, BEFORE ANY MINTING. If this scene+posture already sealed a proposal,
+    // return it unchanged with its own pending entities. Minting first and sealing second would
+    // hand back ids that disagree with the sealed record and burn an id per retry.
+    var prior = _sealedProposalForInvocation(scene);
+    if (prior) {
+      try { console.log('[CONTINUATION:RETRY] scene=' + scene + ' reusing ' + prior.id
+        + ' (' + (prior.pendingEntities || []).length + ' pending entities, no new ids)'); } catch (_) {}
+      return { outcome: 'sealed', tier: v.tier, sealedId: prior.id,
+        introduced: (prior.pendingEntities || []).map(function (e) {
+          return { id: e.id, kind: e.kind, label: e.label, pending: true };
+        }), targets: v.targets, why: [], reusedSeal: true };
+    }
+    // MINT PENDING, NOT ACTIVE (Roman 2026-10-01). Ids and provenance are the system's — the
+    // planner never supplies either — but the entity does NOT enter the active ledger here. It
+    // rides on the sealed proposal until DELIVERED activation. Minting the id from the ledger's
+    // own sequence keeps it collision-free and identical to the id it will carry when admitted;
+    // an unactivated proposal simply leaves a gap in that sequence, which is harmless.
     var introduced = [], mintWhy = [];
+    var L0 = (typeof _relLedger === 'function') ? _relLedger(true) : null;
+    if (!L0) mintWhy.push('no story — cannot mint entity ids');
     (Array.isArray(reply.introduces) ? reply.introduces : []).forEach(function (e) {
-      var res = _proposeNewEntity({ kind: e.kind, label: e.label, aliases: Array.isArray(e.aliases) ? e.aliases : [] });
-      if (res && res.ok) introduced.push({ id: res.entity.id, kind: res.entity.kind, label: res.entity.label });
-      else mintWhy = mintWhy.concat((res && res.why) || ['mint failed for ' + e.label]);
+      if (!L0) return;
+      var chk = _validateEntityCreationProposal({ kind: e.kind, label: e.label,
+        aliases: Array.isArray(e.aliases) ? e.aliases : [] });
+      if (!chk.ok) { mintWhy = mintWhy.concat(chk.why); return; }
+      introduced.push({ id: 'ent:stage:' + (++L0.seq), kind: chk.kind, label: chk.label,
+        aliases: chk.aliases, pending: true });
     });
     if (mintWhy.length) {
       try { console.warn('[CONTINUATION:REJECT] scene=' + scene + ' entity mint failed :: ' + mintWhy.join(' | ')); } catch (_) {}
@@ -100345,6 +100442,7 @@ function _buildAuthorFloorDirective(s) {
       ? String(reply.canon_change.content)
       : ('Introduced: ' + introduced.map(function (e) { return e.label; }).join(', '));
     var sealed = _sealProposal({ fact: factText, scene: scene, anchors: anchors,
+      pendingEntities: introduced,
       milestone: String(reply.forward_pressure || '') });
     if (!sealed) return { outcome: 'rejected', why: ['seal failed'], sealedId: null, introduced: introduced };
     try { console.log('[CONTINUATION:SEALED] scene=' + scene + ' tier=' + v.tier + ' ' + sealed.id
