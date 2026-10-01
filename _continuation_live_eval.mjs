@@ -26,7 +26,7 @@
 import fs from 'fs';
 import { chromium } from 'playwright-core';
 import { estimateUsd } from './_fsc_cost_guard.mjs';
-import { gradeDurable, gradeHandler } from './_continuation_durable_grader.mjs';
+import { gradeDurable, gradeHandler, classifySample } from './_continuation_durable_grader.mjs';
 
 const ARG = process.argv.slice(2);
 const ESTIMATE_ONLY = ARG.includes('--estimate-only');
@@ -74,6 +74,25 @@ const PLANNER_ONLY = ARG.includes('--planner-only');
 const CASES = WANTED ? ALL_CASES.filter(c => c.id === WANTED) : ALL_CASES;
 if (WANTED && !CASES.length) { console.error('unknown --case ' + WANTED); process.exit(2); }
 
+// ── RELIABILITY SAMPLING (Roman 2026-10-01) ─────────────────────────────────────────────────
+// "This is now a measurement question, not another contract edit." N identical planner-only
+// attempts at ONE case, classified into four buckets. Deliberately built INTO this runner rather
+// than as a parallel script, so the prompt, story, posture and model path are byte-identical to
+// the single-case runs 5-7 by construction instead of by resemblance.
+const SAMPLES_IDX = ARG.indexOf('--samples');
+const SAMPLES = SAMPLES_IDX >= 0 ? Number(ARG[SAMPLES_IDX + 1]) : 0;
+if (SAMPLES_IDX >= 0 && !(SAMPLES >= 1 && SAMPLES <= 20)) {
+  console.error('--samples takes an integer 1-20'); process.exit(2);
+}
+if (SAMPLES && !PLANNER_ONLY) {
+  console.error('REFUSED: sampling requires --planner-only (no author or verifier dispatch).');
+  process.exit(2);
+}
+if (SAMPLES && !WANTED) {
+  console.error('REFUSED: sampling needs exactly one --case; a distribution across cases is not one.');
+  process.exit(2);
+}
+
 say('=== LIVE CONTINUATION EVALUATION — ' + CASES.length + ' CASE(S) ===');
 say('    authorized: ' + (ESTIMATE_ONLY ? 'ESTIMATE ONLY ($0)' : '$' + AUTHORIZED.toFixed(2)));
 say('    output: ' + RUN);
@@ -103,14 +122,16 @@ const R_PLANNER = worst(30000, 1400);
 const R_AUTHOR = worst(240000, 8000);
 const R_VERIFIER = worst(10000, 300);
 const PER_CASE = PLANNER_ONLY ? R_PLANNER : (R_PLANNER + R_AUTHOR + R_VERIFIER);
-const reserved = PER_CASE * CASES.length;
+const ATTEMPTS = SAMPLES || CASES.length;
+const reserved = PER_CASE * ATTEMPTS;
 say('\nCHAIN RESERVATION (worst case per stage, no fallback doubling)');
 say('  planner  : $' + R_PLANNER.toFixed(6));
 if (!PLANNER_ONLY) {
   say('  author   : $' + R_AUTHOR.toFixed(6));
   say('  verifier : $' + R_VERIFIER.toFixed(6));
 } else { say('  (--planner-only: author and verifier are not reserved and will be aborted)'); }
-say('  per case : $' + PER_CASE.toFixed(6) + '  x ' + CASES.length + ' case(s)');
+say('  per case : $' + PER_CASE.toFixed(6) + '  x ' + ATTEMPTS
+  + (SAMPLES ? ' identical sample(s) of ' + WANTED : ' case(s)'));
 say('  TOTAL    : $' + reserved.toFixed(6));
 if (!ESTIMATE_ONLY && reserved > AUTHORIZED) {
   say('\nREFUSED BEFORE DISPATCH: reserved $' + reserved.toFixed(6) + ' exceeds $' + AUTHORIZED.toFixed(2));
@@ -139,8 +160,12 @@ if (!ARG.includes('--skip-preflight')) {
 
 let spentEstimate = 0, measured = 0;
 
-const runCase = async (C) => {
+const runCase = async (C, sampleIx) => {
   const calls = [];
+  // ONE ATTEMPT PER SAMPLE, NO RETRIES (Roman). A second planner request inside the same sample is
+  // ABORTED and recorded, so an app-level retry cannot quietly turn five samples into six draws.
+  let plannerDispatched = 0, retriesBlocked = 0;
+  const tag = (sampleIx == null) ? C.id : (C.id + '_s' + sampleIx);
   const browser = await chromium.launch();
   const page = await browser.newPage();
 
@@ -162,18 +187,24 @@ const runCase = async (C) => {
       say('    [PLANNER-ONLY] aborting ' + stage + ' — not reserved in this run');
       try { await route.abort(); } catch (_) {} return;
     }
+    if (SAMPLES && stage === 'planner' && plannerDispatched >= 1) {
+      retriesBlocked++;
+      say('    [ONE-ATTEMPT] aborting a SECOND planner request in this sample — no retries');
+      try { await route.abort(); } catch (_) {} return;
+    }
     if (spentEstimate + est > AUTHORIZED) {
       say('    [GUARD] ABORT ' + stage + ' — would exceed authorization');
       try { await route.abort(); } catch (_) {} return;
     }
     spentEstimate += est;
+    if (stage === 'planner') plannerDispatched++;
     say('    [DISPATCH] ' + stage + '  ' + (raw || '').length + 'ch  est $' + est.toFixed(6));
-    write(C.id + '_request_' + stage + '_' + (calls.length + 1) + '.json', raw || '');
+    write(tag + '_request_' + stage + '_' + (calls.length + 1) + '.json', raw || '');
     try {
       const FT = stage === 'author' ? 300000 : (stage === 'planner' ? 120000 : 90000);
       const resp = await route.fetch({ timeout: FT });
       const text = await resp.text();
-      write(C.id + '_response_' + stage + '_' + (calls.length + 1) + '.json', text);
+      write(tag + '_response_' + stage + '_' + (calls.length + 1) + '.json', text);
       try { const j = JSON.parse(text); const ticks = j && j.usage && j.usage.cost_in_usd_ticks;
         if (typeof ticks === 'number') { measured += ticks * 1e-10;
           say('      measured $' + (ticks * 1e-10).toFixed(6) + ' (total $' + measured.toFixed(6) + ')'); }
@@ -190,7 +221,7 @@ const runCase = async (C) => {
   await page.goto('http://localhost:3000/', { waitUntil: 'domcontentloaded', timeout: 30000 });
   await page.waitForFunction(() => typeof window._processContinuationProposal === 'function', { timeout: 20000 });
 
-  const setup = await page.evaluate(() => {
+  const setup = await page.evaluate((_fixedStoryId) => {
     window._continuationProposalSchema = true;            // EXPLICIT OPT-IN
     window.state = window.state || {};
     // ── A CORRIDOR / ORIGINAL STORY. No _starterId, so no seed and no plan, so NO authored row
@@ -199,7 +230,8 @@ const runCase = async (C) => {
     // returned the seed's row-2 goal and dynamic canon could not be evaluated. This also exercises
     // the universal (no-seed) path, which the register audit flagged as unverified.
     delete window.state._starterId;
-    window.state.storyId = 'live-corridor-' + Date.now();
+    // FIXED under sampling: a varying id would mean the five "identical" prompts were not.
+    window.state.storyId = _fixedStoryId || ('live-corridor-' + Date.now());
     window.state.world = 'Fatelands';
     window.state.worldSubtype = 'arcane_binding';
     window.state.picks = { flavor: 'Arcane Binding', world: 'Fatelands' };
@@ -219,7 +251,7 @@ const runCase = async (C) => {
       ledgerBeforeFull: Object.keys((window.state._relationshipLedger || { entities: {} }).entities)
         .map(k => { const e = window.state._relationshipLedger.entities[k];
           return { id: e.id, kind: e.kind, label: e.label, aliases: e.aliases || [] }; }) };
-  });
+  }, SAMPLES ? 'live-corridor-sampling-fixed' : null);
   if (!setup.enabled) { await browser.close(); throw new Error('opt-in flag not set'); }
 
   await page.evaluate(async ({ a, d }) => {
@@ -260,7 +292,7 @@ const runCase = async (C) => {
   let envelope = null;
   if (pc) {
     const content = contentOf(pc.response);
-    write(C.id + '_planner_content.txt', content);
+    write(tag + '_planner_content.txt', content);
     try { const m = content.match(/\{[\s\S]*\}/); if (m) envelope = JSON.parse(m[0]); } catch (_) {}
   }
   // PROSE IS EXTRACTED FOR EVERY CASE, not only when a change was proposed — a null-change run
@@ -268,26 +300,121 @@ const runCase = async (C) => {
   // never ran on the two runs that mattered.
   const authorResp = calls.filter(c => c.stage === 'author' && c.response).pop() || null;
   const prose = authorResp ? contentOf(authorResp.response) : '';
-  if (prose) write(C.id + '_prose.txt', prose);
-  write(C.id + '_state_after.json', after);
-  write(C.id + '_envelope.json', envelope || {});
-  return { calls, setup, after, envelope, prose,
+  if (prose) write(tag + '_prose.txt', prose);
+  write(tag + '_state_after.json', after);
+  write(tag + '_envelope.json', envelope || {});
+  return { calls, setup, after, envelope, prose, plannerDispatched, retriesBlocked,
+    plannerRequest: (calls.filter(c => c.stage === 'planner').pop() || {}).request || '',
     author: authorResp,
     authorReq: calls.filter(c => c.stage === 'author').pop() || null };
 };
 
 const results = {};
-for (const C of CASES) {
-  say('\n──────── CASE ' + C.id + ': ' + C.label + ' ────────');
+const samples = [];
+
+if (SAMPLES) {
+  // ── THE RELIABILITY MEASUREMENT ─────────────────────────────────────────────────────────────
+  // Five identical attempts. The question is the DISTRIBUTION, so no sample is retried, rescued,
+  // or re-rolled, and a sample that errors is recorded as a sample rather than skipped.
+  const C = CASES[0];
+  say('\n──────── SAMPLING ' + SAMPLES + ' x CASE ' + C.id + ': ' + C.label + ' ────────');
   say('  posture: ' + JSON.stringify(C.action));
-  try { results[C.id] = await runCase(C); }
-  catch (e) { say('  CASE ABORTED: ' + (e && e.message)); results[C.id] = null; }
+  say('  fixed storyId, one attempt per sample, no retries, no author/verifier dispatch.');
+  for (let i = 1; i <= SAMPLES; i++) {
+    say('\n  ── sample ' + i + '/' + SAMPLES);
+    let R = null;
+    try { R = await runCase(C, i); }
+    catch (e) { say('    SAMPLE ERRORED: ' + (e && e.message)); }
+    samples.push({ i, R });
+    if (R) {
+      const E = R.envelope;
+      say('    pressure_scope : ' + JSON.stringify(E && E.pressure_scope));
+      say('    canon_change   : ' + (E && E.canon_change ? 'present' : 'null'));
+      say('    introduces     : ' + ((E && Array.isArray(E.introduces)) ? E.introduces.length : 'n/a'));
+      say('    derivation     : ' + ((E && typeof E.derivation === 'string' && E.derivation.trim()) ? 'present' : 'absent'));
+      say('    handler        : ' + JSON.stringify(R.after && R.after.ctResult && R.after.ctResult.outcome));
+      if (R.retriesBlocked) say('    retries blocked: ' + R.retriesBlocked);
+    }
+  }
+} else {
+  for (const C of CASES) {
+    say('\n──────── CASE ' + C.id + ': ' + C.label + ' ────────');
+    say('  posture: ' + JSON.stringify(C.action));
+    try { results[C.id] = await runCase(C); }
+    catch (e) { say('  CASE ABORTED: ' + (e && e.message)); results[C.id] = null; }
+  }
 }
 
 say('\n=== SPEND ===');
 say('  running estimate : $' + spentEstimate.toFixed(6));
 say('  MEASURED         : $' + measured.toFixed(6) + ' of $' + AUTHORIZED.toFixed(2)
   + '  (' + ((measured / AUTHORIZED) * 100).toFixed(1) + '%)');
+
+// ── THE DISTRIBUTION REPORT (sampling mode) ─────────────────────────────────
+if (SAMPLES) {
+  const crypto = await import('node:crypto');
+  const sha = (x) => crypto.createHash('sha256').update(String(x || '')).digest('hex').slice(0, 16);
+
+  // WAS IT ACTUALLY THE SAME PROMPT? Reported as a measured fact, not assumed from using one code
+  // path. If the assembled planner requests differ, the distribution is not a distribution of one
+  // prompt and must not be read as one.
+  const hashes = samples.map(s2 => s2.R ? sha(s2.R.plannerRequest) : 'ERRORED');
+  const uniq = Array.from(new Set(hashes.filter(h => h !== 'ERRORED')));
+  say('\n=== PROMPT IDENTITY ===');
+  say('  assembled planner request hashes: ' + JSON.stringify(hashes));
+  t('every sample sent a BYTE-IDENTICAL planner request', uniq.length === 1,
+    uniq.length + ' distinct payload(s) — the samples are not of one prompt');
+
+  say('\n=== ONE ATTEMPT PER SAMPLE ===');
+  const dispatches = samples.map(s2 => s2.R ? s2.R.plannerDispatched : 0);
+  const blocked = samples.reduce((n, s2) => n + (s2.R ? s2.R.retriesBlocked : 0), 0);
+  say('  planner dispatches per sample: ' + JSON.stringify(dispatches));
+  t('no sample dispatched more than one planner call', dispatches.every(n => n <= 1),
+    JSON.stringify(dispatches));
+  say('  retry attempts blocked: ' + blocked + (blocked ? '  (recorded, not re-rolled)' : ''));
+  t('no author or verifier call was dispatched',
+    samples.every(s2 => !s2.R || !s2.R.calls.some(c => c.stage !== 'planner' && c.response)));
+
+  say('\n=== DISTRIBUTION ===');
+  const buckets = { valid_durable: 0, valid_scene_local: 0, incoherent: 0, envelope_violation: 0 };
+  const paths = { durable: 0, scene_local: 0, none: 0 };
+  const rows = [];
+  samples.forEach(s2 => {
+    if (!s2.R) { buckets.envelope_violation++; paths.none++;
+      rows.push({ i: s2.i, bucket: 'envelope_violation', path: null, why: ['sample errored'] }); return; }
+    const c = classifySample(s2.R.envelope, s2.R.after, s2.R.setup.ledgerBeforeFull);
+    buckets[c.bucket] = (buckets[c.bucket] || 0) + 1;
+    paths[c.pathChosen || 'none'] = (paths[c.pathChosen || 'none'] || 0) + 1;
+    rows.push({ i: s2.i, bucket: c.bucket, path: c.pathChosen, why: c.why });
+  });
+  rows.forEach(r2 => say('  sample ' + r2.i + ': ' + r2.bucket.toUpperCase()
+    + ' (path=' + JSON.stringify(r2.path) + ')'
+    + (r2.why && r2.why.length ? '\n      why: ' + JSON.stringify(r2.why) : '')));
+  say('\n  valid durable      : ' + buckets.valid_durable + '/' + SAMPLES);
+  say('  valid scene-local  : ' + buckets.valid_scene_local + '/' + SAMPLES);
+  say('  incoherent/rejected: ' + buckets.incoherent + '/' + SAMPLES);
+  say('  envelope violations: ' + buckets.envelope_violation + '/' + SAMPLES);
+  say('\n  PATH CHOSEN (the actual question, blurred by the buckets alone):');
+  say('    durable path     : ' + (paths.durable || 0) + '/' + SAMPLES);
+  say('    scene_local path : ' + (paths.scene_local || 0) + '/' + SAMPLES);
+  say('    no parseable path: ' + (paths.none || 0) + '/' + SAMPLES);
+  // COMPLETENESS, not decoration: if the three path lines do not account for every sample, the
+  // tally is hiding one and the distribution above must not be read as complete.
+  t('the path tally accounts for every sample',
+    (paths.durable || 0) + (paths.scene_local || 0) + (paths.none || 0) === SAMPLES,
+    JSON.stringify(paths));
+  t('the bucket tally accounts for every sample',
+    buckets.valid_durable + buckets.valid_scene_local + buckets.incoherent
+      + buckets.envelope_violation === SAMPLES, JSON.stringify(buckets));
+  say('\n  NOTE: n=' + SAMPLES + '. A rate from five draws has a wide interval; this measures'
+    + ' whether the planner is RELIABLE, and only a clean sweep either way is decisive at this n.');
+  write('distribution.json', { samples: rows, buckets, paths, hashes, dispatches, blocked,
+    measured, authorized: AUTHORIZED });
+  say('\n' + pass + '/' + (pass + fail) + ' harness assertions passed');
+  say('MEASURED SPEND: $' + measured.toFixed(6) + ' of $' + AUTHORIZED.toFixed(2));
+  say('Artefacts: ' + RUN);
+  process.exit(0);
+}
 
 // ── scoring, per pre-registration ────────────────────────────────────────────
 const env = (id) => results[id] && results[id].envelope;

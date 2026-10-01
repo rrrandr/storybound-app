@@ -106,6 +106,58 @@ export function gradeScopeCoherence(E, knownNames) {
   return out;
 }
 
+// ── SAMPLE CLASSIFIER ────────────────────────────────────────────────────────────────────────
+// Roman's four buckets for the reliability measurement. Lives here, with the rest of the shared
+// grading, so the classifier the paid sampling run uses is the one a provider-free control can
+// prove RED first — the same reason gradeDurable lives here.
+//
+//   envelope_violation  one of the five required keys is missing or malformed. Checked FIRST: a
+//                       reply that is not a valid envelope cannot be classified as either path.
+//   valid_durable       pressure_scope "durable", every one of Roman's five pass criteria met,
+//                       derivation present, AND the handler sealed it. Nothing less counts.
+//   valid_scene_local   pressure_scope "scene_local", coherent (names no continuing referent and
+//                       relies on none), AND the handler accepted it as a no-change continuation.
+//   incoherent          a well-formed envelope the validator refused — run 7's scene_local-while-
+//                       relying, and run 6's durable-missing-derivation both land here.
+//
+// `pathChosen` is reported ALONGSIDE the buckets because it answers the actual question — whether
+// the planner reliably CHOOSES the durable path — which the four buckets alone blur: run 6 chose
+// durable and still landed in `incoherent`.
+export function classifySample(E, after, ledgerBefore) {
+  const r = (E && typeof E === 'object') ? E : null;
+  if (!r) return { bucket: 'envelope_violation', pathChosen: null, why: ['no parseable reply'] };
+  const why = [];
+  const has = (k) => Object.prototype.hasOwnProperty.call(r, k);
+  if (!s(r.scene_purpose)) why.push('scene_purpose missing or empty');
+  if (!s(r.forward_pressure)) why.push('forward_pressure missing or empty');
+  const literal = (r.pressure_scope === 'scene_local' || r.pressure_scope === 'durable');
+  if (!literal) why.push('pressure_scope not a contract literal: ' + JSON.stringify(r.pressure_scope));
+  if (!has('canon_change')) why.push('canon_change key absent');
+  if (!has('introduces') || !arr(r.introduces)) why.push('introduces missing or not an array');
+  // pathChosen is ONLY ever a contract literal or null. Echoing an invalid value here ("permanent")
+  // would quietly drop that sample from the durable/scene_local/none tally, so the raw value is
+  // preserved in `why` instead and the path reads as "none chosen".
+  if (why.length) return { bucket: 'envelope_violation', pathChosen: literal ? r.pressure_scope : null, why };
+
+  const pathChosen = r.pressure_scope;
+  const sealed = !!(after && after.ctResult && after.ctResult.outcome === 'sealed');
+  const accepted = !!(after && after.ctResult && after.ctResult.outcome === 'none');
+  const rejectWhy = (after && after.ctResult && after.ctResult.why) || [];
+
+  if (pathChosen === 'durable') {
+    const reds = gradeDurable(r, after, ledgerBefore).filter(c => !c.ok).map(c => c.name);
+    if (reds.length === 0 && sealed) return { bucket: 'valid_durable', pathChosen, why: [] };
+    return { bucket: 'incoherent', pathChosen,
+      why: reds.length ? reds : (rejectWhy.length ? rejectWhy : ['durable but not sealed']) };
+  }
+  const coh = gradeScopeCoherence(r, (arr(ledgerBefore) || []).flatMap(e =>
+    [s(e.label).toLowerCase()].concat((arr(e.aliases) || []).map(a => s(a).toLowerCase()))).filter(Boolean));
+  const cohReds = coh.filter(c => !c.ok).map(c => c.name);
+  if (cohReds.length === 0 && accepted) return { bucket: 'valid_scene_local', pathChosen, why: [] };
+  return { bucket: 'incoherent', pathChosen,
+    why: cohReds.length ? cohReds : (rejectWhy.length ? rejectWhy : ['scene_local but not accepted']) };
+}
+
 // ledgerBefore: [{ id, kind, label, aliases }] — the established register BEFORE the reply.
 // after:        { ctResult, facts, sealed, ledger, localPressures }
 export function gradeDurable(E, after, ledgerBefore) {
