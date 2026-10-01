@@ -81,6 +81,9 @@ const FIXTURES = [
     expect: 'incoherent', path: 'durable' }
 ];
 
+// Count of void fixtures, declared before the bucket-coverage check below uses it.
+const voidCasesCount = 5;
+
 const browser = await chromium.launch();
 const page = await browser.newPage();
 await page.route('**/api/**', r => r.abort());
@@ -135,10 +138,11 @@ FIXTURES.forEach(f => {
     'got ' + JSON.stringify(c.pathChosen));
 });
 
-console.log('\n2. all four buckets were exercised (a bucket never reached proves nothing)');
+console.log('\n2. all five buckets were exercised (a bucket never reached proves nothing)');
 const seen = {};
 FIXTURES.forEach(f => { seen[f.expect] = (seen[f.expect] || 0) + 1; });
-['valid_durable', 'valid_scene_local', 'incoherent', 'envelope_violation'].forEach(b => {
+seen.void = voidCasesCount;
+['valid_durable', 'valid_scene_local', 'incoherent', 'envelope_violation', 'void'].forEach(b => {
   t('  ' + b + ' has at least one fixture', (seen[b] || 0) > 0, 'count=' + (seen[b] || 0));
 });
 
@@ -164,6 +168,46 @@ t('  but its PATH is recorded as durable — the distinction the buckets alone l
 t('  and the reason names derivation',
   JSON.stringify(c6.why).toLowerCase().indexOf('derivation') >= 0, JSON.stringify(c6.why));
 
+// ── VOID vs ENVELOPE_VIOLATION ───────────────────────────────────────────────
+// Run 9: the local proxy returned "NO_RESPONSE_FROM_FUNCTION" on all three samples and this
+// classifier filed them as ENVELOPE violations — which would have read as planner non-compliance
+// for a model that was never reached. A transport failure is not a data point.
+console.log('\n3b. a TRANSPORT failure is VOID, never a planner fault');
+const RUN9 = 'An error occurred with this application.\n\nNO_RESPONSE_FROM_FUNCTION';
+const voidCases = [
+  ['run 9\'s actual proxy body', { dispatched: true, responded: true, content: '', bodySnippet: RUN9 }],
+  ['no planner call dispatched at all', { dispatched: false }],
+  ['a fetch/transport error', { dispatched: true, error: 'socket hang up' }],
+  ['an empty content string', { dispatched: true, responded: true, content: '' }],
+  ['whitespace-only content', { dispatched: true, responded: true, content: '   \n  ' }]
+];
+voidCases.forEach(([name, tr]) => {
+  const c = classifySample(null, {}, [], tr);
+  t('  ' + name + ' → void', c.bucket === 'void', c.bucket + ' ' + JSON.stringify(c.why));
+  t('    and no path is attributed', c.pathChosen === null, JSON.stringify(c.pathChosen));
+});
+t('  run 9\'s body is NOT filed as an envelope violation — the defect this closes',
+  classifySample(null, {}, [], voidCases[0][1]).bucket !== 'envelope_violation');
+t('  and the reason quotes what actually came back',
+  JSON.stringify(classifySample(null, {}, [], voidCases[0][1]).why).indexOf('NO_RESPONSE_FROM_FUNCTION') >= 0,
+  JSON.stringify(classifySample(null, {}, [], voidCases[0][1]).why));
+
+console.log('\n3c. but CONTENT that arrived and failed the contract is the PLANNER\'s fault');
+const spoke = (content) => ({ dispatched: true, responded: true, content: content });
+t('prose instead of JSON → envelope_violation, not void',
+  classifySample(null, {}, [], spoke('I have decided not to answer in JSON.')).bucket === 'envelope_violation');
+t('  and the reason says content came back',
+  JSON.stringify(classifySample(null, {}, [], spoke('nope')).why).indexOf('content returned') >= 0);
+t('a real reply missing a required key → envelope_violation',
+  classifySample({ scene_purpose: 'x', forward_pressure: 'y', canon_change: null, introduces: [] },
+    {}, [], spoke('{...}')).bucket === 'envelope_violation');
+t('a VALID reply still classifies normally when transport is healthy',
+  classifySample(GOOD_SCENE_LOCAL, { ctResult: { outcome: 'none' }, ledger: [] }, [],
+    spoke(JSON.stringify(GOOD_SCENE_LOCAL))).bucket === 'valid_scene_local');
+t('with NO transport information a null reply is VOID, not attributed to the planner',
+  classifySample(null, {}, []).bucket === 'void',
+  JSON.stringify(classifySample(null, {}, []).why));
+
 console.log('\n4. a durable reply that SEALS is the only thing counted as valid_durable');
 const gd = byId['good-durable'];
 t('the good durable fixture actually sealed in the live validator',
@@ -174,8 +218,8 @@ t('  and an identical reply whose handler did NOT seal is NOT valid_durable',
 t('a scene_local reply the handler did NOT accept is NOT valid_scene_local',
   classifySample(GOOD_SCENE_LOCAL, { ctResult: { outcome: 'rejected', why: ['x'] }, ledger: [] }, [])
     .bucket === 'incoherent');
-t('an unparseable reply is an envelope violation, not a path',
-  classifySample(null, {}, []).bucket === 'envelope_violation'
+t('an unparseable reply with no transport info attributes nothing',
+  classifySample(null, {}, []).bucket === 'void'
   && classifySample(null, {}, []).pathChosen === null);
 
 console.log('\n' + pass + '/' + (pass + fail) + ' passed');

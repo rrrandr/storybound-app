@@ -1,0 +1,75 @@
+<claude-code-hint v="1" type="plugin" value="vercel@claude-plugins-official" />
+Vercel CLI 59.25.0 (Node.js 25.3.0)
+Retrieving project…
+> Local resources:
+  Vercel Queues   http://127.0.0.1:4782
+  Runtime Cache   http://127.0.0.1:4783/v1/suspense-cache/
+> Ready! Available at http://localhost:3000
+[SPECIALIST-PROXY] _noFallback — chain reduced to ONE entry: grok-4-1-fast-reasoning
+[SPECIALIST-PROXY] Client preferredModel: grok-4-1-fast-reasoning → chain reordered.
+[SPECIALIST-PROXY] Role: STRUCTURE_GENERATOR, Model chain: grok-4-1-fast-reasoning
+[SPECIALIST-PROXY] Trying model 1/1: grok-4-1-fast-reasoning
+[SPECIALIST-PROXY] latency=37179ms model=grok-4.3 effort=high (chain="grok-4-1-fast-reasoning") status=200
+[SPECIALIST-PROXY] ✓ Model grok-4-1-fast-reasoning succeeded
+[SPECIALIST-PROXY] _noFallback — chain reduced to ONE entry: grok-4-1-fast-reasoning
+[SPECIALIST-PROXY] Client preferredModel: grok-4-1-fast-reasoning → chain reordered.
+[SPECIALIST-PROXY] Role: STRUCTURE_GENERATOR, Model chain: grok-4-1-fast-reasoning
+[SPECIALIST-PROXY] Trying model 1/1: grok-4-1-fast-reasoning
+[SPECIALIST-PROXY] latency=48667ms model=grok-4.3 effort=high (chain="grok-4-1-fast-reasoning") status=200
+[SPECIALIST-PROXY] ✓ Model grok-4-1-fast-reasoning succeeded
+[SPECIALIST-PROXY] _noFallback — chain reduced to ONE entry: grok-4-1-fast-reasoning
+[SPECIALIST-PROXY] Client preferredModel: grok-4-1-fast-reasoning → chain reordered.
+[SPECIALIST-PROXY] Role: STRUCTURE_GENERATOR, Model chain: grok-4-1-fast-reasoning
+[SPECIALIST-PROXY] Trying model 1/1: grok-4-1-fast-reasoning
+[SPECIALIST-PROXY] latency=25252ms model=grok-4.3 effort=high (chain="grok-4-1-fast-reasoning") status=200
+[SPECIALIST-PROXY] ✓ Model grok-4-1-fast-reasoning succeeded
+[SPECIALIST-PROXY] _noFallback — chain reduced to ONE entry: grok-4-1-fast-reasoning
+[SPECIALIST-PROXY] Client preferredModel: grok-4-1-fast-reasoning → chain reordered.
+[SPECIALIST-PROXY] Role: STRUCTURE_GENERATOR, Model chain: grok-4-1-fast-reasoning
+[SPECIALIST-PROXY] Trying model 1/1: grok-4-1-fast-reasoning
+[SPECIALIST-PROXY] latency=40158ms model=grok-4.3 effort=high (chain="grok-4-1-fast-reasoning") status=200
+[SPECIALIST-PROXY] ✓ Model grok-4-1-fast-reasoning succeeded
+[SPECIALIST-PROXY] _noFallback — chain reduced to ONE entry: grok-4-1-fast-reasoning
+[SPECIALIST-PROXY] Client preferredModel: grok-4-1-fast-reasoning → chain reordered.
+[SPECIALIST-PROXY] Role: STRUCTURE_GENERATOR, Model chain: grok-4-1-fast-reasoning
+[SPECIALIST-PROXY] Trying model 1/1: grok-4-1-fast-reasoning
+[SPECIALIST-PROXY] latency=37848ms model=grok-4.3 effort=high (chain="grok-4-1-fast-reasoning") status=200
+[SPECIALIST-PROXY] ✓ Model grok-4-1-fast-reasoning succeeded
+[SPECIALIST-PROXY] _noFallback — chain reduced to ONE entry: grok-4-1-fast-reasoning
+[SPECIALIST-PROXY] Client preferredModel: grok-4-1-fast-reasoning → chain reordered.
+[SPECIALIST-PROXY] Role: STRUCTURE_GENERATOR, Model chain: grok-4-1-fast-reasoning
+[SPECIALIST-PROXY] Trying model 1/1: grok-4-1-fast-reasoning
+[SPECIALIST-PROXY] latency=52558ms model=grok-4.3 effort=high (chain="grok-4-1-fast-reasoning") status=200
+[SPECIALIST-PROXY] ✓ Model grok-4-1-fast-reasoning succeeded
+[SPECIALIST-PROXY] _noFallback — chain reduced to ONE entry: grok-4-1-fast-reasoning
+[SPECIALIST-PROXY] Client preferredModel: grok-4-1-fast-reasoning → chain reordered.
+[SPECIALIST-PROXY] Role: STRUCTURE_GENERATOR, Model chain: grok-4-1-fast-reasoning
+[SPECIALIST-PROXY] Trying model 1/1: grok-4-1-fast-reasoning
+[SPECIALIST-PROXY] Model grok-4-1-fast-reasoning TIMED OUT after 89977ms (>90000ms hang guard) — advancing chain
+[SPECIALIST-PROXY] Entire model chain exhausted. Last error: {
+  error: {
+    message: 'xAI call for grok-4-1-fast-reasoning exceeded 90000ms (hang guard tripped)'
+  }
+}
+[SPECIALIST-PROXY] _noFallback — chain reduced to ONE entry: grok-4-1-fast-reasoning
+[SPECIALIST-PROXY] Client preferredModel: grok-4-1-fast-reasoning → chain reordered.
+[SPECIALIST-PROXY] Role: STRUCTURE_GENERATOR, Model chain: grok-4-1-fast-reasoning
+[SPECIALIST-PROXY] Trying model 1/1: grok-4-1-fast-reasoning
+[SPECIALIST-PROXY] latency=55317ms model=grok-4.3 effort=high (chain="grok-4-1-fast-reasoning") status=200
+[SPECIALIST-PROXY] ✓ Model grok-4-1-fast-reasoning succeeded
+[SPECIALIST-PROXY] Client preferredModel: grok-4-1-fast-reasoning → chain reordered.
+[SPECIALIST-PROXY] Role: STRUCTURE_GENERATOR, Model chain: grok-4-1-fast-reasoning → grok-4-1-fast-non-reasoning → grok-4.3
+[SPECIALIST-PROXY] Trying model 1/3: grok-4-1-fast-reasoning
+[SPECIALIST-PROXY] latency=45745ms model=grok-4.3 effort=high (chain="grok-4-1-fast-reasoning") status=200
+[SPECIALIST-PROXY] ✓ Model grok-4-1-fast-reasoning succeeded
+[SPECIALIST-PROXY] Client preferredModel: grok-4-1-fast-reasoning → chain reordered.
+[SPECIALIST-PROXY] Role: STRUCTURE_GENERATOR, Model chain: grok-4-1-fast-reasoning → grok-4-1-fast-non-reasoning → grok-4.3
+[SPECIALIST-PROXY] Trying model 1/3: grok-4-1-fast-reasoning
+[SPECIALIST-PROXY] latency=7245ms model=grok-4.3 effort=high (chain="grok-4-1-fast-reasoning") status=200
+[SPECIALIST-PROXY] ✓ Model grok-4-1-fast-reasoning succeeded
+[SPECIALIST-PROXY] _noFallback — chain reduced to ONE entry: grok-4-1-fast-reasoning
+[SPECIALIST-PROXY] Client preferredModel: grok-4-1-fast-reasoning → chain reordered.
+[SPECIALIST-PROXY] Role: STRUCTURE_GENERATOR, Model chain: grok-4-1-fast-reasoning
+[SPECIALIST-PROXY] Trying model 1/1: grok-4-1-fast-reasoning
+[SPECIALIST-PROXY] latency=3364ms model=grok-4.3 effort=high (chain="grok-4-1-fast-reasoning") status=200
+[SPECIALIST-PROXY] ✓ Model grok-4-1-fast-reasoning succeeded

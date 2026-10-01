@@ -289,11 +289,21 @@ const runCase = async (C, sampleIx) => {
     } catch (_) { return ''; }
   };
   const pc = calls.filter(c => c.stage === 'planner' && c.response).pop() || null;
+  const pcAny = calls.filter(c => c.stage === 'planner').pop() || null;
   let envelope = null;
+  // TRANSPORT FACTS, recorded separately from the envelope so a failed transport can never be
+  // attributed to the planner. Run 9's proxy returned NO_RESPONSE_FROM_FUNCTION and the classifier
+  // called it an envelope violation.
+  const transport = { dispatched: !!pcAny, responded: !!pc,
+    error: (pcAny && pcAny.error) || null, content: '', bodySnippet: '' };
   if (pc) {
     const content = contentOf(pc.response);
+    transport.content = content;
+    transport.bodySnippet = String(pc.response || '').slice(0, 200);
     write(tag + '_planner_content.txt', content);
     try { const m = content.match(/\{[\s\S]*\}/); if (m) envelope = JSON.parse(m[0]); } catch (_) {}
+  } else if (pcAny) {
+    transport.bodySnippet = String(pcAny.error || 'no response body').slice(0, 200);
   }
   // PROSE IS EXTRACTED FOR EVERY CASE, not only when a change was proposed — a null-change run
   // must still confirm the scene rendered. Previously this sat inside the hasChange branch and so
@@ -303,7 +313,7 @@ const runCase = async (C, sampleIx) => {
   if (prose) write(tag + '_prose.txt', prose);
   write(tag + '_state_after.json', after);
   write(tag + '_envelope.json', envelope || {});
-  return { calls, setup, after, envelope, prose, plannerDispatched, retriesBlocked,
+  return { calls, setup, after, envelope, prose, plannerDispatched, retriesBlocked, transport,
     plannerRequest: (calls.filter(c => c.stage === 'planner').pop() || {}).request || '',
     author: authorResp,
     authorReq: calls.filter(c => c.stage === 'author').pop() || null };
@@ -381,13 +391,13 @@ if (SAMPLES) {
     samples.every(s2 => !s2.R || !s2.R.calls.some(c => c.stage !== 'planner' && c.response)));
 
   say('\n=== DISTRIBUTION ===');
-  const buckets = { valid_durable: 0, valid_scene_local: 0, incoherent: 0, envelope_violation: 0 };
+  const buckets = { valid_durable: 0, valid_scene_local: 0, incoherent: 0, envelope_violation: 0, void: 0 };
   const paths = { durable: 0, scene_local: 0, none: 0 };
   const rows = [];
   samples.forEach(s2 => {
-    if (!s2.R) { buckets.envelope_violation++; paths.none++;
-      rows.push({ i: s2.i, bucket: 'envelope_violation', path: null, why: ['sample errored'] }); return; }
-    const c = classifySample(s2.R.envelope, s2.R.after, s2.R.setup.ledgerBeforeFull);
+    if (!s2.R) { buckets.void++; paths.none++;
+      rows.push({ i: s2.i, bucket: 'void', path: null, why: ['the sample errored before a reply'] }); return; }
+    const c = classifySample(s2.R.envelope, s2.R.after, s2.R.setup.ledgerBeforeFull, s2.R.transport);
     buckets[c.bucket] = (buckets[c.bucket] || 0) + 1;
     paths[c.pathChosen || 'none'] = (paths[c.pathChosen || 'none'] || 0) + 1;
     rows.push({ i: s2.i, bucket: c.bucket, path: c.pathChosen, why: c.why });
@@ -395,10 +405,31 @@ if (SAMPLES) {
   rows.forEach(r2 => say('  sample ' + r2.i + ': ' + r2.bucket.toUpperCase()
     + ' (path=' + JSON.stringify(r2.path) + ')'
     + (r2.why && r2.why.length ? '\n      why: ' + JSON.stringify(r2.why) : '')));
+  // ── REFUSAL. An aggregate that mixes model data with transport failures is not a measurement:
+  // the denominator is wrong and the void samples read as non-compliance. So no rate is printed
+  // at all while any sample is void — the run must be re-dispatched instead.
+  if (buckets.void > 0) {
+    say('\n  DISTRIBUTION REFUSED — ' + buckets.void + ' of ' + SAMPLES + ' sample(s) are VOID');
+    say('  A void sample is a TRANSPORT failure, not a planner outcome. No rate is computed from a');
+    say('  partial set: the denominator would be wrong and the void samples would read as');
+    say('  non-compliance by a model that was never reached. Re-dispatch the whole check.');
+    say('  (non-void outcomes, for diagnosis only, NOT a distribution: '
+      + 'durable=' + buckets.valid_durable + ' scene_local=' + buckets.valid_scene_local
+      + ' incoherent=' + buckets.incoherent + ' envelope_violation=' + buckets.envelope_violation + ')');
+    t('every sample reached the planner', false,
+      buckets.void + ' void sample(s) — nothing is measured');
+    write('distribution.json', { refused: true, voidCount: buckets.void, samples: rows, buckets,
+      hashes, dispatches, blocked, measured, authorized: AUTHORIZED });
+    say('\n' + pass + '/' + (pass + fail) + ' harness assertions passed');
+    say('MEASURED SPEND: $' + measured.toFixed(6) + ' of $' + AUTHORIZED.toFixed(2));
+    say('Artefacts: ' + RUN);
+    process.exit(1);
+  }
   say('\n  valid durable      : ' + buckets.valid_durable + '/' + SAMPLES);
   say('  valid scene-local  : ' + buckets.valid_scene_local + '/' + SAMPLES);
   say('  incoherent/rejected: ' + buckets.incoherent + '/' + SAMPLES);
   say('  envelope violations: ' + buckets.envelope_violation + '/' + SAMPLES);
+  say('  void (transport)   : ' + buckets.void + '/' + SAMPLES);
   // ALIAS COMPLIANCE, scored only over the samples that actually proposed something durable.
   const durableSamples = samples.filter(s2 => s2.R && s2.R.envelope
     && s2.R.envelope.pressure_scope === 'durable'
@@ -436,7 +467,7 @@ if (SAMPLES) {
     JSON.stringify(paths));
   t('the bucket tally accounts for every sample',
     buckets.valid_durable + buckets.valid_scene_local + buckets.incoherent
-      + buckets.envelope_violation === SAMPLES, JSON.stringify(buckets));
+      + buckets.envelope_violation + buckets.void === SAMPLES, JSON.stringify(buckets));
   say('\n  NOTE: n=' + SAMPLES + '. A rate from five draws has a wide interval; this measures'
     + ' whether the planner is RELIABLE, and only a clean sweep either way is decisive at this n.');
   write('distribution.json', { samples: rows, buckets, paths, hashes, dispatches, blocked,

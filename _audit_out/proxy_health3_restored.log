@@ -1,0 +1,48 @@
+=== PROXY HEALTH DIAGNOSTIC (provider-free, $0) ===
+    HEALTH EVIDENCE ONLY — not a planner sample, not contract evidence.
+
+  real planner body: 14995 bytes, 2 messages, system 13543 chars
+  role="STRUCTURE_GENERATOR" preferredModel="grok-4-1-fast-non-reasoning" max_tokens=1200
+
+1. the function is reachable and answers
+   OPTIONS → 204 in 1140ms
+  ok   OPTIONS returns 204 (CORS preflight path)
+   GET     → 405 in 1070ms
+  ok   GET is refused with 405, not a hang
+
+2. a SMALL body is validated and answered (baseline latency)
+   small POST → 400 in 1058ms  "{\"error\":\"Messages array is required\"}"
+  ok   an empty messages array is refused with 400
+  ok     and the error names the reason
+
+3. the REAL full-size body is received, parsed and answered ($0 — rejected pre-dispatch)
+   full POST #1 (15036B) → 400 in 1053ms
+   full POST #2 (15036B) → 400 in 1058ms
+   full POST #3 (15036B) → 400 in 1040ms
+   full POST #4 (15036B) → 400 in 1065ms
+   full POST #5 (15036B) → 400 in 1075ms
+  ok   every full-size probe got an HTTP response
+  ok     each is the expected 400 invalid_response_format
+  ok     and the body names that gate, proving it got past receipt and parsing
+   latencies: [1053,1058,1040,1065,1075]ms  max=1075ms
+  ok     none of them took longer than 10s (the validation path is not the bottleneck)
+  ok     and none returned NO_RESPONSE_FROM_FUNCTION
+
+4. no model was tried — this diagnostic is provider-free, not merely cheap
+   dev-log "Trying model" lines: before=0 after=0
+  ok   the dev log was readable
+  ok   NOT ONE upstream model attempt was added by these probes
+
+5. is the failure payload-specific, or is the function layer down?
+   statuses across OPTIONS, GET, small POST and 5 full POSTs: [204,405,400,400,400,400,400,400]
+   → bodyless methods succeed, so the fault is payload- or upstream-specific.
+  ok   DIAGNOSIS RECORDED: not all requests failed (a healthy function layer)
+
+6. scope
+   This is HEALTH evidence about the local transport. It is NOT evidence about the
+   planner, the alias contract, or any continuation outcome, whichever way it goes.
+   A green run means the function receives, parses and answers a body of the real
+   planner shape and size. It still says nothing about the UPSTREAM call, which this
+   diagnostic cannot test without spending and deliberately does not.
+
+12/12 health checks passed

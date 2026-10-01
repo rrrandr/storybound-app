@@ -1,0 +1,54 @@
+=== PROXY HEALTH DIAGNOSTIC (provider-free, $0) ===
+    HEALTH EVIDENCE ONLY — not a planner sample, not contract evidence.
+
+  real planner body: 14995 bytes, 2 messages, system 13543 chars
+  role="STRUCTURE_GENERATOR" preferredModel="grok-4-1-fast-non-reasoning" max_tokens=1200
+
+1. the function is reachable and answers
+   OPTIONS → 502 in 470ms
+  FAIL OPTIONS returns 204 (CORS preflight path)  — {"label":"OPTIONS","ok":true,"status":502,"ms":470,"body":"An error occurred with this application.\n\nNO_RESPONSE_FROM_FUNCTION\n"}
+   GET     → 502 in 405ms
+  FAIL GET is refused with 405, not a hang  — {"label":"GET","ok":true,"status":502,"ms":405,"body":"An error occurred with this application.\n\nNO_RESPONSE_FROM_FUNCTION\n"}
+
+2. a SMALL body is validated and answered (baseline latency)
+   small POST → 502 in 685ms  "An error occurred with this application.\n\nNO_RESPONSE_FROM_FUNCTION\n"
+  FAIL an empty messages array is refused with 400  — {"label":"small","ok":true,"status":502,"ms":685,"body":"An error occurred with this application.\n\nNO_RESPONSE_FROM_FUNCTION\n"}
+  FAIL   and the error names the reason  — An error occurred with this application.
+
+NO_RESPONSE_FROM_FUNCTION
+
+
+3. the REAL full-size body is received, parsed and answered ($0 — rejected pre-dispatch)
+   full POST #1 (15036B) → 502 in 663ms
+   full POST #2 (15036B) → 502 in 638ms
+   full POST #3 (15036B) → 502 in 641ms
+   full POST #4 (15036B) → 502 in 640ms
+   full POST #5 (15036B) → 502 in 651ms
+  ok   every full-size probe got an HTTP response
+  FAIL   each is the expected 400 invalid_response_format  — [502,502,502,502,502]
+  FAIL   and the body names that gate, proving it got past receipt and parsing  — An error occurred with this application.
+
+NO_RESPONSE_FROM_FUNCTION
+
+   latencies: [663,638,641,640,651]ms  max=663ms
+  ok     none of them took longer than 10s (the validation path is not the bottleneck)
+  FAIL   and none returned NO_RESPONSE_FROM_FUNCTION  — [true,true,true,true,true]
+
+4. no model was tried — this diagnostic is provider-free, not merely cheap
+   dev-log "Trying model" lines: before=11 after=11
+  ok   the dev log was readable
+  ok   NOT ONE upstream model attempt was added by these probes
+
+5. scope of this evidence
+   ESTABLISHED: the local function receives, parses and answers a body of the real
+                planner shape and size, repeatedly, in well under a second, and the
+                NO_RESPONSE_FROM_FUNCTION failure does NOT reproduce on the
+                validation path.
+   NOT ESTABLISHED: anything about the UPSTREAM call. Run 9's failure happened after
+                model selection, with planner latencies observed from 3.4s to the
+                90s hang guard, so the remaining suspect is upstream latency rather
+                than request receipt. This diagnostic cannot test that without
+                spending, and deliberately does not.
+   NOT EVIDENCE about the planner, the alias contract, or any continuation outcome.
+
+4/11 health checks passed

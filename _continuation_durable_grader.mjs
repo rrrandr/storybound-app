@@ -123,9 +123,37 @@ export function gradeScopeCoherence(E, knownNames) {
 // `pathChosen` is reported ALONGSIDE the buckets because it answers the actual question — whether
 // the planner reliably CHOOSES the durable path — which the four buckets alone blur: run 6 chose
 // durable and still landed in `incoherent`.
-export function classifySample(E, after, ledgerBefore) {
+//   void                a TRANSPORT failure, not a model fault: the planner never replied, so
+//                       there was no envelope to violate. Run 9 returned
+//                       "NO_RESPONSE_FROM_FUNCTION" from the local proxy on all three samples and
+//                       my classifier filed them as envelope violations — which would have read
+//                       as planner non-compliance for a model that was never reached. A void
+//                       sample is NOT a data point and is excluded from every rate.
+//
+// `transport` is how void is told apart from a real contract failure. The discriminator is whether
+// a non-empty CONTENT string came back: content present means the model spoke, so a missing or
+// malformed envelope is ITS fault; no content means nothing reached us and the sample is void.
+export function classifySample(E, after, ledgerBefore, transport) {
+  const tr = transport || null;
+  if (tr) {
+    if (tr.dispatched === false) {
+      return { bucket: 'void', pathChosen: null, why: ['no planner call was dispatched'] };
+    }
+    if (tr.error) {
+      return { bucket: 'void', pathChosen: null, why: ['transport error: ' + String(tr.error)] };
+    }
+    if (!s(tr.content)) {
+      return { bucket: 'void', pathChosen: null,
+        why: ['the planner returned no content' + (tr.bodySnippet ? ': ' + String(tr.bodySnippet).slice(0, 120) : '')] };
+    }
+  }
   const r = (E && typeof E === 'object') ? E : null;
-  if (!r) return { bucket: 'envelope_violation', pathChosen: null, why: ['no parseable reply'] };
+  // Content came back but no envelope could be parsed out of it — the model DID reply, and what it
+  // replied with is not a valid envelope. Without transport info we cannot tell this from void, so
+  // we say so rather than guessing a bucket.
+  if (!r) return { bucket: tr ? 'envelope_violation' : 'void', pathChosen: null,
+    why: [tr ? 'content returned but no envelope could be parsed from it'
+             : 'no parseable reply and no transport information — cannot attribute'] };
   const why = [];
   const has = (k) => Object.prototype.hasOwnProperty.call(r, k);
   if (!s(r.scene_purpose)) why.push('scene_purpose missing or empty');
