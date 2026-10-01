@@ -100400,6 +100400,8 @@ function _buildAuthorFloorDirective(s) {
       return { outcome: 'rejected', why: v.why, sealedId: null, introduced: [] };
     }
     if (v.outcome === 'none') {
+      // Clear any prior seal carrier so a later scene cannot re-deliver a stale continuation.
+      try { if (window.state) window.state._activeContinuationSeal = null; } catch (_) {}
       try { console.log('[CONTINUATION:NONE] scene=' + scene + ' — no durable change proposed; nothing written'); } catch (_) {}
       return { outcome: 'none', why: [], sealedId: null, introduced: [] };
     }
@@ -100445,6 +100447,16 @@ function _buildAuthorFloorDirective(s) {
       pendingEntities: introduced,
       milestone: String(reply.forward_pressure || '') });
     if (!sealed) return { outcome: 'rejected', why: ['seal failed'], sealedId: null, introduced: introduced };
+    // THE AUTHOR CARRIER holds the sealed id plus READER-FACING FIELDS ONLY. Tier, targets, basis,
+    // posture hashes and pending-entity records are deliberately absent from it, so even a leak of
+    // the carrier itself cannot put machinery in front of the writer.
+    try {
+      if (window.state) window.state._activeContinuationSeal = {
+        sealedId: sealed.id, scene: scene,
+        readerFacing: { scene_purpose: String(reply.scene_purpose || ''),
+                        forward_pressure: String(reply.forward_pressure || '') }
+      };
+    } catch (_) {}
     try { console.log('[CONTINUATION:SEALED] scene=' + scene + ' tier=' + v.tier + ' ' + sealed.id
       + ' introduced=' + JSON.stringify(introduced.map(function (e) { return e.kind + ':' + e.id; }))); } catch (_) {}
     return { outcome: 'sealed', tier: v.tier, sealedId: sealed.id, introduced: introduced,
@@ -101737,6 +101749,35 @@ function _buildAuthorFloorDirective(s) {
           // KNOWN, DISCLOSED SIDE EFFECT: the planner is now asked for ONE additional JSON key (+token
           // headroom). Event SELECTION semantics are unchanged — slots decompose the event already chosen —
           // but this is not literally a zero-delta planner call.
+          // ═══ UNIVERSAL CONTINUATION PROPOSAL SCHEMA (Roman 2026-10-01) ═══
+          // Applies to whichever contract set _scSys above, exactly as the event-slots block does.
+          // Kill switch: window._continuationProposalSchema === false.
+          //
+          // The planner may now propose ONE structured continuation record, or nothing. Handled by
+          // _processContinuationProposal, which is fully validated provider-free: an omitted or
+          // empty proposal resolves to `none`, writes no canon, and leaves ordinary continuation
+          // untouched. Nothing here can create canon — the seal happens after validation and
+          // activation only after delivery.
+          //
+          // KNOWN, DISCLOSED SIDE EFFECT (same shape as _evidenceCommitCheck's): the planner is
+          // asked for additional OPTIONAL keys and the system prompt grows, so this is not a
+          // literally zero-delta planner call. Event SELECTION semantics are unchanged.
+          if (typeof window !== 'undefined' && window._continuationProposalSchema !== false) {
+            _scSys += '\n\nCONTINUATION PROPOSAL (OPTIONAL — omit entirely when this scene needs no durable change; omitting is NORMAL and correct):\n'
+              + 'If, and only if, the player\'s action makes a NEW DURABLE development the honest next step, you may also return:\n'
+              + '  "scene_purpose": what this scene exists to do · "forward_pressure": what pushes the story on · "derivation": why this follows from the player\'s action\n'
+              + '  "introduces": [ { "kind": "named|role|artifact|institution|collective|place", "label": "", "aliases": [], "justification": "", "future_relevance": "what pressure it will exert later" } ]\n'
+              + '      — for genuinely NEW people, offices, relics, governing bodies, groups or places. Ordinary props are scene texture; do NOT register them.\n'
+              + '      NEVER supply an id — ids are assigned by the system, never by you.\n'
+              + '  "existingRefs": [ "<stable entity id>" ] — established entities this change RELIES ON. Ids only, never names.\n'
+              + '  "canon_change": { "tier": 2|3, "targets": [ "<id or an introduces[] label>" ], "content": "the durable fact, one sentence" }\n'
+              + '      targets = what the change ALTERS (not merely references).\n'
+              + '      TIER 2 = additive: a new institution, group, place, minor actor, pursuit, demand or investigation.\n'
+              + '      TIER 3 = alters established canon: a named character\'s death or removal, an office, a title, ownership or entrustment, established history, or a major institution.\n'
+              + '        TIER 3 ALSO REQUIRES "basis": { "kind": "player_action|fate_outcome|declared_high_authority", "ref": "<recorded id/hash>", "causal_chain": "how it follows" }.\n'
+              + '        A protected change may NOT be presented as additive, and existing authority may NOT be quietly redefined to make a new pressure work.\n'
+              + 'Propose at most ONE canon_change. When in doubt, omit it.';
+          }
           if (typeof window !== 'undefined' && (window._structuredEventHandoff === true || window._evidenceCommitCheck !== false)) {
             _scSys += '\n\nSTRUCTURED EVENT HANDOFF (REQUIRED — add ONE more key to your JSON): also return "event_slots", decomposing THE SAME single event you chose (do NOT invent a different one) into its SEMANTIC core: { "precondition":"WHAT MUST BE PRESENT for this event to be STAGEABLE — the actor and target must exist / be present in the scene (e.g. \\"Julian is present in the scene\\"). A PRESENCE / availability condition, NOT the before-state the event overturns. If the needed party cannot be present, the event is IMPOSSIBLE — pick a different event", "actor":"who performs it", "action":"the core thing they do", "target":"who or what it is done TO / BEFORE / WITH — a specific character or object; if genuinely none, \\"none\\"", "exit_state":"the ONE fact about the world that is now TRUE because it happened, phrased as a STATE (e.g. \\"the elders now believe Julian caused it\\")", "mechanism_grounding":"REQUIRED. What makes this event PHYSICALLY POSSIBLE in this world. Write exactly \\"ordinary\\" when it needs no special capability — speaking, moving, refusing, arriving, deciding, withholding, and institutions convening or suspending are ALL ordinary. Otherwise name the specific WORLD TRUTH, stage affordance, or established canon that grants the capability, in its own words. You may NOT invent a capability, power, faculty or supernatural mechanism to make an event possible — if no grounded source supports it, choose a different event." }. EXIT_STATE is the PRIMARY invariant. These four are the author\'s SEMANTIC contract — MEANING, not wording: the author may freely choose location, phrasing, imagery, pacing, AND invent additional micro-beats (hesitation, a lie, an escalation, a reversal), but may NEVER change WHO acts, the core action, WHOM it targets, or the exit_state.';
           }
@@ -237621,6 +237662,21 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
       try {
         if (typeof _fscAttachToAuthorPayload === 'function') _sharedSys = _fscAttachToAuthorPayload(_sharedSys);
       } catch (_fscAErr) { console.warn('[FSC-DELIVERY] attach threw:', _fscAErr && _fscAErr.message); }
+      // ═══ SEALED CONTINUATION → AUTHOR (Roman 2026-10-01) ═══
+      // Same seam as the Fate brief, and the same discipline: READER-FACING MATERIAL ONLY. The
+      // author gets the sealed fact as already-true plus the scene's purpose and forward pressure.
+      // Never ids, tiers, posture hashes, basis, targets, validator language, protected-register
+      // terms, pending-entity records, or unproposed alternatives — a sealed possibility rendered
+      // as machinery is the defect class already closed for Fate briefs.
+      try {
+        if (typeof _continuationAuthorBlock === 'function') {
+          var _ctSeal = state && state._activeContinuationSeal;
+          if (_ctSeal && _ctSeal.sealedId) {
+            var _ctBlock = _continuationAuthorBlock(_ctSeal.sealedId, _ctSeal.readerFacing || {});
+            if (_ctBlock) _sharedSys += _ctBlock;
+          }
+        }
+      } catch (_ctErr) { console.warn('[CONTINUATION-DELIVERY] attach threw:', _ctErr && _ctErr.message); }
       // END-TO-END ASSERTION, immediately before dispatch. A sealed consequence that is absent,
       // partial or altered in the assembled request stops generation rather than being authored
       // without its facts.
