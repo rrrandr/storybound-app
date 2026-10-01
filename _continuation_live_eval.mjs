@@ -209,22 +209,35 @@ const runCase = async (C) => {
   }));
   await browser.close();
 
-  // parse the planner's own reply
+  // SHAPE-AWARE EXTRACTION, one place. Providers return either a flat {content} (the proxy's own
+  // shape) or the OpenAI {choices:[{message:{content}}]} shape — the last author response used the
+  // latter, and an ad-hoc check that read only `.content` reported 0 prose chars for a scene that
+  // had in fact rendered 17,907.
+  const contentOf = (responseText) => {
+    try {
+      const j = JSON.parse(responseText);
+      return String((j && j.content)
+        || (j && j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content)
+        || '');
+    } catch (_) { return ''; }
+  };
   const pc = calls.filter(c => c.stage === 'planner' && c.response).pop() || null;
   let envelope = null;
   if (pc) {
-    try {
-      const j = JSON.parse(pc.response);
-      const content = (j && j.content) || (j && j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content) || '';
-      write(C.id + '_planner_content.txt', String(content));
-      const m = String(content).match(/\{[\s\S]*\}/);
-      if (m) envelope = JSON.parse(m[0]);
-    } catch (_) {}
+    const content = contentOf(pc.response);
+    write(C.id + '_planner_content.txt', content);
+    try { const m = content.match(/\{[\s\S]*\}/); if (m) envelope = JSON.parse(m[0]); } catch (_) {}
   }
+  // PROSE IS EXTRACTED FOR EVERY CASE, not only when a change was proposed — a null-change run
+  // must still confirm the scene rendered. Previously this sat inside the hasChange branch and so
+  // never ran on the two runs that mattered.
+  const authorResp = calls.filter(c => c.stage === 'author' && c.response).pop() || null;
+  const prose = authorResp ? contentOf(authorResp.response) : '';
+  if (prose) write(C.id + '_prose.txt', prose);
   write(C.id + '_state_after.json', after);
   write(C.id + '_envelope.json', envelope || {});
-  return { calls, setup, after, envelope,
-    author: calls.filter(c => c.stage === 'author' && c.response).pop() || null,
+  return { calls, setup, after, envelope, prose,
+    author: authorResp,
     authorReq: calls.filter(c => c.stage === 'author').pop() || null };
 };
 
@@ -301,14 +314,6 @@ for (const C of CASES) {
           t('    with no entity id', !/ent:stage:\d+/.test(R.authorReq.request));
           t('    with no proposal id', !/prop:\d+:\d+/.test(R.authorReq.request));
         } else t('  an author request was dispatched', false, 'no author request captured');
-        if (R.author) {
-          let prose = '';
-          try { const j = JSON.parse(R.author.response);
-            prose = String((j && j.content) || (j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content) || ''); } catch (_) {}
-          write(C.id + '_prose.txt', prose);
-          say('  prose chars: ' + prose.length);
-          t('  prose was returned', prose.length > 200, 'len=' + prose.length);
-        } else t('  prose was returned', false, 'author call did not complete');
         t('  at most ONE fact activated', R.after.facts.length <= 1, 'facts=' + R.after.facts.length);
         if (R.after.facts.length === 1) {
           t('    it is sealed-provenance', R.after.facts[0].provenanceLink === 'sealed');
@@ -317,6 +322,11 @@ for (const C of CASES) {
       }
     }
   }
+  // PROSE, asserted for EVERY case — a null-change scene must still render.
+  say('\n  prose chars: ' + R.prose.length);
+  t('  the scene rendered prose', R.prose.length > 200, 'len=' + R.prose.length
+    + (PLANNER_ONLY ? ' (planner-only run: no author call expected)' : ''));
+
   // no unplanned canon, both cases
   const planned = R.after.sealed.flatMap(p => (p.pendingEntities || []).map(e => e.id));
   const unplanned = R.after.ledger.filter(e => R.setup.ledgerBefore.indexOf(e.id) === -1

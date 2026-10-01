@@ -103,9 +103,10 @@ const harvest = async (scenario) => {
       // entirely is an envelope VIOLATION, not a no-change scene — proven in
       // _continuation_envelope_control.mjs.
       out.res = window._processContinuationProposal(
-        Object.assign({}, base, { canon_change: null, introduces: [] }), { scene: 30 });
+        Object.assign({}, base, { pressure_scope: 'scene_local', canon_change: null, introduces: [] }), { scene: 30 });
     } else if (sc === 'tier2') {
       out.res = window._processContinuationProposal(Object.assign({}, base, {
+        pressure_scope: 'durable',
         introduces: [{ kind: 'institution', label: 'the Reach Commission', aliases: ['the Commission'],
           justification: 'Governance able to investigate a razing.',
           future_relevance: 'It will summon her and shape the inquiry.' }],
@@ -115,6 +116,7 @@ const harvest = async (scenario) => {
       }), { scene: 30 });
     } else {
       out.res = window._processContinuationProposal(Object.assign({}, base, {
+        pressure_scope: 'durable',
         introduces: [], existingRefs: [out.julianId],
         canon_change: { tier: 3, targets: [out.julianId],
           content: 'Julian is stripped of the Provast office before the assembly.',

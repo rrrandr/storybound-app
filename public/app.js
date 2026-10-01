@@ -100302,6 +100302,47 @@ function _buildAuthorFloorDirective(s) {
     return res && res.ok ? res : null;
   }
 
+  // Candidate continuing referents named in a supposedly scene-local pressure: an article followed
+  // by a capitalised noun phrase ("the Reach Commission", "a Reach Magistrate"). Deliberately
+  // narrow — "whoever governs the toll" and "someone will answer" name nothing and pass.
+  // The ARTICLE is matched case-insensitively (a sentence may open with "The Reach Commission…"),
+  // while the noun phrase stays case-SENSITIVE — capitalisation is the signal that distinguishes a
+  // named body from "the toll". An all-lowercase article class silently passed every
+  // sentence-initial referent, which is how "The Reach Commission" first slipped this guard.
+  var _DURABLE_REFERENT_RX = /\b(?:[Tt]he|[Aa]n?)\s+((?:[A-Z][a-z]+(?:['’]s)?\s+)*[A-Z][a-z]+)\b/g;
+  function _undeclaredDurableReferents(text, declaredLabels) {
+    var out = [], seen = {};
+    try {
+      var s = String(text || '');
+      var reg = _protectedRegisterIds();
+      var known = [];
+      for (var id in reg) {
+        known.push(String(reg[id].label || '').toLowerCase());
+        (reg[id].aliases || []).forEach(function (a) { known.push(String(a || '').toLowerCase()); });
+      }
+      try {
+        var st = window.state || {};
+        [st.playerName, st.name, st.loveInterestName, st.partnerName].forEach(function (n) {
+          if (n) known.push(String(n).toLowerCase());
+        });
+      } catch (_) {}
+      (declaredLabels || []).forEach(function (l) { known.push(String(l).toLowerCase()); });
+      var m;
+      _DURABLE_REFERENT_RX.lastIndex = 0;
+      while ((m = _DURABLE_REFERENT_RX.exec(s)) !== null) {
+        var phrase = (m[1] || '').trim(); if (!phrase) continue;
+        var full = (m[0] || '').trim().toLowerCase();
+        var low = phrase.toLowerCase();
+        // exempt anything already established, declared here, or a cast name
+        var exempt = known.some(function (k) { return k && (k === low || k === full || low.indexOf(k) >= 0 || k.indexOf(low) >= 0); });
+        if (exempt || seen[low]) continue;
+        seen[low] = 1; out.push(phrase);
+      }
+    } catch (_) {}
+    return out;
+  }
+  window._undeclaredDurableReferents = _undeclaredDurableReferents;
+
   // REJECT-ONLY. Returns { ok, why[], … }. Never rewrites a proposal, never partially commits.
   function _validateContinuationProposal(reply) {
     var why = [];
@@ -100319,18 +100360,67 @@ function _buildAuthorFloorDirective(s) {
     var hasPressure = typeof r.forward_pressure === 'string' && r.forward_pressure.trim();
     var hasChangeKey = Object.prototype.hasOwnProperty.call(r, 'canon_change');
     var introIsArray = Array.isArray(r.introduces);
+    var scope = (r.pressure_scope === 'scene_local' || r.pressure_scope === 'durable') ? r.pressure_scope : null;
     if (!hasPurpose) why.push('envelope: scene_purpose is missing or empty');
     if (!hasPressure) why.push('envelope: forward_pressure is missing or empty');
     if (!hasChangeKey) why.push('envelope: canon_change key absent (use null for no change)');
     if (!introIsArray) why.push('envelope: introduces is not an array (use [] for none)');
+    if (!scope) why.push('envelope: pressure_scope must be "scene_local" or "durable"');
     if (why.length) return { ok: false, why: why, outcome: 'rejected', envelopeViolation: true };
+
+    // ── PERSISTENCE (Roman 2026-10-01). The live Corridor run exposed a CONTRACT AMBIGUITY, not
+    // model disobedience: the planner correctly identified a new pressure ("will draw pursuit or
+    // response from whoever governs the toll") but had nowhere to say whether that governing body
+    // is a deliberately unknown scene-local possibility or a continuing institution. Both are
+    // legitimate; only the second may become canon.
+    var declared = r.introduces.map(function (e) {
+      return (e && typeof e.label === 'string') ? e.label.trim() : '';
+    }).filter(Boolean);
+    // A durable referent must be IDENTIFIED — either declared new here, or already established and
+    // cited. A Tier 3 change to an existing entity introduces nothing new, so requiring a non-empty
+    // `introduces` would wrongly reject it; what matters is that the continuing thing is nameable
+    // in canon, not that it is new.
+    var citedExisting = Array.isArray(r.existingRefs) ? r.existingRefs.filter(function (x) {
+      return typeof x === 'string' && x.trim();
+    }) : [];
+    if (scope === 'durable' && !declared.length && !citedExisting.length) {
+      why.push('pressure_scope "durable" requires the continuing referent to be identified — either '
+        + 'declared in introduces[] (with kind, aliases and future_relevance) or cited in existingRefs[] '
+        + 'if it is already established canon');
+    }
+    if (scope === 'scene_local') {
+      // forward_pressure MUST NOT name a continuing referent while claiming to be scene-local.
+      // REJECTION GUARD, NOT PROOF: this is a lexical scan for an article followed by a
+      // capitalised noun phrase — it catches "the Reach Commission" and passes "whoever governs
+      // the toll", but a paraphrase can slip, exactly like the other lexical guards in this
+      // codebase. Named referents already in the register are EXEMPT (referencing established
+      // canon is always allowed), as are the reader's and love interest's own names.
+      var undeclared = _undeclaredDurableReferents(r.forward_pressure, declared);
+      if (undeclared.length) {
+        why.push('pressure_scope "scene_local" but forward_pressure names what reads as a continuing '
+          + 'referent: [' + undeclared.join(', ') + ']. Either leave it unnamed, or mark the pressure '
+          + '"durable" and declare it in introduces[]. forward_pressure is never a second canon channel');
+      }
+    }
+    if (why.length) return { ok: false, why: why, outcome: 'rejected', persistenceViolation: true };
 
     var hasChange = !!(r.canon_change && typeof r.canon_change === 'object');
     var intro = r.introduces;
     // THE NORMAL NO-CHANGE CONTINUATION: a real purpose and pressure, explicitly null change,
     // explicitly empty introductions. Nothing is sealed and nothing is written.
     if (!hasChange && !intro.length) {
-      return { ok: true, outcome: 'none', why: [],
+      // A scene-local pressure is RECORDED as explicitly non-durable. It is never an entity, never
+      // enters the protected register, and a later proposal may not reference it as existing —
+      // `existingRefs` demands stable ledger ids and `targets` demands an established or
+      // here-declared entity, so both routes already reject it. The record exists for audit.
+      try {
+        if (scope === 'scene_local' && window.state) {
+          window.state._sceneLocalPressures = window.state._sceneLocalPressures || [];
+          window.state._sceneLocalPressures.push({ scene: (window.state.turnCount || 0),
+            text: String(r.forward_pressure).slice(0, 200), scope: 'scene_local', durable: false });
+        }
+      } catch (_) {}
+      return { ok: true, outcome: 'none', why: [], pressureScope: scope,
         readerFacing: { scene_purpose: r.scene_purpose, forward_pressure: r.forward_pressure } };
     }
 
@@ -101826,11 +101916,22 @@ function _buildAuthorFloorDirective(s) {
           // evaluation rather than shipping on by default.
           // GATE 1 of 3. DEFAULT OFF — undefined keeps the existing planner contract byte-for-byte.
           if (_continuationSchemaEnabled()) {
-            _scSys += '\n\nCONTINUATION ENVELOPE (REQUIRED — all four keys, every scene):\n'
+            _scSys += '\n\nCONTINUATION ENVELOPE (REQUIRED — all five keys, every scene):\n'
               + '  "scene_purpose": what this scene exists to do (REQUIRED, non-empty)\n'
               + '  "forward_pressure": what pushes the story on from here (REQUIRED, non-empty)\n'
+              + '  "pressure_scope": "scene_local" or "durable" (REQUIRED — see PERSISTENCE below)\n'
               + '  "canon_change": the one durable development, OR null (REQUIRED key; null is the NORMAL answer)\n'
               + '  "introduces": array of genuinely new entities, OR [] (REQUIRED key; [] is the NORMAL answer)\n'
+              + '\nPERSISTENCE — the distinction that decides whether anything becomes canon:\n'
+              + '  "scene_local": forward_pressure names NO continuing referent. "Someone will answer for this",\n'
+              + '      "whoever governs this place will come" — deliberately unknown, and that is a legitimate,\n'
+              + '      common answer. It creates NO canon, and later scenes may NOT treat it as an existing thing.\n'
+              + '  "durable": the pressure depends on a CONTINUING identifiable actor, institution, faction, place\n'
+              + '      or other lasting referent. Then you MUST declare that referent in "introduces" with its\n'
+              + '      kind, aliases and future_relevance. A durable pressure with an empty "introduces" is invalid.\n'
+              + '  forward_pressure is NEVER a second canon channel: do not name a continuing body, office or place\n'
+              + '      there while leaving it undeclared. Either it is unnamed and scene_local, or it is named and\n'
+              + '      declared in introduces.\n'
               + 'MOST SCENES ADVANCE PRESSURE WITHOUT CHANGING DURABLE CANON. For those, return a real\n'
               + 'scene_purpose and forward_pressure with "canon_change": null and "introduces": [].\n'
               + 'Do NOT invent a durable fact merely to fill the envelope — a manufactured change is worse\n'

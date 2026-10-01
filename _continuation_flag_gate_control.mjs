@@ -29,6 +29,7 @@ const PROPOSAL_SHAPED = {
   scene_purpose: 'Bring an outside authority onto her.',
   forward_pressure: 'A body she has no standing with is looking at her.',
   derivation: 'The player burned a settlement.',
+    pressure_scope: 'durable',
   introduces: [{ kind: 'institution', label: 'the Reach Commission', aliases: ['the Commission'],
     justification: 'Governance able to investigate a razing.',
     future_relevance: 'It will summon her and shape the inquiry.' }],

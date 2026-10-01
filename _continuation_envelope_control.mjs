@@ -43,6 +43,7 @@ const RAW_WITH_CHANGE = {
   scene_purpose: 'Bring a consequence back onto her from outside the college.',
   forward_pressure: 'A body she has no standing with is now looking at her.',
   derivation: 'The player burned a settlement and rode toward its governance.',
+    pressure_scope: 'durable',
   introduces: [{ kind: 'institution', label: 'the Reach Commission', aliases: ['the Commission'],
     justification: 'Governance able to investigate a razing.',
     future_relevance: 'It will summon her and shape the inquiry.' }],
@@ -87,7 +88,7 @@ const r = await page.evaluate(({ RAW_WITH_CHANGE }) => {
   out.noChange = window._processContinuationProposal({
     scene_purpose: 'Let her sit in the silence after the fire.',
     forward_pressure: 'Nobody has come for her yet, and that is worse than if they had.',
-    canon_change: null, introduces: []
+    pressure_scope: 'scene_local', canon_change: null, introduces: []
   }, { scene: 50 });
   out.noChangeFacts = facts().length;
   out.noChangeSeal = window.state._activeContinuationSeal;
@@ -96,15 +97,15 @@ const r = await page.evaluate(({ RAW_WITH_CHANGE }) => {
 
   // ── 2. ENVELOPE VIOLATIONS are rejected as violations, not silently "none"
   out.vMissingPurpose = window._validateContinuationProposal({
-    forward_pressure: 'p', canon_change: null, introduces: [] });
+    forward_pressure: 'p', pressure_scope: 'scene_local', canon_change: null, introduces: [] });
   out.vMissingPressure = window._validateContinuationProposal({
-    scene_purpose: 'p', canon_change: null, introduces: [] });
+    scene_purpose: 'p', pressure_scope: 'scene_local', canon_change: null, introduces: [] });
   out.vMissingChangeKey = window._validateContinuationProposal({
     scene_purpose: 'p', forward_pressure: 'q', introduces: [] });
   out.vIntroducesNotArray = window._validateContinuationProposal({
     scene_purpose: 'p', forward_pressure: 'q', canon_change: null, introduces: 'nope' });
   out.vEmptyPurpose = window._validateContinuationProposal({
-    scene_purpose: '   ', forward_pressure: 'q', canon_change: null, introduces: [] });
+    scene_purpose: '   ', forward_pressure: 'q', pressure_scope: 'scene_local', canon_change: null, introduces: [] });
   // the OLD optional shape — no envelope at all — is now a violation, not 'none'
   out.vNoEnvelope = window._validateContinuationProposal({ tactical_move: 'x', state_change: 'y' });
 

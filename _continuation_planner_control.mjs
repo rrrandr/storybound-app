@@ -69,6 +69,7 @@ const r = await page.evaluate(() => {
     scene_purpose: 'Bring the consequence of the burning back onto Lirael from outside the college.',
     forward_pressure: 'An authority she has no standing with is now looking at her.',
     derivation: 'The player burned a settlement; a body with jurisdiction over the Reach would act.',
+    pressure_scope: 'durable',
     introduces: [
       { kind: 'institution', label: "the Reach Commission", aliases: ['the Commission'],
         justification: 'A governance body for Aeryn’s Reach that can investigate a razing.',
@@ -111,6 +112,7 @@ const r = await page.evaluate(() => {
   // REDEFINITION BY RE-INTRODUCTION
   out.reintroduce = window._validateContinuationProposal({
     scene_purpose: 'x', forward_pressure: 'y', derivation: 'z',
+    pressure_scope: 'durable',
     introduces: [{ kind: 'named', label: 'the Provast', justification: 'j', future_relevance: 'f' }],
     existingRefs: [], canon_change: { tier: 2, targets: ['the Provast'], content: 'c' } });
 
@@ -125,6 +127,7 @@ const r = await page.evaluate(() => {
     scene_purpose: 'Let the reader’s own act land irreversibly.',
     forward_pressure: 'The office she aspired to is now vacant and she caused it.',
     derivation: 'The player struck the Provast with the relic in hand.',
+    pressure_scope: 'durable',
     introduces: [], existingRefs: [out.julianId],
     canon_change: { tier: 3, targets: [out.julianId],
       content: 'Julian is dead, killed by Lirael before the assembly.' }
@@ -166,7 +169,7 @@ const r = await page.evaluate(() => {
   out.none = window._processContinuationProposal({
     scene_purpose: 'Let her sit with what she has done.',
     forward_pressure: 'Nobody has come for her yet, and that is worse.',
-    canon_change: null, introduces: []
+    pressure_scope: 'scene_local', canon_change: null, introduces: []
   }, { scene: 14 });
   out.factsAfterNone = facts().length;
   out.noneBlock = window._continuationAuthorBlock(out.none.sealedId, {});

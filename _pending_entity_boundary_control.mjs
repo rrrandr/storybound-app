@@ -50,6 +50,7 @@ const r = await page.evaluate(() => {
     scene_purpose: 'Bring an outside authority onto her.',
     forward_pressure: 'A body she has no standing with is looking at her.',
     derivation: 'The player burned a settlement.',
+    pressure_scope: 'durable',
     introduces: [
       { kind: 'institution', label: 'the Reach Commission', aliases: ['the Commission'],
         justification: 'Governance able to investigate a razing.',
@@ -90,6 +91,7 @@ const r = await page.evaluate(() => {
   // (c) a LATER proposal cannot use a pending id as an existing reference
   out.laterRefAttempt = window._validateContinuationProposal({
     scene_purpose: 'x', forward_pressure: 'y', derivation: 'z',
+    pressure_scope: 'durable',
     introduces: [], existingRefs: [pendIds[0]],
     canon_change: { tier: 2, targets: [pendIds[0]], content: 'c' } });
 
@@ -108,6 +110,7 @@ const r = await page.evaluate(() => {
   // now referenceable by later planning
   out.laterRefAfter = window._validateContinuationProposal({
     scene_purpose: 'x', forward_pressure: 'y', derivation: 'z',
+    pressure_scope: 'durable',
     introduces: [], existingRefs: [pendIds[0]],
     canon_change: { tier: 3, targets: [pendIds[0]],
       content: 'The Commission is dissolved.',
