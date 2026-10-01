@@ -100955,6 +100955,66 @@ function _buildAuthorFloorDirective(s) {
   }
   window._adjudicateSealedProposal = _adjudicateSealedProposal;
 
+  // THE ADJUDICATION LOOP, extracted so a provider-free control can drive it. _commitScene calls
+  // this and does nothing else with the verdicts except mirror state_change bookkeeping.
+  //
+  // opts.legacyDelivery / opts.legacyStateChangeRef carry the OLD single-verdict contract. The
+  // legacy verdict applies to the state_change proposal with that exact ref and to NOTHING else:
+  // a continuation must never be committed by a verdict that was not about it.
+  //
+  // _commitTransition stays the ONLY writer and receives a sealed REFERENCE, never text.
+  function _adjudicateSceneProposals(pendProps, perProposal, prose, opts) {
+    var o = opts || {};
+    var pend = Array.isArray(pendProps) ? pendProps : [];
+    var verdicts = {}, committed = [], pendingOut = [];
+    var byRef = {};
+    (Array.isArray(perProposal) ? perProposal : []).forEach(function (e) {
+      if (e && typeof e.ref === 'string' && e.ref.trim()) byRef[e.ref.trim()] = e;
+    });
+    // AN UNKNOWN REF COMMITS NOTHING: we iterate the PENDING STORE, never the verifier's list, so
+    // a reference the verifier invented is simply never looked up.
+    var unknownRefs = Object.keys(byRef).filter(function (rf) {
+      return !pend.some(function (pp) { return pp.id === rf; });
+    });
+    if (unknownRefs.length) {
+      try { console.warn('[PER-PROPOSAL] DISCARDED unknown ref(s) ' + JSON.stringify(unknownRefs)
+        + ' — not pending for scene ' + o.scene + '; nothing committed from them'); } catch (_) {}
+    }
+    pend.forEach(function (pp) {
+      var entry = byRef[pp.id] || null;
+      var verdict;
+      if (!entry && !Array.isArray(perProposal)) {
+        // LEGACY single-verdict contract, deliberately NARROW.
+        if (pp.kind === 'state_change' && pp.id === o.legacyStateChangeRef) {
+          verdict = { ref: pp.id, commit: (String(o.legacyDelivery).toUpperCase() === 'DELIVERED'),
+            status: String(o.legacyDelivery || 'unreported').toUpperCase(),
+            why: ['legacy single-proposal verdict'] };
+        } else {
+          verdict = { ref: pp.id, commit: false, status: 'no-legacy-verdict',
+            why: ['the legacy single verdict does not apply to a ' + pp.kind + ' proposal'] };
+          try { console.log('[PER-PROPOSAL] ' + pp.id + ' (' + pp.kind + ') has no per-ref status and'
+            + ' the legacy verdict does not apply to it — stays pending'); } catch (_) {}
+        }
+      } else {
+        verdict = _adjudicateSealedProposal(pp, entry, prose);
+      }
+      verdict.kind = pp.kind;
+      verdicts[pp.id] = verdict;
+      if (verdict.commit) {
+        _commitTransition(pp.id, 'scene' + o.scene + '_transition', o.scene);
+        committed.push({ id: pp.id, kind: pp.kind });
+        try { console.log('[COMMIT] ' + pp.kind + ' ' + pp.id + ' DELIVERED scene=' + o.scene
+          + ' factsTotal=' + _ensureCommittedState().facts.length); } catch (_) {}
+      } else {
+        pendingOut.push({ id: pp.id, kind: pp.kind, status: verdict.status });
+        try { console.log('[PENDING] ' + pp.kind + ' ' + pp.id + ' status=' + verdict.status
+          + ' scene=' + o.scene + ' :: ' + (verdict.why || []).join(' | ')); } catch (_) {}
+      }
+    });
+    return { verdicts: verdicts, committed: committed, pending: pendingOut, unknownRefs: unknownRefs };
+  }
+  window._adjudicateSceneProposals = _adjudicateSceneProposals;
+
   async function _commitScene(prevText, prevProposal, prevSceneNum) {
     try {
       if (typeof window !== 'undefined' && window._committedStateV0 === false) return;
@@ -101080,68 +101140,27 @@ function _buildAuthorFloorDirective(s) {
       // anchors. A DELIVERED state_change can no longer carry a continuation into canon with it,
       // and a DELIVERED continuation no longer needs the state_change to have landed.
       //
-      // _commitTransition REMAINS THE ONLY WRITER and still receives a sealed REFERENCE, never
-      // text. Its own idempotency (dedupe by proposalRef) plus _pendingSealedForScene's exclusion
-      // of already-committed refs give first-write-wins on repeated adjudication.
-      var _ctAdjudicated = {};
+      // The loop lives in _adjudicateSceneProposals so it is DRIVABLE BY A CONTROL. It was inline
+      // here first, and the only thing guarding the legacy restriction was then a static regex —
+      // a bite that unrestricted the legacy branch left every behavioural assertion green.
+      var _ppRes = _adjudicateSceneProposals(_pendProps, _perProposal, _pt, {
+        legacyDelivery: _delivery,
+        legacyStateChangeRef: (prevProposal && prevProposal.proposalRef) || null,
+        scene: prevSceneNum
+      });
       try {
-        var _byRef = {};
-        (Array.isArray(_perProposal) ? _perProposal : []).forEach(function (e) {
-          if (e && typeof e.ref === 'string' && e.ref.trim()) _byRef[e.ref.trim()] = e;
-        });
-        // AN UNKNOWN REF COMMITS NOTHING: we iterate the PENDING STORE, never the verifier's list,
-        // so a reference the verifier invented is simply never looked up.
-        var _unknownRefs = Object.keys(_byRef).filter(function (rf) {
-          return !_pendProps.some(function (pp) { return pp.id === rf; });
-        });
-        if (_unknownRefs.length) {
-          try { console.warn('[PER-PROPOSAL] DISCARDED unknown ref(s) ' + JSON.stringify(_unknownRefs)
-            + ' — not pending for scene ' + prevSceneNum + '; nothing committed from them'); } catch (_) {}
-        }
-        _pendProps.forEach(function (pp) {
-          // LEGACY FALLBACK, deliberately NARROW. An older verifier reply has no per_proposal
-          // array; its single `delivery` verdict belongs to the STATE_CHANGE proposal and to
-          // nothing else. A continuation must never be committed by a verdict that was not about
-          // it — that is the accidental-activation route this whole repair exists to close.
-          var entry = _byRef[pp.id] || null;
-          if (!entry && !Array.isArray(_perProposal)) {
-            if (pp.kind === 'state_change' && pp.id === (prevProposal && prevProposal.proposalRef)) {
-              entry = { delivery: _delivery, evidence: '__LEGACY_STATE_CHANGE__' };
-            } else {
-              try { console.log('[PER-PROPOSAL] ' + pp.id + ' (' + pp.kind + ') has no per-ref status and'
-                + ' the legacy verdict does not apply to it — stays pending'); } catch (_) {}
-            }
-          }
-          var verdict;
-          if (entry && entry.evidence === '__LEGACY_STATE_CHANGE__') {
-            // The legacy path keeps its historical behaviour exactly: the single verdict plus the
-            // anchor pre-check already applied to _delivery above.
-            verdict = { ref: pp.id, commit: (_delivery === 'DELIVERED'), status: _delivery,
-              why: ['legacy single-proposal verdict'] };
-          } else {
-            verdict = _adjudicateSealedProposal(pp, entry, _pt);
-          }
-          _ctAdjudicated[pp.id] = verdict;
-          if (verdict.commit) {
-            _commitTransition(pp.id, 'scene' + prevSceneNum + '_transition', prevSceneNum);
-            try { console.log('[COMMIT] ' + pp.kind + ' ' + pp.id + ' DELIVERED scene=' + prevSceneNum
-              + ' factsTotal=' + _ensureCommittedState().facts.length); } catch (_) {}
-            if (pp.kind === 'state_change') {
-              if (_slots && _slots.exitState) cs._priorExitState = _slots.exitState;
-              cs.pendingIntent = null;
-            }
-          } else {
-            try { console.log('[PENDING] ' + pp.kind + ' ' + pp.id + ' status=' + verdict.status
-              + ' scene=' + prevSceneNum + ' :: ' + (verdict.why || []).join(' | ')); } catch (_) {}
-            if (pp.kind === 'state_change' && cs.pendingIntent) cs.pendingIntent.lastStatus = verdict.status;
+        if (_ppRes && _ppRes.committed) _ppRes.committed.forEach(function (c) {
+          if (c.kind === 'state_change') {
+            if (_slots && _slots.exitState) cs._priorExitState = _slots.exitState;
+            cs.pendingIntent = null;
           }
         });
-        try { window.state._lastPerProposalAdjudication = { scene: prevSceneNum,
-          verdicts: _ctAdjudicated, unknownRefs: _unknownRefs }; } catch (_) {}
-      } catch (_ppErr) {
-        try { console.warn('[PER-PROPOSAL] adjudication threw — nothing committed: '
-          + (_ppErr && _ppErr.message)); } catch (_) {}
-      }
+        if (_ppRes && _ppRes.pending) _ppRes.pending.forEach(function (pnd) {
+          if (pnd.kind === 'state_change' && cs.pendingIntent) cs.pendingIntent.lastStatus = pnd.status;
+        });
+        window.state._lastPerProposalAdjudication = { scene: prevSceneNum,
+          verdicts: (_ppRes && _ppRes.verdicts) || {}, unknownRefs: (_ppRes && _ppRes.unknownRefs) || [] };
+      } catch (_) {}
       if (_delivery !== 'DELIVERED') {
         console.log('[ROLLBACK] transition=rejected scene=' + prevSceneNum + ' delivery=' + _delivery + ' → replan from unchanged CommittedState (pendingIntent kept)');
         // AUTHOR PRIORITY INDEX (Roman 2026-07-27): what displaced the transition = what the author optimized for.

@@ -161,12 +161,29 @@ t('_commitScene body was located', body.length > 0);
 // gap: a continuation seal was never committed. The loop now iterates this scene's PENDING SEALED
 // STORE and passes each record's own id. The invariant under test is unchanged and is the one that
 // matters: a sealed REFERENCE goes in, never proposal or verifier TEXT.
+// SCOPE MOVED, not weakened. The commit used to sit inside _commitScene's body; the adjudication
+// loop is now extracted into _adjudicateSceneProposals so a control can drive it, so the
+// one-writer assertion follows the code there. _commitScene's body is asserted to DELEGATE.
+t('_commitScene delegates adjudication to the extracted loop',
+  /_adjudicateSceneProposals\(_pendProps,/.test(body), 'no delegation found in _commitScene');
+t('  passing the legacy state_change ref from prevProposal',
+  /legacyStateChangeRef: \(prevProposal && prevProposal\.proposalRef\)/.test(body));
 t('the commit call passes a REFERENCE, not proposal text',
-  /_commitTransition\(pp\.id,/.test(body)
-  && !/_commitTransition\(prevProposal\.event/.test(body)
-  && !/_commitTransition\(_vP/.test(body) && !/_commitTransition\(_tab/.test(body));
-t('  and the reference comes from the pending sealed store, not the verifier reply',
-  /_pendProps\.forEach\(function \(pp\)/.test(body));
+  /_commitTransition\(pp\.id,/.test(SRC)
+  && !/_commitTransition\(prevProposal\.event/.test(SRC)
+  && !/_commitTransition\(_vP/.test(SRC) && !/_commitTransition\(_tab/.test(SRC));
+t('  and _commitTransition is still called from exactly ONE place',
+  (function () {
+    var n = 0;
+    SRC.split('\n').forEach(function (ln) {
+      var code = ln.replace(/^\s*\/\/.*$/, '');
+      if (!/_commitTransition\s*\(/.test(code)) return;
+      if (/function\s+_commitTransition/.test(code)) return;
+      if (/window\._commitTransition\s*=/.test(code)) return;
+      n++;
+    });
+    return n === 1;
+  })());
 // SUPERSEDED, not relaxed: the first repair pass gated the verifier's tableau on DELIVERED, and
 // this asserted that gate. The second pass removed the verifier tableau from the sink ENTIRELY at
 // every delivery status — strictly stronger, so gating no longer exists to assert. Full

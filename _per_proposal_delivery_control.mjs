@@ -18,12 +18,16 @@
 //
 // ════════════════════════════════════════════════════════════════════════════════════════════════
 // WHAT IS STUBBED, stated rather than glossed: _commitScene's VERIFIER CALL is a paid model call,
-// so this control does not run _commitScene end to end. It exercises the two functions that
-// _commitScene's adjudication loop is built from — _pendingSealedForScene and
-// _adjudicateSealedProposal — plus the real _commitTransition, with verifier payloads supplied as
-// fixtures. So delivery JUDGEMENT is not exercised; everything downstream of a judgement is.
-// The adjudication loop's own wiring inside _commitScene is covered by a static assertion below
-// and will be measured live by the two-scene test.
+// so this control does not run _commitScene end to end. It DOES drive the real adjudication loop
+// (_adjudicateSceneProposals, the function _commitScene calls), the real _pendingSealedForScene,
+// the real _adjudicateSealedProposal and the real _commitTransition, with verifier payloads
+// supplied as fixtures. So delivery JUDGEMENT is not exercised; everything downstream of a
+// judgement is, behaviourally.
+//
+// The loop was INLINE in _commitScene first, and that was a coverage gap worth recording: a bite
+// that unrestricted the legacy branch left every behavioural assertion GREEN, caught only by a
+// static regex. Extracting the loop is what made the legacy restriction and the unknown-ref
+// discard testable for real.
 // ════════════════════════════════════════════════════════════════════════════════════════════════
 import fs from 'fs';
 import { chromium } from 'playwright-core';
@@ -91,17 +95,21 @@ const r = await page.evaluate((PROSE) => {
   };
   // The adjudication loop, exactly as _commitScene runs it: iterate the PENDING STORE, look up
   // each ref in the verifier's list, adjudicate, and commit only on a true verdict.
-  const adjudicate = (scene, perProposal) => {
+  // THE REAL LOOP, not a reimplementation. _adjudicateSceneProposals is the function _commitScene
+  // calls; driving it here means the legacy restriction and the unknown-ref discard are tested
+  // BEHAVIOURALLY. An earlier version of this control reimplemented the loop in node, and a bite
+  // that unrestricted the legacy branch left every behavioural assertion green — only a static
+  // regex caught it. That is exactly the kind of coverage gap worth closing.
+  const adjudicate = (scene, perProposal, legacy) => {
     const pend = window._pendingSealedForScene(scene);
-    const byRef = {};
-    (perProposal || []).forEach(e => { if (e && e.ref) byRef[String(e.ref).trim()] = e; });
-    const verdicts = {};
-    pend.forEach(pp => {
-      const v = window._adjudicateSealedProposal(pp, byRef[pp.id] || null, PROSE);
-      verdicts[pp.id] = { kind: pp.kind, commit: v.commit, status: v.status, why: v.why };
-      if (v.commit) window._commitTransition(pp.id, 'scene' + scene + '_transition', scene);
+    const res = window._adjudicateSceneProposals(pend, perProposal, PROSE, {
+      scene: scene,
+      legacyDelivery: legacy ? legacy.delivery : 'MISSED',
+      legacyStateChangeRef: legacy ? legacy.ref : null
     });
-    return { pend: pend.map(p => ({ id: p.id, kind: p.kind })), verdicts };
+    return { pend: pend.map(p => ({ id: p.id, kind: p.kind })),
+      verdicts: res.verdicts, unknownRefs: res.unknownRefs,
+      committed: res.committed, pendingOut: res.pending };
   };
   const EV_SC = 'The sealed demand reached the clerk before the bell rang.';
   const EV_CT = 'The Toll Road Commission received a formal demand to investigate the burning';
@@ -152,25 +160,16 @@ const r = await page.evaluate((PROSE) => {
   // ── 6. LEGACY single-proposal output: no per_proposal array at all
   let s6 = setup('6');
   out.s6 = { ids: s6 };
-  // Exactly what _commitScene does when _perProposal is null: only the state_change ref whose id
-  // matches prevProposal.proposalRef may take the single legacy verdict.
-  const legacy = (scene, scRef, delivery) => {
-    const pend = window._pendingSealedForScene(scene);
-    const verdicts = {};
-    pend.forEach(pp => {
-      let entry = null;
-      if (pp.kind === 'state_change' && pp.id === scRef) entry = { legacy: true };
-      if (entry) {
-        verdicts[pp.id] = { kind: pp.kind, commit: delivery === 'DELIVERED', status: delivery };
-        if (delivery === 'DELIVERED') window._commitTransition(pp.id, 'legacy', scene);
-      } else {
-        verdicts[pp.id] = { kind: pp.kind, commit: false, status: 'no-legacy-verdict' };
-      }
-    });
-    return verdicts;
-  };
-  out.s6.verdicts = legacy(s6.scene, s6.scRef, 'DELIVERED');
+  // perProposal = null is the LEGACY contract. The real loop must apply that single DELIVERED
+  // verdict to the state_change ref and to nothing else.
+  out.s6.adj = adjudicate(s6.scene, null, { delivery: 'DELIVERED', ref: s6.scRef });
+  out.s6.verdicts = out.s6.adj.verdicts;
   out.s6.after = snapshot();
+  // 6b. the same legacy verdict when the state_change ref does NOT match: nothing may commit.
+  let s6b = setup('6b');
+  out.s6b = { ids: s6b };
+  out.s6b.adj = adjudicate(s6b.scene, null, { delivery: 'DELIVERED', ref: 'prop:1:1' });
+  out.s6b.after = snapshot();
 
   // ── 7. an UNKNOWN / invented ref, and verifier interpretation fields
   let s7 = setup('7');
@@ -271,11 +270,22 @@ t('  exactly one fact, the state_change one',
   JSON.stringify(r.s6.after.facts));
 t('  THE CONTINUATION WAS NOT ACCIDENTALLY ACTIVATED', r.s6.after.activated.length === 0,
   JSON.stringify(r.s6.after.activated));
+t('  and the reason names the kind mismatch',
+  JSON.stringify(r.s6.verdicts[r.s6.ids.ctRef].why).indexOf('does not apply to a continuation') >= 0,
+  JSON.stringify(r.s6.verdicts[r.s6.ids.ctRef]));
+console.log('   6b. a legacy verdict whose ref matches NOTHING commits nothing');
+t('no fact was written', r.s6b.after.facts.length === 0, JSON.stringify(r.s6b.after.facts));
+t('  both proposals stay pending',
+  Object.keys(r.s6b.adj.verdicts).every(k => r.s6b.adj.verdicts[k].commit === false),
+  JSON.stringify(r.s6b.adj.verdicts));
 
 console.log('\n7. unknown refs and verifier interpretation cannot commit anything');
 t('an invented ref prop:999:1 was never adjudicated',
   !Object.prototype.hasOwnProperty.call(r.s7.adj.verdicts, 'prop:999:1'),
   JSON.stringify(Object.keys(r.s7.adj.verdicts)));
+t('  and the real loop REPORTED it as discarded',
+  (r.s7.adj.unknownRefs || []).indexOf('prop:999:1') >= 0,
+  JSON.stringify(r.s7.adj.unknownRefs));
 t('  only this scene\'s real pending refs were considered',
   Object.keys(r.s7.adj.verdicts).every(k => k === r.s7.ids.scRef || k === r.s7.ids.ctRef),
   JSON.stringify(Object.keys(r.s7.adj.verdicts)));
@@ -316,21 +326,25 @@ t('  and it receives a sealed REFERENCE (pp.id), never text',
   callSites.length === 1 && /_commitTransition\(pp\.id,/.test(callSites[0].text),
   callSites.length ? callSites[0].text : 'none');
 t('the loop iterates the PENDING STORE, not the verifier list',
-  /_pendProps\.forEach\(function \(pp\)/.test(src));
+  /pend\.forEach\(function \(pp\)/.test(src) && /_adjudicateSceneProposals/.test(src));
 t('  unknown verifier refs are explicitly discarded and logged',
   /DISCARDED unknown ref/.test(src));
 t('the legacy fallback is restricted to the state_change ref',
-  /pp\.kind === 'state_change' && pp\.id === \(prevProposal && prevProposal\.proposalRef\)/.test(src));
+  /pp\.kind === 'state_change' && pp\.id === o\.legacyStateChangeRef/.test(src));
+t('  and _commitScene supplies that ref from prevProposal',
+  /legacyStateChangeRef: \(prevProposal && prevProposal\.proposalRef\)/.test(src));
 t('the verifier prompt asks for per_proposal with verbatim evidence',
   /PER-PROPOSAL DELIVERY \(judge EACH listed proposal INDEPENDENTLY/.test(src)
   && /"per_proposal"/.test(src));
 
 console.log('\n10. WHAT IS STUBBED');
 console.log('   · _commitScene was NOT run end to end: its verifier call is a paid model call.');
-console.log('     This control drives _pendingSealedForScene + _adjudicateSealedProposal + the real');
-console.log('     _commitTransition, with verifier payloads as fixtures, and asserts the loop wiring');
-console.log('     statically. Delivery JUDGEMENT is therefore not exercised — everything downstream');
-console.log('     of a judgement is.');
+console.log('     This control drives the REAL adjudication loop (_adjudicateSceneProposals) plus');
+console.log('     _pendingSealedForScene, _adjudicateSealedProposal and _commitTransition, with');
+console.log('     verifier payloads as fixtures. Delivery JUDGEMENT is therefore not exercised —');
+console.log('     everything downstream of a judgement is, behaviourally.');
+console.log('   · _commitScene\'s own call into the loop, and its state_change bookkeeping, remain');
+console.log('     STATIC assertions here and will be measured by the two-scene live test.');
 
 console.log('\n' + pass + '/' + (pass + fail) + ' passed');
 process.exit(fail ? 1 : 0);
