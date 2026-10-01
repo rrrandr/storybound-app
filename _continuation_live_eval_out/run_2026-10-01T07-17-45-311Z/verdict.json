@@ -1,0 +1,40 @@
+{
+  "pass": 23,
+  "fail": 7,
+  "measured": 0.0055309,
+  "spentEstimate": 0.009834,
+  "authorized": 0.1,
+  "cases": [
+    {
+      "id": "C-durable",
+      "envelope": {
+        "tactical_move": "initiate formal external pressure on the toll-road commission via sealed demand",
+        "state_change_precondition": "no sealed demand for an investigation into the burning has yet reached the commission",
+        "state_change": "the sealed letter is placed in the commission clerk's incoming tray",
+        "forces_choice": "forces the player to choose between pressing the demand in person at the first session or letting the letter stand alone",
+        "branch_a": "appear at the commission chambers to testify in person",
+        "branch_b": "remain at a distance and let the sealed demand work without further intervention",
+        "scene_purpose": "make the player's demand to the commission an irreversible fact in the world",
+        "forward_pressure": "the commission must now respond to the sealed demand",
+        "pressure_scope": "scene_local",
+        "canon_change": null,
+        "introduces": [],
+        "event_slots": {
+          "precondition": "the sealed letter and a messenger capable of delivering it must be present",
+          "actor": "the messenger",
+          "action": "delivers the sealed letter",
+          "target": "the commission clerk's incoming tray",
+          "exit_state": "the sealed demand for investigation now sits in the commission's possession",
+          "mechanism_grounding": "ordinary"
+        }
+      },
+      "ctResult": {
+        "outcome": "none",
+        "why": [],
+        "sealedId": null,
+        "introduced": []
+      },
+      "facts": []
+    }
+  ]
+}

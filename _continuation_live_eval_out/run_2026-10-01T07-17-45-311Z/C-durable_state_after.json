@@ -1,0 +1,59 @@
+{
+  "facts": [],
+  "ctResult": {
+    "outcome": "none",
+    "why": [],
+    "sealedId": null,
+    "introduced": []
+  },
+  "seal": null,
+  "sealed": [
+    {
+      "id": "prop:2:1",
+      "scene": 2,
+      "kind": "state_change",
+      "fact": "the sealed letter is placed in the commission clerk's incoming tray",
+      "anchors": [],
+      "pendingEntities": [],
+      "milestone": "",
+      "provenance": {
+        "invocationId": "inv:state_change:2:noposture",
+        "postureHash": null,
+        "plannerModel": null,
+        "sceneProposed": 2,
+        "at": 1790839103910
+      },
+      "sealed": true
+    }
+  ],
+  "localPressures": [
+    {
+      "scope": "scene_local",
+      "durable": false,
+      "text": "the commission must now respond to the sealed demand"
+    }
+  ],
+  "ledger": [
+    {
+      "id": "pc",
+      "kind": "named",
+      "label": "Wren",
+      "aliases": []
+    },
+    {
+      "id": "ent:cassel",
+      "kind": "named",
+      "label": "Cassel",
+      "aliases": []
+    },
+    {
+      "id": "ent:stage:1",
+      "kind": "named",
+      "label": "Julian",
+      "aliases": [
+        "the Provast"
+      ],
+      "prov": "stage_issuer_generated"
+    }
+  ]
+}
