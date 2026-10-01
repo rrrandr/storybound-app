@@ -130,7 +130,7 @@ t('  the ledger is still empty after the attempt', D.out.factsAfterActivate.leng
 
 console.log('\n   the PROMPTS are unchanged');
 t('a planner request was assembled', D.hasPlanner === true);
-t('  it carries NO continuation schema', !/CONTINUATION PROPOSAL \(OPTIONAL/.test(D.plannerSys),
+t('  it carries NO continuation schema', !/CONTINUATION ENVELOPE \(REQUIRED/.test(D.plannerSys),
   'schema present under default');
 t('  the pre-existing event-slots contract is intact', /STRUCTURED EVENT HANDOFF/.test(D.plannerSys));
 t('an author request was assembled', D.hasAuthor === true);
@@ -154,7 +154,7 @@ t('  sealing wrote no fact', O.out.facts.length === 0, JSON.stringify(O.out.fact
 
 console.log('\n   the schema and author boundary are reached');
 t('the planner carries the continuation schema',
-  /CONTINUATION PROPOSAL \(OPTIONAL/.test(O.plannerSys));
+  /CONTINUATION ENVELOPE \(REQUIRED/.test(O.plannerSys));
 t('  with all six entity kinds', /named\|role\|artifact\|institution\|collective\|place/.test(O.plannerSys));
 t('  and the Tier 3 basis requirement', /TIER 3 ALSO REQUIRES "basis"/.test(O.plannerSys));
 t('the author carries the sealed fact',
@@ -166,7 +166,7 @@ t('  and still no posture hash', !/ph-flag-40/.test(O.authorRaw));
 
 console.log('\nC. the two directions genuinely differ');
 t('the planner schema is present ONLY under opt-in',
-  /CONTINUATION PROPOSAL/.test(O.plannerSys) && !/CONTINUATION PROPOSAL/.test(D.plannerSys));
+  /CONTINUATION ENVELOPE/.test(O.plannerSys) && !/CONTINUATION ENVELOPE/.test(D.plannerSys));
 t('the author block is present ONLY under opt-in',
   /CONTINUATION — ALREADY TRUE/.test(O.authorRaw) && !/CONTINUATION — ALREADY TRUE/.test(D.authorRaw));
 t('sealing happens ONLY under opt-in', O.out.sealedCount === 1 && D.out.sealedCount === 0);

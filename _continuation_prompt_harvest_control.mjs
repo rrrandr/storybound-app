@@ -98,7 +98,12 @@ const harvest = async (scenario) => {
       derivation: 'The player burned a settlement.' };
 
     if (sc === 'none') {
-      out.res = window._processContinuationProposal(base, { scene: 30 });
+      // THE ENVELOPE IS NOW REQUIRED: a no-change continuation supplies a real purpose and
+      // pressure with an explicit null change and an explicit empty introduces. Omitting the keys
+      // entirely is an envelope VIOLATION, not a no-change scene — proven in
+      // _continuation_envelope_control.mjs.
+      out.res = window._processContinuationProposal(
+        Object.assign({}, base, { canon_change: null, introduces: [] }), { scene: 30 });
     } else if (sc === 'tier2') {
       out.res = window._processContinuationProposal(Object.assign({}, base, {
         introduces: [{ kind: 'institution', label: 'the Reach Commission', aliases: ['the Commission'],
@@ -155,7 +160,7 @@ console.log('TIER 2 — funnel reached ' + h2.callCount + ' stages; planner=' + 
 console.log('\nA. PREFLIGHT — the planner request carries the continuation contract');
 t('a scene-spine planner request was assembled', !!h2.planner);
 const P = h2.planner ? h2.planner.sys : '';
-t('the CONTINUATION PROPOSAL schema is present', /CONTINUATION PROPOSAL \(OPTIONAL/.test(P));
+t('the CONTINUATION ENVELOPE schema is present', /CONTINUATION ENVELOPE \(REQUIRED/.test(P));
 t('  it offers all six entity kinds',
   /named\|role\|artifact\|institution\|collective\|place/.test(P));
 t('  it forbids planner-supplied ids', /NEVER supply an id/.test(P));
@@ -164,7 +169,13 @@ t('  it defines Tier 2 vs Tier 3', /TIER 2 = additive/.test(P) && /TIER 3 = alte
 t('  it requires a Tier 3 basis', /TIER 3 ALSO REQUIRES "basis"/.test(P));
 t('  it forbids presenting a protected change as additive',
   /may NOT be presented as additive/.test(P));
-t('  omitting the proposal is declared NORMAL', /omitting is NORMAL and correct/.test(P));
+// UPDATED with the envelope redesign: omission is no longer offered, because the envelope is
+// REQUIRED on every opt-in reply. The property that matters now is that a NULL change is declared
+// normal, so the planner is never pressured to manufacture a durable fact.
+t('  a null change is declared the NORMAL answer',
+  /null is the NORMAL answer/.test(P) && /MOST SCENES ADVANCE PRESSURE WITHOUT CHANGING DURABLE CANON/.test(P));
+t('  and manufacturing a change to fill the envelope is forbidden',
+  /Do NOT invent a durable fact merely to fill the envelope/.test(P));
 t('the event-slots contract is still present (unchanged)', /STRUCTURED EVENT HANDOFF/.test(P));
 
 console.log('\nB. PREFLIGHT — the planner receives its decision inputs');

@@ -160,10 +160,13 @@ const r = await page.evaluate(() => {
   // ══════════════════════════════════════════════════════════════════════
   window.state.turnCount = 14;
   out.factsBeforeNone = facts().length;
+  // THE ENVELOPE IS REQUIRED: a no-change continuation states purpose and pressure with an
+  // EXPLICIT null change and an EXPLICIT empty introduces. Omitting those keys is an envelope
+  // violation rather than a no-change scene — see _continuation_envelope_control.mjs.
   out.none = window._processContinuationProposal({
     scene_purpose: 'Let her sit with what she has done.',
     forward_pressure: 'Nobody has come for her yet, and that is worse.',
-    derivation: 'Aftermath of the strike; no new world event is required.'
+    canon_change: null, introduces: []
   }, { scene: 14 });
   out.factsAfterNone = facts().length;
   out.noneBlock = window._continuationAuthorBlock(out.none.sealedId, {});

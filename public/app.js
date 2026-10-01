@@ -100296,15 +100296,35 @@ function _buildAuthorFloorDirective(s) {
     var r = (reply && typeof reply === 'object') ? reply : null;
     if (!r) return { ok: false, why: ['no proposal'], outcome: 'rejected' };
 
-    var hasChange = !!(r.canon_change && typeof r.canon_change === 'object');
-    var intro = Array.isArray(r.introduces) ? r.introduces : [];
-    // `none` IS NORMAL: no declared change and nothing introduced. Nothing is written.
-    if (!hasChange && !intro.length) return { ok: true, outcome: 'none', why: [] };
+    // ── THE CONTINUATION ENVELOPE IS REQUIRED on every opt-in reply (Roman 2026-10-01).
+    // Four keys, always. `canon_change: null` + `introduces: []` is the NORMAL answer for a scene
+    // that advances pressure without changing durable canon — which is most scenes. Requiring the
+    // envelope lets the planner keep scenes moving WITHOUT being pressured to manufacture a fact.
+    //
+    // A missing envelope is a CONTRACT VIOLATION, recorded as such rather than silently treated as
+    // "no change" — the two are different and conflating them hides a non-compliant planner.
+    var hasPurpose = typeof r.scene_purpose === 'string' && r.scene_purpose.trim();
+    var hasPressure = typeof r.forward_pressure === 'string' && r.forward_pressure.trim();
+    var hasChangeKey = Object.prototype.hasOwnProperty.call(r, 'canon_change');
+    var introIsArray = Array.isArray(r.introduces);
+    if (!hasPurpose) why.push('envelope: scene_purpose is missing or empty');
+    if (!hasPressure) why.push('envelope: forward_pressure is missing or empty');
+    if (!hasChangeKey) why.push('envelope: canon_change key absent (use null for no change)');
+    if (!introIsArray) why.push('envelope: introduces is not an array (use [] for none)');
+    if (why.length) return { ok: false, why: why, outcome: 'rejected', envelopeViolation: true };
 
-    // ── narrative frame (required whenever anything durable is proposed)
-    ['scene_purpose', 'forward_pressure', 'derivation'].forEach(function (k) {
-      if (typeof r[k] !== 'string' || !r[k].trim()) why.push('missing ' + k);
-    });
+    var hasChange = !!(r.canon_change && typeof r.canon_change === 'object');
+    var intro = r.introduces;
+    // THE NORMAL NO-CHANGE CONTINUATION: a real purpose and pressure, explicitly null change,
+    // explicitly empty introductions. Nothing is sealed and nothing is written.
+    if (!hasChange && !intro.length) {
+      return { ok: true, outcome: 'none', why: [],
+        readerFacing: { scene_purpose: r.scene_purpose, forward_pressure: r.forward_pressure } };
+    }
+
+    // `derivation` is required only when something durable IS proposed — a null-change scene owes
+    // no justification for a change it did not make.
+    if (typeof r.derivation !== 'string' || !r.derivation.trim()) why.push('missing derivation');
 
     // ── introduces[]: declared-new entities. NO planner-supplied ids, ever.
     var kinds = (typeof _REL_ENTITY_KINDS === 'object') ? _REL_ENTITY_KINDS : { named: 1, role: 1 };
@@ -101794,9 +101814,17 @@ function _buildAuthorFloorDirective(s) {
           // evaluation rather than shipping on by default.
           // GATE 1 of 3. DEFAULT OFF — undefined keeps the existing planner contract byte-for-byte.
           if (_continuationSchemaEnabled()) {
-            _scSys += '\n\nCONTINUATION PROPOSAL (OPTIONAL — omit entirely when this scene needs no durable change; omitting is NORMAL and correct):\n'
-              + 'If, and only if, the player\'s action makes a NEW DURABLE development the honest next step, you may also return:\n'
-              + '  "scene_purpose": what this scene exists to do · "forward_pressure": what pushes the story on · "derivation": why this follows from the player\'s action\n'
+            _scSys += '\n\nCONTINUATION ENVELOPE (REQUIRED — all four keys, every scene):\n'
+              + '  "scene_purpose": what this scene exists to do (REQUIRED, non-empty)\n'
+              + '  "forward_pressure": what pushes the story on from here (REQUIRED, non-empty)\n'
+              + '  "canon_change": the one durable development, OR null (REQUIRED key; null is the NORMAL answer)\n'
+              + '  "introduces": array of genuinely new entities, OR [] (REQUIRED key; [] is the NORMAL answer)\n'
+              + 'MOST SCENES ADVANCE PRESSURE WITHOUT CHANGING DURABLE CANON. For those, return a real\n'
+              + 'scene_purpose and forward_pressure with "canon_change": null and "introduces": [].\n'
+              + 'Do NOT invent a durable fact merely to fill the envelope — a manufactured change is worse\n'
+              + 'than none. Only propose one when the player\'s action genuinely makes it the next step.\n'
+              + 'When you DO propose one, add:\n'
+              + '  "derivation": why this follows from the player\'s action (REQUIRED whenever canon_change is not null)\n'
               + '  "introduces": [ { "kind": "named|role|artifact|institution|collective|place", "label": "", "aliases": [], "justification": "", "future_relevance": "what pressure it will exert later" } ]\n'
               + '      — for genuinely NEW people, offices, relics, governing bodies, groups or places. Ordinary props are scene texture; do NOT register them.\n'
               + '      NEVER supply an id — ids are assigned by the system, never by you.\n'
@@ -102107,6 +102135,25 @@ function _buildAuthorFloorDirective(s) {
             if (_sealedProp) _stateChange.proposalRef = _sealedProp.id;
           } catch (_sealErr) { try { console.warn('[SEAL] failed: ' + (_sealErr && _sealErr.message)); } catch (_) {} }
           state._priorSceneStateChange = _stateChange; // next scene's "before" (DECLARED, not delivery-verified — the commit gate verifies)
+          // ═══ CONTINUATION HANDLER — THE WIRE THAT WAS MISSING (Roman 2026-10-01) ═══
+          // The prompt carried the schema and the author seam could render a seal, but NOTHING
+          // connected the planner's reply to _processContinuationProposal. The live evaluation
+          // therefore could not have produced a proposal even from a perfectly compliant reply.
+          //
+          // IT RECEIVES `_scP` — THE RAW PARSED REPLY — DELIBERATELY. `_stateChange` above is built
+          // by copying a FIXED LIST of named fields (precondition, event, forces_choice, …), so it
+          // is a whitelist: every continuation key would be silently dropped at that boundary.
+          // JSON.parse itself preserves unknown keys, and the planner call sets no json_schema or
+          // tool schema (only free-form json_object is used elsewhere in the app), so the raw reply
+          // is the one place the envelope survives intact.
+          //
+          // Gated on the opt-in flag inside the handler, so production defaults are unaffected.
+          try {
+            if (typeof _processContinuationProposal === 'function' && _scP) {
+              var _ctRes = _processContinuationProposal(_scP, { scene: (s.turnCount || 0) });
+              state._lastContinuationResult = _ctRes;   // diagnostics for the next harvest/eval
+            }
+          } catch (_ctpErr) { try { console.warn('[CONTINUATION] handler threw: ' + (_ctpErr && _ctpErr.message)); } catch (_) {} }
           if (_openAccept && _openAccept.ok) {
             s._sceneObjectives = s._sceneObjectives || {};
             s._sceneObjectives[String(_planSceneNum)] = { sceneNum: _planSceneNum, branch: _posture ? _posture.choice : null, postureHash: _posture ? _posture.hash : null, posture_read: _openAccept.posture_read,
