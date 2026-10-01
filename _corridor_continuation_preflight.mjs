@@ -177,6 +177,18 @@ t('  the PLAYER-NAMED-BODY rule is in the planner prompt',
   && /PATH \(b\) IS INVALID IF THIS PROPOSAL ITSELF RELIES ON THAT BODY PERSISTING/.test(Punq));
 t('  with the lowercase clause that case C walked through',
   /This applies in LOWERCASE too/.test(Punq));
+// THE RERUN'S OWN BLOCKER. Run 6 met every pass criterion and was refused for a missing
+// derivation, so the surfaced clause must be present at dispatch time or the rerun measures the
+// same gap again.
+// In the RAW JSON body a prompt newline is the two characters backslash-n, not whitespace, so
+// \s+ collapsing alone cannot join a wrapped sentence — unlike the harvest control, which reads
+// the parsed string. Turn the escape into a space first, then normalise.
+const Pnq = Punq.replace(/\\n/g, ' ').replace(/\s+/g, ' ');
+t('  derivation is surfaced in the envelope HEADER',
+  /all five keys every scene, plus "derivation" whenever "canon_change" is non-null\)/.test(Pnq));
+t('  stated as a biconditional covering introduces-only proposals',
+  /REQUIRED IF AND ONLY IF this envelope proposes something durable/.test(Pnq)
+  && /"canon_change" is non-null OR "introduces" is non-empty/.test(Pnq));
 
 console.log('\n   the funnel reached the author with a stubbed planner reply');
 t('an author request was assembled', !!author);

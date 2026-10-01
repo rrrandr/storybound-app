@@ -39,6 +39,12 @@ const FORBIDDEN_ANYWHERE = [
   // and nothing about the bookkeeping, so these strings must not appear in an author payload at
   // all. Verified unique to this machinery: no other app text produces them.
   ['persistence field names', /pressure_scope|scene_local|_sceneLocalPressures/],
+  // DERIVATION IS PLANNER BOOKKEEPING and never reaches the writer: it is the planner's account of
+  // WHY a change follows, which is a justification to the system, not material for the page.
+  // Scanned as the QUOTED KEY, not the bare word — "derivation" occurs in unrelated author-prompt
+  // text (a Scene 1 block says "MANDATORY DERIVATION" and "Examples of derivation"), so a bare-word
+  // scan would false-positive the way "TIER 2" and "DELIVERED ASSIGNMENTS" already did.
+  ['derivation field name', /"derivation"/],
   ['verifier-only field names', /decisiveChange|dominant_replacement|slots_check/]
 ];
 // (2) CONTINUATION BLOCK ONLY — generic words that legitimately occur elsewhere in the app, so a
@@ -176,7 +182,10 @@ t('a scene-spine planner request was assembled', !!h2.planner);
 const P = h2.planner ? h2.planner.sys : '';
 t('the CONTINUATION ENVELOPE schema is present', /CONTINUATION ENVELOPE \(REQUIRED/.test(P));
 t('  it demands ALL FIVE keys, every scene',
-  /CONTINUATION ENVELOPE \(REQUIRED — all five keys, every scene\)/.test(P));
+  /CONTINUATION ENVELOPE \(REQUIRED — all five keys every scene/.test(P));
+t('  and names derivation IN THE HEADER as the conditional sixth',
+  /all five keys every scene, plus "derivation" whenever "canon_change" is non-null\)/
+    .test(P.replace(/\s+/g, ' ')));
 t('  it offers all six entity kinds',
   /named\|role\|artifact\|institution\|collective\|place/.test(P));
 t('  it forbids planner-supplied ids', /NEVER supply an id/.test(P));
@@ -268,13 +277,48 @@ t('the PERSISTENCE section sits INSIDE the envelope block (not appended elsewher
   && P.indexOf('PERSISTENCE — the distinction') < P.indexOf('MOST SCENES ADVANCE PRESSURE'),
   'env=' + P.indexOf('CONTINUATION ENVELOPE (REQUIRED') + ' pers=' + P.indexOf('PERSISTENCE — the distinction')
   + ' most=' + P.indexOf('MOST SCENES ADVANCE PRESSURE'));
+// ── DERIVATION, SURFACED (Roman 2026-10-01) ──────────────────────────────────────────────────
+// The live case C rerun met every pass criterion and was still refused for a missing derivation,
+// because the requirement sat in a secondary block behind tier/basis/targets detail. A
+// contract-PLACEMENT defect. These assertions prove the clause now arrives in the header itself.
+console.log('\nA3. HARVEST — derivation is surfaced in the envelope header');
+t('the derivation clause is in the KEY LIST, not only in the later block',
+  /"introduces": array of genuinely new entities[\s\S]{0,120}"derivation":/.test(P),
+  'header key-list position');
+t('  it states the condition as a biconditional',
+  /REQUIRED IF AND ONLY IF this envelope proposes something durable/.test(Pn));
+t('  naming BOTH triggers, so an introduces-only proposal is covered',
+  /"canon_change" is non-null OR "introduces" is non-empty/.test(Pn));
+t('  and says to omit it when neither holds',
+  /Omit it when both are empty: it is owed for the CHANGE, not for the scene/.test(Pn));
+t('  with the consequence stated plainly',
+  /Proposing anything durable WITHOUT "derivation" is REJECTED outright/.test(Pn));
+t('the later block no longer restates the rule, it back-references it',
+  /"derivation" — see the envelope header; a non-null canon_change without it is rejected/.test(Pn));
+t('  so the requirement is stated in exactly ONE place',
+  (Pn.match(/REQUIRED IF AND ONLY IF this envelope proposes something durable/g) || []).length === 1,
+  'occurrences=' + (Pn.match(/REQUIRED IF AND ONLY IF this envelope proposes something durable/g) || []).length);
+
+// SCOPED TO THE KEY LIST. Measuring key order across the whole payload broke the moment the header
+// line itself mentioned "canon_change" ("plus derivation whenever canon_change is non-null") — the
+// test was reading the header as a key-list entry. The ordering claim is about the key list, so the
+// slice from the header to the PERSISTENCE section is the honest place to make it.
+const KEYBLOCK = (function () {
+  const i = P.indexOf('CONTINUATION ENVELOPE (REQUIRED');
+  const j = P.indexOf('PERSISTENCE — the distinction');
+  return (i >= 0 && j > i) ? P.slice(i, j) : '';
+})();
+t('the envelope key list was located', KEYBLOCK.length > 0, 'len=' + KEYBLOCK.length);
 t('the five envelope keys appear in contract order',
   (function () { var k = ['"scene_purpose"', '"forward_pressure"', '"pressure_scope"', '"canon_change"', '"introduces"'];
-    var at = k.map(function (s) { return P.indexOf(s); });
+    var at = k.map(function (s) { return KEYBLOCK.indexOf('\n  ' + s); });
     return at.every(function (n) { return n >= 0; })
       && at.every(function (n, i) { return i === 0 || n > at[i - 1]; }); })(),
   JSON.stringify(['"scene_purpose"', '"forward_pressure"', '"pressure_scope"', '"canon_change"', '"introduces"']
-    .map(function (s) { return [s, P.indexOf(s)]; })));
+    .map(function (s) { return [s, KEYBLOCK.indexOf('\n  ' + s)]; })));
+t('  with derivation last, after introduces',
+  KEYBLOCK.indexOf('\n  "derivation"') > KEYBLOCK.indexOf('\n  "introduces"'),
+  'deriv=' + KEYBLOCK.indexOf('\n  "derivation"') + ' intro=' + KEYBLOCK.indexOf('\n  "introduces"'));
 
 console.log('\nB. PREFLIGHT — the planner receives its decision inputs');
 const PU = h2.planner ? h2.planner.raw : '';

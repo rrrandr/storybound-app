@@ -10,6 +10,7 @@
 // Roman's pass criteria for case C:
 //   pressure_scope: durable · >=1 structured introduced institution/collective · future relevance
 //   and aliases · no planner-supplied IDs · no existing canon silently redefined
+import fs from 'fs';
 import { chromium } from 'playwright-core';
 import { gradeDurable, gradeHandler } from './_continuation_durable_grader.mjs';
 
@@ -55,6 +56,13 @@ const FIXTURES = [
     expectFail: ['aliases is a non-empty array'] },
   { id: 'no-future-relevance', reply: mut(r => { r.introduces[0].future_relevance = '   '; }),
     expectFail: ['future_relevance is non-empty'] },
+  // DERIVATION, the biconditional. The live case C rerun met all five criteria and was still
+  // refused for this one missing field, so it is graded now — in BOTH directions, because
+  // demanding it on a nothing-durable scene would be the mirror defect.
+  { id: 'no-derivation', reply: mut(r => { delete r.derivation; }),
+    expectFail: ['derivation is present'] },
+  { id: 'no-derivation-introduces-only', reply: mut(r => { delete r.derivation; r.canon_change = null; }),
+    expectFail: ['derivation is present'] },
   { id: 'planner-supplied-id', reply: mut(r => { r.introduces[0].id = 'ent:stage:99'; }),
     expectFail: ['no id on any introduced entity'] },
   { id: 'planner-supplied-change-id', reply: mut(r => { r.canon_change.id = 'prop:2:1'; }),
@@ -199,6 +207,42 @@ t('FINDING: the same proposal by LABEL is rejected — targets resolve establish
   byLabel && byLabel.outcome === 'rejected'
   && JSON.stringify(byLabel.why).indexOf('neither an established entity nor declared') >= 0,
   JSON.stringify(byLabel));
+
+// ── 3b. the derivation biconditional, both directions, against the live reply ─
+console.log('\n3b. derivation is owed for the CHANGE, not for the scene');
+const noDeriv = byId['no-derivation'];
+t('the validator refuses a durable proposal with no derivation',
+  noDeriv.after.ctResult && noDeriv.after.ctResult.outcome === 'rejected'
+  && JSON.stringify(noDeriv.after.ctResult.why).indexOf('missing derivation') >= 0,
+  JSON.stringify(noDeriv.after.ctResult));
+t('  and so does an INTRODUCES-ONLY proposal with a null change',
+  byId['no-derivation-introduces-only'].after.ctResult
+  && byId['no-derivation-introduces-only'].after.ctResult.outcome === 'rejected'
+  && JSON.stringify(byId['no-derivation-introduces-only'].after.ctResult.why).indexOf('missing derivation') >= 0,
+  JSON.stringify(byId['no-derivation-introduces-only'].after.ctResult));
+t('  which is why the contract clause covers introduces, not just canon_change',
+  gradeDurable(byId['no-derivation-introduces-only'].reply,
+    byId['no-derivation-introduces-only'].after,
+    byId['no-derivation-introduces-only'].ledgerBefore)
+    .some(c => !c.ok && c.name.indexOf('derivation is present') >= 0));
+// A scene that proposes NOTHING durable owes no derivation — the mirror defect, guarded.
+const nothingDurable = gradeDurable({ scene_purpose: 'x', forward_pressure: 'Someone will answer.',
+  pressure_scope: 'scene_local', canon_change: null, introduces: [] }, { ledger: [] }, []);
+t('a nothing-durable envelope is NOT asked for a derivation',
+  nothingDurable.some(c => c.ok && c.name.indexOf('derivation is not required') >= 0),
+  JSON.stringify(nothingDurable.filter(c => c.name.indexOf('derivation') >= 0)));
+
+// THE EXACT SAVED RERUN REPLY (run 6). All five criteria passed; only derivation was missing. The
+// grader must say precisely that, so a future change cannot silently re-grade this history.
+const RERUN = JSON.parse(fs.readFileSync(
+  '_continuation_live_eval_out/run_2026-10-01T07-43-01-650Z/C-durable_planner_content.txt', 'utf8'));
+const rerunChecks = gradeDurable(RERUN, { ledger: [] }, []);
+const rerunReds = rerunChecks.filter(c => !c.ok).map(c => c.name);
+console.log('\n   the saved run-6 reply, graded: ' + (rerunReds.length || 'no') + ' red');
+t('run 6 is RED on derivation', rerunReds.some(n => n.indexOf('derivation is present') >= 0),
+  JSON.stringify(rerunReds));
+t('  and RED on nothing else — all five criteria were genuinely met', rerunReds.length === 1,
+  JSON.stringify(rerunReds));
 
 // ── 4. no fixture wrote canon ────────────────────────────────────────────────
 console.log('\n4. no fixture activated canon (sealing is not committing)');

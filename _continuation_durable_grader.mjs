@@ -149,6 +149,24 @@ export function gradeDurable(E, after, ledgerBefore) {
       !!al && al.length > 0 && al.every(a => !!s(a)), JSON.stringify(x.aliases));
   });
 
+  // ── 3b. DERIVATION, required IF AND ONLY IF canon_change is non-null.
+  //     Added after the live case C rerun, where the planner met all five of Roman's criteria and
+  //     was still refused for a missing derivation. Graded as a BICONDITIONAL, not a requirement:
+  //     demanding it on a null-change scene would be the mirror defect, since the field is owed
+  //     for the CHANGE and not for the scene.
+  //     The condition is "proposes something durable" — a non-null canon_change OR a non-empty
+  //     introduces — because that is what the validator actually enforces. Grading the narrower
+  //     "iff canon_change" version would pass a reply the validator then refuses.
+  const hasChangeObj = !!(E.canon_change && typeof E.canon_change === 'object');
+  const proposesDurable = hasChangeObj || (arr(E.introduces) || []).length > 0;
+  if (proposesDurable) {
+    t('derivation is present (this envelope proposes something durable, so it is owed)',
+      !!s(E.derivation), JSON.stringify(E.derivation));
+  } else {
+    t('derivation is not required (nothing durable proposed)', true,
+      E.derivation == null ? 'absent, as expected' : 'supplied anyway, which is harmless');
+  }
+
   // ── 4. NO planner-supplied ids, by any route
   const introIds = structured.filter(x => x.id || x.recordId).map(x => x.id || x.recordId);
   t('no id on any introduced entity', introIds.length === 0, JSON.stringify(introIds));

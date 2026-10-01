@@ -102027,12 +102027,29 @@ function _buildAuthorFloorDirective(s) {
           // evaluation rather than shipping on by default.
           // GATE 1 of 3. DEFAULT OFF — undefined keeps the existing planner contract byte-for-byte.
           if (_continuationSchemaEnabled()) {
-            _scSys += '\n\nCONTINUATION ENVELOPE (REQUIRED — all five keys, every scene):\n'
+            _scSys += '\n\nCONTINUATION ENVELOPE (REQUIRED — all five keys every scene, plus "derivation" '
+              + 'whenever "canon_change" is non-null):\n'
               + '  "scene_purpose": what this scene exists to do (REQUIRED, non-empty)\n'
               + '  "forward_pressure": what pushes the story on from here (REQUIRED, non-empty)\n'
               + '  "pressure_scope": "scene_local" or "durable" (REQUIRED — see PERSISTENCE below)\n'
               + '  "canon_change": the one durable development, OR null (REQUIRED key; null is the NORMAL answer)\n'
               + '  "introduces": array of genuinely new entities, OR [] (REQUIRED key; [] is the NORMAL answer)\n'
+              // SURFACED HERE (Roman 2026-10-01) after the live case C rerun. The planner produced a
+              // fully correct durable proposal — institution, aliases, future_relevance, no ids, nothing
+              // redefined — and was rejected for "missing derivation", because the requirement sat in a
+              // secondary block behind a wall of tier/basis/targets detail. A contract-PLACEMENT defect,
+              // not planner failure: the requirement is sound, its position was not.
+              // WIDER THAN "iff canon_change is non-null", deliberately. The validator already
+              // requires derivation for an introduces-ONLY proposal (null change, non-empty
+              // introduces) — a reachable path. Wording the clause as the narrower biconditional
+              // would leave that path requiring a field the contract says to omit, which is the
+              // SAME defect class this change exists to remove. The contract now matches the
+              // validator exactly, and the validator stays fail-closed.
+              + '  "derivation": why this follows from the player\'s action — REQUIRED IF AND ONLY IF this\n'
+              + '      envelope proposes something durable, i.e. "canon_change" is non-null OR "introduces"\n'
+              + '      is non-empty. Omit it when both are empty: it is owed for the CHANGE, not for the\n'
+              + '      scene. Proposing anything durable WITHOUT "derivation" is REJECTED outright, however\n'
+              + '      well-formed the rest of the envelope is.\n'
               + '\nPERSISTENCE — the distinction that decides whether anything becomes canon:\n'
               + '  "scene_local": forward_pressure names NO continuing referent. "Someone will answer for this",\n'
               + '      "whoever governs this place will come" — deliberately unknown, and that is a legitimate,\n'
@@ -102065,7 +102082,9 @@ function _buildAuthorFloorDirective(s) {
               + 'Do NOT invent a durable fact merely to fill the envelope — a manufactured change is worse\n'
               + 'than none. Only propose one when the player\'s action genuinely makes it the next step.\n'
               + 'When you DO propose one, add:\n'
-              + '  "derivation": why this follows from the player\'s action (REQUIRED whenever canon_change is not null)\n'
+              // The requirement itself now lives in the envelope header. Restating it in full here
+              // would be a second copy to drift against, so this is a back-reference only.
+              + '  "derivation" — see the envelope header; a non-null canon_change without it is rejected\n'
               + '  "introduces": [ { "kind": "named|role|artifact|institution|collective|place", "label": "", "aliases": [], "justification": "", "future_relevance": "what pressure it will exert later" } ]\n'
               + '      — for genuinely NEW people, offices, relics, governing bodies, groups or places. Ordinary props are scene texture; do NOT register them.\n'
               + '      NEVER supply an id — ids are assigned by the system, never by you.\n'

@@ -330,6 +330,18 @@ for (const C of CASES) {
   t('  the handler did NOT reject it as a persistence violation',
     !(R.after.ctResult && R.after.ctResult.persistenceViolation === true),
     JSON.stringify(R.after.ctResult && R.after.ctResult.why));
+  // DERIVATION, scored for EVERY case as the biconditional the contract now states. Run 6 met all
+  // five pass criteria and was refused for this field alone; it is printed and graded from here on
+  // so that outcome can never again be invisible until the handler verdict.
+  say('  derivation       : ' + JSON.stringify(E.derivation || null));
+  const _proposesDurable = !!(E.canon_change && typeof E.canon_change === 'object')
+    || (Array.isArray(E.introduces) && E.introduces.length > 0);
+  if (_proposesDurable) {
+    t('  derivation is present (something durable is proposed, so it is owed)',
+      typeof E.derivation === 'string' && !!E.derivation.trim(), JSON.stringify(E.derivation));
+  } else {
+    say('  (nothing durable proposed — derivation is correctly not owed)');
+  }
   t('  no planner-supplied durable id',
     !(E.canon_change && E.canon_change.id) && !(E.introduces || []).some(x => x && x.id));
 
