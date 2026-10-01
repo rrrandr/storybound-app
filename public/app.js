@@ -100162,6 +100162,215 @@ function _buildAuthorFloorDirective(s) {
   window._deliveryAnchorAliases = _deliveryAnchorAliases;
   window._checkDeliveryAnchors = _checkDeliveryAnchors;
 
+  // ══════════════════════════════════════════════════════════════════════════════════════════
+  // UNIVERSAL PRE-AUTHOR CONTINUATION PROPOSAL — SLICE 1 (Roman 2026-10-01)
+  //
+  // THE RULE: the planner may creatively propose canon BEFORE prose; prose renders it; post-prose
+  // checks verify DELIVERY, never author new canon.
+  //
+  // This is the handler for an extended scene-spine planner reply. It is DORMANT until the planner
+  // prompt is extended to emit these fields: a reply without `canon_change`/`introduces` resolves
+  // to `none`, which is the normal outcome and writes nothing. Extending the prompt is a separate,
+  // paid step — this slice is the safe path, proven by shape-faithful fixtures.
+  //
+  // NOT IN THIS SLICE: issue-closing terminals, catalogue epochs, narrative-index advancement.
+  //
+  // PROTECTED REGISTER — DERIVED, never stored (canon_mutation_policy.md). Every entity in the
+  // ledger is protected, which is the growth rule: an accepted Tier 2 addition becomes protected
+  // the instant it seals, with no registration step that could be forgotten.
+  function _protectedRegisterIds() {
+    var out = {};
+    try {
+      var L = (typeof _relLedger === 'function') ? _relLedger(false) : null;
+      if (L && L.entities) for (var id in L.entities) { if (!L.entities[id].supersededBy) out[id] = L.entities[id]; }
+    } catch (_) {}
+    return out;
+  }
+  // Does a label/alias already name an established entity? Used to reject an "introduction" that is
+  // really a redefinition — declaring Aeryn's Reach new a second time, or "the Provast" as new.
+  function _registerEntityByName(nameish) {
+    var res = _deliveryAnchorAliases(nameish);
+    return res && res.ok ? res : null;
+  }
+
+  // REJECT-ONLY. Returns { ok, why[], … }. Never rewrites a proposal, never partially commits.
+  function _validateContinuationProposal(reply) {
+    var why = [];
+    var r = (reply && typeof reply === 'object') ? reply : null;
+    if (!r) return { ok: false, why: ['no proposal'], outcome: 'rejected' };
+
+    var hasChange = !!(r.canon_change && typeof r.canon_change === 'object');
+    var intro = Array.isArray(r.introduces) ? r.introduces : [];
+    // `none` IS NORMAL: no declared change and nothing introduced. Nothing is written.
+    if (!hasChange && !intro.length) return { ok: true, outcome: 'none', why: [] };
+
+    // ── narrative frame (required whenever anything durable is proposed)
+    ['scene_purpose', 'forward_pressure', 'derivation'].forEach(function (k) {
+      if (typeof r[k] !== 'string' || !r[k].trim()) why.push('missing ' + k);
+    });
+
+    // ── introduces[]: declared-new entities. NO planner-supplied ids, ever.
+    var kinds = (typeof _REL_ENTITY_KINDS === 'object') ? _REL_ENTITY_KINDS : { named: 1, role: 1 };
+    intro.forEach(function (e, i) {
+      var tag = 'introduces[' + i + ']';
+      if (!e || typeof e !== 'object') { why.push(tag + ' is not an object'); return; }
+      if (e.id) why.push(tag + ' supplies its own id — the backend mints ids, never the planner');
+      if (e.provenance) why.push(tag + ' supplies its own provenance');
+      if (typeof e.label !== 'string' || !e.label.trim()) why.push(tag + ' has no label');
+      if (typeof e.kind !== 'string' || !kinds[e.kind]) why.push(tag + ' has a forbidden/absent kind: ' + e.kind);
+      if (typeof e.justification !== 'string' || !e.justification.trim()) why.push(tag + ' has no justification');
+      // CANON-INFLATION CONTROL: a durable addition must declare what pressure it will exert later.
+      if (typeof e.future_relevance !== 'string' || !e.future_relevance.trim()) why.push(tag + ' has no future_relevance');
+      // An "introduction" of something already established is a REDEFINITION.
+      if (typeof e.label === 'string' && e.label.trim()) {
+        var hit = _registerEntityByName(e.label.trim());
+        if (hit) why.push(tag + ' "' + e.label + '" is already established (' + hit.entityId
+          + ') — introducing it again would redefine it; alteration is Tier 3');
+      }
+    });
+
+    // ── existingRefs[]: must be STABLE LEDGER IDS that resolve. Reference is always allowed.
+    var reg = _protectedRegisterIds();
+    var exRefs = Array.isArray(r.existingRefs) ? r.existingRefs : [];
+    exRefs.forEach(function (ref, i) {
+      if (typeof ref !== 'string' || !ref.trim()) { why.push('existingRefs[' + i + '] is not an id'); return; }
+      if (!reg[ref]) why.push('existingRefs[' + i + '] "' + ref + '" does not resolve to an established entity');
+    });
+
+    if (!hasChange) {
+      // Entities introduced with no durable change: still a sealed addition, Tier 2.
+      return why.length ? { ok: false, why: why, outcome: 'rejected' }
+                        : { ok: true, outcome: 'propose', tier: 2, targets: [], why: [] };
+    }
+
+    // ── the declared change
+    var ch = r.canon_change;
+    if (typeof ch.content !== 'string' || !ch.content.trim()) why.push('canon_change has no content');
+    if (ch.id || ch.recordId) why.push('canon_change supplies its own durable id — the system mints it');
+    // `targets[]` = the entities this change ALTERS (as distinct from existingRefs, which it merely
+    // relies on). Tier is derived from these, never from the planner's own label.
+    var targets = Array.isArray(ch.targets) ? ch.targets.filter(function (x) { return typeof x === 'string' && x.trim(); }) : [];
+    var introLabels = intro.map(function (e) { return (e && typeof e.label === 'string') ? e.label.trim() : ''; });
+    var protectedTargets = [], unknownTargets = [];
+    targets.forEach(function (tg) {
+      if (reg[tg]) { protectedTargets.push(tg); return; }
+      // a target that is not established must be one this proposal introduces
+      if (introLabels.indexOf(tg) === -1) unknownTargets.push(tg);
+    });
+    unknownTargets.forEach(function (tg) {
+      why.push('canon_change.targets "' + tg + '" is neither an established entity nor declared in introduces[]');
+    });
+
+    // ── DETERMINISTIC TIER. Any protected target makes this Tier 3, whatever the planner declared.
+    var derivedTier = protectedTargets.length ? 3 : 2;
+    var declaredTier = (ch.tier === 3 || ch.tier === '3') ? 3 : ((ch.tier === 2 || ch.tier === '2') ? 2 : null);
+    if (declaredTier === null) why.push('canon_change has no declared tier');
+    if (declaredTier === 2 && derivedTier === 3) {
+      why.push('SMUGGLING: declared Tier 2 but alters protected canon [' + protectedTargets.join(', ')
+        + '] — a protected change may not ride in as an additive fact');
+    }
+
+    // ── Tier 3 requires a resolvable causal basis. A player action IS sufficient on its own.
+    if (derivedTier === 3) {
+      var b = ch.basis;
+      if (!b || typeof b !== 'object') why.push('Tier 3 requires a basis (player_action | fate_outcome | declared_high_authority)');
+      else {
+        var kindOk = ['player_action', 'fate_outcome', 'declared_high_authority'].indexOf(b.kind) >= 0;
+        if (!kindOk) why.push('Tier 3 basis.kind is not one of player_action | fate_outcome | declared_high_authority');
+        if (typeof b.ref !== 'string' || !b.ref.trim()) why.push('Tier 3 basis has no ref');
+        if (typeof b.causal_chain !== 'string' || !b.causal_chain.trim()) why.push('Tier 3 basis has no causal_chain');
+        if (kindOk && typeof b.ref === 'string' && b.ref.trim() && !_resolveBasisRef(b)) {
+          why.push('Tier 3 basis.ref "' + b.ref + '" does not resolve to a recorded ' + b.kind);
+        }
+      }
+    }
+    if (why.length) return { ok: false, why: why, outcome: 'rejected' };
+    return { ok: true, outcome: 'propose', tier: derivedTier, targets: targets,
+      protectedTargets: protectedTargets, why: [] };
+  }
+
+  // A basis must point at something ALREADY RECORDED. A player action resolves to the hashed
+  // posture record — the reader's own words, captured before any of this ran.
+  function _resolveBasisRef(b) {
+    try {
+      var s = window.state || {};
+      if (b.kind === 'player_action') {
+        var p = s._scenePosture || {};
+        for (var k in p) { if (p[k] && p[k].hash === b.ref) return { kind: 'posture', scene: k }; }
+        return null;
+      }
+      if (b.kind === 'fate_outcome') {
+        var comp = s._fscCompiled || [];
+        for (var i = 0; i < comp.length; i++) { if (comp[i] && comp[i].outcomeId === b.ref && !comp[i].error) return { kind: 'fate', outcomeId: b.ref }; }
+        return null;
+      }
+      if (b.kind === 'declared_high_authority') {
+        var cs = _ensureCommittedState();
+        for (var j = 0; j < cs.facts.length; j++) { if (cs.facts[j] && cs.facts[j].proposalRef === b.ref) return { kind: 'record', ref: b.ref }; }
+        return null;
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  // ONE ENTRY POINT: player action → validated proposal → minted entities → SEALED record.
+  // Nothing durable is written before validation passes, and the seal happens BEFORE prose.
+  function _processContinuationProposal(reply, ctx) {
+    var o = ctx || {};
+    var scene = (typeof o.scene === 'number') ? o.scene : ((window.state && window.state.turnCount) || 0);
+    var v = _validateContinuationProposal(reply);
+    if (!v.ok) {
+      try { console.warn('[CONTINUATION:REJECT] scene=' + scene + ' :: ' + v.why.join(' | ')); } catch (_) {}
+      return { outcome: 'rejected', why: v.why, sealedId: null, introduced: [] };
+    }
+    if (v.outcome === 'none') {
+      try { console.log('[CONTINUATION:NONE] scene=' + scene + ' — no durable change proposed; nothing written'); } catch (_) {}
+      return { outcome: 'none', why: [], sealedId: null, introduced: [] };
+    }
+    // MINT declared-new entities through the backend path — ids and provenance are the system's.
+    var introduced = [], mintWhy = [];
+    (Array.isArray(reply.introduces) ? reply.introduces : []).forEach(function (e) {
+      var res = _proposeNewEntity({ kind: e.kind, label: e.label, aliases: Array.isArray(e.aliases) ? e.aliases : [] });
+      if (res && res.ok) introduced.push({ id: res.entity.id, kind: res.entity.kind, label: res.entity.label });
+      else mintWhy = mintWhy.concat((res && res.why) || ['mint failed for ' + e.label]);
+    });
+    if (mintWhy.length) {
+      try { console.warn('[CONTINUATION:REJECT] scene=' + scene + ' entity mint failed :: ' + mintWhy.join(' | ')); } catch (_) {}
+      return { outcome: 'rejected', why: mintWhy, sealedId: null, introduced: introduced };
+    }
+    // SEAL. Anchors are the concrete participants: everything relied upon plus everything introduced.
+    var anchors = (Array.isArray(reply.existingRefs) ? reply.existingRefs : []).map(function (ref) { return { role: 'existing', ref: ref }; })
+      .concat(introduced.map(function (e) { return { role: e.kind, ref: e.id }; }));
+    var factText = (reply.canon_change && reply.canon_change.content)
+      ? String(reply.canon_change.content)
+      : ('Introduced: ' + introduced.map(function (e) { return e.label; }).join(', '));
+    var sealed = _sealProposal({ fact: factText, scene: scene, anchors: anchors,
+      milestone: String(reply.forward_pressure || '') });
+    if (!sealed) return { outcome: 'rejected', why: ['seal failed'], sealedId: null, introduced: introduced };
+    try { console.log('[CONTINUATION:SEALED] scene=' + scene + ' tier=' + v.tier + ' ' + sealed.id
+      + ' introduced=' + JSON.stringify(introduced.map(function (e) { return e.kind + ':' + e.id; }))); } catch (_) {}
+    return { outcome: 'sealed', tier: v.tier, sealedId: sealed.id, introduced: introduced,
+      targets: v.targets, why: [] };
+  }
+
+  // THE AUTHOR'S MATERIAL. Reader-facing only: what is now true, why the scene moves, and the
+  // pressure. No ids, no tier, no basis, no register, no targets — a sealed possibility rendered as
+  // machinery would be the defect class already closed for Fate briefs.
+  function _continuationAuthorBlock(sealedId, reply) {
+    var rec = _resolveSealedProposal(sealedId);
+    if (!rec) return '';
+    var L = [];
+    L.push('\nCONTINUATION — ALREADY TRUE (render it; do not add to it):');
+    L.push('  ' + rec.fact);
+    if (reply && typeof reply.scene_purpose === 'string' && reply.scene_purpose.trim()) L.push('  This scene exists to: ' + reply.scene_purpose.trim());
+    if (reply && typeof reply.forward_pressure === 'string' && reply.forward_pressure.trim()) L.push('  Forward pressure: ' + reply.forward_pressure.trim());
+    return L.join('\n') + '\n';
+  }
+  window._validateContinuationProposal = _validateContinuationProposal;
+  window._processContinuationProposal = _processContinuationProposal;
+  window._continuationAuthorBlock = _continuationAuthorBlock;
+  window._protectedRegisterIds = _protectedRegisterIds;
+
   // COMMIT SCENE (Roman 2026-07-27) — the ONE deterministic runtime commit stage. A scene does not "exist"
   // (transactionally) until this finishes. Runs at the top of _generateLiteraryPlotContract for scene N,
   // committing scene N-1 BEFORE N plans → structurally enforces the ordering invariant (planner reads
