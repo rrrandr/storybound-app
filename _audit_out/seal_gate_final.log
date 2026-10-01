@@ -1,0 +1,45 @@
+=== SEAL-GATE CONTROL (no network, no model, $0) ===
+
+1. the gate predicate withholds the author unless a CONTINUATION seal exists
+  ok   virgin state → no release
+  ok   a REJECTED scene_local reply → no release
+  ok     (the handler did refuse it)
+  ok   a reply CLAIMING durable with no referent → no release
+  ok     (refused, so the gate trusts the STORE and not the claim)
+  ok   a garbage reply → no release
+
+2. and it DOES release on a valid durable seal
+  ok   the sealing reply sealed
+  ok     the gate releases
+  ok     reporting the sealed id and its pending entity
+  ok     and the fact it will hand the author
+
+3. THE DISCRIMINATING CASE — a state_change seal is not a continuation seal
+   kinds present: ["state_change"]
+  ok   something IS sealed on that scene
+  ok     and it is a state_change, which every scene has
+  ok     but NO continuation seal
+  ok     so the gate still WITHHOLDS the author
+  ok     (a predicate asking merely "is anything sealed?" would have released here)
+
+4. the runner refuses the mode combinations Roman separated
+  ok   --seal-gated with --samples is REFUSED
+  ok     the message explains both purposes
+  ok   --seal-gated with --planner-only is REFUSED
+  ok   --seal-gated without a case is REFUSED
+
+5. the reservation is the WORST case — three draws plus author and verifier
+  ok   three planner draws are reserved, not one
+  ok     totalling $0.183750
+  ok     with the author described as gated
+  ok     and $0.20 covers it
+
+6. NOT PROVEN HERE — stated so it is not mistaken for coverage
+   · that the browser funnel actually issues an author request after a sealing draw.
+     Two stub-driven attempts produced FALSE GREENS (no author request at all, which
+     reads identically to a working gate), so that claim is not made from stubs.
+   · funnel-level gate behaviour is observed LIVE instead: the draw log records each
+     draw's handler outcome and gate verdict, and the runner asserts the author was
+     never dispatched without a seal.
+
+23/23 passed

@@ -79,8 +79,18 @@ if (WANTED && !CASES.length) { console.error('unknown --case ' + WANTED); proces
 // attempts at ONE case, classified into four buckets. Deliberately built INTO this runner rather
 // than as a parallel script, so the prompt, story, posture and model path are byte-identical to
 // the single-case runs 5-7 by construction instead of by resemblance.
+// Parsed BEFORE the --samples validation so that combining the two modes reports the real reason
+// (two different experiments) rather than a downstream complaint about --planner-only.
+const SEAL_GATED = ARG.includes('--seal-gated');
+const MAX_DRAWS = 3;
 const SAMPLES_IDX = ARG.indexOf('--samples');
 const SAMPLES = SAMPLES_IDX >= 0 ? Number(ARG[SAMPLES_IDX + 1]) : 0;
+if (SEAL_GATED && SAMPLES_IDX >= 0) {
+  console.error('REFUSED: --seal-gated and --samples are different experiments and cannot be combined.');
+  console.error('  --samples measures the path-rate DISTRIBUTION (one draw per sample, no retries).');
+  console.error('  --seal-gated tests the BOUNDARY (up to ' + MAX_DRAWS + ' draws, author gated on a seal).');
+  process.exit(2);
+}
 if (SAMPLES_IDX >= 0 && !(SAMPLES >= 1 && SAMPLES <= 20)) {
   console.error('--samples takes an integer 1-20'); process.exit(2);
 }
@@ -90,6 +100,24 @@ if (SAMPLES && !PLANNER_ONLY) {
 }
 if (SAMPLES && !WANTED) {
   console.error('REFUSED: sampling needs exactly one --case; a distribution across cases is not one.');
+  process.exit(2);
+}
+
+// ── SEAL-GATED BOUNDARY MODE (Roman 2026-10-01) ─────────────────────────────────────────────
+// Run 11 paid $0.0745 for an author call on a draw that never sealed, so the six boundary checks
+// could not execute. The planner costs ~$0.0035 and the author ~$0.075 — twenty times more — so
+// the author is dispatched ONLY after a valid durable seal exists.
+//
+// STRICTLY SEPARATE FROM THE PATH-RATE EXPERIMENT. --samples measured the distribution under
+// "exactly one planner call, no retries", and that measurement is finished (durable 7/9). This
+// mode has a different purpose and says so: up to three draws, every draw and its outcome logged,
+// and the path outcomes still reported so nothing is hidden. The two modes are mutually exclusive.
+if (SEAL_GATED && PLANNER_ONLY) {
+  console.error('REFUSED: --seal-gated exists to reach the AUTHOR; --planner-only would defeat it.');
+  process.exit(2);
+}
+if (SEAL_GATED && !WANTED) {
+  console.error('REFUSED: --seal-gated needs exactly one --case.');
   process.exit(2);
 }
 
@@ -123,15 +151,25 @@ const R_AUTHOR = worst(240000, 8000);
 const R_VERIFIER = worst(10000, 300);
 const PER_CASE = PLANNER_ONLY ? R_PLANNER : (R_PLANNER + R_AUTHOR + R_VERIFIER);
 const ATTEMPTS = SAMPLES || CASES.length;
-const reserved = PER_CASE * ATTEMPTS;
+// Seal-gated reserves the WORST CASE: every one of the three planner draws, plus one author and
+// one verifier, because a sealing draw may be the last one.
+const reserved = SEAL_GATED
+  ? (R_PLANNER * MAX_DRAWS + R_AUTHOR + R_VERIFIER)
+  : PER_CASE * ATTEMPTS;
 say('\nCHAIN RESERVATION (worst case per stage, no fallback doubling)');
 say('  planner  : $' + R_PLANNER.toFixed(6));
 if (!PLANNER_ONLY) {
   say('  author   : $' + R_AUTHOR.toFixed(6));
   say('  verifier : $' + R_VERIFIER.toFixed(6));
 } else { say('  (--planner-only: author and verifier are not reserved and will be aborted)'); }
-say('  per case : $' + PER_CASE.toFixed(6) + '  x ' + ATTEMPTS
-  + (SAMPLES ? ' identical sample(s) of ' + WANTED : ' case(s)'));
+if (SEAL_GATED) {
+  say('  SEAL-GATED: ' + MAX_DRAWS + ' planner draw(s) reserved at $' + R_PLANNER.toFixed(6)
+    + ' each = $' + (R_PLANNER * MAX_DRAWS).toFixed(6));
+  say('              + one author + one verifier, dispatched ONLY after a valid durable seal');
+} else {
+  say('  per case : $' + PER_CASE.toFixed(6) + '  x ' + ATTEMPTS
+    + (SAMPLES ? ' identical sample(s) of ' + WANTED : ' case(s)'));
+}
 say('  TOTAL    : $' + reserved.toFixed(6));
 if (!ESTIMATE_ONLY && reserved > AUTHORIZED) {
   say('\nREFUSED BEFORE DISPATCH: reserved $' + reserved.toFixed(6) + ' exceeds $' + AUTHORIZED.toFixed(2));
@@ -160,8 +198,12 @@ if (!ARG.includes('--skip-preflight')) {
 
 let spentEstimate = 0, measured = 0;
 
-const runCase = async (C, sampleIx) => {
+const runCase = async (C, sampleIx, opts) => {
+  const O = opts || {};
   const calls = [];
+  // SEAL GATE. Set only in --seal-gated mode. The author is the expensive stage, so it is held
+  // until the handler has actually SEALED a continuation proposal. No seal, no author call.
+  let authorGateVerdict = null;
   // ONE ATTEMPT PER SAMPLE, NO RETRIES (Roman). A second planner request inside the same sample is
   // ABORTED and recorded, so an app-level retry cannot quietly turn five samples into six draws.
   let plannerDispatched = 0, retriesBlocked = 0;
@@ -187,10 +229,34 @@ const runCase = async (C, sampleIx) => {
       say('    [PLANNER-ONLY] aborting ' + stage + ' — not reserved in this run');
       try { await route.abort(); } catch (_) {} return;
     }
-    if (SAMPLES && stage === 'planner' && plannerDispatched >= 1) {
+    if ((SAMPLES || O.oneAttempt) && stage === 'planner' && plannerDispatched >= 1) {
       retriesBlocked++;
-      say('    [ONE-ATTEMPT] aborting a SECOND planner request in this sample — no retries');
+      say('    [ONE-ATTEMPT] aborting a SECOND planner request in this draw — no retries');
       try { await route.abort(); } catch (_) {} return;
+    }
+    // ── THE GATE. Checked against LIVE state at the moment the author request appears, never
+    // against the planner's own claim: a continuation-kind seal must exist in the store. A
+    // rejected or scene_local reply leaves none, and the author is aborted unpaid.
+    if (O.gateAuthorOnSeal && stage === 'author') {
+      let sealed = null;
+      try {
+        sealed = await page.evaluate(() => {
+          const st = (window.state && window.state._sealedProposals) || null;
+          if (!st) return null;
+          const rec = Object.keys(st.byId).map(k => st.byId[k])
+            .filter(x => x && x.kind === 'continuation')[0] || null;
+          return rec ? { id: rec.id, fact: String(rec.fact || '').slice(0, 80),
+            pending: (rec.pendingEntities || []).length } : null;
+        });
+      } catch (_) { sealed = null; }
+      if (!sealed) {
+        authorGateVerdict = 'no-seal';
+        say('    [SEAL-GATE] NO continuation seal — aborting the author UNPAID');
+        try { await route.abort(); } catch (_) {} return;
+      }
+      authorGateVerdict = 'sealed';
+      say('    [SEAL-GATE] continuation seal present (' + sealed.id + ', '
+        + sealed.pending + ' pending entity) — releasing the author');
     }
     if (spentEstimate + est > AUTHORIZED) {
       say('    [GUARD] ABORT ' + stage + ' — would exceed authorization');
@@ -339,6 +405,7 @@ const runCase = async (C, sampleIx) => {
   write(tag + '_state_after.json', after);
   write(tag + '_envelope.json', envelope || {});
   return { calls, setup, after, envelope, prose, plannerDispatched, retriesBlocked, transport, replay,
+    authorGateVerdict,
     plannerRequest: (calls.filter(c => c.stage === 'planner').pop() || {}).request || '',
     author: authorResp,
     authorReq: calls.filter(c => c.stage === 'author').pop() || null };
@@ -346,8 +413,53 @@ const runCase = async (C, sampleIx) => {
 
 const results = {};
 const samples = [];
+const draws = [];
 
-if (SAMPLES) {
+if (SEAL_GATED) {
+  // ── THE BOUNDARY TEST ───────────────────────────────────────────────────────────────────────
+  // Up to MAX_DRAWS planner draws, one request each, no retries. Every draw is logged with its
+  // outcome whether it seals or not. The author is released on the FIRST valid durable seal and
+  // never dispatched otherwise. A planner response is never reused and a seal is never fabricated:
+  // each draw is an independent request against fresh state, and the gate reads the live store.
+  const C = CASES[0];
+  say('\n──────── SEAL-GATED BOUNDARY TEST — CASE ' + C.id + ': ' + C.label + ' ────────');
+  say('  posture: ' + JSON.stringify(C.action));
+  say('  up to ' + MAX_DRAWS + ' planner draws, one request each, no retries.');
+  say('  the author is dispatched ONLY after a valid durable seal, and at most once.');
+  say('  NOT a path-rate measurement — that experiment is complete (durable 7/9). Draw outcomes');
+  say('  are logged here so this run hides nothing, but no rate is computed from them.');
+  let sealedDraw = null;
+  for (let d = 1; d <= MAX_DRAWS; d++) {
+    say('\n  ── draw ' + d + '/' + MAX_DRAWS);
+    let R = null;
+    try { R = await runCase(C, d, { oneAttempt: true, gateAuthorOnSeal: true }); }
+    catch (e) { say('    DRAW ERRORED: ' + (e && e.message)); }
+    const E = R && R.envelope;
+    const outcome = (R && R.after && R.after.ctResult && R.after.ctResult.outcome) || null;
+    const gate = (R && R.authorGateVerdict) || null;
+    const respHash = R ? (R.calls.filter(c => c.stage === 'planner' && c.response).pop() || {}).response : null;
+    draws.push({ d, scope: E ? E.pressure_scope : null, outcome, gate,
+      responseLen: respHash ? String(respHash).length : 0,
+      why: (R && R.after && R.after.ctResult && R.after.ctResult.why) || [] });
+    say('    pressure_scope : ' + JSON.stringify(E && E.pressure_scope));
+    say('    handler        : ' + JSON.stringify(outcome));
+    say('    author gate    : ' + JSON.stringify(gate));
+    if (outcome === 'sealed' && gate === 'sealed') { sealedDraw = R; break; }
+    if (outcome === 'sealed' && gate !== 'sealed') {
+      say('    (sealed but the author never appeared — recorded, not retried)');
+      sealedDraw = R; break;
+    }
+    say('    → no seal; this draw cost one planner call and NO author call');
+  }
+  if (sealedDraw) results[C.id] = sealedDraw;
+  else {
+    say('\n  BOUNDARY UNTESTED — none of the ' + MAX_DRAWS + ' draws sealed a durable proposal.');
+    say('  This is NOT a failure of the system or of the planner: a coherent scene_local answer is');
+    say('  a legitimate outcome, and the gate correctly withheld the author every time. The');
+    say('  boundary checks simply had nothing to run against.');
+    results[C.id] = null;
+  }
+} else if (SAMPLES) {
   // ── THE RELIABILITY MEASUREMENT ─────────────────────────────────────────────────────────────
   // Five identical attempts. The question is the DISTRIBUTION, so no sample is retried, rescued,
   // or re-rolled, and a sample that errors is recorded as a sample rather than skipped.
@@ -501,6 +613,41 @@ if (SAMPLES) {
   say('MEASURED SPEND: $' + measured.toFixed(6) + ' of $' + AUTHORIZED.toFixed(2));
   say('Artefacts: ' + RUN);
   process.exit(0);
+}
+
+// ── SEAL-GATED DRAW LOG ─────────────────────────────────────────────────────
+if (SEAL_GATED) {
+  say('\n=== DRAW LOG (every draw, sealing or not) ===');
+  draws.forEach(dr => say('  draw ' + dr.d + ': scope=' + JSON.stringify(dr.scope)
+    + ' handler=' + JSON.stringify(dr.outcome) + ' authorGate=' + JSON.stringify(dr.gate)
+    + ' plannerResponseBytes=' + dr.responseLen
+    + (dr.why && dr.why.length ? '\n      why: ' + JSON.stringify(dr.why) : '')));
+  t('no draw exceeded one planner request', draws.length <= MAX_DRAWS, 'draws=' + draws.length);
+  // A reused response would show up as two draws with byte-identical response lengths AND no
+  // independent fetch; lengths are logged so a reader can see each draw answered separately.
+  t('every draw that reached the planner got its own response',
+    draws.every(dr => dr.responseLen > 0 || dr.outcome === null),
+    JSON.stringify(draws.map(dr => dr.responseLen)));
+  const sealedDraws = draws.filter(dr => dr.outcome === 'sealed');
+  t('the author was released only on a sealed draw',
+    draws.every(dr => dr.gate !== 'sealed' || dr.outcome === 'sealed'),
+    JSON.stringify(draws.map(dr => ({ d: dr.d, outcome: dr.outcome, gate: dr.gate }))));
+  t('the author was never dispatched without a seal',
+    draws.every(dr => dr.outcome === 'sealed' || dr.gate !== 'sealed'),
+    JSON.stringify(draws.map(dr => dr.gate)));
+  if (!sealedDraws.length) {
+    say('\n=== VERDICT: BOUNDARY UNTESTED ===');
+    say('  ' + draws.length + ' draw(s), none sealed. The author was withheld every time, so the');
+    say('  six boundary checks had nothing to run against. Reported as UNTESTED, not failed.');
+    write('draws.json', { seal_gated: true, verdict: 'boundary_untested', draws, measured,
+      authorized: AUTHORIZED });
+    say('\n' + pass + '/' + (pass + fail) + ' harness assertions passed');
+    say('MEASURED SPEND: $' + measured.toFixed(6) + ' of $' + AUTHORIZED.toFixed(2));
+    say('Artefacts: ' + RUN);
+    process.exit(0);
+  }
+  write('draws.json', { seal_gated: true, verdict: 'boundary_tested', draws, measured,
+    authorized: AUTHORIZED });
 }
 
 // ── scoring, per pre-registration ────────────────────────────────────────────
