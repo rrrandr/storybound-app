@@ -1,0 +1,25 @@
+{
+  "verdict": "boundary_untested",
+  "draws": [
+    {
+      "d": 1,
+      "scope": null,
+      "outcome": "sealed",
+      "gate": null
+    },
+    {
+      "d": 2,
+      "scope": null,
+      "outcome": "sealed",
+      "gate": null
+    },
+    {
+      "d": 3,
+      "scope": null,
+      "outcome": "sealed",
+      "gate": null
+    }
+  ],
+  "measured": 0,
+  "authorized": 0.01
+}

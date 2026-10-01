@@ -513,6 +513,26 @@ const runTwoScene = async (C) => {
     // VERIFIER-ONLY: the planner and author are replayed from run 13's recordings, so the verifier
     // judgement is the sole live provider step.
     if (LIVE_VERIFIER_ONLY && (stage === 'planner' || stage === 'author')) {
+      // THE SEAL GATE STILL RUNS, even though the replay is free. My first version returned here
+      // before the gate, so authorGate stayed null, sealedOk was false, and the run reported
+      // "BOUNDARY UNTESTED — no draw sealed" on three draws that had all SEALED. The gate is
+      // evaluated for its verdict and the reply is then served at $0 either way.
+      if (stage === 'author' && phase === 1) {
+        let sealed = null;
+        try {
+          sealed = await page.evaluate(() => {
+            const st = (window.state && window.state._sealedProposals) || null;
+            if (!st) return null;
+            const rec = Object.keys(st.byId).map(k => st.byId[k])
+              .filter(x => x && x.kind === 'continuation')[0] || null;
+            return rec ? rec.id : null;
+          });
+        } catch (_) { sealed = null; }
+        authorGate = sealed ? 'sealed' : 'no-seal';
+        say('      [SEAL-GATE] ' + (sealed ? ('seal ' + sealed + ' — author replay released')
+          : 'no continuation seal — author replay withheld'));
+        if (!sealed) { try { await route.abort(); } catch (_) {} return; }
+      }
       const body = stage === 'planner' ? REPLAY_PLANNER : REPLAY_AUTHOR;
       say('      [REPLAY] ' + stage + ' — run 13 recorded response (' + body.length + ' chars), $0');
       return route.fulfill({ status: 200, contentType: 'application/json',
@@ -741,8 +761,18 @@ if (TWO_SCENE) {
     !!(R.s1 && R.s1.ctResult && R.s1.ctResult.outcome === 'sealed'),
     JSON.stringify(R.s1 && R.s1.ctResult && R.s1.ctResult.why));
   if (!R.sealedOk) {
-    say('\n  BOUNDARY UNTESTED — no draw sealed a durable proposal, so scene 2 had nothing to');
-    say('  adjudicate. NOT a failure of the system or the planner; the gate withheld the author.');
+    // REPORT THE ACTUAL REASON. An earlier version printed "no draw sealed" unconditionally, which
+    // contradicted its own draw log on a run where every draw sealed.
+    const anySealed = draws.some(d => d.outcome === 'sealed');
+    say('\n  BOUNDARY UNTESTED.');
+    if (anySealed) {
+      say('  A draw DID seal (' + draws.filter(d => d.outcome === 'sealed').length + '/' + draws.length
+        + '), but the author gate never recorded a release, so scene 2 was not attempted.');
+      say('  That is a HARNESS condition, not a planner or system outcome: ' + JSON.stringify(draws));
+    } else {
+      say('  No draw sealed a durable proposal, so scene 2 had nothing to adjudicate. NOT a failure');
+      say('  of the system or the planner; the gate withheld the author every time.');
+    }
     write('twoscene.json', { verdict: 'boundary_untested', draws, measured, authorized: AUTHORIZED });
     say('\n' + pass + '/' + (pass + fail) + ' harness assertions passed');
     say('MEASURED SPEND: $' + measured.toFixed(6) + ' of $' + AUTHORIZED.toFixed(2));
