@@ -41,6 +41,23 @@ const AUTHOR_CONTENT = contentOf(RUN13 + '/s1_response_author_2.json');
 // A sentence that exists ONLY in that author response, used as the tracer through every link.
 const TRACER = "The clerk's fingers crack the seal on the parchment I sent.";
 
+// ── THE CHARACTER MEMORY EXTRACTOR, stubbed SHAPE-FAITHFULLY ────────────────────────────────
+// The diagnostic found scene 2's first three provider requests were all this one stage, retried
+// after each abort — and aborting it stopped the advance before the planner, so _commitScene never
+// ran. This is the EXACT skeleton the prompt itself demands (app.js ~31922), with empty collections
+// and null interpretation: ONE real shape, never a union, and it asserts no canon. An empty
+// `characters`/`relations` is a legitimate answer — the scene introduces no named persistent
+// supporting character — and `decisiveChange: null` keeps interpretation out.
+const MEMORY_EXTRACTOR_REPLY = JSON.stringify({
+  characters: [],
+  scene: { chargeTier: 'low', interpretiveDensity: 'measured', loadedSentenceRatio: 0.0 },
+  sceneState: { setting: null, charactersPresent: [], protagonistStatus: null,
+    decisiveChange: null, activeInterlocutor: null, protagonistAlone: false },
+  relations: []
+});
+const STUBBED_STAGES = ['planner (run 13 recorded response)', 'author (run 13 recorded response)',
+  'character memory extractor (shape-faithful skeleton)', 'runtime commit verifier (fixture verdict)'];
+
 console.log('=== RENDER → COMMIT CHAIN (provider-free, $0) ===\n');
 console.log('  replaying run 13\'s REAL responses: planner ' + PLANNER_CONTENT.length
   + ' chars, author ' + AUTHOR_CONTENT.length + ' chars');
@@ -54,8 +71,11 @@ let verifierReply = null;
 // _commitScene logs [VERIFIER-INPUT] immediately before dispatching, and the adjudication loop logs
 // [COMMIT]/[PENDING]/[PER-PROPOSAL]. Capturing console output localises exactly how far the gate got.
 const logs = [];
+let phaseMark = 0;
+const allLogs = [];
 page.on('console', (m) => {
   const txt = m.text();
+  allLogs.push({ at: phaseMark, type: m.type(), txt });
   if (/\[VERIFIER-INPUT\]|\[COMMIT|\[PENDING\]|\[PER-PROPOSAL\]|\[ROLLBACK\]|\[COMMIT-SCENE/.test(txt)) logs.push(txt);
 });
 await page.route('**/api/**', async (route) => {
@@ -70,14 +90,16 @@ await page.route('**/api/**', async (route) => {
   const AUTHOR_MARK = [/FORBIDDEN INVENTIONS/i, /SCENE DIRECTIVES/i, /DIRECTIVE/, /write the scene/i,
     /screenplay-native|cinematic-romance writer|prose author/i].reduce((n, rx) => n + (rx.test(sys) ? 1 : 0), 0);
   const stage = /RUNTIME COMMIT verifier/.test(sys) ? 'verifier'
+    : (/CHARACTER MEMORY EXTRACTOR/.test(sys) ? 'memory'
     : (AUTHOR_MARK >= 2 ? 'author'
     : (/SCENE-SPINE planner|SCENE planner/.test(sys) ? 'planner'
-    : (/BODY BIBLE/.test(sys) ? 'bible' : 'other')));
-  seen.push({ stage, raw: raw || '' });
+    : (/BODY BIBLE/.test(sys) ? 'bible' : 'other'))));
+  seen.push({ stage, raw: raw || '', head: sys.slice(0, 180).replace(/\s+/g, ' ') });
   const give = (c) => route.fulfill({ status: 200, contentType: 'application/json',
     body: JSON.stringify({ content: c }) });
   if (stage === 'planner') return give(PLANNER_CONTENT);
   if (stage === 'author') return give(AUTHOR_CONTENT);
+  if (stage === 'memory') return give(MEMORY_EXTRACTOR_REPLY);
   if (stage === 'verifier') return give(JSON.stringify(verifierReply || { delivery: 'MISSED' }));
   try { await route.abort(); } catch (_) {}
 });
@@ -207,6 +229,52 @@ if (!cleared) {
 }
 t('the staged submit latch cleared — the scene 1 mount completed', cleared === true,
   'still latched after 60s: _renderStagedScene never ran, so the next advance is blocked');
+// ── THE READER PROGRESSION, which is what actually gates submission ─────────────────────────
+// _advanceStagedScene's Guard 1 is `if (active && !active.gateShown) return;` — and the previous
+// run showed exactly that: "[STAGED:SUBMIT] Blocked — gate not yet open". gateShown only becomes
+// true in _advanceStagedBeat when the reader reaches the LAST beat, which then calls
+// _showStagedDecisionGate — the say/do gate at the end of the page. That matches how the product
+// actually works: decisions are say/do entry and fate cards, not buttons mid-scene.
+// So the harness READS THROUGH THE SCENE by calling the real window._advanceStagedBeat, resolving a
+// micro-decision with the real window._resolveMicroDecision when one blocks the advance. Nothing is
+// written into state; gateShown is never set by hand.
+const progression = await page.evaluate(async () => {
+  const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+  const st = () => {
+    const a = window.state._stagedActive || null;
+    return a ? { beat: a.currentBeatIdx, last: (a.plan && a.plan.beats || []).length - 1,
+      gateShown: !!a.gateShown, microShown: !!a.microShown } : null;
+  };
+  const before = st();
+  if (!before) return { ok: false, why: 'no _stagedActive session', before: null };
+  let micros = 0, steps = 0;
+  for (let i = 0; i < 200; i++) {
+    const cur = st();
+    if (!cur || cur.gateShown) break;
+    const prevBeat = cur.beat;
+    try { window._advanceStagedBeat(); } catch (_) {}
+    await sleep(60);
+    const nxt = st();
+    // Stuck on the same beat => a micro-decision overlay is holding it. Resolve it the way a click
+    // does, with the real resolver.
+    if (nxt && nxt.beat === prevBeat && !nxt.gateShown) {
+      if (!nxt.microShown && typeof window._resolveMicroDecision === 'function') {
+        try { window._resolveMicroDecision(0); micros++; } catch (_) {}
+        await sleep(80);
+      } else { await sleep(120); }
+    }
+    steps++;
+  }
+  return { ok: true, before, after: st(), steps, micros };
+});
+console.log('\n  READER PROGRESSION through scene 1\'s beats');
+console.log('  ' + JSON.stringify(progression));
+t('a staged session existed to read through', progression.ok === true,
+  JSON.stringify(progression.why));
+t('the reader reached the END of the scene and the say/do gate OPENED',
+  !!(progression.after && progression.after.gateShown === true),
+  JSON.stringify(progression.after));
+
 // THE SECOND HARNESS FIX. _advanceStagedScene's FIRST gate is the scene decision: when
 // _sceneDecisionNeeded() is true it calls _mountSceneDecisionPrompt(onChosen) and RETURNS. The
 // prompt is real DOM — buttons #sceneDecisionA/#sceneDecisionB — whose click handler calls
@@ -214,6 +282,7 @@ t('the staged submit latch cleared — the scene 1 mount completed', cleared ===
 // scene 2 dispatched NOTHING: the previous run's "scene-2 stages []" with a decision axis in the
 // logs. The harness now CLICKS the real button, which is the actual reader action — the decision is
 // never written into state directly.
+phaseMark = 2;
 await page.evaluate(() => {
   try { window._advanceStagedScene('I wait for the commission to answer.', 'Let them send for me.'); } catch (_) {}
 });
@@ -245,7 +314,19 @@ t('the scene-decision gate was satisfied by the real UI, not by writing state',
 const vcalls = seen.filter(c => c.stage === 'verifier');
 const stages2 = seen.map(c => c.stage);
 console.log('  scene-2 stages: ' + JSON.stringify(stages2.slice(stages1.length)));
+console.log('\n  ── SCENE 2 REQUESTS, in order, with system-prompt heads ──');
+seen.slice(stages1.length).forEach((c, i) => {
+  console.log('  [' + (i + 1) + '] stage=' + c.stage);
+  console.log('      ' + JSON.stringify(c.head));
+});
+console.log('\n  ── SCENE 1 "other" requests, for comparison ──');
+seen.slice(0, stages1.length).filter(c => c.stage === 'other').slice(0, 8).forEach((c, i) => {
+  console.log('  s1 other[' + (i + 1) + '] ' + JSON.stringify(c.head.slice(0, 110)));
+});
 console.log('  commit-gate logs: ' + JSON.stringify(logs));
+console.log('\n  ── EVERY console line during the scene-2 window ──');
+allLogs.filter(l => l.at === 2).slice(0, 40).forEach(l =>
+  console.log('   [' + l.type + '] ' + l.txt.slice(0, 150)));
 console.log('  scene 1 prior ref: ' + JSON.stringify(s1.priorRef)
   + ' sceneProposed=' + JSON.stringify(s1.priorSceneProposed)
   + ' turnCount after s1=' + s1.turnCount);
@@ -288,6 +369,11 @@ t('  and the prose entered as the AUTHOR\'S response at the network boundary',
   /if \(stage === 'author'\) return give\(AUTHOR_CONTENT\)/.test(self));
 t('  replaying run 13\'s real artefacts, not invented payloads',
   /_continuation_live_eval_out\/run_2026-10-01T22-08-44-097Z/.test(self));
+
+console.log('\nSTAGES STUBBED IN THIS CONTROL (reported, not glossed)');
+STUBBED_STAGES.forEach(x => console.log('   · ' + x));
+console.log('   Everything else is production code: scene completion, projection persistence,');
+console.log('   _sbLatestProseText, _commitScene, the adjudication loop, _commitTransition.');
 
 console.log('\n' + pass + '/' + (pass + fail) + ' passed');
 process.exit(fail ? 1 : 0);

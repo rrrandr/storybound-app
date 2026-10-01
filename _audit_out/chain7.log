@@ -1,0 +1,77 @@
+=== RENDER → COMMIT CHAIN (provider-free, $0) ===
+
+  replaying run 13's REAL responses: planner 1744 chars, author 23214 chars
+  tracer sentence: "The clerk's fingers crack the seal on the parchment I sent."
+  ok   the tracer is present in the real author response
+  ok   the real production entry point is reachable
+
+  staged mode: true  CG screenplay path: true
+
+LINK 1 — the author response is produced and consumed
+  stages dispatched: ["bible","bible","bible","bible","bible","bible","other","other","other","other","other","other","other","bible","bible","bible","bible","bible","bible","bible","bible","bible","bible","bible","bible","other","other","other","planner","author","other","other","other","other","other","other","other"]
+  ok   an AUTHOR request was issued
+  ok     and a planner request before it
+  ok   the continuation sealed from the real planner reply
+  ok     both proposal kinds are pending
+  ok     nothing committed yet
+
+LINK 2 — the author prose reaches a surface _commitScene reads
+  StoryPagination.getAllContent(): 0 chars, tracer=false
+  _sbLatestProseText(state):       1457 chars, tracer=true
+  state.scenes=1  sceneLedger entries=1
+  projection head: "The clerk's fingers crack the seal on the parchment I sent.\n\nWax flakes to the stone table like dried blood.\n\nCassel stands apart, arms crossed, eyes on the unf"
+  ok   _sbLatestProseText returns the scene prose
+  ok     and it contains the EXACT author sentence
+  ok     so the commit gate would clear its length-40 guard
+
+LINK 3+4 — scene 2 feeds it to _commitScene, which dispatches the verifier
+
+  after scene 1, _stagedSubmitting = false  (clear — the scene mounted)
+  ok   the staged submit latch cleared — the scene 1 mount completed
+
+  scene decision needed: false  prompt in DOM: false
+  ok   the scene-decision gate was satisfied by the real UI, not by writing state
+  scene-2 stages: ["memory"]
+
+  ── SCENE 2 REQUESTS, in order, with system-prompt heads ──
+  [1] stage=memory
+      "You are the CHARACTER MEMORY EXTRACTOR for an interactive romance story engine. You read the latest scene plus the running character ledger and report what the AUDIENCE now knows a"
+
+  ── SCENE 1 "other" requests, for comparison ──
+  s1 other[1] "You are a CONTINUITY ARCHITECT for a serialized arcane binding romance visual novel. Your job is NOT to write "
+  s1 other[2] "You are a CONTINUITY ARCHITECT for a serialized arcane binding romance visual novel. Your job is NOT to write "
+  s1 other[3] "You are a CONTINUITY ARCHITECT for a serialized arcane binding romance visual novel. Your job is NOT to write "
+  s1 other[4] "You are the A-PLOT GENERATOR for Storybound, an interactive romance fiction engine. Your job: generate a SPECI"
+  s1 other[5] "You are the A-PLOT GENERATOR for Storybound, an interactive romance fiction engine. Your job: generate a SPECI"
+  s1 other[6] "You are the A-PLOT GENERATOR for Storybound, an interactive romance fiction engine. Your job: generate a SPECI"
+  s1 other[7] "You are the A-PLOT GENERATOR for Storybound, an interactive romance fiction engine. Your job: generate a SPECI"
+  s1 other[8] "You are a CONTINUITY ARCHITECT for a serialized arcane binding romance visual novel. Your job is NOT to write "
+  commit-gate logs: ["[COMMIT-SCENE:SKIP] plan-scene=2 reason=no-prior-transition","[COMMITTED-STATE] scene=2 facts=0 proposed=\"The sealed letter arrives and is opened by the commission cl\" (pending until delivery)","[COMMITTED-TRUTH:DEV-FORCE] gate bypassed (localhost/dev or __forceCommittedTruth=true)","[COMMITTED-TRUTH:SEED] about=protector_in_disguise family=redeemed_antagonist truth=\"The figure framed as the antagonist has been protecting the protagonist (or someone close to her) from a danger she cannot see — the hostility is a barrier she was meant to read as cruelty.\" pool-size=5"]
+  scene 1 prior ref: "prop:2:1" sceneProposed=2 turnCount after s1=2
+  verifier requests: 0 (was 0)
+  FAIL THE COMMIT GATE DISPATCHED THE VERIFIER  — verifier requests=0
+  FAIL   its payload carries the EXACT author sentence — the gate got the rendered prose  — tracer not in the verifier payload
+  FAIL   and lists scene 1's sealed refs for judgement  — [["prop:2:1",false],["prop:2:2",false]]
+
+  downstream of the dispatch (for the record)
+  adjudication: null
+  facts: []
+  activated: []
+  FAIL the gate adjudicated scene 1's proposals  — null
+  FAIL   committedThroughScene advanced  — undefined
+
+NO FIXTURE WAS HANDED TO _commitScene
+  ok   this control never calls _commitScene directly
+  ok     it advances scenes through the real entry point
+  ok     and the prose entered as the AUTHOR'S response at the network boundary
+  ok     replaying run 13's real artefacts, not invented payloads
+
+STAGES STUBBED IN THIS CONTROL (reported, not glossed)
+   · planner (run 13 recorded response)
+   · author (run 13 recorded response)
+   · character memory extractor (shape-faithful skeleton)
+   · runtime commit verifier (fixture verdict)
+   Everything else is production code: scene completion, projection persistence,
+   _sbLatestProseText, _commitScene, the adjudication loop, _commitTransition.
+
+16/21 passed

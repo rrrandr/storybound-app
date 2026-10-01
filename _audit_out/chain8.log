@@ -1,0 +1,119 @@
+=== RENDER → COMMIT CHAIN (provider-free, $0) ===
+
+  replaying run 13's REAL responses: planner 1744 chars, author 23214 chars
+  tracer sentence: "The clerk's fingers crack the seal on the parchment I sent."
+  ok   the tracer is present in the real author response
+  ok   the real production entry point is reachable
+
+  staged mode: true  CG screenplay path: true
+
+LINK 1 — the author response is produced and consumed
+  stages dispatched: ["bible","bible","bible","bible","bible","bible","other","other","other","other","other","other","other","bible","bible","bible","bible","bible","bible","bible","bible","bible","bible","bible","bible","other","other","other","planner","author","other","other","other","other","other","other","other"]
+  ok   an AUTHOR request was issued
+  ok     and a planner request before it
+  ok   the continuation sealed from the real planner reply
+  ok     both proposal kinds are pending
+  ok     nothing committed yet
+
+LINK 2 — the author prose reaches a surface _commitScene reads
+  StoryPagination.getAllContent(): 0 chars, tracer=false
+  _sbLatestProseText(state):       1457 chars, tracer=true
+  state.scenes=1  sceneLedger entries=1
+  projection head: "The clerk's fingers crack the seal on the parchment I sent.\n\nWax flakes to the stone table like dried blood.\n\nCassel stands apart, arms crossed, eyes on the unf"
+  ok   _sbLatestProseText returns the scene prose
+  ok     and it contains the EXACT author sentence
+  ok     so the commit gate would clear its length-40 guard
+
+LINK 3+4 — scene 2 feeds it to _commitScene, which dispatches the verifier
+
+  after scene 1, _stagedSubmitting = false  (clear — the scene mounted)
+  ok   the staged submit latch cleared — the scene 1 mount completed
+
+  scene decision needed: false  prompt in DOM: false
+  ok   the scene-decision gate was satisfied by the real UI, not by writing state
+  scene-2 stages: ["memory"]
+
+  ── SCENE 2 REQUESTS, in order, with system-prompt heads ──
+  [1] stage=memory
+      "You are the CHARACTER MEMORY EXTRACTOR for an interactive romance story engine. You read the latest scene plus the running character ledger and report what the AUDIENCE now knows a"
+
+  ── SCENE 1 "other" requests, for comparison ──
+  s1 other[1] "You are a CONTINUITY ARCHITECT for a serialized arcane binding romance visual novel. Your job is NOT to write "
+  s1 other[2] "You are a CONTINUITY ARCHITECT for a serialized arcane binding romance visual novel. Your job is NOT to write "
+  s1 other[3] "You are a CONTINUITY ARCHITECT for a serialized arcane binding romance visual novel. Your job is NOT to write "
+  s1 other[4] "You are the A-PLOT GENERATOR for Storybound, an interactive romance fiction engine. Your job: generate a SPECI"
+  s1 other[5] "You are the A-PLOT GENERATOR for Storybound, an interactive romance fiction engine. Your job: generate a SPECI"
+  s1 other[6] "You are the A-PLOT GENERATOR for Storybound, an interactive romance fiction engine. Your job: generate a SPECI"
+  s1 other[7] "You are the A-PLOT GENERATOR for Storybound, an interactive romance fiction engine. Your job: generate a SPECI"
+  s1 other[8] "You are a CONTINUITY ARCHITECT for a serialized arcane binding romance visual novel. Your job is NOT to write "
+  commit-gate logs: ["[COMMIT-SCENE:SKIP] plan-scene=2 reason=no-prior-transition","[COMMITTED-STATE] scene=2 facts=0 proposed=\"The sealed letter arrives and is opened by the commission cl\" (pending until delivery)","[COMMITTED-TRUTH:DEV-FORCE] gate bypassed (localhost/dev or __forceCommittedTruth=true)","[COMMITTED-TRUTH:SEED] about=inherited_grief family=hidden_identity/identity_history truth=\"The LI is the child of someone the protagonist's family destroyed; the relationship is also a reckoning.\" pool-size=5"]
+
+  ── EVERY console line during the scene-2 window ──
+   [warning] [STAGED:SUBMIT] Blocked — gate not yet open
+   [log] [CHAR-LEDGER] @scene 2 — tracking: 
+   [log] [CPLUS:LEDGER] committed cg:4f36752e-96e4-48cc-b788-1180218ff673 — spent=0 unverified=0 appearances=0
+   [log] [PROSE-DENSITY] scene 2: charge=LOW density=measured loaded≈0%  ✓ in budget
+   [log] [SCENE-STATE:DIAGNOSTIC-ONLY] scene 2 (NOT persisted): ALONE
+   [log] [TEMPT:CRACKLE] segmented into 2 discrete crackles
+   [log] [STYLE-REF:compressed] Loaded: /assets/GN-Artists/ender_mystery_man_master_v2.jpg?v=20260510 (876KB)
+   [log] [ONESHOT] rendering 2x2 sheet for scene 2 @ 2K (1 refs, 38153 char prompt)
+   [error] Failed to load resource: net::ERR_FAILED
+   [warning] [ONESHOT] failed (Failed to fetch) — falling back to per-phase render
+   [log] [STAGED:HERO] Generating 1 phase images for scene 2 (serial: phase 0 first, then 1+ as Kontext edits)
+   [log] [CAMERA-AUTHORITY] p0 ESTABLISH · derived=wide · declared=wide · AGREE
+   [log] [STAGED:TIER] phase 0 → simple → cheap
+   [log] [CG:IMG-PROMPT:GENDER] Identity-lock emitted for side chars: the clerk=male
+   [log] [PANEL-AUTHORITY] character_introduction → roster [cassel] (dropped [protagonist, the clerk] — not in authoritative cast)
+   [log] [STAGED:STAGING-MODE] professional (liAbsent=false, sideChars=1)
+   [log] [LI:DIAG] image-prompt build — phase=0 phaseLIAbsent=false visualState.li_visibility=revealed mysteryManInjected=false camera=wide_establishing shotSt
+   [log] [PANEL-AUTHORITY] p0 type=character_introduction cast=[cassel] pcInCast=false  ✓ solo clean
+   [log] [STAGED:HERO:PHASE] Cache MISS — generating phase 0 (Orientation) for scene 2 at tier=cheap
+   [log] [PC:LOOK] NOT using locked PC face — pcLookLocked=false (user never locked a look this story). storyId=story-chain pcLookLocked=false pcLookSkipped=fa
+   [log] [STAGED:STYLE] artist="ender_bond" → 2 style anchor(s): ender_mystery_man_master_v2.jpg?v=20260510, ender_golden_master_v3_bottom.jpg
+   [log] [STAGED:STYLE] canonical asset "composition:establishing_solo" (tier 2) attached (phase 0)
+   [log] [STAGED:STYLE] phase 0 — passing 2 style anchors to Gemini (filtered 1 LI-implying refs, liAbsent=false)
+   [log] [STAGED:STYLE] artist=ender_bond styleAnchors=2 regionAnchors=0 contractInjected=true phaseIdx=0
+   [log] [IMAGE:SANITIZE] length: 31046 → 30943
+   [log] [IMAGE:NORMALIZE] density: 50 → 4 
+   [log] [IMAGE:PURGE] removed: explicit
+   [log] [VIZ:TONE] No visual ontology for tone: none — using Genre style
+   [log] [STYLE-REF:compressed] Loaded: /assets/GN-Artists/ender_golden_master_v3.jpg (1195KB)
+   [log] [GN DEV] Provider: gemini | Model: gemini-3.1-flash-image-preview
+   [log] [STYLE-REF:compressed] Loaded: /assets/GN-Artists/ender_anchor_face_closeup_v1.png?v=20260331 (812KB)
+   [log] [ASSET-INTEGRITY] preflight OK — 4 required species anchor(s) resolve
+   [log] [STYLE-REF:compressed] Loaded: /assets/GN-Artists/ender_anchor_fullbody_v1.png?v=20260331 (677KB)
+   [log] [STYLE-REF:compressed] Loaded: /assets/GN-Artists/ender_anchor_lighting_v1.png?v=20260331 (749KB)
+   [log] [STYLE-REF:compressed] Loaded: /assets/GN-Artists/ender_anchor_primary.png?v=20260331 (693KB)
+   [log] [STYLE-REF:compressed] Loaded: /assets/Fatelands/Vaelerynsreach.png (732KB)
+   [log] [STYLE-REF:compressed] Loaded: /assets/Fatelands/AshenVerge2.jpg?v=20260402 (569KB)
+   [log] [STYLE-REF:compressed] Loaded: /assets/Fatelands/Lytharyn.png (731KB)
+   [log] [STYLE-EXTRACT] Sending 8 reference images to Gemini for style extraction
+   [error] Failed to load resource: net::ERR_FAILED
+  scene 1 prior ref: "prop:2:1" sceneProposed=2 turnCount after s1=2
+  verifier requests: 0 (was 0)
+  FAIL THE COMMIT GATE DISPATCHED THE VERIFIER  — verifier requests=0
+  FAIL   its payload carries the EXACT author sentence — the gate got the rendered prose  — tracer not in the verifier payload
+  FAIL   and lists scene 1's sealed refs for judgement  — [["prop:2:1",false],["prop:2:2",false]]
+
+  downstream of the dispatch (for the record)
+  adjudication: null
+  facts: []
+  activated: []
+  FAIL the gate adjudicated scene 1's proposals  — null
+  FAIL   committedThroughScene advanced  — undefined
+
+NO FIXTURE WAS HANDED TO _commitScene
+  ok   this control never calls _commitScene directly
+  ok     it advances scenes through the real entry point
+  ok     and the prose entered as the AUTHOR'S response at the network boundary
+  ok     replaying run 13's real artefacts, not invented payloads
+
+STAGES STUBBED IN THIS CONTROL (reported, not glossed)
+   · planner (run 13 recorded response)
+   · author (run 13 recorded response)
+   · character memory extractor (shape-faithful skeleton)
+   · runtime commit verifier (fixture verdict)
+   Everything else is production code: scene completion, projection persistence,
+   _sbLatestProseText, _commitScene, the adjudication loop, _commitTransition.
+
+16/21 passed
