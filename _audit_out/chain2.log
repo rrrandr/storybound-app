@@ -1,0 +1,46 @@
+=== RENDER → COMMIT CHAIN (provider-free, $0) ===
+
+  replaying run 13's REAL responses: planner 1744 chars, author 23214 chars
+  tracer sentence: "The clerk's fingers crack the seal on the parchment I sent."
+  ok   the tracer is present in the real author response
+  ok   the real production entry point is reachable
+
+  staged mode: true  CG screenplay path: true
+
+LINK 1 — the author response is produced and consumed
+  stages dispatched: ["bible","bible","bible","bible","bible","bible","other","other","other","other","other","other","other","bible","bible","bible","bible","bible","bible","bible","bible","bible","bible","bible","bible","other","other","other","planner","author","other","other","other","other","other","other","other"]
+  ok   an AUTHOR request was issued
+  ok     and a planner request before it
+  ok   the continuation sealed from the real planner reply
+  ok     both proposal kinds are pending
+  ok     nothing committed yet
+
+LINK 2 — the author prose reaches a surface _commitScene reads
+  StoryPagination.getAllContent(): 0 chars, tracer=false
+  _sbLatestProseText(state):       1457 chars, tracer=true
+  state.scenes=1  sceneLedger entries=1
+  projection head: "The clerk's fingers crack the seal on the parchment I sent.\n\nWax flakes to the stone table like dried blood.\n\nCassel stands apart, arms crossed, eyes on the unf"
+  ok   _sbLatestProseText returns the scene prose
+  ok     and it contains the EXACT author sentence
+  ok     so the commit gate would clear its length-40 guard
+
+LINK 3+4 — scene 2 feeds it to _commitScene, which dispatches the verifier
+  verifier requests: 0 (was 0)
+  FAIL THE COMMIT GATE DISPATCHED THE VERIFIER  — verifier requests=0
+  FAIL   its payload carries the EXACT author sentence — the gate got the rendered prose  — tracer not in the verifier payload
+  FAIL   and lists scene 1's sealed refs for judgement  — [["prop:2:1",false],["prop:2:2",false]]
+
+  downstream of the dispatch (for the record)
+  adjudication: null
+  facts: []
+  activated: []
+  FAIL the gate adjudicated scene 1's proposals  — null
+  FAIL   committedThroughScene advanced  — undefined
+
+NO FIXTURE WAS HANDED TO _commitScene
+  ok   this control never calls _commitScene directly
+  ok     it advances scenes through the real entry point
+  ok     and the prose entered as the AUTHOR'S response at the network boundary
+  ok     replaying run 13's real artefacts, not invented payloads
+
+14/19 passed
