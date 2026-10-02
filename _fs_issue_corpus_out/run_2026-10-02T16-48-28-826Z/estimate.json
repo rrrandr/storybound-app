@@ -1,0 +1,11 @@
+{
+  "scenes": 10,
+  "liveScenes": 9,
+  "perScene": 0.156975,
+  "reserved": 1.4127750000000001,
+  "stages": {
+    "planner": 0.023174999999999998,
+    "author": 0.126,
+    "verifier": 0.0078000000000000005
+  }
+}
