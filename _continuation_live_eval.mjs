@@ -849,11 +849,19 @@ if (TWO_SCENE) {
   const card2 = R.s2.sceneCard || null;
   t('the scene card is deterministic', !card2 || card2.source === 'deterministic',
     JSON.stringify(card2 && card2.source));
-  t('  and every model-interpretation field on it is null',
-    !card2 || ['decisiveChange', 'protagonistStatus', 'activeInterlocutor', 'setting',
-      'charactersPresent', 'dominantReplacement'].every(k => card2[k] == null),
-    JSON.stringify(card2 && ['decisiveChange', 'protagonistStatus', 'activeInterlocutor', 'setting',
-      'charactersPresent', 'dominantReplacement'].map(k => [k, card2[k]])));
+  // EMPTY IS THE RIGHT VALUE FOR A LIST. My first version demanded `== null` for every field and
+  // tripped on charactersPresent: [] — which is the correct deterministic value for a list, not a
+  // leak. The property that matters is that no field carries verifier-authored CONTENT, so a scalar
+  // must be null and a list must be empty.
+  const SCALAR_FIELDS = ['decisiveChange', 'protagonistStatus', 'activeInterlocutor', 'setting',
+    'dominantReplacement'];
+  const LIST_FIELDS = ['charactersPresent'];
+  t('  no model-interpretation SCALAR on it carries content',
+    !card2 || SCALAR_FIELDS.every(k => card2[k] == null),
+    JSON.stringify(card2 && SCALAR_FIELDS.map(k => [k, card2[k]])));
+  t('  and no model-interpretation LIST on it has entries',
+    !card2 || LIST_FIELDS.every(k => !Array.isArray(card2[k]) || card2[k].length === 0),
+    JSON.stringify(card2 && LIST_FIELDS.map(k => [k, card2[k]])));
   t('no committed fact carries verifier interpretation vocabulary',
     !/atmosphere|relationship_dialogue|internal_monologue|world_exposition|different_event/
       .test(JSON.stringify(R.s2.facts)), JSON.stringify(R.s2.facts).slice(0, 160));

@@ -1,0 +1,26 @@
+=== LIVE CONTINUATION EVALUATION — 1 CASE(S) ===
+    authorized: ESTIMATE ONLY ($0)
+    output: _continuation_live_eval_out/run_2026-10-02T01-00-27-112Z
+
+PRE-REGISTERED EXPECTATIONS (before any dispatch)
+  A-null     : envelope present, canon_change null, introduces [], outcome none, 0 facts
+  BOTH       : pressure_scope returned as "scene_local" or "durable", and the payload AGREES with it — durable identifies its referent, scene_local proposes no canon.
+  B-pressure : EITHER scene_local + null (nothing sealed, 0 facts, recorded non-durable)
+               OR durable + an identified referent (sealed, at most 1 fact, sealed provenance)
+  C-durable  : pressure_scope durable, >=1 structured introduced institution/collective with
+               future_relevance and aliases, NO planner-supplied ids, and no established
+               entity silently redefined. Graded by _continuation_durable_grader.mjs, whose
+               every criterion is proven RED in _continuation_durable_grading_control.mjs.
+  Either surprise is a reportable finding, not a failure to explain away.
+
+CHAIN RESERVATION (worst case per stage, no fallback doubling)
+  planner  : $0.017550
+  author   : $0.126000
+  verifier : $0.006900
+  TWO-SCENE, VERIFIER-ONLY: the planner, author and memory extractor are REPLAYED from
+             run 13 artefacts and the shape-faithful skeleton. The ONLY live provider call
+             is the RUNTIME COMMIT VERIFIER: $0.006900
+             Everything else in the chain is already proven provider-free (23/23).
+  TOTAL    : $0.006900
+
+ESTIMATE ONLY — nothing dispatched. $0 spent.

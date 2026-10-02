@@ -1,0 +1,84 @@
+=== LIVE CONTINUATION EVALUATION — 1 CASE(S) ===
+    authorized: $0.01
+    output: _continuation_live_eval_out/run_2026-10-02T01-05-59-892Z
+
+PRE-REGISTERED EXPECTATIONS (before any dispatch)
+  A-null     : envelope present, canon_change null, introduces [], outcome none, 0 facts
+  BOTH       : pressure_scope returned as "scene_local" or "durable", and the payload AGREES with it — durable identifies its referent, scene_local proposes no canon.
+  B-pressure : EITHER scene_local + null (nothing sealed, 0 facts, recorded non-durable)
+               OR durable + an identified referent (sealed, at most 1 fact, sealed provenance)
+  C-durable  : pressure_scope durable, >=1 structured introduced institution/collective with
+               future_relevance and aliases, NO planner-supplied ids, and no established
+               entity silently redefined. Graded by _continuation_durable_grader.mjs, whose
+               every criterion is proven RED in _continuation_durable_grading_control.mjs.
+  Either surprise is a reportable finding, not a failure to explain away.
+
+CHAIN RESERVATION (worst case per stage, no fallback doubling)
+  planner  : $0.017550
+  author   : $0.126000
+  verifier : $0.006900
+  TWO-SCENE, VERIFIER-ONLY: the planner, author and memory extractor are REPLAYED from
+             run 13 artefacts and the shape-faithful skeleton. The ONLY live provider call
+             is the RUNTIME COMMIT VERIFIER: $0.006900
+             Everything else in the chain is already proven provider-free (23/23).
+  TOTAL    : $0.006900
+  within authorization — $0.003100 headroom
+
+PREFLIGHT GATE (provider-free, $0): _corridor_continuation_preflight.mjs
+  preflight PASSED — the target story has no authored objective and the path is active.
+
+──────── TWO-SCENE ACTIVATION / IDEMPOTENCY — CASE C-durable ────────
+  posture: "I send sealed word to the commission that governs the toll road, demanding they open an investigation into the burning and summon everyone who profited from it."
+  scene 1 seals + renders (author gated on a seal); scene 2 OPENS by adjudicating scene 1
+  through the real _commitScene. Scene 2's author is aborted — no check needs it.
+
+  ── scene 1, draw 1/3
+      [REPLAY] planner — run 13 recorded response (1744 chars), $0
+      [SEAL-GATE] seal prop:3:2 — author replay released
+      [REPLAY] author — run 13 recorded response (23214 chars), $0
+    handler="sealed" authorGate="sealed" pending=["state_change","continuation"]
+    scene 1 prose: projection=1457 chars, StoryPagination=0 chars (empty by design in CG staged mode)
+
+  ── reading scene 1 through to the say/do gate
+      [REPLAY] memory extractor — shape-faithful skeleton, $0
+    {"ok":true,"before":{"beat":0,"last":26,"gateShown":false,"microShown":false},"after":{"beat":26,"last":26,"gateShown":true,"microShown":false},"micros":0}
+
+  ── scene 2 (adjudicates scene 1)
+      [DISPATCH] s2 verifier  6180ch  est $0.005346
+      [REPLAY] planner — run 13 recorded response (1744 chars), $0
+      [REPLAY] author — run 13 recorded response (23214 chars), $0
+
+  ── re-entering _commitScene on the same scene, twice
+      [GUARD] ABORT verifier — would exceed authorization
+      [GUARD] ABORT verifier — would exceed authorization
+      [GUARD] ABORT verifier — would exceed authorization
+
+=== SCENE 1 ===
+  ok   a continuation proposal sealed in scene 1
+  ok     the author was released only because a seal existed
+  ok     BOTH proposal kinds were pending after scene 1
+  ok     and NOTHING was committed by scene 1
+  ok     scene 1 rendered prose
+
+=== SCENE 2 — adjudication through the real _commitScene ===
+  ok   scene 2 issued a RUNTIME COMMIT VERIFIER request
+  ok     its payload listed BOTH sealed refs for judgement
+  adjudication: {"prop:3:1":{"ref":"prop:3:1","commit":true,"status":"DELIVERED","why":["anchors=inapplicable"],"kind":"state_change"},"prop:3:2":{"ref":"prop:3:2","commit":false,"status":"PARTIAL","why":["status is PARTIAL — stays pending"],"kind":"continuation"}}
+  facts: [{"fact":"The sealed letter arrives and is opened by the commission clerk.","ref":"prop:3:1","prov":"sealed","scene":3}]
+  ok   each proposal got its OWN verdict
+  the continuation did NOT commit — recording the verdict rather than asserting success
+  ok   a continuation verdict was recorded
+  ok     and nothing was activated without it
+  ok   the scene card is deterministic
+  FAIL   and every model-interpretation field on it is null  — [["decisiveChange",null],["protagonistStatus",null],["activeInterlocutor",null],["setting",null],["charactersPresent",[]],["dominantReplacement",null]]
+  ok   no committed fact carries verifier interpretation vocabulary
+
+=== IDEMPOTENCY — _commitScene re-entered twice on the same scene ===
+  ok   the fact count did not change
+  ok     no duplicate refs
+  ok     the activated entity count did not change
+  ok     and the verifier was not re-called (committedThrough short-circuits)
+
+16/17 assertions passed
+MEASURED SPEND: $0.000000 of $0.01
+Artefacts: _continuation_live_eval_out/run_2026-10-02T01-05-59-892Z
