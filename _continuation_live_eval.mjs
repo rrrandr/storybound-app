@@ -26,6 +26,7 @@
 import fs from 'fs';
 import { chromium } from 'playwright-core';
 import { estimateUsd } from './_fsc_cost_guard.mjs';
+import { R_PLANNER, R_AUTHOR, R_VERIFIER } from './_live_spend_ledger.mjs';
 import { gradeDurable, gradeHandler, classifySample } from './_continuation_durable_grader.mjs';
 
 const ARG = process.argv.slice(2);
@@ -195,18 +196,10 @@ say('               every criterion is proven RED in _continuation_durable_gradi
 say('  Either surprise is a reportable finding, not a failure to explain away.');
 
 // ── chain reservation for BOTH cases, before the first request ───────────────
-const worst = (chars, out) => estimateUsd({ messages: [{ content: 'x'.repeat(chars) }], max_tokens: out },
-  'grok-4-1-fast-reasoning').estimate;
-// FALLBACK MULTIPLIER DROPPED TO 1 on measured evidence: the two-case run dispatched exactly one
-// call per stage with no tier fallback, so x2 was reserving for a contingency that did not occur.
-// Still a worst-case per-stage estimate, just not a doubled one.
-const R_PLANNER = worst(30000, 1400);
-const R_AUTHOR = worst(240000, 8000);
-// 900 OUTPUT TOKENS, tracking the raised verifier budget. This read 300 — the value max_tokens had
-// before per_proposal existed — so after raising the cap to 700 the reservation would have
-// under-reserved the one stage this run actually pays for. Roman asked for the reservation to be
-// updated alongside the bound; this is that update.
-const R_VERIFIER = worst(10000, 900);   // tracks the verifier's max_tokens, raised for the guard fields
+// THE PER-STAGE FIGURES NOW COME FROM _live_spend_ledger.mjs, which is the only place they are
+// defined. They were inline here, which meant a second runner could only quote them by copying
+// them — and two copies of a reservation can disagree about what Roman authorized. The four
+// recorded estimate-only baselines (_audit_out/rb_*.log) pin every mode's total across this move.
 const PER_CASE = PLANNER_ONLY ? R_PLANNER : (R_PLANNER + R_AUTHOR + R_VERIFIER);
 const ATTEMPTS = SAMPLES || CASES.length;
 // Seal-gated reserves the WORST CASE: every one of the three planner draws, plus one author and

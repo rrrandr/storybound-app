@@ -1,0 +1,41 @@
+=== SPEND LEDGER CONTROL (provider-free, $0) ===
+
+1. the per-stage reservation is one definition, and it is pessimistic
+  ok   every stage reserves a positive amount
+  ok   a live scene is exactly planner + author + verifier
+  ok   the author dominates the scene reservation (it is the stage to tighten)
+  ok   the app's runtime-commit-verifier cap is readable
+  ok   the verifier reservation tracks that cap (900 tokens)
+  ok   the reservation lines name all three stages and the scene total
+
+2. a receipted dispatch is MEASURED from the receipt, not from the estimate
+  ok   the call is reported receipted
+  ok   measured comes from the receipt, NOT the $99 estimate
+  ok   nothing is recorded as unmeasured
+  ok   exposure equals the receipt
+
+3. a RECEIPTLESS dispatch is UNMEASURED and ESTIMATED — never $0
+  ok   the call is reported receiptless
+  ok   measured stays $0 — there was no receipt to measure
+  FAIL but it is RECORDED, with its model and estimate
+  FAIL TOTAL EXPOSURE IS NOT $0 — this is the run-15/16 defect  — exposure=0
+  FAIL the report states measured $0 AND unmeasured $0.0078 separately
+  FAIL the printed report says the figure is an ESTIMATE, not a receipt
+  ok   the printed line for the call says NOT $0 in words
+  FAIL the report never prints TOTAL EXPOSURE as $0.000000  —   TOTAL EXPOSURE     : $0.000000 of $0.05  (0.0%)
+
+4. mixed receipts: exposure is measured + unmeasured, both reported
+  ok   measured sums only the two receipts
+  FAIL unmeasured holds only the receiptless one
+  FAIL exposure is the sum of both  — exposure=0.032
+  ok   exposure is never less than measured
+
+5. a receiptless call still names its model when the response carries one
+file:///Users/romantsukerman/storybound-app/_bite_ledger_ctl.mjs:111
+    L.unreceipted[0].model === 'ministral-8b-2512', L.unreceipted[0].model);
+                     ^
+
+TypeError: Cannot read properties of undefined (reading 'model')
+    at file:///Users/romantsukerman/storybound-app/_bite_ledger_ctl.mjs:111:22
+
+Node.js v25.3.0
