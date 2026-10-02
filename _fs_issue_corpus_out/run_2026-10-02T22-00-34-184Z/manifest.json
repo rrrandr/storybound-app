@@ -1,0 +1,195 @@
+{
+  "design": "ONE EXPLORATORY TRAJECTORY through one full FS issue. NOT a statistical comparison of branches: the scene-1 axis has exactly two buttons, one run per arm cannot support a comparison, and this run takes ONE arm and one seeded card sequence.",
+  "mode": "dry_replay",
+  "plannerFixture": "_audit_out/fixture_mismatched_lane.json",
+  "story": "starter_first_sacrifice",
+  "arm": "A",
+  "seed": 20261002,
+  "scenes": 3,
+  "liveScenes": 2,
+  "bakedScene1": true,
+  "reserved": 0.6279,
+  "authorized": 0,
+  "maxTransportRetries": 1,
+  "attemptsPerStage": 2,
+  "timeouts": {
+    "authorMs": 300000,
+    "otherMs": 120000
+  },
+  "simulatedFailures": null,
+  "retryPolicy": "A COMPLETED response blocks any retry of that stage in that scene. A dispatched request that never returned may be retried up to maxTransportRetries, and each dispatched attempt that produced no response is recorded as UNMEASURED exposure with its estimate.",
+  "axis": {
+    "axis": "run in shame vs remain and see where Julian was taking it",
+    "a": {
+      "key": "run",
+      "label": "run in shame"
+    },
+    "b": {
+      "key": "remain",
+      "label": "remain and see where Julian was taking it"
+    }
+  },
+  "inputMode": "authored Fate card, drawn on a recorded seed, played through the production click handler; say/do submitted EMPTY — no invented text",
+  "completedScenes": 2,
+  "stoppedEarly": true,
+  "stopReason": "scene 2: the projection was still the baked opening",
+  "laneMenuByScene": {
+    "1": 0,
+    "2": 5,
+    "3": 0,
+    "4": 0,
+    "5": 0,
+    "6": 0,
+    "7": 0,
+    "8": 0,
+    "9": 0,
+    "10": 0,
+    "11": 0,
+    "12": 0,
+    "13": 0,
+    "14": 0,
+    "15": 0,
+    "16": 0,
+    "17": 0,
+    "18": 0,
+    "19": 0,
+    "20": 0
+  },
+  "scenesWithLaneMenus": [
+    "2"
+  ],
+  "laneGateNote": "Only plan scene(s) 2 declare an aftermathLanes menu. Elsewhere the lane check is INERT: it cannot reject and cannot accept by signal, so those scenes are recorded as laneRoute \"no_lane_menu\" rather than \"signal\".",
+  "laneRoutes": [
+    {
+      "scene": 1,
+      "laneRoute": null,
+      "hadLaneMenu": false,
+      "plannerRejected": false
+    },
+    {
+      "scene": 2,
+      "laneRoute": "rejected",
+      "hadLaneMenu": true,
+      "plannerRejected": true
+    }
+  ],
+  "perScene": [
+    {
+      "scene": 1,
+      "baked": true,
+      "proseLen": 7605,
+      "laneRoute": null,
+      "plannerRejected": false,
+      "cardCount": 0,
+      "cardSet": null,
+      "selectedCard": null,
+      "decision": null,
+      "stages": [],
+      "facts": [],
+      "activatedLabels": [],
+      "verdicts": [],
+      "pending": [],
+      "refusals": []
+    },
+    {
+      "scene": 2,
+      "baked": false,
+      "proseLen": 7605,
+      "laneRoute": "rejected",
+      "plannerRejected": true,
+      "cardCount": 0,
+      "cardSet": null,
+      "selectedCard": null,
+      "decision": {
+        "axis": "run in shame vs remain and see where Julian was taking it",
+        "choice": "run",
+        "label": "run in shame",
+        "source": "resume",
+        "at": 1790978470982,
+        "storyId": "2088c364-7d9d-4aa2-923c-98c0a48d4528"
+      },
+      "stages": [
+        "other:aborted",
+        "other:aborted",
+        "other:aborted",
+        "other:aborted",
+        "other:aborted",
+        "other:aborted",
+        "planner:replayed",
+        "other:aborted",
+        "other:aborted",
+        "other:aborted",
+        "verifier:replayed"
+      ],
+      "verifierRefs": [
+        "prop:1:1"
+      ],
+      "facts": [],
+      "activatedLabels": [],
+      "verdicts": [
+        {
+          "ref": "prop:1:1",
+          "delivery": null,
+          "reason": "delivered"
+        }
+      ],
+      "pending": [],
+      "committedThrough": 1,
+      "ctOutcome": "none",
+      "blocked": [],
+      "refusals": [
+        "[SCENE-DECISION] continuation requested before the reader's choice was recorded — mounting the prompt, requesting nothing",
+        "[SCENE-DECISION] prompt mounted: run in shame vs remain and see where Julian was taking it",
+        "[SCENE-DECISION] scene 1 → run (resume)",
+        "[CG:SCAFFOLD] generation start (arcane_binding, gpt-4o-mini)",
+        "[CG:SCAFFOLD] awaiting 1 Bible(s) before spine (P2 sequencing — latency over cost)",
+        "[CG:SCAFFOLD] Bibles ready (1ms) — pc=y li=y antag=n",
+        "[TIERED:scaffold] attempt 1 tier=primary provider=mistral model=ministral-8b-2512",
+        "[TIERED:scaffold] primary/mistral/ministral-8b-2512 failed: Failed to fetch",
+        "[TIERED:scaffold] attempt 2 tier=fallback provider=grok model=grok-4-1-fast-reasoning fallbackReason=\"Failed to fetch\"",
+        "[TIERED:scaffold] fallback/grok/grok-4-1-fast-reasoning failed: Failed to fetch",
+        "[TIERED:scaffold] attempt 3 tier=terminal provider=openai model=gpt-4o-mini fallbackReason=\"Failed to fetch\"",
+        "[TIERED:scaffold] terminal/openai/gpt-4o-mini failed: Failed to fetch",
+        "[CG:SCAFFOLD] all provider tiers failed: [TIERED:scaffold] all tiers exhausted — last error: Failed to fetch",
+        "[CG:SCAFFOLD] generation FAILED — scene proceeds without scaffold: scaffold generation failed — all tiers exhausted ([TIERED:scaffold] all tiers exhausted — last error: Failed to fetch)",
+        "[STAGED:SUBMIT] _cgScreenplayMode is ON — using screenplay-native generator (skipping literary submit)",
+        "[CG:SAYDO-SLOT] {\"slot\":null,\"confidence\":\"none\",\"evidence\":[],\"reason\":\"no player input\"}",
+        "[CG:SCAFFOLD] generation start (arcane_binding, gpt-4o-mini)",
+        "[CG:SCAFFOLD] awaiting 1 Bible(s) before spine (P2 sequencing — latency over cost)",
+        "[CG:SCAFFOLD] Bibles ready (0ms) — pc=y li=y antag=n",
+        "[TIERED:scaffold] attempt 1 tier=primary provider=mistral model=ministral-8b-2512",
+        "[TIERED:scaffold] primary/mistral/ministral-8b-2512 failed: Failed to fetch",
+        "[TIERED:scaffold] attempt 2 tier=fallback provider=grok model=grok-4-1-fast-reasoning fallbackReason=\"Failed to fetch\"",
+        "[TIERED:scaffold] fallback/grok/grok-4-1-fast-reasoning failed: Failed to fetch",
+        "[TIERED:scaffold] attempt 3 tier=terminal provider=openai model=gpt-4o-mini fallbackReason=\"Failed to fetch\"",
+        "[TIERED:scaffold] terminal/openai/gpt-4o-mini failed: Failed to fetch",
+        "[CG:SCAFFOLD] all provider tiers failed: [TIERED:scaffold] all tiers exhausted — last error: Failed to fetch",
+        "[CG:SCAFFOLD] generation FAILED — scene proceeds without scaffold: scaffold generation failed — all tiers exhausted ([TIERED:scaffold] all tiers exhausted — last error: Failed to fetch)",
+        "[TIERED:scenePlanner] attempt 1 tier=primary provider=grok model=grok-4-1-fast-non-reasoning",
+        "[CONTINUATION:NONE] scene=1 — no durable change proposed; nothing written",
+        "[CG:PLANNER-GATE] REJECTED before author dispatch, scene=1 — the planner declared chosen_aftermath_lane=\"julian_jurisdiction_challenge\" but the reader's own card selection deterministically resolved this scene to lane \"dohkar_preliminary_review\" — the event frame is not a free choice for this scene; a different (even otherwise-valid) lane is not acceptable",
+        "[CG:STALE-REJECTED] retrying once with the current branch/attempt: the planner declared chosen_aftermath_lane=\"julian_jurisdiction_challenge\" but the reader's own card selection deterministically resolved this scene to lane \"dohkar_preliminary_review\" — the event frame is not a free choice for this scene; a different (even otherwise-valid) lane is not acceptable",
+        "[CG:SAYDO-SLOT] {\"slot\":null,\"confidence\":\"none\",\"evidence\":[],\"reason\":\"no player input\"}",
+        "[CG:SCAFFOLD] generation start (arcane_binding, gpt-4o-mini)",
+        "[CG:SCAFFOLD] awaiting 1 Bible(s) before spine (P2 sequencing — latency over cost)",
+        "[CG:SCAFFOLD] Bibles ready (0ms) — pc=y li=y antag=n",
+        "[TIERED:scaffold] attempt 1 tier=primary provider=mistral model=ministral-8b-2512",
+        "[TIERED:scaffold] primary/mistral/ministral-8b-2512 failed: Failed to fetch",
+        "[TIERED:scaffold] attempt 2 tier=fallback provider=grok model=grok-4-1-fast-reasoning fallbackReason=\"Failed to fetch\"",
+        "[TIERED:scaffold] fallback/grok/grok-4-1-fast-reasoning failed: Failed to fetch",
+        "[TIERED:scaffold] attempt 3 tier=terminal provider=openai model=gpt-4o-mini fallbackReason=\"Failed to fetch\"",
+        "[TIERED:scaffold] terminal/openai/gpt-4o-mini failed: Failed to fetch",
+        "[CG:SCAFFOLD] all provider tiers failed: [TIERED:scaffold] all tiers exhausted — last error: Failed to fetch",
+        "[CG:SCAFFOLD] generation FAILED — scene proceeds without scaffold: scaffold generation failed — all tiers exhausted ([TIERED:scaffold] all tiers exhausted — last error: Failed to fetch)",
+        "[TIERED:runtimeCommitVerifier] attempt 1 tier=primary provider=mistral model=ministral-8b-2512",
+        "[ROLLBACK] transition=rejected scene=1 delivery=MISSED → replan from unchanged CommittedState (pendingIntent kept)",
+        "[CG:PLANNER-GATE] REJECTED before author dispatch, scene=1 — the planner declared chosen_aftermath_lane=\"julian_jurisdiction_challenge\" but the reader's own card selection deterministically resolved this scene to lane \"dohkar_preliminary_review\" — the event frame is not a free choice for this scene; a different (even otherwise-valid) lane is not acceptable",
+        "[CG:STALE-STOP] scene 1 — retry stale: the planner declared chosen_aftermath_lane=\"julian_jurisdiction_challenge\" but the reader's own card selection deterministically resolved this scene to lane \"dohkar_preliminary_review\" — the event frame is not a free choice for this scene; a different (even otherwise-valid) lane is not acceptable — stopped; resumable; no engine switch"
+      ]
+    }
+  ],
+  "checks": {
+    "pass": 8,
+    "fail": 3
+  }
+}

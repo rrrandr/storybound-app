@@ -34,6 +34,7 @@ import { R_SCENE, R_PLANNER, R_AUTHOR, R_VERIFIER, makeSpendLedger, reservationL
   from './_live_spend_ledger.mjs';
 import { stageOf, isProviderEndpoint, AUTHOR as REPLAY_AUTHOR, MEMORY, verifierVerdict,
   refsFromVerifierRequest } from './_replay_fixtures.mjs';
+import { classifyAttempt } from './_attempt_policy.mjs';
 import { findFSDef, launchFS, unlockFS, finalizePreview, readAxis, advanceExpectingGate,
   chooseBranch } from './_fs_story_setup.mjs';
 
@@ -48,6 +49,29 @@ const ESTIMATE_ONLY = ARG.includes('--estimate-only');
 const DRY = ARG.includes('--dry-replay');
 const AUTHORIZED = numArg('--authorize', null);
 const PLANNER_FIXTURE = strArg('--planner-fixture', null);
+// A TRANSPORT FAILURE IS NOT A USED ATTEMPT (Roman 2026-10-02). The live run dispatched the author,
+// the fetch threw, and the one-attempt rule then refused the app's two legitimate retries — turning
+// a transient failure into a stopped run. A retry after a COMPLETED response is a second charge for
+// one question and stays blocked; a retry after the request never came back is the app recovering.
+// Bounded, because "retry until it works" is how a capped run stops being capped.
+const MAX_TRANSPORT_RETRIES = numArg('--max-transport-retries', 1);
+// EXPLICIT TIMEOUTS. playwright's route.fetch() defaults to 30s. This was the FIRST live author
+// call in the project — ~8000 max_tokens on Grok — and 30s is not a plausible budget for it. Every
+// earlier author was replayed, so the default had never been tested against a real one.
+const AUTHOR_TIMEOUT_MS = numArg('--author-timeout-ms', 300000);
+const OTHER_TIMEOUT_MS = numArg('--stage-timeout-ms', 120000);
+// DRY-ONLY FAULT INJECTION, so the transport path is provable at $0: --simulate-transit-fail
+// author:2 makes the first two author requests behave as if the fetch threw. Refused outside dry
+// mode — injecting a fault into a paid run would be deliberately breaking a provider to prove a
+// fallback, which is exactly what must never happen on a paid run.
+const SIM_FAIL = strArg('--simulate-transit-fail', null);
+const simFail = {};
+if (SIM_FAIL) {
+  SIM_FAIL.split(',').forEach((pair) => {
+    const [st, n] = String(pair).split(':');
+    if (st) simFail[st.trim()] = Number(n || 1);
+  });
+}
 
 if (!(SCENES >= 2 && SCENES <= 10)) {
   console.error('REFUSED: --scenes must be 2..10; a CG issue is 10.');
@@ -60,6 +84,15 @@ if (!DRY && !ESTIMATE_ONLY && !(AUTHORIZED > 0)) {
 }
 if (DRY && !PLANNER_FIXTURE) {
   console.error('REFUSED: --dry-replay needs --planner-fixture <recorded response file>.');
+  process.exit(2);
+}
+if (SIM_FAIL && !DRY) {
+  console.error('REFUSED: --simulate-transit-fail is dry-run only. Breaking a provider call on a '
+    + 'paid run to prove the retry path is never acceptable.');
+  process.exit(2);
+}
+if (!(MAX_TRANSPORT_RETRIES >= 0 && MAX_TRANSPORT_RETRIES <= 2)) {
+  console.error('REFUSED: --max-transport-retries must be 0..2.');
   process.exit(2);
 }
 const LIVE = !DRY && !ESTIMATE_ONLY;
@@ -90,11 +123,20 @@ say('  seed    : ' + SEED + '   arm: ' + ARM + '   output: ' + RUN);
 
 // ── RESERVATION: NINE GENERATED SCENES ──────────────────────────────────────
 const LIVE_SCENES = SCENES - 1;       // scene 1 is the baked opening
-const reserved = R_SCENE * LIVE_SCENES;
+// THE RETRY IS RESERVED, NOT HOPED AWAY. With a transport retry allowed, any stage may be
+// dispatched up to (1 + MAX_TRANSPORT_RETRIES) times in a scene, and a request that never comes
+// back may still have billed. A reservation the real run can exceed is not a reservation, so the
+// worst case is reserved in full rather than assuming retries stay rare.
+const ATTEMPTS_PER_STAGE = 1 + MAX_TRANSPORT_RETRIES;
+const reserved = R_SCENE * LIVE_SCENES * ATTEMPTS_PER_STAGE;
 say('\nRESERVATION (from the shared estimator, _live_spend_ledger.mjs)');
 reservationLines().forEach(say);
 say('  scene 1 is FS\'s BAKED opening — fixed, authored, ZERO provider calls, not reserved');
-say('  × ' + LIVE_SCENES + ' GENERATED scene(s) of ' + SCENES + ' = $' + reserved.toFixed(6));
+say('  transport retries allowed: ' + MAX_TRANSPORT_RETRIES + ' per stage per scene, so every'
+  + ' stage is reserved ' + ATTEMPTS_PER_STAGE + 'x — a dispatched call that never returns may'
+  + ' still have billed');
+say('  ' + LIVE_SCENES + ' generated scene(s) × $' + R_SCENE.toFixed(6) + ' × '
+  + ATTEMPTS_PER_STAGE + ' = $' + reserved.toFixed(6));
 if (LIVE && reserved > AUTHORIZED) {
   say('\nREFUSED BEFORE DISPATCH: reserved $' + reserved.toFixed(6)
     + ' exceeds the authorized $' + AUTHORIZED.toFixed(2));
@@ -105,6 +147,8 @@ if (LIVE) say('  within authorization — $' + (AUTHORIZED - reserved).toFixed(6
 if (ESTIMATE_ONLY) {
   say('\nESTIMATE ONLY — no browser launched, nothing dispatched. $0 spent.');
   write('estimate.json', { scenes: SCENES, liveScenes: LIVE_SCENES, perScene: R_SCENE, reserved,
+    maxTransportRetries: MAX_TRANSPORT_RETRIES, attemptsPerStage: ATTEMPTS_PER_STAGE,
+    perSceneWorstCase: R_SCENE * ATTEMPTS_PER_STAGE,
     stages: { planner: R_PLANNER, author: R_AUTHOR, verifier: R_VERIFIER } });
   process.exit(0);
 }
@@ -151,15 +195,43 @@ await page.route('**/api/**', async (route) => {
     calls.push({ scene: sceneNo, stage, outcome: 'aborted' });
     try { await route.abort(); } catch (_) {} return;
   }
-  // ONE ATTEMPT PER STAGE PER SCENE. The app retries a rejected planner once; that is a second
-  // charge for one question.
-  if (calls.some(c => c.scene === sceneNo && c.stage === stage
-    && /dispatched|replayed/.test(c.outcome))) {
-    blocked.push({ scene: sceneNo, stage, why: 'second attempt at the same stage in one scene' });
-    calls.push({ scene: sceneNo, stage, outcome: 'blocked_duplicate' });
+  // TWO DIFFERENT RETRIES, TWO DIFFERENT ANSWERS.
+  //   a COMPLETED response for this stage already exists -> a retry is a second charge for one
+  //     question. BLOCKED, as before.
+  //   the previous attempt never came back -> the app is recovering from a transport failure, and
+  //     refusing it guarantees the scene cannot render. ALLOWED, up to MAX_TRANSPORT_RETRIES.
+  // The live run conflated these and stopped the issue at scene 2 on a transient failure.
+  // THE DECISION LIVES IN _attempt_policy.mjs so it is one definition and testable without a
+  // provider — the app does not re-request a stage after a completed response in this flow, so
+  // that branch cannot be exercised end to end here and is proven at the policy level instead.
+  const mine = calls.filter(c => c.scene === sceneNo && c.stage === stage);
+  const verdictA = classifyAttempt({
+    completed: mine.some(c => /^(dispatched|replayed)$/.test(c.outcome)),
+    transportFails: mine.filter(c => c.outcome === 'transit_error').length,
+    maxTransportRetries: MAX_TRANSPORT_RETRIES });
+  if (!verdictA.allow) {
+    blocked.push({ scene: sceneNo, stage, why: verdictA.why });
+    calls.push({ scene: sceneNo, stage, outcome: verdictA.outcome });
+    say('    [BLOCKED] ' + stage + ' — ' + verdictA.why);
     try { await route.abort(); } catch (_) {} return;
   }
+  if (verdictA.attempt > 1) {
+    say('    [RETRY] ' + stage + ' attempt ' + verdictA.attempt + ' of ' + verdictA.of
+      + ' — ' + verdictA.why);
+  }
   if (DRY) {
+    // DRY FAULT INJECTION: behave exactly as a thrown fetch does, including the accounting, so the
+    // retry and the unmeasured-exposure paths are exercised without a provider.
+    if (simFail[stage] && simFail[stage] > 0) {
+      simFail[stage] -= 1;
+      const estSim = (stage === 'author') ? R_AUTHOR
+        : (stage === 'planner' ? R_PLANNER : R_VERIFIER);
+      say('    [SIMULATED TRANSIT FAILURE] ' + stage + ' scene ' + sceneNo
+        + ' — accounted as dispatched-with-no-response');
+      calls.push({ scene: sceneNo, stage, outcome: 'transit_error', simulated: true });
+      ledger.recordDispatchedNoResponse(stage, estSim, 'simulated transit failure (dry run)');
+      try { await route.abort(); } catch (_) {} return;
+    }
     calls.push({ scene: sceneNo, stage, outcome: 'replayed' });
     if (stage === 'planner') { try { return give(recordedReply(PLANNER_FIXTURE)); }
       catch (e) { say('  REFUSED: ' + e.message); try { await route.abort(); } catch (_) {} return; } }
@@ -181,15 +253,24 @@ await page.route('**/api/**', async (route) => {
     try { await route.abort(); } catch (_) {} return;
   }
   spentEstimate += est;
+  const timeoutMs = (stage === 'author') ? AUTHOR_TIMEOUT_MS : OTHER_TIMEOUT_MS;
   say('    [DISPATCH] ' + stage + ' scene ' + sceneNo + ' — est $' + est.toFixed(6)
-    + ' (committed $' + spentEstimate.toFixed(6) + ')');
+    + ' (committed $' + spentEstimate.toFixed(6) + ', timeout ' + (timeoutMs / 1000) + 's)');
   if (stage === 'verifier') verifierSeen.push({ scene: sceneNo, refs: refsFromVerifierRequest(usr) });
-  calls.push({ scene: sceneNo, stage, outcome: 'dispatched' });
   let resp = null;
-  try { resp = await route.fetch(); } catch (e) {
-    calls.push({ scene: sceneNo, stage, outcome: 'transit_error' });
+  try {
+    resp = await route.fetch({ timeout: timeoutMs });
+  } catch (e) {
+    // THE REQUEST LEFT AND NOTHING CAME BACK. Both halves matter: the error text, which the live
+    // run discarded and left the failure undiagnosable, and the MONEY — a dispatched request may
+    // have billed, so this is unmeasured exposure, never $0.
+    const msg = (e && e.message) ? String(e.message).slice(0, 300) : 'unknown';
+    say('    [TRANSIT FAILURE] ' + stage + ' scene ' + sceneNo + ' — ' + msg);
+    calls.push({ scene: sceneNo, stage, outcome: 'transit_error', error: msg });
+    ledger.recordDispatchedNoResponse(stage, est, msg, (body && body.model) || null);
     try { await route.abort(); } catch (_) {} return;
   }
+  calls.push({ scene: sceneNo, stage, outcome: 'dispatched' });
   const text = await resp.text();
   write('scenes/s' + sceneNo + '_' + stage + '.json', text);
   ledger.recordCost(stage, text, est);
@@ -453,6 +534,12 @@ const manifest = {
   story: 'starter_first_sacrifice', arm: ARM, seed: SEED,
   scenes: SCENES, liveScenes: LIVE_SCENES, bakedScene1: true,
   reserved, authorized: LIVE ? AUTHORIZED : 0,
+  maxTransportRetries: MAX_TRANSPORT_RETRIES, attemptsPerStage: ATTEMPTS_PER_STAGE,
+  timeouts: { authorMs: AUTHOR_TIMEOUT_MS, otherMs: OTHER_TIMEOUT_MS },
+  simulatedFailures: SIM_FAIL || null,
+  retryPolicy: 'A COMPLETED response blocks any retry of that stage in that scene. A dispatched '
+    + 'request that never returned may be retried up to maxTransportRetries, and each dispatched '
+    + 'attempt that produced no response is recorded as UNMEASURED exposure with its estimate.',
   axis, inputMode: 'authored Fate card, drawn on a recorded seed, played through the production '
     + 'click handler; say/do submitted EMPTY — no invented text',
   completedScenes: history.length, stoppedEarly: history.length < SCENES, stopReason,

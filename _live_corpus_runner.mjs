@@ -497,16 +497,27 @@ for (let s = 1; s <= SCENES; s++) {
   const proseNow = String(snap.prose || '');
   t('scene ' + s + ': prose captured from the app projection (>=40 chars)',
     proseNow.length >= 40, 'proseLen=' + proseNow.length);
-  if (!(STORY === 'fs' && s === 1)) {
+  // SCOPED TO FS, and the scoping is the point. On First Sacrifice scene 1 is a FIXED baked
+  // package, so a later scene whose projection equals it means nothing was generated — that is the
+  // failure this assertion exists to catch, and it caught it on the live run.
+  //
+  // On the SYNTHETIC fixture it is not a failure at all: every scene replays ONE recorded author
+  // response, so identical prose scene to scene is the documented artifact (see the four-scene
+  // proof's own header). Asserting against it flagged the fixture working as designed — my
+  // regression, introduced when I carried the FS assertion over without carrying its precondition.
+  if (STORY === 'fs' && s > 1) {
     const baked = String((history[0] && history[0].proseText) || '');
     const isStale = !!baked && proseNow === baked;
     t('scene ' + s + ': the prose is NOT the baked opening — the projection is not stale',
       proseNow.length > 0 && !isStale,
-      isStale ? 'IDENTICAL to scene 1 (' + baked.length + ' chars) — nothing was generated'
+      isStale ? 'IDENTICAL to the baked opening (' + baked.length + ' chars) — nothing was generated'
         : 'len=' + proseNow.length);
     if (isStale && !stopReason) {
       stopReason = 'scene ' + s + ': the projection was still the baked opening — no generated prose';
     }
+  } else if (s > 1) {
+    say('   (synthetic fixture: prose equal to an earlier scene is expected — one replayed author'
+      + ' response — so no staleness assertion applies here)');
   }
 
   // Wait for the submit latch rather than clearing it.

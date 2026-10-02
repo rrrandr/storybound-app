@@ -1,0 +1,88 @@
+=== LIVE N-SCENE CORPUS RUNNER ===
+  scenes       : 2
+  mode         : DRY REPLAY (provider-free, $0)
+  branch       : defy
+  input policy : neutral
+  output       : _live_corpus_out/run_2026-10-02T22-22-20-856Z
+
+RESERVATION (worst case per stage, from _live_spend_ledger.mjs)
+  planner  : $0.023175
+  author   : $0.126000
+  verifier : $0.007800
+  one live scene = $0.156975
+  × 2 scene(s) = $0.313950
+  the memory extractor is REPLAYED in every mode and reserves nothing
+
+BRINGING UP THE SYNTHETIC RELIABILITY FIXTURE (not First Sacrifice)
+
+── scene 1/2
+  ok   scene 1: the staged scene MOUNTED
+  ok   scene 1: prose captured from the app projection (>=40 chars)
+  ok   scene 1: the prose is NOT the baked opening — the projection is not stale
+  ok   scene 1: submit latch cleared before the next advance
+   stages   : ["planner:replayed","author:replayed","memory:replayed"]
+   prose    : 1457 chars   facts: 0   activated: 0   verdicts: 0
+   app said : 200 line(s); notable:
+       · [CG:SCREENPLAY:USER-PROMPT]
+
+═══ AUTHOR FLOOR (HARD — outranks style, ornament and mystery) ═══
+1. INTERIORITY DECODES; IT DOES NOT ENCODE. A reader must never have to reconstruct 
+       · [FATE-WISH] salience=0.81 signals={"fatelands":true,"npcFate":true,"stakes":true,"sacrifice":true,"openDebt":false} candidates=2 included=2 [bargain+refusal]
+
+── scene 2/2
+  ok   scene 2: the gate was OPEN at the moment of submission
+  ok   scene 2: the staged scene MOUNTED
+  ok   scene 2: prose captured from the app projection (>=40 chars)
+  FAIL scene 2: the prose is NOT the baked opening — the projection is not stale  — IDENTICAL to scene 1 (1457 chars) — nothing was generated
+   stages   : ["verifier:replayed","planner:replayed","author:replayed"]
+   prose    : 1457 chars   facts: 2   activated: 1   verdicts: 2
+   verifier asked about: ["prop:2:1","prop:2:2"]
+   app said : 142 line(s); notable:
+       · [CG:SCREENPLAY:USER-PROMPT]
+
+═══ AUTHOR FLOOR (HARD — outranks style, ornament and mystery) ═══
+1. INTERIORITY DECODES; IT DOES NOT ENCODE. A reader must never have to reconstruct 
+       · [IMAGE-GEN] {"provider":"Gemini","context":"visualize","reached":true,"blockedBy":"None","status":"ATTEMPTING","promptLength":33507,"promptPreview":"PRIMARY DIRECTIVE: Depict the s
+       · [IMAGE-GEN] {"provider":"Gemini","context":"visualize","reached":false,"blockedBy":"None","status":"META","promptLength":21,"promptPreview":"styleAuthority: Genre","timestamp":"202
+       · [IMAGE-GEN] {"provider":"Gemini","context":"visualize","reached":true,"blockedBy":"None","status":"ATTEMPTING","promptLength":33619,"promptPreview":"PRIMARY DIRECTIVE: Depict the s
+       · [IMAGE-GEN] {"provider":"Gemini","context":"visualize","reached":false,"blockedBy":"None","status":"META","promptLength":21,"promptPreview":"styleAuthority: Genre","timestamp":"202
+       · [IMAGE-GEN] {"provider":"Gemini","context":"visualize","reached":false,"blockedBy":"NoOutput","status":"FAILED","promptLength":33619,"promptPreview":"PRIMARY DIRECTIVE: Depict the 
+
+── PER-SCENE RESULT TABLE
+  scene | prose | facts | activated | verdicts | refs | stages
+      1 |  1457 |     0 |         0 |        0 |    0 | planner:replayed,author:replayed,memory:replayed
+      2 |  1457 |     2 |         1 |        2 |    2 | verifier:replayed,planner:replayed,author:replayed
+
+SPEND: $0 — nothing was dispatched (dry_replay).
+
+STOPPED EARLY: scene 2: the projection was still the baked opening — no generated prose
+
+WHAT THE APP SAID (342 line(s), in order):
+  · s1 [BAKED] starter-scenes.js loaded — 3 package(s), 2 still PLACEHOLDER: starter_the_first_taste, starter_glass_house
+  · s1 %c[CGLENS] CG signature-lens pass ready — caption-only, ≤1/scene, shared anti-calc/CDS color:#7ec77e;font-weight:bold
+  · s1 [CG:HELPERS] ready=true
+  · s1 [CG:SCAFFOLD] generation start (arcane_binding, gpt-4o-mini)
+  · s1 [TIERED:pcBodyBible] attempt 1 tier=primary provider=mistral model=ministral-8b-2512
+  · s1 [TIERED:liBodyBible] attempt 1 tier=primary provider=mistral model=ministral-8b-2512
+  · s1 [CG:SCAFFOLD] awaiting 3 Bible(s) before spine (P2 sequencing — latency over cost)
+  · s1 [TIERED:pcBodyBible] primary/mistral/ministral-8b-2512 failed: Failed to fetch
+  · s1 [TIERED:pcBodyBible] attempt 2 tier=fallback provider=grok model=grok-4-1-fast-reasoning fallbackReason="Failed to fetch"
+  · s1 [TIERED:pcBodyBible] fallback/grok/grok-4-1-fast-reasoning failed: Failed to fetch
+  · s1 [TIERED:pcBodyBible] attempt 3 tier=terminal provider=openai model=gpt-4o-mini fallbackReason="Failed to fetch"
+  · s1 [TIERED:pcBodyBible] terminal/openai/gpt-4o-mini failed: Failed to fetch
+  · s1 [PC-BODY-BIBLE] all provider tiers failed: [TIERED:pcBodyBible] all tiers exhausted — last error: Failed to fetch
+  · s1 [TIERED:liBodyBible] primary/mistral/ministral-8b-2512 failed: Failed to fetch
+  · s1 [TIERED:liBodyBible] attempt 2 tier=fallback provider=grok model=grok-4-1-fast-reasoning fallbackReason="Failed to fetch"
+  · s1 [TIERED:liBodyBible] fallback/grok/grok-4-1-fast-reasoning failed: Failed to fetch
+  · s1 [TIERED:liBodyBible] attempt 3 tier=terminal provider=openai model=gpt-4o-mini fallbackReason="Failed to fetch"
+  · s1 [TIERED:liBodyBible] terminal/openai/gpt-4o-mini failed: Failed to fetch
+  · s1 [LI-BODY-BIBLE] all provider tiers failed: [TIERED:liBodyBible] all tiers exhausted — last error: Failed to fetch
+  · s1 [CG:SCAFFOLD] Bibles ready (655ms) — pc=n li=n antag=n
+  · s1 [TIERED:scaffold] attempt 1 tier=primary provider=mistral model=ministral-8b-2512
+  · s1 [TIERED:scaffold] primary/mistral/ministral-8b-2512 failed: Failed to fetch
+  · s1 [TIERED:scaffold] attempt 2 tier=fallback provider=grok model=grok-4-1-fast-reasoning fallbackReason="Failed to fetch"
+  · s1 [TIERED:scaffold] fallback/grok/grok-4-1-fast-reasoning failed: Failed to fetch
+  · s1 [TIERED:scaffold] attempt 3 tier=terminal provider=openai model=gpt-4o-mini fallbackReason="Failed to fetch"
+  … 317 more in manifest.json
+
+7/8 per-scene checks passed

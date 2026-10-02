@@ -1,0 +1,25 @@
+{
+  "WARNING": "DO NOT OPEN until the scoresheet is filled and saved.",
+  "seed": 20261002,
+  "arm": "A",
+  "mapping": [
+    {
+      "slot": "slot_01",
+      "scene": 2,
+      "baked": false,
+      "card": null
+    },
+    {
+      "slot": "slot_02",
+      "scene": 1,
+      "baked": true,
+      "card": null
+    },
+    {
+      "slot": "slot_03",
+      "scene": 3,
+      "baked": false,
+      "card": "The Refusal"
+    }
+  ]
+}

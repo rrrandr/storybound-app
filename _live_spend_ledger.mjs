@@ -96,6 +96,20 @@ export function makeSpendLedger(say) {
     return { receipted: false, usd: null, estimate: est };
   };
 
+  // A DISPATCHED CALL THAT NEVER CAME BACK. The FS corpus run dispatched the author, the fetch
+  // threw, and the runner recorded "transit_error" without telling the ledger — so a request that
+  // may well have reached the provider was booked as $0. That is the same defect as reading a
+  // missing receipt as free, in a different code path: the request left, and whether it billed is
+  // not knowable from here. It is UNMEASURED exposure with its estimate, never zero.
+  const recordDispatchedNoResponse = (stage, est, why, model) => {
+    const m = model || 'unknown';
+    unreceipted.push({ stage, model: m, estimate: est, noResponse: true, why: why || 'transit error' });
+    say('        NO RESPONSE from ' + m + ' (' + (why || 'transit error') + ') — the request was'
+      + ' DISPATCHED, so this is UNMEASURED, estimated $' + est.toFixed(6)
+      + ' (NOT $0; total unmeasured $' + unmeasuredTotal().toFixed(6) + ')');
+    return { receipted: false, usd: null, estimate: est, noResponse: true };
+  };
+
   const exposure = () => measured + unmeasuredTotal();
 
   const spendReport = (authorized) => {
@@ -103,10 +117,13 @@ export function makeSpendLedger(say) {
     say('\nSPEND');
     say('  MEASURED (receipts): $' + measured.toFixed(6));
     if (unreceipted.length) {
+      const noResp = unreceipted.filter(u => u.noResponse).length;
       say('  UNMEASURED         : $' + un.toFixed(6) + ' estimated across ' + unreceipted.length
-        + ' call(s) that returned NO receipt');
+        + ' call(s) with no receipt'
+        + (noResp ? ' — ' + noResp + ' of them never returned at all' : ''));
       unreceipted.forEach(u => say('      · ' + u.stage + ' on ' + u.model
-        + ' — estimated $' + u.estimate.toFixed(6)));
+        + ' — estimated $' + u.estimate.toFixed(6)
+        + (u.noResponse ? '  [DISPATCHED, NO RESPONSE: ' + (u.why || 'transit error') + ']' : '')));
     } else {
       say('  UNMEASURED         : none — every dispatch returned a receipt');
     }
@@ -120,6 +137,6 @@ export function makeSpendLedger(say) {
     return { measured, unmeasured: un, exposure: ex, receiptless: unreceipted.length };
   };
 
-  return { recordCost, modelOf, spendReport, unreceipted, unmeasuredTotal,
-    measuredTotal: () => measured, exposure };
+  return { recordCost, recordDispatchedNoResponse, modelOf, spendReport, unreceipted,
+    unmeasuredTotal, measuredTotal: () => measured, exposure };
 }

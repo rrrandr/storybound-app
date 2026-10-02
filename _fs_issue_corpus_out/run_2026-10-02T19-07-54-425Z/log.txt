@@ -1,0 +1,14 @@
+=== ONE FULL FS ISSUE — 10 SCENES, FATE-CARD DRIVEN ===
+  mode    : ESTIMATE ONLY
+  seed    : 20261002   arm: A   output: _fs_issue_corpus_out/run_2026-10-02T19-07-54-425Z
+
+RESERVATION (from the shared estimator, _live_spend_ledger.mjs)
+  planner  : $0.023175
+  author   : $0.126000
+  verifier : $0.007800
+  one live scene = $0.156975
+  scene 1 is FS's BAKED opening — fixed, authored, ZERO provider calls, not reserved
+  transport retries allowed: 1 per stage per scene, so every stage is reserved 2x — a dispatched call that never returns may still have billed
+  9 generated scene(s) × $0.156975 × 2 = $2.825550
+
+ESTIMATE ONLY — no browser launched, nothing dispatched. $0 spent.

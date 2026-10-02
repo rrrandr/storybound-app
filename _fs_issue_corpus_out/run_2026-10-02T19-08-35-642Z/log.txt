@@ -1,0 +1,78 @@
+=== ONE FULL FS ISSUE — 3 SCENES, FATE-CARD DRIVEN ===
+  mode    : DRY REPLAY of _fs_planner_capture_out/run_2026-10-02T13-52-38-343Z/planner_response.json
+  seed    : 20261002   arm: A   output: _fs_issue_corpus_out/run_2026-10-02T19-08-35-642Z
+
+RESERVATION (from the shared estimator, _live_spend_ledger.mjs)
+  planner  : $0.023175
+  author   : $0.126000
+  verifier : $0.007800
+  one live scene = $0.156975
+  scene 1 is FS's BAKED opening — fixed, authored, ZERO provider calls, not reserved
+  transport retries allowed: 1 per stage per scene, so every stage is reserved 2x — a dispatched call that never returns may still have billed
+  2 generated scene(s) × $0.156975 × 2 = $0.627900
+
+BRINGING UP FIRST SACRIFICE
+  ok   the baked opening mounted
+  ok   scene 1 committed as scenes[0]
+  ok   the preview was finalized
+  ok   the authored axis is readable
+  axis: "run in shame vs remain and see where Julian was taking it"
+  lane menus declared on plan scene(s): 2 — the lane gate is INERT everywhere else
+
+── scene 1/3
+  ok   scene 1: the baked opening captured (>=200 chars)
+  ok   scene 1: no planner, no author
+   BAKED opening: 7605 chars, no dispatch
+
+── scene 2/3
+  ok   scene 2: the advance refused until the choice was recorded
+    [SIMULATED TRANSIT FAILURE] author scene 2 — accounted as dispatched-with-no-response
+        NO RESPONSE from unknown (simulated transit failure (dry run)) — the request was DISPATCHED, so this is UNMEASURED, estimated $0.126000 (NOT $0; total unmeasured $0.126000)
+    [RETRY] author attempt 2 of 2 — the previous attempt never returned
+  ok   scene 2: the choice was recorded by the prompt's handler
+   axis choice: "run"
+  ok   scene 2: the staged scene MOUNTED
+  ok   scene 2: prose is non-empty and NOT the baked opening
+  ok   scene 2: prose differs from the previous scene
+   lane route: SIGNAL
+   stages: ["planner:replayed","author:transit_error","author:replayed","memory:replayed"]
+   prose 1566   facts 0   activated 0   verdicts 0
+   notable:
+     · [CG:SCREENPLAY:USER-PROMPT]
+
+═══ AUTHOR FLOOR (HARD — outranks style, ornament and mystery) ═══
+1. INTERIORITY DECODES; IT DOES NOT ENCODE. A reader must never have to reconst
+     · [FATE-WISH] salience=0.84 signals={"fatelands":true,"npcFate":true,"stakes":true,"sacrifice":true,"openDebt":false} candidates=2 included=2 [bargain+refusal]
+
+── scene 3/3
+  ok   scene 3: the gate was OPEN at the moment of submission
+  ok   scene 3: the authored Fate cards were exposed
+  ok   scene 3: the drawn card was played through the production handler
+   cards: 5   drew #0 "Temptation"
+  ok   scene 3: the staged scene MOUNTED
+  ok   scene 3: prose is non-empty and NOT the baked opening
+  ok   scene 3: prose differs from the previous scene
+   lane route: NO_LANE_MENU
+   stages: ["verifier:replayed","planner:replayed","author:replayed","memory:replayed"]
+   prose 1761   facts 0   activated 0   verdicts 1
+   notable:
+     · [ROLLBACK] transition=rejected scene=1 delivery=MISSED → replan from unchanged CommittedState (pendingIntent kept)
+     · [CG:SCREENPLAY:USER-PROMPT]
+
+═══ AUTHOR FLOOR (HARD — outranks style, ornament and mystery) ═══
+1. INTERIORITY DECODES; IT DOES NOT ENCODE. A reader must never have to reconst
+     · [IMAGE-GEN] {"provider":"Gemini","context":"visualize","reached":true,"blockedBy":"None","status":"ATTEMPTING","promptLength":49617,"promptPreview":"PRIMARY DIRECTIVE: Depict 
+     · [IMAGE-GEN] {"provider":"Gemini","context":"visualize","reached":false,"blockedBy":"None","status":"META","promptLength":21,"promptPreview":"styleAuthority: Genre","timestamp"
+
+── PER-SCENE RECORD
+  scene | prose | cards | drew | route      | facts | activated | verdicts | stages
+      1 |  7605 |     - |    - | -          |     0 |         0 |        0 | 
+      2 |  1566 |     - |    - | signal     |     0 |         0 |        0 | planner:replayed,author:transit_error,author:replayed,memory:replayed
+      3 |  1761 |     5 |   #0 | no_lane_menu |     0 |         0 |        1 | verifier:replayed,planner:replayed,author:replayed,memory:replayed
+
+  blind packet: _fs_issue_corpus_out/run_2026-10-02T19-08-35-642Z/blind_packet  (3 shuffled slots, key sealed separately)
+
+SPEND: $0 — nothing was dispatched (dry replay).
+
+17/17 checks passed
+artefacts: _fs_issue_corpus_out/run_2026-10-02T19-08-35-642Z

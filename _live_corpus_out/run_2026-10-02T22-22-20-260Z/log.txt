@@ -1,0 +1,17 @@
+=== LIVE N-SCENE CORPUS RUNNER ===
+  scenes       : 3
+  mode         : ESTIMATE ONLY ($0, no browser)
+  branch       : defy
+  input policy : neutral
+  output       : _live_corpus_out/run_2026-10-02T22-22-20-260Z
+
+RESERVATION (worst case per stage, from _live_spend_ledger.mjs)
+  planner  : $0.023175
+  author   : $0.126000
+  verifier : $0.007800
+  one live scene = $0.156975
+  scene 1 is FS's BAKED package — fixed, authored, ZERO provider calls, not reserved
+  × 2 GENERATED scene(s) of 3 = $0.313950
+  the memory extractor is REPLAYED in every mode and reserves nothing
+
+ESTIMATE ONLY — no browser launched, nothing dispatched. $0 spent.

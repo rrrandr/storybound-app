@@ -3,7 +3,7 @@
 
 SPEND
   MEASURED (receipts): $0.000000
-  UNMEASURED         : $0.007800 estimated across 1 call(s) that returned NO receipt
+  UNMEASURED         : $0.007800 estimated across 1 call(s) with no receipt
       · verifier on ministral-8b-2512 — estimated $0.007800
   TOTAL EXPOSURE     : $0.007800 of $0.05  (15.6%)
   NOTE: the unmeasured figure is an ESTIMATE, not a receipt. Real spend for those
@@ -14,7 +14,7 @@ SPEND
 
 SPEND
   MEASURED (receipts): $0.032000
-  UNMEASURED         : $0.007800 estimated across 1 call(s) that returned NO receipt
+  UNMEASURED         : $0.007800 estimated across 1 call(s) with no receipt
       · verifier on ministral-8b-2512 — estimated $0.007800
   TOTAL EXPOSURE     : $0.039800 of $0.20  (19.9%)
   NOTE: the unmeasured figure is an ESTIMATE, not a receipt. Real spend for those

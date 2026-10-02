@@ -1,0 +1,56 @@
+=== ONE FULL FS ISSUE — 3 SCENES, FATE-CARD DRIVEN ===
+  mode    : DRY REPLAY of _audit_out/fixture_mismatched_lane.json
+  seed    : 20261002   arm: A   output: _fs_issue_corpus_out/run_2026-10-02T22-00-34-184Z
+
+RESERVATION (from the shared estimator, _live_spend_ledger.mjs)
+  planner  : $0.023175
+  author   : $0.126000
+  verifier : $0.007800
+  one live scene = $0.156975
+  scene 1 is FS's BAKED opening — fixed, authored, ZERO provider calls, not reserved
+  transport retries allowed: 1 per stage per scene, so every stage is reserved 2x — a dispatched call that never returns may still have billed
+  2 generated scene(s) × $0.156975 × 2 = $0.627900
+
+BRINGING UP FIRST SACRIFICE
+  ok   the baked opening mounted
+  ok   scene 1 committed as scenes[0]
+  ok   the preview was finalized
+  ok   the authored axis is readable
+  axis: "run in shame vs remain and see where Julian was taking it"
+  lane menus declared on plan scene(s): 2 — the lane gate is INERT everywhere else
+
+── scene 1/3
+  ok   scene 1: the baked opening captured (>=200 chars)
+  ok   scene 1: no planner, no author
+   BAKED opening: 7605 chars, no dispatch
+
+── scene 2/3
+  ok   scene 2: the advance refused until the choice was recorded
+  ok   scene 2: the choice was recorded by the prompt's handler
+   axis choice: "run"
+  FAIL scene 2: the staged scene MOUNTED
+  FAIL scene 2: prose is non-empty and NOT the baked opening  — IDENTICAL to the opening — nothing generated
+  FAIL scene 2: prose differs from the previous scene  — byte-identical to scene 1 — a fixture or a stall
+   lane route: REJECTED
+   stages: ["planner:replayed","verifier:replayed"]
+   prose 7605   facts 0   activated 0   verdicts 1
+   notable:
+     · [CG:PLANNER-GATE] REJECTED before author dispatch, scene=1 — the planner declared chosen_aftermath_lane="julian_jurisdiction_challenge" but the reader's own card selection det
+     · [CG:STALE-REJECTED] retrying once with the current branch/attempt: the planner declared chosen_aftermath_lane="julian_jurisdiction_challenge" but the reader's own card selecti
+     · [ROLLBACK] transition=rejected scene=1 delivery=MISSED → replan from unchanged CommittedState (pendingIntent kept)
+     · [CG:PLANNER-GATE] REJECTED before author dispatch, scene=1 — the planner declared chosen_aftermath_lane="julian_jurisdiction_challenge" but the reader's own card selection det
+  STOP: scene 2: the projection was still the baked opening
+
+── PER-SCENE RECORD
+  scene | prose | cards | drew | route      | facts | activated | verdicts | stages
+      1 |  7605 |     - |    - | -          |     0 |         0 |        0 | 
+      2 |  7605 |     - |    - | rejected   |     0 |         0 |        1 | planner:replayed,verifier:replayed
+
+  blind packet: _fs_issue_corpus_out/run_2026-10-02T22-00-34-184Z/blind_packet  (2 shuffled slots, key sealed separately)
+
+STOPPED EARLY: scene 2: the projection was still the baked opening
+
+SPEND: $0 — nothing was dispatched (dry replay).
+
+8/11 checks passed
+artefacts: _fs_issue_corpus_out/run_2026-10-02T22-00-34-184Z
