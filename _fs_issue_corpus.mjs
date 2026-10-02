@@ -214,6 +214,22 @@ const axis = await readAxis(page);
 t('the authored axis is readable', !!axis);
 say('  axis: "' + (axis && axis.axis) + '"');
 
+// WHICH SCENES EVEN HAVE A LANE GATE. Measured, not assumed: in the FS plan ONLY row n=2 declares
+// an aftermathLanes menu, so from scene 3 on the lane check is INERT — it cannot reject, and it
+// cannot "accept by signal" either. Labelling those scenes 'signal' would claim a check that never
+// ran, which is exactly the kind of green that means nothing.
+const laneMenuByScene = await page.evaluate(() => {
+  const P = window.STARTER_PLANS && window.STARTER_PLANS.starter_first_sacrifice;
+  const m = {};
+  ((P && P.scenes) || []).forEach((r) => {
+    m[String(r.n)] = Array.isArray(r.aftermathLanes) ? r.aftermathLanes.length : 0;
+  });
+  return m;
+});
+const scenesWithLanes = Object.keys(laneMenuByScene).filter(k => laneMenuByScene[k] > 0);
+say('  lane menus declared on plan scene(s): ' + (scenesWithLanes.join(', ') || 'none')
+  + ' — the lane gate is INERT everywhere else');
+
 const readToGate = () => page.evaluate(async () => {
   const sleep = (ms) => new Promise(r => setTimeout(r, ms));
   const st = () => { const a = window.state._stagedActive || null;
@@ -378,7 +394,24 @@ for (let s = 1; s <= SCENES; s++) {
     if (latchClear) break;
     await new Promise(r => setTimeout(r, 1000));
   }
+  // WHICH ROUTE LET THIS SCENE'S PLANNER REPLY THROUGH. The structural route announces itself in
+  // the app's log; a scene whose planner was accepted without that line passed by the lane's signal
+  // vocabulary. Recorded per scene because the two mean different things: 'signal' is the lane's
+  // wording, 'structural' is event_slots naming the lane's declared actor. Roman asked for this to
+  // be reported rather than inferred afterwards.
+  const sceneRefusals = refusals.filter(r => r.scene === s).map(r => r.txt);
+  const plannerRejected = sceneRefusals.some(x => /\[CG:PLANNER-GATE\] REJECTED/i.test(x));
+  const structuralHit = sceneRefusals.some(x => /lane satisfied STRUCTURALLY/i.test(x));
+  const plannerReached = calls.some(c => c.scene === s && c.stage === 'planner'
+    && /dispatched|replayed/.test(c.outcome));
+  const hadLaneMenu = (laneMenuByScene[String(s)] || 0) > 0;
+  const laneRoute = plannerRejected ? 'rejected'
+    : (!plannerReached ? null
+      : (structuralHit ? 'structural' : (hadLaneMenu ? 'signal' : 'no_lane_menu')));
+  if (laneRoute) say('   lane route: ' + laneRoute.toUpperCase());
+
   history.push({ scene: s, baked: false, decision, cardSet, selectedCard: selected,
+    laneRoute, plannerRejected, hadLaneMenu,
     seed: SEED, proseLen: proseNow.length, proseText: proseNow,
     gate: gate.after || null, latchClear,
     stages: calls.filter(c => c.scene === s).map(c => c.stage + ':' + c.outcome),
@@ -401,11 +434,12 @@ await browser.close();
 
 // ── THE RECORD ──────────────────────────────────────────────────────────────
 say('\n── PER-SCENE RECORD');
-say('  scene | prose | cards | drew | facts | activated | verdicts | stages');
+say('  scene | prose | cards | drew | route      | facts | activated | verdicts | stages');
 history.forEach(h => say('  ' + String(h.scene).padStart(5) + ' | '
   + String(h.proseLen).padStart(5) + ' | '
   + String(h.cardSet ? h.cardSet.count : '-').padStart(5) + ' | '
   + String(h.selectedCard ? '#' + h.selectedCard.drawIndex : '-').padStart(4) + ' | '
+  + String(h.laneRoute || '-').padEnd(10) + ' | '
   + String(h.facts.length).padStart(5) + ' | '
   + String(h.activatedLabels.length).padStart(9) + ' | '
   + String(h.verdicts.length).padStart(8) + ' | '
@@ -422,7 +456,14 @@ const manifest = {
   axis, inputMode: 'authored Fate card, drawn on a recorded seed, played through the production '
     + 'click handler; say/do submitted EMPTY — no invented text',
   completedScenes: history.length, stoppedEarly: history.length < SCENES, stopReason,
+  laneMenuByScene, scenesWithLaneMenus: scenesWithLanes,
+  laneGateNote: 'Only plan scene(s) ' + (scenesWithLanes.join(', ') || 'none') + ' declare an '
+    + 'aftermathLanes menu. Elsewhere the lane check is INERT: it cannot reject and cannot accept '
+    + 'by signal, so those scenes are recorded as laneRoute "no_lane_menu" rather than "signal".',
+  laneRoutes: history.map(h => ({ scene: h.scene, laneRoute: h.laneRoute || null,
+    hadLaneMenu: !!h.hadLaneMenu, plannerRejected: !!h.plannerRejected })),
   perScene: history.map(h => ({ scene: h.scene, baked: !!h.baked, proseLen: h.proseLen,
+    laneRoute: h.laneRoute || null, plannerRejected: !!h.plannerRejected,
     cardCount: h.cardSet ? h.cardSet.count : 0,
     cardSet: h.cardSet ? h.cardSet.cards : null,
     selectedCard: h.selectedCard, decision: h.decision || null,
