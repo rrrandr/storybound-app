@@ -1,0 +1,212 @@
+=== RENDER → COMMIT CHAIN (provider-free, $0) ===
+
+  replaying run 13's REAL responses: planner 1744 chars, author 23214 chars
+  tracer sentence: "The clerk's fingers crack the seal on the parchment I sent."
+  ok   the tracer is present in the real author response
+  ok   the real production entry point is reachable
+
+  staged mode: true  CG screenplay path: true
+
+LINK 1 — the author response is produced and consumed
+  stages dispatched: ["bible","bible","bible","bible","bible","bible","other","other","other","other","other","other","other","bible","bible","bible","bible","bible","bible","bible","bible","bible","bible","bible","bible","other","other","other","planner","author","other","other","other","other","other","other","other"]
+  ok   an AUTHOR request was issued
+  ok     and a planner request before it
+  ok   the continuation sealed from the real planner reply
+  ok     both proposal kinds are pending
+  ok     nothing committed yet
+
+LINK 2 — the author prose reaches a surface _commitScene reads
+  StoryPagination.getAllContent(): 0 chars, tracer=false
+  _sbLatestProseText(state):       1457 chars, tracer=true
+  state.scenes=1  sceneLedger entries=1
+  projection head: "The clerk's fingers crack the seal on the parchment I sent.\n\nWax flakes to the stone table like dried blood.\n\nCassel stands apart, arms crossed, eyes on the unf"
+  ok   _sbLatestProseText returns the scene prose
+  ok     and it contains the EXACT author sentence
+  ok     so the commit gate would clear its length-40 guard
+
+LINK 3+4 — scene 2 feeds it to _commitScene, which dispatches the verifier
+
+  after scene 1, _stagedSubmitting = false  (clear — the scene mounted)
+  ok   the staged submit latch cleared — the scene 1 mount completed
+
+  READER PROGRESSION through scene 1's beats
+  {"ok":true,"before":{"beat":0,"last":26,"gateShown":false,"microShown":false},"after":{"beat":26,"last":26,"gateShown":true,"microShown":false},"steps":27,"micros":0}
+  ok   a staged session existed to read through
+  ok   the reader reached the END of the scene and the say/do gate OPENED
+
+  scene decision needed: false  prompt in DOM: false
+  ok   the scene-decision gate was satisfied by the real UI, not by writing state
+  scene-2 stages: ["memory","bible","bible","bible","bible","bible","bible","other","other","other","other","other","other","other","bible","bible","bible","bible","bible","bible","bible","bible","bible","bible","bible","bible","other","other","other","verifier","planner","author","other","other","other","other","other"]
+
+  ── SCENE 2 REQUESTS, in order, with system-prompt heads ──
+  [1] stage=memory
+      "You are the CHARACTER MEMORY EXTRACTOR for an interactive romance story engine. You read the latest scene plus the running character ledger and report what the AUDIENCE now knows a"
+  [2] stage=bible
+      "DISTINGUISHING FEATURE (anti-calcification ROTATION — HARD): this character's ONE memorable physical marker for THIS story is: a habitually chapped / bitten lower lip. Render it sp"
+  [3] stage=bible
+      "DISTINGUISHING FEATURE (anti-calcification ROTATION — HARD): this character's ONE memorable physical marker for THIS story is: a habitually chapped / bitten lower lip. Render it sp"
+  [4] stage=bible
+      "DISTINGUISHING FEATURE (anti-calcification ROTATION — HARD): this character's ONE memorable physical marker for THIS story is: a habitually chapped / bitten lower lip. Render it sp"
+  [5] stage=bible
+      "DISTINGUISHING FEATURE (anti-calcification ROTATION — HARD): this love interest's ONE memorable physical marker for THIS story is: a single gold or capped tooth that shows when the"
+  [6] stage=bible
+      "DISTINGUISHING FEATURE (anti-calcification ROTATION — HARD): this love interest's ONE memorable physical marker for THIS story is: a single gold or capped tooth that shows when the"
+  [7] stage=bible
+      "DISTINGUISHING FEATURE (anti-calcification ROTATION — HARD): this love interest's ONE memorable physical marker for THIS story is: a single gold or capped tooth that shows when the"
+  [8] stage=other
+      "You are a CONTINUITY ARCHITECT for a serialized arcane binding romance visual novel. Your job is NOT to write prose. Your job is to define the GRAVITATIONAL STRUCTURE that downstre"
+  [9] stage=other
+      "You are a CONTINUITY ARCHITECT for a serialized arcane binding romance visual novel. Your job is NOT to write prose. Your job is to define the GRAVITATIONAL STRUCTURE that downstre"
+  [10] stage=other
+      "You are a CONTINUITY ARCHITECT for a serialized arcane binding romance visual novel. Your job is NOT to write prose. Your job is to define the GRAVITATIONAL STRUCTURE that downstre"
+  [11] stage=other
+      "You are the A-PLOT GENERATOR for Storybound, an interactive romance fiction engine. Your job: generate a SPECIFIC, COHERENT non-romance plot that runs alongside the romance arc, p"
+  [12] stage=other
+      "You are the A-PLOT GENERATOR for Storybound, an interactive romance fiction engine. Your job: generate a SPECIFIC, COHERENT non-romance plot that runs alongside the romance arc, p"
+  [13] stage=other
+      "You are the A-PLOT GENERATOR for Storybound, an interactive romance fiction engine. Your job: generate a SPECIFIC, COHERENT non-romance plot that runs alongside the romance arc, p"
+  [14] stage=other
+      "You are the A-PLOT GENERATOR for Storybound, an interactive romance fiction engine. Your job: generate a SPECIFIC, COHERENT non-romance plot that runs alongside the romance arc, p"
+  [15] stage=bible
+      "DISTINGUISHING FEATURE (anti-calcification ROTATION — HARD): this character's ONE memorable physical marker for THIS story is: a habitually chapped / bitten lower lip. Render it sp"
+  [16] stage=bible
+      "DISTINGUISHING FEATURE (anti-calcification ROTATION — HARD): this character's ONE memorable physical marker for THIS story is: a habitually chapped / bitten lower lip. Render it sp"
+  [17] stage=bible
+      "DISTINGUISHING FEATURE (anti-calcification ROTATION — HARD): this character's ONE memorable physical marker for THIS story is: a habitually chapped / bitten lower lip. Render it sp"
+  [18] stage=bible
+      "DISTINGUISHING FEATURE (anti-calcification ROTATION — HARD): this love interest's ONE memorable physical marker for THIS story is: a single gold or capped tooth that shows when the"
+  [19] stage=bible
+      "DISTINGUISHING FEATURE (anti-calcification ROTATION — HARD): this love interest's ONE memorable physical marker for THIS story is: a single gold or capped tooth that shows when the"
+  [20] stage=bible
+      "DISTINGUISHING FEATURE (anti-calcification ROTATION — HARD): this love interest's ONE memorable physical marker for THIS story is: a single gold or capped tooth that shows when the"
+  [21] stage=bible
+      "DISTINGUISHING FEATURE (anti-calcification ROTATION — HARD): this character's ONE memorable physical marker for THIS story is: a habitually chapped / bitten lower lip. Render it sp"
+  [22] stage=bible
+      "DISTINGUISHING FEATURE (anti-calcification ROTATION — HARD): this character's ONE memorable physical marker for THIS story is: a habitually chapped / bitten lower lip. Render it sp"
+  [23] stage=bible
+      "DISTINGUISHING FEATURE (anti-calcification ROTATION — HARD): this character's ONE memorable physical marker for THIS story is: a habitually chapped / bitten lower lip. Render it sp"
+  [24] stage=bible
+      "DISTINGUISHING FEATURE (anti-calcification ROTATION — HARD): this love interest's ONE memorable physical marker for THIS story is: a single gold or capped tooth that shows when the"
+  [25] stage=bible
+      "DISTINGUISHING FEATURE (anti-calcification ROTATION — HARD): this love interest's ONE memorable physical marker for THIS story is: a single gold or capped tooth that shows when the"
+  [26] stage=bible
+      "DISTINGUISHING FEATURE (anti-calcification ROTATION — HARD): this love interest's ONE memorable physical marker for THIS story is: a single gold or capped tooth that shows when the"
+  [27] stage=other
+      "You are a CONTINUITY ARCHITECT for a serialized arcane binding romance visual novel. Your job is NOT to write prose. Your job is to define the GRAVITATIONAL STRUCTURE that downstre"
+  [28] stage=other
+      "You are a CONTINUITY ARCHITECT for a serialized arcane binding romance visual novel. Your job is NOT to write prose. Your job is to define the GRAVITATIONAL STRUCTURE that downstre"
+  [29] stage=other
+      "You are a CONTINUITY ARCHITECT for a serialized arcane binding romance visual novel. Your job is NOT to write prose. Your job is to define the GRAVITATIONAL STRUCTURE that downstre"
+  [30] stage=verifier
+      "You are the RUNTIME COMMIT verifier for an interactive story engine. Given a PROPOSED TRANSITION (an intended irreversible on-page event) and the SCENE PROSE that was rendered, dec"
+  [31] stage=planner
+      "You are the SCENE-SPINE planner for an interactive romance engine. The scene has ONE organizing event: a STATE CHANGE — an irreversible, externally observable event that flips a sp"
+  [32] stage=author
+      "You are a screenplay-native cinematic-romance writer for an adult-romance visual novel. You write the scene DIRECTLY in structured screenplay-beat form. No novel prose. No prose-to"
+  [33] stage=other
+      "You are the A-PLOT GENERATOR for Storybound, an interactive romance fiction engine. Your job: generate a SPECIFIC, COHERENT non-romance plot that runs alongside the romance arc, p"
+  [34] stage=other
+      "You are an editorial auditor measuring EMOTIONAL GRAVITY in a romance scene. The ONE question: WHO (or WHAT) is the reader thinking about / pulled toward as they read? Return stric"
+  [35] stage=other
+      "You are the A-PLOT GENERATOR for Storybound, an interactive romance fiction engine. Your job: generate a SPECIFIC, COHERENT non-romance plot that runs alongside the romance arc, p"
+  [36] stage=other
+      "You are the A-PLOT GENERATOR for Storybound, an interactive romance fiction engine. Your job: generate a SPECIFIC, COHERENT non-romance plot that runs alongside the romance arc, p"
+  [37] stage=other
+      "You are the A-PLOT GENERATOR for Storybound, an interactive romance fiction engine. Your job: generate a SPECIFIC, COHERENT non-romance plot that runs alongside the romance arc, p"
+
+  ── SCENE 1 "other" requests, for comparison ──
+  s1 other[1] "You are a CONTINUITY ARCHITECT for a serialized arcane binding romance visual novel. Your job is NOT to write "
+  s1 other[2] "You are a CONTINUITY ARCHITECT for a serialized arcane binding romance visual novel. Your job is NOT to write "
+  s1 other[3] "You are a CONTINUITY ARCHITECT for a serialized arcane binding romance visual novel. Your job is NOT to write "
+  s1 other[4] "You are the A-PLOT GENERATOR for Storybound, an interactive romance fiction engine. Your job: generate a SPECI"
+  s1 other[5] "You are the A-PLOT GENERATOR for Storybound, an interactive romance fiction engine. Your job: generate a SPECI"
+  s1 other[6] "You are the A-PLOT GENERATOR for Storybound, an interactive romance fiction engine. Your job: generate a SPECI"
+  s1 other[7] "You are the A-PLOT GENERATOR for Storybound, an interactive romance fiction engine. Your job: generate a SPECI"
+  s1 other[8] "You are a CONTINUITY ARCHITECT for a serialized arcane binding romance visual novel. Your job is NOT to write "
+  commit-gate logs: ["[COMMIT-SCENE:SKIP] plan-scene=2 reason=no-prior-transition","[COMMITTED-STATE] scene=2 facts=0 proposed=\"The sealed letter arrives and is opened by the commission cl\" (pending until delivery)","[COMMITTED-TRUTH:DEV-FORCE] gate bypassed (localhost/dev or __forceCommittedTruth=true)","[COMMITTED-TRUTH:SEED] about=inherited_grief family=hidden_identity/identity_history truth=\"The LI is the child of someone the protagonist's family destroyed; the relationship is also a reckoning.\" pool-size=5","[VERIFIER-INPUT] scene=2 prose_len=1457 head=\"The clerk's fingers crack the seal on the parchment I sent. Wax flake\" tail=\" else in my place. I toyed with the idea of letting the cards decide.\"","[COMMIT] state_change prop:2:1 DELIVERED scene=2 factsTotal=1","[COMMIT] continuation prop:2:2 DELIVERED scene=2 factsTotal=2","[COMMIT-SCENE] scene=2 delivery=DELIVERED facts_before=0 facts_after=2 committedThrough=2 | proposed=\"The sealed letter arrives and is opened by the commissi\" | pendingIntent_before=\"The sealed letter arrives and is opened by the commissi\" pendingIntent_after=\"none\"","[COMMITTED-STATE] scene=3 facts=2 proposed=\"The sealed letter arrives and is opened by the commission cl\" (pending until delivery)"]
+
+  ── EVERY console line during the scene-2 window ──
+   [log] [BETA] scene_generation_started {"sceneIndex":3,"storyId":"story-chain","fateMode":null,"turnCount":2,"userLanguage":"en","storyLanguage":"en","genera
+   [log] [CG:SCAFFOLD] generation start (arcane_binding, gpt-4o-mini)
+   [log] [BIBLE-ARTIFACT] pc retrying after a recorded failure (attempt 4): upstream_failure: ["pcBodyBible#1=failed","pcBodyBible#2=failed","pcBodyBible#3=fai
+   [log] [DEEP-TRIO] role=PC arch= wound=DEBT crisis=FORCED_RETURN
+   [log] [TIERED:pcBodyBible] attempt 1 tier=primary provider=mistral model=ministral-8b-2512
+   [log] [BIBLE-ARTIFACT] li retrying after a recorded failure (attempt 4): generation returned null (see [LI-BODY-BIBLE] warning above for detail)
+   [log] [DEEP-TRIO] role=LI arch=BEAUTIFUL_RUIN wound=SIBLING_OR_FRIEND hunger=MET_AS_EQUAL
+   [log] [LI-BUILD] single male LI, non-privation world → hero build pool (tall/broad/impressive)
+   [log] [LI-HAIR] single LI, non-plucking-culture → bald/receding/thinning filtered from hair pool
+   [log] [TIERED:liBodyBible] attempt 1 tier=primary provider=mistral model=ministral-8b-2512
+   [log] [ANT-BODY-BIBLE] skipped — shape=?, antagonist=?
+   [log] [CG:SCAFFOLD] awaiting 3 Bible(s) before spine (P2 sequencing — latency over cost)
+   [error] Failed to load resource: net::ERR_FAILED
+   [warning] [TIERED:pcBodyBible] primary/mistral/ministral-8b-2512 failed: Failed to fetch
+   [log] [TIERED:pcBodyBible] attempt 2 tier=fallback provider=grok model=grok-4-1-fast-reasoning fallbackReason="Failed to fetch"
+   [error] Failed to load resource: net::ERR_FAILED
+   [warning] [TIERED:pcBodyBible] fallback/grok/grok-4-1-fast-reasoning failed: Failed to fetch
+   [log] [TIERED:pcBodyBible] attempt 3 tier=terminal provider=openai model=gpt-4o-mini fallbackReason="Failed to fetch"
+   [error] Failed to load resource: net::ERR_FAILED
+   [warning] [TIERED:pcBodyBible] terminal/openai/gpt-4o-mini failed: Failed to fetch
+   [warning] [PC-BODY-BIBLE] all provider tiers failed: [TIERED:pcBodyBible] all tiers exhausted — last error: Failed to fetch
+   [warning] [BIBLE-ARTIFACT] pc -> failed (attempt 4): upstream_failure: ["pcBodyBible#1=failed","pcBodyBible#2=failed","pcBodyBible#3=failed"]
+   [error] Failed to load resource: net::ERR_FAILED
+   [warning] [TIERED:liBodyBible] primary/mistral/ministral-8b-2512 failed: Failed to fetch
+   [log] [TIERED:liBodyBible] attempt 2 tier=fallback provider=grok model=grok-4-1-fast-reasoning fallbackReason="Failed to fetch"
+   [error] Failed to load resource: net::ERR_FAILED
+   [warning] [TIERED:liBodyBible] fallback/grok/grok-4-1-fast-reasoning failed: Failed to fetch
+   [log] [TIERED:liBodyBible] attempt 3 tier=terminal provider=openai model=gpt-4o-mini fallbackReason="Failed to fetch"
+   [error] Failed to load resource: net::ERR_FAILED
+   [warning] [TIERED:liBodyBible] terminal/openai/gpt-4o-mini failed: Failed to fetch
+   [warning] [LI-BODY-BIBLE] all provider tiers failed: [TIERED:liBodyBible] all tiers exhausted — last error: Failed to fetch
+   [warning] [BIBLE-ARTIFACT] li -> failed (attempt 4): generation returned null (see [LI-BODY-BIBLE] warning above for detail)
+   [log] [CG:SCAFFOLD] Bibles ready (654ms) — pc=n li=n antag=n
+   [log] [TIERED:scaffold] attempt 1 tier=primary provider=mistral model=ministral-8b-2512
+   [error] Failed to load resource: net::ERR_FAILED
+   [warning] [TIERED:scaffold] primary/mistral/ministral-8b-2512 failed: Failed to fetch
+   [log] [TIERED:scaffold] attempt 2 tier=fallback provider=grok model=grok-4-1-fast-reasoning fallbackReason="Failed to fetch"
+   [error] Failed to load resource: net::ERR_FAILED
+   [warning] [TIERED:scaffold] fallback/grok/grok-4-1-fast-reasoning failed: Failed to fetch
+   [log] [TIERED:scaffold] attempt 3 tier=terminal provider=openai model=gpt-4o-mini fallbackReason="Failed to fetch"
+  scene 1 prior ref: "prop:2:1" sceneProposed=2 turnCount after s1=2
+  verifier requests: 1 (was 0)
+  ok   THE COMMIT GATE DISPATCHED THE VERIFIER
+  ok     its payload carries the EXACT author sentence — the gate got the rendered prose
+  ok     and lists scene 1's sealed refs for judgement
+
+  downstream of the dispatch (for the record)
+  adjudication: {"prop:2:1":{"ref":"prop:2:1","commit":true,"status":"DELIVERED","reason":"delivered","preconditionSource":"shared_slots_check","why":["precondition=unreported","anchors=inapplicable"],"kind":"state_change"},"prop:2:2":{"ref":"prop:2:2","commit":true,"status":"DELIVERED","reason":"delivered","preconditionSource":"shared_slots_check","why":["precondition=unreported","anchors=anchors_present"],"kind":"continuation"}}
+  facts: [{"ref":"prop:2:1","prov":"sealed","scene":2},{"ref":"prop:2:2","prov":"sealed","scene":2}]
+  activated: [{"id":"ent:stage:1","label":"Toll Road Commission","aliases":["the commission","the governing commission"]}]
+  ok   the gate adjudicated scene 1's proposals
+  ok     committedThroughScene advanced
+
+IDEMPOTENCY — the PINNED probe (correct) and the OLD shape (the defect)
+  baseline BEFORE re-entry: verifier calls=1 factRefs="prop:2:1|prop:2:2"
+  pinned probe: {"ok":true,"pinnedScene":2,"scRef":"prop:2:1","ctRef":"prop:2:2","facts":"prop:2:1|prop:2:2","activated":1,"proseLen":1457}
+  ok   the probe pinned scene 1's own proposals
+  ok     NO new verifier call
+  ok     NO new facts
+  ok     refs unchanged
+  ok     activated entity count unchanged
+  OLD shape: {"usedRef":"prop:3:3","usedScene":3,"before":"prop:2:1|prop:2:2","after":"prop:2:1|prop:2:2"}
+  verifier calls after the old shape: 2
+  ok   THE OLD SHAPE IS DEMONSTRABLY WRONG — it targets a DIFFERENT proposal than scene 1's
+  ok     and it changes canon or re-calls the verifier, which a retry must not
+  ok     so the pinned form is not merely tidier, it is the only correct one
+
+NO FIXTURE WAS HANDED TO _commitScene
+  ok   every _commitScene call passes a prose VARIABLE, never a literal
+  ok     and that prose is read from _sbLatestProseText, not constructed here
+  ok     no prose string literal is passed to it
+  ok     it advances scenes through the real entry point
+  ok     and the prose entered as the AUTHOR'S response at the network boundary
+  ok     replaying run 13's real artefacts, not invented payloads
+
+STAGES STUBBED IN THIS CONTROL (reported, not glossed)
+   · planner (run 13 recorded response)
+   · author (run 13 recorded response)
+   · character memory extractor (shape-faithful skeleton)
+   · runtime commit verifier (fixture verdict)
+   Everything else is production code: scene completion, projection persistence,
+   _sbLatestProseText, _commitScene, the adjudication loop, _commitTransition.
+
+33/33 passed

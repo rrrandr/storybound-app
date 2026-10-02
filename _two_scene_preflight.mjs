@@ -175,8 +175,13 @@ const vsys = verifierCalls.length ? verifierCalls[0].sys : '';
 const vraw = verifierCalls.length ? verifierCalls[0].raw : '';
 t('  its prompt carries the PER-PROPOSAL contract',
   /PER-PROPOSAL DELIVERY \(judge EACH listed proposal INDEPENDENTLY/.test(vsys));
+// Wording tracked: the contract now says "must EACH be a verbatim quote" because
+// precondition_evidence joined evidence under the same rule.
 t('  demanding one entry per ref with verbatim evidence',
-  /"per_proposal"/.test(vsys) && /must be a verbatim quote from the prose/.test(vsys));
+  /"per_proposal"/.test(vsys) && /must each be a verbatim quote from the prose/.test(vsys));
+t('  and its own precondition_evidence, downgrade-only',
+  /"precondition_evidence"/.test(vsys) && /is empty is DOWNGRADED/.test(vsys));
+t('  plus a reason naming the cause', /"reason": "delivered" \| "precondition_absent"/.test(vsys));
 t('  BOTH sealed refs were listed for judgement',
   vraw.indexOf(scene1.scRef) >= 0 && vraw.indexOf(scene1.ctRef) >= 0,
   'scRef=' + (vraw.indexOf(scene1.scRef) >= 0) + ' ctRef=' + (vraw.indexOf(scene1.ctRef) >= 0));
