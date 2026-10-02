@@ -1,0 +1,290 @@
+{
+  "samples": 4,
+  "arm": "A",
+  "mode": "live",
+  "plannerFixture": null,
+  "reserved": 0.09269999999999999,
+  "authorized": 0.1,
+  "counts": {
+    "accepted_signal": 4,
+    "accepted_structural": 0,
+    "lane_inconsistent": 0,
+    "gate_rejected_other": 0,
+    "rejected_before_lane_gate": 0,
+    "undetermined": 0
+  },
+  "results": [
+    {
+      "draw": 1,
+      "verdict": "accepted_signal",
+      "acceptedVia": "signal",
+      "authorAttempted": true,
+      "rejected": false,
+      "laneInconsistent": false,
+      "declaredLane": "dohkar_preliminary_review",
+      "stateChange": "The presiding Dohkar calls for a preliminary review of Lirael's conduct before the assembly.",
+      "tacticalMove": "advance institutional pressure by moving accusation into Dohkar-led preliminary review",
+      "pressureScope": "scene_local",
+      "canonChange": null,
+      "introduces": [],
+      "axis": "run in shame vs remain and see where Julian was taking it",
+      "decision": {
+        "axis": "run in shame vs remain and see where Julian was taking it",
+        "choice": "run",
+        "label": "run in shame",
+        "source": "resume",
+        "at": 1790966223433,
+        "storyId": "580516b4-a3a2-40d1-86d0-f9e05622fd5f"
+      },
+      "gateLines": [],
+      "calls": [
+        {
+          "stage": "other",
+          "outcome": "aborted"
+        },
+        {
+          "stage": "other",
+          "outcome": "aborted"
+        },
+        {
+          "stage": "other",
+          "outcome": "aborted"
+        },
+        {
+          "stage": "other",
+          "outcome": "aborted"
+        },
+        {
+          "stage": "other",
+          "outcome": "aborted"
+        },
+        {
+          "stage": "other",
+          "outcome": "aborted"
+        },
+        {
+          "stage": "planner",
+          "outcome": "dispatched_live"
+        },
+        {
+          "stage": "author",
+          "outcome": "aborted_after_acceptance_signal"
+        },
+        {
+          "stage": "author",
+          "outcome": "aborted_after_acceptance_signal"
+        },
+        {
+          "stage": "author",
+          "outcome": "aborted_after_acceptance_signal"
+        }
+      ],
+      "blockedRetries": 0
+    },
+    {
+      "draw": 2,
+      "verdict": "accepted_signal",
+      "acceptedVia": "signal",
+      "authorAttempted": true,
+      "rejected": false,
+      "laneInconsistent": false,
+      "declaredLane": "dohkar_preliminary_review",
+      "stateChange": "The presiding Dohkar declares that Lirael's conduct requires a preliminary review before the assembly.",
+      "tacticalMove": "Formalizes the Dohkar's charge into a preliminary review, placing Lirael's standing under institutional scrutiny before the assembly",
+      "pressureScope": "scene_local",
+      "canonChange": null,
+      "introduces": [],
+      "axis": "run in shame vs remain and see where Julian was taking it",
+      "decision": {
+        "axis": "run in shame vs remain and see where Julian was taking it",
+        "choice": "run",
+        "label": "run in shame",
+        "source": "resume",
+        "at": 1790966282157,
+        "storyId": "d529d3c4-49fb-4785-a3eb-5f53a2764048"
+      },
+      "gateLines": [],
+      "calls": [
+        {
+          "stage": "other",
+          "outcome": "aborted"
+        },
+        {
+          "stage": "other",
+          "outcome": "aborted"
+        },
+        {
+          "stage": "other",
+          "outcome": "aborted"
+        },
+        {
+          "stage": "other",
+          "outcome": "aborted"
+        },
+        {
+          "stage": "other",
+          "outcome": "aborted"
+        },
+        {
+          "stage": "other",
+          "outcome": "aborted"
+        },
+        {
+          "stage": "planner",
+          "outcome": "dispatched_live"
+        },
+        {
+          "stage": "author",
+          "outcome": "aborted_after_acceptance_signal"
+        },
+        {
+          "stage": "author",
+          "outcome": "aborted_after_acceptance_signal"
+        },
+        {
+          "stage": "author",
+          "outcome": "aborted_after_acceptance_signal"
+        }
+      ],
+      "blockedRetries": 0
+    },
+    {
+      "draw": 3,
+      "verdict": "accepted_signal",
+      "acceptedVia": "signal",
+      "authorAttempted": true,
+      "rejected": false,
+      "laneInconsistent": false,
+      "declaredLane": "dohkar_preliminary_review",
+      "stateChange": "The presiding Dohkar calls for a preliminary review of Lirael's conduct before the assembly.",
+      "tacticalMove": "The presiding Dohkar shifts the accusation into procedural review to place Lirael's standing at immediate institutional risk before the assembly.",
+      "pressureScope": "scene_local",
+      "canonChange": null,
+      "introduces": [],
+      "axis": "run in shame vs remain and see where Julian was taking it",
+      "decision": {
+        "axis": "run in shame vs remain and see where Julian was taking it",
+        "choice": "run",
+        "label": "run in shame",
+        "source": "resume",
+        "at": 1790966340565,
+        "storyId": "1f28fb25-eed6-49b6-baed-b7b984dfdc4d"
+      },
+      "gateLines": [],
+      "calls": [
+        {
+          "stage": "other",
+          "outcome": "aborted"
+        },
+        {
+          "stage": "other",
+          "outcome": "aborted"
+        },
+        {
+          "stage": "other",
+          "outcome": "aborted"
+        },
+        {
+          "stage": "other",
+          "outcome": "aborted"
+        },
+        {
+          "stage": "other",
+          "outcome": "aborted"
+        },
+        {
+          "stage": "other",
+          "outcome": "aborted"
+        },
+        {
+          "stage": "planner",
+          "outcome": "dispatched_live"
+        },
+        {
+          "stage": "author",
+          "outcome": "aborted_after_acceptance_signal"
+        },
+        {
+          "stage": "author",
+          "outcome": "aborted_after_acceptance_signal"
+        },
+        {
+          "stage": "author",
+          "outcome": "aborted_after_acceptance_signal"
+        }
+      ],
+      "blockedRetries": 0
+    },
+    {
+      "draw": 4,
+      "verdict": "accepted_signal",
+      "acceptedVia": "signal",
+      "authorAttempted": true,
+      "rejected": false,
+      "laneInconsistent": false,
+      "declaredLane": "dohkar_preliminary_review",
+      "stateChange": "The presiding Dohkar announces Lirael's conduct will face preliminary review before the assembly.",
+      "tacticalMove": "initiate Dohkar preliminary review to convert ritual accusation into institutional procedure",
+      "pressureScope": "scene_local",
+      "canonChange": null,
+      "introduces": [],
+      "axis": "run in shame vs remain and see where Julian was taking it",
+      "decision": {
+        "axis": "run in shame vs remain and see where Julian was taking it",
+        "choice": "run",
+        "label": "run in shame",
+        "source": "resume",
+        "at": 1790966396843,
+        "storyId": "95527322-1143-4225-a1eb-8755b348501f"
+      },
+      "gateLines": [],
+      "calls": [
+        {
+          "stage": "other",
+          "outcome": "aborted"
+        },
+        {
+          "stage": "other",
+          "outcome": "aborted"
+        },
+        {
+          "stage": "other",
+          "outcome": "aborted"
+        },
+        {
+          "stage": "other",
+          "outcome": "aborted"
+        },
+        {
+          "stage": "other",
+          "outcome": "aborted"
+        },
+        {
+          "stage": "other",
+          "outcome": "aborted"
+        },
+        {
+          "stage": "planner",
+          "outcome": "dispatched_live"
+        },
+        {
+          "stage": "author",
+          "outcome": "aborted_after_acceptance_signal"
+        },
+        {
+          "stage": "author",
+          "outcome": "aborted_after_acceptance_signal"
+        },
+        {
+          "stage": "author",
+          "outcome": "aborted_after_acceptance_signal"
+        }
+      ],
+      "blockedRetries": 0
+    }
+  ],
+  "checks": {
+    "pass": 0,
+    "fail": 0
+  }
+}

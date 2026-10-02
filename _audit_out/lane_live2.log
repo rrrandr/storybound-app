@@ -1,0 +1,53 @@
+=== FS LANE CONSISTENCY — 4 PLANNER DRAW(S) ===
+  mode    : LIVE, authorized $0.10
+  arm     : A   output: _fs_lane_sample_out/run_2026-10-02T18-36-28-195Z
+
+RESERVATION
+  one planner draw : $0.023175
+  × 4 = $0.092700
+  author, verifier, memory, scaffold: ABORTED — never reserved, cannot be billed
+  within authorization — $0.007300 headroom
+
+── draw 1/4
+    [DISPATCH] planner draw 1 — estimated $0.019133
+        measured $0.013203 (receipted; total measured $0.013203)
+    verdict: ACCEPTED_SIGNAL   lane="dohkar_preliminary_review"
+
+── draw 2/4
+    [DISPATCH] planner draw 2 — estimated $0.019133
+        measured $0.005006 (receipted; total measured $0.018209)
+    verdict: ACCEPTED_SIGNAL   lane="dohkar_preliminary_review"
+
+── draw 3/4
+    [DISPATCH] planner draw 3 — estimated $0.019133
+        measured $0.004428 (receipted; total measured $0.022637)
+    verdict: ACCEPTED_SIGNAL   lane="dohkar_preliminary_review"
+
+── draw 4/4
+    [DISPATCH] planner draw 4 — estimated $0.019133
+        measured $0.004598 (receipted; total measured $0.027235)
+    verdict: ACCEPTED_SIGNAL   lane="dohkar_preliminary_review"
+
+── LANE CONSISTENCY
+  draws                : 4
+  ACCEPTED by the gate : 4   (signal 4, structural 0)
+  lane-inconsistent    : 0
+  rejected (other)     : 0
+  undetermined         : 0
+
+  draw | verdict            | declared lane
+     1 | accepted_signal    | dohkar_preliminary_review
+     2 | accepted_signal    | dohkar_preliminary_review
+     3 | accepted_signal    | dohkar_preliminary_review
+     4 | accepted_signal    | dohkar_preliminary_review
+
+  per-draw acceptance on this sample: 100% (4/4)
+  nine consecutive passes at that rate: 100.0%
+  (arithmetic on a small sample, not a prediction — and a 10-scene run needs all nine)
+
+SPEND
+  MEASURED (receipts): $0.027235
+  UNMEASURED         : none — every dispatch returned a receipt
+  TOTAL EXPOSURE     : $0.027235 of $0.10  (27.2%)
+
+artefacts: _fs_lane_sample_out/run_2026-10-02T18-36-28-195Z

@@ -1,0 +1,91 @@
+{
+  "samples": 1,
+  "arm": "A",
+  "mode": "dry_replay",
+  "plannerFixture": "_live_corpus_out/run_2026-10-02T16-00-21-331Z/s2_planner.json",
+  "reserved": 0.023174999999999998,
+  "authorized": 0,
+  "counts": {
+    "accepted_signal": 0,
+    "accepted_structural": 1,
+    "lane_inconsistent": 0,
+    "gate_rejected_other": 0,
+    "rejected_before_lane_gate": 0,
+    "undetermined": 0
+  },
+  "results": [
+    {
+      "draw": 1,
+      "verdict": "accepted_structural",
+      "acceptedVia": "structural",
+      "authorAttempted": true,
+      "rejected": false,
+      "laneInconsistent": false,
+      "declaredLane": "dohkar_preliminary_review",
+      "stateChange": "the presiding Dohkar declares that Lirael's conduct will be reviewed and that she must answer for it",
+      "tacticalMove": "force Lirael to confront the institutional review of her conduct by moving the accusation into procedure",
+      "pressureScope": "scene_local",
+      "canonChange": null,
+      "introduces": [],
+      "axis": "run in shame vs remain and see where Julian was taking it",
+      "decision": {
+        "axis": "run in shame vs remain and see where Julian was taking it",
+        "choice": "run",
+        "label": "run in shame",
+        "source": "resume",
+        "at": 1790966125164,
+        "storyId": "7b8318df-a960-4f60-a0fa-395d474e5d71"
+      },
+      "gateLines": [
+        "[CG:PLANNER-GATE] lane satisfied STRUCTURALLY — event_slots name the lane's declared actor (\"the presiding Dohkar\") performing a concrete act with a landed exit state, though the prose did not match the lane's signal vocabulary"
+      ],
+      "calls": [
+        {
+          "stage": "other",
+          "outcome": "aborted"
+        },
+        {
+          "stage": "other",
+          "outcome": "aborted"
+        },
+        {
+          "stage": "other",
+          "outcome": "aborted"
+        },
+        {
+          "stage": "other",
+          "outcome": "aborted"
+        },
+        {
+          "stage": "other",
+          "outcome": "aborted"
+        },
+        {
+          "stage": "other",
+          "outcome": "aborted"
+        },
+        {
+          "stage": "planner",
+          "outcome": "replayed"
+        },
+        {
+          "stage": "author",
+          "outcome": "aborted_after_acceptance_signal"
+        },
+        {
+          "stage": "author",
+          "outcome": "aborted_after_acceptance_signal"
+        },
+        {
+          "stage": "author",
+          "outcome": "aborted_after_acceptance_signal"
+        }
+      ],
+      "blockedRetries": 0
+    }
+  ],
+  "checks": {
+    "pass": 0,
+    "fail": 0
+  }
+}

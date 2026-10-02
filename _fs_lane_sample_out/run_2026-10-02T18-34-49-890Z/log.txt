@@ -1,0 +1,30 @@
+=== FS LANE CONSISTENCY — 1 PLANNER DRAW(S) ===
+  mode    : DRY REPLAY of _live_corpus_out/run_2026-10-02T16-00-21-331Z/s2_planner.json
+  arm     : A   output: _fs_lane_sample_out/run_2026-10-02T18-34-49-890Z
+
+RESERVATION
+  one planner draw : $0.023175
+  × 1 = $0.023175
+  author, verifier, memory, scaffold: ABORTED — never reserved, cannot be billed
+
+── draw 1/1
+    verdict: ACCEPTED_STRUCTURAL   lane="dohkar_preliminary_review"
+    gate: [CG:PLANNER-GATE] lane satisfied STRUCTURALLY — event_slots name the lane's declared actor ("the presiding Dohkar") performing a concrete act with a landed exit stat
+
+── LANE CONSISTENCY
+  draws                : 1
+  ACCEPTED by the gate : 1   (signal 0, structural 1)
+  lane-inconsistent    : 0
+  rejected (other)     : 0
+  undetermined         : 0
+
+  draw | verdict            | declared lane
+     1 | accepted_structural | dohkar_preliminary_review
+
+  per-draw acceptance on this sample: 100% (1/1)
+  nine consecutive passes at that rate: 100.0%
+  (arithmetic on a small sample, not a prediction — and a 10-scene run needs all nine)
+
+SPEND: $0 — nothing was dispatched (dry replay).
+
+artefacts: _fs_lane_sample_out/run_2026-10-02T18-34-49-890Z

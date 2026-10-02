@@ -204,8 +204,12 @@ for (let i = 1; i <= SAMPLES; i++) {
   const rejected = gateLines.some(x => /REJECTED/i.test(x));
   const laneInconsistent = gateLines.some(x => /chosen_aftermath_lane/i.test(x));
   const otherReject = lines.some(x => /\[OBJECTIVE:REJECTED\]|\[CONTINUATION:REJECT\]/i.test(x));
+  // WHICH ROUTE ACCEPTED IT. The structural route logs itself; absence of that line on an accepted
+  // draw means the signal vocabulary matched. Reported because the two routes mean different things:
+  // 'signal' is the lane's wording, 'structural' is event_slots naming the lane's declared actor.
+  const structuralLine = lines.some(x => /lane satisfied STRUCTURALLY/i.test(x));
   let verdict = 'undetermined';
-  if (authorAttempted && !rejected) verdict = 'accepted';
+  if (authorAttempted && !rejected) verdict = structuralLine ? 'accepted_structural' : 'accepted_signal';
   else if (laneInconsistent) verdict = 'lane_inconsistent';
   else if (rejected) verdict = 'gate_rejected_other';
   else if (otherReject) verdict = 'rejected_before_lane_gate';
@@ -225,7 +229,9 @@ for (let i = 1; i <= SAMPLES; i++) {
     } catch (_) { return null; }
   })();
 
-  const row = { draw: i, verdict, authorAttempted, rejected, laneInconsistent,
+  const row = { draw: i, verdict, acceptedVia: /^accepted/.test(verdict)
+    ? (structuralLine ? 'structural' : 'signal') : null,
+    authorAttempted, rejected, laneInconsistent,
     declaredLane: reply ? (reply.chosen_aftermath_lane || null) : null,
     stateChange: reply ? (reply.state_change || null) : null,
     tacticalMove: reply ? (reply.tactical_move || null) : null,
@@ -251,7 +257,8 @@ const n = results.length;
 const count = (v) => results.filter(r => r.verdict === v).length;
 say('\n── LANE CONSISTENCY');
 say('  draws                : ' + n);
-say('  ACCEPTED by the gate : ' + count('accepted'));
+say('  ACCEPTED by the gate : ' + (count('accepted_signal') + count('accepted_structural'))
+  + '   (signal ' + count('accepted_signal') + ', structural ' + count('accepted_structural') + ')');
 say('  lane-inconsistent    : ' + count('lane_inconsistent'));
 say('  rejected (other)     : ' + (count('gate_rejected_other') + count('rejected_before_lane_gate')));
 say('  undetermined         : ' + count('undetermined'));
@@ -263,16 +270,18 @@ results.forEach(r => say('  ' + String(r.draw).padStart(4) + ' | '
 // not as a prediction: one run of nine is not nine independent draws, but if the per-draw pass rate
 // is p, the chance all nine pass is p^9, and that is the number worth seeing before funding it.
 if (n > 0) {
-  const p = count('accepted') / n;
-  say('\n  per-draw acceptance on this sample: ' + (p * 100).toFixed(0) + '% (' + count('accepted')
-    + '/' + n + ')');
+  const p = (count('accepted_signal') + count('accepted_structural')) / n;
+  say('\n  per-draw acceptance on this sample: ' + (p * 100).toFixed(0) + '% ('
+    + (count('accepted_signal') + count('accepted_structural')) + '/' + n + ')');
   say('  nine consecutive passes at that rate: ' + (Math.pow(p, 9) * 100).toFixed(1) + '%');
   say('  (arithmetic on a small sample, not a prediction — and a 10-scene run needs all nine)');
 }
 
 write('summary.json', { samples: n, arm: ARM, mode: DRY ? 'dry_replay' : 'live',
   plannerFixture: PLANNER_FIXTURE, reserved, authorized: LIVE ? AUTHORIZED : 0,
-  counts: { accepted: count('accepted'), lane_inconsistent: count('lane_inconsistent'),
+  counts: { accepted_signal: count('accepted_signal'),
+    accepted_structural: count('accepted_structural'),
+    lane_inconsistent: count('lane_inconsistent'),
     gate_rejected_other: count('gate_rejected_other'),
     rejected_before_lane_gate: count('rejected_before_lane_gate'),
     undetermined: count('undetermined') },
