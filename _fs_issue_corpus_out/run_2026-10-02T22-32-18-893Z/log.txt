@@ -1,0 +1,64 @@
+=== ONE FULL FS ISSUE — 2 SCENES, FATE-CARD DRIVEN ===
+  mode    : LIVE, authorized $0.32
+  seed    : 20261002   arm: A   output: _fs_issue_corpus_out/run_2026-10-02T22-32-18-893Z
+
+RESERVATION (from the shared estimator, _live_spend_ledger.mjs)
+  planner  : $0.023175
+  author   : $0.126000
+  verifier : $0.007800
+  one live scene = $0.156975
+  scene 1 is FS's BAKED opening — fixed, authored, ZERO provider calls, not reserved
+  transport retries allowed: 1 per stage per scene, so every stage is reserved 2x — a dispatched call that never returns may still have billed
+  1 generated scene(s) × $0.156975 × 2 = $0.313950
+  within authorization — $0.006050 headroom
+
+BRINGING UP FIRST SACRIFICE
+  ok   the baked opening mounted
+  ok   scene 1 committed as scenes[0]
+  ok   the preview was finalized
+  ok   the authored axis is readable
+  axis: "run in shame vs remain and see where Julian was taking it"
+  lane menus declared on plan scene(s): 2 — the lane gate is INERT everywhere else
+
+── scene 1/2
+  ok   scene 1: the baked opening captured (>=200 chars)
+  ok   scene 1: no planner, no author
+   BAKED opening: 7605 chars, no dispatch
+
+── scene 2/2
+  ok   scene 2: the advance refused until the choice was recorded
+    [DISPATCH] planner scene 2 — est $0.018476 (committed $0.018476, timeout 120s)
+  ok   scene 2: the choice was recorded by the prompt's handler
+   axis choice: "run"
+        measured $0.012018 (receipted; total measured $0.012018)
+    [DISPATCH] author scene 2 — est $0.131183 (committed $0.149658, timeout 300s)
+        measured $0.085191 (receipted; total measured $0.097209)
+  ok   scene 2: the staged scene MOUNTED
+  ok   scene 2: prose is non-empty and NOT the baked opening
+  ok   scene 2: prose differs from the previous scene
+   lane route: SIGNAL
+   stages: ["planner:dispatched","author:dispatched","memory:replayed"]
+   prose 2322   facts 0   activated 0   verdicts 0
+   notable:
+     · [CG:SCREENPLAY:USER-PROMPT]
+
+═══ AUTHOR FLOOR (HARD — outranks style, ornament and mystery) ═══
+1. INTERIORITY DECODES; IT DOES NOT ENCODE. A reader must never have to reconst
+     · [IMAGE-GEN] {"provider":"Gemini","context":"visualize","reached":true,"blockedBy":"None","status":"ATTEMPTING","promptLength":47943,"promptPreview":"PRIMARY DIRECTIVE: Depict 
+     · [IMAGE-GEN] {"provider":"Gemini","context":"visualize","reached":false,"blockedBy":"None","status":"META","promptLength":21,"promptPreview":"styleAuthority: Genre","timestamp"
+     · [IMAGE-GEN] {"provider":"Gemini","context":"visualize","reached":false,"blockedBy":"NoOutput","status":"FAILED","promptLength":47943,"promptPreview":"PRIMARY DIRECTIVE: Depict
+
+── PER-SCENE RECORD
+  scene | prose | cards | drew | route      | facts | activated | verdicts | stages
+      1 |  7605 |     - |    - | -          |     0 |         0 |        0 | 
+      2 |  2322 |     - |    - | signal     |     0 |         0 |        0 | planner:dispatched,author:dispatched,memory:replayed
+
+  blind packet: _fs_issue_corpus_out/run_2026-10-02T22-32-18-893Z/blind_packet  (2 shuffled slots, key sealed separately)
+
+SPEND
+  MEASURED (receipts): $0.097209
+  UNMEASURED         : none — every dispatch returned a receipt
+  TOTAL EXPOSURE     : $0.097209 of $0.32  (30.4%)
+
+11/11 checks passed
+artefacts: _fs_issue_corpus_out/run_2026-10-02T22-32-18-893Z
