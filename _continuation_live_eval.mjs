@@ -909,6 +909,21 @@ if (TWO_SCENE) {
     (R.s1.pending || []).every(p => vreq.indexOf(p.id) >= 0),
     JSON.stringify((R.s1.pending || []).map(p => [p.id, vreq.indexOf(p.id) >= 0])));
   say('  adjudication: ' + JSON.stringify(R.s2.adjudication && R.s2.adjudication.verdicts));
+  // THE REASON AND THE PRECONDITION SOURCE, per proposal. Run 17's PARTIAL arrived with no reason
+  // attached, which is why it could only be classified as indeterminate. These are the fields that
+  // make a non-delivery diagnosable, so they are printed per proposal rather than buried in the
+  // verdict blob.
+  const _vd = (R.s2.adjudication && R.s2.adjudication.verdicts) || {};
+  say('\n  — per-proposal verdict detail —');
+  Object.keys(_vd).forEach(function (ref) {
+    const v = _vd[ref];
+    say('    ' + ref + ' (' + v.kind + '): status=' + v.status
+      + ' reason=' + JSON.stringify(v.reason || null)
+      + ' precondition=' + JSON.stringify(v.preconditionSource || null)
+      + (v.downgraded ? ' DOWNGRADED' : '')
+      + ' commit=' + v.commit);
+    if (v.why && v.why.length) say('      why: ' + JSON.stringify(v.why));
+  });
   say('  facts: ' + JSON.stringify(R.s2.facts));
   const ctRef = ((R.s1.pending || []).filter(p => p.kind === 'continuation')[0] || {}).id;
   const scRef = ((R.s1.pending || []).filter(p => p.kind === 'state_change')[0] || {}).id;

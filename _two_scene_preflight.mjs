@@ -377,6 +377,13 @@ t('aliases must RESOLVE to the activated entity, not merely appear',
   /every declared alias resolves to the activated entity/.test(runner)
   && /_deliveryAnchorAliases\(x\)/.test(runner));
 
+console.log('\nTHE RUN REPORTS THE DIAGNOSTIC FIELDS');
+t('the per-proposal reason is printed per proposal',
+  /reason=' \+ JSON\.stringify\(v\.reason \|\| null\)/.test(runner));
+t('  with the precondition source and downgrade flag',
+  /precondition=' \+ JSON\.stringify\(v\.preconditionSource \|\| null\)/.test(runner)
+  && /v\.downgraded \? ' DOWNGRADED'/.test(runner));
+
 console.log('\nTHE REPAIRED IDEMPOTENCY PROBE (run 17 defect)');
 t('the verifier baseline is captured BEFORE re-entry',
   /const vBeforeRepeat = calls\.filter\(c => c\.stage === 'verifier'\)\.length;/.test(runner)
