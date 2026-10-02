@@ -1,0 +1,80 @@
+=== MULTI-SCENE HARNESS PROOF (provider-free, $0) ===
+
+  4 consecutive scenes through window._advanceStagedScene
+  replaying run 13: planner 1744 chars, author 23214 chars; a DISTINCT institution per scene so the identity guard is respected
+
+── scene 1/4
+  ok     scene 1: the staged scene MOUNTED
+  ok     scene 1: submit latch cleared before the next advance
+   stages: ["planner","author","memory"]
+   gate: {"beat":26,"last":26,"gateShown":true,"microShown":false}  prose=1457  pending=["state_change","continuation"]  facts=0  activated=0
+── scene 2/4
+  ok     scene 2: the staged scene MOUNTED
+  ok     scene 2: submit latch cleared before the next advance
+   stages: ["verifier","planner","author","memory"]
+   gate: {"beat":26,"last":26,"gateShown":true,"microShown":false}  prose=1457  pending=["state_change","continuation"]  facts=2  activated=1
+── scene 3/4
+  ok     scene 3: the staged scene MOUNTED
+  ok     scene 3: submit latch cleared before the next advance
+   stages: []
+   gate: {"beat":26,"last":26,"gateShown":true,"microShown":false}  prose=1457  pending=["state_change","continuation"]  facts=2  activated=1
+── scene 4/4
+  ok     scene 4: the staged scene MOUNTED
+   stages: ["verifier","planner","author","memory"]
+   gate: {"beat":26,"last":26,"gateShown":true,"microShown":false}  prose=1457  pending=["state_change","continuation"]  facts=3  activated=1
+
+0. the app's own refusals, per scene
+   [scene 1] [STAGED:SUBMIT] _cgScreenplayMode is ON — using screenplay-native generator (skipping literary submit)
+   [scene 2] [STAGED:SUBMIT] _cgScreenplayMode is ON — using screenplay-native generator (skipping literary submit)
+   [scene 3] [STAGED:SUBMIT] Blocked — gate not yet open
+   [scene 4] [STAGED:SUBMIT] _cgScreenplayMode is ON — using screenplay-native generator (skipping literary submit)
+
+1. every scene reached the planner and the author
+  ok     scene 1: planner dispatched
+  ok     scene 1: author dispatched
+  ok     scene 2: planner dispatched
+  ok     scene 2: author dispatched
+  FAIL   scene 3: planner dispatched  — []
+  FAIL   scene 3: author dispatched  — []
+  ok     scene 4: planner dispatched
+  ok     scene 4: author dispatched
+
+2. every scene rendered prose onto the surface the commit gate reads
+  ok     scene 1: projection >= 40 chars
+  ok     scene 2: projection >= 40 chars
+  ok     scene 3: projection >= 40 chars
+  ok     scene 4: projection >= 40 chars
+
+3. every scene sealed a continuation and reached the say/do gate
+  ok     scene 1: continuation sealed (its OWN new body)
+  ok     scene 1: gate opened
+  ok     scene 2: continuation sealed (its OWN new body)
+  ok     scene 2: gate opened
+  ok     scene 3: continuation sealed (its OWN new body)
+  ok     scene 3: gate opened
+  ok     scene 4: continuation sealed (its OWN new body)
+  ok     scene 4: gate opened
+
+4. each scene AFTER the first adjudicated the previous scene
+   verifier dispatched on scenes: [2,4]
+  FAIL a verifier ran on every scene from 2 onward  — [2,4]
+  ok     each verifier call was given real proposal refs
+  ok     and the refs were never repeated across scenes — no stale re-adjudication
+
+5. canon grew monotonically, without duplication or corruption
+   facts after each scene: [0,2,2,3]
+   activated after each scene: [0,1,1,1]
+   committedThrough: [null,2,2,3]
+  ok   facts never decreased
+  ok   facts grew after the first adjudication
+  ok   no duplicate fact refs at any point
+  ok   committedThrough advanced monotonically
+  ok   the entity register never shrank
+
+6. THE VERDICT ON HARNESS RELIABILITY
+   the harness broke before 4 scenes — do NOT attempt a paid corpus.
+   This is a RELIABILITY result only. Every scene replayed the SAME author response,
+   so the prose is identical scene to scene and NOTHING here says anything about
+   forward movement, circling or quality.
+
+32/35 passed
