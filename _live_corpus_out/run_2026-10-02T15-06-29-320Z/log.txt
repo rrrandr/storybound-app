@@ -1,0 +1,59 @@
+=== LIVE N-SCENE CORPUS RUNNER ===
+  scenes       : 3
+  mode         : DRY REPLAY (provider-free, $0)
+  branch       : defy
+  input policy : neutral
+  output       : _live_corpus_out/run_2026-10-02T15-06-29-320Z
+
+RESERVATION (worst case per stage, from _live_spend_ledger.mjs)
+  planner  : $0.023175
+  author   : $0.126000
+  verifier : $0.007800
+  one live scene = $0.156975
+  scene 1 is FS's BAKED package — fixed, authored, ZERO provider calls, not reserved
+  × 3 GENERATED scene(s) of 3 = $0.470925
+  the memory extractor is REPLAYED in every mode and reserves nothing
+
+BRINGING UP FIRST SACRIFICE (the Book the study is about)
+  ok   FS scene 1 mounted from its baked package
+  ok   and it cost nothing — no provider call to display it
+  ok   the production unlock committed scene 1 as scenes[0]
+  ok   the preview was finalized through the production function
+  ok   the authored decision axis is readable
+  axis: "run in shame vs remain and see where Julian was taking it"
+
+── scene 1/3
+  ok   scene 1: the BAKED opening was captured (>=200 chars)
+  ok   scene 1: it cost nothing — no planner, no author
+   BAKED opening: 7605 chars, no dispatch
+
+── scene 2/3
+  ok   scene 2: the advance REFUSED until the choice was recorded
+  ok   scene 2: and it dispatched nothing while unrecorded
+  ok   scene 2: the choice was recorded by the prompt's own handler
+   arm A -> button A -> recorded "run"  [click via in-page el.click() — host not rendered in this harness]
+  ok   scene 2: the staged scene MOUNTED
+  ok   scene 2: prose captured from the app projection (>=40 chars)
+  ok   scene 2: submit latch cleared before the next advance
+   stages   : ["planner:replayed","author:replayed","memory:replayed"]
+   prose    : 1566 chars   facts: 0   activated: 0   verdicts: 0
+   app said : ["[STAGED:SUBMIT] _cgScreenplayMode is ON — using screenplay-native generator (skipping literary submit)"]
+
+── scene 3/3
+  ok   scene 3: the gate was OPEN at the moment of submission
+  ok   scene 3: the staged scene MOUNTED
+  ok   scene 3: prose captured from the app projection (>=40 chars)
+   stages   : ["verifier:replayed","planner:replayed","author:replayed"]
+   prose    : 1761 chars   facts: 0   activated: 0   verdicts: 1
+   verifier asked about: ["prop:1:1"]
+   app said : ["[STAGED:SUBMIT] _cgScreenplayMode is ON — using screenplay-native generator (skipping literary submit)"]
+
+── PER-SCENE RESULT TABLE
+  scene | prose | facts | activated | verdicts | refs | stages
+      1 |  7605 |     0 |         0 |        0 |    0 | 
+      2 |  1566 |     0 |         0 |        0 |    0 | planner:replayed,author:replayed,memory:replayed
+      3 |  1761 |     0 |         0 |        1 |    1 | verifier:replayed,planner:replayed,author:replayed
+
+SPEND: $0 — nothing was dispatched (dry_replay).
+
+16/16 per-scene checks passed

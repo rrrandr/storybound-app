@@ -51,6 +51,11 @@ const INPUT_POLICY = strArg('--input-policy', 'neutral');
 // kept as a RELIABILITY FIXTURE only: it answers "does the machinery survive N boundaries", never
 // "is the prose any good on the Book we ship".
 const STORY = strArg('--story', 'fs');
+// REPLAY A SPECIFIC RECORDED PLANNER REPLY. The live FS smoke test stopped before the author and
+// the dry path did NOT reproduce it, which means the difference was in the reply, not in being
+// live — and that run PRESERVED its reply. Pointing dry mode at that file turns a paid mystery into
+// a free experiment. Any path here must be a recorded response file; nothing is authored.
+const PLANNER_FIXTURE = strArg('--planner-fixture', null);
 // For FS the arm maps onto the product's own axis. A and B are its two buttons; C takes the SAME
 // axis choice as B and diverges in say/do, because the axis is binary and no third button exists.
 const ARM = strArg('--arm', 'A');
@@ -155,6 +160,16 @@ const inputFor = (scene) => {
 };
 
 // ── SPEND ────────────────────────────────────────────────────────────────────
+// Read a recorded provider response file and return its content string. Throws rather than
+// falling back: a fixture that silently resolves to something else is how a harness lies.
+const recordedPlannerReply = (path) => {
+  const j = JSON.parse(fs.readFileSync(path, 'utf8'));
+  const c = j.content
+    || (j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content) || '';
+  if (!c || c.indexOf('{') < 0) throw new Error('no planner content in ' + path);
+  return c;
+};
+
 const ledger = makeSpendLedger(say);
 let spentEstimate = 0;
 const RES_OF = { planner: R_PLANNER, author: R_AUTHOR, verifier: R_VERIFIER };
@@ -169,7 +184,14 @@ const verifierSeen = [];   // { scene, refs }
 const refusals = [];       // the app's own console refusals
 page.on('console', (m) => {
   const txt = m.text();
-  if (/\[STAGED:SUBMIT\]|\[STAGED:GUARD\]|Blocked/.test(txt)) refusals.push({ scene: sceneNo, txt });
+  // WIDE, AND THAT IS THE POINT. The live FS smoke run stopped before the author and the reason was
+  // NOT in this log, because the filter was [STAGED:SUBMIT]|[STAGED:GUARD]|Blocked and the app
+  // reports planner adjudication under [CG:…], [OBJECTIVE:REJECTED] and [CONTINUATION:…]. The app
+  // had said why and the harness discarded it — the same narrow-filter mistake already fixed in
+  // _fs_scene1_preflight.mjs and _fs_planner_capture.mjs and not carried here. $0.020578 bought a
+  // result that could not be diagnosed.
+  if (/\[STAGED|\[CG|\[OBJECTIVE:REJECTED\]|\[CONTINUATION|\[SCENE-DECISION\]|\[INTIMATE|\[PREVIEW|\[BAKED|\[TIERED|Blocked|reject|stale|refus/i
+    .test(txt)) refusals.push({ scene: sceneNo, txt });
 });
 
 await page.route('**/api/**', async (route) => {
@@ -213,7 +235,10 @@ await page.route('**/api/**', async (route) => {
       // aftermath. Serving the synthetic fixture on the FS path draws "[OBJECTIVE:REJECTED] no
       // local_objective…", a FIXTURE failure that reads like a product one. fsPlannerCaptured()
       // throws rather than falling back, so that can no longer happen silently.
-      try { return give(STORY === 'fs' ? fsPlannerCaptured() : plannerFor(sceneNo)); }
+      try {
+        if (PLANNER_FIXTURE) return give(recordedPlannerReply(PLANNER_FIXTURE));
+        return give(STORY === 'fs' ? fsPlannerCaptured() : plannerFor(sceneNo));
+      }
       catch (e) { say('  REFUSED: ' + e.message); try { await route.abort(); } catch (_) {} return; } }
     if (stage === 'author') return give(REPLAY_AUTHOR);
     if (stage === 'verifier') {
@@ -365,6 +390,9 @@ const fsInputFor = (scene) => {
 };
 
 const history = [];
+// WHY THE LOOP STOPPED, if it did. An early stop with no recorded reason is what made the live
+// smoke run unreadable; this is written into the manifest either way.
+let stopReason = null;
 for (let s = 1; s <= SCENES; s++) {
   sceneNo = s;
   say('\n── scene ' + s + '/' + SCENES);
@@ -382,7 +410,7 @@ for (let s = 1; s <= SCENES; s++) {
     t('scene 1: it cost nothing — no planner, no author',
       calls.filter(c => c.scene === 1 && (c.stage === 'planner' || c.stage === 'author')).length === 0);
     history.push({ scene: 1, baked: true, input: null, gate: null, latchClear: true,
-      proseLen: prose0.length, stages: [], verifierRefs: [], facts: snap0.facts,
+      proseLen: prose0.length, proseText: prose0, stages: [], verifierRefs: [], facts: snap0.facts,
       activatedLabels: snap0.activatedLabels, verdicts: snap0.verdicts,
       committedThrough: snap0.committedThrough, pending: snap0.pending, ctOutcome: snap0.ctOutcome,
       blocked: [], refusals: [] });
@@ -427,7 +455,13 @@ for (let s = 1; s <= SCENES; s++) {
     }
     t('scene ' + s + ': the gate was OPEN at the moment of submission', open === true,
       'still closed — the advance would be refused');
-    if (!open) { say('  ABORTING the loop: submitting into a closed gate measures nothing.'); break; }
+    if (!open) {
+      stopReason = 'scene ' + s + ': the say/do gate never opened, so the advance would be refused. '
+        + 'The previous scene did not reach its gate.';
+      say('  ABORTING the loop: submitting into a closed gate measures nothing.');
+      say('  STOP REASON: ' + stopReason);
+      break;
+    }
   }
   const inp = (STORY === 'fs') ? fsInputFor(s) : inputFor(s);
   if (!(STORY === 'fs' && s === 2)) {
@@ -456,8 +490,24 @@ for (let s = 1; s <= SCENES; s++) {
   // PER-SCENE PROSE CAPTURE, from the app's own projection. No fixture text is ever written into
   // _commitScene: if the projection is empty, that is the finding.
   write('scene_' + String(s).padStart(2, '0') + '_prose.txt', snap.prose || '');
+  // THE STRONG ASSERTION, carried over from the FS preflight. A length-only check PASSED on the
+  // live smoke run while the projection was still the 7,699-byte baked opening — the run looked
+  // 12/14 while having generated nothing. A generated scene's prose must be non-empty AND
+  // byte-different from the baked scene 1, or there is no generated scene.
+  const proseNow = String(snap.prose || '');
   t('scene ' + s + ': prose captured from the app projection (>=40 chars)',
-    (snap.prose || '').length >= 40, 'proseLen=' + (snap.prose || '').length);
+    proseNow.length >= 40, 'proseLen=' + proseNow.length);
+  if (!(STORY === 'fs' && s === 1)) {
+    const baked = String((history[0] && history[0].proseText) || '');
+    const isStale = !!baked && proseNow === baked;
+    t('scene ' + s + ': the prose is NOT the baked opening — the projection is not stale',
+      proseNow.length > 0 && !isStale,
+      isStale ? 'IDENTICAL to scene 1 (' + baked.length + ' chars) — nothing was generated'
+        : 'len=' + proseNow.length);
+    if (isStale && !stopReason) {
+      stopReason = 'scene ' + s + ': the projection was still the baked opening — no generated prose';
+    }
+  }
 
   // Wait for the submit latch rather than clearing it.
   const latchDeadline = Date.now() + 120000;
@@ -472,7 +522,7 @@ for (let s = 1; s <= SCENES; s++) {
 
   const stages = calls.filter(c => c.scene === s);
   history.push({ scene: s, input: inp, gate: gate.after || null, latchClear,
-    proseLen: (snap.prose || '').length,
+    proseLen: (snap.prose || '').length, proseText: String(snap.prose || ''),
     stages: stages.map(c => c.stage + ':' + c.outcome),
     verifierRefs: (verifierSeen.find(v => v.scene === s) || {}).refs || [],
     facts: snap.facts, activatedLabels: snap.activatedLabels, verdicts: snap.verdicts,
@@ -485,7 +535,13 @@ for (let s = 1; s <= SCENES; s++) {
     + '   activated: ' + h.activatedLabels.length + '   verdicts: ' + h.verdicts.length);
   if (h.verifierRefs.length) say('   verifier asked about: ' + JSON.stringify(h.verifierRefs));
   if (h.blocked.length) say('   BLOCKED  : ' + JSON.stringify(h.blocked));
-  if (h.refusals.length) say('   app said : ' + JSON.stringify(h.refusals));
+  if (h.refusals.length) {
+    // COUNT PLUS A SAMPLE. Dumping the whole array inline turned one dry run's log into 220KB and
+    // made it unreadable; the full list is in manifest.json, where it belongs.
+    say('   app said : ' + h.refusals.length + ' line(s); notable:');
+    h.refusals.filter(x => /REJECT|stale|Blocked|refus|not accepted/i.test(x)).slice(0, 6)
+      .forEach(x => say('       · ' + x.slice(0, 180)));
+  }
 }
 await browser.close();
 
@@ -501,6 +557,7 @@ history.forEach(h => say('  ' + String(h.scene).padStart(5) + ' | '
 const manifest = {
   mode: DRY_REPLAY ? 'dry_replay' : 'live',
   story: STORY,
+  plannerFixture: PLANNER_FIXTURE,
   arm: (STORY === 'fs') ? ARM : null,
   armButton: (STORY === 'fs') ? FS_ARMS[ARM].button : null,
   axis: fsAxis,
@@ -524,6 +581,16 @@ const manifest = {
   reserved, perScene: R_SCENE,
   stageReservations: { planner: R_PLANNER, author: R_AUTHOR, verifier: R_VERIFIER },
   completedScenes: history.length,
+  stopReason,
+  stoppedEarly: history.length < SCENES,
+  // THE SEAL OUTCOME PER SCENE, stated rather than left to be inferred from counts.
+  sealOutcome: history.map(h => ({ scene: h.scene,
+    pending: h.pending || [], facts: (h.facts || []).length,
+    activated: (h.activatedLabels || []).length,
+    verdicts: h.verdicts || [], refs: h.verifierRefs || [],
+    continuationOutcome: h.ctOutcome || null })),
+  stageOrder: history.map(h => ({ scene: h.scene, stages: h.stages })),
+  gateStates: history.map(h => ({ scene: h.scene, gate: h.gate, latchClear: h.latchClear })),
   history, blocked,
   checks: { pass, fail }
 };
@@ -537,6 +604,14 @@ if (LIVE) {
   say('\nSPEND: $0 — nothing was dispatched (' + manifest.mode + ').');
 }
 
+if (stopReason) say('\nSTOPPED EARLY: ' + stopReason);
+// EVERY APP REFUSAL, in order. These are what the live smoke run threw away.
+const allRefusals = history.reduce((a, h) => a.concat((h.refusals || []).map(x => 's' + h.scene + ' ' + x)), []);
+if (allRefusals.length) {
+  say('\nWHAT THE APP SAID (' + allRefusals.length + ' line(s), in order):');
+  allRefusals.slice(0, 25).forEach(x => say('  · ' + x.slice(0, 190)));
+  if (allRefusals.length > 25) say('  … ' + (allRefusals.length - 25) + ' more in manifest.json');
+}
 say('\n' + pass + '/' + (pass + fail) + ' per-scene checks passed'
   + (history.length < SCENES ? '   (loop stopped at scene ' + history.length + ' of ' + SCENES + ')' : ''));
 process.exit(fail ? 1 : 0);

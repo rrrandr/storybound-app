@@ -1,0 +1,52 @@
+=== LIVE N-SCENE CORPUS RUNNER ===
+  scenes       : 3
+  mode         : DRY REPLAY (provider-free, $0)
+  branch       : defy
+  input policy : neutral
+  output       : _live_corpus_out/run_2026-10-02T15-08-19-251Z
+
+RESERVATION (worst case per stage, from _live_spend_ledger.mjs)
+  planner  : $0.023175
+  author   : $0.126000
+  verifier : $0.007800
+  one live scene = $0.156975
+  scene 1 is FS's BAKED package — fixed, authored, ZERO provider calls, not reserved
+  × 2 GENERATED scene(s) of 3 = $0.313950
+  the memory extractor is REPLAYED in every mode and reserves nothing
+
+BRINGING UP FIRST SACRIFICE (the Book the study is about)
+  ok   FS scene 1 mounted from its baked package
+  ok   and it cost nothing — no provider call to display it
+  ok   the production unlock committed scene 1 as scenes[0]
+  ok   the preview was finalized through the production function
+  ok   the authored decision axis is readable
+  axis: "run in shame vs remain and see where Julian was taking it"
+
+── scene 1/3
+  ok   scene 1: the BAKED opening was captured (>=200 chars)
+  ok   scene 1: it cost nothing — no planner, no author
+   BAKED opening: 7605 chars, no dispatch
+
+── scene 2/3
+  ok   scene 2: the advance REFUSED until the choice was recorded
+  ok   scene 2: and it dispatched nothing while unrecorded
+  FAIL scene 2: the choice was recorded by the prompt's own handler  — {"decision1":null}
+   arm A -> button A -> recorded null  [click via BITE: never clicked]
+  FAIL scene 2: the staged scene MOUNTED  — no _stagedActive.plan.beats
+  ok   scene 2: prose captured from the app projection (>=40 chars)
+  ok   scene 2: submit latch cleared before the next advance
+   stages   : []
+   prose    : 7605 chars   facts: 0   activated: 0   verdicts: 0
+
+── scene 3/3
+  FAIL scene 3: the gate was OPEN at the moment of submission  — still closed — the advance would be refused
+  ABORTING the loop: submitting into a closed gate measures nothing.
+
+── PER-SCENE RESULT TABLE
+  scene | prose | facts | activated | verdicts | refs | stages
+      1 |  7605 |     0 |         0 |        0 |    0 | 
+      2 |  7605 |     0 |         0 |        0 |    0 | 
+
+SPEND: $0 — nothing was dispatched (dry_replay).
+
+11/14 per-scene checks passed   (loop stopped at scene 2 of 3)

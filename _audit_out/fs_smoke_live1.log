@@ -1,0 +1,65 @@
+=== LIVE N-SCENE CORPUS RUNNER ===
+  scenes       : 3
+  mode         : LIVE, authorized $0.35
+  branch       : defy
+  input policy : neutral
+  output       : _live_corpus_out/run_2026-10-02T16-00-21-331Z
+
+RESERVATION (worst case per stage, from _live_spend_ledger.mjs)
+  planner  : $0.023175
+  author   : $0.126000
+  verifier : $0.007800
+  one live scene = $0.156975
+  scene 1 is FS's BAKED package — fixed, authored, ZERO provider calls, not reserved
+  × 2 GENERATED scene(s) of 3 = $0.313950
+  the memory extractor is REPLAYED in every mode and reserves nothing
+  within authorization — $0.036050 headroom
+
+BRINGING UP FIRST SACRIFICE (the Book the study is about)
+  ok   FS scene 1 mounted from its baked package
+  ok   and it cost nothing — no provider call to display it
+  ok   the production unlock committed scene 1 as scenes[0]
+  ok   the preview was finalized through the production function
+  ok   the authored decision axis is readable
+  axis: "run in shame vs remain and see where Julian was taking it"
+
+── scene 1/3
+  ok   scene 1: the BAKED opening was captured (>=200 chars)
+  ok   scene 1: it cost nothing — no planner, no author
+   BAKED opening: 7605 chars, no dispatch
+
+── scene 2/3
+  ok   scene 2: the advance REFUSED until the choice was recorded
+  ok   scene 2: and it dispatched nothing while unrecorded
+    [DISPATCH] planner scene 2 — estimated $0.019130 (committed $0.019130 of $0.35)
+  ok   scene 2: the choice was recorded by the prompt's own handler
+   arm A -> button A -> recorded "run"  [click via in-page el.click() — host not rendered in this harness]
+        measured $0.012721 (receipted; total measured $0.012721)
+    [DISPATCH] verifier scene 2 — estimated $0.007857 (committed $0.026987 of $0.35)
+        NO RECEIPT from ministral-8b-2512 — UNMEASURED, estimated $0.007857 (this is NOT $0; total unmeasured $0.007857)
+  FAIL scene 2: the staged scene MOUNTED  — no _stagedActive.plan.beats
+  ok   scene 2: prose captured from the app projection (>=40 chars)
+  ok   scene 2: submit latch cleared before the next advance
+   stages   : ["planner:dispatched","verifier:dispatched"]
+   prose    : 7605 chars   facts: 0   activated: 0   verdicts: 1
+   verifier asked about: ["prop:1:1"]
+   app said : ["[STAGED:SUBMIT] _cgScreenplayMode is ON — using screenplay-native generator (skipping literary submit)"]
+
+── scene 3/3
+  FAIL scene 3: the gate was OPEN at the moment of submission  — still closed — the advance would be refused
+  ABORTING the loop: submitting into a closed gate measures nothing.
+
+── PER-SCENE RESULT TABLE
+  scene | prose | facts | activated | verdicts | refs | stages
+      1 |  7605 |     0 |         0 |        0 |    0 | 
+      2 |  7605 |     0 |         0 |        1 |    1 | planner:dispatched,verifier:dispatched
+
+SPEND
+  MEASURED (receipts): $0.012721
+  UNMEASURED         : $0.007857 estimated across 1 call(s) that returned NO receipt
+      · verifier on ministral-8b-2512 — estimated $0.007857
+  TOTAL EXPOSURE     : $0.020578 of $0.35  (5.9%)
+  NOTE: the unmeasured figure is an ESTIMATE, not a receipt. Real spend for those
+        calls is whatever the provider billed, and is not knowable from this run.
+
+12/14 per-scene checks passed   (loop stopped at scene 2 of 3)

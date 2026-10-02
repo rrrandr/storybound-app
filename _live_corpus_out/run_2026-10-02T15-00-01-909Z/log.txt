@@ -1,0 +1,16 @@
+=== LIVE N-SCENE CORPUS RUNNER ===
+  scenes       : 3
+  mode         : LIVE, authorized $0.01
+  branch       : defy
+  input policy : neutral
+  output       : _live_corpus_out/run_2026-10-02T15-00-01-909Z
+
+RESERVATION (worst case per stage, from _live_spend_ledger.mjs)
+  planner  : $0.023175
+  author   : $0.126000
+  verifier : $0.007800
+  one live scene = $0.156975
+  × 3 scene(s) = $0.470925
+  the memory extractor is REPLAYED in every mode and reserves nothing
+
+REFUSED BEFORE DISPATCH: reserved $0.470925 exceeds the authorized $0.01

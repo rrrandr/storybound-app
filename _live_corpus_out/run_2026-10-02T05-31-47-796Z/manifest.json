@@ -1,0 +1,185 @@
+{
+  "mode": "dry_replay",
+  "scenes": 2,
+  "branch": "defy",
+  "inputPolicy": "neutral",
+  "inputPolicyNote": "Scenes after the branch point take an IDENTICAL neutral input on every path, so downstream divergence is attributable to the branch decision alone. Risk: a passive input repeated every scene could itself induce stalling, which would confound H1.",
+  "authorized": 0,
+  "reserved": 0.3027,
+  "perScene": 0.15135,
+  "stageReservations": {
+    "planner": 0.017550000000000003,
+    "author": 0.126,
+    "verifier": 0.0078000000000000005
+  },
+  "completedScenes": 2,
+  "history": [
+    {
+      "scene": 1,
+      "input": {
+        "action": "I tear the gossamer band off my wrist and go to Seren before the wish finishes turning.",
+        "dialogue": "Seren, stop — take it back, take the words back now."
+      },
+      "gate": {
+        "beat": 26,
+        "last": 26,
+        "gateShown": true,
+        "microShown": false
+      },
+      "latchClear": true,
+      "proseLen": 1457,
+      "stages": [
+        "bible:aborted",
+        "bible:aborted",
+        "bible:aborted",
+        "bible:aborted",
+        "bible:aborted",
+        "bible:aborted",
+        "other:aborted",
+        "other:aborted",
+        "other:aborted",
+        "other:aborted",
+        "other:aborted",
+        "other:aborted",
+        "other:aborted",
+        "bible:aborted",
+        "bible:aborted",
+        "bible:aborted",
+        "bible:aborted",
+        "bible:aborted",
+        "bible:aborted",
+        "bible:aborted",
+        "bible:aborted",
+        "bible:aborted",
+        "bible:aborted",
+        "bible:aborted",
+        "bible:aborted",
+        "other:aborted",
+        "other:aborted",
+        "other:aborted",
+        "planner:replayed",
+        "author:replayed",
+        "other:aborted",
+        "other:aborted",
+        "other:aborted",
+        "other:aborted",
+        "other:aborted",
+        "other:aborted",
+        "other:aborted",
+        "memory:replayed"
+      ],
+      "verifierRefs": [],
+      "facts": [],
+      "activatedLabels": [],
+      "verdicts": [],
+      "pending": [
+        "state_change",
+        "continuation"
+      ],
+      "ctOutcome": "sealed",
+      "blocked": [],
+      "refusals": [
+        "[STAGED:SUBMIT] _cgScreenplayMode is ON — using screenplay-native generator (skipping literary submit)"
+      ]
+    },
+    {
+      "scene": 2,
+      "input": {
+        "action": "I take stock of where this leaves me and keep moving.",
+        "dialogue": "Nothing yet. I want to see what they do next."
+      },
+      "gate": {
+        "beat": 26,
+        "last": 26,
+        "gateShown": true,
+        "microShown": false
+      },
+      "latchClear": true,
+      "proseLen": 1457,
+      "stages": [
+        "bible:aborted",
+        "bible:aborted",
+        "bible:aborted",
+        "bible:aborted",
+        "bible:aborted",
+        "bible:aborted",
+        "other:aborted",
+        "other:aborted",
+        "other:aborted",
+        "other:aborted",
+        "other:aborted",
+        "other:aborted",
+        "other:aborted",
+        "bible:aborted",
+        "bible:aborted",
+        "bible:aborted",
+        "bible:aborted",
+        "bible:aborted",
+        "bible:aborted",
+        "bible:aborted",
+        "bible:aborted",
+        "bible:aborted",
+        "bible:aborted",
+        "bible:aborted",
+        "bible:aborted",
+        "other:aborted",
+        "other:aborted",
+        "other:aborted",
+        "verifier:replayed",
+        "planner:replayed",
+        "author:replayed",
+        "other:aborted",
+        "other:aborted",
+        "other:aborted",
+        "other:aborted",
+        "other:aborted",
+        "other:aborted",
+        "memory:replayed"
+      ],
+      "verifierRefs": [
+        "prop:2:1",
+        "prop:2:2"
+      ],
+      "facts": [
+        {
+          "ref": "prop:2:1",
+          "content": null
+        },
+        {
+          "ref": "prop:2:2",
+          "content": null
+        }
+      ],
+      "activatedLabels": [
+        "Toll Road Commission"
+      ],
+      "verdicts": [
+        {
+          "ref": "prop:2:1",
+          "delivery": null,
+          "reason": "delivered"
+        },
+        {
+          "ref": "prop:2:2",
+          "delivery": null,
+          "reason": "delivered"
+        }
+      ],
+      "committedThrough": 2,
+      "pending": [
+        "state_change",
+        "continuation"
+      ],
+      "ctOutcome": "sealed",
+      "blocked": [],
+      "refusals": [
+        "[STAGED:SUBMIT] _cgScreenplayMode is ON — using screenplay-native generator (skipping literary submit)"
+      ]
+    }
+  ],
+  "blocked": [],
+  "checks": {
+    "pass": 6,
+    "fail": 0
+  }
+}
