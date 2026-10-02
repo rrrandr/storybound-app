@@ -1,0 +1,50 @@
+=== FS PLANNER CAPTURE PREFLIGHT (provider-free, $0) ===
+
+1. it refuses to run at all without an explicit mode
+  ok   refuses with exit 2
+  ok   says it would dispatch a real provider call
+  ok   names the three legitimate modes
+  ok   created no run directory
+
+2. the reservation is exactly one planner call
+  ok   exits 0
+  ok   the reserved figure IS the shared module's R_PLANNER
+  ok   it is $0.017550 to six places
+  ok   the author is explicitly NOT reserved
+  ok   no browser was launched
+
+3. an insufficient ceiling is refused before anything launches
+  ok   exits 3
+  ok   states both figures
+  ok   records zero dispatches
+  ok   no planner request was even built
+
+4. the one-attempt blocker, exercised by the app's own retries
+   (launches a browser and drives the real FS path; about a minute)
+  FAIL exits 0 with no failed check  — exit=1 {"pass":12,"fail":1}
+  ok   the manifest records DRY REPLAY and zero authorization
+  ok   the reservation in the manifest is one planner call
+  FAIL EXACTLY ONE planner request was answered  — ["replayed_known_wrong_fixture","replayed_known_wrong_fixture"]
+  FAIL the app DID attempt a retry — so the blocker was really tested  — blockedRetries=0
+  FAIL every retry was blocked, none answered
+  ok   no live dispatch happened in dry mode
+  ok   the author was never answered
+  ok   the verifier was never answered
+  ok   every non-planner provider stage was aborted
+  ok   the planner REQUEST was written out
+  FAIL the blocked retry's request was written out too
+  ok   the stale-rejection reason was captured verbatim
+  ok   the reason names the fields the FS planner contract wants
+  ok   the recorded decision came from the product's axis
+  ok   spend is reported as $0
+     the app attempted 0 retry/retries; 1 request answered, 0 refused
+
+5. the spend bound is structural, not a promise in a comment
+  ok   there is exactly ONE place that can reach the network
+  ok   the latch is set BEFORE that fetch can be reached
+  ok   every non-planner stage returns before it
+  ok   the reservation is R_PLANNER alone, imported not recomputed
+  ok   the live branch records its cost through the shared ledger
+  ok   it never writes the gate or the latch
+
+30/35 preflight checks passed

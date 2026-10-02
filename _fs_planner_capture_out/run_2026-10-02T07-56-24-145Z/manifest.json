@@ -1,0 +1,133 @@
+{
+  "mode": "dry_replay",
+  "branch": "A",
+  "authorized": 0,
+  "reserved": 0.017550000000000003,
+  "axis": {
+    "axis": "run in shame vs remain and see where Julian was taking it",
+    "a": {
+      "key": "run",
+      "label": "run in shame"
+    },
+    "b": {
+      "key": "remain",
+      "label": "remain and see where Julian was taking it"
+    }
+  },
+  "decision": {
+    "axis": "run in shame vs remain and see where Julian was taking it",
+    "choice": "run",
+    "label": "run in shame",
+    "source": "resume",
+    "at": 1790927819494,
+    "storyId": "579a3da1-aa13-42dd-b64a-1fd8f450e169"
+  },
+  "clickRoute": "in-page el.click() — host not rendered in this harness",
+  "calls": [
+    {
+      "stage": "infrastructure",
+      "url": "/api/csp-report",
+      "outcome": "aborted"
+    },
+    {
+      "stage": "infrastructure",
+      "url": "/api/config",
+      "outcome": "aborted"
+    },
+    {
+      "stage": "infrastructure",
+      "url": "/api/csp-report",
+      "outcome": "aborted"
+    },
+    {
+      "stage": "infrastructure",
+      "url": "/api/geo",
+      "outcome": "aborted"
+    },
+    {
+      "stage": "infrastructure",
+      "url": "/api/beta-events",
+      "outcome": "aborted"
+    },
+    {
+      "stage": "other",
+      "url": "/api/mistral-proxy",
+      "outcome": "aborted"
+    },
+    {
+      "stage": "other",
+      "url": "/api/proxy",
+      "outcome": "aborted"
+    },
+    {
+      "stage": "other",
+      "url": "/api/chatgpt-proxy",
+      "outcome": "aborted"
+    },
+    {
+      "stage": "other",
+      "url": "/api/mistral-proxy",
+      "outcome": "aborted"
+    },
+    {
+      "stage": "other",
+      "url": "/api/proxy",
+      "outcome": "aborted"
+    },
+    {
+      "stage": "other",
+      "url": "/api/chatgpt-proxy",
+      "outcome": "aborted"
+    },
+    {
+      "stage": "planner",
+      "url": "/api/proxy",
+      "outcome": "replayed_known_wrong_fixture",
+      "bytes": 1534
+    },
+    {
+      "stage": "other",
+      "url": "/api/mistral-proxy",
+      "outcome": "aborted"
+    },
+    {
+      "stage": "other",
+      "url": "/api/proxy",
+      "outcome": "aborted"
+    },
+    {
+      "stage": "other",
+      "url": "/api/chatgpt-proxy",
+      "outcome": "aborted"
+    },
+    {
+      "stage": "planner",
+      "url": "/api/proxy",
+      "outcome": "replayed_known_wrong_fixture",
+      "bytes": 1534
+    },
+    {
+      "stage": "infrastructure",
+      "url": "/api/beta-events",
+      "outcome": "aborted"
+    }
+  ],
+  "plannerAnswered": 2,
+  "blockedRetries": 0,
+  "staleReasons": [
+    "[OBJECTIVE:REJECTED] scene 2 — no local_objective; no posture_read; no present cast; no local_objective_actor; reserved event price_identified (scene 3): no status declared; reserved event julian_counter_wish (scene 16): no status declared; reserved event julian_obscuring_wishes (scene 16): no status declared; aftermath truth twist_manifested: no status declared; aftermath truth interrogation_interrupted: no status declared; aftermath truth the_answer_institutional: no status declared; aftermath truth inquiry_authority_claimed: no status declared",
+    "[CG:STALE-REJECTED] retrying once with the current branch/attempt: local objective not accepted: no local_objective; no posture_read; no present cast; no local_objective_actor; reserved event price_identified (scene 3): no status declared; reserved event julian_counter_wish (scene 16): no status declared; reserved event julian_obscuring_wishes (scene 16): no status declared; aftermath truth twist_manifested: no status declared; aftermath truth interrogation_interrupted: no status declared; aftermath truth the_answer_institutional: no status declared; aftermath truth inquiry_authority_claimed: no status declared",
+    "[OBJECTIVE:REJECTED] scene 2 — no local_objective; no posture_read; no present cast; no local_objective_actor; reserved event price_identified (scene 3): no status declared; reserved event julian_counter_wish (scene 16): no status declared; reserved event julian_obscuring_wishes (scene 16): no status declared; aftermath truth twist_manifested: no status declared; aftermath truth interrogation_interrupted: no status declared; aftermath truth the_answer_institutional: no status declared; aftermath truth inquiry_authority_claimed: no status declared",
+    "[CG:STALE-STOP] scene 1 — retry stale: local objective not accepted: no local_objective; no posture_read; no present cast; no local_objective_actor; reserved event price_identified (scene 3): no status declared; reserved event julian_counter_wish (scene 16): no status declared; reserved event julian_obscuring_wishes (scene 16): no status declared; aftermath truth twist_manifested: no status declared; aftermath truth interrogation_interrupted: no status declared; aftermath truth the_answer_institutional: no status declared; aftermath truth inquiry_authority_claimed: no status declared — stopped; resumable; no engine switch"
+  ],
+  "outcome": {
+    "projLen": 7605,
+    "sceneCount": 1,
+    "turnCount": 0,
+    "staged": false
+  },
+  "checks": {
+    "pass": 12,
+    "fail": 1
+  }
+}

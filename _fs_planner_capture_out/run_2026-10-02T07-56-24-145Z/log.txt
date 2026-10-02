@@ -1,0 +1,37 @@
+=== FS CG PLANNER CAPTURE — ONE CALL, ONE ATTEMPT ===
+  mode    : DRY REPLAY (provider-free, $0)
+  branch  : A
+  output  : _fs_planner_capture_out/run_2026-10-02T07-56-24-145Z
+
+RESERVATION
+  one planner call : $0.017550
+  author, verifier, memory, scaffold: ABORTED — not reserved, cannot be billed
+  TOTAL            : $0.017550
+  ok   the FS launch definition is reachable
+  ok   the baked scene 1 mounted
+  ok   it mounted with no provider call
+  ok   the production unlock committed scene 1
+  ok   the preview was finalized
+  ok   the authored axis is readable
+  axis: "run in shame vs remain and see where Julian was taking it"
+  ok   the first advance REFUSED and mounted the decision prompt
+  ok   and it dispatched NOTHING while the choice was unrecorded
+  ok   the choice was recorded by the prompt's own handler
+  recorded: {"axis":"run in shame vs remain and see where Julian was taking it","choice":"run","label":"run in shame","source":"resume","at":1790927819494,"storyId":"579a3da1-aa13-42dd-b64a-1fd8f450e169"}  [click via in-page el.click() — host not rendered in this harness]
+  ok   the planner was reached
+  FAIL AT MOST ONE planner request was ever answered  — ["replayed_known_wrong_fixture","replayed_known_wrong_fixture"]
+  ok   no live planner call beyond the first
+  ok   nothing but the planner was ever answered
+  ok   the planner REQUEST was preserved
+  ok   the stale-rejection reason was captured verbatim
+
+  the app's own words:
+    · [OBJECTIVE:REJECTED] scene 2 — no local_objective; no posture_read; no present cast; no local_objective_actor; reserved event price_identified (scene 3): no status declar
+    · [CG:STALE-REJECTED] retrying once with the current branch/attempt: local objective not accepted: no local_objective; no posture_read; no present cast; no local_objective_
+    · [OBJECTIVE:REJECTED] scene 2 — no local_objective; no posture_read; no present cast; no local_objective_actor; reserved event price_identified (scene 3): no status declar
+    · [CG:STALE-STOP] scene 1 — retry stale: local objective not accepted: no local_objective; no posture_read; no present cast; no local_objective_actor; reserved event price_
+
+SPEND: $0 — nothing was dispatched (dry replay).
+
+14/15 checks passed
+artefacts: _fs_planner_capture_out/run_2026-10-02T07-56-24-145Z
