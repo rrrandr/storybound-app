@@ -1,0 +1,28 @@
+{
+  "sharedOpening": {
+    "story": "starter_first_sacrifice",
+    "scene": 1,
+    "note": "Scene 1 is a FIXED seed package and is NEVER planner-routed, so all three paths share a byte-identical opening. Divergence begins at the Scene 1 → 2 decision, which means any difference downstream is attributable to the CHOICE and not to a different story.",
+    "authoredDecision": "END ON THE DECISION: tear the gossamer band away and go to Seren, or hold the line she was told to hold."
+  },
+  "branches": {
+    "comply": {
+      "label": "comply — hold the line she was told to hold",
+      "source": "the seed's own Scene 1 decision, second option",
+      "action": "I hold the line. I keep the gossamer band on and I do not move from the witness row.",
+      "dialogue": "Nothing. I am a witness. I hold."
+    },
+    "defy": {
+      "label": "defy — tear the band away and go to Seren",
+      "source": "the seed's own Scene 1 decision, first option",
+      "action": "I tear the gossamer band off my wrist and go to Seren before the wish finishes turning.",
+      "dialogue": "Seren, stop — take it back, take the words back now."
+    },
+    "withdraw": {
+      "label": "withdraw — leave the assembly entirely",
+      "source": "DELIBERATELY OFF-SPINE: the seed offers only hold-or-intervene. This branch tests divergence the plan does not anticipate, which is where circling is most likely.",
+      "action": "I say nothing, step back out of the witness row, and walk out of the assembly.",
+      "dialogue": "Nothing. I leave before anyone can ask me to answer for her."
+    }
+  }
+}

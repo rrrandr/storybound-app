@@ -1,0 +1,234 @@
+{
+  "provenance": "READ FROM window.STARTER_PLANS.starter_first_sacrifice at packet build time — not transcribed from memory. A rubric built on remembered obligations would measure the memory.",
+  "sealedFutureReveals": [
+    {
+      "id": "julian_counter_wish",
+      "label": "a sealed future reveal concerning Julian (not to be delivered, named or pre-empted)",
+      "unsealsAtScene": 16
+    },
+    {
+      "id": "julian_obscuring_wishes",
+      "label": "a second sealed future reveal concerning Julian",
+      "unsealsAtScene": 16
+    }
+  ],
+  "sealedRule": "These are RESERVED. A scene that delivers, names or pre-empts one before its unsealsAtScene is a VIOLATION, and the scorer should record it as such — it is not a payoff.",
+  "fieldGuide": {
+    "aftermathTruths": "ALREADY TRUE and NOT to be re-staged. A scene that re-stages one is not a payoff — record it as a VIOLATION. Each has a stable id, which is what the scoresheet's obligation columns should reference.",
+    "requiredTruth": "must be true by the end of the scene",
+    "constraints": "prohibitions, e.g. \"NO new named character\". A breach is an obligation FAILURE.",
+    "reservedEvents": "must NOT be delivered before their due scene",
+    "exitState": "the authored exit state — the baseline for judging forward movement",
+    "decision_axis": "the authored choice; decision_consequence is what each side costs",
+    "vectors": "AUTHORED CANDIDATE CONTINUATIONS, not obligations. Useful for branch-specificity: a scene that could only follow one vector is branch-specific."
+  },
+  "scenes": [
+    {
+      "n": 1,
+      "participants": [
+        "Lirael",
+        "Seren",
+        "Julian",
+        "the presiding Dohkar"
+      ],
+      "presentGroups": [
+        "assembled First Favored family and guests (unnamed, no dialogue)"
+      ],
+      "collectives": null,
+      "sceneFunction": null,
+      "requiredTruth": "Seren is sympathetic AND wrong. The twist has NOT happened yet. Lirael has not said aloud why the wish matters to her.",
+      "aftermathTruths": null,
+      "constraints": null,
+      "reservedEvents": null,
+      "exitState": "RESOLVED: the wish is spoken, the room knows something is wrong, the omen has been seen. NEW PROBLEM: Lirael must choose — break protocol for her ward, or protect her own standing.",
+      "player_decision_required": true,
+      "decision_axis": "intervene (tear the band, go to Seren) vs remain_bound (hold the line she was told to hold)",
+      "decision_consequence": "The choice MUST alter who witnesses the twist, how Lirael is judged when it lands, and what she is able to learn afterwards. A scene may NOT resolve the central crisis before the player decides.",
+      "vectors": null,
+      "goalExcerpt": "THE WISH — steps 1-4 of the twist sequence ONLY. Scene 1 does three things and then STOPS: it establishes the unfolding personal disaster, makes clear what it costs LIRAEL specifically, and ends on a decision she must make. The twist does NOT land here. IN THIS ORDER: (A) The presiding Dohkar calls for the cost first. (B) Seren names her offering ALOUD as dialogue — her earliest memory — and the a"
+    },
+    {
+      "n": 2,
+      "participants": [
+        "Lirael",
+        "Seren",
+        "Julian",
+        "the presiding Dohkar"
+      ],
+      "presentGroups": [
+        "the assembly (unnamed, reacting, no dialogue)"
+      ],
+      "collectives": [
+        {
+          "id": "the_assembly",
+          "label": "the assembly"
+        }
+      ],
+      "sceneFunction": "This scene must land the AFTERMATH of Julian's public accusation and the Dohkar's authority claim: real institutional/procedural pressure (preliminary review, political pressure, or the opening steps toward investigation — NOT the convened formal inquiry itself, which is reserved for a later scene) and/or social fallout (family reaction, her standing visibly at risk), moving concretely toward the exitState's own \"NEW PROBLEM.\" It must NOT simply extend or re-stage the same immediate ritual/interrogation moment the aftermath truths already establish.",
+      "requiredTruth": "The twist is an EVENT, not a recognition of one. Julian is not an antagonist. The price has not yet been named.",
+      "aftermathTruths": [
+        {
+          "id": "twist_manifested",
+          "text": "Seren's wish twisted because it was MISALIGNED — care performed for the assembly over the desire she actually held; the literal words were honoured (the whole assembly turned to look at Lirael) and the intent failed. Every First Favored present heard the loose note. This has already happened and is not re-staged."
+        },
+        {
+          "id": "interrogation_interrupted",
+          "text": "Julian, the Provast, has ALREADY questioned Lirael before the assembly — intimately, as an accusation through desirability — and the presiding Dohkar interrupted it as grossly inappropriate. Only then did her choice (run in shame or remain) arise. Not re-staged."
+        },
+        {
+          "id": "the_answer_institutional",
+          "text": "The Answer belongs to the Institution; Julian is its caretaker; Lirael holds it only for the questioning. It is not hers."
+        },
+        {
+          "id": "inquiry_authority_claimed",
+          "text": "The presiding Dohkar asserted that the rite and the ruling on the Sacrificiant's conduct are his and named a formal inquiry (a Chayr and two Dohkars) as the venue; Julian agreed and publicly claimed authority to convene and preside over it. The inquiry is NOT yet opened (that is a later scene)."
+        }
+      ],
+      "constraints": [
+        "NO new mystery",
+        "NO new named character",
+        "NO new lore"
+      ],
+      "reservedEvents": null,
+      "exitState": "RESOLVED: the words came true and everyone can see how. NEW PROBLEM: Lirael's standing is at risk and the cost is still uncounted.",
+      "player_decision_required": true,
+      "decision_axis": "claim the interference openly vs let the assembly keep its assumption",
+      "decision_consequence": "Whatever the player chose in scene 1 must be VISIBLE here — different witnesses, different judgement, different information available. If this scene reads the same either way, the choice was decorative.",
+      "vectors": [
+        "Lirael goes on the offensive against Julian for what his accusation called her",
+        "Lirael smiles and turns it back on him: Julian confessed to more than he meant to — he implied she was so alluring that others could not help trying to please her",
+        "She runs, slows, and reconsiders either of the above",
+        "She wishes her way out of the predicament",
+        "Seren, or one of Seren's family, follows and confronts her",
+        "She exiles herself to travel the Fatelands looking for a new path, while Julian or one of his people follows and keeps her safe from afar"
+      ],
+      "goalExcerpt": ""
+    },
+    {
+      "n": 3,
+      "participants": [
+        "Lirael",
+        "Seren",
+        "Julian",
+        "the presiding Dohkar"
+      ],
+      "presentGroups": [
+        "the dispersing assembly (unnamed, no dialogue)"
+      ],
+      "collectives": null,
+      "sceneFunction": null,
+      "requiredTruth": "No character chooses Tempt Fate. The pressure is NEW, not louder.",
+      "aftermathTruths": null,
+      "constraints": null,
+      "reservedEvents": [
+        {
+          "id": "price_identified",
+          "text": "The sacrifice is taken or identified — the offered MEMORY lands",
+          "markers": [
+            "the price",
+            "the sacrifice is taken",
+            "memory is taken",
+            "what it cost her",
+            "the cost is named"
+          ]
+        }
+      ],
+      "exitState": "RESOLVED: the price is known and the personal cost is undeniable. NEW PROBLEM: the player must choose.",
+      "player_decision_required": true,
+      "decision_axis": "player-facing Tempt Fate threshold — offered, never taken by a character",
+      "decision_consequence": "The scene builds the temptation and STOPS. Lirael does not resolve it.",
+      "vectors": null,
+      "goalExcerpt": "THE PRICE AND THE THRESHOLD — step 7, then escalation. IN THIS ORDER: (A) The sacrifice is taken or identified — the offered MEMORY, expressed in the memory's own domain, never a faculty Seren did not offer. It lands only now, after the audience understands the twist, so cost is never confused with warp. (B) A NEW irreversible pressure arrives; this scene may NOT restage scene 2's accusation. (C) "
+    },
+    {
+      "n": 4,
+      "participants": [
+        "Lirael",
+        "the presiding Dohkar"
+      ],
+      "presentGroups": [
+        "the assembly (unnamed, no dialogue)"
+      ],
+      "collectives": null,
+      "sceneFunction": null,
+      "requiredTruth": null,
+      "aftermathTruths": null,
+      "constraints": null,
+      "reservedEvents": null,
+      "exitState": null,
+      "player_decision_required": null,
+      "decision_axis": null,
+      "decision_consequence": null,
+      "vectors": null,
+      "goalExcerpt": "NOTICE AND RESTRICTION — procedural pressure closes on Lirael and NOTHING is convened. The presiding Dohkar serves her formal notice that her conduct at the rite is under investigation, and states the restrictions she must keep while it runs. Julian is named aloud as having demanded a review; he is NOT in the room. Do NOT name who will hear the matter, do NOT name a venue, do NOT give a date or a "
+    },
+    {
+      "n": 5,
+      "participants": [],
+      "presentGroups": null,
+      "collectives": null,
+      "sceneFunction": null,
+      "requiredTruth": null,
+      "aftermathTruths": null,
+      "constraints": null,
+      "reservedEvents": null,
+      "exitState": null,
+      "player_decision_required": null,
+      "decision_axis": null,
+      "decision_consequence": null,
+      "vectors": null,
+      "goalExcerpt": "Julian quietly prevents the investigation from uncovering the truth."
+    },
+    {
+      "n": 6,
+      "participants": [],
+      "presentGroups": null,
+      "collectives": null,
+      "sceneFunction": null,
+      "requiredTruth": null,
+      "aftermathTruths": null,
+      "constraints": null,
+      "reservedEvents": null,
+      "exitState": null,
+      "player_decision_required": null,
+      "decision_axis": null,
+      "decision_consequence": null,
+      "vectors": null,
+      "goalExcerpt": "The PC discovers the wish succeeded in a way that should have been impossible."
+    },
+    {
+      "n": 7,
+      "participants": [],
+      "presentGroups": null,
+      "collectives": null,
+      "sceneFunction": null,
+      "requiredTruth": null,
+      "aftermathTruths": null,
+      "constraints": null,
+      "reservedEvents": null,
+      "exitState": null,
+      "player_decision_required": null,
+      "decision_axis": null,
+      "decision_consequence": null,
+      "vectors": null,
+      "goalExcerpt": "Rumors spread through the city; the PC’s reputation collapses."
+    },
+    {
+      "n": 8,
+      "participants": [],
+      "presentGroups": null,
+      "collectives": null,
+      "sceneFunction": null,
+      "requiredTruth": null,
+      "aftermathTruths": null,
+      "constraints": null,
+      "reservedEvents": null,
+      "exitState": null,
+      "player_decision_required": null,
+      "decision_axis": null,
+      "decision_consequence": null,
+      "vectors": null,
+      "goalExcerpt": "The PC realizes someone else may have intervened."
+    }
+  ]
+}
