@@ -9362,6 +9362,57 @@ window.config = window.config || {
             var _deceptionHasEffect = !!(sc.slots && String(sc.slots.exitState || '').trim());
             if (!_deceptionIsIntentionOnly && _deceptionHasTarget && _deceptionHasEffect) laneOk = true;
           }
+          // ── STRUCTURAL ROUTE (Roman 2026-10-02) ──────────────────────────────────────────
+          // MEASURED DEFECT THIS CLOSES. Four live FS planner draws proposed the SAME event — the
+          // presiding Dohkar putting Lirael's conduct in question before the assembly — with
+          // STRUCTURALLY IDENTICAL event_slots, and split 2/2 purely on whether the prose said
+          // "preliminary review" (in signalRx) or "formal review" (not in it). The regex's verdict
+          // matched the gate's on 4/4, so the gate's decision WAS the vocabulary. The lane's own
+          // authored frames failed the same pattern until they were rewritten.
+          //
+          // WHAT THIS ROUTE CHECKS, and it is not vocabulary: the planner's own STRUCTURED
+          // decomposition must name the lane's DECLARED ACTOR performing a concrete act with a
+          // landed exit state that is not simply the precondition restated. A lane that declares no
+          // objectiveActor gets no structural route at all — there is nothing to check against.
+          //
+          // IT IS AN INDEPENDENT ACCEPTING ROUTE, NOT A REPLACEMENT. Nothing that passed the signal
+          // check before can fail now; this only adds a second way through. The signal check and
+          // every existing escape hatch are untouched, and so is the authored-frame invariant —
+          // frames must still satisfy their lane's signal (_lane_frame_invariant_control.mjs).
+          //
+          // WHAT IT DOES NOT CATCH, stated rather than discovered later: it enforces WHO acts and
+          // THAT something landed, not WHICH content landed. A reply naming the lane's actor doing
+          // something the lane does not want — another round of asking, say — satisfies these
+          // conditions. That residual judgment still belongs to signalRx and to the authored frame.
+          // The durable fix is for a lane to declare a STRUCTURAL requirement of its own (a required
+          // exit-state predicate), which is a seed-authoring change, not a gate change.
+          var laneRoute = laneOk ? 'signal' : null;
+          if (!laneOk && laneMatch.objectiveActor) {
+            var _lnorm = function (x) {
+              return String(x || '').toLowerCase()
+                .replace(/^(?:the|a|an)\s+/, '').replace(/[^a-z0-9 ]/g, ' ')
+                .replace(/\s+/g, ' ').trim();
+            };
+            var _sActor = _lnorm(sc.slots && sc.slots.actor);
+            var _lActor = _lnorm(laneMatch.objectiveActor);
+            var _sAct = String((sc.slots && sc.slots.action) || '').trim();
+            var _sExit = String((sc.slots && sc.slots.exitState) || '').trim();
+            var _sTarget = String((sc.slots && sc.slots.target) || '').trim();
+            var _sPre = String((sc.slots && sc.slots.precondition) || '').trim();
+            var _actorOk = !!_sActor && !!_lActor && (_sActor === _lActor
+              || _sActor.indexOf(_lActor) >= 0 || _lActor.indexOf(_sActor) >= 0);
+            if (_actorOk && _sAct.length >= 20 && _sExit.length >= 20 && _sTarget
+                && _lnorm(_sExit) !== _lnorm(_sPre)) {
+              laneOk = true;
+              laneRoute = 'structural';
+              try {
+                console.log('[CG:PLANNER-GATE] lane satisfied STRUCTURALLY — event_slots name the '
+                  + 'lane\'s declared actor ("' + laneMatch.objectiveActor + '") performing a '
+                  + 'concrete act with a landed exit state, though the prose did not match the '
+                  + 'lane\'s signal vocabulary');
+              } catch (_) {}
+            }
+          }
           if (!laneOk) {
             // HESITATION DIAGNOSTIC (Roman 2026-09-21) — real finding: Temptation's real reply chose
             // this exact lane and produced a bare hesitation beat ("opens her mouth... then closes
@@ -9387,7 +9438,7 @@ window.config = window.config || {
           }
         }
       }
-      if (!reasons.length) return { rejected: false, checkedText: combined, chosenAftermathLane: chosenLaneId, aftermathVocabPresent: aftermathVocabPresent, echoDiagnostic: echoDiagnostic };
+      if (!reasons.length) return { rejected: false, checkedText: combined, chosenAftermathLane: chosenLaneId, aftermathVocabPresent: aftermathVocabPresent, echoDiagnostic: echoDiagnostic, laneRoute: (typeof laneRoute !== 'undefined') ? laneRoute : null };
       return { rejected: true, reason: reasons.join(' | '), reasons: reasons, checkedText: combined, echoMatch: echoMatch, echoDiagnostic: echoDiagnostic, aftermathVocabPresent: aftermathVocabPresent, chosenAftermathLane: chosenLaneId };
     } catch (e) { return { rejected: false, error: e && e.message }; }
   }

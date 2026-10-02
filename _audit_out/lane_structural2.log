@@ -1,0 +1,42 @@
+=== STRUCTURAL LANE ROUTE (provider-free, $0) ===
+
+  four recorded replies: draw1_response.json, draw2_response.json, draw3_response.json, draw4_response.json
+
+1. the four real draws — all four propose the same event, all four should pass now
+     draw1: accepted via structural   keys=["rejected","checkedText","chosenAftermathLane","aftermathVocabPresent","echoDiagnostic","laneRoute"]
+     draw2: accepted via structural   keys=["rejected","checkedText","chosenAftermathLane","aftermathVocabPresent","echoDiagnostic","laneRoute"]
+     draw3: accepted via signal   keys=["rejected","checkedText","chosenAftermathLane","aftermathVocabPresent","echoDiagnostic","laneRoute"]
+     draw4: accepted via signal   keys=["rejected","checkedText","chosenAftermathLane","aftermathVocabPresent","echoDiagnostic","laneRoute"]
+  ok   no real draw is rejected any more
+  ok   the two that already matched the signal still pass BY THE SIGNAL — unchanged semantics
+  ok   the two that the vocabulary rejected now pass STRUCTURALLY
+
+2. break one structural field at a time — each must reject
+  ok   the WRONG actor (Julian, not the lane's declared actor) is rejected
+  ok   an EMPTY actor is rejected
+  ok   an EMPTY action is rejected
+  ok   a TRIVIAL action ("nods") is rejected
+  ok   an EMPTY exit state is rejected
+  ok   an EMPTY target is rejected
+  ok   an exit state that merely RESTATES the precondition is rejected
+
+3. the signal route still works on its own, with no structural support
+  ok   a signal-matching reply passes even with event_slots stripped
+
+4. a lane that declares no objectiveActor gets no structural route
+     lanes and declared actors: [{"id":"dohkar_preliminary_review","actor":"the presiding Dohkar"},{"id":"family_accusation","actor":"Lirael"},{"id":"julian_jurisdiction_challenge","actor":"Julian"},{"id":"lirael_constrained","actor":"the presiding Dohkar"},{"id":"lirael_defensive_path","actor":"Lirael"}]
+  ok   the lane menu is readable
+     (every lane declares an actor — nothing to test here)
+  ok   every lane declares an objectiveActor, so the route always has something to check
+
+5. lane selection itself is still enforced
+  ok   a lane outside the menu is still rejected
+  FAIL no declared lane at all is still rejected
+
+14/15 checks passed
+
+CHANGED VERDICT SEMANTICS, stated plainly: a reply whose event_slots name the lane's
+declared actor performing a concrete act with a landed exit state is now ACCEPTED even
+when its prose does not use the lane's signal vocabulary. Nothing that passed before
+fails now. The route enforces WHO acts and THAT something landed — not WHICH content
+landed; that judgment still rests with signalRx and the authored frame.
