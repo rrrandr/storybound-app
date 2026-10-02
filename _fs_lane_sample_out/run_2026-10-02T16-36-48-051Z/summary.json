@@ -1,0 +1,102 @@
+{
+  "samples": 1,
+  "arm": "A",
+  "mode": "dry_replay",
+  "plannerFixture": "_live_corpus_out/run_2026-10-02T16-00-21-331Z/s2_planner.json",
+  "reserved": 0.023174999999999998,
+  "authorized": 0,
+  "counts": {
+    "accepted": 0,
+    "lane_inconsistent": 1,
+    "gate_rejected_other": 0,
+    "rejected_before_lane_gate": 0,
+    "undetermined": 0
+  },
+  "results": [
+    {
+      "draw": 1,
+      "verdict": "lane_inconsistent",
+      "authorAttempted": false,
+      "rejected": true,
+      "laneInconsistent": true,
+      "declaredLane": "dohkar_preliminary_review",
+      "stateChange": "the presiding Dohkar declares that Lirael's conduct will be reviewed and that she must answer for it",
+      "tacticalMove": "force Lirael to confront the institutional review of her conduct by moving the accusation into procedure",
+      "pressureScope": "scene_local",
+      "canonChange": null,
+      "introduces": [],
+      "axis": "run in shame vs remain and see where Julian was taking it",
+      "decision": {
+        "axis": "run in shame vs remain and see where Julian was taking it",
+        "choice": "run",
+        "label": "run in shame",
+        "source": "resume",
+        "at": 1790959045506,
+        "storyId": "1a456c08-7fe1-4c97-8d96-429319e7d472"
+      },
+      "gateLines": [
+        "[CG:PLANNER-GATE] REJECTED before author dispatch, scene=1 — the planner declared chosen_aftermath_lane=\"dohkar_preliminary_review\" but its own proposed event/tactical-move/forces-choice/event-slots does not actually instantiate that lane's content — a declared lane label alone is not enough; the event itself must move into it, not stay inside the same ritual/interrogation moment under a borrowed label",
+        "[CG:PLANNER-GATE] REJECTED before author dispatch, scene=1 — the planner declared chosen_aftermath_lane=\"dohkar_preliminary_review\" but its own proposed event/tactical-move/forces-choice/event-slots does not actually instantiate that lane's content — a declared lane label alone is not enough; the event itself must move into it, not stay inside the same ritual/interrogation moment under a borrowed label"
+      ],
+      "calls": [
+        {
+          "stage": "other",
+          "outcome": "aborted"
+        },
+        {
+          "stage": "other",
+          "outcome": "aborted"
+        },
+        {
+          "stage": "other",
+          "outcome": "aborted"
+        },
+        {
+          "stage": "other",
+          "outcome": "aborted"
+        },
+        {
+          "stage": "other",
+          "outcome": "aborted"
+        },
+        {
+          "stage": "other",
+          "outcome": "aborted"
+        },
+        {
+          "stage": "planner",
+          "outcome": "replayed"
+        },
+        {
+          "stage": "other",
+          "outcome": "aborted"
+        },
+        {
+          "stage": "other",
+          "outcome": "aborted"
+        },
+        {
+          "stage": "other",
+          "outcome": "aborted"
+        },
+        {
+          "stage": "verifier",
+          "outcome": "aborted"
+        },
+        {
+          "stage": "verifier",
+          "outcome": "aborted"
+        },
+        {
+          "stage": "verifier",
+          "outcome": "aborted"
+        }
+      ],
+      "blockedRetries": 0
+    }
+  ],
+  "checks": {
+    "pass": 0,
+    "fail": 0
+  }
+}

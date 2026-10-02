@@ -1,0 +1,29 @@
+=== FS LANE CONSISTENCY — 1 PLANNER DRAW(S) ===
+  mode    : DRY REPLAY of _fs_planner_capture_out/run_2026-10-02T13-52-38-343Z/planner_response.json
+  arm     : A   output: _fs_lane_sample_out/run_2026-10-02T16-38-13-930Z
+
+RESERVATION
+  one planner draw : $0.023175
+  × 1 = $0.023175
+  author, verifier, memory, scaffold: ABORTED — never reserved, cannot be billed
+
+── draw 1/1
+    verdict: ACCEPTED   lane="dohkar_preliminary_review"
+
+── LANE CONSISTENCY
+  draws                : 1
+  ACCEPTED by the gate : 1
+  lane-inconsistent    : 0
+  rejected (other)     : 0
+  undetermined         : 0
+
+  draw | verdict            | declared lane
+     1 | accepted           | dohkar_preliminary_review
+
+  per-draw acceptance on this sample: 100% (1/1)
+  nine consecutive passes at that rate: 100.0%
+  (arithmetic on a small sample, not a prediction — and a 10-scene run needs all nine)
+
+SPEND: $0 — nothing was dispatched (dry replay).
+
+artefacts: _fs_lane_sample_out/run_2026-10-02T16-38-13-930Z

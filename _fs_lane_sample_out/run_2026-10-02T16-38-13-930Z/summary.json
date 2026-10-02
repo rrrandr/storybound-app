@@ -1,0 +1,87 @@
+{
+  "samples": 1,
+  "arm": "A",
+  "mode": "dry_replay",
+  "plannerFixture": "_fs_planner_capture_out/run_2026-10-02T13-52-38-343Z/planner_response.json",
+  "reserved": 0.023174999999999998,
+  "authorized": 0,
+  "counts": {
+    "accepted": 1,
+    "lane_inconsistent": 0,
+    "gate_rejected_other": 0,
+    "rejected_before_lane_gate": 0,
+    "undetermined": 0
+  },
+  "results": [
+    {
+      "draw": 1,
+      "verdict": "accepted",
+      "authorAttempted": true,
+      "rejected": false,
+      "laneInconsistent": false,
+      "declaredLane": "dohkar_preliminary_review",
+      "stateChange": "The presiding Dohkar declares that Lirael's conduct will be reviewed and that she will answer for it.",
+      "tacticalMove": "Establishes the Dohkar's formal preliminary review of Lirael's conduct before the assembly, forcing her to confront the procedural consequences of the bent wish.",
+      "pressureScope": "scene_local",
+      "canonChange": null,
+      "introduces": [],
+      "axis": "run in shame vs remain and see where Julian was taking it",
+      "decision": {
+        "axis": "run in shame vs remain and see where Julian was taking it",
+        "choice": "run",
+        "label": "run in shame",
+        "source": "resume",
+        "at": 1790959127807,
+        "storyId": "155716f3-f737-4c15-808b-980220fc2a89"
+      },
+      "gateLines": [],
+      "calls": [
+        {
+          "stage": "other",
+          "outcome": "aborted"
+        },
+        {
+          "stage": "other",
+          "outcome": "aborted"
+        },
+        {
+          "stage": "other",
+          "outcome": "aborted"
+        },
+        {
+          "stage": "other",
+          "outcome": "aborted"
+        },
+        {
+          "stage": "other",
+          "outcome": "aborted"
+        },
+        {
+          "stage": "other",
+          "outcome": "aborted"
+        },
+        {
+          "stage": "planner",
+          "outcome": "replayed"
+        },
+        {
+          "stage": "author",
+          "outcome": "aborted_after_acceptance_signal"
+        },
+        {
+          "stage": "author",
+          "outcome": "aborted_after_acceptance_signal"
+        },
+        {
+          "stage": "author",
+          "outcome": "aborted_after_acceptance_signal"
+        }
+      ],
+      "blockedRetries": 0
+    }
+  ],
+  "checks": {
+    "pass": 0,
+    "fail": 0
+  }
+}

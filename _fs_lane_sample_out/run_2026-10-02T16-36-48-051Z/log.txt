@@ -1,0 +1,30 @@
+=== FS LANE CONSISTENCY — 1 PLANNER DRAW(S) ===
+  mode    : DRY REPLAY of _live_corpus_out/run_2026-10-02T16-00-21-331Z/s2_planner.json
+  arm     : A   output: _fs_lane_sample_out/run_2026-10-02T16-36-48-051Z
+
+RESERVATION
+  one planner draw : $0.023175
+  × 1 = $0.023175
+  author, verifier, memory, scaffold: ABORTED — never reserved, cannot be billed
+
+── draw 1/1
+    verdict: LANE_INCONSISTENT   lane="dohkar_preliminary_review"
+    gate: [CG:PLANNER-GATE] REJECTED before author dispatch, scene=1 — the planner declared chosen_aftermath_lane="dohkar_preliminary_review" but its own proposed event/tactic
+
+── LANE CONSISTENCY
+  draws                : 1
+  ACCEPTED by the gate : 0
+  lane-inconsistent    : 1
+  rejected (other)     : 0
+  undetermined         : 0
+
+  draw | verdict            | declared lane
+     1 | lane_inconsistent  | dohkar_preliminary_review
+
+  per-draw acceptance on this sample: 0% (0/1)
+  nine consecutive passes at that rate: 0.0%
+  (arithmetic on a small sample, not a prediction — and a 10-scene run needs all nine)
+
+SPEND: $0 — nothing was dispatched (dry replay).
+
+artefacts: _fs_lane_sample_out/run_2026-10-02T16-36-48-051Z

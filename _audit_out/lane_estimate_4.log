@@ -1,0 +1,10 @@
+=== FS LANE CONSISTENCY — 4 PLANNER DRAW(S) ===
+  mode    : ESTIMATE ONLY
+  arm     : A   output: _fs_lane_sample_out/run_2026-10-02T16-40-37-722Z
+
+RESERVATION
+  one planner draw : $0.023175
+  × 4 = $0.092700
+  author, verifier, memory, scaffold: ABORTED — never reserved, cannot be billed
+
+ESTIMATE ONLY — no browser launched, nothing dispatched. $0 spent.
