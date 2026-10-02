@@ -101030,11 +101030,15 @@ function _buildAuthorFloorDirective(s) {
       var _piBefore = (cs.pendingIntent && cs.pendingIntent.proposed) ? String(cs.pendingIntent.proposed).slice(0, 55) : 'none';
       var _vSys = 'You are the RUNTIME COMMIT verifier for an interactive story engine. Given a PROPOSED TRANSITION (an intended irreversible on-page event) and the SCENE PROSE that was rendered, decide ONE thing: did the prose DELIVER that transition as a concrete, externally-observable ON-PAGE event? Then report the scene end-state tableau. This is a runtime gate, not a critique — judge ONLY delivery. Output STRICT JSON only.\n'
         + 'delivery: "DELIVERED" (the event concretely happened on the page), "PARTIAL" (begun / only gestured / not completed), or "MISSED" (did not happen).\n'
-        + 'dominant_replacement (AUTHOR PRIORITY INDEX — when delivery is PARTIAL or MISSED, what did the scene spend MOST of its words on INSTEAD of staging the transition?): "atmosphere" (mood/setting/sensory expansion), "relationship_dialogue" (the characters talking/clashing), "internal_monologue" (the protagonist\'s interior), "world_exposition" (lore/backstory/mechanics), "different_event" (a DIFFERENT concrete external event happened instead), or "none" (when DELIVERED). This reveals what the author OPTIMIZED FOR over the transition.\n'
+        // REMOVED from the requested contract (Roman 2026-10-01, consumer audit). `tableau` and
+        // `dominant_replacement` had NO live consumer: _tab was read only by a log that literally
+        // reports `verifier_tableau_ignored`, and _replacement only by [AUTHOR-PRIORITY]. Asking
+        // for them cost completion tokens that truncated the reply mid-JSON at max_tokens 280,
+        // which made the whole verdict unparseable and sent a correct per-proposal judgement to
+        // the legacy fallback. Measured in run 15.
         + 'transition_position (TRANSITION-POSITION METRIC — an INTEGER PERCENTAGE 0-100 marking how far through the prose the transition FIRST concretely occurs; e.g. 12 = it happens in the opening tenth, 91 = it barely happens at the very end; use -1 if it NEVER occurs). This shows whether the author front-loads the event or lets it drift toward the end under competing objectives.\n'
         + 'first_irreversible_position (PACING METRIC — INTEGER PERCENTAGE 0-100 of the FIRST point where SOMETHING irreversible happens: ANY revelation, betrayal, discovery, transformation, attack, or confession after which the scene can no longer simply continue as before — regardless of whether it is the proposed transition; -1 if nothing irreversible happens). This is the pacing beat a reader actually feels.\n'
-        + 'tableau: { "setting": <=120 chars or null, "charactersPresent": [names], "protagonistStatus": short phrase for what the protagonist is DOING or has just BECOME at the final line, "decisiveChange": if the closing beat OVERTURNED the scene premise name it else null, "activeInterlocutor": name of whoever the protagonist must respond to or null, "protagonistAlone": bool }.\n'
-        + 'JSON: {"delivery":"MISSED","dominant_replacement":"atmosphere","transition_position":-1,"first_irreversible_position":-1,"tableau":{"setting":null,"charactersPresent":[],"protagonistStatus":null,"decisiveChange":null,"activeInterlocutor":null,"protagonistAlone":false}}';
+        + 'JSON: {"delivery":"MISSED","transition_position":-1,"first_irreversible_position":-1}';
       var _vUsr = 'PROPOSED TRANSITION: ' + String(prevProposal.event).slice(0, 240) + '\n\nSCENE PROSE:\n' + _pt.slice(0, 6000) + '\n\nReturn the JSON now.';
       // ── EVERY PENDING SEALED PROPOSAL FOR THIS SCENE, judged independently ───────────────────
       // The state_change proposal and any continuation proposal are separate records with separate
@@ -101076,7 +101080,12 @@ function _buildAuthorFloorDirective(s) {
         var _vData = await _callTieredProvider('runtimeCommitVerifier', [
           { role: 'system', content: _vSys },
           { role: 'user', content: _vUsr }
-        ], { max_tokens: 280, temperature: 0.1 });
+        ], { max_tokens: 700, temperature: 0.1 });
+        // 280 was set BEFORE per_proposal existed. Run 15 measured finish_reason "length" at
+        // exactly 280 completion tokens with the reply cut mid-'"tableau": {', so a correct
+        // per-proposal verdict became unparseable JSON. 700 is a FIXED safe bound for the trimmed
+        // contract: two proposals with verbatim citations plus slots_check measured well under it
+        // in _verifier_contract_preflight.mjs, which fails if a worst-case reply would not fit.
         // COST ACCOUNTING (Roman 2026-09-20): this real per-scene call had zero cost/cache
         // recording — invisible to the ledger since it was added (2026-09-13). Closed alongside the
         // scene-spine planner's own accounting gap (same investigation, same continuation ledger).

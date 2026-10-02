@@ -177,7 +177,11 @@ const worst = (chars, out) => estimateUsd({ messages: [{ content: 'x'.repeat(cha
 // Still a worst-case per-stage estimate, just not a doubled one.
 const R_PLANNER = worst(30000, 1400);
 const R_AUTHOR = worst(240000, 8000);
-const R_VERIFIER = worst(10000, 300);
+// 700 OUTPUT TOKENS, tracking the raised verifier budget. This read 300 — the value max_tokens had
+// before per_proposal existed — so after raising the cap to 700 the reservation would have
+// under-reserved the one stage this run actually pays for. Roman asked for the reservation to be
+// updated alongside the bound; this is that update.
+const R_VERIFIER = worst(10000, 700);
 const PER_CASE = PLANNER_ONLY ? R_PLANNER : (R_PLANNER + R_AUTHOR + R_VERIFIER);
 const ATTEMPTS = SAMPLES || CASES.length;
 // Seal-gated reserves the WORST CASE: every one of the three planner draws, plus one author and
@@ -650,11 +654,22 @@ const runTwoScene = async (C) => {
     if (d === MAX_DRAWS) { s1.exhausted = true; }
   }
   const sealedOk = !!(s1 && s1.ctResult && s1.ctResult.outcome === 'sealed' && authorGate === 'sealed');
-  const prose1 = await page.evaluate(() => {
+  // PROSE CAPTURE, corrected. The old version returned 0 chars on a run where _commitScene
+  // demonstrably received 2,163 chars — it preferred StoryPagination, which is EMPTY BY DESIGN in
+  // CG staged mode ("CG has no page record — staged mode skips the literary
+  // StoryPagination.addPage"), and a falsy-but-defined '' short-circuited the projection fallback.
+  // It now reads the projection FIRST, which is the surface _commitScene's fallback uses, and
+  // reports both so a zero is attributable rather than mysterious.
+  const prose1pair = await page.evaluate(() => {
+    let proj = '', pag = '';
+    try { proj = String(window._sbLatestProseText(window.state) || ''); } catch (_) {}
     try { if (typeof StoryPagination !== 'undefined' && StoryPagination.getAllContent)
-      return StoryPagination.getAllContent().replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim(); } catch (_) {}
-    try { return String(window._sbLatestProseText(window.state) || ''); } catch (_) { return ''; }
+      pag = StoryPagination.getAllContent().replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim(); } catch (_) {}
+    return { proj, pag };
   });
+  const prose1 = prose1pair.proj || prose1pair.pag || '';
+  say('    scene 1 prose: projection=' + prose1pair.proj.length + ' chars, StoryPagination='
+    + prose1pair.pag.length + ' chars (empty by design in CG staged mode)');
   if (prose1) write('s1_prose.txt', prose1);
 
   let s2 = null, repeat = null, progression = null;
@@ -826,9 +841,22 @@ if (TWO_SCENE) {
     t('  and nothing was activated without it', R.s2.activated.length === 0,
       JSON.stringify(R.s2.activated));
   }
-  const canon2 = JSON.stringify(R.s2.facts) + JSON.stringify(R.s2.sceneCard);
-  t('no verifier tableau or replacement text entered canon or the card',
-    !/decisiveChange|dominant_replacement|tableau/.test(canon2), canon2.slice(0, 160));
+  // VALUES, NOT KEY NAMES. The old assertion matched /decisiveChange/ against the card JSON and
+  // tripped on the DETERMINISTIC card's own decisiveChange FIELD, which is permanently null by
+  // design — the same over-broad-scan class as matching "TIER 2" inside a prompt. What must be
+  // absent is verifier-authored CONTENT, so the card's model-interpretation fields are asserted
+  // NULL and the fact texts are checked for interpretation vocabulary.
+  const card2 = R.s2.sceneCard || null;
+  t('the scene card is deterministic', !card2 || card2.source === 'deterministic',
+    JSON.stringify(card2 && card2.source));
+  t('  and every model-interpretation field on it is null',
+    !card2 || ['decisiveChange', 'protagonistStatus', 'activeInterlocutor', 'setting',
+      'charactersPresent', 'dominantReplacement'].every(k => card2[k] == null),
+    JSON.stringify(card2 && ['decisiveChange', 'protagonistStatus', 'activeInterlocutor', 'setting',
+      'charactersPresent', 'dominantReplacement'].map(k => [k, card2[k]])));
+  t('no committed fact carries verifier interpretation vocabulary',
+    !/atmosphere|relationship_dialogue|internal_monologue|world_exposition|different_event/
+      .test(JSON.stringify(R.s2.facts)), JSON.stringify(R.s2.facts).slice(0, 160));
 
   say('\n=== IDEMPOTENCY — _commitScene re-entered twice on the same scene ===');
   t('the fact count did not change', R.repeat && R.repeat.facts === R.repeat.before,
