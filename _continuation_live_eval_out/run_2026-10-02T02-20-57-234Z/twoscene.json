@@ -1,0 +1,123 @@
+{
+  "verdict": "boundary_tested",
+  "draws": [
+    {
+      "d": 1,
+      "scope": null,
+      "outcome": "sealed",
+      "gate": "sealed"
+    }
+  ],
+  "s1": {
+    "ctResult": {
+      "outcome": "sealed",
+      "tier": 2,
+      "sealedId": "prop:3:2",
+      "introduced": [
+        {
+          "id": "ent:stage:1",
+          "kind": "institution",
+          "label": "Toll Road Commission",
+          "aliases": [
+            "the commission",
+            "the governing commission"
+          ],
+          "pending": true
+        }
+      ],
+      "targets": [
+        "Toll Road Commission"
+      ],
+      "why": []
+    },
+    "sealedKinds": [
+      "state_change",
+      "continuation"
+    ],
+    "pending": [
+      {
+        "id": "prop:3:1",
+        "kind": "state_change"
+      },
+      {
+        "id": "prop:3:2",
+        "kind": "continuation"
+      }
+    ],
+    "priorRef": "prop:3:1",
+    "facts": 0
+  },
+  "s2": {
+    "facts": [
+      {
+        "fact": "The sealed letter arrives and is opened by the commission clerk.",
+        "ref": "prop:3:1",
+        "prov": "sealed",
+        "scene": 3
+      }
+    ],
+    "committedThrough": 3,
+    "adjudication": {
+      "scene": 3,
+      "verdicts": {
+        "prop:3:1": {
+          "ref": "prop:3:1",
+          "commit": true,
+          "status": "DELIVERED",
+          "reason": "delivered",
+          "preconditionSource": "per_proposal",
+          "why": [
+            "precondition=per_proposal",
+            "anchors=inapplicable"
+          ],
+          "kind": "state_change"
+        },
+        "prop:3:2": {
+          "ref": "prop:3:2",
+          "commit": false,
+          "status": "PARTIAL",
+          "reason": "incomplete_rendering",
+          "why": [
+            "status is PARTIAL — stays pending (verifier reason: incomplete_rendering)"
+          ],
+          "kind": "continuation"
+        }
+      },
+      "unknownRefs": []
+    },
+    "registerLabels": [
+      "Wren",
+      "Cassel"
+    ],
+    "activated": [],
+    "sceneCard": {
+      "forScene": 3,
+      "source": "deterministic",
+      "sealedProposalRef": "prop:3:1",
+      "sealedFact": "The sealed letter arrives and is opened by the commission clerk.",
+      "activation": "delivered",
+      "sceneTail": "profited.\" The words taste like iron in my mouth. CASSEL: \"Will you stand before them yourself, or send a proxy?\" The question lands exactly where he meant it to. The clerk waits, parchment still in his hands. My breath catches on the edge of an answer I cannot yet give. Cassel does not press further. The chamber holds the silence like a debt. I trace the fate-thread at my cuff without thinking. The clerk shifts his weight, waiting. Cassel's gaze stays on me, steady and unreadable. Appear before the commission or send someone else in my place. I toyed with the idea of letting the cards decide.",
+      "setting": null,
+      "charactersPresent": [],
+      "protagonistStatus": null,
+      "decisiveChange": null,
+      "activeInterlocutor": null,
+      "protagonistAlone": false
+    }
+  },
+  "repeat": {
+    "ok": true,
+    "pinnedScene": 3,
+    "scRef": "prop:3:1",
+    "ctRef": "prop:3:2",
+    "proseLen": 1457,
+    "before": "prop:3:1",
+    "facts": 1,
+    "refs": "prop:3:1",
+    "activated": 0,
+    "vBefore": 1,
+    "vAfter": 1
+  },
+  "measured": 0,
+  "authorized": 0.05
+}
