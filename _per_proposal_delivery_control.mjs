@@ -100,10 +100,11 @@ const r = await page.evaluate((PROSE) => {
   // BEHAVIOURALLY. An earlier version of this control reimplemented the loop in node, and a bite
   // that unrestricted the legacy branch left every behavioural assertion green — only a static
   // regex caught it. That is exactly the kind of coverage gap worth closing.
-  const adjudicate = (scene, perProposal, legacy) => {
+  const adjudicate = (scene, perProposal, legacy, sharedSlots) => {
     const pend = window._pendingSealedForScene(scene);
     const res = window._adjudicateSceneProposals(pend, perProposal, PROSE, {
       scene: scene,
+      sharedSlots: sharedSlots || null,
       legacyDelivery: legacy ? legacy.delivery : 'MISSED',
       legacyStateChangeRef: legacy ? legacy.ref : null
     });
@@ -183,6 +184,68 @@ const r = await page.evaluate((PROSE) => {
       dominant_replacement: 'different_event',
       evidence: EV_CT }]);
   out.s7.after = snapshot();
+
+  // ── 9. THE PER-PROPOSAL PRECONDITION GUARD ───────────────────────────────
+  // Run 17's safety inconsistency: slots_check.precondition_evidence was EMPTY, which the legacy
+  // path treats as "impossible", yet a per-proposal DELIVERED committed anyway.
+  const PRE_OK = 'The sealed demand reached the clerk before the bell rang.';
+  // 9a. its OWN precondition_evidence is empty → DOWNGRADED, nothing commits
+  let s9 = setup('9');
+  out.s9 = { ids: s9 };
+  out.s9.adj = adjudicate(s9.scene, [
+    { ref: s9.ctRef, delivery: 'DELIVERED', evidence: EV_CT, precondition_evidence: '' }]);
+  out.s9.after = snapshot();
+  // 9b. the SAME entry with a usable, verbatim precondition → commits
+  let s9b = setup('9b');
+  out.s9b = { ids: s9b };
+  out.s9b.adj = adjudicate(s9b.scene, [
+    { ref: s9b.ctRef, delivery: 'DELIVERED', evidence: EV_CT, precondition_evidence: PRE_OK }]);
+  out.s9b.after = snapshot();
+  // 9c. precondition present but NOT in the prose → DOWNGRADED
+  let s9c = setup('9c');
+  out.s9c = { ids: s9c };
+  out.s9c.adj = adjudicate(s9c.scene, [
+    { ref: s9c.ctRef, delivery: 'DELIVERED', evidence: EV_CT,
+      precondition_evidence: 'The commission had already convened before she wrote.' }]);
+  out.s9c.after = snapshot();
+  // 9d. the entry OMITS it → falls back to the scene's shared slots_check. Empty there → DOWNGRADED.
+  let s9d = setup('9d');
+  out.s9d = { ids: s9d };
+  out.s9d.adj = adjudicate(s9d.scene,
+    [{ ref: s9d.ctRef, delivery: 'DELIVERED', evidence: EV_CT }],
+    null, { precondition_evidence: '', actor_evidence: PRE_OK, occurred_this_scene: true });
+  out.s9d.after = snapshot();
+  // 9e. same omission, but the shared slots_check precondition IS usable → commits
+  let s9e = setup('9e');
+  out.s9e = { ids: s9e };
+  out.s9e.adj = adjudicate(s9e.scene,
+    [{ ref: s9e.ctRef, delivery: 'DELIVERED', evidence: EV_CT }],
+    null, { precondition_evidence: PRE_OK, occurred_this_scene: true });
+  out.s9e.after = snapshot();
+  // 9f. INDEPENDENCE: one proposal's precondition fails, the other's holds. Only the valid one commits.
+  let s9f = setup('9f');
+  out.s9f = { ids: s9f };
+  out.s9f.adj = adjudicate(s9f.scene, [
+    { ref: s9f.scRef, delivery: 'DELIVERED', evidence: EV_SC, precondition_evidence: PRE_OK },
+    { ref: s9f.ctRef, delivery: 'DELIVERED', evidence: EV_CT, precondition_evidence: '' }]);
+  out.s9f.after = snapshot();
+  // 9g. the guard is DOWNGRADE-ONLY: a usable precondition cannot rescue a PARTIAL
+  let s9g = setup('9g');
+  out.s9g = { ids: s9g };
+  out.s9g.adj = adjudicate(s9g.scene, [
+    { ref: s9g.ctRef, delivery: 'PARTIAL', evidence: EV_CT, precondition_evidence: PRE_OK }]);
+  out.s9g.after = snapshot();
+
+  // ── 10. THE REASON FIELD, carried through
+  let s10 = setup('10');
+  out.s10 = { ids: s10 };
+  out.s10.adj = adjudicate(s10.scene, [
+    { ref: s10.ctRef, delivery: 'PARTIAL', evidence: EV_CT, reason: 'incomplete_rendering' }]);
+  let s10b = setup('10b');
+  out.s10b = { ids: s10b };
+  out.s10b.adj = adjudicate(s10b.scene, [
+    { ref: s10b.ctRef, delivery: 'DELIVERED', evidence: EV_CT,
+      precondition_evidence: '', reason: 'precondition_absent' }]);
 
   // ── 8. DELIVERED but the citation is NOT in the prose
   let s8 = setup('8');
@@ -308,7 +371,73 @@ t('  the verdict says why',
   JSON.stringify(r.s8.adj.verdicts[r.s8.ids.ctRef]));
 t('  and nothing activated', r.s8.after.activated.length === 0);
 
-console.log('\n9. STATIC — the one-writer rule and the loop wiring in _commitScene');
+console.log('\n9. THE PER-PROPOSAL PRECONDITION GUARD (run 17\'s safety inconsistency)');
+const v9 = (x, ref) => x.adj.verdicts[ref] || {};
+t('empty OWN precondition_evidence → NOT committed',
+  v9(r.s9, r.s9.ids.ctRef).commit === false, JSON.stringify(v9(r.s9, r.s9.ids.ctRef)));
+t('  recorded as a DOWNGRADE of a DELIVERED verdict',
+  v9(r.s9, r.s9.ids.ctRef).status === 'DELIVERED' && v9(r.s9, r.s9.ids.ctRef).downgraded === true,
+  JSON.stringify(v9(r.s9, r.s9.ids.ctRef)));
+t('  the reason says the event could not have happened',
+  JSON.stringify(v9(r.s9, r.s9.ids.ctRef).why).indexOf('could not have happened') >= 0,
+  JSON.stringify(v9(r.s9, r.s9.ids.ctRef).why));
+t('  nothing in canon, nothing activated',
+  r.s9.after.facts.length === 0 && r.s9.after.activated.length === 0,
+  JSON.stringify(r.s9.after));
+t('the SAME entry with a usable verbatim precondition DOES commit',
+  v9(r.s9b, r.s9b.ids.ctRef).commit === true, JSON.stringify(v9(r.s9b, r.s9b.ids.ctRef)));
+t('  and activates', r.s9b.after.activated.length === 1, JSON.stringify(r.s9b.after.activated));
+t('a precondition NOT found in the prose → NOT committed',
+  v9(r.s9c, r.s9c.ids.ctRef).commit === false
+  && JSON.stringify(v9(r.s9c, r.s9c.ids.ctRef).why).indexOf('not a verbatim quote') >= 0,
+  JSON.stringify(v9(r.s9c, r.s9c.ids.ctRef)));
+
+console.log('\n   the SHARED slots_check is the fallback, so the legacy rule reaches this path');
+t('omitting it falls back to shared slots_check — empty there → NOT committed',
+  v9(r.s9d, r.s9d.ids.ctRef).commit === false
+  && v9(r.s9d, r.s9d.ids.ctRef).preconditionSource === 'shared_slots_check',
+  JSON.stringify(v9(r.s9d, r.s9d.ids.ctRef)));
+t('  and a USABLE shared precondition lets it commit',
+  v9(r.s9e, r.s9e.ids.ctRef).commit === true
+  && v9(r.s9e, r.s9e.ids.ctRef).preconditionSource === 'shared_slots_check',
+  JSON.stringify(v9(r.s9e, r.s9e.ids.ctRef)));
+t('  run 17\'s exact shape (empty shared precondition + per-proposal DELIVERED) now REFUSES',
+  v9(r.s9d, r.s9d.ids.ctRef).commit === false, 'this is the inconsistency Roman identified');
+
+console.log('\n   INDEPENDENCE is preserved — one failing precondition does not block the other');
+t('the proposal with a valid precondition STILL commits',
+  v9(r.s9f, r.s9f.ids.scRef).commit === true, JSON.stringify(v9(r.s9f, r.s9f.ids.scRef)));
+t('  while the one with an empty precondition does not',
+  v9(r.s9f, r.s9f.ids.ctRef).commit === false, JSON.stringify(v9(r.s9f, r.s9f.ids.ctRef)));
+t('  exactly one fact, the valid one',
+  r.s9f.after.facts.length === 1 && r.s9f.after.facts[0].ref === r.s9f.ids.scRef,
+  JSON.stringify(r.s9f.after.facts));
+t('  and nothing activated, since the continuation was the one refused',
+  r.s9f.after.activated.length === 0, JSON.stringify(r.s9f.after.activated));
+
+console.log('\n   DOWNGRADE-ONLY — a good precondition cannot rescue a non-delivery');
+t('PARTIAL + usable precondition stays PARTIAL and uncommitted',
+  v9(r.s9g, r.s9g.ids.ctRef).commit === false
+  && v9(r.s9g, r.s9g.ids.ctRef).status === 'PARTIAL',
+  JSON.stringify(v9(r.s9g, r.s9g.ids.ctRef)));
+t('  and is NOT marked as a downgrade — it was never DELIVERED to begin with',
+  v9(r.s9g, r.s9g.ids.ctRef).downgraded !== true, JSON.stringify(v9(r.s9g, r.s9g.ids.ctRef)));
+
+console.log('\n10. THE REASON FIELD distinguishes the three non-delivery causes');
+t('a PARTIAL carries the verifier\'s reason through',
+  v9(r.s10, r.s10.ids.ctRef).reason === 'incomplete_rendering',
+  JSON.stringify(v9(r.s10, r.s10.ids.ctRef)));
+t('  and the why text names it', JSON.stringify(v9(r.s10, r.s10.ids.ctRef).why).indexOf('incomplete_rendering') >= 0);
+t('a precondition downgrade reports reason precondition_absent',
+  v9(r.s10b, r.s10b.ids.ctRef).reason === 'precondition_absent',
+  JSON.stringify(v9(r.s10b, r.s10b.ids.ctRef)));
+t('a committed proposal reports reason "delivered"',
+  v9(r.s9b, r.s9b.ids.ctRef).reason === 'delivered', JSON.stringify(v9(r.s9b, r.s9b.ids.ctRef).reason));
+t('an unverifiable citation reports reason "inconsistent"',
+  (r.s8.adj.verdicts[r.s8.ids.ctRef] || {}).reason === 'inconsistent',
+  JSON.stringify(r.s8.adj.verdicts[r.s8.ids.ctRef]));
+
+console.log('\n11. STATIC — the one-writer rule and the loop wiring in _commitScene');
 const src = fs.readFileSync('public/app.js', 'utf8');
 const lines = src.split('\n');
 const callSites = [];

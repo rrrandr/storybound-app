@@ -195,11 +195,11 @@ const worst = (chars, out) => estimateUsd({ messages: [{ content: 'x'.repeat(cha
 // Still a worst-case per-stage estimate, just not a doubled one.
 const R_PLANNER = worst(30000, 1400);
 const R_AUTHOR = worst(240000, 8000);
-// 700 OUTPUT TOKENS, tracking the raised verifier budget. This read 300 — the value max_tokens had
+// 900 OUTPUT TOKENS, tracking the raised verifier budget. This read 300 — the value max_tokens had
 // before per_proposal existed — so after raising the cap to 700 the reservation would have
 // under-reserved the one stage this run actually pays for. Roman asked for the reservation to be
 // updated alongside the bound; this is that update.
-const R_VERIFIER = worst(10000, 700);
+const R_VERIFIER = worst(10000, 900);   // tracks the verifier's max_tokens, raised for the guard fields
 const PER_CASE = PLANNER_ONLY ? R_PLANNER : (R_PLANNER + R_AUTHOR + R_VERIFIER);
 const ATTEMPTS = SAMPLES || CASES.length;
 // Seal-gated reserves the WORST CASE: every one of the three planner draws, plus one author and

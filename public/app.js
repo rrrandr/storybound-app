@@ -100916,28 +100916,74 @@ function _buildAuthorFloorDirective(s) {
   // The verifier's own fact text, tableau and dominant_replacement are NEVER consulted here: the
   // committed content comes from the sealed record by reference, and the only thing taken from the
   // verifier is a verdict plus a citation that is itself checked against the prose.
-  function _adjudicateSealedProposal(pend, entry, prose) {
+  // Is a verbatim-evidence value usable? Same threshold the slot check uses.
+  function _hasUsableEvidence(x) { return typeof x === 'string' && x.trim().length > 3; }
+  // ONE implementation of "is this quote actually in the prose", shared by the evidence check and
+  // the precondition guard. Whitespace-normalised on both sides; a verifier cannot cite what it
+  // cannot find, and surrounding quote marks are tolerated because models add them.
+  function _quoteIsInProse(q, prose) {
+    try {
+      var needle = String(q || '').replace(/\s+/g, ' ').trim().replace(/^["'\u201c\u201d]+|["'\u201c\u201d]+$/g, '');
+      if (needle.length <= 3) return false;
+      return String(prose || '').replace(/\s+/g, ' ').indexOf(needle) >= 0;
+    } catch (_) { return false; }
+  }
+
+  // opts.sharedSlots — the scene's slots_check, used ONLY as a fallback when a per_proposal entry
+  //   omits its own precondition_evidence, so the legacy rule still reaches the new path.
+  function _adjudicateSealedProposal(pend, entry, prose, opts) {
+    var o = opts || {};
     var why = [];
     if (!pend || !pend.id) return { ref: null, commit: false, status: 'unknown', why: ['no pending record'] };
     if (!entry) return { ref: pend.id, commit: false, status: 'unreported',
       why: ['the verifier returned no status for this reference'] };
     var status = String((entry && entry.delivery) || '').toUpperCase();
+    var reason = (entry && typeof entry.reason === 'string') ? entry.reason.trim() : '';
     if (status !== 'DELIVERED') {
-      return { ref: pend.id, commit: false, status: status || 'unreported',
-        why: ['status is ' + (status || 'absent') + ' — stays pending'] };
+      return { ref: pend.id, commit: false, status: status || 'unreported', reason: reason || null,
+        why: ['status is ' + (status || 'absent') + ' — stays pending'
+          + (reason ? ' (verifier reason: ' + reason + ')' : '')] };
+    }
+    // ══ PER-PROPOSAL PRECONDITION GUARD (Roman 2026-10-02) ════════════════════════════════════
+    // THE SAFETY INCONSISTENCY THIS CLOSES, measured in run 17: slots_check.precondition_evidence
+    // was EMPTY — which the legacy path treats as "the event was IMPOSSIBLE" and uses to force
+    // MISSED — yet prop:3:1 COMMITTED on a per-proposal DELIVERED, because that override was wired
+    // only to the legacy aggregate `_delivery` and never to per_proposal verdicts.
+    //
+    // The rule is now applied INDEPENDENTLY to each proposal, and it is DOWNGRADE-ONLY: an absent
+    // or unusable precondition can refuse a commit, never permit one. A proposal that supplies its
+    // own precondition_evidence is judged on that; one that omits it falls back to the scene's
+    // shared slots_check, so the legacy discipline still reaches this path.
+    var ownPre = (entry && typeof entry.precondition_evidence === 'string')
+      ? entry.precondition_evidence : null;
+    var preSource = (ownPre !== null) ? 'per_proposal' : 'shared_slots_check';
+    var preVal = (ownPre !== null) ? ownPre
+      : ((o.sharedSlots && typeof o.sharedSlots.precondition_evidence === 'string')
+        ? o.sharedSlots.precondition_evidence : null);
+    if (preVal !== null) {
+      if (!_hasUsableEvidence(preVal)) {
+        return { ref: pend.id, commit: false, status: 'DELIVERED', reason: reason || 'precondition_absent',
+          downgraded: true, preconditionSource: preSource,
+          why: ['DELIVERED but its precondition evidence (' + preSource + ') is empty or unusable — '
+            + 'the event could not have happened, so delivery is DOWNGRADED and nothing is committed'] };
+      }
+      if (!_quoteIsInProse(preVal, prose)) {
+        return { ref: pend.id, commit: false, status: 'DELIVERED', reason: reason || 'precondition_absent',
+          downgraded: true, preconditionSource: preSource,
+          why: ['DELIVERED but its precondition evidence (' + preSource + ') is not a verbatim quote '
+            + 'from the prose — DOWNGRADED, nothing committed'] };
+      }
+      why.push('precondition=' + preSource);
+    } else {
+      // Nothing to check against. Recorded, never treated as satisfied.
+      why.push('precondition=unreported');
     }
     // The citation must be VERBATIM prose, mechanically checked. A verifier cannot fabricate a
     // quote it cannot find; this is the same discipline the slot check uses.
     var ev = (entry && typeof entry.evidence === 'string') ? entry.evidence.trim() : '';
-    var cited = false;
-    if (ev.length > 3) {
-      try {
-        var hay = String(prose || '').replace(/\s+/g, ' ');
-        cited = hay.indexOf(ev.replace(/\s+/g, ' ')) >= 0;
-      } catch (_) { cited = false; }
-    }
-    if (!cited) {
-      return { ref: pend.id, commit: false, status: 'DELIVERED',
+    if (!_hasUsableEvidence(ev) || !_quoteIsInProse(ev, prose)) {
+      return { ref: pend.id, commit: false, status: 'DELIVERED', reason: reason || 'inconsistent',
+        downgraded: true,
         why: ['DELIVERED but its evidence is not a verbatim quote from the prose — not committed'] };
     }
     // Its OWN anchors, not the other proposal's.
@@ -100951,9 +100997,11 @@ function _buildAuthorFloorDirective(s) {
         why.push('anchors=' + ((chk && chk.verdict) || 'unchecked'));
       }
     } catch (_) {}
-    return { ref: pend.id, commit: true, status: 'DELIVERED', why: why };
+    return { ref: pend.id, commit: true, status: 'DELIVERED', reason: reason || 'delivered',
+      preconditionSource: preSource, why: why };
   }
   window._adjudicateSealedProposal = _adjudicateSealedProposal;
+  window._quoteIsInProse = _quoteIsInProse;
 
   // THE ADJUDICATION LOOP, extracted so a provider-free control can drive it. _commitScene calls
   // this and does nothing else with the verdicts except mirror state_change bookkeeping.
@@ -100963,6 +101011,8 @@ function _buildAuthorFloorDirective(s) {
   // a continuation must never be committed by a verdict that was not about it.
   //
   // _commitTransition stays the ONLY writer and receives a sealed REFERENCE, never text.
+  // opts.sharedSlots — the scene's slots_check, threaded to each proposal's precondition guard as
+  // a FALLBACK only, so the legacy impossible-event rule reaches the per-proposal path.
   function _adjudicateSceneProposals(pendProps, perProposal, prose, opts) {
     var o = opts || {};
     var pend = Array.isArray(pendProps) ? pendProps : [];
@@ -100996,7 +101046,7 @@ function _buildAuthorFloorDirective(s) {
             + ' the legacy verdict does not apply to it — stays pending'); } catch (_) {}
         }
       } else {
-        verdict = _adjudicateSealedProposal(pp, entry, prose);
+        verdict = _adjudicateSealedProposal(pp, entry, prose, { sharedSlots: o.sharedSlots || null });
       }
       verdict.kind = pp.kind;
       verdicts[pp.id] = verdict;
@@ -101050,10 +101100,20 @@ function _buildAuthorFloorDirective(s) {
           + ' NOTHING about another). Return "per_proposal": [ { "ref": "<the exact ref string given below,'
           + ' copied verbatim>", "delivery": "DELIVERED" | "PARTIAL" | "MISSED", "evidence": "<a VERBATIM'
           + ' substring of the SCENE PROSE showing it concretely happened on the page, or \"\" if you cannot'
-          + ' find one>" } ] with ONE entry per ref. HARD RULES: copy each ref EXACTLY — an unrecognised ref is'
-          + ' discarded and commits nothing; "evidence" must be a verbatim quote from the prose, never a'
-          + ' paraphrase and never an inference, and a DELIVERED with no verbatim quote is treated as NOT'
-          + ' delivered. Judge only whether each proposal\'s own content landed on the page.';
+          + ' find one>", "precondition_evidence": "<a VERBATIM substring of the SCENE PROSE showing the'
+          + ' participants/state THIS proposal required were PRESENT so it was possible at all, or \"\" if'
+          + ' absent>", "reason": "delivered" | "precondition_absent" | "incomplete_rendering" |'
+          + ' "inconsistent" } ] with ONE entry per ref.\n'
+          + 'HARD RULES: copy each ref EXACTLY — an unrecognised ref is discarded and commits nothing;'
+          + ' "evidence" and "precondition_evidence" must each be a verbatim quote from the prose, never a'
+          + ' paraphrase and never an inference; a DELIVERED with no verbatim quote is treated as NOT'
+          + ' delivered; and a DELIVERED whose "precondition_evidence" is empty is DOWNGRADED, because an'
+          + ' event whose required participants were never on the page cannot have happened.\n'
+          + '"reason" names WHY you judged as you did, so a non-delivery can be told apart:'
+          + ' "precondition_absent" = what it needed was not in the scene; "incomplete_rendering" = it'
+          + ' began or was gestured at but not completed; "inconsistent" = you cannot reconcile the'
+          + ' proposal with the prose either way; "delivered" = it concretely happened. Judge only'
+          + ' whether each proposal\'s own content landed on the page.';
         _vUsr += '\n\nPROPOSALS FOR THIS SCENE (judge each by its ref):';
         _pendProps.forEach(function (pp) {
           _vUsr += '\n  ref ' + pp.id + ' :: ' + String(pp.fact || '').slice(0, 220);
@@ -101080,10 +101140,16 @@ function _buildAuthorFloorDirective(s) {
         var _vData = await _callTieredProvider('runtimeCommitVerifier', [
           { role: 'system', content: _vSys },
           { role: 'user', content: _vUsr }
-        ], { max_tokens: 700, temperature: 0.1 });
+        ], { max_tokens: 900, temperature: 0.1 });
         // 280 was set BEFORE per_proposal existed. Run 15 measured finish_reason "length" at
         // exactly 280 completion tokens with the reply cut mid-'"tableau": {', so a correct
-        // per-proposal verdict became unparseable JSON. 700 is a FIXED safe bound for the trimmed
+        // per-proposal verdict became unparseable JSON.
+        // RAISED AGAIN 700 → 900, and this EXCEEDS Roman's stated 600-700 range DELIBERATELY: the
+        // per-proposal precondition_evidence + reason fields he asked for cost ~123 tokens on the
+        // pessimistic two-proposal case, taking it from 464 to 587. 700 would have left only 16%
+        // headroom on an estimate with real error, and run 15 showed truncation destroys the whole
+        // verdict rather than degrading it. Flagged, not absorbed by weakening the margin check.
+        // 900 is a FIXED safe bound for the trimmed
         // contract: two proposals with verbatim citations plus slots_check measured well under it
         // in _verifier_contract_preflight.mjs, which fails if a worst-case reply would not fit.
         // COST ACCOUNTING (Roman 2026-09-20): this real per-scene call had zero cost/cache
@@ -101153,6 +101219,7 @@ function _buildAuthorFloorDirective(s) {
       // here first, and the only thing guarding the legacy restriction was then a static regex —
       // a bite that unrestricted the legacy branch left every behavioural assertion green.
       var _ppRes = _adjudicateSceneProposals(_pendProps, _perProposal, _pt, {
+        sharedSlots: (typeof _vP !== 'undefined' && _vP && _vP.slots_check) ? _vP.slots_check : null,
         legacyDelivery: _delivery,
         legacyStateChangeRef: (prevProposal && prevProposal.proposalRef) || null,
         scene: prevSceneNum

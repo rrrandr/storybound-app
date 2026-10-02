@@ -56,15 +56,33 @@ t('slots_check is KEPT — it is genuinely consumed (forces MISSED)',
   /if \(_slotFail && _delivery === 'DELIVERED'\) \{ _delivery = 'MISSED'; \}/.test(SRC));
 t('per_proposal is KEPT with verbatim evidence required',
   /PER-PROPOSAL DELIVERY \(judge EACH listed proposal INDEPENDENTLY/.test(SRC)
-  && /must be a verbatim quote from the prose/.test(SRC));
+  && /must each be a verbatim quote from the prose/.test(SRC));
+console.log('\n   and the per-proposal guard fields are REQUESTED');
+t('each entry is asked for its own precondition_evidence',
+  /"precondition_evidence": "<a VERBATIM substring of the SCENE PROSE showing the/.test(SRC));
+t('  with the downgrade rule stated to the model',
+  /whose "precondition_evidence" is empty is DOWNGRADED/.test(SRC)
+  && /cannot have happened/.test(SRC));
+t('each entry is asked for a reason naming the cause',
+  /"reason": "delivered" \| "precondition_absent" \| "incomplete_rendering" \|/.test(SRC)
+  && /"inconsistent"/.test(SRC));
+t('  and the three non-delivery causes are defined',
+  /"precondition_absent" = what it needed was not in the scene/.test(SRC)
+  && /"incomplete_rendering" = it/.test(SRC)
+  && /"inconsistent" = you cannot reconcile/.test(SRC));
 
 // ── 2. THE BUDGET, measured against a worst-case reply ──────────────────────
 console.log('\n2. does a WORST-CASE two-proposal reply fit the configured budget?');
 const mt = SRC.match(/\], \{ max_tokens: (\d+), temperature: 0\.1 \}\);/);
 const MAX_TOKENS = mt ? Number(mt[1]) : -1;
 console.log('   configured max_tokens: ' + MAX_TOKENS);
-t('max_tokens is a fixed bound in Roman\'s 600-700 range', MAX_TOKENS >= 600 && MAX_TOKENS <= 700,
-  'max_tokens=' + MAX_TOKENS);
+// Roman specified "around 600-700", set BEFORE the precondition_evidence + reason fields existed.
+// Those cost ~123 tokens on the pessimistic case (464 → 587), so 700 left 16% headroom. The bound
+// is 900 and the DEVIATION IS DELIBERATE AND FLAGGED, not absorbed by relaxing the margin.
+t('max_tokens is a fixed bound, and large enough for the guard fields',
+  MAX_TOKENS >= 600 && MAX_TOKENS <= 1000, 'max_tokens=' + MAX_TOKENS);
+t('  it exceeds the originally-stated 600-700 — recorded as a deviation',
+  MAX_TOKENS > 700, 'max_tokens=' + MAX_TOKENS + ' (deliberate; see the comment at the call site)');
 
 // A deliberately PESSIMISTIC reply: two proposals, long verbatim citations, full slots_check with
 // long evidence in every slot, plus both position metrics and actual_exit_state.
@@ -74,9 +92,13 @@ const WORST = {
   delivery: 'DELIVERED',
   transition_position: 42,
   first_irreversible_position: 42,
+  // Each entry now carries its OWN precondition_evidence and a reason, per the guard added after
+  // run 17. Both are long here, which is the pessimistic case for the budget.
   per_proposal: [
-    { ref: 'prop:1234:1', delivery: 'DELIVERED', evidence: LONG },
-    { ref: 'prop:1234:2', delivery: 'DELIVERED', evidence: LONG }
+    { ref: 'prop:1234:1', delivery: 'DELIVERED', evidence: LONG,
+      precondition_evidence: LONG, reason: 'delivered' },
+    { ref: 'prop:1234:2', delivery: 'DELIVERED', evidence: LONG,
+      precondition_evidence: LONG, reason: 'delivered' }
   ],
   slots_check: {
     precondition_evidence: LONG, actor_evidence: LONG, action_evidence: LONG,
@@ -172,6 +194,23 @@ const r = await page.evaluate(({ worstJson, LONG }) => {
   // AND THE TRUNCATED SHAPE run 15 actually produced must still fail CLOSED.
   const truncated = fenced.slice(0, 1002);
   out.truncatedParses = !!parse(truncated);
+
+  // RUN 17'S EXACT SHAPE, through the real adjudicator: a per-proposal DELIVERED with an EMPTY
+  // shared slots_check precondition. Before the guard this committed; it must now refuse.
+  const scene2 = scene + 1;
+  window.state.turnCount = scene2;
+  window.state._scenePosture[String(scene2)] = { hash: 'ph-vcp-2' };
+  window.state._committedState = null;
+  window.state._sealedProposals = null;
+  window.state._relationshipLedger = null;
+  const sc2 = window._sealProposal({ kind: 'state_change', scene: scene2, fact: LONG });
+  const pend2 = window._pendingSealedForScene(scene2);
+  const res2 = window._adjudicateSceneProposals(pend2,
+    [{ ref: sc2.id, delivery: 'DELIVERED', evidence: LONG }], LONG,
+    { scene: scene2, sharedSlots: { precondition_evidence: '', occurred_this_scene: true },
+      legacyDelivery: 'MISSED', legacyStateChangeRef: sc2.id });
+  out.run17Shape = { verdict: res2.verdicts[sc2.id] || null,
+    facts: window._ensureCommittedState().facts.length };
   return out;
 }, { worstJson, LONG });
 await browser.close();
@@ -188,7 +227,18 @@ t('  and the institution activated with its aliases',
 t('a TRUNCATED reply still does not parse — the failure mode stays fail-closed',
   r.truncatedParses === false, 'a truncated reply parsed, which would be worse than run 15');
 
-console.log('\n4. scope');
+console.log('\n4. RUN 17\'s EXACT SHAPE now refuses');
+console.log('   ' + JSON.stringify(r.run17Shape));
+t('a per-proposal DELIVERED with an EMPTY shared precondition is NOT committed',
+  r.run17Shape.verdict && r.run17Shape.verdict.commit === false,
+  JSON.stringify(r.run17Shape.verdict));
+t('  flagged as a downgrade, source shared_slots_check',
+  r.run17Shape.verdict && r.run17Shape.verdict.downgraded === true
+  && r.run17Shape.verdict.preconditionSource === 'shared_slots_check',
+  JSON.stringify(r.run17Shape.verdict));
+t('  and nothing entered canon', r.run17Shape.facts === 0, 'facts=' + r.run17Shape.facts);
+
+console.log('\n5. scope');
 console.log('   This measures SERIALIZATION and PARSE capacity, not model behaviour. Run 15 already');
 console.log('   showed the live verifier produces a correct per_proposal judgement; what it could');
 console.log('   not do was fit it in 280 tokens. Whether a live reply now fits is the one thing the');
